@@ -1,5 +1,11 @@
 /* ADDITIONAL STYLES FOR ENSEMBL PAGE CONTENT */
-
+.hi { border: solid 1px red; padding: 0 1px; font-weight: bold }
+.redbox { visibility:hidden; position:absolute; height: 0px; width: 0px;background-color: red; z-index: 100 }
+  div.zmenu { visibility:hidden; position:absolute; top: 800px; left: 800px; width: 200px; z-index: 200 }
+  div.zmenu { border:1px #cccccc solid;}
+  div.zmenu table th { font-size: 0.9em; background-color:#ccc; color:#000; text-align: left; border:1px #cccccc solid; }
+  div.zmenu table td { font-size: 0.9em; color:#666; border-top : 1px #cccccc dotted;}
+  div.zmenu a { text-decoration:none; }
 /* LAYOUT */
 
 .ch span { /*border: red 1px solid;*/ padding: 2px 2em 2px 2px; }
@@ -77,7 +83,7 @@ td.ddmain a { background-color:[[BACKGROUND4]]; text-decoration:none; font-size:
 
 div#zmenu { font-family:arial,sans-serif,helvetica; font-size:0.9em; border:1px #cccccc solid;}
 div#zmenu th { background-color:#ccc; color:#000; }
-div#zmenu td { color:#666;}
+div#zmenu td { color:[[TEXTCOLOR2]];}
 div#zmenu a { text-decoration:none; }
 
 /* Mark up for geneseqview features */
@@ -97,13 +103,13 @@ span#eo { background-color:#ffd700; color:red; }
 
 tr { vertical-align:top; }
 
-th, td { text-align:left; border:none; color:#333; }
+th, td { text-align:left; border:none; color:[[TEXTCOLOR]]; }
 
 table.two-column { border-collapse:collapse; width: 100% }
 
 th.two-column, td.two-column { vertical-align:top; padding:0px 0.5em 0.5em 0.5em; border:1px solid #ccc; }
 
-th.two-column { width:15%; font-size:1.1em; color:#333;
+th.two-column { width:15%; font-size:1.1em; color:[[TEXTCOLOR]];
     background-color:#f0f0f0; text-align:left; padding-top:0.5em; }
 
 td.two-column p {
@@ -181,7 +187,7 @@ div.formpanel div { margin-top:5px; }
 .formblock .formcontent { float: left; font-size: 1em; padding: 2px; width: 65%; margin-bottom: 0.8em; vertical-align:middle; }
 .formcenter, .formcenter div { display:block; text-align:center; margin-bottom: 0.8em;}
 .formcontent p { margin-top:0.3em; }
-.forminline, .forminline div, { display:inline; }
+.forminline, .forminline div { display:inline; }
 .forminline h6 { display:inline; margin-right:1em; }
 .tight { padding:0px; margin: 0px; }
 .middle { vertical-align:middle; }
@@ -224,7 +230,7 @@ p.error {
     background-image:url(blue_bullet.gif); background-repeat:no-repeat;
     background-position:left center; padding-left:8px; }
 
-h2.breadcrumbs { color:#333; }
+h2.breadcrumbs { color:[[TEXTCOLOR]]; }
 a.breadcrumb { text-decoration:none }
 
 p.footnote { font-size:85%; }
@@ -276,10 +282,10 @@ a.cv_plusminus { font-family:'Arial Black'; font-size: 30px; font-weight:bold; c
 .long_id_list dt { float: left; width: 13em; padding: 0px; margin: 0.2em 1em 0.2em 0.2em; border: 0; }
 
 table.grid { border-collapse: collapse }
-.grid tr td, .grid tr th { border: solid 1px #666; border-collapse: collapse; padding: 0.2em; }
+.grid tr td, .grid tr th { border: solid 1px [[TEXTCOLOR2]]; border-collapse: collapse; padding: 0.2em; }
 
 /* Private formatting */
-table.bug td { border:solid 1px #666 }
+table.bug td { border:solid 1px [[TEXTCOLOR2]] }
 
 table.zoom { display: inline }
 table.zoom, table.zoom tr td { border:0px; margin:0px; padding:0px; background-color:[[BACKGROUND5]]; font-weight: bold; }

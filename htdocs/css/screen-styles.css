@@ -1,9 +1,12 @@
-body { color: #666; }
+body { color: #555555; }
 body { background-image: url(/img/nav-bg.gif); background-repeat: repeat-y; background-position: left; }
 #related, #search, #help, #release-t { display: block }
-#copy, #page { border: solid 0px #fff9af; border-left-width: 190px; }
-#copy #a1, #page #i1 { border: solid 0px #ffdf33; border-left-width: 1px; }
-#copy #a2, #page #i2 { border: solid 0px #ffffff; border-width: 0px 5px 0px 19px; border-left-width: 19px; }
+
+#copy, #page { width: 100%; padding: 0px ; background: none }
+#page { width: 100%; padding:0px; background: none; }
+
+#copy #a1, #page #i1 { padding: 0px 0px 0px 210px; background: none; }
+#copy #a2, #page #i2 { padding: 0px 5px 0px 0px; background: none; }
 
 #release { width: 100%; top: 5em; margin: 1px 0px; text-align: left;
            right: 0px; height:1.5em; background-color:#9bb9dd;

@@ -5,14 +5,14 @@
 /************* Styles for generic HTML elements **************/
 
 body { font-family: Luxi Sans, Geneva, Helvetica, Tahoma, Arial, sans-serif; 
-    font-size:76%; color:#666; background-color:#fff; 
+    font-size:76%; color:#555555; background-color:#fff; 
     background-image: url(/img/nav-bg.gif); background-repeat: repeat-y; 
     padding: 0px; margin: 0px; border: 0px;}
 pre, code, kbd {font-family:monospace; }
 div, p, span, li, dd, dt, th, td, pre, code, kbd { font-size:1em; }
 p  { margin-top:0.6em; margin-bottom:0.6em; }
 h1 { font-size:2em;   color:#3366bb; margin:1.2em 0px 0px 0px; padding:0px; }
-h2 { font-size:1.5em; color:#666; margin:0.5em 0px 0px 0px; padding:0px; }
+h2 { font-size:1.5em; color:#555555; margin:0.5em 0px 0px 0px; padding:0px; }
 h3 { font-size:1.2em; color:#993333; margin:1.5em 0px 0px 0px; padding:2px; }
 h4 { font-size:1.1em; color:#000; margin:1em 0px 0px 0px; padding:0px;}
 h5 { font-size:1em;   color:#000; margin:0px; padding:0px;}
@@ -84,21 +84,17 @@ kbd.line { display:block; margin-left:20px; }
 #help a      { background-color:#3366bb; color:#fff; font-weight:bold;
                font-style:italic; padding:2px; border:1px outset #3366bb;
                text-decoration:none; }
-#page       { right: 0px; left: 0px; border: solid 0px #fff9af; border-left-width: 190px; z-index: 1;
-               margin: 0px; padding: 0px; top: 0em; background-color: #fff; }
-#copy #a1, #page #i1    { border: solid 0px #ffdf33; border-left-width: 1px;
-               margin: 0px; padding: 0px }
-#copy #a2, #page #i2    { border: solid 0px #fff; border-width: 0px 5px 0px 19px;
-               margin: 0px; padding: 0px }
+#page       { right: 0px; left: 0px; z-index: 1; margin: 0px; padding: 0px; top: 0em; background: none; width: 100%; }
+#copy #a1, #page #i1    { padding: 0px 0px 0px 210px; background: none; }
+#copy #a2, #page #i2    { padding: 0px 5px 0px 0px; background: none; }
 
-#copy { right: 0px; left: 0px; border: solid 0px #fff9af; border-left-width: 190px; z-index: 1;
-              margin: 0px; padding: 0px; background-color: #fff }
+#copy {right: 0px; left: 0px; z-index: 1; margin: 0px; padding: 0px; background: none  }
 
 #page div.sptop { height: 7em; }
 #page div.sp { height: 1em; }
 
 #related { z-index: 15; position: absolute; left: 0px; top: 7em; padding: 0px; border: 0px; margin: 0px; width: 211px; }
-#related-box { background-color:#fff9af; color:#333; margin:0px 20px 0px 0px; padding:10px 0px 10px 0px; 
+#related-box { background-color:#fff9af; color:#333333; margin:0px 20px 0px 0px; padding:10px 0px 10px 0px; 
     border-width:0px 1px 0px 0px; border-style:solid; border-color:#ffdf33; }
 #related h2 { background-color:#fff; color:#993333; font-size:1.2em; margin:0px -10px 0px 0px; padding:2px 0px 2px 10px; 
   border-width:1px 1px 1px 0px; border-style:solid; border-color:#ffdf33; }
