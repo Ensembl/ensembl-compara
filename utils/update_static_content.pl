@@ -226,10 +226,10 @@ return;
 
 sub generic_species_homepage {
   my ($dir, $common_name, $species, $chrs) = @_;
-    system ("cp $dir/public-plugins/ensembl/htdocs/img/species/thumb_$species.png $dir/sanger-plugins/pre/htdocs/img/species/");
-    system ("cp $dir/public-plugins/ensembl/htdocs/img/species/pic_$species.png $dir/sanger-plugins/pre/htdocs/img/species/");
 
   if ($site_type eq 'pre') {
+    system ("cp $dir/public-plugins/ensembl/htdocs/img/species/thumb_$species.png $dir/sanger-plugins/pre/htdocs/img/species/");
+    system ("cp $dir/public-plugins/ensembl/htdocs/img/species/pic_$species.png $dir/sanger-plugins/pre/htdocs/img/species/");
     $dir .= "/sanger-plugins/pre/htdocs/$species";
     utils::Tool::check_dir($dir);
   }
@@ -239,8 +239,9 @@ sub generic_species_homepage {
   }
   my $file = $dir ."/index.html";
   if (-e $file) {
-    utils::Tool::info (1, "File $file already exists");
-    return;
+    utils::Tool::info (1, "File $file already exists. Copying old file to $file.old");
+    system ("cp $file $file.old");
+    #return;
   }
   open (my $fh, ">$file") or die "Cannot create $file: $!";
 
@@ -248,7 +249,12 @@ sub generic_species_homepage {
   my $explore = 'examples';
   if ( (scalar @$chrs) > 0 ) {
     $explore = 'karyomap';
+    SSIkaryomap("$dir/ssi", $species, $common_name, $dir) unless -e "$dir/$species/ssi/karyomap.html";
   }
+
+  # check for extra links
+  my $exists_file = $dir."/ssi/links.html";
+  my $extra_links = (-e $exists_file) ? qq([[INCLUDE::/$species/ssi/links.html]]):"";
 
   my $bio_name = utils::Tool::get_config({species =>$species,
 					  values => "SPECIES_BIO_NAME"});
@@ -266,29 +272,28 @@ print $fh qq(
     [[INCLUDE::/$species/ssi/$explore.html]]
     [[INCLUDE::/$species/ssi/entry.html]]
     </div>
-);
 
-print $fh qq(
-    <div class="col2">
-    [[INCLUDE::/$species/ssi/search.html]]
-    </div>
-</div>
-<div class="col-wrapper">
-) unless $site_type eq 'pre';
-
-print $fh qq(
     <div class="col2">
     [[INCLUDE::/$species/ssi/about.html]]
     </div>
+</div>
+
 );
+
 print $fh qq(
+<div class="col-wrapper">
+    <div class="col2">
+    [[INCLUDE::/$species/ssi/whatsnew.html]]
+    </div>
+
     <div class="col2">
     [[INCLUDE::/$species/ssi/stats.html]]
-    </div>
+    $extra_links
+ </div>
+</div>
 ) unless $site_type eq 'pre';
 
 print $fh qq(
-</div>
 </body>
 </html>
   );
