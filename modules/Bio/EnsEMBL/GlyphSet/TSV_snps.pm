@@ -92,15 +92,17 @@ sub _init {
     }
 
     # Coverage -------------------------------------------------
-    my $coverage = 0;
-    foreach ( @coverage_obj ) {
-      next if $allele->start >  $_->[2]->end;
-      last if $allele->start < $_->[2]->start;
-      $coverage = $_->[2]->level if $_->[2]->level > $coverage;
-    }
-    if ($coverage) {
-      $coverage = ">".($coverage-1) if $coverage == $coverage_level->[-1];
-      push @tmp, ("07:Read coverage: $coverage" => '');
+    if ($allele->source eq 'Sanger') {
+      my $coverage = 0;
+      foreach ( @coverage_obj ) {
+	next if $allele->start >  $_->[2]->end;
+	last if $allele->start < $_->[2]->start;
+	$coverage = $_->[2]->level if $_->[2]->level > $coverage;
+      }
+      if ($coverage) {
+	$coverage = ">".($coverage-1) if $coverage == $coverage_level->[-1];
+	push @tmp, ("07:Read coverage: $coverage" => '');
+      }
     }
     my $label  = join "/", @$aa_change;
     if ( (my $splice = $conseq_type->splice_site) =~ s/_/ /g) {
