@@ -62,8 +62,15 @@ sub set_tmp_filename {
 sub extraHTML {
   my $self = shift;
   my $extra = '';
+  if( $self->{'id'} ) {
+    $extra .= qq(id="$self->{'id'}" )
+  }
   if( $self->{'img_map'} ) {
-    $extra .= qq(usemap="#$self->{'token'}" );
+    if( $self->{'id'} ) {
+      $extra .= qq(usemap="#$self->{'id'}_map" );
+    } else {
+      $extra .= qq(usemap="#$self->{'token'}" );
+    }
   }
   return $extra;
 }
@@ -127,7 +134,8 @@ sub render_image_link {
 sub render_image_map {
   my $self = shift;
   my $IF   = $self->render( 'imagemap' );
-  my $HTML = sprintf( qq(<map name="%s" id="%s">\n%s</map>), $self->{'token'}, $self->{'token'}, $IF->{'imagemap'} );
+  my $map_name = $self->{'id'} ? ($self->{'id'}.'_map') : $self->{'token'};
+  my $HTML = sprintf( qq(<map name="%s" id="%s">\n%s</map>), $map_name, $map_name, $IF->{'imagemap'} );
   return $HTML
 }
 
