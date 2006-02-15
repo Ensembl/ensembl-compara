@@ -377,12 +377,12 @@ DotterView should now work.</p>
 used to identify the correct versions of API, Web code and databases (see below) that make up that
 release.</p>
 <p>For the API & Web code, a CVS branch (essentially a named snapshot of the code) is made for each
-release, named with the release version number. The current release is version 36, and the CVS tag for
-identifying the API & Web code for this release is 'branch-ensembl-36'.</p>
+release, named with the release version number. The current release is version 37, and the CVS tag for
+identifying the API & Web code for this release is 'branch-ensembl-37'.</p>
 
 <p>The Ensembl database names consist of the species, the database type, the release number, and the
-data version. The current human 'core' database is named homo_sapiens_core_36_35i. i.e. a
-human core database, release 36, data version 35i built on the NCBI 35 assembly. Subsequent data
+data version. The current human 'core' database is named homo_sapiens_core_37_35j. i.e. a
+human core database, release 37, data version 35i built on the NCBI 35 assembly. Subsequent data
 releases on the same assembly are suffixed with a lower case letter (a, b, etc.).</p>
 
 <p>The idea is that components with the same release version should work together - i.e. any web site built
@@ -418,11 +418,11 @@ a directory for each database we want to install, e.g:
 </tr>
 <tr>
   <td style="width: 3em" rowspan="3">&nbsp; &nbsp;</td>
-  <td>|--&nbsp;homo_sapiens_core_36_35i</td>
+  <td>|--&nbsp;homo_sapiens_core_37_35j</td>
   <td>Core ensembl database</td>
 </tr>
 <tr>
-  <td>|--&nbsp;homo_sapiens_cdna_36_35i</td>
+  <td>|--&nbsp;homo_sapiens_cdna_37_35j</td>
   <td>cDNA database</td>
 </tr>
 <tr>
@@ -444,15 +444,15 @@ about multiple species (e.g. ensembl_compara).</p>
 </tr>
 <tr>
   <td style="width: 3em" rowspan="4">&nbsp; &nbsp;</td>
-  <td>|--&nbsp;ensembl_compara_36</td>
+  <td>|--&nbsp;ensembl_compara_37</td>
   <td>Comparative genomics database</td>
 </tr>
 <tr>
-  <td>|--&nbsp;ensembl_website_36</td>
+  <td>|--&nbsp;ensembl_website_37</td>
   <td>Help database</td>
 </tr>
 <tr>
-  <td>|--&nbsp;ensembl_web_user_db_36</td>
+  <td>|--&nbsp;ensembl_web_user_db_37</td>
   <td>Web preference database</td>
 </tr>
 <tr>
@@ -475,16 +475,16 @@ explain where the data can be found.</p>
 </tr>
 <tr>
   <td style="width: 3em" rowspan="4">&nbsp; &nbsp;</td>
-  <td>|--&nbsp;ensembl_mart_36</td>
+  <td>|--&nbsp;ensembl_mart_37</td>
 </tr>
 <tr>
-  <td>|--&nbsp;sequence_mart_36</td>
+  <td>|--&nbsp;sequence_mart_37</td>
 </tr>
 <tr>
-  <td>|--&nbsp;snp_mart_36</td>
+  <td>|--&nbsp;snp_mart_37</td>
 </tr>
 <tr>
-  <td>|--&nbsp;vega_mart_36</td>
+  <td>|--&nbsp;vega_mart_37</td>
 </tr>
 </table>
 
@@ -500,14 +500,14 @@ easier downloading.</p>
 <p>Each table file is gzipped so unpack the data into working directories, keeping separate directories for
 each database.</p>
 <p>For each database you have downloaded, cd into the database directory and perform steps 3-5. For
-illustration, we will use homo_sapiens_core_36_35i as the database - you need to change this
+illustration, we will use homo_sapiens_core_37_35j as the database - you need to change this
 appropriately for each database you install. Remember, you also need to download and install the
 multi-species databases.</p>
 </li>
 <li>
 <p>Start a MySQL console session (see the Installing MySQL section above if necessary) and issue the
 command:</p>
-<kbd>create database homo_sapiens_core_36_35i</kbd>
+<kbd>create database homo_sapiens_core_37_35j</kbd>
 </li>
 <li>
 <p>Exit the console session, and issue the following command to run the ensembl SQL file, which should
@@ -517,11 +517,11 @@ database you created in step 3.</p>
 mysqldba as the database user. Note that here mysqldba is a MySQL account with file access to the
 database, which is not the same as a system user. See the MySQL documentation for instructions
 on creating/administering users.</p>
-<kbd>/data/mysql/bin/mysql -u mysqldba homo_sapiens_core_36_35i < homo_sapiens_core_36_35i.sql</kbd>
+<kbd>/data/mysql/bin/mysql -u mysqldba homo_sapiens_core_37_35j < homo_sapiens_core_37_35j.sql</kbd>
 </li>
 <li>
 <p>Load the data into the database structure you have just built with the following command.</p>
-<kbd>/data/mysql/bin/mysqlimport -u mysqldba homo_sapiens_core_36_35i *.txt.table</kbd>
+<kbd>/data/mysql/bin/mysqlimport -u mysqldba homo_sapiens_core_37_35j *.txt.table</kbd>
 </li>
 </ol>
 
@@ -567,7 +567,7 @@ usr/local/ensembl with your chosen server-root.</p>
 <p>Check the ensembl API and web code out of CVS (downloads the code from the Sanger CVS server
 onto your local machine):</p>
 <kbd>cvs -d :pserver:cvsuser@cvsro.sanger.ac.uk:/cvsroot/CVSmaster \<br />
-&nbsp; co -r branch-ensembl-36 ensembl-api ensembl-website</kbd>
+&nbsp; co -r branch-ensembl-37 ensembl-api ensembl-website</kbd>
 <p>A listing of your server-root should now look something like:</p>
 <table>
 <tr>
@@ -594,13 +594,13 @@ onto your local machine):</p>
 </table>
 </li>
 </ol>
-<h3 class="boxed"><a id="cvs_cobiomart">To install the BioMart modules</a> (BioMart 0.2)</h3>
+<h3 class="boxed"><a id="cvs_cobiomart">To install the BioMart modules</a> (BioMart 0.4)</h3>
 <ol start="4">
 <li>
 <p>Check the BioMart code out of CVS (downloads the code from the Sanger CVS server onto your local
 machine):</p>
 <kbd>cvs -d :pserver:cvsuser@cvsro.sanger.ac.uk:/cvsroot/CVSmaster \<br />
-&nbsp; co -r release-0_3 biomart-plib biomart-web</kbd>
+&nbsp; co -r release-0_4 biomart-plib biomart-web</kbd>
 </li>
 </ol>
 
