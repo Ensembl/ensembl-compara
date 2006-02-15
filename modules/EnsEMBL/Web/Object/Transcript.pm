@@ -40,6 +40,8 @@ sub default_track_by_gene {
       hox              gsten_transcript
       cyt              gsten_transcript
       ncrna            rna_transcript
+      mirna            rna_transcript
+      trna             rna_transcript
       ensembl_ncrna    erna_transcript
       homology_medium  homology_low_transcript
       homology_high    homology_low_transcript
@@ -929,6 +931,7 @@ sub get_supporting_evidence { ## USED!
   # need the main transcript transformed for rest of page
   my $transcript_adaptor = $dbh->get_TranscriptAdaptor() ; 
   my $trans              = $transcript_adaptor->fetch_by_stable_id( $transid ); 
+  warn $self->Obj;
   $self->__data->{'_SE_trans'} = $trans ;
   my @dl_seq_list;
   my $show;
