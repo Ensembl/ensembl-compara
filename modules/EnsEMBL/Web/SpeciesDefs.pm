@@ -972,6 +972,11 @@ sub DESTROY { }
 
 =cut
 
+sub anyother_species {
+  my ($self, $var) = @_;
+  my( $species ) = keys %{$CONF->{'_storage'}};
+  return $self->get_config( $species, $var );
+}
 sub other_species {
   my ($self, $species, $var) = @_;
   return $self->get_config( $species, $var );
