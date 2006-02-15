@@ -153,7 +153,7 @@ sub generegulationview {
 sub genespliceview {
   my $self   = shift;
   my $obj    = $self->{'object'};
-     $self->update_configs_from_parameter( 'bottom', 'genesnpview_transcript genesnpview_gene genesnpview_context' );
+     $self->update_configs_from_parameter( 'bottom', qw(genesnpview_transcript genesnpview_gene genesnpview_context) );
      $self->set_title( 'Gene Splice Report for '.$obj->stable_id );
   my $params = { 'gene' => $obj->stable_id, 'db' => $obj->get_db  };
 
