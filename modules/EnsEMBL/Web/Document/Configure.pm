@@ -2,6 +2,9 @@ package EnsEMBL::Web::Document::Configure;
 
 use CGI qw(escapeHTML);
 
+use EnsEMBL::Web::Root;
+our @ISA  = qw(EnsEMBL::Web::Root);
+
 sub common_menu_items {
   my( $self, $doc ) = @_;
 ## Now the links on the left hand side....
@@ -54,7 +57,7 @@ sub common_menu_items {
 
   #warn $doc->species_defs;
   #warn $doc->species_defs->databases;
-  if( $doc->species_defs->databases->{'ENSEMBL_WEBSITE'} ) { 
+  if( $doc->species_defs->multidb && $doc->species_defs->multidb->{'ENSEMBL_WEBSITE'} ) { 
     $doc->menu->add_entry( 'docs',
       'code'  => "whatsnew",
       'href' => "/$species_m/newsview?rel=$release",
