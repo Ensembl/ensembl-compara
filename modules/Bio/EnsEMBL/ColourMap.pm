@@ -197,6 +197,12 @@ sub new {
   $self->colourSet( 'mrna',
     'default'    => 'red',
   );
+  $self->colourSet( 'rna',
+    'BlastmiRNA'    => 'plum4',
+    'RfamBlast'     => 'plum4',
+    'default'       => 'plum4'
+  );
+
   $self->colourSet( 'est',
     'default'    => 'purple1',
     'genoscope'  => 'purple3',
