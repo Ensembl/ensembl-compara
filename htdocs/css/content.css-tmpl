@@ -207,7 +207,7 @@ form#change_chr { margin:10px; }
 /**************************** MISCELLANEOUS *******************************/
 
 div.notice {
-    width:50%; margin:2em auto; padding: 1em;
+    width:90%; margin:2em auto; padding: 1em;
     background: [[BACKGROUND3]]; border:1px solid [[HEADING]];
 }
 
