@@ -322,7 +322,6 @@ sub transHandler {
   $r->uri( "/$path" );
   foreach my $dir( @HTDOCS_TRANS_DIRS ){
     my $filename = sprintf( $dir, $path );
-    #warn "$filename.....";
     if( -d $filename ) {
       $r->uri( $r->uri . ($r->uri =~ /\/$/ ? '' : '/' ). 'index.html' );
       $r->filename( $filename . ( $r->filename =~ /\/$/ ? '' : '/' ). 'index.html' );
@@ -354,9 +353,11 @@ sub transHandler {
 
 my %SPECIES_MAP = map { lc($_), $SiteDefs::ENSEMBL_SPECIES_ALIASES->{$_} }
                  keys %{$SiteDefs::ENSEMBL_SPECIES_ALIASES}; # Conf species
-$SPECIES_MAP{biomart} = 'BioMart';                           # Multispecies
+# $SPECIES_MAP{biomart} = 'biomart';                           # Multispecies
 $SPECIES_MAP{multi} = 'Multi';                           # Multispecies
 $SPECIES_MAP{Multi} = 'Multi';                           # Multispecies
+$SPECIES_MAP{BioMart} = 'biomart';                           # Multispecies
+$SPECIES_MAP{biomart} = 'biomart';                           # Multispecies
 $SPECIES_MAP{perl}  = $SiteDefs::ENSEMBL_PERL_SPECIES;   # Def species
 map{ $SPECIES_MAP{lc($_)} = $_ } values( %SPECIES_MAP );     # Self-mapping
 
