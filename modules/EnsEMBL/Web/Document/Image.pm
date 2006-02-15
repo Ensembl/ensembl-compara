@@ -489,6 +489,26 @@ sub render {
     $image->{'id'}   = $self->{'button_id'};
     $HTML .= $image->render_image_button();
     $HTML .= sprintf qq(<div style="text-align: center; font-weight: bold">%s</div>), $self->caption if $self->caption;
+  } elsif( $self->button eq 'drag' ) {
+    $image->{'id'} = "p_$self->{'panel_number'}_i";
+    my $tag = $image->render_image_tag();
+    ## Now we have the image dimensions, we can set the correct DIV width
+    if( $self->menu_container ) {
+      $HTML .= $self->menu_container->render_html;
+      $HTML .= $self->menu_container->render_js;
+    }
+    ## continue with tag HTML
+    ### This has to have a vertical padding of 0px as it is used in a number of places
+    ### butted up to another container! - if you need a vertical padding of 10px add it
+    ### outside this module!
+    $HTML .= sprintf '<div style="text-align:center"><div class="center" style="margin:auto;border:0px;padding:0px;width:%dpx">',  $image->{'width'}+2;
+    $HTML .= sprintf qq(<div id="p_$self->{'panel_number'}" style="border: solid 1px black; position: relative; width:%dpx">%s), $image->{'width'},$tag;
+    if( $self->imagemap eq 'yes' ) {
+      $HTML .= $image->render_image_map
+    }
+    $HTML .= "</div>";
+    $HTML .= sprintf qq(<div style="text-align: center; font-weight: bold">%s</div>), $self->caption if $self->caption;
+    $HTML .= '</div></div>';
   } else {
     my $tag = $image->render_image_tag();
     ## Now we have the image dimensions, we can set the correct DIV width 
@@ -506,7 +526,7 @@ sub render {
       $HTML .= $image->render_image_map
     } 
 ## 
-  $HTML .= sprintf qq(<div style="text-align: center; font-weight: bold">%s</div>), $self->caption if $self->caption;
+    $HTML .= sprintf qq(<div style="text-align: center; font-weight: bold">%s</div>), $self->caption if $self->caption;
     $HTML .= '</div>';
   }
   if( @{$self->{'image_formats'}} ) {
@@ -514,6 +534,7 @@ sub render {
     foreach( sort @{$self->{'image_formats'}} ) {
       my $T = $image->render($_);
       $URLS{$_} = $T->{'URL'};
+      $URLS{$_}.='.eps' if lc($_) eq 'postscript';
     }
     ## Add links for other image formats (right aligned in div)
      $HTML .= '<div style="text-align:right">'.join( '; ', map {
