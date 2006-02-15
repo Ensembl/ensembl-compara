@@ -129,7 +129,7 @@ sub get_adaptor {
 sub get_synteny_local_genes {
     
     my $self = shift ;
-    return $self->{'_local_genes'} if $self->{'_local_genes'};
+    return @{$self->{'_local_genes'}} if $self->{'_local_genes'};
     
     my $slice;
     my @localgenes;
@@ -165,19 +165,18 @@ sub get_synteny_local_genes {
         if(@localgenes>$num) {
             @localgenes = @localgenes[0..($num-1)]; 
         } elsif(@localgenes==0) {
-      $slice = $sliceAdaptor->fetch_by_region
-        ('chromosome', $chr, 1 , $start);
+      $slice = $sliceAdaptor->fetch_by_region('chromosome', $chr, 1 , $start);
       @localgenes = @{$slice->get_all_Genes( 'ensembl' )};
       @localgenes = @localgenes[(-$num)..-1] if(@localgenes>$num);
       $start = 1;
         }
     }
-    foreach my $gene( @localgenes ){ 
-      $gene->start( $gene->start + $start - 1 ); 
-      $gene->end( $gene->end + $start - 1 ); 
-    }
-    $self->{'_local_genes'} = \@localgenes;
-    return \@localgenes;
+#    foreach my $gene( @localgenes ){ 
+#      $gene->start( $gene->start + $start - 1 ); 
+#      $gene->end( $gene->end + $start - 1 ); 
+#    }
+    $self->{'_local_genes'} = [\@localgenes,$start-1];
+    return \@localgenes, $start - 1;
 }
 
 
@@ -188,8 +187,9 @@ sub get_synteny_matches {
     my @data;
     my $OTHER = $self->param('otherspecies') ||$self->param('species')|| ($ENV{ 'ENSEMBL_SPECIES' } eq 'Homo_sapiens' ? 'Mus_musculus' : 'Homo_sapiens');
     my $gene2_adaptor = $self->database('core', $OTHER)->get_GeneAdaptor();
-    my @localgenes = @{$self->get_synteny_local_genes};
-    foreach my $localgene (@localgenes){
+    my ($localgenes,$offset ) = $self->get_synteny_local_genes;
+    
+    foreach my $localgene (@$localgenes){
         my ($sppgene, $separate, $syntenygene);
         my $data;
         my $spp = $ENV{ 'ENSEMBL_SPECIES'};
@@ -198,7 +198,10 @@ sub get_synteny_matches {
         my $homol_num = scalar @{$homologues};
         my $gene_synonym = $localgene->external_name || $localgene->stable_id;
    
+        warn $localgene->stable_id;
+        if(@{$homologues}) {
         foreach my $homol(@{$homologues}){
+            warn "....    ", $homol->stable_id;
             my $gene = $gene2_adaptor->fetch_by_stable_id( $homol->stable_id,1 );
             $homol_id = $gene->external_name;
             $homol_id ||= $gene->stable_id;
@@ -217,7 +220,7 @@ sub get_synteny_matches {
             my $data_row = {
                 'sp_stable_id'      =>  $localgene->stable_id,
                 'sp_synonym'        =>  $gene_synonym,
-                'sp_length'         =>  $self->bp_to_nearest_unit($localgene->start()),
+                'sp_length'         =>  $self->bp_to_nearest_unit($localgene->start()+$offset),
                 'other_stable_id'   =>  $homol->stable_id,
                 'other_synonym'     =>  $homol_id,
                 'other_chr'         =>  $H_CHR,
@@ -226,6 +229,11 @@ sub get_synteny_matches {
                 };
  
             push @data, $data_row;
+        }
+        } else {
+          push @data, { 'sp_stable_id'      =>  $localgene->stable_id,
+                'sp_synonym'        =>  $gene_synonym,
+                'sp_length'         =>  $self->bp_to_nearest_unit($localgene->start()+$offset) }
         }
     }
     return \@data;

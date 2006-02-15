@@ -483,9 +483,8 @@ sub synteny_map {
  
     ## checks done ## 
     my $chr_length = $object->length;
-    my @localgenes = @{$object->get_synteny_local_genes};
-    $loc = ( @localgenes ?
-         $localgenes[0]->start : 1 ); # Jump loc to the location of the genes
+    my ($localgenes,$offset) = $object->get_synteny_local_genes;
+    $loc = ( @$localgenes ? $localgenes->[0]->start+$offset : 1 ); # Jump loc to the location of the genes
         
     my $Config = $object->get_userconfig( 'Vsynteny' );
     $Config->{'other_species_installed'} = $synteny{ $other };
@@ -504,7 +503,7 @@ sub synteny_map {
         $Config
     );
     $image->imagemap           = 'yes';
-    $image->cacheable          = 'yes';
+    # $image->cacheable          = 'yes';
     $image->image_name         = 'syntenyview-'.$species.'-'.$chr.'-'.$other;
 
     $panel->add_image( $image->render, $image->{'width'} );
@@ -543,7 +542,13 @@ sub syn_matches {
         $arrow = $homologue_no ? '-&gt;' : '';
 
         $sp_links = qq(<a href="/$species/geneview?gene=$sp_stable_id"><strong>$sp_synonym</strong></a> \($sp_length\)<br />[<a href="/$species/contigview?gene=$sp_stable_id">ContigView</a>]);
-        $other_links = qq(<a href="/$other/geneview?gene=$other_stable_id"><strong>$other_synonym</strong></a><br />[<a href="/$other/contigview?gene=$other_stable_id" title="Chr $other_chr: $other_length">ContigView</a>] [<a href="/$species/multicontigview?gene=$sp_stable_id;s1=$other;g1=$other_stable_id">MultiContigView</a>]);
+        if( $other_stable_id ) {
+          $other_links = qq(<a href="/$other/geneview?gene=$other_stable_id"><strong>$other_synonym</strong></a><br />);
+          $other_links .= "($other_length)<br />";
+          $other_links .= qq([<a href="/$other/contigview?gene=$other_stable_id" title="Chr $other_chr: $other_length">ContigView</a>] [<a href="/$species/multicontigview?gene=$sp_stable_id;s1=$other;g1=$other_stable_id">MultiContigView</a>]);
+        } else {
+          $other_links = 'No homologues';
+        }
         $data_row = { 'genes'  => $sp_links, 'arrow' => $arrow, 'homologues' => $other_links };
         $table->add_row( $data_row );
     }
