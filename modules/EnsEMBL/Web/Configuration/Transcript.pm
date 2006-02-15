@@ -186,7 +186,7 @@ sub transcriptsnpview {
       'object'  => $obj,
       'params'  => $params,
       'sample' =>  $sample,
-      'null_data' => "<p>Where there is coverage, all alleles <em>observed</em> in sample $sample are the same as the reference.</p>",
+   #   'null_data' => "<p>Where there is coverage, all alleles <em>observed</em> in sample $sample are the same as the reference.</p>",
  )) {
      $panel_table->add_components( qw(TSVvariations
         EnsEMBL::Web::Component::Transcript::spreadsheet_TSVtable));

@@ -1206,10 +1206,10 @@ sub spreadsheet_TSVtable {
     { 'key' => 'cdscoord',  'title' => 'CDS co-ordinate',  },
     { 'key' => 'aachange', 'title' => 'AA change',  },
     { 'key' => 'aacoord',  'title' => 'AA co-ordinate',  },
-    { 'key' => 'coverage',  'title' => 'Read coverage',  },
+  #  { 'key' => 'coverage',  'title' => 'Read coverage',  },
     { 'key' => 'Class', },
     { 'key' => 'Source', },
-    { 'key' => 'Status',  },
+    { 'key' => 'Status', 'title' => 'Validation',  },
 		     );
 
   foreach my $allele_ref (  @$allele_info ) {
@@ -1251,15 +1251,25 @@ sub spreadsheet_TSVtable {
       $codon =~ s/(\w{$position})(\w)(.*)/$1<b>$2<\/b>$3/; 
     }
 
-    # Read coverage
-    my $allele_start = $allele->start;
-    my $coverage = 0;
-    foreach ( @coverage_obj ) {
-      next if $allele_start >  $_->end;
-      last if $allele_start < $_->start;
-      $coverage = $_->level if $_->level > $coverage;
+
+    my $status;
+    if ($allele->source eq 'Sanger') {
+      # Read coverage
+      my $allele_start = $allele->start;
+      my $coverage;
+      foreach ( @coverage_obj ) {
+	next if $allele_start >  $_->end;
+	last if $allele_start < $_->start;
+	$coverage = $_->level if $_->level > $coverage;
+      }
+      $coverage = ">".($coverage-1) if $coverage == $coverage_level->[-1];
+      $status = "read coverage $coverage";
     }
-    $coverage = ">".($coverage-1) if $coverage == $coverage_level->[-1];
+    else {
+      my $tmp =  $allele->variation;
+      my @validation = $tmp ? @{ $tmp->get_all_validation_states || [] } : ();
+      $status = join( ', ',  @validation ) || "-";
+    }
 
     # Other
     my $chr = $sample_slice->seq_region_name;
@@ -1270,20 +1280,19 @@ sub spreadsheet_TSVtable {
     my $cds_coord = $conseq_type->cds_start;
     $cds_coord .= "-".$conseq_type->cds_end unless $conseq_type->cds_start == $conseq_type->cds_end;
 
-    my $tmp =  $allele->variation;
-    my @validation = $tmp ? @{ $tmp->get_all_validation_states || [] } : ();
+
     my $row = {
 	       'ID'          =>  qq(<a href="/@{[$object->species]}/snpview?snp=@{[$allele->variation_name]};source=@{[$allele->source]};chr=$chr;vc_start=$chr_start">@{[$allele->variation_name]}</a>),
 	       'Class'       => $class || "-",
 	       'Source'      => $allele->source || "-",
 	       'Alleles'     => $snp_alleles || "-",
 	       'Ambiguity'   => $object->ambig_code($allele),
-	       'Status'      => (join( ', ',  @validation ) || "-"),
+	       'Status'      => $status,
 	       'chr'         => "$chr:$pos",
 	       'Codon'       => $codon || "-",
 	       'consequence' => $type,
 	       'cdscoord'    => $cds_coord || "-",
-	       'coverage'    => $coverage || "0",
+	       #'coverage'    => $coverage || "0",
 	      };
 
     if ($conseq_type->aa_alleles){
