@@ -59,7 +59,10 @@ sub _init {
   } else {
       @segments = @{$Container->project('seqlevel')||[]};
   }
-  my @coord_systems = @{$Container->adaptor->db->get_CoordSystemAdaptor->fetch_all() || []};
+  my @coord_systems;
+  if ( ! $Container->isa("Bio::EnsEMBL::Compara::AlignSlice::Slice") && ($Container->{__type__} ne 'alignslice')) {
+    @coord_systems = @{$Container->adaptor->db->get_CoordSystemAdaptor->fetch_all() || []};
+  }
   my $Config = $self->{'config'};
 
   my $module = ref($self);
@@ -76,7 +79,7 @@ sub _init {
       my $feature = { 'start' => $start, 'end' => $end, 'name' => $ctg_slice->seq_region_name };
 
       $feature->{'locations'}{ $ctg_slice->coord_system->name } = [ $ctg_slice->seq_region_name, $ctg_slice->start, $ctg_slice->end, $ctg_slice->strand  ];
-if( $show_navigation ) {
+ if( $show_navigation ) {
       if ( ! $Container->isa("Bio::EnsEMBL::Compara::AlignSlice::Slice") && ($Container->{__type__} ne 'alignslice')) {
 	  foreach( @coord_systems ) {
 	      my $path;
