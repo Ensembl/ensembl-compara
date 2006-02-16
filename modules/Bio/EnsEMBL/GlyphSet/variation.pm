@@ -73,7 +73,6 @@ sub tag {
   my ($self, $f) = @_;
   if($f->start > $f->end ) {    
     my $consequence_type = $f->get_consequence_type;
-warn ">INSERTION<";
     return ( { 'style' => 'insertion', 'colour' => $self->{'colours'}{"$consequence_type"}[0] } );
   }
 }
