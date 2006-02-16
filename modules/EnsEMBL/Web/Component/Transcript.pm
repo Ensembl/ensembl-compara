@@ -992,14 +992,12 @@ sub transcriptsnpview {
   my $transcript_slice = $object->__data->{'slices'}{'TSV_transcript'}[1];
   my $sub_slices       =  $object->__data->{'slices'}{'TSV_transcript'}[2];
   my $fake_length      =  $object->__data->{'slices'}{'TSV_transcript'}[3];
-#  my ($count_snps, $snps) = $object->getVariationsOnSlice( "TSV_transcript", $transcript_slice );
-
   my ($count_snps, $snps) = $object->getVariationsOnSlice( $transcript_slice, $sub_slices  );
 
   # Taken out domains (prosite, pfam)
 
-  ## -- Tweak the configurations for the five sub images ------------------ 
-  ## Intronless transcript top and bottom (to draw snps, ruler and exon backgrounds)
+  # Tweak the configurations for the five sub images ------------------ 
+  # Intronless transcript top and bottom (to draw snps, ruler and exon backgrounds)
   my @ens_exons;
   foreach my $exon (@{ $object->Obj->get_all_Exons() }) {
     my $offset = $transcript_slice->start -1;
@@ -1042,19 +1040,16 @@ sub transcriptsnpview {
 
   # SNP stuff ------------------------------------------------------------
   my ($containers_and_configs, $haplotype);
-  my @snp_configs = ();
 
-  if (scalar @$snps) {
+  # Foreach sample ... 
+  ($containers_and_configs, $haplotype) = _sample_configs($object, $transcript_slice, $sub_slices, $fake_length);
 
-    # Foreach sample ... 
-    ($containers_and_configs, $haplotype) = _sample_configs($object, $transcript_slice, $sub_slices, $fake_length);
-
-    # -- Map SNPs for the last SNP display to fake even spaced co-ordinates
-    # @snps: array of arrays  [fake_start, fake_end, B:E:Variation obj]
-    my $SNP_REL     = 5; ## relative length of snp to gap in bottom display...
-    my $snp_fake_length = -1; ## end of last drawn snp on bottom display...
-    my @fake_snps = map {
-      $snp_fake_length +=$SNP_REL+1;
+  # -- Map SNPs for the last SNP display to fake even spaced co-ordinates
+  # @snps: array of arrays  [fake_start, fake_end, B:E:Variation obj]
+  my $SNP_REL     = 5; ## relative length of snp to gap in bottom display...
+  my $snp_fake_length = -1; ## end of last drawn snp on bottom display...
+  my @fake_snps = map {
+    $snp_fake_length +=$SNP_REL+1;
       [ $snp_fake_length - $SNP_REL+1, $snp_fake_length, $_->[2], $transcript_slice->seq_region_name,
 	$transcript_slice->strand > 0 ?
 	( $transcript_slice->start + $_->[2]->start - 1,
@@ -1064,18 +1059,12 @@ sub transcriptsnpview {
       ]
     } sort { $a->[0] <=> $b->[0] } @$snps;
 
-    $Configs->{'snps'}->set( 'snp_fake_haplotype', 'on', 'on' );
-    $Configs->{'snps'}->container_width(   $snp_fake_length   );
-    $Configs->{'snps'}->{'snps'}        = \@fake_snps;
-    $Configs->{'snps'}->{'fakeslice'}   = 1;
-    $Configs->{'snps'}->{'snp_fake_haplotype'}  =  $haplotype;
+  $Configs->{'snps'}->set( 'snp_fake_haplotype', 'on', 'on' );
+  $Configs->{'snps'}->container_width(   $snp_fake_length   );
+  $Configs->{'snps'}->{'snps'}        = \@fake_snps;
+  $Configs->{'snps'}->{'fakeslice'}   = 1;
+  $Configs->{'snps'}->{'snp_fake_haplotype'}  =  $haplotype;
 
-    @snp_configs = (
-		   $transcript_slice, $Configs->{'transcripts_top'},
-		   @$containers_and_configs,
-		   $transcript_slice, $Configs->{'transcripts_bottom'},
-		  );
-  }
   return if $do_not_render;
 
   ## -- Render image ----------------------------------------------------- ##
@@ -1084,7 +1073,9 @@ sub transcriptsnpview {
     [
      $object->__data->{'slices'}{'context'}[1],     $Configs->{'context'},
      $object->__data->{'slices'}{'transcript'}[1],  $Configs->{'transcript'},
-     @snp_configs,
+     $transcript_slice, $Configs->{'transcripts_top'},
+     @$containers_and_configs,
+    $transcript_slice, $Configs->{'transcripts_bottom'},
      $transcript_slice, $Configs->{'snps'},
     ],
     [ $object->stable_id ]
@@ -1206,7 +1197,7 @@ sub spreadsheet_TSVtable {
     { 'key' => 'cdscoord',  'title' => 'CDS co-ordinate',  },
     { 'key' => 'aachange', 'title' => 'AA change',  },
     { 'key' => 'aacoord',  'title' => 'AA co-ordinate',  },
-  #  { 'key' => 'coverage',  'title' => 'Read coverage',  },
+    #{ 'key' => 'coverage',  'title' => 'Read coverage',  },
     { 'key' => 'Class', },
     { 'key' => 'Source', },
     { 'key' => 'Status', 'title' => 'Validation',  },
@@ -1241,8 +1232,9 @@ sub spreadsheet_TSVtable {
     # Class
     my $class = $object->var_class($allele);
     if ($class eq 'in-del') {
-      $class = $chr_start > $chr_end ? 'insertion' : 'deletion';
+      $class = $chr_start > $chr_end ? 'Insertion' : 'Deletion';
     }
+    $class =~ s/snp/SNP/;
 
     # Codon - make the letter for the SNP position in the codon bold
     my $codon = $conseq_type->codon;
@@ -1269,6 +1261,7 @@ sub spreadsheet_TSVtable {
       my $tmp =  $allele->variation;
       my @validation = $tmp ? @{ $tmp->get_all_validation_states || [] } : ();
       $status = join( ', ',  @validation ) || "-";
+      $status =~ s/freq/frequency/;
     }
 
     # Other
