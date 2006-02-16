@@ -14,7 +14,7 @@ The databases for the species given with the --nospecies argument are omitted
 ./list_blast_ssaha [options]
 
 Options:
-  --nospecies, --sources
+  --nospecies, --source ssaha
 
 Example:
   Compile a list of species that have a new gene build (need new blast databases
@@ -80,7 +80,10 @@ Fiona Cunningham <webmaster@sanger.ac.uk>
 
 =cut
 
-
+use strict;
+use warnings;
+use Pod::Usage;
+use Getopt::Long;
 use FindBin qw($Bin);
 use File::Basename qw( dirname );
 use vars qw( $SERVERROOT );
@@ -92,33 +95,25 @@ BEGIN{
   map{ unshift @INC, $_ } @SiteDefs::ENSEMBL_LIB_DIRS;
 }
 
-use strict;
-use warnings;
 use EnsEMBL::Web::BlastView::Tool;
-use Pod::Usage;
-use Getopt::Long;
-  
-my $self = shift;
 my @SPECIES;
 my @sources;
-my $inuse;
 my $info;
 my $help;
+our $sort = "species";
 
 &GetOptions(
     'nospecies:s'  => \@SPECIES, ## species which can be deleted
-    'sources:s'    => \@sources,
     'help'         => \$help,
     'info'         => \$info,
+    'sort:s'      =>  \$sort,
+    'source:s'    => \@sources,
 );
 pod2usage1(-verbose => 2) if $info;
 pod2usage(-verbose => 1) if $help;
-
-
 @sources = qw(BLASTN_DATASOURCES TBLASTX_DATASOURCES 
 		   TBLASTN_DATASOURCES BLASTP_DATASOURCES 
 		   BLASTX_DATASOURCES SSAHA2_DATASOURCES) unless @sources;
-
 
 my $search_db;
 my $count_spp;
@@ -139,7 +134,7 @@ if (@SPECIES) {
 }
 else {
   $search_db = db_in_use( EnsEMBL::Web::BlastView::Tool::all_species, \@sources);
-  die "Need to list all species whose data will not change in --species argument" if $inuse;
+
 }
 print_dbs($search_db);
 print scalar @SPECIES, " species will be replaced with new data (total species: $count_spp):\n", join "\n", @SPECIES,"\n" if @SPECIES;
@@ -154,7 +149,19 @@ sub db_in_use {
     foreach my $source (@$sources) {
       my %tmp = %{EnsEMBL::Web::BlastView::Tool::get_config(  { species=>$spp, 
 					      values => $source}   )};
-      map {$search_db{$spp}{ $tmp{$_} } = 1 unless $tmp{$_} eq 'dna' or $tmp{$_} eq 'peptide' } (keys %tmp);
+
+      foreach (keys %tmp ) {
+	my $info = $tmp{$_};
+	next if $info eq 'dna' or $info eq 'peptide';
+	my ($machine, $port) = split /:/, $info;
+	if ($sort eq 'machine') {
+	  $search_db{$machine}{ $spp } = $port;
+	}
+	else {
+	  $search_db{$spp}{ $machine } = $port;
+	}
+
+      }
     }
   }
   return \%search_db;
@@ -164,8 +171,12 @@ sub db_in_use {
 sub print_dbs {
   my $species_dbs = shift;
   foreach my $species  (sort keys %$species_dbs) {
-    print "[Species] $species\n";
-    print join "\n", (sort keys %{ $species_dbs->{$species} } );
+    print "[$species]\n";
+    my %tmp_hash = %{ $species_dbs->{$species}};
+    foreach  (sort keys %tmp_hash  ){
+      my $port = $tmp_hash{$_} || "";
+      print "$port\t$_\n" ;
+    }
     print "\n";
   }
   print "\nKEEP PRE DATABASES TOO\n\n";
