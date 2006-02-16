@@ -320,6 +320,29 @@ sub add_new_track_est {
   )
 }
 
+sub add_new_track_est_protein {
+  my( $self, $code, $text_label, $pos, %pars ) = @_;
+  $self->add_track( $code,
+    '_menu'       => 'features',
+    'on'          => "off",
+    'colour_set'  => 'est',
+    'dep'         => '6',
+    'str'         => 'b',
+    'compact'     => 0,
+    'glyphset'    => 'generic_match',
+    'CALL'        => 'get_all_ProteinAlignFeatures',
+    'SUBTYPE'     => sub { $_[0] =~ /^BX/ ? 'genoscope' : 'default' },
+    'URL_KEY'     => 'EMBL',
+    'pos'         => $pos,
+    'available'   => "features $code",
+    'caption'     => $text_label,
+    'TEXT_LABEL'  => $text_label,
+    'FEATURES'    => $code,
+    'ZMENU'       => [ 'EST', "EST: ###ID###" => '###HREF###' ],
+    %pars
+  )
+}
+
 sub new {
   my $class   = shift;
   my $adaptor = shift;
@@ -858,7 +881,7 @@ sub ADD_ALL_EST_FEATURES {
   $self->add_new_track_est( 'scerevisiae_est', 'S. cerevisiae ESTs', $POS++, @_ );
   $self->add_new_track_est( 'chicken_est',  'G.gallus ESTs',   $POS++, @_ );
   $self->add_new_track_est( 'macaque_est',  'Macaque ESTs',   $POS++, @_ );
-  $self->add_new_track_est( 'yeast_est',  'Macaque ESTs',   $POS++, @_ );
+  $self->add_new_track_est( 'yeast_est',  'Yeast ESTs',   $POS++, @_ );
   $self->add_new_track_est( 'human_est',    'Human ESTs',      $POS++, @_ );
   $self->add_new_track_est( 'mouse_est',    'Mouse ESTs',      $POS++, @_ );
   $self->add_new_track_est( 'zfish_est',    'D.rerio ESTs',    $POS++, @_ );
@@ -898,9 +921,23 @@ sub ADD_ALL_EST_FEATURES {
     [ 'zfish_EST',             'Zfish EST' ],
     [ 'anopheles_cdna_est',    'RNA (BEST)' ],
     [ 'anopheles_cdna_est_all','RNA (ALL)' ],
+    [ 'kyotograil_2004',  "Kyotograil '04" ],
+    [ 'kyotograil_2005',  "Kyotograil '05" ],
+    [ 'est_bestn_5prim',  "EST BestN 5'" ],
+    [ 'est_bestn_3prim',  "EST Bestn 3'" ],
+    [ 'cint_cdna',        'Ciona EST' ],
   );
   foreach ( @EST_DB_ESTS ) {
     $self->add_new_track_est( "est_$_->[0]",  $_->[1], $POS++,
+                              'FEATURES'  => $_->[0], 'available' => "database_features ENSEMBL_EST.$_->[0]",
+                              'THRESHOLD' => 0, 'DATABASE' => 'est', @_ );
+  }
+   my @EST_DB_ESTS_PROT = (
+    [ 'jgi_v1',        'JGI V1' ],
+    [ 'jgi_v2',        'JGI V2' ],
+  );
+  foreach ( @EST_DB_ESTS_PROT ) {
+    $self->add_new_track_est_protein( "est_$_->[0]",  $_->[1], $POS++,
                               'FEATURES'  => $_->[0], 'available' => "database_features ENSEMBL_EST.$_->[0]",
                               'THRESHOLD' => 0, 'DATABASE' => 'est', @_ );
   }

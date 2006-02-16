@@ -236,6 +236,7 @@ a.breadcrumb { text-decoration:none }
 p.footnote { font-size:85%; }
 a.fnlink { text-decoration:none; }
 
+.alert { background-color:#fff9af; color:#000; font-style:italic; padding:1px; }
 
 /************************ PAGE-SPECIFIC STYLES *************************/
 
@@ -294,7 +295,3 @@ table.zoom tr td img { margin-top: 0px }
 .navbox { background-color: #ffffe7 }
 
 .multicol { float: left; width: 12em; white-space: nowrap }
-
-/* Vega styles */
-
-vh4 { font-size:1.1em; color:#993333; }

@@ -82,10 +82,10 @@ sub _archive {
       qq( <strong>$name</strong> is:</p><table border="0">);
   }
   for (@trans) {
-    if( 0 ) { ## my $seq = $_->get_peptide ) { # there is seq in archive db
-    #  $seq =~ s/(\w{60})/$1<br \/>/g ;
-    #  $seq =~ s/<br \/>$//;
-    #  $output .= qq(<tr valign="top"><th>).$_->stable_id."&nbsp;</th><td><tt>$seq</tt></td></tr>\n";
+    if( my $seq = $_->get_peptide ) { # there is seq in archive db
+      $seq =~ s/(\w{60})/$1<br \/>/g ;
+      $seq =~ s/<br \/>$//;
+      $output .= qq(<tr valign="top"><th>).$_->stable_id."&nbsp;</th><td><tt>$seq</tt></td></tr>\n";
     } else { # it must still be in Ensembl, but check..
       my $adaptor = $self->database($db)->get_TranslationAdaptor();
       my $peptide = $adaptor->fetch_by_stable_id($name);

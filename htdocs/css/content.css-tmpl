@@ -295,7 +295,3 @@ table.zoom tr td img { margin-top: 0px }
 .navbox { background-color: [[BACKGROUND5]] }
 
 .multicol { float: left; width: 12em; white-space: nowrap }
-
-/* Vega styles */
-
-vh4 { font-size:1.1em; color:[[HEADING]]; }
