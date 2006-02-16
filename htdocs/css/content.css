@@ -236,7 +236,7 @@ a.breadcrumb { text-decoration:none }
 p.footnote { font-size:85%; }
 a.fnlink { text-decoration:none; }
 
-.alert { background-color:#fff9af; color:#000; font-style:italic; padding:1px; }
+.alert { background-color:#fff9af; padding: 1px 0.5em; color:#000; font-style:italic; }
 
 /************************ PAGE-SPECIFIC STYLES *************************/
 
