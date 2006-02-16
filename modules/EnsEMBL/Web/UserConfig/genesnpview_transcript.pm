@@ -16,7 +16,6 @@ sub init {
       'opt_pdf' => 0, 'opt_svg' => 0, 'opt_postscript' => 0,
       'opt_zclick'     => 1,
       'show_labels' => 'no',
-      'context'   => 100,
       'width'   => 900,
       'bgcolor'   => 'background1',
       'bgcolour1' => 'background1',
