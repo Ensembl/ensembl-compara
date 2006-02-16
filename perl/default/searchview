@@ -9,9 +9,11 @@ use Data::Dumper;
 use CGI
 $Data::Dumper::Indent = 1;
 
+my $page = new EnsEMBL::Web::Document::WebPage;
+
 my $exalead = new ExaLead;
-   $exalead->engineURL = 'http://exalead.internal.sanger.ac.uk:37000/cgi/search';
-   $exalead->rootURL   = '/perl/exasearch';
+   $exalead->engineURL = $page->{'species_defs'}->ENSEMBL_SEARCH_URL; 
+   $exalead->rootURL   = '/perl/searchview';
 my $q = CGI->new();
 
 ( my $SPECIES   = $ENV{'ENSEMBL_SPECIES'} ) =~ s/_/ /g; 
@@ -51,7 +53,6 @@ if( $not_fresh ) {
   $exalead->parse( $q );
 }
 
-my $page = new EnsEMBL::Web::Document::WebPage;
 my $renderer = new ExaLead::Renderer::HTML( $exalead );
 
 
@@ -65,11 +66,13 @@ my $panel = new EnsEMBL::Web::Document::Panel(
 );
 $page->page->content->add_panel($panel);
 
+if( 0 ) {
 use XML::Simple;
 $page->page->content->add_panel( new EnsEMBL::Web::Document::Panel(
   'caption' => 'RAW',
   'content' => '<pre>'.  CGI::escapeHTML(XMLout($exalead->{'XML'},'KeyAttr'=>{})).'</pre>'
 ));
+}
 foreach my $group ( $renderer->exalead->groups ) {
   my $block_name = CGI::escapeHTML( $group->name );
   if( $group->link( 'reset' ) ) {
@@ -92,7 +95,7 @@ if( $renderer->exalead->keywords ) {
   $page->page->menu->add_block( 'keywords', 'raw', 'Keywords', 'html' => $block_content, 'raw'=>1 );
 }
 
- $page->page->menu->add_block( 'exalead_help', 'raw', 'Exalead Help', 'html' => qq(<p>
+ $page->page->menu->add_block( 'exalead_help', 'raw', 'Exalead Help', 'html' => qq(<div style="font-size: 0.8em">
 <p>
   To exclude a category click on the "<img align="top" src="/img/14-m.gif" height="14" width="14" alt="[-]" border="0" />".
 </p>
@@ -101,7 +104,7 @@ if( $renderer->exalead->keywords ) {
 </p>
 <p>
   To reset a category click on the "<img align="top" src="/img/14-r.gif" height="14" width="14" alt="[R]" border="0" />" or it's name.
-</p>)
+</p></div>)
  );
 $q->header;
 $page->page->render();
