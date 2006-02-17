@@ -171,11 +171,11 @@ sub db_in_use {
 sub print_dbs {
   my $species_dbs = shift;
   foreach my $species  (sort keys %$species_dbs) {
-    print "[$species]\n";
+    print "$species\n";
     my %tmp_hash = %{ $species_dbs->{$species}};
     foreach  (sort keys %tmp_hash  ){
       my $port = $tmp_hash{$_} || "";
-      print "$port\t$_\n" ;
+      print "$port\n$_\n" ;
     }
     print "\n";
   }

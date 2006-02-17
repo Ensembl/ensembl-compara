@@ -109,7 +109,7 @@ exit;
    my %valid_types = map{ $_ => 1 }
      qw(
 	new_species      generic_species_homepage downloads SSI 
-                         species_table gene_build
+                         gene_build
 	archive          assembly_table copy_species_table
         release          blast_db
        );
@@ -157,70 +157,9 @@ sub species_table {
   return unless $site_type eq 'pre';
 
   my $dir = shift;
-
-  my $ssi_dir = $dir;
-  my $title;
-  if ($site_type eq 'pre') {
-    $ssi_dir .= "/sanger-plugins/pre/htdocs/ssi";
-    $title = "Browse a genome";
-  }
-  else {
-    $ssi_dir .= "/htdocs/ssi";
-    $title = "Species";
-  }
-  utils::Tool::check_dir($ssi_dir);
-
-  my $file = $ssi_dir ."/species_table.html.new";
-  open (my $fh, ">$file") or die "Cannot create $file: $!";
-
-  my %vega_spp = ( Homo_sapiens     => 1,
-		   Mus_musculus     => 1,
-		   Canis_familiaris => 1,
-		   Danio_rerio      => 1 );
-
-  my @species = @{ utils::Tool::all_species() };
-
-  print $fh qq(
-
-   <h3 class="boxed">$title</h3>
-    <dl class="species-list">
-
-);
-
-  foreach my $spp ( @species ) {
-    my $bio_name = utils::Tool::get_config({species =>$spp,
-					  values => "SPECIES_BIO_NAME"});
-    my $assembly = utils::Tool::get_config({species =>$spp,
-					  values => "ASSEMBLY_ID"});
-
-
-    print $fh qq(
- <dt>
-    <a href="/$spp">
-    <img src="/img/species/thumb_$spp.png" width="40" height="40" alt="" style="float:left;padding-right:4px;" /></a>$bio_name 
- <span class="small normal">[$assembly]</span>
- </dt>
-            <dd><a href="/$spp/">browse</a>
-);
-
-    if ( $vega_spp{$spp} ) {
-      print $fh qq( 
-          | <a href="http://vega.sanger.ac.uk/$spp/">Vega</a>
-    );
-    }
-      print $fh "</dd>";
-  }
-  print $fh qq(
-   </dl>
-
-);
-
-  if (-e "$ssi_dir/species_table.html") {
-    system ("cp $ssi_dir/species_table.html $ssi_dir/species_table.html.bck")==0 or die "Couldn't copy files";
-  }
-  system ("mv $ssi_dir/species_table.html.new $ssi_dir/species_table.html") ==0 or die "Couldn't copy files";
-  utils::Tool::info (1, "Updated species table file $ssi_dir/species_table.html");
-return;
+  $dir .= "/sanger-plugins/sanger/utils";
+  system( "$dir/homepage.pl --site_type pre");
+  return;
 }
 #---------------------------------------------------------------------
 
