@@ -109,7 +109,7 @@ exit;
    my %valid_types = map{ $_ => 1 }
      qw(
 	new_species      generic_species_homepage downloads SSI 
-                         gene_build
+                         gene_build species_table
 	archive          assembly_table copy_species_table
         release          blast_db
        );
