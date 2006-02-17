@@ -29,6 +29,7 @@ my $SD = EnsEMBL::Web::SpeciesDefs->new;
 our $VERBOSITY = 1;
 our $site_type = "main";
 our $FIRST_ARCHIVE = 25;   # Release number for oldest archive site
+my $release;
 
 my @species;
 my @UPDATES;
@@ -37,7 +38,8 @@ my @UPDATES;
   'info'        => \$info,
   'species=s'   => \@species,
   'update=s'    => \@UPDATES,
-  'site_type=s' => \$site_type,
+  'sitetype=s'  => \$site_type,
+  'release=s'   => \$release,
 );
 
 pod2usage(-verbose => 2) if $info;
@@ -52,7 +54,7 @@ my $version =   $SiteDefs::ENSEMBL_VERSION;
 
 # Only do once
 if ($updates{species_table} ) {
-  species_table($SERVERROOT);
+  species_table($SERVERROOT, $release);
   delete $updates{species_table};
 }
 if ($updates{downloads} ) {
@@ -154,11 +156,10 @@ sub gene_build {
 }
 
 sub species_table {
-  return unless $site_type eq 'pre';
-
-  my $dir = shift;
+  my ($dir, $release) = @_;
   $dir .= "/sanger-plugins/sanger/utils";
-  system( "$dir/homepage.pl --site_type pre");
+  my $release_text  = $release ? "--release $release" : "";
+  system( "$dir/homepage.pl --sitetype pre $release_text");
   return;
 }
 #---------------------------------------------------------------------
@@ -673,7 +674,7 @@ B<  SSI:>;
     Creates a new ssi/entry.html drop down form for entry points
 
 B<  species_table:>; 
-    Creates a first pass at the home page species table:
+    Creates a homepage species table using sanger-plugins/sanger/utils/homepage.pl. Requires the release number for pre if this is different to the pre version.
     htdocs/ssi/species_table.html
 
 B<  blast_db:>; 
