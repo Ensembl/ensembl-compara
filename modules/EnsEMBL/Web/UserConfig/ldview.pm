@@ -26,16 +26,18 @@ sub init {
     '_settings' => { 
 
        'zoom_gifs'     => {
-        zoom1   =>  1000,   zoom2   =>  5000,   zoom3   =>  10000,  zoom4   =>  20000,
-        zoom5   =>  50000, zoom6   =>  100000 
+       'zoom1'   =>  1000,   zoom2   =>  5000,  
+       'zoom3'   =>  10000,  zoom4   =>  20000,
+       'zoom5'   =>  50000,  zoom6   =>  100000 
       },
-      'navigation_options' => [ '500k', '200k', '100k', 'window', 'half', 'zoom' ],
+      'navigation_options' => [ '500k', '200k', '100k', 
+				'window', 'half', 'zoom' ],
 
      'features' => [
-                     [ 'variation'            => "SNPs"          ],
-                     [ 'variation_legend'         => "SNP legend"    ],
-                     [ 'genotyped_variation'      => "Genotyped SNPs"],
-                     [ 'tagged_snp'              => "Tagged SNPs"],
+                     [ 'variation'             => "SNPs"          ],
+                     [ 'variation_legend'      => "SNP legend"    ],
+                     [ 'genotyped_variation'   => "Genotyped SNPs"],
+                     [ 'tagged_snp'            => "Tagged SNPs"],
                      [ 'ld_r2'      => "LD (r2)"],
                      [ 'ld_d_prime' => "LD (d')"],
                     ],
@@ -44,6 +46,9 @@ sub init {
                  [ 'opt_zmenus'      => 'Show popup menus'  ],
                  [ 'opt_zclick'      => '... popup on click'  ],
                    ],
+       'snphelp' => [
+        [ 'ldview'  => 'LDView' ],
+      ],
       'opt_empty_tracks' => 1,
       'opt_zmenus'     => 1,
       'opt_zclick'     => 1,
@@ -52,7 +57,7 @@ sub init {
       'bgcolor'   => 'background1',
       'bgcolour1' => 'background3',
       'bgcolour2' => 'background1',
- },
+     },
     'ruler' => {
       'on'          => "on",
       'pos'         => '9999',
@@ -126,7 +131,7 @@ sub init {
 
     'ld_r2' => {
       'on'          => "on",
-      'pos'         => '4511',
+      'pos'         => '4611',
       'str'         => 'r',
       'dep'         => '10000',
       'col'         => 'blue',
@@ -141,7 +146,7 @@ sub init {
     },
     'ld_d_prime' => {
       'on'          => "on",
-      'pos'         => '4512',
+      'pos'         => '4712',
       'str'         => 'r',
       'dep'         => '10000',
       'col'         => 'blue',
@@ -158,7 +163,7 @@ sub init {
     'variation_legend' => {
       'on'          => "on",
       'str'         => 'r',
-      'pos'         => '4506',
+      'pos'         => '4566',
     },
   };
   $self->ADD_ALL_TRANSCRIPTS(2000, "compact" =>'1');  #first is position

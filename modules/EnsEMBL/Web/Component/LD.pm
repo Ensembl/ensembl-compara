@@ -173,16 +173,16 @@ sub ldview_image_menu {
     'configname'  => 'ldview',
     'panel'       => 'ldview',
     'leftmenus'  => [qw(Features Options Population Export ImageSize)],
-    'rightmenus' => [qw(Help)],
-    'fields' => {
-      'snp'          => $object->param('snp'),
-      'gene'         => $object->param('gene'),
-      'pop'          => $pop, 
-      'w'            => $object->length,
-      'c'            => $object->seq_region_name.':'.$object->centrepoint,  
-      'source'       => $object->param('source') || "dbSNP",
-      'h'            => $object->highlights_string,
-    }
+    'rightmenus' => [qw(SNPHelp)],
+   #  'fields' => {
+#       'snp'          => $object->param('snp'),
+#       'gene'         => $object->param('gene'),
+#       'pop'          => $pop, 
+#       'w'            => $object->length,
+#       'c'            => $object->seq_region_name.':'.$object->centrepoint,  
+#       'source'       => $object->param('source') || "dbSNP",
+#       'h'            => $object->highlights_string,
+#     }
   );
   $panel->print( $mc->render_html );
   $panel->print( $mc->render_js );
