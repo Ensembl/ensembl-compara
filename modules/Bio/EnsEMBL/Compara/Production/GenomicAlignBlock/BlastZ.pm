@@ -14,7 +14,7 @@ Bio::EnsEMBL::Compara::RunnableDB::BlastZ
 =head1 SYNOPSIS
 
 my $db      = Bio::EnsEMBL::Compara::DBAdaptor->new($locator);
-my $repmask = Bio::EnsEMBL::Pipeline::RunnableDB::BlastZ->new ( 
+my $repmask = Bio::EnsEMBL::Analysis::RunnableDB::BlastZ->new ( 
                                                     -db      => $db,
                                                     -input_id   => $input_id
                                                     -analysis   => $analysis );
@@ -27,7 +27,7 @@ $repmask->write_output(); #writes to DB
 
 =head1 DESCRIPTION
 
-This object wraps Bio::EnsEMBL::Pipeline::Runnable::Blast to add
+This object wraps Bio::EnsEMBL::Analysis::Runnable::Blast to add
 functionality to read and write to databases.
 The appropriate Bio::EnsEMBL::Analysis object must be passed for
 extraction of appropriate parameters. A Bio::EnsEMBL::Pipeline::DBSQL::Obj is
@@ -51,7 +51,7 @@ Internal methods are usually preceded with a _
 package Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::BlastZ;
 
 use strict;
-use Bio::EnsEMBL::Pipeline::Runnable::Blastz;
+use Bio::EnsEMBL::Analysis::Runnable::Blastz;
 
 use Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::PairAligner;
 our @ISA = qw(Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::PairAligner);
@@ -98,16 +98,17 @@ have specified a group_set_size in the target_dna_collection. In the case of bla
     print("  options : ", $self->options, "\n");
     print("  program : $program\n");
   }
-
+  
   $self->delete_fasta_dumps_but_these([$qyChunkFile,$dbChunkFile]);
-
-  my $runnable =  new Bio::EnsEMBL::Pipeline::Runnable::Blastz (
+ 
+  my $runnable =  new Bio::EnsEMBL::Analysis::Runnable::Blastz (
                    #-query     => $self->db_DnaFragChunk->bioseq,                   
                    #-database  => $first_qy_chunk->bioseq,
                     -query     => $dbChunkFile,
                     -database  => $qyChunkFile,
                     -options   => $self->options,
                     -program   => $program,
+		    -analysis  => $self->analysis,
                   );
   $runnable->{'_verbose_debug'} = 1 if($self->debug);
   if($self->debug >1) {
