@@ -343,7 +343,7 @@ sub createPairAlignerAnalysis
       $self->{'hiveDBA'}->get_AnalysisAdaptor()->store($queryFilterDuplicatesAnalysis);
       $stats = $queryFilterDuplicatesAnalysis->stats;
       $stats->batch_size(1);
-      $stats->hive_capacity(-1); #unlimited
+      $stats->hive_capacity(200); 
       $stats->status('BLOCKED');
       $stats->update();
       $self->{'queryFilterDuplicatesAnalysis'} = $queryFilterDuplicatesAnalysis;
@@ -436,7 +436,7 @@ sub createPairAlignerAnalysis
       $self->{'hiveDBA'}->get_AnalysisAdaptor()->store($targetFilterDuplicatesAnalysis);
       $stats = $targetFilterDuplicatesAnalysis->stats;
       $stats->batch_size(1);
-      $stats->hive_capacity(-1); #unlimited
+      $stats->hive_capacity(200);
       $stats->status('BLOCKED');
       $stats->update();
       $self->{'targetFilterDuplicatesAnalysis'} = $targetFilterDuplicatesAnalysis;
