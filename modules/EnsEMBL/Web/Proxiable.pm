@@ -483,7 +483,7 @@ sub new_menu_container {
 
   $N{'location'} = $self->location if $self->can('location');
   $N{'panel'}    = $params{'panel'}    || $params{'configname'} || $N{'script'};
-  $N{'fields'}   = $params{'fields'}   || $self->generate_query_hash if $self->can('generate_query_hash');
+  $N{'fields'}   = $params{'fields'}   || ( $self->can('generate_query_hash') ? $self->generate_query_hash : {} );
   $N{'config'}   = $self->user_config_hash( $params{'configname'}, $params{'configname'} ) if $params{'configname'};
   $N{'config'}->set_species( $self->species );
   $N{'configs'}  = $params{'configs'};
