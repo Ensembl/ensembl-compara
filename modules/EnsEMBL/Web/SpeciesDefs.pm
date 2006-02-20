@@ -734,20 +734,19 @@ sub _parse {
 
 ####### Connect and store database sizes...
     foreach my $database( @databases ){
+      my $dbh = $self->db_connect( $tree, $database );
+      unless($dbh) {
+        warn( "\t  [DB] Unable to connect to ",ref($database)eq'HASH' ? $database->{'NAME'} : $database);
+        $tree->{'databases'}{$database} = undef;
+        next;
+      }
       if($tree->{'databases'}->{$database}{'DRIVER'} ne "mysql"){ 
         print STDERR "\t  [WARN] Omitting table scans for ",
               $tree->{'databases'}->{$database}{'DRIVER'},
               " database: \"$database\"\n";
-        next; 
+        next;
       }
-      my $dbh;
-      $dbh = $self->db_connect( $tree, $database );
-      unless($dbh) {
-        warn( "\t  [DB] Unable to connect to ",ref($database)eq'HASH' ? $database->{'NAME'} : $database);
-        $tree->{'databases'}{$database} = undef;
-        next;  
-      } 
-      my $q = "show table status";
+	  my $q = "show table status";
       my $sth = $dbh->prepare( $q ) || next;
       my $rv  = $sth->execute()     || next;
       my $data = $sth->fetchall_arrayref({'Name'=>1,'Rows'=>1});
