@@ -19,7 +19,7 @@ Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::PairAligner
 
 This object is an abstract superclass which must be inherited from.
 It uses a runnable which takes sequence as input and returns
-FeaturePair objects as output (like Bio::EnsEMBL::Pipeline::Runnable::Blastz)
+FeaturePair objects as output (like Bio::EnsEMBL::Analysis::Runnable::Blastz)
 
 It adds functionality to read and write to a compara databases.
 It takes as input (via input_id or analysis->parameters) DnaFragChunk or DnaFragChunkSet
@@ -57,10 +57,10 @@ use Bio::EnsEMBL::Utils::Exception;
 use Time::HiRes qw(time gettimeofday tv_interval);
 use File::Basename;
 
-use Bio::EnsEMBL::Pipeline::RunnableDB;
+use Bio::EnsEMBL::Analysis::RunnableDB;
 use Bio::EnsEMBL::Hive::Process;
 
-our @ISA = qw( Bio::EnsEMBL::Hive::Process Bio::EnsEMBL::Pipeline::RunnableDB );
+our @ISA = qw( Bio::EnsEMBL::Hive::Process );
 
 
 ##########################################
@@ -262,6 +262,7 @@ sub write_output {
   #(a new one for EACH FeaturePair generated)
   #which are a shadow of the real analysis object ($self->analysis)
   #The returned FeaturePair objects thus need to be reset to the real analysis object
+
   foreach my $fp ($self->output) {
     if($fp->isa('Bio::EnsEMBL::FeaturePair')) {
       $fp->analysis($self->analysis);
@@ -410,7 +411,6 @@ sub store_featurePair_as_genomicAlignBlock
   $cigar1 = compact_cigar_line($cigar1);
   $cigar1 =~ s/D/G/g;
   $genomic_align1->cigar_line($cigar1);
-
 
   my $genomic_align2 = new Bio::EnsEMBL::Compara::GenomicAlign;
   $genomic_align2->method_link_species_set($self->{'method_link_species_set'});
