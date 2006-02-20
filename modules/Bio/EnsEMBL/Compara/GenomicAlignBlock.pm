@@ -1519,8 +1519,19 @@ sub restrict_between_reference_positions {
   $new_reference_genomic_align->aligned_sequence(0);
   $new_reference_genomic_align->cigar_line(join("", @reference_cigar));
   if (defined $self->reference_slice) {
-    $genomic_align_block->reference_slice_start($new_reference_genomic_align->dnafrag_start - $self->reference_slice->start + 1);
-    $genomic_align_block->reference_slice_end($new_reference_genomic_align->dnafrag_end - $self->reference_slice->start + 1);
+    if ($self->reference_slice_strand == 1) {
+      $genomic_align_block->reference_slice_start($new_reference_genomic_align->dnafrag_start -
+          $self->reference_slice->start + 1);
+      $genomic_align_block->reference_slice_end($new_reference_genomic_align->dnafrag_end -
+          $self->reference_slice->start + 1);
+      $genomic_align_block->reference_slice_strand(1);
+    } else {
+      $genomic_align_block->reference_slice_start($self->{reference_slice}->{end} - 
+          $new_reference_genomic_align->{dnafrag_end} + 1);
+      $genomic_align_block->reference_slice_end($self->{reference_slice}->{end} -
+          $new_reference_genomic_align->{dnafrag_start} + 1);
+      $genomic_align_block->reference_slice_strand(-1);
+    }
   }
   ## Trim all remaining the GenomicAligns
   foreach my $genomic_align (@{$genomic_align_block->get_all_non_reference_genomic_aligns}) {
