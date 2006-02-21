@@ -200,6 +200,8 @@ sub context_menu {
   my $self = shift;
   my $obj      = $self->{object};
   my $species  = $obj->species;
+  my $script_name = $self->{page}->script_name; 
+  my $script = lc($script_name);
   my $q_string_g = $obj->gene ? sprintf( "db=%s;gene=%s" ,       $obj->get_db , $obj->gene->stable_id ) : undef;
   my $q_string   = sprintf( "db=%s;transcript=%s" , $obj->get_db , $obj->stable_id );
   my $flag     = "gene$self->{flag}";
@@ -209,8 +211,8 @@ sub context_menu {
       'code' => 'vega_link',
       'text'  => "Jump to Vega",
       'icon'  => '/img/vegaicon.gif',
-      'title' => 'Vega - Information about transcript '.$obj->stable_id.' in Vega',
-      'href' => "http://vega.sanger.ac.uk/$species/transview?transcript=".$obj->stable_id );
+      'title' => 'Vega - Information about transcript '.$obj->stable_id." in Vega $script_name",
+      'href' => "http://vega.sanger.ac.uk/$species/$script?transcript=".$obj->stable_id );
   }
   $self->add_entry( $flag,
     'code' => 'gene_info',
