@@ -720,6 +720,15 @@ sub _parse {
           delete $das_conf->{$das_source};
           next;
         }
+
+# Check if the source is based on the current assembly
+	if (defined(my $assembly = $tree->{$das_source}->{assembly})) {
+	    if ($assembly ne $tree->{ENSEMBL_GOLDEN_PATH}) {
+		delete $das_conf->{$das_source};
+		next;
+	    }
+	}
+
         my $das_source_conf = $tree->{$das_source};
         ref( $das_source_conf ) eq 'HASH' or $das_source_conf = {};
         $das_source_conf->{'retrieve_features'} = 1;
