@@ -14,6 +14,11 @@ sub sequence {
     $panel, $object->get_slice_object()
   );
 }
+sub markup_options {
+  my( $panel, $object ) =@_;
+  $panel->add_row( 'Markup options', "<div>@{[ $panel->form( 'markup_options' )->render ]}</div>" );
+  return 1;
+}
 
 sub markup_options_form {
   my( $panel, $object ) = @_;
