@@ -1062,13 +1062,8 @@ sub genomic_align_group_by_type {
         $self->{'genomic_align_group'}->{$this_genomic_align_group->{'type'}} = $this_genomic_align_group;
         $self->{'genomic_align_group_id'}->{$this_genomic_align_group->{'type'}} = $this_genomic_align_group->dbID;
       }
-    } else {
-      warning("Fail to get data from other sources in Bio::EnsEMBL::Compara::GenomicAlign->genomi_align_group_by_type".
-          " You either have to specify more information (see perldoc for".
-          " Bio::EnsEMBL::Compara::GenomicAlign) or to set it up directly");
     }
   }
-
   return $self->{'genomic_align_group'}->{$type};
 }
 
