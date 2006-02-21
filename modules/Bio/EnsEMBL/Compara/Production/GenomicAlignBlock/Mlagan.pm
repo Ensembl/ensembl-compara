@@ -67,6 +67,7 @@ sub fetch_input {
   $self->get_params($self->parameters);
   $self->get_params($self->input_id);
 
+  $self->dumpFasta;
 
   return 1;
 }
@@ -74,7 +75,6 @@ sub fetch_input {
 sub run
 {
   my $self = shift;
-  $self->dumpFasta;
 
   my $runnable = new Bio::EnsEMBL::Analysis::Runnable::Mlagan
     (-workdir => $self->worker_temp_directory,
@@ -217,8 +217,8 @@ sub dumpFasta {
     $dfr->retain;
     $dfr->disavow_parent;
     my $slice = $dfr->slice;
-    print F ">" . $dfr->dnafrag_id . "\n";
-    print MF ">" . $dfr->dnafrag_id . "\n";
+    print F ">#" . $dfr->dnafrag_id . "#\n";
+    print MF ">#" . $dfr->dnafrag_id . "#\n";
     my $seq = $slice->seq;
     $seq =~ s/(.{80})/$1\n/g;
     chomp $seq;
@@ -277,7 +277,7 @@ sub update_node_names {
   my $tree = shift;
   my %gdb_id2dfr;
   foreach my $dfr (values %{$self->{'_dnafrag_regions'}}) {
-    $gdb_id2dfr{$dfr->dnafrag->genome_db->dbID} = $dfr->dnafrag_id;
+    $gdb_id2dfr{$dfr->dnafrag->genome_db->dbID} = "#".$dfr->dnafrag_id ."#";
   }
 
   foreach my $leaf (@{$tree->get_all_leaves}) {
