@@ -41,11 +41,11 @@ sub create_AffyProbe {
 }
 
 sub create_DnaAlignFeature {
-  my $features =  {'AlignFeature' => $_[0]->_generic_create( 'DnaAlignFeature', 'fetch_all_by_hit_name', $_[1] ) }; 
+  my $features =  {'DnaAlignFeature' => $_[0]->_generic_create( 'DnaAlignFeature', 'fetch_all_by_hit_name', $_[1] ) }; 
   return $features;
 }
 sub create_ProteinAlignFeature {
-  my $features = {'AlignFeature' => $_[0]->_generic_create( 'ProteinAlignFeature', 'fetch_all_by_hit_name', $_[1] ) };
+  my $features = {'ProteinAlignFeature' => $_[0]->_generic_create( 'ProteinAlignFeature', 'fetch_all_by_hit_name', $_[1] ) };
   return $features;
 }
 
@@ -110,7 +110,6 @@ sub _generic_create {
   $db ||= 'core';
                                                                                    
   $id ||= $self->param( 'id' );
-  
   if( !$id ) {
     return undef; # return empty object if no id
   }
@@ -134,7 +133,7 @@ sub _generic_create {
       }
     }
                                                                                    
-    warn @$features;
+    #warn @$features;
     return $features if $features && @$features; # Return if we have at least one feature
     # We have no features so return an error....
     if( $flag eq 'no_errors' ) {
