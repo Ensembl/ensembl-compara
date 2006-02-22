@@ -106,7 +106,7 @@ sub fetch_news_items {
     $sql .= ' WHERE n.news_cat_id = c.news_cat_id';
   }
   $sql .= " $where_str GROUP BY n.news_item_id $limit_str";
-warn $sql;
+#warn $sql;
   my $T = $self->db->selectall_arrayref($sql, {});
   return [] unless $T;
 
@@ -403,7 +403,6 @@ sub update_news_item {
     
     my %item = %{$item_ref};
     my $id              = $item{'news_item_id'};
-warn "ID $id";
     my $release_id      = $item{'release_id'};
     my $title           = $item{'title'};
     my $content         = $item{'content'};
@@ -413,7 +412,6 @@ warn "ID $id";
     my $species         = $item{'species'};
     my $priority        = $item{'priority'};
     my $status          = $item{'status'};
-warn "Species $species";
     my $sql = qq(
         UPDATE
             news_item
