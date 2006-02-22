@@ -124,12 +124,26 @@ sub no_data {
 sub show_news {
   my( $panel, $object ) = @_;
   my $sp_dir = $object->species;
+  (my $sp_title = $sp_dir) =~ s/_/ /;
 
   my $html;
   my $prev_cat = 0;
   my $prev_rel = 0;
+  my $rel_selected = $object->param('release_id') || $object->param('rel');
 
-  my @items = @{$object->items};
+  my @generic_items = @{$object->generic_items};
+  my @species_items = @{$object->species_items};
+
+## sort the news items
+  my ($all_sorted, $gen_sorted, $sp_sorted);
+  if ($sp_dir eq 'Multi' || $rel_selected eq 'all') {
+    my @all_items = (@generic_items, @species_items);
+    $all_sorted = $object->sort_items(\@all_items);
+  }
+  else {
+    $gen_sorted = $object->sort_items(\@generic_items);
+    $sp_sorted  = $object->sort_items(\@species_items);
+  }
 
 ## Get lookup hashes
   my $releases = $object->releases;
@@ -148,69 +162,75 @@ sub show_news {
     $sp_dir = $sp_lookup{$object->param('species')};
   }
 
-  my $rel_selected = $object->param('release_id') || $object->param('rel');
-  my @sorted_items;
-  if ($rel_selected eq 'all') {
-    @sorted_items = sort
-                    { $b->{'release_id'} <=> $a->{'release_id'} }
-                    @items;
+## output sorted news
+  my @sections;
+  if ($sp_dir eq 'Multi') {
+    @sections = ("Ensembl News");
   }
   else {
-    @sorted_items = @items;
+    @sections = ("$sp_title News", "Other News");
   }
+  for (my $i=0; $i<scalar(@sections); $i++) {
+    my ($header, $current_items);
+    if ($sp_dir eq 'Multi' || $rel_selected eq 'all') {
+      $current_items = $all_sorted;
+    }
+    else {
+      $header = $sections[$i];
+      $current_items = $i == 0 ? $sp_sorted : $gen_sorted;
+    }
+    my $prev_sp = 0;
+    my $prev_count = 0;
+    my $ul_open = 0;
+    for (my $i=0; $i<scalar(@$current_items); $i++) {
+      my %item = %{$$current_items[$i]};
+      next if $item{'status'} ne 'live';
+      my $item_id = $item{'news_item_id'};
+      my $title = $item{'title'};
+      my $content = $item{'content'};
+      my $release_id = $item{'release_id'};
+      my $rel_date = $rel_lookup{$release_id};
+      $rel_date =~ s/.*\(//g;
+      $rel_date =~ s/\)//g;
+      my $news_cat_id = $item{'news_cat_id'};
+      my $cat_name = $cat_lookup{$news_cat_id};
+      my $species = $item{'species'};
+      my $sp_count = $item{'sp_count'};
 
-## output sorted news
-  my $prev_sp = 0;
-  my $prev_count = 0;
-  my $ul_open = 0;
-  for (my $i=0; $i<scalar(@sorted_items); $i++) {
-    my %item = %{$sorted_items[$i]};
-    next if $item{'status'} ne 'live';
-    my $item_id = $item{'news_item_id'};
-    my $title = $item{'title'};
-    my $content = $item{'content'};
-    my $release_id = $item{'release_id'};
-    my $rel_date = $rel_lookup{$release_id};
-    $rel_date =~ s/.*\(//g;
-    $rel_date =~ s/\)//g;
-    my $news_cat_id = $item{'news_cat_id'};
-    my $cat_name = $cat_lookup{$news_cat_id};
-    my $species = $item{'species'};
-    my $sp_count = $item{'sp_count'};
-
-    if ($prev_rel != $release_id) {
+      ## Release number (only needed for big multi-release pages)
+      if (!$object->param('rel') && $prev_rel != $release_id) {
         $html .= qq(<h2>Release $release_id ($rel_date)</h2>\n);
         $prev_cat = 0;
-    }
+      }
 
-## is it a new category?
-    if ($prev_cat != $news_cat_id) {
+      ## is it a new category?
+      if ($prev_cat != $news_cat_id) {
         $html .= _output_cat_heading($news_cat_id, $cat_name, $rel_selected);
-    }
+      }
 
-## show list of affected species (data updates only) on main news page 
-    if ($sp_dir eq 'Multi' && $news_cat_id == 2) {
+      ## show list of affected species on main news page 
+      if ($sp_dir eq 'Multi') {
         my $sp_str = '';
-        if (ref($species) eq 'ARRAY') {
-            my $sp_count = scalar(@$species);
-            for (my $j=0; $j<$sp_count; $j++) {
-                $sp_str .= ', ' unless $j == 0;
-                (my $sp_name = $sp_lookup{$$species[$j]}) =~ s/_/ /g;
-                $sp_str .= "<i>$sp_name</i>";
-            }
+        if (ref($species) eq 'ARRAY' && scalar(@$species)) {
+          for (my $j=0; $j<scalar(@$species); $j++) {
+            $sp_str .= ', ' unless $j == 0;
+            (my $sp_name = $sp_lookup{$$species[$j]}) =~ s/_/ /g;
+            $sp_str .= "<i>$sp_name</i>";
+          }
         }
         else {
-            $sp_str = 'all species';
+          $sp_str = 'all species';
         }
         $title .= qq# <span style="font-weight:normal">($sp_str)</span>#;
-    }
+      }
     
-## wrap each record in nice XHTML
-    $html .= _output_story($title, $content);
+      ## wrap each record in nice XHTML
+      $html .= _output_story($title, $content);
 
-## keep track of where we are!
-    $prev_rel = $release_id;
-    $prev_cat = $news_cat_id;
+      ## keep track of where we are!
+      $prev_rel = $release_id;
+      $prev_cat = $news_cat_id;
+    }
   }
 
   $panel->print($html);

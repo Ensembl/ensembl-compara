@@ -47,207 +47,115 @@ sub db_write {
 # of criteria (release, species, category and individual item), so that 
 # it can be used as a general search as well as with the web admin interface
 
-sub fetch_items {
-    my ($self, $options) = @_;
-    my $results = [];
-    return [] unless $self->db;
+sub fetch_news_items {
+  my ($self, $where, $generic, $limit) = @_;
+  my $results = [];
+  return [] unless $self->db;
 
-    my %modifiers = %{$options};
-    my $crit_str = ' WHERE n.news_cat_id = c.news_cat_id ';
-    my ($order_str, $sp_str, $group_str, $limit_str, %criteria, @order_by);
-    if (ref($modifiers{'criteria'})) {
-        %criteria = %{$modifiers{'criteria'}};
-    }
-    if (ref($modifiers{'order_by'})) {
-        @order_by = @{$modifiers{'order_by'}};
-        if (scalar(@order_by) < 1) {
-            @order_by = ('default');
-        }
-    }
-    else {
-        @order_by = ('default');
-    }
-    my $order_by_sp;
-    
-    my $limit = 0;
-    if ($modifiers{'limit'}) {
-        $limit = $modifiers{'limit'};
-        $limit_str = " LIMIT $limit ";
-    }
+  ## map option keywords to actual SQL
+  my %where_def = (
+    'item_id'=>'n.news_item_id = '.$$where{'item_id'},
+    'release'=>'n.release_id = "'.$$where{'release'}.'"',
+    'category'=>'n.news_cat_id = '.$$where{'category'},
+    'priority'=>'n.priority = '.$$where{'priority'},
+    'species'=>'n.news_item_id = i.news_item_id AND i.species_id = '.$$where{'species'},
+    'status'=>'n.status = "'.$$where{'status'}.'"',
+  );
 
-    # map option keywords to actual SQL
-    my %crit_hash = (
-        'item_id'=>'n.news_item_id = '.$criteria{'item_id'},
-        'release'=>'n.release_id = '.$criteria{'release'},
-        'category'=>'n.news_cat_id = '.$criteria{'category'},
-        'priority'=>'n.priority = '.$criteria{'priority'},
-        'species'=>'n.news_item_id = i.news_item_id AND i.species_id = '.$criteria{'species'},
-        'status'=>'n.status = "'.$criteria{'status'}.'"',
-        );
-    my %order_hash = (
-        'default'=>'n.priority DESC',
-        'cat_desc'=>'c.priority DESC, n.priority DESC',
-        'species'=>'i.species_id ASC',
-        'release'=>'n.release_id DESC'
-        );
-
-    # add selected options to modifier strings
-    if (%criteria) {
-        foreach my $criterion (keys %criteria) {
-            $crit_str .= ' AND '.$crit_hash{$criterion}.' ';
-            $sp_str .= ' AND '.$crit_hash{$criterion}.' ' unless ($criterion eq 'species');
-        }
+  ## add selected options to modifier strings
+  my $where_str;
+  if ($where) {
+    foreach my $param (keys %$where) {
+      $where_str .= ' AND '.$where_def{$param}.' ';
     }
-    if (@order_by) {
-        $order_str = ' ORDER BY ';
-        my $count = 0;
-        foreach my $order (@order_by) {
-            $order_str .= $order_hash{$order};
-            unless ($count == $#order_by) {
-                $order_str .= ', ';
-            }
-            if ($order eq 'species') {
-                $order_by_sp = 1;
-                $crit_str .= ' AND n.news_item_id = i.news_item_id ';
-                $group_str = ' GROUP BY n.news_item_id ';
-            }
-            $count++;
-        }
-    }
+  }
 
-    my $sql = qq(
+  my $limit_str = " LIMIT $limit " if $limit;
+
+  ## build SQL
+  my $sql = qq(
         SELECT
-                n.news_item_id   as news_item_id,
-                n.release_id     as release_id,
-                n.news_cat_id    as news_cat_id,
-                n.title          as title,
-                n.content        as content,
-                n.priority       as priority,
-                c.priority       as cat_order,
-                n.status         as status
+            n.news_item_id   as news_item_id,
+            n.release_id     as release_id,
+            n.news_cat_id    as news_cat_id,
+            n.title          as title,
+            n.content        as content,
+            n.priority       as priority,
+            c.priority       as cat_order,
+            n.status         as status
         FROM
-                news_item n,
-                news_cat c
+            news_item n,
+            news_cat c
+  );
+  if ($generic) {
+    $sql .= qq(
+        LEFT JOIN
+            item_species i
+        ON
+            n.news_item_id = i.news_item_id
+        WHERE
+            i.news_item_id IS NULL
+        AND 
+            n.news_cat_id = c.news_cat_id 
     );
-    if ($criteria{'species'} || $order_by_sp) {
-        
-        $sql .= ', item_species i ';
-    }
-    $sql .= " $crit_str $group_str $order_str $limit_str";
-    my $T = $self->db->selectall_arrayref($sql, {});
-    return [] unless $T;
+  }
+  elsif ($$where{'species'} > 0) {
+    $sql .= ', item_species i  WHERE n.news_cat_id = c.news_cat_id';
+  }
+  else {
+    $sql .= ' WHERE n.news_cat_id = c.news_cat_id';
+  }
+  $sql .= " $where_str GROUP BY n.news_item_id $limit_str";
+warn $sql;
+  my $T = $self->db->selectall_arrayref($sql, {});
+  return [] unless $T;
 
-    my $running_total = scalar(@$T);
-    for (my $i=0; $i<$running_total;$i++) {
-        my @A = @{$T->[$i]};
-        my $species = [];
-        my $sp_count = 0;
+  my $running_total = scalar(@$T);
+  for (my $i=0; $i<$running_total;$i++) {
+    my @A = @{$T->[$i]};
+    my $species = [];
+    my $sp_count = 0;
 
-        unless ($criteria{'species'}) {
-        # get species list for each item
-            my $id = $A[0];
-            $sql = qq(
-                SELECT
-                    s.species_id        as species_id
-                FROM
-                    species s,
-                    item_species i
-                WHERE   s.species_id = i.species_id
-                AND     i.news_item_id = $id
-                );
+    unless ($generic) {
+      # get species list for each item
+      my $id = $A[0];
+      $sql = qq(
+         SELECT
+             s.species_id        as species_id
+         FROM
+             species s,
+             item_species i
+         WHERE   s.species_id = i.species_id
+         AND     i.news_item_id = $id
+      );
  
-            my $X = $self->db->selectall_arrayref($sql, {});
+      my $X = $self->db->selectall_arrayref($sql, {});
 
-            if ($X && $X->[0]) {
-                $sp_count = scalar(@$X);
-                for (my $j=0; $j<$sp_count;$j++) {
-                    my @B = @{$X->[$j]};
-                    push (@$species, $B[0]);
-                }
-            }
+      if ($X && $X->[0]) {
+        $sp_count = scalar(@$X);
+        for (my $j=0; $j<$sp_count;$j++) {
+          my @B = @{$X->[$j]};
+          push (@$species, $B[0]);
         }
-        push (@$results,
-            {
-                'news_item_id'  => $A[0],
-                'release_id'    => $A[1],
-                'news_cat_id'   => $A[2],
-                'title'         => $A[3],
-                'content'       => $A[4],
-                'priority'      => $A[5],
-                'cat_order'     => $A[6],
-                'status'        => $A[7],
-                'species'       => $species,
-                'sp_count'      => $sp_count
-            });
+      }
     }
+    push (@$results,
+      {
+       'news_item_id'  => $A[0],
+       'release_id'    => $A[1],
+       'news_cat_id'   => $A[2],
+       'title'         => $A[3],
+       'content'       => $A[4],
+       'priority'      => $A[5],
+       'cat_order'     => $A[6],
+       'status'        => $A[7],
+       'species'       => $species,
+       'sp_count'      => $sp_count
+       }
+    );
+  }
         
-    if ($criteria{'species'} || $order_by_sp) {
-    # also get stories that apply to all species
-        my $continue = 1;        
-        if ($limit) {
-            my $running_limit = $limit - $running_total;
-            if ($running_limit > 0) {
-                $limit_str = " LIMIT $running_limit ";
-            }
-            else {
-                $continue = 0;
-            }
-        }
-        if ($continue) {
-            $sql = qq(
-                SELECT
-                    n.news_item_id   as news_item_id,
-                    n.release_id     as release_id,
-                    n.news_cat_id    as news_cat_id,
-                    n.title          as title,
-                    n.content        as content,
-                    n.priority       as priority,
-                    c.priority       as cat_order,
-                    n.status         as status
-                FROM
-                    news_item n,
-                    news_cat c
-                LEFT JOIN
-                    item_species i
-                ON
-                    n.news_item_id = i.news_item_id
-                WHERE
-                    i.news_item_id IS NULL
-                AND 
-                    n.news_cat_id = c.news_cat_id 
-                );
-            $sql .= " $sp_str $order_str $limit_str ";
-            $T = $self->db->selectall_arrayref($sql, {});
-            return [] unless $T;
-
-            for (my $i=0; $i<scalar(@$T);$i++) {
-                my @A = @{$T->[$i]};
-                push (@$results,
-                    {
-                    'news_item_id'  => $A[0],
-                    'release_id'    => $A[1],
-                    'news_cat_id'   => $A[2],
-                    'title'         => $A[3],
-                    'content'       => $A[4],
-                    'priority'      => $A[5],
-                    'cat_order'     => $A[6],
-                    'status'        => $A[7],
-                    'species'       => '',
-                    'sp_count'      => '0'
-                    });
-            }
-            if ($criteria{'species'}) {
-                # re-sort records by release and then news category
-                @$results = sort 
-                        { $b->{'release_id'} <=> $a->{'release_id'} 
-                          || $b->{'cat_order'} <=> $a->{'cat_order'}
-                        } 
-                        @$results;
-            }
-        }
-    }
-
-    return $results;
+  return $results;
 }
 
 

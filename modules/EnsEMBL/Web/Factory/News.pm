@@ -33,6 +33,7 @@ sub createObjects {
   if ($release_id eq 'current') {
     $release_id = $current_release;
   }
+  $release_id = '' if $release_id eq 'all';
 
 ## create some handy lookups
   my $current_spp = $self->news_adaptor->fetch_species($current_release);
@@ -41,17 +42,17 @@ sub createObjects {
   my $all_rels = $self->news_adaptor->fetch_releases;
 
 ## prepare configuration for db query
-  my @order_by = ('cat_desc');
-  my %criteria = ();
-  if ($release_id eq 'all') {
-      @order_by = ('release', 'cat_desc');
-  }
-  else { 
-      $criteria{'release'} = $release_id;
-  }
+  my %where = ();
   if ($self->param('news_cat_id')) {
-    $criteria{'category'} = $self->param('news_cat_id');    
+    $where{'category'} = $self->param('news_cat_id');    
   }
+  if ($release_id) {
+    $where{'release'} = $release_id;    
+  }
+
+## create generic news item objects from the database
+  warn "Fetching generic news";  
+  my $generic_items = $self->news_adaptor->fetch_news_items(\%where, 1);
 
 ## sort out array of chosen species
   my @sp_array = ();
@@ -71,21 +72,21 @@ sub createObjects {
 
 ## get valid releases    
   my $valid_rels = [];
+  my $species_items = [];
   if (scalar(@sp_array) == 1 && $sp_array[0]) { ## single species
-     $criteria{'species'} = $sp_array[0];    
-     $valid_rels = $self->news_adaptor->fetch_releases({'species'=>$sp_array[0]});
+    $where{'species'} = $sp_array[0];    
+    $valid_rels = $self->news_adaptor->fetch_releases({'species'=>$sp_array[0]});
   }
   else { ## in multi-species mode, all releases are valid
     $valid_rels = $self->news_adaptor->fetch_releases;
-    push @order_by, 'species';
   }
         
 ## get valid species for the chosen release
   my $valid_spp = $self->news_adaptor->fetch_species($release_id);
 
-## create news item objects from the database
-  my %options = ('criteria'=>\%criteria, 'order_by'=>\@order_by);
-  my $items = $self->news_adaptor->fetch_items(\%options);
+## get species-specific news
+  warn "Fetching species news";  
+  my $species_items = $self->news_adaptor->fetch_news_items(\%where);
   
   $self->DataObjects( new EnsEMBL::Web::Proxy::Object(
     'News', {
@@ -95,7 +96,8 @@ sub createObjects {
       'valid_spp'   => $valid_spp,
       'current_spp' => $current_spp,
       'all_cats'    => $all_cats,
-      'items'       => $items,
+      'generic_items' => $generic_items,
+      'species_items' => $species_items,
     }, $self->__data
   ) ); 
 }
