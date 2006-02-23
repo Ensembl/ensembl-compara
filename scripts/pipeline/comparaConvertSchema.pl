@@ -115,10 +115,14 @@ sub convert_sequence {
 
   my $db = $self->{'comparaDBA'};
 
-  my $sth = $db->prepare("SELECT member.member_id, member.sequence " .
-                         " FROM member" .
-                         " WHERE member.sequence IS NOT NULL".
-                         " LIMIT 5000 ");
+  my $sql_tmp = "SELECT member.member_id, member.sequence FROM member WHERE member.sequence IS NOT NULL";
+  my $sql = $db->dbc->add_limit_clause($sql_tmp,5000);
+
+  my $sth = $db->prepare($sql);
+#   my $sth = $db->prepare("SELECT member.member_id, member.sequence " .
+#                          " FROM member" .
+#                          " WHERE member.sequence IS NOT NULL".
+#                          " LIMIT 5000 ");
   $sth->execute();
 
   my ($member_id, $sequence);
