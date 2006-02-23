@@ -446,7 +446,10 @@ sub fetch_longest_peptide_member_for_gene_member_id {
   my $constraint = "m.gene_member_id = '$gene_member_id'";
 
   my $join = [[['sequence', 'seq'], 'm.sequence_id = seq.sequence_id']];
-  $self->_final_clause("ORDER BY seq.length DESC, member_id LIMIT 1");
+  my $sql_tmp = "ORDER BY seq.length DESC, member_id ";
+  my $new_sql = $self->dbc->add_limit_clause($sql_tmp,1);
+  $self->_final_clause($new_sql);
+#  $self->_final_clause("ORDER BY seq.length DESC, member_id LIMIT 1");
 
   #fixed fetch_longest_peptide_member_for_gene_member_id so that it returns
   #the same longest peptide used in the peptide_align_feature.  There are some

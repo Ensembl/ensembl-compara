@@ -525,15 +525,17 @@ sub fetch_by_genomic_align_id_type {
 sub retrieve_all_direct_attributes {
   my ($self, $genomic_align_group) = @_;
 
-  my $sql = qq{
-                SELECT
-                    type
-                FROM
-                    genomic_align_group
-                WHERE
-                    group_id = ?
-                LIMIT 1
-        };
+  my $sql_tmp = "SELECT type FROM genomic_align_group WHERE group_id = ?";
+  my $sql = $self->dbc->add_limit_clause($sql_tmp,1);
+#   my $sql = qq{
+#                 SELECT
+#                     type
+#                 FROM
+#                     genomic_align_group
+#                 WHERE
+#                     group_id = ?
+#                 LIMIT 1
+#         };
 
   my $sth = $self->prepare($sql);
   $sth->execute($genomic_align_group->dbID);
