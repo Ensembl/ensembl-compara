@@ -17,8 +17,27 @@ sub my_label {
 sub features {
     my $self = shift;
 
+    # set dnadb to 'vega' so that the assembly mapping is retrieved from there
+    my $reg = "Bio::EnsEMBL::Registry";
+    my $species = $self->{'config'}->{'species'};
+    my $orig_group = $reg->get_DNAAdaptor($species, "vega")->group;
+    $reg->add_DNAAdaptor($species, "vega", $species, "vega");
+
+    # get a Vega slice to do the projection
+    my $vega_sa = Bio::EnsEMBL::Registry->get_adaptor($species, "vega", "Slice");
+    my $vega_slice = $vega_sa->fetch_by_region(
+          (map { $self->{'container'}->$_ } qw(
+            coord_system_name
+            seq_region_name
+            start
+            end
+            strand
+          )),
+          $self->{'container'}->coord_system->version
+    );
+
     my $res = [];
-    my $projection = $self->{'container'}->project('chromosome', $self->species_defs->ALTERNATIVE_ASSEMBLY);
+    my $projection = $vega_slice->project('chromosome', $self->species_defs->ALTERNATIVE_ASSEMBLY);
 
     foreach my $seg (@{ $projection }) {
         my $slice = $seg->to_Slice;
@@ -32,6 +51,9 @@ sub features {
         push @$res, $f;
     }
 
+    # set dnadb back to what it was originally
+    $reg->add_DNAAdaptor($species, "vega", $species, $orig_group);
+    
     return $res;
 }
 
