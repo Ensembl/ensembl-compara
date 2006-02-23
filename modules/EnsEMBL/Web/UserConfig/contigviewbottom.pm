@@ -27,6 +27,7 @@ sub init {
 
         all_affy 
 
+        alternative_assembly
         matepairs   bacs  bac_bands  tilepath  tilepath2  bacends misc_bacends
         ruler     scalebar  stranded_contig
         sequence  codonseq  codons gap gcplot encode
@@ -110,6 +111,7 @@ sub init {
          [ 'regulatory_search_regions' => 'Regulatory search regions'  ],
          [ 'rnai'            => 'RNAi'        ],
          [ 'ex_profile'      => 'Exp. profile'    ],
+         [ 'alternative_assembly'     => 'Vega assembly' ],
 ### Other ###
          [ 'misc_bacends'    => 'BACends' ],
          [ 'encode_region'   => 'ENCODE' ],
@@ -170,7 +172,7 @@ sub init {
     },
     'blast_new' => {
       'on'  => "on",
-      'pos' => '7',
+      'pos' => '8',
       'col' => 'red',
       'dep' => '6',
       'str' => 'b',
@@ -179,14 +181,14 @@ sub init {
   
     'blast' => {
       'on'  => "on",
-      'pos' => '5',
+      'pos' => '6',
       'col' => 'red',
       'str' => 'b',
     },
   
     'ssaha' => {
       'on'  => "on",
-      'pos' => '6',
+      'pos' => '7',
       'col' => 'red',
       'str' => 'b',
     },
@@ -525,6 +527,16 @@ sub init {
     
 ## "Clone" level structural tracks
 
+    'alternative_assembly' => {
+        'on'      => "off",
+        'pos'       => '5',
+        'dep'       => '6',
+        'str'       => 'b',
+        'other'     => 'Vega',
+        'col'       => 'chartreuse3',
+        'available' => 'features alternative_assembly',
+    },
+    
     'tp32k' => {
       'on'  => "on",
       'pos' => '8014',

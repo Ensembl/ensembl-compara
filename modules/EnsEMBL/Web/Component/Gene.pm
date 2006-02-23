@@ -357,17 +357,59 @@ sub location {
     $html .= sprintf( qq(
       <p>
         This $lc_type can be found on %s at location <a href="/%s/contigview?l=%s:%s-%s">%s-%s</a>.
-      </p>
+      </p>),
+      $object->neat_sr_name( $object->coord_system, $object->seq_region_name ),
+      $object->species,
+      $object->seq_region_name, $object->seq_region_start, $object->seq_region_end,
+      $object->thousandify( $object->seq_region_start ),
+      $object->thousandify( $object->seq_region_end )
+    );
+
+    # alternative (Vega) coordinates
+    my $alt_assembly = $object->species_defs->ALTERNATIVE_ASSEMBLY;
+    if ($alt_assembly and lc($object->source) eq 'vega') {
+      
+      # set dnadb to 'vega' so that the assembly mapping is retrieved from there
+      my $reg = "Bio::EnsEMBL::Registry";
+      my $orig_group = $reg->get_DNAAdaptor($object->species, "vega")->group;
+      $reg->add_DNAAdaptor($object->species, "vega", $object->species, "vega");
+
+      # project feature slice onto Vega assembly
+      my $alt_projection = $object->Obj->feature_Slice->project('chromosome', $alt_assembly);
+      my @alt_slices = ();
+      foreach my $seg (@{ $alt_projection }) {
+          my $alt_slice = $seg->to_Slice;
+          push @alt_slices, $alt_slice;
+      }
+
+      # link to Vega if there is an ungapped mapping of whole gene
+      if ((scalar(@alt_slices) == 1) && ($alt_slices[0]->length == $object->Obj->feature_Slice->length)) {
+          my $l = $alt_slices[0]->seq_region_name.":".
+              $alt_slices[0]->start."-".
+              $alt_slices[0]->end;
+          my $url = $object->ExtURL->get_url('VEGA_CONTIGVIEW', $l);
+          $html .= "<p>This corresponds to ";
+          $html .= sprintf(qq(<a href="$url" target="external">%s-%s</a>),
+              $object->thousandify($alt_slices[0]->start),
+              $object->thousandify($alt_slices[0]->end)
+          );
+          $html .= " in $alt_assembly coordinates.</p>";
+      } else {
+          $html .= "<p>There is no ungapped mapping of this $lc_type onto the $alt_assembly assembly.</p>";
+      }
+
+      # set dnadb back to the original group
+      $reg->add_DNAAdaptor($object->species, "vega", $object->species, $orig_group);
+    }
+    
+    $html .= sprintf( qq(
       <p>
         The start of this $lc_type is located in <a href="/%s/contigview?region=%s">%s</a>.
-      </p>), $object->neat_sr_name( $object->coord_system, $object->seq_region_name ),
-             $object->species,
-             $object->seq_region_name, $object->seq_region_start, $object->seq_region_end,
-             $object->thousandify( $object->seq_region_start ),
-             $object->thousandify( $object->seq_region_end ),
-             $object->species, $contig, $contig_name
+      </p>), 
+      $object->species, $contig, $contig_name
     );
   }
+
   # Haplotype/PAR locations
   if( @$alt_locs ) {
     $html .= qq(
@@ -417,7 +459,6 @@ sub method {
   my $label = ( ($db eq 'vega' or $gene->species_defs->ENSEMBL_SITETYPE eq 'Vega') ? 'Curation' : 'Prediction' ).' Method';
   my $text = "No $label defined in database";
   my $o = $gene->Obj;  
-  warn join ", ", keys  %Bio::EnsEMBL::Translation::;
   eval {
   if( $o &&
       $o->can( 'analysis' ) &&
