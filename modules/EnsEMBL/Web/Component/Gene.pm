@@ -367,36 +367,30 @@ sub location {
 
     # alternative (Vega) coordinates
     my $alt_assembly = $object->species_defs->ALTERNATIVE_ASSEMBLY;
-    if ($alt_assembly and lc($object->source) eq 'vega') {
-      
-      # set dnadb to 'vega' so that the assembly mapping is retrieved from there
-      my $reg = "Bio::EnsEMBL::Registry";
-      my $orig_group = $reg->get_DNAAdaptor($object->species, "vega")->group;
-      $reg->add_DNAAdaptor($object->species, "vega", $object->species, "vega");
+    if ($alt_assembly and lc($object->source) eq 'vega') {  
+		# set dnadb to 'vega' so that the assembly mapping is retrieved from there
+		my $reg = "Bio::EnsEMBL::Registry";
+		my $orig_group = $reg->get_DNAAdaptor($object->species, "vega")->group;
+		$reg->add_DNAAdaptor($object->species, "vega", $object->species, "vega") or warn "***********help";
 
-      # project feature slice onto Vega assembly
-      my $alt_projection = $object->Obj->feature_Slice->project('chromosome', $alt_assembly);
-      my @alt_slices = ();
-      foreach my $seg (@{ $alt_projection }) {
-          my $alt_slice = $seg->to_Slice;
-          push @alt_slices, $alt_slice;
-      }
+		# project feature slice onto Vega assembly
+		my $alt_slices = $object->vega_projection($alt_assembly);
 
       # link to Vega if there is an ungapped mapping of whole gene
-      if ((scalar(@alt_slices) == 1) && ($alt_slices[0]->length == $object->Obj->feature_Slice->length)) {
-          my $l = $alt_slices[0]->seq_region_name.":".
-              $alt_slices[0]->start."-".
-              $alt_slices[0]->end;
-          my $url = $object->ExtURL->get_url('VEGA_CONTIGVIEW', $l);
-          $html .= "<p>This corresponds to ";
-          $html .= sprintf(qq(<a href="$url" target="external">%s-%s</a>),
-              $object->thousandify($alt_slices[0]->start),
-              $object->thousandify($alt_slices[0]->end)
-          );
-          $html .= " in $alt_assembly coordinates.</p>";
-      } else {
-          $html .= "<p>There is no ungapped mapping of this $lc_type onto the $alt_assembly assembly.</p>";
-      }
+		if ((scalar(@$alt_slices) == 1) && ($alt_slices->[0]->length == $object->feature_length) ) {
+			my $l = $alt_slices->[0]->seq_region_name.":".
+				$alt_slices->[0]->start."-".
+					$alt_slices->[0]->end;
+			my $url = $object->ExtURL->get_url('VEGA_CONTIGVIEW', $l);
+			$html .= "<p>This corresponds to ";
+			$html .= sprintf(qq(<a href="$url" target="external">%s-%s</a>),
+							 $object->thousandify($alt_slices->[0]->start),
+							 $object->thousandify($alt_slices->[0]->end)
+							);
+			$html .= " in $alt_assembly coordinates.</p>";
+		} else {
+			$html .= "<p>There is no ungapped mapping of this $lc_type onto the $alt_assembly assembly.</p>";
+		}
 
       # set dnadb back to the original group
       $reg->add_DNAAdaptor($object->species, "vega", $object->species, $orig_group);
