@@ -78,6 +78,11 @@ sub fetch_subtree_under_node {
     throw("set arg must be a [Bio::EnsEMBL::Compara::NestedSet] not a $node");
   }
 
+  unless ($node->left_index && $node->right_index) {
+    warning("fetch_tree_at_node_id subroutine assumes that left and right index has been built and store in the database.\n This does not seem to be the case for node_id=$node_id. Returning node.\n");
+    return $node;
+  }
+
   my $table = $self->tables->[0]->[0];
   my $alias = $self->tables->[0]->[1];
 
@@ -95,6 +100,13 @@ sub fetch_subtree_under_node {
 sub fetch_tree_at_node_id {
   my $self = shift;
   my $node_id = shift;
+
+  my $node = $self->fetch_node_by_node_id($node_id);
+
+  unless ($node->left_index && $node->right_index) {
+    warning("fetch_tree_at_node_id subroutine assumes that left and right index has been built and store in the database.\n This does not seem to be the case for node_id=$node_id. Using fetch_node_by_node_id instead, and returning node.\n");
+    return $node;
+  }
 
   my $table = $self->tables->[0]->[0];
   my $alias = $self->tables->[0]->[1];
