@@ -26,6 +26,12 @@ sub seq_region_strand { my $self = shift; return $self->transcript->strand; }
 
 sub translation_object { return $_[0]; }
 
+sub feature_length    { 
+	my $self   = shift;
+	my $length = $self->seq_region_end - $self->seq_region_start + 1;
+	return $length;
+}
+
 sub get_contig_location {
   my $self = shift;
   my $slice = $self->database('core')->get_SliceAdaptor->fetch_by_region( undef,
@@ -916,5 +922,32 @@ sub get_das_features_by_slice {
 
   return @{ $das_features{$name} || [] };
 }
+
+
+=head2 vega_projection
+
+ Arg[1]	     : EnsEMBL::Web::Proxy::Object
+ Arg[2]	     : Alternative assembly name
+ Example     : my $v_slices = $object->ensembl_projection($alt_assembly)
+ Description : map an object to an alternative (vega) assembly
+ Return type : arrayref
+
+=cut
+
+sub vega_projection {
+	my $self = shift;
+	my $alt_assembly = shift;
+	my $slice = $self->database('vega')->get_SliceAdaptor->fetch_by_region( undef,
+       $self->seq_region_name, $self->seq_region_start, $self->seq_region_end );
+	my $alt_projection = $slice->project('chromosome', $alt_assembly);
+	my @alt_slices = ();
+	foreach my $seg (@{ $alt_projection }) {
+		my $alt_slice = $seg->to_Slice;
+		push @alt_slices, $alt_slice;
+	}
+	return \@alt_slices;
+}
+
+
 
 1;

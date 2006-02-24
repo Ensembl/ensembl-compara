@@ -65,6 +65,7 @@ sub seq_region_name   { my $self = shift; return $self->Obj->slice->seq_region_n
 sub seq_region_start  { my $self = shift; return $self->Obj->start; }
 sub seq_region_end    { my $self = shift; return $self->Obj->end; }
 sub seq_region_strand { my $self = shift; return $self->Obj->strand; }
+sub feature_length    { my $self = shift; return $self->Obj->feature_Slice->length; }
 
 sub gene_description {
   my $self = shift;
@@ -931,7 +932,7 @@ sub get_supporting_evidence { ## USED!
   # need the main transcript transformed for rest of page
   my $transcript_adaptor = $dbh->get_TranscriptAdaptor() ; 
   my $trans              = $transcript_adaptor->fetch_by_stable_id( $transid ); 
-  warn $self->Obj;
+#  warn $self->Obj;
   $self->__data->{'_SE_trans'} = $trans ;
   my @dl_seq_list;
   my $show;
@@ -1053,6 +1054,30 @@ sub location_string {
   my $self = shift;
   return sprintf( "%s:%s-%s", $self->seq_region_name, $self->seq_region_start, $self->seq_region_end );
 }
+
+
+=head2 vega_projection
+
+ Arg[1]	     : EnsEMBL::Web::Proxy::Object
+ Arg[2]	     : Alternative assembly name
+ Example     : my $v_slices = $object->ensembl_projection($alt_assembly)
+ Description : map an object to an alternative (vega) assembly
+ Return type : arrayref
+
+=cut
+
+sub vega_projection {
+	my $self = shift;
+	my $alt_assembly = shift;
+	my $alt_projection = $self->Obj->feature_Slice->project('chromosome', $alt_assembly);
+	my @alt_slices = ();
+	foreach my $seg (@{ $alt_projection }) {
+		my $alt_slice = $seg->to_Slice;
+		push @alt_slices, $alt_slice;
+	}
+	return \@alt_slices;
+}
+
 
 1;
 
