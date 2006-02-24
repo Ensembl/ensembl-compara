@@ -9,9 +9,9 @@ use EnsEMBL::Web::Proxy::Object;
 
 our @ISA = qw(EnsEMBL::Web::Object);
 
-use EnsEMBL::Web::DataUpload;
 use Bio::EnsEMBL::DrawableContainer;
 use Bio::EnsEMBL::VDrawableContainer;
+use EnsEMBL::Web::File::Text;
 use Data::Bio::Text::DensityFeatureParser;
 use Digest::MD5 ;
 
@@ -270,28 +270,19 @@ sub get_synteny_nav {
 =cut
   
 sub parse_user_data {
-
-    my ($self, $parser, $track_id) = @_;
-
-    if (my $data = $self->param("upload_file_$track_id")) {
-        warn "Trying to upload file ".$self->param("upload_file_$track_id");
-        # parse data, not file name!
-        my $du = EnsEMBL::Web::DataUpload->new();
-        if (defined(my $error = $du->upload_data("upload_file_$track_id"))) {
-            $self->problem('fatal', "Sorry, unable to upload your file at this time. Please try again later.");
-            #$self->Output->error_page($self->problem->[0]);
-            #$self->Output->ensembl_exit;
-        }
-        my $file_data = $du->data;
-        $parser->parse($file_data);
-    }
-    elsif ($data = $self->param("url_file_$track_id")) {
-        $parser->parse_URL($data);
-    }
-    else {
-        $parser->parse($self->param("paste_file_$track_id"));
-    }
-
+  my ($self, $parser, $track_id) = @_;
+  my $data;
+  if (my $data_file = $self->param("cache_file_$track_id")) {
+    my $cache = new EnsEMBL::Web::File::Text($self->{'_species_defs'}); 
+    $data = $cache->retrieve($data_file);
+    $parser->parse($data);
+  }
+  elsif ($data = $self->param("url_file_$track_id")) {
+    $parser->parse_URL($data);
+  }
+  else {
+    $parser->parse($self->param("paste_file_$track_id"));
+  }
 }
   
 

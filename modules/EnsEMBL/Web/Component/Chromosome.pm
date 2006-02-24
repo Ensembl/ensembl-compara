@@ -507,6 +507,9 @@ sub synteny_map {
     $image->image_name         = 'syntenyview-'.$species.'-'.$chr.'-'.$other;
 
     $panel->add_image( $image->render, $image->{'width'} );
+    foreach my $o (@$raw_data) { ## prevents memory leak!
+      $o->release_tree;
+    }
     return 1;
 
 }
@@ -643,8 +646,10 @@ sub kv_display {
         $parser->no_of_bins($bins);
         $parser->bin_size(int($max_length/$bins));
         $object->parse_user_data($parser, $track_id);
-        $config->{'_group_size'} += scalar(keys %{$parser->counts});
- 
+        if (ref($parser->counts) eq 'HASH') {
+          $config->{'_group_size'} += scalar(keys %{$parser->counts});
+        }
+  
         ## create image with parsed data
         $image->add_tracks($object, $config_name, $parser, $track_id);
       }

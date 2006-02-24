@@ -6,6 +6,7 @@ no warnings "uninitialized";
                                                                                 
 use EnsEMBL::Web::Wizard;
 use EnsEMBL::Web::Form;
+use EnsEMBL::Web::File::Text;
                                                                                 
 our @ISA = qw(EnsEMBL::Web::Wizard);
   
@@ -239,8 +240,12 @@ sub kv_add {
   my $species = $object->species;
   my $node = 'kv_add';           
       
+  ## cache uploaded file
+  my $track_id = $wizard->attrib('loops');
+  my $upload = $object->param("upload_file_$track_id");
+  my $cache = _fh_cache($self, $object, $upload) if $upload;
+
   ## rewrite node values if we are re-doing this page for an additional track
-  my $tracks = $wizard->attrib('loops');
   if ($object->param('submit_kv_add') eq 'Add more data >') {
     push @{$all_nodes{'kv_add'}{'pass_fields'}}, 
       ("track_name_$tracks", "style_$tracks", "col_$tracks",
@@ -284,18 +289,43 @@ sub kv_add {
 
   $wizard->add_widgets($node, $form, $object);
   $wizard->pass_fields($node, $form, $object);
+  if ($upload) {
+    $form->add_element(
+      'type'   => 'Hidden',
+      'name'   => "cache_file_$track_id",
+      'value'  => $cache,
+    );
+  }
   $wizard->add_buttons($node, $form, $object);
                                                                                 
   return $form;
 }
 
+sub _fh_cache {
+  ## make a copy of the uploaded temp file so we can get at it later
+  my ($self, $object, $filename) = @_;
+
+  my $cgi = $object->[1]->{'_input'}; 
+  my $tmpfilename = $cgi->tmpFileName($filename);
+
+  my $cache = new EnsEMBL::Web::File::Text($object->[1]->{'_species_defs'});
+  $cache->set_cache_filename($tmpfilename);
+  $cache->save($tmpfilename);
+  my $cachename = $cache->filename;
+  return $cachename;
+}
+
 sub kv_extras {
   my ($self, $object) = @_;
-                                                                                
   my $wizard = $self->{wizard};
   my $script = $object->script;
   my $species = $object->species;
   my $node = 'kv_extras';
+               
+  ## cache uploaded file
+  my $track_id = $wizard->attrib('loops');
+  my $upload = $object->param("upload_file_$track_id");
+  my $cache = _fh_cache($self, $object, $upload) if $upload;
 
   ## add appropriate options
   my ($location, $density);
@@ -322,6 +352,13 @@ sub kv_extras {
                                                                                 
   $wizard->add_widgets($node, $form, $object);
   $wizard->pass_fields($node, $form, $object);
+  if ($upload) {
+    $form->add_element(
+      'type'   => 'Hidden',
+      'name'   => "cache_file_$track_id",
+      'value'  => $cache,
+    );
+  }
   $wizard->add_buttons($node, $form, $object);
                                                                                 
   return $form;
