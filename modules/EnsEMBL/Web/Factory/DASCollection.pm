@@ -605,7 +605,7 @@ sub getRegistrySources {
 sub getSourceData {
     my ($self, $dassource, $dasconf) = @_;
 
-    if ($dassource->{url} =~ m!(\w+)://(.+/das)/(\w+)/?!) {
+    if ($dassource->{url} =~ m!(\w+)://(.+/das)/([\w\-]+)/?!) {
 	($dasconf->{protocol}, $dasconf->{domain}, $dasconf->{dsn}) = ($1, $2, $3);
 	my ($smap, $species);
 	foreach my $cs (@{$dassource->{coordinateSystem}}) {
