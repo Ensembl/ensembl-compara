@@ -79,7 +79,7 @@ sub fetch_subtree_under_node {
   }
 
   unless ($node->left_index && $node->right_index) {
-    warning("fetch_tree_at_node_id subroutine assumes that left and right index has been built and store in the database.\n This does not seem to be the case for node_id=$node_id. Returning node.\n");
+    warning("fetch_tree_at_node_id subroutine assumes that left and right index has been built and store in the database.\n This does not seem to be the case for node_id=".$node->node_id.". Returning node.\n");
     return $node;
   }
 
