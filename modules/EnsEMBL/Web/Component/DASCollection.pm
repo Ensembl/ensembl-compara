@@ -153,7 +153,7 @@ sub add_das_server {
 
 	$form->add_element('type' => 'String',
 			   'name'     => 'DASdomain',
-			   'label'    => 'DAS Server URL: ( e.g. http://www.myserver.com/MyProject/das )',
+			   'label'    => 'DAS Server URL: ( e.g. http://www.example.com/MyProject/das )',
 			   'notes' => $btnList
 			   );
 
