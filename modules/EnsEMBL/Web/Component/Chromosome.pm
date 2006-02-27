@@ -599,89 +599,93 @@ sub _wrap_form {
 
 sub kv_display {
 
-    my( $panel, $object ) = @_;
+  my( $panel, $object, $node ) = @_;
   
-    # CONFIGURATION
-    my ($config_name, $max_length);
-    my $chr = $object->chr_name;
-    if ($chr eq 'ALL') {
-        $config_name = 'Vkar2view';
-        $max_length = $object->max_chr_length;
+## IMAGE
+  ## Configuration
+  my ($config_name, $max_length);
+  my $chr = $object->chr_name;
+  if ($chr eq 'ALL') {
+    $config_name = 'Vkar2view';
+    $max_length = $object->max_chr_length;
+  }
+  else {
+    $config_name = 'Vmap2view';
+    $max_length = $object->length;
+  }
+  my $config = $object->user_config_hash($config_name);
+
+  # Create image object
+  my $image    = $object->new_karyotype_image();
+  $image->imagemap    = 'yes';
+  $image->cacheable   = 'no';
+  $image->image_name  = 'karyoview-'.$object->species.'-'.$object->chr_name;
+  ## Add features
+  my @params = $object->param;
+  my $track_no = 0;
+  $config->{'_group_size'} = 1;
+  foreach my $param (@params) {
+    $track_no++ if $param =~ /^track_name_/;
+    ## make sure extra Ensembl tracks get grouped with chromosome
+    $config->{'_group_size'}++ if $param =~ /^track_V/;
+  }
+  $track_no = 1 if !$track_no; ## default in case no track name provided!
+
+  my $all_pointers;
+  for (my $i = 0; $i < $track_no; $i++) {
+    my $pointers = [];
+    my $track_id = $i+1;
+    my $parser;
+
+    if ($object->param("style_$track_id") =~ /line|bar|outline/) {
+      ## parse data
+      $parser = Data::Bio::Text::DensityFeatureParser->new();
+      $parser->set_filter($chr);  # filter chromosomes that aren't used
+      $parser->current_key($object->param('defaultlabel') || 'default'); #add in default label
+      my $bins   = 150;
+      $parser->no_of_bins($bins);
+      $parser->bin_size(int($max_length/$bins));
+      $object->parse_user_data($parser, $track_id);
+      if (ref($parser->counts) eq 'HASH') {
+        $config->{'_group_size'} += scalar(keys %{$parser->counts});
+      }
+  
+      ## create image with parsed data
+      $image->add_tracks($object, $config_name, $parser, $track_id);
     }
     else {
-        $config_name = 'Vmap2view';
-        $max_length = $object->length;
+      ## parse data
+      $parser = Data::Bio::Text::FeatureParser->new();
+      $object->parse_user_data($parser, $track_id);
+
+      my $zmenu_config = {
+        'caption' => 'features',
+        'entries' => ['userdata'],
+      };
+
+      ## create image with parsed data
+      $pointers = $image->add_pointers(
+          $object, 
+          {
+          'config_name'=>$config_name, 
+          'zmenu_config' => $zmenu_config,
+          'parser'=>$parser, 
+          'color' => $object->param("col_$track_id"), 
+          'style' => $object->param("style_$track_id")
+          }
+      );
+      push @$all_pointers, $pointers;
     }
-    my $config = $object->user_config_hash($config_name);
+  }
+  $image->karyotype($object, $all_pointers, $config_name);
+  # create image file and render HTML
+  $panel->print($image->render);
 
-    # CREATE IMAGE OBJECT
-    my $image    = $object->new_karyotype_image();
-    $image->imagemap           = 'yes';
-    $image->cacheable          = 'no';
-    $image->image_name         = 'karyoview-'.$object->species.'-'.$object->chr_name;
-    ## Add features
+## HIDDEN FORM
+  my $html = $panel->form('kv_display')->render();
+  $panel->print($html);
 
-    my @params = $object->param;
-    my $track_no = 0;
-    $config->{'_group_size'} = 1;
-    foreach my $param (@params) {
-      $track_no++ if $param =~ /^track_name_/;
-      ## make sure extra Ensembl tracks get grouped with chromosome
-      $config->{'_group_size'}++ if $param =~ /^track_V/;
-    }
-    $track_no = 1 if !$track_no; ## default in case no track name provided!
-
-    my $all_pointers;
-    for (my $i = 0; $i < $track_no; $i++) {
-      my $pointers = [];
-      my $track_id = $i+1;
-      my $parser;
-
-      if ($object->param("style_$track_id") =~ /line|bar|outline/) {
-        ## parse data
-        $parser = Data::Bio::Text::DensityFeatureParser->new();
-        $parser->set_filter($chr);  # filter chromosomes that aren't used
-        $parser->current_key($object->param('defaultlabel') || 'default'); #add in default label
-        my $bins   = 150;
-        $parser->no_of_bins($bins);
-        $parser->bin_size(int($max_length/$bins));
-        $object->parse_user_data($parser, $track_id);
-        if (ref($parser->counts) eq 'HASH') {
-          $config->{'_group_size'} += scalar(keys %{$parser->counts});
-        }
-  
-        ## create image with parsed data
-        $image->add_tracks($object, $config_name, $parser, $track_id);
-      }
-      else {
-        ## parse data
-        $parser = Data::Bio::Text::FeatureParser->new();
-        $object->parse_user_data($parser, $track_id);
-
-        my $zmenu_config = {
-            'caption' => 'features',
-            'entries' => ['userdata'],
-        };
-
-        ## create image with parsed data
-        $pointers = $image->add_pointers(
-            $object, 
-            {
-              'config_name'=>$config_name, 
-              'zmenu_config' => $zmenu_config,
-              'parser'=>$parser, 
-              'color' => $object->param("col_$track_id"), 
-              'style' => $object->param("style_$track_id")
-              }
-        );
-        push @$all_pointers, $pointers;
-      }
-    }
-    $image->karyotype($object, $all_pointers, $config_name);
-    # create image file and render HTML
-    $panel->print($image->render);
-    return 1;
-
+  return 1;
 }
 
 1;

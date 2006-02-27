@@ -40,7 +40,7 @@ sub add_nodes {
 
 
 sub default_node {
-  my ($self, $default) = @_;
+ my ($self, $default) = @_;
   if ($default) {
     ## unset any existing default
     foreach my $node (keys %{$self->{'_nodes'}}) {
@@ -100,6 +100,16 @@ sub isa_form {
   return $self->{'_nodes'}{$node}{'form'};
 }
 
+sub chain_nodes {
+  my ($self, $edge_ref) = @_;
+  foreach my $edge (@$edge_ref) {
+    my $start = $$edge[0];
+    my $end = $$edge[1];
+    push(@{$self->{'_nodes'}{$start}{'_outgoing_edges'}}, $end);
+    push(@{$self->{'_nodes'}{$end}{'_incoming_edges'}}, $start);
+  }
+}
+
 sub add_outgoing_edges {
   my ($self, $edge_ref) = @_;
   foreach my $edge (@$edge_ref) {
@@ -124,6 +134,36 @@ sub get_outgoing_edges {
   ## this function seems to returning duplicate values, so weed them out!
   my (%check_hash, @edges);
   foreach my $edge (@{$self->{'_nodes'}{$node}{'_outgoing_edges'}}) {
+    $check_hash{$edge}++;
+    push @edges, $edge if $check_hash{$edge} < 2;
+  }
+  return \@edges;
+}
+
+sub add_incoming_edges {
+  my ($self, $edge_ref) = @_;
+  foreach my $edge (@$edge_ref) {
+    my $start = $$edge[0];
+    my $end = $$edge[1];
+    push(@{$self->{'_nodes'}{$start}{'_incoming_edges'}}, $end);
+  }
+}
+
+sub remove_incoming_edge {
+  my ($self, $start, $end) = @_;
+  my $edge_ref = $self->{'_nodes'}{$start}{'_incoming_edges'};
+  my $edges = scalar(@$edge_ref);
+  for (my $i=0; $i<$edges; $i++) {
+    my $edge = @{$edge_ref}[$i];
+    splice(@{$edge_ref}, $i) if $edge eq $end;
+  }
+}
+
+sub get_incoming_edges {
+  my ($self, $node) = @_;
+  ## this function seems to returning duplicate values, so weed them out!
+  my (%check_hash, @edges);
+  foreach my $edge (@{$self->{'_nodes'}{$node}{'_incoming_edges'}}) {
     $check_hash{$edge}++;
     push @edges, $edge if $check_hash{$edge} < 2;
   }
@@ -199,6 +239,7 @@ sub show_fields {
       }
       $output = _HTMLize($text);
     }
+
     $parameter{'value'} = $output;
     $form->add_element(%parameter);
   }
@@ -235,11 +276,29 @@ sub pass_fields {
     @fields = $object->param;
   } 
 
+  ## get list of fields you don't want to pass as hidden
+  my $edges = $self->get_incoming_edges($node);
+  my @matches = grep { $node } @$edges;
+  my @no_pass;
+  if (scalar(@matches) < 1) {
+    @no_pass = $self->{'_nodes'}{$node}{'no_passback'};
+  }
+  my $widgets = $self->{'_nodes'}{$node}{'input_fields'};
+my @warn;
+@warn = @$widgets if $widgets;
+warn 'Widgets: '.@warn;
+  #push @no_pass, @$widgets if $widgets;
+
   foreach my $field (@fields) {
     next if $field =~ /submit/;  
 
     ## don't pass 'previous' field or it screws up back buttons!  
-    next if $field =~ /previous/;    
+    next if $field =~ /previous/;
+
+    ## don't pass 'no_pass' fields - duh!
+    if (scalar(@no_pass)) {    
+      next if grep { $field } @no_pass;
+    }
 
     ## Debug form fields
     #$form->add_element(
@@ -297,37 +356,36 @@ sub add_widgets {
       'rows'      => $field_info{'rows'},
     );
 
-    ## deal with multi-value fields
-    my @values = $object->param($field_name);
-    if (scalar(@values) > 1) {
-      my $unique = _uniquify(\@values);
-      $parameter{'value'} = $unique;
-    }
-    else {
-      $parameter{'value'} = $object->param($field_name) 
-                              || $self->{'_data'}{'record'}{$field}
-                              || $field_info{'value'};
-    }
-
     ## extra parameters for multi-value fields
     if ($field_info{'type'} eq 'DropDown' || $field_info{'type'} eq 'MultiSelect') {
-      if ($object->param($field)) {
-        $parameter{'value'}  = [$object->param($field)]; 
+      if ($object->param($field_name)) {
+        $parameter{'value'}  = [$object->param($field_name)]; 
       }
       else {
-        $parameter{'value'}  =  $self->{'_data'}{'record'}{$field} 
+        $parameter{'value'}  =  $self->{'_data'}{'record'}{$field_name} 
                                 || $field_info{'value'};
       }
-      ## extra parameters for multi-value fields
       $parameter{'values'} = $self->{'_data'}{$field_info{'values'}};
       $parameter{'select'} = $field_info{'select'};
     }
+    elsif ($field_info{'type'} eq 'CheckBox') {
+      if ($object->param($field_name)) {
+        $parameter{'checked'} = 1;
+      }
+    }
     else {
-      $parameter{'value'} = $object->param($field) 
-                              || $self->{'_data'}{'record'}{$field} 
+      my @values = $object->param($field_name);
+      if (scalar(@values) > 1) {
+        my $unique = _uniquify(\@values);
+        $parameter{'value'} = $unique;
+      }
+      else {
+        $parameter{'value'} = $object->param($field_name) 
+                              || $self->{'_data'}{'record'}{$field_name} 
                               || $field_info{'value'};
-      if (!$parameter{'value'} && ($field_info{'type'} eq 'Int' || $field_info{'type'} eq 'NonNegInt')) {
-        $parameter{'value'} = '0';
+        if (!$parameter{'value'} && ($field_info{'type'} eq 'Int' || $field_info{'type'} eq 'NonNegInt')) {
+          $parameter{'value'} = '0';
+        }
       }
     }
     $form->add_element(%parameter);
@@ -344,9 +402,17 @@ sub add_buttons {
   );
 
   if ($self->{'_nodes'}{$node}{'back'}) {
+    ## must limit back button to incoming edges!
+    my $previous = $object->param('previous');
+    my $back;
+    my @incoming = @{ $self->get_incoming_edges($node) };
+    foreach my $edge (@incoming) {
+      $back = $edge;
+      last if $edge eq $previous; ## defaults to last incoming edge
+    }
     $form->add_element(
       'type'  => 'Submit',
-      'name'  => 'submit_'.$object->param('previous'),
+      'name'  => "submit_$back",
       'value' => '< Back',
       'spanning' => 'inline',
     );

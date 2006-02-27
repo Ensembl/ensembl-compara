@@ -209,6 +209,7 @@ our %all_nodes = (
       'form' => 1,
       'title' => 'Add extra features',
       'input_fields'  => [qw(extras_subhead track_Vpercents track_Vsnps track_Vgenes track_blurb)],
+      'no_passback' => [qw(style)],
       'button' => 'Continue',
       'back'   => 1,
   },
@@ -221,9 +222,14 @@ our %all_nodes = (
   },
   'kv_display'  => {
       'button' => 'Finish',
-      'page' => 1,
+      'form' => 1,
+      'back'   => 1,
   },
 );
+
+=pod
+      'pass_fields'  => [qw(track_name style col merge paste_file upload_file url_file track_Vpercents track_Vsnps track_Vgenes chr rows chr_length h_padding h_spacing v_padding)],
+=cut
 
 ## Accessor methods for standard data
 sub form_fields { return %form_fields; }
@@ -382,9 +388,20 @@ sub kv_layout {
 }
 
 sub kv_display {
-  ## this node doesn't actually do anything 'wizardy', it just 
-  ## displays the data using the corresponding Component method
-  return 1;
+  my ($self, $object) = @_;
+                                                                                
+  my $wizard = $self->{wizard};
+  my $script = $object->script;
+  my $species = $object->species;
+  my $node = 'kv_display';
+                                                                                
+  my $form = EnsEMBL::Web::Form->new($node, "/$species/$script", 'post');
+
+  $all_nodes{'kv_add'}{'button'} = 'Reconfigure this display';
+  $wizard->pass_fields($node, $form, $object);
+  $wizard->add_buttons($node, $form, $object);
+                                                                                
+  return $form;
 }
 
 1;

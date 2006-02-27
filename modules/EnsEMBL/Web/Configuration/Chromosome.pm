@@ -83,19 +83,20 @@ sub karyoview {
 
   $self->initialize_zmenu_javascript;
                                                                                 
-  ## the "karyoview" wizard uses 3 nodes: configure karyotype, add track
-  ## and display karyotype
+  ## the "karyoview" wizard uses 4 nodes: add data, add standard tracks, 
+  ## configure karyotype, and display karyotype
   my $wizard = EnsEMBL::Web::Wizard::Chromosome->new($object);
   $wizard->add_nodes([qw(kv_add kv_extras kv_layout kv_display)]);
   $wizard->default_node('kv_add');
                                                                                 
   ## chain the nodes together
-  ## note that, since you can add multiple tracks, node 2 is recursive
-  $wizard->add_outgoing_edges([
+  ## note that, since you can add multiple tracks, node 1 is recursive
+  $wizard->chain_nodes([
           ['kv_add'=>'kv_add'],
           ['kv_add'=>'kv_extras'],
           ['kv_extras'=>'kv_layout'],
           ['kv_layout'=>'kv_display'],
+          ['kv_display'=>'kv_add'],
   ]);
                                                                                 
   $self->add_wizard($wizard);
@@ -115,10 +116,8 @@ sub context_karyoview {
   $self->{page}->menu->add_block( $flag, 'bulleted', "Display your data" );
 
 
-  $self->{page}->menu->add_entry( $flag, 'text' => "Select a location display",
-                                  'href' => "/$species/karyoview?display=location" );
-  $self->{page}->menu->add_entry( $flag, 'text' => "Select a density display",
-                                  'href' => "/$species/karyoview?display=density" );
+  $self->{page}->menu->add_entry( $flag, 'text' => "Select another display",
+                                  'href' => "/$species/karyoview" );
 
 }
 
