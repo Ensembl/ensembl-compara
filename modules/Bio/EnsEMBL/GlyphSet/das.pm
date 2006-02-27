@@ -146,13 +146,12 @@ sub RENDER_simple {
     # to geneview where all annotations can be viewed
 
     if( ( "@{[$f->das_type_id()]}" ) =~ /(summary)/i ) { ## INFO Box
-#	my $f     = shift @{$configuration->{'features'}};
 	my $style = $self->get_featurestyle($f, $configuration);
 	my $fdata = $self->get_featuredata($f, $configuration, $y_offset);
 
 	# override to draw this as a span
 	my $oldglyph = $style->{'glyph'};
-	$style->{'glyph'} = 'span';
+	$style->{'glyph'} = 'box';
    
 	# Change zmenu to summary menu
 	my $smenu = $self->smenu($f);
@@ -338,7 +337,7 @@ sub RENDER_grouped {
 
 	# override glyph to draw this as a span
 	my $oldglyph = $style->{'glyph'};
-	$style->{'glyph'} = 'span';
+	$style->{'glyph'} = 'box';
    
 	# Change zmenu to summary menu
 	my $smenu = $self->smenu($f);
@@ -763,16 +762,17 @@ sub _init {
       my $ga =  $self->{'container'}->adaptor->db->get_GeneAdaptor();
       my $genes = $ga->fetch_all_by_Slice( $self->{'container'});
       my $name = $das_name || $url;
+
       foreach my $gene (@$genes) {
          next if ($gene->strand != $self->strand);
 	 my ($features, $style) = $gene->get_all_DAS_Features->{$name}; # First element is aref to features, second - style
 
-#	 warn(Dumper($features));
          my $fcount = 0;
          my %fhash = ();
 
          foreach my $f (grep { $_->das_type_id() !~ /^(contig|component|karyotype)$/i &&  $_->das_type_id() !~ /^(contig|component|karyotype):/i } (@{$features || []})) {
              if ($f->das_end) {
+		
 		 my @coords;
 		 foreach my $transcript (@{$gene->get_all_Transcripts()}) {
 		     @coords = grep { $_->isa('Bio::EnsEMBL::Mapper::Coordinate') } $transcript->pep2genomic($f->start, $f->end, $f->strand);
@@ -799,6 +799,7 @@ sub _init {
          }
          
          foreach my $key (keys %fhash) {
+
              my $ft = $fhash{$key}->{feature}; 
              if ((my $count = $fhash{$key}->{count}) > 1) {
                 $ft->{das_feature_label} = "$key/$count";
@@ -888,10 +889,12 @@ sub smenu {
   $zmenu->{"02:TYPE: ". $f->das_type_id()           } = '' if $f->das_type_id() && uc($f->das_type_id()) ne 'NULL';
 
   my $ids = 3;
-  my @dlabels = $f->das_link_labels();
+
   foreach my $dlink ($f->das_links) {
-      my $dlabel = sprintf("%02d: %s", $ids++, shift @dlabels);
-      $zmenu->{$dlabel} = $dlink if uc($dlink) ne 'NULL';
+      my $txt = $dlink->{txt} || '';
+      my $href = $dlink->{href} || '';
+      my $dlabel = sprintf("%02d: %s", $ids++, $txt);
+      $zmenu->{$dlabel} = $href;
   }
 
 #  $zmenu->{"03:".$f->das_link_label()     } = $f->das_link() if $f->das_link() && uc($f->das_link()) ne 'NULL';
