@@ -99,10 +99,11 @@ sub fetch_masked_sequence {
 
   my $seq;
   my $id = $self->display_id;
-
+  my $masking_options;
   my $starttime = time();
+
   if(defined($self->masking_options)) {
-    my $masking_options = eval($self->masking_options);
+    $masking_options = eval($self->masking_options);
     my $logic_names = $masking_options->{'logic_names'};
     if(defined($masking_options->{'default_soft_masking'}) and
        $masking_options->{'default_soft_masking'} == 0)
@@ -131,7 +132,23 @@ sub fetch_masked_sequence {
 
   #print STDERR "sequence length : ",$seq->length,"\n";
 
-  $self->sequence($seq->seq);
+  $seq = $seq->seq;
+
+  if (defined $masking_options) {
+    foreach my $ae (@{$slice->get_all_AssemblyExceptionFeatures}) {
+      next unless (defined $masking_options->{"assembly_exception_type_" . $ae->type});
+      my $length = $ae->end - $ae->start + 1;
+      if ($masking_options->{"assembly_exception_type_" . $ae->type} == 0) {
+        my $padstr = 'N' x $length;
+        substr ($seq, $ae->start, $length) = $padstr;
+      } elsif ($masking_options->{"assembly_exception_type_" . $ae->type} == 1) {
+        my $padstr = lc substr ($seq, $ae->start, $length);
+        substr ($seq, $ae->start, $length) = $padstr;
+      }
+    }
+  }
+
+  $self->sequence($seq);
 
   return $seq;
 }
