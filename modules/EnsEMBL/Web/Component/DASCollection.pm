@@ -146,14 +146,6 @@ sub add_das_server {
     $form->add_element( 'type'     => 'Information', 'value'    => 'Please select DAS sources to attach and click <b>Next</b>:' );
 
     &wizardTopPanel($form, $$step_ref, $source_conf->{sourcetype});
-
-    $form->add_element(
-                       'type'     => 'String',
-                       'name'     => 'DASuser_source',
-                       'label'    => '(for user uploaded sources enter DSN here)',
-                       'value'    => $source_conf->{userdsn}
-                       );
-
     
 
     if (defined($object->param('_das_add_domain.x'))) {
@@ -161,9 +153,11 @@ sub add_das_server {
 
 	$form->add_element('type' => 'String',
 			   'name'     => 'DASdomain',
-			   'label'    => 'Domain',
+			   'label'    => 'DAS Server URL: ( e.g. http://www.myserver.com/MyProject/das )',
 			   'notes' => $btnList
 			   );
+
+
     } else {
 	my $rurl = $object->species_defs->DAS_REGISTRY_URL;
 	if (defined (my $url = $object->param("DASdomain"))) {
@@ -189,13 +183,21 @@ sub add_das_server {
 	$form->add_element('type'     => 'DropDown',
 			   'select'   => 'select',
 			   'name'     => 'DASdomain',
-			   'label'    => 'DAS Server:',
+			   'label'    => 'DAS Server URL:',
 			   'values'   => \@dvals,
 			   'value'    => $default, 
 			   'notes' => $btnMore,
 			   'on_change' => 'submit',
 			   );
     
+	$form->add_element(
+			   'type'     => 'String',
+			   'name'     => 'DASuser_source',
+			   'label'    => "DAS source name (only for Ensembl user-uploaded sources, e.g. hydraeuf_00000001)",
+			   'value'    => $source_conf->{userdsn}
+                       );
+
+
 	if ($object->param("DASdomain") =~ m!^$rurl!) {
 	    &add_das_registry($form, $source_conf, $object);
 	} else {
@@ -986,7 +988,11 @@ sub wizard_search_box {
 
     my $search_box = qq{
 <div class="formblock">
+  <br />
+  <br />
 
+  <h6><label>Available DAS sources on the selected server</label></h6>
+  <br />
   <h6><label>(use the filter to narrow the list of sources)</label></h6>
     <div class="formcontent">
 
