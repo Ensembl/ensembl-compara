@@ -117,6 +117,7 @@ sub new {
   $self->colourSet( 'vega_gene',
     'hi'                               => 'highlight1',
     'superhi'                          => 'highlight2',
+	'ccdshi'                           => 'lightblue1',
     'protein_coding_KNOWN'             => [ 'dodgerblue4', 'Known Protein coding'],
     'processed_transcript_KNOWN'       => [ 'dodgerblue4', 'Known Processed transcript'],
     'protein_coding_in_progress_KNOWN' => [ 'lightskyblue4', 'Known Protein coding (in progress)'],
