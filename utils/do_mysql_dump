@@ -49,21 +49,22 @@ pod2usage(1) if $help;
 exit(0) if ($help) ;
 
 
+# Load modules needed for reading config -------------------------------------
+require EnsEMBL::Web::SpeciesDefs; 
+my $species_defs = EnsEMBL::Web::SpeciesDefs->new();
+$species_defs || pod2usage("$0: SpeciesDefs config not found");
+
+
 # Log file -------------------------------------------------------------------
 my $time1 = time;
 
 unless ($no_log) {
   (my $time = gmtime(time)) =~ s/\s+/\./g;
   $logfile ||= "logs/mysql"."_$time.log";
+  $logfile = $SERVERROOT."/$logfile";
   print STDERR "Using logfile $logfile\n";
   open(STDERR, "> $logfile") || die "Can't create file:$!\n";
 }
-
-# Load modules needed for reading config -------------------------------------
-require EnsEMBL::Web::SpeciesDefs; 
-my $species_defs = EnsEMBL::Web::SpeciesDefs->new();
-$species_defs || pod2usage("$0: SpeciesDefs config not found");
-
 
 # Web user db conf -----------------------------------------------------------
 my %web_userdb = (
@@ -162,8 +163,8 @@ foreach my $sp( @SPECIES ){
     if ( $db =~ /ensembl_web_user_db/ ){
       rename_files( $all_db_info{$db}{NAME}, $sp_dumpdirs[0] );
     }
-    @dbs = ();
   }
+  @dbs = ();
   info( 1, "Dumps for $sp completed" );
 }
 info( 1, "All dumps completed" );
@@ -172,11 +173,12 @@ info( 1, "All dumps completed" );
 # Work out timings ---------------------------------------------------------
 my $time_taken = time - $time1;
 my $hours      = localtime($time_taken)->hour -1;
-print STDERR "Time taken: $hours:", localtime($time_taken)->min,"mins\n";
-
+warning (1, "Used $logfile.");
+warning (1, " Time taken: $hours:". localtime($time_taken)->min."mins");
 
 $email ||= 'ensembl-webteam@sanger.ac.uk';
 utils::Tool::mail_log( $logfile, $email ) if $logfile;
+close STDERR;
 exit;
 
 
@@ -387,7 +389,7 @@ do_mysql_dump [options]
 
 Options:
   --help, --info, --species, --database, --logfile --dumpdir
-  --no_data  --no_zip --email
+  --no_data  --no_zip --email --no_log
 
 =head1 OPTIONS
 
