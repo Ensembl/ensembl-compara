@@ -249,7 +249,8 @@ sub context_menu {
   ) if $obj->species_defs->databases->{'ENSEMBL_VARIATION'} && $q_string_g; 
 
   # Variation: TranscriptSNP view
-  if ( $obj->species_defs->get_table_size({ -db => 'ENSEMBL_VARIATION', -table => 'allele'}) ) {
+  # if meta_key in variation meta table has default strain listed
+  if ( $obj->species_defs->VARIATION_STRAIN ) { 
     $self->add_entry( $flag,
 		      'code'  => 'TSV',
 		      'text'  => "Compare transcript SNPs",
