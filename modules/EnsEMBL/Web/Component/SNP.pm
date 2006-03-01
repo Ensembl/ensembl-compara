@@ -383,8 +383,8 @@ sub format_frequencies {
     $pop_row{Size} = $freq_data{$pop_id}{pop_info}{Size};
 
     # Descriptions too long. Only display first sentence
-    (my $description = $freq_data{$pop_id}{pop_info}{Description}) =~ s/\.\s+.*//;
-    $pop_row{Description} = "<small>".$description||"-"."</small>";
+    (my $description = $freq_data{$pop_id}{pop_info}{Description});# =~ s/\.\s+.*//;
+    $pop_row{Description} = "<small>". ($description ||"-") ."</small>";
 
 
     # Super and sub populations ----------------------------------------------
@@ -478,14 +478,14 @@ sub mappings {
                      $transcript_data->{translation_start}, $transcript_data->{translation_end});
       my %trans_info = (
 			"conseq"     => $transcript_data->{conseq},
-			"transcript" => "<nobr>$transcript_link:$transcript_coords </nobr>",
+			"transcript" => "$transcript_link:$transcript_coords",
 		       );
       unless ($source eq 'Glovar') {
 	$trans_info{'genesnpview'} = "$genesnpview";
       }
 
       if ($transcript_data->{'proteinname'}) {
-	$trans_info{'translation'} = "<nobr>$protein_link:$translation_coords </nobr>";
+	$trans_info{'translation'} = "$protein_link:$translation_coords";
 	$trans_info{'pepallele'} = "$transcript_data->{pepallele}";
       }
       $panel->add_row({ %chr_info, %trans_info});
@@ -688,10 +688,10 @@ sub individual {
 		  Individual => $ind_data{$ind_id}{Name}."<br />(".
 		    $ind_data{$ind_id}{Gender}.")",
 		  Genotype   => $genotype,
-		  Description=> $description ? "<small>$description</small>" : "<small>-</small>", 
-                  Populations=> $pop_string  ? "<small>$pop_string</small>"  : "<small>-</small>",
-		  Father     => $father      ? "<small>$father</small>"      : "<small>-</small>", 
-		  Mother     => $mother      ? "<small>$mother</small>"      : "<small>-</small>", 
+		  Description=> "<small>".($description ||"-") ."</small>", 
+                  Populations=> "<small>".($pop_string ||"-") ."</small>",
+		  Father     => "<small>".($father||"-") ."</small>",
+		  Mother     => "<small>".($mother ||"-") ."</small>",
 		  );
 
 
