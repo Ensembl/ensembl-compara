@@ -908,13 +908,16 @@ sub _parse {
             };
 
             # if you can't find this in core, look in the Vega db
-            if( my $vega_dbh = $self->db_connect($tree, 'ENSEMBL_VEGA')) {
-              eval{
-                $query = $vega_dbh->prepare($sql);
-                $tree->{'DB_FEATURES'}->{'ALTERNATIVE_ASSEMBLY'} = 1 if $query->execute() > 0;
-                $query->finish();
-              };
+			unless ($tree->{'DB_FEATURES'}->{'ALTERNATIVE_ASSEMBLY'}) {
+              if( my $vega_dbh = $self->db_connect($tree, 'ENSEMBL_VEGA')) {
+                eval{
+                  $query = $vega_dbh->prepare($sql);
+                  $tree->{'DB_FEATURES'}->{'ALTERNATIVE_ASSEMBLY'} = 1 if $query->execute() > 0;
+                  $query->finish();
+                };
+		      }
             }
+			warn ("No alternative assembly found") unless ($tree->{'DB_FEATURES'}->{'ALTERNATIVE_ASSEMBLY'});
           }
           
           $dbh->disconnect();
