@@ -469,7 +469,7 @@ sub mappings {
     }
     foreach my $transcript_data (@transcript_variation_data ) {
       my $transcript_link = qq(<a href='transview?transcript=$transcript_data->{transcriptname}'>$transcript_data->{transcriptname}</a>);
-      my $genesnpview = qq(<a href="genesnpview?transcript=$transcript_data->{transcriptname}">SNP in gene context</a>);
+      my $genesnpview = qq(<a href="genesnpview?transcript=$transcript_data->{transcriptname}">View SNPs on this gene</a>);
       my $protein_link = qq(<a href='protview?transcript=$transcript_data->{transcriptname}'>$transcript_data->{proteinname}</a>);
 
       my $transcript_coords = _sort_start_end(
