@@ -949,7 +949,22 @@ sub _parse {
 	  }
 	};
         $sth->finish();
-        $dbh->disconnect();
+
+ 	$sth = $dbh->prepare(qq(
+                     SELECT count(*) 
+                     FROM meta 
+                     WHERE meta_key = "population.default_strain";
+                  )
+ 			    );
+ 	eval {
+ 	  $sth->execute;
+ 	  my ($count) = $sth->fetchrow_array;
+ 	  if ( $count ) {
+ 	    $tree->{'VARIATION_STRAIN'} = $count;
+ 	  }
+ 	};
+	$sth->finish();
+	$dbh->disconnect();
       }
     }
 
