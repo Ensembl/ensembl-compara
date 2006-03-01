@@ -36,6 +36,11 @@ sub colour {
     $highlight = $colours->{'hi'};
   }
 
+  elsif (my $ccds_att = $transcript->get_all_Attributes('ccds')->[0]) {
+	  $highlight = $colours->{'ccdshi'};
+  }
+
+
   return ($colour, $highlight); 
 }
 
