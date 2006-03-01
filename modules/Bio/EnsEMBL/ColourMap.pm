@@ -244,7 +244,7 @@ sub new {
     'INTRONIC'               => ['contigblue2',    'Intronic',         'white',],
     'UPSTREAM'               => ['lightsteelblue2','Upstream',              'black',],
     'DOWNSTREAM'             => ['lightsteelblue2','Downstream',            'black',],
-    'REG_REGION'             => ['aquamarine1',    'Regulatory region',     'black',],
+    'REGULATORY_REGION'      => ['aquamarine1',    'Regulatory region',     'black',],
     '5PRIME_UTR'             => ['cadetblue3',     "5' UTR",                'black',],
     '3PRIME_UTR'             => ['cadetblue3',     "3' UTR",                'black',],
     'UTR'                    => ['cadetblue3',     'UTR',                   'black',],
