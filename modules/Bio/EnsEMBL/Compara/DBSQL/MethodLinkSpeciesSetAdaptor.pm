@@ -223,13 +223,13 @@ sub store {
 
   my $select_sql = qq{
           SELECT
-            a.method_link_species_set_id, COUNT(*) as count
+            mlss1.method_link_species_set_id, COUNT(*) as count
           FROM
-                  method_link_species_set a, method_link_species_set b
+                  method_link_species_set mlss1, method_link_species_set mlss2
           WHERE
-                  a.method_link_species_set_id = b.method_link_species_set_id
-                  AND a.genome_db_id in (}.join(",", @genome_db_ids).qq{)
-                  AND a.method_link_id = $method_link_id
+                  mlss1.method_link_species_set_id = mlss2.method_link_species_set_id
+                  AND mlss1.genome_db_id in (}.join(",", @genome_db_ids).qq{)
+                  AND mlss2.method_link_id = $method_link_id
           GROUP BY method_link_species_set_id
           HAVING count = }.(scalar(@genome_db_ids) * scalar(@genome_db_ids));
 
@@ -246,8 +246,8 @@ sub store {
     #Thus we need to lock method_link_species_set as a, method_link_species_set as b, and method_link_species_set 
 
     $self->dbc->do(qq{ LOCK TABLES method_link WRITE, 
-                       method_link_species_set as a WRITE, 
-                       method_link_species_set as b WRITE,
+                       method_link_species_set as mlss1 WRITE, 
+                       method_link_species_set as mlss2 WRITE,
                        method_link_species_set WRITE });
 
     # Now, check if the object has not been stored before (tables are locked)
@@ -259,6 +259,29 @@ sub store {
     if (!$dbID) {
       $sth = $self->prepare($method_link_species_set_sql);
       $dbID = $method_link_species_set->dbID();
+      if (!$dbID) {
+        ## Use convetion rule for getting a new dbID. At the moment, we yse the following
+        ## ranges:
+        ##
+        ## dna-dna alignments: method_link_id E [1-100], method_link_species_set_id E [1-10000]
+        ## synteny:            method_link_id E [101-100], method_link_species_set_id E [10001-20000]
+        ## homology:           method_link_id E [201-300], method_link_species_set_id E [20001-30000]
+        ## families:           method_link_id E [301-400], method_link_species_set_id E [30001-40000]
+        ##
+        ## => the method_link_species_set_id must be between 10000 times the hundreds in the
+        ## method_link_id and the next hundred.
+        my $sth2 = $self->prepare("SELECT
+            MAX(mlss1.method_link_species_set_id + 1)
+            FROM method_link_species_set mlss1 LEFT JOIN method_link_species_set mlss2
+              ON (mlss2.method_link_species_set_id = mlss1.method_link_species_set_id + 1)
+            WHERE mlss2.method_link_species_set_id IS NULL
+              AND mlss1.method_link_species_set_id > 10000 * ($method_link_id DIV 100)
+              AND mlss1.method_link_species_set_id < 10000 * (1 + $method_link_id DIV 100)
+            ");
+        $sth2->execute();
+        ($dbID) = $sth2->fetchrow_array();
+        $dbID = 10000 * int($method_link_id / 100) + 1 if (!defined($dbID));
+      }
       foreach my $genome_db_id (@genome_db_ids) {
         $sth->execute(($dbID or "NULL"), $method_link_id, $genome_db_id);
         $dbID = $sth->{'mysql_insertid'};
