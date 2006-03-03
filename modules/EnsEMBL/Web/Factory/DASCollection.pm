@@ -454,6 +454,7 @@ sub createObjects {
 	if( ! $source_conf->{url} and ! ( $source_conf->{protocol} && $source_conf->{domain} ) ){
 	    next;
 	}
+
 	my $das_adapt = Bio::EnsEMBL::ExternalData::DAS::DASAdaptor->new
 	    ( 
 	      -name       => $source,
@@ -481,14 +482,17 @@ sub createObjects {
 	      -mapping     => $source_conf->{mapping}    || [],
 	      -fasta      => $source_conf->{fasta} || [],
 	      );				
-	$das_adapt->ensembldb( $self->DBConnection('core') );
-	if( my $p = $self->species_defs->ENSEMBL_WWW_PROXY ){
-	    $das_adapt->proxy($p);
-	}
+
+	if ($das_adapt) {
+	    $das_adapt->ensembldb( $self->DBConnection('core') );
+	    if( my $p = $self->species_defs->ENSEMBL_WWW_PROXY ){
+		$das_adapt->proxy($p);
+	    }
 
 	# Create the DAS object itself
-	my $das_obj = Bio::EnsEMBL::ExternalData::DAS::DAS->new( $das_adapt );
-	push @das_objs, $das_obj;
+	    my $das_obj = Bio::EnsEMBL::ExternalData::DAS::DAS->new( $das_adapt );
+	    push @das_objs, $das_obj;
+	}
     }
     
     # Create the collection object
