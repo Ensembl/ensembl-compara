@@ -29,7 +29,7 @@ sub features {
     # get a Vega slice to do the projection
     my $vega_slice = $self->{'container'};
     if (my $vega_sa = Bio::EnsEMBL::Registry->get_adaptor($species, "vega", "Slice")) {
-        my $vega_slice = $vega_sa->fetch_by_region(
+        $vega_slice = $vega_sa->fetch_by_region(
               (map { $self->{'container'}->$_ } qw(
                 coord_system_name
                 seq_region_name
