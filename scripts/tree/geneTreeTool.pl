@@ -16,6 +16,7 @@ use Bio::EnsEMBL::Compara::NestedSet;
 use Bio::EnsEMBL::Compara::NCBITaxon;
 use Bio::EnsEMBL::Compara::Graph::Algorithms;
 use Bio::EnsEMBL::Compara::Graph::NewickParser;
+use Bio::EnsEMBL::Registry;
 
 use Switch;
 use Time::HiRes qw(time gettimeofday tv_interval);
@@ -42,6 +43,8 @@ $self->{'print_leaves'} =0;
 my $conf_file;
 my ($help, $host, $user, $pass, $dbname, $port, $adaptor);
 my $url;
+
+Bio::EnsEMBL::Registry->no_version_check(1);
 
 GetOptions('help'             => \$help,
            'url=s'            => \$url,
@@ -149,7 +152,7 @@ if($self->{'tree'}) {
       my $gene = $leaf->gene_member;
       my $desc = $gene->description;
       $desc = "" unless($desc);
-      printf("%s : %s\n", $gene->stable_id, $desc);
+      printf("%s %s : %s\n", $leaf->name,$gene->stable_id, $desc);
     }
     printf("%d proteins\n", scalar(@$leaves));
   }
