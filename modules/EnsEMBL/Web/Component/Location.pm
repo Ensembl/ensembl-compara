@@ -637,14 +637,19 @@ sub multi_bottom_nav     { return bottom_nav( @_, 'thjviewbottom' , { multi_spec
 sub cytoview_nav         { return bottom_nav( @_, 'cytoview', {} ); }
 sub alignsliceviewbottom_nav { return bottom_nav( @_, 'alignsliceviewbottom' , { } ); }
 
-sub ldview_nav           { 
+sub ldview_nav           {
+  my ($pops_on, $pops_off ) = $_[1]->current_pop_name;
+  my $pop;
+  map { $pop .= "opt_pop_$_:on;" } @$pops_on;
+  map { $pop .= "opt_pop_$_:off;" } @$pops_off;
+
   return bottom_nav( @_, 'ldview',   {
     'snp'    => $_[1]->param('snp')    || undef,
     'gene'   => $_[1]->param('gene')   || undef,
-    'pop'    => $_[1]->current_pop_id  || undef,
-   # 'w'      => $_[1]->param('w')      || undef,
-   # 'c'      => $_[1]->param('c')      || undef,
-    'source' => $_[1]->param('source') || "dbSNP",
+    'bottom' => $pop                   || undef,
+    'w'      => $_[1]->param('w')      || undef,
+    'c'      => $_[1]->param('c')      || undef,
+    'source' => $_[1]->param('source'),
     'h'      => $_[1]->highlights_string || undef,
   } );	
 }

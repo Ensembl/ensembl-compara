@@ -40,91 +40,90 @@ use Spreadsheet::WriteExcel;
 
 sub ld_values {
   my $object = shift;
-  my $pop_id = $object->current_pop_id;
-  unless ($pop_id) {
+  my $pops = $object->current_pop_name;
+  unless (@$pops) {
     warn "****** ERROR: No population defined";
     return;
   }
-
-  my $data = $object->ld_for_slice($pop_id); 
-  my $pop_obj = $object->pop_obj_from_id($pop_id);
-  my $pop_name = $pop_obj->{$pop_id}{Name};
-
 
   # Header info -----------------------------------------------------------
   # Check there is data to display
   my $zoom = $object->param('w')|| 50000;
 
   my %return;
-  foreach my $ldtype ( "r2", "d_prime" ) {
-    my $display = $ldtype eq 'r2' ? "r2" : "D'";
-    my $nodata = "No $display linkage data in $zoom kb window for population $pop_name";
-    unless (%$data && keys %$data) {
-      $return{$ldtype}{"text"} = $nodata;
-      next;
-    }
-
-    my @snp_list = 
-      sort { $a->[1]->start <=> $b->[1]->start }
-	map  { [ $_ => $data->{'variationFeatures'}{$_} ] }
-	  keys %{ $data->{'variationFeatures'} };
-    unless (scalar @snp_list) {
-      $return{$ldtype}{"text"} = $nodata;
-      next;
-    }
-
-    # Do each column starting from 1 because first col is empty----------------
-    my @table;
-    my $flag = 0 ;
-    for (my $xcounter=0; $xcounter < scalar @snp_list; $xcounter++) { 
-
-      # Do from left side of table row across to current snp
-      for (my $ycounter= 0; $ycounter < $xcounter; $ycounter++) {
-	my $ld_pair1 = "$snp_list[$xcounter]->[0]".-$snp_list[$ycounter]->[0];
-	my $ld_pair2 = "$snp_list[$ycounter]->[0]".-$snp_list[$xcounter]->[0];
-	my $cell;
-	if ( $data->{'ldContainer'}{$ld_pair1}) {
-	  $cell = $data->{'ldContainer'}{$ld_pair1}{$pop_id}{$ldtype};
-	}
-	elsif ( $data->{'ldContainer'}{$ld_pair2}) {
-	  $cell = $data->{'ldContainer'}{$ld_pair2}{$pop_id}{$ldtype};
-	}
-	$flag = $cell ? 1 : 0 unless $flag;
-	$table[$xcounter][$ycounter] = $cell;
+  foreach my $pop_name (@$pops) {
+    my $pop_obj = $object->pop_obj_from_name($pop_name);
+    my $pop_id = $pop_obj->{$pop_name}{dbID};
+    my $data = $object->ld_for_slice($pop_id);
+    foreach my $ldtype ( "r2", "d_prime" ) {
+      my $display = $ldtype eq 'r2' ? "r2" : "D'";
+      my $nodata = "No $display linkage data in $zoom kb window for population $pop_name";
+      unless (%$data && keys %$data) {
+	$return{$ldtype}{"text"} = $nodata;
+	next;
       }
-    }
-    unless ($flag) {
-      $return{$ldtype}{"text"} = $nodata;
-      next;
-    }
 
-    # Turn snp_list from an array of variation_feature IDs to SNP 'rs' names
-    # Make current SNP bold
-    my @snp_names;
-    my @starts_list;
-    my $snp = $object->param('snp') || "";
-    foreach (@snp_list) {
-      my $name = $_->[1]->variation_name;  #name
-      if ($name eq $snp or $name eq "rs$snp") {
-	push (@snp_names, "*$name*");
-      } else { 
-	push (@snp_names,  $name);     }
-
-      my( $start, $end ) = ($_->[1]->start, $_->[1]->end ); #position
-      my $pos =  $start;
-      if($start > $end  ) {
-	$pos = "between $start & $end";
-      }  elsif($start < $end ) {
-	$pos = "$start-"."$end";
+      my @snp_list = 
+	sort { $a->[1]->start <=> $b->[1]->start }
+	  map  { [ $_ => $data->{'variationFeatures'}{$_} ] }
+	    keys %{ $data->{'variationFeatures'} };
+      unless (scalar @snp_list) {
+	$return{$ldtype}{"text"} = $nodata;
+	next;
       }
-      push (@starts_list, $pos);
-    }
-    my $location = $object->seq_region_name .":".$object->seq_region_start."-".
-      $object->seq_region_end;
-    $return{$ldtype}{"text"} = "Pairwise $display values for $location.  Population: $pop_name";
-    $return{$ldtype}{"data"} = [\@starts_list, \@snp_names, \@table];
-  } # end foreach
 
+      # Do each column starting from 1 because first col is empty---------
+      my @table;
+      my $flag = 0 ;
+      for (my $xcounter=0; $xcounter < scalar @snp_list; $xcounter++) { 
+
+	# Do from left side of table row across to current snp
+	for (my $ycounter= 0; $ycounter < $xcounter; $ycounter++) {
+	  my $ld_pair1 ="$snp_list[$xcounter]->[0]".-$snp_list[$ycounter]->[0];
+	  my $ld_pair2 ="$snp_list[$ycounter]->[0]".-$snp_list[$xcounter]->[0];
+	  my $cell;
+	  if ( $data->{'ldContainer'}{$ld_pair1}) {
+	    $cell = $data->{'ldContainer'}{$ld_pair1}{$pop_id}{$ldtype};
+	  }
+	  elsif ( $data->{'ldContainer'}{$ld_pair2}) {
+	    $cell = $data->{'ldContainer'}{$ld_pair2}{$pop_id}{$ldtype};
+	  }
+	  $flag = $cell ? 1 : 0 unless $flag;
+	  $table[$xcounter][$ycounter] = $cell;
+	}
+      }
+      unless ($flag) {
+	$return{$ldtype}{"text"} = $nodata;
+	next;
+      }
+
+      # Turn snp_list from an array of variation_feature IDs to SNP 'rs' names
+      # Make current SNP bold
+      my @snp_names;
+      my @starts_list;
+      my $snp = $object->param('snp') || "";
+      foreach (@snp_list) {
+	my $name = $_->[1]->variation_name;  #name
+	if ($name eq $snp or $name eq "rs$snp") {
+	  push (@snp_names, "*$name*");
+	} else { 
+	  push (@snp_names,  $name);     }
+
+	my( $start, $end ) = ($_->[1]->start, $_->[1]->end ); #position
+	my $pos =  $start;
+	if($start > $end  ) {
+	  $pos = "between $start & $end";
+	}  elsif($start < $end ) {
+	  $pos = "$start-"."$end";
+      }
+	push (@starts_list, $pos);
+      }
+      my $location = $object->seq_region_name .":".$object->seq_region_start.
+	"-".$object->seq_region_end;
+      $return{$ldtype}{"text"} = "Pairwise $display values for $location.  Population: $pop_name";
+      $return{$ldtype}{"data"} = [\@starts_list, \@snp_names, \@table];
+    } # end foreach
+  }
   return \%return;
 }
 
