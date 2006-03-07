@@ -86,47 +86,61 @@ sub addContext {
 
 ######## LDVIEW CALLS ################################################
 
-=head2 get_default_pop_id
+=head2 get_default_pop_name
 
    Arg[1]      : 
-   Example     : my $pop_id = $self->DataObj->get_default_pop_id
+   Example     : my $pop_id = $self->DataObj->get_default_pop_name
    Description : returns population id for default population for this species
    Return type : population dbID
 
 =cut
 
-sub get_default_pop_id {
+sub get_default_pop_name {
   my $self = shift;
   my $variation_db = $self->database('variation')->get_db_adaptor('variation');
   my $pop_adaptor = $variation_db->get_PopulationAdaptor;
   my $pop = $pop_adaptor->fetch_default_LDPopulation(); 
   return unless $pop;
-  return $pop->dbID;
+  return $pop->name;
 }
 
-=head2 pop_obj_from_id
+=head2 pop_obj_from_name
 
-  Arg[1]      : Population ID
-  Example     : my $pop_name = $self->DataObj->pop_obj_from_id($pop_id);
-  Description : returns population name for the given population dbID
+  Arg[1]      : Population name
+  Example     : my $pop_name = $self->DataObj->pop_obj_from_name($pop_id);
+  Description : returns population info for the given population name
   Return type : population object
 
 =cut
 
-sub pop_obj_from_id {
+sub pop_obj_from_name {
+  my $self = shift;
+  my $pop_name = shift;
+  my $variation_db = $self->database('variation')->get_db_adaptor('variation');
+  my $pa  = $variation_db->get_PopulationAdaptor;
+  my $pop = $pa->fetch_by_name($pop_name);
+  return {} unless $pop;
+  my $data = $self->format_pop( [$pop] );
+  return $data;
+}
+
+=head2 pop_name_from_id
+
+  Arg[1]      : Population id
+  Example     : my $pop_name = $self->DataObj->pop_name_from_id($pop_id);
+  Description : returns population name as string
+  Return type : string
+
+=cut
+
+sub pop_name_from_id {
   my $self = shift;
   my $pop_id = shift;
   my $variation_db = $self->database('variation')->get_db_adaptor('variation');
   my $pa  = $variation_db->get_PopulationAdaptor;
   my $pop = $pa->fetch_by_dbID($pop_id);
   return {} unless $pop;
-  my %data;
-  $data{$pop->dbID}{Name}    = $self->pop_name($pop);
-  $data{$pop->dbID}{Size}    = $self->pop_size($pop);
-  $data{$pop->dbID}{PopLink} = $self->pop_links($pop);
-  $data{$pop->dbID}{Description}= $self->pop_description($pop);
-  $data{$pop->dbID}{PopObject}= $pop;  ## ok maybe this is cheating..
-  return \%data;
+  return $self->pop_name( $pop );
 }
 
 =head2 extra_pop
@@ -144,15 +158,32 @@ sub extra_pop {  ### ALSO IN SNP DATA OBJ
   return {} unless $pop_obj;
   my $call = "get_all_$type" . "_Populations";
   my @populations = @{ $pop_obj->$call};
+  return  $self->format_pop(\@populations);
+}
 
-  my %extra_pop;
-  foreach my $pop ( @populations ) {
-    $extra_pop{$pop->dbID}{Name}       = $self->pop_name($pop);
-    $extra_pop{$pop->dbID}{Size}       = $self->pop_size($pop);
-    $extra_pop{$pop->dbID}{PopLink}    = $self->pop_links($pop);
-    $extra_pop{$pop->dbID}{Description}= $self->pop_description($pop);
+=head2 format_pop
+
+  Arg[1]      : population object
+  Example     : my $data = $self->format_pop
+  Description : returns population info for the given population obj
+  Return type : hashref
+
+=cut
+
+sub format_pop {
+  my $self = shift;
+  my $pops = shift;
+  my %data;
+  foreach (@$pops) {
+    my $name = $self->pop_name($_);
+    $data{$name}{Name}       = $self->pop_name($_);
+    $data{$name}{dbID}       = $_->dbID;
+    $data{$name}{Size}       = $self->pop_size($_);
+    $data{$name}{PopLink}    = $self->pop_links($_);
+    $data{$name}{Description}= $self->pop_description($_);
+    $data{$name}{PopObject}  = $_;  ## ok maybe this is cheating..
   }
-  return \%extra_pop;
+  return \%data;
 }
 
 
@@ -191,11 +222,7 @@ sub ld_for_slice {
 
   my $end   = $start + ($width/2);
   $start -= ($width/2);
-  my $slice =
-    $self->database('core')->get_SliceAdaptor()->fetch_by_region(
-    $seq_type, $seq_region, $start, $end, 1
-  );
-
+  my $slice = $self->slice_cache($seq_type, $seq_region, $start, $end, 1);
   return {} unless $slice;
   return  $slice->get_all_LD_values() || {};
 }
@@ -261,10 +288,11 @@ sub location { return $_[0]; }
 sub generate_query_hash {
   my $self = shift;
   return {
-    'c' => $self->seq_region_name.':'.$self->centrepoint.':'.$self->seq_region_strand,
-    'w' => $self->length,
-    'h' => $self->highlights_string()
-  };
+    'c'     => $self->seq_region_name.':'.$self->centrepoint.':'.$self->seq_region_strand,
+    'w'     => $self->length,
+    'h'     => $self->highlights_string(),
+    'pop'   => $self->param('pop'),
+ };
 }
 
 =head2 get_variation_features
@@ -303,14 +331,50 @@ sub slice_cache {
 }
 
 
-sub current_pop_id {
+sub current_pop_name {
   my $self = shift;
-  #  my $default_pop = "PERLEGEN:AFD_CHN_PANEL";
-  my $param_pop   = $self->param('pop');
-  return $param_pop if $param_pop;
-  my $default_pop =  $self->get_default_pop_id;
+  my %pops_on;
+  my %pops_off;
+  my $script_config = $self->get_scriptconfig();
+
+  # Read in all in scriptconfig stuff
+  foreach ($script_config->options) {
+    next unless $_ =~ s/opt_pop_//;
+    $pops_on{$_}  = 1 if $script_config->get("opt_pop_$_") eq 'on';
+    $pops_off{$_} = 1 if $script_config->get("opt_pop_$_") eq 'off';
+  }
+
+  # Set options according to bottom
+  # if param bottom   #pop_CSHL-HAPMAP:HapMap-JPT:on;
+  if ( $self->param('bottom') ) {
+    foreach( split /\|/, ($self->param('bottom') ) ) {
+      next unless $_ =~ /opt_pop_(.*):(.*)/;
+      if ($2 eq 'on') {
+	$pops_on{$1} = 1;
+	delete $pops_off{$1};
+      }
+      elsif ($2 eq 'off') {
+	$pops_off{$1} = 1;
+	delete $pops_on{$1};
+      }
+    }
+    return ( [keys %pops_on], [keys %pops_off] )  if keys %pops_on or keys %pops_off;
+  }
+
+
+  # Get pops switched on via pop arg if no bottom
+  if ( my @pops = $self->param('pop') ) {
+    # put all pops_on keys in pops_off
+    map { $pops_off{$_} = 1 } (keys %pops_on);
+    %pops_on = ();
+    map { $pops_on{$_} = 1 if $_ } @pops;
+  }
+  return ( [keys %pops_on], [keys %pops_off] )  if keys %pops_on or keys %pops_off;
+
+  return [] if $self->param('bottom') or $self->param('pop');
+  my $default_pop =  $self->get_default_pop_name;
   warn "*****[ERROR]: NO DEFAULT POPULATION DEFINED.\n\n" unless $default_pop;
-  return $default_pop;
+  return ( [$default_pop], [] );
 }
 
 
@@ -319,16 +383,55 @@ sub current_pop_id {
    Arg[1]      :
    Example     : my $data = $self->DataObj->ld_for_slice;
    Description : returns all population IDs with LD data for this slice
-   ReturnType  : array ref of population dbIDs
+   ReturnType  : hashref of population dbIDs
 =cut
 
 
 sub pops_for_slice {
   my $self = shift;
-  my $pop  = shift  || "";
-  my $ld_container = $self->ld_for_slice($pop);
+  my $width  = shift || 100000;
+
+  my $ld_container = $self->ld_for_slice($width);
   return [] unless $ld_container;
-  return $ld_container->get_all_populations();
+
+  my $pop_ids = $ld_container->get_all_populations();
+  return {} unless @$pop_ids;
+
+  my @pops;
+  foreach (@$pop_ids) {
+    my $name = $self->pop_name_from_id($_);
+    push @pops, $name;
+  }
+
+  return \@pops;
+}
+
+
+sub getVariationsOnSlice {
+  my $self = shift;
+  my $sliceObj = EnsEMBL::Web::Proxy::Object->new(
+        'Slice', $self->slice_cache, $self->__data
+       );
+
+  my ($count_snps, $filtered_snps) = $sliceObj->get_genotyped_VariationFeatures;
+  return ($count_snps, $filtered_snps);
+}
+
+sub get_source {
+  my $self = shift;
+  my $default = shift;
+  my $vari_adaptor = $self->database('variation')->get_db_adaptor('variation');
+  unless ($vari_adaptor) {
+    warn "ERROR: Can't get variation adaptor";
+    return ();
+  }
+
+  if ($default) {
+    return  $vari_adaptor->get_VariationAdaptor->get_default_source();
+  }
+  else {
+    return $vari_adaptor->get_VariationAdaptor->get_all_sources();
+  }
 }
 
 1;
