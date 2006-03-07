@@ -2,7 +2,6 @@ package EnsEMBL::Web::Document::DropDown::Menu::Population;
 
 use strict;
 use EnsEMBL::Web::Document::DropDown::Menu;
-
 our @ISA =qw( EnsEMBL::Web::Document::DropDown::Menu );
 
 sub new {
@@ -13,11 +12,10 @@ sub new {
     'image_width' => 85,
     'alt'         => 'Populations'
   );
-  my $pops = $self->{'config'}{'Populations'};
-  my @menu_entries = sort { $pops->{$a} cmp $pops->{$b} } keys %$pops;
-  return undef unless @menu_entries;
-  foreach my $m ( @menu_entries ) {
-    $self->add_checkbox( "pop_$m", $pops->{$m} ); 
+  my @menu_entries = @{ $self->{'config'}{'Populations'} || [] };
+  return undef unless scalar @menu_entries;
+  foreach my $pop ( sort @menu_entries ) {
+    $self->add_checkbox( "opt_pop_$pop", $pop ); 
   }
   return $self;
 }
