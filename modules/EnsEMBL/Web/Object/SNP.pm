@@ -985,23 +985,23 @@ sub pop_obj_from_id {
   return \%data;
 }
 
-=head2 get_default_pop_id
+=head2 get_default_pop_name
 
   Arg[1]      : 
-  Example     : my $pop_id = $object->get_default_pop_id
+  Example     : my $pop_id = $object->get_default_pop_name
   Description : returns population id for default population for this species
   Return type : population dbID
 
 =cut
 
-sub get_default_pop_id {
+sub get_default_pop_name {
   my $self = shift;
   my $variation_db = $self->database('variation')->get_db_adaptor('variation');
   my $pop_adaptor = $variation_db->get_PopulationAdaptor;
   return unless $pop_adaptor;
   my $pop = $pop_adaptor->fetch_default_LDPopulation();
   return unless $pop;
-  return $self->pop_id($pop);
+  return [ $self->pop_name($pop) ];
 }
 
 sub location { return $_[0]; }
@@ -1013,7 +1013,7 @@ sub generate_query_hash {
     'source'  => $self->source || "dbSNP",
     'snp'     => $self->name,
     'c'       => $self->param('c'),
-    'pop'     => $self->get_default_pop_id
+    'pop'     => $self->get_default_pop_name,
   };
 }
 
