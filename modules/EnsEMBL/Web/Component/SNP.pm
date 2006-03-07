@@ -558,12 +558,12 @@ sub snpview_image_menu {
 		 'source'     => $object->source || "dbSNP",
 		 'snp'        => $object->name || '',
 		 'c'          => $object->param('c') || '',
-		 'pop'        => $object->get_default_pop_id || '',
+		 'pop'        => $object->get_default_pop_name || '',
 		};
   $user_config->set( '_settings', 'URL', "/".$object->species."/snpview?".
     join(";", map { "$_=".CGI::escapeHTML($params->{$_}) } keys %$params ).
       ";snpview=%7Cbump_", 1);
-  $user_config->{'_ld_population'} = $object->get_default_pop_id;
+  $user_config->{'_ld_population'} = $object->get_default_pop_name;
   my $mc = $object->new_menu_container( 
     'configname' => 'snpview',
     'panel'      => 'snpview',
@@ -820,9 +820,9 @@ sub link_to_ldview {
     $count++;
     my $name = $pop_data->{$pop_id};
     $output .= "<td><a href='ldview?snp=". $object->name;
-    $output .=  "&amp;c=".$object->param('c') if $object->param('c');
-    $output .=  "&amp;w=".($object->param('w') || "20000");
-    $output .=	"&amp;pop=$pop_id'>$name</a></td>";
+    $output .=  ";c=".$object->param('c') if $object->param('c');
+    $output .=  ";w=".($object->param('w') || "20000");
+    $output .=	";pop=$name'>$name</a></td>";
     if ($count ==4) {
       $count = 0;
       $output .= "</tr><tr>";
