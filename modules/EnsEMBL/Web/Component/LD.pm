@@ -77,47 +77,24 @@ sub prediction_method {
 
 sub population_info {
   my ( $panel, $object ) = @_;
-  my $pop_id  = $object->current_pop_id;
-  return () unless $pop_id;
+  my $pop_names  = $object->current_pop_name;
 
-  my $pop       = $object->pop_obj_from_id($pop_id);
-  my $super_pop = $object->extra_pop($pop->{$pop_id}{PopObject}, "super");
-  my $sub_pop   = $object->extra_pop($pop->{$pop_id}{PopObject}, "sub");
+  unless (@$pop_names) {
+    $panel->add_row("Population", "Please select a population from the yellow drop down menu below.");
+    return ;
+  }
 
-  my $info;
-  $panel->add_row( "Population", print_pop_info($object, $pop, "Population"))  if $pop;
-   $panel->add_row( "Super-population", print_pop_info($object, $super_pop, "Super-population"))  if $super_pop;
-  #$panel->add_row ("Sub-population", print_pop_info($object, $sub_pop, "Sub-population")) if $sub_pop;
-
+  foreach my $name (@$pop_names) {
+    my $pop       = $object->pop_obj_from_name($name);
+    my $super_pop = $object->extra_pop($pop->{$name}{PopObject}, "super");
+    my $sub_pop   = $object->extra_pop($pop->{$name}{PopObject}, "sub");
+    my $html = print_pop_info($object, $pop, "Population");
+    $html   .= print_pop_info($object, $super_pop, "Super-population");
+    $panel->add_row( "Population", "<table>$html</table>");
+  }
   return 1;
- }
+}
 
-
-
-## Location functions #####################################################
-# mappings       : table of mappings displayed if there is more than one 
-#                  mapping for 
-# =head2 html_location
-
-#    Arg[1]      : 
-#    Example     : $self->html_location
-#    Description : returns string with Genomic location as a link
-#    Return type : string
-
-# =cut
-
-# sub html_location {
-#   my ( $panel, $object ) = @_;
-#   my $return   = sprintf '<a href="/%s/contigview?c=%s:%s;w=50">%s %s</a>',
-#     $object->species, 
-#       $object->seq_region_name, 
-# 	$object->seq_region_start,
-# 	  $object->seq_region_type_and_name, 
-# 	    $object->thousandify( $object->seq_region_start );
-
-#   $panel->add_row("Genomic region", $return || "No mapping position");
-#   return 1;
-# }
 
 
 # Use this if there is more than one mapping for SNP  -----------------------
@@ -144,9 +121,8 @@ sub mappings {
       $chr_info{chr} = "unknown";
     }
     my $vari = $snp->[0]->name;
-    my $choice = "<a href='$view?snp=$vari&c=$region:$start'>Choose this location</a>";
-
-    my $display = $object->centrepoint eq $start ? "Current location":$choice;
+    my $choice = "<a href='$view?snp=$vari;c=$region:$start;w=10000'>Choose this location</a>";
+    my $display = int($object->centrepoint +0.5) eq $start ? "Current location":$choice;
     $chr_info{location} = $display;
 
     $panel->add_row(\%chr_info);
@@ -162,25 +138,26 @@ sub mappings {
 
 sub ldview_image_menu {
   my($panel, $object ) = @_;
+  my ($count_snps, $snps) = $object->getVariationsOnSlice();
   my $user_config = $object->user_config_hash( 'ldview' );
   $user_config->{'_databases'}     = $object->DBConnection;
   $user_config->{'_add_labels'}    = 'true';
-  $user_config->{'Populations'} = ld_populations($object, 100000);
+  $user_config->{'Populations'}    = $object->pops_for_slice(100000);
+  $user_config->{'_ld_population'} = $object->current_pop_name;
+  $user_config->{'snps'}           = $snps;
 
-  my $pop = $object->param('pop') || $object->get_default_pop_id;
-  $user_config->{'_ld_population'} = $pop;
   my $mc = $object->new_menu_container(
     'configname'  => 'ldview',
-    'panel'       => 'ldview',
-    'leftmenus'  => [qw(Features Options Population Export ImageSize)],
+    'panel'       => 'bottom',
+    'leftmenus'  => [qw(Features Population Source Options Export ImageSize)],
     'rightmenus' => [qw(SNPHelp)],
-   #  'fields' => {
+    #  'fields' => {
 #       'snp'          => $object->param('snp'),
 #       'gene'         => $object->param('gene'),
-#       'pop'          => $pop, 
+#       'pop'          => $object->current_pop_name,
 #       'w'            => $object->length,
 #       'c'            => $object->seq_region_name.':'.$object->centrepoint,  
-#       'source'       => $object->param('source') || "dbSNP",
+#       'source'       => $object->param('source'),
 #       'h'            => $object->highlights_string,
 #     }
   );
@@ -207,8 +184,7 @@ sub ldview_image {
   # If you want to resize this image
   my $image = $object->new_image( $slice, $wuc, [$object->name] );
   $image->imagemap = 'yes';
-  my $T = $image->render;
-  $panel->print( $T );
+  $panel->print( $image->render );
   return 0;
 }
 
@@ -238,7 +214,7 @@ sub options {
 
 sub options_form {
   my ($panel, $object ) = @_;
-  my $form = EnsEMBL::Web::Form->new('ldview', "/@{[$object->species]}/ldtableview", 'get' );
+  my $form = EnsEMBL::Web::Form->new('ldview_form', "/@{[$object->species]}/ldtableview", 'get' );
 
   my  @formats = ( {"value" => "astext",  "name" => "As text"},
 	#	   {"value" => "asexcel", "name" => "In Excel format"},
@@ -246,7 +222,9 @@ sub options_form {
 		 );
 
   return $form unless @formats;
-  $form->add_element( 'type' => 'Hidden', 'name' => '_format', 'value'=>'HTML' );
+  $form->add_element( 'type' => 'Hidden', 
+		      'name' => '_format', 
+		      'value'=>'HTML' );
   $form->add_element(
     'class'     => 'radiocheck1col',
     'type'      => 'DropDown',
@@ -292,7 +270,7 @@ sub tagged_snp {
   my $snp_data  = $snps->[0]->tagged_snp;
   return unless %$snp_data;
 
-  my $current_pop  = $object->current_pop_id;
+  my $current_pop  = $object->current_pop_name;
   for my $pop_id (keys %$snp_data) {
     return "Yes" if $pop_id == $current_pop;
   }
@@ -306,41 +284,29 @@ sub tagged_snp {
 
 sub print_pop_info {
   my ($object, $pop, $label ) = @_;
-  #my $focus  = focus($object);
   my $count;
   my $return;
 
-  foreach my $pop_id (keys %$pop) {
-    my $display_pop = _pop_url($object,  $pop->{$pop_id}{Name}, 
-				       $pop->{$pop_id}{PopLink});
+  foreach my $pop_name (keys %$pop) {
+    my $display_pop = _pop_url($object,  $pop->{$pop_name}{Name}, 
+				       $pop->{$pop_name}{PopLink});
 
-    my $description = $pop->{$pop_id}{Description} || "Unknown";
+    my $description = $pop->{$pop_name}{Description} || "unknown";
     $description =~ s/\.\s+.*//; # descriptions are v. long. Stop after 1st "."
 
-    if ($label eq 'Population') {
-      $return .= "<th>Name:</th><td>$display_pop</td></tr>";
-      $return .= "<tr><th>Size:</th><td>".
-	($pop->{$pop_id}{Size}|| "Unknown")."</td></tr> ";
-      $return .= "<tr><th>Description:</th><td>".
-	($description)."</td></tr>";
+    my $size = $pop->{$pop_name}{Size}|| "unknown";
+    $return .= "<th>$label: </th><td>$display_pop &nbsp;[size: $size]</td></tr>";
+    $return .= "<tr><th>Description:</th><td>".
+      ($description)."</td>";
 
-      if ($object->param('snp')) {
- 	my $tagged = tagged_snp($object);
- 	$return .= "<tr><th>SNP in tagged set for this population:</th>
-                   <td>$tagged</td></tr>" if $tagged;
-       }
-    }
-    else {
-      $count++;
-      $return .= qq(<td><span class="small">$display_pop</span></td>);
-      if ($count ==4) {
-	$count   = 0;
-	$return .= "</tr><tr>";
-      }
+    if ($object->param('snp') && $label eq 'Population') {
+      my $tagged = tagged_snp($object);
+      $return .= "<tr><th>SNP in tagged set for this population:<br /></th>
+                   <td>$tagged</td>" if $tagged;
     }
   }
   return unless $return;
-  $return = "<table><tr>$return</tr></table>";
+  $return = "<tr>$return</tr>";
   return $return;
 }
 
@@ -351,22 +317,6 @@ sub _pop_url {
   return $object->get_ExtURL_link( $pop_name, 'DBSNPPOP', $pop_dbSNP->[0] );
 }
 
-
-# Internal: Form  calls #################################################
-
-sub ld_populations {
-  my ( $object, $width ) = @_;
-  my $pop_ids = $object->pops_for_slice($width); # slice width
-  return {} unless @$pop_ids;
-
-  my %pops;
-  foreach (@$pop_ids) {
-    my $data = $object->pop_obj_from_id($_);
-    my $name = $data->{$_}{Name};
-    $pops{$_} = $name;
-  }
-  return \%pops;
-}
 
 #------------------------------------------------------------------------------
 
@@ -430,8 +380,6 @@ For section on dumping out the data:
 =item B<print_pop_info>      Returns HTML string with population data
 
 =item B<_pop_url>            Returns HTML string of link to population in dbSNP
-
-=item B<ld_populations>      Returns hasref of pops with LD data for this slice
 
 =back
 
@@ -529,15 +477,6 @@ For section on dumping out the data:
    Example     : _pop_url($pop_name, $pop_dbSNPID);
    Description : makes pop_name into a link
    Return type : html string
-
-
-=head3 B<ld_populations>
-
-   Arg1        : object
-   Arg2        : slice width
-   Example     : ld_populations($object, width)
-   Description : data structure with population id and name of pops with LD info for this slice
-   Return type : hashref
 
 
 =head2 BUGS AND LIMITATIONS
