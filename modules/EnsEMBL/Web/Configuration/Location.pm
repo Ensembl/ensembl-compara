@@ -571,30 +571,67 @@ sub alignsliceview {
 }
 
 
-###############################################################################
+#############################################################################
 
 sub ldview {
   my $self = shift;
-  my $object = $self->{object};
-  ## This should be moved to the Location::Object module I think....
-  $object->alternative_object_from_factory( 'SNP' )  if $object->param('snp');
-  if( $object->param('gene') ) {
-    $object->alternative_object_from_factory( 'Gene' );
-    if( (@{$object->__data->{'objects'}||[]}) && !@{ $object->__data->{'gene'}||[]} ) {
-      $object->param('db',   $object->__data->{'objects'}->[0]{'db'}   );
-      $object->param('gene', $object->__data->{'objects'}->[0]{'gene'} );
-      $object->alternative_object_from_factory( 'Gene' );
+  my $obj = $self->{object};
+
+  # Set default sources
+  my @sources = keys %{ $obj->species_defs->VARIATION_SOURCES || {} } ;
+  my $default_source = $obj->get_source("default");;
+  my $script_config = $obj->get_scriptconfig();
+  my $restore_default = 1;
+
+  $self->update_configs_from_parameter( 'bottom', 'ldview' );
+  foreach my $source ( @sources ) {
+    $restore_default = 0 if $script_config->get(lc("opt_$source") ) eq 'on';
+ }
+
+ if( $restore_default ) { # if none of species' sources are on
+   foreach my $source ( @sources ) {
+     my $switch;
+     if ($default_source) {
+       $switch = $source eq $default_source ? 'on' : 'off' ;
+     }
+     else {
+       $switch = 'on';
+     }
+     $script_config->set(lc("opt_$source"), $switch, 1);
+   }
+ }
+
+  $self->update_configs_from_parameter( 'bottom', 'ldview' );
+
+  my ($pops_on, $pops_off) = $obj->current_pop_name;
+  my $script_config = $obj->get_scriptconfig();
+  foreach (@$pops_on) {
+     $script_config->set("opt_pop_$_", 'on', 1);
+  }
+  map { $script_config->set("opt_pop_$_", 'off', 1); } @$pops_off;
+  map { $script_config->set("opt_pop_$_", 'on', 1); } @$pops_on;
+  $script_config->save;
+
+
+ ## This should be moved to the Location::Object module I think....
+  $obj->alternative_object_from_factory( 'SNP' )  if $obj->param('snp');
+  if( $obj->param('gene') ) {
+    $obj->alternative_object_from_factory( 'Gene' );
+    if( (@{$obj->__data->{'objects'}||[]}) && !@{ $obj->__data->{'gene'}||[]} ) {
+      $obj->param('db',   $obj->__data->{'objects'}->[0]{'db'}   );
+      $obj->param('gene', $obj->__data->{'objects'}->[0]{'gene'} );
+      $obj->alternative_object_from_factory( 'Gene' );
     }
   }
-  $object->clear_problems();
+  $obj->clear_problems();
   my $params= { 
-    'snp'    => $object->param('snp'),
-    'gene'   => $object->param('gene'),
-    'pop'    => $object->current_pop_id,
-    'w'      => $object->length,
-    'c'      => $object->seq_region_name.':'.$object->centrepoint,
-    'source' => $object->param('source') || "dbSNP",
-    'h'      => $object->highlights_string,
+    'snp'    => $obj->param('snp'),
+    'gene'   => $obj->param('gene'),
+    'pop'    => $pops_on,
+    'w'      => $obj->length,
+    'c'      => $obj->seq_region_name.':'.$obj->centrepoint,
+    'source' => $obj->param('source'),
+    'h'      => $obj->highlights_string,
   } ;
 
   # Description : prints a two col table with info abou the LD ---------------
@@ -613,7 +650,7 @@ sub ldview {
   }
 
   # Multiple mappings ------------------------------------------------------
-  my $snp = $object->__data->{'snp'}->[0];
+  my $snp = $obj->__data->{'snp'}->[0];
   if ($snp) {
     my $mappings = $snp->variation_feature_mapping;
     my $multi_hits = keys %$mappings == 1 ? 0 : 1;
@@ -635,8 +672,8 @@ sub ldview {
 
   # Neighbourhood image -------------------------------------------------------
   ## Now create the image panel   
-  my $context = $object->seq_region_type_and_name ." ".
-    $object->thousandify( $object->seq_region_start );
+  my $context = $obj->seq_region_type_and_name ." ".
+    $obj->thousandify( $obj->seq_region_start );
 
   if (
       my $image_panel = $self->new_panel( 'Image',
@@ -646,11 +683,11 @@ sub ldview {
      'params'  => $params,
 					)) {
 
-    if ( $object->seq_region_type ) {
+    if ( $obj->seq_region_type ) {
       # Store any input from Form into the 'ldview' graphic config..
-      if( $object->param( 'ldview' ) ) {
-	my $wuc = $object->user_config_hash( 'ldview' );
-	$wuc->update_config_from_parameter( $object->param('ldview') );
+      if( $obj->param( 'bottom' ) ) {
+	my $wuc = $obj->user_config_hash( 'ldview' );
+	$wuc->update_config_from_parameter( $obj->param('bottom') );
       }
 
       ## Initialize the javascript for the zmenus and dropdown menus
