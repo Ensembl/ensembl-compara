@@ -213,7 +213,7 @@ sub prepareChainSystem
   # AlignmentChains Analysis
   #
   my $max_gap = $chain_conf{'max_gap'};
-  my $output_group_type = $chain_conf{'output_group_type'};
+  my $group_type = $chain_conf{'output_group_type'};
   $group_type = "chain" unless (defined $group_type);
   $parameters = "{\'input_method_link\'=>\'$input_method_link_type\',\'output_method_link\'=>\'$output_method_link_type\',\'max_gap\'=>\'$max_gap\','output_group_type\'=>\'$group_type\'}";
   my $alignmentChainsAnalysis = Bio::EnsEMBL::Analysis->new(
