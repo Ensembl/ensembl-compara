@@ -40,8 +40,17 @@ use Spreadsheet::WriteExcel;
 
 sub ld_values {
   my $object = shift;
-  my $pops = $object->current_pop_name;
-  unless (@$pops) {
+  my %pops;
+  my @bottom = $object->param('bottom');
+
+  foreach my $tmp ( @bottom  ) {
+    foreach (split /\|/, $tmp) {
+      next unless $_ =~ /opt_pop_(.*):(\w*)/;
+      $pops{$1} = 1 if $2 eq 'on';
+    }
+  }
+
+  unless (keys %pops) {
     warn "****** ERROR: No population defined";
     return;
   }
@@ -49,9 +58,9 @@ sub ld_values {
   # Header info -----------------------------------------------------------
   # Check there is data to display
   my $zoom = $object->param('w')|| 50000;
-
   my %return;
-  foreach my $pop_name (@$pops) {
+
+  foreach my $pop_name ( keys %pops ) {
     my $pop_obj = $object->pop_obj_from_name($pop_name);
     my $pop_id = $pop_obj->{$pop_name}{dbID};
     my $data = $object->ld_for_slice($pop_id);
@@ -59,7 +68,7 @@ sub ld_values {
       my $display = $ldtype eq 'r2' ? "r2" : "D'";
       my $nodata = "No $display linkage data in $zoom kb window for population $pop_name";
       unless (%$data && keys %$data) {
-	$return{$ldtype}{"text"} = $nodata;
+	$return{$ldtype}{$pop_name}{"text"} = $nodata;
 	next;
       }
 
@@ -68,7 +77,7 @@ sub ld_values {
 	  map  { [ $_ => $data->{'variationFeatures'}{$_} ] }
 	    keys %{ $data->{'variationFeatures'} };
       unless (scalar @snp_list) {
-	$return{$ldtype}{"text"} = $nodata;
+	$return{$ldtype}{$pop_name}{"text"} = $nodata;
 	next;
       }
 
@@ -93,7 +102,7 @@ sub ld_values {
 	}
       }
       unless ($flag) {
-	$return{$ldtype}{"text"} = $nodata;
+	$return{$ldtype}{$pop_name}{"text"} = $nodata;
 	next;
       }
 
@@ -120,15 +129,16 @@ sub ld_values {
       }
       my $location = $object->seq_region_name .":".$object->seq_region_start.
 	"-".$object->seq_region_end;
-      $return{$ldtype}{"text"} = "Pairwise $display values for $location.  Population: $pop_name";
-      $return{$ldtype}{"data"} = [\@starts_list, \@snp_names, \@table];
+      warn $pop_name;
+      $return{$ldtype}{$pop_name}{"text"} = "Pairwise $display values for $location.  Population: $pop_name";
+      $return{$ldtype}{$pop_name}{"data"} = [\@starts_list, \@snp_names, \@table];
     } # end foreach
   }
   return \%return;
 }
 
 
-#################################################################################
+###############################################################################
 
 =head2 html_lddata
 
@@ -144,56 +154,60 @@ sub ld_values {
 sub html_lddata {
   my ($panel, $object) = @_;
   my $return = ld_values($object);
-  return 1 unless %$return;
+  return 1 unless defined $return && %$return;
 
   foreach my $ldtype (keys %$return) {
-    $panel->print("<h4>", $return->{$ldtype}{"text"}, "</h4>");
-    unless ( $return->{$ldtype}{"data"} ) {
-      next;
-    }
+    foreach my $pop_name ( sort {$a cmp $b } keys %{ $return->{$ldtype} } ) {
+      $panel->print("<h4>", $return->{$ldtype}{$pop_name}{"text"}, "</h4>");
+      unless ( $return->{$ldtype}{$pop_name}{"data"} ) {
+        next;
+      }
 
-    my ( $starts, $snps, $table_data ) = (@ {$return->{$ldtype}{"data"} });
-    if (!$starts) { # there is no data for this area
-      return 1;
-    }
-    my $start      = shift @$starts;
-    my $header_row = qq(
-  <tr class="bg2 small">
+      my ( $starts, $snps, $table_data ) = (@ {$return->{$ldtype}{$pop_name}{"data"} });
+      if (!$starts) { # there is no data for this area
+	return 1;
+      }
+      my $start      = shift @$starts;
+      my $header_row = qq(
     <th>SNPs: bp position</th>
     <td>@{[ shift @$snps ]}: $start</td>);
-    my $table_tag  = qq(
-<table width="100%">$header_row
-  </tr>);
 
-    # Fill rest of table ----------------------------------------------------
-    my $user_config = $object->user_config_hash( 'ldview' );
-    my @colour_gradient = ('ffffff', $user_config->colourmap->build_linear_gradient( 41,'mistyrose', 'pink', 'indianred2', 'red' ));
+      # Fill rest of table ----------------------------------------------------
+      my $user_config = $object->user_config_hash( 'ldview' );
+      my @colour_gradient = ('ffffff', $user_config->colourmap->build_linear_gradient( 41,'mistyrose', 'pink', 'indianred2', 'red' ));
+      
+      my $table_rows;
+      foreach my $row (@$table_data) {
+	next unless ref $row eq 'ARRAY';
+	my $snp = shift @$snps;
+	my $pos = shift @$starts;
+	my $snp_string = $snp =~/^\*/ ? qq(<strong>$snp: $pos</strong>) : "$snp: $pos";
 
-   my $table_rows;
-   foreach my $row (@$table_data) {
-     next unless ref $row eq 'ARRAY';
-     my $snp = shift @$snps;
-     my $pos = shift @$starts;
-     my $snp_string = $snp =~/^\*/ ? qq(<strong>$snp: $pos</strong>) : "$snp: $pos";
-
-     $table_rows .= qq(
+	$table_rows .= qq(
   <tr style="vertical-align: middle"  class="small">
     <td class="bg2">$snp_string</td>).
-	 join( '', map { 
-	   sprintf qq(\n    <td class="center" style="background-color:#%s">%s</td>),
-	     $colour_gradient[floor($_*40)],
-	       $_ ? sprintf("%.3f", $_ ): '-' } @$row );
+      join( '', map { 
+	sprintf qq(\n    <td class="center" style="background-color:#%s">%s</td>),
+	  $colour_gradient[floor($_*40)],
+	    $_ ? sprintf("%.3f", $_ ): '-' } @$row );
 
-     $table_rows .= qq(
+	$table_rows .= qq(
     <td class="bg2">$snp_string</td>
   </tr>);
-     next if $row == $table_data->[-1];
-     $header_row .= qq(
+	next if $row == $table_data->[-1];
+	$header_row .= qq(
     <td>$snp_string</td>);
+      }
+      $panel->print(qq(
+                     <table width="100%">  
+                        <tr class="bg2 small">
+                           $header_row
+                        </tr>$table_rows
+                        <tr class="bg2 small">
+                           $header_row
+                      </tr>
+                      </table>));
     }
-   $panel->print("$table_tag$table_rows$header_row
-  </tr>
-</table>");
   }
   return 1;
 }
@@ -221,26 +235,28 @@ sub text_lddata {
   return 1 unless %$return;
 
   foreach my $ldtype (keys %$return) {
-    $panel->print($return->{$ldtype}{"text"});
-    unless ( $return->{$ldtype}{"data"} ) {
-      next;
-    }
+   foreach my $pop_name ( sort {$a cmp $b } keys %{ $return->{$ldtype} } ) {
+     $panel->print($return->{$ldtype}{$pop_name}{"text"});
+     unless ( $return->{$ldtype}{$pop_name}{"data"} ) {
+       next;
+     }
 
-    my ( $starts, $snps, $table_data ) = (@ {$return->{$ldtype}{"data"} });
-    my $output = "\nbp position\tSNP\t". (join "\t", @$snps);
-    unshift (@$table_data, [""]);
+     my ( $starts, $snps, $table_data ) = (@ {$return->{$ldtype}{$pop_name}{"data"} });
+     my $output = "\nbp position\tSNP\t". (join "\t", @$snps);
+     unshift (@$table_data, [""]);
 
-    foreach my $row (@$table_data) {
-      next unless ref $row eq 'ARRAY';
-      my $snp = shift @$snps;
-      my $pos = shift @$starts;
+     foreach my $row (@$table_data) {
+       next unless ref $row eq 'ARRAY';
+       my $snp = shift @$snps;
+       my $pos = shift @$starts;
 
-      $output .= "\n$pos\t$snp\t";
-      $output .= join "\t", (map {  $_ ? sprintf("%.3f", $_ ): '-' } @$row );
-    }
-    $output .="\n\n";
-    $panel->print("$output");
-  }
+       $output .= "\n$pos\t$snp\t";
+       $output .= join "\t", (map {  $_ ? sprintf("%.3f", $_ ): '-' } @$row );
+     }
+     $output .="\n\n";
+     $panel->print("$output");
+   }
+ }
   return 1;
 }
 

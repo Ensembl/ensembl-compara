@@ -745,7 +745,7 @@ sub ldtableview {
 
  # Description : HTML table of LD values ------------------------------------
   if (
-    my $ld_panel = $self->new_panel('Information',
+    my $ld_panel = $self->new_panel('',
     'code'    => "info$self->{flag}",
     'caption' => 'Pairwise linkage disequilibrium values',
 				   )) {

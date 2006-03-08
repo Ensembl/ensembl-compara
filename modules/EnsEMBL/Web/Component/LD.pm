@@ -84,7 +84,7 @@ sub population_info {
     return ;
   }
 
-  foreach my $name (@$pop_names) {
+  foreach my $name (sort {$a cmp $b} @$pop_names) {
     my $pop       = $object->pop_obj_from_name($name);
     my $super_pop = $object->extra_pop($pop->{$name}{PopObject}, "super");
     my $sub_pop   = $object->extra_pop($pop->{$name}{PopObject}, "sub");
@@ -232,19 +232,45 @@ sub options_form {
     'name'      => 'dump',
     'label'     => 'Dump format',
     'values'    => \@formats,
-    'value'     => $object->param('dump') || 'ashtml'
+    'value'     => $object->param('dump') || 'ashtml',
   );
 
-  my @cgi_params = @{$panel->get_params($object, {style =>"form"}) };
-  foreach my $param ( @cgi_params) {
-    $form->add_element (
-      'type'      => 'Hidden',
-      'name'      => $param->{'name'},
-      'value'     => $param->{'value'},
-      'id'        => "Other param",
-		       );
+  my %pop_values;
+  my $script_config = $object->get_scriptconfig();
+
+  # Read in all in scriptconfig stuff
+  foreach ($script_config->options) {
+    next unless $_ =~ /opt_pop_/;
+    $pop_values{$_} = $script_config->get("$_");
   }
-  $form->add_element(
+
+  my @cgi_params = @{$panel->get_params($object, {style =>"form"}) };
+
+  foreach my $param ( @cgi_params) {
+    if ($param->{'name'} =~ /opt_pop_/) {
+      $pop_values{ $param->{'name'} } = $param->{'value'};
+    }
+     else {
+       next if $param->{'name'} =~/opt_/;
+       $form->add_element (
+ 			  'type'      => 'Hidden',
+ 			  'name'      => $param->{'name'},
+ 			  'value'     => $param->{'value'},
+ 			  'id'        => "Other param",
+ 			 );
+     }
+  }
+
+  my $populations;
+  map { $populations .= "$_:$pop_values{$_}|"; } (keys %pop_values);
+
+  $form->add_element (
+		      'type'      => 'Hidden',
+		      'name'      => "bottom",
+		      'value'     => $populations,
+		     );
+
+ $form->add_element(
     'type'      => 'Submit',
     'name'      => 'submit',
     'value'     => 'Dump',

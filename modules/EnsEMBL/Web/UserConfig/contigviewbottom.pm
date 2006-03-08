@@ -749,7 +749,7 @@ sub init {
   $self->add_track( 'info',        'on' => 'on', 'str' => 'r', 'pos' => 3000300, '_menu' => 'options', 'caption' => 'Information track' );
   $self->add_track( 'missing',     'on' => 'on', 'str' => 'r', 'pos' => 3000100 );
   $self->add_track( 'gene_legend', 'on' => 'on', 'str' => 'r', 'pos' => 2000000,  '_menu' => 'options', 'caption' => 'Gene legend' );
-  $self->add_track( 'variation_legend',  'on' => 'on', 'str' => 'r', 'pos' => 2000100, '_menu' => 'options', 'caption' => 'Variation legend'  );
+  $self->add_track( 'variation_legend',  'on' => 'on', 'str' => 'r', 'pos' => 2000100, '_menu' => 'options', 'caption' => 'SNP legend'  );
 
   $self->ADD_ALL_AFFY_TRACKS();
 
