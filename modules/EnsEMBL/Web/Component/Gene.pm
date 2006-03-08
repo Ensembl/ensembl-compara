@@ -307,9 +307,22 @@ sub name {
     $linked_display_name = $object->get_ExtURL_link( $display_name, $dbname, $ext_id );
   }
   my $site_type = ucfirst(lc($SiteDefs::ENSEMBL_SITETYPE));
+
+
+  ######### HACK  fc1 8/3/05 for v37 but ask Ewan! ########
+  my $hgnc_text = "($dbname_disp ID)";
+  if ($hgnc_text =~ /HGNC/ ) {
+    if ( $ENV{'ENSEMBL_SPECIES'} =~/Pan_troglodytes|Gallus_gallus|Canis_familiaris|Xenopus_tropicalis|Bos_taurus|Monodelphis_domestica|Macaca_mulatta/ ) {
+      $hgnc_text = "";
+      $linked_display_name = $display_name;
+    }
+  }
+ ################ end of nasty hack #######################
+
+
   my $html = qq(
   <p>
-    <strong>$linked_display_name</strong> <span class="small">($dbname_disp ID)</span>
+    <strong>$linked_display_name</strong> <span class="small">$hgnc_text</span>
     <span class="small"> (to view all $site_type genes linked to the name <a href="/@{[$object->species]}/featureview?type=Gene;id=$display_name">click here</a>)</span>
   </p>);
   if(my @CCDS = grep { $_->dbname eq 'CCDS' } @{$object->Obj->get_all_DBLinks} ) {
@@ -493,7 +506,7 @@ sub orthologues {
 # Find the selected method_link_set
   my $especies = $ENV{ENSEMBL_SPECIES};
 
-  my $as_html = qq{<br/> <b>This gene can be viewed in genomic alignment with other species<b><br/><br/>} ;
+  my $as_html = qq{<br/> <b>This gene can be viewed in genomic alignment with other species</b><br/><br/>} ;
   foreach my $id ( qw(MLAGAN-167 MLAGAN-170) ) {
       my %shash = ( $gene->species_defs->multi($id,$especies) );
       if (%shash) {
