@@ -37,7 +37,7 @@ sub _archive {
   eval {
     my $achiveStableIDAdaptor = $self->database($db)->get_ArchiveStableIdAdaptor();
     $archiveStableID       = $achiveStableIDAdaptor->fetch_by_stable_id( $name );
-    $related               = $achiveStableIDAdaptor->fetch_all_currently_related( $archiveStableID ) if $archiveStableID;
+    $related               = $achiveStableIDAdaptor->fetch_successor_history( $archiveStableID ) if $archiveStableID;
   };
   return undef if (!$archiveStableID);
   my @rel = map { $_->stable_id ? $_ : () } @$related;
