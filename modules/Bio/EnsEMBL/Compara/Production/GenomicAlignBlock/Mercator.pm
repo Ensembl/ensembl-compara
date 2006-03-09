@@ -103,7 +103,15 @@ sub write_output {
   my %run_ids2synteny_and_constraints;
   my $synteny_region_ids = $self->store_synteny(\%run_ids2synteny_and_constraints);
   foreach my $sr_id (@{$synteny_region_ids}) {
-    $self->dataflow_output_id("{synteny_region_id=>$sr_id}");
+    my $dataflow_output_id = "synteny_region_id=>$sr_id";
+    if ($self->msa_method_link_species_set_id()) {
+      $dataflow_output_id .= ",method_link_species_set_id=>".
+          $self->msa_method_link_species_set_id();
+    }
+    if ($self->tree_file()) {
+      $dataflow_output_id .= ",tree_file=>'".$self->tree_file()."'";
+    }
+    $self->dataflow_output_id("{$dataflow_output_id}");
   }
 
 #  if ($self->mavid_constraints) {
@@ -263,6 +271,12 @@ sub method_link_species_set {
   return $self->{'_method_link_species_set'};
 }
 
+sub msa_method_link_species_set_id {
+  my $self = shift;
+  $self->{'_msa_method_link_species_set_id'} = shift if(@_);
+  return $self->{'_msa_method_link_species_set_id'};
+}
+
 sub tree_file {
   my $self = shift;
   $self->{'_tree_file'} = shift if(@_);
@@ -305,6 +319,9 @@ sub get_params {
   if(defined($params->{'mavid_constraints'})) {
     $self->mavid_constraints($params->{'mavid_constraints'});
   }
+  if(defined($params->{'msa_method_link_species_set_id'})) {
+    $self->msa_method_link_species_set_id($params->{'msa_method_link_species_set_id'});
+  }
   if(defined($params->{'tree_file'})) {
     $self->tree_file($params->{'tree_file'});
   }
@@ -332,6 +349,7 @@ sub dumpMercatorFiles {
   my $ssa = $self->{'comparaDBA'}->get_SubsetAdaptor;
 
   foreach my $gdb_id (@{$self->genome_db_ids}) {
+    ## Create the Chromosome file for Mercator
     my $gdb = $gdba->fetch_by_dbID($gdb_id);
     my $file = $self->input_dir . "/$gdb_id.chroms";
     open F, ">$file";
@@ -339,6 +357,8 @@ sub dumpMercatorFiles {
       print F $df->name . "\t" . $df->length,"\n";
     }
     close F;
+
+    ## Create the anchor file for Mercator
     my $ss = $ssa->fetch_by_set_description("gdb:".$gdb->dbID ." ". $gdb->name . ' coding exons');
     $file = $self->input_dir . "/$gdb_id.anchors";
     open F, ">$file";
@@ -353,9 +373,15 @@ sub dumpMercatorFiles {
     }
     close F;
   }
-  my $sql = "select qmember_id,hmember_id,score,evalue from peptide_align_feature where qgenome_db_id = ? and hgenome_db_id = ? and hit_rank=1";
+
+  ## Use best reciprocal hits only
+  my $sql = "SELECT paf1.qmember_id, paf1.hmember_id, paf1.score, paf1.evalue, paf2.score, paf2.evalue
+    FROM peptide_align_feature paf1, peptide_align_feature paf2
+    WHERE paf1.qgenome_db_id = ? AND paf1.hgenome_db_id = ?
+      AND paf1.qmember_id = paf2.hmember_id AND paf1.hmember_id = paf2.qmember_id
+      AND paf1.hit_rank = 1 AND paf2.hit_rank = 1";
   my $sth = $self->{'comparaDBA'}->dbc->prepare($sql);
-  my ($qmember_id,$hmember_id,$score,$evalue);
+  my ($qmember_id,$hmember_id,$score1,$evalue1,$score2,$evalue2);
   my @genome_db_ids = @{$self->genome_db_ids};
 
   while (my $gdb_id1 = shift @genome_db_ids) {
@@ -363,10 +389,12 @@ sub dumpMercatorFiles {
       my $file = $self->input_dir . "/$gdb_id1" . "-$gdb_id2.hits";
       open F, ">$file";
       $sth->execute($gdb_id1, $gdb_id2);
-      $sth->bind_columns( \$qmember_id,\$hmember_id,\$score,\$evalue);
+      $sth->bind_columns( \$qmember_id,\$hmember_id,\$score1,\$evalue1,\$score2,\$evalue2);
       my %pair_seen = ();
       while ($sth->fetch()) {
         next if ($pair_seen{$qmember_id . "_" . $hmember_id});
+        my $score = ($score1>$score2)?$score2:$score1; ## Use smallest score
+        my $evalue = ($evalue1>$evalue2)?$evalue1:$evalue2; ## Use largest e-value
         next if (defined $self->cutoff_score && $score < $self->cutoff_score);
         next if (defined $self->cutoff_evalue && $evalue > $self->cutoff_evalue);
         print F "$qmember_id\t$hmember_id\t" . int($score). "\t$evalue\n";
