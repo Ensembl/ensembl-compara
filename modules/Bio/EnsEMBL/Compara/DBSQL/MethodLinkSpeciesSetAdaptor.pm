@@ -230,7 +230,7 @@ sub store {
                   mlss1.method_link_species_set_id = mlss2.method_link_species_set_id
                   AND mlss1.genome_db_id in (}.join(",", @genome_db_ids).qq{)
                   AND mlss2.method_link_id = $method_link_id
-          GROUP BY method_link_species_set_id
+          GROUP BY mlss1.method_link_species_set_id
           HAVING count = }.(scalar(@genome_db_ids) * scalar(@genome_db_ids));
 
   $sth = $self->prepare($select_sql);
