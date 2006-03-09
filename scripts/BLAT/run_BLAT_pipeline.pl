@@ -201,6 +201,7 @@ my $coord_systems = {
         "supercontig" => "clump_files",
         "scaffold" => "clump_files",
         "contig" => "clump_files",
+        "clone" => "clump_files",
     };
 
 my $base_dir = "/ecs4/work1/jh7/BLAT";
