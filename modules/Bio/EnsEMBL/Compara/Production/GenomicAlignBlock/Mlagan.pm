@@ -172,7 +172,7 @@ sub get_params {
   my $param_string = shift;
 
   return unless($param_string);
-  print("parsing parameter string : ",$param_string,"\n");
+#   print("parsing parameter string : ",$param_string,"\n");
 
   my $params = eval($param_string);
   return unless($params);
