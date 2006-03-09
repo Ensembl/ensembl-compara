@@ -20,7 +20,7 @@ my %analysis_template;
 my %hive_params ;
 my %member_loading_params;
 my %mercator_params;
-my %multiplealigner_params;
+my $multiplealigner_params;
 
 my %compara_conf = ();
 #$compara_conf{'-user'} = 'ensadmin';
@@ -130,7 +130,7 @@ sub parse_conf {
         %mercator_params = %{$confPtr};
       }
       elsif($type eq 'MULTIPLEALIGNER') {
-        %multiplealigner_params = %{$confPtr};
+        push(@$multiplealigner_params, $confPtr);
       }
     }
   }
@@ -292,42 +292,47 @@ sub prepareGenomeAnalysis
   $ctrlRuleDBA->create_rule($blastrules_analysis, $mercatorAnalysis);
 
   #
-  # CreateMercatorJobs
-  #
-  if (defined $mercator_params{'species_set'}) {
-    Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob
-        (-input_id       => '{gdb_ids=> [' . join(",",@{$mercator_params{'species_set'}}) . ']}',
-         -analysis       => $mercatorAnalysis);
-  }
-
-  #
   # Mlagan
   #
+  foreach my $this_multiplealigner_params (@$multiplealigner_params) {
+    my ($method_link_id, $method_link_type);
+    if($this_multiplealigner_params->{'method_link'}) {
+      ($method_link_id, $method_link_type) = @{$this_multiplealigner_params->{'method_link'}};
+    } else {
+      ($method_link_id, $method_link_type) = qw(9 MLAGAN);
+    }
+    my $sql = "INSERT ignore into method_link SET method_link_id=$method_link_id, type='$method_link_type'";
+    $self->{'hiveDBA'}->dbc->do($sql);
+    my $mlss = new Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
+    $mlss->method_link_type($method_link_type);
+
+    my $gdbs = [];
+    foreach my $gdb_id (@{$this_multiplealigner_params->{'species_set'}}) {
+      my $gdb = $self->{'comparaDBA'}->get_GenomeDBAdaptor->fetch_by_dbID($gdb_id);
+      push @{$gdbs}, $gdb;
+    }
+    $mlss->species_set($gdbs);
+    if (defined($this_multiplealigner_params->{method_link_species_set_id})) {
+      $mlss->dbID($this_multiplealigner_params->{method_link_species_set_id});
+    }
+    $self->{'comparaDBA'}->get_MethodLinkSpeciesSetAdaptor->store($mlss);
+
+    ## Create a Synteny Map Builder job per Multiple Aligner
+    if (defined $this_multiplealigner_params->{'species_set'}) {
+      my $input_id = 'gdb_ids=> [' . join(",",@{$this_multiplealigner_params->{'species_set'}}) . ']';
+      if (defined $mlss) {
+        $input_id .= ",msa_method_link_species_set_id => ".$mlss->dbID();
+      }
+      if (defined $this_multiplealigner_params->{'tree_file'}) {
+        $input_id .= ",tree_file => \'" . $this_multiplealigner_params->{'tree_file'} ."\'";
+      }
+      Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob(
+            -input_id       => "{$input_id}",
+            -analysis       => $mercatorAnalysis
+          );
+    }
+  }
   $parameters = "";
-  my ($method_link_id, $method_link_type);
-  if($multiplealigner_params{'method_link'}) {
-    ($method_link_id, $method_link_type) = @{$multiplealigner_params{'method_link'}};
-  } else {
-    ($method_link_id, $method_link_type) = qw(9 MLAGAN);
-  }
-  my $sql = "INSERT ignore into method_link SET method_link_id=$method_link_id, type='$method_link_type'";
-  $self->{'hiveDBA'}->dbc->do($sql);
-  my $mlss = new Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
-  $mlss->method_link_type($method_link_type);
-
-  my $gdbs = [];
-  foreach my $gdb_id (@{$mercator_params{'species_set'}}) {
-    my $gdb = $self->{'comparaDBA'}->get_GenomeDBAdaptor->fetch_by_dbID($gdb_id);
-    push @{$gdbs}, $gdb;
-  }
-  $mlss->species_set($gdbs);
-  $self->{'comparaDBA'}->get_MethodLinkSpeciesSetAdaptor->store($mlss);
-
-  $parameters .= "method_link_species_set_id => " . $mlss->dbID .",";
-  if (defined $multiplealigner_params{'tree_file'}) {
-    $parameters .= "tree_file => \'" . $multiplealigner_params{'tree_file'} ."\'";
-  }
-  $parameters = "{$parameters}";
   my $mlaganAnalysis = Bio::EnsEMBL::Analysis->new(
       -logic_name      => 'Mlagan',
       -module          => 'Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::Mlagan',
@@ -336,7 +341,7 @@ sub prepareGenomeAnalysis
   $self->{'comparaDBA'}->get_AnalysisAdaptor()->store($mlaganAnalysis);
   $stats = $analysisStatsDBA->fetch_by_analysis_id($mlaganAnalysis->dbID);
   $stats->batch_size(1);
-  $stats->hive_capacity(1);
+  $stats->hive_capacity(5);
   $stats->status('BLOCKED');
   $stats->update();
 
