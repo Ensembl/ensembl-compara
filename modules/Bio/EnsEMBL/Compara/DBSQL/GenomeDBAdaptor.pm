@@ -135,7 +135,7 @@ sub fetch_by_name_assembly {
 
   my $sth;
 
-  unless (defined $assembly) {
+  unless (defined $assembly && $assembly ne '') {
     my $sql = "SELECT genome_db_id FROM genome_db WHERE name = ? AND assembly_default = 1";
     $sth = $self->prepare($sql);
     $sth->execute($name);
