@@ -62,9 +62,11 @@ sub context_menu {
         $past = 1;
       }
       my $previous = $current - 1;
-      $self->{page}->menu->add_entry( $flag, 
+	  if ($previous) {
+		$self->{page}->menu->add_entry( $flag, 
                           'text' => "<< Release $previous",
                           'href' => "/$species/newsview?rel=$previous" );
+	  }
       ## extra link forward if user has gone back to earlier news
       if ($past) {
         my $next = $current + 1;
