@@ -248,7 +248,13 @@ sub zmenu {
     my ($self, $gene, $transcript) = @_;
 	my $script_name =  $ENV{'ENSEMBL_SCRIPT'};
 	my $tid = $transcript->stable_id();
-	my $author =  shift(@{$transcript->get_all_Attributes('author')})->value;
+	my $author;
+	if ( defined (@{$transcript->get_all_Attributes('author')}) ) {
+		$author =  shift( @{$transcript->get_all_Attributes('author')} )->value || 'unknown';
+	}
+	else {
+		$author =   'not defined';
+	}
     my $translation = $transcript->translation;
     my $pid = $translation->stable_id() if $translation;
     my $gid = $gene->stable_id();
@@ -293,7 +299,13 @@ sub gene_zmenu {
     my $gid = $gene->stable_id();
     my $id   = $gene->external_name() eq '' ? $gid : $gene->external_name();
 	my $type = $self->format_vega_name($gene);
-	my $author =  shift(@{$gene->get_all_Attributes('author')})->value;
+	my $author;
+	if ( defined (@{$gene->get_all_Attributes('author')}) ) {
+		$author =  shift( @{$gene->get_all_Attributes('author')} )->value || 'unknown';
+	}
+	else {
+		$author =   'not defined';
+	}
     my $zmenu = {
         'caption' 	          => $self->my_config('zmenu_caption'),
         "00:$id"	          => "",
