@@ -243,10 +243,393 @@ sub decryptID {
     $ID = substr($MD5d,0,16).$rand1.$rand2.substr($MD5d,16,16) eq $encrypted ? $ID : 0;
 }
 
+#------------------------------------------------------------------------------
+# USER ACCOUNT - management methods
+#------------------------------------------------------------------------------
+
+sub _random_string {
+  my $length = shift || 8;
+
+  my @chars = ('a'..'z','A'..'Z','0'..'9','_');
+  my $random_string;
+  foreach (1..$length) 
+  {
+    $random_string .= $chars[rand @chars];
+  }
+  return $random_string;
+}
+
+sub getUserByID {
+  my ($self, $id) = @_;
+
+  my $details = {};
+  return $details unless $self->{'_handle'};
+
+  my $sql = qq(
+    SELECT user_id, name, org, email
+    FROM USERACCOUNT
+    WHERE user_id = "$id" 
+  );
+
+  my $R = $self->{'_handle'}->selectall_arrayref($sql); 
+  return {} unless $R->[0];
+
+  my @record = @{$R->[0]};
+  $details = {
+    'user_id' => $record[0],
+    'name'    => $record[1],
+    'org'     => $record[2],
+    'email'   => $record[3],
+  };
+  return $details;
+}
+
+sub getUserByEmail {
+  my ($self, $email) = @_;
+
+  my $details = {};
+  return $details unless $self->{'_handle'};
+
+  my $sql = qq(
+    SELECT user_id, name, org, salt
+    FROM USERACCOUNT
+    WHERE email = "$email" 
+  );
+
+  my $R = $self->{'_handle'}->selectall_arrayref($sql); 
+  return {} unless $R->[0];
+
+  my @record = @{$R->[0]};
+  $details = {
+    'user_id' => $record[0],
+    'name'    => $record[1],
+    'org'     => $record[2],
+    'salt'    => $record[3],
+  };
+  return $details;
+}
+
+sub getUserByCode {
+  my ($self, $code) = @_;
+
+  my $details = {};
+  return $details unless $self->{'_handle'};
+
+  my $sql = qq(
+    SELECT user_id, name, org, salt
+    FROM USERACCOUNT
+    WHERE password = "$code"
+  );
+
+  my $R = $self->{'_handle'}->selectall_arrayref($sql); 
+  return {} unless $R->[0];
+
+  my @record = @{$R->[0]};
+  $details = {
+    'user_id' => $record[0],
+    'name'    => $record[1],
+    'org'     => $record[2],
+    'salt'    => $record[3],
+  };
+  return $details;
+}
+
+sub getUserPrivilege {
+  my ($self, $id, $access_level) = @_;
+  my $ok = 0;
+  return $ok unless $self->{'_handle'};
+
+  my $sql = qq(
+    SELECT privilege
+    FROM USERPRIVILEGE p
+    WHERE user_id = "$id"
+    AND privilege = "$access_level"
+  );
+  my $R = $self->{'_handle'}->selectall_arrayref($sql); 
+  $ok = $R->[0] ? 1 : 0;
+
+  return $ok;
+}
+
+sub createUserAccount {
+  my ($self, $record) = @_;
+  return unless $self->{'_handle'};
+  
+  my %details = %$record; 
+
+  my $name      = $details{'name'}; 
+  my $email     = $details{'email'}; 
+  my $password  = $details{'password'}; 
+  my $org       = $details{'org'}; 
+  my $salt      = _random_string(8); 
+  my $encrypted = Digest::MD5->new->add($password.$salt)->hexdigest();
+
+  my $sql = qq(
+    INSERT INTO USERACCOUNT SET  
+      name          = "$name", 
+      email         = "$email", 
+      salt          = "$salt",
+      password      = "$encrypted",
+      org           = "$org",
+      date_created  = NOW()
+  );
+  
+  my $sth = $self->{'_handle'}->prepare($sql);
+  my $result = $sth->execute();
+
+  ## get new user ID so we can return it and set a cookie
+  if ($result) {
+    # get id for inserted record
+    $sql = "SELECT LAST_INSERT_ID()";
+    my $T = $self->{'_handle'}->selectall_arrayref($sql);
+    return '' unless $T;
+    my @A = @{$T->[0]}[0];
+    $result = $A[0];
+  }
+  return $result;
+}
+
+sub updateUserAccount {
+  my ($self, $record) = @_;
+  return unless $self->{'_handle'};
+  
+  my %details = %$record; 
+
+  my $user_id   = $details{'user_id'};
+  my $name      = $details{'name'}; 
+  my $email     = $details{'email'}; 
+  my $org       = $details{'org'}; 
+
+  my $result;
+    if ($user_id > 0) {
+    my $sql = qq(
+      UPDATE USERACCOUNT SET  
+        name          = "$name", 
+        email         = "$email", 
+        org           = "$org",
+        last_updated  = NOW()
+      WHERE user_id   = $user_id
+    );
+  
+    my $sth = $self->{'_handle'}->prepare($sql);
+    $result = $sth->execute();
+  }
+
+  return $result;
+}
+
+
+sub validateUser {
+  my ($self, $email, $password) = @_;
+  return {} unless $self->{'_handle'};
+
+  my $result = {};
+  ## first, do we have this email address?
+  my %user = %{$self->getUserByEmail($email)};
+  my $id = $user{'user_id'};
+  if ($id > 0) {
+    my $salt = $user{'salt'};
+    my $encrypted = Digest::MD5->new->add($password.$salt)->hexdigest();
+    my $sql = qq(
+      SELECT user_id
+      FROM USERACCOUNT
+      WHERE email = "$email" AND password = "$encrypted"
+    );
+    my $R = $self->{'_handle'}->selectall_arrayref($sql); 
+    return unless $R->[0];
+
+    my @record = @{$R->[0]};
+    if ($record[0]) {
+      $$result{'user_id'} = $record[0];
+    }
+    else {
+      $$result{'error'} = 'invalid';
+    }
+  }
+  else {
+    $$result{'error'} = 'not_found';
+  }
+  return $result;
+}
+
+sub resetPassword {
+  my ($self, $record) = @_;
+  return unless $self->{'_handle'};
+
+  my $result = {};
+  my $id        = $$record{'user_id'};
+  return unless $id > 0;
+
+  my $password  = $$record{'password'};
+  if (!$password && $$record{'reset'} eq 'auto') { ## resetting lost password
+    $password   = _random_string(16); 
+  }
+  my $salt      = _random_string(8); 
+  my $encrypted = Digest::MD5->new->add($password.$salt)->hexdigest();
+ 
+  my $sql = qq(
+    UPDATE USERACCOUNT  
+    SET 
+      password  = "$encrypted",
+      salt      = "$salt"
+    WHERE user_id = "$id"
+  );
+  my $sth = $self->{'_handle'}->prepare($sql);
+  my $result = $sth->execute();
+ 
+  return $encrypted; ## string used in URL sent to user
+}
+
+#------------------------------------------------------------------------------
+# USER ACCOUNT - customisation methods
+#------------------------------------------------------------------------------
+
+sub saveBookmark {
+  my ($self, $user_id, $url, $title) = @_;
+  return {} unless $self->{'_handle'};
+  return {} unless ($user_id && $url);
+
+  my $sql = qq(
+    INSERT INTO USERBOOKMARKS 
+    SET user_id = $user_id, 
+        name    = "$title", 
+        url     = "$url"
+  );
+  my $sth = $self->{'_handle'}->prepare($sql);
+  my $result = $sth->execute();
+
+  return $result;
+}
+
+sub getBookmarksByUser {
+  my ($self, $user_id) = @_;
+  return [] unless $self->{'_handle'};
+  return [] unless $user_id;
+
+  my $results = [];
+  my $sql = qq(
+    SELECT bm_id, name, url
+    FROM USERBOOKMARKS
+    WHERE user_id = $user_id
+  ); 
+  my $T = $self->{'_handle'}->selectall_arrayref($sql);
+  return [] unless $T;
+  for (my $i=0; $i<scalar(@$T);$i++) {
+    my @array = @{$T->[$i]};
+    push (@$results,
+      {
+      'bm_id'   => $array[0],
+      'bm_name' => $array[1],
+      'bm_url'  => $array[2],
+      }
+    );
+  }
+  return $results;
+}
+
+sub deleteBookmarks {
+  my ($self, $bookmarks) = @_;
+  return 0 unless $self->{'_handle'};
+  return 0 unless (ref($bookmarks) eq 'ARRAY' && scalar(@$bookmarks) > 0);
+  
+  foreach my $bookmark (@$bookmarks) {
+    my $sql = "DELETE FROM USERBOOKMARKS where bm_id = $bookmark";
+    my $sth = $self->{'_handle'}->prepare($sql);
+    my $result = $sth->execute();
+  }
+
+  return 1;
+}
+
+sub getGroupsByUser {
+  my ($self, $user_id) = @_;
+  return [] unless $self->{'_handle'};
+  return [] unless $user_id;
+
+  my $results = [];
+  my $sql = qq(
+    SELECT g.group_id, g.name, g.title, g.blurb
+    FROM USERGROUP g, GROUPMEMBER m
+    WHERE g.group_id = m.group_id 
+    AND m.user_id = $user_id
+  ); 
+  my $T = $self->{'_handle'}->selectall_arrayref($sql);
+  return [] unless $T;
+  for (my $i=0; $i<scalar(@$T);$i++) {
+    my @array = @{$T->[$i]};
+    push (@$results,
+      {
+      'group_id'  => $array[0],
+      'name'      => $array[1],
+      'title'     => $array[2],
+      'blurb'     => $array[3],
+      }
+    );
+  }
+  return $results;
+}
+
+sub getGroupsByType {
+  my ($self, $type) = @_;
+  return [] unless $self->{'_handle'};
+  return [] unless $type;
+
+  my $results = [];
+  my $sql = qq(
+    SELECT group_id, name, title, blurb
+    FROM USERGROUP
+    WHERE type = "$type" 
+    ORDER BY title
+  ); 
+  my $T = $self->{'_handle'}->selectall_arrayref($sql);
+  return [] unless $T;
+  for (my $i=0; $i<scalar(@$T);$i++) {
+    my @array = @{$T->[$i]};
+    push (@$results,
+      {
+      'group_id'  => $array[0],
+      'name'      => $array[1],
+      'title'     => $array[2],
+      'blurb'     => $array[3],
+      }
+    );
+  }
+  return $results;
+}
+
+sub getAllGroups {
+  my $self = shift;
+  return [] unless $self->{'_handle'};
+
+  my $results = [];
+  my $sql = qq(
+    SELECT group_id, name, title, blurb, type
+    FROM USERGROUP
+    ORDER BY title
+  ); 
+  my $T = $self->{'_handle'}->selectall_arrayref($sql);
+  return [] unless $T;
+  for (my $i=0; $i<scalar(@$T);$i++) {
+    my @array = @{$T->[$i]};
+    push (@$results,
+      {
+      'group_id'  => $array[0],
+      'name'      => $array[1],
+      'title'     => $array[2],
+      'blurb'     => $array[3],
+      'type'      => $array[4],
+      }
+    );
+  }
+  return $results;
+}
+
 1;
+
 __END__
 # EnsEMBL module for EnsEMBL::Web::DBSQL::UserDB
 # Begat by James Smith <js5@sanger.ac.uk>
+# User Account methods by Anne Parker <ap5@sanger.ac.uk>
 
 =head1 NAME
 

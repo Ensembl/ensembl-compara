@@ -55,6 +55,15 @@ sub add_block {
   $self->{page}->menu->add_block( $flag, @_ );
 }
 
+sub delete_block { 
+  my $self = shift;
+  return unless $self->{page}->can('menu');
+  return unless $self->{page}->menu;
+  my $flag = shift;
+     $flag =~s/#/$self->{flag}/g;
+  $self->{page}->menu->delete_block( $flag, @_ );
+}
+
 sub add_entry { 
   my $self = shift;
   return unless $self->{page}->can('menu');
@@ -184,17 +193,95 @@ sub context_location {
   }
 }
 
+sub context_user {
+  ## This menu only appears on user pages, e.g. account management, db admin
+  ## Menus for general dynamic pages are in Document::Configure::common_menu_items
+
+  my $self = shift;
+  my $obj = $self->{object};
+
+  ## this menu clashes with mini one on non-account pages, so remove it
+  $self->delete_block('ac_mini');
+
+  ## Is the user logged in?
+  my $user_id = $ENV{'ENSEMBL_USER'};
+
+  if ($user_id) {
+    my $flag = 'user';
+    $self->add_block( $flag, 'bulleted', "My Account" );
+
+
+    $self->add_entry( $flag, 'text' => "Account summary",
+                                    'href' => "/Multi/user_login?node=accountview" );
+    $self->add_entry( $flag, 'text' => "Update my details",
+                                    'href' => "/Multi/user_update" );
+    $self->add_entry( $flag, 'text' => "Change my password",
+                                    'href' => "/Multi/user_pw_change" );
+    $self->add_entry( $flag, 'text' => "Manage my bookmarks",
+                                    'href' => "/Multi/user_manage_bkmarks" );
+    $self->add_entry( $flag, 'text' => "Log out",
+                                    'href' => "/Multi/user_logout" );
+
+    ## get user status
+    my $help_access = $obj->get_user_privilege($user_id, 'help');
+    my $news_access = $obj->get_user_privilege($user_id, 'news');
+
+    $flag = 'help';
+    if ($help_access) {
+      $self->add_block( $flag, 'bulleted', "Helpdesk Admin" );
+      $self->add_entry( $flag, 'text' => "Add Help Item",
+                                    'href' => "/Multi/help_add" );
+      $self->add_entry( $flag, 'text' => "Edit Help Item",
+                                    'href' => "/Multi/help_edit" );
+      $self->add_entry( $flag, 'text' => "Build Help Article",
+                                    'href' => "/Multi/help_article" );
+    }
+
+    $flag = 'news';
+    if ($news_access) {
+      $self->add_block( $flag, 'bulleted', "News DB Admin" );
+      $self->add_entry( $flag, 'text' => "Add News",
+                                    'href' => "/Multi/news_add" );
+      $self->add_entry( $flag, 'text' => "Edit News",
+                                    'href' => "/Multi/news_edit" );
+      $self->add_entry( $flag, 'text' => "Add old news",
+                                    'href' => "/Multi/news_add_old" );
+      $self->add_entry( $flag, 'text' => "Edit old news",
+                                    'href' => "/Multi/news_edit_old" );
+    }
+  }
+  else {
+    my $flag = 'ac_full';
+    $self->add_block( $flag, 'bulleted', "My Account" );
+    
+    $self->add_entry( $flag, 'text' => "Login",
+                                  'href' => "/Multi/user_login" );
+    $self->add_entry( $flag, 'text' => "Register",
+                                  'href' => "/Multi/user_register" );
+    $self->add_entry( $flag, 'text' => "Lost Password",
+                                  'href' => "/Multi/user_pw_lost" );
+    $self->add_entry( $flag, 'text' => "About User Accounts",
+                                    'href' => "/info/about/accounts.html" );
+  }
+
+}
+
+
 sub wizard_panel {
   my ($self, $caption) = @_;
   my $object = $self->{object};
   my $wizard = $self->{wizard};
+  my $node = $wizard->current_node($object);
 
   ## determine object type
   my @module_bits = split('::', ref($wizard));
   my $type = $module_bits[-1];
 
+  ## check for a node-specific title
+  my $title = $wizard->node_value($node, 'title');
+  $caption = $title if $title;
+
   ## call the relevant configuration method
-  my $node = $wizard->current_node($object);
   if ($wizard->isa_page($node)) { ## create panel(s)
     if ($object->param('feedback')) { ## check for error messages
       my $message = $wizard->get_message($object->param('feedback'));
@@ -223,7 +310,7 @@ sub wizard_feedback {
   my ($self, $feedback, $error) = @_;
   my $caption;
 
-  if ($error) {
+  if ($error > 0) {
     $feedback = '<span class="red"><strong>'.$feedback.'</strong></span>';
     $caption = 'Error';
   }

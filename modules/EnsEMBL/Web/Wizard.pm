@@ -11,12 +11,15 @@ our @ISA = qw(EnsEMBL::Web::Root);
 
 sub new {
   my ($class, $object) = @_;
-  my $self = {'_nodes' => {}};
+  my $self = {'_nodes' => {}, '_access_level' => ''};
   bless $self, $class;
   my $init = $class.'::_init';
   if ($self->can($init)) { 
-    my $data = $self->$init($object);
-    $self->{'_data'} = $data;
+    my ($data, $fields, $all_nodes, $messages) = @{ $self->$init($object) };
+    $self->{'_data'}        = $data;
+    $self->{'_fields'}      = $fields;
+    $self->{'_all_nodes'}   = $all_nodes;
+    $self->{'_messages'}    = $messages;
   }
   return $self;
 }
@@ -27,6 +30,26 @@ sub attrib {
     $self->{'_data'}{$name} = $value;
   }
   return $self->{'_data'}{$name}; 
+}
+
+sub field {
+  my ($self, $field, $param, $value) = @_;
+  if ($value) {
+    $self->{'_fields'}{$field}{$param} = $value;
+  }
+  return $self->{'_fields'}{$field}{$param}; 
+}
+
+sub get_fields  { return $_[0]->{'_fields'}; }
+sub get_node    { return $_[0]->{'_all_nodes'}{$_[1]}; }
+sub get_message { return $_[0]->{'_messages'}{$_[1]}; }
+
+sub access_level {
+  my ($self, $level) = @_;
+  if ($level) {
+    $self->{'_access_level'} = $level;
+  }
+  return $self->{'_access_level'};
 }
 
 ## 'FLOWCHART' FUNCTIONS
@@ -170,6 +193,22 @@ sub get_incoming_edges {
   return \@edges;
 }
 
+sub node_restriction {
+  my ($self, $node, $value) = @_;
+  if ($value) {
+    $self->{'_nodes'}{$node}{'restricted'} = $value;
+  }
+  return $self->{'_nodes'}{$node}{'restricted'};
+}
+
+sub lock_all_nodes {
+  my $self = shift;
+  my $value = shift || 1;
+  foreach my $node (@{$self->{'_nodes'}}) {
+    $self->{'_nodes'}{$node}{'_restricted'} = $value;
+  }
+}
+
 ##---------------- FORM ASSEMBLY FUNCTIONS --------------------------------
 
 sub simple_form {
@@ -203,7 +242,7 @@ sub show_fields {
   if (!$fields) {
     $fields = $self->{'_nodes'}{$node}{'show_fields'} || $self->default_order;
   } 
-  my %form_fields = $self->form_fields;
+  my %form_fields = %{$self->get_fields};
 
   foreach my $field (@$fields) {
     my %field_info = %{$form_fields{$field}};
@@ -276,7 +315,7 @@ sub pass_fields {
     @fields = $object->param;
   } 
 
-  ## get list of fields you don't want to pass as hidden
+  ## make lookup of fields you don't want to pass as hidden
   my $edges = $self->get_incoming_edges($node);
   my @matches = grep { $node } @$edges;
   my @no_pass;
@@ -284,28 +323,20 @@ sub pass_fields {
     @no_pass = $self->{'_nodes'}{$node}{'no_passback'};
   }
   my $widgets = $self->{'_nodes'}{$node}{'input_fields'};
-my @warn;
-@warn = @$widgets if $widgets;
-warn 'Widgets: '.@warn;
-  #push @no_pass, @$widgets if $widgets;
+  push @no_pass, @$widgets if $widgets;
+  ## put values into a hash to get around Perl's crap array functions!
+  my %skip;
+  foreach my $x (@no_pass) {
+    $skip{$x}++;
+  } 
+  
 
   foreach my $field (@fields) {
     next if $field =~ /submit/;  
-
+    next if exists( $skip{$field} );
+  
     ## don't pass 'previous' field or it screws up back buttons!  
     next if $field =~ /previous/;
-
-    ## don't pass 'no_pass' fields - duh!
-    if (scalar(@no_pass)) {    
-      next if grep { $field } @no_pass;
-    }
-
-    ## Debug form fields
-    #$form->add_element(
-    #  'type'      => 'NoEdit',
-    #  'label'     => $field,
-    #  'value'     => $object->param($field),
-    #);
 
     ## include a hidden element for passing data
     my @values = $object->param($field);
@@ -337,7 +368,7 @@ sub add_widgets {
   if (!$fields) {
     $fields = $self->{'_nodes'}{$node}{'input_fields'} || $self->default_order;
   } 
-  my %form_fields = $self->form_fields;
+  my %form_fields = %{$self->get_fields};
   foreach my $field (@$fields) {
     my %field_info = %{$form_fields{$field}};
     my $field_name = $field;
@@ -354,6 +385,7 @@ sub add_widgets {
       'label'     => $field_info{'label'},
       'required'  => $field_info{'required'},
       'rows'      => $field_info{'rows'},
+      'notes'     => $field_info{'notes'},
     );
 
     ## extra parameters for multi-value fields
@@ -445,7 +477,7 @@ sub create_record {
   my ($self, $object) = @_;
   my %record;
 
-  my %form_fields = $self->form_fields;
+  my %form_fields = %{$self->get_fields};
   my @params = $object->param;
   foreach my $param (@params) {
     next unless $form_fields{$param}; ## skip submit buttons, etc
