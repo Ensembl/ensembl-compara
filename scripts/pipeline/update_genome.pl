@@ -41,7 +41,7 @@ This script is part of the Ensembl project http://www.ensembl.org
 
 =head1 DESCRIPTION
 
-This script takes the new core DB and a compara DB in production fase and updates it in several steps:
+This script takes the new core DB and a compara DB in production phase and updates it in several steps:
 
  - It updates the genome_db table
  - It deletes all the genomic alignment data for the old genome_db
