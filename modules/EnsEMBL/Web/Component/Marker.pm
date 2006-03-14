@@ -55,17 +55,15 @@ sub location {
   my($panel, $data) = @_;
   my $label = 'Marker Location';    
   my $marker = $data->name;
-  my $marker_feats = $data->markerFeatures;
-  my $count = scalar(@$marker_feats);
+  my $marker_feats;
+  my $count = ($marker_feats = $data->markerFeatures) ? scalar(@$marker_feats) : 0;
   my $sitetype = $data->species_defs->ENSEMBL_SITETYPE;
   my $html = '';
   my %real_chromosomes = map { $_, 1 } @{$data->species_defs->ENSEMBL_CHROMOSOMES};
-
-  ## Vega needs a plugin which returns <p>Marker $marker is not mapped to the tilepath in the current Vega assembly.</p>
   if( $count == 0 ) {
     $panel->add_row( 
       $label,
-      qq(<p>Marker $marker is not mapped to the assembly in the current Ensembl database</p>)
+      qq(<p>Marker $marker is not mapped to the assembly in the current $sitetype database</p>)
     );
     return 1;
   }
@@ -79,14 +77,13 @@ sub location {
       my $name  = $feature->seq_region_name;
       my $start = $feature->start;
       my $end   = $feature->end;
-      $html .= sprintf qq(\n  %sBasepairs <a href="%s">%d - %d</a> on %s %s &nbsp; [<a href="%s">Export data</a>]%s),
+      $html .= sprintf qq(\n  %sBasepairs <a href="%s">%d - %d</a> on %s %s),
         ( $count > 1 ? '<dd>' : '<p>' ),
         $data->location_URL( $feature, undef, 10000), $start, $end,
         $feature->coord_system_name, 
-        $data->mapview_link( $feature ),
-        $data->location_URL( $feature, 'exportview' ),
-        ( $count > 1 ? '</dd>' : '</p>' );
-    }        
+		$name,
+		( $count > 1 ? '</dd>' : '</p>' );
+    }
   }
   if( $count > 1 ) {
     $html .= '</dl>';
