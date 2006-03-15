@@ -65,6 +65,7 @@ sub new {
       '_wsc_adaptor'     => $data->{_wsc_adaptor}     || undef,
       '_wuc_adaptor'     => $data->{_wuc_adaptor}     || undef,
       '_script_configs_' => $data->{_script_configs_} || {},
+      '_user_details'    => $data->{_user_details}    || undef,
       '_web_user_db'     => $data->{_web_user_db}     || undef,
       '_apache_handle'   => $data->{_apache_handle}   || undef,
       '_species'         => $data->{_species}         || $ENV{'ENSEMBL_SPECIES'},
@@ -98,6 +99,8 @@ sub new {
 }
 
 sub species_defs { $_[0][1]{'_species_defs'}  ||= EnsEMBL::Web::SpeciesDefs->new(); }
+sub user_details { $_[0][1]{'_user_details'}  ||= 1; } # EnsEMBL::Web::User::Details->new(); }
+
 sub species :lvalue { $_[0][1]{'_species'}; }
 sub script       { $_[0][1]{'_script'};  }
 
