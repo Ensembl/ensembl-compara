@@ -232,10 +232,6 @@ sub fasta_description {
 }
 
 
-
- 
-=head3
- 
 sub store_gene
 {
   my($gene) = @_;
@@ -353,9 +349,7 @@ sub update_method_link
     $sth_method_link_species->execute($method_link_id,$max_species_set + 1,$genome_db_id2);
   }
 }
-=cut 
 
-=head2
 sub processHomologies
 {
   my %homologies;
@@ -535,5 +529,5 @@ sub return_attribute {
 
   return $attribute;
 }
-=cut
+
 
