@@ -107,16 +107,13 @@ sub run
 
   $self->{'comparaDBA'}->dbc->disconnect_when_inactive(0);
   $self->{'coreDBA'}->dbc->disconnect_when_inactive(0);  
-  
+
   # main routine which takes a genome_db_id (from input_id) and
   # access the ensembl_core database, useing the SliceAdaptor
   # it will load all slices, all genes, and all transscripts
   # and convert them into members to be stored into compara
   $self->loadCodingExonMembersFromCoreSlices();
-  
-  $self->{'comparaDBA'}->dbc->disconnect_when_inactive(1);
-  $self->{'coreDBA'}->dbc->disconnect_when_inactive(1);
-                                          
+
   return 1;
 }
 
