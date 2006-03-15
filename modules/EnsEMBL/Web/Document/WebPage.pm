@@ -9,6 +9,7 @@ use Apache::Constants qw(:common :response);
 our $SD = EnsEMBL::Web::SpeciesDefs->new();
 
 use CGI qw(header escapeHTML);
+use CGI::Cookie;
 use SiteDefs;
 use strict;
 
@@ -100,8 +101,8 @@ sub configure {
         if( $CONF->can($FN) ) {
                            # If this configuration module can perform this
                            # function do so...
-          eval { $CONF->$FN(); };
           $self->{wizard} = $CONF->{wizard};
+          eval { $CONF->$FN(); };
           if( $@ ) { 
                            # Catch any errors and display as a "configuration runtime error"
             $self->page->content->add_panel( 
@@ -116,6 +117,9 @@ sub configure {
               )
             );
           }
+        }
+        else {
+          warn "Can't do menu function $FN";
         }
       }
     } elsif( $self->dynamic_use_failure( $config_module_name ) !~ /^Can't locate/ ) { 
@@ -162,26 +166,66 @@ sub action {
   if ($self->{wizard}) {
     my $object = ${$self->dataObjects}[0];
     my $node = $self->{wizard}->current_node($object);
+
     if (!$self->{wizard}->isa_page($node)) { ## isn't a web page
+
       ## do whatever processing is required by this node
       my %parameter = %{$self->{wizard}->$node($object)};
       ## unpack returned parameters into a URL
-      my $URL = '/'.$object->species.'/'.$object->script.'?';
+      my $URL = '/'.$object->species.'/';
+      if (my $bounce = $parameter{'bounce'}) {
+        $URL .= $bounce.'?';
+      }
+      else {
+        $URL .= $object->script.'?';
+      }
       my $count = 0;
       foreach my $param (keys %parameter) {
+        next if $param eq 'bounce';
+        next if $param eq 'set_cookie'; ## don't pass cookie id!!
         $URL .= ';' if $count > 0;
         $URL .= $param.'='.$parameter{$param};    
         $count++;
       }
-      warn "Redirecting to $URL";
-      $URL = "http://ensarc-1-14.internal.sanger.ac.uk:10000$URL";
       my $r = $self->page->renderer->{'r'};
+
+      ## set user cookie if logging in/out
+      if (exists($parameter{'set_cookie'})) {
+
+        my ($value, $date);
+        ## are we setting or unsetting?
+        my $user_ID = $parameter{'set_cookie'};
+        if ($user_ID) {
+          warn "Setting cookie for user $user_ID";
+          $value = EnsEMBL::Web::DBSQL::UserDB::encryptID($user_ID);
+          $date = 'Monday, 31-Dec-2037 23:59:59 GMT';
+        }
+        else {
+          warn "Unsetting cookie!";
+          $value = '';
+          $date = 'Monday, 31-Dec-2000 23:59:59 GMT';
+        }
+
+        my $cookie = CGI::Cookie->new(
+          -name    => EnsEMBL::Web::SpeciesDefs->ENSEMBL_USER_COOKIE,
+          -value   => $value,
+          -domain  => EnsEMBL::Web::SpeciesDefs->ENSEMBL_COOKIEHOST,
+          -path    => '/',
+          -expires => $date
+        );
+        $r->headers_out->add( 'Set-cookie' => $cookie );
+        $r->err_headers_out->add( 'Set-cookie' => $cookie );
+        $r->subprocess_env->{'ENSEMBL_USER'} = $user_ID;
+      }
+
+      ## do redirect
+      warn "Redirecting to $URL";
       $r->headers_out->add( "Location" => $URL );
       $r->err_headers_out->add( "Location" => $URL );
       $r->status( REDIRECT );
     }
     else {
-      warn "Rendering page $node";
+      warn "Rendering wizard page $node";
       $self->render;
     }
   }
@@ -189,6 +233,25 @@ sub action {
     warn "Rendering non-wizard page";
     $self->render;
   }
+}
+
+sub logout {
+  my $self = shift;
+
+  ## setting a (blank) expired cookie deletes the current one
+  my $cookie = CGI::Cookie->new(
+      -name    => EnsEMBL::Web::SpeciesDefs->ENSEMBL_USER_COOKIE,
+      -value   => '',
+      -domain  => EnsEMBL::Web::SpeciesDefs->ENSEMBL_COOKIEHOST,
+      -path    => "/",
+      -expires => "Monday, 31-Dec-2000 23:59:59 GMT"
+  );
+  
+  my $r = $self->page->renderer->{'r'};
+  $r->headers_out->add( 'Set-cookie' => $cookie );
+  $r->err_headers_out->add( 'Set-cookie' => $cookie );
+  $r->subprocess_env->{'ENSEMBL_USER'} = '';
+  return 1;
 }
 
 sub redirect {
@@ -321,6 +384,55 @@ sub simple_with_redirect {
        $self->configure( $object, $object->script, 'context_menu', 'context_location' );
      }
      $self->render;
+  }
+}
+
+
+sub simple_user {
+  my $object_type = shift;
+  my $self = __PACKAGE__->new( 'objecttype' => $object_type );
+
+  if( $self->has_a_problem ) {
+    $self->render_error_page;
+  } 
+  else {
+    foreach my $object( @{$self->dataObjects} ) {
+      $self->configure( $object, $object->script, 'context_user' );
+    }
+    my $account = ${$self->dataObjects}[0];
+    my $id = $account->get_user_id;
+  
+    my $script_ok = 0;
+    my $node_ok   = 0;
+
+    ## check if user has privileges for this script
+    my $access = $self->{wizard}->access;
+    my $level = $$access{'level'};
+    my $group = $$access{'group'};
+    if (!$level || $level eq 'user') {
+      $script_ok = 1;
+    }
+    else {
+      $script_ok = $account->get_user_privilege($id, $level, $group) if $id;
+    }
+
+    if ($script_ok) {
+      ## check if this node requires login
+      my $node = $self->{wizard}->current_node($account);
+      my $restricted = $self->{wizard}->node_restriction($node);
+      if (!$restricted || $id) {
+        $node_ok = 1;
+      }
+    }
+
+    ## send user to appropriate page
+    if ($node_ok) {
+      $self->action;
+    }
+    else {
+      my $URL = '/Multi/access_denied';
+      $self->redirect($URL);
+    }
   }
 }
 
