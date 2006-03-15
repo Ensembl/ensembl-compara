@@ -81,6 +81,11 @@ paths to the 'hive_output_dir' to
 The species names should correspond to the genome_db_id of the species used (and defined in the 
 hive configuration file).
 
+You can have several multiple alignment pipelines working in the same HIVE. To do this, add an extra
+MULTIPLE_ALIGNER block in the configuration file and change the corresponding list of species and the
+tree file. The HIVE will run the all-vs-all balstp jobs and then build a Synteny map for each
+multiple alignment pipeline. The resulting syntenies will be used to feed the multiple aligner.
+
 5- Run the configure scripts
    ~~~~~~~~~~~~~~~~~~~~~~~~~
 The following scripts are in ensembl-compara/scripts/pipeline (should be in your PATH)
