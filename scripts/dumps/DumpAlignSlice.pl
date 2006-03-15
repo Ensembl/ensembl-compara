@@ -59,6 +59,7 @@ perl DumpAlignSlice.pl
     [--alignment_type method_link_name]
     [--set_of_species species1:species2:species3:...]
     [--[no]condensed]
+    [--[no]solve_overlapping]
     [--[no]print_genomic]
     [--[no]print_contigs]
     [--[no]print_genes]
@@ -141,6 +142,12 @@ registry_configuration_file or any of its aliases
 By default, the AlignSlice is created in "expanded" mode. Use
 this option for getting the AlignSlice in "condensed" mode
 
+=item B<[--[no]solve_overlpping]>
+
+By default, the AlignSlice ignores overlapping alignments. 
+This option will reconciliate them by means of a fake
+alignment.
+
 =back
 
 =head2 OUTPUT
@@ -216,6 +223,10 @@ perl DumpAlignSlice.pl
     [--[no]condensed]
         By default, the AlignSlice is created in "expanded" mode. Use
         this option for getting the AlignSlice in "condensed" mode
+    [--[no]solve_overlapping]
+        By default, the AlignSlice ignores overlapping alignments. 
+        This option will reconciliate them by means of a fake
+        alignment.
 
   Ouput:
     [--[no]print_genomic]
@@ -257,6 +268,7 @@ my $seq_region_strand = 1;
 my $alignment_type = "MAVID";
 my $set_of_species = "mouse:rat";
 my $condensed = 0;
+my $solve_overlapping = 0;
 my $print_genomic = 1;
 my $print_genes = 0;
 my $print_contigs = 0;
@@ -278,6 +290,7 @@ GetOptions(
     "alignment_type=s" => \$alignment_type,
     "set_of_species=s" => \$set_of_species,
     "condensed!" => \$condensed,
+    "solve_overlapping!" => \$solve_overlapping,
     "print_genomic!" => \$print_genomic,
     "print_genes!" => \$print_genes,
     "print_contigs!" => \$print_contigs,
@@ -338,7 +351,7 @@ throw("The database does not contain any $alignment_type data for ".join(", ", k
 ## Create an AlignSlice for projecting on query_slice
 my $align_slice_adaptor = Bio::EnsEMBL::Registry->get_adaptor($dbname, "compara", "AlignSlice");
 my $align_slice = $align_slice_adaptor->fetch_by_Slice_MethodLinkSpeciesSet(
-        $query_slice, $method_link_species_set, !$condensed
+        $query_slice, $method_link_species_set, !$condensed, $solve_overlapping
     );
 my $simple_align;
 if ($print_genomic) {
