@@ -109,12 +109,12 @@ have specified a group_set_size in the target_dna_collection. In the case of bla
                     -options   => $self->options,
                     -program   => $program,
 		    -analysis  => $self->analysis,
+                    -verbose   => $self->debug,
                   );
-  $runnable->{'_verbose_debug'} = 1 if($self->debug);
+
   if($self->debug >1) {
-    $runnable->{'_results_to_tmp_file'} = 1;  # switch on whether to use pipe or /tmp file
-    $runnable->results($self->worker_temp_directory . "/results." . time);
-    $runnable->{'_delete_results'} = 0;       # switch on whether to delete /tmp/results file or not
+    $runnable->results_to_file(1);  # switch on whether to use pipe or /tmp file
+    $runnable->resultsfile($self->worker_temp_directory . "/results." . time);
   }
 
   #
