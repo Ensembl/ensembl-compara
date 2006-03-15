@@ -19,8 +19,8 @@ my $conf_file;
 my %analysis_template;
 my %hive_params ;
 my %member_loading_params;
-my %mercator_params;
-my $multiplealigner_params;
+my %synteny_map_builder_params;
+my $multiple_aligner_params;
 
 my %compara_conf = ();
 #$compara_conf{'-user'} = 'ensadmin';
@@ -117,20 +117,28 @@ sub parse_conf {
       if($type eq 'COMPARA') {
         %compara_conf = %{$confPtr};
       }
-      elsif(($type eq 'BLAST_TEMPLATE') or ($confPtr->{TYPE} eq 'BLASTP_TEMPLATE')) {
+      elsif(($type eq 'BLAST_TEMPLATE') or ($type eq 'BLASTP_TEMPLATE')) {
+        die "You cannot have more than one BLAST_TEMPLATE/BLASTP_TEMPLATE block in your configuration file"
+            if (%analysis_template);
         %analysis_template = %{$confPtr};
       }
       elsif($type eq 'HIVE') {
+        die "You cannot have more than one HIVE block in your configuration file"
+            if (%hive_params);
         %hive_params = %{$confPtr};
       }
       elsif($type eq 'MEMBER_LOADING') {
+        die "You cannot have more than one MEMBER_LOADING block in your configuration file"
+            if (%member_loading_params);
         %member_loading_params = %{$confPtr};
       }
-      elsif($type eq 'MERCATOR') {
-        %mercator_params = %{$confPtr};
+      elsif($type eq 'SYNTENY_MAP_BUILDER') {
+        die "You cannot have more than one SYNTENY_MAP_BUILDER block in your configuration file"
+            if (%synteny_map_builder_params);
+        %synteny_map_builder_params = %{$confPtr};
       }
-      elsif($type eq 'MULTIPLEALIGNER') {
-        push(@$multiplealigner_params, $confPtr);
+      elsif($type eq 'MULTIPLE_ALIGNER') {
+        push(@$multiple_aligner_params, $confPtr);
       }
     }
   }
@@ -241,9 +249,47 @@ sub prepareGenomeAnalysis
   }
 
   #
-  # CreateBlastRules
+  # SyntenyMapBuilder
   #
-  $parameters = "{phylumBlast=>0, selfBlast=>0,cr_analysis_logic_name=>'Mercator'}";
+  $parameters = "";
+  my $synteny_map_builder_logic_name = "Mercator"; #Default value
+  if (defined $synteny_map_builder_params{'logic_name'}) {
+    $synteny_map_builder_logic_name = $synteny_map_builder_params{'logic_name'};
+  }
+  my $synteny_map_builder_module =
+      "Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::$synteny_map_builder_logic_name";
+  if (defined $synteny_map_builder_params{'module'}) {
+    $synteny_map_builder_module = $synteny_map_builder_params{'module'};
+  }
+
+  if (defined $synteny_map_builder_params{'strict_map'}) {
+    $parameters .= "strict_map => " . $synteny_map_builder_params{'strict_map'} .",";
+  }
+  if (defined $synteny_map_builder_params{'cutoff_score'}) {
+    $parameters .= "cutoff_score => " . $synteny_map_builder_params{'cutoff_score'} .",";
+  }
+  if (defined $synteny_map_builder_params{'cutoff_evalue'}) {
+    $parameters .= "cutoff_evalue => " . $synteny_map_builder_params{'cutoff_evalue'} .",";
+  }
+  $parameters = "{$parameters}";
+  my $synteny_map_builder_analysis = Bio::EnsEMBL::Analysis->new(
+      -logic_name      => $synteny_map_builder_logic_name,
+      -module          => $synteny_map_builder_module,
+      -parameters      => $parameters
+    );
+  $self->{'comparaDBA'}->get_AnalysisAdaptor()->store($synteny_map_builder_analysis);
+  $stats = $analysisStatsDBA->fetch_by_analysis_id($synteny_map_builder_analysis->dbID);
+  $stats->batch_size(1);
+  $stats->hive_capacity(1);
+  $stats->status('BLOCKED');
+  $stats->update();
+
+  #
+  # CreateBlastRules
+  #    (it comes before SyntenyMapBuilder in the pipeline but needs to know about
+  #    the logic_name of the SyntenyMapBuilder)
+  #
+  $parameters = "{phylumBlast=>0, selfBlast=>0,cr_analysis_logic_name=>'$synteny_map_builder_logic_name'}";
   my $blastrules_analysis = Bio::EnsEMBL::Pipeline::Analysis->new(
       -db_version      => '1',
       -logic_name      => 'CreateBlastRules',
@@ -263,41 +309,15 @@ sub prepareGenomeAnalysis
   $ctrlRuleDBA->create_rule($submitpep_analysis, $blastrules_analysis);
   $ctrlRuleDBA->create_rule($dumpfasta_analysis, $blastrules_analysis);
 
-  #
-  # Mercator
-  #
-  $parameters = "";
-  if (defined $mercator_params{'strict_map'}) {
-    $parameters .= "strict_map => " . $mercator_params{'strict_map'} .",";
-  }
-  if (defined $mercator_params{'cutoff_score'}) {
-    $parameters .= "cutoff_score => " . $mercator_params{'cutoff_score'} .",";
-  }
-  if (defined $mercator_params{'cutoff_evalue'}) {
-    $parameters .= "cutoff_evalue => " . $mercator_params{'cutoff_evalue'} .",";
-  }
-  $parameters = "{$parameters}";
-  my $mercatorAnalysis = Bio::EnsEMBL::Analysis->new(
-      -logic_name      => 'Mercator',
-      -module          => 'Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::Mercator',
-      -parameters      => $parameters
-    );
-  $self->{'comparaDBA'}->get_AnalysisAdaptor()->store($mercatorAnalysis);
-  $stats = $analysisStatsDBA->fetch_by_analysis_id($mercatorAnalysis->dbID);
-  $stats->batch_size(1);
-  $stats->hive_capacity(1);
-  $stats->status('BLOCKED');
-  $stats->update();
-
-  $ctrlRuleDBA->create_rule($blastrules_analysis, $mercatorAnalysis);
+  $ctrlRuleDBA->create_rule($blastrules_analysis, $synteny_map_builder_analysis);
 
   #
-  # Mlagan
+  # MultipleAligner
   #
-  foreach my $this_multiplealigner_params (@$multiplealigner_params) {
+  foreach my $this_multiple_aligner_params (@$multiple_aligner_params) {
     my ($method_link_id, $method_link_type);
-    if($this_multiplealigner_params->{'method_link'}) {
-      ($method_link_id, $method_link_type) = @{$this_multiplealigner_params->{'method_link'}};
+    if($this_multiple_aligner_params->{'method_link'}) {
+      ($method_link_id, $method_link_type) = @{$this_multiple_aligner_params->{'method_link'}};
     } else {
       ($method_link_id, $method_link_type) = qw(9 MLAGAN);
     }
@@ -307,46 +327,46 @@ sub prepareGenomeAnalysis
     $mlss->method_link_type($method_link_type);
 
     my $gdbs = [];
-    foreach my $gdb_id (@{$this_multiplealigner_params->{'species_set'}}) {
+    foreach my $gdb_id (@{$this_multiple_aligner_params->{'species_set'}}) {
       my $gdb = $self->{'comparaDBA'}->get_GenomeDBAdaptor->fetch_by_dbID($gdb_id);
       push @{$gdbs}, $gdb;
     }
     $mlss->species_set($gdbs);
-    if (defined($this_multiplealigner_params->{method_link_species_set_id})) {
-      $mlss->dbID($this_multiplealigner_params->{method_link_species_set_id});
+    if (defined($this_multiple_aligner_params->{method_link_species_set_id})) {
+      $mlss->dbID($this_multiple_aligner_params->{method_link_species_set_id});
     }
     $self->{'comparaDBA'}->get_MethodLinkSpeciesSetAdaptor->store($mlss);
 
     ## Create a Synteny Map Builder job per Multiple Aligner
-    if (defined $this_multiplealigner_params->{'species_set'}) {
-      my $input_id = 'gdb_ids=> [' . join(",",@{$this_multiplealigner_params->{'species_set'}}) . ']';
+    if (defined $this_multiple_aligner_params->{'species_set'}) {
+      my $input_id = 'gdb_ids=> [' . join(",",@{$this_multiple_aligner_params->{'species_set'}}) . ']';
       if (defined $mlss) {
         $input_id .= ",msa_method_link_species_set_id => ".$mlss->dbID();
       }
-      if (defined $this_multiplealigner_params->{'tree_file'}) {
-        $input_id .= ",tree_file => \'" . $this_multiplealigner_params->{'tree_file'} ."\'";
+      if (defined $this_multiple_aligner_params->{'tree_file'}) {
+        $input_id .= ",tree_file => \'" . $this_multiple_aligner_params->{'tree_file'} ."\'";
       }
       Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob(
             -input_id       => "{$input_id}",
-            -analysis       => $mercatorAnalysis
+            -analysis       => $synteny_map_builder_analysis
           );
     }
   }
   $parameters = "";
-  my $mlaganAnalysis = Bio::EnsEMBL::Analysis->new(
+  my $multiple_aligner_analysis = Bio::EnsEMBL::Analysis->new(
       -logic_name      => 'Mlagan',
       -module          => 'Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::Mlagan',
       -parameters      => $parameters
     );
-  $self->{'comparaDBA'}->get_AnalysisAdaptor()->store($mlaganAnalysis);
-  $stats = $analysisStatsDBA->fetch_by_analysis_id($mlaganAnalysis->dbID);
+  $self->{'comparaDBA'}->get_AnalysisAdaptor()->store($multiple_aligner_analysis);
+  $stats = $analysisStatsDBA->fetch_by_analysis_id($multiple_aligner_analysis->dbID);
   $stats->batch_size(1);
   $stats->hive_capacity(5);
   $stats->status('BLOCKED');
   $stats->update();
 
-  $dataflowRuleDBA->create_rule($mercatorAnalysis, $mlaganAnalysis);
-  $ctrlRuleDBA->create_rule($mercatorAnalysis, $mlaganAnalysis);
+  $dataflowRuleDBA->create_rule($synteny_map_builder_analysis, $multiple_aligner_analysis);
+  $ctrlRuleDBA->create_rule($synteny_map_builder_analysis, $multiple_aligner_analysis);
 
   #
   # blast_template
