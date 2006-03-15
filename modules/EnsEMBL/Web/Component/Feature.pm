@@ -37,6 +37,8 @@ sub select_feature {
 
 sub select_feature_form {
   my( $panel, $object ) = @_;
+  my $species      = $object->species;
+  my $species_defs = $object->species_defs;
   my $form = EnsEMBL::Web::Form->new( 'select_feature', "/@{[$object->species]}/featureview", 'get' );
 
   $form->add_element(
@@ -44,15 +46,11 @@ sub select_feature_form {
     'value' => 'Select a Feature'
     );
 
-  my @types = (
-    { 'value' => 'Gene',                'name' => 'Gene' },
-    { 'value' => 'AffyProbe',           'name' => 'AffyProbe' },
-    { 'value' => 'DnaAlignFeature',     'name' => 'Sequence Feature' },
-    { 'value' => 'ProteinAlignFeature', 'name' => 'Protein Feature' },
-    { 'value' => 'RegulatoryFactor',   'name' => 'Regulatory Factor' },
-  );
-  unshift @types, { 'value' => 'Disease', 'name' => 'OMIM Disease' }
-    if $object->species_defs->databases->{'ENSEMBL_DISEASE'};
+  my $types;
+  #look in species defs to find available features
+  foreach my $avail_feature (@{$object->find_available_features}) {
+	  push @$types, { 'value'=>$avail_feature->{'value'},'name'=>$avail_feature->{'text'} }, 
+  }
 
   $form->add_element(
     'type' => 'Information',
@@ -64,7 +62,7 @@ sub select_feature_form {
     'select' => 'select',
     'name'   => 'type',
     'label'  => 'Feature type:',
-    'values' => \@types,
+    'values' => $types,
     'value'  => $object->param( 'type' ) || 'Gene',
     'string_name'   => 'id',
     'string_label'  => 'ID',

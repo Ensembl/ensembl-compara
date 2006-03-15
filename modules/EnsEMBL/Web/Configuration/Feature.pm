@@ -98,11 +98,10 @@ sub featureview {
 #---------------------------------------------------------------------------
 
 sub context_menu {
-  my $self = shift;
-  my $obj      = $self->{object};
-  my $species = $self->{object}->species;
-  
-  my $flag     = "feat";
+  my $self         = shift;
+  my $obj          = $self->{object};
+  my $species      = $obj->species;
+  my $flag         = "feat";
   $self->{page}->menu->add_block( $flag, 'bulleted', "Display Feature" );
 
   # pass configuration options in URL
@@ -116,20 +115,15 @@ sub context_menu {
   my $rows        = $obj->param('rows');
   my $config = "style=$style;col=$col;zmenu=$zmenu;chr_length=$chr_length;v_padding=$v_padding;h_padding=$h_padding;h_spacing=$h_spacing;rows=$rows";
 
-  my $feature_types = [
-        {'text'=>"Gene", 'href'=>"/$species/featureview?type=Gene", 'raw'=>1},
-        {'text'=>"AffyProbe", 'href'=>"/$species/featureview?type=AffyProbe", 'raw'=>1},
-        {'text'=>"Sequence Feature", 'href'=>"/$species/featureview?type=DnaAlignFeature", 'raw'=>1},
-        {'text'=>"Protein Feature", 'href'=>"/$species/featureview?type=ProteinAlignFeature", 'raw'=>1},
-        {'text'=>"Regulatory Factor", 'href'=>"/$species/featureview?type=RegulatoryFactor", 'raw'=>1},
-    ];
-
-  if ($species eq 'Homo_sapiens') {
-        unshift (@$feature_types,  {'text'=>"OMIM Disease", 'href'=>"/$species/featureview?type=Disease", 'raw'=>1});
+  my $features = [];
+  my $href_root = "/$species/featureview?type=";
+  #look in species defs to find available features
+  foreach my $avail_feature (@{$obj->find_available_features}) {
+	push @$features, {'text'=>$avail_feature->{'text'},'href'=>$href_root.$avail_feature->{'value'},'raw'=>1 } ;
   }
 
   $self->add_entry( $flag, code=>'other_feat', 'text' => "Select another feature to display",
-                                  'href' => "/@{[$obj->species]}/featureview?$config", 'options' => $feature_types );
+                                  'href' => "/@{[$obj->species]}/featureview?$config", 'options' => $features );
   $self->add_entry( $flag, 'text' => "Display your own features on a karyotype",
                                   'href' => "/@{[$obj->species]}/karyoview" );
 }

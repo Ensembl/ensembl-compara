@@ -393,14 +393,7 @@ sub jump_to_contig_form {
 
   $form->add_element('type' => 'SubHeader', 'value' => 'Region');
 
-  my @types = (
-        {'value'=>'band', 'name'=>'Band'},
-        {'value'=>'region', 'name'=>'Region'},
-        {'value'=>'marker', 'name'=>'Marker'},
-        {'value'=>'bp', 'name'=>'Base pair'},
-        {'value'=>'gene', 'name'=>'Gene'},
-        {'value'=>'peptide', 'name'=>'Peptide'},
-    );
+  my @types = @{$object->find_available_anchor_points};
   my @types_1 = @types;
   $form->add_element(
     'type'   => 'DropDownAndString',

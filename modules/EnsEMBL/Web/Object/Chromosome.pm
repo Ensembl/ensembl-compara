@@ -284,6 +284,43 @@ sub parse_user_data {
     $parser->parse($self->param("paste_file_$track_id"));
   }
 }
-  
+
+
+=head2 find_available_anchor_points
+
+ Arg[1]		 : EnsEMBL::Web::Object::Chromosome
+ Example     : my @types = @{$object->find_available_anchor_points};
+ Description : Looks in species_defs for available anchor points, ie non-emprty tables
+ Return type : Arrayref
+
+=cut
+
+sub find_available_anchor_points {
+	my $self=shift;
+	my $species      = $self->species;
+	my $species_defs = $self->species_defs;
+	#define possible anchor here - where 'table' value is undef then option added by default
+	my $all_anchor_points = [
+							 {'table'=>'karyotype',      'value'=>'band',   'name'=>'Band'},
+							 {'table'=>'',               'value'=>'region', 'name'=>'Region'},
+						 	 {'table'=>'marker_feature', 'value'=>'marker', 'name'=>'Marker'},
+						   	 {'table'=>'' ,              'value'=>'bp',     'name'=>'Base pair'},
+						   	 {'table'=>'' ,              'value'=>'gene',   'name'=>'Gene'},
+						   	 {'table'=>'' ,              'value'=>'peptide','name'=>'Peptide'},	
+							];
+
+	my $avail_anchor_points = [];
+	foreach my $poss_anchor (@$all_anchor_points) {
+		if ($poss_anchor->{'table'}) {
+			if ($species_defs->get_table_size( {-db=>'ENSEMBL_DB',-table => $poss_anchor->{'table'}},$species )) {
+				push @$avail_anchor_points, {'value'=>$poss_anchor->{'value'}, 'name'=>$poss_anchor->{'name'} };
+			}
+		}
+		else {
+			push @$avail_anchor_points, {'value'=>$poss_anchor->{'value'}, 'name'=>$poss_anchor->{'name'} };
+		}
+	}
+	return $avail_anchor_points;
+}
 
 1;

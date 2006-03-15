@@ -206,4 +206,40 @@ sub retrieve_RegulatoryFactor {
   return ( $results, $extras );
 }
 
+
+=head2 find_available_features
+
+ Arg[1]	     : EnsEMBL::Web::Object::Feature (or EnsEMBL::Web::Proxy::Object)
+ Example     : my $avail_features = $obj->find_available_features
+ Description : looks in species_defs for size of feature tables and returns details of those that have entries
+ Return type : arrayref
+
+=cut	
+
+sub find_available_features {
+	my $self = shift;
+	my $species      = $self->species;
+	my $species_defs = $self->species_defs;
+
+	my $all_feature_types = [
+		{'table'=>'gene',value=>'Gene','text'=>"Gene"},
+        {'table'=>'affy_feature','value'=>'AffyProbe','text'=>"AffyProbe"},
+        {'table'=>'dna_align_feature','value'=>'DnaAlignFeature','text'=>"Sequence Feature"},
+        {'table'=>'protein_align_feature','value'=>'ProteinAlignFeature','text'=>"Protein Feature"},
+        {'table'=>'regulatory_feature','value'=>'RegulatoryFactor','text'=>"Regulatory Factor"},
+						  ];
+
+	my $used_feature_types = [];
+	foreach my $poss_feature (@$all_feature_types) {
+		if ($species_defs->get_table_size( {-db=>'ENSEMBL_DB',-table => $poss_feature->{'table'}},$species )) {
+			push @$used_feature_types, $poss_feature;
+		}
+	}
+	if ($species_defs->databases->{'ENSEMBL_DISEASE'}) {
+		unshift @$used_feature_types, {'text'=>"OMIM Disease",'value'=>'Disease','href'=>"/$species/featureview?type=Disease",'raw'=>1};
+	}
+	return $used_feature_types;
+}
+
+
 1;
