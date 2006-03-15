@@ -345,16 +345,36 @@ sub store {
    my $name = $dnafrag->name;
    my $gid =  $gdb->dbID;
    my $type = $dnafrag->coord_system_name;
+   my $stored_id;
+
+   # use INSERT IGNORE so that this method can be used 
+   # in a multi-process environment
 
    my $sth = $self->prepare("
-     INSERT INTO dnafrag ( genome_db_id, coord_system_name,
-                           name, length )
+     INSERT IGNORE INTO dnafrag ( genome_db_id, coord_system_name,
+                                  name, length )
      VALUES (?,?,?,?)");
 
-   $sth->execute($gid, $type, $name, $dnafrag->length);
+   my $rows_inserted = $sth->execute($gid, $type, $name, $dnafrag->length);
+   
+   if ($rows_inserted > 0) {
+     $stored_id = $sth->{'mysql_insertid'};
+   } else {
+     # entry was already stored by another process
+     my $sth2 = $self->prepare("
+        SELECT dnafrag_id 
+          FROM dnafrag 
+         WHERE name= ?
+           AND genome_db_id= ?");
+     $sth2->execute($name, $gid);
+     ($stored_id) = $sth2->fetchrow_array();
+   }
 
-   $dnafrag->dbID( $sth->{'mysql_insertid'} );
+   throw("DnaFrag apparently already stored, but could not be retrieved")
+       if not defined $stored_id;
+
    $dnafrag->adaptor($self);
+   $dnafrag->dbID($stored_id);
 
    return $dnafrag->dbID;
 }
