@@ -7,6 +7,9 @@ use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Compara::GenomeDB;
 use Bio::EnsEMBL::Hive;
 use Bio::EnsEMBL::DBLoader;
+use Bio::EnsEMBL::Registry;
+
+Bio::EnsEMBL::Registry->no_version_check(1);
 
 
 my $conf_file;
@@ -66,6 +69,7 @@ if(%hive_params) {
   if(defined($hive_params{'hive_output_dir'})) {
     die("\nERROR!! hive_output_dir doesn't exist, can't configure\n  ", $hive_params{'hive_output_dir'} , "\n")
       if(($hive_params{'hive_output_dir'} ne "") and !(-d $hive_params{'hive_output_dir'}));
+    $self->{'comparaDBA'}->get_MetaContainer->delete_key('hive_output_dir');
     $self->{'comparaDBA'}->get_MetaContainer->store_key_value('hive_output_dir', $hive_params{'hive_output_dir'});
   }
 }
