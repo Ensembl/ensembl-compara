@@ -50,7 +50,7 @@ sub new {
 sub slice {
   my ($self) = @_;
 
-  return $self->{'_slice'} if(defined($self->{'slice'}));
+  return $self->{'_slice'} if(defined($self->{'_slice'}));
 
   return undef unless($self->dnafrag);
   return undef unless($self->dnafrag->genome_db);
