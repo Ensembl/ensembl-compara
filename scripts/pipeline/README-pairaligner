@@ -8,6 +8,7 @@
   ensembl-compara
   ensembl-hive
   ensembl-pipeline
+  ensebml-analysis
 
   executables
   ~~~~~~~~~~~
@@ -18,30 +19,41 @@
 
     bioperl code
 
-      cvs -d :ext:bio.perl.org:/home/repository/bioperl co -r branch-07 bioperl-live
+    cvs -d :pserver:cvs@cvs.open-bio.org:/home/repository/bioperl login
+    when prompted, the password is 'cvs'
+    cvs -d :pserver:cvs@cvs.open-bio.org:/home/repository/bioperl co -r branch-1-2 -d bioperl-1-2 bioperl-live
 
     core ensembl code
 
-      cvs -d :ext:cvs.sanger.ac.uk:/nfs/ensembl/cvsroot co ensembl
+    cvs -d :pserver:cvsuser@cvs.sanger.ac.uk:/cvsroot/ensembl login
+    When prompted the password is 'CVSUSER'. 
+    cvs -d :pserver:cvsuser@cvs.sanger.ac.uk:/cvsroot/ensembl co ensembl
 
-    ensembl-pipeline code (for Runnables)
+    ensembl-compara code (for compara API and some RunnableDBs or Hive::Process)
+    cvs -d :pserver:cvsuser@cvs.sanger.ac.uk:/cvsroot/ensembl co ensembl-compara
+    
+    ensembl-analysis code (for Runnables/RunnableDBs)
+    cvs -d :pserver:cvsuser@cvs.sanger.ac.uk:/cvsroot/ensembl co ensembl-analysis
 
-      cvs -d :ext:cvs.sanger.ac.uk:/nfs/ensembl/cvsroot co  ensembl-pipeline
+    ensembl-hive code (Bio::EnsEMBL::Hive pipeline infrastructure)
+    cvs -d :pserver:cvsuser@cvs.sanger.ac.uk:/cvsroot/ensembl co ensembl-hive
 
-    ensembl-hive code
-
-      cvs -d :ext:cvs.sanger.ac.uk:/nfs/ensembl/cvsroot co  ensembl-hive
+    ensembl-pipeline code (Bio::EnsEMBL:Pipeline pipeline infrastructure, this pipeline has still some
+    dependancies with this code. Hopefully this should not be the case in the near future)
+    cvs -d :pserver:cvsuser@cvs.sanger.ac.uk:/cvsroot/ensembl co ensembl-pipeline
 
 in tcsh
     setenv BASEDIR   /some/path/to/modules
-    setenv PERL5LIB  ${BASEDIR}/ensembl/modules:${BASEDIR}/ensembl-pipeline/modules:${BASEDIR}/bioperl-live:${BASEDIR}/ensembl-compara:${BASEDIR}/ensembl-hive
+    setenv PERL5LIB  ${BASEDIR}/ensembl/modules:${BASEDIR}/ensembl-pipeline/modules:${BASEDIR}/bioperl-live:${BASEDIR}/ensembl-compara:${BASEDIR}/ensembl-hive:${BASEDIR}/ensembl-analysis
     setenv PATH $PATH:${BASEDIR}/ensembl-compara/script/pipeline:${BASEDIR}/ensembl-hive/scripts
 
 in bash
     BASEDIR=/some/path/to/modules
-    PERL5LIB=${BASEDIR}/ensembl/modules:${BASEDIR}/ensembl-pipeline/modules:${BASEDIR}/bioperl-live:${BASEDIR}/ensembl-compara:${BASEDIR}/ensembl-hive
+    PERL5LIB=${BASEDIR}/ensembl/modules:${BASEDIR}/ensembl-pipeline/modules:${BASEDIR}/bioperl-live:${BASEDIR}/ensembl-compara:${BASEDIR}/ensembl-hive:${BASEDIR}/ensembl-analysis
     PATH=$PATH:${BASEDIR}/ensembl-compara/scripts/pipeline:${BASEDIR}/ensembl-hive/scripts
 
+Copy General.pm.example to General.pm
+cp ${BASEDIR}/ensembl-analysis/modules/Bio/EnsEMBL/Analysis/Config/General.pm.example ${BASEDIR}/ensembl-analysis/modules/Bio/EnsEMBL/Analysis/Config/General.pm
 
 2- Create a hive/compara database
    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -63,12 +75,14 @@ debug options is on this can take some space. So be careful.
 
 mkdir -p /acari/work7a/abel/hive/abel_compara_human_cow_blastz_27/workers
 
-This directory needs to be set in 'hive_output_dir' variable in the compara-hive
-configuration file. See below. If not set, all STDOUT/STDERR goes to /dev/null. :)
+This directory can be set in 'hive_output_dir' variable in the compara-hive
+configuration file. Unless you know what you are doing we recommend to set to an empty string
+'hive_output_dir' => ""
+Or not set it at all. In both case, all STDOUT/STDERR goes to /dev/null.
 
 # IMPORTANT: The hive system can generate an awful lot of log outputs that are dumped in
 # the hive_output_dir. When a pipeline runs fine, these are not needed and can take a lot of
-# disk space as well as generate a large number of files. If you don't want log outputs (recommended),
+# disk space as well as generate a large number of files. If you don't want log outputs (RECOMMENDED),
 # then just don't specify any hive_output_dir (delete or comment the line or set to "" if you don't want
 # any STDOUT/STDERR files)
 
