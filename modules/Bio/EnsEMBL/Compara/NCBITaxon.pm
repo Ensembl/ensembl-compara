@@ -125,6 +125,30 @@ sub classification {
   return $self->{'_classification'};
 }
 
+sub species {
+  my $self = shift;
+
+  unless (defined $self->{'_species'}) {
+    my ($species, $genus) = split /\s+/, $self->classification;
+    $self->{'_species'} = $species;
+    $self->{'_genus'} = $genus;
+  }
+
+  return $self->{'_species'};
+}
+
+sub genus {
+  my $self = shift;
+
+  unless (defined $self->{'_genus'}) {
+    my ($species, $genus) = split /\s+/, $self->classification;
+    $self->{'_species'} = $species;
+    $self->{'_genus'} = $genus;
+  }
+
+  return $self->{'_genus'};
+}
+
 sub _add_child_name_to_classification {
   my $self = shift;
   my $classification = shift;
