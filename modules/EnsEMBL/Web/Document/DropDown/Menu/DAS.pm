@@ -55,6 +55,8 @@ sub new {
       $das_data{label} or $das_data{label} = $das_data{name};
       $das_data{caption} or $das_data{caption} = $das_data{name};
       $das_data{stylesheet} or $das_data{stylesheet} = 'n';
+      $das_data{score} or $das_data{score} = 'n';
+      $das_data{fg_merge} or $das_data{fg_merge} = 'a';
       $das_data{group} or $das_data{group} = 'y';
       $das_data{strand} or $das_data{strand} = 'b';
       if (exists $das_data{enable}) {
@@ -124,8 +126,6 @@ sub new {
   $URL = sprintf qq(/%s/%s?%sscript=%s), $self->{'species'}, 'urlsource', $self->{'LINK'}, $script;
   $self->add_link( "URL based data...",  qq(javascript:X=window.open('$URL','urlsources','left=10,top=10,scrollbars=yes');X.focus()),'');
 
-# Now we have a proper DAS registry ther is no need for DAS wiki
-#  $self->add_link( 'Server directory...', '/Docs/wiki/html/EnsemblDocs/DASdirectory.html', 'server' );
   return $self;
 }
 

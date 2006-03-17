@@ -69,7 +69,7 @@ sub display_wizard_status {
     return if (defined($object->param('_das_submit')));
     my %source_conf = ();        
 
-    my @confkeys = qw( stylesheet score strand label caption type depth domain group name protocol labelflag color help url linktext linkurl);
+    my @confkeys = qw( stylesheet fg_merge score strand label caption type depth domain group name protocol labelflag color help url linktext linkurl);
     my $step;
 
     if (defined(my $new_das = $object->param('_das_add'))) {

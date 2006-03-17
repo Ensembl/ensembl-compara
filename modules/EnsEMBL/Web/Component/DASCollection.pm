@@ -259,7 +259,7 @@ sub das_wizard {
     my %source_conf = ();        
     my $step;
 
-    my @confkeys = qw( stylesheet score strand label dsn caption type depth domain group name protocol labelflag color help url linktext linkurl);
+    my @confkeys = qw( fg_merge stylesheet score strand label dsn caption type depth domain group name protocol labelflag color help url linktext linkurl);
 
     if (defined(my $new_das = $object->param('_das_add'))) {
         $step = 1;
@@ -454,9 +454,9 @@ sub das_wizard {
     
     my @sparams; 
     if ($step == 1) {
-    @sparams = grep { /^DAS/ && /edit|link|enable|type|name|label|help|color|group|strand|depth|labelflag|stylesheet|score/} $object->param();
+    @sparams = grep { /^DAS/ && /edit|link|enable|type|name|label|help|color|group|strand|depth|labelflag|stylesheet|score|fg_merge/} $object->param();
     } elsif ($step == 2) {
-    @sparams = grep { /^DAS/ && /edit|link|user_|sourcetype|protocol|domain|dsn|registry|dsns|paste_data|name|label|help|color|group|strand|depth|labelflag|stylesheet|score/} $object->param();
+    @sparams = grep { /^DAS/ && /edit|link|user_|sourcetype|protocol|domain|dsn|registry|dsns|paste_data|name|label|help|color|group|strand|depth|labelflag|stylesheet|score|fg_merge/} $object->param();
     } elsif ($step == 3) {
     @sparams = grep { /^DAS/ && /edit|user_|protocol|domain|dsn|registry|dsns|paste_data|enable|type/} $object->param();
     }
@@ -512,7 +512,7 @@ sub added_sources {
 	    }
 	}
 
-	my $add_link = sprintf("%sadd_das_source=(name=%s+url=%s+dsn=%s+type=%s+color=%s+strand=%s+labelflag=%s+stylesheet=%s+group=%s+depth=%d+score=%s+active=1)",
+	my $add_link = sprintf("%sadd_das_source=(name=%s+url=%s+dsn=%s+type=%s+color=%s+strand=%s+labelflag=%s+stylesheet=%s+group=%s+depth=%d+score=%s+fg_merge=%s+active=1)",
 			       $url, 
 			       $das_name,
 			       $das_adapt->domain,
@@ -524,7 +524,8 @@ sub added_sources {
 			       $das_adapt->stylesheet,
 			       $das_adapt->group,
 			       $das_adapt->depth,
-			       $das_adapt->score
+			       $das_adapt->score,
+			       $das_adapt->fg_merge
 );
 
 	my $js = qq{javascript:X=window.open('','helpview','left=20,top=20,height=200,width=600,resizable');
@@ -956,17 +957,36 @@ sub das_wizard_3 {
 
     $option = lc($das_conf->{score} || 'n');
     my @scvalues;
-    foreach ( 'No', 'Histogram' ) {
+    foreach ( 'No chart', 'Histogram' ) {
         my $id          = lc(substr($_,0,1));
         push @scvalues, {'name'=>$_, 'value'=>$id};
     }
     $form->add_element('select'=>'select',
                        'type'=>'DropDown',
                        'name'=>'DASscore',
-                       'label'=>'Use score:',
+                       'label'=>'Score chart:',
                        'values'=>\@scvalues,
-                       'value' => $option
+                       'value' => $option,
+		       'on_change' => 'submit'
 		       );
+ 
+    if ($option ne 'n') {
+	$option = lc($das_conf->{fg_merge} || 'a');
+	my @scvalues;
+	foreach ( 'Average Score', 'Max Score') {
+	    my $id          = lc(substr($_,0,1));
+	    push @scvalues, {'name'=>$_, 'value'=>$id};
+	}
+	$form->add_element('select'=>'select',
+			   'type'=>'DropDown',
+			   'name'=>'DASfg_merge',
+			   'label'=>'Merged features score:',
+			   'values'=>\@scvalues,
+			   'value' => $option
+			   );
+
+    }
+ 
     return;
 }
 

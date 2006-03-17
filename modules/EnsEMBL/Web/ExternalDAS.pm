@@ -16,7 +16,8 @@ sub new {
       'GROUP'          => '1',
       'DEFAULT_COLOUR' => 'grey50',
       'STYLESHEET'     => 'Y',
-      'SCORE' => 'N'
+      'SCORE' => 'N',
+      'FG_MERGE' => 'A'
     },
   };
   bless($self,$class);
@@ -61,6 +62,7 @@ sub add_das_source {
     'depth'      => $href->{depth},
     'stylesheet' => $href->{stylesheet},
     'score' => $href->{score},
+    'fg_merge' => $href->{fg_merge},
     'species'    => $self->{'proxiable'}->species,
   } );
 
@@ -79,6 +81,7 @@ sub add_das_source {
     $config->set( "managed_extdas_$key", "str",        $href->{strand} ? $href->{strand} : $self->{'defaults'}{'STRAND'},             1);
     $config->set( "managed_extdas_$key", "stylesheet", $href->{stylesheet} ? $href->{stylesheet} : $self->{'defaults'}{'STYLESHEET'}, 1);
     $config->set( "managed_extdas_$key", "score", $href->{score} ? $href->{score} : $self->{'defaults'}{'SCORE'}, 1);
+    $config->set( "managed_extdas_$key", "fg_merge", $href->{fg_merge} ? $href->{fg_merge} : $self->{'defaults'}{'FG_MERGE'}, 1);
     $config->set( "managed_extdas_$key", "lflag",      $href->{labelflag} ? $href->{labelflag} : $self->{'defaults'}{'LABELFLAG'},    1);
     $config->set( "managed_extdas_$key", "manager",    'das',                                                                         1);
     $config->set( "managed_extdas_$key", "col",        $href->{col} || $href->{color} ,                                               1);
