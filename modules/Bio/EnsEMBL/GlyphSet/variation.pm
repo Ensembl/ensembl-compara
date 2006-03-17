@@ -12,9 +12,10 @@ sub my_label { return "SNPs"; }
 
 sub features {
   my ($self) = @_;
-  if( exists( $self->{'config'}->{'snpview'}->{'snps'} ) ) {
-    my $snps = $self->{'config'}->{'snpview'}->{'snps'} || [];
+  if( exists( $self->{'config'}->{'snps'} ) ) {
+    my $snps = $self->{'config'}->{'snps'} || [];
     if(@$snps) {
+      warn "in here";
       $self->{'config'}->{'variation_legend_features'}->{'variations'} = { 'priority' => 1000, 'legend' => [] };
     }
     return $snps;
@@ -37,6 +38,17 @@ sub href {
   my $self = shift;
   my $f    = shift;
   my $view = shift || 'snpview';
+  my $pops;
+
+  if ($view eq 'ldview') {
+    my $Config   = $self->{'config'};
+    my $config_pop = $Config->{'_ld_population'};
+    
+    return unless $config_pop;
+    foreach ( @$config_pop ) {
+      $pops .= "pop=$_;";
+    }
+  }
 
   my $id     = $f->variation_name;
   my $source = $f->source;
@@ -53,13 +65,7 @@ sub href {
       $species = "@{[$self->{container}{_config_file_name_}]}";
   }
 
-  if ($view eq 'ldview' ){
-    my $Config   = $self->{'config'};
-    my $only_pop = $Config->{'_ld_population'};
-    $start .= ";pop=$only_pop" if $only_pop;
-  }
-
-  return "/$species/$view?snp=$id;source=$source;c=$region:$start;w=20000";
+  return "/$species/$view?snp=$id;source=$source;c=$region:$start;w=20000;$pops";
 }
 
 sub image_label {
@@ -113,13 +119,14 @@ sub zmenu {
   elsif($f->start < $f->end ) {
     $pos = "$start&nbsp;-&nbsp;$end";
   }
+  my $ldview_link =  $self->href( $f, 'ldview' );
 
   my $status = join ", ", @{$f->get_all_validation_states};
   my %zmenu = ( 
  	       caption               => "SNP: " . ($f->variation_name),
  	       '01:SNP properties'   => $self->href( $f, 'snpview' ),
-               ( $self->{'config'}->_is_available_artefact( 'database_tables ENSEMBL_VARIATION.pairwise_ld' ) ?
- 	         ( '02:View in LDView'   => $self->href( $f, 'ldview' ) ) : ()
+               ( $ldview_link  ?
+ 	         ( '02:View in LDView'   => $ldview_link ) : ()
                ),
  	       "03:bp: $pos"         => '',
  	       "04:status: ".($status || '-') => '',
@@ -129,10 +136,6 @@ sub zmenu {
  	       "09:source: ".$f->source => '',
 	      );
 
- # foreach my $db (@{  $variation->get_all_synonym_sources }) {
-  #  if( $db eq 'TSC-CSHL' || $db eq 'HGVBASE' || $db eq 'dbSNP' || $db eq 'WI' ) {
-  #  }
-  #}
   my $consequence_type = $f->get_consequence_type;
   my $label = $self->{'colours'}{$consequence_type}[1]; 
   $zmenu{"57:Type: $label"} = "" unless $consequence_type eq '';  

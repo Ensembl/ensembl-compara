@@ -9,7 +9,7 @@ sub my_label { return "Genotyped SNPs"; }
 
 sub features {
   my ($self) = @_;
-  my $snps =  $self->{'config'}->{'snpview'}->{'genotyped_snps'} || [];
+  my $snps =  $self->{'config'}->{'genotyped_snps'} || [];
   return $snps;
 }
 1;
