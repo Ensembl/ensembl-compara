@@ -16,7 +16,6 @@ sub features {
   my ($self) = @_;
   my $slice = $self->{'container'};
   my $gene = $self->{'config'}->{'_draw_single_Gene'};
-  warn ">>> $gene <<<";
   if( $gene ) {
     my $data = $slice->adaptor->db->get_RegulatoryFeatureAdaptor->fetch_all_by_gene( $gene, 1 );
     my $offset = 1 - $slice->start;
@@ -24,7 +23,6 @@ sub features {
       $_->{'start'} += $offset;
       $_->{'end'}   += $offset;
     }
-    warn join " ", map {$_->seq_region_start} @$data;
     return $data;
   } else {
     return $slice->adaptor->db->get_RegulatoryFeatureAdaptor->fetch_all_by_Slice_constraint( $slice );  # $logic name is second param
@@ -52,9 +50,9 @@ sub zmenu {
     my $analysis = $f->analysis->logic_name;
     my $feature_link;
     if ($analysis =~ /cisred/i ) {
-      $name =~/\w+(\d+)/;
-      $name .= "  [CisRed]";
+      $name =~/\D+(\d+)/;
       $feature_link = "http://www.cisred.org/human2/siteseq?fid=$1";
+      $name .= "  [CisRed]";
     }
     $return->{"01:Feature: $name"} = $feature_link;
 
