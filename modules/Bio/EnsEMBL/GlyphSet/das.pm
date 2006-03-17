@@ -745,8 +745,6 @@ sub _init {
   $configuration->{colour} = $Config->get($das_config_key, 'col') || $Extra->{color} || $Extra->{col} || 'contigblue1';
   $configuration->{depth} =  defined($Config->get($das_config_key, 'dep')) ? $Config->get($das_config_key, 'dep') : $Extra->{depth} || 4;
   $configuration->{use_style} = $Extra->{stylesheet} ? uc($Extra->{stylesheet}) eq 'Y' : uc($Config->get($das_config_key, 'stylesheet')) eq 'Y';
-  $configuration->{use_score} = $Extra->{score} ? uc($Extra->{score}) eq 'Y' : uc($Config->get($das_config_key, 'score')) eq 'Y';
-
   $configuration->{'labelling'} =($Config->get($das_config_key, 'lflag') || $Extra->{'labelflag'}) =~ /^n$/i ? 0 : 1,
   $configuration->{length} = $container_length;
 
@@ -758,7 +756,7 @@ sub _init {
 
   my $styles;
 
-  if ($dastype ne 'ensembl_location') {
+  if ($dastype !~ /^ensembl_location/) {
       my $ga =  $self->{'container'}->adaptor->db->get_GeneAdaptor();
       my $genes = $ga->fetch_all_by_Slice( $self->{'container'});
       my $name = $das_name || $url;
@@ -822,7 +820,7 @@ sub _init {
 
       }
   } else {
-      my( $features, $das_styles ) = @{$self->{'container'}->get_all_DASFeatures->{$dsn}||[]};
+      my( $features, $das_styles ) = @{$self->{'container'}->get_all_DASFeatures($dastype)->{$dsn}||[]};
       $styles = $das_styles;
       @das_features = grep {
 	  $_->das_type_id() !~ /^(contig|component|karyotype)$/i && 
@@ -871,6 +869,9 @@ sub _init {
 
   if ($score ne 'N') {
       $renderer = "RENDER_histogram_simple";
+      $configuration->{use_score} = $score;
+      my $fg_merge = uc($Config->get($das_config_key, 'fg_merge') || $Extra->{'fg_merge'} || 'A');
+      $configuration->{'fg_merge'} = $fg_merge;
   } else {
       $renderer = $renderer ? "RENDER_$renderer" : ($group eq 'N' ? 'RENDER_simple' : 'RENDER_grouped');  
   }
@@ -1064,7 +1065,13 @@ sub RENDER_histogram_simple {
     my $empty_flag = 1;
 
 # Should come from a stylesheet in future
-    my ($max_score, $min_score, $row_height) = (100, 0, 20);
+
+    my @features = sort { $a->das_start() <=> $b->das_start() } @{$configuration->{'features'}};
+
+
+    my ($min_score, $max_score) = (sort {$a <=> $b} (map { $_->score } @features))[0,-1];
+
+    my $row_height = 30;
     my $pix_per_score = ($max_score - $min_score) / $row_height;
     my $bp_per_pix = 1 / $self->{pix_per_bp};
 
@@ -1072,8 +1079,8 @@ sub RENDER_histogram_simple {
 
     # flag to indicate if not all features have been displayed 
     my $more_features = 0;
-    my ($gScore, $gWidth, $fCount, $gStart) = (0, 0, 0, 0);
-    my @features = sort { $a->das_start() <=> $b->das_start() } @{$configuration->{'features'}};
+    my ($gScore, $gWidth, $fCount, $gStart, $mScore) = (0, 0, 0, 0, $min_score);
+#    warn("SCORES: $min_score * $max_score * $pix_per_score");
 
     for (my $i = 0; $i< @features; $i++) { 
 	my $f = $features[$i];
@@ -1106,6 +1113,8 @@ sub RENDER_histogram_simple {
 
 	$gWidth += $width;
 	$gScore += $score;
+	$mScore = $score if ($score > $mScore);
+
 	$fCount ++;
 	$gStart = $START if ($fCount == 1);
 
@@ -1119,8 +1128,19 @@ sub RENDER_histogram_simple {
 	    }
 	}
 
-	my $height = ($score / $fCount - $min_score) / $pix_per_score;
 
+
+	my $height;
+
+	if ($configuration->{'fg_merge'} eq 'A') {
+	    $height = ($score / $fCount - $min_score) / $pix_per_score;
+	} elsif ($configuration->{'fg_merge'} eq 'M') {
+	    $height = ($mScore - $min_score) / $pix_per_score;
+	    if ($height < 0) {
+		warn("ERROR: !! $mScore * $min_score * $pix_per_score");
+	    }
+	}
+#	$height = ($score / $fCount - $min_score) / $pix_per_score;
 	my ($href, $zmenu );
 	my $Composite = new Sanger::Graphics::Glyph::Composite({
 	    'y'         => 0,
@@ -1135,6 +1155,7 @@ sub RENDER_histogram_simple {
 
 	    $zmenu->{"03:$fCount features merged"} = '';
 	    $zmenu->{"05:Average SCORE: ".($gScore/$fCount)} = '';
+	    $zmenu->{"08:Max SCORE: $mScore"} = '';
 	    $zmenu->{"10:START: $gStart"} = '';
 	    $zmenu->{"20:END: $END"} = '';
 	} else {
@@ -1166,7 +1187,7 @@ sub RENDER_histogram_simple {
 
 	my $style = $self->get_featurestyle($f, $configuration);
 	my $fdata = $self->get_featuredata($f, $configuration, $y_offset);
-	
+#	warn(sprintf ("H : $score * %.2f * %d * %d * %d * %d \n", $height, $mScore, $width, $y_offset, $START, $END));
 	my $sm = new Sanger::Graphics::Glyph::Rect({
 	    'x'          => $gStart - 1,
 	    'y'          => $row_height - $height, 
@@ -1187,6 +1208,7 @@ sub RENDER_histogram_simple {
 	$self->push( $Composite );
 
 	$gWidth = $gScore = $fCount = 0;
+	$mScore = $min_score;
     } # END loop over features
 
     $self->errorTrack( 'No '.$self->{'extras'}->{'caption'}.' features in this region' ) if $empty_flag;
