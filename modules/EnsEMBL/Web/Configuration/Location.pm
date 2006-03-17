@@ -583,7 +583,7 @@ sub ldview {
   my $script_config = $obj->get_scriptconfig();
   my $restore_default = 1;
 
-  $self->update_configs_from_parameter( 'bottom', 'ldview' );
+  $self->update_configs_from_parameter( 'bottom', 'ldview', 'LD_population' );
   foreach my $source ( @sources ) {
     $restore_default = 0 if $script_config->get(lc("opt_$source") ) eq 'on';
  }
@@ -600,8 +600,8 @@ sub ldview {
      $script_config->set(lc("opt_$source"), $switch, 1);
    }
  }
-
-  $self->update_configs_from_parameter( 'bottom', 'ldview' );
+ 
+  $self->update_configs_from_parameter( 'bottom', 'ldview', 'LD_population' );
 
   my ($pops_on, $pops_off) = $obj->current_pop_name;
   my $script_config = $obj->get_scriptconfig();

@@ -91,7 +91,7 @@ sub getVariationFeatures {
   return (0, []) unless scalar @snps;
 
   my $filtered_snps = $self->filter_snps(\@snps);
-  return (scalar @snps, $filtered_snps);
+  return (scalar @snps, $filtered_snps || []);
 }
 
 
@@ -102,7 +102,7 @@ sub get_genotyped_VariationFeatures {
   return (0, []) unless scalar @snps;
 
   my $filtered_snps = $self->filter_snps(\@snps);
-  return (scalar @snps, $filtered_snps);
+  return (scalar @snps, $filtered_snps || []);
 }
 
 
@@ -137,48 +137,36 @@ sub filter_snps {
   return \@filtered_snps;
 }
 
+sub getFakeMungedVariationFeatures {
+  my ( $self, $subslices, $gene ) = @_;
+  my ($total_snps, $filter_snps) = $self->getVariationFeatures;
+  return (0, []) unless $total_snps;
+
+  my @on_slice_snps = 
+    # [ fake_s, fake_e, SNP ]   Filter out any SNPs not on munged slice...
+    map  { $_->[1]?[$_->[0]->start+$_->[1],$_->[0]->end+$_->[1],$_->[0]]:() }
+
+      # [ SNP, offset ]    Create a munged version of the SNPS -> map to "fake coords"
+      map  { [$_, $self->munge_gaps( $subslices, $_->start, $_->end)] }
+
+	# [ SNP ]          Get all features on slice
+	@$filter_snps;
+
+  return ($total_snps, \@on_slice_snps);
+}
 
 
 sub getFakeVariationFeatures {
-  my ( $self, $subslices, $gene ) = @_;
+  my ( $self, ) = @_;
   my $valids = $self->valids;
+  my ($total_snps, $filtered_snps) = $self->getVariationFeatures;
+  return (0, []) unless $total_snps;
 
-  my @on_slice_snps = 
-# [ fake_s, fake_e, SNP ]   Filter out any SNPs not on munged slice...
-    map  { $_->[1]?[$_->[0]->start+$_->[1],$_->[0]->end+$_->[1],$_->[0]]:() } # Filter out anything that misses
-# [ SNP, offset ]           Create a munged version of the SNPS
-    map  { [$_, $self->munge_gaps( $subslices, $_->start, $_->end)] }    # Map to "fake coordinates"
-# [ SNP ]                   Filter out all the multiply hitting SNPs
-    grep { $_->map_weight < 4 }
-# [ SNP ]                   Get all features on slice
-    @{ $self->Obj->get_all_VariationFeatures() };
-
-  my $count_snps = scalar @on_slice_snps;
-  return (0, []) unless $count_snps;
-
-  my @filtered_snps =
-# [fake_s, fake_e, SNP]              Remove the schwartzian index
-    map  { $_->[1] }
-# [ index, [fake_s, fake_e, SNP] ]   Sort snps on schwartzian index
-    sort { $a->[0] <=> $b->[0] }
-# [ index, [fake_s, fake_e, SNP] ]   Compute schwartzian index [ consequence type priority, fake SNP ]
-    map  { [ $_->[1] - $ct{$_->[2]->get_consequence_type($gene)} *1e9, $_ ] }
-# [ fake_s, fake_e, SNP ]   Grep features to see if the area valid
-    grep { ( @{$_->[2]->get_all_validation_states()} ?
-           (grep { $valids->{"opt_$_"} } @{$_->[2]->get_all_validation_states()} ) :
-           $valids->{'opt_noinfo'} ) }
-# [ fake_s, fake_e, SNP ]   Filter our unwanted consequence classifications
-    grep { $valids->{'opt_'.lc($_->[2]->get_consequence_type()) } }
-
-# [ fake_s, fake_e, SNP ]   Filter our unwanted sources
-    grep { $valids->{'opt_'.lc($_->[2]->source)} }
-
-# [ fake_s, fake_e, SNP ]   Filter our unwanted classes
-    grep { $valids->{'opt_'.$_->[2]->var_class} }
-      @on_slice_snps;
-
-  return ($count_snps, \@filtered_snps);
+  my @snps =
+    map  { [ $_->start, $_->end, $_  ] } @$filtered_snps;
+  return ($total_snps, \@snps);
 }
+
 
 sub munge_gaps {
   my( $self, $subslices, $bp, $bp2  ) = @_;

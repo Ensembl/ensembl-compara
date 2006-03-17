@@ -243,15 +243,15 @@ sub moltype {
 
 sub ld_data {
   my ( $panel, $object ) = @_;
-  my %pop_data = %{ _ld_populations($object) };
+  my $pop_names = _ld_populations($object) ;
   my $label = "Linkage disequilibrium <br />data";
 
-  unless (%pop_data) {
+  unless (@$pop_names) {
     $panel->add_row($label, "<h5>No linkage data for this SNP</h5>");
     return 1;
   }
 
-  $panel->add_row($label, link_to_ldview($panel, $object, \%pop_data) );
+  $panel->add_row($label, link_to_ldview($panel, $object, $pop_names) );
   return 1;
 }
 
@@ -271,7 +271,7 @@ sub tagged_snp {
   my ( $panel, $object ) = @_;
   my $label = 'SNP in tagged set for these populations';
   my $snp_data  = $object->tagged_snp;
-  return 1 unless %$snp_data;
+  return 1 unless @$snp_data;
   $panel->add_row($label, link_to_ldview($panel, $object, $snp_data) );
   return 1;
 }
@@ -613,8 +613,8 @@ sub snpview_image {
 
   my $wuc = $object->user_config_hash( 'snpview' );
   $wuc->set( '_settings', 'width', $object->param('image_width') );
-  $wuc->{'snpview'}->{'snps'}           = $filtered_snps;
-  $wuc->{'snpview'}->{'genotyped_snps'} = $genotyped_snps;
+  $wuc->{'snps'}           = $filtered_snps;
+  $wuc->{'genotyped_snps'} = $genotyped_snps;
   $wuc->{'snp_counts'}     = [$count_snps+$genotyped_count, scalar @$filtered_snps+scalar @$genotyped_snps];
 
   ## If you want to resize this image
@@ -812,17 +812,16 @@ sub _format_parent {
 =cut
 
 sub link_to_ldview {
-  my ($panel, $object, $pop_data ) = @_;
+  my ($panel, $object, $pops ) = @_;
   my $output = "<table width='100%' class='hidden' border=0><tr>";
   $output .="<td> <b>Links to LDview per population:</b></td></tr><tr>";
   my $count = 0;
-  for my $pop_id (keys %$pop_data) {
+  for my $pop_name (sort {$a cmp $b} @$pops) {
     $count++;
-    my $name = $pop_data->{$pop_id};
     $output .= "<td><a href='ldview?snp=". $object->name;
     $output .=  ";c=".$object->param('c') if $object->param('c');
     $output .=  ";w=".($object->param('w') || "20000");
-    $output .=	";pop=$name'>$name</a></td>";
+    $output .=	";pop=$pop_name'>$pop_name</a></td>";
     if ($count ==4) {
       $count = 0;
       $output .= "</tr><tr>";
@@ -845,15 +844,14 @@ sub link_to_ldview {
 sub _ld_populations {
   my $object = shift;
   my $pop_ids = $object->ld_pops_for_snp;
-  return {} unless @$pop_ids;
+  return [] unless @$pop_ids;
 
-  my %pops;
+  my @pops;
   foreach (@$pop_ids) {
     my $pop_obj = $object->pop_obj_from_id($_);
-    my $name = $pop_obj->{$_}{Name};
-    $pops{$_} = $name;
+    push @pops, $pop_obj->{$_}{Name};
   }
-  return \%pops;
+  return \@pops;
 }
 
 

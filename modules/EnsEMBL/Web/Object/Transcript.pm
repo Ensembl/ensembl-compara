@@ -227,13 +227,24 @@ sub valids {
   return \%valids;
 }
 
-sub getVariationsOnSlice {
+sub getFakeVariationsOnSlice {
+  my( $self, $slice ) = @_;
+  my $sliceObj = EnsEMBL::Web::Proxy::Object->new(
+        'Slice', $slice, $self->__data
+       );
+
+  my ($count_snps, $filtered_snps) = $sliceObj->getFakeVariationFeatures();
+  return ($count_snps, $filtered_snps);
+}
+
+
+sub getFakeMungedVariationsOnSlice {
   my( $self, $slice, $subslices ) = @_;
   my $sliceObj = EnsEMBL::Web::Proxy::Object->new(
         'Slice', $slice, $self->__data
        );
 
-  my ($count_snps, $filtered_snps) = $sliceObj->getFakeVariationFeatures($subslices);
+  my ($count_snps, $filtered_snps) = $sliceObj->getFakeMungedVariationFeatures($subslices);
   $self->__data->{'sample'}{"snp_counts"} = [$count_snps, scalar @$filtered_snps];
  return ($count_snps, $filtered_snps);
 }
@@ -312,19 +323,38 @@ sub ambig_code {
  return &ambiguity_code($allele_string);
 }
 
-#return type list
-sub get_samples {
-  my $self = shift;
-  return sort($self->param('sample')) if  $self->param('sample');
-  my $vari_adaptor = $self->Obj->adaptor->db->get_db_adaptor('variation');
 
+#return type list
+
+sub get_samples {
+  my $self    = shift;
+  my $options = shift;
+
+  my $vari_adaptor = $self->Obj->adaptor->db->get_db_adaptor('variation');
   unless ($vari_adaptor) {
     warn "ERROR: Can't get variation adaptor";
     return ();
   }
+
   my $pop_adaptor = $vari_adaptor->get_PopulationAdaptor;
-  my @samples = @{$pop_adaptor->get_default_strains};
-  return sort @samples;
+
+  if ($options eq 'default') {
+    return sort  @{$pop_adaptor->get_default_strains};
+  }
+  elsif ($options eq 'all') {
+    my @pops = @{$pop_adaptor->fetch_all_strains};
+    return sort (map {$_->name} @pops);
+  }
+  else {
+    my @pops;
+    my $script_config = $self->get_scriptconfig();
+    foreach my $sample (sort $script_config->options) {
+      next unless $sample =~ s/opt_pop_//;
+      next unless $script_config->get("opt_pop_$sample") eq 'on';
+      push @pops, $sample;
+    }
+    return sort @pops;
+  }
 }
 
 

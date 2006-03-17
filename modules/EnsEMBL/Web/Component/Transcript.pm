@@ -992,7 +992,10 @@ sub transcriptsnpview {
   my $transcript_slice = $object->__data->{'slices'}{'TSV_transcript'}[1];
   my $sub_slices       =  $object->__data->{'slices'}{'TSV_transcript'}[2];
   my $fake_length      =  $object->__data->{'slices'}{'TSV_transcript'}[3];
-  my ($count_snps, $snps) = $object->getVariationsOnSlice( $transcript_slice, $sub_slices  );
+  my ($count_fake_snps, $fake_snps) = $object->getFakeMungedVariationsOnSlice( $transcript_slice, $sub_slices  );
+  my ($count_snps, $snps) = $object->getFakeVariationsOnSlice( $object->__data->{'slices'}{'transcript'}[1] );
+  my ($count_context_snps, $context_snps) = $object->getFakeVariationsOnSlice( $object->__data->{'slices'}{'context'}[1] );
+
 
   # Taken out domains (prosite, pfam)
 
@@ -1011,18 +1014,21 @@ sub transcriptsnpview {
   # General page configs -------------------------------------
   # Get 4 configs (one for each section) set width to width of context config
   my $Configs;
-  my $image_width  = $object->param( 'image_width' );
+  my $image_width    = $object->param( 'image_width' );
+
   foreach (qw(context transcript transcripts_bottom transcripts_top)) {
     $Configs->{$_} = $object->user_config_hash( "TSV_$_" );
     $Configs->{$_}->set( '_settings', 'width',  $image_width );
     $Configs->{$_}->{'id'} = $object->stable_id;
   }
 
+  $Configs->{'transcript'}->{'filtered_fake_snps'} = $snps;
+
   foreach(qw(transcripts_top transcripts_bottom)) {
     $Configs->{$_}->{'extent'}      = $extent;
     $Configs->{$_}->{'transid'}     = $object->stable_id;
     $Configs->{$_}->{'transcripts'} = [{ 'exons' => \@ens_exons }];
-    $Configs->{$_}->{'snps'}        = $snps;
+    $Configs->{$_}->{'snps'}        = $fake_snps;
     $Configs->{$_}->{'subslices'}   = $sub_slices;
     $Configs->{$_}->{'fakeslice'}   = 1;
     $Configs->{$_}->container_width( $fake_length );
@@ -1031,12 +1037,13 @@ sub transcriptsnpview {
 
   $Configs->{'snps'} = $object->user_config_hash( "genesnpview_snps" );
   $Configs->{'snps'}->set( '_settings', 'width',  $image_width );
-  $Configs->{'snps'}->{'snp_counts'} = [$count_snps, scalar @$snps];
+  $Configs->{'snps'}->{'snp_counts'} = [$count_fake_snps, scalar @$fake_snps];
 
   $Configs->{'context'}->container_width( $object->__data->{'slices'}{'context'}[1]->length() );
   $Configs->{'context'}->set( 'scalebar', 'label', "Chr. @{[$object->__data->{'slices'}{'context'}[1]->seq_region_name]}");
   $Configs->{'context'}->set( 'est_transcript','on','off');
   $Configs->{'context'}->set( '_settings', 'URL',   $URL_for_expand, 1);
+  $Configs->{'context'}->{'filtered_fake_snps'} = $context_snps;
 
   # SNP stuff ------------------------------------------------------------
   my ($containers_and_configs, $haplotype);
@@ -1057,7 +1064,7 @@ sub transcriptsnpview {
 	( $transcript_slice->end - $_->[2]->end     + 1,
 	  $transcript_slice->end - $_->[2]->start   + 1 )
       ]
-    } sort { $a->[0] <=> $b->[0] } @$snps;
+    } sort { $a->[0] <=> $b->[0] } @$fake_snps;
 
   $Configs->{'snps'}->set( 'snp_fake_haplotype', 'on', 'on' );
   $Configs->{'snps'}->container_width(   $snp_fake_length   );
@@ -1098,8 +1105,9 @@ sub _sample_configs {
   my @haplotype = ();
   my $extent = tsv_extent($object);
 
-  foreach my $sample (  $object->get_samples ) { #e.g. DBA/2J
+  foreach my $sample ( $object->get_samples ) {
     my $sample_slice = $transcript_slice->get_by_strain( $sample );
+    next unless $sample_slice;
 
     ## Initialize content...
     my $sample_config = $object->get_userconfig( "TSV_sampletranscript" );
@@ -1109,6 +1117,7 @@ sub _sample_configs {
 
     ## Get this transcript only, on the sample slice
     my $transcript;
+
     foreach my $test_transcript ( @{$sample_slice->get_all_Transcripts} ) {
       next unless $test_transcript->stable_id eq $object->stable_id;
       $transcript = $test_transcript;  # Only display on e transcripts...
@@ -1305,11 +1314,8 @@ sub spreadsheet_TSVtable {
    my ($panel, $object) = @_;
    my $valids = $object->valids;
 
-   my $sources = $object->get_source || [];
    my @onsources;
-   foreach (@$sources) {
-     push @onsources, $_ if $valids->{lc("opt_$_")};
-   }
+   map {  push @onsources, $_ if $valids->{lc("opt_$_")} }  @{$object->get_source || [] };
 
    my $text;
    if ( $onsources[0] ) {
@@ -1320,19 +1326,18 @@ sub spreadsheet_TSVtable {
    }
    $panel->print("<p>These SNP calls are sequence coverage dependent. Here we display the SNP calls observed by transcript$text.</p>");
 
-   return tsv_menu( @_, 'TSV_sampletranscript',
-    [qw( Features Source SNPClasses SNPTypes SNPContext THExport ImageSize )], ['SNPHelp'] ); 
-# removed SNPValid
- }
 
- sub tsv_menu { 
-   my($panel, $object, $configname, $left, $right ) = @_;
+   my $user_config = $object->user_config_hash( 'TSV_sampletranscript' );
+   $user_config->{'Populations'}    = [$object->get_samples('all') ];
+
+   my $left =  [qw( Features Source SNPClasses SNPTypes Population SNPContext THExport ImageSize )]; # removed SNPValid
+
    my $mc = $object->new_menu_container(
-     'configname'  => $configname, #primary config for display
+     'configname'  => 'TSV_sampletranscript', #primary config for display
      'panel'       => "bottom",
-     'configs'     => [ $object->user_config_hash( 'TSV_context' ) ], # other configs that are affected by menu changes
+     'configs'     => [ $object->user_config_hash( 'TSV_context' ), $object->user_config_hash('TSV_transcript') ], # other configs that are affected by menu changes
      'leftmenus'  => $left,
-     'rightmenus' => $right
+     'rightmenus' => ['SNPHelp'],
    );
    $panel->print( $mc->render_html );
    $panel->print( $mc->render_js );

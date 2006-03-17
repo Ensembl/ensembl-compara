@@ -138,28 +138,15 @@ sub mappings {
 
 sub ldview_image_menu {
   my($panel, $object ) = @_;
-  my ($count_snps, $snps) = $object->getVariationsOnSlice();
-  my $user_config = $object->user_config_hash( 'ldview' );
-  $user_config->{'_databases'}     = $object->DBConnection;
-  $user_config->{'_add_labels'}    = 'true';
+  my $user_config = $object->user_config_hash( 'LD_population' );
   $user_config->{'Populations'}    = $object->pops_for_slice(100000);
-  $user_config->{'_ld_population'} = $object->current_pop_name;
-  $user_config->{'snps'}           = $snps;
 
   my $mc = $object->new_menu_container(
-    'configname'  => 'ldview',
+    'configname'  => 'LD_population',
+    'configs'    =>  [$object->user_config_hash('ldview')],
     'panel'       => 'bottom',
     'leftmenus'  => [qw(Features Population Source Options Export ImageSize)],
     'rightmenus' => [qw(SNPHelp)],
-    #  'fields' => {
-#       'snp'          => $object->param('snp'),
-#       'gene'         => $object->param('gene'),
-#       'pop'          => $object->current_pop_name,
-#       'w'            => $object->length,
-#       'c'            => $object->seq_region_name.':'.$object->centrepoint,  
-#       'source'       => $object->param('source'),
-#       'h'            => $object->highlights_string,
-#     }
   );
   $panel->print( $mc->render_html );
   $panel->print( $mc->render_js );
@@ -176,15 +163,45 @@ sub ldview_image {
     $object->database('core')->get_SliceAdaptor()->fetch_by_region(
     $seq_type, $seq_region, $start, $end, 1
   );
-  my $wuc = $object->user_config_hash( 'ldview' );
+ 
 
-  $wuc->set( '_settings', 'width', $object->param('image_width'));
-  $wuc->container_width($slice->length);
+  my ($count_snps, $snps) = $object->getVariationsOnSlice();
+  my ($genotyped_count, $genotyped_snps) = $object->get_genotyped_VariationsOnSlice();
 
-  # If you want to resize this image
-  my $image = $object->new_image( $slice, $wuc, [$object->name] );
+  my $wuc_ldview = $object->user_config_hash( 'ldview' );
+  $wuc_ldview->set( '_settings', 'width', $object->param('image_width'));
+  $wuc_ldview->container_width($slice->length);
+  $wuc_ldview->{'_databases'}     = $object->DBConnection;
+  $wuc_ldview->{'_add_labels'}    = 'true';
+  $wuc_ldview->{'snps'}           = $snps;
+  $wuc_ldview->{'genotyped_snps'} = $genotyped_snps;
+
+  # Do images for first section
+  my @containers_and_configs = ( $slice, $wuc_ldview );
+
+  # Do images for each population
+  foreach my $pop_name ( sort { $a cmp $b } @{ $object->current_pop_name } ) {
+    my $pop_obj = $object->pop_obj_from_name($pop_name);
+    next unless $pop_obj->{$pop_name}; # i.e. skip name if not a valid pop name
+
+    my $wuc_pop = $object->user_config_hash( "LD_population_$pop_name", 'LD_population' );
+    $wuc_pop->set( '_settings', 'width', $object->param('image_width'));
+    $wuc_pop->container_width($slice->length);
+    $wuc_pop->{'_databases'}     = $object->DBConnection;
+    $wuc_pop->{'_add_labels'}    = 'true';
+    $wuc_pop->{'_ld_population'} = [$pop_name];
+    $wuc_pop->{'text'} = $pop_name;
+    $wuc_pop->{'snps'} = $snps;
+
+
+    push @containers_and_configs, $slice, $wuc_pop;
+  }
+  my $image    = $object->new_image([ @containers_and_configs, ],
+				    [ $object->name ], );
+
   $image->imagemap = 'yes';
   $panel->print( $image->render );
+
   return 0;
 }
 
@@ -290,15 +307,14 @@ sub options_form {
 ###############################################################################
 
 sub tagged_snp {
-  my $object  = shift;
+  my ($object, $pop_name)  = @_;
   my $snps = $object->__data->{'snp'};
   return 0 unless $snps && @$snps;
   my $snp_data  = $snps->[0]->tagged_snp;
-  return unless %$snp_data;
+  return unless @$snp_data;
 
-  my $current_pop  = $object->current_pop_name;
-  for my $pop_id (keys %$snp_data) {
-    return "Yes" if $pop_id == $current_pop;
+  for my $pop_id (@$snp_data) {
+    return "Yes" if $pop_id eq $pop_name;
   }
   return "No";
 }
@@ -326,7 +342,7 @@ sub print_pop_info {
       ($description)."</td>";
 
     if ($object->param('snp') && $label eq 'Population') {
-      my $tagged = tagged_snp($object);
+      my $tagged = tagged_snp($object, $pop->{$pop_name}{Name} );
       $return .= "<tr><th>SNP in tagged set for this population:<br /></th>
                    <td>$tagged</td>" if $tagged;
     }

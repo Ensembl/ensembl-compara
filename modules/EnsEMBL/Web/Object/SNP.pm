@@ -301,15 +301,13 @@ sub tagged_snp {
   my  @vari_mappings = @{ $self->get_variation_features };
   return {} unless @vari_mappings;
 
-  my %pops;
+  my @pops;
   foreach my $vf ( @vari_mappings ) {
     foreach my $pop_obj ( @{ $vf->is_tagged } ) {
-      my $id = $self->pop_id($pop_obj);
-      next unless $id;
-      $pops{$id} = $self->pop_name($pop_obj);
+      push @pops, $self->pop_name($pop_obj);
     }
   }
-  return \%pops or {};
+  return \@pops or [];
 }
 
 

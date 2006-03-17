@@ -130,6 +130,27 @@ sub transcriptsnpview {
    }
  }
 
+ # Populations/strains: Read in all in scriptconfig stuff
+ my $use_default_strains = 1;
+ foreach ($script_config->options) {
+   next unless $_ =~ s/opt_pop_//;
+   $use_default_strains = 0;
+   last;
+ }
+
+ if( $use_default_strains ) { # if none of species' sources are on
+   foreach my $sample ( $obj->get_samples("default") ) {
+     $script_config->set("opt_pop_$sample", "on", 1);
+   }
+ }
+ elsif ( $obj->param('bottom') ) {
+   foreach( split /\|/, ($obj->param('bottom') ) ) {
+     next unless $_ =~ /opt_pop_(.*):(.*)/;
+     $script_config->set("opt_pop_$1", $2, 1);
+   }
+ }
+ $script_config->save;
+
  # Need this to make yellow dropdowns work
  $self->update_configs_from_parameter( 'bottom', qw(TSV_context TSV_sampletranscript TSV_transcript) );
 
@@ -172,11 +193,9 @@ sub transcriptsnpview {
   }
 
 ## Panel 3 - finally a set of spreadsheet tables showing the information from the image..
- my $I = 0;
- my @samples = $obj->get_samples;
  my $counts = $obj->__data->{'sample'}{"snp_counts"};
 
- foreach my $sample ( @samples ) { #e.g. DBA/2J
+ foreach my $sample ( $obj->get_samples() ) { #e.g. DBA/2J
    last unless $sample;
    last if (defined $counts->[1] && $counts->[1] == 0);
    if( my $panel_table = $self->new_panel( 'SpreadSheet',

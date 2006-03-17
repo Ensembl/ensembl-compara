@@ -405,9 +405,8 @@ sub getVariationsOnSlice {
         'Slice', $slice, $self->__data
        );
 
-  my ($count_snps, $filtered_snps) = $sliceObj->getFakeVariationFeatures($subslices, $gene);
-
- $self->__data->{'sample'}{"snp_counts"} = [$count_snps, scalar @$filtered_snps];
+  my ($count_snps, $filtered_snps) = $sliceObj->getFakeMungedVariationFeatures($subslices,$gene);
+  $self->__data->{'sample'}{"snp_counts"} = [$count_snps, scalar @$filtered_snps];
   $self->__data->{'SNPS'} = $filtered_snps;
   return ($count_snps, $filtered_snps);
 }

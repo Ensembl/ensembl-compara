@@ -236,7 +236,7 @@ sub text_lddata {
 
   foreach my $ldtype (keys %$return) {
    foreach my $pop_name ( sort {$a cmp $b } keys %{ $return->{$ldtype} } ) {
-     $panel->print($return->{$ldtype}{$pop_name}{"text"});
+     $panel->print($return->{$ldtype}{$pop_name}{"text"}."\n");
      unless ( $return->{$ldtype}{$pop_name}{"data"} ) {
        next;
      }

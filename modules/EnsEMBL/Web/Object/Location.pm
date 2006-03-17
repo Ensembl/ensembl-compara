@@ -413,6 +413,17 @@ sub getVariationsOnSlice {
         'Slice', $self->slice_cache, $self->__data
        );
 
+  my ($count_snps, $filtered_snps) = $sliceObj->getVariationFeatures;
+  return ($count_snps, $filtered_snps);
+}
+
+
+sub get_genotyped_VariationsOnSlice {
+  my $self = shift;
+  my $sliceObj = EnsEMBL::Web::Proxy::Object->new(
+        'Slice', $self->slice_cache, $self->__data
+       );
+
   my ($count_snps, $filtered_snps) = $sliceObj->get_genotyped_VariationFeatures;
   return ($count_snps, $filtered_snps);
 }
