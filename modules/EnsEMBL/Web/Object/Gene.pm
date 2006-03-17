@@ -317,7 +317,7 @@ sub get_das_features_by_name {
   my %das_features;
   foreach my $dasfact( @{$self->get_das_factories} ){
     my $type = $dasfact->adaptor->type;
-    next if $dasfact->adaptor->type eq 'ensembl_location';
+    next if $dasfact->adaptor->type =~ /^ensembl_location/;
     my $name = $dasfact->adaptor->name;
     next unless $name;
     my $dsn = $dasfact->adaptor->dsn;
@@ -344,6 +344,7 @@ sub get_das_features_by_slice {
   my $self = shift;
   my $name  = shift || die( "Need a source name" );
   my $slice = shift || die( "Need a slice" );
+  
   my $cache = $self->Obj;     
 
   $cache->{_das_features} ||= {}; # Cache
@@ -351,7 +352,7 @@ sub get_das_features_by_slice {
     
   foreach my $dasfact( @{$self->get_das_factories} ){
     my $type = $dasfact->adaptor->type;
-    next unless $dasfact->adaptor->type eq 'ensembl_location';
+    next unless $dasfact->adaptor->type =~ /^ensembl_location/;
     my $name = $dasfact->adaptor->name;
     next unless $name;
     my $dsn = $dasfact->adaptor->dsn;
@@ -364,7 +365,7 @@ sub get_das_features_by_slice {
     $key .= "/$dsn/$type";
 
     unless( $cache->{_das_features}->{$key} ) { ## No cached values - so grab and store them!!
-      my $featref = ($dasfact->fetch_all_by_Slice( $slice ))[0];
+      my $featref = ($dasfact->fetch_all_Fatures( $slice, $type ))[0];
       $cache->{_das_features}->{$key} = $featref;
     }
     $das_features{$name} = $cache->{_das_features}->{$key};

@@ -865,10 +865,9 @@ sub get_das_features_by_name {
 
   $cache->{_das_features} ||= {}; # Cache
   my %das_features;
-
   foreach my $dasfact( @{$self->get_das_factories} ){
     my $type = $dasfact->adaptor->type;
-    next if $dasfact->adaptor->type eq 'ensembl_location';
+    next if $dasfact->adaptor->type =~ /^ensembl_location/;
     my $name = $dasfact->adaptor->name;
     next unless $name;
     my $dsn = $dasfact->adaptor->dsn;
@@ -898,10 +897,9 @@ sub get_das_features_by_slice {
 
   $cache->{_das_features} ||= {}; # Cache
   my %das_features;
-    
   foreach my $dasfact( @{$self->get_das_factories} ){
     my $type = $dasfact->adaptor->type;
-    next unless $dasfact->adaptor->type eq 'ensembl_location';
+    next unless $dasfact->adaptor->type =~ /^ensembl_location/;
     my $name = $dasfact->adaptor->name;
     next unless $name;
     my $dsn = $dasfact->adaptor->dsn;

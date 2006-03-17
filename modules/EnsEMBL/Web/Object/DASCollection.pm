@@ -94,7 +94,9 @@ sub getEnsemblMapping {
 
 
     if ($base =~ /Chromosome|Clone|Contig|Scaffold/) {
-	$smap = 'ensembl_location';
+	$smap = 'ensembl_location_'.lc($base);
+    } elsif ($base eq 'NT_Contig') {
+	$smap = 'ensembl_location_supercontig';
     } elsif ($base eq 'Gene_ID') {
 	if ($realm eq 'Ensembl') {
 	    $smap = 'ensembl_gene';
@@ -157,6 +159,8 @@ sub getRegistrySources {
 		my $src = shift; 
 		foreach my $cs (@{$src->{coordinateSystem}}) {
 		    return 1 if ($self->getEnsemblMapping($cs) eq $keyMapping);
+### Special case for Ensembl Location
+		    return 1 if ($self->getEnsemblMapping($cs) =~ /^$keyMapping/);
 		}
 		return 0; };
 	}

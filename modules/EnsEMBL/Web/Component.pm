@@ -82,7 +82,7 @@ sub format_das_panel {
     my $location_features = 0;
     my @rhs_rows = ();
 # Check the source type, if it is 'ensembl_location' then we need to query the DAS source using the chromosome coordinates of the gene rather than its ID
-    if( $source->{type} eq 'ensembl_location' ) { 
+    if( $source->{type} =~ /^ensembl_location/ ) { 
       my $slice = $object->get_Slice();
       my @features = $object->get_das_features_by_slice($source_nm, $slice);
       my $slice_length = $slice->end - $slice->start;

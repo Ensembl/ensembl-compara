@@ -225,6 +225,11 @@ sub getCoordinateSystem{
          'entrezgene'            => 'Entrez Gene ID',
 	 'ipi_acc'               => 'IPI Accession',
 	 'ipi_id'                => 'IPI ID',
+	 'ensembl_location_chromosome'  => 'Chromosome',
+	 'ensembl_location_supercontig' => 'NT Contig',
+	 'ensembl_location_clone'       => 'Clone',
+	 'ensembl_location_contig'      => 'Contig',
+	 'ensembl_location_scaffold'    => 'Scaffold',
          );
 
 

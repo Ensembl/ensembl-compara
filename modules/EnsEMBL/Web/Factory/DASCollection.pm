@@ -95,7 +95,7 @@ sub createObjects {
 	$source_confdata->{stylesheet} ||= 'N';
 	$source_confdata->{stylesheet} = 'Y' if ($source_confdata->{stylesheet} eq '1'); # 
 	$source_confdata->{score} ||= 'N';
-	$source_confdata->{score} = 'Y' if ($source_confdata->{score} eq '1'); # 
+	$source_confdata->{fg_merge} ||= 'A';
 
 	$source_confdata->{name} ||= $source;
 	$source_confdata->{group} ||= 'N';
@@ -229,7 +229,7 @@ sub createObjects {
 
     my @confkeys = qw( name type);
 
-    my @allkeys = ('strand', 'labelflag', 'label', 'url', 'conftype', 'group', 'stylesheet', 'score', 'caption', 'active', 'color', 'depth', 'help', 'linktext', 'linkurl' );
+    my @allkeys = ('strand', 'labelflag', 'label', 'url', 'conftype', 'group', 'stylesheet', 'score', 'fg_merge', 'caption', 'active', 'color', 'depth', 'help', 'linktext', 'linkurl' );
     my @arr_keys = ('enable', 'mapping');
 
 # DAS sources can be added from URL 
@@ -266,6 +266,7 @@ sub createObjects {
 	$das_data{caption} or $das_data{caption} = $das_data{name};
 	$das_data{stylesheet} or $das_data{stylesheet} = 'n';
 	$das_data{score} or $das_data{score} = 'n';
+	$das_data{fg_merge} or $das_data{fg_merge} = 'a';
 	if (exists $das_data{enable}) {
 	    my @enable_on = split(/\,/, $das_data{enable});
 	    delete $das_data{enable};
@@ -345,6 +346,7 @@ sub createObjects {
 		$das_data{strand} = $self->param('DASstrand');
 		$das_data{labelflag} = $self->param('DASlabelflag');
 		$das_data{score} = $self->param('DASscore');
+		$das_data{fg_merge} = $self->param('DASfg_merge');
 		$das_data{group} = $self->param('DASgroup');
 		@{$das_data{enable}} = $self->param('DASenable');
 		$das_data{conftype} = 'external';
@@ -358,11 +360,43 @@ sub createObjects {
 		foreach my $key( @confkeys, @allkeys, @arr_keys, 'conftype', 'active') {
 		    $sources_conf{$das_name}->{$key} = $das_data{$key};
 		}
+
+#		warn("S:".Data::Dumper::Dumper(\%das_data));
 		$extdas->add_das_source(\%das_data);
 		$DASsel{$das_name} = 1;
 
 	    }
+	} elsif (my $das_name = $self->param("DASedit")) { # Edit source
+	    my $das_dsn = $self->param("DASdsns");
+	    
+	    my $das_data = $sources_conf{$das_name};
+	    foreach my $key( @confkeys, @allkeys){
+		if (defined($self->param("DAS${key}"))) {
+		    $das_data->{$key} = $self->param("DAS${key}");
+		}
+	    }
 
+	    $das_data->{active} = 1; # Enable by default
+
+	    # Add to the conf list
+	    $das_data->{name} = $das_name;
+	    $das_data->{label} ||= $das_data->{name};
+	    $das_data->{caption} ||= $das_data->{name};
+	    @{$das_data->{enable}} = $self->param('DASenable');
+	    @{$das_data->{mapping}} = $self->param('DAStype');
+	    $das_data->{type} = 'mixed' if (scalar(@{$das_data->{mapping}}>1));
+
+	    $das_data->{conftype} = 'external';
+	    $sources_conf{$das_name} ||= {};
+
+	    foreach my $key( @confkeys, @allkeys, 'dsn', 'enable', 'mapping') {
+		$sources_conf{$das_name}->{$key} = $das_data->{$key};
+	    }
+
+	    warn("SAVE : ".Data::Dumper::Dumper($das_data));
+
+	    $extdas->add_das_source($das_data);
+	    $DASsel{$das_name} = 1;
 	} else {
 	    my $err = 0;
 	    if ($self->param("DASsourcetype") eq 'das_file') {
@@ -472,6 +506,7 @@ sub createObjects {
 	      -group      => $source_conf->{group}     || '',
 	      -stylesheet => $source_conf->{stylesheet}|| '',
 	      -score      => $source_conf->{score} || '',
+	      -fg_merge      => $source_conf->{fg_merge} || '',
 	      -conftype   => $source_conf->{conftype}  || 'external',
 	      -active     => $source_conf->{active}    || 0, 
 	      -description => $source_conf->{description}    || '', 
@@ -509,9 +544,10 @@ sub getEnsemblMapping {
     my ($realm, $base, $species) = ($cs->{name}, $cs->{category}, $cs->{organismName});
     my $smap ='unknown';
 
-
     if ($base =~ /Chromosome|Clone|Contig|Scaffold/) {
-	$smap = 'ensembl_location';
+	$smap = 'ensembl_location_'.lc($base);
+    } elsif ($base eq 'NT_Contig') {
+	$smap = 'ensembl_location_supercontig';
     } elsif ($base eq 'Gene_ID') {
 	if ($realm eq 'Ensembl') {
 	    $smap = 'ensembl_gene';
@@ -575,6 +611,7 @@ sub getRegistrySources {
 		my $src = shift; 
 		foreach my $cs (@{$src->{coordinateSystem}}) {
 		    return 1 if ($self->getEnsemblMapping($cs) eq $keyMapping);
+		    return 1 if ($self->getEnsemblMapping($cs) =~ /^$keyMapping/);
 		}
 		return 0; };
 	}
