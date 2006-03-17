@@ -90,7 +90,7 @@ sub _init {
 
     foreach my $feat (@$das_feat_ref) {
 	next if ( ! $feat->end); # Draw only features that have location	
-	if ($self->{'extras'}->{'source_type'} ne 'ensembl_location') {
+	if ($self->{'extras'}->{'source_type'} !~ /^ensembl_location/) {
 	    push(@{$hash{$feat->das_feature_id}},$feat);
 	    next;
 	}
