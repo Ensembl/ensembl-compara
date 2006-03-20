@@ -401,6 +401,8 @@ sub add_widgets {
       $parameter{'select'} = $field_info{'select'};
     }
     elsif ($field_info{'type'} eq 'CheckBox') {
+      $parameter{'value'}  =  $self->{'_data'}{'record'}{$field_name} 
+                                || $field_info{'value'};
       if ($object->param($field_name)) {
         $parameter{'checked'} = 1;
       }
