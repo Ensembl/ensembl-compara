@@ -16,59 +16,6 @@ our @ISA = qw(EnsEMBL::Web::Wizard);
 ## to keep track of this
 our $tracks = 1;
                                                                         
-sub _init {
-  my ($self, $object) = @_;
-                                                                                
-  ## get useful data from object
-  my @all_chr = @{$object->species_defs->ENSEMBL_CHROMOSOMES};
-  my @chr_values;
-  push @chr_values, {'name'=>'ALL', 'value'=>'ALL'} ;
-  foreach my $next (@all_chr) {
-    push @chr_values, {'name'=>$next, 'value'=>$next} ;
-  }
-
-  ## define other standard data
-  my @colours = (
-        {'value' => 'purple',   'name'=> 'Purple'},
-        {'value' => 'magenta',  'name'=> 'Magenta'},
-        {'value' => 'red',      'name' =>'Red'},
-        {'value' => 'orange',   'name' => 'Orange'},
-        {'value' => 'brown',    'name'=> 'Brown'},
-        {'value' => 'green',    'name'=> 'Green'},
-        {'value' => 'darkgreen','name'=> 'Dark Green'},
-        {'value' => 'blue',     'name'=> 'Blue'},
-        {'value' => 'darkblue', 'name'=> 'Dark Blue'},
-        {'value' => 'violet',   'name'=> 'Violet'},
-        {'value' => 'grey',     'name'=> 'Grey'},
-        {'value' => 'darkgrey', 'name'=> 'Dark Grey'}
-  );
-
-  my @styles = (
-        {'group' => 'Density', 'value' => 'line', 'name' => 'Line graph'},
-        {'group' => 'Density', 'value' => 'bar', 'name' => 'Bar chart, filled'},
-        {'group' => 'Density', 'value' => 'outline', 'name' => 'Bar chart, outline'},
-        {'group' => 'Location', 'value' => 'box', 'name' => 'Filled box'},
-        {'group' => 'Location', 'value' => 'filledwidebox', 'name' => 'Filled wide box'},
-        {'group' => 'Location', 'value' => 'widebox', 'name' => 'Outline wide box'},
-        {'group' => 'Location', 'value' => 'outbox', 'name' => 'Oversize outline box'},
-        {'group' => 'Location', 'value' => 'wideline', 'name' => 'Line'},
-        {'group' => 'Location', 'value' => 'lharrow', 'name' => 'Arrow left side'},
-        {'group' => 'Location', 'value' => 'rharrow', 'name' => 'Arrow right side'},
-        {'group' => 'Location', 'value' => 'bowtie', 'name' => 'Arrows both sides'},
-        {'group' => 'Location', 'value' => 'text', 'name' => 'Text label (+ wide box)'},
-  );
-
-  my $data = {
-    'loops'         => $tracks,
-    'chr_values'    => \@chr_values,
-    'colours'       => \@colours,
-    'styles'        => \@styles,
-  };
-                                                                                
-  return $data;
-
-}
-                                                                              
 ## define fields available to the forms in this wizard
 our %form_fields = (
   'blurb' => {
@@ -227,14 +174,59 @@ our %all_nodes = (
   },
 );
 
-=pod
-      'pass_fields'  => [qw(track_name style col merge paste_file upload_file url_file track_Vpercents track_Vsnps track_Vgenes chr rows chr_length h_padding h_spacing v_padding)],
-=cut
+sub _init {
+  my ($self, $object) = @_;
+                                                                                
+  ## get useful data from object
+  my @all_chr = @{$object->species_defs->ENSEMBL_CHROMOSOMES};
+  my @chr_values;
+  push @chr_values, {'name'=>'ALL', 'value'=>'ALL'} ;
+  foreach my $next (@all_chr) {
+    push @chr_values, {'name'=>$next, 'value'=>$next} ;
+  }
 
-## Accessor methods for standard data
-sub form_fields { return %form_fields; }
-sub get_node { return $all_nodes{$_[1]}; }
+  ## define other standard data
+  my @colours = (
+        {'value' => 'purple',   'name'=> 'Purple'},
+        {'value' => 'magenta',  'name'=> 'Magenta'},
+        {'value' => 'red',      'name' =>'Red'},
+        {'value' => 'orange',   'name' => 'Orange'},
+        {'value' => 'brown',    'name'=> 'Brown'},
+        {'value' => 'green',    'name'=> 'Green'},
+        {'value' => 'darkgreen','name'=> 'Dark Green'},
+        {'value' => 'blue',     'name'=> 'Blue'},
+        {'value' => 'darkblue', 'name'=> 'Dark Blue'},
+        {'value' => 'violet',   'name'=> 'Violet'},
+        {'value' => 'grey',     'name'=> 'Grey'},
+        {'value' => 'darkgrey', 'name'=> 'Dark Grey'}
+  );
 
+  my @styles = (
+        {'group' => 'Density', 'value' => 'line', 'name' => 'Line graph'},
+        {'group' => 'Density', 'value' => 'bar', 'name' => 'Bar chart, filled'},
+        {'group' => 'Density', 'value' => 'outline', 'name' => 'Bar chart, outline'},
+        {'group' => 'Location', 'value' => 'box', 'name' => 'Filled box'},
+        {'group' => 'Location', 'value' => 'filledwidebox', 'name' => 'Filled wide box'},
+        {'group' => 'Location', 'value' => 'widebox', 'name' => 'Outline wide box'},
+        {'group' => 'Location', 'value' => 'outbox', 'name' => 'Oversize outline box'},
+        {'group' => 'Location', 'value' => 'wideline', 'name' => 'Line'},
+        {'group' => 'Location', 'value' => 'lharrow', 'name' => 'Arrow left side'},
+        {'group' => 'Location', 'value' => 'rharrow', 'name' => 'Arrow right side'},
+        {'group' => 'Location', 'value' => 'bowtie', 'name' => 'Arrows both sides'},
+        {'group' => 'Location', 'value' => 'text', 'name' => 'Text label (+ wide box)'},
+  );
+
+  my $data = {
+    'loops'         => $tracks,
+    'chr_values'    => \@chr_values,
+    'colours'       => \@colours,
+    'styles'        => \@styles,
+  };
+                                                                                
+  return [$data, \%form_fields, \%all_nodes];
+
+}
+                                                                              
 ## ---------------------- METHODS FOR INDIVIDUAL NODES ----------------------
 
 
