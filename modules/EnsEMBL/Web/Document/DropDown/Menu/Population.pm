@@ -14,7 +14,7 @@ sub new {
   );
   my @menu_entries = @{ $self->{'config'}{'Populations'} || [] };
   return undef unless scalar @menu_entries;
-  foreach my $pop ( sort @menu_entries ) {
+  foreach my $pop (  @menu_entries ) {
     $self->add_checkbox( "opt_pop_$pop", $pop ); 
   }
   return $self;

@@ -132,8 +132,9 @@ sub get_transcript_Slice {
 
 sub get_transcript_slices {
   my( $self, $slice_config ) = @_;
+  # name, normal/munged, zoom
   if( $slice_config->[1] eq 'normal') {
-    my $slice= $self->get_transcript_Slice( $slice_config->[2], 1 );
+    my $slice = $self->get_transcript_Slice( $slice_config->[2], 1 );
     return [ 'normal', $slice, [], $slice->length ];
   }
   else {
@@ -341,9 +342,15 @@ sub get_samples {
   if ($options eq 'default') {
     return sort  @{$pop_adaptor->get_default_strains};
   }
-  elsif ($options eq 'all') {
-    my @pops = @{$pop_adaptor->fetch_all_strains};
-    return sort (map {$_->name} @pops);
+  elsif ($options eq 'all') { # return list of pops with default first
+    my %default;
+    map {$default{$_} = 1 } @{$pop_adaptor->get_default_strains};
+    my @pops;
+    foreach ( @{$pop_adaptor->fetch_all_strains} ) {
+       next if $default{$_->name}; 
+       push @pops, $_->name;
+    }
+    return (sort keys %default), (sort @pops);
   }
   else {
     my @pops;

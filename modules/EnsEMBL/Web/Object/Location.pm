@@ -403,7 +403,8 @@ sub pops_for_slice {
     push @pops, $name;
   }
 
-  return \@pops;
+  my @tmp_sorted =  sort {$a cmp $b} @pops;
+  return \@tmp_sorted;
 }
 
 
