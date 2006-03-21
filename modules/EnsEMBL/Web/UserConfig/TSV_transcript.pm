@@ -20,13 +20,15 @@ sub init {
       'bgcolour1' => 'background1',
       'bgcolour2' => 'background1',
     },
-    'spacer' => { 'on'=>'on','pos'=>1e6, 'height' => 50, 'str' => 'r' },
+    'spacer' => { 'on'=>'on','pos'=>1e6, 'height' => 40, 'str' => 'r' },
 
     'snp_join' => {
       'tag' => 1,
-      'on'=>'on','pos'=>4600,
+      'on'  => 'on',
+      'pos' => 4600,
+      'str' => 'b',
       'available'=> 'databases ENSEMBL_VARIATION',
-      'colours'=>{$self->{'_colourmap'}->colourSet('variation')}, 'str' => 'b'
+      'colours'=>{$self->{'_colourmap'}->colourSet('variation')},
     },
     'ruler' => {
       'on'          => "on",
