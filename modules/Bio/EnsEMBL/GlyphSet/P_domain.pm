@@ -46,7 +46,7 @@ sub _init {
   my $font          = "Small";
   my ($fontwidth, $fontheight)  = $Config->texthelper->real_px2bp($font);
 
-warn ">>> $logic_name <<<";
+#warn ">>> $logic_name <<<";
   my @ps_feat = @{$protein->get_all_ProteinFeatures( $logic_name )};
 
   foreach my $feat(@ps_feat) {
