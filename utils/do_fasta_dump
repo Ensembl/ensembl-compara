@@ -154,7 +154,7 @@ You need to send out two emails:
 . Edit the list of species. Blast db and ssaha servers ONLY needed for species with new assemblies.  Blast db also needed if there are changes to the data effecting the fasta files.
 . Check the location of the files is correct
 \n
-To : web-corebio\@sanger.ac.uk, ensembl-webteam\@sanger.ac.uk
+To : team105-corebio\@sanger.ac.uk, ensembl-webteam\@sanger.ac.uk
 Subject: blast databases
 
 Please can you set up blast databases for @SPECIES. $pre_spp
