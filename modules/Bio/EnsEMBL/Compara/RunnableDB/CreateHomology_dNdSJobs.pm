@@ -117,7 +117,7 @@ sub create_analysis_jobs {
   my $aa = $self->db->get_AnalysisAdaptor;
   my $Homology_dNdS_analysis = $aa->fetch_by_logic_name('Homology_dNdS');
 
-  my $sql = "insert into analysis_job (analysis_id,input_id,status) select " .
+  my $sql = "insert ignore into analysis_job (analysis_id,input_id,status) select " .
     $Homology_dNdS_analysis->dbID .
       ",homology_id,'READY' from homology where method_link_species_set_id = ?";
 
