@@ -22,7 +22,12 @@ sub _init {
 
   my $track_height = $th + 4;
   $self->push(new Sanger::Graphics::Glyph::Space({ 'y' => 0, 'height' => $track_height, 'x' => 1, 'w' => 1, 'absolutey' => 1, }));
-  my $info_text = "Comparison to reference strain alleles (green = same allele; purple = different allele)";
+
+  # Get reference strain name for start of track:
+  my $pop_adaptor = $self->{'container'}->adaptor->db->get_db_adaptor('variation')->get_PopulationAdaptor;
+  my $reference_name = $Config->{'reference'} || $pop_adaptor->get_reference_strain_name();
+
+  my $info_text = "Comparison to reference $reference_name strain alleles (green = same allele; purple = different allele)";
 
   my ($small_w, $small_th) = $Config->texthelper()->px2bp('Small');
   my $textglyph = new Sanger::Graphics::Glyph::Text({
@@ -38,9 +43,7 @@ sub _init {
   $self->push( $textglyph );
 
 
-  # Get reference strain name for start of track:
-  my $pop_adaptor = $self->{'container'}->adaptor->db->get_db_adaptor('variation')->get_PopulationAdaptor;
-  my $reference_name = "Reference ". $pop_adaptor->get_reference_strain_name();
+  $reference_name = "Reference $reference_name"; 
   my $ref_bp_textwidth = $w * length($reference_name) * 1.2;
   my $offset = $small_th + 4;
   my $textglyph = new Sanger::Graphics::Glyph::Text({
@@ -110,20 +113,21 @@ sub _init {
 
 
    # Now draw SNPs for each strain
-   my %T; 
-   my %C;
-  foreach my $t_ref ( @{$Config->{'snp_fake_haplotype'}} ) {
-    my( $strain, $allele_ref, $coverage_ref ) = @$t_ref;
+   my %strain_alleles;   # $strain_alleles{strain}{id::start} = allele
+   my %coverage;         # $coverage{strain} = [ [start, end, level], [start, end, level]   ];
+
+  foreach my $data ( @{$Config->{'snp_fake_haplotype'}} ) {
+    my( $strain, $allele_ref, $coverage_ref ) = @$data;
     foreach my $a_ref ( @$allele_ref ) {
-      $T{$strain}{ join "::", $a_ref->[2]->{'_variation_id'}, $a_ref->[2]->{'start'} } = $a_ref->[2]->allele_string ;
+      $strain_alleles{$strain}{ join "::", $a_ref->[2]->{'_variation_id'}, $a_ref->[2]->{'start'} } = $a_ref->[2]->allele_string ;
     }
     foreach my $c_ref ( @$coverage_ref ) {
-      push @{ $C{$strain} }, [ $c_ref->[2]->start, $c_ref->[2]->end, $c_ref->[2]->level ];
+      push @{ $coverage{$strain} }, [ $c_ref->[2]->start, $c_ref->[2]->end, $c_ref->[2]->level ];
     }
   }
-   foreach my $t_ref ( reverse @{$Config->{'snp_fake_haplotype'}} ) {
+   foreach my $data ( reverse @{$Config->{'snp_fake_haplotype'}} ) {
      $offset += $track_height;
-     my( $strain ) = @$t_ref;
+     my( $strain ) = @$data;
 
     # Write strain names
     my $strain_bp_textwidth = $w * length($strain) * 1.2;
@@ -141,11 +145,11 @@ sub _init {
 
      foreach my $snp_ref ( @snps ) {
        my $snp = $snp_ref->[2];
-       my $st  = $snp->start;
-       my $allele_string =  $T{$strain}{ join "::", $snp->{_variation_id}, $st };
+       my $start  = $snp->start;
+       my $allele_string =  $strain_alleles{$strain}{ join "::", $snp->{_variation_id}, $start };
        unless( $allele_string ) {
-         foreach my $cov ( @{$C{$strain}} ) {
-           if( $st >= $cov->[0] && $st <= $cov->[1] ) {
+         foreach my $cov ( @{$coverage{$strain}} ) {
+           if( $start >= $cov->[0] && $start <= $cov->[1] ) {
              $allele_string = $snp_ref->[4];
              last;
            }

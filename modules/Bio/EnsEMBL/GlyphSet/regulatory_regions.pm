@@ -54,7 +54,10 @@ sub zmenu {
       $feature_link = "http://www.cisred.org/human2/siteseq?fid=$1";
       $name .= "  [CisRed]";
     }
-    $return->{"01:Feature: $name"} = $feature_link;
+    elsif ($analysis eq "tiffin") {
+      $feature_link = "http://servlet.sanger.ac.uk/tiffin/motif.jsp?acc=$name";
+    }
+     $return->{"01:Feature: $name"} = $feature_link;
 
     # Factor
     if (my $factor = $f->factor->name ) {
