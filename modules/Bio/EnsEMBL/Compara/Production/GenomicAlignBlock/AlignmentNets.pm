@@ -45,7 +45,7 @@ use Bio::EnsEMBL::Compara::Production::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::DnaDnaAlignFeature;
 use Bio::EnsEMBL::Utils::Exception;
 
-our @ISA = qw(Bio::EnsEMBL::Analysis::RunnableDB::AlignmentFilter);
+our @ISA = qw(Bio::EnsEMBL::Hive::Process Bio::EnsEMBL::Analysis::RunnableDB::AlignmentFilter);
 
 my $WORKDIR; # global variable holding the path to the working directory where output will be written
 my $BIN_DIR = "/usr/local/ensembl/bin";
@@ -54,6 +54,9 @@ my $BIN_DIR = "/usr/local/ensembl/bin";
 sub new {
   my ($class,@args) = @_;
   my $self = $class->SUPER::new(@args);
+
+  $self->query_DnaFrag_hash({});
+  $self->target_DnaFrag_hash({});
 
   return $self;
 }
@@ -140,6 +143,11 @@ sub fetch_input {
 
   ######## needed for output####################
   $self->output_MethodLinkSpeciesSet($out_mlss);
+
+  if ($self->input_job->retry_count > 0) {
+    print STDERR "Deleting alignments as it is a rerun\n";
+    $self->delete_alignments($out_mlss,$self->query_dnafrag,$self->{'start'},$self->{'end'});
+  }
 
   my $gabs = $gaba->fetch_all_by_MethodLinkSpeciesSet_DnaFrag_GroupType($mlss,$self->query_dnafrag,$self->{'start'},$self->{'end'}, $self->{'input_group_type'});
 
@@ -234,6 +242,74 @@ sub convert_output {
   }
 
   return $chains;
+}
+
+sub delete_alignments {
+  my ($self, $mlss, $qy_dnafrag, $start, $end) = @_;
+
+  my $dbc = $self->db->dbc;
+  my $sql = "select ga1.genomic_align_block_id, ga1.genomic_align_id, ga2.genomic_align_id from genomic_align ga1, genomic_align ga2 where ga1.genomic_align_block_id=ga2.genomic_align_block_id and ga1.dnafrag_id = ? and ga1.dnafrag_start <= ? and ga1.dnafrag_end >= ? and ga1.method_link_species_set_id = ?";
+  my $sth = $dbc->prepare($sql);
+  $sth->execute($qy_dnafrag->dbID, $end, $start, $mlss->dbID);
+
+  my $nb_gabs = 0;
+  my @gabs;
+  while (my $aref = $sth->fetchrow_arrayref) {
+    my ($gab_id, $ga_id1, $ga_id2) = @$aref;
+    push @gabs, [$gab_id, $ga_id1, $ga_id2];
+    $nb_gabs++;
+  }
+
+  my $sql_gab = "delete from genomic_align_block where genomic_align_block_id in ";
+  my $sql_ga = "delete from genomic_align where genomic_align_id in ";
+  my $sql_gag = "delete from genomic_align_group where genomic_align_id in ";
+
+  for (my $i=0; $i < scalar @gabs; $i=$i+20000) {
+    my (@gab_ids, @ga1_ids, @ga2_ids);
+    for (my $j = $i; ($j < scalar @gabs && $j < $i+20000); $j++) {
+      push @gab_ids, $gabs[$j][0];
+      push @ga1_ids, $gabs[$j][1];
+      push @ga2_ids, $gabs[$j][2];
+      print $j," ",$gabs[$j][0]," ",$gabs[$j][1]," ",$gabs[$j][2],"\n";
+    }
+    my $sql_gab_to_exec = $sql_gab . "(" . join(",", @gab_ids) . ")";
+    my $sql_ga_to_exec1 = $sql_ga . "(" . join(",", @ga1_ids) . ")";
+    my $sql_ga_to_exec2 = $sql_ga . "(" . join(",", @ga2_ids) . ")";
+    my $sql_gag_to_exec1 = $sql_gag . "(" . join(",", @ga1_ids) . ")";
+    my $sql_gag_to_exec2 = $sql_gag . "(" . join(",", @ga2_ids) . ")";
+
+    foreach my $sql ($sql_gab_to_exec,$sql_ga_to_exec1,$sql_ga_to_exec2,$sql_gag_to_exec1,$sql_gag_to_exec2) {
+      my $sth = $dbc->prepare($sql);
+      $sth->execute;
+      $sth->finish;
+    }
+  }
+}
+
+sub run {
+#  my $self = shift;
+#  bless $self, "Bio::EnsEMBL::Analysis::RunnableDB::AlignmentFilter";
+#  $self->run;
+  my ($self) = @_;
+  foreach my $runnable(@{$self->runnable}){
+    $runnable->run;
+    my $converted_output = $self->convert_output($runnable->output);
+    $self->output($converted_output);
+#    rmdir($runnable->workdir) if (defined $runnable->workdir);
+  }
+}
+
+sub write_output {
+  my $self = shift;
+
+  my $disconnect_when_inactive_default = $self->{'comparaDBA'}->disconnect_when_inactive;
+  $self->{'comparaDBA'}->disconnect_when_inactive(0);
+
+  bless $self, "Bio::EnsEMBL::Analysis::RunnableDB::AlignmentFilter";
+  $self->write_output;
+  bless $self, "Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::AlignmentChains";
+
+  $self->{'comparaDBA'}->disconnect_when_inactive($disconnect_when_inactive_default);
 }
 
 1;
