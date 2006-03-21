@@ -45,16 +45,12 @@ package Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::CreateAlignmentNet
 
 use strict;
 
-#use Bio::EnsEMBL::Hive;
 use Bio::EnsEMBL::Compara::Production::DBSQL::DBAdaptor;
-#use Bio::EnsEMBL::Compara::Production::DnaFragChunk;
-#use Bio::EnsEMBL::Compara::Production::DnaFragChunkSet;
-#use Bio::EnsEMBL::Compara::Production::DnaCollection;
 use Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor;
-use Bio::EnsEMBL::Pipeline::RunnableDB;
+use Bio::EnsEMBL::Hive::Process;
 use Bio::EnsEMBL::Utils::Exception;
 
-our @ISA = qw(Bio::EnsEMBL::Pipeline::RunnableDB);
+our @ISA = qw(Bio::EnsEMBL::Hive::Process);
 
 my $DEFAULT_DUMP_MIN_SIZE = 11500000;
 
@@ -130,6 +126,8 @@ sub run
 sub write_output
 {
   my $self = shift;
+  my $output_id = "{\'query_genome_db_id\' => \'" . $self->{'query_genome_db_id'} . "\',\'target_genome_db_id\' => \'" . $self->{'target_genome_db_id'} . "\'}";
+  $self->dataflow_output_id($output_id, 2);
   return 1;
 }
 
