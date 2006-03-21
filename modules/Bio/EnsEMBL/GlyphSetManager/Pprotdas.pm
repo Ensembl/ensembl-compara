@@ -7,6 +7,7 @@ use Bio::EnsEMBL::GlyphSet::Pseparator;
 use vars qw(@ISA);
 @ISA = qw(Sanger::Graphics::GlyphSetManager);
 
+
 sub init {
   my ($self) = @_;
 
@@ -25,6 +26,7 @@ sub init {
   my $user_confkey;
   foreach my $source ( keys( %$feat_container ) ){
     $user_confkey = "genedas_$source";
+    next if ($Config->get($user_confkey, "on") ne 'on');
     my @features = @{$feat_container->{$source}};
 
 # To distiguish between tracks that really don't have features and those that don't have features that we display
@@ -52,8 +54,10 @@ sub init {
     };
 
    # Add a separator (top)
+    my $label = $Config->get($user_confkey, "label") || $source;
+
     $self->add_glyphset_separator ({ 
-        name=>"DAS $source",
+        name=>$label,
         confkey=>$user_confkey,
 	authority=>$authorities{$source},
         order  => sprintf("%05d", $self->{order} -- )
@@ -74,6 +78,7 @@ sub init {
 
   return 1;
 }
+
 
 sub add_glyphset {
     my ($self,$config) = @_;	
