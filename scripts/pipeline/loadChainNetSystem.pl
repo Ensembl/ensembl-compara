@@ -52,7 +52,7 @@ $self->{'hiveDBA'}      = new Bio::EnsEMBL::Hive::DBSQL::DBAdaptor(-DBCONN => $s
 if(%hive_params) {
   if(defined($hive_params{'hive_output_dir'})) {
     die("\nERROR!! hive_output_dir doesn't exist, can't configure\n  ", $hive_params{'hive_output_dir'} , "\n")
-      unless(-d $hive_params{'hive_output_dir'});
+      if(($hive_params{'hive_output_dir'} ne "") and !(-d $hive_params{'hive_output_dir'}));
     $self->{'comparaDBA'}->get_MetaContainer->delete_key('hive_output_dir');
     $self->{'comparaDBA'}->get_MetaContainer->store_key_value('hive_output_dir', $hive_params{'hive_output_dir'});
   }
@@ -234,29 +234,21 @@ sub prepareChainSystem
   #
   # creating UpdateMaxAlignmentLengthAfterChain analysis
   #
-  
+  $parameters = "{\'method_link\'=>\'$output_method_link_type\'}";
   my $updateMaxAlignmentLengthAfterChainAnalysis = Bio::EnsEMBL::Analysis->new
     (-db_version      => '1',
      -logic_name      => 'UpdateMaxAlignmentLengthAfterChain',
      -module          => 'Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::UpdateMaxAlignmentLength',
-     -parameters      => "");
+     -parameters      => $parameters);
   
   $self->{'hiveDBA'}->get_AnalysisAdaptor()->store($updateMaxAlignmentLengthAfterChainAnalysis);
   $stats = $updateMaxAlignmentLengthAfterChainAnalysis->stats;
   $stats->hive_capacity(1);
   $stats->update();
   $self->{'updateMaxAlignmentLengthAfterChainAnalysis'} = $updateMaxAlignmentLengthAfterChainAnalysis;
-  
-  
-  #
-  # create UpdateMaxAlignmentLengthAfterChain job
-  #
-  my $input_id = 1;
-  Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob
-      (-input_id       => $input_id,
-       -analysis       => $self->{'updateMaxAlignmentLengthAfterChainAnalysis'});
 
   $ctrlRuleDBA->create_rule($alignmentChainsAnalysis, $self->{'updateMaxAlignmentLengthAfterChainAnalysis'});
+  $dataflowRuleDBA->create_rule($createAlignmentChainsJobsAnalysis,$self->{'updateMaxAlignmentLengthAfterChainAnalysis'}, 2);
 }
 
 sub prepareNetSystem {
@@ -330,31 +322,24 @@ sub prepareNetSystem {
     #
     # creating UpdateMaxAlignmentLengthAfterNet analysis
     #
-
+    $parameters = "{\'method_link\'=>\'$output_method_link_type\'}";
     my $updateMaxAlignmentLengthAfterNetAnalysis = Bio::EnsEMBL::Analysis->new
       (-db_version      => '1',
        -logic_name      => 'UpdateMaxAlignmentLengthAfterNet',
        -module          => 'Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::UpdateMaxAlignmentLength',
-       -parameters      => "");
+       -parameters      => $parameters);
 
     $self->{'hiveDBA'}->get_AnalysisAdaptor()->store($updateMaxAlignmentLengthAfterNetAnalysis);
-    my $stats = $updateMaxAlignmentLengthAfterNetAnalysis->stats;
+    $stats = $updateMaxAlignmentLengthAfterNetAnalysis->stats;
     $stats->hive_capacity(1);
     $stats->update();
     $self->{'updateMaxAlignmentLengthAfterNetAnalysis'} = $updateMaxAlignmentLengthAfterNetAnalysis;
 
-    #
-    # create UpdateMaxAlignmentLengthAfterNet job
-    #
-    my $input_id = 1;
-    Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob
-        (-input_id       => $input_id,
-         -analysis       => $self->{'updateMaxAlignmentLengthAfterNetAnalysis'});
   }
-
   $ctrlRuleDBA->create_rule($alignmentNetsAnalysis,$self->{'updateMaxAlignmentLengthAfterNetAnalysis'});
-
+  $dataflowRuleDBA->create_rule($createAlignmentNetsJobsAnalysis,$self->{'updateMaxAlignmentLengthAfterNetAnalysis'}, 2);
 }
+
 sub storeMaskingOptions
 {
   my $self = shift;
