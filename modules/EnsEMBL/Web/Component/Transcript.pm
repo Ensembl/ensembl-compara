@@ -974,7 +974,7 @@ sub transcriptsnpview {
   my( $panel, $object, $do_not_render ) = @_;
 
   # Params for context transcript expansion.
-  my  $db = $object->get_db();
+  my $db = $object->get_db();
   my $transcript = $object->stable_id;
   my $script = 'transcriptsnpview';
   my $URL_for_expand =
@@ -992,10 +992,16 @@ sub transcriptsnpview {
   my $transcript_slice = $object->__data->{'slices'}{'TSV_transcript'}[1];
   my $sub_slices       =  $object->__data->{'slices'}{'TSV_transcript'}[2];
   my $fake_length      =  $object->__data->{'slices'}{'TSV_transcript'}[3];
-  my ($count_fake_snps, $fake_snps) = $object->getFakeMungedVariationsOnSlice( $transcript_slice, $sub_slices  );
-  my ($count_snps, $snps) = $object->getFakeVariationsOnSlice( $object->__data->{'slices'}{'transcript'}[1] );
-  my ($count_context_snps, $context_snps) = $object->getFakeVariationsOnSlice( $object->__data->{'slices'}{'context'}[1] );
 
+  #SNPs
+  my ($count_sample_snps, $sample_snps) = $object->getFakeMungedVariationsOnSlice( $transcript_slice, $sub_slices  );
+  my $start_difference =  $object->__data->{'slices'}{'TSV_transcript'}[1]->start - $object->__data->{'slices'}{'transcript'}[1]->start;
+
+  my @transcript_snps;
+  map { push @transcript_snps, 
+	  [ $_->[2]->start + $start_difference, 
+	    $_->[2]->end   + $start_difference, 
+	    $_->[2]] } @$sample_snps;
 
   # Taken out domains (prosite, pfam)
 
@@ -1022,13 +1028,13 @@ sub transcriptsnpview {
     $Configs->{$_}->{'id'} = $object->stable_id;
   }
 
-  $Configs->{'transcript'}->{'filtered_fake_snps'} = $snps;
+  $Configs->{'transcript'}->{'filtered_fake_snps'} = \@transcript_snps;
 
   foreach(qw(transcripts_top transcripts_bottom)) {
     $Configs->{$_}->{'extent'}      = $extent;
     $Configs->{$_}->{'transid'}     = $object->stable_id;
     $Configs->{$_}->{'transcripts'} = [{ 'exons' => \@ens_exons }];
-    $Configs->{$_}->{'snps'}        = $fake_snps;
+    $Configs->{$_}->{'snps'}        = $sample_snps;
     $Configs->{$_}->{'subslices'}   = $sub_slices;
     $Configs->{$_}->{'fakeslice'}   = 1;
     $Configs->{$_}->container_width( $fake_length );
@@ -1037,13 +1043,13 @@ sub transcriptsnpview {
 
   $Configs->{'snps'} = $object->user_config_hash( "genesnpview_snps" );
   $Configs->{'snps'}->set( '_settings', 'width',  $image_width );
-  $Configs->{'snps'}->{'snp_counts'} = [$count_fake_snps, scalar @$fake_snps];
+  $Configs->{'snps'}->{'snp_counts'} = [$count_sample_snps, scalar @$sample_snps];
 
   $Configs->{'context'}->container_width( $object->__data->{'slices'}{'context'}[1]->length() );
   $Configs->{'context'}->set( 'scalebar', 'label', "Chr. @{[$object->__data->{'slices'}{'context'}[1]->seq_region_name]}");
   $Configs->{'context'}->set( 'est_transcript','on','off');
   $Configs->{'context'}->set( '_settings', 'URL',   $URL_for_expand, 1);
-  $Configs->{'context'}->{'filtered_fake_snps'} = $context_snps;
+  #$Configs->{'context'}->{'filtered_fake_snps'} = $context_snps;
 
   # SNP stuff ------------------------------------------------------------
   my ($containers_and_configs, $haplotype);
@@ -1064,11 +1070,12 @@ sub transcriptsnpview {
 	( $transcript_slice->end - $_->[2]->end     + 1,
 	  $transcript_slice->end - $_->[2]->start   + 1 )
       ]
-    } sort { $a->[0] <=> $b->[0] } @$fake_snps;
+    } sort { $a->[0] <=> $b->[0] } @$sample_snps;
 
   $Configs->{'snps'}->set( 'snp_fake_haplotype', 'on', 'on' );
   $Configs->{'snps'}->container_width(   $snp_fake_length   );
   $Configs->{'snps'}->{'snps'}        = \@fake_snps;
+  $Configs->{'snps'}->{'reference'}   = $object->param('reference');
   $Configs->{'snps'}->{'fakeslice'}   = 1;
   $Configs->{'snps'}->{'snp_fake_haplotype'}  =  $haplotype;
 
@@ -1325,7 +1332,6 @@ sub spreadsheet_TSVtable {
      $text = ". Please select a source from the yellow 'Source' dropdown menu";
    }
    $panel->print("<p>These SNP calls are sequence coverage dependent. Here we display the SNP calls observed by transcript$text.</p>");
-
 
    my $user_config = $object->user_config_hash( 'TSV_sampletranscript' );
    $user_config->{'Populations'}    = [$object->get_samples('all') ];

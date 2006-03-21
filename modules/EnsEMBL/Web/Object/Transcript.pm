@@ -132,7 +132,7 @@ sub get_transcript_Slice {
 
 sub get_transcript_slices {
   my( $self, $slice_config ) = @_;
-  # name, normal/munged, zoom
+  # name, normal/munged, zoom/extent
   if( $slice_config->[1] eq 'normal') {
     my $slice = $self->get_transcript_Slice( $slice_config->[2], 1 );
     return [ 'normal', $slice, [], $slice->length ];
@@ -228,15 +228,15 @@ sub valids {
   return \%valids;
 }
 
-sub getFakeVariationsOnSlice {
-  my( $self, $slice ) = @_;
-  my $sliceObj = EnsEMBL::Web::Proxy::Object->new(
-        'Slice', $slice, $self->__data
-       );
+# sub getFakeVariationsOnSlice {
+#   my( $self, $slice ) = @_;
+#   my $sliceObj = EnsEMBL::Web::Proxy::Object->new(
+#         'Slice', $slice, $self->__data
+#        );
 
-  my ($count_snps, $filtered_snps) = $sliceObj->getFakeVariationFeatures();
-  return ($count_snps, $filtered_snps);
-}
+#   my ($count_snps, $filtered_snps) = $sliceObj->getFakeVariationFeatures();
+#   return ($count_snps, $filtered_snps);
+# }
 
 
 sub getFakeMungedVariationsOnSlice {
