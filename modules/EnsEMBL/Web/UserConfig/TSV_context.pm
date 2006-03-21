@@ -45,7 +45,7 @@ sub init {
       'pos'         => '0',
       'navigation'  => 'off'
     },
-    'spacer' => { 'on'=>'on','pos'=>1e6, 'height' => 30, 'str' => 'r' },
+    'spacer' => { 'on'=>'on','pos'=>1e6, 'height' => 20, 'str' => 'r' },
     'snp_join' => {
       'tag'=>0,
       'on'=>'on',

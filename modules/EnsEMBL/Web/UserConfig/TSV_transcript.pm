@@ -20,7 +20,7 @@ sub init {
       'bgcolour1' => 'background1',
       'bgcolour2' => 'background1',
     },
-    'spacer' => { 'on'=>'on','pos'=>1e6, 'height' => 40, 'str' => 'r' },
+    'spacer' => { 'on'=>'on','pos'=>1e6, 'height' => 20, 'str' => 'r' },
 
     'snp_join' => {
       'tag' => 1,
