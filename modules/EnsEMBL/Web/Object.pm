@@ -255,4 +255,39 @@ sub getCoordinateSystem{
 
 }
 
+=head2 get_DASCollection
+
+  Arg [1]   : none
+  Function  : PRIVATE: Lazy-loads the DASCollection object for this gene, translation or transcript
+  Returntype: EnsEMBL::Web::DataFactory::DASCollectionFactory
+  Exceptions: 
+  Caller    : 
+  Example   : 
+
+=cut
+
+sub get_DASCollection{
+  my $self = shift;
+  my $data = $self->__data;
+
+  unless( $data->{_das_collection} ){
+    my $dasfact = EnsEMBL::Web::Proxy::Factory->new( 'DASCollection', $self->__data );
+    $dasfact->createObjects;
+    if( $dasfact->has_a_problem ){
+	my $prob = $dasfact->problem->[0];
+	warn join( ':', $prob->type, $prob->name, $prob->description );
+	return;
+    }
+
+    $data->{_das_collection} = $dasfact->DataObjects->[0];
+
+    foreach my $das( @{$data->{_das_collection}->Obj} ){
+	if ($das->adaptor->active) {
+	    $self->DBConnection->add_DASFeatureFactory($das);
+	}
+    } 
+  }
+  return $data->{_das_collection};
+}
+
 1;

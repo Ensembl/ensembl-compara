@@ -265,43 +265,6 @@ sub get_disease_matches{
 
 #----------------------------------------------------------------------
 
-=head2 get_DASCollection
-
-  Arg [1]   : none
-  Function  : PRIVATE: Lazy-loads the DASCollection object for this gene
-  Returntype: EnsEMBL::Web::DataFactory::DASCollectionFactory
-  Exceptions: 
-  Caller    : 
-  Example   : 
-
-=cut
-
-sub get_DASCollection{
-    my $self = shift;
-    my $data = $self->__data;
-
-    if( ! $data->{_das_collection} ){
-
-	my $dbc = $data->{_databases};
-	my $input = $data->{_input};
-
-	my $dasfact = EnsEMBL::Web::Proxy::Factory->new( 'DASCollection', { '_databases' => $dbc, '_input' => $input } );
-	$dasfact->createObjects;
-	if( $dasfact->has_a_problem ){
-	    my $prob = $dasfact->problem->[0];
-	    warn join( ':', $prob->type, $prob->name, $prob->description );
-	    return;
-	}else{
-	    my $das_collection = $dasfact->DataObjects->[0];
-	    $data->{_das_collection} = $das_collection;
-	    foreach my $das( @{$das_collection->Obj} ){
-		if( ! $das->adaptor->active ){ next };
-		$dbc->add_DASFeatureFactory($das);
-	   } }
-	}
-    return $data->{_das_collection};
-}
-
 sub get_das_factories {
    my $self = shift;
    return [ $self->__data->{_object}->adaptor()->db()->_each_DASFeatureFactory ];
@@ -365,7 +328,7 @@ sub get_das_features_by_slice {
     $key .= "/$dsn/$type";
 
     unless( $cache->{_das_features}->{$key} ) { ## No cached values - so grab and store them!!
-      my $featref = ($dasfact->fetch_all_Fatures( $slice, $type ))[0];
+      my $featref = ($dasfact->fetch_all_Features( $slice, $type ))[0];
       $cache->{_das_features}->{$key} = $featref;
     }
     $das_features{$name} = $cache->{_das_features}->{$key};

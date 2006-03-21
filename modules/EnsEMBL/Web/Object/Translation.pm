@@ -823,33 +823,6 @@ sub location_string {
 ## DAS collection stuff............................................. ##
 #######################################################################
 
-=head2 get_DASCollection
-
-  Arg [1]   : none
-  Function  : PRIVATE: Lazy-loads the DASCollection object for this gene
-  Returntype: EnsEMBL::Web::DataFactory::DASCollectionFactory
-  Exceptions: 
-  Caller    : 
-  Example   : 
-
-=cut
-
-sub get_DASCollection{
-  my $self = shift;
-  my $data = $self->__data;
-
-  unless( $data->{_das_collection} ){
-    my $dasfact = EnsEMBL::Web::Proxy::Factory->new( 'DASCollection', $self->__data );
-    $dasfact->createObjects;
-#   warn "DFPROB: @{[ $dasfact->problem->[0]->type]} : @{[ $dasfact->problem->[0]->name]} : @{[ $dasfact->problem->[0]->description ]}";
-    return if $dasfact->has_a_problem;
-    $data->{_das_collection} = $dasfact->DataObjects->[0];
-    foreach my $das( @{$data->{_das_collection}->Obj} ){
-      $self->DBConnection->add_DASFeatureFactory($das) if $das->adaptor->active;
-    } 
-  }
-  return $data->{_das_collection};
-}
 
 sub get_das_factories {
   my $self = shift;
