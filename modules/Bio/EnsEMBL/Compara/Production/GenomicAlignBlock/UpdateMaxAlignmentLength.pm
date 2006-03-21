@@ -53,8 +53,10 @@ use Time::HiRes qw(time gettimeofday tv_interval);
 use Bio::EnsEMBL::Utils::Exception qw( throw warning verbose );
 use Bio::EnsEMBL::Compara::Production::DBSQL::DBAdaptor;
 
-use Bio::EnsEMBL::Pipeline::RunnableDB;
-our @ISA = qw(Bio::EnsEMBL::Pipeline::RunnableDB);
+#use Bio::EnsEMBL::Pipeline::RunnableDB;
+use Bio::EnsEMBL::Hive::Process;
+#our @ISA = qw(Bio::EnsEMBL::Pipeline::RunnableDB);
+our @ISA = qw(Bio::EnsEMBL::Hive::Process);
 
 
 =head2 fetch_input
@@ -81,7 +83,10 @@ sub fetch_input {
   #with the Pipeline::DBAdaptor that is based into this runnable
   $self->{'comparaDBA'} = Bio::EnsEMBL::Compara::Production::DBSQL::DBAdaptor->new(-DBCONN => $self->db->dbc);
   $self->{'comparaDBA'}->dbc->disconnect_when_inactive(0);
-    
+
+  $self->get_params($self->parameters);
+  $self->get_params($self->input_id);
+
   return 1;
 }
 
@@ -89,6 +94,7 @@ sub fetch_input {
 sub run
 {
   my $self = shift;
+  $self->remove_alignment_data_inconsistencies;
   $self->update_meta_table;
   return 1;
 }
@@ -97,11 +103,36 @@ sub run
 sub write_output 
 {
   my $self = shift;
+  return 1;
+}
 
-  my $output_id = $self->input_id;
+sub get_params {
+  my $self         = shift;
+  my $param_string = shift;
 
-  print("output_id = $output_id\n");
-  $self->input_id($output_id);
+  return unless($param_string);
+  
+  my $params = eval($param_string);
+  return unless($params);
+
+  foreach my $key (keys %$params) {
+    print("  $key : ", $params->{$key}, "\n");
+  }
+
+  # from input_id
+  $self->{'query_genome_db_id'} = $params->{'query_genome_db_id'} if(defined($params->{'query_genome_db_id'}));
+  $self->{'target_genome_db_id'} = $params->{'target_genome_db_id'} if(defined($params->{'target_genome_db_id'}));
+  # from parameters
+  $self->{'method_link'} = $params->{'method_link'} if(defined($params->{'method_link'}));
+  # get the mlss object;
+
+  if (defined $self->{'method_link'} && defined $self->{'query_genome_db_id'} && $self->{'target_genome_db_id'}) {
+    my $mlssa = $self->{'comparaDBA'}->get_MethodLinkSpeciesSetAdaptor;
+    my $mlss = $mlssa->fetch_by_method_link_type_genome_db_ids($self->{'method_link'}, [$self->{'query_genome_db_id'},$self->{'target_genome_db_id'}]);
+    
+    $self->{'mlss'} = $mlss if (defined $mlss);
+  }
+
   return 1;
 }
 
@@ -141,6 +172,116 @@ sub update_meta_table {
 
   $sth->finish;
 
+}
+
+sub remove_alignment_data_inconsistencies {
+  my $self = shift;
+
+  my $dba = $self->{'comparaDBA'};
+
+  $dba->dbc->do("analyze table genomic_align_block");
+  $dba->dbc->do("analyze table genomic_align");
+  $dba->dbc->do("analyze table genomic_align_group");
+
+  #Delete genomic align blocks which have no genomic aligns. Assume not many of these
+  #
+
+  my $sql_gab = "delete from genomic_align_block where genomic_align_block_id in ";
+  my $sql_ga = "delete from genomic_align where genomic_align_id in ";
+  my $sql_gag = "delete from genomic_align_group where genomic_align_id in ";
+
+  my $sql = "SELECT gab.genomic_align_block_id FROM genomic_align_block gab LEFT JOIN genomic_align  ga ON gab.genomic_align_block_id=ga.genomic_align_block_id WHERE ga.genomic_align_block_id IS NULL;";
+  my $sth = $dba->dbc->prepare($sql);
+  $sth->execute();
+
+  my @gab_ids;
+  while (my $aref = $sth->fetchrow_arrayref) {
+    my ($gab_id) = @$aref;
+    push @gab_ids, $gab_id;
+  }
+  $sth->finish;
+
+  #check if any results found
+  if (scalar @gab_ids) {
+    my $sql_gab_to_exec = $sql_gab . "(" . join(",", @gab_ids) . ");";
+    my $sth = $dba->dbc->prepare($sql_gab_to_exec);
+    $sth->execute;
+    $sth->finish;
+  }
+
+  #
+  #Delete genomic align blocks which have 1 genomic align. Assume not many of these
+  #
+  
+  $sql = "SELECT genomic_align_block_id, genomic_align_id FROM genomic_align GROUP BY genomic_align_block_id HAVING count(*)<2;";
+  $sth = $dba->dbc->prepare($sql);
+  $sth->execute;
+
+  @gab_ids = ();
+  my @ga_ids;
+  while (my $aref = $sth->fetchrow_arrayref) {
+    my ($gab_id, $ga_id) = @$aref;
+    push @gab_ids, $gab_id;
+    push @ga_ids, $ga_id;
+  }
+  $sth->finish;
+
+  if (scalar @gab_ids) {
+    my $sql_gab_to_exec = $sql_gab . "(" . join(",", @gab_ids) . ")";
+    my $sql_ga_to_exec = $sql_ga . "(" . join(",", @ga_ids) . ")";
+    my $sql_gag_to_exec = $sql_gag . "(" . join(",", @ga_ids) . ")";
+
+    foreach my $sql ($sql_gab_to_exec,$sql_ga_to_exec,$sql_gag_to_exec) {
+      my $sth = $dba->dbc->prepare($sql);
+      $sth->execute;
+      $sth->finish;
+    }
+  }
+  if (defined $self->{'mlss'}) {
+
+    #
+    # Delete genomic aligns that have no genomic align group. Assume not many of these
+    #
+
+    $sql = "SELECT DISTINCT ga.genomic_align_block_id FROM genomic_align ga LEFT JOIN genomic_align_group  gag ON ga.genomic_align_id=gag.genomic_align_id WHERE gag.genomic_align_id IS NULL and method_link_species_set_id=?;";
+
+    $sth = $dba->dbc->prepare($sql);
+    $sth->execute($self->{'mlss'}->dbID);
+    @gab_ids = ();
+    @ga_ids = ();
+    while (my $aref = $sth->fetchrow_arrayref) {
+      my ($gab_id) = @$aref;
+      push @gab_ids, $gab_id;
+    }
+    $sth->finish;
+    
+    for (my $i=0; $i < scalar @gab_ids; $i++) {
+      $sql = "select genomic_align_id from genomic_align where genomic_align_block_id = ?;";
+      
+      $sth = $dba->dbc->prepare($sql);
+      $sth->execute($gab_ids[$i]);
+      
+      while (my $aref = $sth->fetchrow_arrayref) {
+        my ($ga_id) = @$aref;
+        
+        #Need to leave this to print in case things go wrong and I need to recover.
+#        print STDOUT "$ga_id\n";
+        push @ga_ids, $ga_id;
+      }
+    }
+    
+    if (scalar @gab_ids) {
+      my $sql_gab_to_exec = $sql_gab . "(" . join(",", @gab_ids) . ");";
+      my $sql_ga_to_exec = $sql_ga . "(" . join(",", @ga_ids) . ");";
+      my $sql_gag_to_exec = $sql_gag . "(" . join(",", @ga_ids) . ");";
+      
+      foreach my $sql ($sql_gab_to_exec,$sql_ga_to_exec,$sql_gag_to_exec) {
+        my $sth = $dba->dbc->prepare($sql);
+        $sth->execute;
+        $sth->finish;
+      }
+    }
+  }
 }
 
 1;
