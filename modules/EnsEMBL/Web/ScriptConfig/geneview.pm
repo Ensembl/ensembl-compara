@@ -15,6 +15,7 @@ sub init {
     status_das_sources      on
     status_gene_orthologues on
     context                 0
+    das_sources             
   ));
 }
 1;

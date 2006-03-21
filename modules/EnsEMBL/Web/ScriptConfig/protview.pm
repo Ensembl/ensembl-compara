@@ -11,6 +11,7 @@ sub init {
     panel_variation         on
     show                    plain
     number                  off   
+    das_sources             
   ));
 }
 1;

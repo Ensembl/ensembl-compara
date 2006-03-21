@@ -22,7 +22,10 @@ sub dasconfview {
 
     my $confparams = '';
     foreach my $param (grep { !/^DAS|^_das/ } $obj->param()) {
-      $confparams .= ";$param=".$obj->param($param) if defined $obj->param($param);
+	my @values = $obj->param($param);
+	foreach my $v (@values) {
+	    $confparams .= ";$param=$v";
+	}
     }
 
 # for Edit and Delete buttons

@@ -72,8 +72,6 @@ sub createObjects {
     ref( $ini_confdata ) eq 'HASH' or die("$das_conftype badly configured" );
     foreach my $source( keys %$ini_confdata ){
 	my $source_confdata = $ini_confdata->{$source} || ( warn( "$das_conftype source $source not configured" ) && next );
-
-        next if exists($source_confdata->{assembly}) && $self->species_defs->ENSEMBL_GOLDEN_PATH ne $source_confdata->{assembly};
 	ref( $source_confdata ) eq 'HASH' || ( warn( "$das_conftype source $source badly configured" ) && next );
 
 	# Is source enabled for this view?
@@ -108,7 +106,7 @@ sub createObjects {
 
 # Add external sources (ones added by user)
     my $extdas = new EnsEMBL::Web::ExternalDAS( $self );
-    $extdas->getConfigs($conf_script, $conf_script);
+#    $extdas->getConfigs($conf_script, $conf_script);
     my %daslist = %{$extdas->{'data'}};
 	 
     for my $source ( keys %daslist ) {
@@ -161,6 +159,7 @@ sub createObjects {
     my $urlnum = 1;
     foreach my $u (@udas) {
 	my $das_name = "_URL_$urlnum";
+#	warn ("ADD URL");
 	$sources_conf{$das_name}->{name} = $das_name;
 	$sources_conf{$das_name}->{url} = $u;
 	$sources_conf{$das_name}->{conftype} = 'url';
@@ -172,35 +171,16 @@ sub createObjects {
     my $config = $uca->getUserConfig( 'dasconfview' );
     my $section = $conf_script;
 
-    my @das_params = CGI::param('DASselect');
-    foreach my $src (@das_params) {
-        my $sp = "DASselect_$src";
-	my $value = CGI::param($sp) || 0;
+    $config->reset_subsection($section);
+#    warn("DAS Select : ".join('*', $self->param('das_sources')));
 
-	if (CGI::param($sp)) {
-	    $config->set($section, $src, "on", 1);
-	} else {
-	    $config->set($section, $src, "off", 1);
-	}
+    
+    foreach my $src ( $self->param('das_sources')) {
+	$config->set($section, $src, "on", 1);
     }
     $config->save( );
 
-    my @selection = ();
-
-    foreach my $src (keys (%sources_conf)) {
-	my $value = $config->get($section, $src) || 'undef';
-	if ($value eq 'on') {
-	    push(@selection, $src);
-	}
-    }
-
-    if( @selection ) {
-      $self->param("DASselect", @selection);
-    } else {
-      $self->delete_param("DASselect" );
-    }
-    my %DASsel = map {$_ => 1} $self->param("DASselect");
-
+    my %DASsel = map {$_ => 1} $self->param('das_sources');
 
 # Process the dasconfig form input - Get DAS sources to add/delete/edit;
     my %das_submit = map{$_,1} ($self->param( "_das_submit" ) || ());
@@ -285,12 +265,7 @@ sub createObjects {
 	    }
 	}
 	$extdas->add_das_source(\%das_data);
-	if ($das_data{active}) {
-	    $DASsel{$das_name} = 1;
-	    push @selection, $das_name;
-	    $self->param("DASselect", \@selection);
-	}
-
+	$DASsel{$das_name} = 1 if ($das_data{active});
     }
 
     # Add '/das' suffix to _das_domain param
@@ -361,6 +336,8 @@ sub createObjects {
 		    $sources_conf{$das_name}->{$key} = $das_data{$key};
 		}
 
+#		warn("DAS SUBMIT $das_name");
+
 #		warn("S:".Data::Dumper::Dumper(\%das_data));
 		$extdas->add_das_source(\%das_data);
 		$DASsel{$das_name} = 1;
@@ -392,8 +369,6 @@ sub createObjects {
 	    foreach my $key( @confkeys, @allkeys, 'dsn', 'enable', 'mapping') {
 		$sources_conf{$das_name}->{$key} = $das_data->{$key};
 	    }
-
-	    warn("SAVE : ".Data::Dumper::Dumper($das_data));
 
 	    $extdas->add_das_source($das_data);
 	    $DASsel{$das_name} = 1;
@@ -453,16 +428,13 @@ sub createObjects {
 
 		$das_data->{conftype} = 'external';
 
-#		warn("ADD $das_name");
+#		warn("ADD2 $das_name");
 #		warn(Dumper($das_data));
 		$sources_conf{$das_name} ||= {};
 
 		foreach my $key( @confkeys, @allkeys, 'dsn', 'enable', 'mapping') {
 		    $sources_conf{$das_name}->{$key} = $das_data->{$key};
 		}
-
-		
-
 		$extdas->add_das_source($das_data);
 		$DASsel{$das_name} = 1;
 
@@ -482,12 +454,13 @@ sub createObjects {
 	# Create the DAS adaptor from the (valid) conf
 	my $source_conf = $sources_conf{$source};
 	push (@udaslist, "URL:$source_conf->{url}") if ($source_conf->{conftype} eq 'url');
-		  
-	$source_conf->{active} = defined ($DASsel{$source}) ? 1 : 0;
 
 	if( ! $source_conf->{url} and ! ( $source_conf->{protocol} && $source_conf->{domain} ) ){
 	    next;
 	}
+
+	$source_conf->{active} = defined ($DASsel{$source}) ? 1 : 0;
+
 
 	my $das_adapt = Bio::EnsEMBL::ExternalData::DAS::DASAdaptor->new
 	    ( 
@@ -527,9 +500,18 @@ sub createObjects {
 	# Create the DAS object itself
 	    my $das_obj = Bio::EnsEMBL::ExternalData::DAS::DAS->new( $das_adapt );
 	    push @das_objs, $das_obj;
+	} else {
+	    $DASsel{$source} = 0;
+	    $extdas->delete_das_source($source);
 	}
+
     }
+    my @selection = grep {$DASsel{$_}} keys %DASsel;
+#    warn(join '*', 'SELCT:', @selection);
+
     
+    $self->param('das_sources', @selection);
+
     # Create the collection object
     my $dataobject = EnsEMBL::Web::Proxy::Object->new( 'DASCollection', [@das_objs], $self->__data );
     $self->DataObjects( $dataobject );

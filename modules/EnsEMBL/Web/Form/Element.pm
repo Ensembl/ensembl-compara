@@ -28,6 +28,7 @@ sub new {
     'alt'          => $array{ 'alt'    },
     'width'        => $array{ 'width' },
     'height'       => $array{ 'height' },
+    'noescape'       => $array{ 'noescape' },
     'in_error'     => 'no'
   };
   bless $self, $class;
@@ -58,6 +59,7 @@ sub src           :lvalue { $_[0]{'src'};   }
 sub alt           :lvalue { $_[0]{'alt'};   }
 sub width         :lvalue { $_[0]{'width'};   }
 sub height        :lvalue { $_[0]{'height'};   }
+sub noescape        :lvalue { $_[0]{'noescape'};   }
 
 sub _is_valid { return 1; }
 sub validate  { return $_[0]->required eq 'yes'; }

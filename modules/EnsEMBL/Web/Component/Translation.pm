@@ -74,6 +74,7 @@ sub author {
 
 =cut
 
+
 sub image {
   my( $panel, $object ) = @_;
   my $label = 'Protein Features';
@@ -81,12 +82,14 @@ sub image {
   my $db        = $object->get_db ;
   my $wuc       = $object->get_userconfig( 'protview' );
   $wuc->container_width( $object->Obj->length );
+
   my $das_collection = $object->get_DASCollection();
   foreach my $das( @{$das_collection->Obj} ){
     next unless $das->adaptor->active;
     my $source = $das->adaptor->name();
     my $color  = $das->adaptor->color() || 'black';
-    $wuc->das_sources( { "genedas_$source" => { on=>'on', col=>$color, manager=>'Pprotdas' } } );
+    my $src_label  = $das->adaptor->label() || $source;
+    $wuc->das_sources( { "managed_$source" => { on=>'on', col=>$color, label=> $src_label, manager=>'Pprotdas' } } );
   }
 
   $object->Obj->{'image_snps'}   = $object->pep_snps;

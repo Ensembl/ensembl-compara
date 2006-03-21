@@ -12,27 +12,9 @@ sub format_das_panel {
   my( $panel, $object,$status, $URL ) = @_;
 # Get parameters to be passed to dasconfview script
 
-  my $params ='';
-  my @cparams = qw ( db gene transcript peptide );
-
-  my $hidden = '';
-
-  foreach my $param (@cparams) {
-    if( defined(my $v = $object->param($param)) ) {
-      $hidden .= sprintf qq(<input type="hidden" name="%s" value="%s" />\n), $param, $v;
-      $params .= ";$param=$v";
-    }
-  }
 
   my $script  = $object->script;
   my $species  = $object->species;
-# The code below to be rewritten to use new Web::Form module
-
-# Template for a checkbox that switches the source on/off
-  my $checkbox_tmpl = qq{
-    <input type="checkbox" name="DASselect_%s" value="1" %s onClick='javascript:document.dasForm.submit()' /> %s 
-    <input type="hidden" name="DASselect" value="%s" />
-};
 
   my @checks = ();
 # Get the DAS configuration
@@ -218,7 +200,6 @@ sub format_das_panel {
       }  
     }
 
-
     if( scalar( @rhs_rows ) == 0 ){
 	my $msg = "No annotation";
 	if ($location_features > 0) {
@@ -242,27 +223,66 @@ sub format_das_panel {
     return 0;
   }
 
-  ###### Get the switched on sources
-  my @T = ($object->param("DASselect"));
-  my %selected_das = map {$_ => 1} $object->param("DASselect");
-  foreach my $source ( grep { $_->{conftype} ne 'url' } @$das_attribute_data ) {
-    my $name        = $source->{name} || ( warn "DAS source found with no name attribute" ) && next;
-    my $selected    = $selected_das{$name} ? 'checked="checked"' : '';
-    my $label       = $source->{authority} ? qq(<a href="$source->{authority}" target="_blank">$name</a>) : $name;
-    $label         .= " ($source->{description})" if $source->{'description'};
-    push @checks, sprintf( $checkbox_tmpl, $name, $selected, $label, $name);
+  my $form = EnsEMBL::Web::Form->new( 'dasForm', "/$species/$script", 'GET');
+
+
+  my $params ='';
+  my @cparams = qw ( db gene transcript peptide );
+
+  foreach my $param (@cparams) {
+    if( defined(my $v = $object->param($param)) ) {
+      $params .= ";$param=$v";
+    }
   }
-  my $html = qq( 
-<form name="dasForm" id="dasForm" method="get" action="/@{[$species]}/@{[$script]}">
-<dl>
-  @{[ map { "<dt>$_</dt>\n" } @checks ]}
-</dl>
-$hidden
-  <input type="button" value="Manage Sources" onClick="X=window.open('/@{[$species]}/dasconfview?conf_script=$script;$params','das_sources','left=10,top=10,resizable,scrollbars=yes');X.focus()" />
-</form>);
-  $panel->add_row( $label, $html, "$URL=off" );
+
+  foreach my $src ($object->param('das_sources')) {
+      $params .=";das_sources=$src";
+  }
+
+  foreach my $param (@cparams) {
+    if( defined(my $v = $object->param($param)) ) {
+	$form->add_element(
+			   'type' => 'Hidden',
+			   'name' => $param,
+			   'value' => $object->param($param)
+			   );
+    }
+  }
+
+  my %selected_sources = map {$_ => 1} $object->param('das_sources');
+
+  my @mvalues;
+  foreach my $source ( grep { $_->{conftype} ne 'url' } @$das_attribute_data ){
+      my $name = $source->{name};
+      my $label = $source->{authority} ? qq(<a href="$source->{authority}" target="_blank">$name</a>) : $name;
+      $label         .= " ($source->{description})" if $source->{'description'};
+      push @mvalues, { "value" => $name, "name"=>$label, 'checked' => $selected_sources{$name} ? 1 : 0 };
+  }
+
+
+  $form->add_element('type' => 'MultiSelect',
+		     'class' => 'radiocheck1col',
+		     'noescape' => 1,
+		     'name'=>'das_sources',
+		     'label'=>'',
+		     'values' => \@mvalues,
+		     'spanning' => 'yes'
+		     );
+  $form->add_element(
+    'type'  => 'Submit', 'value' => 'Update', 'name' => 'Update', 'spanning' => 'yes'
+  );
+
+  $form->add_element(
+		     'type'  => 'Button', 
+		     'value' => 'Manage Sources', 
+		     'name' => 'Manage',
+		     'spanning' => 'yes',
+		     'on_click' => "X=window.open('/@{[$species]}/dasconfview?conf_script=$script;$params','das_sources','left=10,top=10,resizable,scrollbars=yes');X.focus()"
+		     );
+
+  $panel->add_row( $label, $form->render(), "$URL=off" );
+
   ###### End of the sources selector form
 }
-
 
 1;

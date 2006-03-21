@@ -431,11 +431,14 @@ sub das_wizard {
     }
     $form->{_attributes}->{onSubmit} = $onSubmit;
 
-    my @cparams = qw ( conf_script db gene peptide transcript c w h l vc_start vc_end region);
+    my @cparams = qw ( conf_script db gene peptide transcript c w h l vc_start vc_end region das_sources );
     foreach my $param (@cparams) {
-      if( defined(my $v = $object->param($param)) ) {
-        $form->add_element('type'=>'Hidden', 'name' => $param, 'value' => $v );
-      }
+	my @vals = $object->param($param);
+	if (scalar(@vals) > 0) {
+	    foreach my $v (@vals) {
+		$form->add_element('type'=>'Hidden', 'name' => $param, 'value' => $v );
+	    }
+	}
     }
 
     no strict 'refs';

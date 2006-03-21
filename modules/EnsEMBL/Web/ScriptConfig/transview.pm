@@ -8,6 +8,7 @@ sub init {
   $script_config->_set_defaults(qw(
     show                    plain
     number                   off   
+    das_sources             
   ));
 }
 1;

@@ -448,6 +448,16 @@ sub reset {
   return;
 }
 
+sub reset_subsection {
+    my ($self, $subsection) = @_;
+    my $script = $self->script();
+    return unless(defined $subsection);
+
+    $self->{'user'}->{$script}->{$subsection} = {}; 
+    $self->save( );
+    return;
+}
+
 sub dump {
     my ($self) = @_;
     print STDERR Dumper($self);
