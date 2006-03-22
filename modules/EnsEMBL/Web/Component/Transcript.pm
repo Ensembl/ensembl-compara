@@ -977,8 +977,7 @@ sub transcriptsnpview {
   my $db = $object->get_db();
   my $transcript = $object->stable_id;
   my $script = 'transcriptsnpview';
-  my $URL_for_expand =
-    "/".$object->species."/$script?db=$db;transcript=$transcript;bottom=%7Cbump_";
+  my $base_URL = "/".$object->species."/$script?db=$db;transcript=$transcript;";
 
   # Get three slice - context (5x) gene (4/3x) transcripts (+-EXTENT)
   my $extent = tsv_extent($object);
@@ -1048,7 +1047,7 @@ sub transcriptsnpview {
   $Configs->{'context'}->container_width( $object->__data->{'slices'}{'context'}[1]->length() );
   $Configs->{'context'}->set( 'scalebar', 'label', "Chr. @{[$object->__data->{'slices'}{'context'}[1]->seq_region_name]}");
   $Configs->{'context'}->set( 'est_transcript','on','off');
-  $Configs->{'context'}->set( '_settings', 'URL',   $URL_for_expand, 1);
+  $Configs->{'context'}->set( '_settings', 'URL', $base_URL."bottom=%7Cbump_", 1);
   #$Configs->{'context'}->{'filtered_fake_snps'} = $context_snps;
 
   # SNP stuff ------------------------------------------------------------
@@ -1078,7 +1077,7 @@ sub transcriptsnpview {
   $Configs->{'snps'}->{'reference'}   = $object->param('reference');
   $Configs->{'snps'}->{'fakeslice'}   = 1;
   $Configs->{'snps'}->{'snp_fake_haplotype'}  =  $haplotype;
-
+  $Configs->{'snps'}->{'URL'} =  $base_URL;
   return if $do_not_render;
 
   ## -- Render image ----------------------------------------------------- ##

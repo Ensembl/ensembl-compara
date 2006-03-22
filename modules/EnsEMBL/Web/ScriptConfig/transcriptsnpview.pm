@@ -10,7 +10,7 @@ sub init {
     context              100
     panel_transcript     on
     image_width          700
-
+    reference            ),'',qw(
     opt_freq        on
     opt_cluster     on
     opt_doublehit   on
