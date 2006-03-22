@@ -52,9 +52,9 @@ sub _init {
 
   ## First lets draw the reference SNPs....
   my $length     = exists $self->{'container'}{'ref'} ? $self->{'container'}{'ref'}->length : $self->{'container'}->length;
-  my @colours       = qw(chartreuse4 darkorchid4);# orange4 deeppink3 dodgerblue4);s
+  my @colours       = qw(chartreuse4 darkorchid4);# orange4 deeppink3 dodgerblue4);
 
-  foreach my $snp_ref ( @snps ) { 
+  foreach my $snp_ref ( @snps ) {
     my $snp = $snp_ref->[2];
     my( $start, $end ) = ($snp_ref->[0], $snp_ref->[1] );
     $start = 1 if $start < 1;
@@ -67,15 +67,14 @@ sub _init {
     $snp_ref->[4] = $reference_base;
 
     my $alleles_bp_textwidth = $w * length("$label");
-    my $strain_bp_textwidth  = $w * length($alleles[0]) ;
+    $self->do_glyphs($offset, $th, $w, $start, $end, $snp_ref->[3]{$reference_base}, $alleles_bp_textwidth, $Config, $reference_base);
 
-       $self->do_glyphs($offset, $th, $w, $start, $end, $snp_ref->[3]{$reference_base}, $strain_bp_textwidth, $alleles_bp_textwidth, $Config, $reference_base);
   } #end foreach $snp_ref
 
 
-   # Now draw SNPs for each strain -----------------------------------------
-   my %strain_alleles;   # $strain_alleles{strain}{id::start} = allele
-   my %coverage;         # $coverage{strain} = [ [start, end, level], [start, end, level]   ];
+  # Now draw SNPs for each strain -----------------------------------------
+  my %strain_alleles;   # $strain_alleles{strain}{id::start} = allele
+  my %coverage;         # $coverage{strain} = [ [start, end, level], [start, end, level]   ];
 
   foreach my $data ( @{$Config->{'snp_fake_haplotype'}} ) {
     my( $strain, $allele_ref, $coverage_ref ) = @$data;
@@ -88,43 +87,43 @@ sub _init {
   }
 
   # Start with last strain
-   foreach my $data ( reverse @{$Config->{'snp_fake_haplotype'}} ) {
-     $offset += $track_height;
-     my( $strain ) = @$data;
-     $self->strain_name_text($w, $th, $offset, $strain, $Config);
+  foreach my $data ( reverse @{$Config->{'snp_fake_haplotype'}} ) {
+    $offset += $track_height;
+    my( $strain ) = @$data;
+    $self->strain_name_text($w, $th, $offset, $strain, $Config);
 
-     foreach my $snp_ref ( @snps ) {
-       my $snp = $snp_ref->[2];
-       my $start  = $snp->start;
-       my $allele_string =  $strain_alleles{$strain}{ join "::", $snp->{_variation_id}, $start };
+    foreach my $snp_ref ( @snps ) {
+      my $snp = $snp_ref->[2];
+      my $start  = $snp->start;
+      my $allele_string =  $strain_alleles{$strain}{ join "::", $snp->{_variation_id}, $start };
 
-       # If no allele for SNP but there is coverage, allele = reference allele
-       unless( $allele_string ) {
-         foreach my $cov ( @{$coverage{$strain}} ) {
-           if( $start >= $cov->[0] && $start <= $cov->[1] ) {
-             $allele_string = $snp_ref->[4];
-             last;
-           }
-         }
-       }
+      # If no allele for SNP but there is coverage, allele = reference allele
+      unless( $allele_string ) {
+	foreach my $cov ( @{$coverage{$strain}} ) {
+	  if( $start >= $cov->[0] && $start <= $cov->[1] ) {
+	    $allele_string = $snp_ref->[4];
+	    last;
+	  }
+	}
+      }
 
-       my $alleles_bp_textwidth = $w * length($snp->allele_string);
-       my $strain_bp_textwidth = $w * length($allele_string||1) ;
-       my $colour = undef;
+
+      my $colour = undef;
       if( $allele_string ) {
         $colour = $snp_ref->[3]{ $allele_string };
         unless($colour) {
           $colour = $snp_ref->[3]{ $allele_string } = $colours[ scalar(values %{$snp_ref->[3]} )] || $colours[-1];
         }
-       }
-      my( $S,$E ) = ($snp_ref->[0], $snp_ref->[1] );
-      $S = 1 if $S < 1;
-      $E = $length if $E > $length;
-       $self->do_glyphs($offset, $th, $w, $S, $E, $colour, $strain_bp_textwidth, $alleles_bp_textwidth, $Config, $allele_string);
+      }
+      my( $start,$end ) = ($snp_ref->[0], $snp_ref->[1] );
+      $start = 1 if $start < 1;
+      $end = $length if $end > $length;
 
-     }
-   }
-   $self->push(new Sanger::Graphics::Glyph::Space({ 'y' => $offset + $track_height, 'height' => $th+2, 'x' => 1, 'width' => 1, 'absolutey' => 1, }));
+      my $alleles_bp_textwidth = $w * length($snp->allele_string);
+      $self->do_glyphs($offset, $th, $w, $start, $end, $colour, $alleles_bp_textwidth, $Config, $allele_string); 
+    }
+  }
+  $self->push(new Sanger::Graphics::Glyph::Space({ 'y' => $offset + $track_height, 'height' => $th+2, 'x' => 1, 'width' => 1, 'absolutey' => 1, }));
   return 1;
 }
 
@@ -153,7 +152,7 @@ sub strain_name_text {
 
 
 sub do_glyphs {
-  my ($self, $offset, $th, $w, $start, $end, $colour, $strain_bp_textwidth, $alleles_bp_textwidth, $Config, $allele_string) = @_;
+  my ($self, $offset, $th, $w, $start, $end, $colour, $alleles_bp_textwidth, $Config, $allele_string) = @_;
 
   my $tmp_width = $alleles_bp_textwidth + $w*4;
   if ( ($end - $start + 1) > $tmp_width ) {
@@ -173,6 +172,7 @@ sub do_glyphs {
  	});
   $self->push( $back_glyph );
 
+  my $strain_bp_textwidth  = $w * length($allele_string || 1) ;
   if ( ($end-$start + 1)  >$strain_bp_textwidth) {
     my $textglyph = new Sanger::Graphics::Glyph::Text({
             'x'          => ( $end + $start - 1 - $strain_bp_textwidth)/2,
