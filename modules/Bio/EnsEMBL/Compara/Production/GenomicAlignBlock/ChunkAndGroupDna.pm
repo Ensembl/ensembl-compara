@@ -125,16 +125,12 @@ sub run
 {
   my $self = shift;
 
-  $self->{'comparaDBA'}->dbc->disconnect_when_inactive(0);
-  
   # main routine which takes a genome_db_id (from input_id) and
   # access the ensembl_core database, useing the SliceAdaptor
   # it will load all slices, all genes, and all transscripts
   # and convert them into members to be stored into compara
   $self->create_chunks;
   
-  $self->{'comparaDBA'}->dbc->disconnect_when_inactive(1);
-                                          
   return 1;
 }
 
