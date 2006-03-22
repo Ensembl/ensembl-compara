@@ -179,7 +179,7 @@ sub new {
 
    my $x_scale = $panel_width /( ($Config->container_width()|| $Container->length() || $panel_width));
   
-  if($show_buttons eq 'yes') {
+  if($show_buttons eq 'yes' && $Config->get('_settings','URL') ) {
   for my $glyphset (@glyphsets) {
     next unless defined $glyphset->bumped();
     my $NAME = $glyphset->check();
