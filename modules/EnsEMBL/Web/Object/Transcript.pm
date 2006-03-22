@@ -228,15 +228,6 @@ sub valids {
   return \%valids;
 }
 
-# sub getFakeVariationsOnSlice {
-#   my( $self, $slice ) = @_;
-#   my $sliceObj = EnsEMBL::Web::Proxy::Object->new(
-#         'Slice', $slice, $self->__data
-#        );
-
-#   my ($count_snps, $filtered_snps) = $sliceObj->getFakeVariationFeatures();
-#   return ($count_snps, $filtered_snps);
-# }
 
 
 sub getFakeMungedVariationsOnSlice {
