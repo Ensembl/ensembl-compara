@@ -220,7 +220,7 @@ sub run
   $self->{'comparaDBA'}->dbc->disconnect_when_inactive(1);  
 
   my $starttime = time();
-  foreach my $runnable ($self->runnable) {
+  foreach my $runnable (@{$self->runnable}) {
     throw("Runnable module not set") unless($runnable);
     $runnable->run();
   }
