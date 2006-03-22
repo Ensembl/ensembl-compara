@@ -89,7 +89,7 @@ sub image {
     my $source = $das->adaptor->name();
     my $color  = $das->adaptor->color() || 'black';
     my $src_label  = $das->adaptor->label() || $source;
-    $wuc->das_sources( { "managed_$source" => { on=>'on', col=>$color, label=> $src_label, manager=>'Pprotdas' } } );
+    $wuc->das_sources( { "genedas_$source" => { on=>'on', col=>$color, label=> $src_label, manager=>'Pprotdas' } } );
   }
 
   $object->Obj->{'image_snps'}   = $object->pep_snps;
