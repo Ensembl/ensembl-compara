@@ -278,7 +278,7 @@ sub family {
     my $family_desc  = $families->{$family_id}{'description'};
     $html .= qq(<p>
       <a href="$family_url">$family_id</a> : $family_desc<br />
-            This cluster contains $family_count Ensembl gene member(s)</p>);
+            This cluster contains $family_count Ensembl gene member(s) in this species.</p>);
   }
   $panel->add_row( $label, $html );
 }
@@ -1270,7 +1270,7 @@ sub spreadsheet_TSVtable {
 	$coverage = $_->level if $_->level > $coverage;
       }
       $coverage = ">".($coverage-1) if $coverage == $coverage_level->[-1];
-      $status = "read coverage $coverage";
+      $status = "resequencing coverage $coverage";
     }
     else {
       my $tmp =  $allele->variation;
@@ -1333,7 +1333,7 @@ sub spreadsheet_TSVtable {
    $panel->print("<p>These SNP calls are sequence coverage dependent. Here we display the SNP calls observed by transcript$text.</p>");
 
    my $user_config = $object->user_config_hash( 'TSV_sampletranscript' );
-   $user_config->{'Populations'}    = [$object->get_samples('all') ];
+   $user_config->{'Populations'}    = [$object->get_samples('display') ];
 
    my $left =  [qw( Features Source SNPClasses SNPTypes Population SNPContext THExport ImageSize )]; # removed SNPValid
 
