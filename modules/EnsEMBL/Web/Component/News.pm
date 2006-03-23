@@ -33,7 +33,7 @@ sub select_news_form {
   if ($species eq 'Multi') {
     
 ## do species dropdown
-    my %all_species = %{$object->all_spp};
+    my %all_species = %{$object->current_spp};
     my @sorted = sort {$all_species{$a} cmp $all_species{$b}} keys %all_species;
     my @spp_values = ({'name'=>'All species', 'value'=>'0'});
     foreach my $id (@sorted) {

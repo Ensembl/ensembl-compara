@@ -227,6 +227,7 @@ sub fetch_species {
                 release_species x
             WHERE   s.species_id = x.species_id
             AND     x.release_id = $release_id
+            AND     x.assembly_code != ''
             ORDER BY species_name ASC
         );
     } else {
