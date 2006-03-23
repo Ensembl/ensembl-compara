@@ -60,7 +60,7 @@ use vars qw(@ISA);
 use strict;
 
 use Bio::EnsEMBL::DBSQL::BaseAdaptor;
-use Bio::EnsEMBL::Utils::Exception qw(throw info deprecate);
+use Bio::EnsEMBL::Utils::Exception;
 use Bio::EnsEMBL::Compara::GenomicAlignGroup;
 use Bio::EnsEMBL::Compara::GenomicAlign;
 use Bio::EnsEMBL::Compara::DnaFrag;
@@ -80,7 +80,7 @@ sub new {
   if(@$vals) {
     $self->{'max_alignment_length'} = $vals->[0];
   } else {
-    $self->warn("Meta table key 'max_alignment_length' not defined\n" .
+    warning("Meta table key 'max_alignment_length' not defined\n" .
         "using default value [$DEFAULT_MAX_ALIGNMENT]");
     $self->{'max_alignment_length'} = $DEFAULT_MAX_ALIGNMENT;
   }
