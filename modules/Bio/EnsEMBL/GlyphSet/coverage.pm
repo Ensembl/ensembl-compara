@@ -17,7 +17,7 @@ sub init_label {
   my $self = shift;
   my $Config         = $self->{'config'};
   my $coverage_obj   = $Config->{'transcript'}->{'coverage_obj'};
-  my $text  =  @$coverage_obj ? "Coverage" : "No coverage";
+  my $text  =  @$coverage_obj ? "Resequence coverage" : "No reseq. coverage";
   $self->label(new Sanger::Graphics::Glyph::Text({
     'text'      => $text,
     'font'      => 'Tiny',
