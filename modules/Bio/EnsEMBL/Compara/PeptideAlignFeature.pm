@@ -2,6 +2,32 @@
 
 =head1 SYNOPSIS
 
+      # Get an $homology object somehow
+
+      # For Homology PeptideAlignFeatures, you normally get 2 pafs,
+      # one for each member used alternatively as query and database
+      # (hit) in the blast run
+
+      my $pafs = $homology->get_all_PeptideAlignFeature;
+
+      foreach my $paf (@{$pafs}) {
+        print $paf->query_member->stable_id," ",$self->hit_member->stable_id," ",$paf->evalue,"\n";
+      }
+
+      # Other stuff in the object:
+      # $paf->qstart
+      # $paf->qend
+      # $paf->hstart
+      # $paf->hend
+      # $paf->score
+      # $paf->alignment_length
+      # $paf->identical_matches
+      # $paf->perc_ident
+      # $paf->positive_matches
+      # $paf->perc_pos
+      # $paf->hit_rank
+      # $paf->cigar_line
+
 =head1 DESCRIPTION
 
 =head1 CONTACT
