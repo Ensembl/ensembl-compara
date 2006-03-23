@@ -50,12 +50,10 @@ package Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::UpdateMaxAlignment
 
 use strict;
 use Time::HiRes qw(time gettimeofday tv_interval);
-use Bio::EnsEMBL::Utils::Exception qw( throw warning verbose );
+use Bio::EnsEMBL::Utils::Exception;
 use Bio::EnsEMBL::Compara::Production::DBSQL::DBAdaptor;
 
-#use Bio::EnsEMBL::Pipeline::RunnableDB;
 use Bio::EnsEMBL::Hive::Process;
-#our @ISA = qw(Bio::EnsEMBL::Pipeline::RunnableDB);
 our @ISA = qw(Bio::EnsEMBL::Hive::Process);
 
 
@@ -111,7 +109,8 @@ sub get_params {
   my $param_string = shift;
 
   return unless($param_string);
-  
+  return if ($param_string eq "1");
+
   my $params = eval($param_string);
   return unless($params);
 
