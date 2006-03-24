@@ -128,6 +128,49 @@ sub context_menu {
   }
 }
 
+sub export_step1 {
+  ## Alternative context menu for step 1 of exportview
+  my $self = shift;
+  my $obj  = $self->{object};
+  my $species = $obj->real_species;
+  return unless $self->{page}->can('menu');
+  my $menu = $self->{page}->menu;
+  return unless $menu;
+
+  my $flag = 'species';
+  $menu->add_block( $flag, 'bulleted', 'Export a different species', 'raw' => 1 );
+
+
+  my @species_inconf = @{$obj->species_defs->ENSEMBL_SPECIES};
+  my @group_order = qw( Mammals Chordates Eukaryotes );
+  my %spp_tree = (
+      'Mammals'   => { 'label'=>'Mammals',          'species' => [] },
+      'Chordates' => { 'label'=>'Other chordates',  'species' => [] },
+      'Eukaryotes'=> { 'label'=>'Other eukaryotes', 'species' => [] },
+    );
+
+  foreach my $sp ( @species_inconf) {
+    my $bio_name = $obj->species_defs->other_species($sp, "SPECIES_BIO_NAME");
+    my $group    = $obj->species_defs->other_species($sp, "SPECIES_GROUP") || 'default_group';
+    unless( $spp_tree{ $group } ) {
+      push @group_order, $group;
+      $spp_tree{ $group } = { 'label' => $group, 'species' => [] };
+    }
+    my $hash_ref = { 'href'=>"/$sp/exportview", 'text'=>"<i>$bio_name</i>", 'raw'=>1 };
+    push @{ $spp_tree{$group}{'species'} }, $hash_ref;
+  }
+  foreach my $group (@group_order) {
+    next unless @{ $spp_tree{$group}{'species'} };
+    my $text = $spp_tree{$group}{'label'};
+    $menu->add_entry(
+      'species',
+      'href'=>'/',
+      'text'=>$text,
+      'options'=>$spp_tree{$group}{'species'}
+    );
+  }
+}
+
 sub exportview {
   my $self = shift;
   my $obj  = $self->{object};
