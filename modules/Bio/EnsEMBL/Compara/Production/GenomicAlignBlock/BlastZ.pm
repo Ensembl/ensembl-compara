@@ -107,7 +107,6 @@ have specified a group_set_size in the target_dna_collection. In the case of bla
                     -options    => $self->options,
                     -program    => $program,
 		    -analysis   => $self->analysis,
-                    -verbosity  => $self->debug,
                   );
 
   if($self->debug >1) {
