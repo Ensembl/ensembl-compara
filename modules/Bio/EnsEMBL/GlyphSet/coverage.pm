@@ -85,7 +85,7 @@ sub _init {
       'colour'    => $draw_coverage{$level}->[1],
       'absolutey' => 1,
       'zmenu' => {
-        'caption' => 'Read coverage: '.$display_level,
+        'caption' => 'Resequencing read coverage: '.$display_level,
         "12:bp $pos" => '',
         "14:$sample" => '',
       },

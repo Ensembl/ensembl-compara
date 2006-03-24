@@ -101,7 +101,7 @@ sub _init {
       }
       if ($coverage) {
 	$coverage = ">".($coverage-1) if $coverage == $coverage_level->[-1];
-	push @tmp, ("07:Read coverage: $coverage" => '');
+	push @tmp, ("07:Resequencing coverage: $coverage" => '');
       }
     }
     my $label  = join "/", @$aa_change;
