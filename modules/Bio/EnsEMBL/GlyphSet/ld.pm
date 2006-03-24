@@ -54,7 +54,7 @@ sub _init {
     my $pop_obj = $pop_adaptor->fetch_by_name($pop_name);
     next unless $pop_obj;
     my $pop_id =  $pop_obj->dbID;
-    my $data = $self->{'container'}->get_all_LD_values($pop_id); 
+    my $data = $self->{'container'}->get_all_LD_values($pop_obj); 
     my @snps  = sort { $a->[1]->start <=> $b->[1]->start }
       map  { [ $_ => $data->{'variationFeatures'}{$_} ] }
 	keys %{ $data->{'variationFeatures'} };
