@@ -21,24 +21,39 @@ CREATE TABLE meta (
 
 
 #
-# Table structure for table 'taxon'
+# Table structure for tables 'ncbi_taxa_nodes' and 'ncbi_taxa_names'
 #
-# Contains all taxa used in this database.
+# Contains all taxa used in this database, which mirror the data and tree structure
+# from NCBI Taxonomy database (for more details see ensembl-compara/script/taxonomy/README-taxonomy
+# which explain our import process)
 #
 
-CREATE TABLE taxon (
-  taxon_id                    int(10) unsigned NOT NULL, # unique internal id
-  genus                       varchar(50),
-  species                     varchar(50),
-  sub_species                 varchar(50),
-  common_name                 varchar(100),
-  classification              mediumtext,
+CREATE TABLE ncbi_taxa_nodes (
+  taxon_id                        int(10) unsigned NOT NULL,
+  parent_id                       int(10) unsigned NOT NULL,
 
-  PRIMARY KEY (taxon_id),
-  KEY (genus,species),
-  KEY (common_name)
+  rank                            char(32) default '' NOT NULL,
+  genbank_hidden_flag             boolean default 0 NOT NULL,
+
+  left_index                      int(10) NOT NULL,
+  right_index                     int(10) NOT NULL,
+  root_id                         int(10) default 1 NOT NULL,
+  
+  KEY (taxon_id),
+  KEY (parent_id),
+  KEY (rank)
 ) COLLATE=latin1_swedish_ci;
 
+CREATE TABLE ncbi_taxa_names (
+  taxon_id                    int(10) unsigned NOT NULL,
+
+  name                        varchar(255),
+  name_class                  varchar(50),
+
+  KEY (taxon_id),
+  KEY (name),
+  KEY (name_class)
+) COLLATE=latin1_swedish_ci;
 
 #
 # Table structure for table 'genome_db'
