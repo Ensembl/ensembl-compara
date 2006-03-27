@@ -156,7 +156,7 @@ sub _add_child_name_to_classification {
     throw("Can't classification on a multifurcating tree\n");
   } elsif ($self->get_child_count == 1) {
     my $child = $self->children->[0];
-    unless ($child->genbank_hidden_flag) {
+    unless ($child->genbank_hidden_flag || $child->rank eq "subgenus" || $child->rank eq "subspecies") {
       unshift @$classification, $child->name;
     }
     unless ($child->rank eq 'species') {
