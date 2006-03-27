@@ -960,7 +960,7 @@ sub das_wizard_3 {
 
     $option = lc($das_conf->{score} || 'n');
     my @scvalues;
-    foreach ( 'No chart', 'Histogram' ) {
+    foreach ( 'No chart', 'Histogram', 'SignalMap' ) {
         my $id          = lc(substr($_,0,1));
         push @scvalues, {'name'=>$_, 'value'=>$id};
     }
@@ -973,7 +973,7 @@ sub das_wizard_3 {
 		       'on_change' => 'submit'
 		       );
  
-    if ($option ne 'n') {
+    if ($option eq 'h') {
 	$option = lc($das_conf->{fg_merge} || 'a');
 	my @scvalues;
 	foreach ( 'Average Score', 'Max Score') {
