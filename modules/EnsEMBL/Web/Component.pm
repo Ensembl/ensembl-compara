@@ -12,20 +12,11 @@ sub format_das_panel {
   my( $panel, $object,$status, $URL ) = @_;
 # Get parameters to be passed to dasconfview script
 
-
   my $script  = $object->script;
   my $species  = $object->species;
 
-  my @checks = ();
-# Get the DAS configuration
-  my $das_collection     = $object->get_DASCollection;
-
-  my $das_attribute_data = $das_collection->get_DASAdaptor_attributes_by_method(qw(
-    name authority description conftype active type
-  ));
 
 # Now display the annotation from the selected sources
-
   my $link_tmpl = qq(<a href="%s" target="%s">%s</a>);
 
 # Template for annotations is :
@@ -57,14 +48,23 @@ sub format_das_panel {
   );
 
 
-  foreach my $source( @$das_attribute_data ){
-    $source->{active} || next;
-    my $source_nm = $source->{name};
-    my $label = "<a name=$source_nm></a>$source_nm";
+# Get the DAS configuration
+  my @das_objs = @{$das_collection->Obj || []} ;
+
+  foreach my $das ( grep {$_->adaptor->active} @das_objs ){
+      my $source = $das->adaptor;
+      my $source_nm = $source->name;
+      my $label = "<a name=$source_nm></a>$source_nm";
+      if (defined (my $error = $source->verify)) {
+	  my $msg = qq{Error retrieving features : $error};
+	  $panel->add_row( $label, qq(<p>$msg</p>) );
+	  next;
+      }
+
     my $location_features = 0;
     my @rhs_rows = ();
 # Check the source type, if it is 'ensembl_location' then we need to query the DAS source using the chromosome coordinates of the gene rather than its ID
-    if( $source->{type} =~ /^ensembl_location/ ) { 
+    if( $source->type =~ /^ensembl_location/ ) { 
       my $slice = $object->get_Slice();
       my @features = $object->get_das_features_by_slice($source_nm, $slice);
       my $slice_length = $slice->end - $slice->start;
@@ -198,7 +198,7 @@ sub format_das_panel {
           '&nbsp;'
         ) );
       }  
-    }
+  }
 
     if( scalar( @rhs_rows ) == 0 ){
 	my $msg = "No annotation";
@@ -213,7 +213,7 @@ sub format_das_panel {
   @rhs_rows
 </table>)
       );
-    }
+  }
   }
 
   ###### Collapse/expand switch for the DAS sources panel 
@@ -252,10 +252,12 @@ sub format_das_panel {
   my %selected_sources = map {$_ => 1} $object->param('das_sources');
 
   my @mvalues;
-  foreach my $source ( grep { $_->{conftype} ne 'url' } @$das_attribute_data ){
-      my $name = $source->{name};
-      my $label = $source->{authority} ? qq(<a href="$source->{authority}" target="_blank">$name</a>) : $name;
-      $label         .= " ($source->{description})" if $source->{'description'};
+
+  foreach my $das ( grep { $_->adaptor->conftype  ne 'url' } @das_objs ){
+      my $source = $das->adaptor;
+      my $name = $source->name;
+      my $label = $source->authority ? qq(<a href=").$source->authority.qq(" target="_blank">$name</a>) : $name;
+      $label         .= " (".$source->description.")" if $source->description;
       push @mvalues, { "value" => $name, "name"=>$label, 'checked' => $selected_sources{$name} ? 1 : 0 };
   }
 
