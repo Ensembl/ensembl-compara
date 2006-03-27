@@ -31,6 +31,7 @@ if ($help) {
   exit 0;
 }
 
+Bio::EnsEMBL::Registry->no_version_check(1);
 Bio::EnsEMBL::Registry->load_all($reg_conf);
 
 my $dbc = Bio::EnsEMBL::Registry->get_DBAdaptor($dbname, 'compara')->dbc;
@@ -61,8 +62,8 @@ foreach my $tg_slice (@{$tg_sa->fetch_all('toplevel')}) {
   $tg_slices{$tg_slice->seq_region_name} = $tg_slice;
 }
 
-my $sth_synteny_region = $dbc->prepare("insert into synteny_region (method_link_species_set_id, rel_orientation) values (?,?)");
-my $sth_dnafrag_region = $dbc->prepare("insert into dnafrag_region (synteny_region_id,dnafrag_id,dnafrag_start,dnafrag_end) values (?,?,?,?)");
+my $sth_synteny_region = $dbc->prepare("insert into synteny_region (method_link_species_set_id) values (?)");
+my $sth_dnafrag_region = $dbc->prepare("insert into dnafrag_region (synteny_region_id,dnafrag_id,dnafrag_start,dnafrag_end,dnafrag_strand) values (?,?,?,?,?)");
 
 my $line_number = 1;
 
@@ -88,10 +89,10 @@ while (defined (my $line = <>) ) {
 
 # print STDERR "1: $qy_chr, 2: $tg_chr, qy_end: " .$qy_dnafrag->end.", tg_end: ". $tg_dnafrag->end."\n";
   
-    $sth_synteny_region->execute($mlss->dbID, $rel);
+    $sth_synteny_region->execute($mlss->dbID);
     my $synteny_region_id = $sth_synteny_region->{'mysql_insertid'};
-    $sth_dnafrag_region->execute($synteny_region_id,$qy_dnafrag->dbID,$qy_start,$qy_end);
-    $sth_dnafrag_region->execute($synteny_region_id,$tg_dnafrag->dbID,$tg_start,$tg_end);
+    $sth_dnafrag_region->execute($synteny_region_id,$qy_dnafrag->dbID,$qy_start,$qy_end,1);
+    $sth_dnafrag_region->execute($synteny_region_id,$tg_dnafrag->dbID,$tg_start,$tg_end,$rel);
     print STDERR "synteny region line number $line_number loaded\n";
     $line_number++;
   } else {
