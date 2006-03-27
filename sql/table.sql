@@ -92,24 +92,35 @@ CREATE TABLE method_link (
 ) COLLATE=latin1_swedish_ci;
 
 
+
+
 #
 # Table structure for table 'method_link_species_set'
 #
--- KEY method_link_species_set_id is a multiple key. It defines a set of species
---   (genome_db_ids) linked through a method_link_id. 
+-- KEY species_set_id is a multiple key. It defines a set of species
+--   (genome_db_ids).
+CREATE TABLE `species_set` (
+  species_set_id              int(10) unsigned NOT NULL auto_increment,
+  genome_db_id                int(10) unsigned NOT NULL default '0',
+  PRIMARY KEY  (species_set_id,genome_db_id)
+) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+
+
+#
+# Table structure for table 'method_link_species_set'
+#
 
 CREATE TABLE method_link_species_set (
   method_link_species_set_id  int(10) unsigned NOT NULL AUTO_INCREMENT, # unique internal id
   method_link_id              int(10) unsigned, # FK method_link.method_link_id
-  genome_db_id                int(10) unsigned, # FK genome_db.genome_db_id
+  species_set_id              int(10) unsigned NOT NULL default '0',
+  name                        varchar(255) NOT NULL default '',
+  source                      varchar(255) NOT NULL default 'ensembl',
+  url                         varchar(255) NOT NULL default '',
 
-  FOREIGN KEY (method_link_id) REFERENCES method_link(method_link_id),
-  FOREIGN KEY (genome_db_id) REFERENCES genome_db(genome_db_id),
-
-  KEY method_link_species_set (method_link_species_set_id),
-  KEY method_link_id (method_link_id, method_link_species_set_id, genome_db_id)
+  PRIMARY KEY (method_link_species_set_id),
+  UNIQUE KEY method_link_id (method_link_id,species_set_id)
 ) COLLATE=latin1_swedish_ci;
-
 
 #
 # Table structure for table 'dnafrag'
