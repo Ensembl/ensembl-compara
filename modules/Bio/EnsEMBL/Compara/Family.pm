@@ -167,4 +167,35 @@ sub get_SimpleAlign {
   return $sa;
 }
 
+sub get_all_taxa_by_member_source_name {
+  my $self = shift;
+  my $source_name = shift;
+
+  my $sql = "SELECT distinct(m.taxon_id)
+             FROM family_member fm,member m
+             WHERE fm.family_id= ? AND
+                   fm.member_id=m.member_id";
+  
+  if (defined $source_name) {
+    $sql .= " AND m.source_name = '$source_name'"
+  }
+
+  my $sth = $self->adaptor->dbc->prepare($sql);
+  $sth->execute($self->dbID);
+
+  my @taxa;
+  my $ncbi_ta = $self->adaptor->db->get_NCBITaxonAdaptor;
+
+  while (my $rowhash = $sth->fetchrow_hashref) {
+    my $taxon_id = $rowhash->{taxon_id};
+    my $taxon = $ncbi_ta->fetch_node_by_taxon_id($taxon_id);
+    push @taxa, $taxon;
+  }
+  $sth->finish;
+
+  return \@taxa;
+
+
+}
+
 1;
