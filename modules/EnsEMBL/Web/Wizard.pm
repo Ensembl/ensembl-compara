@@ -304,6 +304,13 @@ sub _HTMLize {
 sub pass_fields {
   my ($self, $node, $form, $object, $fields) = @_;
 
+  ## don't pass data if returning via a Back button
+  if ($object->param) {
+    foreach my $param ($object->param) {
+      return if ($param =~ /^submit/ && $object->param($param) =~ /Back/);
+    }
+  } 
+
   my @fields;
   if ($fields) {
     @fields = @$fields;
@@ -324,6 +331,7 @@ sub pass_fields {
   }
   my $widgets = $self->{'_nodes'}{$node}{'input_fields'};
   push @no_pass, @$widgets if $widgets;
+
   ## put values into a hash to get around Perl's crap array functions!
   my %skip;
   foreach my $x (@no_pass) {
