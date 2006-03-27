@@ -758,7 +758,7 @@ sub fetch_all_by_MethodLinkSpeciesSet_DnaFrag_DnaFrag {
           WHERE 
               ga1.genomic_align_block_id = ga2.genomic_align_block_id
               AND ga2.method_link_species_set_id = $method_link_species_set_id
-              AND ga1.dnafrag_id = $dnafrag_id1 AND ga2.dnafrag_id = $dnafrag_id2;
+              AND ga1.dnafrag_id = $dnafrag_id1 AND ga2.dnafrag_id = $dnafrag_id2
       };
   if (defined($start) and defined($end)) {
     my $max_alignment_length = $method_link_species_set->max_alignment_length;
