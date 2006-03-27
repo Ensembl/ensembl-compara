@@ -11,90 +11,97 @@
   make so that Ensembl will run on your local set-up.
 </p>
 
-<h3 class="boxed">File Configuration</h3>
+<h3 class="boxed">Background: configuration</h3>
+<h4 >File Configuration</h4>
 
 <p>
   The configuration for the website is split up into site-wide
-  configuration (Apache config, global settings) and species-specific
-  configuration (database names, and so on). Site-wide configuration
-  is stored inSiteDefs.pm, while the species-specific config is kept
-  in species_name.ini files (e.g. Homo_sapiens.ini).
-  There needs to be a species-specific .ini file for each species
-  you want to display on your Ensembl website.
-</p>
-
-<p>
-  In addition to these configuration files, there is a DEFAULTS.ini
- file and a MULTI.ini file. DEFAULTS.ini holds default values for
-  the species-specific .ini files; i.e. unless you override these
-  settings in a particular species ini file, they will apply to all
-  species. This is simply to save having to make the same
-  setting in multiple species ini files.
-</p>
-
-<p>
-  MULTI.ini contains multi-species settings. This currently contains
-  database connection information for the Compara and
-  Mart databases.
-</p>
-
-
-<p>
+  configuration and species configuration. 
   The default configuration files can all be found in the "conf"
   subdirectory of your server-root.
 </p>
 
+
 <p>
-  <strong>If you have installed
-  Ensembl prior to release 31 you will have editted these files
-  in the conf directory. As from version 32 there is a new
-  approach to the configuration of the site.</strong>
+     The site-wide configuration (Apache config, global settings) 
+     is stored in <kbd>conf/SiteDefs.pm</kbd>.  
 </p>
 
-<h3 class="boxed">PLUGINS</h3>
+
+<p>  
+    The species configuration (database names, etc.) is 
+     kept in the conf/ini_files directory as a series of "ini" files.
+</p>
+<ul>
+  <li>
+     There is a generic file called DEFAULTS.ini which holds default 
+     values for all the species.   (This is simply to save having 
+     to make the same setting in multiple species ini files.)
+  </li>
+  <li>
+     There needs to be a species-specific .ini file for each 
+     species you want to display on your Ensembl website.
+     (&lt;Genus_species&gt;.ini files e.g. Homo_sapiens.ini).
+     You can override settings in DEFAULTS.ini by redefining the setting
+      in a particular species' ini file.
+  </li>
+  <li>  
+     In addition, MULTI.ini contains multi-species settings. It has
+     database connection information for the Compara and
+     Mart databases.
+  </li>
+</ul>
+
+<h4 class="boxed">Plugins</h4>
 
 <p>
   Elsewhere in the documentation you will read about how to extend
   Ensembl by writing your own <strong>plugins</strong>. A by product
   of this extensibility is that you can also use plugins to simply
   configure your server.
+
+  For example, in your checked out copy of Ensembl there is a 
+  <strong>public-plugins</strong> with a mirror directory.  The 
+   <strong>mirror/conf</strong> directory contains DEFAULTS.ini 
+   and SiteDefs.pm files which
+  can be used to configure your copy of Ensembl.
+</p>
+
+
+<h3 class="boxed">Setting up the "Mirror Plugin"</h3>
+<p class="red">
+  If you have installed
+  Ensembl prior to release 31 you will have edited files
+  in the conf directory. From version 32 there is a new
+  approach to configure the site using plugins.
+
 </p>
 
 <p>
-  When you checked out your copy of Ensembl you will find that you
-  created a directory called <strong>public-plugins</strong> inside
-  this is a folder called mirror which contains a <strong>conf</strong>
-  directory. This contains DEFAULTS.ini and SiteDefs.pm files which
-  can be used to configure your copy of Ensembl.
-</p>
-<h4>Setting up the "Mirror Plugin"</h4>
-<p>
-  In the main conf directory you will find a file called <strong>Plugins.pm-dist</strong>
-  The first thing to do is to make a copy of this without the -dist extension.
-  This sets up the mirror plugin mentioned above.
+  In the main <kbd>conf</kbd> directory you will find a file called <strong>Plugins.pm-dist</strong>.
+  Copy this file and name it Plugins.pm (i.e. without the -dist extension).
+  This file sets up the mirror plugin mentioned above.
 </p>
 <p>
   Now go into the <strong>public-plugins/mirror/conf</strong> directory and
-  make changes to the SiteDefs.pm and DEFAULTS.ini listed below:
+  make the changes listed below to SiteDefs.pm and ini_files/DEFAULTS.ini:
 </p>
-<h3 class="boxed">public-plugins/mirror/conf/SiteDefs.pm</h3>
+
+<h3>public-plugins/mirror/conf/SiteDefs.pm</h3>
 
 <p>
   First copy SiteDefs.pm-dist to SiteDefs.pm in this directory.
   If you open this file in a text editor, such as vi, you will see it is
-  actually a Perl module, containing a single method "update_conf" which 
-  contains, changes you need to make to configure your copy of the website.
-</p>
+  a Perl module with a single method "update_conf" which 
+  contains the changes needed to configure your copy of the website.
 
-<p>
-  This methods consists of a list of variables (of the form $SiteDefs::ENSEMBL_whatever),
-  and a value for the variable, and a comment (after a # symbol) about the variable.
+  The "update_conf" method consists of a list of variables (of the form $SiteDefs::ENSEMBL_whatever),
 </p>
 <p>
-  These are the variables you will need to change to match your installation. There
-  are other variables that you can change (you can change any variables that are
-  defined in the main SiteDefs.pm file.
+  Below are the variables you will need to change to match your installation. 
+  If you wish, you can change any variables that are defined in the main SiteDefs.pm file.
 </p>
+<p class="red">You should only change the values, that is the parts between single quotes.</p>
 
 <h4>General configuration</h4>
 
@@ -105,7 +112,6 @@ change this line of SiteDefs to read:</p>
 <pre>
   $SiteDefs::ENSEMBL_SERVERROOT = '/usr/local/ensembl';
 </pre>
-<p>You should only change the values, that is the parts between single quotes.</p>
 
 <h4>Configuration of the Apache web server</h4>
 <p>Change $SiteDefs::ENSEMBL_SERVERNAME to the web name of the server - e.g. "www.yoursite.org". This value is
@@ -120,27 +126,50 @@ and change $SiteDefs::ENSEMBL_ERRORS_TO to your email address. If you don't want
 $SiteDefs::ENSEMBL_MAIL_ERRORS to 0.</p>
 
 <h4>User database - Database and cookie configuration</h4>
-<p>Change the values of $SiteDefs::ENSEMBL_USERDB_NAME, $SiteDefs::ENSEMBL_USERDB_HOST,
-$SiteDefs::ENSEMBL_USERDB_USER, $SiteDefs::ENSEMBL_USERDB_PASS, to the details for your web_user database,
-remembering that this database needs a user with update/insert/delete privileges. Additionally you will
-may wish to change the encryption keys used to "protect" the cookies - $SiteDefs::ENSEMBL_ENCRYPT_0 should
-be a six digit hex-number, $SiteDefs::ENSEMBL_ENCRYPT_1, _2 and _3 should each contain two alphanumeric
+<p>Change the values of the following to have the details for your web_user database</p>
+<ul>
+  <li>$SiteDefs::ENSEMBL_USERDB_NAME</li>
+  <li>$SiteDefs::ENSEMBL_USERDB_HOST</li>
+  <li>$SiteDefs::ENSEMBL_USERDB_USER</li>
+  <li>$SiteDefs::ENSEMBL_USERDB_PASS</li>
+</ul>
+
+<p>Remember this database needs a user with update/insert/delete privileges. Additionally if you wish  
+to change the encryption keys used to "protect" the cookies, $SiteDefs::ENSEMBL_ENCRYPT_0 should
+be a six digit hex-number and $SiteDefs::ENSEMBL_ENCRYPT_1, _2 and _3 should each contain two alphanumeric
 characters. Unless you are particularly concerned about people changing cookies, the default values
 will probably do.</p>
 
-<h4>Enabling Species [*** UPDATE ***]</h4>
-<p>$SiteDefs::ENSEMBL_SPECIES_ALIASES contains a hash of species aliases against species names. This is
-created by populating %__species_aliases</p>
-<pre>
-  %__species_aliases = (
-  'Bos_taurus'        => [qw(bt cow)],
-  'Canis_familiaries' => [qw(cf dog)],
+<h4>Enabling Species <span class="red">*** UPDATED ***</span></h4>
+<p>The default species for Ensembl are listed in this file <kbd>public-plugins/ensembl/conf/SiteDefs.pm</kbd> 
+ in %__species_aliases.  These are automatically imported into the main conf/SiteDefs::ENSEMBL_SPECIES_ALIASES.
+In this distribution all the default species are enabled. (See below on 
+<a href="#customise">how to customise</a> your own list).
 
-  );
+<p>The keys of the hash (the species names on the left hand side) define the list of valid species for
+this website. The values of the hash (the aliases on the right) can be used in URLs instead of the longer
+species names. i.e.</p>
+<kbd><a href="/mouse/contigview?l=1:4m-4.1m">http://my.ensembl.site/mouse/contigview</a></kbd>
+<p>is identical to</p>
+<kbd><a href="/Mus_musculus/contigview?l=1:4m-4.1m">http://my.ensembl.site/Mus_musculus/contigview</a></kbd>
+
+
+<p>To configure a species it has to have an appropriately-named .ini file in the 
+conf/ini_files directory and to be present as in the %__species_aliases as shown below:</p>
+
+<pre>
+sub update_conf {
+  $SiteDefs::ENSEMBL_PERL_SPECIES  = 'Homo_sapiens'; # Default species
+  $SiteDefs::__species_aliases{ 'Bos_taurus'      } = [qw(bt cow moo)];
+  $SiteDefs::__species_aliases{ 'Canis_familiaris'} = [qw(cf dog)];
+  $SiteDefs::__species_aliases{ 'Homo_sapiens'    } = [qw(hs human man default)];
+}
 </pre>
 
-<p>In this distribution all species are enabled, to disable a species in your SiteDefs.pm "update_conf" method
-you need to manipulate this hash:
+<h5 id="customise">Customising your species list</h5>
+<p>To overwrite the default species and customise your own species list 
+add lines (described below) to the "update_conf" method in <strong>your mirror plugin</strong>: 
+<kbd>public-plugins/mirror/conf/SiteDefs.pm</kbd>.
 </p>
 <ol>
   <li>To delete a species:<br />
@@ -153,15 +182,10 @@ you need to manipulate this hash:
   <tt>&nbsp; &nbsp; push @{$SiteDefs::__species_aliases{'Pan_troglodytes'}}, qw(chimpanzee);</tt>
   </li>
 </ol>
-<p>The keys of the hash (the species names on the left hand side) defines the list of valid species for
-this website. The values of the hash (the aliases on the left) can be used in URLs instead of the longer
-species names. i.e.</p>
-<kbd><a href="/mouse/contigview?l=1:4m-4.1m">http://my.ensembl.site/mouse/contigview</a></kbd>
-<p>is identical to</p>
-<kbd><a href="/Mus_musculus/contigview?l=1:4m-4.1m">http://my.ensembl.site/Mus_musculus/contigview</a></kbd>
 
-<p>To configure a species it has to be present as a value in the $SiteDefs::ENSEMBL_SPECIES_ALIASES hash, and
-it has to have an appropriately-named .ini file in the conf/ini_files directory.</p>
+<p>Remember to <a href="#species_ini">create an ini file</a> for each of the species in 
+<kbd>public-plugins/mirror/conf/ini-files/&lt;Genus_species&gt;.ini</kbd>.  If you put your changes 
+into the public-plugins/mirror directory, they will not be overridden when you next do a cvs update.</p>
 
 <p>You might also want to change $SiteDefs::ENSEMBL_PERL_SPECIES - this is a special alias for URLs of the form
 http://my.ensembl.site/perl/contigview, for purely historical reasons. It will probably be used in the future
@@ -194,7 +218,10 @@ $SiteDefs::ENSEMBL_USER.$SiteDefs::ENSEMBL_GROUP</li>
 the contents of $ENSEMBL_TMP_DIR and
 $SiteDefs::ENSEMBL_TMP_DIR_IMG.</li>
 </ul>
-<h3 class="boxed">public-plugins/mirror/conf/ini-files/DEFAULTS.ini and public-plugins/mirror/conf/ini-files/[Species_name].ini</h3>
+
+
+
+<h3 id="species_ini">public-plugins/mirror/conf/ini-files/DEFAULTS.ini <br />and public-plugins/mirror/conf/ini-files/[Species_name].ini</h3>
 <p>
 Again the first thing to do is make a copy of the DEFAULTS.ini-dist file as DEFAULTS.ini,
 then you will need to go in and edit the appropriate lines of the DEFAULTS.ini.
@@ -237,7 +264,8 @@ e.g.</p>
 ENSEMBL_DAS_PROXY = http://webproxy.mycompany.com:80
 </pre>
 
-<h3 class="boxed">MULTI.ini</h3>
+<h3>public-plugins/mirror/conf/ini-files/MULTI.ini</h3>
+
 <p>Configure the [general] section for connection to the MySQL server, as for the species-specific ini files.
 In the [databases] section, change the values of ENSEMBL_COMPARA and the various _MART entries
 to match the name of the ensembl_compara and ensembl_mart databases that you created.</p>
