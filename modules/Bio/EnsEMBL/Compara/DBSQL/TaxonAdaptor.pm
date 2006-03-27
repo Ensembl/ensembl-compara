@@ -28,14 +28,13 @@ package Bio::EnsEMBL::Compara::DBSQL::TaxonAdaptor;
 use vars qw(@ISA);
 use strict;
 
-#use Bio::Species;
 use Bio::EnsEMBL::Compara::Taxon;
 use Bio::EnsEMBL::DBSQL::BaseAdaptor;
 use Bio::EnsEMBL::Utils::Exception;
 
 @ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor);
 
-=head2 fetch_by_dbID
+=head2 fetch_by_dbID [deprecated]
 
  Title   : fetch_by_dbID
  Usage   : $taxonadaptor->fetch_by_dbID($id);
@@ -50,32 +49,13 @@ use Bio::EnsEMBL::Utils::Exception;
 sub fetch_by_dbID {
   my ($self,$taxon_id) = @_;
 
-  $self->throw("Should give a defined taxon_id as argument\n") unless (defined $taxon_id);
+  deprecate("calling Bio::EnsEMBL::Compara::NCBITaxonAdaptor::fetch_node_by_taxon_id method instead.");
 
-  my $q = "SELECT taxon_id,genus,species,sub_species,common_name,classification
-           FROM taxon
-           WHERE taxon_id= ?";
-
-  my $sth = $self->prepare($q);
-  $sth->execute($taxon_id);
-  
-  if (defined (my $rowhash = $sth->fetchrow_hashref)) {
-    my $taxon = new Bio::EnsEMBL::Compara::Taxon;
-    
-    $taxon->ncbi_taxid($taxon_id); #for bioperl-1-0-0 on
-    $taxon->sub_species($rowhash->{sub_species});
-    my @classification = split /\s+/,$rowhash->{classification};
-    $taxon->classification(@classification);
-    $taxon->common_name($rowhash->{common_name});
-    $sth->finish;
-    return $taxon;
-  }
-  $sth->finish;
-
-  return undef;
+  my $ncbi_ta = $self->db->get_NCBITaxonAdaptor;
+  return $ncbi_ta->fetch_node_by_taxon_id($taxon_id);
 }
 
-=head2 fetch_by_taxon_id
+=head2 fetch_by_taxon_id [deprecated]
 
  Title   : fetch_by_taxon_id
  Usage   : $taxonadaptor->fetch_by_taxon_id($id);
@@ -90,84 +70,60 @@ sub fetch_by_dbID {
 sub fetch_by_taxon_id {
   my ($self,$taxon_id) = @_;
 
-  $self->throw("Should give a defined taxon_id as argument\n") unless (defined $taxon_id);
+  deprecate("calling Bio::EnsEMBL::Compara::NCBITaxonAdaptor::fetch_node_by_taxon_id method instead.");
 
-  return $self->fetch_by_dbID($taxon_id);
+  my $ncbi_ta = $self->db->get_NCBITaxonAdaptor;
+  return $ncbi_ta->fetch_node_by_taxon_id($taxon_id);
 }
 
-=head2 fetch_by_Family_Member_source
+=head2 fetch_by_Family_Member_source [deprecated]
+
  Title   : fetch_by_Family_Member_source
  Args[0] : Bio::EnsEMBL::Compara::Family object
- Args[1] : string (member's source name)
+ Args[1] : string (member\'s source name)
  Usage   : @taxonArray = @$taxonAdaptor->fetch_by_Family_Member_source($family, 'ENSEMBLGENE');
  Function: fetches all the taxon in a family of specified member source
  Returns : reference to array of Bio::EnsEMBL::Compara::Taxon objects
+
 =cut
 
 sub fetch_by_Family_Member_source {
   my ($self, $family, $source_name) = @_;
- 
-  my $sql = "SELECT distinct(t.taxon_id)
-             FROM family_member fm,member m,taxon t
-             WHERE fm.family_id= ? AND
-                   m.source_name= ? AND
-                   fm.member_id=m.member_id AND
-                   m.taxon_id=t.taxon_id";
 
-  my $sth = $self->prepare($sql);
-  $sth->execute($family->dbID, $source_name);
-
-  my @taxa;
-
-  while (my $rowhash = $sth->fetchrow_hashref) {
-    my $taxon_id = $rowhash->{taxon_id};
-    my $taxon = $self->fetch_by_dbID($taxon_id);
-    push @taxa, $taxon;
-  }
-  $sth->finish;
-
-  return \@taxa;
+  deprecate("calling Bio::EnsEMBL::Compara::Family::get_all_taxa_by_member_source_name method instead.");
+  return $family->get_all_taxa_by_member_source_name($source_name);
 }
 
 
-=head2 store
+=head2 store [deprecated]
+
  Title   : store
  Usage   : $memberadaptor->store($member)
- Function: Stores a taxon object only if it doesn't exists in the database
+ Function: Stores a taxon object only if it does not exists in the database
  Example : $memberadaptor->store($member)
  Returns : $member->dbID
  Args    : An Bio::EnsEMBL::Compara::Taxon object
+
 =cut
 
 sub store {
   my ($self,$taxon) = @_;
 
-  $taxon->isa('Bio::EnsEMBL::Compara::Taxon') ||
-    $self->throw("You have to store a Bio::EnsEMBL::Compara::Taxon object, not a $taxon");
-
-  my $taxon_id = $taxon->ncbi_taxid;
-  if (!defined($self->{"_stored_taxon_$taxon_id"})) {
-    my $q = "INSERT ignore INTO taxon (taxon_id,genus,species,sub_species,common_name,classification) 
-            VALUES (?,?,?,?,?,?)";
-    my $sth = $self->prepare($q);
-    $sth->execute($taxon_id,$taxon->genus,$taxon->species,$taxon->sub_species,
-        $taxon->common_name,join " ",$taxon->classification);
-    $sth->finish;
-    $self->{"_stored_taxon_$taxon_id"} = 1;
-  }
-
-  $taxon->adaptor($self);
-
-  return $taxon->dbID;
+  deprecate("Bio::EnsEMBL::Compara::NCBITaxonAdaptor is now the new adaptor.
+It does not have store method subroutine. The taxonomy data is imported from NCBI Taxonomy database.
+Please read ensembl-compara/scripts/taxonomy/README-taxonomy for more information.");
+  return undef;
 }
 
-=head2 store_if_needed
+=head2 store_if_needed [deprecated]
+
  Title   : store_if_needed_if_needed
  Usage   : $memberadaptor->store($taxon)
- Function: Stores a taxon object only if it doesn't exists in the database 
+ Function: Stores a taxon object only if it does not exists in the database 
  Example : $memberadaptor->store($member)
  Returns : $member->dbID
  Args    : An Bio::EnsEMBL::Compara::Taxon object
+
 =cut
 
 sub store_if_needed {
