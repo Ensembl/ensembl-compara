@@ -23,9 +23,9 @@ use utils::Tool;
 
 #$| = 1;
 
-my @formats ;
+my @user_formats ;
 my $MAX_SIZE = 1000000;
-my $GENE_MAX = 3000000;
+my $GENE_MAX = 3000000; # if gene > $GENE_MAX, skips gene and prints warning
 #my $GENE_MAX = 1500000;
 my @species;
 my $logfile;
@@ -37,7 +37,7 @@ my $readme_only;
 my ($help, $info, $email);
 
 &GetOptions( 'maxsize:s' => \$MAX_SIZE,
-             'format:s'	 => \@formats,
+             'format:s'	 => \@user_formats,
              'species:s' => \@species,
              'logfile:s' => \$logfile,
 	     'email:s'   => \$email,
@@ -59,9 +59,8 @@ if (@species) {
 else {
   @species = @{ utils::Tool::all_species() };
 }
-
 my $time1 = time;
-@formats = qw(embl genbank) if (!$formats[0]);
+@user_formats = qw(embl genbank) if (!$user_formats[0]);
 $dumpdir ||= "/mysql/dumps/FTP";
 $VERBOSITY ||= 2;
 require SiteDefs;
@@ -80,77 +79,48 @@ unless ($no_log) {
 my $SPECIES_DEFS = EnsEMBL::Web::SpeciesDefs->new();
 my $dbconnection = EnsEMBL::Web::DBSQL::DBConnection->new(undef, $SPECIES_DEFS);
 
-my $sitedefs_release =  $SiteDefs::ENSEMBL_VERSION;
 foreach my $spp (@species){
+  $ENV{'ENSEMBL_SPECIES'} = $spp;
+  my ($spp_dumpdirectory, $formats) = setup_directories($SPECIES_DEFS, $spp, \@user_formats);
+  my $format_count = scalar @$formats;
+
   my $batch = 0;
-  my $chunk = $spp eq 'Mus_musculus' ? 100 : 1000;
   my $count = 0;
+  my $chunk = $spp eq "Mus_musculus" ? 100 : 1000;
   my @too_long;
-  my @tmp =();
 
-  my @spp_dumpdirectory;  
-  my $sp_release = $SPECIES_DEFS->get_config($spp,"SPECIES_RELEASE_VERSION");
-  $sp_release =~ s/\.//g;
-  my $format_count=0;
-  my @tmp=();
-  foreach my $format (@formats){
-    my $spp_dir = join "_", (lc ($spp), $sitedefs_release, $sp_release);
-    my $spp_dumpdir = "$dumpdir/$spp_dir/data/flatfiles/$format";
-
-    unless (-d "$spp_dumpdir"){
-      system("mkdir -p $spp_dumpdir") ==0 or die "Can't create dir $!";
-    }
-    warning(1, "species = $spp $format");
-    my $text = readme($format, $spp);
-    open(README, '>'."$spp_dumpdir/README") 
-      or die "Couldn't open file $spp_dumpdir/README: $!\n";
-    print README $text;
-    close README;
-    info (1,"Made dump directory: $spp_dumpdir");
-    next if $readme_only;
-     unless (lc($format) eq "embl" || lc($format) eq "genbank"){
-      die "[*DIE] unrecognized dump format - use embl or genbank\n";
-    }
-    push @tmp, $format;
-    push @spp_dumpdirectory, $spp_dumpdir;
-    $format_count++;
-  }
-  @formats = ();
-  push @formats, @tmp;
-    
-  my $databases = $dbconnection->get_databases_species($spp, "core");
-  my $db =  $databases->{'core'} ||
-    die( "Could not retrieve core database for $spp" ); 
-
-  my $slice_adaptor = $db->get_SliceAdaptor();
-  $slice_adaptor->cache_toplevel_seq_mappings();
-   
   # loop through every non-redundant region in the DB
   my $inc_dupes  = 1; # include duplicate regions like PARs?
   my $inc_nonref = 1; # include non-reference regions like haplotypes?
-  
+
+  # Get slices --------------------------------------------------
+  my $databases = $dbconnection->get_databases_species($spp, "core");
+  my $db =  $databases->{'core'} ||
+    die( "Could not retrieve core database for $spp" );
+  my $slice_adaptor = $db->get_SliceAdaptor();
+  $slice_adaptor->cache_toplevel_seq_mappings();
   my $slices = $slice_adaptor->fetch_all('toplevel', undef,
-					 $inc_dupes, $inc_nonref);
+                                         $inc_dupes, $inc_nonref);
   foreach my $slice (@$slices) {
     # generate list of 'unbreakable' blocks around genes
     my ($exclude_blocks, $big_blocks, $too_long)= generate_blocklist($slice, $spp);
-    
+
     # split up slices into reasonable chunks, and avoid breaking genes
     my $chunked_slices = chunk_seq_region( $slice, $exclude_blocks );
-    
+
     # dump flatfiles for the chunks
     foreach my $chunked_slice (@$chunked_slices) {
       my $seq = $chunked_slice->seq();
-      for (my $i=0;$i < $format_count; $i++){
-	dump_format($chunked_slice, $formats[$i], $spp_dumpdirectory[$i], $seq);
+      for (my $i=0;$i < scalar @$formats; $i++){
+        dump_format($chunked_slice, $formats->[$i], $spp_dumpdirectory->[$i], $seq);
       }
       $count++;
       if($count >= $chunk){
-	for (my $i=0;$i < $format_count; $i++){
-	  ftp_bundle($formats[$i], $spp_dumpdirectory[$i], $VERBOSITY, $batch, $chunk, $spp) unless $nobundle;
-	}
-	$batch++;
-	$count = 0;
+        for (my $i=0;$i < $format_count; $i++){
+          ftp_bundle($formats->[$i], $spp_dumpdirectory->[$i], $VERBOSITY, $batch, $chunk, $spp) unless $nobundle;
+        }
+        $batch++;
+        $count = 0;
       }
     }
     # Were there big blocks or genes that were skipped cos too long?
@@ -160,9 +130,10 @@ foreach my $spp (@species){
 
   if($count > 0){
     for (my $i=0;$i < $format_count; $i++){
-      ftp_bundle($formats[$i], $spp_dumpdirectory[$i], $VERBOSITY, $batch, $chunk) unless $nobundle;
+      ftp_bundle($formats->[$i], $spp_dumpdirectory->[$i], $VERBOSITY, $batch, $chunk) unless $nobundle;
     }
   }
+
   foreach (@too_long){
     warning (1, "Gene skipped cos greater than $GENE_MAX: $_");
   }
@@ -179,6 +150,46 @@ $email ||= 'ensembl-webteam@sanger.ac.uk';
 utils::Tool::mail_log( $logfile, $email ) if $logfile;
 
 exit;
+
+
+#-----------------------------------------------------------------------------
+sub setup_directories {
+  my ($SPECIES_DEFS, $spp, $user_formats) = @_;
+  my $sp_release = $SPECIES_DEFS->get_config($spp,"SPECIES_RELEASE_VERSION");
+  $sp_release =~ s/\.//g;
+
+  my @formats = ();
+  my @spp_dumpdirectory;
+  my $sitedefs_release =  $SiteDefs::ENSEMBL_VERSION;
+
+  foreach my $format (@$user_formats){
+    unless (lc($format) eq "embl" || lc($format) eq "genbank"){
+      die "[*DIE] unrecognized dump format - use embl or genbank\n";
+    }
+    warning(1, "species = $spp $format");
+
+    # Make dumpdir
+    my $spp_dir = join "_", (lc ($spp), $sitedefs_release, $sp_release);
+    my $spp_dumpdir = "$dumpdir/$spp_dir/data/flatfiles/$format";
+    unless (-d "$spp_dumpdir"){
+      system("mkdir -p $spp_dumpdir") ==0 or die "Can't create dir $!";
+    }
+    info (1,"Made dump directory: $spp_dumpdir");
+
+    # Do README file
+    my $text = readme($format, $spp);
+    open(README, '>'."$spp_dumpdir/README")
+      or die "Couldn't open file $spp_dumpdir/README: $!\n";
+    print README $text;
+    close README;
+
+
+    next if $readme_only;
+    push @formats, $format;
+    push @spp_dumpdirectory, $spp_dumpdir;
+  }
+    return (\@spp_dumpdirectory, \@formats);
+  }
 
 
 
@@ -217,8 +228,8 @@ sub generate_blocklist {
     $gen_end   = $gene->end()   + 1000;
 
     if( $gen_end - $gen_start > $GENE_MAX ) {
-      print STDERR "Gene too long ", $slice->seq_region_name(),":",
-        $gene->start(), "-", $gene->end(), "\n";
+      warning (1, "Gene too long -skipped ". $slice->seq_region_name().":".
+         $gene->start(). "-". $gene->end());
       push (@too_long, "Species: $species, Slice: ".
 	    $slice->seq_region_name." coords:".
 	    $gene->start()."-".$gene->end());
@@ -363,8 +374,6 @@ sub dump_format {
     $seq_dumper->disable_feature_type('repeat');
 
     my $outfile;
-
-#    info (1, "..$format..");
     my $filename =  "$spp_dumpdir/$name.$format";
     $seq_dumper->dump($slice, $format, $filename, $seq);
   };
@@ -377,7 +386,7 @@ sub dump_format {
 sub ftp_bundle{
   my ($format, $spp_dumpdir, $VERBOSITY, $batch, $chunk_size, $spp) = @_;
   my $count = 0;
-  #my $spp = $ENV{'ENSEMBL_SPECIES'};
+  my $spp = $ENV{'ENSEMBL_SPECIES'};
   my $gz;
 
   info(1, "Generating compressed data archives for FTP site (chunk=$chunk_size)..");
