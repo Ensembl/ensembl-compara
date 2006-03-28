@@ -66,11 +66,18 @@ sub fetch_news_items {
   my $where_str;
   if ($where) {
     foreach my $param (keys %$where) {
-      $where_str .= ' AND '.$where_def{$param}.' ';
+      unless ($generic && $param eq 'species') {
+        $where_str .= ' AND '.$where_def{$param}.' ';
+      }
     }
   }
 
   my $limit_str = " LIMIT $limit " if $limit;
+
+  my $species = 0;
+  if  ($$where{'species'} && ref($$where{'species'}) ne 'ARRAY') {
+    $species = $$where{'species'};
+  }
 
   ## build SQL
   my $sql = qq(
@@ -88,6 +95,7 @@ sub fetch_news_items {
             news_cat c
   );
   if ($generic) {
+    $sql .= ', release_species r' if $species;
     $sql .= qq(
         LEFT JOIN
             item_species i
@@ -98,9 +106,14 @@ sub fetch_news_items {
         AND 
             n.news_cat_id = c.news_cat_id 
     );
+    $sql .= "AND r.release_id = n.release_id
+             AND r.species_id = $species" if $species;
   }
   elsif ($$where{'species'} > 0) {
-    $sql .= ', item_species i  WHERE n.news_cat_id = c.news_cat_id';
+    $sql .= ", item_species i, release_species r  
+            WHERE n.news_cat_id = c.news_cat_id 
+            AND r.release_id = n.release_id
+            AND r.species_id = $species";
   }
   else {
     $sql .= ' WHERE n.news_cat_id = c.news_cat_id';

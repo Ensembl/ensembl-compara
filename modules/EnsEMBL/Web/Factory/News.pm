@@ -50,10 +50,6 @@ sub createObjects {
     $where{'release'} = $release_id;    
   }
 
-## create generic news item objects from the database
-  warn "Fetching generic news";  
-  my $generic_items = $self->news_adaptor->fetch_news_items(\%where, 1);
-
 ## sort out array of chosen species
   my @sp_array = ();
   if ($self->param('species')) {
@@ -83,6 +79,10 @@ sub createObjects {
         
 ## get valid species for the chosen release
   my $valid_spp = $self->news_adaptor->fetch_species($release_id);
+
+## create generic news item objects from the database
+  warn "Fetching generic news";  
+  my $generic_items = $self->news_adaptor->fetch_news_items(\%where, 1);
 
 ## get species-specific news
   warn "Fetching species news";  
