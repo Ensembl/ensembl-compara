@@ -56,6 +56,123 @@ DROP TABLE tmp_species_set;
 DROP TABLE rm_species_set;
 
 
+## Populate name column for the new table
+
+CREATE TABLE new_name SELECT
+  method_link_species_set_id,
+  concat(group_concat(
+    concat(
+      substr(genome_db.name, 1, 1),
+      ".",
+      substr(substring_index(genome_db.name, " ", -1),1,3))
+      SEPARATOR "-"
+    ), " translated-blat") AS new_name
+  FROM method_link_species_set LEFT JOIN species_set using (species_set_id) LEFT JOIN genome_db using (genome_db_id), method_link
+  WHERE method_link_species_set.method_link_id = method_link.method_link_id AND method_link.type = "TRANSLATED_BLAT"
+  GROUP BY method_link_species_set_id;
+
+UPDATE method_link_species_set, new_name SET method_link_species_set.name = new_name WHERE method_link_species_set.method_link_species_set_id = new_name.method_link_species_set_id;
+
+DROP TABLE new_name;
+
+CREATE TABLE new_name SELECT
+  method_link_species_set_id,
+  concat(group_concat(
+    concat(
+      substr(genome_db.name, 1, 1),
+      ".",
+      substr(substring_index(genome_db.name, " ", -1),1,3))
+      SEPARATOR "-"
+    ), " blastz-net (on M.mus)") AS new_name
+  FROM method_link_species_set LEFT JOIN species_set using (species_set_id) LEFT JOIN genome_db using (genome_db_id), method_link
+  WHERE method_link_species_set.method_link_id = method_link.method_link_id AND method_link.type = "BLASTZ_NET"
+  GROUP BY method_link_species_set_id HAVING group_concat(genome_db.name) LIKE "%Mus musculus%";
+
+UPDATE method_link_species_set, new_name SET method_link_species_set.name = new_name WHERE method_link_species_set.method_link_species_set_id = new_name.method_link_species_set_id;
+
+DROP TABLE new_name;
+
+CREATE TABLE new_name SELECT
+  method_link_species_set_id,
+  concat(group_concat(
+    concat(
+      substr(genome_db.name, 1, 1),
+      ".",
+      substr(substring_index(genome_db.name, " ", -1),1,3))
+      SEPARATOR "-"
+    ), " blastz-net (on H.sap)") AS new_name
+  FROM method_link_species_set LEFT JOIN species_set using (species_set_id) LEFT JOIN genome_db using (genome_db_id), method_link
+  WHERE method_link_species_set.method_link_id = method_link.method_link_id AND method_link.type = "BLASTZ_NET"
+  GROUP BY method_link_species_set_id HAVING group_concat(genome_db.name) LIKE "%Homo sapiens%";
+
+UPDATE method_link_species_set, new_name SET method_link_species_set.name = new_name WHERE method_link_species_set.method_link_species_set_id = new_name.method_link_species_set_id;
+
+DROP TABLE new_name;
+
+CREATE TABLE new_name SELECT
+  method_link_species_set_id,
+  concat(count(*), " species MLAGAN") AS new_name
+  FROM method_link_species_set LEFT JOIN species_set using (species_set_id) LEFT JOIN genome_db using (genome_db_id), method_link
+  WHERE method_link_species_set.method_link_id = method_link.method_link_id AND method_link.type = "MLAGAN"
+  GROUP BY method_link_species_set_id;
+
+UPDATE method_link_species_set, new_name SET method_link_species_set.name = new_name WHERE method_link_species_set.method_link_species_set_id = new_name.method_link_species_set_id;
+
+DROP TABLE new_name;
+
+CREATE TABLE new_name SELECT
+  method_link_species_set_id,
+  concat(group_concat(
+    concat(
+      substr(genome_db.name, 1, 1),
+      ".",
+      substr(substring_index(genome_db.name, " ", -1),1,3))
+      SEPARATOR "-"
+    ), " synteny") AS new_name
+  FROM method_link_species_set LEFT JOIN species_set using (species_set_id) LEFT JOIN genome_db using (genome_db_id), method_link
+  WHERE method_link_species_set.method_link_id = method_link.method_link_id AND method_link.type = "SYNTENY"
+  GROUP BY method_link_species_set_id;
+
+UPDATE method_link_species_set, new_name SET method_link_species_set.name = new_name WHERE method_link_species_set.method_link_species_set_id = new_name.method_link_species_set_id;
+
+DROP TABLE new_name;
+
+CREATE TABLE new_name SELECT
+  method_link_species_set_id,
+  concat(group_concat(
+    concat(
+      substr(genome_db.name, 1, 1),
+      ".",
+      substr(substring_index(genome_db.name, " ", -1),1,3))
+      SEPARATOR "-"
+    ), " orthologues") AS new_name
+  FROM method_link_species_set LEFT JOIN species_set using (species_set_id) LEFT JOIN genome_db using (genome_db_id), method_link
+  WHERE method_link_species_set.method_link_id = method_link.method_link_id AND method_link.type = "ENSEMBL_ORTHOLOGUES"
+  GROUP BY method_link_species_set_id;
+
+UPDATE method_link_species_set, new_name SET method_link_species_set.name = new_name WHERE method_link_species_set.method_link_species_set_id = new_name.method_link_species_set_id;
+
+DROP TABLE new_name;
+
+CREATE TABLE new_name SELECT
+  method_link_species_set_id,
+  concat(group_concat(
+    concat(
+      substr(genome_db.name, 1, 1),
+      ".",
+      substr(substring_index(genome_db.name, " ", -1),1,3))
+      SEPARATOR "-"
+    ), " paralogues") AS new_name
+  FROM method_link_species_set LEFT JOIN species_set using (species_set_id) LEFT JOIN genome_db using (genome_db_id), method_link
+  WHERE method_link_species_set.method_link_id = method_link.method_link_id AND method_link.type = "ENSEMBL_PARALOGUES"
+  GROUP BY method_link_species_set_id;
+
+UPDATE method_link_species_set, new_name SET method_link_species_set.name = new_name WHERE method_link_species_set.method_link_species_set_id = new_name.method_link_species_set_id;
+
+DROP TABLE new_name;
+
+UPDATE method_link_species_set, method_link SET method_link_species_set.name = "families" WHERE method_link_species_set.method_link_id = method_link.method_link_id and method_link.type = "FAMILY";
+
 ## Deleting old method_link_species_set table
 
 DROP TABLE old_method_link_species_set;
