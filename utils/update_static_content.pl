@@ -347,7 +347,7 @@ sub SSIabout {
 
 <h4>Assembly</h4>
 
-<p><img src="/img/species/pic_$species.png" height="100" width="100" class="float-left" alt="$common_name" title="">
+<p><img src="/img/species/pic_$species.png" height="100" width="100" class="float-left" alt="$common_name" title="" />
 
 </p>
 
