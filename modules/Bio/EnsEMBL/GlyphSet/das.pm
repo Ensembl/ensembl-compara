@@ -209,10 +209,9 @@ sub RENDER_grouped {
 
   ## Loop over features and hash into groups
   foreach my $f (@{$configuration->{'features'}}){
-    
     # Handle DAS errors first
     if($f->das_type_id() eq '__ERROR__') {
-      $self->errorTrack( 'Error retrieving '.$self->{'extras'}->{'caption'}.' features ('.$f->id.')' );
+      $self->errorTrack( 'Error retrieving '.$self->{'extras'}->{'caption'}.' features ('.$f->das_id.')' );
       return -1; # indicates no features drawn because of DAS error
     }
 
@@ -821,6 +820,8 @@ sub _init {
       }
   } else {
       my( $features, $das_styles ) = @{$self->{'container'}->get_all_DASFeatures($dastype)->{$dsn}||[]};
+
+
       $styles = $das_styles;
       @das_features = grep {
 	  $_->das_type_id() !~ /^(contig|component|karyotype)$/i && 
@@ -829,7 +830,6 @@ sub _init {
 	      $_->das_end > 0
 	  } @{ $features || [] };
   }
-
   
   $configuration->{'features'} = \@das_features;
 
@@ -867,8 +867,14 @@ sub _init {
 
   my $score = uc($Config->get($das_config_key, 'score') || $Extra->{'score'} || 'N');
 
-  if ($score ne 'N') {
+  if ($score eq 'H') {
       $renderer = "RENDER_histogram_simple";
+      $configuration->{use_score} = $score;
+      my $fg_merge = uc($Config->get($das_config_key, 'fg_merge') || $Extra->{'fg_merge'} || 'A');
+      $configuration->{'fg_merge'} = $fg_merge;
+
+  } elsif ($score eq 'S') {
+      $renderer = "RENDER_signalmap";
       $configuration->{use_score} = $score;
       my $fg_merge = uc($Config->get($das_config_key, 'fg_merge') || $Extra->{'fg_merge'} || 'A');
       $configuration->{'fg_merge'} = $fg_merge;
@@ -876,7 +882,6 @@ sub _init {
       $renderer = $renderer ? "RENDER_$renderer" : ($group eq 'N' ? 'RENDER_simple' : 'RENDER_grouped');  
   }
   $renderer =~ s/RENDER_RENDER/RENDER/;
-
   return $self->$renderer( $configuration );
 }
 
@@ -1080,8 +1085,6 @@ sub RENDER_histogram_simple {
     # flag to indicate if not all features have been displayed 
     my $more_features = 0;
     my ($gScore, $gWidth, $fCount, $gStart, $mScore) = (0, 0, 0, 0, $min_score);
-#    warn("SCORES: $min_score * $max_score * $pix_per_score");
-
     for (my $i = 0; $i< @features; $i++) { 
 	my $f = $features[$i];
 
@@ -1187,7 +1190,7 @@ sub RENDER_histogram_simple {
 
 	my $style = $self->get_featurestyle($f, $configuration);
 	my $fdata = $self->get_featuredata($f, $configuration, $y_offset);
-#	warn(sprintf ("H : $score * %.2f * %d * %d * %d * %d \n", $height, $mScore, $width, $y_offset, $START, $END));
+
 	my $sm = new Sanger::Graphics::Glyph::Rect({
 	    'x'          => $gStart - 1,
 	    'y'          => $row_height - $height, 
@@ -1198,8 +1201,6 @@ sub RENDER_histogram_simple {
 	});
 
     # Draw feature symbol
-#    my $symbol = $self->get_symbol ($style, $fdata, $y_offset);
-#    $self->push($symbol->draw);
 
 	$self->push($sm);
 	# Offset label coords by which row we're on
@@ -1215,6 +1216,162 @@ sub RENDER_histogram_simple {
     return $empty_flag ? 0 : 1 ;
 
 }   # END RENDER_simple
+
+
+sub RENDER_signalmap {
+    my( $self, $configuration ) = @_;
+
+# Display histogram only on a reverse strand
+    return if ($configuration->{'STRAND'} == 1);
+
+    my @features = sort { $a->das_score <=> $b->das_score  } @{$configuration->{'features'}};
+
+    
+    if (@features) {
+	my $f = $features[0];
+	if($f->das_type_id() eq '__ERROR__') {
+	    $self->errorTrack(
+			      'Error retrieving '.$self->{'extras'}->{'caption'}.' features ('.$f->das_id.')'
+			      );
+	    return -1 ;   # indicates no features drawn because of DAS error
+	}
+    } else {
+	$self->errorTrack( 'No '.$self->{'extras'}->{'caption'}.' features in this region' );
+	return 0;
+    }
+	
+    my ($min_score, $max_score) = ($features[0]->das_score, $features[-1]->das_score);
+
+    my @positive_features = grep { $_->das_score >= 0 } @features;
+    my @negative_features = grep { $_->das_score < 0 } reverse @features;
+
+    my $row_height = 30;
+    my $pix_per_score = (abs($max_score) >  abs($min_score) ? abs($max_score) : abs($min_score)) / $row_height;
+    my $bp_per_pix = 1 / $self->{pix_per_bp};
+
+    $configuration->{h} = $row_height;
+
+    # flag to indicate if not all features have been displayed 
+    my $more_features = 0;
+    my ($gScore, $gWidth, $fCount, $gStart, $mScore) = (0, 0, 0, 0, $min_score);
+#    warn("SCORES: $min_score * $max_score * $pix_per_score");
+
+    my $row = 0; # bumping row
+
+# Draw the axis
+    $self->push( new Sanger::Graphics::Glyph::Line({
+	'x'         => 0,
+        'y'         => $row_height,
+	'width'     => $configuration->{'length'},
+	'height'    => 0,
+	'absolutey' => 1,
+	'colour'    => 'red',
+	'dotted'    => 1,
+    }));
+
+    $self->push( new Sanger::Graphics::Glyph::Line({
+	'x'         => 0,
+        'y'         => 0,
+	'width'     => 0,
+	'height'    => $row_height * 2 + 1,
+	'absolutey' => 1,
+	'absolutex' => 1,
+	'colour'    => 'red',
+	'dotted'    => 1,
+    }));
+
+
+    foreach my $f (@negative_features, @positive_features) {
+
+	next if (! $f->das_score);
+
+	my $START = $f->das_start() < 1 ? 1 : $f->das_start();
+	my $END   = $f->das_end()   > $configuration->{'length'}  ? $configuration->{'length'} : $f->das_end();
+
+
+	my $Composite = new Sanger::Graphics::Glyph::Composite({
+	    'y'         => 0,
+	    'x'         => $START-1,
+	    'absolutey' => 1,
+	});
+
+
+#	warn(join('*', 'F', $f->start, $f->end, $f->das_score));
+	my $width = ($END - $START +1);
+	my $score = $f->das_score;
+	my $height = abs($score) / $pix_per_score;
+	my $y_offset = $row_height+1;
+	if ($score > 0) {
+	    $y_offset = $row_height - $height - 1;
+	}
+
+
+	my ($href, $zmenu ) = $self->zmenu( $f );
+	$Composite->{'href'} = $href if $href;
+	$Composite->{'zmenu'} = $zmenu;
+
+
+	my $style = $self->get_featurestyle ($f, $configuration);
+
+	my $styledata = $style->{'attrs'};  # style attributes for this feature
+	my $glyph_height = $styledata->{'height'};
+	my $colour = $styledata->{'colour'};
+	my $glyph_symbol = $style->{'glyph'};
+	
+	if ($score < 0) {
+	    $colour = 'green';
+	}
+
+	# make clickable box to anchor zmenu
+	$Composite->push( new Sanger::Graphics::Glyph::Space({
+	    'x'         => $START - 1,
+	    'y'         => $score < 0 ? $row_height + 1 : 0,
+	    'width'     => $width,
+	    'height'    => $glyph_height,
+	    'absolutey' => 1
+	    }) );
+
+	my $style = $self->get_featurestyle($f, $configuration);
+	my $fdata = $self->get_featuredata($f, $configuration, $y_offset);
+#	warn(Data::Dumper::Dumper($fdata));
+
+	my $symbol = $self->get_symbol ($style, $fdata, $y_offset);
+	$symbol->{'style'}->{'height'} = $height;
+	$symbol->{'feature'}->{'orientation'} = 1;
+	$symbol->{'feature'}->{'row_height'} = $row_height * 2 + 1;
+	$Composite->push($symbol->draw);
+
+	$self->push( $Composite );
+    } # END loop over features
+
+
+
+    $self->push( new Sanger::Graphics::Glyph::Text({
+	'text'      => $max_score,
+	'font'      => 'Tiny',
+	'colour'    => 'red',
+	'y' => 1,
+	'x' => 3,
+	'absolutey' => 1,
+	'absolutex' => 1,
+    }) );
+
+
+    if ($min_score < 0) {
+	$self->push( new Sanger::Graphics::Glyph::Text({
+	    'text'      => $min_score,
+	    'font'      => 'Tiny',
+	    'colour'    => 'red',
+	    'y' => abs($min_score) / $pix_per_score + $row_height + 2,
+	    'x' => 3,
+	    'absolutey' => 1,
+	    'absolutex' => 1,
+	}) );
+    }
+
+	return 1;
+
+}   # END RENDER_signalmap
 
 
 1;
