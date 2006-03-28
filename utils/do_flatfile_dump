@@ -69,12 +69,6 @@ require EnsEMBL::Web::SpeciesDefs;
 require Bio::EnsEMBL::Utils::SeqDumper;
 require EnsEMBL::Web::DBSQL::DBConnection;
 
-my $SPECIES_DEFS = EnsEMBL::Web::SpeciesDefs->new();
-my $dbconnection = EnsEMBL::Web::DBSQL::DBConnection->new(undef, $SPECIES_DEFS);
-my $batch;
-my $chunk;
-my $count;
-my @too_long;
 unless ($no_log) {
   (my $time = gmtime(time)) =~ s/\s+/\./g;
   $logfile ||= "logs/flat"."_$time.log";
@@ -83,20 +77,16 @@ unless ($no_log) {
 }
 
 
+my $SPECIES_DEFS = EnsEMBL::Web::SpeciesDefs->new();
+my $dbconnection = EnsEMBL::Web::DBSQL::DBConnection->new(undef, $SPECIES_DEFS);
+
 my $sitedefs_release =  $SiteDefs::ENSEMBL_VERSION;
 foreach my $spp (@species){
+  my $batch = 0;
+  my $chunk = $spp eq 'Mus_musculus' ? 100 : 1000;
+  my $count = 0;
+  my @too_long;
   my @tmp =();
-  $spp = ucfirst(lc($spp));
-  $ENV{'ENSEMBL_SPECIES'} = $spp;
-
-  $batch = 0;
-  $count =0;
-  if($spp eq "Mus_musculus"){
-    $chunk = 100;
-  }
-  else{
-    $chunk = 1000;
-  }
 
   my @spp_dumpdirectory;  
   my $sp_release = $SPECIES_DEFS->get_config($spp,"SPECIES_RELEASE_VERSION");
@@ -157,8 +147,7 @@ foreach my $spp (@species){
       $count++;
       if($count >= $chunk){
 	for (my $i=0;$i < $format_count; $i++){
-	  ftp_bundle($formats[$i], $spp_dumpdirectory[$i], $VERBOSITY, $batch, $chunk) 
-	    unless $nobundle;
+	  ftp_bundle($formats[$i], $spp_dumpdirectory[$i], $VERBOSITY, $batch, $chunk, $spp) unless $nobundle;
 	}
 	$batch++;
 	$count = 0;
@@ -166,23 +155,20 @@ foreach my $spp (@species){
     }
     # Were there big blocks or genes that were skipped cos too long?
     warning (1, "$big_blocks big blocks") if $big_blocks;
-    
     push (@too_long, @$too_long);
-    
   }
+
   if($count > 0){
     for (my $i=0;$i < $format_count; $i++){
-      ftp_bundle($formats[$i], $spp_dumpdirectory[$i], $VERBOSITY, $batch, $chunk) 
-	unless $nobundle;
+      ftp_bundle($formats[$i], $spp_dumpdirectory[$i], $VERBOSITY, $batch, $chunk) unless $nobundle;
     }
-    
   }
-}
+  foreach (@too_long){
+    warning (1, "Gene skipped cos greater than $GENE_MAX: $_");
+  }
+} # end foreach spp
 
 
-foreach (@too_long){
-  warning (1, "Gene skipped cos greater than 1.5M: $_");
-}
 
 # Work out timings -----------------------------------------------
 my $time_taken = time - $time1;
@@ -389,12 +375,12 @@ sub dump_format {
 
 #------------------------------------------------------------------------------
 sub ftp_bundle{
-  my ($format, $spp_dumpdir, $VERBOSITY, $batch, $chunk_size) = @_;
+  my ($format, $spp_dumpdir, $VERBOSITY, $batch, $chunk_size, $spp) = @_;
   my $count = 0;
-  my $spp = $ENV{'ENSEMBL_SPECIES'};
+  #my $spp = $ENV{'ENSEMBL_SPECIES'};
   my $gz;
 
-  info(1, "Generating compressed data archives for FTP site (chunk=$chunk)..");
+  info(1, "Generating compressed data archives for FTP site (chunk=$chunk_size)..");
   opendir DIR, "$spp_dumpdir" or warn "$spp_dumpdir: $!\n";
   my @f = readdir DIR;
   closedir(DIR);
