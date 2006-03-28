@@ -49,6 +49,7 @@ sub format_das_panel {
 
 
 # Get the DAS configuration
+  my $das_collection     = $object->get_DASCollection;
   my @das_objs = @{$das_collection->Obj || []} ;
 
   foreach my $das ( grep {$_->adaptor->active} @das_objs ){
