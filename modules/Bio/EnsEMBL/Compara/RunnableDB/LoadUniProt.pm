@@ -294,12 +294,12 @@ sub store_bioseq
     printf("store_bioseq %s %s : %d : %s", $source, $bioseq->display_id, $species->ncbi_taxid, $species->species);
   }
    
-  my $taxon = $self->{'comparaDBA'}->get_TaxonAdaptor->fetch_by_dbID($species->ncbi_taxid);
+  my $taxon = $self->{'comparaDBA'}->get_NCBITaxonAdaptor->fetch_node_by_taxon_id($species->ncbi_taxid);
   unless($taxon) {
-    #taxon not in compara, so create and store
-    $taxon = $species;
-    bless $taxon, "Bio::EnsEMBL::Compara::Taxon";
-    $self->{'comparaDBA'}->get_TaxonAdaptor->store($taxon);
+    #taxon not in compara, do not store the member and warn
+    warning("Taxon id " . $species->ncbi_taxid . " from $source " . $bioseq->accession_number ." not in the database.
+Member not stored.");
+    return 1;
   }
 
   my $member = new Bio::EnsEMBL::Compara::Member;
