@@ -53,7 +53,7 @@ use strict;
 
 BEGIN { $| = 1;  
   use Test;
-  plan tests => 83;
+  plan tests => 59;
 }
 
 use Bio::EnsEMBL::Utils::Exception qw (warning verbose);
@@ -84,9 +84,10 @@ my $all_rows = $compara_db->dbc->db_handle->selectall_arrayref("
     SELECT mlss.method_link_species_set_id, ml.method_link_id, ml.type,
         GROUP_CONCAT(gdb.name ORDER BY gdb.name),
         GROUP_CONCAT(gdb.genome_db_id ORDER BY gdb.genome_db_id)
-    FROM method_link ml, method_link_species_set mlss, genome_db gdb
+    FROM method_link ml, method_link_species_set mlss, species_set ss, genome_db gdb
     WHERE mlss.method_link_id = ml.method_link_id
-      AND mlss.genome_db_id = gdb.genome_db_id
+      AND mlss.species_set_id = ss.species_set_id
+      AND ss.genome_db_id = gdb.genome_db_id
     GROUP BY mlss.method_link_species_set_id");
 
 foreach my $row (@$all_rows) {
@@ -147,7 +148,7 @@ debug("Test Bio::EnsEMBL::Compara::DBSQL::MethodLinkSpeciesSetAdaptor::fetch_by_
   my $this_method_link_species_set_id = [keys(%$all_mlss)]->[0];
   $method_link_species_set = $method_link_species_set_adaptor->fetch_by_dbID($this_method_link_species_set_id);
   $is_test_ok = 1;
-  $is_test_ok = 2 if (!$method_link_species_set->isa("Bio::EnsEMBL::Compara::MethodLinkSpeciesSet"));
+  $is_test_ok = 2 if (!UNIVERSAL::isa($method_link_species_set, "Bio::EnsEMBL::Compara::MethodLinkSpeciesSet"));
   $is_test_ok = 3 if ($method_link_species_set->dbID != $this_method_link_species_set_id);
   $is_test_ok = 4 if ($method_link_species_set->method_link_id !=
       $all_mlss->{$this_method_link_species_set_id}->{method_link_id});
@@ -454,7 +455,7 @@ debug( "Check Bio::EnsEMBL::Compara::MethodLinkSpeciesSet::new method [2]" );
 # 38. Check store method with a new entry
 # 
 debug( "Check Bio::EnsEMBL::Compara::DBSQL::MethodLinkSpeciesSet::store method [2]" );
-  $multi->save("compara", "method_link_species_set", "meta");
+  $multi->save("compara", "method_link_species_set", "species_set", "meta");
   $method_link_species_set_adaptor->store($method_link_species_set);
   ok(scalar(@{$method_link_species_set_adaptor->fetch_all}), values(%$all_mlss) + 1);
 
@@ -467,205 +468,6 @@ debug( "Check Bio::EnsEMBL::Compara::DBSQL::MethodLinkSpeciesSet::delete method"
   ok(scalar(@{$method_link_species_set_adaptor->fetch_all}), values(%$all_mlss));
   $method_link_species_set_adaptor->store($method_link_species_set);
   ok(scalar(@{$method_link_species_set_adaptor->fetch_all}), values(%$all_mlss) + 1);
-  $multi->restore("compara", "method_link_species_set", "meta");
+  $multi->restore("compara", "method_link_species_set", "species_set", "meta");
   ok(scalar(@{$method_link_species_set_adaptor->fetch_all}), values(%$all_mlss));
-
-  
-  
-  
-  
-  
-  
-verbose(0);
-# 
-# 19-20. Test fetch_all_by_genome_db [1]
-# 
-debug("Test Bio::EnsEMBL::Compara::DBSQL::MethodLinkSpeciesSetAdaptor::fetch_all_by_genome_db [1]");
-  $method_link_species_sets = $method_link_species_set_adaptor->fetch_all_by_genome_db(
-          $genome_db_adaptor->fetch_by_name_assembly($species_name)->dbID
-      );
-  ok(scalar(@{$method_link_species_sets}), grep {$_->{species_set} =~ /$species_name/} values(%$all_mlss));
-  @$method_link_species_sets = sort {$a->dbID <=> $b->dbID } @$method_link_species_sets;
-  $is_test_ok = 1;
-  foreach my $this_method_link_species_set (@$method_link_species_sets) {
-    $is_test_ok = 0 if (!$this_method_link_species_set->isa("Bio::EnsEMBL::Compara::MethodLinkSpeciesSet"));
-    $species = join(",", sort map {$_->name} @{$this_method_link_species_set->species_set});
-    if (defined($all_mlss->{$this_method_link_species_set->dbID})) {
-      $is_test_ok = 2 if ($this_method_link_species_set->method_link_id !=
-          $all_mlss->{$this_method_link_species_set->dbID}->{method_link_id});
-      $is_test_ok = 3 if ($this_method_link_species_set->method_link_type ne 
-          $all_mlss->{$this_method_link_species_set->dbID}->{type});
-      $is_test_ok = 4 if ($species ne 
-          $all_mlss->{$this_method_link_species_set->dbID}->{species_set});
-    } else {
-      $is_test_ok = 0;
-      print STDERR "\n\n ", $this_method_link_species_set->dbID, ". $species\n";
-    }
-  }
-  ok($is_test_ok, 1);
-
-
-# 
-# 21-22. Test fetch_all_by_genome_db [2]
-# 
-debug("Test Bio::EnsEMBL::Compara::DBSQL::MethodLinkSpeciesSetAdaptor::fetch_all_by_genome_db [2]");
-  $method_link_species_sets = $method_link_species_set_adaptor->fetch_all_by_genome_db(
-          $genome_db_adaptor->fetch_by_name_assembly($species_name)
-      );
-  ok(scalar(@{$method_link_species_sets}), grep {$_->{species_set} =~ /$species_name/} values(%$all_mlss));
-  @$method_link_species_sets = sort {$a->dbID <=> $b->dbID } @$method_link_species_sets;
-  $is_test_ok = 1;
-  foreach my $this_method_link_species_set (@$method_link_species_sets) {
-    $is_test_ok = 0 if (!$this_method_link_species_set->isa("Bio::EnsEMBL::Compara::MethodLinkSpeciesSet"));
-    $species = join(",", sort map {$_->name} @{$this_method_link_species_set->species_set});
-    if (defined($all_mlss->{$this_method_link_species_set->dbID})) {
-      $is_test_ok = 2 if ($this_method_link_species_set->method_link_id !=
-          $all_mlss->{$this_method_link_species_set->dbID}->{method_link_id});
-      $is_test_ok = 3 if ($this_method_link_species_set->method_link_type ne 
-          $all_mlss->{$this_method_link_species_set->dbID}->{type});
-      $is_test_ok = 4 if ($species ne 
-          $all_mlss->{$this_method_link_species_set->dbID}->{species_set});
-    } else {
-      $is_test_ok = 0;
-      print STDERR "\n\n ", $this_method_link_species_set->dbID, ". $species\n";
-    }
-  }
-  ok($is_test_ok, 1);
-
-
-# 
-# 23. Test fetch_all_by_genome_db [3]
-# 
-debug("Test Bio::EnsEMBL::Compara::DBSQL::MethodLinkSpeciesSetAdaptor::fetch_all_by_genome_db [3]");
-  $method_link_species_sets = eval {
-          $method_link_species_set_adaptor->fetch_all_by_genome_db("THIS IS A WRONG ARGUMENT");
-      };
-  ok($method_link_species_sets, undef, "Testing failure");
-
-
-# 
-# 24. Test fetch_all_by_genome_db [4]
-# 
-debug("Test Bio::EnsEMBL::Compara::DBSQL::MethodLinkSpeciesSetAdaptor::fetch_all_by_genome_db [4]");
-  $method_link_species_sets = $method_link_species_set_adaptor->fetch_all_by_genome_db(0);
-  ok(scalar(@{$method_link_species_sets}), 0);
-  @$method_link_species_sets = sort {$a->dbID <=> $b->dbID } @$method_link_species_sets;
-  $is_test_ok = 1;
-  foreach my $this_method_link_species_set (@$method_link_species_sets) {
-    $is_test_ok = 0 if (!$this_method_link_species_set->isa("Bio::EnsEMBL::Compara::MethodLinkSpeciesSet"));
-    $species = join(" - ", map {$_->name} @{$this_method_link_species_set->species_set});
-    if ($this_method_link_species_set->dbID == 72) {
-      $is_test_ok = 0 if ($this_method_link_species_set->method_link_id != 1);
-      $is_test_ok = 0 if ($this_method_link_species_set->method_link_type ne "BLASTZ_NET");
-      $is_test_ok = 0 if ($species ne "Homo sapiens - Rattus norvegicus");
-    } elsif ($this_method_link_species_set->dbID == 28) {
-      $is_test_ok = 0 if ($this_method_link_species_set->method_link_id != 201);
-      $is_test_ok = 0 if ($this_method_link_species_set->method_link_type ne "ENSEMBL_ORTHOLOGUES");
-      $is_test_ok = 0 if ($species ne "Homo sapiens - Rattus norvegicus");
-    } elsif ($this_method_link_species_set->dbID == 68) {
-      $is_test_ok = 0 if ($this_method_link_species_set->method_link_id != 301);
-      $is_test_ok = 0 if ($this_method_link_species_set->method_link_type ne "FAMILY");
-      $is_test_ok = 0 if ($species !~ /^Homo sapiens - Mus musculus - Rattus norvegicus - Fugu rubripes/);
-    } else {
-      $is_test_ok = 0;
-    }
-  }
-  ok($is_test_ok);
-
-# 
-# 7-8. Test fetch_all_by_method_link [1]
-# 
-debug("Test Bio::EnsEMBL::Compara::DBSQL::MethodLinkSpeciesSetAdaptor::fetch_all_by_method_link [1]");
-  $method_link_species_sets = $method_link_species_set_adaptor->fetch_all_by_method_link($this_type);
-  ok(scalar(@{$method_link_species_sets}), grep {$_->{type} eq $this_type} values(%$all_mlss));
-  @$method_link_species_sets = sort {$a->dbID <=> $b->dbID } @$method_link_species_sets;
-  $is_test_ok = 1;
-  foreach my $this_method_link_species_set (@$method_link_species_sets) {
-    $is_test_ok = 0 if (!$this_method_link_species_set->isa("Bio::EnsEMBL::Compara::MethodLinkSpeciesSet"));
-    $species = join(",", sort map {$_->name} @{$this_method_link_species_set->species_set});
-    if (defined($all_mlss->{$this_method_link_species_set->dbID})) {
-      $is_test_ok = 2 if ($this_method_link_species_set->method_link_id !=
-          $all_mlss->{$this_method_link_species_set->dbID}->{method_link_id});
-      $is_test_ok = 3 if ($this_method_link_species_set->method_link_type ne 
-          $all_mlss->{$this_method_link_species_set->dbID}->{type});
-      $is_test_ok = 4 if ($species ne 
-          $all_mlss->{$this_method_link_species_set->dbID}->{species_set});
-    } else {
-      $is_test_ok = 0;
-      print STDERR "\n\n ", $this_method_link_species_set->dbID, ". $species\n";
-    }
-  }
-  ok($is_test_ok, 1);
-
-
-# 
-# 9-10. Test fetch_all_by_method_link [2]
-# 
-debug("Test Bio::EnsEMBL::Compara::DBSQL::MethodLinkSpeciesSetAdaptor::fetch_all_by_method_link [2]");
-  $method_link_species_sets = $method_link_species_set_adaptor->fetch_all_by_method_link("NOT_AN_EXISTING_METHOD_LINK");
-  ok($method_link_species_sets);
-  ok(scalar(@{$method_link_species_sets}), 0);
-
-
-# 
-# 31. Test fetch_by_method_link_and_genome_db_ids
-# 
-debug("Test Bio::EnsEMBL::Compara::DBSQL::MethodLinkSpeciesSetAdaptor::fetch_by_method_link_and_genome_db_ids [1]");
-  $method_link_species_set = $method_link_species_set_adaptor->fetch_by_method_link_and_genome_db_ids(
-          $all_mlss->{$this_method_link_species_set_id}->{method_link_id},
-          [map {$genome_db_adaptor->fetch_by_dbID($_)->dbID} split(",",
-              $all_mlss->{$this_method_link_species_set_id}->{gdbid_set})]
-      );
-  ok($method_link_species_set->isa("Bio::EnsEMBL::Compara::MethodLinkSpeciesSet"));
-  ok($method_link_species_set->dbID, $this_method_link_species_set_id);
-  ok($method_link_species_set->method_link_id,
-      $all_mlss->{$this_method_link_species_set_id}->{method_link_id});
-  ok($method_link_species_set->method_link_type,
-      $all_mlss->{$this_method_link_species_set_id}->{type});
-  $species = join(",", sort map {$_->name} @{$method_link_species_set->species_set});
-  ok($species, $all_mlss->{$this_method_link_species_set_id}->{species_set});
-
-
-# 
-# 32. Test fetch_by_method_link_and_genome_db_ids
-# 
-debug("Test Bio::EnsEMBL::Compara::DBSQL::MethodLinkSpeciesSetAdaptor::fetch_by_method_link_and_genome_db_ids [2]");
-  $method_link_species_set = $method_link_species_set_adaptor->fetch_by_method_link_and_genome_db_ids(
-          $all_mlss->{$this_method_link_species_set_id}->{method_link_id},
-          [map {$genome_db_adaptor->fetch_by_dbID($_)->dbID} split(",",
-              $all_mlss->{$this_method_link_species_set_id}->{gdbid_set})]
-      );
-  ok($method_link_species_set->isa("Bio::EnsEMBL::Compara::MethodLinkSpeciesSet"));
-  ok($method_link_species_set->dbID, $this_method_link_species_set_id);
-  ok($method_link_species_set->method_link_id,
-      $all_mlss->{$this_method_link_species_set_id}->{method_link_id});
-  ok($method_link_species_set->method_link_type,
-      $all_mlss->{$this_method_link_species_set_id}->{type});
-  $species = join(",", sort map {$_->name} @{$method_link_species_set->species_set});
-  ok($species, $all_mlss->{$this_method_link_species_set_id}->{species_set});
-
-
-# 
-# 33. Test fetch_by_method_link_and_genome_db_ids
-# 
-debug("Test Bio::EnsEMBL::Compara::DBSQL::MethodLinkSpeciesSetAdaptor::fetch_by_method_link_and_genome_db_ids [3]");
-  $method_link_species_set = $method_link_species_set_adaptor->fetch_by_method_link_and_genome_db_ids(-1, [1,2]);
-  ok(!$method_link_species_set);
-
-
-# 
-# 29. Test fetch_all_by_genome_db_id [2]
-# 
-debug("Test Bio::EnsEMBL::Compara::DBSQL::MethodLinkSpeciesSetAdaptor::fetch_all_by_method_link_and_genome_db [2]");
-  $method_link_species_sets = $method_link_species_set_adaptor->fetch_all_by_method_link_and_genome_db(1, 1);
-  ok(scalar(@{$method_link_species_sets}), 2);
-
-# 
-# 30. Test fetch_all_by_genome_db_id [2]
-# 
-debug("Test Bio::EnsEMBL::Compara::DBSQL::MethodLinkSpeciesSetAdaptor::fetch_all_by_method_link_and_genome_db [2]");
-  $method_link_species_sets = $method_link_species_set_adaptor->fetch_all_by_method_link_and_genome_db(
-          "BLASTZ_NET",
-          $genome_db_adaptor->fetch_by_dbID(1));
-  ok(scalar(@{$method_link_species_sets}), 2);
 

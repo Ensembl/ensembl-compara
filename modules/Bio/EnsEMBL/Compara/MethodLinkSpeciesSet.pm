@@ -62,10 +62,15 @@ method_link.method_link_id)
 
 corresponds to method_link.type, accessed through method_link_id (external ref.)
 
+=item species_set_id
+
+corresponds to method_link_species_set.species_set_id (external ref. to
+species_set.species_set_id)
+
 =item species_set
 
 listref of Bio::EnsEMBL::Compara::GenomeDB objects. Each of them corresponds to
-a method_link_species_set.genome_db_id
+a species_set.genome_db_id
 
 =item max_alignment_length (experimental)
 
@@ -113,9 +118,17 @@ use Bio::EnsEMBL::Utils::Argument qw(rearrange);
               : (opt.) int $method_link_id (the database internal ID for the method_link)
   Arg [-METHOD_LINK_TYPE]
               : (opt.) string $method_link_type (the name of the method_link)
+  Arg [-SPECIES_SET_ID]
+              : (opt.) int $species_set_id (the database internal ID for the species_set)
   Arg [-SPECIES_SET]
               : (opt.) arrayref $genome_dbs (a reference to an array of
                 Bio::EnsEMBL::Compara::GenomeDB objects)
+  Arg [-NAME]
+              : (opt.) string $name (the name for this method_link_species_set)
+  Arg [-SOURCE]
+              : (opt.) string $source (the source of these data)
+  Arg [-URL]
+              : (opt.) string $url (the original url of these data)
   Arg [-MAX_ALGINMENT_LENGTH]
               : (opt.) int $max_alignment_length (the length of the largest alignment
                 for this MethodLinkSpeciesSet (only used for genomic alignments)
@@ -139,17 +152,21 @@ sub new {
   my $self = {};
   bless $self,$class;
     
-  my ($dbID, $adaptor, $method_link_id, $method_link_type, $species_set,
-      $max_alignment_length) =
+  my ($dbID, $adaptor, $method_link_id, $method_link_type, $species_set_id, $species_set,
+      $name, $source, $url, $max_alignment_length) =
       rearrange([qw(
-          DBID ADAPTOR METHOD_LINK_ID METHOD_LINK_TYPE SPECIES_SET
-          MAX_ALIGNMENT_LENGTH)], @args);
+          DBID ADAPTOR METHOD_LINK_ID METHOD_LINK_TYPE SPECIES_SET_ID SPECIES_SET
+          NAME SOURCE URL MAX_ALIGNMENT_LENGTH)], @args);
 
   $self->dbID($dbID) if (defined ($dbID));
   $self->adaptor($adaptor) if (defined ($adaptor));
   $self->method_link_id($method_link_id) if (defined ($method_link_id));
   $self->method_link_type($method_link_type) if (defined ($method_link_type));
+  $self->species_set_id($species_set_id) if (defined ($species_set_id));
   $self->species_set($species_set) if (defined ($species_set));
+  $self->name($name) if (defined ($name));
+  $self->source($source) if (defined ($source));
+  $self->url($url) if (defined ($url));
   $self->max_alignment_length($max_alignment_length) if (defined ($max_alignment_length));
 
   return $self;
@@ -269,6 +286,35 @@ sub method_link_type {
 }
 
 
+=head2 species_set_id
+
+  Arg [1]    : (opt.) integer species_set_id
+  Example    : my $species_set_id = $method_link_species_set->species_set_id();
+  Example    : $method_link_species_set->species_set_id(23);
+  Description: get/set for attribute species_set_id
+  Returntype : integer
+  Exceptions : none
+  Caller     : general
+
+=cut
+
+sub species_set_id {
+  my ($self, $arg) = @_;
+
+  if (defined($arg)) {
+    $self->{'species_set_id'} = $arg ;
+  }
+
+  if (!defined($self->{'species_set_id'})
+      && defined($self->{'species_set'})
+      && defined($self->{'adaptor'})) {
+    $self->{'species_set_id'} = $self->adaptor->_get_species_set_id_from_species_set($self->{'species_set'});
+  }
+
+  return $self->{'species_set_id'};
+}
+
+
 =head2 species_set
  
   Arg [1]    : (opt.) listref of Bio::EnsEMBL::Compara::GenomeDB objects
@@ -304,6 +350,77 @@ sub species_set {
     $self->{'species_set'} = [ values %{$genome_dbs} ] ;
   }
   return $self->{'species_set'};
+}
+
+
+=head2 name
+
+  Arg [1]    : (opt.) string $name
+  Example    : my $name = $method_link_species_set->name();
+  Example    : $method_link_species_set->name("families");
+  Description: get/set for attribute name
+  Returntype : string
+  Exceptions : none
+  Caller     : general
+
+=cut
+
+sub name {
+  my ($self, $arg) = @_;
+
+  if (defined($arg)) {
+    $self->{'name'} = $arg ;
+  }
+
+  return $self->{'name'};
+}
+
+
+=head2 source
+
+  Arg [1]    : (opt.) string $name
+  Example    : my $name = $method_link_species_set->source();
+  Example    : $method_link_species_set->source("ensembl");
+  Description: get/set for attribute source. The source refers to who
+               generated the data in a first instance (ensembl, ucsc...)
+  Returntype : string
+  Exceptions : none
+  Caller     : general
+
+=cut
+
+sub source {
+  my ($self, $arg) = @_;
+
+  if (defined($arg)) {
+    $self->{'source'} = $arg ;
+  }
+
+  return $self->{'source'};
+}
+
+
+=head2 url
+
+  Arg [1]    : (opt.) string $url
+  Example    : my $name = $method_link_species_set->source();
+  Example    : $method_link_species_set->url("http://hgdownload.cse.ucsc.edu/goldenPath/monDom1/vsHg17/");
+  Description: get/set for attribute url. Defines where the data come from if they
+               have been imported
+  Returntype : string
+  Exceptions : none
+  Caller     : general
+
+=cut
+
+sub url {
+  my ($self, $arg) = @_;
+
+  if (defined($arg)) {
+    $self->{'url'} = $arg ;
+  }
+
+  return $self->{'url'};
 }
 
 
