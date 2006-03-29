@@ -794,9 +794,9 @@ sub do_markedup_pep_seq {
   my $pos = 1;
   my $SPACER = $number eq 'on' ? '       ' : '';
   my %bg_color = (  # move to constant MARKUP_COLOUR
-    'utr'      => $object->species_defs->ENSEMBL_STYLE->{'BACKGROUND0'},
+    'utr'      => $object->species_defs->ENSEMBL_STYLE->{'BACKGROUND1'},
     'c0'       => 'ffffff',
-    'c1'       => $object->species_defs->ENSEMBL_STYLE->{'BACKGROUND3'},
+    'c1'       => $object->species_defs->ENSEMBL_STYLE->{'BACKGROUND2'},
     'c99'      => 'ffcc99',
     'synutr'   => '7ac5cd',
     'sync0'    => '76ee00',
