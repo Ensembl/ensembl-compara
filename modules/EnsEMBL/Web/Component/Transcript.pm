@@ -1335,7 +1335,7 @@ sub spreadsheet_TSVtable {
    my $user_config = $object->user_config_hash( 'TSV_sampletranscript' );
    $user_config->{'Populations'}    = [$object->get_samples('display') ];
 
-   my $left =  [qw( Features Source SNPClasses SNPTypes Population SNPContext THExport ImageSize )]; # removed SNPValid
+   my $left =  [qw( Features Source SNPClasses SNPTypes Strains SNPContext THExport ImageSize )]; # removed SNPValid
 
    my $mc = $object->new_menu_container(
      'configname'  => 'TSV_sampletranscript', #primary config for display
