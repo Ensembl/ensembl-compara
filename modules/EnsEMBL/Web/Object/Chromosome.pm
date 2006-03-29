@@ -198,10 +198,10 @@ sub get_synteny_matches {
         my $homol_num = scalar @{$homologues};
         my $gene_synonym = $localgene->external_name || $localgene->stable_id;
    
-        warn $localgene->stable_id;
+        #warn $localgene->stable_id;
         if(@{$homologues}) {
         foreach my $homol(@{$homologues}){
-            warn "....    ", $homol->stable_id;
+            #warn "....    ", $homol->stable_id;
             my $gene = $gene2_adaptor->fetch_by_stable_id( $homol->stable_id,1 );
             $homol_id = $gene->external_name;
             $homol_id ||= $gene->stable_id;
@@ -246,7 +246,8 @@ sub get_synteny_nav {
 
     my @data;
 
-    my @localgenes = @{$object->get_synteny_local_genes};
+    my ($genes, $offset) = $object->get_synteny_local_genes;
+    my @localgenes = @$genes;
     my $first_start = @localgenes ? $localgenes[0]->start : 0;
     my $last_end    = @localgenes ? $localgenes[-1]->end  : 0;
     my $up_length   = $object->bp_to_nearest_unit($first_start);
