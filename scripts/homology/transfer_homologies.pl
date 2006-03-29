@@ -71,7 +71,7 @@ foreach my $mlss (@{$mlss_aref}) {
         $attribute->peptide_member_id($destination_peptide_member->dbID);
       } else {
         $store = 0;
-        print "member not in db ",$member->source_name
+        print "member not in db ",$member->source_name,"\n";
       }
     }
     if ($store) {
