@@ -66,6 +66,8 @@ foreach my $taxon_id(keys %taxon_ids) {
   $sth_ncbi_taxa_names->execute($taxon_id);
   while (my $aref = $sth_ncbi_taxa_names->fetchrow_arrayref) {
     my ($taxon_id, $name, $name_class) = @{$aref};
+    $name =~ s/\'/\\\'/g;
+    $name =~ s/\"/\\\"/g;
     print "INSERT INTO ncbi_taxa_names VALUES ($taxon_id, '$name', '$name_class');\n";
   }
 }
