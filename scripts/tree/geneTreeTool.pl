@@ -536,7 +536,7 @@ sub analyzeClusters
     printf("%7d, %10d, %10d, %10.3f\n", $cluster->node_id, scalar(@{$member_list}), $has_gdb_dups, (time()-$starttime));
     $pretty_cluster_count++ unless($has_gdb_dups);
   }
-  print("%d clusters without duplciates (%d total)\n", $pretty_cluster_count, $clusterset->get_child_count);
+  print("%d clusters without duplicates (%d total)\n", $pretty_cluster_count, $clusterset->get_child_count);
     
 }
 
