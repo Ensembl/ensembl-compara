@@ -70,7 +70,7 @@ sub handler {
 
   $page->title->set( $pageContent =~ /<title>(.*?)<\/title>/sm ? $1 : 'Untitled: '.$r->uri );
   # warn $ENV{'ENSEMBL_SPECIES'};
-  $page->masthead->species = $SD->SPECIES_COMMON_NAME if $ENV{'ENSEMBL_SPECIES'};
+  #$page->masthead->species = $SD->SPECIES_COMMON_NAME if $ENV{'ENSEMBL_SPECIES'};
 
   $page->content->add_panel(
     new EnsEMBL::Web::Document::Panel( 
