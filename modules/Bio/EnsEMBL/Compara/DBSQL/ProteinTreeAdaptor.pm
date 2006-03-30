@@ -191,7 +191,9 @@ sub delete_node {
   #print("delete node $node_id\n");
   $self->dbc->do("UPDATE protein_tree_nodes dn, protein_tree_nodes n SET ". 
             "n.parent_id = dn.parent_id WHERE n.parent_id=dn.node_id AND dn.node_id=$node_id");
-  $self->dbc->do("DELETE from protein_tree_nodes WHERE node_id=$node_id");
+  $self->dbc->do("DELETE from protein_tree_nodes WHERE node_id = $node_id");
+  $self->dbc->do("DELETE from protein_tree_tags WHERE node_id = $node_id");
+  $self->dbc->do("DELETE from protein_tree_member WHERE node_id = $node_id");
 }
 
 
@@ -213,6 +215,22 @@ sub delete_nodes_not_in_tree
   $dbtree->release_tree;
 }
 
+sub delete_node_and_under {
+  my $self = @_;
+  my $node = shift;
+
+  my @all_subnodes = $node->get_all_subnodes;
+  foreach my $subnode (@all_subnodes) {
+    my $subnode_id = $subnode->node_id;
+    $self->dbc->do("DELETE from protein_tree_nodes WHERE node_id = $subnode_id");
+    $self->dbc->do("DELETE from protein_tree_tags WHERE node_id = $subnode_id");
+    $self->dbc->do("DELETE from protein_tree_member WHERE node_id = $subnode_id");
+  }
+  my $node_id = $node->node_id;
+  $self->dbc->do("DELETE from protein_tree_nodes WHERE node_id = $node_id");
+  $self->dbc->do("DELETE from protein_tree_tags WHERE node_id = $node_id");
+  $self->dbc->do("DELETE from protein_tree_member WHERE node_id = $node_id");
+}
 
 ###################################
 #
