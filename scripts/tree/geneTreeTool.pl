@@ -69,7 +69,7 @@ GetOptions('help'             => \$help,
            'newick'           => \$self->{'print_newick'},
            'print'            => \$self->{'print_tree'},
            'list'             => \$self->{'print_leaves'},
-           'analyze'          => \$self->{'analyze'},
+           'analyze|analyse'  => \$self->{'analyze'},
            'draw'             => \$self->{'drawtree'},
            'balance'          => \$self->{'balance_tree'},
            'chop'             => \$self->{'chop_tree'},
@@ -195,6 +195,7 @@ if($self->{'clusterset_id'}) {
   printf("loaded %d clusters\n", $self->{'clusterset'}->get_child_count);
 
   analyzeClusters2($self) if($self->{'analyze'});
+#  analyzeClusters($self) if($self->{'analyze'});
 
   dumpAllTreesToNewick($self) if($self->{'print_newick'});
  
@@ -522,6 +523,7 @@ sub analyzeClusters
   printf("%d clusters\n", $clusterset->get_child_count);  
   
   my $pretty_cluster_count=0;
+  printf("%7s, %10s, %10s, %7s\n", "node_id", "members", "has_gdb_dups", "time");
   foreach my $cluster (@{$clusterset->children}) {
     my $starttime = time();
     $treeDBA->fetch_subtree_under_node($cluster);
