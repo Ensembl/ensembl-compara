@@ -78,6 +78,7 @@ sub fetch_input {
   $self->{'bsr_threshold'} = 0.25;
   $self->{'clusterset_id'} = undef;
   
+  $self->get_params($self->parameters);
   $self->get_params($self->input_id);
   return 1;
 }
@@ -86,6 +87,8 @@ sub fetch_input {
 sub get_params {
   my $self         = shift;
   my $param_string = shift;
+  
+  return if ($param_string eq "1");
 
   return unless($param_string);
   print("parsing parameter string : ",$param_string,"\n");
