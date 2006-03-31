@@ -556,80 +556,79 @@ sub add_species {
 # Add a record to the release_species cross-reference table
 
 sub add_release_species {
-    my ($self, $record) = @_;
-    my $result = '';
+  my ($self, $record) = @_;
 
-    return unless $self->db_write;
+  return unless $self->db_write;
+  return unless $record && ref($record) eq 'HASH';
 
-    # check if record is already added
-    my $release_id      = $$record{'release_id'};
-    my $species_id      = $$record{'species_id'};
-    my $assembly_code   = $$record{'assembly_code'};
-    my $assembly_name   = $$record{'assembly_name'};
+  my $result = '';
+  my $release_id      = $$record{'release_id'};
+  my $species_id      = $$record{'species_id'};
+  my $assembly_code   = $$record{'assembly_code'};
+  my $assembly_name   = $$record{'assembly_name'};
+  my $pre_code        = $$record{'pre_code'};
+  my $pre_name        = $$record{'pre_name'};
 
-    my $sql = qq(SELECT release_id, species_id FROM release_species 
-                WHERE release_id = "$release_id" AND species_id = "$species_id");    
+  # check if record is already added
+  my $sql = qq(SELECT release_id, species_id FROM release_species 
+          WHERE release_id = "$release_id" AND species_id = "$species_id");    
 
-    my $T = $self->db_write->selectall_arrayref($sql);
+  my $T = $self->db_write->selectall_arrayref($sql);
 
-    if ($T && @{$T->[0]}[0]) {
-        $result = "This species is already logged for release $release_id";
+  if ($T && @{$T->[0]}[0]) {
+    ## update the existing record
+    my $both = 0;
+    $sql = qq(
+        UPDATE 
+          release_species
+        SET
+    );
+    if ($assembly_code || $assembly_name) {
+      $sql .= qq(
+            assembly_code = "$assembly_code",
+            assembly_name = "$assembly_name"
+      );
+      $both = 1;
     }
-    else {
-        # insert the new record
-        $sql = qq(
+    if ($pre_code || $pre_name) {
+      $sql .= ',' if $both == 1;
+      $sql .= qq(
+            pre_code = "$pre_code",
+            pre_name = "$pre_name"
+      );
+    }
+    $sql .= qq(
+        WHERE release_id = "$release_id" AND species_id = "$species_id"
+    );
+  }
+  else {
+    # insert the new record
+    $sql = qq(
             INSERT INTO 
                 release_species
             SET release_id = "$release_id", 
-                species_id = "$species_id", 
-                assembly_code = "$assembly_code",
-                assembly_name = "$assembly_name"
-        );
-
-        my $sth = $self->db_write->prepare($sql);
-        $result = $sth->execute();
-        if ($result) {
-            $result = "Record added";
-        }
-    }
-    return $result;
-}
-
-sub delete_pre {
-  my $self = shift;
-
-  my $sql = "UPDATE species SET pre_assembly_code = ''";
-        
-  my $sth = $self->db_write->prepare($sql);
-  my $result = $sth->execute();
-
-  return $result;
-}
-
-sub add_pre {
-  my ($self, $species, $common, $assembly) = @_;
-
-  ## is this species in the database?
-  my $sql = qq(SELECT species_id FROM species WHERE name = "$species");
-    
-  my $T = $self->db_write->selectall_arrayref($sql);
-
-  if ($T && @{$T->[0]}[0]) { ## update the record
-    $sql = qq(UPDATE species SET pre_assembly_code = "$assembly" 
-              WHERE name = "$species"); 
-  }
-  else {
-    # insert a new record
-    $sql = qq(INSERT INTO species 
-              SET 
-                name              = "$species",
-                common_name       = "$common",  
-                pre_assembly_code = "$assembly"
+                species_id = "$species_id" 
     );
+
+    if ($assembly_code || $assembly_name) {
+      $sql .= qq(,
+            assembly_code = "$assembly_code",
+            assembly_name = "$assembly_name"
+      );
+    }
+    if ($pre_code || $pre_name) {
+      $sql .= qq(,
+            pre_code = "$pre_code",
+            pre_name = "$pre_name"
+      );
+    }
+
   }
   my $sth = $self->db_write->prepare($sql);
-  my $result = $sth->execute();
-
+  $result = $sth->execute();
+  if ($result) {
+    $result = "Record added";
+  }
   return $result;
 }
 
