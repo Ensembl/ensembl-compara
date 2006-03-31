@@ -713,7 +713,8 @@ sub marked_up_seq_form {
   my $show = [
     { 'value' => 'plain',   'name' => 'Exons' },
     { 'value' => 'codons',  'name' => 'Exons and Codons' },
-    { 'value' => 'peptide', 'name' => 'Exons, Codons and Translation'}
+    { 'value' => 'peptide', 'name' => 'Exons, Codons and Translation'},
+    { 'value' => 'coding', 'name' => 'Exons, Codons, Translation and Coding sequence'}
   ];
   if( $object->species_defs->databases->{'ENSEMBL_VARIATION'} ||
       $object->species_defs->databases->{'ENSEMBL_GLOVAR'} ) {
@@ -744,7 +745,7 @@ sub marked_up_seq {
 
   if( $show eq 'codons' ) {
       $HTML .= qq(<img src="/img/help/transview-key1.gif" height="200" width="200" alt="[Key]" border="0" />);
-  } elsif( $show eq 'peptide' ) { 
+  } elsif( $show eq 'peptide' or $show eq 'coding' ) { 
       $HTML .= qq(<img src="/img/help/transview-key2.gif" height="200" width="200" alt="[Key]" border="0" />);
   } elsif( $show eq 'snps' ) {
       $HTML .= qq(<img src="/img/help/transview-key3.gif" height="350" width="300" alt="[Key]" border="0" />);
@@ -758,11 +759,14 @@ sub do_markedup_pep_seq {
   my $object = shift;
   my $show = $object->param('show');
   my $number = $object->param('number');
+
   if( $show eq 'plain' ) {
     my $fasta = $object->get_trans_seq;
     $fasta =~ s/([acgtn\*]+)/'<span style="color: blue">'.uc($1).'<\/span>'/eg;
     return $fasta;
-  } elsif( $show eq 'rna' ) {
+  } 
+
+  elsif( $show eq 'rna' ) {
     my @strings = $object->rna_notation;
     my @extra_array;
     foreach( @strings ) {
@@ -786,11 +790,14 @@ sub do_markedup_pep_seq {
     }
     return $out; 
   }
+
+  # If $show ne rna or plan
   my( $cd_start, $cd_end, $trans_strand, $bps ) = $object->get_markedup_trans_seq;
   my $trans  = $object->transcript;
   my $wrap = 60;
   my $count = 0;
-  my ($pep_previous, $ambiguities, $previous, $output, $fasta, $peptide)  = '';
+  my ($pep_previous, $ambiguities, $previous, $coding_previous, $output, $fasta, $peptide)  = '';
+  my $coding_fasta;
   my $pos = 1;
   my $SPACER = $number eq 'on' ? '       ' : '';
   my %bg_color = (  # move to constant MARKUP_COLOUR
@@ -808,28 +815,37 @@ sub do_markedup_pep_seq {
     'snpc0'    => 'ffd700',
     'snpc1'    => 'ffd700',
   );
+
   foreach(@$bps) {
     if($count == $wrap) {
       my( $NUMBER, $PEPNUM ) = ('','');
+      my $CODINGNUM;
       if($number eq 'on') {
         $NUMBER = sprintf("%6d ",$pos);
         $PEPNUM = ( $pos>=$cd_start && $pos<=$cd_end ) ? sprintf("%6d ",int( ($pos-$cd_start+3)/3) ) : $SPACER ;
-        $pos += $wrap;
+        $CODINGNUM = ( $pos>=$cd_start && $pos<=$cd_end ) ? sprintf("%6d ", $pos-$cd_start+1 ) : $SPACER ;
       }
-      $output .= ($show eq 'snps' ? "$SPACER$ambiguities\n" : '' ).
-      $NUMBER.$fasta. ($previous eq '' ? '':'</span>')."\n".
-        ( ( $show eq 'snps' || $show eq 'peptide' ) ?
-          "$PEPNUM$peptide". ($pep_previous eq ''?'':'</span>')."\n\n" : '' );
+      $pos += $wrap;
+      $output .=  "$SPACER$ambiguities\n" if $show eq 'snps';
+      $output .= $NUMBER.$fasta. ($previous eq '' ? '':'</span>')."\n";
+      $output .="$CODINGNUM$coding_fasta".($coding_previous eq ''?'':'</span>')."\n" if $show eq 'coding';
+      $output .="$PEPNUM$peptide". ($pep_previous eq ''?'':'</span>')."\n\n" if $show eq 'snps' || $show eq 'peptide' || $show eq 'coding';
+	
       $previous='';
       $pep_previous='';
+      $coding_previous='';
+      $ambiguities = '';
       $count=0;
       $peptide = '';
-      $ambiguities = '';
       $fasta ='';
+      $coding_fasta ='';
     }
     my $bg = $bg_color{"$_->{'snp'}$_->{'bg'}"};
     my $style = qq(style="color: $_->{'fg'};). ( $bg ? qq( background-color: #$bg;) : '' ) .qq(");
     my $pep_style = '';
+    my $coding_style;
+
+    # SNPs
     if( $show eq 'snps') {
       if($_->{'snp'} ne '') {
         if( $trans_strand == -1 ) {
@@ -843,11 +859,21 @@ sub do_markedup_pep_seq {
       }
       $ambiguities.=$_->{'ambigcode'};
     }
+
+    my $where =  $count + $pos;
     if($style ne $previous) {
       $fasta.=qq(</span>) unless $previous eq '';
       $fasta.=qq(<span $style>) unless $style eq '';
       $previous = $style;
     }
+    if ($coding_style ne $coding_previous) {
+      if ( $where>=$cd_start && $where<=$cd_end ) {
+	$coding_fasta.=qq(<span $coding_style>) unless $coding_style eq '';
+      }
+      $coding_fasta.=qq(</span>) unless $coding_previous eq '';
+      $coding_previous = $coding_style;
+    }
+
     if($pep_style ne $pep_previous) {
       $peptide.=qq(</span>) unless $pep_previous eq '';
       $peptide.=qq(<span $pep_style>) unless $pep_style eq '';
@@ -855,18 +881,24 @@ sub do_markedup_pep_seq {
     }
     $count++;
     $fasta.=$_->{'letter'};
+    $coding_fasta.=( $where>=$cd_start && $where<=$cd_end ) ? $_->{'letter'} :".";
     $peptide.=$_->{'peptide'};
-  }
-  my( $NUMBER, $PEPNUM ) = ('','');
+
+  }# end foreach bp
+
+
+  my( $NUMBER, $PEPNUM, $CODINGNUM)  = ("", "", "");
   if($number eq 'on') {
     $NUMBER = sprintf("%6d ",$pos);
+    $CODINGNUM = ( $pos>=$cd_start && $pos<=$cd_end ) ? sprintf("%6d ", $pos-$cd_start +1 ) : $SPACER ;
     $PEPNUM = ( $pos>=$cd_start && $pos<=$cd_end ) ? sprintf("%6d ",int( ($pos-$cd_start-1)/3 +1) ) : $SPACER ;
     $pos += $wrap;
   }
-  $output .= ($show eq 'snps' ? "$SPACER$ambiguities\n" : '' ).
-             $NUMBER.$fasta. ($previous eq '' ? '':'</span>')."\n".
-             ( ( $show eq 'snps' || $show eq 'peptide' ) ?
-             "$PEPNUM$peptide". ($pep_previous eq ''?'':'</span>')."\n\n" : '' );
+  $output .=  "$SPACER$ambiguities\n" if $show eq 'snps';
+  $output .= $NUMBER.$fasta. ($previous eq '' ? '':'</span>')."\n";
+  $output .="$CODINGNUM$coding_fasta".($coding_previous eq ''?'':'</span>')."\n" if $show eq 'coding';
+  $output .="$PEPNUM$peptide". ($pep_previous eq ''?'':'</span>')."\n\n" if $show eq 'snps' || $show eq 'peptide' || $show eq 'coding';
+
   return $output;
 }
 
