@@ -135,9 +135,11 @@ sub build_GeneTreeSystem
   #
   # PAFCluster
   #
+  my $parameters = $genetree_params{'cluster_params'};
   my $paf_cluster = Bio::EnsEMBL::Analysis->new(
       -logic_name      => 'PAFCluster',
       -module          => 'Bio::EnsEMBL::Compara::RunnableDB::PAFCluster',
+      -parameters      => $parameters
     );
   $self->{'hiveDBA'}->get_AnalysisAdaptor()->store($paf_cluster);
   $stats = $paf_cluster->stats;
@@ -194,41 +196,41 @@ sub build_GeneTreeSystem
   #
   # ClustalW_mpi
   #
-  my $db_file = $genetree_params{'clustalw_mpi_dir'};
-  unless (defined $db_file && -d $db_file) {
-    warn("db_file for ClustalW_mpi is either not defined or the directory does not exist.\n
-Make sure to set up the 'clustalw_mpi_dir' parameter in the GENE_TREE section of your configuration file\n");
-    exit(2);
-  }
-  my $clustalw_mpi = Bio::EnsEMBL::Analysis->new(
-      -logic_name      => 'ClustalW_mpi',
-      -program_file    => '/usr/local/ensembl/bin/clustalw',
-      -module          => 'Bio::EnsEMBL::Compara::RunnableDB::ClustalW',
-      -parameters      => "{'mpi'=>1}",
-      -db_file         => $db_file,
-    );
-  $self->{'hiveDBA'}->get_AnalysisAdaptor()->store($clustalw_mpi);
-  $stats = $clustalw_mpi->stats;
-  $stats->batch_size(1);
-  $stats->hive_capacity(-1);
-  $stats->update();
+#  my $db_file = $genetree_params{'clustalw_mpi_dir'};
+#  unless (defined $db_file && -d $db_file) {
+#    warn("db_file for ClustalW_mpi is either not defined or the directory does not exist.\n
+#Make sure to set up the 'clustalw_mpi_dir' parameter in the GENE_TREE section of your configuration file\n");
+#    exit(2);
+#  }
+#  my $clustalw_mpi = Bio::EnsEMBL::Analysis->new(
+#      -logic_name      => 'ClustalW_mpi',
+#      -program_file    => '/usr/local/ensembl/bin/clustalw',
+#      -module          => 'Bio::EnsEMBL::Compara::RunnableDB::ClustalW',
+#      -parameters      => "{'mpi'=>1}",
+#      -db_file         => $db_file,
+#    );
+#  $self->{'hiveDBA'}->get_AnalysisAdaptor()->store($clustalw_mpi);
+#  $stats = $clustalw_mpi->stats;
+#  $stats->batch_size(1);
+#  $stats->hive_capacity(-1);
+#  $stats->update();
 
 
   #
   # ClustalW_parse
   #
-  my $clustalw_parse = Bio::EnsEMBL::Analysis->new(
-      -logic_name      => 'ClustalW_parse',
-      -program_file    => '/usr/local/ensembl/bin/clustalw',
-      -module          => 'Bio::EnsEMBL::Compara::RunnableDB::ClustalW',
-      -parameters      => "{'parse'=>1, 'align'=>0}",
-      -db_file         => $db_file,
-    );
-  $self->{'hiveDBA'}->get_AnalysisAdaptor()->store($clustalw_parse);
-  $stats = $clustalw_parse->stats;
-  $stats->batch_size(1);
-  $stats->hive_capacity(-1);
-  $stats->update();
+#  my $clustalw_parse = Bio::EnsEMBL::Analysis->new(
+#      -logic_name      => 'ClustalW_parse',
+#      -program_file    => '/usr/local/ensembl/bin/clustalw',
+#      -module          => 'Bio::EnsEMBL::Compara::RunnableDB::ClustalW',
+#      -parameters      => "{'parse'=>1, 'align'=>0}",
+#      -db_file         => $db_file,
+#    );
+#  $self->{'hiveDBA'}->get_AnalysisAdaptor()->store($clustalw_parse);
+#  $stats = $clustalw_parse->stats;
+#  $stats->batch_size(1);
+#  $stats->hive_capacity(-1);
+#  $stats->update();
 
 
   #
@@ -262,14 +264,30 @@ Make sure to set up the 'clustalw_mpi_dir' parameter in the GENE_TREE section of
   $stats->hive_capacity(400);
   $stats->update();
 
+  #
+  # BreakPAFCluster
+  #
+  $parameters = $genetree_params{'breakcluster_params'};
+  my $BreakPAFCluster = Bio::EnsEMBL::Analysis->new(
+      -logic_name      => 'PAFCluster',
+      -module          => 'Bio::EnsEMBL::Compara::RunnableDB::BreakPAFCluster',
+      -parameters      => $parameters
+    );
+  $self->{'hiveDBA'}->get_AnalysisAdaptor()->store($BreakPAFCluster);
+  $stats = $BreakPAFCluster->stats;
+  $stats->batch_size(1);
+  $stats->hive_capacity(-1);
+  $stats->update();
 
   #
   # RAP
   #
-  my $parameters = $genetree_params{'species_tree_file'};
+  $parameters = $genetree_params{'species_tree_file'};
+  my $rap_jar_file = $genetree_params{'rap_jar_file'};
+  $rap_jar_file = "/nfs/acari/abel/bin/rap.jar" unless (defined $rap_jar_file);
   my $rap = Bio::EnsEMBL::Analysis->new(
       -logic_name      => 'RAP',
-      -program_file    => '/usr/opt/java/bin/java -jar /nfs/acari/abel/bin/rap.jar',
+      -program_file    => '/usr/opt/java/bin/java -jar $rap_jar_file',
       -module          => 'Bio::EnsEMBL::Compara::RunnableDB::RAP',
       -parameters      => $parameters
     );
@@ -277,6 +295,19 @@ Make sure to set up the 'clustalw_mpi_dir' parameter in the GENE_TREE section of
   $stats = $rap->stats;
   $stats->batch_size(-1);
   $stats->hive_capacity(100);
+  $stats->update();
+
+  #
+  # OrthoTree
+  #
+  my $orthotree = Bio::EnsEMBL::Analysis->new(
+      -logic_name      => 'OrthoTree',
+      -module          => 'Bio::EnsEMBL::Compara::RunnableDB::OrthoTree',
+    );
+  $self->{'hiveDBA'}->get_AnalysisAdaptor()->store($orthotree);
+  $stats = $orthotree->stats;
+  $stats->batch_size(1);
+  $stats->hive_capacity(200);
   $stats->update();
 
   #
@@ -289,32 +320,29 @@ Make sure to set up the 'clustalw_mpi_dir' parameter in the GENE_TREE section of
   $dataflowRuleDBA->create_rule($muscle, $muscle_huge, 2);
 
   $dataflowRuleDBA->create_rule($muscle_huge, $phyml, 1);
-  $dataflowRuleDBA->create_rule($muscle_huge, $clustalw_mpi, 2);
-
-  $dataflowRuleDBA->create_rule($clustalw_mpi, $clustalw_parse, 1);
-  $dataflowRuleDBA->create_rule($clustalw_parse, $phyml, 1);
+  $dataflowRuleDBA->create_rule($muscle_huge, $BreakPAFCluster, 2);
 
   $dataflowRuleDBA->create_rule($phyml, $rap, 1);
   $dataflowRuleDBA->create_rule($phyml, $phyml_cdna, 2);
   $dataflowRuleDBA->create_rule($phyml_cdna, $rap, 1);
+  $dataflowRuleDBA->create_rule($phyml_cdna, $BreakPAFCluster, 2); 
+
+  $dataflowRuleDBA->create_rule($BreakPAFCluster, $muscle, 2);
+
+  $dataflowRuleDBA->create_rule($rap,$orthotree, 1);
 
   #$ctrlRuleDBA->create_rule($load_genome, $blastrules_analysis);
-
 
   #
   # create initial job
   #
 
-  my $input_id = $genetree_params{'cluster_params'};
-  if(defined($input_id)) {
-    Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob
-        (
-         -input_id       => $input_id,
-         -analysis       => $paf_cluster,
-        );
-  }
-
-
+  Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob
+      (
+       -input_id       => 1,
+       -analysis       => $paf_cluster,
+      );
+  
   return 1;
 }
 
