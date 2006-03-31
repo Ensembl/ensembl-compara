@@ -714,11 +714,14 @@ sub marked_up_seq_form {
     { 'value' => 'plain',   'name' => 'Exons' },
     { 'value' => 'codons',  'name' => 'Exons and Codons' },
     { 'value' => 'peptide', 'name' => 'Exons, Codons and Translation'},
-    { 'value' => 'coding', 'name' => 'Exons, Codons, Translation and Coding sequence'}
   ];
   if( $object->species_defs->databases->{'ENSEMBL_VARIATION'} ||
       $object->species_defs->databases->{'ENSEMBL_GLOVAR'} ) {
     push @$show, { 'value' => 'snps', 'name' => 'Exons, Codons, Translations and SNPs' };
+    push @$show, { 'value' => 'snp_coding', 'name' => 'Exons, Codons, Translation, SNPs and Coding sequence'};
+  }
+  else {
+    push @$show, { 'value' => 'coding', 'name' => 'Exons, Codons, Translation and Coding sequence'};
   }
   push @$show, { 'value'=>'rna', 'name' => 'Exons, RNA information' } if $object->Obj->biotype =~ /RNA/;
   $form->add_element(
@@ -745,11 +748,11 @@ sub marked_up_seq {
 
   if( $show eq 'codons' ) {
       $HTML .= qq(<img src="/img/help/transview-key1.gif" height="200" width="200" alt="[Key]" border="0" />);
+  } elsif( $show eq 'snps' or $show eq 'snp_coding' ) {
+      $HTML .= qq(<img src="/img/help/transview-key3.gif" height="350" width="300" alt="[Key]" border="0" />);
   } elsif( $show eq 'peptide' or $show eq 'coding' ) { 
       $HTML .= qq(<img src="/img/help/transview-key2.gif" height="200" width="200" alt="[Key]" border="0" />);
-  } elsif( $show eq 'snps' ) {
-      $HTML .= qq(<img src="/img/help/transview-key3.gif" height="350" width="300" alt="[Key]" border="0" />);
-  }
+    }
   $HTML .= "<div>@{[ $panel->form( 'markup_up_seq' )->render ]}</div>";
   $panel->add_row( $label, $HTML );
   return 1;
@@ -826,10 +829,10 @@ sub do_markedup_pep_seq {
         $CODINGNUM = ( $pos>=$cd_start && $pos<=$cd_end ) ? sprintf("%6d ", $pos-$cd_start+1 ) : $SPACER ;
       }
       $pos += $wrap;
-      $output .=  "$SPACER$ambiguities\n" if $show eq 'snps';
+      $output .=  "$SPACER$ambiguities\n" if $show =~ /^snp/;
       $output .= $NUMBER.$fasta. ($previous eq '' ? '':'</span>')."\n";
-      $output .="$CODINGNUM$coding_fasta".($coding_previous eq ''?'':'</span>')."\n" if $show eq 'coding';
-      $output .="$PEPNUM$peptide". ($pep_previous eq ''?'':'</span>')."\n\n" if $show eq 'snps' || $show eq 'peptide' || $show eq 'coding';
+      $output .="$CODINGNUM$coding_fasta".($coding_previous eq ''?'':'</span>')."\n" if $show =~ /coding/;
+      $output .="$PEPNUM$peptide". ($pep_previous eq ''?'':'</span>')."\n\n" if $show =~/^snp/ || $show eq 'peptide' || $show =~ /coding/;
 	
       $previous='';
       $pep_previous='';
@@ -846,7 +849,7 @@ sub do_markedup_pep_seq {
     my $coding_style;
 
     # SNPs
-    if( $show eq 'snps') {
+    if( $show =~ /^snp/) {
       if($_->{'snp'} ne '') {
         if( $trans_strand == -1 ) {
           $_->{'alleles'}=~tr/acgthvmrdbkynwsACGTDBKYHVMRNWS\//tgcadbkyhvmrnwsTGCAHVMRDBKYNWS\//;
@@ -894,10 +897,14 @@ sub do_markedup_pep_seq {
     $PEPNUM = ( $pos>=$cd_start && $pos<=$cd_end ) ? sprintf("%6d ",int( ($pos-$cd_start-1)/3 +1) ) : $SPACER ;
     $pos += $wrap;
   }
-  $output .=  "$SPACER$ambiguities\n" if $show eq 'snps';
-  $output .= $NUMBER.$fasta. ($previous eq '' ? '':'</span>')."\n";
-  $output .="$CODINGNUM$coding_fasta".($coding_previous eq ''?'':'</span>')."\n" if $show eq 'coding';
-  $output .="$PEPNUM$peptide". ($pep_previous eq ''?'':'</span>')."\n\n" if $show eq 'snps' || $show eq 'peptide' || $show eq 'coding';
+      $output .=  "$SPACER$ambiguities\n" if $show =~ /^snp/;
+      $output .= $NUMBER.$fasta. ($previous eq '' ? '':'</span>')."\n";
+      $output .="$CODINGNUM$coding_fasta".($coding_previous eq ''?'':'</span>')."\n" if $show =~ /coding/;
+      $output .="$PEPNUM$peptide". ($pep_previous eq ''?'':'</span>')."\n\n" if $show =~/^snp/ || $show eq 'peptide' || $show =~ /coding/;
+#  $output .=  "$SPACER$ambiguities\n" if $show eq 'snps';
+#  $output .= $NUMBER.$fasta. ($previous eq '' ? '':'</span>')."\n";
+#  $output .="$CODINGNUM$coding_fasta".($coding_previous eq ''?'':'</span>')."\n" if $show eq 'coding';
+#  $output .="$PEPNUM$peptide". ($pep_previous eq ''?'':'</span>')."\n\n" if $show eq 'snps' || $show eq 'peptide' || $show eq 'coding';
 
   return $output;
 }

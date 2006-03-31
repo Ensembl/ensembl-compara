@@ -828,7 +828,7 @@ sub get_markedup_trans_seq {
     $peptide = '';
   };
 
-  if($show eq 'snps') {
+  if($show =~ /snp/) {
     $self->database('variation');
     my $source = "";
     if (exists($self->species_defs->databases->{'ENSEMBL_GLOVAR'})) {
