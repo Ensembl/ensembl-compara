@@ -868,7 +868,12 @@ sub do_markedup_pep_seq {
       if($_->{'aminoacids'} ne '') {
         $pep_style = qq(style="color: #ff0000" title="$_->{'aminoacids'}");
       }
-      $ambiguities.=$_->{'ambigcode'};
+      if ( my $url_params = $_->{'url_params'} ){ 
+	$ambiguities .= qq(<a href="snpview?$url_params">).$_->{'ambigcode'}."</a>";
+      }
+      else {
+	$ambiguities.="</a>" if  $_->{'url_params'};
+      }
     }
 
     my $where =  $count + $pos;
