@@ -80,6 +80,7 @@ sub fetch_input {
   $self->{'bsr_threshold'} = 0.25;
   $self->{'clusterset_id'} = undef;
   
+  $self->get_params($self->parameters);
   $self->get_params($self->input_id);
   return 1;
 }
@@ -102,9 +103,9 @@ sub get_params {
   if (defined $params->{'species_set'}) {
     $self->{'species_set'} = $params->{'species_set'};
   }
-  if (defined $params->{'node_id'}) {
+  if (defined $params->{'protein_tree_id'}) {
     my $treeDBA = $self->{'comparaDBA'}->get_ProteinTreeAdaptor;
-    my $cluster = $treeDBA->fetch_node_by_node_id($params->{'node_id'});
+    my $cluster = $treeDBA->fetch_node_by_node_id($params->{'protein_tree_id'});
     $self->{'original_cluster'} = $cluster;
   }
   if (defined $params->{'all_best'}) {
@@ -120,14 +121,16 @@ sub get_params {
     $self->{'include_brh'} = $params->{'brh'};
   }
 #  $self->{'include_brh'} = 1;
-  print("parameters...\n");
-  printf("  species_set    : (%s)\n", join(',', @{$self->{'species_set'}}));
-  printf("  node_id        : %d\n", $self->{'original_cluster'}->node_id);
-  printf("  BRH            : %d\n", $self->{'include_brh'});
-  printf("  all_blast_hits : %d\n", $self->{'no_filters'});
-  printf("  all_bests      : %d\n", $self->{'all_bests'});  
-  printf("  bsr_threshold  : %1.3f\n", $self->{'bsr_threshold'});  
-  
+  if (defined $self->{'original_cluster'}) {
+    print("parameters...\n");
+    printf("  species_set     : (%s)\n", join(',', @{$self->{'species_set'}}));
+    printf("  protein_tree_id : %d\n", $self->{'original_cluster'}->node_id);
+    printf("  BRH             : %d\n", $self->{'include_brh'});
+    printf("  all_blast_hits  : %d\n", $self->{'no_filters'});
+    printf("  all_bests       : %d\n", $self->{'all_bests'});  
+    printf("  bsr_threshold   : %1.3f\n", $self->{'bsr_threshold'});  
+  }
+
   return;
 }
 
@@ -140,9 +143,10 @@ sub run
 
 sub write_output {
   my $self = shift;
-  return 1;
+
   $self->store_clusters;
-  
+  $self->delete_original_cluster;
+
   $self->dataflow_clusters;
 
   # modify input_job so that it now contains the clusterset_id
@@ -385,9 +389,12 @@ sub store_clusters {
 
   my $clusterset = $self->{'ccEngine'}->clusterset;
   throw("no clusters generated") unless($clusterset);
-  
+
+  $clusterset->node_id($self->{'original_cluster'}->root->node_id);
+  $clusterset->adaptor($treeDBA);
+
   $clusterset->name("ORTHO_CLUSTERS");
-  $treeDBA->store_node($clusterset);
+#  $treeDBA->store_node($clusterset);
   printf("root_id %d\n", $clusterset->node_id);
   $self->{'clusterset_id'} = $clusterset->node_id;
   
@@ -459,5 +466,15 @@ sub dataflow_clusters {
   }
 }
 
+sub delete_original_cluster {
+  my $self = shift;
+
+  my $original_cluster = $self->{'original_cluster'};
+  
+  $original_cluster->adaptor->delete_node_and_under($original_cluster);
+  
+  return 1;
+
+}
 
 1;
