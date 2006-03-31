@@ -841,19 +841,20 @@ sub get_markedup_trans_seq {
     my %snps = %{$trans->get_all_cdna_SNPs($source)};
     my %protein_features = $can_translate==0 ? () : %{ $trans->get_all_peptide_variations($source) };
     foreach my $t (values %snps) {
-      foreach my $s (@$t) {
+      foreach my $snp (@$t) {
 # Due to some changes start of a variation can be greater than its end - insertion happend
         my ($st, $en);
-        if($s->start > $s->end) {
-          $st = $s->end;
-          $en = $s->start;
+        if($snp->start > $snp->end) {
+          $st = $snp->end;
+          $en = $snp->start;
         } else {
-          $en = $s->end;
-          $st = $s->start;
+          $en = $snp->end;
+          $st = $snp->start;
         }
         foreach my $r ($st..$en) {
-          $bps[$r-1]{'alleles'}.= $s->allele_string;
-          my $snpclass = $s->var_class;
+          $bps[$r-1]{'alleles'}.= $snp->allele_string;
+          $bps[$r-1]{'url_params'}.= "source=".$snp->source.";snp=".$snp->variation_name;
+          my $snpclass = $snp->var_class;
           if($snpclass eq 'snp' || $snpclass eq 'SNP - substitution') {
             my $aa = int(($r-$cd_start+3)/3);
             my $aa_bp = $aa*3+$cd_start - 3;
@@ -866,8 +867,8 @@ sub get_markedup_trans_seq {
               $bps[ $aa_bp - 1 ]{'peptide'} =
               $bps[ $aa_bp + 1 ]{'peptide'} = '=';
             }
-            $bps[$r-1]{'ambigcode'}= $s->ambig_code;
-            if ($s->strand ne "$trans_strand"){
+            $bps[$r-1]{'ambigcode'}= $snp->ambig_code;
+            if ($snp->strand ne "$trans_strand"){
               $bps[$r-1]{'ambigcode'} =~ tr/acgthvmrdbkynwsACGTDBKYHVMRNWS\//tgcadbkyhvmrnwsTGCAHVMRDBKYNWS\//;
               $bps[$r-1]{'alleles'} =~ tr/acgthvmrdbkynwsACGTDBKYHVMRNWS\//tgcadbkyhvmrnwsTGCAHVMRDBKYNWS\//;
             }
