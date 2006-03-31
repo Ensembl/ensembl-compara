@@ -216,7 +216,7 @@ sub delete_nodes_not_in_tree
 }
 
 sub delete_node_and_under {
-  my $self = @_;
+  my $self = shift;
   my $node = shift;
 
   my @all_subnodes = $node->get_all_subnodes;
