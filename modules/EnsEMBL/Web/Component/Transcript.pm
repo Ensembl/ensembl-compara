@@ -752,8 +752,11 @@ sub marked_up_seq {
   } elsif( $show eq 'snps' or $show eq 'snp_coding' ) {
       $HTML .= qq(<img src="/img/help/transview-key3.gif" height="350" width="300" alt="[Key]" border="0" />);
   } elsif( $show eq 'peptide' or $show eq 'coding' ) { 
-      $HTML .= qq(<img src="/img/help/transview-key2.gif" height="200" width="200" alt="[Key]" border="0" />);
-    }
+    $HTML .= qq(<img src="/img/help/transview-key2.gif" height="200" width="200" alt="[Key]" border="0" />);
+  }
+  elsif ($show eq 'revcom') {
+    $HTML .= "<p>Reverse complement sequence</p>";
+  }
   $HTML .= "<div>@{[ $panel->form( 'markup_up_seq' )->render ]}</div>";
   $panel->add_row( $label, $HTML );
   return 1;

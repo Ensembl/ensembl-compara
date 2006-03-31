@@ -748,6 +748,7 @@ sub get_contig_location {
 
 sub get_trans_seq{
   my $self   = shift;
+  my $revcom = shift;
   my $trans  = $self->Obj;
   my $number = $self->param('number');   
   my $flip = 0;
@@ -760,6 +761,7 @@ sub get_trans_seq{
        $subseq = lc($subseq) if ($flip++)%2;
        $fasta.=$subseq;
   }
+  $fasta = $trans->seq->revcom->seq if $revcom;
   if($number eq 'on') {
     $fasta =~ s|(\w{1,$wrap})|sprintf( "%6d %s\n",$pos+=$wrap,"$1")|eg;    
   } else {
