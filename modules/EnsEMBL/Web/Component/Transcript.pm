@@ -712,6 +712,7 @@ sub marked_up_seq_form {
   $form->add_element( 'type' => 'Hidden', 'name' => 'transcript', 'value' => $object->stable_id );
   my $show = [
     { 'value' => 'plain',   'name' => 'Exons' },
+    { 'value' => 'revcom',  'name' => 'Reverse complement sequence' },
     { 'value' => 'codons',  'name' => 'Exons and Codons' },
     { 'value' => 'peptide', 'name' => 'Exons, Codons and Translation'},
   ];
@@ -768,7 +769,11 @@ sub do_markedup_pep_seq {
     $fasta =~ s/([acgtn\*]+)/'<span style="color: blue">'.uc($1).'<\/span>'/eg;
     return $fasta;
   } 
-
+  elsif( $show eq 'revcom' ) {
+    my $fasta = $object->get_trans_seq("revcom");
+    $fasta =~ s/([acgtn\*]+)/'<span style="color: blue">'.uc($1).'<\/span>'/eg;
+    return $fasta;
+  }
   elsif( $show eq 'rna' ) {
     my @strings = $object->rna_notation;
     my @extra_array;
