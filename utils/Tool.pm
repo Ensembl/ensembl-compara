@@ -232,6 +232,11 @@ sub print_next {
 
 
 sub release_month {
+  my $archive_date = lc($SiteDefs::ARCHIVE_VERSION);
+  $archive_date =~ s/\d+//;
+  return $archive_date;
+
+  # Old way
   my @months = qw (jan feb mar apr may jun jul aug sep oct nov dec);
   my $day      = localtime->mday;
   my $curr_mth = localtime->mon;
