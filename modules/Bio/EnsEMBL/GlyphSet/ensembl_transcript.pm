@@ -120,7 +120,10 @@ sub zmenu {
     $zmenu->{'05:Export Peptide'} = qq(/@{[$self->{container}{_config_file_name_}]}/exportview?option=peptide;action=select;format=fasta;type1=peptide;anchor1=$pid);	
   }
   $zmenu->{'05:Gene SNP view'}= "/@{[$self->{container}{_config_file_name_}]}/genesnpview?gene=$gid;db=core" if $ENV{'ENSEMBL_SCRIPT'} =~ /snpview/;
-  $zmenu->{'05:Transcript SNP view'}= "/@{[$self->{container}{_config_file_name_}]}/transcriptsnpview?transcript=$tid";
+ if ( $self->species_defs->VARIATION_STRAIN ) {
+   $zmenu->{'05:Transcript SNP view'}= "/@{[$self->{container}{_config_file_name_}]}/transcriptsnpview?transcript=$tid";
+    }
+
   return $zmenu;
 }
 

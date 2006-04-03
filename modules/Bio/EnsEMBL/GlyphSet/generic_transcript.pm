@@ -127,8 +127,12 @@ sub zmenu {
     $zmenu->{"00:$tname"}       = '';
     $zmenu->{"02:Transcr:$tid"} = "/$sp/transview?transcript=$tid;db=$db";
     $zmenu->{'05:Export cDNA'}  = "/$sp/exportview?action=select;format=fasta;type1=transcript;anchor1=$tid;option=cdna";
-    $zmenu->{'07:Transcript SNP view'}= "/$sp/transcriptsnpview?transcript=$tid;db=$db";
 
+   # Variation: TranscriptSNP view
+  # if meta_key in variation meta table has default strain listed
+    if ( $self->species_defs->VARIATION_STRAIN ) {
+      $zmenu->{'07:Transcript SNP view'}= "/$sp/transcriptsnpview?transcript=$tid;db=$db";
+    }
     my $translation = $transcript->translation;
     if( $translation ){
       my $pid = $translation->stable_id;
