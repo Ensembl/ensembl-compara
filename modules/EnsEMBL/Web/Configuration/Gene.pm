@@ -359,6 +359,9 @@ sub context_menu {
 
   if( @transcripts ) {
 
+  # Variation: TranscriptSNP view
+  # if meta_key in variation meta table has default strain listed
+    if ( $obj->species_defs->VARIATION_STRAIN ) { 
     # Transcript SNP View
     my @sample_links =
       map { {
@@ -366,9 +369,6 @@ sub context_menu {
 	  'text'  => $_->stable_id,
 	}} sort{ $a->stable_id cmp $b->stable_id } @{ $obj->get_all_transcripts };
 
-  # Variation: TranscriptSNP view
-  # if meta_key in variation meta table has default strain listed
-    if ( $obj->species_defs->VARIATION_STRAIN ) { 
       $self->add_entry( $flag,
        'code'  => 'compare_samples',
        'text'  => "Compare SNPs in transcript",

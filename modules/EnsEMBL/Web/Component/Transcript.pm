@@ -1378,16 +1378,17 @@ sub spreadsheet_TSVtable {
    map {  push @onsources, $_ if $valids->{lc("opt_$_")} }  @{$object->get_source || [] };
 
    my $text;
+   my @populations = $object->get_samples('display');
    if ( $onsources[0] ) {
      $text = " from these sources: " . join ", ", @onsources if $onsources[0];
    }
    else {
-     $text = ". Please select a source from the yellow 'Source' dropdown menu";
+     $text = ". Please select a source from the yellow 'Source' dropdown menu" if scalar @populations;
    }
    $panel->print("<p>These SNP calls are sequence coverage dependent. Here we display the SNP calls observed by transcript$text.</p>");
 
    my $user_config = $object->user_config_hash( 'TSV_sampletranscript' );
-   $user_config->{'Populations'}    = [$object->get_samples('display') ];
+   $user_config->{'Populations'}    = \@populations;
 
    my $left =  [qw( Features Source SNPClasses SNPTypes Strains SNPContext THExport ImageSize )]; # removed SNPValid
 
