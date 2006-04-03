@@ -567,27 +567,29 @@ sub _parse {
             FROM method_link ml, method_link_species_set mlss, genome_db gd
            WHERE mlss.method_link_id = ml.method_link_id and
                  mlss.genome_db_id=gd.genome_db_id AND ml.type = 'MLAGAN'};
+
+
+	$q = qq{
+	    SELECT ml.type, gd.name, mlss.name, mlss.method_link_species_set_id
+	    FROM method_link ml, method_link_species_set mlss, genome_db gd, species_set ss 
+	    WHERE mlss.method_link_id = ml.method_link_id AND mlss.species_set_id=ss.species_set_id AND ss.genome_db_id = gd.genome_db_id AND ml.type in ('MLAGAN', 'BLASTZ_NET')};
+
         my $sth = $dbh->prepare( $q );
         my $rv  = $sth->execute || die( $sth->errstr );
         my $results = $sth->fetchall_arrayref();
         my $thash;
-        foreach my $row ( @$results ) {
-          my ($type, $species, $id) = (uc($row->[0]), $row->[1], $row->[2]);
-          $species =~ tr/ /_/;
-#          my $KEY = $sections{$type} || $type;
-          my $KEY = $id;
-          push @{$thash->{$KEY}}, $species;
-        }
-        foreach my $KEY (keys %$thash) {
-          my @species = @{$thash->{$KEY}};
-          foreach my $p (@species) {
-            foreach my $s (@species) {
-              $tree->{$KEY}->{$p}->{$s} = 1 unless $s eq $p;
-            }
-          }
 
-#	  warn("$KEY: ". Data::Dumper::Dumper($tree->{$KEY}));
+	my $KEY = 'ALIGNMENTS';
+        foreach my $row ( @$results ) {
+          my ($type, $species, $name, $id) = (uc($row->[0]), $row->[1], $row->[2], $row->[3]);
+          $species =~ tr/ /_/;
+	  $tree->{$KEY}->{$id}->{'id'} = $id;
+	  $tree->{$KEY}->{$id}->{'name'} = $name;
+	  $tree->{$KEY}->{$id}->{'type'} = $type;
+          $tree->{$KEY}->{$id}->{'species'}->{$species} = 1;
         }
+
+	warn("$KEY: ". Data::Dumper::Dumper($tree->{$KEY}));
 
         $sth->finish();
         $dbh->disconnect();
@@ -615,6 +617,9 @@ sub _parse {
                         gd1.genome_db_id != gd2.genome_db_id and
                         mls1.genome_db_id = gd1.genome_db_id and
                         mls2.genome_db_id = gd2.genome_db_id";
+
+	$q = qq{select ml.type, gd1.name, gd2.name from genome_db gd1, genome_db gd2, species_set ss1, species_set ss2 , method_link ml, method_link_species_set mls1, method_link_species_set mls2 where mls1.method_link_species_set_id = mls2.method_link_species_set_id and ml.method_link_id = mls1.method_link_id and ml.method_link_id = mls2.method_link_id and gd1.genome_db_id != gd2.genome_db_id and mls1.species_set_id = ss1.species_set_id and mls2.species_set_id = ss2.species_set_id and ss1.genome_db_id = gd1.genome_db_id and ss2.genome_db_id = gd2.genome_db_id};
+
         my $sth = $dbh->prepare( $q );
         my $rv  = $sth->execute || die( $sth->errstr );
         my $results = $sth->fetchall_arrayref();
@@ -702,9 +707,7 @@ sub _parse {
       delete $tree->{'general'};
       $CONF->{'_multi'} = $tree;
       $CONF->{'_storage'}{'Multi'} = $tree;
-#      warn(Dumper($tree->{BLASTZ_NET}));
-#      warn(Dumper($tree->{MLAGAN}));
-
+      warn(Dumper($CONF->{_multi}->{'ALIGNMENTS'}));
       next;
     }
 ## Move anything in the general section over up to the top level
