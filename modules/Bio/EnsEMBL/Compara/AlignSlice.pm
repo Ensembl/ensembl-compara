@@ -341,6 +341,9 @@ sub adaptor {
                species is returned first and then the remaining slices
                depending on their phylogenetic distance to the first
                one.
+               NB: You can use underscores instead of whitespaces for
+               the name of the species, i.e. Homo_sapiens will be
+               understood as "Homo sapiens".
   Returntype : listref of Bio::EnsEMBL::Compara::AlignSlice::Slice
                objects.
   Exceptions : 
@@ -355,6 +358,7 @@ sub get_all_Slices {
   if (@species_names) {
     foreach my $slice (@{$self->{_slices}}) {
       foreach my $this_species_name (@species_names) {
+        $this_species_name =~ s/_/ /g; ## supports names containing underscores instead of whitespaces
         push(@$slices, $slice) if ($this_species_name eq $slice->genome_db->name);
       }
     }
