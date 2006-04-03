@@ -492,6 +492,77 @@ sub print_node {
   printf("%s\n", $self->name);
 }
 
+#### avilella hacking start
+##
+
+sub nhx_format {
+  my $self = shift;
+  my $format_mode = shift;
+  
+  $format_mode="full" unless(defined($format_mode));
+  my $nhx = $self->_internal_nhx_format($format_mode); 
+  $nhx .= ";";
+  return $nhx;
+}
+
+
+sub _internal_nhx_format {
+  my $self = shift;
+  my $format_mode = shift;
+  my $nhx = "";
+  
+  if($self->get_child_count() > 0) {
+    $nhx .= "(";
+    my $first_child=1;
+    foreach my $child (@{$self->sorted_children}) {  
+      $nhx .= "," unless($first_child);
+      $nhx .= $child->_internal_nhx_format($format_mode);
+      $first_child = 0;
+    }
+    $nhx .= ")";
+  }
+  
+  if($format_mode eq "full") { 
+    #full: name and distance on all nodes
+    $nhx .= sprintf("%s", $self->name,);
+    $nhx .= sprintf(":%1.4f", $self->distance_to_parent);
+    $nhx .= "[&&NHX";
+    if($self->get_tagvalue("Duplication") eq '1') { 
+        # mark as duplication
+        $nhx .= ":D=Y";
+    } else {
+        # this only applies to internal nodes, hence the name of the
+        # method and the reason we can safely add this here
+        $nhx .= ":D=N";
+    }
+    $nhx .= "]";
+  }
+  if($format_mode eq 'simple') { 
+    #simplified: name only on leaves, dist only if has parent
+    if($self->parent) {
+      if($self->is_leaf) {
+        $nhx .= sprintf("\"%s\"", $self->name);
+      }
+      $nhx .= sprintf(":%1.4f", $self->distance_to_parent);
+    }
+  }
+  if($format_mode eq 'phylip') { 
+    #phylip: restrict names to 21 characters
+    if($self->parent) {
+      if($self->is_leaf) {
+        my $name = $self->name;
+        $name =~ s/[,(:)]//g;
+        $name = substr($name, 0 , 21);
+        $nhx .= sprintf("%s", $name);
+      }
+      $nhx .= sprintf(":%1.4f", $self->distance_to_parent);
+    }
+  }
+
+  return $nhx;
+}
+##
+#### avilella hacking end
 
 sub newick_format {
   my $self = shift;
