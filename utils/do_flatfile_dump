@@ -24,15 +24,14 @@ use utils::Tool;
 #$| = 1;
 
 my @user_formats ;
+my @species;
 my $MAX_SIZE = 1000000;
 my $GENE_MAX = 3000000; # if gene > $GENE_MAX, skips gene and prints warning
-#my $GENE_MAX = 1500000;
-my @species;
+our $VERBOSITY;
 my $logfile;
 my $no_log;
 my $dumpdir;
 my $nobundle;
-my $VERBOSITY;
 my $readme_only;
 my ($help, $info, $email);
 
@@ -68,6 +67,9 @@ require EnsEMBL::Web::SpeciesDefs;
 require Bio::EnsEMBL::Utils::SeqDumper;
 require EnsEMBL::Web::DBSQL::DBConnection;
 
+my $SPECIES_DEFS = EnsEMBL::Web::SpeciesDefs->new();
+my $dbconnection = EnsEMBL::Web::DBSQL::DBConnection->new(undef, $SPECIES_DEFS);
+
 unless ($no_log) {
   (my $time = gmtime(time)) =~ s/\s+/\./g;
   $logfile ||= "logs/flat"."_$time.log";
@@ -75,18 +77,13 @@ unless ($no_log) {
   open(STDERR, "> $logfile") || die "Can't create file:$!\n";
 }
 
-
-my $SPECIES_DEFS = EnsEMBL::Web::SpeciesDefs->new();
-my $dbconnection = EnsEMBL::Web::DBSQL::DBConnection->new(undef, $SPECIES_DEFS);
-
 foreach my $spp (@species){
   $ENV{'ENSEMBL_SPECIES'} = $spp;
-  my ($spp_dumpdirectory, $formats) = setup_directories($SPECIES_DEFS, $spp, \@user_formats);
-  my $format_count = scalar @$formats;
+  my $formats_dir = setup_directories($SPECIES_DEFS, $spp, \@user_formats);
 
   my $batch = 0;
   my $count = 0;
-  my $chunk = $spp eq "Mus_musculus" ? 100 : 1000;
+  my $CHUNK = $spp eq "Mus_musculus" ? 100 : 1000;
   my @too_long;
 
   # loop through every non-redundant region in the DB
@@ -99,38 +96,37 @@ foreach my $spp (@species){
     die( "Could not retrieve core database for $spp" );
   my $slice_adaptor = $db->get_SliceAdaptor();
   $slice_adaptor->cache_toplevel_seq_mappings();
-  my $slices = $slice_adaptor->fetch_all('toplevel', undef,
-                                         $inc_dupes, $inc_nonref);
-  foreach my $slice (@$slices) {
+
+  foreach my $slice (@{ $slice_adaptor->fetch_all('toplevel', undef, 
+						  $inc_dupes, $inc_nonref) } ){
     # generate list of 'unbreakable' blocks around genes
-    my ($exclude_blocks, $big_blocks, $too_long)= generate_blocklist($slice, $spp);
+    my ($blocks, $too_long)= generate_blocklist($slice, $spp);
+    push (@too_long, @$too_long);
 
     # split up slices into reasonable chunks, and avoid breaking genes
-    my $chunked_slices = chunk_seq_region( $slice, $exclude_blocks );
+    my $chunked_slices = chunk_seq_region( $slice, $blocks );
+    undef $blocks;
 
     # dump flatfiles for the chunks
     foreach my $chunked_slice (@$chunked_slices) {
       my $seq = $chunked_slice->seq();
-      for (my $i=0;$i < scalar @$formats; $i++){
-        dump_format($chunked_slice, $formats->[$i], $spp_dumpdirectory->[$i], $seq);
+      foreach my $format (sort keys %$formats_dir) {
+        dump_format($chunked_slice, $format, $formats_dir->{$format}, $seq);
       }
       $count++;
-      if($count >= $chunk){
-        for (my $i=0;$i < $format_count; $i++){
-          ftp_bundle($formats->[$i], $spp_dumpdirectory->[$i], $VERBOSITY, $batch, $chunk, $spp) unless $nobundle;
+      if($count >= $CHUNK){
+        foreach my $format (sort keys %$formats_dir) {
+          ftp_bundle($format, $formats_dir->{$format}, $batch, $spp) unless $nobundle;
         }
         $batch++;
         $count = 0;
       }
     }
-    # Were there big blocks or genes that were skipped cos too long?
-    warning (1, "$big_blocks big blocks") if $big_blocks;
-    push (@too_long, @$too_long);
-  }
+  } #end foreach slice
 
   if($count > 0){
-    for (my $i=0;$i < $format_count; $i++){
-      ftp_bundle($formats->[$i], $spp_dumpdirectory->[$i], $VERBOSITY, $batch, $chunk) unless $nobundle;
+    foreach my $format (sort keys %$formats_dir) {
+      ftp_bundle($format, $formats_dir->{$format}, $batch, $spp) unless $nobundle;
     }
   }
 
@@ -147,7 +143,7 @@ my $hours      = localtime($time_taken)->hour -1;
 warning (1, "Used $logfile. Time taken: $hours:". localtime($time_taken)->min."mins");
 
 $email ||= 'ensembl-webteam@sanger.ac.uk';
-utils::Tool::mail_log( $logfile, $email ) if $logfile;
+utils::Tool::mail_log( $logfile, $email,"" ) if $logfile;
 
 exit;
 
@@ -158,8 +154,7 @@ sub setup_directories {
   my $sp_release = $SPECIES_DEFS->get_config($spp,"SPECIES_RELEASE_VERSION");
   $sp_release =~ s/\.//g;
 
-  my @formats = ();
-  my @spp_dumpdirectory;
+  my %formats_dir;
   my $sitedefs_release =  $SiteDefs::ENSEMBL_VERSION;
 
   foreach my $format (@$user_formats){
@@ -185,10 +180,9 @@ sub setup_directories {
 
 
     next if $readme_only;
-    push @formats, $format;
-    push @spp_dumpdirectory, $spp_dumpdir;
+    $formats_dir{$format} = $spp_dumpdir;
   }
-    return (\@spp_dumpdirectory, \@formats);
+    return \%formats_dir;
   }
 
 
@@ -218,14 +212,12 @@ sub generate_blocklist {
   my $block_start = 0;
   my $block_end   = 0;   #  $block_end = end of current gene
   my @block_list;
-  my @too_long;
-  my($gen_start, $gen_end);
+  my @too_long;          # skipped
 
   foreach my $gene( @genes ) {
-
     # make the gene a bit bigger to put gene in context
-    $gen_start = $gene->start() - 1000;
-    $gen_end   = $gene->end()   + 1000;
+    my $gen_start = $gene->start() - 1000;
+    my $gen_end   = $gene->end()   + 1000;
 
     if( $gen_end - $gen_start > $GENE_MAX ) {
       warning (1, "Gene too long -skipped ". $slice->seq_region_name().":".
@@ -241,10 +233,7 @@ sub generate_blocklist {
     if( $gen_start > $block_end ) {
       if( $block_end > 0 ) {
         push( @block_list, [ $block_start, $block_end ] );
-
-        if( $block_end - $block_start > 2 * $MAX_SIZE ) {
-          $big_blocks++;
-        }
+	$big_blocks++ if ( $block_end - $block_start > 2 * $MAX_SIZE) ;
       }
       # Reset the block start and end to match current gene
       ( $block_start, $block_end ) = ( $gen_start, $gen_end );
@@ -252,20 +241,18 @@ sub generate_blocklist {
     else {  # The current gene overlaps the last, so incr current block size
       $block_end = $gen_end;
     }
-  }
+  } # end foreach gene
 
   # remember to add the last block
   if($block_end > 0) {
     push( @block_list, [ $block_start, $block_end ]);
-    if($block_end - $block_start > 2 * $MAX_SIZE) {
-      $big_blocks++;
-    }
+    $big_blocks++ if ( $block_end - $block_start > 2 * $MAX_SIZE) ;
   }
 
   if($big_blocks) {
-    print STDERR "WARNING: ", $slice->seq_region_name(), " has $big_blocks big blocks\n";
+    print STDERR "HEADS UP: ", $slice->seq_region_name(), " has $big_blocks big blocks due to no gaps between genes\n";
   }
-  return (\@block_list, $big_blocks, \@too_long);
+  return (\@block_list, \@too_long);
 }
 
 #-----------------------------------------------------------------------------
@@ -295,16 +282,14 @@ sub chunk_seq_region {
 
   ########## CAN YOU ASSUME THESE COME BACK IN ORDER??  
   my @projection = @{$slice->project('seqlevel')};
+  undef $slice;  # saves memory
+
   if(!@projection) {
     warning (1,"Sequence region: $seq_region doesn't have any sequence");
     return [];
   }
-  my $seq_start = $projection[0]->from_start();
   my $seq_end   = $projection[-1]->from_end();
-
-  # Destroy $slice for memory reasons and @projection
-  undef $slice;
-  undef @projection;
+  undef @projection; # saves memory
 
   # We need a stop block at the end to ensure algorithm gets
   # to the very end of the sequence.
@@ -345,7 +330,8 @@ sub chunk_seq_region {
     push( @chunked, $chunked_slice);
     $cur_start = $cur_start + $cur_length;
     $cur_length = 0;
-  }
+  }  # end while
+
   if( $cur_length > 0 ) {
     my $chunked_slice = 
       $slice_adaptor->fetch_by_region($cs_name, $seq_region, $cur_start,
@@ -384,12 +370,13 @@ sub dump_format {
 
 #------------------------------------------------------------------------------
 sub ftp_bundle{
-  my ($format, $spp_dumpdir, $VERBOSITY, $batch, $chunk_size, $spp) = @_;
+  my ($format, $spp_dumpdir, $batch, $spp) = @_;
   my $count = 0;
   my $spp = $ENV{'ENSEMBL_SPECIES'};
   my $gz;
+  my $CHUNK = $spp eq "Mus_musculus" ? 100 : 1000;
 
-  info(1, "Generating compressed data archives for FTP site (chunk=$chunk_size)..");
+  info(1, "Generating compressed data archives for FTP site (chunk=$CHUNK)..");
   opendir DIR, "$spp_dumpdir" or warn "$spp_dumpdir: $!\n";
   my @f = readdir DIR;
   closedir(DIR);
@@ -399,7 +386,7 @@ sub ftp_bundle{
     info (1, "Made dir $spp_dumpdir/FTP");
   }
 
-  $gz = gzopen("$spp_dumpdir/FTP/$spp.".($batch*$chunk_size).".dat.gz","wb") || die $!;
+  $gz = gzopen("$spp_dumpdir/FTP/$spp.".($batch*$CHUNK).".dat.gz","wb") || die $!;
  HOP: while (@f){
 
     my $filename = shift(@f);
