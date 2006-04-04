@@ -380,6 +380,9 @@ sub fetch_all {
           SELECT
             method_link_species_set_id,
             method_link_species_set.method_link_id,
+            name,
+            source,
+            url,
             genome_db_id,
             type
           FROM
@@ -395,9 +398,12 @@ sub fetch_all {
   my $all_method_link_species_sets;
   my $gdba = $self->db->get_GenomeDBAdaptor;
   
-  while (my ($method_link_species_set_id, $method_link_id, $genome_db_id, $type) =
+  while (my ($method_link_species_set_id, $method_link_id, $name, $source, $url, $genome_db_id, $type) =
         $sth->fetchrow_array()) {
     $all_method_link_species_sets->{$method_link_species_set_id}->{'METHOD_LINK_ID'} = $method_link_id;
+    $all_method_link_species_sets->{$method_link_species_set_id}->{'NAME'} = $name;
+    $all_method_link_species_sets->{$method_link_species_set_id}->{'SOURCE'} = $source;
+    $all_method_link_species_sets->{$method_link_species_set_id}->{'URL'} = $url;
     $all_method_link_species_sets->{$method_link_species_set_id}->{'METHOD_LINK_TYPE'} = $type;
     push(@{$all_method_link_species_sets->{$method_link_species_set_id}->{'SPECIES_SET'}},
         $gdba->fetch_by_dbID($genome_db_id));
@@ -411,6 +417,12 @@ sub fetch_all {
                 $all_method_link_species_sets->{$method_link_species_set_id}->{'METHOD_LINK_ID'},
             -method_link_type =>
                 $all_method_link_species_sets->{$method_link_species_set_id}->{'METHOD_LINK_TYPE'},
+            -name =>
+                $all_method_link_species_sets->{$method_link_species_set_id}->{'NAME'},
+            -source =>
+                $all_method_link_species_sets->{$method_link_species_set_id}->{'SOURCE'},
+            -url =>
+                $all_method_link_species_sets->{$method_link_species_set_id}->{'URL'},
             -species_set =>
                 $all_method_link_species_sets->{$method_link_species_set_id}->{'SPECIES_SET'}
         );
@@ -443,6 +455,9 @@ sub fetch_by_dbID {
           SELECT
             method_link_species_set_id,
             mlss.method_link_id,
+            name,
+            source,
+            url,
             genome_db_id,
             type
           FROM
@@ -460,10 +475,13 @@ sub fetch_by_dbID {
   my $this_method_link_species_set;
   
   ## Get all rows corresponding to this method_link_species_set
-  while (my ($method_link_species_set_id, $method_link_id, $genome_db_id, $type) =
+  while (my ($method_link_species_set_id, $method_link_id, $name, $source, $url, $genome_db_id, $type) =
         $sth->fetchrow_array()) {
     $this_method_link_species_set->{'METHOD_LINK_ID'} = $method_link_id;
     $this_method_link_species_set->{'METHOD_LINK_TYPE'} = $type;
+    $this_method_link_species_set->{'NAME'} = $name;
+    $this_method_link_species_set->{'SOURCE'} = $source;
+    $this_method_link_species_set->{'URL'} = $url;
     push(@{$this_method_link_species_set->{'SPECIES_SET'}}, $gdba->fetch_by_dbID($genome_db_id));
   }
   
@@ -475,6 +493,9 @@ sub fetch_by_dbID {
           -dbID => $dbID,
           -method_link_id => $this_method_link_species_set->{'METHOD_LINK_ID'},
           -method_link_type => $this_method_link_species_set->{'METHOD_LINK_TYPE'},
+          -name => $this_method_link_species_set->{'NAME'},
+          -source => $this_method_link_species_set->{'SOURCE'},
+          -url => $this_method_link_species_set->{'URL'},
           -species_set => $this_method_link_species_set->{'SPECIES_SET'}
       );
   if (!$method_link_species_set) {
