@@ -106,6 +106,10 @@ foreach my $codon (keys %FOURD_CODONS) {
 sub get_SimpleAlign {
   my $self = shift;
   my $alignment = shift;
+  my $changeSelenos = shift;
+  unless (defined $changeSelenos) {
+      $changeSelenos = 0;
+  }
   
   my $sa = Bio::SimpleAlign->new();
 
@@ -123,7 +127,7 @@ sub get_SimpleAlign {
     my $peptide_member = $ma->fetch_by_dbID($attribute->peptide_member_id);
     my $seqstr;
     if (defined $alignment && $alignment =~ /^cdna$/i) {
-      $seqstr = $attribute->cdna_alignment_string($peptide_member);
+      $seqstr = $attribute->cdna_alignment_string($peptide_member,$changeSelenos);
       $seqstr =~ s/\s+//g;
     } else {
       $seqstr = $attribute->alignment_string($peptide_member);
