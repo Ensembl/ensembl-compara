@@ -169,6 +169,7 @@ sub output_AlignSlice {
     my $sa = $as->get_SimpleAlign( $esp, @species);
     
     my $type = $as->get_MethodLinkSpeciesSet->method_link_type;
+    my $name = $as->get_MethodLinkSpeciesSet->name;
 
     my $info = qq{
 <table>
@@ -180,11 +181,15 @@ sub output_AlignSlice {
     <td> Method: </td>
     <td> %s </td>
   </tr>
+  <tr>
+    <td> Species set: </td>
+    <td> %s </td>
+  </tr>
 
 </table>
     };
 
-    $panel->print(sprintf($info, join(", ", @species), $type));
+    $panel->print(sprintf($info, join(", ", @species), $type, $name));
 
     my $alignio = Bio::AlignIO->newFh(
 				      -fh     => IO::String->new(my $var),
