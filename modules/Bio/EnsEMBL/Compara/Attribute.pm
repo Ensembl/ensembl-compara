@@ -115,7 +115,10 @@ sub alignment_string {
 =cut
 
 sub cdna_alignment_string {
-  my ($self, $member) = @_;
+  my ($self, $member, $changeSelenos) = @_;
+  unless (defined $changeSelenos) {
+      $changeSelenos = 0;
+  }
 
   if($member->source_name ne 'ENSEMBLPEP') {
     warning("Don't know how to retrieve cdna for database [@{[$member->source_name]}]
@@ -163,6 +166,9 @@ sub cdna_alignment_string {
       
       if($pep eq '-') {
         $cdna_align_string .= '--- ';
+      } elsif ($pep eq 'U' && $changeSelenos) {
+	$cdna_align_string .= 'NNN ';
+	$start += 3;  
       } else {
         my $codon = substr($cdna, $start, 3);
         unless (length($codon) == 3) {
@@ -174,7 +180,7 @@ sub cdna_alignment_string {
         $start += 3;
       }
     }
-    $self->{'cdna_alignment_string'} = $cdna_align_string
+    $self->{'cdna_alignment_string'} = $cdna_align_string;
   }
   
   return $self->{'cdna_alignment_string'};
