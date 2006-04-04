@@ -34,9 +34,12 @@ sub render {
       }
       $output .= sprintf( "    <div class=\"%s\"><input id=\"%s_%d\" class=\"radio\" type=\"radio\" name=\"%s\" value=\"%s\" %s/><label for=\"%s_%d\">%s</label></div>\n",
 			  $self->{'class'},
-			  CGI::escapeHTML($self->id), $K, CGI::escapeHTML($self->name), CGI::escapeHTML($V->{'value'}),
-			  $checked eq 'yes' ? ' checked="checked"' : '', CGI::escapeHTML($self->id), $K,
-			  CGI::escapeHTML($V->{'name'})
+			  CGI::escapeHTML($self->id), 
+			  $K, CGI::escapeHTML($self->name), 
+			  CGI::escapeHTML($V->{'value'}),
+			  $checked eq 'yes' ? ' checked="checked"' : '', 
+			  CGI::escapeHTML($self->id), $K,
+			  $self->{'noescape'} ? $V->{'name'} : CGI::escapeHTML($V->{'name'}),
 			  );
       $K++;
   }
