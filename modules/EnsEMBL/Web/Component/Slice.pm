@@ -65,47 +65,21 @@ sub align_sequence_display {
       $SeqDNA->{$spe} = $slice->seq;
       push @{$SeqSlices->{$spe}}, $slice->name;
   } else {
-      my ($aID, $aType);
-      my @sarray;
-      my @selarray;
-      
-      if( $aselect =~ /^(BLASTZ_NET)_(.+)/) {
-	  $aType = $aID = $1;
-	  push @sarray, $2;
-	  push @selarray, $2;
-      } else {
-	  $aID = $aselect;
-	  $aType = 'MLAGAN';
-	  my %shash = $object->species_defs->multi($aID, $species);
-	  push @sarray, keys %shash;
-	  push @selarray , $object->param("ms_$aID");
-      }
-
-      my @s_array;
-      foreach my $sp ($species, @sarray) {
-	  $sp =~ s/_/ /g;
-	  push @s_array, $sp;
-      }
-      my @sel_array;
-      foreach my $sp ($species, @selarray) {
-	  $sp =~ s/_/ /g;
-	  push @sel_array, $sp;
-      }
-
       my $mlss_adaptor = $comparadb->get_adaptor("MethodLinkSpeciesSet");
-      my $method_link_species_set = $mlss_adaptor->fetch_by_method_link_type_registry_aliases($aType, \@s_array );
+      my $method_link_species_set = $mlss_adaptor->fetch_by_dbID($aselect); 
 
       my $asa = $comparadb->get_adaptor("AlignSlice" );
       my $align_slice = $asa->fetch_by_Slice_MethodLinkSpeciesSet($slice, $method_link_species_set);
-      push @slice_display, $slice;
-      (my $sss = $species) =~ s/_/ /g;
-      push @slice_display, grep { $_->genome_db->name ne $sss } @{$align_slice->get_all_Slices(@sel_array)};
+
+      my @selected_species = grep {$_ } $object->param("ms_$aselect");
+
+      unshift @selected_species, $object->species if (@selected_species);
+
+      push @slice_display, @{$align_slice->get_all_Slices(@selected_species)};
 
       push @tsa, (time - $ts);
 
       $alignments_no = scalar(@slice_display);  
-
-
 
       foreach my $sl (@slice_display) {
 	  my @lsa = ();

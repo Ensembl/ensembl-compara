@@ -1,5 +1,25 @@
 package EnsEMBL::Web::Document::DropDown::Menu::AlignCompara;
 
+
+=head1 NAME
+
+EnsEMBL::Web::Document::DropDown::Menu::AlignCompara
+
+=head1 SYNOPSIS
+
+The object handles the 'Comparative' dropdown menu in alignsliceview 
+
+=head1 LICENCE
+
+This code is distributed under an Apache style licence:
+Please see http://www.ensembl.org/code_licence.html for details
+
+=head1 CONTACT
+
+Eugene Kulesha - ek3@sanger.ac.uk
+
+=cut
+
 use strict;
 use EnsEMBL::Web::Document::DropDown::Menu;
 
@@ -16,34 +36,48 @@ sub new {
   
   my $species = $ENV{ENSEMBL_SPECIES};
 
-### Get all MLAGAN alignment sets
-### It is understood that all set ids will be like MLAGAN-XXX
-  my @mlagan_alignments = grep { /MLAGAN-/ } keys %{$self->{'config'}->{'species_defs'}->{'_multi'}};
+  my %alignments = $self->{'config'}->species_defs->multiX('ALIGNMENTS');
 
-  if (@mlagan_alignments) {
+  my @multiple_alignments;
+  my @pairwise_alignments;
+
+  foreach my $id (
+		  sort { 10 * ($alignments{$a}->{'type'} cmp $alignments{$b}->{'type'}) + ($a <=> $b) }
+		  grep { $alignments{$_}->{'species'}->{$species} } 
+		  keys (%alignments)) {
+
+      my $sp = $alignments{$id}->{'name'};
+
+      my @species = grep {$_ ne $species} sort keys %{$alignments{$id}->{'species'}};
+
+      if ( scalar(@species) > 1) {
+	  push @multiple_alignments, [ $id, $sp, @species ];
+      } else {
+	  push @pairwise_alignments, [ $id, $species[0] ];
+      }
+  }
+
+  if (@multiple_alignments) {
       $self->add_text("Multiple Alignments");
   }
 
-  foreach my $align (@mlagan_alignments) {
-      my $h = $self->{'config'}->{'species_defs'}->{'_multi'}->{$align};
-      next if (! defined($h->{$species}));
-      $self->add_radiobutton( "opt_alignm_$align", $align );
+  foreach my $align (@multiple_alignments) {
+      my ($id, $label, @sspecies) = @$align;
+      $self->add_radiobutton( "opt_align_$id", $label );
 
-      foreach my $sp (sort keys %$h ) { 
-	  $self->add_checkbox( "opt_${align}_$sp", $sp ) if ($sp ne $species);
+      foreach my $sp (sort @sspecies ) { 
+	  $self->add_checkbox( "opt_${id}_$sp", $sp );
       }
       $self->add_text(" ");
   }
 
-  my $align = 'BLASTZ_NET';
-  my $h = $self->{'config'}->{'species_defs'}->{'_multi'}->{$align}->{$species};
-  $self->add_text("Pairwise Alignments");  
-
-  my @species = sort keys %$h ;
-  foreach my $label ( @species ) {
-      $self->add_radiobutton( "opt_alignp_${align}_$label", $label) 
+  if (@pairwise_alignments) {
+      $self->add_text("Pairwise Alignments");  
   }
-  
+  foreach my $align (@pairwise_alignments) {
+      my ($id, $label) = @$align;
+      $self->add_radiobutton( "opt_align_$id", $label );
+  }
   return $self;
 }
 

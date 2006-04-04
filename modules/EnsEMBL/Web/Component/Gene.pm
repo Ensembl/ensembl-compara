@@ -230,64 +230,67 @@ sub align_markup_options_form {
     'notes'    => "On mouse over displays exon IDs, length of insertions and SNP\'s allele"
   );
 
-  my $id = 'BLASTZ_NET';
-  my @dvals;
-
-  my %shash = $object->species_defs->multi($id, $object->species);
   my $aselect = $object->param("RGselect") || "NONE";
-
-  foreach my $sp (sort keys %shash) {
-      push @dvals, {'name'=> "$sp", 'value' => "${id}_$sp", checked=>$aselect eq "${id}_$sp" ? "yes" : undef};
-  }
 
   $form->add_element('type' => 'RadioGroup',
 		     'name' => 'RGselect',
-		     'values' =>[{name=> "No alignments", value => "NONE", checked => $aselect eq "NONE" ? "yes" : undef}],
+		     'values' =>[{name=> "<b>No alignments</b>", value => "NONE", checked => $aselect eq "NONE" ? "yes" : undef}],
 		     'label' => 'View in alignment with',
+		     'noescape' => 'yes',
 		     );
 
 
-  foreach my $id (qw(MLAGAN-167 MLAGAN-170)) {
-      if ( my %shash = $object->species_defs->multi($id, $object->species)) {
-	  my @vvalues;
-	  foreach my $s ($object->param("ms_$id")) {
-	      $shash{$s} = 2 if ($shash{$s});
-	  }
-	  foreach my $v (sort keys %shash) {
-	      next if ($v eq $object->species);
-	      if ($shash{$v} == 2) {
-		  push @vvalues, {"value"=>$v, "name"=>$v, "checked"=>"yes"};
+
+  my %alignments = $object->species_defs->multiX('ALIGNMENTS');
+  my @align_select;
+
+  foreach my $id (
+		  sort { 10 * ($alignments{$a}->{'type'} cmp $alignments{$b}->{'type'}) + ($a <=> $b) }
+		  grep { $alignments{$_}->{'species'}->{$object->species} } 
+		  keys (%alignments)) {
+
+      my $label = $alignments{$id}->{'name'};
+      my @species = grep {$_ ne $object->species} sort keys %{$alignments{$id}->{'species'}};
+
+      my @multi_species;
+      if ( scalar(@species) > 1) {
+	  my %selected_species = map { $_ => 1} $object->param("ms_$id");
+
+	  foreach my $v (@species) {
+	      if ($selected_species{$v}) {
+		  push @multi_species, {"value"=>$v, "name"=>$v, "checked"=>"yes"};
 	      } else {
-		  push @vvalues, {"value"=>$v, "name"=>$v};
+		  push @multi_species, {"value"=>$v, "name"=>$v};
 	      }
 	  }
-	  $form->add_element('type' => 'RadioGroup',
-			     'name' => 'RGselect',
-			     'values' =>[{name=>sprintf("%d Species (%s)", scalar(keys %shash), $id), value => $id, checked=> $aselect eq $id ? "yes" : undef}],
-			     'label' => '    ',
-			     );
+	  $label = "<b>$label</b> (click on checkboxes to select species)";
+
+      } else {
+	  $label = "<b>$species[0]</b>";
+      }
+
+      $form->add_element('type' => 'RadioGroup',
+			 'name' => 'RGselect',
+			 'values' =>  [{name=> $label, 'value' => $id, checked=>$aselect eq "$id" ? "yes" : undef}],
+			 'label' => '     ',
+			 'class' => 'radiocheck1col',
+			 'noescape' => 'yes'
+		     );
 
 
-	  my @ava = $object->param("ms_$id");
-
+      if (@multi_species) {
 	  $form->add_element(
 			     'type' => 'MultiSelect',
 			     'name'=> "ms_$id",
-			     'label'=>'     ',
-			     'values' => \@vvalues,
+			     'label'=> (' ' x 420),
+			     'values' => \@multi_species,
 			     'value' => $object->param("ms_$id")
 			     );
       }
+
+
   }
-
   
-  $form->add_element('type' => 'RadioGroup',
-		     'name' => 'RGselect',
-		     'values' => \@dvals,
-		     'label' => '     ',
-		     );
-
-
   $form->add_element(
     'type'  => 'Submit', 'value' => 'Update' 
   );
@@ -507,38 +510,31 @@ sub orthologues {
   my $especies = $ENV{ENSEMBL_SPECIES};
 
   my $as_html = qq{<br/> <b>This gene can be viewed in genomic alignment with other species</b><br/><br/>} ;
-  foreach my $id ( qw(MLAGAN-167 MLAGAN-170) ) {
-      my %shash = ( $gene->species_defs->multi($id,$especies) );
-      if (%shash) {
-	  my $KEY = "opt_alignm_$id";
-	  $as_html .= sprintf( qq(&nbsp;&nbsp;&nbsp;<a href="/%s/alignsliceview?l=%s:%s-%s;align=%s">view genomic alignment with %s Species ($id)</a> <br/>), 
-			       $gene->species,
-			       $gene->seq_region_name, 
-			       $gene->seq_region_start, 
-			       $gene->seq_region_end, 
-			       $KEY,
-			       scalar(keys(%shash))
-			       );
-      }
+
+  my %alignments = $gene->species_defs->multiX('ALIGNMENTS');
+  my $species = $gene->species;
+
+  foreach my $id (
+		  sort { 10 *($alignments{$a}->{'type'} cmp $alignments{$b}->{'type'}) + ($a <=> $b) }
+		  grep { $alignments{$_}->{'species'}->{$species} } 
+		  keys (%alignments)) {
+
+      my $label = $alignments{$id}->{'name'};
+      my $KEY = "opt_align_${id}";
+
+      my @species = grep {$_ ne $species} sort keys %{$alignments{$id}->{'species'}};
+
+      $label = $species[0] if ( scalar(@species) == 1);
+      
+      $as_html .= sprintf( qq(&nbsp;&nbsp;&nbsp;<a href="/%s/alignsliceview?l=%s:%s-%s;align=%s">view genomic alignment with <b>%s</b></a> <br/>), 
+			   $gene->species,
+			   $gene->seq_region_name, 
+			   $gene->seq_region_start, 
+			   $gene->seq_region_end, 
+			   $KEY,
+			   $label);
+
   }
-
-  my $aID = 'BLASTZ_NET';
-  my %shash2 = ( $gene->species_defs->multi($aID,$especies) );
-  my @species = keys %shash2;
-
-  foreach my $sp (@species) {
-      my $KEY = "opt_alignp_${aID}_$sp";
-
-      $as_html .= sprintf( qq(&nbsp;&nbsp;&nbsp;<a href="/%s/alignsliceview?l=%s:%s-%s;align=%s">view genomic alignment with %s</a> <br/>), 
-			  $especies,
-			  $gene->seq_region_name, 
-			  $gene->seq_region_start, 
-			  $gene->seq_region_end, 
-			  $KEY, 
-			   $sp
-			  );
-  }
-
 
   my $html = qq(
       <p>

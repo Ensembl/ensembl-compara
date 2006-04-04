@@ -1015,28 +1015,16 @@ sub alignsliceviewbottom {
 
     my $query_slice= $query_slice_adaptor->fetch_by_region($slice->coord_system_name, $slice->seq_region_name, $slice->start, $slice->end);
 
-    my %aSpecies = ( $species => 1 );
-    my $aType = $wuc->get("alignslice", "type");
-    my $aID = $wuc->get("alignslice", "id");
-
-    foreach my $sp (@{$wuc->get("alignslice", "species")}) {
-	$aSpecies{$sp} = 1;
-    }
-
-    my %shash = $object->species_defs->multi($aID, $species);
-
     my $comparadb = $object->database('compara');
-    my @sarray;
-    foreach my $s (keys %aSpecies) {
-	$s =~ s/_/ /;
-	push @sarray, $s;
-    }
-    my @larray = ($species, keys %shash);
-
     my $mlss_adaptor = $comparadb->get_adaptor("MethodLinkSpeciesSet");
-#    warn ("SA: @sarray ");
-#    warn ("LA: @larray ");
-    my $method_link_species_set = $mlss_adaptor->fetch_by_method_link_type_registry_aliases($aType, $aType eq 'BLASTZ_NET' ? \@sarray : \@larray);
+
+    my $aID = $wuc->get("alignslice", "id");
+    my $method_link_species_set = $mlss_adaptor->fetch_by_dbID($aID); 
+
+    my @selected_species = @{$wuc->get("alignslice", "species")};
+    unshift @selected_species, $object->species if (@selected_species);
+
+
     my $asa = $comparadb->get_adaptor("AlignSlice" );
     my $align_slice = $asa->fetch_by_Slice_MethodLinkSpeciesSet($query_slice, $method_link_species_set, "expanded" );
 
@@ -1050,16 +1038,12 @@ sub alignsliceviewbottom {
     my $t2 = $wuc->get('evega_transcript','compact');
     my $t3 = $wuc->get('variation','on');
     my $id = 0;
-    my $num = scalar(@sarray);
+    my $num = scalar(@selected_species);
 
     add_repeat_tracks( $object, $wuc );
 
-    foreach my $as (@{$align_slice->get_all_Slices(@sarray)}) {
-
+    foreach my $as (@{$align_slice->get_all_Slices(@selected_species)}) {
 	(my $vsp = $as->genome_db->name) =~ s/ /_/g;
-#	warn("VSP: $vsp !!!");
-#	next if (! $aSpecies{$vsp});
-
 	$id ++;
 	my $CONF = $object->user_config_hash( "alignsliceviewbottom_$id", "alignsliceviewbottom"  );
 	$CONF->{'align_slice'}  = 1;

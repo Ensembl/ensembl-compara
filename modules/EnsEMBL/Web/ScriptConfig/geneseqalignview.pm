@@ -1,5 +1,24 @@
 package EnsEMBL::Web::ScriptConfig::geneseqalignview;
 
+=head1 NAME
+
+EnsEMBL::Web::ScriptConfig::geneseqalignview;
+
+=head1 SYNOPSIS
+
+The object handles the config of geneseqalignview script
+
+=head1 LICENCE
+
+This code is distributed under an Apache style licence:
+Please see http://www.ensembl.org/code_licence.html for details
+
+=head1 CONTACT
+
+Eugene Kulesha - ek3@sanger.ac.uk
+
+=cut
+
 use strict;
 
 sub init {
@@ -17,8 +36,8 @@ sub init {
     codons_display off
     title_display off
     RGselect   NONE
-    ms_MLAGAN-167 off
-    ms_MLAGAN-170 off
+    ms_1 off
+    ms_2 off
   ));
 }
 1;

@@ -61,29 +61,27 @@ sub context_menu {
 
   my @options_as = ();
 
-  foreach my $id ( qw(MLAGAN-167 MLAGAN-170) ) {
-    my %shash2 = ( $obj->species_defs->multi($id, $species) );
-    if (%shash2) {
-      my $KEY = "opt_alignm_${id}";
-      my $label = sprintf("%d Species ($id)", scalar(keys(%shash2)));
+  my %alignments = $obj->species_defs->multiX('ALIGNMENTS');
+
+  foreach my $id (
+		  sort { 10 * ($alignments{$a}->{'type'} cmp $alignments{$b}->{'type'}) + ($a <=> $b) }
+		  grep { $alignments{$_}->{'species'}->{$species} } 
+		  keys (%alignments)) {
+
+      my $label = $alignments{$id}->{'name'};
+      my $KEY = "opt_align_${id}";
+
+      my @species = grep {$_ ne $species} sort keys %{$alignments{$id}->{'species'}};
+
+      $label = $species[0] if ( scalar(@species) == 1);
+
       push @options_as, {
-        'text' => "... $label", 'raw' => 1,
+        'text' => "... <em>$label</em>", 'raw' => 1,
         'href' =>  sprintf( "/%s/alignsliceview?c=%s:%s;w=%s;align=%s", $species,  $obj->seq_region_name, $obj->centrepoint, $obj->length, $KEY )
       };
-    }
+    
   }
 
-  my $aID = 'BLASTZ_NET';
-  my %shash = ( $obj->species_defs->multi($aID,$species) );
-  my @species = keys %shash;
-
-  foreach my $sp (@species) {
-      my $KEY = "opt_alignp_${aID}_$sp";
-      push @options_as, {
-	  'text' => "... <em>$sp</em>", 'raw' => 1,
-	  'href' =>  sprintf( "/%s/alignsliceview?c=%s:%s;w=%s;align=%s", $species, $obj->seq_region_name, $obj->centrepoint, $obj->length, $KEY )
-	  };
-  }
   if( @options_as ) {
     $menu->add_entry( $flag, 'text' => "View alignment with ...", 'href' => $options_as[0]{'href'},
       'options' => \@options_as, 'title' => "AlignSliceView - graphical view of alignment"
@@ -484,6 +482,7 @@ sub contigview {
 sub alignsliceview {
     my $self   = shift;
     my $obj    = $self->{object};
+    my $species    = $obj->species;
     my $q_string = sprintf( '%s:%s-%s', $obj->seq_region_name, $obj->seq_region_start, $obj->seq_region_end );
 
     my $config_name = 'alignsliceviewbottom';
@@ -507,25 +506,18 @@ sub alignsliceview {
 	    my ($atype, $id);
 	    my @selected_species;
 
-	    if ($opt =~ /^opt_alignp_(.*)_(\w+_\w+)$/) {
-#		warn("REXP: $1 * $2");
-		$id = $atype = $1;
-		push @selected_species, $2;
-	    } else {
-		($atype = $opt) =~ s!opt_alignm_|-.+$!!g;
-		($id = $opt) =~ s!opt_alignm_!!;
+	    if ($opt =~ /^opt_align_(.*)/) {
+		$id = $1;
 		my @align_species = grep { /opt_${id}_/ } keys (%{$wsc->{_options}});
 
 	        foreach my $sp (@align_species) {
 		    if ($wsc->get($sp, "on") eq 'on') {
 			$sp =~ s/opt_${id}_//;
-			push @selected_species, $sp;
+			push @selected_species, $sp if ($sp ne $species);
 		    }
 	        }
 	    }
-
-#	    warn("STEP1: ($opt :$atype, $id : @selected_species )");
-	    $wuc->set( 'alignslice',  'type', $atype, 1);
+#	    warn("STEP1: ($opt : $id : @selected_species )");
 	    $wuc->set( 'alignslice',  'id', $id, 1);
             $wuc->set( 'alignslice',  'species', \@selected_species, 1);
             $wuc->set( 'alignslice',  'align', $opt, 1);
