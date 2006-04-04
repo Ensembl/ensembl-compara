@@ -562,14 +562,7 @@ sub _parse {
         );
  ## We've done the DB hash...
  ## So lets get on with the multiple alignment hash;
-        my $q = qq{
-          SELECT ml.type, gd.name, CONCAT(ml.type,'-', mlss.method_link_species_set_id) as id 
-            FROM method_link ml, method_link_species_set mlss, genome_db gd
-           WHERE mlss.method_link_id = ml.method_link_id and
-                 mlss.genome_db_id=gd.genome_db_id AND ml.type = 'MLAGAN'};
-
-
-	$q = qq{
+	my $q = qq{
 	    SELECT ml.type, gd.name, mlss.name, mlss.method_link_species_set_id
 	    FROM method_link ml, method_link_species_set mlss, genome_db gd, species_set ss 
 	    WHERE mlss.method_link_id = ml.method_link_id AND mlss.species_set_id=ss.species_set_id AND ss.genome_db_id = gd.genome_db_id AND ml.type in ('MLAGAN', 'BLASTZ_NET')};
@@ -589,7 +582,7 @@ sub _parse {
           $tree->{$KEY}->{$id}->{'species'}->{$species} = 1;
         }
 
-	warn("$KEY: ". Data::Dumper::Dumper($tree->{$KEY}));
+#	warn("$KEY: ". Data::Dumper::Dumper($tree->{$KEY}));
 
         $sth->finish();
         $dbh->disconnect();
@@ -607,18 +600,7 @@ sub _parse {
         );
         # We've done the DB hash...
         # So lets get on with the DNA, SYNTENY and GENE hashes;
-        my $q = "select ml.type, gd1.name, gd2.name
-                   from method_link as ml,
-                        method_link_species_set as mls1, genome_db as gd1,
-                        method_link_species_set as mls2, genome_db as gd2
-                  where mls1.method_link_species_set_id = mls2.method_link_species_set_id and
-                        ml.method_link_id = mls1.method_link_id and
-                        ml.method_link_id = mls2.method_link_id and 
-                        gd1.genome_db_id != gd2.genome_db_id and
-                        mls1.genome_db_id = gd1.genome_db_id and
-                        mls2.genome_db_id = gd2.genome_db_id";
-
-	$q = qq{select ml.type, gd1.name, gd2.name from genome_db gd1, genome_db gd2, species_set ss1, species_set ss2 , method_link ml, method_link_species_set mls1, method_link_species_set mls2 where mls1.method_link_species_set_id = mls2.method_link_species_set_id and ml.method_link_id = mls1.method_link_id and ml.method_link_id = mls2.method_link_id and gd1.genome_db_id != gd2.genome_db_id and mls1.species_set_id = ss1.species_set_id and mls2.species_set_id = ss2.species_set_id and ss1.genome_db_id = gd1.genome_db_id and ss2.genome_db_id = gd2.genome_db_id};
+	my $q = qq{select ml.type, gd1.name, gd2.name from genome_db gd1, genome_db gd2, species_set ss1, species_set ss2 , method_link ml, method_link_species_set mls1, method_link_species_set mls2 where mls1.method_link_species_set_id = mls2.method_link_species_set_id and ml.method_link_id = mls1.method_link_id and ml.method_link_id = mls2.method_link_id and gd1.genome_db_id != gd2.genome_db_id and mls1.species_set_id = ss1.species_set_id and mls2.species_set_id = ss2.species_set_id and ss1.genome_db_id = gd1.genome_db_id and ss2.genome_db_id = gd2.genome_db_id};
 
         my $sth = $dbh->prepare( $q );
         my $rv  = $sth->execute || die( $sth->errstr );
@@ -707,7 +689,7 @@ sub _parse {
       delete $tree->{'general'};
       $CONF->{'_multi'} = $tree;
       $CONF->{'_storage'}{'Multi'} = $tree;
-      warn(Dumper($CONF->{_multi}->{'ALIGNMENTS'}));
+#      warn(Dumper($CONF->{_multi}->{'ALIGNMENTS'}));
       next;
     }
 ## Move anything in the general section over up to the top level
