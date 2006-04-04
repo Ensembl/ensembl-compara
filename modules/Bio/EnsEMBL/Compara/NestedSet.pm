@@ -499,7 +499,7 @@ sub nhx_format {
   my $self = shift;
   my $format_mode = shift;
   
-  $format_mode="full" unless(defined($format_mode));
+  $format_mode="transcript_id" unless(defined($format_mode));
   my $nhx = $self->_internal_nhx_format($format_mode); 
   $nhx .= ";";
   return $nhx;
@@ -522,9 +522,17 @@ sub _internal_nhx_format {
     $nhx .= ")";
   }
   
-  if($format_mode eq "full") { 
-    #full: name and distance on all nodes
-    $nhx .= sprintf("%s", $self->name,);
+  if($format_mode eq "full" || $format_mode eq "transcript_id") { 
+      #full: name and distance on all nodes
+      if($self->isa('Bio::EnsEMBL::Compara::AlignedMember')) {
+	  if ($format_mode eq "transcript_id") {
+	      $self->description =~ /Transcript:(\w+)/;
+	      my $transcript_stable_id = $1;
+	      $nhx .= sprintf("%s", $transcript_stable_id,);
+	  }
+      } else {
+	  $nhx .= sprintf("%s", $self->name,);
+      }
     $nhx .= sprintf(":%1.4f", $self->distance_to_parent);
     $nhx .= "[&&NHX";
     if($self->get_tagvalue("Duplication") eq '1') { 
@@ -534,6 +542,16 @@ sub _internal_nhx_format {
         # this only applies to internal nodes, hence the name of the
         # method and the reason we can safely add this here
         $nhx .= ":D=N";
+    }
+    if($self->isa('Bio::EnsEMBL::Compara::AlignedMember')) {
+	my $gene_stable_id = $self->gene_member->stable_id;
+	if(defined $gene_stable_id) {
+	    $nhx .= ":G=$gene_stable_id";
+	}
+    }
+    my $taxon_id = $self->get_tagvalue("taxon_id");
+    if(defined ($taxon_id) && (!($taxon_id eq ''))) {
+	$nhx .= ":T=$taxon_id";
     }
     $nhx .= "]";
   }
