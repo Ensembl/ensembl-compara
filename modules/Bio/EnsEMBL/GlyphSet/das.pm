@@ -600,7 +600,7 @@ sub zmenu {
   $zmenu->{"20:TYPE: ". $type           } = '' if $type && uc($type) ne 'NULL';
   my $method = $f->das_method || $f->das_method_id;
   $zmenu->{"25:METHOD: ". $method       } = '' if $method && uc($method) ne 'NULL';
-  $zmenu->{"30:SCORE: ". $f->das_score  } = '' if $f->das_score() && uc($f->das_score()) ne 'NULL';
+  $zmenu->{"30:SCORE: ". $f->das_score  } = '' if (defined($f->das_score));
   $zmenu->{"35:CATEGORY: ". $f->das_type_category } = '' if $f->das_type_category && uc($f->das_type_category) ne 'NULL';
 
   my $ids = 40;
@@ -611,7 +611,7 @@ sub zmenu {
   }
   
   $ids = 50;
-  if ($f->das_start && $f->das_end) {
+  if (defined($f->das_start) && defined($f->das_end)) {
       my $strand = ($f->das_strand > 0) ? 'Forward' : 'Reverse';
       $zmenu->{"50:FEATURE LOCATION:"} = '';
       $zmenu->{"51:   - Start: ".$f->das_segment->start} = '';
@@ -954,9 +954,13 @@ sub get_featurestyle {
     my ($self, $f, $configuration) = @_;
     my $style;
     if($configuration->{'use_style'}) {
-	$style = $configuration->{'styles'}{$f->das_type_category}{$f->das_type_id};
-	$style ||= $configuration->{'styles'}{$f->das_type_category}{'default'};
-	$style ||= $configuration->{'styles'}{'default'}{'default'};
+	my $fcategory = $f->das_type_category || 'default';
+	my $ftype = $f->das_type_id || 'default';
+	$style = $configuration->{'styles'}{$fcategory}{$ftype};
+
+#	$style = $configuration->{'styles'}{$f->das_type_category}{$f->das_type_id};
+#	$style ||= $configuration->{'styles'}{$f->das_type_category}{'default'};
+#	$style ||= $configuration->{'styles'}{'default'}{'default'};
     }
     $style ||= {};
     $style->{'attrs'} ||= {};
@@ -1240,7 +1244,7 @@ sub RENDER_signalmap {
 	return 0;
     }
 	
-    my ($min_score, $max_score) = ($features[0]->das_score, $features[-1]->das_score);
+    my ($min_score, $max_score) = ($features[0]->das_score || 0, $features[-1]->das_score || 0);
 
     my @positive_features = grep { $_->das_score >= 0 } @features;
     my @negative_features = grep { $_->das_score < 0 } reverse @features;
@@ -1254,14 +1258,12 @@ sub RENDER_signalmap {
     # flag to indicate if not all features have been displayed 
     my $more_features = 0;
     my ($gScore, $gWidth, $fCount, $gStart, $mScore) = (0, 0, 0, 0, $min_score);
-#    warn("SCORES: $min_score * $max_score * $pix_per_score");
-
-    my $row = 0; # bumping row
 
 # Draw the axis
+
     $self->push( new Sanger::Graphics::Glyph::Line({
 	'x'         => 0,
-        'y'         => $row_height,
+        'y'         => $row_height + 1,
 	'width'     => $configuration->{'length'},
 	'height'    => 0,
 	'absolutey' => 1,
@@ -1280,14 +1282,14 @@ sub RENDER_signalmap {
 	'dotted'    => 1,
     }));
 
-
+#    return 1;
     foreach my $f (@negative_features, @positive_features) {
-
-	next if (! $f->das_score);
-
+#	warn(join('*', 'F', $f->start, $f->end, $f->das_score, $f->das_type_category));
 	my $START = $f->das_start() < 1 ? 1 : $f->das_start();
 	my $END   = $f->das_end()   > $configuration->{'length'}  ? $configuration->{'length'} : $f->das_end();
 
+	my $width = ($END - $START +1);
+	my $score = $f->das_score || 0;
 
 	my $Composite = new Sanger::Graphics::Glyph::Composite({
 	    'y'         => 0,
@@ -1295,50 +1297,36 @@ sub RENDER_signalmap {
 	    'absolutey' => 1,
 	});
 
-
-#	warn(join('*', 'F', $f->start, $f->end, $f->das_score));
-	my $width = ($END - $START +1);
-	my $score = $f->das_score;
 	my $height = abs($score) / $pix_per_score;
-	my $y_offset = $row_height+1;
-	if ($score > 0) {
-	    $y_offset = $row_height - $height - 1;
-	}
-
+	my $y_offset = 	($score > 0) ?  $row_height - $height : $row_height+2;
+	$y_offset-- if (! $score);
 
 	my ($href, $zmenu ) = $self->zmenu( $f );
+
 	$Composite->{'href'} = $href if $href;
 	$Composite->{'zmenu'} = $zmenu;
-
-
-	my $style = $self->get_featurestyle ($f, $configuration);
-
-	my $styledata = $style->{'attrs'};  # style attributes for this feature
-	my $glyph_height = $styledata->{'height'};
-	my $colour = $styledata->{'colour'};
-	my $glyph_symbol = $style->{'glyph'};
-	
-	if ($score < 0) {
-	    $colour = 'green';
-	}
 
 	# make clickable box to anchor zmenu
 	$Composite->push( new Sanger::Graphics::Glyph::Space({
 	    'x'         => $START - 1,
-	    'y'         => $score < 0 ? $row_height + 1 : 0,
+	    'y'         => ($score ? (($score > 0) ? 0 : ($row_height + 2)) : ($row_height + 1)),
 	    'width'     => $width,
-	    'height'    => $glyph_height,
+	    'height'    => $score ? $row_height : 1,
 	    'absolutey' => 1
 	    }) );
 
+
 	my $style = $self->get_featurestyle($f, $configuration);
 	my $fdata = $self->get_featuredata($f, $configuration, $y_offset);
-#	warn(Data::Dumper::Dumper($fdata));
-
 	my $symbol = $self->get_symbol ($style, $fdata, $y_offset);
+
 	$symbol->{'style'}->{'height'} = $height;
 	$symbol->{'feature'}->{'orientation'} = 1;
 	$symbol->{'feature'}->{'row_height'} = $row_height * 2 + 1;
+	$symbol->{'feature'}->{'y_offset'}  = $y_offset;
+
+#	warn(Data::Dumper::Dumper($symbol));# if (! $f->das_score);
+
 	$Composite->push($symbol->draw);
 
 	$self->push( $Composite );
