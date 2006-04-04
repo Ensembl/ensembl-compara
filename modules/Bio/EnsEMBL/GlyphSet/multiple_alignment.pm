@@ -1,4 +1,24 @@
 package Bio::EnsEMBL::GlyphSet::multiple_alignment;
+
+=head1 NAME
+
+EnsEMBL::Web::GlyphSet::multiple_alignment;
+
+=head1 SYNOPSIS
+
+The multiple_alignment object handles the display of multiple alignment regions in contigview.
+
+=head1 LICENCE
+
+This code is distributed under an Apache style licence:
+Please see http://www.ensembl.org/code_licence.html for details
+
+=head1 CONTACT
+
+Eugene Kulesha - ek3@sanger.ac.uk
+
+=cut
+
 use strict;
 use vars qw(@ISA);
 use Bio::EnsEMBL::GlyphSet;
@@ -96,7 +116,7 @@ sub compact_init {
     $X = $START;
 
     my $TO_PUSH;
-    my $href  = "/$short_self/alignsliceview?l=$chr:$rs-$re;align=opt_alignm_$METHOD";
+    my $href  = "/$short_self/alignsliceview?l=$chr:$rs-$re;align=opt_align_$METHOD_ID";
 
     my $zmenu = { 'caption'              => $caption,
 		  "45:" => '',

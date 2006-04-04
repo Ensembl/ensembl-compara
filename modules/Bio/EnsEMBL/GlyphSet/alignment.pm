@@ -1,4 +1,23 @@
 package Bio::EnsEMBL::GlyphSet::alignment;
+
+=head1 NAME
+
+EnsEMBL::Web::GlyphSet::alignment;
+
+=head1 SYNOPSIS
+
+The multiple_alignment object handles the basepair display of multiple alignments in alignsliceview.
+
+=head1 LICENCE
+
+This code is distributed under an Apache style licence:
+Please see http://www.ensembl.org/code_licence.html for details
+
+=head1 CONTACT
+
+Eugene Kulesha - ek3@sanger.ac.uk
+
+=cut
 use strict;
 use vars qw(@ISA);
 use Bio::EnsEMBL::GlyphSet_simple;

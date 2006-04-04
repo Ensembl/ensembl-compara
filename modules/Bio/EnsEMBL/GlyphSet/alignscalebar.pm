@@ -1,4 +1,24 @@
 package Bio::EnsEMBL::GlyphSet::alignscalebar;
+
+=head1 NAME
+
+EnsEMBL::Web::GlyphSet::alignscalebar;
+
+=head1 SYNOPSIS
+
+The alignscalebar object handles the detailed display of multiple alignments in alignsliceview
+
+=head1 LICENCE
+
+This code is distributed under an Apache style licence:
+Please see http://www.ensembl.org/code_licence.html for details
+
+=head1 CONTACT
+
+Eugene Kulesha - ek3@sanger.ac.uk
+
+=cut
+
 use strict;
 use vars qw(@ISA);
 use Bio::EnsEMBL::GlyphSet;
@@ -74,15 +94,7 @@ sub _init {
     
     my $species =  $Container->{_config_file_name_};
 
-# The compara option that activates the current AlignSlice alignment is stored in Config - alignslice -align
-# The option looks like opt_alignm_MLAGAN-170 or opt_alignp_BLASTZ_NET_Canis_familiaris
-# When we create links for secondary species we need to replace the secondary species with the primary species
-
     my $aslink = $Config->get('alignslice', 'align');
-    if ($aslink =~ /BLASTZ_NET/ && $species ne $ENV{ENSEMBL_SPECIES}) {
-	$aslink =~ s/$species$/$ENV{ENSEMBL_SPECIES}/;
-    }
-
     my $main_width     = $Config->get('_settings', 'main_vc_width');
     my $len            = $Container->length();
 
