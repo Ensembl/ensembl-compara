@@ -67,6 +67,7 @@ GetOptions('help'             => \$help,
            'scale=f'          => \$self->{'scale'},
            'counts'           => \$self->{'counts'},
            'newick'           => \$self->{'print_newick'},
+           'nhx'              => \$self->{'print_nhx'},
            'print'            => \$self->{'print_tree'},
            'list'             => \$self->{'print_leaves'},
            'analyze|analyse'  => \$self->{'analyze'},
@@ -238,6 +239,7 @@ sub usage {
   print "  -print_tree            : print ASCII formated tree\n";
   print "  -scale <num>           : scale factor for printing tree (def: 100)\n";
   print "  -newick                : output tree(s) in newick format\n";
+  print "  -nhx                   : output tree(s) in newick extended (NHX) format with duplication tags\n";
   print "  -reroot <id>           : reroot genetree on node_id\n";
   print "  -parent                : move up to the parent of the loaded node\n";
   print "  -dump                  : outputs to autonamed file, not STDOUT\n";
