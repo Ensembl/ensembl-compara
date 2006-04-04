@@ -161,6 +161,10 @@ if($self->{'tree'}) {
     dumpTreeAsNewick($self, $self->{'tree'});
   }
 
+  if($self->{'print_nhx'}) {
+    dumpTreeAsNHX($self, $self->{'tree'});
+  }
+
   if($self->{'counts'}) {
     print_cluster_counts($self);
     print_cluster_counts($self, $self->{'tree'});
@@ -388,6 +392,7 @@ sub dumpTreeAsNewick
   
   warn("missing tree\n") unless($tree);
 
+  # newick_simple_format is a synonymous of newick_format method
   my $newick = $tree->newick_simple_format;
 
   if($self->{'dump'}) {
@@ -404,6 +409,34 @@ sub dumpTreeAsNewick
   }
 
   print OUTSEQ "$newick\n\n";
+  close OUTSEQ;
+}
+
+sub dumpTreeAsNHX 
+{
+  my $self = shift;
+  my $tree = shift;
+  
+  warn("missing tree\n") unless($tree);
+
+  # newick_simple_format is a synonymous of newick_format method
+  my $nhx = $tree->nhx_format;
+
+  if($self->{'dump'}) {
+    my $aln_file = "proteintree_". $tree->node_id;
+    $aln_file =~ s/\/\//\//g;  # converts any // in path to /
+    $aln_file .= ".nhx";
+    
+    # we still call this newick_file as we dont need it for much else
+    $self->{'newick_file'} = $aln_file;
+    
+    open(OUTSEQ, ">$aln_file")
+      or $self->throw("Error opening $aln_file for write");
+  } else {
+    open OUTSEQ, ">&STDOUT";
+  }
+
+  print OUTSEQ "$nhx\n\n";
   close OUTSEQ;
 }
 
