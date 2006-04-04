@@ -1,4 +1,24 @@
 package EnsEMBL::Web::UserConfig::alignsliceviewbottom;
+
+=head1 NAME
+
+EnsEMBL::Web::UserConfig::alignsliceviewbottom;
+
+=head1 SYNOPSIS
+
+alignsliceviewbottom.pm manages a user-defined settings in alignsliceview.
+
+=head1 LICENCE
+
+This code is distributed under an Apache style licence:
+Please see http://www.ensembl.org/code_licence.html for details
+
+=head1 CONTACT
+
+Eugene Kulesha - ek3@sanger.ac.uk
+
+=cut
+
 use strict;
 no strict 'refs';
 use EnsEMBL::Web::UserConfig;
@@ -365,49 +385,31 @@ sub init {
   };
 
 
-  my $especies = $ENV{ENSEMBL_SPECIES};
-# Add multiple multiple alignment
+  my $species = $ENV{ENSEMBL_SPECIES};
 
-  my $type = 'MLAGAN'; # 'MAVID';
-  my %shash2 = ( $self->species_defs->multi($type, $especies) );
-#  warn("$especies:$type:".Data::Dumper::Dumper(\%shash2));
+  my %alignments = $self->{'species_defs'}->multiX('ALIGNMENTS');
 
-  if (%shash2) {
-      my $KEY = lc($especies).'_compara_'.lc($type);
-      my $label = sprintf("%d Species ($type)", scalar(keys(%shash2)) + 1);
+  foreach my $id (
+		  sort { 10 * ($alignments{$a}->{'type'} cmp $alignments{$b}->{'type'}) + ($a <=> $b) }
+		  grep { $alignments{$_}->{'species'}->{$species} } 
+		  keys (%alignments)) {
+
+      my $label = $alignments{$id}->{'name'};
+      my @species = grep {$_ ne $species} sort keys %{$alignments{$id}->{'species'}};
+
+      $label = $species[0] if ( scalar(@species) == 1);
+      my $KEY = lc($species)."_compara_$id";
 
       $self->{'general'}->{'alignsliceviewbottom'}{$KEY} = {
-	  'species'  => $especies,
+	  'species'  => $species,
 	  'on'       => 'off',
 	  'label'    => $label
       };
   
       push @{ $self->{'general'}->{'alignsliceviewbottom'}{ '_artefacts'} }, $KEY;
       push @{ $self->{'general'}->{'alignsliceviewbottom'}{'_settings'}{'aligncompara'} },  [ $KEY , $label ];
-  
- }
 
-
-
-  $type = 'BLASTZ_NET';
-  my %shash = ( $self->species_defs->multi($type,$especies) );
-
-#  warn("$especies:$type:".Data::Dumper::Dumper(\%shash));
-  my @species = keys %shash;
-
-  foreach my $SPECIES (@species) {
-      (my $species = $SPECIES ) =~ s/_\d+//;
-      my $KEY = lc($SPECIES).'_compara_pairwise';
-      $self->{'general'}->{'alignsliceviewbottom'}{$KEY} = {
-	  'species'  => $species,
-	  'on'       => 'off',
-	  'label'    => "$species",
-      };
-  
-      push @{ $self->{'general'}->{'alignsliceviewbottom'}{ '_artefacts'} }, $KEY;
-      push @{ $self->{'general'}->{'alignsliceviewbottom'}{'_settings'}{'aligncompara'} },  [ $KEY , "$species" ];
   }
-
  
   my $POS = $self->ADD_ALL_AS_TRANSCRIPTS( 0 );
 }

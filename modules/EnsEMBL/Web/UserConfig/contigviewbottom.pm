@@ -793,15 +793,25 @@ sub init {
     }
   }
 
-  my @multimethods = (
-    [ 'MLAGAN-167'      ,'orchid1', 'mlagan-167',   '4 Species MLAGAN-167', 167 ],
-    [ 'MLAGAN-170'      ,'pink', 'mlagan-170',   '7 Species MLAGAN-170', 170 ],
-  );
-  foreach my $METHOD (@multimethods) {
-      my $SPECIES = $ENV{ENSEMBL_SPECIES};
+# Add multiple alignments tracks
+  my @multimethods;
+  my %alignments = $self->{'species_defs'}->multiX('ALIGNMENTS');
+  my $species = $ENV{ENSEMBL_SPECIES};
+  foreach my $id (
+		  sort { 10 * ($alignments{$a}->{'type'} cmp $alignments{$b}->{'type'}) + ($a <=> $b) }
+		  grep { $alignments{$_}->{'species'}->{$species} } 
+		  keys (%alignments)) {
 
-      (my $species = $SPECIES ) =~ s/_\d+//;
-      (my $abbrev = $species ) =~ s/^(\w)\w+_(\w)\w+$/\1\2/g;
+
+      my @species = grep {$_ ne $species} sort keys %{$alignments{$id}->{'species'}};
+
+      next if ( scalar(@species) == 1);
+      my $label = $alignments{$id}->{'name'};
+
+      push @multimethods, [ $id, 'pink', $label, $label, $id ];
+  }
+
+  foreach my $METHOD (@multimethods) {
       $compara++;
       my $KEY = lc($METHOD->[0]).'_match';
       $self->{'general'}->{'contigviewbottom'}{$KEY} = {
@@ -813,7 +823,7 @@ sub init {
         'pos'      => $compara+300,
         'col'      => $METHOD->[1],
         'str'      => 'f',
-        'available'=> "mlagan ".$METHOD->[0],
+        'available'=> "multialignment ".$METHOD->[0],
         'method'   => $METHOD->[0],
 	'method_id' => $METHOD->[4],
         'label'    => $METHOD->[2],
