@@ -60,7 +60,17 @@ sub render {
 
       );
       $K++;
+	
     }
+
+# To deal with the case when all checkboxes get unselected we intoduce a dummy 
+# hidden field that will force CGI to pass the parameter to our script
+    $output .= sprintf( "    <input id=\"%s_%d\" type=\"hidden\" name=\"%s\" value=\"\" />\n",
+            CGI::escapeHTML($self->id), 
+	    $K, 
+	    CGI::escapeHTML($self->name), 
+			);
+
     return $self->introduction.$output.$self->notes;
   }
 }
