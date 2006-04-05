@@ -11,7 +11,7 @@ our @ISA = qw(  EnsEMBL::Web::Factory );
 
 sub createObjects { 
   my $self   = shift;
-  my $feature_type  = $self->param('type') || 'AffyProbe';
+  my $feature_type  = $self->param('type') || 'OligoProbe';
   my $create_method = "create_$feature_type";
 
   my ($identifier, $fetch_call, $featureobj, $dataobject);
@@ -30,13 +30,13 @@ sub createObjects {
 
 #---------------------------------------------------------------------------
 
-sub create_AffyProbe {
+sub create_OligoProbe {
     # get Affy hits plus corresponding genes
 
-    my $affy = $_[0]->_generic_create( 'AffyProbe', 'fetch_all_by_probeset', $_[1] );
-    my $affy_genes = $_[0]->_generic_create( 'Gene', 'fetch_all_by_external_name', $_[1],undef, 'no_error' );
-    my $features = {'AffyProbe'=>$affy};
-    $$features{'Gene'} = $affy_genes if $affy_genes;
+    my $probe = $_[0]->_generic_create( 'OligoProbe', 'fetch_all_by_probeset', $_[1] );
+    my $probe_genes = $_[0]->_generic_create( 'Gene', 'fetch_all_by_external_name', $_[1],undef, 'no_error' );
+    my $features = {'OligoProbe'=>$probe};
+    $$features{'Gene'} = $probe_genes if $probe_genes;
     return $features;
 }
 
@@ -53,63 +53,24 @@ sub create_Gene {
   my $features = {'Gene' => $_[0]->_generic_create( 'Gene', 'fetch_all_by_external_name', $_[1] ) }; 
   return $features;
 }
+
+
 sub create_Disease {
-  my( $self, $db ) = @_; # Don't need db...
-  my $disease_db = $self->database( 'disease' );
-  return $self->problem( 'Fatal', 'Database Error', 'No disease database for this species' ) unless $disease_db;
-  
-  my $EXTRA = join '', map { s/'/\'/g; " and ( d.disease like '%$_%' or g.omim_id='$_' )" } split /\s+/, $self->param('id');
-  my $sth = $disease_db->_db_handle->prepare(
-    "select distinct d.id, d.disease, g.omim_id, g.chromosome, g.start_cyto, g.end_cyto, g.gene_symbol
-       from gene as g, disease as d
-      where d.id = g.id and g.omim_id $EXTRA"
-  );
-  $sth->execute;
-  my %T ;
-  my %gene_symbols;
-  foreach my $row ( @{$sth->fetchall_arrayref} ) {
-    push @{$T{$row->[2]}}, $row;
-    $gene_symbols{$row->[2]}=1;
-  } 
-  my $features = $self->_generic_create( 'Gene', 'fetch_all_by_external_name',
-                                         'core' , join( ' ', keys %gene_symbols) );
-  return unless $features;
-  my @dis_features = ();
-  foreach my $F ( @$features ) {
-    warn $F->external_name,' ',$F->{_id_};
-    foreach( @{$T{$F->{_id_}}||[]} ) {
-      delete $gene_symbols{$F->{_id_}};
-      my $NF = {
-        'gene'    => $F,
-        'disease' => $_->[1],
-        'omim_id' => $_->[2],
-        'genename' => $F->{_id_},
-        'cyto'    => $_->[3].$_->[4].($_->[4] eq $_->[5] ? "" : "-$_->[3]$_->[5]"),
-        'gsi'     => $F->stable_id
-      };
-      push @dis_features, $NF;
-    }
-  }
-  foreach ( keys %gene_symbols ) {
-    foreach my $row ( @{$T{$_}} ) {
-    push @dis_features, {
-     'genename' => $row->[6], 'disease' => $row->[1],
-            'omim_id' => $row->[2],
-            'gsi'  => '',
-            'cyto' => $row->[3].$row->[4].($row->[4] eq $row->[5] ? '' : "-$row->[3]$row->[5]")
-    };
-    }
-  }
-  warn @dis_features;
-  my $feature_set = {'Disease' => \@dis_features, 'Gene' => $features};
-  return $feature_set;
+    # get disease hits plus corresponding genes
+    my $disease = $_[0]->_generic_create( 'DBEntry', 'fetch_by_db_accession', $_[1] );
+    my $disease_genes = $_[0]->_generic_create( 'Gene', 'fetch_all_by_external_name', $_[1],undef, 'no_error' );
+    my $features = {'Disease'=>$disease};
+    $$features{'Gene'} = $disease_genes if $disease_genes;
+    return $features;
 }
+
 
 sub _generic_create {
   my( $self, $object_type, $accessor, $db, $id, $flag ) = @_;
   $db ||= 'core';
                                                                                    
   $id ||= $self->param( 'id' );
+  my $extra = 'MIM' if $object_type eq 'DBEntry';
   if( !$id ) {
     return undef; # return empty object if no id
   }
@@ -124,10 +85,17 @@ sub _generic_create {
     my $features = [];
     foreach my $fid ( split /\s+/, $id ) {
       my $t_features;
-      eval {
+      if ($extra) {
+        eval {
+         $t_features = [$db_adaptor->$adaptor_name->$accessor($extra, $fid)];
+        };
+      }
+      else {
+        eval {
          $t_features = $db_adaptor->$adaptor_name->$accessor($fid);
-      };
-      if( $t_features ) {
+        };
+      }
+      if( $t_features && ref($t_features) eq 'ARRAY') {
         foreach( @$t_features ) { $_->{'_id_'} = $fid; }
         push @$features, @$t_features;
       }

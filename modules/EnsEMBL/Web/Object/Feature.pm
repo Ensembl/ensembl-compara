@@ -36,68 +36,37 @@ sub retrieve_features {
   return $self->$method() if defined &$method;
 }
 
-sub retrieve_Disease {
-  my $self = shift;
-  my $results = [];
-  my @P = (0,0,0,0);
-  foreach my $ap ( sort {
-    lc($a->{'disease'})  cmp lc($b->{'disease'})  || 
-    $a->{'OMIM'}         <=> $b->{'OMIM'}         ||
-    lc($a->{'cyto'})     cmp lc($b->{'cyto'})     ||
-    lc($a->{'gsi'})      cmp lc($b->{'gsi'})      || 
-    lc($a->{'genename'}) cmp lc($b->{'genename'}) 
-  } @{$self->Obj->{'Disease'}}) {
-    if( lc($ap->{'disease'}) eq $P[0] && $ap->{'OMIM'} eq $P[1] && lc($ap->{'gsi'}) eq $P[2] && lc($ap->{'cyto'}) eq $P[3] ) {
-      $results->[-1]->{'extname'}.=" $ap->{'genename'}";
-      next;
-    }
-    @P = ( lc($ap->{'disease'}), $ap->{'OMIM'}, lc($ap->{'gsi'}), lc($ap->{'cyto'}) );
-    my $gene = $ap->{'gene'};
-    if( $gene ) {
-      push @$results, {
-        'region'   => $gene->seq_region_name,
-        'start'    => $gene->start,
-        'end'      => $gene->end,
-        'strand'   => $gene->strand,
-        'length'   => $gene->end-$ap->{'gene'}->start+1,
-        'extname'  => $ap->{'genename'}, #$gene->external_name,
-        'label'    => $gene->stable_id,
-        'gene_id'  => [ $gene->stable_id ],
-        'extra'    => [],
-        'initial'  => [ $ap->{'disease'}, $ap->{'omim_id'}, $ap->{'cyto'} ]
-      };
-    } else {
-      push @$results, {
-        'region'   => '',
-        'start'    => '', 'end' => '',
-        'strand'   => '',
-        'length'   => '',
-        'extname'  => $ap->{'genename'},
-        'label'    => '',
-        'gene_id'  => [],
-        'extra'    => [],
-        'initial'  => [ $ap->{'disease'}, $ap->{'omim_id'}, $ap->{'cyto'} ]
-      };
-    } 
-  }
-  return ( $results, [], ['Disease', 'OMIM', 'Cyto loc'], {'sorted'=>'yes'} );
-}
-
 sub retrieve_Gene {
   my $self = shift;
   
   my $results = [];
-  foreach my $ap (@{$self->Obj->{'Gene'}}) {
+  foreach my $g (@{$self->Obj->{'Gene'}}) {
     push @$results, {
-      'region'   => $ap->seq_region_name,
-      'start'    => $ap->start,
-      'end'      => $ap->end,
-      'strand'   => $ap->strand,
-      'length'   => $ap->end-$ap->start+1,
-      'extname'  => $ap->external_name, 
-      'label'    => $ap->stable_id,
-      'gene_id'  => [ $ap->stable_id ],
-      'extra'    => [ $ap->description ]
+      'region'   => $g->seq_region_name,
+      'start'    => $g->start,
+      'end'      => $g->end,
+      'strand'   => $g->strand,
+      'length'   => $g->end-$g->start+1,
+      'extname'  => $g->external_name, 
+      'label'    => $g->stable_id,
+      'gene_id'  => [ $g->stable_id ],
+      'extra'    => [ $g->description ]
+    }
+  }
+  
+  return ( $results, ['Description'] );
+}
+
+sub retrieve_Disease {
+  my $self = shift;
+  
+  my $results = [];
+  foreach my $d (@{$self->Obj->{'Disease'}}) {
+    push @$results, {
+      'label'       => $d->primary_id,
+      'disease_id'  => [ $d->primary_id ],
+      'extname'     => $d->display_id,
+      'extra'    => [ $d->description ]
     }
   }
   
@@ -235,7 +204,8 @@ sub find_available_features {
 			push @$used_feature_types, $poss_feature;
 		}
 	}
-	if ($species_defs->databases->{'ENSEMBL_DISEASE'}) {
+  ## quick and dirty - ought to check for MIM in external_db
+	if ($species eq 'Homo_sapiens') { 
 		unshift @$used_feature_types, {'text'=>"OMIM Disease",'value'=>'Disease','href'=>"/$species/featureview?type=Disease",'raw'=>1};
 	}
 	return $used_feature_types;

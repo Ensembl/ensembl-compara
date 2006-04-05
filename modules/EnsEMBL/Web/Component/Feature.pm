@@ -97,7 +97,7 @@ sub spreadsheet_featureTable {
   # get feature data
   my( $data, $extra_columns, $initial_columns, $options ) = $object->retrieve_features;
   my @data = [];
-  my $data_type = $object->param('type') eq 'Gene' || $object->param('type') eq 'Disease' ? 'gene' : 'feature';
+  my $data_type = $object->param('type');
 
   # spreadsheet headers
   # columns common to all features
@@ -109,11 +109,16 @@ sub spreadsheet_featureTable {
   }
 
   $panel->add_columns(
-    {'key' => 'loc', 'title' => 'Location', 'width' => '25%', 'align' => 'center' },
-  );
-  if ($data_type eq 'gene') {
+    {'key' => 'loc', 'title' => 'Location', 'width' => '25%', 'align' => 'left' },
+  ) unless $data_type eq 'Disease';
+  if ($data_type eq 'Gene') {
     $panel->add_columns(
-      {'key' => 'extname', 'title' => 'External names', 'width' => '25%', 'align' => 'center' },
+      {'key' => 'extname', 'title' => 'External names', 'width' => '25%', 'align' => 'left' },
+    );
+  } 
+  elsif ($data_type eq 'Disease') {
+    $panel->add_columns(
+      {'key' => 'extname', 'title' => 'OMIM ID', 'width' => '25%', 'align' => 'left' },
     );
   } else {
     $panel->add_columns(
@@ -121,7 +126,7 @@ sub spreadsheet_featureTable {
     );
   }
   $panel->add_columns(
-    {'key' => 'names', 'title' => 'Name(s)', 'width' => '25%', 'align' => 'center' },
+    {'key' => 'names', 'title' => 'Name(s)', 'width' => '25%', 'align' => 'left' },
   );
   # add extra columns
   $C = 0;
@@ -146,13 +151,21 @@ sub spreadsheet_featureTable {
       $object->species, $row->{'region'}, int( ($row->{'start'} + $row->{'end'} )/2 ), 
       $row->{'length'} + 1000, join( '|',split(/\s+/,$row->{'label'}),$row->{'extname'}), $row->{'region'}, $row->{'start'}, $row->{'end'}, $row->{'strand'} 
     ) if $row->{'region'};
-    if ($data_type eq 'gene') {
+    if ($data_type eq 'Gene') {
         $names = sprintf('<a href="/%s/geneview?gene=%s">%s</a>',
             $object->species, $row->{'label'}, $row->{'label'}) if $row->{'label'};
         $extname = $row->{'extname'}, 
         $desc =  $row->{'extra'}[0];
         $data_row = { 'loc' => $contig_link, 'extname' => $extname, 'names' => $names, };
-    } else {
+    } 
+    elsif ($data_type eq 'Disease') {
+        $names = sprintf('<a href="http://www.ncbi.nlm.nih.gov/entrez/dispomim.cgi?id=%s">%s</a>',
+          $row->{'label'}, $row->{'label'}) if $row->{'label'};
+        $extname = $row->{'extname'}, 
+        $desc =  $row->{'extra'}[0];
+        $data_row = { 'loc' => $contig_link, 'extname' => $extname, 'names' => $names, };
+    } 
+    else {
       $names = $row->{'label'} if $row->{'label'};
       $length = $row->{'length'},
       $data_row = { 'loc'  => $contig_link, 'length' => $length, 'names' => $names, };
