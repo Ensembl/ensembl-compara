@@ -548,7 +548,8 @@ sub check_toplevel {
     elsif ($file =~ /nonchromosomal\.fa\.gz/) { $flag_nonchrom++;  }
     elsif ($file =~ /clone|scaffold|contig|chunk/i)  { $flag_seqlevel++;  }
   }
-  error("No seqlevel DNA files") unless $flag_seqlevel ==2;
+
+  error("No seqlevel DNA files") unless $flag_seqlevel >1;
 
 }
 #-----------------------------------------------------------------------------
