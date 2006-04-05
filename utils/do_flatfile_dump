@@ -222,7 +222,7 @@ sub generate_blocklist {
     if( $gen_end - $gen_start > $GENE_MAX ) {
       warning (1, "Gene too long -skipped ". $slice->seq_region_name().":".
          $gene->start(). "-". $gene->end());
-      push (@too_long, "Species: $species, Slice: ".
+      push (@too_long, "Species: $species, chr:".
 	    $slice->seq_region_name." coords:".
 	    $gene->start()."-".$gene->end());
       next;
@@ -250,7 +250,7 @@ sub generate_blocklist {
   }
 
   if($big_blocks) {
-    print STDERR "HEADS UP: ", $slice->seq_region_name(), " has $big_blocks big blocks due to no gaps between genes\n";
+    print STDERR "HEADS UP: chr", $slice->seq_region_name(), " has $big_blocks big blocks due to no gaps between genes\n";
   }
   return (\@block_list, \@too_long);
 }
@@ -335,7 +335,7 @@ sub chunk_seq_region {
   if( $cur_length > 0 ) {
     my $chunked_slice = 
       $slice_adaptor->fetch_by_region($cs_name, $seq_region, $cur_start,
-                                      $cur_start + $cur_length - 1,1, $cs_ver);
+                                      $cur_start + $cur_length - 1, 1, $cs_ver);
     push @chunked, $chunked_slice;
   }
   return \@chunked;
