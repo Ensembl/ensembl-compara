@@ -294,7 +294,7 @@ sub chunk_seq_region {
   # We need a stop block at the end to ensure algorithm gets
   # to the very end of the sequence.
   # It starts on the last base and it ends one before it!
-  push( @$blocklist, [ $seq_end, $seq_end-1 ] );
+  push( @$blocklist, [ $seq_end, $seq_end ] );
 
   my @chunked;
   my $current_block = 0;
