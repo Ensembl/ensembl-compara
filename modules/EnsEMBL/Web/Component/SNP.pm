@@ -383,7 +383,7 @@ sub format_frequencies {
     $pop_row{Size} = $freq_data{$pop_id}{pop_info}{Size};
 
     # Descriptions too long. Only display first sentence
-    (my $description = $freq_data{$pop_id}{pop_info}{Description});# =~ s/\.\s+.*//;
+    (my $description = $freq_data{$pop_id}{pop_info}{Description}) =~ s/International HapMap project.*/International HapMap project\.\.\./;
     $pop_row{Description} = "<small>". ($description ||"-") ."</small>";
 
 
