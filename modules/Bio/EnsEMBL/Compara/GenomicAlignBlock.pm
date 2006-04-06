@@ -323,6 +323,10 @@ sub method_link_species_set {
       throw("method_link_species_set object does not match previously defined method_link_species_set_id")
           if ($self->{'method_link_species_set'}->dbID != $self->{'method_link_species_set_id'});
     }
+    ## Update the MethodLinkSpeciesSet for the GenomicAligns included in this GenomicAlignBlock
+    foreach my $this_genomic_align (@{$self->get_all_GenomicAligns()}) {
+      $this_genomic_align->method_link_species_set($method_link_species_set);
+    }
 
   } elsif (!defined($self->{'method_link_species_set'}) and defined($self->{'adaptor'})
           and defined($self->method_link_species_set_id)) {
@@ -364,6 +368,10 @@ sub method_link_species_set_id {
       throw("method_link_species_set_id does not match previously defined method_link_species_set object")
           if ($self->{'method_link_species_set'} and
               $self->{'method_link_species_set'}->dbID != $self->{'method_link_species_set_id'});
+    }
+    ## Update the MethodLinkSpeciesSet for the GenomicAligns included in this GenomicAlignBlock
+    foreach my $this_genomic_align (@{$self->get_all_GenomicAligns()}) {
+      $this_genomic_align->method_link_species_set_id($method_link_species_set_id);
     }
 
   } elsif (!($self->{'method_link_species_set_id'})) {
