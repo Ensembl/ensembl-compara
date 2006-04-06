@@ -245,7 +245,7 @@ sub align_markup_options_form {
   my @align_select;
 
   foreach my $id (
-		  sort { 10 * ($alignments{$a}->{'type'} cmp $alignments{$b}->{'type'}) + ($a <=> $b) }
+		  sort { 10 * ($alignments{$b}->{'type'} cmp $alignments{$a}->{'type'}) + ($a <=> $b) }
 		  grep { $alignments{$_}->{'species'}->{$object->species} } 
 		  keys (%alignments)) {
 
@@ -257,16 +257,17 @@ sub align_markup_options_form {
 	  my %selected_species = map { $_ => 1} $object->param("ms_$id");
 
 	  foreach my $v (@species) {
+	      (my $name = $v) =~ s/_/ /g;
 	      if ($selected_species{$v}) {
-		  push @multi_species, {"value"=>$v, "name"=>$v, "checked"=>"yes"};
+		  push @multi_species, {"value"=>$v, "name"=>$name, "checked"=>"yes"};
 	      } else {
-		  push @multi_species, {"value"=>$v, "name"=>$v};
+		  push @multi_species, {"value"=>$v, "name"=>$name};
 	      }
 	  }
 	  $label = "<b>$label</b> (click on checkboxes to select species)";
 
       } else {
-	  $label = "<b>$species[0]</b>";
+	  ($label = "<b>$species[0]</b>") =~ s/_/ /g;
       }
 
       $form->add_element('type' => 'RadioGroup',
@@ -282,7 +283,7 @@ sub align_markup_options_form {
 	  $form->add_element(
 			     'type' => 'MultiSelect',
 			     'name'=> "ms_$id",
-			     'label'=> (' ' x 420),
+#			     'label'=> ' ',
 			     'values' => \@multi_species,
 			     'value' => $object->param("ms_$id")
 			     );
@@ -515,7 +516,7 @@ sub orthologues {
   my $species = $gene->species;
 
   foreach my $id (
-		  sort { 10 *($alignments{$a}->{'type'} cmp $alignments{$b}->{'type'}) + ($a <=> $b) }
+		  sort { 10 *($alignments{$b}->{'type'} cmp $alignments{$a}->{'type'}) + ($a <=> $b) }
 		  grep { $alignments{$_}->{'species'}->{$species} } 
 		  keys (%alignments)) {
 
@@ -524,7 +525,9 @@ sub orthologues {
 
       my @species = grep {$_ ne $species} sort keys %{$alignments{$id}->{'species'}};
 
-      $label = $species[0] if ( scalar(@species) == 1);
+      if ( scalar(@species) == 1) {
+	  ($label = $species[0]) =~ s/_/ /g;
+      }
       
       $as_html .= sprintf( qq(&nbsp;&nbsp;&nbsp;<a href="/%s/alignsliceview?l=%s:%s-%s;align=%s">view genomic alignment with <b>%s</b></a> <br/>), 
 			   $gene->species,

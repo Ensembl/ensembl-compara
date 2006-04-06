@@ -64,7 +64,7 @@ sub context_menu {
   my %alignments = $obj->species_defs->multiX('ALIGNMENTS');
 
   foreach my $id (
-		  sort { 10 * ($alignments{$a}->{'type'} cmp $alignments{$b}->{'type'}) + ($a <=> $b) }
+		  sort { 10 * ($alignments{$b}->{'type'} cmp $alignments{$a}->{'type'}) + ($a <=> $b) }
 		  grep { $alignments{$_}->{'species'}->{$species} } 
 		  keys (%alignments)) {
 
@@ -72,8 +72,9 @@ sub context_menu {
       my $KEY = "opt_align_${id}";
 
       my @species = grep {$_ ne $species} sort keys %{$alignments{$id}->{'species'}};
-
-      $label = $species[0] if ( scalar(@species) == 1);
+      if ( scalar(@species) == 1) {
+	  ($label = $species[0]) =~ s/_/ /g;
+      }
 
       push @options_as, {
         'text' => "... <em>$label</em>", 'raw' => 1,
