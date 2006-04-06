@@ -106,6 +106,34 @@ sub transcriptsnpview {
  my $obj    = $self->{'object'};
  my $params = { 'transcript' => $obj->stable_id, 'db' => $obj->get_db  };
 
+ # Info panel
+ my $panel1 = new EnsEMBL::Web::Document::Panel::Information(
+    'code'    => "info$self->{flag}",
+    'caption' => 'Ensembl Transcript Variation Report for '.$obj->stable_id,
+    'object'  => $obj,
+  );
+  $panel1->add_form( $self->{page}, 'markup_up_seq', 'EnsEMBL::Web::Component::Transcript::marked_up_seq_form' );
+  $panel1->add_components(qw(
+    name        EnsEMBL::Web::Component::Gene::name
+    stable_id   EnsEMBL::Web::Component::Gene::stable_id
+    location    EnsEMBL::Web::Component::Gene::location
+    description EnsEMBL::Web::Component::Gene::description
+  ));
+  $self->add_panel( $panel1 );
+  $self->initialize_zmenu_javascript;
+  $self->set_title( 'Transcript SNP Report for '.$obj->stable_id );
+
+ if ( $obj->gene->length >3000000){
+   my $panel_return = new EnsEMBL::Web::Document::Panel(
+	  'caption' => 'Exception: for '.$obj->stable_id,
+          'object_type' => 'transcript',
+     );
+   $panel_return->add_components(qw(too_big EnsEMBL::Web::Component::Gene::too_big    ));
+   $self->add_panel( $panel_return );
+   return 1;
+ }
+
+## Panel 2 - the main image on the page showing variations plotted against the exons of the transcript
  # Set default sources
  my @sources = keys %{ $obj->species_defs->VARIATION_SOURCES || {} } ;
  my $default_source = $obj->get_source("default");;
@@ -154,26 +182,6 @@ sub transcriptsnpview {
  # Need this to make yellow dropdowns work
  $self->update_configs_from_parameter( 'bottom', qw(TSV_context TSV_sampletranscript TSV_transcript) );
 
-
- # Info panel
- my $panel1 = new EnsEMBL::Web::Document::Panel::Information(
-    'code'    => "info$self->{flag}",
-    'caption' => 'Ensembl Transcript Variation Report for '.$obj->stable_id,
-    'object'  => $obj,
-  );
-  $panel1->add_form( $self->{page}, 'markup_up_seq', 'EnsEMBL::Web::Component::Transcript::marked_up_seq_form' );
-  $panel1->add_components(qw(
-    name        EnsEMBL::Web::Component::Gene::name
-    stable_id   EnsEMBL::Web::Component::Gene::stable_id
-    location    EnsEMBL::Web::Component::Gene::location
-    description EnsEMBL::Web::Component::Gene::description
-  ));
-  $self->add_panel( $panel1 );
-  $self->initialize_zmenu_javascript;
-  $self->set_title( 'Transcript SNP Report for '.$obj->stable_id );
-
-
-## Panel 2 - the main image on the page showing variations plotted against the exons of the transcript
 
   if( my $panel2 = $self->new_panel( 'Image',
     'code'    => "image#",

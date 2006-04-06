@@ -11,7 +11,37 @@ our @ISA = qw( EnsEMBL::Web::Configuration );
 sub genesnpview {
   my $self   = shift;
   my $obj    = $self->{'object'};
+  $self->set_title( 'Gene Variation Report for '.$obj->stable_id );
+  my $params = { 'gene' => $obj->stable_id, 'db' => $obj->get_db  };
 
+## Panel 1 - the gene information table at the top of the page...
+
+  if( my $panel1 = $self->new_panel( 'Information',
+    'code'    => "info#",
+    'caption' => 'Ensembl Gene Variation Report for '.$obj->stable_id,
+    'params'  => $params
+  )) {
+    $panel1->add_components(qw(
+      name          EnsEMBL::Web::Component::Gene::name
+      stable_id     EnsEMBL::Web::Component::Gene::stable_id
+      location      EnsEMBL::Web::Component::Gene::location
+      description   EnsEMBL::Web::Component::Gene::description
+    ));
+    $self->add_panel( $panel1 );
+  }
+
+  if ( $obj->gene->length >3000000){
+    my $panel_return = new EnsEMBL::Web::Document::Panel(
+	  'caption' => 'Exception: for '.$obj->stable_id,
+          'object_type' => 'gene',
+     );
+    $panel_return->add_components(qw(too_big EnsEMBL::Web::Component::Gene::too_big    ));
+    $self->add_panel( $panel_return );
+    return 1;
+  }
+
+
+## Panel 2 - the main image on the page showing variations plotted against the exons of the gene
  # Set default sources
   my @sources = keys %{ $obj->species_defs->VARIATION_SOURCES || {} } ;
   my $default_source = $obj->get_source("default");
@@ -37,27 +67,8 @@ sub genesnpview {
   }
 
   $self->update_configs_from_parameter( 'bottom', 'genesnpview_transcript', 'genesnpview_gene', 'genesnpview_context' );
-  $self->set_title( 'Gene Variation Report for '.$obj->stable_id );
-  my $params = { 'gene' => $obj->stable_id, 'db' => $obj->get_db  };
 
-## Panel 1 - the gene information table at the top of the page...
-
-  if( my $panel1 = $self->new_panel( 'Information',
-    'code'    => "info#",
-    'caption' => 'Ensembl Gene Variation Report for '.$obj->stable_id,
-    'params'  => $params
-  )) {
-    $panel1->add_components(qw(
-      name          EnsEMBL::Web::Component::Gene::name
-      stable_id     EnsEMBL::Web::Component::Gene::stable_id
-      location      EnsEMBL::Web::Component::Gene::location
-      description   EnsEMBL::Web::Component::Gene::description
-    ));
-    $self->add_panel( $panel1 );
-  }
-
-## Panel 2 - the main image on the page showing variations plotted against the exons of the gene
-
+  # Drawing stuff
   if( my $panel2 = $self->new_panel( 'Image',
     'code'    => "image#",
     'caption' => 'SNPs and variations in region of gene '.$obj->stable_id,
@@ -171,6 +182,17 @@ sub genespliceview {
       description   EnsEMBL::Web::Component::Gene::description
     ));
     $self->add_panel( $panel1 );
+  }
+
+## Exit panel if gene is too long ...
+  if ( $obj->gene->length >3000000){
+    my $panel_return = new EnsEMBL::Web::Document::Panel(
+	  'caption' => 'Exception: for '.$obj->stable_id,
+          'object_type' => 'gene',
+     );
+    $panel_return->add_components(qw(too_big EnsEMBL::Web::Component::Gene::too_big    ));
+    $self->add_panel( $panel_return );
+    return 1;
   }
 
 ## Panel 2 - the main image on the page showing exons of the gene

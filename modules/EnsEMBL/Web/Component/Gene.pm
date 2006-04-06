@@ -1100,4 +1100,10 @@ sub genesnpview_legend {
   return 0;
 }
 
+sub too_big {
+  my( $panel, $object ) = @_;
+  my $object_type = $panel->{'object_type'};
+  $panel->print( qq(<p>Due to the length of this $object_type, this display is disabled as the rendering time is too long.</p>) );
+  return 0;
+}
 1;
