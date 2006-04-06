@@ -43,7 +43,7 @@ GET VALUES
   my $method_link_species_set = $genomic_align_block->method_link_species_set;
   my $genomic_aligns = $genomic_align_block->genomic_align_array();
   my $reference_genomic_align = $genomic_align_block->reference_genomic_align();
-  my $non_reference_genomic_aligns = $genomic_align_block->non_reference_genomic_aligns();
+  my $non_reference_genomic_aligns = $genomic_align_block->get_all_non_reference_genomic_aligns();
   my $reference_slice = $genomic_align_block->reference_slice();
   my $reference_slice_start = $genomic_align_block->reference_slice_start();
   my $reference_slice_end = $genomic_align_block->reference_slice_end();
