@@ -700,20 +700,14 @@ sub genomic_align_array {
 
 sub add_GenomicAlign {
   my ($self, $genomic_align) = @_;
- 
+
   throw("[$genomic_align] is not a Bio::EnsEMBL::Compara::GenomicAlign object")
       unless ($genomic_align and ref($genomic_align) and 
           $genomic_align->isa("Bio::EnsEMBL::Compara::GenomicAlign"));
   # Create weak circular reference to genomic_align_block from each genomic_align
   $genomic_align->genomic_align_block($self);
-  
-if(defined($self->{'genomic_align_array'})) {
-print "---Adding $genomic_align (", scalar(@{$self->{'genomic_align_array'}}), ")\n";
-} else {
-print "---Adding $genomic_align (0)\n";
-}
   push(@{$self->{'genomic_align_array'}}, $genomic_align);
-  
+
   return $genomic_align;
 }
 
