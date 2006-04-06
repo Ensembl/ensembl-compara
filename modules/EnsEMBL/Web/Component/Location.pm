@@ -1140,25 +1140,13 @@ sub alignsliceviewzoom {
     my $fcend = $gend;
 
     my $wuc = $object->user_config_hash( 'alignsliceviewbottom' );
-    my %aSpecies = ( $species => 1 );
-    my $aType = $wuc->get("alignslice", "type");
     my $aID = $wuc->get("alignslice", "id");
+    my @selected_species = @{$wuc->get("alignslice", "species")};
+    unshift @selected_species, $object->species if (@selected_species);
 
-    foreach my $sp (@{$wuc->get("alignslice", "species")}) {
-	$aSpecies{$sp} = 1;
-    }
-
-    my @sarray;
-    foreach my $s (keys %aSpecies) {
-	$s =~ s/_/ /;
-	push @sarray, $s;
-    }
-
-    if ($object->Obj->{_align_slice}) {
-	(my $psp = $species) =~ s/_/ /g;
-
-	my $pAlignSlice = $object->Obj->{_align_slice}->get_all_Slices($psp)->[0];
-	my $gc = $object->Obj->{_align_slice}->reference_Slice->start;
+    if ($align_slice = $object->Obj->{_align_slice}) {
+	my $pAlignSlice = $align_slice->get_all_Slices($species)->[0];
+	my $gc = $align_slice->reference_Slice->start;
 	my $cigar_line = $pAlignSlice->get_cigar_line();
 	my @inters = split (/([MDG])/, $cigar_line);
 	my ($ms, $ds);
@@ -1192,7 +1180,7 @@ sub alignsliceviewzoom {
 	    }
 	}
 	$fcend = $fc - ($gc - $gend);
-	$align_slice = $object->Obj->{_align_slice}->sub_AlignSlice( $fcstart +1 , $fcend +1);
+	$align_slice = $align_slice->sub_AlignSlice( $fcstart +1 , $fcend +1);
     } else {
 	my $slice = $object->database('core')->get_SliceAdaptor()
 	    ->fetch_by_region($object->seq_region_type, $object->seq_region_name, $gstart, $gend, 1 );
@@ -1201,14 +1189,9 @@ sub alignsliceviewzoom {
     
 	my $query_slice= $query_slice_adaptor->fetch_by_region($slice->coord_system_name, $slice->seq_region_name, $slice->start, $slice->end);
 
-	my %shash = ($object->species_defs->multi($aID, ucfirst($species)));
-	my @larray = ($species, keys %shash);
-
 	my $comparadb = $object->database('compara');
-
 	my $mlss_adaptor = $comparadb->get_adaptor("MethodLinkSpeciesSet");
-
-	my $method_link_species_set = $mlss_adaptor->fetch_by_method_link_type_registry_aliases($aType, $aType eq 'BLASTZ_NET' ? \@sarray : \@larray);
+	my $method_link_species_set = $mlss_adaptor->fetch_by_dbID($aID);
 
 	my $asa = $comparadb->get_adaptor("AlignSlice" );
 	$align_slice = $asa->fetch_by_Slice_MethodLinkSpeciesSet($query_slice, $method_link_species_set, "expanded" );
@@ -1216,7 +1199,7 @@ sub alignsliceviewzoom {
     }
 
     my @SEQ = ();
-    foreach my $as (@{$align_slice->get_all_Slices(@sarray)}) {
+    foreach my $as (@{$align_slice->get_all_Slices(@selected_species)}) {
 	my $seq = $as->seq;
 	my $ind = 0;
 	foreach (split(//, $seq)) {
@@ -1224,7 +1207,7 @@ sub alignsliceviewzoom {
 	}
     }
 
-    my $num = scalar(@sarray);
+    my $num = scalar(@selected_species) || 2;
 
     foreach my $nt (@SEQ) {
 	$nt->{S} = join('', grep {$nt->{$_} >= $num} keys(%{$nt}));
@@ -1234,7 +1217,7 @@ sub alignsliceviewzoom {
     my $cmpstr = 'primary';
     my $id = 0;
 
-    foreach my $as (@{$align_slice->get_all_Slices(@sarray)}) {
+    foreach my $as (@{$align_slice->get_all_Slices(@selected_species)}) {
 	(my $vsp = $as->genome_db->name) =~ s/ /_/g;
 	$id ++;
 	my $wuc = $object->user_config_hash( "alignsliceviewzoom_$id", 'alignsliceviewbottom' );
