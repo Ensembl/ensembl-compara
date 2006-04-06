@@ -322,8 +322,10 @@ sub method_link_species_set {
       $self->{'method_link_species_set_id'} = $self->{'method_link_species_set'}->dbID;
     }
     ## Update the MethodLinkSpeciesSet for the GenomicAligns included in this GenomicAlignBlock
-    foreach my $this_genomic_align (@{$self->get_all_GenomicAligns()}) {
-      $this_genomic_align->method_link_species_set($method_link_species_set);
+    if (defined($self->{genomic_align_array})) {
+      foreach my $this_genomic_align (@{$self->{genomic_align_array}}) {
+        $this_genomic_align->method_link_species_set($method_link_species_set);
+      }
     }
 
   } elsif (!defined($self->{'method_link_species_set'}) and defined($self->{'adaptor'})
@@ -365,8 +367,10 @@ sub method_link_species_set_id {
       $self->{'method_link_species_set'} = undef;
     }
     ## Update the MethodLinkSpeciesSet for the GenomicAligns included in this GenomicAlignBlock
-    foreach my $this_genomic_align (@{$self->get_all_GenomicAligns()}) {
-      $this_genomic_align->method_link_species_set_id($method_link_species_set_id);
+    if (defined($self->{genomic_align_array})) {
+      foreach my $this_genomic_align (@{$self->{genomic_align_array}}) {
+        $this_genomic_align->method_link_species_set_id($method_link_species_set_id);
+      }
     }
 
   } elsif (!($self->{'method_link_species_set_id'})) {
@@ -702,6 +706,12 @@ sub add_GenomicAlign {
           $genomic_align->isa("Bio::EnsEMBL::Compara::GenomicAlign"));
   # Create weak circular reference to genomic_align_block from each genomic_align
   $genomic_align->genomic_align_block($self);
+  
+if(defined($self->{'genomic_align_array'})) {
+print "---Adding $genomic_align (", scalar(@{$self->{'genomic_align_array'}}), ")\n";
+} else {
+print "---Adding $genomic_align (0)\n";
+}
   push(@{$self->{'genomic_align_array'}}, $genomic_align);
   
   return $genomic_align;
