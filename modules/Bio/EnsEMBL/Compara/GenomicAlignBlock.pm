@@ -319,9 +319,7 @@ sub method_link_species_set {
         unless ($method_link_species_set->isa("Bio::EnsEMBL::Compara::MethodLinkSpeciesSet"));
     $self->{'method_link_species_set'} = $method_link_species_set;
     if ($self->{'method_link_species_set_id'}) {
-#       warning("Defining both method_link_species_set_id and method_link_species_set");
-      throw("method_link_species_set object does not match previously defined method_link_species_set_id")
-          if ($self->{'method_link_species_set'}->dbID != $self->{'method_link_species_set_id'});
+      $self->{'method_link_species_set_id'} = $self->{'method_link_species_set'}->dbID;
     }
     ## Update the MethodLinkSpeciesSet for the GenomicAligns included in this GenomicAlignBlock
     foreach my $this_genomic_align (@{$self->get_all_GenomicAligns()}) {
@@ -364,10 +362,7 @@ sub method_link_species_set_id {
   if (defined($method_link_species_set_id)) {
     $self->{'method_link_species_set_id'} = $method_link_species_set_id;
     if (defined($self->{'method_link_species_set'}) and $self->{'method_link_species_set_id'}) {
-#       warning("Defining both method_link_species_set_id and method_link_species_set");
-      throw("method_link_species_set_id does not match previously defined method_link_species_set object")
-          if ($self->{'method_link_species_set'} and
-              $self->{'method_link_species_set'}->dbID != $self->{'method_link_species_set_id'});
+      $self->{'method_link_species_set'} = undef;
     }
     ## Update the MethodLinkSpeciesSet for the GenomicAligns included in this GenomicAlignBlock
     foreach my $this_genomic_align (@{$self->get_all_GenomicAligns()}) {
