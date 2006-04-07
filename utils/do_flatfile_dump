@@ -239,7 +239,9 @@ sub generate_blocklist {
       ( $block_start, $block_end ) = ( $gen_start, $gen_end );
     }
     else {  # The current gene overlaps the last, so incr current block size
-      $block_end = $gen_end;
+      if($gen_end > $block_end){
+	$block_end = $gen_end;
+      }
     }
   } # end foreach gene
 
