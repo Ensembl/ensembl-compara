@@ -333,23 +333,26 @@ sub get_samples {
   if ($options eq 'default') {
     return sort  @{$pop_adaptor->get_default_strains};
   }
-  elsif ($options eq 'display') { # return list of pops with default first
-    my %default;
-    map {$default{$_} = 1 } @{$pop_adaptor->get_default_strains};
-    my @pops;
-    foreach ( sort  @{$pop_adaptor->get_display_strains} ) {
-       next if $default{$_}; 
-       push @pops, $_;
-    }
-    return (sort keys %default),  @pops;
+
+  my %default_pops;
+  map {$default_pops{$_} = 1 } @{$pop_adaptor->get_default_strains};
+  my %db_pops;
+  foreach ( sort  @{$pop_adaptor->get_display_strains} ) {
+    next if $default_pops{$_}; 
+    $db_pops{$_} = 1;
+  }
+
+  if ($options eq 'display') { # return list of pops with default first
+    return (sort keys %default_pops), (sort keys %db_pops);
   }
   else { #get configured samples
+    my %configured_pops = (%default_pops, %db_pops);
     my @pops;
     my $script_config = $self->get_scriptconfig();
     foreach my $sample (sort $script_config->options) {
       next unless $sample =~ s/opt_pop_//;
       next unless $script_config->get("opt_pop_$sample") eq 'on';
-      push @pops, $sample;
+      push @pops, $sample if $configured_pops{$sample};
     }
     return sort @pops;
   }
