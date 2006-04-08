@@ -57,6 +57,7 @@ use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Hive;
 use Bio::EnsEMBL::Compara::NestedSet;
 use Bio::EnsEMBL::Compara::Homology;
+use Data::UUID;
 use Time::HiRes qw(time gettimeofday tv_interval);
 
 our @ISA = qw(Bio::EnsEMBL::Hive::Process);
