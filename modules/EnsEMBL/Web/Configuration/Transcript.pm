@@ -136,7 +136,7 @@ sub transcriptsnpview {
 ## Panel 2 - the main image on the page showing variations plotted against the exons of the transcript
  # Set default sources
  my @sources = keys %{ $obj->species_defs->VARIATION_SOURCES || {} } ;
- my $default_source = $obj->get_source("default");;
+ my $default_source = $obj->get_source("default");
  my $script_config = $obj->get_scriptconfig();
  my $restore_default = 1;
 
@@ -145,7 +145,7 @@ sub transcriptsnpview {
    $restore_default = 0 if $script_config->get(lc("opt_$source") ) eq 'on';
  }
 
- if( $restore_default ) { # if none of species' sources are on
+ if( $restore_default && !$obj->param('bottom') ) { # if none of species' sources are on
    foreach my $source ( @sources ) {
      my $switch;
      if ($default_source) {
