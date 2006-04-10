@@ -69,7 +69,7 @@ sub parse_newick_into_tree
         $root=$node unless($root);
         if($token eq '(') { #create new set
           printf("    create set\n")  if($debug);
-          $token = next_token(\$newick, "(:,)");
+          $token = next_token(\$newick, "[(:,)");
           $state = 1;
           $bracket_level++;
           $lastset = $node;
@@ -81,20 +81,39 @@ sub parse_newick_into_tree
         if(!($token =~ /[:,);]/)) { 
           $node->name($token);
           if($debug) { print("    naming leaf"); $node->print_node; }
-          $token = next_token(\$newick, ":,);");
+          $token = next_token(\$newick, "[:,);");
         }
         $state = 3;
       }
       case 3 { # optional : and distance
         if($token eq ':') {
-          $token = next_token(\$newick, ",);");
+          $token = next_token(\$newick, "[,);");
           $node->distance_to_parent($token);
           if($debug) { print("set distance: $token"); $node->print_node; }
           $token = next_token(\$newick, ",);"); #move to , or )
+        } elsif ($token eq '[') { # NHX tag without previous blength
+          $token .= next_token(\$newick, ",);");
         }
         $state = 4;
       }
-      case 4 { # end node
+      case 4 { # optional NHX tags
+        if($token =~ /\[\&\&NHX\:(\S+)\]/) {
+            # careful: this regexp gets rid of all NHX wrapping in one step
+            $token =~ s|\[\&\&NHX\:(\S+)\]|$1|;
+            my @attributes = split ':', $token;
+            foreach my $attribute (@attributes) {
+                my($key,$value) = split '=', $attribute;
+                # we assume only one value per key
+                $node->add_tag("$key","$value");
+            }
+          # $token = next_token(\$newick, ",);");
+          #$node->distance_to_parent($token);
+            if($debug) { print("NHX tags: $token"); $node->print_node; }
+            $token = next_token(\$newick, ",);"); #move to , or )
+        }
+        $state = 5;
+      }
+      case 5 { # end node
         if($token eq ')') {
           if($debug) { print("end set : "); $lastset->print_node; }
           $node = $lastset;        
