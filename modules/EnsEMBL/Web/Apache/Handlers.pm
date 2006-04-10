@@ -282,41 +282,79 @@ sub transHandler {
   shift @path_segments; # Always empty
   my $species   = shift @path_segments;
 
-  # DECLINE this request if we cant find a valid species
   my $Tspecies = $species;
   my $script    = undef;
   my $path_info = undef;
-  if( $species && ($species = map_alias_to_species($species)) ) {
-    $script = shift @path_segments;
-       $path_info = join( '/', @path_segments );
-    unshift ( @path_segments, '', $species, $script );
-    my $newfile = join( '/', @path_segments );
-
-    if( $newfile ne $file ){ # Path is changed; REDIRECT
-      $r->uri( $newfile );
-      $r->headers_out->add( 'Location' => join( '?', $newfile, $querystring || () ) );
-      $r->child_terminate;
-      return REDIRECT;
+  if( $species eq 'das' ) { # we have a DAS request...
+warn "DAS HANDLER";
+    my $DSN = $path_segments[0];
+    my $command = '';
+    if( $DSN eq 'dsn' ) {
+      $command = 'dsn';
+    } else {
+      my( $das_species, $assembly, $type, $subtype ) = split /\./, $DSN;
+      $command = $path_segments[1];
+      my $FN = "/ensemblweb/wwwdev/server/perl/das/$command";
+      $das_species = map_alias_to_species( $das_species );
+      if( ! $das_species ) {
+        $command = 'das_error';
+        $r->subprocess_env->{'ENSEMBL_DAS_ERROR'} = 'unknown-species';
+      }
+      $r->subprocess_env->{'ENSEMBL_SPECIES' }     = $das_species;
+      $r->subprocess_env->{'ENSEMBL_DAS_ASSEMBLY'} = $assembly;
+      $r->subprocess_env->{'ENSEMBL_DAS_TYPE'}     = $type;
+      $r->subprocess_env->{'ENSEMBL_DAS_SUBTYPE'}  = $subtype;
     }
-    # Mess with the environment
-    $r->subprocess_env->{'ENSEMBL_SPECIES'} = $species;
-    $r->subprocess_env->{'ENSEMBL_SCRIPT'}  = $script;
-    # Search the mod-perl dirs for a script to run
-    foreach my $dir( @PERL_TRANS_DIRS ){
-      $script || last;
-      my $filename = sprintf( $dir, $species ) ."/$script";
+    my $error_filename = '';
+    foreach my $dir ( @PERL_TRANS_DIRS ) {
+      my $filename = sprintf( $dir, $species )."/das/$command";
+      my $t_error_filename = sprintf( $dir, $species )."/das/das_error";
+      $error_filename ||= $t_error_filename if -r $t_error_filename;
       next unless -r $filename;
       $r->filename( $filename );
-      $r->uri( "/perl/$species/$script" );
-      $r->subprocess_env->{'PATH_INFO'} = "/$path_info" if $path_info;
-      warn sprintf( "SCRIPT:%-10d /%s/%s?%s\n", $$, $species, $script, $querystring ) if $ENSEMBL_DEBUG_FLAGS | 8 && ($script ne 'ladist' && $script ne 'la' );
+      $r->uri( "/perl/das/$DSN/$command" );
       return OK;
     }
+    if( -r $error_filename ) {
+      $r->subprocess_env->{'ENSEMBL_DAS_ERROR'}  = 'unknown-command';
+      $r->filename( $error_filename );
+      $r->uri( "/perl/das/$DSN/$command" );
+      return OK;
+    }
+    return DECLINED;
   } else {
-    $species = $Tspecies;
-    $script = join( '/', @path_segments );
-  }
+  # DECLINE this request if we cant find a valid species
+    if( $species && ($species = map_alias_to_species($species)) ) {
+      $script = shift @path_segments;
+      $path_info = join( '/', @path_segments );
+      unshift ( @path_segments, '', $species, $script );
+      my $newfile = join( '/', @path_segments );
 
+      if( $newfile ne $file ){ # Path is changed; REDIRECT
+        $r->uri( $newfile );
+        $r->headers_out->add( 'Location' => join( '?', $newfile, $querystring || () ) );
+        $r->child_terminate;
+        return REDIRECT;
+      }
+      # Mess with the environment
+      $r->subprocess_env->{'ENSEMBL_SPECIES'} = $species;
+      $r->subprocess_env->{'ENSEMBL_SCRIPT'}  = $script;
+      # Search the mod-perl dirs for a script to run
+      foreach my $dir( @PERL_TRANS_DIRS ){
+        $script || last;
+        my $filename = sprintf( $dir, $species ) ."/$script";
+        next unless -r $filename;
+        $r->filename( $filename );
+        $r->uri( "/perl/$species/$script" );
+        $r->subprocess_env->{'PATH_INFO'} = "/$path_info" if $path_info;
+        warn sprintf( "SCRIPT:%-10d /%s/%s?%s\n", $$, $species, $script, $querystring ) if $ENSEMBL_DEBUG_FLAGS | 8 && ($script ne 'ladist' && $script ne 'la' );
+        return OK;
+      }
+    } else {
+      $species = $Tspecies;
+      $script = join( '/', @path_segments );
+    }
+  }
   # Search the htdocs dirs for a file to return
   my $path = join( "/", $species || (), $script || (), $path_info || () );
   $r->uri( "/$path" );
