@@ -485,9 +485,6 @@ sub print_node {
   printf("%s\n", $self->name);
 }
 
-#### avilella hacking start
-##
-
 sub nhx_format {
   my $self = shift;
   my $format_mode = shift;
@@ -572,8 +569,6 @@ sub _internal_nhx_format {
 
   return $nhx;
 }
-##
-#### avilella hacking end
 
 sub newick_format {
   my $self = shift;
