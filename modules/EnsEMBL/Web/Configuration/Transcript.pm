@@ -157,6 +157,7 @@ sub transcriptsnpview {
      $script_config->set(lc("opt_$source"), $switch, 1);
    }
  }
+ $script_config->save;
 
  # Populations/strains: Read in all in scriptconfig stuff
  my $use_default_strains = 1;

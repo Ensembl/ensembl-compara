@@ -1385,7 +1385,7 @@ sub spreadsheet_TSVtable {
    else {
      $text = ". Please select a source from the yellow 'Source' dropdown menu" if scalar @populations;
    }
-   $panel->print("<p>These SNP calls are sequence coverage dependent. Here we display the SNP calls observed by transcript$text.</p>");
+   $panel->print("<p>Where there is resequencing coverage, SNPs have been called using a computational method.  Here we display the SNP calls observed by transcript$text.  </p>");
 
    my $user_config = $object->user_config_hash( 'TSV_sampletranscript' );
    $user_config->{'Populations'}    = \@populations;
