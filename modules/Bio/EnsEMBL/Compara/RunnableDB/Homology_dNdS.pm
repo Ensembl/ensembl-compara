@@ -137,7 +137,8 @@ sub calc_genetic_distance
   #print("use codeml to get genetic distance of homology\n");
   #$homology->print_homology;
   
-  my $aln = $homology->get_SimpleAlign("cdna");
+  # second argument will change selenocyteine TGA codons to NNN
+  my $aln = $homology->get_SimpleAlign("cdna", 1);
 
   $self->{'comparaDBA'}->dbc->disconnect_when_inactive(1);
   
