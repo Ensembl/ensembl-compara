@@ -743,7 +743,7 @@ sub flatten_tree {
 
   Overview   : rearranges the tree structure so that the root is moved to 
                beetween this node and its parent.  If the old root was more than
-	       bifircated (2 children) a new node is created where it was to hold
+	       bifurcated (2 children) a new node is created where it was to hold
 	       the multiple children that arises from the re-rooting.  
 	       The old root is returned.
   Example    : $node->re_root();
