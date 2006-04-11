@@ -29,21 +29,6 @@ use Bio::EnsEMBL::Compara::NestedSet;
 use Bio::EnsEMBL::Utils::Exception qw(throw warning);
 
 
-###########################
-# NEWICK PARSING
-###########################
-
-=head2 parse_newick_into_tree
-
-  Arg [1]    : <string> newick formated string
-  Example    : $link = new Bio::EnsEMBL::Compara::Graph::Link($node1, $node2);
-  Description: parses newick string into a 
-  Returntype : Bio::EnsEMBL::Compara::NestedSet object which is the root of the tree
-  Exceptions : none
-
-=cut
-
-
 sub parse_newick_into_tree
 {
   my $newick = shift;
@@ -78,7 +63,7 @@ sub parse_newick_into_tree
         }
       }
       case 2 { #naming a node
-        if(!($token =~ /[:,);]/)) { 
+        if(!($token =~ /[\[\:\,\)\;]/)) { 
           $node->name($token);
           if($debug) { print("    naming leaf"); $node->print_node; }
           $token = next_token(\$newick, "[:,);");
@@ -118,11 +103,17 @@ sub parse_newick_into_tree
           if($debug) { print("end set : "); $lastset->print_node; }
           $node = $lastset;        
           $lastset = $lastset->parent;
-          $token = next_token(\$newick, ":,);");
-          $state=2;
+          $token = next_token(\$newick, "[:,);"); 
+          # it is possible to have anonymous internal nodes no name
+          # no blength but with NHX tags
+          if ($token eq '[') {
+              $state=1;
+          } else {
+              $state=2;
+          }
           $bracket_level--;
         } elsif($token eq ',') {
-          $token = next_token(\$newick, "(:,)");
+          $token = next_token(\$newick, "[(:,)"); #can be un_blengthed nhx nodes
           $state=1;
         } elsif($token eq ';') {
           #done with tree
