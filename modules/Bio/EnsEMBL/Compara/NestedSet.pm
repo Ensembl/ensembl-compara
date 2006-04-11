@@ -149,7 +149,7 @@ sub add_child {
 sub store_child {
   my ($self, $child) = @_;
   throw("store_child has been deprecated. Highly inefficient.".
-        "Use add_child, build in memory and store in one go\n") 
+        "Use add_child, build in memory and store in one go\n");
 }
 
 
@@ -827,7 +827,7 @@ sub minimize_node {
   my $dist = $child->distance_to_parent + $self->distance_to_parent;
   if($self->parent) { $self->parent->add_child($child, $dist); }
   $self->disavow_parent;
-  return $child
+  return $child;
 }
 
 
