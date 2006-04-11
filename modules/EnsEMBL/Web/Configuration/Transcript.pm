@@ -145,7 +145,7 @@ sub transcriptsnpview {
    $restore_default = 0 if $script_config->get(lc("opt_$source") ) eq 'on';
  }
 
- if( $restore_default && !$obj->param('bottom') ) { # if none of species' sources are on
+ if( $restore_default && !$obj->param('bottom') ) { # if no spp sources are on
    foreach my $source ( @sources ) {
      my $switch;
      if ($default_source) {
@@ -157,8 +157,8 @@ sub transcriptsnpview {
      $script_config->set(lc("opt_$source"), $switch, 1);
    }
  }
- $script_config->save;
 
+ # Need this to make yellow dropdowns work
  # Populations/strains: Read in all in scriptconfig stuff
  my $use_default_strains = 1;
  foreach ($script_config->options) {
@@ -166,8 +166,13 @@ sub transcriptsnpview {
    $use_default_strains = 0;
    last;
  }
+ $use_default_strains = 1 if $obj->param('default') eq 'populations';
 
  if( $use_default_strains ) { # if none of species' sources are on
+   map { $script_config->delete("opt_pop_$_") }  ($obj->get_samples) ;
+ foreach ($script_config->options) {
+   next unless $_ =~/anger|db/;
+ }
    foreach my $sample ( $obj->get_samples("default") ) {
      $script_config->set("opt_pop_$sample", "on", 1);
    }
@@ -180,7 +185,6 @@ sub transcriptsnpview {
  }
  $script_config->save;
 
- # Need this to make yellow dropdowns work
  $self->update_configs_from_parameter( 'bottom', qw(TSV_context TSV_sampletranscript TSV_transcript) );
 
 

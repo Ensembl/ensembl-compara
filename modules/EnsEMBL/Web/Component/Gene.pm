@@ -301,7 +301,7 @@ sub align_markup_options_form {
 
 sub name {
   my( $panel, $object ) = @_;
-  my( $display_name, $dbname, $ext_id, $dbname_disp ) = $object->display_xref();
+  my( $display_name, $dbname, $ext_id, $dbname_disp, $info_text ) = $object->display_xref();
   return 1 unless defined $display_name;
   my $label = $object->type_name();
   my $lc_type = lc($label);
@@ -312,22 +312,10 @@ sub name {
   }
   my $site_type = ucfirst(lc($SiteDefs::ENSEMBL_SITETYPE));
 
-
-  ######### HACK  fc1 8/3/05 for v37 but ask Ewan! ########
-  my $hgnc_text = "($dbname_disp ID)";
-  if ($hgnc_text =~ /HGNC/ ) {
-    if ( $ENV{'ENSEMBL_SPECIES'} =~/Pan_troglodytes|Gallus_gallus|Canis_familiaris|Xenopus_tropicalis|Bos_taurus|Monodelphis_domestica|Macaca_mulatta/ ) {
-      $hgnc_text = "";
-      $linked_display_name = $display_name;
-    }
-  }
- ################ end of nasty hack #######################
-
-
   my $html = qq(
   <p>
-    <strong>$linked_display_name</strong> <span class="small">$hgnc_text</span>
-    <span class="small"> (to view all $site_type genes linked to the name <a href="/@{[$object->species]}/featureview?type=Gene;id=$display_name">click here</a>)</span>
+    <strong>$linked_display_name</strong> $info_text <span class="small">($dbname_disp ID)</span>
+    <span class="small">. To view all $site_type genes linked to the name <a href="/@{[$object->species]}/featureview?type=Gene;id=$display_name">click here</a></span>
   </p>);
   if(my @CCDS = grep { $_->dbname eq 'CCDS' } @{$object->Obj->get_all_DBLinks} ) {
     my %T = map { $_->primary_id,1 } @CCDS;

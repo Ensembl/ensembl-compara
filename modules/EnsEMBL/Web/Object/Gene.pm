@@ -88,7 +88,7 @@ sub chromosome {
 sub display_xref {
   my $self = shift; 
   my $trans_xref = $self->Obj->display_xref();
-  return ($trans_xref->display_id, $trans_xref->dbname, $trans_xref->primary_id, $trans_xref->db_display_name ) if $trans_xref;
+  return ($trans_xref->display_id, $trans_xref->dbname, $trans_xref->primary_id, $trans_xref->db_display_name, $trans_xref->info_text ) if $trans_xref;
 }
 
 sub gene_description {
