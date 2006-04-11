@@ -18,11 +18,32 @@ sub _init {
   my @snps = @{$Config->{'snps'}};
   return unless scalar @snps;
 
-  # Info text ---------------------------------------------------------
   # Get reference strain name for start of track:
   my $pop_adaptor = $self->{'container'}->adaptor->db->get_db_adaptor('variation')->get_PopulationAdaptor;
   my $golden_path =  $pop_adaptor->get_reference_strain_name();
   my $reference_name = $Config->{'reference'} || $golden_path;
+
+
+  # Get allele and coverage data from config -----------------------------
+  my %strain_alleles;   # $strain_alleles{strain}{id::start} = allele
+  my %coverage;         # $coverage{strain} = [ [start, end, level], [start, end, level]   ];
+
+  foreach my $data ( @{$Config->{'snp_fake_haplotype'}} ) {
+    my( $strain, $allele_ref, $coverage_ref ) = @$data;
+    $strain_alleles{$strain} = {};  # every strain should be in here
+    foreach my $a_ref ( @$allele_ref ) {
+      $strain_alleles{$strain}{ join "::", $a_ref->[2]->{'_variation_id'}, $a_ref->[2]->{'start'} } = $a_ref->[2]->allele_string ;
+    }
+    foreach my $c_ref ( @$coverage_ref ) {
+      push @{ $coverage{$strain} }, [ $c_ref->[2]->start, $c_ref->[2]->end, $c_ref->[2]->level ];
+    }
+  }
+
+  # Default to Ensembl golden path ref strain if chosen "ref" strain isn't selected on the display
+  $reference_name = $golden_path unless $strain_alleles{$reference_name};
+
+
+  # Info text ---------------------------------------------------------
   my $info_text = "Comparison to reference $reference_name strain alleles (green = same allele; purple = different allele)";
 
   my ($w,$th) = $Config->texthelper()->px2bp($Config->species_defs->ENSEMBL_STYLE->{'LABEL_FONT'});
@@ -43,23 +64,6 @@ sub _init {
   $self->push( $textglyph );
 
 
-  # Get allele and coverage data from config -----------------------------
-  my %strain_alleles;   # $strain_alleles{strain}{id::start} = allele
-  my %coverage;         # $coverage{strain} = [ [start, end, level], [start, end, level]   ];
-
-  foreach my $data ( @{$Config->{'snp_fake_haplotype'}} ) {
-    my( $strain, $allele_ref, $coverage_ref ) = @$data;
-    $strain_alleles{$strain} = {};  # every strain should be in here
-
-    foreach my $a_ref ( @$allele_ref ) {
-      $strain_alleles{$strain}{ join "::", $a_ref->[2]->{'_variation_id'}, $a_ref->[2]->{'start'} } = $a_ref->[2]->allele_string ;
-    }
-    foreach my $c_ref ( @$coverage_ref ) {
-      push @{ $coverage{$strain} }, [ $c_ref->[2]->start, $c_ref->[2]->end, $c_ref->[2]->level ];
-    }
-  }
-
-
 
   # Reference track ----------------------------------------------------
   my $offset = $small_th + 4;
@@ -72,6 +76,7 @@ sub _init {
   foreach my $snp_ref ( @snps ) {
     my $snp = $snp_ref->[2];
     my $label =  $snp->allele_string;
+
     my ($golden_path_base) = split "\/", $label;
     my ($reference_base, $colour);
 
