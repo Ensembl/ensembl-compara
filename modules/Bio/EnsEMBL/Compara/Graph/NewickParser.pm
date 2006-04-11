@@ -87,6 +87,7 @@ sub parse_newick_into_tree
             $token =~ s|\[\&\&NHX\:(\S+)\]|$1|;
             my @attributes = split ':', $token;
             foreach my $attribute (@attributes) {
+                $attribute =~ s/\s+//;
                 my($key,$value) = split '=', $attribute;
                 # we assume only one value per key
                 $node->add_tag("$key","$value");
