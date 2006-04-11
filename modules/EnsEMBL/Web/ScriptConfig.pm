@@ -126,6 +126,11 @@ sub reset {
   return;
 }
 
+sub delete {
+  my ($self,$key) = @_;
+  delete $self->{'_options'}{$key}{'user'};
+}
+
 sub dump {
   my ($self) = @_;
   print STDERR Dumper($self);
