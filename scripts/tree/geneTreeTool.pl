@@ -43,6 +43,7 @@ $self->{'print_leaves'} =0;
 my $conf_file;
 my ($help, $host, $user, $pass, $dbname, $port, $adaptor);
 my $url;
+my $debug=0;
 
 Bio::EnsEMBL::Registry->no_version_check(1);
 
@@ -54,6 +55,7 @@ GetOptions('help'             => \$help,
            'port=s'           => \$compara_conf{'-port'},
            'db=s'             => \$compara_conf{'-dbname'},
            'file=s'           => \$self->{'newick_file'},
+           'treefam_file=s'   => \$self->{'treefam_file'},
            'tree_id=i'        => \$self->{'tree_id'},
            'clusterset_id=i'  => \$self->{'clusterset_id'},
            'gene=s'           => \$self->{'gene_stable_id'},
@@ -79,7 +81,7 @@ GetOptions('help'             => \$help,
 
 if ($help) { usage(); }
 
-#test7($self);
+#compare_two_test($self);
 
 if($url) {
   $self->{'comparaDBA'}  = Bio::EnsEMBL::Hive::URLFactory->fetch($url, 'compara');
@@ -106,6 +108,9 @@ elsif ($self->{'gene_stable_id'} and $self->{'clusterset_id'}) {
 elsif ($self->{'newick_file'}) {
   parse_newick($self);
 }
+elsif ($self->{'treefam_file'}) {
+  treefam_compare($self);
+}
 
 if ($self->{'keep_leaves'}) {
   keep_leaves($self);
@@ -128,7 +133,7 @@ if($self->{'tree'}) {
     reroot($self);
   }
   
-#  test7($self);
+  #test7($self);
   if($self->{'balance_tree'}) {
     balance_tree($self);
   }
@@ -144,8 +149,8 @@ if($self->{'tree'}) {
     $self->{'tree'}->print_tree($self->{'scale'});
     printf("%d proteins\n", scalar(@{$self->{'tree'}->get_all_leaves}));
   }
-
   if($self->{'print_leaves'}) {
+    # leaves are Bio::EnsEMBL::Compara::AlignedMember objects
     my $leaves = $self->{'tree'}->get_all_leaves;
     printf("fetched %d leaves\n", scalar(@$leaves));
     foreach my $leaf (@$leaves) {
@@ -232,6 +237,8 @@ sub usage {
   print "  -gene <stable_id>      : fetch tree which contains gene_stable_id\n";
   print "  -file <path>           : parse tree from Newick format file\n";
   print "\n";
+  print "  -treefam_file <path>   : parse tree from treefam and compare to genetree db (clusterset_id req)\n";
+  print "\n";
   print "  -align                 : output protein multiple alignment\n";
   print "  -cdna                  : output cdna multiple alignment\n";
   print "  -align_format          : alignment format (see perldoc Bio::AlignIO) (def:phylip)\n";
@@ -267,6 +274,7 @@ sub fetch_protein_tree_with_gene {
   my $member = $self->{'comparaDBA'}->
                get_MemberAdaptor->
                fetch_by_source_stable_id('ENSEMBLGENE', $gene_stable_id);
+  return 0 unless (defined $member);
   my $aligned_member = $treeDBA->
                        fetch_AlignedMember_by_member_id_root_id(
                           $member->get_longest_peptide_Member->member_id,
@@ -275,6 +283,7 @@ sub fetch_protein_tree_with_gene {
   
   $self->{'tree'} = $treeDBA->fetch_node_by_node_id($node->node_id);
   $node->release_tree;
+  return 1;
 }
 
 
@@ -988,6 +997,39 @@ sub balance_tree
   #move tree back to original root node  
   $self->{'tree'}->merge_children($root);
 }
+
+sub treefam_compare
+{
+  my $self = shift;
+  my $treefam_nhx = '';
+  print("load from file ", $self->{'treefam_file'}, "\n");
+  open (FH, $self->{'treefam_file'}) or throw("Could not open treefam_nhx file [$self->{'treefam_file'}]");
+  while(<FH>) {
+    $treefam_nhx .= $_;
+  }
+  printf("newick string: $treefam_nhx\n") if $debug;
+  my $treefam_tree = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($treefam_nhx);
+
+  my @shared;
+  my @different;
+  my @leaves = @{$treefam_tree->get_all_leaves};
+  foreach my $leaf (@leaves) {
+      my $leaf_name = $leaf->name;
+      # treefam uses G NHX tag for genename
+      my $genename = $leaf->get_tagvalue('G');
+      next if (0==length($genename)); #for weird pseudoleaf tags with no gene name
+      if (fetch_protein_tree_with_gene($self, $genename)) {
+          print STDERR "leaf_name_treefam isshared: ",$genename, "\t", $leaf_name,"\n";
+          push @shared, $genename;
+      } else {
+          print STDERR "leaf_name_treefam notfound: ",$genename, "\t", $leaf_name,"\n";
+          push @different, $genename;
+      }
+  }
+  1;
+}
+
+
 
 
 sub test7
