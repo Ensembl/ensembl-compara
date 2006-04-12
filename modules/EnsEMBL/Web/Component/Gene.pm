@@ -313,12 +313,15 @@ sub name {
   my $site_type = ucfirst(lc($SiteDefs::ENSEMBL_SITETYPE));
 
   # If gene ID projected from other spp, put link on other spp geneID
-  if ($info_text && $dbname_disp =~/^Projected/) {
-    $info_text =~ /from (.+) gene (.+)/;
-    my ($species, $gene) = ($1, $2);
-    $info_text =~ s|$species|<i>$species</i>| if $species =~ /\w+ \w+/;
-    $species =~ s/ /_/;
-    $info_text =~s|($gene)|<a href="/$species/geneview?gene=$gene">$gene</a> |;
+  if ($dbname_disp =~/^Projected/) {
+    $linked_display_name = $display_name; # i.e. don't link it
+    if ($info_text) {
+      $info_text =~ /from (.+) gene (.+)/;
+      my ($species, $gene) = ($1, $2);
+      $info_text =~ s|$species|<i>$species</i>| if $species =~ /\w+ \w+/;
+      $species =~ s/ /_/;
+      $info_text =~s|($gene)|<a href="/$species/geneview?gene=$gene">$gene</a> |;
+    }
   }
 
   my $html = qq(
