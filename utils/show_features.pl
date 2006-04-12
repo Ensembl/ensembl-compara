@@ -45,7 +45,7 @@ my %queries = (
   'Gene features' => qq(
      select concat( ifnull(f.biotype,    '--'), ' : ',
                     ifnull(f.source,     '--'), ' : ',
-                    ifnull(f.confidence, '--'), ' : ',
+                    ifnull(f.status, '--'), ' : ',
                     ifnull(a.logic_name, '--') ) as name,
             count(*) as n
        from gene as f, analysis as a
@@ -60,14 +60,15 @@ my %queries = (
       order by name),
   'Transcript' => qq(
      select concat( ifnull(f.biotype,    '--'), ' : ',
-                    ifnull(f.confidence, '--'), ' : ',
+                    ifnull(f.status, '--'), ' : ',
+                    ifnull(a1.logic_name, '--'), ' : ',
                     ifnull(g.biotype,    '--'), ' : ',
                     ifnull(g.source,     '--'), ' : ',
-                    ifnull(g.confidence, '--'), ' : ',
+                    ifnull(g.status, '--'), ' : ',
                     ifnull(a.logic_name, '--') ) as name,
             count(*) as n
-       from transcript as f, gene as g, analysis as a
-      where a.analysis_id = g.analysis_id and g.gene_id = f.gene_id
+       from transcript as f, gene as g, analysis as a, analysis as a1
+      where a.analysis_id = g.analysis_id and g.gene_id = f.gene_id and f.analysis_id = a1.analysis_id
       group by name
       order by name),
   'Repeats' => qq(
@@ -82,7 +83,7 @@ my @species = @ARGV ? @ARGV : @{$SD->ENSEMBL_SPECIES};
 
 foreach my $sp ( @species ) {
   my $tree = $SD->{_storage}{$sp};
-  foreach my $db_name ( qw(ENSEMBL_DB ENSEMBL_VEGA ENSEMBL_EST ) ) {
+  foreach my $db_name ( qw(ENSEMBL_DB ENSEMBL_VEGA ENSEMBL_EST ENSEMBL_CDNA) ) {
     next unless $tree->{'databases'}->{$db_name}{'NAME'};
     my $dbh = $SD->db_connect( $tree, $db_name );
     foreach my $K ( sort keys %queries ) {
