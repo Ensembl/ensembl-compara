@@ -85,7 +85,7 @@ function show_zmenu( caption, e_x, e_y, menu_items, zmn ) {
     ce.colSpan = 3;
     ro.appendChild(ce);
     o=dtn(caption);
-    temp = href.split(':');
+    temp = href ? href.split(':') : new Array('','');
     if( temp[0] == 'pfetch' ) {
       o=dce('span');
       sa(o,'id','pfetch_'+zmn);

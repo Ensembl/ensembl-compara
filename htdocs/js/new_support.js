@@ -1,4 +1,5 @@
 // General support functionality....
+MAC = navigator.userAgent.toLowerCase().indexOf('mac')==-1?0:1;
 var LOADED = 0;    // Has the page been loaded
 var DIAG   = 0;    // Warn missing objects??
 var PRECISION = 3; // precision of click...
@@ -64,14 +65,14 @@ function rs( X,w,h ) {switch(MODE) {
 }}
 
 // get property "wh" of object "i"
-function egP(i,wh) {ip = 0;switch(MODE) {
-  case 'IE6': case 'NS6': while (i!=null) { ip+=i["offset"+wh]; i=i.offsetParent; }
+function egP(i,wh) {flag=100;ip = 0;switch(MODE) {
+  case 'IE6': case 'NS6': while (flag && (i!=null)) { ip+=i["offset"+wh]; i=i.offsetParent; flag--; }
 }return( ip );}
 
 function egX( i ) { return egP(i,'Left'); }
 function egY( i ) { return egP(i,'Top'); }
-function egW( i ) { return parseInt( i.width  ? i.width  : (i.style ? i.style.width : 0 )); }
-function egH( i ) { return parseInt( i.height ? i.height : (i.style ? i.style.height : 0 ) ); }
+function egW( i ) { return i ? parseInt( i.width  ? i.width  : (i.style ? i.style.width : 0 )) : 0; }
+function egH( i ) { return i ? parseInt( i.height ? i.height : (i.style ? i.style.height : 0 ) ) : 0; }
 function egXr( i ) { return parseInt( i.offsetLeft ); }
 function egYr( i ) { return parseInt( i.offsetTop ); }
 

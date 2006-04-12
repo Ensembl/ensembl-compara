@@ -65,6 +65,7 @@ function contigview_init( id_1, id_2 ) {
 /* create panel specific red boxes */
     if( !ego( n+'_rl' ) ) {
       A = ego( n );
+      if(A) {
       A.onmousedown = select_start
       for(k=0;k<edges.length;k++) {
         var L = edges.substr(k,1);
@@ -88,11 +89,12 @@ function contigview_init( id_1, id_2 ) {
         i2=dce('img');  i2.src = '/img/blank.gif'; i2.width = 1; i2.height  = 1; i2.style.borderWidth = 0;
 */
       }
+      }
     }
   }
   cv_draw_red_boxes( id_1, id_2 );
   B = ego( 'ensembl-webpage' );
-  for(i=0;i<8;i++) {
+  for(i=0;i<4;i++) {
     var D = dce('div');
     var I = dce('img');
     sa(D,'id',red_box_divs[i]);
@@ -121,7 +123,10 @@ function cv_draw_red_boxes( id_1, id_2 ) {
     name = 'p_'+loop;
     I = egi(name+'_i');
     X = egX( I ); Y = egY( I ); W = egW( I ); H = egH( I );
-    document.getElementById( name ).style.borderColor = 'black';
+    Z = ego( name );
+    if( Z ) {
+     Z.style.borderColor = 'black';
+    }
     if( F.elements[name+'_visible'].value == 1 ) {
       l2 = loop+1;
       fl  = 1 

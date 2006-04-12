@@ -18,13 +18,13 @@ var drag_offset_y   = 0;
 var selectoi ;
 var SELECTION_X;
 var SELECTION_Y;
-var IE_offset = 0;
+var IE_offset = -1;
 var N = 3;
 
 // This is eht zmenu on mouse down menus....
 // Grab event... get it's location and also location of current
 // object... this gives us the 
-function drag_start( evt ) {
+function drag_start( evt ) { debug_print( 'drag_start' );
   evt = (evt) ? evt : ((event)?event:null)
   dragging_object = gee(evt).parentNode.parentNode.parentNode.parentNode;
   drag_offset_x = egeX(evt) - egX(dragging_object);
@@ -35,29 +35,45 @@ function drag_start( evt ) {
   document.getElementsByTagName('body')[0].onmouseout  = drag_move;
 }
 
-function drag_stop( evt ) {
+function drag_stop( evt ) { debug_print( 'drag_stop' );
   document.getElementsByTagName('body')[0].onmousemove = null;
   document.getElementsByTagName('body')[0].onmouseup   = null;
   document.getElementsByTagName('body')[0].onmouseout  = null;
 }
 
-function drag_move( evt ) {
+function drag_move( evt ) { debug_print( 'drag_move' );
   evt = (evt) ? evt : ((event)?event:null)
   m2( dragging_object, egeX(evt) - drag_offset_x, egeY(evt) - drag_offset_y );
 }
 
 // Funtionality for the drag-select mechanism....
 
-function select_start( evt ) {
+function select_start( evt ) { if(MAC && MODE=='IE6') return;
+  debug_print( 'select_start' );
   evt = (evt) ? evt : ((event)?event:null)
   SELECTION_DIV   = gp(gee(evt),'DIV');
   dragging_object = gp( gee(evt), 'DIV' );
   dragging_id     = dragging_object.getAttribute('id')
-  IE_offset = MODE == 'IE6' ? 2 : 0;
-  drag_offset_x  = egX( SELECTION_DIV ) + IE_offset; 
-  drag_offset_y  = egY( SELECTION_DIV ) + IE_offset; 
-  SELECTION_X = egeX(evt) - drag_offset_x
-  SELECTION_Y = egeY(evt) - drag_offset_y
+  IE_offset       = 0; // MODE == 'IE6' ? 2 : 0;
+  drag_offset_x   = egX( SELECTION_DIV ) + IE_offset; 
+  drag_offset_y   = egY( SELECTION_DIV ) + IE_offset; 
+  SELECTION_X     = egeX(evt) - drag_offset_x
+  SELECTION_Y     = egeY(evt) - drag_offset_y
+  for(i=4;i<8;i++) {
+    T = ego(red_box_divs[i]);
+    if(T) { T.parentNode.removeChild(T); }
+    var D = dce('div');
+    var I = dce('img');
+    sa(D,'id',red_box_divs[i]);
+    D.className = 'redbox';
+    D.style.backgroundColor = 'red';
+    sa(I,'src', '/img/blank.gif');
+    ac(D,I);
+    ac(dragging_object,D);
+    rs(D,1,1);
+    rs(I,1,1);
+  }
+
   show(ego('other_l'));
   m2(ego('other_l'), SELECTION_X, SELECTION_Y, 1, 1 );
   m2(ego('other_t'), SELECTION_X, SELECTION_Y, 1, 1 );
@@ -73,7 +89,7 @@ function select_start( evt ) {
   return false;
 }
 
-function select_move(evt) {
+function select_move(evt) { debug_print( 'select_move' );
   evt     = (evt) ? evt : ((event)?event:null)
   O       = egi(dragging_id+'_i');
   var I   = gee(evt);
@@ -104,7 +120,7 @@ function select_move(evt) {
 }
 
 
-function select_stop(evt) {
+function select_stop(evt) { debug_print( 'select_stop' );
   evt = (evt) ? evt : ((event)?event:null)
   document.getElementsByTagName('body')[0].onmousemove = null;
   document.getElementsByTagName('body')[0].onmouseup   = null;
@@ -148,6 +164,7 @@ function select_stop(evt) {
       m2(ego('real_l'), sx,    sy, 1,   H+1 ); m2(ego('real_t'), sx, sy,    W+1, 1   );
       m2(ego('real_r'), enx,   sy, 1,   H+1 ); m2(ego('real_b'), sx, eny,   W+1, 1   );
       chr = F.chr.value
+/* Centre point of object */
       ocp = Math.floor( 0.5 * F.elements[dragging_id+'_bp_end'].value + 0.5 * F.elements[dragging_id+'_bp_start'].value );
       ow  = Math.floor( 1.0 * F.elements[dragging_id+'_bp_end'].value - 1.0 * F.elements[dragging_id+'_bp_start'].value + 1 );
       ns  = 1.0 * p2b( dragging_id,  sx-tl_x );
@@ -219,6 +236,13 @@ function select_stop(evt) {
               ZMENU_ID = zmn;
               MOUSE_UP = 1;
               A.onclick();
+              MOUSE_UP = 0;
+            } else if(A.onmouseover) {
+              CLICK_X  = e_x;
+              CLICK_Y  = e_y;
+              ZMENU_ID = zmn;
+              MOUSE_UP = 1;
+              A.onmouseover();
               MOUSE_UP = 0;
             } else {
               if( A.title.substr(  0, 6 ) == 'About:' ) {
