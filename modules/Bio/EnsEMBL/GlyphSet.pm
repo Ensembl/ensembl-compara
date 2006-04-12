@@ -67,6 +67,13 @@ sub my_config {
   return $self->{'_my_config_'}{ $key } ||= $self->{'config'}->get($self->check(), $key );
 }
 
+sub set_my_config {
+  my( $self, $key, $val ) = @_;
+  $self->{'config'}->set($self->check(), $key, $val );
+  $self->{'_my_config_'}{ $key } = $val;
+  return $self->{'_my_config_'}{$key};
+}
+
 sub check {
   my( $self ) = @_;
   unless( $self->{'_check_'} ) {

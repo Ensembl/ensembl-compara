@@ -61,6 +61,9 @@ sub _init {
   return unless defined $type;
   
   my $VirtualContig   = $self->{'container'};
+  if( $self->can( '_threshold_update' ) ) {
+    $self->_threshold_update();
+  }
   my $Config          = $self->{'config'};
   my $strand          = $self->strand();
   my $strand_flag     = $Config->get($type, 'str');
@@ -96,7 +99,9 @@ sub _init {
   my $bitmap_length  = int($VirtualContig->length * $pix_per_bp);
 
   ## And the colours
-  $self->{'colours'} = $Config->get($type, 'colours');
+  $self->{'colours'} = $Config->get($type,'colour_set') ?
+    $self->{'config'}->colourmap->{'colour_sets'}{ $Config->get($type,'colour_set') } : 
+    $Config->get($type, 'colours');
   $self->{'feature_colour'} = $Config->get($type, 'col') || $self->{'colours'} && $self->{'colours'}{'col'};
   $self->{'label_colour'}   = $Config->get($type, 'lab') || $self->{'colours'} && $self->{'colours'}{'lab'};
   $self->{'part_to_colour'} = '';

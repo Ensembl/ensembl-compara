@@ -84,6 +84,7 @@ sub _init {
 	  foreach( @coord_systems ) {
 	      my $path;
 	      eval { $path = $ctg_slice->project($_->name); };
+              next unless $path;
 	      next unless(@$path == 1);
 	      $path = $path->[0]->to_Slice;
 # get clone id out of seq_region_attrib for link to webFPC 

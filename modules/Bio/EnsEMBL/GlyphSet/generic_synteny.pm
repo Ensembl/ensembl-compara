@@ -38,6 +38,7 @@ sub features {
     $f->{'chr_end'}       = $main_dfr->dnafrag_end;
     $f->{'rel_ori'}       = $main_dfr->dnafrag_strand * $other_dfr->dnafrag_strand;
     push @RET, $f;
+    $argh->release_tree;
   }
   return \@RET;
 }
