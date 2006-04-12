@@ -55,13 +55,12 @@ sub genesnpview {
 
   if( $restore_default ) { # if none of species' sources are on
     foreach my $source ( @sources ) {
-      my $switch;
-      if ($default_source) {
-        $switch = $source eq $default_source ? 'on' : 'off' ;
-      }
-      else {
-        $switch = 'on';
-      }
+      my $switch = "on";
+
+      # Switch on all by default for GSV
+      #if ($default_source) {
+      #  $switch = $source eq $default_source ? 'on' : 'off' ;
+      #}
       $script_config->set(lc("opt_$source"), $switch, 1);
     }
   }
