@@ -82,18 +82,21 @@ sub parse_newick_into_tree
         $state = 4;
       }
       case 4 { # optional NHX tags
-        if($token =~ /\[\&\&NHX\:(\S+)\]/) {
+        if($token =~ /\[\&\&NHX/) {
             # careful: this regexp gets rid of all NHX wrapping in one step
-            $token =~ s|\[\&\&NHX\:(\S+)\]|$1|;
-            my @attributes = split ':', $token;
-            foreach my $attribute (@attributes) {
-                $attribute =~ s/\s+//;
-                my($key,$value) = split '=', $attribute;
-                # we assume only one value per key
-                $node->add_tag("$key","$value");
+            $token =~ /\[\&\&NHX\:(\S+)\]/;
+            if ($1) {
+                # NHX may be empty, presumably at end of file, just before ";"
+                my @attributes = split ':', $1;
+                foreach my $attribute (@attributes) {
+                    $attribute =~ s/\s+//;
+                    my($key,$value) = split '=', $attribute;
+                    # we assume only one value per key
+                    $node->add_tag("$key","$value");
+                }
             }
-          # $token = next_token(\$newick, ",);");
-          #$node->distance_to_parent($token);
+            # $token = next_token(\$newick, ",);");
+            #$node->distance_to_parent($token);
             if($debug) { print("NHX tags: $token"); $node->print_node; }
             $token = next_token(\$newick, ",);"); #move to , or )
         }
