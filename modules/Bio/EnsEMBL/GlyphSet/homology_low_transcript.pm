@@ -22,12 +22,12 @@ sub transcript_type {
 
 sub colour {
   my ($self, $gene, $transcript, $colours, %highlights) = @_;
-  my $colour = $colours->{$gene->analysis->logic_name}[0];
+  my $colour = $colours->{$gene->analysis->logic_name};
   my $highlight;
   if( exists $highlights{lc($gene->stable_id)} ){
     $highlight = $colours->{'hi'};
   }
-  return ( $colour, $highlight );
+  return ( @$colour, $highlight );
 }
 
 sub gene_colour {

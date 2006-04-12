@@ -86,7 +86,7 @@ sub compact_init {
   @highlights{$self->highlights} = ();    # build hashkeys of highlight list
   my @bitmap        = undef;
   my $colours       = $self->colours();
-
+  my %used_colours  = ();
   my $fontname      =  $Config->species_defs->ENSEMBL_STYLE->{'LABEL_FONT'}; 
   my $pix_per_bp    = $Config->transform->{'scalex'};
   my $_w            = $Config->texthelper->width($fontname) / $pix_per_bp;
@@ -116,9 +116,8 @@ sub compact_init {
     my $Composite = new Sanger::Graphics::Glyph::Composite({'y'=>$y,'height'=>$h, 'title' => $gene->stable_id });
        $Composite->{'href'} = $self->gene_href( $gene, %highlights );
        $Composite->{'zmenu'} = $self->gene_zmenu( $gene ) unless $Config->{'_href_only'};
-    my($colour, $hilight) = $self->gene_colour( $gene, $colours, %highlights );
-
-    $colour ||= 'black';
+    my($colour, $label, $hilight) = $self->gene_colour( $gene, $colours, %highlights );
+    $used_colours{ $label } = $colour;
     my $Composite2 = new Sanger::Graphics::Glyph::Composite({'y'=>$y,'height'=>$h});
     foreach my $exon (@exons) {
       my $s = $exon->start;
@@ -206,13 +205,19 @@ sub compact_init {
   }
 
   if($transcript_drawn) {
-    my ($key, $priority, $legend) = $self->legend( $colours );
+    my @legend = %used_colours;
+    $Config->{'legend_features'}->{$type} = {
+      'priority' => $Config->get( $type, 'pos' ),
+      'legend'   => \@legend
+    };
+
+    ## my ($key, $priority, $legend) = $self->legend( $colours );
     # define which legend_features should be displayed
     # this is being used by GlyphSet::gene_legend
-    $Config->{'legend_features'}->{$key} = {
-      'priority' => $priority,
-      'legend'   => $legend
-    } if defined($key);
+    ## $Config->{'legend_features'}->{$key} = {
+    ##  'priority' => $priority,
+    ##  'legend'   => $legend
+    ## } if defined($key);
   } elsif( $Config->get('_settings','opt_empty_tracks')!=0) {
     $self->errorTrack( "No ".$self->error_track_name()." in this region" );
   }
@@ -306,6 +311,7 @@ sub expanded_init {
   my @bitmap        = undef;
   my $colours       = $self->colours();
 
+  my %used_colours  = ();
   my $fontname      =  $Config->species_defs->ENSEMBL_STYLE->{'LABEL_FONT'}; 
   my $pix_per_bp    = $Config->transform->{'scalex'};
   my $bitmap_length = $Config->image_width(); #int($Config->container_width() * $pix_per_bp);
@@ -376,7 +382,8 @@ sub expanded_init {
       my $Composite = new Sanger::Graphics::Glyph::Composite({'y'=>$y,'height'=>$h,'title'=>$title});
          $Composite->{'href'} = $self->href( $gene, $transcript, %highlights );
          $Composite->{'zmenu'} = $self->zmenu( $gene, $transcript ) unless $Config->{'_href_only'};
-      my($colour, $hilight) = $self->colour( $gene, $transcript, $colours, %highlights );
+      my($colour, $label, $hilight) = $self->colour( $gene, $transcript, $colours, %highlights );
+      $used_colours{ $label } = $colour;
       my $coding_start = defined ( $transcript->coding_region_start() ) ? $transcript->coding_region_start :  -1e6;
       my $coding_end   = defined ( $transcript->coding_region_end() )   ? $transcript->coding_region_end :    -1e6;
       my $Composite2 = new Sanger::Graphics::Glyph::Composite({'y'=>$y,'height'=>$h});
@@ -554,13 +561,19 @@ sub expanded_init {
     }
   }
   if($transcript_drawn) {
-    my ($key, $priority, $legend) = $self->legend( $colours );
+    my @legend = %used_colours;
+    $Config->{'legend_features'}->{$type} = {
+      'priority' => $Config->get( $type, 'pos' ),
+      'legend'   => \@legend
+    };
+
+    ## my ($key, $priority, $legend) = $self->legend( $colours );
     # define which legend_features should be displayed
     # this is being used by GlyphSet::gene_legend
-    $Config->{'legend_features'}->{$key} = {
-      'priority' => $priority,
-      'legend'   => $legend
-    } if defined($key);
+    ## $Config->{'legend_features'}->{$key} = {
+    ##  'priority' => $priority,
+    ##  'legend'   => $legend
+    ## } if defined($key);
   } elsif( $Config->get('_settings','opt_empty_tracks')!=0) {
     $self->errorTrack( "No ".$self->error_track_name()." in this region" );
   }
@@ -655,7 +668,7 @@ sub as_expanded_init {
 
     my @bitmap        = undef;
     my $colours       = $self->colours();
-
+    my %used_colours  = ();
     my $fontname      =  $Config->species_defs->ENSEMBL_STYLE->{'LABEL_FONT'}; 
     my $pix_per_bp    = $Config->transform->{'scalex'};
     my $bitmap_length = $Config->image_width(); #int($Config->container_width() * $pix_per_bp);
@@ -698,8 +711,8 @@ sub as_expanded_init {
 	    my $Composite = new Sanger::Graphics::Glyph::Composite({'y'=>$y,'height'=>$h});
 	    $Composite->{'href'} = $self->href( $gene, $transcript, %highlights );
 	    $Composite->{'zmenu'} = $self->zmenu( $gene, $transcript ) unless $Config->{'_href_only'};
-	    my($colour, $hilight) = $self->colour( $gene, $transcript, $colours, %highlights );
-	    
+	    my($colour, $label, $hilight) = $self->colour( $gene, $transcript, $colours, %highlights );
+	    $used_colours{ $label } = $colour; 
 # AlignSlice translations don't have coordinates .. 
 
 	    my $coding_start = -1e6;
@@ -901,13 +914,19 @@ sub as_expanded_init {
 	}
     }
     if($transcript_drawn) {
-	my ($key, $priority, $legend) = $self->legend( $colours );
-	# define which legend_features should be displayed
-	# this is being used by GlyphSet::gene_legend
-	$Config->{'legend_features'}->{$key} = {
-	    'priority' => $priority,
-	    'legend'   => $legend
-	    } if defined($key);
+    my @legend = %used_colours;
+    $Config->{'legend_features'}->{$type} = {
+      'priority' => $Config->get( $type, 'pos' ),
+      'legend'   => \@legend
+    };
+
+    ## my ($key, $priority, $legend) = $self->legend( $colours );
+    # define which legend_features should be displayed
+    # this is being used by GlyphSet::gene_legend
+    ## $Config->{'legend_features'}->{$key} = {
+    ##  'priority' => $priority,
+    ##  'legend'   => $legend
+    ## } if defined($key);
     } elsif( $Config->get('_settings','opt_empty_tracks')!=0) {
 	$self->errorTrack( "No ".$self->error_track_name()." in this region" );
     }
@@ -930,7 +949,7 @@ sub as_compact_init {
 
     my @bitmap        = undef;
     my $colours       = $self->colours();
-
+    my %used_colours; 
     my $fontname      =  $Config->species_defs->ENSEMBL_STYLE->{'LABEL_FONT'}; 
     my $pix_per_bp    = $Config->transform->{'scalex'};
     my $_w            = $Config->texthelper->width($fontname) / $pix_per_bp;
@@ -963,8 +982,8 @@ sub as_compact_init {
 	my $Composite = new Sanger::Graphics::Glyph::Composite({'y'=>$y,'height'=>$h});
 	$Composite->{'href'} = $self->gene_href( $gene, %highlights );
 	$Composite->{'zmenu'} = $self->gene_zmenu( $gene ) unless $Config->{'_href_only'};
-	my($colour, $hilight) = $self->gene_colour( $gene, $colours, %highlights );
-	$colour ||= 'black';
+	my($colour, $label, $hilight) = $self->gene_colour( $gene, $colours, %highlights );
+        $used_colours{ $label } = $colour;
 	my @exons = ();
 # In compact mode we 'collapse' exons showing just the gene structure, i.e overlapping exons/transcripts will be merged
 	foreach my $transcript (@{$gene->get_all_Transcripts()}) {
@@ -1067,13 +1086,19 @@ sub as_compact_init {
     }
     
     if($transcript_drawn) {
-	my ($key, $priority, $legend) = $self->legend( $colours );
-	# define which legend_features should be displayed
-	# this is being used by GlyphSet::gene_legend
-	$Config->{'legend_features'}->{$key} = {
-	    'priority' => $priority,
-	    'legend'   => $legend
-	    } if defined($key);
+    my @legend = %used_colours;
+    $Config->{'legend_features'}->{$type} = {
+      'priority' => $Config->get( $type, 'pos' ),
+      'legend'   => \@legend
+    };
+
+    ## my ($key, $priority, $legend) = $self->legend( $colours );
+    # define which legend_features should be displayed
+    # this is being used by GlyphSet::gene_legend
+    ## $Config->{'legend_features'}->{$key} = {
+    ##  'priority' => $priority,
+    ##  'legend'   => $legend
+    ## } if defined($key);
     } elsif( $Config->get('_settings','opt_empty_tracks')!=0) {
 	$self->errorTrack( "No ".$self->error_track_name()." in this region" );
     }

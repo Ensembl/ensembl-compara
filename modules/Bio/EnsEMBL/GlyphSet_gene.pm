@@ -88,14 +88,16 @@ sub _init {
    my $genes = $self->features( $logic_name, $database );
    foreach my $g (@$genes) {
     my $gene_label = $self->gene_label( $g );
+warn ">>> ", $g->analysis->logic_name, ' -- ', $g->biotype, ' -- ' , $g->status,' <<<';
     my $GT         = $self->gene_col( $g );
        $GT =~ s/XREF//g;
+   warn $GT unless $colours->{$GT};
     my $gene_col   = ($used_colours->{ $GT } = $colours->{ $GT });
     my $ens_ID     = $self->ens_ID( $g );
     my $high = exists $highlights{ lc($gene_label) } || exists $highlights{ lc($g->stable_id) };
 
-	my $type = $g->source eq 'vega' ? $self->format_vega_name($g) : $g->biotype;
-	$type =~ s/HUMACE-//;
+    my $type = $g->source eq 'vega' ? $self->format_vega_name($g) : $g->biotype;
+       $type =~ s/HUMACE-//;
     my $start = $g->start;
     my $end   = $g->end;
     my ($chr_start, $chr_end) = $self->slice2sr( $start, $end );
@@ -129,8 +131,8 @@ sub _init {
 	"length: @{[$chr_end-$chr_start+1]}"  => ''
       }; 
       if( $ens_ID ne '' ) {
-        $Z->{"Gene: $ens_ID"} = "/@{[$self->{container}{_config_file_name_}]}/geneview?gene=$ens_ID&db=$database"; 
-        $HREF= "/@{[$self->{container}{_config_file_name_}]}/geneview?gene=$ens_ID&db=$database";
+        $Z->{"Gene: $ens_ID"} = "/@{[$self->{container}{_config_file_name_}]}/geneview?gene=$ens_ID;db=$database"; 
+        $HREF= "/@{[$self->{container}{_config_file_name_}]}/geneview?gene=$ens_ID;db=$database";
         $rect->{'href'}  = $HREF;
       }
       $rect->{'zmenu'} = $Z;

@@ -40,20 +40,21 @@ sub colour {
 
   my $genecol;
   if( $gene->type eq 'Genoscope_predicted' ) {
-    $genecol = $colours->{ '_GSTEN' }[0];
+    $genecol = '_GSTEN';
   } else {
-    $genecol = $colours->{ '_HOX' }[0];
+    $genecol = '_HOX' ;
   }
 
+  my $highlight = undef;
   if(exists $highlights{lc($transcript->stable_id)}) {
-    return ($genecol, $colours->{'superhi'});
+    $highlight = $colours->{'superhi'};
   } elsif(exists $highlights{lc($transcript->external_name)}) {
-    return ($genecol, $colours->{'superhi'});
+    $highlight = $colours->{'superhi'};
   } elsif(exists $highlights{lc($gene->stable_id)}) {
-    return ($genecol, $colours->{'hi'});
+    $highlight = $colours->{'hi'};
   }
     
-  return ($genecol, undef);
+  return (@{$colours->{$genecol}}, $highlight);
 }
 
 sub gene_colour {
@@ -61,15 +62,17 @@ sub gene_colour {
   my $genecol;  $colours->{ "_".$gene->external_status }[0];
 
   if( $gene->type eq 'Genoscope_predicted' ) {
-    $genecol = $colours->{ '_GSTEN' }[0];
-  } else { 
-    $genecol = $colours->{ '_HOX' }[0];
-  }
-  if(exists $highlights{lc($gene->stable_id)}) {
-    return ($genecol, $colours->{'hi'});
+    $genecol = '_GSTEN';
+  } else {
+    $genecol = '_HOX' ;
   }
 
-  return ($genecol, undef);
+  my $highlight = undef;
+  if(exists $highlights{lc($gene->stable_id)}) {
+    $highlight = $colours->{'hi'};
+  }
+
+  return (@{$colours->{$genecol}}, $highlight);
 }
 
 sub href {

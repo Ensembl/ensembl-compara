@@ -24,7 +24,7 @@ sub colour {
 
   my $highlight = undef;
   my $type = $transcript->type() || $gene->biotype();
-  my $colour = $colours->{ $type =~ /pseudo/i ? 'rna-pseudo' : 'rna-real' }[0];
+  my $colour = $colours->{ $type =~ /pseudo/i ? 'rna-pseudo' : 'rna-real' };
 
   if(exists $highlights{lc($transcript->stable_id)}) {
     $highlight = $colours->{'superhi'};
@@ -34,7 +34,7 @@ sub colour {
     $highlight = $colours->{'hi'};
   }
 
-  return ($colour, $highlight); 
+  return (@$colour, $highlight); 
 }
 
 sub gene_colour {
@@ -42,13 +42,13 @@ sub gene_colour {
 
   my $highlight = undef;
   my $type = $gene->biotype();
-  my $colour = $colours->{ $type =~ /pseudo/i ? 'rna-pseudo' : 'rna-real' }[0];
+  my $colour = $colours->{ $type =~ /pseudo/i ? 'rna-pseudo' : 'rna-real' };
 
   if(exists $highlights{lc($gene->stable_id)}) {
     $highlight = $colours->{'hi'};
   }
 
-  return ($colour, $highlight);
+  return (@$colour, $highlight);
 }
 
 sub href {

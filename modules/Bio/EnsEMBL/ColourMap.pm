@@ -26,14 +26,25 @@ sub new {
 
   $self->{'colour_sets'} = {};
   my %core = (
-    '_KNOWN'     => [ 'rust', 'known' ],
-    '_KNOWNXREF' => [ 'rust', 'known' ],
-    '_XREF'      => [ 'black','novel' ],
+    '_protein_coding'           => [ 'rust', 'Known Protein Coding' ],
+    '_protein_coding_KNOWN'     => [ 'rust', 'Known Protein Coding' ],
+    '_pseudogene_KNOWN'         => [ 'grey50','Known Pseudogene' ],
+    '_protein_coding_NOVEL'     => [ 'black', 'Novel Protein Coding' ],
+    '_pseudogene_NOVEL'         => [ 'grey30','Novel Psuedogene' ],
+    '_Mt_tRNA_KNOWN'            => [ 'plum4', 'Known RNA' ],
+    '_rRNA_KNOWN'               => [ 'plum4', 'Known RNA' ],
+    '_tRNA_KNOWN'               => [ 'plum4', 'Known RNA' ],
+    '_tRNA_NOVEL'               => [ 'plum4', 'Novel RNA' ],
+    '_snoRNA_KNOWN'             => [ 'plum4', 'Known RNA' ],
+    '_snRNA_KNOWN'              => [ 'plum4', 'Known RNA' ],
+    '_misc_RNA_KNOWN'           => [ 'plum4', 'Known RNA' ],
+    '_misc_RNA_NOVEL'           => [ 'plum3', 'Novel RNA' ],
     '_ORTH'      => [ 'green3', 'ortholog' ],
     '_PREDXREF'  => [ 'red3',   'prediction'  ],
     '_PRED'      => [ 'red3',   'prediction'  ],
     '_BACCOM'    => [ 'red',    'bacterial contaminent' ],
     '_'          => [ 'black',  'novel' ],
+    '_NOVEL'     => [ 'black',  'novel' ],
     '_PSEUDO'    => [ 'grey50', 'pseudogene' ],
   );
   $self->colourSet( 'protein_features', qw(
@@ -79,12 +90,18 @@ sub new {
   $self->colourSet( 'ensembl_gene',
     'hi'         => 'highlight1',
     'superhi'    => 'highlight2',
-    map { $_ => [ $core{$_}[0], "Ensembl predicted genes (@{[$core{$_}[1]]})" ] } keys %core
+    'havana_protein_coding_KNOWN'  => [ 'dodgerblue4', 'Havana Known Protein coding'],
+    'havana_protein_coding_NOVEL'  => [ 'blue',        'Havana Novel Protein coding' ],
+    'ensembl_havana_gene_protein_coding_KNOWN'  => [ 'goldenrod3', 'Merged Known Protein coding'],
+    'ensembl_havana_gene_protein_coding_NOVEL'  => [ 'goldenrod4', 'Merged Novel Protein coding'],
+    'ensembl_havana_transcript_protein_coding_KNOWN'  => [ 'goldenrod3', 'Common Known Protein coding'],
+    'ensembl_havana_transcript_protein_coding_NOVEL'  => [ 'goldenrod4', 'Common Novel Protein coding'],
+    map { ("ensembl$_" => [ $core{$_}[0], "Ensembl ".$core{$_}[1] ]) } keys %core
   );
   $self->colourSet( 'sgd_gene',
     'hi'         => 'highlight1',
     'superhi'    => 'highlight2',
-    map { $_ => [ $core{$_}[0], "SGD predicted genes (@{[$core{$_}[1]]})" ] } keys %core
+    map { ("sgd$_" => [ $core{$_}[0], "SGD ".$core{$_}[1] ]) } keys %core
   );
   $self->colourSet( 'bee_gene',
     'hi'         => 'highlight1',
@@ -107,17 +124,17 @@ sub new {
   $self->colourSet( 'wormbase_gene',
     'hi'         => 'highlight1',
     'superhi'    => 'highlight2',
-    map { $_ => [ $core{$_}[0], "Wormbase predicted genes (@{[$core{$_}[1]]})" ] } keys %core
+    map {( "wormbase$_" => [ $core{$_}[0], "Wormbase (@{[$core{$_}[1]]})" ] )} keys %core
   );
   $self->colourSet( 'flybase_gene',
     'hi'         => 'highlight1',
     'superhi'    => 'highlight2',
-    map { $_ => [ $core{$_}[0], "Flybase predicted genes (@{[$core{$_}[1]]})" ] } keys %core
+    map { ( "flybase$_" => [ $core{$_}[0], "Flybase (@{[$core{$_}[1]]})" ] )} keys %core
   );
   $self->colourSet( 'vega_gene',
     'hi'                               => 'highlight1',
     'superhi'                          => 'highlight2',
-	'ccdshi'                           => 'lightblue1',
+    'ccdshi'                           => 'lightblue1',
     'protein_coding_KNOWN'             => [ 'dodgerblue4', 'Known Protein coding'],
     'processed_transcript_KNOWN'       => [ 'dodgerblue4', 'Known Processed transcript'],
     'protein_coding_in_progress_KNOWN' => [ 'lightskyblue4', 'Known Protein coding (in progress)'],
@@ -256,7 +273,7 @@ sub new {
     'STOP_GAINED'            => ['red',            'Stop gained',           'black',],
     'STOP_LOST'              => ['red',            'Stop lost',             'black',],
     '_'                      => ['gray50',         'Other SNP',           'black',],
-		  );
+  );
 
 
   $self->colourSet('regulatory_search_regions',
@@ -292,6 +309,60 @@ sub new {
 		    '_'                         => 'gray50',
 		    );
 
+  $self->colourSet( 'clones',
+    'col_Free'        => 'gray80',
+    'col_Phase0Ac'    => 'thistle2',
+    'col_Committed'   => 'mediumpurple1',
+    'col_PreDraftAc'  => 'plum',
+    'col_Redundant'   => 'gray80',
+    'col_Reserved'    => 'gray80',
+    'col_DraftAc'     => 'gold2',
+    'col_FinishAc'    => 'gold3',
+    'col_Abandoned'   => 'gray80',
+    'col_Accessioned' => 'thistle2',
+    'col_Unknown'     => 'gray80',
+    'col_'            => 'gray80',
+    'lab_Free'        => 'black',
+    'lab_Phase0Ac'    => 'black',
+    'lab_Committed'   => 'black',
+    'lab_PreDraftAc'  => 'black',
+    'lab_Redundant'   => 'black',
+    'lab_Reserved'    => 'black',
+    'lab_DraftAc'     => 'black',
+    'lab_FinishAc'    => 'black',
+    'lab_Abandoned'   => 'black',
+    'lab_Accessioned' => 'black',
+    'lab_Unknown'     => 'black',
+    'lab_'            => 'black',
+    'col_conflict'    => 'red',
+    'col_consistent'  => 'chartreuse3',
+    'col_unmapped'    => 'grey80',
+    'lab_conflict'    => 'black',
+    'lab_consistent'  => 'black',
+    'lab_unmapped'    => 'black',
+    'bacend'          => 'black',
+    'seq_len'         => 'black',
+    'fish_tag'        => 'black'
+  );
+
+  $self->colourSet( 'alternating',
+    'col1' => 'red',
+    'col2' => 'orange',
+    'lab1' => 'black',
+    'lab2' => 'black',
+    'bacend' => 'black',
+    'seq_len' => 'black'
+  );
+  $self->colourSet( 'fosmids',
+    'col' => 'purple2',
+    'lab' => 'black'
+  );
+  $self->colourSet( 'supercontigs',
+    'col1' =>  'darkgreen',
+    'col2' => 'green',
+    'lab1' => 'white',
+    'lab2' => 'black',
+  );
 
   return $self;
 }

@@ -17,7 +17,6 @@ sub colour {
   my ($self, $gene, $transcript, $colours, %highlights) = @_;
    
   my $highlight = undef;
-  my $colour = $colours->{'tigr_0_5'}[0];
   if(exists $highlights{lc($transcript->stable_id)}) {
     $highlight = $colours->{'superhi'};
   } elsif(exists $highlights{lc($transcript->external_name)}) {
@@ -26,20 +25,19 @@ sub colour {
     $highlight = $colours->{'hi'};
   }
 
-  return ($colour, $highlight); 
+  return ( @{$colours->{'tigr_0_5'}}, $highlight );
 }
 
 sub gene_colour {
   my ($self, $gene, $colours, %highlights) = @_;
   my $highlight = undef;
-  my $colour = $colours->{lc($gene->type())}[0];
 
   if(exists $highlights{lc($gene->external_name)}) {
     $highlight = $colours->{'superhi'};
   } elsif(exists $highlights{lc($gene->stable_id)}) {
     $highlight = $colours->{'hi'};
   }
-  return ($colour, $highlight);
+  return ( @{$colours->{'tigr_0_5'}}, $highlight );
 }
 
 sub href {

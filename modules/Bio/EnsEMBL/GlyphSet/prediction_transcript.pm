@@ -52,7 +52,7 @@ sub colour {
   if($transcript && exists $highlights{lc($transcript->stable_id)}) {
     return ($colours->{'col'}, $colours->{'hi'});
   }
-  return ( $colours->{'col'}, undef );
+  return ( $colours->{'col'}, $self->analysis_logic_name, undef );
 }
 
 sub href {

@@ -24,7 +24,7 @@ sub features {
   my $track = 'ensembl_transcript';
   my $slice = $self->{'container'};
   my $sp = $self->{'_config_file_name_'};
-  my @analyses = ( 'ensembl', 'pseudogene');
+  my @analyses = ( 'ensembl', 'pseudogene', 'havana', 'ensembl_havana_gene' );
   my $db_alias = 'core'; # $self->{'config'}->get($track,'db_alias') || '';
   my @genes;
 
@@ -37,42 +37,36 @@ sub features {
 
 sub colour {
   my ($self, $gene, $transcript, $colours, %highlights) = @_;
-  my $translation = $transcript->translation;
-  my $translation_id = $translation ? $translation->stable_id : '';
 
-  my $genecol = $colours->{ "_".$transcript->external_status }[0];
-
-  if( $gene->biotype eq 'bacterial_contaminant' ) {
-    $genecol = $colours->{'_BACCOM'}[0];
-  } elsif( $transcript->external_status eq '' and ! $translation_id ) {
-    $genecol = $colours->{'_PSEUDO'}[0];
-  }
+  my $genecol = $colours->{ $transcript->analysis->logic_name."_".$transcript->biotype."_".$transcript->status };
+  warn $transcript->stable_id,' ',$gene->stable_id, ' ',$transcript->analysis->logic_name."_".$transcript->biotype."_".$transcript->status unless $genecol;
+  
   if(exists $highlights{lc($transcript->stable_id)}) {
-    return ($genecol, $colours->{'superhi'});
+    return (@$genecol, $colours->{'superhi'});
   } elsif(exists $highlights{lc($transcript->external_name)}) {
-    return ($genecol, $colours->{'superhi'});
+    return (@$genecol, $colours->{'superhi'});
   } elsif(exists $highlights{lc($gene->stable_id)}) {
-    return ($genecol, $colours->{'hi'});
+    return (@$genecol, $colours->{'hi'});
   }
-    
-  return ($genecol, undef);
+  warn @$genecol;  
+  return (@$genecol, undef);
 }
 
 sub gene_colour {
   my ($self, $gene, $colours, %highlights) = @_;
-  my $genecol = $colours->{ "_".$gene->external_status }[0];
+  my $genecol = $colours->{ $gene->analysis->logic_name."_".$gene->biotype."_".$gene->status };
 
   if( $gene->biotype eq 'bacterial_contaminant' ) {
-    $genecol = $colours->{'_BACCOM'}[0];
+    $genecol = $colours->{'_BACCOM'};
   }
   if(exists $highlights{lc($gene->stable_id)}) {
-    return ($genecol, $colours->{'hi'});
+    return (@$genecol, $colours->{'hi'});
   }
   if(exists $highlights{lc($gene->external_name)}) {
-    return ($genecol, $colours->{'hi'});
+    return (@$genecol, $colours->{'hi'});
   }
 
-  return ($genecol, undef);
+  return (@$genecol, undef);
 }
 
 sub href {
@@ -142,6 +136,7 @@ sub gene_zmenu {
 
 sub text_label {
   my ($self, $gene, $transcript) = @_;
+  my $colours = $self->colours();
   my $tid = $transcript->stable_id();
   my $eid = $transcript->external_name();
   my $id = $eid || $tid;
@@ -155,10 +150,8 @@ sub text_label {
     $id .= "\n";
     if( $gene->biotype eq 'bacterial_contaminant' ) {
       $id.= 'Bacterial cont.';
-    } elsif( $transcript->translation ) {
-      $id.= $eid ? "Ensembl known trans" : "Ensembl novel trans";
     } else {
-      $id .= "Ensembl pseudogene";
+      $id .= $colours->{ $transcript->analysis->logic_name."_".$transcript->biotype."_".$transcript->status }[1];
     }
   }
   return $id;
@@ -166,6 +159,7 @@ sub text_label {
 
 sub gene_text_label {
   my ($self, $gene ) = @_;
+  my $colours = $self->colours();
   my $gid    = $gene->stable_id;
   my $eid    = $gene->external_name;
   my $id     = $eid || $gid;
@@ -180,7 +174,7 @@ sub gene_text_label {
     if( $gene->biotype eq 'bacterial_contaminant' ) {
       $id.= 'Bacterial cont.';
     } else {
-      $id.= $eid ? "Ensembl known trans" : "Ensembl novel trans";
+      $id .= $colours->{ $gene->analysis->logic_name."_".$gene->biotype."_".$gene->status }[1];
     }
   }
   return $id;

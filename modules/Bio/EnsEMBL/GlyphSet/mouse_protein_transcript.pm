@@ -22,12 +22,11 @@ sub transcript_type {
 
 sub colour {
     my ($self, $gene, $transcript, $colours, %highlights) = @_;
-    my $colour = $colours->{'_col'}[0];
     my $highlight;
     if( exists $highlights{lc($gene->stable_id)} ){
         $highlight = $colours->{'hi'};
     }
-    return ( $colour, $highlight );
+  return( @{$colours->{'_col'}},$highlight );
 }
 
 sub href {

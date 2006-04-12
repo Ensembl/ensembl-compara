@@ -38,36 +38,36 @@ sub colour {
   my $translation = $transcript->translation;
   my $translation_id = $translation ? $translation->stable_id : '';
 
-  my $genecol = $colours->{ "_".$transcript->external_status }[0];
+  my $genecol = $colours->{ "_".$transcript->external_status };
 
   if( $gene->type eq 'bacterial_contaminant' ) {
-    $genecol = $colours->{'_BACCOM'}[0];
+    $genecol = $colours->{'_BACCOM'};
   } elsif( $transcript->external_status eq '' and ! $translation_id ) {
-    $genecol = $colours->{'_PSEUDO'}[0];
+    $genecol = $colours->{'_PSEUDO'};
   }
   if(exists $highlights{lc($transcript->stable_id)}) {
-    return ($genecol, $colours->{'superhi'});
+    return (@$genecol, $colours->{'superhi'});
   } elsif(exists $highlights{lc($transcript->external_name)}) {
-    return ($genecol, $colours->{'superhi'});
+    return (@$genecol, $colours->{'superhi'});
   } elsif(exists $highlights{lc($gene->stable_id)}) {
-    return ($genecol, $colours->{'hi'});
+    return (@$genecol, $colours->{'hi'});
   }
     
-  return ($genecol, undef);
+  return (@$genecol, undef);
 }
 
 sub gene_colour {
   my ($self, $gene, $colours, %highlights) = @_;
-  my $genecol = $colours->{ "_".$gene->external_status }[0];
+  my $genecol = $colours->{ "_".$gene->external_status };
 
   if( $gene->type eq 'bacterial_contaminant' ) {
-    $genecol = $colours->{'_BACCOM'}[0];
+    $genecol = $colours->{'_BACCOM'};
   }
   if(exists $highlights{lc($gene->stable_id)}) {
-    return ($genecol, $colours->{'hi'});
+    return (@$genecol, $colours->{'hi'});
   }
 
-  return ($genecol, undef);
+  return (@$genecol, undef);
 }
 
 sub href {

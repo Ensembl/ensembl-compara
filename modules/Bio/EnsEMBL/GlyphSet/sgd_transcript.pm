@@ -35,39 +35,29 @@ sub features {
 
 sub colour {
   my ($self, $gene, $transcript, $colours, %highlights) = @_;
-  my $translation = $transcript->translation;
-  my $translation_id = $translation ? $translation->stable_id : '';
 
-  my $genecol = $colours->{ "_".$transcript->external_status }[0];
+  my $genecol = $colours->{ $transcript->analysis->logic_name."_".$transcript->biotype."_".$transcript->status };
 
-  if( $gene->type eq 'bacterial_contaminant' ) {
-    $genecol = $colours->{'_BACCOM'}[0];
-  } elsif( $transcript->external_status eq '' and ! $translation_id ) {
-    $genecol = $colours->{'_PSEUDO'}[0];
-  }
   if(exists $highlights{lc($transcript->stable_id)}) {
-    return ($genecol, $colours->{'superhi'});
+    return (@$genecol, $colours->{'superhi'});
   } elsif(exists $highlights{lc($transcript->external_name)}) {
-    return ($genecol, $colours->{'superhi'});
+    return (@$genecol, $colours->{'superhi'});
   } elsif(exists $highlights{lc($gene->stable_id)}) {
-    return ($genecol, $colours->{'hi'});
+    return (@$genecol, $colours->{'hi'});
   }
     
-  return ($genecol, undef);
+  return (@$genecol, undef);
 }
 
 sub gene_colour {
   my ($self, $gene, $colours, %highlights) = @_;
-  my $genecol = $colours->{ "_".$gene->external_status }[0];
+  my $genecol = $colours->{ $gene->analysis->logic_name."_".$gene->biotype."_".$gene->status };
 
-  if( $gene->type eq 'bacterial_contaminant' ) {
-    $genecol = $colours->{'_BACCOM'}[0];
-  }
   if(exists $highlights{lc($gene->stable_id)}) {
-    return ($genecol, $colours->{'hi'});
+    return (@$genecol, $colours->{'hi'});
   }
 
-  return ($genecol, undef);
+  return (@$genecol, undef);
 }
 
 sub href {
@@ -137,6 +127,8 @@ sub text_label {
   my $eid = $transcript->external_name();
   my $id = $eid || $tid;
   my $Config = $self->{config};
+ my $colours = $self->colours();
+
   my $short_labels = $Config->get('_settings','opt_shortlabels');
 
   if( $self->{'config'}->{'_both_names_'} eq 'yes') {
@@ -146,10 +138,8 @@ sub text_label {
     $id .= "\n";
     if( $gene->type eq 'bacterial_contaminant' ) {
       $id.= 'Bacterial cont.';
-    } elsif( $transcript->translation ) {
-      $id.= $eid ? "SGD known trans" : "SGD novel trans";
     } else {
-      $id .= "SGD pseudogene";
+      $id .= $colours->{ $transcript->analysis->logic_name."_".$transcript->biotype."_".$transcript->status }[1];
     }
   }
   return $id;
@@ -161,6 +151,8 @@ sub gene_text_label {
   my $eid    = $gene->external_name;
   my $id     = $eid || $gid;
   my $Config = $self->{config};
+ my $colours = $self->colours();
+
   my $short_labels = $Config->get('_settings','opt_shortlabels');
 
   if( $self->{'config'}->{'_both_names_'} eq 'yes') {
@@ -171,7 +163,7 @@ sub gene_text_label {
     if( $gene->type eq 'bacterial_contaminant' ) {
       $id.= 'Bacterial cont.';
     } else {
-      $id.= $eid ? "SGD known trans" : "SGD novel trans";
+      $id .= $colours->{ $gene->analysis->logic_name."_".$gene->biotype."_".$gene->status }[1];
     }
   }
   return $id;

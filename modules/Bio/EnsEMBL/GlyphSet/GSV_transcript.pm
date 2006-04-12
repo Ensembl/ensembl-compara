@@ -49,7 +49,7 @@ sub _init {
   # If stranded diagram skip if on wrong strand
   # For exon_structure diagram only given transcript
   # my $Composite = new Sanger::Graphics::Glyph::Composite({'y'=>0,'height'=>$h});
-  my($colour, $hilight) = $self->colour( $gene, $transcript, $colours, %highlights );
+  my($colour, $label, $hilight) = $self->colour( $gene, $transcript, $colours, %highlights );
   my $coding_start = $trans_ref->{'coding_start'};
   my $coding_end   = $trans_ref->{'coding_end'  };
 
@@ -140,28 +140,22 @@ sub colours {
 }
 
 sub colour {
+
+}
+
+sub colour {
   my ($self, $gene, $transcript, $colours, %highlights) = @_;
-
-  my $genecol = $colours->{ $transcript->type() ? $transcript->type.'_'.$gene->confidence :  $gene->type.'_'.$gene->confidence };
-  if( $colours->{ "_".$transcript->external_status } ) {
-    $genecol = $colours->{ "_".$transcript->external_status };
-  }
-  if( $transcript->external_status eq '' and ! $transcript->translation->stable_id ) {
-    $genecol = $colours->{'_pseudogene'};
-  }
-  $genecol ||= ['black'];
-
-  $genecol = $genecol->[0];
-
+  my $genecol = $colours->{ $transcript->analysis->logic_name."_".$transcript->biotype."_".$transcript->status };
+  warn $transcript->stable_id,' ',$transcript->analysis->logic_name."_".$transcript->biotype."_".$transcript->status;
   if(exists $highlights{lc($transcript->stable_id)}) {
-    return ($genecol, $colours->{'superhi'}[0]);
+    return (@$genecol, $colours->{'superhi'}[0]);
   } elsif(exists $highlights{lc($transcript->external_name)}) {
-    return ($genecol, $colours->{'superhi'}[0]);
+    return (@$genecol, $colours->{'superhi'}[0]);
   } elsif(exists $highlights{lc($gene->stable_id)}) {
-    return ($genecol, $colours->{'hi'}[0]);
+    return (@$genecol, $colours->{'hi'}[0]);
   }
-      
-    return ($genecol, undef);
+  return (@$genecol, undef);
+
 }
 
 sub href {

@@ -27,7 +27,7 @@ sub colour {
     if( exists $highlights{lc($gene->stable_id)} ){
         $highlight = $colours->{'hi'};
     }
-    return ( $colour, $highlight );
+    return ( @{$colours->{'_col'}}, $highlight );
 }
 
 sub href {

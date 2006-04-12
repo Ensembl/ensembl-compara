@@ -58,7 +58,7 @@ sub _init {
     my $Composite = new Sanger::Graphics::Glyph::Composite({'y'=>0,'height'=>$h});
       # $Composite->{'href'} = $self->href( $gene, $transcript, %highlights );
       # $Composite->{'zmenu'} = $self->zmenu( $gene, $transcript ) unless $Config->{'_href_only'};
-    my($colour, $hilight) = $self->colour( $gene, $transcript, $colours, %highlights );
+    my($colour, $label, $hilight) = $self->colour( $gene, $transcript, $colours, %highlights );
     my $coding_start = $trans_ref->{'coding_start'};
     my $coding_end   = $trans_ref->{'coding_end'  };
     my $Composite2 = new Sanger::Graphics::Glyph::Composite({'y'=>0,'height'=>$h});
@@ -317,20 +317,17 @@ sub colours {
 sub colour {
     my ($self, $gene, $transcript, $colours, %highlights) = @_;
 
-    my $genecol = $colours->{ "_".$transcript->external_status } || 'black';
-
-    if( $transcript->external_status eq '' and ! $transcript->translation->stable_id ) {
-       $genecol = $colours->{'_pseudogene'};
-    }
+    my $genecol = $colours->{ $transcript->analysis->logic_name."_".$transcript->biotype."_".$transcript->status };
+    warn ">>>> ". $transcript->analysis->logic_name."_".$transcript->biotype."_".$transcript->status ;
     if(exists $highlights{$transcript->stable_id()}) {
-      return ($genecol, $colours->{'superhi'});
+      return (@$genecol, $colours->{'superhi'});
     } elsif(exists $highlights{$transcript->external_name()}) {
-      return ($genecol, $colours->{'superhi'});
+      return (@$genecol, $colours->{'superhi'});
     } elsif(exists $highlights{$gene->stable_id()}) {
-      return ($genecol, $colours->{'hi'});
+      return (@$genecol, $colours->{'hi'});
     }
       
-    return ($genecol, undef);
+    return (@$genecol, undef);
 }
 
 sub href {

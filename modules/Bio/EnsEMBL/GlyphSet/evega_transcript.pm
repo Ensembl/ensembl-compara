@@ -26,22 +26,19 @@ sub colour {
   my $highlight = undef;
   my $type = $transcript->type() ? $transcript->type.'_'.$gene->confidence :  $gene->biotype.'_'.$gene->confidence;
   # $type =~ s/HUMACE-//g;
-  my $colour = $colours->{$type}[0] || 'black';
-
+  my @colour = @{$colours->{$type}||['black','transcript']};
+  $colour[1] = "Vega ".$colour[1];
   if(exists $highlights{lc($transcript->stable_id)}) {
     $highlight = $colours->{'superhi'};
   } elsif(exists $highlights{lc($transcript->external_name)}) {
     $highlight = $colours->{'superhi'};
   } elsif(exists $highlights{lc($gene->stable_id)}) {
     $highlight = $colours->{'hi'};
+  } elsif( my $ccds_att = $transcript->get_all_Attributes('ccds')->[0] ) {
+    $highlight = $colours->{'ccdshi'};
   }
 
-  elsif (my $ccds_att = $transcript->get_all_Attributes('ccds')->[0]) {
-	  $highlight = $colours->{'ccdshi'};
-  }
-
-
-  return ($colour, $highlight); 
+  return (@colour, $highlight); 
 }
 
 sub gene_colour {
@@ -50,13 +47,14 @@ sub gene_colour {
   my $highlight = undef;
   my $type = $gene->biotype."_".$gene->confidence;
   $type =~ s/HUMACE-//g;
-  my $colour = $colours->{$type}[0];
+  my @colour = @{$colours->{$type}||['black','transcript']};
+  $colour[1] = "Vega ".$colour[1];
 
   if(exists $highlights{lc($gene->stable_id)}) {
     $highlight = $colours->{'hi'};
   }
 
-  return ($colour, $highlight);
+  return (@colour, $highlight);
 
 }
 sub href {

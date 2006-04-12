@@ -43,7 +43,7 @@ sub features {
 
 sub colour {
     my ($self, $gene, $transcipt, $colours, %highlights) = @_;
-    return ( $colours->{'col'}, undef );
+    return ( $colours->{'col'}, $self->my_config('LOGIC_NAME'), undef );
 }
 
 sub href {
