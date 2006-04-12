@@ -232,15 +232,25 @@ sub status {
 =cut
 
 sub alleles {
- my @allele_obj = @{$_[0]->vari->get_all_Alleles};
- my %tmp;
- my @uniq_alleles;
- foreach (@allele_obj) {
-   next if $tmp{$_->allele};
-   push @uniq_alleles, $_->allele;
-   $tmp{$_->allele} = 1;
- }
- return join '/', @uniq_alleles;
+  my $self = shift;
+  my  @vari_mappings = @{ $self->get_variation_features };
+
+  my %allele_string;
+  if (@vari_mappings) {
+    map { $allele_string{$_->allele_string} = 1; } @vari_mappings;
+  }
+  else {
+    my @allele_obj = @{$self->vari->get_all_Alleles};
+    my %alleles;
+    map { $alleles{$_->allele} = 1; } @allele_obj;
+    return "This variation has no mapping.  Observed alleles are: ". join ", ", (keys %alleles);
+  }
+  if (  scalar (keys %allele_string) > 1 ) {
+    return "This variation maps to several locations. Choose a location below.";
+  }
+  else {
+    return (keys %allele_string);
+  }
 }
 
 =head2 vari_class
@@ -292,14 +302,14 @@ sub ancestor {
   Description : The "is_tagged" call returns an array ref of populations 
                 objects Bio::Ensembl::Variation::Population where this SNP 
                 is a tag SNP
-  Return type : hashref of $pop{pop_dbID} = pop_name
+  Return type : arrayref of pop_name
 
 =cut
 
 sub tagged_snp { 
   my $self = shift;
   my  @vari_mappings = @{ $self->get_variation_features };
-  return {} unless @vari_mappings;
+  return [] unless @vari_mappings;
 
   my @pops;
   foreach my $vf ( @vari_mappings ) {

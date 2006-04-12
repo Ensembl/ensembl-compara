@@ -455,7 +455,7 @@ sub mappings {
 
     if ($flag_multi_hits) {
       my $vari = $object->name;
-      my $link = "SNP maps several times:<br /><a href='$view?snp=$vari&c=$region:$start'>Choose this location</a>";
+      my $link = "SNP maps several times:<br /><a href='$view?snp=$vari;c=$region:$start'>Choose this location</a>";
       my $display = $object->param('c') eq "$region:$start" ?
 	"Current location" : $link;
       $chr_info{location} = $display;
