@@ -712,7 +712,7 @@ sub marked_up_seq_form {
   $form->add_element( 'type' => 'Hidden', 'name' => 'transcript', 'value' => $object->stable_id );
   my $show = [
     { 'value' => 'plain',   'name' => 'Exons' },
-    { 'value' => 'revcom',  'name' => 'Reverse complement sequence' },
+#    { 'value' => 'revcom',  'name' => 'Reverse complement sequence' },
     { 'value' => 'codons',  'name' => 'Exons and Codons' },
     { 'value' => 'peptide', 'name' => 'Exons, Codons and Translation'},
   ];
