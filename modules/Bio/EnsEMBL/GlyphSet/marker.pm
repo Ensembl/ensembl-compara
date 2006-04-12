@@ -43,7 +43,7 @@ sub _init {
   my ($w,$h)         = $Config->texthelper->px2bp($fontname);
       $w             = $Config->texthelper->width($fontname);
 
-  my $labels         = $Config->get('marker', 'labels' ) eq 'on';
+  my $labels         = ($Config->get('marker', 'labels' ) eq 'on') && ($L<1e7);
 
   my $priority = ($self->{container}{_config_file_name_} eq 'Homo_sapiens' ? 
                   $PRIORITY : undef);
