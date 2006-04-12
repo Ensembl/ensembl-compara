@@ -312,9 +312,18 @@ sub name {
   }
   my $site_type = ucfirst(lc($SiteDefs::ENSEMBL_SITETYPE));
 
+  # If gene ID projected from other spp, put link on other spp geneID
+  if ($info_text && $dbname_disp =~/^Projected/) {
+    $info_text =~ /from (.+) gene (.+)/;
+    my ($species, $gene) = ($1, $2);
+    $info_text =~ s|$species|<i>$species</i>| if $species =~ /\w+ \w+/;
+    $species =~ s/ /_/;
+    $info_text =~s|($gene)|<a href="/$species/geneview?gene=$gene">$gene</a> |;
+  }
+
   my $html = qq(
   <p>
-    <strong>$linked_display_name</strong> $info_text <span class="small">($dbname_disp ID)</span>
+    <strong>$linked_display_name</strong> $info_text<span class="small">($dbname_disp ID)</span>
     <span class="small">. To view all $site_type genes linked to the name <a href="/@{[$object->species]}/featureview?type=Gene;id=$display_name">click here</a>.</span>
   </p>);
   if(my @CCDS = grep { $_->dbname eq 'CCDS' } @{$object->Obj->get_all_DBLinks} ) {
