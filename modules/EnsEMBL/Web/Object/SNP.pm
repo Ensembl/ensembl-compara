@@ -238,18 +238,20 @@ sub alleles {
   my %allele_string;
   if (@vari_mappings) {
     map { $allele_string{$_->allele_string} = 1; } @vari_mappings;
+    return (keys %allele_string) unless scalar (keys %allele_string) > 1;
+  }
+
+  # Several mappings or no mappings
+  my @allele_obj = @{$self->vari->get_all_Alleles};
+  my %alleles;
+  map { $alleles{$_->allele} = 1; } @allele_obj;
+
+  my $observed_alleles = "Observed alleles are: ". join ", ", (keys %alleles);
+  if (@vari_mappings) {
+    return "This variation maps to several locations. $observed_alleles";
   }
   else {
-    my @allele_obj = @{$self->vari->get_all_Alleles};
-    my %alleles;
-    map { $alleles{$_->allele} = 1; } @allele_obj;
-    return "This variation has no mapping.  Observed alleles are: ". join ", ", (keys %alleles);
-  }
-  if (  scalar (keys %allele_string) > 1 ) {
-    return "This variation maps to several locations. Choose a location below.";
-  }
-  else {
-    return (keys %allele_string);
+    return "This variation has no mapping.  $observed_alleles";
   }
 }
 
