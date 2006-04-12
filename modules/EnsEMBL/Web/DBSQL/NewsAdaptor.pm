@@ -66,18 +66,11 @@ sub fetch_news_items {
   my $where_str;
   if ($where) {
     foreach my $param (keys %$where) {
-      unless ($generic && $param eq 'species') {
-        $where_str .= ' AND '.$where_def{$param}.' ';
-      }
+      $where_str .= ' AND '.$where_def{$param}.' ';
     }
   }
 
   my $limit_str = " LIMIT $limit " if $limit;
-
-  my $species = 0;
-  if  ($$where{'species'} && ref($$where{'species'}) ne 'ARRAY') {
-    $species = $$where{'species'};
-  }
 
   ## build SQL
   my $sql = qq(
@@ -95,7 +88,6 @@ sub fetch_news_items {
             news_cat c
   );
   if ($generic) {
-    $sql .= ', release_species r' if $species;
     $sql .= qq(
         LEFT JOIN
             item_species i
@@ -103,23 +95,20 @@ sub fetch_news_items {
             n.news_item_id = i.news_item_id
         WHERE
             i.news_item_id IS NULL
-        AND 
-            n.news_cat_id = c.news_cat_id 
+        AND
+            n.news_cat_id = c.news_cat_id
     );
-    $sql .= "AND r.release_id = n.release_id
-             AND r.species_id = $species" if $species;
   }
   elsif ($$where{'species'} > 0) {
-    $sql .= ", item_species i, release_species r  
-            WHERE n.news_cat_id = c.news_cat_id 
-            AND r.release_id = n.release_id
-            AND r.species_id = $species";
+    $sql .= ', item_species i  WHERE n.news_cat_id = c.news_cat_id';
   }
   else {
     $sql .= ' WHERE n.news_cat_id = c.news_cat_id';
   }
   $sql .= " $where_str GROUP BY n.news_item_id $limit_str";
 #warn $sql;
+
+
   my $T = $self->db->selectall_arrayref($sql, {});
   return [] unless $T;
 
