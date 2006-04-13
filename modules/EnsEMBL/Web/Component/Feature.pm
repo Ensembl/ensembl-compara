@@ -44,7 +44,6 @@ sub spreadsheet_featureTable {
   my( $data, $extra_columns, $initial_columns, $options ) = $object->retrieve_features;
   my @data = [];
   my $data_type = $object->param('type');
-warn $data;
   # spreadsheet headers
   # columns common to all features
   $panel->add_option( 'triangular', 1 );
@@ -150,7 +149,8 @@ sub unmapped_id {
   my( $panel, $object ) = @_;
 
   my $label = 'Feature ID';
-  my $html = '<p>'.$object->feature_id.'</p>';
+  
+  my $html = '<p>'.$object->feature_id.' - '.$object->unmapped_detail('external_db_name').'</p>';
 
   $panel->add_row($label, $html);
   return 1; 
@@ -160,10 +160,9 @@ sub unmapped_reason {
   my( $panel, $object ) = @_;
   my( $data, $extra_columns, $initial_columns, $options ) = $object->retrieve_features;
 
-  my $label   = 'Reason';
+  my $label   = 'Reason match failed';
   my $reason  = $$data[0]{'reason'};
-  my $score   = $$data[0]{'score'};
-  my $html    = "<p>$reason (Target score $score%)</p>";
+  my $html    = "<p>$reason</p>";
 
   $panel->add_row($label, $html);
   return 1; 
@@ -172,10 +171,29 @@ sub unmapped_reason {
 sub unmapped_details {
   my( $panel, $object ) = @_;
 
-  my $label = '';
-  my $html = '';
+  my $species = $object->species;
+  my ($script, $param);
 
-  #$panel->add_row($label, $html);
+  my $query  = $object->unmapped_detail('query_score');
+  my $target = $object->unmapped_detail('target_score');
+  if ($query > 0 || $target > 0) {
+    my $label = 'Best match';
+
+    my $id    = $object->unmapped_detail('stable_id');
+    my $type  = $object->unmapped_detail('ensembl_object_type');
+
+    my %links = (
+      'Transcript'  => ['transview', 'transcript'],
+      'Translation' => ['transview', 'transcript'],
+    );
+    my $script = $links{$type}->[0];
+    my $param  = $links{$type}->[1];
+
+    my $html = qq(<p><a href="/$species/$script?$param=$id">$id</a> 
+      (Query score $query%, Target score $target%)</p>);
+
+    $panel->add_row($label, $html);
+  }
   return 1; 
 }
 

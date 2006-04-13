@@ -31,6 +31,13 @@ sub feature_mapped {
   return $mapped;
 }
 
+sub unmapped_detail {
+  my ($self, $detail) = @_;
+  my $type = $self->feature_type;
+  my $value = $self->{'data'}{'_object'}{$type}[0]->$detail;
+  return $value;
+}
+
 sub retrieve_features {
   my ($self, $feature_type) = @_;
   my $method;
