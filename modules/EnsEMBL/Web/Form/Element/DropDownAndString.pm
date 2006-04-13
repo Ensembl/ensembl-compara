@@ -40,9 +40,22 @@ sub render {
   if( $self->render_as eq 'select' ) {
     my $options = '';
     foreach my $V ( @{$self->values} ) {
-      my %v_hash = %{$V}; 
+      my %v_hash = %{$V};
+      my $selected;
+      if ($self->value && ref($self->value) eq 'ARRAY') {
+        foreach my $v (@{$self->value}) {
+          if ($v eq $v_hash{'value'}) {
+            $selected = 1;
+            last;
+          }
+        }
+      }
+      else {
+        $selected = 1 if $self->value eq $v_hash{'value'};
+      }
+
       $options .= sprintf( qq(<option value="%s"%s>%s</option>\n),
-        $v_hash{'value'}, $self->value eq $v_hash{'value'} ? ' selected="selected"' : '', $v_hash{'name'}
+        $v_hash{'value'}, $selected ? ' selected="selected"' : '', $v_hash{'name'}
       );
     }
     return sprintf( qq(%s<select name="%s" id="%s" class="normal" onChange="check('%s',this,%s)">\n%s</select>
