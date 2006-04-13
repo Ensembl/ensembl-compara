@@ -12,7 +12,7 @@ our @ISA = qw(  EnsEMBL::Web::Factory );
 sub createObjects { 
   my $self   = shift;
   my $feature_type  = $self->param('type') || 'OligoProbe';
-  $feature_type = 'OligoProbe' if $feature_type = 'AffyProbe'; ## catch old links
+  $feature_type = 'OligoProbe' if $feature_type eq 'AffyProbe'; ## catch old links
 
   my $create_method = "create_$feature_type";
 
