@@ -156,7 +156,7 @@ foreach my $sp( @SPECIES ){
       $all_db_info{$db}{NODATA} = " --nodata";
     }
 
-    info( 1, "Dumping $sp $db: ".$all_db_info{$db}{NAME} );
+    warning( 1, "Dumping $sp $db: ".$all_db_info{$db}{NAME} );
     dump_mysql( \%{ $all_db_info{$db} }, $no_zip);
 
     # Rename ensembl_web_user_db so they include the release number

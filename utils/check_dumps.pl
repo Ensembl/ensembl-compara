@@ -517,9 +517,9 @@ sub check_toplevel {
   }
 
   if ($species eq 'Drosophila_melanogaster') {    map {$chr{$_} = 1;} 
-						    qw( U 2h 3h 4h Xh Yh  )
+						    qw( U 2h 3h 4h Xh Yh Uh )
 					      }
-  elsif ($species eq 'Anopheles_gambiae')    {    $chr{UNKN} = 1;}
+  elsif ($species eq 'Anopheles_gambiae')    {  map { $chr{$_} =1; } qw( UNKN Y_unplaced) }
   elsif ($species eq 'Gallus_gallus' or 
 	$species eq 'Canis_familiaris') { $chr{Un} =1;}
   elsif ($species eq 'Caenorhabditis_elegans') {
