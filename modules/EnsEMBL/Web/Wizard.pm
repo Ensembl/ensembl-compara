@@ -15,16 +15,17 @@ sub new {
   bless $self, $class;
   my $init = $class.'::_init';
   if ($self->can($init)) { 
-    my ($data, $fields, $all_nodes, $messages) = @{ $self->$init($object) };
+    my ($data, $fields, $node_defs, $messages, $karyotype) = @{ $self->$init($object) };
     $self->{'_data'}        = $data;
     $self->{'_fields'}      = $fields;
-    $self->{'_all_nodes'}   = $all_nodes;
+    $self->{'_node_defs'}   = $node_defs;
     $self->{'_messages'}    = $messages;
   }
   return $self;
 }
 
-sub attrib { 
+
+sub data { 
   my ($self, $name, $value) = @_;
   if ($value) {
     $self->{'_data'}{$name} = $value;
@@ -40,9 +41,20 @@ sub field {
   return $self->{'_fields'}{$field}{$param}; 
 }
 
-sub get_fields  { return $_[0]->{'_fields'}; }
-sub get_node    { return $_[0]->{'_all_nodes'}{$_[1]}; }
-sub get_message { return $_[0]->{'_messages'}{$_[1]}; }
+sub redefine_node {
+  my ($self, $node, $attrib, $value) = @_;
+  if (ref($self->{'_node_defs'}{$node}{$attrib}) eq 'ARRAY') {
+    push(@{$self->{'_node_defs'}{$node}{$attrib}}, @$value) 
+      unless grep {$_ eq $value} @{$self->{'_node_defs'}{$node}{$attrib}};
+  }
+  else {
+    $self->{'_node_defs'}{$node}{$attrib} = $value;
+  }
+}
+
+sub get_fields    { return $_[0]->{'_fields'}; }
+sub get_node_def  { return $_[0]->{'_node_defs'}{$_[1]}; }
+sub get_message   { return $_[0]->{'_messages'}{$_[1]}; }
 
 sub access_level {
   my ($self, $level) = @_;
@@ -57,10 +69,9 @@ sub access_level {
 sub add_nodes {
   my ($self, $nodes) = @_;
   foreach my $node (@$nodes) {
-    $self->{'_nodes'}{$node} = $self->get_node($node);
+    $self->{'_nodes'}{$node} = $self->get_node_def($node);
   }
 }
-
 
 sub default_node {
  my ($self, $default) = @_;
@@ -338,7 +349,6 @@ sub pass_fields {
     $skip{$x}++;
   } 
   
-
   foreach my $field (@fields) {
     next if $field =~ /submit/;  
     next if exists( $skip{$field} );
@@ -388,16 +398,20 @@ sub add_widgets {
 
     ## set basic parameters
     my %parameter = (
-      'type'      => $field_info{'type'},
-      'name'      => $field_name,
-      'label'     => $field_info{'label'},
-      'required'  => $field_info{'required'},
-      'rows'      => $field_info{'rows'},
-      'notes'     => $field_info{'notes'},
+      'type'          => $field_info{'type'},
+      'name'          => $field_name,
+      'label'         => $field_info{'label'},
+      'required'      => $field_info{'required'},
+      'rows'          => $field_info{'rows'},
+      'notes'         => $field_info{'notes'},
+      'select'        => $field_info{'select'},
+      'string_name'   => $field_info{'string_name'},
+      'string_label'  => $field_info{'string_label'},
     );
 
     ## extra parameters for multi-value fields
-    if ($field_info{'type'} eq 'DropDown' || $field_info{'type'} eq 'MultiSelect') {
+    if ($field_info{'type'} eq 'DropDown' || $field_info{'type'} eq 'DropDownAndString'
+          || $field_info{'type'} eq 'MultiSelect') {
       if ($object->param($field_name)) {
         $parameter{'value'}  = [$object->param($field_name)]; 
       }
@@ -407,6 +421,16 @@ sub add_widgets {
       }
       $parameter{'values'} = $self->{'_data'}{$field_info{'values'}};
       $parameter{'select'} = $field_info{'select'};
+      if ($field_info{'type'} eq 'DropDownAndString') {
+        my $string = $parameter{'string_name'};
+        if ($object->param($string)) {
+          $parameter{'string_value'}  = [$object->param($string)]; 
+        }
+        else {
+          $parameter{'string_value'}  =  $self->{'_data'}{'record'}{$string} 
+                                || $field_info{'string_value'};
+        }
+      }
     }
     elsif ($field_info{'type'} eq 'CheckBox') {
       $parameter{'value'}  =  $self->{'_data'}{'record'}{$field_name} 

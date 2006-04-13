@@ -10,182 +10,18 @@ use EnsEMBL::Web::File::Text;
                                                                                 
 our @ISA = qw(EnsEMBL::Web::Wizard);
   
-## DATA FOR DROPDOWNS, ETC.
-        
-## This wizard can accept multiple data sets, so we need 
-## to keep track of this
-our $tracks = 1;
-                                                                        
-## define fields available to the forms in this wizard
-our %form_fields = (
-  'blurb' => {
-    'type'  => 'Information',
-    'value' => qq(Karyoview now allows you to display multiple data sets as either density plots, location pointers or a mixture of the two. Add all your data sets first, then click on 'Continue' for more configuration options.),
-  },
-  'track_name'  => {
-    'type'=>'String',
-    'label'=>'Track name (optional)',
-    'loop'=>1,
-  },
-  'style'       => {
-    'type'=>'DropDown',
-    'select'   => 'select',
-    'label'=>'Style',
-    'required'=>'yes',
-    'values' => 'styles',
-    'loop'=>1,
-  },
-  'col'       => {
-    'type'=>'DropDown',
-    'select'   => 'select',
-    'label'=>'Colour',
-    'required'=>'yes',
-    'values' => 'colours',
-    'loop'=>1,
-  },
 
-  'paste_file' => {
-    'type'=>'Text',
-    'label'=>'Paste file content',
-    'loop'=>1,
-  },
-  'upload_file' => {
-    'type'=>'File',
-    'label'=>'Upload file',
-    'loop'=>1,
-  },
-  'url_file' => {
-    'type'=>'String',
-    'label'=>'File URL',
-    'loop'=>1,
-  },
-  'merge'  => {
-    'type'  => 'CheckBox',
-    'label' => 'Merge features into a single track',
-    'loop'=>1,
-    'value' => 'on',
-  },
-
-  'extras_subhead'  => {
-    'type'  => 'SubHeader',
-    'value' => 'Add Ensembl tracks',
-  },
-  'track_Vpercents'  => {
-    'type'  => 'CheckBox',
-    'label' => 'Show GC content frequency *',
-    'value' => 'on',
-  },
-  'track_Vsnps'  => {
-    'type'  => 'CheckBox',
-    'label' => 'Show SNP frequency *',
-    'value' => 'on',
-  },
-  'track_Vgenes'  => {
-    'type'  => 'CheckBox',
-    'label' => 'Show gene frequency *',
-    'value' => 'on',
-  },
-  'track_blurb' => {
-    'type'  => 'Information',
-    'value' => '* Extra tracks will only be shown if you select a single chromosome to display on your karyotype',
-  },
-  'maxmin'  => {
-    'type'  => 'CheckBox',
-    'label' => 'Show max/min lines',
-    'value' => 'on',
-  },
-  'zmenu'  => {
-    'type'  => 'CheckBox',
-    'label' => 'Display mouseovers on menus',
-    'value' => 'on',
-  },
-
-  'chr'   => {
-    'type'=>'DropDown',
-    'select'   => 'select',
-    'label'=>'Chromosome',
-    'required'=>'yes',
-    'values' => 'chr_values',
-  },
-  'rows'    => {
-    'type'=>'Int',
-    'label'=>'Number of rows of chromosomes',
-    'value' => '2',
-    'required'=>'yes',
-  },
-  'chr_length' => {
-    'type'=>'Int',
-    'label'=>'Height of the longest chromosome (pixels)',
-    'value' => '200',
-    'required'=>'yes',
-  },
-  'h_padding' => {
-    'type'=>'Int',
-    'label'=>'Padding around chromosomes (pixels)',
-    'value' => '4',
-    'required'=>'yes',
-  },
-  'h_spacing'    => {
-    'type'=>'Int',
-    'label'=>'Spacing between chromosomes (pixels)',
-    'value' => '6',
-    'required'=>'yes',
-  },
-  'v_padding'    => {
-    'type'=>'Int',
-    'label'=>'Spacing between rows (pixels)',
-    'value' => '50',
-    'required'=>'yes',
-  },
-);
-
-sub default_order {
-  my @order = qw(chr rows chr_length h_padding h_spacing v_padding track_name style col paste_file upload_file url_file);
-  return \@order;
-}
-
-## define the nodes available to wizards based on this type of object
-our %all_nodes = (
-  'kv_add' => {
-      'form' => 1,
-      'title' => 'Add your data',
-      'input_fields'  => [qw(blurb track_name style col merge paste_file upload_file url_file)],
-      'button'  => 'Add more data',
-  },
-  'kv_extras' => {
-      'form' => 1,
-      'title' => 'Add extra features',
-      'input_fields'  => [qw(extras_subhead track_Vpercents track_Vsnps track_Vgenes track_blurb)],
-      'no_passback' => [qw(style)],
-      'button' => 'Continue',
-      'back'   => 1,
-  },
-  'kv_layout' =>  {
-      'form' => 1,
-      'title' => 'Configure karyotype',
-      'input_fields'  => [qw(chr rows chr_length h_padding h_spacing v_padding)],
-      'button' => 'Continue',
-      'back'   => 1,
-  },
-  'kv_display'  => {
-      'button' => 'Finish',
-      'form' => 1,
-      'back'   => 1,
-  },
-);
-
-sub _init {
-  my ($self, $object) = @_;
-                                                                                
-  ## get useful data from object
+sub add_karyotype_options {
+  my ($self, $object, $option) = @_;
+  
+  ## chromosome numbers
   my @all_chr = @{$object->species_defs->ENSEMBL_CHROMOSOMES};
-  my @chr_values;
-  push @chr_values, {'name'=>'ALL', 'value'=>'ALL'} ;
+  my @chr_values = ({'name'=>'ALL', 'value'=>'ALL'}) ;
   foreach my $next (@all_chr) {
     push @chr_values, {'name'=>$next, 'value'=>$next} ;
   }
 
-  ## define other standard data
+  ## pointer/track styles
   my @colours = (
         {'value' => 'purple',   'name'=> 'Purple'},
         {'value' => 'magenta',  'name'=> 'Magenta'},
@@ -201,29 +37,229 @@ sub _init {
         {'value' => 'darkgrey', 'name'=> 'Dark Grey'}
   );
 
-  my @styles = (
-        {'group' => 'Density', 'value' => 'line', 'name' => 'Line graph'},
-        {'group' => 'Density', 'value' => 'bar', 'name' => 'Bar chart, filled'},
-        {'group' => 'Density', 'value' => 'outline', 'name' => 'Bar chart, outline'},
-        {'group' => 'Location', 'value' => 'box', 'name' => 'Filled box'},
-        {'group' => 'Location', 'value' => 'filledwidebox', 'name' => 'Filled wide box'},
-        {'group' => 'Location', 'value' => 'widebox', 'name' => 'Outline wide box'},
-        {'group' => 'Location', 'value' => 'outbox', 'name' => 'Oversize outline box'},
-        {'group' => 'Location', 'value' => 'wideline', 'name' => 'Line'},
-        {'group' => 'Location', 'value' => 'lharrow', 'name' => 'Arrow left side'},
-        {'group' => 'Location', 'value' => 'rharrow', 'name' => 'Arrow right side'},
-        {'group' => 'Location', 'value' => 'bowtie', 'name' => 'Arrows both sides'},
-        {'group' => 'Location', 'value' => 'text', 'name' => 'Text label (+ wide box)'},
+  my %all_styles = (
+    'density' => [
+        {'value' => 'line', 'name' => 'Line graph'},
+        {'value' => 'bar', 'name' => 'Bar chart, filled'},
+        {'value' => 'outline', 'name' => 'Bar chart, outline'},
+    ],
+    'location' => [
+        {'value' => 'box', 'name' => 'Filled box'},
+        {'value' => 'filledwidebox', 'name' => 'Filled wide box'},
+        {'value' => 'widebox', 'name' => 'Outline wide box'},
+        {'value' => 'outbox', 'name' => 'Oversize outline box'},
+        {'value' => 'wideline', 'name' => 'Line'},
+        {'value' => 'lharrow', 'name' => 'Arrow left side'},
+        {'value' => 'rharrow', 'name' => 'Arrow right side'},
+        {'value' => 'bowtie', 'name' => 'Arrows both sides'},
+        {'value' => 'text', 'name' => 'Text label (+ wide box)'},
+    ],
   );
+
+  my @styles;
+  my $style_opt = $option->{'styles'};
+  if (ref($style_opt) eq 'ARRAY') {
+    foreach my $style_gp (@{$style_opt}) {
+      my $group = $all_styles{$style_gp};
+      if ($group) {
+        my $group_name = ucfirst($style_gp);
+        foreach my $style (@$group) {
+          $style->{'group'} = $group_name if $option->{'group_styles'}; ## for OPTGROUP
+          push(@styles, $style);
+        }
+      } 
+    }
+  }
+
+  ## basic widgets to configure karyotype
+  ## N.B. Don't include styles and colours as depends on number of tracks being done 
+  my %widgets = (
+    'track_subhead' => {
+      'type' => 'SubHeader',
+      'value' => 'Feature graphics',
+    },
+    'layout_subhead' => {
+      'type' => 'SubHeader',
+      'value' => 'Karyotype layout',
+    },
+    'chr'   => {
+      'type'=>'DropDown',
+      'select'   => 'select',
+      'label'=>'Chromosome',
+      'required'=>'yes',
+      'values' => 'chr_values',
+    },
+    'rows'    => {
+      'type'=>'Int',
+      'label'=>'Number of rows of chromosomes',
+      'value' => '2',
+      'required'=>'yes',
+    },
+    'chr_length' => {
+      'type'=>'Int',
+      'label'=>'Height of the longest chromosome (pixels)',
+      'value' => '200',
+      'required'=>'yes',
+    },
+    'h_padding' => {
+      'type'=>'Int',
+      'label'=>'Padding around chromosomes (pixels)',
+      'value' => '4',
+      'required'=>'yes',
+    },
+    'h_spacing'    => {
+      'type'=>'Int',
+      'label'=>'Spacing between chromosomes (pixels)',
+      'value' => '6',
+      'required'=>'yes',
+    },
+    'v_padding'    => {
+      'type'=>'Int',
+      'label'=>'Spacing between rows (pixels)',
+      'value' => '50',
+      'required'=>'yes',
+    },
+  );
+  return (\@chr_values, \@colours, \@styles, \%widgets);
+}
+
+## This wizard can accept multiple data sets, so we need 
+## to keep track of this
+our $tracks = 1;
+
+sub _init {
+  my ($self, $object) = @_;
+
+  ## define fields available to the forms in this wizard
+  my %form_fields = (
+    'blurb' => {
+      'type'  => 'Information',
+      'value' => qq(Karyoview now allows you to display multiple data sets as either density plots, location pointers or a mixture of the two. Add all your data sets first, then click on 'Continue' for more configuration options.),
+    },
+    'track_name'  => {
+      'type'=>'String',
+      'label'=>'Track name (optional)',
+      'loop'=>1,
+    },
+    'style'       => {
+      'type'=>'DropDown',
+      'select'   => 'select',
+      'label'=>'Style',
+      'required'=>'yes',
+      'values' => 'styles',
+      'loop'=>1,
+    },
+    'col'       => {
+      'type'=>'DropDown',
+      'select'   => 'select',
+      'label'=>'Colour',
+      'required'=>'yes',
+      'values' => 'colours',
+      'loop'=>1,
+    },
+    'paste_file' => {
+      'type'=>'Text',
+      'label'=>'Paste file content',
+      'loop'=>1,
+    },
+    'upload_file' => {
+      'type'=>'File',
+      'label'=>'Upload file',
+      'loop'=>1,
+    },
+    'url_file' => {
+      'type'=>'String',
+      'label'=>'File URL',
+      'loop'=>1,
+    },
+    'merge'  => {
+      'type'  => 'CheckBox',
+      'label' => 'Merge features into a single track',
+      'loop'=>1,
+      'value' => 'on',
+    },
+    'extras_subhead'  => {
+      'type'  => 'SubHeader',
+      'value' => 'Add Ensembl tracks',
+    },
+    'track_Vpercents'  => {
+      'type'  => 'CheckBox',
+      'label' => 'Show GC content frequency *',
+      'value' => 'on',
+    },
+    'track_Vsnps'  => {
+      'type'  => 'CheckBox',
+      'label' => 'Show SNP frequency *',
+      'value' => 'on',
+    },
+    'track_Vgenes'  => {
+      'type'  => 'CheckBox',
+      'label' => 'Show gene frequency *',
+      'value' => 'on',
+    },
+    'track_blurb' => {
+      'type'  => 'Information',
+      'value' => '* Extra tracks will only be shown if you select a single chromosome to display on your karyotype',
+    },
+    'maxmin'  => {
+      'type'  => 'CheckBox',
+      'label' => 'Show max/min lines',
+      'value' => 'on',
+    },
+    'zmenu'  => {
+      'type'  => 'CheckBox',
+      'label' => 'Display mouseovers on menus',
+      'value' => 'on',
+    },
+);
+
+  ## define the nodes available to wizards based on this type of object
+  my %all_nodes = (
+    'kv_add' => {
+      'form' => 1,
+      'title' => 'Add your data',
+      'input_fields'  => [qw(blurb track_name style col merge paste_file upload_file url_file)],
+      'button'  => 'Add more data',
+    },
+    'kv_extras' => {
+      'form' => 1,
+      'title' => 'Add extra features',
+      'input_fields'  => [qw(extras_subhead track_Vpercents track_Vsnps track_Vgenes track_blurb)],
+      'no_passback' => [qw(style)],
+      'button' => 'Continue',
+      'back'   => 1,
+    },
+    'kv_layout' =>  {
+      'form' => 1,
+      'title' => 'Configure karyotype',
+      'input_fields'  => [qw(chr rows chr_length h_padding h_spacing v_padding)],
+      'button' => 'Continue',
+      'back'   => 1,
+    },
+    'kv_display'  => {
+      'button' => 'Finish',
+      'form' => 1,
+      'back'   => 1,
+    },
+  );
+
+  ## get useful data from object
+ ## add generic karyotype stuff
+  my $option = {
+    'styles' => ['density', 'location'],
+    'group_styles' => 1,
+  };
+  my ($chr_values, $colours, $styles, $widgets) = $self->add_karyotype_options($object, $option);
+  my %all_fields = (%form_fields, %$widgets);
 
   my $data = {
     'loops'         => $tracks,
-    'chr_values'    => \@chr_values,
-    'colours'       => \@colours,
-    'styles'        => \@styles,
+    'chr_values'    => $chr_values,
+    'colours'       => $colours,
+    'styles'        => $styles,
   };
-                                                                                
-  return [$data, \%form_fields, \%all_nodes];
+
+  return [$data, \%all_fields, \%all_nodes];
 
 }
                                                                               
@@ -239,19 +275,19 @@ sub kv_add {
   my $node = 'kv_add';           
       
   ## cache uploaded file
-  my $track_id = $wizard->attrib('loops');
+  my $track_id = $wizard->data('loops');
   my $upload = $object->param("upload_file_$track_id");
   my $cache = _fh_cache($self, $object, $upload) if $upload;
 
   ## rewrite node values if we are re-doing this page for an additional track
   if ($object->param('submit_kv_add') eq 'Add more data >') {
-    push @{$all_nodes{'kv_add'}{'pass_fields'}}, 
-      ("track_name_$tracks", "style_$tracks", "col_$tracks",
+    $self->redefine_node('kv_add', 'pass_fields', 
+      ["track_name_$tracks", "style_$tracks", "col_$tracks",
       "paste_file_$tracks", "upload_file_$tracks", "url_file_$tracks",
-      "merge_$tracks");
-    $all_nodes{'kv_add'}{'back'} = 1;
+      "merge_$tracks"]);
+    $self->redefine_node('kv_add', 'back', 1);
     $tracks++;
-    $wizard->attrib('loops', $tracks);
+    $wizard->data('loops', $tracks);
   }
                                                                
   my $form = EnsEMBL::Web::Form->new($node, "/$species/$script", 'post');
@@ -263,8 +299,8 @@ sub kv_add {
       'type'   => 'SubHeader',
       'value'  => qq(Track$plural added so far:),
     );
-    my @cols   = @{$wizard->attrib('colours')};
-    my @styles = @{$wizard->attrib('styles')};
+    my @cols   = @{$wizard->data('colours')};
+    my @styles = @{$wizard->colours('styles')};
     my ($colour, $style, $h_ref, %hash, $output);
     for (my $i = 0; $i < $tracks; $i++) {
       my $track_name = $object->param("track_name_$i");
@@ -321,7 +357,7 @@ sub kv_extras {
   my $node = 'kv_extras';
                
   ## cache uploaded file
-  my $track_id = $wizard->attrib('loops');
+  my $track_id = $wizard->data('loops');
   my $upload = $object->param("upload_file_$track_id");
   my $cache = _fh_cache($self, $object, $upload) if $upload;
 
@@ -338,12 +374,10 @@ sub kv_extras {
     }
   }
   if ($density) {
-    push @{$all_nodes{'kv_extras'}{'input_fields'}}, 'maxmin' 
-      unless grep {$_ eq 'maxmin'} @{$all_nodes{'kv_extras'}{'input_fields'}};
+    $wizard->redefine_node('kv_extras', 'input_fields', ['maxmin']); 
   }
   if ($location) {
-    push @{$all_nodes{'kv_extras'}{'input_fields'}}, 'zmenu' 
-      unless grep {$_ eq 'zmenu'} @{$all_nodes{'kv_extras'}{'input_fields'}};
+    $wizard->redefine_node('kv_extras', 'input_fields', ['zmenu']); 
   }
                                                                                 
   my $form = EnsEMBL::Web::Form->new($node, "/$species/$script", 'post');
@@ -389,7 +423,7 @@ sub kv_display {
                                                                                 
   my $form = EnsEMBL::Web::Form->new($node, "/$species/$script", 'post');
 
-  $all_nodes{'kv_add'}{'button'} = 'Reconfigure this display';
+  $wizard->redefine_node('kv_add', 'button', 'Reconfigure this display');
   $wizard->pass_fields($node, $form, $object);
   $wizard->add_buttons($node, $form, $object);
                                                                                 
