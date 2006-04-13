@@ -333,9 +333,9 @@ sub _init {
         ( @bands && $bands[-1]->stain() eq 'tip' ? () : 1 )
      ) {
         my $direction = $end ? -1 : 1;
-        
         my %partials    = map { uc($_) => 1 } @{ $self->species_defs->PARTIAL_CHROMOSOMES || [] };
     	my %artificials = map { uc($_) => 1 } @{ $self->species_defs->ARTIFICIAL_CHROMOSOMES || [] };
+
         if ($partials{uc($chr)}) {
         # draw jagged ends for partial chromosomes
             # resolution dependent scaling
@@ -382,8 +382,13 @@ sub _init {
                     'absolutewidth'    => 1,
                 }));
             }
-	} elsif ($artificials{uc($chr)}) {
-        # draw blunt ends for artificial chromosomes
+	} elsif ( ($artificials{uc($chr)}) || 
+        ($end == 0 && @bands && $bands[0]->stain() eq 'ACEN') || 
+        ($end == 1 && @bands && $bands[-1]->stain() eq 'ACEN') ||
+        ($end == 0 && $chr =~ /Q|q/) ||
+        ($end == 1 && $chr =~ /P|p/)
+    ) {
+        # draw blunt ends for artificial chromosomes or chr arms
 	    my $x = $v_offset + $chr_length * $end - 1;
 	    my $y = $h_offset;
 	    my $width = 0;
