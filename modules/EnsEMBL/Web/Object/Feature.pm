@@ -20,9 +20,16 @@ use Bio::AlignIO;
 
 =cut
 
+sub data         : lvalue { $_[0]->{'_data'         }; }
 sub feature_type : lvalue {  my ($self, $p) = @_; if ($p) {$_[0]->{'_feature_type'} = $p} return $_[0]->{'_feature_type' }; }
 sub feature_id : lvalue {  my ($self, $p) = @_; if ($p) {$_[0]->{'_feature_id'} = $p} return $_[0]->{'_feature_id' }; }
-sub data         : lvalue { $_[0]->{'_data'         }; }
+
+sub feature_mapped {  
+  my $self = shift;
+  my $type = $self->feature_type;
+  my $mapped = $self->{'data'}{'_object'}{$type}[0] =~ /UnmappedObject/ ? 0 : 1;
+  return $mapped;
+}
 
 sub retrieve_features {
   my ($self, $feature_type) = @_;
@@ -41,16 +48,22 @@ sub retrieve_Gene {
   
   my $results = [];
   foreach my $g (@{$self->Obj->{'Gene'}}) {
-    push @$results, {
-      'region'   => $g->seq_region_name,
-      'start'    => $g->start,
-      'end'      => $g->end,
-      'strand'   => $g->strand,
-      'length'   => $g->end-$g->start+1,
-      'extname'  => $g->external_name, 
-      'label'    => $g->stable_id,
-      'gene_id'  => [ $g->stable_id ],
-      'extra'    => [ $g->description ]
+    if (ref($g) =~ /UnmappedObject/) {
+      my $unmapped = $self->unmapped_object($g);
+      push(@$results, $unmapped);
+    }
+    else {
+      push @$results, {
+        'region'   => $g->seq_region_name,
+        'start'    => $g->start,
+        'end'      => $g->end,
+        'strand'   => $g->strand,
+        'length'   => $g->end-$g->start+1,
+        'extname'  => $g->external_name, 
+        'label'    => $g->stable_id,
+        'gene_id'  => [ $g->stable_id ],
+        'extra'    => [ $g->description ]
+      }
     }
   }
   
@@ -73,22 +86,28 @@ sub retrieve_Disease {
   return ( $results, ['Description'] );
 }
 
-sub retrieve_AffyProbe {
+sub retrieve_OligoProbe {
   my $self = shift;
   
   my $results = [];
-  foreach my $ap (@{$self->Obj->{'AffyProbe'}}) {
-    my $names = join ' ', sort @{$ap->get_all_complete_names()};
-    foreach my $f (@{$ap->get_all_AffyFeatures()}) {
-      push @$results, {
-        'region'   => $f->seq_region_name,
-        'start'    => $f->start,
-        'end'      => $f->end,
-        'strand'   => $f->strand,
-        'length'   => $f->end-$f->start+1,
-        'label'    => $names,
-        'gene_id'  => [$names],
-        'extra'    => [ $f->mismatchcount ]
+  foreach my $ap (@{$self->Obj->{'OligoProbe'}}) {
+    if (ref($ap) =~ /UnmappedObject/) {
+      my $unmapped = $self->unmapped_object($ap);
+      push(@$results, $unmapped);
+    }
+    else {
+      my $names = join ' ', sort @{$ap->get_all_complete_names()};
+      foreach my $f (@{$ap->get_all_OligoFeatures()}) {
+        push @$results, {
+          'region'   => $f->seq_region_name,
+          'start'    => $f->start,
+          'end'      => $f->end,
+          'strand'   => $f->strand,
+          'length'   => $f->end-$f->start+1,
+          'label'    => $names,
+          'gene_id'  => [$names],
+          'extra'    => [ $f->mismatchcount ]
+        }
       }
     }
   }
@@ -102,37 +121,72 @@ sub coord_systems {
   return [ map { $_->name } @{ $self->Obj->{$exemplar}->[0]->adaptor->db->get_CoordSystemAdaptor()->fetch_all() } ];
 }
 
+sub unmapped_object {
+  my ($self, $unmapped) = @_;
+
+  my $analysis = $unmapped->analysis;
+  #while (my($k, $v) = each (%$analysis)) {
+  #  warn "$k = $v";
+  #}
+
+  my $result = {
+    'label'     => $unmapped->{'_id_'},
+    'reason'    => $unmapped->description,
+    'object'    => $unmapped->ensembl_object_type,
+    'score'     => $unmapped->target_score,
+    'analysis'  => $$analysis{'_description'},
+  };
+  #while (my($k, $v) = each (%$unmapped)) {
+  #  warn "$k = $v";
+  #}
+
+  return $result;
+}
+
 sub retrieve_DnaAlignFeature {
   my ($self, $ftype) = @_;
   $ftype = 'Dna' unless $ftype;
   my $results = [];
-  my $coord_systems = $self->coord_systems();
-  foreach my $f ( @{$self->Obj->{$ftype.'AlignFeature'}} ) { 
-	  next unless ($f->score > 80);
-    my( $region, $start, $end, $strand ) = ( $f->seq_region_name, $f->start, $f->end, $f->strand );
-    if( $f->coord_system_name ne $coord_systems->[0] ) {
-      foreach my $system ( @{$coord_systems} ) {
-        # warn "Projecting feature to $system";
-        my $slice = $f->project( $system );
-        # warn @$slice;
-        if( @$slice == 1 ) {
-          ($region,$start,$end,$strand) = ($slice->[0][2]->seq_region_name, $slice->[0][2]->start, $slice->[0][2]->end, $slice->[0][2]->strand );
-          last;
+
+  foreach my $f ( @{$self->Obj->{$ftype.'AlignFeature'}} ) {
+    if (ref($f) =~ /UnmappedObject/) {
+      my $unmapped = $self->unmapped_object($f);
+      push(@$results, $unmapped);
+    }
+    else {
+	    next unless ($f->score > 80);
+      my $coord_systems = $self->coord_systems();
+      my( $region, $start, $end, $strand ) = ( $f->seq_region_name, $f->start, $f->end, $f->strand );
+      if( $f->coord_system_name ne $coord_systems->[0] ) {
+        foreach my $system ( @{$coord_systems} ) {
+          # warn "Projecting feature to $system";
+          my $slice = $f->project( $system );
+          # warn @$slice;
+          if( @$slice == 1 ) {
+            ($region,$start,$end,$strand) = ($slice->[0][2]->seq_region_name, $slice->[0][2]->start, $slice->[0][2]->end, $slice->[0][2]->strand );
+            last;
+          }
         }
       }
+      push @$results, {
+        'region'   => $region,
+        'start'    => $start,
+        'end'      => $end,
+        'strand'   => $strand,
+        'length'   => $f->end-$f->start+1,
+        'label'    => "@{[$f->hstart]}-@{[$f->hend]}",
+        'gene_id'  => ["@{[$f->hstart]}-@{[$f->hend]}"],
+        'extra' => [ $f->alignment_length, $f->hstrand * $f->strand, $f->percent_id, $f->score, $f->p_value ]
+      };
     }
-    push @$results, {
-      'region'   => $region,
-      'start'    => $start,
-      'end'      => $end,
-      'strand'   => $strand,
-      'length'   => $f->end-$f->start+1,
-      'label'    => "@{[$f->hstart]}-@{[$f->hend]}",
-      'gene_id'  => ["@{[$f->hstart]}-@{[$f->hend]}"],
-      'extra' => [ $f->alignment_length, $f->hstrand * $f->strand, $f->percent_id, $f->score, $f->p_value ]
-    };
   }
-  return $results, [ 'Alignment length', 'Rel ori', '%id', 'score', 'p-value' ];
+
+  if ($self->feature_mapped) {
+    return $results, [ 'Alignment length', 'Rel ori', '%id', 'score', 'p-value' ];
+  }
+  else {
+    return $results;
+  }
 }
 
 sub retrieve_ProteinAlignFeature {
@@ -192,7 +246,7 @@ sub find_available_features {
 
 	my $all_feature_types = [
 		{'table'=>'gene',value=>'Gene','text'=>"Gene"},
-        {'table'=>'affy_feature','value'=>'AffyProbe','text'=>"AffyProbe"},
+        {'table'=>'oligo_feature','value'=>'OligoProbe','text'=>"OligoProbe"},
         {'table'=>'dna_align_feature','value'=>'DnaAlignFeature','text'=>"Sequence Feature"},
         {'table'=>'protein_align_feature','value'=>'ProteinAlignFeature','text'=>"Protein Feature"},
         {'table'=>'regulatory_feature','value'=>'RegulatoryFactor','text'=>"Regulatory Factor"},

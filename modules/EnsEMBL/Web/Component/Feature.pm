@@ -25,71 +25,17 @@ our %pointer_defaults = (
 
 #---------------------------------------------------------------------------
 
-sub select_feature {
-  my ( $panel, $object ) = @_;
+sub fv_select      { _wrap_form($_[0], $_[1], 'fv_select'); }
+sub fv_layout      { _wrap_form($_[0], $_[1], 'fv_layout'); }
+
+sub _wrap_form {
+  my ( $panel, $object, $node ) = @_;
   my $html = qq(<div class="formpanel" style="width:80%">);
-  $html .= $panel->form( 'select_feature' )->render();
+  $html .= $panel->form($node)->render();
   $html .= '</div>';
   $panel->print($html);
   return 1;
 }
-
-
-sub select_feature_form {
-  my( $panel, $object ) = @_;
-  my $species      = $object->species;
-  my $species_defs = $object->species_defs;
-  my $form = EnsEMBL::Web::Form->new( 'select_feature', "/@{[$object->species]}/featureview", 'get' );
-
-  $form->add_element(
-    'type' => 'SubHeader',
-    'value' => 'Select a Feature'
-    );
-
-  my $types;
-  #look in species defs to find available features
-  foreach my $avail_feature (@{$object->find_available_features}) {
-	  push @$types, { 'value'=>$avail_feature->{'value'},'name'=>$avail_feature->{'text'} }, 
-  }
-
-  $form->add_element(
-    'type' => 'Information',
-    'value' => 'Hint: to display multiple features, enter them as a space-delimited list'
-    );
-
-  $form->add_element(
-    'type'   => 'DropDownAndString',
-    'select' => 'select',
-    'name'   => 'type',
-    'label'  => 'Feature type:',
-    'values' => $types,
-    'value'  => $object->param( 'type' ) || 'Gene',
-    'string_name'   => 'id',
-    'string_label'  => 'ID',
-    'string_value' => $object->param( 'id' ),
-    'required' => 'yes'
-  );
-
-  $form->add_element(
-    'type' => 'SubHeader',
-    'value' => 'Configure Display Options'
-    );
-  
-  $form->add_element(
-    'type' => 'Information',
-    'value' => 'Some feature displays now include additional data, so two sets of pointers can be configured'
-    );
-
-  # use image config widgets from Chromosome module
-  &EnsEMBL::Web::Component::Chromosome::config_hilites($form, $object, 2);
-  &EnsEMBL::Web::Component::Chromosome::config_karyotype($form, $object);
-
-  $form->add_element( 'type' => 'Submit', 'value' => 'Go');
-
-  return $form;
-}
-
-#-----------------------------------------------------------------------------
 
 sub spreadsheet_featureTable {
   my( $panel, $object ) = @_;
@@ -98,7 +44,7 @@ sub spreadsheet_featureTable {
   my( $data, $extra_columns, $initial_columns, $options ) = $object->retrieve_features;
   my @data = [];
   my $data_type = $object->param('type');
-
+warn $data;
   # spreadsheet headers
   # columns common to all features
   $panel->add_option( 'triangular', 1 );
@@ -131,7 +77,7 @@ sub spreadsheet_featureTable {
   # add extra columns
   $C = 0;
   for( @{$extra_columns||[]} ) {
-    $panel->add_columns( {'key' => "extra$C", 'title' => $_, 'width' => '10%', 'align' => 'center' } );
+    $panel->add_columns({'key' => "extra$C", 'title' => $_, 'width' => '10%', 'align' => 'center'} );
     $C++;
   }
 
@@ -185,6 +131,52 @@ sub spreadsheet_featureTable {
 
   return 1;
 
+}
+
+sub unmapped {
+  my( $panel, $object ) = @_;
+  my( $data, $extra_columns, $initial_columns, $options ) = $object->retrieve_features;
+
+  my $label = 'Location';
+  my $name = $object->species_defs->SPECIES_COMMON_NAME;
+  my $analysis = $$data[0]{'analysis'};
+  my $html = qq(<p>This feature has not been mapped to the $name genome.</p><p>$analysis</p>);
+
+  $panel->add_row($label, $html);
+  return 1; 
+}
+
+sub unmapped_id {
+  my( $panel, $object ) = @_;
+
+  my $label = 'Feature ID';
+  my $html = '<p>'.$object->feature_id.'</p>';
+
+  $panel->add_row($label, $html);
+  return 1; 
+}
+
+sub unmapped_reason {
+  my( $panel, $object ) = @_;
+  my( $data, $extra_columns, $initial_columns, $options ) = $object->retrieve_features;
+
+  my $label   = 'Reason';
+  my $reason  = $$data[0]{'reason'};
+  my $score   = $$data[0]{'score'};
+  my $html    = "<p>$reason (Target score $score%)</p>";
+
+  $panel->add_row($label, $html);
+  return 1; 
+}
+
+sub unmapped_details {
+  my( $panel, $object ) = @_;
+
+  my $label = '';
+  my $html = '';
+
+  #$panel->add_row($label, $html);
+  return 1; 
 }
 
 #-----------------------------------------------------------------------------
@@ -365,6 +357,7 @@ sub regulatory_factor {
   $panel->print("<p>The karyotype shows where this regulatory factor binds. The table below lists the regulatory features to which it binds.</p>");
   return 1;
 }
+
 
 1;
                                                  

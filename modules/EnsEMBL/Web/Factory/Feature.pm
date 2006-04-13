@@ -31,10 +31,9 @@ sub createObjects {
 #---------------------------------------------------------------------------
 
 sub create_OligoProbe {
-    # get Affy hits plus corresponding genes
-
+    # get Oligo hits plus corresponding genes
     my $probe = $_[0]->_generic_create( 'OligoProbe', 'fetch_all_by_probeset', $_[1] );
-    my $probe_genes = $_[0]->_generic_create( 'Gene', 'fetch_all_by_external_name', $_[1],undef, 'no_error' );
+    my $probe_genes = $_[0]->_generic_create( 'Gene', 'fetch_all_by_external_name', $_[1],undef, 'no_errors' );
     my $features = {'OligoProbe'=>$probe};
     $$features{'Gene'} = $probe_genes if $probe_genes;
     return $features;
@@ -58,7 +57,7 @@ sub create_Gene {
 sub create_Disease {
     # get disease hits plus corresponding genes
     my $disease = $_[0]->_generic_create( 'DBEntry', 'fetch_by_db_accession', $_[1] );
-    my $disease_genes = $_[0]->_generic_create( 'Gene', 'fetch_all_by_external_name', $_[1],undef, 'no_error' );
+    my $disease_genes = $_[0]->_generic_create( 'Gene', 'fetch_all_by_external_name', $_[1],undef, 'no_errors' );
     my $features = {'Disease'=>$disease};
     $$features{'Gene'} = $disease_genes if $disease_genes;
     return $features;
@@ -95,16 +94,24 @@ sub _generic_create {
          $t_features = $db_adaptor->$adaptor_name->$accessor($fid);
         };
       }
+      ## if no result, check for unmapped features
+      if ($t_features && ref($t_features) eq 'ARRAY' && !@$t_features) {
+        my $uoa = $db_adaptor->get_UnmappedObjectAdaptor;
+        $t_features = $uoa->fetch_by_identifier($fid);
+      }
+
       if( $t_features && ref($t_features) eq 'ARRAY') {
-        foreach( @$t_features ) { $_->{'_id_'} = $fid; }
+        foreach my $f (@$t_features) { 
+          $f->{'_id_'} = $fid;
+        }
         push @$features, @$t_features;
       }
     }
                                                                                    
-    #warn @$features;
     return $features if $features && @$features; # Return if we have at least one feature
+
     # We have no features so return an error....
-    if( $flag eq 'no_errors' ) {
+    unless ( $flag eq 'no_errors' ) {
       $self->problem( 'no_match', 'Invalid Identifier', "$object_type $id was not found" );
     }
     return undef;

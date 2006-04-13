@@ -2,9 +2,10 @@ package EnsEMBL::Web::Configuration::Feature;
 
 use strict;
 use EnsEMBL::Web::Document::Panel::SpreadSheet;
+use EnsEMBL::Web::Document::Panel::Information;
 use EnsEMBL::Web::Document::Panel::Image;
-
 use EnsEMBL::Web::Configuration;
+use EnsEMBL::Web::Wizard::Feature;
 
 our @ISA = qw( EnsEMBL::Web::Configuration );
 
@@ -12,17 +13,31 @@ our @ISA = qw( EnsEMBL::Web::Configuration );
 
 ## Function to configure featureview
 
-## This view has two pages: a form to select the required feature and
-## configure the image, then a display page with multiple panels
-
 sub featureview {
   my $self   = shift;
   my $object = $self->{'object'};
 
-  # this is a two-step view, so we need 2 separate sections
-  my %data = %{$object->__data};
-  if ($object->param('id') && $data{'_object'}) {
-    # Step 2 - user has chosen valid feature
+  $self->initialize_zmenu_javascript;
+
+  ## the "featureview" wizard uses 4 nodes: select feature, process selection, 
+  ## configure image (only shown if species has chromosomes), and display features
+  my $wizard = EnsEMBL::Web::Wizard::Feature->new($object);
+  $wizard->add_nodes([qw(fv_select fv_process fv_layout fv_display)]);
+  $wizard->default_node('fv_display');
+
+  ## chain the nodes together
+  $wizard->chain_nodes([
+          ['fv_select'=>'fv_process'],
+          ['fv_process'=>'fv_layout'],
+          ['fv_process'=>'fv_display'],
+          ['fv_layout'=>'fv_display'],
+  ]);
+
+  $self->add_wizard($wizard);
+
+  ## need custom panels for display page
+  my $here = $wizard->current_node($object);
+  if ($here eq 'fv_display') {
     my $type = $object->param('type');
     my $id   = $object->param('id');
     if ($type eq 'Gene') {
@@ -30,8 +45,8 @@ sub featureview {
     }
 
     $self->{page}->set_title( "FeatureView: $type $id");
-    my $gene_panel;
-    if ($object->Obj->{'Gene'}) {  ## data includes one or more gene objects
+    my ($gene_panel, $karyo_panel, $ss_panel);
+    if ($object->Obj->{'Gene'} && $object->param('style_1')) {  ## data includes one or more subsidiary gene objects
       $gene_panel = new EnsEMBL::Web::Document::Panel::SpreadSheet(
         'code'    => "info$self->{flag}",
         'caption' => "Gene Information",
@@ -43,13 +58,13 @@ sub featureview {
       $gene_panel = $self->new_panel('Information',
          'code'    => "info$self->{flag}",
          'caption' => "Regulatory Factor $id",
-				       );
+               );
 
       $gene_panel->add_components(qw(
     regulatory_factor EnsEMBL::Web::Component::Feature::regulatory_factor
-				    ));
+            ));
     }
-
+=pod
     # do key
     my $key_panel = new EnsEMBL::Web::Document::Panel::Image(
         'code'    => "info$self->{flag}",
@@ -57,43 +72,54 @@ sub featureview {
         'object'  => $self->{object},
     );
     $key_panel->add_components(qw(image EnsEMBL::Web::Component::Feature::key_to_pointers));
+=cut
+
     # do karytype
-    my $karyo_panel = new EnsEMBL::Web::Document::Panel::Image(
+    if (@{$object->species_defs->ENSEMBL_CHROMOSOMES} && $object->feature_mapped) {
+      $karyo_panel = new EnsEMBL::Web::Document::Panel::Image(
         'code'    => "info$self->{flag}",
         'caption' => "Feature Location(s)",
         'object'  => $self->{object},
-    );
-    $karyo_panel->add_components(qw(image EnsEMBL::Web::Component::Feature::show_karyotype));
+      );
+      $karyo_panel->add_components(qw(image EnsEMBL::Web::Component::Feature::show_karyotype));
+    }
+
     # do feature information table
-    my $ss_panel = new EnsEMBL::Web::Document::Panel::SpreadSheet(
+    my $info_panel;
+    if ($object->feature_mapped) {
+      $info_panel = new EnsEMBL::Web::Document::Panel::SpreadSheet(
         'code'    => "info$self->{flag}",
         'caption' => 'Feature Information', 
         'object'  => $self->{object},
-    );
-    $ss_panel->add_components( qw(features
-      EnsEMBL::Web::Component::Feature::spreadsheet_featureTable));
+      );
+      $info_panel->add_components( qw(features
+          EnsEMBL::Web::Component::Feature::spreadsheet_featureTable));
+    }
+    else {
+      $info_panel = new EnsEMBL::Web::Document::Panel::Information(
+        'code'    => "info$self->{flag}",
+        'caption' => 'Unmapped Feature', 
+        'object'  => $self->{object},
+      );
+      $info_panel->add_components( qw(
+          id          EnsEMBL::Web::Component::Feature::unmapped_id
+          unmapped    EnsEMBL::Web::Component::Feature::unmapped
+          reason      EnsEMBL::Web::Component::Feature::unmapped_reason
+          details     EnsEMBL::Web::Component::Feature::unmapped_details
+      ));
+    }
 
     $self->initialize_zmenu_javascript;
-    if ($gene_panel) {
-      $self->{page}->content->add_panel($gene_panel);
-    }
     #$self->{page}->content->add_panel($key_panel);
-    $self->{page}->content->add_panel($karyo_panel);
-    $self->{page}->content->add_panel($ss_panel);
+    $self->{page}->content->add_panel($karyo_panel) if $karyo_panel;
+    $self->{page}->content->add_panel($info_panel);
+    $self->{page}->content->add_panel($gene_panel) if $gene_panel;
   }
   else {
-    # Step 1 - initial page display
-
-    my $panel1 =  new EnsEMBL::Web::Document::Panel::Image( 
-        'code'    => "info$self->{flag}",
-        'caption' => 'FeatureView',
-        'object'  => $self->{object},
-    );
-    $panel1->add_components(qw(select EnsEMBL::Web::Component::Feature::select_feature));
-    $panel1->add_form( $self->{page}, qw(select_feature  EnsEMBL::Web::Component::Feature::select_feature_form) );
-    $self->{page}->content->add_panel($panel1);
+    $self->wizard_panel('Featureview');
   }
 }
+
 
 #---------------------------------------------------------------------------
 
@@ -116,7 +142,7 @@ sub context_menu {
   my $config = "style=$style;col=$col;zmenu=$zmenu;chr_length=$chr_length;v_padding=$v_padding;h_padding=$h_padding;h_spacing=$h_spacing;rows=$rows";
 
   my $features = [];
-  my $href_root = "/$species/featureview?type=";
+  my $href_root = "/$species/featureview?node=fv_select;type=";
   #look in species defs to find available features
   foreach my $avail_feature (@{$obj->find_available_features}) {
 	push @$features, {'text'=>$avail_feature->{'text'},'href'=>$href_root.$avail_feature->{'value'},'raw'=>1 } ;
