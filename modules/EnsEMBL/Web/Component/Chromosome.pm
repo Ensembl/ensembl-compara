@@ -11,203 +11,6 @@ no warnings "uninitialized";
 
 @EnsEMBL::Web::Component::Chromosome::ISA = qw( EnsEMBL::Web::Component);
 
-#------------------- GENERIC FUNCTIONS ---------------------------
-  
-# make array of hashes for dropdown options
-sub chr_list {
-  my $object = shift;
-  my @all_chr = @{$object->species_defs->ENSEMBL_CHROMOSOMES};
-  my @chrs;
-  foreach my $next (@all_chr) {
-    push @chrs, {'name'=>$next, 'value'=>$next} ;
-  }
-  return @chrs;
-}
-
-# dropdown values for image configuration forms
-
-my @pointer_styles = (
-        {'value' => 'box',              'name' => 'Filled box'},
-        {'value' => 'filledwidebox',    'name' => 'Filled wide box'},
-        {'value' => 'widebox',          'name' => 'Outline wide box'},
-        {'value' => 'outbox',           'name' => 'Oversize outline box'},
-        {'value' => 'wideline',         'name' => 'Line'},
-        {'value' => 'lharrow',          'name' => 'Arrow left side'},
-        {'value' => 'rharrow',          'name' => 'Arrow right side'},
-        {'value' => 'bowtie',           'name' => 'Arrows both sides'},
-        {'value' => 'text',             'name' => 'Text label (+ wide box)'}
-    );
-                                                                                
-my @pointer_cols = (
-        {'value' => 'purple',   'name'=> 'Purple'},
-        {'value' => 'magenta',  'name'=> 'Magenta'},
-        {'value' => 'red',      'name' =>'Red'},
-        {'value' => 'orange',   'name' => 'Orange'},
-        {'value' => 'brown',    'name'=> 'Brown'},
-        {'value' => 'green',    'name'=> 'Green'},
-        {'value' => 'darkgreen','name'=> 'Dark Green'},
-        {'value' => 'blue',     'name'=> 'Blue'},
-        {'value' => 'darkblue', 'name'=> 'Dark Blue'},
-        {'value' => 'violet',   'name'=> 'Violet'},
-        {'value' => 'grey',     'name'=> 'Grey'},
-        {'value' => 'darkgrey', 'name'=> 'Dark Grey'}
-    );
-
-my @zmenus = (
-        {'name'=>'on',  'value'=>'on'},
-        {'name'=>'off',  'value'=>'off'}
-    );
-                                                                                
-my @rows = (
-        {'name'=>'1',  'value'=>'1'},
-        {'name'=>'2',  'value'=>'2'},
-        {'name'=>'3',  'value'=>'3'},
-        {'name'=>'4',  'value'=>'4'}
-    );
-
-
-# widget blocks for image configuration forms
-
-sub config_hilites {
-                                                                                
-  my ($form, $object, $sets) = @_;
-  $sets = 1 if !$sets;
-  my @defaults = ( 
-                ['first',   'rharrow',  'red'],
-                ['second',  'lharrow',  'blue'],
-                ['third',   'box',      'green'],
-  );
-                      
-  for (my $i=0; $i<$sets; $i++) {                                                  
-    $form->add_element(
-        'type'   => 'DropDown',
-        'select' => 'select',
-        'name'   => "style_$i",
-        'label'  => "Style for $defaults[$i][0] pointer set:",
-        'values' => \@pointer_styles,
-        'value'  => $object->param( "style_$i" ) || $defaults[$i][1],
-    );
-    $form->add_element(
-        'type'   => 'DropDown',
-        'select' => 'select',
-        'name'   => "col_$i",
-        'label'  => "Colour for $defaults[$i][0] pointer set:",
-        'values' => \@pointer_cols,
-        'value'  => $object->param( "col_$i" ) || $defaults[$i][2],
-    );
-  }
-  $form->add_element(
-    'type'   => 'DropDown',
-    'select' => 'select',
-    'name'   => 'zmenu',
-    'label'  => 'Display mouseovers on menus:',
-    'values' => \@zmenus,
-    'value'  => $object->param( 'zmenu' ) || 'on',
-  );
-                                                                                
-}
-
-sub config_tracks {
-
-  my ($form, $object) = @_;
-
-  my @trackboxes = (
-        {'name'=>'Show max/min lines',          'value'=>'maxmin'},
-        {'name'=>'Show GC content frequency',   'value'=>'track_Vpercents'},
-        {'name'=>'Show SNP frequency',          'value'=>'track_Vsnps'},
-        {'name'=>'Show gene frequency',         'value'=>'track_Vgenes'}
-    );
-  foreach my $box (@trackboxes) {
-    $form->add_element(
-        'type'   => 'CheckBox',
-        'label'  => $box->{'name'},
-        'name'   => $box->{'value'},
-        'id'     => $box->{'value'},
-        'value'  => 'on',
-    );
-  }
-  $form->add_element(
-    'type'   => 'DropDown',
-    'select' => 'select',
-    'name'   => 'col',
-    'label'  => 'Track colour:',
-    'values' => \@pointer_cols,
-    'value'  => $object->param( 'col' ) || 'purple',
-  );
-}
-
-sub config_karyotype {
-                                                                                
-  my ($form, $object) = @_;
-                                                                                
-  $form->add_element(
-    'type'   => 'DropDown',
-    'select' => 'select',
-    'name'   => 'rows',
-    'label'  => 'Number of rows of chromosomes:',
-    'values' => \@rows,
-    'value'  => $object->param( 'rows' ) || '2',
-  );
-  $form->add_element(
-    'type'   => 'PosInt',
-    'name'   => 'chr_length',
-    'label'  => 'Height of the longest chromosome (pixels):',
-    'value'  => $object->param( 'chr_length' ) || '200',
-    'size'   => '4'
-  );
-  $form->add_element(
-    'type'   => 'Int',
-    'name'   => 'h_padding',
-    'label'  => 'Padding around chromosomes (pixels):',
-    'value'  => $object->param( 'h_padding' ) || '4',
-    'size'   => '4'
-  );
-  $form->add_element(
-    'type'   => 'Int',
-    'name'   => 'h_spacing',
-    'label'  => 'Spacing between chromosomes (pixels):',
-    'value'  => $object->param( 'h_spacing' ) || '6',
-    'size'   => '4'
-  );
-
-  $form->add_element(
-    'type'   => 'Int',
-    'name'   => 'v_padding',
-    'label'  => 'Spacing between rows (pixels):',
-    'value'  => $object->param( 'v_padding' ) || '50',
-    'size'   => '4'
-  );
-                                                                                
-}
-
-sub config_data {
-
-  my ($form, $object) = @_;
-  my $species = $object->species;
-  $form->add_element(
-    'type'   => 'Information',
-    'value'  => qq(Accepted <a href="javascript:window.open('/$species/helpview?se=1;kw=karyoview#FileFormats', 'helpview', 'width=400,height=500,resizable,scrollbars'); void(0);">file formats</a>),
-  );
-  $form->add_element(
-    'type'   => 'Text',
-    'name'   => 'paste_file',
-    'label'  => 'Paste file:',
-    'value'  => '',
-  );
-  $form->add_element(
-    'type'   => 'File',
-    'name'   => 'upload_file',
-    'label'  => 'Upload file:',
-    'value'  => '',
-  );
-  $form->add_element(
-    'type'   => 'String',
-    'name'   => 'url_file',
-    'label'  => 'File URL:',
-    'value'  => '',
-  );
-                                                                                
-}
 
 #-----------------------------------------------------------------
 # MAPVIEW COMPONENTS    
@@ -608,7 +411,7 @@ sub kv_display {
   }
   my $config = $object->user_config_hash($config_name);
 
-  # Create image object
+  ## Create image object
   my $image    = $object->new_karyotype_image();
   $image->imagemap    = 'yes';
   $image->cacheable   = 'no';
@@ -670,6 +473,17 @@ sub kv_display {
       push @$all_pointers, $pointers;
     }
   }
+  ## add extra formats if selected
+  if ($object->param('format_pdf')) {
+    push(@{$image->{'image_formats'}}, 'pdf');  
+  }
+  if ($object->param('format_svg')) {
+    push(@{$image->{'image_formats'}}, 'svg');  
+  }
+  if ($object->param('format_eps')) {
+    push(@{$image->{'image_formats'}}, 'postscript');  
+  }
+
   $image->karyotype($object, $all_pointers, $config_name);
   # create image file and render HTML
   $panel->print($image->render);
