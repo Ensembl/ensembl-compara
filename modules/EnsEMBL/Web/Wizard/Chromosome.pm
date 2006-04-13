@@ -300,7 +300,7 @@ sub kv_add {
       'value'  => qq(Track$plural added so far:),
     );
     my @cols   = @{$wizard->data('colours')};
-    my @styles = @{$wizard->colours('styles')};
+    my @styles = @{$wizard->data('styles')};
     my ($colour, $style, $h_ref, %hash, $output);
     for (my $i = 0; $i < $tracks; $i++) {
       my $track_name = $object->param("track_name_$i");
