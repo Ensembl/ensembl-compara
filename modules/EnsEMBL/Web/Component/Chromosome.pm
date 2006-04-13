@@ -19,6 +19,17 @@ no warnings "uninitialized";
 ## Creates a clickable imagemap of a single chromosome, 
 ## with extra tracks - GC, SNPs and genes
 
+# make array of hashes for dropdown options
+sub chr_list {
+  my $object = shift;
+  my @all_chr = @{$object->species_defs->ENSEMBL_CHROMOSOMES};
+  my @chrs;
+  foreach my $next (@all_chr) {
+    push @chrs, {'name'=>$next, 'value'=>$next} ;
+  }
+  return @chrs;
+}
+
 sub chr_map {
   my( $panel, $object ) = @_;
   my $config_name = 'Vmapview';
