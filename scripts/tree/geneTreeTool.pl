@@ -43,7 +43,6 @@ $self->{'print_leaves'} =0;
 my $conf_file;
 my ($help, $host, $user, $pass, $dbname, $port, $adaptor);
 my $url;
-my $debug=0;
 
 Bio::EnsEMBL::Registry->no_version_check(1);
 
@@ -77,6 +76,7 @@ GetOptions('help'             => \$help,
            'balance'          => \$self->{'balance_tree'},
            'chop'             => \$self->{'chop_tree'},
            'keep_leaves=s'    => \$self->{'keep_leaves'},
+           'debug'             => \$self->{'debug'},
           );
 
 if ($help) { usage(); }
@@ -198,7 +198,7 @@ if($self->{'tree'}) {
 #
 # clusterset stuff
 #
-if($self->{'clusterset_id'}) {
+if($self->{'clusterset_id'} && !($self->{'treefam_file'})) {
   my $treeDBA = $self->{'comparaDBA'}->get_ProteinTreeAdaptor;
   $self->{'clusterset'} = $treeDBA->fetch_node_by_node_id($self->{'clusterset_id'});
   
@@ -279,6 +279,7 @@ sub fetch_protein_tree_with_gene {
                        fetch_AlignedMember_by_member_id_root_id(
                           $member->get_longest_peptide_Member->member_id,
                           $self->{'clusterset_id'});
+  return 0 unless (defined $aligned_member);
   my $node = $aligned_member->subroot;
   
   $self->{'tree'} = $treeDBA->fetch_node_by_node_id($node->node_id);
@@ -1001,32 +1002,64 @@ sub balance_tree
 sub treefam_compare
 {
   my $self = shift;
+  my $treefam_entry = '';
   my $treefam_nhx = '';
-  print("load from file ", $self->{'treefam_file'}, "\n");
-  open (FH, $self->{'treefam_file'}) or throw("Could not open treefam_nhx file [$self->{'treefam_file'}]");
+  print("load from file ", $self->{'treefam_file'}, "\n") if $self->{'debug'};
+  open (FH, $self->{'treefam_file'}) or die("Could not open treefam_nhx file [$self->{'treefam_file'}]");
+  my $tree_counter=0;
+  print "tree,type,v1,v2\n";
   while(<FH>) {
-    $treefam_nhx .= $_;
-  }
-  printf("newick string: $treefam_nhx\n") if $debug;
-  my $treefam_tree = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($treefam_nhx);
-
-  my @shared;
-  my @different;
-  my @leaves = @{$treefam_tree->get_all_leaves};
-  foreach my $leaf (@leaves) {
-      my $leaf_name = $leaf->name;
-      # treefam uses G NHX tag for genename
-      my $genename = $leaf->get_tagvalue('G');
-      next if (0==length($genename)); #for weird pseudoleaf tags with no gene name
-      if (fetch_protein_tree_with_gene($self, $genename)) {
-          print STDERR "leaf_name_treefam isshared: ",$genename, "\t", $leaf_name,"\n";
-          push @shared, $genename;
-      } else {
-          print STDERR "leaf_name_treefam notfound: ",$genename, "\t", $leaf_name,"\n";
-          push @different, $genename;
+      $treefam_entry .= $_;
+      next unless $treefam_entry =~ /;/;
+      my ($treefamid, $treefam_nhx) = split ("\t",$treefam_entry);
+      #printf("newick string: $treefam_nhx\n") if $self->{'debug'};
+      my $treefam_tree = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($treefam_nhx);
+      $tree_counter++;
+      my @shared;
+      my %treeid_shared = ();
+      my @differ;
+      my @leaves = @{$treefam_tree->get_all_leaves};
+      foreach my $leaf (@leaves) {
+          my $leaf_name = $leaf->name;
+          # treefam uses G NHX tag for genename
+          my $genename = $leaf->get_tagvalue('G');
+          next if (0==length($genename)); #for weird pseudoleaf tags with no gene name
+          if (fetch_protein_tree_with_gene($self, $genename)) {
+#          print STDERR "leaf_name_treefam isshared: ",$genename, "\t", $leaf_name,"\n";
+              $treeid_shared{$self->{'tree'}->node_id} += 1;
+              push @shared, $genename;
+          } else {
+#          print STDERR "leaf_name_treefam notfound: ",$genename, "\t", $leaf_name,"\n";
+              push @differ, $genename;
+          }
       }
+      my $num_shared = scalar(@shared);
+      my $num_differ = scalar(@differ);
+      my $num_treeid_shared = scalar(keys %treeid_shared);
+      # print "tree,type,v1,v2\n";
+      my $perc;
+      eval { $perc = $num_shared/($num_shared+$num_differ); }; $perc = 0 if $@;
+      print "$treefamid,shared,$num_shared,",$perc,"\n";
+      print "$treefamid,treeids,"
+          ,join ":", keys %treeid_shared,
+          ,",$num_treeid_shared\n";
+      foreach my $elem (keys %treeid_shared) {
+          print "$treefamid,$elem,$treeid_shared{$elem},$num_treeid_shared\n";
+      }
+      print "differ,$num_differ,",$num_differ/($num_shared+$num_differ),"\n" if $self->{'debug'};
+      foreach my $elem (@differ) {
+          print "$elem\n" if $self->{'debug'};
+      }
+      $treefam_entry = '';
+#       eval "require Bio::EnsEMBL::Compara::RunnableDB::OrthoTree qw(get_ancestor_species_hash)";
+#       1;
+#       unless($@) {
+#           $self->Bio::EnsEMBL::Compara::RunnableDB::OrthoTree::run_analysis;
+#       }
+#      $self->{'protein_tree'} = $self->{'tree'};
+#      $self->Bio::EnsEMBL::Compara::RunnableDB::RAP::run_rap;
+#      $self->Bio::EnsEMBL::Compara::RunnableDB::OrthoTree::run_analysis;
   }
-  1;
 }
 
 
