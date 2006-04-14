@@ -48,7 +48,6 @@ sub context_menu {
     'text' => 'Gene List', 'title' => 'BioMart: Gene list',
     'href' => "/@{[$self->{object}->species]}/martlink?type=domain;domain_id=".$self->{object}->domainAcc );
 
-
 }
 
 1;

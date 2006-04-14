@@ -396,7 +396,7 @@ sub context_menu {
        'title' => "TranscriptSNP View - Compare transcript variation in different individuals or strains",
        'href'  => $sample_links[0]{'href'},
        'options' => \@sample_links,
-		      );
+      );
     }
 
     $self->add_entry( $flag,
