@@ -67,7 +67,7 @@ no warnings "uninitialized";
 
 use Carp qw( cluck );
 
-use Storable qw(lock_nstore lock_retrieve);
+use Storable qw(lock_nstore lock_retrieve thaw);
 use Data::Dumper;
 
 use Bio::EnsEMBL::Registry;
@@ -465,12 +465,6 @@ sub _parse {
 ######### Deal with DEFAULTS.ini -- store the information collected in a separate tree...
 #########                           and skip the remainder of this code...
     if( $filename eq 'DEFAULTS' ) { 
-      if( $tree->{'general'}{'SITE_LOGO_KEY'} ) {
-        for( keys %{$tree->{$tree->{'general'}{'SITE_LOGO_KEY'}}} ) {
-          $tree->{'general'}{$_} = $tree->{$tree->{'general'}{'SITE_LOGO_KEY'}}{$_};
-        }
-      }
-
       print STDERR ( "\t  [INFO] Defaults file successfully stored\n" );
       $defaults = $tree;
       next;
@@ -490,6 +484,7 @@ sub _parse {
     if( exists $tree->{'databases'} ) {
       foreach my $key ( keys %{$tree->{'databases'}} ) {
         my $DB_NAME = $tree->{'databases'}{$key};
+      print "$key......$DB_NAME\n";
         if( $DB_NAME =~ /%_(\w+)_%/ ) {
           $DB_NAME = lc(sprintf( '%s_%s_%s_%s', $filename , $1, $SiteDefs::ENSEMBL_VERSION, $tree->{'general'}{'SPECIES_RELEASE_VERSION'} ));
         } elsif( $DB_NAME =~/%_(\w+)/ ) {
@@ -716,9 +711,13 @@ sub _parse {
 
         my $das_source_conf = $tree->{$das_source};
         ref( $das_source_conf ) eq 'HASH' or $das_source_conf = {};
-        $das_source_conf->{'retrieve_features'} = 1;
-        $das_source_conf->{'name'} = $das_source;
-        $das_conf->{$das_source} = $das_source_conf; # Substitute conf
+        if( ! exists($das_source_conf->{'assembly'}) || $das_source_conf->{'assembly'} eq $tree->{'ENSEMBL_GOLDEN_PATH'} ) {
+          $das_source_conf->{'retrieve_features'} = 1;
+          $das_source_conf->{'name'} = $das_source;
+          $das_conf->{$das_source} = $das_source_conf; # Substitute conf
+        } else {
+          delete( $das_conf->{$das_source} );
+        }
         delete $tree->{$das_source};
       }
     }
@@ -822,15 +821,15 @@ sub _parse {
 ## Affy probe sets...
           $sql   = qq(
             select distinct(aa.name)
-              from affy_array as aa, affy_probe as ap
-             where aa.affy_array_id = ap.affy_array_id
+              from oligo_array as aa, oligo_probe as ap
+             where aa.oligo_array_id = ap.oligo_array_id
           );
           $query = $dbh->prepare($sql);
           eval {
             $query->execute;
             while (my $row = $query->fetchrow_arrayref ){
-              $tree->{'AFFY'}{$row->[0]} = 1;
-              ( my $key = uc("AFFY_$row->[0]") ) =~ s/\W/_/;
+              $tree->{'OLIGO'}{$row->[0]} = 1;
+              ( my $key = uc("OLIGO_$row->[0]") ) =~ s/\W/_/;
               $tree->{'DB_FEATURES'}{$key} = 1;
             }
           };
@@ -1201,20 +1200,22 @@ sub create_martRegistry {
       my $T = $multi->{'databases'}->{$mart};
       $reg .= sprintf( '
 <MartDBLocation
-  databaseType = "%s"
-      database = "%s"
-          name = "%s"
-        schema = "%s"
-          host = "%s"
-          port = "%s"
-          user = "%s"
-      password = "%s"
-   displayName = "%s"
-       visible = "%d"
-       default = "%d"
+   databaseType = "%s"
+       database = "%s"
+           name = "%s"
+         schema = "%s"
+           host = "%s"
+           port = "%s"
+           user = "%s"
+       password = "%s"
+    displayName = "%s"
+        visible = "%s"
+        default = "%s"
+       martUser = ""
+includeDatasets = ""
 />',
         $T->{DRIVER}, $T->{NAME},   $mart,  $T->{NAME}, $T->{HOST}, $T->{PORT},
-        $T->{USER},   $T->{PASS},   "@name", $visible, $default
+        $T->{USER},   $T->{PASS},   "@name", $visible?1:'', $default?1:''
       );
     }
   }
@@ -1275,6 +1276,8 @@ Disallow: /BioMart/
 );
     foreach( @$ENSEMBL_SPECIES ) { 
       print FH qq(Disallow: /$_/\n);
+      print FH qq(Allow: /$_/geneview\n);
+      print FH qq(Allow: /$_/sitemap.xml.gz\n);
     }
 print FH qq(
 

@@ -1155,10 +1155,10 @@ sub ADD_ALL_TRANSCRIPTS {
   return $POS;
 }
 
-sub ADD_ALL_AFFY_TRACKS {
+sub ADD_ALL_OLIGO_TRACKS {
   my $self = shift;
   my $POS  = shift || 4000;
-  my @AFFY = map { sort keys %{ $self->{'species_defs'}{'_storage'}->{$_}{'AFFY'}||{} } } keys %{$self->{'species_defs'}{'_storage'}};
+  my @OLIGO = map { sort keys %{ $self->{'species_defs'}{'_storage'}->{$_}{'OLIGO'}||{} } } keys %{$self->{'species_defs'}{'_storage'}};
 #    qw( Canine ),    # Dog
 #    qw( Zebrafish ), # Zfish
 #    qw( Chicken ),   # Chicken
@@ -1169,16 +1169,16 @@ sub ADD_ALL_AFFY_TRACKS {
 #        Mouse430A_2 Mouse430_2 Mu11KsubA Mu11KsubB ), # Mouse
 #    qw( Rat230_2 RG-U34A RG-U34B RG-U34C ),           # Rat
 #  );
-  foreach my $chipset (@AFFY) {
+  foreach my $chipset (@OLIGO) {
     ( my $T = lc($chipset) ) =~ s/\W/_/g;
     ( my $T2 = $chipset ) =~ s/Plus_/+/i;
     $self->add_track(
       $T, 'on' => 'off', 'pos' => $POS++, 'str' => 'b', '_menu' => 'features', 
-          'caption' => "AFFY $T2",
+          'caption' => "OLIGO $T2",
           'dep' => 6,
       'col' => 'springgreen4',
       'compact'   => 0,
-      'available' => "features affy_$T",
+      'available' => "features oligo_$T",
       'glyphset'  => 'generic_microarray',
       'FEATURES'  => $chipset,
     );
