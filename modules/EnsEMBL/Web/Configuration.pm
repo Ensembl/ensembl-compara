@@ -136,6 +136,16 @@ sub initialize_zmenu_javascript {
   $self->{page}->add_body_attr( 'onLoad' => 'LOADED = 1;' );
 }
 
+sub initialize_zmenu_javascript_new {
+  my $self = shift;
+  $self->{page}->javascript->add_script( 'var LOADED = 0;' );
+  foreach( qw(dd_menus_32.js new_contigview_support.js new_drag_imagemap.js new_old_zmenu.js new_zmenu.js new_support.js) ) {
+    $self->{page}->javascript->add_source( "/js/$_" );
+  }
+  $self->{page}->javascript_div->add_div( 'jstooldiv', { 'style' => 'z-index: 200; position: absolute; visibility: hidden' } , '' );
+  $self->{page}->add_body_attr( 'onLoad' => 'LOADED = 1;' );
+}
+
 sub context_location {
   my $self = shift;
   my $obj = $self->{object};

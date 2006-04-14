@@ -47,7 +47,7 @@ sub context_menu {
     'title' => "ExportView - export sequence of $header as EMBL",
     'href' => "/$species/exportview?l=$q_string;format=embl;action=format" 
   );
-  unless ($obj->species_defs->ENSEMBL_NOMART) {
+  unless ( $obj->species_defs->ENSEMBL_NOMART) {
       $menu->add_entry( $flag, 'icon' => '/img/biomarticon.gif' , 'text' => 'Export Gene info in region',
         'title' => "BioMart - export Gene information in $header",
         'href' => "/$species/martlink?l=$q_string;type=gene_region" );
@@ -58,7 +58,6 @@ sub context_menu {
         'title' => "BioMart - export Vega gene features in $header",
         'href' => "/$species/martlink?l=$q_string;type=vega_region" ) if $obj->species_defs->databases->{'ENSEMBL_VEGA'};
   }
-
   my @options_as = ();
 
   my %alignments = $obj->species_defs->multiX('ALIGNMENTS');
@@ -292,25 +291,25 @@ sub cytoview {
   my @common = (
     
   );
+  my @rendered_panels;
   my $ideo = $self->new_panel( 'Image',
     'code'    => "ideogram_#", 'caption' => $obj->seq_region_type_and_name,
     'status'  => 'panel_ideogram',
     'params' => { 'l'=>$q_string }
   );
+  push @rendered_panels, $ideo if( $obj->param('panel_ideogram') ne 'off' );
+
   $ideo->add_components(qw(image EnsEMBL::Web::Component::Location::ideogram));
   $self->add_panel( $ideo );
 
-  $self->initialize_zmenu_javascript;
+  $self->initialize_zmenu_javascript_new;
   $self->initialize_ddmenu_javascript;
 
   my $bottom = $self->new_panel( 'Image',
     'code'    => "bottom_#", 'caption' => 'Detailed view', 'status'  => 'panel_bottom',
     'params' => { 'l'=>$q_string }
   );
-  if( $obj->param('panel_ideogram') ne 'off' && $obj->param('panel_bottom' ) ne 'off' ) {
-    $bottom->add_option( 'red_edge', 'yes' );
-    $ideo->add_option(   'red_box' , [ $obj->seq_region_start, $obj->seq_region_end ] );
-  }
+  push @rendered_panels, $bottom if( $obj->param('panel_bottom') ne 'off' );
   my @URL_configs;
   my $URL    = $obj->param('data_URL');
   my @H = map { /^URL:(.*)/ ? $1 : () } @{ $obj->highlights( $URL ? "URL:$URL" : () ) };
@@ -349,6 +348,24 @@ sub cytoview {
       }
     }
   }
+  if( @rendered_panels ) {
+    my $hidden = $self->new_panel( undef, 'code' => 'contigview_form' );
+    $hidden->add_components(qw(form EnsEMBL::Web::Component::Location::contigview_form));
+    $obj->__data->{_cv_panel_no} = 0;
+    $obj->__data->{'_cv_parameter_hash'} = {
+      'species' => $ENV{ENSEMBL_SPECIES},
+      'chr'     => $obj->seq_region_name,
+      'ori'     => 1,
+      'main_width' => $obj->length,
+      'bp_width' => $obj->param('zoom_width'),
+      'base_URL' => "/$ENV{ENSEMBL_SPECIES}/$ENV{ENSEMBL_SCRIPT}"
+    };
+    $self->add_panel( $hidden );
+    $self->{page}->add_body_attr( 'onload' => sprintf 'contigview_init(1,%d);', 0+@rendered_panels );
+  }
+
+  $self->{page}->set_title( "Features on ".$obj->seq_region_type_and_name.' '.$self->{object}->seq_region_start.'-'.$self->{object}->seq_region_end );
+
   $self->{page}->set_title( "Overview of features on ".$obj->seq_region_type_and_name.' '.$self->{object}->seq_region_start.'-'.$self->{object}->seq_region_end );
 }
 
@@ -381,10 +398,14 @@ sub contigview {
   my @common = ( 'params' => { 'l'=>$q_string, 'h' => $obj->highlights_string } );
 
 ## Initialize the ideogram image...
+  my @rendered_panels = ();
   my $ideo = $self->new_panel( 'Image',
     'code'    => "ideogram_#", 'caption' => $obj->seq_region_type_and_name, 'status'  => 'panel_ideogram', @common
   );
-  $last_rendered_panel = $ideo if $obj->param('panel_ideogram') ne 'off';
+  if( $obj->param('panel_ideogram') ne 'off' ) {
+    $last_rendered_panel = $ideo;
+    push @rendered_panels, $ideo;
+  }
   $ideo->add_components(qw(image EnsEMBL::Web::Component::Location::ideogram));
   $self->add_panel( $ideo );
 
@@ -395,16 +416,15 @@ sub contigview {
   my $max_length = ($obj->species_defs->ENSEMBL_GENOME_SIZE||1) * 1.001e6;
   if( $obj->param('panel_top') ne 'off' ) {
     my($start,$end) = $self->top_start_end( $obj, $max_length );
-    $last_rendered_panel->add_option( 'red_box' , [ $start, $end ] ) if $last_rendered_panel;
     $over->add_option( 'start', $start );
     $over->add_option( 'end',   $end   );
-    $over->add_option( 'red_edge', 'yes' );
-    $last_rendered_panel = $over;
+    push @rendered_panels, $over;
   }
+
   $over->add_components(qw(image EnsEMBL::Web::Component::Location::contigviewtop));
   $self->add_panel( $over );
 
-  $self->initialize_zmenu_javascript;
+  $self->initialize_zmenu_javascript_new;
   $self->initialize_ddmenu_javascript;
 
   my $bottom = $self->new_panel( 'Image',
@@ -425,11 +445,7 @@ sub contigview {
     $self->{page}->content->add_panel( $bottom );
   } else {
     if( $obj->param('panel_bottom') ne 'off' ) {
-      if( $last_rendered_panel ) {
-        $last_rendered_panel->add_option( 'red_box' , [ $obj->seq_region_start, $obj->seq_region_end ] );
-        $bottom->add_option( 'red_edge', 'yes' );
-      }
-      $last_rendered_panel = $bottom;
+      push @rendered_panels, $bottom;
       push @URL_configs, $obj->user_config_hash( 'contigviewbottom' ) if @H;
     }
     $bottom->add_components(qw(
@@ -448,11 +464,7 @@ sub contigview {
                              ( $obj->centrepoint - ($zw-1)/2 , $obj->centrepoint + ($zw-1)/2 );
       $base->add_option( 'start', $start );
       $base->add_option( 'end',   $end );
-      if( $last_rendered_panel ) {
-        $last_rendered_panel->add_option( 'red_box' , [ $start, $end ] );
-        $bottom->add_option( 'red_edge', 'yes' );
-      }
-      $last_rendered_panel = $base;
+      push @rendered_panels, $base;
       push @URL_configs, $obj->user_config_hash( 'contigviewzoom', 'contigviewbottom' ) if @H;
     }
     $base->add_components(qw(
@@ -477,6 +489,22 @@ sub contigview {
       }
     }
   }
+  if( @rendered_panels ) {
+    my $hidden = $self->new_panel( undef, 'code' => 'contigview_form' );
+    $hidden->add_components(qw(form EnsEMBL::Web::Component::Location::contigview_form));
+    $obj->__data->{_cv_panel_no} = 0;
+    $obj->__data->{'_cv_parameter_hash'} = {
+      'species' => $ENV{ENSEMBL_SPECIES},
+      'chr'     => $obj->seq_region_name,
+      'ori'     => 1,
+      'main_width' => $obj->length,
+      'bp_width' => $obj->param('zoom_width'),
+      'base_URL' => "/$ENV{ENSEMBL_SPECIES}/$ENV{ENSEMBL_SCRIPT}"
+    };
+    $self->add_panel( $hidden );
+    $self->{page}->add_body_attr( 'onload' => sprintf 'contigview_init(1,%d);', 0+@rendered_panels );
+  }
+
   $self->{page}->set_title( "Features on ".$obj->seq_region_type_and_name.' '.$self->{object}->seq_region_start.'-'.$self->{object}->seq_region_end );
 }
 
@@ -535,7 +563,7 @@ sub alignsliceview {
 				 'code'    => "ideogram_#", 'caption' => $obj->seq_region_type_and_name, 'status'  => 'panel_ideogram', @common
                                 );
      $last_rendered_panel = $ideo if $obj->param('panel_ideogram') ne 'off';
-     $ideo->add_components(qw(image EnsEMBL::Web::Component::Location::ideogram));
+     $ideo->add_components(qw(image EnsEMBL::Web::Component::Location::ideogram_old));
      $self->{page}->content->add_panel( $ideo );
 
     ## Now the overview panel...
