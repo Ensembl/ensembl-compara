@@ -10,7 +10,7 @@ our @ISA = qw(EnsEMBL::Web::Document::HTML);
 
 sub new    { return shift->SUPER::new( 'links' => [], 'indexes' => [] ); }
 
-sub add_link  { push @{$_[0]->{'links'}}, sprintf( '<a href="%s">%s</a>', CGI::escapeHTML( $_[1] ), CGI::escapeHTML( $_[2] ) ); }
+sub add_link  { push @{$_[0]->{'links'}}, sprintf( '<a href="/%s/%s">%s</a>', $ENV{'ENSEMBL_SPECIES'}, CGI::escapeHTML( $_[1] ), CGI::escapeHTML( $_[2] ) ); }
 sub add_index { push @{$_[0]->{'indexes'}}, $_[1]; }
 
 sub sp_common  :lvalue { $_[0]{'sp_common'}=~s/_/ /g; $_[0]{'sp_common'}; }
