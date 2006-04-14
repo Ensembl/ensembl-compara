@@ -8,6 +8,7 @@ sub init {
   my ($self) = @_;
 
   $self->{'_userdatatype_ID'} = 6;
+  $self->{'no_image_frame'} = 1;
 
   $self->{'general'}->{'chromosome'} = {
     '_artefacts' => [qw(ideogram assemblyexception)],
@@ -37,6 +38,6 @@ sub init {
     },
 
     };
-  $self->add_track( 'redbox', 'on'=>'off', 'col' => 'red', 'zindex' => -20, 'pos' => 1000100 );
+##  $self->add_track( 'redbox', 'on'=>'off', 'col' => 'red', 'zindex' => -20, 'pos' => 1000100 );
 }
 1;

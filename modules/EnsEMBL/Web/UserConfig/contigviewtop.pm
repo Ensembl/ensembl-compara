@@ -7,12 +7,14 @@ use vars qw(@ISA);
 sub init {
   my ($self) = @_;
   $self->{'_userdatatype_ID'} = 2;
+  $self->{'no_image_frame'} = 1;
   $self->{'general'}->{'contigviewtop'} = {
     '_artefacts'   => [  ],
     '_settings'    => {
       'width'             => 900,
-      'draw_red_box'      => 'yes',
+#      'draw_red_box'      => 'yes',
       'default_vc_size'   => 1000000,
+      'opt_zclick'     => 1,
       'show_contigview'   => 'yes',
       'imagemap'          => 1,
       'bgcolor'           => 'background1',
@@ -38,7 +40,7 @@ sub init {
       'on'      => "on", 'pos'       => '9998', 'str'       => 'x', 'height'         => 1, 'dep'         => 6,
       'lab'       => 'black', 'navigation'  => 'on', );
 
-  $self->add_track( 'redbox', 'on'=>'off', 'col' => 'red', 'zindex' => -20, 'pos' => 1000100 );
+#  $self->add_track( 'redbox', 'on'=>'off', 'col' => 'red', 'zindex' => -20, 'pos' => 1000100 );
   $POS = 2000100;
   $self->add_track( 'gene_legend', 'str' => 'r', 'on'=>'on', 'pos' => $POS++ );
 }

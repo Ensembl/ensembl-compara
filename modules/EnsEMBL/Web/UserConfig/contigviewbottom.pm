@@ -11,6 +11,7 @@ sub init {
   my ($self ) = @_;
   $self->{'_das_offset'} = '5800';
 
+  $self->{'no_image_frame'} = 1;
   $self->{'_userdatatype_ID'} = 1;
   $self->{'_add_labels'} = 'yes';
   $self->{'_transcript_names_'} = 'yes';
@@ -28,12 +29,12 @@ sub init {
         all_affy 
 
         alternative_assembly
-        matepairs   bacs  bac_bands  tilepath  tilepath2  bacends misc_bacends
+        matepairs  bacends 
         ruler     scalebar  stranded_contig
         sequence  codonseq  codons gap gcplot encode
-	encode_region fosmid_map regulatory_search_regions regulatory_regions
-
-        restrict redbox),
+	encode_region regulatory_search_regions regulatory_regions
+#       redbox
+        restrict),
     # qw( zfish_est ),
      qw(glovar_snp)
     ],
@@ -63,7 +64,7 @@ sub init {
       'clone_based'   => 'no',
       'clone_start'   => '1',
       'clone'       => 1,
-      'draw_red_box'  => 'no',
+#      'draw_red_box'  => 'no',
       'default_vc_size' => 100000,
       'main_vc_width'   => 100000,
       'imagemap'    => 1,
@@ -113,7 +114,6 @@ sub init {
          [ 'ex_profile'      => 'Exp. profile'    ],
          [ 'alternative_assembly'     => 'Vega assembly' ],
 ### Other ###
-         [ 'misc_bacends'    => 'BACends' ],
          [ 'encode_region'   => 'ENCODE' ],
 ## MICROARRAY TRACKS ##
          [ 'all_affy'            => 'All-Probe-Sets' ],
@@ -129,23 +129,16 @@ sub init {
          [ 'stranded_contig' => 'Contigs'       ],
          [ 'ruler'           => 'Ruler'       ],
          [ 'scalebar'        => 'Scale Bar'     ],
-         [ 'tp32k'           => '32K Tilepath'      ],
-         [ 'tilepath'        => 'Tilepath'      ],
-         [ 'tilepath2'       => 'Acc. clones'     ],
          [ 'encode'          => 'Encode regions' ],
          [ 'gcplot'          => '%GC'         ],
          [ 'opt_lines'       => 'Show register lines' ],
          [ 'opt_empty_tracks' => 'Show empty tracks' ],
          [ 'opt_zmenus'      => 'Show popup menus'  ],
-         [ 'opt_zclick'      => '... popup on click'  ],
+#         [ 'opt_zclick'      => '... popup on click'  ],
          [ 'opt_show_bumped' => 'Show # bumped glyphs'  ],
          [ 'opt_halfheight'  => 'Half-height glyphs'  ],
 	 [ 'opt_shortlabels' => 'Concise labels' ],
          [ 'matepairs'       => 'Matepairs' ],
-         [ 'bacends'         => 'BACends' ],
-         [ 'bacs'            => 'BACs' ],
-         [ 'fosmid_map'      => 'Fosmid map' ],
-         [ 'bac_bands'	     =>	'BAC band' ],
 	 [ 'gap'             => 'Gaps' ],
          [ 'restrict'        => 'Rest.Enzymes' ],
          [ 'opt_restrict_zoom'   => 'Rest.Enzymes on zoom' ],
@@ -164,12 +157,12 @@ sub init {
 
 ## Blast and SSAHA tracks displayed if linked to from Blast/SSAHA...
 ## These get put beside the central track and so are numbered 4 and 6
-    'redbox' => {
-      'on' => 'off',
-      'pos' => '1000000',
-      'col' => 'red',
-      'zindex' => -20,
-    },
+#    'redbox' => {
+#      'on' => 'off',
+#      'pos' => '1000000',
+#      'col' => 'red',
+#      'zindex' => -20,
+#   },
     'blast_new' => {
       'on'  => "on",
       'pos' => '8',
@@ -742,6 +735,7 @@ sub init {
   $self->ADD_ALL_DNA_FEATURES();
   $self->ADD_ALL_EST_FEATURES();
   $self->ADD_SIMPLE_TRACKS();
+  $self->ADD_ALL_CLONE_TRACKS();
 ## Additional tracks... on the forward strand ( top );
   $self->add_track( 'preliminary', 'on' => 'on', 'pos' => 1, 'str' => 'f' );
   $self->add_track( 'mod',         'on' => 'off', 'pos' => 3000200, 'str' => 'f' );
@@ -751,7 +745,7 @@ sub init {
   $self->add_track( 'gene_legend', 'on' => 'on', 'str' => 'r', 'pos' => 2000000,  '_menu' => 'options', 'caption' => 'Gene legend' );
   $self->add_track( 'variation_legend',  'on' => 'on', 'str' => 'r', 'pos' => 2000100, '_menu' => 'options', 'caption' => 'SNP legend'  );
 
-  $self->ADD_ALL_AFFY_TRACKS();
+  $self->ADD_ALL_OLIGO_TRACKS();
 
 ## And finally the multispecies tracks....
   my @species = @{$self->{'species_defs'}->ENSEMBL_SPECIES};

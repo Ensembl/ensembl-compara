@@ -10,9 +10,8 @@ $self->{'_userdatatype_ID'} = 20;
 $self->{'_das_offset'} = '5080';
 
 $self->{'general'}->{'cytoview'} = {
- '_artefacts' => [qw(chr_band scalebar ruler stranded_contig gene_legend marker ntcontigs fosmid_map
-      supercontigs tilepath cloneset_37k cloneset_1mb cloneset_32k encode 
-      bacends bacs nod_bacs bac_bands qtl
+ '_artefacts' => [qw(chr_band scalebar ruler stranded_contig gene_legend marker
+      ntcontigs supercontigs encode bacends qtl
       repeat_lite missing 
       haplotype_links gap 
       assemblyexception
@@ -48,10 +47,7 @@ $self->{'general'}->{'cytoview'} = {
     'options' => [
       [ 'fosmid_map'     => 'Fosmid map' 		],
 #      [ 'bac_map'     => 'BAC map' 		],
-      [ 'nod_bacs'    => 'Nod BACs'       ],
-      [ 'bac_bands'     => 'Band BACs'       ],
       [ 'haplotype_links'    => 'Haplotype blocks'       ],
-      [ 'bacs'     => 'BACs'       ],
       [ 'bacends'     => 'BACends'       ],
       [ 'supercontigs'  => 'FPC Contigs'     ],
       [ 'ntcontigs'     => 'NT Contigs'    ],
@@ -59,18 +55,12 @@ $self->{'general'}->{'cytoview'} = {
       [ 'stranded_contig' => 'Contigs'       ],
       [ 'ruler'       => 'Ruler'       ],
       [ 'scalebar'    => 'Scale Bar'     ],
-#      [ 'cloneset'     => '1Mb Cloneset'    ],
-      [ 'cloneset_1mb' => '1Mb Cloneset'    ],
-      [ 'cloneset_37k' => '37k Cloneset'    ],
-      [ 'cloneset_32k' => '32k Cloneset'    ],
       [ 'encode'       => 'Encode regions'  ],
-      [ 'tilepath'    => 'Tilepath'      ],
-#      [ 'tilepath2'     => 'Acc. BAC clones'     ],
       [ 'opt_gene_labels'     => 'Show gene labels' ],
       [ 'opt_lines'     => 'Show register lines' ],
       [ 'opt_empty_tracks'=> 'Show empty tracks' ],
       [ 'opt_zmenus'    => 'Show popup menus'  ],
-      [ 'opt_zclick'    => '... popup on click'  ],
+#      [ 'opt_zclick'    => '... popup on click'  ],
       [ 'gap'        => 'Gaps' ],
     ],
     'menus' => [ qw(features DAS options repeats export jumpto resize) ]
@@ -542,5 +532,6 @@ $self->{'general'}->{'cytoview'} = {
 };
 $self->ADD_GENE_TRACKS();
 $self->ADD_SYNTENY_TRACKS();
+$self->ADD_ALL_CLONE_TRACKS();
 }
 1;
