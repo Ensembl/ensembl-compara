@@ -111,6 +111,12 @@ sub align_markup_options {
   return 1;
 }
 
+sub markup_options {
+  my( $panel, $object ) =@_;
+  $panel->add_row( 'Markup options', "<div>@{[ $panel->form( 'markup_options' )->render ]}</div>" );
+  return 1;
+}
+
 sub align_markup_options_form {
   my( $panel, $object ) = @_;
   my $form = EnsEMBL::Web::Form->new( 'align_markup_options', "/@{[$object->species]}/geneseqalignview", 'post' );
@@ -641,7 +647,7 @@ sub diseases {
         <dd><ul>), CGI::escapeHTML($description) );
     for my $omim (sort @{$omim_list->{$description}}){
       my $omim_link = $omim;
-      my $omim_URL = $gene->get_ExtURL('OMIM', $_);
+      my $omim_URL = $gene->get_ExtURL('OMIM', $omim_link);
       if( $omim_URL ) {
         $omim_link = qq(<a href="$omim_URL" rel="external">$omim_link</a>);
       }

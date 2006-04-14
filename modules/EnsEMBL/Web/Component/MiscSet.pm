@@ -27,15 +27,13 @@ sub _spreadsheet_miscset {
     { 'key' => 'sr',     'title' => 'SeqRegion' },
     { 'key' => 'start',  'title' => 'Start'     },
     { 'key' => 'end',    'title' => 'End'       },
+    { 'key' => 'name',   'title' => 'Name'      },
     { 'key' => 'well',   'title' => 'Well name' },
     { 'key' => 'sanger', 'title' => 'Sanger'    },
     { 'key' => 'embl',   'title' => 'EMBL Acc'  },
-    { 'key' => 'name',   'title' => 'Name'      },
     { 'key' => 'fish',   'title' => 'FISH'      },
     { 'key' => 'centre', 'title' => 'Centre'    },
     { 'key' => 'status', 'title' => 'State',    },
-    { 'key' => 'method', 'title' => 'Positioned by' },
-    { 'key' => 'notes',  'title' => 'Notes'    },
   );
   my @regions = ();
   if( $sr ) {
@@ -66,15 +64,15 @@ sub _spreadsheet_miscset {
         'sr'     => $entry->seq_region_name,
         'start'  => $entry->seq_region_start,
         'end'    => $entry->seq_region_end,
-        'well'   => $well,
+        'well'   => join(';',@{$entry->get_all_attribute_values('well_name')} ),
         'sanger' => join(';',@{$entry->get_all_attribute_values('synonym')},@{$entry->get_all_attribute_values('sanger_project')} ),
         'embl'   => join(';',@{$entry->get_all_attribute_values('embl_acc')} ),
-        'name'   => $name,
-        'fish'   => $entry->get_scalar_attribute( 'FISHmap' )      || $entry->get_scalar_attribute('fish'),
-        'centre' => $entry->get_scalar_attribute( 'organisation' ) || $entry->get_scalar_attribute('org'),
+        'name'   => join(';',@{$entry->get_all_attribute_values('clone_name')},@{$entry->get_all_attribute_values('name')} ),
+        'fish'   => $entry->get_scalar_attribute( 'fish' ),
+        'centre' => $entry->get_scalar_attribute( 'org' ),
         'status' => $entry->get_scalar_attribute( 'state' ),
-        'method' => $entry->get_scalar_attribute( 'method' )       || "@{[$entry->get_scalar_attribute('start_pos')]}:@{[$entry->get_scalar_attribute('end_pos')]}",
-        'notes'  => $entry->get_scalar_attribute('mismatch')
+# 'method' => $entry->get_scalar_attribute( 'method' )       || "@{[$entry->get_scalar_attribute('start_pos')]}:@{[$entry->get_scalar_attribute('end_pos')]}",
+# 'notes'  => $entry->get_scalar_attribute('mismatch')
       } );
     }
   }

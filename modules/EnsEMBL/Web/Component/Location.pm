@@ -301,7 +301,7 @@ sub push_secondary {
   push @$array, $loc->slice, $wuc;
 }
 
-sub ideogram {
+sub ideogram_old {
   my($panel, $object) = @_;
   my $slice = $object->database('core')->get_SliceAdaptor()->fetch_by_region(
     $object->seq_region_type, $object->seq_region_name, 1, $object->seq_region_length, 1
@@ -333,6 +333,37 @@ sub ideogram {
   return 1;
 }
 
+sub ideogram {
+  my($panel, $object) = @_;
+  my $slice = $object->database('core')->get_SliceAdaptor()->fetch_by_region(
+    $object->seq_region_type, $object->seq_region_name, 1, $object->seq_region_length, 1
+  );
+  my $wuc = $object->user_config_hash( 'chromosome' );
+     $wuc->container_width( $object->seq_region_length );
+     $wuc->set_width( $object->param('image_width') );
+     $wuc->{'image_frame_colour'} = 'red' if $panel->option( 'red_edge' ) eq 'yes';
+  red_box( $wuc, @{$panel->option('red_box')} ) if $panel->option( 'red_box' );
+
+  my $image    = $object->new_image( $slice, $wuc );
+  my $click_left  = int( $wuc->transform->{'translatex'} );
+  my $click_right = int( $wuc->transform->{'scalex'} * $object->seq_region_length + int( $wuc->transform->{'translatex'} ) );
+  my $panel_no = ++ $object->__data->{'_cv_panel_no'};
+     $image->{'panel_number'} = $panel_no;
+     $image->cacheable   = 'yes';
+     $image->image_name  = 'ideogram-'.($object->param('image_width')).'-'.$ENV{'ENSEMBL_SPECIES'}.'-'.$object->seq_region_name;
+     $image->set_button( 'drag', 'panel_number' => $panel_no, 'title' => 'Click or drag to centre display' );
+  #$panel->print( '<div id="debug" style="z-index: 50; position:absolute; top: 0px; left: 0px; width:300px; height:300px">DEBUG</div>')
+  $panel->print( $image->render );
+  $object->__data->{'_cv_parameter_hash'}{ "p_${panel_no}_px_start" } = $click_left,
+  $object->__data->{'_cv_parameter_hash'}{ "p_${panel_no}_px_end"   } = $click_right,
+  $object->__data->{'_cv_parameter_hash'}{ "p_${panel_no}_bp_start" } = 1;
+  $object->__data->{'_cv_parameter_hash'}{ "p_${panel_no}_bp_end"   } = $object->seq_region_length;
+  $object->__data->{'_cv_parameter_hash'}{ "p_${panel_no}_visible"  } = 1;
+  $object->__data->{'_cv_parameter_hash'}{ "p_${panel_no}_flag"     } = 'cv';
+  $object->__data->{'_cv_parameter_hash'}{ "p_${panel_no}_URL"      } = "/$ENV{ENSEMBL_SPECIES}/$ENV{ENSEMBL_SCRIPT}?c=[[s]]:[[c]];w=[[w]]";
+  return 1;
+}
+
 sub red_box {
   my( $config, $start, $end ) = @_;
   $config->set( '_settings', 'draw_red_box',  'yes',  1 );
@@ -355,24 +386,21 @@ sub contigviewtop {
   red_box( $wuc, @{$panel->option('red_box')} ) if $panel->option( 'red_box' );
 
   my $image    = $object->new_image( $slice, $wuc, $object->highlights );
-     $image->set_button( 'form',
-       'name'   => 'click',
-       'extra'  => '_top',
-       'id'     => 'click_top',
-       'title'  => 'Click to centre display',
-       'URL'    => "/@{[$object->species]}/@{[$object->script]}",
-       'hidden' => {
-         'click_left'        => int( $wuc->transform->{'translatex'} ),
-         'click_right'       => int( $wuc->transform->{'scalex'} * ($panel->option('end')-$panel->option('start')+1) + int( $wuc->transform->{'translatex'} ) ),
-         'seq_region_strand' => $object->seq_region_strand,
-         'seq_region_left'   => $panel->option('start'),
-         'seq_region_right'  => $panel->option('end'),
-         'seq_region_width'  => $object->seq_region_end-$object->seq_region_start + 1,
-         'seq_region_name'   => $object->seq_region_name,
-         'h'                 => $object->highlights_string,
-       }
-     );
+     $image->imagemap = 'yes';
+  my $click_left  = int( $wuc->transform->{'translatex'} );
+  my $click_right = int( $wuc->transform->{'scalex'} * ($panel->option('end')-$panel->option('start')+1) + int( $wuc->transform->{'translatex'} ) );
+  my $panel_no = ++ $object->__data->{'_cv_panel_no'};
+     $image->{'panel_number'} = $panel_no;
+     $image->set_button( 'drag', 'panel_number' => $panel_no, 'title' => 'Click or drag to centre display' );
   $panel->print( $image->render );
+  $object->__data->{'_cv_parameter_hash'}{ "p_${panel_no}_px_start" } = $click_left,
+  $object->__data->{'_cv_parameter_hash'}{ "p_${panel_no}_px_end"   } = $click_right,
+  $object->__data->{'_cv_parameter_hash'}{ "p_${panel_no}_bp_start" } = $panel->option('start');
+  $object->__data->{'_cv_parameter_hash'}{ "p_${panel_no}_bp_end"   } = $panel->option('end');
+  $object->__data->{'_cv_parameter_hash'}{ "p_${panel_no}_flag"     } = 'cv';
+  $object->__data->{'_cv_parameter_hash'}{ "p_${panel_no}_visible"  } = 1;
+  $object->__data->{'_cv_parameter_hash'}{ "p_${panel_no}_URL"      } = "/$ENV{ENSEMBL_SPECIES}/$ENV{ENSEMBL_SCRIPT}?c=[[s]]:[[c]];w=[[w]]";
+
   return 1;
 }
 
@@ -395,7 +423,21 @@ sub cytoview {
 
   my $image = $object->new_image( $slice, $wuc, $object->highlights );
      $image->imagemap = 'yes';
+  my $click_left  = int( $wuc->transform->{'translatex'} );
+  my $click_right = int( $wuc->transform->{'scalex'} * ($panel->option('end')-$panel->option('start')+1) + int( $wuc->transform->{'translatex'} ) );
+  my $panel_no = ++ $object->__data->{'_cv_panel_no'};
+     $image->{'panel_number'} = $panel_no;
+     $image->set_button( 'drag', 'panel_number' => $panel_no, 'title' => 'Click or drag to centre display' );
   $panel->print( $image->render );
+
+  $object->__data->{'_cv_parameter_hash'}{ "p_${panel_no}_px_start" } = $wuc->get('_settings','label_width' ) + 3 * $wuc->get('_settings','margin') + $wuc->get('_settings','button_width');
+  $object->__data->{'_cv_parameter_hash'}{ "p_${panel_no}_px_end"   } = $wuc->get('_settings','width') - $wuc->get('_settings','margin');
+  $object->__data->{'_cv_parameter_hash'}{ "p_${panel_no}_bp_start" } = $object->seq_region_start;
+  $object->__data->{'_cv_parameter_hash'}{ "p_${panel_no}_bp_end"   } = $object->seq_region_end;
+  $object->__data->{'_cv_parameter_hash'}{ "p_${panel_no}_flag"     } = 'cv';
+  $object->__data->{'_cv_parameter_hash'}{ "p_${panel_no}_visible"  } = 1;
+  $object->__data->{'_cv_parameter_hash'}{ "p_${panel_no}_URL"      } = "/$ENV{ENSEMBL_SPECIES}/$ENV{ENSEMBL_SCRIPT}?c=[[s]]:[[c]];w=[[w]]";
+
   return 0;
 }
 
@@ -544,8 +586,18 @@ sub contigviewbottom {
   $wuc->{_object} = $object;
   my $image = $object->new_image( $slice, $wuc, $object->highlights );
   $image->imagemap = 'yes';
+  my $panel_no = ++ $object->__data->{'_cv_panel_no'};
+     $image->{'panel_number'} = $panel_no;
+     $image->set_button( 'drag', 'panel_number' => $panel_no, 'title' => 'Click or drag to centre display' );
   $panel->print( $image->render );
 
+  $object->__data->{'_cv_parameter_hash'}{ "p_${panel_no}_px_start" } = $wuc->get('_settings','label_width' ) + 3 * $wuc->get('_settings','margin') + $wuc->get('_settings','button_width');
+  $object->__data->{'_cv_parameter_hash'}{ "p_${panel_no}_px_end"   } = $wuc->get('_settings','width') - $wuc->get('_settings','margin');
+  $object->__data->{'_cv_parameter_hash'}{ "p_${panel_no}_bp_start" } = $object->seq_region_start;
+  $object->__data->{'_cv_parameter_hash'}{ "p_${panel_no}_bp_end"   } = $object->seq_region_end;
+  $object->__data->{'_cv_parameter_hash'}{ "p_${panel_no}_flag"     } = 'cv';
+  $object->__data->{'_cv_parameter_hash'}{ "p_${panel_no}_visible"  } = 1;
+  $object->__data->{'_cv_parameter_hash'}{ "p_${panel_no}_URL"      } = "/$ENV{ENSEMBL_SPECIES}/$ENV{ENSEMBL_SCRIPT}?c=[[s]]:[[c]];w=[[w]]";
 
   return 0;
 }
@@ -930,8 +982,18 @@ sub contigviewzoom {
 
   my $image    = $object->new_image( $slice, $wuc, $object->highlights );
   $image->imagemap = 'yes';
-  my $T = $image->render;
-  $panel->print( $T );
+  my $panel_no = ++ $object->__data->{'_cv_panel_no'};
+     $image->{'panel_number'} = $panel_no;
+     $image->set_button( 'drag', 'panel_number' => $panel_no, 'title' => 'Click or drag to centre display' );
+  $panel->print( $image->render );
+  $object->__data->{'_cv_parameter_hash'}{ "p_${panel_no}_px_start" } = $wuc->get('_settings','label_width' ) + 3 * $wuc->get('_settings','margin') + $wuc->get('_settings','button_width');
+  $object->__data->{'_cv_parameter_hash'}{ "p_${panel_no}_px_end"   } = $wuc->get('_settings','width') - $wuc->get('_settings','margin');
+  $object->__data->{'_cv_parameter_hash'}{ "p_${panel_no}_bp_start" } = $panel->option('start');
+  $object->__data->{'_cv_parameter_hash'}{ "p_${panel_no}_bp_end"   } = $panel->option('end');
+  $object->__data->{'_cv_parameter_hash'}{ "p_${panel_no}_flag"     } = 'bp';
+  $object->__data->{'_cv_parameter_hash'}{ "p_${panel_no}_visible"  } = 1;
+  $object->__data->{'_cv_parameter_hash'}{ "p_${panel_no}_URL"      } = "/$ENV{ENSEMBL_SPECIES}/$ENV{ENSEMBL_SCRIPT}?c=[[s]]:[[c]];w=[[w]];zoom_width=[[zw]]";
+
   return 1;
 }
 
@@ -954,14 +1016,17 @@ sub misc_set_form {
     $miscsets = [
       { 'value' => 'tilepath'     , 'name' => 'Tile path clones' },
       { 'value' => 'cloneset_1mb' , 'name' => '1mb clone set'    },
-      { 'value' => 'cloneset_37k' , 'name' => '37k clone set'    },
-      { 'value' => 'cloneset_32k' , 'name' => '32k clone set'    }
+      { 'value' => 'cloneset_32k' , 'name' => '32k clone set'    },
+      { 'value' => 'cloneset_30k' , 'name' => '30k TPA set'    }
     ];
   } elsif( $ENV{'ENSEMBL_SPECIES'} eq 'Mus_musculus' ) {
     $miscsets = [
       { 'value' => 'acc_bac_map' , 'name' => 'Accessioned clones' },
       { 'value' => 'bac_map'     , 'name' => 'BAC clones'         },
-      { 'value' => 'cloneset'    , 'name' => '1mb clone set'      },
+      { 'value' => 'cloneset_1mb'  , 'name' => '1mb clone set'      },
+      { 'value' => 'cloneset_0_5mb', 'name' => '0.5mb clone set'      },
+      { 'value' => 'tilepath_cloneset','name' => 'Tilepath clone set'      },
+      { 'value' => 'extra_bacs',    'name' => 'Extra BACs set'      },
       { 'value' => 'fosmid_map'    , 'name' => 'Fosmid map'      },
     ];
   }
@@ -1378,5 +1443,15 @@ sub alignsliceviewtop {
     return 1;
  }
 
+sub contigview_form {
+  my( $panel, $object ) = @_;
+  my $HTML = qq(<form action="javascript:void(0)" method="get" id="panel_form">\n);
+  foreach my $K ( sort keys %{$object->__data->{_cv_parameter_hash}||{}} ) {
+    $HTML .= sprintf qq(  <input type="hidden" name="%s" value="%s" />\n), CGI::escapeHTML($K), CGI::escapeHTML( $object->__data->{_cv_parameter_hash}{$K} );
+  }
+  $HTML .= qq(</form>);
+  $panel->print( $HTML );
+  return 1;
+}
 
 1;    
