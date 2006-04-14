@@ -250,25 +250,25 @@ sub search_SEQUENCE {
   $self->{'results'}{ 'Sequence' }  = [ $self->{_results}, $self->{_result_count} ]
 }
 
-sub search_AFFYPROBE {
+sub search_OLIGOPROBE {
   my $self = shift;
   $self->_fetch_results(
-    [ 'core', 'AffyProbe',
-      "select count(distinct probeset) from affy_probe where probeset [[COMP]] '[[KEY]]'",
-      "select ap.probeset, group_concat(distinct aa.name order by aa.name separator ' ') from affy_probe ap, affy_array as aa
-        where ap.probeset [[COMP]] '[[KEY]]' and ap.affy_array_id = aa.affy_array_id group by ap.probeset" ],
+    [ 'core', 'OligoProbe',
+      "select count(distinct probeset) from oligo_probe where probeset [[COMP]] '[[KEY]]'",
+      "select ap.probeset, group_concat(distinct aa.name order by aa.name separator ' ') from oligo_probe ap, oligo_array as aa
+        where ap.probeset [[COMP]] '[[KEY]]' and ap.oligo_array_id = aa.oligo_array_id group by ap.probeset" ],
   );
   foreach ( @{$self->{_results}} ) {
     $_ = {
-      'URL'       => "/@{[$self->species]}/featureview?type=AffyProbe;id=$_->[0]",
-      'idx'       => 'AffyProbe',
-      'subtype'   => 'AffyProbe',
+      'URL'       => "/@{[$self->species]}/featureview?type=OligoProbe;id=$_->[0]",
+      'idx'       => 'OligoProbe',
+      'subtype'   => 'OligoProbe',
       'ID'        => $_->[0],
       'desc'      => 'Is a member of the following arrays: '.$_->[1],
       'species'   => $self->species
     };
   }
-  $self->{'results'}{ 'AffyProbe' }  = [ $self->{_results}, $self->{_result_count} ];
+  $self->{'results'}{ 'OligoProbe' }  = [ $self->{_results}, $self->{_result_count} ];
 }
 
 sub search_QTL {
