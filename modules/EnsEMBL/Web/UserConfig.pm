@@ -106,7 +106,7 @@ sub add_new_synteny_track {
     'caption'   => "$short synteny",
     'species'   => $species,
     'available' => "multi SYNTENY|$species",
-    'on'        => 'on',
+    'on'        => 'off',
     'pos'       => $pos,
     'str'       => 'f',
     'dep'       => 20,
@@ -147,7 +147,7 @@ sub add_new_track_generictranscript{
     'glyphset'    => 'generic_transcript',
     'LOGIC_NAME'  => $code,
     '_menu'       => 'features',
-    'on'          => 'on',
+    'on'          => 'off',
     'col'         => $colour,
     'pos'         => $pos,
     'str'         => 'b',
@@ -206,7 +206,7 @@ sub add_new_track_cdna {
   my( $self, $code, $text_label, $pos, %pars ) = @_;
   $self->add_track( $code, 
     '_menu'       => 'features',
-    'on'          => "on",
+    'on'          => "off",
     'colour_set'  => 'cdna',
     'dep'         => '6',
     'str'         => 'b',
@@ -235,7 +235,7 @@ sub add_new_track_mrna {
   my( $self, $code, $text_label, $pos, %pars ) = @_;
   $self->add_track( $code,
     '_menu'       => 'features',
-    'on'          => "on",
+    'on'          => "off",
     'colour_set'  => 'mrna',
     'dep'         => '6',
     'str'         => 'b',
@@ -257,7 +257,7 @@ sub add_new_track_rna {
   my( $self, $code, $text_label, $pos, %pars ) = @_;
   $self->add_track( $code,
     '_menu'       => 'features',
-    'on'          => "on",
+    'on'          => "off",
     'colour_set'  => 'rna',
     'dep'         => '6',
     'str'         => 'b',
@@ -279,7 +279,7 @@ sub add_new_track_protein {
   my( $self, $code, $text_label, $pos, %pars ) = @_;
   $self->add_track( $code,
     '_menu'       => 'features',
-    'on'          => "on",
+    'on'          => "off",
     'colour_set'  => 'protein',
     'CALL'        => 'get_all_ProteinAlignFeatures',
     'dep'         => '6',
@@ -341,6 +341,27 @@ sub add_new_track_est_protein {
     'ZMENU'       => [ 'EST', "EST: ###ID###" => '###HREF###' ],
     %pars
   )
+}
+
+sub add_clone_track {
+  my( $self, $code, $track_label, $pos, %pars ) = @_;
+  $self->add_track( "cloneset_$code",
+    '_menu'                => 'options',
+    'on'                   => 'off',
+    'dep'                  => 9999,
+    'str'                  => 'r',
+    'glyphset'             => 'generic_clone',
+    'pos'                  => $pos,
+    'navigation'           => 'on',
+    'outline_threshold'    => '350000',
+    'colour_set'           => 'clones',
+    'FEATURES'             => $code,
+    'label'                => $track_label,
+    'caption'              => $track_label,
+    'available'            => 'features MAPSET_'.uc($code),
+    'threshold_array'      => { 100000 => { 'navigation' => 'off', 'height' => 4 }, %{$pars{'thresholds'}||{}} },
+    %pars,
+  );
 }
 
 sub new {
@@ -818,8 +839,8 @@ sub das_sources {
 sub ADD_ALL_DNA_FEATURES {
   my $self = shift;
   my $POS  = shift || 2300;
-  $self->add_new_track_mrna( 'unigene', 'Unigene', $POS++, 'URL_KEY' => 'UNIGENE', 'ZMENU'       => [ '###ID###' , 'Unigene cluster ###ID###', '###HREF###' ], @_ );
-  $self->add_new_track_mrna( 'vertrna', 'EMBL mRNAs', $POS++, @_ );
+  $self->add_new_track_mrna( 'unigene', 'Unigene', $POS++, 'on' => 'on', 'URL_KEY' => 'UNIGENE', 'ZMENU'       => [ '###ID###' , 'Unigene cluster ###ID###', '###HREF###' ], @_ );
+  $self->add_new_track_mrna( 'vertrna', 'EMBL mRNAs', $POS++, 'on' => 'on', @_ );
   $self->add_new_track_mrna( 'celegans_mrna', 'C.elegans mRNAs', $POS++, @_ );
   $self->add_new_track_mrna( 'cbriggsae_mrna', 'C.briggsae mRNAs', $POS++, @_ );
 
@@ -833,7 +854,7 @@ sub ADD_ALL_DNA_FEATURES {
 
   $POS = shift || 2400;
 ## 
-  $self->add_new_track_cdna( 'Harvard_manual', 'Manual annot.', $POS++, @_ );
+  $self->add_new_track_cdna( 'Harvard_manual', 'Manual annot.', $POS++, 'URL_KEY' => 'NULL', 'ZMENU' => [ '###ID###', 'Internal identifier', '' ], @_ );
 
   $self->add_new_track_cdna( 'human_cdna', 'Human cDNAs',   $POS++, @_ );
   $self->add_new_track_cdna( 'dog_cdna',   'Dog cDNAs',     $POS++, @_ );
@@ -845,7 +866,7 @@ sub ADD_ALL_DNA_FEATURES {
         'ZMENU'      => [ 'EST cDNA', "EST: ###LABEL###" => '###HREF###' ],
         'URL_KEY'    => { 'WZ' => 'WZ', 'IMCB_HOME' => 'IMCB_HOME', 'EMBL' => 'EMBL' },
                              ,@_ );
-  $self->add_new_track_cdna( 'Exonerate_cDNA', 'Ciona cDNAs', $POS++, @_ );
+  $self->add_new_track_cdna( 'Exonerate_cDNA',           'Exonerate cDNAs', $POS++, @_ );
   $self->add_new_track_cdna( 'Btaurus_Exonerate_cDNA',   'Cow cDNAs', $POS++, @_ );
   $self->add_new_track_cdna( 'Cow_cDNAs',   'Cow cDNAs', $POS++, @_ );
   $self->add_new_track_cdna( 'cow_cdna',   'Cow cDNAs', $POS++, @_ );
@@ -860,7 +881,6 @@ sub ADD_ALL_DNA_FEATURES {
 ## now the tetraodon tracks...
   $self->add_new_track_cdna( 'cdm', 'Tetraodon cDNAs',   $POS++, 'SUBTYPE'     => 'genoscope', 'on' => 'off', @_ );
   $self->add_new_track_cdna( 'xlaevis_cDNA', 'X.laevis cDNAs',   $POS++, @_ );
-  $self->add_new_track_cdna( 'xlaev_cDNA', 'X.laevis cDNAs',   $POS++, @_ );
   $self->add_new_track_cdna( 'xtrop_cDNA', 'X.trop cDNAs',   $POS++, @_ );
   $self->add_new_track_cdna( 'ep3_h', 'Ecotig (Human prot)',   $POS++, 'SUBTYPE'     => 'genoscope_ecotig', 'on' => 'off', @_ );
   $self->add_new_track_cdna( 'ep3_s', 'Ecotig (Mouse prot)',   $POS++, 'SUBTYPE'     => 'genoscope_ecotig', 'on' => 'off', @_ );
@@ -870,12 +890,6 @@ sub ADD_ALL_DNA_FEATURES {
   $self->add_new_track_cdna( 'cdna_update',     'CDNAs',         $POS++,
                             'FEATURES'  => 'UNDEF', 'available' => 'databases ENSEMBL_CDNA',
                             'THRESHOLD' => 0,       'DATABASE'  => 'cdna', @_ );
-  $self->add_new_track_cdna( 'fly_gold_cdna',  'Fly Gold CDNAs', $POS++,
-                            'FEATURES'  => 'drosophila_gold_cdna', 'available' => 'database_features ENSEMBL_EST.drosophila_gold_cdna',
-                            'THRESHOLD' => 0, 'DATABASE' => 'est', @_ );
-  $self->add_new_track_cdna( 'fly_cdna_all',  'All Fly CDNAs', $POS++,
-                            'FEATURES'  => 'drosophila_cdna_all', 'available' => 'database_features ENSEMBL_EST.drosophila_cdna_all',
-                            'THRESHOLD' => 0, 'DATABASE' => 'est', @_ );
   $self->add_new_track_cdna( 'cdna_all',  'All CDNAs', $POS++, 'SUBTYPE' => { return 'cdna_all' }, @_ );
   return $POS;
 }
@@ -899,8 +913,6 @@ sub ADD_ALL_EST_FEATURES {
   $self->add_new_track_est( 'Cow_ESTs',    'B.taurus ESTs',    $POS++, @_ );
   $self->add_new_track_est( 'Exonerate_EST_083',    'Ciona ESTs',    $POS++, @_ );
   $self->add_new_track_est( 'xlaevis_EST', 'X.laevis ESTs',   $POS++, @_ );
-  $self->add_new_track_est( 'xlaev_EST', 'X.laevis ESTs',   $POS++, @_ );
-  $self->add_new_track_est( 'xtrop_EST', 'X.tropicalis ESTs',   $POS++, @_ );
   $self->add_new_track_est( 'xtrop_cluster','X.trop EST clust', 
 							$POS++, 'URL_KEY' => 'XTROP_CLUSTER',
 							'SUBTYPE' => 'default',
@@ -914,42 +926,61 @@ sub ADD_ALL_EST_FEATURES {
   $self->add_new_track_est( 'ciona_est_3prim_align', "3' EST-align. (Kyoto)", $POS++, @_ );
   $self->add_new_track_est( 'ciona_est_5prim_align', "5' EST-align. (Kyoto)", $POS++, @_ );
   $self->add_new_track_est( 'ciona_cdna_align',      'cDNA-align. (Kyoto)', $POS++, @_ );
+  $self->add_new_track_est( 'cint_est',      'Ciona ESTs', $POS++, @_ );
   $self->add_new_track_est( 'expression_pattern', 'Expression pattern', $POS++, 'URL_KEY' => 'EXPRESSION_PATTERN', 'SUBTYPE' => 'default', @_ );
   my @EST_DB_ESTS = (
+    [ 'estgene',               'ESTs' ],
     [ 'bee_est',               'Bee EST' ],
     [ 'chicken_est_exonerate', 'Chicken EST (ex.)' ],
     [ 'human_est_exonerate',   'Human EST (ex.)' ],
     [ 'ciona_est',             'Ciona EST' ],
-    [ 'drosophila_est',        'Fly EST' ],
     [ 'drosophila_est',        'Fly EST' ],
     [ 'cow_est',               'Cow EST' ],
     [ 'fugu_est',              'Fugu EST' ],
     [ 'RNA',                   'Mosquito EST' ],
     [ 'mouse_est',             'Mouse EST' ],
     [ 'rat_est',               'Rat EST' ],
+    [ 'xlaevis_EST',           'X.laevis EST' ],
     [ 'xtrop_EST',             'X.trop EST' ],
     [ 'zfish_EST',             'Zfish EST' ],
     [ 'anopheles_cdna_est',    'RNA (BEST)' ],
     [ 'anopheles_cdna_est_all','RNA (ALL)' ],
-    [ 'kyotograil_2004',  "Kyotograil '04" ],
-    [ 'kyotograil_2005',  "Kyotograil '05" ],
     [ 'est_bestn_5prim',  "EST BestN 5'" ],
     [ 'est_bestn_3prim',  "EST Bestn 3'" ],
     [ 'cint_cdna',        'Ciona EST' ],
   );
+  my @EST_DB_CDNA = (
+    [ 'drosophila_cdna_all',   'Fly cDNA (all)',  'URL_KEY' => 'DROSOPHILA_EST', 'ZMENU' =>
+       [ '###ID###', "Fly cDNA: ###ID###" => '###HREF###' ]
+    ],
+    [ 'drosophila_gold_cdna',  'Fly cDNA (gold)', 'URL_KEY' => 'DROSOPHILA_EST', 'ZMENU' =>
+       [ '###ID###', "Fly cDNA: ###ID###" => '###HREF###' ]
+    ],
+    [ 'kyotograil_2004',  "Kyotograil '04" ],
+    [ 'kyotograil_2005',  "Kyotograil '05" ],
+    [ 'sheep_bac_ends',   "Sheep BAC ends" ],
+  );
   foreach ( @EST_DB_ESTS ) {
-    $self->add_new_track_est( "est_$_->[0]",  $_->[1], $POS++,
-                              'FEATURES'  => $_->[0], 'available' => "database_features ENSEMBL_EST.$_->[0]",
-                              'THRESHOLD' => 0, 'DATABASE' => 'est', @_ );
+    my($A,$B,@T) = @$_;
+    $self->add_new_track_est( "otherfeatures_$A",  $B, $POS++,
+                              'FEATURES'  => $A, 'available' => "database_features ENSEMBL_EST.$A",
+                              'THRESHOLD' => 0, 'DATABASE' => 'est', @T, @_ );
   }
-   my @EST_DB_ESTS_PROT = (
+  foreach ( @EST_DB_CDNA ) {
+    my($A,$B,@T) = @$_; warn ">>> @T <<<";
+    $self->add_new_track_cdna( "otherfeatures_$A",  $B, $POS++,
+                              'FEATURES'  => $A, 'available' => "database_features ENSEMBL_EST.$A",
+                              'THRESHOLD' => 0, 'DATABASE' => 'est', @T, @_ );
+  }
+  my @EST_DB_ESTS_PROT = (
     [ 'jgi_v1',        'JGI V1' ],
     [ 'jgi_v2',        'JGI V2' ],
   );
   foreach ( @EST_DB_ESTS_PROT ) {
-    $self->add_new_track_est_protein( "est_$_->[0]",  $_->[1], $POS++,
-                              'FEATURES'  => $_->[0], 'available' => "database_features ENSEMBL_EST.$_->[0]",
-                              'THRESHOLD' => 0, 'DATABASE' => 'est', @_ );
+    my($A,$B,@T) = @$_;
+    $self->add_new_track_est_protein( "otherfeatures_$A",  $B, $POS++,
+                              'FEATURES'  => $A, 'available' => "database_features ENSEMBL_EST.$A",
+                              'THRESHOLD' => 0, 'DATABASE' => 'est', @T, @_ );
   }
   $self->add_new_track_est( 'other_est',    'Other ESTs',      $POS++, @_ );
   $self->add_new_track_est( 'drerio_estclust', 'EST clusters', $POS++,
@@ -971,13 +1002,29 @@ sub ADD_ALL_EST_FEATURES {
   return $POS;
 }
 
+sub ADD_ALL_CLONE_TRACKS {
+  my $self = shift;
+  my $POS = shift || 2500;
+  $self->add_clone_track( 'cloneset_0_5mb', '0.5Mb clones',   $POS++, @_ );
+  $self->add_clone_track( 'cloneset_1mb',   '1Mb clones',     $POS++, @_ );
+  $self->add_clone_track( 'cloneset_30k',   '30k TPA clones', $POS++, @_ );
+  $self->add_clone_track( 'cloneset_32k',   '32k clones',     $POS++, @_ );
+  $self->add_clone_track( 'acc_bac_map',    'Acc. BAC map',   $POS++, @_ );
+  $self->add_clone_track( 'bac_map',        'BAC map',        $POS++, 'thresholds' => { 20000 => {'FEATURES'=>'acc_bac_map'}}, @_ );
+  $self->add_clone_track( 'bacs',           'BACs',           $POS++, @_ );
+  $self->add_clone_track( 'bacs_bands',     'Band BACs',      $POS++, @_ );
+  $self->add_clone_track( 'extra_bacs',     'Extra BACs',     $POS++, @_ );
+  $self->add_clone_track( 'tilepath_cloneset', 'Mouse Tilepath', $POS++, @_ );
+  $self->add_clone_track( 'tilepath',       'Human tilepath clones', $POS++, @_ );
+  $self->add_clone_track( 'fosmid_map',     'Fosmid map',     $POS++, 'colour_set' => 'fosmids', @_ );
+}
 
 sub ADD_ALL_PROTEIN_FEATURES {
   my $self = shift;
   my $POS  = shift || 2200;
   $self->add_new_track_protein( 'swall',               'Proteins',       $POS++, @_ );
   $self->add_new_track_protein( 'swall_blastx',        'Proteins',       $POS++, @_ );
-  $self->add_new_track_protein( 'uniprot',             'UniProtKB',       $POS++, @_ );
+  $self->add_new_track_protein( 'uniprot',             'UniProtKB',       $POS++, 'on'=>'on',@_ );
   $self->add_new_track_protein( 'Uniprot_wublastx',    'UniProtKB (v. genscans)',       $POS++, @_ );
   $self->add_new_track_protein( 'Uniprot_mammal',      'UniProtKB (mammal)',       $POS++, @_ );
   $self->add_new_track_protein( 'Uniprot_non_mammal',  'UniProtKB (non-mammal)',       $POS++, @_ );
@@ -1011,13 +1058,13 @@ sub ADD_ALL_PROTEIN_FEATURES {
   $self->add_new_track_protein( 'GenscanPeptidesUniprotBlast', 'Gen.Pep. UniP.BL.', $POS++, @_ );
   $self->add_new_track_protein( 'BeeProteinBlast',             'Bee Protein blast', $POS++, @_ );
   $self->add_new_track_protein( 'human_ensembl_peptides', 'Human e! peptides',  $POS++, 'URL_KEY' => 'HUMAN_PROTVIEW', @_ );
-  $self->add_new_track_protein( 'ciona_jgi_v1',            'JGI 1.0 model', $POS++, @_ );
-  $self->add_new_track_protein( 'ciona_kyotograil_2004',   "Kyotograil '04 model", $POS++, @_ );
-  $self->add_new_track_protein( 'ciona_kyotograil_2005',   "Kyotograil '05 model", $POS++, @_ );
+  #$self->add_new_track_protein( 'ciona_jgi_v1',            'JGI 1.0 model', $POS++, @_ );
+  #$self->add_new_track_protein( 'ciona_kyotograil_2004',   "Kyotograil '04 model", $POS++, @_ );
+  #$self->add_new_track_protein( 'ciona_kyotograil_2005',   "Kyotograil '05 model", $POS++, @_ );
   $self->add_new_track_protein( 'blastx',            'BLASTx', $POS++, @_ );
   $self->add_new_track_protein( 'blastp',            'BLASTp', $POS++, @_ );
-  $self->add_new_track_protein( 'kyotograil_2004',   "Kyotograil '04 model", $POS++, @_ );
-  $self->add_new_track_protein( 'kyotograil_2005',   "Kyotograil '05 model", $POS++, @_ );
+  #$self->add_new_track_protein( 'kyotograil_2004',   "Kyotograil '04 model", $POS++, @_ );
+  #$self->add_new_track_protein( 'kyotograil_2005',   "Kyotograil '05 model", $POS++, @_ );
 #/* aedes additions */
   $self->add_new_track_protein( 'Similarity_Diptera',   "Similarity Diptera", $POS++, @_ );
   $self->add_new_track_protein( 'Similarity_Arthropoda',"Similarity Arthropoda", $POS++, @_ );
@@ -1074,7 +1121,7 @@ sub ADD_ALL_TRANSCRIPTS {
                                                 'Bee genes',       'bee_gene',       $POS++, @_ );
   $self->add_new_track_transcript( 'gsten',     'Genoscope genes', 'genoscope_gene', $POS++, @_ );
   $self->add_new_track_transcript( 'rna',       'ncRNA genes',     'rna_gene',       $POS++, 'available' => 'features NCRNA|MIRNA',      @_ );
-  $self->add_new_track_transcript( 'erna',       'e! ncRNA genes', 'rna_gene',   $POS++, 'available' => 'features ensembl_ncRNA',        @_ );
+  $self->add_new_track_transcript( 'erna',       'e! ncRNA genes', 'rna_gene',   $POS++, 'available' => 'features ensembl_ncRNA', 'legend_type' => 'rna',        @_ );
   $self->add_new_track_transcript( 'est',       'EST genes',       'est_gene',       $POS++, 'available' => 'databases ENSEMBL_EST', @_ );
   $self->add_new_track_transcript( 'ciona_dbest_ncbi', "3/5' EST genes (dbEST)", 'estgene', $POS++, @_) ;
   $self->add_new_track_transcript( 'ciona_est_seqc',   "3' EST genes (Kyoto)", 'estgene', $POS++, @_) ;
@@ -1162,28 +1209,28 @@ sub ADD_GENE_TRACKS {
   my $self = shift;
   my $POS  = shift || 2000;
   $self->add_new_track_gene( 'ensembl', 'Ensembl Genes', 'ensembl_gene', $POS++,
-   'gene_label'           => sub { return $_[0]->biotype eq 'bacterial_contaminant' ? 'Bac. cont.' : ( $_[0]->biotype eq 'pseudogene' ? 'Pseudogene' : ( $_[0]->external_name || 'NOVEL' ) ) },
-   'gene_col'             => sub { return $_[0]->biotype eq 'bacterial_contaminant' ? '_BACCOM'    : ( $_[0]->biotype eq 'pseudogene' ? '_PSEUDO'    : '_'.$_[0]->external_status          ) },
-   'logic_name'           => 'ensembl psuedogene', @_
+    'gene_label'           => sub { return $_[0]->biotype eq 'bacterial_contaminant' ? 'Bac. cont.' : ( $_[0]->biotype eq 'pseudogene' ? 'Pseudogene' : ( $_[0]->external_name || 'NOVEL' ) ) },
+    'gene_col'             => sub { return $_[0]->biotype eq 'bacterial_contaminant' ? '_BACCOM'    : $_[0]->analysis->logic_name.'_'.$_[0]->biotype.'_'.$_[0]->status          },
+    'logic_name'           => 'ensembl psuedogene havana ensembl_havana_gene', @_
   );
   $self->add_new_track_gene( 'flybase', 'Flybase Genes', 'flybase_gene', $POS++,
     'gene_label'           => sub { return $_[0]->biotype eq 'bacterial_contaminant' ? 'Bac. cont.' : ( $_[0]->biotype eq 'pseudogene' ? 'Pseudogene' : ( $_[0]->external_name || 'NOVEL' ) ) },
-    'gene_col'             => sub { return $_[0]->biotype eq 'bacterial_contaminant' ? '_BACCOM'    : ( $_[0]->biotype eq 'pseudogene' ? '_PSEUDO'    : '_'.$_[0]->external_status          ) },
+    'gene_col'             => sub { return $_[0]->biotype eq 'bacterial_contaminant' ? '_BACCOM'    : $_[0]->analysis->logic_name.'_'.$_[0]->biotype.'_'.$_[0]->status          },
     'logic_name'           => 'flybase psuedogene', @_
   );
   $self->add_new_track_gene( 'wormbase', 'Wormbase Genes', 'wormbase_gene', $POS++,
     'gene_label'           => sub { return $_[0]->biotype eq 'bacterial_contaminant' ? 'Bac. cont.' : ( $_[0]->biotype eq 'pseudogene' ? 'Pseudogene' : ( $_[0]->external_name || 'NOVEL' ) ) },
-    'gene_col'             => sub { return $_[0]->biotype eq 'bacterial_contaminant' ? '_BACCOM'    : ( $_[0]->biotype eq 'pseudogene' ? '_PSEUDO'    : '_'.$_[0]->external_status          ) },
+    'gene_col'             => sub { return $_[0]->biotype eq 'bacterial_contaminant' ? '_BACCOM'    : $_[0]->analysis->logic_name.'_'.$_[0]->biotype.'_'.$_[0]->status          },
     'logic_name'           => 'wormbase psuedogene', @_
   );
   $self->add_new_track_gene( 'genebuilderbeeflymosandswall', 'Bee Genes', 'bee_gene', $POS++,
     'gene_label'           => sub { return $_[0]->biotype eq 'bacterial_contaminant' ? 'Bac. cont.' : ( $_[0]->biotype eq 'pseudogene' ? 'Pseudogene' : ( $_[0]->external_name || 'NOVEL' ) ) },
-    'gene_col'             => sub { return $_[0]->biotype eq 'bacterial_contaminant' ? '_BACCOM'    : ( $_[0]->biotype eq 'pseudogene' ? '_PSEUDO'    : '_'.$_[0]->external_status          ) },
+    'gene_col'             => sub { return $_[0]->biotype eq 'bacterial_contaminant' ? '_BACCOM'    : $_[0]->analysis->logic_name.'_'.$_[0]->biotype.'_'.$_[0]->status          },
     @_
   );
   $self->add_new_track_gene( 'SGD', 'SGD Genes', 'sgd_gene', $POS++,
     'gene_label'           => sub { return $_[0]->biotype eq 'bacterial_contaminant' ? 'Bac. cont.' : ( $_[0]->biotype eq 'pseudogene' ? 'Pseudogene' : ( $_[0]->external_name || 'NOVEL' ) ) },
-    'gene_col'             => sub { return $_[0]->biotype eq 'bacterial_contaminant' ? '_BACCOM'    : ( $_[0]->biotype eq 'pseudogene' ? '_PSEUDO'    : '_'.$_[0]->external_status          ) },
+    'gene_col'             => sub { return $_[0]->biotype eq 'bacterial_contaminant' ? '_BACCOM'    : $_[0]->analysis->logic_name.'_'.$_[0]->biotype.'_'.$_[0]->status          },
     @_
   );
   $self->add_new_track_gene( 'Homology_low', 'Bee Genes', 'bee_pre_gene', $POS++,
@@ -1222,7 +1269,7 @@ sub ADD_GENE_TRACKS {
                              'logic_name' => 'miRNA tRNA ncRNA',
                              'available' => 'features ncrna|miRNA',
                              'gene_col' => sub { return $_[0]->biotype =~ /pseudo/i ? 'rna-pseudo' : 'rna-real' }, @_ );
-  $self->add_new_track_gene( 'ensembl_ncrna', 'e! ncRNA Genes', 'rna_gene', $POS++,
+  $self->add_new_track_gene( 'ensembl_ncrna', 'e! ncRNA Genes', 'rna_gene', $POS++, 'legend_type' => 'gene_ncrna',
                              'gene_col' => sub { return $_[0]->biotype =~ /pseudo/i ? 'rna-pseudo' : 'rna-real' }, @_ );
   $self->add_new_track_gene( 'refseq', 'RefSeq Genes', 'refseq_gene', $POS++, 'gene_col' => '_refseq',  @_ );
   $self->add_new_track_gene( 'mouse_protein', 'Mouse Protein Genes', 'prot_gene', $POS++, 'gene_col' => '_col',  @_ );
