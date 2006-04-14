@@ -44,13 +44,14 @@ sub createObjects {
 
   my ($term, $graph, %families);
   if ($acc_id || $query) {
-    if ($acc_id) {
+    if ($acc_id=~/^(GO:\d+)/i) {
+        $acc_id = uc($1);
         $term    = $ga->get_term({'acc'=>$acc_id});
         $graph   = $ga->get_graph_by_terms([$term], $limit);
     }
     else {
-        if (($query =~ /^GO\:/i) || ($query =~ /^\d+$/)){
-            $query = uc($query);
+        if (($query =~ /^(GO\:\d+)/i) || ($query =~ /^(\d+)$/)){
+            $query = uc( $1 );
             $graph = $ga->get_graph_by_acc($query,$limit);
         } else {
             $term    = $ga->get_terms({'search'=>$query});

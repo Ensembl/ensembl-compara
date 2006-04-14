@@ -144,7 +144,7 @@ sub show_page {
 
 sub connect {
   my $self = shift;
-  my $DB = SpeciesDefs->databases->{'ENSEMBL_HELP'};
+  my $DB = SpeciesDefs->databases->{'ENSEMBL_WEBSITE'};
   $self->{'dbh'} ||= DBI->connect(
     "DBI:mysql:database=$DB->{'NAME'};host=$DB->{'HOST'};port=$DB->{'PORT'}",
     $DB->{'USER'}, "$DB->{'PASS'}", { RaiseError => 1});

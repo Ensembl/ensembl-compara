@@ -74,7 +74,7 @@ sub _createObjectsType {
   my( $DB, $TYPE ) = $self->_dataset( $type );
   return unless $DB;
   return $self->_link(
-    'schema'            => [ 'defaultSchema' ],
+    'schema'            => [ 'default' ],
     'dataset'           => [ $DB ],
     'stage_initialised' => [ 'start' ],
     'stage'             => [ 'filter' ],
@@ -87,7 +87,7 @@ sub _createObjectsLocation {
   return unless $DB;
   my($sr,$start,$end) = $self->param('l') =~ /^(\w+):(-?[.\w]+)-([.\w]+)$/;
   return $self->_link(
-    'schema'            => [ 'defaultSchema' ],
+    'schema'            => [ 'default' ],
     'dataset'           => [ $DB ],
     'stage_initialised' => [ 'start', 'filter' ],
     'stage'             => [ 'output' ],
@@ -104,7 +104,7 @@ sub _createObjects_family {
   my( $DB, $TYPE ) = $self->_dataset( 'core' );
   return unless $DB;
   return $self->_link( 
-    'schema'            => [ 'defaultSchema' ],
+    'schema'            => [ 'default' ],
     'dataset'           => [ $DB ],
     'stage_initialised' => [ 'start', 'filter' ],
     'stage'             => [ 'output' ],
@@ -119,7 +119,7 @@ sub _createObjects_domain {
   my( $DB, $TYPE ) = $self->_dataset( 'core' );
   return unless $DB;
   return $self->_link( 
-    'schema'            => [ 'defaultSchema' ],
+    'schema'            => [ 'default' ],
     'dataset'           => [ $DB ],
     'stage_initialised' => [ 'start', 'filter' ],
     'stage'             => [ 'output' ],
@@ -134,7 +134,7 @@ sub _createObjects_xref {
   my( $DB, $TYPE ) = $self->_dataset( 'core' );
   return unless $DB;
   return $self->_link( 
-    'schema'            => [ 'defaultSchema' ],
+    'schema'            => [ 'default' ],
     'dataset'           => [ $DB ],
     'stage_initialised' => [ 'start', 'filter' ],
     'stage'             => [ 'output' ],

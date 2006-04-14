@@ -246,10 +246,9 @@ sub get_synteny_nav {
 
     my @data;
 
-    my ($genes, $offset) = $object->get_synteny_local_genes;
-    my @localgenes = @$genes;
-    my $first_start = @localgenes ? $localgenes[0]->start : 0;
-    my $last_end    = @localgenes ? $localgenes[-1]->end  : 0;
+    my ($localgenes,$offset) = $object->get_synteny_local_genes;
+    my $first_start = @$localgenes ? $localgenes->[0]->start +$offset: 0;
+    my $last_end    = @$localgenes ? $localgenes->[-1]->end  +$offset: 0;
     my $up_length   = $object->bp_to_nearest_unit($first_start);
     my $down_length = $object->bp_to_nearest_unit($last_end);
 

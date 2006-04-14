@@ -485,8 +485,10 @@ sub get_munged_slice {
   my $CONTEXT = $self->param( 'context' );
   my $EXTENT  = $CONTEXT eq 'FULL' ? 1000 : $CONTEXT;
   ## first get all the transcripts for a given gene...
-  my $ANALYSIS = $self->get_db() eq 'core' ? lc($self->species_defs->AUTHORITY) : 'otter';
-  my $features = $slice->get_all_Genes($ANALYSIS);
+  my @ANALYSIS = ( $self->get_db() eq 'core' ? (lc($self->species_defs->AUTHORITY)||'ensembl') : 'otter' );
+  @ANALYSIS = qw(ensembl havana ensembl_havana_gene) if $ENV{'ENSEMBL_SPECIES'} eq 'Homo_sapiens';
+warn ">>>>> @ANALYSIS <<<<<<";
+  my $features = [map { @{ $slice->get_all_Genes($_)||[]} } @ANALYSIS ];
   my @lengths;
   if( $CONTEXT eq 'FULL' ) {
     @lengths = ( $length );

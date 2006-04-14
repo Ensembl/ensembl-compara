@@ -47,8 +47,10 @@ sub get_alignment{
     }
     unlink( $out_file );
   }
-  unlink( $int_seq_file );
-  unlink( $ext_seq_file );
+ warn "$int_seq_file $ext_seq_file $out_file";
+ unlink( $int_seq_file );
+ unlink( $ext_seq_file );
+ 
   return $alignment;
 }
 

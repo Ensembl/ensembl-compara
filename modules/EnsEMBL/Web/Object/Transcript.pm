@@ -927,7 +927,7 @@ sub get_go_list {
     if( $goxref->isa('Bio::EnsEMBL::GoXref') ){
       $evidence = join( ", ", @{$goxref->get_all_linkage_types } ); 
     }
-    (my $go2 = $go) =~ s/^GO\:0*//;
+    my ($go2) = $go=~/GO:0*(\d+)/;
     my $term;
     next if exists $hash{$go2};
     $hash{$go2}=1;
@@ -935,6 +935,7 @@ sub get_go_list {
     my $term_name;
     if( $goadaptor ){
       my $term;
+warn "$go $go2";
       eval{ $term = $goadaptor->get_term({acc=>$go2}) };
       if($@){ warn( $@ ) }
       $term_name = $term ? $term->name : '';
@@ -1006,7 +1007,11 @@ sub get_supporting_evidence { ## USED!
         } else {
           $no_version_no = $dl_seq_name=~/^(\w+)\.\d+/ ? $1 : $dl_seq_name;
         }
-        $evidence->{ 'hits' }{$dl_seq_name}{'link'} = $self->get_ExtURL('SRS_FALLBACK',$no_version_no);      
+        if( $no_version_no =~ /^JAM_(.*)$/ ) {
+          $evidence->{ 'hits' }{$dl_seq_name}{'link'} = $self->get_ExtURL('XT_JAM',$1);
+        } else {
+          $evidence->{ 'hits' }{$dl_seq_name}{'link'} = $self->get_ExtURL('SRS_FALLBACK',$no_version_no);
+        }
         $evidence->{ 'hits' }{$dl_seq_name}{'exon_ids'}[$exon_count - 1 ] = $exonData->stable_id;
         if( !defined( $evidence->{ 'hits' }{$dl_seq_name}{'datalib'} ) ) {
       # Create array to hold the feature top-score for each exon

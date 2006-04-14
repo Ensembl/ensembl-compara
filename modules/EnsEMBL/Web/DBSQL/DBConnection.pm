@@ -607,7 +607,7 @@ sub _get_compara_multiple_database{
 
 sub _get_help_database{
     my $self = shift;
-    my $db_info = $self->{'species_defs'}->multidb->{ENSEMBL_HELP} ||
+    my $db_info = $self->{'species_defs'}->multidb->{ENSEMBL_WEBSITE} ||
         die( "No go database for this species" );
     return  $self->_get_database( $db_info, 'Bio::EnsEMBL::DBSQL::DBAdaptor' );
 }

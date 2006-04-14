@@ -13,7 +13,6 @@ use vars qw( @ISA );
 
 sub createObjects {   
     my $self = shift;    
-    my $databases       = $self->DBConnection->get_databases( 'core', 'compara' );
     my $chr = uc( $self->param('chr'));
     my @chromosomes = map { uc($_) } @{$self->species_defs->ENSEMBL_CHROMOSOMES};
     my %chrhash;

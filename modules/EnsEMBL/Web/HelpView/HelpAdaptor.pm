@@ -90,7 +90,7 @@ use DBI;
 sub dbh {
     my $self = shift;
     unless ($self->{'_dbh'}) {
-        my $dbinfo = $SPECIES_DEFS->multidb->{'ENSEMBL_HELP'};
+        my $dbinfo = $SPECIES_DEFS->multidb->{'ENSEMBL_WEBSITE'};
         my $dbh = DBI->connect(
 		"DBI:mysql:database=$dbinfo->{NAME};host=$dbinfo->{HOST};port=$dbinfo->{PORT}",
                 $SPECIES_DEFS->ENSEMBL_WRITE_USER,

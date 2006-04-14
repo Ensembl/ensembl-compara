@@ -10,7 +10,7 @@ our @ISA = qw(EnsEMBL::Web::Factory);
 sub help_adaptor {
   my $self = shift;
   unless( $self->__data->{'help_db'} ) {
-    my $DB = $self->species_defs->databases->{'ENSEMBL_HELP'};
+    my $DB = $self->species_defs->databases->{'ENSEMBL_WEBSITE'};
     unless( $DB ) {
       $self->problem( 'Fatal', 'Help Database', 'Do not know how to connect to help database');
       return undef;

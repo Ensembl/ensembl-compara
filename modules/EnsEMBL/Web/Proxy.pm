@@ -99,7 +99,7 @@ sub new {
 }
 
 sub species_defs { $_[0][1]{'_species_defs'}  ||= EnsEMBL::Web::SpeciesDefs->new(); }
-sub user_details { $_[0][1]{'_user_details'}  ||= 1; } # EnsEMBL::Web::User::Details->new(); }
+sub user_details { $_[0][1]{'_user_details'}  ||= 1; } # EnsEMBL::Web::User::Details->new( $_[0]->{_web_user_db}); }
 
 sub species :lvalue { $_[0][1]{'_species'}; }
 sub script       { $_[0][1]{'_script'};  }

@@ -98,6 +98,22 @@ sub _render_category {
 
 sub _render_hit {
   my( $self,  $hit ) = @_;
+  if( $hit->URL =~ /^(rs.*)$/ ) {
+  return sprintf qq(
+<p><strong><a href="%s">%s</a></strong><br />
+  %s
+</p>
+<blockquote>%s</blockquote>
+
+),
+    "/Homo_sapiens/snpview?snp=$1",
+    "Ensembl SNP: $1",
+    "IDs". $hit->field('description')->getHighlighted,
+    join( '&nbsp;&nbsp; ',
+      map { '<strong>'.CGI::escapeHTML( $_->name ).'</strong>: '.
+            $self->_render_hitcats( $_->children ) } $hit->groups );
+
+  } else {
   return sprintf qq(
 <p><strong><a href="%s">%s</a></strong><br />
   %s
@@ -111,6 +127,7 @@ sub _render_hit {
     join( '&nbsp;&nbsp; ',
       map { '<strong>'.CGI::escapeHTML( $_->name ).'</strong>: '.
             $self->_render_hitcats( $_->children ) } $hit->groups );
+  }
 }
 
 sub _render_hitcats {
