@@ -54,6 +54,7 @@ our  @ISA = qw( EnsEMBL::Web::Root );
 
 sub new {
   my( $class, $supertype, $type, $data, %extra_elements ) = @_;
+
   my $self  = [
     $type,
     {
@@ -70,6 +71,7 @@ sub new {
       '_apache_handle'   => $data->{_apache_handle}   || undef,
       '_species'         => $data->{_species}         || $ENV{'ENSEMBL_SPECIES'},
       '_script'          => $data->{_script}          || $ENV{'ENSEMBL_SCRIPT'},
+      '_feature_types'   => $data->{_feature_types}   || [],
       %extra_elements
     },
     [],
