@@ -572,19 +572,19 @@ sub assembly_table {
   foreach my $species (sort keys %info) {
     my @tint = qw(class="bg4" class="bg2");
     (my $display_spp = $species) =~ s/_/ /;
-    $table .=qq(<tr>\n   <th><a href="http://www.ensembl.org/$species">$display_spp</a></th>\n);
-
     my %assemblies = reverse %{ $info{$species} };
+
+    my $release_text;
     my $release_counter = $this_release;
     foreach my $release (sort {$b <=> $a} keys %assemblies  ) {
-
+      next unless $assemblies{$release};
       my $colspan = $release_counter - $release;
       $colspan++;# if $release_counter == $this_release;
       $release_counter -= $colspan;
-      $table .= qq(   <td $tint[0] colspan="$colspan">$assemblies{$release}</td>\n);
+      $release_text .= qq(   <td $tint[0] colspan="$colspan">$assemblies{$release}</td>\n);
       push ( @tint, shift @tint );
     }
-    $table .= "</tr>\n\n";
+    $table .=qq(<tr>\n   <th><a href="http://www.ensembl.org/$species">$display_spp</a></th>\n$release_text\n</tr>\n\n) if $release_text;
   }
 
   # Update the file ..
