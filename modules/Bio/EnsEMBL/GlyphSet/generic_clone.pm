@@ -136,12 +136,12 @@ sub zmenu {
       [ 'sanger_project' => '22:Sanger project' ],
       [ 'clone_name'     => '23:Library name' ],
       [ 'synonym'        => '24:Synonym' ],
-      [ 'embl_acc'       => '25:EMBL accession' ],
-      [ 'bacend'         => '29:BAC end acc' ],
+      [ 'embl_acc'       => '25:EMBL accession', 'EMBL' ],
+      [ 'bacend'         => '29:BAC end acc', 'EMBL' ],
     );
     foreach my $ref (@names ) {
       foreach(@{$f->get_all_attribute_values($ref->[0])||[]}) {
-        $zmenu->{"$ref->[1] $_" } = '';
+        $zmenu->{"$ref->[1] $_" } = $ref->[2] ? $self->ID_URL( $ref->[2], $_ ) : '';
       }
     }
     (my $state = $f->get_scalar_attribute('state'))=~s/^\d\d://;
