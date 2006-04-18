@@ -97,8 +97,14 @@ sub default_node {
 }
 
 sub current_node {
-  my ($self, $object) = @_;
+  my ($self, $object, $new_node) = @_;
   my $node;
+
+  ## are we resetting the current node?
+  if ($new_node) {
+    $object->param('node', $new_node);
+    return $new_node;
+  }
 
   ## check if we have a submit button setting the next node
   my @params = $object->param();

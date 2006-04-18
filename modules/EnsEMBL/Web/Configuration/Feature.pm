@@ -38,8 +38,16 @@ sub featureview {
   ## need custom panels for display page
   my $here = $wizard->current_node($object);
   if ($here eq 'fv_display') {
+    if (!$object->param('id')) { ## redirect to form
+      $wizard->current_node($object, 'fv_select');
+    }
+  }
+
+  $here = $wizard->current_node($object);
+  if ($here eq 'fv_display') {
     my $type = $object->param('type');
     my $id   = $object->param('id');
+
     if ($type eq 'Gene') {
         $id = uc($id);
     }
