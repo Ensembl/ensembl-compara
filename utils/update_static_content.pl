@@ -555,9 +555,10 @@ sub assembly_table {
   foreach my $data ( @{$wa->fetch_releases()} ) {
     my $release_id = $data->{release_id};
     last if $release_id == ($FIRST_ARCHIVE - 1 );
-   (my $link = $data->{short_date}) =~ s/\s+//;
+    (my $link = $data->{short_date}) =~ s/\s+//;
+    (my $display_date = $data->{short_date}) =~ s|\s+20| |;
 
-    $header_row .=qq(<th><a href="http://$link.archive.ensembl.org">$data->{short_date}</a><br />v$release_id</th>);
+    $header_row .=qq(<th><a href="http://$link.archive.ensembl.org">$display_date</a><br />v$release_id</th>);
 
 
     # If the assembly name spans several releases,%info stores its first release only
@@ -571,7 +572,7 @@ sub assembly_table {
   my $table;
   foreach my $species (sort keys %info) {
     my @tint = qw(class="bg4" class="bg2");
-    (my $display_spp = $species) =~ s/_/ /;
+    (my $display_spp = "<i>$species</i>") =~ s|_| |;
     my %assemblies = reverse %{ $info{$species} };
 
     my $release_text;
