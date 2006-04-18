@@ -113,7 +113,6 @@ my %kill_list = map {$_=>1} qw( ENSEMBL_BLAST ENSEMBL_HELP
 # Compile a list of all mysql db from the database
 our %mysql_db =  %{ utils::Tool::mysql_db($release) }; 
 $mysql_db{"ensembl_web_user_db_$release"} = 1;
-$mysql_db{"ensembl_help_$release"} = 1;
 $mysql_db{"ensembl_website_$release"} = 1;
 
 
@@ -129,7 +128,7 @@ foreach my $species (@SPECIES) {
   if ($species eq 'Multi' && $types{mysql} ) {
     $species_folder = "multi_species_$release";
 
-    foreach my $x qw( ensembl_help ensembl_website ensembl_web_user_db ) {
+    foreach my $x qw( ensembl_website ensembl_web_user_db ) {
       $ok_dirs->{"$DUMPDIR/$species_folder/data/mysql/$x"."_$release"} = [1];
       $mysql_conf++; 
     }
@@ -158,12 +157,11 @@ foreach my $species (@SPECIES) {
   my $databases  = $SPECIES_DEFS->get_config($species, "databases");
   error("No core database configured for this species $species") unless $databases->{'ENSEMBL_DB'}->{'NAME'} or $species eq 'Multi';
 
+
   foreach my $db (keys %$databases) {
     next if $kill_list{$db};
-
     my $name = $databases->{$db}->{'NAME'};
     next unless $name;
-
     $mysql_conf++;
 
     if ( $name =~ /_mart_/ ) {
@@ -526,7 +524,7 @@ sub check_toplevel {
     map {$chr{$_} = 1;}  qw( MtDNA );
   }
   elsif ($species eq 'Homo_sapiens') {
-    map {$chr{$_} = 1;}  qw( DR53 DR52 );
+    map {$chr{$_} = 1;}  qw( c6_COX c6_QBL c5_H2 c22_H2 );
   }
   foreach my $chr (keys %chr) {
     my $dna_file = "$species.$assembly.$month.dna.chromosome.$chr.fa.gz";
