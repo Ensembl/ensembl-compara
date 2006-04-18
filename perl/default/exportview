@@ -29,7 +29,7 @@ if( @{$webpage->dataObjects} ) {
     {},
     $webpage->{factory}->__data
   );
-  $webpage->configure( $object, 'exportview' );
+  $webpage->configure( $object, 'exportview', 'export_step1' );
 }
 
 $webpage->{factory}->clear_problems();
