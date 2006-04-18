@@ -179,50 +179,15 @@ sub action {
       my %parameter = %{$self->{wizard}->$node($object)};
       ## unpack returned parameters into a URL
       my $URL = '/'.$object->species.'/';
-      if (my $bounce = $parameter{'bounce'}) {
-        $URL .= $bounce.'?';
-      }
-      else {
-        $URL .= $object->script.'?';
-      }
+      $URL .= $object->script.'?';
       my $count = 0;
       foreach my $param (keys %parameter) {
         next if $param eq 'bounce';
-        next if $param eq 'set_cookie'; ## don't pass cookie id!!
         $URL .= ';' if $count > 0;
         $URL .= $param.'='.$parameter{$param};    
         $count++;
       }
       my $r = $self->page->renderer->{'r'};
-
-      ## set user cookie if logging in/out
-      if (exists($parameter{'set_cookie'})) {
-
-        my ($value, $date);
-        ## are we setting or unsetting?
-        my $user_ID = $parameter{'set_cookie'};
-        if ($user_ID) {
-          warn "Setting cookie for user $user_ID";
-          $value = EnsEMBL::Web::DBSQL::UserDB::encryptID($user_ID);
-          $date = 'Monday, 31-Dec-2037 23:59:59 GMT';
-        }
-        else {
-          warn "Unsetting cookie!";
-          $value = '';
-          $date = 'Monday, 31-Dec-2000 23:59:59 GMT';
-        }
-
-        my $cookie = CGI::Cookie->new(
-          -name    => EnsEMBL::Web::SpeciesDefs->ENSEMBL_USER_COOKIE,
-          -value   => $value,
-          -domain  => EnsEMBL::Web::SpeciesDefs->ENSEMBL_COOKIEHOST,
-          -path    => '/',
-          -expires => $date
-        );
-        $r->headers_out->add( 'Set-cookie' => $cookie );
-        $r->err_headers_out->add( 'Set-cookie' => $cookie );
-        $r->subprocess_env->{'ENSEMBL_USER'} = $user_ID;
-      }
 
       ## do redirect
       warn "Redirecting to $URL";
