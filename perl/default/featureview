@@ -1,8 +1,27 @@
 #!/usr/local/bin/perl
+
 package featureview;
 
+use strict;
+use warnings;
+no warnings "uninitialized";
+
 use EnsEMBL::Web::Document::WebPage;
-EnsEMBL::Web::Document::WebPage::simple( 'Feature' );
+
+my $webpage= new EnsEMBL::Web::Document::WebPage(
+  'use_proxy'  => 1,
+  'renderer'   => 'Apache',
+  'outputtype' => 'HTML',
+  'scriptname' => 'featureview',
+  'objecttype' => 'Feature',
+);
+if( $webpage->has_a_problem() ) {
+  $webpage->render_error_page( $webpage->problem->[0] );
+} else {
+  foreach my $object( @{$webpage->dataObjects} ) {
+    $webpage->configure( $object, 'featureview', 'context_menu' );
+  }
+  $webpage->action();
+}
 
 1;
-
