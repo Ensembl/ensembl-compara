@@ -26,7 +26,13 @@ our %DOCUMENT_TYPES = (
     '1.0 Trans'  => '"-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"',
     '1.0 Frame'  => '"-//W3C//DTD XHTML 1.0 Frameset//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-frameset.dtd"',
     '1.1'        => '"-//W3C//DTD XHTML 1.1//EN"'
-  }
+  },
+  'XML' => {
+    'DASGFF' => '"http://www.biodas.org/dtd/dasgff.dtd"',
+    'DASDSN' => '"http://www.biodas.org/dtd/dasdsn.dtd"',
+    'DASEP'  => '"http://www.biodas.org/dtd/dasep.dtd"',
+    'DASDNA' => '"http://www.biodas.org/dtd/dasdna.dtd"',
+    },
 );
 
 sub child_objects {
@@ -255,7 +261,11 @@ sub doc_type {
     unless exists $DOCUMENT_TYPES{$self->{'doc_type'}};
   $self->{'doc_type_version'} = DEFAULT_DOCTYPE_VERSION
     unless exists $DOCUMENT_TYPES{$self->{'doc_type'}}{$self->{'doc_type_version'}};
-  return "<!DOCTYPE html PUBLIC @{[$DOCUMENT_TYPES{$self->{'doc_type'}}{$self->{'doc_type_version'}} ]}>\n";
+#  return "<!DOCTYPE html PUBLIC @{[$DOCUMENT_TYPES{$self->{'doc_type'}}{$self->{'doc_type_version'}} ]}>\n";
+
+  my $header = $self->{'doc_type'} eq 'XML' ? qq#<!DOCTYPE $self->{'doc_type_version'} SYSTEM @{[$DOCUMENT_TYPES{$self->{'doc_type'}}{$self->{'doc_type_version'}} ]}>\n# : "<!DOCTYPE html PUBLIC @{[$DOCUMENT_TYPES{$self->{'doc_type'}}{$self->{'doc_type_version'}} ]}>\n";
+
+  return $header;
 }
 
 sub html_line {
@@ -311,6 +321,21 @@ sub render {
     $self->_prof( "Rendered $attr" );
   }
   $self->_render_close_body_tag;
+}
+
+sub render_XML {
+  my( $self ) = shift;
+
+  $self->print(qq{<?xml version="1.0" standalone="no"?>\n});
+  $self->print( $self->doc_type);
+  $self->print( "\<$self->{'doc_type_version'}\>\n" );
+
+  foreach my $R ( @{$self->{'body_order'}} ) {
+    my $attr = $R->[0];
+    $self->$attr->render;
+  }
+  $self->print( "\<\/$self->{'doc_type_version'}\>\n" );
+
 }
 
 sub render_Excel {

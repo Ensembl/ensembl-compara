@@ -51,6 +51,7 @@ sub new {
 ## Compile and create "Document" object ... [ Dynamic, Popup, ... ]
   my $doctype = $parameters{'doctype'} || DEFAULT_DOCUMENT;
   my $doc_module = "EnsEMBL::Web::Document::$doctype";
+
   unless( $self->dynamic_use( $doc_module ) ) {
     $doc_module = "EnsEMBL::Web::Document::".DEFAULT_DOCUMENT;
     $self->dynamic_use( $doc_module ); 
@@ -58,14 +59,16 @@ sub new {
   $self->page = new $doc_module( $rend, $self->{'timer'}, $self->{'species_defs'} );          $self->_prof("Page object compiled and initialized");
 
 ## Initialize output type! [ HTML, XML, Excel, Txt ]
-  $self->{'format'} = $input->param('_format') || DEFAULT_OUTPUTTYPE;
+  $self->{'format'} = $input->param('_format') || $parameters{'outputtype'} || DEFAULT_OUTPUTTYPE;
   my $method = "_initialize_".($self->{'format'});
+
   $self->page->$method();                                            $self->_prof("Output method initialized" );
 
 ## Finally we get to the Factory module!
   $self->factory = EnsEMBL::Web::Proxy::Factory->new(
     $parameters{'objecttype'}, { '_input' => $input, '_apache_handle' => $rend->{'r'} }
   );                                                                 $self->_prof("Factory compiled");
+
   return $self if $self->factory->has_fatal_problem();
   eval { $self->factory->createObjects(); };
   if( $@ ) {
@@ -82,6 +85,9 @@ sub new {
 sub configure {
   my( $self, $object, @functions ) = @_;
   my $objecttype = $object ? $object->__objecttype : 'Static';
+
+  $objecttype = 'DAS' if ($objecttype =~ /^DAS::.+/);
+
   my $flag = 0;
   my @T = ('EnsEMBL::Web', '', @{$ENSEMBL_PLUGINS});
   while( my ($module_root, $X) = splice( @T, 0, 2) ) {
@@ -264,6 +270,8 @@ sub render {
   my $self = shift;
   if( $self->{'format'} eq 'Text' ) { 
     CGI::header("text/plain"); $self->page->render_Text;
+  } elsif( $self->{'format'} eq 'XML' ) { 
+    CGI::header("text/xml"); $self->page->render_XML;
   } elsif( $self->{'format'} eq 'Excel' ) { 
     CGI::header(
       -type => "application/x-msexcel",
@@ -294,6 +302,10 @@ sub render_popup {
 
 sub render_error_page { 
   my $self = shift;
+
+  $self->{'format'} = 'HTML';
+  $self->page->set_doc_type('HTML', '4.01 Trans');
+
   $self->add_error_panels( @_ );
   $self->render();
 }
@@ -326,8 +338,7 @@ sub add_error_panels {
   $desc
   $eg_html
   <p>
-    If you think this is an error, or you have any questions, you can contact our HelpDesk team by clicking on the HELP link in the
-    top right hand corner of this page.
+    If you think this is an error, or you have any questions, you can contact our HelpDesk team by clicking <strong><a href="javascript:void(window.open('/perl/helpview','helpview','width=700,height=550,resizable,scrollbars'))" class="red-button">here</a></strong>.
   </p>) 
       )
     );
@@ -356,8 +367,10 @@ sub wrapper {
   foreach(qw(renderer outputtype scriptname doctype)) {
     $new_params{$_} = $params{$_} if $params{$_};
   }
+
   my $self = __PACKAGE__->new( %new_params );
   if( $self->has_a_problem ) {
+      
     $self->render_error_page;
   } else {
     foreach my $object( @{$self->dataObjects} ) {

@@ -29,6 +29,16 @@ sub _initialize_Text {
   $self->_init();
 }
 
+sub _initialize_XML {
+  my $self = shift; 
+
+  $self->add_body_elements qw(
+			      content     EnsEMBL::Web::Document::XML::Content
+			      );
+
+  $self->_init();
+}
+
 sub _initialize_HTML {
   my $self = shift;
 
