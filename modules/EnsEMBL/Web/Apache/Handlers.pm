@@ -286,11 +286,11 @@ sub transHandler {
   my $script    = undef;
   my $path_info = undef;
   if( $species eq 'das' ) { # we have a DAS request...
-warn "DAS HANDLER";
     my $DSN = $path_segments[0];
     my $command = '';
     if( $DSN eq 'dsn' ) {
       $command = 'dsn';
+      $r->subprocess_env->{'ENSEMBL_SCRIPT'}  = $command;
     } else {
       my( $das_species, $assembly, $type, $subtype ) = split /\./, $DSN;
       $command = $path_segments[1];
@@ -304,6 +304,7 @@ warn "DAS HANDLER";
       $r->subprocess_env->{'ENSEMBL_DAS_ASSEMBLY'} = $assembly;
       $r->subprocess_env->{'ENSEMBL_DAS_TYPE'}     = $type;
       $r->subprocess_env->{'ENSEMBL_DAS_SUBTYPE'}  = $subtype;
+      $r->subprocess_env->{'ENSEMBL_SCRIPT'}  = $command;
     }
     my $error_filename = '';
     foreach my $dir ( @PERL_TRANS_DIRS ) {
