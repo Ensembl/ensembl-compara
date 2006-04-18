@@ -100,9 +100,11 @@ sub new {
       next if (! grep {$_ eq $script} @valid_views);
 
       if (my @select_views = defined ($EXT->{$source}->{select}) ? @{$EXT->{$source}->{select}} : ()) {
-	  my $c = $self->{config};   
-	  if ( ! defined($c->get("managed_$source", "on"))) {
-	      $c->set("managed_$source", "on", "on", 1);
+	  if (grep {$_ eq $script} @select_views) {
+	      my $c = $self->{config};   
+	      if ( ! defined($c->get("managed_$source", "on"))) {
+		  $c->set("managed_$source", "on", "on", 1);
+	      }
 	  }
       }
 
