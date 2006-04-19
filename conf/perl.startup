@@ -25,10 +25,8 @@ use EnsEMBL::Web::Apache::SendDecPage;
 use EnsEMBL::Web::Apache::ServerError;
 use EnsEMBL::Web::Document::ColourChanger;
 
-use EnsEMBL::Web::Root;
-
-my $T = new EnsEMBL::Web::Root;
-
+#use EnsEMBL::Web::Root;
+#my $T = new EnsEMBL::Web::Root;
 #$T->dynamic_use( 'BioMart::Initializer' );
 #$T->dynamic_use( 'BioMart::Registry' );
 #$T->dynamic_use( 'BioMart::Dataset::TableSet' );
@@ -44,6 +42,7 @@ use BioMart::Dataset::GenomicSequence;
 use BioMart::Dataset::GenomicAlign;
 
 local $Storable::Deparse = 1; #### MART
+# local $Storable::Eval    = 1; #### MART
 $Storable::forgive_me    = 1; #### MART
 
 # for making gifs
@@ -83,6 +82,7 @@ if( keys %{$conf->{'_multi'}{'marts'}} && !$SiteDefs::ENSEMBL_NOMART) { ### NOMA
   my ($initializer,$registry);                                                    ####
   warn( ( '*' x 78 ) ."\n" );
   if( -e $MART_PACKFILE ) {
+if(0){
     open FH, $MART_PACKFILE || die ("Can't open $MART_PACKFILE: $!" );
     local $/ = undef;
     $initializer = thaw(<FH>);
@@ -93,6 +93,7 @@ if( keys %{$conf->{'_multi'}{'marts'}} && !$SiteDefs::ENSEMBL_NOMART) { ### NOMA
     warn("[MARTCONF][INFO] Retrieving CACHED configuration from $MART_PACKFILE\n" );
     warn("[MARTCONF][INFO] Remove martconf.packed file before server startup if you need to update registry or dataset configuration\n" );
     warn( ( '-' x 78 ) ."\n" );
+}
   } else {
     warn( "[MARTCONF][INFO] Retrieving configuration:\n" );
     warn( ( '-' x 78 ) ."\n" );
