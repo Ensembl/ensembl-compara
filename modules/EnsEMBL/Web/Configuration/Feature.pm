@@ -54,7 +54,7 @@ sub featureview {
 
     $self->{page}->set_title( "FeatureView: $type $id");
     my ($gene_panel, $karyo_panel, $ss_panel);
-    if ($object->Obj->{'Gene'} && $object->param('style_1')) {  ## data includes one or more subsidiary gene objects
+    if ($object->Obj->{'Gene'} && scalar(keys %{$object->Obj}) > 1) {  ## data includes one or more subsidiary gene objects
       $gene_panel = new EnsEMBL::Web::Document::Panel::SpreadSheet(
         'code'    => "info$self->{flag}",
         'caption' => "Gene Information",
