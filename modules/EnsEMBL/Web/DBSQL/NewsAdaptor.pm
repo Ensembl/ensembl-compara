@@ -105,7 +105,7 @@ sub fetch_news_items {
   else {
     $sql .= ' WHERE n.news_cat_id = c.news_cat_id';
   }
-  $sql .= " $where_str GROUP BY n.news_item_id $limit_str";
+  $sql .= " $where_str GROUP BY n.news_item_id ORDER BY n.priority DESC $limit_str";
 #warn $sql;
 
 
