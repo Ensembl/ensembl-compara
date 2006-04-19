@@ -1,4 +1,4 @@
-package EnsEMBL::Web::Object::DAS::karyotypes;
+package EnsEMBL::Web::Object::DAS::karyotype;
 
 use strict;
 use warnings;
