@@ -17,6 +17,9 @@ sub createObjects {
     my @chromosomes = map { uc($_) } @{$self->species_defs->ENSEMBL_CHROMOSOMES};
     my %chrhash;
 
+   if($self->param('otherspecies')) {
+      $self->DBConnection->get_databases( 'core', 'compara' );
+   }
     $chr =~ s/^CHR//i;       # for retro-compatability
     @chrhash{@chromosomes}=1;
     $chr = $chromosomes[0] unless $chr eq 'ALL' || exists $chrhash{$chr};
