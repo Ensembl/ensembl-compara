@@ -21,7 +21,7 @@ sub init {
     }
   };
 
-  $self->ADD_AS_GENE_TRACKS();
+  $self->ADD_GENE_TRACKS();
   $self->ADD_SYNTENY_TRACKS();
   my $POS = 0;
   
