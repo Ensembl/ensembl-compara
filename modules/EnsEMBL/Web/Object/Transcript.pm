@@ -317,6 +317,10 @@ sub ambig_code {
 
 
 #return type list
+# arg[1] (optional) : "default" - returns samples checked by default
+#                   : "display" - returns samples for dropdown list with 
+#                     with default ones first
+#                   : no arg - returns selected samples
 
 sub get_samples {
   my $self    = shift;
