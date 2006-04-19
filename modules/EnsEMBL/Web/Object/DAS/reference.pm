@@ -168,7 +168,61 @@ sub Features {
     }
 
 
-    warn(Data::Dumper::Dumper(\@features));
+#    warn(Data::Dumper::Dumper(\@features));
+
+    return \@features;
+}
+
+
+sub EntryPoints {
+    my ($self) = @_;
+
+    my $slice_adaptor = $self->database('core', $self->real_species)->get_SliceAdaptor();
+
+
+    my @chromosome_slices = @{$slice_adaptor->fetch_all('chromosome')};
+    my $collection;
+
+    my @toplevel_slices = @{$slice_adaptor->fetch_all('toplevel', undef, 1)};
+
+#    foreach my $chromosome_slice (@chromosome_slices) {
+    foreach my $chromosome_slice (@toplevel_slices) {
+	my ($ctype, $build, $region, $start, $end, $ori) = split(/:/,$chromosome_slice->name());
+	push @$collection, [$region, $start, $end, $ori > 0 ? '+': '-', $region];
+    }
+
+    return $collection;
+}
+
+
+sub DNA {
+    my $self = shift;
+    my @segments = $self->Locations;
+    my @features;
+
+    foreach my $s (@segments) {
+	if (ref($s) eq 'HASH' && $s->{'TYPE'} eq 'ERROR') {
+	    push @features, $s;
+	    next;
+	}
+
+	my ($region_name, $region_start, $region_end) = ($s->name);
+
+	if ($s->name =~ /^([-\w\.]+):([\.\w]+),([\.\w]+)$/ ) {
+	    ($region_name,$region_start,$region_end) = ($1,$2,$3);
+	}
+
+	my $slice = $self->database('core', $self->real_species)->get_SliceAdaptor->fetch_by_region('', $region_name, $region_start, $region_end, 1 );
+
+	my $seq = lc($slice->seq());
+
+	push @features, {
+    	    'REGION' => $region_name, 
+	    'START'  => $region_start, 
+	    'STOP'   => $region_end,
+	    'SEQ' => $seq
+	    };
+    }
 
     return \@features;
 }
