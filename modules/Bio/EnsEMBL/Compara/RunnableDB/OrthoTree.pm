@@ -392,12 +392,6 @@ sub load_species_tree
 
 
 
-#############################################
-#
-# individual feature detectors
-#
-#############################################
-
 sub get_ancestor_species_hash
 {
   my $self = shift;
@@ -556,7 +550,7 @@ sub direct_ortholog_test
   #strictest ortholog test: 
   #  - genes are from different species
   #  - no ancestral duplication events
-  #  - these genes are only copies of the ancestor for thier species
+  #  - these genes are only copies of the ancestor for their species
 
   return undef if($genepairlink->get_tagvalue('has_dups'));
   
