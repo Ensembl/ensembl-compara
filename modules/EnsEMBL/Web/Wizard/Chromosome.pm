@@ -239,7 +239,6 @@ sub _init {
     'kv_display'  => {
       'button' => 'Finish',
       'form' => 1,
-      'back'   => 1,
     },
   );
 
