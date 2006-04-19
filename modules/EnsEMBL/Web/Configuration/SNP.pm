@@ -173,7 +173,8 @@ sub context_menu {
 	"title" => "SNPView",
 	'href' => $snpview_href
   );
-  
+
+  if ( $obj->species_defs->VARIATION_STRAIN ) {
   $self->add_entry(
         "snp$self->{flag}",
         'code' => 'ld_info',
@@ -181,6 +182,7 @@ sub context_menu {
 	"title" => "Linkage disequilibrium data",
         'href' => "/$species/ldview?snp=$name"
   );
+}
 
 }
 
