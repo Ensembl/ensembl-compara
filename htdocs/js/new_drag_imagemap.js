@@ -183,7 +183,7 @@ function select_stop(evt) { debug_print( 'select_stop' );
         case 'cv':
           lnks = new Array(
             new Array( 'View this region in basepair view', cv_URL( { c: cp, zw: w } ) ),
-            new Array( 'Zoom into this region',             cv_URL( { c: cp, w: w  } ) ),
+            new Array( 'Zoom into this region on detailed view', cv_URL( { c: cp, w: w  } ) ),
             new Array( 'Centre on this region',             cv_URL( { c: cp        } ) )
           );
       }
@@ -251,6 +251,7 @@ function select_stop(evt) { debug_print( 'select_stop' );
                   new Array('Further help',A.href)
                 );
               } else {
+/*
                 if( A.href && A.href != 'javascript:void(0)') {
                   lnks = new Array(
                     new Array( 'test' ),
@@ -260,6 +261,10 @@ function select_stop(evt) { debug_print( 'select_stop' );
                   lnks = new Array(
                     new Array( 'test' )
                   );
+                }
+*/
+                if( A.href ) {
+                  location.href = A.href; return;
                 }
               }
               show_zmenu( A.title, e_x, e_y, lnks, zmn );

@@ -156,7 +156,7 @@ function cv_draw_red_boxes( id_1, id_2 ) {
     if( A ) {
       for(i=0;i<A.areas.length;i++) {
         A.areas[i].onmousedown = select_start;
-        A.areas[i].href        = "javascript:void(0)"
+        if( A.areas[i].onclick || A.areas[i].onmouseover ) A.areas[i].href  = "javascript:void(0)" ;
       } 
     }
   }
