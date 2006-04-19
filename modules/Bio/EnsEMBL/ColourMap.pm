@@ -101,7 +101,7 @@ sub new {
   $self->colourSet( 'sgd_gene',
     'hi'         => 'highlight1',
     'superhi'    => 'highlight2',
-    map { ("sgd$_" => [ $core{$_}[0], "SGD ".$core{$_}[1] ]) } keys %core
+    map { ("SGD$_" => [ $core{$_}[0], "SGD ".$core{$_}[1] ]) } keys %core
   );
   $self->colourSet( 'bee_gene',
     'hi'         => 'highlight1',
