@@ -601,7 +601,8 @@ sub copy_species_table {
   my ( $dir ) = @_;
   my $dir2 = $dir."/sanger-plugins/archive/htdocs/ssi/";
   utils::Tool::check_dir($dir2);
-  system("cp $dir/public-plugins/ensembl/htdocs/ssi/species_table.html $dir2");
+  system("cp $dir/public-plugins/ensembl/htdocs/ssi/mammals.html $dir2");
+  system("cp $dir/public-plugins/ensembl/htdocs/ssi/others.html $dir2");
   return;
 }
 #############################################################################
