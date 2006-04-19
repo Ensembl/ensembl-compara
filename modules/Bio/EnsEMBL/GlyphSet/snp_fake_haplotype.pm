@@ -73,6 +73,7 @@ sub _init {
 
 
   # First lets draw the reference SNPs....
+  my @golden_path;
   foreach my $snp_ref ( @snps ) {
     my $snp = $snp_ref->[2];
     my $label =  $snp->allele_string;
@@ -97,6 +98,12 @@ sub _init {
 	  }
 	}
       }
+      push @golden_path, {
+			  label   => $label,
+			  snp_ref => $snp_ref,
+			  colour  => $colours[0],
+			  base    => $golden_path_base,
+			 };
     }
 
     # Set ref base colour and draw glyphs ----------------------------------
@@ -108,7 +115,17 @@ sub _init {
 
   } #end foreach $snp_ref
 
-
+  # Make sure the golden path one is in there somewhere
+  unless ( $strain_alleles{$golden_path} ) {
+    $offset += $track_height;
+    $self->strain_name_text($w, $th, $offset, $golden_path, $Config);
+    foreach my $hash (@golden_path) {
+      my $snp_ref = $hash->{snp_ref};
+       $self->do_glyphs($offset, $th, $w, $Config, $hash->{label}, 
+			$snp_ref->[0], $snp_ref->[1], 
+			$hash->{colour}, $hash->{base});
+    }
+  }
 
   # Draw SNPs for each strain -----------------------------------------------
   foreach my $strain ( sort {$a cmp $b} keys %strain_alleles ) {

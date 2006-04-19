@@ -147,13 +147,13 @@ sub colours {
 sub colour {
   my ($self,  $transcript, $colours, %highlights) = @_;
   my $genecol = $colours->{ $transcript->analysis->logic_name."_".$transcript->biotype."_".$transcript->status };
-  warn $transcript->stable_id,' ',$transcript->analysis->logic_name."_".$transcript->biotype."_".$transcript->status;
+#  warn $transcript->stable_id,' ',$transcript->analysis->logic_name."_".$transcript->biotype."_".$transcript->status;
   if(exists $highlights{lc($transcript->stable_id)}) {
     return (@$genecol, $colours->{'hi'});
   } elsif(exists $highlights{lc($transcript->external_name)}) {
     return (@$genecol, $colours->{'hi'});
   }
-  warn @$genecol;
+ # warn @$genecol;
   return (@$genecol, undef);
 
 }
