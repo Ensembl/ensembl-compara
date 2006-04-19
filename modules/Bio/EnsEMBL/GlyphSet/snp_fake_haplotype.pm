@@ -116,7 +116,7 @@ sub _init {
   } #end foreach $snp_ref
 
   # Make sure the golden path one is in there somewhere
-  unless ( $strain_alleles{$golden_path} ) {
+  if ( $reference_name ne $golden_path && !$strain_alleles{$golden_path} ) {
     $offset += $track_height;
     $self->strain_name_text($w, $th, $offset, $golden_path, $Config);
     foreach my $hash (@golden_path) {
