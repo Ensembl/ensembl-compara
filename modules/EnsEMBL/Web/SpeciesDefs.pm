@@ -1211,7 +1211,7 @@ sub create_martRegistry {
 <!DOCTYPE MartRegistry>
 <MartRegistry>';
 
-  foreach my $mart ( keys %{$multi->{'marts'}} ) {
+  foreach my $mart ( sort keys %{$multi->{'marts'}} ) {
     my( $default, $visible, @name ) = @{$multi->{'marts'}->{$mart}};
     if( $multi->{'databases'}->{$mart} ) {
       my $T = $multi->{'databases'}->{$mart};
