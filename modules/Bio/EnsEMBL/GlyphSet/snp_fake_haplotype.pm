@@ -98,11 +98,14 @@ sub _init {
 	  }
 	}
       }
-
+      my $golden_colour = undef;
+      if ($reference_base) {
+	$golden_colour = $golden_path_base eq $reference_base ? $colours[0] : $colours[1],
+      }
       push @golden_path, {
 			  label   => $label,
 			  snp_ref => $snp_ref,
-			  colour  => $golden_path_base eq $reference_base ? $colours[0] : $colours[1],
+			  colour  => $golden_colour,
 			  base    => $golden_path_base,
 			 };
     }
@@ -122,9 +125,10 @@ sub _init {
     $self->strain_name_text($w, $th, $offset, $golden_path, $Config);
     foreach my $hash (@golden_path) {
       my $snp_ref = $hash->{snp_ref};
+      my $text_colour = $hash->{colour} ? "white" : "black";
        $self->do_glyphs($offset, $th, $w, $Config, $hash->{label}, 
 			$snp_ref->[0], $snp_ref->[1], 
-			$hash->{colour}, $hash->{base});
+			$hash->{colour}, $hash->{base}, $text_colour);
     }
   }
 
