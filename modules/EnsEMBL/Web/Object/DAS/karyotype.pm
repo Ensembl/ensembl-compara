@@ -28,11 +28,11 @@ sub Features {
 
 	    my $f = {
 		'ID'          => $ft->{'name'},
-		'TYPE'        => $ft->{'stain'}, 
+		'TYPE'        => $ft->{'stain'}||'', 
 		'METHOD'      => 'ensembl',
 		'START'       => $ft->{'start'},
 		'END'         => $ft->{'end'},
-		'ORIENTATION' => $ft->{'strand'},
+		'ORIENTATION' => $ft->{'strand'}+0,
 	    };
 	    push @segment_features, $f;
 	}
