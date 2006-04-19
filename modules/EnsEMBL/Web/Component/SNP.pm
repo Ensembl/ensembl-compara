@@ -821,7 +821,7 @@ sub link_to_ldview {
     $output .= "<td><a href='ldview?snp=". $object->name;
     $output .=  ";c=".$object->param('c') if $object->param('c');
     $output .=  ";w=".($object->param('w') || "20000");
-    $output .=	";pop=$pop_name'>$pop_name</a></td>";
+    $output .=	";bottom=opt_pop_$pop_name:on'>$pop_name</a></td>";
     if ($count ==4) {
       $count = 0;
       $output .= "</tr><tr>";

@@ -643,7 +643,7 @@ sub ldview {
 
   # Set default sources
   my @sources = keys %{ $obj->species_defs->VARIATION_SOURCES || {} } ;
-  my $default_source = $obj->get_source("default");;
+  my $default_source = $obj->get_source("default");
   my $script_config = $obj->get_scriptconfig();
   my $restore_default = 1;
 
@@ -652,7 +652,7 @@ sub ldview {
     $restore_default = 0 if $script_config->get(lc("opt_$source") ) eq 'on';
  }
 
- if( $restore_default ) { # if none of species' sources are on
+if( $restore_default && !$obj->param('bottom') ) { # if no spp sources are on
    foreach my $source ( @sources ) {
      my $switch;
      if ($default_source) {
@@ -664,14 +664,10 @@ sub ldview {
      $script_config->set(lc("opt_$source"), $switch, 1);
    }
  }
- 
+
   $self->update_configs_from_parameter( 'bottom', 'ldview', 'LD_population' );
 
   my ($pops_on, $pops_off) = $obj->current_pop_name;
-  my $script_config = $obj->get_scriptconfig();
-  foreach (@$pops_on) {
-     $script_config->set("opt_pop_$_", 'on', 1);
-  }
   map { $script_config->set("opt_pop_$_", 'off', 1); } @$pops_off;
   map { $script_config->set("opt_pop_$_", 'on', 1); } @$pops_on;
   $script_config->save;
@@ -691,7 +687,7 @@ sub ldview {
   my $params= { 
     'snp'    => $obj->param('snp'),
     'gene'   => $obj->param('gene'),
-    'pop'    => $pops_on,
+ #   'pop'    => $pops_on,
     'w'      => $obj->length,
     'c'      => $obj->seq_region_name.':'.$obj->centrepoint,
     'source' => $obj->param('source'),

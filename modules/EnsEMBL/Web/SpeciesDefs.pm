@@ -953,6 +953,23 @@ sub _parse {
  	    $tree->{'VARIATION_STRAIN'} = $count;
  	  }
  	};
+
+        # For LDview link
+        $sth = $dbh->prepare(qq(
+                     SELECT count(*)
+                     FROM meta
+                     WHERE meta_key = "pairwise_ld.default_population";
+                  )
+                            );
+        eval {
+          $sth->execute;
+          my ($count) = $sth->fetchrow_array;
+          if ( $count ) {
+            $tree->{'VARIATION_LD'} = $count;
+          }
+        };
+
+
 	$sth->finish();
 	$dbh->disconnect();
       }

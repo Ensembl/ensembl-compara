@@ -361,16 +361,15 @@ sub current_pop_name {
     return ( [keys %pops_on], [keys %pops_off] )  if keys %pops_on or keys %pops_off;
   }
 
-
   # Get pops switched on via pop arg if no bottom
-  if ( my @pops = $self->param('pop') ) {
+  if ( $self->param('pop') ) {
     # put all pops_on keys in pops_off
     map { $pops_off{$_} = 1 } (keys %pops_on);
     %pops_on = ();
-    map { $pops_on{$_} = 1 if $_ } @pops;
+    map { $pops_on{$_} = 1 if $_ } $self->param('pop');
   }
-  return ( [keys %pops_on], [keys %pops_off] )  if keys %pops_on or keys %pops_off;
 
+  return ( [keys %pops_on], [keys %pops_off] )  if keys %pops_on or keys %pops_off;
   return [] if $self->param('bottom') or $self->param('pop');
   my $default_pop =  $self->get_default_pop_name;
   warn "*****[ERROR]: NO DEFAULT POPULATION DEFINED.\n\n" unless $default_pop;
@@ -395,7 +394,7 @@ sub pops_for_slice {
   return [] unless $ld_container;
 
   my $pop_ids = $ld_container->get_all_populations();
-  return {} unless @$pop_ids;
+  return [] unless @$pop_ids;
 
   my @pops;
   foreach (@$pop_ids) {

@@ -23,7 +23,7 @@ use POSIX qw(floor ceil);
 
 
 ## Info panel functions ################################################
-# focus              : i.e. gene, SNP or slice
+# focus              : i.e. gene, SNP (rs5050)or slice
 # prediction_method  : standard blurb about calculation of LD
 # population_info    : name, size, description of population
 #                      super/sub population info if exists
@@ -46,9 +46,6 @@ sub focus {
     my $source = $snp->source;
     my $link_name  = $object->get_ExtURL_link($name, 'SNP', $name) if $source eq 'dbSNP';
     $info .= "$link_name ($source ". $snp->source_version.")";
-    my $params = qq( [<a href="snpview?snp=$name;source=$source);
-    $params .= ";c=".$object->param('c') if $object->param('c');
-    $params .= ";pop=".$object->param('pop') if $object->param('pop');
   }
   else {
     return 1;
@@ -80,10 +77,15 @@ sub population_info {
   my $pop_names  = $object->current_pop_name;
 
   unless (@$pop_names) {
-    $panel->add_row("Population", "Please select a population from the yellow drop down menu below.");
-    return ;
+    if  ( @{$object->pops_for_slice(100000)} ) {
+      $panel->add_row("Population", "Please select a population from the yellow drop down menu below.");
+      return ;
+    }
+    else {
+      $panel->add_row("Population", "There is no LD data for this species.");
+      return ;
+    }
   }
-
   foreach my $name (sort {$a cmp $b} @$pop_names) {
     my $pop       = $object->pop_obj_from_name($name);
     my $super_pop = $object->extra_pop($pop->{$name}{PopObject}, "super");
