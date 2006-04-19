@@ -160,17 +160,15 @@ sub status {
   my $html = join(", ", @status_list);
   if ($html) {
     if ($html eq 'observed' or $html eq 'non-polymorphic') {
-      $html = '<b>'.ucfirst($html).'</b>';
+      $html = '<b>'.ucfirst($html).'</b> ';
     } else {
-      $html = "Proven by <b>$html</b>";
+      $html = "Proven by <b>$html</b> ";
     }
-    $html .= ' (<i>SNP tested and validated by a non-computational method</i>).<br />';
-  }
-  else {
-    $html = "Undefined";
+    $html .= ' (<i>SNP tested and validated by a non-computational method</i>).<br /> ';
   }
   $html .= $hapmap_html;
-  $panel->add_row($label, $html);
+
+  $panel->add_row($label, $html||"Undefined");
   return 1;
 }
 

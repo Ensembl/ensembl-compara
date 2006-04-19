@@ -174,7 +174,7 @@ sub context_menu {
 	'href' => $snpview_href
   );
 
-  if ( $obj->species_defs->VARIATION_STRAIN ) {
+  if ( $obj->species_defs->VARIATION_LD ) {
   $self->add_entry(
         "snp$self->{flag}",
         'code' => 'ld_info',
