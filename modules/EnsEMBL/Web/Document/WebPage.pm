@@ -104,6 +104,7 @@ sub configure {
                            # of the script.
       my $CONF = $config_module_name->new( $self->page, $object, $flag );
       foreach my $FN ( @functions ) { 
+	 
         if( $CONF->can($FN) ) {
                            # If this configuration module can perform this
                            # function do so...
@@ -122,12 +123,21 @@ sub configure {
     <pre>%s</pre>), $self->_format_error($@) )
               )
             );
-          }
-        }
-        else {
-          warn "Can't do menu function $FN";
-        }
+	}
       }
+        else {
+
+	    if ($objecttype = 'DAS') {
+		
+		$self->problem('Fatal', 'Bad request', 'Unimplemented');
+
+
+	    } else {
+
+		warn "Can't do menu function $FN";
+	    }
+	    }
+	}
     } elsif( $self->dynamic_use_failure( $config_module_name ) !~ /^Can't locate/ ) { 
                            # Handle "use" failures gracefully... 
                            # Firstly skip Can't locate errors
@@ -267,10 +277,6 @@ sub render_popup {
 
 sub render_error_page { 
   my $self = shift;
-
-  $self->{'format'} = 'HTML';
-  $self->page->set_doc_type('HTML', '4.01 Trans');
-
   $self->add_error_panels( @_ );
   $self->render();
 }
@@ -278,6 +284,12 @@ sub render_error_page {
 sub add_error_panels {
   my( $self, @problems ) = @_;
   @problems = @{$self->problem} if !@problems && $self->factory;
+
+  if (@problems) {
+      $self->{'format'} = 'HTML';
+      $self->page->set_doc_type('HTML', '4.01 Trans');
+  }
+
   foreach my $problem ( sort { $b->isFatal <=> $a->isFatal } @problems ) {
     next if !$problem->isFatal && $self->{'show_fatal_only'};
     my $desc = $problem->description;

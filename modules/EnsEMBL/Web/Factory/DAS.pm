@@ -43,7 +43,7 @@ sub createObjects {
   my @locations;
 
   if( my @segments = $self->param('segment')) {
-      foreach my $segment (@segments) {
+      foreach my $segment (grep { $_ } @segments) {
 	  if ($segment =~ /^([-\w\.]+):(-?[\.\w]+),([\.\w]+)$/ ) {
 	      my($sr,$start,$end) = ($1,$2,$3);
 	      $start = $self->evaluate_bp($start);
