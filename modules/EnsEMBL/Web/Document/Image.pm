@@ -157,6 +157,7 @@ sub add_tracks {
       $config->{'_group_size'} = 2;
     }
     else {
+      my $track_count = 0;
       foreach my $track ( $parser->feature_types ) {
         push @{$config->{'general'}{$config_name}{'_artefacts'}}, "track_$track";
         $config->{'general'}{$config_name}{"track_$track"} = 
@@ -172,6 +173,7 @@ sub add_tracks {
           'data'          => $parser->features_of_type( $track ),
           'maxmin'        => $object->param('maxmin'),
           };
+        $track_count++;
       }
       $config->{'_group_size'} = 1 + $parser->feature_types();
     }
@@ -181,7 +183,7 @@ sub add_tracks {
     my $box_value;
     foreach my $param (@params) {
       if ($param =~ /^track_/ && !($param =~ /^track_name/)) {
-        $config->{'_group_size'}++;
+       $config->{'_group_size'}++;
         if ($object->param($param) ne 'on') {
           $box_value = 'off';
         }
@@ -206,8 +208,6 @@ sub add_tracks {
       $config->set( $art, 'logicname', join( " ", @good_lnames ) );
     }
   }
-warn $config->{'_group_size'};
-                                                                                
   return 1;
 }
                                                                                 

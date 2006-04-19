@@ -10,7 +10,6 @@ sub _initialize {
   my $self = shift;
 
 ## General layout for static pages...
-
   $self->add_head_elements qw(
     title      EnsEMBL::Web::Document::HTML::Title
     stylesheet EnsEMBL::Web::Document::HTML::Stylesheet
