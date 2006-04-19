@@ -214,13 +214,11 @@ sub DNA {
 
 	my $slice = $self->database('core', $self->real_species)->get_SliceAdaptor->fetch_by_region('', $region_name, $region_start, $region_end, 1 );
 
-	my $seq = lc($slice->seq());
-
 	push @features, {
     	    'REGION' => $region_name, 
 	    'START'  => $region_start, 
 	    'STOP'   => $region_end,
-	    'SEQ' => $seq
+	    'SEQ' => $slice->seq(),
 	    };
     }
 
