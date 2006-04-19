@@ -98,10 +98,11 @@ sub _init {
 	  }
 	}
       }
+
       push @golden_path, {
 			  label   => $label,
 			  snp_ref => $snp_ref,
-			  colour  => $colours[0],
+			  colour  => $golden_path_base eq $reference_base ? $colours[0] : $colours[1],
 			  base    => $golden_path_base,
 			 };
     }
