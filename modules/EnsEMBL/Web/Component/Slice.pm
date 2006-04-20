@@ -98,7 +98,7 @@ sub align_sequence_display {
 	      $SEQ[$idx++]->{uc($s)} ++;
 	  }
 
-	  warn("\t$spe: ".join('*', @lsa)."\n");
+#	  warn("\t$spe: ".join('*', @lsa)."\n");
 
 
 ### In case we need to display coordinates relative to a coordinate system - 
@@ -443,7 +443,6 @@ sub align_sequence_display {
       my $sindex = 0;
       my $notes;
 
-     
  #     warn("MARK:".Dumper(\@markup));
       for (my $i = 1; $i < (@markup); $i++) {
 	  my $p = $markup[$i -1];
@@ -469,9 +468,11 @@ sub align_sequence_display {
 
 	  my $sq = $p->{mark} ? '' : substr($sequence, $p->{pos}-1, $w);
 
+
 	  if ($p->{mark} && ! defined($c->{mark})) {
 	      push @ht, $BR, $abbr;
 
+	      
 	      if ($object->param('line_numbering') eq 'slice') {
 		  if ($ass) {
 		      my $srt = substr($sequence, $sindex, $width);
@@ -483,7 +484,8 @@ sub align_sequence_display {
 		      }
 
 		  } else {
-		      push @ht, sprintf("%*s:%*u %s", $max_region, $as->seq_region_name, $lineformat, $sindex + $linenumbers[0] + 1);
+		      my $pos = $sstrand > 0 ? ($sindex + $linenumbers[0] + 1) : ($linenumbers[0] + 1 - $sindex);
+		      push @ht, sprintf("%*s:%*u %s", $max_region, $as->seq_region_name, $lineformat, $pos);
 		  }
 		
 	      } else {
@@ -549,7 +551,8 @@ sub align_sequence_display {
 		      }
 
 		  } else {
-		      push @ht, sprintf(" %*s:%*u", $max_region, $as->seq_region_name, $lineformat, $sindex + $linenumbers[0]);
+		      my $pos = $sstrand > 0 ? ($sindex + $linenumbers[0]) : ($linenumbers[0] - $sindex + 2);
+		      push @ht, sprintf(" %*s:%*u", $max_region, $as->seq_region_name, $lineformat, $pos);
 		  }
 		
 	      } else {
@@ -624,7 +627,6 @@ sub align_sequence_display {
 	  last if (!$hi);
       }
   } else {
-      warn("KEYS: ".join('*', sort keys %{$html_hash}));
       $hhh = join('', @{$html_hash->{"1_$species"}});
   }
 
