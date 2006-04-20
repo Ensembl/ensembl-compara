@@ -14,7 +14,7 @@ sub features {
   my ($self) = @_;
   if( exists( $self->{'config'}->{'snps'} ) ) {
     my $snps = $self->{'config'}->{'snps'} || [];
-    if(@$snps) {
+    if(@$snps && !$self->{'config'}->{'variation_legend_features'} ) {
       $self->{'config'}->{'variation_legend_features'}->{'variations'} = { 'priority' => 1000, 'legend' => [] };
     }
     return $snps;
