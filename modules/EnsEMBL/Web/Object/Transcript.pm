@@ -346,13 +346,24 @@ sub get_samples {
     $db_pops{$_} = 1;
   }
 
+  my $script_config = $self->get_scriptconfig();
   if ($options eq 'display') { # return list of pops with default first
     return (sort keys %default_pops), (sort keys %db_pops);
+  }
+
+  # This elsif allows a user to manually add in an optional strain. Use format strain=xxx:on
+  elsif ( $self->param('strain') ) { # only occurs when tweak URL
+    my @pops;
+    foreach my $sample ( $self->param('strain') ) {
+      next unless $sample =~ /(.*):(\w+)/;
+      $script_config->get("opt_pop_$1") eq '$2';
+      push @pops, $1 if $2 eq 'on';
+    }
+    return sort @pops;
   }
   else { #get configured samples
     my %configured_pops = (%default_pops, %db_pops);
     my @pops;
-    my $script_config = $self->get_scriptconfig();
     foreach my $sample (sort $script_config->options) {
       next unless $sample =~ s/opt_pop_//;
       next unless $script_config->get("opt_pop_$sample") eq 'on';
