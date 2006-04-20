@@ -1,0 +1,55 @@
+<html>
+<head>
+<meta name="author" content="web" />
+<meta name="navigation" content="Comparative Genomics" />
+<title>Comparative Genomics</title>
+</head>
+
+<body>
+
+<h2>Comparative Genomics</h2>
+
+<h3>BlastZ-net Analysis</h3>
+
+<p>BlastZ-net (<a href="http://www.genome.org/cgi/content/abstract/13/1/103">Schwartz S et al., Genome Res.;13(1):103-7</a>, <a href="http://www.pnas.org/cgi/content/full/100/20/11484">Kent WJ et al., Proc Natl Acad Sci U S A., 2003;100(20):11484-9</a>) alignments are provided for closely related pairs of species. The alignments are the results of post-processing the raw BlastZ results. In the first step, original blocks are chained according to their location in both genomes. The netting process chooses for the reference species the best sub-chain in each region. The reference species in the BlastZ-net alignments is human if possible or mouse otherwise.</p>
+
+[[INCLUDE::/info/data/compara/blastz_net.html]]
+
+
+
+
+
+<h3>Translated Blat Analysis</h3>
+
+<p>Translated blat (<a href="http://www.genome.org/cgi/content/abstract/12/4/656">Kent W, Genome Res., 2002;12(4):656-64</a>) is used to look for homologous regions between more distantly related pairs of species. We expect to find homologies mainly in coding regions.</p>
+
+[[INCLUDE::/info/data/compara/tblat.html]]
+
+
+
+
+
+
+<h3>MLAGAN Analysis</h3>
+
+<p>Mlagan (<a href="http://www.genome.org/cgi/content/abstract/13/4/721">Brudno M et al., Genome Res., 2003;13(4):721-31</a>) is used to provide global multiple genomic alignments. First, Mercator is used to build a synteny map between the genomes and then Mlagan builds alignments in the syntenic regions.</p>
+
+[[INCLUDE::/info/data/compara/mlagan.html]]
+
+
+
+
+
+<h3>Homology Analysis</h3>
+
+<p>Three types of homology relationships are provided.</p>
+
+<p>The orthology pipeline takes into account the genes from the species listed below and predicts orthologues based on best reciprocal hits and extends the concept using synteny information.</p>
+
+<p>Paralogues are provided for a selected set of species.</p>
+
+<p>Families are groups of related genes. The full set of Ensembl proteins is extended using all the metazoan proteins from SwissProt and SPTrEMBL.</p>
+
+[[INCLUDE::/info/data/compara/homologues.html]]
+</body>
+</html>
