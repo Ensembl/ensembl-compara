@@ -336,9 +336,6 @@ sub createObjects {
 		    $sources_conf{$das_name}->{$key} = $das_data{$key};
 		}
 
-#		warn("DAS SUBMIT $das_name");
-
-#		warn("S:".Data::Dumper::Dumper(\%das_data));
 		$extdas->add_das_source(\%das_data);
 		$DASsel{$das_name} = 1;
 
@@ -360,7 +357,7 @@ sub createObjects {
 	    $das_data->{label} ||= $das_data->{name};
 	    $das_data->{caption} ||= $das_data->{name};
 	    @{$das_data->{enable}} = $self->param('DASenable');
-	    @{$das_data->{mapping}} = $self->param('DAStype');
+	    @{$das_data->{mapping}} = grep { $_ } $self->param('DAStype');
 	    $das_data->{type} = 'mixed' if (scalar(@{$das_data->{mapping}}>1));
 
 	    $das_data->{conftype} = 'external';
@@ -423,13 +420,11 @@ sub createObjects {
 		$das_data->{label} ||= $das_data->{name};
 		$das_data->{caption} ||= $das_data->{name};
 		@{$das_data->{enable}} = $self->param('DASenable');
-		@{$das_data->{mapping}} = $self->param('DAStype');
+		@{$das_data->{mapping}} = grep { $_ } $self->param('DAStype');
 		$das_data->{type} = 'mixed' if (scalar(@{$das_data->{mapping}}>1));
 
 		$das_data->{conftype} = 'external';
 
-#		warn("ADD2 $das_name");
-#		warn(Dumper($das_data));
 		$sources_conf{$das_name} ||= {};
 
 		foreach my $key( @confkeys, @allkeys, 'dsn', 'enable', 'mapping') {
