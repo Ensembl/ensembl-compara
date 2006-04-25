@@ -89,6 +89,7 @@ sub _init {
         'caption' => 'Resequencing read coverage: '.$display_level,
         "12:bp $pos" => '',
         "14:$sample" => '',
+        "16:Source: Sanger",
       },
       'z'    => $z
     });
