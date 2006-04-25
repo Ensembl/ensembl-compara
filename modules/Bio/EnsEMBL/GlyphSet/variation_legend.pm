@@ -42,12 +42,14 @@ sub _init {
     $y++ unless $x==0;
     $x=0;
     while( my ($legend, $colour) = splice @colours, 0, 2 ) {
+      my $tocolour='';
+      ($tocolour,$colour) = ($1,$2) if $colour =~ /(.*):(.*)/;
       $self->push(new Sanger::Graphics::Glyph::Rect({
         'x'         => $im_width * $x/$NO_OF_COLUMNS,
         'y'         => $y * ($th+3) + 6,
         'width'     => $BOX_WIDTH, 
         'height'    => $th - 2, 
-        'colour'    => $colour,
+        $tocolour.'colour'    => $colour,
         'absolutey' => 1,
         'absolutex' => 1,'absolutewidth'=>1,
       }));

@@ -40,7 +40,6 @@ sub _init {
   my $bitmap_length = $Config->image_width(); #int($Config->container_width() * $pix_per_bp);
   my $voffset = 0;
   my @bitmap;
-  my $max_row = -1;
 
   # Data stuff
   my $colour_map = $Config->get('TSV_snps','colours' );
@@ -71,16 +70,41 @@ sub _init {
       warn "ERROR: Allele call on alleles ", $allele->allele_string, " Allele call on ConsequenceType is different: $tmp" if $allele->allele_string ne $tmp;
     }
 
+    # Alleles (if same as ref, draw empty box )---------------------
+    my $aa_change =  $conseq_type->aa_alleles || [];
+    my $label  = join "/", @$aa_change;
+    my $S =  ( $allele_ref->[0]+$allele_ref->[1] - $font_w_bp * length( $label ) )/2;
+    my $width = $font_w_bp * length( $label );
+    my $ref_allele = $allele->ref_allele_string();
+
+
+    if ($ref_allele eq $allele->allele_string) { # if 'negative snp'
+       my $bglyph = new Sanger::Graphics::Glyph::Rect({
+      'x'         => $S - $font_w_bp / 2,
+      'y'         => $height + 2,
+      'height'    => $height,
+      'width'     => $width + $font_w_bp +4,
+      'bordercolour' => 'grey70',
+      'absolutey' => 1,
+      'zindex'    => -4,
+     });
+      my $bump_start = int($bglyph->{'x'} * $pix_per_bp);
+      $bump_start = 0 if ($bump_start < 0);
+      my $bump_end = $bump_start + int($bglyph->width()*$pix_per_bp) +1;
+      $bump_end = $bitmap_length if ($bump_end > $bitmap_length);
+      my $row = & Sanger::Graphics::Bump::bump_row( $bump_start, $bump_end, $bitmap_length, \@bitmap );
+      $bglyph->y( $voffset + $bglyph->{'y'} + ( $row * (2+$height) ) + 1 );
+      $self->push( $bglyph );
+      next;
+    }
+
+
     # Type and colour -------------------------------------------
     my $type = $conseq_type->type;
     my $colour = $colour_map->{$type}->[0];
 
-    my $aa_change =  $conseq_type->aa_alleles || [];
     my @tmp;
-    if ( my $aa2 = $aa_change->[1] ) {
-      #$aa_change->[1] = lc( $aa2 ) if $type eq 'SYNONYMOUS_CODING';
-      push @tmp, ("05:Amino acid: $aa_change->[0] to $aa_change->[1]", '' );
-    }
+    push @tmp, ("05:Amino acid: $aa_change->[0] to $aa_change->[1]", '' ) if $aa_change->[1];
 
     # Codon - make the letter for the SNP position in the codon bold
     my $codon = $conseq_type->codon;
@@ -104,7 +128,7 @@ sub _init {
 	push @tmp, ("07:Resequencing coverage: $coverage" => '');
       }
     }
-    my $label  = join "/", @$aa_change;
+
     if ( (my $splice = $conseq_type->splice_site) =~ s/_/ /g) {
       $type .= "- $splice";
       $colour = $colour_map->{'SPLICE_SITE'}->[0] if $conseq_type->type eq "INTRONIC";
@@ -115,8 +139,6 @@ sub _init {
     }
 
     # Draw ------------------------------------------------
-    my $S =  ( $allele_ref->[0]+$allele_ref->[1] - $font_w_bp * length( $label ) )/2;
-    my $width = $font_w_bp * length( $label );
     my $tglyph = new Sanger::Graphics::Glyph::Text({
       'x'         => $S,
       'y'         => $height + 3,
@@ -127,7 +149,7 @@ sub _init {
       'text'      => $label,
       'absolutey' => 1,
     });
-  
+ 
     my $offset = $self->{'container'}->strand > 0 ? $self->{'container'}->start - 1 :  $self->{'container'}->end + 1;
     my $chr_start = $allele->start() + $offset;
     my $chr_end   = $allele->end() + $offset;
@@ -139,7 +161,7 @@ sub _init {
     }
 
     my $href = "/@{[$self->{container}{_config_file_name_}]}/snpview?snp=@{[$allele->variation_name]};source=@{[$allele->source]};chr=$seq_region_name;vc_start=$chr_start";
-    my $ref_allele = $allele->ref_allele_string();
+
     my $bglyph = new Sanger::Graphics::Glyph::Rect({
       'x'         => $S - $font_w_bp / 2,
       'y'         => $height + 2,
@@ -166,7 +188,7 @@ sub _init {
     my $bump_end = $bump_start + int($bglyph->width()*$pix_per_bp) +1;
        $bump_end = $bitmap_length if ($bump_end > $bitmap_length);
     my $row = & Sanger::Graphics::Bump::bump_row( $bump_start, $bump_end, $bitmap_length, \@bitmap );
-    $max_row = $row if $row > $max_row;
+
     $tglyph->y( $voffset + $tglyph->{'y'} + ( $row * (2+$height) ) + 1 );
     $bglyph->y( $voffset + $bglyph->{'y'} + ( $row * (2+$height) ) + 1 );
     $self->push( $bglyph, $tglyph );

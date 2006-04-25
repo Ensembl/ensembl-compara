@@ -17,7 +17,7 @@ sub _init {
   foreach my $type ( sort { $colours->{$a}->[0] cmp $colours->{$b}->[0]} keys %$colours ) {
     push @{ $Config->{'variation_legend_features'}->{'variations'}->{'legend'}}, $colours->{$type}->[1],   $colours->{$type}->[0];
   }
-
+ push @{ $Config->{'variation_legend_features'}->{'variations'}->{'legend'}}, "Allele same as reference", "border:grey70";
 
   my ($w,$th) = $Config->texthelper()->px2bp($Config->species_defs->ENSEMBL_STYLE->{'LABEL_FONT'});
 
