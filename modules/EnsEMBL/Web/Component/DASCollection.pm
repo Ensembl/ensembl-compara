@@ -960,10 +960,14 @@ sub das_wizard_3 {
 
     $option = lc($das_conf->{score} || 'n');
     my @scvalues;
-    foreach ( 'No chart', 'Histogram', 'Tiling Array' ) {
-        my $id          = lc(substr($_,0,1));
-        push @scvalues, {'name'=>$_, 'value'=>$id};
-    }
+    my @ctypes = ( 'n' => 'No chart', 'h' => 'Histogram', 's' => 'Tiling Array' );
+
+    do {
+	my $id = shift @ctypes;
+	my $label = shift @ctypes;
+        push @scvalues, {'name'=>$label, 'value'=>$id};
+    } while (@ctypes);
+
     $form->add_element('select'=>'select',
                        'type'=>'DropDown',
                        'name'=>'DASscore',
