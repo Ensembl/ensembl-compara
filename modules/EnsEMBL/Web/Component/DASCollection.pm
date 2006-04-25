@@ -960,7 +960,7 @@ sub das_wizard_3 {
 
     $option = lc($das_conf->{score} || 'n');
     my @scvalues;
-    foreach ( 'No chart', 'Histogram', 'SignalMap' ) {
+    foreach ( 'No chart', 'Histogram', 'Tiling Array' ) {
         my $id          = lc(substr($_,0,1));
         push @scvalues, {'name'=>$_, 'value'=>$id};
     }
