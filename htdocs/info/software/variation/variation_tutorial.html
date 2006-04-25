@@ -249,7 +249,7 @@ exit 0;
 <p>
 Below is a complete example on how to use the variation API to retrieve different data from the database. In that particular example, 
 we want to get, for a list of variation names, information about alleles, flanking sequences, locations, effects of variations
-in transcripts, position in the transcript (in case it has a coding effect) and genes involved in the transcripts.
+in transcripts, position in the transcript (in case it has a coding effect) and genes containing the transcripts.
 </p>
 
 <pre>
@@ -320,7 +320,7 @@ exit 0;
 <h3 class="boxed">LD calculation</h3>
 
 <p>
-In order to be able to use the LD calculation, you need to compile the C source code and install a moude, called IPC::Run. There is more information
+In order to be able to use the LD calculation, you need to compile the C source code and install a module, called IPC::Run. There is more information
 on how to do this in <a href="http://cvs.sanger.ac.uk/cgi-bin/viewcvs.cgi/ensembl-variation/C_code/README.txt?rev=1.1&view=markup"> Use LD calculation </a>
 In the example below, it calculates the LD in a region in human chromosome 6 for a HAPMAP population, but only prints when there is a high LD
 </p>
@@ -374,7 +374,7 @@ exit 0;
 <p>
 With the apparition of the new technologies, one of the new functionalities that the variation API has is the possibility to
 work with your specific strain as if it was the reference one, and compare it against others. In the example, we create a StrainSlice
-object for a mouse exon and compare it agains the reference exon.
+object for a mouse exon and compare it against the reference exon.
 </p>
 
 <pre>
