@@ -13,21 +13,97 @@
 <h3 class="boxed">Database Description</h3>
 
 <p>
-The set of species-specific Ensembl Variation databases holds genetic variation information.
+The Ensembl Variation database stores two types of variation data, depending it comes from an external source or data it is calculated on site.
 </p>
 
 
-<h3 class="boxed">Database Schema</h3>
-
+<li>
 <p>
-The table layout of the database is explained in the following document:
+Data imported from external sources (dbSNP, Sanger,...):
 </p>
 
 <ul>
 
 <li>
 <p>
-<a href="./variation_schema.html">Variation Schema Description</a>
+SNPS, in-dels
+</p>
+</li>
+
+<li>
+<p>
+Locations for variations
+</p>
+</li>
+
+<li>
+<p>
+Alleles
+</p>
+</li>
+
+<li>
+<p>
+Populations
+</p>
+</li>
+
+<li>
+<p>
+Genotypes
+</p>
+</li>
+
+</ul>
+
+</li>
+
+<li>
+<p>
+Calculated data:
+</p>
+
+<ul>
+
+<li>
+<p>
+Consequence of variations in transcripts (synonymous, non-synonymous,...)
+</p>
+</li>
+
+<li>
+<p>
+Linkage disequilibrium information
+</p>
+</li>
+
+<li>
+<p>
+Tagged variations
+</p>
+</li>
+
+<li>
+<p>
+Read coverage data
+</p>
+</li>
+
+</ul>
+
+</li>
+
+<h3 class="boxed">Database Schema</h3>
+
+<p>
+The table layout of the database, with all the tables, fields and relationships,  is found in the following pdf:
+</p>
+
+<ul>
+
+<li>
+<p>
+<a href="../../../../../ensembl-variation/schema/database-schema.pdf">Variation Database Schema</a>
 </p>
 </li>
 
@@ -59,13 +135,13 @@ A short
 </p>
 </li>
 
-<!--
+
 <li>
 <p>
 <a href="./variation_tutorial.html">Variation Perl API Tutorial</a>: An introduction to the underlying concepts of the Variation database API.
 </p>
 </li>
--->
+
 
 </ul>
 
