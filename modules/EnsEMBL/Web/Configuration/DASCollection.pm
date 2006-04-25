@@ -216,7 +216,7 @@ sub display_wizard_status {
 
     if (@data_location) {
         if (defined(my $mmapping = $source_conf{type})) {
-	    my $cs = join('+ ', map {$object->getCoordinateSystem($_)} @{$source_conf{mapping}});
+	    my $cs = join('+ ', map {$object->getCoordinateSystem($_)} grep {$_} @{$source_conf{mapping}});
             push @data_location, {"text" => "Coordinate system: $cs"};
         }
     
