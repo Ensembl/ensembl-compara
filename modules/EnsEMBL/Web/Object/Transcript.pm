@@ -356,7 +356,7 @@ sub get_samples {
     my @pops;
     foreach my $sample ( $self->param('strain') ) {
       next unless $sample =~ /(.*):(\w+)/;
-      $script_config->get("opt_pop_$1") eq '$2';
+      $script_config->set("opt_pop_$1", $2, 1);
       push @pops, $1 if $2 eq 'on';
     }
     return sort @pops;

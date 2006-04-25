@@ -1200,7 +1200,7 @@ sub _sample_configs {
     }
 
     my ( $allele_info, $consequences ) = $object->getAllelesConsequencesOnSlice($sample, "TSV_transcript", $sample_slice);
-    my ($coverage_level, $raw_coverage_obj) = [], [];
+    my ($coverage_level, $raw_coverage_obj) = ([], []);
     if ($display_coverage) {
       ($coverage_level, $raw_coverage_obj) = $object->read_coverage($sample, $sample_slice);
     }
