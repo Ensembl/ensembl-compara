@@ -607,8 +607,8 @@ sub _internal_newick_format {
     #simplified: name only on leaves, dist only if has parent
     if($self->parent) {
       if($self->is_leaf) {
-#        $newick .= sprintf("\"%s\"", $self->name);
-        $newick .= sprintf("%s", $self->name);
+        $newick .= sprintf("\"%s\"", $self->name);
+#        $newick .= sprintf("%s", $self->name);
       }
       $newick .= sprintf(":%1.4f", $self->distance_to_parent);
     }
@@ -827,14 +827,13 @@ sub minimize_node {
   
   my $child = $self->children->[0];
   my $dist = $child->distance_to_parent + $self->distance_to_parent;
-  if($self->parent && $self->parent->node_id != $self->root->node_id) {
-    $self->parent->add_child($child, $dist);
-    $self->disavow_parent;
+  if ($self->parent) {
+     $self->parent->add_child($child, $dist); 
+     $self->disavow_parent;
   } else {
-    $child->parent->merge_children($child);
-    $child->disavow_parent;
+     $child->disavow_parent;
   }
-  return $child;
+  return $child
 }
 
 
