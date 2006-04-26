@@ -301,7 +301,7 @@ sub update_node_names {
       $leaf->name($gdb_id2dfr{$leaf->name});
     } else {
       $leaf->disavow_parent;
-      $tree->minimize_tree;
+      $tree = $tree->minimize_tree;
     }
   }
   if ($tree->get_child_count == 1) {

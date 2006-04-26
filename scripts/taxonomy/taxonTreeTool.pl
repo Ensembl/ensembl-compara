@@ -171,7 +171,7 @@ sub fetch_by_ncbi_taxa_list {
     $root->merge_node_via_shared_ancestor($node);
   }
 
-  $root->minimize_tree if($self->{'minimize_tree'});
+  $root = $root->minimize_tree if($self->{'minimize_tree'});
   $root->print_tree($self->{'scale'});
   $root->flatten_tree->print_tree($self->{'scale'});
   $self->{'root'} = $root;
