@@ -283,7 +283,7 @@ sub update_node_names {
       $leaf->parent->retain->remove_child($leaf);
     }
   }
-  $tree->minimize_tree;
+  $tree = $tree->minimize_tree;
   if ($tree->get_child_count == 1) {
     my $child = $tree->children->[0];
     $child->parent->merge_children($child);
