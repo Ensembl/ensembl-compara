@@ -36,7 +36,7 @@ Refer to the Ensembl core tutorial for a good description of the coding conventi
 
 <p>
 There are two ways to connect to the EnsEMBL Variation database. 
-The old way uses the Bio::EnsEMBL::Variation::DBSQL::DBAdaptor explicitely. 
+The old way uses the Bio::EnsEMBL::Variation::DBSQL::DBAdaptor explicitly. 
 The new one uses the Bio::EnsEMBL::Registry module, which can read either a global or a specific configuration file.
 </p>
 
@@ -68,7 +68,7 @@ the type of database driver and the password respectively.
 These values have sensible defaults and can often be omitted.
 </p>
 
-<h4>Implicitely, using the Bio::EnsEMBL::Registry configuration file (recommended)</h4>
+<h4>Implicitly, using the Bio::EnsEMBL::Registry configuration file (recommended)</h4>
 
 <p>
 You will need to have a registry configuration file set up. 
@@ -116,7 +116,7 @@ new Bio::EnsEMBL::Variation::DBSQL::DBAdaptor(
 
 <p>
 In this configuration file, you can list all the parameters needed to connect a variation database.
-The variation database is a database that contains information about one particular specie. However, in order 
+The variation database is a database that contains information about one particular species. However, in order 
 to have full functionality, you will need to connect to the core database as well.
 The use of the registry configuration file lets you the freedom to list connection parameters for all
 Ensembl core databases you might need to access in relation to Ensembl variation data (in our example, only 1 is mentioned, human).
