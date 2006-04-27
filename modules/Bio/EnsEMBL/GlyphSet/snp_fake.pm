@@ -14,11 +14,6 @@ sub _init {
 
   my $Config        = $self->{'config'};
   my $colours       = $Config->get('snp_fake','colours' );
-  foreach my $type ( sort { $colours->{$a}->[0] cmp $colours->{$b}->[0]} keys %$colours ) {
-    push @{ $Config->{'variation_legend_features'}->{'variations'}->{'legend'}}, $colours->{$type}->[1],   $colours->{$type}->[0];
-  }
- push @{ $Config->{'variation_legend_features'}->{'variations'}->{'legend'}}, "Allele same as reference assembly", "border:grey70";
-
   my ($w,$th) = $Config->texthelper()->px2bp($Config->species_defs->ENSEMBL_STYLE->{'LABEL_FONT'});
 
   my $snps = $Config->{'snps'};
@@ -89,7 +84,14 @@ sub _init {
     $self->join_tag( $tglyph, "X:$tag_root=$tag2", .5, 0, $colour,'',-3 );
     $self->push( $tglyph );
 
+
+    # Colour legend stuff
+    unless($Config->{'variation_types'}{$type}) {
+      push @{ $Config->{'variation_legend_features'}->{'variations'}->{'legend'}}, $colours->{$type}->[1],   $colours->{$type}->[0];
+      $Config->{'variation_types'}{$type} = 1;
+    }
   }
+  push @{ $Config->{'variation_legend_features'}->{'variations'}->{'legend'}}, $colours->{"NEGATIVE"}->[1],   $colours->{"NEGATIVE"}->[0];
 }
 
 sub zmenu {
