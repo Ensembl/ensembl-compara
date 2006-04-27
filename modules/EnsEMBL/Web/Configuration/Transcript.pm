@@ -148,7 +148,7 @@ sub transcriptsnpview {
  if( $restore_default && !$obj->param('bottom') ) { # if no spp sources are on
    foreach my $source ( @sources ) {
      my $switch;
-     if ($default_source) {
+     if (0) { # default is all sources on   $default_source) {
        $switch = $source eq $default_source ? 'on' : 'off' ;
      }
      else {
