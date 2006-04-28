@@ -90,7 +90,7 @@ my $mapping_panel = $self->new_panel('SpreadSheet',
 
  # Set default sources--------------
  my @sources = keys %{ $obj->species_defs->VARIATION_SOURCES || {} } ;
- my $default_source = $obj->get_source("default");;
+ my $default_source = $obj->source;  # source of SNP
  my $script_config = $obj->get_scriptconfig();
  my $restore_default = 1;
 
