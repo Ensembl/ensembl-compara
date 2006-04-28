@@ -330,7 +330,8 @@ sub write_chains {
     @ungapped_features = sort {$a->{q_start} <=> $b->{q_start}} @ungapped_features;
 
     # write chain header here
-    printf($fh "chain %d %s %d %s %d %d %s %d %s %s %s %d\n",
+#    printf($fh "chain %d %s %d %s %d %d %s %d %s %s %s %d\n",
+    print $fh join(" ",("chain",
            $chain_score,
            $query_name,
            $self->query_length_hash->{$query_name},
@@ -342,7 +343,7 @@ sub write_chains {
            $target_strand == -1 ? "-" : "+",
            $ungapped_features[0]->{t_start} - 1,
            $ungapped_features[-1]->{t_end},
-           $chain_id);
+           $chain_id)), "\n";
     
     for (my $i = 0; $i < @ungapped_features; $i++) {
       my $f = $ungapped_features[$i];
