@@ -232,7 +232,7 @@ sub convert_output {
       $gab->{'method_link_species_set_id'} = undef;
       $gab->method_link_species_set($self->output_MethodLinkSpeciesSet);
       foreach my $ga (@{$gab->get_all_GenomicAligns}) {
-        $ga->genomic_align_group_by_type("chain");
+        $ga->genomic_align_group_by_type($self->{'input_group_type'});
         $ga->{'adaptor'} = undef;
         $ga->{'dbID'} = undef;
         $ga->{'method_link_species_set_id'} = undef;
@@ -248,7 +248,7 @@ sub delete_alignments {
   my ($self, $mlss, $qy_dnafrag, $start, $end) = @_;
 
   my $dbc = $self->db->dbc;
-  my $sql = "select ga1.genomic_align_block_id, ga1.genomic_align_id, ga2.genomic_align_id from genomic_align ga1, genomic_align ga2 where ga1.genomic_align_block_id=ga2.genomic_align_block_id and ga1.dnafrag_id = ? and ga1.dnafrag_start <= ? and ga1.dnafrag_end >= ? and ga1.method_link_species_set_id = ?";
+  my $sql = "select ga1.genomic_align_block_id, ga1.genomic_align_id, ga2.genomic_align_id from genomic_align ga1, genomic_align ga2 where ga1.genomic_align_block_id=ga2.genomic_align_block_id and ga1.dnafrag_id = ? and ga1.dnafrag_id!=ga2.dnafrag_id and ga1.dnafrag_start <= ? and ga1.dnafrag_end >= ? and ga1.method_link_species_set_id = ?";
   my $sth = $dbc->prepare($sql);
   $sth->execute($qy_dnafrag->dbID, $end, $start, $mlss->dbID);
 
@@ -270,7 +270,7 @@ sub delete_alignments {
       push @gab_ids, $gabs[$j][0];
       push @ga1_ids, $gabs[$j][1];
       push @ga2_ids, $gabs[$j][2];
-      print $j," ",$gabs[$j][0]," ",$gabs[$j][1]," ",$gabs[$j][2],"\n";
+#      print $j," ",$gabs[$j][0]," ",$gabs[$j][1]," ",$gabs[$j][2],"\n";
     }
     my $sql_gab_to_exec = $sql_gab . "(" . join(",", @gab_ids) . ")";
     my $sql_ga_to_exec1 = $sql_ga . "(" . join(",", @ga1_ids) . ")";
@@ -302,14 +302,14 @@ sub run {
 sub write_output {
   my $self = shift;
 
-  my $disconnect_when_inactive_default = $self->{'comparaDBA'}->disconnect_when_inactive;
-  $self->{'comparaDBA'}->disconnect_when_inactive(0);
+  my $disconnect_when_inactive_default = $self->{'comparaDBA'}->dbc->disconnect_when_inactive;
+  $self->{'comparaDBA'}->dbc->disconnect_when_inactive(0);
 
   bless $self, "Bio::EnsEMBL::Analysis::RunnableDB::AlignmentFilter";
   $self->write_output;
   bless $self, "Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::AlignmentChains";
 
-  $self->{'comparaDBA'}->disconnect_when_inactive($disconnect_when_inactive_default);
+  $self->{'comparaDBA'}->dbc->disconnect_when_inactive($disconnect_when_inactive_default);
 }
 
 1;
