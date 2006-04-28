@@ -380,7 +380,7 @@ sub parse_Net_file {
       
       my ($score)    = $rest =~ /score\s+(\d+)/;
       my ($chain_id) = $rest =~ /id\s+(\d+)/;
-      
+
       $new_chain_scores{$chain_id} += $score;
       
       my ($restricted_fps)
@@ -432,7 +432,6 @@ sub parse_Net_file {
           
           $new_chains{$last_parent_chain[$indent - 2]} = [@$chain1, @$chain2];
         }
-        
         $last_parent_chain[$indent] = $chain_id;
       }
     };
@@ -481,6 +480,7 @@ sub restrict_between_positions {
     #$chain_left = [];
     #$chain_right = $chain;
   } else {
+
     if ($first_idx > 0) {
       #@$chain_left = @{@$chain}[0..$first_idx-1];
     }
@@ -561,10 +561,7 @@ sub restrict_between_positions {
 sub _bin_search_start {
   my ($self, $blocks, $position) = @_; 
 
-  # if direction is "reverse", returns index of latest block with start <= $position
-  # if direction is something else returns index of earliest block with end >= $position
-
-  # binary search the block list
+  # find index of left-most block that ends to the right of $position
   my ($left, $right) = (0, scalar(@$blocks));
   while ($right - $left > 0) {
     my $mid = int(($left + $right) / 2);
@@ -595,10 +592,7 @@ sub _bin_search_start {
 sub _bin_search_end {
   my ($self, $blocks, $position) = @_; 
 
-  # if direction is "reverse", returns index of latest block with start <= $position
-  # if direction is something else returns index of earliest block with end >= $position
-
-  # binary search the block list
+  # find index of rightmost block that starts before $position
   my ($left, $right) = (-1, scalar(@$blocks)-1);
   while ($right - $left > 0) {
     my $mid = int(($left + $right + 1) / 2);
@@ -607,7 +601,7 @@ sub _bin_search_end {
     if ($blocks->[0]->isa("Bio::EnsEMBL::Compara::GenomicAlignBlock")) {
       $block_start = $blocks->[$mid]->reference_genomic_align->dnafrag_start;
     } else {
-      $block_start = $blocks->[$mid]->end;
+      $block_start = $blocks->[$mid]->start;
     }
 
     if ($block_start > $position) {
