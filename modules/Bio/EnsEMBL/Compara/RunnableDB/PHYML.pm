@@ -88,11 +88,13 @@ sub fetch_input {
   $self->{'gamma_distribution_parameter'}            = 1;
   $self->{'cdna'}                                    = 1;
 
-  if($self->input_job->retry_count >= 3) {
-    $self->dataflow_output_id($self->input_id, 2);
-    $self->input_job->update_status('FAILED');
-    throw("PHYML job failed >3 times: try something else and FAIL it");
-  }
+  $self->check_job_fail_options;
+
+#  if($self->input_job->retry_count >= 3) {
+#    $self->dataflow_output_id($self->input_id, 2);
+#    $self->input_job->update_status('FAILED');
+#    throw("PHYML job failed >3 times: try something else and FAIL it");
+#  }
 
   $self->throw("No input_id") unless defined($self->input_id);
 
@@ -259,23 +261,18 @@ sub run_phyml
 sub check_job_fail_options
 {
   my $self = shift;
-  
-  printf("PHYML failed : ");
-  $self->input_job->print_job;
-  printf("\n");
 
-  if($self->input_job->retry_count >= 3) {
-    printf("  failed >3 times: try something else and FAIL it\n");
+  if($self->input_job->retry_count >= 2) {
     $self->dataflow_output_id($self->input_id, 2);
     $self->input_job->update_status('FAILED');
-  }
   
-  if($self->{'protein_tree'}) {
-    $self->{'protein_tree'}->release_tree;
-    $self->{'protein_tree'} = undef;
+    if($self->{'protein_tree'}) {
+      $self->{'protein_tree'}->release_tree;
+      $self->{'protein_tree'} = undef;
+    }
+    throw("PHYML job failed >=3 times: try something else and FAIL it");
   }
 }
-
 
 
 ########################################################
@@ -308,7 +305,7 @@ sub dumpTreeMultipleAlignmentToWorkdir
   open(OUTSEQ, ">$clw_file")
     or $self->throw("Error opening $clw_file for write");
 
-  my $sa = $tree->get_SimpleAlign(-id_type => 'MEMBER', -cdna=>$self->{'cdna'});
+  my $sa = $tree->get_SimpleAlign(-id_type => 'MEMBER', -cdna=>$self->{'cdna'}, -stop2x => 1);
   
   my $alignIO = Bio::AlignIO->newFh(-fh => \*OUTSEQ,
                                     -interleaved => 1,
@@ -331,7 +328,6 @@ sub store_proteintree
 
   printf("PHYML::store_proteintree\n") if($self->debug);
   my $treeDBA = $self->{'comparaDBA'}->get_ProteinTreeAdaptor;
-  
   $treeDBA->sync_tree_leftright_index($self->{'protein_tree'});
   $treeDBA->store($self->{'protein_tree'});
   $treeDBA->delete_nodes_not_in_tree($self->{'protein_tree'});
@@ -396,6 +392,14 @@ sub parse_newick_into_proteintree
   $newtree->release_tree;
 
   $tree->print_tree if($self->debug);
+  # check here on the leaf to test if they all are AlignedMembers as
+  # minimize_tree/minimize_node might not work properly
+  foreach my $leaf (@{$self->{'protein_tree'}->get_all_leaves}) {
+    unless($leaf->isa('Bio::EnsEMBL::Compara::AlignedMember')) {
+      throw("Phyml tree does not have all leaves as AlignedMember\n");
+    }
+  }
+
   return undef;
 }
 
