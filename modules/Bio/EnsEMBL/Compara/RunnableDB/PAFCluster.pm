@@ -58,6 +58,7 @@ use Bio::EnsEMBL::Hive;
 use Bio::EnsEMBL::Compara::NestedSet;
 use Bio::EnsEMBL::Compara::Homology;
 use Bio::EnsEMBL::Compara::Graph::ConnectedComponents;
+use Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
 use Time::HiRes qw(time gettimeofday tv_interval);
 
 our @ISA = qw(Bio::EnsEMBL::Hive::Process);
@@ -80,6 +81,18 @@ sub fetch_input {
   
   $self->get_params($self->parameters);
   $self->get_params($self->input_id);
+
+  my @species_set = @{$self->{'species_set'}};
+  $self->{'cluster_mlss'} = new Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
+  $self->{'cluster_mlss'}->method_link_type('ORTHO_CLUSTERS'); 
+  my @genomeDB_set;
+  foreach my $gdb_id (@species_set) {
+    my $gdb = $self->{'comparaDBA'}->get_GenomeDBAdaptor->fetch_by_dbID($gdb_id);
+    throw("print gdb not defined for gdb_id = $gdb_id\n") unless (defined $gdb);
+    push @genomeDB_set, $gdb;
+  }
+  $self->{'cluster_mlss'}->species_set(\@genomeDB_set);
+
   return 1;
 }
 
@@ -145,7 +158,7 @@ sub write_output {
 
   # modify input_job so that it now contains the clusterset_id
   my $outputHash = {};
-  $outputHash = eval($self->input_id) if(defined($self->input_id));
+  $outputHash = eval($self->input_id) if(defined($self->input_id) && $self->input_id =~ /^\s*\{.*\}\s*$/);
   $outputHash->{'clusterset_id'} = $self->{'clusterset_id'};
   my $output_id = $self->encode_hash($outputHash);  
   $self->input_job->input_id($output_id);
@@ -359,8 +372,9 @@ sub store_clusters {
   my $self = shift;
   
   return unless($self->{'species_set'});
-  my @species_set = @{$self->{'species_set'}};
-  return unless @species_set;
+#  my @species_set = @{$self->{'species_set'}};
+#  return unless @species_set;
+  return unless ($self->{'cluster_mlss'});
 
   my $mlssDBA = $self->{'comparaDBA'}->get_MethodLinkSpeciesSetAdaptor;
   my $pafDBA = $self->{'comparaDBA'}->get_PeptideAlignFeatureAdaptor;
@@ -378,14 +392,15 @@ sub store_clusters {
   #
   # create Cluster MLSS
   #
-  $self->{'cluster_mlss'} = new Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
-  $self->{'cluster_mlss'}->method_link_type('ORTHO_CLUSTERS'); 
-  my @genomeDB_set;
-  foreach my $gdb_id (@species_set) {
-    my $gdb = $self->{'comparaDBA'}->get_GenomeDBAdaptor->fetch_by_dbID($gdb_id);
-    push @genomeDB_set, $gdb;
-  }
-  $self->{'cluster_mlss'}->species_set(\@genomeDB_set);
+#  $self->{'cluster_mlss'} = new Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
+#  $self->{'cluster_mlss'}->method_link_type('ORTHO_CLUSTERS'); 
+#  my @genomeDB_set;
+#  foreach my $gdb_id (@species_set) {
+#    my $gdb = $self->{'comparaDBA'}->get_GenomeDBAdaptor->fetch_by_dbID($gdb_id);
+#    
+#    push @genomeDB_set, $gdb;
+#  }
+#  $self->{'cluster_mlss'}->species_set(\@genomeDB_set);
   $mlssDBA->store($self->{'cluster_mlss'});
   printf("MLSS %d\n", $self->{'cluster_mlss'}->dbID);
   
@@ -423,6 +438,8 @@ sub store_clusters {
     #calc residue count total
     my $leafcount = scalar(@{$cluster->get_all_leaves});
     $cluster->store_tag('gene_count', $leafcount);
+    $cluster->store_tag('include_brh', $self->{'include_brh'});
+    $cluster->store_tag('bsr_threshold', $self->{'bsr_threshold'});
 
     if($counter++ % 200 == 0) { printf("%10d clusters stored\n", $counter); }
   }
