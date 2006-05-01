@@ -86,12 +86,14 @@ sub fetch_input {
   #$self->{'options'} = "-maxiters 1 -diags1 -sv"; #fast options
   $self->{'options'} = "";
   $self->{'muscle_starttime'} = time()*1000;
+
+  $self->check_job_fail_options;
   
-  if($self->input_job->retry_count >= 3) {
-    $self->dataflow_output_id($self->input_id, 2);
-    $self->input_job->update_status('FAILED');
-    throw("Muscle job failed >3 times: try something else and FAIL it");
-  }
+#  if($self->input_job->retry_count >= 3) {
+#    $self->dataflow_output_id($self->input_id, 2);
+#    $self->input_job->update_status('FAILED');
+#    throw("Muscle job failed >3 times: try something else and FAIL it");
+#  }
   
   $self->throw("No input_id") unless defined($self->input_id);
 
@@ -190,6 +192,9 @@ sub get_params {
          $self->{'comparaDBA'}->get_ProteinTreeAdaptor->
          fetch_node_by_node_id($params->{'protein_tree_id'});
   }
+  if(defined($params->{'clusterset_id'})) {
+    $self->{'clusterset_id'} = $params->{'clusterset_id'};
+  }
   $self->{'options'} = $params->{'options'} if(defined($params->{'options'}));
   return;
 
@@ -256,20 +261,16 @@ sub cleanup_job_tmp_files
 sub check_job_fail_options
 {
   my $self = shift;
-  
-  printf("\nMUSCLE failed to execute on job\n");
-  $self->input_job->print_job;
-  printf("\n");
-  
-  if($self->input_job->retry_count >= 3) {
-    printf("  failed >3 times: try something else and FAIL it\n");
+
+  if($self->input_job->retry_count >= 2) {
     $self->dataflow_output_id($self->input_id, 2);
     $self->input_job->update_status('FAILED');
-  }
-  
-  if($self->{'protein_tree'}) {
-    $self->{'protein_tree'}->release_tree;
-    $self->{'protein_tree'} = undef;
+
+    if($self->{'protein_tree'}) {
+      $self->{'protein_tree'}->release_tree;
+      $self->{'protein_tree'} = undef;
+    }
+    throw("Muscle job failed >=3 times: try something else and FAIL it");
   }
 }
 
