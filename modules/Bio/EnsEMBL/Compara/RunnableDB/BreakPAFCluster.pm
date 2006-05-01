@@ -76,12 +76,21 @@ sub fetch_input {
   $self->{'selfhit_score_hash'} = {};
   $self->{'no_filters'} = 0;
   $self->{'all_bests'} = 0;
-  $self->{'include_brh'} = 1;
+  $self->{'include_brh'} = 0;
   $self->{'bsr_threshold'} = 0.25;
   $self->{'clusterset_id'} = undef;
-  
+  $self->{'bsr_threshold_increase'} = 0.1;
+
   $self->get_params($self->parameters);
   $self->get_params($self->input_id);
+
+  my $cluster_include_brh = $self->{'original_cluster'}->get_tagvalue("include_brh");
+  my $cluster_bsr_threshold = $self->{'original_cluster'}->get_tagvalue("bsr_threshold");
+  $self->{'bsr_threshold'} = $cluster_bsr_threshold unless ($self->{'bsr_threshold_analysis_set'});
+  if (defined $cluster_include_brh && $cluster_include_brh == 0) {
+    $self->{'bsr_threshold'} += $self->{'bsr_threshold_increase'}
+      unless ($self->{'bsr_threshold_analysis_set'});
+  }
   return 1;
 }
 
@@ -114,11 +123,16 @@ sub get_params {
   if (defined $params->{'no_filters'}) {
     $self->{'no_filters'} = $params->{'no_filters'};
   }
+  if (defined $params->{'bsr_threshold_increase'}) {
+    $self->{'bsr_threshold_increase'} = $params->{'bsr_threshold_increase'};
+  }
   if (defined $params->{'bsr_threshold'}) {
     $self->{'bsr_threshold'} = $params->{'bsr_threshold'};
+    $self->{'bsr_threshold_analysis_set'} = 1;
   }
   if (defined $params->{'brh'}) {
     $self->{'include_brh'} = $params->{'brh'};
+    $self->{'include_brh_analysis_set'} = 1;
   }
 #  $self->{'include_brh'} = 1;
   if (defined $self->{'original_cluster'}) {
@@ -136,13 +150,22 @@ sub get_params {
 
 sub run
 {
-  my $self = shift;  
+  my $self = shift;
+  if ($self->{'bsr_threshold'} >= 1) {
+    $self->delete_original_cluster;
+    return 1;
+  }
   $self->build_paf_clusters();
   return 1;
 }
 
 sub write_output {
   my $self = shift;
+
+  if ($self->{'bsr_threshold'} >= 1) {
+    $self->delete_original_cluster;
+    return 1;
+  }
 
   $self->store_clusters;
   $self->delete_original_cluster;
@@ -446,6 +469,9 @@ sub store_clusters {
     #calc residue count total
     my $leafcount = scalar(@{$cluster->get_all_leaves});
     $cluster->store_tag('gene_count', $leafcount);
+    $cluster->store_tag('include_brh', $self->{'include_brh'});
+    $cluster->store_tag('bsr_threshold', $self->{'bsr_threshold'});
+    $cluster->store_tag('original_cluster_id', $self->{'original_cluster'}->node_id);
 
     if($counter++ % 200 == 0) { printf("%10d clusters stored\n", $counter); }
   }
@@ -470,8 +496,8 @@ sub delete_original_cluster {
   my $self = shift;
 
   my $original_cluster = $self->{'original_cluster'};
-  
-  $original_cluster->adaptor->delete_node_and_under($original_cluster);
+  $original_cluster->store_tag('cluster_had_to_be_broken_down',1);
+#  $original_cluster->adaptor->delete_node_and_under($original_cluster);
   
   return 1;
 
