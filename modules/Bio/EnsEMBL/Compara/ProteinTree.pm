@@ -60,9 +60,10 @@ sub get_SimpleAlign {
   my $id_type = 'STABLE';
   my $unique_seqs = 0;
   my $cdna = 0;
+  my $stop2x = 0;
   if (scalar @args) {
-    ($unique_seqs, $cdna, $id_type) = 
-       rearrange([qw(UNIQ_SEQ CDNA ID_TYPE)], @args);
+    ($unique_seqs, $cdna, $id_type, $stop2x) = 
+       rearrange([qw(UNIQ_SEQ CDNA ID_TYPE STOP2X)], @args);
   }
   $id_type = 'STABLE' unless(defined($id_type));
 
@@ -91,7 +92,7 @@ sub get_SimpleAlign {
     my $seqID = $member->stable_id;
     $seqID = $member->sequence_id if($id_type eq "SEQ");
     $seqID = $member->member_id if($id_type eq "MEMBER");
-    
+    $seqstr =~ s/\*/X/g if ($stop2x);
     my $seq = Bio::LocatableSeq->new(-SEQ    => $seqstr,
                                      -START  => 1,
                                      -END    => length($seqstr),
