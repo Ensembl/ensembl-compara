@@ -699,8 +699,6 @@ sub ldview_nav           {
     'snp'    => $_[1]->param('snp')    || undef,
     'gene'   => $_[1]->param('gene')   || undef,
     'bottom' => $pop                   || undef,
-    'w'      => $_[1]->param('w')      || undef,
-    'c'      => $_[1]->param('c')      || undef,
     'source' => $_[1]->param('source'),
     'h'      => $_[1]->highlights_string || undef,
   } );	
