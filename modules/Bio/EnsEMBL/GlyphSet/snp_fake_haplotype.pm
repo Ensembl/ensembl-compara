@@ -44,7 +44,7 @@ sub _init {
 
 
   # Info text ---------------------------------------------------------
-  my $info_text = "Comparison to reference $reference_name strain alleles (green = same allele; purple = different allele)";
+  my $info_text = "Comparison to $reference_name alleles (green = same allele; purple = different allele)";
 
   my ($w,$th) = $Config->texthelper()->px2bp($Config->species_defs->ENSEMBL_STYLE->{'LABEL_FONT'});
   my $track_height = $th + 4;
@@ -69,7 +69,7 @@ sub _init {
   my $offset = $small_th + 4;
   my @colours       = qw(chartreuse4 darkorchid4);# orange4 deeppink3 dodgerblue4);
 
-  $self->strain_name_text($w, $th, $offset, "Reference $reference_name", $Config);
+  $self->strain_name_text($w, $th, $offset, "Compare to $reference_name", $Config);
 
 
   # First lets draw the reference SNPs....
@@ -195,7 +195,7 @@ sub strain_name_text {
       'font'       => $Config->species_defs->ENSEMBL_STYLE->{'LABEL_FONT'},
       'colour'     => 'black',
       'text'       => $name,
-      'title'      => "Click to set strain as reference",
+      'title'      => "Click to compare to $name",
       'href'       => $URL,
       'absolutey'  => 1,
     });
