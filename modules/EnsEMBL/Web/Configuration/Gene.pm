@@ -383,6 +383,7 @@ sub context_menu {
   # Variation: TranscriptSNP view
   # if meta_key in variation meta table has default strain listed
     if ( $obj->species_defs->VARIATION_STRAIN ) { 
+      my $strain =  $obj->species_defs->translate( "strain" )."s";
     # Transcript SNP View
     my @sample_links =
       map { {
@@ -393,7 +394,7 @@ sub context_menu {
       $self->add_entry( $flag,
        'code'  => 'compare_samples',
        'text'  => "Compare SNPs in transcript",
-       'title' => "TranscriptSNP View - Compare transcript variation in different individuals or strains",
+       'title' => "TranscriptSNP View - Compare transcript variation in different $strain",
        'href'  => $sample_links[0]{'href'},
        'options' => \@sample_links,
       );

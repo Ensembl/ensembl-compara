@@ -283,10 +283,11 @@ sub context_menu {
   # Variation: TranscriptSNP view
   # if meta_key in variation meta table has default strain listed
   if ( $obj->species_defs->VARIATION_STRAIN ) { 
+    my $strain =  $obj->species_defs->translate( "strain" )."s";
     $self->add_entry( $flag,
 		      'code'  => 'TSV',
 		      'text'  => "Compare transcript SNPs",
-		      'title' => 'TranscriptSNPView - Compare variation in different individuals or strains for this transcript '.$obj->stable_id,
+		      'title' => "TranscriptSNPView - Compare variation in different $strain for this transcript ".$obj->stable_id,
 		      'href'  => "/$species/transcriptsnpview?$q_string" 
 		    );
   }
