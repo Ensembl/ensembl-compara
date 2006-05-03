@@ -1434,6 +1434,8 @@ sub restrict_between_alignment_positions {
   ## trim these gaps from the alignment as they fall just outside of the region of interest
   return $self if ($length_of_truncated_seq_at_the_start <= 0 and $length_of_truncated_seq_at_the_end <= 0);
 
+  my $final_aligned_length = $end - $start + 1;
+
   ## Create a new Bio::EnsEMBL::Compara::GenomicAlignBlock object
   foreach my $this_genomic_align (@{$self->get_all_GenomicAligns}) {
     my $dnafrag_strand = $this_genomic_align->dnafrag_strand;
@@ -1457,7 +1459,7 @@ sub restrict_between_alignment_positions {
     if (scalar @gags) {
       $new_genomic_align->genomic_align_groups(\@gags);
     }
-    if ($this_genomic_align == $self->reference_genomic_align) {
+    if ($self->reference_genomic_align and $this_genomic_align == $self->reference_genomic_align) {
       $new_reference_genomic_align = $new_genomic_align;
     }
     push(@$new_genomic_aligns, $new_genomic_align);
@@ -1506,41 +1508,47 @@ sub restrict_between_alignment_positions {
       }
     }
 
+    my @final_cigar = ();
+
     ## Trim end of cigar_line if needed
     if ($length_of_truncated_seq_at_the_end >= 0) {
-    ## Truncate all the GenomicAligns
+      ## Truncate all the GenomicAligns
       my $aligned_seq_length = 0;
       my $original_seq_length = 0;
       my $new_cigar_piece = "";
-      while (my $cigar = pop(@cigar)) {
-        my ($num, $type) = ($cigar =~ /^(\d*)([DIGM])/);
+      while (my $cigar = shift(@cigar)) {
+        my ($num, $type) = ($cigar =~ /^(\d*)([DM])/);
         $num = 1 if ($num eq "");
         $aligned_seq_length += $num;
-        if ($aligned_seq_length >= $length_of_truncated_seq_at_the_end) {
-          my $length = $aligned_seq_length - $length_of_truncated_seq_at_the_end;
+        if ($aligned_seq_length >= $final_aligned_length) {
+          my $length = $num - $aligned_seq_length + $final_aligned_length;
           if ($length > 1) {
-            $new_cigar_piece .= $length.$type;
+            $new_cigar_piece = $length.$type;
           } elsif ($length == 1) {
-            $new_cigar_piece .= $type;
+            $new_cigar_piece = $type;
           }
-          push(@cigar, $new_cigar_piece) if ($new_cigar_piece);
+          push(@final_cigar, $new_cigar_piece) if ($new_cigar_piece);
           if ($type eq "M") {
-            $original_seq_length += $length_of_truncated_seq_at_the_end - ($aligned_seq_length - $num);
+            $original_seq_length += $length;
           }
           last;
+        } else {
+          push(@final_cigar, $cigar);
         }
         $original_seq_length += $num if ($type eq "M");
       }
       if ($genomic_align->dnafrag_strand == 1) {
-        $genomic_align->dnafrag_end($genomic_align->dnafrag_end - $original_seq_length);
+        $genomic_align->dnafrag_end($genomic_align->dnafrag_start + $original_seq_length - 1);
       } else {
-        $genomic_align->dnafrag_start($genomic_align->dnafrag_start + $original_seq_length);
+        $genomic_align->dnafrag_start($genomic_align->dnafrag_end - $original_seq_length + 1);
       }
+    } else {
+      @final_cigar = @cigar;
     }
 
     ## Save genomic_align's cigar_line
     $genomic_align->aligned_sequence(0);
-    $genomic_align->cigar_line(join("", @cigar));
+    $genomic_align->cigar_line(join("", @final_cigar));
   }
 
   return $genomic_align_block;
