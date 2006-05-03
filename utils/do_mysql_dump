@@ -101,6 +101,7 @@ foreach my $sp( @SPECIES ){
 				ENSEMBL_COMPARA_MULTIPLE
 				ENSEMBL_BLAST_LOG
 				ENSEMBL_FASTA
+                                ENSEMBL_HELP
 				ENSEMBL_GLOVAR );
   # Work out dumpdir ---------------------------------------------------------
   my @sp_dumpdirs;
@@ -112,7 +113,6 @@ foreach my $sp( @SPECIES ){
     $sp_release =~ s/\.//g;
 
     @sp_dumpdirs= join "_", ("$dumpdir/".lc($sp), $sitedefs_release, "$sp_release/data/mysql");
-    $kill_list{"ENSEMBL_HELP"}    = 1;
     $kill_list{"ENSEMBL_WEBSITE"} = 1;
     $kill_list{"ensembl_web_user_db"} = 1;
   }
@@ -158,11 +158,6 @@ foreach my $sp( @SPECIES ){
 
     warning( 1, "Dumping $sp $db: ".$all_db_info{$db}{NAME} );
     dump_mysql( \%{ $all_db_info{$db} }, $no_zip);
-
-    # Rename ensembl_web_user_db so they include the release number
-    if ( $db =~ /ensembl_web_user_db/ ){
-      rename_files( $all_db_info{$db}{NAME}, $sp_dumpdirs[0] );
-    }
   }
   @dbs = ();
   info( 1, "Dumps for $sp completed" );
@@ -226,12 +221,18 @@ sub dump_mysql {
   my $compatible = "$dump_command --no_data --compatible=mysql40 $DB ";
   system( "$compatible > $compatible_file" ) and die( "Cannot create compatible file: $compatible: $!" );
 
-
   unless ( $no_zip ) {
     my $dump_command_d = $dump_command . " -d $DB | gzip -c > $DB.sql.gz";
     system( $dump_command_d ) and die( "Cannot $dump_command_d: $!" );
     system( "gzip $compatible_file" ) and die( "Cannot gzip $compatible_file: $!");
   }
+
+  # Rename ensembl_web_user_db so they include the release number
+  if ( $dumpdir =~ /ensembl_web_user_db|ensembl_website/ ){
+    rename_files( $DB, $dumpdir );
+  }
+
+
 
   # Divide files up ------------------------------------------
   foreach my $f (<*.txt>){
@@ -338,17 +339,9 @@ sub rename_files {
   my $db_name    = shift;
   my $sp_dumpdir = shift;
 
-  if ($db_name =~ /ensembl_help/) {
-    my $new_db = "ensembl_help_$sitedefs_release";
-    system ("mv $sp_dumpdir/$new_db/ensembl_help_32.sql.gz $sp_dumpdir/$new_db/$new_db.sql.gz" );
-    system ("mv $sp_dumpdir/$new_db/ensembl_help_32.mysql40_compatible.sql.gz $sp_dumpdir/$new_db/$new_db.mysql40_compatible.sql.gz" );
-  }
-
-  else {
-    my $new_db = "$db_name"."_$sitedefs_release";
-    system ("mv $sp_dumpdir/$new_db/$db_name.sql.gz $sp_dumpdir/$new_db/$new_db.sql.gz" );
-    system ("mv $sp_dumpdir/$new_db/$db_name.mysql40_compatible.sql.gz $sp_dumpdir/$new_db/$new_db.mysql40_compatible.sql.gz" );
-    }
+  my $new_db = "$db_name"."_$sitedefs_release";
+  system ("mv $sp_dumpdir/$db_name.sql.gz $sp_dumpdir/$new_db.sql.gz" );
+  system ("mv $sp_dumpdir/$db_name.mysql40_compatible.sql.gz $sp_dumpdir/$new_db.mysql40_compatible.sql.gz" );
 
   return;
 }
