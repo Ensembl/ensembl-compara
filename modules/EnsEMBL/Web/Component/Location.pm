@@ -1343,16 +1343,27 @@ sub exons_markup {
              next if (!$ex->start);
 
              my ($active_start, $active_end)  = (0, 0);
-             if ($ex->end <= $slice_length && $ex->exon->end - $ex->exon->start + 1  == $ex->get_aligned_end  ) {
-                 $active_end = 1;
-             }
-             if ($ex->get_aligned_start == 1 && $ex->start > 0) {
-                 $active_start = 1;
-             }
 
-             if ($ex->strand < 0 && $ex->start > 0 && $ex->end <= $slice_length) {
-                 ($active_start, $active_end) = ($active_end, $active_start);
-             }
+# If you have questions about the code below - please send them to Javier Herrero <jherrero@ebi.ac.uk> :)
+
+	     if ($ex->strand > 0) {
+		 if ($ex->end <= $slice_length && $ex->exon->end - $ex->exon->start + 1  == $ex->get_aligned_end  ) {
+		     $active_end = 1;
+		 }
+
+	     
+		 if ($ex->get_aligned_start == 1 && $ex->start > 0) {
+		     $active_start = 1;
+		 }
+	     } else {
+		 if ($ex->end <= $slice_length && $ex->get_aligned_start == 1) {
+		     $active_end = 1;
+		 }
+
+		 if ($ex->start > 0 && $ex->exon->end - $ex->exon->start + 1  == $ex->get_aligned_end ) {
+		     $active_start = 1;
+		 }
+	     }
 
 #warn("EXON:".join('*', $slice_length, $ex->start, $ex->end, $ex->get_aligned_start, $ex->get_aligned_end, $ex->exon->start, $ex->exon->end, $active_start, $active_end)); 
             push @exons, {
