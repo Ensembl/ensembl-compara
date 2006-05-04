@@ -1102,22 +1102,47 @@ sub _get_species_set_id_from_species_set {
   my ($self, $species_set) = @_;
   my $species_set_id;
 
+  ## Fetch all the species_set which contain all these species_set_ids
   my $sql = qq{
           SELECT
-            ss1.species_set_id,
+            species_set_id,
             COUNT(*) as count
           FROM
-            species_set ss1,
-            species_set ss2
+            species_set
           WHERE
-            ss1.species_set_id = ss2.species_set_id
-            AND ss1.genome_db_id in (}.join(",", map {$_->dbID} @$species_set).qq{)
-          GROUP BY ss1.species_set_id
-          HAVING count = }.(scalar(@$species_set)**2);
+            genome_db_id in (}.join(",", map {$_->dbID} @$species_set).qq{)
+          GROUP BY species_set_id
+          HAVING count = }.(scalar(@$species_set));
   my $sth = $self->prepare($sql);
   $sth->execute();
+  my $all_rows = $sth->fetchall_arrayref();
+  if (!@$all_rows) {
+    return undef;
+  }
+  my $species_set_ids = [map {$_->[0]} @$all_rows];
 
-  ($species_set_id) = $sth->fetchrow_array();
+  ## Keep only the species_set which does not contain any other genome_db_id
+  $sql = qq{
+          SELECT
+            species_set_id,
+            COUNT(*) as count
+          FROM
+            species_set
+          WHERE
+            species_set_id in (}.join(",", @$species_set_ids).qq{)
+          GROUP BY species_set_id
+          HAVING count = }.(scalar(@$species_set));
+  $sth = $self->prepare($sql);
+  $sth->execute();
+
+  my $all_rows = $sth->fetchall_arrayref();
+  if (!@$all_rows) {
+    return undef;
+  } elsif (@$all_rows > 1) {
+    warning("Several species_set_ids have been found for genome_db_ids (".
+        join(",", map {$_->dbID} @$species_set)."): ".join(",", map {$_->[0]} @$all_rows));
+  }
+  $species_set_id = $all_rows->[0]->[0];
 
   return $species_set_id;
 }
