@@ -984,25 +984,10 @@ sub _run_query_from_method_link_id_genome_db_ids {
   my ($self, $method_link_id, $genome_db_ids) = @_;
   my $method_link_species_set;
 
-  my $sql = qq{
-          SELECT
-            ss1.species_set_id,
-            COUNT(*) as count
-          FROM
-            species_set ss1,
-            species_set ss2
-          WHERE
-            ss1.species_set_id = ss2.species_set_id
-            AND ss1.genome_db_id in (}.join(",", @$genome_db_ids).qq{)
-          GROUP BY ss1.species_set_id
-          HAVING count = }.(scalar(@$genome_db_ids)**2);
-  my $sth = $self->prepare($sql);
-  $sth->execute();
-
-  my ($species_set_id) = $sth->fetchrow_array();
+  my $species_set_id = $self->_get_species_set_id_from_genome_db_ids($genome_db_ids);
 
   if ($species_set_id) {
-    $sql = qq{
+    my $sql = qq{
             SELECT
               method_link_species_set_id
             FROM
@@ -1011,7 +996,7 @@ sub _run_query_from_method_link_id_genome_db_ids {
               species_set_id = \"$species_set_id\"
               AND method_link_id = \"$method_link_id\"
             };
-    $sth = $self->prepare($sql);
+    my $sth = $self->prepare($sql);
     $sth->execute();
     my ($dbID) = $sth->fetchrow_array();
 
@@ -1100,6 +1085,31 @@ sub _get_method_link_id_from_type {
 
 sub _get_species_set_id_from_species_set {
   my ($self, $species_set) = @_;
+  my $genome_db_ids = [];
+
+  foreach my $this_genome_db (@$species_set) {
+    if (UNIVERSAL::isa($this_genome_db, "Bio::EnsEMBL::Compara::GenomeDB") and $this_genome_db->dbID) {
+      push(@$genome_db_ids, $this_genome_db->dbID);
+    } else {
+      throw("[$this_genome_db] is not a Bio::EnsEMBL::Compara::GenomeDB or has no dbID");
+    }
+  }
+  return $self->_get_species_set_id_from_genome_db_ids([map {$_->dbID} @$species_set]);
+}
+
+=head2 _get_species_set_id_from_genome_db_ids
+
+  Arg  1     : listref of Bio::EnsEMBL::Compara::GenomeDB obejcts $species_set
+  Example    : my $species_set_id = $mlssa->_get_species_set_id_from_species_set($mlss->species_set);
+  Description: Retrieve species_set_id corresponding to this set of species
+  Returntype : integer $species_set_id
+  Exceptions :
+  Caller     :
+
+=cut
+
+sub _get_species_set_id_from_genome_db_ids {
+  my ($self, $genome_db_ids) = @_;
   my $species_set_id;
 
   ## Fetch all the species_set which contain all these species_set_ids
@@ -1110,9 +1120,9 @@ sub _get_species_set_id_from_species_set {
           FROM
             species_set
           WHERE
-            genome_db_id in (}.join(",", map {$_->dbID} @$species_set).qq{)
+            genome_db_id in (}.join(",", @$genome_db_ids).qq{)
           GROUP BY species_set_id
-          HAVING count = }.(scalar(@$species_set));
+          HAVING count = }.(scalar(@$genome_db_ids));
   my $sth = $self->prepare($sql);
   $sth->execute();
   my $all_rows = $sth->fetchall_arrayref();
@@ -1131,7 +1141,7 @@ sub _get_species_set_id_from_species_set {
           WHERE
             species_set_id in (}.join(",", @$species_set_ids).qq{)
           GROUP BY species_set_id
-          HAVING count = }.(scalar(@$species_set));
+          HAVING count = }.(scalar(@$genome_db_ids));
   $sth = $self->prepare($sql);
   $sth->execute();
 
@@ -1140,7 +1150,7 @@ sub _get_species_set_id_from_species_set {
     return undef;
   } elsif (@$all_rows > 1) {
     warning("Several species_set_ids have been found for genome_db_ids (".
-        join(",", map {$_->dbID} @$species_set)."): ".join(",", map {$_->[0]} @$all_rows));
+        join(",", @$genome_db_ids)."): ".join(",", map {$_->[0]} @$all_rows));
   }
   $species_set_id = $all_rows->[0]->[0];
 
