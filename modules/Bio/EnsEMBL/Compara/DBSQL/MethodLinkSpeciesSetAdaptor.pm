@@ -1145,7 +1145,7 @@ sub _get_species_set_id_from_genome_db_ids {
   $sth = $self->prepare($sql);
   $sth->execute();
 
-  my $all_rows = $sth->fetchall_arrayref();
+  $all_rows = $sth->fetchall_arrayref();
   if (!@$all_rows) {
     return undef;
   } elsif (@$all_rows > 1) {
