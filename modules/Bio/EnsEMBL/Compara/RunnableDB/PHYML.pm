@@ -87,6 +87,7 @@ sub fetch_input {
   $self->{'number_of_substitution_rate_categories'}  = 4;
   $self->{'gamma_distribution_parameter'}            = 1;
   $self->{'cdna'}                                    = 1;
+  $self->{'max_gene_count'} = 1000000;
 
   $self->check_job_fail_options;
 
@@ -109,7 +110,14 @@ sub fetch_input {
   unless($self->{'protein_tree'}) {
     throw("undefined ProteinTree as input\n");
   }
-
+  if ($self->{'protein_tree'}->get_tagvalue('gene_count') > $self->{'max_gene_count'}) {
+    $self->dataflow_output_id($self->input_id, 2);
+    $self->input_job->update_status('FAILED');
+    $self->{'protein_tree'}->release_tree;
+    $self->{'protein_tree'} = undef;
+    throw("PHYML : cluster size over threshold and FAIL it");
+  }
+  
   return 1;
 }
 
@@ -189,6 +197,7 @@ sub get_params {
          fetch_node_by_node_id($params->{'protein_tree_id'});
   }
   $self->{'cdna'} = $params->{'cdna'} if(defined($params->{'cdna'}));
+  $self->{'max_gene_count'} = $params->{'max_gene_count'} if(defined($params->{'max_gene_count'}));
   
   return;
 

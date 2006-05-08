@@ -86,6 +86,7 @@ sub fetch_input {
   #$self->{'options'} = "-maxiters 1 -diags1 -sv"; #fast options
   $self->{'options'} = "";
   $self->{'muscle_starttime'} = time()*1000;
+  $self->{'max_gene_count'} = 1000000;
 
   $self->check_job_fail_options;
   
@@ -108,6 +109,13 @@ sub fetch_input {
   if($self->{'family'}) {
     $self->{'input_fasta'} = $self->dumpFamilyPeptidesToWorkdir($self->{'family'});
   } elsif($self->{'protein_tree'}) {
+    if ($self->{'protein_tree'}->get_tagvalue('gene_count') > $self->{'max_gene_count'}) {
+      $self->dataflow_output_id($self->input_id, 2);
+      $self->input_job->update_status('FAILED');
+      $self->{'protein_tree'}->release_tree;
+      $self->{'protein_tree'} = undef;
+      throw("Muscle : cluster size over threshold and FAIL it");
+    }
     $self->{'input_fasta'} = $self->dumpProteinTreeToWorkdir($self->{'protein_tree'});
   } else {
     throw("undefined family as input\n");
@@ -196,6 +204,7 @@ sub get_params {
     $self->{'clusterset_id'} = $params->{'clusterset_id'};
   }
   $self->{'options'} = $params->{'options'} if(defined($params->{'options'}));
+  $self->{'max_gene_count'} = $params->{'max_gene_count'} if(defined($params->{'max_gene_count'}));
   return;
 
 }
