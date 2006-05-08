@@ -199,6 +199,7 @@ my $coord_systems = {
         "chromosome" => "separate_files",
         "group" => "separate_files",
         "supercontig" => "clump_files",
+        "reftig" => "clump_files",
         "scaffold" => "clump_files",
         "contig" => "clump_files",
         "clone" => "clump_files",
@@ -424,8 +425,11 @@ sub dump_dna {
     my $coordinate_system_name = $values->[1];
     my $length = $values->[2];
 
-    throw "Coordinate system [$coordinate_system_name] has not been configured"
-        if (!defined($coord_systems->{$coordinate_system_name}));
+    if (!defined($coord_systems->{$coordinate_system_name})) {
+      $coord_systems->{$coordinate_system_name} = "clump_files"
+      warning "Coordinate system [$coordinate_system_name] has not been configured.\n".
+          "Clumping files for this coordinate system";
+    }
 
     my $lsf_output_file = "$DNA_DIR/$species_directory/bsub_${coordinate_system_name}_${seq_region_name}.out";
     my $seq_region_file = "$DNA_DIR/$species_directory/${coordinate_system_name}_$seq_region_name.fa";
@@ -1194,7 +1198,7 @@ sub doze_instead_of_flooding_LSF_queue {
   ## Wait if more than 200 jobs are running or pending
   my $unfinished_jobs = scalar(grep {!defined($_->{ok})} @$lsf_jobs);
   my $cycle_count = 0;
-  if ($unfinished_jobs > 200) {
+  if ($unfinished_jobs > 100) {
     print LOG "[", scalar(localtime()), "] Dozing ($unfinished_jobs unfinished jobs) ";
     do {
       $cycle_count++;
