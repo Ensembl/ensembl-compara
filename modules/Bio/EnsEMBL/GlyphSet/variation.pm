@@ -129,7 +129,7 @@ sub zmenu {
                ),
  	       "03:bp: $pos"         => '',
  	       "04:status: ".($status || '-') => '',
- 	       "05:SNP type: ".($f->var_class || '-') => '',
+ 	       "05:class: ".($f->var_class || '-') => '',
  	       "07:ambiguity code: ".$f->ambig_code => '',
  	       "08:alleles: ".$f->allele_string => '',
  	       "09:source: ".$f->source => '',
@@ -137,7 +137,7 @@ sub zmenu {
 
   my $consequence_type = $f->get_consequence_type;
   my $label = $self->{'colours'}{$consequence_type}[1]; 
-  $zmenu{"57:Type: $label"} = "" unless $consequence_type eq '';  
+  $zmenu{"57:type: $label"} = "" unless $consequence_type eq '';  
   return \%zmenu;
 }
 1;

@@ -104,7 +104,7 @@ sub _init {
     my $colour = $colour_map->{$type}->[0];
 
     my @tmp;
-    push @tmp, ("05:Amino acid: $aa_change->[0] to $aa_change->[1]", '' ) if $aa_change->[1];
+    push @tmp, ("13:amino acid: $aa_change->[0] to $aa_change->[1]", '' ) if $aa_change->[1];
 
     # Codon - make the letter for the SNP position in the codon bold
     my $codon = $conseq_type->codon;
@@ -112,7 +112,7 @@ sub _init {
       my $pos = ($conseq_type->cds_start % 3 || 3) - 1;
       $codon =~ s/(\w{$pos})(\w)(.*)/$1<b>$2<\/b>$3/;
       my $strand = $transcript->strand > 0 ? "+" : "-";
-      push @tmp, ("04:Transcript codon ($strand strand) ".$codon => '');
+      push @tmp, ("11:transcript codon ($strand strand) ".$codon => '');
     }
 
     # Coverage -------------------------------------------------
@@ -125,7 +125,7 @@ sub _init {
       }
       if ($coverage) {
 	$coverage = ">".($coverage-1) if $coverage == $coverage_level->[-1];
-	push @tmp, ("07:Resequencing coverage: $coverage" => '');
+	push @tmp, ("17:resequencing coverage: $coverage" => '');
       }
     }
 
@@ -171,16 +171,16 @@ sub _init {
       'absolutey' => 1,
       'zmenu' => {
         'caption' => 'SNP '.$allele->variation_name,
-        "01:".$type => '',
+        "19:".$type => '',
         @tmp,
-        "02:Alleles: ".( length($ref_allele) <16 ? $ref_allele : substr($ref_allele,0,14).'..')."/".
+        "09:alleles: ".( length($ref_allele) <16 ? $ref_allele : substr($ref_allele,0,14).'..')."/".
 		  (length($allele->allele_string)<16 ? $allele->allele_string : substr($allele->allele_string,0,14).'..')
 		  => '',
-	"03:Ambiguity code: ".&ambiguity_code(join "|", $allele->ref_allele_string(), $allele->allele_string) => '',
-       '11:SNP properties' => $href,
-       "12:bp $pos" => '',
-       "13:class: ".&variation_class(join "|", $allele->ref_allele_string(), $allele->allele_string) => '',
-       "14:source: ". $allele->source => '',
+	"07:ambiguity code: ".&ambiguity_code(join "|", $allele->ref_allele_string(), $allele->allele_string) => '',
+       '01:SNP properties' => $href,
+       "03:bp $pos" => '',
+       "05:class: ".&variation_class(join "|", $allele->ref_allele_string(), $allele->allele_string) => '',
+       "15:source: ". $allele->source => '',
       }
     });
     my $bump_start = int($bglyph->{'x'} * $pix_per_bp);

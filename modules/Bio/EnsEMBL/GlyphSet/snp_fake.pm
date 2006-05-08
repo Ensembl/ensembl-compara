@@ -110,10 +110,10 @@ sub zmenu {
         'caption'           => "SNP: ".$f->variation_name(),
         '01:SNP properties' => $self->href( $f ),
         "02:bp: $pos" => '',
-        "03:class: ".$f->var_class() => '',
+        "04:class: ".$f->var_class() => '',
         "03:status: ".join(', ', @{$f->get_all_validation_states||[]} ) => '',
         "06:mapweight: ".$f->map_weight => '',
-        "07:ambiguity code: ".$f->ambig_code => '',
+        "05:ambiguity code: ".$f->ambig_code => '',
         "08:alleles: ".(length($allele)<16 ? $allele : substr($allele,0,14).'..') => '',
         "09:source: ".$f->source() => '',
    );
@@ -122,7 +122,7 @@ sub zmenu {
     
     my $source = $f->source; 
     my $type = $f->get_consequence_type;
-    $zmenu{"57:Type: $type"} = "" unless $type eq '';  
+    $zmenu{"57:type: $type"} = "" unless $type eq '';  
     return \%zmenu;
 }
 

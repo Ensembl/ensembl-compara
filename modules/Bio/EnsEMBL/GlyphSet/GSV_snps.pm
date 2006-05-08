@@ -54,7 +54,7 @@ sub _init {
     my $colour    = $colour_map->{$type}->[0];
     my $aa_change = $cod_snp->pep_allele_string;
 
-    my @tmp = $aa_change ? ("05:Amino acid: $aa_change", '' ) : ();
+    my @tmp = $aa_change ? ("10:amino acid: $aa_change", '' ) : ();
 
     my $S =  ( $snpref->[0]+$snpref->[1] - $font_w_bp * length( $aa_change ) )/2;
     my $W = $font_w_bp * length( $aa_change );
@@ -87,14 +87,14 @@ sub _init {
       'absolutey' => 1,
       'zmenu' => {
         'caption' => 'SNP '.$snp->variation_name,
-        "01:".$cod_snp->consequence_type => '',
+        "14:type: ".$cod_snp->consequence_type => '',
         @tmp,
-        '11:SNP properties' => $href,
-        "12:bp $pos" => '',
-        "13:Class: ".$snp->var_class => '',
-        "14:source: ". $snp->source => '',
-        "03:Ambiguity code: ".$snp->ambig_code => '',
-        "02:Alleles: ".(length($allele)<16 ? $allele : substr($allele,0,14).'..') => ''
+        '01:SNP properties' => $href,
+        "02:bp $pos" => '',
+        "03:class: ".$snp->var_class => '',
+        "12:source: ". $snp->source => '',
+        "06:ambiguity code: ".$snp->ambig_code => '',
+        "08:alleles: ".(length($allele)<16 ? $allele : substr($allele,0,14).'..') => ''
       }
     });
     my $bump_start = int($bglyph->{'x'} * $pix_per_bp);
