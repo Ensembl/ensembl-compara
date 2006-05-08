@@ -503,7 +503,7 @@ sub mappings {
 		{key => 'pepallele',   title =>'Peptide allele&nbsp;'},
 	       );
 	}
-	push (@table_header, {key => 'conseq', title =>'Consequence'});
+	push (@table_header, {key => 'conseq', title =>'Type'});
       }
       %chr_info = ();
     }

@@ -91,7 +91,7 @@ sub genesnpview {
     my $tsid = $transcript->stable_id;
     if( my $panel = $self->new_panel( 'SpreadSheet',
       'code' => "variation#-$tsid",
-      'caption' => "Variations and consequences for $tsid",
+      'caption' => "Variations in $tsid",
       'status'  => 'panel_transcript',
       'object'  => $transcript,
       'params'  => $params

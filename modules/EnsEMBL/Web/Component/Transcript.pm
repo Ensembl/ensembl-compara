@@ -988,9 +988,9 @@ sub spreadsheet_variationTable {
     { 'key' => 'Ambiguity', 'align' => 'center' },
     { 'key' => 'aachange', 'title' => 'AA change', 'align' => 'center' },
     { 'key' => 'aacoord',  'title' => 'AA co-ordinate', 'align' => 'center' },
-    { 'key' => 'class', 'align' => 'center' },
+    { 'key' => 'class', 'title' => 'Class', 'align' => 'center' },
     { 'key' => 'Source', },
-    { 'key' => 'status', 'align' => 'center' },
+    { 'key' => 'status', 'title' => 'Validation', 'align' => 'center' },
   );
 
 

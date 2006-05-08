@@ -213,7 +213,7 @@ sub transcriptsnpview {
    last if (defined $counts->[1] && $counts->[1] == 0);
    if( my $panel_table = $self->new_panel( 'SpreadSheet',
       'code' => "variation#-$sample",
-      'caption' => "Variations and consequences for $sample",
+      'caption' => "Variations in $sample",
       'status'  => 'panel_sample',
       'object'  => $obj,
       'params'  => $params,
