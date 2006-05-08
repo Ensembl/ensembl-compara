@@ -426,7 +426,7 @@ sub dump_dna {
     my $length = $values->[2];
 
     if (!defined($coord_systems->{$coordinate_system_name})) {
-      $coord_systems->{$coordinate_system_name} = "clump_files"
+      $coord_systems->{$coordinate_system_name} = "clump_files";
       warning "Coordinate system [$coordinate_system_name] has not been configured.\n".
           "Clumping files for this coordinate system";
     }
