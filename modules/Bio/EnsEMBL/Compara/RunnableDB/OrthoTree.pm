@@ -380,7 +380,7 @@ sub load_species_tree
     $root = $taxon->root unless($root);
     $root->merge_node_via_shared_ancestor($taxon);
   }
-  $root->minimize_tree;  
+  $root = $root->minimize_tree;  
   
   $self->{'taxon_tree'} = $root;
   if($self->debug) {
@@ -431,9 +431,25 @@ sub get_ancestor_species_hash
   
   $node->add_tag("species_hash", $species_hash);
   if($is_dup) {
-    $node->add_tag("duplication_hash", $duplication_hash);
-    $node->add_tag("Duplication",1);
-    $node->add_tag("Duplication_alg", 'species_count');
+    my $original_duplication_value = $node->get_tagvalue('Duplication');
+    $original_duplication_value = 0 unless (defined $original_duplication_value);
+
+    if ($original_duplication_value == 0) {
+      # RAP did not predict a duplication here
+      $node->add_tag("duplication_hash", $duplication_hash);
+      $node->store_tag("Duplication", 1);
+      $node->store_tag("Duplication_alg", 'species_count');
+
+    } elsif ($original_duplication_value == 1) {
+      my $dup_alg = $node->get_tagvalue("Duplication_alg");
+      if (defined $dup_alg and $dup_alg ne 'species_count') {
+        # RAP did predict a duplication here but not species_count
+        $node->add_tag("duplication_hash", $duplication_hash);
+        $node->store_tag("Duplication", 2);
+        $node->store_tag("Duplication_alg", 'species_count');
+      }
+
+    }
   }
   return $species_hash;
 }
@@ -454,7 +470,7 @@ sub get_ancestor_taxon_level
   foreach my $gdbID (keys(%$species_hash)) {
     my $gdb = $self->{'comparaDBA'}->get_GenomeDBAdaptor->fetch_by_dbID($gdbID);
     my $taxon = $taxon_tree->find_node_by_node_id($gdb->taxon_id);
-    throw("oops missing taxon") unless($taxon);
+    throw("oops missing taxon " . $gdb->taxon_id ."\n") unless($taxon);
 
     if($taxon_level) { 
       $taxon_level = $taxon_level->find_first_shared_ancestor($taxon);
@@ -516,7 +532,7 @@ sub genepairlink_check_dups
   do {
     $tnode = $tnode->parent;
     #$tnode->print_node;
-    $has_dup=1 if($tnode->get_tagvalue("Duplication") eq '1');
+    $has_dup=1 if($tnode->get_tagvalue("Duplication") > 0);
     $nodes_between{$tnode->node_id} = $tnode;
   } while(!($tnode->equals($ancestor)));
 
@@ -525,7 +541,7 @@ sub genepairlink_check_dups
   do {
     $tnode = $tnode->parent;
     #$tnode->print_node;
-    $has_dup=1 if($tnode->get_tagvalue("Duplication") eq '1');
+    $has_dup=1 if($tnode->get_tagvalue("Duplication") > 0);
     $nodes_between{$tnode->node_id} = $tnode;
   } while(!($tnode->equals($ancestor)));
 
@@ -626,7 +642,7 @@ sub ancient_residual_test
   return undef if($count2>1);
 
   #passed all the tests -> it's a simple ortholog
-  if($ancestor->get_tagvalue("Duplication") eq '1') {
+  if($ancestor->get_tagvalue("Duplication") > 0) {
     $genepairlink->add_tag("orthotree_type", 'outspecies_paralog_one2one_geneloss');
   } else {
     $genepairlink->add_tag("orthotree_type", 'ortholog_one2one_geneloss');
@@ -682,7 +698,7 @@ sub outspecies_test
   my $taxon = $self->get_ancestor_taxon_level($ancestor);
   
   #ultra simple ortho/paralog classification
-  if($ancestor->get_tagvalue("Duplication") eq '1') {
+  if($ancestor->get_tagvalue("Duplication") > 0) {
     $genepairlink->add_tag("orthotree_type", 'outspecies_paralog');
   } else {
     $genepairlink->add_tag("orthotree_type", 'ortholog_many2many');
@@ -733,7 +749,11 @@ sub store_gene_link_as_homology
   #
   my $mlss = new Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
   $mlss->method_link_type("TREE_HOMOLOGIES");
-  $mlss->species_set([$protein1->genome_db, $protein2->genome_db]);
+  if ($protein1->genome_db->dbID == $protein2->genome_db->dbID) {
+    $mlss->species_set([$protein1->genome_db]);
+  } else {
+    $mlss->species_set([$protein1->genome_db, $protein2->genome_db]);
+  }
   $self->{'comparaDBA'}->get_MethodLinkSpeciesSetAdaptor->store($mlss);
 
   # create an Homology object
