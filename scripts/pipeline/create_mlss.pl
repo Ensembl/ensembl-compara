@@ -45,7 +45,12 @@ it in the database
 
 perl create_mlss.pl --help
 
-perl create_mlss.pl [options] method_link_type genome_dbs...
+perl create_mlss.pl
+    [--method_link_type method_link_type]
+    [--genome_db_id genome_db_id_1,genome_db_id_2... [--genome_db_id genome_db_id_X]]
+    [--name name]
+    [--source source]
+    [--url url]
 
 =head1 OPTIONS
 
@@ -74,27 +79,36 @@ the one set in ENSEMBL_REGISTRY will be used if defined, if not
 The compara database to update. You can use either the original name or any of the
 aliases given in the registry_configuration_file. DEFAULT VALUE: compara-master
 
-=item B<--yes>
-
-Do not ask. Assume yes
-
 =back
 
-=head2 method_link_type
+=head2 --method_link_type method_link_type
 
 It should be an existing method_link_type. E.g. TRANSLATED_BLAT, BLASTZ_NET, MLAGAN...
 
-=head2 genome_dbs
+=head2 genome_db_id
 
-This should a list of genome_db_ids.
+This should be a list of genome_db_ids. You can separate them by commas or specify them in
+as many --genome_db_id options as you want
+
+=head2 name
+
+The name for this MethodLinkSpeciesSet
+
+=head2 source
+
+The source for this MethodLinkSpeciesSet
+
+=head2 url
+
+The url for this MethodLinkSpeciesSet
 
 =head2 Examples
 
-perl create_mlss.pl BLASTZ_NET 1 2
+perl create_mlss.pl
 
-perl create_mlss.pl MLAGAN 1 2 3 4
+perl create_mlss.pl --method_link_type BLASTZ_NET --genome_db_id 1,2
 
-perl create_mlss.pl TRANSLATED_BLAT 10 45
+perl create_mlss.pl --method_link_type MLAGAN --genome_db_id 1,2,3,4 --name "4 species MLAGAN" --source "ensembl" --url ""
 
 
 =head1 INTERNAL METHODS
@@ -105,6 +119,7 @@ use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
 use Bio::EnsEMBL::Utils::Exception qw(throw warning);
 use Getopt::Long;
+use ExtUtils::MakeMaker qw(prompt);
 
 my $help;
 
@@ -113,21 +128,27 @@ my $compara = "compara-master";
 my $yes = 0;
 my $method_link_type;
 my @genome_db_ids;
+my $name;
+my $source;
+my $url;
 
 GetOptions(
     "help" => \$help,
     "reg_conf=s" => \$reg_conf,
     "compara=s" => \$compara,
-    "yes" => \$yes,
+    "method_link_type=s" => \$method_link_type,
+    "genome_db_id=s@" => \@genome_db_ids,
+    "name=s" => \$name,
+    "source=s" => \$source,
+    "url=s" => \$url,
   );
-$method_link_type = shift @ARGV;
-@genome_db_ids = @ARGV;
+@genome_db_ids = split(/,/,join(',',@genome_db_ids));
+
 
 # Print Help and exit if help is requested
-if ($help or !$method_link_type or !@genome_db_ids) {
+if ($help) {
   exec("/usr/bin/env perldoc $0");
 }
-
 
 #################################################
 ## Get the adaptors from the Registry
@@ -143,11 +164,64 @@ my $mlssa = $compara_dba->get_MethodLinkSpeciesSetAdaptor();
 #################################################
 
 #################################################
+## Set values interactivelly if needed
+if (!$method_link_type) {
+  $method_link_type = ask_for_method_link_type($compara_dba);
+  print "METHOD_LINK_TYPE = $method_link_type\n";
+}
+
+if (!@genome_db_ids) {
+  my @genome_dbs = ask_for_genome_dbs($compara_dba);
+  @genome_db_ids = map {$_->dbID} @genome_dbs;
+}
+
+if (!$name) {
+  if ($method_link_type eq "FAMILY") {
+    $name = "families";
+  } elsif ($method_link_type eq "MLAGAN") {
+    $name = scalar(@genome_db_ids)." species MLAGAN";
+  } else {
+    foreach my $this_genome_db_id (@genome_db_ids) {
+      my $species_name = $gdba->fetch_by_dbID($this_genome_db_id)->name;
+      $species_name =~ s/(\S)\S+ /$1\./;
+      $species_name = substr($species_name, 0, 5);
+      $name .= $species_name."-";
+    }
+    $name =~ s/\-$//;
+    my $type = lc($method_link_type);
+    $type =~ s/ensembl_//;
+    $type =~ s/_/\-/g;
+    $name .= " $type";
+    if ($method_link_type eq "BLASTZ_NET") {
+      if ($name =~ /H\.sap/) {
+        $name .= " (on H.sap)";
+      } elsif ($name =~ /M\.mus/) {
+        $name .= " (on M.mus)";
+      }
+    }
+  }
+  $name = prompt("Set the name for this MethodLinkSpeciesSet", $name);
+}
+
+if (!$source) {
+  $source = prompt("Set the source for this MethodLinkSpeciesSet", "ensembl");
+}
+
+if (!defined $url) {
+  $url = prompt("Set the url for this MethodLinkSpeciesSet", "");
+}
+##
+#################################################
+
+#################################################
 ## Check if the MethodLinkSpeciesSet already exits
 my $mlss = $mlssa->fetch_by_method_link_type_genome_db_ids($method_link_type, \@genome_db_ids);
 if ($mlss) {
   print "This MethodLinkSpeciesSet already exists in the database!\n  $method_link_type: ",
-    join(" - ", map {$_->name."(".$_->assembly.")"} @{$mlss->species_set}), "\n";
+    join(" - ", map {$_->name."(".$_->assembly.")"} @{$mlss->species_set}), "\n",
+    "  Name: ", $mlss->name, "\n",
+    "  Source: ", $mlss->source, "\n",
+    "  URL: $url\n";
   print "  MethodLinkSpeciesSet has dbID: ", $mlss->dbID, "\n";
   exit(0);
 }
@@ -169,6 +243,9 @@ foreach my $this_genome_db_id (@genome_db_ids) {
 
 print "You are about to store the following MethodLinkSpeciesSet\n  $method_link_type: ",
     join(" - ", map {$_->name."(".$_->assembly.")"} @$all_genome_dbs), "\n",
+    "  Name: $name\n",
+    "  Source: $source\n",
+    "  URL: $url\n",
     "\nDo you want to continue? [y/N]? ";
 
 my $resp = <STDIN>;
@@ -178,7 +255,87 @@ if ($resp !~ /^y$/i and $resp !~ /^yes$/i) {
 }
 my $new_mlss = new Bio::EnsEMBL::Compara::MethodLinkSpeciesSet(
     -method_link_type => $method_link_type,
-    -species_set => $all_genome_dbs);
+    -species_set => $all_genome_dbs,
+    -name => $name,
+    -source => $source,
+    -url => $url);
 
 $mlssa->store($new_mlss);
 print "  MethodLinkSpeciesSet has dbID: ", $new_mlss->dbID, "\n";
+
+exit(0);
+
+
+###############################################################################
+## SUBROUTINES
+###############################################################################
+
+sub ask_for_method_link_type {
+  my ($compara_dba) = @_;
+  my $method_link_type = undef;
+
+  return undef if (!$compara_dba);
+
+  my $sth = $compara_dba->dbc->prepare("SELECT method_link_id, type FROM method_link");
+  $sth->execute();
+  my $all_rows = $sth->fetchall_arrayref;
+  my $answer;
+  my $method_link_types = {map {$_->[0], $_->[1]} @{$all_rows}};
+  do {
+    print "\n";
+    foreach my $this_method_link_id (sort {$a <=> $b} keys %$method_link_types) {
+      my $type = $method_link_types->{$this_method_link_id};
+      printf " %3d. $type\n", $this_method_link_id;
+    }
+    $answer = prompt("Select the method link type");
+    if ($answer =~ /^\d+$/ and defined($method_link_types->{$answer})) {
+      $method_link_type = $method_link_types->{$answer};
+      return $method_link_type;
+    } else {
+      print "\nERROR, try again\n";
+    }
+  } while (1);
+}
+
+sub ask_for_genome_dbs {
+  my ($compara_dba) = @_;
+  my @genome_dbs = ();
+
+  return undef if (!$compara_dba);
+
+  my $all_genome_dbs = $compara_dba->get_GenomeDBAdaptor->fetch_all();
+  my $answer;
+  my $genome_dbs_in = {};
+  my $genome_dbs_out = {map {$_->dbID, $_} @{$all_genome_dbs}};
+  do {
+    print "\n";
+    foreach my $this_genome_db (sort {
+        ($a->assembly_default <=> $b->assembly_default)
+          or
+        ($a->name cmp $b->name)} values %$genome_dbs_out) {
+      my $dbID = $this_genome_db->dbID;
+      my $name = $this_genome_db->name;
+      my $assembly = $this_genome_db->assembly;
+      if ($this_genome_db->assembly_default) {
+        printf " %3d. $name $assembly\n", $dbID;
+      } else {
+        printf " %3d. ($name $assembly)\n", $dbID;
+      }
+    }
+    print "Current species = ",
+        join(" - ", map {$_->dbID.". ".$_->name." (".$_->assembly.")"} values %$genome_dbs_in),
+        "\n";
+    $answer = prompt("Add a GenomeDB", "Pres enter to finish");
+    if ($answer =~ /^\d+$/ and defined($genome_dbs_in->{$answer})) {
+      delete($genome_dbs_in->{$answer});
+    } elsif ($answer =~ /^\d+$/ and defined($genome_dbs_out->{$answer})) {
+      $genome_dbs_in->{$answer} = $genome_dbs_out->{$answer};
+    } elsif ($answer eq "Pres enter to finish" and keys %$genome_dbs_in) {
+      @genome_dbs = values %$genome_dbs_in;
+      return @genome_dbs;
+    } else {
+      print "\nERROR, try again\n";
+    }
+  } while (1);
+}
+
