@@ -8,6 +8,7 @@ use EnsEMBL::Web::Document::Renderer::Apache;
 use EnsEMBL::Web::Document::Panel;
 use EnsEMBL::Web::Document::Static;
 use EnsEMBL::Web::SpeciesDefs;
+use EnsEMBL::Web::User;
 use Data::Dumper;
 # use EnsEMBL::Web::Root;
 
@@ -45,6 +46,39 @@ sub handler {
   unless ($fh) {
     $r->log->error("File permissions deny server access: ", $r->filename);
     return FORBIDDEN;
+  }
+
+  ## Is this page under a 'private' folder?
+
+  ## parse path and get first 'private_n_nn' folder above current page
+  my @dirs = reverse(split('/', $r->filename));
+  my @groups;
+  foreach my $d (@dirs) {
+    if ($d =~ /^private(_[0-9]+)+/) {
+      (my $grouplist = $d) =~ s/private_//;
+      @groups = split('_', $grouplist); ## groups permitted to access files 
+    }
+    last if @groups;
+  }
+
+  if (@groups) {
+    my $user = EnsEMBL::Web::User->new();
+    my @user_groups = $user->groups;
+
+    ## cross-reference user's groups against permitted groups
+    my $access = 0;
+    foreach my $g (@groups) {
+      foreach my $u (@user_groups) {
+        $access = 1 if $u == $g;
+      }
+      last if $access;
+    }
+    if (!$access) {
+      my $URL = '/common/access_denied';
+      $r->headers_out->add( "Location" => $URL );
+      $r->err_headers_out->add( "Location" => $URL );
+      $r->status( REDIRECT );
+    }
   }
 
 ## Read html file into memory to parse out SSI directives.
