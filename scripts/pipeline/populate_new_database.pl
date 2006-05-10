@@ -268,7 +268,7 @@ sub update_schema_version {
   print "Updating schema_version...\n";
   my ($old_schema_version) = $old_dba->dbc->db_handle->selectrow_array(
       "SELECT meta_value FROM meta WHERE meta_key = 'schema_version'");
-  my ($new_schema_version) = $old_dba->dbc->db_handle->selectrow_array(
+  my ($new_schema_version) = $new_dba->dbc->db_handle->selectrow_array(
       "SELECT meta_value FROM meta WHERE meta_key = 'schema_version'");
 
   if (!$new_schema_version and $old_schema_version =~ /^\d+$/) {
