@@ -130,7 +130,7 @@ GetOptions(
 
 
 # Print Help and exit if help is requested
-if ($help or !$master or !$old or !$new) {
+if ($help or !$master or !$new) {
   exec("/usr/bin/env perldoc $0");
 }
 
@@ -141,8 +141,11 @@ Bio::EnsEMBL::Registry->load_all($reg_conf);
 my $master_dba = Bio::EnsEMBL::Registry->get_DBAdaptor($master, "compara");
 $master_dba->get_MetaContainer; # tests that the DB exists
 
-my $old_dba = Bio::EnsEMBL::Registry->get_DBAdaptor($old, "compara");
-$old_dba->get_MetaContainer; # tests that the DB exists
+my $old_dba;
+if ($old) {
+  $old_dba = Bio::EnsEMBL::Registry->get_DBAdaptor($old, "compara");
+  $old_dba->get_MetaContainer; # tests that the DB exists
+}
 
 my $new_dba = Bio::EnsEMBL::Registry->get_DBAdaptor($new, "compara");
 $new_dba->get_MetaContainer; # tests that the DB exists
@@ -150,7 +153,7 @@ $new_dba->get_MetaContainer; # tests that the DB exists
 #################################################
 
 ## Sets the schema version for the new database
-update_schema_version($old_dba, $new_dba);
+update_schema_version($master_dba, $new_dba);
 
 ## Copy taxa and method_link tables
 copy_table($master_dba, $new_dba, "ncbi_taxa_names");
@@ -170,7 +173,10 @@ my $all_default_method_link_species_sets = get_all_method_link_species_sets($mas
 store_objects($new_dba->get_MethodLinkSpeciesSetAdaptor, $all_default_method_link_species_sets,
     "all previous valid method_link_species_sets");
 
-if (!$skip_data) {
+## Copy all the DnaFrags for the default assemblies
+copy_all_dnafrags($master_dba, $new_dba, $all_default_genome_dbs);
+
+if ($old_dba and !$skip_data) {
   ## Copy DNA-DNA alignemnts
   copy_dna_dna_alignements($old_dba, $new_dba, $all_default_method_link_species_sets);
 
@@ -344,6 +350,47 @@ sub get_all_method_link_species_sets {
   }
 
   return [sort {$a->dbID <=> $b->dbID} values %$all_method_link_species_sets];
+}
+
+
+=head2 copy_all_dnafrags
+
+  Arg[1]      : Bio::EnsEMBL::Compara::DBSQL::DBAdaptor $from_dba
+  Arg[2]      : Bio::EnsEMBL::Compara::DBSQL::DBAdaptor $to_dba
+  Arg[3]      : listref Bio::EnsEMBL::Compara::GenomeDB $genome_dbs
+  Description : copy from $from_dba to $to_dba all the DnaFrags which
+                correspond to GenomeDBs from the $genome_dbs list only.
+  Returns     :
+  Exceptions  : throw if argument test fails
+
+=cut
+
+sub copy_all_dnafrags {
+  my ($from_dba, $to_dba, $genome_dbs) = @_;
+
+  throw("[$from_dba] should be a Bio::EnsEMBL::Compara::DBSQL::DBAdaptor")
+      unless (UNIVERSAL::isa($from_dba, "Bio::EnsEMBL::Compara::DBSQL::DBAdaptor"));
+
+  throw("[$to_dba] should be a Bio::EnsEMBL::Compara::DBSQL::DBAdaptor")
+      unless (UNIVERSAL::isa($to_dba, "Bio::EnsEMBL::Compara::DBSQL::DBAdaptor"));
+
+  $new_dba->dbc->do("ALTER TABLE dnafrag DISABLE KEYS");
+  my $dnafrag_fetch_sth = $from_dba->dbc->prepare("SELECT * FROM dnafrag".
+      " WHERE genome_db_id = ?");
+  foreach my $this_genome_db (@$genome_dbs) {
+    $dnafrag_fetch_sth->execute($this_genome_db->dbID);
+    my $rows = $dnafrag_fetch_sth->fetchrow_arrayref;
+    if (!$rows) {
+      next;
+    }
+    print "Copying dnafrag for ", $this_genome_db->name, "...\n";
+    my $sth_insert = $to_dba->dbc->prepare("INSERT IGNORE INTO dnafrag VALUES (?".(",?"x(@$rows - 1)).")");
+    do {
+      $sth_insert->execute(@$rows);
+    } while ($rows = $dnafrag_fetch_sth->fetchrow_arrayref);
+  }
+  print "Rebuilding indexes...\n";
+  $new_dba->dbc->do("ALTER TABLE dnafrag ENABLE KEYS");
 }
 
 
