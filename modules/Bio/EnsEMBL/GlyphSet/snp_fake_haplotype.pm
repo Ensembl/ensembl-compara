@@ -183,7 +183,7 @@ sub _init {
 
 sub strain_name_text {
   my ($self, $w, $th, $offset, $name, $Config) = @_;
-  (my $url_name = $name) =~ s/Reference //;
+  (my $url_name = $name) =~ s/Compare to //;
   my $URL = $Config->{'URL'}."reference=$url_name;";
 
   my $bp_textwidth = $w * length($name) * 1.2;
