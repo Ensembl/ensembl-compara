@@ -73,27 +73,27 @@ static content utilities as well as the news and help pages.
 <p>If you would like your species home page to match that of the existing Ensembl site,
 you will need the following:</p>
 
-<ul class="spaced">
-<li>a subdirectory <kbd>public-plugins/mirror/htdocs/[Genus_species]/ssi/</kbd></li>
+<ol class="spaced">
+<li>A subdirectory <kbd>public-plugins/mirror/htdocs/[Genus_species]/ssi/</kbd></li>
 <li>An index page copied from a similar species. There are only two variations 
 on the species home page, depending on whether the genome has been assembled 
 into chromosomes or not. Both versions have four smaller HTML files that are placed within
 the home page using server-side includes; note that you will see errors on the page if
 these files do not exist. The files are:
-  <ol>
+  <ul>
   <li>A block giving access points for the data:
     <ul>
-    <li>If a species has no chromosomes, it will need a file
+      <li>If a species has no chromosomes, it will need a file
 <kbd>htdocs/[Genus_species]/ssi/examples.html</kbd> which should have example 
 entry points to the data.</li>
-    <li>If the species has chromosomes, it will need a karyotype image, called
+      <li>If the species has chromosomes, it will need a karyotype image, called
 <kbd>karyotype_[Genus_species].png</kbd>. The image can be generated in
 KaryoView (provided that the site is already correctly configured for 
 dynamic content!) and then edited - it should ideally be no more than 250px wide so that
 the page won't look cramped at 800x600 resolution! Save the finished file
 in <kbd>htdocs/img/species/</kbd> (N.B. the folder is literally called
 'species' - don't substitute the name of your new species!).</li>
-<li>After you have made the karyotype, you will need to create a file
+      <li>After you have made the karyotype, you will need to create a file
 <kbd>htdocs/[Genus_species]/ssi/karyomap.html</kbd> - use a similar
 species as a template and adjust the imagemap areas and URLs to match
 the new karyotype.</li>
@@ -101,21 +101,21 @@ the new karyotype.</li>
   <li>A block <kbd>htdocs/[Genus_species]/ssi/about.html</kbd> which
 generally should contain a short description of the assembl/annotation 
 plus (optionally) a picture of the species. The image should be roughly 100x100px and 
-called <kbd>pic_[Genus_species].png. Save it in <kbd>htdocs/img/species/</kbd>,
+called <kbd>pic_[Genus_species].png</kbd>. Save it in <kbd>htdocs/img/species/</kbd>,
 as per the karyotype images.</li>
-  </ol></li>
   <li>Two additional blocks currently show "What's New" and species statistics, which the
 Ensembl webteam generate using Perl scripts.
-  <ul>
-  <li>The species statistics are generated from raw SQL queries against the relevant database(s).
+    <ul>
+      <li>The species statistics are generated from raw SQL queries against the relevant database(s).
 Since the queries depend on the database content, our in-house script may not work with your
 data so we recommend writing your own script to generate this file.</li>
-  <li>The "What's New" block depends upon content from the news tables in the ensembl_website 
+      <li>The "What's New" block depends upon content from the news tables in the ensembl_website 
 database. If you are using this database to add your own site news, you can run the utility
 script <kbd>whatsnew.pl</kbd> to generate this block. If not, you will need to replace it with your
 own static content.</li>
+    </ul>
   </ul>
-</ul>
+</ol>
 
 <h3 class="boxed">The Ensembl home page and site maps</h3>
 
