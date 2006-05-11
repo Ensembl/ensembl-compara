@@ -140,56 +140,14 @@ be a six digit hex-number and $SiteDefs::ENSEMBL_ENCRYPT_1, _2 and _3 should eac
 characters. Unless you are particularly concerned about people changing cookies, the default values
 will probably do.</p>
 
-<h4>Enabling Species <span class="red">*** UPDATED ***</span></h4>
-<p>The default species for Ensembl are listed in this file <kbd>public-plugins/ensembl/conf/SiteDefs.pm</kbd> 
- in %__species_aliases.  These are automatically imported into the main conf/SiteDefs::ENSEMBL_SPECIES_ALIASES.
-In this distribution all the default species are enabled. (See below on 
-<a href="#customise">how to customise</a> your own list).
 
-<p>The keys of the hash (the species names on the left hand side) define the list of valid species for
-this website. The values of the hash (the aliases on the right) can be used in URLs instead of the longer
-species names. i.e.</p>
-<kbd><a href="/mouse/contigview?l=1:4m-4.1m">http://my.ensembl.site/mouse/contigview</a></kbd>
-<p>is identical to</p>
-<kbd><a href="/Mus_musculus/contigview?l=1:4m-4.1m">http://my.ensembl.site/Mus_musculus/contigview</a></kbd>
+<h4>Configuring the available species</h4>
 
+<p>If you wish to use Ensembl 'as-is', with the full list of species found in the release you
+downloaded, you can skip to the next section.</p>
 
-<p>To configure a species it has to have an appropriately-named .ini file in the 
-conf/ini_files directory and to be present as in the %__species_aliases as shown below:</p>
-
-<pre>
-sub update_conf {
-  $SiteDefs::ENSEMBL_PERL_SPECIES  = 'Homo_sapiens'; # Default species
-  $SiteDefs::__species_aliases{ 'Bos_taurus'      } = [qw(bt cow moo)];
-  $SiteDefs::__species_aliases{ 'Canis_familiaris'} = [qw(cf dog)];
-  $SiteDefs::__species_aliases{ 'Homo_sapiens'    } = [qw(hs human man default)];
-}
-</pre>
-
-<h5 id="customise">Customising your species list</h5>
-<p>To overwrite the default species and customise your own species list 
-add lines (described below) to the "update_conf" method in <strong>your mirror plugin</strong>: 
-<kbd>public-plugins/mirror/conf/SiteDefs.pm</kbd>.
-</p>
-<ol>
-  <li>To delete a species:<br />
-  <tt>&nbsp; &nbsp; delete( $SiteDefs::__species_aliases{'Bos_taurus'} );</tt>
-  </li>
-  <li>To add a new species:<br />
-  <tt>&nbsp; &nbsp; $SiteDefs::__species_aliases{'New_species'} = [qw(ns new)];</tt>
-  </li>
-  <li>To add an additional alias to a species:<br />
-  <tt>&nbsp; &nbsp; push @{$SiteDefs::__species_aliases{'Pan_troglodytes'}}, qw(chimpanzee);</tt>
-  </li>
-</ol>
-
-<p>Remember to <a href="#species_ini">create an ini file</a> for each of the species in 
-<kbd>public-plugins/mirror/conf/ini-files/&lt;Genus_species&gt;.ini</kbd>.  If you put your changes 
-into the public-plugins/mirror directory, they will not be overridden when you next do a cvs update.</p>
-
-<p>You might also want to change $SiteDefs::ENSEMBL_PERL_SPECIES - this is a special alias for URLs of the form
-http://my.ensembl.site/perl/contigview, for purely historical reasons. It will probably be used in the future
-to set the default species for multi-species pages/functions.</p>
+<p>If you wish to add or remove species, please see the 
+<a href="species.html">species configuration</a> page.</p>
 
 <h4>Temporary Files</h4>
 
@@ -263,6 +221,16 @@ e.g.</p>
 <pre>
 ENSEMBL_DAS_PROXY = http://webproxy.mycompany.com:80
 </pre>
+
+<h4>Search Links</h4>
+
+<p>These are used to provide sample links for the top right-hand corner of dynamic pages, as well as
+for the links in the site maps. If you would like to include these in any added species, copy the
+[SEARCH_LINKS] section from another species, remove any views that do not apply to your species
+(e.g. species with no chromosomes have no link to MapView) and then edit the links to point to
+representative sequence locations, genes, etc.</p>
+
+<p>If you extend Ensembl by adding new views, don't forget to add sample links to the ini files!</p>
 
 <h3>public-plugins/mirror/conf/ini-files/MULTI.ini</h3>
 
