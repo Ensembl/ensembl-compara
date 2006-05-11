@@ -132,13 +132,18 @@ print TOP $html_footer;
 close TOP;
 exit if $species[0] eq 'none';
 
-# List details for all views
-# NB: we have to create the multidimensional data structure *within* the
-# species loop, otherwise when we delete a view for one species, it will
-# remain deleted on subsequent iterations
+## LIST DETAILS FOR ALL VIEWS
 
-# Thus, you need to add new views here as individual named arrays, then
-# put references to those arrays in the species loop, below
+## NB: we have to create the multidimensional data structure *within* the
+## species loop, otherwise when we delete a view for one species, it will
+## remain deleted on subsequent iterations
+
+## TO ADD A NEW VIEW:
+## 1. Add an array of values in the format:
+##    my @newview = ('newview', 'NewView', 'short description of my new view');
+##
+## 2. Add the name of your view to the appropriate section of %species_views
+##    - see an existing site map for the full title of each section
 
 #            ['alignview', 'AlignContigView', 'Compare sequences from any genomes'],
 my @contigview      = ('contigview', 'ContigView', 'Small-scale Sequence display');
