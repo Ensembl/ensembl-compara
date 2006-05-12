@@ -1293,6 +1293,9 @@ sub spreadsheet_TSVtable {
     if ($conseq_type->regulatory_region()) {
       $type .= "- Regulatory region SNP";
     }
+    elsif ($type eq 'SARA') {
+      $type .= " (Same As Ref. Assembly)";
+    }
 
     # Position
     my $offset = $sample_slice->strand > 0 ? $sample_slice->start - 1 :  $sample_slice->end + 1;

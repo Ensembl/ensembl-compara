@@ -41,6 +41,7 @@ sub init {
     opt_regulatory_region      on
     opt_stop_gained            on
     opt_stop_lost              on
+    opt_sara                   on
   ));
 }
 1;
