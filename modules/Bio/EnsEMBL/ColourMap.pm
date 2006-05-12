@@ -257,7 +257,7 @@ sub new {
 
   # key => [colour, text, labelcolour]
   $self->colourSet( 'variation',
-    'NEGATIVE'               => ['border:grey70',  'Allele same as ref. assembly', 'black',],
+    'SARA'               => ['border:grey70',      'SARA', 'black',],
     'INTERGENIC'             => ['gray39',         'Intergenic',           'white',],
     'INTRONIC'               => ['contigblue2',    'Intronic',         'white',],
     'UPSTREAM'               => ['lightsteelblue2','Upstream',              'black',],

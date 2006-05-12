@@ -91,7 +91,7 @@ sub _init {
       $Config->{'variation_types'}{$type} = 1;
     }
   }
-  push @{ $Config->{'variation_legend_features'}->{'variations'}->{'legend'}}, $colours->{"NEGATIVE"}->[1],   $colours->{"NEGATIVE"}->[0];
+  push @{ $Config->{'variation_legend_features'}->{'variations'}->{'legend'}}, $colours->{"SARA"}->[1],   $colours->{"SARA"}->[0];
 }
 
 sub zmenu {
