@@ -76,6 +76,7 @@ sub run
 {
   my $self = shift;
 
+  throw("Wrong tree: ".$self->tree_string) if ($self->tree_string !~ /^\(/);
   my $runnable = new Bio::EnsEMBL::Analysis::Runnable::Mlagan
     (-workdir => $self->worker_temp_directory,
      -fasta_files => $self->fasta_files,
@@ -258,8 +259,7 @@ sub build_tree_string {
   close F;
 
   my $tree = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($newick);
-
-  $self->update_node_names($tree);
+  $tree = $self->update_node_names($tree);
 
   my $tree_string = $tree->newick_simple_format;
 
