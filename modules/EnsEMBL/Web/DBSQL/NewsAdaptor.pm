@@ -306,6 +306,30 @@ sub fetch_random_ad {
   return $result;
 }
 
+sub fetch_pre_ad {
+  my $self = shift;
+  return unless $self->db;
+                                                                                
+  my $sql = qq(
+    SELECT image, alt, url
+    FROM miniad
+    WHERE start_date < NOW() AND end_date > NOW()
+    AND url LIKE '%pre.ensembl.org%'
+    ORDER BY rand()
+    LIMIT 1
+  );
+                                                                                
+  my $record = $self->db->selectall_arrayref($sql);
+  return unless ($record && ref($record) eq 'ARRAY');
+  my @array = @{$record->[0]};
+  my $result = {
+      'image' => $array[0],
+      'alt'   => $array[1],
+      'url'   => $array[2],
+  };
+  return $result;
+}
+
 #------------------------- Select queries for archive.ensembl.org -------------
 
 
