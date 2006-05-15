@@ -935,8 +935,14 @@ sub get_go_list {
 
   my %go_hash;
   my %hash;
-  foreach my $goxref ( sort{ $a->display_id cmp $a->display_id } @goxrefs ){
+  foreach my $goxref ( sort{ $a->display_id cmp $b->display_id } @goxrefs ){
     my $go = $goxref->display_id;
+
+		my $info_text;
+
+		if($goxref->info_type eq 'PROJECTION'){
+			$info_text= $goxref->info_text; 
+		}
 
     my $evidence = '';
     if( $goxref->isa('Bio::EnsEMBL::GoXref') ){
@@ -956,7 +962,7 @@ warn "$go $go2";
       $term_name = $term ? $term->name : '';
     }
     $term_name ||= $goxref->description || '';
-    $go_hash{$go} = [$evidence, $term_name];
+    $go_hash{$go} = [$evidence, $term_name, $info_text];
   }
   return \%go_hash;
 }
