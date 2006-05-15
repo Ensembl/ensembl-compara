@@ -129,7 +129,7 @@ sub go {
 
   foreach my $go (sort keys %{$go_hash}){
     my @go_data = @{$go_hash->{$go}||[]};
-    my( $evidence, $description ) = @go_data;
+    my( $evidence, $description, $info_text ) = @go_data;
     my $link_name = $description;
     $link_name =~ s/ /\+/g;
 
@@ -139,7 +139,33 @@ sub go {
       $goidurl  = $object->get_ExtURL_link($go,'GO',$go);
       $queryurl = $object->get_ExtURL_link($description,'GOTERMNAME', $link_name);
     }
-    $html .= qq(<dd>$goidurl [$queryurl] <code>$evidence</code></dd>\n);
+		my $info_text_html;
+		my $info_text_url;
+		my $info_text_gene;
+		my $info_text_species;
+		my $info_text_common_name;
+
+		if($info_text){
+			
+			#create URL
+			if($info_text=~/from (\w+) gene (\w+)/){
+				$info_text_gene= $2;
+				$info_text_common_name= $1;
+			}
+			else{
+
+				#parse error
+				warn "regex parse failure in EnsEMBL::Web::Component::Transcript::go()";
+			}
+			$info_text_species= $object->species;
+			$info_text_url= "<a href='/$info_text_species/geneview?gene=$info_text_gene'>$info_text_gene</a>";	
+			$info_text_html= "[from $info_text_common_name $info_text_url]";
+		}
+		else{
+			$info_text_html= '';
+		}
+
+	$html .= qq(<dd>$goidurl $info_text_html [$queryurl] <code>$evidence</code></dd>\n);
   }
   $html .= qq(</dl>);
   $panel->add_row( $label, $html );
