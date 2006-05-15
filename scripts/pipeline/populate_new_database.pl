@@ -374,23 +374,30 @@ sub copy_all_dnafrags {
   throw("[$to_dba] should be a Bio::EnsEMBL::Compara::DBSQL::DBAdaptor")
       unless (UNIVERSAL::isa($to_dba, "Bio::EnsEMBL::Compara::DBSQL::DBAdaptor"));
 
-  $new_dba->dbc->do("ALTER TABLE dnafrag DISABLE KEYS");
+  my $user = $new_dba->dbc->username;
+  my $pass = $new_dba->dbc->password;
+  my $host = $new_dba->dbc->host;
+  my $port = $new_dba->dbc->port;
+  my $dbname = $new_dba->dbc->dbname;
+
   my $dnafrag_fetch_sth = $from_dba->dbc->prepare("SELECT * FROM dnafrag".
       " WHERE genome_db_id = ?");
   foreach my $this_genome_db (@$genome_dbs) {
     $dnafrag_fetch_sth->execute($this_genome_db->dbID);
-    my $rows = $dnafrag_fetch_sth->fetchrow_arrayref;
-    if (!$rows) {
+    my $all_rows = $dnafrag_fetch_sth->fetchall_arrayref;
+    if (!@$all_rows) {
       next;
     }
-    print "Copying dnafrag for ", $this_genome_db->name, "...\n";
-    my $sth_insert = $to_dba->dbc->prepare("INSERT IGNORE INTO dnafrag VALUES (?".(",?"x(@$rows - 1)).")");
-    do {
-      $sth_insert->execute(@$rows);
-    } while ($rows = $dnafrag_fetch_sth->fetchrow_arrayref);
+    my $filename = "/tmp/dnafrag.populate_new_database.".$this_genome_db->dbID.".$$.txt";
+    open(TEMP, ">$filename") or die;
+    foreach my $this_row (@$all_rows) {
+      print TEMP join("\t", @$this_row), "\n";
+    }
+    close(TEMP);
+    print "Copying dnafrag for ", $this_genome_db->name, ":\n . ";
+    system("mysqlimport", "-u$user", "-p$pass", "-h$host", "-P$port", "-L", "-l", "-i", $dbname, $filename);
+    unlink("$filename");
   }
-  print "Rebuilding indexes...\n";
-  $new_dba->dbc->do("ALTER TABLE dnafrag ENABLE KEYS");
 }
 
 
@@ -411,57 +418,64 @@ sub copy_all_dnafrags {
 sub copy_dna_dna_alignements {
   my ($old_dba, $new_dba, $method_link_species_sets) = @_;
 
-  $new_dba->dbc->do("ALTER TABLE genomic_align_block DISABLE KEYS");
-  $new_dba->dbc->do("ALTER TABLE genomic_align DISABLE KEYS");
-  $new_dba->dbc->do("ALTER TABLE genomic_align_group DISABLE KEYS");
+  my $user = $new_dba->dbc->username;
+  my $pass = $new_dba->dbc->password;
+  my $host = $new_dba->dbc->host;
+  my $port = $new_dba->dbc->port;
+  my $dbname = $new_dba->dbc->dbname;
+
   foreach my $this_method_link_species_set (@$method_link_species_sets) {
     my $sql = "SELECT * FROM genomic_align_block WHERE genomic_align_block_id >= ".
         ($this_method_link_species_set->dbID * 10**10)." AND genomic_align_block_id < ".
         (($this_method_link_species_set->dbID + 1) * 10**10);
     my $sth_fetch = $old_dba->dbc->prepare($sql);
     $sth_fetch->execute();
-    my $rows = $sth_fetch->fetchrow_arrayref;
-    if (!$rows) {
+    my $all_rows = $sth_fetch->fetchall_arrayref;
+    if (!@$all_rows) {
       next;
     }
-    print "Copying dna-dna alignments for ", $this_method_link_species_set->name, "...\n";
-    my $sth_insert = $new_dba->dbc->prepare("INSERT IGNORE INTO genomic_align_block VALUES (?".(",?"x(@$rows - 1)).")");
-    do {
-      $sth_insert->execute(@$rows);
-    } while ($rows = $sth_fetch->fetchrow_arrayref);
+    my $filename = "/tmp/genomic_align_block.populate_new_database.".$this_method_link_species_set->dbID.".$$.txt";
+    open(TEMP, ">$filename") or die;
+    foreach my $this_row (@$all_rows) {
+      print TEMP join("\t", @$this_row), "\n";
+    }
+    close(TEMP);
+    print "Copying dna-dna alignments for ", $this_method_link_species_set->name, ":\n . ";
+    system("mysqlimport", "-u$user", "-p$pass", "-h$host", "-P$port", "-L", "-l", "-i", $dbname, $filename);
+    unlink("$filename");
 
     $sql = "SELECT * FROM genomic_align WHERE genomic_align_id >= ".
         ($this_method_link_species_set->dbID * 10**10)." AND genomic_align_id < ".
         (($this_method_link_species_set->dbID + 1) * 10**10);
     $sth_fetch = $old_dba->dbc->prepare($sql);
     $sth_fetch->execute();
-    $rows = $sth_fetch->fetchrow_arrayref;
-    if (!$rows) {
-      next;
+    $all_rows = $sth_fetch->fetchall_arrayref;
+    $filename = "/tmp/genomic_align.populate_new_database.".$this_method_link_species_set->dbID.".$$.txt";
+    open(TEMP, ">$filename") or die;
+    foreach my $this_row (@$all_rows) {
+      print TEMP join("\t", @$this_row), "\n";
     }
-    $sth_insert = $new_dba->dbc->prepare("INSERT IGNORE INTO genomic_align VALUES (?".(",?"x(@$rows - 1)).")");
-    do {
-      $sth_insert->execute(@$rows);
-    } while ($rows = $sth_fetch->fetchrow_arrayref);
+    close(TEMP);
+    print " . ";
+    system("mysqlimport", "-u$user", "-p$pass", "-h$host", "-P$port", "-L", "-l", "-i", $dbname, $filename);
+    unlink("$filename");
 
     $sql = "SELECT * FROM genomic_align_group WHERE group_id >= ".
         ($this_method_link_species_set->dbID * 10**10)." AND group_id < ".
         (($this_method_link_species_set->dbID + 1) * 10**10);
     $sth_fetch = $old_dba->dbc->prepare($sql);
     $sth_fetch->execute();
-    $rows = $sth_fetch->fetchrow_arrayref;
-    if (!$rows) {
-      next;
+    $all_rows = $sth_fetch->fetchall_arrayref;
+    $filename = "/tmp/genomic_align_group.populate_new_database.".$this_method_link_species_set->dbID.".$$.txt";
+    open(TEMP, ">$filename") or die;
+    foreach my $this_row (@$all_rows) {
+      print TEMP join("\t", @$this_row), "\n";
     }
-    $sth_insert = $new_dba->dbc->prepare("INSERT IGNORE INTO genomic_align_group VALUES (?".(",?"x(@$rows - 1)).")");
-    do {
-      $sth_insert->execute(@$rows);
-    } while ($rows = $sth_fetch->fetchrow_arrayref);
+    close(TEMP);
+    print " . ";
+    system("mysqlimport", "-u$user", "-p$pass", "-h$host", "-P$port", "-L", "-l", "-i", $dbname, $filename);
+    unlink("$filename");
   }
-  print "Rebuilding indexes...\n";
-  $new_dba->dbc->do("ALTER TABLE genomic_align_block ENABLE KEYS");
-  $new_dba->dbc->do("ALTER TABLE genomic_align ENABLE KEYS");
-  $new_dba->dbc->do("ALTER TABLE genomic_align_group ENABLE KEYS");
 }
 
 
@@ -481,36 +495,46 @@ sub copy_dna_dna_alignements {
 sub copy_synteny_data {
   my ($old_dba, $new_dba, $method_link_species_sets) = @_;
 
-  $new_dba->dbc->do("ALTER TABLE synteny_region DISABLE KEYS");
-  $new_dba->dbc->do("ALTER TABLE dnafrag_region DISABLE KEYS");
+  my $user = $new_dba->dbc->username;
+  my $pass = $new_dba->dbc->password;
+  my $host = $new_dba->dbc->host;
+  my $port = $new_dba->dbc->port;
+  my $dbname = $new_dba->dbc->dbname;
+
   my $synteny_region_fetch_sth = $old_dba->dbc->prepare("SELECT * FROM synteny_region".
       " WHERE method_link_species_set_id = ?");
   my $dnafrag_region_fetch_sth = $old_dba->dbc->prepare("SELECT dnafrag_region.* FROM synteny_region".
       " LEFT JOIN dnafrag_region using (synteny_region_id) WHERE method_link_species_set_id = ?");
   foreach my $this_method_link_species_set (@$method_link_species_sets) {
     $synteny_region_fetch_sth->execute($this_method_link_species_set->dbID);
-    my $rows = $synteny_region_fetch_sth->fetchrow_arrayref;
-    if (!$rows) {
+    my $all_rows = $synteny_region_fetch_sth->fetchall_arrayref;
+    if (!@$all_rows) {
       next;
     }
-    print "Copying synteny data for ", $this_method_link_species_set->name, "...\n";
-    my $sth_insert = $new_dba->dbc->prepare("INSERT IGNORE INTO synteny_region VALUES (?".(",?"x(@$rows - 1)).")");
-    do {
-      $sth_insert->execute(@$rows);
-    } while ($rows = $synteny_region_fetch_sth->fetchrow_arrayref);
+    my $filename = "/tmp/synteny_region.populate_new_database.".$this_method_link_species_set->dbID.".$$.txt";
+    open(TEMP, ">$filename") or die;
+    foreach my $this_row (@$all_rows) {
+      print TEMP join("\t", @$this_row), "\n";
+    }
+    close(TEMP);
+    print "Copying dna-dna alignments for ", $this_method_link_species_set->name, ":\n . ";
+    system("mysqlimport", "-u$user", "-p$pass", "-h$host", "-P$port", "-L", "-l", "-i", $dbname, $filename);
+    unlink("$filename");
 
     $dnafrag_region_fetch_sth->execute($this_method_link_species_set->dbID);
-    $rows = $dnafrag_region_fetch_sth->fetchrow_arrayref;
-    if (!$rows) {
+    $all_rows = $dnafrag_region_fetch_sth->fetchall_arrayref;
+    if (!@$all_rows) {
       next;
     }
-    $sth_insert = $new_dba->dbc->prepare("INSERT IGNORE INTO dnafrag_region VALUES (?".(",?"x(@$rows - 1)).")");
-    do {
-      $sth_insert->execute(@$rows);
-    } while ($rows = $dnafrag_region_fetch_sth->fetchrow_arrayref);
+    $filename = "/tmp/dnafrag_region.populate_new_database.".$this_method_link_species_set->dbID.".$$.txt";
+    open(TEMP, ">$filename") or die;
+    foreach my $this_row (@$all_rows) {
+      print TEMP join("\t", @$this_row), "\n";
+    }
+    close(TEMP);
+    print " . ";
+    system("mysqlimport", "-u$user", "-p$pass", "-h$host", "-P$port", "-L", "-l", "-i", $dbname, $filename);
+    unlink("$filename");
   }
-  print "Rebuilding indexes...\n";
-  $new_dba->dbc->do("ALTER TABLE synteny_region ENABLE KEYS");
-  $new_dba->dbc->do("ALTER TABLE dnafrag_region ENABLE KEYS");
 }
 
