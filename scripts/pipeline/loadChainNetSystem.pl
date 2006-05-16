@@ -352,28 +352,32 @@ sub storeMaskingOptions
     exit(5);
   }
 
-  my $options_hash_ref;
+  my $options_string = "";
   if (defined $masking_options_file) {
-    $options_hash_ref = do($masking_options_file);
+    my $options_hash_ref = do($masking_options_file);
+
+    return unless($options_hash_ref);
+
+    $options_string = "{\n";
+    foreach my $key (keys %{$options_hash_ref}) {
+      $options_string .= "'$key'=>'" . $options_hash_ref->{$key} . "',\n";
+    }
+    $options_string .= "}";
   } else {
-    $options_hash_ref = $dnaCollectionConf->{'masking_options'};
+    $options_string = $dnaCollectionConf->{'masking_options'};
+    if (!eval($options_string) or $options_string !~ /^\{/) {
+      throw("DNA_COLLECTION (".$dnaCollectionConf->{'collection_name'}.
+          ") -> masking_options is not properly configured\n".
+          "This value must be a string representing a hash!");
+    }
   }
-
-  return unless($options_hash_ref);
-
-  my @keys = keys %{$options_hash_ref};
-  my $options_string = "{\n";
-  foreach my $key (@keys) {
-    $options_string .= "'$key'=>'" . $options_hash_ref->{$key} . "',\n";
-  }
-  $options_string .= "}";
 
   $dnaCollectionConf->{'masking_analysis_data_id'} =
     $self->{'hiveDBA'}->get_AnalysisDataAdaptor->store_if_needed($options_string);
 
   $dnaCollectionConf->{'masking_options'} = undef;
+  $dnaCollectionConf->{'masking_options_file'} = undef;
 }
-
 
 sub createChunkAndGroupDnaJobs
 {
