@@ -9,11 +9,11 @@ $0
   [--help]                      this menu
    --dbname string              (e.g. compara23) one of the compara database Bio::EnsEMBL::Registry aliases
    --seq_region string          (e.g. 22)
-   --qy string                  (e.g. human) the query species (i.e. a Bio::EnsEMBL::Registry alias)
+   --qy string                  (e.g. \"Homo sapiens\") the query species
                                 from which alignments are queried and seq_region refer to
-   --tg string                  (e.g. mouse) the target sepcies (i.e. a Bio::EnsEMBL::Registry alias)
+   --tg string                  (e.g. \"Mus musculus\") the target sepcies
                                 to which alignments are queried
-  [--alignment_type string]     (e.g. TRANSLATED_BLAT) type of alignment stored (default: BLASTZ_NET)
+  [--method_link_type string]   (e.g. TRANSLATED_BLAT) type of alignment stored (default: BLASTZ_NET)
   [--reg_conf filepath]         the Bio::EnsEMBL::Registry configuration file. If none given, 
                                 the one set in ENSEMBL_REGISTRY will be used if defined, if not
   [--level interger]            highest level to be dumped
@@ -21,7 +21,7 @@ $0
 
 my $help = 0;
 my $dbname;
-my $alignment_type = "BLASTZ_NET";
+my $method_link_type = "BLASTZ_NET";
 my $seq_region;
 my $qy_species;
 my $tg_species;
@@ -33,7 +33,7 @@ GetOptions('help' => \$help,
 	   'seq_region=s' => \$seq_region,
 	   'qy=s' => \$qy_species,
 	   'tg=s' => \$tg_species,
-	   'alignment_type=s' => \$alignment_type,
+	   'method_link_type=s' => \$method_link_type,
            'level=s' => \$level,
            'reg_conf=s' => \$reg_conf);
 
@@ -46,61 +46,78 @@ if ($help) {
 
 # Take values from ENSEMBL_REGISTRY environment variable or from ~/.ensembl_init
 # if no reg_conf file is given.
+Bio::EnsEMBL::Registry->no_version_check(1);
 Bio::EnsEMBL::Registry->load_all($reg_conf);
 
-print STDERR "Start time when dumping gff for synteny on chr $seq_region : " . time . "\n";
+my $gdba = Bio::EnsEMBL::Registry->get_adaptor($dbname, 'compara', 'GenomeDB');
+my $mlssa = Bio::EnsEMBL::Registry->get_adaptor($dbname, 'compara', 'MethodLinkSpeciesSet');
+my $dfa = Bio::EnsEMBL::Registry->get_adaptor($dbname, 'compara', 'DnaFrag');
+my $gaba = Bio::EnsEMBL::Registry->get_adaptor($dbname, 'compara', 'GenomicAlignBlock');
 
-my $dafa = Bio::EnsEMBL::Registry->get_adaptor($dbname, 'compara', 'DnaAlignFeature');
-my $sa = Bio::EnsEMBL::Registry->get_adaptor($qy_species, 'core', 'Slice');
+my $qy_gdb = $gdba->fetch_by_name_assembly($qy_species);
+my $tg_gdb = $gdba->fetch_by_name_assembly($tg_species);
+my $mlss = $mlssa->fetch_by_method_link_type_GenomeDBs($method_link_type, [$qy_gdb, $tg_gdb]);
 
-my $tg_binomial = Bio::EnsEMBL::Registry->get_adaptor($tg_species,'core','MetaContainer')->get_Species->binomial;
-
-my $slice = $sa->fetch_by_region('toplevel',$seq_region);
-my $seq_region_length = $slice->length;
-my $coord_system_name = $slice->coord_system->name;
-
-my $start = 1;
-my $chunk = 5000000;
-
-open SYN,"|sort -u > $seq_region.syten.gff";
-
-while ($start <= $seq_region_length) {
-  my $end = $start + $chunk -1;
-  $end = $seq_region_length if ($end > $seq_region_length);
-  
-  $slice = $sa->fetch_by_region($coord_system_name, $seq_region, $start, $end);
-  
-  my $dafs = $dafa->fetch_all_by_Slice($slice, $tg_binomial,undef,$alignment_type);
-  print STDERR "Got ", scalar @{$dafs}," features for chunk $start to $end on chr $seq_region\n";
-  
-  foreach my $daf (@{$dafs}) {
-    
-    my ($strand,$hstrand) = qw(+ +);
-    $strand = "-" if ($daf->strand < 0);
-    $hstrand = "-" if ($daf->hstrand < 0);
-    
-    # keep on the basis of level_id
-    next if ($daf->level_id != $level);
-    
-    # print out a in gff format
-    print SYN  
-      $daf->seqname . "\t" .
-        "synteny\t" .
-          "similarity\t" .
-            $daf->seq_region_start . "\t" .
-              $daf->seq_region_end . "\t" .
-                $daf->score . "\t" .
-                  $strand . "\t" .
-                    ".\t" .
-                      $daf->hseqname . "\t" .
-                        $daf->hstart . "\t" .
-                          $daf->hend . "\t" .
-                            $hstrand . "\t" .
-                              ".\n";
-  }
-  $start += $chunk;
+my $qy_dnafrags;
+unless (defined $seq_region) {
+  $qy_dnafrags = $dfa->fetch_all_by_GenomeDB_region($qy_gdb, 'chromosome');
+} else {
+  $qy_dnafrags = [ $dfa->fetch_by_GenomeDB_and_name($qy_gdb, $seq_region) ];
 }
 
-close SYN;
+foreach my $qy_dnafrag (@{$qy_dnafrags}) {
+  next unless ($qy_dnafrag->name =~ /^\d+$|^X$|^Y$/);
+  my $seq_region_name = $qy_dnafrag->name;
+  open SYN,"|sort -u > $seq_region_name.syten.gff";
 
-print STDERR "End time when dumping gff for synteny on chr $seq_region " . time . "\n";
+  foreach my $tg_dnafrag (@{$dfa->fetch_all_by_GenomeDB_region($tg_gdb, 'chromosome')}) {
+    next unless ($tg_dnafrag->name =~ /^\d+$|^X$|^Y$/);
+
+    my $start = 1;
+    my $chunk = 5000000;
+
+    while ($start <= $qy_dnafrag->length) {
+      my $end = $start + $chunk -1;
+      $end = $qy_dnafrag->length if ($end > $qy_dnafrag->length);
+
+      my $gabs = $gaba->fetch_all_by_MethodLinkSpeciesSet_DnaFrag_DnaFrag($mlss,$qy_dnafrag,$start,$end,$tg_dnafrag);
+      while (my $gab = shift @{$gabs}) {
+        my $qy_ga = $gab->reference_genomic_align;
+        
+        # keep on the basis of level_id
+        next if ($qy_ga->level_id != $level);
+        
+        my ($tg_ga) = @{$gab->get_all_non_reference_genomic_aligns};
+        
+        my ($strand,$hstrand) = qw(+ +);
+        
+        if ($qy_ga->dnafrag_strand > 0 && $tg_ga->dnafrag_strand < 0) {
+          $hstrand = "-";
+        }
+        if ($qy_ga->dnafrag_strand < 0 && $tg_ga->dnafrag_strand > 0) {
+          $hstrand = "-";
+        }
+        
+        # print out a in gff format
+        print SYN  
+          $qy_dnafrag->name . "\t" .
+            "synteny\t" .
+              "similarity\t" .
+                $qy_ga->dnafrag_start . "\t" .
+                  $qy_ga->dnafrag_end . "\t" .
+                    $gab->score . "\t" .
+                      $strand . "\t" .
+                        ".\t" .
+                          $tg_dnafrag->name . "\t" .
+                            $tg_ga->dnafrag_start . "\t" .
+                              $tg_ga->dnafrag_end . "\t" .
+                                $hstrand . "\t" .
+                                  ".\n";
+      }
+      $start += $chunk;
+    }
+  }
+  close SYN;
+}
+
+exit 0;
