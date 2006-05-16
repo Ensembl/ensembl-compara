@@ -371,9 +371,6 @@ sub createObjects {
 	    $DASsel{$das_name} = 1;
 	} else {
 	    my $err = 0;
-	    if ($self->param("DASsourcetype") eq 'das_file') {
-		$self->param("DAStype", "ensembl_location");
-	    }
 	    my @das_sources;
 
 	    if (defined( my $usersrc = $self->param("DASuser_source") || undef)) {

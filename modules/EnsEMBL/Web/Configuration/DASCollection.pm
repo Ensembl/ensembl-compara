@@ -86,7 +86,7 @@ sub display_wizard_status {
 	my @das_objs = @{$das_collection};
 
 	my $das_adapt;
-#	warn("EDIT $src");
+
 	foreach my $das_obj (@das_objs) {
 	    $das_adapt = $das_obj->adaptor;
 	    last if ($das_adapt->name eq $src);
@@ -94,7 +94,6 @@ sub display_wizard_status {
 #	warn(Dumper($das_adapt));
 	foreach my $key (@confkeys) {
 	    my $hkey ="DAS${key}";
-#	    warn("SET $hkey :".$das_adapt->$key);
 	    $object->param( "$hkey", $das_adapt->$key);
 	}
 	$object->param("DASenable", @{$das_adapt->enable});
@@ -140,8 +139,6 @@ sub display_wizard_status {
 	$object->param('DASdomain', $source_conf{domain});
 	$source_conf{dsn} = $usersrc;
 	$source_conf{user_source} = $usersrc;
-	$source_conf{type} = 'ensembl_location';
-	$object->param('DAStype', $source_conf{type});
     }
 
     push @{$source_conf{enable}} , $object->param("DASenable");
