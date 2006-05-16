@@ -64,24 +64,40 @@ sub new {
 =cut
 
 sub upload_data {
-  my $self = shift;
-  my ($param_name) = @_;
-  delete($self->{_error});
+    my $self = shift;
+    my ($param_name) = @_;
+    my $data;
+    delete($self->{_error});
 
-  return $self->error(cgi_error) if defined cgi_error;
-  return $self->error("Missing filename") unless defined param($param_name);
-  return $self->error("Missing filename") unless (length(param($param_name))> 0);
-  
-  eval {
-    my $fh = upload($param_name);
-    return $self->error(qq(Could not open '@{[param($param_name)]}')) unless defined $fh;
-    local $/ = undef;
-    $self->{DATA} = <$fh>;
-  };
+    return $self->error(cgi_error) if defined cgi_error;
+    return $self->error("Missing filename") unless defined param($param_name);
+    return $self->error("Missing filename") unless (length(param($param_name))> 0);
+    
+    eval {
+	my $fh = upload($param_name);
+	return $self->error(qq(Could not open '@{[param($param_name)]}')) unless defined $fh;
+	local $/ = undef;
+	
+	if (param($param_name) =~ /\.gz$/) {
+	    use Compress::Zlib;
+	    $data = Compress::Zlib::memGunzip(<$fh>);
+	} elsif (param($param_name) =~ /\.bz2$/) {
+	    use lib "/ensemblweb/ek3/www/ensembl-external/modules/i686-linux";
+	    require Compress::Bzip2;
+	    my $bz = Compress::Bzip2::bzopen($fh, "rb");
+	    $bz->bzread($data);
+	} else {
+	    $data = <$fh>;
+	}
+	
+    };
+    
+    $self->error($@) if $@;
 
-  $self->error($@) if $@;
 
-  return $self->error;
+
+    $self->{DATA} = $data;
+    return $self->error;
 }
 
 sub data {
