@@ -82,7 +82,6 @@ sub upload_data {
 	    use Compress::Zlib;
 	    $data = Compress::Zlib::memGunzip(<$fh>);
 	} elsif (param($param_name) =~ /\.bz2$/) {
-	    use lib "/ensemblweb/ek3/www/ensembl-external/modules/i686-linux";
 	    require Compress::Bzip2;
 	    my $bz = Compress::Bzip2::bzopen($fh, "rb");
 	    $bz->bzread($data);
