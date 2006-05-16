@@ -6,10 +6,10 @@ no warnings "uninitialized";
 use CGI qw(escape);
 use CGI::Cookie;
 
-use EnsEMBL::Web::Object::User;
+#use EnsEMBL::Web::Object::User;
 use EnsEMBL::Web::User;
 
-our @ISA = qw(EnsEMBL::Web::Object::User);
+#our @ISA = qw(EnsEMBL::Web::Object::User);
 
 
 sub new {
