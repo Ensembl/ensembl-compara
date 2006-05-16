@@ -44,7 +44,7 @@ cd /ecs2/work4/compara_abel_cara/ensembl_release_26/compara/synteny/Hs35Mm33
 
 echo "select distinct(name) from dnafrag where genome_db_id=1 and coord_system_name=\"Chromosome\";"|mysql -h ecs2 -u ensro -P3362 -N abel_ensembl_compara_26_1 |grep -v NT | grep -v DR | sort > Hs35_chr_names
 
-cat Hs35_chr_names |while read i;do bsub -o $i.err ~/src/ensembl_main/ensembl-compara/scripts/synteny/DumpGFFAlignmentsForSynteny.pl --dbname compara25 --qy human --tg mouse --seq_region $i;done
+cat Hs35_chr_names |while read i;do bsub -o $i.err ~/src/ensembl_main/ensembl-compara/scripts/synteny/DumpGFFAlignmentsForSynteny.pl --dbname compara25 --qy "Homo sapiens" --tg "Mus musculus" --seq_region $i;done
 
 In this command line, "human", "mouse" and "abelcompara26" are aliases to the respective core and compara databases, 
 as defined in the registry configuration file.
