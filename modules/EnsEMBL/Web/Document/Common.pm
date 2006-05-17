@@ -2,7 +2,6 @@ package EnsEMBL::Web::Document::Common;
 
 use strict;
 use EnsEMBL::Web::Document::Page;
-use EnsEMBL::Web::DBSQL::NewsAdaptor;
 
 our @ISA = qw(EnsEMBL::Web::Document::Page);
 
@@ -90,17 +89,8 @@ sub _script_HTML {
   $self->title->set( $scriptname );
 }
 
-sub mini_ad {
-  my $self = shift;
-                                                                                
-  my $db = 
-    $self->species_defs->databases ? $self->species_defs->databases->{'ENSEMBL_WEBSITE'} : (
-      $self->species_defs->multidb ? $self->species_defs->multidb->{'ENSEMBL_WEBSITE'} : undef 
-    );
-  return unless $db;
-  my $wa = EnsEMBL::Web::DBSQL::NewsAdaptor->new($db);
-  my $miniad = $wa->fetch_random_ad;
-                                                                                
+sub wrap_ad {
+  my ($self, $miniad) = @_;
   my $html = '';
                                                                                 
   if( $miniad ) {
