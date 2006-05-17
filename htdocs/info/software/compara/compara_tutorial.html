@@ -160,11 +160,11 @@ These values have sensible defaults and can often be omitted.
 <h4>Implicitely, using the Bio::EnsEMBL::Registry configuration file (recommended)</h4>
 
 <p>
-You will need to have a registry configuration file set up. 
-By default, it takes the file defined by the ENSEMBL_REGISTRY environment variable or 
+You will need to have a registry configuration file set up.
+By default, it takes the file defined by the ENSEMBL_REGISTRY environment variable or
 the file named .ensembl_init in your home directory if the former is not found. 
 Additionally, it is possible to use a specific file 
-(see perldoc Bio::EnsEMBL::Registry or later in this document for some examples on how to use a different file). 
+(see perldoc Bio::EnsEMBL::Registry or later in this document for some examples on how to use a different file).
 An example of such file can be found in ensembl/modules/Bio/EnsEMBL/Utils/ensembl_init.example, and below you have a slightly modified copy of it.
 </p>
 
@@ -383,10 +383,16 @@ if ($help) {
     exit 0;
 }
 
-# Setting up Bio::EnsEMBL::Regitry
+# Setting up Bio::EnsEMBL::Registry
 # if $reg_conf is undef, ~/.ensembl_init will be loaded if it exists
+#Bio::EnsEMBL::Registry->load_all($reg_conf);
 
-Bio::EnsEMBL::Registry->load_all($reg_conf);
+
+# Auto-loading the registry via the public Ensembl MySQL interface:
+Bio::EnsEMBL::Registry->load_registry_from_db(
+	-host => "ensembldb.ensembl.org",
+ 	-user => "anonymous");
+
 
 $format = lc $format;
 
@@ -477,7 +483,7 @@ exit 0;
 </pre>
 
 <p>
-So to pull out BLASTZ_NET_TIGHT alignments, let's say on part of ENCODE region ENm004 on human chromosome 22, 
+So to pull out BLASTZ_NET_TIGHT alignments, let's say on part of ENCODE region ENm004 on human chromosome 22,
 between position 30184430 and position 30184485, against the mouse genome in clustalw format, we can use know the following command line:
 </p>
 
@@ -521,7 +527,7 @@ CLUSTAL W(1.81) multiple sequence alignment
 </pre>
 
 <p>
-Now on the same region, TRANSLATED_BLAT alignments against fugu in clustalw format, 
+Now on the same region, TRANSLATED_BLAT alignments against fugu in clustalw format,
 but at translation level now (-tsl) not nucleotide level, we can run the following command line:
 </p>
 
@@ -626,7 +632,7 @@ my $slice_adaptor = Bio::EnsEMBL::Registry->get_adaptor(
 # Fetching a Slice object:
 my $query_slice = $qy_sa->fetch_by_region(
     'toplevel', 
-    $seq_region, 
+    $seq_region,
     $seq_region_start,
     $seq_region_end);
 
@@ -729,9 +735,15 @@ if ($output_file) {
 }
 
 # Configure the Bio::EnsEMBL::Registry
-# Uses $reg_conf if supllied. Uses ENV{ENSMEBL_REGISTRY} instead if defined.
+# Uses $reg_conf if supplied. Uses ENV{ENSMEBL_REGISTRY} instead if defined.
 # Uses ~/.ensembl_init if all the previous fail.
-Bio::EnsEMBL::Registry->load_all($reg_conf);
+# Bio::EnsEMBL::Registry->load_all($reg_conf);
+
+# Auto-loading the registry via the public Ensembl MySQL interface:
+Bio::EnsEMBL::Registry->load_registry_from_db(
+	-host => "ensembldb.ensembl.org",
+ 	-user => "anonymous");
+
 
 # Getting all the Bio::EnsEMBL::Compara::GenomeDB objects
 my $genome_dbs;
@@ -778,7 +790,7 @@ throw("The database do not contain any $alignment_type data for $set_of_species!
 # Fetching the query Slice:
 my $slice_adaptor = Bio::EnsEMBL::Registry->get_adaptor($species, 'core', 'Slice');
 
-throw("Registry configuration file has no data for connecting to &lt;$species>")
+throw("Registry configuration file has no data for connecting to &lt;$species&gt;")
     if (!$slice_adaptor);
 
 my $query_slice = $slice_adaptor->fetch_by_region('toplevel', $seq_region, $seq_region_start, $seq_region_end);
