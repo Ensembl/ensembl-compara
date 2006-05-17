@@ -283,7 +283,12 @@ sub store {
         ($dbID) = $sth2->fetchrow_array();
         $dbID = 10000 * int($method_link_id / 100) + 1 if (!defined($dbID));
       }
-      my $species_set_id = $self->_get_species_set_id_from_species_set($species_set);
+      my $species_set_id;
+      if ($method_link_species_set->species_set_id) { 
+        $species_set_id = $method_link_species_set->species_set_id;
+      } else {
+        $species_set_id = $self->_get_species_set_id_from_species_set($species_set);
+      }
       if (!$species_set_id) {
         my $sth2 = $self->prepare("INSERT INTO species_set VALUES (?, ?)");
         foreach my $genome_db_id (@genome_db_ids) {
