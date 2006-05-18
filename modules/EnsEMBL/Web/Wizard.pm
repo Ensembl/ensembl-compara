@@ -473,18 +473,25 @@ sub add_buttons {
     'value' => $node,
   );
 
-  if ($self->{'_nodes'}{$node}{'back'}) {
-    ## must limit back button to incoming edges!
-    my $previous = $object->param('previous');
-    my $back;
-    my @incoming = @{ $self->get_incoming_edges($node) };
-    foreach my $edge (@incoming) {
-      $back = $edge;
-      last if $edge eq $previous; ## defaults to last incoming edge
+  my $back = $self->{'_nodes'}{$node}{'back'};
+  if ($back) {
+    ## normally limit back button to direct incoming edges
+    my $back_node;
+    if ($back eq '1') {
+      my $previous = $object->param('previous');
+      my @incoming = @{ $self->get_incoming_edges($node) };
+      foreach my $edge (@incoming) {
+        $back_node = $edge;
+        last if $edge eq $previous; ## defaults to last incoming edge
+      }
+    }
+    ## unless the return node is specified (e.g. to skip a decision node)
+    else {
+      $back_node = $back;
     }
     $form->add_element(
       'type'  => 'Submit',
-      'name'  => "submit_$back",
+      'name'  => "submit_$back_node",
       'value' => '< Back',
       'spanning' => 'inline',
     );
