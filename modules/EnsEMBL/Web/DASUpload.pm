@@ -56,24 +56,29 @@ use EnsEMBL::Web::DataUpload;
 # in case of DB problems we don't want users to see all the debug info. 
 my $DB_Error = "DAS Database is temporary unavailable. Please try again later. If the problem persists please contact helpdesk.";
 
-# all DAS tables are named as FORMAT_DDDDDDDD, e.g euf_00000001 
+# all DAS tables are named as hydrasource_DDDDDDDD, e.g hydrasource_00000001
 
-my $EUF_DPREFIX = 'hydraeuf_'; # This is the header of the corresponding section in  proserver.ini file of the ProServer set up
-my $EUF_TPREFIX = 'euf_'; # This is the basename field in the section
+my $OLD_DSN_PREFIX = 'hydraeuf_'; # Old name prefix for uploaded data sources
 
-# e.g in case of EUF 
+my $DSN_PREFIX = 'hydrasource_'; # Name prefix for uploaded data sources
 
-#[hydraeuf]
+my $MASTER_TABLE = 'journal'; # Table where all sources configuration is stored
+my $TABLE_PREFIX = 'source_'; # Name prefix for tables with features
+my $GROUPS_PREFIX = 'groups_';# Name prefix for tables with groups
+
+# ProServer ini file section 
+#[hydrasource]
 # state         = on
-# adaptor       = upload_euf
+# adaptor       = ensembl_upload
 # hydra         = dbi
 # transport     = dbi
-# basename      = euf
+# basename      = source
 # dbname        = upload_db
 # host          = upload.sanger.ac.uk
 # port          = 3306
-# username      = uplaod_user
+# username      = upload_user
 # password      =
+
 
 # Sets / returns  DAS source CSS
 sub css {
@@ -93,22 +98,22 @@ sub dsn {
     return $self->{_dsn};
 }
 
-# Sets / returns  the type of the uploaded file. So far only EUF (Ensembl Upload Format) is supported
-sub file_type {
-    my $self = shift;
-    if (defined( my $value = shift)) {
-	$self->{_file_type} = $value;
-    }
-    return $self->{_file_type};
-}
-
 # Sets / returns  the mapping type of the uploaded data. So far only ensembl_location is supported
 sub mapping {
     my $self = shift;
     if (defined( my $value = shift)) {
-	$self->{_mapping} = $value;
+	$self->{_metadata}->{'coordinate_system'} = $value;
     }
-    return $self->{_mapping};
+    return $self->{_metadata}->{'coordinate_system'};
+}
+
+sub metadata {
+    my $self = shift;
+    my $key = shift;
+    if (defined( my $value = shift)) {
+	$self->{_metadata}->{$key} = $value;
+    }
+    return $self->{_metadata}->{$key};
 }
 
 
@@ -123,25 +128,124 @@ sub domain {
     return $self->{_domain};
 }
 
-# Parser for the uploaded data. So far only EUF (Ensembl Upload Format) is supported.
+sub features :lvalue { $_[0]->{_FEATURES}; }
+sub groups :lvalue { $_[0]->{_GROUPS}; }
+
+# Parsers for the uploaded data. Ensembl Upload Format versions 1 and 2 are supported.
 
 sub parse {
   my $self = shift;
 
-  delete($self->{PARSED_DATA});
-  my @lines = split(/\r|\n/, $self->data);
-  my @keys = ('groupname', 'featureid', 'featuretype', 'featuresubtype', 'seqmentid', 'start', 'end', 'strand', 'phase', 'score', 'alignment_start', 'alignment_end');
-  my $icount = 0;
-  my $lcount = 0;
-  my $BR = '###';
-  my $EUF = qq{(.+)$BR(.)+$BR(.)+$BR(.)+$BR(.+)$BR(\\d+)$BR(\\d+)$BR(.)$BR(\.|0|1|2|3)$BR(.+)};
-  my $EUFREF = qq{(.+)$BR(.)+$BR(.)+};
+  $self->features = undef;
+  $self->groups = undef;
 
-  my $lnum = scalar(@lines);
+  my @lines = split(/\r|\n/, $self->data);
+
+  if ($lines[0] =~ /euf_version\s+(\d)/) {
+      return $self->parse_euf_2(\@lines);
+  }
+
+  return $self->parse_euf_1(\@lines);
+
+}
+
+sub parse_euf_2 {
+    my $self = shift;
+    my $data = shift;
+
+    my $lnum = scalar(@$data);
+    my $lcount = 0;
+    my $fcount = 1;
+    my $gcount = 1;
+
+    my $fa = 1; # By default we have annotations at the beginning of the file
+    my @css = ();
+    my @meta = ();
+
+    my ($ghash, $fhash);
+    my @feature_keys = ('featureid', 'featuretype', 'method', 'seqmentid', 'start', 'end', 'strand', 'phase', 'score', 'attributes');
+
+    my @group_keys = ('groupid', 'attributes');
+
+    while ($lcount < $lnum) {
+	my $line = shift @$data;
+	$lcount ++;
+
+# skip the empty lines
+	next unless $line;
+
+# parse the meta data
+	if ($line =~ /^\#\#\s?(.+)\s+(.+)/){
+	    $self->metadata($1, $2);
+	    next;
+	}
+
+# parse the section headers
+	if ($line =~ /\[annotation(s?)\]/) {
+	    $fa = 1;
+	    next;
+	} elsif ($line =~ /\[(\s?)stylesheet(\s?)\]/) {
+	    $fa = 2;
+	    next;
+	} elsif ($line =~ /\[(\s?)groups(\s?)\]/) {
+	    $fa = 3;
+	    next;
+	} elsif ($line =~ /\[(\s?)meta(\s?)\]/) {
+	    $fa = 4;
+	    next;
+	} elsif ($line =~ /\[.+\]/) { # Start of some other section - just ignore it
+	    $fa = 0;
+	}
+
+	next if (! $fa);
+
+	if ($fa == 2) { # CSS line - just collect them together
+	    push @css , $line;
+	    next;
+	}
+	if ($fa == 4) { # meta data line - just collect them together
+	    push @meta , $line;
+	    next;
+	}
+	
+	my @line_data = split (/\t/, $line);
+#	print "$fa : [ @line_data ] <br/ >";
+
+
+	if ($fa == 1) { # features
+	    %{$fhash->{$fcount++}} = map { $_ => shift(@line_data) } @feature_keys;
+	} elsif ($fa == 3) { # groups
+	    %{$ghash->{$gcount++}} = map { $_ => shift(@line_data) } @group_keys;
+	}
+
+    }
+
+    $self->css(join("\n", @css));
+    $self->metadata('_XML', join("\n", @meta));
+    $self->groups = $ghash;
+    $self->features = $fhash;
+
+    return;
+}
+
+sub parse_euf_1 {
+    my $self = shift;
+    my $data = shift;
+    my @lines = @$data;
+
+    my @keys = ('groupname', 'featureid', 'featuretype', 'method', 'segmentid', 'start', 'end', 'strand', 'phase', 'score', 'alignment_start', 'alignment_end');
+    my $icount = 1;
+    my $lcount = 0;
+    my $BR = '###';
+    my $EUF = qq{(.+)$BR(.)+$BR(.)+$BR(.)+$BR(.+)$BR(\\d+)$BR(\\d+)$BR(.)$BR(\.|0|1|2|3)$BR(.+)};
+    my $EUFREF = qq{(.+)$BR(.)+$BR(.)+};
+
+    my $lnum = scalar(@lines);
 
   my $fa = 1; # By default we have annotations at the beginning of the file
 
   my @css = ();
+  my $fhash;
 
   while ($lcount < $lnum) {
       my $line = shift @lines;
@@ -167,7 +271,6 @@ sub parse {
 #      print "1: $line<br>";
       next if ($line =~ /^\#|^$|^\s+$/);
 #      print "2: $line<br>";
-      $icount ++;
 
 # feature type and feature subtype can consist of multiple words - so we preserve single spaces, then split the line by tabs or multiple spaces then bring back the single spaces ..
 # we have to do that because sometimes people cut-and-paste the date from the web pages and tabs get subsituted with multiple spaces in the process .. 
@@ -185,35 +288,18 @@ sub parse {
       }
       
       my @data = split(/$BR/, $line);
-#      print("DATA: @data <hr>");
+      %{$fhash->{$icount++}} = map { $_ => shift(@data) } @keys;
 
-      %{$self->{PARSED_DATA}->{$icount}} = map { $_ => shift(@data) } @keys;
+      if (my $gname = $fhash->{($icount-1)}->{groupname}) {
+	  if ($gname ne '.') {
+	      $fhash->{($icount-1)}->{attributes} = "group=$gname";
+	  }
+      }
   }
 
   $self->css(join("\n", @css));
-
-
-# now read the references
-#  my @refkeys = ('clone', 'clonetype', 'size');
-
-#  foreach my $line (@lines) {
-#      print "1: $line<br>";
-#      $lcount ++;
-#      next if ($line =~ /\[references\]/);
-#      next if ($line =~ /^\#|^$|^\s+$/);
-#      $icount ++;
-#      $line =~ s/[\t\s]+/$BR/g;
-#      print "2: $line<br>";
-#      if ($line !~ /$EUFREF/) {
-#	  return $self->error("ERROR: Invalid format. Line $lcount");
-#      }
-#      my @data = split(/$BR/, $line);
-#
-#      %{$self->{REFERENCES}->{$data[0]}} = map { $_ => shift(@data) } @refkeys;
-#  }
-
-  $self->file_type('EUF');
-  $self->mapping('ensembl_location');
+  $self->metadata('coordinate_system', 'ensembl_location');
+  $self->features = $fhash;
   return;
 }
   
@@ -226,9 +312,8 @@ sub create_dsn {
     
     $self->error($self->_db_connect()) and  return -1;
     $self->error($self->_create_table($email, $password)) and return -2;
-    my $icount = $self->_save_data();
     $self->domain($self->species_defs->ENSEMBL_DAS_UPLOAD_SERVER);
-    return $icount;
+    return $self->_save_data();
 }
 
 sub _db_connect {
@@ -258,7 +343,7 @@ sub _db_connect {
     return undef;
 }
 
-# There is a master table hydra_journal 
+# There is a master table journal 
 # +-------------+-------------+------+-----+---------+----------------+
 # | Field       | Type        | Null | Key | Default | Extra          |
 # +-------------+-------------+------+-----+---------+----------------+
@@ -299,10 +384,31 @@ sub _create_table {
     my ($email, $password) = @_;
 
     my $dsnid;
-    my $ftype = $self->file_type || 'NONE';
     my $css = $self->css || '';
-    my $sql = qq{insert into hydra_journal (create_date, email, passw, ftype, css) values (curdate(), '$email', '$password', '$ftype', '$css')};
-    
+    my $meta = $self->metadata('_XML') || '';
+    my $assembly = $self->metadata('assembly') || '*';
+
+    my $cs_id = 2;
+
+    if (my $cs = $self->metadata('coordinate_system')) {
+	my $sql2 = qq{ select id from coordinate_system where name = '$cs'};
+	eval {
+	    my $sth = $self->{_dbh}->prepare($sql2);
+	    $sth->execute();
+	    $cs_id = $sth->fetchrow;
+	};
+  
+	if ($@) {
+	    warn("DB ERROR: $@");
+	    return $DB_Error;
+	}
+	if (! defined ($cs_id)) {
+	    return "DB WARNING: $cs is not a recognized coordinate system";
+	}
+    }
+
+    my $sql = qq{insert into journal (create_date, email, passw, css, meta, coord_system, assembly) values (now(), '$email', '$password', '$css', '$meta', $cs_id, \'$assembly\')};
+
     eval {
 	$self->{_dbh}->do($sql);
     };
@@ -312,7 +418,7 @@ sub _create_table {
 	return $DB_Error;
     }
     
-    $sql = qq{SELECT id FROM hydra_journal WHERE email = '$email' AND access_date IS NULL};
+    $sql = qq{SELECT id FROM $MASTER_TABLE WHERE email = '$email' AND access_date IS NULL ORDER BY create_date DESC};
     eval {
 	my $sth = $self->{_dbh}->prepare($sql);
 	$sth->execute();
@@ -324,31 +430,24 @@ sub _create_table {
 	return $DB_Error;
     }
 
+    my $table_name = sprintf("${TABLE_PREFIX}%08d", $dsnid);  
+    $self->dsn(sprintf("${DSN_PREFIX}%08d", $dsnid));  
 
-
-    if ($ftype eq 'EUF') {
-	my $table_name = sprintf("$EUF_TPREFIX%08d", $dsnid);  
-	$self->dsn(sprintf("$EUF_DPREFIX%08d", $dsnid));  
-	$sql = qq{
+    $sql = qq{
 CREATE TABLE $table_name (
   id int not null auto_increment,
-  groupname varchar(64),
   featureid varchar(64),
   featuretype varchar(32),
-  featuresubtype varchar(32),
+  method varchar(32),
   segmentid varchar(64),
   start int,
   end int,
   strand char,
   phase char,
   score float,
-  alignment_start varchar(32),
-  alignment_end varchar(32),
+  attributes text,
   primary key(id), index(segmentid), index (featuretype) ) TYPE=MyISAM
 };
-    } else {
-	return "Error: Unknow file format"; 
-    }
 
     eval {
 	$self->{_dbh}->do($sql);
@@ -359,7 +458,25 @@ CREATE TABLE $table_name (
 	return $DB_Error;
     }
    
-    $sql = qq{ update hydra_journal set access_date = curdate() where id = $dsnid };
+    $sql = qq{ update journal set access_date = now() where id = $dsnid };
+    eval {
+	$self->{_dbh}->do($sql);
+    };
+
+    if ($@) {
+	warn("DB ERROR: $@");
+	return $DB_Error;
+    }
+
+    my $gtable_name = sprintf("groups_%08d", $dsnid);  
+    $sql = qq{
+CREATE TABLE $gtable_name (
+  id int not null auto_increment,
+  groupid varchar(64),
+  attributes text,
+  primary key(id), index(groupid) ) TYPE=MyISAM
+};
+
     eval {
 	$self->{_dbh}->do($sql);
     };
@@ -372,24 +489,26 @@ CREATE TABLE $table_name (
     return undef;
 }
 
+
 # Save the uploaded data into a table. ATM it supports only EUF format hence there is no check on fily_type.
 sub _save_data {
   my $self = shift;
 
-  (my $table_name = $self->dsn()) =~ s/$EUF_DPREFIX/$EUF_TPREFIX/;
+  (my $table_name = $self->dsn()) =~ s/$DSN_PREFIX/$TABLE_PREFIX/;
 
-  my $sql = qq{insert into $table_name (groupname, featureid, featuretype, featuresubtype, segmentid, start, end, strand, phase, score, alignment_start, alignment_end) values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)};
+  my $sql = qq{insert into $table_name (featureid, featuretype, method, segmentid, start, end, strand, phase, score, attributes) values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)};
+      
   my $icount = 0;
+  my $gcount = 0;
 
   eval {
     my $sth = $self->{_dbh}->prepare($sql);
 
-    foreach (keys (%{$self->{PARSED_DATA}})) {
-      my $hashref = $self->{PARSED_DATA}->{$_};
+    foreach (keys (%{$self->features})) {
+      my $hashref = $self->features->{$_};
 #      warn(Dumper($hashref));
-#      $sth->execute($hashref->{groupname}, $hashref->{featureid}, $hashref->{featuretype}, $hashref->{featuresubtype}, $hashref->{seqmentid}, $hashref->{start}, $hashref->{end}, $hashref->{strand}, $hashref->{phase}, $hashref->{score}, $hashref->{alignment_start}, $hashref->{alignment_end}  );
+      $sth->execute($hashref->{featureid}, $hashref->{featuretype}, $hashref->{method}, $hashref->{segmentid}, $hashref->{start}, $hashref->{end}, $hashref->{strand}, $hashref->{phase}, $hashref->{score}, $hashref->{attributes});
 
-      $sth->execute($hashref->{featureid}, $hashref->{featureid}, $hashref->{featuretype}, $hashref->{featuresubtype}, $hashref->{seqmentid}, $hashref->{start}, $hashref->{end}, $hashref->{strand}, $hashref->{phase}, $hashref->{score}, $hashref->{alignment_start}, $hashref->{alignment_end}  );
       $icount ++;
     }
     $sth->finish();
@@ -400,7 +519,35 @@ sub _save_data {
       $self->error($DB_Error);
       return -3;
   }
-  return $icount;
+
+  if ($self->groups) {
+      (my $table_name = $self->dsn()) =~ s/$DSN_PREFIX/$GROUPS_PREFIX/;
+      my $gsql = qq{insert into $table_name (groupid, attributes) values(?, ?)};
+      my $gusql = qq{update $table_name set attributes = ? where groupid = ?};
+      eval {
+	  my $usth = $self->{_dbh}->prepare($gusql);
+	  my $sth = $self->{_dbh}->prepare($gsql);
+
+	  foreach (keys (%{$self->groups})) {
+	      my $hashref = $self->groups->{$_};
+#	      warn(Dumper($hashref));
+	      if (my $c = $usth->execute($hashref->{attributes}, $hashref->{groupid}) < 1) {
+		  $sth->execute($hashref->{groupid}, $hashref->{attributes});
+	      }
+
+	      $gcount ++;
+	  }
+	  $sth->finish();
+      };
+
+      if ($@) {
+	  warn("DB ERROR: $@");
+	  $self->error($DB_Error);
+	  return -4;
+      }
+
+  }
+  return ($icount, $gcount);
 }  
 
 # When we remove datasource we need to remove the corresponding entry from hydra_journal and drop the corresponding table
@@ -412,10 +559,10 @@ sub remove_dsn {
 
     $self->error($self->_db_connect()) and  return -1;
     
-    (my $dsn_id = $dsn) =~ s/^$EUF_DPREFIX(0)*//;
+    (my $dsn_id = $dsn) =~ s/^$DSN_PREFIX(0)*//;
     my $jid;
     
-    my $sql = qq{select id from hydra_journal where id = '$dsn_id' and passw = '$password'};
+    my $sql = qq{select id from $MASTER_TABLE where id = '$dsn_id' and passw = '$password'};
     eval {
 	my $sth = $self->{_dbh}->prepare($sql);
 	$sth->execute();
@@ -426,13 +573,12 @@ sub remove_dsn {
 	warn("DB ERROR: $@");
 	return $self->error($DB_Error);
     }
-#  warn("$sql : $jid");
 
     if (! defined($jid)) {
 	return $self->error("Error: no such data source or invalid password");
     }
 
-    $sql = qq{delete from hydra_journal where id = $dsn_id and passw = '$password'};
+    $sql = qq{delete from $MASTER_TABLE where id = $dsn_id and passw = '$password'};
     eval {
 	$self->{_dbh}->do($sql);
     };
@@ -456,7 +602,6 @@ sub remove_dsn {
     return undef;
 }
 
-
 # When 'overwrite' is passed as $action the data in the table are overwritten, otherwise just added to the existing.
 sub update_dsn {
     my $self = shift;
@@ -464,14 +609,16 @@ sub update_dsn {
 
     delete ($self->{_error});
     
+    if ($dsn =~ /^hydraeuf_/) {
+	return $self->_update_oldsource(@_);
+    }
+
     $self->error($self->_db_connect()) and  return -1;
-    (my $dsnid = $dsn) =~ s/^$EUF_DPREFIX(0)*//;
+    (my $dsnid = $dsn) =~ s/^$DSN_PREFIX(0)*//;
     
-    warn("UPDATE!");
-    my $sql = qq{select id from hydra_journal where id = '$dsnid' and passw = '$password'};
+    my $sql = qq{select id from $MASTER_TABLE where id = '$dsnid' and passw = '$password'};
     my $jid;
     my $sth;
-    warn("$sql");
     eval {
 	$sth = $self->{_dbh}->prepare($sql);
 	$sth->execute();
@@ -492,8 +639,8 @@ sub update_dsn {
     $self->dsn($dsn);
     
     if ($action eq 'overwrite') {
-	(my $tname = $dsn) =~ s/hydraeuf_/euf_/;
-	$sql = qq{delete from $tname};
+	(my $tname = $dsn) =~ s/$DSN_PREFIX/$TABLE_PREFIX/;
+	$sql = qq{truncate $tname};
 	eval {
 	    $self->{_dbh}->do($sql);
 	};
@@ -502,21 +649,153 @@ sub update_dsn {
 	    warn("DB Error: $@");
 	    $self->error($DB_Error) and return -4;
 	}
-    }
-    if (my $css = $self->css) {
-	$sql = qq{ UPDATE hydra_journal SET css = '$css' WHERE id = $jid};
+
+	(my $gname = $dsn) =~ s/$DSN_PREFIX/$GROUPS_PREFIX/;
+	$sql = qq{truncate $gname};
 	eval {
 	    $self->{_dbh}->do($sql);
 	};
 
 	if ($@) {
-	    warn("DB Error: $@");
-	    $self->error($DB_Error) and return -5;
+	    my $gtable_name = sprintf("$GROUPS_PREFIX%08d", $dsnid);  
+	    $sql = qq{
+CREATE TABLE $gtable_name (
+  id int not null auto_increment,
+  groupid varchar(64),
+  attributes text,
+  primary key(id), index(groupid) ) TYPE=MyISAM
+};
+
+	    eval {
+		$self->{_dbh}->do($sql);
+	    };
+
+	    if ($@) {
+		warn("DB ERROR: $@");
+		return $DB_Error;
+	    }
+	}
+
+    }
+
+    my $css = $self->css || '';
+    my $meta = $self->metadata('_XML') || '';
+    my $assembly = $self->metadata('assembly') || '*';
+    my $cs_id = 2;
+
+    if (my $cs = $self->metadata('coordinate_system')) {
+	my $sql2 = qq{ select id from coordinate_system where name = '$cs'};
+	eval {
+	    my $sth = $self->{_dbh}->prepare($sql2);
+	    $sth->execute();
+	    $cs_id = $sth->fetchrow;
+	};
+  
+	if ($@) {
+	    warn("DB ERROR: $@");
+	    return $DB_Error;
+	}
+	if (! defined ($cs_id)) {
+	    return "DB WARNING: $cs is not a recognized coordinate system";
 	}
     }
-    my $icount = $self->_save_data();
+
+
+    $sql = qq{ UPDATE $MASTER_TABLE SET css = '$css', meta ='$meta', coord_system = $cs_id, assembly = '$assembly', access_date = curdate() WHERE id = $jid};
+
+    eval {
+	$self->{_dbh}->do($sql);
+    };
+
+    if ($@) {
+	warn("DB Error: $@");
+	$self->error($DB_Error) and return -5;
+    }
+
     $self->domain($self->species_defs->ENSEMBL_DAS_UPLOAD_SERVER);
-    return $icount;
+    return $self->_save_data();
+}
+
+sub _update_oldsource {
+    my $self = shift;
+    my ($dsn, $password, $action) = @_;
+
+    delete ($self->{_error});
+
+    $self->error($self->_db_connect()) and  return -1;
+    (my $dsnid = $dsn) =~ s/^hydraeuf_(0)*//;
+
+    my $sql = qq{select id from hydra_journal where id = '$dsnid' and passw = '$password'};
+    my $jid;
+    my $sth;
+
+    warn($sql);
+    eval {
+        $sth = $self->{_dbh}->prepare($sql);
+        $sth->execute();
+        $jid = $sth->fetchrow;
+    };
+
+    if ($@) {
+        warn("DB Error: $@");
+        $self->error($DB_Error) and return -2;
+    }
+    $sth->finish;
+
+    if (! defined($jid)) {
+        $self->error("Error: no such data source or invalid password");
+        return -3;
+    }
+
+    $self->dsn($dsn);
+    (my $table_name = $dsn) =~ s/hydraeuf_/euf_/;
+
+    if ($action eq 'overwrite') {
+
+        $sql = qq{delete from $table_name};
+        eval {
+            $self->{_dbh}->do($sql);
+        };
+
+        if ($@) {
+            warn("DB Error: $@");
+            $self->error($DB_Error) and return -4;
+        }
+    }
+    if (my $css = $self->css) {
+        $sql = qq{ UPDATE hydra_journal SET css = '$css' WHERE id = $jid};
+        eval {
+            $self->{_dbh}->do($sql);
+        };
+
+        if ($@) {
+            warn("DB Error: $@");
+            $self->error($DB_Error) and return -5;
+        }
+    }
+
+    $self->domain($self->species_defs->ENSEMBL_DAS_UPLOAD_SERVER);
+
+    $sql = qq{insert into $table_name (groupname, featureid, featuretype, featuresubtype, segmentid, start, end, strand, phase, score, alignment_start, alignment_end) values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)};
+  my $icount = 0;
+
+    eval {
+	my $sth = $self->{_dbh}->prepare($sql);
+
+	foreach (keys (%{$self->features})) {
+	    my $hashref = $self->features->{$_};
+	    $sth->execute($hashref->{featureid}, $hashref->{featureid}, $hashref->{featuretype}, $hashref->{featuresubtype}, $hashref->{segmentid}, $hashref->{start}, $hashref->{end}, $hashref->{strand}, $hashref->{phase}, $hashref->{score}, $hashref->{alignment_start}, $hashref->{alignment_end}  );
+	    $icount ++;
+	}
+	$sth->finish();
+    };
+
+    if ($@) {
+	warn("DB ERROR: $@");
+	$self->error($DB_Error);
+	return -3;
+    }
+    return ($icount, 0);
 }
 
 1;
