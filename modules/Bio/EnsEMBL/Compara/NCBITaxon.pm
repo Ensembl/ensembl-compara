@@ -103,9 +103,6 @@ sub classification {
   my $separator = shift;
 
   $separator = " " unless (defined $separator);
-  unless ($self->rank eq 'species') {
-    throw("classification can only be called on node of species rank\n");
-  }
   
   unless (defined $self->{'_classification'}) {
     
@@ -117,8 +114,11 @@ sub classification {
     unless ($root->get_child_count == 0) {
       $root->_add_child_name_to_classification(\@classification);
     }
-    my ($genus, $species) = split(" ", $self->binomial);
-    unshift @classification, $species;
+    if ($self->rank eq 'species' || $self->rank eq 'subspecies') {
+      my ($genus, $species, $subspecies) = split(" ", $self->binomial);
+      unshift @classification, $species;
+      unshift @classification, $subspecies if (defined $subspecies);
+    }
     $self->{'_classification'} = join($separator,@classification);
   }
   
@@ -156,7 +156,7 @@ sub _add_child_name_to_classification {
     throw("Can't classification on a multifurcating tree\n");
   } elsif ($self->get_child_count == 1) {
     my $child = $self->children->[0];
-    unless ($child->genbank_hidden_flag || $child->rank eq "subgenus" || $child->rank eq "subspecies") {
+    unless ($child->genbank_hidden_flag || $child->rank eq "subgenus") {
       unshift @$classification, $child->name;
     }
     unless ($child->rank eq 'species') {
@@ -176,7 +176,7 @@ sub common_name {
 
 sub binomial {
   my $self = shift;
-  if ($self->has_tag('scientific name') && $self->rank eq 'species') {
+  if ($self->has_tag('scientific name') && ($self->rank eq 'species' || $self->rank eq 'subspecies')) {
     return $self->get_tagvalue('scientific name');
   } else {
     return undef;
