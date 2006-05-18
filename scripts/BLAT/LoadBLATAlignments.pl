@@ -95,13 +95,7 @@ my $db = "Bio::EnsEMBL::Registry";
 
 my $comparadb=$db->get_DBAdaptor($dbname, 'compara') or die "no comparadbadaptor:$dbname, 'compara' \n";
 
-my $stored_max_alignment_length;
 my $meta_con = $db->get_adaptor($dbname, 'compara', 'MetaContainer') or die "no metadbadaptor:$dbname, 'compara','MetaContainer' \n";
-my $values=$meta_con->list_value_by_key("max_alignment_length");
-
-if(@$values) {
-  $stored_max_alignment_length = $values->[0];
-}
 
 my $gdb_adaptor = $db->get_adaptor($dbname, 'compara', 'GenomeDB') or die "no Genomedbadaptor:$dbname, 'compara' \n";
 my $cs_genome_db = $gdb_adaptor->fetch_by_dbID($cs_genome_db_id) or die "no dbId in :$dbname, '$cs_genome_db_id' \n";
@@ -342,13 +336,6 @@ LINE:while (my $line =<FILE>) {
 ######Again only store if not creating tab file-- otherwise store in DB
 if ($tab) {
   open (META, ">meta.$file") or die "can't open meta.$file:$!\n";
-  if (!defined $stored_max_alignment_length) {
-    print META "max_alignment_length\t", ($max_alignment_length + 1), "\n";
-  } elsif ($stored_max_alignment_length < $max_alignment_length + 1) {
-    foreach my $meta_id (@{get_all_meta_ids($meta_con, "max_alignment_length")}) {
-      print META "$meta_id\tmax_alignment_length\t", ($max_alignment_length + 1), "\n";
-    }
-  }
   my $all_meta_ids = get_all_meta_ids($meta_con, "max_align_".$method_link_species_set->dbID);
   if (!@$all_meta_ids) {
     print META "NULL\tmax_align_".$method_link_species_set->dbID."\t", ($max_alignment_length + 1), "\n";
@@ -362,11 +349,6 @@ if ($tab) {
   close GA;
   close GAG;
 } else {
-  if (!defined $stored_max_alignment_length) {
-    $meta_con->store_key_value("max_alignment_length", $max_alignment_length + 1);
-  } elsif ($stored_max_alignment_length < $max_alignment_length + 1) {
-    $meta_con->update_key_value("max_alignment_length", $max_alignment_length + 1);
-  }
   ## New max_alignment_length is method_link_species_set-specific!
   if (@{$meta_con->store_key_value("max_align_".$method_link_species_set->dbID)}) {
     $meta_con->update_key_value("max_align_".$method_link_species_set->dbID, $max_alignment_length + 1);
