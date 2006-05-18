@@ -31,7 +31,30 @@ sub fetch_node_by_taxon_id {
   my ($self, $taxon_id) = @_;
   my $constraint = "WHERE t.taxon_id = $taxon_id";
   my ($node) = @{$self->_generic_fetch($constraint)};
+  unless ($node) {
+    my $new_taxon_id = $self->fetch_node_id_by_merged_taxon_id($taxon_id);
+    if (defined $new_taxon_id) {
+      $constraint = "WHERE t.taxon_id = $new_taxon_id";
+      ($node) = @{$self->_generic_fetch($constraint)};
+    }
+    if ($node) {
+      warning("The given taxon_id=$taxon_id is now deprecated and has been merged with taxon_id=".$node->taxon_id,"\n");
+    }
+  }
   return $node;
+}
+
+sub fetch_node_id_by_merged_taxon_id {
+  my ($self, $taxon_id) = @_; 
+
+  my $sql = "SELECT t.taxon_id FROM ncbi_taxa_nodes t, ncbi_taxa_names n WHERE n.name = ? and n.name_class = 'merged_taxon_id' AND t.taxon_id = n.taxon_id";
+
+  my $sth = $self->dbc->prepare($sql);
+  $sth->execute($taxon_id);
+  my ($merged_taxon_id) = $sth->fetchrow_array();
+  $sth->finish;
+
+  return $merged_taxon_id;
 }
 
 sub fetch_node_by_name {
