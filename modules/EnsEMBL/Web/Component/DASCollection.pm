@@ -1,7 +1,26 @@
 package EnsEMBL::Web::Component::DASCollection;
+=head1 NAME
 
-# Puts together chunks of XHTML for gene-based displays
+EnsEMBL::Web::Component::DASCollection;
 
+=head1 SYNOPSIS
+
+Web Component used to render dasconfview pages
+
+=head1 DESCRIPTION
+
+Web Component used to render dasconfview pages
+
+=head1 LICENCE
+
+This code is distributed under an Apache style licence:
+Please see http://www.ensembl.org/code_licence.html for details
+
+=head1 CONTACT
+
+Eugene Kulesha - ek3@sanger.ac.uk
+
+=cut
 use EnsEMBL::Web::Component;
 use Data::Dumper;
 
@@ -457,11 +476,12 @@ sub das_wizard {
     
     my @sparams; 
     if ($step == 1) {
-    @sparams = grep { /^DAS/ && /edit|link|enable|type|name|label|help|color|group|strand|depth|labelflag|stylesheet|score|fg_merge/} $object->param();
+	@sparams = grep { /^DAS/ && /edit|link|enable|type|name|label|help|color|group|strand|depth|labelflag|stylesheet|score|fg_merge/} $object->param();
     } elsif ($step == 2) {
-    @sparams = grep { /^DAS/ && /edit|link|user_|sourcetype|protocol|domain|dsn|registry|dsns|paste_data|name|label|help|color|group|strand|depth|labelflag|stylesheet|score|fg_merge/} $object->param();
+	@sparams = grep { /^DAS/ && /edit|link|user_|sourcetype|protocol|domain|dsn|registry|dsns|paste_data|name|label|help|color|group|strand|depth|labelflag|stylesheet|score|fg_merge/} $object->param();
+	push @sparams, 'DAStype' if ($source_conf{sourcetype} eq 'das_file' && (! $object->param("DASdsn")));
     } elsif ($step == 3) {
-    @sparams = grep { /^DAS/ && /edit|user_|protocol|domain|dsn|registry|dsns|paste_data|enable|type/} $object->param();
+	@sparams = grep { /^DAS/ && /edit|user_|protocol|domain|dsn|registry|dsns|paste_data|enable|type/} $object->param();
     }
     foreach my $param (@sparams) {
         my @v = $object->param($param);
@@ -639,102 +659,98 @@ sub das_wizard_2 {
     my ($form, $source_conf, $object, $step_ref, $error) = @_;
 
     my $error_section;
-
+    my $set_mapping;
     my $source_type = $source_conf->{sourcetype};
-
-#    &wizardTopPanel($form, $$step_ref, $source_conf->{sourcetype});
 
     $source_type  = 'das_registry' if ($object->param('DASdomain') eq $object->species_defs->DAS_REGISTRY_URL);
 
     if ($source_conf->{sourcetype} eq 'das_file' && (! $object->param("DASdsn"))) {
-    my $user_email = $object->param('DASuser_email');
-    my $user_password = $object->param('DASuser_password');
-    my $user_pastedata = $object->param('DASpaste_data');
-
+	my $user_email = $object->param('DASuser_email');
+	my $user_password = $object->param('DASuser_password');
+	my $user_pastedata = $object->param('DASpaste_data');
+	my $user_action = $object->param('DASuser_action');
 # Validate email and password
        
-    ( length($user_password) > 0) or $error_section = qq{<strong>ERROR: Empty parameter: Password</strong>};
-    
-    ($user_email =~ /\@/) or $error_section = qq{<strong>ERROR:Invalid format of Email</strong>};
-    return $error_section if ($error_section);
+	( length($user_password) > 0) or $error_section = qq{<strong>ERROR: Empty parameter: Password</strong>};
+	
+	($user_email =~ /\@/) or $error_section = qq{<strong>ERROR:Invalid format of Email</strong>};
+	return $error_section if ($error_section);
 
-    use EnsEMBL::Web::DASUpload;
-    my $du  = EnsEMBL::Web::DASUpload->new($object);
-    my $set_mapping;
+	use EnsEMBL::Web::DASUpload;
+	my $du  = EnsEMBL::Web::DASUpload->new($object);
+	warn ("UA : $user_action");
+	
+	if (length($user_pastedata) > 0) {
+	    $du->data($user_pastedata);
+	} else {
+	    $du->upload_data('DASfilename');
+	}
+	if (defined (my $err= $du->error)) { 
+	    $error_section = qq{<strong>ERROR: Could not upload data due to \'$err\' </strong>};
+	} else {
+	    if (defined (my $err = $du->parse())) {
+		$error_section = qq{<strong>ERROR: Could not upload data due to \'$err\' </strong>};
+	    } else {
+		my ($fnum, $gnum);
+		if (defined(my $user_dsn = $object->param("DASuser_dsn") || undef)) {
+		    ($fnum, $gnum) = $du->update_dsn($user_dsn, $user_password, $user_action);
+		} else {
+		    ($fnum, $gnum) = $du->create_dsn($user_email, $user_password);
+		}
 
-    if (length($user_pastedata) > 0) {
-        $du->data($user_pastedata);
-    } else {
-        $du->upload_data('DASfilename');
-    }
-    if (defined (my $err= $du->error)) { 
-        $error_section = qq{<strong>ERROR: Could not upload data due to \'$err\' </strong>};
-    } else {
-        if (defined (my $err = $du->parse())) {
-        $error_section = qq{<strong>ERROR: Could not upload data due to \'$err\' </strong>};
-        } else {
-        if (defined(my $user_dsn = $object->param("DASuser_dsn") || undef)) {
-            if (defined (my $user_action = $object->param("DASuser_action"))) {
-            if ( (my $enum = $du->update_dsn($user_dsn, $user_password, $user_action)) > 0) {
-                my $domain = $du->domain;
-                my $dsn = $du->dsn;
-		$set_mapping = $du->mapping;
-                $source_conf->{domain} = $domain;
-                $source_conf->{dsn} = $dsn;
-		$source_conf->{url} = join('/',$domain, $dsn);
-		push @{$source_conf->{mapping}} , $set_mapping;
-		$object->param('DAStype', $set_mapping);
-                $object->param('DASdomain', $domain);
-                $object->param('DASdsns', $dsn);
-                $$step_ref = 10;
-                my $css = $du->css ? 'Successfully uploaded stylesheet <br>' : '';
-                $form->add_element('type' => 'Information', 'value'=> qq{
-		$css
-                Successfully uploaded $enum entries <br />
-                DAS source at $domain/$dsn has been updated<hr/>
-		<br/> <br />
-                });
+		if (defined (my $err = $du->error)) {
+		    $error_section = qq{<strong>ERROR: Could not upload data due to \'$err\' </strong>};
+		} else {
+		    my $domain = $du->domain;
+		    my $dsn = $du->dsn;
+		    if ($set_mapping = $du->metadata('coordinate_system')) {
+			push @{$source_conf->{mapping}} , $set_mapping;
+		    }
 
-            }
-            if (defined (my $err = $du->error)) {
-                $error_section = qq{<strong>ERROR: Could not upload data due to \'$err\' </strong>};
-            }
-            return $error_section;
-            } else {
-            $error_section = qq{<strong>ERROR: If you want to update the source you have to choose whether to overwrite old data or append new data to them</strong>};
-            }
-        } else {
-            if ( (my $enum = $du->create_dsn($user_email, $user_password)) > 0) {
-            my $domain = $du->domain;
-            my $dsn = $du->dsn;
+		    $source_conf->{type} = $set_mapping;			
+		    $source_conf->{domain} = $domain;
+		    $source_conf->{dsn} = $dsn;
+		    $source_conf->{url} = join('/',$domain, $dsn);
+			    
+		    $object->param('DAStype', $set_mapping);
+		    $object->param('DASdomain', $domain);
+		    $object->param('DASdsns', $dsn);
 
-            $source_conf->{domain} = $domain;
-            $source_conf->{dsn} = $dsn;
 
-            $source_conf->{url} = join('/',$domain, $dsn);
+		    my $css = $du->css ? 'Successfully uploaded stylesheet <br />' : '';
+		    my $meta = $du->metadata('_XML') ? 'Successfully uploaded meta data <br />' : '';
+		    my $groups = $gnum ? "Successfully uploaded $gnum groups <br/>" : '';
+		    my $assembly = $du->metadata('assembly');
+		    my $features = "Successfully uploaded $fnum features ". ($assembly ? "based on $assembly assembly" : ''). "<br/>";
+		    if (defined(my $user_dsn = $object->param("DASuser_dsn") || undef)) {
+			$$step_ref = 10;
 
-	    $set_mapping = $du->mapping;
-            push @{$source_conf->{mapping}} , $set_mapping;
-	    $object->param('DAStype', $set_mapping);
-            $object->param('DASprotocol', 'http');
-            $object->param('DASdomain', $domain);
-            $object->param('DASdsns', $dsn);
-	    my $css = $du->css ? 'Successfully uploaded stylesheet <br>' : '';
-            $form->add_element('type' => 'Information', 'value'=> qq{
-		$css
-                Successfully uploaded $enum entries <br/>
-                A new DAS source has been created at $domain/$dsn<hr/>
-		<br/>
-		<br/>
-            });
-            }
-            if (defined (my $err = $du->error)) {
-            $error_section = qq{<strong>ERROR: Could not upload data due to \'$err\' </strong>};
-            }
-        }
-        }
-    }
-    return $error_section if ($error_section);
+			$form->add_element('type' => 'Information', 'value'=> qq{
+			    $css
+			    $meta
+			    $groups
+			    $features
+			    DAS source at $domain/$dsn has been updated<hr/>
+			    <br/>
+			    <br/>
+			});
+
+		    } else {
+			$form->add_element('type' => 'Information', 'value'=> qq{
+			    $css
+			    $meta
+			    $groups
+			    $features
+			    A new DAS source has been created at $domain/$dsn<hr/>
+			    <br/>
+			    <br/>
+			});
+		    }
+		}
+	    }
+	}
+
+	return $error_section if ($error_section);
     }
     my $script = $object->param('conf_script');
 
@@ -756,9 +772,11 @@ sub das_wizard_2 {
   </div>
 };
         $form->add_element('type'=>'Information', 'value'=> $cs_html);
-    } elsif ($source_conf->{sourcetype} eq 'das_file') {
-	my $cs = join('<br/>', map {$object->getCoordinateSystem($_)} grep {$_} @{$source_conf->{mapping}}) ;
-	my $cs_html = qq{
+    } else {
+	if ($source_conf->{sourcetype} eq 'das_file' && $set_mapping) {
+	    my $cs = join('<br/>', map {$object->getCoordinateSystem($_)} grep {$_} @{$source_conf->{mapping}}) ;
+
+	    my $cs_html = qq{
 <div class="formblock">
   <h6><label>Coordinate System </label></h6>
     <div class="formcontent">
@@ -766,30 +784,31 @@ sub das_wizard_2 {
     </div>
   </div>
 };
-        $form->add_element('type'=>'Information', 'value'=> $cs_html);
-    } else {
-        my @mvalues;
+	    $form->add_element('type'=>'Information', 'value'=> $cs_html);
+	} else {
+	    my @mvalues;
 # grep is to filter out undef elements
-    my @seltypes = grep {$_} @{$source_conf->{mapping}};
-        if (scalar(@seltypes) < 1) {
-            push @seltypes, $DefaultMapping{$script};
-        }
+	    my @seltypes = grep {$_} @{$source_conf->{mapping}};
+	    if (scalar(@seltypes) < 1) {
+		push @seltypes, $DefaultMapping{$script};
+	    }
 
-	my %DASMapping = %{$object->getCoordinateSystem};
-        my $ptest = join('*', @seltypes).'*';
-        foreach my $p (sort keys (%DASMapping)) {
-            if ($ptest =~ /$p\*/){
-                push @mvalues, {"value"=>$p, "name"=>$DASMapping{$p}, "checked"=>"yes"};
-            } else {
-                push @mvalues, {"value"=>$p, "name"=>$DASMapping{$p}};
-            }
-        }
-        $form->add_element('type' => 'MultiSelect',
-                           'class' => 'radiocheck1col',
-                           'name'=>'DAStype',
-                           'label'=>'Coordinate System',
-                           'values' => \@mvalues
-                           );
+	    my %DASMapping = %{$object->getCoordinateSystem};
+	    my $ptest = join('*', @seltypes).'*';
+	    foreach my $p (sort keys (%DASMapping)) {
+		if ($ptest =~ /$p\*/){
+		    push @mvalues, {"value"=>$p, "name"=>$DASMapping{$p}, "checked"=>"yes"};
+		} else {
+		    push @mvalues, {"value"=>$p, "name"=>$DASMapping{$p}};
+		}
+	    }
+	    $form->add_element('type' => 'MultiSelect',
+			       'class' => 'radiocheck1col',
+			       'name'=>'DAStype',
+			       'label'=>'Coordinate System',
+			       'values' => \@mvalues
+			       );
+	}
     }
     my @views = ('geneview', 'protview', 'transview', 'contigview', 'cytoview');
 
@@ -821,8 +840,6 @@ sub das_wizard_2 {
 
 sub das_wizard_3 {
     my ($form, $das_conf, $object, $step_ref, $error) = @_;
-
-#    &wizardTopPanel($form, $$step_ref, $das_conf->{sourcetype});
 
     my $html = qq{<table id="display_config">\n};
     my $option;
@@ -1052,8 +1069,6 @@ sub add_das_registry {
       }
   }
 
-
-
   my $registry = $object->getRegistrySources();
 
   $rurl .= "/showdetails.jsp?auto_id=";
@@ -1065,7 +1080,6 @@ sub add_das_registry {
     my ($id, $name, $url, $desc, $cs) = ($dassource->{id}, $dassource->{nickname}, $dassource->{url}, substr($dassource->{description}, 0, $dwidth), join('*', @{$dassource->{coordinateSystem}}));
     $cs = qq{<a href="javascript:X=window.open(\'$rurl$id\', \'DAS source details\', \'left=50,top=50,resizable,scrollbars=yes\');X.focus();void(0)">details about \`$name\`</a>};
     my $selected = $selected_sources{$id} ? 'checked' : '';
-#    $html .= qq{\n  <tr><td><input type="checkbox" name="DASregistry" value="$id" $selected ></td><td>$name</td><td>$url</td><td>$cs</td></tr>};
     
     if( length($desc) == $dwidth ) {
 # find the last space character in the line and replace the tail with ...        
@@ -1154,17 +1168,21 @@ sub add_das_file {
     'value' => $object->param('DASuser_dsn'),
   );
 
+  $object->param('DASuser_action') || $object->param('DASuser_action', 'append');
+
   $form->add_element(
     'type'   => 'DropDown',
     'name'   => 'DASuser_action',
     'label'  => 'Action',
     'values' => [
       { 'name' => 'Overwrite', 'value' => 'overwrite' },
-      { 'name' => 'Append',    'name'  => 'append'    }
-    ]
+      { 'name' => 'Append',    'value'  => 'append'    }
+    ],
+    'value' => $object->param('DASuser_action'),
   );
 
 
   return;
 }
 
+1;
