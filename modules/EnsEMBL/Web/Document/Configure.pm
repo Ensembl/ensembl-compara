@@ -65,8 +65,6 @@ sub common_menu_items {
       'title' => "Latest changes in Ensembl",
       'icon' => '/img/infoicon.gif',
     );
-    my $ad_html = $doc->mini_ad;
-    $doc->menu->add_miniad($ad_html);
   }
   $doc->menu->add_entry( 'docs',
     'href' => '/info/about/',
