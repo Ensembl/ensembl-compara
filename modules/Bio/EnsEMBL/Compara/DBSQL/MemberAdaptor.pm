@@ -282,7 +282,7 @@ sub fetch_by_relation_source {
     my $extra_columns = [qw(hm.homology_id
                             hm.member_id
                             hm.peptide_member_id
-                            hm.peptide_align_feature_id                            
+                            hm.peptide_align_feature_id
                             hm.cigar_line
                             hm.cigar_start
                             hm.cigar_end
@@ -734,11 +734,6 @@ sub store {
     $sth3->finish;
   }
 
-
-  if (defined $member->taxon) {
-    $self->db->get_TaxonAdaptor->store($member->taxon);
-  }
-
   return $member->dbID;
 }
 
@@ -766,107 +761,6 @@ sub update_sequence {
   }
   return 1;
 }
-
-
-=head2 store_source
-
-  Arg [1]    : 
-  Example    : 
-  Description: 
-  Returntype : 
-  Exceptions : 
-  Caller     : 
-
-=cut
-
-sub store_source {
-  my ($self,$source_name) = @_;
-
-  throw("store_source method is deprecated. source_name is now directly stored in member table\n");
-
-  my $sql = "SELECT source_id FROM source WHERE source_name = ?";
-  my $sth = $self->prepare($sql);
-  $sth->execute($source_name);
-  my $rowhash = $sth->fetchrow_hashref;
-  $sth->finish;
-  
-  if ($rowhash->{source_id}) {
-    return $rowhash->{source_id};
-  } else {
-    $sql = "INSERT INTO source (source_name) VALUES (?)";
-    my $sth2 = $self->prepare($sql);
-    $sth2->execute($source_name);
-    my $dbID = $sth2->{'mysql_insertid'};
-    $sth2->finish;
-    return $dbID;
-  }
-}
-
-=head2 get_source_name_from_id
-
-  Arg [1]    :
-  Example    :
-  Description:
-  Returntype :
-  Exceptions :
-  Caller     :
-
-=cut
-
-sub get_source_name_from_id {
-  my ($self,$source_id) = @_;
-
-  throw("get_source_name_from_id method is deprecated.\n");
-
-  $self->{'_source_id2name_hash'} = {} unless($self->{'_source_id2name_hash'});
-  my $source_name = $self->{'_source_id2name_hash'}->{$source_id};
-  return $source_name if($source_name);
-  
-  # source_id not in hash, so reload source table from DB
-  $self->{'_source_name2id_hash'} = {} unless($self->{'_source_name2id_hash'});
-  my $sql = "SELECT source_id, source_name FROM source";
-  my $sth = $self->prepare($sql);
-  $sth->execute();
-  while(my ($id, $name) = $sth->fetchrow_array()) {
-    $self->{'_source_id2name_hash'}->{$id} = $name;
-    $self->{'_source_name2id_hash'}->{$name} = $id;
-  }
-  $sth->finish;
-
-  $source_name = $self->{'_source_id2name_hash'}->{$source_id};
-  $source_name = '' unless($source_name);
-  return $source_name;
-}
-
-sub get_source_id_from_name {
-  my ($self,$source_name) = @_;
-  
-  throw("get_source_id_from_name method is deprecated.\n");
-
-  $self->{'_source_name2id_hash'} = {} unless($self->{'_source_name2id_hash'});
-  my $source_id = $self->{'_source_name2id_hash'}->{$source_name};
-  return $source_id if($source_id);
-  
-  # source_name not in hash, so reload source table from DB
-  # by calling get_source_name_from_id(-1) (a non-valid id)
-  $self->get_source_name_from_id(-1);
-  $source_id = $self->{'_source_name2id_hash'}->{$source_name};
-  $source_id = -1 unless($source_id);
-  return $source_id 
-}
-
-=head2 store_gene_peptide_link
-
-  Arg [1]    : int member_id of gene member
-  Arg [2]    : int member_id of peptide member
-  Example    : $memberDBA->store_gene_peptide_link($gene->dbID, $peptide->dbID);
-  Description: creates link relationship between gene members and their translated
-               peptide members. Store relationship in member_gene_peptide table
-  Returntype : none
-  Exceptions : none
-  Caller     : general
-
-=cut
 
 sub store_gene_peptide_link {
   my ($self, $gene_member_id, $peptide_member_id) = @_;
