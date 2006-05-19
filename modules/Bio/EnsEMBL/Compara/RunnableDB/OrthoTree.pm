@@ -273,7 +273,7 @@ sub run_analysis
   
   #display summary stats of analysis 
   my $runtime = time()*1000-$starttime;  
-  $self->{'protein_tree'}->store_tag('OrthoTree_runtime_msec', $runtime) unless $self->{'_treefam'};
+  $self->{'protein_tree'}->store_tag('OrthoTree_runtime_msec', $runtime) unless ($self->{'_readonly'});
   if($self->debug) {
     printf("%d proteins in tree\n", scalar(@{$tree->get_all_leaves}));
     printf("%d pairings\n", scalar(@genepairlinks));
@@ -437,16 +437,16 @@ sub get_ancestor_species_hash
     if ($original_duplication_value == 0) {
       # RAP did not predict a duplication here
       $node->add_tag("duplication_hash", $duplication_hash);
-      $node->store_tag("Duplication", 1);
-      $node->store_tag("Duplication_alg", 'species_count');
+      $node->store_tag("Duplication", 1)  unless ($self->{'_readonly'});
+      $node->store_tag("Duplication_alg", 'species_count') unless ($self->{'_readonly'});
 
     } elsif ($original_duplication_value == 1) {
       my $dup_alg = $node->get_tagvalue("Duplication_alg");
       if (defined $dup_alg and $dup_alg ne 'species_count') {
         # RAP did predict a duplication here but not species_count
         $node->add_tag("duplication_hash", $duplication_hash);
-        $node->store_tag("Duplication", 2);
-        $node->store_tag("Duplication_alg", 'species_count');
+        $node->store_tag("Duplication", 2) unless ($self->{'_readonly'});
+        $node->store_tag("Duplication_alg", 'species_count') unless ($self->{'_readonly'});
       }
 
     }
@@ -479,8 +479,8 @@ sub get_ancestor_taxon_level
     }
   }
   $ancestor->add_tag("taxon_level", $taxon_level);
-  $ancestor->store_tag("taxon_id", $taxon_level->taxon_id) unless $self->{'_treefam'};
-  $ancestor->store_tag("name", $taxon_level->name) unless $self->{'_treefam'};
+  $ancestor->store_tag("taxon_id", $taxon_level->taxon_id) unless ($self->{'_readonly'});
+  $ancestor->store_tag("name", $taxon_level->name) unless ($self->{'_readonly'});
 
   #$ancestor->print_tree($self->{'tree_scale'});
   #$taxon_level->print_tree(10);
