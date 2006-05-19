@@ -973,7 +973,7 @@ sub map_random_chromosome {
 
   my ($chrom_start, $chrom_end, $frag_name, $frag_start, $frag_end, $frag_strand);
 
-  if ($seq_region_name =~ /_random$/) {
+  if ($seq_region_name =~ /_random$/ or $seq_region_name =~ /_hap/) {
     ## Get mapping information from goldenpath table
     my $random_sql = "SELECT chrom, chromStart, chromEnd, frag, fragStart, fragEnd, strand".
     " FROM chr${seq_region_name}_gold where chromStart <= ? and chromEnd >= ? ORDER BY chromStart";
