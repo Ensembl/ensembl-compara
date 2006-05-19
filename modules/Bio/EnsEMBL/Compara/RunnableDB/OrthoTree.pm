@@ -273,7 +273,7 @@ sub run_analysis
   
   #display summary stats of analysis 
   my $runtime = time()*1000-$starttime;  
-  $self->{'protein_tree'}->store_tag('OrthoTree_runtime_msec', $runtime);
+  $self->{'protein_tree'}->store_tag('OrthoTree_runtime_msec', $runtime) unless $self->{'_treefam'};
   if($self->debug) {
     printf("%d proteins in tree\n", scalar(@{$tree->get_all_leaves}));
     printf("%d pairings\n", scalar(@genepairlinks));
@@ -430,7 +430,7 @@ sub get_ancestor_species_hash
   #$node->print_tree(20);
   
   $node->add_tag("species_hash", $species_hash);
-  if($is_dup) {
+  if($is_dup && !($self->{'_treefam'})) {
     my $original_duplication_value = $node->get_tagvalue('Duplication');
     $original_duplication_value = 0 unless (defined $original_duplication_value);
 
@@ -479,8 +479,8 @@ sub get_ancestor_taxon_level
     }
   }
   $ancestor->add_tag("taxon_level", $taxon_level);
-  $ancestor->store_tag("taxon_id", $taxon_level->taxon_id);
-  $ancestor->store_tag("name", $taxon_level->name);
+  $ancestor->store_tag("taxon_id", $taxon_level->taxon_id) unless $self->{'_treefam'};
+  $ancestor->store_tag("name", $taxon_level->name) unless $self->{'_treefam'};
 
   #$ancestor->print_tree($self->{'tree_scale'});
   #$taxon_level->print_tree(10);
@@ -532,7 +532,10 @@ sub genepairlink_check_dups
   do {
     $tnode = $tnode->parent;
     #$tnode->print_node;
-    $has_dup=1 if($tnode->get_tagvalue("Duplication") > 0);
+    my $dup_value = $tnode->get_tagvalue("Duplication");
+    unless ($dup_value eq '') {
+      $has_dup = 1 if($dup_value > 0);
+    }
     $nodes_between{$tnode->node_id} = $tnode;
   } while(!($tnode->equals($ancestor)));
 
@@ -541,7 +544,10 @@ sub genepairlink_check_dups
   do {
     $tnode = $tnode->parent;
     #$tnode->print_node;
-    $has_dup=1 if($tnode->get_tagvalue("Duplication") > 0);
+    my $dup_value = $tnode->get_tagvalue("Duplication");
+    unless ($dup_value eq '') {
+      $has_dup = 1 if($dup_value > 0);
+    }
     $nodes_between{$tnode->node_id} = $tnode;
   } while(!($tnode->equals($ancestor)));
 
@@ -587,6 +593,8 @@ sub direct_ortholog_test
   
   #passed all the tests -> it's a simple ortholog
   $genepairlink->add_tag("orthotree_type", 'ortholog_one2one');
+  my $taxon = $self->get_ancestor_taxon_level($ancestor);
+  $genepairlink->add_tag("orthotree_subtype", $taxon->name);
   return 1;
 }
 
@@ -644,8 +652,12 @@ sub ancient_residual_test
   #passed all the tests -> it's a simple ortholog
   if($ancestor->get_tagvalue("Duplication") > 0) {
     $genepairlink->add_tag("orthotree_type", 'outspecies_paralog_one2one_geneloss');
+    my $taxon = $self->get_ancestor_taxon_level($ancestor);
+    $genepairlink->add_tag("orthotree_subtype", $taxon->name);
   } else {
     $genepairlink->add_tag("orthotree_type", 'ortholog_one2one_geneloss');
+    my $taxon = $self->get_ancestor_taxon_level($ancestor);
+    $genepairlink->add_tag("orthotree_subtype", $taxon->name);
   }
   return 1;
 }
@@ -678,6 +690,8 @@ sub one2many_ortholog_test
   
   #passed all the tests -> it's a one2many ortholog
   $genepairlink->add_tag("orthotree_type", 'ortholog_one2many');
+  my $taxon = $self->get_ancestor_taxon_level($ancestor);
+  $genepairlink->add_tag("orthotree_subtype", $taxon->name);
   return 1;
 }
 
@@ -698,10 +712,15 @@ sub outspecies_test
   my $taxon = $self->get_ancestor_taxon_level($ancestor);
   
   #ultra simple ortho/paralog classification
-  if($ancestor->get_tagvalue("Duplication") > 0) {
-    $genepairlink->add_tag("orthotree_type", 'outspecies_paralog');
+  my $dup_value = $ancestor->get_tagvalue("Duplication");
+  unless ($dup_value eq '') {
+    if($dup_value > 0) {
+      $genepairlink->add_tag("orthotree_type", 'outspecies_paralog');
+      $genepairlink->add_tag("orthotree_subtype", $taxon->name);
+    } 
   } else {
     $genepairlink->add_tag("orthotree_type", 'ortholog_many2many');
+    $genepairlink->add_tag("orthotree_subtype", $taxon->name);
   }
   return 1;
 }
@@ -834,5 +853,98 @@ sub store_gene_link_as_homology
   return undef;  
 }
 
+sub _treefam_genepairlink_stats
+{
+  # This method is only useful to compare treefam v genetree
+  my $self = shift;
+
+  my $starttime = time()*1000;
+  my $tmp_time = time();
+  my $tree = $self->{'protein_tree'};
+    
+  my @all_protein_leaves = @{$tree->get_all_leaves};
+  
+  #precalculate the ancestor species_hash (caches into the metadata of nodes)
+  #also augments the Duplication tagging
+  $self->get_ancestor_species_hash($tree);
+  
+  #compare every gene in the tree with every other
+  #each gene/gene pairing is a potential ortholog/paralog
+  #and thus we need to analyze every possibility
+  #accomplish by creating a fully connected graph between all the genes
+  #under the tree (hybrid graph structure) and then analyze each gene/gene link
+  $tmp_time = time();
+  printf("build fully linked graph\n") if($self->debug);
+  my @genepairlinks;
+  while (my $protein1 = shift @all_protein_leaves) {
+    foreach my $protein2 (@all_protein_leaves) {
+      my $ancestor = $protein1->find_first_shared_ancestor($protein2);
+      my $taxon_level = $self->get_ancestor_taxon_level($ancestor);
+      my $distance = $protein1->distance_to_ancestor($ancestor) +
+                     $protein2->distance_to_ancestor($ancestor);
+      my $genepairlink = new Bio::EnsEMBL::Compara::Graph::Link($protein1, $protein2, $distance);
+      $genepairlink->add_tag("hops", 0);
+      $genepairlink->add_tag("ancestor", $ancestor);
+      $genepairlink->add_tag("taxon_name", $taxon_level->name);
+      push @genepairlinks, $genepairlink;
+    }
+  }
+  printf("%1.3f secs build links and features\n", time()-$tmp_time) if($self->debug>1);
+  
+  $self->{'protein_tree'}->print_tree($self->{'tree_scale'}) if($self->debug);
+
+  #sort the gene/gene links by distance
+  #   makes debug display easier to read, not required by algorithm
+  $tmp_time = time();
+  printf("sort links\n") if($self->debug);
+  my @sorted_genepairlinks = sort {$a->distance_between <=> $b->distance_between} @genepairlinks;
+  printf("%1.3f secs to sort links\n", time()-$tmp_time) if($self->debug > 1);
+
+  #analyze every gene pair (genepairlink) to get its classification
+  printf("analyze links\n") if($self->debug);
+  $tmp_time = time();
+  foreach my $genepairlink (@sorted_genepairlinks) {
+    my ($protein1, $protein2) = $genepairlink->get_nodes;
+    #run feature detectors: precalcs and caches into metadata
+    $self->genepairlink_check_dups($genepairlink);
+    $self->genepairlink_fetch_homology($genepairlink) if($self->debug);
+    
+    #do classification analysis : as filter stack
+    if($self->inspecies_paralog_test($genepairlink)) { }
+    elsif($self->direct_ortholog_test($genepairlink)) { } 
+    elsif($self->ancient_residual_test($genepairlink)) { } 
+    elsif($self->one2many_ortholog_test($genepairlink)) { } 
+    elsif($self->outspecies_test($genepairlink)) { }
+    else {
+      printf("OOPS!!!! %s - %s\n", $protein1->gene_member->stable_id, $protein2->gene_member->stable_id);
+    }
+    my $stid1;
+    if (defined($protein1->gene_member)) {
+      $stid1 = $protein1->gene_member->stable_id;
+    } elsif (defined($protein1->get_tagvalue("G"))) {
+      $stid1 = $protein1->get_tagvalue("G");
+    } else {
+      $stid1 = "unknown";
+    }
+    my $stid2;
+    if (defined($protein2->gene_member)) {
+      $stid2 = $protein2->gene_member->stable_id;
+    } elsif (defined($protein2->get_tagvalue("G"))) {
+      $stid2 = $protein2->get_tagvalue("G");
+    } else {
+      $stid2 = "unknown";
+    }
+    my @stids = sort ($stid1,$stid2);
+    my $type = $genepairlink->get_tagvalue('orthotree_type');
+    my $subtype = $genepairlink->get_tagvalue('orthotree_subtype') || 'NA';
+    my $tree_type = "GT";
+    $tree_type = "TF" if $self->{'_treefam'};
+    my $tree_id = $self->{'protein_tree'}->node_id unless $self->{'_treefam'};
+    $tree_id = $self->{'_treefam'} if $self->{'_treefam'};
+    $self->{_gpresults} .= "$tree_type,$tree_id,$stids[0]"."_"."$stids[1]".","."$type,$subtype\n";
+
+  }
+  printf("%1.3f secs to analyze genepair links\n", time()-$tmp_time) if($self->debug > 1);
+}
 
 1;
