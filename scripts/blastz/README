@@ -23,9 +23,9 @@ grep Mm5 index.html |awk -F "\"" '{print $6}'|grep -e net -e chain|while read i;
 
 again remembering to replace hg17 with the relevent species abbreviation. Note they tend to be in the format of canFam1 or xenTro1 or galGal2 for more recently added species.
 
-You may also download the goldenpath data if you want to map alignments on the *_random genes:
+You may also download the goldenpath data if you want to map alignments on the *_random and hap chromosomes:
 
-grep random_gold index.html | awk -F "\"" '{print $6}' | while read i; do wget -t 5 \
+grep gold index.html | grep -e random -e hap | awk -F "\"" '{print $6}' | while read i; do wget -t 5 \
 http://hgdownload.cse.ucsc.edu/goldenPath/hg17/database/$i; done
 
 2- set up a mysql database
@@ -46,9 +46,9 @@ ls *.gz | sed "s/\.txt.gz//" | while read i ; do echo "Loading $i..." ; gunzip $
 
 Load in compara
 
-cd ..; mkdir load; cd ../load
+cd ..; mkdir load; cd load
 
-NB: You need to have an ensembl_compara database with method_links, dnafrags and genome_dbs!!
+NB: You need to have an ensembl_compara database with method_link_species_sets, method_links, dnafrags and genome_dbs!!
 
 Run the script first with the --check_length option first to see if the chromosomes lengths match between ensembl and UCSC 
 /nfs/acari/abel/src/ensembl_main/ensembl-compara/scripts/blastz/LoadUcscNetData.pl \
