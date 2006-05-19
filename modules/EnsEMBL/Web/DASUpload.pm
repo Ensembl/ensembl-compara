@@ -163,7 +163,7 @@ sub parse_euf_2 {
     my @meta = ();
 
     my ($ghash, $fhash);
-    my @feature_keys = ('featureid', 'featuretype', 'method', 'seqmentid', 'start', 'end', 'strand', 'phase', 'score', 'attributes');
+    my @feature_keys = ('featureid', 'featuretype', 'method', 'segmentid', 'start', 'end', 'strand', 'phase', 'score', 'attributes');
 
     my @group_keys = ('groupid', 'attributes');
 
