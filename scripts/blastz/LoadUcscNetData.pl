@@ -591,7 +591,7 @@ sub fetch_and_load_nets {
         next FETCH_NET;
       } elsif (!defined($tdnafrags{$slice->seq_region_name})) {
         print STDERR "$net_index (#$n_chainId): daf not stored because $tBinomial seqname ",
-            $n_tName, " (", $slice->seq_region_name, ") not in dnafrag table (2)\n";
+            $n_tName, " [$n_tStart-$n_tEnd] (", $slice->seq_region_name, ") not in dnafrag table (2)\n";
         next FETCH_NET;
       }
       $t_needs_mapping = 1;
@@ -619,7 +619,7 @@ sub fetch_and_load_nets {
         foreach my $this_seq_region (@$seq_regions) {
           if (!defined $qdnafrags{$this_seq_region}) {
             print STDERR "$net_index (#$n_chainId): daf not stored because $qBinomial seqname ",
-                $n_qName, " maps on $this_seq_region and it is not in dnafrag table (3)\n";
+                $n_qName, " [$n_qStart-$n_qEnd] maps on $this_seq_region and it is not in dnafrag table (3)\n";
             next FETCH_NET;
           }
         }
@@ -629,18 +629,19 @@ sub fetch_and_load_nets {
         $slice = map_random_chromosome($tSpecies, $n_qName, ($n_qStart + 1), $n_qEnd);
         if (!defined($slice)) {
           print STDERR "$net_index (#$n_chainId): daf not stored because $qBinomial seqname ",
-              $n_qName, " (", ($n_qStart + 1), " - ", $n_qEnd, ") is not in dnafrag table (4)\n";
+              $n_qName, " [", ($n_qStart + 1), "-", $n_qEnd, "] is not in dnafrag table (4)\n";
           next FETCH_NET;
         } elsif (!defined($qdnafrags{$slice->seq_region_name})) {
           print STDERR "$net_index (#$n_chainId): daf not stored because $qBinomial seqname ",
-              $n_qName, " (", $slice->seq_region_name, ") not in dnafrag table (5)\n";
+              $n_qName, " [", ($n_qStart + 1), "-", $n_qEnd, "] (", $slice->seq_region_name,
+              ") not in dnafrag table (5)\n";
           next FETCH_NET;
         }
         $q_needs_mapping = 1;
         $qdnafrag = $qdnafrags{$slice->seq_region_name};
       } else {
         print STDERR "$net_index (#$n_chainId): daf not stored because $qBinomial seqname ",
-            $n_qName," not in dnafrag table (6)\n";
+            $n_qName, " [", ($n_qStart + 1), "-", $n_qEnd, "] not in dnafrag table (6)\n";
         next FETCH_NET;
       }
     } else {
@@ -730,11 +731,16 @@ sub fetch_and_load_nets {
         my $slice = map_random_chromosome($tSpecies, $c_tName, $cl_tStart, $cl_tEnd);
         if (!defined($slice)) {
           print STDERR "$net_index (#$n_chainId): daf not stored because $tBinomial seqname ",
-              $c_tName, " (", ($cl_tStart), " - ", $cl_tEnd, ") is not in dnafrag table (7)\n";
+              $c_tName, " [$cl_tStart-$cl_tEnd] is not in dnafrag table (7)\n";
           next FETCH_CHAIN;
         } elsif (!defined($tdnafrags{$slice->seq_region_name})) {
           print STDERR "$net_index (#$n_chainId): daf not stored because $tBinomial seqname ",
-              $c_tName, " (", $slice->seq_region_name, ") not in dnafrag table (8)\n";
+              $c_tName, " [$cl_tStart-$cl_tEnd] (", $slice->seq_region_name, ") not in dnafrag table (8)\n";
+          next FETCH_CHAIN;
+        }
+        if ($cl_tEnd - $cl_tStart != $slice->end - $slice->start) {
+          print STDERR "$net_index (#$n_chainId): daf not stored because length of $c_tName [$cl_tStart-$cl_tEnd] ",
+              "does not match => ", $slice->seq_region_name, " [", $slice->start, "-", $slice->end, "] (9)\n";
           next FETCH_CHAIN;
         }
         $c_tName = $slice->seq_region_name;
@@ -752,7 +758,7 @@ sub fetch_and_load_nets {
           $qdnafrag = $qdnafrags{$seq_region};
           if (!defined $qdnafrag) {
             print STDERR "$net_index (#$n_chainId): daf not stored because $qBinomial seqname ",
-                $n_qName," not in dnafrag table, so not in core (9)\n";
+                $n_qName," not in dnafrag table, so not in core (10)\n";
             next FETCH_CHAIN;
           }
         }
@@ -767,7 +773,7 @@ sub fetch_and_load_nets {
             $complex++;
             ## Not supported at the moment!!!
             print STDERR "$net_index (#$n_chainId): daf not stored because $qBinomial seqname ",
-                $n_qName," maps on several seq_regions. (10)\n";
+                $n_qName," maps on several seq_regions. (11)\n";
             next FETCH_CHAIN;
           }
         }
@@ -793,11 +799,11 @@ sub fetch_and_load_nets {
           my $slice = map_random_chromosome($tSpecies, $c_qName, $cl_qStart, $cl_qEnd);
           if (!defined($slice)) {
             print STDERR "$net_index (#$n_chainId): daf not stored because $qBinomial seqname ",
-                $c_qName, " (", ($c_qStart), " - ", $c_qEnd, ") is not in dnafrag table (11)\n";
+                $c_qName, " (", ($c_qStart), " - ", $c_qEnd, ") is not in dnafrag table (12)\n";
             next FETCH_CHAIN;
           } elsif (!defined($tdnafrags{$slice->seq_region_name})) {
             print STDERR "$net_index (#$n_chainId): daf not stored because $qBinomial seqname ",
-                $c_qName, " (", $slice->seq_region_name, ") not in dnafrag table (12)\n";
+                $c_qName, " (", $slice->seq_region_name, ") not in dnafrag table (13)\n";
             next FETCH_CHAIN;
           }
           $c_qName = $slice->seq_region_name;
@@ -1098,15 +1104,23 @@ sub map_non_toplevel_seqregion {
   my $coord_system_adaptor = Bio::EnsEMBL::Registry->get_adaptor(
       $species_name, "core", "CoordSystem");
   return (undef, undef, undef) if (!$coord_system_adaptor);
-  my $other_coord_system;
-  
+
+  my $binomial = get_binomial_name($species_name);
+
   my $slice_adaptor = Bio::EnsEMBL::Registry->get_adaptor($species_name, "core", "Slice");
   my $slice;
   if ($seq_region_name =~ /^SCAFFOLD/i) {
     $slice = $slice_adaptor->fetch_by_region("scaffold", $seq_region_name);
-    $other_coord_system = $coord_system_adaptor->fetch_by_name("scaffold");
   }
-  return (undef, undef, undef) if (!$slice or !$other_coord_system);
+  if (!$slice and $binomial eq "Bos taurus" and $seq_region_name =~ /^SCAFFOLD(\d+)/i) {
+    $slice = $slice_adaptor->fetch_by_region("scaffold", "ChrUn.$1");
+  }
+  if (!$slice and $binomial eq "Bos taurus" and $seq_region_name eq "X") {
+    $slice = $slice_adaptor->fetch_by_region("chromosome", "30");
+  }
+  return (undef, undef, undef) if (!$slice);
+
+  my $other_coord_system = $slice->coord_system;
 
   my $assembly_mapper_adaptor = Bio::EnsEMBL::Registry->get_adaptor(
       $species_name, "core", "AssemblyMapper");
