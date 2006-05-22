@@ -471,7 +471,7 @@ sub fetch_by_dbID {
             name,
             source,
             url,
-            method_link_species_set.species_set_id,
+            mlss.species_set_id,
             genome_db_id,
             type
           FROM
