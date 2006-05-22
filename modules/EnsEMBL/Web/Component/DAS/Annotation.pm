@@ -33,6 +33,7 @@ sub features {
     my $segment_tmp = qq{<SEGMENT id="%s" start="%s" stop="%s">\n};
     my $error_tmp = qq{<ERRORSEGMENT id="%s" start="%s" stop="%s" />\n};
 
+    
     my $feature_template = qq{
 <FEATURE id="%s">
   <START>%d</START>
@@ -40,10 +41,12 @@ sub features {
   <TYPE id="%s">%s</TYPE>
   <METHOD id="%s">%s</METHOD>
   <ORIENTATION>%s</ORIENTATION>
+  %s
 </FEATURE>
 };
 
-
+    my $link_template = qq{\n<LINK href="%s">%s</LINK>};
+    my $note_template = qq{\n<NOTE>%s</NOTE>};
 
     my $features = $object->Features();
     (my $url = lc($ENV{SERVER_PROTOCOL})) =~ s/\/.+//;
@@ -67,6 +70,28 @@ sub features {
 				$segment->{'STOP'} || ''));
 
 	foreach my $feature (@{$segment->{'FEATURES'} || []}) {
+	    my $group_tag = '';
+
+	    if (my @groups = @{$feature->{'GROUP'} || []}) {
+		foreach my $g (@groups) {
+		    my $tag = sprintf(qq{<GROUP id="%s" type="%s" label="%s">}, $g->{'ID'}, $g->{'TYPE'}, $g->{'LABEL'} || '');
+
+		    if ( my @links = @{$g->{'LINK'} || []}) {
+			foreach my $l (@links) {
+			    $tag .= sprintf($link_template, $l->{href}, $l->{text} || $l->{href});
+			}
+		    }
+
+		    if ( my @notes = @{$g->{'NOTE'} || []}) {
+			foreach my $n (@notes) {
+			    $tag .= sprintf($note_template, $n);
+			}
+		    }
+		    $tag .="\n</GROUP>";
+		    $group_tag .= "\n$tag";
+		}
+
+	    }
 
 	    $panel->print( sprintf ($feature_template, 
 				    $feature->{'ID'} || '',
@@ -77,7 +102,7 @@ sub features {
 				    $feature->{'METHOD'} || '',
 				    $feature->{'METHOD'} || '',
 				    $feature->{'ORIENTATION'} || '',
-
+				    $group_tag
 				    ));
 	    
 	}
