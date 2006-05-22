@@ -85,6 +85,9 @@ sub get_params {
   if (defined $params->{'species_sets'}) {
     $self->{'species_sets_aref'} = $params->{'species_sets'};
   }
+  if (defined $params->{'method_link_type'}) {
+    $self->{'method_link_type'} = $params->{'method_link_type'};
+  }
   
   return;
 }
@@ -127,7 +130,7 @@ sub create_analysis_jobs {
   foreach my $species_set (@{$species_sets_aref}) {
     while (my $genome_db_id1 = shift @{$species_set}) {
       foreach my $genome_db_id2 (@{$species_set}) {
-        my $mlss = $mlssa->fetch_by_method_link_type_genome_db_ids("ENSEMBL_ORTHOLOGUES",[$genome_db_id1,$genome_db_id2]);
+        my $mlss = $mlssa->fetch_by_method_link_type_genome_db_ids($self->{'method_link_type'},[$genome_db_id1,$genome_db_id2]);
 	next unless($mlss);
         $sth->execute($mlss->dbID);
       }
