@@ -72,6 +72,8 @@ sub new {
       '_species'         => $data->{_species}         || $ENV{'ENSEMBL_SPECIES'},
       '_script'          => $data->{_script}          || $ENV{'ENSEMBL_SCRIPT'},
       '_feature_types'   => $data->{_feature_types}   || [],
+      '_feature_ids'     => $data->{_feature_ids}   || [],
+      '_group_ids'       => $data->{_group_ids}   || [],
       %extra_elements
     },
     [],

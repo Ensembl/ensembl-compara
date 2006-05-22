@@ -27,4 +27,16 @@ sub FeatureTypes {
   return $self->{'data'}{'_feature_types'};
 }
 
+sub FeatureIDs { 
+  my $self = shift;
+  push @{$self->{'data'}{'_feature_ids'}}, @_ if @_;
+  return $self->{'data'}{'_feature_ids'};
+}
+
+sub GroupIDs { 
+  my $self = shift;
+  push @{$self->{'data'}{'_group_ids'}}, @_ if @_;
+  return $self->{'data'}{'_group_ids'};
+}
+
 1;

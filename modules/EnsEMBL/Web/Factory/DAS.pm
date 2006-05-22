@@ -34,6 +34,18 @@ sub featureTypes {
   return $self->{'data'}{'_feature_types'};
 }
 
+sub featureIDs {
+  my $self = shift;
+  push @{$self->{'data'}{'_feature_ids'}}, @_ if @_;
+  return $self->{'data'}{'_feature_ids'};
+}
+
+sub groupIDs {
+  my $self = shift;
+  push @{$self->{'data'}{'_group_ids'}}, @_ if @_;
+  return $self->{'data'}{'_group_ids'};
+}
+
 sub createObjects { 
   my $self      = shift;    
   $self->get_databases('core');
@@ -75,11 +87,18 @@ sub createObjects {
 	  }
       }
   }
+
   $self->clear_problems();
 
   my @feature_types = $self->param('type');
-
   $self->featureTypes(@feature_types);
+
+  my @feature_ids = $self->param('feature_id');
+  $self->featureIDs(@feature_ids);
+
+  my @group_ids = $self->param('group_id');
+  $self->groupIDs(@group_ids);
+
   my $source = $ENV{ENSEMBL_DAS_TYPE};
 
   
