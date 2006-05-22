@@ -36,7 +36,7 @@ sub features {
     my $feature_template = qq{
 <FEATURE id="%s">
   <START>%d</START>
-  <STOP>%d</STOP>
+  <END>%d</END>
   <TYPE id="%s" category="%s" reference="yes" superparts="%s" subparts="%s">%s</TYPE>
   <TARGET id="%s" start="%s" stop="%s">%s</TARGET>
 </FEATURE>
