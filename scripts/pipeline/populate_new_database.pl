@@ -211,19 +211,24 @@ sub copy_table {
   throw("[$to_dba] should be a Bio::EnsEMBL::Compara::DBSQL::DBAdaptor")
       unless (UNIVERSAL::isa($to_dba, "Bio::EnsEMBL::Compara::DBSQL::DBAdaptor"));
 
+  my $user = $to_dba->dbc->username;
+  my $pass = $to_dba->dbc->password;
+  my $host = $to_dba->dbc->host;
+  my $port = $to_dba->dbc->port;
+  my $dbname = $to_dba->dbc->dbname;
+
   my $sth = $from_dba->dbc->prepare("SELECT * FROM $table_name");
   $sth->execute();
   my $all_rows = $sth->fetchall_arrayref();
   $sth->finish;
-  my $number_of_rows = scalar(@{$all_rows->[0]});
-  $to_dba->dbc->do("TRUNCATE $table_name");
-  $to_dba->dbc->do("ALTER TABLE $table_name DISABLE KEYS");
-  $sth = $to_dba->dbc->prepare("INSERT INTO $table_name VALUES (?".(",?"x($number_of_rows-1)).")");
+  my $filename = "/tmp/$table_name.populate_new_database.$$.txt";
+  open(TEMP, ">$filename") or die;
   foreach my $this_row (@$all_rows) {
-    $sth->execute(@$this_row);
+    print TEMP join("\t", @$this_row), "\n";
   }
-  $sth->finish;
-  $to_dba->dbc->do("ALTER TABLE $table_name ENABLE KEYS");
+  close(TEMP);
+  system("mysqlimport", "-u$user", "-p$pass", "-h$host", "-P$port", "-L", "-l", "-i", $dbname, $filename);
+  unlink("$filename");
 }
 
 
