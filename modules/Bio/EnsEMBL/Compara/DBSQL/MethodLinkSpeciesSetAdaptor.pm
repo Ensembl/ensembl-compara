@@ -258,7 +258,6 @@ sub store {
 
     # If the object still does not exist in the DB, store it
     if (!$dbID) {
-      $sth = $self->prepare($method_link_species_set_sql);
       $dbID = $method_link_species_set->dbID();
       if (!$dbID) {
         ## Use convetion rule for getting a new dbID. At the moment, we yse the following
@@ -286,6 +285,10 @@ sub store {
       my $species_set_id;
       if ($method_link_species_set->species_set_id) { 
         $species_set_id = $method_link_species_set->species_set_id;
+        my $sth2 = $self->prepare("INSERT IGNORE INTO species_set VALUES (?, ?)");
+        foreach my $genome_db_id (@genome_db_ids) {
+          $sth2->execute($species_set_id, $genome_db_id);
+        }
       } else {
         $species_set_id = $self->_get_species_set_id_from_species_set($species_set);
       }
@@ -296,6 +299,7 @@ sub store {
           $species_set_id = $sth2->{'mysql_insertid'};
         }
       }
+      $sth = $self->prepare($method_link_species_set_sql);
       $sth->execute(($dbID or "NULL"), $method_link_id, $species_set_id,
           ($method_link_species_set->name or "NULL"), ($method_link_species_set->source or "NULL"),
           ($method_link_species_set->url or ""));
@@ -388,6 +392,7 @@ sub fetch_all {
             name,
             source,
             url,
+            method_link_species_set.species_set_id,
             genome_db_id,
             type
           FROM
@@ -403,12 +408,13 @@ sub fetch_all {
   my $all_method_link_species_sets;
   my $gdba = $self->db->get_GenomeDBAdaptor;
   
-  while (my ($method_link_species_set_id, $method_link_id, $name, $source, $url, $genome_db_id, $type) =
+  while (my ($method_link_species_set_id, $method_link_id, $name, $source, $url, $species_set_id, $genome_db_id, $type) =
         $sth->fetchrow_array()) {
     $all_method_link_species_sets->{$method_link_species_set_id}->{'METHOD_LINK_ID'} = $method_link_id;
     $all_method_link_species_sets->{$method_link_species_set_id}->{'NAME'} = $name;
     $all_method_link_species_sets->{$method_link_species_set_id}->{'SOURCE'} = $source;
     $all_method_link_species_sets->{$method_link_species_set_id}->{'URL'} = $url;
+    $all_method_link_species_sets->{$method_link_species_set_id}->{'SPECIES_SET_ID'} = $species_set_id;
     $all_method_link_species_sets->{$method_link_species_set_id}->{'METHOD_LINK_TYPE'} = $type;
     push(@{$all_method_link_species_sets->{$method_link_species_set_id}->{'SPECIES_SET'}},
         $gdba->fetch_by_dbID($genome_db_id));
@@ -428,8 +434,10 @@ sub fetch_all {
                 $all_method_link_species_sets->{$method_link_species_set_id}->{'SOURCE'},
             -url =>
                 $all_method_link_species_sets->{$method_link_species_set_id}->{'URL'},
+            -species_set_id =>
+                $all_method_link_species_sets->{$method_link_species_set_id}->{'SPECIES_SET_ID'},
             -species_set =>
-                $all_method_link_species_sets->{$method_link_species_set_id}->{'SPECIES_SET'}
+                $all_method_link_species_sets->{$method_link_species_set_id}->{'SPECIES_SET'},
         );
     push(@$method_link_species_sets, $this_method_link_species_set);
   }
@@ -463,6 +471,7 @@ sub fetch_by_dbID {
             name,
             source,
             url,
+            method_link_species_set.species_set_id,
             genome_db_id,
             type
           FROM
@@ -480,7 +489,7 @@ sub fetch_by_dbID {
   my $this_method_link_species_set;
   
   ## Get all rows corresponding to this method_link_species_set
-  while (my ($method_link_species_set_id, $method_link_id, $name, $source, $url, $genome_db_id, $type) =
+  while (my ($method_link_species_set_id, $method_link_id, $name, $source, $url, $species_set_id, $genome_db_id, $type) =
         $sth->fetchrow_array()) {
     $this_method_link_species_set->{'METHOD_LINK_ID'} = $method_link_id;
     $this_method_link_species_set->{'METHOD_LINK_TYPE'} = $type;
@@ -501,6 +510,7 @@ sub fetch_by_dbID {
           -name => $this_method_link_species_set->{'NAME'},
           -source => $this_method_link_species_set->{'SOURCE'},
           -url => $this_method_link_species_set->{'URL'},
+          -species_set_id => $this_method_link_species_set->{'SPECIES_SET_ID'},
           -species_set => $this_method_link_species_set->{'SPECIES_SET'}
       );
   if (!$method_link_species_set) {
