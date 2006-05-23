@@ -11,6 +11,7 @@ sub Features {
 
     my @segments = $self->Locations;
     my @features;
+    my @fts = grep { $_ } @{$self->FeatureTypes || []};
 
     foreach my $s (@segments) {
 	if (ref($s) eq 'HASH' && $s->{'TYPE'} eq 'ERROR') {
@@ -33,6 +34,14 @@ sub Features {
 	my $current_cs = $slice->coord_system;
 	my @coord_systems = ($current_cs);
 
+	if ( ! defined ($region_end)) {
+	    my $path;
+	    eval { $path = $slice->project($current_cs->name); };
+	    if ($path) {
+		$path = $path->[0]->to_Slice;
+		($region_start, $region_end) = ($path->start, $path->end);
+	    }
+	}
 	my $current_rank = $current_cs->rank;
 
 # Check if there are super and/or sub parts
@@ -60,7 +69,7 @@ sub Features {
 	    my $end        = $psegment->from_end;
 	    my $ctg_slice  = $psegment->to_Slice;
 	    my $ORI        = $ctg_slice->strand;
-	    my $feature = { 'start' => $start, 'end' => $end, 'name' => $ctg_slice->seq_region_name };
+	    my $feature = { 'start' => $start, 'end' => $end, 'name' => $ctg_slice->seq_region_name, 'strand' => $ctg_slice->strand };
 
 
 	    foreach ( @coord_systems ) {
@@ -77,9 +86,10 @@ sub Features {
 	my ($ids, $sids);
 
 	foreach my $f (@segment_features) {
-	    my $id = $f->{'locations'}{ ($current_rank + 1) }->[0];
+	    my $id = $f->{'locations'}{ ($current_rank + 1) }->[0] || next;
 	    my $start = $f->{'locations'}{ ($current_rank) }->[1];
 	    my $end = $f->{'locations'}{ ($current_rank) }->[2];
+	    my $fstrand = $f->{'locations'}{ ($current_rank) }->[3];
 
 	    my $target_start = $f->{'locations'}{ ($current_rank + 1) }->[1];
 	    my $target_end = $f->{'locations'}{ ($current_rank + 1) }->[2];
@@ -89,7 +99,7 @@ sub Features {
 		$ids->{$id}->[4] = $target_end;
 	    } else {
 		if ($lower_cs) {
-		    $ids->{$id} = [ $lower_cs->name, $start, $end, $target_start, $target_end ];
+		    $ids->{$id} = [ $lower_cs->name, $start, $end, $target_start, $target_end, $fstrand ];
 		}
 	    }
 
@@ -97,19 +107,17 @@ sub Features {
 		my $id = $f->{'locations'}{ ($current_rank-1) }->[0];
 		my $pstart = $f->{'locations'}{ ($current_rank - 1) }->[1];
 		my $pend = $f->{'locations'}{ ($current_rank - 1) }->[2];
+		my $pstrand = $f->{'locations'}{ ($current_rank - 1) }->[3];
 
 		if (exists($sids->{$id})) {
 		    $sids->{$id}->[2] = $end;
 		    $sids->{$id}->[4] = $pend;
 		} else {
-		    $sids->{$id} = [$higher_cs->name, $start, $end, $pstart, $pend, 
+		    $sids->{$id} = [$higher_cs->name, $start, $end, $pstart, $pend, $pstrand,
 				    $higher_cs->rank == 1 ? 'no' : 'yes'];
 		}
 
 	    }
-
-#	    warn(Data::Dumper::Dumper($f));
-	    
 	} 
 
 	my @ss;
@@ -118,6 +126,7 @@ sub Features {
 	    'ID' => $slice->seq_region_name, 
 	    'START' => $slice->start, 
 	    'END' => $slice->end,
+	    'ORIENTATION' => $slice->strand,
 	    'TARGET_ID' => $slice->seq_region_name, 
 	    'TARGET_START' => $slice->start, 
 	    'TARGET_END' => $slice->end,
@@ -129,9 +138,10 @@ sub Features {
 
 	foreach my $id ( keys %$ids ) {
 	    push @ss, {
-		'ID' =>  "$ids->{$id}->[0]\:$id", 
+		'ID' =>  "$id", 
 		'START' => $ids->{$id}->[1], 
 		'END' => $ids->{$id}->[2],
+		'ORIENTATION' => $ids->{$id}->[5],
 		'TARGET_ID' => $id, 
 		'TARGET_START' => $ids->{$id}->[3], 
 		'TARGET_END' => $ids->{$id}->[4],
@@ -144,26 +154,36 @@ sub Features {
 
 	foreach my $id ( keys %$sids ) {
 	    push @ss, {
-		'ID' =>  "$sids->{$id}->[0]\:$id", 
+		'ID' =>  "$id", 
 		'START' => $sids->{$id}->[1], 
 		'END' => $sids->{$id}->[2],
+		'ORIENTATION' => $ids->{$id}->[5],
 		'TARGET_ID' => $id, 
 		'TARGET_START' => $sids->{$id}->[3], 
 		'TARGET_END' => $sids->{$id}->[4],
 		'TYPE' => $sids->{$id}->[0], 
-		'SUPERPARTS' => $sids->{$id}->[5], 
+		'SUPERPARTS' => $sids->{$id}->[6], 
 		'SUBPARTS' => 'yes',
 		'CATEGORY' => 'supercomponent',
 		};
 	}
 
 
+	my @rfeatures = ();
+	if (@fts > 0) {
+	    foreach my $ft (@ss) {
+		next unless grep {$_ eq $ft->{'TYPE'}} @fts;
+		push @rfeatures, $ft
+	    }
+	} else {
+	    @rfeatures = @ss;
+	}
 
 	push @features, {
     	    'REGION' => $region_name, 
 	    'START'  => $region_start, 
 	    'STOP'   => $region_end,
-	    'FEATURES' => \@ss
+	    'FEATURES' => \@rfeatures
 	    };
     }
 

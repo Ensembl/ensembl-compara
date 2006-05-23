@@ -27,9 +27,16 @@ our @ISA = qw( EnsEMBL::Web::Component::DAS);
 use strict;
 use warnings;
 
+my $strand = {
+	'1' => '+',
+	'0' => '-',
+	'-1' => '-'
+	};
+
+
 sub features {
     my( $panel, $object ) = @_;
-
+    
     my $segment_tmp = qq{<SEGMENT id="%s" start="%s" stop="%s">\n};
     my $error_tmp = qq{<ERRORSEGMENT id="%s" start="%s" stop="%s" />\n};
 
@@ -37,11 +44,11 @@ sub features {
 <FEATURE id="%s">
   <START>%d</START>
   <END>%d</END>
+  <ORIENTATION>%s</ORIENTATION>
   <TYPE id="%s" category="%s" reference="yes" superparts="%s" subparts="%s">%s</TYPE>
   <TARGET id="%s" start="%s" stop="%s">%s</TARGET>
 </FEATURE>
 };
-
 
 
     my $features = $object->Features();
@@ -71,6 +78,7 @@ sub features {
 				    $feature->{'ID'} || '',
 				    $feature->{'START'} || '',
 				    $feature->{'END'} || '',
+				    $strand->{$feature->{'ORIENTATION'}} || '',
 				    $feature->{'TYPE'} || '',
 				    $feature->{'CATEGORY'} || '',
 				    $feature->{'SUPERPARTS'} || '',
