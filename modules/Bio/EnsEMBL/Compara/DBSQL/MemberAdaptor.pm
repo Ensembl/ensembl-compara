@@ -130,7 +130,19 @@ sub fetch_all {
   return $self->_generic_fetch();
 }
 
+
 =head2 fetch_by_source
+
+  DEPRECATED: use fetch_all_by_source instead
+
+=cut
+
+sub fetch_by_source {
+  my ($self, @args) = @_;
+  return $self->fetch_all_by_source(@args);
+}
+
+=head2 fetch_all_by_source
 
   Arg [1]    : string $source_name
   Example    : 
@@ -141,7 +153,7 @@ sub fetch_all {
 
 =cut
 
-sub fetch_by_source {
+sub fetch_all_by_source {
   my ($self,$source_name) = @_;
 
   $self->throw("source_name arg is required\n")
@@ -153,7 +165,19 @@ sub fetch_by_source {
   return $self->_generic_fetch($constraint);
 }
 
+
 =head2 fetch_by_source_taxon
+
+  DEPRECATED: use fetch_all_by_source_taxon instead
+
+=cut
+
+sub fetch_by_source_taxon {
+  my ($self, @args) = @_;
+  return $self->fetch_all_by_source_taxon(@args);
+}
+
+=head2 fetch_all_by_source_taxon
 
   Arg [1]    : 
   Example    : 
@@ -164,7 +188,7 @@ sub fetch_by_source {
 
 =cut
 
-sub fetch_by_source_taxon {
+sub fetch_all_by_source_taxon {
   my ($self,$source_name,$taxon_id) = @_;
 
   $self->throw("source_name and taxon_id args are required") 
@@ -176,7 +200,19 @@ sub fetch_by_source_taxon {
   return $self->_generic_fetch($constraint);
 }
 
+
 =head2 fetch_by_relation
+
+  DEPRECATED: use fetch_all_by_relation instead
+
+=cut
+
+sub fetch_by_relation {
+  my ($self, @args) = @_;
+  return $self->fetch_all_by_relation(@args);
+}
+
+=head2 fetch_all_by_relation
 
   Arg [1]    : 
   Example    : 
@@ -187,7 +223,7 @@ sub fetch_by_source_taxon {
 
 =cut
 
-sub fetch_by_relation {
+sub fetch_all_by_relation {
   my ($self, $relation) = @_;
 
   my $join;
@@ -235,7 +271,19 @@ sub fetch_by_relation {
   return $self->_generic_fetch($constraint, $join);
 }
 
+
 =head2 fetch_by_relation_source
+
+  DEPRECATED: use fetch_all_by_relation_source instead
+
+=cut
+
+sub fetch_by_relation_source {
+  my ($self, @args) = @_;
+  return $self->fetch_all_by_relation_source(@args);
+}
+
+=head2 fetch_all_by_relation_source
 
   Arg [1]    : 
   Example    : 
@@ -246,7 +294,7 @@ sub fetch_by_relation {
 
 =cut
 
-sub fetch_by_relation_source {
+sub fetch_all_by_relation_source {
   my ($self, $relation, $source_name) = @_;
 
   $self->throw() 
@@ -297,7 +345,19 @@ sub fetch_by_relation_source {
   return $self->_generic_fetch($constraint, $join);
 }
 
+
 =head2 fetch_by_relation_source_taxon
+
+  DEPRECATED: use fetch_all_by_relation_source_taxon instead
+
+=cut
+
+sub fetch_by_relation_source_taxon {
+  my ($self, @args) = @_;
+  return $self->fetch_all_by_relation_source_taxon(@args);
+}
+
+=head2 fetch_all_by_relation_source_taxon
 
   Arg [1]    : 
   Example    : 
@@ -308,7 +368,7 @@ sub fetch_by_relation_source {
 
 =cut
 
-sub fetch_by_relation_source_taxon {
+sub fetch_all_by_relation_source_taxon {
   my ($self, $relation, $source_name, $taxon_id) = @_;
 
   $self->throw()
@@ -349,8 +409,20 @@ sub fetch_by_relation_source_taxon {
 
 =head2 fetch_by_subset_id
 
+  DEPRECATED: use fetch_all_by_subset_id instead
+
+=cut
+
+sub fetch_by_subset_id {
+  my ($self, @args) = @_;
+  return $self->fetch_all_by_subset_id(@args);
+}
+
+
+=head2 fetch_all_by_subset_id
+
   Arg [1]    : int subset_id
-  Example    : @members = @{$memberAdaptor->fetch_by_subset_id($subset_id)};
+  Example    : @members = @{$memberAdaptor->fetch_all_by_subset_id($subset_id)};
   Description: given a subset_id, does a join to the subset_member table
                to return a list of Member objects in this subset
   Returntype : list by reference of Compara::Member objects
@@ -359,7 +431,7 @@ sub fetch_by_relation_source_taxon {
 
 =cut
 
-sub fetch_by_subset_id {
+sub fetch_all_by_subset_id {
   my ($self, $subset_id) = @_;
 
   $self->throw() unless (defined $subset_id);
@@ -400,10 +472,22 @@ sub fetch_gene_for_peptide_member_id {
   return $obj;
 }
 
-=head2 fetch_peptides_for_gene_member_id
+
+=head2 fetch_all_peptides_for_gene_member_id
+
+  DEPRECATED: use fetch_all_peptides_for_gene_member_id instead
+
+=cut
+
+sub fetch_peptides_for_gene_member_id {
+  my ($self, @args) = @_;
+  return $self->fetch_all_peptides_for_gene_member_id(@args);
+}
+
+=head2 fetch_all_peptides_for_gene_member_id
 
   Arg [1]    : int member_id of a gene member
-  Example    : @pepMembers = @{$memberAdaptor->fetch_peptides_for_gene_member_id($gene_member_id)};
+  Example    : @pepMembers = @{$memberAdaptor->fetch_all_peptides_for_gene_member_id($gene_member_id)};
   Description: given a member_id of a gene member,
                fetches all peptide members for this gene
   Returntype : array ref of Bio::EnsEMBL::Compara::Member objects
@@ -412,7 +496,7 @@ sub fetch_gene_for_peptide_member_id {
 
 =cut
 
-sub fetch_peptides_for_gene_member_id {
+sub fetch_all_peptides_for_gene_member_id {
   my ($self, $gene_member_id) = @_;
 
   $self->throw() unless (defined $gene_member_id);
@@ -432,7 +516,7 @@ sub fetch_peptides_for_gene_member_id {
   Example    : $pepMembers = $memberAdaptor->fetch_peptides_for_gene_member_id($gene_member_id);
   Description: given a member_id of a gene member,
                fetches all peptide members for this gene
-  Returntype : array ref of Bio::EnsEMBL::Compara::Member objects
+  Returntype : Bio::EnsEMBL::Compara::Member object
   Exceptions :
   Caller     : general
 
