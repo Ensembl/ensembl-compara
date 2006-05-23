@@ -7,10 +7,22 @@ use Bio::EnsEMBL::Utils::Exception;
 
 our @ISA = qw(Bio::EnsEMBL::Compara::DBSQL::BaseRelationAdaptor);
 
+
 =head2 fetch_by_Member
 
+  DEPRECATED: use fetch_all_by_Member instead
+
+=cut
+
+sub fetch_by_Member {
+  my ($self, @args) = @_;
+  return $self->fetch_all_by_Member(@args);
+}
+
+=head2 fetch_all_by_Member
+
  Arg [1]    : Bio::EnsEMBL::Compara::Member $member
- Example    : $homologies = $HomologyAdaptor->fetch_by_Member($member);
+ Example    : $homologies = $HomologyAdaptor->fetch_all_by_Member($member);
  Description: fetch the homology relationships where the given member is implicated
  Returntype : an array reference of Bio::EnsEMBL::Compara::Homology objects
  Exceptions : none
@@ -18,8 +30,7 @@ our @ISA = qw(Bio::EnsEMBL::Compara::DBSQL::BaseRelationAdaptor);
 
 =cut
 
-sub fetch_by_Member {
-  # to be renamed fetch_all_by_Member
+sub fetch_all_by_Member {
   my ($self, $member) = @_;
 
   my $join = [[['homology_member', 'hm'], 'h.homology_id = hm.homology_id']];
@@ -37,10 +48,22 @@ sub fetch_by_Member {
 
 =head2 fetch_by_Member_paired_species
 
+  DEPRECATED: use fetch_all_by_Member_paired_species instead
+
+=cut
+
+sub fetch_by_Member_paired_species {
+  my ($self, @args) = @_;
+  return $self->fetch_all_by_Member_paired_species(@args);
+}
+
+
+=head2 fetch_all_by_Member_paired_species
+
   Arg [1]    : Bio::EnsEMBL::Compara::Member $member
   Arg [2]    : string $species
                e.g. "Mus_musculus" or "Mus musculus"
-  Example    : $homologies = $HomologyAdaptor->fetch_by_Member($member, "Mus_musculus");
+  Example    : $homologies = $HomologyAdaptor->fetch_all_by_Member_paired_species($member, "Mus_musculus");
   Description: fetch the homology relationships where the given member is implicated
                in pair with another member from the paired species. Member species and
                paired species should be different.
@@ -50,8 +73,7 @@ sub fetch_by_Member {
 
 =cut
 
-sub fetch_by_Member_paired_species {
-  # to be renamed fetch_all_by_Member_paired_species
+sub fetch_all_by_Member_paired_species {
   my ($self, $member, $species) = @_;
 
   $species =~ tr/_/ /;
