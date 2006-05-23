@@ -11,7 +11,7 @@ All instructions to do it are in ensembl-compara/scripts/taxonomy/README-taxonom
 2- Create the other gene tree-related tables in the database
    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-msql -hia64e -uensadmin -pensembl abel_compara_tree_37 < ensembl-compara/sql/protein_tree.sql
+mysql -hia64e -uensadmin -pensembl abel_compara_tree_37 < ensembl-compara/sql/protein_tree.sql
 
 This will create 3 tables
 protein_tree_nodes
