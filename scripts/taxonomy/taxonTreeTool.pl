@@ -118,8 +118,8 @@ sub fetch_by_ncbi_taxon_id {
   my $root = $node->root;
   
   $root->print_tree($self->{'scale'});
+  print "classification: ",$node->classification,"\n";
   if ($node->rank eq 'species') {
-    print "classification: ",$node->classification,"\n";
     print "scientific name: ",$node->binomial,"\n";
     if (defined $node->common_name) {
       print "common name: ",$node->common_name,"\n";
@@ -138,8 +138,8 @@ sub fetch_by_scientific_name {
   my $root = $node->root;
 
   $root->print_tree($self->{'scale'});
+  print "classification: ",$node->classification,"\n";
   if ($node->rank eq 'species') {
-    print "classification: ",$node->classification,"\n";
     print "scientific name: ",$node->binomial,"\n";
     if (defined $node->common_name) {
       print "common name: ",$node->common_name,"\n";
@@ -195,7 +195,7 @@ sub fetch_compara_ncbi_taxa {
     $root->merge_node_via_shared_ancestor($taxon);
   }
 
-  $root->minimize_tree if($self->{'minimize_tree'});
+  $root = $root->minimize_tree if($self->{'minimize_tree'});
   $root->print_tree($self->{'scale'});
   
   my $newick = $root->newick_format;
