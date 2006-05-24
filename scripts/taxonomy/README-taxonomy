@@ -14,13 +14,13 @@ gtar xvzf taxdump.tar.gz
 
 rm -f taxdump.tar.gz
 
-perl -e 'while(<>) {chomp;s/\t\|$//;my @array = split(/\t\|\t/);my ($taxon_id, $parent_id, $rank, $genbank_hidden_flag) = ($array[0],$array[1],$array[2],$array[10]);print $taxon_id,"\t", $parent_id,"\t", $rank,"\t",$genbank_hidden_flag,"\n";}' nodes.dmp > ncbi_taxa_nodes.txt
+perl -e 'while(<>) {chomp;s/\t\|$//;my @array = split(/\t\|\t/);my ($taxon_id, $parent_id, $rank, $genbank_hidden_flag) = ($array[0],$array[1],$array[2],$array[10]);print $taxon_id,"\t", $parent_id,"\t", $rank,"\t",$genbank_hidden_flag,"\n";}' nodes.dmp > ncbi_taxa_node.txt
 
-perl -e 'while(<>) {chomp;s/\t\|$//;my ($taxon_id, $name, $unique_name, $name_class) = split(/\t\|\t/);print $taxon_id,"\t", $name,"\t",$name_class,"\n";}' names.dmp > ncbi_taxa_names.txt
+perl -e 'while(<>) {chomp;s/\t\|$//;my ($taxon_id, $name, $unique_name, $name_class) = split(/\t\|\t/);print $taxon_id,"\t", $name,"\t",$name_class,"\n";}' names.dmp > ncbi_taxa_name.txt
 
 mysql -hecs2 -P3365 -uensadmin -pensembl -N -e "create database ncbi_taxonomy"
 
-CREATE TABLE ncbi_taxa_nodes (
+CREATE TABLE ncbi_taxa_node (
   taxon_id                        int(10) unsigned NOT NULL,
   parent_id                       int(10) unsigned NOT NULL,
 
@@ -36,7 +36,7 @@ CREATE TABLE ncbi_taxa_nodes (
   KEY (rank)
 );
 
-CREATE TABLE ncbi_taxa_names (
+CREATE TABLE ncbi_taxa_name (
   taxon_id                    int(10) unsigned NOT NULL,
 
   name                        varchar(255),
@@ -47,17 +47,22 @@ CREATE TABLE ncbi_taxa_names (
   KEY (name_class)
 );
 
-mysqlimport -hecs2 -P3365 -uensadmin -pensembl ncbi_taxonomy ncbi_taxa_nodes.txt
-ncbi_taxonomy.ncbi_taxa_nodes: Records: 296515  Deleted: 0  Skipped: 0  Warnings: 889545
+mysqlimport -hecs2 -P3365 -uensadmin -pensembl ncbi_taxonomy ncbi_taxa_node.txt
+ncbi_taxonomy.ncbi_taxa_node: Records: 296515  Deleted: 0  Skipped: 0  Warnings: 889545
 
-mysqlimport -hecs2 -P3365 -uensadmin -pensembl ncbi_taxonomy ncbi_taxa_names.txt
-ncbi_taxonomy.ncbi_taxa_names: Records: 385145  Deleted: 0  Skipped: 0  Warnings: 0
+mysqlimport -hecs2 -P3365 -uensadmin -pensembl ncbi_taxonomy ncbi_taxa_name.txt
+ncbi_taxonomy.ncbi_taxa_name: Records: 385145  Deleted: 0  Skipped: 0  Warnings: 0
 
-mysql -hecs2 -P3365 -uensadmin -pensembl -N -e "update ncbi_taxa_nodes set parent_id=0 where parent_id=taxon_id" ncbi_taxonomy
+mysql -hecs2 -P3365 -uensadmin -pensembl -N -e "update ncbi_taxa_node set parent_id=0 where parent_id=taxon_id" ncbi_taxonomy
 
-mysql -hecs2 -P3365 -uensadmin -pensembl -N -e "insert into ncbi_taxa_names (taxon_id, name, name_class) select distinct taxon_id, CURRENT_TIMESTAMP, 'import date' from ncbi_taxa_nodes where parent_id=0" ncbi_taxonomy
+awk '{print $1,$3}' merged.dmp |awk '{print "insert into ncbi_taxa_name (taxon_id, name_class, name) values ("$2",\"merged_taxon_id\","$1");"}' > merged_nodes.sql
+
+mysql -hecs2 -P3365 -uensadmin -pensembl ncbi_taxonomy < merged_nodes.sql
+
+mysql -hecs2 -P3365 -uensadmin -pensembl -N -e "insert into ncbi_taxa_name (taxon_id, name, name_class) select distinct taxon_id, CURRENT_TIMESTAMP, 'import date' from ncbi_taxa_node where parent_id=0" ncbi_taxonomy
 
 # Build the left/right indexes and store them in the database. This indexing help speeding up subtree retrivial if needed.
 
 ensembl-compara/scripts/taxonomy/taxonTreeTool.pl -url mysql://ensadmin:ensembl@ecs2:3365/ncbi_taxonomy -index > leftright_indexing.err 2>&1 &
+
 
