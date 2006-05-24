@@ -7,7 +7,7 @@ use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Compara::GenomeDB;
 use Bio::EnsEMBL::Hive;
 use Bio::EnsEMBL::DBLoader;
-
+use Bio::EnsEMBL::Registry;
 
 my $conf_file;
 my %analysis_template;
@@ -33,6 +33,8 @@ GetOptions('help'     => \$help,
           );
 
 if ($help) { usage(); }
+
+Bio::EnsEMBL::Registry->no_version_check(1);
 
 parse_conf($conf_file);
 
@@ -164,11 +166,16 @@ sub build_GeneTreeSystem
   #
   # Muscle
   #
+  $parameters = "{'options'=>'-maxiters 2'";
+  if (defined $genetree_params{'max_gene_count'}) {
+    $parameters .= ",max_gene_count=>".$genetree_params{'max_gene_count'};
+  }
+  $parameters .= "}";
   my $muscle = Bio::EnsEMBL::Analysis->new(
       -logic_name      => 'Muscle',
       -program_file    => '/usr/local/ensembl/bin/muscle',
       -module          => 'Bio::EnsEMBL::Compara::RunnableDB::Muscle',
-      -parameters      => "{'options'=>'-maxiters 2'}"
+      -parameters      => $parameters
     );
   $self->{'hiveDBA'}->get_AnalysisAdaptor()->store($muscle);
   $stats = $muscle->stats;
@@ -180,11 +187,16 @@ sub build_GeneTreeSystem
   #
   # Muscle_huge
   #
+  $parameters = "{'options'=>'-maxiters 1 -diags1 -sv'";
+  if (defined $genetree_params{'max_gene_count'}) {
+    $parameters .= ",max_gene_count=>".$genetree_params{'max_gene_count'};
+  }
+  $parameters .= "}";
   my $muscle_huge = Bio::EnsEMBL::Analysis->new(
       -logic_name      => 'Muscle_huge',
       -program_file    => '/usr/local/ensembl/bin/muscle',
       -module          => 'Bio::EnsEMBL::Compara::RunnableDB::Muscle',
-      -parameters      => "{'options'=>'-maxiters 1 -diags1 -sv'}"
+      -parameters      => $parameters
     );
   $self->{'hiveDBA'}->get_AnalysisAdaptor()->store($muscle_huge);
   $stats = $muscle_huge->stats;
@@ -236,11 +248,16 @@ sub build_GeneTreeSystem
   #
   # PHYML
   #
+  $parameters = "{cdna=>0";
+  if (defined $genetree_params{'max_gene_count'}) {
+    $parameters .= ",max_gene_count=>".$genetree_params{'max_gene_count'};
+  }
+  $parameters .= "}";
   my $phyml = Bio::EnsEMBL::Analysis->new(
       -logic_name      => 'PHYML',
       -program_file    => '/usr/local/ensembl/bin/phyml',
       -module          => 'Bio::EnsEMBL::Compara::RunnableDB::PHYML',
-      -parameters      => "{cdna=>0}"
+      -parameters      => $parameters
     );
   $self->{'hiveDBA'}->get_AnalysisAdaptor()->store($phyml);
   $stats = $phyml->stats;
@@ -252,31 +269,31 @@ sub build_GeneTreeSystem
   #
   # PHYML_cdna
   #
-  my $phyml_cdna = Bio::EnsEMBL::Analysis->new(
-      -logic_name      => 'PHYML_cdna',
-      -program_file    => '/usr/local/ensembl/bin/phyml',
-      -module          => 'Bio::EnsEMBL::Compara::RunnableDB::PHYML',
-      -parameters      => "{cdna=>1}"
-    );
-  $self->{'hiveDBA'}->get_AnalysisAdaptor()->store($phyml_cdna);
-  $stats = $phyml->stats;
-  $stats->batch_size(1);
-  $stats->hive_capacity(400);
-  $stats->update();
+#  my $phyml_cdna = Bio::EnsEMBL::Analysis->new(
+#      -logic_name      => 'PHYML_cdna',
+#      -program_file    => '/usr/local/ensembl/bin/phyml',
+#      -module          => 'Bio::EnsEMBL::Compara::RunnableDB::PHYML',
+#      -parameters      => "{cdna=>1}"
+#    );
+#  $self->{'hiveDBA'}->get_AnalysisAdaptor()->store($phyml_cdna);
+#  $stats = $phyml->stats;
+#  $stats->batch_size(1);
+#  $stats->hive_capacity(400);
+#  $stats->update();
 
   #
   # BreakPAFCluster
   #
   $parameters = $genetree_params{'breakcluster_params'};
   my $BreakPAFCluster = Bio::EnsEMBL::Analysis->new(
-      -logic_name      => 'PAFCluster',
+      -logic_name      => 'BreakPAFCluster',
       -module          => 'Bio::EnsEMBL::Compara::RunnableDB::BreakPAFCluster',
       -parameters      => $parameters
     );
   $self->{'hiveDBA'}->get_AnalysisAdaptor()->store($BreakPAFCluster);
   $stats = $BreakPAFCluster->stats;
   $stats->batch_size(1);
-  $stats->hive_capacity(-1);
+  $stats->hive_capacity(3);
   $stats->update();
 
   #
@@ -285,9 +302,10 @@ sub build_GeneTreeSystem
   $parameters = $genetree_params{'species_tree_file'};
   my $rap_jar_file = $genetree_params{'rap_jar_file'};
   $rap_jar_file = "/nfs/acari/abel/bin/rap.jar" unless (defined $rap_jar_file);
+  my $program_file = "/usr/opt/java/bin/java -jar " . $rap_jar_file;
   my $rap = Bio::EnsEMBL::Analysis->new(
       -logic_name      => 'RAP',
-      -program_file    => '/usr/opt/java/bin/java -jar $rap_jar_file',
+      -program_file    => $program_file,
       -module          => 'Bio::EnsEMBL::Compara::RunnableDB::RAP',
       -parameters      => $parameters
     );
@@ -323,9 +341,10 @@ sub build_GeneTreeSystem
   $dataflowRuleDBA->create_rule($muscle_huge, $BreakPAFCluster, 2);
 
   $dataflowRuleDBA->create_rule($phyml, $rap, 1);
-  $dataflowRuleDBA->create_rule($phyml, $phyml_cdna, 2);
-  $dataflowRuleDBA->create_rule($phyml_cdna, $rap, 1);
-  $dataflowRuleDBA->create_rule($phyml_cdna, $BreakPAFCluster, 2); 
+#  $dataflowRuleDBA->create_rule($phyml, $phyml_cdna, 2);
+#  $dataflowRuleDBA->create_rule($phyml_cdna, $rap, 1);
+#  $dataflowRuleDBA->create_rule($phyml_cdna, $BreakPAFCluster, 2); 
+  $dataflowRuleDBA->create_rule($phyml, $BreakPAFCluster, 2); 
 
   $dataflowRuleDBA->create_rule($BreakPAFCluster, $muscle, 2);
 
@@ -342,7 +361,7 @@ sub build_GeneTreeSystem
        -input_id       => 1,
        -analysis       => $paf_cluster,
       );
-  
+
   return 1;
 }
 
