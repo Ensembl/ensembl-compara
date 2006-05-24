@@ -1,7 +1,7 @@
 
 ------------------------------------------------------------------------------------
 --
--- Table structure for table 'protein_tree_nodes'
+-- Table structure for table 'protein_tree_node'
 --
 -- overview: for importing from the ncbi taxonomy taxdump.tar nodes.dmp file
 --           tables stores the nodes in a tree formated DB
@@ -12,7 +12,7 @@
 --      left_index            -- for fast nested set searching
 --      right_index           -- for fast nested set searching
 
-CREATE TABLE protein_tree_nodes (
+CREATE TABLE protein_tree_node (
   node_id                         int(10) unsigned NOT NULL auto_increment, # unique internal id
   parent_id                       int(10) unsigned NOT NULL,
   root_id                         int(10) unsigned NOT NULL,
@@ -65,7 +65,7 @@ CREATE TABLE protein_tree_member (
 --    name                -- name itself
 --    name_class          -- (synonym, common name, ...)
 
-CREATE TABLE protein_tree_tags (
+CREATE TABLE protein_tree_tag (
   node_id                int(10) unsigned NOT NULL,
   tag                    varchar(50),
   value                  mediumtext,

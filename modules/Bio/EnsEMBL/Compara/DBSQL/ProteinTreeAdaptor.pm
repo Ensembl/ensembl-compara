@@ -98,7 +98,7 @@ sub store_node {
   }
   #printf("inserting parent_id = %d, root_id = %d\n", $parent_id, $root_id);
   
-  my $sth = $self->prepare("INSERT INTO protein_tree_nodes 
+  my $sth = $self->prepare("INSERT INTO protein_tree_node 
                              (parent_id,
                               root_id,
                               left_index,
@@ -137,7 +137,7 @@ sub update_node {
     $parent_id = $node->parent->node_id ;
   }
 
-  my $sth = $self->prepare("UPDATE protein_tree_nodes SET
+  my $sth = $self->prepare("UPDATE protein_tree_node SET
                               parent_id=?,
                               left_index=?,
                               right_index=?,
@@ -171,13 +171,13 @@ sub merge_nodes {
   
   # printf("MERGE children from parent %d => %d\n", $node2->node_id, $node1->node_id);
   
-  my $sth = $self->prepare("UPDATE protein_tree_nodes SET
+  my $sth = $self->prepare("UPDATE protein_tree_node SET
                               parent_id=?,
 			                     WHERE parent_id=?");
   $sth->execute($node1->node_id, $node2->node_id);
   $sth->finish;
   
-  $sth = $self->prepare("DELETE from protein_tree_nodes WHERE node_id=?");
+  $sth = $self->prepare("DELETE from protein_tree_node WHERE node_id=?");
   $sth->execute($node2->node_id);
   $sth->finish;
 }
@@ -189,10 +189,10 @@ sub delete_node {
   
   my $node_id = $node->node_id;
   #print("delete node $node_id\n");
-  $self->dbc->do("UPDATE protein_tree_nodes dn, protein_tree_nodes n SET ". 
+  $self->dbc->do("UPDATE protein_tree_node dn, protein_tree_node n SET ". 
             "n.parent_id = dn.parent_id WHERE n.parent_id=dn.node_id AND dn.node_id=$node_id");
-  $self->dbc->do("DELETE from protein_tree_nodes WHERE node_id = $node_id");
-  $self->dbc->do("DELETE from protein_tree_tags WHERE node_id = $node_id");
+  $self->dbc->do("DELETE from protein_tree_node WHERE node_id = $node_id");
+  $self->dbc->do("DELETE from protein_tree_tag WHERE node_id = $node_id");
   $self->dbc->do("DELETE from protein_tree_member WHERE node_id = $node_id");
 }
 
@@ -222,13 +222,13 @@ sub delete_node_and_under {
   my @all_subnodes = $node->get_all_subnodes;
   foreach my $subnode (@all_subnodes) {
     my $subnode_id = $subnode->node_id;
-    $self->dbc->do("DELETE from protein_tree_nodes WHERE node_id = $subnode_id");
-    $self->dbc->do("DELETE from protein_tree_tags WHERE node_id = $subnode_id");
+    $self->dbc->do("DELETE from protein_tree_node WHERE node_id = $subnode_id");
+    $self->dbc->do("DELETE from protein_tree_tag WHERE node_id = $subnode_id");
     $self->dbc->do("DELETE from protein_tree_member WHERE node_id = $subnode_id");
   }
   my $node_id = $node->node_id;
-  $self->dbc->do("DELETE from protein_tree_nodes WHERE node_id = $node_id");
-  $self->dbc->do("DELETE from protein_tree_tags WHERE node_id = $node_id");
+  $self->dbc->do("DELETE from protein_tree_node WHERE node_id = $node_id");
+  $self->dbc->do("DELETE from protein_tree_tag WHERE node_id = $node_id");
   $self->dbc->do("DELETE from protein_tree_member WHERE node_id = $node_id");
 }
 
@@ -246,7 +246,7 @@ sub _load_tagvalues {
     throw("set arg must be a [Bio::EnsEMBL::Compara::NestedSet] not a $node");
   }
 
-  my $sth = $self->prepare("SELECT tag,value from protein_tree_tags where node_id=?");
+  my $sth = $self->prepare("SELECT tag,value from protein_tree_tag where node_id=?");
   $sth->execute($node->node_id);  
   while (my ($tag, $value) = $sth->fetchrow_array()) {
     $node->add_tag($tag,$value);
@@ -263,11 +263,11 @@ sub _store_tagvalue {
   
   $value="" unless(defined($value));
 
-  my $sql = "INSERT ignore into protein_tree_tags (node_id,tag) values ($node_id,\"$tag\")";
+  my $sql = "INSERT ignore into protein_tree_tag (node_id,tag) values ($node_id,\"$tag\")";
   #print("$sql\n");
   $self->dbc->do($sql);
 
-  $sql = "UPDATE protein_tree_tags set value=\"$value\" where node_id=$node_id and tag=\"$tag\"";
+  $sql = "UPDATE protein_tree_tag set value=\"$value\" where node_id=$node_id and tag=\"$tag\"";
   #print("$sql\n");
   $self->dbc->do($sql);
 }
@@ -298,7 +298,7 @@ sub columns {
 
 sub tables {
   my $self = shift;
-  return [['protein_tree_nodes', 't']];
+  return [['protein_tree_node', 't']];
 }
 
 sub left_join_clause {
