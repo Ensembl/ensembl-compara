@@ -413,7 +413,7 @@ sub prepareGenomeAnalysis
   if (defined $dnds_params{'species_sets'}) {
     Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob
         (
-         -input_id       => '{species_sets=>' . $dnds_params{'species_sets'} . '}',
+         -input_id       => '{species_sets=>' . $dnds_params{'species_sets'} . ',method_link_type=>\''.$dnds_params{'method_link_type'}.'\'}',
          -analysis       => $threshold_on_dS,
         );
   }
