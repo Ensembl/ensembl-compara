@@ -21,14 +21,14 @@ CREATE TABLE meta (
 
 
 #
-# Table structure for tables 'ncbi_taxa_nodes' and 'ncbi_taxa_names'
+# Table structure for tables 'ncbi_taxa_node' and 'ncbi_taxa_name'
 #
 # Contains all taxa used in this database, which mirror the data and tree structure
 # from NCBI Taxonomy database (for more details see ensembl-compara/script/taxonomy/README-taxonomy
 # which explain our import process)
 #
 
-CREATE TABLE ncbi_taxa_nodes (
+CREATE TABLE ncbi_taxa_node (
   taxon_id                        int(10) unsigned NOT NULL,
   parent_id                       int(10) unsigned NOT NULL,
 
@@ -44,7 +44,7 @@ CREATE TABLE ncbi_taxa_nodes (
   KEY (rank)
 ) COLLATE=latin1_swedish_ci;
 
-CREATE TABLE ncbi_taxa_names (
+CREATE TABLE ncbi_taxa_name (
   taxon_id                    int(10) unsigned NOT NULL,
 
   name                        varchar(255),

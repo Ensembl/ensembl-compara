@@ -47,7 +47,7 @@ sub fetch_node_by_taxon_id {
 sub fetch_node_id_by_merged_taxon_id {
   my ($self, $taxon_id) = @_; 
 
-  my $sql = "SELECT t.taxon_id FROM ncbi_taxa_nodes t, ncbi_taxa_names n WHERE n.name = ? and n.name_class = 'merged_taxon_id' AND t.taxon_id = n.taxon_id";
+  my $sql = "SELECT t.taxon_id FROM ncbi_taxa_node t, ncbi_taxa_name n WHERE n.name = ? and n.name_class = 'merged_taxon_id' AND t.taxon_id = n.taxon_id";
 
   my $sth = $self->dbc->prepare($sql);
   $sth->execute($taxon_id);
@@ -95,8 +95,8 @@ sub fetch_parent_for_node {
 
 sub tables {
   my $self = shift;
-  return [['ncbi_taxa_nodes', 't'],
-          ['ncbi_taxa_names', 'n']
+  return [['ncbi_taxa_node', 't'],
+          ['ncbi_taxa_name', 'n']
          ];
 }
 
@@ -161,7 +161,7 @@ sub _load_tagvalues {
     throw("set arg must be a [Bio::EnsEMBL::Compara::NCBITaxon] not a $node");
   }
 
-  my $sth = $self->prepare("SELECT name_class, name from ncbi_taxa_names where taxon_id=?");
+  my $sth = $self->prepare("SELECT name_class, name from ncbi_taxa_name where taxon_id=?");
   $sth->execute($node->node_id);  
   while (my ($tag, $value) = $sth->fetchrow_array()) {
     $node->add_tag($tag,$value);
