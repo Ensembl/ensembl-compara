@@ -129,6 +129,11 @@ sub node_value {
   return $value;
 }
 
+sub isa_node {
+  my ($self, $node) = @_;
+  return $self->{'_nodes'}{$node};
+}
+
 sub isa_page {
   my ($self, $node) = @_;
   my $page = $self->{'_nodes'}{$node}{'form'} || $self->{'_nodes'}{$node}{'page'};
