@@ -9,32 +9,37 @@
 
 <h2>Custom Annotation</h2>
 
+<p>Ensembl offers you the ability to display your own data in:</p>
 
-<h3 class="boxed">External Data Sets in Ensembl</h3>
+<ul class="spaced">
+<li>KaryoView</li>
+<li>ContigView</li>
+<li>CytoView</li>
+<li>GeneView</li>
+<li>ProtView</li>
+</ul>
 
-<p>
-Depending on the amount and type of data that you have, Ensembl allows you to display it as features or as user-defined regions in some of its displays
-(e.g. in KaryoView, ContigView, CytoView, ProtView, or in GeneView).
-You may also share your data source with others if you wish to do so.
-</p>
-
+<p>You may also share your data source with others if you wish to do so.</p>
 
 <h3 class="boxed">Ensembl KaryoView</h3>
 
+
 <p>
-Ensembl KaryoView can be configured to display a series of user-defined data points either along a single chromosome ideogram, such as those displayed on Ensembl MapView, or along an entire karyotype ideogram.
+For species with assembled chromosomes, Ensembl KaryoView can be configured to display a series of user-defined data points either along a single chromosome ideogram, such as those displayed on Ensembl MapView, or along an entire karyotype ideogram.
 Visualising sets of genomic data with discrete positions can be extremely useful to get an overview of your data distribution and to identify any hot or cold spots that might not be immediately obvious.
 </p>
 
 <p>
-Generally, KaryoView is linked from MapView pages via the navigation column option "Map your data onto this chromosome", and is available for any species with an assembly mapped to chromosomes.
-(e.g. <i>Homo sapiens</i> <a href="/Homo_sapiens/mapview">MapView</a> and <a href="/Homo_sapiens/karyoview">KaryoView</a>)
+The data set is specified as a list of features, where each line is a tab-delimited record of chromosome number, start base, end base and feature name values. It can be shown against the chromosomes as a variety of boxes, lines and arrows.
 </p>
 
-<p>
-The data set is specified as a list of chromosome, start base, end base and feature name values.
-It can be shown against the chromosomes as a variety of boxes, lines and arrows.
-</p>
+<p><strong>To find KaryoView</strong>, go to any MapView page for the chosen species and click on
+"Map your data onto this chromosome" in the left-hand menu (if desired, you can change chromosome when 
+you configure KaryoView).</p>
+
+<ul>
+<li><a href="/Homo_sapiens/karyoview"> <i>Homo sapiens</i> KaryoView</a></li>
+</ul>
 
 
 <h3 class="boxed">Other Ensembl Displays</h3>
@@ -55,8 +60,8 @@ you will have to either use user-uploaded data or set up a DAS server (see below
 </p>
 
 <p>
-For URL-based data, use the pop-up help on
-<a href="javascript:void(window.open('/perl/helpview?se=1;kw=urlsource', 'helpview', 'width=700, height=550, resizable, scrollbars'))">URL-based data</a>
+For URL-based data, use the 
+<a href="javascript:void(window.open('/perl/helpview?se=1;kw=urlsource', 'helpview', 'width=700, height=550, resizable, scrollbars'))">pop-up help on URL-based data</a>
 to get an explanation of how to view genomic features from a file on your own web server.
 Ensembl reads this file and displays the features as graphical boxes on the ContigView or CytoView displays.
 As the URL-based data is compatible with the UCSC <em>Custom Track</em> format, the same file can be used for both the UCSC genome browser and the Ensembl genome browser.
@@ -71,8 +76,8 @@ The data is private, but you can share URLs with collaborators, and are as perma
 <h4>Uploaded Data Sets</h4>
 
 <p>
-Use the instructions on the the Ensembl help page for
-<a href="javascript:void(window.open('/perl/helpview?se=1;kw=dasconfview', 'helpview', 'width=700, height=550, resizable, scrollbars'))">DASConfView</a> about how to upload your data into Ensembl.
+Use the instructions on the the Ensembl
+<a href="javascript:void(window.open('/perl/helpview?se=1;kw=dasconfview', 'helpview', 'width=700, height=550, resizable, scrollbars'))">help page for DASConfView</a> about how to upload your data into Ensembl.
 </p>
 
 
