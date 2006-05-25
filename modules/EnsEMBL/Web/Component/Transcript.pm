@@ -1048,7 +1048,7 @@ sub spreadsheet_variationTable {
   return 1;
 }
 
-# Transcript SNP View ###################
+# Transcript SNP View ---------------------------------------###################
 
 sub transcriptsnpview { 
   my( $panel, $object, $do_not_render ) = @_;
@@ -1264,30 +1264,49 @@ sub tsv_extent {
 }
 
 
+sub transcriptsnpview_menu    {
+  my ($panel, $object) = @_;
+  my $valids = $object->valids;
+
+  my @onsources;
+  map {  push @onsources, $_ if $valids->{lc("opt_$_")} }  @{$object->get_source || [] };
+
+  my $text;
+  my @populations = $object->get_samples('display');
+  if ( $onsources[0] ) {
+    $text = " from these sources: " . join ", ", @onsources if $onsources[0];
+  }
+  else {
+    $text = ". Please select a source from the yellow 'Source' dropdown menu" if scalar @populations;
+  }
+  $panel->print("<p>Where there is resequencing coverage, SNPs have been called using a computational method.  Here we display the SNP calls observed by transcript$text.  </p>");
+
+  my $user_config = $object->user_config_hash( 'TSV_sampletranscript' );
+  $user_config->{'Populations'}    = \@populations;
+
+
+  my $pop_adaptor = $object->Obj->adaptor->db->get_db_adaptor('variation')->get_PopulationAdaptor;
+  $user_config->{'snp_haplotype_reference'}    =  $pop_adaptor->get_reference_strain_name();
+
+  my $left =  [qw( Features Source SNPClasses SNPTypes Strains SNPContext THExport ImageSize )]; # removed SNPValid
+
+  my $mc = $object->new_menu_container(
+     'configname'  => 'TSV_sampletranscript', #primary config for display
+     'panel'       => "bottom",
+     'configs'     => [ $object->user_config_hash( 'TSV_context' ), $object->user_config_hash('TSV_transcript') ], # other configs that are affected by menu changes
+     'leftmenus'  => $left,
+     'rightmenus' => ['SNPHelp'],
+   );
+  $panel->print( $mc->render_html );
+  $panel->print( $mc->render_js );
+  return 0;
+}
 
 
 sub spreadsheet_TSVtable {
   my( $panel, $object ) = @_;
   my $sample =  $panel->{'sample'};
-  my $sample_slice = $object->__data->{'slices'}{'TSV_transcript'}[1];
-
-  unless ($sample_slice) {
-    my $extent = tsv_extent($object);
-    my $munged_transcript = $object->get_munged_slice("TSV_transcript", $extent, 1 ) || warn "Couldn't get munged transcript";
-    $sample_slice = $munged_transcript->[1]->get_by_strain( $sample );
-  }
-
-  my ( $allele_info, $consequences ) = $object->getAllelesConsequencesOnSlice($sample, "TSV_transcript", $sample_slice);
-  unless( @$consequences && @$allele_info) {
-    return 1;
-  }
-
-  my ($coverage_level, $raw_coverage_obj) = $object->read_coverage($sample, $sample_slice);
-
-  my @coverage_obj;
-  if ( @$raw_coverage_obj ){
-    @coverage_obj = sort {$a->start <=> $b->start} @$raw_coverage_obj;
-  }
+  my $snp_data = get_page_data($panel, $object, [$sample] );
 
   $panel->add_columns(
     { 'key' => 'ID',  },
@@ -1303,145 +1322,278 @@ sub spreadsheet_TSVtable {
     { 'key' => 'Class', },
     { 'key' => 'Source', },
     { 'key' => 'Status', 'title' => 'Validation',  },
-		     );
-
-  foreach my $allele_ref (  @$allele_info ) {
-    my $allele = $allele_ref->[2];
-    my $conseq_type = shift @$consequences;
-    next unless $conseq_type;
-    next unless $allele;
-
-    # Type
-    my $type = $conseq_type->type;
-    if ( (my $splice = $conseq_type->splice_site) =~ s/_/ /g) {
-      $type .= "- $splice";
-    }
-    if ($conseq_type->regulatory_region()) {
-      $type .= "- Regulatory region SNP";
-    }
-    elsif ($type eq 'SARA') {
-      $type .= " (Same As Ref. Assembly)";
-    }
-
-    # Position
-    my $offset = $sample_slice->strand > 0 ? $sample_slice->start - 1 :  $sample_slice->end + 1;
-    my $chr_start = $allele->start() + $offset;
-    my $chr_end   = $allele->end() + $offset;
-    my $pos =  $chr_start;
-    if( $chr_end < $chr_start ) {
-      $pos = "between&nbsp;$chr_end&nbsp;&amp;&nbsp;$chr_start";
-    } elsif($chr_end > $chr_start ) {
-      $pos = "$chr_start&nbsp;-&nbsp;$chr_end";
-    }
-
-    # Class
-    my $class = $object->var_class($allele);
-    if ($class eq 'in-del') {
-      $class = $chr_start > $chr_end ? 'Insertion' : 'Deletion';
-    }
-    $class =~ s/snp/SNP/;
-
-    # Codon - make the letter for the SNP position in the codon bold
-    my $codon = $conseq_type->codon;
-    if ( $codon ) {
-      my $position = ($conseq_type->cds_start % 3 || 3) - 1;
-      $codon =~ s/(\w{$position})(\w)(.*)/$1<b>$2<\/b>$3/; 
-    }
-
-
-    my $status;
-    if ($allele->source eq 'Sanger') {
-      # Read coverage
-      my $allele_start = $allele->start;
-      my $coverage;
-      foreach ( @coverage_obj ) {
-	next if $allele_start >  $_->end;
-	last if $allele_start < $_->start;
-	$coverage = $_->level if $_->level > $coverage;
-      }
-      $coverage = ">".($coverage-1) if $coverage == $coverage_level->[-1];
-      $status = "resequencing coverage $coverage";
-    }
-    else {
-      my $tmp =  $allele->variation;
-      my @validation = $tmp ? @{ $tmp->get_all_validation_states || [] } : ();
-      $status = join( ', ',  @validation ) || "-";
-      $status =~ s/freq/frequency/;
-    }
-
-    # Other
-    my $chr = $sample_slice->seq_region_name;
-    my $snp_alleles = join "/", ($allele->ref_allele_string, $allele->allele_string);
-    my $aa_alleles = $conseq_type->aa_alleles || [];
-    my $aa_coord = $conseq_type->aa_start;
-    $aa_coord .= $aa_coord == $conseq_type->aa_end ? "": $conseq_type->aa_end;
-    my $cds_coord = $conseq_type->cds_start;
-    $cds_coord .= "-".$conseq_type->cds_end unless $conseq_type->cds_start == $conseq_type->cds_end;
-
-
-    my $row = {
-	       'ID'          =>  qq(<a href="/@{[$object->species]}/snpview?snp=@{[$allele->variation_name]};source=@{[$allele->source]};chr=$chr;vc_start=$chr_start">@{[$allele->variation_name]}</a>),
-	       'Class'       => $class || "-",
-	       'Source'      => $allele->source || "-",
-	       'Alleles'     => $snp_alleles || "-",
-	       'Ambiguity'   => $object->ambig_code($allele),
-	       'Status'      => $status,
-	       'chr'         => "$chr:$pos",
-	       'Codon'       => $codon || "-",
-	       'consequence' => $type,
-	       'cdscoord'    => $cds_coord || "-",
-	       #'coverage'    => $coverage || "0",
-	      };
-
-    if ($conseq_type->aa_alleles){
-      $row->{'aachange'} = ( join "/", @{$aa_alleles} ) || "";
-      $row->{'aacoord'}  = $aa_coord;
-    }
-    else {
-      $row->{'aachange'} = '-';
-      $row->{'aacoord'}  = '-';
-      }
+		     ) if %$snp_data;
+  foreach my $snp_row (sort keys %$snp_data) {
+    my $row = $snp_data->{$snp_row}{$sample};
     $panel->add_row( $row );
   }
   return 1;
 }
 
- sub transcriptsnpview_menu    {
-   my ($panel, $object) = @_;
-   my $valids = $object->valids;
-
-   my @onsources;
-   map {  push @onsources, $_ if $valids->{lc("opt_$_")} }  @{$object->get_source || [] };
-
-   my $text;
-   my @populations = $object->get_samples('display');
-   if ( $onsources[0] ) {
-     $text = " from these sources: " . join ", ", @onsources if $onsources[0];
-   }
-   else {
-     $text = ". Please select a source from the yellow 'Source' dropdown menu" if scalar @populations;
-   }
-   $panel->print("<p>Where there is resequencing coverage, SNPs have been called using a computational method.  Here we display the SNP calls observed by transcript$text.  </p>");
-
-   my $user_config = $object->user_config_hash( 'TSV_sampletranscript' );
-   $user_config->{'Populations'}    = \@populations;
 
 
-   my $pop_adaptor = $object->Obj->adaptor->db->get_db_adaptor('variation')->get_PopulationAdaptor;
-   $user_config->{'snp_haplotype_reference'}    =  $pop_adaptor->get_reference_strain_name();
+sub get_page_data {
+  my( $panel, $object, $samples ) = @_;
 
-   my $left =  [qw( Features Source SNPClasses SNPTypes Strains SNPContext THExport ImageSize )]; # removed SNPValid
+  my %snp_data;
 
-   my $mc = $object->new_menu_container(
-     'configname'  => 'TSV_sampletranscript', #primary config for display
-     'panel'       => "bottom",
-     'configs'     => [ $object->user_config_hash( 'TSV_context' ), $object->user_config_hash('TSV_transcript') ], # other configs that are affected by menu changes
-     'leftmenus'  => $left,
-     'rightmenus' => ['SNPHelp'],
-   );
-   $panel->print( $mc->render_html );
-   $panel->print( $mc->render_js );
-   return 0;
- }
+  foreach my $sample ( @$samples ) { 
+    my $munged_transcript = $object->get_munged_slice("TSV_transcript",  tsv_extent($object), 1 ) || warn "Couldn't get munged transcript";
+    my $sample_slice = $munged_transcript->[1]->get_by_strain( $sample );
+
+    my ( $allele_info, $consequences ) = $object->getAllelesConsequencesOnSlice($sample, "TSV_transcript", $sample_slice);
+    next unless @$consequences && @$allele_info;
+
+    my ($coverage_level, $raw_coverage_obj) = $object->read_coverage($sample, $sample_slice);
+    my @coverage_obj;
+    if ( @$raw_coverage_obj ){
+      @coverage_obj = sort {$a->start <=> $b->start} @$raw_coverage_obj;
+    }
+
+    my @cp_consequences = @$consequences; # cp so original can be used later
+    foreach my $allele_ref (  @$allele_info ) {
+      my $allele = $allele_ref->[2];
+      my $conseq_type = shift @cp_consequences;
+      next unless $conseq_type;
+      next unless $allele;
+
+      # Type
+      my $type = $conseq_type->type;
+      if ( (my $splice = $conseq_type->splice_site) =~ s/_/ /g) {
+	$type .= "- $splice";
+      }
+      if ($conseq_type->regulatory_region()) {
+	$type .= "- Regulatory region SNP";
+      }
+      elsif ($type eq 'SARA') {
+	$type .= " (Same As Ref. Assembly)";
+      }
+      
+      # Position
+      my $offset = $sample_slice->strand > 0 ? $sample_slice->start - 1 :  $sample_slice->end + 1;
+      my $chr_start = $allele->start() + $offset;
+      my $chr_end   = $allele->end() + $offset;
+      my $pos =  $chr_start;
+      if( $chr_end < $chr_start ) {
+	$pos = "between&nbsp;$chr_end&nbsp;&amp;&nbsp;$chr_start";
+      } elsif($chr_end > $chr_start ) {
+	$pos = "$chr_start&nbsp;-&nbsp;$chr_end";
+      }
+
+      # Class
+      my $class = $object->var_class($allele);
+      if ($class eq 'in-del') {
+	$class = $chr_start > $chr_end ? 'Insertion' : 'Deletion';
+      }
+      $class =~ s/snp/SNP/;
+      
+      # Codon - make the letter for the SNP position in the codon bold
+      my $codon = $conseq_type->codon;
+      if ( $codon ) {
+	my $position = ($conseq_type->cds_start % 3 || 3) - 1;
+	$codon =~ s/(\w{$position})(\w)(.*)/$1<b>$2<\/b>$3/; 
+      }
+
+
+      my $status;
+      if ($allele->source eq 'Sanger') {
+	# Read coverage
+	my $allele_start = $allele->start;
+	my $coverage;
+	foreach ( @coverage_obj ) {
+	  next if $allele_start >  $_->end;
+	  last if $allele_start < $_->start;
+	  $coverage = $_->level if $_->level > $coverage;
+	}
+	$coverage = ">".($coverage-1) if $coverage == $coverage_level->[-1];
+	$status = "resequencing coverage $coverage";
+      }
+      else {
+	my $tmp =  $allele->variation;
+	my @validation = $tmp ? @{ $tmp->get_all_validation_states || [] } : ();
+	$status = join( ', ',  @validation ) || "-";
+	$status =~ s/freq/frequency/;
+      }
+
+      # Other
+      my $chr = $sample_slice->seq_region_name;
+      my $snp_alleles = join "/", ($allele->ref_allele_string, $allele->allele_string);
+      my $aa_alleles = $conseq_type->aa_alleles || [];
+      my $aa_coord = $conseq_type->aa_start;
+      $aa_coord .= $aa_coord == $conseq_type->aa_end ? "": $conseq_type->aa_end;
+      my $cds_coord = $conseq_type->cds_start;
+      $cds_coord .= "-".$conseq_type->cds_end unless $conseq_type->cds_start == $conseq_type->cds_end;
+
+      my $row = {
+		'ID'          =>  qq(<a href="/@{[$object->species]}/snpview?snp=@{[$allele->variation_name]};source=@{[$allele->source]};chr=$chr;vc_start=$chr_start">@{[$allele->variation_name]}</a>),
+		'Class'       => $class || "-",
+		'Source'      => $allele->source || "-",
+		'Alleles'     => $snp_alleles || "-",
+		'Ambiguity'   => $object->ambig_code($allele),
+		'Status'      => $status,
+		'chr'         => "$chr:$pos",
+		'Codon'       => $codon || "-",
+		'consequence' => $type,
+		'cdscoord'    => $cds_coord || "-",
+		#'coverage'    => $coverage || "0",
+		};
+     
+      if ($conseq_type->aa_alleles){
+	$row->{'aachange'} = ( join "/", @{$aa_alleles} ) || "";
+	$row->{'aacoord'}  = $aa_coord;
+      }
+      else {
+	$row->{'aachange'} = '-';
+	$row->{'aacoord'}  = '-';
+      }
+      $snp_data{"$chr:$pos"}{$sample} = $row;
+    }
+  }
+  return \%snp_data;
+}
+
+
+# PAGE DUMP METHODS -------------------------------------------------------
+
+sub dump {
+  my ( $panel, $object ) = @_;
+  $panel->print("<p>Dump of SNP data per strain (SNPs in rows, strains in columns).  For more advanced data queries use <a href='/multi/martview'>Bio-mart</a>. </p>");
+  my $html = qq(
+   <div>
+     @{[ $panel->form( 'dump_form' )->render() ]}
+  </div>);
+
+  $panel->print( $html );
+  return 1;
+}
+
+
+sub dump_form {
+  my ($panel, $object ) = @_;
+
+  my $form = EnsEMBL::Web::Form->new('tsvview_form', "/@{[$object->species]}/transcriptsnpdataview", 'get' );
+
+  my  @formats = ( {"value" => "astext",  "name" => "Text format"},
+        #          {"value" => "asexcel", "name" => "In Excel format"},
+                   {"value" => "ashtml",  "name" => "HTML format"}
+                 );
+
+  return $form unless @formats;
+  $form->add_element( 'type'  => 'Hidden',
+                      'name'  => '_format',
+                      'value' => 'ashtml' );
+  $form->add_element(
+    'class'     => 'radiocheck1col',
+    'type'      => 'DropDown',
+    'renderas'  => 'checkbox',
+    'name'      => 'dump',
+    'label'     => 'Dump format',
+    'values'    => \@formats,
+    'value'     => $object->param('dump') || 'astext',
+  );
+
+  $form->add_element (
+                           'type'      => 'Hidden',
+                           'name'      => 'transcript',
+                           'value'     => $object->param('transcript'),
+		     );
+
+  my @cgi_params = @{$panel->get_params($object, {style =>"form"}) };
+  foreach my $param ( @cgi_params) {
+       $form->add_element (
+                          'type'      => 'Hidden',
+                          'name'      => $param->{'name'},
+                          'value'     => $param->{'value'},
+                          'id'        => "Other param",
+                         );
+  }
+
+
+ $form->add_element(
+    'type'      => 'Submit',
+    'name'      => 'submit',
+    'value'     => 'Dump',
+                    );
+
+
+  $form->add_attribute( 'onSubmit',
+  qq(this.elements['_format'].value='HTML';this.target='_self';flag='';for(var i=0;i<this.elements['dump'].length;i++){if(this.elements['dump'][i].checked){flag=this.elements['dump'][i].value;}}if(flag=='astext'){this.elements['_format'].value='Text';this.target='_blank'}if(flag=='gz'){this.elements['_format'].value='Text';})
+    );
+
+  return $form;
+}
+
+
+sub html_dump {
+  my( $panel, $object ) = @_;
+
+  my $script_config = $object->get_scriptconfig;
+  foreach my $param ( $object->param() ) {
+    $script_config->set($param, $object->param($param) , 1);
+  }
+  $script_config->save;
+  my @samples = sort ( $object->get_samples );
+
+  my $snp_data = get_page_data($panel, $object, \@samples );
+  unless (ref $snp_data eq 'HASH') {
+    $panel->print("<p>No data in this region.");
+    return;
+  }
+
+  my $header_row = join "</th><th>", ("bp position", @samples);
+  $panel->print("<table class='spreadsheet'>\n");
+  $panel->print("<tr><th>$header_row</th></tr>\n");
+
+  my @background = ('class="tint"', "");
+  foreach my $snp_pos ( sort keys %$snp_data ) {
+    my $background = shift @background;
+    push @background, $background;
+    $panel->print(qq(<tr $background><td>$snp_pos</td>));
+    foreach my $sample ( @samples ) {
+      my $row =  $snp_data->{$snp_pos}{$sample} ;
+
+      (my $type = $row->{consequence}) =~ s/\(Same As Ref. Assembly\)//;;
+      my $info = $row->{ID} ? "$row->{ID} $type" : "-";
+      $panel->print(qq(<td>$info</td>));
+    }
+    $panel->print("</tr>\n");
+  }
+  $panel->print("\n</table>");
+  return 1;
+}
+
+sub text_dump {
+  my( $panel, $object ) = @_;
+
+  my $script_config = $object->get_scriptconfig;
+  foreach my $param ( $object->param() ) {
+    $script_config->set($param, $object->param($param) , 1);
+  }
+  $script_config->save;
+  my @samples = sort ( $object->get_samples );
+
+  my $snp_data = get_page_data($panel, $object, \@samples );
+  unless (ref $snp_data eq 'HASH') {
+    $panel->print("No data in this region.");
+    return;
+  }
+
+  my $header_row = join "\t", ("bp position", @samples);
+  $panel->print("$header_row\n");
+
+  foreach my $snp_pos ( sort keys %$snp_data ) {
+    $panel->print(qq($snp_pos\t));
+    foreach my $sample ( @samples ) {
+      my $row =  $snp_data->{$snp_pos}{$sample} ;
+
+      (my $type = $row->{consequence}) =~ s/\(Same As Ref. Assembly\)//;;
+      my $info = $row->{ID} ? "$row->{ID} $type" : "-";
+      $panel->print(qq($info\t));
+    }
+    $panel->print("\n");
+  }
+  $panel->print("\n");
+  return 1;
+}
 
 1;

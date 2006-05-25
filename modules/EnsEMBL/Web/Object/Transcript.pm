@@ -229,6 +229,15 @@ sub valids {
 }
 
 
+sub extent {
+  my $self = shift;
+  my $extent = $self->param( 'context' );
+  if( $extent eq 'FULL' ) {
+    $extent = 1000;
+  }
+  return $extent;
+}
+
 
 sub getFakeMungedVariationsOnSlice {
   my( $self, $slice, $subslices ) = @_;
@@ -254,8 +263,7 @@ sub getAllelesConsequencesOnSlice {
 
   # Get all features on slice
   my $allele_features = $sample_slice->get_all_differences_Slice() || [];
-  #warn scalar (@$allele_features);
-  return [] unless @$allele_features;
+  return ([], []) unless @$allele_features;
 
   my @filtered_af =
     sort {$a->[2]->start <=> $b->[2]->start}
@@ -270,19 +278,19 @@ sub getAllelesConsequencesOnSlice {
     grep { $valids->{'opt_'.lc($_->[2]->source) }  }
 
     # [ fake_s, fake_e, AlleleFeature ]   Filter out AFs not on munged slice...
-      map  { $_->[1]?[$_->[0]->start+$_->[1],$_->[0]->end+$_->[1],$_->[0]]:() } 
-	# [ AF, offset ]   Map to fake coords.   Create a munged version AF
-	map  { [$_, $self->munge_gaps( $key, $_->start, $_->end)] }
-	  @$allele_features;
+     map  { $_->[1]?[$_->[0]->start+$_->[1],$_->[0]->end+$_->[1],$_->[0]]:() } 
+       # [ AF, offset ]   Map to fake coords.   Create a munged version AF
+       map  { [$_, $self->munge_gaps( $key, $_->start, $_->end)] }
+	 @$allele_features;
 
-  return [] unless @filtered_af;
+  return ([], []) unless @filtered_af;
 
 
   # consequences of AlleleFeatures on the transcript
   my @slice_alleles = map { $_->[2]->transfer($self->Obj->slice) } @filtered_af;
 
   $consequences =  Bio::EnsEMBL::Utils::TranscriptAlleles::get_all_ConsequenceType($self->Obj, \@slice_alleles);
-  return [] unless @$consequences;
+  return ([], []) unless @$consequences;
 
   my @valid_conseq;
   my @valid_alleles;
@@ -296,7 +304,6 @@ sub getAllelesConsequencesOnSlice {
   }
   $self->__data->{'sample'}{$sample}->{'consequences'} = \@valid_conseq || [];
   $self->__data->{'sample'}{$sample}->{'allele_info'}  = \@valid_alleles || [];
-
   return (\@valid_alleles, \@valid_conseq);
 }
 
@@ -350,7 +357,6 @@ sub get_samples {
   if ($options eq 'display') { # return list of pops with default first
     return (sort keys %default_pops), (sort keys %db_pops);
   }
-
   # This elsif allows a user to manually add in an optional strain. Use format strain=xxx:on
   elsif ( $self->param('strain') ) { # only occurs when tweak URL
     my @pops;
@@ -396,9 +402,14 @@ sub get_source {
 sub munge_gaps {
   my( $self, $slice_code, $bp, $bp2  ) = @_;
   my $subslices = $self->__data->{'slices'}{ $slice_code }[2];
+  unless ($subslices) {
+    my $tmp =  $self->get_transcript_slices( [ $slice_code, 'munged', $self->extent ] );
+    $subslices = $tmp->[2];
+  }
+
   foreach( @$subslices ) {
     if( $bp >= $_->[0] && $bp <= $_->[1] ) {
-      my $return =  defined($bp2) && ($bp2 < $_->[0] || $bp2 > $_->[1] ) ? undef : $_->[2] ;
+      my $return =  defined($bp2) && ($bp2 < $_->[0] || $bp2 > $_->[1] ) ? undef : $_->[2];
       return $return;
     }
   }
