@@ -222,15 +222,15 @@ sub context_user {
 
 
     $self->add_entry( $flag, 'text' => "Account summary",
-                                    'href' => "/Multi/user_login?node=accountview" );
+                                    'href' => "/common/user_login?node=accountview" );
     $self->add_entry( $flag, 'text' => "Update my details",
-                                    'href' => "/Multi/user_update" );
+                                    'href' => "/common/user_update" );
     $self->add_entry( $flag, 'text' => "Change my password",
-                                    'href' => "/Multi/user_pw_change" );
+                                    'href' => "/common/user_pw_change" );
     $self->add_entry( $flag, 'text' => "Manage my bookmarks",
-                                    'href' => "/Multi/user_manage_bkmarks" );
+                                    'href' => "/common/user_manage_bkmarks" );
     $self->add_entry( $flag, 'text' => "Log out",
-                                    'href' => "/Multi/user_logout" );
+                                    'href' => "/common/user_logout" );
 
     ## get user status
     my $help_access = $obj->get_user_privilege($user_id, 'help');
@@ -240,24 +240,24 @@ sub context_user {
     if ($help_access) {
       $self->add_block( $flag, 'bulleted', "Helpdesk Admin" );
       $self->add_entry( $flag, 'text' => "Add Help Item",
-                                    'href' => "/Multi/help_add" );
+                                    'href' => "/common/help_add" );
       $self->add_entry( $flag, 'text' => "Edit Help Item",
-                                    'href' => "/Multi/help_edit" );
+                                    'href' => "/common/help_edit" );
       $self->add_entry( $flag, 'text' => "Build Help Article",
-                                    'href' => "/Multi/help_article" );
+                                    'href' => "/common/help_article" );
     }
 
     $flag = 'news';
     if ($news_access) {
       $self->add_block( $flag, 'bulleted', "News DB Admin" );
       $self->add_entry( $flag, 'text' => "Add News",
-                                    'href' => "/Multi/news_add" );
+                                    'href' => "/common/news_add" );
       $self->add_entry( $flag, 'text' => "Edit News",
-                                    'href' => "/Multi/news_edit" );
+                                    'href' => "/common/news_edit" );
       $self->add_entry( $flag, 'text' => "Add old news",
-                                    'href' => "/Multi/news_add_old" );
+                                    'href' => "/common/news_add_old" );
       $self->add_entry( $flag, 'text' => "Edit old news",
-                                    'href' => "/Multi/news_edit_old" );
+                                    'href' => "/common/news_edit_old" );
     }
   }
   else {
@@ -265,11 +265,11 @@ sub context_user {
     $self->add_block( $flag, 'bulleted', "My Account" );
     
     $self->add_entry( $flag, 'text' => "Login",
-                                  'href' => "/Multi/user_login" );
+                                  'href' => "/common/user_login" );
     $self->add_entry( $flag, 'text' => "Register",
-                                  'href' => "/Multi/user_register" );
+                                  'href' => "/common/user_register" );
     $self->add_entry( $flag, 'text' => "Lost Password",
-                                  'href' => "/Multi/user_pw_lost" );
+                                  'href' => "/common/user_pw_lost" );
     $self->add_entry( $flag, 'text' => "About User Accounts",
                                     'href' => "/info/about/accounts.html" );
   }
