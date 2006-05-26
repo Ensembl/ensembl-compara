@@ -15,11 +15,36 @@ Bio::EnsEMBL::Compara::SyntenyRegion - Synteny region on one species
 
 =head1 SYNOPSIS
 
+  print $this_synteny_region->dbID;
 
+  print $this_synteny_region->method_link_species_set_id;
+
+  my $these_dnafrag_regions = $this_synteny_region->children();
+  foreach my $this_dnafrag_region (@$these_dnafrag_regions) {
+    print $this_dnafrag_region->dnafrag->genome_db->name, ": ", $this_dnafrag_region->slice->name, "\n";
+  }
 
 =head1 DESCRIPTION
 
 Describe the object here
+
+=head1 OBJECT ATTRIBUTES
+
+=over
+
+=item dbID
+
+corresponds to synteny_region.synteny_region_id
+
+=item adaptor
+
+Bio::EnsEMBL::Compara::DBSQL::SyntenyRegionAdaptor object to access DB
+
+=item method_link_species_set_id
+
+corresponds to synteny_region.method_link_species_set_id
+
+=back
 
 =head1 CONTACT
 
