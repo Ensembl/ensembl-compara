@@ -1,108 +1,188 @@
-
-March 30th 2005
-(reviewed on April 21st 2005)
-
-This document is a first attempt to describe the different steps that the compara
-release coordination has to overlook to hopefully have a successful production cycle.
+  COMPARA PRODUCTION CYCLE
+============================
 
 1. Once the release coordinator has sent the mail for declaration of intention,
 ask the other members of compara group (or related) what they intend to produce.
 Sometimes, you have to wait a bit that gene builders do their declaration first
 to know what compara will need to produce and also potential schema changes.
 
-For orthologues and family, ask Jessica (jessica@ebi.ac.uk)
-For paralogues, ask Dan Andrews (dta@sanger.ac.uk)
-For whole genome alignments and synteny ask Javier (jherrero@ebi.ac.uk)
-or Abel (abel@ebi.ac.uk)
+For homologues and family, ask Albert (avilella@ebi.ac.uk) or Abel
+(abel@ebi.ac.uk). For whole genome alignments and synteny ask Javier
+(jherrero@ebi.ac.uk) or Abel (abel@ebi.ac.uk)
 
-2. Mail the compara declaration of intention to ensembl-admin
+2. Mail the compara declaration of intention to ensembl-admin@ebi.ac.uk
 
-3. Usually the protein/gene compara production and whole genome alignments (WGA)
-production are done separately in 2 different databases, and even MySQL instances.
+3. Define priorities and assign jobs to the team members.
 
-A lot of the WGA data released the month before is just "recycled". Have a database
-copy of the latest compara release on your chosen MySQL instance, and renamed for
-the new release (e.g. copy ensembl_compara_30 to ensembl_compara_31). Take into account
-the possible schema changes from the previous release!
+4. Add in the master compara database (ia64f:3306/jh7_ensembl_compara_master)
+the new entries in the genome_db and dnafrag tables. You can set up your
+registry and use the ~ensembl-compara/pipeline/update_genome.pl script. This
+script sets the new genome_dbs as the default assemblies.
 
-  NB: It is possible to rename a database on a mysql instance without copying it again
-  | cd /mysql/data_3364/databases
-  | mkdir new_database
-  | cd old_database
-  | ln * ../new_database
-  |
-  | then in a mysql client
-  |
-  | drop database old_database
+5. Wait for the handover before starting to build the new database in case
+any of the new species cannot make it. Don't forget to switch the
+assembly_default values in this case.
 
+6. Update the ncbi_taxa_nodes and ncbi_taxa_names in the master DB using the
+ncbi_taxonomy database located in mysql::/ecs2:3365/ncbi_taxonomy
 
-Delete none WGA related data (e.g. homology, family, taxon...)
-Delete out of date WGA.
+7. New method_link_species_set entries might be added using the
+~ensembl-compara/pipeline/create_mlss.pl script. The release coordinator (or
+any team member) should create a new method_link_species_set in the master
+database before starting a new pipeline in order to get a unique
+method_link_species_set_id. Ideally they can be created before starting
+to build the new database although new method_link_species_sets can be added
+later on.
 
-  NB: You can use the script in ~ensembl-compara/scripts/pipeline/update_genome.pl for
-  this. This script also updates the genome_db and the dnafrags for a given species.
-  Make sure that the new assembly/genebuild is actually released before deleting the
-  data!
+8. Create the new database for the new release and add it to your registry
+configuration file. Use the ~ensembl-compara/sql/table.sql file to create
+the tables and populate the database with the relevant primary data and
+genomic alignments that can be reused from the previous release. This can
+be done with the ~ensembl-compara/pipeline/populate_new_database.pl script.
+It requires the master database, the previous released database and the fresh
+new database with the tables already created. The script will copy relevant
+data from the master and the old database into the new one.
 
+  mysql -u USER -pPASSWD -h ia64f -P 3306 \
+      -e "CREATE DATABASE jh7_ensembl_compara_39"
+  mysql -u USER -pPASSWD -h ia64f -P 3306 \
+      jh7_ensembl_compara_39 < ~/src/ensembl-compara/sql/table.sql
+  populate_new_database.pl --master compara_master \
+      --old compara_38 --new_compara_39
 
-4. IMPORTANT: making sure there is no conflict between protein and WGA production
-on
+If new method_link_species_sets are added in the master after this, you use this
+script again to copy the new relevant data. In such case, you will have to skip
+the old_database in order to avoid trying to copy the dna-dna alignments and
+syntenies again.
 
-genome_db_id
-method_link_species_set_id
+  populate_new_database.pl --master compara_master --new compara_39
 
-Some of these can be recycled. At the moment, the only way to avoid conflicts is
-that the persons in production communicated/exchange/agree on the common genome_db_id and
-method_link_species_set_id to be used.
+9. Check that primary data (species data, dnafrags...) in the new compara DB
+match the data in the corresponding core databases using the healthchecks. You
+may have to edit the enj-healthcheck/database.properties file. It should look
+like this:
 
-Usually method_link_species_set_id range is as follow
-    1 to 10000 WGA
-10001 to 20000 Synteny
-20001 tp 30000 Homology
-30001 to 40000 Family
+    host=ia64f
+    port=3306
+    user=ensadmin
+    password=***********
 
-Inside the WGA production, avoid genomic_align_block_id and genomic_align_id conflicts
-between different method_link_species_set production.
+    # Database driver class - shouldn't need to be changed
+    driver=org.gjt.mm.mysql.Driver
 
-5. Merging of protein/gene production and WGA production. Each production is in a database, and both databases must be on the same MySQL instance.
+    # Master schema - see CompareSchema healthcheck
+    # This setting is ignored if CompareSchema is not run
+    master.schema=master_schema_38
 
-There is no script for the following now (we should have one though), the protein/gene
-data is moved to the WGA database by a serie of insert/select from and to the following tables.
+    # Secondary database connection details
+    secondary.host=ecs2
+    secondary.port=3364
+    secondary.user=ensro
+    secondary.driver=org.gjt.mm.mysql.Driver
 
-homology
-homology_member
-family
-family_member
-member
-sequence
-taxon
-peptide_align_feature (this one take a while)
+Now you can run the compara-compara_external_foreign_keys healthchecks:
 
-by a serie of insert ignore/select from and to the following tables.
+  ./run-healthcheck.sh -d jh7_ensembl_compara_39 -type compara \
+      -d2 .+_core_39_.+ compara_external_foreign_keys
 
-method_link
-method_link_species_set
+...and correct mismatches if any!
 
-A potential check script to write should check that both genome_db tables are consistent.
+10. Merge data. The fastest way to merge new data is to mysqlimport them.
 
-6. Once the database is merge, run the heathchecks to spot potential conflicts
-see ensembl-compara/docs/healthchecks.txt
+- Translated BLAT: the LoadBLATAlignment.pl script creates tab-delimited files
+which can be imported directly into the release database.
 
-Check the collation of the tables as well:
-  > SHOW TABLE STATUS;
+- BlastZ-Net: you need to dump the tables manually. Check the
+method_link_species_set_id. You will probably need to update the
+genomic_align_block_id, genomic_align_id and genomic_align_group_id in order to
+match the 10^10 convention for the IDs. For instance, in order to dump
+BlastZ-Net alignments from database
+mysql://ensro@ia64f:3306/kb3_compara_human_mouse_blastz_39, you will have to run
+the following commands:
 
-7. Optimize and flush all the tables
+    mysql -hia64f -uensro -N -e "select \
+        genomic_align_block_id+method_link_species_set_id*10000000000, \
+        method_link_species_set_id,score,perc_id,length from \
+        genomic_align_block where method_link_species_set_id=194" \
+        kb3_compara_human_mouse_blastz_39 > genomic_align_block.txt
 
-8. Create a patch to convert a compara DB from the previous release to the new one. The patch should include at least an update of the schema_version in the meta table!
+    mysql -hia64f -uensro -N -e "select \
+        genomic_align_id+method_link_species_set_id*10000000000, \
+        genomic_align_block_id+method_link_species_set_id*10000000000, \
+        method_link_species_set_id, dnafrag_id, dnafrag_start, \
+        dnafrag_end, dnafrag_strand, cigar_line, level_id from \
+        genomic_align where method_link_species_set_id=194" \
+        kb3_compara_human_mouse_blastz_39 > genomic_align.txt
 
-9. Update the files in the ~ensembl-compara/sql directory:
-  $ mysql -h ecs4 -u ensro -P 3364 -e "SELECT * FROM genome_db" ensembl_compara_XX > \
-      ~ensembl-compara/sql/genome_db.txt
-  $ mysql -h ecs4 -u ensro -P 3364 -e "SELECT * FROM method_link" ensembl_compara_XX > \
-      ~ensembl-compara/sql/method_link.txt
-  $ mysql -h ecs4 -u ensro -P 3364 -e "SELECT * FROM taxon" ensembl_compara_XX > \
-      ~ensembl-compara/sql/taxon.txt
+    mysql -hia64f -uensro -N -e "select \
+        gag.group_id+ga.method_link_species_set_id*10000000000, \
+        gag.type, gag.genomic_align_id+ga.method_link_species_set_id* \
+        10000000000 from genomic_align_group gag, genomic_align ga where \
+        ga.method_link_species_set_id=194 and ga.genomic_align_id= \
+        gag.genomic_align_id" kb3_compara_human_mouse_blastz_39 > \
+        genomic_align_group.txt
 
-10. Apply patches to the test databases and verify that they work fine. Recompile the test database.
+Hopefully, these databases should have the right method_link_species_sets,
+genome_dbs and dnafrags. In order to check for inconsistencies, you can run
+the following query (this should be implemented as healthcheck...):
+
+    create table mlss_checks select mlss.method_link_species_set_id, \
+    mlss.name as mlss_name, gdb.name as species_name, count(*) from \
+    method_link_species_set mlss left join genomic_align_block using \
+    (method_link_species_set_id) left join genomic_align using \
+    (genomic_align_block_id) left join dnafrag using (dnafrag_id) left \
+    join genome_db gdb using (genome_db_id) where mlss.method_link_id < \
+    100 group by mlss.name, gdb.name;
+
+and check that all the alignments correspond to the right species.
+
+If the database had wrong dnafrag_ids, you will have to update them as well.
+This process can be done after dumping the files. At the moment there is a
+script in /ecs4/work1/jh7/dumps/mlagan/update_dnafrags.pl which reads the right
+dnafrags from a file called "new_dnafrag.txt", the wrong ones from the file
+called "old_dnafrag.txt" and the genomic_align from the "genomic_align.txt"
+file. This scripts prints the genomic_aligns with the right dnafrag_ids to the
+standard output:
+
+    mysql -N -e "SELECT * FROM dnafrag" jh7_ensembl_compara_39 > new_dnafrag.txt
+    mysql -N -e "SELECT * FROM dnafrag" other database > old_dnafrag.txt
+    update_danfrags.pl > new_genomic_align.txt
+    mv genomic_align.txt old_genomic_align.txt
+    mv new_genomic_align.txt genomic_align.txt
+
+- Syntenies:
+
+- Protein trees and homologues:
+
+11. Drop method_link_species_set entries for alignments which did not make it.
+
+12. Update the max_alignment_length. You can use the corresponding healthcheck
+with the -repair option:
+
+    ./run-healthcheck.sh -d jh7_ensembl_compara_39 -type compara -repair Meta
+
+13. Run the healthchecks:
+
+  ./run-healthcheck.sh -d jh7_ensembl_compara_39 -type compara \
+      -d2 .+_core_39_.+ compara_external_foreign_keys
+  ./run-healthcheck.sh -d jh7_ensembl_compara_39 -type compara \
+      compara_db_constraints
+
+...and correct mismatches if any!
+
+14. Ask the release coordinator to point the test web server to the compara DB.
+
+15. Create a patch to convert a compara DB from the previous release to the new
+one. The patch should include at least an update of the schema_version in the
+meta table!
+
+16. Update the files in the ~ensembl-compara/sql directory:
+  $ mysql -h ecs4 -u ensro -P 3364 -e "SELECT * FROM genome_db" \
+      ensembl_compara_XX > ~ensembl-compara/sql/genome_db.txt
+  $ mysql -h ecs4 -u ensro -P 3364 -e "SELECT * FROM method_link" \
+      ensembl_compara_XX > ~ensembl-compara/sql/method_link.txt
+
+17. Apply patches to the test databases and verify that they work fine.
+Recompile the test database.
 
 Don't forget to commit these changes into the repository!
