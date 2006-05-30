@@ -13,9 +13,9 @@ our @ISA = qw(  EnsEMBL::Web::Factory );
 sub _sufficies {
   my $self = shift;
   return if $self->__data->{'sufficies'}{ 'core' };
-  $self->__data->{'sufficies'}{ 'core' } = [ '_gene_ensembl', 'gene' ];
-  $self->__data->{'sufficies'}{ 'snp'  } = [ '_snp',          'snp'  ];
-  $self->__data->{'sufficies'}{ 'vega' } = [ '_gene_vega',    'gene' ];
+  $self->__data->{'sufficies'}{ 'core' } = [ '_gene_ensembl', '_gene' ];
+  $self->__data->{'sufficies'}{ 'snp'  } = [ '_snp',          ''  ];
+  $self->__data->{'sufficies'}{ 'vega' } = [ '_gene_vega',    '' ];
 }
 
 sub _link {
@@ -94,8 +94,8 @@ sub _createObjectsLocation {
     $DB.'_collection_chromosome' => [ 1 ],
     $DB.'_chr_name'     => [ $sr ],
     $DB.'_collection_chromosome_coordinates' => [ 1 ],
-    $DB.'_'.$TYPE.'_chrom_start' => [ $start ],
-    $DB.'_'.$TYPE.'_chrom_end'   => [ $end ]
+    $DB.$TYPE.'_chrom_start' => [ $start ],
+    $DB.$TYPE.'_chrom_end'   => [ $end ]
   );
 }
 
