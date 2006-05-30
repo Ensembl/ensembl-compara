@@ -11,37 +11,25 @@ Bio::EnsEMBL::DBSQL::Compara::GenomicAlignBlockAdaptor
 
 =head1 SYNOPSIS
 
-=head2 Connecting to the database using the old way:
+=head2 Connecting to the database using the Registry
 
-  use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor; 
-  my $db = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor (
-      -host => $host,
-      -user => $dbuser,
-      -pass => $dbpass,
-      -port => $port,
-      -dbname => $dbname,
-      -conf_file => $conf_file);
+  use Bio::EnsEMBL::Registry;
 
-  my $genomic_align_block_adaptor = $db->get_GenomicAlignBlockAdaptor();
+  my $reg = "Bio::EnsEMBL::Registry";
 
-=head2 Connecting to the database using the new way (recommended):
-  
-  use Bio::EnsEMBL::Registry; 
-  Bio::EnsEMBL::Registry->load_all($conf_file); # $conf_file can be undef
+  $reg->load_registry_from_db(-host=>"ensembldb.ensembl.org", -user=>"anonymous");
 
-  Bio::EnsEMBL::Registry->load_all();
-
-  my $genomic_align_block_adaptor = Bio::EnsEMBL::Registry->get_adaptor(
-      $compara_db_name, "compara", "GenomicAlignBlock");
+  my $genomic_align_block_adaptor = $reg->get_adaptor(
+      "Multi", "compara", "GenomicAlignBlock");
 
 =head2 Store/Delete data from the database
-  
+
   $genomic_align_block_adaptor->store($genomic_align_block);
 
   $genomic_align_block_adaptor->delete_by_dbID($genomic_align_block->dbID);
 
 =head2 Retrieve data from the database
-  
+
   $genomic_align_block = $genomic_align_block_adaptor->fetch_by_dbID(12);
 
   $genomic_align_blocks = $genomic_align_block_adaptor->fetch_all_by_MethodLinkSpeciesSet(
@@ -56,9 +44,24 @@ Bio::EnsEMBL::DBSQL::Compara::GenomicAlignBlockAdaptor
   $genomic_align_blocks = $genomic_align_block_adaptor->fetch_all_by_MethodLinkSpeciesSet_DnaFrag_DnaFrag(
       $method_link_species_set, $human_dnafrag, $mouse_dnafrag);
 
+=head2 Other methods
+
+$genomic_align_block = $genomic_align_block_adaptor->
+    retrieve_all_direct_attributes($genomic_align_block);
+
+$genomic_align_block_adaptor->lazy_loading(1);
+
+$genomic_align_block_adaptor->use_autoincrement
+
 =head1 DESCRIPTION
 
-This object is intended for accessiong data in the genomic_align_block table.
+This module is intended to access data in the genomic_align_block table.
+
+Each alignment is represented by Bio::EnsEMBL::Compara::GenomicAlignBlock. Each GenomicAlignBlock
+contains several Bio::EnsEMBL::Compara::GenomicAlign, one per sequence included in the alignment.
+The GenomicAlign contains information about the coordinates of the sequence and the sequence of
+gaps, information needed to rebuild the aligned sequence. By combining all the aligned sequences
+of the GenomicAlignBlock, it is possible to get the orignal alignment back.
 
 =head1 INHERITANCE
 
@@ -182,7 +185,13 @@ sub store {
     }
   }
   
+  my $lock_tables = 0;
   if (!$genomic_align_block->dbID and !$self->use_autoincrement()) {
+    ## Lock tables
+    $lock_tables = 1;
+    $self->dbc->do(qq{ LOCK TABLES genomic_align_block WRITE });
+
+    ## Get max genomic_align_block_id for the corresponding range of ids
     my $sql = 
             "SELECT MAX(genomic_align_block_id) FROM genomic_align_block WHERE".
             " genomic_align_block_id > ".$genomic_align_block->method_link_species_set->dbID.
@@ -192,6 +201,8 @@ sub store {
     $sth->execute();
     my $genomic_align_block_id = ($sth->fetchrow_array() or
         ($genomic_align_block->method_link_species_set->dbID * 10000000000));
+
+    ## Set the genomic_align_block_id
     $genomic_align_block->dbID($genomic_align_block_id+1);
   }
 
@@ -205,6 +216,10 @@ sub store {
                 $genomic_align_block->perc_id,
                 $genomic_align_block->length
         );
+  if ($lock_tables) {
+    ## Unlock tables
+    $self->dbc->do("UNLOCK TABLES");
+  }
   if (!$genomic_align_block->dbID) {
     $genomic_align_block->dbID($sth->{'mysql_insertid'});
   }
@@ -371,49 +386,6 @@ sub fetch_all_by_MethodLinkSpeciesSet {
 }
 
 
-# # =head2 fetch_all_by_Slice
-# # 
-# #   Arg  1     : integer $method_link_species_set_id
-# #                     - or -
-# #                Bio::EnsEMBL::Compara::MethodLinkSpeciesSet $method_link_species_set
-# #   Arg  2     : Bio::EnsEMBL::Slice $original_slice
-# #   Arg  3     : [optional] integer $limit
-# #   Example    : my $genomic_align_blocks =
-# #                   $genomic_align_block_adaptor->fetch_all_by_Slice(
-# #                       2, $original_slice);
-# #   Example    : my $genomic_align_blocks =
-# #                   $genomic_align_block_adaptor->fetch_all_by_Slice(
-# #                       $method_link_species_set, $original_slice);
-# #   Description: Retrieve the corresponding
-# #                Bio::EnsEMBL::Compara::GenomicAlignBlock objects.
-# #   Returntype : ref. to an array of Bio::EnsEMBL::Compara::GenomicAlignBlock objects. Only dbID,
-# #                adaptor and method_link_species_set are actually stored in the objects. The remaining
-# #                attributes are only retrieved when required.
-# #   Exceptions : Returns ref. to an empty array if no matching
-# #                Bio::EnsEMBL::Compara::GenomicAlignBlock object can be retrieved
-# #   Caller     : $object->mthod_name
-# # 
-# # =cut
-
-sub fetch_all_by_Slice {
-  my ($self, $method_link_species_set, $original_slice, $limit) = @_;
-  my $all_genomic_align_blocks = []; # Returned value
-
-  deprecate("Use fetch_all_by_MethodLinkSpeciesSet_Slice method instead");
-
-  if ($method_link_species_set =~ /^\d+$/) {
-    my $method_link_species_set_adaptor = $self->db->get_MethodLinkSpeciesSetAdaptor;
-    $method_link_species_set = $method_link_species_set_adaptor->fetch_by_dbID($method_link_species_set);
-  }
-
-  return $self->fetch_all_by_MethodLinkSpeciesSet_Slice(
-          $method_link_species_set,
-          $original_slice,
-          $limit
-      );
-}
-
-
 =head2 fetch_all_by_MethodLinkSpeciesSet_Slice
 
   Arg  1     : Bio::EnsEMBL::Compara::MethodLinkSpeciesSet $method_link_species_set
@@ -523,57 +495,6 @@ sub fetch_all_by_MethodLinkSpeciesSet_Slice {
   }
 
   return $all_genomic_align_blocks;
-}
-
-
-# # =head2 fetch_all_by_DnaFrag
-# # 
-# #   Arg  1     : integer $method_link_species_set_id
-# #                     - or -
-# #                Bio::EnsEMBL::Compara::MethodLinkSpeciesSet $method_link_species_set
-# #   Arg  2     : integer $dnafrag_id
-# #                     - or -
-# #                Bio::EnsEMBL::Compara::DnaFrag $dnafrag
-# #   Arg  3     : integer $start
-# #   Arg  4     : integer $end
-# #   Arg  5     : integer $limit
-# #   Example    : my $genomic_align_blocks =
-# #                   $genomic_align_block_adaptor->fetch_all_by_DnaFrag(
-# #                       2, 19, 50000000, 50250000);
-# #   Description: Retrieve the corresponding
-# #                Bio::EnsEMBL::Compara::GenomicAlignBlock objects. Objects 
-# #   Returntype : ref. to an array of Bio::EnsEMBL::Compara::GenomicAlignBlock objects. Only dbID,
-# #                adaptor and method_link_species_set are actually stored in the objects. The remaining
-# #                attributes are only retrieved when requiered.
-# #   Exceptions : Returns ref. to an empty array if no matching
-# #                Bio::EnsEMBL::Compara::GenomicAlignBlock object can be retrieved
-# #   Caller     : none
-# # 
-# # =cut
-
-sub fetch_all_by_DnaFrag {
-  my ($self, $method_link_species_set, $dnafrag, $start, $end, $limit) = @_;
-  my $genomic_align_blocks = []; # returned object
-
-  deprecate("Use fetch_all_by_MethodLinkSpeciesSet_DnaFrag method instead");
-
-  if ($dnafrag =~ /^\d+$/) {
-    my $dnafrag_adaptor = $self->db->get_DnaFragAdaptor;
-    $dnafrag = $dnafrag_adaptor->fetch_by_dbID($dnafrag);
-  }
-
-  if ($method_link_species_set =~ /^\d+$/) {
-    my $method_link_species_set_adaptor = $self->db->get_MethodLinkSpeciesSetAdaptor;
-    $method_link_species_set = $method_link_species_set_adaptor->fetch_by_dbID($method_link_species_set);
-  }
-
-  return $self->fetch_all_by_MethodLinkSpeciesSet_DnaFrag(
-          $method_link_species_set,
-          $dnafrag,
-          $start,
-          $end,
-          $limit
-      )
 }
 
 
@@ -829,6 +750,7 @@ sub fetch_all_by_MethodLinkSpeciesSet_DnaFrag_DnaFrag {
   return $genomic_align_blocks;
 }
 
+
 =head2 fetch_all_by_MethodLinkSpeciesSet_DnaFrag_GroupType
 
   Arg  1     : Bio::EnsEMBL::Compara::MethodLinkSpeciesSet $method_link_species_set
@@ -941,6 +863,7 @@ sub fetch_all_by_MethodLinkSpeciesSet_DnaFrag_GroupType {
   return $genomic_align_blocks;
 }
 
+
 =head2 retrieve_all_direct_attributes
 
   Arg  1     : Bio::EnsEMBL::Compara::GenomicAlignBlock $genomic_align_block
@@ -984,6 +907,34 @@ sub retrieve_all_direct_attributes {
   return $genomic_align_block;
 }
 
+
+=head2 lazy_loading
+
+  [Arg  1]   : (optional)int $value
+  Example    : $genomic_align_block_adaptor->lazy_loading(1);
+  Description: Getter/setter for the _lazy_loading flag. This flag
+               is used when fetching objects from the database. If
+               the flag is OFF (default), the adaptor will fetch the
+               all the attributes of the object. This is usually faster
+               unless you run in some memory limitation problem. This
+               happens typically when fetching loads of objects in one
+               go.In this case you might want to consider using the
+               lazy_loading option which return lighter objects and
+               deleting objects as you use them:
+               $gaba->lazy_loading(1);
+               my $all_gabs = $gaba->fetch_all_by_MethodLinkSpeciesSet($mlss);
+               foreach my $this_gab (@$all_gabs) {
+                 # do something
+                 ...
+                 # delete object
+                 undef($this_gab);
+               }
+  Returntype : integer
+  Exceptions :
+  Caller     : none
+
+=cut
+
 sub lazy_loading {
   my ($self, $value) = @_;
 
@@ -993,6 +944,7 @@ sub lazy_loading {
 
   return $self->{_lazy_loading};
 }
+
 
 =head2 use_autoincrement
 
