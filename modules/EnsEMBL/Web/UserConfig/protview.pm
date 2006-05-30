@@ -7,6 +7,7 @@ use vars qw(@ISA);
 sub init {
   my ($self) = @_;
 
+  $self->{'_das_offset'} = 2100;
   $self->{'_userdatatype_ID'} = 4;
   $self->{'general'}->{'protview'} = {
     '_artefacts' => [qw(Pprot_scalebar Pprotein Pprot_snp Psnp_legend)],
