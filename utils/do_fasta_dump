@@ -1,7 +1,345 @@
-logic_name = lc($gene->analysis->logic_name);
+#!/usr/local/bin/perl
+
+use strict;
+use warnings;
+
+package do_fasta_dump;
+
+use Carp;
+use FindBin qw($Bin);
+use File::Basename qw( dirname );
+use Time::localtime;
+use Time::HiRes qw(time);
+use Getopt::Long;
+use Pod::Usage;
+use Data::Dumper qw( Dumper );
+
+# Load libraries needed for reading config -----------------------------------
+use vars qw( $SERVERROOT );
+BEGIN{
+  $SERVERROOT = dirname( $Bin );
+  unshift @INC, "$SERVERROOT/conf";
+  unshift @INC, "$SERVERROOT";
+  eval{ require SiteDefs };
+  if ($@){ die "Can't use SiteDefs.pm - $@\n"; }
+  map{ unshift @INC, $_ } @SiteDefs::ENSEMBL_LIB_DIRS;
+}
+
+use Bio::EnsEMBL::DBSQL::DBAdaptor;
+use Bio::EnsEMBL::DBLoader;
+use Bio::SeqIO;
+use utils::Tool;
+
+#$| = 1; # unbuffers STDOUT (issues print commands immediately)
+
+our $DUMPDIR;
+our $NODATA;
+
+my $nocompress;
+my $no_log;
+my $logfile;
+my $help;
+my $info;
+my @SPECIES;
+my @DATABASES;
+my @TYPES;
+my $release;
+my $email;
+
+&GetOptions(
+	    'species:s'  => \@SPECIES,
+	    'database:s' => \@DATABASES,
+	    'type:s'     => \@TYPES,
+	    'release:s'  => \$release,
+	    'dumpdir:s'  => \$DUMPDIR,
+	    'nocompress' => \$nocompress,
+	    'no_log'     => \$no_log,
+	    'logfile:s'  => \$logfile,
+	    'help'       => \$help,
+	    'info'       => \$info,
+	    'email:s'    => \$email,
+	    'no_data'    => \$NODATA,
+	   ) || pod2usage(2);
+
+pod2usage(-verbose => 2) if $info;
+pod2usage(-verbose => 1) if $help;
+
+my $types = check_types(\@TYPES);
+die "\n\n[DIE] You must provide an ensembl release number e.g. --release 30" unless $release;
+
+# Load modules needed for reading config -------------------------------------
+#info(1, "Using config in $SERVERROOT/conf" );
+require EnsEMBL::Web::SpeciesDefs;      # Loaded at run time
+require EnsEMBL::Web::DBSQL::DBConnection;
+
+my $SPECIES_DEFS = EnsEMBL::Web::SpeciesDefs->new(); 
+$SPECIES_DEFS || die "$0: SpeciesDefs config not found";
+
+# Check the ENSEMBL_VERSION is up to date and matchs user's request
+if ( my $sitedefs_release =  $SiteDefs::ENSEMBL_VERSION ne $release) {
+ die "[*DIE] Ensembl release version requested is $release but site defs is configured to use $sitedefs_release";
+}
+
+# Times and log file
+our $script_start_time = time();
+unless ($no_log) {
+  (my $time = gmtime(time)) =~ s/\s+/\./g;
+  $logfile ||= "logs/fasta$release"."_$time.log";
+  print STDERR "Using logfile $logfile\n";
+  open(STDERR, "> $logfile") || die "Can't create file:$!\n";
+}
+
+# Validate DUMPDIR
+$DUMPDIR   ||= "/mysql/dumps/FTP";
+utils::Tool::check_dir($DUMPDIR);
+
+my %db_names = ( 'ENSEMBL_DB'      => 'core',
+               'ENSEMBL_ESTGENE' => 'estgene',
+               'ENSEMBL_VEGA'    => 'vega', );
+
+
+# Check species if user defined.  Else use all species
+if (@SPECIES) {
+  @SPECIES = @{ utils::Tool::check_species(\@SPECIES) };
+}
+else {
+  @SPECIES = @{ utils::Tool::all_species()};
+}
+
+# For each species ----------------------------------------------------------
+for my $sp( sort @SPECIES ){  # users selected spp
+
+  # Work out species folder name and empty if you are dumping --type all
+  my $sp_release = $SPECIES_DEFS->get_config($sp,"SPECIES_RELEASE_VERSION");
+  $sp_release =~ s/\.//g;
+  my $sp_folder = "$DUMPDIR/".(join "_", lc($sp), $release, $sp_release)."/data/fasta";
+
+  if ( -e $sp_folder && $TYPES[0] eq 'all') {
+    info( 1, "Removing existing copies of $sp_folder" );
+    system("rm -rf $sp_folder") && die "Couldn't delete $sp_folder";
+  }
+
+  my $dbConnection = EnsEMBL::Web::DBSQL::DBConnection->new($sp, $SPECIES_DEFS);
+
+  foreach my $db( @DATABASES || "ENSEMBL_DB"){
+    my $db_adaptor = $dbConnection->get_DBAdaptor( $db_names{$db} ) ||
+      ( warning( 1, "DB $db is not valid for $sp" ) && next );
+    warning( 1, "Dumping @TYPES from \n$db $sp - $DUMPDIR" );
+
+    # Create directories and filehandles for dumps
+    my ($chr_toplevel, $fhs) = create_dirs_for_dumps($sp, $SPECIES_DEFS, 
+						     $sp_folder,
+						     $types,  $db_adaptor);
+
+    # Do dumps, then compress
+    my $created_files = get_data($db_adaptor, $sp, $fhs, $chr_toplevel);
+    compress( $created_files ) unless $nocompress;
+  }
+}
+
+
+# Work out timings -----------------------------------------------------------
+my $time_taken = time - $script_start_time;
+my $hours      = localtime($time_taken)->hour -1;
+warning (1, "Used $logfile.");
+warning (1, " Time taken: $hours:". localtime($time_taken)->min."mins");
+close STDERR;
+
+my $pre_spp = $TYPES[0] eq 'blast_all' ? "This is a PRE species.\n" :"";
+my $additional_text = qq(
+\n\n-------- Using this data --------------
+You need to send out two emails:
+. Say if these are PRE species.  
+. Core bio normally process this on Thursdays. If you want it done sooner you have to give them 48h notice.
+. Edit the list of species. Blast db and ssaha servers ONLY needed for species with new assemblies.  Blast db also needed if there are changes to the data effecting the fasta files.
+. Check the location of the files is correct
+\n
+To : team105-corebio\@sanger.ac.uk, ensembl-webteam\@sanger.ac.uk
+Subject: blast databases
+
+Please can you set up blast databases for @SPECIES. $pre_spp
+The files are here ecs3:$DUMPDIR .
+
+Thanks,
+
+Ensembl-webteam.
+\n
+----ssaha
+
+To: aws\@sanger.ac.uk, ensembl-webteam\@sanger.ac.uk
+Subject: ssaha server
+
+Please can you set up ssaha servers for @SPECIES. $pre_spp
+The files are here ecs3:$DUMPDIR .
+
+Thanks,
+
+Ensembl-webteam
+
+);
+
+$email ||= 'ensembl-webteam@sanger.ac.uk';
+utils::Tool::mail_log( $logfile, $email, $additional_text ) if $logfile;
+exit;
+
+######################### END OF PROGRAM ######################################
+
+sub check_types {
+  my $types = shift;
+  my %valid_types = map{ $_ => 1 }
+    qw(
+       pre blast_all
+       rna  cdna_known-ccds
+       cdna cdna_known cdna_novel cdna_pseudo cdna_abinitio
+       pep  pep_known  pep_novel  pep_abinitio pep_known-ccds
+       dna_seqlevel    dna_seqlevel_masked
+       dna_toplevel    dna_toplevel_masked
+      );
+
+
+  my %compound_types = 
+    (
+     dna_all   => [ qw( dna_seqlevel dna_seqlevel_masked 
+			dna_toplevel dna_toplevel_masked) ],
+     cdna_all  => [ qw( cdna cdna_known cdna_novel cdna_pseudo cdna_abinitio
+                        cdna_known-ccds)],
+     pep_all   => [ qw( pep pep_known pep_novel pep_abinitio pep_known-ccds) ],
+     rna_all   => [ qw( rna ) ],
+     blast_all => [ qw( rna_all cdna_all pep_all dna_seqlevel dna_seqlevel_masked ) ],
+     pre       => [ qw( dna_toplevel rna_all cdna_all pep_all dna_seqlevel dna_seqlevel_masked ) ],
+     all       => [ qw( cdna_all pep_all dna_all rna_all) ],
+    );
+
+
+  # Validate types  and return hashref
+  return utils::Tool::validate_types(\%valid_types, \%compound_types, $types);
+}
+
+
+#-----------------------------------------------------------------------------
+
+sub create_dirs_for_dumps {
+  my ($sp, $SPECIES_DEFS, $sp_folder, $types, $db_adaptor) = @_;
+
+  # Get assembly and check against ini file -------------
+  my $cs_adaptor   = $db_adaptor->get_CoordSystemAdaptor;
+  my ($highest_cs) = @{$cs_adaptor->fetch_all()};
+  my $assembly     = $highest_cs->version();
+  my $ini_assembly = $SPECIES_DEFS->get_config($sp,"ENSEMBL_GOLDEN_PATH");
+  warning(1, "Error: INI file GOLDEN_PATH is $ini_assembly. Database assembly is $assembly") unless $ini_assembly eq $assembly;
+  my $file_details = "$sp.$assembly.".utils::Tool::release_month();
+
+
+  # Create dirs ------------------------------------------
+  my $filehandles;
+  foreach my $type ( @$types) {
+    my( $master_type ) = split( '_', $type );
+    my $thisdir = $sp_folder."/$master_type";
+
+    unless ( -e $thisdir ) {
+      utils::Tool::check_dir( $thisdir );
+      open(README, '>'."$thisdir/README") or die "Couldn't open file $thisdir/README: $!\n";
+      print README readme($master_type);
+      close README;
+    }
+
+    # Work out types of directories needed ------------------------
+    my ($seqtype, $idtype);
+    if ($type =~ /toplevel/) {
+      $seqtype = "dna";
+      $idtype = "nonchromosomal";
+      # chromosome directories are added later on per species basis
+    }
+    elsif ($type =~ /seqlevel/) {  # contig, chunk, chromosome for Scerevisiae
+      $seqtype = "dna";
+      $idtype = $cs_adaptor->fetch_sequence_level->name; # seq_level;
+    }
+    else {
+      ($seqtype, $idtype) = split (/_/, $type);
+    }
+    if ($type =~ /masked/) {
+      $seqtype .= "_rm";
+    }
+
+    # file name like dna.contig.fa cdna.abinitio.fa
+    my $tmp_file = join (".", "$thisdir/$file_details", $seqtype, $idtype || (), "fa");
+    $filehandles->{$type} = Bio::SeqIO->new('-format' => 'Fasta', 
+					    '-file'   => '>'.$tmp_file);
+  }
+
+  my $chr_toplevel = "$sp_folder/dna/$file_details";
+  return ( $chr_toplevel, $filehandles );
+}
+
+#------------------------------------------------------------------------------
+sub get_data {
+  my $dbAdaptor    = shift || die( 'Need a DBAdaptor' );
+  my $species      = shift || die( 'Need a species' );
+  my $fhs          = shift || die( 'Need a hashref of types to dump' );
+  my $chr_toplevel = shift;  # for toplevel seq directories
+  my $load_exons   = 1;
+
+  # Dump even non-reference region
+  my $sliceAdaptor = $dbAdaptor->get_SliceAdaptor;
+  $sliceAdaptor->cache_toplevel_seq_mappings();
+
+  foreach my $slice( @{$sliceAdaptor->fetch_all('toplevel', undef, 1)} ){
+    info( 1, "Start toplevel ". $slice->name );
+     my $coord_system = $slice->coord_system->name;
+
+    # Toplevel DNA dumps ------------------------------------------------------
+    if ($fhs->{'dna_toplevel_masked'} or $fhs->{'dna_toplevel'}) {
+
+      my $seq_name = $slice->seq_region_name;
+      #info (1, "M1: $seq_name");
+      # If not chr based toplevel, use predefined filehandle
+      if ( ($coord_system !~ /^chromosome$/i) or  ( $seq_name =~/random
+						 |E\d\d\w*$
+						 |_NT_
+                                                 |scaffold_
+						 /x)  ) {
+	if ( my $seqio = $fhs->{'dna_toplevel'} ){
+	  dump_dna( $seqio, $slice, 'dna' );
+	}
+	if ( my $seqio_masked = $fhs->{'dna_toplevel_masked'} ){
+	  dump_dna( $seqio_masked, $slice->get_repeatmasked_seq, 'dna_rm' );
+	}
+      }
+
+      # chromosome based system, need to make new files for each chr
+      else  {
+	my $file = ">$chr_toplevel.%s.chromosome.$seq_name.fa";
+	#info( 1, "M2: Dump into $file");
+	
+	if($fhs->{'dna_toplevel'} ){
+	  #info(1, "M3: DNA");
+	  my $seqio = Bio::SeqIO->new('-format' => 'Fasta', 
+				   '-file'   =>  sprintf ($file, "dna"));
+	  dump_dna( $seqio, $slice, 'dna' );
+
+	  # Need to add these so they are closed and gzipped
+	  $fhs->{"$chr_toplevel.dna.chromosome.$seq_name.fa"} = $seqio;
+	}
+
+	if($fhs->{'dna_toplevel_masked'} ){
+	  #info (1, "M4: DNA");
+	  my $seqio_masked = Bio::SeqIO->new('-format' => 'Fasta', 
+					  '-file' => sprintf ($file,"dna_rm"));
+	  dump_dna( $seqio_masked, $slice->get_repeatmasked_seq, 'dna_rm' );
+
+	  # Need to add these so they are closed and gzipped
+	  $fhs->{"$chr_toplevel.dna_rm.chromosome.$seq_name.fa"} = $seqio_masked;
+	}
+      }
+    }
+    # End dna_toplevel (masked and not masked) ------------------------------
+    if(scalar( grep{$_ !~ /^dna|abinitio|\/dna\// } keys %$fhs ))  {
+      foreach my $gene( @{$slice->get_all_Genes(undef,undef,$load_exons)} ){
+	foreach my $transcript( @{$gene->get_all_Transcripts} ){
+	  my $logic_name = lc($gene->analysis->logic_name);
 	  my $subtype;
 	  my $ccds = "";
-	  if   ( $logic_name =~ /ncrna/)     { $subtype = 'ncrna';}
+	  if   ( $logic_name =~/ncrna/)     { $subtype = 'ncrna';}
 	  elsif( ! $transcript->translation ){ $subtype = 'pseudogene' }
 	  elsif( $transcript->is_known   ){ $subtype = 'known'      }
 	  else                            { $subtype = 'novel'      }
