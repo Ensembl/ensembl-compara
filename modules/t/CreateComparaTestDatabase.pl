@@ -116,18 +116,19 @@ foreach my $genome_db_id (@$other_genome_db_ids) {
   foreach my $seq_region (@seq_regions) {
     my ($seq_region_name, $seq_region_start, $seq_region_end) = @{$seq_region};
     my $lower_bound = $seq_region_start - $max_alignment_length;
-    my ($method_link_species_set_id) = $dbh->selectrow_array(qq{
+    my ($method_link_species_set_id, $species_set_id) = $dbh->selectrow_array(qq{
           SELECT
-            mls1.method_link_species_set_id
+            mls.method_link_species_set_id, mls.species_set_id
           FROM
-            $srcDB.method_link_species_set mls1, $srcDB.method_link_species_set mls2
+            $srcDB.method_link_species_set mls, $srcDB.species_set ss1, $srcDB.species_set ss2
           WHERE
-            mls1.genome_db_id=$ref_genome_db_id AND
-            mls2.genome_db_id=$genome_db_id AND
-            mls1.method_link_species_set_id=mls2.method_link_species_set_id AND
-            mls1.method_link_id=$method_link_id
+            ss1.genome_db_id=$ref_genome_db_id AND
+            ss2.genome_db_id=$genome_db_id AND
+            ss1.species_set_id=ss2.species_set_id AND
+            mls.species_set_id=ss1.species_set_id AND
+            mls.method_link_id=$method_link_id
         });
-    
+
     # Get dnafrag_id for the reference region
     my ($dnafrag_id) = $dbh->selectrow_array(qq{
           SELECT
@@ -199,10 +200,24 @@ foreach my $genome_db_id (@$other_genome_db_ids) {
             gag.genomic_align_id=ga.genomic_align_id
         });
 
-    # populate homology table
+    # populate peptide_align_feature table
+    print " - populating peptide_align_feature table\n";
+    $dbh->do("insert into peptide_align_feature select paf.* from $srcDB.peptide_align_feature paf, $srcDB.member m where paf.qmember_id = m.member_id and hgenome_db_id=$genome_db_id and m.genome_db_id=$ref_genome_db_id and m.chr_name=$seq_region_name and m.chr_start<$seq_region_end and m.chr_end>$seq_region_start");
+    $dbh->do("insert into peptide_align_feature select paf.* from $srcDB.peptide_align_feature paf, $srcDB.member m where paf.hmember_id = m.member_id and qgenome_db_id=$genome_db_id and m.genome_db_id=$ref_genome_db_id and m.chr_name=$seq_region_name and m.chr_start<$seq_region_end and m.chr_end>$seq_region_start");
+
+    # populate homology table for pairwise homologues
     print " - populating homology table\n";
-#    my $srcDB2 = "ensembl_compara_22_1";
-    $dbh->do("insert into homology select h.* from $srcDB.homology h,$srcDB.homology_member hm1, $srcDB.member m1, $srcDB.homology_member hm2, $srcDB.member m2 where h.homology_id=hm1.homology_id and h.homology_id=hm2.homology_id and hm1.member_id=m1.member_id and hm2.member_id=m2.member_id and m1.genome_db_id=$ref_genome_db_id and m2.genome_db_id=$genome_db_id and m1.chr_name=$seq_region_name and m1.chr_start<$seq_region_end and m1.chr_end>$seq_region_start");
+    ($method_link_species_set_id) = $dbh->selectrow_array(qq{
+          SELECT
+            mls.method_link_species_set_id
+          FROM
+            $srcDB.method_link_species_set mls, $srcDB.method_link ml
+          WHERE
+            mls.species_set_id=$species_set_id AND
+            mls.method_link_id=ml.method_link_id AND
+            ml.type="ENSEMBL_HOMOLOGUES"
+        });
+    $dbh->do("insert into homology select h.* from $srcDB.homology h,$srcDB.homology_member hm1, $srcDB.member m1, $srcDB.homology_member hm2, $srcDB.member m2 where h.homology_id=hm1.homology_id and h.homology_id=hm2.homology_id and hm1.member_id=m1.member_id and hm2.member_id=m2.member_id and m1.genome_db_id=$ref_genome_db_id and m2.genome_db_id=$genome_db_id and m1.chr_name=$seq_region_name and m1.chr_start<$seq_region_end and m1.chr_end>$seq_region_start and h.method_link_species_set_id=$method_link_species_set_id");
 
     # populate family table
     print " - populating family table\n";
@@ -212,6 +227,48 @@ foreach my $genome_db_id (@$other_genome_db_ids) {
   }
 }
 
+foreach my $seq_region (@seq_regions) {
+  my ($seq_region_name, $seq_region_start, $seq_region_end) = @{$seq_region};
+  print "Dumping data for dnafrag (genome=$ref_genome_db_id; seq=$seq_region_name)\n";
+  print " - populating protein trees\n";
+  ## Get the fisrt all the leaves which correspond to members in this region
+  my $num = $dbh->do("insert ignore into protein_tree_node select ptn.* from $srcDB.protein_tree_node ptn, $srcDB.protein_tree_member ptm, $srcDB.member m WHERE ptn.node_id=ptm.node_id and ptm.member_id=m.member_id and m.genome_db_id=$ref_genome_db_id and m.chr_name=$seq_region_name and m.chr_start<$seq_region_end and m.chr_end>$seq_region_start");
+  while ($num > 0) {
+    ## Add parent nodes until we hit the root
+    $num = $dbh->do("insert ignore into protein_tree_node select ptn1.* from $srcDB.protein_tree_node ptn1, protein_tree_node ptn2 WHERE ptn1.node_id=ptn2.parent_id and ptn2.parent_id > 1");
+  }
+  ## Add all the nodes underlying the roots
+  $dbh->do("insert ignore into protein_tree_node select ptn1.* from $srcDB.protein_tree_node ptn1, protein_tree_node ptn2 WHERE ptn2.parent_id = 1 and ptn1.left_index BETWEEN ptn2.left_index and ptn2.right_index");
+  ## Add all relevant entries in the protein_tree_member table
+  $dbh->do("insert ignore into protein_tree_member select ptm.* from $srcDB.protein_tree_member ptm, protein_tree_node ptn2 WHERE ptn2.node_id = ptm.node_id");
+  ## Add all relevant entries in the protein_tree_tag table
+  $dbh->do("insert ignore into protein_tree_tag select ptt.* from $srcDB.protein_tree_tag ptt, protein_tree_node ptn2 WHERE ptn2.node_id = ptt.node_id");
+
+  print " - populating homology table with self-data\n";
+  my ($species_set_id) = $dbh->selectrow_array(qq{
+        SELECT
+          ss1.species_set_id
+        FROM
+          $srcDB.species_set ss1, $srcDB.species_set ss2
+        WHERE
+          ss1.species_set_id=ss2.species_set_id AND
+          ss1.genome_db_id=$ref_genome_db_id
+        GROUP BY ss1.species_set_id HAVING count(*) = 1
+      });
+  my ($method_link_species_set_id) = $dbh->selectrow_array(qq{
+        SELECT
+          mlss.method_link_species_set_id
+        FROM
+          $srcDB.method_link_species_set mlss, $srcDB.method_link ml
+        WHERE
+          mlss.species_set_id=$species_set_id AND
+          mlss.method_link_id=ml.method_link_id AND
+          ml.type="ENSEMBL_HOMOLOGUES"
+      });
+  $dbh->do("insert into homology select h.* from $srcDB.homology h,$srcDB.homology_member hm1, $srcDB.member m1, $srcDB.homology_member hm2, $srcDB.member m2 where h.homology_id=hm1.homology_id and h.homology_id=hm2.homology_id and hm1.member_id=m1.member_id and hm2.member_id=m2.member_id and m1.genome_db_id=$ref_genome_db_id and m2.genome_db_id=$ref_genome_db_id and m1.chr_name=$seq_region_name and m1.chr_start<$seq_region_end and m1.chr_end>$seq_region_start and m1.member_id <> m2.member_id and h.method_link_species_set_id=$method_link_species_set_id");
+
+  print " - done\n";
+}
 
 # populate dnafrag table
 $dbh->do("insert ignore into dnafrag select d.* from genomic_align ga, $srcDB.dnafrag d where ga.dnafrag_id=d.dnafrag_id");
@@ -240,24 +297,27 @@ $dbh->do("insert ignore into member select m.* from homology_member hm, $srcDB.m
 $dbh->do("insert ignore into sequence select s.* from member m, $srcDB.sequence s where m.sequence_id=s.sequence_id");
 
 # populate taxon table
-$dbh->do("insert ignore into taxon select t.* from member m, $srcDB.taxon t where m.taxon_id=t.taxon_id");
-$dbh->do("insert ignore into taxon select t.* from genome_db g, $srcDB.taxon t where g.taxon_id=t.taxon_id");
+# $dbh->do("insert ignore into taxon select t.* from member m, $srcDB.taxon t where m.taxon_id=t.taxon_id");
+# $dbh->do("insert ignore into taxon select t.* from genome_db g, $srcDB.taxon t where g.taxon_id=t.taxon_id");
 
 # populate the method_link_species.....not it is needed with the current schema
 # it will when moving to the multiple alignment enabled schema.
 
 # need to do something a bit more clever here to just add what we really
 # method_link_species_set entries from genomic_align_block
-$dbh->do("insert into method_link_species_set select mlss.* from $srcDB.method_link_species_set mlss, genomic_align_block gab where gab.method_link_species_set_id=mlss.method_link_species_set_id group by mlss.method_link_species_set_id, mlss.method_link_id, mlss.genome_db_id");
+$dbh->do("insert into method_link_species_set select mlss.* from $srcDB.method_link_species_set mlss, genomic_align_block gab where gab.method_link_species_set_id=mlss.method_link_species_set_id group by mlss.method_link_species_set_id");
 
 # method_link_species_set entries from homology
-$dbh->do("insert into method_link_species_set select mlss.* from $srcDB.method_link_species_set mlss, homology h where h.method_link_species_set_id=mlss.method_link_species_set_id group by mlss.method_link_species_set_id, mlss.method_link_id, mlss.genome_db_id");
+$dbh->do("insert into method_link_species_set select mlss.* from $srcDB.method_link_species_set mlss, homology h where h.method_link_species_set_id=mlss.method_link_species_set_id group by mlss.method_link_species_set_id");
 
 # method_link_species_set entries from family
-$dbh->do("insert into method_link_species_set select mlss.* from $srcDB.method_link_species_set mlss, family f where f.method_link_species_set_id=mlss.method_link_species_set_id group by mlss.method_link_species_set_id, mlss.method_link_id, mlss.genome_db_id");
+$dbh->do("insert into method_link_species_set select mlss.* from $srcDB.method_link_species_set mlss, family f where f.method_link_species_set_id=mlss.method_link_species_set_id group by mlss.method_link_species_set_id");
 
 # method_link_species_set entries from synteny_region/dnafrag_region
-$dbh->do("insert into method_link_species_set select mlss.* from $srcDB.method_link_species_set mlss, synteny_region sr where sr.method_link_species_set_id=mlss.method_link_species_set_id group by mlss.method_link_species_set_id, mlss.method_link_id, mlss.genome_db_id");
+$dbh->do("insert into method_link_species_set select mlss.* from $srcDB.method_link_species_set mlss, synteny_region sr where sr.method_link_species_set_id=mlss.method_link_species_set_id group by mlss.method_link_species_set_id");
+
+# species_set entries
+$dbh->do("insert into species_set select ss.* from method_link_species_set mlss left join $srcDB.species_set ss using (species_set_id) group by ss.species_set_id, ss.genome_db_id");
 
 
 # Now output the mouse and rat seq_region file needed to create the corresponding core databases
