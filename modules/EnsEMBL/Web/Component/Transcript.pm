@@ -1457,7 +1457,7 @@ sub get_page_data {
 
 sub dump {
   my ( $panel, $object ) = @_;
-  $panel->print("<p>Dump of SNP data per strain (SNPs in rows, strains in columns).  For more advanced data queries use <a href='/multi/martview'>Bio-mart</a>. </p>");
+  $panel->print("<p>Dump of SNP data per strain (SNPs in rows, strains in columns).  For more advanced data queries use <a href='/multi/martview'>BioMart</a>. </p>");
   my $html = qq(
    <div>
      @{[ $panel->form( 'dump_form' )->render() ]}
@@ -1500,6 +1500,7 @@ sub dump_form {
 
   my @cgi_params = @{$panel->get_params($object, {style =>"form"}) };
   foreach my $param ( @cgi_params) {
+    warn $param->{'name'}, $param->{'value'};
        $form->add_element (
                           'type'      => 'Hidden',
                           'name'      => $param->{'name'},
@@ -1528,6 +1529,7 @@ sub html_dump {
   my( $panel, $object ) = @_;
 
   my $script_config = $object->get_scriptconfig;
+  $script_config->reset;
   foreach my $param ( $object->param() ) {
     $script_config->set($param, $object->param($param) , 1);
   }
@@ -1540,21 +1542,35 @@ sub html_dump {
     return;
   }
 
+  $panel->print("<p>Format: tab separated per strain (SNP id; Type; Amino acid change;)</p>\n");
   my $header_row = join "</th><th>", ("bp position", @samples);
   $panel->print("<table class='spreadsheet'>\n");
   $panel->print("<tr><th>$header_row</th></tr>\n");
 
-  my @background = ('class="tint"', "");
+  my @background = ('class="tint"', ""); 
+  my $user_config = $object->user_config_hash( 'genesnpview_snps' );
+  my %colours = $user_config->{'_colourmap'}->colourSet('variation');
+
   foreach my $snp_pos ( sort keys %$snp_data ) {
-    my $background = shift @background;
+    my $background= shift @background;
     push @background, $background;
     $panel->print(qq(<tr $background><td>$snp_pos</td>));
     foreach my $sample ( @samples ) {
       my $row =  $snp_data->{$snp_pos}{$sample} ;
 
-      (my $type = $row->{consequence}) =~ s/\(Same As Ref. Assembly\)//;;
-      my $info = $row->{ID} ? "$row->{ID} $type" : "-";
-      $panel->print(qq(<td>$info</td>));
+      (my $type = $row->{consequence}) =~ s/\(Same As Ref. Assembly\)//;
+      if ($row->{ID}) {
+	my $style;
+	if ($row->{aachange} ne "-") {
+	  my $colour = $user_config->{'_colourmap'}->hex_by_name($colours{$type}[0]);
+	  $style = qq(style="background-color:#$colour");
+	}
+	my $info = "$row->{ID}; $type; $row->{aachange};";
+	$panel->print(qq(<td $style>$info</td>));
+      }
+      else {
+	$panel->print(qq(<td>.</td>));
+      }
     }
     $panel->print("</tr>\n");
   }
@@ -1566,11 +1582,14 @@ sub text_dump {
   my( $panel, $object ) = @_;
 
   my $script_config = $object->get_scriptconfig;
+  $script_config->reset;
   foreach my $param ( $object->param() ) {
     $script_config->set($param, $object->param($param) , 1);
   }
   $script_config->save;
   my @samples = sort ( $object->get_samples );
+  $panel->print("Variation data for ".$object->stable_id);
+  $panel->print("\nFormat: tab separated per strain (SNP id; Type; Amino acid change;)\n\n");
 
   my $snp_data = get_page_data($panel, $object, \@samples );
   unless (ref $snp_data eq 'HASH') {
@@ -1587,7 +1606,7 @@ sub text_dump {
       my $row =  $snp_data->{$snp_pos}{$sample} ;
 
       (my $type = $row->{consequence}) =~ s/\(Same As Ref. Assembly\)//;;
-      my $info = $row->{ID} ? "$row->{ID} $type" : "-";
+      my $info = $row->{ID} ? "$row->{ID}; $type; $row->{aachange};" : ".";
       $panel->print(qq($info\t));
     }
     $panel->print("\n");
