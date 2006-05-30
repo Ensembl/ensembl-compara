@@ -3,6 +3,9 @@ package EnsEMBL::Web::File::Text;
 use strict;
 use Digest::MD5 qw(md5_hex);
 use EnsEMBL::Web::Root;
+use LWP::UserAgent;
+use HTTP::Request;
+use HTTP::Response;
 
 our $TMP_IMG_FORMAT     = 'XXX/X/X/XXXXXXXXXXXXXXX';
 our @ISA =qw(EnsEMBL::Web::Root);
@@ -26,9 +29,8 @@ sub new {
 
 
 sub set_cache_filename {
-  my $self     = shift;
-  my $filename = shift;
-  $filename =~ s#/usr/tmp/##;
+  my ($self, $filename) = @_;
+  
   $self->{'cache'}      = 1;
   my $MD5 = hex(substr( md5_hex($filename), 0, 6 )); ## Just the first 6 characters will do!
   my $c1  = $EnsEMBL::Web::Root::random_ticket_chars[($MD5>>5)&31];
@@ -36,7 +38,7 @@ sub set_cache_filename {
   
   $self->{'token'}      = "$c1$c2$filename";
   $self->{'filename'}   = "$c1/$c2/$filename";
-
+warn "File will be ".$self->{'filename'};
   $self->{'file_root' } = $self->{'species_defs'}->ENSEMBL_TMP_DIR;
 }
 
@@ -48,24 +50,78 @@ sub filename {
 
 
 sub save {
-  my( $self, $in ) = @_;
+  my( $self, $object, $param ) = @_;
   my $out = $self->filename;
-warn "Writing from $in to $out";
-  ## open data file 
-  my $open = open (IN, '<', $in) || warn qq(Cannot open CGI temp file for caching: $!);
-  if( $open ) {
-    $self->make_directory( $out );
-    open(OUT, ">$out") || warn qq(Cannot open local cache file for saving: $!);
-    while (<IN>) {
-      print OUT $_;
+  my (%result, $fh);
+  return unless $object;
+  return unless $param;
+
+  ## what kind of data do we have?
+  if ($param =~ /^upload/) {
+    ## open data file 
+    my $cgi = $object->[1]->{'_input'};
+    my $in = $cgi->tmpFileName($object->param($param));
+    my $open = open (IN, '<', $in) || warn qq(Cannot open CGI temp file for caching: $!);
+    if( $open ) {
+      $fh = $self->_prep_output($out);
+      if ($fh) {
+        while (<IN>) {
+          print $fh $_;
+        }
+        close(IN);
+        $result{'file'} = $out;
+      } 
+    } 
+    else {
+      $result{'error'} = 'no_upload';
+      warn $@;
     }
-    close(OUT);
-    close(IN);
-    return { 'file' => $out };
-  } else {
-    warn $@;
-    return {};
   }
+  elsif ($param =~ /^url/) { 
+    my $useragent = LWP::UserAgent->new();
+    $useragent->proxy( 'http', $object->species_defs->ENSEMBL_WWW_PROXY ) if( $object->species_defs->ENSEMBL_WWW_PROXY );
+    my $request = new HTTP::Request( 'GET', $object->param($param) );
+    $request->header( 'Pragma'           => 'no-cache' );
+    $request->header( 'Cache-control' => 'no-cache' );
+    my $response = $useragent->request($request);
+    if( $response->is_success && $response->content) {
+      $fh = $self->_prep_output($out);
+      print $fh $response->content if $fh;
+      $result{'file'} = $out;
+    }
+    else {
+      $result{'error'} = 'no_online';
+      warn $@;
+    }
+  }
+  else {
+    my $data = $object->param($param);
+    if ($data) {
+      $fh = $self->_prep_output($out);
+      print $fh $data if $fh;
+      $result{'file'} = $out;
+    }
+    else {
+      $result{'error'} = 'no_paste';
+      warn $@;
+    }
+  }
+
+  if ($fh) {
+    close($fh);
+  }
+  else {
+    $result{'error'} = 'no_cache';
+  }
+  return \%result;
+}
+
+sub _prep_output {
+  my ($self, $out) = @_;
+  my $fh;
+  $self->make_directory( $out );
+  open($fh, ">$out") || warn qq(Cannot open local cache file for saving: $!);
+  return $fh;
 }
 
 sub retrieve {

@@ -83,22 +83,21 @@ sub karyoview {
 
   $self->initialize_zmenu_javascript;
                                                                                 
-  ## the "karyoview" wizard uses 4 nodes: add data, add standard tracks, 
+  ## the "karyoview" wizard uses 5 nodes: add data, check data is present, configure tracks
   ## configure karyotype, and display karyotype
   my $wizard = EnsEMBL::Web::Wizard::Chromosome->new($object);
-  $wizard->add_nodes([qw(kv_add kv_extras kv_layout kv_display)]);
+  $wizard->add_nodes([qw(kv_add kv_datacheck kv_tracks kv_layout kv_display)]);
   $wizard->default_node('kv_add');
                                                                                 
-  ## chain the nodes together
-  ## note that, since you can add multiple tracks, node 1 is recursive
+  ## chain the static nodes together
   $wizard->chain_nodes([
-          ['kv_add'=>'kv_add'],
-          ['kv_add'=>'kv_extras'],
-          ['kv_extras'=>'kv_layout'],
+          ['kv_add'=>'kv_datacheck'],
+          ['kv_datacheck'=>'kv_add'],
+          ['kv_tracks'=>'kv_layout'],
           ['kv_layout'=>'kv_display'],
-          ['kv_display'=>'kv_add'],
+          ['kv_display'=>'kv_tracks'],
   ]);
-                                                                                
+          
   $self->add_wizard($wizard);
   $self->wizard_panel('Karyoview');
 }

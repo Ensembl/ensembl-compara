@@ -165,8 +165,8 @@ sub static_links {
 #  $self->_prof("Static links added");
 }
 
-sub factory :lvalue { $_[0]->{'factory'}; }
-sub page    :lvalue { $_[0]->{'page'};    }
+sub factory   :lvalue { $_[0]->{'factory'}; }
+sub page      :lvalue { $_[0]->{'page'};    }
 
 ## Wrapper functions around factory and page....
 sub has_fatal_problem { my $self = shift; return $self->factory->has_fatal_problem;       }
@@ -175,27 +175,101 @@ sub has_problem_type  { my $self = shift; return $self->factory->has_problem_typ
 sub problem           { my $self = shift; return $self->factory->problem(@_);             }
 sub dataObjects       { my $self = shift; return $self->factory->DataObjects;             }
 
-## wrapper around redirect and render, so wizard can choose
-sub action {
+sub restrict  { 
+  my $self = shift;
+  $self->{'restrict'} = shift if @_;
+  return $self->{'restrict'}; ## returns string   
+}
+sub groups  { 
+  my $self = shift;
+  $self->{'groups'} = shift if @_;
+  return $self->{'groups'} || []; ## returns array ref    
+}
+
+sub get_user_id {
   my $self = shift;
 
-  if ($self->{wizard}) {
+  ## do we have one in the current session?
+  my $user_id = $ENV{'ENSEMBL_USER'};
+
+  ## if not, look for a cookie
+  if (!$user_id) {
+    #my $cgi = ;
+    #my $cookie = $cgi->cookie('ENSEMBL_USER');
+    #if ($cookie) {
+    #  $user_id = $self->web_user_db->decryptID($cookie);
+    #}
+  }
+
+  return $user_id;
+}
+
+
+## wrapper around redirect and render
+sub action {
+  my $self = shift;
+  my $permitted = 1; ## default is to allow access, so ordinary pages don't break!
+  my $user_id = 0;
+
+=pod
+  if ($self->restrict) { ## check for script-level access restrictions
+    my $id = $self->get_user_id;
+
+    my $groups = $self->groups;
+
+    warn "RESTRICTED ACCESS! Permitted group(s): @$groups";
+    $permitted = 0;
+  }
+=cut
+
+  if ($permitted) {
+    if ($self->{wizard}) {
+      my $object = ${$self->dataObjects}[0];
+      my $node = $self->{wizard}->current_node($object);
+      $self->_node_hop($node);
+    }
+    else { ## not a wizard page after all!
+      $self->render;
+    }
+  }
+  else {
+    my $URL = '/common/access_denied';
+    $self->redirect($URL);
+  }
+}
+
+sub _node_hop {
+  my ($self, $node, $loop) = @_;
+  $loop++;
+
+  if ($loop > 10 || !$self->{wizard}->isa_node($node) || $self->{wizard}->isa_page($node)) {
+    ## render page if not a processing node or function has recursed too many times!
+    $self->render;
+  }
+  else {
+    ## do whatever processing is required by this node
     my $object = ${$self->dataObjects}[0];
-    my $node = $self->{wizard}->current_node($object);
-
-    if (!$self->{wizard}->isa_page($node)) { ## isn't a web page
-
-      ## do whatever processing is required by this node
-      my %parameter = %{$self->{wizard}->$node($object)};
-      ## unpack returned parameters into a URL
+    my %parameter = %{$self->{wizard}->$node($object)};
+    if (my $next_node = $parameter{'hop'}) {
+      $self->_node_hop($next_node, $loop);
+    }
+    else {
       my $URL = '/'.$object->species.'/';
-      $URL .= $object->script.'?';
-      my $count = 0;
+      if (my $exit = $parameter{'exit'}) {
+        $URL .= $exit;
+        delete($parameter{'exit'}); ## don't need to pass this parameter along
+      }
+      else { 
+        $URL .= $object->script;
+      }
+      ## unpack returned parameters into a URL
+      my $tally = 0;
+      my $param_count = scalar(keys %parameter);
+      $URL .= '?' if $param_count;
       foreach my $param (keys %parameter) {
-        next if $param eq 'bounce';
-        $URL .= ';' if $count > 0;
+        $URL .= ';' if $tally > 0;
         $URL .= $param.'='.$parameter{$param};    
-        $count++;
+        $tally++;
       }
       my $r = $self->page->renderer->{'r'};
 
@@ -205,14 +279,6 @@ sub action {
       $r->err_headers_out->add( "Location" => $URL );
       $r->status( REDIRECT );
     }
-    else {
-      warn "Rendering wizard page $node";
-      $self->render;
-    }
-  }
-  else { ## not a wizard page after all!
-    warn "Rendering non-wizard page";
-    $self->render;
   }
 }
 
@@ -329,11 +395,12 @@ sub simple {
   my $self = __PACKAGE__->new( 'objecttype' => shift );
   if( $self->has_a_problem ) {
      $self->render_error_page;
-  } else {
-     foreach my $object( @{$self->dataObjects} ) {
-       $self->configure( $object, $object->script, 'context_menu', 'context_location' );
-     }
-     $self->render;
+  } 
+  else {
+    foreach my $object( @{$self->dataObjects} ) {
+      $self->configure( $object, $object->script, 'context_menu', 'context_location' );
+    }
+    $self->action;
   }
 }
 
@@ -353,7 +420,7 @@ sub wrapper {
     foreach my $object( @{$self->dataObjects} ) {
       $self->configure( $object, $object->script, @{$params{'extra_config'}||[]} );
     }
-    $self->render;
+    $self->action;
   }
 }
 
@@ -373,56 +440,7 @@ sub simple_with_redirect {
      foreach my $object( @{$self->dataObjects} ) {
        $self->configure( $object, $object->script, 'context_menu', 'context_location' );
      }
-     $self->render;
-  }
-}
-
-
-sub simple_user {
-  my $object_type = shift;
-  my $self = __PACKAGE__->new( 'objecttype' => $object_type );
-
-  if( $self->has_a_problem ) {
-    $self->render_error_page;
-  } 
-  else {
-    foreach my $object( @{$self->dataObjects} ) {
-      $self->configure( $object, $object->script, 'context_user' );
-    }
-    my $account = ${$self->dataObjects}[0];
-    my $id = $account->get_user_id;
-  
-    my $script_ok = 0;
-    my $node_ok   = 0;
-
-    ## check if user has privileges for this script
-    my $access = $self->{wizard}->access;
-    my $level = $$access{'level'};
-    my $group = $$access{'group'};
-    if (!$level || $level eq 'user') {
-      $script_ok = 1;
-    }
-    else {
-      $script_ok = $account->get_user_privilege($id, $level, $group) if $id;
-    }
-
-    if ($script_ok) {
-      ## check if this node requires login
-      my $node = $self->{wizard}->current_node($account);
-      my $restricted = $self->{wizard}->node_restriction($node);
-      if (!$restricted || $id) {
-        $node_ok = 1;
-      }
-    }
-
-    ## send user to appropriate page
-    if ($node_ok) {
-      $self->action;
-    }
-    else {
-      my $URL = '/Multi/access_denied';
-      $self->redirect($URL);
-    }
+     $self->action;
   }
 }
 

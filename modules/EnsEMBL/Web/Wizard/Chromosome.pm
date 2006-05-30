@@ -123,10 +123,6 @@ sub add_karyotype_options {
   return (\@chr_values, \@colours, \@styles, \%widgets);
 }
 
-## This wizard can accept multiple data sets, so we need 
-## to keep track of this
-our $tracks = 1;
-
 sub _init {
   my ($self, $object) = @_;
 
@@ -134,27 +130,11 @@ sub _init {
   my %form_fields = (
     'blurb' => {
       'type'  => 'Information',
-      'value' => qq(Karyoview now allows you to display multiple data sets as either density plots, location pointers or a mixture of the two. Add all your data sets first, then click on 'Continue' for more configuration options.),
+      'value' => qq{<p>Karyoview now allows you to display multiple data sets as either density plots, location pointers or a mixture of the two. Your data will be saved in a temporary cache. <a href="javascript:void(window.open('/Homo_sapiens/helpview?kw=karyoview;se=1;#FileFormats','helpview','width=700,height=550,resizable,scrollbars'))">Information about valid file formats</a></p><p>Once you have added all your tracks, you can configure the rest of the image options.</p>},
     },
     'track_name'  => {
       'type'=>'String',
       'label'=>'Track name (optional)',
-      'loop'=>1,
-    },
-    'style'       => {
-      'type'=>'DropDown',
-      'select'   => 'select',
-      'label'=>'Style',
-      'required'=>'yes',
-      'values' => 'styles',
-      'loop'=>1,
-    },
-    'col'       => {
-      'type'=>'DropDown',
-      'select'   => 'select',
-      'label'=>'Colour',
-      'required'=>'yes',
-      'values' => 'colours',
       'loop'=>1,
     },
     'paste_file' => {
@@ -172,10 +152,23 @@ sub _init {
       'label'=>'File URL',
       'loop'=>1,
     },
+    'tracks_subhead'  => {
+      'type'  => 'SubHeader',
+      'value' => 'Configure your tracks',
+    },
     'merge'  => {
       'type'  => 'CheckBox',
       'label' => 'Merge features into a single track',
-      'loop'=>1,
+      'value' => 'on',
+    },
+    'maxmin'  => {
+      'type'  => 'CheckBox',
+      'label' => 'Show max/min lines on density plots',
+      'value' => 'on',
+    },
+    'zmenu'  => {
+      'type'  => 'CheckBox',
+      'label' => 'Display mouseovers on location menus',
       'value' => 'on',
     },
     'extras_subhead'  => {
@@ -201,16 +194,6 @@ sub _init {
       'type'  => 'Information',
       'value' => '* Extra tracks will only be shown if you select a single chromosome to display on your karyotype',
     },
-    'maxmin'  => {
-      'type'  => 'CheckBox',
-      'label' => 'Show max/min lines',
-      'value' => 'on',
-    },
-    'zmenu'  => {
-      'type'  => 'CheckBox',
-      'label' => 'Display mouseovers on menus',
-      'value' => 'on',
-    },
 );
 
   ## define the nodes available to wizards based on this type of object
@@ -218,12 +201,17 @@ sub _init {
     'kv_add' => {
       'form' => 1,
       'title' => 'Add your data',
-      'input_fields'  => [qw(blurb track_name style col merge paste_file upload_file url_file)],
+      'input_fields'  => [qw(blurb track_name paste_file upload_file url_file)],
       'button'  => 'Add more data',
     },
-    'kv_extras' => {
+    'kv_datacheck' => {
       'form' => 1,
-      'title' => 'Add extra features',
+      'back'   => 'kv_add',
+      'button' => 'Save this track',
+    },
+    'kv_tracks' => {
+      'form' => 1,
+      'title' => 'Configure tracks',
       'input_fields'  => [qw(extras_subhead track_Vpercents track_Vsnps track_Vgenes track_blurb)],
       'no_passback' => [qw(style)],
       'button' => 'Continue',
@@ -234,7 +222,7 @@ sub _init {
       'title' => 'Configure karyotype',
       'input_fields'  => [qw(chr rows chr_length h_padding h_spacing v_padding)],
       'button' => 'Continue',
-      'back'   => 1,
+      'back'   => 'kv_add',
     },
     'kv_display'  => {
       'button' => 'Finish',
@@ -242,8 +230,26 @@ sub _init {
     },
   );
 
-  ## get useful data from object
- ## add generic karyotype stuff
+  ## feedback messages
+  my %message = (
+  'no_upload'    => 'Your uploaded file could not be cached for processing; please check that the file contains valid data.',
+  'no_online'     => 'The URL you entered did not point to a valid data file; please check and try again.',
+  'no_paste'     => 'No data was entered.',
+  'no_cache'     => 'Sorry, your data could not be cached. Please try again later, or >a href="mailto:helpdesk@ensembl.org">contact our HelpDesk</a> if the problem persists.',
+
+);
+
+
+  ## which loop are we on?
+  my $loops = 1;
+  my @params = $object->param();
+  foreach my $p (@params) {
+    if ($p =~ /^cache_(.)*/) {
+      $loops++;
+    }
+  }
+
+  ## add generic karyotype stuff
   my $option = {
     'styles' => ['density', 'location'],
     'group_styles' => 1,
@@ -252,13 +258,13 @@ sub _init {
   my %all_fields = (%form_fields, %$widgets);
 
   my $data = {
-    'loops'         => $tracks,
+    'loops'         => $loops,
     'chr_values'    => $chr_values,
     'colours'       => $colours,
     'styles'        => $styles,
   };
 
-  return [$data, \%all_fields, \%all_nodes];
+  return [$data, \%all_fields, \%all_nodes, \%message];
 
 }
                                                                               
@@ -273,123 +279,139 @@ sub kv_add {
   my $species = $object->species;
   my $node = 'kv_add';           
       
-  ## cache uploaded file
-  my $track_id = $wizard->data('loops');
-  my $upload = $object->param("upload_file_$track_id");
-  my $cache = _fh_cache($self, $object, $upload) if $upload;
-
   ## rewrite node values if we are re-doing this page for an additional track
   if ($object->param('submit_kv_add') eq 'Add more data >') {
-    $self->redefine_node('kv_add', 'pass_fields', 
-      ["track_name_$tracks", "style_$tracks", "col_$tracks",
-      "paste_file_$tracks", "upload_file_$tracks", "url_file_$tracks",
-      "merge_$tracks"]);
-    $self->redefine_node('kv_add', 'back', 1);
-    $tracks++;
-    $wizard->data('loops', $tracks);
-  }
+    $wizard->redefine_node('kv_add', 'back', 1);
+  } 
                                                                
   my $form = EnsEMBL::Web::Form->new($node, "/$species/$script", 'post');
 
-  ## show previously-added tracks
-  if ($object->param('style_1')) {
-    my $plural = 's' if $tracks > 1;
-    $form->add_element(
-      'type'   => 'SubHeader',
-      'value'  => qq(Track$plural added so far:),
-    );
-    my @cols   = @{$wizard->data('colours')};
-    my @styles = @{$wizard->data('styles')};
-    my ($colour, $style, $h_ref, %hash, $output);
-    for (my $i = 0; $i < $tracks; $i++) {
-      my $track_name = $object->param("track_name_$i");
-      $output = "$track_name: " if $track_name;
-      foreach $h_ref (@cols) {
-        %hash = %$h_ref;
-        $colour = lc($hash{'name'}) if $hash{'value'} eq $object->param("col_$i");
-      }
-      foreach $h_ref (@styles) {
-        %hash = %$h_ref;
-        $style = lc($hash{'name'}) if $hash{'value'} eq $object->param("style_$i");
-      }
-      $output .= "$colour $style";
-      $form->add_element(
-        'type'   => 'Information',
-        'value'  => $output,
-      );
-    }
-  }
-
   $wizard->add_widgets($node, $form, $object);
   $wizard->pass_fields($node, $form, $object);
-  if ($upload) {
-    $form->add_element(
-      'type'   => 'Hidden',
-      'name'   => "cache_file_$track_id",
-      'value'  => $cache,
-    );
-  }
   $wizard->add_buttons($node, $form, $object);
                                                                                 
   return $form;
 }
 
-sub _fh_cache {
-  ## make a copy of the uploaded temp file so we can get at it later
-  my ($self, $object, $filename) = @_;
 
-  my $cgi = $object->[1]->{'_input'}; 
-  my $tmpfilename = $cgi->tmpFileName($filename);
+sub kv_datacheck {
+  my ($self, $object) = @_;
+                                                                                
+  my $wizard = $self->{wizard};
+  my $script = $object->script;
+  my $species = $object->species;
+  my $node = 'kv_datacheck';
+  my $missing = 0;
+  my (%parameter, $result);     
 
-  my $cache = new EnsEMBL::Web::File::Text($object->[1]->{'_species_defs'});
-  $cache->set_cache_filename($tmpfilename);
-  $cache->save($tmpfilename);
-  my $cachename = $cache->filename;
-  return $cachename;
+  ## try to cache data
+  my $count = $wizard->data('loops');
+  my ($data, $param, $filename);
+  if ($data = $object->param('paste_file_'.$count)) {
+    $param = 'paste_file_'.$count;
+    $filename = substr($data, 0, 5); ## use the data itself as the basis for the cache filename
+    $filename =~ s/\s//g;
+    my $timestamp = time();
+    $filename .= '_'.$timestamp;
+  }
+  elsif ($data = $object->param('upload_file_'.$count)) {
+    $param = 'upload_file_'.$count;
+    $filename = $object->param($param);
+    $filename =~ s#/usr/tmp/##;
+  }
+  elsif ($data = $object->param('url_file_'.$count)) {
+    $param = 'url_file_'.$count;
+    ($filename = $data) =~ s#^http://##;
+    $filename =~ s#/##g; ## remove slashes so it's not a path!
+  }
+
+  my $error;
+  if ($param) { 
+    my $cache = new EnsEMBL::Web::File::Text($object->[1]->{'_species_defs'});
+    $cache->set_cache_filename($filename);
+    $result = $cache->save($object, $param);
+    $error = $$result{'error'};
+  }
+  else {
+    $error = 'no_paste';
+  }
+
+  my $form = EnsEMBL::Web::Form->new($node, "/$species/$script", 'post');
+
+  if ($error) {
+    my $error_msg = $wizard->get_message($error);
+    my $msg_output = qq(There seems to be a problem with your input:<blockquote><strong>$error_msg</strong></blockquote>);
+    if ($error =~ /[no_upload|no_online|no_paste]/) {
+      $msg_output .= 'If this is intentional, click Continue; otherwise click on Back to enter the correct data.';
+    }
+    $form->add_element(
+        'type'   => 'Information',
+        'value'  => $msg_output,
+    );
+    $wizard->add_outgoing_edges([['kv_datacheck', 'kv_layout']]);
+  }
+  else {
+    my $cache_file = $$result{'file'};
+    $form->add_element(
+        'type'   => 'Information',
+        'value'  => 'Thank you - your data has been saved.',
+    );
+    $wizard->add_outgoing_edges([['kv_datacheck','kv_tracks']]);
+    $wizard->pass_fields($node, $form, $object);
+    $form->add_element(
+        'type'   => 'Hidden',
+        'name'   => 'cache_file_'.$count,
+        'value'  => $$result{'file'},
+    );
+  }
+  $wizard->add_buttons($node, $form, $object);
+                                                                                
+  return $form;
+    
 }
 
-sub kv_extras {
+sub kv_tracks {
   my ($self, $object) = @_;
   my $wizard = $self->{wizard};
   my $script = $object->script;
   my $species = $object->species;
-  my $node = 'kv_extras';
+  my $node = 'kv_tracks';
                
-  ## cache uploaded file
-  my $track_id = $wizard->data('loops');
-  my $upload = $object->param("upload_file_$track_id");
-  my $cache = _fh_cache($self, $object, $upload) if $upload;
-
-  ## add appropriate options
-  my ($location, $density);
-  my @params = $object->param;
-  foreach my $param (@params) {
-    next unless $param =~ /^style/;
-    if ($object->param($param) =~ /bar|line|outline/) {
-      $density = 1;
-    }
-    else {
-      $location = 1;
-    }
-  }
-  if ($density) {
-    $wizard->redefine_node('kv_extras', 'input_fields', ['maxmin']); 
-  }
-  if ($location) {
-    $wizard->redefine_node('kv_extras', 'input_fields', ['zmenu']); 
-  }
-                                                                                
   my $form = EnsEMBL::Web::Form->new($node, "/$species/$script", 'post');
-                                                                                
-  $wizard->add_widgets($node, $form, $object);
-  $wizard->pass_fields($node, $form, $object);
-  if ($upload) {
+  
+  ## add widgets for each track                                                                              
+  $wizard->add_widgets($node, $form, $object, ['tracks_subhead']);
+  my $count = $wizard->data('loops') - 1;
+  my @caches;
+  for (my $i=1; $i<=$count; $i++) {
+    my $track_name = $object->param('track_name_'.$i) || "(Track $i)";  
     $form->add_element(
-      'type'   => 'Hidden',
-      'name'   => "cache_file_$track_id",
-      'value'  => $cache,
+        'type'   => 'NoEdit',
+        'label'  => 'Track name',
+        'value'  => $track_name,
+    );
+    $form->add_element(
+      'type'    =>'DropDown',
+      'name'    => 'style_'.$i,
+      'select'  => 'select',
+      'label'   =>'Style',
+      'required'=>'yes',
+      'values'  => $wizard->data('styles'),
+    );
+    $form->add_element(
+      'type'    =>'DropDown',
+      'name'    => 'col_'.$i,
+      'select'  => 'select',
+      'label'   =>'Colour',
+      'required'=>'yes',
+      'values'  => $wizard->data('colours'),
     );
   }
+  $wizard->add_widgets($node, $form, $object, ['merge']) if $count > 1;
+  $wizard->add_widgets($node, $form, $object, ['maxmin', 'zmenu']);
+
+  $wizard->add_widgets($node, $form, $object);
+  $wizard->pass_fields($node, $form, $object);
   $wizard->add_buttons($node, $form, $object);
                                                                                 
   return $form;
@@ -422,8 +444,15 @@ sub kv_display {
                                                                                 
   my $form = EnsEMBL::Web::Form->new($node, "/$species/$script", 'post');
 
-  $wizard->redefine_node('kv_add', 'button', 'Reconfigure this display');
-  $wizard->pass_fields($node, $form, $object);
+  $wizard->redefine_node('kv_tracks', 'button', 'Reconfigure (with same data)');
+  ## pass cache fields only
+  my $count = $wizard->data('loops') - 1;
+  my @caches;
+  for (my $i=1; $i<=$count; $i++) {
+    my $param = 'cache_file_'.$i;
+    push(@caches, $param) if $object->param($param);
+  }
+  $wizard->pass_fields($node, $form, $object, \@caches);
   $wizard->add_buttons($node, $form, $object);
                                                                                 
   return $form;

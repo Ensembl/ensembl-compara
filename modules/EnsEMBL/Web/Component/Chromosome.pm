@@ -391,9 +391,10 @@ qq(<a href="/$species/syntenyview?otherspecies=$other;chr=$chr;loc=).$data[1].'"
 # KARYOVIEW COMPONENTS  
 #-----------------------------------------------------------------
 
-sub kv_add      { _wrap_form($_[0], $_[1], 'kv_add'); }
-sub kv_extras   { _wrap_form($_[0], $_[1], 'kv_extras'); }
-sub kv_layout   { _wrap_form($_[0], $_[1], 'kv_layout'); }
+sub kv_add        { _wrap_form($_[0], $_[1], 'kv_add'); }
+sub kv_datacheck  { _wrap_form($_[0], $_[1], 'kv_datacheck'); }
+sub kv_tracks     { _wrap_form($_[0], $_[1], 'kv_tracks'); }
+sub kv_layout     { _wrap_form($_[0], $_[1], 'kv_layout'); }
 
 sub _wrap_form {
   my ( $panel, $object, $node ) = @_;
@@ -421,6 +422,7 @@ sub kv_display {
     $max_length = $object->length;
   }
   my $config = $object->user_config_hash($config_name);
+  my $group = 1;
 
   ## Create image object
   my $image    = $object->new_karyotype_image();
@@ -429,17 +431,15 @@ sub kv_display {
   $image->image_name  = 'karyoview-'.$object->species.'-'.$object->chr_name;
   ## Add features
   my @params = $object->param;
-  my $track_no = 0;
-  $config->{'_group_size'} = 1;
+  my $tracks = 0;
   foreach my $param (@params) {
-    $track_no++ if $param =~ /^track_name_/;
+    $tracks++ if $param =~ /^cache_file_/;
     ## make sure extra Ensembl tracks get grouped with chromosome
-    $config->{'_group_size'}++ if $param =~ /^track_V/;
+    $group++ if $param =~ /^track_V/;
   }
-  $track_no = 1 if !$track_no; ## default in case no track name provided!
 
   my $all_pointers;
-  for (my $i = 0; $i < $track_no; $i++) {
+  for (my $i = 0; $i < $tracks; $i++) {
     my $pointers = [];
     my $track_id = $i+1;
     my $parser;
@@ -454,7 +454,7 @@ sub kv_display {
       $parser->bin_size(int($max_length/$bins));
       $object->parse_user_data($parser, $track_id);
       if (ref($parser->counts) eq 'HASH') {
-        $config->{'_group_size'} += scalar(keys %{$parser->counts});
+        $group += scalar(keys %{$parser->counts});
       }
   
       ## create image with parsed data
@@ -495,15 +495,27 @@ sub kv_display {
     push(@{$image->{'image_formats'}}, 'postscript');  
   }
 
+  ## set this just before rendering, to make sure we group all user tracks together
+  $config->{'_group_size'} = $group; 
+
   $image->karyotype($object, $all_pointers, $config_name);
   # create image file and render HTML
   $panel->print($image->render);
 
-## HIDDEN FORM
+## Hidden form
   my $html = $panel->form('kv_display')->render();
+
+## Blank form going back to first node (passing no parameters)
+  my $species = $object->species;
+  my $script  = $object->script;
+  $html .= qq(<form action="/$species/$script" method="get">
+<p><input type="submit" name="submit_kv_add" value="Start again with new data" class="red-button" /></p>
+</form>);
+
   $panel->print($html);
 
   return 1;
 }
+
 
 1;
