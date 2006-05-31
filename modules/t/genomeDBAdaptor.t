@@ -105,8 +105,8 @@ foreach my $this_species (@$species) {
 
 my $genome_db;
 my $all_genome_dbs;
-my $num_of_genomes = 17;
-my $genome_db_id = 1;
+my $num_of_genomes = 19;
+my $genome_db_id = 22;
 my $method_link_id = 1;
 my $num_of_db_links = 2;
 

@@ -33,11 +33,19 @@ my $ma = $compara_dba->get_MemberAdaptor;
 my $fa = $compara_dba->get_FamilyAdaptor;
 my $mlssa = $compara_dba->get_MethodLinkSpeciesSetAdaptor;
 
+
+my $stable_id = "ENSG00000119787";
+my $source = "ENSEMBLGENE";
+my $family_id = 1209;
+my $family_stable_id = "ENSF00000001209";
+my $family_description = "ATLASTIN GTP BINDING 3 GUANINE NUCLEOTIDE BINDING 3";
+my $family_method_link_species_set_id = 30003;
+
 #######
 #  1  #
 #######
 
-my $member = $ma->fetch_by_source_stable_id("ENSEMBLGENE","ENSG00000119787");
+my $member = $ma->fetch_by_source_stable_id($source,$stable_id);
 
 ok($member);
 
@@ -49,7 +57,7 @@ $verbose && debug("\nnb of families: ". scalar @{$families});
 
 $families = $fa->fetch_all_by_Member_method_link_type($member,"FAMILY");
 
-$families = $fa->fetch_by_Member_source_stable_id("ENSEMBLGENE","ENSG00000119787");
+$families = $fa->fetch_by_Member_source_stable_id($source,$stable_id);
 
 ok($families);
 ok (scalar @{$families} == 1);
@@ -58,13 +66,13 @@ $verbose && debug("\nnb of families: ". scalar @{$families});
 my $family = $families->[0];
 
 ok( $family );
-ok( $family->dbID, 1246 );
+ok( $family->dbID, $family_id );
 $verbose && debug($family->dbID);
-ok( $family->stable_id, "ENSF00000001246" );
+ok( $family->stable_id, $family_stable_id );
 $verbose && debug($family->stable_id);
-ok( $family->description, "ATLASTIN GTP BINDING 3 GUANINE NUCLEOTIDE BINDING 3" );
+ok( $family->description, $family_description );
 $verbose && debug($family->description);
-ok( $family->method_link_species_set_id, 30001 );
+ok( $family->method_link_species_set_id, $family_method_link_species_set_id );
 $verbose && debug($family->method_link_species_set_id);
 ok( $family->method_link_type, "FAMILY" );
 $verbose && debug($family->method_link_type);

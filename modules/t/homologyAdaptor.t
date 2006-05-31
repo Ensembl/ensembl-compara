@@ -33,11 +33,14 @@ my $ma = $compara_dba->get_MemberAdaptor;
 my $ha = $compara_dba->get_HomologyAdaptor;
 my $mlssa = $compara_dba->get_MethodLinkSpeciesSetAdaptor;
 
+my $member_stable_id = "ENSG00000012983";
+my $method_link_type = "ENSEMBL_HOMOLOGUES";
+
 #######
 #  1  #
 #######
 
-my $member = $ma->fetch_by_source_stable_id("ENSEMBLGENE","ENSG00000012983");
+my $member = $ma->fetch_by_source_stable_id("ENSEMBLGENE","$member_stable_id");
 
 ok($member);
 
@@ -45,18 +48,29 @@ my $homologies = $ha->fetch_by_Member($member);
 
 ok($homologies);
 
-$homologies = $ha->fetch_all_by_Member_method_link_type($member,"ENSEMBL_ORTHOLOGUES");
+$homologies = $ha->fetch_all_by_Member_method_link_type($member,"$method_link_type");
 
 #print STDERR "nb of homology: ", scalar @{$homology},"\n";
+
+my ($homology_id, $stable_id, $method_link_species_set_id, $description,
+    $subtype, $dn, $ds, $n, $s, $lnl, $threshold_on_ds) =
+        $compara_dba->dbc->db_handle->selectrow_array("SELECT homology.*
+        FROM homology_member hm1
+          LEFT JOIN homology using (homology_id)
+          LEFT JOIN homology_member hm2 using (homology_id)
+          LEFT JOIN member m2 on (hm2.member_id = m2.member_id)
+          LEFT JOIN genome_db gdb on (m2.genome_db_id = gdb.genome_db_id)
+        WHERE hm1.member_id = ".$member->dbID." and gdb.name = 'Rattus norvegicus'");
 
 my $homology = $ha->fetch_by_Member_paired_species($member,"Rattus norvegicus")->[0];
 
 ok( $homology );
-ok( $homology->dbID, 119970 );
-ok( $homology->stable_id, "9606_10116_01119868733" );
-ok( $homology->description, "UBRH" );
-ok( $homology->method_link_species_set_id, 20001 );
-ok( $homology->method_link_type, "ENSEMBL_ORTHOLOGUES" );
+ok( $homology->dbID, $homology_id );
+ok( $homology->stable_id, $stable_id );
+ok( $homology->description, $description );
+ok( $homology->subtype, $subtype );
+ok( $homology->method_link_species_set_id, $method_link_species_set_id );
+ok( $homology->method_link_type, "$method_link_type" );
 ok( $homology->adaptor->isa("Bio::EnsEMBL::Compara::DBSQL::HomologyAdaptor") );
 
 $multi->hide('compara', 'homology');
@@ -88,8 +102,6 @@ $multi->restore('compara', 'homology');
 $multi->restore('compara', 'homology_member');
 $multi->restore('compara', 'method_link_species_set');
 
-$homologies = $ha->fetch_all_by_method_link_type("ENSEMBL_ORTHOLOGUES");
-#$homologies = $ha->fetch_by_source("ENSEMBL_ORTHOLOGUES");
+$homologies = $ha->fetch_all_by_method_link_type("$method_link_type");
 
 ok($homologies);
-ok(scalar @{$homologies}, 6);

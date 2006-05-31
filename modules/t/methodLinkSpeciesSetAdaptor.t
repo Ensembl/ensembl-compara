@@ -78,8 +78,14 @@ my $method_link_species_sets;
 my $method_link_species_set;
 my $species;
 my $is_test_ok;
+my $blastz_net_method_link_id = 1;
 
 my $all_mlss;
+my ($human_genome_db_id) = $compara_db->dbc->db_handle->selectrow_array("
+    SELECT genome_db_id
+    FROM genome_db
+    WHERE name = 'Homo sapiens'");
+
 my $all_rows = $compara_db->dbc->db_handle->selectall_arrayref("
     SELECT mlss.method_link_species_set_id, ml.method_link_id, ml.type,
         GROUP_CONCAT(gdb.name ORDER BY gdb.name),
@@ -300,15 +306,15 @@ debug("Test Bio::EnsEMBL::Compara::DBSQL::MethodLinkSpeciesSetAdaptor::fetch_all
 
 debug("Test Bio::EnsEMBL::Compara::DBSQL::MethodLinkSpeciesSetAdaptor::fetch_all_by_method_link_id_GenomeDB [2]");
   $method_link_species_sets = $method_link_species_set_adaptor->fetch_all_by_method_link_id_GenomeDB(
-          1,
-          $genome_db_adaptor->fetch_by_dbID(1)
+          $blastz_net_method_link_id,
+          $genome_db_adaptor->fetch_by_dbID($human_genome_db_id)
       );
   ok(scalar(@{$method_link_species_sets}), 2);
 
 debug("Test Bio::EnsEMBL::Compara::DBSQL::MethodLinkSpeciesSetAdaptor::fetch_all_by_method_link_id_genome_db_id");
   $method_link_species_sets = $method_link_species_set_adaptor->fetch_all_by_method_link_id_genome_db_id(
-          1,
-          1);
+          $blastz_net_method_link_id,
+          $human_genome_db_id);
   ok(scalar(@{$method_link_species_sets}), 2);
 
 # 
@@ -317,7 +323,7 @@ debug("Test Bio::EnsEMBL::Compara::DBSQL::MethodLinkSpeciesSetAdaptor::fetch_all
 debug("Test Bio::EnsEMBL::Compara::DBSQL::MethodLinkSpeciesSetAdaptor::fetch_all_by_method_link_type_GenomeDB [2]");
   $method_link_species_sets = $method_link_species_set_adaptor->fetch_all_by_method_link_type_GenomeDB(
           "BLASTZ_NET",
-          $genome_db_adaptor->fetch_by_dbID(1)
+          $genome_db_adaptor->fetch_by_dbID($human_genome_db_id)
       );
   ok(scalar(@{$method_link_species_sets}), 2);
 
@@ -327,7 +333,7 @@ debug("Test Bio::EnsEMBL::Compara::DBSQL::MethodLinkSpeciesSetAdaptor::fetch_all
 debug("Test Bio::EnsEMBL::Compara::DBSQL::MethodLinkSpeciesSetAdaptor::fetch_all_by_method_link_type_genome_db_id");
   $method_link_species_sets = $method_link_species_set_adaptor->fetch_all_by_method_link_type_genome_db_id(
           "BLASTZ_NET",
-          1);
+          $human_genome_db_id);
   ok(scalar(@{$method_link_species_sets}), 2);
 
 # 
@@ -436,7 +442,7 @@ debug( "Check Bio::EnsEMBL::Compara::DBSQL::MethodLinkSpeciesSet::store method [
 # 
 debug( "Check Bio::EnsEMBL::Compara::MethodLinkSpeciesSet::new method [2]" );
   $method_link_species_set = new Bio::EnsEMBL::Compara::MethodLinkSpeciesSet(
-        -method_link_id => 1,
+        -method_link_id => $blastz_net_method_link_id,
         -method_link_type => "BLASTZ_NET",
         -species_set => [
             $genome_db_adaptor->fetch_by_name_assembly("Gallus gallus"),
@@ -445,7 +451,7 @@ debug( "Check Bio::EnsEMBL::Compara::MethodLinkSpeciesSet::new method [2]" );
     );
   $is_test_ok = 1;
   ok($method_link_species_set->isa("Bio::EnsEMBL::Compara::MethodLinkSpeciesSet"));
-  ok($method_link_species_set->method_link_id, 1);
+  ok($method_link_species_set->method_link_id, $blastz_net_method_link_id);
   ok($method_link_species_set->method_link_type,"BLASTZ_NET");
   $species = join(" - ", sort map {$_->name} @{$method_link_species_set->species_set});
   ok($species, "Gallus gallus - Mus musculus");

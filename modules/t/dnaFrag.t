@@ -112,11 +112,11 @@ ok(!$dnafrag_adaptor, "", "Checking Bio::EnsEMBL::Compara::DBSQL::DnaFragAdaptor
 ok(!$dummy_db, "", "Checking Bio::EnsEMBL::Compara::GenomeDB object");
 
 my $dnafrag;
-my $dbID = 19;
+my $dbID = 905410;
 my $adaptor = $dnafrag_adaptor;
-my $length = 105311216;
+my $length = 106368585;
 my $name = "14";
-my $genome_db_id = 1;
+my $genome_db_id = 22;
 my $genome_db = $genome_db_adaptor->fetch_by_dbID($genome_db_id);
 my $coord_system_name = "chromosome";
 

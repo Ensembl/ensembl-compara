@@ -41,7 +41,7 @@ This script uses a small compara database build following the specifitions given
 This script (as far as possible) tests all the methods defined in the
 Bio::EnsEMBL::Compara::DBSQL::GenomicAlignBlockAdaptor module.
 
-This script includes 36 tests.
+This script includes 32 tests.
 
 =head1 AUTHOR
 
@@ -68,7 +68,7 @@ use strict;
 
 BEGIN { $| = 1;  
     use Test;
-    plan tests => 36;
+    plan tests => 32;
 }
 
 use Bio::EnsEMBL::Utils::Exception qw (warning verbose);
@@ -323,94 +323,5 @@ debug("Test Bio::EnsEMBL::Compara::DBSQL::GenomicAlignBlockAdaptor->delete metho
   $genomic_align_block = $genomic_align_block_adaptor->delete_by_dbID($genomic_align_block_id);
   $genomic_align_block = $genomic_align_block_adaptor->fetch_by_dbID($genomic_align_block_id);
   ok(!$genomic_align_block);
-
-
-  
-verbose(0);
-
-debug("Test Bio::EnsEMBL::Compara::DBSQL::GenomicAlignBlockAdaptor->fetch_all_by_Slice method");
-  $slice = $slice_adaptor->fetch_by_region(
-          $slice_coord_system_name,
-          $slice_seq_region_name,
-          $slice_start,
-          $slice_end
-      );
-  $all_genomic_align_blocks = $genomic_align_block_adaptor->fetch_all_by_Slice(
-      $method_link_species_set, $slice);
-  do {
-    my $all_fails;
-    foreach my $this_genomic_align_block (@{$all_genomic_align_blocks}) {
-      my $fail = $this_genomic_align_block->dbID;
-      foreach my $that_genomic_align_block_id (@$all_genomic_align_block_ids) {
-        if ($that_genomic_align_block_id == $this_genomic_align_block->dbID) {
-          $fail = undef;
-          last;
-        }
-      }
-      $all_fails .= " <$fail> " if ($fail);
-    }
-    ok($all_fails, undef);
-  };
-
-debug("Test Bio::EnsEMBL::Compara::DBSQL::GenomicAlignBlockAdaptor->fetch_all_by_DnaFrag method");
-  $all_genomic_align_blocks = $genomic_align_block_adaptor->fetch_all_by_DnaFrag(
-      $method_link_species_set, $dnafrag_id, $dnafrag_start, $dnafrag_end);
-  do {
-    my $all_fails;
-    foreach my $this_genomic_align_block (@{$all_genomic_align_blocks}) {
-      my $fail = $this_genomic_align_block->dbID;
-      foreach my $that_genomic_align_block_id (@$all_genomic_align_block_ids) {
-        if ($that_genomic_align_block_id == $this_genomic_align_block->dbID) {
-          $fail = undef;
-          last;
-        }
-      }
-      $all_fails .= " <$fail> " if ($fail);
-    }
-    ok($all_fails, undef);
-  };
-
-debug("Test Bio::EnsEMBL::Compara::DBSQL::GenomicAlignBlockAdaptor->fetch_all_by_Slice method");
-  $slice = $slice_adaptor->fetch_by_region(
-          $slice_coord_system_name,
-          $slice_seq_region_name,
-          $slice_start,
-          $slice_end
-      );
-  $all_genomic_align_blocks = $genomic_align_block_adaptor->fetch_all_by_Slice(
-      $method_link_species_set_id, $slice);
-  do {
-    my $all_fails;
-    foreach my $this_genomic_align_block (@{$all_genomic_align_blocks}) {
-      my $fail = $this_genomic_align_block->dbID;
-      foreach my $that_genomic_align_block_id (@$all_genomic_align_block_ids) {
-        if ($that_genomic_align_block_id == $this_genomic_align_block->dbID) {
-          $fail = undef;
-          last;
-        }
-      }
-      $all_fails .= " <$fail> " if ($fail);
-    }
-    ok($all_fails, undef);
-  };
-
-debug("Test Bio::EnsEMBL::Compara::DBSQL::GenomicAlignBlockAdaptor->fetch_all_by_DnaFrag method");
-  $all_genomic_align_blocks = $genomic_align_block_adaptor->fetch_all_by_DnaFrag(
-      $method_link_species_set_id, $dnafrag_id, $dnafrag_start, $dnafrag_end);
-  do {
-    my $all_fails;
-    foreach my $this_genomic_align_block (@{$all_genomic_align_blocks}) {
-      my $fail = $this_genomic_align_block->dbID;
-      foreach my $that_genomic_align_block_id (@$all_genomic_align_block_ids) {
-        if ($that_genomic_align_block_id == $this_genomic_align_block->dbID) {
-          $fail = undef;
-          last;
-        }
-      }
-      $all_fails .= " <$fail> " if ($fail);
-    }
-    ok($all_fails, undef);
-  };
-
 
 exit 0;

@@ -66,7 +66,7 @@ use strict;
 
 BEGIN { $| = 1;  
     use Test;
-    plan tests => 76;
+    plan tests => 72;
 }
 
 use Bio::EnsEMBL::Utils::Exception qw (warning verbose);
@@ -159,7 +159,7 @@ my $slice_adaptor = $species_db->{"homo_sapiens"}->get_DBAdaptor("core")->get_Sl
 my $slice_coord_system_name = "chromosome";
 my $slice_seq_region_name = "14";
 my $slice_start = 50000000;
-my $slice_end = 50001000;
+my $slice_end = 50251000;
 
 # 
 # 1
@@ -282,8 +282,8 @@ debug("Test Bio::EnsEMBL::Compara::GenomicAlignBlock->reference_genomic_align me
           $slice_start,
           $slice_end
       );
-  $genomic_align_blocks = $genomic_align_block_adaptor->fetch_all_by_Slice(
-          $method_link_species_set_id,
+  $genomic_align_blocks = $genomic_align_block_adaptor->fetch_all_by_MethodLinkSpeciesSet_Slice(
+          $method_link_species_set,
           $slice
       );
   ok($genomic_align_blocks->[0]->reference_genomic_align->isa("Bio::EnsEMBL::Compara::GenomicAlign"));
@@ -513,7 +513,7 @@ ok( $st->dnafrag_strand, -1 );
 ok( $st->cigar_line, 'm/M/');
 
 my $res = $genomic_align_block->get_all_non_reference_genomic_aligns->[0];
-ok( $res->dnafrag_strand, -1 );
+ok( $res->dnafrag_strand, 1 );
 ok( $res->cigar_line, 'm/M/');
 
 debug("Test Bio::EnsEMBL::Compara::GenomicAlignBlock->get_all_ungapped_GenomicAlignBlocks method");
@@ -527,7 +527,7 @@ do {
   my $sequences;
   my $num_of_gaps = 0;
   foreach my $genomic_align (@{$genomic_align_block->genomic_align_array}) {
-    $num_of_gaps = $genomic_align->cigar_line =~ tr/IDG/IDG/;
+    $num_of_gaps += $genomic_align->cigar_line =~ tr/IDG/IDG/;
     push(@$sequences, $genomic_align->aligned_sequence);
   }
   my $lengths;
@@ -547,7 +547,7 @@ do {
   my $ungapped_genomic_align_blocks = $genomic_align_block->get_all_ungapped_GenomicAlignBlocks();
   ## This GenomicAlignBlock contains 7 ungapped GenomicAlignBlocks
   ok(scalar(@$ungapped_genomic_align_blocks), ($num_of_gaps+1),
-      "Number of ungapped GenomicAlignBlocks (assuming normal pairwise alignments)");
+      "Number of ungapped GenomicAlignBlocks (assuming normal pairwise alignments): ".$genomic_align_block->dbID);
   foreach my $ungapped_gab (@$ungapped_genomic_align_blocks) {
     my $this_length = shift @$lengths;
     ## This ok() is executed 7 times!!
@@ -666,70 +666,5 @@ ok($genomic_align_block->reference_genomic_align_id, $genomic_align_block->get_a
 ok($genomic_align_block->reference_genomic_align);
 ok($genomic_align_block->genomic_align_array);
 
-
-#####################################################################
-## TEST DEPRECATED METHODS
-
-do {
-
-verbose("EXCEPTION");
-
-
-debug("Test Bio::EnsEMBL::Compara::GenomicAlignBlock->starting_genomic_align_id method");
-  $genomic_align_block = new Bio::EnsEMBL::Compara::GenomicAlignBlock(
-          -adaptor => $genomic_align_block_adaptor,
-          -dbID => $genomic_align_block_id,
-      );
-  $genomic_align_block->starting_genomic_align_id(0);
-  ok($genomic_align_block->starting_genomic_align, undef);
-
-debug("Test Bio::EnsEMBL::Compara::GenomicAlignBlock->starting_genomic_align method");
-  my $slice = $slice_adaptor->fetch_by_region(
-          $slice_coord_system_name,
-          $slice_seq_region_name,
-          $method_link_species_set_id,
-          $slice
-      );
-  ok($genomic_align_blocks->[0]->starting_genomic_align->isa("Bio::EnsEMBL::Compara::GenomicAlign"));
-
-debug("Test Bio::EnsEMBL::Compara::GenomicAlignBlock->resulting_genomic_aligns method");
-  my $first_starting_genomic_align_id = $genomic_align_blocks->[0]->starting_genomic_align->dbID;
-  my $second_starting_genomic_align_id = $genomic_align_blocks->[0]->resulting_genomic_aligns->[0]->dbID;
-  $genomic_align_blocks->[0]->starting_genomic_align_id($second_starting_genomic_align_id);
-  ok($genomic_align_blocks->[0]->starting_genomic_align->dbID, $second_starting_genomic_align_id);
-
-debug("Test Bio::EnsEMBL::Compara::GenomicAlignBlock->requesting_slice method");
-  $genomic_align_blocks = $genomic_align_block_adaptor->fetch_all_by_MethodLinkSpeciesSet_Slice(
-          $method_link_species_set,
-          $slice
-      );
-  ok($genomic_align_blocks->[0]->requesting_slice, $slice);
-
-debug("Test Bio::EnsEMBL::Compara::GenomicAlignBlock->requesting_slice_start method");
-  ok($genomic_align_blocks->[0]->requesting_slice_start,
-    $genomic_align_blocks->[0]->reference_genomic_align->dnafrag_start - $slice->start + 1);
-
-debug("Test Bio::EnsEMBL::Compara::GenomicAlignBlock->requesting_slice_start method");
-  $genomic_align_blocks->[0]->requesting_slice_start(0);
-  ok($genomic_align_blocks->[0]->requesting_slice_start, undef);
-
-debug("Test Bio::EnsEMBL::Compara::GenomicAlignBlock->requesting_slice_start method");
-  $genomic_align_blocks->[0]->requesting_slice_start(100);
-  ok($genomic_align_blocks->[0]->requesting_slice_start, 100);
-
-debug("Test Bio::EnsEMBL::Compara::GenomicAlignBlock->requesting_slice_end method");
-  ok($genomic_align_blocks->[0]->requesting_slice_end,
-    $genomic_align_blocks->[0]->reference_genomic_align->dnafrag_end - $slice->start + 1);
-
-debug("Test Bio::EnsEMBL::Compara::GenomicAlignBlock->requesting_slice_end method");
-  $genomic_align_blocks->[0]->requesting_slice_end(0);
-  ok($genomic_align_blocks->[0]->requesting_slice_end, undef);
-
-debug("Test Bio::EnsEMBL::Compara::GenomicAlignBlock->requesting_slice_end method");
-  $genomic_align_blocks->[0]->requesting_slice_end(1000);
-  ok($genomic_align_blocks->[0]->requesting_slice_end, 1000);
-
-
-};
 
 exit 0;

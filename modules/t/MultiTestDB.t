@@ -70,7 +70,7 @@ BEGIN { $| = 1; plan tests => 8 }
 
 use Bio::EnsEMBL::Test::MultiTestDB;
 
-my $num_of_species = 17;
+my $num_of_species = 19;
 
 # Database will be dropped when this
 # object goes out of scope
@@ -111,13 +111,13 @@ ok(scalar($sth->rows), $num_of_species,
 
 
 # delete 1 entry from the db
-$sth = $dba->dbc->prepare("delete from genome_db where genome_db_id = $num_of_species");
+$sth = $dba->dbc->prepare("delete from genome_db where name = 'Homo sapiens'");
 $sth->execute;
 
 $sth = $dba->dbc->prepare("select * from genome_db");
 $sth->execute;
 ok(scalar($sth->rows), ($num_of_species - 1),
-    "Checking the number of species present in the copy table after deleting the last entry");
+    "Checking the number of species present in the copy table after deleting the human entry");
 
 
 # check to see whether the restore works again

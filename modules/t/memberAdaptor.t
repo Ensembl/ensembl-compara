@@ -36,39 +36,48 @@ my $ma = $compara_dba->get_MemberAdaptor;
 #  1  #
 #######
 
+my ($member_id, $stable_id, $version, $source_name, $taxon_id, $genome_db_id, $sequence_id,
+    $gene_member_id, $description, $chr_name, $chr_start, $chr_end, $chr_strand) =
+        $compara_dba->dbc->db_handle->selectrow_array("SELECT * FROM member WHERE stable_id = 'ENSG00000119787'");
+
 my $member = $ma->fetch_by_source_stable_id("ENSEMBLGENE","ENSG00000119787");
 
 ok($member);
-ok( $member->dbID,  493261);
-ok( $member->stable_id, "ENSG00000119787" );
-ok( $member->version, 3 );
-ok( $member->description, "NULL" );
-ok( $member->source_name, "ENSEMBLGENE" );
+ok( $member->dbID,  $member_id);
+ok( $member->stable_id, $stable_id );
+ok( $member->version, $version );
+ok( $member->description, $description );
+ok( $member->source_name, $source_name );
 ok( $member->adaptor->isa("Bio::EnsEMBL::Compara::DBSQL::MemberAdaptor") );
-ok( $member->chr_name, "2" );
-ok( $member->chr_start, 38434775 );
-ok( $member->chr_end, 38516066 );
-ok( $member->chr_strand, -1 );
-ok( $member->taxon_id, 9606 );
-ok( $member->genome_db_id, 1 );
+ok( $member->chr_name, $chr_name );
+ok( $member->chr_start, $chr_start );
+ok( $member->chr_end, $chr_end );
+ok( $member->chr_strand, $chr_strand );
+ok( $member->taxon_id, $taxon_id );
+ok( $member->genome_db_id, $genome_db_id );
 ok( ! $member->sequence_id );
+
+($member_id, $stable_id, $version, $source_name, $taxon_id, $genome_db_id, $sequence_id,
+    $gene_member_id, $description, $chr_name, $chr_start, $chr_end, $chr_strand) =
+        $compara_dba->dbc->db_handle->selectrow_array("SELECT * FROM member WHERE stable_id = 'ENSP00000013125'");
 
 $member = $ma->fetch_by_source_stable_id("ENSEMBLPEP","ENSP00000013125");
 
 ok($member);
-ok( $member->dbID,  258517);
-ok( $member->stable_id, "ENSP00000013125" );
-ok( $member->version, 2 );
-ok( $member->description, "Transcript:ENST00000013125 Gene:ENSG00000012983 Chr:14 Start:49954999 End:50069126");
-ok( $member->source_name, "ENSEMBLPEP" );
+ok( $member->dbID,  $member_id);
+ok( $member->stable_id, $stable_id );
+ok( $member->version, $version );
+ok( $member->description, $description );
+ok( $member->source_name, $source_name );
 ok( $member->adaptor->isa("Bio::EnsEMBL::Compara::DBSQL::MemberAdaptor") );
-ok( $member->chr_name, "14" );
-ok( $member->chr_start, 49956487 );
-ok( $member->chr_end, 50068517 );
-ok( $member->chr_strand, -1 );
-ok( $member->taxon_id, 9606 );
-ok( $member->genome_db_id, 1 );
-ok( $member->sequence_id, 150450 );
+ok( $member->chr_name, $chr_name );
+ok( $member->chr_start, $chr_start );
+ok( $member->chr_end, $chr_end );
+ok( $member->chr_strand, $chr_strand );
+ok( $member->taxon_id, $taxon_id );
+ok( $member->genome_db_id, $genome_db_id );
+ok( $member->sequence_id );
+
 
 $multi->hide('compara', 'member');
 $member->{'_dbID'} = undef;
