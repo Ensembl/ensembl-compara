@@ -125,10 +125,18 @@ sub _known_feature {
     if( scalar(@features) == 1){
       $self->problem('mapped_id', 'Re-Mapped Identifier', 'The identifer has been mapped to a synonym' );
     } else {
-      $self->problem('mapped_id', 'Multiple mapped IDs',  'This feature id maps to mutliple synonyms'  );
+      $self->problem('mapped_id', 'Multiple mapped IDs',  'This feature id maps to multiple synonyms'  );
     }
   } else {
-    $self->problem('fatal', "$type '$name' not found", "The identifier '$name' is not present in the current release of the Ensembl database. ")  ;
+    my $db_adaptor = $self->database(lc($db));
+    my $uoa = $db_adaptor->get_UnmappedObjectAdaptor;
+    eval { @features = @{$uoa->fetch_by_identifier($name)}; };
+    if (!$@ && @features) {
+      $self->problem('unmapped');
+    }
+    else {
+      $self->problem('fatal', "$type '$name' not found", "The identifier '$name' is not present in the current release of the Ensembl database. ")  ;
+    }
   }
   return;
 }
