@@ -40,7 +40,7 @@ sub draw {
     my $end = $feature->{'end'};
     my $pix_per_bp = $feature->{'pix_per_bp'};
     my $y_offset = $feature->{'y_offset'};
-   
+
     my $linecolour = $style->{'fgcolor'};
     my $fillcolour = $style->{'bgcolor'} || $style->{'colour'};
     $linecolour ||= $fillcolour;
@@ -79,9 +79,9 @@ sub draw {
     }
     elsif($direction eq 'W'){ # <|
 	push @$points, (
-	    $start_x, $y_offset,
-	    $start_x - $width, $y_offset + $height/2,
-	    $start_x, $y_offset + $height,
+	    $start_x + $width, $y_offset,
+	    $start_x, $y_offset + $height/2,
+	    $start_x + $width, $y_offset + $height,
 	);
     }
     elsif($direction eq 'S'){ # V 
