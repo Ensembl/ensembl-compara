@@ -71,6 +71,8 @@ sub RENDER_simple {
 
   # flag to indicate if not all features have been displayed 
   my $more_features = 0;
+  my $label_height = 0;
+  my $total_track_height = 0;
 
   foreach my $f( sort { 
     my $c=0;
@@ -109,7 +111,7 @@ sub RENDER_simple {
     if( $configuration->{'depth'} > 0 ) {
       $row = $self->bump( $START, $END, $label_length, $configuration->{'depth'} );
       if( $row < 0 ) { ## SKIP IF BUMPED...
-	  $more_features = 1;
+	  $more_features ++;
 	  next;
       }
     } 
@@ -178,6 +180,7 @@ sub RENDER_simple {
     # Draw feature symbol
     my $symbol = $self->get_symbol ($style, $fdata, $y_offset);
     $self->push($symbol->draw);
+    $total_track_height = $y_offset if ($total_track_height < $y_offset);
   }
 
     # Offset label coords by which row we're on
@@ -188,12 +191,13 @@ sub RENDER_simple {
 
   $self->errorTrack( 'No '.$self->{'extras'}->{'caption'}.' features in this region' ) if $empty_flag;
 
-  if($more_features) {
+    if($more_features) {
     # There are more features to display : show the note
-      my $yx = $configuration->{'depth'};
+      my $yx =   2 * ($configuration->{'h'} + $label_height) + $total_track_height;
+
       my $ID = 'There are more '.$self->{'extras'}->{'label'}.' features in this region. Increase source depth to view them all ';
-      $self->errorTrack($ID, undef, $configuration->{'tstrand'}*($configuration->{'h'}) * $yx);
-  }    
+      $self->errorTrack($ID, undef, $yx);
+    }    
 
   return $empty_flag ? 0 : 1 ;
 
@@ -206,6 +210,8 @@ sub RENDER_grouped {
 
   my $old_end = -1e9;
   my $empty_flag = 1;
+  my $label_height = 0;
+  my $total_track_height = 0;
 
   ## Loop over features and hash into groups
   foreach my $f (@{$configuration->{'features'}}){
@@ -275,10 +281,10 @@ sub RENDER_grouped {
     my $row = $configuration->{'depth'} > 0 ? $self->bump( $START, $end, $label_length, $configuration->{'depth'} ) : 0;
 
     if( $row < 0 ) { ## SKIP IF BUMPED...
-	$more_features = 1;
+	$more_features ++;
 	next;
     }
-
+    
     my $groupsize = scalar @feature_group;
     
     my( $href, $zmenu ) = $f->das_group_id ? $self->gmenu( $f, $groupsize ) : $self->zmenu( $f);
@@ -314,7 +320,7 @@ sub RENDER_grouped {
     my $orig_groupstyle_line = $groupstyle->{'attrs'}{'style'};
 
     # Draw label
-    my $label_height =$self->feature_label( $Composite, 
+    $label_height =$self->feature_label( $Composite, 
 					    $label, 
 					    $colour, 
 					    $row_height,
@@ -324,7 +330,7 @@ sub RENDER_grouped {
 					   );
 
     my $y_offset = - $configuration->{'tstrand'}*($row_height+2+$label_height) * $row;
-
+    
     if( ( "@{[$f->das_group_type]} @{[$f->das_type_id()]}" ) =~ /(summary)/i) { 
 
 	# Special case for viewing summary non-positional features (i.e. gene
@@ -389,7 +395,11 @@ sub RENDER_grouped {
 
 	# update 'from' for next time around
 	$from = $symbol->feature->{'end'} unless $from > $symbol->feature->{'end'};
+
     }
+    
+
+    $total_track_height = $y_offset if ($total_track_height < $y_offset);
 
     #now take symols from the temporary stack to draw in order of their zindex....
     @tmpsymbolstack = sort{ 
@@ -412,10 +422,11 @@ sub RENDER_grouped {
 
     if($more_features) {
     # There are more features to display : show the note
-         my $yx = $configuration->{'depth'};
-         my $ID = 'There are more '.$self->{'extras'}->{'caption'}.' features in this region. Increase source depth to view them all ';
-         $self->errorTrack($ID, undef, $configuration->{'tstrand'}*($configuration->{'h'}) * $yx);
-      }    
+      my $yx =   2 * ($configuration->{'h'} + $label_height) + $total_track_height;
+
+      my $ID = 'There are more '.$self->{'extras'}->{'label'}.' features in this region. Increase source depth to view them all ';
+      $self->errorTrack($ID, undef, $yx);
+    }    
 
   return 1; ## We have rendered at least one feature....
 }   # END RENDER_grouped
@@ -565,6 +576,7 @@ sub gmenu{
       }
       
       $zmenu->{"$ids:&nbsp;&nbsp;NOTES:  ". join('<br />', @{$group->{'note'}}) } = '' if ($group->{'note'});
+
       $ids ++;
   }
 
