@@ -591,6 +591,39 @@ sub method_link_species_set_id {
 }
 
 
+=head2 genome_db
+
+  Arg [1]    : Bio::EnsEMBL::Compara::GenomeDB $genome_db
+  Example    : $genome_db = $genomic_align->genome_db;
+  Example    : $genomic_align->genome_db($genome_db);
+  Description: Getter/Setter for the attribute genome_db of
+               the dnafrag. This method is a short cut for
+               $genomic_align->dnafrag->genome_db()
+  Returntype : Bio::EnsEMBL::Compara::DnaFrag object
+  Exceptions : thrown if $genomic_align->dnafrag is not
+               defined and cannot be fetched from other
+               sources.
+  Caller     : object->methodname
+
+=cut
+
+sub genome_db {
+  my ($self, $genome_db) = @_;
+
+  if (defined($genome_db)) {
+    throw("$genome_db is not a Bio::EnsEMBL::Compara::GenomeDB object")
+        if (!UNIVERSAL::isa($genome_db, "Bio::EnsEMBL::Compara::GenomeDB"));
+    my $dnafrag = $self->dnafrag();
+    if (!$dnafrag) {
+      throw("Cannot set genome_db if dnafrag does not exist");
+    } else {
+      $self->dnafrag->genome_db($genome_db);
+    }
+  }
+  return $self->dnafrag->genome_db;
+}
+
+
 =head2 dnafrag
 
   Arg [1]    : Bio::EnsEMBL::Compara::DnaFrag $dnafrag
