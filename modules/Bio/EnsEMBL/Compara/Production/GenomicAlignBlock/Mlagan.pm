@@ -248,7 +248,7 @@ sub dumpFasta {
 sub build_tree_string {
   my $self = shift;
   my $tree_file = $self->tree_file;
-  open F, $tree_file || throw("Can not open $tree_file");
+  open(F, $tree_file) or throw("Can not open $tree_file");
   my $newick = "";
   while (<F>) {
     chomp;
@@ -287,6 +287,9 @@ sub update_node_names {
       $leaf->disavow_parent;
       $tree = $tree->minimize_tree;
     }
+  }
+  if (@{$tree->get_all_leaves} != scalar(values %{$self->{'_dnafrag_regions'}})) {
+    throw("Tree has a wrong number of leaves after updating the node names");
   }
   if ($tree->get_child_count == 1) {
     my $child = $tree->children->[0];
