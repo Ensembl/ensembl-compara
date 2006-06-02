@@ -10,8 +10,8 @@
 <h2>Database Schema</h2>
 
 <p>
-This document refers to the schema of the EnsEMBL Compara version <strong>26.1</strong>.
-This is the revision <strong>0.3</strong> of this document.
+This document refers to the schema of the EnsEMBL Compara version <strong>39</strong>.
+This is the revision <strong>0.4</strong> of this document.
 </p>
 
 
@@ -34,27 +34,18 @@ It also includes a list of syntenic regions.
 
 <li>
 <p>
-<strong>Othologues and Protein Clusters or Families</strong> -
-This part contains several types of data.
+<strong>Homologues and Families (or Protein Clusters)</strong> -
+This part is dedicated to protein-protein alignments and it includes protein families, protein trees and homologues defined from the protein trees.
 </p>
 
 <p>
-The first one corresponds to a list of protein orthologues.
-By now, for each gene, only the longest peptide is considered for homology search. 
-Only pairwise comparisons are taken into account. 
-In principle, only Best Reciprocal Hits (BRH) are considered. 
-Nevertheless extra orthologous relationships are found taking into account the gene order conservation of neighbour genes (RHS, Reciprocal Hit based on Synteny around BRH). 
-Additionally, in Human vs. Chimp relationships may be found Derived from Whole Genome Alignment (DWGA).
+The protein families are clusters of proteins. They are defined using the full set of Ensembl proteins plus all the metazoan proteins from SwissProt and SPTrEMBL.
 </p>
 
 <p>
-Another part is dedicated to protein clusters (or families). 
-In this case, Metazoan entries of the UniProt/TrEMBL database are also taken into account in order to annotate the clusters.
+The protein trees are built using the longest transcript of each protein coding Ensembl gene. Homologies are derived from them.
 </p>
 
-<p>
-A third part is planed for domain alignments but is not used by now.
-</p>
 </li>
 
 </ul>
@@ -70,8 +61,10 @@ A third part is planed for domain alignments but is not used by now.
 
 <ul>
 <li><a href="#meta">meta</a></li>
-<li><a href="#taxon">taxon</a></li>
+<li><a href="#ncbi_taxa_node">ncbi_taxa_node</a></li>
+<li><a href="#ncbi_taxa_name">ncbi_taxa_name</a></li>
 <li><a href="#genome_db">genome_db</a></li>
+<li><a href="#species_set">species_set</a></li>
 <li><a href="#method_link">method_link</a></li>
 <li><a href="#method_link_species_set">method_link_species_set</a></li>
 </ul>
@@ -185,32 +178,32 @@ A third part is planed for domain alignments but is not used by now.
 
 </table>
 
-<p>Current values are:</p>
+<p>Meta table stores miscelaneous values:</p>
 
 <pre>
-mysql> SELECT * FROM meta;
-+---------+----------------------+------------+
-| meta_id | meta_key             | meta_value |
-+---------+----------------------+------------+
-|       1 | max_alignment_length | 108838     |
-+---------+----------------------+------------+
+mysql> SELECT * FROM meta WHERE meta_key = "schema_version";
++---------+----------------+------------+
+| meta_id | meta_key       | meta_value |
++---------+----------------+------------+
+|       1 | schema_version | 39         |
++---------+----------------+------------+
 </pre>
 
-<p>max_alignment_length is used in the perl API GenomicAlignAdaptor.pm to speed up the data query.</p>
+<p>This entry defines which API version must be used to access this database.</p>
 
 
 <!--
 #####################################################################
-  TABLE TAXON
+  TABLE NCBI_TAXA_NODE
 #####################################################################
  -->
 
-<h4 id="taxon">taxon</h4>
+<h4 id="ncbi_taxa_node">ncbi_taxa_node</h4>
 
-<p>Contains all taxa used in this database.</p>
+<p>Contains a description of the taxonomic relathionships between all the taxa used in this database.</p>
 
 <table class="spreadsheet">
-<caption>taxon table description</caption>
+<caption>ncbi_taxa_node table description</caption>
 <thead>
 <tr>
 <th>Field</th>
@@ -228,91 +221,195 @@ mysql> SELECT * FROM meta;
 <td>taxon_id</td>
 <td>int(10) unsigned</td>
 <td></td>
-<td>PRI</td>
+<td>MUL</td>
 <td>0</td>
 <td></td>
-<td>unique ID</td>
+<td>the NCBI taxonomy ID</td>
 </tr>
 
 <tr>
-<td>genus</td>
-<td>varchar(50)</td>
+<td>parent_id</td>
+<td>int(10) unsigned</td>
+<td></td>
+<td>MUL</td>
+<td>0</td>
+<td></td>
+<td>the parent taxonomy ID for this node (refers to ncbi_taxa_node.taxon_id)</td>
+</tr>
+
+<tr>
+<td>rank</td>
+<td>char(32)</td>
 <td>YES</td>
 <td>MUL</td>
 <td>NULL</td>
 <td></td>
-<td>e.g. Homo</td>
+<td>e.g. kingdom, family, genus, etc.</td>
 </tr>
 
 <tr>
-<td>species</td>
-<td>varchar(50)</td>
-<td>YES</td>
+<td>genbank_hidden_flag</td>
+<td>tinyint(1)</td>
 <td></td>
-<td>NULL</td>
 <td></td>
-<td>e.g. sapiens</td>
+<td>0</td>
+<td></td>
+<td>boolean value which defines whether this rank is used or not in the abbreviated lineage</td>
 </tr>
 
 <tr>
-<td>sub_species</td>
-<td>varchar(50)</td>
-<td>YES</td>
-<td></td>
-<td>NULL</td>
+<td>left_index</td>
+<td>int(10)</td>
 <td></td>
 <td></td>
+<td>0</td>
+<td></td>
+<td>sub-set left index. All sub-nodes have left_index and right_index values larger than this left_index</td>
 </tr>
 
 <tr>
-<td>common_name</td>
-<td>varchar(100)</td>
-<td>YES</td>
-<td>MUL</td>
-<td>NULL</td>
+<td>right_index</td>
+<td>int(10)</td>
 <td></td>
-<td>e.g. Human</td>
+<td></td>
+<td>0</td>
+<td></td>
+<td>sub-set right index. All sub-nodes have left_index and right_index values smaller than this right_index</td>
 </tr>
 
 <tr>
-<td>classification</td>
-<td>mediumtext</td>
-<td>YES</td>
+<td>root_id</td>
+<td>int(10)</td>
 <td></td>
-<td>NULL</td>
 <td></td>
-<td>Full taxonomic classification</td>
+<td>1</td>
+<td></td>
+<td>the root taxonomy ID for this node (refers to ncbi_taxa_node.taxon_id)</td>
 </tr>
 </tbody>
 </table>
 
-<p>E.g. the rows</p>
+<p>(c.f. <a href="#ncbi_taxa_name">ncbi_taxa_name</a> for examples)</p>
+
+
+
+
+<!--
+#####################################################################
+  TABLE NCBI_TAXA_NAME
+#####################################################################
+ -->
+
+<h4 id="ncbi_taxa_name">ncbi_taxa_name</h4>
+
+<p>Contains descriptions the taxonimc nodes defined in the <a href="ncbi_taxa_node">ncbi_taxa_node</a> table.</p>
+
+<table class="spreadsheet">
+<caption>ncbi_taxa_name table description</caption>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Null</th>
+<th>Key</th>
+<th>Default</th>
+<th>Extra</th>
+<th>Description</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>taxon_id</td>
+<td>int(10) unsigned</td>
+<td></td>
+<td>MUL</td>
+<td>0</td>
+<td></td>
+<td>external reference to <a href="ncbi_taxa_node">ncbi_taxa_node.taxon_id</a></td>
+</tr>
+
+<tr>
+<td>name</td>
+<td>varchar(255)</td>
+<td>YES</td>
+<td>MUL</td>
+<td>NULL</td>
+<td></td>
+<td>information assigned to this taxon_id</td>
+</tr>
+
+<tr>
+<td>name_class</td>
+<td>varchar(255)</td>
+<td>YES</td>
+<td>MUL</td>
+<td>NULL</td>
+<td></td>
+<td>type of information. e.g. common name, genbank_synonym, scientif name, etc.</td>
+</tr>
+
+</tbody>
+</table>
+
+<p>Here is an example on how to get the taxonomic ID for a species:</p>
 
 <pre>
-mysql> SELECT * FROM taxon WHERE taxon_id IN (9031, 9606);
-+----------+--------+---------+-------------+-------------+-...
-| taxon_id | genus  | species | sub_species | common_name |
-+----------+--------+---------+-------------+-------------+-...
-|     9031 | Gallus | gallus  | NULL        | Chicken     |
-|     9606 | Homo   | sapiens | NULL        | Human       |
-+----------+--------+---------+-------------+-------------+-...
-
- ...-+-------------------------------------------------------------------...
-     | classification
- ...-+-------------------------------------------------------------------...
-     | gallus Gallus Phasianinae Phasianidae Galliformes Neognathae Aves
-     | sapiens Homo Hominidae Catarrhini Primates Eutheria Mammalia
- ...-+-------------------------------------------------------------------...
-
- ...-------------------------------------------------------------------------+
-                                                                             |
- ...-------------------------------------------------------------------------+
-     Archosauria Euteleostomi Vertebrata Craniata Chordata Metazoa Eukaryota |
-     Euteleostomi Vertebrata Craniata Chordata Metazoa Eukaryota             |
- ...-------------------------------------------------------------------------+
+mysql> SELECT * FROM ncbi_taxa_name WHERE name_class = "scientific name"
+AND name = "Homo sapiens";
++----------+--------------+-----------------+
+| taxon_id | name         | name_class      |
++----------+--------------+-----------------+
+|     9606 | Homo sapiens | scientific name |
++----------+--------------+-----------------+
 </pre>
 
-<p>correspond to the Chicken and the Human species.</p>
+<p>Here is another example on how to get the lineage for the hominidae family:</p>
+
+<pre>
+mysql> SELECT * FROM ncbi_taxa_name WHERE name_class = "scientific name"
+AND name = "Hominidae";
++----------+-----------+-----------------+
+| taxon_id | name      | name_class      |
++----------+-----------+-----------------+
+|     9604 | Hominidae | scientific name |
++----------+-----------+-----------------+
+
+mysql> SELECT * FROM ncbi_taxa_node WHERE taxon_id = 9604;
++----------+-----------+--------+---------------------+------------+-------------+---------+
+| taxon_id | parent_id | rank   | genbank_hidden_flag | left_index | right_index | root_id |
++----------+-----------+--------+---------------------+------------+-------------+---------+
+|     9604 |    314295 | family |                   0 |     351172 |      351217 |       1 |
++----------+-----------+--------+---------------------+------------+-------------+---------+
+
+mysql> SELECT * FROM ncbi_taxa_node WHERE left_index &gt; 351172 AND left_index &lt; 351217;
++----------+-----------+------------+---------------------+------------+-------------+---------+
+| taxon_id | parent_id | rank       | genbank_hidden_flag | left_index | right_index | root_id |
++----------+-----------+------------+---------------------+------------+-------------+---------+
+|     9592 |    207598 | genus      |                   0 |     351184 |      351195 |       1 |
+|     9593 |      9592 | species    |                   1 |     351185 |      351194 |       1 |
+|     9594 |      9593 | subspecies |                   1 |     351188 |      351189 |       1 |
+|     9595 |      9593 | subspecies |                   1 |     351192 |      351193 |       1 |
+|     9596 |    207598 | genus      |                   0 |     351202 |      351215 |       1 |
+|     9597 |      9596 | species    |                   1 |     351213 |      351214 |       1 |
+|     9598 |      9596 | species    |                   1 |     351203 |      351212 |       1 |
+|     9599 |      9604 | genus      |                   0 |     351173 |      351182 |       1 |
+|     9600 |      9599 | species    |                   1 |     351174 |      351179 |       1 |
+|     9601 |      9600 | subspecies |                   1 |     351177 |      351178 |       1 |
+|     9602 |      9600 | subspecies |                   1 |     351175 |      351176 |       1 |
+|     9603 |      9599 | species    |                   1 |     351180 |      351181 |       1 |
+|     9605 |    207598 | genus      |                   0 |     351196 |      351201 |       1 |
+|     9606 |      9605 | species    |                   1 |     351197 |      351200 |       1 |
+|    37010 |      9598 | subspecies |                   1 |     351208 |      351209 |       1 |
+|    37011 |      9598 | subspecies |                   1 |     351210 |      351211 |       1 |
+|    37012 |      9598 | subspecies |                   1 |     351204 |      351205 |       1 |
+|    46359 |      9593 | subspecies |                   1 |     351186 |      351187 |       1 |
+|    63221 |      9606 | subspecies |                   1 |     351198 |      351199 |       1 |
+|    91950 |      9598 | subspecies |                   1 |     351206 |      351207 |       1 |
+|   183511 |      9593 | subspecies |                   1 |     351190 |      351191 |       1 |
+|   207598 |      9604 | no rank    |                   1 |     351183 |      351216 |       1 |
++----------+-----------+------------+---------------------+------------+-------------+---------+
+</pre>
 
 
 <!--
@@ -357,7 +454,7 @@ mysql> SELECT * FROM taxon WHERE taxon_id IN (9031, 9606);
 <td></td>
 <td>0</td>
 <td></td>
-<td>external reference to <a href="#taxon">taxon.taxon_id</a></td>
+<td>external reference to <a href="#ncbi_taxa_node">ncbi_taxa_node.taxon_id</a></td>
 </tr>
 
 <tr>
@@ -417,24 +514,79 @@ assempbly version for a given species.</td>
 <p>Eg the rows:</p>
 
 <pre>
-mysql> SELECT * FROM genome_db WHERE genome_db_id IN (1, 11);
-+--------------+----------+-------------------------+------------+-...
-| genome_db_id | taxon_id | name                    | assembly   |
-+--------------+----------+-------------------------+------------+-...
-|            1 |     9606 | Homo sapiens            | NCBI34     |
-|           11 |     9031 | Gallus gallus           | WASHUC1    |
-+--------------+----------+-------------------------+------------+-...
-
-...-+------------------+---------------+---------+
-    | assembly_default | genebuild     | locator |
-...-+------------------+---------------+---------+
-    |                1 | 0405Ensembl   | NULL    |
-    |                1 | 0406Ensembl   | NULL    |
-...-+------------------+---------------+---------+
+mysql> SELECT * FROM genome_db WHERE name IN ("Homo sapiens", "Gallus gallus");
++--------------+----------+---------------+----------+------------------+-------------+---------+
+| genome_db_id | taxon_id | name          | assembly | assembly_default | genebuild   | locator |
++--------------+----------+---------------+----------+------------------+-------------+---------+
+|           11 |     9031 | Gallus gallus | WASHUC1  |                1 | 0512Ensembl | NULL    |
+|           22 |     9606 | Homo sapiens  | NCBI36   |                1 | 0510Ensembl | NULL    |
++--------------+----------+---------------+----------+------------------+-------------+---------+
 </pre>
 
 <p>correspond to the Human and Chicken genomes</p>
 
+
+<!--
+#####################################################################
+  TABLE SPECIES_SET
+#####################################################################
+ -->
+
+<h4 id="species_set">species_set</h4>
+
+<p>Contains groups or sets of species which are used in the
+<a href="#method_link_species_set">method_link_species_set</a> table.</p>
+
+<table class="spreadsheet">
+<caption>species_set table description</caption>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Null</th>
+<th>Key</th>
+<th>Default</th>
+<th>Extra</th>
+<th>Description</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>species_set_id</td>
+<td>int(10) unsigned</td>
+<td></td>
+<td>PRI</td>
+<td>NULL</td>
+<td>auto_increment</td>
+<td>internal (non-unique) ID</td>
+</tr>
+
+<tr>
+<td>genome_db_id</td>
+<td>int(10) unsigned</td>
+<td></td>
+<td>PRI</td>
+<td>0</td>
+<td></td>
+<td>external reference to <a href="genome_db">genome_db.genome_db_id</a></td>
+</tr>
+</tbody>
+</table>
+
+<p>E.g. the rows</p>
+
+<pre>
+mysql> SELECT * FROM species_set WHERE species_set_id = 181;
++----------------+--------------+
+| species_set_id | genome_db_id |
++----------------+--------------+
+|            181 |           11 |
+|            181 |           22 |
++----------------+--------------+
+</pre>
+
+<p>correspond to the species_set for the Human and Chicken genomes.</p>
 
 <!--
 #####################################################################
@@ -444,7 +596,7 @@ mysql> SELECT * FROM genome_db WHERE genome_db_id IN (1, 11);
 
 <h4 id="method_link">method_link</h4>
 
-<p>Contains the list of alignment methods used to find links (homologies) between DNA sequences.</p>
+<p>Contains the list of alignment methods used to find links (homologies) between entities in compara.</p>
 
 <table class="spreadsheet">
 <caption>method_link table description</caption>
@@ -498,13 +650,18 @@ mysql> SELECT * FROM method_link;
 |              6 | TRANSLATED_BLAT      |
 |              7 | BLASTZ_GROUP         |
 |              8 | BLASTZ_GROUP_TIGHT   |
+|              9 | MLAGAN               |
 |            101 | SYNTENY              |
 |            201 | ENSEMBL_ORTHOLOGUES  |
 |            202 | ENSEMBL_PARALOGUES   |
+|            204 | ENSEMBL_HOMOLOGUES   |
 |            301 | FAMILY               |
+|            401 | PROTEIN_TREES        |
 +----------------+----------------------+
 </pre>
 
+<p>We use method_link_ids between 1 and 100 for DNA-DNA alignments, between 101 and 200 for genomic syntenies,
+between 201 and 300 for protein homologies, between 301 and 400 for protein families and between 401 and 500 for protein trees. Each category corresponds to data stored in different tables</p>
 
 <!--
 #####################################################################
@@ -517,8 +674,8 @@ mysql> SELECT * FROM method_link;
 <p>
 This table contains information about the comparisons stored in the database.
 A given method_link_species_set_id exist for each comparison made and relates a
-<a href="#method_link">method_link.method_link_id</a> with a set of
-<a href="#genome_db">genome_db.genome_db_id</a>.
+<a href="#method_link">method_link.method_link_id</a> with a set of species
+(<a href="#species_set">species_set.species_set_id</a>.
 </p>
 
 <table class="spreadsheet">
@@ -543,7 +700,7 @@ A given method_link_species_set_id exist for each comparison made and relates a
 <td>MUL</td>
 <td>NULL</td>
 <td>auto_increment</td>
-<td>internal id.</td>
+<td>internal unique ID.</td>
 </tr>
 
 <tr>
@@ -557,13 +714,43 @@ A given method_link_species_set_id exist for each comparison made and relates a
 </tr>
 
 <tr>
-<td>genome_db_id</td>
+<td>species_set_id</td>
 <td>int(10) unsigned</td>
-<td>YES</td>
+<td></td>
+<td></td>
+<td>0</td>
+<td></td>
+<td>external reference to <a href="#species_set">species_set.species_set_id</a></td>
+</tr>
+
+<tr>
+<td>name</td>
+<td>varchar(255)</td>
+<td></td>
 <td></td>
 <td>NULL</td>
 <td></td>
-<td>external reference to <a href="#genome_db">genome_db.genome_db_id</a></td>
+<td>human-readable description for this method_link_species_set</td>
+</tr>
+
+<tr>
+<td>source</td>
+<td>varchar(255)</td>
+<td></td>
+<td></td>
+<td>ensembl</td>
+<td></td>
+<td>source of the data. Currently either ensembl or ucsc if data were imported from UCSC</td>
+</tr>
+
+<tr>
+<td>url</td>
+<td>varchar(255)</td>
+<td></td>
+<td></td>
+<td>NULL</td>
+<td></td>
+<td>A URL where you can find the orignal data if they were imported.</td>
 </tr>
 </tbody>
 </table>
@@ -571,19 +758,18 @@ A given method_link_species_set_id exist for each comparison made and relates a
 <p>E.g. the rows</p>
 
 <pre>
-mysql> SELECT * FROM method_link_species_set WHERE method_link_species_set_id = 71;
-+----------------------------+----------------+--------------+
-| method_link_species_set_id | method_link_id | genome_db_id |
-+----------------------------+----------------+--------------+
-|                         71 |              1 |            1 |
-|                         71 |              1 |           11 |
-+----------------------------+----------------+--------------+
+mysql> SELECT * FROM method_link_species_set WHERE method_link_id = 9;
++----------------------------+----------------+----------------+------------------------------+---------+-----+
+| method_link_species_set_id | method_link_id | species_set_id | name                         | source  | url |
++----------------------------+----------------+----------------+------------------------------+---------+-----+
+|                        192 |              9 |          30003 | 5 eutherian mammals MLAGAN   | ensembl |     |
+|                        193 |              9 |          30004 | 7 amniota vertebrates MLAGAN | ensembl |     |
+|                        214 |              9 |          30079 | 3 primates MLAGAN            | ensembl |     |
++----------------------------+----------------+----------------+------------------------------+---------+-----+
 </pre>
 
 <p>
-mean that BLASTZ_NET (<a href="#method_link">method_link_id</a> = 1) has been used for 
-linking all the species of this set: Human (<a href="#genome_db">genome_db_id</a> = 1) and 
-Chicken (<a href="#genome_db">genome_db_id</a> = 11).
+correspond to all the MLAGAN alignments in this database.
 </p>
 
 
@@ -683,20 +869,18 @@ It is also used by the
 <p>E.g. the row</p>
 
 <pre>
-mysql> SELECT * FROM dnafrag WHERE dnafrag_id IN (19, 23227);
+mysql> SELECT dnafrag.* FROM dnafrag LEFT JOIN genome_db USING (genome_db_id) WHERE
+dnafrag.name = "14" AND genome_db.name = "Homo sapiens";
 +------------+-----------+------+--------------+-------------------+
 | dnafrag_id | length    | name | genome_db_id | coord_system_name |
 +------------+-----------+------+--------------+-------------------+
-|         19 | 105311216 | 14   |            1 | chromosome        |
-|      23227 |  56310377 | 5    |           11 | chromosome        |
+|     905410 | 106368585 | 14   |           22 | chromosome        |
 +------------+-----------+------+--------------+-------------------+
 </pre>
 
 <p>
-refer to the chromosome 14 of the Human genome (<a href="#genome_db">genome_db.genome_db_id</a> = 1 refers
-to Human genome in this example) which is 105311216 nucleotides length and to the chromosome 5 of the
-Chicken genome (<a href="#genome_db">genome_db.genome_db_id</a> = 11 refers to Chicken genome in this example)
-which is 56310377 nucleotides length.
+refer to the chromosome 14 of the Human genome (<a href="#genome_db">genome_db.genome_db_id</a> = 22 refers
+to Human genome in this example) which is 106368585 nucleotides long.
 </p>
 
 
@@ -787,19 +971,19 @@ Nevertheless, actual aligned sequences are defined in the
 <p>E.g. the row</p>
 
 <pre>
-mysql> SELECT * FROM genomic_align_block WHERE genomic_align_block_id = 5095912;
+mysql> SELECT * FROM genomic_align_block WHERE genomic_align_block_id = 2130000103409;
 +------------------------+----------------------------+-------+---------+--------+
 | genomic_align_block_id | method_link_species_set_id | score | perc_id | length |
 +------------------------+----------------------------+-------+---------+--------+
-|                5095912 |                         71 |  1102 |      60 |     53 |
+|          2130000103409 |                        213 |   992 |      53 |     71 |
 +------------------------+----------------------------+-------+---------+--------+
 </pre>
 
 <p>
 will refer to a BLASTZ_NET alignment between human and chicken genomes
-(<a href="#method_link_species_set">method_link_species_set.method_link_species_set_id</a> = 71)
-with a score of 1102, an identity of 60% and a length of 53 nucleotides. 
-The actual sequences corresponding to this aligment are defined in the 
+(<a href="#method_link_species_set">method_link_species_set.method_link_species_set_id</a> = 213)
+with a score of 992, an identity of 53% and a length of 71 nucleotides.
+The actual sequences corresponding to this aligment are defined in the
 <a href="#genomic_align">genomic_align</a> table.
 </p>
 
@@ -990,32 +1174,48 @@ are addiotional layers. Use for building the <a href="#synteny_region">syntenies
 <p>E.g. the rows</p>
 
 <pre>
-mysql> SELECT * FROM genomic_align WHERE genomic_align_block_id = 5095912;
+mysql> SELECT * FROM genomic_align WHERE genomic_align_block_id = 2130000103409;
 +------------------+------------------------+----------------------------+------------+-...
 | genomic_align_id | genomic_align_block_id | method_link_species_set_id | dnafrag_id |
 +------------------+------------------------+----------------------------+------------+-...
-|         10191817 |                5095912 |                         71 |      23227 |
-|         10191830 |                5095912 |                         71 |         19 |
+|    2130000206817 |          2130000103409 |                        213 |     905409 |
+|    2130000206818 |          2130000103409 |                        213 |      23206 |
 +------------------+------------------------+----------------------------+------------+-...
 
  ...-+---------------+-------------+----------------+------------+----------+
      | dnafrag_start | dnafrag_end | dnafrag_strand | cigar_line | level_id |
  ...-+---------------+-------------+----------------+------------+----------+
-     |      30021505 |    30021554 |              1 | 37M3D13M   |        2 |
-     |      25833506 |    25833558 |             -1 | 53M        |        2 |
+     |      10347506 |    10347576 |              1 | 71M        |        2 |
+     |        462910 |      462978 |              1 | 41M2D28M   |        2 |
  ...-+---------------+-------------+----------------+------------+----------+
 </pre>
 
 <p>
 correspond to both pieces of sequences included in the alignment described above (see
 <a href="#genomic_align_block">genomic_align_block</a> table description). 
-The first sequence includes the nucleotides from 30021505 to 30021554 in the forward 
-strand of the chromosome 5 of the Chicken genome
-(<a href="#dnafrag">dnafrag.dnafrag_id</a> = 23227). 
-The second sequence includes the nucleotides from 25833506 to 25833558 in the backward 
-strand of the chromosome 14 of the Human genome
-(<a href="#dnafrag">dnafrag.dnafrag_id</a> = 19).
+The first sequence includes the nucleotides from 10347506 to 10347576 in the forward 
+strand of the chromosome 17 of the Human genome
+(<a href="#dnafrag">dnafrag.dnafrag_id</a> = 905409).
+The second sequence includes the nucleotides from 462910 to 462978 in the forward
+strand of the chromosome 18 of the Chicken genome
+(<a href="#dnafrag">dnafrag.dnafrag_id</a> = 23206).
 </p>
+
+<p>Here is a better way to get this by joining the <a href="dnafrag">dnafrag</a>
+and <a href="#genome_db">genome_db</a> tables:
+</p>
+
+<pre>
+mysql> SELECT genome_db.name, dnafrag.name, dnafrag_start, dnafrag_end, dnafrag_strand, cigar_line
+FROM genomic_align LEFT JOIN dnafrag USING (dnafrag_id) LEFT JOIN genome_db USING (genome_db_id)
+WHERE genomic_align_block_id = 2130000103409;
++---------------+------+---------------+-------------+----------------+------------+
+| name          | name | dnafrag_start | dnafrag_end | dnafrag_strand | cigar_line |
++---------------+------+---------------+-------------+----------------+------------+
+| Homo sapiens  | 17   |      10347506 |    10347576 |              1 | 71M        |
+| Gallus gallus | 18   |        462910 |      462978 |              1 | 41M2D28M   |
++---------------+------+---------------+-------------+----------------+------------+
+</pre>
 
 <p>
 The aligned sequences can be rebuild using the original sequences fetched from the corresponding core
@@ -1083,43 +1283,29 @@ databases and the cigar lines as explained before.
 <p>E.g. the rows</p>
 
 <pre>
-mysql> SELECT * FROM genomic_align_group WHERE group_id = 64065;
-+----------+---------+------------------+
-| group_id | type    | genomic_align_id |
-+----------+---------+------------------+
-|    64065 | default |          1261387 |
-|    64065 | default |          1261382 |
-|    64065 | default |          1261429 |
-|    64065 | default |          1261422 |
-|    64065 | default |          8250806 |
-|    64065 | default |          8250793 |
-|    64065 | default |         10191710 |
-|    64065 | default |         10191697 |
-|    64065 | default |         10191750 |
-|    64065 | default |         10191737 |
-|    64065 | default |         10191789 |
-|    64065 | default |         10191778 |
-|    64065 | default |         10191830 |
-|    64065 | default |         10191817 |
-|    64065 | default |         10191868 |
-|    64065 | default |         10191856 |
-|    64065 | default |         10191909 |
-|    64065 | default |         10191896 |
-|    64065 | default |         11109668 |
-|    64065 | default |         11109655 |
-|    64065 | default |         14443871 |
-|    64065 | default |         14443860 |
-|    64065 | default |         19780097 |
-|    64065 | default |         19780088 |
-|    64065 | default |         22515872 |
-|    64065 | default |         22515866 |
-|    64065 | default |         23205949 |
-|    64065 | default |         23205943 |
-|    64065 | default |         31071852 |
-|    64065 | default |         31071843 |
-|    64065 | default |         54076401 |
-|    64065 | default |         54076402 |
-+----------+---------+------------------+
+mysql> SELECT * FROM genomic_align_group WHERE group_id = 2130000000314;
++---------------+---------+------------------+
+| group_id      | type    | genomic_align_id |
++---------------+---------+------------------+
+| 2130000000314 | default |    2130000205251 |
+| 2130000000314 | default |    2130000205252 |
+| 2130000000314 | default |    2130000205255 |
+| 2130000000314 | default |    2130000205253 |
+| 2130000000314 | default |    2130000206402 |
+| 2130000000314 | default |    2130000206401 |
+| 2130000000314 | default |    2130000206578 |
+| 2130000000314 | default |    2130000206577 |
+| 2130000000314 | default |    2130000206818 |
+| 2130000000314 | default |    2130000206817 |
+| 2130000000314 | default |    2130000207114 |
+| 2130000000314 | default |    2130000207113 |
+| 2130000000314 | default |    2130000207148 |
+| 2130000000314 | default |    2130000207147 |
+| 2130000000314 | default |    2130000207149 |
+| 2130000000314 | default |    2130000207150 |
+| 2130000000314 | default |    2130000207243 |
+| 2130000000314 | default |    2130000207244 |
++---------------+---------+------------------+
 </pre>
 
 <p>correspond to the group of several genomic_align in which the alignment described before is included.</p>
@@ -1170,33 +1356,22 @@ mysql> SELECT * FROM genomic_align_group WHERE group_id = 64065;
 <td>external reference to
 <a href="#method_link_species_set">method_link_species_set.method_link_species_set_id</a>.</td>
 </tr>
-
-<tr>
-<td>rel_orientation</td>
-<td>tinyint(1)</td>
-<td></td>
-<td></td>
-<td>1</td>
-<td></td>
-<td>1 when both regions are in the same orientation, 0 otherwise.</td>
-</tr>
 </tbody>
 </table>
 
 <p>E.g. the row</p>
 
 <pre>
-mysql> SELECT * FROM synteny_region WHERE synteny_region_id = 1849;
-+-------------------+-----------------+
-| synteny_region_id | rel_orientation |
-+-------------------+-----------------+
-|              1849 |               1 |
-+-------------------+-----------------+
+mysql> SELECT * FROM synteny_region WHERE synteny_region_id = 29099;
++-------------------+----------------------------+
+| synteny_region_id | method_link_species_set_id |
++-------------------+----------------------------+
+|             29099 |                      10007 |
++-------------------+----------------------------+
 </pre>
 
 <p>
-means that the syntenic region 1849 corresponds to a syntenic relationship where both genomic regions are in
-the same orientation. 
+means that the syntenic region 29099 corresponds to a syntenic relationship between the Human and Chicken genomes.
 See <a href="#dnafrag_region">dnafrag_region</a> table for more details.
 </p>
 
@@ -1268,33 +1443,54 @@ There are two genomic regions for every syntenic relationship.
 <td></td>
 <td>last nucleotide from this dnafrag which is in synteny</td>
 </tr>
+
+<tr>
+<td>dnafrag_strand</td>
+<td>tinyint(4)</td>
+<td></td>
+<td></td>
+<td>0</td>
+<td></td>
+<td>strand of this region</td>
+</tr>
 </tbody>
 </table>
 
 <p>E.g. the rows</p>
 
 <pre>
-mysql> SELECT * FROM dnafrag_region WHERE synteny_region_id = 1849;
-+-------------------+------------+---------------+--------------+
-| synteny_region_id | dnafrag_id | dnafrag_start | dnafrag_end  |
-+-------------------+------------+---------------+--------------+
-|              1849 |         19 |      23939018 |     37861860 |
-|              1849 |      23227 |      29431279 |     34526887 |
-+-------------------+------------+---------------+--------------+
+mysql> SELECT * FROM dnafrag_region WHERE synteny_region_id = 29099;
++-------------------+------------+---------------+-------------+----------------+
+| synteny_region_id | dnafrag_id | dnafrag_start | dnafrag_end | dnafrag_strand |
++-------------------+------------+---------------+-------------+----------------+
+|             29099 |      23206 |        281326 |     2819393 |             -1 |
+|             29099 |     905409 |       8236729 |    15175628 |              1 |
++-------------------+------------+---------------+-------------+----------------+
 </pre>
 
 <p>
-correspond to both genomic regions of the syntenic region 1849. 
-In this case, the first genomic region corresponds to the sequence from 
-23939018 to 37861860 of the chromosome 14 of the Human genome
-(<a href="#dnafrag">dnafrag_id</a> = 19 for this chromosome) and the
-second one corresponds to the sequence from 29431279 to 34526887 
-of the chromosome 5 of the Chicken genome
-(<a href="#dnafrag">dnafrag_id</a> = 23227 for this chromosome).
-Using the
-<a href="#synteny_region">synteny_region</a> table, we know that both syntenic regions are in the same orientation.
+correspond to both genomic regions of the syntenic region 29099.
+In this case, the first genomic region corresponds to the negative strand
+of the sequence from 281326 to 2819393 of the chromosome 18 of the Chicken genome
+(<a href="#dnafrag">dnafrag_id</a> = 23206 for this chromosome) and the
+second one corresponds to the sequence from 8236729 to 15175628
+of the chromosome 17 of the Human genome
+(<a href="#dnafrag">dnafrag_id</a> = 905409 for this chromosome).
 </p>
 
+<p>Here is a better way to get this by joining the <a href="dnafrag">dnafrag</a>
+and <a href="#genome_db">genome_db</a> tables:
+</p>
+
+<pre>A
+mysql> SELECT genome_db.name, dnafrag.name, dnafrag_start, dnafrag_end, dnafrag_strand FROM dnafrag_region LEFT JOIN dnafrag USING (dnafrag_id) LEFT JOIN genome_db USING (genome_db_id) WHERE synteny_region_id = 29099;
++---------------+------+---------------+-------------+----------------+
+| name          | name | dnafrag_start | dnafrag_end | dnafrag_strand |
++---------------+------+---------------+-------------+----------------+
+| Gallus gallus | 18   |        281326 |     2819393 |             -1 |
+| Homo sapiens  | 17   |       8236729 |    15175628 |              1 |
++---------------+------+---------------+-------------+----------------+
+</pre>
 
 <!--
 #####################################################################
@@ -1469,38 +1665,38 @@ instance.</td>
 <p>E.g. the row</p>
 
 <pre>
-mysql> SELECT * FROM member WHERE member_id = 1945;
-+-----------+--------------------+---------+-------------+----------+--------------+-------------+-...
-| member_id | stable_id          | version | source_name | taxon_id | genome_db_id | sequence_id |
-+-----------+--------------------+---------+-------------+----------+--------------+-------------+-...
-|      1945 | ENSGALP00000012979 |       1 | ENSEMBLPEP  |     9031 |           11 |        1121 |
-+-----------+--------------------+---------+-------------+----------+--------------+-------------+-...
+mysql> SELECT * FROM member WHERE stable_id = "ENSP00000309431";
++-----------+-----------------+---------+-------------+----------+--------------+-------------+-...
+| member_id | stable_id       | version | source_name | taxon_id | genome_db_id | sequence_id |
++-----------+-----------------+---------+-------------+----------+--------------+-------------+-...
+|    156982 | ENSP00000309431 |      31 | ENSEMBLPEP  |     9606 |           22 |      145811 |
++-----------+-----------------+---------+-------------+----------+--------------+-------------+-...
 
  ...-+----------------+-...
      | gene_member_id |
  ...-+----------------+-...
-     |           1932 |
+     |         156981 |
  ...-+----------------+-...
 
  ...-+---------------------------------------------------------------------------------------+-...
      | description                                                                           |
  ...-+---------------------------------------------------------------------------------------+-...
-     | Transcript:ENSGALT00000012994 Gene:ENSGALG00000008004 Chr:1 Start:8903413 End:8906606 |
+     | Transcript:ENST00000308911 Gene:ENSG00000173213 Chr:18 Start:37358 End:39626 |
  ...-+---------------------------------------------------------------------------------------+-...
 
  ...-+----------+-----------+---------+------------+
      | chr_name | chr_start | chr_end | chr_strand |
  ...-+----------+-----------+---------+------------+
-     | 1        |   8903413 | 8906606 |         -1 |
+     | 18       |     37390 |   39557 |         -1 |
  ...-+----------+-----------+---------+------------+
 
 
 </pre>
 
 <p>
-refers to the chicken (<a href="#taxon">taxon_id</a> = 9031 or <a href="#genome_db">genome_db_id</a> = 11)
-gene ENSGALP00000012979 which is located in the chromosome 1 (from 8903413 to 8906606, in the reverse strand).
-This gene is described as "Transcript:ENSGALT00000012994 Gene:ENSGALG00000008004 Chr:1 Start:8903413 End:8906606"
+refers to the human (<a href="#taxon">taxon_id</a> = 9606 or <a href="#genome_db">genome_db_id</a> = 22)
+peptide ENSP00000309431 which is located in the chromosome 18 (from 37390 to 39557, in the reverse strand).
+This peptide is described as "Transcript:ENST00000308911 Gene:ENSG00000173213 Chr:18 Start:37358 End:39626"
 and the sequence can be found in the <a href="#sequence">sequence</a> table.
 </p>
 
@@ -1543,16 +1739,6 @@ EnsEMBL Compara DB.
 </tr>
 
 <tr>
-<td>sequence</td>
-<td>longtext</td>
-<td>YES</td>
-<td></td>
-<td>NULL</td>
-<td></td>
-<td>the sequence</td>
-</tr>
-
-<tr>
 <td>length</td>
 <td>int(10)</td>
 <td>YES</td>
@@ -1561,18 +1747,28 @@ EnsEMBL Compara DB.
 <td></td>
 <td>the length of the sequence</td>
 </tr>
+
+<tr>
+<td>sequence</td>
+<td>longtext</td>
+<td>YES</td>
+<td></td>
+<td>NULL</td>
+<td></td>
+<td>the sequence</td>
+</tr>
 </tbody>
 </table>
 
 <p>E.g. the row</p>
 
 <pre>
-mysql> select * from sequence where sequence_id = 1121;
-+-------------+-------------------------------------------+--------+
-| sequence_id | sequence                                  | length |
-+-------------+-------------------------------------------+--------+
-|        1121 | LPNTRGYTQVWECSLAVLIAMVCMTLVGWGLIWLFSVTASV |     41 |
-+-------------+-------------------------------------------+--------+
+mysql> select * from sequence where sequence_id = 139425;
++-------------+--------+---------------------------------------------------------------+
+| sequence_id | length | sequence                                                      |
++-------------+--------+---------------------------------------------------------------+
+|      145811 |    444 | MREIVLTQTGQCGNQIGAKFWEVISDEHAIDSAGTYHGDSHLQLERINVHHHEASG[...] |
++-------------+--------+---------------------------------------------------------------+
 </pre>
 
 <p>contains a 41 aminoacids long sequence.</p>
