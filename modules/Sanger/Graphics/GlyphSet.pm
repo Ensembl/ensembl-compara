@@ -70,6 +70,18 @@ sub glob_bp {
     return int( $self->basepairs_per_pixel()*2 );
 }
 
+
+# join_tag joins between glyphsets in different tracks
+#$self->join_tag(
+#  $tglyph,         # A glyph you've drawn...
+#  $key,            # Key for glyph
+#  $T,              # X position in glyph (0-1)
+#  0,               # Y position in glyph (0-1) 0 nearest contigs
+#  $colour,         # colour to draw shape
+#  'fill',          # whether to fill or draw line
+#  -99              # z-index 
+#);
+
 sub join_tag {
     my( $self, $glyph, $tag, $x_pos, $y_pos, $col, $style, $zindex ) = @_;
     CORE::push @{$self->{'tags'}{$tag}}, { 'glyph' => $glyph, 'x' => $x_pos, 'y' => $y_pos, 'col' => $col, 'style' => $style, 'z' => $zindex };
