@@ -19,7 +19,6 @@ no warnings "uninitialized";
 our %pointer_defaults = ( 
             'Gene'      => ['blue', 'lharrow'],
             'AffyProbe' => ['red', 'rharrow'],
-            'Disease'   => ['red', 'rhbox'],
   );
 
 
@@ -55,13 +54,13 @@ sub spreadsheet_featureTable {
 
   $panel->add_columns(
     {'key' => 'loc', 'title' => 'Location', 'width' => '25%', 'align' => 'left' },
-  ) unless $data_type eq 'Disease';
+  ) unless $data_type =~ /Xref/;
   if ($data_type eq 'Gene') {
     $panel->add_columns(
       {'key' => 'extname', 'title' => 'External names', 'width' => '25%', 'align' => 'left' },
     );
   } 
-  elsif ($data_type eq 'Disease') {
+  elsif ($data_type eq 'Xref_MIM') {
     $panel->add_columns(
       {'key' => 'extname', 'title' => 'OMIM ID', 'width' => '25%', 'align' => 'left' },
     );
@@ -103,7 +102,7 @@ sub spreadsheet_featureTable {
         $desc =  $row->{'extra'}[0];
         $data_row = { 'loc' => $contig_link, 'extname' => $extname, 'names' => $names, };
     } 
-    elsif ($data_type eq 'Disease') {
+    elsif ($data_type eq 'Xref_MIM') {
         $names = sprintf('<a href="http://www.ncbi.nlm.nih.gov/entrez/dispomim.cgi?id=%s">%s</a>',
           $row->{'label'}, $row->{'label'}) if $row->{'label'};
         $extname = $row->{'extname'}, 
@@ -199,6 +198,7 @@ sub unmapped_details {
 
 #-----------------------------------------------------------------------------
 
+=pod
 sub key_to_pointers {
   my( $panel, $object ) = @_;
   # sanity check - does this species have chromosomes?
@@ -254,6 +254,7 @@ sub key_to_pointers {
   return 1;
 
 }
+=cut
 
 sub show_karyotype {
   my( $panel, $object ) = @_;
@@ -286,17 +287,11 @@ sub create_karyotype {
   if ($zmenu eq 'on') {
     # simple zmenu configuration - add_pointers (see below) now does 
     # all the messy output :)
-    if ($data_type eq 'Gene') {
+    if ($data_type eq 'Gene' || $data_type eq 'RegulatoryFactor' || $data_type eq 'Xref') {
         $zmenu_config = {
             'caption' => 'Genes',
             'entries' => ['label', 'contigview', 'geneview'],
         };
-    }
-    elsif ($data_type eq 'RegulatoryFactor' ){
-      $zmenu_config = {
-		       'caption' => 'Genes',
-		       'entries' => ['label', 'contigview', 'geneview'],
-		      };
     }
     else {
         $zmenu_config = {

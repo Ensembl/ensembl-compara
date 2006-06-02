@@ -368,7 +368,7 @@ sub pass_fields {
     next if $field =~ /previous/;
 
     ## include a hidden element for passing data
-    my @values = $object->param($field);
+    my @values = $object->param($field); ## use array context to catch multiple values
     if (scalar(@values) > 1) {
       my $unique = _uniquify(\@values);
       foreach my $element (@$unique) {

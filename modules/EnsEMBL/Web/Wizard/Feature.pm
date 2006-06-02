@@ -18,6 +18,10 @@ sub _init {
       
   ## define fields available to the forms in this wizard
   my %form_fields = (
+    'type_subhead' => {
+      'type'  => 'SubHeader',
+      'value' => 'Select features by ID',
+    },
     'type_blurb' => {
       'type'  => 'Information',
       'value' => 'Hint: to display multiple features, enter them as a space-delimited list',
@@ -30,7 +34,23 @@ sub _init {
       'value'   => 'Gene',
       'string_name'   => 'id',
       'string_label'  => 'ID',
-      'required' => 'yes',
+    },
+    'xref_subhead' => {
+      'type'  => 'SubHeader',
+      'value' => 'Search for features (OMIM only)',
+    },
+    'xref_db'  => {
+      'type'    =>'MultiSelect',
+      'label'   =>'Feature type',
+      'values'  => 'xref',
+    },
+    'xref_term' => {
+      'type'   => 'String',
+      'label'  => 'Search term',
+    },
+    'xref_blurb' => {
+      'type' => 'Information',
+      'value' => 'N.B. If you enter more than one search term, the search will be done on the whole phrase (i.e. "prostate cancer"), NOT as an and/or search on each term.',
     },
     'pointer_blurb' => {
       'type' => 'Information',
@@ -80,7 +100,7 @@ sub _init {
     'fv_select' => {
       'form' => 1,
       'title' => 'Select a feature',
-      'input_fields'  => [qw(type_blurb type)],
+      'input_fields'  => [qw(type_subhead type type_blurb)],
     },
     'fv_process' => {
       'button' => 'Next',
@@ -89,11 +109,9 @@ sub _init {
       'form' => 1,
       'title' => 'Configure karyotype',
       'input_fields'  => [qw(layout_subhead chr rows chr_length h_padding h_spacing v_padding)],
-      'pass_fields' => [qw(type id)],
       'back'   => 1,
     },
     'fv_display'  => {
-      'pass_fields' => [qw(type id col_0 style_0 col_1 style_1 zmenu chr rows chr_length h_padding h_spacing v_padding)],
       'button' => 'Show Feature',
       'page'   => 1,
       'back'   => 1,
@@ -113,12 +131,18 @@ sub _init {
   foreach my $avail_feature (@{$object->find_available_features}) {
     push @$types, { 'value'=>$avail_feature->{'value'},'name'=>$avail_feature->{'text'} },
   }
+  ## values for search checkboxes
+  my $xref = [
+    {'name'=>'OMIM Disease', 'value'=>'MIM_MORBID'},
+    {'name'=>'OMIM Trait',   'value'=>'MIM_GENE'},
+  ];
 
   my $data = {
     'chr_values'    => $chr_values,
     'colours'       => $colours,
     'styles'        => $styles,
     'types'         => $types,
+    'xref'          => $xref,
   };
                                                                                 
   return [$data, \%all_fields, \%all_nodes];
@@ -138,6 +162,9 @@ sub fv_select {
   my $form = EnsEMBL::Web::Form->new($node, "/$species/$script", 'post');
 
   $wizard->add_widgets($node, $form, $object);
+  if ($species eq 'Homo_sapiens') {
+    $wizard->add_widgets($node, $form, $object, ['xref_subhead', 'xref_db', 'xref_term', 'xref_blurb']);
+  }
   $wizard->add_buttons($node, $form, $object);
 
   return $form;
@@ -149,9 +176,13 @@ sub fv_process {
   my %parameter;
 
   ## does the species have chromosomes?
-  $parameter{'type'} = $object->param('type');
-  $parameter{'id'}   = $object->param('id');
-  if (@{$object->species_defs->ENSEMBL_CHROMOSOMES} && $object->feature_mapped) {
+  $parameter{'type'}      = $object->param('type');
+  $parameter{'id'}        = $object->param('id');
+  $parameter{'xref_term'} = $object->param('xref_term');
+  my @db_array  = $object->param('xref_db');
+  $parameter{'xref_db'}   = \@db_array;
+  if (@{$object->species_defs->ENSEMBL_CHROMOSOMES} && 
+             ($object->param('xref_term') || $object->feature_mapped)) {
     $parameter{'node'} = 'fv_layout';
   }
   else {
@@ -172,7 +203,7 @@ sub fv_layout {
   my $form = EnsEMBL::Web::Form->new($node, "/$species/$script", 'post');
                              
   $wizard->add_widgets($node, $form, $object, ['track_subhead', 'zmenu', 'col_0', 'style_0']);
-  if ($object->param('type') eq 'Disease' || $object->param('type') eq 'OligoProbe') {
+  if ($object->param('type') eq 'OligoProbe') {
     $wizard->add_widgets($node, $form, $object, ['pointer_blurb', 'col_1', 'style_1']);
   }
   $wizard->add_widgets($node, $form, $object);

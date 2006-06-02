@@ -20,7 +20,7 @@ use Bio::AlignIO;
 
 =cut
 
-sub data         : lvalue { $_[0]->{'_data'         }; }
+sub data         : lvalue { $_[0]->{'_data'}; }
 sub feature_type : lvalue {  my ($self, $p) = @_; if ($p) {$_[0]->{'_feature_type'} = $p} return $_[0]->{'_feature_type' }; }
 sub feature_id : lvalue {  my ($self, $p) = @_; if ($p) {$_[0]->{'_feature_id'} = $p} return $_[0]->{'_feature_id' }; }
 
@@ -77,14 +77,14 @@ sub retrieve_Gene {
   return ( $results, ['Description'] );
 }
 
-sub retrieve_Disease {
+sub retrieve_Xref {
   my $self = shift;
   
   my $results = [];
-  foreach my $d (@{$self->Obj->{'Disease'}}) {
+  foreach my $d (@{$self->Obj->{'Xref'}}) {
     push @$results, {
       'label'       => $d->primary_id,
-      'disease_id'  => [ $d->primary_id ],
+      'xref_id'  => [ $d->primary_id ],
       'extname'     => $d->display_id,
       'extra'    => [ $d->description ]
     }
@@ -267,7 +267,7 @@ sub find_available_features {
 	}
   ## quick and dirty - ought to check for MIM in external_db
 	if ($species eq 'Homo_sapiens') { 
-		unshift @$used_feature_types, {'text'=>"OMIM Disease",'value'=>'Disease','href'=>"/$species/featureview?type=Disease",'raw'=>1};
+		unshift @$used_feature_types, {'text'=>"OMIM Disease/Trait",'value'=>'Xref_MIM','href'=>"/$species/featureview?type=Xref_MIM",'raw'=>1};
 	}
 	return $used_feature_types;
 }

@@ -11,21 +11,43 @@ our @ISA = qw(  EnsEMBL::Web::Factory );
 
 sub createObjects { 
   my $self   = shift;
-  my $feature_type  = $self->param('type') || 'OligoProbe';
-  $feature_type = 'OligoProbe' if $feature_type eq 'AffyProbe'; ## catch old links
-
-  my $create_method = "create_$feature_type";
-
-  my ($identifier, $fetch_call, $featureobj, $dataobject);
   my $db        = $self->param('db')  || 'core';
+  my ($identifier, $fetch_call, $featureobj, $dataobject);
 
-  $featureobj    = defined &$create_method ? $self->$create_method($db) : undef;
-  $dataobject    = EnsEMBL::Web::Proxy::Object->new( 'Feature', $featureobj, $self->__data );
+  ## Are we inputting IDs or searching on a text term?
+  if ($self->param('xref_term')) {
+    my @exdb = $self->param('xref_db');
+    $featureobj = $self->search_Xref($db, \@exdb, $self->param('xref_term'));
 
-  if( $dataobject ) {
-    $dataobject->feature_type( $feature_type );
-    $dataobject->feature_id( $self->param( 'id' ));
-    $self->DataObjects( $dataobject );
+    $dataobject    = EnsEMBL::Web::Proxy::Object->new( 'Feature', $featureobj, $self->__data );
+
+    if( $dataobject ) {
+      $dataobject->feature_type( 'Xref' );
+      $self->DataObjects( $dataobject );
+    }
+  }
+  else {
+    my $feature_type  = $self->param('type') || 'OligoProbe';
+    $feature_type = 'OligoProbe' if $feature_type eq 'AffyProbe'; ## catch old links
+
+    ## deal with xrefs
+    my $subtype;
+    if ($feature_type =~ /^Xref_/) {
+      ## Don't use split here - external DB name may include underscores!
+      ($subtype = $feature_type) =~ s/Xref_//; 
+      $feature_type = 'Xref';
+    }
+
+    my $create_method = "create_$feature_type";
+    $featureobj    = defined &$create_method ? $self->$create_method($db, $subtype) : undef;
+
+    $dataobject    = EnsEMBL::Web::Proxy::Object->new( 'Feature', $featureobj, $self->__data );
+
+    if( $dataobject ) {
+      $dataobject->feature_type( $feature_type );
+      $dataobject->feature_id( $self->param( 'id' ));
+      $self->DataObjects( $dataobject );
+    }
   }
   
 }
@@ -36,89 +58,21 @@ sub create_OligoProbe {
     # get Oligo hits plus corresponding genes
     my $probe = $_[0]->_generic_create( 'OligoProbe', 'fetch_all_by_probeset', $_[1] );
     my $probe_genes = $_[0]->_generic_create( 'Gene', 'fetch_all_by_external_name', $_[1],undef, 'no_errors' );
-    my $features = {'OligoProbe'=>$probe};
-    $$features{'Gene'} = $probe_genes if $probe_genes;
-    return $features;
+    my %features = ('OligoProbe' => $probe);
+    $features{'Gene'} = $probe_genes if $probe_genes;
+    return \%features;
 }
 
 sub create_DnaAlignFeature {
-  my $features =  {'DnaAlignFeature' => $_[0]->_generic_create( 'DnaAlignFeature', 'fetch_all_by_hit_name', $_[1] ) }; 
-  return $features;
+  return {'DnaAlignFeature' => $_[0]->_generic_create( 'DnaAlignFeature', 'fetch_all_by_hit_name', $_[1] ) }; 
 }
+
 sub create_ProteinAlignFeature {
-  my $features = {'ProteinAlignFeature' => $_[0]->_generic_create( 'ProteinAlignFeature', 'fetch_all_by_hit_name', $_[1] ) };
-  return $features;
+  return {'ProteinAlignFeature' => $_[0]->_generic_create( 'ProteinAlignFeature', 'fetch_all_by_hit_name', $_[1] ) };
 }
 
 sub create_Gene {
-  my $features = {'Gene' => $_[0]->_generic_create( 'Gene', 'fetch_all_by_external_name', $_[1] ) }; 
-  return $features;
-}
-
-
-sub create_Disease {
-    # get disease hits plus corresponding genes
-    my $disease = $_[0]->_generic_create( 'DBEntry', 'fetch_by_db_accession', $_[1] );
-    my $disease_genes = $_[0]->_generic_create( 'Gene', 'fetch_all_by_external_name', $_[1],undef, 'no_errors' );
-    my $features = {'Disease'=>$disease};
-    $$features{'Gene'} = $disease_genes if $disease_genes;
-    return $features;
-}
-
-
-sub _generic_create {
-  my( $self, $object_type, $accessor, $db, $id, $flag ) = @_;
-  $db ||= 'core';
-                                                                                   
-  $id ||= $self->param( 'id' );
-  my $extra = 'MIM' if $object_type eq 'DBEntry';
-  if( !$id ) {
-    return undef; # return empty object if no id
-  }
-  else {
-    # Get the 'central' database (core, est, vega)
-    my $db_adaptor  = $self->database(lc($db));
-    unless( $db_adaptor ){
-      $self->problem( 'Fatal', 'Database Error', "Could not connect to the $db database." );
-      return undef;
-    }
-    my $adaptor_name = "get_${object_type}Adaptor";
-    my $features = [];
-    foreach my $fid ( split /\s+/, $id ) {
-      my $t_features;
-      if ($extra) {
-        eval {
-         $t_features = [$db_adaptor->$adaptor_name->$accessor($extra, $fid)];
-        };
-      }
-      else {
-        eval {
-         $t_features = $db_adaptor->$adaptor_name->$accessor($fid);
-        };
-      }
-      ## if no result, check for unmapped features
-      if ($t_features && ref($t_features) eq 'ARRAY' && !@$t_features) {
-        my $uoa = $db_adaptor->get_UnmappedObjectAdaptor;
-        $t_features = $uoa->fetch_by_identifier($fid);
-      }
-
-      if( $t_features && ref($t_features) eq 'ARRAY') {
-        foreach my $f (@$t_features) { 
-          $f->{'_id_'} = $fid;
-        }
-        push @$features, @$t_features;
-      }
-    }
-                                                                                   
-    return $features if $features && @$features; # Return if we have at least one feature
-
-    # We have no features so return an error....
-    unless ( $flag eq 'no_errors' ) {
-      $self->problem( 'no_match', 'Invalid Identifier', "$object_type $id was not found" );
-    }
-    return undef;
-  }
-
+  return {'Gene' => $_[0]->_generic_create( 'Gene', 'fetch_all_by_external_name', $_[1] ) }; 
 }
 
 # For a Regulatory Factor ID display all the RegulatoryFeatures
@@ -153,5 +107,133 @@ sub create_RegulatoryFactor {
   $self->problem( 'no_match', 'Invalid Identifier', "Regulatory Factor $id was not found" );
   return undef;
 }
+
+sub create_Xref {
+
+    # get OMIM hits plus corresponding Ensembl genes
+    my ($self, $db, $subtype) = @_;
+    my $xref;
+
+    if ($subtype eq 'MIM') {
+      my $mim_g = $self->_generic_create( 'DBEntry', 'fetch_by_db_accession', [$db, 'MIM_GENE'] );
+      my $mim_m = $self->_generic_create( 'DBEntry', 'fetch_by_db_accession', [$db, 'MIM_MORBID'] );
+      @$xref = (@$mim_g, @$mim_m);
+    }
+    else {
+      $xref = $self->_generic_create( 'DBEntry', 'fetch_by_db_accession', [$db, $subtype] );
+    }
+
+    my $genes = $self->_generic_create( 'Gene', 'fetch_all_by_external_name', $db, undef, 'no_errors' );
+
+    my $features = {'Xref'=>$xref};
+    $$features{'Gene'} = $genes if $genes;
+    return $features;
+}
+
+sub _generic_create {
+  my( $self, $object_type, $accessor, $db, $id, $flag ) = @_;
+  $db ||= 'core';
+                                                                                   
+  $id ||= $self->param( 'id' );
+
+  ## deal with xrefs
+  my $xref_db;
+  if ($object_type eq 'DBEntry') {
+    my @A = @$db;
+    $db = $A[0];
+    $xref_db = $A[1];
+  }
+
+  if( !$id ) {
+    return undef; # return empty object if no id
+  }
+  else {
+    # Get the 'central' database (core, est, vega)
+    my $db_adaptor  = $self->database(lc($db));
+    unless( $db_adaptor ){
+      $self->problem( 'Fatal', 'Database Error', "Could not connect to the $db database." );
+      return undef;
+    }
+    my $adaptor_name = "get_${object_type}Adaptor";
+    my $features = [];
+    foreach my $fid ( split /\s+/, $id ) {
+      my $t_features;
+      if ($xref_db) {
+        eval {
+         $t_features = [$db_adaptor->$adaptor_name->$accessor($xref_db, $fid)];
+        };
+      }
+      else {
+        eval {
+         $t_features = $db_adaptor->$adaptor_name->$accessor($fid);
+        };
+      }
+      ## if no result, check for unmapped features
+      if ($t_features && ref($t_features) eq 'ARRAY' && !@$t_features) {
+        my $uoa = $db_adaptor->get_UnmappedObjectAdaptor;
+        $t_features = $uoa->fetch_by_identifier($fid);
+      }
+
+      if( $t_features && ref($t_features) eq 'ARRAY') {
+        foreach my $f (@$t_features) { 
+          $f->{'_id_'} = $fid;
+        }
+        push @$features, @$t_features;
+      }
+    }
+                                                                                   
+    return $features if $features && @$features; # Return if we have at least one feature
+
+    # We have no features so return an error....
+    unless ( $flag eq 'no_errors' ) {
+      $self->problem( 'no_match', 'Invalid Identifier', "$object_type $id was not found" );
+    }
+    return undef;
+  }
+
+}
+
+sub search_Xref {
+  my ($self, $db, $exdb, $string, $flag) = @_;
+
+  my $db_adaptor  = $self->database(lc($db));
+  unless( $db_adaptor ){
+    $self->problem( 'Fatal', 'Database Error', "Could not connect to the $db database." );
+    return undef;
+  }
+
+  my @xref_dbs = @$exdb;
+#warn "DB @$exdb"; 
+  my $features = [];
+  my $genes = [];
+  foreach my $x (@xref_dbs) {
+    my $t_features;
+    eval {
+     $t_features = $db_adaptor->get_DBEntryAdaptor->fetch_all_by_description('%'.$string.'%', $x);
+    };
+    if( $t_features && ref($t_features) eq 'ARRAY') {
+      ## get genes for each xref
+      foreach my $t (@$t_features) {
+        my $id = $t->primary_id;
+        my $t_genes = $self->_generic_create( 'Gene', 'fetch_all_by_external_name', $db, $id, 'no_errors' );
+        push (@$genes, @$t_genes) if ref($t_genes) eq 'ARRAY';
+      }
+      push @$features, @$t_features;
+    }
+  }
+
+  if ($features && @$features) { ## Return if we have at least one feature
+    my %results = ('Xref'=>$features);
+    $results{'Gene'} = $genes if $genes;
+    return \%results; 
+  }
+
+  # We have no features so return an error....
+  unless ( $flag eq 'no_errors' ) {
+    $self->problem( 'no_match', 'No Match', "No features could be found matching the search term '$string'" );
+  }
+  return undef;
+}
+
 1;
 

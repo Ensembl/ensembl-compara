@@ -266,9 +266,17 @@ sub _node_hop {
       my $tally = 0;
       my $param_count = scalar(keys %parameter);
       $URL .= '?' if $param_count;
-      foreach my $param (keys %parameter) {
-        $URL .= ';' if $tally > 0;
-        $URL .= $param.'='.$parameter{$param};    
+      foreach my $param_name (keys %parameter) {
+        if (ref($parameter{$param_name}) eq 'ARRAY') {
+          foreach my $param_value (@{$parameter{$param_name}}) {
+            $URL .= ';' if $tally > 0;
+            $URL .= $param_name.'='.$param_value;    
+          }
+        }
+        else {
+          $URL .= ';' if $tally > 0;
+          $URL .= $param_name.'='.$parameter{$param_name};    
+        }
         $tally++;
       }
       my $r = $self->page->renderer->{'r'};
