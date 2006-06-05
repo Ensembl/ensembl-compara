@@ -124,7 +124,7 @@ sub read_clustalw {
       $attribute->cigar_line($cigar_line);
 
     } else {
-      warning("No member for alignment portion: [$id]");
+      throw("No member for alignment portion: [$id]");
     }
   }
 }
