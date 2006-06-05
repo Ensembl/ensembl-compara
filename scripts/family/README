@@ -237,7 +237,7 @@ rm family_32.raw
 
 This step uses turing which has 192Gb of memory :))) and 16 CPUs. As mcl can be multi-threaded, it is very useful.
 
-bsub -C0 -R 'select[ncpus>=8 && mem>10000 && type==LINUX64] rusage[mem=10000] span[hosts=1]' -q hugemem -n 8 -f "family_32.sym > /tmp/family_32.sym" -f "family_32.mcl < /tmp/family_32.mcl" -o mcl.out /nfs/acari/abel/bin/arch-ia64/mcl /tmp/family_32.sym -I 2.3 -t 8 -P 10000 -S 1000 -R 1260 -pct 90 -o /tmp/family_32.mcl
+bsub -C0 -R 'select[ncpus>=8 && mem>10000 && type==LINUX64] rusage[mem=10000] span[hosts=1]' -q hugemem -n 8 -f "family_32.bin > /tmp/family_32.bin" -f "family_32.mcl < /tmp/family_32.mcl" -o mcl.out /nfs/acari/abel/bin/arch-ia64/mcl /tmp/family_32.bin -I 2.3 -t 8 -P 10000 -S 1000 -R 1260 -pct 90 -o /tmp/family_32.mcl
 
 NB: when ever you have finished running mcl (maybe with different parameters), don't forget 
 to delete /tmp/family_32.* from aristotle /tmp (a shell script having the flavour of 
@@ -372,7 +372,7 @@ mysql -h ecs2 -u ensro -P3362 -N -e "select family_id,count(*) as count from fam
 
 mysql -h ecs2 -u ensadmin -pxxxx -P3364 ensembl_compara_32 < update_singletons_cigar_line.sql
 
-~/src/ensembl_main/ensembl-compara/scripts/family/InsertRedundantPeptidesAndGenesInFamilies.pl --dbname abelcompara32 > Redundancy_and_Genes_load.err 2>&1 &
+~/src/ensembl_main/ensembl-compara/scripts/family/InsertRedundantPeptidesAndGenesInFamilies.pl --reg_conf reg_conf.pl --dbname abelcompara32 > Redundancy_and_Genes_load.err 2>&1 &
 
 IMPORTANT: add healthcheck about NULL cigar_line
 select m.source_name,count(*) from family_member fm, member m where fm.member_id=m.member_id and fm.cigar_line="NULL" group by m.source_name;
@@ -397,6 +397,6 @@ family_32.description.SPTREMBL-consensus  > family_32.description-consensus 2> f
 update the family description in ensembl_family_32 with the data in family_32.description-consensus using ensembl-compara/scripts/family/LoadDescriptionInFamily.pl 
 Use the same reg_cong.pl as in step 11
 
-LoadDescriptionInFamily.pl --reg_cong reg_conf.pl --dbname abelcompara32 family_32.description-consensus
+LoadDescriptionInFamily.pl --reg_conf reg_conf.pl --dbname abelcompara32 family_32.description-consensus
 
 
