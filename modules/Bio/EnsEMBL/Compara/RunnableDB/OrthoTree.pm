@@ -620,7 +620,8 @@ sub inspecies_paralog_test
   #}
   
   #passed all the tests -> it's an inspecies_paralog
-  $genepairlink->add_tag("orthotree_type", 'inspecies_paralog');
+#  $genepairlink->add_tag("orthotree_type", 'inspecies_paralog');
+  $genepairlink->add_tag("orthotree_type", 'within_species_paralog');
   $genepairlink->add_tag("orthotree_subtype", $taxon->name);
   return 1;
 }
@@ -651,11 +652,13 @@ sub ancient_residual_test
 
   #passed all the tests -> it's a simple ortholog
   if($ancestor->get_tagvalue("Duplication") > 0) {
-    $genepairlink->add_tag("orthotree_type", 'outspecies_paralog_one2one_geneloss');
+#    $genepairlink->add_tag("orthotree_type", 'outspecies_paralog_one2one_geneloss');
+    $genepairlink->add_tag("orthotree_type", 'apparent_ortholog_one2one');
     my $taxon = $self->get_ancestor_taxon_level($ancestor);
     $genepairlink->add_tag("orthotree_subtype", $taxon->name);
   } else {
-    $genepairlink->add_tag("orthotree_type", 'ortholog_one2one_geneloss');
+#    $genepairlink->add_tag("orthotree_type", 'ortholog_one2one_geneloss');
+    $genepairlink->add_tag("orthotree_type", 'ortholog_one2one');
     my $taxon = $self->get_ancestor_taxon_level($ancestor);
     $genepairlink->add_tag("orthotree_subtype", $taxon->name);
   }
@@ -715,12 +718,13 @@ sub outspecies_test
   my $dup_value = $ancestor->get_tagvalue("Duplication");
   unless ($dup_value eq '') {
     if($dup_value > 0) {
-      $genepairlink->add_tag("orthotree_type", 'outspecies_paralog');
+#      $genepairlink->add_tag("orthotree_type", 'outspecies_paralog');
+      $genepairlink->add_tag("orthotree_type", 'between_species_paralog');
       $genepairlink->add_tag("orthotree_subtype", $taxon->name);
-    } 
-  } else {
-    $genepairlink->add_tag("orthotree_type", 'ortholog_many2many');
-    $genepairlink->add_tag("orthotree_subtype", $taxon->name);
+    } else {
+      $genepairlink->add_tag("orthotree_type", 'ortholog_many2many');
+      $genepairlink->add_tag("orthotree_subtype", $taxon->name);
+    }
   }
   return 1;
 }
@@ -784,28 +788,18 @@ sub store_gene_link_as_homology
   #$homology->dbID(-1);
 
   # NEED TO BUILD THE Attributes (ie homology_members)
-  #
+  my ($cigar_line1, $perc_id1, $perc_pos1, $cigar_line2, $perc_id2, $perc_pos2) = $self->generate_attribute_arguments($protein1, $protein2); 
+
   # QUERY member
   #
   my $attribute;
   $attribute = new Bio::EnsEMBL::Compara::Attribute;
   $attribute->peptide_member_id($protein1->dbID);
-  #$attribute->cigar_start($self->qstart);
-  #$attribute->cigar_end($self->qend);
-  #my $qlen = ($self->qend - $self->qstart + 1);
-  #$attribute->perc_cov(int($qlen*100/$protein1->seq_length));
-  #$attribute->perc_id(int($self->identical_matches*100.0/$qlen));
-  #$attribute->perc_pos(int($self->positive_matches*100/$qlen));
-  #$attribute->peptide_align_feature_id($self->dbID);
+  $attribute->cigar_line($cigar_line1);
+  $attribute->perc_cov(100);
+  $attribute->perc_id(int($perc_id1));
+  $attribute->perc_pos(int($perc_pos1));
 
-  #my $cigar_line = $self->cigar_line;
-  #print("original cigar_line '$cigar_line'\n");
-  #$cigar_line =~ s/I/M/g;
-  #$cigar_line = compact_cigar_line($cigar_line);
-  #$attribute->cigar_line($cigar_line);
-  #print("   '$cigar_line'\n");
-
-  #print("add query member gene : ", $protein1->gene_member->stable_id, "\n");
   $homology->add_Member_Attribute([$protein1->gene_member, $attribute]);
 
   #
@@ -813,23 +807,11 @@ sub store_gene_link_as_homology
   #
   $attribute = new Bio::EnsEMBL::Compara::Attribute;
   $attribute->peptide_member_id($protein2->dbID);
-  #$attribute->cigar_start($self->hstart);
-  #$attribute->cigar_end($self->hend);
-  #my $hlen = ($self->hend - $self->hstart + 1);
-  #$attribute->perc_cov(int($hlen*100/$protein2->seq_length));
-  #$attribute->perc_id(int($self->identical_matches*100.0/$hlen));
-  #$attribute->perc_pos(int($self->positive_matches*100/$hlen));
-  #$attribute->peptide_align_feature_id($self->rhit_dbID);
+  $attribute->cigar_line($cigar_line2);
+  $attribute->perc_cov(100);
+  $attribute->perc_id(int($perc_id2));
+  $attribute->perc_pos(int($perc_pos2));
 
-  #$cigar_line = $self->cigar_line;
-  #print("original cigar_line\n    '$cigar_line'\n");
-  #$cigar_line =~ s/D/M/g;
-  #$cigar_line =~ s/I/D/g;
-  #$cigar_line = compact_cigar_line($cigar_line);
-  #$attribute->cigar_line($cigar_line);
-  #print("   '$cigar_line'\n");
-  
-  #print("add hit member gene : ", $protein2->gene_member->stable_id, "\n");
   $homology->add_Member_Attribute([$protein2->gene_member, $attribute]);
   
   
@@ -945,6 +927,161 @@ sub _treefam_genepairlink_stats
 
   }
   printf("%1.3f secs to analyze genepair links\n", time()-$tmp_time) if($self->debug > 1);
+}
+
+sub generate_attribute_arguments {
+  my ($self, $protein1, $protein2) = @_;
+
+  my $identical_matches = 0;
+  my $positive_matches = 0;
+  my $m_hash = $self->get_matrix_hash;
+
+  my @aln1 = split(//, $protein1->alignment_string);
+  my @aln2 = split(//, $protein2->alignment_string);
+
+  my ($aln1state, $aln2state);
+  my ($aln1count, $aln2count);
+
+  my $new_aln1_cigarline = "";
+  my $new_aln2_cigarline = "";
+
+  for (my $i=0; $i <= $#aln1; $i++) {
+    next if ($aln1[$i] eq "-" && $aln2[$i] eq "-");
+    my ($cur_aln1state, $cur_aln2state) = qw(M M);
+    if ($aln1[$i] eq "-") {
+      $cur_aln1state = "D";
+    }
+    if ($aln2[$i] eq "-") {
+      $cur_aln2state = "D";
+    }
+    if ($cur_aln1state eq "M" && $cur_aln2state eq "M" && $aln1[$i] eq $aln2[$i]) {
+      $identical_matches++;
+      $positive_matches++;
+    } elsif ($cur_aln1state eq "M" && $cur_aln2state eq "M" && $m_hash->{uc $aln1[$i]}{uc $aln2[$i]} > 0) {
+        $positive_matches++;
+    }
+    unless (defined $aln1state) {
+      $aln1count = 1;
+      $aln2count = 1;
+      $aln1state = $cur_aln1state;
+      $aln2state = $cur_aln2state;
+      next;
+    }
+    if ($cur_aln1state eq $aln1state) {
+      $aln1count++;
+    } else {
+      if ($aln1count == 1) {
+        $new_aln1_cigarline .= $aln1state;
+      } else {
+        $new_aln1_cigarline .= $aln1count.$aln1state;
+      }
+      $aln1count = 1;
+      $aln1state = $cur_aln1state;
+    }
+    if ($cur_aln2state eq $aln2state) {
+      $aln2count++;
+    } else {
+      if ($aln2count == 1) {
+        $new_aln2_cigarline .= $aln2state;
+      } else {
+        $new_aln2_cigarline .= $aln2count.$aln2state;
+      }
+      $aln2count = 1;
+      $aln2state = $cur_aln2state;
+    }
+  }
+  if ($aln1count == 1) {
+    $new_aln1_cigarline .= $aln1state;
+  } else {
+    $new_aln1_cigarline .= $aln1count.$aln1state;
+  }
+  if ($aln2count == 1) {
+    $new_aln2_cigarline .= $aln2state;
+  } else {
+    $new_aln2_cigarline .= $aln2count.$aln2state;
+  }
+  my $perc_id1 = $identical_matches*100.0/$protein1->seq_length;
+  my $perc_pos1 = $positive_matches*100.0/$protein1->seq_length;
+  my $perc_id2 = $identical_matches*100.0/$protein2->seq_length;
+  my $perc_pos2 = $positive_matches*100.0/$protein2->seq_length;
+
+  return ($new_aln1_cigarline, $perc_id1, $perc_pos1, $new_aln2_cigarline, $perc_id2, $perc_pos2);
+}
+
+sub get_matrix_hash {
+  my $self = shift;
+
+  return $self->{'matrix_hash'} if (defined $self->{'matrix_hash'});
+
+  my $BLOSUM62 = "#  Matrix made by matblas from blosum62.iij
+#  * column uses minimum score
+#  BLOSUM Clustered Scoring Matrix in 1/2 Bit Units
+#  Blocks Database = /data/blocks_5.0/blocks.dat
+#  Cluster Percentage: >= 62
+#  Entropy =   0.6979, Expected =  -0.5209
+   A  R  N  D  C  Q  E  G  H  I  L  K  M  F  P  S  T  W  Y  V  B  Z  X  *
+A  4 -1 -2 -2  0 -1 -1  0 -2 -1 -1 -1 -1 -2 -1  1  0 -3 -2  0 -2 -1  0 -4
+R -1  5  0 -2 -3  1  0 -2  0 -3 -2  2 -1 -3 -2 -1 -1 -3 -2 -3 -1  0 -1 -4
+N -2  0  6  1 -3  0  0  0  1 -3 -3  0 -2 -3 -2  1  0 -4 -2 -3  3  0 -1 -4
+D -2 -2  1  6 -3  0  2 -1 -1 -3 -4 -1 -3 -3 -1  0 -1 -4 -3 -3  4  1 -1 -4
+C  0 -3 -3 -3  9 -3 -4 -3 -3 -1 -1 -3 -1 -2 -3 -1 -1 -2 -2 -1 -3 -3 -2 -4
+Q -1  1  0  0 -3  5  2 -2  0 -3 -2  1  0 -3 -1  0 -1 -2 -1 -2  0  3 -1 -4
+E -1  0  0  2 -4  2  5 -2  0 -3 -3  1 -2 -3 -1  0 -1 -3 -2 -2  1  4 -1 -4
+G  0 -2  0 -1 -3 -2 -2  6 -2 -4 -4 -2 -3 -3 -2  0 -2 -2 -3 -3 -1 -2 -1 -4
+H -2  0  1 -1 -3  0  0 -2  8 -3 -3 -1 -2 -1 -2 -1 -2 -2  2 -3  0  0 -1 -4
+I -1 -3 -3 -3 -1 -3 -3 -4 -3  4  2 -3  1  0 -3 -2 -1 -3 -1  3 -3 -3 -1 -4
+L -1 -2 -3 -4 -1 -2 -3 -4 -3  2  4 -2  2  0 -3 -2 -1 -2 -1  1 -4 -3 -1 -4
+K -1  2  0 -1 -3  1  1 -2 -1 -3 -2  5 -1 -3 -1  0 -1 -3 -2 -2  0  1 -1 -4
+M -1 -1 -2 -3 -1  0 -2 -3 -2  1  2 -1  5  0 -2 -1 -1 -1 -1  1 -3 -1 -1 -4
+F -2 -3 -3 -3 -2 -3 -3 -3 -1  0  0 -3  0  6 -4 -2 -2  1  3 -1 -3 -3 -1 -4
+P -1 -2 -2 -1 -3 -1 -1 -2 -2 -3 -3 -1 -2 -4  7 -1 -1 -4 -3 -2 -2 -1 -2 -4
+S  1 -1  1  0 -1  0  0  0 -1 -2 -2  0 -1 -2 -1  4  1 -3 -2 -2  0  0  0 -4
+T  0 -1  0 -1 -1 -1 -1 -2 -2 -1 -1 -1 -1 -2 -1  1  5 -2 -2  0 -1 -1  0 -4
+W -3 -3 -4 -4 -2 -2 -3 -2 -2 -3 -2 -3 -1  1 -4 -3 -2 11  2 -3 -4 -3 -2 -4
+Y -2 -2 -2 -3 -2 -1 -2 -3  2 -1 -1 -2 -1  3 -3 -2 -2  2  7 -1 -3 -2 -1 -4
+V  0 -3 -3 -3 -1 -2 -2 -3 -3  3  1 -2  1 -1 -2 -2  0 -3 -1  4 -3 -2 -1 -4
+B -2 -1  3  4 -3  0  1 -1  0 -3 -4  0 -3 -3 -2  0 -1 -4 -3 -3  4  1 -1 -4
+Z -1  0  0  1 -3  3  4 -2  0 -3 -3  1 -1 -3 -1  0 -1 -3 -2 -2  1  4 -1 -4
+X  0 -1 -1 -1 -2 -1 -1 -1 -1 -1 -1 -1 -1 -1 -2  0  0 -2 -1 -1 -1 -1 -1 -4
+* -4 -4 -4 -4 -4 -4 -4 -4 -4 -4 -4 -4 -4 -4 -4 -4 -4 -4 -4 -4 -4 -4 -4  1
+";
+  my $matrix_string;
+  my @lines = split(/\n/,$BLOSUM62);
+  foreach my $line (@lines) {
+    next if ($line =~ /^\#/);
+    if ($line =~ /^[A-Z\*\s]+$/) {
+      $matrix_string .= sprintf "$line\n";
+    } else {
+      my @t = split(/\s+/,$line);
+      shift @t;
+      #       print scalar @t,"\n";
+      $matrix_string .= sprintf(join(" ",@t)."\n");
+    }
+  }
+  
+  my %matrix_hash;
+  @lines = ();
+  @lines = split /\n/, $matrix_string;
+  my $lts = shift @lines;
+  $lts =~ s/^\s+//;
+  $lts =~ s/\s+$//;
+  my @letters = split /\s+/, $lts;
+  
+  foreach my $letter (@letters) {
+    my $line = shift @lines;
+    $line =~ s/^\s+//;
+    $line =~ s/\s+$//;
+    my @penalties = split /\s+/, $line;
+    die "Size of letters array and penalties array are different\n"
+      unless (scalar @letters == scalar @penalties);
+    for (my $i=0; $i < scalar @letters; $i++) {
+      $matrix_hash{uc $letter}{uc $letters[$i]} = $penalties[$i];
+    }
+  }
+
+  $self->{'matrix_hash'} = \%matrix_hash;
+
+  return $self->{'matrix_hash'};
 }
 
 1;
