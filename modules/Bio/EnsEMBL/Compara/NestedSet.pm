@@ -481,7 +481,7 @@ sub print_node {
   my $self  = shift;
 
   print("(");
-  if($self->get_tagvalue("Duplication") eq '1' || $self->get_tagvalue("Duplication") eq '2') { print("DUP "); }
+  if($self->get_tagvalue("Duplication") > 0) { print("DUP "); }
   printf("%s %d,%d)", $self->node_id, $self->left_index, $self->right_index);
   printf("%s\n", $self->name);
 }
@@ -529,7 +529,7 @@ sub _internal_nhx_format {
       }
     $nhx .= sprintf(":%1.4f", $self->distance_to_parent);
     $nhx .= "[&&NHX";
-    if($self->get_tagvalue("Duplication") eq '1' || $self->get_tagvalue("Duplication") eq '2') { 
+    if($self->get_tagvalue("Duplication") > 0) { 
         # mark as duplication
         $nhx .= ":D=Y";
     } else {
