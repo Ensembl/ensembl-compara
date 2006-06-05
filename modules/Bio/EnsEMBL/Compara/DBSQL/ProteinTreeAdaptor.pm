@@ -337,8 +337,9 @@ sub init_instance_from_rowhash {
     Bio::EnsEMBL::Compara::DBSQL::MemberAdaptor->init_instance_from_rowhash($node, $rowhash);
     
     $node->cigar_line($rowhash->{'cigar_line'});
-    $node->cigar_start($rowhash->{'cigar_start'});
-    $node->cigar_end($rowhash->{'cigar_end'});
+# cigar_start and cigar_end does not need to be set.
+#    $node->cigar_start($rowhash->{'cigar_start'});
+#    $node->cigar_end($rowhash->{'cigar_end'});
   }
   # print("  create node : ", $node, " : "); $node->print_node;
 
