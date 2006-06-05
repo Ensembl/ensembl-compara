@@ -305,7 +305,7 @@ sub keep_leaves {
   my $self = shift;
 
   my %leaves_names;
-  foreach my $name (split(",",$self->{'keep_leaves'})) {
+  foreach my $name (split(/\s*,\s*/,$self->{'keep_leaves'})) {
     $leaves_names{$name} = 1;
   }
 
@@ -317,7 +317,7 @@ sub keep_leaves {
     unless (defined $leaves_names{$leaf->name}) {
       print $leaf->name," leaf disavowing parent\n";
       $leaf->disavow_parent;
-      $tree->minimize_tree;
+      $tree = $tree->minimize_tree;
     }
   }
   if ($tree->get_child_count == 1) {
@@ -325,6 +325,7 @@ sub keep_leaves {
     $child->parent->merge_children($child);
     $child->disavow_parent;
   }
+  $self->{'tree'} = $tree;
 }
 
 sub reroot {
@@ -1081,7 +1082,7 @@ sub test7
   $node->disavow_parent;
   $tree->print_tree;
   
-  $tree->minimize_tree;
+  $tree = $tree->minimize_tree;
   $tree->print_tree;
   
   $tree->release_tree;
