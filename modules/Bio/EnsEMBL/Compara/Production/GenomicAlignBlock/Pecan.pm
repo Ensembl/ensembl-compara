@@ -70,19 +70,26 @@ sub fetch_input {
   my( $self) = @_;
 
   $self->{'comparaDBA'} = Bio::EnsEMBL::Compara::Production::DBSQL::DBAdaptor->new(-DBCONN=>$self->db->dbc);
+  $self->{'hiveDBA'} = Bio::EnsEMBL::Hive::DBSQL::DBAdaptor->new(-DBCONN => $self->{'comparaDBA'}->dbc);
   $self->get_params($self->parameters);
   $self->get_params($self->input_id);
+
+  if (!$self->method_link_species_set_id) {
+    throw("MethodLinkSpeciesSet->dbID is not defined for this Pecan job");
+  }
 
   ## Store DnaFragRegions corresponding to the SyntenyRegion in $self->dnafrag_regions(). At this point the
   ## DnaFragRegions are in random order
   $self->_load_DnaFragRegions($self->synteny_region_id);
-  if ($self->tree_file and $self->dnafrag_regions) {
+  if ($self->get_species_tree and $self->dnafrag_regions) {
     ## Get the tree string by taking into account duplications and deletions. Resort dnafrag_regions
     ## in order to match the name of the sequences in the tree string (seq1, seq2...)
     $self->_build_tree_string;
     ## Dumps fasta files for the DnaFragRegions. Fasta files order must match the entries in the
     ## newick tree. The order of the files will match the order of sequences in the tree_string.
     $self->_dump_fasta;
+  } else {
+    throw("Cannot start Pecan job because some information is missing");
   }
 
   return 1;
@@ -164,10 +171,33 @@ sub fasta_files {
   return $self->{'_fasta_files'};
 }
 
-sub tree_file {
+sub get_species_tree {
   my $self = shift;
-  $self->{'_tree_file'} = shift if(@_);
-  return $self->{'_tree_file'};
+
+  my $newick_species_tree;
+  if (defined($self->{_species_tree})) {
+    return $self->{_species_tree};
+  } elsif ($self->{_tree_analysis_data_id}) {
+    my $analysis_data_adaptor = $self->{hiveDBA}->get_AnalysisDataAdaptor();
+    $newick_species_tree = $analysis_data_adaptor->fetch_by_dbID($self->{_tree_analysis_data_id});
+  } elsif ($self->{_tree_file}) {
+    open(TREE_FILE, $self->{_tree_file}) or throw("Cannot open file ".$self->{_tree_file});
+    $newick_species_tree = join("", <TREE_FILE>);
+    close(TREE_FILE);
+  }
+
+  if (!defined($newick_species_tree)) {
+    throw("Cannot get the species tree");
+  }
+
+  $newick_species_tree =~ s/^\s*//;
+  $newick_species_tree =~ s/\s*$//;
+  $newick_species_tree =~ s/[\r\n]//g;
+
+  $self->{'_species_tree'} =
+      Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($newick_species_tree);
+
+  return $self->{'_species_tree'};
 }
 
 sub tree_string {
@@ -205,7 +235,10 @@ sub get_params {
     $self->method_link_species_set_id($params->{'method_link_species_set_id'});
   }
   if(defined($params->{'tree_file'})) {
-    $self->tree_file($params->{'tree_file'});
+    $self->{_tree_file} = $params->{'tree_file'};
+  }
+  if(defined($params->{'tree_analysis_data_id'})) {
+    $self->{_tree_analysis_data_id} = $params->{'tree_analysis_data_id'};
   }
 
   return 1;
@@ -308,25 +341,8 @@ sub _dump_fasta {
 sub _build_tree_string {
   my $self = shift;
 
-  my $tree_file = $self->tree_file;
-  my $newick = "";
-  if (-e $tree_file) {
-    open NEWICK_FILE, $tree_file || throw("Can not open $tree_file");
-    $newick = join("", <NEWICK_FILE>);
-    close NEWICK_FILE;
-  } else {
-    ## Look in the meta table
-    my $meta_adaptor = $self->{'comparaDBA'}->get_MetaContainer;
-    $tree_file =~ s/.*\/([^\/]+)$/$1/;
-    $newick = $meta_adaptor->list_value_by_key("$tree_file")->[0];
-  }
-  return if (!$newick);
-
-  $newick =~ s/^\s*//;
-  $newick =~ s/\s*$//;
-  $newick =~ s/[\r\n]//g;
-
-  my $tree = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($newick);
+  my $tree = $self->get_species_tree;
+  return if (!$tree);
 
   $self->_update_tree($tree);
 
@@ -335,7 +351,7 @@ sub _build_tree_string {
   $tree_string =~ s/"(seq\d+)"/$1/g;
   # Remove branch length if 0
   $tree_string =~ s/\:0\.0+(\D)/$1/g;
-  $tree_string =~ s/\:0(\D)/$1/g;
+  $tree_string =~ s/\:0([^\.\d])/$1/g;
 
   $tree->release_tree;
 
@@ -403,6 +419,10 @@ sub _update_tree {
     }
   }
   $self->dnafrag_regions($ordered_dnafrag_regions);
+
+  if (scalar(@$all_dnafrag_regions) != scalar(@$ordered_dnafrag_regions)) {
+    throw("Tree has a wrong number of leaves after updating the node names");
+  }
 
   if ($tree->get_child_count == 1) {
     my $child = $tree->children->[0];
