@@ -84,6 +84,11 @@ function show_zmenu( caption, e_x, e_y, menu_items, zmn ) {
     ce = dce('td');
     ce.colSpan = 3;
     ro.appendChild(ce);
+    
+    if (caption.match(/^NOTES/)) {
+       parseHTML(ce, caption);
+    } else {
+
     o=dtn(caption);
     temp = href ? href.split(':') : new Array('','');
     if( temp[0] == 'pfetch' ) {
@@ -95,7 +100,9 @@ function show_zmenu( caption, e_x, e_y, menu_items, zmn ) {
       to=dce('a');ac(to,o);o=to;sa(o,'href',href)
       if(target) sa(o,'rel','external')
     }
+    
     ac(ce,o);
+    }
   }
   
   m2(nz, e_x, e_y )
@@ -210,4 +217,47 @@ function changePFETCH( myAJAX, key ) {
 function encode( uri ) {
  if( encodeURIComponent ) return encodeURIComponent(uri);
  if( escape             ) return escape(uri);
+}
+
+function extractAttributes (el, content) {
+  var pAttrs = /(\w+)=\"?([^\"\n]*)\"?/g;
+  var pAttr = /(\w+)=\"?([^\"\n]*)\"?/;
+
+  var aList = content.match(pAttrs);
+
+  if (aList != null) {
+    for (var i=0; i < aList.length; i++) {
+      var attr = aList[i].match(pAttr);
+        if (attr != null) {
+	  sa(el, attr[1], attr[2]);
+	}
+    }
+  }
+}
+
+function parseHTML (el, content) {
+  var pTags = /<(a)\s+([^\>\n]*)\s*\>(.*)<\s*\/a\s*>|<(img)\s+([^\>\n]*)\s*\/?>|<(br)\s*\/?>/;
+
+  var tag;
+  while ( (tag = content.match(pTags)) != null) {
+     var txt = RegExp.leftContext;
+     content = RegExp.rightContext;
+     ac(el, dtn(txt));
+     var tag_name = tag[1] || tag[4] || tag[6];
+     var tag_attributes = tag[2] || tag[5];
+     var tag_text = tag[3]; // Can contain other tags
+
+//     alert(tag_name + " * " + tag_attributes + " * " + tag_text);
+
+     var cel = dce(tag_name);
+     if (tag_attributes != null) {
+       extractAttributes(cel, tag_attributes);
+     }
+     
+     if (tag_text != null) {
+       parseHTML(cel, tag_text);
+     }
+     ac(el, cel);
+  }
+  ac(el, dtn(content));
 }
