@@ -37,6 +37,7 @@ use strict;
 use Bio::Species;
 use Bio::EnsEMBL::Compara::NestedSet;
 use Bio::EnsEMBL::Utils::Exception;
+use Bio::EnsEMBL::Utils::Argument;
 
 our @ISA = qw(Bio::EnsEMBL::Compara::NestedSet);
 
@@ -99,39 +100,73 @@ sub genbank_hidden_flag {
 }
 
 sub classification {
-  my $self = shift;
-  my $separator = shift;
+  my $self =shift;
+  my @args = @_;
 
-  $separator = " " unless (defined $separator);
-  
-  unless (defined $self->{'_classification'}) {
-    
-    my $root = $self->root;
-    my @classification;
-    unless ($root->name eq "root") {
-      unshift @classification, $self->name;
-    }
-    unless ($root->get_child_count == 0) {
-      $root->_add_child_name_to_classification(\@classification);
-    }
-    if ($self->rank eq 'species' || $self->rank eq 'subspecies') {
-      my ($genus, $species, $subspecies) = split(" ", $self->binomial);
-      unshift @classification, $species;
-      unshift @classification, $subspecies if (defined $subspecies);
-    }
-    $self->{'_classification'} = join($separator,@classification);
+  my ($separator, $full);
+  if (scalar @args) {
+    ($separator, $full) = rearrange([qw(SEPARATOR FULL)], @args);
   }
-  
-  return $self->{'_classification'};
+
+  $separator = " " unless(defined $separator);
+  $full = 0 unless (defined $full);
+
+  $self->{"_separator"} = $separator unless (defined $self->{"_separator"});
+  $self->{"_separator_full"} = $separator unless (defined $self->{"_separator_full"});
+
+  $self->{'_classification'} = undef unless ($self->{"_separator"} eq $separator);
+  $self->{'_classification_full'} = undef unless ($self->{"_separator_full"} eq $separator);
+
+  return $self->{'_classification_full'} if ($full && defined $self->{'_classification_full'});
+  return $self->{'_classification'} if (!$full && defined $self->{'_classification'});
+
+  my $root = $self->root;
+  my @classification;
+  unless ($root->name eq "root") {
+    unshift @classification, $self->name;
+  }
+  unless ($root->get_child_count == 0) {
+    $root->_add_child_name_to_classification(\@classification, $full);
+  }
+  if ($self->rank eq 'species' || $self->rank eq 'subspecies') {
+    my ($genus, $species, $subspecies) = split(" ", $self->binomial);
+    unshift @classification, $species;
+    unshift @classification, $subspecies if (defined $subspecies);
+  }
+
+
+  if ($full) {
+    $self->{'_classification_full'} = join($separator,@classification);
+    $self->{"_separator_full"} = $separator;
+    return $self->{'_classification_full'};
+  } else {
+    $self->{'_classification'} = join($separator,@classification);
+    $self->{"_separator"} = $separator;
+    return $self->{'_classification'};
+  }
+}
+
+sub subspecies {
+  my $self = shift;
+
+  unless (defined $self->{'_species'}) {
+    my ($genus, $species, $subspecies) = split(" ", $self->binomial);
+    $self->{'_species'} = $species;
+    $self->{'_genus'} = $genus;
+    $self->{'_subspecies'} = $subspecies;
+  }
+
+  return $self->{'_species'};
 }
 
 sub species {
   my $self = shift;
 
   unless (defined $self->{'_species'}) {
-    my ($species, $genus) = split /\s+/, $self->classification;
+    my ($genus, $species, $subspecies) = split(" ", $self->binomial);
     $self->{'_species'} = $species;
     $self->{'_genus'} = $genus;
+    $self->{'_subspecies'} = $subspecies;
   }
 
   return $self->{'_species'};
@@ -141,9 +176,10 @@ sub genus {
   my $self = shift;
 
   unless (defined $self->{'_genus'}) {
-    my ($species, $genus) = split /\s+/, $self->classification;
+    my ($genus, $species, $subspecies) = split(" ", $self->binomial);
     $self->{'_species'} = $species;
     $self->{'_genus'} = $genus;
+    $self->{'_subspecies'} = $subspecies;
   }
 
   return $self->{'_genus'};
@@ -152,15 +188,23 @@ sub genus {
 sub _add_child_name_to_classification {
   my $self = shift;
   my $classification = shift;
+  my $full = shift;
+
   if ($self->get_child_count > 1) {
     throw("Can't classification on a multifurcating tree\n");
   } elsif ($self->get_child_count == 1) {
     my $child = $self->children->[0];
-    unless ($child->genbank_hidden_flag || $child->rank eq "subgenus") {
-      unshift @$classification, $child->name;
+    if ($full) {
+      unshift @$classification, $child->name unless ($child->rank eq "subgenus"
+                                                     || $child->rank eq "subspecies"
+                                                     || $child->rank eq "species");
+    } else {
+      unless ($child->genbank_hidden_flag || $child->rank eq "subgenus") {
+        unshift @$classification, $child->name;
+      }
     }
     unless ($child->rank eq 'species') {
-      $child->_add_child_name_to_classification($classification);
+      $child->_add_child_name_to_classification($classification, $full);
     }
   }
 }
@@ -179,6 +223,7 @@ sub binomial {
   if ($self->has_tag('scientific name') && ($self->rank eq 'species' || $self->rank eq 'subspecies')) {
     return $self->get_tagvalue('scientific name');
   } else {
+    warning("taxon_id=",$self->node_id," is not a species or subspecies. So binomial is undef\n");
     return undef;
   }
 }
