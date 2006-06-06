@@ -64,6 +64,7 @@ sub fetch_input {
   my( $self) = @_;
 
   $self->{'comparaDBA'} = Bio::EnsEMBL::Compara::Production::DBSQL::DBAdaptor->new(-DBCONN=>$self->db->dbc);
+  $self->{'hiveDBA'} = Bio::EnsEMBL::Hive::DBSQL::DBAdaptor->new(-DBCONN => $self->{'comparaDBA'}->dbc);
   $self->get_params($self->parameters);
   $self->get_params($self->input_id);
 
@@ -144,10 +145,33 @@ sub fasta_files {
   return $self->{'_fasta_files'};
 }
 
-sub tree_file {
+sub get_species_tree {
   my $self = shift;
-  $self->{'_tree_file'} = shift if(@_);
-  return $self->{'_tree_file'};
+
+  my $newick_species_tree;
+  if (defined($self->{_species_tree})) {
+    return $self->{_species_tree};
+  } elsif ($self->{_tree_analysis_data_id}) {
+    my $analysis_data_adaptor = $self->{hiveDBA}->get_AnalysisDataAdaptor();
+    $newick_species_tree = $analysis_data_adaptor->fetch_by_dbID($self->{_tree_analysis_data_id});
+  } elsif ($self->{_tree_file}) {
+    open(TREE_FILE, $self->{_tree_file}) or throw("Cannot open file ".$self->{_tree_file});
+    $newick_species_tree = join("", <TREE_FILE>);
+    close(TREE_FILE);
+  }
+
+  if (!defined($newick_species_tree)) {
+    throw("Cannot get the species tree");
+  }
+
+  $newick_species_tree =~ s/^\s*//;
+  $newick_species_tree =~ s/\s*$//;
+  $newick_species_tree =~ s/[\r\n]//g;
+
+  $self->{'_species_tree'} =
+      Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($newick_species_tree);
+
+  return $self->{'_species_tree'};
 }
 
 sub tree_string {
@@ -185,7 +209,10 @@ sub get_params {
     $self->method_link_species_set_id($params->{'method_link_species_set_id'});
   }
   if(defined($params->{'tree_file'})) {
-    $self->tree_file($params->{'tree_file'});
+    $self->{_tree_file} = $params->{'tree_file'};
+  }
+  if(defined($params->{'tree_analysis_data_id'})) {
+    $self->{_tree_analysis_data_id} = $params->{'tree_analysis_data_id'};
   }
 
   return 1;
@@ -238,7 +265,7 @@ sub dumpFasta {
 
   $sr->release_tree;
 
-  if ($self->tree_file) {
+  if ($self->get_species_tree) {
     my $tree_string = $self->build_tree_string;
     $self->tree_string($tree_string);
   }
@@ -247,18 +274,10 @@ sub dumpFasta {
 
 sub build_tree_string {
   my $self = shift;
-  my $tree_file = $self->tree_file;
-  open(F, $tree_file) or throw("Can not open $tree_file");
-  my $newick = "";
-  while (<F>) {
-    chomp;
-    if (/^\s*(.*)\s*$/) {
-      $newick .= $1;
-    }
-  }
-  close F;
 
-  my $tree = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($newick);
+  my $tree = $self->get_species_tree;
+  return if (!$tree);
+
   $tree = $self->update_node_names($tree);
 
   my $tree_string = $tree->newick_simple_format;
