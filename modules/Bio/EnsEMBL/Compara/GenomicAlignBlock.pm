@@ -50,6 +50,8 @@ GET VALUES
   my $score = $genomic_align_block->score();
   my $length = $genomic_align_block->length;
   my alignment_strings = $genomic_align_block->alignment_strings;
+  my $genomic_align_block_is_on_the_original_strand =
+      $genomic_align_block->orginal_strand;
 
 =head1 OBJECT ATTRIBUTES
 
@@ -213,6 +215,8 @@ sub new {
         SCORE PERC_ID LENGTH REFERENCE_GENOMIC_ALIGN REFERENCE_GENOMIC_ALIGN_ID
         GENOMIC_ALIGN_ARRAY STARTING_GENOMIC_ALIGN_ID UNGAPPED_GENOMIC_ALIGN_BLOCKS)],
             @args);
+
+  $self->{_original_strand} = 1;
 
   if (defined($ungapped_genomic_align_blocks)) {
     return $self->_create_from_a_list_of_ungapped_genomic_align_blocks($ungapped_genomic_align_blocks);
@@ -1372,10 +1376,46 @@ sub get_all_ungapped_GenomicAlignBlocks {
 sub reverse_complement {
   my ($self) = @_;
 
+  if (defined($self->{_original_strand})) {
+    $self->{_original_strand} = 1 - $self->{_original_strand};
+  } else {
+    $self->{_original_strand} = 0;
+  }
+
   my $gas = $self->get_all_GenomicAligns;
   foreach my $ga (@{$gas}) {
     $ga->reverse_complement;
   }
+}
+
+
+=head2 original_strand
+
+  Args       : (optional) bool $original_strand
+  Example    : if (!$genomic_align_block->original_strand()) {
+                 # orignal GenomicAlignBlock has been reverse-complemented
+               }
+  Description: getter/setter for the _orignal_strand attribute
+
+               WARNING: to reverse_complement a genomic_align_block, use
+               reverse_complement() method instead. It is not
+               recommended to set manually this value unless you really
+               know what you are doing!
+
+  Returntype : none
+  Exceptions : none
+  Caller     : general
+
+=cut
+
+sub original_strand {
+  my ($self) = @_;
+
+  if (@_) {
+    $self->{_original_strand} = shift;
+  }
+
+  return $self->{_original_strand};
 }
 
 
@@ -1811,7 +1851,7 @@ sub _print {
   my ($self, $FILEH) = @_;
 
   my $verbose = verbose;
-  verbose(0);
+#   verbose(0);
   $FILEH ||= \*STDOUT;
   print $FILEH
 "Bio::EnsEMBL::Compara::GenomicAlignBlock object ($self)
@@ -1820,20 +1860,12 @@ sub _print {
   method_link_species_set = ", ($self->method_link_species_set or "-undef-"), "
   method_link_species_set_id = ", ($self->method_link_species_set_id or "-undef-"), "
   genomic_aligns = ", (scalar(@{$self->genomic_align_array}) or "-undef-"), "
-  reference_genomic_align = ", ($self->reference_genomic_align->dnafrag->genome_db->name or "-undef-"), "
-  all_non_reference_genomic_aligns = ", (join(":", map {$_->dnafrag->genome_db->name or "-undef-"}
-          @{$self->get_all_non_reference_genomic_aligns}) or "-undef-"), "
-  reference_slice = ", (eval{$self->reference_slice->name} or "-undef-"), "
-  reference_slice_start = ", ($self->reference_slice_start or defined($self->reference_slice_start)?"0":"-undef-"), "
-  reference_slice_end = ", ($self->reference_slice_end or "-undef-"), "
-  reference_slice_strand = ", ($self->reference_slice_strand or "-undef-"), "
   score = ", ($self->score or "-undef-"), "
   length = ", ($self->length or "-undef-"), "
   alignments: \n";
-  foreach my $this_genomic_align (@{$self->get_all_GenomicAligns()}) {
-    print $FILEH "    - ", $this_genomic_align->dnafrag->genome_db->name, " ",
-        $this_genomic_align->dnafrag->name, ":", $this_genomic_align->dnafrag_start,
-        "-", $this_genomic_align->dnafrag_end, ($this_genomic_align->dnafrag_strand==1)?"[+]\n":"[-]\n";
+  foreach my $this_genomic_align (@{$self->genomic_align_array()}) {
+    print $FILEH "    - ", $this_genomic_align->genome_db->name, " ",
+        $this_genomic_align->get_Slice->name, "\n";
   }
   verbose($verbose);
 
