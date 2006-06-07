@@ -11,7 +11,7 @@ use Sanger::Graphics::Bump;
 use Bio::EnsEMBL::Glyph::Symbol::box;	# default symbol for features
 use Data::Dumper;
 use POSIX qw(floor);
-
+use HTML::Entities;
 
 sub init_label {
     my ($self) = @_;
@@ -133,7 +133,7 @@ sub RENDER_simple {
     my $glyph_symbol = $style->{'glyph'};
 
     # Draw label first, so we can get the label_height to use in poly offsets
-    my $label_height =$self->feature_label( $Composite, 
+    $label_height =$self->feature_label( $Composite, 
 					    $label, 
 					    $colour, 
 					    $glyph_height,
@@ -180,9 +180,9 @@ sub RENDER_simple {
     # Draw feature symbol
     my $symbol = $self->get_symbol ($style, $fdata, $y_offset);
     $self->push($symbol->draw);
-    $total_track_height = $y_offset if ($total_track_height < $y_offset);
-  }
 
+  }
+    $total_track_height = $y_offset if ($total_track_height < $y_offset);
     # Offset label coords by which row we're on
     $Composite->y($Composite->y() + $y_offset);
 
@@ -192,8 +192,11 @@ sub RENDER_simple {
   $self->errorTrack( 'No '.$self->{'extras'}->{'caption'}.' features in this region' ) if $empty_flag;
 
     if($more_features) {
+    
     # There are more features to display : show the note
       my $yx =   2 * ($configuration->{'h'} + $label_height) + $total_track_height;
+
+
 
       my $ID = 'There are more '.$self->{'extras'}->{'label'}.' features in this region. Increase source depth to view them all ';
       $self->errorTrack($ID, undef, $yx);
@@ -289,6 +292,9 @@ sub RENDER_grouped {
     
     my( $href, $zmenu ) = $f->das_group_id ? $self->gmenu( $f, $groupsize ) : $self->zmenu( $f);
 
+
+#    warn (Data::Dumper::Dumper($zmenu));
+
     my $Composite = new Sanger::Graphics::Glyph::Composite({
       'y'            => 0,
       'x'            => $START-1,
@@ -381,8 +387,10 @@ sub RENDER_grouped {
     # - the grouping line between the previous feature and this one
     # - the feature itself
     foreach my $f (@feature_group) {
+
 	my $style = $self->get_featurestyle($f, $configuration);
 	my $fdata = $self->get_featuredata($f, $configuration, $y_offset);
+
 	my $symbol = $self->get_symbol ($style, $fdata, $y_offset);
 	my $to = $symbol->feature->{'start'};
 
@@ -547,7 +555,10 @@ sub gmenu{
 
   my $id;
   my $ids = 10;
+#      warn(Data::Dumper::Dumper($f));
   foreach my $group ($f->das_groups) {
+
+
       my $txt = $group->{'group_label'} || $group->{'group_id'};
 
       next if ($txt !~ $f->{'grouped_by'});
@@ -575,7 +586,19 @@ sub gmenu{
 	  $zmenu->{$dlabel} = $dlink->{'href'};
       }
       
-      $zmenu->{"$ids:&nbsp;&nbsp;NOTES:  ". join('<br />', @{$group->{'note'}}) } = '' if ($group->{'note'});
+      if (my $note = $group->{'note'}) {
+	  my $note_txt = '';
+
+	  if (ref $note eq 'ARRAY') {
+	      foreach my $n (@$note) {
+		  $note_txt .= (decode_entities($n) . '<br/>');
+	      }
+	  } else {
+	      $note_txt = decode_entities($note);
+
+	  }
+	  $zmenu->{"$ids:NOTES: $note_txt"} = '';
+      }
 
       $ids ++;
   }
@@ -638,7 +661,19 @@ sub zmenu {
       $zmenu->{$dlabel} = $dlink->{'href'};
   }
 
-  $zmenu->{"70:NOTES:  ".$f->das_note()     } = '' if $f->das_note();
+  if (my $note = $f->das_note()) {
+      my $note_txt = '';
+
+      if (ref $note eq 'ARRAY') {
+	  foreach my $n (@$note) {
+	      $note_txt .= (decode_entities($n) . '<br/>');
+	  }
+      } else {
+	  $note_txt = decode_entities($note);
+
+      }
+      $zmenu->{"70:NOTES: $note_txt"} = '';
+  }
 
   my $href = undef;
 
