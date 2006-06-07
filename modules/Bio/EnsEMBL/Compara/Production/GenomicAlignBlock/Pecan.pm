@@ -99,12 +99,13 @@ sub run
 {
   my $self = shift;
 
-  my $runnable = new Bio::EnsEMBL::Analysis::Runnable::Pecan
-    (-workdir => $self->worker_temp_directory,
-     -fasta_files => $self->fasta_files,
-     -tree_string => $self->tree_string,
-     -analysis => $self->analysis,
-     -parameters => "-Xmx1000M");
+  my $runnable = new Bio::EnsEMBL::Analysis::Runnable::Pecan(
+      -workdir => $self->worker_temp_directory,
+      -fasta_files => $self->fasta_files,
+      -tree_string => $self->tree_string,
+      -analysis => $self->analysis,
+      -parameters => $self->{_java_options},
+      );
   $self->{'_runnable'} = $runnable;
   $runnable->run_analysis;
 }
@@ -233,6 +234,9 @@ sub get_params {
   }
   if(defined($params->{'method_link_species_set_id'})) {
     $self->method_link_species_set_id($params->{'method_link_species_set_id'});
+  }
+  if(defined($params->{'java_options'})) {
+    $self->{_java_options} = $params->{'java_options'};
   }
   if(defined($params->{'tree_file'})) {
     $self->{_tree_file} = $params->{'tree_file'};
