@@ -91,14 +91,15 @@ sub get_das_domains {
     push( @domains, @{$object->species_defs->ENSEMBL_DAS_SERVERS || []});
     push( @domains, map{$_->adaptor->domain} @{$object->Obj} );
     push( @domains, $object->param("DASdomain")) if ($object->param("DASdomain") ne $object->species_defs->DAS_REGISTRY_URL);
-    my %known_domains = map { $_ => 1} grep{$_} @domains ;
+
     my @urls;
-    foreach my $url (sort keys %known_domains) {
+    foreach my $url (sort @domains) {
 	$url = "http://$url" if ($url !~ m!^\w+://!);
 	$url .= "/das" if ($url !~ m!/das$!);
 	push @urls, $url;
     }
-    return  @urls;
+    my %known_domains = map { $_ => 1} grep{$_} @urls ;
+    return  sort keys %known_domains;
 }
 
 sub get_server_dsns {
@@ -178,7 +179,10 @@ sub add_das_server {
 
 
     } else {
-	my $rurl = $object->species_defs->DAS_REGISTRY_URL;
+	my $NO_REG = 'No registry';
+	my $rurl = $object->species_defs->DAS_REGISTRY_URL || $NO_REG;
+
+
 	if (defined (my $url = $object->param("DASdomain"))) {
 	    $url = "http://$url" if ($url !~ m!^\w+://!);
 	    $url .= '/das' if ($url !~ m!/das$! && $url ne $rurl);
@@ -186,13 +190,19 @@ sub add_das_server {
 	}
 	my @das_servers = &get_das_domains($object);
 
+#	warn("SERVERS:".Dumper(\@das_servers));
+	my @dvals = ();
+	if ($rurl eq $NO_REG) {
+	    $object->param("DASdomain") or $object->param("DASdomain", $das_servers[0]);
+	} else {
+	    $object->param("DASdomain") or $object->param("DASdomain", $rurl);
+	    push @dvals, {'name' => 'DAS Registry', 'value'=>$rurl};
+	}
 
-	$object->param("DASdomain") or $object->param("DASdomain", $rurl);
 	my $default = $object->param("DASdomain");
 
-#	warn("SERVERS:".Dumper(\@das_servers));
 #	warn("DEFAULT: $default");
-	my @dvals = ({'name' => 'DAS Registry', 'value'=>$rurl});
+
 	foreach my $dom (@das_servers) { push @dvals, {'name'=>$dom, 'value'=>$dom} ; }
 
 
