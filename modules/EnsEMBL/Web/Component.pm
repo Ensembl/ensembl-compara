@@ -4,6 +4,8 @@ use strict;
 use Data::Dumper;
 $Data::Dumper::Indent = 3;
 use EnsEMBL::Web::Form;
+use HTML::Entities;
+use HTML::Parser;
 
 @EnsEMBL::Web::Component::ISA = qw(EnsEMBL::Web::Root);
 
@@ -55,7 +57,9 @@ sub format_das_panel {
   foreach my $das ( grep {$_->adaptor->active} @das_objs ){
       my $source = $das->adaptor;
       my $source_nm = $source->name;
-      my $label = "<a name=$source_nm></a>$source_nm";
+
+      my $source_label = $source->label || $source->name;
+      my $label = "<a name=$source_nm></a>$source_label";
       if (defined (my $error = $source->verify)) {
 	  my $msg = qq{Error retrieving features : $error};
 	  $panel->add_row( $label, qq(<p>$msg</p>) );
@@ -108,13 +112,7 @@ sub format_das_panel {
           }
 
           if( my $note = $feature->das_note ){
-            $note=~s|((\S+?):(http://\S+))|
-              <a href="$3" target="$segment">[$2]</a>|ig;
-            $note=~s|([^"])(http://\S+)([^"])|
-              $1<a href="$2" target="$segment">$2</a>$3|ig;
-            $note=~s|((\S+?):navigation://(\S+))|
-              <a href="$script?gene=$3">[$2]</a>|ig;
-            $uhash{$id}->{note} = $note;
+            $uhash{$id}->{note} = parseHTML(decode_entities($note));
           }
         }
       }
@@ -257,7 +255,8 @@ sub format_das_panel {
   foreach my $das ( grep { $_->adaptor->conftype  ne 'url' } @das_objs ){
       my $source = $das->adaptor;
       my $name = $source->name;
-      my $label = $source->authority ? qq(<a href=").$source->authority.qq(" target="_blank">$name</a>) : $name;
+      my $source_label = $source->label || $source->name;
+      my $label = $source->authority ? qq(<a href=").$source->authority.qq(" target="_blank">$source_label</a>) : $source_label;
       $label         .= " (".$source->description.")" if $source->description;
       push @mvalues, { "value" => $name, "name"=>$label, 'checked' => $selected_sources{$name} ? 1 : 0 };
   }
@@ -286,6 +285,47 @@ sub format_das_panel {
   $panel->add_row( $label, $form->render(), "$URL=off" );
 
   ###### End of the sources selector form
+}
+
+# Function to parse HTML within NOTES
+
+my @htext;
+
+sub parseHTML {
+    my ($html) = @_;
+
+    @htext = ();
+
+    sub start_handler {
+	my ($self, $tag, $text) = @_;
+#	warn "+ $tag : $text\n";	    
+# HTML tags that we allow go in here - rest will be encoded
+	if ($tag eq 'span' || $tag eq 'a' || $tag eq 'img' || $tag eq 'br' || $tag eq 'br/') {
+	    push @htext, $text;
+	} else {
+	    push @htext, encode_entities ($text);
+	}
+
+	$self->handler(text => sub { my $tt = shift; push @htext, encode_entities ($tt) }, "dtext");
+    }
+
+    sub end_handler {
+        my ($self, $tag, $text) = @_;
+#	warn "- $tag : $text\n";
+	if ($tag eq 'span' || $tag eq 'a') {
+	    push @htext, $text;
+	} else {
+	    push @htext, encode_entities ($text);
+	}
+    }
+
+    my $p = HTML::Parser->new(api_version => 3);
+    $p->handler( start => \&start_handler, "self,tagname,text", );
+    $p->handler( end => \&end_handler, "self, tagname,text", );
+ 		
+    $p->parse("<span>$html</span>");
+    $p->eof;
+    return join '', @htext;
 }
 
 1;
