@@ -24,7 +24,7 @@ sub script_name {
   ## SNPView GeneSNPView
   $scriptname =~ s/(snp)/uc($1)/ieg;
   ## LDView LDTableVies
-  $scriptname =~ s/(Ld.)/uc($1)/eg;
+  $scriptname =~ s/(Ld.|Id.)/uc($1)/eg;
   ## MultiContigView, GeneSpliceView
   $scriptname =~ s/(Gene|Multi|Transcript)(.)/$1.uc($2)/eg;
   return $scriptname;

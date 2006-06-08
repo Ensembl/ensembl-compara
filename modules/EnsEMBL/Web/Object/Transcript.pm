@@ -445,8 +445,16 @@ sub munge_gaps_split {
 
 sub read_coverage {
   my ( $self, $sample, $sample_slice) = @_;
-  my $pop_adaptor = $self->Obj->adaptor->db->get_db_adaptor('variation')->get_PopulationAdaptor;
-  my $sample_obj = $pop_adaptor->fetch_by_name($sample); 
+  #my $pop_adaptor = $self->Obj->adaptor->db->get_db_adaptor('variation')->get_PopulationAdaptor;
+  #my $sample_obj = $pop_adaptor->fetch_by_name($sample); 
+
+
+  # NASTY HACK
+  my $pop_adaptor = $self->Obj->adaptor->db->get_db_adaptor('variation')->get_IndividualAdaptor;
+  my $sample_objs = $pop_adaptor->fetch_all_by_name($sample);
+  return ([],[]) unless @$sample_objs; 
+  my $sample_obj = $sample_objs->[0];
+  # --- end nasty hack
 
   my $rc_adaptor = $self->Obj->adaptor->db->get_db_adaptor('variation')->get_ReadCoverageAdaptor;
   my $coverage_level = $rc_adaptor->get_coverage_levels;

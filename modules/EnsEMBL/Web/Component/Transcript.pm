@@ -1500,7 +1500,6 @@ sub dump_form {
 
   my @cgi_params = @{$panel->get_params($object, {style =>"form"}) };
   foreach my $param ( @cgi_params) {
-    warn $param->{'name'}, $param->{'value'};
        $form->add_element (
                           'type'      => 'Hidden',
                           'name'      => $param->{'name'},
