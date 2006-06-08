@@ -50,8 +50,6 @@ sub colour {
     (my $state = $f->get_scalar_attribute('state')) =~ s/^\d\d://;
     my $to_colour = $f->get_scalar_attribute('inner_start') ? 'border' : $self->{'part_to_colour'};
     $to_colour = 'border' if $f->length > 350e3;
-    warn "STATE $state";
-warn keys %{$self->{'colours'}};
     return $self->{'colours'}{"col_$state"}||$self->{'feature_colour'},
            $self->{'colours'}{"lab_$state"}||$self->{'label_colour'},
            $to_colour;

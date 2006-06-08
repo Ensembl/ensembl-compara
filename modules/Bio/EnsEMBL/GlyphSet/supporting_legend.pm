@@ -8,14 +8,9 @@ use Sanger::Graphics::Glyph::Text;
 use  Sanger::Graphics::Bump;
 
 sub init_label {
-    my ($self) = @_;
-    return if( defined $self->{'config'}->{'_no_label'} );
-    my $label = new Sanger::Graphics::Glyph::Text({
-        'text'      => 'Scores: ',
-        'font'      => 'Small',
-        'absolutey' => 1,
-    });
-#    $self->label($label);
+  my ($self) = @_;
+  return if( defined $self->{'config'}->{'_no_label'} );
+#  $self->init_label_text( 'Scores:' );
 }
 
 sub _init {

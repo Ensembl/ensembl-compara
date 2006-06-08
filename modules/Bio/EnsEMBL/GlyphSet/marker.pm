@@ -14,15 +14,7 @@ my $PRIORITY   = 50;
 sub init_label {
   my ($self) = @_;
   return if( defined $self->{'config'}->{'_no_label'} );
-  $self->label( new Sanger::Graphics::Glyph::Text({
-    'text'    => "Markers",
-    'font'    => 'Small',
-    'absolutey' => 1,
-    'href'    => qq[javascript:X=hw('@{[$self->{container}{_config_file_name_}]}','$ENV{'ENSEMBL_SCRIPT'}','markers')],
-    'zmenu'   => {
-    'caption'           => 'HELP',
-    "01:Track information..."   => qq[javascript:X=hw(\'@{[$self->{container}{_config_file_name_}]}\',\'$ENV{'ENSEMBL_SCRIPT'}\',\'markers\')]
-  }}));
+  $self->init_label_text('Markers','markers');
 }
 
 sub _init {
@@ -38,17 +30,26 @@ sub _init {
   return unless $self->strand() == -1;
 
   $self->{'colours'} = $Config->get('marker','colours');
-  my $fontname       = $Config->species_defs->ENSEMBL_STYLE->{'LABEL_FONT'};
+  my( $fontname, $fontsize ) = $self->get_font_details( 'outertext' );
+  my @res = $self->get_text_width( 0, 'X', '', 'font'=>$fontname, 'ptsize' => $fontsize );
+  my $h = $res[3];
+  my $pix_per_bp = $self->{'config'}->transform()->{'scalex'};
+
   my $row_height     = 8;
-  my ($w,$h)         = $Config->texthelper->px2bp($fontname);
-      $w             = $Config->texthelper->width($fontname);
 
   my $labels         = ($Config->get('marker', 'labels' ) eq 'on') && ($L<1e7);
+  if( $L > 5e7 ) {
+    $self->errorTrack( "Markers only displayed for less than 50Mb.");
+    return;
+  }
 
   my $priority = ($self->{container}{_config_file_name_} eq 'Homo_sapiens' ? 
                   $PRIORITY : undef);
 
-  my @features = @{$slice->get_all_MarkerFeatures(undef,$priority,$MAP_WEIGHT)};
+  my $previous_start = $L + 1e9;
+  my $previous_end   = -1e9 ;
+
+  my @features = sort { $a->seq_region_start <=> $b->seq_region_start } @{$slice->get_all_MarkerFeatures(undef,$priority,$MAP_WEIGHT)};
   foreach my $f (@features){
     my $ms           = $f->marker->display_MarkerSynonym;
     my $fid          = '';
@@ -58,7 +59,6 @@ sub _init {
       my $mss = $f->marker->get_all_MarkerSynonyms;
       if(@$mss) { $fid = $mss->[0]->name; }
     }
-    my $bp_textwidth = $w * length("$fid ");
     my ($feature_colour, $label_colour, $part_to_colour) = $self->colour($f);
     my $href         = "/@{[$self->{container}{_config_file_name_}]}/markerview?marker=$fid";
 
@@ -70,18 +70,27 @@ sub _init {
       %HREF = ( 'href'   => $href );
       %ZMENU = ( 'zmenu' => { 'caption' => ($ms && $ms->source eq 'unists' ? "uniSTS:$fid" : $fid), 'Marker info' => $href } );
     }
-    $self->push( new Sanger::Graphics::Glyph::Rect({
-      'x' => $S,        'y' => 0,         'height' => $row_height, 'width' => ($E-$S+1),
-      'colour' => $feature_colour, 'absolutey' => 1,
-      %HREF, %ZMENU
-    }));
+    unless( $slice->strand < 0 ? $previous_start - $S < 0.5/$pix_per_bp : $E - $previous_end < 0.5/$pix_per_bp ) {
+      $self->push( new Sanger::Graphics::Glyph::Rect({
+        'x' => $S,        'y' => 0,         'height' => $row_height, 'width' => ($E-$S+1),
+        'colour' => $feature_colour, 'absolutey' => 1,
+        %HREF, %ZMENU
+      }));
+      $previous_end   = $E;
+      $previous_start = $E;
+    }
     next unless $labels;
+warn "HERE.........................";
+    my @res = $self->get_text_width( 0, $fid, '', 'font'=>$fontname, 'ptsize' => $fontsize );
+warn "LABEL - $fid";
     my $glyph = new Sanger::Graphics::Glyph::Text({
       'x'         => $S,
       'y'         => $row_height + 2,
-      'height'    => $Config->texthelper->height($fontname),
-      'width'     => $bp_textwidth,
+      'height'    => $h,
+      'width'     => 0,
+      'halign'    => 'left',
       'font'      => $fontname,
+      'ptsize'    => $fontsize,
       'colour'    => $label_colour,
       'absolutey' => 1,
       'text'      => $fid,
@@ -90,13 +99,13 @@ sub _init {
 
     my $bump_start = int($glyph->x() * $pix_per_bp);
        $bump_start = 0 if $bump_start < 0;
-    my $bump_end = $bump_start + $bp_textwidth;
+    my $bump_end = $bump_start + $res[2];
     next if $bump_end > $bitmap_length;
     my $row = & Sanger::Graphics::Bump::bump_row( $bump_start, $bump_end, $bitmap_length, \@bitmap );
     $glyph->y($glyph->y() + (1.2 * $row * $h));
     $self->push($glyph);
   }    
-
+warn "HERE.........................";
   ## No features show "empty track line" if option set....  ##
   if ((scalar(@features) == 0) && $Config->get('_settings','opt_empty_tracks')==1){
     $self->errorTrack( "No markers in this region" )

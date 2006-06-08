@@ -7,14 +7,9 @@ use Sanger::Graphics::Glyph::Rect;
 use Sanger::Graphics::Glyph::Text;
 
 sub init_label {
-    my ($self) = @_;
-    return if( defined $self->{'config'}->{'_no_label'} );
-    my $label = new Sanger::Graphics::Glyph::Text({
-        'text'      => 'SNP legend',
-        'font'      => 'Small',
-        'absolutey' => 1,
-    });
-    $self->label($label);
+  my ($self) = @_;
+  return if( defined $self->{'config'}->{'_no_label'} );
+  $self->init_label_text( 'SNP legend' );
 }
 
 sub _init {
@@ -25,7 +20,7 @@ sub _init {
     my $BOX_HEIGHT    = 4;
     my $BOX_WIDTH     = 20;
     my $NO_OF_COLUMNS = 3;
-    my $FONTNAME      = $Config->species_defs->ENSEMBL_STYLE->{'LABEL_FONT'};
+    my $FONTNAME      = $Config->species_defs->ENSEMBL_STYLE->{'GRAPHIC_FONT'};
     my ($w,$th)       = $Config->texthelper()->px2bp($FONTNAME);
 
     my $vc            = $self->{'container'};

@@ -36,7 +36,6 @@ sub init_label {
   my $code      = $self->check();
   $self->label( new Sanger::Graphics::Glyph::Text({
     'text'      => $self->{'config'}->get($code,'label')||'---',
-    'font'      => 'Small',
     'absolutey' => 1,
     'title'     => $self->{'config'}->get($code,'title')||$self->{'config'}->get($code,'label')||'',
     'href'      => qq[javascript:X=hw('@{[$self->{container}{_config_file_name_}]}','$ENV{'ENSEMBL_SCRIPT'}','$HELP_LINK')],

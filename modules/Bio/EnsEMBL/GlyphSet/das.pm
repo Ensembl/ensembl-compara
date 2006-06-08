@@ -14,13 +14,13 @@ use POSIX qw(floor);
 use HTML::Entities;
 
 sub init_label {
-    my ($self) = @_;
-    return if( defined $self->{'config'}->{'_no_label'} );
+  my ($self) = @_;
+  return if( defined $self->{'config'}->{'_no_label'} );
 
-    my $params;
-    foreach my $param (CGI::param()) {
-	next if ($param eq 'add_das_source');
-	if (defined(my $v = CGI::param($param))) {
+  my $params;
+  foreach my $param (CGI::param()) {
+    next if ($param eq 'add_das_source');
+    if (defined(my $v = CGI::param($param))) {
 	    if (ref($v) eq 'ARRAY') {
 		foreach my $w (@$v) {
 		    $params .= ";$param=$w";
@@ -49,12 +49,16 @@ sub init_label {
     my $track_label = $self->{'extras'}->{'label'} || $self->{'extras'}->{'caption'} || $self->{'extras'}->{'name'};
     $track_label =~ s/^(managed_|managed_extdas)//;
 
-    $self->label( new Sanger::Graphics::Glyph::Text({
-	'text'      => $track_label,
-	'font'      => 'Small',
-	'colour'    => 'contigblue2',
-	'absolutey' => 1,
-	'href'      => $URL,
+  my( $fontname, $fontsize ) = $self->get_font_details( 'label' );
+  my @res = $self->get_text_width( 0, $track_label, '', 'font'=>$fontname, 'ptsize' => $fontsize );
+  $self->label( new Sanger::Graphics::Glyph::Text({
+    'text'      => $track_label,
+    'colour'    => 'contigblue2',
+    'height'    => $res[3],
+    'absolutey' => 1,
+    'font'      => $fontname,
+    'ptsize'    => $fontsize,
+    'href'      => $URL,
 	'zmenu'     => $self->das_name  =~/^managed_extdas/ ?
 	        { 'caption' => 'Configure', '01:Advanced configuration...' => $URL } :
                 { 'caption' => 'HELP',      '01:Track information...'      => $URL }
@@ -100,7 +104,8 @@ sub RENDER_simple {
 
     my $ID    = $f->das_id;
     my $label = $f->das_feature_label || $ID;
-    my $label_length = $configuration->{'labelling'} * $self->{'textwidth'} * length(" $ID ") * 1.1; # add 10% for scaling text
+    my @res = $self->get_text_width( 0, $ID, '', 'font'=>$self->{'fontname_i'}, 'ptsize' => $self->{'fontsize_i'} );
+    my $label_length = $configuration->{'labelling'} * $res[2]/$self->{'pix_per_bp'};
     my $row = 0; # bumping row
 
     # keep within the window we're drawing
@@ -280,7 +285,8 @@ sub RENDER_grouped {
 	$label .= "[$num_in_group]";
     }
     
-    my $label_length = $configuration->{'labelling'} * $self->{'textwidth'} * length(" $label ") * 1.1; # add 10% for scaling text
+    my @res = $self->get_text_width( 0, $ID, '', 'font'=>$self->{'fontname_i'}, 'ptsize' => $self->{'fontsize_i'} );
+    my $label_length = $configuration->{'labelling'} * $res[2]/$self->{'pix_per_bp'};
     my $row = $configuration->{'depth'} > 0 ? $self->bump( $START, $end, $label_length, $configuration->{'depth'} ) : 0;
 
     if( $row < 0 ) { ## SKIP IF BUMPED...
@@ -708,16 +714,17 @@ sub feature_label {
   # relative to this.
 
   if( uc($self->{'extras'}->{'labelflag'}) eq 'O' ) { # draw On feature
-    my $bp_textwidth = $self->{'textwidth'} * length($text) * 1.2; # add 10% for scaling text
-    return unless $bp_textwidth < ($end - $start);
+    my @res = $self->get_text_width( 0, $text, '', 'font'=>$self->{'fontname_i'}, 'ptsize' => $self->{'fontsize_i'} );
+    return unless $res[2]/$self->{'pix_per_bp'} < ($end-$start);
 
-    my $y_offset = ($row_height - $self->{'textheight'})/2;
+    my $y_offset = ($row_height - $self->{'textheight_i'})/2;
     my $tglyph = new Sanger::Graphics::Glyph::Text({
-      'x'          => ( $end + $start - 1 - $bp_textwidth)/2,
+      'x'          => ( $end + $start - 1)/2,
       'y'          => $y_offset,
-      'width'      => $bp_textwidth,
-      'height'     => $self->{'textheight'},
-      'font'       => 'Tiny',
+      'width'      => 0,
+      'height'     => $self->{'textheight_i'},
+      'font'       => $self->{'fontname_i'},
+      'ptsize'     => $self->{'fontsize_i'},
       'colour'     => $self->{'config'}->colourmap->contrast($feature_colour),
       'text'       => $text,
       'absolutey'  => 1,
@@ -726,23 +733,28 @@ sub feature_label {
     return 0;
   } 
   elsif( uc($self->{'extras'}->{'labelflag'}) eq 'U') {	# draw Under feature
-    my $bp_textwidth = $self->{'textwidth'} * length($text) * 1.2; # add 10% for scaling text
+    my @res = $self->get_text_width( 0, $text, '', 'font'=>$self->{'fontname_o'}, 'ptsize' => $self->{'fontsize_o'} );
     my $y_offset = ($row_height + $glyph_height)/2;
     $y_offset += 2; # give a couple of pixels gap under the glyph
+warn "$text ............. $start .............. $res[2] / $self->{'pix_per_bp'}" ;
     my $tglyph = new Sanger::Graphics::Glyph::Text({
       'x'          => $start -1,
       'y'          => $y_offset,
-      'width'      => $bp_textwidth,
-      'height'     => $self->{'textheight'},
-      'font'       => 'Tiny',
+      'width'      => $res[2]/$self->{'pix_per_bp'},
+      'height'     => $self->{'textheight_o'},
+      'font'       => $self->{'fontname_o'},
+      'ptsize'     => $self->{'fontsize_o'},
+      'halign'     => 'left',
       'colour'     => $feature_colour,
       'text'       => $text,
       'absolutey'  => 1,
     });
+warn $composite->width,'-',$composite->height;
     $composite->push($tglyph);
-    return $self->{'textheight'} + 4;
-  } 
-  else {
+warn $composite->width,'-',$composite->height;
+warn "......... $self->{'textheight_o'} + 4";
+    return $self->{'textheight_o'} + 4;
+  } else {
     return 0;
   }
 }
@@ -795,11 +807,19 @@ sub _init {
   $configuration->{'labelling'} =($Config->get($das_config_key, 'lflag') || $Extra->{'labelflag'}) =~ /^n$/i ? 0 : 1,
   $configuration->{length} = $container_length;
 
+  my( $fontname_i, $fontsize_i ) = $self->get_font_details( 'innertext' );
+  my @res_i = $self->get_text_width( 0, 'X', '', 'font'=>$fontname_i, 'ptsize' => $fontsize_i );
+
+  my( $fontname_o, $fontsize_o ) = $self->get_font_details( 'innertext' );
+  my @res_o = $self->get_text_width( 0, 'X', '', 'font'=>$fontname_o, 'ptsize' => $fontsize_o );
+
   $self->{'pix_per_bp'}    = $Config->transform->{'scalex'};
   $self->{'bitmap_length'} = int(($configuration->{'length'}+1) * $self->{'pix_per_bp'});
-  ($self->{'textwidth'},$self->{'textheight'}) = $Config->texthelper()->real_px2bp('Tiny');
-  $self->{'textwidth'}     *= (1 + 1/($container_length||1) );
-  $configuration->{'h'} = $self->{'textheight'};
+  ($self->{'fontname_i'},$self->{'fontsize_i'}, $self->{'textwidth_i'},$self->{'textheight_i'}) = ($fontname_i, $fontsize_i,$res_i[2],$res_i[3]);
+  ($self->{'fontname_o'},$self->{'fontsize_o'}, $self->{'textwidth_o'},$self->{'textheight_o'}) = ($fontname_o, $fontsize_o,$res_o[2],$res_o[3]);
+  $self->{'textwidth_i'}     *= (1 + 1/($container_length||1) );
+  $self->{'textwidth_o'}     *= (1 + 1/($container_length||1) );
+  $configuration->{'h'} = $self->{'textheight_i'};
 
   my $styles;
 
@@ -1384,7 +1404,10 @@ sub RENDER_signalmap {
 
     $self->push( new Sanger::Graphics::Glyph::Text({
 	'text'      => $max_score,
-	'font'      => 'Tiny',
+      'height'     => $self->{'textheight_i'},
+      'font'       => $self->{'fontname_i'},
+      'ptsize'     => $self->{'fontsize_i'},
+      'halign' => 'left',
 	'colour'    => 'red',
 	'y' => 1,
 	'x' => 3,
@@ -1396,7 +1419,10 @@ sub RENDER_signalmap {
     if ($min_score < 0) {
 	$self->push( new Sanger::Graphics::Glyph::Text({
 	    'text'      => $min_score,
-	    'font'      => 'Tiny',
+      'height'     => $self->{'textheight_i'},
+      'font'       => $self->{'fontname_i'},
+      'ptsize'     => $self->{'fontsize_i'},
+      'halign' => 'left',
 	    'colour'    => 'red',
 	    'y' => abs($min_score) / $pix_per_score + $row_height + 2,
 	    'x' => 3,

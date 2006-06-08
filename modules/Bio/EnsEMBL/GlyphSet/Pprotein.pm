@@ -9,14 +9,9 @@ use Sanger::Graphics::Glyph::Text;
 @ISA = qw(Bio::EnsEMBL::GlyphSet);
 
 sub init_label {
-    my ($self) = @_;
-    return if( defined $self->{'config'}->{'_no_label'} );
-    my $label = new Sanger::Graphics::Glyph::Text({
-		'text'      => 'Peptide',
-		'font'      => 'Small',
-		'absolutey' => 1,
-    });
-    $self->label($label);
+  my ($self) = @_;
+  return if( defined $self->{'config'}->{'_no_label'} );
+  $self->init_label_text( 'Peptide' );
 }
 
 sub _init {

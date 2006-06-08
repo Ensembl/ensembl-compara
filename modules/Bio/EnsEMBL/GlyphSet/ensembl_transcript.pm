@@ -48,7 +48,6 @@ sub colour {
   } elsif(exists $highlights{lc($gene->stable_id)}) {
     return (@$genecol, $colours->{'hi'});
   }
-  warn @$genecol;  
   return (@$genecol, undef);
 }
 

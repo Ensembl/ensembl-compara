@@ -3,7 +3,6 @@ use strict;
 use vars qw(@ISA);
 use Bio::EnsEMBL::GlyphSet;
 use Sanger::Graphics::Glyph::Rect;
-use Sanger::Graphics::Glyph::Text;
 use Sanger::Graphics::Glyph::Composite;
 use Sanger::Graphics::Bump;
 
@@ -14,17 +13,7 @@ sub init_label {
   return if( defined $self->{'config'}->{'_no_label'} );
   my $HELP_LINK = 'compara_alignment';
   my $code      = $self->check();
-  $self->label( new Sanger::Graphics::Glyph::Text({
-    'text'      => $self->{'config'}->get($code,'label')||'---',
-    'font'      => 'Small',
-    'absolutey' => 1,
-    'title'     => $self->{'config'}->get($code,'title')||$self->{'config'}->get($code,'label')||'',
-    'href'      => qq[javascript:X=hw('@{[$self->{container}{_config_file_name_}]}','$ENV{'ENSEMBL_SCRIPT'}','$HELP_LINK')],
-    'zmenu'     => {
-      'caption'                 => 'HELP',
-      "01:Track information..." => qq[javascript:X=hw(\'@{[$self->{container}{_config_file_name_}]}\',\'$ENV{'ENSEMBL_SCRIPT'}\',\'$HELP_LINK\')]
-    }
-  }));
+  $self->init_label_text(  $self->{'config'}->get($code,'label')||'---', $HELP_LINK );
   $self->bumped( $self->{'config'}->get($code, 'compact') ? 'no' : 'yes' ) unless $self->{'config'}{'compara'};
 }
 

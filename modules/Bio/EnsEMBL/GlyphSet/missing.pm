@@ -9,25 +9,35 @@ sub init_label {
 }
 
 sub _init {
-    my ($self) = @_;
-    return unless ($self->strand() == -1);
-    my $tracks   = $self->{'config'}->{'missing_tracks'};
-    my ($w,$h)   = $self->{'config'}->texthelper()->real_px2bp($self->{'config'}->species_defs->ENSEMBL_STYLE->{'LABEL_FONT'});
-    my ($w2,$h2) = $self->{'config'}->texthelper()->real_px2bp('Small');
-    $self->push( new Sanger::Graphics::Glyph::Text({
-        'x'         => 1, 
-        'y'         => int( ($h2-$h)/2 ),
-        'height'    => $h2,
-        'font'      => $self->{'config'}->species_defs->ENSEMBL_STYLE->{'LABEL_FONT'},
-        'colour'    => 'black',
-        'text'      => 
-	    $tracks == 0 ? "All tracks are currently switched on" : (
-		$tracks == 1 ?
-		"There is currently 1 track switched off, use the menus above the image to turn this on." :
-		"There are currently $tracks tracks switched off, use the menus above the image to turn these on."
-        ),
-        'absolutey' => 1,
-    }) );
+  my ($self) = @_;
+  return unless ($self->strand() == -1);
+  my $tracks   = $self->{'config'}->{'missing_tracks'};
+
+  my $Config        = $self->{'config'};
+  my( $FONT,$FONTSIZE)  = $self->get_font_details( 'text' );
+
+  my $text_to_display = "All tracks are currently switched on";
+
+  if( $tracks > 1 ) {
+    $text_to_display =  "There are currently $tracks tracks switched off, use the menus above the image to turn them on." ;
+  } elsif( $tracks == 1 ) {
+    $text_to_display =  "There is currently one track switched off, use the menus above the image to turn this on." ;
+  }
+
+  my( $txt, $bit, $w,$th ) = $self->get_text_width( 0, $text_to_display, '', 'ptsize' => $FONTSIZE, 'font' => $FONT );
+ 
+  warn "$w - $th - $bit - $text_to_display....";
+  $self->push( new Sanger::Graphics::Glyph::Text({
+    'x'         => 1, 
+    'y'         => 1,
+    'height'    => $th,
+    'font'      => $FONT,
+    'ptsize'    => $FONTSIZE,
+    'colour'    => 'black',
+    'halign'    => 'left',
+    'text'      => $text_to_display,
+    'absolutey' => 1,
+  }) );
 }
 
 1;

@@ -24,7 +24,7 @@ sub colour {
   my ($self, $gene, $transcript, $colours, %highlights) = @_;
 
   my $highlight = undef;
-  my $type = $gene->biotype.'_'.$gene->confidence;
+  my $type = $gene->biotype.'_'.$gene->status;
   # $type =~ s/HUMACE-//g;
   my @colour = @{$colours->{$type}||['black','transcript']};
   $colour[1] = "Vega ".$colour[1];
@@ -45,7 +45,7 @@ sub gene_colour {
   my ($self, $gene, $colours, %highlights) = @_;
 
   my $highlight = undef;
-  my $type = $gene->biotype."_".$gene->confidence;
+  my $type = $gene->biotype."_".$gene->status;
   $type =~ s/HUMACE-//g;
   my @colour = @{$colours->{$type}||['black','transcript']};
   $colour[1] = "Vega ".$colour[1];
@@ -245,7 +245,7 @@ sub format_vega_name {
 	my ($status,$biotype);
 	my %gm = $self->{'config'}->colourmap()->colourSet('vega_gene');
 	if ($trans) {
-		$status = $trans->confidence()||$gene->confidence;
+		$status = $trans->status()||$gene->status;
 		$biotype = $trans->biotype()||$gene->biotype();
 	} else {
 		$status = $gene->confidence;

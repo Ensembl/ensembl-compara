@@ -4,7 +4,6 @@ use vars qw(@ISA);
 use Bio::EnsEMBL::GlyphSet;
 use Sanger::Graphics::Glyph::Space;
 use Sanger::Graphics::Glyph::Rect;
-use Sanger::Graphics::Glyph::Text;
 use Sanger::Graphics::Glyph::Composite;
 use  Sanger::Graphics::Bump;
 @ISA = qw(Bio::EnsEMBL::GlyphSet);
@@ -14,25 +13,11 @@ sub init_label {
   my ($self) = @_;
   return if( defined $self->{'config'}->{'_no_label'} );
   my $HELP_LINK = $self->check();
-  my $label = new Sanger::Graphics::Glyph::Text({
-    'text'      => $self->my_label(),
-    'font'      => 'Small',
-    'absolutey' => 1,
-    'href'      => qq[javascript:X=hw('@{[$self->{container}{_config_file_name_}]}','$ENV{'ENSEMBL_SCRIPT'}','$HELP_LINK')],
-    'zmenu'     => {
-      'caption'                     => 'HELP',
-      "02:Track information..."     => qq[javascript:X=hw(\'@{[$self->{container}{_config_file_name_}]}\',\'$ENV{'ENSEMBL_SCRIPT'}\',\'$HELP_LINK\')]
-    }
-  });
-  if( $self->{'extras'} && $self->{'extras'}{'description'} ) {
-    $label->{'zmenu'}->{'01:'.CGI::escapeHTML($self->{'extras'}{'description'})} = ''; 
-  }
-  $self->label($label);
+  $self->init_label_text( $self->my_label, $HELP_LINK, $self->{'extras'} ? $self->{'extras'}{'description'} : undef );
   unless ($self->{'config'}->get($HELP_LINK, 'bump') eq 'always') {
     $self->bumped( $self->{'config'}->get($HELP_LINK, 'compact') ? 'no' : 'yes' );
   }
 }
-
 
 sub colour   { return $_[0]->{'feature_colour'}, $_[0]->{'label_colour'}, $_[0]->{'part_to_colour'}; }
 sub my_label { return 'Missing label'; }
@@ -195,7 +180,7 @@ sub expanded_init {
     if( $strand < 0 ) {
       $y_pos = ($dep+1) * ( $h + 2 ) + 2;
     } else {
-      $y_pos  = 2 + $self->{'config'}->texthelper()->height($self->{'config'}->species_defs->ENSEMBL_STYLE->{'LABEL_FONT'});
+      $y_pos  = 2 + $self->{'config'}->texthelper()->height($self->{'config'}->species_defs->ENSEMBL_STYLE->{'GRAPHIC_FONT'});
     }
     $self->errorTrack( "$n_bumped ".$self->my_label." omitted", undef, $y_pos );
   }

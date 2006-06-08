@@ -11,6 +11,7 @@ package Sanger::Graphics::Renderer::gif;
 use strict;
 use Sanger::Graphics::Renderer;
 use GD;
+use GD::Text::Align;
 # use Math::Bezier;
 use vars qw(@ISA);
 @ISA = qw(Sanger::Graphics::Renderer);
@@ -142,29 +143,37 @@ sub render_Rect {
 }
 
 sub render_Text {
-    my ($self, $glyph) = @_;
+  my ($self, $glyph) = @_;
 
-    my $colour = $self->colour($glyph->{'colour'});
+  my $colour = $self->colour($glyph->{'colour'});
     
     ########## Stock GD fonts
-    my $font = $glyph->font();
-    if($font eq "Tiny") {
-        $self->{'canvas'}->string(gdTinyFont, $glyph->{'pixelx'}, $glyph->{'pixely'}, $glyph->text(), $colour);
-    } elsif($font eq "Small") {
-        $self->{'canvas'}->string(gdSmallFont, $glyph->{'pixelx'}, $glyph->{'pixely'}, $glyph->text(), $colour);
-    } elsif($font eq "MediumBold") {
-        $self->{'canvas'}->string(gdMediumBoldFont, $glyph->{'pixelx'}, $glyph->{'pixely'}, $glyph->text(), $colour);
-    } elsif($font eq "Large") {
-        $self->{'canvas'}->string(gdLargeFont, $glyph->{'pixelx'}, $glyph->{'pixely'}, $glyph->text(), $colour);
-    } elsif($font eq "Giant") {
-        $self->{'canvas'}->string(gdGiantFont, $glyph->{'pixelx'}, $glyph->{'pixely'}, $glyph->text(), $colour);
-    } elsif($font) {
-	########## If we didn't recognise it already, assume it's a TrueType font
-	$self->{'canvas'}->stringFT(
-          $colour, $font, $glyph->ptsize(), $glyph->angle()||0,
-          $glyph->{'pixelx'}, $glyph->{'pixely'}, $glyph->text()
-        );
-    }
+  my $font = $glyph->font();
+  if($font eq "Tiny") {
+      $self->{'canvas'}->string(gdTinyFont, $glyph->{'pixelx'}, $glyph->{'pixely'}, $glyph->text(), $colour);
+  } elsif($font eq "Small") {
+    $self->{'canvas'}->string(gdSmallFont, $glyph->{'pixelx'}, $glyph->{'pixely'}, $glyph->text(), $colour);
+  } elsif($font eq "MediumBold") {
+    $self->{'canvas'}->string(gdMediumBoldFont, $glyph->{'pixelx'}, $glyph->{'pixely'}, $glyph->text(), $colour);
+  } elsif($font eq "Large") {
+    $self->{'canvas'}->string(gdLargeFont, $glyph->{'pixelx'}, $glyph->{'pixely'}, $glyph->text(), $colour);
+  } elsif($font eq "Giant") {
+    $self->{'canvas'}->string(gdGiantFont, $glyph->{'pixelx'}, $glyph->{'pixely'}, $glyph->text(), $colour);
+  } elsif($font) {
+    ######### If we didn't recognise it already, assume it's a TrueType font
+    my ($cx, $cy)      = $glyph->pixelcentre();
+    my $xpt = $glyph->{'pixelx'} + 
+            ( $glyph->{'halign'} eq 'left' ? 0 : $glyph->{'halign'} eq 'right' ? 1 : 0.5 ) * $glyph->{'pixelwidth'};
+    my $X = GD::Text::Align->new( $self->{'canvas'},
+      'valign' => $glyph->{'valign'} || 'center',
+      'halign' => $glyph->{'halign'} || 'center',
+      'colour' => $colour,
+      'font'   => "/usr/local/share/fonts/ttfonts/$font.ttf",
+      'ptsize' => $glyph->ptsize(),
+      'text'   => $glyph->text()
+    );
+    $X->draw( $xpt, $cy, $glyph->angle()||0 );
+  }
 }
 
 sub render_Circle {

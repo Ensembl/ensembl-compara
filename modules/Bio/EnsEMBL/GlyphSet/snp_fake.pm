@@ -14,8 +14,12 @@ sub _init {
 
   my $Config        = $self->{'config'};
   my $colours       = $Config->get('snp_fake','colours' );
-  my ($w,$th) = $Config->texthelper()->px2bp($Config->species_defs->ENSEMBL_STYLE->{'LABEL_FONT'});
 
+  my( $fontname, $fontsize ) = $self->get_font_details( 'innertext' );
+  my @res = $self->get_text_width( 0, 'X', '', 'font'=>$fontname, 'ptsize' => $fontsize );
+  my $w = $res[2];
+  my $th = $res[3];
+  my $pix_per_bp = $self->{'config'}->transform()->{'scalex'};
   my $snps = $Config->{'snps'};
   return unless ref $snps eq 'ARRAY';
 
@@ -32,37 +36,38 @@ sub _init {
     my @alleles = split "\/", $label;
     my  $h = 4 + ($th+2) * scalar @alleles;
 
-    my $bp_textwidth = $w * length("$label");
-    if( $bp_textwidth*1.2 < $end-$start+1 ) {
+    my @res = $self->get_text_width( ($end-$start+1)*$pix_per_bp, $label, 'X', 'font'=>$fontname, 'ptsize' => $fontsize );
+    if( $res[0] eq $label ) {
       $h = 8 + $th*2;
-      my $tmp_width = $bp_textwidth + $w*4;
+      my $tmp_width = ($w*2+$res[2]) / $pix_per_bp;
       if ( ($end - $start + 1) > $tmp_width ) {
 	$start = ( $end + $start-$tmp_width )/2;
 	$end =  $start+$tmp_width ;
       }
       my $textglyph = new Sanger::Graphics::Glyph::Text({
-                'x'          => ( $end + $start - 1 - $bp_textwidth)/2,
-                'y'          => ($h-$th)/2,
-                'width'      => $bp_textwidth,
-                'height'     => $th,
-                'font'       => $Config->species_defs->ENSEMBL_STYLE->{'LABEL_FONT'},
-                'colour'     => 'black',
-                'text'       => $label,
-                'absolutey'  => 1,
+        'x'          => ( $end + $start - 1 )/2,
+        'y'          => ($h-$th)/2,
+        'width'      => 0,
+        'height'     => $th,
+        'font'       => $fontname,
+        'ptsize'     => $fontsize,
+        'colour'     => 'black',
+        'text'       => $label,
+        'absolutey'  => 1,
       });
       $self->push( $textglyph );
-    } elsif( ($w < $end-$start+1) && $label =~ /^[-\w](\/[-\w])+$/ ) {
-
+    } elsif( $res[0] eq 'X' && $label =~ /^[-\w](\/[-\w])+$/ ) {
       for (my $i = 0; $i < 3; $i ++ ) {
 	my $textglyph = new Sanger::Graphics::Glyph::Text({
-                'x'          => ( $end + $start - 1 - $w)/2,
-                'y'          => 3 + ($th+2) * $i,
-                'width'      => $w,
-                'height'     => $th,
-                'font'       => $Config->species_defs->ENSEMBL_STYLE->{'LABEL_FONT'},
-                'colour'     => 'black',
-                'text'       => $alleles[$i],
-                'absolutey'  => 1,
+          'x'          => ( $end + $start - 1 )/2,
+          'y'          => 3 + ($th+2) * $i,
+          'width'      => 0,
+          'height'     => $th,
+        'font'       => $fontname,
+        'ptsize'     => $fontsize,
+          'colour'     => 'black',
+          'text'       => $alleles[$i],
+          'absolutey'  => 1,
 							  });
 	$self->push( $textglyph );
       }

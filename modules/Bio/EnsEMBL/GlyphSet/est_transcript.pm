@@ -127,7 +127,7 @@ sub features {
   my $track = 'est_transcript';
   my $db_alias = $self->{'config'}->get($track,'db_alias');
   if( ! $db_alias and ! $self->{'config'}->{'fakecore'} ){
-    $db_alias = 'est';
+    $db_alias = 'otherfeatures';
   }
   my $slice = $self->{'container'};
   my @genes;

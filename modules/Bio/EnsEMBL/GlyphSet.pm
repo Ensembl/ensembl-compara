@@ -3,7 +3,11 @@ use strict;
 use Exporter;
 use Sanger::Graphics::GlyphSet;
 use Sanger::Graphics::Glyph::Rect;
+use Sanger::Graphics::Glyph::Text;
 use Bio::EnsEMBL::Utils::Eprof qw(eprof_start eprof_end eprof_dump);
+use GD;
+use GD::Text;
+use CGI qw(escapeHTML);
 
 use vars qw(@ISA $AUTOLOAD);
 
@@ -13,7 +17,88 @@ use vars qw(@ISA $AUTOLOAD);
 # constructor
 #
 
+sub get_font_details {
+  my( $self, $type ) = @_;
+  my $ST = $self->{'config'}->species_defs->ENSEMBL_STYLE;
+  return (
+    $ST->{'GRAPHIC_FONT'},
+    $ST->{'GRAPHIC_FONTSIZE'} * ($ST->{'GRAPHIC_'.uc($type)}||1)
+  );
+}
+sub init_label_text {
+  my( $self, $text, $help_link, $description) = @_;
+  return if defined $self->{'config'}->{'_no_label'};
+  my @extra=();
+  if( $help_link ) {
+    push @extra,
+      'href'      => qq[javascript:X=hw('@{[$self->{container}{_config_file_name_}]}','$ENV{'ENSEMBL_SCRIPT'}','$help_link')],
+      'zmenu'     => { 'caption' => 'HELP', '02:Track information...' => qq[javascript:X=hw(\'@{[$self->{container}{_config_file_name_}]}\',\'$ENV{'ENSEMBL_SCRIPT'}\',\'$help_link\')] };
+  }
+  if( $description ) {
+    push @extra, '01:'.CGI::escapeHTML( $description ) => '';
+  }
+  
+  my $ST = $self->{'config'}->species_defs->ENSEMBL_STYLE;
+  my $font = $ST->{'GRAPHIC_FONT'};
+  my $fsze = $ST->{'GRAPHIC_FONTSIZE'} * $ST->{'GRAPHIC_LABEL'};
+
+  my @res = $self->get_text_width(0,$text,'','font'=>$font,'ptsize'=>$fsze);
+  $self->label( new Sanger::Graphics::Glyph::Text({
+    'text'   => "$text",
+    'font'   => $font,
+    'ptsize' => $fsze,
+    @extra,
+    'absolutey'=>1,'height'=>$res[3]}
+  ));
+}
+
 sub species_defs { return $_[0]->{'config'}->{'species_defs'}; }
+
+sub get_text_width {
+  my( $self, $width, $text, $short_text, %parameters ) = @_;
+
+  my $KEY = "$width--$text--$short_text--$parameters{'font'}--$parameters{'ptsize'}";
+  return @{$self->{'_cache_'}{$KEY}} if $self->{'_cache_'}{$KEY};
+  $width ||= 1e6;
+  my $font   = '/usr/local/share/fonts/ttfonts/'.($parameters{'font'}||'arial').'.ttf';
+  my $ptsize =  $parameters{'ptsize'}||10;
+  my $gd_text = GD::Text->new();
+  eval {
+    if( -e $font ) {
+      $gd_text->set_font( $font, $ptsize );
+    } elsif( $parameters{'font'} eq 'Tiny' ) {
+      $gd_text->set_font( gdTinyFont );
+    } elsif( $parameters{'font'} eq 'Small' ) {
+      $gd_text->set_font( gdSmallFont );
+    } elsif( $parameters{'font'} eq 'MediumBold' ) {
+      $gd_text->set_font( gdMediumBoldFont );
+    } elsif( $parameters{'font'} eq 'Large' ) {
+      $gd_text->set_font( gdLargeFont );
+    } elsif( $parameters{'font'} eq 'Giant' ) {
+      $gd_text->set_font( gdGiantFont );
+    }
+  };
+
+  warn $@ if $@;
+  if( $gd_text ) {
+    $gd_text->set_text($text);
+    my($w,$h) = $gd_text->get('width','height');
+    my @res;
+    if($w<$width) { 
+      @res = ($text,      'full', $w,$h);
+    } elsif($short_text) {
+      $gd_text->set_text($short_text);
+      ($w,$h) = $gd_text->get('width','height');
+      if($w<$width) { 
+        @res = ($short_text,'short',$w,$h);
+      } else {
+        @res = ('',         'none', 0, 0 );
+      }
+    }
+    $self->{'_cache_'}{$KEY} = \@res;
+    return @res;
+  }
+}
 
 sub commify { local $_ = reverse $_[1]; s/(\d\d\d)(?=\d)(?!\d*\.)/$1,/g; return scalar reverse $_; }
 sub slice2sr {
@@ -202,5 +287,32 @@ sub no_features {
   $self->errorTrack( "No ".$self->my_label." in this region" ) if $self->{'config'}->get('_settings','opt_empty_tracks')==1;
 }
 
+
+
+sub errorTrack {
+  my ($self, $message, $x, $y) = @_;
+  my $ST = $self->{'config'}->species_defs->ENSEMBL_STYLE;
+  my $font = $ST->{'GRAPHIC_FONT'};
+  my $fsze = $ST->{'GRAPHIC_FONTSIZE'} * $ST->{'GRAPHIC_TEXT'};
+  my @res = $self->get_text_width( 0, $message, '', $font, $fsze );
+
+  my $length = $self->{'config'}->image_width();
+  $self->push( new Sanger::Graphics::Glyph::Text({
+    'x'         => $x || int($length/2), # int( ($length - $res[2])/2 ),
+    'y'         => $y || 2,
+    'height'    => $res[3],
+    'halign'    => 'center',
+    'font'      => $font,
+    'ptsize'    => $fsze,
+    'colour'    => "red",
+    'text'      => $message,
+    'absolutey' => 1,
+    'absolutex' => 1,
+    'absolutewidth' => 1,
+    'pixperbp'  => $self->{'config'}->{'transform'}->{'scalex'} ,
+  }) );
+
+    return;
+}
 
 1;

@@ -9,19 +9,9 @@ use Sanger::Graphics::Glyph::Poly;
 
 sub init_label {
   my ($self) = @_;
-
   return if defined $self->{'config'}->{'_no_label'};
-
   return if( $self->{'container'}->isa("Bio::EnsEMBL::Compara::AlignSlice::Slice"));
-
-  $self->label( new Sanger::Graphics::Glyph::Text({
-    'text' => 'Length',
-    'font' => 'Small',
-    'absolutey' => 1,
-  }));
-
-
-
+  $self->init_label_text('Length' );
 }
 
 sub _init {
@@ -47,12 +37,15 @@ sub _init {
   my $highlights     = $self->highlights();
   my $im_width       = $Config->image_width();
   my $feature_colour = $Config->get('ruler','col');
-  my $fontname       = $Config->species_defs->ENSEMBL_STYLE->{'LABEL_FONT'};
-  my $fontheight     = $Config->texthelper->height($fontname),
-  my $fontwidth      = $Config->texthelper->width($fontname),
+  my( $fontname, $fontsize ) = $self->get_font_details( 'innertext' );
+  my @res = $self->get_text_width( 0, 'X', '', 'font'=>$fontname, 'ptsize' => $fontsize );
+
+  my $fontheight     = $res[3];
+  my $fontwidth      = $res[2];
 
   my $con_strand     = $self->{'container'}->strand();
 
+  my $pix_per_bp    = $Config->transform->{'scalex'};
   #####################################################################
   # The ruler has to be drawn in absolute x, because when the length is
   # too small the rounding errors screw everything
@@ -94,33 +87,34 @@ sub _init {
     ## First let's draw the blocksize in the middle....
 
   my @lines = ( 0 );
+  my $O = 3; my $P = 20;
   my @common = (
     'z' => 1000, 'colour' => $feature_colour, 'absolutex' => 1, 'absolutey' => 1, 'absolutewidth' => 1
   );
-  my @common_text = ( 'height' => $fontheight, 'font' => $fontname, @common, 'y' => 2 );
+  my @common_text = ( 'height' => $fontheight, 'font' => 'arial', 'ptsize' => '8', @common, 'y' => 2 );
   if( $lefttext ) {
-    my $bp_textwidth = $fontwidth * length( $lefttext );
-    my $start        = 2 * $fontwidth;
+    my($text,$part,$W,$H) = $self->get_text_width( 0, $lefttext, '', @common_text );
+    my $start        = $P;
     $self->push( new Sanger::Graphics::Glyph::Text({
-      'x' => $start, 'text' => $lefttext, @common_text
+      'x' => $start, 'text' => $lefttext, 'halign' => 'left', @common_text
     }));
-    push @lines, $start - $fontwidth, $start + $bp_textwidth + $fontwidth;
+    push @lines, $P-$O, $P+$O+$W;
   }
   if( $centretext ) {
-    my $bp_textwidth = $fontwidth * length( $centretext );
-    my $start        = $im_width/2 - $bp_textwidth/2;
+    my($text,$part,$W,$H) = $self->get_text_width( 0, $centretext, '', @common_text );
+    my $start        = $im_width/2;
     $self->push( new Sanger::Graphics::Glyph::Text({
-      'x' => $start, 'text' => $centretext, @common_text
+      'x' => $start, 'text' => $centretext, 'halign' => 'center', @common_text
     }));
-    push @lines, $start - $fontwidth, $start + $bp_textwidth + $fontwidth;
+    push @lines, $im_width/2 - $O-$W/2, $im_width/2 + $O+$W/2;
   }
   if( $righttext ) {
-    my $bp_textwidth = $fontwidth * length( $righttext );
-    my $start        = $im_width - $bp_textwidth - 2 * $fontwidth;
+    my($text,$part,$W,$H) = $self->get_text_width( 0, $righttext, '', @common_text );
+    my $start        = $im_width - $P;
     $self->push( new Sanger::Graphics::Glyph::Text({
-      'x' => $start, 'text' => $righttext, @common_text
+      'x' => $start, 'text' => $righttext, 'halign' => 'right', @common_text
     }));
-    push @lines, $start - $fontwidth, $start + $bp_textwidth + $fontwidth;
+    push @lines, $im_width - $P-$O-$W, $im_width -$P+$O;
   }
   push @lines, $im_width;
 

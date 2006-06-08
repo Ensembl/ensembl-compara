@@ -20,16 +20,7 @@ sub init_label {
   my ($self) = @_;
   my $type = $self->check();
   return if( defined $self->{'config'}->{'_no_label'} );
-  $self->label(new Sanger::Graphics::Glyph::Text({
-    'text'      => $self->my_label(),
-    'font'      => 'Small',
-    'absolutey' => 1,
-    'href'      => qq[javascript:X=hw('@{[$self->{container}{_config_file_name_}]}','$ENV{'ENSEMBL_SCRIPT'}','$type')],
-    'zmenu'     => {
-      'caption'                     => 'HELP',
-      "01:Track information..."     => qq[javascript:X=hw(\'@{[$self->{container}{_config_file_name_}]}\',\'$ENV{'ENSEMBL_SCRIPT'}\',\'$type\')]
-    }
-  }));
+  $self->init_label_text( $self->my_label, $type );
 }
 
 sub my_label {    return 'Sometype of Gene'; }
@@ -49,6 +40,10 @@ sub _init {
   my $Config         = $self->{'config'};
   my $h       = 8;
   
+  my $FONT     = $Config->species_defs->ENSEMBL_STYLE->{'GRAPHIC_FONT'};
+  my $FONTSIZE = $Config->species_defs->ENSEMBL_STYLE->{'GRAPHIC_FONTSIZE'} *
+                 $Config->species_defs->ENSEMBL_STYLE->{'GRAPHIC_OUTERTEXT'};
+
   my %highlights;
   @highlights{$self->highlights} = ();    # build hashkeys of highlight list
   my @bitmap         = undef;
@@ -75,8 +70,7 @@ sub _init {
 
   my $F = 0;
 
-  my $fontname       = $Config->species_defs->ENSEMBL_STYLE->{'LABEL_FONT'}; # "Small";
-  my ($font_w_bp,$h) = $Config->texthelper->px2bp($fontname);
+  my $fontname       = $Config->species_defs->ENSEMBL_STYLE->{'GRAPHIC_FONT'}; # "Small";
   my $database = $Config->get($type,'database');
 
   my $used_colours = {};
@@ -174,25 +168,28 @@ sub _init {
       my $START_ROW = @bitmap + 1;
       @bitmap = ();
       foreach my $gr ( @GENES_TO_LABEL ) {
+        my( $txt, $part, $W, $H ) = $self->get_text_width( 0, "$gr->{'label'} ", '', 'font' => $FONT, 'ptsize' => $FONTSIZE );
         my $tglyph = new Sanger::Graphics::Glyph::Text({
-          'x'         => $gr->{'start'}-1,
+          'x'         => $gr->{'start'}-1 + 4/$pix_per_bp,
           'y'         => 0,
-          'height'    => $h,
-          'width'     => $font_w_bp * length(" $gr->{'label'} "),
-          'font'      => $fontname,
+          'height'    => $H,
+          'width'     => $W / $pix_per_bp,
+          'font'      => $FONT,
+          'halign'    => 'left',
+          'ptsize'    => $FONTSIZE,
           'colour'    => $gr->{'col'},
-          'text'      => " $gr->{'label'}",
+          'text'      => "$gr->{'label'}",
           'zmenu'     => $gr->{'zmenu'},
           'href'      => $gr->{'href'},
           'absolutey' => 1,
         });
-      my $bump_start = int($tglyph->{'x'} * $pix_per_bp);
+      my $bump_start = int($tglyph->{'x'} * $pix_per_bp) - 4;
          $bump_start = 0 if ($bump_start < 0);
       my $bump_end = $bump_start + int($tglyph->width()*$pix_per_bp) +1;
          $bump_end = $bitmap_length if ($bump_end > $bitmap_length);
       my $row = & Sanger::Graphics::Bump::bump_row(
          $bump_start, $bump_end, $bitmap_length, \@bitmap );
-      $tglyph->y($tglyph->{'y'} + $row * (2+$h) + 1 + ( $START_ROW * 6 ));
+      $tglyph->y($tglyph->{'y'} + $row * (2+$H) + 1 + ( $START_ROW * 6 ));
       $self->push( $tglyph );
     ##################################################
     # Draw little taggy bit to indicate start of gene
@@ -208,7 +205,7 @@ sub _init {
       $self->push( new Sanger::Graphics::Glyph::Rect({
         'x'            => $gr->{'start'}-1,
         'y'            => $tglyph->y - 1 + 4,
-        'width'        => $font_w_bp * 0.5,
+        'width'        => 3/$pix_per_bp,
         'height'       => 0,
         'bordercolour' => $gr->{'col'},
         'absolutey'    => 1,

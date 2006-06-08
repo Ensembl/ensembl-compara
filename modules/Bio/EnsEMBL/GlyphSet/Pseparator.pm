@@ -20,8 +20,6 @@ sub init_label {
   my $text     = $self->{'extras'}->{'name'};
   my $authority= $self->{'extras'}->{'authority'} || '';
   my $colour   = $Config->get($confkey,'col') || 'black';
-  my $fontname = 'Small';
-  my $fontwidth= $Config->texthelper->width($fontname);
   my $longtext = $text;
 
   my $textlen = length($text);
@@ -29,21 +27,19 @@ sub init_label {
     $text = substr( $text, 0, 14 ).".."
   }
 
-  my $negative_extend = ( ( length($text) || -2 ) - $numchars ) * $fontwidth;
-  $self->{'extras'}->{'x_offset'} = $negative_extend;
-
+  my @res = $self->get_text_width(0,$text,'','font'=>$self->{'config'}->{'_font_face'},'ptsize'=>$self->{'config'}->{'_font_size'});
+  $self->{'extras'}->{'x_offset'} =  $res[2] - 120;
 
   my $zmenu = { caption=>$longtext };
   $authority and $zmenu->{"01:Details"} = $authority;
 
-  my $label = new Sanger::Graphics::Glyph::Text
-    ({
-      'text'      => $text,
-      'font'      => $fontname,
-      'colour'    => $colour,
-      'absolutey' => 1,
-      'zmenu'     => $zmenu
-     });
+  my $label = new Sanger::Graphics::Glyph::Text({
+    'height'    => $res[3],
+    'text'      => $text,
+    'colour'    => $colour,
+    'absolutey' => 1,
+    'zmenu'     => $zmenu
+  });
   $self->label($label);
 }
 

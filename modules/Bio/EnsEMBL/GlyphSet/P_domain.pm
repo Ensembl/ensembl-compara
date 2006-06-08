@@ -16,12 +16,7 @@ use  Sanger::Graphics::Bump;
 sub init_label {
   my ($self) = @_;
   return if( defined $self->{'config'}->{'_no_label'} );
-  my $label = new Sanger::Graphics::Glyph::Text({
-    'text'      => $self->my_config('caption'),
-    'font'      => 'Small',
-    'absolutey' => 1,
-  });
-  $self->label($label);
+  $self->init_label_text( $self->my_config('caption') );
 }
 
 sub _init {
@@ -34,6 +29,9 @@ sub _init {
   return unless $protein->dbID;
   return unless $self->check();
   my $Config        = $self->{'config'};
+  my( $fontname, $fontsize ) = $self->get_font_details( 'innertext' );
+  my @res = $self->get_text_width( 0, 'X', '', 'font'=>$fontname, 'ptsize' => $fontsize );
+  my $th = $res[3];
   my $pix_per_bp    = $Config->transform->{'scalex'};
   my $bitmap_length = int($protein->length() * $pix_per_bp);
 
@@ -44,7 +42,6 @@ sub _init {
   my $colours       = $self->my_config( 'colours'    )||{};
   my $colour        = $colours->{lc($logic_name)} || $colours->{'default'};
   my $font          = "Small";
-  my ($fontwidth, $fontheight)  = $Config->texthelper->real_px2bp($font);
 
 #warn ">>> $logic_name <<<";
   my @ps_feat = @{$protein->get_all_ProteinFeatures( $logic_name )};
@@ -104,13 +101,16 @@ sub _init {
 
     #### add a label
     my $desc = $prsave->idesc() || $key;
+    my @res = $self->get_text_width( 0, $desc, '', 'font'=>$fontname, 'ptsize' => $fontsize );
     $Composite->push(new Sanger::Graphics::Glyph::Text({
-      'font'   => $font,
+      'font'   => $fontname,
+      'ptsize' => $fontsize,
+      'halign' => 'left',
       'text'   => $desc,
       'x'      => $row[0]->start(),
-      'y'      => $h + 1,
-      'height' => $fontheight,
-      'width'  => $fontwidth * length($desc),
+      'y'      => $h + 2,
+      'height' => $th,
+      'width'  => $res[2]/$pix_per_bp,
       'colour' => $colour,
       'absolutey' => 1
     }));
@@ -122,7 +122,7 @@ sub _init {
       $bump_end = $bitmap_length if $bump_end > $bitmap_length;
       if( $bump_end > $bump_start ) {
         my $row = & Sanger::Graphics::Bump::bump_row( $bump_start, $bump_end, $bitmap_length, \@bitmap );
-        $Composite->y($Composite->y() + ( $row * ( 2 + $h + $fontheight))) if $row;
+        $Composite->y($Composite->y() + ( $row * ( 4 + $h + $th))) if $row;
       }
     }
     $self->push($Composite);

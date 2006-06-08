@@ -8,14 +8,9 @@ use Sanger::Graphics::Glyph::Text;
 use Sanger::Graphics::Glyph::Composite;
 
 sub init_label {
-    my ($self) = @_;
-	return if( defined $self->{'config'}->{'_no_label'} );
-    my $label = new Sanger::Graphics::Glyph::Text({
-	'text'      => '',
-	'font'      => 'Small',
-	'absolutey' => 1,
-    });
-    $self->label($label);
+  my ($self) = @_;
+  return if( defined $self->{'config'}->{'_no_label'} );
+  $self->init_label_text( '' );
 }
 
 sub _init {
@@ -374,7 +369,7 @@ sub draw_labelled_snp_block {
         my $tglyph = new Sanger::Graphics::Glyph::Text({
             'x'          => $x+7,
             'y'          => $y+4,
-            'font'       => $Config->species_defs->ENSEMBL_STYLE->{'LABEL_FONT'},
+            'font'       => $Config->species_defs->ENSEMBL_STYLE->{'GRAPHIC_FONT'},
             'colour'     => $fg,
             'text'       => uc($label),
             'absolutex'  => 1,'absolutewidth'=>1,

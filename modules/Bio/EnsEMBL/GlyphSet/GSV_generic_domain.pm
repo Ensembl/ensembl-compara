@@ -1,4 +1,4 @@
-package Bio::EnsEMBL::GlyphSet::GSV_prints;
+package Bio::EnsEMBL::GlyphSet::GSV_generic_domain;
 use strict;
 use vars qw(@ISA);
 use Bio::EnsEMBL::GlyphSet;
@@ -13,9 +13,8 @@ use Data::Dumper;
 
 sub init_label {
   my ($self) = @_;
-  $self->init_label_text( 'Prints', 'domains' );
+  $self->init_label_text( $self->my_config('caption'), 'domains' );
 }
-
 
 sub _init {
   my ($self) = @_;
@@ -23,8 +22,13 @@ sub _init {
   return unless defined $type;
 
   return unless $self->strand() == -1;
-  my $offset = $self->{'container'}->start - 1;
+  my $key = lc($self->my_config('logic_name')).'_hits';
+
   my $Config        = $self->{'config'};
+  my $trans_ref = $Config->{'transcript'};
+  warn "@{[ keys %$trans_ref ]}";
+  warn "... $type ... $key ...".$self->my_config('pos')." ... @{$trans_ref->{$key}||[]}";
+  my $offset = $self->{'container'}->start - 1;
     
   my $y             = 0;
   my $h             = 8;   #Single transcript mode - set height to 30 - width to 8!
@@ -32,22 +36,23 @@ sub _init {
   my %highlights;
   @highlights{$self->highlights} = ();    # build hashkeys of highlight list
 
-  my $fontname      = $Config->species_defs->ENSEMBL_STYLE->{'GRAPHIC_FONT'};
-  my $pix_per_bp    = $Config->transform->{'scalex'};
+  my( $fontname, $fontsize ) = $self->get_font_details( 'outertext' );
+  my @res = $self->get_text_width( 0, 'X', '', 'font' => $fontname, 'ptsize' => $fontsize );
+  my $th = $res[3];
+  my $pix_per_bp = $self->{'config'}->transform()->{'scalex'};
+  
   my $bitmap_length = $Config->image_width(); #int($Config->container_width() * $pix_per_bp);
 
   my $length  = $Config->container_width();
   my $transcript_drawn = 0;
     
   my $voffset = 0;
-  my($font_w_bp, $font_h_bp) = $Config->texthelper->px2bp($fontname);
-  my $trans_ref = $Config->{'transcript'};
   my $strand = $trans_ref->{'exons'}[0][2]->strand;
     my $gene = $trans_ref->{'gene'};
     my $transcript = $trans_ref->{'transcript'};
 
   my @bitmap = undef;
-  foreach my $domain_ref ( @{$trans_ref->{'prints_hits'}||[]} ) {
+  foreach my $domain_ref ( @{$trans_ref->{$key}||[]} ) {
     my($domain,@pairs) = @$domain_ref;
     my $Composite3 = new Sanger::Graphics::Glyph::Composite({
       'y'         => 0,
@@ -72,25 +77,31 @@ sub _init {
       'absolutey' => 1
     }));
     my $text_label = $domain->hseqname;
-    my $width_of_label = length( "$text_label " ) * $font_w_bp;
+    my @res = $self->get_text_width( 0, $text_label, '', 'font' => $fontname, 'ptsize' => $fontsize );
     $Composite3->push( new Sanger::Graphics::Glyph::Text({
       'x'         => $Composite3->{'x'},
       'y'         => $h+2,
-      'height'    => $font_h_bp,
-      'width'     => $width_of_label,
+      'height'    => $res[3],
+      'width'     => $res[2]/$pix_per_bp,
       'font'      => $fontname,
+      'ptsize'    => $fontsize,
+      'halign'    => 'left', 
+      'valign'    => 'top',
       'colour'    => 'purple4',
       'text'      => $text_label,
       'absolutey' => 1,
     }));
     $text_label = $domain->idesc;
-    $width_of_label = length( "$text_label " ) * $font_w_bp;
+    my @res = $self->get_text_width( 0, $text_label, '', 'font' => $fontname, 'ptsize' => $fontsize );
     $Composite3->push( new Sanger::Graphics::Glyph::Text({
       'x'         => $Composite3->{'x'},
-      'y'         => $h+4 + $font_h_bp,
-      'height'    => $font_h_bp,
-      'width'     => $width_of_label,
+      'y'         => $h+4 + $th,
+      'height'    => $res[3],
+      'width'     => $res[2]/$pix_per_bp,
       'font'      => $fontname,
+      'ptsize'    => $fontsize,
+      'halign'    => 'left', 
+      'valign'    => 'top',
       'colour'    => 'purple4',
       'text'      => $text_label,
       'absolutey' => 1,
@@ -101,7 +112,7 @@ sub _init {
        $bump_end = $bitmap_length if ($bump_end > $bitmap_length);
     my $row = & Sanger::Graphics::Bump::bump_row( $bump_start, $bump_end, $bitmap_length, \@bitmap );
 
-    $Composite3->y( $voffset + $Composite3->{'y'} + $row * ($h+$font_h_bp*2+5) );
+    $Composite3->y( $voffset + $Composite3->{'y'} + $row * ($h+$th*2+5) );
     $self->push( $Composite3 );
   }
 

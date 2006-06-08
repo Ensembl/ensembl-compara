@@ -13,11 +13,7 @@ use Time::HiRes qw( time );
 sub init_label {
   my $self = shift;
   my $key = $self->_key();
-  $self->label(new Sanger::Graphics::Glyph::Text({
-    'text'      => "LD ($key)",
-    'font'      => 'Small',
-    'absolutey' => 1,
-  }));
+  $self->init_label_text( "LD ($key)" );
 }
 
 sub _key { return $_[0]->my_config('key') || 'r2'; }
@@ -37,7 +33,10 @@ sub _init {
   my $pop_adaptor = $self->{'container'}->adaptor->db->get_db_adaptor('variation')->get_PopulationAdaptor;
   my $length      = ($self->{'container'}->length -1)/1000;
   my $max_ld_range = 100000;
-  my $text_height     = $Config->texthelper->height('Tiny');
+  my( $fontname, $fontsize ) = $self->get_font_details( 'innertext' );
+  my @res = $self->get_text_width( 0, 'X', '', 'font'=>$fontname, 'ptsize' => $fontsize );
+  my $h = $res[3];
+  
   my $TAG_LENGTH      = 10;
   my $yoffset         = 0;
   my $offset          = $self->{'container'}->start - 1;
@@ -61,13 +60,13 @@ sub _init {
 
     my $number_of_snps = scalar(@snps);
     unless( $number_of_snps > 1 ) {
-      $yoffset += $text_height*1.5;
+      $yoffset += $h*1.5;
       $self->errorTrack( "No $key linkage data in $length kb window for population $pop_name", undef, $yoffset);
-      $yoffset += $text_height*1.5;
+      $yoffset += $h*1.5;
       next;
     }
 
-    $yoffset += $TAG_LENGTH + $text_height;
+    $yoffset += $TAG_LENGTH + $h;
     # Print GlyphSet::variation type bars above ld triangle
     foreach my $snp ( @snps ) {
       $self->push( Sanger::Graphics::Glyph::Rect->new({
@@ -108,14 +107,17 @@ sub _init {
     $name   .= "   $number_of_snps SNPs";
     $self->push( Sanger::Graphics::Glyph::Text->new({
       'x'         => 0,
-      'y'         => $yoffset - $text_height - $TAG_LENGTH,
-      'height'    => 0,
-      'font'      => 'Tiny',
+      'y'         => $yoffset - $h - $TAG_LENGTH,
+      'height'    => $h,
+      'halign'    => 'left',
+      'font'      => $fontname,
+      'ptsize'    => $fontsize,
       'colour'    => 'black',
       'text'      => $name,
       'absolutey' => 1,
-      'absolutex' => 1,'absolutewidth'=>1,
-						    }));
+      'absolutex' => 1,
+      'absolutewidth'=>1,
+    }));
 
     # Create triangle
     foreach my $m ( 0 .. ($number_of_snps-2) ) {

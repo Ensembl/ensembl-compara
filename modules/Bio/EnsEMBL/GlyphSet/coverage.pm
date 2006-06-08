@@ -4,7 +4,6 @@ use vars qw(@ISA);
 use Bio::EnsEMBL::GlyphSet;
 @ISA = qw(Bio::EnsEMBL::GlyphSet);
 use Sanger::Graphics::Glyph::Rect;
-use Sanger::Graphics::Glyph::Text;
 use Sanger::Graphics::Glyph::Composite;
 use Sanger::Graphics::Glyph::Line;
 use Sanger::Graphics::Glyph::Space;
@@ -19,11 +18,7 @@ sub init_label {
   my $coverage_obj   = $Config->{'transcript'}->{'coverage_obj'};
   return unless @$coverage_obj;
   my $text  =  @$coverage_obj ? "Resequence coverage" : "No reseq. coverage";
-  $self->label(new Sanger::Graphics::Glyph::Text({
-    'text'      => $text,
-    'font'      => 'Tiny',
-    'absolutey' => 1,
-  }));
+  $self->init_label_text( $text );
 }
 
 
@@ -57,7 +52,7 @@ sub _init {
 
 
   # Drawing stuff
-  my $fontname      = $Config->species_defs->ENSEMBL_STYLE->{'LABEL_FONT'};
+  my $fontname      = $Config->species_defs->ENSEMBL_STYLE->{'GRAPHIC_FONT'};
   my($font_w_bp, $font_h_bp) = $Config->texthelper->px2bp($fontname);
 
   foreach my $coverage ( sort { $a->[2]->level <=> $b->[2]->level } @$coverage_obj  ) {

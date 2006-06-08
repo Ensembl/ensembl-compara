@@ -10,11 +10,7 @@ use Sanger::Graphics::Glyph::Composite;
 sub init_label {
   my ($self) = @_;
   return if( defined $self->{'config'}->{'_no_label'} );
-  $self->label(new Sanger::Graphics::Glyph::Text({
-    'text'    => $self->my_config('caption'),
-    'font'    => 'Small',
-    'absolutey' => 1,
-  }));
+  $self->init_label_text( $self->my_config('caption') );
 }
 
 sub _init {

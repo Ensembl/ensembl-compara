@@ -5,25 +5,14 @@ use Bio::EnsEMBL::GlyphSet;
 @ISA = qw(Bio::EnsEMBL::GlyphSet);
 use Sanger::Graphics::Glyph::Rect;
 use Sanger::Graphics::Glyph::Intron;
-use Sanger::Graphics::Glyph::Text;
 use Sanger::Graphics::Glyph::Composite;
 use Sanger::Graphics::Glyph::Line;
 use  Sanger::Graphics::Bump;
 
 sub init_label {
-    my ($self) = @_;
-    return if( defined $self->{'config'}->{'_no_label'} );
-    my $label = new Sanger::Graphics::Glyph::Text({
-        'text'      => '%GC',
-        'font'      => 'Small',
-        'absolutey' => 1,
-        'href'      => qq[javascript:X=hw('@{[$self->{container}{_config_file_name_}]}','$ENV{'ENSEMBL_SCRIPT'}','gcplot')],
-        'zmenu'     => {
-            'caption'                     => 'HELP',
-            "01:Track information..."     => qq[javascript:X=hw(\'@{[$self->{container}{_config_file_name_}]}\',\'$ENV{'ENSEMBL_SCRIPT'}\',\'gcplot\')]
-        }
-    });
-    $self->label($label);
+  my ($self) = @_;
+  return if( defined $self->{'config'}->{'_no_label'} );
+  $self->init_label_text( '%GC', 'gcplot' );
 }
 
 sub _init {

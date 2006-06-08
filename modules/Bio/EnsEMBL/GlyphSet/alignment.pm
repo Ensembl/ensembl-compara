@@ -34,27 +34,16 @@ sub init_label {
   if (length($text) > $max_length) {
       $text = substr($text, 0, 14). " ...";
   }
-  my $label = new Sanger::Graphics::Glyph::Text({
-      'z'             => 10,
-      'x'             => -110,
-      'y'             => -1,
-      'text'      => "$text",	
-      'font'      => 'Small',
-      'absolutex'     => 1,
-      'absolutey' => 1,
-  });
-  $self->push($label);
-  return;
-
+  $self->init_label_text( $text );
 }
 
 sub features {
-    my ($self) = @_;
-    my $start = 0;
+  my ($self) = @_;
+  my $start = 0;
 
-    my $amatch = $self->{'container'}->{alignmatch};
-    my $emark = $self->{'container'}->{exons_markup};
-    my $smark = $self->{'container'}->{snps_markup};
+  my $amatch = $self->{'container'}->{alignmatch};
+  my $emark = $self->{'container'}->{exons_markup};
+  my $smark = $self->{'container'}->{snps_markup};
 
 
 # Convert the sequence to the lower case and replace '-' with '_' so later we can distinguish between 
@@ -139,7 +128,7 @@ sub colour {
 
 sub image_label { 
     my ($self, $f ) = @_; 
-    return $f->seqname(), $f->{type} || 'overlaid2'; 
+    return $f->seqname(), $f->{type} || 'overlaid'; 
 }
 
 sub href {

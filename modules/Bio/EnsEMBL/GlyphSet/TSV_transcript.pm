@@ -14,12 +14,7 @@ use Data::Dumper;
 sub init_label {
   my ($self) = @_;
   my $sample = $self->{'config'}->{'transcript'}->{'sample'};
-
-  $self->label(new Sanger::Graphics::Glyph::Text({
-    'text'      => "$sample",
-    'font'      => 'Small',
-    'absolutey' => 1,
-  }));
+  $self->init_label_text( $sample );
 }
 
 sub _init {
@@ -37,7 +32,7 @@ sub _init {
   @highlights{$self->highlights} = ();    # build hashkeys of highlight list
 
   my $colours       = $self->colours();
-  my $fontname      = $Config->species_defs->ENSEMBL_STYLE->{'LABEL_FONT'};
+  my $fontname      = $Config->species_defs->ENSEMBL_STYLE->{'GRAPHIC_FONT'};
   my $pix_per_bp    = $Config->transform->{'scalex'};
   my $bitmap_length = $Config->image_width(); #int($Config->container_width() * $pix_per_bp);
 

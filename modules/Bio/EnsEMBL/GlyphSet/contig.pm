@@ -15,17 +15,7 @@ use constant MAX_VIEWABLE_ASSEMBLY_SIZE => 5e6;
 sub init_label {
   my ($self) = @_;
   return if( defined $self->{'config'}->{'_no_label'} );
-  my $label = new Sanger::Graphics::Glyph::Text({
-    'text'      => 'DNA(contigs)',
-    'font'      => 'Small',
-    'absolutey' => 1,
-    'href'      => qq[javascript:X=hw('@{[$self->{container}{_config_file_name_}]}','$ENV{'ENSEMBL_SCRIPT'}','contig')],
-    'zmenu'     => {
-      'caption'                     => 'HELP',
-      '01:Track information...'     => qq[javascript:X=hw(\'@{[$self->{container}{_config_file_name_}]}\',\'$ENV{'ENSEMBL_SCRIPT'}\',\'contig\')]
-    }
-  });
-  $self->label($label);
+  $self->init_label_text( 'DNA(contigs)', 'contig' );
 }
 
 sub _init {
@@ -51,6 +41,11 @@ sub _init {
 
   $self->push($gline);
   
+  my( $fontname, $fontsize ) = $self->get_font_details( 'innertext' );
+  my @res = $self->get_text_width( 0, 'X', '', 'font'=>$fontname, 'ptsize' => $fontsize );
+  my $h = $res[3];
+  my $pix_per_bp = $self->{'config'}->transform()->{'scalex'};
+
   my @features = ();
   my @segments = ();
 
@@ -119,12 +114,17 @@ sub _init_non_assembled_contig {
   my $ch = $Container->seq_region_name;
 
   my $Config = $self->{'config'};
+  my( $fontname, $fontsize ) = $self->get_font_details( 'innertext' );
+  my @res = $self->get_text_width( 0, 'X', '', 'font'=>$fontname, 'ptsize' => $fontsize );
+  my $h = $res[3];
+  my $pix_per_bp = $self->{'config'}->transform()->{'scalex'};
 
   my $module = ref($self);
      $module = $1 if $module=~/::([^:]+)$/;
   my $threshold_navigation = ($Config->get($module, 'threshold_navigation')|| 2e6)*1001;
   my $navigation     = $Config->get($module, 'navigation') || 'on';
   my $show_navigation = ($length < $threshold_navigation) && ($navigation eq 'on');
+  my $show_href       = ($length < 1e8 ) && ($navigation eq 'on');
 
 ########
 # Vars used only for scale drawing
@@ -165,7 +165,6 @@ sub _init_non_assembled_contig {
 #######
 # Draw the Contig Tiling Path
 #
-  my ($w,$h)   = $Config->texthelper()->real_px2bp($Config->species_defs->ENSEMBL_STYLE->{'LABEL_FONT'});    
   my $i = 1;
   my @colours  = qw(contigblue1 contigblue2);
 
@@ -201,14 +200,15 @@ sub _init_non_assembled_contig {
       $script = 'contigview';
       $caption = 'Jump to contigview';
     } 
-    if($navigation eq 'on') {
-      foreach( qw(chunk supercontig clone scaffold contig) ) {
-        if( my $Q = $tile->{'locations'}->{$_} ) {
+    my $label = '';
+    foreach( qw(chunk supercontig clone scaffold contig) ) {
+      if( my $Q = $tile->{'locations'}->{$_} ) {
+        if($show_href eq 'on') {
           $glyph->{'href'} = qq(/@{[$self->{container}{_config_file_name_}]}/$script?ch=$ch;region=$Q->[0]);
         }
+        $label = $Q->[0];
       }
     }
-    my $label = '';
     if($show_navigation) {
       $glyph->{'zmenu'} = {
         'caption' => $rid,
@@ -246,29 +246,24 @@ sub _init_non_assembled_contig {
     }
     $self->push($glyph);
 
-    $label = $strand > 0 ? "$label >" : "< $label";
-    my $bp_textwidth = $w * length($label) * 1.2; # add 20% for scaling text
-    if($bp_textwidth > ($rend - $rstart)) {
-      my $pointer = $strand > 0 ? ">" : "<";
-      $bp_textwidth = $w * length($pointer) * 1.2; # add 20% for scaling text
-      unless($bp_textwidth > ($rend - $rstart)){
-        my $tglyph = new Sanger::Graphics::Glyph::Text({
-          'x'          => ($rend + $rstart - $bp_textwidth)/2,
-          'y'          => $ystart+4,
-          'font'       => $Config->species_defs->ENSEMBL_STYLE->{'LABEL_FONT'},
-          'colour'     => 'white',
-          'text'       => $pointer,
-          'absolutey'  => 1,
-        });
-        $self->push($tglyph);
-      }
-    } else {
+warn ".... ", $rend-$rstart, '..', $pix_per_bp, "......";
+warn ".... ",      ($rend-$rstart)*$pix_per_bp, "......";
+
+    my @res = $self->get_text_width(
+      ($rend-$rstart)*$pix_per_bp,
+      $strand > 0 ? "$label >" : "< $label",
+      $strand > 0 ? '>' : '<',
+      'font'=>$fontname, 'ptsize' => $fontsize
+    );
+    if( $res[0] ) {
       my $tglyph = new Sanger::Graphics::Glyph::Text({
-        'x'          => ($rend + $rstart - 1 - $bp_textwidth)/2,
-        'y'          => $ystart+5,
-        'font'       => $Config->species_defs->ENSEMBL_STYLE->{'LABEL_FONT'},
+        'x'          => ($rend + $rstart)/2,
+        'height'     => $h,
+        'y'          => $ystart+4,
+        'font'       => $fontname,
+        'ptsize'     => $fontsize,
         'colour'     => 'white',
-        'text'       => $label,
+        'text'       => $res[0],
         'absolutey'  => 1,
       });
       $self->push($tglyph);

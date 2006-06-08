@@ -46,12 +46,7 @@ sub init_label {
     }
     $self->push($line);
   }
-  my $label = new Sanger::Graphics::Glyph::Text({
-    'text'      => "$chr",	
-    'font'      => 'Small',
-    'absolutey' => 1,
-  });
-  $self->label($label);
+  $self->init_label_text( $chr );
 }
 
 
@@ -61,12 +56,14 @@ sub _init {
 
     my $Config         = $self->{'config'};
     my $Container      = $self->{'container'};
+    
+  my( $fontname, $fontsize ) = $self->get_font_details( 'innertext' );
+
     my $contig_strand  = $Container->can('strand') ? $Container->strand : 1;
+    my $pix_per_bp     = $Config->transform()->{'scalex'};
     my $h              = 0;
     my $highlights     = $self->highlights();
-    my $fontname       = $Config->species_defs->ENSEMBL_STYLE->{'LABEL_FONT'};
-    my $fontwidth_bp   = $Config->texthelper->width($fontname),
-    my ($fontwidth, $fontheight)       = $Config->texthelper->px2bp($fontname),
+
     my $black          = 'black';
     my $highlights     = join('|',$self->highlights());
     $highlights        = $highlights ? ";h=$highlights" : '';
@@ -168,12 +165,15 @@ sub _init {
             'absolutey' => 1,
         }));
         my $LABEL = $minor_unit < 250 ? $self->commify($box_start * $contig_strand ): $self->bp_to_nearest_unit( $box_start * $contig_strand, 2 );
-        if( $last_text_X + length($LABEL) * $fontwidth * 1.5 < $box_start ) {
+        my($TXT,$PART,$W,$H) = $self->get_text_width(0,$LABEL,'','font'=>$fontname,'ptsize'=>$fontsize);
+        if( $last_text_X + $W/$pix_per_bp * 1.5 < $box_start ) {
           $self->push(new Sanger::Graphics::Glyph::Text({
             'x'         => $box_start - $global_start,
             'y'         => 8,
-            'height'    => $fontheight,
+            'height'    => $H,
             'font'      => $fontname,
+            'ptsize'    => $fontsize,
+            'halign'    => 'left',
             'colour'    => $feature_colour,
             'text'      => $LABEL,
             'absolutey' => 1,

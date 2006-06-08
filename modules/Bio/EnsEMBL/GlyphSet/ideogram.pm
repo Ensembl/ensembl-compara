@@ -14,23 +14,17 @@ my %SHORT = qw(
 );
 
 sub init_label {
-    my ($self) = @_;
-	return if( defined $self->{'config'}->{'_no_label'} );
-    my $type = $self->{'container'}->coord_system->name();
+  my ($self) = @_;
+  return if( defined $self->{'config'}->{'_no_label'} );
+  my $type = $self->{'container'}->coord_system->name();
 
-    $type = $SHORT{lc($type)} || ucfirst( $type );
-    my $chr = $self->{'container'}->seq_region_name();
-    $chr = "$type $chr" unless $chr =~ /^$type/i;
-    if( $self->{'config'}->{'multi'} ) {
-       $chr = join( '', map { substr($_,0,1) } split( /_/, $self->{'config'}->{'species'}),'.')." $chr";
-    }
-
-    my $label = new Sanger::Graphics::Glyph::Text({
-    	'text'      => ucfirst($chr),
-    	'font'      => 'Small',
-    	'absolutey' => 1,
-    });
-    $self->label($label);
+  $type = $SHORT{lc($type)} || ucfirst( $type );
+  my $chr = $self->{'container'}->seq_region_name();
+  $chr = "$type $chr" unless $chr =~ /^$type/i;
+  if( $self->{'config'}->{'multi'} ) {
+    $chr = join( '', map { substr($_,0,1) } split( /_/, $self->{'config'}->{'species'}),'.')." $chr";
+  }
+  $self->init_label_text(ucfirst($chr));
 }
 
 sub _init {
@@ -61,7 +55,7 @@ sub _init {
     $COL{'mark'}    = 'blue'; # marks start/end of annotated sequence
 
     my $im_width = $Config->image_width();
-    my ($w,$h)   = $Config->texthelper->px2bp($self->{'config'}->species_defs->ENSEMBL_STYLE->{'LABEL_FONT'});
+    my ($w,$h)   = $Config->texthelper->px2bp($self->{'config'}->species_defs->ENSEMBL_STYLE->{'GRAPHIC_FONT'});
     my $chr      = $self->{'container'}->seq_region_name();
     my $len      = $self->{'container'}->length();
 
@@ -85,6 +79,11 @@ sub _init {
     $self->push($hack);
     
     my $done_one_acen = 0;	    # flag for tracking place in chromsome
+
+    my( $fontname, $fontsize ) = $self->get_font_details( 'innertext' );
+    my @res = $self->get_text_width( 0, 'X', '', 'font'=>$fontname, 'ptsize' => $fontsize );
+    my $h = $res[3];
+    my $pix_per_bp = $self->{'config'}->transform()->{'scalex'};
 
     my @bands =  sort{$a->start <=> $b->start } @$bands;
     if(@bands) {
@@ -197,18 +196,21 @@ sub _init {
 	#################################################################
 	# only add the band label if the box is big enough to hold it...
 	#################################################################
-	my $bp_textwidth = $w * length($bandname);
-	unless ($stain eq "acen" || $stain eq "tip" || $stain eq "stalk" ||($bp_textwidth > ($vc_band_end - $vc_band_start))){
-		my $tglyph = new Sanger::Graphics::Glyph::Text({
-		'x'      => ($vc_band_end + $vc_band_start - 1 - $bp_textwidth)/2,
-		'y'      => 4,
-		'font'   => $self->{'config'}->species_defs->ENSEMBL_STYLE->{'LABEL_FONT'},
-		'colour' => $fontcolour,
-		'text'   => $bandname,
-		'absolutey'  => 1,
-		});
-		$self->push($tglyph);
-	}
+   my @res = $self->get_text_width( ($vc_band_end-$vc_band_start)*$pix_per_bp, $bandname, '', 'font'=>$fontname, 'ptsize' => $fontsize );
+   if( $res[0] && $stain ne "tip" && $stain ne "acen" && $stain ne 'stalk' ){
+      my $tglyph = new Sanger::Graphics::Glyph::Text({
+        'x'      => int(($vc_band_end + $vc_band_start)/2),
+        'y'      => 4,
+        'font'   => $fontname,
+        'height' => $h+4,
+        'ptsize' => $fontsize,
+        'colour' => $fontcolour,
+        'text'   => $res[0],
+        'absolutey'  => 1,
+      });
+      $self->push($tglyph);
+    }
+
       }
     } else {
       my $gband = new Sanger::Graphics::Glyph::Line({

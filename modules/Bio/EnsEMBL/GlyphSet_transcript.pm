@@ -17,17 +17,7 @@ sub init_label {
   my ($self) = @_;
   return if( defined $self->{'config'}->{'_no_label'} );
   my $HELP_LINK = $self->check();
-  my $label = new Sanger::Graphics::Glyph::Text({
-    'text'      => $self->my_label(),
-    'font'      => 'Small',
-    'absolutey' => 1,
-    'href'      => qq[javascript:X=hw('@{[$self->{container}{_config_file_name_}]}','$ENV{'ENSEMBL_SCRIPT'}','$HELP_LINK')],
-    'zmenu'     => {
-      'caption'                     => 'HELP',
-      "01:Track information..."     => qq[javascript:X=hw(\'@{[$self->{container}{_config_file_name_}]}\',\'$ENV{'ENSEMBL_SCRIPT'}\',\'$HELP_LINK\')]
-    }
-  });
-  $self->label($label);
+  $self->init_label_text( $self->my_label, $HELP_LINK );
   $self->bumped( $self->{'config'}->get($HELP_LINK, 'compact') ? 'no' : 'yes' );
 }
 #'
@@ -87,10 +77,10 @@ sub compact_init {
   my @bitmap        = undef;
   my $colours       = $self->colours();
   my %used_colours  = ();
-  my $fontname      =  $Config->species_defs->ENSEMBL_STYLE->{'LABEL_FONT'}; 
+  my $fontname      =  $Config->species_defs->ENSEMBL_STYLE->{'GRAPHIC_FONT'}; 
+  my $fontsize      =  $Config->species_defs->ENSEMBL_STYLE->{'GRAPHIC_FONTSIZE'} *
+                       $Config->species_defs->ENSEMBL_STYLE->{'GRAPHIC_OUTERTEXT'}; 
   my $pix_per_bp    = $Config->transform->{'scalex'};
-  my $_w            = $Config->texthelper->width($fontname) / $pix_per_bp;
-  my $_h            = $Config->texthelper->height($fontname);
   my $bitmap_length = $Config->image_width(); #int($Config->container_width() * $pix_per_bp);
 
   my $strand        = $self->strand();
@@ -173,21 +163,24 @@ sub compact_init {
     if( $Config->{'_add_labels'} ) {
       if(my $text_label = $self->gene_text_label($gene) ) {
         my @lines = split "\n", $text_label;
-        $lines[0] = "<- $lines[0]" if $gene_strand < 1;
-        $lines[0] = $lines[0].' ->' if $gene_strand >= 1;
+        $lines[0] = "< $lines[0]" if $strand < 1;
+        $lines[0] = $lines[0].' >' if $strand >= 1;
         for( my $i=0; $i<@lines; $i++ ){
-          my $line = $lines[$i];
+          my $line = $lines[$i].' ';
+          my( $txt, $bit, $w,$th ) = $self->get_text_width( 0, $line, '', 'ptsize' => $fontsize, 'font' => $fontname );
           $Composite->push( new Sanger::Graphics::Glyph::Text({
             'x'         => $Composite->x(),
-            'y'         => $y + $h + ($i*$_h) + 2,
-            'height'    => $_h,
-            'width'     => $_w * length(" $line "),
+            'y'         => $y + $h + $i*($th+1) + 2,
+            'height'    => $th,
+            'width'     => $w / $pix_per_bp,
             'font'      => $fontname,
+            'ptsize'    => $fontsize,
+            'halign'    => 'left',
             'colour'    => $colour,
             'text'      => $line,
             'absolutey' => 1,
           }));
-          $bump_height += $_h;
+          $bump_height += $th+1;
         }
       }
     }
@@ -205,6 +198,8 @@ sub compact_init {
   }
 
   if($transcript_drawn) {
+    my %legend_old = @{$Config->{'legend_features'}{$type}{'legend'}||[]};
+    foreach(keys %legend_old) { $used_colours{$_} = $legend_old{$_}; }
     my @legend = %used_colours;
     $Config->{'legend_features'}->{$type} = {
       'priority' => $Config->get( $type, 'pos' ),
@@ -296,7 +291,11 @@ sub expanded_init {
   my $type = $self->check();
   return unless defined $type;
 
+
   my $Config        = $self->{'config'};
+  my $fontname      = $Config->species_defs->ENSEMBL_STYLE->{'GRAPHIC_FONT'}; 
+  my $fontsize      = $Config->species_defs->ENSEMBL_STYLE->{'GRAPHIC_FONTSIZE'} *
+                      $Config->species_defs->ENSEMBL_STYLE->{'GRAPHIC_OUTERTEXT'};
   my $strand_flag   = $Config->{'str'} || 'b';
   my $container     = exists $self->{'container'}{'ref'} ? $self->{'container'}{'ref'} : $self->{'container'};
   my $target        = $Config->{'_draw_single_Transcript'};
@@ -312,7 +311,6 @@ sub expanded_init {
   my $colours       = $self->colours();
 
   my %used_colours  = ();
-  my $fontname      =  $Config->species_defs->ENSEMBL_STYLE->{'LABEL_FONT'}; 
   my $pix_per_bp    = $Config->transform->{'scalex'};
   my $bitmap_length = $Config->image_width(); #int($Config->container_width() * $pix_per_bp);
 
@@ -489,22 +487,25 @@ sub expanded_init {
       if( $Config->{'_add_labels'} ) {
         if(my $text_label = $self->text_label($gene, $transcript) ) {
 	  my @lines = split "\n", $text_label; 
-          $lines[0] = "<- $lines[0]" if $strand < 1;
-          $lines[0] = $lines[0].' ->' if $strand >= 1;
+          $lines[0] = "< $lines[0]" if $strand < 1;
+          $lines[0] = $lines[0].' >' if $strand >= 1;
           my($font_w_bp, $font_h_bp) = $Config->texthelper->px2bp($fontname);
           for( my $i=0; $i<@lines; $i++ ){
-            my $line = $lines[$i];
+            my $line = $lines[$i].' ';
+            my( $txt, $bit, $w,$th ) = $self->get_text_width( 0, $line, '', 'ptsize' => $fontsize, 'font' => $fontname );
             $Composite->push( new Sanger::Graphics::Glyph::Text({
               'x'         => $Composite->x(),
-              'y'         => $y + $h + ($i*$_h) + 2,
-              'height'    => $_h,
-              'width'     => $_w * length(" $line "),
+              'y'         => $y + $h + $i*($th+1) + 2,
+              'height'    => $th,
+              'width'     => $w / $pix_per_bp,
               'font'      => $fontname,
+              'ptsize'    => $fontsize,
+              'halign'    => 'left', 
               'colour'    => $colour,
               'text'      => $line,
               'absolutey' => 1,
             }));
-            $bump_height += $_h;
+            $bump_height += $th+1;
 	  }
         }
       }
@@ -561,6 +562,9 @@ sub expanded_init {
     }
   }
   if($transcript_drawn) {
+    my %legend_old = @{$Config->{'legend_features'}{$type}{'legend'}||[]};
+    foreach(keys %legend_old) { $used_colours{$_} = $legend_old{$_}; }
+
     my @legend = %used_colours;
     $Config->{'legend_features'}->{$type} = {
       'priority' => $Config->get( $type, 'pos' ),
@@ -669,7 +673,7 @@ sub as_expanded_init {
     my @bitmap        = undef;
     my $colours       = $self->colours();
     my %used_colours  = ();
-    my $fontname      =  $Config->species_defs->ENSEMBL_STYLE->{'LABEL_FONT'}; 
+    my $fontname      =  $Config->species_defs->ENSEMBL_STYLE->{'GRAPHIC_FONT'}; 
     my $pix_per_bp    = $Config->transform->{'scalex'};
     my $bitmap_length = $Config->image_width(); #int($Config->container_width() * $pix_per_bp);
 
@@ -950,7 +954,7 @@ sub as_compact_init {
     my @bitmap        = undef;
     my $colours       = $self->colours();
     my %used_colours; 
-    my $fontname      =  $Config->species_defs->ENSEMBL_STYLE->{'LABEL_FONT'}; 
+    my $fontname      =  $Config->species_defs->ENSEMBL_STYLE->{'GRAPHIC_FONT'}; 
     my $pix_per_bp    = $Config->transform->{'scalex'};
     my $_w            = $Config->texthelper->width($fontname) / $pix_per_bp;
     my $_h            = $Config->texthelper->height($fontname);

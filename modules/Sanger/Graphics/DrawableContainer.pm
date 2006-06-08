@@ -220,9 +220,12 @@ sub new {
     ## set the X-locations for each of the bump buttons/labels
     for my $glyphset (@glyphsets) {
       next unless defined $glyphset->label();
-      $glyphset->label->{'absolutex'}= 1;
+      $glyphset->label->{'font'}        ||= $Config->{'_font_face'} || 'arial';
+      $glyphset->label->{'ptsize'}      ||= $Config->{'_font_size'} || 100;
+      $glyphset->label->{'halign'}      ||= 'left';
+      $glyphset->label->{'absolutex'}    = 1;
       $glyphset->label->{'absolutewidth'}= 1;
-      $glyphset->label->{'pixperbp'}= $x_scale;
+      $glyphset->label->{'pixperbp'}     = $x_scale;
       $glyphset->label->x(-$label_width-$margin) if defined $glyphset->label;
     }
 
@@ -269,7 +272,7 @@ sub new {
       }
       ## set up the "bumping button" label for this strip
       if(defined $glyphset->label()) {
-        my $gh = $Config->texthelper->height($glyphset->label->font());
+        my $gh = $glyphset->label->height || $Config->texthelper->height($glyphset->label->font());
         $glyphset->label->y(
           ( ($glyphset->maxy() - $glyphset->miny() - $gh) / 2) + $gminy
         );

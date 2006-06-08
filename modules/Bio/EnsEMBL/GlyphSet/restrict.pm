@@ -10,12 +10,7 @@ use Sanger::Graphics::Glyph::Composite;
 sub init_label {
   my ($self) = @_;
   return if( defined $self->{'config'}->{'_no_label'} );
-  my $label = new Sanger::Graphics::Glyph::Text({
-    'text'    => "Restr.Enzymes",
-    'font'    => 'Small',
-    'absolutey' => 1,
-  });
-  $self->label($label);
+  $self->init_label_text( 'Restr.Enzymes' );
 }
 
 sub _init {
@@ -46,7 +41,14 @@ sub _init {
   my @bitmap; 
   my $pix_per_bp = $config->transform->{'scalex'};
   my $bitmap_length = int ($length * $pix_per_bp );
-  my ($w,$th) = $config->texthelper()->px2bp($self->{'config'}->species_defs->ENSEMBL_STYLE->{'LABEL_FONT'});
+  my($FONT_I,$FONTSIZE_I) = $self->get_font_details( 'innertext' );
+  my @res = $self->get_text_width(0,'X','','font'=>$FONT_I,'ptsize' => $FONTSIZE_I );
+  my $tw_i = $res[3];
+  my $th_i = $res[3];
+  my($FONT_O,$FONTSIZE_O) = $self->get_font_details( 'outertext' );
+  my @res = $self->get_text_width(0,'X','','font'=>$FONT_O,'ptsize' => $FONTSIZE_O );
+  my $tw_o = $res[3];
+  my $th_o = $res[3];
 
 ## CREATE THE emboss in file...
   open O, ">$filename.in";
@@ -135,19 +137,20 @@ sub _init {
         'x'    => $start -1 ,
         'y'    => 0,
         'width'  => $end - $start +1 ,
-        'height' => $th+4,
+        'height' => $th_i+4,
         'colour' => $colour,
         'absolutey' => 1,
       }));
-      if( $pix_per_bp > $w * 1.1 ) {
-        my $O = -1/2-$w/2;
+      if( $pix_per_bp > $tw_i ) {
+        my $O = -1;
         foreach( split //, substr($seq, $start-1, $end-$start+1 ) ) {
           $Composite->push( new Sanger::Graphics::Glyph::Text({
-            'x'      => $start + $O,
-            'y'      => 1,
-            'width'    => $w,
-            'height'   => $th,
-            'font'     => $self->{'config'}->species_defs->ENSEMBL_STYLE->{'LABEL_FONT'},
+            'x'      => $start+$O,
+            'y'      => 2,
+            'width'    => 1,
+            'height'   => $th_i,
+            'font'     => $FONT_I,
+            'ptsize'  => $FONTSIZE_I,
             'colour'   => $text_colour,
             'text'     => $_,
             'absolutey'  => 1,
@@ -209,19 +212,23 @@ sub _init {
       }
     }
     next unless @{$Composite->{'composite'}||[]};
-    if( $Composite->width * 2 > 1.2 * $w / $pix_per_bp * length( $f->{'name'} ) ) {
-      $Composite->push( new Sanger::Graphics::Glyph::Text({
-        'x'         => $Composite->x,
-        'y'         => $th+4 ,
-        'width'     => $pix_per_bp * $w * length( $f->{'name'} ),
-        'height'    => $th,
-        'font'      => $self->{'config'}->species_defs->ENSEMBL_STYLE->{'LABEL_FONT'},
-        'colour'    => $text_colour,
-        'text'      => $f->{'name'},
-        'absolutey' => 1,
-      }));
-      $H = $th+4;
-    }
+    
+    my(@res) = $self->get_text_width(0,$f->{'name'},'','font'=>$FONT_O,'ptsize' => $FONTSIZE_O );
+
+    $Composite->push( new Sanger::Graphics::Glyph::Text({
+      'x'         => $Composite->x,
+      'y'         => $th_i+4 ,
+      'width'     => $pix_per_bp * $res[2],
+      'height'    => $th_o,
+      'halign'    => 'left',
+      'font'      => $FONT_O,
+      'ptsize'    => $FONTSIZE_O,
+      'colour'    => $text_colour,
+      'text'      => $f->{'name'},
+      'absolutey' => 1,
+    }));
+    $H = $th_i+4;
+
     my $bump_start = int($Composite->x * $pix_per_bp);
     my $bump_end   = $bump_start + int( ($Composite->width) * $pix_per_bp);
        $bump_start--; 

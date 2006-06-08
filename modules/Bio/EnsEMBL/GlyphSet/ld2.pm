@@ -3,16 +3,12 @@ use strict;
 use Bio::EnsEMBL::GlyphSet;
 our @ISA = qw(Bio::EnsEMBL::GlyphSet);
 use Sanger::Graphics::Glyph::Poly;
-use Sanger::Graphics::Glyph::Text;
 
 sub init_label {
   my $self = shift;
-  my $label = new Sanger::Graphics::Glyph::Text({
-    'text'      => $self->my_config( 'source' ) eq 'genotyped' ? "LD (Genotyped)" : "LD (All)",
-    'font'      => 'Small',
-    'absolutey' => 1,
-  });
-  $self->label($label);
+  $self->init_label_text(
+    $self->my_config( 'source' ) eq 'genotyped' ? "LD (Genotyped)" : "LD (All)"
+  );
 }
 
 sub _init {

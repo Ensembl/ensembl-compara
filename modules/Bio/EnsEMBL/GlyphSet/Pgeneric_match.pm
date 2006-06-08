@@ -11,17 +11,11 @@ use Sanger::Graphics::Glyph::Composite;
 use Sanger::Graphics::Bump;
 
 sub init_label {
-    my ($self) = @_;
-    return if( defined $self->{'config'}->{'_no_label'} );
-    my $track_label = $self->my_config('track_label') || 
+  my ($self) = @_;
+  return if( defined $self->{'config'}->{'_no_label'} );
+  my $track_label = $self->my_config('track_label') || 
                       $self->my_config('LOGIC_NAME')  || 'Unknown';
-
-    my $label = new Sanger::Graphics::Glyph::Text({
-	'text'      => $track_label,
-	'font'      => 'Small',
-	'absolutey' => 1,
-    });
-    $self->label($label);
+  my $self->init_label_text( $track_label );
 }
 
 sub _init {

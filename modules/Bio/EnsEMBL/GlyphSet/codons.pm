@@ -4,22 +4,11 @@ use vars qw(@ISA);
 use Bio::EnsEMBL::GlyphSet;
 @ISA = qw(Bio::EnsEMBL::GlyphSet);
 use Sanger::Graphics::Glyph::Rect;
-use Sanger::Graphics::Glyph::Text;
 
 sub init_label {
   my ($self) = @_;
   return if( defined $self->{'config'}->{'_no_label'} );
-  my $label = new Sanger::Graphics::Glyph::Text({
-    'text'    => "Start/Stop",
-    'font'    => 'Small',
-    'absolutey' => 1,
-    'href'    => qq[javascript:X=hw('@{[$self->{container}{_config_file_name_}]}','$ENV{'ENSEMBL_SCRIPT'}','codons')],
-    'zmenu'   => {
-      'caption'           => 'HELP',
-      "01:Track information..."   => qq[javascript:X=hw(\'@{[$self->{container}{_config_file_name_}]}\',\'$ENV{'ENSEMBL_SCRIPT'}\',\'codons\')]
-    }
-  });
-  $self->label($label);
+  $self->init_label_text( 'Start/Stop', 'codons' );
 }
 
 sub _init {

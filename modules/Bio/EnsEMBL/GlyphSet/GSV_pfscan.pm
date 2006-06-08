@@ -13,17 +13,7 @@ use Data::Dumper;
 
 sub init_label {
   my ($self) = @_;
-  my $label = new Sanger::Graphics::Glyph::Text({
-    'text'      => 'PFScan',
-    'font'      => 'Small',
-    'absolutey' => 1,
-    'href'      => qq[javascript:X=hw('@{[$self->{container}{_config_file_name_}]}','$ENV{'ENSEMBL_SCRIPT'}','domains')],
-    'zmenu'     => {
-      'caption'                     => 'HELP',
-      '01:Track information...'     => qq[javascript:X=hw(\'@{[$self->{container}{_config_file_name_}]}\',\'$ENV{'ENSEMBL_SCRIPT'}\',\'domains\')]
-    }
-  });
-  $self->label($label);
+  $self->init_label_text( 'PFscan', 'domains' );
 }
 
 sub _init {
@@ -41,7 +31,7 @@ sub _init {
   my %highlights;
   @highlights{$self->highlights} = ();    # build hashkeys of highlight list
 
-  my $fontname      = $Config->species_defs->ENSEMBL_STYLE->{'LABEL_FONT'};
+  my $fontname      = $Config->species_defs->ENSEMBL_STYLE->{'GRAPHIC_FONT'};
   my $pix_per_bp    = $Config->transform->{'scalex'};
   my $bitmap_length = $Config->image_width(); #int($Config->container_width() * $pix_per_bp);
 

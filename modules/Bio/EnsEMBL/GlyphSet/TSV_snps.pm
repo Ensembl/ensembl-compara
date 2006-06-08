@@ -31,9 +31,11 @@ sub _init {
 
 
   # Drawing params
-  my $fontname      = $Config->species_defs->ENSEMBL_STYLE->{'LABEL_FONT'};
-  my($font_w_bp, $font_h_bp) = $Config->texthelper->px2bp($fontname);
-  my $height = $font_h_bp + 4;  #Single transcript mode: height= 30, width=8
+  my( $fontname, $fontsize ) = $self->get_font_details( 'innertext' );
+  my $pix_per_bp    = $Config->transform->{'scalex'};
+  my @res = $self->get_text_width( 0, 'M', '', 'font'=>$fontname, 'ptsize' => $fontsize );
+  my( $font_w_bp, $font_h_bp) = ($res[2]/$pix_per_bp,$res[3]);
+  my $height = $res[3] + 4;
 
   # Bumping params
   my $pix_per_bp    = $Config->transform->{'scalex'};
@@ -73,7 +75,7 @@ sub _init {
     # Alleles (if same as ref, draw empty box )---------------------
     my $aa_change =  $conseq_type->aa_alleles || [];
     my $label  = join "/", @$aa_change;
-    my $S =  ( $allele_ref->[0]+$allele_ref->[1] - $font_w_bp * length( $label ) )/2;
+    my $S =  ( $allele_ref->[0]+$allele_ref->[1] )/2;
     my $width = $font_w_bp * length( $label );
     my $ref_allele = $allele->ref_allele_string();
 
@@ -139,12 +141,16 @@ sub _init {
     }
 
     # Draw ------------------------------------------------
+    my @res = $self->get_text_width( 0, $label, '', 'font'=>$fontname, 'ptsize' => $fontsize );
+    my $W = ($res[2]+4)/$pix_per_bp;
+
     my $tglyph = new Sanger::Graphics::Glyph::Text({
       'x'         => $S,
       'y'         => $height + 3,
       'height'    => $font_h_bp,
-      'width'     => $width,
+      'width'     => 0,
       'font'      => $fontname,
+      'ptsize'    => $fontsize,
       'colour'    => 'black',
       'text'      => $label,
       'absolutey' => 1,
@@ -163,10 +169,10 @@ sub _init {
     my $href = "/@{[$self->{container}{_config_file_name_}]}/snpview?snp=@{[$allele->variation_name]};source=@{[$allele->source]};chr=$seq_region_name;vc_start=$chr_start";
 
     my $bglyph = new Sanger::Graphics::Glyph::Rect({
-      'x'         => $S - $font_w_bp / 2,
+      'x'         => $S - $W / 2,
       'y'         => $height + 2,
       'height'    => $height,
-      'width'     => $width + $font_w_bp +4,
+      'width'     => $W,
       'colour'    => $colour,
       'absolutey' => 1,
       'zmenu' => {

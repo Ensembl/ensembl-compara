@@ -9,21 +9,25 @@ sub init_label {
 }
 
 sub _init {
-    my ($self) = @_;
-    return unless ($self->strand() == -1);
+  my ($self) = @_;
+  return unless ($self->strand() == -1);
 
-    my $text = $self->{'config'}->{'text'};
-    my ($w,$h)   = $self->{'config'}->texthelper()->real_px2bp($self->{'config'}->species_defs->ENSEMBL_STYLE->{'LABEL_FONT'});
-    my ($w2,$h2) = $self->{'config'}->texthelper()->real_px2bp('Small');
-    $self->push( new Sanger::Graphics::Glyph::Text({
-        'x'         => 1, 
-        'y'         => int( ($h2-$h)/2 ),
-        'height'    => $h2,
-        'font'      => 'MediumBold',
-        'colour'    => 'black',
-        'text'      => $text,
-        'absolutey' => 1,
-    }) );
+  my( $fontname, $fontsize ) = $self->get_font_details( 'text' );
+  my @res = $self->get_text_width( 0, 'X', '', 'font'=>$fontname, 'ptsize' => $fontsize );
+  my $h = $res[3];
+
+  my $text = $self->{'config'}->{'text'};
+  $self->push( new Sanger::Graphics::Glyph::Text({
+    'x'         => 1, 
+    'y'         => 2,
+    'height'    => $h,
+    'halign'    => 'left',
+    'font'      => $fontname,
+    'ptsize'    => $fontsize,
+    'colour'    => 'black',
+    'text'      => $text,
+    'absolutey' => 1,
+  }) );
 }
 
 1;

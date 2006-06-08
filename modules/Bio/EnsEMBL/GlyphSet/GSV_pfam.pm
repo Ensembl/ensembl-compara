@@ -13,17 +13,7 @@ use Data::Dumper;
 
 sub init_label {
   my ($self) = @_;
-  my $label = new Sanger::Graphics::Glyph::Text({
-    'text'      => 'PFam',
-    'font'      => 'Small',
-    'absolutey' => 1,
-    'href'      => qq[javascript:X=hw('@{[$self->{container}{_config_file_name_}]}','$ENV{'ENSEMBL_SCRIPT'}','domains')],
-    'zmenu'     => {
-      'caption'                     => 'HELP',
-      '01:Track information...'     => qq[javascript:X=hw(\'@{[$self->{container}{_config_file_name_}]}\',\'$ENV{'ENSEMBL_SCRIPT'}\',\'domains\')]
-    }
-  });
-  $self->label($label);
+  $self->init_label_text( 'PFam', 'domains' );
 }
 
 sub _init {
@@ -41,15 +31,18 @@ sub _init {
   my %highlights;
   @highlights{$self->highlights} = ();    # build hashkeys of highlight list
 
-  my $fontname      = $Config->species_defs->ENSEMBL_STYLE->{'LABEL_FONT'};
-  my $pix_per_bp    = $Config->transform->{'scalex'};
+  my( $fontname, $fontsize ) = $self->get_font_details( 'outertext' );
+warn "$fontname -- $fontsize";
+  my @res = $self->get_text_width( 0, 'X', '', 'font' => $fontname, 'ptsize' => $fontsize );
+  my $th = $res[3];
+  my $pix_per_bp = $self->{'config'}->transform()->{'scalex'};
+  
   my $bitmap_length = $Config->image_width(); #int($Config->container_width() * $pix_per_bp);
 
   my $length  = $Config->container_width();
   my $transcript_drawn = 0;
     
   my $voffset = 0;
-  my($font_w_bp, $font_h_bp) = $Config->texthelper->px2bp($fontname);
   my $trans_ref = $Config->{'transcript'};
   my $strand = $trans_ref->{'exons'}[0][2]->strand;
     my $gene = $trans_ref->{'gene'};
@@ -81,25 +74,31 @@ sub _init {
       'absolutey' => 1
     }));
     my $text_label = $domain->hseqname;
-    my $width_of_label = length( "$text_label " ) * $font_w_bp;
+    my @res = $self->get_text_width( 0, $text_label, '', 'font' => $fontname, 'ptsize' => $fontsize );
     $Composite3->push( new Sanger::Graphics::Glyph::Text({
       'x'         => $Composite3->{'x'},
       'y'         => $h+2,
-      'height'    => $font_h_bp,
-      'width'     => $width_of_label,
+      'height'    => $res[3],
+      'width'     => $res[2]/$pix_per_bp,
       'font'      => $fontname,
+      'ptsize'    => $fontsize,
+      'halign'    => 'left', 
+      'valign'    => 'top',
       'colour'    => 'purple4',
       'text'      => $text_label,
       'absolutey' => 1,
     }));
     $text_label = $domain->idesc;
-    $width_of_label = length( "$text_label " ) * $font_w_bp;
+    my @res = $self->get_text_width( 0, $text_label, '', 'font' => $fontname, 'ptsize' => $fontsize );
     $Composite3->push( new Sanger::Graphics::Glyph::Text({
       'x'         => $Composite3->{'x'},
-      'y'         => $h+4 + $font_h_bp,
-      'height'    => $font_h_bp,
-      'width'     => $width_of_label,
+      'y'         => $h+4 + $th,
+      'height'    => $res[3],
+      'width'     => $res[2]/$pix_per_bp,
       'font'      => $fontname,
+      'ptsize'    => $fontsize,
+      'halign'    => 'left', 
+      'valign'    => 'top',
       'colour'    => 'purple4',
       'text'      => $text_label,
       'absolutey' => 1,
@@ -110,7 +109,7 @@ sub _init {
        $bump_end = $bitmap_length if ($bump_end > $bitmap_length);
     my $row = & Sanger::Graphics::Bump::bump_row( $bump_start, $bump_end, $bitmap_length, \@bitmap );
 
-    $Composite3->y( $voffset + $Composite3->{'y'} + $row * ($h+$font_h_bp*2+5) );
+    $Composite3->y( $voffset + $Composite3->{'y'} + $row * ($h+$th*2+5) );
     $self->push( $Composite3 );
   }
 

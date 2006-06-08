@@ -20,13 +20,7 @@ sub init_label {
                       substr( $text, 0, ( $numchars - $indent - 2 ) )."..": 
                       $text );
 
-  my $label = new Sanger::Graphics::Glyph::Text
-    ({
-      'text'      => $print_label,
-      'font'      => 'Small',
-      'absolutey' => 1,
-     });
-  $self->label($label);
+  $self->init_label_text($print_label);
 }
 
 sub _init {

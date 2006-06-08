@@ -1,42 +1,54 @@
 package Bio::EnsEMBL::GlyphSet::variation_legend;
+
 use strict;
-use vars qw(@ISA);
 use Bio::EnsEMBL::GlyphSet;
-@ISA = qw(Bio::EnsEMBL::GlyphSet);
 use Sanger::Graphics::Glyph::Rect;
 use Sanger::Graphics::Glyph::Text;
+use Bio::EnsEMBL::Utils::Eprof qw(eprof_start eprof_end);
+our @ISA = qw(Bio::EnsEMBL::GlyphSet);
 
 sub init_label {
   my ($self) = @_;
   return if( defined $self->{'config'}->{'_no_label'} );
-  $self->label( new Sanger::Graphics::Glyph::Text({
-    'text'      => 'SNP legend',
-    'font'      => 'Small',
-    'absolutey' => 1,
-  }));
+  $self->init_label_text( 'SNP legend' );
 }
 
 sub _init {
   my ($self) = @_;
+
   return unless ($self->strand() == -1);
+
   my $BOX_WIDTH     = 20;
   my $NO_OF_COLUMNS = 3;
 
-
   my $vc            = $self->{'container'};
   my $Config        = $self->{'config'};
-  my $FONTNAME      = "Small"; #$Config->species_defs->ENSEMBL_STYLE->{'LABEL_FONT'};
-  my ($w,$th)       = $Config->texthelper()->px2bp($FONTNAME);
   my $im_width      = $Config->image_width();
-  my $type          = $Config->get('variation_legend', 'src');
+  my $type          = $Config->get('variaion_legend', 'src');
 
   my @colours;
   return unless $Config->{'variation_legend_features'};
   my %features = %{$Config->{'variation_legend_features'}};
   return unless %features;
 
+# Set up a separating line...
+  my $rect = new Sanger::Graphics::Glyph::Rect({
+    'x'         => 0,
+    'y'         => 0,
+    'width'     => $im_width,
+    'height'    => 0,
+    'colour'    => 'grey50',
+    'absolutey' => 1,
+    'absolutex' => 1,'absolutewidth'=>1,
+  });
+  $self->push($rect);
+
   my ($x,$y) = (0,0);
-  
+  my( $fontname, $fontsize ) = $self->get_font_details( 'legend' );
+  my @res = $self->get_text_width( 0, 'X', '', 'font'=>$fontname, 'ptsize' => $fontsize );
+  my $th = $res[3];
+  my $pix_per_bp = $self->{'config'}->transform()->{'scalex'};
+
   foreach (sort { $features{$b}->{'priority'} <=> $features{$a}->{'priority'} } keys %features) {
     @colours = @{$features{$_}->{'legend'}};
     $y++ unless $x==0;
@@ -46,22 +58,25 @@ sub _init {
       ($tocolour,$colour) = ($1,$2) if $colour =~ /(.*):(.*)/;
       $self->push(new Sanger::Graphics::Glyph::Rect({
         'x'         => $im_width * $x/$NO_OF_COLUMNS,
-        'y'         => $y * ($th+3) + 6,
-        'width'     => $BOX_WIDTH, 
-        'height'    => $th - 2, 
+        'y'         => $y * ( $th + 3 ) + 2,
+        'width'     => $BOX_WIDTH,
+        'height'    => $th-2,
         $tocolour.'colour'    => $colour,
         'absolutey' => 1,
         'absolutex' => 1,'absolutewidth'=>1,
       }));
       $self->push(new Sanger::Graphics::Glyph::Text({
         'x'         => $im_width * $x/$NO_OF_COLUMNS + $BOX_WIDTH,
-        'y'         => $y * ($th+3) + 4,
-        'height'    => $Config->texthelper->height($FONTNAME),
-        'font'      => $FONTNAME,
-        'colour'    => "black", #$colour,
+        'y'         => $y * ( $th + 3 ) + 1,
+        'height'    => $th,
+        'valign'    => 'center',
+        'halign'    => 'left',
+        'ptsize'    => $fontsize,
+        'font'      => $fontname,
+        'colour'    => 'black',
         'text'      => " $legend",
         'absolutey' => 1,
-        'absolutex' => 1,'absolutewidth'=>1,
+        'absolutex' => 1,'absolutewidth'=>1
       }));
       $x++;
       if($x==$NO_OF_COLUMNS) {

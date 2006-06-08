@@ -9,29 +9,25 @@ use Sanger::Graphics::Glyph::Text;
 use Sanger::Graphics::Glyph::Poly;
 
 sub init_label {
-    my ($self) = @_;
-    return if( defined $self->{'config'}->{'_no_label'} );
-    my $label = new Sanger::Graphics::Glyph::Text({
-        'text'      => 'SNP legend',
-        'font'      => 'Small',
-        'absolutey' => 1,
-    });
-    $self->label($label);
+  my ($self) = @_;
+  return if( defined $self->{'config'}->{'_no_label'} );
+  $self->init_label_text( 'SNP legend' );
 }
 
 sub _init {
     my ($self) = @_;
     my $BOX_HEIGHT    = 6;
     my $BOX_WIDTH     = 6;
-    my $FONTNAME      = "Tiny";
 	
     my $vc            = $self->{'container'};
     my $Config        = $self->{'config'};
 
     my $im_width      = $Config->image_width();
-	my $TEXT_WIDTH 	  = $Config->texthelper->width($FONTNAME);
-	my $TEXT_HEIGHT 	  = $Config->texthelper->height($FONTNAME);
-	my %key;
+  my( $fontname, $fontsize ) = $self->get_font_details( 'legend' );
+  my @res = $self->get_text_width( 0, 'X', '', 'font'=>$fontname, 'ptsize' => $fontsize );
+  my $h = $res[3];
+
+    my %key;
     
     my ($x,$y) = (0,0);
 	
@@ -50,18 +46,21 @@ sub _init {
 					'absolutewidth' => 1,
 					
                 }));	
+           my @res = $self->get_text_width( 0, 'Insert', '', 'font'=>$fontname, 'ptsize' => $fontsize );
 	   $self->push(new Sanger::Graphics::Glyph::Text({
                 'x'         => $x + $BOX_WIDTH +5,
                 'y'         => $y,
-                'height'    => $TEXT_HEIGHT,
-                'font'      => $FONTNAME,
+                'height'    => $h,
+                'font'      => $fontname,
+                'ptsize'      => $fontsize,
+                'halign'     => 'left',
                 'colour'    => 'black',
                 'text'      => 'Insert',
                 'absolutey' => 1,
                 'absolutex' => 1,
 				'absolutewidth'=>1,
             }));
-	$x = $x + $BOX_WIDTH + ($TEXT_WIDTH * 13);
+	$x = $x + $BOX_WIDTH * 4 + $res[2];
 	}
 	if ($key{'deletion'}){
 	$self->push(new Sanger::Graphics::Glyph::Poly({
@@ -74,18 +73,21 @@ sub _init {
 					'absolutewidth' => 1,
 					
                 }));	
+           my @res = $self->get_text_width( 0, 'Deletion', '', 'font'=>$fontname, 'ptsize' => $fontsize );
 	   $self->push(new Sanger::Graphics::Glyph::Text({
                 'x'         => $x + $BOX_WIDTH +5,
                 'y'         => $y,
-                'height'    => $TEXT_HEIGHT,
-                'font'      => $FONTNAME,
+                'height'    => $h,
+                'font'      => $fontname,
+                'ptsize'      => $fontsize,
+                'halign'     => 'left',
                 'colour'    => 'black',
                 'text'      => 'Deletion',
                 'absolutey' => 1,
                 'absolutex' => 1,
 				'absolutewidth'=>1,
             }));
-	$x = $x + $BOX_WIDTH +($TEXT_WIDTH * 17);
+	$x = $x + $BOX_WIDTH * 4 + $res[2];
 	}
 	if ($key{'syn'}){
 	$self->push(new Sanger::Graphics::Glyph::Rect({
@@ -97,18 +99,21 @@ sub _init {
 		'absolutey' => 1,
 		'absolutewidth' => 1,}));
 		
+        my @res = $self->get_text_width( 0, 'Synonymous', '', 'font'=>$fontname, 'ptsize' => $fontsize );
 	$self->push(new Sanger::Graphics::Glyph::Text({
                 'x'         => $x + $BOX_WIDTH +5,
                 'y'         => $y ,
-                'height'    => $TEXT_HEIGHT,
-                'font'      => $FONTNAME,
+                'height'    => $h,
+                'font'      => $fontname,
+                'ptsize'      => $fontsize,
+                'halign'     => 'left',
                 'colour'    => 'black',
                 'text'      => 'Synonymous',
                 'absolutey' => 1,
                 'absolutex' => 1,
 				'absolutewidth'=>1,
             }));
-	$x = $x + $BOX_WIDTH +($TEXT_WIDTH * 18);
+	$x = $x + $BOX_WIDTH * 4 + $res[2];
 	}
 	if ($key{'snp'}){
 	$self->push(new Sanger::Graphics::Glyph::Rect({
@@ -119,18 +124,21 @@ sub _init {
 		'absolutex' => 1,
 		'absolutey' => 1,
 		'absolutewidth' => 1,}));
+        my @res = $self->get_text_width( 0, 'Non-Synonymous', '', 'font'=>$fontname, 'ptsize' => $fontsize );
 	$self->push(new Sanger::Graphics::Glyph::Text({
                 'x'         => $x + $BOX_WIDTH +5,
                 'y'         => $y ,
-                'height'    => $TEXT_HEIGHT,
-                'font'      => $FONTNAME,
+                'height'    => $h,
+                'font'      => $fontname,
+                'ptsize'      => $fontsize,
+                'halign'     => 'left',
                 'colour'    => 'black',
                 'text'      => 'Non-Synonymous',
                 'absolutey' => 1,
                 'absolutex' => 1,
 				'absolutewidth'=>1,
             }));
-	$x = $x + $BOX_WIDTH +($TEXT_WIDTH * 22);
+	$x = $x + $BOX_WIDTH * 4 + $res[2];
 	}
                
 }

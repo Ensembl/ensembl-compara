@@ -26,9 +26,12 @@ sub _init {
   my $transcript =  $Config->{'transcript'}->{'transcript'};
 
   # Drawing params
-  my $fontname      = $Config->species_defs->ENSEMBL_STYLE->{'LABEL_FONT'};
-  my($font_w_bp, $font_h_bp) = $Config->texthelper->px2bp($fontname);
-  my $h             = $font_h_bp + 4;   #Single transcript mode - set height to 30 - width to 8!
+  
+  my( $fontname, $fontsize ) = $self->get_font_details( 'innertext' );
+  my $pix_per_bp    = $Config->transform->{'scalex'};
+  my @res = $self->get_text_width( 0, 'M', '', 'font'=>$fontname, 'ptsize' => $fontsize );
+  my( $font_w_bp, $font_h_bp) = ($res[2]/$pix_per_bp,$res[3]);
+  my $h = $res[3] + 4; 
 
   # Data stuff
   my $colour_map = $Config->get('GSV_snps','colours' );
@@ -38,7 +41,6 @@ sub _init {
   my $seq_region_name = $self->{'container'}->seq_region_name();
 
   # Bumping params
-  my $pix_per_bp    = $Config->transform->{'scalex'};
   my $bitmap_length = $Config->image_width(); #int($Config->container_width() * $pix_per_bp);
   my $voffset = 0;
   my @bitmap;
@@ -53,17 +55,19 @@ sub _init {
     my $type      = $cod_snp->consequence_type;
     my $colour    = $colour_map->{$type}->[0];
     my $aa_change = $cod_snp->pep_allele_string;
-
+    
     my @tmp = $aa_change ? ("10:amino acid: $aa_change", '' ) : ();
 
-    my $S =  ( $snpref->[0]+$snpref->[1] - $font_w_bp * length( $aa_change ) )/2;
-    my $W = $font_w_bp * length( $aa_change );
+    my $S =  ( $snpref->[0]+$snpref->[1] )/2;
+    my @res = $self->get_text_width( 0, $aa_change, '', 'font'=>$fontname, 'ptsize' => $fontsize );
+    my $W = ($res[2]+4)/$pix_per_bp;
     my $tglyph = new Sanger::Graphics::Glyph::Text({
       'x'         => $S,
-      'y'         => $h + 3,
+      'y'         => $h + 4,
       'height'    => $font_h_bp,
-      'width'     => $W,
+      'width'     => 0,
       'font'      => $fontname,
+      'ptsize'    => $fontsize,
       'colour'    => 'black',
       'text'      => $aa_change,
       'absolutey' => 1,
@@ -79,10 +83,10 @@ sub _init {
     }
     my $href = "/@{[$self->{container}{_config_file_name_}]}/snpview?snp=@{[$snp->variation_name]};source=@{[$snp->source]};chr=$seq_region_name;vc_start=$chr_start";
     my $bglyph = new Sanger::Graphics::Glyph::Rect({
-      'x'         => $S - $font_w_bp / 2,
+      'x'         => $S - $W / 2,
       'y'         => $h + 2,
       'height'    => $h,
-      'width'     => $W + $font_w_bp,
+      'width'     => $W,
       'colour'    => $colour,
       'absolutey' => 1,
       'zmenu' => {

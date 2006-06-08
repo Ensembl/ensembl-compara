@@ -18,12 +18,7 @@ use Sanger::Graphics::Bump;
 sub init_label {
   my ($self) = @_;
   return if( defined $self->{'config'}->{'_no_label'} );
-  my $label = Sanger::Graphics::Glyph::Text->new({
-						  'text'      => (($self->strand()==-1)?"-":"+") . " hsps",
-						  'font'      => 'Small',
-						  'absolutey' => 1,
-						 });
-  $self->label($label);
+  $self->init_label_text( (($self->strand()==-1)?"-":"+") . " hsps" );
 }
 
 sub _init {

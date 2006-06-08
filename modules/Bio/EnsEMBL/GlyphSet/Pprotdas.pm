@@ -25,19 +25,7 @@ sub init_label {
   my $print_label = ( length($text) > ( $numchars - $indent ) ? 
 		      substr( $text, 0, ( $numchars - $indent - 2 ) )."..": 
 		      $text );
-
-  $print_label =  ' ' x $indent . $print_label;
-  my $label = new Sanger::Graphics::Glyph::Text
-    ( { 'text'      => $print_label,
-	'font'      => 'Small',
-	'absolutey' => 1,
-	'colour'    => $colour,
-	'zmenu'     => {caption=>$text}
-      });
-
-    $self->label($label);
-
-    return 1;
+  $self->init_label_text( $print_label );
 }
 
 

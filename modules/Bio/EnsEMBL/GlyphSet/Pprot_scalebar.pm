@@ -10,25 +10,24 @@ use Sanger::Graphics::Glyph::Composite;
 use  Sanger::Graphics::Bump;
 
 sub init_label {
-    my ($self) = @_;
-	return if( defined $self->{'config'}->{'_no_label'} );
-    my $label = new Sanger::Graphics::Glyph::Text({
-	'text'      => 'Scale (aa)',
-	'font'      => 'Small',
-	'absolutey' => 1,
-    });
-    $self->label($label);
+  my ($self) = @_;
+  return if( defined $self->{'config'}->{'_no_label'} );
+  $self->init_label_text( 'Scale (aa)' );
 }
 
 sub _init {
     my ($self) = @_;
 	
     my $h                     = 0;
-    my $fontname              = "Tiny";
+  
     my $Config        	      = $self->{'config'};
-    my $fontheight 	      = $Config->texthelper->height($fontname),
-    my $fontwidth_bp 	      = $Config->texthelper->width($fontname),
-    my ($fontwidth,$dontcare) = $Config->texthelper->px2bp($fontname),
+  my( $fontname, $fontsize ) = $self->get_font_details( 'innertext' );
+  my @res = $self->get_text_width( 0, 'X', '', 'font'=>$fontname, 'ptsize' => $fontsize );
+  my $pix_per_bp = $self->{'config'}->transform()->{'scalex'};
+
+  my $fontheight   = $res[3];
+  my $fontwidth_bp = $res[2]/$pix_per_bp;
+  my $fontwidth    = $res[2];
 	
     my $feature_colour 	      = $Config->get('Pprot_scalebar','col');
     my $len                   = $self->{'container'}->length();
@@ -63,6 +62,8 @@ sub _init {
 	    'y'      	=> 8,
 	    'height'	=> $fontheight,
 	    'font'   	=> $fontname,
+	    'ptsize'   	=> $fontsize,
+            'halign'    => 'left',
 	    'colour' 	=> $feature_colour,
 	    'text'   	=> $text,
 	    'absolutey' => 1,
@@ -76,7 +77,9 @@ sub _init {
 	'x'      	=> 0,
 	'y'      	=> 8,
 	'height'	=> $fontheight,
-	'font'   	=> $fontname,
+        'font'   	=> $fontname,
+	    'ptsize'   	=> $fontsize,
+            'halign'    => 'left',
 	'colour' 	=> $feature_colour,
 	'text'   	=> $text,
 	'absolutey' => 1,
@@ -88,10 +91,13 @@ sub _init {
     
     # label last tick
     my $endglyph = new Sanger::Graphics::Glyph::Text({
-	'x'      	=> $im_width -(length("$text ")*$fontwidth_bp),
+	'x'      	=> $im_width,
 	'y'      	=> 8,
 	'height'	=> $fontheight,
-	'font'   	=> $fontname,
+        'font'   	=> $fontname,
+	    'ptsize'   	=> $fontsize,
+            'halign'    => 'right',
+
 	'colour' 	=> $feature_colour,
 	'text'   	=> $text,
 	'absolutex'  => 1,

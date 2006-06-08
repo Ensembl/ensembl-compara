@@ -32,7 +32,6 @@ sub _init {
   @highlights{$self->highlights} = ();    # build hashkeys of highlight list
 
   my $colours       = $self->colours();
-  my $fontname      = $Config->species_defs->ENSEMBL_STYLE->{'LABEL_FONT'};
   my $pix_per_bp    = $Config->transform->{'scalex'};
   my $bitmap_length = $Config->image_width(); #int($Config->container_width() * $pix_per_bp);
 
@@ -40,7 +39,6 @@ sub _init {
   my $transcript_drawn = 0;
     
   my $voffset = 0;
-  my($font_w_bp, $font_h_bp) = $Config->texthelper->px2bp($fontname);
   my $trans_ref = $Config->{'transcript'};
   my $strand = $trans_ref->{'exons'}[0][2]->strand;
   my $gene = $trans_ref->{'gene'};
@@ -107,6 +105,9 @@ sub _init {
   } #we are finished if there is no other exon defined
 
   if( $Config->{'_add_labels'} ) { 
+    my( $fontname, $fontsize ) = $self->get_font_details( 'caption' );
+    my @res = $self->get_text_width( 0, 'X', '', 'font'=>$fontname, 'ptsize' => $fontsize );
+    my $h = $res[3];
     my $H = 0;
     my  $T = length( $transcript->stable_id );
     my $name =  ' '.$transcript->external_name;
@@ -114,20 +115,21 @@ sub _init {
     foreach my $text_label ( $transcript->stable_id, $name ) {
       next unless $text_label;
       next if $text_label eq ' ';
-      my $width_of_label = $font_w_bp * ( $T ) * 1.5;
       my $tglyph = new Sanger::Graphics::Glyph::Text({
        # 'x'         => - $width_of_label,
         'x'         => -100,
         'y'         => $H,
-        'height'    => $font_h_bp,
-        'width'     => $width_of_label,
+        'height'    => $h,
+        'width'     => 0,
         'font'      => $fontname,
+        'ptsize'    => $fontsize,
+        'halign'    => 'left',
         'colour'    => $colour,
         'text'      => $text_label,
         'absolutey' => 1,
         'absolutex' => 1,
       });
-      $H += $font_h_bp + 1;
+      $H += $h + 1;
       $self->push($tglyph);
     }
   }
