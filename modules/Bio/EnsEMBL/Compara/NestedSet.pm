@@ -481,7 +481,7 @@ sub print_node {
   my $self  = shift;
 
   print("(");
-  if($self->get_tagvalue("Duplication") > 0) { print("DUP "); }
+  if(defined $self->get_tagvalue("Duplication") && $self->get_tagvalue("Duplication") ne '' && $self->get_tagvalue("Duplication") > 0) { print("DUP "); }
   printf("%s %d,%d)", $self->node_id, $self->left_index, $self->right_index);
   printf("%s\n", $self->name);
 }
@@ -529,7 +529,7 @@ sub _internal_nhx_format {
       }
     $nhx .= sprintf(":%1.4f", $self->distance_to_parent);
     $nhx .= "[&&NHX";
-    if($self->get_tagvalue("Duplication") > 0) { 
+    if(defined $self->get_tagvalue("Duplication") && $self->get_tagvalue("Duplication") ne '' && $self->get_tagvalue("Duplication") > 0) { 
         # mark as duplication
         $nhx .= ":D=Y";
     } else {
@@ -618,7 +618,6 @@ sub _internal_newick_format {
     if($self->parent) {
       if($self->is_leaf) {
         $newick .= sprintf("\"%s\"", $self->name);
-#        $newick .= sprintf("%s", $self->name);
       }
       $newick .= sprintf(":%1.4f", $self->distance_to_parent);
     }
