@@ -24,7 +24,7 @@ sub colour {
   my ($self, $gene, $transcript, $colours, %highlights) = @_;
 
   my $highlight = undef;
-  my $type = $transcript->type() ? $transcript->type.'_'.$gene->confidence :  $gene->biotype.'_'.$gene->confidence;
+  my $type = $gene->biotype.'_'.$gene->confidence;
   # $type =~ s/HUMACE-//g;
   my @colour = @{$colours->{$type}||['black','transcript']};
   $colour[1] = "Vega ".$colour[1];
@@ -91,7 +91,7 @@ sub zmenu {
   my $pid = $translation->stable_id() if $translation;
   my $gid = $gene->stable_id();
   my $id   = $transcript->external_name() eq '' ? $tid : $transcript->external_name();
-  my $type = $self->format_vega_name($gene,$transcript);
+  my $type = $self->format_vega_name($gene);
   $type =~ s/HUMACE-//g;
   my $ExtUrl = EnsEMBL::Web::ExtURL->new($self->{'config'}->{'species'}, $self->species_defs);
   
@@ -150,7 +150,7 @@ sub text_label {
   my $Config = $self->{config};
   my $short_labels = $Config->get('_settings','opt_shortlabels');
   unless( $short_labels ){
-    my $type = $self->format_vega_name($gene,$transcript);
+    my $type = $self->format_vega_name($gene);
     $id .= " \n$type ";
   }
   return $id;
@@ -192,7 +192,6 @@ sub features {
 sub legend {
 	my ($self, $colours) = @_;
 	my %gtypes;
-
 	if (defined $VEGA_TO_SHOW_ON_ENS) {
 		foreach my $gene (@$VEGA_TO_SHOW_ON_ENS){
 			my $type = $gene->biotype.'_'.$gene->status;
@@ -227,6 +226,34 @@ sub legend {
 		
 	}
 	
+}
+
+=head2 format_vega_name
+
+  Arg [1]    : $self
+  Arg [2]    : gene object
+  Arg [3]    : transcript object (optional)
+  Example    : my $type = $self->format_vega_name($g,$t);
+  Description: retrieves status and biotype of a transcript, or failing that the parent gene. Then retrieves
+               the display name from the Colourmap
+  Returntype : string
+
+=cut
+
+sub format_vega_name {
+	my ($self,$gene,$trans) = @_;
+	my ($status,$biotype);
+	my %gm = $self->{'config'}->colourmap()->colourSet('vega_gene');
+	if ($trans) {
+		$status = $trans->confidence()||$gene->confidence;
+		$biotype = $trans->biotype()||$gene->biotype();
+	} else {
+		$status = $gene->confidence;
+		$biotype = $gene->biotype();
+	}
+	my $t = $biotype.'_'.$status;
+	my $label = $gm{$t}[1];
+	return $label;
 }
 
 sub error_track_name { return 'Vega transcripts'; }
