@@ -403,14 +403,12 @@ structure below this is as follows (using current_human as an example):</p>
   <td style="width: 3em" rowspan="5">&nbsp; &nbsp;</td>
   <td colspan="2">|--&nbsp;data</td>
 </tr>
-<tr><td>|--&nbsp;fasta</td><td>cDNA, DNA, RNA and peptide dumps</td></tr>
+<tr><td>|--&nbsp;fasta</td><td>cDNA, DNA (masked and unmasked chromosome sequence dumps), RNA and peptide dumps</td></tr>
 <tr><td>|--&nbsp;flatfiles</td><td>EMBL and GenBank format dumps</td></tr>
-<tr><td>|--&nbsp;golden_path</td><td>masked and unmasked chromosome seq dumps</td></tr>
 <tr><td>|--&nbsp;mysql</td><td>Database dumps</td></tr>
 </table>
 <p>
-For installing the Ensembl data, we are interested in the contents of the mysql directory. This contains
-a directory for each database we want to install, e.g:
+The mysql directory contains a directory for each database.  This can be used to install your own copy of the Ensembl data, e.g.: 
 </p>
 <table>
 <tr>
@@ -418,20 +416,19 @@ a directory for each database we want to install, e.g:
 </tr>
 <tr>
   <td style="width: 3em" rowspan="3">&nbsp; &nbsp;</td>
-  <td>|--&nbsp;homo_sapiens_core_37_35j</td>
-  <td>Core ensembl database</td>
+  <td>|--&nbsp;homo_sapiens_core_38_36</td>
+  <td>core ensembl database</td>
 </tr>
 <tr>
-  <td>|--&nbsp;homo_sapiens_cdna_37_35j</td>
-  <td>cDNA database</td>
+  <td>|--&nbsp;homo_sapiens_otherfeatures_38_36</td>
+  <td>other features database</td>
 </tr>
 <tr>
   <td>|--&nbsp;etc...</td>
 </tr>
 </table>
-<p>Each database directory contains a checksum file (using a UNIX "sum" utility), so you can verify that the
-data has downloaded correctly, a data file for each table in that database, and an SQL file that contains
-the SQL commands necessary to build that database's table structure.</p>
+<p>Each database directory contains a data file for each table in that database an SQL file that contains the SQL commands necessary to build that database's table structure and a checksum file (using a UNIX "sum" utility) so you can verify that the
+data has downloaded correctly.</p>
 
 <h4>Multi-species data</h4>
 
@@ -564,8 +561,7 @@ usr/local/ensembl with your chosen server-root.</p>
 <kbd>cvs -d :pserver:cvsuser@cvsro.sanger.ac.uk:/cvsroot/CVSmaster login</kbd>
 </li>
 <li>
-<p>Check the ensembl API and web code out of CVS (downloads the code from the Sanger CVS server
-onto your local machine):</p>
+<p>To check out the most recent stable version of the ensembl API and web code from CVS (i.e. to download the code from the Sanger CVS server onto your local machine) you need to use the latest branch of the code.  Please note the code on the CVS HEAD is under development and unstable.  Use the following command making sure you use the code that matches your databases:</p>
 <kbd>cvs -d :pserver:cvsuser@cvsro.sanger.ac.uk:/cvsroot/CVSmaster \<br />
 &nbsp; co -r branch-ensembl-37 ensembl-api ensembl-website</kbd>
 <p>A listing of your server-root should now look something like:</p>

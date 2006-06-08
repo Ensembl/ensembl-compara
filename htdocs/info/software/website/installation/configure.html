@@ -55,7 +55,7 @@
 <h4 class="boxed">Plugins</h4>
 
 <p>
-  Elsewhere in the documentation you will read about how to extend
+  Elsewhere in the documentation you will read about how to <a href="/info/software/website/index.html#extending">extend</a>
   Ensembl by writing your own <strong>plugins</strong>. A by product
   of this extensibility is that you can also use plugins to simply
   configure your server.
@@ -234,7 +234,7 @@ representative sequence locations, genes, etc.</p>
 
 <h3>public-plugins/mirror/conf/ini-files/MULTI.ini</h3>
 
-<p>Configure the [general] section for connection to the MySQL server, as for the species-specific ini files.
+<p>Create this file to configure the multi species databases.  Configure the [general] section for connection to the MySQL server, as for the species-specific ini files.
 In the [databases] section, change the values of ENSEMBL_COMPARA and the various _MART entries
 to match the name of the ensembl_compara and ensembl_mart databases that you created.</p>
 
@@ -251,15 +251,14 @@ PASS=dbpass
 HOST=mysqlserver2
 PORT=4444
 </pre>
-<p>The Mart configuration creates a simplified BioMart configuration file martRegistry.xml in the conf
-directory. Read the BioMart install document how to edit this to create a more functional BioMart registry
+<p>The Mart configuration automatically creates a simplified BioMart configuration file martRegistry.xml in the conf directory at server start up. Read the BioMart install document how to edit this to create a more functional BioMart registry
 which leverages BioMart's advanced features such as federated searches.</p>
 <h4>BLAST</h4>
-<p>It is possible to configure blast for a local installation. See documentation describing how to <a href="blast.html">configure BLAST</a>.
+<p>BLAST is not installed by default.  You have to configure blast for a local installation. See documentation describing how to <a href="blast.html">configure BLAST</a>.
 
 <h3 class="boxed">Note on Ensembl Web Site Search</h3>
 
-<p>The Ensembl web site uses the AltaVista search engine (<a href="http://www.altavista.com/">http://www.altavista.com/</a>). This software
+<p>The Ensembl web site uses the Exalead search engine (<a href="http://www.exalead.com/">http://www.exalead.com</a>).  Previously it used AltaVista (<a href="http://www.altavista.com/">http://www.altavista.com/</a>). This software
 requires a user license and cannot be distributed as part of the Ensembl web code.</p>
 
 <!--DOES NOT WORK WITH NEW SITE<p>As an alternative to using AltaVista, two external contributors, Chen Peng and Dyfed Lloyd-Evans, have
@@ -267,7 +266,10 @@ built a system using the new full-text indexing capabilities of MySQL4. You can 
 instruction for use in the contrib/mysql_indexer directory, public-web folder.</p>-->
 
 <p>By default, local installations of Ensembl use a simple search page called Unisearch that just does SQL
-searches against the database. This method is rather slow and crude, however.</p>
+searches against the database. This method is rather slow and crude, however.
+
+Unisearch does not do cross species queries (too time consuming
+for the Unisearch's MySQL queries).</p>
 
 <h3 class="boxed">Site Preparation</h3>
 <p>cd into your server root and run the following commands:</p>

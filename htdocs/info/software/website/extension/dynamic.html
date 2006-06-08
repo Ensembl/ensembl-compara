@@ -7,9 +7,10 @@
                                                                                 
 <h2>Dynamic Content</h2>
 
-<p>For most users, it will be sufficient to use the new <a href="plugins.html">plugins</a> in order to modify existing pages. However on occasion you may wish to create an entirely new page from scratch.</p>
+<p>For most users, it will be sufficient to use plugins in <kbd>public-plugins/mirror</kbd> to modify existing pages.  This has the advantage of leaving the Ensembl code in <kbd>modules</kbd> intact.  Currently the Object/Factory/Configuration are pluggable but most other scripts are not.  Hopefully <kbd>EnsEMBL/Web/UserConfig.pm</kbd> will be pluggable in late 2006.</p> 
 
-<h3>Coding a Dynamic Page</h3>
+
+<h3>Coding a new Dynamic Page</h3>
 
 <p>As in the previous version of Ensembl, standard dynamic pages are created 
 via a 'view' script in /perl/default, e.g. geneview. However the modules used by this script have been reorganised.</p>
