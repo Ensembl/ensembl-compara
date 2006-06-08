@@ -176,23 +176,41 @@ sub get_alternative_locations {
 sub get_homology_matches{
   my $self = shift;
   my $homology_source = shift;
-  $homology_source = "ENSEMBL_ORTHOLOGUES" unless (defined $homology_source);
-  my %homologues = %{$self->fetch_homology_species_hash($homology_source)};
+  my $homology_description = shift;
+  $homology_source = "ENSEMBL_HOMOLOGUES" unless (defined $homology_source);
+  $homology_description= "ortholog" unless (defined $homology_description);
+
+  
+  my %homologues = %{$self->fetch_homology_species_hash($homology_source, $homology_description)};
   return unless keys %homologues;
   my $gene = $self->Obj;
   my $geneid = $gene->stable_id;
   my %homology_list;
   my $adaptor_call = $self->param('gene_adaptor') || 'get_GeneAdaptor';
 
+  # hash to convert descriptions into more readable form
+
+  my %desc_mapping_sr7 = ('ortholog_one2one' => '1 to 1', 'apparent_ortholog_one2one' => '1 to 1 (apparent)', 'ortholog_one2many' => '1 to many', 'between_species_paralog' => 'paralogue (between species)', 'ortholog_many2many' => 'many to many', 'within_species_paralog' => 'paralog (within species)');
+
+
   foreach my $displayspp (keys (%homologues)){
     ( my $spp = $displayspp ) =~ tr/ /_/;
+    my $order_sr7=0;
     foreach my $homology (@{$homologues{$displayspp}}){
-      my ($homologue, $homology_desc, $homology_dnds_ratio) = @{$homology};
+
+
+      my ($homologue, $homology_desc, $homology_subtype) = @{$homology};
+      next unless ($homology_desc =~ /$homology_description/);
       my $homologue_id = $homologue->stable_id;
-      $homology_list{$displayspp}{$homologue_id}{'homology_desc'} = $homology_desc ;
-      $homology_list{$displayspp}{$homologue_id}{'homology_dnds_ratio'} = $homology_dnds_ratio ;
+      my $homology_desc_sr7= $desc_mapping_sr7{$homology_desc};   # mapping to more readable form
+      $homology_desc_sr7= "no description" unless (defined $homology_desc_sr7);
+      $homology_list{$displayspp}{$homologue_id}{'homology_desc'} = $homology_desc_sr7 ;
+      $homology_list{$displayspp}{$homologue_id}{'homology_subtype'} = $homology_subtype ;
       $homology_list{$displayspp}{$homologue_id}{'spp'} = $displayspp ;
       $homology_list{$displayspp}{$homologue_id}{'description'} = $homologue->description ;
+      
+      $homology_list{$displayspp}{$homologue_id}{'order'} = $order_sr7 ;
+      
       if ($self->species_defs->valid_species($spp)){
         my $database_spp = $self->DBConnection->get_databases_species( $spp, 'core') ;
         unless( $database_spp->{'core'} ) {
@@ -212,6 +230,8 @@ sub get_homology_matches{
         $homology_list{$displayspp}{$homologue_id}{'location'}= $gene_spp->feature_Slice->name;
         $database_spp->{'core'}->dbc->disconnect_if_idle();
       }
+      $order_sr7++;
+      
     }
   }
   return \%homology_list;
@@ -221,7 +241,12 @@ sub get_homology_matches{
 sub fetch_homology_species_hash {
   my $self = shift;
   my $homology_source = shift;
-  $homology_source = "ENSEMBL_ORTHOLOGUES" unless (defined $homology_source);
+  my $homology_description = shift;
+  
+  
+  $homology_source = "ENSEMBL_HOMOLOGUES" unless (defined $homology_source);
+  $homology_description= "ortholog" unless (defined $homology_description);
+  
   my $geneid = $self->stable_id;
   my $databases = $self->database('compara') ;
   my %homologues;
@@ -234,13 +259,37 @@ sub fetch_homology_species_hash {
   return {} unless defined $query_member ;
   my $homology_adaptor = $databases->get_HomologyAdaptor;
   my $homologies_array = $homology_adaptor->fetch_all_by_Member_method_link_type($query_member,$homology_source);
-  foreach my $homology (@{$homologies_array}){
+  
+  my $query_taxon = $query_member->taxon;
+  my %classification;
+  my $idx = 1;
+  my $node = $query_taxon;
+  while ($node){
+    $classification{$node->get_tagvalue('scientific name')} = $idx;
+    $node = $node->parent;
+    $idx++;
+
+
+  }
+ 
+ 
+ foreach my $homology (@{$homologies_array}){
+    next unless ($homology->description =~ /$homology_description/);
     foreach my $member_attribute (@{$homology->get_all_Member_Attribute}) {
       my ($member, $attribute) = @{$member_attribute};
       next if ($member->stable_id eq $query_member->stable_id);
-      push (@{$homologues{$member->genome_db->name}}, [ $member, $homology->description, $homology->dnds_ratio ]);
+     # push (@{$homologues{$member->genome_db->name}}, [ $member, $homology->description, $homology->dnds_ratio ]);
+
+      push (@{$homologues{$member->genome_db->name}}, [ $member, $homology->description, $homology->subtype ]);
+      
     }
   }
+
+  foreach my $species_name (keys %homologues){
+    @{$homologues{$species_name}} = sort {$classification{$a->[2]} <=> $classification{$b->[2]}} @{$homologues{$species_name}};
+
+  }
+  
   return \%homologues;
 }
 

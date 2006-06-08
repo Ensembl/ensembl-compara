@@ -502,7 +502,7 @@ sub method {
 
 sub orthologues {
   my( $panel, $gene ) = @_;
-  my $orthologue = $gene->get_homology_matches('ENSEMBL_ORTHOLOGUES');
+  my $orthologue = $gene->get_homology_matches('ENSEMBL_HOMOLOGUES', 'ortholog');
   return 1 unless $orthologue;
 ## call table method here
   my $db              = $gene->get_db() ;
@@ -548,13 +548,12 @@ sub orthologues {
   my $html = qq(
       <p>
         The following gene(s) have been identified as putative
-        orthologues by reciprocal BLAST analysis:
+        orthologues:
       </p>
       <table width="100%" cellpadding="4">
         <tr> 
           <th>Species</th>
           <th>Type</th>
-          <th>dN/dS</th>
           <th>Gene identifier</th>
         </tr>);
   my %orthologue_map = qw(SEED BRH PIP RHS);
@@ -580,8 +579,8 @@ sub orthologues {
       my $description = $OBJ->{'description'};
          $description = "No description" if $description eq "NULL";
       my $orthologue_desc = $orthologue_map{ $OBJ->{'homology_desc'} } || $OBJ->{'homology_desc'};
-      my $orthologue_dnds_ratio = $OBJ->{'homology_dnds_ratio'};
-         $orthologue_dnds_ratio = '&nbsp;' unless (defined $orthologue_dnds_ratio);
+     # my $orthologue_dnds_ratio = $OBJ->{'homology_dnds_ratio'};
+     #    $orthologue_dnds_ratio = '&nbsp;' unless (defined $orthologue_dnds_ratio);
       my $last_col;
       if(exists( $OBJ->{'display_id'} )) {
         (my $spp = $OBJ->{'spp'}) =~ tr/ /_/ ;
@@ -605,7 +604,6 @@ sub orthologues {
       }
       $html .= sprintf( qq(
             <td>$orthologue_desc</td>
-            <td>$orthologue_dnds_ratio</td>
             <td>$last_col</td>
           </tr>));
     }
@@ -614,13 +612,6 @@ sub orthologues {
   if( keys %orthologue_list ) {
     # $html .= qq(\n      <p><a href="$FULL_URL">View all genes in MultiContigView</a>;);
     $html .= qq(\n      <p><a href="/@{[$gene->species]}/alignview?class=Homology;gene=$STABLE_ID">View alignments of homologies</a>.</p>) if $ALIGNVIEW;
-    $html .= qq(
-      <p class="small">
-        UBRH = (U)nique (B)est (R)eciprocal (H)it<br />
-        MBRH = one of (M)any (B)est (R)eciprocal (H)its<br />
-        RHS   = Reciprocal Hit based on Synteny around BRH<br />
-        DWGA  = Derived from Whole Genome Alignment
-      </p>);
   }
   return 1 unless($matching_orthologues);
   $panel->add_row( $label, $html.$as_html, "$URL=off" );
@@ -675,29 +666,44 @@ sub das {
 sub paralogues {
   my( $panel, $gene ) = @_;
 
-  my $paralogue = $gene->get_homology_matches('ENSEMBL_PARALOGUES');
+  my $paralogue = $gene->get_homology_matches('ENSEMBL_HOMOLOGUES', 'within_species_paralog');
   return 1 unless $paralogue;
+
+  # make the paralogues panel a collapsable one
+  my $label_sr7= 'Paralogue Prediction';
+  my $status_sr7= 'status_gene_paralogues';
+  my $URL_sr7= _flip_URL($gene, $status_sr7);
+  if($gene->param($status_sr7) eq 'off'){
+    $panel->add_row($label_sr7, '', "$URL_sr7=on");
+    return 0;
+
+
+  }
+  
+
 
 ## call table method here
   my $db = $gene->get_db() ;
   my %paralogue_list = %{$paralogue};
   my $html = qq(
       <p>
-        The following gene(s) have been identified as putative paralogues:
+        The following gene(s) have been identified as putative paralogues (within species):
       </p>
       <table>);
   $html .= qq(
         <tr>
-          <th>dN/dS</th><th>Gene identifier</th>
+          <th>Taxonomy Level</th><th>Gene identifier</th>
         </tr>);
   my $STABLE_ID = $gene->stable_id; my $C = 1;
   foreach my $species (sort keys %paralogue_list){
-  foreach my $stable_id (sort keys %{$paralogue_list{$species}}){
+ # foreach my $stable_id (sort keys %{$paralogue_list{$species}}){
+  foreach my $stable_id (sort {$paralogue_list{$species}{$a}{'order'} <=> $paralogue_list{$species}{$b}{'order'}} keys %{$paralogue_list{$species}}){
+
     my $OBJ = $paralogue_list{$species}{$stable_id};
     my $description = $OBJ->{'description'};
        $description = "No description" if $description eq "NULL";
-    my $paralogue_dnds_ratio = $OBJ->{'homology_dnds_ratio'};
-       $paralogue_dnds_ratio = "&nbsp;" unless (defined $paralogue_dnds_ratio);
+    my $paralogue_subtype = $OBJ->{'homology_subtype'};
+       $paralogue_subtype = "&nbsp;" unless (defined $paralogue_subtype);
     if($OBJ->{'display_id'}) {
       (my $spp = $OBJ->{'spp'}) =~ tr/ /_/ ;
       my $link = qq(/$spp/geneview?gene=$stable_id;db=$db);
@@ -709,14 +715,14 @@ sub paralogues {
       }
       $html .= qq(
         <tr>
-          <td>$paralogue_dnds_ratio</td>
+          <td>$paralogue_subtype</td>
           <td><a href="$link">$stable_id</a> (@{[ $OBJ->{'display_id'} ]})<br />
               <span class="small">$description</span></td>
         </tr>);
     } else {
       $html .= qq(
         <tr>
-          <td>$paralogue_dnds_ratio</td>
+          <td>$paralogue_subtype</td>
           <td>$stable_id<br /><span class="small">$description</span></td>
         </tr>);
     }
@@ -724,7 +730,7 @@ sub paralogues {
   }
   $html .= qq(</table>);
 
-  $panel->add_row( 'Paralogue Prediction', $html );
+  $panel->add_row( 'Paralogue Prediction', $html, "$URL_sr7=off" );
   return 1;
 }
 
