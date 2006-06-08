@@ -348,7 +348,7 @@ sub _build_tree_string {
   my $tree = $self->get_species_tree;
   return if (!$tree);
 
-  $self->_update_tree($tree);
+  $tree = $self->_update_tree($tree);
 
   my $tree_string = $tree->newick_simple_format;
   # Remove quotes around node labels
