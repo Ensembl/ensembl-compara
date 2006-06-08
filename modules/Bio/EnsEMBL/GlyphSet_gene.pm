@@ -88,7 +88,7 @@ sub _init {
    my $genes = $self->features( $logic_name, $database );
    foreach my $g (@$genes) {
     my $gene_label = $self->gene_label( $g );
-warn ">>> ", $g->analysis->logic_name, ' -- ', $g->biotype, ' -- ' , $g->status,' <<<';
+#warn ">>> ", $g->analysis->logic_name, ' -- ', $g->biotype, ' -- ' , $g->status,' <<<';
     my $GT         = $self->gene_col( $g );
        $GT =~ s/XREF//g;
    warn $GT unless $colours->{$GT};
@@ -239,6 +239,27 @@ sub legend {
   return \@legend;
 }
 
+
+=head2 format_vega_name
+
+  Arg [1]    : $self
+  Arg [2]    : gene object
+  Example    : my $type = $self->format_vega_name($g);
+  Description: retrieves status and biotype of a gene. Then retrieves
+               the display name from the Colourmap
+  Returntype : string
+
+=cut
+
+sub format_vega_name {
+	my ($self,$gene) = @_;
+	my %gm = $self->{'config'}->colourmap()->colourSet('vega_gene');
+	my $status = $gene->confidence;
+	my $biotype = $gene->biotype();
+	my $t = $biotype.'_'.$status;
+	my $label = $gm{$t}[1];
+	return $label;
+}
 
 
 1;
