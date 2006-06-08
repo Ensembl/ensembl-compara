@@ -1,8 +1,13 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 <html>
 <head>
-<meta name="author" content="web" />
-<meta name="navigation" content="Comparative Genomics" />
-<title>Comparative Genomics</title>
+
+  <meta name="author" content="web">
+
+  <meta name="navigation" content="Comparative Genomics">
+  <title>Comparative Genomics</title>
+
+
 </head>
 
 <body>
@@ -11,44 +16,51 @@
 
 <h3>BlastZ-net Analysis</h3>
 
-<p>BlastZ-net (<a href="http://www.genome.org/cgi/content/abstract/13/1/103">Schwartz S et al., Genome Res.;13(1):103-7</a>, <a href="http://www.pnas.org/cgi/content/full/100/20/11484">Kent WJ et al., Proc Natl Acad Sci U S A., 2003;100(20):11484-9</a>) alignments are provided for closely related pairs of species. The alignments are the results of post-processing the raw BlastZ results. In the first step, original blocks are chained according to their location in both genomes. The netting process chooses for the reference species the best sub-chain in each region. The reference species in the BlastZ-net alignments is defined in this table:</p>
+<p>BlastZ-net (<a href="http://www.genome.org/cgi/content/abstract/13/1/103">Schwartz
+S et al., Genome Res.;13(1):103-7</a>, <a href="http://www.pnas.org/cgi/content/full/100/20/11484">Kent
+WJ et al., Proc Natl Acad Sci U S A., 2003;100(20):11484-9</a>)
+alignments are provided for closely related pairs of species. The
+alignments are the results of post-processing the raw BlastZ results.
+In the first step, original blocks are chained according to their
+location in both genomes. The netting process chooses for the reference
+species the best sub-chain in each region. The reference species in the
+BlastZ-net alignments is defined in this table:</p>
 
 [[INCLUDE::/info/data/compara/blastz_net.html]]
-
-
-
-
-
 <h3>Translated Blat Analysis</h3>
 
-<p>Translated blat (<a href="http://www.genome.org/cgi/content/abstract/12/4/656">Kent W, Genome Res., 2002;12(4):656-64</a>) is used to look for homologous regions between more distantly related pairs of species. We expect to find homologies mainly in coding regions.</p>
+<p>Translated blat (<a href="http://www.genome.org/cgi/content/abstract/12/4/656">Kent
+W, Genome Res., 2002;12(4):656-64</a>) is used to look for
+homologous regions between more distantly related pairs of species. We
+expect to find homologies mainly in coding regions.</p>
 
 [[INCLUDE::/info/data/compara/tblat.html]]
-
-
-
-
-
-
 <h3>MLAGAN Analysis</h3>
 
-<p>Mlagan (<a href="http://www.genome.org/cgi/content/abstract/13/4/721">Brudno M et al., Genome Res., 2003;13(4):721-31</a>) is used to provide global multiple genomic alignments. First, Mercator is used to build a synteny map between the genomes and then Mlagan builds alignments in the syntenic regions.</p>
+<p>Mlagan (<a href="http://www.genome.org/cgi/content/abstract/13/4/721">Brudno
+M et al., Genome Res., 2003;13(4):721-31</a>) is used to provide
+global multiple genomic alignments. First, Mercator is used to build a
+synteny map between the genomes and then Mlagan builds alignments in
+the syntenic regions.</p>
 
 [[INCLUDE::/info/data/compara/mlagan.html]]
-
-
-
-
-
 <h3>Protein Homology Analysis</h3>
 
 <p>Three types of homology relationships are provided.</p>
 
-<p>Protein trees are calculated using the longest peptide of all the Ensembl protein coding genes. Proteins are clustered based on Best-Reciprocal Hits and Blast Score Ratios. Each cluster of protein is aligned using Muscle. PHYML is used to get a gene tree from each multiple alignment. The gene tree is reconciliated with the species tree using RAP to root the tree and to call duplication events.</p>
+<p>Protein trees are calculated using the longest peptide of all
+the Ensembl protein coding genes. Proteins are clustered based on
+Best-Reciprocal Hits and Blast Score Ratios. Each cluster of protein is
+aligned using Muscle. PHYML is used to get a gene tree from each
+multiple alignment. The gene tree is reconciliated with the species
+tree using RAP to root the tree and to call duplication events.</p>
 
-<p>Homologues (orthologues and paralogues) are deduced from the protein trees.</p>
+<p>Homologues (orthologues and paralogues) are deduced from the
+protein trees. A more detailed description of the method is provided <a href="homology_method.html">here</a></p>
 
-<p>Families are groups of related genes. The full set of Ensembl proteins is extended using all the metazoan proteins from SwissProt and SPTrEMBL.</p>
+<p>Families are groups of related genes. The full set of Ensembl
+proteins is extended using all the metazoan proteins from SwissProt and
+SPTrEMBL.</p>
 
 </body>
 </html>
