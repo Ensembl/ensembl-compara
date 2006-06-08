@@ -39,6 +39,7 @@ use warnings;
 no warnings "uninitialized";
 
 use EnsEMBL::Web::SpeciesDefs;
+use EnsEMBL::Web::User;
 use EnsEMBL::Web::ExtURL;
 use EnsEMBL::Web::UserConfigAdaptor;
 use EnsEMBL::Web::ScriptConfigAdaptor;
@@ -293,6 +294,17 @@ sub problem {
 sub clear_problems {
   my $self = shift;
   $self->{'data'}{'_problem'} = [];
+}
+
+=head2 user
+
+ Example     : $OBJ->user
+ Description : Returns the EnsEMBL::Web::User object
+ Return type : EnsEMBL::Web::User object
+=cut
+
+sub user {
+  $_[0]{'data'}{'_user'}         ||= EnsEMBL::Web::User->new();
 }
 
 =head2 species_defs

@@ -61,6 +61,7 @@ sub new {
       '_problem'         => $data->{_problem}         || [],
       '_species_defs'    => $data->{_species_defs}    || undef,
       '_ext_url_'        => $data->{_ext_url}         || undef,
+      '_user'            => $data->{_user}            || undef,
       '_input'           => $data->{_input}           || undef,
       '_databases'       => $data->{_databases}       || undef,
       '_wsc_adaptor'     => $data->{_wsc_adaptor}     || undef,

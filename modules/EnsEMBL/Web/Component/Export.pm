@@ -195,7 +195,7 @@ sub flat_form {
   push @options, [ 'marker'     => 'Marker features' ]        if $object->species_defs->get_table_size({ -db => 'ENSEMBL_DB', -table => 'marker' });
   push @options, [ 'gene'       => 'Gene Information' ];
   push @options, [ 'vegagene'   => 'Vega Gene Information' ]  if $object->species_defs->databases->{'ENSEMBL_VEGA'};
-  push @options, [ 'estgene'    => 'EST Gene Information' ]   if $object->species_defs->get_table_size({ -db => 'ENSEMBL_EST', -table => 'gene' });
+  push @options, [ 'estgene'    => 'EST Gene Information' ]   if $object->species_defs->get_table_size({ -db => 'ENSEMBL_OTHERFEATURES', -table => 'gene' });
   my %checked = map { $_ => 'yes' } $object->param('options');
   $form->add_element( 'type' => 'MultiSelect',
     'class'  => 'radiocheck1col',
@@ -427,7 +427,7 @@ sub flat {
   }
   if( $checked{ 'estgene' } ) {
     $seq_dumper->enable_feature_type("estgene");
-    $seq_dumper->attach_database('estgene', $object->database('est'));
+    $seq_dumper->attach_database('otherfeatures', $object->database('otherfeatures'));
   }
   $panel->print( "<pre>" );
   $seq_dumper->dump( $object->slice, $object->param('format'), $panel );
@@ -603,7 +603,7 @@ sub __gene_databases {
   my $species_defs = shift;
   my @return = ('core');
   push @return, 'vega' if $species_defs->databases->{ 'ENSEMBL_VEGA' };
-  push @return, 'est' if $species_defs->databases->{ 'ENSEMBL_EST' };
+  push @return, 'est' if $species_defs->databases->{ 'ENSEMBL_OTHERFEATURES' };
   return @return;
 }
 

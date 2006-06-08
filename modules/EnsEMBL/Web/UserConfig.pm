@@ -48,6 +48,23 @@ sub add_track {
   ## Create configuration entry....
 }
 
+sub add_GSV_protein_domain_track {
+  my( $self, $code, $text_label, $pos, %pars ) = @_;
+  $self->add_track( $code,
+    'on'         => 'on',
+    'pos'        => $pos,
+    'glyphset'   => 'GSV_generic_domain',
+    '_menu'      => 'features',
+    'available'  => "features $code",
+    'logic_name' => $code,
+    'caption'    => $text_label,
+    'dep'        => 20,
+    'url_key'    => uc($code),
+    'colours'    => { $self->{'_colourmap'}->colourSet( 'protein_features' ) },
+    %pars
+  );
+}
+
 sub add_protein_domain_track {
   my( $self, $code, $text_label, $pos, %pars ) = @_;
   $self->add_track( $code,
@@ -370,6 +387,8 @@ sub new {
   my $type    = $class =~/([^:]+)$/ ? $1 : $class;
   my $self = {
     '_colourmap' 	=> $adaptor->{'colourmap'},
+    '_font_face'        => $adaptor->{'species_defs'}->GRAPHIC_FONT       || 'Arial',
+    '_font_size'        => ( $adaptor->{'species_defs'}->GRAPHIC_FONTSIZE * $adaptor->{'species_defs'}->GRAPHIC_LABEL ) || 20,
     '_texthelper' 	=> new Sanger::Graphics::TextHelper,
     '_db'         	=> $adaptor->{'user_db'},
     'type'              => $type,
@@ -963,14 +982,14 @@ sub ADD_ALL_EST_FEATURES {
   foreach ( @EST_DB_ESTS ) {
     my($A,$B,@T) = @$_;
     $self->add_new_track_est( "otherfeatures_$A",  $B, $POS++,
-                              'FEATURES'  => $A, 'available' => "database_features ENSEMBL_EST.$A",
-                              'THRESHOLD' => 0, 'DATABASE' => 'est', @T, @_ );
+                              'FEATURES'  => $A, 'available' => "database_features ENSEMBL_OTHERFEATURES.$A",
+                              'THRESHOLD' => 0, 'DATABASE' => 'otherfeatures', @T, @_ );
   }
   foreach ( @EST_DB_CDNA ) {
     my($A,$B,@T) = @$_; warn ">>> @T <<<";
     $self->add_new_track_cdna( "otherfeatures_$A",  $B, $POS++,
-                              'FEATURES'  => $A, 'available' => "database_features ENSEMBL_EST.$A",
-                              'THRESHOLD' => 0, 'DATABASE' => 'est', @T, @_ );
+                              'FEATURES'  => $A, 'available' => "database_features ENSEMBL_OTHERFEATURES.$A",
+                              'THRESHOLD' => 0, 'DATABASE' => 'otherfeatures', @T, @_ );
   }
   my @EST_DB_ESTS_PROT = (
     [ 'jgi_v1',        'JGI V1' ],
@@ -979,8 +998,8 @@ sub ADD_ALL_EST_FEATURES {
   foreach ( @EST_DB_ESTS_PROT ) {
     my($A,$B,@T) = @$_;
     $self->add_new_track_est_protein( "otherfeatures_$A",  $B, $POS++,
-                              'FEATURES'  => $A, 'available' => "database_features ENSEMBL_EST.$A",
-                              'THRESHOLD' => 0, 'DATABASE' => 'est', @T, @_ );
+                              'FEATURES'  => $A, 'available' => "database_features ENSEMBL_OTHERFEATURES.$A",
+                              'THRESHOLD' => 0, 'DATABASE' => 'otherfeatures', @T, @_ );
   }
   $self->add_new_track_est( 'other_est',    'Other ESTs',      $POS++, @_ );
   $self->add_new_track_est( 'drerio_estclust', 'EST clusters', $POS++,
@@ -1122,7 +1141,7 @@ sub ADD_ALL_TRANSCRIPTS {
   $self->add_new_track_transcript( 'gsten',     'Genoscope genes', 'genoscope_gene', $POS++, @_ );
   $self->add_new_track_transcript( 'rna',       'ncRNA genes',     'rna_gene',       $POS++, 'available' => 'features NCRNA|MIRNA',      @_ );
   $self->add_new_track_transcript( 'erna',       'e! ncRNA genes', 'rna_gene',   $POS++, 'available' => 'features ensembl_ncRNA', 'legend_type' => 'rna',        @_ );
-  $self->add_new_track_transcript( 'est',       'EST genes',       'est_gene',       $POS++, 'available' => 'databases ENSEMBL_EST', @_ );
+  $self->add_new_track_transcript( 'est',       'EST genes',       'est_gene',       $POS++, 'available' => 'databases ENSEMBL_OTHERFEATURES', @_ );
   $self->add_new_track_transcript( 'ciona_dbest_ncbi', "3/5' EST genes (dbEST)", 'estgene', $POS++, @_) ;
   $self->add_new_track_transcript( 'ciona_est_seqc',   "3' EST genes (Kyoto)", 'estgene', $POS++, @_) ;
   $self->add_new_track_transcript( 'ciona_est_seqn',   "5' EST genes (Kyoto)",  'estgene',$POS++, @_) ;
@@ -1276,8 +1295,8 @@ sub ADD_GENE_TRACKS {
   $self->add_new_track_gene( 'targettedgenewise', 'Targetted Genewise Genes', 'prot_gene', $POS++, 'gene_col' => '_col',  @_ );
   $self->add_new_track_gene( 'cdna_all', 'cDNA Genes', 'prot_gene', $POS++, 'gene_col' => '_col',  @_ );
   $self->add_new_track_gene( 'estgene', 'EST Genes', 'est_gene', $POS++,
-                             'database' => 'est', 'available' => 'databases ENSEMBL_EST',
-                             'logic_name' => 'genomewise estgene', 'on' => 'off',
+                             'database' => 'otherfeatures', 'available' => 'databases ENSEMBL_OTHERFEATURES',
+                             'logic_name' => 'genomewise estgene', # 'on' => 'off',
                              'gene_col' => 'estgene', @_ );
   $self->add_new_track_gene( 'otter', 'Vega Genes', 'vega_gene', $POS++,
                              'database' => 'vega', 'available' => 'databases ENSEMBL_VEGA',
@@ -1392,6 +1411,22 @@ sub ADD_ALL_PROTEIN_FEATURE_TRACKS {
   $self->add_protein_feature_track( 'SignalP', 'Sig.Pep cleavage',  $POS++ );
   $self->add_protein_feature_track( 'Seg',     'Low complex seq',   $POS++ );
   $self->add_protein_feature_track( 'tmhmm',   'Transmem helices',  $POS++ );
+}
+
+sub ADD_ALL_PROTEIN_FEATURE_TRACKS_GSV {
+  my $self = shift;
+  my $POS = shift || 2000;
+  $self->add_GSV_protein_domain_track( 'Prints', 'PRINTS', $POS++ );
+  $self->add_GSV_protein_domain_track( 'PrositePatterns', 'Prosite patterns', $POS++ );
+  $self->add_GSV_protein_domain_track( 'scanprosite',     'Prosite patterns', $POS++ );
+  $self->add_GSV_protein_domain_track( 'PrositeProfiles', 'Prosite profiles', $POS++ );
+  $self->add_GSV_protein_domain_track( 'pfscan',          'Prosite profiles', $POS++ );
+
+  $self->add_GSV_protein_domain_track( 'Pfam', 'PFam', $POS++ );
+  $self->add_GSV_protein_domain_track( 'TigrFam', 'TIGRFAM', $POS++ );
+  $self->add_GSV_protein_domain_track( 'SuperFamily', 'SUPERFAMILY', $POS++ );
+  $self->add_GSV_protein_domain_track( 'Smart', 'SMART', $POS++ );
+  $self->add_GSV_protein_domain_track( 'PIRS', 'PIR SuperFamily', $POS++ );
 }
 
 1;

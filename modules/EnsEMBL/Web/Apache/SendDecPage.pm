@@ -8,7 +8,7 @@ use EnsEMBL::Web::Document::Renderer::Apache;
 use EnsEMBL::Web::Document::Panel;
 use EnsEMBL::Web::Document::Static;
 use EnsEMBL::Web::SpeciesDefs;
-use EnsEMBL::Web::User;
+#use EnsEMBL::Web::User;
 use Data::Dumper;
 # use EnsEMBL::Web::Root;
 
@@ -62,7 +62,7 @@ sub handler {
   }
 
   if (@groups) {
-    my $user = EnsEMBL::Web::User->new();
+    my $user;# = EnsEMBL::Web::User->new();
     my @user_groups = $user->groups;
 
     ## cross-reference user's groups against permitted groups
@@ -106,6 +106,16 @@ sub handler {
   # warn $ENV{'ENSEMBL_SPECIES'};
   #$page->masthead->species = $SD->SPECIES_COMMON_NAME if $ENV{'ENSEMBL_SPECIES'};
 
+  my $head = $pageContent =~ /<head>(.*?)<\/head>/sm ? $1 : '';
+  while($head=~s/<script(.*?)>(.*?)<\/script>//sm) {
+    my($attr,$cont) = ($1,$2);
+    next unless $attr =~/text\/javascript/;
+    if($attr =~ /src="(.*?)"/ ) {
+      $page->javascript->add_source( $1 );
+    } else {
+      $page->javascript->add_script( $cont );
+    }   
+  }
   $page->content->add_panel(
     new EnsEMBL::Web::Document::Panel( 
       'raw' => $pageContent =~ /<body.*?>(.*?)<\/body>/sm ? $1 : $pageContent

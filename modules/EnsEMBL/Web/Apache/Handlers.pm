@@ -130,14 +130,14 @@ LONG PROCESS %10s IP:  %s  UA: %s
 
 sub _run_blast_no_ticket {
   my( $loads, $seconds_since_last_run ) = @_;
-  return $loads->{'blast'} < 5 &&
+  return $loads->{'blast'} < 3 &&
          rand( $loads->{'httpd'} ) < 10 &&
          rand( $seconds_since_last_run ) > 1;
 }
 
 sub _run_blast_ticket {
   my( $loads, $seconds_since_last_run ) = @_;
-  return $loads->{'blast'} < 15;
+  return $loads->{'blast'} < 8;
 }
 
 use vars qw($LOAD_COMMAND);
@@ -292,8 +292,7 @@ sub transHandler {
     my $DSN = $path_segments[0];
     my $command = '';
     if( $DSN eq 'dsn' ) {
-      $command = 'dsn';
-      $r->subprocess_env->{'ENSEMBL_SCRIPT'}  = $command;
+      $path_info = join ('/',@path_segments );
     } else {
       my( $das_species, $assembly, $type, $subtype ) = split /\./, $DSN;
       $command = $path_segments[1];
@@ -396,6 +395,8 @@ sub transHandler {
 my %SPECIES_MAP = map { lc($_), $SiteDefs::ENSEMBL_SPECIES_ALIASES->{$_} }
                  keys %{$SiteDefs::ENSEMBL_SPECIES_ALIASES}; # Conf species
 # $SPECIES_MAP{biomart} = 'biomart';                           # Multispecies
+$SPECIES_MAP{common} = 'common';                           # Multispecies
+$SPECIES_MAP{Common} = 'common';                           # Multispecies
 $SPECIES_MAP{multi} = 'Multi';                           # Multispecies
 $SPECIES_MAP{Multi} = 'Multi';                           # Multispecies
 $SPECIES_MAP{BioMart} = 'biomart';                           # Multispecies

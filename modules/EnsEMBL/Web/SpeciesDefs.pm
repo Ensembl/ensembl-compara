@@ -97,6 +97,7 @@ sub new {
   my $conffile = $SiteDefs::ENSEMBL_CONF_DIRS[0].'/'.$ENSEMBL_CONFIG_FILENAME;
   $self->{'_filename'} = $conffile;
 
+warn "NEW.... $CONF";
   $self->parse unless $CONF;
 
   ## Diagnostic - sets up back trace of point at which new was
@@ -199,6 +200,7 @@ sub AUTOLOAD {
 
 sub configure_registry {
   my $self = shift;
+warn "CR";
   my %adaptors = (
     'VARIATION' => 'Bio::EnsEMBL::Variation::DBSQL::DBAdaptor', 
     'SNP'       => 'Bio::EnsEMBL::ExternalData::SNPSQL::DBAdaptor',
@@ -206,6 +208,7 @@ sub configure_registry {
     'LITE'      => 'Bio::EnsEMBL::Lite::DBAdaptor',
     'HAPLOTYPE' => 'Bio::EnsEMBL::ExternalData::Haplotype::DBAdaptor',
     'EST'       => 'Bio::EnsEMBL::DBSQL::DBAdaptor',
+    'OTHERFEATURES' => 'Bio::EnsEMBL::DBSQL::DBAdaptor',
     'CDNA'      => 'Bio::EnsEMBL::DBSQL::DBAdaptor',
     'VEGA'      => 'Bio::EnsEMBL::DBSQL::DBAdaptor',
     'DB'        => 'Bio::EnsEMBL::DBSQL::DBAdaptor',
@@ -241,6 +244,7 @@ sub configure_registry {
         if( my $module = $adaptors{ my $key = $1 } ) {
 ## Hack because we map ENSEMBL_DB to 'core' not 'DB'....
           my $group = $key eq 'DB' ? 'core' : lc( $key );
+          $group = 'otherfeatures' if $group eq 'est';
 ## Create a new "module" object... stores info - but doesn't create connection yet!
           if( $self->dynamic_use( $module ) ) {
             $module->new( %arg, '-group' => $group );
@@ -910,7 +914,7 @@ sub _parse {
         }
       }
 
-      foreach my $T_DB (qw(ENSEMBL_VEGA ENSEMBL_EST)) {
+      foreach my $T_DB (qw(ENSEMBL_VEGA ENSEMBL_OTHERFEATURES)) {
         if( $tree->{'databases'}->{$T_DB} ) {
           if( my $dbh = $self->db_connect( $tree, $T_DB ) ) {
           my $sql = qq(select distinct(logic_name) from analysis);

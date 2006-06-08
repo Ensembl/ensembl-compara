@@ -42,8 +42,8 @@ sub markup_options_form {
     'Ensembl';
   my $exon_display = [
     { 'value' => 'core'       , 'name' => "$sitetype exons" },
-    $object->species_defs->databases->{'ENSEMBL_VEGA'} ? { 'value' => 'vega'       , 'name' => 'Vega exons' } : (),
-    $object->species_defs->databases->{'ENSEMBL_EST'}  ? { 'value' => 'est'        , 'name' => 'EST-gene exons' } : (),
+    $object->species_defs->databases->{'ENSEMBL_VEGA'} ? { 'value' => 'vega'           , 'name' => 'Vega exons' } : (),
+    $object->species_defs->databases->{'ENSEMBL_OTHEFEATURES'}  ? { 'value' => 'otherfeatures'  , 'name' => 'EST-gene exons' } : (),
     { 'value' => 'prediction' , 'name' => 'Ab-initio exons' },
     { 'value' => 'off'        , 'name' => 'No exon markup' }
   ];
@@ -145,8 +145,8 @@ sub align_markup_options_form {
     'Ensembl';
   my $exon_display = [
     { 'value' => 'core'       , 'name' => "$sitetype exons" },
-    $object->species_defs->databases->{'ENSEMBL_VEGA'} ? { 'value' => 'vega'       , 'name' => 'Vega exons' } : (),
-    $object->species_defs->databases->{'ENSEMBL_EST'}  ? { 'value' => 'est'        , 'name' => 'EST-gene exons' } : (),
+    $object->species_defs->databases->{'ENSEMBL_VEGA'} ? { 'value' => 'vega'       ,   'name' => 'Vega exons' } : (),
+    $object->species_defs->databases->{'ENSEMBL_OTHERFEATURES'}  ? { 'value' => 'otherfeatures', 'name' => 'EST-gene exons' } : (),
     { 'value' => 'prediction' , 'name' => 'Ab-initio exons' },
     { 'value' => 'off'        , 'name' => 'No exon markup' }
   ];
@@ -406,7 +406,8 @@ sub location {
 					$alt_slices->[0]->end;
 			my $url = $object->ExtURL->get_url('VEGA_CONTIGVIEW', $l);
 			$html .= "<p>This corresponds to ";
-			$html .= sprintf(qq(<a href="$url" target="external">%s-%s</a>),
+			$html .= sprintf(qq(<a href="%s" target="external">%s-%s</a>),
+                                                         $url,
 							 $object->thousandify($alt_slices->[0]->start),
 							 $object->thousandify($alt_slices->[0]->end)
 							);
@@ -990,7 +991,7 @@ sub genesnpview {
  
  $object->store_TransformedTranscripts();        ## Stores in $transcript_object->__data->{'transformed'}{'exons'|'coding_start'|'coding_end'}
 
-  my @domain_logic_names = qw(Pfam scanprosite Prints pfscan);
+  my @domain_logic_names = qw(Pfam scanprosite Prints pfscan PrositePatterns PrositeProfiles TigrFam SuperFamily Smart PIRS);
   foreach( @domain_logic_names ) {
     $object->store_TransformedDomains( $_ );    ## Stores in $transcript_object->__data->{'transformed'}{'Pfam_hits'} 
   }
