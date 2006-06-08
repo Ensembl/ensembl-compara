@@ -24,7 +24,7 @@ sub init {
   };
 
   $self->ADD_GENE_TRACKS();
-  $self->ADD_SYNTENY_TRACKS();
+  $self->ADD_SYNTENY_TRACKS( 0, 'on' => 'on' );
   my $POS = 0;
   
   $self->add_track( 'contig',   'on'=>'on', 'pos' => $POS++ );

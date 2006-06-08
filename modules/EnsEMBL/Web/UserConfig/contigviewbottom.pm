@@ -143,6 +143,7 @@ sub init {
          [ 'restrict'        => 'Rest.Enzymes' ],
          [ 'opt_restrict_zoom'   => 'Rest.Enzymes on zoom' ],
       #   [ 'vegaclones'     => 'Vega clones' ],
+         [ 'bacends'         => 'BAC ends' ],
       ],
       'menus' => [ qw( features DAS options repeats export jumpto resize )]
     },

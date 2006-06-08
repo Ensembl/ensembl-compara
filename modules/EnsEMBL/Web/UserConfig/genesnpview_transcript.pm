@@ -10,7 +10,7 @@ sub init {
   $self->{'_transcript_names_'} = 'yes';
   $self->{'_add_labels' }  = 1;
   $self->{'general'}->{'genesnpview_transcript'} = {
-    '_artefacts' => [qw(GSV_transcript GSV_snps GSV_pfam GSV_prints GSV_prosite GSV_pfscan)],
+    '_artefacts' => [qw(GSV_transcript GSV_snps)],
     '_options'  => [qw(pos col known unknown)],
     '_settings' => {
       'opt_pdf' => 0, 'opt_svg' => 0, 'opt_postscript' => 0,
@@ -54,12 +54,7 @@ sub init {
        [ 'opt_downstream'            => 'Downstream' ],
        [ 'opt_intergenic'            => 'Intergenic' ], 
       ],
-      'features' => [
-        [ 'GSV_pfam'    => 'Pfam domains' ],
-        [ 'GSV_prints'  => 'Prints domains' ],
-        [ 'GSV_prosite' => 'Prosite domains' ],
-        [ 'GSV_pfscan'  => 'PFScan domains' ],
-      ],
+      'features' => [],
     'snphelp' => [
         [ 'genesnpview'  => 'GeneSNPView' ],
       ],
@@ -77,30 +72,8 @@ sub init {
       'str'         => 'r',
       'colours'=>{$self->{'_colourmap'}->colourSet('variation')},
     },
-    'GSV_pfam' => {
-      'on'          => "on",
-      'pos'         => '300',
-      'str'         => 'r',
-      'col'         => 'violet3'
-    },
-    'GSV_prints' => {
-      'on'          => "on",
-      'pos'         => '301',
-      'str'         => 'r',
-      'col'         => 'violet3'
-    },
-    'GSV_prosite' => {
-      'on'          => "on",
-      'pos'         => '302',
-      'str'         => 'r',
-      'col'         => 'violet3'
-    },
-    'GSV_pfscan' => {
-      'on'          => "on",
-      'pos'         => '303',
-      'str'         => 'r',
-      'col'         => 'violet3'
-    },
+
   };
+  $self->ADD_ALL_PROTEIN_FEATURE_TRACKS_GSV;
 } 
 1;
