@@ -411,9 +411,9 @@ sub taxon {
 
   if (@_) {
     my $taxon = shift;
-    unless ($taxon->isa('Bio::EnsEMBL::Compara::Taxon')) {
+    unless ($taxon->isa('Bio::EnsEMBL::Compara::NCBITaxon')) {
       throw(
-		   "taxon arg must be a [Bio::EnsEMBL::Compara::Taxon".
+		   "taxon arg must be a [Bio::EnsEMBL::Compara::NCBITaxon".
 		   "not a [$taxon]");
     }
     $self->{'_taxon'} = $taxon;
@@ -423,8 +423,8 @@ sub taxon {
       unless (defined $self->taxon_id) {
         throw("can't fetch Taxon without a taxon_id");
       }
-      my $TaxonAdaptor = $self->adaptor->db->get_TaxonAdaptor;
-      $self->{'_taxon'} = $TaxonAdaptor->fetch_by_dbID($self->taxon_id);
+      my $NCBITaxonAdaptor = $self->adaptor->db->get_NCBITaxonAdaptor;
+      $self->{'_taxon'} = $NCBITaxonAdaptor->fetch_node_by_taxon_id($self->taxon_id);
     }
   }
 
