@@ -19,7 +19,7 @@ sub default_track_by_gene {
 
   my %mappings_db = qw(
     vega evega_transcript
-    est est_transcript
+    otherfeatures est_transcript
   );
   my %mappings_logic_name = (
     map( {( $_, $_ )} qw( 
@@ -565,7 +565,7 @@ sub translation_object {
 sub get_db {
   my $self = shift;
   my $db = $self->param('db') || 'core';
-  return $db eq 'estgene' ? 'est' : $db;
+  return $db eq 'estgene'|| $db eq 'est' ? 'otherfeatures' : $db;
 }
 
 =head2 db_type
@@ -583,6 +583,7 @@ sub db_type{
   my $db   = $self->get_db;
   my %db_hash = qw(
     core    Ensembl
+    otherfeatures     EST
     est     EST
     estgene EST
     vega    Vega
@@ -975,7 +976,6 @@ sub get_go_list {
     my $term_name;
     if( $goadaptor ){
       my $term;
-warn "$go $go2";
       eval{ $term = $goadaptor->get_term({acc=>$go2}) };
       if($@){ warn( $@ ) }
       $term_name = $term ? $term->name : '';

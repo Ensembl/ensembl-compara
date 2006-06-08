@@ -112,7 +112,7 @@ sub created_date {
 sub get_db {
   my $self = shift;
   my $db = $self->param('db') || 'core';
-  return $db eq 'estgene' ? 'est' : $db;
+  return $db eq 'est' ? 'otherfeatures' : $db;
 }
 
 
@@ -506,8 +506,9 @@ sub store_TransformedDomains {
         my $O = $self->munge_gaps( 'transcripts', $_->start - $offset, $_->end - $offset) - $offset;
         push @A, $_->start + $O, $_->end + $O;
       }
-      push @{$trans_obj->__data->{'transformed'}{$key.'_hits'}}, \@A;
+      push @{$trans_obj->__data->{'transformed'}{lc($key).'_hits'}}, \@A;
     }
+    warn "@{[ keys %{ $transcript->translation->{'protein_features'}||{} } ]}";
   }
 }
 

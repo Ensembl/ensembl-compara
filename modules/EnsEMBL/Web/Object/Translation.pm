@@ -198,7 +198,9 @@ sub protein{
 
 sub get_db {
     my $self = shift;
-    return $self->param('db') || 'core';    
+    my $T = $self->param('db') || 'core';    
+    $T = 'otherfeatures' if $T eq 'est';
+    return $T;
 }
 
 #----------------------------------------------------------------------

@@ -31,6 +31,7 @@ sub exon_display {
   my $self = shift;
   my $exontype = $self->param('exon_display');
   my @exons;
+  $exontype = 'otherfeatures' if $exontype eq 'est';
   my( $s, $e ) = ( $self->Obj->start, $self->Obj->end );
   if( $exontype eq 'vega' or $exontype eq 'est' ){
     @exons = ( grep { $_->seq_region_start <= $e && $_->seq_region_end   >= $s }

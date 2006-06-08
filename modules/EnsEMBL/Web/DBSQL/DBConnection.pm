@@ -72,6 +72,7 @@ sub get_DBAdaptor {
     my $self = shift;
     my $database = shift || $self->error( 'FATAL', "Need a DBAdaptor name" );
     $database = "SNP" if $database eq "snp";
+    $database = "otherfeatures" if $database eq "est";
     my $species = shift || $self->default_species();
     $self->{'_dbs'}->{$species} ||= {}; 
 
@@ -82,6 +83,7 @@ sub get_DBAdaptor {
     
     # try to retrieve the DBAdaptor from the Registry
     my $dba = $reg->get_DBAdaptor($species, $database);
+    warn "$species - $database - $dba";
 
     # Glovar
     if(!defined($dba) || $database eq 'glovar'){
@@ -231,23 +233,6 @@ sub _get_databases_common {
         delete $databases{$_};
     }
 
-    # Attach to core vice versa (if core is available)
-    my @attached_dbs = grep { $databases{$_} } qw(haplotype est lite);
-    foreach (@attached_dbs) { 
-        my $getter = "_get_" . lc($_) . "_database";
-        eval{ $default_species_db->{$_} = $self->$getter($species); };
-        if ($@) { 
-            $self->{'error'} .= "\n$_ database: $@";
-        } elsif (my $core_db = $default_species_db->{'core'}) {
- #           warn "CONNECTING LITE TO CORE";
- #           warn "CORE1: ",$core_db;
-            $core_db->add_db_adaptor($_, $default_species_db->{$_});
- #          warn "CONNECTING CORE TO LITE";
-            $default_species_db->{$_}->add_db_adaptor('core', $core_db);
-        }
-        delete $databases{$_};
-    }
-  
     ## Other DBs
     # cdna
     if($databases{'cdna'}) {
@@ -283,6 +268,12 @@ sub _get_databases_common {
     if ($databases{'vega'}) {
         $self->_get_db_with_dnadb('vega', $species);
         delete $databases{'vega'};
+    }
+                                                                                
+    if ($databases{'otherfeatures'}) {
+  warn "CONNECTED otherfeatures db";
+        $self->_get_db_with_dnadb('otherfeatures', $species);
+        delete $databases{'otherfeatures'};
     }
                                                                                 
     # compara
@@ -371,6 +362,7 @@ sub _get_core_database{
 sub _get_db_with_dnadb {
   my $self = shift;
   my $db = shift || die("No database given");
+  warn "..... $db ........";
   my $species = shift || die("No species given");
   #warn "_GET_DB_WIDTH_DNADB -> $db -> $species";
   my $getter = "_get_" . lc($db) . "_database";
@@ -386,7 +378,7 @@ sub _get_db_with_dnadb {
   if( $@ ){
     $self->{'error'} = qq(Unable to connect to the Core database: $@);
   } else { 
-    #warn "$db attached to core $default_species_db->{$db}";
+    warn "$db attached to core $default_species_db->{$db}";
     $default_species_db->{$db}->dnadb( $default_species_db->{'core'} );
     $default_species_db->{'core'}->add_db_adaptor($db, $default_species_db->{$db} );
     $default_species_db->{$db}->add_db_adaptor('core', $default_species_db->{'core'} );
@@ -527,7 +519,7 @@ sub _get_disease_database{
     return  $self->_get_database( $db_info, 'Bio::EnsEMBL::ExternalData::Disease::DBHandler' );
 }
 
-=head2 _get_est_database
+=head2 _get_otherfeatures_database
 
  Arg[1]      : String  
                 Species name
@@ -538,9 +530,9 @@ sub _get_disease_database{
 
 =cut
 
-sub _get_est_database{
+sub _get_otherfeatures_database{
     my $self = shift;
-    my $db_info =  $self->_get_database_info( shift, 'ENSEMBL_EST' ) ||
+    my $db_info =  $self->_get_database_info( shift, 'ENSEMBL_OTHERFEATURES' ) ||
         die( "No est database for this species" );
     return  $self->_get_database( $db_info, 'Bio::EnsEMBL::DBSQL::DBAdaptor' ); 
 }
