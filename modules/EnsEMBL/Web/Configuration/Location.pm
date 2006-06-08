@@ -352,12 +352,14 @@ sub cytoview {
     my $hidden = $self->new_panel( undef, 'code' => 'contigview_form' );
     $hidden->add_components(qw(form EnsEMBL::Web::Component::Location::contigview_form));
     $obj->__data->{_cv_panel_no} = 0;
+    my $zw = int(abs($obj->param('zoom_width')));
+       $zw = 1 if $zw <1; 
     $obj->__data->{'_cv_parameter_hash'} = {
       'species' => $ENV{ENSEMBL_SPECIES},
       'chr'     => $obj->seq_region_name,
       'ori'     => 1,
       'main_width' => $obj->length,
-      'bp_width' => $obj->param('zoom_width'),
+      'bp_width' => $zw,
       'base_URL' => "/$ENV{ENSEMBL_SPECIES}/$ENV{ENSEMBL_SCRIPT}"
     };
     $self->add_panel( $hidden );
@@ -458,7 +460,8 @@ sub contigview {
       'code'    => "basepair_#", 'caption' => 'Basepair view', 'status'  => 'panel_zoom', @common
     );
     if( $obj->param('panel_zoom') ne 'off' ) {
-      my $zw = $obj->param('zoom_width');
+      my $zw = int(abs($obj->param('zoom_width')));
+         $zw = 1 if $zw <1;
       my( $start, $end ) = $obj->length < $zw ?
                              ( $obj->seq_region_start, $obj->seq_region_end ) :
                              ( $obj->centrepoint - ($zw-1)/2 , $obj->centrepoint + ($zw-1)/2 );
@@ -492,13 +495,16 @@ sub contigview {
   if( @rendered_panels ) {
     my $hidden = $self->new_panel( undef, 'code' => 'contigview_form' );
     $hidden->add_components(qw(form EnsEMBL::Web::Component::Location::contigview_form));
+    my $zw = int(abs($obj->param('zoom_width')));
+       $zw = 1 if $zw <1;
+
     $obj->__data->{_cv_panel_no} = 0;
     $obj->__data->{'_cv_parameter_hash'} = {
       'species' => $ENV{ENSEMBL_SPECIES},
       'chr'     => $obj->seq_region_name,
       'ori'     => 1,
       'main_width' => $obj->length,
-      'bp_width' => $obj->param('zoom_width'),
+      'bp_width' => $zw,
       'base_URL' => "/$ENV{ENSEMBL_SPECIES}/$ENV{ENSEMBL_SCRIPT}"
     };
     $self->add_panel( $hidden );
@@ -615,7 +621,9 @@ sub alignsliceview {
 				     'code'    => "basepair_#", 'caption' => 'Basepair view', 'status'  => 'panel_zoom', @common
 				     );
        if( $obj->param('panel_zoom') ne 'off' ) {
-           my $zw = $obj->param('zoom_width');
+           my $zw = int(abs($obj->param('zoom_width')));
+              $zw = 1 if $zw <1;
+
            my( $start, $end ) = $obj->length < $zw ? ( $obj->seq_region_start, $obj->seq_region_end ) : ( $obj->centrepoint - ($zw-1)/2 , $obj->centrepoint + ($zw-1)/2 );
            $base->add_option( 'start', $start );
            $base->add_option( 'end',   $end );
