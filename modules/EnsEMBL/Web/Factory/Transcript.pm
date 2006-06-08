@@ -10,8 +10,10 @@ our @ISA = qw(  EnsEMBL::Web::Factory );
 
 sub createObjects {   
   my $self = shift;
-  my ($identifier, $fetch_call, $transobj);
+  my ($identifier, @fetch_calls, $transobj);
   my $db          = $self->param( 'db' ) || 'core';
+     $db          = 'otherfeatures' if $db eq 'est';
+warn $db;
   my $db_adaptor  = $self->database($db) ;	
   unless ($db_adaptor){
     $self->problem('Fatal', 
@@ -22,13 +24,14 @@ sub createObjects {
 
   my $KEY = 'transcript';
   if( $identifier = $self->param( 'peptide' ) ){ 
-    $fetch_call = 'fetch_by_translation_stable_id';
+    @fetch_calls = qw(fetch_by_translation_stable_id fetch_by_stable_id);
   } elsif( $identifier = $self->param( 'transcript' ) ){ 
-    $fetch_call = 'fetch_by_stable_id';
+    @fetch_calls = qw(fetch_by_stable_id fetch_by_translation_stable_id);
   } elsif( $identifier = $self->param( 'exon' ) ){
-    $fetch_call = 'fetch_all_by_exon_stable_id';
+    @fetch_calls = qw(fetch_all_by_exon_stable_id);
   } elsif( $identifier = $self->param( 'anchor1' ) ) {
-    $fetch_call = $self->param( 'type1' ) eq 'peptide' ? 'fetch_by_translation_stable_id' : 'fetch_by_stable_id';
+    @fetch_calls = qw(fetch_by_stable_id fetch_by_translation_stable_id);
+    reverse @fetch_calls if($self->param( 'type1' ) eq 'peptide');
     $KEY = 'anchor1';
   } else {
     $self->problem('fatal', 'Please enter a valid identifier',
@@ -43,11 +46,14 @@ sub createObjects {
     (my $T = $identifier) =~ s/^(\S+)\.\d*/$1/g ; # Strip versions
     (my $T2 = $identifier) =~ s/^(\S+?)(\d+)(\.\d*)?/$1.sprintf("%011d",$2)/eg ; # Strip versions
 
+    foreach my $fetch_call (@fetch_calls) {
     eval { $transobj = $adaptor->$fetch_call($identifier) };
     last if $transobj;
     eval { $transobj = $adaptor->$fetch_call($T2) };
     last if $transobj;
     eval { $transobj = $adaptor->$fetch_call($T) };
+    last if $transobj;
+    }
     last if $transobj;
   }
 

@@ -11,8 +11,9 @@ our @ISA = qw(  EnsEMBL::Web::Factory );
 
 sub createObjects { 
   my $self = shift;
-  my ($identifier, $fetch_call, $geneobj);
+  my ($identifier, @fetch_calls, $geneobj);
   my $db        = $self->param('db')  || 'core'; 
+     $db          = 'otherfeatures' if $db eq 'est';
   my $exonid    = $self->param('exon');
 
   # Get the 'central' database (core, est, vega)
@@ -30,9 +31,9 @@ sub createObjects {
     my $adaptor  = $self->database('core');
     if( $adaptor ){ $db_adaptor->add_db_adaptor( 'core', $adaptor ) }
   }
-  if( $self->species_defs->databases->{'ENSEMBL_EST'} ){
-    my $adaptor  = $self->database('est');
-    if( $adaptor ){ $db_adaptor->add_db_adaptor( 'est', $adaptor ) }
+  if( $self->species_defs->databases->{'ENSEMBL_OTHERFEATURES'} ){
+    my $adaptor  = $self->database('otherfeatures');
+    if( $adaptor ){ $db_adaptor->add_db_adaptor( 'otherfeatures', $adaptor ) }
   }
   if( $self->species_defs->databases->{'ENSEMBL_VEGA'} ){
     my $adaptor  = $self->database('vega');
@@ -50,14 +51,14 @@ sub createObjects {
   my $adaptor = $db_adaptor->get_GeneAdaptor;
   my $KEY = 'gene';
   if( $identifier = $self->param( 'peptide' ) ){ 
-    $fetch_call = 'fetch_by_Peptide_id';
+    @fetch_calls = qw(fetch_by_Peptide_id fetch_by_transcript_stable_id);
   } elsif( $identifier = $self->param( 'transcript' ) ){ 
-    $fetch_call = 'fetch_by_transcript_stable_id';
+    @fetch_calls = qw(fetch_by_transcript_stable_id fetch_by_Peptide_id);
   } elsif( $identifier = $self->param( 'exon' ) ){ 
-    $fetch_call = 'fetch_by_exon_stable_id';
+    @fetch_calls = qw(fetch_by_exon_stable_id);
   } elsif( $identifier = $self->param( 'gene' ) || $self->param( 'anchor1' ) ){
     $KEY = 'anchor1' unless $self->param('gene');
-    $fetch_call = 'fetch_by_stable_id';
+    @fetch_calls = qw(fetch_by_stable_id fetch_by_transcript_stable_id fetch_by_Peptide_id); 
   } else {
     $self->problem('fatal', 'Please enter a valid identifier',
 		     "This view requires a gene, transcript or peptide 
@@ -67,9 +68,11 @@ sub createObjects {
 
   (my $T = $identifier) =~ s/^(\S+)\.\d*/$1/g ; # Strip versions
   (my $T2 = $identifier) =~ s/^(\S+?)(\d+)(\.\d*)?/$1.sprintf("%011d",$2)/eg ; # Strip versions
-  eval { $geneobj = $adaptor->$fetch_call($identifier); };
-  eval { $geneobj = $adaptor->$fetch_call($T2) unless $geneobj;};
-  eval { $geneobj = $adaptor->$fetch_call($T) unless $geneobj;};
+  foreach my $fetch_call(@fetch_calls) {  
+    eval { $geneobj = $adaptor->$fetch_call($identifier) } unless $geneobj; 
+    eval { $geneobj = $adaptor->$fetch_call($T2) } unless $geneobj;
+    eval { $geneobj = $adaptor->$fetch_call($T) } unless $geneobj;
+  }
 
   if(!$geneobj || $@) {
     $self->_archive( 'Gene', $KEY );

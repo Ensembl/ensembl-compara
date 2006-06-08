@@ -51,7 +51,7 @@ sub __gene_databases {
   my $self = shift;
   my @return = ('core');
   push @return, 'vega' if $self->species_defs->databases->{ 'ENSEMBL_VEGA' };
-  push @return, 'est' if $self->species_defs->databases->{ 'ENSEMBL_EST' };
+  push @return, 'est' if $self->species_defs->databases->{ 'ENSEMBL_OTHERFEATURES' };
   return @return;
 }
 sub _location_from_Gene {
@@ -171,7 +171,7 @@ sub _location_from_Peptide {
 sub _location_from_MiscFeature {
   my( $self, $ID ) = @_;
   my $TS;
-  foreach my $type ( qw(name embl_acc synonym clone_name sanger_project) ) {
+  foreach my $type ( qw(name embl_acc synonym clone_name sanger_project well_name clonename) ) {
     eval { $TS = $self->_slice_adaptor->fetch_by_misc_feature_attribute( $type, $ID ); };
     return $self->_create_from_slice( "MiscFeature", $ID, $self->expand($TS) ) if $TS;
   }
@@ -255,6 +255,7 @@ sub _location_from_SeqRegion {
     $start = 1 if $start < 1;     ## Truncate slice to start of seq region
     ($start,$end) = ($end, $start) if $start > $end;
     foreach my $system ( @{$self->__coord_systems} ) {
+warn "SR ... $system";
       my $slice;
       eval { $slice = $self->_slice_adaptor->fetch_by_region( $system->name, $chr, $start, $end, $strand ); };
       warn $@ if $@;

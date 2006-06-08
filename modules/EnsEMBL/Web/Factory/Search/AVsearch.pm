@@ -118,7 +118,7 @@ sub search_GENE {
 
   my @databases = [ 'core',  'Ensembl Gene', 'Ensembl Transcript', 'Ensembl Peptide' ];
   push @databases, [ 'vega', 'Vega Loci', 'Vega Transcript', 'Vega Peptide' ] if $self->species_defs->other_species($species, 'databases')->{'ENSEMBL_VEGA'};
-  push @databases, [ 'est',  'EST gene', 'EST Transcript', 'EST Peptide' ] if $self->species_defs->other_species($species, 'databases')->{'ENSEMBL_EST'};
+  push @databases, [ 'est',  'EST gene', 'EST Transcript', 'EST Peptide' ] if $self->species_defs->other_species($species, 'databases')->{'ENSEMBL_OTHERFEATURES'};
 
   my @RES = ();
   foreach my $db ( @databases ) {

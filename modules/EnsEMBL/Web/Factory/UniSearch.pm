@@ -44,7 +44,8 @@ sub count {
 
   my $dbh = $self->database($db);
   return 0 unless $dbh;
-  (my $t = $sql ) =~ s/\[\[KEY\]\]/$kw/g;
+  $kw = $dbh->dbc->db_handle->quote($kw);
+  (my $t = $sql ) =~ s/'\[\[KEY\]\]'/$kw/g;
                $t =~ s/\[\[COMP\]\]/$comp/g;
   #warn $t;
   #my( $res ) = $dbh->db_handle->selectrow_array( $t );
@@ -53,10 +54,11 @@ sub count {
 }
 
 sub _fetch {
-  my( $self, $db, $search_SQL, $comparator, $keyword, $limit ) = @_;
+  my( $self, $db, $search_SQL, $comparator, $kw, $limit ) = @_;
   my $dbh = $self->database( $db );
   return unless $dbh;
-  (my $t = $search_SQL ) =~ s/\[\[KEY\]\]/$keyword/g;
+  $kw = $dbh->dbc->db_handle->quote($kw);
+  (my $t = $search_SQL ) =~ s/'\[\[KEY\]\]'/$kw/g;
   $t =~ s/\[\[COMP\]\]/$comparator/g;
   #warn "$t limit $limit";
   #my $res = $dbh->db_handle->selectall_arrayref( "$t limit $limit" );
@@ -333,7 +335,7 @@ sub search_GENE {
 
   my @databases = ('core');
   push @databases, 'vega' if $self->species_defs->databases->{'ENSEMBL_VEGA'};
-  push @databases, 'est' if $self->species_defs->databases->{'ENSEMBL_EST'};
+  push @databases, 'est' if $self->species_defs->databases->{'ENSEMBL_OTHERFEATURES'};
   foreach my $db (@databases) {
   $self->_fetch_results( 
     [ $db, 'Gene',
