@@ -127,7 +127,7 @@ sub configure {
       }
         else {
 
-	    if ($objecttype = 'DAS') {
+	    if ($objecttype eq 'DAS') {
 		
 		$self->problem('Fatal', 'Bad request', 'Unimplemented');
 

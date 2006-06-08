@@ -72,7 +72,7 @@ sub _initialize_HTML {
 ## Let us set up the search box...
   $self->searchbox->sp_common  = $self->species_defs->SPECIES_COMMON_NAME;
 #  --- First the search index drop down
-  if( $ENV{'ENSEMBL_SPECIES'} ne 'Multi' ) { # If we are in static content for a species
+  if( $ENV{'ENSEMBL_SPECIES'} ne 'Multi' && $ENV{'ENSEMBL_SPECIES'} ne 'common' ) { # If we are in static content for a species
     foreach my $K ( sort @{($self->species_defs->ENSEMBL_SEARCH_IDXS)||[]} ) {
       $self->searchbox->add_index( $K );
     }
@@ -96,6 +96,7 @@ sub _initialize_HTML {
     }
   } else { # If we are in general static content...
     ## Grab all the search indexes...
+warn $self->species_defs;
     foreach my $K ( $self->species_defs->all_search_indexes ) {
       $self->searchbox->add_index( $K );
     }

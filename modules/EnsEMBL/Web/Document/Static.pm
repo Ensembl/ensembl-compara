@@ -56,7 +56,7 @@ sub _initialize {
 
   # add handy-dandy collapsing menu script
   $self->javascript->add_source('/js/hier_menu.js');
-  $self->add_body_attr( 'onload' => 'coll_all();' );
+  $self->javascript->add_script( 'window.onload = coll_all;' );
 
   $self->call_child_functions( 'extra_configuration' );
   $self->call_child_functions( 'common_menu_items', 'static_menu_items' );
