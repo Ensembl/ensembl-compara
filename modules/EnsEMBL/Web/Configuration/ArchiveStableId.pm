@@ -24,7 +24,7 @@ sub idhistoryview {
 
   if (my $panel1 = $self->new_panel('SpreadSheet',
     'code'    => "info$self->{flag}",
-    'caption' => 'History',
+    'caption' => 'ID Mapping History',
     'null_data' => "<p>".$obj->stable_id. " has no successors or predecessors.</p>",
 				   )) {
     $panel1->add_components(qw(

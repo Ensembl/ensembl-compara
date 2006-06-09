@@ -62,6 +62,7 @@ sub status {
   $panel->add_row( $label, $status );
   return 1 if $status =~/^Current/;
 
+
   # Transcripts
   my $label2  = 'Archived transcripts';
   my @ids   = @{ $object->transcript || []};
@@ -76,6 +77,8 @@ sub status {
   else {
     $panel->add_row( $label2, "Unknown") unless scalar @ids;
   }
+
+  return 1 if $object->type eq 'Translation';
 
   # Peptides
   my $label3  = 'Archived peptides';
@@ -127,7 +130,7 @@ sub history {
     }
     else {
       my $start = $releases[$i+1] +1;
-      $row->{Release} = "v$releases[$i]-$start";
+      $row->{Release} = "v$start-$releases[$i]";
     }
 
     $row->{Database} = $history->{$releases[$i]}->[0]->db_name;
@@ -136,6 +139,10 @@ sub history {
     # loop over archive ids
     foreach my $a (sort {$a->stable_id cmp $b->stable_id} @{ $history->{$releases[$i]} }) {
       my $id = $a->stable_id.".".$a->version;
+      
+      if ($i == 0 && $object->get_current_object($type, $a->stable_id, $a->version)) {
+	$row->{Release} .= "-". $object->species_defs->ENSEMBL_VERSION;
+      }
       $panel->add_columns(  { 'key' => $a->stable_id, 
 			      'title' => $type.": ".$a->stable_id} ) unless $columns{$a->stable_id};
       $columns{$a->stable_id}++;

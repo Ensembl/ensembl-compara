@@ -41,7 +41,7 @@ sub createObjects {
     $archiveStableId = $aa->fetch_by_stable_id($id);
   }
 
-  return $self->problem( 'Fatal', "Unknown ID $id",  "$id is not in Ensembl or the Archive (or there was a problem retrieving it)." ) unless $archiveStableId;
+  return $self->problem( 'Fatal', "$id not in Archive",  "$id is not in the ID Archive (or there was a problem retrieving it)." ) unless $archiveStableId;
 
   my $obj = EnsEMBL::Web::Proxy::Object->new( 'ArchiveStableId', $archiveStableId, $self->__data );
    $self->DataObjects($obj);

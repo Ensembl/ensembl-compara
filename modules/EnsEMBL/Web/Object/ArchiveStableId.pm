@@ -44,14 +44,18 @@ sub type {
 }
 
 sub get_current_object {
-  my $self = shift;
-  my $type = shift;
+  my ($self, $type, $id, $version) = @_;
   $type = ucfirst(lc($type));
   $type = 'Translation' if $type eq 'Peptide';
-  my $id = $self->stable_id;
+  $id ||= $self->stable_id;
   my $call = "get_$type"."Adaptor";
   my $adaptor = $self->database('core')->$call;
   my $object = $adaptor->fetch_by_stable_id($id);
+
+  return undef unless $object;
+  $version ||= $self->version;
+
+  return undef unless $object->version eq $version;
   return $object || undef;
 }
 
