@@ -43,7 +43,7 @@ sub context_menu {
                                   $self->{object}->domainAcc );
   $self->add_entry( "domain$self->{flag}", 'code' => 'domaindesc', 'text' => $self->{object}->domainDesc );
   $self->add_entry( "domain$self->{flag}", 'code' => 'domaininfo', 'text' => "Domain info.",
-                                  'href' => "/@{[$self->{object}->species]}/domainview?domainview=".$self->{object}->domainAcc );
+                                  'href' => "/@{[$self->{object}->species]}/domainview?domainentry=".$self->{object}->domainAcc );
   $self->add_entry( "domain$self->{flag}", 'code' => 'mart', 'icon' => '/img/biomarticon.gif' ,
     'text' => 'Gene List', 'title' => 'BioMart: Gene list',
     'href' => "/@{[$self->{object}->species]}/martlink?type=domain;domain_id=".$self->{object}->domainAcc );
