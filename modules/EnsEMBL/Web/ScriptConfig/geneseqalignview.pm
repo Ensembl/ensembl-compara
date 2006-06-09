@@ -38,6 +38,9 @@ sub init {
     RGselect   NONE
     ms_1 off
     ms_2 off
+    ms_192 off
+    ms_193 off
+    ms_213 off
   ));
 }
 1;
