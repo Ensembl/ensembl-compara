@@ -138,6 +138,13 @@ sub context_menu {
     'text' => "Genomic sequence",
     'href' => "/$species/geneseqview?$q_string_g"
   ) if $q_string_g;
+
+ $self->add_entry( $flag,
+    'code'  => 'id_history',
+    'text'  => 'ID history',
+    'title' => 'ID history - Protein stable ID history for'. $obj->stable_id,
+    'href'  => "/$species/idhistoryview?$q_string");
+
   $self->add_entry( $flag,
     'code' => 'trans_info',
     'text' => "Transcript information",

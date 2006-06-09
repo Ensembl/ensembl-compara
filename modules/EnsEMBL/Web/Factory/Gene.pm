@@ -51,14 +51,14 @@ sub createObjects {
   my $adaptor = $db_adaptor->get_GeneAdaptor;
   my $KEY = 'gene';
   if( $identifier = $self->param( 'peptide' ) ){ 
-    @fetch_calls = qw(fetch_by_Peptide_id fetch_by_transcript_stable_id);
+    @fetch_calls = qw(fetch_by_translation_stable_id fetch_by_transcript_stable_id);
   } elsif( $identifier = $self->param( 'transcript' ) ){ 
-    @fetch_calls = qw(fetch_by_transcript_stable_id fetch_by_Peptide_id);
+    @fetch_calls = qw(fetch_by_transcript_stable_id fetch_by_translation_stable_id);
   } elsif( $identifier = $self->param( 'exon' ) ){ 
     @fetch_calls = qw(fetch_by_exon_stable_id);
   } elsif( $identifier = $self->param( 'gene' ) || $self->param( 'anchor1' ) ){
     $KEY = 'anchor1' unless $self->param('gene');
-    @fetch_calls = qw(fetch_by_stable_id fetch_by_transcript_stable_id fetch_by_Peptide_id); 
+    @fetch_calls = qw(fetch_by_stable_id fetch_by_transcript_stable_id fetch_by_translation_stable_id); 
   } else {
     $self->problem('fatal', 'Please enter a valid identifier',
 		     "This view requires a gene, transcript or peptide 

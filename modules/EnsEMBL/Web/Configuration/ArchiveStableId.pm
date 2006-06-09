@@ -17,10 +17,8 @@ sub idhistoryview {
 
     $info_panel->add_components(qw(
     name       EnsEMBL::Web::Component::ArchiveStableId::name
-    db_name    EnsEMBL::Web::Component::ArchiveStableId::db_name
-    transcript EnsEMBL::Web::Component::ArchiveStableId::transcript
-    peptide    EnsEMBL::Web::Component::ArchiveStableId::peptide
-				  ));
+    db_name    EnsEMBL::Web::Component::ArchiveStableId::status
+     ));
     $self->{page}->content->add_panel( $info_panel );
   }
 

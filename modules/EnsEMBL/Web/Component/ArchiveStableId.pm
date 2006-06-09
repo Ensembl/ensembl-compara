@@ -34,66 +34,66 @@ use CGI qw(escapeHTML);
 sub name {
   my($panel, $object) = @_;
   my $label  = 'Stable ID';
-  my $id = $object->stable_id;
-  my $version = $object->version;
+  my $id = $object->stable_id.".".$object->version;
+
   my $param = $object->type eq 'Translation' ? 'peptide' : lc($object->type);
   my $name = _archive_link($object, $id, $param, $id) || $id;
-  $panel->add_row( $label, $object->type.": $name.$version" );
+  $panel->add_row( $label, $object->type.": $name" );
   return 1;
 }
 
 
-sub db_name {
+sub status {
   my($panel, $object) = @_;
   my $label  = 'Status';
   my $current_release = $object->species_defs->ENSEMBL_VERSION;
   my $release  = $object->release;
 
   my $status;
-  if ($release == $current_release) {
-    $status = "Current v$release";
-  }
-  elsif ($current_release > $release) {
-    $status = "<b>This ID has been removed from the current version of Ensembl</b>.<br />Last release $release";
+  if ($object->get_current_object($object->type)) {
+    $status = "Current v$current_release";
   }
   else {
-    $status = "Data error: release $release";
+    $status = "<b>This ID has been removed from the current version of Ensembl</b>.<br />Last release $release";
   }
 
   my $assembly = $object->assembly;
-  $status .= " ($assembly)<br />Database: ".$object->db_name;
+  $status .= " ($assembly)<br />Last remapped for database: ".$object->db_name;
   $panel->add_row( $label, $status );
-  return 1;
-}
+  return 1 if $status =~/^Current/;
 
-sub transcript {
-  my($panel, $object) = @_;
-  my $label  = 'Archived transcripts';
+  # Transcripts
+  my $label2  = 'Archived transcripts';
   my @ids   = @{ $object->transcript || []};
-  return  $panel->add_row( $label, "Unknown") unless scalar @ids;
-  my $html;
-  foreach (@ids) {
-    $html .= "<p>".$_->stable_id;
-    $html .= "</p>";
+  if (scalar @ids) {
+    my $html;
+    foreach (@ids) {
+      $html .= "<p>".$_->stable_id;
+      $html .= "</p>";
+    }
+    $panel->add_row( $label2, $html);
   }
-  $panel->add_row( $label, $html);
-  return 1;
-}
-
-sub peptide {
-  my($panel, $object) = @_;
-  my $label  = 'Archived peptides';
-  my @ids   = @{ $object->peptide || []};
-  return  $panel->add_row( $label, "Unknown") unless scalar @ids;
-
-  my $html;
-  foreach (@ids) {
-    $html .= "<kbd>>".$_->stable_id."<br />";
-    my $seq = $_->get_peptide;
-    $seq =~ s#(.{1,60})#$1<br />#g;
-    $html .= "$seq</kbd><br />";
+  else {
+    $panel->add_row( $label2, "Unknown") unless scalar @ids;
   }
-  $panel->add_row( $label, $html);
+
+  # Peptides
+  my $label3  = 'Archived peptides';
+  my @pep_ids   = @{ $object->peptide || []};
+
+  if (scalar @pep_ids) {
+    my $html;
+    foreach (@pep_ids) {
+      $html .= "<kbd>>".$_->stable_id."<br />";
+      my $seq = $_->get_peptide;
+      $seq =~ s#(.{1,60})#$1<br />#g;
+      $html .= "$seq</kbd><br />";
+    }
+    $panel->add_row( $label3, $html);
+  }
+  else {
+    $panel->add_row( $label3, "Unknown");
+  }
   return 1;
 }
 
@@ -165,7 +165,7 @@ sub _archive_link {
 
   my $current_release = $object->species_defs->ENSEMBL_VERSION;
   my $url;
-  if ($release == $current_release) {
+  if ($object->get_current_object($type)) {
     $url = "/";
   }
   else {

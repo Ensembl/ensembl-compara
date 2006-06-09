@@ -371,6 +371,12 @@ sub context_menu {
     'title' => 'GeneSNPView - View of consequences of variations on gene '.$obj->stable_id,
     'href'  => "/$species/genesnpview?$q_string" ) if $obj->species_defs->databases->{'ENSEMBL_VARIATION'};
 
+  $self->add_entry( $flag,
+    'code'  => 'id_history',
+    'text'  => 'ID history',
+    'title' => 'ID history - Gene stable ID history for'. $obj->stable_id,
+    'href'  => "/$species/idhistoryview?$q_string");
+
   my @transcripts = 
       map { {
         'href'  => sprintf( '/%s/transview?db=%s;transcript=%s', $species, $obj->get_db, $_->stable_id ),

@@ -449,6 +449,19 @@ sub simple_with_redirect {
       $self->redirect( sprintf "/%s/featureview?type=%s;id=%s",
         $self->factory->species, $type, $id 
       );
+    } 
+
+    elsif ($self->has_problem_type('archived') ) {
+      my $f     = $self->factory;
+      my $id =  $f->param('peptide') || $f->param('transcript') || $f->param('gene');
+      my $type;
+      if ($f->param('peptide')) { $type = 'peptide'; }
+      elsif ($f->param('transcript') ) { $type = 'transcript' }
+      else { $type = "gene" ; }
+
+      $self->redirect( sprintf "/%s/idhistoryview?%s=%s",
+		       $self->factory->species, $type, $id 
+		     );
     } else {
       $self->render_error_page;
     }

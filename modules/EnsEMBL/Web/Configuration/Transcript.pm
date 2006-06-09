@@ -330,6 +330,12 @@ sub context_menu {
     'href' => "/$species/genesnpview?$q_string_g"
   ) if $obj->species_defs->databases->{'ENSEMBL_VARIATION'} && $q_string_g; 
 
+ $self->add_entry( $flag,
+    'code'  => 'id_history',
+    'text'  => 'ID history',
+    'title' => 'ID history - Transcript stable ID history for'. $obj->stable_id,
+    'href'  => "/$species/idhistoryview?$q_string");
+
   # Variation: TranscriptSNP view
   # if meta_key in variation meta table has default strain listed
   if ( $obj->species_defs->VARIATION_STRAIN ) { 

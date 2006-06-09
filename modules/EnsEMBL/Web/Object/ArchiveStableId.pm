@@ -43,6 +43,17 @@ sub type {
   return $self->Obj->type;
 }
 
+sub get_current_object {
+  my $self = shift;
+  my $type = shift;
+  $type = ucfirst(lc($type));
+  $type = 'Translation' if $type eq 'Peptide';
+  my $id = $self->stable_id;
+  my $call = "get_$type"."Adaptor";
+  my $adaptor = $self->database('core')->$call;
+  my $object = $adaptor->fetch_by_stable_id($id);
+  return $object || undef;
+}
 
 sub transcript {
   my $self = shift;
