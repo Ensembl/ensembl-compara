@@ -53,37 +53,37 @@ sub featureview {
     }
 
     $self->{page}->set_title( "FeatureView: $type $id");
-    my ($gene_panel, $karyo_panel, $ss_panel);
-    if ($object->Obj->{'Gene'} && scalar(keys %{$object->Obj}) > 1) {  ## data includes one or more subsidiary gene objects
-      $gene_panel = new EnsEMBL::Web::Document::Panel::SpreadSheet(
-        'code'    => "info$self->{flag}",
-        'caption' => "Gene Information",
-        'object'  => $self->{object},
-      );
-      $gene_panel->add_components(qw(genes    EnsEMBL::Web::Component::Feature::genes))
-    }
-    elsif ($object->Obj->{'RegulatoryFactor'}) {
-      $gene_panel = $self->new_panel('Information',
-         'code'    => "info$self->{flag}",
-         'caption' => "Regulatory Factor $id",
-               );
 
-      $gene_panel->add_components(qw(
-    regulatory_factor EnsEMBL::Web::Component::Feature::regulatory_factor
-            ));
+    ## determine which panels are needed
+    my ($karyo_panel, $key_panel, $unmapped_panel, $gene_panel, $reg_panel, $feature_panel, $xref_panel);
+    if ($object->Obj->{'Xref'}) {
+      $karyo_panel = 1;
+      $xref_panel = 1;
     }
-=pod
-    # do key
-    my $key_panel = new EnsEMBL::Web::Document::Panel::Image(
-        'code'    => "info$self->{flag}",
-        'caption' => "$type: $id",
-        'object'  => $self->{object},
-    );
-    $key_panel->add_components(qw(image EnsEMBL::Web::Component::Feature::key_to_pointers));
-=cut
+    else {
+      if (!$object->feature_mapped) {
+        $unmapped_panel = 1;
+      }
+      else {
+        ## standard spreadsheet panel
+        $feature_panel = 1;
+        ## karyotype
+        if (@{$object->species_defs->ENSEMBL_CHROMOSOMES}) {
+          $karyo_panel = 1;
+        }
+        ## extra spreadsheet panel(s)
+        if ($object->Obj->{'Gene'} && scalar(keys %{$object->Obj}) > 1) {
+          $gene_panel = 1;
+          $key_panel = 1;
+        }
+        if ($object->Obj->{'RegulatoryFactor'}) {
+          $reg_panel = 1;
+        }
+      }
+    }
 
-    # do karytype
-    if (@{$object->species_defs->ENSEMBL_CHROMOSOMES} && $object->feature_mapped) {
+    ## generate required panels
+    if ($karyo_panel) {
       $karyo_panel = new EnsEMBL::Web::Document::Panel::Image(
         'code'    => "info$self->{flag}",
         'caption' => "Feature Location(s)",
@@ -92,24 +92,65 @@ sub featureview {
       $karyo_panel->add_components(qw(image EnsEMBL::Web::Component::Feature::show_karyotype));
     }
 
-    # do feature information table
-    my $info_panel;
-    if ($object->feature_mapped) {
-      $info_panel = new EnsEMBL::Web::Document::Panel::SpreadSheet(
+=pod
+    if ($key_panel) {
+      $key_panel = new EnsEMBL::Web::Document::Panel::Image(
+        'code'    => "info$self->{flag}",
+        'caption' => "$type: $id",
+        'object'  => $self->{object},
+      );
+      $key_panel->add_components(qw(image EnsEMBL::Web::Component::Feature::key_to_pointers));
+    }
+=cut
+
+    if ($gene_panel) {  
+      ## data includes one or more subsidiary gene objects (currently OligoProbes only)
+      $gene_panel = new EnsEMBL::Web::Document::Panel::SpreadSheet(
+        'code'    => "info$self->{flag}",
+        'caption' => "Gene Information",
+        'object'  => $self->{object},
+      );
+      $gene_panel->add_components(qw(genes    EnsEMBL::Web::Component::Feature::genes))
+    }
+
+    if ($reg_panel) {
+      $reg_panel = $self->new_panel('Information',
+         'code'    => "info$self->{flag}",
+         'caption' => "Regulatory Factor $id",
+               );
+
+      $reg_panel->add_components(qw(
+    regulatory_factor EnsEMBL::Web::Component::Feature::regulatory_factor
+            ));
+    }
+   
+    if ($feature_panel) {
+      $feature_panel = new EnsEMBL::Web::Document::Panel::SpreadSheet(
         'code'    => "info$self->{flag}",
         'caption' => 'Feature Information', 
         'object'  => $self->{object},
       );
-      $info_panel->add_components( qw(features
+      $feature_panel->add_components( qw(features
           EnsEMBL::Web::Component::Feature::spreadsheet_featureTable));
     }
-    else {
-      $info_panel = new EnsEMBL::Web::Document::Panel::Information(
+
+    if ($xref_panel) {
+      $xref_panel = new EnsEMBL::Web::Document::Panel::SpreadSheet(
+        'code'    => "info$self->{flag}",
+        'caption' => 'Feature Information', 
+        'object'  => $self->{object},
+      );
+      $xref_panel->add_components( qw(xrefs
+          EnsEMBL::Web::Component::Feature::spreadsheet_xrefTable));
+    }
+
+    if ($unmapped_panel) {
+      $unmapped_panel = new EnsEMBL::Web::Document::Panel::Information(
         'code'    => "info$self->{flag}",
         'caption' => 'Unmapped Feature', 
         'object'  => $self->{object},
       );
-      $info_panel->add_components( qw(
+      $unmapped_panel->add_components( qw(
           id          EnsEMBL::Web::Component::Feature::unmapped_id
           unmapped    EnsEMBL::Web::Component::Feature::unmapped
           reason      EnsEMBL::Web::Component::Feature::unmapped_reason
@@ -117,11 +158,15 @@ sub featureview {
       ));
     }
 
+    ## add required panels to webpage
     $self->initialize_zmenu_javascript;
-    #$self->{page}->content->add_panel($key_panel);
-    $self->{page}->content->add_panel($karyo_panel) if $karyo_panel;
-    $self->{page}->content->add_panel($info_panel);
-    $self->{page}->content->add_panel($gene_panel) if $gene_panel;
+    $self->{page}->content->add_panel($unmapped_panel)  if $unmapped_panel;
+    #$self->{page}->content->add_panel($key_panel)  if $key_panel;
+    $self->{page}->content->add_panel($karyo_panel)     if $karyo_panel;
+    $self->{page}->content->add_panel($feature_panel)   if $feature_panel;
+    $self->{page}->content->add_panel($xref_panel)      if $xref_panel;
+    $self->{page}->content->add_panel($gene_panel)      if $gene_panel;
+    $self->{page}->content->add_panel($reg_panel)       if $reg_panel;
   }
   else {
     $self->wizard_panel('Featureview');

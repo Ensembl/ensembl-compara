@@ -54,15 +54,10 @@ sub spreadsheet_featureTable {
 
   $panel->add_columns(
     {'key' => 'loc', 'title' => 'Location', 'width' => '25%', 'align' => 'left' },
-  ) unless $data_type =~ /Xref/;
+  );
   if ($data_type eq 'Gene') {
     $panel->add_columns(
       {'key' => 'extname', 'title' => 'External names', 'width' => '25%', 'align' => 'left' },
-    );
-  } 
-  elsif ($data_type eq 'Xref_MIM') {
-    $panel->add_columns(
-      {'key' => 'extname', 'title' => 'OMIM ID', 'width' => '25%', 'align' => 'left' },
     );
   } else {
     $panel->add_columns(
@@ -102,13 +97,6 @@ sub spreadsheet_featureTable {
         $desc =  $row->{'extra'}[0];
         $data_row = { 'loc' => $contig_link, 'extname' => $extname, 'names' => $names, };
     } 
-    elsif ($data_type eq 'Xref_MIM') {
-        $names = sprintf('<a href="http://www.ncbi.nlm.nih.gov/entrez/dispomim.cgi?id=%s">%s</a>',
-          $row->{'label'}, $row->{'label'}) if $row->{'label'};
-        $extname = $row->{'extname'}, 
-        $desc =  $row->{'extra'}[0];
-        $data_row = { 'loc' => $contig_link, 'extname' => $extname, 'names' => $names, };
-    } 
     else {
       $names = $row->{'label'} if $row->{'label'};
       $length = $row->{'length'},
@@ -128,7 +116,64 @@ sub spreadsheet_featureTable {
   } # end of foreach loop
 
   return 1;
+}
 
+sub spreadsheet_xrefTable {
+  my( $panel, $object ) = @_;
+  my $species = $object->species;
+  $panel->add_option( 'triangular', 1 );
+
+  my $array = $object->Obj->{'Xref'};
+  if (@$array) {
+    $panel->add_columns(
+      {'key' => 'extname', 'title' => 'External Name', 'width' => '10%', 'align' => 'left' },
+      {'key' => 'xref_db', 'title' => 'External Database', 'width' => '20%', 'align' => 'left' },
+      {'key' => 'desc', 'title' => 'Description', 'width' => '30%', 'align' => 'left' },
+      {'key' => 'chr', 'title' => 'Chr', 'width' => '10%', 'align' => 'left' },
+      {'key' => 'genes', 'title' => 'Ensembl Gene(s)', 'width' => '30%', 'align' => 'left' },
+    );
+    # get feature data
+    my( $data, $extra_columns, $initial_columns, $options ) = $object->retrieve_features('Xref');
+    my @data = [];
+    my ($data_row, $extname, $desc);
+    my $new_xref;
+    foreach my $row ( @$data ) {
+      if ($row->{'region'}) { ## gene entry
+        $extname    = $row->{'label'};
+        $desc       =  $row->{'extra'}[0];
+        my $gene_info = qq(<strong><a href="/$species/geneview?gene=$extname">$extname</a></strong>);
+        if ($new_xref) { ## tack this entry onto xref row
+          $$data_row{'chr'} = $row->{'region'};
+          $$data_row{'genes'} = $gene_info;
+          $new_xref = 0;
+        }
+        else { ## new row
+          $data_row = { 'chr' => $row->{'region'}, 'genes' => $gene_info };
+        }
+        $panel->add_row($data_row);
+        $panel->add_row({'genes' => $desc});
+      }
+      else { ## xref
+        $new_xref = 1;
+        my $exdb =  $row->{'extra'}[1];
+        if ($exdb =~ /^MIM/) {
+          $extname = sprintf('<a href="http://www.ncbi.nlm.nih.gov/entrez/dispomim.cgi?id=%s">%s</a>',
+            $row->{'label'}, $row->{'label'}) if $row->{'label'};
+        }
+        else {
+          $extname = $row->{'label'};
+        }
+        $desc =  $row->{'extra'}[0];
+        $data_row = { 'extname' => $extname, 'xref_db' => $exdb, 'desc' => $desc };
+      }
+    }
+    foreach my $subarray (@$array) {
+      my $xref = shift(@$subarray);
+      my @genes = @$subarray;
+    }
+  } 
+
+  return 1;
 }
 
 sub unmapped {

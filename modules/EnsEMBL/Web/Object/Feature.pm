@@ -81,12 +81,27 @@ sub retrieve_Xref {
   my $self = shift;
   
   my $results = [];
-  foreach my $d (@{$self->Obj->{'Xref'}}) {
+  foreach my $array (@{$self->Obj->{'Xref'}}) {
+    my $xref = shift @$array;
     push @$results, {
-      'label'       => $d->primary_id,
-      'xref_id'  => [ $d->primary_id ],
-      'extname'     => $d->display_id,
-      'extra'    => [ $d->description ]
+      'label'     => $xref->primary_id,
+      'xref_id'   => [ $xref->primary_id ],
+      'extname'   => $xref->display_id,
+      'extra'     => [ $xref->description, $xref->dbname ]
+    };
+    ## also get genes
+    foreach my $g (@$array) {
+      push @$results, {
+        'region'   => $g->seq_region_name,
+        'start'    => $g->start,
+        'end'      => $g->end,
+        'strand'   => $g->strand,
+        'length'   => $g->end-$g->start+1,
+        'extname'  => $g->external_name, 
+        'label'    => $g->stable_id,
+        'gene_id'  => [ $g->stable_id ],
+        'extra'    => [ $g->description ]
+      }
     }
   }
   

@@ -108,27 +108,6 @@ sub create_RegulatoryFactor {
   return undef;
 }
 
-sub create_Xref {
-
-    # get OMIM hits plus corresponding Ensembl genes
-    my ($self, $db, $subtype) = @_;
-    my $xref;
-
-    if ($subtype eq 'MIM') {
-      my $mim_g = $self->_generic_create( 'DBEntry', 'fetch_by_db_accession', [$db, 'MIM_GENE'] );
-      my $mim_m = $self->_generic_create( 'DBEntry', 'fetch_by_db_accession', [$db, 'MIM_MORBID'] );
-      @$xref = (@$mim_g, @$mim_m);
-    }
-    else {
-      $xref = $self->_generic_create( 'DBEntry', 'fetch_by_db_accession', [$db, $subtype] );
-    }
-
-    my $genes = $self->_generic_create( 'Gene', 'fetch_all_by_external_name', $db, undef, 'no_errors' );
-
-    my $features = {'Xref'=>$xref};
-    $$features{'Gene'} = $genes if $genes;
-    return $features;
-}
 
 sub _generic_create {
   my( $self, $object_type, $accessor, $db, $id, $flag ) = @_;
@@ -193,6 +172,30 @@ sub _generic_create {
 
 }
 
+sub create_Xref {
+
+  # get OMIM hits plus corresponding Ensembl genes
+  my ($self, $db, $subtype) = @_;
+  my $t_features = [];
+  my ($xrefarray, $genes);
+
+  if ($subtype eq 'MIM') {
+    my $mim_g = $self->_generic_create( 'DBEntry', 'fetch_by_db_accession', [$db, 'MIM_GENE'] );
+    my $mim_m = $self->_generic_create( 'DBEntry', 'fetch_by_db_accession', [$db, 'MIM_MORBID'] );
+    @$t_features = (@$mim_g, @$mim_m);
+  }
+  else {
+    $t_features = $self->_generic_create( 'DBEntry', 'fetch_by_db_accession', [$db, $subtype] );
+  }
+  if( $t_features && ref($t_features) eq 'ARRAY') {
+    ($xrefarray, $genes) = $self->create_XrefArray($t_features, $db);
+  }
+
+  my $features = {'Xref'=>$xrefarray};
+  $$features{'Gene'} = $genes if $genes;
+  return $features;
+}
+
 sub search_Xref {
   my ($self, $db, $exdb, $string, $flag) = @_;
 
@@ -203,24 +206,17 @@ sub search_Xref {
   }
 
   my @xref_dbs = @$exdb;
-#warn "DB @$exdb"; 
-  my $features = [];
-  my $genes = [];
+  my ($features, $total_features, $genes);
   foreach my $x (@xref_dbs) {
     my $t_features;
     eval {
      $t_features = $db_adaptor->get_DBEntryAdaptor->fetch_all_by_description('%'.$string.'%', $x);
     };
     if( $t_features && ref($t_features) eq 'ARRAY') {
-      ## get genes for each xref
-      foreach my $t (@$t_features) {
-        my $id = $t->primary_id;
-        my $t_genes = $self->_generic_create( 'Gene', 'fetch_all_by_external_name', $db, $id, 'no_errors' );
-        push (@$genes, @$t_genes) if ref($t_genes) eq 'ARRAY';
-      }
-      push @$features, @$t_features;
+      push @$total_features, @$t_features;
     }
   }
+  ($features, $genes) = $self->create_XrefArray($total_features, $db);
 
   if ($features && @$features) { ## Return if we have at least one feature
     my %results = ('Xref'=>$features);
@@ -233,6 +229,27 @@ sub search_Xref {
     $self->problem( 'no_match', 'No Match', "No features could be found matching the search term '$string'" );
   }
   return undef;
+}
+
+sub create_XrefArray {
+  my ($self, $t_features, $db) = @_;
+  my (@features, @genes);
+
+  foreach my $t (@$t_features) {
+    ## we need to keep each xref and its matching genes together
+    my @matches;
+    push @matches, $t;
+    ## get genes for each xref
+    my $id = $t->primary_id;
+    my $t_genes = $self->_generic_create( 'Gene', 'fetch_all_by_external_name', $db, $id, 'no_errors' );
+    if ($t_genes && @$t_genes) {
+      push (@matches, @$t_genes);
+      push (@genes, @$t_genes);
+    }
+    push @features, \@matches;
+  }
+
+  return (\@features, \@genes);
 }
 
 1;
