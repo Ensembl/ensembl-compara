@@ -298,14 +298,17 @@ sub parseHTML {
 
     sub start_handler {
 	my ($self, $tag, $text) = @_;
-#	warn "+ $tag : $text\n";	    
+
 # HTML tags that we allow go in here - rest will be encoded
 	if ($tag eq 'span' || $tag eq 'a' || $tag eq 'img' || $tag eq 'br' || $tag eq 'br/') {
+	    if ($tag eq 'a') { # Make all das links open in a new window
+		$text =~ s/\>$/ target="external"\>/;
+	    }
 	    push @htext, $text;
 	} else {
 	    push @htext, encode_entities ($text);
 	}
-
+#	warn "+ $tag : $text\n";	    
 	$self->handler(text => sub { my $tt = shift; push @htext, encode_entities ($tt) }, "dtext");
     }
 
