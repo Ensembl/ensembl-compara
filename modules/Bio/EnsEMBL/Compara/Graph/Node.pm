@@ -24,7 +24,7 @@ System has a simple API based on creating Nodes and then linking them together:
   new Bio::EnsEMBL::Compara::Graph::Link($node1, $node2, $distance_between);
 And to 'disconnect' nodes, one just breaks a link;
   my $link = $node1->link_for_neighbor($node2);
-  $link->release;
+  $link->dealloc;
 Convenience methods to simplify this process
   $node1->create_link_to_node($node2, $distance_between);
   $node2->unlink_neighbor($node1);
@@ -235,7 +235,7 @@ sub unlink_all {
 
   Overview   : release all neighbors and clear arrays and hashes
                will cause potential deletion of neighbors if refcount reaches Zero.
-  Example    : $self->release_neighbors
+  Example    : $self->cascade_unlink
   Returntype : $self
   Exceptions : none
   Caller     : general
@@ -384,6 +384,46 @@ sub has_neighbor {
   return 0;
 }
 
+sub neighbors {
+  my $self = shift;
+
+  my @neighbors;
+
+  foreach my $link (@{$self->links}) {
+    my $neighbor = $link->get_neighbor($self);
+    push @neighbors, $neighbor;
+  }
+
+  return \@neighbors;
+}
+
+sub find_node_by_name {
+  my $self = shift;
+  my $name = shift;
+  
+  return $self if($name eq $self->name);
+  
+  foreach my $neighbor (@{$self->neighbors}) {
+    my $found = $neighbor->find_node_by_name($name);
+    return $found if(defined($found));
+  }
+  
+  return undef;
+}
+
+sub find_node_by_node_id {
+  my $self = shift;
+  my $node_id = shift;
+  
+  return $self if($node_id eq $self->node_id);
+  
+  foreach my $neighbor (@{$self->neighbors}) {
+    my $found = $neighbor->find_node_by_node_id($node_id);
+    return $found if(defined($found));
+  }
+  
+  return undef;
+}
 
 1;
 
