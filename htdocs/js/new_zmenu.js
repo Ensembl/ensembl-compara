@@ -98,7 +98,8 @@ function show_zmenu( caption, e_x, e_y, menu_items, zmn ) {
       pfetch( 'pfetch_'+zmn, temp[1] );
     } else if( href ) {
       to=dce('a');ac(to,o);o=to;sa(o,'href',href)
-      if(target) sa(o,'rel','external')
+        if(target) sa(o,'rel','external');
+	if (caption.match(/DAS LINK:/)) sa(o,'target','external');
     }
     
     ac(ce,o);
@@ -236,7 +237,7 @@ function extractAttributes (el, content) {
 }
 
 function parseHTML (el, content) {
-  var pTags = /<(a)\s+([^\>\n]*)\s*\>(.*)<\s*\/a\s*>|<(img)\s+([^\>\n]*)\s*\/?>|<(br)\s*\/?>/;
+  var pTags = /<(a)\s+([^\>\n]*)\s*\>(.*)<\s*\/a\s*>|<(img)\s+([^\>\n]*)\s*\/?>|<(br)\s*\/?>/i;
 
   var tag;
   while ( (tag = content.match(pTags)) != null) {
@@ -247,13 +248,15 @@ function parseHTML (el, content) {
      var tag_attributes = tag[2] || tag[5];
      var tag_text = tag[3]; // Can contain other tags
 
-//     alert(tag_name + " * " + tag_attributes + " * " + tag_text);
-
      var cel = dce(tag_name);
      if (tag_attributes != null) {
        extractAttributes(cel, tag_attributes);
      }
-     
+
+     if (tag_name == 'a' || tag_name == 'A') {
+        sa(cel, 'target', 'external');
+     }
+
      if (tag_text != null) {
        parseHTML(cel, tag_text);
      }
