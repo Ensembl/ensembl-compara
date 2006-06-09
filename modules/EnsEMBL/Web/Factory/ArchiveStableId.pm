@@ -31,10 +31,16 @@ sub createObjects {
   return undef unless $id;
 
   my $aa = $db_adaptor->get_ArchiveStableIdAdaptor;
-  my $archiveStableId = $aa->fetch_by_stable_id($id);
-  unless ($archiveStableId) {
-    $archiveStableId =~ s/\..*//;
+  my $archiveStableId;
+  
+  if ($id =~ /(\S+)\.(\d+)/) {
+    my $version = $2;
+    $archiveStableId = $aa->fetch_by_stable_id_version($1, $version);
   }
+  else {
+    $archiveStableId = $aa->fetch_by_stable_id($id);
+  }
+
   return $self->problem( 'Fatal', "Unknown ID $id",  "Either $id is an unknown ID or there was a problem retrieving it." ) unless $archiveStableId;
 
   my $obj = EnsEMBL::Web::Proxy::Object->new( 'ArchiveStableId', $archiveStableId, $self->__data );

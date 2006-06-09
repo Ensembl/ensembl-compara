@@ -35,9 +35,10 @@ sub name {
   my($panel, $object) = @_;
   my $label  = 'Stable ID';
   my $id = $object->stable_id;
+  my $version = $object->version;
   my $param = $object->type eq 'Translation' ? 'peptide' : lc($object->type);
   my $name = _archive_link($object, $id, $param, $id) || $id;
-  $panel->add_row( $label, $object->type.": ".$name );
+  $panel->add_row( $label, $object->type.": $name.$version" );
   return 1;
 }
 
@@ -53,7 +54,7 @@ sub db_name {
     $status = "Current v$release";
   }
   elsif ($current_release > $release) {
-    $status = "<b>This ID has been removed from the current version of Ensembl</b>.<br />Archived in release $release";
+    $status = "<b>This ID has been removed from the current version of Ensembl</b>.<br />Last release $release";
   }
   else {
     $status = "Data error: release $release";
@@ -67,7 +68,7 @@ sub db_name {
 
 sub transcript {
   my($panel, $object) = @_;
-  my $label  = 'Related transcripts';
+  my $label  = 'Archived transcripts';
   my @ids   = @{ $object->transcript || []};
   return  $panel->add_row( $label, "Unknown") unless scalar @ids;
   my $html;
@@ -81,14 +82,16 @@ sub transcript {
 
 sub peptide {
   my($panel, $object) = @_;
-  my $label  = 'Related peptides';
+  my $label  = 'Archived peptides';
   my @ids   = @{ $object->peptide || []};
   return  $panel->add_row( $label, "Unknown") unless scalar @ids;
 
   my $html;
   foreach (@ids) {
-    $html .= "<p>".$_->stable_id;
-    $html .= " <kbd>".$_->get_peptide."</kbd></p>";
+    $html .= "<kbd>>".$_->stable_id."<br />";
+    my $seq = $_->get_peptide;
+    $seq =~ s#(.{1,60})#$1<br />#g;
+    $html .= "$seq</kbd><br />";
   }
   $panel->add_row( $label, $html);
   return 1;
@@ -107,7 +110,7 @@ sub history {
   $panel->add_columns(
     { 'key' => 'Release',  },
     { 'key' => 'Assembly',  },
-    { 'key' => 'Database', },
+    { 'key' => 'Database', title=> 'Last database' },
 		     );
 
   my %columns;
@@ -142,13 +145,13 @@ sub history {
 
       next if $type eq 'Translation';
       # get peptide length
-      foreach my $pep (@{ $a->get_all_translation_archive_ids }) {
-	my $pep_length = length($pep->get_peptide)."bp";
-	my $archive = _archive_link($object, $pep->stable_id, "peptide", "<img src='/img/ensemblicon.gif' />", $releases[$i]);
+      # foreach my $pep (@{ $a->get_all_translation_archive_ids }) {
+      # my $pep_length = length($pep->get_peptide)."bp";
+      # my $archive = _archive_link($object, $pep->stable_id, "peptide", "<img src='/img/ensemblicon.gif' />", $releases[$i]);
 
-	$row->{$a->stable_id}.= "<br /><a href='idhistoryview?peptide=".
-	  $pep->stable_id."'>".$pep->stable_id."</a> ($pep_length) $archive";
-      }
+      # $row->{$a->stable_id}.= "<br /><a href='idhistoryview?peptide=".
+      #   $pep->stable_id."'>".$pep->stable_id."</a> ($pep_length) $archive";
+      #      }
     }
     $panel->add_row( $row );
   }

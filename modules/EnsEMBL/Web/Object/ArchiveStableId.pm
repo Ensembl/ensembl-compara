@@ -33,6 +33,10 @@ sub stable_id {
   return $self->Obj->stable_id;
 }
 
+sub version {
+  my $self = shift;
+  return $self->Obj->version;
+}
 
 sub type {
   my $self = shift;
