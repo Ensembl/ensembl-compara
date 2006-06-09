@@ -19,6 +19,7 @@ sub init_label {
   return unless @$coverage_obj;
   my $text  =  @$coverage_obj ? "Resequence coverage" : "No reseq. coverage";
   $self->init_label_text( $text );
+  $self->{'label'}->{'ptsize'} *= 0.8;
 }
 
 

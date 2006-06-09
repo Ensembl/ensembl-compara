@@ -51,7 +51,7 @@ sub _init {
   my $th_c = $res_c[3];
 
   my( $fontname, $fontsize ) = $self->get_font_details( 'innertext' );
-  my @res = $self->get_text_width( 0, 'M', '', 'font'=>$fontname, 'ptsize' => $fontsize );
+  my @res = $self->get_text_width( 0, 'X', '', 'font'=>$fontname, 'ptsize' => $fontsize );
   my $w  = $res[2];
   my $th = $res[3];
   my $pix_per_bp    = $Config->transform->{'scalex'};
@@ -81,14 +81,24 @@ sub _init {
   my $offset = $th_c + 4;
   my @colours       = qw(chartreuse4 darkorchid4);# orange4 deeppink3 dodgerblue4);
 
-  $self->strain_name_text($w, $th, $offset, "Compare to $reference_name", $Config);
+  $self->strain_name_text($th, $fontname, $fontsize, $offset, "Compare to $reference_name", $Config);
 
 
   # First lets draw the reference SNPs....
   my @golden_path;
+  my @widths = ();
   foreach my $snp_ref ( @snps ) {
-    my $snp = $snp_ref->[2];
+    my $start = $snp_ref->[0];
+    my $end   = $snp_ref->[1];
+    my $snp   = $snp_ref->[2];
     my $label =  $snp->allele_string;
+
+    my @res = $self->get_text_width( ($end-$start+1)*$pix_per_bp, $label, 'X', 'font'=>$fontname, 'ptsize' => $fontsize );
+    my $tmp_width = ($w*2+$res[2])/$pix_per_bp;
+    my $two = $tmp_width;
+       $tmp_width =  $end-$start+1 if  $end-$start+1 < $tmp_width;
+    warn "$end - $start - $tmp_width - $two";
+    push @widths, $tmp_width;
 
     my ($golden_path_base) = split "\/", $label;
     my ($reference_base, $colour);
@@ -126,21 +136,23 @@ sub _init {
     $colour = $colours[0] if $reference_base;
     $snp_ref->[3] = { $reference_base => $colours[0] }  ;
     $snp_ref->[4] = $reference_base ;
-    $self->do_glyphs($offset, $th, $w, $pix_per_bp, $fontname, $fontsize, $Config, $label, $snp_ref->[0], 
+    $self->do_glyphs($offset, $th, $tmp_width, $pix_per_bp, $fontname, $fontsize, $Config, $label, $snp_ref->[0], 
 		     $snp_ref->[1], $colour, $reference_base);
 
   } #end foreach $snp_ref
 
   # Make sure the golden path one is in there somewhere
+  my $c = 0;
   if ( $reference_name ne $golden_path && !$strain_alleles{$golden_path} ) {
     $offset += $track_height;
     $self->strain_name_text( $th, $fontname, $fontsize, $offset, $golden_path, $Config);
     foreach my $hash (@golden_path) {
       my $snp_ref = $hash->{snp_ref};
       my $text_colour = $hash->{colour} ? "white" : "black";
-       $self->do_glyphs($offset, $th, $w, $pix_per_bp, $fontname, $fontsize, $Config, $hash->{label}, 
+      $self->do_glyphs($offset, $th, $widths[$c], $pix_per_bp, $fontname, $fontsize, $Config, $hash->{label}, 
 			$snp_ref->[0], $snp_ref->[1], 
 			$hash->{colour}, $hash->{base}, $text_colour);
+      $c++;
     }
   }
 
@@ -151,6 +163,7 @@ sub _init {
     $offset += $track_height;
     $self->strain_name_text($th,$fontname, $fontsize, $offset, $strain, $Config);
 
+    my $c = 0;
     foreach my $snp_ref ( @snps ) {
       my $snp = $snp_ref->[2];
       my $label =  $snp->allele_string;
@@ -181,8 +194,9 @@ sub _init {
       }
 
       # Draw rectangle ------------------------------------
-      $self->do_glyphs($offset, $th,$w, $pix_per_bp, $fontname, $fontsize, $Config, $label, $snp_ref->[0], 
+      $self->do_glyphs($offset, $th,$widths[$c], $pix_per_bp, $fontname, $fontsize, $Config, $label, $snp_ref->[0], 
 		       $snp_ref->[1], $colour, $allele_string, $text);
+      $c++;
     }
   }
   $self->push(new Sanger::Graphics::Glyph::Space({ 'y' => $offset + $track_height, 'height' => $th+2, 'x' => 1, 'width' => 1, 'absolutey' => 1, }));
@@ -198,7 +212,6 @@ sub strain_name_text {
   (my $url_name = $name) =~ s/Compare to //;
   my $URL = $Config->{'URL'}."reference=$url_name;";
 
-warn "$offset....$name $fontname($fontsize) ....";
   my $textglyph = new Sanger::Graphics::Glyph::Text({
       'x'          => -100,
       'y'          => $offset+1,
@@ -213,7 +226,8 @@ warn "$offset....$name $fontname($fontsize) ....";
       'width'      => 95,
       'absolutex'  => 1,
       'absolutey'  => 1,
-    });
+      'absolutewidth'  => 1,
+  });
   $self->push( $textglyph );
   return 1;
 }
@@ -222,7 +236,7 @@ warn "$offset....$name $fontname($fontsize) ....";
 
 
 sub do_glyphs {
-  my ($self, $offset, $th, $w, $pix_per_bp, $fontname, $fontsize, $Config, $label, $start, $end, $colour, $allele_string, $text_colour) = @_;
+  my ($self, $offset, $th, $tmp_width, $pix_per_bp, $fontname, $fontsize, $Config, $label, $start, $end, $colour, $allele_string, $text_colour) = @_;
 
   my $length = exists $self->{'container'}{'ref'} ? $self->{'container'}{'ref'}->length : $self->{'container'}->length;
 
@@ -231,37 +245,31 @@ sub do_glyphs {
 
   my @res = $self->get_text_width( 0, $allele_string, '', 'font'=>$fontname, 'ptsize' => $fontsize );
 
-  my $tmp_width = ($res[2] + $w*2)/$pix_per_bp;
-  if ( ($end - $start + 1) > $tmp_width ) {
-    $start = ( $end + $start-$tmp_width )/2;
-    $end =  $start+$tmp_width ;
-  }
-
   my $back_glyph = new Sanger::Graphics::Glyph::Rect({
-    'x'         => $start-1,
+    'x'         => ($end+$start-1-$tmp_width)/2,
     'y'         => $offset,
     'colour'    => $colour,
     'bordercolour' => 'black',
     'absolutey' => 1,
     'height'    => $th+2,
-    'width'     => $end-$start+1,
+    'width'     => $tmp_width,
     'absolutey' => 1,
   });
   $self->push( $back_glyph );
 
-  my $strain_bp_textwidth  = $w * length($allele_string || 1) ;
-  if ( ($end-$start + 1)  >$strain_bp_textwidth) {
+  
+  if ( ($end-$start + 1) > $res[2]/$pix_per_bp) {
     my $textglyph = new Sanger::Graphics::Glyph::Text({
-            'x'          => ( $end + $start - 1)/2,
-            'y'          => 2+$offset,
-            'width'      => 0,
-            'height'     => $th,
-            'font'       => $fontname,
-            'ptsize'     => $fontsize,
-            'colour'     => $text_colour || "white",
-            'text'       => $allele_string,
-            'absolutey'  => 1,
-          }) if $allele_string;
+      'x'          => ( $end + $start - 1)/2,
+      'y'          => 2+$offset,
+      'width'      => 0,
+      'height'     => $th,
+      'font'       => $fontname,
+      'ptsize'     => $fontsize,
+      'colour'     => $text_colour || "white",
+      'text'       => $allele_string,
+      'absolutey'  => 1,
+    }) if $allele_string;
     $self->push( $textglyph ) if defined $textglyph;
   }
   return 1;

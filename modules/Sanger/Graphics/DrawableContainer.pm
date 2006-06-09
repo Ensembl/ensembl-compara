@@ -271,7 +271,7 @@ sub new {
         unshift @{$glyphset->{'glyphs'}}, $background;
       }
       ## set up the "bumping button" label for this strip
-      if(defined $glyphset->label()) {
+      if(defined $glyphset->label() && $show_labels eq 'yes' ) {
         my $gh = $glyphset->label->height || $Config->texthelper->height($glyphset->label->font());
         $glyphset->label->y(
           ( ($glyphset->maxy() - $glyphset->miny() - $gh) / 2) + $gminy

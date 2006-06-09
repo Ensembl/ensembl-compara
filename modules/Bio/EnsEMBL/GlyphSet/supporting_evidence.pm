@@ -11,21 +11,21 @@ use Bio::EnsEMBL::GlyphSet_simple;
 @ISA = qw(Bio::EnsEMBL::GlyphSet_simple);
 
 sub my_label {  # no labbel
-    my $self = shift;
-    return ;
+  my $self = shift;
+  return ;
 }
 
 sub href {
-    my ($self, $hit, $exon_count) = @_;
-    my $alignment = '';
-    my $seq_type = 'P';
-    my $Container = $self->{'container'};
+  my ($self, $hit, $exon_count) = @_;
+  my $alignment = '';
+  my $seq_type = 'P';
+  my $Container = $self->{'container'};
    #links to alignview
     
-   $seq_type = 'N' if ( $Container->{'hits'}{$hit}{'datalib'} !~ /swir/i ) ;
+  $seq_type = 'N' if ( $Container->{'hits'}{$hit}{'datalib'} !~ /swir/i ) ;
    
   if ( $Container->{'hits'}{$hit}{'datalib'} !~ /pfamfrag/i && $hit !~ /^WP.+[A-Z]$/i ) {
-	$alignment =
+    $alignment =
         "/@{[$self->{container}{_config_file_name_}]}/alignview?transcript=".$Container->{'transcript'}{'ID'}.";exon=".@{$Container->{'hits'}{$hit}{'exon_ids'}}[$exon_count].";sequence=".$hit.";seq_type=$seq_type;db=".
 	$Container->{'transcript'}{'db'} ;
   }
@@ -40,14 +40,20 @@ sub _init {
     my $Config      = $self->{'config'};
     my $display_limit = 0; 
   
+  my( $fontname_i, $fontsize_i ) = $self->get_font_details( 'innertext' );
+  my @res_i = $self->get_text_width( 0, 'X', '', 'font'=>$fontname_i, 'ptsize' => $fontsize_i );
+  my $th_i = $res_i[3];
+  my( $fontname_o, $fontsize_o ) = $self->get_font_details( 'outertext' );
+  my @res_o = $self->get_text_width( 0, 'X', '', 'font'=>$fontname_o, 'ptsize' => $fontsize_o );
+  my $th_o = $res_o[3];
+
     my $BOX_HEIGHT    = 10;  # exon height
     my $BOX_WIDTH     = 25;  # exon width
     my $INTRON_HEIGHT = 10;  # intron height
     my $INTRON_WIDTH  = 15;  # intron width
     my $TEXT_HEIGHT   = 10;  # label height
     my $TEXT_WIDTH    = 70;  # label width
-    my ($MED_TEXT_W, $MED_TEXT_H) = $Config->texthelper()->real_px2bp('MediumBold');
-    my ($w,$h)   = $Config->texthelper()->real_px2bp('Tiny');  # give pixs per char for labels
+
     my $CONT_LENGTH   = $Config->get('_settings','width') ;    # get container lenght  
     my $LOW_SCORE = $Config->get('supporting_evidence', 'low_score'); # low score colour
     my $HIGH_SCORE = $Config->get('supporting_evidence', 'colours', '100'); # high score colour  
@@ -83,16 +89,17 @@ my $x = $TEXT_WIDTH + 10 + ($BOX_WIDTH / 2);
 for (my $j=1; $j <= $NO_OF_COLUMNS; $j++){
  
     my $header = new Sanger::Graphics::Glyph::Text({
-                    'x'          => $x - (length($j) * ($MED_TEXT_W / 2 )) + 3,
-            	    'y'          => 1,
-            	    'width'      => $BOX_WIDTH,
-            	    'height'     => $TEXT_HEIGHT,
-                    'font'       => 'MediumBold',
-                    'colour'     => 'darkred',
-           	    'text'       => $j ,
-          	    'absolutey'  => 1,
-		    'absolutex'  => 1,'absolutewidth'=>1,
-            	});  
+      'x'          => $x,
+      'y'          => 1,
+      'width'      => 0,
+      'height'     => $th_o,
+      'font'       => $fontname_o,
+      'ptsize'     => $fontsize_o,
+      'colour'     => 'darkred',
+      'text'       => $j ,
+      'absolutey'  => 1,
+      'absolutex'  => 1,'absolutewidth'=>1,
+    });  
 $self->push($header);
 $x = $x + $BOX_WIDTH + $INTRON_WIDTH;
  
@@ -119,8 +126,10 @@ for my $hit (sort { $Container->{'hits'}{$b}{'top_score'} <=> $Container->{'hits
                     'x'          => 1 ,
             	    'y'          => $y,
             	    'width'      => $TEXT_WIDTH,
-            	    'height'     => $TEXT_HEIGHT,
-                    'font'       => 'Small',
+            	    'height'     => $th_o,
+                    'font'       => $fontname_o,
+                    'ptsize'     => $fontsize_o,
+                    'halign'     => 'left', 
                     'colour'     => 'blue',
            	    'text'       => $hit,
 		    'href'       => $Container->{'hits'}{$hit}{'link'},
@@ -130,18 +139,26 @@ for my $hit (sort { $Container->{'hits'}{$b}{'top_score'} <=> $Container->{'hits
    
 # print the description (add full decription) under the exons
    my $desc_text = $Container->{'hits'}{$hit}{'description'}; 
+   my $cont = '';
+   my @res;
+   @res = $self->get_text_width( ($CONT_LENGTH-$TEXT_WIDTH-30), $desc_text, '', 'font' => $fontname_i, 'ptsize' => $fontsize_i );
+   while( $res[0] eq '' && $desc_text ne '' ) {
+     $desc_text =~ s/ ([^ ]*)$//;
+     @res = $self->get_text_width( ($CONT_LENGTH-$TEXT_WIDTH-30), "$desc_text...", '', 'font' => $fontname_i, 'ptsize' => $fontsize_i );
+   };
    my $desc = new Sanger::Graphics::Glyph::Text({
-                    'x'          => $x ,
-            	    'y'          => $y + 15,
-            	    'width'      => ($BOX_WIDTH + $INTRON_WIDTH) * $NO_OF_COLUMNS,
-            	    'height'     => $TEXT_HEIGHT,
-                    'font'       => 'Tiny',
-                    'colour'     => 'Black',
-           	    'text'       => ($w * length($desc_text)) > ($CONT_LENGTH - ($TEXT_WIDTH + 30)) ? substr($desc_text,
-				0, (($CONT_LENGTH - 150) / $w))."..." : $desc_text,
-          	    'absolutey'  => 1,
-		    'absolutex'  => 1,'absolutewidth'=>1,
-            	});
+     'x'          => $x ,
+     'y'          => $y + 15,
+     'width'      => ($BOX_WIDTH + $INTRON_WIDTH) * $NO_OF_COLUMNS,
+     'height'     => $th_i,
+     'font'       => $fontname_i,
+     'ptsize'     => $fontsize_i,
+     'halign'     => 'left',
+     'text'       => $res[0], 
+     'colour'     => 'Black',
+     'absolutey'  => 1,
+     'absolutex'  => 1,'absolutewidth'=>1,
+   });
 $self->push($desc);
 
 # for each hit (with score) add an exon onto the hit line   

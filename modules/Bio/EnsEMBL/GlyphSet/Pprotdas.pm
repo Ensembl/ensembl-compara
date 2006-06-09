@@ -22,10 +22,12 @@ sub init_label {
   my $text     = $self->{'extras'}->{'label'} || $self->{'extras'}->{'name'};
   my $colour   = $Config->get($confkey,'col') || 'black';
 
+
   my $print_label = ( length($text) > ( $numchars - $indent ) ? 
 		      substr( $text, 0, ( $numchars - $indent - 2 ) )."..": 
 		      $text );
   $self->init_label_text( $print_label );
+  $self->{'label'}->{'ptsize'} *= 0.8;
 }
 
 

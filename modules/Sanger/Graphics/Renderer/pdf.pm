@@ -96,13 +96,32 @@ sub render_Text {
     my $gcolour = $glyph->colour() || "black";
     my $text    = $glyph->text();
     my $x = $self->X($glyph);
+    my $w = $self->W($glyph);
     my $y = $self->Y($glyph);
+    my $h = $self->H($glyph);
 
+    my $S = $glyph->{'ptsize'}||8;
     my $T = $self->{'canvas'}{'t'};
-       $T->translate( $x, $y );
-       $T->font( $self->{'canvas'}{'font'}, 8 );
+       $T->font( $self->{'canvas'}{'font'}, $S );
        $T->fillcolor( $gcolour ); 
-       $T->text( $text );
+    if( $glyph->{'valign'} eq 'top' ) {
+      $y += $h - $S;
+    } elsif( $glyph->{'valign'} eq 'bottom' ) {
+      $y += 0;
+    } else {
+      $y += $h/2 - $S/2;
+    }
+
+    if( $glyph->{'halign'} eq 'right' ) {
+      $T->translate( $x+$w, $y );
+      $T->text_right( $text );
+    } elsif( $glyph->{'halign'} eq 'center' ) {
+      $T->translate( $x+$w/2, $y );
+      $T->text_center( $text );
+    } else {
+      $T->translate( $x, $y );
+      $T->text( $text );
+    }
 }
 
 sub render_Circle {

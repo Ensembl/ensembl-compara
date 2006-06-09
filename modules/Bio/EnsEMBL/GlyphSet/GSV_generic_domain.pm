@@ -80,13 +80,12 @@ sub _init {
     my @res = $self->get_text_width( 0, $text_label, '', 'font' => $fontname, 'ptsize' => $fontsize );
     $Composite3->push( new Sanger::Graphics::Glyph::Text({
       'x'         => $Composite3->{'x'},
-      'y'         => $h+2,
-      'height'    => $res[3],
+      'y'         => $h,
+      'height'    => $th+4,
       'width'     => $res[2]/$pix_per_bp,
       'font'      => $fontname,
       'ptsize'    => $fontsize,
       'halign'    => 'left', 
-      'valign'    => 'top',
       'colour'    => 'purple4',
       'text'      => $text_label,
       'absolutey' => 1,
@@ -95,13 +94,12 @@ sub _init {
     my @res = $self->get_text_width( 0, $text_label, '', 'font' => $fontname, 'ptsize' => $fontsize );
     $Composite3->push( new Sanger::Graphics::Glyph::Text({
       'x'         => $Composite3->{'x'},
-      'y'         => $h+4 + $th,
-      'height'    => $res[3],
+      'y'         => $h+2 + $th,
+      'height'    => $th+4,
       'width'     => $res[2]/$pix_per_bp,
       'font'      => $fontname,
       'ptsize'    => $fontsize,
       'halign'    => 'left', 
-      'valign'    => 'top',
       'colour'    => 'purple4',
       'text'      => $text_label,
       'absolutey' => 1,

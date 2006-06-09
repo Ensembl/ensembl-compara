@@ -29,9 +29,10 @@ sub _init {
     my $Config         = $self->{'config'};
     my $Container      = $self->{'container'};
     my $h              = 0;
-    my $fontname       = "Tiny";
-    my $fontwidth_bp   = $Config->texthelper->width($fontname),
-    my ($fontwidth, $fontheight)       = $Config->texthelper->px2bp($fontname),
+    my( $fontname, $fontsize ) = $self->get_font_details( 'innertext' );
+    my @res = $self->get_text_width( 0, 'X', '', 'font'=>$fontname, 'ptsize' => $fontsize );
+    my $th = $res[3];
+    my $pix_per_bp = $self->{'config'}->transform()->{'scalex'};
     my $black          = 'black';
     my $highlights     = join('|',$self->highlights());
     $highlights        = $highlights ? ";h=$highlights" : '';
@@ -124,12 +125,15 @@ sub _init {
             'absolutey' => 1,
         }));
         my $LABEL = $minor_unit < 250 ? $self->commify($box_start): $self->bp_to_nearest_unit( $box_start, 2 );
-        if( $last_text_X + length($LABEL) * $fontwidth * 1.5 < $box_start ) {
+        my @res = $self->get_text_width( 0, $LABEL, '', 'font'=>$fontname, 'ptsize' => $fontsize );
+        if( $last_text_X + $res[2] * 1.5 / $pix_per_bp < $box_start ) {
           $self->push(new Sanger::Graphics::Glyph::Text({
             'x'         => $box_start - $global_start,
             'y'         => 8,
-            'height'    => $fontheight,
+            'height'    => $th,
             'font'      => $fontname,
+            'ptsize'      => $fontsize,
+            'halign'    => 'left',
             'colour'    => $feature_colour,
             'text'      => $LABEL,
             'absolutey' => 1,

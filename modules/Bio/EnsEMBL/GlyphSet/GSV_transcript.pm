@@ -50,11 +50,15 @@ sub _init {
   my($colour, $label, $hilight) = $self->colour( $gene, $transcript, $colours, %highlights );
   my $coding_start = $trans_ref->{'coding_start'};
   my $coding_end   = $trans_ref->{'coding_end'  };
+  my( $fontname, $fontsize ) = $self->get_font_details( 'caption' );
+  my @res = $self->get_text_width( 0, 'X', '', 'font'=>$fontname, 'ptsize' => $fontsize );
+  my $th = $res[3];
 
   ## First of all draw the lines behind the exons.....
+  my $Y = $Config->{'_add_labels'} ? $th : 0;
   foreach my $subslice (@{$Config->{'subslices'}}) {
     $self->push( new Sanger::Graphics::Glyph::Rect({
-      'x' => $subslice->[0]+$subslice->[2]-1, 'y' => $h/2, 'h'=>1, 'width'=>$subslice->[1]-$subslice->[0], 'colour'=>$colour, 'absolutey'=>1
+      'x' => $subslice->[0]+$subslice->[2]-1, 'y' => $Y+$h/2, 'h'=>1, 'width'=>$subslice->[1]-$subslice->[0], 'colour'=>$colour, 'absolutey'=>1
     }));
   }
   ## Now draw the exons themselves....
@@ -76,7 +80,7 @@ sub _init {
     #Draw a filled rectangle in the coding region of the exon
       $self->push( new Sanger::Graphics::Glyph::Rect({
         'x' => $filled_start -1,
-        'y'         => 0,
+        'y'         => $Y,
         'width'     => $filled_end - $filled_start + 1,
         'height'    => $h,
         'colour'    => $colour,
@@ -91,7 +95,7 @@ sub _init {
       #Draw a non-filled rectangle around the entire exon
       my $G = new Sanger::Graphics::Glyph::Rect({
         'x'         => $box_start -1 ,
-        'y'         => 0,
+        'y'         => $Y,
         'width'     => $box_end-$box_start +1,
         'height'    => $h,
         'bordercolour' => $colour,
@@ -105,9 +109,6 @@ sub _init {
   } #we are finished if there is no other exon defined
 
   if( $Config->{'_add_labels'} ) { 
-    my( $fontname, $fontsize ) = $self->get_font_details( 'caption' );
-    my @res = $self->get_text_width( 0, 'X', '', 'font'=>$fontname, 'ptsize' => $fontsize );
-    my $h = $res[3];
     my $H = 0;
     my  $T = length( $transcript->stable_id );
     my $name =  ' '.$transcript->external_name;
@@ -119,7 +120,7 @@ sub _init {
        # 'x'         => - $width_of_label,
         'x'         => -100,
         'y'         => $H,
-        'height'    => $h,
+        'height'    => $th,
         'width'     => 0,
         'font'      => $fontname,
         'ptsize'    => $fontsize,
@@ -129,7 +130,7 @@ sub _init {
         'absolutey' => 1,
         'absolutex' => 1,
       });
-      $H += $h + 1;
+      $H += $th + 1;
       $self->push($tglyph);
     }
   }

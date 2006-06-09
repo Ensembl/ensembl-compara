@@ -14,6 +14,7 @@ sub init_canvas {
   $self->{'im_width'}  = $im_width;
   $self->{'im_height'} = $im_height;
   my $canvas = GD::Image->newTrueColor($im_width, $im_height);
+  $self->{'ttf_path'}  = "/usr/local/share/fonts/ttfonts/";
   $self->canvas($canvas);
   my $bgcolor = $self->colour($config->bgcolor);
   $self->{'canvas'}->filledRectangle(0,0, $im_width, $im_height, $bgcolor );

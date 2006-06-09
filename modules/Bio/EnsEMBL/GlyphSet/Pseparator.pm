@@ -27,13 +27,17 @@ sub init_label {
     $text = substr( $text, 0, 14 ).".."
   }
 
-  my @res = $self->get_text_width(0,$text,'','font'=>$self->{'config'}->{'_font_face'},'ptsize'=>$self->{'config'}->{'_font_size'});
-  $self->{'extras'}->{'x_offset'} =  $res[2] - 120;
+  my( $fontname, $fontsize ) = $self->get_font_details( 'label' );
+  my @res = $self->get_text_width(0,$text,'','font'=>$fontname, 'ptsize' => $fontsize );
+  $self->{'extras'}->{'x_offset'} =  $res[2] - 100;
 
   my $zmenu = { caption=>$longtext };
   $authority and $zmenu->{"01:Details"} = $authority;
 
+
   my $label = new Sanger::Graphics::Glyph::Text({
+    'font'      => $fontname,
+    'ptsize'    => $fontsize,
     'height'    => $res[3],
     'text'      => $text,
     'colour'    => $colour,

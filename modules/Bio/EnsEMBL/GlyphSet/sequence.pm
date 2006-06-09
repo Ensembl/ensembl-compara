@@ -7,6 +7,8 @@ use Bio::EnsEMBL::Feature;
 
 use Bio::EnsEMBL::Utils::Eprof qw(eprof_start eprof_end eprof_dump);
 
+sub fixed { return 1;}
+
 sub my_label { return "Sequence"; }
 
 sub features {

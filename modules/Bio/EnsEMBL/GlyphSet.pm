@@ -21,10 +21,11 @@ sub get_font_details {
   my( $self, $type ) = @_;
   my $ST = $self->{'config'}->species_defs->ENSEMBL_STYLE;
   return (
-    $ST->{'GRAPHIC_FONT'},
+    $type =~ /fixed/i ? $ST->{'GRAPHIC_FONT_FIXED'} : $ST->{'GRAPHIC_FONT'},
     $ST->{'GRAPHIC_FONTSIZE'} * ($ST->{'GRAPHIC_'.uc($type)}||1)
   );
 }
+
 sub init_label_text {
   my( $self, $text, $help_link, $description) = @_;
   return if defined $self->{'config'}->{'_no_label'};
@@ -60,11 +61,13 @@ sub get_text_width {
   my $KEY = "$width--$text--$short_text--$parameters{'font'}--$parameters{'ptsize'}";
   return @{$self->{'_cache_'}{$KEY}} if $self->{'_cache_'}{$KEY};
   $width ||= 1e6;
-  my $font   = '/usr/local/share/fonts/ttfonts/'.($parameters{'font'}||'arial').'.ttf';
+  my $font   = $self->{'config'}->species_defs->ENSEMBL_STYLE->{'GRAPHIC_TTF_PATH'}.($parameters{'font'}||'arial').'.ttf';
+warn "........... $font ...........";
   my $ptsize =  $parameters{'ptsize'}||10;
   my $gd_text = GD::Text->new();
   eval {
     if( -e $font ) {
+warn "TTF";
       $gd_text->set_font( $font, $ptsize );
     } elsif( $parameters{'font'} eq 'Tiny' ) {
       $gd_text->set_font( gdTinyFont );
@@ -287,6 +290,12 @@ sub no_features {
   $self->errorTrack( "No ".$self->my_label." in this region" ) if $self->{'config'}->get('_settings','opt_empty_tracks')==1;
 }
 
+sub thousandify {
+  my( $self, $value ) = @_;
+  local $_ = reverse $value;
+  s/(\d\d\d)(?=\d)(?!\d*\.)/$1,/g;
+  return scalar reverse $_;
+}
 
 
 sub errorTrack {

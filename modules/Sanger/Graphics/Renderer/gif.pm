@@ -17,12 +17,13 @@ use vars qw(@ISA);
 @ISA = qw(Sanger::Graphics::Renderer);
 
 sub init_canvas {
-    my ($self, $config, $im_width, $im_height) = @_;
-    $self->{'im_width'}  = $im_width;
-    $self->{'im_height'} = $im_height;
-    my $canvas = GD::Image->new($im_width, $im_height);
-    $canvas->colorAllocate($config->colourmap->rgb_by_name($config->bgcolor()));
-    $self->canvas($canvas);
+  my ($self, $config, $im_width, $im_height) = @_;
+  $self->{'im_width'}  = $im_width;
+  $self->{'im_height'} = $im_height;
+  $self->{'ttf_path'}  = "/usr/local/share/fonts/ttfonts/";
+  my $canvas = GD::Image->new($im_width, $im_height);
+  $canvas->colorAllocate($config->colourmap->rgb_by_name($config->bgcolor()));
+  $self->canvas($canvas);
 }
 
 sub add_canvas_frame {
@@ -149,6 +150,8 @@ sub render_Text {
     
     ########## Stock GD fonts
   my $font = $glyph->font();
+warn "@{[ keys %$self ]}";
+warn "$self->{'ttf_path'}$font.ttf";
   if($font eq "Tiny") {
       $self->{'canvas'}->string(gdTinyFont, $glyph->{'pixelx'}, $glyph->{'pixely'}, $glyph->text(), $colour);
   } elsif($font eq "Small") {
@@ -168,7 +171,7 @@ sub render_Text {
       'valign' => $glyph->{'valign'} || 'center',
       'halign' => $glyph->{'halign'} || 'center',
       'colour' => $colour,
-      'font'   => "/usr/local/share/fonts/ttfonts/$font.ttf",
+      'font'   => "$self->{'ttf_path'}$font.ttf",
       'ptsize' => $glyph->ptsize(),
       'text'   => $glyph->text()
     );

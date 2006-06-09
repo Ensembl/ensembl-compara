@@ -77,9 +77,7 @@ sub compact_init {
   my @bitmap        = undef;
   my $colours       = $self->colours();
   my %used_colours  = ();
-  my $fontname      =  $Config->species_defs->ENSEMBL_STYLE->{'GRAPHIC_FONT'}; 
-  my $fontsize      =  $Config->species_defs->ENSEMBL_STYLE->{'GRAPHIC_FONTSIZE'} *
-                       $Config->species_defs->ENSEMBL_STYLE->{'GRAPHIC_OUTERTEXT'}; 
+  my( $fontname, $fontsize ) = $self->get_font_details( 'outertext' );
   my $pix_per_bp    = $Config->transform->{'scalex'};
   my $bitmap_length = $Config->image_width(); #int($Config->container_width() * $pix_per_bp);
 
@@ -293,9 +291,7 @@ sub expanded_init {
 
 
   my $Config        = $self->{'config'};
-  my $fontname      = $Config->species_defs->ENSEMBL_STYLE->{'GRAPHIC_FONT'}; 
-  my $fontsize      = $Config->species_defs->ENSEMBL_STYLE->{'GRAPHIC_FONTSIZE'} *
-                      $Config->species_defs->ENSEMBL_STYLE->{'GRAPHIC_OUTERTEXT'};
+  my( $fontname, $fontsize ) = $self->get_font_details( 'outertext' );
   my $strand_flag   = $Config->{'str'} || 'b';
   my $container     = exists $self->{'container'}{'ref'} ? $self->{'container'}{'ref'} : $self->{'container'};
   my $target        = $Config->{'_draw_single_Transcript'};
@@ -318,8 +314,6 @@ sub expanded_init {
   my $length  = $container->length;
   my $transcript_drawn = 0;
     
-  my $_w            = $Config->texthelper->width($fontname) / $pix_per_bp;
-  my $_h            = $Config->texthelper->height($fontname);
 
   my $compara = $Config->{'compara'};
   my $link    = $compara ? $Config->get('_settings','opt_join_transcript') : 0;
@@ -489,7 +483,6 @@ sub expanded_init {
 	  my @lines = split "\n", $text_label; 
           $lines[0] = "< $lines[0]" if $strand < 1;
           $lines[0] = $lines[0].' >' if $strand >= 1;
-          my($font_w_bp, $font_h_bp) = $Config->texthelper->px2bp($fontname);
           for( my $i=0; $i<@lines; $i++ ){
             my $line = $lines[$i].' ';
             my( $txt, $bit, $w,$th ) = $self->get_text_width( 0, $line, '', 'ptsize' => $fontsize, 'font' => $fontname );
@@ -673,7 +666,7 @@ sub as_expanded_init {
     my @bitmap        = undef;
     my $colours       = $self->colours();
     my %used_colours  = ();
-    my $fontname      =  $Config->species_defs->ENSEMBL_STYLE->{'GRAPHIC_FONT'}; 
+  my( $fontname, $fontsize ) = $self->get_font_details( 'outertext' );
     my $pix_per_bp    = $Config->transform->{'scalex'};
     my $bitmap_length = $Config->image_width(); #int($Config->container_width() * $pix_per_bp);
 
@@ -681,8 +674,6 @@ sub as_expanded_init {
     my $length  = $container->length;
     my $transcript_drawn = 0;
     
-    my $_w            = $Config->texthelper->width($fontname) / $pix_per_bp;
-    my $_h            = $Config->texthelper->height($fontname);
 
 # Colour to use to display missing exons
     my $mcolour = 'green';
@@ -845,22 +836,25 @@ sub as_expanded_init {
 	    if( $Config->{'_add_labels'} ) {
 		if ( my $text_label = $self->text_label($gene, $transcript) ) {
 		    my @lines = split "\n", $text_label;
-		    my($font_w_bp, $font_h_bp) = $Config->texthelper->px2bp($fontname);
 		    my @lines = split "\n", $text_label;
 		    for( my $i=0; $i<@lines; $i++ ){
 			my $line = $lines[$i];
+          my( $txt, $bit, $w,$th ) = $self->get_text_width( 0, $line, '', 'ptsize' => $fontsize, 'font' => $fontname );
 
 			$Composite->push( new Sanger::Graphics::Glyph::Text({
 			    'x'         => $Composite->x(),
-			    'y'         => $y + $h + ($i*$_h) + 2,
-			    'height'    => $_h,
-			    'width'     => $_w * length(" $line "),
-			    'font'      => $fontname,
+			    'y'         => $y + $h + ($i*$th+1) + 2,
+            'height'    => $th,
+            'width'     => $w / $pix_per_bp,
+            'font'      => $fontname,
+            'ptsize'    => $fontsize,
+            'halign'    => 'left',
+
 			    'colour'    => $colour,
 			    'text'      => $line,
 			    'absolutey' => 1,
 			}));
-			$bump_height += $_h;
+			$bump_height += $th+1;
 		    }
 		}
 	    }

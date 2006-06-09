@@ -12,10 +12,23 @@ sub _init {
   my ($self) = @_;
   return unless ($self->strand() == -1);
 
-  my $Config        = $self->{'config'};
-  my $text_to_display = sprintf( "Ensembl %s    %s:%d-%d    %s",
-    @{[$self->{container}{_config_file_name_}]}, $self->{'container'}->seq_region_name,
-    $self->{'container'}->start(), $self->{'container'}->end,
+  my $Config   = $self->{'config'};
+
+  my $Version   = $Config->species_defs->ENSEMBL_VERSION;
+  my $Assembly  = $Config->species_defs->ASSEMBLY_ID;
+  my $SpVersion = $Config->species_defs->SPECIES_RELEASE_VERSION;
+  my $species   = $Config->species_defs->SPECIES_BIO_NAME;
+
+  my $type = $self->{'container'}->coord_system->name();
+  $type = ucfirst( $type );
+  my $chr = $self->{'container'}->seq_region_name();
+  $chr = "$type $chr" unless $chr =~ /^$type/i;
+
+  my $text_to_display = sprintf( "Ensembl %s version %s.%s (%s) %s %s - %s (rendered %s)",
+    $species, $Version, $SpVersion, $Assembly,
+    $chr,
+    $self->thousandify( $self->{'container'}->start() ),
+    $self->thousandify( $self->{'container'}->end ),
     scalar( gmtime() )
   );
 

@@ -246,9 +246,6 @@ sub _init_non_assembled_contig {
     }
     $self->push($glyph);
 
-warn ".... ", $rend-$rstart, '..', $pix_per_bp, "......";
-warn ".... ",      ($rend-$rstart)*$pix_per_bp, "......";
-
     my @res = $self->get_text_width(
       ($rend-$rstart)*$pix_per_bp,
       $strand > 0 ? "$label >" : "< $label",

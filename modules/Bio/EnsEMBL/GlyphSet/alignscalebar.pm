@@ -37,22 +37,16 @@ sub init_label {
 
   my $text =  $self->{'container'}->{_config_file_name_};
 
-  my $label = new Sanger::Graphics::Glyph::Text({
-    'z'             => 10,
-    'x'             => -110,
-    'y'             => 2,
-    'text'      => "$text",    
-    'absolutex'     => 1,
-    'absolutey' => 1,
-  });
+  my $extra_height = 0;
+     $extra_height = 15 if $self->{'container'}->{'compara'} eq 'primary';
   $self->init_label_text($text);
   my $line = new Sanger::Graphics::Glyph::Rect({
-    'z' => 9,
+    'z' => -1,
     'x' => -120,
-    'y' => 2,
+    'y' => 2 - $extra_height,
     'colour' => 'white', 
     'width' => 118,
-    'height' => 15,
+    'height' => 15 + $extra_height,
     'absolutex'     => 1,
     'absolutewidth' => 1,
     'absolutey'     => 1,
@@ -72,9 +66,13 @@ sub _init {
     my $contig_strand  = $Container->can('strand') ? $Container->strand : 1;
     my $h              = 0;
     my $highlights     = $self->highlights();
-    my $fontname       = "Tiny";
-    my $fontwidth_bp   = $Config->texthelper->width($fontname),
-    my ($fontwidth, $fontheight)       = $Config->texthelper->px2bp($fontname),
+
+  my $pix_per_bp = $self->{'config'}->transform()->{'scalex'};
+
+  my( $fontname, $fontsize ) = $self->get_font_details( 'innertext' );
+  my @res = $self->get_text_width( 0, 'X', '', 'font'=>$fontname, 'ptsize' => $fontsize );
+  my $fontheight = $res[3];
+
     my $black          = 'black';
     my $highlights     = join('|',$self->highlights());
     $highlights        = $highlights ? "&highlight=$highlights" : '';
@@ -135,7 +133,7 @@ sub _init {
     my $start = floor( $global_start / $minor_unit ) * $minor_unit;
     my $filled = 1;
     my $last_text_X = -1e20;
-    my $yc = $self->{strand} > 0 ? 0 : 17;
+    my $yc = $self->{strand} > 0 ? 0 : 20;
     if ($param_string eq $ENV{ENSEMBL_SPECIES}) {
     if ($self->{strand} < 0) {
         $start = $global_end  +1;
@@ -168,10 +166,10 @@ sub _init {
 
     $self->push($t);
 
-        if($REGISTER_LINE && $Container->{compara} ne 'secondary') {
+   if($REGISTER_LINE && $Container->{compara} ne 'secondary') {
         if($start == $box_start ) { # This is the end of the box!
         $self->join_tag( $t, "ruler_$start", 0, 0 , $start%$major_unit ? 'grey90' : 'grey80'  );
-        } elsif( ( $box_end==$global_end ) && !(( $box_end+1) % $minor_unit ) ) {
+    } elsif( ( $box_end==$global_end ) && !(( $box_end+1) % $minor_unit ) ) {
         $self->join_tag( $t, "ruler_$end", 1, 0 , ($global_end+1)%$major_unit ? 'grey90' : 'grey80'  );
         }
     }
@@ -186,12 +184,16 @@ sub _init {
         'absolutey' => 1,
         }));
         my $LABEL = $minor_unit < 250 ? $object->thousandify($box_start * $contig_strand ): $self->bp_to_nearest_unit( $box_start * $contig_strand, 2 );
-        if( $last_text_X + length($LABEL) * $fontwidth * 1.5 < $box_start ) {
+        my @res = $self->get_text_width( ($box_start-$last_text_X)*$pix_per_bp*1.5, $LABEL, '', 'font'=>$fontname, 'ptsize' => $fontsize );
+
+        if( $res[0]) {
         $self->push(new Sanger::Graphics::Glyph::Text({
             'x'         => $box_start - $global_start,
             'y'         => $yc - 9,
             'height'    => $fontheight,
             'font'      => $fontname,
+            'ptsize'    => $fontsize,
+            'halign'    => 'left',
             'colour'    => $feature_colour,
             'text'      => $LABEL,
             'absolutey' => 1,

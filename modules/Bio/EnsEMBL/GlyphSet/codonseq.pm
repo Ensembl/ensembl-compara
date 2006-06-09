@@ -8,6 +8,8 @@ use Bio::Seq;
 
 sub my_label { return "Amino acids"; }
 
+sub fixed { return 1;}
+
 sub features {
     my ($self) = @_;
     my $seq = $self->{'container'}->subseq(-2,$self->{'container'}->length+4);

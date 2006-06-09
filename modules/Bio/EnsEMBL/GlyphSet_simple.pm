@@ -91,7 +91,7 @@ sub _init {
   my $Config          = $self->{'config'};
   my $strand          = $self->strand();
   my $strand_flag     = $Config->get($type, 'str');
-  my($FONT,$FONTSIZE) = $self->get_font_details( 'innertext' );
+  my($FONT,$FONTSIZE) = $self->get_font_details( $self->can('fixed') ? 'fixed' : 'innertext' );
   my $BUMP_WIDTH      = $Config->get($type, 'bump_width');
   $BUMP_WIDTH      = 1 unless defined $BUMP_WIDTH;
   
