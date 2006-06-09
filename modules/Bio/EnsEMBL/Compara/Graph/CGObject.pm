@@ -214,8 +214,9 @@ sub add_tag {
   unless(defined($self->{'_tags'})) { $self->{'_tags'} = {}; }
   return unless(defined($tag));
   
-  if(defined($value)) { $self->{'_tags'}->{$value} = '';}
-  else {$value='';}
+#  if(defined($value)) { $self->{'_tags'}->{$value} = '';}
+#  else {$value='';}
+  $value='' unless (defined $value);
   
   $self->{'_tags'}->{$tag} = $value;
 }
