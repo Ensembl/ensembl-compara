@@ -120,6 +120,7 @@ sub add_connection {
       $connected_to_holding_node->name("");
       #break link with holding_node
       $connected_to_holding_node->unlink_neighbor($self->{'holding_node'});
+#      another way to do it in 2 lines
 #      my $holding_link = $connected_to_holding_node->link_for_neighbor($self->{'holding_node'});
 #      $holding_link->dealloc;
 
