@@ -717,10 +717,9 @@ sub as_expanded_init {
 	    $Composite->{'zmenu'} = $self->zmenu( $gene, $transcript ) unless $Config->{'_href_only'};
 	    my($colour, $label, $hilight) = $self->colour( $gene, $transcript, $colours, %highlights );
 	    $used_colours{ $label } = $colour; 
-# AlignSlice translations don't have coordinates .. 
 
-	    my $coding_start = -1e6;
-	    my $coding_end   = -1e6;
+	    my $coding_start = defined ( $transcript->coding_region_start() ) ? $transcript->coding_region_start :  -1e6;
+	    my $coding_end   = defined ( $transcript->coding_region_end() )   ? $transcript->coding_region_end :    -1e6;
 
 	    my $Composite2 = new Sanger::Graphics::Glyph::Composite({'y'=>$y,'height'=>$h});
 
