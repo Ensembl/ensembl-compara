@@ -44,28 +44,6 @@ sub init {
       'tag'         => 2 
     }, 
 
-    'stranded_contig' => {
-      'on'          => "on",
-      'pos'         => '0',
-      'navigation'  => 'off'
-    },
-    'scalebar' => {
-      'on'          => "on",
-      'nav'         => "off",
-      'pos'         => '8000',
-      'col'         => 'black',
-      'str'         => 'r',
-      'abbrev'      => 'on',
-      'navigation'  => 'off'
-    },
-    'intronlesstranscript' => {
-      'on'          => "on",
-      'pos'         => '21',
-      'str'         => 'b',
-      'src'         => 'all', # 'ens' or 'all'
-      'colours' => {$self->{'_colourmap'}->colourSet( 'ensembl_gene' )},
-    },
-
   };
 }
 1;

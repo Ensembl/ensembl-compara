@@ -1402,10 +1402,10 @@ sub ADD_ALL_PROTEIN_FEATURE_TRACKS {
   $self->add_protein_domain_track( 'pfscan',          'Prosite profiles', $POS++ );
 
   $self->add_protein_domain_track( 'Pfam', 'Pfam', $POS++ );
-  $self->add_protein_domain_track( 'TigrFam', 'TIGRFAM', $POS++ );
-  $self->add_protein_domain_track( 'SuperFamily', 'SUPERFAMILY', $POS++ );
+  $self->add_protein_domain_track( 'Tigrfam', 'TIGRFAM', $POS++ );
+  $self->add_protein_domain_track( 'Superfamily', 'SUPERFAMILY', $POS++ );
   $self->add_protein_domain_track( 'Smart', 'SMART', $POS++ );
-  $self->add_protein_domain_track( 'PIRS', 'PIR SuperFamily', $POS++ );
+  $self->add_protein_domain_track( 'PIRSF', 'PIR SuperFamily', $POS++ );
 
   $self->add_protein_feature_track( 'ncoils',  'Coiled coils',      $POS++ );
   $self->add_protein_feature_track( 'SignalP', 'Sig.Pep cleavage',  $POS++ );
@@ -1422,11 +1422,11 @@ sub ADD_ALL_PROTEIN_FEATURE_TRACKS_GSV {
   $self->add_GSV_protein_domain_track( 'PrositeProfiles', 'Prosite profiles', $POS++ );
   $self->add_GSV_protein_domain_track( 'pfscan',          'Prosite profiles', $POS++ );
 
-  $self->add_GSV_protein_domain_track( 'Pfam', 'PFam', $POS++ );
-  $self->add_GSV_protein_domain_track( 'TigrFam', 'TIGRFAM', $POS++ );
-  $self->add_GSV_protein_domain_track( 'SuperFamily', 'SUPERFAMILY', $POS++ );
-  $self->add_GSV_protein_domain_track( 'Smart', 'SMART', $POS++ );
-  $self->add_GSV_protein_domain_track( 'PIRS', 'PIR SuperFamily', $POS++ );
+  $self->add_GSV_protein_domain_track( 'Pfam',            'PFam', $POS++ );
+  $self->add_GSV_protein_domain_track( 'Tigrfam',         'TIGRFAM', $POS++ );
+  $self->add_GSV_protein_domain_track( 'Superfamily',     'SUPERFAMILY', $POS++ );
+  $self->add_GSV_protein_domain_track( 'Smart',           'SMART', $POS++ );
+  $self->add_GSV_protein_domain_track( 'PIRSF',           'PIR SuperFamily', $POS++ );
 }
 
 1;

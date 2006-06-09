@@ -20,19 +20,12 @@ sub init {
       'bgcolour1' => 'background1',
       'bgcolour2' => 'background1',
     },
-    'spacer' => { 'on'=>'on','pos'=>1e6, 'height' => 50, 'str' => 'r' },
     'snp_join' => {
       'tag'=>2, 'context'=>50,
       'on'=>'on','pos'=>4600,
       'str' => 'f',
       'available'=> 'databases ENSEMBL_VARIATION',
       'colours'=>{$self->{'_colourmap'}->colourSet('variation')}
-    },
-    'ruler' => {
-      'on'          => "on",
-      'pos'         => '6000',
-      'col'         => 'black',
-      'str'         => 'r'
     },
     'transcriptexon_bgtrack' => {
       'on'          => "on",
@@ -42,29 +35,6 @@ sub init {
       'col'         => 'bisque',
       'tag'         => 2 
     }, 
-
-    'stranded_contig' => {
-      'on'          => "on",
-      'pos'         => '0',
-      'navigation'  => 'off'
-    },
-    'scalebar' => {
-      'on'          => "on",
-      'nav'         => "off",
-      'pos'         => '8000',
-      'col'         => 'black',
-      'str'         => 'r',
-      'abbrev'      => 'on',
-      'navigation'  => 'off'
-    },
-    'intronlesstranscript' => {
-      'on'          => "on",
-      'pos'         => '21',
-      'str'         => 'b',
-      'src'         => 'all', # 'ens' or 'all'
-      'colours' => {$self->{'_colourmap'}->colourSet( 'ensembl_gene' )},
-    },
-
   };
 }
 1;

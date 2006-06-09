@@ -991,7 +991,7 @@ sub genesnpview {
  
  $object->store_TransformedTranscripts();        ## Stores in $transcript_object->__data->{'transformed'}{'exons'|'coding_start'|'coding_end'}
 
-  my @domain_logic_names = qw(Pfam scanprosite Prints pfscan PrositePatterns PrositeProfiles TigrFam SuperFamily Smart PIRS);
+  my @domain_logic_names = qw(Pfam scanprosite Prints pfscan PrositePatterns PrositeProfiles Tigrfam Superfamily Smart PIRSF);
   foreach( @domain_logic_names ) {
     $object->store_TransformedDomains( $_ );    ## Stores in $transcript_object->__data->{'transformed'}{'Pfam_hits'} 
   }
@@ -1017,7 +1017,7 @@ sub genesnpview {
       $no_snps ? (): ('snps' => $TS->{'snps'})
     };
     foreach ( @domain_logic_names ) { 
-      $CONFIG->{'transcript'}{lc($_).'_hits'} = $TS->{$_.'_hits'};
+      $CONFIG->{'transcript'}{lc($_).'_hits'} = $TS->{lc($_).'_hits'};
     }
 
     $CONFIG->container_width( $object->__data->{'slices'}{'transcripts'}[3] );

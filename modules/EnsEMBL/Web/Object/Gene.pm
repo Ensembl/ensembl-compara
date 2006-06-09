@@ -508,7 +508,6 @@ sub store_TransformedDomains {
       }
       push @{$trans_obj->__data->{'transformed'}{lc($key).'_hits'}}, \@A;
     }
-    warn "@{[ keys %{ $transcript->translation->{'protein_features'}||{} } ]}";
   }
 }
 

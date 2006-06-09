@@ -42,54 +42,6 @@ sub init {
       'col'         => 'bisque',
       'tag'         => 2 
     }, 
-
-    'stranded_contig' => {
-      'on'          => "on",
-      'pos'         => '0',
-      'navigation'  => 'off'
-    },
-    'scalebar' => {
-      'on'          => "on",
-      'nav'         => "off",
-      'pos'         => '8000',
-      'col'         => 'black',
-      'str'         => 'r',
-      'abbrev'      => 'on',
-      'navigation'  => 'off'
-    },
-    'intronlesstranscript' => {
-      'on'          => "on",
-      'pos'         => '21',
-      'str'         => 'b',
-      'src'         => 'all', # 'ens' or 'all'
-      'colours' => {$self->{'_colourmap'}->colourSet( 'ensembl_gene' )},
-    },
-    'snp_triangle_lite' => {
-      'on'          => "on",
-      'pos'         => '4520',
-      'str'         => 'r',
-      'dep'         => '10',
-      'col'         => 'blue',
-      'track_height'=> 7,
-      'hi'          => 'black',
-      'colours' => {$self->{'_colourmap'}->colourSet('snp')},
-      'available'=> 'database_tables ENSEMBL_LITE.snp', 
-    },
-    'haplotype' => {
-      'on'          => "on",
-      'pos'         => '4525',
-      'str'         => 'r',
-      'dep'         => 6,
-      'col'         => 'darkgreen',
-      'lab'         => 'black',
-      'available'=> 'databases ENSEMBL_HAPLOTYPE',
-    },
-
-    'snp_legend' => {
-      'on'          => "on",
-      'str'         => 'r',
-      'pos'         => '9999',
-    },
   };
 }
 1;
