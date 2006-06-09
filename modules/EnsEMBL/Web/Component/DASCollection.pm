@@ -222,7 +222,7 @@ sub add_das_server {
 	$form->add_element(
 			   'type'     => 'String',
 			   'name'     => 'DASuser_source',
-			   'label'    => "DAS source name (only for Ensembl user-uploaded sources, e.g. hydraeuf_00000001)",
+			   'label'    => "DAS source name (only for Ensembl user-uploaded sources, e.g. hydraeuf_00000001 or hydrasource_00000010)",
 			   'value'    => $source_conf->{userdsn}
                        );
 
