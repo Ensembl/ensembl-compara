@@ -24,7 +24,7 @@ System has a simple API based on creating Nodes and then linking them together:
   new Bio::EnsEMBL::Compara::Graph::Link($node1, $node2, $distance_between);
 And to 'disconnect' nodes, one just breaks a link;
   my $link = $node1->link_for_neighbor($node2);
-  $link->release;
+  $link->dealloc;
 Convenience methods to simplify this process
   $node1->create_link_to_node($node2, $distance_between);
   $node2->unlink_neighbor($node1);
