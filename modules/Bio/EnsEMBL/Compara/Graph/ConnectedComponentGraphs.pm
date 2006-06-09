@@ -27,8 +27,8 @@ foreach my $link (@{$holding_node->links}) {
 
 =head1 DESCRIPTION
 
-This is a general purpose tool for building connected component clusters
-from pairs of scalars.  The scalars can be any perl scalar (number, string, 
+This is a general purpose tool for building connected component graphs
+from pairs of scalars. The scalars can be any perl scalar (number, string,
 object reference, hash reference, list reference) The scalars are treated as
 distinct IDs so that equal scalars point to the same node/component.
 As new scalar IDs are encountered new nodes are created and graphs are grown
@@ -41,6 +41,15 @@ typical use would be
     printf("built %d graphs\n", $ccEngine->get_graph_count);
     printf("has %d distinct components\n", $ccEngine->get_component_count);
     $graph_holding_node = $ccEngine->holding_node;
+
+The holding node has a hard coded name 'ccg_holding_node' that can be
+retrieved by $graph_holding_node->name, or find from any node in a graph
+using $current_node->find_node_by_name('ccg_holding_node');
+
+The holding node has links to graph nodes, each of which is a single entry
+point to an independant graph. This entry node (and there is only one for each graph)
+have a special name 'connected_to_holding_node', and can be found from any node in a
+graph using $current_node->find_node_by_name('connected_to_holding_node');
 
 =cut
 
@@ -85,17 +94,17 @@ sub DESTROY {
   $self->{'holding_node'} = undef;
 }
 
-
 =head2 add_connection
 
+  Arg [1]    : <scalar> node1 identifier (some unique number, name or object/data reference)
+  Arg [2]    : <scalar> node2 identifier
+  Example    : $ccgEngine->add_connection($id1, $id2);
+               $ccgEngine->add_connection($member1, $member2);
+               $ccgEngine->add_connection("ENG00000016598", "ENG00000076598");
   Description: Takes a pair of unique scalars and uses the Node objects to build graphs in memory.
                There is a single graph holding node for the entire build process, and each independant
                graph has a single node connected to this "holding" node.
-  Arg [1]    : <scalar> node1 identifier (some unique number, name or object/data reference)
-  Arg [2]    : <scalar> node2 identifier
-  Example    : $ccgEngine->add_connection(1234567, $member);
-               $ccgEngine->add_connection(1234567, "ENG00000076598");
-  Returntype : undef
+  Returntype : Bio::EnsEMBL::Compara::Graph::Link
   Exceptions : none
   Caller     : general
     
@@ -156,23 +165,65 @@ sub add_connection {
   }
 }
 
+=head2 get_graph_count
+
+  Arg [1]    : none
+  Example    : $ccgEngine->get_graph_count;
+  Description: return the number of independant graphs currently in memory
+  Returntype : integer
+  Exceptions : none
+  Caller     : general
+
+=cut
 
 sub get_graph_count {
   my $self = shift;
   return scalar @{$self->{'holding_node'}->links};
 }
 
+=head2 get_component_count
+
+  Arg [1]    : none
+  Example    : $ccgEngine->get_component_count;
+  Description: return the number of nodes involved in the graphs currently in memory
+  Returntype : integer
+  Exceptions : none
+  Caller     : general
+
+=cut
 
 sub get_component_count {
   my $self = shift;
   return scalar(keys(%{$self->{'cache_nodes'}}));
 }
 
+=head2 holding_node
+
+  Arg [1]    : none
+  Example    : $ccgEngine->holding_node;
+  Description: return the node that hold links to each graph currently in memory
+  Returntype : Bio::EnsEMBL::Compara::Graph::Node
+  Exceptions : none
+  Caller     : general
+
+=cut
 
 sub holding_node {
   my $self = shift;
   return $self->{'holding_node'};
 }
+
+=head2 graphs
+
+  Arg [1]    : none
+  Example    : $ccgEngine->graphs;
+  Description: return the array reference of nodes, each of them is the entry point
+               to an individual independant graph.
+  Returntype : array reference of Bio::EnsEMBL::Compara::Graph::Node
+  Exceptions : none
+  Caller     : general
+
+=cut
 
 sub graphs {
   my $self = shift;
