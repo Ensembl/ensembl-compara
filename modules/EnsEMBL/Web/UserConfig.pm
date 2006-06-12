@@ -1301,7 +1301,7 @@ sub ADD_GENE_TRACKS {
   $self->add_new_track_gene( 'otter', 'Vega Genes', 'vega_gene', $POS++,
                              'database' => 'vega', 'available' => 'databases ENSEMBL_VEGA',
                             # 'gene_col'             => sub { ( my $T = $_[0]->biotype ) =~s/HUMACE-//; return $T; },
-                             'gene_col'             => sub { return $_[0]->biotype.'_'.$_[0]->confidence; },
+                             'gene_col'             => sub { return $_[0]->biotype.'_'.$_[0]->status; },
                              'gene_label'           => sub { $_[0]->external_name || $_[0]->stable_id; }, @_ );
 #for genes in Vega
   $self->add_new_track_gene( 'vega_gene', 'Vega Genes', 'vega_gene', $POS++,
@@ -1378,7 +1378,7 @@ sub ADD_AS_GENE_TRACKS {
     
     $self->add_new_track_gene( 'otter', 'Vega Genes', 'vega_gene', $POS++,
 			       'database' => 'vega', 'available' => 'databases ENSEMBL_VEGA',
-			       'gene_col'             => sub { return $_[0]->biotype.'_'.$_[0]->confidence; },
+			       'gene_col'             => sub { return $_[0]->biotype.'_'.$_[0]->status; },
 			       'gene_label'           => sub { $_[0]->external_name || $_[0]->stable_id; }, @_ );
 
     #for genes in Vega
