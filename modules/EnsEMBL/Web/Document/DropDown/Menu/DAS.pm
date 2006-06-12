@@ -17,7 +17,7 @@ sub new {
 				);
 
   my $script = $self->{'script'} || $ENV{ENSEMBL_SCRIPT};
-
+  my $config = $self->{config};
   my $ext_das = new EnsEMBL::Web::ExternalDAS( $self->{'location'} );
   $ext_das->getConfigs($script, $script);
 
@@ -70,7 +70,6 @@ sub new {
       $das_data{type} = 'mixed' if (scalar(@{$das_data{mapping}} > 1));
 
       if ($das_data{active}) {
-	  my $config = $self->{config};
 	  $config->set("managed_extdas_$das_name", 'on', 'on', 1);
 
 	  $das_data{depth} and $config->set( "managed_extdas_$das_name", "dep", $das_data{depth}, 1);
@@ -83,11 +82,18 @@ sub new {
 	  $das_data{color} and $config->set( "managed_extdas_$das_name", "col", $das_data{col}, 1);
 	  $das_data{linktext} and $config->set( "managed_extdas_$das_name", "linktext", $das_data{linktext}, 1);
 	  $das_data{linkurl} and $config->set( "managed_extdas_$das_name", "linkurl", $das_data{linkurl}, 1);
-	  $config->save;
+
       }
 
       $ext_das->add_das_source(\%das_data);
   }
+
+
+  foreach my $source (grep {$_ } CGI::param('das_sources')) {
+      $config->set("managed_extdas_$source", 'on', 'on', 1);
+  }
+  $config->save;
+
 
   my $ds2 = $ext_das->{'data'};
 
