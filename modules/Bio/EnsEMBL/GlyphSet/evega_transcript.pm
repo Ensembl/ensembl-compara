@@ -248,7 +248,7 @@ sub format_vega_name {
 		$status = $trans->status()||$gene->status;
 		$biotype = $trans->biotype()||$gene->biotype();
 	} else {
-		$status = $gene->confidence;
+		$status = $gene->status;
 		$biotype = $gene->biotype();
 	}
 	my $t = $biotype.'_'.$status;

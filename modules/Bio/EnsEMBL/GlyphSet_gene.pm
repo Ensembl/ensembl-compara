@@ -250,9 +250,9 @@ sub legend {
 
 sub format_vega_name {
 	my ($self,$gene) = @_;
-	my %gm = $self->{'config'}->colourmap()->colourSet('vega_gene');
-	my $status = $gene->confidence;
-	my $biotype = $gene->biotype();
+	my %gm = $self->{'config'}->colourmap->colourSet('vega_gene');
+	my $status = $gene->status;
+	my $biotype = $gene->biotype;
 	my $t = $biotype.'_'.$status;
 	my $label = $gm{$t}[1];
 	return $label;
