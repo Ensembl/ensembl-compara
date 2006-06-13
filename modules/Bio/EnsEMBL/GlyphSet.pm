@@ -62,12 +62,10 @@ sub get_text_width {
   return @{$self->{'_cache_'}{$KEY}} if $self->{'_cache_'}{$KEY};
   $width ||= 1e6;
   my $font   = $self->{'config'}->species_defs->ENSEMBL_STYLE->{'GRAPHIC_TTF_PATH'}.($parameters{'font'}||'arial').'.ttf';
-warn "........... $font ...........";
   my $ptsize =  $parameters{'ptsize'}||10;
   my $gd_text = GD::Text->new();
   eval {
     if( -e $font ) {
-warn "TTF";
       $gd_text->set_font( $font, $ptsize );
     } elsif( $parameters{'font'} eq 'Tiny' ) {
       $gd_text->set_font( gdTinyFont );

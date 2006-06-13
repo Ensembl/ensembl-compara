@@ -163,7 +163,13 @@ sub _init {
   } 
   if($FLAG) { ## NOW WE NEED TO ADD THE LABELS_TRACK.... FOLLOWED BY THE LEGEND
     my $GL_FLAG = $Config->get( '_settings', 'opt_gene_labels' );
+warn "$FLAG - $GL_FLAG.............";
        $GL_FLAG = 1 unless defined($GL_FLAG);
+warn "$FLAG - $GL_FLAG.............";
+warn  $Config->get( $type, 'label_threshold' );
+warn $vc->length;
+       $GL_FLAG = 0 if ( $Config->get( $type, 'label_threshold' ) || 50e3 )*1001 < $vc->length;
+warn "$FLAG - $GL_FLAG.............";
     if( $GL_FLAG ) {
       my $START_ROW = @bitmap + 1;
       @bitmap = ();
