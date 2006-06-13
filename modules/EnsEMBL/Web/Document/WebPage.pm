@@ -441,17 +441,14 @@ sub simple_with_redirect {
         $self->factory->species, $self->factory->script,
         join(';',map {"$_=$feature->{$_}"} keys %$feature )
       );
-    }
-    elsif ($self->has_problem_type('unmapped')) {
+    } elsif ($self->has_problem_type('unmapped')) {
       my $f     = $self->factory;
       my $id  = $f->param('peptide') || $f->param('transcript') || $f->param('gene');
       my $type = $f->param('gene') ? 'Gene' : 'DnaAlignFeature';
       $self->redirect( sprintf "/%s/featureview?type=%s;id=%s",
         $self->factory->species, $type, $id 
       );
-    } 
-
-    elsif ($self->has_problem_type('archived') ) {
+    } elsif ($self->has_problem_type('archived') ) {
       my $f     = $self->factory;
       my $id =  $f->param('peptide') || $f->param('transcript') || $f->param('gene');
       my $type;

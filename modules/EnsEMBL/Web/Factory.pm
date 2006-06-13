@@ -28,27 +28,28 @@ sub featureIds {
 sub _archive {
   my( $self, $type, $parameter ) = @_;
 
-  # Redirect -> now uses code in idhistory
-  $self->problem('archived');
+#   Redirect -> now uses code in idhistory
 
- #  my $db        = $self->param('db')||'core';
-#   my $name      = $self->param($parameter) || $self->param('peptide') || $self->param('transcript') || $self->param('gene');
-#   my @features  = undef;
-#   my $adaptor;
+  my $db        = $self->param('db')||'core';
+   my $name      = $self->param($parameter) || $self->param('peptide') || $self->param('transcript') || $self->param('gene');
+   my @features  = undef;
+   my $adaptor;
 
-#   my $related;
-#   my $archiveStableID ;
-#   eval {
-#     my $achiveStableIDAdaptor = $self->database($db)->get_ArchiveStableIdAdaptor();
-#     $archiveStableID       = $achiveStableIDAdaptor->fetch_by_stable_id( $name );
-#     $related               = $achiveStableIDAdaptor->fetch_successor_history( $archiveStableID ) if $archiveStableID;
-#   };
-#   return undef if (!$archiveStableID);
-#   my @rel = map { $_->stable_id ? $_ : () } @$related;
-#   my $caption = '';
-#   my $output  = '';
-#   my $probtype= '';
-#   if( @rel ) {
+   my $related;
+   my $archiveStableID ;
+   eval {
+     my $achiveStableIDAdaptor = $self->database($db)->get_ArchiveStableIdAdaptor();
+     $archiveStableID       = $achiveStableIDAdaptor->fetch_by_stable_id( $name );
+     $related               = $achiveStableIDAdaptor->fetch_successor_history( $archiveStableID ) if $archiveStableID;
+   };
+   return undef if (!$archiveStableID);
+   my @rel = map { $_->stable_id ? $_ : () } @$related;
+   my $caption = '';
+   my $output  = '';
+   my $probtype= '';
+   if( @rel ) {
+      $self->problem('archived');
+   }
 #     $caption = 'Archived identifier';
 #     $probtype= 'archived';
 #     $output  = "<p>The feature <strong>$name</strong> has been mapped to the following feature(s):</p>";
