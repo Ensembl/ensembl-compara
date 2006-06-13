@@ -143,6 +143,11 @@ sub add_miniad {
   $self->{'miniad'} = $html;
 }
 
+sub delete_miniad {
+  my $self = shift;
+  $self->{'miniad'} = '';
+}
+
 sub render {
   my $self = shift;
   $self->print( qq(\n<div id="related"><div id="related-box">) );
