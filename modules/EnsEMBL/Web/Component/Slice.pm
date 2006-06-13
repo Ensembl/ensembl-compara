@@ -73,7 +73,12 @@ sub align_sequence_display {
 
       my @selected_species = grep {$_ } $object->param("ms_$aselect");
 
-      unshift @selected_species, $object->species if (@selected_species);
+# I could not find a better way to distinguish between pairwise alignments
+# and multiple alignments. The difference is that in case of multiple alignments
+# there are checkboxes for all species from the alignment apart from the reference species: So we need to add the reference species to the list of selected species. In case of pairwise alignments the list remains empty - that will force the display of all available species in the alignment
+      if ( scalar (@{$method_link_species_set->species_set}) > 2) {
+	  unshift @selected_species, $object->species;
+      }
 
       push @slice_display, @{$align_slice->get_all_Slices(@selected_species)};
 
