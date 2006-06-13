@@ -21,7 +21,7 @@ sub update_config_from_parameter {
   shift @array;
   return unless @array;
   foreach( @array ) {
-    my( $key, $value ) = split ':';
+    my( $key, $value ) = /^(.*):(.*)$/;
     if( $key =~ /bump_(.*)/ ) {
       $self->set( $1, 'compact', $value eq 'on' ? 0 : 1 );
     } elsif( $key eq 'imagemap' || $key=~/^opt_/ ) {
@@ -992,7 +992,7 @@ sub ADD_ALL_EST_FEATURES {
                               'THRESHOLD' => 0, 'DATABASE' => 'otherfeatures', @T, @_ );
   }
   foreach ( @EST_DB_CDNA ) {
-    my($A,$B,@T) = @$_; warn ">>> @T <<<";
+    my($A,$B,@T) = @$_;
     $self->add_new_track_cdna( "otherfeatures_$A",  $B, $POS++,
                               'FEATURES'  => $A, 'available' => "database_features ENSEMBL_OTHERFEATURES.$A",
                               'THRESHOLD' => 0, 'DATABASE' => 'otherfeatures', @T, @_ );
