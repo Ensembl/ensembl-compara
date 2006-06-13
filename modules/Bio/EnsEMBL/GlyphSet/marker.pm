@@ -80,9 +80,7 @@ sub _init {
       $previous_start = $E;
     }
     next unless $labels;
-warn "HERE.........................";
     my @res = $self->get_text_width( 0, $fid, '', 'font'=>$fontname, 'ptsize' => $fontsize );
-warn "LABEL - $fid";
     my $glyph = new Sanger::Graphics::Glyph::Text({
       'x'         => $S,
       'y'         => $row_height + 2,
@@ -105,7 +103,6 @@ warn "LABEL - $fid";
     $glyph->y($glyph->y() + (1.2 * $row * $h));
     $self->push($glyph);
   }    
-warn "HERE.........................";
   ## No features show "empty track line" if option set....  ##
   if ((scalar(@features) == 0) && $Config->get('_settings','opt_empty_tracks')==1){
     $self->errorTrack( "No markers in this region" )

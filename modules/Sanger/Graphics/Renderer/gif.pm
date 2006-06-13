@@ -150,8 +150,6 @@ sub render_Text {
     
     ########## Stock GD fonts
   my $font = $glyph->font();
-warn "@{[ keys %$self ]}";
-warn "$self->{'ttf_path'}$font.ttf";
   if($font eq "Tiny") {
       $self->{'canvas'}->string(gdTinyFont, $glyph->{'pixelx'}, $glyph->{'pixely'}, $glyph->text(), $colour);
   } elsif($font eq "Small") {

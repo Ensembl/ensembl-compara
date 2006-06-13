@@ -82,10 +82,8 @@ sub _init {
    my $genes = $self->features( $logic_name, $database );
    foreach my $g (@$genes) {
     my $gene_label = $self->gene_label( $g );
-#warn ">>> ", $g->analysis->logic_name, ' -- ', $g->biotype, ' -- ' , $g->status,' <<<';
     my $GT         = $self->gene_col( $g );
        $GT =~ s/XREF//g;
-   warn $GT unless $colours->{$GT};
     my $gene_col   = ($used_colours->{ $GT } = $colours->{ $GT });
     my $ens_ID     = $self->ens_ID( $g );
     my $high = exists $highlights{ lc($gene_label) } || exists $highlights{ lc($g->stable_id) };
@@ -163,13 +161,8 @@ sub _init {
   } 
   if($FLAG) { ## NOW WE NEED TO ADD THE LABELS_TRACK.... FOLLOWED BY THE LEGEND
     my $GL_FLAG = $Config->get( '_settings', 'opt_gene_labels' );
-warn "$FLAG - $GL_FLAG.............";
        $GL_FLAG = 1 unless defined($GL_FLAG);
-warn "$FLAG - $GL_FLAG.............";
-warn  $Config->get( $type, 'label_threshold' );
-warn $vc->length;
        $GL_FLAG = 0 if ( $Config->get( $type, 'label_threshold' ) || 50e3 )*1001 < $vc->length;
-warn "$FLAG - $GL_FLAG.............";
     if( $GL_FLAG ) {
       my $START_ROW = @bitmap + 1;
       @bitmap = ();
