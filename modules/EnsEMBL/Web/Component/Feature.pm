@@ -228,7 +228,7 @@ sub unmapped_details {
 
     my %links = (
       'Transcript'  => ['transview', 'transcript'],
-      'Translation' => ['transview', 'transcript'],
+      'Translation' => ['protview', 'peptide'],
     );
     my $script = $links{$type}->[0];
     my $param  = $links{$type}->[1];
