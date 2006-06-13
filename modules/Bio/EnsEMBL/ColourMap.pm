@@ -28,6 +28,8 @@ sub new {
   my %core = (
     '_protein_coding'           => [ 'rust', 'Known Protein Coding' ],
     '_protein_coding_KNOWN'     => [ 'rust', 'Known Protein Coding' ],
+    '_protein_coding_KNOWN_BY_PROJECTION'     => [ 'rust', 'Known Proj Protein Coding' ],
+    '_protein_coding_PUTATIVE'     => [ 'black', 'Putative Protein Coding' ],
     '_pseudogene_KNOWN'         => [ 'grey50','Known Pseudogene' ],
     '_protein_coding_NOVEL'     => [ 'black', 'Novel Protein Coding' ],
     '_pseudogene_NOVEL'         => [ 'grey30','Novel Psuedogene' ],
