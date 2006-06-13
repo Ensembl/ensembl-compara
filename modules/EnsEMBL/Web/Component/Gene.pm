@@ -238,16 +238,22 @@ sub align_markup_options_form {
 
   my $aselect = $object->param("RGselect") || "NONE";
 
+  my %alignments = $object->species_defs->multiX('ALIGNMENTS');
+
+# From release to release the alignment ids change so we need to 
+# check that the passed id is still valid.
+
+  if (! exists ($alignments{$aselect})) {
+      $aselect = 'NONE';
+      $object->param("RGselect", "NONE");
+  }
+
   $form->add_element('type' => 'RadioGroup',
 		     'name' => 'RGselect',
 		     'values' =>[{name=> "<b>No alignments</b>", value => "NONE", checked => $aselect eq "NONE" ? "yes" : undef}],
 		     'label' => 'View in alignment with',
 		     'noescape' => 'yes',
 		     );
-
-
-
-  my %alignments = $object->species_defs->multiX('ALIGNMENTS');
   my @align_select;
 
   foreach my $id (
