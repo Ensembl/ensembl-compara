@@ -23,13 +23,7 @@ if( $not_fresh ) {
     $q->param('_q',$q->param('q'));
     my $CAT = '';
     my $CAT2 = '';
-    if( $q->param('idx') ) { 
-      $CAT = "Top/Species/".$SPECIES;
-      if( $q->param('idx') ne 'All' ) {
-        $CAT .= "/".$q->param('idx');
-        $CAT2 = "Top/Feature type/".$q->param('idx').'/'.$SPECIES;
-      }
-    } elsif( $q->param('species') && $q->param('species') ne 'All' ) {
+    if( $q->param('species') && $q->param('species') ne 'all' ) {
       $CAT = "Top/Species/".$q->param('species');
       unless( $q->param('idx') && $q->param('idx') ne 'All' ) {
         $CAT .= '/'.$q->param('idx');
@@ -42,13 +36,15 @@ if( $not_fresh ) {
       $CAT =~ s/_/ /g;
       if( $CAT2 ) {
         $CAT2 =~ s/_/ /g;
-        $q->param('_c', "+$CAT2", "+$CAT","+Top/Source/e!37" );
+        $q->param('_c', "+$CAT2", "+$CAT","+Top/Source/e!39" );
       } else {
-        $q->param('_c', "+$CAT" , "+Top/Source/e!37");
+        $q->param('_c', "+$CAT" , "+Top/Source/e!39");
       }
+    } else {
+      $q->param( '_c', "+Top/Source/e!39" );
     }
   } elsif( $q->param('_q') ){
-    $q->param('_c', "+Top/Source/e!37");
+    $q->param('_c', "+Top/Source/e!39");
   }
   $exalead->parse( $q );
 }
