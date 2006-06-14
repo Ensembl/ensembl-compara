@@ -358,7 +358,7 @@ my $population_adaptor = $dbVariation->get_PopulationAdaptor; #get adaptor for P
 my $population = $population_adaptor->fetch_by_name($population_name); #get population object from database
 
 my $ldFeatureContainerAdaptor = $dbVariation->get_LDFeatureContainerAdaptor; #get adaptor for LDFeatureContainer object
-my $ldFeatureContainer = $ldFeatureContainerAdaptor->fetch_by_Slice($slice,$population->dbID); #retrieve all LD values in the region
+my $ldFeatureContainer = $ldFeatureContainerAdaptor->fetch_by_Slice($slice,$population); #retrieve all LD values in the region
 
 foreach my $r_square (@{$ldFeatureContainer->get_all_r_square_values}){
     if ($r_square->{r2} > 0.8){ #only print high LD, where high is defined as r2 > 0.8
