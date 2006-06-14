@@ -23,6 +23,12 @@ you chose when you installed MySQL.</p>
 <p>Note that it is important that you start MySQL before you start the website. The startup scripts for the
 site rely on the databases being available, as they compile lists of available data at this point.
 You should now be able to point a web-browser at your server and see the Ensembl homepage.</p>
+<p>
+  If you have already started the site - and then reconfigured it you will
+  need to delete the config.packed file (and if you change mart configuration
+  martconf.packed and martRegistry.xml files) in the conf directory before
+  restarting.
+</p>
 </li>
 </ol>
 <h3 class="boxed">Stopping the Ensembl website</h3>
