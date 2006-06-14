@@ -143,7 +143,7 @@ sub context_menu {
     'code'  => 'id_history',
     'text'  => 'ID history',
     'title' => 'ID history - Protein stable ID history for'. $obj->stable_id,
-    'href'  => "/$species/idhistoryview?$q_string");
+    'href'  => "/$species/idhistoryview?$q_string") if $obj->species_defs->get_table_size({-db  => "ENSEMBL_DB", -table => 'gene_archive'});
 
   $self->add_entry( $flag,
     'code' => 'trans_info',

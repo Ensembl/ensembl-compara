@@ -334,7 +334,7 @@ sub context_menu {
     'code'  => 'id_history',
     'text'  => 'ID history',
     'title' => 'ID history - Transcript stable ID history for'. $obj->stable_id,
-    'href'  => "/$species/idhistoryview?$q_string");
+    'href'  => "/$species/idhistoryview?$q_string") if $obj->species_defs->get_table_size({-db  => "ENSEMBL_DB", -table => 'gene_archive'});
 
   # Variation: TranscriptSNP view
   # if meta_key in variation meta table has default strain listed

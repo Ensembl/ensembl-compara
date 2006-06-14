@@ -36,30 +36,53 @@ sub name {
   my $label  = 'Stable ID';
   my $id = $object->stable_id.".".$object->version;
 
-  my $param = $object->type eq 'Translation' ? 'peptide' : lc($object->type);
-  my $name = _archive_link($object, $id, $param, $id) || $id;
-  $panel->add_row( $label, $object->type.": $name" );
+  my $assembly = $object->assembly;
+  $id .= " from assembly $assembly<br />Last remapped for database: ".$object->db_name;
+
+
+  $panel->add_row( $label, $object->type.": $id" );
   return 1;
 }
 
 
 sub status {
   my($panel, $object) = @_;
-  my $label  = 'Status';
-  my $current_release = $object->species_defs->ENSEMBL_VERSION;
-  my $release  = $object->release;
+  my $id = $object->stable_id.".".$object->version;
+  my $param = $object->type eq 'Translation' ? 'peptide' : lc($object->type);
 
   my $status;
-  if ($object->get_current_object($object->type)) {
-    $status = "Current v$current_release";
+  my $current_obj = $object->get_current_object($object->type);
+  my $archive = _archive_link($object, $id, $param, "Archive <img src='/img/ensemblicon.gif'/>");
+
+  if (!$current_obj) {
+    $status = "<b>This ID has been removed from the current version of Ensembl</b>.<br />";
+
+    if ($archive) {
+      $status .= "$archive version (release ".$object->release.")";
+    }
+    else {
+      $status .= "No archive version available.  Last in release ". $object->release;
+    }
   }
-  else {
-    $status = "<b>This ID has been removed from the current version of Ensembl</b>.<br />Last release $release";
+  elsif ($current_obj->version eq $object->version) {
+    $status = "Current v".$object->species_defs->ENSEMBL_VERSION;
+    my $current_link = _archive_link($object, $id, $param, $id);
+    $status .= " $current_link";
+  }
+  else  {
+    my $current = $object->stable_id . ".". $current_obj->version;
+    my $name = _current_link($object->stable_id, $param, $current);
+    $status = "<b>Current version of $id is $name</b><br />";
+
+    if ($archive) {
+      $status .= "$archive version (release ".$object->release.")";
+    }
+    else {
+      $status .= "No archive version available";
+    }
   }
 
-  my $assembly = $object->assembly;
-  $status .= " ($assembly)<br />Last remapped for database: ".$object->db_name;
-  $panel->add_row( $label, $status );
+  $panel->add_row( "Status", $status );
   return 1 if $status =~/^Current/;
 
 
@@ -107,7 +130,6 @@ sub history {
   foreach my $arch_id ( @{ $object->history} ) {
     push @{ $history->{$arch_id->release} }, $arch_id;
   }
-  my $dbnames = $object->dbnames;
   return unless keys %$history;
 
   $panel->add_columns(
@@ -126,39 +148,34 @@ sub history {
     my $row;
 
     if ( $releases[$i]-$releases[$i+1] == 1) {
-      $row->{Release} = "v$releases[$i]";
+      $row->{Release} = $releases[$i];
     }
     else {
       my $start = $releases[$i+1] +1;
-      $row->{Release} = "v$start-$releases[$i]";
+      $row->{Release} = "$start-$releases[$i]";
     }
 
     $row->{Database} = $history->{$releases[$i]}->[0]->db_name;
     $row->{Assembly} = $history->{$releases[$i]}->[0]->assembly;
 
     # loop over archive ids
+    my $flag = 0;
     foreach my $a (sort {$a->stable_id cmp $b->stable_id} @{ $history->{$releases[$i]} }) {
       my $id = $a->stable_id.".".$a->version;
-      
-      if ($i == 0 && $object->get_current_object($type, $a->stable_id, $a->version)) {
-	$row->{Release} .= "-". $object->species_defs->ENSEMBL_VERSION;
-      }
+
       $panel->add_columns(  { 'key' => $a->stable_id, 
 			      'title' => $type.": ".$a->stable_id} ) unless $columns{$a->stable_id};
       $columns{$a->stable_id}++;
       my $archive = _archive_link($object, $id, $param, "<img src='/img/ensemblicon.gif'/>",  $releases[$i]);
 
       $row->{$a->stable_id} = qq(<a href="idhistoryview?$param).qq(=$id">$id</a> $archive);
-
-      next if $type eq 'Translation';
-      # get peptide length
-      # foreach my $pep (@{ $a->get_all_translation_archive_ids }) {
-      # my $pep_length = length($pep->get_peptide)."bp";
-      # my $archive = _archive_link($object, $pep->stable_id, "peptide", "<img src='/img/ensemblicon.gif' />", $releases[$i]);
-
-      # $row->{$a->stable_id}.= "<br /><a href='idhistoryview?peptide=".
-      #   $pep->stable_id."'>".$pep->stable_id."</a> ($pep_length) $archive";
-      #      }
+      next if $flag;
+      if ($i == 0) {
+	my $current_obj = $object->get_current_object($type, $a->stable_id);
+	next unless $current_obj->version eq $object->release;
+	$row->{Release} .= "-". $object->species_defs->ENSEMBL_VERSION;
+	$flag = 1;
+      }
     }
     $panel->add_row( $row );
   }
@@ -169,10 +186,9 @@ sub _archive_link {
   my ($object, $name, $type, $id, $release) = @_;
   $release ||= $object->release;
   return unless $release > 24;
-
-  my $current_release = $object->species_defs->ENSEMBL_VERSION;
   my $url;
-  if ($object->get_current_object($type)) {
+  my $current_obj = $object->get_current_object($type);
+  if ($current_obj && $current_obj->version eq $release) {
     $url = "/";
   }
   else {
@@ -187,12 +203,19 @@ sub _archive_link {
   if ($type eq 'peptide') {
     $view = 'protview';
   }
-
   $id = qq(<a title="Archive site" href="$url$view?$type=$name">$id</a>);
-
   return $id;
 }
 
+sub _current_link {
+  my ($name, $type, $display) = @_;
+  my $url =  "/".$ENV{'ENSEMBL_SPECIES'}."/";
+  my $view = $type."view";
+  if ($type eq 'peptide') {
+    $view = 'protview';
+  }
+  return qq(<a title="Archive site" href="$url$view?$type=$name">$display</a>);
+}
 
 
 1;
