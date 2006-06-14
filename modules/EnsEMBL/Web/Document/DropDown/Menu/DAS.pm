@@ -32,7 +32,6 @@ sub new {
 	  warn("WARNING: DAS source $das_name has not been added: Missing parameters");
 	  next;
       }
-      
 
       if( my $src = $ext_das->{'data'}->{$das_name}){ 
 
@@ -64,6 +63,14 @@ sub new {
 	  delete $das_data{enable};
 	  push @{$das_data{enable}}, @enable_on;
       }
+
+      if (my $link_url = $das_data{linkurl}) {
+	  $link_url =~ s/\$3F/\?/g;
+	  $link_url =~ s/\$3A/\:/g;
+	  $link_url =~ s/\$23/\#/g;
+	  $link_url =~ s/\$26/\&/g;
+	  $das_data{linkurl} = $link_url;
+      }
       push @{$das_data{enable}}, $script;
       push @{$das_data{mapping}} , split(/\,/, $das_data{type});
       $das_data{conftype} = 'external';
@@ -82,7 +89,6 @@ sub new {
 	  $das_data{color} and $config->set( "managed_extdas_$das_name", "col", $das_data{col}, 1);
 	  $das_data{linktext} and $config->set( "managed_extdas_$das_name", "linktext", $das_data{linktext}, 1);
 	  $das_data{linkurl} and $config->set( "managed_extdas_$das_name", "linkurl", $das_data{linkurl}, 1);
-
       }
 
       $ext_das->add_das_source(\%das_data);

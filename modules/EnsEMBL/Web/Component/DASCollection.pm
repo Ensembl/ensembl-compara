@@ -29,6 +29,7 @@ our @ISA = qw(EnsEMBL::Web::Component);
 use strict;
 use warnings;
 no warnings "uninitialized";
+use HTML::Entities;
 
 my $btnNext = 'Next';
 my $btnBack = 'Back';
@@ -541,25 +542,73 @@ sub added_sources {
 
 	foreach my $param (@cparams) {
 	    if (defined(my $v = $object->param($param))) {
-		$url .= "$param=$v;";
+		$url .= "$param=$v;" if ($v);
 	    }
 	}
 
-	my $add_link = sprintf("%sadd_das_source=(name=%s+url=%s+dsn=%s+type=%s+color=%s+strand=%s+labelflag=%s+stylesheet=%s+group=%s+depth=%d+score=%s+fg_merge=%s+active=1)",
+	my $add_link = sprintf("%sadd_das_source=(name=%s+url=%s+dsn=%s+type=%s",
 			       $url, 
 			       $das_name,
 			       $das_adapt->domain,
 			       $das_adapt->dsn,
 			       $das_adapt->type,
-			       $das_adapt->color,
-			       $das_adapt->strand,
-			       $das_adapt->labelflag,
-			       $das_adapt->stylesheet,
-			       $das_adapt->group,
-			       $das_adapt->depth,
-			       $das_adapt->score,
-			       $das_adapt->fg_merge
-);
+			       );
+
+	if ($das_adapt->color ne 'blue') {
+	    $add_link .= '+color=';
+	    $add_link .= $das_adapt->color;
+	}
+	
+	if ($das_adapt->strand ne 'b') {
+	    $add_link .= '+strand=';
+	    $add_link .= $das_adapt->strand;
+	}
+
+	if ($das_adapt->labelflag ne 'u') {
+	    $add_link .= '+labelflag=';
+	    $add_link .= $das_adapt->labelflag;
+	}
+
+	if ($das_adapt->stylesheet ne 'n') {
+	    $add_link .= '+stylesheet=';
+	    $add_link .= $das_adapt->stylesheet;
+	}
+
+	if ($das_adapt->group ne 'y') {
+	    $add_link .= '+group=';
+	    $add_link .= $das_adapt->group;
+	}
+
+	if ($das_adapt->depth != 10) {
+	    $add_link .= '+depth=';
+	    $add_link .= $das_adapt->depth;
+	}
+
+	if ($das_adapt->score ne 'n') {
+	    $add_link .= '+score=';
+	    $add_link .= $das_adapt->score;
+	}
+
+	if ($das_adapt->fg_merge) {
+	    $add_link .= '+fg_merge=';
+	    $add_link .= $das_adapt->fg_merge;
+	}
+
+	
+	if (my $link_url = $das_adapt->linkurl) {
+	    $add_link .= '+linkurl=';
+	    $link_url =~ s/\?/\$3F/g;
+	    $link_url =~ s/\:/\$3A/g;
+	    $link_url =~ s/\#/\$23/g;
+	    $link_url =~ s/\&/\$26/g;
+	    $add_link .= $link_url;
+	}
+	if (my $link_text = $das_adapt->linktext) {
+	    $add_link .= '+linktext=';
+	    $add_link .= $link_text;
+	}
+
+	$add_link .= '+active=1)';
 
 	my $js = qq{javascript:X=window.open('','helpview','left=20,top=20,height=200,width=600,resizable');
 	  X.document.write('
