@@ -51,6 +51,7 @@ function drag_move( evt ) { debug_print( 'drag_move' );
 function select_start( evt ) { if(MAC && MODE=='IE6') return;
   debug_print( 'select_start' );
   evt = (evt) ? evt : ((event)?event:null)
+  if( evt.button == 2 ) { return; }
   SELECTION_DIV   = gp(gee(evt),'DIV');
   dragging_object = gp( gee(evt), 'DIV' );
   dragging_id     = dragging_object.getAttribute('id')

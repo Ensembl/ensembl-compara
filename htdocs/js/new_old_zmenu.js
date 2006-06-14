@@ -42,7 +42,11 @@ function zmenu( event ) {
   var caption = d[0]
   var lnks    = new Array((d.length-1)/2);
   for(var i=0;i<d.length-1;i+=2) {
-    lnks[i/2] = new Array( d[i+2], d[i+1] );
+    if(d[i+1].substring(0,1)=='@') {
+      lnks[i/2] = new Array( d[i+2], d[i+1].substring(1), '_blank' );
+    } else {
+      lnks[i/2] = new Array( d[i+2], d[i+1] );
+    }
   }
   show_zmenu( caption, CLICK_X, CLICK_Y, lnks, ZMENU_ID  );
   return true;
