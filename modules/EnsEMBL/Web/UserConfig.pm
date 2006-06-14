@@ -1030,7 +1030,8 @@ sub ADD_ALL_EST_FEATURES {
 sub ADD_ALL_CLONE_TRACKS {
   my $self = shift;
   my $POS = shift || 2500;
-  $self->add_clone_track( 'cloneset_0_5mb', '0.5Mb clones',   $POS++, @_ );
+  $self->add_clone_track( '0_5MB_cloneset', '0.5Mb clones',   $POS++, @_ );
+  $self->add_clone_track( '1MB_cloneset',   '1Mb clones',     $POS++, @_ );
   $self->add_clone_track( 'cloneset_1mb',   '1Mb clones',     $POS++, @_ );
   $self->add_clone_track( 'cloneset_30k',   '30k TPA clones', $POS++, @_ );
   $self->add_clone_track( 'cloneset_32k',   '32k clones',     $POS++, @_ );
@@ -1302,7 +1303,7 @@ sub ADD_GENE_TRACKS {
   $self->add_new_track_gene( 'cdna_all', 'cDNA Genes', 'prot_gene', $POS++, 'gene_col' => '_col',  @_ );
   $self->add_new_track_gene( 'estgene', 'EST Genes', 'est_gene', $POS++,
                              'database' => 'otherfeatures', 'available' => 'databases ENSEMBL_OTHERFEATURES',
-                             'logic_name' => 'genomewise estgene', # 'on' => 'off',
+                             'logic_name' => 'genomewise estgene', 'label_threshold' => 500, # 'on' => 'off',
                              'gene_col' => 'estgene', @_ );
   $self->add_new_track_gene( 'otter', 'Vega Genes', 'vega_gene', $POS++,
                              'database' => 'vega', 'available' => 'databases ENSEMBL_VEGA',
