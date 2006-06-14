@@ -301,3 +301,9 @@ table.zoom tr td img { margin-top: 0px }
 /* hide the rest of the file from Safari */
 .bogus { font-style:normal;# }
 .multicol { float: left; width: 12em; white-space: nowrap }
+
+    table.newzmenu { font-size: 0.9em; width: 200px; border: 2px solid #cccccc; padding: 0px; margin: 0px; border-collapse: collapse }
+    table.newzmenu th { background-color: #cccccc; text-align: left; padding: 1px 2px; vertical-align: top; border: 1px solid #cccccc }
+    table.newzmenu td { border: 1px solid #cccccc; padding: 1px 2px }
+    table.newzmenu td dl { margin: 0px }
+

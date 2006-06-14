@@ -264,6 +264,10 @@ table#species-stats td.value { text-align:right;}
 a.info { text-decoration: none; font-weight:bold; }
 .blue {color: rgb(51, 102, 187); }
 
+/* HelpDesk */
+.example { width:90%; margin:1em auto; padding:20px;
+          border:1px solid #ccc; background:#eee; color:#000; }
+
 /* Other pages */
 
 div#page table.sitemap td ul.sitemap li.toggle { list-style:none; margin-left:-15px; }
@@ -294,4 +298,12 @@ table.zoom tr td { vertical-align: bottom }
 table.zoom tr td img { margin-top: 0px }
 .navbox { background-color: #ffffe7 }
 
+/* hide the rest of the file from Safari */
+.bogus { font-style:normal;# }
 .multicol { float: left; width: 12em; white-space: nowrap }
+
+    table.newzmenu { font-size: 0.9em; width: 200px; border: 2px solid #cccccc; padding: 0px; margin: 0px; border-collapse: collapse }
+    table.newzmenu th { background-color: #cccccc; text-align: left; padding: 1px 2px; vertical-align: top; border: 1px solid #cccccc }
+    table.newzmenu td { border: 1px solid #cccccc; padding: 1px 2px }
+    table.newzmenu td dl { margin: 0px }
+
