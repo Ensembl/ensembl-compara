@@ -25,17 +25,6 @@
 	    
 <tr>
 <td>
-<a target="ftp" href="ftp://ftp.ensembl.org/pub/current_apis_mellifera/"><i>Apis mellifera</i></a> (honey bee)</td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_apis_mellifera/data/fasta/dna/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_apis_mellifera/data/fasta/cdna/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_apis_mellifera/data/fasta/pep/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_apis_mellifera/data/flatfiles/embl/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_apis_mellifera/data/flatfiles/genbank/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_apis_mellifera/data/mysql/">FTP</a></td>
-</tr>
-	    
-<tr>
-<td>
 <a target="ftp" href="ftp://ftp.ensembl.org/pub/current_bos_taurus/"><i>Bos taurus</i></a> (cow)</td>
 <td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_bos_taurus/data/fasta/dna/">FTP</a></td>
 <td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_bos_taurus/data/fasta/cdna/">FTP</a></td>
@@ -80,6 +69,17 @@
 	    
 <tr>
 <td>
+<a target="ftp" href="ftp://ftp.ensembl.org/pub/current_ciona_savignyi/"><i>Ciona savignyi</i></a> (Pacific transparent sea squirt)</td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_ciona_savignyi/data/fasta/dna/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_ciona_savignyi/data/fasta/cdna/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_ciona_savignyi/data/fasta/pep/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_ciona_savignyi/data/flatfiles/embl/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_ciona_savignyi/data/flatfiles/genbank/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_ciona_savignyi/data/mysql/">FTP</a></td>
+</tr>
+	    
+<tr>
+<td>
 <a target="ftp" href="ftp://ftp.ensembl.org/pub/current_danio_rerio/"><i>Danio rerio</i></a> (zebrafish)</td>
 <td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_danio_rerio/data/fasta/dna/">FTP</a></td>
 <td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_danio_rerio/data/fasta/cdna/">FTP</a></td>
@@ -98,17 +98,6 @@
 <td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_drosophila_melanogaster/data/flatfiles/embl/">FTP</a></td>
 <td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_drosophila_melanogaster/data/flatfiles/genbank/">FTP</a></td>
 <td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_drosophila_melanogaster/data/mysql/">FTP</a></td>
-</tr>
-	    
-<tr>
-<td>
-<a target="ftp" href="ftp://ftp.ensembl.org/pub/current_fugu_rubripes/"><i>Fugu rubripes</i></a> (torafugu)</td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_fugu_rubripes/data/fasta/dna/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_fugu_rubripes/data/fasta/cdna/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_fugu_rubripes/data/fasta/pep/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_fugu_rubripes/data/flatfiles/embl/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_fugu_rubripes/data/flatfiles/genbank/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_fugu_rubripes/data/mysql/">FTP</a></td>
 </tr>
 	    
 <tr>
@@ -197,6 +186,17 @@
 <td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_saccharomyces_cerevisiae/data/flatfiles/embl/">FTP</a></td>
 <td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_saccharomyces_cerevisiae/data/flatfiles/genbank/">FTP</a></td>
 <td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_saccharomyces_cerevisiae/data/mysql/">FTP</a></td>
+</tr>
+	    
+<tr>
+<td>
+<a target="ftp" href="ftp://ftp.ensembl.org/pub/current_takifugu_rubripes/"><i>Takifugu rubripes</i></a> (torafugu)</td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_takifugu_rubripes/data/fasta/dna/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_takifugu_rubripes/data/fasta/cdna/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_takifugu_rubripes/data/fasta/pep/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_takifugu_rubripes/data/flatfiles/embl/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_takifugu_rubripes/data/flatfiles/genbank/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_takifugu_rubripes/data/mysql/">FTP</a></td>
 </tr>
 	    
 <tr>
