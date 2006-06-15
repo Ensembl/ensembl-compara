@@ -228,6 +228,9 @@ sub _archive_link {
   if ($type eq 'peptide') {
     $view = 'protview';
   }
+  elsif ($type eq 'transcript') {
+    $view = 'transview';
+  }
   $id = qq(<a title="Archive site" href="$url$view?$type=$name">$id</a>);
   return $id;
 }
