@@ -689,8 +689,9 @@ sub one2many_ortholog_test
   
   #one of the genes must be the only copy of the gene
   #and the other must appear more than once in the ancestry
-  return undef unless(($count1==1 and $count2>1) or ($count1>1 and $count2==1));
-  
+  return undef unless (($count1==1 and $count2>1) or ($count1>1 and $count2==1));
+  return undef if ($ancestor->get_tagvalue('Duplication'));
+
   #passed all the tests -> it's a one2many ortholog
   $genepairlink->add_tag("orthotree_type", 'ortholog_one2many');
   my $taxon = $self->get_ancestor_taxon_level($ancestor);
