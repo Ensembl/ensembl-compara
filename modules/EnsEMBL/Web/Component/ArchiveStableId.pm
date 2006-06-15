@@ -242,6 +242,9 @@ sub _current_link {
   if ($type eq 'peptide') {
     $view = 'protview';
   }
+  elsif ($type eq 'transcript') {
+    $view = 'transview';
+  }
   return qq(<a title="Archive site" href="$url$view?$type=$name">$display</a>);
 }
 
