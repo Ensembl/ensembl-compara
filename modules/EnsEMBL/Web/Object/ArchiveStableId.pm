@@ -67,6 +67,7 @@ sub db_name {
 
 sub get_current_object {
   my ($self, $type, $id) = @_;
+  warn "Error: no id" && return unless $id;
   $type = ucfirst(lc($type));
   $type = 'Translation' if $type eq 'Peptide';
   $id ||= $self->stable_id;
@@ -75,6 +76,24 @@ sub get_current_object {
   return $adaptor->fetch_by_stable_id($id) || undef;
 }
 
+
+=head2 history
+
+ Arg1        : data object
+ Description : gets the archive id history tree based around this ID
+ Return type : listref of Bio::EnsEMBL::ArchiveStableId
+               As every ArchiveStableId knows about it's successors, this is
+                a linked tree.
+
+=cut
+
+sub history {
+  my $self = shift;
+  my $adaptor = $self->_adaptor;
+  return unless $adaptor;
+  my $history = $adaptor->fetch_archive_id_history($self->Obj);
+  return $history;
+}
 
 =head2 release
 
@@ -184,23 +203,6 @@ sub _adaptor {
   return $self->database('core')->get_ArchiveStableIdAdaptor;
 }
 
-=head2 history
-
- Arg1        : data object
- Description : gets the archive id history tree based around this ID
- Return type : listref of Bio::EnsEMBL::ArchiveStableId
-               As every ArchiveStableId knows about it's successors, this is
-                a linked tree.
-
-=cut
-
-sub history {
-  my $self = shift;
-  my $adaptor = $self->_adaptor;
-  return unless $adaptor;
-  my $history = $adaptor->fetch_archive_id_history($self->Obj);
-  return $history;
-}
 
 
 1;

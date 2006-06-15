@@ -63,8 +63,8 @@ sub status {
   my $archive = _archive_link($object, $id, $param, "Archive <img src='/img/ensemblicon.gif'/>");
 
   if (!$current_obj) {
-    #my $successors = $object->successors;
-    #warn @$successors;
+    my $successors = $object->successors;
+    warn @{$successors};
     $status = "<b>This ID has been removed from Ensembl</b>.<br />";
   }
   elsif ($current_obj->version eq $object->version) {
@@ -147,12 +147,12 @@ sub history {
   my $type = $object->type;
   my $param = $type eq 'Translation' ? "peptide" : lc($type);
   my $id_focus = $object->stable_id.".".$object->version;
-  
+
   my @releases = (sort { $b <=> $a } keys %$history);
   # loop over releases and print results
-  for (my $i =0; $i < $#releases; $i++) {
-    my $row;
 
+  for (my $i =0; $i <= $#releases; $i++) {
+    my $row;
     if ( $releases[$i]-$releases[$i+1] == 1) {
       $row->{Release} = $releases[$i];
     }
@@ -164,11 +164,18 @@ sub history {
     $row->{Database} = $history->{$releases[$i]}->[0]->db_name;
     $row->{Assembly} = $history->{$releases[$i]}->[0]->assembly;
 
+    my $first_id = $history->{$releases[$i]}->[0]->stable_id;
+    if ($i == 0) {
+      my $current_obj = $object->get_current_object($type, $first_id);
+      if ($current_obj && $current_obj->version eq $object->release) {
+	$row->{Release} .= "-". $object->species_defs->ENSEMBL_VERSION;
+      }
+    }
+
+
     # loop over archive ids
-    my $flag = 0;
     foreach my $a (sort {$a->stable_id cmp $b->stable_id} @{ $history->{$releases[$i]} }) {
       my $id = $a->stable_id.".".$a->version;
-
       $panel->add_columns(  { 'key' => $a->stable_id, 
 			      'title' => $type.": ".$a->stable_id} ) unless $columns{$a->stable_id};
       $columns{$a->stable_id}++;
@@ -176,13 +183,6 @@ sub history {
 
       my $display_id = $id eq $id_focus ? "<b>$id</b>" : $id;
       $row->{$a->stable_id} = qq(<a href="idhistoryview?$param).qq(=$id">$display_id</a> $archive);
-      next if $flag;
-      if ($i == 0) {
-	my $current_obj = $object->get_current_object($type, $a->stable_id);
-	next unless $current_obj->version eq $object->release;
-	$row->{Release} .= "-". $object->species_defs->ENSEMBL_VERSION;
-	$flag = 1;
-      }
     }
     $panel->add_row( $row );
   }
