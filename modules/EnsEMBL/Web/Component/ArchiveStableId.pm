@@ -63,9 +63,14 @@ sub status {
   my $archive = _archive_link($object, $id, $param, "Archive <img src='/img/ensemblicon.gif'/>");
 
   if (!$current_obj) {
+    $status = "<b>This ID has been removed from Ensembl</b>";
     my $successors = $object->successors;
-    warn @{$successors};
-    $status = "<b>This ID has been removed from Ensembl</b>.<br />";
+    my $url = qq(<a href="idhistoryview?$param=%s">%s</a>);
+    foreach ( @{$object->successors || []} ) {
+      $status .= "<br />and replaced by ";
+      $status .= sprintf ($url, $_->stable_id, $_->stable_id);
+      $status .= " in release ".$_->release;
+    }
   }
   elsif ($current_obj->version eq $object->version) {
     $status = "Current release ".$object->species_defs->ENSEMBL_VERSION;
@@ -89,41 +94,53 @@ sub status {
   return 1;
 }
 
-sub transcript {
+sub associated_ids {
   my($panel, $object) = @_;
-  # Transcripts
-  my $label2  = 'Archived transcripts';
-  my @ids   = @{ $object->transcript || []};
-  if (scalar @ids) {
-    my $html;
-    foreach (@ids) {
-      $html .= "<p>".$_->stable_id;
-      $html .= "</p>";
+  my $type = $object->type;
+  my $url = qq(<a href="idhistoryview?%s=%s">%s</a>);
+
+  # Genes
+  unless ($type eq 'Gene') {
+    my $label1 = 'Archived genes';
+
+    my %gene_ids = map { $_->stable_id => $_; } @{ $object->genes || [] };
+    if (keys %gene_ids) {
+      my $html1;
+      foreach (keys %gene_ids) {
+	$html1 .= "<p>". sprintf ($url, "gene", $_, $_);
+	$html1 .= "</p>";
+      }
+      $panel->add_row( $label1, $html1);
     }
-    $panel->add_row( $label2, $html);
-  }
-  else {
-    $panel->add_row( $label2, "Unknown") unless scalar @ids;
   }
 
-  return 1 if $object->type eq 'Translation';
+  # Transcripts
+  unless ($type eq 'Transcript') {
+    my $label2  = 'Archived transcripts';
+    my %ids = map { $_->stable_id => $_; } @{ $object->transcript || [] };
+    if (keys %ids) {
+      my $html;
+      foreach (keys %ids) {
+	$html .="<p>".sprintf ($url,"transcript",$_, $_)."</p>";
+      }
+      $panel->add_row( $label2, $html);
+    }
+  }
+  return 1 if $type eq 'Translation';
 
   # Peptides
   my $label3  = 'Archived peptides';
-  my @pep_ids   = @{ $object->peptide || []};
-
-  if (scalar @pep_ids) {
+  my %pep_ids = map { $_->stable_id => $_; } @{ $object->peptide || [] };
+  if (keys %pep_ids) {
     my $html;
-    foreach (@pep_ids) {
-      $html .= "<kbd>>".$_->stable_id."<br />";
-      my $seq = $_->get_peptide;
+    foreach ( keys %pep_ids) {
+      $html .= "<p>".sprintf ($url, "peptide", $_, $_)."<br /><kbd>";
+      my $peptide_obj = $pep_ids{$_};
+      my $seq = $peptide_obj->get_peptide;
       $seq =~ s#(.{1,60})#$1<br />#g;
-      $html .= "$seq</kbd><br />";
+      $html .= "$seq</kbd></p>";
     }
     $panel->add_row( $label3, $html);
-  }
-  else {
-    $panel->add_row( $label3, "Unknown");
   }
   return 1;
 }

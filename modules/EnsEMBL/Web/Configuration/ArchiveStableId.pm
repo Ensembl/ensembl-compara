@@ -19,7 +19,7 @@ sub idhistoryview {
     name       EnsEMBL::Web::Component::ArchiveStableId::name
     db_name    EnsEMBL::Web::Component::ArchiveStableId::status
     remapped   EnsEMBL::Web::Component::ArchiveStableId::remapped
-    transcript EnsEMBL::Web::Component::ArchiveStableId::transcript
+    associated_ids EnsEMBL::Web::Component::ArchiveStableId::associated_ids
      ));
     $self->{page}->content->add_panel( $info_panel );
   }
