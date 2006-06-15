@@ -27,58 +27,6 @@ use EnsEMBL::Web::Object;
 our @ISA = qw(EnsEMBL::Web::Object);
 
 
-=head2 stable_id
-
- Arg1        : data object
- Description : fetches stable_id off the core API object 
- Return type : string
-
-=cut
-
-sub stable_id {
-  my $self = shift;
-  return $self->Obj->stable_id;
-}
-
-=head2 version
-
- Arg1        : data object
- Description : fetches version off the core API object 
- Return type : string
-
-=cut
-
-sub version {
-  my $self = shift;
-  return $self->Obj->version;
-}
-
-=head2 type
-
- Arg1        : data object
- Description : fetches type off the core API object 
- Return type : string
-
-=cut
-
-sub type {
-  my $self = shift;
-  return $self->Obj->type;
-}
-
-=head2 release
-
- Arg1        : data object
- Description : fetches release number off the core API object 
- Return type : string
-
-=cut
-
-sub release {
-  my $self = shift;
-  return $self->Obj->release;
-}
-
 =head2 assembly
 
  Arg1        : data object
@@ -106,7 +54,6 @@ sub db_name {
   return $self->Obj->db_name;
 }
 
-
 =head2 get_current_object
 
  Arg1        : data object
@@ -126,6 +73,73 @@ sub get_current_object {
   my $call = "get_$type"."Adaptor";
   my $adaptor = $self->database('core')->$call;
   return $adaptor->fetch_by_stable_id($id) || undef;
+}
+
+
+=head2 release
+
+ Arg1        : data object
+ Description : fetches release number off the core API object 
+ Return type : string
+
+=cut
+
+sub release {
+  my $self = shift;
+  return $self->Obj->release;
+}
+
+=head2 stable_id
+
+ Arg1        : data object
+ Description : fetches stable_id off the core API object 
+ Return type : string
+
+=cut
+
+sub stable_id {
+  my $self = shift;
+  return $self->Obj->stable_id;
+}
+
+
+=head2 successors
+
+ Arg1        : data object
+ Description : fetches successors off the core API object 
+ Return type : list ref of Archive ID objects
+
+=cut
+
+sub successors {
+  my $self = shift;
+  return $self->Obj->successors;
+}
+
+=head2 type
+
+ Arg1        : data object
+ Description : fetches type off the core API object 
+ Return type : string
+
+=cut
+
+sub type {
+  my $self = shift;
+  return $self->Obj->type;
+}
+
+=head2 version
+
+ Arg1        : data object
+ Description : fetches version off the core API object 
+ Return type : string
+
+=cut
+
+sub version {
+  my $self = shift;
+  return $self->Obj->version;
 }
 
 

@@ -35,12 +35,20 @@ sub name {
   my($panel, $object) = @_;
   my $label  = 'Stable ID';
   my $id = $object->stable_id.".".$object->version;
+  $panel->add_row( $label, $object->type.": $id" );
+  return 1;
+}
+
+
+sub remapped {
+  my($panel, $object) = @_;
+  my $label  = 'Last remapped';
 
   my $assembly = $object->assembly;
-  $id .= " from assembly $assembly<br />Last remapped for database: ".$object->db_name;
+  my $html .= "Assembly: $assembly<br />Database: ".$object->db_name;
+  $html .= "<br />Release: ".$object->release;
 
-
-  $panel->add_row( $label, $object->type.": $id" );
+  $panel->add_row( $label, $html );
   return 1;
 }
 
@@ -55,17 +63,12 @@ sub status {
   my $archive = _archive_link($object, $id, $param, "Archive <img src='/img/ensemblicon.gif'/>");
 
   if (!$current_obj) {
-    $status = "<b>This ID has been removed from the current version of Ensembl</b>.<br />";
-
-    if ($archive) {
-      $status .= "$archive version (release ".$object->release.")";
-    }
-    else {
-      $status .= "No archive version available.  Last in release ". $object->release;
-    }
+    #my $successors = $object->successors;
+    #warn @$successors;
+    $status = "<b>This ID has been removed from Ensembl</b>.<br />";
   }
   elsif ($current_obj->version eq $object->version) {
-    $status = "Current v".$object->species_defs->ENSEMBL_VERSION;
+    $status = "Current release ".$object->species_defs->ENSEMBL_VERSION;
     my $current_link = _archive_link($object, $id, $param, $id);
     $status .= " $current_link";
   }
@@ -73,19 +76,21 @@ sub status {
     my $current = $object->stable_id . ".". $current_obj->version;
     my $name = _current_link($object->stable_id, $param, $current);
     $status = "<b>Current version of $id is $name</b><br />";
-
-    if ($archive) {
-      $status .= "$archive version (release ".$object->release.")";
-    }
-    else {
-      $status .= "No archive version available";
-    }
   }
-
   $panel->add_row( "Status", $status );
   return 1 if $status =~/^Current/;
 
+  if ($archive) {
+    $panel->add_row("Archive", "$archive (release ".$object->release.")");
+  }
+  else {
+    $panel->add_row("Archive", "No archive for release ".$object->release." available.");
+  }
+  return 1;
+}
 
+sub transcript {
+  my($panel, $object) = @_;
   # Transcripts
   my $label2  = 'Archived transcripts';
   my @ids   = @{ $object->transcript || []};
@@ -141,7 +146,8 @@ sub history {
   my %columns;
   my $type = $object->type;
   my $param = $type eq 'Translation' ? "peptide" : lc($type);
-
+  my $id_focus = $object->stable_id.".".$object->version;
+  
   my @releases = (sort { $b <=> $a } keys %$history);
   # loop over releases and print results
   for (my $i =0; $i < $#releases; $i++) {
@@ -168,7 +174,8 @@ sub history {
       $columns{$a->stable_id}++;
       my $archive = _archive_link($object, $id, $param, "<img src='/img/ensemblicon.gif'/>",  $releases[$i]);
 
-      $row->{$a->stable_id} = qq(<a href="idhistoryview?$param).qq(=$id">$id</a> $archive);
+      my $display_id = $id eq $id_focus ? "<b>$id</b>" : $id;
+      $row->{$a->stable_id} = qq(<a href="idhistoryview?$param).qq(=$id">$display_id</a> $archive);
       next if $flag;
       if ($i == 0) {
 	my $current_obj = $object->get_current_object($type, $a->stable_id);
@@ -188,7 +195,8 @@ sub _archive_link {
   return unless $release > 24;
   my $url;
   my $current_obj = $object->get_current_object($type);
-  if ($current_obj && $current_obj->version eq $release) {
+
+  if ($current_obj && $current_obj->version eq $object->version) {
     $url = "/";
   }
   else {

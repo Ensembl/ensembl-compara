@@ -18,6 +18,8 @@ sub idhistoryview {
     $info_panel->add_components(qw(
     name       EnsEMBL::Web::Component::ArchiveStableId::name
     db_name    EnsEMBL::Web::Component::ArchiveStableId::status
+    remapped   EnsEMBL::Web::Component::ArchiveStableId::remapped
+    transcript EnsEMBL::Web::Component::ArchiveStableId::transcript
      ));
     $self->{page}->content->add_panel( $info_panel );
   }
