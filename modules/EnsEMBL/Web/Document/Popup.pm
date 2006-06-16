@@ -31,9 +31,9 @@ sub _initialize_HTML {
     copyright  EnsEMBL::Web::Document::HTML::Copyright
     html_end   EnsEMBL::Web::Document::HTML::HTML_Block
   );
-
   $self->_common_HTML;
   $self->_script_HTML;
+  $self->helplink->kw = $ENV{'ENSEMBL_SCRIPT'}.';se=1';
 }
 
 1;
