@@ -69,7 +69,7 @@ sub db_name {
 }
 
 
-=head2 genes
+=head2 gene
 
  Arg1        : data object
  Description : fetches archived genes off the core API object 
@@ -77,7 +77,7 @@ sub db_name {
 
 =cut
 
-sub genes {
+sub gene {
   my $self = shift;
   return $self->Obj->get_all_gene_archive_ids();
 }

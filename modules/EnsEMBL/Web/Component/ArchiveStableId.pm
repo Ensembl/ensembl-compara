@@ -23,10 +23,9 @@ use CGI qw(escapeHTML);
 
 =head2 name
 
- Arg1        : panel
- Arg2        : data object
- Example     : $panel1->add_rows(qw(name   EnsEMBL::Web::Component::SNP::name) );
- Description : adds a label and the variation name, source to the panel
+ Arg1,2      : panel, data object
+ Description : adds the type and stable ID of the archive ID
+ Output      : two col table
  Return type : 1
 
 =cut
@@ -40,6 +39,15 @@ sub name {
 }
 
 
+=head2 remapped
+
+ Arg1,2      : panel, data object
+ Description : adds the assembly, database and release corresponding to the last mapping of the archive ID
+ Output      : two col table
+ Return type : 1
+
+=cut
+
 sub remapped {
   my($panel, $object) = @_;
   my $label  = 'Last remapped';
@@ -52,6 +60,15 @@ sub remapped {
   return 1;
 }
 
+=head2 status
+
+ Arg1,2      : panel, data object
+ Description : whether the ID is current, removed, replaced,
+               if it is removed and there are successors, ID of these are shown
+ Output      : two col table
+ Return type : 1
+
+=cut
 
 sub status {
   my($panel, $object) = @_;
@@ -64,13 +81,14 @@ sub status {
 
   if (!$current_obj) {
     $status = "<b>This ID has been removed from Ensembl</b>";
-    my $successors = $object->successors;
+    my @successors = @{ $object->successors || []};
     my $url = qq(<a href="idhistoryview?$param=%s">%s</a>);
-    foreach ( @{$object->successors || []} ) {
-      $status .= "<br />and replaced by ";
-      $status .= sprintf ($url, $_->stable_id, $_->stable_id);
-      $status .= " in release ".$_->release;
-    }
+    my $verb = scalar @successors > 1 ? "split into " : "replaced by ";
+    my @successor_text = map {
+      sprintf ($url, $_->stable_id, $_->stable_id).
+	" in release ".$_->release; } @successors;
+    $status .= " and <b>$verb</b><br />".
+      join "and <br />", @successor_text if @successors;
   }
   elsif ($current_obj->version eq $object->version) {
     $status = "Current release ".$object->species_defs->ENSEMBL_VERSION;
@@ -94,57 +112,65 @@ sub status {
   return 1;
 }
 
+=head2 associated_ids
+
+ Arg1,2      : panel, data object
+ Description : adds the associated gene/transcript/peptide (and seq)
+ Output      : two col table
+ Return type : 1
+
+=cut
+
 sub associated_ids {
   my($panel, $object) = @_;
   my $type = $object->type;
-  my $url = qq(<a href="idhistoryview?%s=%s">%s</a>);
 
-  # Genes
-  unless ($type eq 'Gene') {
-    my $label1 = 'Archived genes';
-
-    my %gene_ids = map { $_->stable_id => $_; } @{ $object->genes || [] };
-    if (keys %gene_ids) {
-      my $html1;
-      foreach (keys %gene_ids) {
-	$html1 .= "<p>". sprintf ($url, "gene", $_, $_);
-	$html1 .= "</p>";
-      }
-      $panel->add_row( $label1, $html1);
-    }
+  my ($id_type, $id_type2);
+  if ($type eq 'Gene') {
+    ($id_type, $id_type2) = ("transcript", "peptide");
+  }
+  elsif ($type eq 'Transcript') {
+    ($id_type, $id_type2) = ("gene", "peptide");
+  }
+  elsif ($type eq 'Translation') {
+    ($id_type, $id_type2) = ("gene", "transcript");
+  }
+  else {
+    warn "Error:  Unknown type $type in ID history view";
   }
 
-  # Transcripts
-  unless ($type eq 'Transcript') {
-    my $label2  = 'Archived transcripts';
-    my %ids = map { $_->stable_id => $_; } @{ $object->transcript || [] };
-    if (keys %ids) {
-      my $html;
-      foreach (keys %ids) {
-	$html .="<p>".sprintf ($url,"transcript",$_, $_)."</p>";
-      }
-      $panel->add_row( $label2, $html);
-    }
-  }
-  return 1 if $type eq 'Translation';
+  my $url = qq( <a href="idhistoryview?%s=%s">%s</a>);
+  my %ids = map { $_->stable_id => $_; } @{ $object->$id_type || [] };
 
-  # Peptides
-  my $label3  = 'Archived peptides';
-  my %pep_ids = map { $_->stable_id => $_; } @{ $object->peptide || [] };
-  if (keys %pep_ids) {
+  foreach (keys %ids) {
     my $html;
-    foreach ( keys %pep_ids) {
-      $html .= "<p>".sprintf ($url, "peptide", $_, $_)."<br /><kbd>";
-      my $peptide_obj = $pep_ids{$_};
-      my $seq = $peptide_obj->get_peptide;
-      $seq =~ s#(.{1,60})#$1<br />#g;
-      $html .= "$seq</kbd></p>";
+    $html .= "<p>".ucfirst($id_type). sprintf ($url, $id_type, $_, $_). "</p>";
+
+    my %ids2 = map { $_->stable_id => $_; } @{ $object->$id_type2 || [] };
+    foreach (keys %ids2) {
+      $html .= "<p>".ucfirst($id_type2). sprintf ($url, $id_type2, $_, $_);
+      if ($id_type2 eq 'peptide') {
+	my $peptide_obj = $ids2{$_};
+	my $seq = $peptide_obj->get_peptide;
+	$seq =~ s#(.{1,60})#$1<br />#g;
+	$html .= "<br /><kbd>$seq</kbd>" if $seq;
+      }
+      $html .= "</p>";
     }
-    $panel->add_row( $label3, $html);
+    $panel->add_row( "Associated $id_type, $id_type2 in archive", $html);
   }
   return 1;
 }
 
+
+=head2 history
+
+ Arg1,2      : panel, data object
+ Description : adds the history tree for the archive ID
+ Output      : spreadsheet table
+ Return type : 1
+
+=cut
 
 sub history {
   my($panel, $object) = @_;
@@ -206,6 +232,20 @@ sub history {
   return 1;
 }
 
+
+=head2 _archive_link
+
+ Arg 1       : data object
+ Arg 2       : param to view for URL (within first <a> tag)
+ Arg 3       : type of object  (e.g. "gene", "transcript" or "peptide")
+ Arg 4       : id - the display text (within <a>HERE</a> tags)
+ Description : creates an archive link from the ID if archive is available
+               if the ID is current, it creates a link to the page on curr Ens
+ Return type : html
+
+=cut
+
+
 sub _archive_link {
   my ($object, $name, $type, $id, $release) = @_;
   $release ||= $object->release;
@@ -235,6 +275,18 @@ sub _archive_link {
   return $id;
 }
 
+
+=head2 _current_link
+
+ Arg 1       : name within first <a> tag -for URL
+ Arg 2       : type (e.g. "peptide", "gene", "transcript")
+ Arg 3       : display text between <a> HERE </a> tags
+ Description : adds the type and stable ID of the archive ID
+ Return type : html
+
+=cut
+
+
 sub _current_link {
   my ($name, $type, $display) = @_;
   my $url =  "/".$ENV{'ENSEMBL_SPECIES'}."/";
@@ -251,7 +303,4 @@ sub _current_link {
 
 1;
 
-      # get successors (for tagging)
-      #my $predecessor = join("<br />", map { $_->stable_id.".".$_->version }  @{ $a->get_all_predecessors });
-      #$html .= "<td>$predecessor</td>";
 
