@@ -152,8 +152,13 @@ sub associated_ids {
       if ($id_type2 eq 'peptide') {
 	my $peptide_obj = $ids2{$_};
 	my $seq = $peptide_obj->get_peptide;
-	$seq =~ s#(.{1,60})#$1<br />#g;
-	$html .= "<br /><kbd>$seq</kbd>" if $seq;
+	if ($seq) {
+	  $seq =~ s#(.{1,60})#$1<br />#g;
+	  $html .= "<br /><kbd>$seq</kbd>";
+	}
+	else {
+	  $html .= qq( (sequence same as <a href="protview?peptide=$_">current release</a>));
+	}
       }
       $html .= "</p>";
     }
