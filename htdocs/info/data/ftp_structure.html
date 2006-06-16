@@ -14,30 +14,41 @@
 <h3 class="boxed">Introduction</h3>
 
 <p>
-The Ensembl FTP site provides biological sequence databases suitable for large-scale local sequence similarity search approaches, as well as MySQL table dumps of all underlying Ensembl databases.
-These table dumps are suitable for import into relational database management systems and allow
-<a href="../software/website/installation/index.html">installation</a> of complete Ensembl mirror sites.
+The Ensembl FTP site provides biological sequence databases suitable for
+large-scale local sequence similarity search approaches, as well as MySQL table
+dumps of all underlying Ensembl databases.
+These table dumps are suitable for import into relational database management
+systems and allow
+<a href="../software/website/installation/index.html">installation</a>
+of complete Ensembl mirror sites.
 </p>
 
 <p>
-<b>Please note:</b> Ensembl supports downloading of many correlation tables via the highly customisable
+<strong>Please note:</strong>
+Ensembl supports downloading of many correlation tables via the highly
+customisable
 <a href="http://www.ebi.ac.uk/biomart/">BioMart</a> data mining tool.
-You may find exploring this web-based data mining tool easier than extracting information from our normalised database dumps.
+You may find exploring this web-based data mining tool easier than extracting
+information from our normalised database dumps.
 </p>
 
 <p>
 The URL
 <a href="ftp://ftp.ensembl.org/pub/" target="external">ftp://ftp.ensembl.org/pub/</a> is the basis of the directory structure outlined below.
-The structure is also described in the FTP site <a href="ftp://ftp.ensembl.org/pub/README">README</a>.
-The latest data sets for each species are available via directories prefixed '<b>current_</b>'.
-For example 'current_mouse' will always point to the latest data release for the mouse.
+The structure is also described in the FTP site
+<a href="ftp://ftp.ensembl.org/pub/README">README</a>.
+The latest data sets for each species are available via directories prefixed
+'<strong>current_</strong>'.
+For example 'current_mouse' will always point to the latest data release for
+the mouse.
 </p>
 
 
 <h3 class="boxed">Species Directories</h3>
 
 <p>
-All species directories have the following basic structure, although not all information is neccessarily available for each species.
+All species directories have the following basic structure, although not all
+information is neccessarily available for each species.
 </p>
 
 <pre>
@@ -68,7 +79,11 @@ All species directories have the following basic structure, although not all inf
            |                * Marker information
            |                * ...
            |
-           |-- est        Gene predictions based on EST information
+           |-- otherfeatures  Additional genome annotation
+           |
+           |                * Gene predictions based on EST information
+           |                * ...
+           |
            |-- variation  Genetic variation information
            |-- vega       Manually curated gene sets
            |-- cdna       cDNA to genome alignments based on the latest EMBL database
@@ -79,7 +94,8 @@ All species directories have the following basic structure, although not all inf
 <h3 class="boxed">Multi-species Directories</h3>
 
 <p>
-The 'multi-species' directories contain databases not directly linked to single species data or which contain link data between species.
+The 'multi-species' directories contain databases not directly linked to single
+species data or which contain link data between species.
 </p>
 
 <pre>
@@ -92,15 +108,19 @@ The 'multi-species' directories contain databases not directly linked to single 
            |
            |-- ensembl_compara      Cross-species comparative genomics data:
            |
-           |                          * Orthologue predictions
+           |                          * Orthologue/paralogue predictions
            |                          * Protein families
            |                          * Whole genome alignments
            |                          * Synteny information
            |
-           |-- ensembl_help         Database storing context-sensitive help articles
-           |-- ensembl_web_user_db  SQL table defintion for server-side user config database
            |-- ensembl_go           Gene Ontology database
-
+           |
+           |-- ensembl_web_user_db  SQL table defintion for server-side user config database
+           |
+           |-- ensembl_website      Ensembl web site database:
+           |                          * Context-sensitive help articles
+           |                          * News articles
+           |                          * Mini-ads
 </pre>
 
 
@@ -129,9 +149,12 @@ The 'mart' directory contains table dumps of the databases underlying the
 
 <!--
 <p>
-Please note that file name substitution or globbing has been turned off in the FTP server so that you cannot use meta characters or wildcards for pattern matching in your FTP requests.
+Please note that file name substitution or globbing has been turned off in the
+FTP server so that you cannot use meta characters or wildcards for pattern
+matching in your FTP requests.
 Smart clients like
-<a href="http://directory.fsf.org/wget.html" target="external">GNU wget</a> or mirroring software should be able to work around this.
+<a href="http://directory.fsf.org/wget.html" target="external">GNU wget</a>
+or mirroring software should be able to work around this.
 </p>
 -->
 
