@@ -67,64 +67,6 @@ foreach my $species ( @species ) {
 
 ########################################################################## QTLs
 
-sub dumpUnmapped {
-  my $conf = shift;
-  my %queries = ( 'None' => q(
-select a.logic_name, e.db_display_name,
-       uo.identifier, ur.summary_description,
-       'Not mapped'
-  from analysis as a, external_db as e, unmapped_object as uo,
-       unmapped_reason as ur
- where a.analysis_id = uo.analysis_id and 
-       uo.external_db_id = e.external_db_id and
-       uo.unmapped_reason_id = ur.unmapped_reason_id and
-       uo.ensembl_id = 0
-), 'Transcript' => q(
-select a.logic_name, e.db_display_name,
-       uo.identifier, ur.summary_description,
-       concat( 'Transcript: ',
-                tsi.stable_id, '; Gene: ',gsi.stable_id )
-  from analysis as a, external_db as e, unmapped_object as uo,
-       unmapped_reason as ur, transcript_stable_id as tsi,
-       transcript as t, gene_stable_id as gsi
- where a.analysis_id = uo.analysis_id and 
-       uo.external_db_id = e.external_db_id and
-       uo.unmapped_reason_id = ur.unmapped_reason_id and
-       uo.ensembl_id = t.transcript_id and
-       uo.ensembl_object_type = 'Transcript' and
-       t.transcript_id = tsi.transcript_id and
-       t.gene_id       = gsi.gene_id
-), 'Translation' => q(
-select e.db_display_name, uo.identifier, ur.summary_description,
-       concat( 'Translation: ',trsi.stable_id,'; Transcript: ',
-                tsi.stable_id, '; Gene: ',gsi.stable_id )
-  from analysis as a, external_db as e, unmapped_object as uo,
-       unmapped_reason as ur, transcript_stable_id as tsi,
-       translation as tr, translation_stable_id as trsi,
-       transcript as t, gene_stable_id as gsi
- where a.analysis_id = uo.analysis_id and 
-       uo.external_db_id = e.external_db_id and
-       uo.unmapped_reason_id = ur.unmapped_reason_id and
-       uo.ensembl_id = tr.translation_id and 
-       tr.transcript_id = t.transcript_id and
-       trsi.translation_id = tr.translation_id and
-       uo.ensembl_object_type = 'Translation' and
-       t.transcript_id = tsi.transcript_id and
-       t.gene_id       = gsi.gene_id
-  ));
-  open O, ">$conf->{'directory'}/Unmapped.txt";
-  foreach my $FLAG (keys %queries) {
-    my $SQL = $queries{$FLAG};
-    my $sth = $conf->{'dbh'}->prepare($SQL);
-    $sth->execute;
-    while( my $T = $sth->fetchrow_arrayref() ) {
-      print O join "\t", (INC_SPECIES?"$conf->{'species'}\t":"").qq(Unmapped feature:),
-    "$T->[1] $T->[2]",
-    "/$conf->{'species'}/featureview?type=Unmapped;name=$T->[2]", "$T->[2] $T->[4]", "$T->[3]; $T->[4]\n";
-    }
-  }
-  close O;
-}   
 sub dumpQTL {
   my $conf = shift;
   my $sth = $conf->{'dbh'}->prepare(qq(
@@ -709,10 +651,10 @@ sub dumpGene {
     my %sths = (
         'Ensembl' => $conf->{'dbh'}->prepare(qq(
 select gsi.stable_id as gsid, tsi.stable_id as tsid, trsi.stable_id as trsid,
-       x.display_label as disp_id, x.dbprimary_acc as db_id, xd.db_display_name as db,
+       x.display_label as disp_id, x.dbprimary_acc as db_id, xd.db_display_name as db, xs.synonym as s,
        g.description,
-       Z_x.display_label as disp_id_1, Z_x.dbprimary_acc as db_id_1, Z_xd.db_display_name as db_1,
-       Y_x.display_label as disp_id_2, Y_x.dbprimary_acc as db_id_2, Y_xd.db_display_name as db_2
+       Z_x.display_label as disp_id_1, Z_x.dbprimary_acc as db_id_1, Z_xd.db_display_name as db_1, Z_xs.synonym as s_1,
+       Y_x.display_label as disp_id_2, Y_x.dbprimary_acc as db_id_2, Y_xd.db_display_name as db_2, Y_xs.synonym as s_2
   from $COREDB.gene_stable_id as gsi, $COREDB.gene as g,
        $COREDB.transcript_stable_id as tsi,
        $COREDB.transcript as t left join
@@ -722,12 +664,15 @@ select gsi.stable_id as gsid, tsi.stable_id as tsid, trsi.stable_id as trsid,
  left join
        $COREDB.xref as x on ox.xref_id = x.xref_id left join
        $COREDB.external_db as xd on xd.external_db_id = x.external_db_id left join
+       $COREDB.external_synonym as xs on xs.xref_id = x.xref_id left join
        $COREDB.object_xref as Z_ox on t.transcript_id = Z_ox.ensembl_id and Z_ox.ensembl_object_type = 'Transcript' left join
        $COREDB.xref as Z_x on Z_ox.xref_id = Z_x.xref_id left join
        $COREDB.external_db as Z_xd on Z_xd.external_db_id = Z_x.external_db_id left join
+       $COREDB.external_synonym as Z_xs on Z_xs.xref_id = Z_x.xref_id left join
        $COREDB.object_xref as Y_ox on t.gene_id = Y_ox.ensembl_id and Y_ox.ensembl_object_type = 'Gene' left join
        $COREDB.xref as Y_x on Y_ox.xref_id = Y_x.xref_id left join
-       $COREDB.external_db as Y_xd on Y_xd.external_db_id = Y_x.external_db_id
+       $COREDB.external_db as Y_xd on Y_xd.external_db_id = Y_x.external_db_id left join
+       $COREDB.external_synonym as Y_xs on Y_xs.xref_id = Y_x.xref_id 
  where t.gene_id = gsi.gene_id and t.transcript_id = tsi.transcript_id and t.gene_id = g.gene_id
  order by gsi.stable_id, tsi.stable_id
         ))
@@ -738,10 +683,10 @@ select gsi.stable_id as gsid, tsi.stable_id as tsid, trsi.stable_id as trsid,
       $sths{'Vega'} 
         = $conf->{'dbh'}->prepare(qq(
 select gsi.stable_id as gsid, tsi.stable_id as tsid, trsi.stable_id as trsid,
-       x.display_label as disp_id, x.dbprimary_acc as db_id, xd.db_display_name as db,
+       x.display_label as disp_id, x.dbprimary_acc as db_id, xd.db_display_name as db, '' as s,
        g.description,
-       Z_x.display_label as disp_id_1, Z_x.dbprimary_acc as db_id_1, Z_xd.db_display_name as db_1,
-       Y_x.display_label as disp_id_2, Y_x.dbprimary_acc as db_id_2, Y_xd.db_display_name as db_2
+       Z_x.display_label as disp_id_1, Z_x.dbprimary_acc as db_id_1, Z_xd.db_display_name as db_1, '' as s_1,
+       Y_x.display_label as disp_id_2, Y_x.dbprimary_acc as db_id_2, Y_xd.db_display_name as db_2, '' as s_2
   from $SANGDB.gene_stable_id as gsi, $SANGDB.gene as g,
        $SANGDB.transcript_stable_id as tsi,
        $SANGDB.transcript as t left join
@@ -765,7 +710,7 @@ select gsi.stable_id as gsid, tsi.stable_id as tsid, trsi.stable_id as trsid,
     if( $ESTGENEDB ) {
     $sths{'Ensembl EST'} = $conf->{'dbh'}->prepare(qq(
 select gsi.stable_id as gsid, tsi.stable_id as tsid, trsi.stable_id as trsid,
-       x.display_label, x.dbprimary_acc, xd.db_display_name, g.description
+       x.display_label, x.dbprimary_acc, xd.db_display_name, '' as s, g.description
   from $ESTGENEDB.gene_stable_id as gsi, $ESTGENEDB.gene as g,
        $ESTGENEDB.transcript_stable_id as tsi,
        $ESTGENEDB.transcript as t left join
@@ -792,20 +737,20 @@ select gsi.stable_id as gsid, tsi.stable_id as tsid, trsi.stable_id as trsid,
         my $peptides    = {};
         my $external_ids= {};
         my %IDX         = ();
-        while( my($gid, $tid, $trid, $dispid, $dbid, $db, $desc, $dispid2,$dbid2,$db2,$dispid3,$dbid3,$db3 ) = $sth->fetchrow_array() ) {
+        while( my($gid, $tid, $trid, $dispid, $dbid, $db, $s, $desc, $dispid2,$dbid2,$db2,$s2,$dispid3,$dbid3,$db3,$s3 ) = $sth->fetchrow_array() ) {
           $desc =~ s/[\r\n\t\s ]+/ /g;
             if($gid eq $old_gid) {
                 if( $db ) {
-                  $external_ids->{$db}{$dispid}   = 1; $external_ids->{$db}{$dbid}   = 1;
-                  $IDX{$dbid}                     = 1; $IDX{$dispid}                 = 1;
+                  $external_ids->{$db}{$dispid}   = 1; $external_ids->{$db}{$dbid}   = 1; $external_ids->{$db}{$s} = 1 if $s;
+                  $IDX{$dbid}                     = 1; $IDX{$dispid}                 = 1; $IDX{$s} = 1 if $s;
                 }
                 if( $db2 ) {
-                  $external_ids->{$db2}{$dispid2} = 1; $external_ids->{$db2}{$dbid2}   = 1;
-                  $IDX{$dbid2}                    = 1; $IDX{$dispid2}                 = 1;
+                  $external_ids->{$db2}{$dispid2} = 1; $external_ids->{$db2}{$dbid2} = 1; $external_ids->{$db}{$s2} = 1 if $s2;
+                  $IDX{$dbid2}                    = 1; $IDX{$dispid2}                = 1; $IDX{$s2} = 1 if $s2;
                 }
                 if( $db3 ) {
-                  $external_ids->{$db3}{$dispid3} = 1; $external_ids->{$db3}{$dbid3}   = 1;
-                  $IDX{$dbid3}                    = 1; $IDX{$dispid3}                 = 1;
+                  $external_ids->{$db3}{$dispid3} = 1; $external_ids->{$db3}{$dbid3} = 1; $external_ids->{$db}{$s3} = 1 if $s3;
+                  $IDX{$dbid3}                    = 1; $IDX{$dispid3}                = 1; $IDX{$s3} = 1 if $s3;
                 }
                 $transcripts->{ $tid }=1;
                 $peptides->{ $trid }=1 if $trid;
@@ -827,16 +772,16 @@ select gsi.stable_id as gsid, tsi.stable_id as tsid, trsi.stable_id as trsid,
                 %IDX         = ( $tid=>1 );
                 $IDX{$trid} = 1 if $trid;
                 if( $db ) {
-                  $external_ids->{$db}{$dispid}   = 1; $external_ids->{$db}{$dbid}   = 1;
-                  $IDX{$dbid}                     = 1; $IDX{$dispid}                 = 1;
+                  $external_ids->{$db}{$dispid}   = 1; $external_ids->{$db}{$dbid}   = 1; $external_ids->{$db}{$s} = 1 if $s;
+                  $IDX{$dbid}                     = 1; $IDX{$dispid}                 = 1; $IDX{$s} = 1 if $s;
                 }
                 if( $db2 ) {
-                  $external_ids->{$db2}{$dispid2} = 1; $external_ids->{$db2}{$dbid2}   = 1;
-                  $IDX{$dbid2}                    = 1; $IDX{$dispid2}                 = 1;
+                  $external_ids->{$db2}{$dispid2} = 1; $external_ids->{$db2}{$dbid2} = 1; $external_ids->{$db}{$s2} = 1 if $s2;
+                  $IDX{$dbid2}                    = 1; $IDX{$dispid2}                = 1; $IDX{$s2} = 1 if $s2;
                 }
                 if( $db3 ) {
-                  $external_ids->{$db3}{$dispid3} = 1; $external_ids->{$db3}{$dbid3}   = 1;
-                  $IDX{$dbid3}                    = 1; $IDX{$dispid3}                 = 1;
+                  $external_ids->{$db3}{$dispid3} = 1; $external_ids->{$db3}{$dbid3} = 1; $external_ids->{$db}{$s3} = 1 if $s3;
+                  $IDX{$dbid3}                    = 1; $IDX{$dispid3}                = 1; $IDX{$s3} = 1 if $s3;
                 }
             }
         }
@@ -852,21 +797,21 @@ select gsi.stable_id as gsid, tsi.stable_id as tsid, trsi.stable_id as trsid,
   from $COREDB.stable_id_event as sie
        left join $COREDB.gene_stable_id as gsi  on gsi.stable_id  = sie.new_stable_id
        left join $COREDB.gene_stable_id as gsio on gsio.stable_id = sie.old_stable_id
- where sie.type = 'gene' and sie.mapping_session_id = 357 and !isnull(sie.old_stable_id) and
+ where sie.type = 'gene' and !isnull(sie.old_stable_id) and
        sie.new_stable_id!=sie.old_stable_id and isnull(gsio.stable_id)
  order by sie.old_stable_id, sie.new_stable_id),
       'Transcript' => qq(select distinct sie.old_stable_id, tsi.stable_id 
   from $COREDB.stable_id_event as sie
        left join $COREDB.transcript_stable_id as tsi  on tsi.stable_id  = sie.new_stable_id
        left join $COREDB.transcript_stable_id as tsio on tsio.stable_id = sie.old_stable_id
- where sie.type = 'transcript' and sie.mapping_session_id = 357 and !isnull(sie.old_stable_id) and
+ where sie.type = 'transcript' and !isnull(sie.old_stable_id) and
        sie.new_stable_id!=sie.old_stable_id  and isnull(tsio.stable_id)
  order by sie.old_stable_id, sie.new_stable_id),
       'Peptide' => qq(select distinct sie.old_stable_id, tsi.stable_id 
   from $COREDB.stable_id_event as sie
        left join $COREDB.translation_stable_id as tsi  on tsi.stable_id  = sie.new_stable_id
        left join $COREDB.translation_stable_id as tsio on tsio.stable_id = sie.old_stable_id
- where sie.type = 'translation' and sie.mapping_session_id = 357 and !isnull(sie.old_stable_id) and
+ where sie.type = 'translation' and !isnull(sie.old_stable_id) and
        sie.new_stable_id!=sie.old_stable_id  and isnull(tsio.stable_id)
  order by sie.old_stable_id, sie.new_stable_id)
     );
@@ -884,6 +829,59 @@ select gsi.stable_id as gsid, tsi.stable_id as tsid, trsi.stable_id as trsid,
       }
       print O &geneLineOld( $conf->{'species'}, $type, $ID, @MAP );
     }
+  my %unmapped_queries = ( 'None' => q(
+select a.logic_name, e.db_display_name,
+       uo.identifier, ur.summary_description,
+       'Not mapped'
+  from $COREDB.analysis as a, $COREDB.external_db as e, $COREDB.unmapped_object as uo,
+       $COREDB.unmapped_reason as ur
+ where a.analysis_id = uo.analysis_id and 
+       uo.external_db_id = e.external_db_id and
+       uo.unmapped_reason_id = ur.unmapped_reason_id and
+       uo.ensembl_id = 0
+), 'Transcript' => q(
+select a.logic_name, e.db_display_name,
+       uo.identifier, ur.summary_description,
+       concat( 'Transcript: ',
+                tsi.stable_id, '; Gene: ',gsi.stable_id )
+  from $COREDB.analysis as a, $COREDB.external_db as e, $COREDB.unmapped_object as uo,
+       $COREDB.unmapped_reason as ur, $COREDB.transcript_stable_id as tsi,
+       $COREDB.transcript as t, $COREDB.gene_stable_id as gsi
+ where a.analysis_id = uo.analysis_id and 
+       uo.external_db_id = e.external_db_id and
+       uo.unmapped_reason_id = ur.unmapped_reason_id and
+       uo.ensembl_id = t.transcript_id and
+       uo.ensembl_object_type = 'Transcript' and
+       t.transcript_id = tsi.transcript_id and
+       t.gene_id       = gsi.gene_id
+), 'Translation' => q(
+select a.logic_name, e.db_display_name, uo.identifier, ur.summary_description,
+       concat( 'Translation: ',trsi.stable_id,'; Transcript: ',
+                tsi.stable_id, '; Gene: ',gsi.stable_id )
+  from $COREDB.analysis as a, $COREDB.external_db as e, $COREDB.unmapped_object as uo,
+       $COREDB.unmapped_reason as ur, $COREDB.transcript_stable_id as tsi,
+       $COREDB.translation as tr, $COREDB.translation_stable_id as trsi,
+       $COREDB.transcript as t, $COREDB.gene_stable_id as gsi
+ where a.analysis_id = uo.analysis_id and 
+       uo.external_db_id = e.external_db_id and
+       uo.unmapped_reason_id = ur.unmapped_reason_id and
+       uo.ensembl_id = tr.translation_id and 
+       tr.transcript_id = t.transcript_id and
+       trsi.translation_id = tr.translation_id and
+       uo.ensembl_object_type = 'Translation' and
+       t.transcript_id = tsi.transcript_id and
+       t.gene_id       = gsi.gene_id
+  ));
+  foreach my $FLAG (keys %unmapped_queries) {
+    my $SQL = $queries{$FLAG};
+    my $sth = $conf->{'dbh'}->prepare($SQL);
+    $sth->execute;
+    while( my $T = $sth->fetchrow_arrayref() ) {
+      print O join "\t", (INC_SPECIES?"$conf->{'species'}\t":"").qq(Unmapped feature),
+    "$T->[1] $T->[2]",
+    "/$conf->{'species'}/featureview?type=Gene;id=$T->[2]", "$T->[2] $T->[4]", "$T->[3]; $T->[4]\n";
+    }
+  }
     close O;
 }
 
