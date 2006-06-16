@@ -204,6 +204,9 @@ sub history {
     if ( $releases[$i]-$releases[$i+1] == 1) {
       $row->{Release} = $releases[$i];
     }
+    elsif ($releases[$i] eq $releases[-1]) {
+      $row->{Release} = $releases[$i];
+    }
     else {
       my $start = $releases[$i+1] +1;
       $row->{Release} = "$start-$releases[$i]";
@@ -228,7 +231,6 @@ sub history {
 			      'title' => $type.": ".$a->stable_id} ) unless $columns{$a->stable_id};
       $columns{$a->stable_id}++;
       my $archive = _archive_link($object, $id, $param, "<img src='/img/ensemblicon.gif'/>",  $releases[$i]);
-
       my $display_id = $id eq $id_focus ? "<b>$id</b>" : $id;
       $row->{$a->stable_id} = qq(<a href="idhistoryview?$param).qq(=$id">$display_id</a> $archive);
     }
@@ -256,8 +258,7 @@ sub _archive_link {
   $release ||= $object->release;
   return unless $release > 24;
   my $url;
-  my $current_obj = $object->get_current_object($type);
-
+  my $current_obj = $object->get_current_object($type, $name);
   if ($current_obj && $current_obj->version eq $object->version) {
     $url = "/";
   }
@@ -276,6 +277,7 @@ sub _archive_link {
   elsif ($type eq 'transcript') {
     $view = 'transview';
   }
+
   $id = qq(<a title="Archive site" href="$url$view?$type=$name">$id</a>);
   return $id;
 }
