@@ -1,16 +1,16 @@
-package Bio::EnsEMBL::GlyphSet::est_transcript;
+package Bio::EnsEMBL::GlyphSet::singapore_protein_transcript;
 use strict;
 use vars qw(@ISA);
 use Bio::EnsEMBL::GlyphSet_transcript;
 @ISA = qw(Bio::EnsEMBL::GlyphSet_transcript);
 
 sub my_label {
-    return 'EST trans.';
+    return 'Sing. Protein trans.';
 }
 
 sub colours {
     my $self = shift;
-    my $Config = $self->{'config'}->get('est_transcript','colours');
+    my $Config = $self->{'config'}->get('singapore_protein_transcript','colours');
 }
 
 sub colour {
@@ -48,7 +48,7 @@ sub href {
   my $gid = $gene->stable_id();
   my $tid = $transcript->stable_id();
 
-  return ( $self->{'config'}->get('est_transcript','_href_only') eq '#tid' && exists $highlights{lc($gene->stable_id())} ) ?
+  return ( $self->{'config'}->get('singapore_protein_transcript','_href_only') eq '#tid' && exists $highlights{lc($gene->stable_id())} ) ?
         "#$tid" : 
         qq(/@{[$self->{container}{_config_file_name_}]}/geneview?db=est;gene=$gid);
 
@@ -57,7 +57,7 @@ sub href {
 sub gene_href {
   my ($self, $gene, %highlights) = @_;
   my $gid = $gene->stable_id();
-  return ( $self->{'config'}->get('est_transcript','_href_only') eq '#gid' && exists $highlights{lc($gid)} ) ?
+  return ( $self->{'config'}->get('singapore_protein_transcript','_href_only') eq '#gid' && exists $highlights{lc($gid)} ) ?
     "#$gid" : qq(/@{[$self->{container}{_config_file_name_}]}/geneview?db=est;gene=$gid);
 }
 
@@ -71,7 +71,7 @@ sub zmenu {
   my $gid = $gene->stable_id();
   
   my $zmenu = {
-    'caption'         => "EST Gene",
+    'caption'         => "Singapore Protein Gene",
     "01:Gene:$gid"    => "/@{[$self->{container}{_config_file_name_}]}/geneview?gene=$gid;db=est",
     "02:Transcr:$tid" => "/@{[$self->{container}{_config_file_name_}]}/transview?transcript=$tid;db=est",                	
     '04:Export cDNA'  => "/@{[$self->{container}{_config_file_name_}]}/exportview?option=cdna;action=select;format=fasta;type1=transcript;anchor1=$tid",
@@ -93,7 +93,7 @@ sub gene_zmenu {
   my ($self, $gene ) = @_;
   my $gid = $gene->stable_id();
   my $zmenu = {
-    'caption'                   => "EST Gene",
+    'caption'                   => "Singapore Protein Gene",
     "01:Gene:$gid"          => "/@{[$self->{container}{_config_file_name_}]}/geneview?gene=$gid;db=est",
   };
   $zmenu->{"00:@{[$gene->external_name()]}"} = '' if $gene->external_name();
@@ -125,14 +125,14 @@ sub gene_text_label {
 
 sub features {
   my ($self) = @_;
-  my $track = 'est_transcript';
+  my $track = 'singapore_protein_transcript';
   my $db_alias = $self->{'config'}->get($track,'db_alias');
   if( ! $db_alias and ! $self->{'config'}->{'fakecore'} ){
     $db_alias = 'otherfeatures';
   }
   my $slice = $self->{'container'};
   my @genes;
-  foreach my $analysis( 'genomewise', 'estgene' ){
+  foreach my $analysis( 'singapore_protein' ){
     push @genes, @{ $slice->get_all_Genes( $analysis, $db_alias||() ) }
   }
   return [@genes];
@@ -140,11 +140,11 @@ sub features {
 
 sub legend {
   my ($self, $colours) = @_;
-  return ('est_genes', 1000, 
-    [ 'EST genes' => $colours->{'genomewise'}[0], ]
+  return ('sing_protein_genes', 1003, 
+    [ 'Singapore Protein genes' => $colours->{'_col'}[0], ]
   );
 }
 
-sub error_track_name { return 'EST transcripts'; }
+sub error_track_name { return 'Singapore Protein transcripts'; }
 
 1;

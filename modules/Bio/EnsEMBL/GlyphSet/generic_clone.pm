@@ -39,6 +39,7 @@ sub features {
       ), $_]
     }
     @{$self->{'container'}->get_all_MiscFeatures( $self->my_config( 'FEATURES' ))};
+warn "features... ".@sorted;
   return \@sorted;
 }
 

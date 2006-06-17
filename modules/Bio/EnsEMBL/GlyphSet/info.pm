@@ -24,12 +24,11 @@ sub _init {
   my $chr = $self->{'container'}->seq_region_name();
   $chr = "$type $chr" unless $chr =~ /^$type/i;
 
-  my $text_to_display = sprintf( "Ensembl %s version %s.%s (%s) %s %s - %s (rendered %s)",
+  my $text_to_display = sprintf( "Ensembl %s version %s.%s (%s) %s %s - %s",
     $species, $Version, $SpVersion, $Assembly,
     $chr,
     $self->thousandify( $self->{'container'}->start() ),
-    $self->thousandify( $self->{'container'}->end ),
-    scalar( gmtime() )
+    $self->thousandify( $self->{'container'}->end )
   );
 
   my( $FONT,$FONTSIZE)  = $self->get_font_details( 'text' );
