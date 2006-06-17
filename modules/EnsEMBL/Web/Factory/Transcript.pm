@@ -31,7 +31,7 @@ warn $db;
     @fetch_calls = qw(fetch_all_by_exon_stable_id);
   } elsif( $identifier = $self->param( 'anchor1' ) ) {
     @fetch_calls = qw(fetch_by_stable_id fetch_by_translation_stable_id);
-    reverse @fetch_calls if($self->param( 'type1' ) eq 'peptide');
+    @fetch_calls = reverse @fetch_calls if($self->param( 'type1' ) eq 'peptide');
     $KEY = 'anchor1';
   } else {
     $self->problem('fatal', 'Please enter a valid identifier',

@@ -49,6 +49,7 @@ sub default_track_by_gene {
       otter            vega_transcript
     )
   );
+  return lc($logic).'_transcript' if $db eq 'otherfeatures' && lc($logic) =~ /^singapore_(est|protein)$/;
   return $mappings_db{ lc( $db ) } ||
          $mappings_logic_name{ lc( $logic ) } || 'ensembl_transcript';
 }
@@ -1058,7 +1059,7 @@ sub get_supporting_evidence { ## USED!
           $evidence->{ 'hits' }{$dl_seq_name}{'scores'} = [];          
           push @dl_seq_list, $dl_seq_name ; # list to get descriptions in one go 
       # Hold the data library that this feature is from
-          ($evidence->{ 'hits' }{$dl_seq_name}{'datalib'} = $this_feature->analysis->logic_name) =~ s/swir/Swir/;
+          ($evidence->{ 'hits' }{$dl_seq_name}{'datalib'} = ( $this_feature->analysis ? $this_feature->analysis->logic_name : '') ) =~ s/swir/Swir/;
           $show = 1; 
         }               
         # Compare to see if this is the top-score

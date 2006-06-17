@@ -1148,6 +1148,8 @@ sub ADD_ALL_TRANSCRIPTS {
   $self->add_new_track_transcript( 'gsten',     'Genoscope genes', 'genoscope_gene', $POS++, @_ );
   $self->add_new_track_transcript( 'rna',       'ncRNA genes',     'rna_gene',       $POS++, 'available' => 'features NCRNA|MIRNA',      @_ );
   $self->add_new_track_transcript( 'erna',       'e! ncRNA genes', 'rna_gene',   $POS++, 'available' => 'features ensembl_ncRNA', 'legend_type' => 'rna',        @_ );
+  $self->add_new_track_transcript( 'singapore_est',  'Sing. EST genes',       'est_gene',     $POS++, 'available' => 'features singapore_est', @_ );
+  $self->add_new_track_transcript( 'singapore_protein',  'Sing. Protein genes',       'prot_gene',     $POS++, 'available' => 'features singapore_protein', @_ );
   $self->add_new_track_transcript( 'est',       'EST genes',       'est_gene',       $POS++, 'available' => 'databases ENSEMBL_OTHERFEATURES', @_ );
   $self->add_new_track_transcript( 'ciona_dbest_ncbi', "3/5' EST genes (dbEST)", 'estgene', $POS++, @_) ;
   $self->add_new_track_transcript( 'ciona_est_seqc',   "3' EST genes (Kyoto)", 'estgene', $POS++, @_) ;
@@ -1301,6 +1303,8 @@ sub ADD_GENE_TRACKS {
   $self->add_new_track_gene( 'mouse_protein', 'Mouse Protein Genes', 'prot_gene', $POS++, 'gene_col' => '_col',  @_ );
   $self->add_new_track_gene( 'targettedgenewise', 'Targetted Genewise Genes', 'prot_gene', $POS++, 'gene_col' => '_col',  @_ );
   $self->add_new_track_gene( 'cdna_all', 'cDNA Genes', 'prot_gene', $POS++, 'gene_col' => '_col',  @_ );
+  $self->add_new_track_gene( 'singapore_est',     'Singapore EST Genes',     'est_gene',  $POS++, 'database' => 'otherfeatures', 'gene_col' => 'estgene', @_ );
+  $self->add_new_track_gene( 'singapore_protein', 'Singapore Protein Genes', 'prot_gene', $POS++, 'database' => 'otherfeatures', 'gene_col' => '_col', @_ );
   $self->add_new_track_gene( 'estgene', 'EST Genes', 'est_gene', $POS++,
                              'database' => 'otherfeatures', 'available' => 'databases ENSEMBL_OTHERFEATURES',
                              'logic_name' => 'genomewise estgene', 'label_threshold' => 500, # 'on' => 'off',
