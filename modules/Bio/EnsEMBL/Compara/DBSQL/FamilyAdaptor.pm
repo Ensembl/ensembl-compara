@@ -66,6 +66,18 @@ our @ISA = qw(Bio::EnsEMBL::Compara::DBSQL::BaseRelationAdaptor);
 
 =head2 fetch_by_Member
 
+  DEPRECATED: use fetch_all_by_Member instead
+
+=cut
+
+sub fetch_by_Member {
+  my ($self, @args) = @_;
+  return $self->fetch_all_by_Member(@args);
+}
+
+
+=head2 fetch_all_by_Member
+
  Arg [1]    : Bio::EnsEMBL::Compara::Member $member
  Example    : $families = $FamilyAdaptor->fetch_by_Member($member);
  Description: find the families to which the given member belongs to
@@ -76,7 +88,7 @@ our @ISA = qw(Bio::EnsEMBL::Compara::DBSQL::BaseRelationAdaptor);
 
 =cut
 
-sub fetch_by_Member {
+sub fetch_all_by_Member {
   my ($self, $member) = @_;
 
   unless ($member->isa('Bio::EnsEMBL::Compara::Member')) {
@@ -88,6 +100,7 @@ sub fetch_by_Member {
 
   return $self->generic_fetch($constraint, $join);
 }
+
 
 sub fetch_by_Member_source_stable_id {
   my ($self, $source_name, $member_stable_id) = @_;
