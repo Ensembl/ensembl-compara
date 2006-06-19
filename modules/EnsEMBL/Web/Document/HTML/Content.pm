@@ -71,7 +71,7 @@ sub panels{
 }
 
 sub _start { $_[0]->print( qq(\n<div id="page"><div id="i1"><div id="i2"><div class="sptop">&nbsp;</div>)); return 1; }
-sub _end {   $_[0]->print( qq(\n<hr />\n<div class="sp">&nbsp;</div></div></div></div>)); }
+sub _end {   $_[0]->print( qq(\n<hr /><div id="popups"></div>\n<div class="sp">&nbsp;</div></div></div></div>)); }
 
 sub panel {
   my( $self, $code ) = @_;

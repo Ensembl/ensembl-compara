@@ -102,6 +102,11 @@ warn $self->species_defs;
     }
     ## Note we have no example links here!!
   }
+
+  $self->javascript->add_source('/js/new_drag_imagemap.js');
+  $self->javascript->add_source('/js/help.js');
+  $self->javascript->add_source('/js/new_support.js');
+
 #  --- and the search box links...
 
   $self->call_child_functions( 'extra_configuration' );
