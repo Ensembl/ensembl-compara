@@ -130,7 +130,7 @@ sub _init {
   my %form_fields = (
     'blurb' => {
       'type'  => 'Information',
-      'value' => qq{<p>Karyoview now allows you to display multiple data sets as either density plots, location pointers or a mixture of the two. Your data will be saved in a temporary cache. <a href="javascript:void(window.open('/Homo_sapiens/helpview?kw=karyoview;se=1;#FileFormats','helpview','width=700,height=550,resizable,scrollbars'))">Information about valid file formats</a></p><p>Once you have added all your tracks, you can configure the rest of the image options.</p>},
+      'value' => qq{<p>Karyoview now allows you to display multiple data sets as either density plots, location pointers or a mixture of the two. Your data will be saved in a temporary cache. Once you have added all your tracks, you can configure the rest of the image options.</p> <p><a href="javascript:void(window.open('/Homo_sapiens/helpview?kw=karyoview;se=2;#FileFormats','helpview','width=700,height=550,resizable,scrollbars'))">Information about valid file formats</a></p>},
     },
     'track_name'  => {
       'type'=>'String',
@@ -144,12 +144,12 @@ sub _init {
     },
     'upload_file' => {
       'type'=>'File',
-      'label'=>'Upload file',
+      'label'=>'or upload file',
       'loop'=>1,
     },
     'url_file' => {
       'type'=>'String',
-      'label'=>'File URL',
+      'label'=>'or use file URL',
       'loop'=>1,
     },
     'tracks_subhead'  => {

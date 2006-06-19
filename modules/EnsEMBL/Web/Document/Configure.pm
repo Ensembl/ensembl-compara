@@ -37,8 +37,8 @@ sub common_menu_items {
     );
   }
   $doc->menu->add_entry( 'whattodo',
-    'href'=>"/info/data/external_data/index.html",
-    'text'=>'Upload your own data'
+    'href'=>"/$species_d/karyoview",
+    'text'=>'Upload and view data on chromosome'
   );
   $doc->menu->add_entry(
     'whattodo',

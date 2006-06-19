@@ -118,6 +118,12 @@ sub context_karyoview {
   $self->{page}->menu->add_entry( $flag, 'text' => "Select another display",
                                   'href' => "/$species/karyoview" );
 
+  $self->{page}->menu->add_entry( $flag, 
+    'href'=>"/info/data/external_data/index.html",
+    'text'=>'How to upload your data'
+  );
+
+
 }
 
 sub context_menu {
