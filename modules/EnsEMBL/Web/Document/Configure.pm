@@ -37,9 +37,10 @@ sub common_menu_items {
     );
   }
   $doc->menu->add_entry( 'whattodo',
-    'href'=>"/$species_d/karyoview",
+    'href'=>"/$species/karyoview",
     'text'=>'Upload and view data on chromosome'
-  );
+  ) unless $species eq 'default';
+
   $doc->menu->add_entry(
     'whattodo',
     'href' => "/$species_d/exportview",
