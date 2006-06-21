@@ -184,9 +184,10 @@ sub hv_contact {
                       
   my $kw = $object->param('search');
   if ($kw) {
+    $wizard->redefine_node($node, 'title', 'No matches found.');
     $form->add_element(
       'type' => 'Information',
-      'value' => qq(Sorry, your search for "$kw" found no matches. [N.B. Very common word such as 'Ensembl' and 'chromosome' are omitted by the search as they appear on almost every page.]),
+      'value' => qq(Sorry, your search for "$kw" found no matches. [N.B. Very common word such as 'Ensembl' and 'chromosome' are omitted by the search as they appear on almost every page.]<p>If you require more information, please contact us using the form below.</p>),
     );
   }
   ## more backwards compatibility
