@@ -52,6 +52,21 @@
   </li>
 </ul>
 
+<p>To create a new species-specific ini file, copy an existing one and use that as a template.  
+These lines will need to be edited by hand:</p>
+<ul>
+<li>SPECIES_DESCRIPTION (used for the species descriptions in the table at the end of the <a href="/info/data/download.html">FTP download page)</a>.</li>
+<li>ASSEMBLY_ID (used for display on the homepage)</li>
+<li>ENSEMBL_GOLDEN_PATH (used in the webcode)</li>
+<li>SPECIES_RELEASE_VERSION is the last number of the database name for the species. Used to work out database name, name of FTP site directory etc</li>
+<li>Are there gene predictions or not? If not you can comment-out/ ignore all the sections for genes</li>
+<li>Under [databases], list all the ones configured for this species.  <br />
+You can use "%" instead of the release number if it is idential to &lt;ENSEMBL_VERSION&gt; (configured in <kbd>conf/SiteDefs.pm</kbd>).  <br />
+Use "%" to replace the species release version if you have configured this above</li>
+<li>DAS sections are optional</li>
+</ul>
+
+
 <h4 class="boxed">Plugins</h4>
 
 <p>
@@ -253,8 +268,30 @@ PORT=4444
 </pre>
 <p>The Mart configuration automatically creates a simplified BioMart configuration file martRegistry.xml in the conf directory at server start up. Read the BioMart install document how to edit this to create a more functional BioMart registry
 which leverages BioMart's advanced features such as federated searches.</p>
-<h4>BLAST</h4>
+
+
+<h3 class="boxed">BLAST</h3>
 <p>BLAST is not installed by default.  You have to configure blast for a local installation. See documentation describing how to <a href="blast.html">configure BLAST</a>.
+<p>All relevant fasta files are on <a href="ftp://ftp.ensembl.org/pub">ftp://ftp.ensembl.org/pub</a>.</p>
+
+<h3 class="boxed"><a id="ssaha">SSAHA</a></h3>
+<p>SSAHA2 is not installed by default as it requires a large amount of memory to put the look
+up tables in memory. 
+(Ensembl currently uses 10 4G machines for our SSAHA servers).</p>
+
+<p>All relevant fasta files are on <a href="ftp://ftp.ensembl.org/pub">ftp://ftp.ensembl.org/pub</a>. 
+ These need processing to produce the appropriate files.  SSAHA2 servers can be configured for any DNA based data.</p>
+
+<p>SSAHA2 software is at: <a href="http://www.sanger.ac.uk/Software/analysis/SSAHA2/">http://www.sanger.ac.uk/Software/analysis/SSAHA2/</a>.</p>
+
+<p>Each species ini file (<kbd>public-plugins/mirror/conf/ini-files/&lt;Genus_species.ini&gt;</kbd>) needs the following:
+<pre>
+[SSAHA2_DATASOURCES]
+DATASOURCE_TYPE = dna
+LATESTGP        = host:port        ; for unmased dna
+CDNA_ALL        = host:port        ; for cDNA data 
+</pre>
+
 
 <h3 class="boxed">Note on Ensembl Web Site Search</h3>
 
