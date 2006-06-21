@@ -23,17 +23,49 @@ sub help_adaptor {
 sub createObjects { 
   my $self         = shift;
   my $keywords     = $self->param( 'kw' );
-  my $single_entry = $self->param( 'se' );
-  my $form         = $self->param( 'form' );
+  my $ids          = $self->param( 'ids' );
 
   my $results    = [];
   my $index = [];
-  if( $self->param('se') || $self->param('form') ) {
-    $results = $self->help_adaptor->fetch_all_by_keyword( $keywords );
-  } else {
-    $results = $self->help_adaptor->fetch_all_by_string( $keywords );
+
+  ## we only want live entries for the helpview index
+  my $status = $self->script eq 'helpview' ? 'live' : '';
+
+  ## Help schema switch
+  my $modular = $self->species_defs->ENSEMBL_MODULAR_HELP;
+  my ($method_se, $method_kw, $method_id, $index);
+
+  if ($modular) {
+    $method_se = 'fetch_article_by_keyword';
+    $method_kw = 'fetch_scores_by_string';
+    $method_id = 'fetch_summaries_by_scores';
+    $index     = 'fetch_article_index';
   }
-  $index = $self->help_adaptor->fetch_index_list;
+  else {
+    $method_se = 'fetch_all_by_keyword';
+    $method_kw = 'fetch_all_by_string';
+    $method_id = 'fetch_all_by_scores';
+    $index     = 'fetch_index_list';
+  }
+
+  ## get list of help articles by appropriate method
+  if( $self->param('se') ) {
+    $results = $self->help_adaptor->$method_se( $keywords );
+  } 
+  elsif ($self->param('kw')) {
+    $results = $self->help_adaptor->$method_kw( $keywords );
+  }
+  elsif ( $self->param('results')) {
+    ## messy, but makes sure we get the results in order!
+    my $ids = [];
+    my @articles = split('_', $self->param('results'));
+    foreach my $article (@articles) {
+      my @bits = split('-', $article);
+      push(@$ids, {'id'=>$bits[0], 'score'=>$bits[1]});
+    }
+    $results = $self->help_adaptor->$method_id( $ids );
+  }
+  $index = $self->help_adaptor->$index($status);
 
   $self->DataObjects( new EnsEMBL::Web::Proxy::Object(
     'Help', {

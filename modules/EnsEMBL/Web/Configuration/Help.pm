@@ -2,7 +2,8 @@ package EnsEMBL::Web::Configuration::Help;
 
 use strict;
 use EnsEMBL::Web::Configuration;
-use Mail::Mailer;
+use EnsEMBL::Web::Wizard::Help;
+#use Mail::Mailer;
 
 our @ISA = qw( EnsEMBL::Web::Configuration );
 
@@ -10,6 +11,9 @@ sub helpview {
   my $self = shift;
   my $object = $self->{object};
 
+  ## Configure masthead, left hand menu, etc.
+  my $sitetype = ucfirst(lc($object->species_defs->ENSEMBL_SITETYPE)) || 'Ensembl';
+  $self->set_title( "$sitetype HelpView" );
   $self->{'page'}->close->style = 'help';
   $self->{'page'}->close->URL   = "/$ENV{'ENSEMBL_SPECIES'}/$ENV{'ENSEMBL_SCRIPT'}";
   $self->{'page'}->close->kw    = $object->param('kw');
@@ -21,76 +25,36 @@ sub helpview {
   $self->{'page'}->menu->add_block( '___', 'bulleted', 'Help with help!' );
   $self->{'page'}->menu->add_entry( '___', 'href' => $object->_help_URL( 'helpview' ), 'text' => 'General' ) ;
   $self->{'page'}->menu->add_entry( '___', 'href' => $object->_help_URL( 'helpview#searching' ), 'text' => 'Full text search' );
-  my $sitetype = ucfirst(lc($object->species_defs->ENSEMBL_SITETYPE)) || 'Ensembl';
-  $self->set_title( "$sitetype HelpView" );
-  my $include_form = 1;
-  if( $object->param( 'action' ) ) { ## Actually this is the old helpdesk page...
-    if( $object->param( 'action' ) eq 'thank_you' ) {
-      my $panel = $self->new_panel( '',
-        'code'    => 'panel',
-        'caption' => "Thanks for your correspondence",
-        'object'  => $object
-      );
-      $panel->add_components(qw(thank_you EnsEMBL::Web::Component::Help::form_thankyou));
-      $self->add_panel( $panel );
-      $include_form = 0;
-    } elsif( $object->param( 'action' ) eq 'submit' ) {
-      $object->send_email;
-      $include_form = 0;
-    }
+
+  ## the "helpview" wizard uses 7 nodes: intro, do search, multiple results, single result, 
+  ## no result, send email and acknowledgement
+  my $wizard = EnsEMBL::Web::Wizard::Help->new($object);
+  $wizard->add_nodes([qw(hv_intro hv_search hv_multi hv_single hv_contact hv_email hv_thanks)]);
+  $wizard->default_node('hv_intro');
+
+  ## chain the nodes together
+  $wizard->chain_nodes([
+          ['hv_intro'=>'hv_search'],
+          ['hv_search'=>'hv_multi'],
+          ['hv_search'=>'hv_single'],
+          ['hv_search'=>'hv_contact'],
+          ['hv_contact'=>'hv_email'],
+          ['hv_email'=>'hv_thanks'],
+  ]);
+
+  ## make this wizard compatible with old URLs
+  if ($object->param('se')) {
+    $wizard->current_node($object, 'hv_single');
   }
-  if( $include_form && $object->param('action') ne 'form' ) {
-    if( @{$object->results} ) {
-      warn ">HERE";
-      if( @{$object->results} == 1 ) {
-        my $panel = $self->new_panel( '',
-          'code'    => 'panel',
-          'caption' => $object->results->[0]->{'title'},
-          'object'  => $object
-        );
-        $panel->add_components(qw(single_match EnsEMBL::Web::Component::Help::single_match));
-        $self->add_panel( $panel );
-      } else {
-        my $panel = $self->new_panel( '',
-          'code'    => 'panel',
-          'caption' => qq(Search for "@{[$object->param('kw')]}"),
-          'object'  => $object
-        );
-        $panel->add_components(qw(multi_match EnsEMBL::Web::Component::Help::multi_match));
-        $self->add_panel( $panel );
-      }
-      $include_form = 0;
-    } else {
-      if( $object->param( 'kw' ) ) {
-        my $panel = $self->new_panel( '',
-          'code'    => 'panel',
-          'caption' => qq(No such help page),
-          'object'  => $object
-        );
-        $panel->add_components(qw(single_match_failure EnsEMBL::Web::Component::Help::single_match_failure));
-        $self->add_panel( $panel );
-      } else {
-        my $panel = $self->new_panel( '',
-          'code'    => 'panel',
-          'caption' => "$sitetype help",
-          'object'  => $object
-        );
-        $panel->add_components(qw(first_page EnsEMBL::Web::Component::Help::first_page));
-        $self->add_panel( $panel );
-      }
-    }
+  elsif ($object->param('ref')) {
+    $wizard->current_node($object, 'hv_contact');
   }
-  if( $include_form ) {
-    my $panel2 = $self->new_panel( '',
-      'code'    => 'form',
-      'caption' => 'Getting further help',
-      'object'  => $object
-    );
-    $self->add_form( $panel2, qw(help_form EnsEMBL::Web::Component::Help::help_form_form));
-    $panel2->add_components(qw(help_form EnsEMBL::Web::Component::Help::help_form));
-    $self->add_panel( $panel2 );
+  elsif ($object->param('kw') && !$object->param('results') ) {
+    $wizard->current_node($object, 'hv_search');
   }
-  $self->{page}->title->set( 'Help!' );
+
+  $self->add_wizard($wizard);
+  $self->wizard_panel('');
 }
 
 sub context_menu {
@@ -103,6 +67,10 @@ sub context_menu {
   my @result_array = @{ $object->Obj->{'index'} || [] };
   foreach my $row ( @result_array ) {
     (my $name = $row->{'title'} ) =~ s/^(.{50})...+/\1.../;
+    #if ($name =~ /^Ensembl/) {
+    #  $name =~ s/^Ensembl //;
+    #}
+
     $self->add_block( lc($row->{'category'}), 'bulleted', $row->{'category'} );
     my %hash= ( 'text' => $name );
        $hash{ 'title' } =  $row->{'title'} unless $name eq $row->{'title'};

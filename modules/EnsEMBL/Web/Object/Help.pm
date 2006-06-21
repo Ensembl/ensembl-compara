@@ -31,17 +31,11 @@ sub send_email {
   $message .= "\n\nComments:\n\n@{[$self->param('comments')]}\n\n";
   my $mailer = new Mail::Mailer 'smtp', Server => "localhost";
   my $sitetype = ucfirst(lc($self->species_defs->ENSEMBL_SITETYPE))||'Ensembl';
-  $mailer->open({ 'To' => $self->species_defs->ENSEMBL_HELPDESK_EMAIL, 'Subject' => "$sitetype website Helpdesk", });
+  my $recipient = $self->species_defs->ENSEMBL_HELPDESK_EMAIL;
+  $mailer->open({ 'To' => $recipient, 'Subject' => "$sitetype website Helpdesk", });
   print $mailer $message;
   $mailer->close();
-  $self->problem( 'redirect',
-    sprintf( "/%s/%s?action=thank_you;ref=%s;kw=%s",
-      $self->species, $self->script,
-      CGI::escape( $self->referer ),
-      CGI::escape( $self->param('kw') ),
-      ''
-    )
-  );
   return 1;
 }
+
 1;
