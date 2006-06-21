@@ -59,6 +59,7 @@ sub hv_single {
   my $article = $object->results->[0];
 
   my $html = '<h2>'.$$article{'title'}.'</h2>';
+  my $text;
   if ($object->species_defs->ENSEMBL_MODULAR_HELP) {
     if ($$article{'intro'}) {
       $text = _link_mapping($object, $$article{'intro'});
