@@ -153,8 +153,10 @@ sub hv_search {
     }
   }
   else {
+    my $single = $object->results->[0];
     $parameter{'node'}  = 'hv_single';
     $parameter{'kw'}    = $object->param('kw');
+    $parameter{'id'}    = $$single{'id'};
     $parameter{'se'}    = 1;
     
   }
@@ -184,7 +186,7 @@ sub hv_contact {
   if ($kw) {
     $form->add_element(
       'type' => 'Information',
-      'value' => qq(Sorry, your search for "$kw" found no matches.),
+      'value' => qq(Sorry, your search for "$kw" found no matches. [N.B. Very common word such as 'Ensembl' and 'chromosome' are omitted by the search as they appear on almost every page.]),
     );
   }
   ## more backwards compatibility
