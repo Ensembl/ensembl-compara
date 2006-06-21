@@ -7,7 +7,7 @@ use warnings;
 no warnings "uninitialized";
 
 use EnsEMBL::Web::Document::WebPage;
-                                                                                
+
 my $webpage= new EnsEMBL::Web::Document::WebPage(
   'doctype'    => 'Popup',
   'scriptname' => 'helpview',
@@ -23,7 +23,7 @@ if( $webpage->has_a_problem ) {
   if( $object->has_problem_type( 'redirect' ) ) {
     $webpage->redirect( $object->problem->[0]->name );
   } else {
-    $webpage->render;
+    $webpage->action;
   }
 }
 
