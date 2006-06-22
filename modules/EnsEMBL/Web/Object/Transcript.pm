@@ -246,9 +246,9 @@ sub getFakeMungedVariationsOnSlice {
         'Slice', $slice, $self->__data
        );
 
-  my ($count_snps, $filtered_snps) = $sliceObj->getFakeMungedVariationFeatures($subslices);
+  my ($count_snps, $filtered_snps, $context_count) = $sliceObj->getFakeMungedVariationFeatures($subslices);
   $self->__data->{'sample'}{"snp_counts"} = [$count_snps, scalar @$filtered_snps];
- return ($count_snps, $filtered_snps);
+ return ($count_snps, $filtered_snps, $context_count);
 }
 
 sub getAllelesConsequencesOnSlice {

@@ -1073,7 +1073,7 @@ sub transcriptsnpview {
   my $fake_length      =  $object->__data->{'slices'}{'TSV_transcript'}[3];
 
   #SNPs
-  my ($count_sample_snps, $sample_snps) = $object->getFakeMungedVariationsOnSlice( $transcript_slice, $sub_slices  );
+  my ($count_sample_snps, $sample_snps, $context_count) = $object->getFakeMungedVariationsOnSlice( $transcript_slice, $sub_slices  );
   my $start_difference =  $object->__data->{'slices'}{'TSV_transcript'}[1]->start - $object->__data->{'slices'}{'transcript'}[1]->start;
 
   my @transcript_snps;
@@ -1122,7 +1122,7 @@ sub transcriptsnpview {
 
   $Configs->{'snps'} = $object->user_config_hash( "genesnpview_snps" );
   $Configs->{'snps'}->set( '_settings', 'width',  $image_width );
-  $Configs->{'snps'}->{'snp_counts'} = [$count_sample_snps, scalar @$sample_snps];
+  $Configs->{'snps'}->{'snp_counts'} = [$count_sample_snps, scalar @$sample_snps, $context_count];
 
   $Configs->{'context'}->container_width( $object->__data->{'slices'}{'context'}[1]->length() );
   $Configs->{'context'}->set( 'scalebar', 'label', "Chr. @{[$object->__data->{'slices'}{'context'}[1]->seq_region_name]}");

@@ -992,7 +992,7 @@ sub genesnpview {
 
 # Grab the SNPs and map them to subslice co-ordinate ---------------- ##
 # $snps contains an array of array each sub-array contains [fake_start, fake_end, B:E:Variation object] # Stores in $object->__data->{'SNPS'} 
-  my ($count_snps, $snps) = $object->getVariationsOnSlice( $transcript_slice, $sub_slices  ); 
+  my ($count_snps, $snps, $context_count) = $object->getVariationsOnSlice( $transcript_slice, $sub_slices  ); 
 
  
  $object->store_TransformedTranscripts();        ## Stores in $transcript_object->__data->{'transformed'}{'exons'|'coding_start'|'coding_end'}
@@ -1090,7 +1090,7 @@ sub genesnpview {
     $Configs->{'snps'}->{'fakeslice'}   = 1;
     $Configs->{'snps'}->{'snps'}        = \@snps2;
     $Configs->{'snps'}->container_width(   $fake_length   );
-    $Configs->{'snps'}->{'snp_counts'} = [$count_snps, scalar @$snps];
+    $Configs->{'snps'}->{'snp_counts'} = [$count_snps, scalar @$snps, $context_count];
   }
   return if $do_not_render;
 ## -- Render image ------------------------------------------------------ ##

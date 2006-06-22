@@ -74,6 +74,14 @@ sub line_numbering {
   return();
 }
 
+=head2 valids
+
+ Arg1        : Web slice obj
+ Description : uses param to work out valid SNP options
+ Return type : hashref with keys as valid options, value = 1
+
+=cut
+
 
 sub valids {
   my $self = shift;
@@ -85,6 +93,15 @@ sub valids {
 }
 
 
+=head2 getVariationFeatures 
+
+ Arg1        : Web slice obj
+ Description : fetches all variation features on Slice object 
+               and filters them based on type, class etc
+ Return type : scalar- total number of SNPs before filtering
+               arrayref SNP objects
+
+=cut
 
 sub getVariationFeatures {
   my ( $self ) = @_;
@@ -96,6 +113,15 @@ sub getVariationFeatures {
 }
 
 
+=head2 get_genotyped_VariationFeatures 
+
+ Arg1        : Web slice obj
+ Description : fetches all genotyped variation features on Slice object 
+               and filters them based on type, class etc
+ Return type : scalar- total number of SNPs before filtering
+               arrayref SNP objects
+
+=cut
 
 sub get_genotyped_VariationFeatures {
   my ( $self ) = @_;
@@ -106,6 +132,16 @@ sub get_genotyped_VariationFeatures {
   return (scalar @snps, $filtered_snps || []);
 }
 
+
+=head2 filter_snps
+
+ Arg1        : Web slice obj
+ Arg2        : arrayref snps objects
+ Example     : Called from within
+ Description : filters snps based on source, conseq type, validation etc
+ Return type : arrayref SNP objects
+
+=cut
 
 sub filter_snps {
   my ( $self, $snps ) = @_;
@@ -138,6 +174,80 @@ sub filter_snps {
   return \@filtered_snps;
 }
 
+
+
+=head2 getFakeMungedVariationFeatures
+
+ Arg1        : Web slice obj
+ Arg2        : Subslices
+ Arg3        : Optional: gene
+ Example     : Called from E::W::Object::Transcript for TSV
+ Description : Gets SNPs on slice for display + counts
+ Return type : scalar - number of SNPs on slice post context filtering, prior to
+                        other filters
+               arrayref of munged 'fake snps' = [ fake_s, fake_e, SNP ]
+               scalar - number of SNPs filtered out by the context filter
+
+=cut
+
+sub getFakeMungedVariationFeatures {
+  my ( $self, $subslices, $gene ) = @_;
+  my $all_snps = $self->Obj->get_all_VariationFeatures();
+
+  my @on_slice_snps = 
+# [ fake_s, fake_e, SNP ]   Filter out any SNPs not on munged slice...
+    map  { $_->[1]?[$_->[0]->start+$_->[1],$_->[0]->end+$_->[1],$_->[0]]:() } # Filter out anything that misses
+# [ SNP, offset ]           Create a munged version of the SNPS
+    map  { [$_, $self->munge_gaps( $subslices, $_->start, $_->end)] }    # Map to "fake coordinates"
+# [ SNP ]                   Filter out all the multiply hitting SNPs
+    grep { $_->map_weight < 4 }
+# [ SNP ]                   Get all features on slice
+    @{ $all_snps };
+
+  my $count_snps = scalar @on_slice_snps;
+  my $filtered_context_snps = scalar @$all_snps - $count_snps;
+  return (0, [], $filtered_context_snps) unless $count_snps;
+  return ( $count_snps, $self->filter_munged_snps(\@on_slice_snps, $gene), $filtered_context_snps );
+}
+
+
+=head2 munge_gaps
+
+ Arg1        : Web slice obj
+ Arg2        : Subslices
+ Arg3        : position 1: start
+ Arg4        : position 2: end
+ Example     : Called from within
+ Description : 
+ Return type : 
+
+=cut
+
+sub munge_gaps {
+  my( $self, $subslices, $bp, $bp2  ) = @_;
+
+  foreach( @$subslices ) {
+    if( $bp >= $_->[0] && $bp <= $_->[1] ) {
+      my $return =  defined($bp2) && ($bp2 < $_->[0] || $bp2 > $_->[1] ) ? undef : $_->[2] ;
+      return $return;
+    }
+  }
+  return undef;
+}
+
+
+
+=head2 filter_munged_snps
+
+ Arg1        : Web slice obj
+ Arg2        : arrayref of munged 'fake snps' = [ fake_s, fake_e, SNP ]
+ Arg3        : gene (optional)
+ Example     : Called from within
+ Description : filters 'fake snps' based on source, conseq type, validation etc
+ Return type : arrayref of munged 'fake snps' = [ fake_s, fake_e, SNP ]
+
+=cut
+
 sub filter_munged_snps {
   my ( $self, $snps, $gene ) = @_;
   my $valids = $self->valids;
@@ -166,36 +276,6 @@ sub filter_munged_snps {
   return \@filtered_snps;
 }
 
-sub getFakeMungedVariationFeatures {
-  my ( $self, $subslices, $gene ) = @_;
-
-  my @on_slice_snps = 
-# [ fake_s, fake_e, SNP ]   Filter out any SNPs not on munged slice...
-    map  { $_->[1]?[$_->[0]->start+$_->[1],$_->[0]->end+$_->[1],$_->[0]]:() } # Filter out anything that misses
-# [ SNP, offset ]           Create a munged version of the SNPS
-    map  { [$_, $self->munge_gaps( $subslices, $_->start, $_->end)] }    # Map to "fake coordinates"
-# [ SNP ]                   Filter out all the multiply hitting SNPs
-    grep { $_->map_weight < 4 }
-# [ SNP ]                   Get all features on slice
-    @{ $self->Obj->get_all_VariationFeatures() };
-
-  my $count_snps = scalar @on_slice_snps;
-  return (0, []) unless $count_snps;
-  return ( $count_snps, $self->filter_munged_snps(\@on_slice_snps, $gene) );
-}
-
-
-sub munge_gaps {
-  my( $self, $subslices, $bp, $bp2  ) = @_;
-
-  foreach( @$subslices ) {
-    if( $bp >= $_->[0] && $bp <= $_->[1] ) {
-      my $return =  defined($bp2) && ($bp2 < $_->[0] || $bp2 > $_->[1] ) ? undef : $_->[2] ;
-      return $return;
-    }
-  }
-  return undef;
-}
 
 
 1;
