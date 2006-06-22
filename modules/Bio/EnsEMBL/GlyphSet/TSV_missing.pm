@@ -19,12 +19,24 @@ sub _init {
   } elsif ($counts->[1] ==0 ) {
     $text .= "The options set in the drop down menu have filtered out all $counts->[0] variations in this region.";
   } elsif ($counts->[0] == $counts->[1] ) {
-    $text .= "None of the variations are removed by the drop down menu filters";
+    $text .= "None of the variations are filtered out by the Source, class and type menus";
   } else {
-    $text .= ($counts->[0]-$counts->[1])." of the $counts->[0] variations in this region have been filtered out by the drop down menu options.";
+    $text .= ($counts->[0]-$counts->[1])." of the $counts->[0] variations in this region have been filtered out by the source, class and type menu options.";
   }
   $self->errorTrack( $text );
+
+  # Context filter
+  return unless defined $counts->[2];
+
+  my $context_text;
+  if ($counts->[2]==0) {
+    $context_text = "None of the variations are removed by the Context drop down filter";
+  } else {
+    $context_text = $counts->[2]." variations are removed by the Context drop down filter";
+  }
+  $self->errorTrack( $context_text, 0, 14 );
+  return 1;
 }
 
 1;
-        
+
