@@ -1,7 +1,7 @@
 
 ------------------------------------------------------------------------------------
 --
--- Table structure for table 'ncbi_taxa_nodes'
+-- Table structure for table 'ncbi_taxa_node'
 --
 -- overview: for importing from the ncbi taxonomy taxdump.tar nodes.dmp file
 --           tables stores the nodes in a tree formated DB
@@ -20,7 +20,7 @@
 --      hidden_subtree_root_flag (1 or 0)       -- 1 if this subtree has no sequence data yet
 --      comments                                -- free-text comments and citations
 
-CREATE TABLE ncbi_taxa_nodes (
+CREATE TABLE ncbi_taxa_node (
   taxon_id                        int(10) unsigned NOT NULL,
   parent_id                       int(10) unsigned NOT NULL,
   rank                            char(32) default '' NOT NULL,
@@ -46,7 +46,7 @@ CREATE TABLE ncbi_taxa_nodes (
 
 ------------------------------------------------------------------------------------
 --
--- Table structure for table 'ncbi_taxa_names'
+-- Table structure for table 'ncbi_taxa_name'
 --
 -- overview: for importing from the ncbi taxonomy taxdump.tar names.dmp file
 --           tables stores the multiple types of names used for each taxa level
@@ -56,7 +56,7 @@ CREATE TABLE ncbi_taxa_nodes (
 --    unique_name              -- the unique variant of this name if name not unique
 --    name_class               -- (synonym, common name, ...)
 
-CREATE TABLE ncbi_taxa_names (
+CREATE TABLE ncbi_taxa_name (
   taxon_id                    int(10) unsigned NOT NULL,
   name                        varchar(255),
   unique_name                 varchar(255),
@@ -86,7 +86,7 @@ CREATE TABLE ncbi_taxa_division (
   division_name             char(50),
   comments                  char(100),
 
-  FOREIGN KEY (division_id) REFERENCES ncbi_taxa_nodes(division_id),
+  FOREIGN KEY (division_id) REFERENCES ncbi_taxa_node(division_id),
   
   KEY (division_id)
   
