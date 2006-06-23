@@ -6,7 +6,7 @@ use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Registry;
 
 my $usage = "
-This script will dump the INSERT INTO statements to load into ncbi_taxa_nodes and ncbi_taxa_names
+This script will dump the INSERT INTO statements to load into ncbi_taxa_node and ncbi_taxa_name
 tables the needed data for the taxon_ids in genome_db table of a compara database
 
 $0 --host ensembldb.ensembl.org -port 3306 --user anonymous --dbname ensembl_compara_38
@@ -51,26 +51,26 @@ foreach my $gdb (@{$gdba->fetch_all}) {
   }
 }
 
-my $sql_ncbi_taxa_nodes = "select taxon_id, parent_id, rank, genbank_hidden_flag, left_index, right_index, root_id from ncbi_taxa_nodes where taxon_id = ?";
-my $sth_ncbi_taxa_nodes = $db->dbc->prepare($sql_ncbi_taxa_nodes);
+my $sql_ncbi_taxa_node = "select taxon_id, parent_id, rank, genbank_hidden_flag, left_index, right_index, root_id from ncbi_taxa_node where taxon_id = ?";
+my $sth_ncbi_taxa_node = $db->dbc->prepare($sql_ncbi_taxa_node);
 
-my $sql_ncbi_taxa_names = "select taxon_id, name, name_class from ncbi_taxa_names where taxon_id = ?";
-my $sth_ncbi_taxa_names = $db->dbc->prepare($sql_ncbi_taxa_names);
+my $sql_ncbi_taxa_name = "select taxon_id, name, name_class from ncbi_taxa_name where taxon_id = ?";
+my $sth_ncbi_taxa_name = $db->dbc->prepare($sql_ncbi_taxa_name);
 
 foreach my $taxon_id(keys %taxon_ids) {
-  $sth_ncbi_taxa_nodes->execute($taxon_id);
-  while (my $aref = $sth_ncbi_taxa_nodes->fetchrow_arrayref) {
+  $sth_ncbi_taxa_node->execute($taxon_id);
+  while (my $aref = $sth_ncbi_taxa_node->fetchrow_arrayref) {
     my ($taxon_id, $parent_id, $rank, $genbank_hidden_flag, $left_index, $right_index, $root_id) = @{$aref};
-    print "INSERT INTO ncbi_taxa_nodes VALUES ($taxon_id, $parent_id, '$rank', $genbank_hidden_flag, $left_index, $right_index, $root_id);\n";
+    print "INSERT INTO ncbi_taxa_node VALUES ($taxon_id, $parent_id, '$rank', $genbank_hidden_flag, $left_index, $right_index, $root_id);\n";
   }
-  $sth_ncbi_taxa_names->execute($taxon_id);
-  while (my $aref = $sth_ncbi_taxa_names->fetchrow_arrayref) {
+  $sth_ncbi_taxa_name->execute($taxon_id);
+  while (my $aref = $sth_ncbi_taxa_name->fetchrow_arrayref) {
     my ($taxon_id, $name, $name_class) = @{$aref};
     $name =~ s/\'/\\\'/g;
     $name =~ s/\"/\\\"/g;
-    print "INSERT INTO ncbi_taxa_names VALUES ($taxon_id, '$name', '$name_class');\n";
+    print "INSERT INTO ncbi_taxa_name VALUES ($taxon_id, '$name', '$name_class');\n";
   }
 }
 
-$sth_ncbi_taxa_names->finish;
-$sth_ncbi_taxa_nodes->finish;
+$sth_ncbi_taxa_name->finish;
+$sth_ncbi_taxa_node->finish;

@@ -156,8 +156,8 @@ $new_dba->get_MetaContainer; # tests that the DB exists
 update_schema_version($master_dba, $new_dba);
 
 ## Copy taxa and method_link tables
-copy_table($master_dba, $new_dba, "ncbi_taxa_names");
-copy_table($master_dba, $new_dba, "ncbi_taxa_nodes");
+copy_table($master_dba, $new_dba, "ncbi_taxa_name");
+copy_table($master_dba, $new_dba, "ncbi_taxa_node");
 copy_table($master_dba, $new_dba, "method_link");
 
 ## Get all the genome_dbs with a default assembly
