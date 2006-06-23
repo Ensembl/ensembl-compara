@@ -249,8 +249,8 @@ sub taxon_id {
 
 =head2 taxon
 
-  Description: uses taxon_id to fetch the Taxon object
-  Returntype : Bio::EnsEMBL::Compara::Taxon object 
+  Description: uses taxon_id to fetch the NCBITaxon object
+  Returntype : Bio::EnsEMBL::Compara::NCBITaxon object 
   Exceptions : if taxon_id or adaptor not defined
   Caller     : general
 
@@ -264,8 +264,8 @@ sub taxon {
   unless (defined $self->taxon_id and $self->adaptor) {
     throw("can't fetch Taxon without a taxon_id and an adaptor");
   }
-  my $TaxonAdaptor = $self->adaptor->db->get_TaxonAdaptor;
-  $self->{'_taxon'} = $TaxonAdaptor->fetch_by_dbID($self->taxon_id);
+  my $ncbi_taxon_adaptor = $self->adaptor->get_NCBITaxonAdaptor;
+  $self->{'_taxon'} = $ncbi_taxon_adaptor->fetch_node_by_taxon_id($taxon_id);
   return $self->{'_taxon'};
 }
 
