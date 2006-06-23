@@ -265,7 +265,7 @@ sub taxon {
     throw("can't fetch Taxon without a taxon_id and an adaptor");
   }
   my $ncbi_taxon_adaptor = $self->adaptor->get_NCBITaxonAdaptor;
-  $self->{'_taxon'} = $ncbi_taxon_adaptor->fetch_node_by_taxon_id($taxon_id);
+  $self->{'_taxon'} = $ncbi_taxon_adaptor->fetch_node_by_taxon_id($self->{'taxon_id'});
   return $self->{'_taxon'};
 }
 
