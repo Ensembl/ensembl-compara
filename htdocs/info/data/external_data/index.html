@@ -9,18 +9,53 @@
 
 <h2>Custom Annotation</h2>
 
-<p>Ensembl offers you the ability to display your own data in:</p>
+
+<h3 class="boxed" id="introduction">Introduction</h3>
+
+<p>
+While genome annotation is generally provided by the Ensembl project,
+the genome browser is also extensible to show annotation of custom data sets.
+External data sets can be integrated in several ways differing in
+flexibility, efficiency and data persistence.
+</p>
+
+<p>You may also share your data source with others if you wish to do so.</p>
+
+<!--
+<p>Ensembl offers you the ability to display your own data sets in:</p>
 
 <ul class="spaced">
 <li>KaryoView</li>
 <li>ContigView and CytoView</li>
 <li>GeneView, TransView and ProtView</li>
 </ul>
+-->
 
-<p>You may also share your data source with others if you wish to do so.</p>
 
+<h3 class="boxed" id="upload">Uploaded Data Sets</h3>
 
-<h3 class="boxed" id="karyoview">Ensembl KaryoView</h3>
+<p>
+Ensembl provides a simple, form-based upload function to store small custom
+data sets directly in the genome browser.
+</p>
+
+<p>
+To annotate features along the genome sequence like Ensembl does on
+<a href="/default/contigview">ContigView</a> and
+<a href="/default/cytoview">CytoView</a>, open the 'DAS Sources' menu on these
+displays.
+The 'Manage sources' option will lead to a DasConfView web form.
+Select 'Upload your data' to start the upload dialogue.
+</p>
+
+<p>
+Custom data sets are generally specified as a list of features, where each
+line is a tab-delimited record of chromosome number, start base, end base and
+feature name values.
+More detailed specification of the supported upload format would be available
+from the DasConfView 
+<a href="javascript:void(window.open('/default/helpview?se=1;kw=dasconfview', 'helpview', 'width=700, height=550, resizable, scrollbars'))">help document</a>.
+</p>
 
 <p>
 For species with assembled chromosomes, Ensembl
@@ -39,39 +74,19 @@ Ensembl KaryoView displays are accessible via the
 column on Ensembl MapView pages.
 MapView displays in turn are accessible by clicking a chromosome on an Ensembl
 <a href="/default/">species entry page</a>.
-If desired, you can change the chromosome when you configure KaryoView.
 </p>
 
 <p>
-The data set is generally specified as a list of features, where each line is
-a tab-delimited record of chromosome number, start base, end base and feature
-name values.
 KaryoView can be configured to display the data set as a variety of boxes,
 lines and arrows against the chromosomes.
-</p>
-
-<p>
+If desired, you can change the chromosome when you configure KaryoView.
 More information about the supported data set formats and display configuration
 would be available from the KaryoView
 <a href="javascript:void(window.open('/default/helpview?kw=karyoview;se=1','helpview','width=700,height=550,resizable,scrollbars'))">help document</a>.
 </p>
 
 
-<h3 class="boxed" id="cytoview">Ensembl ContigView and CytoView</h3>
-
-<p>
-Both, Ensembl
-<a href="/default/contigview">ContigView</a> and
-<a href="/default/cytoview">CytoView</a> display features annotated on genome
-sequence assemblies.
-While genome annotation is generally provided by the Ensembl project, both
-displays are also extensible to show annotation of custom data sets.
-External data sets can be integrated in several ways that differ in
-flexibility, efficiency and data persistence.
-</p>
-
-
-<h4>URL-based Data Sets</h4>
+<h3 class="boxed" id="url">URL-based Data Sets</h3>
 
 <p>
 The addition of URL-based data sets provides a very simple means to add rather
@@ -92,7 +107,9 @@ the Ensembl genome browser.
 
 <p>
 Once stored on a web server, the external data set can be added via the
-'DAS Sources' menu on ContigView and CytoView pages.
+'DAS Sources' menu on
+<a href="/default/contigview">ContigView</a> and
+<a href="/default/cytoview">CytoView</a> pages.
 Follow the 'URL-based data' option in the menu to specify the URL.
 </p>
 
@@ -103,25 +120,7 @@ URL-based data
 </p>
 
 
-<h4>Uploaded Data Sets</h4>
-
-<p>
-Ensembl provides an upload function to store custom data sets directly in the
-genome browser.
-Custom data set upload is accessible via the 'DAS Sources' menu on Ensembl
-ContigView or CytoView pages.
-The 'Manage source' option will lead to a DasConfView web form.
-Select 'Upload your data' to start the upload dialogue.
-</p>
-
-<p>
-A detailed description of the data format would be available from the
-DasConfView 
-<a href="javascript:void(window.open('/default/helpview?se=1;kw=dasconfview', 'helpview', 'width=700, height=550, resizable, scrollbars'))">help document</a>.
-</p>
-
-
-<h4>Distributed Annotation System</h4>
+<h3 class="boxed" id="das">Distributed Annotation System</h3>
 
 <p>
 The Distributed Annotation System
@@ -133,13 +132,30 @@ allowing users to see and compare annotations from different sources.
 
 <p>
 Ensembl provides a list of pre-configured DAS sources in the 'DAS Sources'
-menus on ContigView and CytoView.
-While these sources can be simply activated from the menu, DAS sources provided
+menus of
+<a href="/default/contigview">ContigView</a> and
+<a href="/default/cytoview">CytoView</a> displays, which annotate features
+on a genome sequence assembly.
+While these sources can simply be activated from the menu, DAS sources provided
 by other servers can be added via the 'Manage sources' option.
 </p>
 
 <p>
-Following the link will lead to the Ensembl DasConfView display.
+Ensembl
+<a href="/default/geneview">GeneView</a>,
+<a href="/default/transview">TransView</a> and
+<a href="/default/protview">ProtView</a> displays provide specific information
+about genes, transcripts and their translations, if any, respectively.
+A 'DAS Sources' section on all those displays contains a list of pre-configured
+Distributed Annotation System (DAS) sources that extend the information stored
+in Ensembl.
+Additional data sources, as well as external DAS servers can be attached via
+the 'Manage sources' button.
+</p>
+
+<p>
+Following the 'Manage sources' option will lead to the Ensembl DasConfView
+display.
 Several DAS servers serving annotation sources are available from the
 DAS Registry.
 Other servers could be added by providing a URL via the 'Add Data Sources'
@@ -158,37 +174,6 @@ ContigView, CytoView, GeneView, TransView and ProtView displays.
 Ensembl also has its own
 <a href="./das/ensembl_das.html">Ensembl-DAS reference server</a>.
 <a href="./das/index.html">More...</a>
-</p>
-
-
-<h3 class="boxed" id="geneview">Ensembl GeneView, TransView and ProtView</h3>
-
-<p>
-Ensembl GeneView, TransView and ProtView displays provide specific information
-about genes, transcripts and their translations, if any, respectively.
-</p>
-
-<p>
-A 'DAS Sources' section on all those displays contains a list of pre-configured
-Distributed Annotation System (DAS) sources that extend the information stored
-in Ensembl.
-</p>
-
-<p>
-Custom data sets can be added by clicking the 'Manage Sources' button, which
-leads to the same Ensembl DasConfView dialogue that allows for upload of
-data sets, selection of DAS sources from the Ensembl DAS registry or
-specification of a DAS source provided by an external DAS server.
-</p>
-
-<p>
-For a more detailed description of these options see the Ensembl ContigView and
-CytoView section above or consult the DasConfView
-<a href="javascript:void(window.open('/default/helpview?se=1;kw=dasconfview', 'helpview', 'width=700, height=550, resizable, scrollbars'))">help document</a>.
-</p>
-
-<p>
-URL-based data sets however are not supported for these displays.
 </p>
 
 </body>
