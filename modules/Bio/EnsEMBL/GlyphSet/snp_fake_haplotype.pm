@@ -243,7 +243,7 @@ sub do_glyphs {
   $start = 1 if $start < 1;
   $end = $length if $end > $length;
 
-  my @res = $self->get_text_width( 0, $allele_string, '', 'font'=>$fontname, 'ptsize' => $fontsize );
+  my @res = $self->get_text_width( 0, length($allele_string)==1 ? "A" : $allele_string, '', 'font'=>$fontname, 'ptsize' => $fontsize );
 
   my $back_glyph = new Sanger::Graphics::Glyph::Rect({
     'x'         => ($end+$start-1-$tmp_width)/2,
