@@ -467,7 +467,7 @@ sub mappings {
     }
     foreach my $transcript_data (@transcript_variation_data ) {
       my $transcript_link = qq(<a href='transview?transcript=$transcript_data->{transcriptname}'>$transcript_data->{transcriptname}</a>);
-      my $genesnpview = qq(<a href="genesnpview?transcript=$transcript_data->{transcriptname}">View SNPs on this gene</a>);
+      my $genesnpview = qq(<a href="genesnpview?transcript=$transcript_data->{transcriptname}">View in gene context</a>);
       my $protein_link = qq(<a href='protview?transcript=$transcript_data->{transcriptname}'>$transcript_data->{proteinname}</a>);
 
       my $transcript_coords = _sort_start_end(
@@ -497,12 +497,10 @@ sub mappings {
 		{key => 'genesnpview', title => 'GeneSNPView link&nbsp;'},
 	       );
 	}
-	if ($transcript_data->{'proteinname'}) {
-	  push (@table_header, 
-		{key => 'translation', title => 'Translation: start-end&nbsp;'},
-		{key => 'pepallele',   title =>'Peptide allele&nbsp;'},
-	       );
-	}
+
+
+	push @table_header, {key => 'translation', title => 'Translation: start-end&nbsp;'} if $transcript_data->{'proteinname'} ;
+	push @table_header, {key => 'pepallele',   title =>'Peptide allele&nbsp;'} if $transcript_data->{'pepallele'} ;
 	push (@table_header, {key => 'conseq', title =>'Type'});
       }
       %chr_info = ();

@@ -906,8 +906,13 @@ sub transcript_variation {
   my @data;
   foreach my $tvari_obj ( @{ $transcript_variation_obj } )  {
     next unless $tvari_obj->transcript;
+    my $type = $tvari_obj->consequence_type;
+    if ($tvari_obj->splice_site or $tvari_obj->regulatory_region) {
+      $type .=", ". $tvari_obj->splice_site;
+      $type .= $tvari_obj->regulatory_region;
+    }
     push (@data, {
-            conseq =>           $tvari_obj->consequence_type,
+            conseq =>           $type,
             transcriptname =>   $tvari_obj->transcript->stable_id,
             proteinname  =>     $tvari_obj->transcript->translation->stable_id,
             cdna_start =>       $tvari_obj->cdna_start,
