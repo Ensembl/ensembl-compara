@@ -5,7 +5,6 @@ use DBI;
 use Getopt::Long;
 use Bio::EnsEMBL::Compara::Production::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Compara::GenomeDB;
-use Bio::EnsEMBL::Compara::Taxon;
 use Bio::EnsEMBL::Analysis;
 use Bio::EnsEMBL::DBLoader;
 use Bio::EnsEMBL::Hive;
@@ -49,7 +48,7 @@ if($pass)   { $compara_conf{'-pass'}   = $pass; }
 
 unless(defined($compara_conf{'-host'}) and defined($compara_conf{'-user'}) and defined($compara_conf{'-dbname'})) {
   print "\nERROR : must specify host, user, and database to connect to compara\n\n";
-  usage(); 
+  usage();
 }
 
 if(%analysis_template and (not(-d $analysis_template{'fasta_dir'}))) {
@@ -107,7 +106,7 @@ sub usage {
   print "  -dbpass <pass>         : compara mysql connection password\n";
   print "comparaLoadGenomes.pl v1.1\n";
   
-  exit(1);  
+  exit(1);
 }
 
 
@@ -177,17 +176,19 @@ sub submitGenome
   }
 
   my $meta = $genomeDBA->get_MetaContainer;
+  my $taxon_id = $meta->get_taxonomy_id;
+  my $ncbi_taxon = $self->{'comparaDBA'}->get_NCBITaxonAdaptor->fetch_node_by_taxon_id($taxon_id);
+  my $genome_name;
+  # check for ncbi table
+  if (defined $ncbi_taxon) {
+    $genome_name = $ncbi_taxon->binomial;
+  } else {
+    $genome_name = $meta->get_Species->binomial;
+  }
 
-  my $taxon_id = $meta->get_taxonomy_id;  
-  my $taxon = $meta->get_Species;
-  bless $taxon, "Bio::EnsEMBL::Compara::Taxon";
-  $taxon->ncbi_taxid($taxon_id);
-  $self->{'comparaDBA'}->get_TaxonAdaptor->store($taxon);
-
-  my $genome_name = $taxon->binomial;
   my ($cs) = @{$genomeDBA->get_CoordSystemAdaptor->fetch_all()};
   my $assembly = $cs->version;
-  my $genebuild = $meta->get_genebuild;  
+  my $genebuild = $meta->get_genebuild;
 
   if($species->{taxon_id} && ($taxon_id ne $species->{taxon_id})) {
     throw("$genome_name taxon_id=$taxon_id not as expected ". $species->{taxon_id});
