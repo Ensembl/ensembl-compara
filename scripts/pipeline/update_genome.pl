@@ -18,10 +18,7 @@ my $description = q{
 ##    and updates it in several steps:
 ##
 ##      - It updates the genome_db table
-##      - It deletes all the genomic alignment data for the old genome_db
-##      - It deletes all the syntenic data for the old genome_db
 ##      - It updates all the dnafrags for the given genome_db
-##      - It cleans all the tables that are not related to genomic data
 ##
 ###########################################################################
 
@@ -44,10 +41,7 @@ This script is part of the Ensembl project http://www.ensembl.org
 This script takes the new core DB and a compara DB in production fase and updates it in several steps:
 
  - It updates the genome_db table
- - It deletes all the genomic alignment data for the old genome_db
- - It deletes all the syntenic data for the old genome_db
  - It updates all the dnafrags for the given genome_db
- - It cleans all the tables that are not related to genomic data
 
 =head1 SYNOPSIS
 
@@ -57,10 +51,12 @@ perl update_genome.pl
     [--reg_conf registry_configuration_file]
     --compara compara_db_name_or_alias
     --species new_species_db_name_or_alias
-    [--[no]clean_database]
-        This scripts can also truncate all the table that are not
-        used in the genomic part of Compara. It is possible to avoid
-        this by using the "--noclean_database" flag.
+    [--species_name "Species name"]
+        Set up the species name. This is needed when the core database
+        misses this information
+    [--taxon_id 1234]
+        Set up the NCBI taxon ID. This is needed when the core database
+        misses this information
     [--[no]force]
         This scripts fails if the genome_db table of the compara DB
         already matches the new species DB. This options allows you
@@ -111,11 +107,15 @@ any of the aliases given in the registry_configuration_file
 
 =over
 
-=item B<[--[no]clean_database]>
+=item B<[--species_name "Species name">
 
-This scripts can also truncate all the table that are not
-used in the genomic part of Compara. It is possible to avoid
-this by using the "--noclean_database" flag.
+Set up the species name. This is needed when the core database
+misses this information
+
+=item B<[--taxon_id 1234>
+
+Set up the NCBI taxon ID. This is needed when the core database
+misses this information
 
 =item B<[--[no]force]>
 
@@ -150,10 +150,12 @@ perl update_genome.pl
     --species new_species_db_name_or_alias
 
   Options:
-    [--[no]clean_database]
-        This scripts can also truncate all the table that are not
-        used in the genomic part of Compara. It is possible to avoid
-        this by using the "--noclean_database" flag.
+    [--species_name "Species name"]
+        Set up the species name. This is needed when the core database
+        misses this information
+    [--taxon_id 1234]
+        Set up the NCBI taxon ID. This is needed when the core database
+        misses this information
     [--[no]force]
         This scripts fails if the genome_db table of the compara DB
         already matches the new species DB. This options allows you
@@ -166,22 +168,24 @@ my $help;
 my $reg_conf;
 my $compara;
 my $species;
+my $species_name;
+my $taxon_id;
 my $force = 0;
-my $clean_database = 1;
 
 GetOptions(
     "help" => \$help,
     "reg_conf=s" => \$reg_conf,
     "compara=s" => \$compara,
     "species=s" => \$species,
+    "species_name=s" => \$species_name,
+    "taxon_id=i" => \$taxon_id,
     "force!" => \$force,
-    "clean_database!" => \$clean_database,
   );
 
 $| = 0;
 
 # Print Help and exit if help is requested
-if ($help) {
+if ($help or !$species or !$compara) {
   print $description, $usage;
   exit(0);
 }
@@ -200,25 +204,13 @@ my $compara_db = Bio::EnsEMBL::Registry->get_DBAdaptor($compara, "compara");
 throw ("Cannot connect to database [$compara]") if (!$compara_db);
 
 my $genome_db = update_genome_db($species_db, $compara_db, $force);
-print "Former " if (!$force);
 print "Bio::EnsEMBL::Compara::GenomeDB->dbID: ", $genome_db->dbID, "\n\n";
 
-delete_genomic_align_data($compara_db, $genome_db);
+# delete_genomic_align_data($compara_db, $genome_db);
 
-delete_syntenic_data($compara_db, $genome_db);
+# delete_syntenic_data($compara_db, $genome_db);
 
-if (!$force) {
-  update_dnafrags($compara_db, $genome_db, $species_db);
-}
-
-if ($clean_database) {
-  print "Deleting non-genomic data from the database... ";
-  foreach my $table ("member", "sequence", "analysis" ,"analysis_description", "peptide_align_feature",
-      "homology", "homology_member", "family", "family_member", "domain", "domain_member") {
-    $compara_db->dbc->do("TRUNCATE $table");
-  }
-  print "ok\n\n";
-}
+update_dnafrags($compara_db, $genome_db, $species_db);
 
 print_method_link_species_sets_to_update($compara_db, $genome_db);
 
@@ -243,8 +235,16 @@ sub update_genome_db {
   my ($species_dba, $compara_dba, $force) = @_;
   
   my $slice_adaptor = $species_dba->get_adaptor("Slice");
-  my $primary_species_binomial_name = 
-      $slice_adaptor->db->get_MetaContainer->get_Species->binomial;
+  my $primary_species_binomial_name;
+  if (defined($species_name)) {
+    $primary_species_binomial_name = $species_name;
+  } else {
+    my $primary_species = $slice_adaptor->db->get_MetaContainer->get_Species;
+    if (!$primary_species) {
+      throw "Cannot get the species name from the database. Use the --species_name option";
+    }
+    $primary_species_binomial_name = $primary_species->binomial;
+  }
   my ($highest_cs) = @{$slice_adaptor->db->get_CoordSystemAdaptor->fetch_all()};
   my $primary_species_assembly = $highest_cs->version();
   my $genome_db_adaptor = $compara_dba->get_GenomeDBAdaptor;
@@ -282,31 +282,37 @@ sub update_genome_db {
   print "New assembly and genebuild: ", join(" -- ", $assembly, $genebuild),"\n\n";
 
   $genome_db = eval{$genome_db_adaptor->fetch_by_name_assembly(
-          $primary_species_binomial_name
+          $primary_species_binomial_name, $assembly
       )};
-  if ($genome_db) {
+  if ($genome_db) { ## New genebuild!
     $sql = "UPDATE genome_db SET assembly = \"$assembly\", genebuild = \"$genebuild\" WHERE genome_db_id = ".
         $genome_db->dbID;
     $sth = $compara_dba->dbc->do($sql); 
     $genome_db = $genome_db_adaptor->fetch_by_name_assembly(
             $primary_species_binomial_name,
-            $primary_species_assembly
+            $assembly
         );
 
-  } else { ## New genome!!
-    $sth->execute("species.taxonomy_id");
-    my ($taxon_id) = $sth->fetchrow_array();
+  } else { ## New genome or new assembly!!
     if (!defined($taxon_id)) {
-      throw "Cannot find species.taxonomy_id in meta table for $primary_species_binomial_name";
+      $sth->execute("species.taxonomy_id");
+      ($taxon_id) = $sth->fetchrow_array();
     }
-    print "New genome in compara. Taxon #$taxon_id\n\n";
+    if (!defined($taxon_id)) {
+      throw "Cannot find species.taxonomy_id in meta table for $primary_species_binomial_name.\n".
+          "   You can use the --taxon_id option";
+    }
+    print "New genome in compara. Taxon #$taxon_id; Name: $primary_species_binomial_name; Assembly $assembly\n\n";
+    $sql = "UPDATE genome_db SET assembly_default = 0 WHERE name = \"".
+        $primary_species_binomial_name . "\"";
+    $sth = $compara_dba->dbc->do($sql); 
     $sql = "INSERT INTO genome_db (taxon_id, name, assembly, genebuild)".
         " VALUES (\"$taxon_id\", \"$primary_species_binomial_name\",".
         " \"$assembly\", \"$genebuild\")";
     $sth = $compara_dba->dbc->do($sql); 
     $genome_db = $genome_db_adaptor->fetch_by_name_assembly(
             $primary_species_binomial_name,
-            $primary_species_assembly
+            $assembly
         );
   }
   return $genome_db;
@@ -470,14 +476,66 @@ sub print_method_link_species_sets_to_update {
   my ($compara_dba, $genome_db) = @_;
 
   my $method_link_species_set_adaptor = $compara_dba->get_adaptor("MethodLinkSpeciesSet");
-  my $method_link_species_sets = $method_link_species_set_adaptor->fetch_all_by_GenomeDB($genome_db);
+  my $genome_db_adaptor = $compara_dba->get_adaptor("GenomeDB");
+
+  my $method_link_species_sets;
+  foreach my $this_genome_db (@{$genome_db_adaptor->fetch_all()}) {
+    next if ($this_genome_db->name ne $genome_db->name);
+    foreach my $this_method_link_species_set (@{$method_link_species_set_adaptor->fetch_all_by_GenomeDB($this_genome_db)}) {
+      $method_link_species_sets->{$this_method_link_species_set->method_link_id}->
+          {join("-", sort map {$_->name} @{$this_method_link_species_set->species_set})} = $this_method_link_species_set;
+    }
+  }
 
   print "List of Bio::EnsEMBL::Compara::MethodLinkSpeciesSet to update:\n";
-  foreach my $this_method_link_species_set (sort {$a->method_link_id <=> $b->method_link_id} @$method_link_species_sets) {
-    last if ($this_method_link_species_set->method_link_id > 200); # Avoid non-genomic method_link_species_set
-    printf "%8d: ", $this_method_link_species_set->dbID,;
-    print $this_method_link_species_set->method_link_type, " (",
-        join(",", map {$_->name} @{$this_method_link_species_set->species_set}), ")\n";
+  foreach my $this_method_link_id (sort {$a <=> $b} keys %$method_link_species_sets) {
+    last if ($this_method_link_id > 200); # Avoid non-genomic method_link_species_set
+    foreach my $this_method_link_species_set (values %{$method_link_species_sets->{$this_method_link_id}}) {
+      printf "%8d: ", $this_method_link_species_set->dbID,;
+      print $this_method_link_species_set->method_link_type, " (",
+          join(",", map {$_->name} @{$this_method_link_species_set->species_set}), ")\n";
+    }
+  }
+
+}
+
+=head2 create_new_method_link_species_sets
+
+  Arg[1]      : Bio::EnsEMBL::Compara::DBSQL::DBAdaptor $compara_dba
+  Arg[2]      : Bio::EnsEMBL::Compara::GenomeDB $genome_db
+  Description : This method creates all the genomic MethodLinkSpeciesSet
+                that are needed for the new assembly.
+                NB: Only method_link with a dbID <200 are taken into
+                account (they should be the genomic ones)
+  Returns     : -none-
+  Exceptions  :
+
+=cut
+
+sub create_new_method_link_species_sets {
+  my ($compara_dba, $genome_db) = @_;
+
+  my $method_link_species_set_adaptor = $compara_dba->get_adaptor("MethodLinkSpeciesSet");
+  my $genome_db_adaptor = $compara_dba->get_adaptor("GenomeDB");
+
+  my $method_link_species_sets;
+  my $all_genome_dbs = $genome_db_adaptor->fetch_all();
+  foreach my $this_genome_db (@$all_genome_dbs) {
+    next if ($this_genome_db->name ne $genome_db->name);
+    foreach my $this_method_link_species_set (@{$method_link_species_set_adaptor->fetch_all_by_GenomeDB($this_genome_db)}) {
+      $method_link_species_sets->{$this_method_link_species_set->method_link_id}->
+          {join("-", sort map {$_->name} @{$this_method_link_species_set->species_set})} = $this_method_link_species_set;
+    }
+  }
+
+  print "List of Bio::EnsEMBL::Compara::MethodLinkSpeciesSet to update:\n";
+  foreach my $this_method_link_id (sort {$a <=> $b} keys %$method_link_species_sets) {
+    last if ($this_method_link_id > 200); # Avoid non-genomic method_link_species_set
+    foreach my $this_method_link_species_set (values %{$method_link_species_sets->{$this_method_link_id}}) {
+      printf "%8d: ", $this_method_link_species_set->dbID,;
+      print $this_method_link_species_set->method_link_type, " (",
+          join(",", map {$_->name} @{$this_method_link_species_set->species_set}), ")\n";
+    }
   }
 
 }
