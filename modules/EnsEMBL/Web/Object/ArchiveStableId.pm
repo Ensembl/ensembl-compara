@@ -96,6 +96,7 @@ sub gene {
 sub get_current_object {
   my ($self, $type, $id) = @_;
   $id ||= $self->stable_id;
+  $id =~ s/(\S+)\.+\d+/$1/;
   warn "Error: no id" && return unless $id;
   $type = ucfirst(lc($type));
   $type = 'Translation' if $type eq 'Peptide';

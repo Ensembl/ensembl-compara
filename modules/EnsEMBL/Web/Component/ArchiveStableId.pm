@@ -84,7 +84,7 @@ sub status {
     my @successors = @{ $object->successors || []};
     my $url = qq(<a href="idhistoryview?$param=%s">%s</a>);
     my $verb = scalar @successors > 1 ? "and split into " : "and replaced by ";
-    if ($successors[0]->stable_id eq $object->stable_id) {
+    if ($successors[0] && $successors[0]->stable_id eq $object->stable_id) {
       $verb = "but existed as";
     }
     my @successor_text = map {
@@ -288,7 +288,7 @@ sub _archive_link {
     $view = 'transview';
   }
 
-  $id = qq(<a title="Archive site" href="$url$view?$type=$name">$id</a>);
+  $id = qq(<a title="$view" href="$url$view?$type=$name">$id</a>);
   return $id;
 }
 
