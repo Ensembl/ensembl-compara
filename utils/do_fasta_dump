@@ -227,7 +227,7 @@ sub create_dirs_for_dumps {
   my $assembly     = $highest_cs->version();
   my $ini_assembly = $SPECIES_DEFS->get_config($sp,"ENSEMBL_GOLDEN_PATH");
   warning(1, "Error: INI file GOLDEN_PATH is $ini_assembly. Database assembly is $assembly") unless $ini_assembly eq $assembly;
-  my $file_details = "$sp.$assembly.".utils::Tool::release_month();
+  my $file_details = "$sp.$assembly.$release";
 
 
   # Create dirs ------------------------------------------
@@ -658,10 +658,11 @@ Fasta DNA dumps
 FILE NAMES
 ------------
 The files are consistently named following this pattern:
-   <species>.<version.month>.<sequence type>.<id type>.<id>.fa.gz
+   <species>.<assembly>.<version>.<sequence type>.<id type>.<id>.fa.gz
 
 <species>: The systematic name of the species. 
-<version>: The version number of the genome sequence assembly build. 
+<assembly>: The assembly build name.
+<version>: The release number. 
 <sequence type>
     * 'dna' - unmasked genomic DNA sequences.
     * 'dna_rm' - masked genomic DNA.  Interspersed repeats and low 
@@ -743,10 +744,11 @@ These files hold the protein translations of Ensembl gene predictions.
 FILE NAMES
 ------------
 The files are consistently named following this pattern:
-   <species>.<version.month>.<sequence type>.<status>.fa.gz
+   <species>.<assembly>.<version>.<sequence type>.<status>.fa.gz
 
 <species>: The systematic name of the species. 
-<version>: The version number of the genome sequence assembly build. 
+<assembly>: The assembly build name.
+<version>: The release number. 
 <sequence type>: pep for peptide sequences
 <status>
     * 'pep' - the super-set of all translations resulting from Ensembl known
@@ -831,10 +833,11 @@ These files hold the cDNA sequences corresponding to Ensembl gene predictions.
 FILE NAMES
 ------------
 The files are consistently named following this pattern:
-<species>.<version.month>.<sequence type>.<status>.fa.gz
+<species>.<assembly>.<version>.<sequence type>.<status>.fa.gz
 
 <species>: The systematic name of the species. 
-<version>: The version number of the genome sequence assembly build. 
+<assembly>: The assembly build name.
+<version>: The release number. 
 <sequence type>: cdna for cDNA sequences
 <status>
     * 'cdna' - the super-set of all transcripts resulting from 
@@ -923,10 +926,11 @@ These files hold the transcript sequences corresponding to non-coding RNA genes 
 FILE NAMES
 ------------
 The files are consistently named following this pattern:
-<species>.<version.month>.<sequence type>.<status>.fa.gz
+<species>.<assembly>.<version>.<sequence type>.<status>.fa.gz
 
 <species>: The systematic name of the species. 
-<version>: The version number of the genome sequence assembly build. 
+<assembly>: The assembly build name.
+<version>: The release number. 
 <sequence type>: ncrna for non-coding RNA sequences
 <status>
     * 'rna' - all non-coding RNA genes
