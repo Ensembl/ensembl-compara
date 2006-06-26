@@ -77,7 +77,7 @@ sub status {
 
   my $status;
   my $current_obj = $object->get_current_object($object->type);
-  my $archive = _archive_link($object, $id, $param, "Archive <img src='/img/ensemblicon.gif'/>");
+
 
   if (!$current_obj) {
     $status = "<b>This ID has been removed from Ensembl</b>";
@@ -106,7 +106,13 @@ sub status {
   }
   $panel->add_row( "Status", $status );
   return 1 if $status =~/^Current/;
+}
 
+sub archive {
+  my ($panel, $object) = @_;
+  my $id = $object->stable_id.".".$object->version;
+  my $param = $object->type eq 'Translation' ? 'peptide' : lc($object->type);
+  my $archive = _archive_link($object, $id, $param, "Archive <img src='/img/ensemblicon.gif'/>");
   if ($archive) {
     $panel->add_row("Archive", "$archive (release ".$object->release.")");
   }

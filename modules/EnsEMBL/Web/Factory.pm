@@ -29,7 +29,6 @@ sub _archive {
   my( $self, $type, $parameter ) = @_;
 
 #   Redirect -> now uses code in idhistory
-  warn "IN HERE";
   my $db        = $self->param('db')||'core';
    my $name      = $self->param($parameter) || $self->param('peptide') || $self->param('transcript') || $self->param('gene');
    my @features  = undef;
@@ -115,7 +114,6 @@ sub _known_feature {
   my $db        = $self->param('db')||'core';
   my $name      = $self->param($parameter)||$self->param('peptide') || $self->param('transcript') || $self->param('gene');
   my @features  = undef;
-  warn "dkdkdkdkdk";
   my $adaptor;
   my $adaptor_name = "get_$type".'Adaptor';
   eval { $adaptor = $self->database($db)->$adaptor_name;};
