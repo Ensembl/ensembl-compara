@@ -81,11 +81,13 @@ use vars qw(@ISA);
 my $g_BlastComparaPep_workdir;
 
 =head2 fetch_input
+
     Title   :   fetch_input
     Usage   :   $self->fetch_input
     Function:   Fetches input data for repeatmasker from the database
     Returns :   none
     Args    :   none
+
 =cut
 
 sub fetch_input {
@@ -285,7 +287,7 @@ sub dumpPeptidesToFasta
 
   printf("took %d secs to dump database to local disk\n", (time() - $startTime));
 
-  return $fastafile
+  return $fastafile;
 }
 
 1;
