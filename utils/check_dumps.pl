@@ -506,7 +506,7 @@ sub check_toplevel {
   # Work out assembly and month and check it doesn't
   my $assembly;
   my $month;
-  if ($files->[0] =~/$species\.(.+)\.(\w{3})\.dna.*\.fa\.gz/){
+  if ($files->[0] =~/$species\.?\d?\.(.+)\.(\w{3})\.dna.*\.fa\.gz/){
     $assembly = $1;
     $month = $2;
   }
@@ -518,7 +518,7 @@ sub check_toplevel {
 						    qw( U 2h 3h 4h Xh Yh Uh )
 					      }
   elsif ($species eq 'Anopheles_gambiae')    {  map { $chr{$_} =1; } qw( UNKN Y_unplaced) }
-  elsif ($species eq 'Gallus_gallus' or 
+  elsif ($species eq 'Gallus_gallus' or $species eq 'Monodelphis_domestica' or 
 	$species eq 'Canis_familiaris') { $chr{Un} =1;}
   elsif ($species eq 'Caenorhabditis_elegans') {
     map {$chr{$_} = 1;}  qw( MtDNA );

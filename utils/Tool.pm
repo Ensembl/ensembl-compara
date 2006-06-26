@@ -149,6 +149,28 @@ sub get_config {
 
 =cut
 
+sub sz {
+  my $size = `ps $$ -o vsz |tail -1`;
+  chomp $size;
+  my $unit = chop $size;
+  if($unit eq "M"){
+    $size *= 1024;
+  } elsif ($unit eq "G"){
+    $size *= 1048576;   # 1024*1024
+  }
+  my $rss = `ps $$ -o rss |tail -1`;
+  chomp $rss;
+  $unit = chop $rss;
+  if($unit eq "M"){
+    $rss *= 1024;
+  } elsif ($unit eq "G"){
+    $rss *= 1048576;   # 1024*1024
+  }
+
+  return($size, $rss); # return 0 for share, to avoid undef warnings
+}
+
+
 sub info{
   my $v   = shift;
   my $msg = shift;
@@ -156,7 +178,8 @@ sub info{
   $msg || ( carp("Need a warning message" ) && return );
 
   if( $v > $VERBOSITY ){ return 1 }
-  warn( "[INFO] ".$msg."\n" );
+  my @sz = sz();
+  warn( "[INFO] ".$msg." (@sz)\n" );
   return 1;
 }
 
@@ -334,7 +357,8 @@ sub warning{
   $msg || ( carp("Need a warning message" ) && return );
 
   if( $v > $VERBOSITY ){ return 1 }
-  warn( "[WARN] ".$msg."\n" );
+  my @sz = sz();
+  warn( "[WARN] ".$msg." (@sz)\n" );
   return 1;
 }
 #----------------------------------------------------------------------

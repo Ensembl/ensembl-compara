@@ -325,7 +325,9 @@ sub get_data {
 	  #info (1, "M4: DNA");
 	  my $seqio_masked = Bio::SeqIO->new('-format' => 'Fasta', 
 					  '-file' => sprintf ($file,"dna_rm"));
-	  dump_dna( $seqio_masked, $slice->get_repeatmasked_seq, 'dna_rm' );
+	  #dump_dna( $seqio_masked, $slice->get_repeatmasked_seq, 'dna_rm' );
+	  #dump_dna( $seqio_masked, $slice->get_repeatmasked_seq([('RepeatMask','Dust','TRF','Mono_sup_RepeatMask')]), 'dna_rm' );
+	  dump_dna_masked( $seqio_masked, $slice, mask_sequence($slice), 'dna_rm' );
 
 	  # Need to add these so they are closed and gzipped
 	  $fhs->{"$chr_toplevel.dna_rm.chromosome.$seq_name.fa"} = $seqio_masked;
@@ -536,6 +538,29 @@ sub dump_dna{
 
   my $seq = new Bio::Seq
     ( -seq         => $pad_start . $slice->seq() . $pad_end,
+      -display_id  => $slice->seq_region_name );
+  $seq->description( "$type:". $slice->coord_system->name(). " $location" );
+  #info( 1, "DNA>".$seq->display_id );
+
+  $seqio->write_seq($seq);
+  return 1;
+}
+
+sub dump_dna_masked{
+  my ($seqio, $slice, $seqstr, $type_str, $location) = @_;
+  return if $NODATA;
+
+  # Force slice onto forward strand
+  if( $slice->strand < 1 ){ $slice = $slice->invert }
+
+  $location ||= $slice->name;
+  my ($type, $subtype) = split(':', $type_str);
+
+  my $pad_start = 'N' x ( $slice->start - 1 );
+  my $pad_end   = 'N' x ( $slice->seq_region_length - $slice->end );
+
+  my $seq = new Bio::Seq
+    ( -seq         => $pad_start . $seqstr . $pad_end,
       -display_id  => $slice->seq_region_name );
   $seq->description( "$type:". $slice->coord_system->name(). " $location" );
   #info( 1, "DNA>".$seq->display_id );
@@ -987,6 +1012,57 @@ sub process_size {
   return $size;
 }
 
+sub mask_sequence {
+  my ($slice,$logic_names) = (@_);
+
+
+  my $seq_region = $slice->seq_region_name;
+
+  my $chunk_start = $slice->start;
+  my $chunk_size  = 10000000;
+  my $chunk_end   = $chunk_start + $chunk_size-1;
+
+  if ($chunk_end > $slice->end) {
+    $chunk_end = $slice->end;
+  }
+
+  my $slice_seq;
+
+  while ($chunk_start <= $slice->end) {
+    my $chunk_slice_name = $slice->coord_system->name . ":" .$slice->coord_system->version . ":" .$slice->seq_region_name . ":" . $chunk_start . ":" . $chunk_end . ":1";
+
+    print STDERR " Chunk slice name = $chunk_slice_name\n";
+
+    my $chunk_slice = $slice->adaptor->fetch_by_name($chunk_slice_name);
+    
+#    foreach my $lname (@$logic_names) {
+#      my $rfs = $chunk_slice->get_all_RepeatFeatures($lname);
+#      foreach my $old_f (@$rfs) {
+#        my $f = $old_f->transfer( $slice );
+#        $padstr = 'N' x $length;
+#        
+#      }
+#
+#    }
+
+    my $chunk_seq =  $chunk_slice->get_repeatmasked_seq($logic_names)->seq;
+
+    $slice_seq .= $chunk_seq;
+
+    $chunk_start += $chunk_size;
+    $chunk_end   += $chunk_size;
+    if ($chunk_end > $slice->end) {
+      $chunk_end = $slice->end;
+    }
+  }
+
+ warn "returning seq"; 
+ # if (CORE::length($slice_seq) != $slice->length) {
+ #   print STDERR "Length difference for slice sequence\n";
+ # }
+
+  return $slice_seq;
+}
 
 1;
 
