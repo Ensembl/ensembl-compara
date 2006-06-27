@@ -141,31 +141,13 @@ for my $sp( sort @SPECIES ){  # users selected spp
 # Work out timings -----------------------------------------------------------
 my $time_taken = time - $script_start_time;
 my $hours      = localtime($time_taken)->hour -1;
-warning (1, "Used $logfile.");
+warning (1, "Used $logfile.") if $logfile;
 warning (1, " Time taken: $hours:". localtime($time_taken)->min."mins");
 close STDERR;
 
 my $pre_spp = $TYPES[0] eq 'blast_all' ? "This is a PRE species.\n" :"";
 my $additional_text = qq(
 \n\n-------- Using this data --------------
-You need to send out two emails:
-. Say if these are PRE species.  
-. Core bio normally process this on Thursdays. If you want it done sooner you have to give them 48h notice.
-. Edit the list of species. Blast db and ssaha servers ONLY needed for species with new assemblies.  Blast db also needed if there are changes to the data effecting the fasta files.
-. Check the location of the files is correct
-\n
-To : team105-corebio\@sanger.ac.uk, ensembl-webteam\@sanger.ac.uk
-Subject: blast databases
-
-Please can you set up blast databases for @SPECIES. $pre_spp
-The files are here ecs3:$DUMPDIR .
-
-Thanks,
-
-Ensembl-webteam.
-\n
-----ssaha
-
 To: aws\@sanger.ac.uk, ensembl-webteam\@sanger.ac.uk
 Subject: ssaha server
 
@@ -188,10 +170,10 @@ sub check_types {
   my $types = shift;
   my %valid_types = map{ $_ => 1 }
     qw(
-       pre blast_all
-       rna  cdna_known-ccds
-       cdna cdna_known cdna_novel cdna_pseudo cdna_abinitio
-       pep  pep_known  pep_novel  pep_abinitio pep_known-ccds
+       pre blast
+       rna_nc  cdna_known-ccds
+       cdna_all cdna_known cdna_novel cdna_pseudo cdna_abinitio
+       pep_all  pep_known  pep_novel  pep_abinitio pep_known-ccds
        dna_seqlevel    dna_seqlevel_masked
        dna_toplevel    dna_toplevel_masked
       );
@@ -199,15 +181,15 @@ sub check_types {
 
   my %compound_types = 
     (
-     dna_all   => [ qw( dna_seqlevel dna_seqlevel_masked 
+     dna   => [ qw( dna_seqlevel dna_seqlevel_masked 
 			dna_toplevel dna_toplevel_masked) ],
-     cdna_all  => [ qw( cdna cdna_known cdna_novel cdna_pseudo cdna_abinitio
+     cdna  => [ qw( cdna_all cdna_known cdna_novel cdna_pseudo cdna_abinitio
                         cdna_known-ccds)],
-     pep_all   => [ qw( pep pep_known pep_novel pep_abinitio pep_known-ccds) ],
-     rna_all   => [ qw( rna ) ],
-     blast_all => [ qw( rna_all cdna_all pep_all dna_seqlevel dna_seqlevel_masked ) ],
-     pre       => [ qw( dna_toplevel rna_all cdna_all pep_all dna_seqlevel dna_seqlevel_masked ) ],
-     all       => [ qw( cdna_all pep_all dna_all rna_all) ],
+     pep   => [ qw( pep_all pep_known pep_novel pep_abinitio pep_known-ccds) ],
+     rna   => [ qw( rna_nc ) ],
+     blast => [ qw( rna cdna pep dna_seqlevel dna_seqlevel_masked ) ],
+     pre       => [ qw( dna_toplevel rna cdna pep dna_seqlevel dna_seqlevel_masked ) ],
+     all       => [ qw( cdna pep dna rna) ],
     );
 
 
@@ -252,7 +234,8 @@ sub create_dirs_for_dumps {
     }
     elsif ($type =~ /seqlevel/) {  # contig, chunk, chromosome for Scerevisiae
       $seqtype = "dna";
-      $idtype = $cs_adaptor->fetch_sequence_level->name; # seq_level;
+      #$idtype = $cs_adaptor->fetch_sequence_level->name; # seq_level;
+      $idtype = "seqlevel"; # seq_level;
     }
     else {
       ($seqtype, $idtype) = split (/_/, $type);
@@ -683,11 +666,11 @@ Fasta DNA dumps
 FILE NAMES
 ------------
 The files are consistently named following this pattern:
-   <species>.<assembly>.<version>.<sequence type>.<id type>.<id>.fa.gz
+   <species>.<assembly>.<release>.<sequence type>.<id type>.<id>.fa.gz
 
 <species>: The systematic name of the species. 
 <assembly>: The assembly build name.
-<version>: The release number. 
+<release>: The release number. 
 <sequence type>
     * 'dna' - unmasked genomic DNA sequences.
     * 'dna_rm' - masked genomic DNA.  Interspersed repeats and low 
@@ -696,20 +679,22 @@ The files are consistently named following this pattern:
 <id type> One of the following:
     * 'chromosome' - The top-level coordinate system in most species in Ensembl
     * 'nonchromosomal' - Contains DNA that has not been assigned a chromosome
-    * 'scaffold'  - Larger sequence contigs from the assembly of shorter
+    * 'seqlevel' - This is usually sequence scaffolds, chunks or clones. 
+     -- 'scaffold'  - Larger sequence contigs from the assembly of shorter
       sequencing reads (often from whole genome shotgun, WGS) which could 
       not yet be assembled into chromosomes. Often more genome sequencing 
       is needed to narrow gaps and establish a tiling path.
-    * 'chunk' -  While contig sequences can be assembled into large entities, 
+     -- 'chunk' -  While contig sequences can be assembled into large entities, 
       they sometimes have to be artificially broken down into smaller entities 
       called 'chunks'. This is due to limitations in the annotation
       pipeline and the finite record size imposed by MySQL which stores the
       sequence and annotation information.
-    * 'clone' - In general this is the smallest sequence entity.  It is often
+    -- 'clone' - In general this is the smallest sequence entity.  It is often
        identical to the sequence of one BAC clone, or sequence region 
        of one BAC clone which forms the tiling path. 
 <id>: The actual sequence identifier. Depending on the <id type> the <id>
     could represent the name of a chromosome, a scaffold, a contig, a clone ..
+     Field is empty for seqlevel files
 fa : All files in these directories represent FASTA database files
 gz : All files are compacted with GNU Zip for storage efficiency.
 
@@ -721,16 +706,16 @@ They contain one chromosome per file.
 
 EXAMPLES
      The genomic sequence of human chromosome 1:
-       Homo_sapiens.NCBI34.dna.chromosome.1.fa.gz
+       Homo_sapiens.NCBI36.40.dna.chromosome.1.fa.gz
 
      The masked version of the genome sequence on human chromosome 1 
      (contains '_rm' in the name):
-        Homo_sapiens.NCBI34.dna_rm.chromosome.1.fa.gz
+        Homo_sapiens.NCBI36.40.dna_rm.chromosome.1.fa.gz
 
      Non-chromosomal assembly sequences:
      e.g. mitochondrial genome, sequence contigs not yet mapped on chromosomes
-       Homo_sapiens.NCBI34.dna.nonchromosomal.fa.gz
-       Homo_sapiens.NCBI34.dna_rm.nonchromosomal.fa.gz
+       Homo_sapiens.NCBI36.40.dna.nonchromosomal.fa.gz
+       Homo_sapiens.NCBI36.40.dna_rm.nonchromosomal.fa.gz
 
 
 -----------------
@@ -739,21 +724,27 @@ SEQUENCE LEVEL
 These files are fasta file dumps of the assembly at the sequence level.
 
 EXAMPLES
-   Format:   <species>.<version>.<sequence type>.<container>.fa.gz
+   Format:   <species>.<assembly>.<release>.<sequence type>.seqlevel.fa.gz
 
-Unmasked sequence file name example:
+Unmasked sequence file name example (until release 39):
        Homo_sapiens.NCBI34.dna.contig.fa.gz
        Anopheles_gambiae.MOZ2a.dna.chunk.fa.gz
        Fugu_rubripes.FUGU2.dna.scaffold.fa.gz
        Saccharomyces_cerevisiae.SGD1.oct.dna.chromosome.fa.gz
 
-Repeat masked file example (contain '_rm' in the file name);
+Repeat masked file example (contain '_rm' in the file name) (until release 39);
       Homo_sapiens.NCBI34.dna_rm.contig.fa.gz
       Anopheles_gambiae.MOZ2a.dna_rm.chunk.fa.gz
       Fugu_rubripes.FUGU2.dna_rm.scaffold.fa.gz
       Saccharomyces_cerevisiae.SGD1.oct.dna_rm.chromosome.fa.gz
 
-Note that the sequence <container> varies in different species: 
+Now all of these contain 'seqlevel' in the file names e.g. 
+       Homo_sapiens.NCBI36.40.dna.seqlevel.fa.gz
+       Anopheles_gambiae.MOZ2a.40.dna_rm.seqlevel.fa.gz
+       Fugu_rubripes.FUGU2.40.dna.seqlevel.fa.gz
+       Saccharomyces_cerevisiae.SGD1.40.dna_rm.seqlevel.fa.gz
+
+Note that the type of sequence container varies in different species: 
 contigs in human, chunks in Anopheles, scaffolds in Fugu.\n\n",
 
 
@@ -769,14 +760,14 @@ These files hold the protein translations of Ensembl gene predictions.
 FILE NAMES
 ------------
 The files are consistently named following this pattern:
-   <species>.<assembly>.<version>.<sequence type>.<status>.fa.gz
+   <species>.<assembly>.<release>.<sequence type>.<status>.fa.gz
 
 <species>: The systematic name of the species. 
 <assembly>: The assembly build name.
-<version>: The release number. 
+<release>: The release number. 
 <sequence type>: pep for peptide sequences
 <status>
-    * 'pep' - the super-set of all translations resulting from Ensembl known
+    * 'pep.all' - the super-set of all translations resulting from Ensembl known
        or novel gene predictions.
     * 'pep.known' - translations of Ensembl known gene predictions 
        (see more below).  Any ccds_known peptides are in 'pep.known-ccds'.
@@ -793,15 +784,15 @@ gz : All files are compacted with GNU Zip for storage efficiency.
 
 EXAMPLES (Note: Most species do not sequences for each different <status>)
  for Human:
-      Homo_sapiens.NCBI35.may.pep.fa.gz
+      Homo_sapiens.NCBI36.40.pep.all.fa.gz
             contains all known, ccds and novel peptides
-      Homo_sapiens.NCBI35.may.pep.known-ccds.fa.gz
+      Homo_sapiens.NCBI36.40.pep.known-ccds.fa.gz
             contains all 'ccds' peptide sequences (see below).
-      Homo_sapiens.NCBI35.may.pep.known.fa.gz
+      Homo_sapiens.NCBI36.40.pep.known.fa.gz
             contains all known peptides (excluding the ccds peptides)
-      Homo_sapiens.NCBI35.may.pep.novel.fa.gz
+      Homo_sapiens.NCBI36.40.pep.novel.fa.gz
             contains all novel peptides
-      Homo_sapiens.NCBI35.may.pep.abinitio.fa.gz
+      Homo_sapiens.NCBI36.40.pep.abinitio.fa.gz
             contains all abinitio predicted peptide
 
 
@@ -858,14 +849,14 @@ These files hold the cDNA sequences corresponding to Ensembl gene predictions.
 FILE NAMES
 ------------
 The files are consistently named following this pattern:
-<species>.<assembly>.<version>.<sequence type>.<status>.fa.gz
+<species>.<assembly>.<release>.<sequence type>.<status>.fa.gz
 
 <species>: The systematic name of the species. 
 <assembly>: The assembly build name.
-<version>: The release number. 
+<release>: The release number. 
 <sequence type>: cdna for cDNA sequences
 <status>
-    * 'cdna' - the super-set of all transcripts resulting from 
+    * 'cdna.all' - the super-set of all transcripts resulting from 
        Ensembl known, novel and pseudo gene predictions (see more below).
     * 'cdna.known'    - transcripts from Ensembl known gene predictions only 
       (see more below).  This set does not include ccds cDNAs.
@@ -883,17 +874,17 @@ The files are consistently named following this pattern:
 
 EXAMPLES  (Note: Most species do not sequences for each different <status>)
   for Human:
-      Homo_sapiens.NCBI35.may.cdna.fa.gz
+      Homo_sapiens.NCBI36.40.cdna.all.fa.gz
             cDNA sequences for all transcripts: known, ccds, novel and pseudo
-      Homo_sapiens.NCBI35.may.cdna.known-ccds.fa.gz
+      Homo_sapiens.NCBI36.40.cdna.known-ccds.fa.gz
             cDNA sequences for 'ccds' sequences (see below).
-      Homo_sapiens.NCBI35.may.cdna.known.fa.gz
+      Homo_sapiens.NCBI36.40.cdna.known.fa.gz
             cDNA sequences for transcripts flagged as 'known' (excluding ccds transcripts).
-      Homo_sapiens.NCBI35.may.cdna.novel.fa.gz
+      Homo_sapiens.NCBI36.40.cdna.novel.fa.gz
             cDNA sequences for transcripts flagged as 'novel'.
-      Homo_sapiens.NCBI35.may.cdna.pseudo.fa.gz
+      Homo_sapiens.NCBI36.40.cdna.pseudo.fa.gz
             cDNA sequences for transcripts flagged as 'pseudogene'.
-      Homo_sapiens.NCBI35.may.cdna.abinitio.fa.gz
+      Homo_sapiens.NCBI36.40.cdna.abinitio.fa.gz
             cDNA sequences for 'ab-initio' prediction transcripts.
 
 
@@ -951,18 +942,18 @@ These files hold the transcript sequences corresponding to non-coding RNA genes 
 FILE NAMES
 ------------
 The files are consistently named following this pattern:
-<species>.<assembly>.<version>.<sequence type>.<status>.fa.gz
+<species>.<assembly>.<release>.<sequence type>.<status>.fa.gz
 
 <species>: The systematic name of the species. 
 <assembly>: The assembly build name.
-<version>: The release number. 
+<release>: The release number. 
 <sequence type>: ncrna for non-coding RNA sequences
 <status>
-    * 'rna' - all non-coding RNA genes
+    * 'rna.nc' - all non-coding RNA genes
 
 EXAMPLES
   for Human:
-      Homo_sapiens.NCBI35.may.rna.fa.gz
+      Homo_sapiens.NCBI36.40.rna.nc.fa.gz
           Transcript sequences for all ncRNA gene types.
 
 
