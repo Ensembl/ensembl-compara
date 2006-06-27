@@ -27,7 +27,7 @@ SpeciesDefs - Ensembl web configuration accessor
   my $sp_name = $speciesdefs->get_config('Homo_sapiens','SPECIES_COMMON_NAME');
 
   # Alternative setting getter - uses autoloader
-  my $sp_bio_name = $speciesdefs->SPECIES_COMMON_NAME('Homo_sapiens');
+  my $sp_bio_name = $speciesdefs->SPECIE_%S_COMMON_NAME('Homo_sapiens');
 
   # Can also use the ENSEMBL_SPECIES environment variable
   ENV{'ENSEMBL_SPECIES'} = 'Homo_sapiens';
@@ -519,6 +519,31 @@ sub _parse {
         }
       }
     }
+
+
+#### INI FILE BLAST DATABASES
+# Creates default file name of format
+# Anopheles_gambiae.AgamP3.39.dna_rm.seqlevel.fa if the value "%_" is in ini file
+
+    foreach my $blast_type (keys %$tree) {
+      next unless $blast_type =~ /_DATASOURCES/;
+      foreach my $source ( keys %{$tree->{$blast_type}} ) {
+	my $file = $tree->{$blast_type}{$source};
+	next unless $file =~ /^%_/;
+	my $assembly = $tree->{'general'}{'ENSEMBL_GOLDEN_PATH'};
+	(my $type = lc($source)) =~ s/_/\./ ;
+	if ($type =~ /latestgp/) {
+	  $type =~ s/latestgp(.*)/dna$1\.seqlevel/;
+	  $type =~ s/.masked/_rm/;
+	}
+	my $new_file = sprintf( '%s.%s.%s.%s', $filename, $assembly, $SiteDefs::ENSEMBL_VERSION, $type ).".fa";
+  print "AUTOGENERATING $source......$new_file\n";
+	$tree->{$blast_type}{$source} = $new_file;
+
+      }
+    }
+
+
 #### This is the bit of code which handles the "Multi-species" part of the hash....
 #### It creates an entry "_multi" with the following structure:
 ####
