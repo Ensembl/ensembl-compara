@@ -536,6 +536,7 @@ sub _parse {
 	  $type =~ s/latestgp(.*)/dna$1\.seqlevel/;
 	  $type =~ s/.masked/_rm/;
 	}
+	$type = "ncrna" if $type eq 'rna.nc';
 	my $new_file = sprintf( '%s.%s.%s.%s', $filename, $assembly, $SiteDefs::ENSEMBL_VERSION, $type ).".fa";
   print "AUTOGENERATING $source......$new_file\n";
 	$tree->{$blast_type}{$source} = $new_file;
