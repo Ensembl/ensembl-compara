@@ -13,7 +13,6 @@ sub init {
     '_artefacts' => [qw( 
 			scalebar
 			ruler
-			snp_triangle_glovar
 			variation
 			genotyped_variation
 			variation_legend
@@ -84,18 +83,6 @@ sub init {
       'hi'          => 'black',
       'colours' => {$self->{'_colourmap'}->colourSet('variation')},
       'available'=> 'databases ENSEMBL_VARIATION',
-    },
-    'snp_triangle_glovar' => {
-      'on'          => "off",
-      'pos'         => '4505',
-      'str'         => 'r',
-      'dep'         => '10',
-      'col'         => 'blue',
-      'track_height'=> 7,
-
-      'hi'          => 'black',
-      'colours' => {$self->{'_colourmap'}->colourSet('snp')},
-      'available'=> 'database ENSEMBL_GLOVAR', 
     },
 
    'variation' => {

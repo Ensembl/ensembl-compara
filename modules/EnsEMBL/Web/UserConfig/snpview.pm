@@ -14,7 +14,6 @@ sub init {
                        stranded_contig
                        ruler
                        scalebar
-                       snp_triangle_glovar
 		       variation_box
                        genotyped_variation
 		       ld_r2
@@ -104,18 +103,6 @@ sub init {
       'str'         => 'r',
       'abbrev'      => 'on',
       'navigation'  => 'off'
-    },
-    'snp_triangle_glovar' => {
-      'on'          => "off",
-      'pos'         => '4521',
-      'str'         => 'r',
-      'dep'         => '10',
-      'col'         => 'blue',
-      'track_height'=> 7,
-
-      'hi'          => 'black',
-      'colours' => {$self->{'_colourmap'}->colourSet('snp')},
-      'available'=> 'database ENSEMBL_GLOVAR', 
     },
 
    'variation_box' => {
