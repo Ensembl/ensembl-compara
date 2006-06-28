@@ -7,6 +7,10 @@ use strict;
 use warnings;
 no warnings "uninitialized";
 use EnsEMBL::Web::Component::Slice;
+use EnsEMBL::Web::Component::Transcript qw(_sort_similarity_links);
+
+#use Data::Dumper;
+
 
 sub sequence {
   my( $panel, $object ) = @_;
@@ -313,7 +317,44 @@ sub align_markup_options_form {
 
 sub name {
   my( $panel, $object ) = @_;
-  my( $display_name, $dbname, $ext_id, $dbname_disp, $info_text ) = $object->display_xref();
+  
+  my $page_type_sr7= $object->[0];
+  my @vega_info_sr7=();
+  
+  if($page_type_sr7 eq 'Transcript'){
+  
+	  my $trans_sr7= $object->transcript;
+
+	 # Check cache
+	   unless ($object->__data->{'similarity_links'}){
+	       my @similarity_links = @{$object->get_similarity_hash($trans_sr7)};
+	       if(@similarity_links){
+        	  EnsEMBL::Web::Component::Transcript::_sort_similarity_links($object, @similarity_links);
+	       }
+	    }
+	   my @links_sr7 = @{$object->__data->{'similarity_links'}};
+	#look for any vega links and display here as well as in the similarity matches section                   
+	    if(@links_sr7){
+        	foreach my $link_sr7(@links_sr7){
+        	  my($key_sr7, $text_sr7)= @$link_sr7;
+        	  if($key_sr7 eq 'Havana transcripts'){
+        	    if($text_sr7 =~ m{(<a.+>.+</a>)}){   
+        	      push @vega_info_sr7, $1;
+        	    }
+        	    else{
+        	      push @vega_info_sr7, $text_sr7;
+        	    }
+        	  }
+        	}
+	    }
+
+  
+  }
+  
+  
+  
+ 
+ my( $display_name, $dbname, $ext_id, $dbname_disp, $info_text ) = $object->display_xref();
   return 1 unless defined $display_name;
   my $label = $object->type_name();
   my $lc_type = lc($label);
@@ -349,6 +390,17 @@ sub name {
     This $lc_type is a member of the human CCDS set: @{[join ', ', map {$object->get_ExtURL_link($_,'CCDS', $_)} @CCDS] }
   </p>);
   }
+
+  if(@vega_info_sr7){
+    foreach my $info_sr7(@vega_info_sr7){
+      $html .= qq(
+        <p>
+          This transcript is identical to Vega transcript: $info_sr7
+       </p>
+     );
+    }
+   } 
+  
   $panel->add_row( $label, $html );
   return 1;
 }
