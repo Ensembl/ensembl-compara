@@ -39,8 +39,7 @@ sub createObjects {
   my $archiveStableId;
   
   if ($id =~ /(\S+)\.(\d+)/) {
-    my $version = $2;
-    $archiveStableId = $aa->fetch_by_stable_id_version($1, $version);
+    $archiveStableId = $aa->fetch_by_stable_id_version($1, $2);
   }
   else {
     $archiveStableId = $aa->fetch_by_stable_id($id);
