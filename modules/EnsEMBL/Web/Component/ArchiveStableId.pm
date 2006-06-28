@@ -92,7 +92,7 @@ sub status {
       sprintf ($url, $succ_id, $succ_id).
 	" in release ".$_->release; } @successors;
     $status .= " <b>$verb</b><br />".
-      join "and <br />", @successor_text if @successors;
+      join " and <br />", @successor_text if @successors;
   }
   elsif ($current_obj->version eq $object->version) {
     $status = "Current release ".$object->species_defs->ENSEMBL_VERSION;
@@ -240,7 +240,12 @@ sub history {
       $panel->add_columns(  { 'key' => $a->stable_id, 
 			      'title' => $type.": ".$a->stable_id} ) unless $columns{$a->stable_id};
       $columns{$a->stable_id}++;
-      my $archive = _archive_link($object, $id, $param, "<img src='/img/ensemblicon.gif'/>",  $releases[$i]);
+
+      # Link to archive of first appearance
+      my $first = $releases[$i+1]+1;
+      $first = 26 if $first < 26 && $releases[$i] > 25;
+
+      my $archive = _archive_link($object, $id, $param, "<img src='/img/ensemblicon.gif'/>",  $first, $a->version );
       my $display_id = $id eq $id_focus ? "<b>$id</b>" : $id;
       $row->{$a->stable_id} = qq(<a href="idhistoryview?$param).qq(=$id">$display_id</a> $archive);
     }
@@ -264,12 +269,13 @@ sub history {
 
 
 sub _archive_link {
-  my ($object, $name, $type, $id, $release) = @_;
+  my ($object, $name, $type, $id, $release, $version) = @_;
   $release ||= $object->release;
+  $version ||= $object->version;
   return unless $release > 24;
   my $url;
   my $current_obj = $object->get_current_object($type, $name);
-  if ($current_obj && $current_obj->version eq $object->version) {
+  if ($current_obj && $current_obj->version eq $version) {
     $url = "/";
   }
   else {

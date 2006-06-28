@@ -40,16 +40,16 @@ sub _archive {
      my $achiveStableIDAdaptor = $self->database($db)->get_ArchiveStableIdAdaptor();
      $name =~ s/(\S+)\.(\d+)/$1/;  # remove version
      $archiveStableID       = $achiveStableIDAdaptor->fetch_by_stable_id( $name );
-     $related               = $achiveStableIDAdaptor->fetch_successor_history( $archiveStableID ) if $archiveStableID;
+     #$related               = $achiveStableIDAdaptor->fetch_successor_history( $archiveStableID ) if $archiveStableID;
    };
    return undef if (!$archiveStableID);
-   my @rel = map { $_->stable_id ? $_ : () } @$related;
-   my $caption = '';
-   my $output  = '';
-   my $probtype= '';
-   if( @rel ) {
+   #my @rel = map { $_->stable_id ? $_ : () } @$related;
+   #my $caption = '';
+   #my $output  = '';
+   #my $probtype= '';
+   #if( @rel ) {
       $self->problem('archived');
-   }
+   #}
 #     $caption = 'Archived identifier';
 #     $probtype= 'archived';
 #     $output  = "<p>The feature <strong>$name</strong> has been mapped to the following feature(s):</p>";
