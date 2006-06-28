@@ -186,10 +186,15 @@ sub bp_to_nearest_unit {
 
 
 sub referer { return $_[0]->param('ref')||$ENV{'HTTP_REFERER'}; }
+
 sub _help_URL {
-  my( $self, $kw ) = @_;
+  my( $self, $options ) = @_;
   my $ref = CGI::escape( $self->referer );
-  return "/@{[$self->species]}/helpview?se=1;ref=$ref;kw=$kw";
+  my $URL = "/@{[$self->species]}/helpview?se=1;ref=$ref";
+  while (my ($k, $v) = each (%$options)) {
+    $URL .= ";$k=$v";
+  } 
+  return $URL;
 }
 
 sub _help_link {

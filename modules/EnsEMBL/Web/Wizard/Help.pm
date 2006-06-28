@@ -42,6 +42,10 @@ sub _init {
       'label'=>'Search for:',
       'required'=>'yes',
     },
+    'hilite' => {
+      'type'=>'CheckBox', 
+      'label'=>'Highlight search terms(s)',
+    },
     'name' => {
       'type'=>'String', 
       'label'=>'Your name:',
@@ -72,7 +76,7 @@ sub _init {
     'hv_intro' => {
       'form' => 1,
       'title' => 'Ensembl Help',
-      'input_fields' => [qw(intro kw)],
+      'input_fields' => [qw(intro kw hilite)],
     },
     'hv_search' => {
       'button' => 'Search',
@@ -142,6 +146,7 @@ sub hv_search {
   elsif ($total > 1) {
     $parameter{'node'}    = 'hv_multi';
     $parameter{'search'}  = $object->param('kw');
+    $parameter{'hilite'}  = $object->param('hilite');
     my $i = 0;
     foreach my $article (@{$object->results}) {
       ## messy, but keeps results in order :)
@@ -154,10 +159,11 @@ sub hv_search {
   }
   else {
     my $single = $object->results->[0];
-    $parameter{'node'}  = 'hv_single';
-    $parameter{'kw'}    = $object->param('kw');
-    $parameter{'id'}    = $$single{'id'};
-    $parameter{'se'}    = 1;
+    $parameter{'node'}    = 'hv_single';
+    $parameter{'kw'}      = $object->param('kw');
+    $parameter{'hilite'}  = $object->param('hilite');
+    $parameter{'id'}      = $$single{'id'};
+    $parameter{'se'}      = 1;
     
   }
 

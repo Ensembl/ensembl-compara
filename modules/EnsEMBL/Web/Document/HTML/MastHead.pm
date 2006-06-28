@@ -20,22 +20,32 @@ sub logo_img  { return sprintf '<img src="%s" style="width: %dpx; height: %dpx; 
 sub sub_title :lvalue { $_[0]{'sub_title'}; }
 
 sub render {
-  my $species_text = '<span style="font-size: 1.5em; color:#fff">.</span>';
-  my $species_name;
-  if( $_[0]->sp_bio && $ENV{'ENSEMBL_SPECIES'}) {
-    if ($_[0]->sp_common =~ /\./) {
-       $species_name = '<i>'.$_[0]->sp_common.'</i>';
-    }
-    else {
-       $species_name = $_[0]->sp_common;
-    }
-    $species_text = sprintf( '<a href="/%s/" class="section">%s</a>',  $_[0]->sp_bio, $species_name );
-    $species_text .= qq( <span class="viewname serif">@{[$_[0]->sub_title]}</span>) if $_[0]->sub_title;
+  my @sub_titles = @{[$_[0]->sub_title]};
+  if ($sub_titles[0] eq 'HelpView') {
+    $_[0]->printf( qq(
+<div id="masthead">
+  <h1><a href="/">%s</a> <span class="viewname serif">%s</span></h1>
+</div>), $_[0]->logo_img, @{[$_[0]->sub_title]}
+    );
   }
-  $_[0]->printf( qq(
+  else {
+    my $species_text = '<span style="font-size: 1.5em; color:#fff">.</span>';
+    my $species_name;
+    if( $_[0]->sp_bio && $ENV{'ENSEMBL_SPECIES'}) {
+      if ($_[0]->sp_common =~ /\./) {
+       $species_name = '<i>'.$_[0]->sp_common.'</i>';
+      }
+      else {
+       $species_name = $_[0]->sp_common;
+      }
+      $species_text = sprintf( '<a href="/%s/" class="section">%s</a>',  $_[0]->sp_bio, $species_name );
+      $species_text .= qq( <span class="viewname serif">@{[$_[0]->sub_title]}</span>) if $_[0]->sub_title;
+    }
+    $_[0]->printf( qq(
 <div id="masthead">
   <h1><a href="/">%s</a><a href="/" class="home serif">%s</a> %s</h1>
 </div>), $_[0]->logo_img, $_[0]->site_name, $species_text );
+  }
 }
 
 1;

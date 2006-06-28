@@ -14,16 +14,16 @@ sub render {
   my $self = shift;
   if( $self->style eq 'help' ) {
     $self->print( qq(
-  <div id="closewindow">
-    <form action="@{[$self->URL]}" method="get">
+    <div id="closewindow">
+    <form action="@{[$self->URL]}" method="get">Search Help:
       <input type="hidden" name="action" value="full_text_search" />
       <input type="text" size="25" name="kw" value="@{[$self->kw]}" />
-      <input type="submit" class="red-button" value="Look up" />
-      &nbsp; &nbsp;
-      <a class="red-button" href="javascript:window.close()">Close Window</a>
+      <br />Highlight search term(s)
+      <input type="checkbox" name="hilite" />
+      <input type="submit" class="red-button" value="Go" />
     </form>
-  </div>)
-    );
+  </div>
+    ));
   } else {
     my $EXTRA_JAVASCRIPT =  $self->URL ? sprintf( "window.opener.location='%s';", $self->URL ) : '';
     $self->print( qq(

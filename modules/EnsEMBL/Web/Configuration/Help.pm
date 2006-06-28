@@ -23,8 +23,8 @@ sub helpview {
   $self->{'page'}->helplink->ref    = $object->referer;
 
   $self->{'page'}->menu->add_block( '___', 'bulleted', 'Help with help!' );
-  $self->{'page'}->menu->add_entry( '___', 'href' => $object->_help_URL( 'helpview' ), 'text' => 'General' ) ;
-  $self->{'page'}->menu->add_entry( '___', 'href' => $object->_help_URL( 'helpview#searching' ), 'text' => 'Full text search' );
+  $self->{'page'}->menu->add_entry( '___', 'href' => $object->_help_URL( {'kw'=>'helpview'} ), 'text' => 'General' ) ;
+  $self->{'page'}->menu->add_entry( '___', 'href' => $object->_help_URL( {'kw'=>'helpview#searching'} ), 'text' => 'Full text search' );
 
   ## the "helpview" wizard uses 7 nodes: intro, do search, multiple results, single result, 
   ## no result, send email and acknowledgement
@@ -77,7 +77,7 @@ sub context_menu {
     if( $row->{'keyword'} eq $focus ) {
       $hash{ 'text'  } =  "$name";
     } else {
-      $hash{ 'href'  } =  $object->_help_URL( $row->{'keyword'} );
+      $hash{ 'href'  } =  $object->_help_URL( {'kw'=>$row->{'keyword'}} );
     }
     $self->add_entry( lc($row->{'category'}), %hash );
   }
