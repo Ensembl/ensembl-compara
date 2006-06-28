@@ -171,7 +171,7 @@ sub check_types {
   my %valid_types = map{ $_ => 1 }
     qw(
        pre blast
-       rna_nc  cdna_known-ccds
+       ncrna  cdna_known-ccds
        cdna_all cdna_known cdna_novel cdna_pseudo cdna_abinitio
        pep_all  pep_known  pep_novel  pep_abinitio pep_known-ccds
        dna_seqlevel    dna_seqlevel_masked
@@ -186,7 +186,7 @@ sub check_types {
      cdna  => [ qw( cdna_all cdna_known cdna_novel cdna_pseudo cdna_abinitio
                         cdna_known-ccds)],
      pep   => [ qw( pep_all pep_known pep_novel pep_abinitio pep_known-ccds) ],
-     rna   => [ qw( rna_nc ) ],
+     rna   => [ qw( ncrna ) ],
      blast => [ qw( rna cdna pep dna_seqlevel dna_seqlevel_masked ) ],
      pre       => [ qw( dna_toplevel rna cdna pep dna_seqlevel dna_seqlevel_masked ) ],
      all       => [ qw( cdna pep dna rna) ],
@@ -949,7 +949,7 @@ The files are consistently named following this pattern:
 <release>: The release number. 
 <sequence type>: ncrna for non-coding RNA sequences
 <status>
-    * 'rna.nc' - all non-coding RNA genes
+    * 'ncrna' - all non-coding RNA genes
 
 EXAMPLES
   for Human:
