@@ -632,6 +632,7 @@ sub gmenu{
 sub zmenu {
   my( $self, $f ) = @_;
   my $id = $f->das_feature_id || $f->das_feature_label;
+
   my $zmenu = {
     'caption'         => $f->das_feature_label || $f->das_feature_id,
   };
@@ -651,16 +652,21 @@ sub zmenu {
       $zmenu->{$dlabel} = '';
   }
   
-  $ids = 50;
   if (defined($f->das_start) && defined($f->das_end)) {
       my $strand = ($f->das_strand > 0) ? 'Forward' : 'Reverse';
       $zmenu->{"50:FEATURE LOCATION:"} = '';
       $zmenu->{"51:   - Start: ".$f->das_segment->start} = '';
       $zmenu->{"52:   - End: ".$f->das_segment->end} = '';
       $zmenu->{"53:   - Strand: $strand"} = '';
-      $ids = 54;
   }
 
+  if (defined($f->das_target_id)) {
+      $zmenu->{"55:TARGET:".$f->das_target_id} = '';
+      $zmenu->{"56:   - Start: ".$f->das_target_start} = '';
+      $zmenu->{"57:   - End: ".$f->das_target_stop} = '';
+  }
+
+  $ids = 60;
   foreach my $dlink ($f->das_links) {
       my $txt = $dlink->{'txt'} || $dlink->{'href'};
       my $dlabel = sprintf("%02d:DAS LINK: %s", $ids++, $txt);
