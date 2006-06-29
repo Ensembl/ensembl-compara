@@ -35,8 +35,9 @@ use CGI qw(escapeHTML);
 sub version_info {
    my ($panel, $object) = @_;
   $panel->print(qq(<p>Ensembl Gene, Transcript and Exon versions are distinct from 
-database versions.  The versions increment when there is a sequence change to a Gene, Transcript or Exon respectively (considering exons only for genes and transcripts). </p>));
-  return 1;
+database versions.  The versions increment when there is a sequence change to a Gene, Transcript or Exon respectively (considering exons only for genes and transcripts). Genes or Transcripts may merge over time. When this happens one identifier is retired.  The retired IDs are shown in the table. </p>));
+
+ return 1;
 }
 
 
@@ -153,8 +154,8 @@ sub archive {
 
     my $text;
     if (scalar @archive_releases > 1) {
-    my $archive_first = _archive_link($object, $id, $param, "Archive <img src='/img/ensemblicon.gif'/>", $archive_releases[-1]) || " (no archive)";
-    my $archive_last = _archive_link($object, $id, $param, "Archive <img src='/img/ensemblicon.gif'/>", $archive_releases[0]) || " (no archive)";
+    my $archive_first = _archive_link($object, $id, $param, "Archive <img src='/img/ensemblicon.gif'/>", $archive_releases[-1]) || " (no web archive)";
+    my $archive_last = _archive_link($object, $id, $param, "Archive <img src='/img/ensemblicon.gif'/>", $archive_releases[0]) || " (no web archive)";
 
     $text = "$id was in release $archive_releases[-1] $archive_first to $archive_releases[0] $archive_last";
   }
