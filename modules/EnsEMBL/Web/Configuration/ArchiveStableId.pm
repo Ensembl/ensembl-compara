@@ -21,6 +21,7 @@ sub idhistoryview {
     remapped   EnsEMBL::Web::Component::ArchiveStableId::remapped
     archive    EnsEMBL::Web::Component::ArchiveStableId::archive
     associated_ids EnsEMBL::Web::Component::ArchiveStableId::associated_ids
+
      ));
     $self->{page}->content->add_panel( $info_panel );
   }
@@ -36,6 +37,17 @@ sub idhistoryview {
    $self->{page}->content->add_panel( $panel1 );
  }
 
+if (my $panel2 = $self->new_panel('',
+    'code'    => "info$self->{flag}",
+    'caption' => 'Version information',
+				       )) {
+
+    $panel2->add_components(qw(
+    version_info EnsEMBL::Web::Component::ArchiveStableId::version_info
+
+     ));
+    $self->{page}->content->add_panel( $panel2 );
+  }
 }
 
 sub context_menu {
