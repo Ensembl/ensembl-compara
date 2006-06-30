@@ -481,14 +481,12 @@ sub add_buttons {
   );
 
   my $back = $self->{'_nodes'}{$node}{'back'};
-warn "Back: $back";
   if ($back) {
     ## normally limit back button to direct incoming edges
     my $back_node;
     if ($back eq '1') {
       my $previous = $object->param('previous');
       my @incoming = @{ $self->get_incoming_edges($node) };
-warn "Incoming!! @incoming";
       foreach my $edge (@incoming) {
         $back_node = $edge;
         last if $edge eq $previous; ## defaults to last incoming edge
