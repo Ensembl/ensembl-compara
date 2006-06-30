@@ -57,6 +57,24 @@ sub helpview {
   $self->wizard_panel('');
 }
 
+sub glossaryview {
+  my $self = shift;
+  my $object = $self->{object};
+
+  $self->set_title('Ensembl Glossary');
+
+  if( my $panel = $self->new_panel( 'Image',
+    'code'    => "info$self->{flag}",
+    'object'  => $self->{object},
+
+  )) {
+    $panel->add_components(qw(
+      glossary          EnsEMBL::Web::Component::Help::glossary
+    ));
+    $self->add_panel( $panel );
+  }
+}
+
 sub context_menu {
   my $self = shift;
   my $object = $self->{object};

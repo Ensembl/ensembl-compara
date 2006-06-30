@@ -29,7 +29,7 @@ sub createObjects {
   my $index = [];
 
   ## we only want live entries for the helpview index
-  my $status = $self->script eq 'helpview' ? 'live' : '';
+  my $status = $self->script =~ /view$/ ? 'live' : '';
 
   ## Help schema switch
   my $modular = $self->species_defs->ENSEMBL_MODULAR_HELP;
@@ -66,10 +66,12 @@ sub createObjects {
     $results = $self->help_adaptor->$method_id( $ids );
   }
   $index = $self->help_adaptor->$index($status);
+  my $glossary = $self->help_adaptor->fetch_glossary($status);
 
   $self->DataObjects( new EnsEMBL::Web::Proxy::Object(
     'Help', {
       'index'   => $index,
+      'glossary'    => $glossary,
       'results' => $results,
     }, $self->__data
   ) ); 

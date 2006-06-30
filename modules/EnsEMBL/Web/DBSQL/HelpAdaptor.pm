@@ -262,6 +262,23 @@ sub fetch_article_index {
   }} @$T ];
 }
 
+sub fetch_glossary {
+  my ($self, $status) = @_;
+  return [] unless $self->db;
+  my $results = [];
+
+  my $sql = 'SELECT word_id, word, meaning FROM glossary ';
+  $sql .= qq( WHERE status = "$status" ) if $status;
+  $sql .= 'ORDER BY word ASC';
+  my $T = $self->db->selectall_arrayref($sql);
+  return [ map {{
+    'word_id'  => $_->[0],
+    'word'     => $_->[1],
+    'meaning'  => $_->[2],
+  }} @$T ];
+}
+
+
 ############ HELPDB INTERFACE QUERIES ###############
 
 ## Web interface methods are provided for the new schema only, since 

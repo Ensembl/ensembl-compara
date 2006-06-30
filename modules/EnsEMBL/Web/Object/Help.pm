@@ -9,8 +9,9 @@ use EnsEMBL::Web::Object;
 our @ISA = qw(EnsEMBL::Web::Object);
 use Mail::Mailer;
 
-sub index   { return $_[0]->Obj->{'index'};   }
-sub results { return $_[0]->Obj->{'results'}; }
+sub index       { return $_[0]->Obj->{'index'};   }
+sub glossary    { return $_[0]->Obj->{'glossary'};   }
+sub results     { return $_[0]->Obj->{'results'}; }
 
 sub send_email {
   my $self = shift;

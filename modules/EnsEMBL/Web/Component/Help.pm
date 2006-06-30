@@ -25,7 +25,7 @@ sub hv_contact    { _wrap_form($_[0], $_[1], 'hv_contact'); }
 sub hv_multi {
   my($panel,$object) = @_;
   my $kw = $object->param('search');
-  my $list_type;
+  my ($list_type, %scores);
 
   if ($object->species_defs->ENSEMBL_MODULAR_HELP) {
     $list_type = 'dl';
@@ -147,6 +147,22 @@ sub hv_thanks {
   $panel->print(qq(
 <p>Your message was successfully sent to the $sitetype Site Helpdesk Administration Team. They will get back to you in due course.</p>
 <p>Helpdesk</p>));
+  return 1;
+}
+
+sub glossary {
+  my($panel,$object) = @_;
+  my $glossary = $object->glossary;
+
+  my $html = "<dl>";
+  foreach my $entry (@$glossary) {     my $word    = $$entry{'word'};
+    (my $anchor = $word) =~ s/ /_/g;
+    my $meaning = $$entry{'meaning'};
+    $html .= qq(<dt id="$anchor">$word</dt>\n<dd>$meaning</dd>\n);
+  }
+  $html .= "</dl>\n\n";
+
+  $panel->print($html);
   return 1;
 }
 
