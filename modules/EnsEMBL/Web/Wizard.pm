@@ -4,6 +4,8 @@ use strict;
 use warnings;
 no warnings "uninitialized";
 use CGI qw(escape);
+#use Text::Aspell;
+use EnsEMBL::Web::File::Text;
 
 use EnsEMBL::Web::Root;
 our @ISA = qw(EnsEMBL::Web::Root);
@@ -362,6 +364,7 @@ sub pass_fields {
   
   foreach my $field (@fields) {
     next if $field =~ /submit/;  
+    next if $field =~ /feedback/;  
     next if exists( $skip{$field} );
   
     ## don't pass 'previous' field or it screws up back buttons!  
@@ -393,7 +396,6 @@ sub pass_fields {
 
 sub add_widgets {
   my ($self, $node, $form, $object, $fields) = @_;
-
   if (!$fields) {
     $fields = $self->{'_nodes'}{$node}{'input_fields'} || $self->default_order;
   } 
@@ -444,9 +446,9 @@ sub add_widgets {
       }
     }
     elsif ($field_info{'type'} eq 'CheckBox') {
-      $parameter{'value'}  =  $self->{'_data'}{'record'}{$field_name} 
-                                || $field_info{'value'};
-      if ($object->param($field_name)) {
+      $parameter{'value'}  =  $field_info{'value'} || 'yes';
+      if ($object->param($field_name) 
+          || $self->{'_data'}{'record'}{$field_name} =~ /^(yes|Y|on)$/) {
         $parameter{'checked'} = 1;
       }
     }
@@ -479,12 +481,14 @@ sub add_buttons {
   );
 
   my $back = $self->{'_nodes'}{$node}{'back'};
+warn "Back: $back";
   if ($back) {
     ## normally limit back button to direct incoming edges
     my $back_node;
     if ($back eq '1') {
       my $previous = $object->param('previous');
       my @incoming = @{ $self->get_incoming_edges($node) };
+warn "Incoming!! @incoming";
       foreach my $edge (@incoming) {
         $back_node = $edge;
         last if $edge eq $previous; ## defaults to last incoming edge
@@ -535,7 +539,7 @@ sub create_record {
     next unless $form_fields{$param}; ## skip submit buttons, etc
     my %field_info = %{$form_fields{$param}};
     my $value;
-    if ($field_info{'type'} eq 'DropDown' || $field_info{'type'} eq 'MultiSelect') {
+    if ($field_info{'type'} eq 'MultiSelect') {
       $value = [$object->param($param)];
     }
     else { 
@@ -544,6 +548,45 @@ sub create_record {
     $record{$param} = $value;
   }
   return \%record;
+}
+
+sub spellcheck {
+  my ($self, $object, $text) = @_;
+
+  my $aspell_cmd = 'aspell';
+  my $aspell_opts = "-a --lang=en_US"; 
+  my $ensembl_dict = $object->species_defs->ENSEMBL_SERVERROOT.'/utils/ensembl.aspell';
+  $aspell_opts .= " --personal=$ensembl_dict"; 
+
+  my $timestamp = time();
+  my $filename .= 'spell_'.$timestamp;
+  my $cache = new EnsEMBL::Web::File::Text($object->[1]->{'_species_defs'});
+  $cache->set_cache_filename($filename);
+  my $result = $cache->save_aspell($object, $text);
+
+  ## do spell check
+  my $checked = '<strong>** CHECKED TEXT **</strong><br />';
+  if ($result) { 
+    my $i = 0;
+    my $cachefile = $cache->filename;
+    my @lines = split( /\n/, $text );
+    my $cmd = "$aspell_cmd $aspell_opts < $cachefile 2>&1";
+    open ASPELL, "$cmd |";
+    # parse each line of aspell return
+    for my $result ( <ASPELL> ) {
+      chomp( $result );
+      # if '&', then not in dictionary but has suggestions
+      # if '#', then not in dictionary and no suggestions
+      # if '*', then it is a delimiter between text inputs
+      #if( $result =~ /^\*/ ) { ## no errors found
+      #  $checked .= $lines[$i];
+      #}
+      #elsif( $result =~ /^(&|#)/ ) {
+      #  my @array = split(' ', $result);
+      $checked .= $result;
+    }
+  }
+  return $checked;
 }
                                                                                 
 __END__
