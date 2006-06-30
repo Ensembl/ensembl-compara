@@ -8,12 +8,14 @@
   div.zmenu a { text-decoration:none; }
 
 /* Popup Help */
+.pointer { cursor:pointer; }
 .round-button { vertical-align:middle; margin:0px 2px; }
 div.help-popup { visibility:hidden; position:absolute; top: 800px; left: 800px; width: 400px; z-index:200 }
 div.help-popup { border:1px #36b solid;}
 div.help-popup table th { font-size: 0.9em; background-color:#9bb9dd; color:#000; text-align: left; border:1px #9bb9dd solid; }
 div.help-popup table td { font-size: 0.9em; color:#666; border-top : 1px #9bb9dd dotted; padding:0.5em; }
 div.help-popup a { text-decoration:none; }
+a.glossary {text-decoration:none; border-bottom:1px dotted #000; }
 
 /* LAYOUT */
 
