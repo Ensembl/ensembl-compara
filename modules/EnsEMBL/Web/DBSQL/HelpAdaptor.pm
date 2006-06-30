@@ -267,14 +267,15 @@ sub fetch_glossary {
   return [] unless $self->db;
   my $results = [];
 
-  my $sql = 'SELECT word_id, word, meaning FROM glossary ';
+  my $sql = 'SELECT word_id, word, acronym, meaning FROM glossary ';
   $sql .= qq( WHERE status = "$status" ) if $status;
   $sql .= 'ORDER BY word ASC';
   my $T = $self->db->selectall_arrayref($sql);
   return [ map {{
     'word_id'  => $_->[0],
     'word'     => $_->[1],
-    'meaning'  => $_->[2],
+    'acronym'  => $_->[2],
+    'meaning'  => $_->[3],
   }} @$T ];
 }
 

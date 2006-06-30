@@ -155,10 +155,14 @@ sub glossary {
   my $glossary = $object->glossary;
 
   my $html = "<dl>";
-  foreach my $entry (@$glossary) {     my $word    = $$entry{'word'};
+  foreach my $entry (@$glossary) {     
+    my $word    = $$entry{'word'};
     (my $anchor = $word) =~ s/ /_/g;
+    my $acronym = $$entry{'acronym'};
     my $meaning = $$entry{'meaning'};
-    $html .= qq(<dt id="$anchor">$word</dt>\n<dd>$meaning</dd>\n);
+    $html .= qq(<dt id="$anchor">$word</dt>\n<dd>);
+    $html .= "<strong>$acronym</strong><br />" if $acronym;
+    $html .= qq($meaning</dd>\n);
   }
   $html .= "</dl>\n\n";
 
