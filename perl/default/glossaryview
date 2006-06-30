@@ -23,7 +23,7 @@ if( $webpage->has_a_problem() ) {
 }
 else {
   foreach my $object( @{$webpage->dataObjects} ) {
-    $webpage->configure( $object, 'glossaryview'); ## this call creates wizard
+    $webpage->configure( $object, 'glossaryview', 'context_menu'); ## this call creates wizard
   }
   $webpage->action; 
 }
