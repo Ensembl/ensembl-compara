@@ -67,7 +67,7 @@ STAGE_SETUP:{
 	$entry->set_cgi_rows( 4 );
 	$entry->set_cgi_cols( 57 );
 	$entry->set_label
-	  ( "<B>Either</B> Paste sequences (max 30) in FASTA or plain text:" );
+	  ( "<B>Either</B> Paste sequences (max 30 sequences) in FASTA or plain text:" );
 	#$entry->set_label_summary( $callback );
 	$entry->set_cgi_onchange('javascript:changedQuerySequence()');
       }
