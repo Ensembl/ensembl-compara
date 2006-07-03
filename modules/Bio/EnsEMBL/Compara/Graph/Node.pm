@@ -48,6 +48,8 @@ use strict;
 use Bio::EnsEMBL::Utils::Exception;
 use Bio::EnsEMBL::Utils::Argument;
 use Bio::EnsEMBL::Compara::Graph::Link;
+use Bio::EnsEMBL::Compara::Graph::CGObject;
+use warnings;
 
 our @ISA = qw(Bio::EnsEMBL::Compara::Graph::CGObject);
 
@@ -176,6 +178,31 @@ sub create_link_to_node {
   return $link;
 }
 
+sub create_directed_link_to_node {
+  my $self = shift;
+  my $node = shift;
+  my $distance = shift;
+
+  throw("neighbor not defined") 
+     unless(defined($node));
+  throw("arg must be a [Bio::EnsEMBL::Compara::Graph::Node] not a [$node]")
+     unless($node->isa('Bio::EnsEMBL::Compara::Graph::Node'));
+  
+  #print("create_link_to_node\n");  $self->print_node; $node->print_node;
+  
+  my $link = $self->link_for_neighbor($node);
+  return $link if($link);
+
+  #results in calls to _add_neighbor_link_to_hash on each node
+  $link = new Bio::EnsEMBL::Compara::Graph::Link($self, $node);
+  if(defined($distance)) { 
+    $link->distance_between($distance);
+  }
+  $link->{'_link_node2'}->_unlink_node_in_hash($link->{'_link_node1'});
+
+  return $link;
+}
+
 #
 # internal method called by Compara::Graph::Link
 sub _add_neighbor_link_to_hash {
@@ -245,7 +272,9 @@ sub unlink_all {
 sub cascade_unlink {
   my $self = shift;
   my $caller = shift;
-  
+
+  no warnings qw/recursion/;
+
   #printf("cascade_unlink : "); $self->print_node;
 #  if($self->refcount > $self->link_count) {
 #    printf("!!!! node is being retained - can't cascade_unlink\n");
@@ -401,13 +430,15 @@ sub find_node_by_name {
   my $self = shift;
   my $name = shift;
   
-  return $self if($name eq $self->name);
-  
-  foreach my $neighbor (@{$self->neighbors}) {
-    my $found = $neighbor->find_node_by_name($name);
-    return $found if(defined($found));
+  unless (defined $name) {
+    throw("a name needs to be given as argument. The argument is currently undef\n");
   }
-  
+  return $self if($name eq $self->name);
+ 
+  foreach my $neighbor (@{$self->_walk_graph_until(-name => $name)}) {
+    return $neighbor if($name eq $neighbor->name);
+  }
+
   return undef;
 }
 
@@ -415,14 +446,76 @@ sub find_node_by_node_id {
   my $self = shift;
   my $node_id = shift;
   
+  unless (defined $node_id) {
+    throw("a node_id needs to be given as argument. The argument is currently undef\n");
+  }
   return $self if($node_id eq $self->node_id);
-  
-  foreach my $neighbor (@{$self->neighbors}) {
-    my $found = $neighbor->find_node_by_node_id($node_id);
-    return $found if(defined($found));
+
+  foreach my $neighbor (@{$self->_walk_graph_until(-node_id => $node_id)}) {
+    return $neighbor if($node_id eq $neighbor->node_id);
   }
   
   return undef;
+}
+
+sub all_nodes_in_graph {
+  my $self = shift;
+
+  return $self->_walk_graph_until;
+}
+
+sub all_links_in_graph {
+  my ($self, @args) = @_;
+  my $cache_links;
+
+  if (scalar @args) {
+    ($cache_links) = 
+      rearrange([qw(CACHE_LINKS)], @args);
+  }
+
+  no warnings qw/recursion/;
+
+  unless (defined $cache_links) {
+    $cache_links = {};
+  }
+
+  foreach my $link (@{$self->links}) {
+    next if ($cache_links->{$link});
+    $cache_links->{$link} = $link;
+    my $neighbor = $link->get_neighbor($self);
+    $neighbor->all_links_in_graph(-cache_links => $cache_links);
+  }
+
+  return [ values %{$cache_links} ];
+}
+
+sub _walk_graph_until {
+  my ($self, @args) = @_;
+  my $name;
+  my $node_id;
+  my $cache_nodes;
+
+  if (scalar @args) {
+    ($name, $node_id, $cache_nodes) = 
+       rearrange([qw(NAME NODE_ID CACHE_NODES)], @args);
+  }
+
+  no warnings qw/recursion/;
+
+  unless (defined $cache_nodes) {
+    $cache_nodes = {};
+    $cache_nodes->{$self} = $self;
+  }
+
+  foreach my $neighbor (@{$self->neighbors}) {
+    next if ($cache_nodes->{$neighbor});
+    $cache_nodes->{$neighbor} = $neighbor;
+    last if (defined $name && $name eq $neighbor->name);
+    last if (defined $node_id && $node_id eq $neighbor->node_id);
+    $neighbor->_walk_graph_until(-name => $name, -node_id => $node_id, -cache_nodes => $cache_nodes);
+  }
+
+  return [ values %{$cache_nodes} ];
 }
 
 1;
