@@ -42,14 +42,17 @@ typical use would be
     printf("has %d distinct components\n", $ccEngine->get_component_count);
     $graph_holding_node = $ccEngine->holding_node;
 
-The holding node has a hard coded name 'ccg_holding_node' that can be
-retrieved by $graph_holding_node->name, or find from any node in a graph
-using $current_node->find_node_by_name('ccg_holding_node');
+The holding node has a hard coded name 'ccg_holding_node' that can only be
+retrieved by $ccEngine->holding_node.
 
-The holding node has links to graph nodes, each of which is a single entry
+The holding node has DIRECTED links to graph nodes, each of which is a single entry
 point to an independant graph. This entry node (and there is only one for each graph)
 have a special name 'connected_to_holding_node', and can be found from any node in a
 graph using $current_node->find_node_by_name('connected_to_holding_node');
+The DIRECTED link holding node to graph nodes means that it is not bi-directional. You
+can only go from holding node to graph nodes, NOT fromgraph nodes to holding node. This
+is done to clearly isolate independant subgraph and facilitate the walking in each of them,
+without mixing them up.
 
 =cut
 
@@ -81,7 +84,8 @@ sub new {
   
   $self->{'holding_node'} = new Bio::EnsEMBL::Compara::Graph::Node;
   $self->{'holding_node'}->name("ccg_holding_node");
-    
+  $self->{'graphs'} = undef;
+
   $self->{'cache_nodes'} = {};
  
   return $self;
@@ -114,6 +118,8 @@ sub add_connection {
   my $self = shift;
   my $node1_id = shift;
   my $node2_id = shift;
+
+  return undef if ($node1_id eq $node2_id);
   
   my ($node1, $node2);
   $node1 = $self->{'cache_nodes'}->{$node1_id};
@@ -124,30 +130,20 @@ sub add_connection {
       #link exist already return it
       return $node1->link_for_neighbor($node2);
     } else {
-      #needs to merge 2 graphs, undef one of the nodes connected to the holding node
-      my $connected_to_holding_node = $node2->find_node_by_name('connected_to_holding_node');
-      $connected_to_holding_node->name("");
-      #break link with holding_node
-      $connected_to_holding_node->unlink_neighbor($self->{'holding_node'});
-#      another way to do it in 2 lines
-#      my $holding_link = $connected_to_holding_node->link_for_neighbor($self->{'holding_node'});
-#      $holding_link->dealloc;
-
       #link does not exit, creates it 
       my $link = $node1->create_link_to_node($node2);
+      $self->{'graphs'} = undef;
       return $link
     }
   }
-
-  my $node1_was_undef = 0;
 
   if(!defined($node1)) {
     $node1 = new Bio::EnsEMBL::Compara::Graph::Node;
     $node1->node_id($node1_id);
     $self->{'cache_nodes'}->{$node1_id} = $node1;
-    $node1_was_undef = 1;
     if (defined $node2) {
       my $link = $node1->create_link_to_node($node2);
+      $self->{'graphs'} = undef;
       return $link;
     }
   }
@@ -155,12 +151,8 @@ sub add_connection {
     $node2 = new Bio::EnsEMBL::Compara::Graph::Node;
     $node2->node_id($node2_id);
     $self->{'cache_nodes'}->{$node2_id} = $node2;
-    if ($node1_was_undef) {
-      # both node were undef, connect one of them to the holding_node
-      $node1->name("connected_to_holding_node");
-      $node1->create_link_to_node($self->{'holding_node'});
-    }
     my $link = $node1->create_link_to_node($node2);
+    $self->{'graphs'} = undef;
     return $link;
   }
 }
@@ -178,7 +170,7 @@ sub add_connection {
 
 sub get_graph_count {
   my $self = shift;
-  return scalar @{$self->{'holding_node'}->links};
+  return scalar @{$self->holding_node->links};
 }
 
 =head2 get_component_count
@@ -210,6 +202,7 @@ sub get_component_count {
 
 sub holding_node {
   my $self = shift;
+  $self->graphs;
   return $self->{'holding_node'};
 }
 
@@ -218,7 +211,11 @@ sub holding_node {
   Arg [1]    : none
   Example    : $ccgEngine->graphs;
   Description: return the array reference of nodes, each of them is the entry point
-               to an individual independant graph.
+               to an individual independant graph. IMPORTANT: be aware that this requires
+               walk through all the nodes to find the independant graphs. If you are still
+               adding connections and calling this method can get longer time as the graphs
+               are growing. We suggest to use it when your graphs are stable, so the graphs
+               walking is only done once, and the result cached.
   Returntype : array reference of Bio::EnsEMBL::Compara::Graph::Node
   Exceptions : none
   Caller     : general
@@ -228,13 +225,26 @@ sub holding_node {
 sub graphs {
   my $self = shift;
 
-  my @graphs;
-  foreach my $link (@{$self->{'holding_node'}->links}) {
-    my $node = $link->get_neighbor($self->{'holding_node'});
-    push @graphs, $node;
+  unless (defined $self->{'graphs'}) {
+    $self->{'holding_node'}->unlink_all;
+    my @graphs;
+    my %already_seen_nodes;
+    my $counter=0;
+    foreach my $node (values %{$self->{'cache_nodes'}}) {
+      $counter++;
+      next if ($already_seen_nodes{$node});
+      my $nodes = $node->all_nodes_in_graph;
+      for my $n (@{$nodes}) {
+        $already_seen_nodes{$n} = 1;
+        $n->name("");
+      }
+      $node->name("connected_to_holding_node");
+      $self->{'holding_node'}->create_directed_link_to_node($node);
+      push @graphs, $node;
+    }
+    $self->{'graphs'} = \@graphs;
   }
-
-  return \@graphs;
+  return $self->{'graphs'};
 }
 
 1;
