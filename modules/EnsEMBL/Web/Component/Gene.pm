@@ -1016,8 +1016,10 @@ sub genesnpview {
   my $master_config = $uca->getUserConfig( "genesnpview_transcript" );
      $master_config->set( '_settings', 'width',  $image_width );
 
-  ## -- Get 5 configs - and set width to width of context config ---------- ##
-  ## -- Get three slice - context (5x) gene (4/3x) transcripts (+-EXTENT) - ##
+
+  # Padding-----------------------------------------------------------
+  # Get 5 configs - and set width to width of context config
+  # Get three slice - context (5x) gene (4/3x) transcripts (+-EXTENT)
   my $Configs;
   my @confs = qw(context gene transcripts_top transcripts_bottom);
   push @confs, 'snps' unless $no_snps;
@@ -1036,17 +1038,23 @@ sub genesnpview {
   my $transcript_slice = $object->__data->{'slices'}{'transcripts'}[1];
   my $sub_slices       =  $object->__data->{'slices'}{'transcripts'}[2];
 
-## Now we have the padding size we can now go about making our
-## fake transcripts and snps....
 
-  my @transcripts            = ();
-  my @containers_and_configs = (); ## array of containers and configs
-
-# Grab the SNPs and map them to subslice co-ordinate ---------------- ##
-# $snps contains an array of array each sub-array contains [fake_start, fake_end, B:E:Variation object] # Stores in $object->__data->{'SNPS'} 
+  # Fake SNPs -----------------------------------------------------------
+  # Grab the SNPs and map them to subslice co-ordinate 
+  # $snps contains an array of array each sub-array contains [fake_start, fake_end, B:E:Variation object] # Stores in $object->__data->{'SNPS'} 
   my ($count_snps, $snps, $context_count) = $object->getVariationsOnSlice( $transcript_slice, $sub_slices  ); 
+  my $start_difference =  $object->__data->{'slices'}{'transcripts'}[1]->start - $object->__data->{'slices'}{'gene'}[1]->start;
+  
+  my @fake_filtered_snps;
+  map { push @fake_filtered_snps, 
+ 	  [ $_->[2]->start + $start_difference, 
+ 	    $_->[2]->end   + $start_difference, 
+ 	    $_->[2]] } @$snps;
 
- 
+  $Configs->{'gene'}->{'filtered_fake_snps'} = \@fake_filtered_snps unless $no_snps;
+
+
+  # Make fake transcripts ----------------------------------------------
  $object->store_TransformedTranscripts();        ## Stores in $transcript_object->__data->{'transformed'}{'exons'|'coding_start'|'coding_end'}
 
   my @domain_logic_names = qw(Pfam scanprosite Prints pfscan PrositePatterns PrositeProfiles Tigrfam Superfamily Smart PIRSF);
@@ -1055,7 +1063,11 @@ sub genesnpview {
   }
   $object->store_TransformedSNPS() unless $no_snps;      ## Stores in $transcript_object->__data->{'transformed'}{'snps'}
 
-### This is where we do the configuration of containers....
+
+  ### This is where we do the configuration of containers....
+  my @transcripts            = ();
+  my @containers_and_configs = (); ## array of containers and configs
+
   foreach my $trans_obj ( @{$object->get_all_transcripts} ) {
 ## create config and store information on it...
     $trans_obj->__data->{'transformed'}{'extent'} = $extent;
@@ -1107,7 +1119,7 @@ sub genesnpview {
       ]
     } sort { $a->[0] <=> $b->[0] } @{ $snps };
 ## Cache data so that it can be retrieved later...
-    $object->__data->{'gene_snps'} = \@snps2;
+    #$object->__data->{'gene_snps'} = \@snps2; fc1 - don't think is used
     foreach my $trans_obj ( @{$object->get_all_transcripts} ) {
       $trans_obj->__data->{'transformed'}{'gene_snps'} = \@snps2;
     }
