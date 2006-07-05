@@ -1065,7 +1065,7 @@ sub seqLine {
 sub sanger_project_names {
   my $conf = shift;
   my %SPECIES = qw(
-    Homo_sapiens Human Mus_musculus Mouse Danio_rerio Zebradish
+    Homo_sapiens Human Mus_musculus Mouse Danio_rerio Zebrafish
     Drosophila_melanogaster Drosophila Rattus_norvegicus Rat
   );
   my $sanger_species_name = $SPECIES{$conf->{'species'}};
