@@ -16,7 +16,7 @@ sub _init {
   my $colours       = $Config->get('snp_fake','colours' );
 
   my( $fontname, $fontsize ) = $self->get_font_details( 'innertext' );
-  my @res = $self->get_text_width( 0, 'A/A', '', 'font'=>$fontname, 'ptsize' => $fontsize );
+  my @res = $self->get_text_width( 0, 'A', '', 'font'=>$fontname, 'ptsize' => $fontsize );
   my $w = $res[2];
   my $th = $res[3];
   my $pix_per_bp = $self->{'config'}->transform()->{'scalex'};
@@ -36,8 +36,8 @@ sub _init {
     my @alleles = split "\/", $label;
     my  $h = 4 + ($th+2) * scalar @alleles;
 
-    my @res = $self->get_text_width( ($end-$start+1)*$pix_per_bp, $label, 'A/A', 'font'=>$fontname, 'ptsize' => $fontsize );
-    if( $res[0] eq $label ) {
+    my @res = $self->get_text_width( ($end-$start+1)*$pix_per_bp, $label =~ /\w\/\w/ ? 'A/A' : $label, 'A', 'font'=>$fontname, 'ptsize' => $fontsize );
+    if( $res[0] eq $label || $res[0] eq 'A/A' ) {
       $h = 8 + $th*2;
       my $tmp_width = ($w*2+$res[2]) / $pix_per_bp;
       if ( ($end - $start + 1) > $tmp_width ) {
@@ -56,7 +56,7 @@ sub _init {
         'absolutey'  => 1,
       });
       $self->push( $textglyph );
-    } elsif( $res[0] eq 'X' && $label =~ /^[-\w](\/[-\w])+$/ ) {
+    } elsif( $res[0] eq 'A' && $label =~ /^[-\w](\/[-\w])+$/ ) {
       for (my $i = 0; $i < 3; $i ++ ) {
 	my $textglyph = new Sanger::Graphics::Glyph::Text({
           'x'          => ( $end + $start - 1 )/2,

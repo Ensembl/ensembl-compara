@@ -201,7 +201,7 @@ sub _init_non_assembled_contig {
       $caption = 'Jump to contigview';
     } 
     my $label = '';
-    foreach( qw(chunk supercontig clone scaffold contig) ) {
+    foreach( qw(chunk supercontig scaffold clone contig) ) {
       if( my $Q = $tile->{'locations'}->{$_} ) {
         if($show_href eq 'on') {
           $glyph->{'href'} = qq(/@{[$self->{container}{_config_file_name_}]}/$script?ch=$ch;region=$Q->[0]);
@@ -219,7 +219,6 @@ sub _init_non_assembled_contig {
           my $name =$Q->[0];
           my $full_name = $name;
 	  $name =~ s/\.\d+$// if $_ eq 'clone';
-          $label ||= $tile->{'locations'}->{$_}->[0];
           (my $T=ucfirst($_))=~s/contig/Contig/g;
           $glyph->{'zmenu'}{"$POS:$T $name"} ='' unless $_ eq 'contig';
           $POS++;

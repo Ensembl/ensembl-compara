@@ -82,7 +82,11 @@ sub get_text_width {
 
   warn $@ if $@;
   if( $gd_text ) {
-    $gd_text->set_text($text);
+    if($font =~ /Cour/i && length($text)==1) {
+      $gd_text->set_text('X');
+    } else {
+      $gd_text->set_text($text);
+    }
     my($w,$h) = $gd_text->get('width','height');
     my @res;
     if($w<$width) { 

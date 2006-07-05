@@ -17,7 +17,7 @@ sub init {
 ## Add a glyphset with the contents of this track.....
     my $T = $data->{$track};
     my $url_glyphset;
-    warn "@{[ %{$T->{'config'}} ]}";
+    $T->{'config'}||={};
     eval {
       $url_glyphset = new Bio::EnsEMBL::GlyphSet::urlfeature(
         $self->{'container'}, $self->{'config'}, $self->{'highlights'}, $self->{'strand'},
