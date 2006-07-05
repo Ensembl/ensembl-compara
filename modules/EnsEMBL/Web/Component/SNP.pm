@@ -76,39 +76,28 @@ sub synonyms {
   foreach my $db (keys %synonyms) {
     my @ids =  @{ $synonyms{$db} } ;
     my @urls;
-    my $display_db;
 
-    if ($object->source eq 'dbSNP') {
-      if ($db =~ /dbsnp/i) {
- 	$display_db = "dbSNP";
- 	#  The synonyms in the db are ssids
- 	#@urls  = map {  $object->get_ExtURL('SNP', $_) ) } @ids;
- 	@urls  = map { $object->get_ExtURL_link($_, 'DBSNPSS', $_) } @ids;
-      }
-    } 
-    elsif ($object->source eq 'Glovar') {
-      if ($db =~ /dbsnp rs/i) {
- 	$display_db = "dbSNP rs";
- 	@urls  = map {  $object->get_ExtURL_link( $_, 'SNP', $_)  } @ids;
-      }
-      elsif ($db =~ /dbsnp ss/i) {
- 	$display_db = "dbSNP ss";
- 	@urls  = map {  $object->get_ExtURL_link( $_, 'DBSNPSS', $_ ) } @ids;
-      }
-    }				# end elseif glover
-
-    else {
-      $display_db = "Other";
-      @urls = @ids;
+    if ($db =~ /dbsnp rs/i) {  # Glovar stuff
+      @urls  = map {  $object->get_ExtURL_link( $_, 'SNP', $_)  } @ids;
     }
-
-    if ($db =~ /hgvbase/i) {
-      $display_db = "HGVbase";
+    elsif ($db =~ /dbsnp/i) { 
+      foreach (@ids) {
+	next if $_ =~/^ss/; # don't display SSIDs - these are useless
+	push @urls , $object->get_ExtURL_link( $_, 'DBSNPSS', $_ );
+      }
+      next unless @urls;
+    }
+    elsif ($db =~ /hgvbase/i) {
       @urls  = map {  $object->get_ExtURL_link( $_, 'HGVBASE', $_) } @ids;
     } 
     elsif ($db =~ /tsc/i) {
-      $display_db = "TSC";
       @urls  = map {  $object->get_ExtURL_link( $_, 'TSC', $_)  } @ids;
+    }
+    #elsif ($db =~ /Sanger/i) {  # don't link to this as it gives no extra info
+    #  @urls = map {  $object->get_ExtURL_link( $_, 'SNPVIEW', {source=>$db, ID=>$_} ) } @ids;
+    #}
+    else {
+      @urls = @ids;
     }
 
     # Do wrapping
@@ -118,10 +107,10 @@ sub synonyms {
       @urls = (@front, @urls);
     }
 
-    $info .= "<b>$display_db</b> ". (join ", ", @urls ). "<br />";
+    $info .= "<b>$db</b> ". (join ", ", @urls ). "<br />";
   }
 
-  $info .= "None currently in the database" unless (keys %synonyms);
+  $info ||= "None currently in the database";
   $panel->add_row( $label, $info );
   return 1;
 }
@@ -474,6 +463,7 @@ sub mappings {
                      $transcript_data->{cdna_start}, $transcript_data->{cdna_end});
       my $translation_coords = _sort_start_end(
                      $transcript_data->{translation_start}, $transcript_data->{translation_end});
+
       my %trans_info = (
 			"conseq"     => $transcript_data->{conseq},
 			"transcript" => "$transcript_link:$transcript_coords",
