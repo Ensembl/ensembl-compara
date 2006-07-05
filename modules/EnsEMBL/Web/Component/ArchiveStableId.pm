@@ -154,8 +154,8 @@ sub archive {
 
     my $text;
     if (scalar @archive_releases > 1) {
-    my $archive_first = _archive_link($object, $id, $param, "Archive <img src='/img/ensemblicon.gif'/>", $archive_releases[-1]) || " (no web archive)";
-    my $archive_last = _archive_link($object, $id, $param, "Archive <img src='/img/ensemblicon.gif'/>", $archive_releases[0]) || " (no web archive)";
+    my $archive_first = _archive_link($object, $id, $param, "Archive <img alt='link to archive version' src='/img/ensemblicon.gif'/>", $archive_releases[-1]) || " (no web archive)";
+    my $archive_last = _archive_link($object, $id, $param, "Archive <img alt='link to archive version' src='/img/ensemblicon.gif'/>", $archive_releases[0]) || " (no web archive)";
 
     $text = "$id was in release $archive_releases[-1] $archive_first to $archive_releases[0] $archive_last";
   }
@@ -312,7 +312,7 @@ sub history {
       my $first = $releases[$i+1]+1;
       $first = 26 if $first < 26 && $releases[$i] > $object->species_defs->EARLIEST_ARCHIVE;
 
-      my $archive = _archive_link($object, $id, $param, "<img src='/img/ensemblicon.gif'/>",  $first, $a->version );
+      my $archive = _archive_link($object, $id, $param, "<img alt='link to archive version' src='/img/ensemblicon.gif'/>",  $first, $a->version );
       my $display_id = $id eq $id_focus ? "<b>$id</b>" : $id;
       $row->{$a->stable_id} = qq(<a href="idhistoryview?$param).qq(=$id">$display_id</a> $archive);
     }
@@ -342,26 +342,29 @@ sub _archive_link {
   return unless $release >= $object->species_defs->EARLIEST_ARCHIVE;
   my $url;
   my $current_obj = $object->get_current_object($type, $name);
+  my $site_type;
   if ($current_obj && $current_obj->version eq $version) {
     $url = "/";
+    $site_type = "current ";
   }
   else {
     my %archive_sites;
     map { $archive_sites{ $_->{release_id} } = $_->{short_date} }@{ $object->species_defs->RELEASE_INFO };
     $url = "http://$archive_sites{$release}.archive.ensembl.org/";
     $url =~ s/ //;
+    $site_type = "archived ";
   }
 
   $url .=  $ENV{'ENSEMBL_SPECIES'}."/";
-  my $view = $type."view";
+  my $view = ucfirst($type)."View";
   if ($type eq 'peptide') {
-    $view = 'protview';
+    $view = 'Protview';
   }
   elsif ($type eq 'transcript') {
-    $view = 'transview';
+    $view = 'Transview';
   }
 
-  $id = qq(<a title="$view" href="$url$view?$type=$name">$id</a>);
+  $id = qq(<a title="View in $site_type$view" href="$url$view?$type=$name">$id</a>);
   return $id;
 }
 
