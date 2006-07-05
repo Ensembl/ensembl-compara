@@ -200,7 +200,6 @@ sub dblinks {
   my @sources = @{  $self->vari->get_all_synonym_sources  };
   my %synonyms;
   foreach (@sources) {
-    next if $_ eq 'dbSNP';  # these are ss IDs and aren't really synonyms
     $synonyms{$_} = $self->vari->get_all_synonyms($_);
   }
   return \%synonyms;
@@ -906,11 +905,8 @@ sub transcript_variation {
   my @data;
   foreach my $tvari_obj ( @{ $transcript_variation_obj } )  {
     next unless $tvari_obj->transcript;
-    my $type = $tvari_obj->consequence_type;
-    if ($tvari_obj->splice_site or $tvari_obj->regulatory_region) {
-      $type .=", ". $tvari_obj->splice_site;
-      $type .= $tvari_obj->regulatory_region;
-    }
+    my $type = join ", " , @{ $tvari_obj->consequence_type || [] };
+
     push (@data, {
             conseq =>           $type,
             transcriptname =>   $tvari_obj->transcript->stable_id,
