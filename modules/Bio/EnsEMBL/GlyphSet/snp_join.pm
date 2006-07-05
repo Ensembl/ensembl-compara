@@ -34,7 +34,7 @@ sub _init {
     my $tag_root = $snp->dbID();
     $S = 1 if $S < 1;
     $E = $length if $E > $length;
-    my $type = $snp->get_consequence_type();
+    my $type = $snp->display_consequence;
     my $colour = $colours->{$type}->[0];
     my $tglyph = new Sanger::Graphics::Glyph::Space({
       'x' => $S-1,
@@ -60,7 +60,7 @@ sub get_snps {
     my %ct = %Bio::EnsEMBL::Variation::VariationFeature::CONSEQUENCE_TYPES;
     @snps = map  { [ $_->[1]->start, $_->[1]->end, $_->[1]  ] } 
       sort { $a->[0] <=> $b->[0] }
-	map { [ - $ct{$_->get_consequence_type} * 1e9 + $_->start, $_ ] }
+	map { [ - $ct{$_->display_consequence} * 1e9 + $_->start, $_ ] }
 	  grep { $_->map_weight < 4 }
 	    @{$self->{'container'}->get_all_VariationFeatures()};
   }

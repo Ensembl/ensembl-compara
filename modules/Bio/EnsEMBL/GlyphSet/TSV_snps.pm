@@ -102,9 +102,8 @@ sub _init {
 
 
     # Type and colour -------------------------------------------
-    my $type = $conseq_type->type;
+    my $type = $conseq_type->display_consequence;
     my $colour = $colour_map->{$type}->[0];
-
     my @tmp;
     push @tmp, ("13:amino acid: $aa_change->[0] to $aa_change->[1]", '' ) if $aa_change->[1];
 
@@ -131,14 +130,6 @@ sub _init {
       }
     }
 
-    if ( (my $splice = $conseq_type->splice_site) =~ s/_/ /g) {
-      $type .= "- $splice";
-      $colour = $colour_map->{'SPLICE_SITE'}->[0] if $conseq_type->type eq "INTRONIC";
-    }
-    if ($conseq_type->regulatory_region()) {
-      $type .= "- Regulatory region SNP";
-      $colour = $colour_map->{'REG_REGION'}->[0];
-    }
 
     # Draw ------------------------------------------------
     my @res = $self->get_text_width( 0, $label, '', 'font'=>$fontname, 'ptsize' => $fontsize );

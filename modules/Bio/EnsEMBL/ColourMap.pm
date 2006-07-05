@@ -269,7 +269,7 @@ sub new {
     '3PRIME_UTR'             => ['cadetblue3',     "3' UTR",                'black',],
     'UTR'                    => ['cadetblue3',     'UTR',                   'black',],
     'SPLICE_SITE'            => ['coral',          'Splice site SNP',       'black',],
-    'ESS_SPLICE'             => ['coral',          'Essential splice site', 'black',],
+    'ESSENTIAL_SPLICE_SITE'  => ['coral',          'Essential splice site', 'black',],
     'FRAMESHIFT_CODING'      => ['hotpink',        'Frameshift coding',     'black',],
     'SYNONYMOUS_CODING'      => ['chartreuse2',    'Synonymous coding', 'black',],
     'NON_SYNONYMOUS_CODING'  => ['gold',           'Non-synonymous coding', 'black',],

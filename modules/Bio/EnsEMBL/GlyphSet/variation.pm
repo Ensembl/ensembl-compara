@@ -24,7 +24,7 @@ sub features {
     my @vari_features =
       map  { $_->[1] }
       sort { $a->[0] <=> $b->[0] }
-      map  { [ $ct{$_->get_consequence_type} * 1e9 + $_->start, $_ ] }
+      map  { [ $ct{$_->display_consequence} * 1e9 + $_->start, $_ ] }
       grep { $_->map_weight < 4 } @$vf_ref;
     if(@vari_features) {
       $self->{'config'}->{'variation_legend_features'}->{'variations'} = { 'priority' => 1000, 'legend' => [] };
@@ -77,23 +77,24 @@ sub image_label {
 sub tag {
   my ($self, $f) = @_;
   if($f->start > $f->end ) {    
-    my $consequence_type = $f->get_consequence_type;
+    my $consequence_type = $f->display_consequence;
     return ( { 'style' => 'insertion', 'colour' => $self->{'colours'}{"$consequence_type"}[0] } );
   }
 }
 
 sub colour {
   my ($self, $f) = @_;
-  my $consequence_type = $f->get_consequence_type();
-  unless($self->{'config'}->{'variation_types'}{$consequence_type}) {
-    push @{ $self->{'config'}->{'variation_legend_features'}->{'variations'}->{'legend'}},
-      $self->{'colours'}{$consequence_type}[1],  $self->{'colours'}{$consequence_type}[0];
 
-    $self->{'config'}->{'variation_types'}{$consequence_type} = 1;
-  }
-  return $self->{'colours'}{$consequence_type}[0],
-    $self->{'colours'}{$consequence_type}[2],
-      $f->start > $f->end ? 'invisible' : '';
+  my $consequence_type = $f->display_consequence();
+    unless($self->{'config'}->{'variation_types'}{$consequence_type}) {
+      push @{ $self->{'config'}->{'variation_legend_features'}->{'variations'}->{'legend'}},
+	$self->{'colours'}{$consequence_type}[1],  $self->{'colours'}{$consequence_type}[0];
+
+      $self->{'config'}->{'variation_types'}{$consequence_type} = 1;
+    }
+    return $self->{'colours'}{$consequence_type}[0],
+      $self->{'colours'}{$consequence_type}[2],
+	$f->start > $f->end ? 'invisible' : '';
 }
 
 
@@ -135,9 +136,9 @@ sub zmenu {
  	       "09:source: ".$f->source => '',
 	      );
 
-  my $consequence_type = $f->get_consequence_type;
-  my $label = $self->{'colours'}{$consequence_type}[1]; 
-  $zmenu{"57:type: $label"} = "" unless $consequence_type eq '';  
+  my @label;
+  map { push @label, $self->{'colours'}{$_}[1]; }  @{ $f->get_consequence_type || [] };
+  $zmenu{"57:type: ".join ", ", @label} = "";
   return \%zmenu;
 }
 1;

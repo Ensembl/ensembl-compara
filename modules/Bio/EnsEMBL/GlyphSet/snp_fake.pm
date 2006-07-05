@@ -72,7 +72,7 @@ sub _init {
 	$self->push( $textglyph );
       }
     }
-    my $type = $snp->get_consequence_type();
+    my $type = $snp->display_consequence;
     my $colour = $colours->{$type}->[0];
     my $tglyph = new Sanger::Graphics::Glyph::Rect({
       'x' => $start-1,
@@ -96,7 +96,7 @@ sub _init {
       $Config->{'variation_types'}{$type} = 1;
     }
   }
-  push @{ $Config->{'variation_legend_features'}->{'variations'}->{'legend'}}, $colours->{"SARA"}->[1],   $colours->{"SARA"}->[0];
+  push @{ $Config->{'variation_legend_features'}->{'variations'}->{'legend'}}, $colours->{"SARA"}->[1],   $colours->{"SARA"}->[0] if  $ENV{'ENSEMBL_SCRIPT'} eq 'transcriptsnpview';
 }
 
 sub zmenu {
@@ -126,8 +126,9 @@ sub zmenu {
     my %links;
     
     my $source = $f->source; 
-    my $type = $f->get_consequence_type;
-    $zmenu{"57:type: $type"} = "" unless $type eq '';  
+    my @type;
+    map { push @type, $_ }  @{ $f->get_consequence_type || [] };
+    $zmenu{"57:type: ".join ", ", @type} = "";
     return \%zmenu;
 }
 
