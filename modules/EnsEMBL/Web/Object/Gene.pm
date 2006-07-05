@@ -483,9 +483,12 @@ sub store_TransformedSNPS {
     my $snps = {};
     foreach my $S ( @{$self->__data->{'SNPS'}} ) {
       foreach( @{$S->[2]->get_all_TranscriptVariations||[]} ) {
-        if( $T eq $_->transcript->stable_id ) {
-          $snps->{ $S->[2]->dbID } = $_ if $valids->{'opt_'.lc($_->consequence_type)};
-        }
+	next unless  $T eq $_->transcript->stable_id;
+	foreach my $type ( @{ $_->consequence_type || []} ) {
+	  next unless $valids->{'opt_'.lc($type)};
+	  $snps->{ $S->[2]->dbID } = $_;
+	  last;
+	}
       }
     }
     $trans_obj->__data->{'transformed'}{'snps'} = $snps;

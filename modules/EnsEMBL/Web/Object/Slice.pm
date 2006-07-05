@@ -152,7 +152,7 @@ sub filter_snps {
       sort { $a->[0] <=> $b->[0] }   #   Sort snps on schwartzian index
 
 	#  Compute schwartzian index [ consequence type priority, fake SNP ]
-	map  { [ $ct{$_->get_consequence_type} * 1e9 + $_->start, $_ ] }
+	map  { [ $ct{$_->display_consequence} * 1e9 + $_->start, $_ ] }
 
 	  # [ fake_s, fake_e, SNP ]   Grep features to see if the area valid
 	 grep { ( @{$_->get_all_validation_states()} ?
@@ -160,7 +160,7 @@ sub filter_snps {
 		  $valids->{'opt_noinfo'} ) }
 
    # Filter unwanted consequence classifications
-    grep { $valids->{'opt_'.lc($_->get_consequence_type()) } }
+    grep { scalar map { $valids->{'opt_'.lc($_)}?1:() } @{$_->get_consequence_type()}  }
 
       # Filter our unwanted sources
       grep { $valids->{'opt_'.lc($_->source)} }
@@ -258,13 +258,13 @@ sub filter_munged_snps {
 # [ index, [fake_s, fake_e, SNP] ]   Sort snps on schwartzian index
     sort { $a->[0] <=> $b->[0] }
 # [ index, [fake_s, fake_e, SNP] ]   Compute schwartzian index [ consequence type priority, fake SNP ]
-    map  { [ $_->[1] - $ct{$_->[2]->get_consequence_type($gene)} *1e9, $_ ] }
+    map  { [ $_->[1] - $ct{$_->[2]->display_consequence($gene)} *1e9, $_ ] }
 # [ fake_s, fake_e, SNP ]   Grep features to see if the area valid
     grep { ( @{$_->[2]->get_all_validation_states()} ?
            (grep { $valids->{"opt_$_"} } @{$_->[2]->get_all_validation_states()} ) :
            $valids->{'opt_noinfo'} ) }
 # [ fake_s, fake_e, SNP ]   Filter our unwanted consequence classifications
-    grep { $valids->{'opt_'.lc($_->[2]->get_consequence_type()) } }
+    grep { scalar map { $valids->{'opt_'.lc($_)}?1:() } @{$_->[2]->get_consequence_type()}  }
 
 # [ fake_s, fake_e, SNP ]   Filter our unwanted sources
     grep { $valids->{'opt_'.lc($_->[2]->source)} }

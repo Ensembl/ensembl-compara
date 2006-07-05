@@ -6,6 +6,8 @@ our @ISA = qw( EnsEMBL::Web::Component);
 use Data::Dumper;
 use strict;
 use warnings;
+use Exporter;
+our @EXPORT = qw(_sort_similarity_links);  ##dunno if this is needed
 no warnings "uninitialized";
 
 ## No sub stable_id   <- uses Gene's stable_id
@@ -1019,7 +1021,6 @@ sub spreadsheet_variationTable {
     { 'key' => 'status', 'title' => 'Validation', 'align' => 'center' },
   );
 
-
   foreach my $gs ( @gene_snps ) {
     my $raw_id = $gs->[2]->dbID;
     my $transcript_variation  = $snps{$raw_id};
@@ -1035,7 +1036,7 @@ sub spreadsheet_variationTable {
         'status'    => (join( ', ',  @validation ) || "-"),
         'chr'       => $gs->[3].": ".
                         ($gs->[4]==$gs->[5] ? $gs->[4] :  "$gs->[4]-$gs->[5]"),
-        'snptype'   => $transcript_variation->consequence_type,
+        'snptype'   => (join ", ", @{ $transcript_variation->consequence_type || []}),
         $transcript_variation->translation_start ? (
            'aachange' => $transcript_variation->pep_allele_string,
            'aacoord'   => $transcript_variation->translation_start.' ('.(($transcript_variation->cdna_start - $cdna_coding_start )%3+1).')'
@@ -1358,14 +1359,8 @@ sub get_page_data {
       next unless $allele;
 
       # Type
-      my $type = $conseq_type->type;
-      if ( (my $splice = $conseq_type->splice_site) =~ s/_/ /g) {
-	$type .= "- $splice";
-      }
-      if ($conseq_type->regulatory_region()) {
-	$type .= "- Regulatory region SNP";
-      }
-      elsif ($type eq 'SARA') {
+      my $type = join ", ", @{$conseq_type->type || []};
+      if ($type eq 'SARA') {
 	$type .= " (Same As Ref. Assembly)";
       }
       

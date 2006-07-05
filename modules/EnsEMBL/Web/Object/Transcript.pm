@@ -296,11 +296,15 @@ sub getAllelesConsequencesOnSlice {
   my @valid_conseq;
   my @valid_alleles;
   foreach (sort {$a->start <=> $b->start} @$consequences ){  # conseq on our transcript
+
     my $allele_feature = shift @filtered_af;
-    if ( $valids->{'opt_'.lc($_->type)} ) {
+    foreach my $type (@{ $_->type || [] }) {
+      next unless $valids->{ 'opt_'.lc($type) } ;
+
       # [ fake_s, fake_e, SNP ]   Filter our unwanted consequences
       push @valid_conseq,  $_ ;
       push @valid_alleles, $allele_feature;
+      last;
     }
   }
   $self->__data->{'sample'}{$sample}->{'consequences'} = \@valid_conseq || [];
