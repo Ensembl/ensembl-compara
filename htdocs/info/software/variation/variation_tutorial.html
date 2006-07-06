@@ -237,7 +237,7 @@ my $trv_adaptor = $dbVariation->get_TranscriptVariationAdaptor; #get the adaptor
 my $trvs = $trv_adaptor->fetch_all_by_Transcripts([$transcript]); #get ALL effects of Variations in the Transcript
 
 foreach my $tv (@{$trvs}){
-    print "SNP :",$tv->variation_feature->variation_name, " has a consequence ", $tv->consequence_type, " in transcript ", $stable_id, "\n";
+    print "SNP :",$tv->variation_feature->variation_name, " has a consequence/s ", join(",",@{$tv->consequence_type}), " in transcript ", $stable_id, "\n";
     #print the name of the variation and the effect (consequence_type) of the variation in the Transcript
 }
 exit 0;
@@ -292,7 +292,7 @@ sub get_VariationFeatures{
 	foreach my $vf (@{$vf_adaptor->fetch_all_by_Variation($var)}){
 	    print $vf->variation_name(),","; # print rsID
             print $vf->allele_string(),","; # print alleles
-            print $vf->get_consequence_type(),","; # print consequenceType
+            print join(",",@{$vf->get_consequence_type()}),","; # print consequenceType
 	    print substr($var->five_prime_flanking_seq,-10) , "[",$vf->allele_string,"]"; #print the allele string
 	    print substr($var->three_prime_flanking_seq,0,10), ","; # print RefSeq
 	    print $vf->seq_region_name, ":", $vf->start,"-",$vf->end; # print position in Ref in format Chr:start-end
