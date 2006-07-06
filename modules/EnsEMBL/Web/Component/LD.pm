@@ -203,7 +203,7 @@ sub ldview_image {
     push @containers_and_configs, $slice, $wuc_pop;
   }
   my $image    = $object->new_image([ @containers_and_configs, ],
-				    [ $object->name ], );
+				     $object->highlights, );
 
   $image->imagemap = 'yes';
   $panel->print( $image->render );

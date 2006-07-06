@@ -33,9 +33,6 @@ sub init {
                      [ 'variation'             => "SNPs"          ],
                      [ 'variation_legend'      => "SNP legend"    ],
                      [ 'genotyped_variation'   => "Genotyped SNPs"],
-                     [ 'tagged_snp'            => "Tagged SNPs"],
-                     [ 'ld_r2'      => "LD (r2)"],
-                     [ 'ld_d_prime' => "LD (d')"],
                     ],
       'options' => [
                  [ 'opt_empty_tracks' => 'Show empty tracks' ],
@@ -58,7 +55,7 @@ sub init {
       'on'          => "on",
       'pos'         => '9999',
       'col'         => 'black',
-      'str'         => 'f',
+     'str'         => 'f',
     },
 
     'scalebar' => {

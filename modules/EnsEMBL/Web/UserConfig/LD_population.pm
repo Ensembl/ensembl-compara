@@ -28,10 +28,7 @@ sub init {
 				'window', 'half', 'zoom' ],
 
      'features' => [
-                     [ 'variation'             => "SNPs"          ],
-                     [ 'variation_legend'      => "SNP legend"    ],
-                     [ 'genotyped_variation'   => "Genotyped SNPs"],
-                     [ 'tagged_snp'            => "Tagged SNPs"],
+                     [ 'tagged_snp' => "Tagged SNPs"],
                      [ 'ld_r2'      => "LD (r2)"],
                      [ 'ld_d_prime' => "LD (d')"],
                     ],
