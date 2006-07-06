@@ -118,13 +118,17 @@ sub mappings {
     my $strand = $mappings{$varif_id}{strand};
     $strand = " ($strand)&nbsp;" if $strand;
     if ($region) {
-      $chr_info{chr} = "<nobr><a href= $link>$region: $start-$end</a>$strand </nobr>";
+      $chr_info{chr} = "&nbsp;<a href= $link>$region: $start-$end</a>$strand";
     } else {
       $chr_info{chr} = "unknown";
     }
     my $vari = $snp->[0]->name;
     my $choice = "<a href='$view?snp=$vari;c=$region:$start;w=10000'>Choose this location</a>";
-    my $display = int($object->centrepoint +0.5) eq $start ? "Current location":$choice;
+
+    my $display = $choice;
+    if ( int($object->centrepoint +0.5) eq $start ) {
+      $display =  "Current location" if $object->seq_region_name eq $region ;
+    }
     $chr_info{location} = $display;
 
     $panel->add_row(\%chr_info);
