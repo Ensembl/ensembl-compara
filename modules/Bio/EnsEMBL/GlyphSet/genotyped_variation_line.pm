@@ -14,7 +14,7 @@ sub features {
   my @genotyped_vari =
              map { $_->[1] } 
              sort { $a->[0] <=> $b->[0] }
-             map { [ $ct{$_->get_consequence_type} * 1e9 + $_->start, $_ ] }
+             map { [ $ct{$_->display_consequence} * 1e9 + $_->start, $_ ] }
              grep { $_->map_weight < 4 } 
 	       @{$self->{'container'}->get_all_genotyped_VariationFeatures()};
 

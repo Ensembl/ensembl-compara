@@ -50,7 +50,7 @@ sub features {
     my @snps = 
         map { $_->[1] } 
         sort { $a->[0] <=> $b->[0] }
-        map { [ $ct{$_->get_consequence_type} * 1e9 + $_->start, $_ ] }
+        map { [ $ct{$_->display_consequence} * 1e9 + $_->start, $_ ] }
             @{$self->{'container'}->get_all_ExternalFeatures('GlovarSNP')};
 
     if(@snps) {
@@ -85,7 +85,7 @@ sub zmenu {
       $pos = "$start&nbsp;-&nbsp;$end";
     }
     my $status = join ", ", @{$f->get_all_validation_states};
-    my $cons = $f->get_consequence_type;
+    my $cons = join ", ", @{ $f->get_consequence_type || [] };
     $cons = '-' if ($cons eq '_');
 
     my %zmenu = ( 

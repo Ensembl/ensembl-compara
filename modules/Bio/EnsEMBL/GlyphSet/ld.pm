@@ -31,7 +31,6 @@ sub _init {
   # Auxiliary data
   my $key = $self->_key();
   my $pop_adaptor = $self->{'container'}->adaptor->db->get_db_adaptor('variation')->get_PopulationAdaptor;
-  my $length      = ($self->{'container'}->length -1)/1000;
   my $max_ld_range = 100000;
   my( $fontname, $fontsize ) = $self->get_font_details( 'innertext' );
   my @res = $self->get_text_width( 0, 'X', '', 'font'=>$fontname, 'ptsize' => $fontsize );
@@ -43,6 +42,7 @@ sub _init {
   my $colours         = $self->my_config( 'colours');
   my $height_ppb      = $Config->transform()->{'scalex'};
   my @colour_gradient = $Config->colourmap->build_linear_gradient( 41,'mistyrose', 'pink', 'indianred2', 'red' );
+  my $length      = int(($self->{'container'}->length -1)/1000 + 0.5);
 
   # Foreach population
   foreach my $pop_name ( sort  @pops ) {
@@ -76,7 +76,7 @@ sub _init {
         'y'         => $yoffset - $TAG_LENGTH,
         'width'     => 1,
         'absolutey' => 1,
-        'colour'    => $colours->{$snp->[1]->get_consequence_type}->[0],
+        'colour'    => $colours->{$snp->[1]->display_consequence}->[0],
       })); 
     }
 
