@@ -114,7 +114,7 @@ sub add_new_simple_track {
   );
 }
 sub add_new_synteny_track {
-  my( $self, $species, $short, $pos ) = @_;
+  my( $self, $species, $short, $pos) = @_;
   $self->add_track( "synteny_$species",
     "_menu" => 'compara',
     'height'    => 4,
@@ -1179,7 +1179,9 @@ sub ADD_ALL_TRANSCRIPTS {
   $self->add_new_track_transcript('vega_corf', 'CORF genes', 'vega_gene',
     $POS++, 'glyph' => 'vega_transcript', 'logic_name' => 'otter_corf',
     'available'=>'features VEGA_GENES_OTTER_CORF', @_);
-    
+  $self->add_new_track_transcript('vega_igsf', 'IgSF genes', 'vega_gene',
+    $POS++, 'glyph' => 'vega_transcript', 'logic_name' => 'otter_igsf',
+    'available'=>'features VEGA_GENES_OTTER_IGSF', @_);  
   return $POS;
 }
 
@@ -1321,7 +1323,9 @@ sub ADD_GENE_TRACKS {
   $self->add_new_track_gene( 'vega_corf_gene', 'CORF Genes', 'vega_gene', $POS++,
     'available' => 'features VEGA_GENES_OTTER_CORF', 'glyphset' => 'vega_gene',
     'logic_name' => 'otter_corf', 'gene_col' => 'vega_gene', @_);
-
+  $self->add_new_track_gene( 'vega_igsf_gene', 'IgSF Genes', 'vega_gene', $POS++,
+    'available' => 'features VEGA_GENES_OTTER_IGSF', 'glyphset' => 'vega_gene',
+    'logic_name' => 'otter_igsf', 'gene_col' => 'vega_gene', @_);
   $self->add_new_track_gene( 'ciona_dbest_ncbi', "3/5' EST genes (dbEST)", 'estgene', $POS++, 'on' => 'off', 
                              'gene_label' => sub { return $_[0]->stable_id }, 'gene_col' => sub { return $_[0]->biotype }, @_ );
   $self->add_new_track_gene( 'targettedgenewise', "Targetted genewise", 'prot_gene', $POS++, 'available' => 'features TargettedGenewise', 'logic_name' => 'TargettedGenewise', 'gene_col' => '_col', @_ );
@@ -1399,7 +1403,9 @@ sub ADD_AS_GENE_TRACKS {
     $self->add_new_track_gene( 'vega_corf_gene', 'CORF Genes', 'vega_gene', $POS++,
 	'available' => 'features VEGA_GENES_OTTER_CORF', 'glyphset' => 'vega_gene',
 	'logic_name' => 'otter_corf', 'gene_col' => 'vega_gene', @_);
-
+    $self->add_new_track_gene( 'vega_igsf_gene', 'IgSF Genes', 'vega_gene', $POS++,
+	'available' => 'features VEGA_GENES_OTTER_IGSF', 'glyphset' => 'vega_gene',
+	'logic_name' => 'otter_igsf', 'gene_col' => 'vega_gene', @_);
     return $POS;
 }
 
