@@ -30,9 +30,9 @@ sub features {
     foreach my $segment (@{ $slice->project('clone') }){
         my $clone = $segment->to_Slice->seq_region_name;
         my ($clone_name) = split(/\./, $clone);
-        push(@clones, $clone_name);
+        push(@clones, {segment=>$clone_name,
+					   type   => 'clone'});
     }
-
     # get DAS source config for this track
     my $species_defs    = $self->species_defs();
     my $source          = $self->my_config('dsn');
@@ -48,7 +48,7 @@ sub features {
     # called whenever the DAS XML parser finds a feature
     my $feature_callback =  sub {
         my $f = shift;
-        $SEGMENTS{join(".", $f->{'segment_id'},$f->{'segment_version'})}++;
+      $SEGMENTS{$f->{'feature_id'}}++;
     };
 
     # create a new DAS adaptor
@@ -68,11 +68,11 @@ sub features {
     my $dbh = $adaptor->_db_handle();
     my $response;
 
-#	warn "clones:" , join "\n", @clones;
     # DAS fetches happen here
     $response = $dbh->features(\@clones,$feature_callback);
 
     my $res = [];
+
     foreach my $seg (keys %SEGMENTS){
         my ($seg_name, $seg_version) = split(/\./, $seg);
         foreach my $p (@{ $slice->project('clone') }) {
@@ -85,8 +85,7 @@ sub features {
                     -end            => $p->from_end,
                     -strand         => $clone_slice->strand,
                 );
-
-                # remember if the Vega clone version is newer/older/same as e!
+                # remember if the e! clone version is newer/older/same as Vega
                 # clone
                 if ($seg_version > $version) {
                     $f->{'status'} = 'newer';
