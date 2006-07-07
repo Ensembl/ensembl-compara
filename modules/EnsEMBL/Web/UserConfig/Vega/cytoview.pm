@@ -19,6 +19,7 @@ sub init {
         gene_legend
         marker
 		encode
+		alternative_assembly
         ntcontigs
         cloneset
         bac_map
@@ -60,10 +61,12 @@ sub init {
       'navigation_options' => [ '2mb', '1mb', 'window', 'half', 'zoom' ],
       'features' => [
         [ 'marker'       =>  'Markers'      ],
-        [ 'qtl'          =>  'QTLs'        ], 
+        [ 'qtl'          =>  'QTLs'        ],
+        [ 'alternative_assembly'     => 'Ensembl assembly' ],
       ],
       'options' => [
   		[ 'encode'              => 'Encode regions' ],
+        [ 'assemblyexception' => 'Assembly exceptions' ],
         [ 'bac_map'     => 'BAC map' 		],
         [ 'nod_bacs'    => 'Nod BACs'       ],
         [ 'bac_bands'     => 'Band BACs'       ],
@@ -147,6 +150,16 @@ sub init {
       'dep' => '9999',
       'threshold_navigation' => '10000000',
       'available' => 'features mapset_encode'
+    },
+
+    'alternative_assembly' => {
+        'on'      => "off",
+        'pos'       => '6',
+        'dep'       => '6',
+        'str'       => 'b',
+        'other'     => 'Ensembl',
+        'col'       => 'chartreuse3',
+        'available' => 'features alternative_assembly',
     },
 
     'nod_bacs' => {

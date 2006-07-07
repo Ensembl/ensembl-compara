@@ -226,7 +226,10 @@ sub select {
 sub _story_select {
   my $object = shift;
 
-  my @items = @{$object->items}; 
+  my @sp_items = @{$object->species_items}; 
+  my @gen_items = @{$object->generic_items}; 
+  my @items = (@sp_items, @gen_items); 
+  @items = @{ $object->sort_items(\@items) }; 
   my %all_spp = %{$object->all_spp};
   my @all_rels = @{$object->releases};
   my @item_values;
