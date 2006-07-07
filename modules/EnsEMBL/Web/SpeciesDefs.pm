@@ -634,9 +634,10 @@ sub _parse {
         if( $SiteDefs::ENSEMBL_SITETYPE eq 'Vega' ) {
 ## add list of self compared species and genomic analyses for vega self compara.
           $q = "select ml.type, gd.name, gd.name, count(*) as count
-                  from method_link_species_set as mls, method_link as ml, genome_db as gd 
-                 where mls.genome_db_id = gd.genome_db_id and 
-                       mls.method_link_id = ml.method_link_id
+                  from method_link_species_set as mls, method_link as ml, species_set as ss, genome_db as gd 
+                 where mls.species_set_id = ss.species_set_id
+                   and ss.genome_db_id = gd.genome_db_id 
+                   and mls.method_link_id = ml.method_link_id
                  group by mls.method_link_species_set_id, mls.method_link_id
                 having count = 1";
           $sth = $dbh->prepare( $q );
@@ -714,6 +715,7 @@ sub _parse {
       delete $tree->{'general'};
       $CONF->{'_multi'} = $tree;
       $CONF->{'_storage'}{'Multi'} = $tree;
+#	  warn(Dumper($tree->{VEGA_BLASTZ_CONF}));
 #      warn(Dumper($CONF->{_multi}->{'ALIGNMENTS'}));
       next;
     }
