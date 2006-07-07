@@ -59,7 +59,9 @@ function check( type, element, req ) {
 function on_load( list ) {
   for( e in list ) {
     el = list[e];
-    check( el.type, document.forms[el.form].elements[el.element], el.req )
+    if( document.forms[el.form] ) {
+      check( el.type, document.forms[el.form].elements[el.element],el.req)
+    }
   }
 }
 
