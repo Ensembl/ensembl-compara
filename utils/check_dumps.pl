@@ -37,6 +37,7 @@ my $warn;
 my $size;
 my $mysql_dir;
 my $logfile;
+my $skip;
 
 &GetOptions(
             'species:s'     => \@SPECIES,
@@ -47,6 +48,7 @@ my $logfile;
 	    'mysql_dir:s'   => \$mysql_dir,
             'help'          => \$help,
             'info'          => \$info,
+            'skip:s'        => \$skip,
             'size'          => \$size,
 	    'warn'          => \$warn,
             'logfile:s'     => \$logfile,
@@ -89,13 +91,7 @@ while (defined(my $file = readdir(DUMP_DIR))) {
 close DUMP_DIR;
 
 
-# Sort out species ------------------------------------------------------------
-if (@SPECIES) {  @SPECIES = @{ utils::Tool::check_species(\@SPECIES) };  }
-else {  @SPECIES = @{ utils::Tool::all_species()};  }
-info(1, "Checking these species:\n".join "\n", @SPECIES);
-
-
-# Check each species ---------------------------------------------------------
+# Check release  ---------------------------------------------------------
 my $sitedefs_release =  $SiteDefs::ENSEMBL_VERSION;
 if ($sitedefs_release ne $release) {
  die "[*DIE] Ensembl release version requested is $release but site defs is configured to use $sitedefs_release";
@@ -116,7 +112,18 @@ $mysql_db{"ensembl_web_user_db_$release"} = 1;
 $mysql_db{"ensembl_website_$release"} = 1;
 
 
-foreach my $species (@SPECIES) {
+# Sort out species ------------------------------------------------------------
+if (@SPECIES) {  @SPECIES = @{ utils::Tool::check_species(\@SPECIES) };  }
+else {  @SPECIES = @{ utils::Tool::all_species()};  }
+info(1, "Checking these species:\n".join "\n", @SPECIES) unless $skip;
+
+
+
+foreach my $species (sort @SPECIES) {
+  if ($skip) {
+    next unless $species =~ /^$skip/i;
+    $skip = 0;
+  }
   info (1, "Species: $species");
 
   my $ok_dirs;
@@ -672,6 +679,10 @@ B<--warn>
 B<--size>
   Optional: Print out of how much size (in Gigabytes) the fasta, mysql and flatfiles use
   DEFAULT: No size evaluation
+
+B<--skip>
+  Optional: A letter
+  Skips all species before this letter in the alphabet.
 
 
 =head1 DESCRIPTION

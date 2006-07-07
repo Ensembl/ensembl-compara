@@ -35,15 +35,16 @@ use utils::Tool;
 our $DUMPDIR;
 our $NODATA;
 
-my $nocompress;
+my $no_compress;
 my $no_log;
+my $no_indexes;
 my $logfile;
 my $help;
 my $info;
 my @SPECIES;
 my @DATABASES;
 my @TYPES;
-my $release;
+our $release;
 my $email;
 my $minimise_memory;
 
@@ -53,7 +54,8 @@ my $minimise_memory;
 	    'type:s'     => \@TYPES,
 	    'release:s'  => \$release,
 	    'dumpdir:s'  => \$DUMPDIR,
-	    'nocompress' => \$nocompress,
+	    'no_compress' => \$no_compress,
+            'no_indexes' => \$no_indexes,
 	    'no_log'     => \$no_log,
 	    'logfile:s'  => \$logfile,
 	    'help'       => \$help,
@@ -133,9 +135,14 @@ for my $sp( sort @SPECIES ){  # users selected spp
 						     $sp_folder,
 						     $types,  $db_adaptor);
 
-    # Do dumps, then compress
+    # Do dumps
     my $created_files = get_data($db_adaptor, $sp, $fhs, $chr_toplevel);
-    compress( $created_files ) unless $nocompress;
+  
+    # Make blast indexes and copy to blastsrv machine $BLASTSRV
+    blast_indexes( $created_files ) unless $no_indexes;
+
+    # Compress (gzip files)
+    compress( $created_files ) unless $no_compress;
   }
 }
 
@@ -551,7 +558,6 @@ sub dump_pep {
     warning( 1, "Transcript ".$transcript->stable_id." does not translate" );
     return;
   }
-
   my $coord_system = $transcript->slice->coord_system;
   my $location = join( ':', 
                        $coord_system->name,
@@ -626,6 +632,36 @@ sub dump_dna_masked{
 }
 
 #------------------------------------------------------------------------------
+sub blast_indexes {
+  my $created_files = shift;
+  info (1, "Creating blast indexes");
+  
+  my $dna_command = "/usr/local/pubseq/bin/pressdb";
+  my $pep_command = "/usr/local/pubseq/bin/setdb";
+  my $machine = "blastsrv11";
+  my $release_dir = "release$release";
+  
+  foreach my $types (keys %$created_files) {
+     next unless $types =~ /^dna_seqlevel|^cdna|^pep|^ncrna/;
+     my $seqio = $created_files->{$types};
+     next unless $seqio;
+     my $fh = $seqio->file;
+     $fh =~ s/^>//;
+     my $command = $types=~/^pep/ ? $pep_command : $dna_command;
+     system("$pep_command $fh");
+
+     foreach my $index (".atb", ".ahd", ".bsq", "" ) {
+        my $file = "$fh$index";
+        (my $file_name = $file) =~ s#.*/##;
+        warning(1, "Error producing file $file") && next unless -s "$file";
+        system("scp -i /nfs/WWW/.ssh/blastsrv $file $machine:/data/blastdb/ensembl/$release_dir/$file_name");
+        unlink($file) || warn "Can't delete $file: $!" unless $file eq $fh;
+     }
+  }
+
+}
+#-----------------------------------------------------------------------------
+
 sub compress{
   my $created_files = shift;
   info( 1, "Gzipping fasta files");
@@ -1004,7 +1040,7 @@ Example of an Ensembl cDNA header:
 
 
 
-rna => "
+ncrna => "
 ##################
 Fasta RNA dumps
 #################
@@ -1059,7 +1095,6 @@ EnsMart data mining tools. See http://www.ensembl.org/multi/martview or
 http://www.ebi.ac.uk/biomart/ for more information.
 
 ";
-
 return ($warning .$text{$key});
 }
 
@@ -1095,7 +1130,7 @@ sub mask_sequence {
   while ($chunk_start <= $slice->end) {
     my $chunk_slice_name = $slice->coord_system->name . ":" .$slice->coord_system->version . ":" .$slice->seq_region_name . ":" . $chunk_start . ":" . $chunk_end . ":1";
 
-    print STDERR " Chunk slice name = $chunk_slice_name\n";
+    #print STDERR " Chunk slice name = $chunk_slice_name\n";
 
     my $chunk_slice = $slice->adaptor->fetch_by_name($chunk_slice_name);
     
@@ -1120,7 +1155,6 @@ sub mask_sequence {
     }
   }
 
- warn "returning seq"; 
  # if (CORE::length($slice_seq) != $slice->length) {
  #   print STDERR "Length difference for slice sequence\n";
  # }
@@ -1193,8 +1227,11 @@ B<-d, --database>
   One or more databases to dump (ENSEMBL_DB, ENSEMBL_VEGA etc.). 
   Defaults to ENSEMBL_DB.
 
-B<--nocompress>
+B<--no_compress>
   Specify no gzip compression of dumped files.
+
+B<--no_indexes>
+  Turns off generation of blast database index files
 
 B<--minimise_memory>
   Reduces the memory usage but the dump time will increase.
@@ -1216,15 +1253,15 @@ B<  [INFO]>: Non-critical message, dumping should continue as normal.
 
 More on --type: Valid options are:
 
-B<  all:> dna_all, cdna_all, pep_all and rna_all
+B<  all:> dna, cdna, pep and rna
 
-B<  rna_all>; DNA sequences that give non-coding RNA (ncRNA) in the specified DB.
+B<  rna>; DNA sequences that give non-coding RNA (ncRNA) in the specified DB.
 
-B<  blast_all>; dna_seqlevel, dna_seqlevel_masked, cdna_all, rna_all and pep_all
+B<  blast>; dna_seqlevel, dna_seqlevel_masked, cdna_all, rna_all and pep_all
 
 B<  pre>; dna_toplevel, dna_seqlevel, dna_seqlevel_masked, cdna_all, rna_all and pep_all
 
-B<  dna_all:> dna_seqlevel, dna_seqlevel_masked, dna_toplevel and dna_toplevel__masked.
+B<  dna:> dna_seqlevel, dna_seqlevel_masked, dna_toplevel and dna_toplevel__masked.
 
 B<  dna_seqlevel:> All DNA sequences at the 'seqlevel' coordinate system.
 
@@ -1234,9 +1271,9 @@ B<  dna_toplevel:> All DNA sequences at the 'toplevel' coordinate system.
 
 B<  dna_toplevel_masked:> The above, but repeatmasked.
 
-B<  cdna_all>; cdna, cdna_known, cdna_novel, cdna_psuedogenes, cdna_abinitio.
+B<  cdna>; cdna, cdna_known, cdna_novel, cdna_psuedogenes, cdna_abinitio.
 
-B<  cdna>; cDNA sequences for Transcripts in the specified DB.
+B<  cdna_all>; All cDNA sequences for Transcripts in the specified DB.
 
 B<  cdna_known>; cDNA sequences for Transcripts flagged as 'known'.
 
@@ -1248,9 +1285,9 @@ B<  cdna_known-ccds>; known cDNA sequences for Transcripts with an xref of 'CCDS
 
 B<  cdna_abinitio>;  cDNA sequences for 'ab-initio' PredictionTranscripts.
 
-B<  pep_all>; pep_known, pep_novel and pep_abinitio
+B<  pep>; pep_known, pep_novel and pep_abinitio
 
-B<  pep>; Peptide sequences for Transcripts in the specified DB.
+B<  pep_all>; All Peptide sequences for Transcripts in the specified DB.
 
 B<  pep_known>; Peptide sequences for Transcripts flagged as 'known'.
 
