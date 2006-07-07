@@ -21,7 +21,8 @@ sub legend {
 }
 
 sub ens_ID {
-  return '';
+  my( $self, $g ) = @_;
+  return $g->stable_id();
 }
 
 sub gene_label {
