@@ -34,6 +34,7 @@ use utils::Tool;
 
 our $DUMPDIR;
 our $NODATA;
+our $MACHINE = "blastsrv11";
 
 my $no_compress;
 my $no_log;
@@ -109,6 +110,12 @@ if (@SPECIES) {
 else {
   @SPECIES = @{ utils::Tool::all_species()};
 }
+
+
+# Create directory for release
+system("ssh -i /nfs/WWW/.ssh/blastsrv $MACHINE mkdir /data/blastdb/ensembl/release$release");
+
+
 
 # For each species ----------------------------------------------------------
 for my $sp( sort @SPECIES ){  # users selected spp
@@ -646,7 +653,6 @@ sub blast_indexes {
   
   my $dna_command = "/usr/local/pubseq/bin/pressdb";
   my $pep_command = "/usr/local/pubseq/bin/setdb";
-  my $machine = "blastsrv11";
   my $release_dir = "release$release";
 
   my %configured;
@@ -660,9 +666,6 @@ sub blast_indexes {
     my $value = $_ =~ /^pep/ ?  2 : 3;
     warning(1, "Misconfiguration for $_ in $sp ini file") unless $configured{$_} == $value;
   }
-
-  # Create directory for release
-  system("ssh -i /nfs/WWW/.ssh/blastsrv $machine mkdir /data/blastdb/ensembl/$release_dir");
 
   foreach my $types (keys %$created_files) {
      next unless $types =~ /^dna_seqlevel|^cdna|^pep|^ncrna/;
@@ -680,17 +683,17 @@ sub blast_indexes {
         my $file = "$fh$index";
         (my $file_name = $file) =~ s#.*/##;
         warning(1, "Error producing file $file") && next unless -s "$file";
-        system("scp -i /nfs/WWW/.ssh/blastsrv $file $machine:/data/blastdb/ensembl/$release_dir/$file_name");
+        system("scp -i /nfs/WWW/.ssh/blastsrv $file $MACHINE:/data/blastdb/ensembl/$release_dir/$file_name");
         unlink($file) || warn "Can't delete $file: $!" unless $file eq $fh;
      }
 
      # Check ini file configuration
-     $types =~ s/latestgp/dna_seqlevel/;
+     $types =~ s/dna_seqlevel/latestgp/;
      if ($configured{$types}) {
        delete $configured{$types};
      }
      else {
-       warning(1, uc($types)." needs to be add to $sp ini file BLAST DATASOURCES");
+       warning(1, uc($types)." needs to be added to $sp ini file BLAST DATASOURCES");
      }
    }
 
