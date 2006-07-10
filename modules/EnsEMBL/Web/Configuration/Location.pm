@@ -164,7 +164,8 @@ sub export_step1 {
       'species',
       'href'=>'/',
       'text'=>$text,
-      'options'=>$spp_tree{$group}{'species'}
+      'options'=>$spp_tree{$group}{'species'},
+	  'code' => 'export_'.$group,
     );
   }
 }
