@@ -139,10 +139,14 @@ for my $sp( sort @SPECIES ){  # users selected spp
     my $created_files = get_data($db_adaptor, $sp, $fhs, $chr_toplevel);
   
     # Make blast indexes and copy to blastsrv machine $BLASTSRV
-    blast_indexes( $created_files ) unless $no_indexes;
+    blast_indexes( $created_files, $sp ) unless $no_indexes;
 
     # Compress (gzip files)
     compress( $created_files ) unless $no_compress;
+
+    # Empty vars
+    $created_files = undef;
+    $fhs = undef;
   }
 }
 
@@ -436,6 +440,7 @@ sub get_data {
     }
     #info( 1, "End toplevel ". $slice->name );
   }
+
   if($minimise_memory){
     my @gene_ids = @{$gene_adaptor->list_dbIDs()};
     info( 1, "dumping the data for ".scalar(@gene_ids)." genes" );
@@ -512,7 +517,9 @@ sub get_data {
       unlink $file || warn "Can't delete $file: $!";
       info(1, "Deleting empty file $file");
       undef( $fhs->{$type} );
+      next;
     }
+    $fhs->{$type}->close;
   }
   return ($fhs);
 }
@@ -634,22 +641,41 @@ sub dump_dna_masked{
 #------------------------------------------------------------------------------
 sub blast_indexes {
   my $created_files = shift;
+  my $sp = shift;
   info (1, "Creating blast indexes");
   
   my $dna_command = "/usr/local/pubseq/bin/pressdb";
   my $pep_command = "/usr/local/pubseq/bin/setdb";
   my $machine = "blastsrv11";
   my $release_dir = "release$release";
-  
+
+  my %configured;
+  foreach my $blast_datasources (qw(BLASTN_DATASOURCES TBLASTX_DATASOURCES TBLASTN_DATASOURCES BLASTP_DATASOURCES BLASTX_DATASOURCES )) {
+    my %ini_datasources = %{ $SPECIES_DEFS->get_config($sp, $blast_datasources)|| {} };
+    map { next if $_ eq 'DATASOURCE_TYPE'; $configured{lc($_)}++; } (keys %ini_datasources);
+  }
+
+  # Check the cdna/pep configuration is the same for each source
+  foreach (keys %configured) {
+    my $value = $_ =~ /^pep/ ?  2 : 3;
+    warning(1, "Misconfiguration for $_ in $sp ini file") unless $configured{$_} == $value;
+  }
+
+  # Create directory for release
+  system("ssh -i /nfs/WWW/.ssh/blastsrv $machine mkdir /data/blastdb/ensembl/$release_dir");
+
   foreach my $types (keys %$created_files) {
      next unless $types =~ /^dna_seqlevel|^cdna|^pep|^ncrna/;
      my $seqio = $created_files->{$types};
      next unless $seqio;
      my $fh = $seqio->file;
      $fh =~ s/^>//;
+
+     # Make blast indexes
      my $command = $types=~/^pep/ ? $pep_command : $dna_command;
      system("$pep_command $fh");
 
+     # Copy blast indexes across
      foreach my $index (".atb", ".ahd", ".bsq", "" ) {
         my $file = "$fh$index";
         (my $file_name = $file) =~ s#.*/##;
@@ -657,7 +683,21 @@ sub blast_indexes {
         system("scp -i /nfs/WWW/.ssh/blastsrv $file $machine:/data/blastdb/ensembl/$release_dir/$file_name");
         unlink($file) || warn "Can't delete $file: $!" unless $file eq $fh;
      }
-  }
+
+     # Check ini file configuration
+     $types =~ s/latestgp/dna_seqlevel/;
+     if ($configured{$types}) {
+       delete $configured{$types};
+     }
+     else {
+       warning(1, uc($types)." needs to be add to $sp ini file BLAST DATASOURCES");
+     }
+   }
+
+  # Check all configured are accounted for
+  warning(1, "These types need to be removed from $sp ini file: ". join ", ",(keys %configured) ) if keys %configured;
+
+  return;
 
 }
 #-----------------------------------------------------------------------------
