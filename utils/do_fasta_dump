@@ -95,7 +95,7 @@ unless ($no_log) {
 }
 
 # Validate DUMPDIR
-$DUMPDIR   ||= "/mysql/dumps/FTP";
+$DUMPDIR   ||= "/mysql/dumps/release-$release";
 utils::Tool::check_dir($DUMPDIR);
 
 my %db_names = ( 'ENSEMBL_DB'      => 'core',
@@ -113,8 +113,12 @@ else {
 
 
 # Create directory for release
-system("ssh -i /nfs/WWW/.ssh/blastsrv $MACHINE mkdir /data/blastdb/ensembl/release$release");
-
+eval{
+  system("ssh -i /nfs/WWW/.ssh/blastsrv $MACHINE mkdir -p /data/blastdb/ensembl/release-$release");
+};
+if ($@) {
+  warning(1, "$@") unless $@ =~ /File exists/;
+}
 
 
 # For each species ----------------------------------------------------------
@@ -446,6 +450,7 @@ sub get_data {
       }
     }
     #info( 1, "End toplevel ". $slice->name );
+    last;
   }
 
   if($minimise_memory){
@@ -653,12 +658,12 @@ sub blast_indexes {
   
   my $dna_command = "/usr/local/pubseq/bin/pressdb";
   my $pep_command = "/usr/local/pubseq/bin/setdb";
-  my $release_dir = "release$release";
+  my $release_dir = "release-$release";
 
   my %configured;
   foreach my $blast_datasources (qw(BLASTN_DATASOURCES TBLASTX_DATASOURCES TBLASTN_DATASOURCES BLASTP_DATASOURCES BLASTX_DATASOURCES )) {
     my %ini_datasources = %{ $SPECIES_DEFS->get_config($sp, $blast_datasources)|| {} };
-    map { next if $_ eq 'DATASOURCE_TYPE'; $configured{lc($_)}++; } (keys %ini_datasources);
+    map { $configured{lc($_)}++ unless $_ eq 'DATASOURCE_TYPE' } (keys %ini_datasources);
   }
 
   # Check the cdna/pep configuration is the same for each source
@@ -1255,7 +1260,7 @@ B<-v,--verbose>
   Set verbosity level for debug output to stdout or no_log. Default 1
 
 B<--dumpdir>
-  Specifies directory to dump into (def /mysql/dumps/FTP)
+  Specifies directory to dump into (def /mysql/dumps/release-XX)
 
 b<--logfile>
   Choose the name of your logfile. The default is "fasta<release_number>timestamp.log".

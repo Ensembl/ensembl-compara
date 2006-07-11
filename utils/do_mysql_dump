@@ -80,13 +80,13 @@ my %web_userdb = (
 
 
 # Sort out dumpdir ----------------------------------------------------------
-$dumpdir ||= "/mysql/dumps/FTP";  #should be cluster CDSL "/mysqld/current/var"
+my $sitedefs_release =  $SiteDefs::ENSEMBL_VERSION;
+$dumpdir ||= "/mysql/dumps/release-$sitedefs_release";  #should be cluster CDSL "/mysqld/current/var"
 info(1, "Dumping data to $dumpdir" );
 if( $dumpdir !~/^\// ){
   pod2usage("[*DIE] Must provide the full path to dumpdir: $dumpdir" ) 
 }
 
-my $sitedefs_release =  $SiteDefs::ENSEMBL_VERSION;
 
 # Check species -------------------------------------------------------------
 if ( @SPECIES ) {

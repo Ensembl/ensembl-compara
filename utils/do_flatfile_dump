@@ -60,7 +60,6 @@ else {
 }
 my $time1 = time;
 @user_formats = qw(embl genbank) if (!$user_formats[0]);
-$dumpdir ||= "/mysql/dumps/FTP";
 $VERBOSITY ||= 2;
 require SiteDefs;
 require EnsEMBL::Web::SpeciesDefs;
@@ -69,6 +68,7 @@ require EnsEMBL::Web::DBSQL::DBConnection;
 
 my $SPECIES_DEFS = EnsEMBL::Web::SpeciesDefs->new();
 my $dbconnection = EnsEMBL::Web::DBSQL::DBConnection->new(undef, $SPECIES_DEFS);
+our $sitedefs_release =  $SiteDefs::ENSEMBL_VERSION;
 
 unless ($no_log) {
   (my $time = gmtime(time)) =~ s/\s+/\./g;
@@ -76,6 +76,8 @@ unless ($no_log) {
   print STDERR "Using logfile $logfile\n";
   open(STDERR, "> $logfile") || die "Can't create file:$!\n";
 }
+
+$dumpdir ||= "/mysql/dumps/release-$sitedefs_release";
 
 foreach my $spp (@species){
   $ENV{'ENSEMBL_SPECIES'} = $spp;
@@ -155,7 +157,6 @@ sub setup_directories {
   $sp_release =~ s/\.//g;
 
   my %formats_dir;
-  my $sitedefs_release =  $SiteDefs::ENSEMBL_VERSION;
 
   foreach my $format (@$user_formats){
     unless (lc($format) eq "embl" || lc($format) eq "genbank"){
