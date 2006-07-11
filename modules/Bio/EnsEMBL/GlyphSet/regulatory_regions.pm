@@ -51,7 +51,7 @@ sub zmenu {
     my $feature_link;
     if ($analysis =~ /cisred/i ) {
       $name =~/\D+(\d+)/;
-      $feature_link = "http://www.cisred.org/human2/siteseq?fid=$1";
+      $feature_link = "http://www.cisred.org/human8/siteseq?fid=$1";
       $name .= "  [CisRed]";
     }
     elsif ($analysis eq "tiffin") {
@@ -74,7 +74,7 @@ sub zmenu {
       $return->{"03:Associated gene: $stable_id"} = "geneview?gene=$stable_id";
 
       if ($analysis) {
-	my $cisred = $analysis =~/cisred/i ? "http://www.cisred.org/human2/gene_view?ensembl_id=$stable_id" : "";
+	my $cisred = $analysis =~/cisred/i ? "http://www.cisred.org/human8/gene_view?ensembl_id=$stable_id" : "";
 	$return->{"04:Analysis: $analysis"} = "$cisred";
       }
     }
