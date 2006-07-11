@@ -21,13 +21,17 @@ sub init_label {
   return unless $self->{'config'}->get('scalebar','label') eq 'on';
   return if $self->strand < 0 ;
   my $type = $self->{'container'}->coord_system->name();
-  my $chr = $self->{'container'}->seq_region_name(); 
+  my $chr = $self->{'container'}->seq_region_name();
+  my $chr_raw = $chr;
   unless( $chr =~ /^$type/i ) {
     $type = $SHORT{lc($type)} || ucfirst( $type );
     $chr = "$type $chr";
   }
   if( $self->{'config'}->{'compara'} ) {
-    $chr = join( '', map { substr($_,0,1) } split( /_/, $self->{'config'}->{'species'}),'.')." $chr";
+	  if( length($chr) > 9 ) { 
+		$chr = $chr_raw;
+	  }
+    $chr = join( '', map { substr($_,0,1) } split( /_/, $self->{'config'}->{'species'}))." $chr";
     my $line = new Sanger::Graphics::Glyph::Rect({
       'z' => 11,
       'x' => -120,
