@@ -71,6 +71,7 @@ sub _init {
       my $end        = $segment->from_end;
       my $ctg_slice  = $segment->to_Slice;
       my $ORI        = $ctg_slice->strand;
+#warn $ctg_slice->seq_region_name,' ... ', $ctg_slice->coord_system->name, ' ... ';
       my $feature = { 'start' => $start, 'end' => $end, 'name' => $ctg_slice->seq_region_name };
 
       $feature->{'locations'}{ $ctg_slice->coord_system->name } = [ $ctg_slice->seq_region_name, $ctg_slice->start, $ctg_slice->end, $ctg_slice->strand  ];
@@ -218,7 +219,14 @@ sub _init_non_assembled_contig {
         if( my $Q = $tile->{'locations'}->{$_} ) {
           my $name =$Q->[0];
           my $full_name = $name;
-	  $name =~ s/\.\d+$// if $_ eq 'clone';
+		  $name =~ s/\.\d+$// if $_ eq 'clone';
+          $label ||= $tile->{'locations'}->{$_}->[0];
+          my $species_sr7= $Config->species_defs->SPECIES_COMMON_NAME;
+          if($species_sr7 eq 'Zebrafish'){
+            if($label=~/(.+\.\d+)\.\d+\.\d+/){
+              $label= $1;
+            }
+          }
           (my $T=ucfirst($_))=~s/contig/Contig/g;
           $glyph->{'zmenu'}{"$POS:$T $name"} ='' unless $_ eq 'contig';
           $POS++;
