@@ -35,12 +35,14 @@ sub features {
 
     
     my $feature_template = qq{
-<FEATURE id="%s">
+<FEATURE id="%s" %s>
   <START>%d</START>
   <END>%d</END>
   <TYPE id="%s">%s</TYPE>
   <METHOD id="%s">%s</METHOD>
   <ORIENTATION>%s</ORIENTATION>
+  %s
+  %s
   %s
 </FEATURE>
 };
@@ -74,7 +76,7 @@ sub features {
 
 	    if (my @groups = @{$feature->{'GROUP'} || []}) {
 		foreach my $g (@groups) {
-		    my $tag = sprintf(qq{<GROUP id="%s" type="%s" label="%s">}, $g->{'ID'}, $g->{'TYPE'}, $g->{'LABEL'} || '');
+		    my $tag = sprintf(qq{<GROUP id="%s" %s %s>}, $g->{'ID'}, $g->{'TYPE'} ? qq{type="$g->{'TYPE'}"} : '', $g->{'LABEL'} ? qq{label="$g->{'LABEL'}"} : '');
 
 		    if ( my @links = @{$g->{'LINK'} || []}) {
 			foreach my $l (@links) {
@@ -93,8 +95,25 @@ sub features {
 
 	    }
 
+
+	    my $link_tag = '';
+	    if ( my @links = @{$feature->{'LINK'} || []}) {
+		foreach my $l (@links) {
+		    $link_tag .= sprintf($link_template, $l->{href}, $l->{text} || $l->{href});
+		}
+	    }
+
+	    my $note_tag = '';
+	    if ( my @notes = @{$feature->{'NOTE'} || []}) {
+		foreach my $n (@notes) {
+		    $note_tag .= sprintf($note_template, $n);
+		}
+	    }
+
+
 	    $panel->print( sprintf ($feature_template, 
-				    $feature->{'ID'} || '',
+				    $feature->{'ID'} || '', 
+				    $feature->{'LABEL'} ? qq{ label="$feature->{'LABEL'}"} : '',
 				    $feature->{'START'} || '',
 				    $feature->{'END'} || '',
 				    $feature->{'TYPE'}|| '',
@@ -102,13 +121,22 @@ sub features {
 				    $feature->{'METHOD'} || '',
 				    $feature->{'METHOD'} || '',
 				    $feature->{'ORIENTATION'} || '',
-				    $group_tag
+				    $group_tag,
+				    $link_tag,
+				    $note_tag,
+
 				    ));
 	    
 	}
 	$panel->print ( qq{</SEGMENT>\n});
     }
     $panel->print(qq{</GFF>\n});
+}
+
+sub stylesheet {
+    my( $panel, $object ) = @_;
+
+    $panel->print($object->Stylesheet());
 }
 
 1;
