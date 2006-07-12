@@ -257,7 +257,7 @@ sub compact_init {
   my $CONTIGVIEW_TEXT_LINK =  $compara ? 'Jump to ContigView' : 'Centre on this match' ;
   my $MCV_TEMPLATE  = "/$short_self/multicontigview?c=%s:%d;w=%d;s1=$short_other;c1=%s:%d;w1=%d$COMPARA_HTML_EXTRA";
   
-  warn "!>>>>> $other_species $METHOD <<<<<";
+#  warn "!>>>>> $other_species $METHOD <<<<<";
   my @T = sort { $a->[0] <=> $b->[0] }
     map { [$_->start, $_ ] }
     grep { !( ($strand_flag eq 'b' && $strand != $_->hstrand) ||
@@ -371,8 +371,9 @@ sub features {
   (my $species_2 = $species) =~ s/_/ /; 
   my $assembly = $self->species_defs->other_species($species,'ENSEMBL_GOLDEN_PATH');
   my $START = time();
-  my $T = $self->{'container'}->get_all_compara_DnaAlignFeatures( $species_2, $assembly, $method );
-  warn "generic_alignment - $method $species ",time()-$START;
+  my $compara_db = $self->{'container'}->adaptor->db->get_db_adaptor('compara');
+  my $T = $self->{'container'}->get_all_compara_DnaAlignFeatures( $species_2, $assembly, $method, $compara_db );
+#  warn "generic_alignment - $method $species ",time()-$START;
   return $T;
 }
 

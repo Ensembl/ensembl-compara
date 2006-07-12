@@ -109,13 +109,16 @@ sub get_hap_alleles_and_orthologs_urls {
 	my @orth_details;
 	foreach my $other_species (keys %species_shown) {
 		next if ($this_species eq $other_species);
+		eval {
 		if (my @orthologs = $self->get_ortholog_gene_details($this_gene_id,$other_species)) {
 			foreach my $ortholog (@orthologs) {
-				#save details of orthologs on the slices shown onthe display
+				#save details of orthologs on the slices shown on the display
+			SLICE:
 				foreach my $t (@all_slices) {
-					next if ($this_species eq $t->{'real_species'});
-					if ( my $ortholog_slice = $t->{'slice'}{'adaptor'}->fetch_by_gene_stable_id($ortholog->[0]) ) {
-						push @orth_details, {
+					next SLICE if ($this_species eq $t->{'real_species'});
+						eval {
+							if ( my $ortholog_slice = $t->{'slice'}{'adaptor'}->fetch_by_gene_stable_id($ortholog->[0]) ) {
+								push @orth_details, {
 											 species          => $t->{'real_species'},
 											 slice_name       => $ortholog_slice->{'seq_region_name'},
 											 gene_start       => $ortholog_slice->{'start'},
@@ -123,14 +126,21 @@ sub get_hap_alleles_and_orthologs_urls {
 											 ortholog_id      => $ortholog->[0],
 											 ortholog_details => $ortholog->[1],
 											};
-					}
+							}
+					};
 				}
 			}
-		}		
+		}
+	}
 	}
 
 	#check each slice to:
 	#(i) get the context (needed so as to not change the size of the region displayed after navigation)
+#######
+
+	#this block of code adds an amount of  padding dependent on the size of the slice
+	#however not actually used since it probably leads to confusion and also fails with very small slices
+
 	#(ii) see if there's an ortholog on it, and if so add to the URL
 	my $context;
 	foreach my $slice (@all_slices) {
@@ -155,8 +165,12 @@ sub get_hap_alleles_and_orthologs_urls {
 			$no++;
 		}
 	}
-	#add the context argument to the URL if either orthologs or haplotype alleles have been found
-	$href .= ";context=$context" if ($href);
+	#add the context argument to the URL if either orthologs or haplotype alleles have been found	
+	#	$href .= ";context=$context" if ($href);
+######	
+
+	#instead just set the context to a straight 1000
+	$href .= ";context=1000" if ($href);
 	return $href;
 }
 
@@ -172,17 +186,19 @@ sub get_hap_alleles_and_orthologs_urls {
 
 sub get_ortholog_gene_details {
 	my( $self, $gene_id, $species ) = @_;
-	my $compara_db = $self->{'container'}->adaptor->db->get_db_adaptor('compara');
+	Bio::EnsEMBL::Registry->add_alias("Multi","compara");
+	my $compara_db = Bio::EnsEMBL::Registry->get_DBAdaptor("compara","compara");
 	my $ma         = $compara_db->get_MemberAdaptor;
-	my $qy_member = $ma->fetch_by_source_stable_id("ENSEMBLGENE",$gene_id);
+	my $qy_member  = $ma->fetch_by_source_stable_id("ENSEMBLGENE",$gene_id);
 	return () unless (defined $qy_member);
 	my $ha = $compara_db->get_HomologyAdaptor;
 	my @orthologs;
 	foreach my $homology (@{$ha->fetch_by_Member_paired_species($qy_member, $species)}){
 		foreach my $member_attribute (@{$homology->get_all_Member_Attribute}) {
 			my ($member, $attribute) = @{$member_attribute};
-			next if ($member->stable_id eq $qy_member->stable_id);
-			push @orthologs, [$member->stable_id,$attribute];
+			my $member_stable_id = $member->stable_id;
+			next if ($member_stable_id eq $qy_member->stable_id);
+			push @orthologs, [$member_stable_id,$attribute];
 		}
 	}
 	return @orthologs;
@@ -259,7 +275,7 @@ sub zmenu {
     my $pid = $translation->stable_id() if $translation;
     my $gid = $gene->stable_id();
     my $id   = $transcript->external_name() eq '' ? $tid : ( $transcript->external_db.": ".$transcript->external_name() );
-	my $type = $self->format_vega_name($gene,$transcript);
+	my $type = $self->format_vega_name($gene);
     my $zmenu = {
         'caption' 	    => $self->my_config('zmenu_caption'),
         "00:$id"	    => "",
@@ -327,7 +343,7 @@ sub text_label {
     my $Config = $self->{config};
     my $short_labels = $Config->get('_settings','opt_shortlabels');
     unless( $short_labels ){
-        my $type = $self->format_vega_name($gene,$transcript);
+        my $type = $self->format_vega_name($gene);
         $id .= " \n$type ";
     }
     return $id;
