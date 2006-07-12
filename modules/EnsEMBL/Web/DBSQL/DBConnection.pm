@@ -83,7 +83,7 @@ sub get_DBAdaptor {
     
     # try to retrieve the DBAdaptor from the Registry
     my $dba = $reg->get_DBAdaptor($species, $database);
-    warn "$species - $database - $dba";
+    #warn "$species - $database - $dba";
 
     # Glovar
     if(!defined($dba) || $database eq 'glovar'){
