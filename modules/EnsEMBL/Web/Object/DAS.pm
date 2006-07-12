@@ -39,4 +39,12 @@ sub GroupIDs {
   return $self->{'data'}{'_group_ids'};
 }
 
+sub Stylesheet {
+    my $self = shift;
+    return qq{
+<STYLESHEET version="1.0">
+</STYLESHEET>
+};
+}
+
 1;

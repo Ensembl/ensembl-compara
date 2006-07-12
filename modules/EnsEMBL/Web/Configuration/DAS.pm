@@ -4,6 +4,23 @@ use strict;
 use EnsEMBL::Web::Configuration;
 our @ISA = qw( EnsEMBL::Web::Configuration);
 
+sub stylesheet {
+    my $self = shift;
+
+    my $page = $self->{'page'};
+    $page->set_doc_type('XML', 'DASSTYLE');
+
+    my $component = "EnsEMBL::Web::Component::DAS::Annotation";
+
+    if( my $das_panel = $self->new_panel( '',
+					  'code' => 'das', 
+					  ) ) {
+	$das_panel->add_components("das_features", $component.'::stylesheet');
+	$self->add_panel( $das_panel );
+    }
+
+}
+
 sub features {
     my $self = shift;
 
