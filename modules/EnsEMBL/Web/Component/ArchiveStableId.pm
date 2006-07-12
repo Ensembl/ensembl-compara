@@ -107,6 +107,7 @@ sub status {
     if ($successors[0] && $successors[0]->stable_id eq $object->stable_id) {
       $verb = "but existed as";
     }
+
     my @successor_text = map {
       my $succ_id = $_->stable_id.".".$_->version;
       sprintf ($url, $succ_id, $succ_id).
@@ -146,7 +147,7 @@ sub archive {
 	foreach my $a ( @{ $history->{ $releases->[$i] } }  ) {
 	  my $history_id = $a->stable_id.".".$a->version;
 	  next unless $history_id eq $id;
-	  push @archive_releases,  $releases->[$i], $releases->[$i+1]+1;
+	  push @archive_releases,  $releases->[$i-1]-1, $releases->[$i];
 	  last;
 	}
       }
@@ -157,7 +158,12 @@ sub archive {
     my $archive_first = _archive_link($object, $id, $param, "Archive <img alt='link to archive version' src='/img/ensemblicon.gif'/>", $archive_releases[-1]) || " (no web archive)";
     my $archive_last = _archive_link($object, $id, $param, "Archive <img alt='link to archive version' src='/img/ensemblicon.gif'/>", $archive_releases[0]) || " (no web archive)";
 
-    $text = "$id was in release $archive_releases[-1] $archive_first to $archive_releases[0] $archive_last";
+    if ($archive_releases[0] eq $archive_releases[-1]) {
+      $text = "$id was in release $archive_releases[-1] $archive_first";
+    }
+    else {
+      $text = "$id was in release $archive_releases[-1] $archive_first to $archive_releases[0] $archive_last";
+    }
   }
     else {
       $text = "No archive available for $id";
@@ -278,15 +284,16 @@ sub history {
   my @releases = @$release_ref;
   for (my $i =0; $i <= $#releases; $i++) {
     my $row;
-    if ( $releases[$i]-$releases[$i+1] == 1) {
-      $row->{Release} = $releases[$i];
+    if ($i==0) {
+      my $end = $releases[$i]-$releases[$i+1] > 1 ? "-".$releases[$i+1] -1 : "";
+      $row->{Release} = $releases[$i].$end;
     }
-    elsif ($releases[$i] eq $releases[-1]) {
+    elsif ( $releases[$i-1]-$releases[$i] == 1) {
       $row->{Release} = $releases[$i];
     }
     else {
-      my $start = $releases[$i+1] +1;
-      $row->{Release} = "$start-$releases[$i]";
+      my $end = $releases[$i-1] -1;
+      $row->{Release} = "$releases[$i]-$end";
     }
 
     $row->{Database} = $history->{$releases[$i]}->[0]->db_name;
@@ -309,8 +316,9 @@ sub history {
       $columns{$a->stable_id}++;
 
       # Link to archive of first appearance
-      my $first = $releases[$i+1]+1;
-      $first = 26 if $first < 26 && $releases[$i] > $object->species_defs->EARLIEST_ARCHIVE;
+      my $first = $releases[$i];
+      my $earliest_archive =  $object->species_defs->EARLIEST_ARCHIVE;
+      $first =  $earliest_archive if $first <  $earliest_archive && $releases[$i-1]+1 > $earliest_archive;
 
       my $archive = _archive_link($object, $id, $param, "<img alt='link to archive version' src='/img/ensemblicon.gif'/>",  $first, $a->version );
       my $display_id = $id eq $id_focus ? "<b>$id</b>" : $id;
@@ -356,12 +364,12 @@ sub _archive_link {
   }
 
   $url .=  $ENV{'ENSEMBL_SPECIES'}."/";
-  my $view = ucfirst($type)."View";
+  my $view = $type."view";
   if ($type eq 'peptide') {
-    $view = 'Protview';
+    $view = 'protview';
   }
   elsif ($type eq 'transcript') {
-    $view = 'Transview';
+    $view = 'transview';
   }
 
   $id = qq(<a title="View in $site_type$view" href="$url$view?$type=$name">$id</a>);
