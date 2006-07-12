@@ -114,7 +114,7 @@ else {
 
 # Create directory for release
 eval{
-  system("ssh -i /nfs/WWW/.ssh/blastsrv $MACHINE mkdir -p /data/blastdb/ensembl/release-$release");
+  system("ssh -i /nfs/WWW/.ssh/blastsrv $MACHINE mkdir -p /data/blastdb/ensembl/release-$release") unless $no_indexes;
 };
 if ($@) {
   warning(1, "$@") unless $@ =~ /File exists/;
@@ -139,7 +139,7 @@ for my $sp( sort @SPECIES ){  # users selected spp
   foreach my $db( @DATABASES || "ENSEMBL_DB"){
     my $db_adaptor = $dbConnection->get_DBAdaptor( $db_names{$db} ) ||
       ( warning( 1, "DB $db is not valid for $sp" ) && next );
-    warning( 1, "Dumping @TYPES from \n$db $sp - $DUMPDIR" );
+    info( 2, "Dumping @TYPES from \n$db $sp - $DUMPDIR" );
 
     # Create directories and filehandles for dumps
     my ($chr_toplevel, $fhs) = create_dirs_for_dumps($sp, $SPECIES_DEFS, 
@@ -165,8 +165,8 @@ for my $sp( sort @SPECIES ){  # users selected spp
 # Work out timings -----------------------------------------------------------
 my $time_taken = time - $script_start_time;
 my $hours      = localtime($time_taken)->hour -1;
-warning (1, "Used $logfile.") if $logfile;
-warning (1, " Time taken: $hours:". localtime($time_taken)->min."mins");
+info (2, "Used $logfile.") if $logfile;
+info (2, " Time taken: $hours:". localtime($time_taken)->min."mins");
 close STDERR;
 
 my $pre_spp = $TYPES[0] eq 'blast_all' ? "This is a PRE species.\n" :"";
@@ -739,8 +739,13 @@ sub info{
   if( ! defined($msg) ){ $msg = $v; $v = 0 }
   $msg || ( carp("Need a warning message" ) && return );
 
-  warn( sprintf "[INFO] %s [%0.3fs]\n", $msg, time()- $script_start_time );
-  # warn( sprintf "[INFO] %s [%0.3fs %d]\n", $msg, time()- $script_start_time, &process_size );
+  if ($v > 1) {
+  warn( sprintf "[INFO_2] %s [%0.3fs]\n", $msg, time()- $script_start_time );
+  }
+  else {
+    warn( sprintf "[INFO] %s [%0.3fs]\n", $msg, time()- $script_start_time );
+    # warn( sprintf "[INFO] %s [%0.3fs %d]\n", $msg, time()- $script_start_time, &process_size );
+  }
   return 1;
 }
 
