@@ -1,0 +1,10 @@
+package das::stylesheet;
+
+use EnsEMBL::Web::Document::WebPage;
+
+
+EnsEMBL::Web::Document::WebPage::wrapper( "DAS", 
+					  'outputtype' => 'XML',
+					  );
+
+1;
