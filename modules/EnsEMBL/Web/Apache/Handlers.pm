@@ -307,24 +307,24 @@ sub transHandler {
       $r->subprocess_env->{'ENSEMBL_DAS_TYPE'}     = $type;
       $r->subprocess_env->{'ENSEMBL_DAS_SUBTYPE'}  = $subtype;
       $r->subprocess_env->{'ENSEMBL_SCRIPT'}  = $command;
+      my $error_filename = '';
+      foreach my $dir ( @PERL_TRANS_DIRS ) {
+        my $filename = sprintf( $dir, $species )."/das/$command";
+        my $t_error_filename = sprintf( $dir, $species )."/das/das_error";
+        $error_filename ||= $t_error_filename if -r $t_error_filename;
+        next unless -r $filename;
+        $r->filename( $filename );
+        $r->uri( "/perl/das/$DSN/$command" );
+        return OK;
+      }
+      if( -r $error_filename ) {
+        $r->subprocess_env->{'ENSEMBL_DAS_ERROR'}  = 'unknown-command';
+        $r->filename( $error_filename );
+        $r->uri( "/perl/das/$DSN/$command" );
+        return OK;
+      }
+      return DECLINED;
     }
-    my $error_filename = '';
-    foreach my $dir ( @PERL_TRANS_DIRS ) {
-      my $filename = sprintf( $dir, $species )."/das/$command";
-      my $t_error_filename = sprintf( $dir, $species )."/das/das_error";
-      $error_filename ||= $t_error_filename if -r $t_error_filename;
-      next unless -r $filename;
-      $r->filename( $filename );
-      $r->uri( "/perl/das/$DSN/$command" );
-      return OK;
-    }
-    if( -r $error_filename ) {
-      $r->subprocess_env->{'ENSEMBL_DAS_ERROR'}  = 'unknown-command';
-      $r->filename( $error_filename );
-      $r->uri( "/perl/das/$DSN/$command" );
-      return OK;
-    }
-    return DECLINED;
   } else {
   # DECLINE this request if we cant find a valid species
     if( $species && ($species = map_alias_to_species($species)) ) {
