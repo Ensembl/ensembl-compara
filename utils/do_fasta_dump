@@ -289,7 +289,9 @@ sub get_data {
   # Dump even non-reference region
   my $sliceAdaptor = $dbAdaptor->get_SliceAdaptor;
   my $gene_adaptor = $dbAdaptor->get_GeneAdaptor;
-  if(!defined($minimise_memory)){
+
+  # temporary hack for Mus and rat until the assembly mapping is fixed 
+  if(!defined($minimise_memory) && $species ne 'Mus_musculus' && species ne 'Rattus_norvegicus'){
     $sliceAdaptor->cache_toplevel_seq_mappings();
   }
   else{
