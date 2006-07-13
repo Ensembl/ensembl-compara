@@ -18,7 +18,7 @@ my $q = CGI->new();
 
 ( my $SPECIES   = $ENV{'ENSEMBL_SPECIES'} ) =~ s/_/ /g;
 
-my $source = "+Top/Source/" . $ENV{'ENSEMBL_EXALEAD_SITE_INDEX'};
+my $source = "+Top/Source/" . $page->{'species_defs'}->ENSEMBL_EXALEAD_SITE_INDEX;
 
 my $not_fresh = $q->param;
 if( $not_fresh ) {
