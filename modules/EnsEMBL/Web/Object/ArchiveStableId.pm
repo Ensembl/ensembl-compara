@@ -178,6 +178,23 @@ sub successors {
   return $self->Obj->get_all_successors;
 }
 
+
+=head2 successor_history
+
+ Arg1        : data object
+ Description : fetches successor history of core API object 
+ Return type : list ref of Archive ID objects
+
+=cut
+
+sub successor_history {
+  my $self = shift;
+  my $adaptor = $self->_adaptor;
+  return unless $adaptor;
+  return $adaptor->fetch_successor_history($self->Obj);
+}
+
+
 =head2 type
 
  Arg1        : data object

@@ -97,26 +97,43 @@ sub status {
 
   my $status;
   my $current_obj = $object->get_current_object($object->type);
+  my $current_release = $object->species_defs->ENSEMBL_VERSION;
 
 
   if (!$current_obj) {
     $status = "<b>This ID has been removed from Ensembl</b>";
-    my @successors = @{ $object->successors || []};
-    my $url = qq(<a href="idhistoryview?$param=%s">%s</a>);
-    my $verb = scalar @successors > 1 ? "and split into " : "and replaced by ";
-    if ($successors[0] && $successors[0]->stable_id eq $object->stable_id) {
-      $verb = "but existed as";
-    }
+    my @successors = reverse @{ $object->successor_history || []};
 
-    my @successor_text = map {
-      my $succ_id = $_->stable_id.".".$_->version;
-      sprintf ($url, $succ_id, $succ_id).
-	" in release ".$_->release; } @successors;
-    $status .= " <b>$verb</b><br />".
-      join " and <br />", @successor_text if @successors;
+    # Only display successors in current release
+    if (@successors) {
+      my $url = qq(<a href="idhistoryview?$param=%s">%s</a>);
+      my @successor_text;
+      my $most_recent = 0;
+
+      foreach my $id (@successors) {
+	last if $id->release < $most_recent;
+	$most_recent = $id->release;
+
+	my $succ_id = $id->stable_id.".".$id->version;
+	my $current = $id->release == $current_release ? " (current release)":"";
+	push @successor_text, sprintf ($url, $succ_id, $succ_id)." release ".$id->release.$current;
+      }
+
+      my $verb;
+      if ( scalar @successor_text > 1 ) {
+	$verb =  "and split into ";
+      }
+      elsif ( $successors[0]->stable_id eq $object->stable_id ) {
+	$verb = "but exists as";
+      }
+      else {
+	$verb = "and replaced by ";
+      }
+      $status .= " <b>$verb</b><br />".	join " and <br />", @successor_text if @successors;
+    }
   }
   elsif ($current_obj->version eq $object->version) {
-    $status = "Current release ".$object->species_defs->ENSEMBL_VERSION;
+    $status = "Current release $current_release";
     my $current_link = _archive_link($object, $id, $param, $id);
     $status .= " $current_link";
   }
@@ -147,24 +164,23 @@ sub archive {
 	foreach my $a ( @{ $history->{ $releases->[$i] } }  ) {
 	  my $history_id = $a->stable_id.".".$a->version;
 	  next unless $history_id eq $id;
-	  push @archive_releases,  $releases->[$i-1]-1, $releases->[$i];
+	  push @archive_releases,  $releases->[$i-1]-1 unless $i==0;
+	  push @archive_releases, $releases->[$i];
 	  last;
 	}
       }
     }
 
     my $text;
-    if (scalar @archive_releases > 1) {
-    my $archive_first = _archive_link($object, $id, $param, "Archive <img alt='link to archive version' src='/img/ensemblicon.gif'/>", $archive_releases[-1]) || " (no web archive)";
-    my $archive_last = _archive_link($object, $id, $param, "Archive <img alt='link to archive version' src='/img/ensemblicon.gif'/>", $archive_releases[0]) || " (no web archive)";
-
-    if ($archive_releases[0] eq $archive_releases[-1]) {
+    if (@archive_releases) {
+      my $archive_first = _archive_link($object, $id, $param, "Archive <img alt='link to archive version' src='/img/ensemblicon.gif'/>", $archive_releases[-1]) || " (no web archive)";
       $text = "$id was in release $archive_releases[-1] $archive_first";
+
+      unless ( $archive_releases[0] eq $archive_releases[-1] ) {
+	my $archive_last = _archive_link($object, $id, $param, " Archive <img alt='link to archive version' src='/img/ensemblicon.gif'/>", $archive_releases[0]) || " (no web archive)";
+	$text .= " to $archive_releases[0] $archive_last"
+      }
     }
-    else {
-      $text = "$id was in release $archive_releases[-1] $archive_first to $archive_releases[0] $archive_last";
-    }
-  }
     else {
       $text = "No archive available for $id";
     }
@@ -277,6 +293,7 @@ sub history {
   my $type = $object->type;
   my $param = $type eq 'Translation' ? "peptide" : lc($type);
   my $id_focus = $object->stable_id.".".$object->version;
+  my $current_release = $object->species_defs->ENSEMBL_VERSION;
 
 
   # loop over releases and print results
@@ -284,11 +301,7 @@ sub history {
   my @releases = @$release_ref;
   for (my $i =0; $i <= $#releases; $i++) {
     my $row;
-    if ($i==0) {
-      my $end = $releases[$i]-$releases[$i+1] > 1 ? "-".$releases[$i+1] -1 : "";
-      $row->{Release} = $releases[$i].$end;
-    }
-    elsif ( $releases[$i-1]-$releases[$i] == 1) {
+    if ( $i==0 or $releases[$i-1]-$releases[$i] == 1) {
       $row->{Release} = $releases[$i];
     }
     else {
@@ -307,6 +320,7 @@ sub history {
       }
     }
 
+    $row->{Release} .= $releases[$i] == $current_release ? " (current)" : "";
 
     # loop over archive ids
     foreach my $a (sort {$a->stable_id cmp $b->stable_id} @{ $history->{$releases[$i]} }) {
