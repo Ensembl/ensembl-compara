@@ -32,38 +32,43 @@ use utils::Tool;
 
 #$| = 1; # unbuffers STDOUT (issues print commands immediately)
 
-our $DUMPDIR;
-our $NODATA;
-our $MACHINE = "blastsrv11";
 
+our $MACHINE = "blastsrv11";
+our $no_data;
 my $no_compress;
 my $no_log;
 my $no_indexes;
-my $logfile;
-my $help;
-my $info;
-my @SPECIES;
-my @DATABASES;
+my $no_ssaha;
 my @TYPES;
 our $release;
+my @SPECIES;
+my @DATABASES;
+our $DUMPDIR;
+my $logfile;
 my $email;
 my $minimise_memory;
+my $help;
+my $info;
 
 &GetOptions(
-	    'species:s'  => \@SPECIES,
-	    'database:s' => \@DATABASES,
-	    'type:s'     => \@TYPES,
+	    'type:s'     => \@TYPES,          # obligatory
 	    'release:s'  => \$release,
+
+	    'species:s'  => \@SPECIES,        # optional
+	    'database:s' => \@DATABASES,
 	    'dumpdir:s'  => \$DUMPDIR,
+	    'logfile:s'  => \$logfile,
+	    'email:s'    => \$email,
+	    'minimise_memory' => \$minimise_memory,
+
 	    'no_compress' => \$no_compress,
             'no_indexes' => \$no_indexes,
 	    'no_log'     => \$no_log,
-	    'logfile:s'  => \$logfile,
-	    'help'       => \$help,
+            'no_ssaha'   => \$no_ssaha,
+	    'no_data'    => \$no_data,
+
+	    'help'       => \$help,           # info
 	    'info'       => \$info,
-	    'email:s'    => \$email,
-	    'no_data'    => \$NODATA,
-	    'minimise_memory' => \$minimise_memory,
 	   ) || pod2usage(2);
 
 pod2usage(-verbose => 2) if $info;
@@ -95,7 +100,8 @@ unless ($no_log) {
 }
 
 # Validate DUMPDIR
-$DUMPDIR   ||= "/mysql/dumps/release-$release";
+our $basedir = "/mysql/dumps/";
+$DUMPDIR   ||= $basedir."release-$release";
 utils::Tool::check_dir($DUMPDIR);
 
 my %db_names = ( 'ENSEMBL_DB'      => 'core',
@@ -151,6 +157,9 @@ for my $sp( sort @SPECIES ){  # users selected spp
   
     # Make blast indexes and copy to blastsrv machine $BLASTSRV
     blast_indexes( $created_files, $sp ) unless $no_indexes;
+
+    # Make ssaha servers
+    ssaha_servers( $created_files, $sp ) unless $no_ssaha;
 
     # Compress (gzip files)
     compress( $created_files ) unless $no_compress;
@@ -291,7 +300,7 @@ sub get_data {
   my $gene_adaptor = $dbAdaptor->get_GeneAdaptor;
 
   # temporary hack for Mus and rat until the assembly mapping is fixed 
-  if(!defined($minimise_memory) && $species ne 'Mus_musculus' && species ne 'Rattus_norvegicus'){
+  if(!defined($minimise_memory) && $species ne 'Mus_musculus' && $species ne 'Rattus_norvegicus'){
     $sliceAdaptor->cache_toplevel_seq_mappings();
   }
   else{
@@ -380,7 +389,7 @@ sub get_data {
 		}
 	      }
 	    }
-	    if( ( my $seqio = $fhs->{'cdna'} and $subtype ne 'ncrna') ) {
+	    if( ( my $seqio = $fhs->{'cdna_all'} and $subtype ne 'ncrna') ) {
 	      dump_cdna_rna( $seqio, $transcript, "cdna:$subtype", $gene, $ccds);
 	    }
 	    if( my $seqio = $fhs->{'cdna_known'} and $subtype eq 'known' ){
@@ -393,7 +402,7 @@ sub get_data {
 	    dump_cdna_rna( $seqio, $transcript, 'cdna:novel', $gene);
 	  }
 	    
-	    if( my $seqio = $fhs->{'pep'} and $subtype ne 'pseudogene'
+	    if( my $seqio = $fhs->{'pep_all'} and $subtype ne 'pseudogene'
 		and $subtype ne 'ncrna'){
 	      dump_pep( $seqio, $transcript, "pep:$subtype", $gene, $ccds);
 	    }
@@ -452,7 +461,6 @@ sub get_data {
       }
     }
     #info( 1, "End toplevel ". $slice->name );
-    last;
   }
 
   if($minimise_memory){
@@ -487,7 +495,7 @@ sub get_data {
 	    }
 	  }
 	}
-	if( ( my $seqio = $fhs->{'cdna'} and $subtype ne 'ncrna') ) {
+	if( ( my $seqio = $fhs->{'cdna_all'} and $subtype ne 'ncrna') ) {
 	  dump_cdna_rna( $seqio, $transcript, "cdna:$subtype", $gene, $ccds);
 	}
 	if( my $seqio = $fhs->{'cdna_known'} and $subtype eq 'known' ){
@@ -500,7 +508,7 @@ sub get_data {
 	  dump_cdna_rna( $seqio, $transcript, 'cdna:novel', $gene);
 	}
 	
-	if( my $seqio = $fhs->{'pep'} and $subtype ne 'pseudogene'
+	if( my $seqio = $fhs->{'pep_all'} and $subtype ne 'pseudogene'
 	    and $subtype ne 'ncrna'){
 	  dump_pep( $seqio, $transcript, "pep:$subtype", $gene, $ccds);
 	}
@@ -546,7 +554,7 @@ sub get_data {
 
 sub dump_cdna_rna {
   my( $seqio, $transcript, $type, $gene, $ccds_id) = @_;
-  return if $NODATA;
+  return if $no_data;
   $ccds_id ||= " ";
   my $coord_system = $transcript->slice->coord_system;
   my $location = join( ':', 
@@ -570,7 +578,7 @@ sub dump_cdna_rna {
 #>gene:ENSG00000158815:transcript:ENST00000328693
 sub dump_pep {
   my ($seqio, $transcript, $type, $gene, $ccds_id) = @_;
-  return if $NODATA;
+  return if $no_data;
   $ccds_id ||= " ";
   my $translation = $transcript->translation;
   if( ! $translation ){
@@ -608,7 +616,7 @@ sub dump_pep {
 #----------------------------------------------------------------------
 sub dump_dna{
   my ($seqio, $slice, $type_str, $location) = @_;
-  return if $NODATA;
+  return if $no_data;
 
   # Force slice onto forward strand
   if( $slice->strand < 1 ){ $slice = $slice->invert }
@@ -631,7 +639,7 @@ sub dump_dna{
 
 sub dump_dna_masked{
   my ($seqio, $slice, $seqstr, $type_str, $location) = @_;
-  return if $NODATA;
+  return if $no_data;
 
   # Force slice onto forward strand
   if( $slice->strand < 1 ){ $slice = $slice->invert }
@@ -711,8 +719,46 @@ sub blast_indexes {
 
 }
 #-----------------------------------------------------------------------------
+sub ssaha_servers {
+  my ($created_files, $species) = @_;
+  info( 1, "Creating ssaha server");
 
-sub compress{
+  # Prep directories
+  my $ssaha_dir = $DUMPDIR eq $basedir."release-$release" ? $basedir : $DUMPDIR; 
+  my $dna_dir = $ssaha_dir."/ssaha/dna/";
+  my $cdna_dir = $ssaha_dir."/ssaha/release-$release/";
+  utils::Tool::check_dir($cdna_dir);
+  utils::Tool::check_dir($dna_dir);
+
+  my $command = "ssaha2Build -save ";
+  my $assembly = $SPECIES_DEFS->get_config($species,"ENSEMBL_GOLDEN_PATH");
+
+  # cdna SSAHA (rebuilt each release)
+  my %ini_datasources = %{ $SPECIES_DEFS->get_config($species, "SSAHA2_DATASOURCES")|| {} };
+  (my $port = $ini_datasources{"CDNA_ALL"}) =~ s/\w.+:(\d+)/$1/;
+  #my $cdna_server = "$cdna_dir$species.$assembly.$release.cdna_all.$port";
+  my $cdna_server = "$cdna_dir$species.cdna.$port";
+  my $dna_server = "$dna_dir$species.$assembly.dna";  # only toplevel not rm
+
+  foreach my $types (keys %$created_files) {
+    next unless $types =~ /^dna_seqlevel$|cdna_all/;
+    my $seqio = $created_files->{$types};
+    next unless $seqio;
+    my $fh = $seqio->file;
+    $fh =~ s/^>//;
+
+   if ($types eq 'cdna_all') {
+     system("$command $cdna_server $fh");
+     next;
+   }
+   system("$command $dna_server $fh") unless -e $dna_server; # only when new assembly
+ }
+  return;
+}
+
+
+#-----------------------------------------------------------------------------
+sub compress {
   my $created_files = shift;
   info( 1, "Gzipping fasta files");
 
@@ -1233,7 +1279,7 @@ do_fasta_dumps - Dump Ensembl databases to text files and gzip them
 do_fasta_dumps [options]
 
 Options:
-  --help, --info, --verbose, --dumpdir, --no_log, --email
+  --help, --info, --verbose, --dumpdir, --no_log, --no_indexes --no_ssaha --email
   --species, --database, --type --no_data --logfile --minimise_memory 
 
 Example:
@@ -1287,6 +1333,9 @@ B<--no_compress>
 
 B<--no_indexes>
   Turns off generation of blast database index files
+
+B<--no_ssaha>
+  Turns off generation of ssaha server
 
 B<--minimise_memory>
   Reduces the memory usage but the dump time will increase.
