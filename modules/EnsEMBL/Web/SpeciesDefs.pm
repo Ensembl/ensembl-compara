@@ -1113,6 +1113,16 @@ sub db_connect {
       $dbh = DBI->connect(
         $dsn,$userstring,$dbpass, { 'RaiseError' => 1, 'PrintError' => 0 }
       ); 
+    } elsif ( $dbdriver eq "ODBC") {
+      $dsn = "DBI:$dbdriver:$dbname";
+      $dbh = DBI->connect(
+        $dsn, $dbuser, $dbpass,
+        {'LongTruncOk' => 1,
+         'LongReadLen' => 2**16 - 8,
+         'RaiseError' => 1,
+         'PrintError' => 0,
+         'odbc_cursortype' => 2}
+      );
     } else {
       print STDERR "\t  [WARN] Can't connect using unsupported DBI driver type: $dbdriver\n";
     }
