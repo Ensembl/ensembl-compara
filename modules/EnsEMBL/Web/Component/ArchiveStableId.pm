@@ -120,10 +120,7 @@ sub status {
       }
 
       my $verb;
-      if ( scalar @successor_text > 1 ) {
-	$verb =  "and split into ";
-      }
-      elsif ( $successors[0]->stable_id eq $object->stable_id ) {
+      if ( $successors[0]->stable_id eq $object->stable_id ) {
 	$verb = "but exists as";
       }
       else {
