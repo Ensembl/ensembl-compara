@@ -45,7 +45,7 @@ sub _init {
 
   # Data stuff
   my $colour_map = $Config->get('TSV_snps','colours' );
-  my $EXTENT        = $Config->get('_settings','context');
+  my $EXTENT        = $Config->get('_settings','context')|| 1e6;
      $EXTENT        = 1e6 if $EXTENT eq 'FULL';
   my $seq_region_name = $self->{'container'}->seq_region_name();
   my @consequences =  @$consequences_ref;
@@ -65,7 +65,6 @@ sub _init {
     next unless $conseq_type;
     next if $allele->end < $transcript->start - $EXTENT;
     next if $allele->start > $transcript->end + $EXTENT;
-
     if( $transcript->strand != $allele->strand ) {
       my $tmp = join "", @{$conseq_type->alleles};
       $tmp =~tr/ACGT/TGCA/;
