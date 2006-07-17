@@ -1261,7 +1261,7 @@ sub _sample_configs {
 
 sub tsv_extent {
   my $object = shift;
-  return $object->param( 'context' ) eq 'FULL' ? 1000 : $object->param( 'context' );
+  return $object->param( 'context' ) eq 'FULL' ? 10000 : $object->param( 'context' );
 }
 
 
@@ -1325,8 +1325,9 @@ sub spreadsheet_TSVtable {
     { 'key' => 'Status', 'title' => 'Validation',  },
 		     ) if %$snp_data;
   foreach my $snp_row (sort keys %$snp_data) {
-    my $row = $snp_data->{$snp_row}{$sample};
-    $panel->add_row( $row );
+    foreach my $row ( @{$snp_data->{$snp_row}{$sample} || [] } ) {
+      $panel->add_row( $row );
+    }
   }
   return 1;
 }
@@ -1441,7 +1442,7 @@ sub get_page_data {
 	$row->{'aachange'} = '-';
 	$row->{'aacoord'}  = '-';
       }
-      $snp_data{"$chr:$pos"}{$sample} = $row;
+      push @{$snp_data{"$chr:$pos"}{$sample}}, $row;
     }
   }
   return \%snp_data;
@@ -1550,21 +1551,24 @@ sub html_dump {
     push @background, $background;
     $panel->print(qq(<tr $background><td>$snp_pos</td>));
     foreach my $sample ( @samples ) {
-      my $row =  $snp_data->{$snp_pos}{$sample} ;
+      my @info;
+      my $style;
 
-      (my $type = $row->{consequence}) =~ s/\(Same As Ref. Assembly\)//;
-      if ($row->{ID}) {
-	my $style;
-	if ($row->{aachange} ne "-") {
-	  my $colour = $user_config->{'_colourmap'}->hex_by_name($colours{$type}[0]);
-	  $style = qq(style="background-color:#$colour");
+      foreach my $row ( @{$snp_data->{$snp_pos}{$sample} || [] } ) {
+	(my $type = $row->{consequence}) =~ s/\(Same As Ref. Assembly\)//;
+	if ($row->{ID}) {
+	  if ($row->{aachange} ne "-") {
+	    my $colour = $user_config->{'_colourmap'}->hex_by_name($colours{$type}[0]);
+	    $style = qq(style="background-color:#$colour");
+	  }
+	  push @info, "$row->{ID}; $type; $row->{aachange};";
 	}
-	my $info = "$row->{ID}; $type; $row->{aachange};";
-	$panel->print(qq(<td $style>$info</td>));
+	else {
+	  push @info, "<td>.</td>";
+	}
       }
-      else {
-	$panel->print(qq(<td>.</td>));
-      }
+      my $print = join "<br />", @info;
+      $panel->print("<td $style>$print</td>");
     }
     $panel->print("</tr>\n");
   }
@@ -1597,11 +1601,12 @@ sub text_dump {
   foreach my $snp_pos ( sort keys %$snp_data ) {
     $panel->print(qq($snp_pos\t));
     foreach my $sample ( @samples ) {
-      my $row =  $snp_data->{$snp_pos}{$sample} ;
-
-      (my $type = $row->{consequence}) =~ s/\(Same As Ref. Assembly\)//;;
-      my $info = $row->{ID} ? "$row->{ID}; $type; $row->{aachange};" : ".";
-      $panel->print(qq($info\t));
+      foreach my $row ( @{$snp_data->{$snp_pos}{$sample} || [] }) {
+	(my $type = $row->{consequence}) =~ s/\(Same As Ref. Assembly\)//;;
+	my $info = $row->{ID} ? "$row->{ID}; $type; $row->{aachange}; " : ".";
+	$panel->print(qq($info));
+      }
+      $panel->print("\t");
     }
     $panel->print("\n");
   }
