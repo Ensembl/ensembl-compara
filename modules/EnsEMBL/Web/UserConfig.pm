@@ -897,7 +897,6 @@ sub ADD_ALL_DNA_FEATURES {
   $self->add_new_track_cdna( 'mouse_cdna', 'Mouse cDNAs',   $POS++, @_ );
   $self->add_new_track_cdna( 'other_cdna', 'Other cDNAs',   $POS++, @_ );
   $self->add_new_track_cdna( 'opossum_cdna', 'Opossum cDNAs',   $POS++, @_ );
-  $self->add_new_track_cdna( 'stickleback_cdna', 'Stickleback cDNAs',   $POS++, @_ );
 ## now the tetraodon tracks...
   $self->add_new_track_cdna( 'cdm', 'Tetraodon cDNAs',   $POS++, 'SUBTYPE'     => 'genoscope', 'on' => 'off', @_ );
   $self->add_new_track_cdna( 'xlaevis_cDNA', 'X.laevis cDNAs',   $POS++, @_ );
@@ -928,7 +927,6 @@ sub ADD_ALL_EST_FEATURES {
   $self->add_new_track_est( 'yeast_est',  'Yeast ESTs',   $POS++, @_ );
   $self->add_new_track_est( 'human_est',    'Human ESTs',      $POS++, @_ );
   $self->add_new_track_est( 'mouse_est',    'Mouse ESTs',      $POS++, @_ );
-  $self->add_new_track_est( 'stickleback_est',    'Stickleback ESTs',      $POS++, @_ );
   $self->add_new_track_est( 'zfish_est',    'D.rerio ESTs',    $POS++, @_ );
   $self->add_new_track_est( 'Btaurus_Exonerate_EST',    'B.taurus ESTs',    $POS++, @_ );
   $self->add_new_track_est( 'Cow_ESTs',    'B.taurus ESTs',    $POS++, @_ );
@@ -974,6 +972,7 @@ sub ADD_ALL_EST_FEATURES {
     [ 'anopheles_cdna_est_all','RNA (ALL)' ],
     [ 'est_bestn_5prim',  "EST BestN 5'" ],
     [ 'est_bestn_3prim',  "EST Bestn 3'" ],
+    [ 'stickleback_est',   "Stickleback ESTs" ],
     [ 'cint_cdna',        'Ciona EST' ],
   );
   my @EST_DB_CDNA = (
@@ -986,6 +985,7 @@ sub ADD_ALL_EST_FEATURES {
     [ 'kyotograil_2004',  "Kyotograil '04" ],
     [ 'kyotograil_2005',  "Kyotograil '05" ],
     [ 'sheep_bac_ends',   "Sheep BAC ends" ],
+    [ 'stickleback_cdna',   "Stickleback cDNAs" ],
   );
   foreach ( @EST_DB_ESTS ) {
     my($A,$B,@T) = @$_;
