@@ -97,11 +97,12 @@ sub _init {
     my $tmp_width = ($w*2+$res[2])/$pix_per_bp;
     my $two = $tmp_width;
        $tmp_width =  $end-$start+1 if  $end-$start+1 < $tmp_width;
-    warn "$end - $start - $tmp_width - $two";
+    #warn "$end - $start - $tmp_width - $two";
     push @widths, $tmp_width;
 
     my ($golden_path_base) = split "\/", $label;
-    my ($reference_base, $colour);
+    my $reference_base;
+    my $colour = "white";
 
     if ($reference_name eq $golden_path) {
       $reference_base = $golden_path_base;
@@ -121,6 +122,7 @@ sub _init {
 	}
       }
       my $golden_colour = undef;
+
       if ($reference_base) {
 	$golden_colour = $golden_path_base eq $reference_base ? $colours[0] : $colours[1],
       }
@@ -136,6 +138,7 @@ sub _init {
     $colour = $colours[0] if $reference_base;
     $snp_ref->[3] = { $reference_base => $colours[0] }  ;
     $snp_ref->[4] = $reference_base ;
+    warn $colour;
     $self->do_glyphs($offset, $th, $tmp_width, $pix_per_bp, $fontname, $fontsize, $Config, $label, $snp_ref->[0], 
 		     $snp_ref->[1], $colour, $reference_base);
 
@@ -182,7 +185,7 @@ sub _init {
       }
 
       # Determine colour ------------------------------------
-      my $colour = undef;
+      my $colour = "white";#undef;
       my $text = $snp_ref->[4] ? "white" : "black";
 
       if( $allele_string && $snp_ref->[4] ) {
