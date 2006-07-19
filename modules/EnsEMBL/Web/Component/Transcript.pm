@@ -1261,7 +1261,7 @@ sub _sample_configs {
 
 sub tsv_extent {
   my $object = shift;
-  return $object->param( 'context' ) eq 'FULL' ? 10000 : $object->param( 'context' );
+  return $object->param( 'context' ) eq 'FULL' ? 1000 : $object->param( 'context' );
 }
 
 
