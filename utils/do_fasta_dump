@@ -35,6 +35,7 @@ use utils::Tool;
 
 our $MACHINE = "blastsrv11";
 our $no_data;
+our $index_only;
 my $no_compress;
 my $no_log;
 my $no_indexes;
@@ -63,6 +64,7 @@ my $info;
 
 	    'no_compress' => \$no_compress,
             'no_indexes' => \$no_indexes,
+	    'index_only' => \$index_only,
 	    'no_log'     => \$no_log,
             'no_ssaha'   => \$no_ssaha,
 	    'no_data'    => \$no_data,
@@ -152,20 +154,26 @@ for my $sp( sort @SPECIES ){  # users selected spp
 						     $sp_folder,
 						     $types,  $db_adaptor);
 
-    # Do dumps
-    my $created_files = get_data($db_adaptor, $sp, $fhs, $chr_toplevel);
+
+    if ($index_only) {
+      blast_indexes( $fhs, $sp );
+    }
+    else {
+      # Do dumps
+      my $created_files = get_data($db_adaptor, $sp, $fhs, $chr_toplevel);
   
-    # Make blast indexes and copy to blastsrv machine $BLASTSRV
-    blast_indexes( $created_files, $sp ) unless $no_indexes;
+      # Make blast indexes and copy to blastsrv machine $BLASTSRV
+      blast_indexes( $created_files, $sp ) unless $no_indexes;
 
-    # Make ssaha servers
-    ssaha_servers( $created_files, $sp ) unless $no_ssaha;
+      # Make ssaha servers
+      ssaha_servers( $created_files, $sp ) unless $no_ssaha;
 
-    # Compress (gzip files)
-    compress( $created_files ) unless $no_compress;
+      # Compress (gzip files)
+      compress( $created_files ) unless $no_compress;
 
-    # Empty vars
-    $created_files = undef;
+      # Empty vars
+      $created_files = undef;
+    }
     $fhs = undef;
   }
 }
@@ -267,8 +275,8 @@ sub create_dirs_for_dumps {
     }
     elsif ($type =~ /seqlevel/) {  # contig, chunk, chromosome for Scerevisiae
       $seqtype = "dna";
-      #$idtype = $cs_adaptor->fetch_sequence_level->name; # seq_level;
-      $idtype = "seqlevel"; # seq_level;
+      #$idtype = $cs_adaptor->fetch_sequence_level->name; # seq_level pre 40;
+      $idtype = "seqlevel";
     }
     else {
       ($seqtype, $idtype) = split (/_/, $type);
@@ -690,11 +698,28 @@ sub blast_indexes {
      $fh =~ s/^>//;
 
      # Make blast indexes
-     my $command = $types=~/^pep/ ? $pep_command : $dna_command;
-     system("$pep_command $fh");
+     my $command;
+     my @names;
+     if ($types=~/^pep/) {
+       $command =  $pep_command;
+       @names = (".atb", ".ahd", ".bsq", "" );
+     }
+     else {
+       $command =  $dna_command;
+       @names = (".ntb", ".nhd", ".csq", "" );
+     }
+
+     if ($index_only) {
+       info(1, "Gunziping $fh.gz");
+       if (-e "$fh.gz") {
+	 system("rm $fh");
+	 system("gunzip $fh.gz");
+       }
+     }
+     system("$command $fh");
 
      # Copy blast indexes across
-     foreach my $index (".atb", ".ahd", ".bsq", "" ) {
+     foreach my $index (@names ) {
         my $file = "$fh$index";
         (my $file_name = $file) =~ s#.*/##;
         warning(1, "Error producing file $file") && next unless -s "$file";
@@ -721,7 +746,7 @@ sub blast_indexes {
 #-----------------------------------------------------------------------------
 sub ssaha_servers {
   my ($created_files, $species) = @_;
-  info( 1, "Creating ssaha server");
+  info( 1, "Creating cdna ssaha server");
 
   # Prep directories
   my $ssaha_dir = $DUMPDIR eq $basedir."release-$release" ? $basedir : $DUMPDIR; 
@@ -751,7 +776,10 @@ sub ssaha_servers {
      system("$command $cdna_server $fh");
      next;
    }
-   system("$command $dna_server $fh") unless -e $dna_server; # only when new assembly
+
+    return if -e $dna_server; # only when new assembly
+    info (2, "New ssaha dna $dna_server");
+    system("$command $dna_server $fh");
  }
   return;
 }
@@ -809,16 +837,6 @@ sub warning{
   return 1;
 }
 
-#----------------------------------------------------------------------
-# # Quick+dirty method of trapping STDERR
-# sub TIEHANDLE{
-#   my $class = shift;
-#   bless {}, $class;
-# }
-# sub PRINT {
-#   my $self = shift;
-#   # Do nothing!;
-# }
 #----------------------------------------------------------------------
 
 sub split_data {
@@ -1279,7 +1297,7 @@ do_fasta_dumps - Dump Ensembl databases to text files and gzip them
 do_fasta_dumps [options]
 
 Options:
-  --help, --info, --verbose, --dumpdir, --no_log, --no_indexes --no_ssaha --email
+  --help, --info, --verbose, --dumpdir, --no_log, --no_indexes --index_only --no_ssaha --email
   --species, --database, --type --no_data --logfile --minimise_memory 
 
 Example:
@@ -1333,6 +1351,9 @@ B<--no_compress>
 
 B<--no_indexes>
   Turns off generation of blast database index files
+
+B<--index_only>
+  Generates blast database index files from existing fa.gz files and copies them to $MACHINE
 
 B<--no_ssaha>
   Turns off generation of ssaha server
