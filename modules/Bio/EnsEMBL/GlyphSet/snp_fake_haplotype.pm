@@ -61,7 +61,7 @@ sub _init {
   $self->push(new Sanger::Graphics::Glyph::Space({ 'y' => 0, 'height' => $track_height, 'x' => 1, 'w' => 1, 'absolutey' => 1, }));
 
   my $textglyph = new Sanger::Graphics::Glyph::Text({
-    'x'          => - 100,
+    'x'          => - 115,
     'y'          => 2,
     'width'      => 0,
     'height'     => $th_c,
@@ -81,7 +81,17 @@ sub _init {
   my $offset = $th_c + 4;
   my @colours       = qw(chartreuse4 darkorchid4);# orange4 deeppink3 dodgerblue4);
 
-  $self->strain_name_text($th, $fontname, $fontsize, $offset, "Compare to $reference_name", $Config);
+
+    my @ref_name_size = $self->get_text_width( 80, $reference_name, '', 'font'=>$fontname, 'ptsize' => $fontsize );
+  if ($ref_name_size[0] eq '') {
+    $self->strain_name_text($th, $fontname, $fontsize, $offset, "Compare to", $Config);
+    $offset += $track_height;
+    $self->strain_name_text($th, $fontname, $fontsize, $offset, "    $reference_name", $Config);
+  }
+  else {
+    $self->strain_name_text($th, $fontname, $fontsize, $offset, "Compare to $reference_name", $Config);
+  }
+
 
 
   # First lets draw the reference SNPs....
@@ -153,7 +163,7 @@ sub _init {
       my $text_colour = $hash->{colour} ? "white" : "black";
       $self->do_glyphs($offset, $th, $widths[$c], $pix_per_bp, $fontname, $fontsize, $Config, $hash->{label}, 
 			$snp_ref->[0], $snp_ref->[1], 
-			$hash->{colour}, $hash->{base}, $text_colour);
+			$hash->{colour}||"white", $hash->{base}, $text_colour);
       $c++;
     }
   }
@@ -211,21 +221,21 @@ sub _init {
 
 sub strain_name_text {
   my ($self, $th, $fontname, $fontsize, $offset, $name, $Config) = @_;
-  (my $url_name = $name) =~ s/Compare to //;
+  (my $url_name = $name) =~ s/Compare to |^\s+//;
   my $URL = $Config->{'URL'}."reference=$url_name;";
 
   my $textglyph = new Sanger::Graphics::Glyph::Text({
-      'x'          => -100,
+      'x'          => -115,
       'y'          => $offset+1,
       'height'     => $th,
       'font'       => $fontname,
       'ptsize'     => $fontsize,
       'colour'     => 'black',
       'text'       => $name,
-      'title'      => "Click to compare to $name",
+      'title'      => "Click to compare to $url_name",
       'href'       => $URL,
-      'halign'     => 'right',
-      'width'      => 95,
+      'halign'     => 'left',
+      'width'      => 205,
       'absolutex'  => 1,
       'absolutey'  => 1,
       'absolutewidth'  => 1,
