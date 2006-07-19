@@ -23,9 +23,9 @@ sub _init {
   } elsif ($counts->[1] ==0 ) {
     $text .= "The options set in the drop down menu have filtered out all $counts->[0] variations in this region.";
   } elsif ($counts->[0] == $counts->[1] ) {
-    $text .= "None of the variations are filtered out by the Source, class and type menus";
+    $text .= "None of the variations are filtered out by the Source, Class and Type menus.";
   } else {
-    $text .= ($counts->[0]-$counts->[1])." of the $counts->[0] variations in this region have been filtered out by the source, class and type menu options.";
+    $text .= ($counts->[0]-$counts->[1])." of the $counts->[0] variations in this region have been filtered out by the Source, Class and Type menus.";
   }
   $self->errorTrack( $text );
 
@@ -34,9 +34,13 @@ sub _init {
 
   my $context_text;
   if ($counts->[2]==0) {
-    $context_text = "None of the variations are removed by the Context drop down filter";
-  } else {
-    $context_text = $counts->[2]." variations are removed by the Context drop down filter";
+    $context_text = "None of the intronic variations are removed by the Context drop down filter.";
+  }
+  elsif ($counts->[2]==1) {
+    $context_text = $counts->[2]." intronic variation has been removed by the Context drop down filter.";
+  }
+ else {
+    $context_text = $counts->[2]." intronic variations are removed by the Context drop down filter.";
   }
   $self->errorTrack( $context_text, 0, 14 );
   return 1;

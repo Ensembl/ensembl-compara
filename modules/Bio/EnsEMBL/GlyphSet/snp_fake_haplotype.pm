@@ -44,7 +44,7 @@ sub _init {
 
 
   # Info text ---------------------------------------------------------
-  my $info_text = "Comparison to $reference_name alleles (green = same allele; purple = different allele)";
+  my $info_text = "Comparison to $reference_name alleles (green = same allele; purple = different allele; white = data missing)";
 
   my( $fontname_c, $fontsize_c ) = $self->get_font_details( 'caption' );
   my @res_c = $self->get_text_width( 0, 'X', '', 'font'=>$fontname_c, 'ptsize' => $fontsize_c );
@@ -138,7 +138,6 @@ sub _init {
     $colour = $colours[0] if $reference_base;
     $snp_ref->[3] = { $reference_base => $colours[0] }  ;
     $snp_ref->[4] = $reference_base ;
-    warn $colour;
     $self->do_glyphs($offset, $th, $tmp_width, $pix_per_bp, $fontname, $fontsize, $Config, $label, $snp_ref->[0], 
 		     $snp_ref->[1], $colour, $reference_base);
 
