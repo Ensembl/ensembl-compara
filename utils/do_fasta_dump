@@ -40,7 +40,7 @@ my $no_compress;
 my $no_log;
 my $no_indexes;
 my $no_ssaha;
-my @TYPES;
+our @TYPES;
 our $release;
 my @SPECIES;
 my @DATABASES;
@@ -87,11 +87,25 @@ require EnsEMBL::Web::DBSQL::DBConnection;
 my $SPECIES_DEFS = EnsEMBL::Web::SpeciesDefs->new(); 
 $SPECIES_DEFS || die "$0: SpeciesDefs config not found";
 
+
+# Check species if user defined.  Else use all species
+if (@SPECIES) {
+  @SPECIES = @{ utils::Tool::check_species(\@SPECIES) };
+}
+else {
+  @SPECIES = @{ utils::Tool::all_species()};
+}
+
+
 # Check the ENSEMBL_VERSION is up to date and matchs user's request
 if ( my $sitedefs_release =  $SiteDefs::ENSEMBL_VERSION ne $release) {
  die "[*DIE] Ensembl release version requested is $release but site defs is configured to use $sitedefs_release";
 }
 
+ my $blast_dir = $SPECIES_DEFS->get_config($SPECIES[0],"ENSEMBL_BLAST_DATA_PATH");
+if ( $blast_dir !~ /$release/) {
+  die "[*DIE] Ensembl release version requested is $release but blast dir is configured to be $blast_dir";
+}
 # Times and log file
 our $script_start_time = time();
 unless ($no_log) {
@@ -109,15 +123,6 @@ utils::Tool::check_dir($DUMPDIR);
 my %db_names = ( 'ENSEMBL_DB'      => 'core',
                'ENSEMBL_ESTGENE' => 'estgene',
                'ENSEMBL_VEGA'    => 'vega', );
-
-
-# Check species if user defined.  Else use all species
-if (@SPECIES) {
-  @SPECIES = @{ utils::Tool::check_species(\@SPECIES) };
-}
-else {
-  @SPECIES = @{ utils::Tool::all_species()};
-}
 
 
 # Create directory for release
@@ -186,23 +191,8 @@ info (2, "Used $logfile.") if $logfile;
 info (2, " Time taken: $hours:". localtime($time_taken)->min."mins");
 close STDERR;
 
-my $pre_spp = $TYPES[0] eq 'blast_all' ? "This is a PRE species.\n" :"";
-my $additional_text = qq(
-\n\n-------- Using this data --------------
-To: aws\@sanger.ac.uk, ensembl-webteam\@sanger.ac.uk
-Subject: ssaha server
-
-Please can you set up ssaha servers for @SPECIES. $pre_spp
-The files are here ecs3:$DUMPDIR .
-
-Thanks,
-
-Ensembl-webteam
-
-);
-
 $email ||= 'ensembl-webteam@sanger.ac.uk';
-utils::Tool::mail_log( $logfile, $email, $additional_text ) if $logfile;
+utils::Tool::mail_log( $logfile, $email ) if $logfile;
 exit;
 
 ######################### END OF PROGRAM ######################################
@@ -677,6 +667,7 @@ sub blast_indexes {
   my $dna_command = "/usr/local/pubseq/bin/pressdb";
   my $pep_command = "/usr/local/pubseq/bin/setdb";
   my $release_dir = "release-$release";
+  $release_dir = "PRE" if $TYPES[0] eq 'pre';
 
   my %configured;
   foreach my $blast_datasources (qw(BLASTN_DATASOURCES TBLASTX_DATASOURCES TBLASTN_DATASOURCES BLASTP_DATASOURCES BLASTX_DATASOURCES )) {
@@ -853,7 +844,7 @@ sub split_data {
 
   # Core dna file compression ~66%, RefSNP table = 75%
   # Feature dna compression = 88 %
-  info("Creating ${name}.${chunk}.$ext"); 
+  info(1, "Creating ${name}.${chunk}.$ext"); 
   while(<IN>){
     $bytes += length $_;
     if ($bytes > 3500000000){
@@ -865,7 +856,7 @@ sub split_data {
       $chunk++;
       open (OUT, ">$name.$chunk.$ext") or die "Can't create ${name}.${chunk}.txt.table: $!\n";
 
-      info ("Creating  ${name}.${chunk}.$ext"); 
+      info (1, "Creating  ${name}.${chunk}.$ext"); 
       $bytes = 0;
     }
     else{
