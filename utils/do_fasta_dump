@@ -761,8 +761,8 @@ sub ssaha_servers {
   # cdna SSAHA (rebuilt each release)
   my %ini_datasources = %{ $SPECIES_DEFS->get_config($species, "SSAHA2_DATASOURCES")|| {} };
   (my $port = $ini_datasources{"CDNA_ALL"}) =~ s/\w.+:(\d+)/$1/;
-  #my $cdna_server = "$cdna_dir$species.$assembly.$release.cdna_all.$port";
-  my $cdna_server = "$cdna_dir$species.cdna.$port";
+  my $cdna_server = "$cdna_dir$species.$assembly.$release.cdna_all.$port";
+  #my $cdna_server = "$cdna_dir$species.cdna.$port";
   my $dna_server = "$dna_dir$species.$assembly.dna";  # only toplevel not rm
 
   foreach my $types (keys %$created_files) {
