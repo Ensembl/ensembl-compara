@@ -46,6 +46,7 @@ sub set_extra {
 #----------------------------------------------------------------------------
 # FUNCTIONS FOR CONFIGURING AND CREATING KARYOTYPE IMAGES
 #----------------------------------------------------------------------------
+
                                                                                 
 sub karyotype {
   my( $self, $data, $highs, $config ) = @_;
@@ -68,7 +69,7 @@ sub karyotype {
 
     if (!($wuc->{'_rows'})) {
        $wuc->{'_rows'} = $data->param('rows') || ceil($total_chrs / 13 );
-     }
+    }
   } 
   else {
     $chr_name = $data->chr_name;
