@@ -439,39 +439,40 @@ sub kv_display {
   }
 
   my $all_pointers;
-  for (my $i = 0; $i < $tracks; $i++) {
-    my $pointers = [];
-    my $track_id = $i+1;
-    my $parser;
+  if ($tracks) {
+    for (my $i = 0; $i < $tracks; $i++) {
+      my $pointers = [];
+      my $track_id = $i+1;
+      my $parser;
 
-    if ($object->param("style_$track_id") =~ /line|bar|outline/) {
-      ## parse data
-      $parser = Data::Bio::Text::DensityFeatureParser->new();
-      $parser->set_filter($chr);  # filter chromosomes that aren't used
-      $parser->current_key($object->param('defaultlabel') || 'default'); #add in default label
-      my $bins   = 150;
-      $parser->no_of_bins($bins);
-      $parser->bin_size(int($max_length/$bins));
-      $object->parse_user_data($parser, $track_id);
-      if (ref($parser->counts) eq 'HASH') {
-        $group += scalar(keys %{$parser->counts});
-      }
+      if ($object->param("style_$track_id") =~ /line|bar|outline/) {
+        ## parse data
+        $parser = Data::Bio::Text::DensityFeatureParser->new();
+        $parser->set_filter($chr);  # filter chromosomes that aren't used
+        $parser->current_key($object->param('defaultlabel') || 'default'); #add in default label
+        my $bins   = 150;
+        $parser->no_of_bins($bins);
+        $parser->bin_size(int($max_length/$bins));
+        $object->parse_user_data($parser, $track_id);
+        if (ref($parser->counts) eq 'HASH') {
+          $group += scalar(keys %{$parser->counts});
+        }
   
-      ## create image with parsed data
-      $image->add_tracks($object, $config_name, $parser, $track_id);
-    }
-    else {
-      ## parse data
-      $parser = Data::Bio::Text::FeatureParser->new();
-      $object->parse_user_data($parser, $track_id);
+        ## create image with parsed data
+        $image->add_tracks($object, $config_name, $parser, $track_id);
+      }
+      else {
+        ## parse data
+        $parser = Data::Bio::Text::FeatureParser->new();
+        $object->parse_user_data($parser, $track_id);
 
-      my $zmenu_config = {
-        'caption' => 'features',
-        'entries' => ['userdata'],
-      };
+        my $zmenu_config = {
+          'caption' => 'features',
+          'entries' => ['userdata'],
+        };
 
-      ## create image with parsed data
-      $pointers = $image->add_pointers(
+        ## create image with parsed data
+        $pointers = $image->add_pointers(
           $object, 
           {
           'config_name'=>$config_name, 
@@ -480,8 +481,14 @@ sub kv_display {
           'color' => $object->param("col_$track_id"), 
           'style' => $object->param("style_$track_id")
           }
-      );
-      push @$all_pointers, $pointers;
+        );
+        push @$all_pointers, $pointers;
+      }
+    }
+  }
+  else {
+    if ($object->chr_name eq 'ALL') {
+      $image->do_chr_layout($object, $config_name);
     }
   }
   ## add extra formats if selected
