@@ -1,20 +1,26 @@
 genome_db_id	taxon_id	name	assembly	assembly_default	genebuild	locator
-1	9606	Homo sapiens	NCBI35	1	0410Ensembl	NULL
-2	10090	Mus musculus	NCBIM34	1	0503Ensembl	NULL
-3	10116	Rattus norvegicus	RGSC3.4	1	0501Ensembl	NULL
-4	31033	Fugu rubripes	FUGU4	1	0505IMCB	NULL
-5	7165	Anopheles gambiae	AgamP3	1	1005Ensembl	NULL
-6	7227	Drosophila melanogaster	BDGP4	1	0502FlyBase	NULL
-7	6239	Caenorhabditis elegans	CEL150	1	0511Wormbase	NULL
-9	7955	Danio rerio	ZFISH5	1	0505Ensembl	NULL
-10	9598	Pan troglodytes	CHIMP1A	1	0503Ensembl	NULL
-11	9031	Gallus gallus	WASHUC1	1	0512Ensembl	NULL
-12	7460	Apis mellifera	AMEL2.0	1	0505Ensembl	NULL
-13	99883	Tetraodon nigroviridis	TETRAODON7	1	0409Genoscope	NULL
-14	9615	Canis familiaris	BROADD1	1	0411Ensembl	NULL
-15	9913	Bos taurus	Btau_2.0	1	0512Ensembl	NULL
-16	8364	Xenopus tropicalis	JGI4	1	1105Ensembl	NULL
-17	4932	Saccharomyces cerevisiae	SGD1	1	0511SGD	NULL
-18	7719	Ciona intestinalis	JGI2	1	0602Ensembl	NULL
-19	13616	Monodelphis domestica	BROADO2	1	0510Ensembl	NULL
-21	9544	Macaca mulatta	MMUL_0_1	1	0506Ensembl	NULL
+3	10116	Rattus norvegicus	RGSC3.4	1	0501Ensembl	
+4	31033	Takifugu rubripes	FUGU4	1	0505IMCB	
+5	7165	Anopheles gambiae	AgamP3	1	1005Ensembl	
+7	6239	Caenorhabditis elegans	CEL150	1	0511Wormbase	
+10	9598	Pan troglodytes	CHIMP1A	1	0503Ensembl	
+11	9031	Gallus gallus	WASHUC1	1	0512Ensembl	
+13	99883	Tetraodon nigroviridis	TETRAODON7	1	0409Genoscope	
+14	9615	Canis familiaris	BROADD1	1	0411Ensembl	
+15	9913	Bos taurus	Btau_2.0	1	0512Ensembl	
+16	8364	Xenopus tropicalis	JGI4.1	1	1105Ensembl	
+17	4932	Saccharomyces cerevisiae	SGD1	1	0511SGD	
+18	7719	Ciona intestinalis	JGI2	1	0602Ensembl	
+22	9606	Homo sapiens	NCBI36	1	0510Ensembl	
+24	7227	Drosophila melanogaster	BDGP4.2	1	0509FlyBase	
+25	10090	Mus musculus	NCBIM36	1	0604Ensembl	
+26	7955	Danio rerio	ZFISH6	1	0603Ensembl	
+27	51511	Ciona savignyi	CSAV2.0	1	0604Ensembl	
+28	13616	Monodelphis domestica	BROADO3	1	0602Ensembl	
+29	7159	Aedes aegypti	AaegL1	1	0606VectorBase	
+31	9544	Macaca mulatta	MMUL_1	1	0601Ensembl	
+32	9785	Loxodonta africana	BROADE1	1	0510Ensembl	
+33	9371	Echinops telfairi	TENREC	1	0601Ensembl	
+34	9986	Oryctolagus cuniculus	RABBIT	1	0601Ensembl	
+35	9361	Dasypus novemcinctus	ARMA	1	0105Ensembl	
+36	69293	Gasterosteus aculeatus	BROADS1	1	0606Ensembl	

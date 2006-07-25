@@ -1,4 +1,3 @@
-method_link_id	type
 1	BLASTZ_NET
 2	BLASTZ_NET_TIGHT
 3	BLASTZ_RECIP_NET
