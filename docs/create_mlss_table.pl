@@ -246,26 +246,19 @@ sub print_html_list {
       } @$all_method_link_species_sets;
 
   my $these_method_link_species_sets = [];
-  foreach my $this_method_link_species_set (@$all_method_link_species_sets) {
+  foreach my $this_method_link_species_set (sort {scalar @{$a->species_set} <=> scalar @{$b->species_set}} @$all_method_link_species_sets) {
     if (defined($all_methods->{$this_method_link_species_set->method_link_type})) {
       push(@$these_method_link_species_sets, $this_method_link_species_set);
     }
   }
-  my $this_method_link_type = "";
-  foreach my $this_method_link_species_set (@$these_method_link_species_sets) {
-    if ($this_method_link_species_set->method_link_type ne $this_method_link_type) {
-      $this_method_link_type = $this_method_link_species_set->method_link_type;
-      print "<h3>$this_method_link_type Analysis</th>\r\n";
-      print "\r\n";
-    }
-    print "<h4>", $this_method_link_species_set->name, "</h4>\r\n";
-    foreach my $this_species (@{$this_method_link_species_set->species_set()}) {
-      print $this_species->name, "<br />\r\n";
-    }
-    print "\r\n";
-  }
-  print "\r\n";
 
+  foreach my $this_method_link_species_set (@$these_method_link_species_sets) {
+    print "<h4>",
+        $this_method_link_species_set->name,
+        "</h4>\r\n",
+        join("\r\n",map {$_->{name} . "<br />"} @{$this_method_link_species_set->species_set()}),
+          "\r\n";
+  }
 }
 
 
@@ -460,9 +453,13 @@ sub print_half_html_table {
           push(@$these_method_link_species_sets, $this_method_link_species_set);
         }
       }
-
-      if (@$method_link_type == 1 and !$use_names) {
-        @$these_method_link_species_sets = map {"Yes"} @$these_method_link_species_sets;
+      if (@$method_link_type == 1 && !$use_names) {
+        @$these_method_link_species_sets = map {
+          my $on_species = $_->name;
+          $on_species =~ s/.*(\(.*\))/ $1/;
+          $on_species = "" unless ($on_species =~ /^\s\(/);
+          "<font color=\"blue\">YES$on_species</font>";
+        } @$these_method_link_species_sets;
       } else {
         @$these_method_link_species_sets = sort {$all_methods->{$a->method_link_type}->{order}
             <=> $all_methods->{$b->method_link_type}->{order}} @$these_method_link_species_sets;
