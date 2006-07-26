@@ -20,7 +20,10 @@ sub init_canvas {
   my ($self, $config, $im_width, $im_height) = @_;
   $self->{'im_width'}  = $im_width;
   $self->{'im_height'} = $im_height;
-  $self->{'ttf_path'}  = "/usr/local/share/fonts/ttfonts/";
+  my $ST = $self->{'config'}->species_defs->ENSEMBL_STYLE;
+  my $font_path = $ST->{'GRAPHIC_TTF_PATH'} || "/usr/local/share/fonts/ttfonts/";
+
+  $self->{'ttf_path'}  = $font_path;
   my $canvas = GD::Image->new($im_width, $im_height);
   $canvas->colorAllocate($config->colourmap->rgb_by_name($config->bgcolor()));
   $self->canvas($canvas);
