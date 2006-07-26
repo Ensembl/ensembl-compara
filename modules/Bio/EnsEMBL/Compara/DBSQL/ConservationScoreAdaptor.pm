@@ -95,7 +95,6 @@ my $_bucket;
 my $_score_index = 0;
 my $_no_score_value = 0.0; #value if no score
 
-#just for testing purposes. 
 my $PACKED = 1;
 
 @ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor);
@@ -187,7 +186,7 @@ sub fetch_all_by_MethodLinkSpeciesSet_Slice {
 	    next;
 	}
 
-	if ($genomic_align_block->original_strand == 0) {
+	if ($genomic_align_block->get_original_strand == 0) {
 	    $conservation_scores = _reverse($conservation_scores);
 	}
 
