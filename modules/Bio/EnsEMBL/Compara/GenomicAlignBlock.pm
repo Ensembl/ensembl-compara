@@ -1389,31 +1389,21 @@ sub reverse_complement {
 }
 
 
-=head2 original_strand
+=head2 get_original_strand
 
-  Args       : (optional) bool $original_strand
-  Example    : if (!$genomic_align_block->original_strand()) {
-                 # orignal GenomicAlignBlock has been reverse-complemented
+  Args       : none
+  Example    : if (!$genomic_align_block->get_original_strand()) {
+                 # original GenomicAlignBlock has been reverse-complemented
                }
-  Description: getter/setter for the _orignal_strand attribute
-
-               WARNING: to reverse_complement a genomic_align_block, use
-               reverse_complement() method instead. It is not
-               recommended to set manually this value unless you really
-               know what you are doing!
-
+  Description: getter for the _orignal_strand attribute
   Returntype : none
   Exceptions : none
   Caller     : general
 
 =cut
 
-sub original_strand {
+sub get_original_strand {
   my ($self) = @_;
-
-  if (@_) {
-    $self->{_original_strand} = shift;
-  }
 
   return $self->{_original_strand};
 }
