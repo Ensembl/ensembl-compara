@@ -110,6 +110,18 @@ sub write_output {
     }
     $gab->method_link_species_set($mlss);
     $gaba->store($gab);
+
+    #21/04/2006 kfb added for gerp analysis
+    my $species_set = "[";
+    my $genome_db_set  = $mlss->species_set;
+
+    foreach my $genome_db (@$genome_db_set) {
+	$species_set .= $genome_db->dbID . ","; 
+    }
+    $species_set .= "]";
+      
+    my $output_id = "{genomic_align_block_id=>" . $gab->dbID . ",species_set=>" .  $species_set . "}";
+    $self->dataflow_output_id($output_id);
   }
   return 1;
 }
@@ -269,6 +281,7 @@ sub dumpFasta {
     my $tree_string = $self->build_tree_string;
     $self->tree_string($tree_string);
   }
+
   return 1;
 }
 
