@@ -355,7 +355,7 @@ sub format_frequencies {
   my %freq_data = %{ $freq_data };
   my %columns;
 
-  foreach my $pop_id (keys %freq_data) {
+  foreach my $pop_id (sort { $freq_data{$a}{pop_info}{Name} cmp $freq_data{$b}{pop_info}{Name}} keys %freq_data) {
     my %pop_row;
 
     # Freqs and genotypes/alleles ---------------------------------------------
