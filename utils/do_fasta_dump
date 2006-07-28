@@ -48,8 +48,10 @@ our $DUMPDIR;
 my $logfile;
 my $email;
 my $minimise_memory;
+my $start_with;
 my $help;
 my $info;
+
 
 &GetOptions(
 	    'type:s'     => \@TYPES,          # obligatory
@@ -63,12 +65,12 @@ my $info;
 	    'minimise_memory' => \$minimise_memory,
 
 	    'no_compress' => \$no_compress,
-            'no_indexes' => \$no_indexes,
-	    'index_only' => \$index_only,
 	    'no_log'     => \$no_log,
             'no_ssaha'   => \$no_ssaha,
 	    'no_data'    => \$no_data,
-
+            'no_indexes' => \$no_indexes,
+	    'index_only' => \$index_only,
+	    'start_with:s' => \$start_with,   # optional
 	    'help'       => \$help,           # info
 	    'info'       => \$info,
 	   ) || pod2usage(2);
@@ -97,15 +99,6 @@ else {
 }
 
 
-# Check the ENSEMBL_VERSION is up to date and matchs user's request
-if ( my $sitedefs_release =  $SiteDefs::ENSEMBL_VERSION ne $release) {
- die "[*DIE] Ensembl release version requested is $release but site defs is configured to use $sitedefs_release";
-}
-
- my $blast_dir = $SPECIES_DEFS->get_config($SPECIES[0],"ENSEMBL_BLAST_DATA_PATH");
-if ( $blast_dir !~ /$release/) {
-  die "[*DIE] Ensembl release version requested is $release but blast dir is configured to be $blast_dir";
-}
 # Times and log file
 our $script_start_time = time();
 unless ($no_log) {
@@ -113,6 +106,27 @@ unless ($no_log) {
   $logfile ||= "logs/fasta$release"."_$time.log";
   print STDERR "Using logfile $logfile\n";
   open(STDERR, "> $logfile") || die "Can't create file:$!\n";
+}
+
+# Start with a species further down in the alphabet
+if ($start_with) {
+  foreach (sort @SPECIES) {
+    last if $start_with eq $_;
+    info(1, "Skipping $_ and all species until $start_with");
+    shift @SPECIES;
+  }
+}
+
+
+# Check the ENSEMBL_VERSION is up to date and matchs user's request
+if ( my $sitedefs_release =  $SiteDefs::ENSEMBL_VERSION ne $release) {
+ die "[*DIE] Ensembl release version requested is $release but site defs is configured to use $sitedefs_release";
+}
+
+ my $blast_dir = $SPECIES_DEFS->get_config($SPECIES[0],"ENSEMBL_BLAST_DATA_PATH");
+
+if ( $blast_dir !~ /$release/ && $TYPES[0] ne 'pre') {
+  die "[*DIE] Ensembl release version requested is $release but blast dir is configured to be $blast_dir";
 }
 
 # Validate DUMPDIR
@@ -160,25 +174,27 @@ for my $sp( sort @SPECIES ){  # users selected spp
 						     $types,  $db_adaptor);
 
 
+    my $created_files;
+
     if ($index_only) {
-      blast_indexes( $fhs, $sp );
+      $created_files = blast_indexes( $fhs, $sp );
     }
     else {
       # Do dumps
-      my $created_files = get_data($db_adaptor, $sp, $fhs, $chr_toplevel);
-  
+      $created_files = get_data($db_adaptor, $sp, $fhs, $chr_toplevel);
+
       # Make blast indexes and copy to blastsrv machine $BLASTSRV
       blast_indexes( $created_files, $sp ) unless $no_indexes;
 
       # Make ssaha servers
       ssaha_servers( $created_files, $sp ) unless $no_ssaha;
-
-      # Compress (gzip files)
-      compress( $created_files ) unless $no_compress;
-
-      # Empty vars
-      $created_files = undef;
     }
+
+    # Compress (gzip files)
+    compress( $created_files ) unless $no_compress;
+
+    # Empty vars
+    $created_files = undef;
     $fhs = undef;
   }
 }
@@ -265,8 +281,8 @@ sub create_dirs_for_dumps {
     }
     elsif ($type =~ /seqlevel/) {  # contig, chunk, chromosome for Scerevisiae
       $seqtype = "dna";
-      #$idtype = $cs_adaptor->fetch_sequence_level->name; # seq_level pre 40;
       $idtype = "seqlevel";
+      $idtype = $cs_adaptor->fetch_sequence_level->name if $release < 40;
     }
     else {
       ($seqtype, $idtype) = split (/_/, $type);
@@ -411,7 +427,7 @@ sub get_data {
 	      dump_pep( $seqio, $transcript, 'pep:novel', $gene);
 	    }
 	    
-	    if( ( my $seqio = $fhs->{'rna'} and $subtype eq 'ncrna' ) ) {
+	    if( ( my $seqio = $fhs->{'ncrna'} and $subtype eq 'ncrna' ) ) {
 	      $subtype = $gene->biotype;
 	      dump_cdna_rna( $seqio, $transcript, "$logic_name:$subtype",$gene);
 	    }
@@ -517,7 +533,7 @@ sub get_data {
 	  dump_pep( $seqio, $transcript, 'pep:novel', $gene);
 	}
 	
-	if( ( my $seqio = $fhs->{'rna'} and $subtype eq 'ncrna' ) ) {
+	if( ( my $seqio = $fhs->{'ncrna'} and $subtype eq 'ncrna' ) ) {
 	  $subtype = $gene->biotype;
 	  dump_cdna_rna( $seqio, $transcript, "$logic_name:$subtype",$gene);
 	}
@@ -662,33 +678,48 @@ sub dump_dna_masked{
 sub blast_indexes {
   my $created_files = shift;
   my $sp = shift;
-  info (1, "Creating blast indexes");
-  
   my $dna_command = "/usr/local/pubseq/bin/pressdb";
   my $pep_command = "/usr/local/pubseq/bin/setdb";
   my $release_dir = "release-$release";
   $release_dir = "PRE" if $TYPES[0] eq 'pre';
 
+  # Check the cdna/pep configuration is the same for each source
   my %configured;
   foreach my $blast_datasources (qw(BLASTN_DATASOURCES TBLASTX_DATASOURCES TBLASTN_DATASOURCES BLASTP_DATASOURCES BLASTX_DATASOURCES )) {
     my %ini_datasources = %{ $SPECIES_DEFS->get_config($sp, $blast_datasources)|| {} };
     map { $configured{lc($_)}++ unless $_ eq 'DATASOURCE_TYPE' } (keys %ini_datasources);
   }
 
-  # Check the cdna/pep configuration is the same for each source
   foreach (keys %configured) {
     my $value = $_ =~ /^pep/ ?  2 : 3;
-    warning(1, "Misconfiguration for $_ in $sp ini file") unless $configured{$_} == $value;
+    warning(1, "No configuration for $_ in $sp ini file") unless $configured{$_} == $value;
   }
 
-  foreach my $types (keys %$created_files) {
+  foreach my $types (sort keys %$created_files) {
      next unless $types =~ /^dna_seqlevel|^cdna|^pep|^ncrna/;
      my $seqio = $created_files->{$types};
      next unless $seqio;
      my $fh = $seqio->file;
      $fh =~ s/^>//;
 
+     if ($index_only) {
+       if (-e "$fh.gz") {
+	 info(1, "Gunziping $fh.gz");
+	 system("rm $fh");
+	 system("gunzip $fh.gz");
+       }
+
+       if( -z $fh){ #Empty file
+	 unlink $fh || warn "Can't delete $fh: $!";
+	 info(1, "Deleting empty file $fh");
+	 undef( $created_files->{$types} );
+	 next;
+       }
+     }
+
+
      # Make blast indexes
+     info (2, "Creating blast indexes for $types");
      my $command;
      my @names;
      if ($types=~/^pep/) {
@@ -700,13 +731,6 @@ sub blast_indexes {
        @names = (".ntb", ".nhd", ".csq", "" );
      }
 
-     if ($index_only) {
-       info(1, "Gunziping $fh.gz");
-       if (-e "$fh.gz") {
-	 system("rm $fh");
-	 system("gunzip $fh.gz");
-       }
-     }
      system("$command $fh");
 
      # Copy blast indexes across
@@ -720,6 +744,7 @@ sub blast_indexes {
 
      # Check ini file configuration
      $types =~ s/dna_seqlevel/latestgp/;
+     $types =~ s/ncrna/rna_nc/;
      if ($configured{$types}) {
        delete $configured{$types};
      }
@@ -729,11 +754,12 @@ sub blast_indexes {
    }
 
   # Check all configured are accounted for
-  warning(1, "These types need to be removed from $sp ini file: ". join ", ",(keys %configured) ) if keys %configured;
+  warning(1, "These types are in the $sp ini file but not produced during this dump: ". join ", ",(sort keys %configured) ) if keys %configured;
 
-  return;
+  return ($created_files);
 
 }
+
 #-----------------------------------------------------------------------------
 sub ssaha_servers {
   my ($created_files, $species) = @_;
@@ -741,8 +767,8 @@ sub ssaha_servers {
 
   # Prep directories
   my $ssaha_dir = $DUMPDIR eq $basedir."release-$release" ? $basedir : $DUMPDIR; 
-  my $dna_dir = $ssaha_dir."/ssaha/dna/";
-  my $cdna_dir = $ssaha_dir."/ssaha/release-$release/";
+  my $dna_dir = $ssaha_dir."ssaha/dna/";
+  my $cdna_dir = $ssaha_dir."ssaha/release-$release/";
   utils::Tool::check_dir($cdna_dir);
   utils::Tool::check_dir($dna_dir);
 
@@ -751,9 +777,15 @@ sub ssaha_servers {
 
   # cdna SSAHA (rebuilt each release)
   my %ini_datasources = %{ $SPECIES_DEFS->get_config($species, "SSAHA2_DATASOURCES")|| {} };
-  (my $port = $ini_datasources{"CDNA_ALL"}) =~ s/\w.+:(\d+)/$1/;
+
+  my $port;
+  if ($ini_datasources{"CDNA_ALL"}) {
+    ($port = $ini_datasources{"CDNA_ALL"}) =~ s/\w.+:(\d+)/$1/;
+  }
+  else {
+    warning(1, "Add CDNA_ALL SSAHA2_DATASOURCES to $species ini file and correct file name in $cdna_dir.");
+  }
   my $cdna_server = "$cdna_dir$species.$assembly.$release.cdna_all.$port";
-  #my $cdna_server = "$cdna_dir$species.cdna.$port";
   my $dna_server = "$dna_dir$species.$assembly.dna";  # only toplevel not rm
 
   foreach my $types (keys %$created_files) {
@@ -790,7 +822,7 @@ sub compress {
     next unless (-e "$fh");
 
     my $size = -s $fh;
-    if ($size > 900000000 ){
+    if ($size > 3500000000 ){
       split_data($fh);
     }
     else {
@@ -1288,8 +1320,8 @@ do_fasta_dumps - Dump Ensembl databases to text files and gzip them
 do_fasta_dumps [options]
 
 Options:
-  --help, --info, --verbose, --dumpdir, --no_log, --no_indexes --index_only --no_ssaha --email
-  --species, --database, --type --no_data --logfile --minimise_memory 
+  --help, --info, --verbose, --minimise_memory, --no_data --no_log, --no_indexes --index_only --no_ssaha 
+  --species, --database, --type, --logfile,  --start_with   --dumpdir --email
 
 Example:
  nohup time ./do_fasta_dump --type all --release 23 --email ek3@sanger.ac.uk
@@ -1351,6 +1383,9 @@ B<--no_ssaha>
 
 B<--minimise_memory>
   Reduces the memory usage but the dump time will increase.
+
+B<--start_with>
+  Optional: give it a species name and it will skip all species before this in the alphabet.
 
 =head1 DESCRIPTION
 
