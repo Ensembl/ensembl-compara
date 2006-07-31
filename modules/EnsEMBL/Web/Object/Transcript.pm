@@ -27,7 +27,7 @@ sub default_track_by_gene {
       gsc gid slam gws_h gws_s )
     ),
     map( {($_, $_.'_transcript')} qw(
-      vectorbase_0_5 tigr_0_5
+      vectorbase tigr_0_5
       cdna_all targettedgenewise
       genebuilderbeeflymosandswall gsten flybase wormbase
       ensembl sgd homology_low cow_proteins refseq mouse_protein dog_protein
