@@ -511,17 +511,19 @@ sub reverse {
     if ($self->packed) { 
 	$num_scores = length($self->observed_score)/$pack_size;
     } else {
-	$num_scores = scalar($self->observed_score);
+	my @scores = split ' ', $self->observed_score;
+	$num_scores = scalar(@scores);
+	#$num_scores = scalar($self->observed_score);
     } 
     
     #swap position orientation and reverse position in alignment
-    my $end = $self->position + $num_scores - 1;
-    $self->position($self->genomic_align_block->length - $end + 1);
+    my $end = $self->position + (($num_scores - 1) * $self->window_size);
+    $self->position($self->genomic_align_block->length - $end);
 
     #swap position orientation and reverse seq_region_pos in alignment
     if (defined $self->seq_region_pos) {
-	$end = $self->seq_region_pos + $num_scores - 1;
-	$self->seq_region_pos($self->genomic_align_block->length - $end + 1);
+	$end = $self->seq_region_pos + (($num_scores - 1) * $self->window_size);
+	$self->seq_region_pos($self->genomic_align_block->length - $end);
     }
 
     #reverse score strings
@@ -551,6 +553,7 @@ sub _reverse_score {
 	    $rev_str .= $scores[$i];	
 	} 
     }
+
     return $rev_str;
 }
 
