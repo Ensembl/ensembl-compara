@@ -113,8 +113,8 @@ my $PACKED = 1;
                Bio::EnsEMBL::Compara::ConservationScore objects. 
                Each conservation score object contains a single score in slice 
                coordinates ie the position field contains the slice coordinate
-               and the observed, expected and diff score fields contain a 
-               single float. The min and max y axis values for the array of 
+               and the diff score field contains a single float. 
+               The min and max y axis values for the array of 
                conservation score objects are set in the first conservation 
                score object (index 0). Display_size is the number of scores
                that will be returned. If the slice length is larger than the
@@ -151,7 +151,7 @@ sub fetch_all_by_MethodLinkSpeciesSet_Slice {
     }
 
     #set up bucket object for storing bucket_size number of scores 
-    my $bucket_size = int(($slice->end-$slice->start+1)/$display_size + 0.5);
+    my $bucket_size = ($slice->end-$slice->start+1)/$display_size;
     
     #default window size is the largest bucket that gives at least 
     #display_size values ie get speed but reasonable resolution
@@ -189,7 +189,7 @@ sub fetch_all_by_MethodLinkSpeciesSet_Slice {
 	if ($genomic_align_block->get_original_strand == 0) {
 	    $conservation_scores = _reverse($conservation_scores);
 	}
-
+ 
 	#reset _score_index for new conservation_scores
 	$_score_index = 0;
 
@@ -225,6 +225,109 @@ sub fetch_all_by_MethodLinkSpeciesSet_Slice {
     }
 
     return ($scores);
+}
+
+=head2 fetch_all_by_GenomicAlignBlock
+
+  Arg  1     : Bio::EnsEMBL::Compara::GenomicAlignBlock $genomic_align_block
+  Arg  2     : (opt) integer $display_size (default 1000)
+  Arg  3     : (opt) string $display_type (one of "AVERAGE" or "MAX") (default "MAX")
+  Arg  4     : (opt) integer $window_size
+  Example    : my $conservation_scores =
+                    $conservation_score_adaptor->fetch_all_by_GenomicAlignBlock($genomic_align_block, 1000, "MAX", 10);
+  Description: Retrieve the corresponding
+               Bio::EnsEMBL::Compara::ConservationScore objects. 
+               Each conservation score object contains a single score in 
+               alignment coordinates ie the position field contains the
+               alignment coordinate and the diff score field contains a 
+               single float. The min and max y axis values for
+               the array of conservation score objects are set in the first 
+               conservation score object (index 0). Display_size is the number 
+               of scores that will be returned. If the slice length is larger 
+               than the display_size, the scores will either be averaged if the
+               display_type is "AVERAGE" or the maximum taken if display_type
+               is "MAXIMUM". If the window_size is not specified, the
+               window_size is determined as the largest window_size 
+               which gives at least display_size number of scores. 
+  Returntype : ref. to an array of Bio::EnsEMBL::Compara::ConservationScore objects. 
+  Caller     : object::methodname
+
+=cut
+sub fetch_all_by_GenomicAlignBlock {
+    my ($self, $genomic_align_block, $display_size, $display_type, $window_size) = @_;
+
+    my $scores = [];
+
+    #default display_size is 1000
+    if (!defined $display_size) {
+	$display_size = 1000;
+    }
+
+    #default display_mode is MAX
+    if (!defined $display_type) {
+	$display_type = "MAX";
+    }
+
+    #set up bucket object for storing bucket_size number of scores 
+    #my $bucket_size = int(($genomic_align_block->length)/$display_size + 0.5);
+    my $bucket_size = ($genomic_align_block->length)/$display_size;
+    
+    #default window size is the largest bucket that gives at least 
+    #display_size values ie get speed but reasonable resolution
+    my @window_sizes = (1, 10, 100, 500);
+    if (!defined $window_size) {
+	#set window_size to be the largest for when for loop fails
+	$window_size = $window_sizes[scalar(@window_sizes)-1];
+	for (my $i = 0; $i < scalar(@window_sizes); $i++) {
+	    if ($bucket_size <= $window_sizes[$i]) {
+		$window_size = $window_sizes[$i-1];
+		last;
+	    }
+	}
+    }
+
+    $_bucket = {diff_score => 0,
+		start_pos => 0,
+		end_pos => 0,
+		start_seq_region_pos => 0,
+		end_seq_region_pos => 0,
+		called => 0,
+		cnt => 0,
+		size => $bucket_size};
+    
+    my $conservation_scores = $self->_fetch_all_by_GenomicAlignBlockId_WindowSize($genomic_align_block->dbID, $window_size, $PACKED);
+
+    if (scalar(@$conservation_scores) == 0) {
+	return $scores;
+    }
+
+    #need to reverse conservation scores if reference species is complemented
+    if ($genomic_align_block->get_original_strand == 0) {
+	$conservation_scores = _reverse($conservation_scores);
+    }
+    
+    #reset _score_index for new conservation_scores
+    $_score_index = 0;
+
+    $scores = $self->_get_alignment_scores($conservation_scores, $display_type, $window_size, $genomic_align_block);
+
+
+    if (scalar(@$scores) == 0) {
+	return $scores;
+    }
+
+    #Find the min and max scores for y axis scaling. Save in first
+    #conservation score object
+    my ($min_y_axis, $max_y_axis) =  _find_min_max_score($scores);
+
+    #add min and max scores to the first conservation score object
+    if ((scalar @$scores) > 0) {
+	$scores->[0]->y_axis_min($min_y_axis);
+	$scores->[0]->y_axis_max($max_y_axis);
+    }
+
+   return ($scores);
+
 }
 
 
@@ -312,103 +415,6 @@ sub store {
 }
 
 #Internal methods
-
-#    Arg  1     : Bio::EnsEMBL::Compara::GenomicAlignBlock object with a valid dbID
-#    Arg  2     : (opt) boolean $packed (default 0)
-#    Example    : my $conservation_scores =
-#    $conservation_score_adaptor->fetch_all_by_GenomicAlignBlock($genomic_align_block);
-#    Description: Retrieve the corresponding
-#               Bio::EnsEMBL::Compara::ConservationScore objects
-#    Returntype : ref. to an array of Bio::EnsEMBL::Compara::ConservationScore objects
-#    Exceptions : Returns a ref. to an empty array if there are no matching entries
-#    Exceptions : Thrown if $genomic_align_block is neither a number or a
-#               Bio::EnsEMBL::Compara::GenomicAlignBlock object
-#    Caller     : object::methodname
-sub _fetch_all_by_GenomicAlignBlock {
-   my ($self,$genomic_align_block, $packed) = @_;
-
-   throw("$genomic_align_block is not a Bio::EnsEMBL::Compara::GenomicAlignBlock object")
-       if (!$genomic_align_block->isa("Bio::EnsEMBL::Compara::GenomicAlignBlock"));
-   my $genomic_align_block_id = $genomic_align_block->dbID;
-
-    #whether to return the scores in packed or unpacked format
-    #default to unpacked (space delimited string of floats)
-    if (!defined $packed) {
-	$packed = 0;
-    }
-
-   return $self->_fetch_all_by_GenomicAlignBlockId($genomic_align_block_id, $packed);
-}
-
-
-#  Arg  1     : integer $genomic_align_block_id 
-#  Arg  2     : (opt) boolean $packed (default 0)
-#  Example    : my $conservation_scores =
-#                    $conservation_score_adaptor->fetch_all_by_GenomicAlignBlockId(23134);
-#  Description: Retrieve the corresponding
-#               Bio::EnsEMBL::Compara::ConservationScore objects. 
-#  Returntype : ref. to an array of Bio::EnsEMBL::Compara::ConservationScore objects. If $packed is true, return the scores in a packed format given by $_pack_size and $_pack_type.
-
-#  Caller     : object::methodname
-
-sub _fetch_all_by_GenomicAlignBlockId {
-    my ($self, $genomic_align_block_id, $packed) = @_;
-    my $conservation_scores = [];
-    my $obs_scores;
-    my $exp_scores;
-    my $diff_scores;
-    
-    #whether to return the scores in packed or unpacked format
-    #default to unpacked (space delimited string of floats)
-    if (!defined $packed) {
-	$packed = 0;
-    }
-
-    my $sql = qq{
-	SELECT
-	    genomic_align_block_id,
-	    window_size,
-	    position,
-	    observed_score,
-	    expected_score,
-	    diff_score
-	 FROM
-	    conservation_score
-	 WHERE
-	    genomic_align_block_id = ?
-	};
-
-    my $sth = $self->prepare($sql);
-    $sth->execute($genomic_align_block_id);
-    my $conservation_score;
-    while (my @values = $sth->fetchrow_array()) {
-	if (!$packed) {
-	    $obs_scores = _unpack_scores($values[3]);
-	    $exp_scores = _unpack_scores($values[4]);
-	    $diff_scores = _unpack_scores($values[5]);
-	} else {
-	    $obs_scores = $values[3];
-	    $exp_scores = $values[4];
-	    $diff_scores = $values[5];
-	}
-
-	$conservation_score = new Bio::EnsEMBL::Compara::ConservationScore(
-				        -adaptor => $self,
-					-genomic_align_block_id => $values[0],
-					-window_size => $values[1],
-					-position => $values[2],
-					-observed_score => $obs_scores,
-					-expected_score => $exp_scores,
-					-diff_score => $diff_scores,
-					-packed => $packed);
-	push(@$conservation_scores, $conservation_score);
-    }
-    
-    #sort into numerical order based on position
-    my @sorted_scores = sort {$a->{position} <=> $b->{position}} @$conservation_scores;
-
-    return \@sorted_scores;
-}
 
 #  Arg  1     : integer $genomic_align_block_id 
 #  Arg  2     : integer $window_size
@@ -509,6 +515,7 @@ sub _reverse {
     }
     #reverse array so position values go from small to large
     my @rev = reverse @$scores;
+
     return \@rev;
 }
 
@@ -664,7 +671,7 @@ sub _get_aligned_scores_from_cigar_line {
     for (my $j = 0; $j < $num_scores; $j++) {
 	my $length;
 	if ($PACKED) {
-	    $length = length($scores->[$j]->diff_score)/4;
+	    $length = length($scores->[$j]->diff_score)/$_pack_size;
 	} else {
 	    my @split_scores = split ' ', $scores->[$j]->diff_score;
 	    $length = scalar(@split_scores);
@@ -720,7 +727,8 @@ sub _get_aligned_scores_from_cigar_line {
 	#if a score has been found, find the score in the score string and 
 	#unpack it.
 	unless ($cs_index == -1) {
-	    $csBlockCnt = ($current_pos - $scores->[$cs_index]->position)/$win_size;
+	    $csBlockCnt = int(($current_pos - $scores->[$cs_index]->position)/$win_size);
+
 	    my $value;
 	    if ($PACKED) {
 		$value = substr $scores->[$cs_index]->diff_score, $csBlockCnt*$_pack_size, $_pack_size;
@@ -791,6 +799,68 @@ sub _get_aligned_scores_from_cigar_line {
     return $aligned_scores;
 }
 
+sub _get_alignment_scores {
+    my ($self, $conservation_scores, $display_type, $window_size, $genomic_align_block) = @_;
+
+    my $num_rows = scalar(@$conservation_scores);
+    my @diff_scores;
+    my $diff_score;
+    my $aligned_scores = [];
+    my $pos;
+
+    #if first pos is not at the start of the alignment (1) then need to fill in
+    #with _no_score_value
+    $pos = $conservation_scores->[0]->position;
+    my $genomic_align_block_id = $genomic_align_block->dbID;
+    for (my $j = 1; $j < $pos; $j++) {
+	
+	my $aligned_score = _add_to_bucket($self, $display_type, $_no_score_value, $j, 1, scalar(@$aligned_scores), $genomic_align_block_id, $window_size);  
+	if ($aligned_score) {
+	    push(@$aligned_scores, $aligned_score);
+	}
+    }
+
+    for (my $i = 0; $i < $num_rows; $i++) {
+	my $num_scores;
+	if ($PACKED) {
+	    $num_scores = length($conservation_scores->[$i]->diff_score)/$_pack_size;
+	} else {
+	    @diff_scores = split ' ', $conservation_scores->[$i]->diff_score;
+	    $num_scores = scalar(@diff_scores);
+	}
+	$pos = $conservation_scores->[$i]->position;
+
+	for (my $j = 0; $j < $num_scores; $j++) {
+
+	    if ($PACKED) {
+		my $value = substr $conservation_scores->[$i]->diff_score, $j*$_pack_size, $_pack_size;
+		$diff_score = unpack($_pack_type, $value);
+	    } else {
+		$diff_score = $diff_scores[$j];
+	    } 
+
+	    my $aligned_score = _add_to_bucket($self, $display_type, $diff_score, $pos, 1, scalar(@$aligned_scores), $genomic_align_block_id, $window_size);  
+	    if ($aligned_score) {
+		push(@$aligned_scores, $aligned_score);
+	    }
+	    $pos+=$window_size;
+	}
+	my $next_pos;
+	if ($i < $num_rows-1) {
+	    $next_pos = $conservation_scores->[$i+1]->position;
+	} else {
+	    $next_pos = $genomic_align_block->length;
+	}
+	for (my $j = $pos; $j < $next_pos; $j++) {
+	    
+	    my $aligned_score = _add_to_bucket($self, $display_type, $_no_score_value, $j, 1, scalar(@$aligned_scores), $genomic_align_block_id, $window_size);  
+	    if ($aligned_score) {
+		push(@$aligned_scores, $aligned_score);
+	    }
+	}
+    }
+    return $aligned_scores;
+}
 
 #Add scores to bucket until it is full (given by size) and then average the 
 #called scores or take the maximum (given by display_type). Once the bucket is
@@ -817,7 +887,7 @@ sub _add_to_bucket {
     my ($self, $display_type, $score, $chr_pos, $start_slice, $num_buckets, $genomic_align_block_id, $win_size) = @_;
     my $p = 0;
     my $s;
-    my ($obs, $exp);
+    my $final_score;
 
     #store start of bucket position
     if ($_bucket->{cnt} == 0) {
@@ -847,7 +917,7 @@ sub _add_to_bucket {
 	}
 
 	$_bucket->{cnt}++;
-	
+
 	#check to see if reached size of bucket NB end_pos is in slice coords
 	#so multiply size (number of bases/bucket) by number of buckets used so
 	#far (plus 1 because it starts at 0)
@@ -858,41 +928,39 @@ sub _add_to_bucket {
 	    $s = int(($end_seq_region_pos + $_bucket->{start_seq_region_pos})/2);
 	    #take average score
 	    if ($_bucket->{called} == 0) {
-		$score  = $_no_score_value;
+		$final_score  = $_no_score_value;
 	    } else {
-		$score = $_bucket->{diff_score}/$_bucket->{called};
+		#should average over complete bucket even if not all values are
+		#called
+		#$final_score = $_bucket->{diff_score}/$_bucket->{called};
+		$final_score = $_bucket->{diff_score}/$_bucket->{cnt};
 	    }
 	}
     } else {
-	#store only the min or max score
-	if ($display_type eq "MIN") {
-	    if ($_bucket->{diff_score} > $score) {
-		$_bucket->{diff_score} = $score;
-	    }
-	} elsif ($display_type eq "MAX") {
-	    if ($_bucket->{diff_score} < $score) {
-		$_bucket->{diff_score} = $score;
-	    }
+	#store only the max score
+	if ($_bucket->{diff_score} < $score) {
+	    $_bucket->{diff_score} = $score;
 	}
 	$_bucket->{cnt}++;
 	if ($end_pos >= ($_bucket->{size} * ($num_buckets+1))) {
 	    $p = int(($end_pos + $_bucket->{start_pos})/2);
 	    $s = int(($end_seq_region_pos + $_bucket->{start_seq_region_pos})/2);
-	    $score = $_bucket->{diff_score};
+	    $final_score = $_bucket->{diff_score};
 	}
     }
 
     #if bucket is full, create a new conservation score
-    if ($end_pos >= ($_bucket->{size} * ($num_buckets+1))) {
+    #if ($end_pos >= ($_bucket->{size} * ($num_buckets+1))) {
+    if (defined $final_score) {
 
 	my $aligned_score = new Bio::EnsEMBL::Compara::ConservationScore(
-								      -adaptor => $self,
-								      -genomic_align_block_id => $genomic_align_block_id,
-								      -window_size => $win_size,
-								      -position => $p,
-								      -seq_region_pos => $s,
-								      -diff_score => $score,
-								      );
+		      -adaptor => $self,
+		      -genomic_align_block_id => $genomic_align_block_id,
+		      -window_size => $win_size,
+		      -position => $p,
+		      -seq_region_pos => $s,
+		      -diff_score => $final_score,
+		      );
 	$_bucket->{diff_score} = 0;
 	$_bucket->{cnt} = 0;
 	$_bucket->{called} = 0;
