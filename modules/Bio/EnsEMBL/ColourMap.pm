@@ -79,10 +79,11 @@ sub new {
     'superhi'    => 'highlight2',
     'cow_protein' => [ 'blue', 'Cow protein' ]
   );
-  $self->colourSet( 'vectorbase_0_5',
+  $self->colourSet( 'vectorbase_gene',
     'hi'         => 'highlight1',
     'superhi'    => 'highlight2',
-    'vectorbase_0_5' => [ 'black', 'VectorBase protein' ]
+    map { ( "vectorbase$_" => [ $core{$_}[0], "Vectorbase (@{[$core{$_}[1]]})" ] )} keys %core
+		    #'vectorbase' => [ 'black', 'VectorBase protein' ]
   );
   $self->colourSet( 'tigr_0_5',
     'hi'         => 'highlight1',
