@@ -1144,6 +1144,7 @@ sub ADD_ALL_TRANSCRIPTS {
   $self->add_new_track_transcript( 'evega',     'Vega genes',      'vega_gene',      $POS++, 'available' => 'databases ENSEMBL_VEGA',    @_ );
   $self->add_new_track_transcript( 'ensembl',   'Ensembl genes',   'ensembl_gene',   $POS++, @_ );
   $self->add_new_track_transcript( 'flybase',   'Flybase genes',   'flybase_gene',   $POS++, @_ );
+  $self->add_new_track_transcript( 'vectorbase', 'Vectorbase genes', 'vectorbase_gene',   $POS++, @_ );
   $self->add_new_track_transcript( 'wormbase',  'Wormbase genes',  'wormbase_gene',  $POS++, @_ );
   $self->add_new_track_transcript( 'sgd',       'SGD genes',  'sgd_gene',  $POS++, @_ );
   $self->add_new_track_transcript( 'genebuilderbeeflymosandswall',
@@ -1172,7 +1173,7 @@ sub ADD_ALL_TRANSCRIPTS {
 
   $self->add_new_track_transcript( 'dog_protein',   'Dog genes',   'dog_protein',   $POS++, @_ );
   $self->add_new_track_transcript( 'cow_proteins',   'Cow genes',   'cow_protein',   $POS++, @_ );
-  $self->add_new_track_transcript( 'vectorbase_0_5',   'VectorBase genes',   'vectorbase_0_5',   $POS++, @_ );
+ # $self->add_new_track_transcript( 'vectorbase_0_5',   'VectorBase genes',   'vectorbase_0_5',   $POS++, @_ );
   $self->add_new_track_transcript( 'tigr_0_5',   'TIGR genes',   'tigr_0_5',   $POS++, @_ );
   $self->add_new_track_transcript( 'homology_low', 'Bee genes',    'bee_pre_gene',   $POS++, @_ );
   # trancripts for Vega
@@ -1251,6 +1252,11 @@ sub ADD_GENE_TRACKS {
     'gene_col'             => sub { return $_[0]->biotype eq 'bacterial_contaminant' ? '_BACCOM'    : $_[0]->analysis->logic_name.'_'.$_[0]->biotype.'_'.$_[0]->status          },
     'logic_name'           => 'flybase psuedogene', @_
   );
+  $self->add_new_track_gene( 'vectorbase', 'Vectorbase Genes', 'vectorbase_gene', $POS++,
+    'gene_label'           => sub { return $_[0]->biotype eq 'bacterial_contaminant' ? 'Bac. cont.' : ( $_[0]->biotype eq 'pseudogene' ? 'Pseudogene' : ( $_[0]->external_name || 'NOVEL' ) ) },
+    'gene_col'             => sub { return $_[0]->biotype eq 'bacterial_contaminant' ? '_BACCOM'    : $_[0]->analysis->logic_name.'_'.$_[0]->biotype.'_'.$_[0]->status          },
+    'logic_name'           => 'vectorbase psuedogene', @_
+  );
   $self->add_new_track_gene( 'wormbase', 'Wormbase Genes', 'wormbase_gene', $POS++,
     'gene_label'           => sub { return $_[0]->biotype eq 'bacterial_contaminant' ? 'Bac. cont.' : ( $_[0]->biotype eq 'pseudogene' ? 'Pseudogene' : ( $_[0]->external_name || 'NOVEL' ) ) },
     'gene_col'             => sub { return $_[0]->biotype eq 'bacterial_contaminant' ? '_BACCOM'    : $_[0]->analysis->logic_name.'_'.$_[0]->biotype.'_'.$_[0]->status          },
@@ -1285,10 +1291,10 @@ sub ADD_GENE_TRACKS {
     'gene_col'             => 'cow_protein', @_
   );
 
-  $self->add_new_track_gene( 'VectorBase_0_5', 'VectorBase proteins', 'vectorbase_0_5', $POS++,
-    'gene_label'           => sub { return $_[0]->stable_id },
-    'gene_col'             => 'vectorbase_0_5', @_
-  );
+#  $self->add_new_track_gene( 'VectorBase_0_5', 'VectorBase proteins', 'vectorbase_0_5', $POS++,
+#    'gene_label'           => sub { return $_[0]->stable_id },
+#    'gene_col'             => 'vectorbase_0_5', @_
+#  );
 
   $self->add_new_track_gene( 'TIGR_0_5', 'TIGR proteins', 'tigr_0_5', $POS++,
     'gene_label'           => sub { return $_[0]->stable_id },
@@ -1368,12 +1374,20 @@ sub ADD_AS_GENE_TRACKS {
 			       'gene_col'             => sub { return $_[0]->biotype eq 'bacterial_contaminant' ? '_BACCOM'    : ( $_[0]->biotype eq 'pseudogene' ? '_PSEUDO'    : '_'.$_[0]->external_status          ) },
 			       'logic_name'           => 'ensembl psuedogene', @_
 			       );
+
     $self->add_new_track_gene( 'flybase', 'Flybase Genes', 'flybase_gene', $POS++,
      'gene_label'           => sub { return $_[0]->biotype eq 'bacterial_contaminant' ? 'Bac. cont.' : ( $_[0]->biotype eq 'pseudogene' ? 'Pseudogene' : ( $_[0]->external_name || 'NOVEL' ) ) },
 			       'gene_col'             => sub { return $_[0]->biotype eq 'bacterial_contaminant' ? '_BACCOM'    : ( $_[0]->biotype eq 'pseudogene' ? '_PSEUDO'    : '_'.$_[0]->external_status          ) },
      'logic_name'           => 'flybase psuedogene', @_
 			       );
-    $self->add_new_track_gene( 'wormbase', 'Wormbase Genes', 'wormbase_gene', $POS++,
+
+     $self->add_new_track_gene( 'vectorbase', 'Vectorbase Genes', 'vectorbase_gene', $POS++,
+     'gene_label'           => sub { return $_[0]->biotype eq 'bacterial_contaminant' ? 'Bac. cont.' : ( $_[0]->biotype eq 'pseudogene' ? 'Pseudogene' : ( $_[0]->external_name || 'NOVEL' ) ) },
+			       'gene_col'             => sub { return $_[0]->biotype eq 'bacterial_contaminant' ? '_BACCOM'    : ( $_[0]->biotype eq 'pseudogene' ? '_PSEUDO'    : '_'.$_[0]->external_status          ) },
+     'logic_name'           => 'vectorbase psuedogene', @_
+			       );
+
+   $self->add_new_track_gene( 'wormbase', 'Wormbase Genes', 'wormbase_gene', $POS++,
 			       'gene_label'           => sub { return $_[0]->biotype eq 'bacterial_contaminant' ? 'Bac. cont.' : ( $_[0]->biotype eq 'pseudogene' ? 'Pseudogene' : ( $_[0]->external_name || 'NOVEL' ) ) },
 			       'gene_col'             => sub { return $_[0]->biotype eq 'bacterial_contaminant' ? '_BACCOM'    : ( $_[0]->biotype eq 'pseudogene' ? '_PSEUDO'    : '_'.$_[0]->external_status          ) },
 			       'logic_name'           => 'wormbase psuedogene', @_
