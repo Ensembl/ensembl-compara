@@ -159,8 +159,8 @@ sub fetch_all_by_MethodLinkSpeciesSet_Slice {
     if (!defined $window_size) {
 	#set window_size to be the largest for when for loop fails
 	$window_size = $window_sizes[scalar(@window_sizes)-1];
-	for (my $i = 0; $i < scalar(@window_sizes); $i++) {
-	    if ($bucket_size <= $window_sizes[$i]) {
+	for (my $i = 1; $i < scalar(@window_sizes); $i++) {
+	    if ($bucket_size < $window_sizes[$i]) {
 		$window_size = $window_sizes[$i-1];
 		last;
 	    }
@@ -278,8 +278,8 @@ sub fetch_all_by_GenomicAlignBlock {
     if (!defined $window_size) {
 	#set window_size to be the largest for when for loop fails
 	$window_size = $window_sizes[scalar(@window_sizes)-1];
-	for (my $i = 0; $i < scalar(@window_sizes); $i++) {
-	    if ($bucket_size <= $window_sizes[$i]) {
+	for (my $i = 1; $i < scalar(@window_sizes); $i++) {
+	    if ($bucket_size < $window_sizes[$i]) {
 		$window_size = $window_sizes[$i-1];
 		last;
 	    }
@@ -812,7 +812,7 @@ sub _get_alignment_scores {
     #with _no_score_value
     $pos = $conservation_scores->[0]->position;
     my $genomic_align_block_id = $genomic_align_block->dbID;
-    for (my $j = 1; $j < $pos; $j++) {
+    for (my $j = 1; $j < $pos; $j+=$window_size) {
 	
 	my $aligned_score = _add_to_bucket($self, $display_type, $_no_score_value, $j, 1, scalar(@$aligned_scores), $genomic_align_block_id, $window_size);  
 	if ($aligned_score) {
@@ -851,7 +851,7 @@ sub _get_alignment_scores {
 	} else {
 	    $next_pos = $genomic_align_block->length;
 	}
-	for (my $j = $pos; $j < $next_pos; $j++) {
+	for (my $j = $pos; $j < $next_pos; $j+=$window_size) {
 	    
 	    my $aligned_score = _add_to_bucket($self, $display_type, $_no_score_value, $j, 1, scalar(@$aligned_scores), $genomic_align_block_id, $window_size);  
 	    if ($aligned_score) {
