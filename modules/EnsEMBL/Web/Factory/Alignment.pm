@@ -402,5 +402,34 @@ sub determine_sequence_type{
   return ( ( $dna_chars/$all_chars ) * 100 ) > $threshold ? 'DNA' : 'PEP';
 }
 
+sub usage_GeneTree {
+  return 
+    'Comparative gene homologies',
+    [ ['gene' => 'Name of gene' ]],
+    [ ['format' => 'SimpleAlign renderer name'] ]
+}
+
+sub createObjects_GeneTree {
+  my $self            = shift;
+  my $databases       = $self->DBConnection->get_databases( 'core', 'compara' );
+  my $compara_db      = $databases->{'compara'};
+  my $ma              = $compara_db->get_MemberAdaptor;
+  my $member          = $ma->fetch_by_source_stable_id("ENSEMBLGENE",$self->param('gene'));
+  return $self->_prob( 'Unable to find gene' ) unless $member;
+  eval {
+      my $clusterset_id = 1; ### WHAT IS IT ???
+      my $treeDBA = $compara_db->get_ProteinTreeAdaptor;
+      my $aligned_member = $treeDBA->fetch_AlignedMember_by_member_id_root_id(
+									      $member->get_longest_peptide_Member->member_id,
+									      $clusterset_id);
+
+      my $node = $aligned_member->subroot;
+      my $tree = $treeDBA->fetch_node_by_node_id($node->node_id);
+      $node->release_tree;
+      $self->_createObjects( $tree, 'GeneTree' );
+  };
+  return $self->_prob( 'Unable to get homologies', "<pre>$@</pre>" ) if $@;
+}
+
 1;
 

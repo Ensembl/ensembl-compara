@@ -98,6 +98,29 @@ sub alignview_Homology {
   }
 }
 
+
+sub alignview_GeneTree {
+  my $self = shift;
+  my $object = $self->{object};
+
+  my $caption =  qq(GeneTree for gene @{[CGI::escapeHTML($object->param('gene'))]});
+
+  if( my $panel1 = $self->new_panel( '',
+    'code'    => "info",
+    'caption' => $caption
+  )) {
+    $self->add_form( $panel1,
+      qw(format EnsEMBL::Web::Component::Alignment::format_form)
+    );
+    $panel1->add_components(qw(
+      format EnsEMBL::Web::Component::Alignment::format
+      output EnsEMBL::Web::Component::Alignment::output_GeneTree
+    ));
+    $self->add_panel( $panel1 );
+  }
+}
+
+
 sub alignview_AlignSlice {
     my $self = shift;
     my $object = $self->{object};

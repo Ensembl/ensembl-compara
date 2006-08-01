@@ -37,6 +37,7 @@ sub param_list {
   my $T = {
     'Family'   => [qw(family_stable_id)],
     'Homology' => [qw(gene g1)],
+    'GeneTree' => [qw(gene)],
     'AlignSlice' => [qw(chr bp_start bp_end as method s)],
   };
   return @{$T->{$class}||[]};
@@ -265,4 +266,19 @@ sub output_External {
   }
   return 1;
 }
+
+
+sub output_GeneTree {
+  my( $panel, $object ) = @_;
+  my $tree = $object->Obj;
+  my $alignio = Bio::AlignIO->newFh(
+				    -fh     => IO::String->new(my $var),
+				    -format => renderer_type($object->param('format'))
+				    );
+      
+  print $alignio $tree->get_SimpleAlign();
+  $panel->print("<pre>$var</pre>\n");
+}
+
+
 1;
