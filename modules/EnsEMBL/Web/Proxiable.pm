@@ -486,11 +486,16 @@ The parameters that you can set are:
 sub new_menu_container {
   my($self, %params ) = @_;
 
+#  foreach my $p (sort keys %params) {
+#      warn ("$p => $params{$p}");
+#  }
+
   my %N = (
     'species'      => $self->species,
     'script'       => $self->script,
     'scriptconfig' => $self->get_scriptconfig,
-    'width'        => $self->param('image_width')
+    'width'        => $self->param('image_width'),
+    'object'    => $params{'object'}
   );
 
   $N{'location'} = $self->location if $self->can('location');

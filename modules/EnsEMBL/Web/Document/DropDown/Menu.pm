@@ -21,6 +21,7 @@ sub new {
     'configs'      => $menu_container->{'configs'}      || [],
     'scriptconfig' => $menu_container->{'scriptconfig'} || undef,
     'location'     => $menu_container->{'location'}     || undef,
+    'object'       => $menu_container->{'object'}       || undef,
 ## Set to "empty"
     'menuitems'      => [],
     'missing_tracks' => 0,
