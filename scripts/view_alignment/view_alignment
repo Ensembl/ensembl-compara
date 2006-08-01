@@ -1,0 +1,23 @@
+#!/bin/sh
+# AUTHOR:
+# Kathryn Beal (kbeal@ebi.ac.uk)
+# COPYRIGHT:
+# This script is part of the Ensembl project http://www.ensembl.org
+# DESCRIPTION:
+# This file is calls view_alignment.pl. Please see this file for
+# documentation and usage
+
+#
+# Set up the environment if not already done
+#
+if [ "x$STADENROOT_1_6" = "x" ]
+then
+    STADENROOT=`which gap4 | sed -e 's#[^/]*/[^/]*$##'`	
+    export STADENROOT
+    . $STADENROOT/staden.profile
+fi
+
+#
+# Run it!
+#
+exec view_alignment.pl ${@+"$@"}
