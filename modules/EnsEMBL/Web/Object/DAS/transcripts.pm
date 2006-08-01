@@ -39,7 +39,7 @@ sub Features {
 				    'LABEL' => $gene->display_xref ? $gene->display_xref->display_id : undef, 
 				    'LINK' => [
 					       {
-						   href => sprintf("http://www.ensmebl.org/%s/geneview?gene=%s", $self->real_species, $gene->display_id),
+						   href => sprintf("http://www.ensembl.org/%s/geneview?gene=%s", $self->real_species, $gene->display_id),
 						   text => 'GeneView'
 						   }
 					       ]
@@ -54,7 +54,7 @@ sub Features {
 			    'LABEL' => $t->display_xref ? $t->display_xref->display_id : undef, 
 			    'LINK' => [
 				       {
-					   href => sprintf("http://www.ensmebl.org/%s/transview?transcript=%s", $self->real_species, $t->display_id),
+					   href => sprintf("http://www.ensembl.org/%s/transview?transcript=%s", $self->real_species, $t->display_id),
 					   text => 'TransView'
 					   }
 				       ]
@@ -118,7 +118,7 @@ sub Features {
 	    'TYPE' => 'gene',
 	    'LINK' => [
 		       {
-			   href => sprintf("http://www.ensmebl.org/%s/geneview?gene=%s", $self->real_species, $gene->display_id),
+			   href => sprintf("http://www.ensembl.org/%s/geneview?gene=%s", $self->real_species, $gene->display_id),
 			   text => 'GeneView'
 			   }
 		       ]
@@ -134,7 +134,7 @@ sub Features {
 		'TYPE' => 'transcript',
 		'LINK' => [
 			   {
-			       href => sprintf("http://www.ensmebl.org/%s/transview?transcript=%s", $self->real_species, $t->display_id),
+			       href => sprintf("http://www.ensembl.org/%s/transview?transcript=%s", $self->real_species, $t->display_id),
 			       text => 'TransView'
 			       }
 			   ]
@@ -181,7 +181,7 @@ sub Features {
 		'TYPE' => 'gene',
 		'LINK' => [
 			   {
-			       href => sprintf("http://www.ensmebl.org/%s/geneview?gene=%s", $self->real_species, $gene->display_id),
+			       href => sprintf("http://www.ensembl.org/%s/geneview?gene=%s", $self->real_species, $gene->display_id),
 			       text => 'GeneView'
 			       }
 			   ]
@@ -197,7 +197,7 @@ sub Features {
 		    'TYPE' => 'transcript',
 		    'LINK' => [
 			       {
-				   href => sprintf("http://www.ensmebl.org/%s/transview?gene=%s", $self->real_species, $t->display_id),
+				   href => sprintf("http://www.ensembl.org/%s/transview?gene=%s", $self->real_species, $t->display_id),
 				   text => 'TransView'
 				   }
 			       ]
