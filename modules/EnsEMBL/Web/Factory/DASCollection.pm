@@ -513,7 +513,6 @@ sub createObjects {
 
 sub getEnsemblMapping {
     my ($self, $cs) = @_;
-#    my ($realm, $base, $species) = split(/\,/, $cs);
 
     my ($realm, $base, $species) = ($cs->{name}, $cs->{category}, $cs->{organismName});
     my $smap ='unknown';
