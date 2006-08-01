@@ -246,3 +246,71 @@ function dd_move_to( X, left, top ) {
   }
   return( 0 )
 }
+
+
+function openATV( u ) {
+  atv_window = open("", "atv_window", 
+    "width=300,height=150,status=no,toolbar=no,menubar=no,resizable=yes");
+
+  // open document for further output
+  atv_window.document.open();
+  
+  // create document
+  atv_window.document.write( "<HTML><HEAD><TITLE>ATV" );
+  atv_window.document.write( "</TITLE></HEAD><BODY>" );
+  atv_window.document.write( "<BODY TEXT =\"#FFFFFF\" BGCOLOR =\"#000000\">" );
+  atv_window.document.write( "<FONT FACE = \"HELVETICA, ARIAL\">" );
+  atv_window.document.write( "<CENTER><B>" );
+  atv_window.document.write( "Please do not close this window<BR>as long as you want to use ATV." );
+  atv_window.document.write( "<APPLET ARCHIVE = \"http://ensarc-1-14.internal.sanger.ac.uk:9020/forester/ATVapplet.jar\"" );
+  atv_window.document.write( " CODE = \"forester.atv_awt.ATVapplet.class\"" );
+  atv_window.document.write( " WIDTH = 200 HEIGHT = 50>\n" );
+  atv_window.document.write( "<PARAM NAME = url_of_tree_to_load\n" );
+  atv_window.document.write( " VALUE = " );
+  atv_window.document.write( " http://" + u + ">" );
+  atv_window.document.write( "</APPLET>" );
+  atv_window.document.write( "</BODY></HTML>" );
+  
+  // close the document - (not the window!)
+  atv_window.document.close();  
+}
+
+function openJalview( u ) {
+  atv_window = open("", "jalview_window", 
+    "width=300,height=150,status=no,toolbar=no,menubar=no,resizable=yes");
+
+  // open document for further output
+  atv_window.document.open();
+  
+  // create document
+  atv_window.document.write( "<HTML><HEAD><TITLE>ATV" );
+  atv_window.document.write( "</TITLE></HEAD><BODY>" );
+  atv_window.document.write( "<BODY TEXT =\"#FFFFFF\" BGCOLOR =\"#000000\">" );
+  atv_window.document.write( "<FONT FACE = \"HELVETICA, ARIAL\">" );
+  atv_window.document.write( "<CENTER><B>" );
+  atv_window.document.write( "Please do not close this window<BR>as long as you want to use Jalview.<BR> Click on the button below" );
+
+  atv_window.document.write( "<applet archive=\"http://ensarc-1-14.internal.sanger.ac.uk:9020/jalview/jalview.jar\"");
+  atv_window.document.write( "  code=\"jalview.ButtonAlignApplet.class\" width=\"100\" height=\"35\" style=\"border:0\"");
+  atv_window.document.write( "  alt = \"[Java must be enabled to view alignments]\">\n");
+
+  atv_window.document.write( "<PARAM NAME = input\n" );
+  atv_window.document.write( " VALUE = " );
+  atv_window.document.write( " http://" + u + ">" );
+   atv_window.document.write( "   <param name=\"type\" value=\"URL\" />");
+   atv_window.document.write( "   <param name=\"format\" value=\"FASTA\" />");
+   atv_window.document.write( "   <param name=\"fontsize\" value=\"10\" />");
+   atv_window.document.write( "   <param name=\"Consensus\" value=\"*\" />");
+   atv_window.document.write( "   <param name=\"srsServer\" value=\"srs.sanger.ac.uk/srsbin/cgi-bin/\" />");
+   atv_window.document.write( "   <param name=\"database\" value=\"ensemblpep\" />");
+   atv_window.document.write( "   <strong>Java must be enabled to view alignments</strong>");
+
+
+
+  atv_window.document.write( "</APPLET>" );
+  atv_window.document.write( "</BODY></HTML>" );
+  
+  // close the document - (not the window!)
+  atv_window.document.close();  
+}
+
