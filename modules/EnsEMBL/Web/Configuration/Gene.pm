@@ -366,6 +366,12 @@ sub context_menu {
     'href'  => "/$species/geneseqalignview?$q_string" );
 
   $self->add_entry( $flag,
+    'code'  => 'genetree',
+    'text'  => "Gene tree info",
+    'title' => 'GeneTreeView - View graphic display of the gene tree for gene '.$obj->stable_id,
+    'href'  => "/$species/genetreeview?$q_string" );
+
+  $self->add_entry( $flag,
     'code'  => 'gene_var_info',
     'text'  => "Gene variation info.",
     'title' => 'GeneSNPView - View of consequences of variations on gene '.$obj->stable_id,
@@ -454,6 +460,59 @@ sub context_menu {
     'title' => "ExportView - Export information about gene ".$obj->stable_id,
     'href'  => "/$species/exportview?type1=gene;anchor1=@{[$obj->stable_id]}"
   );
+}
+
+sub genetreeview {
+  my $self   = shift;
+  my $obj    = $self->{'object'};
+  
+  $self->update_configs_from_parameter('image', qw(genetreeview genetreeview) );
+  $self->set_title( 'Gene Splice Report for '.$obj->stable_id );
+  my $params = { 'gene' => $obj->stable_id, 'db' => $obj->get_db  };
+
+  if( my $panel1 = $self->new_panel( 'Information',
+    'code'    => "info#",
+    'caption' => 'Gene Tree information',
+  ) ) {
+    $panel1->add_components(qw(
+      name           EnsEMBL::Web::Component::Gene::name
+      stable_id      EnsEMBL::Web::Component::Gene::stable_id
+      location       EnsEMBL::Web::Component::Gene::location
+      external_links EnsEMBL::Web::Component::Gene::external_links
+     ));
+    $self->add_panel( $panel1 );
+
+}
+
+
+  if( my $panel2 = $self->new_panel( 'Image',
+    'code'    => "image#",
+    'caption' => 'Genetree for gene '.$obj->stable_id,
+    'params' => $params
+  ) ) {
+    $self->initialize_zmenu_javascript;
+    $self->initialize_ddmenu_javascript;
+    $panel2->add_components(qw(
+      menu  EnsEMBL::Web::Component::Gene::genetreeview_menu
+      image EnsEMBL::Web::Component::Gene::genetreeview
+    ));
+    $self->add_panel( $panel2 );
+  }
+
+  if( my $panel3 = $self->new_panel( 'Information',
+    'code'    => "info#",
+    'caption' => 'Gene Orthologues',
+  ) ) {
+    $panel3->add_components(qw(
+      orthologues    EnsEMBL::Web::Component::Gene::orthologues
+     ));
+    $self->add_panel( $panel3 );
+
+}
+
+
+
+
 }
 
 1;

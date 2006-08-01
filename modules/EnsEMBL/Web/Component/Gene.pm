@@ -10,6 +10,8 @@ use EnsEMBL::Web::Component::Slice;
 use EnsEMBL::Web::Component::Transcript qw(_sort_similarity_links);
 
 #use Data::Dumper;
+use Bio::AlignIO;
+use IO::String;
 
 
 sub sequence {
@@ -983,6 +985,26 @@ sub factor {
 
 sub genespliceview_menu {  return gene_menu( @_, 'genesnpview_transcript',
    [qw( Features SNPContext ImageSize THExport )], ['GeneSpliceHelp'] ); }
+
+sub genetreeview_menu {
+    my($panel, $object, $configname, $left, $right ) =  
+	(@_, 'genetreeview', [qw( ImageSize GTExport )], ['GeneTreeHelp'] );
+
+    my ( $contig_name, $contig, $contig_start) = $object->get_contig_location();
+    my $mc = $object->new_menu_container(
+					 'configname'  => $configname,
+					 'panel'       => 'image',
+					 'object' => $object,
+					 'configs'     => [ $object->user_config_hash( 'genetreeview' ) ],
+					 'leftmenus'  => $left,
+					 'rightmenus' => $right
+					 );
+    $panel->print( $mc->render_html );
+    $panel->print( $mc->render_js );
+    return 0;
+}
+
+
 sub genesnpview_menu    {  return gene_menu( @_, 'genesnpview_transcript', 
    [qw( Features  Source SNPClasses SNPValid SNPTypes SNPContext ImageSize THExport)], ['SNPHelp'] ); }
 
@@ -1171,6 +1193,7 @@ sub genesnpview {
   #$image->set_extra( $object );
 
   $image->imagemap = 'yes';
+
   my $T = $image->render;
   $panel->print( $T );
   return 0;
@@ -1192,4 +1215,138 @@ sub too_big {
   $panel->print( qq(<p>Due to the length of this $object_type, this display is disabled as the rendering time is too long.</p>) );
   return 0;
 }
+
+sub genetreeview {
+  my( $panel, $object ) = @_;
+
+  my $databases       = $object->DBConnection->get_databases( 'core', 'compara' );
+  my $comparaDBA      = $databases->{'compara'};
+
+  my $id = $object->stable_id;
+  my $clusterset_id = 1; ### WHAT IS IT ???
+
+  my $treeDBA = $comparaDBA->get_ProteinTreeAdaptor;
+  warn ($treeDBA);
+  my $member = $comparaDBA->get_MemberAdaptor->fetch_by_source_stable_id('ENSEMBLGENE', $id);
+  return 0 unless (defined $member);
+  warn ($member);
+  my $aligned_member = $treeDBA->fetch_AlignedMember_by_member_id_root_id(
+									  $member->get_longest_peptide_Member->member_id,
+									  $clusterset_id);
+  return 0 unless (defined $aligned_member);
+  warn ($aligned_member);
+  my $node = $aligned_member->subroot;
+  warn ($node);
+  my $tree = $treeDBA->fetch_node_by_node_id($node->node_id);
+  $node->release_tree;
+
+  warn("Z-0:".localtime);
+  my $label = "GeneTree";
+
+  my $treeimage = create_genetree_image( $object, $tree);
+  warn("Y-0:".localtime);
+
+  my $T = $treeimage->render;
+  $panel->print( $T );
+  warn("X-0:".localtime);
+
+  return 1;
+}
+
+
+sub external_links {
+  my( $panel, $object ) = @_;
+
+  my $databases       = $object->DBConnection->get_databases( 'core', 'compara' );
+  my $comparaDBA      = $databases->{'compara'};
+
+  my $id = $object->stable_id;
+  my $clusterset_id = 1; ### WHAT IS IT ???
+
+  my $treeDBA = $comparaDBA->get_ProteinTreeAdaptor;
+  my $member = $comparaDBA->get_MemberAdaptor->fetch_by_source_stable_id('ENSEMBLGENE', $id);
+  return 0 unless (defined $member);
+  my $aligned_member = $treeDBA->fetch_AlignedMember_by_member_id_root_id(
+									  $member->get_longest_peptide_Member->member_id,
+									  $clusterset_id);
+  return 0 unless (defined $aligned_member);
+  my $node = $aligned_member->subroot;
+  my $tree = $treeDBA->fetch_node_by_node_id($node->node_id);
+  $node->release_tree;
+  my $label = "External Links";
+
+  my $FN        = $object->temp_file_name( undef, 'XXX/X/X/XXXXXXXXXXXXXXX' );
+  my $file      = $object->species_defs->ENSEMBL_TMP_DIR_IMG."/$FN";
+  $object->make_directory( $file );
+  my $SERVER    = $object->species_defs->ENSEMBL_SERVERNAME;
+  my $PROTOCOL  = $object->species_defs->ENSEMBL_PROTOCOL;
+  my $PORT      = 9020; #$object->species_defs->ENSEMBL_PROXY_PORT || $object->species_defs->ENSEMBL_PORT;
+
+  my $URL       = "$SERVER:$PORT".$object->species_defs->ENSEMBL_TMP_URL_IMG."/$FN";
+  if( open NHX,   ">$file" ) {
+      print NHX $tree->nhx_format('simple');
+      close NHX;
+      warn "(written $file => $URL)";
+  }
+
+
+
+  my $alignio = Bio::AlignIO->newFh(
+				    -fh     => IO::String->new(my $var),
+				    -format => 'fasta'
+				    );
+      
+  print $alignio $tree->get_SimpleAlign();
+  my $FN2        = $object->temp_file_name( undef, 'XXX/X/X/XXXXXXXXXXXXXXX' );
+  my $file2      = $object->species_defs->ENSEMBL_TMP_DIR_IMG."/$FN2";
+  $object->make_directory( $file2 );
+  my $URL2       = "$SERVER:$PORT".$object->species_defs->ENSEMBL_TMP_URL_IMG."/$FN2";
+  if( open FASTA,   ">$file2" ) {
+      print FASTA $var;
+      close FASTA;
+      warn "(written FASTA $file2 => $URL2)";
+  }
+
+  my $html = qq{
+<form>
+    <input style="vertical-align:top; margin: 5px;" type=button value="View in ATV" onClick="openATV(\'$URL\' )">
+    <input style="vertical-align:top; margin: 5px;" type=button value="View in Jalview" onClick="openJalview(\'$URL2\' )">
+</form>
+};
+
+  my $jl = qq{
+    <applet archive="http://www.ensembl.org/jalview/jalview.jar"
+        code="jalview.ButtonAlignApplet.class" width="100" height="35" style="border:0"
+        alt = "[Java must be enabled to view alignments]">
+      <param name="input" value="$URL2" />
+      <param name="type" value="URL" />
+      <param name=format value="FASTA" />
+      <param name="fontsize" value="10" />
+      <param name="Consensus" value="*" />
+      <param name="srsServer" value="srs.sanger.ac.uk/srsbin/cgi-bin/" />
+      <param name="database" value="ensemblpep" />
+      <strong>Java must be enabled to view alignments</strong>
+    </applet>
+};
+
+  $panel->add_row( $label, $html );
+  return 1;
+}
+
+sub create_genetree_image {
+  my(  $object, $tree ) = @_;
+
+  my $wuc        = $object->user_config_hash( 'genetreeview' ); 
+  my $image_width  = $object->param( 'image_width' ) || 1200;
+  $wuc->container_width($image_width);
+  $wuc->set_width( $object->param('image_width') );
+  $wuc->{_object} = $object;
+
+  my $image  = $object->new_image( $tree, $wuc, [$object->stable_id] );
+  $image->cacheable   = 'yes';
+  $image->image_name  = 'genetree-'.($object->param('image_width')).'-'.$object->stable_id;
+  $image->imagemap           = 'yes';
+  return $image;
+}     
+
 1;
