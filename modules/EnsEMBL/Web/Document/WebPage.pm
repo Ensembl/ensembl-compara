@@ -4,7 +4,7 @@ use EnsEMBL::Web::Root;
 use EnsEMBL::Web::Proxy::Factory;
 use EnsEMBL::Web::Timer;
 use EnsEMBL::Web::SpeciesDefs;
-use Apache::Constants qw(:common :response);
+use Apache::Constants qw(:common :response M_GET);
 
 our $SD = EnsEMBL::Web::SpeciesDefs->new();
 
@@ -282,8 +282,7 @@ sub _node_hop {
       my $r = $self->page->renderer->{'r'};
 
       ## do redirect
-      warn "Redirecting to $URL";
-      $r->headers_out->add( "Location" => $URL );
+      $r->headers_out->add( "Location" => $URL ); 
       $r->err_headers_out->add( "Location" => $URL );
       $r->status( REDIRECT );
     }

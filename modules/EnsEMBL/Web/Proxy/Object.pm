@@ -46,8 +46,8 @@ our @ISA = qw( EnsEMBL::Web::Proxy );
 =head2 new
 
  Arg[1]      : object type
- Arg[1]      : ensembl object
- Arg[1]      : data hash ref
+ Arg[2]      : ensembl object
+ Arg[3]      : data hash ref
  Example     : EnsEMBL::Web::Proxy::Object( 'Gene', $gene, $data );
  Description : Instantiates the Proxy::Object, add all it's child
                objects

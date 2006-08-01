@@ -20,6 +20,4 @@ sub render {
 		    CGI::escapeHTML($_[0]->value), 
 		    $_[0]->on_click ? sprintf("onClick=\"%s\"", $_[0]->on_click) : '');
 }  
-		
-
 1;

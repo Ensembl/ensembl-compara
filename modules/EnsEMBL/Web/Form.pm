@@ -83,7 +83,7 @@ sub _render_element {
   </div>), $element->id, ( $element->label eq '' ? "&nbsp;" : CGI::escapeHTML($element->label) )
   } elsif( $element->label ne '' ) {
     $output = sprintf qq(
-  <h6><label for="%s">%s</label></h6>), $element->id, CGI::escapeHTML($element->label);
+  <h6><label for="%s">%s<br><span style="color: #333; font-weight: normal;">%s<br /><br /></span></label></h6>), $element->id, CGI::escapeHTML($element->label), CGI::escapeHTML($element->comment);
   } elsif( $style eq 'formblock' ) {
     $output = qq(
   <div class=\"formpadding\"></div>);;

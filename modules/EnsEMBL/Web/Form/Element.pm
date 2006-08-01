@@ -22,6 +22,7 @@ sub new {
     'style'        => $array{ 'style' } || 'normal',
     'introduction' => $array{ 'introduction' },
     'label'        => $array{ 'label' },
+    'comment'      => $array{ 'comment' },
     'hidden_label' => $array{ 'hidden_label' },
     'render_as'    => $array{ 'render_as'    },
     'src'          => $array{ 'src'    },
@@ -52,6 +53,7 @@ sub required     :lvalue { $_[0]{'required'}; }
 sub notes        :lvalue { $_[0]{'notes'}; }
 sub introduction :lvalue { $_[0]{'introduction'}; }
 sub label        :lvalue { $_[0]{'label'}; }
+sub comment 	 :lvalue { $_[0]{'comment'}; }
 sub hidden_label :lvalue { $_[0]{'hidden_label'}; }
 sub in_error     :lvalue { $_[0]{'in_error'}; }
 sub render_as    :lvalue { $_[0]{'render_as'}; }

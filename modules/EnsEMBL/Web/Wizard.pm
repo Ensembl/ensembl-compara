@@ -233,6 +233,25 @@ sub lock_all_nodes {
   }
 }
 
+##---------------- PROGRESS BAR FUNCTIONS ---------------------------------
+
+sub nodes_in_progress_bar {
+  my $self = shift;
+  warn "Progress bar";
+  my %nodes = %{ $self->{'_nodes'} };
+  my @bar_nodes;
+  for my $key( keys %nodes) {
+    my $node_def = $nodes{$key};
+    $node_def->{'name'} = $key;
+    my $label = $node_def->{'progress_label'};
+    if ($label) {
+      push @bar_nodes, $node_def;
+    }
+  }
+  my @sorted = sort { $a->{'order'} cmp $b->{'order'} } @bar_nodes; 
+  return @sorted;
+}
+
 ##---------------- FORM ASSEMBLY FUNCTIONS --------------------------------
 
 sub simple_form {
@@ -414,6 +433,7 @@ sub add_widgets {
       'type'          => $field_info{'type'},
       'name'          => $field_name,
       'label'         => $field_info{'label'},
+      'comment'       => $field_info{'comment'},
       'required'      => $field_info{'required'},
       'rows'          => $field_info{'rows'},
       'notes'         => $field_info{'notes'},

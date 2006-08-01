@@ -5,6 +5,8 @@ use SiteDefs qw( :APACHE);
 use strict;
 use Apache::Constants qw(:common :response);
 use EnsEMBL::Web::DBSQL::UserDB;
+use EnsEMBL::Web::DBSQL::BlastAdaptor;
+use EnsEMBL::Web::Object::BlastJobMaster;
 use Apache::SizeLimit;
 use Apache::URI ();
 use CGI::Cookie;
@@ -110,6 +112,10 @@ LONG PROCESS %10s IP:  %s  UA: %s
   use Fcntl ':flock';
 ## Now we do the BLAST parser stuff!!
   _process_blast( $r ) if $ENV{'ENSEMBL_SCRIPT'} && $ENSEMBL_BLASTSCRIPT;
+  
+  if ($ENV{'ENSEMBL_SCRIPT'} && $ENSEMBL_BLASTSCRIPT) {
+    #&queue_pending_blast_jobs;
+  }
 
 ## Now we check if the die file has been touched...
   my $die_file = $ENSEMBL_SERVERROOT.'/logs/ensembl.die';
@@ -169,6 +175,28 @@ sub _get_loads {
            'httpd' => &$LOAD_COMMAND( 'httpd' ) };
 }
 
+sub queue_pending_blast_jobs {
+
+  my $queue_class = "EnsEMBL::Web::Queue::LSF";
+
+  my $species_defs = EnsEMBL::Web::SpeciesDefs->new();
+#  my $DB = $species_defs->databases->{'ENSEMBL_BLAST'}; 
+
+  my $DB = { 'NAME' => 'ensembl_blast',
+             'USER' => 'ensadmin',
+             'PASS' => 'ensembl',
+             'HOST' => 'ensarc-1-08',
+             'PORT' => '3306' }; 
+
+  my $blast_adaptor = EnsEMBL::Web::DBSQL::BlastAdaptor->new($DB);
+  warn "Blast adaptor: " . $blast_adaptor;
+  warn "Species def databases: " . $species_defs->databases->{'ENSEMBL_BLAST'};
+  my $job_master = EnsEMBL::Web::Object::BlastJobMaster->new($blast_adaptor, $queue_class);
+  $job_master->queue_pending_jobs;
+  $job_master->process_completed_jobs;
+
+}
+
 sub _process_blast {
   my $r = shift;
   my $directory = $ENSEMBL_TMP_DIR_BLAST.'/pending';
@@ -176,6 +204,8 @@ sub _process_blast {
   my $count=0;
   my $ticket;
   my $_process_blast_called_at = time();
+
+  warn "Processing BLAST in Apache: $r";
 
   $ticket = $ENV{'ticket'};
   ## Lets work out when to run this!!
