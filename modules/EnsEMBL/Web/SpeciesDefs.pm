@@ -820,10 +820,15 @@ sub _parse {
           }
 ## Compute the length of the maximum chromosome. 
 ## Used to scale figures
+
+### STICKLEBACK BUG FIX... 'group' in ickleback is really 'chromosome' so
+### we need a minor hack to the calculation of the longest 'chromosome'
+### REMOVE THE (or cs.name = 'group') where stickleback is fixed.
+
           $sql   = qq(
           select sr.name, sr.length 
             from seq_region as sr, coord_system as cs 
-           where cs.name = 'chromosome' and cs.coord_system_id = sr.coord_system_id 
+           where ( cs.name = 'chromosome' or cs.name = 'group' ) and cs.coord_system_id = sr.coord_system_id 
            order by sr.length
             desc limit 1);
           $query = $dbh->prepare($sql);
@@ -1155,8 +1160,8 @@ sub db_connect_multi_species {
   
   my $self = EnsEMBL::Web::SpeciesDefs->new();
   
-  my $tree = $CONF->{_multi} || 
-    die( "No multispecies DB config found!" );
+  my $tree = $CONF->{_multi} || die( "No multispecies DB config found!" );
+  warn "... $tree ... $db_name ...";
   return $self->db_connect( $tree, $db_name );
 }
 
