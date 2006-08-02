@@ -334,7 +334,7 @@ sub name {
         	  EnsEMBL::Web::Component::Transcript::_sort_similarity_links($object, @similarity_links);
 	       }
 	    }
-	   my @links_sr7 = @{$object->__data->{'similarity_links'}};
+	   my @links_sr7 = @{$object->__data->{'similarity_links'} || []};
 	#look for any vega links and display here as well as in the similarity matches section                   
 	    if(@links_sr7){
         	foreach my $link_sr7(@links_sr7){
