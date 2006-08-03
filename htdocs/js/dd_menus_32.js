@@ -247,4 +247,3 @@ function dd_move_to( X, left, top ) {
   return( 0 )
 }
 
-
