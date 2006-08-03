@@ -1215,29 +1215,26 @@ sub genetreeview {
   my $clusterset_id = 0; ### WHAT IS IT ???
 
   my $treeDBA = $comparaDBA->get_ProteinTreeAdaptor;
-  warn ($treeDBA);
   my $member = $comparaDBA->get_MemberAdaptor->fetch_by_source_stable_id('ENSEMBLGENE', $id);
-  return 0 unless (defined $member);
-  warn ($member);
+  (warn("Can't get member") and return 0) unless (defined $member);
   my $aligned_member = $treeDBA->fetch_AlignedMember_by_member_id_root_id(
 									  $member->get_longest_peptide_Member->member_id,
 									  $clusterset_id);
-  return 0 unless (defined $aligned_member);
-  warn ($aligned_member);
+  (warn("Can't get aligned member") and return 0) unless (defined $aligned_member);
+
   my $node = $aligned_member->subroot;
-  warn ($node);
   my $tree = $treeDBA->fetch_node_by_node_id($node->node_id);
   $node->release_tree;
 
-  warn("Z-0:".localtime);
+#  warn("Z-0:".localtime);
   my $label = "GeneTree";
 
   my $treeimage = create_genetree_image( $object, $tree);
-  warn("Y-0:".localtime);
+#  warn("Y-0:".localtime);
 
   my $T = $treeimage->render;
   $panel->print( $T );
-  warn("X-0:".localtime);
+#  warn("X-0:".localtime);
 
   return 1;
 }
@@ -1271,18 +1268,12 @@ sub external_links {
   my $PROTOCOL  = $object->species_defs->ENSEMBL_PROTOCOL;
   my $PORT      = $object->species_defs->ENSEMBL_PROXY_PORT || $object->species_defs->ENSEMBL_PORT;
 
-  if ($SERVER =~ /internal/) {
-      $PORT = $object->species_defs->ENSEMBL_PORT;
-  }
-
-  my $URL       = "$SERVER:$PORT".$object->species_defs->ENSEMBL_TMP_URL_IMG."/$FN";
+  my $URL       = "http://$SERVER:$PORT".$object->species_defs->ENSEMBL_TMP_URL_IMG."/$FN";
   if( open NHX,   ">$file" ) {
       print NHX $tree->nhx_format('simple');
       close NHX;
-      warn "(written $file => $URL)";
+#      warn "(written $file => $URL)";
   }
-
-
 
   my $alignio = Bio::AlignIO->newFh(
 				    -fh     => IO::String->new(my $var),
@@ -1297,11 +1288,10 @@ sub external_links {
   if( open FASTA,   ">$file2" ) {
       print FASTA $var;
       close FASTA;
-      warn "(written FASTA $file2 => $URL2)";
+#      warn "(written FASTA $file2 => $URL2)";
   }
 
-
-  my $jl = qq{
+  my $jalview = qq{
     <applet archive="http://$SERVER:$PORT/jalview/jalview.jar"
         code="jalview.ButtonAlignApplet.class" width="100" height="35" style="border:0"
         alt = "[Java must be enabled to view alignments]">
@@ -1316,10 +1306,13 @@ sub external_links {
     </applet>
 };
 
+
   my $html = qq{
+<script type="text/javascript" src="/js/atv.js"></script>
+
 <form>
-    <input style="vertical-align:top; margin: 5px; border: 1; width:70px; height:23px" type=button value="ATV" onClick="openATV(\'$URL\' )">
-    $jl
+    <input style="background-color:white;vertical-align:top; margin: 5px; border: 1; width:70px; height:23px" type=button value="ATV" onClick="openATV(\'http://$SERVER:$PORT\',\'$URL\' )">
+    $jalview
 </form>
 };
 
