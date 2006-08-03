@@ -255,56 +255,56 @@ sub align_markup_options_form {
   }
 
   $form->add_element('type' => 'RadioGroup',
-		     'name' => 'RGselect',
-		     'values' =>[{name=> "<b>No alignments</b>", value => "NONE", checked => $aselect eq "NONE" ? "yes" : undef}],
-		     'label' => 'View in alignment with',
-		     'noescape' => 'yes',
-		     );
+         'name' => 'RGselect',
+         'values' =>[{name=> "<b>No alignments</b>", value => "NONE", checked => $aselect eq "NONE" ? "yes" : undef}],
+         'label' => 'View in alignment with',
+         'noescape' => 'yes',
+         );
   my @align_select;
 
   foreach my $id (
-		  sort { 10 * ($alignments{$b}->{'type'} cmp $alignments{$a}->{'type'}) + ($a <=> $b) }
-		  grep { $alignments{$_}->{'species'}->{$object->species} } 
-		  keys (%alignments)) {
+      sort { 10 * ($alignments{$b}->{'type'} cmp $alignments{$a}->{'type'}) + ($a <=> $b) }
+      grep { $alignments{$_}->{'species'}->{$object->species} } 
+      keys (%alignments)) {
 
       my $label = $alignments{$id}->{'name'};
       my @species = grep {$_ ne $object->species} sort keys %{$alignments{$id}->{'species'}};
 
       my @multi_species;
       if ( scalar(@species) > 1) {
-	  my %selected_species = map { $_ => 1} $object->param("ms_$id");
+    my %selected_species = map { $_ => 1} $object->param("ms_$id");
 
-	  foreach my $v (@species) {
-	      (my $name = $v) =~ s/_/ /g;
-	      if ($selected_species{$v}) {
-		  push @multi_species, {"value"=>$v, "name"=>$name, "checked"=>"yes"};
-	      } else {
-		  push @multi_species, {"value"=>$v, "name"=>$name};
-	      }
-	  }
-	  $label = "<b>$label</b> (click on checkboxes to select species)";
+    foreach my $v (@species) {
+        (my $name = $v) =~ s/_/ /g;
+        if ($selected_species{$v}) {
+      push @multi_species, {"value"=>$v, "name"=>$name, "checked"=>"yes"};
+        } else {
+      push @multi_species, {"value"=>$v, "name"=>$name};
+        }
+    }
+    $label = "<b>$label</b> (click on checkboxes to select species)";
 
       } else {
-	  ($label = "<b>$species[0]</b>") =~ s/_/ /g;
+    ($label = "<b>$species[0]</b>") =~ s/_/ /g;
       }
 
       $form->add_element('type' => 'RadioGroup',
-			 'name' => 'RGselect',
-			 'values' =>  [{name=> $label, 'value' => $id, checked=>$aselect eq "$id" ? "yes" : undef}],
-			 'label' => '     ',
-			 'class' => 'radiocheck1col',
-			 'noescape' => 'yes'
-		     );
+       'name' => 'RGselect',
+       'values' =>  [{name=> $label, 'value' => $id, checked=>$aselect eq "$id" ? "yes" : undef}],
+       'label' => '     ',
+       'class' => 'radiocheck1col',
+       'noescape' => 'yes'
+         );
 
 
       if (@multi_species) {
-	  $form->add_element(
-			     'type' => 'MultiSelect',
-			     'name'=> "ms_$id",
-#			     'label'=> ' ',
-			     'values' => \@multi_species,
-			     'value' => $object->param("ms_$id")
-			     );
+    $form->add_element(
+           'type' => 'MultiSelect',
+           'name'=> "ms_$id",
+#           'label'=> ' ',
+           'values' => \@multi_species,
+           'value' => $object->param("ms_$id")
+           );
       }
 
 
@@ -320,43 +320,34 @@ sub align_markup_options_form {
 sub name {
   my( $panel, $object ) = @_;
   
-  my $page_type_sr7= $object->[0];
-  my @vega_info_sr7=();
+  my $page_type= $object->[0];
+  my @vega_info=();
   
-  if($page_type_sr7 eq 'Transcript'){
-  
-	  my $trans_sr7= $object->transcript;
-
-	 # Check cache
-	   unless ($object->__data->{'similarity_links'}){
-	       my @similarity_links = @{$object->get_similarity_hash($trans_sr7)};
-	       if(@similarity_links){
-        	  EnsEMBL::Web::Component::Transcript::_sort_similarity_links($object, @similarity_links);
-	       }
-	    }
-	   my @links_sr7 = @{$object->__data->{'similarity_links'} || []};
-	#look for any vega links and display here as well as in the similarity matches section                   
-	    if(@links_sr7){
-        	foreach my $link_sr7(@links_sr7){
-        	  my($key_sr7, $text_sr7)= @$link_sr7;
-        	  if($key_sr7 eq 'Havana transcripts'){
-        	    if($text_sr7 =~ m{(<a.+>.+</a>)}){   
-        	      push @vega_info_sr7, $1;
-        	    }
-        	    else{
-        	      push @vega_info_sr7, $text_sr7;
-        	    }
-        	  }
-        	}
-	    }
-
-  
+  if($page_type eq 'Transcript'){
+    my $trans= $object->transcript;
+# Check cache
+    unless ($object->__data->{'similarity_links'}){
+      my @similarity_links = @{$object->get_similarity_hash($trans)};
+      if(@similarity_links){
+        EnsEMBL::Web::Component::Transcript::_sort_similarity_links($object, @similarity_links);
+      }
+    }
+    my @links = @{$object->__data->{'similarity_links'}||[]};
+  #look for any vega links and display here as well as in the similarity matches section                   
+    if(@links){
+      foreach my $link(@links){
+        my($key, $text)= @$link;
+        if($key eq 'Havana transcripts'){
+          if($text =~ m{(<a.+>.+</a>)}){   
+            push @vega_info, $1;
+          } else {
+            push @vega_info, $text;
+          }
+        }
+      }
+    }
   }
-  
-  
-  
- 
- my( $display_name, $dbname, $ext_id, $dbname_disp, $info_text ) = $object->display_xref();
+  my( $display_name, $dbname, $ext_id, $dbname_disp, $info_text ) = $object->display_xref();
   return 1 unless defined $display_name;
   my $label = $object->type_name();
   my $lc_type = lc($label);
@@ -393,11 +384,11 @@ sub name {
   </p>);
   }
 
-  if(@vega_info_sr7){
-    foreach my $info_sr7(@vega_info_sr7){
+  if(@vega_info){
+    foreach my $info(@vega_info){
       $html .= qq(
         <p>
-          This transcript is identical to Vega transcript: $info_sr7
+          This transcript is identical to Vega transcript: $info
        </p>
      );
     }
@@ -451,30 +442,30 @@ sub location {
     # alternative (Vega) coordinates
     my $alt_assembly = $object->species_defs->ALTERNATIVE_ASSEMBLY;
     if ($alt_assembly and lc($object->source) eq 'vega') {  
-		# set dnadb to 'vega' so that the assembly mapping is retrieved from there
-		my $reg = "Bio::EnsEMBL::Registry";
-		my $orig_group = $reg->get_DNAAdaptor($object->species, "vega")->group;
-		$reg->add_DNAAdaptor($object->species, "vega", $object->species, "vega") or warn "***********help";
+    # set dnadb to 'vega' so that the assembly mapping is retrieved from there
+    my $reg = "Bio::EnsEMBL::Registry";
+    my $orig_group = $reg->get_DNAAdaptor($object->species, "vega")->group;
+    $reg->add_DNAAdaptor($object->species, "vega", $object->species, "vega") or warn "***********help";
 
-		# project feature slice onto Vega assembly
-		my $alt_slices = $object->vega_projection($alt_assembly);
+    # project feature slice onto Vega assembly
+    my $alt_slices = $object->vega_projection($alt_assembly);
 
       # link to Vega if there is an ungapped mapping of whole gene
-		if ((scalar(@$alt_slices) == 1) && ($alt_slices->[0]->length == $object->feature_length) ) {
-			my $l = $alt_slices->[0]->seq_region_name.":".
-				$alt_slices->[0]->start."-".
-					$alt_slices->[0]->end;
-			my $url = $object->ExtURL->get_url('VEGA_CONTIGVIEW', $l);
-			$html .= "<p>This corresponds to ";
-			$html .= sprintf(qq(<a href="%s" target="external">%s-%s</a>),
+    if ((scalar(@$alt_slices) == 1) && ($alt_slices->[0]->length == $object->feature_length) ) {
+      my $l = $alt_slices->[0]->seq_region_name.":".
+        $alt_slices->[0]->start."-".
+          $alt_slices->[0]->end;
+      my $url = $object->ExtURL->get_url('VEGA_CONTIGVIEW', $l);
+      $html .= "<p>This corresponds to ";
+      $html .= sprintf(qq(<a href="%s" target="external">%s-%s</a>),
                                                          $url,
-							 $object->thousandify($alt_slices->[0]->start),
-							 $object->thousandify($alt_slices->[0]->end)
-							);
-			$html .= " in $alt_assembly coordinates.</p>";
-		} else {
-			$html .= "<p>There is no ungapped mapping of this $lc_type onto the $alt_assembly assembly.</p>";
-		}
+               $object->thousandify($alt_slices->[0]->start),
+               $object->thousandify($alt_slices->[0]->end)
+              );
+      $html .= " in $alt_assembly coordinates.</p>";
+    } else {
+      $html .= "<p>There is no ungapped mapping of this $lc_type onto the $alt_assembly assembly.</p>";
+    }
 
       # set dnadb back to the original group
       $reg->add_DNAAdaptor($object->species, "vega", $object->species, $orig_group);
@@ -577,15 +568,16 @@ sub orthologues {
 # Find the selected method_link_set
   my $especies = $ENV{ENSEMBL_SPECIES};
 
+  my $FLAG = 0;
   my $as_html = qq{<br/> <b>This gene can be viewed in genomic alignment with other species</b><br/><br/>} ;
 
   my %alignments = $gene->species_defs->multiX('ALIGNMENTS');
   my $species = $gene->species;
 
   foreach my $id (
-		  sort { 10 *($alignments{$b}->{'type'} cmp $alignments{$a}->{'type'}) + ($a <=> $b) }
-		  grep { $alignments{$_}->{'species'}->{$species} } 
-		  keys (%alignments)) {
+      sort { 10 *($alignments{$b}->{'type'} cmp $alignments{$a}->{'type'}) + ($a <=> $b) }
+      grep { $alignments{$_}->{'species'}->{$species} } 
+      keys (%alignments)) {
 
       my $label = $alignments{$id}->{'name'};
       my $KEY = "opt_align_${id}";
@@ -593,19 +585,20 @@ sub orthologues {
       my @species = grep {$_ ne $species} sort keys %{$alignments{$id}->{'species'}};
 
       if ( scalar(@species) == 1) {
-	  ($label = $species[0]) =~ s/_/ /g;
+    ($label = $species[0]) =~ s/_/ /g;
       }
       
       $as_html .= sprintf( qq(&nbsp;&nbsp;&nbsp;<a href="/%s/alignsliceview?l=%s:%s-%s;align=%s">view genomic alignment with <b>%s</b></a> <br/>), 
-			   $gene->species,
-			   $gene->seq_region_name, 
-			   $gene->seq_region_start, 
-			   $gene->seq_region_end, 
-			   $KEY,
-			   $label);
+         $gene->species,
+         $gene->seq_region_name, 
+         $gene->seq_region_start, 
+         $gene->seq_region_end, 
+         $KEY,
+         $label);
 
+    $FLAG = 1;
   }
-
+  $as_html = '' unless $FLAG;
   my $html = qq(
       <p>
         The following gene(s) have been identified as putative
@@ -731,17 +724,13 @@ sub paralogues {
   return 1 unless $paralogue;
 
   # make the paralogues panel a collapsable one
-  my $label_sr7= 'Paralogue Prediction';
-  my $status_sr7= 'status_gene_paralogues';
-  my $URL_sr7= _flip_URL($gene, $status_sr7);
-  if($gene->param($status_sr7) eq 'off'){
-    $panel->add_row($label_sr7, '', "$URL_sr7=on");
+  my $label  = 'Paralogue Prediction';
+  my $status = 'status_gene_paralogues';
+  my $URL    = _flip_URL($gene, $status );
+  if( $gene->param($status) eq 'off' ) {
+    $panel->add_row( $label, '', "$URL=on" );
     return 0;
-
-
   }
-  
-
 
 ## call table method here
   my $db = $gene->get_db() ;
@@ -791,7 +780,7 @@ sub paralogues {
   }
   $html .= qq(</table>);
 
-  $panel->add_row( 'Paralogue Prediction', $html, "$URL_sr7=off" );
+  $panel->add_row( 'Paralogue Prediction', $html, "$URL=off" );
   return 1;
 }
 
@@ -919,13 +908,13 @@ sub regulation_factors {
     my $analysis = $feature_obj->analysis->description;
     $analysis =~ s/(https?:\/\/\S+[\w\/])/<a rel="external" href="$1">$1<\/a>/ig;
     $row = {
-	    'Location'         => $position,
-	    'Reg. factor'      => $factor_link,
-	    'Reg. feature'     => "$feature_name",
-	    'Feature analysis' =>  $analysis,
-	    'Length'           => $object->thousandify( length($seq) ).' bp',
+      'Location'         => $position,
+      'Reg. factor'      => $factor_link,
+      'Reg. feature'     => "$feature_name",
+      'Feature analysis' =>  $analysis,
+      'Length'           => $object->thousandify( length($seq) ).' bp',
             'Sequence'         => qq(<font face="courier" color="black">$seq</font>),
-	   };
+     };
 
      $panel->add_row( $row );
   }
@@ -1069,9 +1058,9 @@ sub genesnpview {
   
   my @fake_filtered_snps;
   map { push @fake_filtered_snps, 
- 	  [ $_->[2]->start + $start_difference, 
- 	    $_->[2]->end   + $start_difference, 
- 	    $_->[2]] } @$snps;
+     [ $_->[2]->start + $start_difference, 
+       $_->[2]->end   + $start_difference, 
+       $_->[2]] } @$snps;
 
   $Configs->{'gene'}->{'filtered_fake_snps'} = \@fake_filtered_snps unless $no_snps;
 
@@ -1223,7 +1212,7 @@ sub genetreeview {
   my $comparaDBA      = $databases->{'compara'};
 
   my $id = $object->stable_id;
-  my $clusterset_id = 1; ### WHAT IS IT ???
+  my $clusterset_id = 0; ### WHAT IS IT ???
 
   my $treeDBA = $comparaDBA->get_ProteinTreeAdaptor;
   warn ($treeDBA);
@@ -1261,7 +1250,7 @@ sub external_links {
   my $comparaDBA      = $databases->{'compara'};
 
   my $id = $object->stable_id;
-  my $clusterset_id = 1; ### WHAT IS IT ???
+  my $clusterset_id = 0; 
 
   my $treeDBA = $comparaDBA->get_ProteinTreeAdaptor;
   my $member = $comparaDBA->get_MemberAdaptor->fetch_by_source_stable_id('ENSEMBLGENE', $id);
@@ -1304,7 +1293,7 @@ sub external_links {
   my $FN2        = $object->temp_file_name( undef, 'XXX/X/X/XXXXXXXXXXXXXXX' );
   my $file2      = $object->species_defs->ENSEMBL_TMP_DIR_IMG."/$FN2";
   $object->make_directory( $file2 );
-  my $URL2       = "$SERVER:$PORT".$object->species_defs->ENSEMBL_TMP_URL_IMG."/$FN2";
+  my $URL2       = "http://$SERVER:$PORT".$object->species_defs->ENSEMBL_TMP_URL_IMG."/$FN2";
   if( open FASTA,   ">$file2" ) {
       print FASTA $var;
       close FASTA;
@@ -1329,8 +1318,7 @@ sub external_links {
 
   my $html = qq{
 <form>
-    <input style="vertical-align:top; margin: 5px;" type=button value="View in ATV" onClick="openATV(\'$URL\' )">
-    <input style="vertical-align:top; margin: 5px;" type=button value="View in Jalview" onClick="openJalview(\'$URL2\' )">
+    <input style="vertical-align:top; margin: 5px; border: 1; width:70px; height:23px" type=button value="ATV" onClick="openATV(\'$URL\' )">
     $jl
 </form>
 };
