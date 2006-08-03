@@ -472,7 +472,7 @@ sub genetreeview {
 
   if( my $panel1 = $self->new_panel( 'Information',
     'code'    => "info#",
-    'caption' => 'Gene Tree information',
+    'caption' => 'Gene information',
   ) ) {
     $panel1->add_components(qw(
       name           EnsEMBL::Web::Component::Gene::name
@@ -487,7 +487,7 @@ sub genetreeview {
 
   if( my $panel2 = $self->new_panel( 'Image',
     'code'    => "image#",
-    'caption' => 'Genetree for gene '.$obj->stable_id,
+    'caption' => 'Gene Tree for gene '.$obj->stable_id,
     'params' => $params
   ) ) {
     $self->initialize_zmenu_javascript;
@@ -509,9 +509,6 @@ sub genetreeview {
     $self->add_panel( $panel3 );
 
 }
-
-
-
 
 }
 
