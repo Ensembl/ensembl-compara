@@ -34,22 +34,19 @@ sub _init {
   my $tree      = $self->{'container'};
 
   $k = 1;
-  warn ("A-0:".localtime());
+#  warn ("A-0:".localtime());
   my @nodes = sort {$a->{_rank} <=> $b->{_rank}} @{$self->features($tree, 0, 0, 0) || []};
 
-  warn ("B-0:".localtime());
+#  warn ("B-0:".localtime());
 
   my $Config         = $self->{'config'};
   my $bitmap_length = $Config->image_width(); 
 
   my %labels = map {length($_->{label}) => $_->{label}} @nodes;
-#  warn(Data::Dumper::Dumper(\%labels));
 
   my $li = (sort {$a <=> $b} keys %labels)[-1];
   my $longest_label = $labels{$li};
   my $rank_no = $nodes[-1]->{_rank};
-
-#  warn ("LABEL $longest_label : $rank_no");
 
   my( $fontname, $fontsize ) = $self->get_font_details( 'small' );
   my @res = $self->get_text_width( 0, $longest_label, '', 'font'=>$fontname, 'ptsize' => $fontsize );
@@ -110,8 +107,8 @@ sub _init {
   my $max_x = (sort {$a->{x} <=> $b->{x}} @nodes)[-1]->{x};
   my $min_y = (sort {$a->{y} <=> $b->{y}} @nodes)[0]->{y};
 
-  warn ("MAX X: $max_x" );
-  warn ("C-0:".localtime());
+#  warn ("MAX X: $max_x" );
+#  warn ("C-0:".localtime());
 #  warn(Data::Dumper::Dumper(\%xcs));
   my %Nodes;
   map { $Nodes{$_->{_id}} = $_} @nodes;
@@ -149,7 +146,7 @@ sub _init {
 
       }
   }
-  warn ("D-0:".localtime());
+#  warn ("D-0:".localtime());
   my $fy = $min_y;
 
 #  warn(Data::Dumper::Dumper(\@alignments));
@@ -168,7 +165,7 @@ sub _init {
 
   my $min_length = int($alignment_length / $alignment_width);   
   my $alignment_scale = $alignment_width / $alignment_length;   
-  warn ("AL: $alignment_length, $alignment_width, $min_length");
+#  warn ("AL: $alignment_length, $alignment_width, $min_length");
   
   foreach my $a (@alignments) {
       my ($yc, $al) = @$a;
@@ -224,8 +221,7 @@ sub _init {
 
   }
 
-
-  warn ("E-0:".localtime());
+#  warn ("E-0:".localtime());
   return 1;
 }
 
@@ -233,8 +229,6 @@ sub features {
   my ($self, $tree, $rank, $pid) = @_;
 
   my @features = ();
-
-  
   my $f = {
       '_distance' => $tree->distance_to_parent,
       '_dup' => $tree->get_tagvalue("Duplication"),
@@ -250,17 +244,11 @@ sub features {
 	 
   $rank ++;
 
-#  my $t1 = time;
-
   my $children = $tree->sorted_children;
-
-#  my $t2 = time - $t1;
 
   foreach my $child_node (@$children) {  
     push @features, @{$self->features($child_node, $rank, $tree->node_id)};
   }
-
-#  my $t3 = time - $t1;
 
   if ( @$children > 0) {
       $f->{y} = ($features[0]->{y} + $features[-1]->{y}) / 2;
@@ -302,9 +290,6 @@ sub features {
       $f->{'_name'} = $tree->name;
       $f->{'_taxon_id'} = $tree->get_tagvalue('taxon_id');
   }
-
-  
-#  warn(join('*', $tree->node_id, $rank, $t3, $t2));
 
   push @features, $f;
 
