@@ -216,17 +216,17 @@ username and password you want MySQL to be accessed by. Set ENSEMBL_HOST and
 ENSEMBL_HOST_PORT to be the database server and port that MySQL is running on.</p>
 
 <p>These are default settings - you can override them by adding a section for a particular database. For
-example, adding a section like the following into the mirror plugin would override the defaults in public-plugin for the Help database:</p>
+example, adding a section like the following into the mirror plugin would override the defaults in public-plugin for the ENSEMBL_WEBSITE database:</p>
 <pre>
-[ENSEMBL_HELP]
+[ENSEMBL_WEBSITE]
 USER=mysqluser2
 PASS=helppass
 HOST=mysqlserver2
 PORT=4444
 </pre>
 <h4>Names of databases</h4>
-<p>In the [databases] section, change the values of ENSEMBL_DB, ENSEMBL_EST, etc. to match the
-names of the core, EST, etc. databases you created.</p>
+<p>In the [databases] section, change the values of ENSEMBL_DB, ENSEMBL_OTHERFEATURES, etc. to match the
+names of the core, OTHERFEATURES, etc. databases you created.</p>
 
 <h4>DAS Proxy</h4>
 <p>If you wish to display external DAS sources on your ensembl installation, and are behind a firewall, then
