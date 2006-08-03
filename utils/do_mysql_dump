@@ -156,7 +156,7 @@ foreach my $sp( @SPECIES ){
       $all_db_info{$db}{NODATA} = " --nodata";
     }
 
-    warning( 1, "Dumping $sp $db: ".$all_db_info{$db}{NAME} );
+    info( 2, "Dumping $sp $db: ".$all_db_info{$db}{NAME} );
     dump_mysql( \%{ $all_db_info{$db} }, $no_zip);
   }
   @dbs = ();
@@ -172,7 +172,7 @@ warning (1, "Used $logfile.");
 warning (1, " Time taken: $hours:". localtime($time_taken)->min."mins");
 
 $email ||= 'ensembl-webteam@sanger.ac.uk';
-utils::Tool::mail_log( $logfile, $email ) if $logfile;
+utils::Tool::mail_log( $logfile, $email, "" ) if $logfile;
 close STDERR;
 exit;
 
@@ -351,8 +351,13 @@ sub info{
   my $msg = shift;
   if( ! defined($msg) ){ $msg = $v; $v = 0 }
   $msg || ( carp("Need a warning message" ) && return );
-
-  warn( "[INFO] ".$msg."\n" );
+ 
+  if ($v > 1) {
+      warn( "[INFO_2] ".$msg."\n" );
+  }
+  else {
+      warn( "[INFO] ".$msg."\n" );
+  }
   return 1;
 }
 
