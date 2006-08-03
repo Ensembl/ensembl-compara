@@ -21,8 +21,8 @@ sub init {
 ## Only features whose key is in this array gets displayed as a track....
        qw( blast_new ),
        qw( tp32k assemblyexception
-
-        repeat_lite variation genotyped_variation_line
+        repeat_lite variation variation_affy100 variation_affy500
+        genotyped_variation_line
         trna   cpg eponine marker operon rnai ex_profile qtl ep1_h ep1_s
         first_ef
 
@@ -97,6 +97,8 @@ sub init {
 ## OTHER (SIMPLE) FEATURES ##
          [ 'variation'       => 'SNPs'  ],
          [ 'genotyped_variation_line'       => 'Genotyped SNPs'  ],
+         [ 'variation_affy100'       => 'Affy 100k SNP'  ],
+         [ 'variation_affy500'       => 'Affy 500k SNP'  ],
          [ 'glovar_snp'      => 'Glovar SNPs' ], ## not ready for prime time yet
         #[ 'glovar_trace'   => 'Glovar traces'], ## not ready for prime time yet
          [ 'trna'            => 'tRNA'        ],
@@ -389,7 +391,34 @@ sub init {
       'colours' => {$self->{'_colourmap'}->colourSet('variation')},
       'available'=> 'databases ENSEMBL_VARIATION', 
     },
-    'genotyped_variation_line' => {
+    'variation_affy100' => {
+      'on'  => "off",
+      'bump_width' => 0,
+      'dep' => 0.1,
+      'pos' => '4525',
+      'str' => 'r',
+      'col' => 'blue',
+      'track_label' => 'Affy 100k SNP',
+      'key'         => 50,
+      'glyphset'    => 'variation_affy',
+      'colours' => {$self->{'_colourmap'}->colourSet('variation')},
+      'available'=> 'databases ENSEMBL_VARIATION', 
+    },
+    'variation_affy500' => {
+      'on'  => "off",
+      'bump_width' => 0,
+      'dep' => 0.1,
+      'pos' => '4526',
+      'str' => 'r',
+      'col' => 'blue',
+      'track_label' => 'Affy 500k SNP',
+      'key'         => 250,
+      'glyphset'    => 'variation_affy',
+      'colours' => {$self->{'_colourmap'}->colourSet('variation')},
+      'available'=> 'databases ENSEMBL_VARIATION', 
+    }, 
+
+   'genotyped_variation_line' => {
       'on'  => "off",
       'bump_width' => 0,
       'dep' => 0.1,

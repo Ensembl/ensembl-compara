@@ -916,7 +916,6 @@ sub contigviewzoom_nav_ajax {
   warn("Zoom nav 3: " . $end);
   my $wid = ($end - $start) + 1;
   my %additional_hidden_values = ( 'h' => $object->highlights_string );
-  my %additional_hidden_values = (); 
   my $hidden_fields_string = join '', map { qq(<input type="input" name="$_" value="$additional_hidden_values{$_}" />) } keys %additional_hidden_values;
   my $hidden_fields_URL    = join '', map { qq(;$_=$additional_hidden_values{$_}) } keys %additional_hidden_values;
 
