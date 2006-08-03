@@ -478,6 +478,7 @@ sub genetreeview {
       name           EnsEMBL::Web::Component::Gene::name
       stable_id      EnsEMBL::Web::Component::Gene::stable_id
       location       EnsEMBL::Web::Component::Gene::location
+      description   EnsEMBL::Web::Component::Gene::description
       external_links EnsEMBL::Web::Component::Gene::external_links
      ));
     $self->add_panel( $panel1 );
