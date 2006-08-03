@@ -13,21 +13,13 @@ sub new {
     'alt'         => 'Export data'
   );
 
-#  foreach my $key (sort keys %$self) {
-#      warn ("$key => $self->{$key}");
-#  }
-
   my $object = $self->{'object'} or return;
 
   my $alignURL = sprintf ("/%s/alignview?class=GeneTree;gene=%s", $self->{species}, $object->stable_id);
-  my $exportURL = sprintf ("/%s/exportview?l=%s:%d-%d;action=export&_format=HTML;output=html", $self->{species}, $object->seq_region_name, $object->seq_region_start, $object->seq_region_end,);
 
   my $exports = { 
-      clustal  => { text  => 'CLUSTAL',
+      clustal  => { text  => 'Alignment Dump',
 		  url   => "$alignURL;format=clustalw",
-		  avail => 1 },
-      fasta  => { text  => 'FASTA dump',
-		  url   => "$exportURL;format=fasta",
 		  avail => 1 },
   };
 
