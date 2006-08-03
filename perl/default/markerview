@@ -2,7 +2,4 @@
 
 package markerview;
 use EnsEMBL::Web::Document::WebPage;
-
-EnsEMBL::Web::Document::WebPage::simple( 'Marker' );
-
-1;
+simple_webpage( 'Marker' );

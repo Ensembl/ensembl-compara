@@ -3,6 +3,6 @@
 package contigview;
 
 use EnsEMBL::Web::Document::WebPage;
-EnsEMBL::Web::Document::WebPage::simple( 'Location' );
+simple_webpage( 'Location' );
 
 1;

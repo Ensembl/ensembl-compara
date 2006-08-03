@@ -3,5 +3,4 @@
 package geneview;
 
 use EnsEMBL::Web::Document::WebPage;
-EnsEMBL::Web::Document::WebPage::simple_with_redirect( 'Gene' );
-1;
+simple_with_redirect( 'Gene' );
