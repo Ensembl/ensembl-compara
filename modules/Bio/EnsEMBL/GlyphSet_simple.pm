@@ -180,6 +180,7 @@ sub _init {
     next if $end<1;            ## Skip if totally outside VC
     $end   = $vc_length if $end>$vc_length;
     $T++;
+warn "$type ... $start->$end" unless $type =~ /seq/;
     next if $optimizable && ( $VirtualContig->strand() < 0 ?
                                 $previous_start-$start < 0.5/$pix_per_bp : 
                                 $end-$previous_end     < 0.5/$pix_per_bp );
@@ -228,8 +229,9 @@ sub _init {
     if ($dep > 0){ # we bump
       $img_start = int($img_start * $pix_per_bp);
       $img_start = 0 if $img_start < 0;
-      $img_end   = $BUMP_WIDTH + int($img_end * $pix_per_bp);
+      $img_end   = $BUMP_WIDTH + int( $img_end * $pix_per_bp );
       $img_end   = $bitmap_length if $img_end > $bitmap_length;
+      $img_end   = $img_start if $img_end < $img_start;
       $row = &Sanger::Graphics::Bump::bump_row( $img_start, $img_end, $bitmap_length, \@bitmap, $dep );
       next if $row > $dep;
     }
@@ -310,10 +312,10 @@ sub _init {
                 });
          $composite->push($line);
       } elsif($tag->{'style'} eq 'insertion') {
-        my $triangle_end   =  $start - 2/$pix_per_bp;
-        my $triangle_start =  $start + 2/$pix_per_bp;
+        my $triangle_end   =  $start-1 - 2/$pix_per_bp;
+        my $triangle_start =  $start-1 + 2/$pix_per_bp;
         my $line = new Sanger::Graphics::Glyph::Rect({
-                    'x'          => $start,
+                    'x'          => $start-1,
                     'y'          => 0,
                     'width'      => 0,
                     'height'     => $h,
@@ -323,7 +325,7 @@ sub _init {
         push @tag_glyphs, $line;
         my $triangle = new Sanger::Graphics::Glyph::Poly({
           'points'    => [ $triangle_start, $h+2,
-                           $start, $h-1,
+                           $start-1, $h-1,
                            $triangle_end, $h+2  ],
           'colour'    => $tag->{'colour'},
           'absolutey' => 1,

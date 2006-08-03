@@ -104,8 +104,8 @@ sub _init {
     my $bands       = $kba->fetch_all_by_chr_name($chr);
 
     my $slice_adaptor = $self->{'container'}->{'sa'};
-    my $slice = $slice_adaptor->fetch_by_region('chromosome',$chr) ||
-      (warn("$slice_adaptor has no fetch_by_region('chromosome',$chr)" ) && return);
+    my $slice = $slice_adaptor->fetch_by_region(undef,$chr) ||
+      (warn("$slice_adaptor has no fetch_by_region(undef,$chr)" ) && return);
     my $chr_length = $slice->length || 1;
     # bottom align each chromosome!
     my $v_offset    = $Config->container_width() - $chr_length; 

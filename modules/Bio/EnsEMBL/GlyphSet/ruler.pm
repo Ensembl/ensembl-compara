@@ -92,12 +92,10 @@ sub _init {
     'z' => 1000, 'colour' => $feature_colour, 'absolutex' => 1, 'absolutey' => 1, 'absolutewidth' => 1
   );
 
-  my $ST = $self->{'config'}->species_defs->ENSEMBL_STYLE;
-  my $font = $ST->{'GRAPHIC_FONT'} || "arial";
-  my $font_size = $ST->{'GRAPHIC_FONTSIZE'} || 8;
+  my( $fontname, $fontsize ) = $self->get_font_details( 'innertext' );
+  my($X_1,$X_2,$X_3,$H) = $self->get_text_width(0,'X','','font'=>$fontname,'ptsize'=>$fontsize);
 
-
-  my @common_text = ( 'height' => $fontheight, 'font' => $font, 'ptsize' => $font_size, @common, 'y' => 2 );
+  my @common_text = ( 'height' => $H + 2, 'font' => $fontname, 'ptsize' => $fontsize, @common, 'y' => 2 );
   if( $lefttext ) {
     my($text,$part,$W,$H) = $self->get_text_width( 0, $lefttext, '', @common_text );
     my $start        = $P;

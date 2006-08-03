@@ -85,8 +85,9 @@ sub _init {
 	  my $col = $f->{_gene} eq $current_gene ? 'red' : 'black';
 
 	  my $txt = new Sanger::Graphics::Glyph::Text({
-	      'text'      => $f->{label},
+	      'text'       => $f->{label},
 	      'height'     => $font_height,
+              'width'      => $label_width,
 	      'font'       => $fontname,
 	      'ptsize'     => $fontsize,
 	      'halign' => 'left',
@@ -237,7 +238,7 @@ sub features {
       '_parent' => $pid
   };
 
-  if ($f->{_distance} > 1) {
+  if ($f->{_distance} > 2) {
       $f->{_distance} /= 10;
       $f->{_cut}  = 1;
   }
