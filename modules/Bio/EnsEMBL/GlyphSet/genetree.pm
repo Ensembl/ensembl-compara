@@ -49,7 +49,7 @@ sub _init {
   my $longest_label = $labels{$li};
   my $rank_no = $nodes[-1]->{_rank};
 
-  warn ("LABEL $longest_label : $rank_no");
+#  warn ("LABEL $longest_label : $rank_no");
 
   my( $fontname, $fontsize ) = $self->get_font_details( 'small' );
   my @res = $self->get_text_width( 0, $longest_label, '', 'font'=>$fontname, 'ptsize' => $fontsize );
@@ -63,7 +63,6 @@ sub _init {
   my @alignments;
   my %xcs;
 
-#  foreach my $f (sort {$a->{_rank} <=> $b->{_rank}} @$nodes) {
   foreach my $f (@nodes) {
       my $xcc = $xcs{$f->{_parent}} + $f->{_distance};
       $xcs{$f->{_id}} = $xcc;
@@ -78,7 +77,7 @@ sub _init {
 	  'y'         => $f->{y},
 	  'width'     => 5,
 	  'height'    => 5,
-	  'colour'   => ($f->{_dup} ? 'red3' : 'contigblue1'),
+	  'colour'   => ($f->{_dup} ? 'red3' : 'navyblue'),
 	  'zindex'   => ($f->{_dup} ? 40 : -20),
 	  'zmenu' => $zmenu
 	  });
@@ -145,6 +144,7 @@ sub _init {
 	      'height'    => 0,
 	      'colour'    => $col,
 	      'zindex'    => 0,
+	      'dotted' => $Nodes{$f}->{_cut} || undef,
 	  }));
 
       }
@@ -243,6 +243,11 @@ sub features {
       '_parent' => $pid
   };
 
+  if ($f->{_distance} > 1) {
+      $f->{_distance} /= 10;
+      $f->{_cut}  = 1;
+  }
+	 
   $rank ++;
 
 #  my $t1 = time;
@@ -269,15 +274,12 @@ sub features {
 
       if ($tree->stable_id) {
 	  $f->{_protein} = $tree->stable_id;
-#my( $display_name, $dbname, $ext_id, $dbname_disp, $info_text ) = $object->display_xref();	  
-
-	  $f->{label} = $f->{_stable_id};
-
+	  $f->{label} = sprintf("%s %s", $f->{_stable_id}, $f->{_species});
       }
 
       if($tree->gene_member) {
 	  $f->{_gene} = $tree->gene_member->stable_id;
-	  $f->{label} = $f->{_gene};
+	  $f->{label} = sprintf("%s %s", $f->{_gene}, $f->{_species});
 	  push @{$f->{_link}}, { 'text' => 'View in TreeFam', 'href' =>  sprintf("http://www.treefam.org/cgi-bin/TFseq.pl?id=%s", $f->{_gene})};
 	  $f->{_location}  = sprintf ("%s:%d-%d",$tree->gene_member->chr_name, $tree->gene_member->chr_start, $tree->gene_member->chr_end);
 	  $f->{_length}  = $tree->gene_member->chr_end- $tree->gene_member->chr_start;
@@ -289,7 +291,7 @@ sub features {
 	      my $geneadaptor_spp = $database_spp->{'core'}->get_GeneAdaptor;
 	      if ( my $gene_spp = $geneadaptor_spp->fetch_by_stable_id( $f->{_gene})) {
 		  if (my $display_xref = $gene_spp->display_xref) {
-		      $f->{label} = $f->{_display_id} =  $display_xref->display_id();
+		      $f->{label} = $f->{_display_id} =  sprintf("%s %s", $display_xref->display_id, $f->{_species});
 
 		  }
 	      }
@@ -336,9 +338,10 @@ sub zmenu {
   my( $self, $f ) = @_;
 
   my $href = '';
+  my $blength = $f->{_cut} ? $f->{'_distance'} * 10: $f->{'_distance'};
   my $zmenu = { 
 		caption               => $f->{'_id'},
-		"60:Branch length: $f->{'_distance'}"   => '',
+		"60:Branch length: $blength"   => '',
 	      };
 
   $zmenu->{"30:Taxonomy name: $f->{'_name'}"} = '' if ($f->{_name});
