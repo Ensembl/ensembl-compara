@@ -23,7 +23,7 @@ sub colour {
   my ($self, $gene, $transcript, $colours, %highlights) = @_;
 
   my $highlight = undef;
-  my $type = $transcript->type() || $gene->biotype();
+  my $type = $transcript->biotype() || $gene->biotype();
   my $colour = $colours->{ $type =~ /pseudo/i ? 'rna-pseudo' : 'rna-real' };
 
   if(exists $highlights{lc($transcript->stable_id)}) {
@@ -79,7 +79,7 @@ sub zmenu {
   my $pid = $translation->stable_id() if $translation;
   my $gid = $gene->stable_id();
   my $id   = $transcript->external_name() eq '' ? $tid : $transcript->external_name();
-  my $type = $transcript->type() || $gene->biotype();
+  my $type = $transcript->biotype() || $gene->biotype();
   
   my $zmenu = {
     'caption'             => "ncRNA",
@@ -132,7 +132,7 @@ sub text_label {
   my $Config = $self->{config};
   my $short_labels = $Config->get('_settings','opt_shortlabels');
   unless( $short_labels ){
-  my $type = $legend_map{$transcript->type} || $transcript->type;
+  my $type = $legend_map{$transcript->biotype} || $transcript->biotype;
   $id .= " \n$type ";
   }
   return $id;
