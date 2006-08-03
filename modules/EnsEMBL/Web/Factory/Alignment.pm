@@ -417,7 +417,7 @@ sub createObjects_GeneTree {
   my $member          = $ma->fetch_by_source_stable_id("ENSEMBLGENE",$self->param('gene'));
   return $self->_prob( 'Unable to find gene' ) unless $member;
   eval {
-      my $clusterset_id = 1; ### WHAT IS IT ???
+      my $clusterset_id = 0; 
       my $treeDBA = $compara_db->get_ProteinTreeAdaptor;
       my $aligned_member = $treeDBA->fetch_AlignedMember_by_member_id_root_id(
 									      $member->get_longest_peptide_Member->member_id,
