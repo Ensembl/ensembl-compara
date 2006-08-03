@@ -18,81 +18,130 @@ use EnsEMBL::Web::SpeciesDefs;
 my $SD = new EnsEMBL::Web::SpeciesDefs;
 
 my %queries = (
+  'Oligos' => qq(
+    select of.analysis_id, oa.name , count(*) as n
+      from oligo_feature as of, oligo_probe as op, oligo_array as oa
+     where of.oligo_probe_id = op.oligo_probe_id and op.oligo_array_id = oa.oligo_array_id
+     group by of.analysis_id, oa.name
+     order by analysis_id, name),
+  'Regulatory Fact' => qq(
+    select rr.analysis_id, rf.type, count(*) as n
+      from regulatory_feature as rr left join regulatory_factor as rf on rr.regulatory_factor_id = rf.regulatory_factor_id
+     group by rr.analysis_id,rf.type
+     order by analysis_id, type),
+  'Regulatory Search' => qq(
+    select analysis_id,'',count(*) as n
+      from regulatory_search_region
+     group by analysis_id
+     order by analysis_id),
+  'QTLs' => qq(
+    select analysis_id,'',count(*) as n
+      from qtl_feature
+     group by analysis_id
+     order by analysis_id),
+  'Identity Xref' => qq(
+    select analysis_id, '', count(*) as n
+      from identity_xref
+     group by analysis_id
+     order by analysis_id),
+  'Unmapped' => qq(
+    select uo.analysis_id, ed.db_name, count(*) as n
+      from unmapped_object as uo left join external_db as ed on uo.external_db_id = ed.external_db_id
+     group by uo.analysis_id
+     order by analysis_id,db_name),
+  'Markers' => qq(
+    select analysis_id, '', count(*) as n
+      from marker_feature
+     group by analysis_id
+     order by analysis_id),
   'Sequence regions' => qq(
-     select cs.name, count(*) as n
+     select 0, cs.name, count(*) as n
        from coord_system as cs, seq_region as sr
       where cs.coord_system_id = sr.coord_system_id
       group by cs.coord_system_id
-      order by name),
+      order by cs.coord_system_id),
+  'Density' => qq(
+     select dt.analysis_id, '', count(*) as n
+       from density_feature as df, density_type as dt
+      where dt.density_type_id = df.density_type_id
+      group by dt.analysis_id
+      order by analysis_id),
   'Simple' => qq(
-     select a.logic_name as name, count(*) as n
-       from simple_feature as f, analysis as a
-      where a.analysis_id = f.analysis_id
-      group by a.analysis_id
-      order by name),
+     select analysis_id, '', count(*) as n
+       from simple_feature
+      group by analysis_id
+      order by analysis_id),
+  'Protein' => qq(
+     select analysis_id, '', count(*) as n
+       from protein_feature
+      group by analysis_id
+      order by analysis_id),
   'Protein align' => qq(
-     select a.logic_name as name, count(*) as n
-       from protein_align_feature as f, analysis as a
-      where a.analysis_id = f.analysis_id
-      group by a.analysis_id
-      order by name),
+     select analysis_id, '', count(*) as n
+       from protein_align_feature
+      group by analysis_id
+      order by analysis_id),
   'Dna align' => qq(
-     select a.logic_name as name, count(*) as n
-       from dna_align_feature as f, analysis as a
-      where a.analysis_id = f.analysis_id
-      group by a.analysis_id
-      order by name),
+     select analysis_id, '',count(*) as n
+       from dna_align_feature
+      group by analysis_id
+      order by analysis_id),
   'Gene features' => qq(
-     select concat( ifnull(f.biotype,    '--'), ' : ',
-                    ifnull(f.source,     '--'), ' : ',
-                    ifnull(f.status, '--'), ' : ',
-                    ifnull(a.logic_name, '--') ) as name,
+     select analysis_id,
+            concat( ifnull(biotype,    '--'), ' : ',
+                    ifnull(source,     '--'), ' : ',
+                    ifnull(status, '--') 
+                  )  as name,
             count(*) as n
-       from gene as f, analysis as a
-      where a.analysis_id = f.analysis_id
-      group by name
-      order by name),
+       from gene
+      group by analysis_id
+      order by analysis_id),
   'Prediction transcripts' => qq(
-     select a.logic_name as name, count(*) as n
-       from prediction_transcript as f, analysis as a
-      where a.analysis_id = f.analysis_id
-      group by name
-      order by name),
+     select analysis_id, '', count(*) as n
+       from prediction_transcript as f
+      group by analysis_id
+      order by analysis_id),
   'Transcript' => qq(
-     select concat( ifnull(f.biotype,    '--'), ' : ',
+     select f.analysis_id, concat( ifnull(f.biotype,    '--'), ' : ',
                     ifnull(f.status, '--'), ' : ',
-                    ifnull(a1.logic_name, '--'), ' : ',
+                    ifnull(a.logic_name, '--'), ' : ',
                     ifnull(g.biotype,    '--'), ' : ',
                     ifnull(g.source,     '--'), ' : ',
-                    ifnull(g.status, '--'), ' : ',
-                    ifnull(a.logic_name, '--') ) as name,
+                    ifnull(g.status, '--') 
+            ) as name,
             count(*) as n
-       from transcript as f, gene as g, analysis as a, analysis as a1
-      where a.analysis_id = g.analysis_id and g.gene_id = f.gene_id and f.analysis_id = a1.analysis_id
-      group by name
-      order by name),
+       from transcript as f, gene as g left join analysis as a on g.analysis_id = a.analysis_id
+      where g.gene_id = f.gene_id 
+      group by f.analysis_id, name
+      order by f.analysis_id, name),
   'Repeats' => qq(
-     select rc.repeat_type as name, count(*) as n
+     select rf.analysis_id, rc.repeat_type as name, count(*) as n
        from repeat_consensus as rc, repeat_feature as rf
       where rc.repeat_consensus_id = rf.repeat_consensus_id
-      group by rc.repeat_type
-      order by name)
+      group by rf.analysis_id, rc.repeat_type
+      order by analysis_id,repeat_type)
 );
 
 my @species = @ARGV ? @ARGV : @{$SD->ENSEMBL_SPECIES};
 
 foreach my $sp ( @species ) {
   my $tree = $SD->{_storage}{$sp};
-  foreach my $db_name ( qw(ENSEMBL_DB ENSEMBL_VEGA ENSEMBL_EST ENSEMBL_CDNA) ) {
+  foreach my $db_name ( qw(ENSEMBL_DB ENSEMBL_VEGA ENSEMBL_OTHERFEATURES ENSEMBL_CDNA) ) {
     next unless $tree->{'databases'}->{$db_name}{'NAME'};
     my $dbh = $SD->db_connect( $tree, $db_name );
+    my %analyses = (0=>'Coordinatesystems', map {@$_} @{$dbh->selectall_arrayref("select analysis_id,logic_name from analysis")});
+    my %used     = map {($_=>1)} keys %analyses;
     foreach my $K ( sort keys %queries ) {
       my $results = $dbh->selectall_arrayref( $queries{$K} );
       next unless $results;
       next unless @{$results};
       foreach( @{$results} ) {
-        print join "\t", $sp, $db_name, $K, @{$_},"\n";
+        print join "\t", $sp, $db_name, $K, $analyses{$_->[0]}||"**$_->[0]**", $_->[1],"$_->[2]\n";
+        delete $used{$_->[0]};
       }
+    }
+    foreach( sort keys %used ) {
+      print join "\t", $sp, $db_name, 'ununsed', $analyses{$_},'',0,"\n";
     }
   }
 }
