@@ -1280,7 +1280,11 @@ sub external_links {
   $object->make_directory( $file );
   my $SERVER    = $object->species_defs->ENSEMBL_SERVERNAME;
   my $PROTOCOL  = $object->species_defs->ENSEMBL_PROTOCOL;
-  my $PORT      = 9020; #$object->species_defs->ENSEMBL_PROXY_PORT || $object->species_defs->ENSEMBL_PORT;
+  my $PORT      = $object->species_defs->ENSEMBL_PROXY_PORT || $object->species_defs->ENSEMBL_PORT;
+
+  if ($SERVER =~ /internal/) {
+      $PORT = $object->species_defs->ENSEMBL_PORT;
+  }
 
   my $URL       = "$SERVER:$PORT".$object->species_defs->ENSEMBL_TMP_URL_IMG."/$FN";
   if( open NHX,   ">$file" ) {
@@ -1307,15 +1311,9 @@ sub external_links {
       warn "(written FASTA $file2 => $URL2)";
   }
 
-  my $html = qq{
-<form>
-    <input style="vertical-align:top; margin: 5px;" type=button value="View in ATV" onClick="openATV(\'$URL\' )">
-    <input style="vertical-align:top; margin: 5px;" type=button value="View in Jalview" onClick="openJalview(\'$URL2\' )">
-</form>
-};
 
   my $jl = qq{
-    <applet archive="http://www.ensembl.org/jalview/jalview.jar"
+    <applet archive="http://$SERVER:$PORT/jalview/jalview.jar"
         code="jalview.ButtonAlignApplet.class" width="100" height="35" style="border:0"
         alt = "[Java must be enabled to view alignments]">
       <param name="input" value="$URL2" />
@@ -1327,6 +1325,14 @@ sub external_links {
       <param name="database" value="ensemblpep" />
       <strong>Java must be enabled to view alignments</strong>
     </applet>
+};
+
+  my $html = qq{
+<form>
+    <input style="vertical-align:top; margin: 5px;" type=button value="View in ATV" onClick="openATV(\'$URL\' )">
+    <input style="vertical-align:top; margin: 5px;" type=button value="View in Jalview" onClick="openJalview(\'$URL2\' )">
+    $jl
+</form>
 };
 
   $panel->add_row( $label, $html );
