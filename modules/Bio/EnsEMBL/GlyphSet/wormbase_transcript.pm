@@ -52,7 +52,14 @@ sub colour {
 sub gene_colour {
   my ($self, $gene, $colours, %highlights) = @_;
   my $genecol = $colours->{ $gene->analysis->logic_name."_".$gene->biotype."_".$gene->status };
-  if(exists $highlights{lc(@$gene->stable_id)}) {
+
+  if( $gene->biotype eq 'bacterial_contaminant' ) {
+    $genecol = $colours->{'_BACCOM'};
+  }
+  if(exists $highlights{lc($gene->stable_id)}) {
+    return (@$genecol, $colours->{'hi'});
+  }
+  if(exists $highlights{lc($gene->external_name)}) {
     return (@$genecol, $colours->{'hi'});
   }
 
