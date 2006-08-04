@@ -26,7 +26,7 @@ $self->{'general'}->{'cytoview'} = {
     'opt_pdf' => 0, 'opt_svg' => 0, 'opt_postscript' => 0,
     'opt_lines' => 1,
     'opt_empty_tracks' => 0,
-    'opt_gene_labels' => 0,
+    'opt_gene_labels' => 1,
     'opt_zmenus'     => 1,
     'opt_zclick'     => 1,
     'bgcolor'      => 'background1',
@@ -45,7 +45,6 @@ $self->{'general'}->{'cytoview'} = {
       # [ 'decipher'     =>  'DECIPHER'    ],
     ],
     'options' => [
-      [ 'fosmid_map'     => 'Fosmid map' 		],
 #      [ 'bac_map'     => 'BAC map' 		],
       [ 'haplotype_links'    => 'Haplotype blocks'       ],
       [ 'bacends'     => 'BACends'       ],
@@ -248,80 +247,6 @@ $self->{'general'}->{'cytoview'} = {
 	  'outline_threshold'  => '350000'
     },
 	 
-  'cloneset' => {
-    'on' => 'on',
-    'pos' => '993',
-    'col' => 'gold',
-    'lab' => 'black',
-    'available' => 'features mapset_cloneset',
-    'colours' => {
-      'col' => 'gold',
-      'lab' => 'black'
-    },
-    'str' => 'r',
-    'dep' => '9999999',
-    'threshold_navigation' => '100000',
-    'full_threshold'     => '50000',
-    'outline_threshold'  => '350000'
-  },
-  'fosmid_map' => {
-    'on' => 'on',
-    'height' => 5,
-    'pos' => '994',
-    'col' => 'purple2',
-    'lab' => 'black',
-    'available' => 'features mapset_fosmid_map',
-    'colours' => {
-      'col' => 'purple2',
-      'lab' => 'black'
-    },
-    'str' => 'r',
-    'dep' => '9999999',
-    'threshold_navigation' => '100000',
-    'full_threshold'     => '50000',
-    'outline_threshold'  => '350000'
-  },
-  'bac_map' => {
-    'on'  => "on",
-    'pos' => '995',
-    'col' => 'green',
-    'lab' => 'black',
-    'available' => 'features mapset_bac_map',
-    'colours' => {
-      'col_Free'        => 'gray80',
-      'col_Phase0Ac'    => 'thistle2',
-      'col_Committed'   => 'mediumpurple1',
-      'col_PreDraftAc'  => 'plum',
-      'col_Redundant'   => 'gray80',
-      'col_Reserved'    => 'gray80',
-      'col_DraftAc'     => 'gold2',
-      'col_FinishAc'    => 'gold3',
-      'col_Abandoned'   => 'gray80',
-      'col_Accessioned' => 'thistle2',
-      'col_Unknown'     => 'gray80',
-      'col_'            => 'gray80',
-      'lab_Free'        => 'black',
-      'lab_Phase0Ac'    => 'black',
-      'lab_Committed'   => 'black',
-      'lab_PreDraftAc'  => 'black',
-      'lab_Redundant'   => 'black',
-      'lab_Reserved'    => 'black',
-      'lab_DraftAc'     => 'black',
-      'lab_FinishAc'    => 'black',
-      'lab_Abandoned'   => 'black',
-      'lab_Accessioned' => 'black',
-      'lab_Unknown'     => 'black',
-      'lab_'            => 'black',
-      'bacend'          => 'black',
-      'seq_len'         => 'black',
-    },
-    'str' => 'r',
-    'dep' => '9999999',
-    'threshold_navigation' => '100000',
-    'full_threshold'     => '50000',
-    'outline_threshold'  => '350000'
-  },
-
   'supercontigs' => {
     'on'  => "on",
     'pos' => '990',

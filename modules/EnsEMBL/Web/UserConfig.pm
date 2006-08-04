@@ -1116,6 +1116,7 @@ sub ADD_ALL_PROTEIN_FEATURES {
 sub ADD_ALL_PREDICTIONTRANSCRIPTS {
   my $self = shift;
   my $POS  = shift || 2100;
+  $self->add_new_track_predictiontranscript( 'fgenesh', 'Fgenesh', 'darkkhaki', $POS ++, {}, @_ );
   $self->add_new_track_predictiontranscript( 'genscan',   'Genscan',    'lightseagreen',   $POS ++, {}, @_ );
   $self->add_new_track_predictiontranscript( 'genefinder','Genefinder', 'darkolivegreen4', $POS ++, {}, @_ );
   $self->add_new_track_predictiontranscript( 'snap',      'SNAP',       'darkseagreen4',   $POS ++, {}, @_ );
@@ -1125,8 +1126,6 @@ sub ADD_ALL_PREDICTIONTRANSCRIPTS {
   $self->add_new_track_predictiontranscript( 'gid',       'Gene id','red',$POS ++, { 'Genoscope' => 'TETRAODON_ABINITIO' }, @_ );
   $self->add_new_track_predictiontranscript( 'gws_h','Genewise (Human)','orange',$POS ++, { 'Genoscope' => 'TETRAODON_GENEWISE' }, @_ );
   $self->add_new_track_predictiontranscript( 'gws_s','Genewise (Mouse)','orange',$POS ++, { 'Genoscope' => 'TETRAODON_GENEWISE' }, @_ );
-#for vega 
-  $self->add_new_track_predictiontranscript( 'fgenesh', 'Fgenesh', 'darkkhaki', $POS ++, {}, @_ ); # 'available' => 'features Fgenesh', @_ ); # , 'glyphset'=>'fgenesh', @_);
   return $POS;
 }
 
