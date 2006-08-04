@@ -1392,7 +1392,8 @@ sub get_page_data {
 
 
       my $status;
-      if ($allele->source eq 'Sanger') {
+      if ( grep { $_ eq "Sanger"} @{$allele->get_all_sources() || []} ) {
+	#if ($allele->source eq 'Sanger') {
 	# Read coverage
 	my $allele_start = $allele->start;
 	my $coverage;

@@ -916,6 +916,8 @@ sub ADD_ALL_DNA_FEATURES {
 sub ADD_ALL_EST_FEATURES {
   my $self = shift;
   my $POS  = shift || 2350;
+  $self->add_new_track_est( 'arraymap_e2g',   'ARRAY_MMC1_ests', $POS++, @_ );
+  $self->add_new_track_est( 'est2clones',   'ARRAY_MMC1_reporters', $POS++, @_ );
   $self->add_new_track_est( 'BeeESTAlignmentEvidence', 'Bee EST evid.', $POS++, @_ );
   $self->add_new_track_est( 'est_rna',      'ESTs (RNA)',      $POS++, 'available' => 'features RNA',      'FEATURES' => 'RNA', @_ );
   $self->add_new_track_est( 'est_rnabest',  'ESTs (RNA best)', $POS++, 'available' => 'features RNA_BEST', 'FEATURES' => 'RNA_BEST', @_ );

@@ -276,7 +276,8 @@ sub getAllelesConsequencesOnSlice {
     grep { $valids->{'opt_'.$self->var_class($_->[2])} }
 
     # [ fake_s, fake_e, AF ]   Filter our unwanted sources
-    grep { $valids->{'opt_'.lc($_->[2]->source) }  }
+     # grep { $valids->{'opt_'.lc($_->[2]->source) }  }
+    grep { scalar map { $valids->{'opt_'.lc($_)}?1:() } @{$_->[2]->get_all_sources()}  }
 
     # [ fake_s, fake_e, AlleleFeature ]   Filter out AFs not on munged slice...
      map  { $_->[1]?[$_->[0]->start+$_->[1],$_->[0]->end+$_->[1],$_->[0]]:() } 

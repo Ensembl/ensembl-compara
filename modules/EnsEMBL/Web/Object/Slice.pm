@@ -163,7 +163,8 @@ sub filter_snps {
     grep { scalar map { $valids->{'opt_'.lc($_)}?1:() } @{$_->get_consequence_type()}  }
 
       # Filter our unwanted sources
-      grep { $valids->{'opt_'.lc($_->source)} }
+      grep { scalar map { $valids->{'opt_'.lc($_)}?1:() } @{$_->get_all_sources()}  }
+      #grep { $valids->{'opt_'.lc($_->source)} }
 
 	# Filter our unwanted classes
 	grep { $valids->{'opt_'.$_->var_class} }
@@ -267,7 +268,8 @@ sub filter_munged_snps {
     grep { scalar map { $valids->{'opt_'.lc($_)}?1:() } @{$_->[2]->get_consequence_type()}  }
 
 # [ fake_s, fake_e, SNP ]   Filter our unwanted sources
-    grep { $valids->{'opt_'.lc($_->[2]->source)} }
+      #grep { $valids->{'opt_'.lc($_->[2]->source)} }
+      grep { scalar map { $valids->{'opt_'.lc($_)}?1:() } @{$_->[2]->get_all_sources()}  }
 
 # [ fake_s, fake_e, SNP ]   Filter our unwanted classes
     grep { $valids->{'opt_'.$_->[2]->var_class} }
