@@ -1,3 +1,5 @@
+.more { text-align: right }
+
 /* ADDITIONAL STYLES FOR ENSEMBL PAGE CONTENT */
 .hi { border: solid 1px red; padding: 0 1px; font-weight: bold }
 .redbox { visibility:hidden; position:absolute; height: 0px; width: 0px;background-color: red; z-index: 100 }
@@ -6,6 +8,17 @@
   div.zmenu table th { font-size: 0.9em; background-color:#ccc; color:#000; text-align: left; border:1px #cccccc solid; }
   div.zmenu table td { font-size: 0.9em; color:#666; border-top : 1px #cccccc dotted;}
   div.zmenu a { text-decoration:none; }
+
+/* Popup Help */
+.pointer { cursor:pointer; }
+.round-button { vertical-align:middle; margin:0px 2px; }
+div.help-popup { visibility:hidden; position:absolute; top: 800px; left: 800px; width: 400px; z-index:200 }
+div.help-popup { border:1px #36b solid;}
+div.help-popup table th { font-size: 0.9em; background-color:#9bb9dd; color:#000; text-align: left; border:1px #9bb9dd solid; }
+div.help-popup table td { font-size: 0.9em; color:#666; border-top : 1px #9bb9dd dotted; padding:0.5em; }
+div.help-popup a { text-decoration:none; }
+a.glossary {text-decoration:none; border-bottom:1px dotted #000; }
+
 /* LAYOUT */
 
 .ch span { /*border: red 1px solid;*/ padding: 2px 2em 2px 2px; }
@@ -297,6 +310,19 @@ table.zoom, table.zoom tr td { border:0px; margin:0px; padding:0px; background-c
 table.zoom tr td { vertical-align: bottom }
 table.zoom tr td img { margin-top: 0px }
 .navbox { background-color: #ffffe7 }
+
+
+/* CODE RELATED CSS */
+code { font: 1em andale mono, sans-serif; font-weight: bold; color: #990000 }
+.code { position: relative; border: 1px solid #666; background: #eee; margin: 1em 1em 0.2em 1em; padding: 0.2em 0.5em; }
+.code h4 { font-size: 1em; padding: 0.2em 0.5em ; z-index: 2; margin: -1em 0 0 -1em; border: 1px solid #666; background-color: #eee; }
+.code pre { margin: 0.5em 0em 1.5em 0em; font: 0.8em andale mono, sans-serif; color: #000 }
+.code pre:after { content: "."; display: block; height: 0; clear: both; visibility: hidden; }
+.code pre { display: inline-block; }
+/* Holly Hack Targets IE Win only \*/
+* html .code pre { height: 1%;}
+.code pre               { display: block; }
+/* end of Holly hack */
 
 /* hide the rest of the file from Safari */
 .bogus { font-style:normal;# }
