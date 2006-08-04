@@ -1420,11 +1420,11 @@ sub get_page_data {
       $aa_coord .= $aa_coord == $conseq_type->aa_end ? "": $conseq_type->aa_end;
       my $cds_coord = $conseq_type->cds_start;
       $cds_coord .= "-".$conseq_type->cds_end unless $conseq_type->cds_start == $conseq_type->cds_end;
-
+      my $sources = join ", " , @{$allele->get_all_sources || [] };
       my $row = {
 		'ID'          =>  qq(<a href="/@{[$object->species]}/snpview?snp=@{[$allele->variation_name]};source=@{[$allele->source]};chr=$chr;vc_start=$chr_start">@{[$allele->variation_name]}</a>),
 		'Class'       => $class || "-",
-		'Source'      => $allele->source || "-",
+		'Source'      => $sources || "-",
 		'Alleles'     => $snp_alleles || "-",
 		'Ambiguity'   => $object->ambig_code($allele),
 		'Status'      => $status,
