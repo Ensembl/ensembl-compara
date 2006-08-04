@@ -10,7 +10,6 @@ sub init {
     panel_ideogram    on
     panel_bottom      on
     image_width      700
-    opt_gene_labels   on
     context        10000
   ));
 }

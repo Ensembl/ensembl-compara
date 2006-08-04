@@ -40,12 +40,12 @@ sub dynamic_use {
   }
   my( $parent_namespace, $module ) = $classname =~/^(.*::)(.*)$/ ? ($1,$2) : ('::',$classname);
   no strict 'refs';
-  return 1 if $parent_namespace->{$module.'::'}; # return if already used
+  return 1 if $parent_namespace->{$module.'::'} && %{ $parent_namespace->{$module.'::'}||{} }; # return if already used 
   eval "require $classname";
   if($@) {
     warn "EnsEMBL::Web::Root: failed to use $classname\nEnsEMBL::Web::Root: $@" unless $@ =~/^Can't locate /;
-    delete( $parent_namespace->{$module.'::'} );
-    $failed_modules->{$classname} = $@;
+    $parent_namespace->{$module.'::'} = {};
+    $failed_modules->{$classname} = $@ || "Unknown failure when dynamically using module";
     return 0;
   }
   $classname->import();
