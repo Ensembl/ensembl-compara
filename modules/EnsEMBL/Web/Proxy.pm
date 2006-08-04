@@ -1,56 +1,11 @@
 package EnsEMBL::Web::Proxy;
 
-=head1 NAME
-
-EnsEMBL::Web::Proxy
-
-=head1 SYNOPSIS
-To allow for Plugins you no longer create individual objects of type
-"EnsEMBL::Web::Factory::Gene" e.g., but instead create a Proxy::Factory
-with type "Gene"
-
-=head1 DESCRIPTION
-
- my $gene  = EnsEMBL::Web::Proxy::Object->new(
-               'Gene', $ensembl_object, 
-               { '_databases' => $dbs, '_input' => $input } );
-
-This object is a wrapper round real objects which allows functions
-to be distributed about a number of plugins.
-
-An instance of a Proxy::Object is a blessed array ref with 3 elements:
-
- [0] The type of the object (e.g. Gene)
- [1] The "data" hash containing information pertaining to the Gene
-
-=head1 LICENCE
-
-This code is distributed under an Apache style licence:
-Please see http://www.ensembl.org/code_licence.html for details
-
-=head1 CONTACT
-
-James Smith - js5@sanger.ac.uk
-
-=cut
-
 use strict;
 use EnsEMBL::Web::SpeciesDefs;
 use EnsEMBL::Web::Problem;
 use EnsEMBL::Web::Root;
 use vars qw($AUTOLOAD);
 our  @ISA = qw( EnsEMBL::Web::Root );
-
-=head2 new
-
- Arg[1]      : object type
- Arg[2]      : data
- Example     : EnsEMBL::Web::Proxy::Factory( 'Gene', $data );
- Description : Instantiates the Proxy::Factory, add all it's child
-               factories
- Return type : the Proxy::Factory if any of the child objects can
-               instantiate.
-=cut
 
 sub new {
   my( $class, $supertype, $type, $data, %extra_elements ) = @_;
@@ -103,100 +58,28 @@ sub new {
   return $self;
 }
 
-sub species_defs { $_[0][1]{'_species_defs'}  ||= EnsEMBL::Web::SpeciesDefs->new(); }
-sub user_details { $_[0][1]{'_user_details'}  ||= 1; } # EnsEMBL::Web::User::Details->new( $_[0]->{_web_user_db}); }
-
-sub species :lvalue { $_[0][1]{'_species'}; }
-sub script       { $_[0][1]{'_script'};  }
-
-=head2 __supertype
-
- Example     : print $object->__supertype;
- Description : Gets/sets the type of thing being proxied -either Factory or Object
- Return type : String
-
-=cut
-
-sub __supertype :lvalue { $_[0][3]; }
-
-=head2 __objecttype
-
- Example     : print $object->__objectype;
- Description : Gets/sets the type of the Proxy::Object
- Return type : String
-
-=cut
-
+##
+## Accessor functionality
+##
+sub species_defs         { $_[0][1]{'_species_defs'}  ||= EnsEMBL::Web::SpeciesDefs->new(); }
+sub user_details         { $_[0][1]{'_user_details'}  ||= 1; } # EnsEMBL::Web::User::Details->new( $_[0]->{_web_user_db}); }
+sub species :lvalue      { $_[0][1]{'_species'}; }
+sub script               { $_[0][1]{'_script'};  }
+sub __supertype  :lvalue { $_[0][3]; }
 sub __objecttype :lvalue { $_[0][0]; }
+sub __data       :lvalue { $_[0][1]; }
+sub __children           { return $_[0][2]; }
 
-=head2 __data
-
- Example     : $object->__data->{_problem}
- Description : Gets/sets the data part of the Proxy::Object
- Return type : Hashref
-
-=cut
-
-sub __data :lvalue { $_[0][1]; }
-
-=head2 __children
-
- Example     : $object->__children
- Description : Gets the child Obects of the Proxy::Object
- Return type : arrayref
-
-=cut
-
-sub __children { return $_[0][2]; }
-
-=head2 can
-
- Arg[1]      : object method
- Example     : $object->can( 'stable_id' )
- Description : Checks if any of the "child" objects can call this method
- Return type : flag, 1 if can do the function, 0 if not
-
-=cut
-
-sub can {
+sub has_a_problem     { return scalar(                               @{$_[0][1]{'_problem'}} ); }
+sub has_fatal_problem { return scalar( grep {$_->isFatal}            @{$_[0][1]{'_problem'}} ); }
+sub has_problem_type  { return scalar( grep {$_->get_by_type($_[1])} @{$_[0][1]{'_problem'}} ); }
+sub get_problem_type  { return         grep {$_->get_by_type($_[1])} @{$_[0][1]{'_problem'}};   }
+sub clear_problems    {                                                $_[0][1]{'_problem'} = []; }
+sub problem {
   my $self = shift;
-  my $fn   = shift;
-  foreach my $sub ( @{$self->__children} ) {
-    return 1 if $sub->can($fn);
-  }
-  return 0;
+  push @{$self->[1]{'_problem'}}, EnsEMBL::Web::Problem->new(@_) if @_;
+  return $self->[1]{'_problem'};
 }
-
-=head2 AUTOLOAD
-
- Args        : passed through to child object functions 
- Description : Autoloader function to proxy call on child object.
- Return type : scalar, array depending on "wantarray()"
-
- Notes: 
- 
- This loops through the child objects in order, looking for the
- method to exist. IF the method exists on the child it is called.
- 
- IF the function sets data->{_drop_through_} then the this process
- is continued through subsequent child objects.
- 
- IF data->{_drop_through_} names a function (rather than 1) then
- after processing all the child objects, these functions are called
- (in reverse) order to post process the data.
- 
- FINALLY the data is returned. either as an array (if wantarray
- is true) OR as a scalar value (if it is not)
- 
- Caveat:
- 
- Due to the drop through nature of this call this uses wantarray,
- with all the "complications" this involves, there are places where
- wantarray gets confused so if you need to explicitly scalarize the
- array - always copy into an array first (or force into array context)
- and then convert back to a scalar.
-
-=cut
 
 sub AUTOLOAD {
   my $self   = shift;
@@ -209,12 +92,10 @@ sub AUTOLOAD {
       $self->__data->{'_drop_through_'} = 0;
       @return = $sub->$fn( @_ );
       $flag = 1;
-      if( $self->__data->{'_drop_through_'} ) {
-        if( $self->__data->{'_drop_through_'} !=1 ) {
-          push @post_process, [ $sub, $self->__data->{'_drop_through_'} ];
-        }
-      } else {
+      if( ! $self->__data->{'_drop_through_'} ) {
         last;
+      } elsif( $self->__data->{'_drop_through_'} !=1 ) {
+        push @post_process, [ $sub, $self->__data->{'_drop_through_'} ];
       }
     }
   }
@@ -233,6 +114,15 @@ sub AUTOLOAD {
   return wantarray() ? @return : $return[0];
 }
 
+sub can {
+  my $self = shift;
+  my $fn   = shift;
+  foreach my $sub ( @{$self->__children} ) {
+    return 1 if $sub->can($fn);
+  }
+  return 0;
+}
+
 sub ref {
   my $self = shift;
   my $ref = ref( $self );
@@ -240,15 +130,7 @@ sub ref {
   return "$object (@{[map { ref($_) } @{$self->__children}]})";
 };
 
-sub has_a_problem     { return scalar( @{$_[0][1]{'_problem'}} ); }
-sub has_fatal_problem { return scalar( grep {$_->isFatal} @{$_[0][1]{'_problem'}} ); }
-sub has_problem_type  { return scalar( grep{$_->get_by_type($_[1])} @{$_[0][1]{'_problem'}} ); }
-sub get_problem_type  { return grep{$_->get_by_type($_[1])} @{$_[0][1]{'_problem'}}; }
-sub clear_problems    { $_[0][1]{'_problem'} = []; }
-sub problem {
-  my $self = shift;
-  push @{$self->[1]{'_problem'}}, EnsEMBL::Web::Problem->new(@_) if @_;
-  return $self->[1]{'_problem'};
-}
+sub DESTROY {}
+
 
 1;
