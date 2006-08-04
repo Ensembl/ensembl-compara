@@ -190,26 +190,29 @@ sub get_homology_matches{
 
   # hash to convert descriptions into more readable form
 
-  my %desc_mapping_sr7 = ('ortholog_one2one' => '1 to 1', 'apparent_ortholog_one2one' => '1 to 1 (apparent)', 'ortholog_one2many' => '1 to many', 'between_species_paralog' => 'paralogue (between species)', 'ortholog_many2many' => 'many to many', 'within_species_paralog' => 'paralog (within species)');
-
+  my %desc_mapping = (
+    'ortholog_one2one'          => '1 to 1',
+    'apparent_ortholog_one2one' => '1 to 1 (apparent)', 
+    'ortholog_one2many'         => '1 to many',
+    'between_species_paralog'   => 'paralogue (between species)',
+    'ortholog_many2many'        => 'many to many',
+    'within_species_paralog'    => 'paralog (within species)'
+  );
 
   foreach my $displayspp (keys (%homologues)){
     ( my $spp = $displayspp ) =~ tr/ /_/;
-    my $order_sr7=0;
+    my $order=0;
     foreach my $homology (@{$homologues{$displayspp}}){
-
-
       my ($homologue, $homology_desc, $homology_subtype) = @{$homology};
       next unless ($homology_desc =~ /$homology_description/);
       my $homologue_id = $homologue->stable_id;
-      my $homology_desc_sr7= $desc_mapping_sr7{$homology_desc};   # mapping to more readable form
-      $homology_desc_sr7= "no description" unless (defined $homology_desc_sr7);
-      $homology_list{$displayspp}{$homologue_id}{'homology_desc'} = $homology_desc_sr7 ;
+      my $homology_desc= $desc_mapping{$homology_desc};   # mapping to more readable form
+      $homology_desc= "no description" unless (defined $homology_desc);
+      $homology_list{$displayspp}{$homologue_id}{'homology_desc'}    = $homology_desc ;
       $homology_list{$displayspp}{$homologue_id}{'homology_subtype'} = $homology_subtype ;
-      $homology_list{$displayspp}{$homologue_id}{'spp'} = $displayspp ;
-      $homology_list{$displayspp}{$homologue_id}{'description'} = $homologue->description ;
-      
-      $homology_list{$displayspp}{$homologue_id}{'order'} = $order_sr7 ;
+      $homology_list{$displayspp}{$homologue_id}{'spp'}              = $displayspp ;
+      $homology_list{$displayspp}{$homologue_id}{'description'}      = $homologue->description ;
+      $homology_list{$displayspp}{$homologue_id}{'order'}            = $order ;
       
       if ($self->species_defs->valid_species($spp)){
         my $database_spp = $self->DBConnection->get_databases_species( $spp, 'core') ;
@@ -230,8 +233,7 @@ sub get_homology_matches{
         $homology_list{$displayspp}{$homologue_id}{'location'}= $gene_spp->feature_Slice->name;
         $database_spp->{'core'}->dbc->disconnect_if_idle();
       }
-      $order_sr7++;
-      
+      $order++;
     }
   }
   return \%homology_list;
@@ -602,7 +604,7 @@ warn ">>>>> @ANALYSIS <<<<<<";
     $start += $_->[1]-$_->[0]-1 + $padding;
   }
 
-  return [ 'munged', $slice, $subslices, $collapsed_length+2*$EXTENT ];
+  return [ 'munged', $slice, $subslices, $collapsed_length ];
 
 }
 

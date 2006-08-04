@@ -56,11 +56,11 @@ sub featureview {
 
     ## determine which panels are needed
     my ($karyo_panel, $key_panel, $unmapped_panel, $gene_panel, $reg_panel, $feature_panel, $xref_panel);
-    if ($object->Obj->{'Xref'}) {
+warn $object;
+    if ($object->Obj && $object->Obj->{'Xref'}) {
       $karyo_panel = 1;
       $xref_panel = 1;
-    }
-    else {
+    } else {
       if (!$object->feature_mapped) {
         $unmapped_panel = 1;
       }

@@ -76,12 +76,13 @@ sub context_menu {
   $self->{page}->menu->add_block( "family$self->{flag}", 'bulleted',
                                   $self->{object}->stable_id );
   $self->{page}->menu->add_entry( "family$self->{flag}", 'text' => "Family info.",
-                                  'href' => "/@{[$self->{object}->species]}/familyview?familyview=".$self->{object}->stable_id );
+                                  'href' => "/@{[$self->{object}->species]}/familyview?family=".$self->{object}->stable_id );
   $self->add_entry( "family$self->{flag}", 'icon' => '/img/biomarticon.gif' ,
                     'text' => 'Gene List', 'title' => 'BioMart: Gene list',
         'href' => "/@{[$self->{object}->species]}/martlink?type=family;family_id=".$self->{object}->stable_id );
-  $self->{page}->menu->add_entry( "family$self->{flag}", 'text' => 'Peptide sequences (FASTA)',
-    'href' => sprintf( "/Multi/martview?stage_initialised=start;stage_initialised=region;stage_initialised=filter;stage=output;species=@{[$self->{object}->species]};focus=gene;genome_type=entire_genome;named_fam=1;named_fam_filter=FP_ens_family_ID;named_fam_list=%s;named_family=1;outtype=sequence;outformat=fasta", ) );
+  $self->add_entry( "family$self->{flag}", 'icon' => '/img/biomarticon.gif' ,
+                    'text' => 'Peptide sequences (FASTA)', 'title' => 'BioMart: Peptide sequences FASTA',
+        'href' => "/@{[$self->{object}->species]}/martlink?type=familyseq;family_id=".$self->{object}->stable_id );
   $self->{page}->menu->add_entry( "family$self->{flag}", 'text' => 'Export alignments',
     'href' => sprintf( '/%s/alignview?family_stable_id=%s', $self->{object}->species, $self->{object}->stable_id ),
     'options' => [

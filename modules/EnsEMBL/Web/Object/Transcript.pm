@@ -215,7 +215,7 @@ sub get_munged_slice {
     $start += $_->[1]-$_->[0]-1 + $padding;
   }
 
-  return [ 'munged', $slice, $subslices, $collapsed_length+2*$extent ];
+  return [ 'munged', $slice, $subslices, $collapsed_length ];
 
 }
 

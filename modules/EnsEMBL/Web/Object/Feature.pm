@@ -43,11 +43,11 @@ sub retrieve_features {
   my $method;
   if ($feature_type) {
     $method = "retrieve_$feature_type";
-  }
-  else {
+  } else {
     $method = "retrieve_".$self->feature_type;
   }
   return $self->$method() if defined &$method;
+  return [];
 }
 
 sub retrieve_Gene {
