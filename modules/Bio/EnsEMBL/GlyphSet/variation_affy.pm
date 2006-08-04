@@ -50,8 +50,9 @@ sub features {
     #  push @affy_snps, $vf;
     #  next;
     #}
+
+    next unless  grep{ $_ eq $source_name }  @{ $vf->get_all_sources || []};
     my $v = $vf->variation;
-    #print STDERR $vf->variation_name,"\n" unless $v;
     next unless $v;
 
     # get v->synonym names if any match Mapping$key, push into @affy_snps;
