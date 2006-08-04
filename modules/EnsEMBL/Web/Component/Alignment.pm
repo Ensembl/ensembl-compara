@@ -106,7 +106,7 @@ sub output_Family {
 sub output_Homology {
   my( $panel, $object ) = @_;
 
-  my %desc_mapping_sr7= ('ortholog_one2one' => '1 to 1 orthologue', 'apparent_ortholog_one2one' => '1 to 1 orthologue (apparent)', 'ortholog_one2many' => '1 to many orthologue', 'between_species_paralog' => 'paralogue (between species)', 'ortholog_many2many' => 'many to many orthologue', 'within_species_paralog' => 'paralogue (within species)');
+  my %desc_mapping= ('ortholog_one2one' => '1 to 1 orthologue', 'apparent_ortholog_one2one' => '1 to 1 orthologue (apparent)', 'ortholog_one2many' => '1 to many orthologue', 'between_species_paralog' => 'paralogue (between species)', 'ortholog_many2many' => 'many to many orthologue', 'within_species_paralog' => 'paralogue (within species)');
   
   foreach my $homology (@{$object->Obj||[]}) {
     my $sa;
@@ -134,16 +134,16 @@ sub output_Homology {
       next unless $FLAG;
       my $homology_types = HOMOLOGY_TYPES;
 
-      my $homology_desc_sr7= $homology_types->{$homology->{_description}} || $homology->{_description};
+      my $homology_desc= $homology_types->{$homology->{_description}} || $homology->{_description};
 
       # filter out the between species paralogs
-      next if($homology_desc_sr7 eq 'between_species_paralog');
+      next if($homology_desc eq 'between_species_paralog');
       
-      my $homology_desc_mapped_sr7= $desc_mapping_sr7{$homology_desc_sr7};
-      $homology_desc_mapped_sr7= 'no description' unless (defined $homology_desc_mapped_sr7);
+      my $homology_desc_mapped= $desc_mapping{$homology_desc};
+      $homology_desc_mapped= 'no description' unless (defined $homology_desc_mapped);
       
       $panel->print( sprintf( '<h3>"%s" homology for gene %s</h3>',
-      $homology_desc_mapped_sr7,
+      $homology_desc_mapped,
       $homology->{'_this_one_first'} ) );
       my $ss = EnsEMBL::Web::Document::SpreadSheet->new(
         [ { 'title' => 'Species', 'width'=>'20%' },

@@ -150,6 +150,11 @@ sub breadcrumbs {
   return $out;
 }
 
+sub template_SPECIESINFO {
+  my( $r, $code ) = @_;
+  my($sp,$code) = split /:/, $code;
+  return $SD->other_species($sp,$code);
+}
 sub template_SPECIESDEFS {
   my( $r, $code ) = @_;
   return $SD->$code;
