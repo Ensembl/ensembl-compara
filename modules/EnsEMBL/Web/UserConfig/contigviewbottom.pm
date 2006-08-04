@@ -402,7 +402,7 @@ sub init {
       'key'         => 50,
       'glyphset'    => 'variation_affy',
       'colours' => {$self->{'_colourmap'}->colourSet('variation')},
-      'available'=> 'databases ENSEMBL_VARIATION', 
+      'available'=> 'species Homo_sapiens', 
     },
     'variation_affy500' => {
       'on'  => "off",
@@ -415,7 +415,7 @@ sub init {
       'key'         => 250,
       'glyphset'    => 'variation_affy',
       'colours' => {$self->{'_colourmap'}->colourSet('variation')},
-      'available'=> 'databases ENSEMBL_VARIATION', 
+      'available'=> 'species Homo_sapiens',  
     }, 
 
    'genotyped_variation_line' => {
