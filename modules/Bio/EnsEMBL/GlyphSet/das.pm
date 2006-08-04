@@ -742,7 +742,7 @@ sub feature_label {
     my @res = $self->get_text_width( 0, $text, '', 'font'=>$self->{'fontname_o'}, 'ptsize' => $self->{'fontsize_o'} );
     my $y_offset = ($row_height + $glyph_height)/2;
     $y_offset += 2; # give a couple of pixels gap under the glyph
-warn "$text ............. $start .............. $res[2] / $self->{'pix_per_bp'}" ;
+#warn "$text ............. $start .............. $res[2] / $self->{'pix_per_bp'}" ;
     my $tglyph = new Sanger::Graphics::Glyph::Text({
       'x'          => $start -1,
       'y'          => $y_offset,
@@ -755,10 +755,10 @@ warn "$text ............. $start .............. $res[2] / $self->{'pix_per_bp'}"
       'text'       => $text,
       'absolutey'  => 1,
     });
-warn $composite->width,'-',$composite->height;
+#warn $composite->width,'-',$composite->height;
     $composite->push($tglyph);
-warn $composite->width,'-',$composite->height;
-warn "......... $self->{'textheight_o'} + 4";
+#warn $composite->width,'-',$composite->height;
+#warn "......... $self->{'textheight_o'} + 4";
     return $self->{'textheight_o'} + 4;
   } else {
     return 0;

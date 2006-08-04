@@ -90,10 +90,10 @@ sub draw_parallel{
     #   full (top = height, bottom = y_offset)
     #   indent (solid bar, indented from height by some chunk)
     #   line (top = bottom)
-	warn Dumper($style);
-	warn "STYLE: ".$style->{'bar_style'}."\n";
+#	warn Dumper($style);
+#	warn "STYLE: ".$style->{'bar_style'}."\n";
     my $bar_style = $style->{'bar_style'} || $self->default_bar_style;
-   warn "BARSTYLE: $bar_style\n";
+#   warn "BARSTYLE: $bar_style\n";
     my ($bar_top, $bar_bottom);
 
     if ($bar_style =~ /full/i){
