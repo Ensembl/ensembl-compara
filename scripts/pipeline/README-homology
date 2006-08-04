@@ -1,3 +1,5 @@
+
+
 1- code API needed and executable
    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -6,7 +8,7 @@
   ensembl
   ensembl-compara
   ensembl-hive
-  ensembl-pipeline
+  ensembl-analysis
 
   executables
   ~~~~~~~~~~~
@@ -32,9 +34,9 @@ ensembl-compara code (for Compara API and schema)
 
   $ cvs -d :ext:cvs.sanger.ac.uk:/nfs/ensembl/cvsroot co ensembl-compara
 
-ensembl-pipeline code (for Runnables)
+ensembl-analysis code (for Runnables)
 
-  $ cvs -d :ext:cvs.sanger.ac.uk:/nfs/ensembl/cvsroot co  ensembl-pipeline
+  $ cvs -d :ext:cvs.sanger.ac.uk:/nfs/ensembl/cvsroot co ensembl-analysis
 
 ensembl-hive code
 
@@ -47,7 +49,7 @@ in tcsh
   $ setenv BASEDIR   /some/path/to/modules
   $ setenv PERL5LIB ${BASEDIR}/ensembl/modules:${PERL5LIB}
   $ setenv PERL5LIB ${BASEDIR}/ensembl-compara/modules:${PERL5LIB}
-  $ setenv PERL5LIB ${BASEDIR}/ensembl-pipeline/modules:${PERL5LIB}
+  $ setenv PERL5LIB ${BASEDIR}/ensembl-analysis/modules:${PERL5LIB}
   $ setenv PERL5LIB ${BASEDIR}/ensembl-hive/modules:${PERL5LIB}
   $ setenv PERL5LIB ${BASEDIR}/bioperl-live:${PERL5LIB}
   $ setenv PERL5LIB ${BASEDIR}/bioperl-run:${PERL5LIB}
@@ -56,7 +58,7 @@ in bash
   $ BASEDIR=/some/path/to/modules
   $ export PERL5LIB=${BASEDIR}/ensembl/modules:${PERL5LIB}
   $ export PERL5LIB=${BASEDIR}/ensembl-compara/modules:${PERL5LIB}
-  $ export PERL5LIB=${BASEDIR}/ensembl-pipeline/modules:${PERL5LIB}
+  $ export PERL5LIB=${BASEDIR}/ensembl-analysis/modules:${PERL5LIB}
   $ export PERL5LIB=${BASEDIR}/ensembl-hive/modules:${PERL5LIB}
   $ export PERL5LIB=${BASEDIR}/bioperl-live:${PERL5LIB}
   $ export PERL5LIB=${BASEDIR}/bioperl-run:${PERL5LIB}
@@ -81,13 +83,24 @@ Pick a mysql instance and create a database;
 
 And load the schemas;
 
-  $ cd $BASEDIR
   $ mysql -hecs2 -P3361 -uensadmin -pxxxx ensembl_compara_jess_23_1 \
-    < ensembl-hive/sql/tables.sql
+    < $BASEDIR/ensembl-hive/sql/tables.sql
   $ mysql -hecs2 -P3361 -uensadmin -pxxxx ensembl_compara_jess_23_1 \
-    < ensembl-compara/sql/table.sql
+    < $BASEDIR/ensembl-compara/sql/table.sql
   $ mysql -hecs2 -P3361 -uensadmin -pxxxx ensembl_compara_jess_23_1 \
-    < ensembl-compara/sql/pipeline-tables.sql
+    < $BASEDIR/ensembl-compara/sql/pipeline-tables.sql
+
+You now need to load the NCBI taxonomy data into the ncbi_taxa_name
+and ncbi_taxa_node tables. See the following file;
+
+  $BASEDIR/ensembl-compara/scripts/taxonomy/README-taxonomy
+
+You may alternatively be able to copy taxonomy tables from an existing
+compara db, e.g.
+
+  $ mysqldump -hecs2 -P3365 -uensadmin -pxxxx --no-create-info \
+    ncbi_taxonomy ncbi_taxa_node ncbi_taxa_name \
+    | mysql -hecs2 -P3361 -uensadmin -pxxxx ensembl_compara_jess_23_1
 
 
 3- Choose a working directory with enough disk space
@@ -113,30 +126,35 @@ must exist.
   $ cp compara-hive-homology.conf.example my_compara.conf
   <editor> my_compara.conf
 
-IMPORTANT: The hive system can generate an awful lot of log outputs that are dumped in
-the hive_output_dir. When a pipeline runs fine, these are not needed and can take a lot of
-disk space as well as generate a large number of files. If you don't want log outputs (recommended),
-then just don't specify any hive_output_dir.
+If you are just interested in building the orthologs, and are not
+going to run the family pipeline later, comment out the TYPE=>UNIPROT
+directives.
 
-4.1 Copy and modify the Bio::EnsEMBL::Pipeline::Config::General.pm file
+IMPORTANT: The hive system can generate an awful lot of log outputs
+that are dumped in the hive_output_dir. When a pipeline runs fine,
+these are not needed and can take a lot of disk space as well as
+generate a large number of files. If you don't want log outputs
+(recommended), then just don't specify any hive_output_dir.
+
+
+4.1 Copy and modify the Bio::EnsEMBL::Analysis::Config::General.pm file
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
 You may need to change the locations of BIN_DIR, DATA_DIR and LIB_DIR;
 
-  $ cd $BASEDIR/ensembl-pipeline/modules/Bio/EnsEMBL/Pipeline/Config
+  $ cd $BASEDIR/ensembl-analysis/modules/Bio/EnsEMBL/Analysis/Config
   $ cp General.pm.example General.pm
   <editor> General.pm
 
 
-4.2 Copy and modify the Bio::EnsEMBL::Pipeline::Config::Blast.pm file
+4.2 Copy and modify the Bio::EnsEMBL::Analysis::Config::Blast.pm file
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  $ cd $BASEDIR/ensembl-pipeline/modules/Bio/EnsEMBL/Pipeline/Config
+  $ cd $BASEDIR/ensembl-analysis/modules/Bio/EnsEMBL/Analysis/Config
   $ cp Blast.pm.example Blast.pm
-  <editor> General.pm
+  <editor> Blast.pm
+
 
 4.3 Set the blast envirnment
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
 These environment variables cannot be set in either ::Config::Blast or
 ::Config::General;
 
@@ -183,7 +201,9 @@ At this point the system is ready to run
 One must first make sure that the available hive scripts are available
 in one's path.  This can be done by either extending PATH or linking the
 scripts to an existing directory in the PATH
-  $ export PATH=$PATH:$BASEDIR/ensembl-hive/scripts
+
+  tcsh$ setenv PATH ${PATH}:${BASEDIR}/ensembl-hive/scripts
+  bash$ export PATH=$PATH:$BASEDIR/ensembl-hive/scripts
 
 There are two beekepers, one which uses LSF job submission system, and
 another that uses the local machine only. If using the local machine,
