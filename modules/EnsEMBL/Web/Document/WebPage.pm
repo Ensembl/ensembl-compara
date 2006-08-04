@@ -4,6 +4,7 @@ use EnsEMBL::Web::Root;
 use EnsEMBL::Web::Proxy::Factory;
 use EnsEMBL::Web::Timer;
 use EnsEMBL::Web::SpeciesDefs;
+use Exporter;
 use Apache::Constants qw(:common :response M_GET);
 
 our $SD = EnsEMBL::Web::SpeciesDefs->new();
@@ -18,7 +19,9 @@ use constant 'DEFAULT_OUTPUTTYPE' => 'HTML';
 use constant 'DEFAULT_DOCUMENT'   => 'Dynamic';
 
 use Bio::EnsEMBL::Registry; # Required so we can do the disconnect all call!!
-our @ISA = qw(EnsEMBL::Web::Root);
+our @ISA = qw(EnsEMBL::Web::Root Exporter);
+our @EXPORT_OK = qw(simple_webpage simple_with_redirect);
+our @EXPORT    = @EXPORT_OK;
 
 sub _prof { my $self = shift; $self->timer->push( @_ ); }
 sub timer { return $_[0]{'timer'}; }
@@ -398,7 +401,8 @@ sub add_error_panels {
 
 sub DESTROY { Bio::EnsEMBL::Registry->disconnect_all(); }
 
-sub simple {
+sub simple { simple_webpage( @_ ); }
+sub simple_webpage {
   my $self = __PACKAGE__->new( 'objecttype' => shift );
   if( $self->has_a_problem ) {
      $self->render_error_page;
@@ -467,6 +471,7 @@ sub simple_with_redirect {
      }
      $self->action;
   }
+  return 1;
 }
 
 

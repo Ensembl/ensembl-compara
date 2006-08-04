@@ -64,7 +64,7 @@ sub _initialize_HTML {
     html_end   EnsEMBL::Web::Document::HTML::HTML_Block
   );
 
-  $self->call_child_functions( 'common_page_elements','static_page_elements' );
+  $self->call_child_functions( 'common_page_elements','dynamic_page_elements' );
 
   $self->_common_HTML();
   $self->_script_HTML();
@@ -103,6 +103,7 @@ warn $self->species_defs;
     ## Note we have no example links here!!
   }
 
+  $self->javascript->add_source('/js/core.js');
   $self->javascript->add_source('/js/new_drag_imagemap.js');
   $self->javascript->add_source('/js/help.js');
   $self->javascript->add_source('/js/new_support.js');

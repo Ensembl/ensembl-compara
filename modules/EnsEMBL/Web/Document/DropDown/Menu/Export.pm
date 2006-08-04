@@ -45,11 +45,11 @@ sub new {
   foreach( qw(pdf svg postscript) ) {
     $self->add_checkbox( "format_$_", "Include @{[uc($_)]} links" );
   }
-  foreach( keys %{$exports} ){
-    if( $exports->{$_}->{avail} ){
-      $self->add_link( $exports->{$_}->{'text'}, $exports->{$_}->{'url'} );
-    }
-  }
+#  foreach( keys %{$exports} ){
+#    if( $exports->{$_}->{avail} ){
+#      $self->add_link( $exports->{$_}->{'text'}, $exports->{$_}->{'url'} );
+#    }
+#  }
   return $self;
 }
 
