@@ -142,7 +142,7 @@ foreach my $spp (@species){
 # Work out timings -----------------------------------------------
 my $time_taken = time - $time1;
 my $hours      = localtime($time_taken)->hour -1;
-warning (1, "Used $logfile. Time taken: $hours:". localtime($time_taken)->min."mins");
+info (2, "Used $logfile. Time taken: $hours:". localtime($time_taken)->min."mins");
 
 $email ||= 'ensembl-webteam@sanger.ac.uk';
 utils::Tool::mail_log( $logfile, $email,"" ) if $logfile;
@@ -437,10 +437,15 @@ sub info{
   my $msg = shift;
   if( ! defined($msg) ){ $msg = $v; $v = 0 }
   $msg || ( carp("Need a warning message" ) && return );
-
+ 
   if( $v > $VERBOSITY ){ return 1 }
-  my $importance = $v > 1 ? "" : "[INFO] ";
-  warn( $importance.$msg."\n" );
+  if ($v > 1) {
+      warn( "[INFO_2] ".$msg."\n" );
+  }
+  else {
+      warn( "[INFO] ".$msg."\n" );
+  }
+
   return 1;
 }
 

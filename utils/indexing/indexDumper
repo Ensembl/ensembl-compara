@@ -50,7 +50,7 @@ foreach my $species ( @species ) {
   $conf->{'species'}   = $species;
   my %dbs = %{$SD->get_config($species,'databases')||{}};
   $conf->{'dbs'}       = { map { ($_,$dbs{$_}{NAME}) } keys %dbs };
-  $conf->{'dbs'}{'ENSEMBL_COMPARA'} = 'ensembl_compara_38';
+  $conf->{'dbs'}{'ENSEMBL_COMPARA'} = 'ensembl_compara_40';
   my $core = $dbs{'ENSEMBL_DB'};
   $conf->{'dbh'}       = DBI->connect( "dbi:mysql:$core->{'NAME'};host=$core->{'HOST'};port=$core->{'PORT'}",
         $core->{'USER'}, $core->{'PASS'} );
@@ -234,223 +234,41 @@ sub markerLine {
 sub dumpGenomicAlignment {
   my  $conf = shift;
   open D, ">$conf->{'directory'}/GenomicAlignment.txt";
-  my @features = (
-  [ 'uniprotblast',       'Protein', 'UniprotKB blast' ],
-  [ 'drosophilablast',    'Protein', 'Drosophila blast' ],
-  [ 'uniprot_wublastx',   'Protein', 'BLASTX hits' ],
-  [ 'uniprot_wublastx',   'Protein', 'BLASTX hits' ],
-  [ 'blastx',             'Protein', 'BLASTX hits' ],
-  [ 'blastp',             'Protein', 'BLASTP hits' ],
-  [ 'macaque_protein',    'Protein', 'Macaque protein' ],
-  [ 'opossum_protein',    'Protein', 'Opossum protein' ],
-  [ 'fugu_protein',       'Protein', 'Fugu Protein' ],
-  [ 'fish_protein',       'Protein', 'Fish Protein' ],
-  [ 'anopheles_protein',  'Protein', 'Anopheles Protein' ],
-  [ 'drosophila_protein', 'Protein', 'Drosophila Protein' ],
-  [ 'cow_protein',        'Protein', 'Cow Protein' ],
-  [ 'cow_proteins',       'Protein', 'Cow Protein' ],
-  [ 'other_proteins',     'Protein', 'Other Protein' ],
-  [ 'human_ensembl_proteins', 'Protein', 'Human (Ensembl) Protein' ],
-  [ 'beeproteinblast', 'Protein', 'Bee protein BLAST evidence' ],
-  [ 'beeproteinsimilarity', 'Protein', 'Bee protein Similarity evidence' ],
-  [ 'chicken_protein', 'Protein', 'Chicken peptide' ],
-  [ 'dog_protein', 'Protein', 'Dog peptide' ],
-  [ 'drosophila-peptides', 'Protein', 'Fly peptide' ],
-  [ 'btaurus_exonerate_protein', 'Protein', 'Cow peptide' ],
-  [ 'gapfilluniprothomologyevidence', 'Protein', 'UniProtKB (evidence in gaps)' ],
-  [ 'genomeuniprotblast', 'Protein', 'Genome Uniprot BLAST' ],
-  [ 'genscanpeptidesuniprotblast', 'Protein', 'Genscan Uniprot BLAST' ],
-  [ 'human_ensembl_peptides', 'Protein', 'Ensembl peptides (Human)' ],
-  [ 'human_protein', 'Protein', 'Human peptide' ],
-  [ 'human_refseq', 'Protein', 'Human RefSeq peptide' ],
-  [ 'mammal_protein', 'Protein', 'Mammal peptide' ],
-  [ 'mouse_protein', 'Protein', 'Mouse peptide' ],
-  [ 'mouse_refseq', 'Protein', 'Mouse RefSeq peptide' ],
-  [ 'other_protein', 'Protein', 'Other peptide' ],
-  [ 'rodent_protein', 'Protein', 'Rodent peptide' ],
-  [ 'similarity_genewise', 'Protein', 'Similarity Genewise' ],
-  [ 'similaritygenewise', 'Protein', 'Similarity Genewise' ],
-  [ 'support_other_protein', 'Protein', 'Other peptide (supporting)' ],
-  [ 'support_xtrop_protein', 'Protein', 'X.tropicalis protein (supporting)' ],
-  [ 'swall', 'Protein', 'UniProt' ],
-  [ 'swall_blastx', 'Protein', 'UniProt' ],
-  [ 'targettedgenewise', 'Protein', 'Targetted Genewise' ],
-  [ 'tge_gw', 'Protein', 'Targetted Genewise' ],
-  [ 'uniprot', 'Protein', 'UniProtKB' ],
-  [ 'uniprot_mammal', 'Protein', 'Mammal UniProtKB' ],
-  [ 'uniprot_non_mammal', 'Protein', 'Non-mammal UniProtKB' ],
-  [ 'uniprothomologyevidence', 'Protein', 'UniProtKB (evidence)' ],
-  [ 'wormpep', 'Protein', 'Wormbase peptide' ],
-
-  [ 'macaque_cdna',   'cDNA', 'Macaque cDNA' ],
-  [ 'opossum_cdna',   'cDNA', 'Opossum cDNA' ],
-  [ 'cdm',            'cDNA', 'Tetraodon cDNA' ],
-  [ 'chicken_cdna',   'cDNA', 'Chicken cDNA' ],
-  [ 'duck_cdna',      'cDNA', 'Duck cDNA' ],
-  [ 'exonerate_cdna', 'cDNA', 'Ciona cDNA' ],
-  [ 'fugu_cdna',      'cDNA', 'Fugu cDNA' ],
-  [ 'cint_cdna',      'cDNA', 'Ciona cDNA' ],
-  [ 'btaurus_exonerate_cdna', 'cDNA', 'Cow cDNA' ],
-  [ 'dog_cdna', 'cDNA', 'Dog cDNA' ],
-  [ 'drosophila_cdna_all', 'cDNA', 'Fly cDNA' ],
-  [ 'drosophila_gold_cdna', 'cDNA', 'Fly gold cDNA' ],
-  [ 'fugu_cdnas', 'cDNA', 'Fugu cDNA' ],
-  [ 'human_cdna', 'cDNA', 'Human cDNA' ],
-  [ 'human_cdna_update', 'cDNA', 'Human cDNA (update)' ],
-  [ 'cdna_update', 'cDNA', 'cDNA (update)' ],
-  [ 'mouse_cdna', 'cDNA', 'Mouse cDNA' ],
-  [ 'rat_cdna', 'cDNA', 'Rat cDNA' ],
-  [ 'xlaevis_cdna', 'cDNA', 'X.leavis cDNA' ],
-  [ 'xtrop_cdna', 'cDNA', 'X.tropicalis cDNA' ],
-  [ 'zfish_cdna', 'cDNA', 'Zebrafish cDNA' ],
-  [ 'cow_cdna', 'cDNA', 'Cow cDNA' ],
-  [ 'harvard_manual', 'cDNA', 'Manually curated anopheles transcript' ],
-  [ 'kyotograil_2004', 'cDNA', 'Kyotograil 2004 models' ],
-  [ 'kyotograil_2005', 'cDNA', 'Kyotograil 2005 models' ],
-
-  [ 'eg3_f', 'Ecotig', 'Ecotig (Fugu DNA)' ],
-  [ 'eg3_h', 'Ecotig', 'Ecotig (Human DNA)' ],
-  [ 'eg3_s', 'Ecotig', 'Ecotig (Mouse DNA)' ],
-  [ 'ep3_h', 'Ecotig', 'Ecotig (Human Protein)' ],
-  [ 'ep3_s', 'Ecotig', 'Ecotig (Mouse Protein)' ],
-
-  [ 'est_bestn_3prim', 'EST', 'Ciona EST' ],
-  [ 'est_bestn_5prim', 'EST', 'Ciona EST' ],
-  [ 'cint_est',   'EST', 'Ciona EST' ],
-  [ 'yeast_est',   'EST', 'Yeast EST' ],
-  [ 'macaque_est', 'EST', 'Macaque EST' ],
-  [ 'bee_est', 'EST', 'Bee EST' ],
-  [ 'beeestalignmentevidence', 'EST', 'Bee EST evidence' ],
-  [ 'cbriggsae_est', 'EST', 'C.briggsae EST' ],
-  [ 'celegans_est', 'EST', 'C.elegans EST' ],
-  [ 'chicken_est', 'EST', 'Chicken EST' ],
-  [ 'chicken_est_exonerate', 'EST', 'Chicken EST (exonerate)' ],
-  [ 'ciona_est', 'EST', 'Ciona EST' ],
-  [ 'btaurus_exonerate_est', 'EST', 'Cow EST' ],
-  [ 'drosophila_est', 'EST', 'Fly EST' ],
-  [ 'est_cluster_imcb', 'EST', 'Zebrafish EST cluster (IMCB)' ],
-  [ 'est_cluster_washu', 'EST', 'Zebrafish EST cluster (WashU)' ],
-  [ 'exonerate_est_083', 'EST', 'Ciona EST (083)' ],
-  [ 'fugu_est', 'EST', 'Fugu EST' ],
-  [ 'human_est', 'EST', 'Human EST' ],
-  [ 'human_est_exonerate', 'EST', 'Human EST (exonerate)' ],
-  [ 'mouse_est', 'EST', 'Mouse EST' ],
-  [ 'other_est', 'EST', 'Other EST' ],
-  [ 'rat_est', 'EST', 'Rat EST' ],
-  [ 'rna', 'EST', 'Mosquito EST' ],
-  [ 'rna', 'EST', 'Mosquito EST (RNA)' ],
-  [ 'rna_best', 'EST', 'Mosquito EST (RNA BEST)' ],
-  [ 'cow_est', 'EST', 'Cow EST' ],
-  [ 'scerevisiae_est', 'EST', 'Yeast EST' ],
-  [ 'xlaevis_est', 'EST', 'X.leavis EST' ],
-  [ 'xtrop_cluster', 'EST', 'X.tropicalis EST cluster' ],
-  [ 'xtrop_est', 'EST', 'X.tropicalis EST' ],
-  [ 'zfish_est', 'EST', 'Zebrafish EST' ],
-  [ 'estgene', 'EST', 'EST' ],
-  [ 'est_gene', 'EST', 'EST' ],
-  [ 'anopheles_cdna_est_all', 'cDNA/EST', 'Anopheles cDNA/EST' ],
-  [ 'anopheles_cdna_est',     'cDNA/EST', 'Anopheles cDNA/EST' ],
-
-  [ 'cbriggsae_mrna', 'mRNA', 'C.briggsae mRNA' ],
-  [ 'celegans_mrna', 'mRNA', 'C.elegans mRNA' ],
-  [ 'vertrna', 'mRNA', 'EMBL mRNA' ],
-
-  [ 'unigene', 'Unigene', 'UniGene' ],
-
-## RNA
-  [ 'blastmirna',     'RNA', 'miRbase RNA' ],
-  [ 'rfamblast',      'RNA', 'RFAM RNA' ],
-  [ 'mirbase',        'RNA', 'miRbase RNA' ],
-  [ 'mirna_registry', 'RNA', 'miRbase RNA' ],
-  [ 'mirna_registry', 'RNA', 'miRbase RNA' ],
-  [ 'rfam',           'RNA', 'RFAM RNA' ],
-);
-
-my %analysis = map { $_->[0] => [$_->[1],$_->[2]] } @features;
 
   my $species = $conf->{'species'};
-  my $COREDB = $conf->{'dbs'}->{'ENSEMBL_CORE'};    
-  my $ESTDB  = $conf->{'dbs'}->{'ENSEMBL_EST'};
+  my $COREDB = $conf->{'dbs'}->{'ENSEMBL_DB'};    
+  my $ESTDB  = $conf->{'dbs'}->{'ENSEMBL_OTHERFEATURES'};
   my $CDNADB = $conf->{'dbs'}->{'ENSEMBL_CDNA'};
+  my %dbs    = ( 'core' => $COREDB );
+  $dbs{'otherfeatures'}  =  $ESTDB  if $ESTDB;
+  $dbs{'cdna'} = $CDNADB if $CDNADB;
   my %tables = (
-    'dna_align_feature'     => 'DnaAlignFeature',
-    'protein_align_feature' => 'ProteinAlignFeature',
+    'dna_align_feature'     => [ 'DnaAlignFeature',     'DNA alignment feature' ],
+    'protein_align_feature' => [ 'ProteinAlignFeature', 'Protein alignment feature' ]
   );
   my %errors = ();
-  foreach my $table ( keys %tables ) {
-    my $source = $tables{ $table };
-    my $sth    = $conf->{'dbh'}->prepare(
-      "select a.logic_name, t.hit_name, count(*) as hits
-         from analysis as a, $table as t
-        where a.analysis_id = t.analysis_id
-        group by a.logic_name, t.hit_name"
-    ); 
-    $sth->execute();
-    while( my( $logic_name, $hid, $count ) = $sth->fetchrow_array ) { 
-      $logic_name = lc($logic_name);
-      next if $errors{ $logic_name }; 
-      unless( $analysis{ $logic_name } ) {
-        warn "UNRECOGNISED LOGIC NAME $species-$logic_name";
-        $errors{$logic_name} = 1;
-        next;
+  foreach my $db ( keys %dbs) { 
+    my $DB_NAME = $dbs{$db};
+    foreach my $table ( keys %tables ) {
+      my $source = $tables{ $table }[0];
+         $source .= ';db=$db' unless $db eq 'core';
+      my $type   = $tables{ $table }[1];
+      my $sth    = $conf->{'dbh'}->prepare(
+        "select a.logic_name, ad.display_label, t.hit_name, count(*) as hits
+           from $DB_NAME.analysis as a, $DB_NAME.$table as t left join
+                $DB_NAME.analysis_description as ad on ad.analysis_id = a.analysis_id
+          where a.analysis_id = t.analysis_id
+          group by a.logic_name, t.hit_name"
+      ); 
+      $sth->execute();
+      while( my( $logic_name, $label, $hid, $count ) = $sth->fetchrow_array ) { 
+        print D join "\t",
+          (INC_SPECIES?"$species\t":"")."$type: ".($label||$logic_name),
+          $hid,
+          "/$species/featureview?type=$source;id=$hid",
+          $hid,
+          qq($logic_name $hid hits the genome in $count locations.\n);
       }
-      my($F,$AN) = @{$analysis{$logic_name}};
-      my $string = join "\t", (INC_SPECIES?"$species\t":"")."$F similarity feature: $AN",
-        $hid, "/$species/featureview?type=$source;id=$hid",
-        $hid, qq($AN $hid hits the genome in $count locations.\n);
-      print D $string if $F;
-    }
-  }
-  if( $ESTDB ) {
-    my $table  = 'dna_align_feature';
-    my $source = 'DnaAlignFeature;db=est';
-    my $sth    = $conf->{'dbh'}->prepare(
-      "select a.logic_name, t.hit_name, count(*) as hits
-         from $ESTDB.analysis as a, $ESTDB.$table as t
-        where a.analysis_id = t.analysis_id
-        group by a.logic_name, t.hit_name"
-    );
-    $sth->execute();
-    while( my( $logic_name, $hid, $count ) = $sth->fetchrow_array ) {
-      $logic_name = lc($logic_name);
-      next if $errors{ $logic_name };
-      unless( $analysis{ $logic_name } ) {
-        warn "UNRECOGNISED LOGIC NAME $species-$logic_name";
-        $errors{$logic_name} = 1;
-        next;
-      }
-      my($F,$AN) = @{$analysis{$logic_name}};
-
-      my $string = join "\t", (INC_SPECIES?"$species\t":"")."$F similarity feature: $AN",
-        $hid, "/$species/featureview?type=$source;id=$hid",
-        $hid, qq(EST ($logic_name) $hid hits the genome in $count locations.\n);
-      print D $string;
-    }
-  }
-  if( $CDNADB ) {
-    my $table  = 'dna_align_feature';
-    my $source = 'DnaAlignFeature;db=cdna';
-    my $sth    = $conf->{'dbh'}->prepare(
-      "select a.logic_name, t.hit_name, count(*) as hits
-         from $CDNADB.analysis as a, $CDNADB.$table as t
-        where a.analysis_id = t.analysis_id
-        group by a.logic_name, t.hit_name"
-    );
-    $sth->execute();
-    while( my( $logic_name, $hid, $count ) = $sth->fetchrow_array ) {
-      $logic_name = lc($logic_name);
-      next if $errors{ $logic_name };
-      unless( $analysis{ $logic_name } ) {
-        warn "UNRECOGNISED LOGIC NAME $species-$logic_name";
-        $errors{$logic_name} = 1;
-        next;
-      }
-      my($F,$AN) = @{$analysis{$logic_name}};
-
-      my $string = join "\t", (INC_SPECIES?"$species\t":"")."$F Similarity feature: $AN",
-        $hid, "/$species/featureview?type=$source;id=$hid",
-        $hid, qq(CDNA ($logic_name) $hid hits the genome in $count locations.\n);
-      print D $string;
     }
   }
 
@@ -461,7 +279,7 @@ sub dumpOligoProbe {
   my $conf = shift;
   open A, ">$conf->{'directory'}/OligoProbe.txt";
   my $species = $conf->{'species'};
-  my $COREDB = $conf->{'dbs'}->{'ENSEMBL_CORE'};
+  my $COREDB = $conf->{'dbs'}->{'ENSEMBL_DB'};
   my $sth    = $conf->{'dbh'}->prepare(
     "select p.probeset, count(*) as hits, a.type
        from oligo_probe as p, oligo_feature as f, oligo_array as a
@@ -484,7 +302,7 @@ sub dumpDisease {
   my $conf = shift;
   my $DISDB   = $conf->{'dbs'}->{'ENSEMBL_DISEASE'};    
   return unless $DISDB;
-  my $COREDB   = $conf->{'dbs'}->{'ENSEMBL_CORE'};    
+  my $COREDB   = $conf->{'dbs'}->{'ENSEMBL_DB'};    
   my $sth = $conf->{'dbh'}->prepare(
     "select distinct concat( g.gene_symbol,':',g.omim_id, ' (',gsi.stable_id,')') as name,
             d.disease, d.disease
@@ -647,7 +465,7 @@ sub dumpGene {
     my $conf = shift;
     my $COREDB = $conf->{'dbs'}->{'ENSEMBL_DB'};
     my $SANGDB = $conf->{'dbs'}->{'ENSEMBL_VEGA'};
-    my $ESTGENEDB = $conf->{'dbs'}->{'ENSEMBL_EST'};
+    my $ESTGENEDB = $conf->{'dbs'}->{'ENSEMBL_OTHERFEATURES'};
     my %sths = (
         'Ensembl' => $conf->{'dbh'}->prepare(qq(
 select gsi.stable_id as gsid, tsi.stable_id as tsid, trsi.stable_id as trsid,
@@ -829,7 +647,7 @@ select gsi.stable_id as gsid, tsi.stable_id as tsid, trsi.stable_id as trsid,
       }
       print O &geneLineOld( $conf->{'species'}, $type, $ID, @MAP );
     }
-  my %unmapped_queries = ( 'None' => q(
+  my %unmapped_queries = ( 'None' => qq(
 select a.logic_name, e.db_display_name,
        uo.identifier, ur.summary_description,
        'Not mapped'
@@ -839,7 +657,7 @@ select a.logic_name, e.db_display_name,
        uo.external_db_id = e.external_db_id and
        uo.unmapped_reason_id = ur.unmapped_reason_id and
        uo.ensembl_id = 0
-), 'Transcript' => q(
+), 'Transcript' => qq(
 select a.logic_name, e.db_display_name,
        uo.identifier, ur.summary_description,
        concat( 'Transcript: ',
@@ -854,7 +672,7 @@ select a.logic_name, e.db_display_name,
        uo.ensembl_object_type = 'Transcript' and
        t.transcript_id = tsi.transcript_id and
        t.gene_id       = gsi.gene_id
-), 'Translation' => q(
+), 'Translation' => qq(
 select a.logic_name, e.db_display_name, uo.identifier, ur.summary_description,
        concat( 'Translation: ',trsi.stable_id,'; Transcript: ',
                 tsi.stable_id, '; Gene: ',gsi.stable_id )
@@ -873,7 +691,7 @@ select a.logic_name, e.db_display_name, uo.identifier, ur.summary_description,
        t.gene_id       = gsi.gene_id
   ));
   foreach my $FLAG (keys %unmapped_queries) {
-    my $SQL = $queries{$FLAG};
+    my $SQL = $unmapped_queries{$FLAG};
     my $sth = $conf->{'dbh'}->prepare($SQL);
     $sth->execute;
     while( my $T = $sth->fetchrow_arrayref() ) {
@@ -946,33 +764,38 @@ sub dumpSequence {
         [ 'Encode region', 'encode', 'name,synonym,description' ],
       ],
       "Mus_musculus" => [
-        [ 'BAC',        'cloneset_0_5mb,cloneset_1mb,bac_map', 'embl_acc,name' ],
-        [ 'Fosmid',     'fosmid_map', 'name' ],
+        [ 'BAC',        'cloneset_0_5mb,cloneset_1mb,bac_map,tilingpath_cloneset', 'embl_acc,name,clone_name,well_name,synonym' ],
+        [ 'Fosmid',     'fosmid_map', 'name,clone_name' ],
         [ 'Supercontig','superctgs', 'name' ],
-        [ 'NT Contig',  'ntctgs',    'name' ],
       ],
       "Anopheles_gambiae" => [
-        [ 'BAC' ,       'bacs',        'name,synonym' ],
-        [ 'BAC band' ,  'bacs_bands',  'name,synonym' ],
+        [ 'BAC' ,       'bacs',        'name,synonym,clone_name' ],
+        [ 'BAC band' ,  'bacs_bands',  'name,synonym,clone_name' ],
+      ],
+      "Gallus_gallus" => [
+        [ 'BAC', 'bac_map', 'name,synonym,clone_name' ],
+        [ 'BAC ends', 'bacends', 'name,synonym,clone_name', 'otherfeatures' ]
       ]
     );
 
   my $COREDB   = $conf->{'dbs'}->{'ENSEMBL_DB'};
+  my $ESTDB    = $conf->{'dbs'}->{'ENSEMBL_OTHERFEATURES'};
   open O, ">$conf->{'directory'}/Sequence.txt";
   my @types = @{$config{$conf->{'species'}}||[]};
   foreach my $arrayref ( @types ) {
-    my( $TYPE, $mapsets, $annotationtypes ) = @$arrayref;
+    my( $TYPE, $mapsets, $annotationtypes,$DB ) = @$arrayref;
+    my $DB = $DB eq 'otherfeatures' ? $ESTDB : $COREDB;
     my @temp         = split (',',$mapsets);        
     my @mapsets;
     foreach my $X ( @temp ) {
-       my $ID = $conf->{'dbh'}->selectrow_array( "select misc_set_id from misc_set where code = ?", {}, $X );
+       my $ID = $conf->{'dbh'}->selectrow_array( "select misc_set_id from $DB.misc_set where code = ?", {}, $X );
       push @mapsets, $ID if($ID);
     }
     next unless @mapsets;
     @temp = split (',',$annotationtypes);        
     my @mapannotationtypes;
     foreach my $X ( @temp ) {
-      my $ID = $conf->{'dbh'}->selectrow_array( "select attrib_type_id from attrib_type where code = ?", {}, $X );
+      my $ID = $conf->{'dbh'}->selectrow_array( "select attrib_type_id from $DB.attrib_type where code = ?", {}, $X );
       push @mapannotationtypes, $ID if($ID);
     }
     next unless @mapannotationtypes;
@@ -982,11 +805,11 @@ sub dumpSequence {
       "select mf.misc_feature_id, sr.name,
               ma.value, mf.seq_region_end-mf.seq_region_start+1 as len, 
               at.code
-         from misc_feature_misc_set as ms, 
-              misc_feature as mf,
+         from $DB.misc_feature_misc_set as ms, 
+              $DB.misc_feature as mf,
               seq_region   as sr,
-              misc_attrib  as ma,
-              attrib_type  as at 
+              $DB.misc_attrib  as ma,
+              $DB.attrib_type  as at 
         where mf.seq_region_id = sr.seq_region_id and mf.misc_feature_id = ms.misc_feature_id and ms.misc_set_id in ($MAPSETS) and
               mf.misc_feature_id = ma.misc_feature_id and ma.attrib_type_id = at.attrib_type_id
         order by mf.misc_feature_id, at.code"

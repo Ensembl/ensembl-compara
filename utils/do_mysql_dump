@@ -168,8 +168,8 @@ info( 1, "All dumps completed" );
 # Work out timings ---------------------------------------------------------
 my $time_taken = time - $time1;
 my $hours      = localtime($time_taken)->hour -1;
-warning (1, "Used $logfile.");
-warning (1, " Time taken: $hours:". localtime($time_taken)->min."mins");
+info (2, "Used $logfile.") if $logfile;
+info (2, " Time taken: $hours:". localtime($time_taken)->min."mins");
 
 $email ||= 'ensembl-webteam@sanger.ac.uk';
 utils::Tool::mail_log( $logfile, $email, "" ) if $logfile;
