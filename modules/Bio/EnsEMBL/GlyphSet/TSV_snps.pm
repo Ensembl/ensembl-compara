@@ -116,7 +116,7 @@ sub _init {
     }
 
     # Coverage -------------------------------------------------
-    if ($allele->source eq 'Sanger') {
+    if ( grep { $_ eq "Sanger"}  @{$allele->get_all_sources() || []}  ) {
       my $coverage = 0;
       foreach ( @coverage_obj ) {
 	next if $allele->start >  $_->[2]->end;
@@ -157,7 +157,7 @@ sub _init {
     }
 
     my $href = "/@{[$self->{container}{_config_file_name_}]}/snpview?snp=@{[$allele->variation_name]};source=@{[$allele->source]};chr=$seq_region_name;vc_start=$chr_start";
-
+	
     my $bglyph = new Sanger::Graphics::Glyph::Rect({
       'x'         => $S - $W / 2,
       'y'         => $height + 2,
@@ -176,7 +176,7 @@ sub _init {
        '01:SNP properties' => $href,
        "03:bp $pos" => '',
        "05:class: ".&variation_class(join "|", $allele->ref_allele_string(), $allele->allele_string) => '',
-       "15:source: ". $allele->source => '',
+       "15:source: ". (join ", ", @{$allele->get_all_sources ||[]}) => '',
       }
     });
     my $bump_start = int($bglyph->{'x'} * $pix_per_bp);

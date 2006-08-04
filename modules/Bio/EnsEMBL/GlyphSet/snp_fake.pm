@@ -111,6 +111,7 @@ sub zmenu {
     } elsif($f->{'range_type'} ne 'exact' ) {
        $pos = "$start&nbsp;-&nbsp;$end";
    }
+
     my %zmenu = ( 
         'caption'           => "SNP: ".$f->variation_name(),
         '01:SNP properties' => $self->href( $f ),
@@ -120,15 +121,9 @@ sub zmenu {
         "06:mapweight: ".$f->map_weight => '',
         "05:ambiguity code: ".$f->ambig_code => '',
         "08:alleles: ".(length($allele)<16 ? $allele : substr($allele,0,14).'..') => '',
-        "09:source: ".$f->source() => '',
-   );
-
-    my %links;
-    
-    my $source = $f->source; 
-    my @type;
-    map { push @type, $_ }  @{ $f->get_consequence_type || [] };
-    $zmenu{"57:type: ".join ", ", @type} = "";
+        "09:source: ".(join ", ", @{$f->get_all_sources      || [] }) => '',
+        "57:type:   ".(join ", ", @{$f->get_consequence_type || [] }) => "",
+	       );
     return \%zmenu;
 }
 
