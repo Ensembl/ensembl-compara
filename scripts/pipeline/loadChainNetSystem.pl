@@ -11,6 +11,9 @@ use Bio::EnsEMBL::Hive;
 use Bio::EnsEMBL::DBLoader;
 use Bio::EnsEMBL::Registry;
 
+# Version number updated by cvs
+our $VERSION = sprintf "%d.%d", q$Revision$ =~ /: (\d+)\.(\d+)/;
+
 Bio::EnsEMBL::Registry->no_version_check(1);
 
 srand();
@@ -36,13 +39,13 @@ GetOptions('help'     => \$help,
            'conf=s'   => \$conf_file,
            'v' => \$verbose);
 
-if ($help) { usage(); }
+if ($help or !defined($conf_file)) { usage(); }
 
 $self->parse_conf($conf_file);
 
 
 unless(defined($compara_conf{'-host'}) and defined($compara_conf{'-user'}) and defined($compara_conf{'-dbname'})) {
-  print "\nERROR : must specify host, user, and database to connect to compara\n\n";
+  print "\nERROR : must specify host, user, and database to connect to compara in the configuration file\n\n";
   usage(); 
 }
 
@@ -86,11 +89,10 @@ exit(0);
 #######################
 
 sub usage {
-  print "loadGenomicAlignSystem.pl [options]\n";
+  print "loadChainNetSystem.pl $VERSION\n";
+  print "loadChainNetSystem.pl [options]\n";
   print "  -help                  : print this help\n";
   print "  -conf <path>           : config file describing compara, templates\n";
-  print "loadGenomicAlignSystem.pl v1.1\n";
-  
   exit(1);  
 }
 
