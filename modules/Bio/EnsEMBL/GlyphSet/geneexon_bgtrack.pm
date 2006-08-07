@@ -39,7 +39,10 @@ sub _init {
     }
   } else {
     my $offset  = $container->start - 1;
-    my $features =  $self->{'container'}->get_all_Genes(lc($self->species_defs->AUTHORITY));
+    my $features =  $self->{'container'}->get_all_Genes(
+      undef,
+      $Config->get('geneexon_bgtrack','opt_db')
+    );
     foreach my $gene ( @$features ) { 
       next if $target_gene && ($gene->stable_id() ne $target_gene);
       foreach my $transcript (@{$gene->get_all_Transcripts()}) {
