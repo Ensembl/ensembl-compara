@@ -48,6 +48,7 @@ sub genesnpview {
   my $script_config = $obj->get_scriptconfig();
   my $restore_default = 1;
 
+  $obj->param('opt_db',$obj->param('db'));
   $self->update_configs_from_parameter( 'bottom','genesnpview_transcript', 'genesnpview_gene', 'genesnpview_context' );
   foreach my $source ( @sources ) {
     $restore_default = 0 if $script_config->get(lc("opt_$source") ) eq 'on';

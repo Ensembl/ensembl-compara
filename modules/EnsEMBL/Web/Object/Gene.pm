@@ -542,7 +542,8 @@ sub get_munged_slice {
   my @ANALYSIS = ( $self->get_db() eq 'core' ? (lc($self->species_defs->AUTHORITY)||'ensembl') : 'otter' );
   @ANALYSIS = qw(ensembl havana ensembl_havana_gene) if $ENV{'ENSEMBL_SPECIES'} eq 'Homo_sapiens';
 warn ">>>>> @ANALYSIS <<<<<<";
-  my $features = [map { @{ $slice->get_all_Genes($_)||[]} } @ANALYSIS ];
+# my $features = [map { @{ $slice->get_all_Genes($_)||[]} } @ANALYSIS ];
+  my $features = $slice->get_all_Genes( undef, $self->param('opt_db') );
   my @lengths;
   if( $CONTEXT eq 'FULL' ) {
     @lengths = ( $length );

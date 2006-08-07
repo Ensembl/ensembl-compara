@@ -900,9 +900,8 @@ sub do_markedup_pep_seq {
       # Add links to SNPs in markup
       if ( my $url_params = $_->{'url_params'} ){ 
 	$ambiguities .= qq(<a href="snpview?$url_params">).$_->{'ambigcode'}."</a>";
-      }
-      else {
-	$ambiguities.="</a>" if  $_->{'url_params'};
+      } else {
+        $ambiguities.= $_->{'ambigcode'};
       }
     }
 
