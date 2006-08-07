@@ -25,7 +25,7 @@ sub new {
     }
     my $wuc = $self->{config}; 
 
-    my @species = @{$wuc->get('alignslice', 'species')};
+    my @species = @{$wuc->get('alignslice', 'species') || []};
     my $aID = $wuc->get('alignslice', 'id');
     my $aType = $wuc->get('alignslice', 'type');
 

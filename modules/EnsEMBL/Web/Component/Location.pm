@@ -1175,7 +1175,7 @@ sub alignsliceviewbottom {
     my $aID = $wuc->get("alignslice", "id");
     my $method_link_species_set = $mlss_adaptor->fetch_by_dbID($aID); 
 
-    my @selected_species = @{$wuc->get("alignslice", "species")};
+    my @selected_species = @{$wuc->get("alignslice", "species") || []};
     unshift @selected_species, $object->species if (@selected_species);
 
 
@@ -1295,7 +1295,7 @@ sub alignsliceviewzoom {
 
     my $wuc = $object->user_config_hash( 'alignsliceviewbottom' );
     my $aID = $wuc->get("alignslice", "id");
-    my @selected_species = @{$wuc->get("alignslice", "species")};
+    my @selected_species = @{$wuc->get("alignslice", "species") || []};
     unshift @selected_species, $object->species if (@selected_species);
 
     if ($align_slice = $object->Obj->{_align_slice}) {
@@ -1415,8 +1415,8 @@ sub alignsliceviewzoom {
 sub exons_markup {
    my ($slice) = @_;
 
-   my @analyses = ( 'ensembl', 'pseudogene');
-
+#   my @analyses = ( 'ensembl', 'pseudogene');
+   my @analyses = ( 'ensembl', 'pseudogene', 'havana', 'ensembl_havana_gene' );
    my $db_alias = 'core';
    my @genes;
    foreach my $analysis( @analyses ){
