@@ -858,6 +858,8 @@ sub das_sources {
 sub ADD_ALL_DNA_FEATURES {
   my $self = shift;
   my $POS  = shift || 2300;
+
+  ## BACends - configured elsewhere, not gene style features
   $self->add_new_track_mrna( 'unigene', 'Unigene', $POS++, 'on' => 'on', 'URL_KEY' => 'UNIGENE', 'ZMENU'       => [ '###ID###' , 'Unigene cluster ###ID###', '###HREF###' ], @_ );
   $self->add_new_track_mrna( 'vertrna', 'EMBL mRNAs', $POS++, 'on' => 'on', @_ );
   $self->add_new_track_mrna( 'celegans_mrna', 'C.elegans mRNAs', $POS++, @_ );
@@ -872,7 +874,6 @@ sub ADD_ALL_DNA_FEATURES {
   $self->add_new_track_cdna( 'jgi_v1',            'JGI 1.0 model', $POS++, @_ );
 
   $POS = shift || 2400;
-## 
   $self->add_new_track_cdna( 'Harvard_manual', 'Manual annot.', $POS++, 'URL_KEY' => 'NULL', 'ZMENU' => [ '###ID###', 'Internal identifier', '' ], @_ );
 
   $self->add_new_track_cdna( 'human_cdna', 'Human cDNAs',   $POS++, @_ );
@@ -923,7 +924,7 @@ sub ADD_ALL_DNA_FEATURES {
     [ 'kyotograil_2004',  "Kyotograil '04" ],
     [ 'kyotograil_2005',  "Kyotograil '05" ],
     [ 'sheep_bac_ends',   "Sheep BAC ends" ],
-    [ 'stickleback_cdna',   "Stickleback cDNAs" ],
+    [ 'stickleback_cdna',   "Stickleback cDNAs" ], # subset of these in core but don't draw those
   );
 
   foreach ( @EST_DB_CDNA ) {
@@ -941,7 +942,6 @@ sub ADD_ALL_DNA_FEATURES {
 sub ADD_ALL_EST_FEATURES {
   my $self = shift;
   my $POS  = shift || 2350;
-  $self->add_new_track_est( 'anopheles_cdna_est',    'RNA (BEST)', $POS++, @_);
   $self->add_new_track_est( 'arraymap_e2g',   'ARRAY_MMC1_ests', $POS++, @_ );
   $self->add_new_track_est( 'BeeESTAlignmentEvidence', 'Bee EST evid.', $POS++, @_ );
   $self->add_new_track_est( 'est2clones',   'ARRAY_MMC1_reporters', $POS++, @_ );
@@ -972,23 +972,22 @@ sub ADD_ALL_EST_FEATURES {
   $self->add_new_track_est( 'ciona_dbest_align',     'dbEST align',           $POS++, @_ );
   $self->add_new_track_est( 'ciona_est_3prim_align', "3' EST-align. (Kyoto)", $POS++, @_ );
   $self->add_new_track_est( 'ciona_est_5prim_align', "5' EST-align. (Kyoto)", $POS++, @_ );
-  $self->add_new_track_est( 'est_3prim_savi',        "C.savigyi EST 3'",      $POS++, @_ );
-  $self->add_new_track_est( 'est_5prim_savi',        "C.savigyi EST 5'",      $POS++, @_ );
   $self->add_new_track_est( 'ciona_cdna_align',      'cDNA-align. (Kyoto)',   $POS++, @_ );
   $self->add_new_track_est( 'cint_est',              'Ciona ESTs',            $POS++, @_ );
-  $self->add_new_track_est( 'savignyi_est',          "C.savigyi EST",         $POS++, @_ );
+  #$self->add_new_track_est( 'savignyi_est',          "C.savigyi EST",         $POS++, @_ );  # added to OTHERFEATURES
   $self->add_new_track_est( 'expression_pattern',    'Expression pattern', $POS++, 'URL_KEY' => 'EXPRESSION_PATTERN', 'SUBTYPE' => 'default', @_ );
   $self->add_new_track_est( 'other_est',    'Other ESTs',      $POS++, @_ );
   $self->add_new_track_est( 'cDNA_exonerate',    'ESTs',      $POS++, @_ );
 
   my @EST_DB_ESTS = (
+    [ 'anopheles_cdna_est',    'RNA (BEST)'],      # subset of these in core but don't draw those
     [ 'estgene',               'ESTs' ],
     [ 'bee_est',               'Bee EST' ],
-    [ 'chicken_ests', 'Chicken EST' ],
-    [ 'est_embl', "C.savigyi EST" ],
+    [ 'chicken_ests',          'Chicken EST' ],
+    [ 'est_embl',              "C.savigyi EST" ],  # subset of these in core but don't draw those
     [ 'chicken_est_exonerate', 'Chicken EST (ex.)' ],
     [ 'human_est_exonerate',   'Human EST (ex.)' ],
-    [ 'est_exonerate',   'EST (ex.)' ],
+    [ 'est_exonerate',         'EST (ex.)' ],
     [ 'ciona_est',             'Ciona EST' ],
     [ 'drosophila_est',        'Fly EST' ],
     [ 'cow_est',               'Cow EST' ],
@@ -1000,11 +999,23 @@ sub ADD_ALL_EST_FEATURES {
     [ 'xtrop_EST',             'X.trop EST' ],
     [ 'zfish_EST',             'Zfish EST' ],
     [ 'anopheles_cdna_est_all','RNA (ALL)' ],
-    [ 'est_bestn_5prim',  "EST BestN 5'" ],
-    [ 'est_bestn_3prim',  "EST Bestn 3'" ],
-    [ 'stickleback_est',   "Stickleback ESTs" ],
-    [ 'cint_cdna',        'Ciona EST' ],
+    [ 'est_bestn_5prim',       "EST BestN 5'" ],
+    [ 'est_bestn_3prim',       "EST Bestn 3'" ],
+    [ 'stickleback_est',       "Stickleback EST" ],   # subset of these in core but don't draw those
+    [ 'est_3prim_savi',        "C.savigyi EST 3'"],   # subset of these in core but don't draw those
+    [ 'est_5prim_savi',        "C.savigyi EST 5'"],   # subset of these in core but don't draw those
+    [ 'cint_cdna',             'Ciona EST' ],
+    [ 'savignyi_est',          "C.savigyi EST"],      # subset of these in core but don't draw those
+
+    # Duplicated tracks (same logic name used core and otherfeatures). Not ideal!
+    [ 'human_cdna',            'Human cDNA' ],
+    [ 'macaque_cdna',          'Macaque cDNA' ],
+    [ 'macaque_est',           'Macaque EST' ],
+    [ 'mouse_cdna',            'Mouse cDNA' ],
+    [ 'rat_cdna',              'Rat cDNA' ],
   );
+
+
   foreach ( @EST_DB_ESTS ) {
     my($A,$B,@T) = @$_;
     $self->add_new_track_est( "otherfeatures_$A",  $B, $POS++,
@@ -1073,40 +1084,42 @@ sub ADD_ALL_PROTEIN_FEATURES {
   $self->add_new_track_protein( 'human_refseq',        'Human RefSeqs', $POS++, @_ );
   $self->add_new_track_protein( 'dog_protein',         'Dog proteins', $POS++, @_ );
   $self->add_new_track_protein( 'Btaurus_Exonerate_Protein',         'Cow proteins', $POS++, @_ );
-  $self->add_new_track_protein( 'cow_proteins',         'Cow proteins', $POS++, @_ );
+  $self->add_new_track_protein( 'cow_proteins',        'Cow proteins', $POS++, @_ );
   $self->add_new_track_protein( 'cow_protein',         'Cow proteins', $POS++, @_ );
-  $self->add_new_track_protein( 'fugu_protein',         'Fugu proteins', $POS++, @_ );
-  $self->add_new_track_protein( 'fish_protein',         'Fish proteins', $POS++, @_ );
+  $self->add_new_track_protein( 'fugu_protein',        'Fugu proteins', $POS++, @_ );
+  $self->add_new_track_protein( 'fish_protein',        'Fish proteins', $POS++, @_ );
   $self->add_new_track_protein( 'macaque_protein',     'Macaque proteins', $POS++, @_ );
+  $self->add_new_track_protein( 'macaque_refseq',      'Macaque RefSeqs', $POS++, @_ );
   $self->add_new_track_protein( 'mouse_protein',       'Mouse proteins', $POS++, @_ );
   $self->add_new_track_protein( 'mouse_refseq',        'Mouse RefSeqs', $POS++, @_ );
-  $self->add_new_track_protein( 'opossum_protein',      'Opossum proteins',$POS++, @_ );
+  $self->add_new_track_protein( 'opossum_protein',     'Opossum proteins',$POS++, @_ );
   $self->add_new_track_protein( 'rodent_protein',      'Rodent proteins',$POS++, @_ );
   $self->add_new_track_protein( 'stickleback_protein', 'Stickleback proteins', $POS++, @_);
   $self->add_new_track_protein( 'mammal_protein',      'Mammal proteins', $POS++, @_ );
   $self->add_new_track_protein( 'other_protein',       'Other proteins', $POS++, @_ );
   $self->add_new_track_protein( 'other_proteins',      'Other proteins', $POS++, @_ );
-  $self->add_new_track_protein( 'GenomeUniprotBlast',          'Genome UniP.Bl.',   $POS++, @_ );
+  $self->add_new_track_protein( 'GenomeUniprotBlast',  'Genome UniP.Bl.',   $POS++, @_ );
   $self->add_new_track_protein( 'GenscanPeptidesUniprotBlast', 'Gen.Pep. UniP.BL.', $POS++, @_ );
-  $self->add_new_track_protein( 'BeeProteinBlast',             'Bee Protein blast', $POS++, @_ );
+  $self->add_new_track_protein( 'BeeProteinBlast',     'Bee Protein blast', $POS++, @_ );
   $self->add_new_track_protein( 'human_ensembl_peptides', 'Human e! peptides',  $POS++, 'URL_KEY' => 'HUMAN_PROTVIEW', @_ );
+  $self->add_new_track_protein( 'human_ensembl_proteins', 'Human e! proteins',  $POS++, 'URL_KEY' => 'HUMAN_PROTVIEW', @_ );
   #$self->add_new_track_protein( 'ciona_jgi_v1',            'JGI 1.0 model', $POS++, @_ );
   #$self->add_new_track_protein( 'ciona_kyotograil_2004',   "Kyotograil '04 model", $POS++, @_ );
   #$self->add_new_track_protein( 'ciona_kyotograil_2005',   "Kyotograil '05 model", $POS++, @_ );
-  $self->add_new_track_protein( 'blastx',            'BLASTx', $POS++, @_ );
-  $self->add_new_track_protein( 'blastp',            'BLASTp', $POS++, @_ );
-  #$self->add_new_track_protein( 'kyotograil_2004',   "Kyotograil '04 model", $POS++, @_ );
-  #$self->add_new_track_protein( 'kyotograil_2005',   "Kyotograil '05 model", $POS++, @_ );
+  $self->add_new_track_protein( 'blastx',              'BLASTx', $POS++, @_ );
+  $self->add_new_track_protein( 'blastp',              'BLASTp', $POS++, @_ );
+  #$self->add_new_track_protein( 'kyotograil_2004',    "Kyotograil '04 model", $POS++, @_ );
+  #$self->add_new_track_protein( 'kyotograil_2005',    "Kyotograil '05 model", $POS++, @_ );
 #/* aedes additions */
   $self->add_new_track_protein( 'Similarity_Diptera',   "Similarity Diptera", $POS++, @_ );
   $self->add_new_track_protein( 'Similarity_Arthropoda',"Similarity Arthropoda", $POS++, @_ );
   $self->add_new_track_protein( 'Similarity_Metazoa',   "Similarity Metazoa", $POS++, @_ );
   $self->add_new_track_protein( 'Similarity_Eukaryota', "Similarity Eukaryota", $POS++, @_ );
 
-  $self->add_new_track_protein( 'DrosophilaBlast', "BLAST Drosophila", $POS++, 'URL_KEY' => 'DROSOPHILABLAST', @_ );
-  $self->add_new_track_protein( 'UniprotBlast',    "BLAST UniProtKB", $POS++, @_ );
-  $self->add_new_track_protein( 'anopheles_protein', "Anopheles protein", $POS++, @_ );
-  $self->add_new_track_protein( 'drosophila_protein', "Dros. protein", $POS++, 'URL_KEY' => 'DROSOPHILABLAST',@_ );
+  $self->add_new_track_protein( 'DrosophilaBlast',      "BLAST Drosophila", $POS++, 'URL_KEY' => 'DROSOPHILABLAST', @_ );
+  $self->add_new_track_protein( 'UniprotBlast',         "BLAST UniProtKB", $POS++, @_ );
+  $self->add_new_track_protein( 'anopheles_protein',    "Anopheles protein", $POS++, @_ );
+  $self->add_new_track_protein( 'drosophila_protein',   "Dros. protein", $POS++, 'URL_KEY' => 'DROSOPHILABLAST',@_ );
 
   $self->add_new_track_protein( 'DipteraBlast',    "BLAST Diptera", $POS++, @_ );
   $self->add_new_track_protein( 'ArthropodaBlast', "BLAST Arthropoda", $POS++, @_ );
@@ -1253,7 +1266,12 @@ sub ADD_SIMPLE_TRACKS {
   $self->add_new_simple_track( 'transposable_element',     'Transposable element','red', $POS++, @_ );
   $self->add_new_simple_track( 'rescue_fragment',          'Rescue fragment',     'red', $POS++, @_ );
   $self->add_new_simple_track( 'signal_peptide',           'Signal peptide',      'red', $POS++, @_ );
+  $self->add_new_simple_track( 'MMC2_probes',              'MMC2 probes',         'red', $POS++, @_ );
+  $self->add_new_simple_track( 'oligo',                    'Oligo',               'red', $POS++, @_ );
+
+  # some simple features are configured in contigview
 }
+
 
 sub ADD_GENE_TRACKS {
   my $self = shift;
