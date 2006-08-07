@@ -52,8 +52,7 @@ sub _init {
     next unless $cod_snp;
     next if $snp->end < $transcript->start - $EXTENT - $offset;
     next if $snp->start > $transcript->end + $EXTENT - $offset;
-    my $type      = $cod_snp->consequence_type;
-    my $colour    = $colour_map->{$type}->[0];
+    my $colour    = $colour_map->{$cod_snp->display_consequence}->[0];
     my $aa_change = $cod_snp->pep_allele_string;
     
     my @tmp = $aa_change ? ("10:amino acid: $aa_change", '' ) : ();
@@ -82,6 +81,7 @@ sub _init {
       $pos = "$chr_start&nbsp;-&nbsp;$chr_end";
     }
     my $href = "/@{[$self->{container}{_config_file_name_}]}/snpview?snp=@{[$snp->variation_name]};source=@{[$snp->source]};chr=$seq_region_name;vc_start=$chr_start";
+    my $type      = join ", ", @{$cod_snp->consequence_type || [] };
     my $bglyph = new Sanger::Graphics::Glyph::Rect({
       'x'         => $S - $W / 2,
       'y'         => $h + 2,
@@ -91,12 +91,12 @@ sub _init {
       'absolutey' => 1,
       'zmenu' => {
         'caption' => 'SNP '.$snp->variation_name,
-        "14:type: ".$cod_snp->consequence_type => '',
+        "14:type: $type" => '',
         @tmp,
         '01:SNP properties' => $href,
         "02:bp $pos" => '',
         "03:class: ".$snp->var_class => '',
-        "12:source: ". $snp->source => '',
+        "12:source: ". (join ", ", @{$snp->get_all_sources ||[] }) => '',
         "06:ambiguity code: ".$snp->ambig_code => '',
         "08:alleles: ".(length($allele)<16 ? $allele : substr($allele,0,14).'..') => ''
       }
