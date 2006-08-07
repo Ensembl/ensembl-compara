@@ -323,13 +323,14 @@ sub context_menu {
     'href' => "/$species/geneseqview?$q_string_g"
   ) if $q_string_g;
 
+  unless ( $obj->get_db eq 'vega' ) {
   # Variation: GeneSNPView
   $self->add_entry( $flag,
     'coed' => 'gene_var_info',
     'text' => "Gene variation info.",
     'href' => "/$species/genesnpview?$q_string_g"
   ) if $obj->species_defs->databases->{'ENSEMBL_VARIATION'} && $q_string_g; 
-
+  }
  $self->add_entry( $flag,
     'code'  => 'id_history',
     'text'  => 'ID history',
@@ -338,7 +339,7 @@ sub context_menu {
 
   # Variation: TranscriptSNP view
   # if meta_key in variation meta table has default strain listed
-  if ( $obj->species_defs->VARIATION_STRAIN ) { 
+  if ( $obj->species_defs->VARIATION_STRAIN &&  $obj->get_db ne 'vega' ) { 
     my $strain =  $obj->species_defs->translate( "strain" )."s";
     $self->add_entry( $flag,
 		      'code'  => 'TSV',

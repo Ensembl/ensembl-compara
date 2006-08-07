@@ -127,11 +127,13 @@ sub context_menu {
     'href'  => "/$species/generegulationview?$q_string_g" 
   ) if $obj->species_defs->get_table_size({ -db => 'ENSEMBL_DB', -table => 'regulatory_feature'}) && $obj->gene;
 
+  unless ( $obj->get_db eq 'vega' ) {
   $self->add_entry( $flag,
     'coed' => 'gene_var_info',
     'text' => "Gene variation info.",
     'href' => "/$species/genesnpview?$q_string_g"
   ) if $obj->species_defs->databases->{'ENSEMBL_VARIATION'} && $q_string_g; 
+  }
 
   $self->add_entry( $flag,
     'code' => 'genomic_seq',

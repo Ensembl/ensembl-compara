@@ -371,11 +371,13 @@ sub context_menu {
     'title' => 'GeneTreeView - View graphic display of the gene tree for gene '.$obj->stable_id,
     'href'  => "/$species/genetreeview?$q_string" );
 
+  unless ($obj->get_db eq 'vega' ) {
   $self->add_entry( $flag,
     'code'  => 'gene_var_info',
     'text'  => "Gene variation info.",
     'title' => 'GeneSNPView - View of consequences of variations on gene '.$obj->stable_id,
     'href'  => "/$species/genesnpview?$q_string" ) if $obj->species_defs->databases->{'ENSEMBL_VARIATION'};
+  }
 
   $self->add_entry( $flag,
     'code'  => 'id_history',
@@ -394,7 +396,7 @@ sub context_menu {
 
   # Variation: TranscriptSNP view
   # if meta_key in variation meta table has default strain listed
-    if ( $obj->species_defs->VARIATION_STRAIN ) { 
+    if ( $obj->species_defs->VARIATION_STRAIN &&  $obj->get_db ne 'vega'  ) { 
       my $strain =  $obj->species_defs->translate( "strain" )."s";
     # Transcript SNP View
     my @sample_links =

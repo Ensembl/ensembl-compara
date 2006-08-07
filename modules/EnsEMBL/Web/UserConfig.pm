@@ -891,8 +891,8 @@ sub ADD_ALL_DNA_FEATURES {
   $self->add_new_track_cdna( 'cow_cdna',   'Cow cDNAs', $POS++, @_ );
   $self->add_new_track_cdna( 'chicken_cdna', 'G.gallus cDNAs', $POS++, @_ );
   $self->add_new_track_cdna( 'macaque_cdna', 'Macaque cDNAs', $POS++, @_ );
-  $self->add_new_track_cdna( 'fugu_cdnas', 'F.rubripes cDNAs', $POS++, @_ );
-  $self->add_new_track_cdna( 'fugu_cdna', 'F.rubripes cDNAs', $POS++, @_ );
+  $self->add_new_track_cdna( 'fugu_cdnas', 'T.rubripes cDNAs', $POS++, @_ );
+  $self->add_new_track_cdna( 'fugu_cdna', 'T.rubripes cDNAs', $POS++, @_ );
   $self->add_new_track_cdna( 'duck_cdna', 'Duck cDNAs', $POS++, @_ );
   $self->add_new_track_cdna( 'mouse_cdna', 'Mouse cDNAs',   $POS++, @_ );
   $self->add_new_track_cdna( 'other_cdna', 'Other cDNAs',   $POS++, @_ );
@@ -910,15 +910,41 @@ sub ADD_ALL_DNA_FEATURES {
                             'FEATURES'  => 'UNDEF', 'available' => 'databases ENSEMBL_CDNA',
                             'THRESHOLD' => 0,       'DATABASE'  => 'cdna', @_ );
   $self->add_new_track_cdna( 'cdna_all',  'All CDNAs', $POS++, 'SUBTYPE' => { return 'cdna_all' }, @_ );
+
+
+  # Otherfeatures db
+  my @EST_DB_CDNA = (
+    [ 'drosophila_cdna_all',   'Fly cDNA (all)',  'URL_KEY' => 'DROSOPHILA_EST', 'ZMENU' =>
+       [ '###ID###', "Fly cDNA: ###ID###" => '###HREF###' ]
+    ],
+    [ 'drosophila_gold_cdna',  'Fly cDNA (gold)', 'URL_KEY' => 'DROSOPHILA_EST', 'ZMENU' =>
+       [ '###ID###', "Fly cDNA: ###ID###" => '###HREF###' ]
+    ],
+    [ 'kyotograil_2004',  "Kyotograil '04" ],
+    [ 'kyotograil_2005',  "Kyotograil '05" ],
+    [ 'sheep_bac_ends',   "Sheep BAC ends" ],
+    [ 'stickleback_cdna',   "Stickleback cDNAs" ],
+  );
+
+  foreach ( @EST_DB_CDNA ) {
+    my($A,$B,@T) = @$_;
+    $self->add_new_track_cdna( "otherfeatures_$A",  $B, $POS++,
+                              'FEATURES'  => $A, 'available' => "database_features ENSEMBL_OTHERFEATURES.$A",
+                              'THRESHOLD' => 0, 'DATABASE' => 'otherfeatures', @T, @_ );
+  }
+
   return $POS;
 }
+
+
 
 sub ADD_ALL_EST_FEATURES {
   my $self = shift;
   my $POS  = shift || 2350;
+  $self->add_new_track_est( 'anopheles_cdna_est',    'RNA (BEST)', $POS++, @_);
   $self->add_new_track_est( 'arraymap_e2g',   'ARRAY_MMC1_ests', $POS++, @_ );
-  $self->add_new_track_est( 'est2clones',   'ARRAY_MMC1_reporters', $POS++, @_ );
   $self->add_new_track_est( 'BeeESTAlignmentEvidence', 'Bee EST evid.', $POS++, @_ );
+  $self->add_new_track_est( 'est2clones',   'ARRAY_MMC1_reporters', $POS++, @_ );
   $self->add_new_track_est( 'est_rna',      'ESTs (RNA)',      $POS++, 'available' => 'features RNA',      'FEATURES' => 'RNA', @_ );
   $self->add_new_track_est( 'est_rnabest',  'ESTs (RNA best)', $POS++, 'available' => 'features RNA_BEST', 'FEATURES' => 'RNA_BEST', @_ );
   $self->add_new_track_est( 'celegans_est', 'C. elegans ESTs', $POS++, @_ );
@@ -943,20 +969,23 @@ sub ADD_ALL_EST_FEATURES {
                                                         'SUBTYPE' => 'default',
                                                         @_);
 
-  $self->add_new_track_est( 'ciona_dbest_align',     'dbEST align', $POS++, @_ );
+  $self->add_new_track_est( 'ciona_dbest_align',     'dbEST align',           $POS++, @_ );
   $self->add_new_track_est( 'ciona_est_3prim_align', "3' EST-align. (Kyoto)", $POS++, @_ );
   $self->add_new_track_est( 'ciona_est_5prim_align', "5' EST-align. (Kyoto)", $POS++, @_ );
-  $self->add_new_track_est( 'ciona_cdna_align',      'cDNA-align. (Kyoto)', $POS++, @_ );
-  $self->add_new_track_est( 'cint_est',      'Ciona ESTs', $POS++, @_ );
-  $self->add_new_track_est( 'expression_pattern', 'Expression pattern', $POS++, 'URL_KEY' => 'EXPRESSION_PATTERN', 'SUBTYPE' => 'default', @_ );
+  $self->add_new_track_est( 'est_3prim_savi',        "C.savigyi EST 3'",      $POS++, @_ );
+  $self->add_new_track_est( 'est_5prim_savi',        "C.savigyi EST 5'",      $POS++, @_ );
+  $self->add_new_track_est( 'ciona_cdna_align',      'cDNA-align. (Kyoto)',   $POS++, @_ );
+  $self->add_new_track_est( 'cint_est',              'Ciona ESTs',            $POS++, @_ );
+  $self->add_new_track_est( 'savignyi_est',          "C.savigyi EST",         $POS++, @_ );
+  $self->add_new_track_est( 'expression_pattern',    'Expression pattern', $POS++, 'URL_KEY' => 'EXPRESSION_PATTERN', 'SUBTYPE' => 'default', @_ );
+  $self->add_new_track_est( 'other_est',    'Other ESTs',      $POS++, @_ );
+  $self->add_new_track_est( 'cDNA_exonerate',    'ESTs',      $POS++, @_ );
+
   my @EST_DB_ESTS = (
     [ 'estgene',               'ESTs' ],
     [ 'bee_est',               'Bee EST' ],
     [ 'chicken_ests', 'Chicken EST' ],
-    [ 'est_3prim_savi', "C.savigyi EST 3'" ],
-    [ 'est_5prim_savi', "C.savigyi EST 5'" ],
     [ 'est_embl', "C.savigyi EST" ],
-    [ 'savignyi_est', "C.savigyi EST" ],
     [ 'chicken_est_exonerate', 'Chicken EST (ex.)' ],
     [ 'human_est_exonerate',   'Human EST (ex.)' ],
     [ 'est_exonerate',   'EST (ex.)' ],
@@ -970,24 +999,11 @@ sub ADD_ALL_EST_FEATURES {
     [ 'xlaevis_EST',           'X.laevis EST' ],
     [ 'xtrop_EST',             'X.trop EST' ],
     [ 'zfish_EST',             'Zfish EST' ],
-    [ 'anopheles_cdna_est',    'RNA (BEST)' ],
     [ 'anopheles_cdna_est_all','RNA (ALL)' ],
     [ 'est_bestn_5prim',  "EST BestN 5'" ],
     [ 'est_bestn_3prim',  "EST Bestn 3'" ],
     [ 'stickleback_est',   "Stickleback ESTs" ],
     [ 'cint_cdna',        'Ciona EST' ],
-  );
-  my @EST_DB_CDNA = (
-    [ 'drosophila_cdna_all',   'Fly cDNA (all)',  'URL_KEY' => 'DROSOPHILA_EST', 'ZMENU' =>
-       [ '###ID###', "Fly cDNA: ###ID###" => '###HREF###' ]
-    ],
-    [ 'drosophila_gold_cdna',  'Fly cDNA (gold)', 'URL_KEY' => 'DROSOPHILA_EST', 'ZMENU' =>
-       [ '###ID###', "Fly cDNA: ###ID###" => '###HREF###' ]
-    ],
-    [ 'kyotograil_2004',  "Kyotograil '04" ],
-    [ 'kyotograil_2005',  "Kyotograil '05" ],
-    [ 'sheep_bac_ends',   "Sheep BAC ends" ],
-    [ 'stickleback_cdna',   "Stickleback cDNAs" ],
   );
   foreach ( @EST_DB_ESTS ) {
     my($A,$B,@T) = @$_;
@@ -995,23 +1011,9 @@ sub ADD_ALL_EST_FEATURES {
                               'FEATURES'  => $A, 'available' => "database_features ENSEMBL_OTHERFEATURES.$A",
                               'THRESHOLD' => 0, 'DATABASE' => 'otherfeatures', @T, @_ );
   }
-  foreach ( @EST_DB_CDNA ) {
-    my($A,$B,@T) = @$_;
-    $self->add_new_track_cdna( "otherfeatures_$A",  $B, $POS++,
-                              'FEATURES'  => $A, 'available' => "database_features ENSEMBL_OTHERFEATURES.$A",
-                              'THRESHOLD' => 0, 'DATABASE' => 'otherfeatures', @T, @_ );
-  }
-  my @EST_DB_ESTS_PROT = (
-    [ 'jgi_v1',        'JGI V1' ],
-    [ 'jgi_v2',        'JGI V2' ],
-  );
-  foreach ( @EST_DB_ESTS_PROT ) {
-    my($A,$B,@T) = @$_;
-    $self->add_new_track_est_protein( "otherfeatures_$A",  $B, $POS++,
-                              'FEATURES'  => $A, 'available' => "database_features ENSEMBL_OTHERFEATURES.$A",
-                              'THRESHOLD' => 0, 'DATABASE' => 'otherfeatures', @T, @_ );
-  }
-  $self->add_new_track_est( 'other_est',    'Other ESTs',      $POS++, @_ );
+
+
+  # Hacky ones
   $self->add_new_track_est( 'drerio_estclust', 'EST clusters', $POS++,
 							'available'  => 'any_feature EST_cluster_WashU EST_cluster_IMCB EST2genome_clusters Est2genome_clusters',
 							'FEATURES'   => 'EST_Cluster_WashU EST_cluster_IMCB EST2genome_clusters Est2genome_clusters',
@@ -1027,7 +1029,6 @@ sub ADD_ALL_EST_FEATURES {
 							'FEATURES' => 'Est2genome_human Est2genome_mouse Est2genome_other Est2genome_fish',
                             'src' => 'all', 
 							@_);
-  $self->add_new_track_est( 'cDNA_exonerate',    'ESTs',      $POS++, @_ );
   return $POS;
 }
 
@@ -1112,6 +1113,20 @@ sub ADD_ALL_PROTEIN_FEATURES {
   $self->add_new_track_protein( 'MetazoaBlast',    "BLAST Metazoa", $POS++, @_ );
   $self->add_new_track_protein( 'EukaryotaBlast',  "BLAST Eukaryota", $POS++, @_ );
   $self->add_new_track_protein( 'EverythingBlast', "BLAST All", $POS++, @_ );
+
+  my @EST_DB_ESTS_PROT = (
+    [ 'jgi_v1',        'JGI V1' ],
+    [ 'jgi_v2',        'JGI V2' ],
+  );
+  foreach ( @EST_DB_ESTS_PROT ) {
+    my($A,$B,@T) = @$_;
+    $self->add_new_track_est_protein( "otherfeatures_$A",  $B, $POS++,
+                              'FEATURES'  => $A, 'available' => "database_features ENSEMBL_OTHERFEATURES.$A",
+                              'THRESHOLD' => 0, 'DATABASE' => 'otherfeatures', @T, @_ );
+  }
+
+
+
   return $POS;
 }
 
