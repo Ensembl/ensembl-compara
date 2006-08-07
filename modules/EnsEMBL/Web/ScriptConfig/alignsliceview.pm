@@ -34,30 +34,10 @@ sub init {
     image_width    700
     context    100000
 
-opt_align_1 on
-    opt_1_Bos_taurus on
-    opt_1_Canis_familiaris on
-    opt_1_Homo_sapiens on
-    opt_1_Macaca_mulatta on
-    opt_1_Mus_musculus on
-    opt_1_Pan_troglodytes on
-    opt_1_Rattus_norvegicus on
-
-opt_align_2 off
-    opt_2_Bos_taurus on
-    opt_2_Canis_familiaris on
-    opt_2_Homo_sapiens on
-    opt_2_Macaca_mulatta on
-    opt_2_Mus_musculus on
-    opt_2_Pan_troglodytes on
-    opt_2_Rattus_norvegicus on
-    opt_2_Gallus_gallus on
-    opt_2_Monodelphis_domestica on
-
-    opt_align_214 on
-opt_214_Homo_sapiens on
-opt_214_Macaca_mulatta on
-opt_214_Pan_troglodytes on
+    opt_align_216 off
+opt_216_Homo_sapiens on
+opt_216_Macaca_mulatta on
+opt_216_Pan_troglodytes on
 
     opt_align_192 off
 opt_192_Homo_sapiens on
@@ -75,6 +55,7 @@ opt_193_Mus_musculus on
 opt_193_Monodelphis_domestica on
 opt_193_Rattus_norvegicus on
 
+    opt_align_4 off
     opt_align_171 off
     opt_align_172 off
     opt_align_173 off
@@ -82,7 +63,15 @@ opt_193_Rattus_norvegicus on
     opt_align_191 off
     opt_align_194 off
     opt_align_195 off
-    opt_align_213 off
+    opt_align_196 off
+    opt_align_212 off
+    opt_align_215 off
+    opt_align_217 off
+    opt_align_218 off
+    opt_align_219 off
+    opt_align_220 off
+    opt_align_221 off
+    opt_align_222 off
   ));
 }
 1;
