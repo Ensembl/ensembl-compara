@@ -1041,7 +1041,7 @@ sub spreadsheet_variationTable {
            'aachange' => $transcript_variation->pep_allele_string,
            'aacoord'   => $transcript_variation->translation_start.' ('.(($transcript_variation->cdna_start - $cdna_coding_start )%3+1).')'
         ) : ( 'aachange' => '-', 'aacoord' => '-' ),
-	  'Source'      => $gs->[2]->source || "-",	 
+	  'Source'      => (join ", ", @{$gs->[2]->get_all_sources ||[] } )|| "-",	 
       };
       $panel->add_row( $ROW );
     }
