@@ -1175,9 +1175,27 @@ sub alignsliceviewbottom {
     my $aID = $wuc->get("alignslice", "id");
     my $method_link_species_set = $mlss_adaptor->fetch_by_dbID($aID); 
 
-    my @selected_species = @{$wuc->get("alignslice", "species") || []};
-    unshift @selected_species, $object->species if (@selected_species);
+# With every new release the compara team update the alignment IDs
+# It would be much better if we had something permanent to refer to, but as for 
+# now we have to check that the selected alignment is still in the compara database.
+# If it's not we just choose the first alignment that we can find for this species
 
+    if (! $method_link_species_set) {
+	my %alignments = $object->species_defs->multiX('ALIGNMENTS');
+
+	foreach my $a (sort keys %alignments) {
+	    if ($alignments{$a}->{'species'}->{$species}) {
+		$aID = $a;
+		$wuc->get("alignslice", "id", $aID, 1);
+		$wuc->save;
+		$method_link_species_set = $mlss_adaptor->fetch_by_dbID($aID); 
+		last;
+	    }
+	}
+    }
+
+    my @selected_species = @{$wuc->get("alignslice", "species") || []};
+    unshift @selected_species, $object->species if (scalar(@selected_species));
 
     my $asa = $comparadb->get_adaptor("AlignSlice" );
     my $align_slice = $asa->fetch_by_Slice_MethodLinkSpeciesSet($query_slice, $method_link_species_set, "expanded" );
