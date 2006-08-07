@@ -925,6 +925,12 @@ sub ADD_ALL_DNA_FEATURES {
     [ 'kyotograil_2005',  "Kyotograil '05" ],
     [ 'sheep_bac_ends',   "Sheep BAC ends" ],
     [ 'stickleback_cdna',   "Stickleback cDNAs" ], # subset of these in core but don't draw those
+
+    # Duplicated tracks (same logic name used core and otherfeatures). Not ideal!
+    [ 'human_cdna',            'Human cDNAs' ],
+    [ 'macaque_cdna',          'Macaque cDNAs' ],
+    [ 'mouse_cdna',            'Mouse cDNAs' ],
+    [ 'rat_cdna',              'Rat cDNAs' ],
   );
 
   foreach ( @EST_DB_CDNA ) {
@@ -1008,11 +1014,7 @@ sub ADD_ALL_EST_FEATURES {
     [ 'savignyi_est',          "C.savigyi EST"],      # subset of these in core but don't draw those
 
     # Duplicated tracks (same logic name used core and otherfeatures). Not ideal!
-    [ 'human_cdna',            'Human cDNA' ],
-    [ 'macaque_cdna',          'Macaque cDNA' ],
-    [ 'macaque_est',           'Macaque EST' ],
-    [ 'mouse_cdna',            'Mouse cDNA' ],
-    [ 'rat_cdna',              'Rat cDNA' ],
+    [ 'macaque_est',           'Macaque ESTs' ],
   );
 
 
