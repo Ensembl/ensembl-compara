@@ -14,9 +14,9 @@ All instructions to do it are in ensembl-compara/scripts/taxonomy/README-taxonom
 mysql -hia64e -uensadmin -pensembl abel_compara_tree_37 < ensembl-compara/sql/protein_tree.sql
 
 This will create 3 tables
-protein_tree_nodes
+protein_tree_node
 protein_tree_member
-protein_tree_tags
+protein_tree_tag
 
 3- Copy and modify the compara-hive config file
    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -29,13 +29,15 @@ must exist.
   $ cp compara-hive-homology.conf.example my_compara.conf
   <editor> my_compara.conf
 
- { TYPE => GENE_TREE,
-    'cluster_params' => '{species_set=>[1,2,3,4,5,6,7,9,10,11,12,13,14,15,16,17,18,19,21], brh=>1, all_best=>0, bsr_threshold=>0.33}',
-   'breakcluster_params' => "{species_set=>[1,2,3,4,5,6,7,9,10,11,12,13,14,15,16,17,18,19,21],bsr_threshold_increase=>0.1}",
-    'max_gene_count' => 2000,
-    'species_tree_file' => '{species_tree_file=>'/acari/work7a/abel/hive/abel_compara_tree_37/encode_species_tree2.nh'}',,
-    'rap_jar_file' => '/nfs/acari/abel/bin/rap.jar'
-  },
+   { TYPE => GENE_TREE,
+     'cluster_params' => '{species_set=>[3,4,5,7,10,11,13,14,15,16,17,18,22,24,25,26,27,28,29,31,32,33,34,35,36], brh=>1, all_best=>0, bsr_threshold=>0.33}',
+     'breakcluster_params' => '{species_set=>[3,4,5,7,10,11,13,14,15,16,17,18,22,24,25,26,27,28,29,31,32,33,34,35,36], bsr_threshold_increase=>0.1}',
+     'max_gene_count' => 2000,
+     'species_tree_file' => "{species_tree_file=>'/ecs2/work2/avilella/hive/avilella_compara_homology_40/compara_encode_species_tree_40_mfurc.nh'}",
+     'rap_jar_file' => '/ecs2/work2/avilella/bin/rap.jar'
+   },
+ 
+One example of the species_tree_file can be found in ensembl-compara/scripts/pipeline/species_tree_rap.nh
 
 5- Run the configure scripts
    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
