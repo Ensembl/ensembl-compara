@@ -315,11 +315,22 @@ sub prepareGenomeAnalysis
   # MultipleAligner
   #
   foreach my $this_multiple_aligner_params (@$multiple_aligner_params) {
+
+    my $this_multiple_aligner_logic_name = "Pecan"; #Default value
+    if (defined $this_multiple_aligner_params->{'logic_name'}) {
+      $this_multiple_aligner_logic_name = $this_multiple_aligner_params->{'logic_name'};
+    }
+    my $this_multiple_aligner_module =
+        "Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::$this_multiple_aligner_logic_name";
+    if (defined $this_multiple_aligner_params->{'module'}) {
+      $this_multiple_aligner_module = $this_multiple_aligner_params->{'module'};
+    }
+
     my ($method_link_id, $method_link_type);
     if($this_multiple_aligner_params->{'method_link'}) {
       ($method_link_id, $method_link_type) = @{$this_multiple_aligner_params->{'method_link'}};
     } else {
-      ($method_link_id, $method_link_type) = qw(9 MLAGAN);
+      ($method_link_id, $method_link_type) = qw(10 PECAN);
     }
     my $sql = "INSERT ignore into method_link SET method_link_id=$method_link_id, type='$method_link_type'";
     $self->{'hiveDBA'}->dbc->do($sql);
@@ -343,9 +354,21 @@ sub prepareGenomeAnalysis
       if (defined $mlss) {
         $input_id .= ",msa_method_link_species_set_id => ".$mlss->dbID();
       }
-      if (defined $this_multiple_aligner_params->{'tree_file'}) {
-        $input_id .= ",tree_file => \'" . $this_multiple_aligner_params->{'tree_file'} ."\'";
+
+      my $tree_string;
+      if (defined $this_multiple_aligner_params->{'tree_string'}) {
+        $tree_string = $this_multiple_aligner_params->{'tree_string'};
+      } elsif (defined $this_multiple_aligner_params->{'tree_file'}) {
+        open TREE_FILE, $tree_file || throw("Can not open $tree_file");
+        $tree_string = join("", <TREE_FILE>);
+        close TREE_FILE;
       }
+      if ($tree_string) {
+        my $tree_string_analysis_data_id =
+              $self->{'hiveDBA'}->get_AnalysisDataAdaptor->store_if_needed($tree_string);
+        $input_id .= ",tree_analysis_data_id => \'" . $tree_string_analysis_data_id ."\'";
+      }
+
       Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob(
             -input_id       => "{$input_id}",
             -analysis       => $synteny_map_builder_analysis
@@ -354,8 +377,8 @@ sub prepareGenomeAnalysis
   }
   $parameters = "";
   my $multiple_aligner_analysis = Bio::EnsEMBL::Analysis->new(
-      -logic_name      => 'Mlagan',
-      -module          => 'Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::Mlagan',
+      -logic_name      => $this_multiple_aligner_logic_name,
+      -module          => $this_multiple_aligner_module,
       -parameters      => $parameters
     );
   $self->{'comparaDBA'}->get_AnalysisAdaptor()->store($multiple_aligner_analysis);
