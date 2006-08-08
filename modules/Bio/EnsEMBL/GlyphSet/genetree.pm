@@ -35,7 +35,7 @@ sub _init {
 
   $k = 1;
 #  warn ("A-0:".localtime());
-  my @nodes = sort {$a->{_rank} <=> $b->{_rank}} @{$self->features($tree, 0, 0, 0) || []};
+  my @nodes = sort { ($a->{_rank} <=> $b->{_rank}) * 10 + ($a->{_id} <=> $b->{_id})} @{$self->features($tree, 0, 0, 0) || []};
 
 #  warn ("B-0:".localtime());
 
@@ -54,9 +54,19 @@ sub _init {
   my $font_height = $res[3];
   my $label_width = $res[2];
 
-  my $scale = ($bitmap_length - $label_width) / 5;
-#  warn("SCALE : $font_height, $label_width, $scale");
+  my $max_distance = $tree->max_distance;
 
+  my $oldscale = ($bitmap_length - $label_width) / 5; # works for most of the genes, but not for trees where max_distance > 100
+
+# basic scaling : probably will need some fine tunning
+  my $scale = 100;
+  if ($max_distance > 100) {
+      $scale = 50;
+  }
+  $scale *= ($bitmap_length / 600);
+
+#  warn("SCALE : $bitmap_length * $scale * $oldscale * $max_distance");  
+  
   my @alignments;
   my %xcs;
 
@@ -116,6 +126,13 @@ sub _init {
 
 #  warn(Data::Dumper::Dumper(\%Nodes));
 
+  my %Colours = (
+		 0 => 'blue',
+		 1 => 'blue',
+		 2 => 'green',
+		 3 => 'red',
+		 );
+
   foreach my $f (keys %Nodes) {
       if (my $pid = $Nodes{$f}->{_parent}) {
 	  my $xc = $Nodes{$f}->{x} + 2;
@@ -135,6 +152,9 @@ sub _init {
 	      'colour'    => $col,
 	      'zindex'    => 0,
 	  }));
+
+	  $col = $Colours{ ($Nodes{$f}->{_cut} || 0)} || 'red';
+
 	  $self->unshift( new Sanger::Graphics::Glyph::Line({
 	      'x'         => $xp,
 	      'y'         => $yc,
@@ -153,7 +173,7 @@ sub _init {
 #  warn(Data::Dumper::Dumper(\@alignments));
 # Display only those gaps that amount to more than 1 pixel on screen, otherwise screen gets white when you zoom out too much .. 
   
-  my $alignment_start = $max_x + $label_width + 30;
+  my $alignment_start = $max_x + $label_width + 20;
   my $alignment_width = $bitmap_length - $alignment_start;
   my @inters = split (/([MDG])/, $alignments[0]->[1]);
 
@@ -166,7 +186,7 @@ sub _init {
 
   my $min_length = int($alignment_length / $alignment_width);   
   my $alignment_scale = $alignment_width / $alignment_length;   
-#  warn ("AL: $alignment_length, $alignment_width, $min_length");
+#  warn ("AL: $alignment_start, $alignment_length, $alignment_width, $min_length");
   
   foreach my $a (@alignments) {
       my ($yc, $al) = @$a;
@@ -238,9 +258,9 @@ sub features {
       '_parent' => $pid
   };
 
-  if ($f->{_distance} > 1) {
+  while ($f->{_distance} > 2) {
       $f->{_distance} /= 10;
-      $f->{_cut}  = 1;
+      $f->{_cut} ++;
   }
 	 
   $rank ++;
@@ -324,7 +344,7 @@ sub zmenu {
   my( $self, $f ) = @_;
 
   my $href = '';
-  my $blength = $f->{_cut} ? $f->{'_distance'} * 10: $f->{'_distance'};
+  my $blength = $f->{_cut} ? ($f->{'_distance'} * (10 ** ($f->{'_cut'}))): $f->{'_distance'};
   my $zmenu = { 
 		caption               => $f->{'_id'},
 		"60:Branch length: $blength"   => '',
