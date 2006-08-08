@@ -180,7 +180,6 @@ sub _init {
     next if $end<1;            ## Skip if totally outside VC
     $end   = $vc_length if $end>$vc_length;
     $T++;
-warn "$type ... $start->$end" unless $type =~ /seq/;
     next if $optimizable && ( $VirtualContig->strand() < 0 ?
                                 $previous_start-$start < 0.5/$pix_per_bp : 
                                 $end-$previous_end     < 0.5/$pix_per_bp );
