@@ -918,6 +918,30 @@ sub _recursive_get_all_leaves {
 }
 
 
+=head2 max_distance
+
+ Title   : max_distance
+ Args    : none
+ Usage   : $tree_node->max_distance;
+ Function: searching from the given starting node, calculates the maximum distance to a leaf
+ Returns : int
+
+=cut
+
+sub max_distance {
+  my $self = shift;
+
+  my $max_distance = 0;
+  
+  foreach my $child (@{$self->children}) {
+    my $distance = $child->max_distance;
+    $max_distance = $distance if($distance>$max_distance);
+  }
+
+  return ($self->distance_to_parent + $max_distance);
+}
+
+
 =head2 max_depth
 
  Title   : max_depth
