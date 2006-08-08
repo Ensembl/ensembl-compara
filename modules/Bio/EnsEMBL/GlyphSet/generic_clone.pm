@@ -29,7 +29,6 @@ warn $self->check()," SETTING $_ to ",$thresholds->{$th}{$_};
 
 sub features {
   my ($self) = @_;
-  warn $self->check," >>> ",$self->my_config( 'FEATURES' );
   my @sorted =  
     map { $_->[1] }
     sort { $a->[0] <=> $b->[0] }
@@ -38,8 +37,7 @@ sub features {
       $_->get_scalar_attribute('state') + $_->get_scalar_attribute('BACend_flag')/4
       ), $_]
     }
-    @{$self->{'container'}->get_all_MiscFeatures( $self->my_config( 'FEATURES' ))};
-warn "features... ".@sorted;
+    @{$self->{'container'}->get_all_MiscFeatures( $self->my_config( 'FEATURES' ), $self->my_config( 'DATABASE' ) )};
   return \@sorted;
 }
 

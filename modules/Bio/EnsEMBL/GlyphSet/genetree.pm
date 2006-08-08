@@ -238,7 +238,7 @@ sub features {
       '_parent' => $pid
   };
 
-  if ($f->{_distance} > 2) {
+  if ($f->{_distance} > 1) {
       $f->{_distance} /= 10;
       $f->{_cut}  = 1;
   }
