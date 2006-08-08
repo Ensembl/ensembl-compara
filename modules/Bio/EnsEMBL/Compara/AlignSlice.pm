@@ -192,6 +192,8 @@ use Bio::EnsEMBL::Utils::Argument qw(rearrange);
 use Bio::EnsEMBL::Utils::Exception qw(throw warning info verbose);
 use Bio::EnsEMBL::Compara::AlignSlice::Exon;
 use Bio::EnsEMBL::Compara::AlignSlice::Slice;
+use Bio::EnsEMBL::Compara::GenomicAlignBlock;
+use Bio::EnsEMBL::Compara::GenomicAlign;
 use Bio::SimpleAlign;
 
 
