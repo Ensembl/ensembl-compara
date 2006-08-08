@@ -228,6 +228,7 @@ sub new {
     'default'    => 'purple1',
     'genoscope'  => 'purple3',
     'WZ'         => 'purple1',
+    'mmc'        => 'darkgreen',
     'IMCB_HOME'  => 'purple3'
   );
   $self->colourSet( 'glovar_sts',
