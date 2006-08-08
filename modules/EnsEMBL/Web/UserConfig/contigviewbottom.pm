@@ -140,7 +140,7 @@ sub init {
          [ 'opt_show_bumped' => 'Show # bumped glyphs'  ],
          [ 'opt_halfheight'  => 'Half-height glyphs'  ],
 	 [ 'opt_shortlabels' => 'Concise labels' ],
-         [ 'matepairs'       => 'Matepairs' ],
+         [ 'matepairs'       => 'Bad Matepairs' ],
 	 [ 'gap'             => 'Gaps' ],
          [ 'restrict'        => 'Rest.Enzymes' ],
          [ 'opt_restrict_zoom'   => 'Rest.Enzymes on zoom' ],
