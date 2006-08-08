@@ -43,6 +43,7 @@ a.red-button:visited, a.blue-button:visited { color:#fff; text-decoration:none; 
 .bg3 { background:#ffffcc; }
 .bg4 { background:#fff9af; }
 .bg5 { background:#ffffe7; }
+.hilite { background:#ccff99; }
 
 .serif    { font-family: Serif, Palatino, Times, "Times New Roman", serif; }
 .latin { font-style:italic; }
