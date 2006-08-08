@@ -129,7 +129,6 @@ sub _process {
   my @row_colours = exists $options->{'rows'} ? @{$options->{rows}} : qw(bg1 bg2);
   foreach my $row (@sorted_data) {
     my $flag = 0;
-    push @row_colours, shift @row_colours;
     my $out_row = { 'style' => 'row', 'class' => $row_colours[0], 'col' => [] };
     $counter = 0;
     foreach my $col ( @$columns ) {
@@ -164,6 +163,9 @@ sub _process {
       };
       $counter++;
     }
+    next if( $flag == $counter ) ; ## SKIP WHOLY BLANK LINES
+    push @row_colours, shift @row_colours;
+
     $row_count++;
     if( $options->{'total'}>0 ) { ### SUMMARY TOTALS.... ###
       if($flag<$options->{'total'}) {

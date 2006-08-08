@@ -48,23 +48,21 @@ sub featureview {
     my $type = $object->param('type');
     my $id   = $object->param('id');
 
-    if ($type eq 'Gene') {
-        $id = uc($id);
+    if( $type eq 'Gene' ) {
+      $id = uc($id);
     }
 
     $self->{page}->set_title( "FeatureView: $type $id");
 
     ## determine which panels are needed
     my ($karyo_panel, $key_panel, $unmapped_panel, $gene_panel, $reg_panel, $feature_panel, $xref_panel);
-warn $object;
     if ($object->Obj && $object->Obj->{'Xref'}) {
       $karyo_panel = 1;
       $xref_panel = 1;
     } else {
       if (!$object->feature_mapped) {
         $unmapped_panel = 1;
-      }
-      else {
+      } else {
         ## standard spreadsheet panel
         $feature_panel = 1;
         ## karyotype

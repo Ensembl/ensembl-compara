@@ -64,11 +64,18 @@ sub create_OligoProbe {
 }
 
 sub create_DnaAlignFeature {
-  return {'DnaAlignFeature' => $_[0]->_generic_create( 'DnaAlignFeature', 'fetch_all_by_hit_name', $_[1] ) }; 
+  my $features = {'DnaAlignFeature' => $_[0]->_generic_create( 'DnaAlignFeature', 'fetch_all_by_hit_name', $_[1] ) }; 
+  my $genes = $_[0]->_generic_create( 'Gene', 'fetch_all_by_external_name', $_[1],undef, 'no_errors' );
+warn $genes;
+  $features->{'Gene'} = $genes if $genes;
+  return $features;
 }
 
 sub create_ProteinAlignFeature {
-  return {'ProteinAlignFeature' => $_[0]->_generic_create( 'ProteinAlignFeature', 'fetch_all_by_hit_name', $_[1] ) };
+  my $features = {'ProteinAlignFeature' => $_[0]->_generic_create( 'ProteinAlignFeature', 'fetch_all_by_hit_name', $_[1] ) };
+  my $genes = $_[0]->_generic_create( 'Gene', 'fetch_all_by_external_name', $_[1],undef, 'no_errors' );
+  $features->{'Gene'} = $genes if $genes;
+  return $features;
 }
 
 sub create_Gene {
@@ -135,7 +142,10 @@ sub _generic_create {
     }
     my $adaptor_name = "get_${object_type}Adaptor";
     my $features = [];
-    foreach my $fid ( $id, split /\s+/, $id ) {
+    $id =~ s/\s+/ /g;
+    $id =~s/^ //;
+    $id =~s/ $//;
+    foreach my $fid ( $id=~/ /?$id:(), split /\s+/, $id ) {
       my $t_features;
       if ($xref_db) {
         eval {

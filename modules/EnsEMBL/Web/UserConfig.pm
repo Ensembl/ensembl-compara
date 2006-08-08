@@ -948,7 +948,6 @@ sub ADD_ALL_EST_FEATURES {
   my $POS  = shift || 2350;
   $self->add_new_track_est( 'arraymap_e2g',   'ARRAY_MMC1_ests', $POS++, @_ );
   $self->add_new_track_est( 'BeeESTAlignmentEvidence', 'Bee EST evid.', $POS++, @_ );
-  $self->add_new_track_est( 'est2clones',   'ARRAY_MMC1_reporters', $POS++, 'URL_KEY' => 'VECTORBASE_REPORTER', @_ );
   $self->add_new_track_est( 'est_rna',      'ESTs (RNA)',      $POS++, 'available' => 'features RNA',      'FEATURES' => 'RNA', @_ );
   $self->add_new_track_est( 'est_rnabest',  'ESTs (RNA best)', $POS++, 'available' => 'features RNA_BEST', 'FEATURES' => 'RNA_BEST', @_ );
   $self->add_new_track_est( 'celegans_est', 'C. elegans ESTs', $POS++, @_ );
@@ -1040,6 +1039,7 @@ sub ADD_ALL_EST_FEATURES {
 							'FEATURES' => 'Est2genome_human Est2genome_mouse Est2genome_other Est2genome_fish',
                             'src' => 'all', 
 							@_);
+  $self->add_new_track_est( 'est2clones',   'ARRAY_MMC1_reporters', $POS++, 'URL_KEY' => 'VECTORBASE_REPORTER', 'str' => 'r', 'SUBTYPE' => 'mmc',  'ZMENU' => [ 'Reporter ###LABEL###', '###LABEL###' => '###HREF###' ], @_ );
   return $POS;
 }
 

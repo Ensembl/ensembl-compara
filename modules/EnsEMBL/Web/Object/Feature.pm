@@ -176,7 +176,7 @@ sub retrieve_DnaAlignFeature {
       push(@$results, $unmapped);
     }
     else {
-	    next unless ($f->score > 80);
+#	    next unless ($f->score > 80);
       my $coord_systems = $self->coord_systems();
       my( $region, $start, $end, $strand ) = ( $f->seq_region_name, $f->start, $f->end, $f->strand );
       if( $f->coord_system_name ne $coord_systems->[0] ) {
