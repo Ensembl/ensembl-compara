@@ -146,26 +146,26 @@ sub go {
 		my $info_text_gene;
 		my $info_text_species;
 		my $info_text_common_name;
-
-		if($info_text){
-			
-			#create URL
-			if($info_text=~/from (\w+) gene (\w+)/){
-				$info_text_gene= $2;
-				$info_text_common_name= $1;
-			}
-			else{
-
-				#parse error
-				warn "regex parse failure in EnsEMBL::Web::Component::Transcript::go()";
-			}
-			$info_text_species= $object->species;
-			$info_text_url= "<a href='/$info_text_species/geneview?gene=$info_text_gene'>$info_text_gene</a>";	
-			$info_text_html= "[from $info_text_common_name $info_text_url]";
-		}
-		else{
-			$info_text_html= '';
-		}
+                my $info_text_type;
+    if($info_text){
+  #create URL
+     if($info_text=~/from ([a-z]+[ _][a-z]+) (gene|translation) (\w+)/){
+        $info_text_gene= $3;
+        $info_text_type= $2;
+        $info_text_common_name= ucfirst($1);
+      } else{
+        #parse error
+        warn "regex parse failure in EnsEMBL::Web::Component::Transcript::go()";
+      }
+      $info_text_species= $object->species;
+      (my $species = $info_text_common_name) =~ s/ /_/g;
+      my $script = $info_text_type eq 'gene' ? 'geneview?gene=' : 'protview?peptide=';
+      $info_text_url= "<a href='/$species/$script$info_text_gene'>$info_text_gene</a>";
+      $info_text_html= "[from $info_text_common_name $info_text_url]";
+    }
+    else{
+      $info_text_html= '';
+    }
 
 	$html .= qq(<dd>$goidurl $info_text_html [$queryurl] <code>$evidence</code></dd>\n);
   }
@@ -248,11 +248,13 @@ sub _sort_similarity_links{
       next;
     }
    my $text = $display_id;
-    if( $urls and $urls->is_linked( $externalDB ) ) {
+    (my $A = $externalDB ) =~ s/_predicted//;
+warn ".... $externalDB -- $A ...";
+    if( $urls and $urls->is_linked( $A ) ) {
       my $link;
-      $link = $urls->get_url( $externalDB, $primary_id );
+      $link = $urls->get_url( $A, $primary_id );
       my $word = $display_id;
-      if( $externalDB eq 'MARKERSYMBOL' ) {
+      if( $A eq 'MARKERSYMBOL' ) {
         $word = "$display_id ($primary_id)";
       }
       if( $link ) {

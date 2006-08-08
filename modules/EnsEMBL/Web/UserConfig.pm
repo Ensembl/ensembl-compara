@@ -910,17 +910,13 @@ sub ADD_ALL_DNA_FEATURES {
   $self->add_new_track_cdna( 'cdna_update',     'CDNAs',         $POS++,
                             'FEATURES'  => 'UNDEF', 'available' => 'databases ENSEMBL_CDNA',
                             'THRESHOLD' => 0,       'DATABASE'  => 'cdna', @_ );
-  $self->add_new_track_cdna( 'cdna_all',  'All CDNAs', $POS++, 'SUBTYPE' => { return 'cdna_all' }, @_ );
+  $self->add_new_track_cdna( 'cdna_all',  'All CDNAs', $POS++, 'SUBTYPE' => 'cdna_all' , @_ );
 
 
   # Otherfeatures db
   my @EST_DB_CDNA = (
-    [ 'drosophila_cdna_all',   'Fly cDNA (all)',  'URL_KEY' => 'DROSOPHILA_EST', 'ZMENU' =>
-       [ '###ID###', "Fly cDNA: ###ID###" => '###HREF###' ]
-    ],
-    [ 'drosophila_gold_cdna',  'Fly cDNA (gold)', 'URL_KEY' => 'DROSOPHILA_EST', 'ZMENU' =>
-       [ '###ID###', "Fly cDNA: ###ID###" => '###HREF###' ]
-    ],
+    [ 'drosophila_cdna_all',   'Fly cDNA (all)',  'URL_KEY' => 'DROSOPHILA_EST', 'ZMENU' => [ '###ID###', "Fly cDNA: ###ID###" => '###HREF###' ] ],
+    [ 'drosophila_gold_cdna',  'Fly cDNA (gold)', 'URL_KEY' => 'DROSOPHILA_EST', 'ZMENU' => [ '###ID###', "Fly cDNA: ###ID###" => '###HREF###' ] ],
     [ 'kyotograil_2004',  "Kyotograil '04" ],
     [ 'kyotograil_2005',  "Kyotograil '05" ],
     [ 'sheep_bac_ends',   "Sheep BAC ends" ],
@@ -935,10 +931,12 @@ sub ADD_ALL_DNA_FEATURES {
 
   foreach ( @EST_DB_CDNA ) {
     my($A,$B,@T) = @$_;
+    warn ".. $A $B ..";
     $self->add_new_track_cdna( "otherfeatures_$A",  $B, $POS++,
                               'FEATURES'  => $A, 'available' => "database_features ENSEMBL_OTHERFEATURES.$A",
                               'THRESHOLD' => 0, 'DATABASE' => 'otherfeatures', @T, @_ );
   }
+
 
   return $POS;
 }
@@ -950,7 +948,7 @@ sub ADD_ALL_EST_FEATURES {
   my $POS  = shift || 2350;
   $self->add_new_track_est( 'arraymap_e2g',   'ARRAY_MMC1_ests', $POS++, @_ );
   $self->add_new_track_est( 'BeeESTAlignmentEvidence', 'Bee EST evid.', $POS++, @_ );
-  $self->add_new_track_est( 'est2clones',   'ARRAY_MMC1_reporters', $POS++, @_ );
+  $self->add_new_track_est( 'est2clones',   'ARRAY_MMC1_reporters', $POS++, 'URL_KEY' => 'VECTORBASE_REPORTER', @_ );
   $self->add_new_track_est( 'est_rna',      'ESTs (RNA)',      $POS++, 'available' => 'features RNA',      'FEATURES' => 'RNA', @_ );
   $self->add_new_track_est( 'est_rnabest',  'ESTs (RNA best)', $POS++, 'available' => 'features RNA_BEST', 'FEATURES' => 'RNA_BEST', @_ );
   $self->add_new_track_est( 'celegans_est', 'C. elegans ESTs', $POS++, @_ );
@@ -1057,7 +1055,9 @@ sub ADD_ALL_CLONE_TRACKS {
   $self->add_clone_track( 'bac_map',        'BAC map',        $POS++, 'thresholds' => { 20000 => {'FEATURES'=>'acc_bac_map'}}, @_ );
   $self->add_clone_track( 'bacs',           'BACs',           $POS++, @_ );
   $self->add_clone_track( 'bacs_bands',     'Band BACs',      $POS++, @_ );
+  $self->add_clone_track( 'bacends',        'BAC ends',       $POS++, @_ );
   $self->add_clone_track( 'extra_bacs',     'Extra BACs',     $POS++, @_ );
+  $self->add_clone_track( 'ex_bac_map',        'BAC map',     $POS++, 'FEATURES' => 'bac_map', 'DATABASE' => 'otherfeatures', 'available' => 'database_tables ENSEMBL_OTHERFEATURES.misc_set',  @_ );
   $self->add_clone_track( 'tilepath_cloneset', 'Mouse Tilepath', $POS++, @_ );
   $self->add_clone_track( 'tilepath',       'Human tilepath clones', $POS++, @_ );
   $self->add_clone_track( 'fosmid_map',     'Fosmid map',     $POS++, 'colour_set' => 'fosmids', @_ );

@@ -448,8 +448,9 @@ sub contigviewbottom_text {
     <p style="padding: 2px; margin: 0px;">
       The region you are trying to display is too large. To zoom into a
       viewable region use the zoom buttons above - or click on the top
-      display to centre and zoom the image
+      display to centre and zoom the image.
     </p>
+    <p>Alternatively <a href="javascript:cytoview_link()">View this page in Graphical Overview (CytoView)</a></p>
   </div>) 
   );
   return 0;

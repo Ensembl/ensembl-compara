@@ -331,7 +331,7 @@ sub createObjects {
                    $self->param( 'wvc_end' )   || $self->param( 'fpos_end' )   ||
                    $self->param( 'end' );
   if( defined $self->param('l') ) {
-    ($seq_region,$start,$end) = $self->param('l') =~ /^([-\w\.]+):(-?[\.\w]+)-([\.\w]+)$/;
+    ($seq_region,$start,$end) = $self->param('l') =~ /^([-\w\.]+):(-?[\.\w,]+)-([\.\w,]+)$/;
     $start = $self->evaluate_bp($start);
     $end   = $self->evaluate_bp($end);
   } 
@@ -347,7 +347,7 @@ sub createObjects {
   }
   if( defined $self->param('c') ) {
     my($cp,$t_strand);
-    ($seq_region,$cp,$t_strand) = $self->param('c') =~ /^([-\w\.]+):(-?[.\w]+)(:-?1)?$/;
+    ($seq_region,$cp,$t_strand) = $self->param('c') =~ /^([-\w\.]+):(-?[.\w,]+)(:-?1)?$/;
     $cp = $self->evaluate_bp( $cp );
     my $w = $self->evaluate_bp( $self->param('w') );
     $start = $cp - ($w-1)/2;

@@ -80,6 +80,7 @@ sub round_bp {
 
 sub evaluate_bp {
   my( $self, $value ) = @_;
+  $value =~ s/,//g;
   return $value * 1e3 if( $value =~ /K/i );
   return $value * 1e6 if( $value =~ /M/i );
   return $value * 1e9 if( $value =~ /G/i );
