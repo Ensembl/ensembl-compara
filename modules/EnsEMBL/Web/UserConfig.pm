@@ -860,6 +860,7 @@ sub ADD_ALL_DNA_FEATURES {
   my $POS  = shift || 2300;
 
   ## BACends - configured elsewhere, not gene style features
+  ## Full_dbSTS - in r40, leftover from Vega, don't display
   $self->add_new_track_mrna( 'unigene', 'Unigene', $POS++, 'on' => 'on', 'URL_KEY' => 'UNIGENE', 'ZMENU'       => [ '###ID###' , 'Unigene cluster ###ID###', '###HREF###' ], @_ );
   $self->add_new_track_mrna( 'vertrna', 'EMBL mRNAs', $POS++, 'on' => 'on', @_ );
   $self->add_new_track_mrna( 'celegans_mrna', 'C.elegans mRNAs', $POS++, @_ );
