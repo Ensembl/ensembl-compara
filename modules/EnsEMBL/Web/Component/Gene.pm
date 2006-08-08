@@ -979,7 +979,6 @@ sub genetreeview_menu {
     my($panel, $object, $configname, $left, $right ) =  
 	(@_, 'genetreeview', [qw( ImageSize GTExport )], ['GeneTreeHelp'] );
 
-    my ( $contig_name, $contig, $contig_start) = $object->get_contig_location();
     my $mc = $object->new_menu_container(
 					 'configname'  => $configname,
 					 'panel'       => 'image',
@@ -1216,7 +1215,8 @@ sub genetreeview {
 
   my $treeDBA = $comparaDBA->get_ProteinTreeAdaptor;
   my $member = $comparaDBA->get_MemberAdaptor->fetch_by_source_stable_id('ENSEMBLGENE', $id);
-  (warn("Can't get member") and return 0) unless (defined $member);
+
+ ( $panel->print( qq(<p style="text-align:center"><b>Could not find a tree for gene $id.</b></p>) ) and return 1) unless (defined $member);
   my $aligned_member = $treeDBA->fetch_AlignedMember_by_member_id_root_id(
 									  $member->get_longest_peptide_Member->member_id,
 									  $clusterset_id);
