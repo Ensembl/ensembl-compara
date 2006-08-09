@@ -513,7 +513,7 @@ sub _internal_nhx_format {
     $nhx .= ")";
   }
   
-  if($format_mode eq "full" || $format_mode eq "transcript_id" || $format_mode eq "gene_id") { 
+  if($format_mode eq "full" || $format_mode eq "transcript_id" || $format_mode eq "gene_id" || $format_mode eq "protein_id") { 
       #full: name and distance on all nodes
       if($self->isa('Bio::EnsEMBL::Compara::AlignedMember')) {
 	  if ($format_mode eq "transcript_id") {
@@ -523,6 +523,8 @@ sub _internal_nhx_format {
 	  } elsif ($format_mode eq "gene_id") {
             my $gene_stable_id = $self->gene_member->stable_id;
             $nhx .= sprintf("%s", $gene_stable_id);
+	  } elsif ($format_mode eq "protein_id") {
+            $nhx .= sprintf("%s", $self->name);
           }
       } else {
 	  $nhx .= sprintf("%s", $self->name);
@@ -546,6 +548,8 @@ sub _internal_nhx_format {
         $self->description =~ /Transcript:(\w+)/;
         my $transcript_stable_id = $1;
         $nhx .= ":G=$transcript_stable_id";
+      } elsif (defined $gene_stable_id && $format_mode eq "protein_id") {
+        $nhx .= ":G=$gene_stable_id";
       }
       $taxon_id = $self->taxon_id;
     } else {
