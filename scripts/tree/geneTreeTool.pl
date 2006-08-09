@@ -17,8 +17,8 @@ use Bio::EnsEMBL::Compara::NCBITaxon;
 use Bio::EnsEMBL::Compara::Graph::Algorithms;
 use Bio::EnsEMBL::Compara::Graph::NewickParser;
 use Bio::EnsEMBL::Registry;
+use Bio::EnsEMBL::Compara::RunnableDB::OrthoTree;
 
-use Switch;
 use Time::HiRes qw(time gettimeofday tv_interval);
 
 # ok this is a hack, but I'm going to pretend I've got an object here
@@ -69,19 +69,30 @@ GetOptions('help'             => \$help,
            'counts'           => \$self->{'counts'},
            'newick'           => \$self->{'print_newick'},
            'nhx'              => \$self->{'print_nhx'},
+           'nhx_gene_id'      => \$self->{'nhx_gene_id'},
+           'nhx_protein_id'      => \$self->{'nhx_protein_id'},
            'print'            => \$self->{'print_tree'},
            'list'             => \$self->{'print_leaves'},
+           'list_defs=s'      => \$self->{'list_defs'},
            'analyze|analyse'  => \$self->{'analyze'},
            'draw'             => \$self->{'drawtree'},
            'balance'          => \$self->{'balance_tree'},
            'chop'             => \$self->{'chop_tree'},
            'keep_leaves=s'    => \$self->{'keep_leaves'},
-           'debug'             => \$self->{'debug'},
+           'debug'            => \$self->{'debug'},
+           'test'             => \$self->{'test'},
+           'onlyrapdups'      => \$self->{'onlyrapdups'},
+           'pattern'          => \$self->{'pattern'},
+           'check_multifurcation' => \$self->{'check_multifurcation'},
+           'topolmis=s'       => \$self->{'topolmis'},
+           'badgenes'         => \$self->{'badgenes'},
+           'orthotree'        => \$self->{'orthotree'},
+           'readonly=s'        => \$self->{'_readonly'},
+           'species_list=s'   => \$self->{'species_list'},
+           'v|verbose=s'      => \$self->{'verbose'},
           );
 
 if ($help) { usage(); }
-
-#compare_two_test($self);
 
 if($url) {
   $self->{'comparaDBA'}  = Bio::EnsEMBL::Hive::URLFactory->fetch($url, 'compara');
@@ -97,9 +108,36 @@ unless(defined $self->{'newick_file'} || defined($self->{'comparaDBA'})) {
 # load tree
 #
 
+if($self->{'list_defs'}) {
+  my @treeids_list = split (":", $self->{'list_defs'});
+  my $treeDBA = $self->{'comparaDBA'}->get_ProteinTreeAdaptor;
+  foreach my $tree_id (@treeids_list) {
+    $self->{'tree'} = $treeDBA->fetch_node_by_node_id($tree_id);
+    # leaves are Bio::EnsEMBL::Compara::AlignedMember objects
+    my $leaves = $self->{'tree'}->get_all_leaves;
+    #printf("fetched %d leaves\n", scalar(@$leaves));
+    printf("treeid %d, %d proteins ########################################\n", $tree_id, scalar(@$leaves));
+    foreach my $leaf (@$leaves) {
+      #$leaf->print_node;
+      my $gene = $leaf->gene_member;
+      my $desc = $gene->description;
+      $desc = "" unless($desc);
+      $desc = "Description : " . $desc if ($desc);
+      printf("%s %s : %s\n", $leaf->name,$gene->stable_id, $desc);
+    }
+    #printf("\n");
+    $self->{'tree'}->release_tree;
+  }
+}
+
 if($self->{'tree_id'}) {
   my $treeDBA = $self->{'comparaDBA'}->get_ProteinTreeAdaptor;
   $self->{'tree'} = $treeDBA->fetch_node_by_node_id($self->{'tree_id'});
+} 
+elsif ($self->{'gene_stable_id'} and $self->{'clusterset_id'} and $self->{orthotree}) {
+  fetch_protein_tree_with_gene($self, $self->{'gene_stable_id'});
+  $self->{'clusterset_id'} = undef;
+  run_orthotree($self);
 } 
 elsif ($self->{'gene_stable_id'} and $self->{'clusterset_id'}) {
   fetch_protein_tree_with_gene($self, $self->{'gene_stable_id'});
@@ -109,7 +147,9 @@ elsif ($self->{'newick_file'}) {
   parse_newick($self);
 }
 elsif ($self->{'treefam_file'}) {
-  treefam_compare($self);
+#  treefam_compare($self);
+  treefam_compare2($self);
+  $self->{'keep_leaves'} = 0;
 }
 
 if ($self->{'keep_leaves'}) {
@@ -125,7 +165,7 @@ if($self->{'tree'}) {
   }
 
   $self->{'tree'}->disavow_parent;
-  $self->{'tree'}->get_all_leaves;
+  #$self->{'tree'}->get_all_leaves;
   #printf("get_all_leaves gives %d proteins\n", scalar(@{$self->{'tree'}->get_all_leaves}));
   #$self->{'tree'}->flatten_tree;
   
@@ -190,7 +230,7 @@ if($self->{'tree'}) {
 
   #cleanup memory
   #print("ABOUT TO MANUALLY release tree\n");
-  $self->{'tree'}->release_tree;
+  $self->{'tree'}->release_tree unless ($self->{_treefam});
   $self->{'tree'} = undef;
   #print("DONE\n");
 }
@@ -198,24 +238,54 @@ if($self->{'tree'}) {
 #
 # clusterset stuff
 #
-if($self->{'clusterset_id'} && !($self->{'treefam_file'})) {
+if ($self->{'clusterset_id'} && $self->{'pattern'}) {
+  my $treeDBA = $self->{'comparaDBA'}->get_ProteinTreeAdaptor;
+  $self->{'clusterset'} = $treeDBA->fetch_node_by_node_id($self->{'clusterset_id'});
+#  printf("loaded %d clusters\n", $self->{'clusterset'}->get_child_count);
+  analyzePattern($self) if($self->{'pattern'});
+
+  exit(0);
+}
+
+if ($self->{'clusterset_id'} && $self->{'topolmis'}) {
+  my $treeDBA = $self->{'comparaDBA'}->get_ProteinTreeAdaptor;
+  $self->{'clusterset'} = $treeDBA->fetch_node_by_node_id($self->{'clusterset_id'});
+#  printf("loaded %d clusters\n", $self->{'clusterset'}->get_child_count);
+  topology_mismatches($self) if($self->{'topolmis'});
+
+  exit(0);
+}
+
+if (defined($self->{'clusterset_id'}) && $self->{'check_multifurcation'}) {
+  my $treeDBA = $self->{'comparaDBA'}->get_ProteinTreeAdaptor;
+  $self->{'clusterset'} = $treeDBA->fetch_node_by_node_id($self->{'clusterset_id'});
+#  printf("loaded %d clusters\n", $self->{'clusterset'}->get_child_count);
+  check_multifurcation($self) if($self->{'check_multifurcation'});
+
+  exit(0);
+}
+
+
+
+if(defined($self->{'clusterset_id'}) && !($self->{'treefam_file'})) {
   my $treeDBA = $self->{'comparaDBA'}->get_ProteinTreeAdaptor;
   $self->{'clusterset'} = $treeDBA->fetch_node_by_node_id($self->{'clusterset_id'});
   
-  printf("loaded %d clusters\n", $self->{'clusterset'}->get_child_count);
+#  printf("loaded %d clusters\n", $self->{'clusterset'}->get_child_count);
 
-  analyzeClusters2($self) if($self->{'analyze'});
+#  analyzeClusters2($self) if($self->{'analyze'});
 #  analyzeClusters($self) if($self->{'analyze'});
 
   dumpAllTreesToNewick($self) if($self->{'print_newick'});
+  dumpAllTreesToNHX($self) if($self->{'print_nhx'});
  
-  if($self->{'counts'}) {
-    print_cluster_counts($self);
-    foreach my $cluster (@{$self->{'clusterset'}->children}) {
-      print_cluster_counts($self, $cluster);
-    }
-  }
-  
+#   if($self->{'counts'}) {
+#     print_cluster_counts($self);
+#     foreach my $cluster (@{$self->{'clusterset'}->children}) {
+#       print_cluster_counts($self, $cluster);
+#     }
+#   }
+
   $self->{'clusterset'} = undef;
 }
 
@@ -305,17 +375,17 @@ sub keep_leaves {
   my $self = shift;
 
   my %leaves_names;
-  foreach my $name (split(/\s*,\s*/,$self->{'keep_leaves'})) {
+  foreach my $name (split(",",$self->{'keep_leaves'})) {
     $leaves_names{$name} = 1;
   }
 
-  print join(" ",keys %leaves_names),"\n";
+  print join(" ",keys %leaves_names),"\n" if $self->{'$debug'};
 
   my $tree = $self->{'tree'};
   
   foreach my $leaf (@{$tree->get_all_leaves}) {
     unless (defined $leaves_names{$leaf->name}) {
-      print $leaf->name," leaf disavowing parent\n";
+      print $leaf->name," leaf disavowing parent\n" if $self->{'$debug'};
       $leaf->disavow_parent;
       $tree = $tree->minimize_tree;
     }
@@ -409,14 +479,16 @@ sub dumpTreeAsNewick
   my $newick = $tree->newick_simple_format;
 
   if($self->{'dump'}) {
-    my $aln_file = "proteintree_". $tree->node_id;
-    $aln_file =~ s/\/\//\//g;  # converts any // in path to /
-    $aln_file .= ".newick";
+    my $newick_file = "proteintree_". $tree->node_id;
+    $newick_file = $self->{'dump'} if (1 < length($self->{'dump'})); #wise naming
+    $newick_file =~ s/\/\//\//g;  # converts any // in path to /
+    $newick_file .= ".newick";
     
-    $self->{'newick_file'} = $aln_file;
+    $self->{'newick_file'} = $newick_file;
     
-    open(OUTSEQ, ">$aln_file")
-      or $self->throw("Error opening $aln_file for write");
+#    open(OUTSEQ, ">$newick_file")
+    open(OUTSEQ, ">>$newick_file")
+      or $self->throw("Error opening $newick_file for write");
   } else {
     open OUTSEQ, ">&STDOUT";
   }
@@ -433,7 +505,14 @@ sub dumpTreeAsNHX
   warn("missing tree\n") unless($tree);
 
   # newick_simple_format is a synonymous of newick_format method
-  my $nhx = $tree->nhx_format;
+  my $nhx;
+  if ($self->{'nhx_gene_id'}) {
+    $nhx = $tree->nhx_format("gene_id");
+  } elsif ($self->{'nhx_protein_id'}) {
+    $nhx = $tree->nhx_format("protein_id");
+  } else {
+    $nhx = $tree->nhx_format;
+  }
 
   if($self->{'dump'}) {
     my $aln_file = "proteintree_". $tree->node_id;
@@ -556,10 +635,274 @@ sub dumpAllTreesToNewick
   }
 }
 
+sub dumpAllTreesToNHX
+{
+  my $self = shift;
+
+  foreach my $cluster (@{$self->{'clusterset'}->children}) {
+    dumpTreeAsNHX($self, $cluster);
+  }
+}
+
+sub topology_mismatches
+{
+  my $self = shift;
+  my $species_list_as_in_tree = $self->{species_list} || "22,10,21,23,3,14,15,19,11,16,9,13,4,18,5,24,12,7,17";
+  my $species_list = [22,10,21,25,3,14,15,28,11,16,26,13,4,27,18,5,24,7,17];
+  my @species_list_as_in_tree = split("\,",$species_list_as_in_tree);
+  my @query_species = split("\,",$self->{'topolmis'});
+  
+  printf("topolmis root_id: %d\n", $self->{'clusterset_id'});
+  
+  my $treeDBA = $self->{'comparaDBA'}->get_ProteinTreeAdaptor;
+  my $clusterset = $treeDBA->fetch_node_by_node_id($self->{'clusterset_id'});
+
+  #  my $outfile = "topolmis.". $self->{'clusterset_id'} . ".txt";
+  my $outfile = "topolmis.". $self->{'clusterset_id'}. "." . "sp." . join (".",@query_species) . ".txt";
+  open OUTFILE, ">$outfile" or die "error opening outfile: $!\n";
+  print OUTFILE "topo_match,tree_id,node_id,duptag,ottag\n";
+  my $cluster_count;
+  foreach my $cluster (@{$clusterset->children}) {
+    my %member_totals;
+    $cluster_count++;
+    my $verbose_string = sprintf "[%5d trees done]\n", $cluster_count;
+    print STDERR $verbose_string if ($self->{'verbose'} &&  ($cluster_count % $self->{'verbose'} == 0));
+    $treeDBA->fetch_subtree_under_node($cluster);
+
+    my $member_list = $cluster->get_all_leaves;
+    my %member_gdb_hash;
+
+    foreach my $member (@{$member_list}) {
+      $member_gdb_hash{$member->genome_db_id} = 1;
+      $member_totals{$member->genome_db_id}++;
+    }
+    my @genetree_species = keys %member_gdb_hash;
+    #print the patterns
+    my @isect = my @diff = my @union = ();
+    my %count;
+    foreach my $e (@genetree_species, @query_species) { $count{$e}++ }
+    foreach my $e (keys %count) {
+      push(@union, $e);
+      push @{ $count{$e} == 2 ? \@isect : \@diff }, $e;
+    }
+
+    next if (scalar(@isect) < 3);
+    #trim tree and look at topology
+    my $keep_leaves_string;
+    my %query_species;
+    foreach my $mis (@query_species) {$query_species{$mis}=1;}
+    foreach my $member (@{$member_list}) {
+      next unless ($query_species{$member->genome_db_id});
+      #mark to keep
+      $keep_leaves_string .= $member->name;
+      $keep_leaves_string .= ",";
+    }
+    $keep_leaves_string =~ s/\,$//;
+    $self->{'tree'} = $cluster;
+    $self->{'keep_leaves'} = $keep_leaves_string;
+    keep_leaves($self);
+    $cluster = $self->{'tree'};
+    # For each internal node in the tree
+    ## no intersection of sps btw both child
+    my $nodes_to_inspect = mark_for_topology_inspection($cluster);
+    foreach my $subnode ($cluster->get_all_subnodes) {
+      next if ($subnode->is_leaf);
+      if ('1' eq $subnode->get_tagvalue('_inspect_topology')) {
+        my $copy = $subnode->copy;
+        my $leaves = $copy->get_all_leaves;
+        foreach my $member (@$leaves) {
+          my $gene_taxon = new Bio::EnsEMBL::Compara::NCBITaxon;
+          $gene_taxon->ncbi_taxid($member->taxon_id);
+          $gene_taxon->distance_to_parent($member->distance_to_parent);
+          $member->parent->add_child($gene_taxon);
+          $member->disavow_parent;
+        }
+        #$copy->print_tree;  
+        #build real taxon tree from NCBI taxon database
+        my $taxonDBA = $self->{'comparaDBA'}->get_NCBITaxonAdaptor;
+        my $species_tree = undef;
+        foreach my $member (@$leaves) {
+          my $ncbi_taxon = $taxonDBA->fetch_node_by_taxon_id($member->taxon_id);
+          $ncbi_taxon->no_autoload_children;
+          $species_tree = $ncbi_taxon->root unless($species_tree);
+          $species_tree->merge_node_via_shared_ancestor($ncbi_taxon);
+        }
+        $species_tree = $species_tree->minimize_tree;
+        my $topology_matches = compare_topology($copy, $species_tree);
+        my $refetched_cluster = $treeDBA->fetch_node_by_node_id($subnode->node_id);
+        my $duptag = $refetched_cluster->find_node_by_node_id($subnode->node_id)->get_tagvalue('Duplication');
+        my $ottag = $refetched_cluster->find_node_by_node_id($subnode->node_id)->get_tagvalue('Duplication_alg');
+        $ottag = 1 if ($ottag =~ /species_count/);
+        $ottag = 0 if ($ottag eq '');
+        print OUTFILE $topology_matches, ",", $subnode->subroot->node_id,",", $subnode->node_id,",", $duptag, "," ,$ottag, "\n";
+      }
+    }
+  }
+}
+#topolmis end
+
+sub compare_topology {
+  my $gene_tree = shift;
+  my $species_tree = shift;
+  my $topology_matches = 0;
+
+  my ($g_child_a, $g_child_b) = @{$gene_tree->children};
+  my @g_gdb_a_tmp = map {$_->node_id} @{$g_child_a->get_all_leaves};
+  my @g_gdb_b_tmp = map {$_->node_id} @{$g_child_b->get_all_leaves};
+  my %g_seen = ();  my @g_gdb_a = grep { ! $g_seen{$_} ++ } @g_gdb_a_tmp;
+     %g_seen = ();  my @g_gdb_b = grep { ! $g_seen{$_} ++ } @g_gdb_b_tmp;
+  my ($s_child_a, $s_child_b) = @{$species_tree->children};
+  my @s_gdb_a_tmp = map {$_->node_id} @{$s_child_a->get_all_leaves};
+  my @s_gdb_b_tmp = map {$_->node_id} @{$s_child_b->get_all_leaves};
+  my %s_seen = ();  my @s_gdb_a = grep { ! $s_seen{$_} ++ } @s_gdb_a_tmp;
+     %s_seen = ();  my @s_gdb_b = grep { ! $s_seen{$_} ++ } @s_gdb_b_tmp;
+
+  # straight
+  my @isect_a = my @diff_a = my @union_a = (); my %count_a;
+  foreach my $e (@g_gdb_a, @s_gdb_a) { $count_a{$e}++ }
+  foreach my $e (keys %count_a) { push(@union_a, $e); push @{ $count_a{$e} == 2 ? \@isect_a : \@diff_a }, $e; }
+  my @isect_b = my @diff_b = my @union_b = (); my %count_b;
+  foreach my $e (@g_gdb_b, @s_gdb_b) { $count_b{$e}++ }
+  foreach my $e (keys %count_b) { push(@union_b, $e); push @{ $count_b{$e} == 2 ? \@isect_b : \@diff_b }, $e; }
+  # crossed
+  my @isect_ax = my @diff_ax = my @union_ax = (); my %count_ax;
+  foreach my $e (@g_gdb_a, @s_gdb_b) { $count_ax{$e}++ }
+  foreach my $e (keys %count_ax) { push(@union_ax, $e); push @{ $count_ax{$e} == 2 ? \@isect_ax : \@diff_ax }, $e; }
+  my @isect_bx = my @diff_bx = my @union_bx = (); my %count_bx;
+  foreach my $e (@g_gdb_b, @s_gdb_a) { $count_bx{$e}++ }
+  foreach my $e (keys %count_bx) { push(@union_bx, $e); push @{ $count_bx{$e} == 2 ? \@isect_bx : \@diff_bx }, $e; }
+
+  if ((0==scalar(@diff_a) && 0==scalar(@diff_b)) || (0==scalar(@diff_ax) && 0==scalar(@diff_bx))) {
+    $topology_matches = 1;
+  }
+  return $topology_matches;
+}
+
+sub mark_for_topology_inspection {
+  my $node = shift;
+  my $nodes_to_inspect = 0;
+  my ($child_a, $child_b) = @{$node->children};
+  my @gdb_a_tmp = map {$_->genome_db_id} @{$child_a->get_all_leaves};
+  my @gdb_b_tmp = map {$_->genome_db_id} @{$child_b->get_all_leaves};
+  my %seen = ();  my @gdb_a = grep { ! $seen{$_} ++ } @gdb_a_tmp;
+     %seen = ();  my @gdb_b = grep { ! $seen{$_} ++ } @gdb_b_tmp;
+  my @isect = my @diff = my @union = (); my %count;
+  foreach my $e (@gdb_a, @gdb_b) { $count{$e}++ }
+  foreach my $e (keys %count) { push(@union, $e); push @{ $count{$e} == 2 ? \@isect : \@diff }, $e; }
+  if (0 == scalar(@isect)) {
+    $node->add_tag('_inspect_topology','1'); $nodes_to_inspect++;
+  }
+  $nodes_to_inspect += mark_for_topology_inspection($child_a) if (scalar(@gdb_a)>2);
+  $nodes_to_inspect += mark_for_topology_inspection($child_b) if (scalar(@gdb_b)>2);
+  return $nodes_to_inspect;
+}
+
+
+sub check_multifurcation {
+  my $self = shift;
+  my $treeDBA = $self->{'comparaDBA'}->get_ProteinTreeAdaptor;
+  my $clusterset = $treeDBA->fetch_node_by_node_id($self->{'clusterset_id'});
+  my $cluster_count;
+  foreach my $cluster (@{$clusterset->children}) {
+    $cluster_count++;
+    foreach my $subnode ($cluster->get_all_subnodes) {
+      my $child_count = scalar(@{$subnode->children});
+      print "multifurcation node_id\n", $cluster->node_id, if ($child_count > 2);
+      my $verbose_string = sprintf "[%5d trees done]\n", $cluster_count;
+      print STDERR $verbose_string if ($self->{'verbose'} && ($cluster_count % $self->{'verbose'} == 0));
+    }
+  }
+}
+
+sub analyzePattern
+{
+  my $self = shift;
+  my $species_list_as_in_tree = $self->{species_list} || "22,10,21,23,3,14,15,19,11,16,9,13,4,18,5,24,12,7,17";
+  my @species_list_as_in_tree = split("\,",$species_list_as_in_tree);
+  #        my $species_list = [3,4,5,7,9,10,11,12,13,14,15,16,17,18,19,21,22,23,24];
+  
+  printf("analyzePattern root_id: %d\n", $self->{'clusterset_id'});
+  
+  my $treeDBA = $self->{'comparaDBA'}->get_ProteinTreeAdaptor;
+  my $clusterset = $treeDBA->fetch_node_by_node_id($self->{'clusterset_id'});
+
+  #printf("%d clusters\n", $clusterset->get_child_count);
+  
+  my $pretty_cluster_count=0;
+  my $outfile = "analyzePattern.". $self->{'clusterset_id'} . ".txt";
+  open OUTFILE, ">$outfile" or die "error opening outfile: $!\n";
+  my $badgenes = "analyzePattern.". $self->{'clusterset_id'} . ".strangepatterns" . ".txt";
+  open BADGENES, ">$badgenes" or die "error opening outfile: $!\n" if ($self->{'badgenes'});
+  #  printf(OUTFILE "%7s, %10s, %10s, %7s", "node_id", "members", "has_gdb_dups", "time");
+  printf(OUTFILE "%7s, %7s, %7s, %7s, %10s, %8s, %9s", "node_id", "members", "nodes", "species", "has_gdb_dups", "duptags", "time");
+  foreach my $species (@species_list_as_in_tree) {
+    printf(OUTFILE ", %2d", $species);
+  }
+  printf(OUTFILE "\n");
+  my $cluster_count;
+  foreach my $cluster (@{$clusterset->children}) {
+    my %member_totals;
+    $cluster_count++;
+    my $verbose_string = sprintf "[%5d trees done]\n", $cluster_count;
+    print STDERR $verbose_string if ($self->{'verbose'} &&  ($cluster_count % $self->{'verbose'} == 0));
+    my $starttime = time();
+    $treeDBA->fetch_subtree_under_node($cluster);
+    
+    my $member_list = $cluster->get_all_leaves;
+    my %member_gdb_hash;
+    my $has_gdb_dups=0;
+
+    my (@duptags) = map {$_->get_tagvalue("Duplication")} $cluster->get_all_subnodes;
+    push @duptags, $cluster->get_tagvalue("Duplication");
+    my $duptags;
+    foreach my $duptag (@duptags) {
+      $duptags++ if (0 != $duptag);
+    }
+
+    foreach my $member (@{$member_list}) {
+      $has_gdb_dups=1 if($member_gdb_hash{$member->genome_db_id});
+      $member_gdb_hash{$member->genome_db_id} = 1;
+      #$member_totals{$member->genome_db_id}{$member->node_id} = scalar(@{$member_list});
+      $member_totals{$member->genome_db_id}++;
+    }
+    my $species_count = (scalar(keys %member_gdb_hash));
+    #     printf("%7d, %10d, %10d, %10.3f\n", $cluster->node_id, scalar(@{$member_list}), $has_gdb_dups, (time()-$starttime));
+    printf(OUTFILE "%7d, %7d, %7d, %7d, %10d, %10d, %10.3f", $cluster->node_id, scalar(@{$member_list}), scalar(@duptags), $species_count, $has_gdb_dups, $duptags, (time()-$starttime));
+    #print the patterns
+    foreach my $species (@species_list_as_in_tree) {
+      my $value = 0;
+      $value = $member_totals{$species} if ($member_totals{$species});
+      printf(OUTFILE ", %2d", $value);
+    }
+    print OUTFILE "\n";
+
+    $pretty_cluster_count++ unless($has_gdb_dups);
+    #badgenes
+    if ($self->{'badgenes'}) {
+      my $max = 0; my $min = 999; my $mean_num;
+      foreach my $species (keys %member_totals) {
+        $max = $member_totals{$species} if ($member_totals{$species}>$max);
+        $min = $member_totals{$species} if ($member_totals{$species}<$min);
+        $mean_num += $member_totals{$species};
+      }
+      my $mean = $mean_num/$species_count;
+      next unless ($max >= 10);
+      next unless ($max > (3*$mean));
+      # get number of "Un" genes
+      printf(BADGENES "%7d, %7d, %7d, %10d, %10.3f", $cluster->node_id, scalar(@{$member_list}), $species_count, $has_gdb_dups, (time()-$starttime));
+      print BADGENES "\n";
+    }
+    ### badgenes
+
+  }
+  printf("%d clusters without duplicates (%d total)\n", $pretty_cluster_count, $cluster_count);
+  close OUTFILE;
+}
 
 sub analyzeClusters
 {
   my $self = shift;
+  my $species_list = [3,4,5,7,9,10,11,12,13,14,15,16,17,18,19,21,22,23,24];
   
   printf("analyzeClusters root_id: %d\n", $self->{'clusterset_id'});
   
@@ -569,7 +912,14 @@ sub analyzeClusters
   printf("%d clusters\n", $clusterset->get_child_count);  
   
   my $pretty_cluster_count=0;
-  printf("%7s, %10s, %10s, %7s\n", "node_id", "members", "has_gdb_dups", "time");
+  my $outfile = "analyzeClusters.". $self->{'clusterset_id'} . ".txt";
+  open OUTFILE, ">$outfile" or die "error opening outfile: $!\n";
+  printf(OUTFILE "%7s, %10s, %10s, %7s", "node_id", "members", "has_gdb_dups", "time");
+  foreach my $species (sort {$a <=> $b} @{$species_list}) {
+    printf(OUTFILE ", %2d", $species);
+  }
+  printf(OUTFILE "\n");
+#   my %member_totals;
   foreach my $cluster (@{$clusterset->children}) {
     my $starttime = time();
     $treeDBA->fetch_subtree_under_node($cluster);
@@ -580,20 +930,35 @@ sub analyzeClusters
     foreach my $member (@{$member_list}) {
       $has_gdb_dups=1 if($member_gdb_hash{$member->genome_db_id});
       $member_gdb_hash{$member->genome_db_id} = 1;
+#       $member_totals{$member->genome_db_id}{$member->node_id} = scalar(@{$member_list});
     }
-    printf("%7d, %10d, %10d, %10.3f\n", $cluster->node_id, scalar(@{$member_list}), $has_gdb_dups, (time()-$starttime));
+#     printf("%7d, %10d, %10d, %10.3f\n", $cluster->node_id, scalar(@{$member_list}), $has_gdb_dups, (time()-$starttime));
+    printf(OUTFILE "%7d, %10d, %10d, %10.3f", $cluster->node_id, scalar(@{$member_list}), $has_gdb_dups, (time()-$starttime));
+    foreach my $species (sort {$a <=> $b} @{$species_list}) {
+      my $value = 0;
+      $value = 1 if $member_gdb_hash{$species};
+      printf(OUTFILE ", %2d", $value);
+    }
+    print OUTFILE "\n";
     $pretty_cluster_count++ unless($has_gdb_dups);
   }
-  print("%d clusters without duplicates (%d total)\n", $pretty_cluster_count, $clusterset->get_child_count);
-    
+#   foreach my $species (keys %member_totals) {
+#     print "$species,", scalar keys %{$member_totals{$species}}, "\n";
+#   }
+  printf("%d clusters without duplicates (%d total)\n", $pretty_cluster_count, $clusterset->get_child_count);
+  close OUTFILE;
 }
+
 
 
 sub analyzeClusters2
 {
   my $self = shift;
-  #my $species_list = [1,2,3,4,9,11,13,14,16];
-  my $species_list = [1,2,3,14];
+  # this list should be ok for ensembl_38
+  # use mysql> select genome_db_id,name from genome_db order by genome_db_id;
+  # to check gdb ids
+  my $species_list = [3,4,5,7,9,10,11,12,13,14,15,16,17,18,19,21,22,23,24];
+  #my $species_list = [1,2,3,14];
   
   $self->{'member_LSD_hash'} = {};
   $self->{'gdb_member_hash'} = {};
@@ -880,14 +1245,15 @@ sub test_rosette_matches_species_tree
     next if($node->is_leaf);
     my $topo_set = $node->copy->flatten_tree;
     #$topo_set->print_tree;
-    $gene_topo_sets->add_child($topo_set); 
+    $gene_topo_sets->add_child($topo_set);
   }
   
   #print("BUILD TAXON topology sets\n");
   my $taxon_topo_sets = new Bio::EnsEMBL::Compara::NestedSet;
   foreach my $node ($species_tree->get_all_subnodes) {
     next if($node->is_leaf);
-    my $topo_set = $node->copy->flatten_tree;
+#    my $topo_set = $node->copy->flatten_tree;
+    my $topo_set = $node->flatten_tree;
     #$topo_set->print_tree;
     $taxon_topo_sets->add_child($topo_set);
   }
@@ -987,8 +1353,8 @@ sub balance_tree
   # get a link
   my ($link) = @{$node->links};  
   $link = Bio::EnsEMBL::Compara::Graph::Algorithms::find_balanced_link($link);
-  print("balanced link is\n    ");
-  $link->print_link;
+#  print("balanced link is\n    ");
+#  $link->print_link;
   my $root = Bio::EnsEMBL::Compara::Graph::Algorithms::root_tree_on_link($link);
   #$root->print_tree($self->{'scale'});
 
@@ -1000,71 +1366,296 @@ sub balance_tree
   $self->{'tree'}->merge_children($root);
 }
 
-sub treefam_compare
+# sub treefam_compare
+# {
+#   my $self = shift;
+#   my $treefam_entry = '';
+#   my $treefam_nhx = '';
+#   my $oneTonebigtrees = 0;
+#   my $outfile = $self->{treefam_file};
+#   $outfile .= ".gp.txt";
+#   open OUTFILE, ">$outfile" or die "couldnt open outfile: $!\n" if ($self->{'test'});
+#   print OUTFILE "tree_type,tree_id,gpair_link,type,sub_type\n" if ($self->{'test'});
+#   print("load from file ", $self->{'treefam_file'}, "\n") if $self->{'debug'};
+#   open (FH, $self->{'treefam_file'}) or die("Could not open treefam_nhx file [$self->{'treefam_file'}]");
+#   while(<FH>) {
+#     $treefam_entry .= $_;
+#     next unless $treefam_entry =~ /;/;
+#     my ($treefamid, $treefam_nhx) = split ("\t",$treefam_entry);
+#     $treefam_entry = '';
+#     my $tf = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($treefam_nhx);
+#     next unless (defined $tf);
+#     my %treeid_shared;
+#     my %differ_leaves;
+#     my %gsid_names;
+#     my @shared;
+#     my @differ;
+#     my @leaves = @{$tf->get_all_leaves};
+#     my $gt;
+#     my $gt_node_id;
+#     # recalling a genetree for each leaf of treefam tree
+#     foreach my $leaf (@leaves) {
+#       my $leaf_name = $leaf->name;
+#       # treefam uses G NHX tag for genename
+#       my $genename = $leaf->get_tagvalue('G');
+#       next if (0==length($genename)); #for weird pseudoleaf tags with no gene name
+#       if (fetch_protein_tree_with_gene($self, $genename)) {
+#         $gt = $self->{'tree'}; 
+#         $gt_node_id = $self->{'tree'}->node_id;
+#        $treeid_shared{$self->{'tree'}->node_id} += 1;
+#         push @shared, $genename;
+#         $gsid_names{$leaf_name} = $genename;
+#       } else {
+#         push @differ, $leaf_name;
+#         $differ_leaves{$leaf_name} = 1;
+#       }
+#     }
+#     my $num_shared = scalar(@shared);
+#     my $num_differ = scalar(@differ);
+#     my $num_treeid_shared = scalar(keys %treeid_shared);
+#     my $coef_shar;
+#     eval { $coef_shar = $num_shared/($num_shared+$num_differ); }; $coef_shar = 0 if $@;
+#     print "$treefamid,shared,$num_shared,",$coef_shar,"\n" unless ($self->{'test'});
+#     print "$treefamid,treeids,"
+#       ,join ":", keys %treeid_shared,
+#         ,",$num_treeid_shared\n" unless ($self->{'test'});
+#     foreach my $elem (keys %treeid_shared) {
+#       print "$treefamid,$elem,$treeid_shared{$elem},$num_treeid_shared\n" unless ($self->{'test'});
+#     }
+#     print "differ,$num_differ,",$num_differ/($num_shared+$num_differ),"\n" if $self->{'debug'};
+    
+#     # Rename shared leaves of the treefam tree to gsids
+#     foreach my $leaf (@{$tf->get_all_leaves}) {
+#       unless (defined $differ_leaves{$leaf->name}) {
+#         $leaf->name($gsid_names{$leaf->name});
+#       }
+#     }
+    
+#     # Only the shared leaves of the tree are kept. Renamed to gsids
+#     my %rev_gsid_names = reverse %gsid_names;
+#     if (1 == $num_treeid_shared) {
+#       $oneTonebigtrees++ if (1000 < scalar(@{$self->{'tree'}->get_all_leaves}));
+#       next if (200 < scalar(@{$self->{'tree'}->get_all_leaves})); #avoid huge trees
+#       foreach my $leaf (@{$self->{'tree'}->get_all_leaves}) {
+#         my $description = $leaf->description;
+#         $description =~ /Gene\:(\S+)/;
+#         my $desc_gsid = $1;
+#         if (defined $rev_gsid_names{$desc_gsid}) {
+#           # keep it renaming to geneid
+#           $leaf->name($desc_gsid);
+#         }
+#       }
+#       my $to_keep = join(",", keys %rev_gsid_names);
+#       $self->{'keep_leaves'} = $to_keep;
+#       keep_leaves($self);
+#       $self->{_treefam} = 0;
+#       my %leaf_to_member;
+#       my %leaf_to_genome_db_id;
+#       #my %leaf_to_adaptor;
+#       foreach my $leaf (@{$self->{'tree'}->get_all_leaves}) {
+#         $leaf_to_member{$leaf->name} = $leaf->member_id;
+#         $leaf_to_genome_db_id{$leaf->name} = $leaf->genome_db_id;
+#       }
+#       run_orthotree($self) if ($self->{'test'});
+#       $self->{'dump'} = "tf_"."$gt_node_id"."_"."$treefamid";
+#       my $gt_lc = scalar(@{$self->{'tree'}->get_all_leaves});
+#       $tf->node_id($self->{'tree'}->node_id);
+#       dumpTreeAsNewick($self, $self->{'tree'}) unless ($self->{'test'});
+#       # stuffing treefam tree into $self->{'tree'} -- caution
+#       $gt = $self->{'tree'};
+#       $self->{'tree'} = $tf;
+#       $self->{'keep_leaves'} = $to_keep;
+#       # first round
+#       # With the rooting it should be ok
+#       my $tf_root = new Bio::EnsEMBL::Compara::NestedSet;
+#       $tf_root->add_child($tf->root, 0.0);
+#       keep_leaves($self);
+#       foreach my $leaf (@{$self->{'tree'}->get_all_leaves}) {
+#         my $name = $leaf->name;
+#         bless $leaf, "Bio::EnsEMBL::Compara::AlignedMember";
+#         $leaf->name($name);
+#         $leaf->{'_dbID'} = $leaf_to_member{$name};
+#         $leaf->{'_genome_db_id'} = $leaf_to_genome_db_id{$name};
+#       }
+#       $tf = $self->{'tree'};
+#       $self->{_treefam} = $treefamid;
+#       run_orthotree($self) if ($self->{'test'});
+#       print OUTFILE $self->{_gpresults}; $self->{_gpresults} = '';
+#       my $tf_lc = scalar(@{$self->{'tree'}->get_all_leaves});
+#       # second round may be necessary for cleaning extra anonymous close-to-root leaves in tf
+#       $self->{'dump'} = "tf_"."$gt_node_id"."_"."$treefamid";
+#       print STDERR "gt leaves ", $gt_lc,"\n" unless $self->{'test'};
+#       print STDERR "tf leaves ", $tf_lc,"\n" unless $self->{'test'};
+#       dumpTreeAsNewick($self, $self->{'tree'}) unless ($self->{'test'});
+#       1;
+#     }
+#   }
+#   print STDERR "bigtrees (200 limit) with one-one gt-tf = $oneTonebigtrees\n";
+#   $self->{'tree'} = 0;
+#   $self->{'protein_tree'} = 0;
+# }
+
+sub treefam_compare2
 {
   my $self = shift;
   my $treefam_entry = '';
   my $treefam_nhx = '';
+  my $oneTonebigtrees = 0;
+  my $outfile = $self->{treefam_file};
+  $outfile .= ".gp.txt";
+  my $io = new Bio::Root::IO();my ($tmpfilefh,$tempfile) = $io->tempfile(-dir => "/tmp");
+  #  open OUTFILE, ">$outfile" or die "couldnt open outfile: $!\n" if ($self->{'test'});
+  print $tmpfilefh "tree_type,tree_id,gpair_link,type,sub_type\n" if ($self->{'test'});
   print("load from file ", $self->{'treefam_file'}, "\n") if $self->{'debug'};
   open (FH, $self->{'treefam_file'}) or die("Could not open treefam_nhx file [$self->{'treefam_file'}]");
-  my $tree_counter=0;
-  print "tree,type,v1,v2\n";
+  my $cluster_count = 0;
   while(<FH>) {
-      $treefam_entry .= $_;
-      next unless $treefam_entry =~ /;/;
-      my ($treefamid, $treefam_nhx) = split ("\t",$treefam_entry);
-      #printf("newick string: $treefam_nhx\n") if $self->{'debug'};
-      my $treefam_tree = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($treefam_nhx);
-      $tree_counter++;
-      my @shared;
-      my %treeid_shared = ();
-      my @differ;
-      my @leaves = @{$treefam_tree->get_all_leaves};
+    $treefam_entry .= $_;
+    next unless $treefam_entry =~ /;/;
+    my ($treefamid, $treefam_nhx) = split ("\t",$treefam_entry);
+    $treefam_entry = '';
+    my $tf = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($treefam_nhx);
+    $cluster_count++;
+    my $verbose_string = sprintf "[%5d trees done]\n", $cluster_count;
+    print STDERR $verbose_string if ($self->{'verbose'} &&  ($cluster_count % $self->{'verbose'} == 0));
+    next unless (defined $tf);
+    my %differ_leaves;
+    my %gsid_names;
+    my @shared;
+    my @differ;
+    my $gt;
+    my %treeid_shared;
+    my %tf_gt_map;
+    my %tf_gt_keepleaves;
+    my $gt_node_id;
+    my @gt_genenames;
+    my @tf_genenames;
+
+    # recalling a genetree for each leaf of treefam tree
+    my @leaves = @{$tf->get_all_leaves};
+    foreach my $leaf (@leaves) {
+      my $genename = $leaf->get_tagvalue('G');
+      push @tf_genenames, $genename unless (0 == length($genename));
+    }
+    foreach my $leaf (@leaves) {
+      my $leaf_name = $leaf->name;
+      # treefam uses G NHX tag for genename
+      my $genename = $leaf->get_tagvalue('G');
+      next if (0==length($genename)); #for weird pseudoleaf tags with no gene name
+      $leaf->name($genename);
+      if (fetch_protein_tree_with_gene($self, $genename)) {
+        $gt = $self->{'tree'};
+        @gt_genenames = ();
+        foreach my $leaf (@{$self->{'tree'}->get_all_leaves}) {
+          my $description = $leaf->description;
+          $description =~ /Gene\:(\S+)/;
+          push @gt_genenames, $1;
+        }
+        $gt_node_id = $self->{'tree'}->node_id;
+        $treeid_shared{$self->{'tree'}->node_id} += 1;
+        push @shared, $genename;
+        $tf_gt_map{$treefamid}{$gt_node_id} = 1;
+        ##
+        my @isect = my @diff = my @union = ();
+        my %count;
+        foreach my $e (@tf_genenames, @gt_genenames) { $count{$e}++ }
+        foreach my $e (keys %count) {
+          push(@union, $e);
+          push @{ $count{$e} == 2 ? \@isect : \@diff }, $e;
+        }
+        ##
+        my $to_keep = join(",", @isect);
+        $tf_gt_keepleaves{$treefamid}{$gt_node_id} = $to_keep;
+        $gsid_names{$gt_node_id}{$leaf_name} = $genename;
+      } else {
+        $differ_leaves{$leaf_name} = 1;
+      }
+    }
+
+    foreach my $treeid (keys %{$tf_gt_map{$treefamid}}) {
+      my $treeDBA = $self->{'comparaDBA'}->get_ProteinTreeAdaptor;
+      $self->{'tree'} = $treeDBA->fetch_node_by_node_id($treeid);
+      $gt = $self->{'tree'};
+
+      my $incomparison_tf = 
+        Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($treefam_nhx);
+      # Only the shared leaves of the tree are kept. Renamed to gsids
+      #$oneTonebigtrees++ if (2000 < scalar(@{$self->{'tree'}->get_all_leaves}));
+      next if (2000 < scalar(@{$self->{'tree'}->get_all_leaves})); #avoid huge trees
+      foreach my $leaf (@{$self->{'tree'}->get_all_leaves}) {
+        my $description = $leaf->description;
+        $description =~ /Gene\:(\S+)/;
+        my $desc_gsid = $1;
+        $leaf->name($desc_gsid) unless (0 == length($desc_gsid));
+      }
+      $self->{'keep_leaves'} = $tf_gt_keepleaves{$treefamid}{$treeid};
+      keep_leaves($self);
+      $self->{_treefam} = 0;
+      my %leaf_to_member;
+      my %leaf_to_genome_db_id;
+      #my %leaf_to_adaptor;
+      foreach my $leaf (@{$self->{'tree'}->get_all_leaves}) {
+        $leaf_to_member{$leaf->name} = $leaf->member_id;
+        $leaf_to_genome_db_id{$leaf->name} = $leaf->genome_db_id;
+      }
+      $self->{_gpresults} = '';
+      run_orthotree($self) if ($self->{'test'});
+      my $gt_lc = scalar(@{$self->{'tree'}->get_all_leaves});
+      $incomparison_tf->node_id($self->{'tree'}->node_id);
+      dumpTreeAsNewick($self, $self->{'tree'}) unless ($self->{'test'});
+      # stuffing treefam tree into $self->{'tree'} -- caution
+      $gt = $self->{'tree'};
+      @leaves = @{$incomparison_tf->get_all_leaves};
       foreach my $leaf (@leaves) {
-          my $leaf_name = $leaf->name;
-          # treefam uses G NHX tag for genename
-          my $genename = $leaf->get_tagvalue('G');
-          next if (0==length($genename)); #for weird pseudoleaf tags with no gene name
-          if (fetch_protein_tree_with_gene($self, $genename)) {
-#          print STDERR "leaf_name_treefam isshared: ",$genename, "\t", $leaf_name,"\n";
-              $treeid_shared{$self->{'tree'}->node_id} += 1;
-              push @shared, $genename;
-          } else {
-#          print STDERR "leaf_name_treefam notfound: ",$genename, "\t", $leaf_name,"\n";
-              push @differ, $genename;
-          }
+        my $genename = $leaf->get_tagvalue('G');
+        next if (0==length($genename)); #for weird pseudoleaf tags with no gene name
+        $leaf->name($genename);
       }
-      my $num_shared = scalar(@shared);
-      my $num_differ = scalar(@differ);
-      my $num_treeid_shared = scalar(keys %treeid_shared);
-      # print "tree,type,v1,v2\n";
-      my $perc;
-      eval { $perc = $num_shared/($num_shared+$num_differ); }; $perc = 0 if $@;
-      print "$treefamid,shared,$num_shared,",$perc,"\n";
-      print "$treefamid,treeids,"
-          ,join ":", keys %treeid_shared,
-          ,",$num_treeid_shared\n";
-      foreach my $elem (keys %treeid_shared) {
-          print "$treefamid,$elem,$treeid_shared{$elem},$num_treeid_shared\n";
+      $self->{'tree'} = $incomparison_tf;
+      $self->{'keep_leaves'} = $tf_gt_keepleaves{$treefamid}{$treeid};
+      # first round
+      # With the rooting it should be ok
+      my $tf_root = new Bio::EnsEMBL::Compara::NestedSet;
+      $tf_root->add_child($tf->root, 0.0);
+      keep_leaves($self);
+      foreach my $leaf (@{$self->{'tree'}->get_all_leaves}) {
+        my $name = $leaf->name;
+        bless $leaf, "Bio::EnsEMBL::Compara::AlignedMember";
+        $leaf->name($name);
+        $leaf->{'_dbID'} = $leaf_to_member{$name};
+        $leaf->{'_genome_db_id'} = $leaf_to_genome_db_id{$name};
       }
-      print "differ,$num_differ,",$num_differ/($num_shared+$num_differ),"\n" if $self->{'debug'};
-      foreach my $elem (@differ) {
-          print "$elem\n" if $self->{'debug'};
-      }
-      $treefam_entry = '';
-#       eval "require Bio::EnsEMBL::Compara::RunnableDB::OrthoTree qw(get_ancestor_species_hash)";
-#       1;
-#       unless($@) {
-#           $self->Bio::EnsEMBL::Compara::RunnableDB::OrthoTree::run_analysis;
-#       }
-#      $self->{'protein_tree'} = $self->{'tree'};
-#      $self->Bio::EnsEMBL::Compara::RunnableDB::RAP::run_rap;
-#      $self->Bio::EnsEMBL::Compara::RunnableDB::OrthoTree::run_analysis;
+      $tf = $self->{'tree'};
+      $self->{_treefam} = $treefamid;
+      run_orthotree($self) if ($self->{'test'});
+      print $tmpfilefh $self->{_gpresults}; $self->{_gpresults} = '';
+      my $tf_lc = scalar(@{$self->{'tree'}->get_all_leaves});
+      # second round may be necessary for cleaning extra anonymous close-to-root leaves in tf
+      print STDERR "gt leaves ", $gt_lc,"\n" unless $self->{'test'};
+      print STDERR "tf leaves ", $tf_lc,"\n" unless $self->{'test'};
+      dumpTreeAsNewick($self, $self->{'tree'}) unless ($self->{'test'});
+
+      #$self->{'tree'} = 0;
+      #$self->{'tree'}->release_tree;
+    }
+    1;
   }
+  #print STDERR "bigtrees (2000 limit) with one-one gt-tf = $oneTonebigtrees\n";
+  close_and_transfer($tmpfilefh,$outfile,$tempfile);
 }
 
 
-
+sub run_orthotree {
+  my $self = shift;
+  # nasty nasty reblessing hack
+  bless $self, "Bio::EnsEMBL::Compara::RunnableDB::OrthoTree";
+  $self->{'protein_tree'} = $self->{'tree'};
+  if (defined($self->{'_readonly'})) {
+    if ($self->{'_readonly'} == 0) {1;}
+  } else { $self->{'_readonly'} = 1;  }
+  $self->load_species_tree() unless($self->{_treefam}); #load only once
+  $self->Bio::EnsEMBL::Compara::RunnableDB::OrthoTree::_treefam_genepairlink_stats;
+}
 
 sub test7
 {
@@ -1116,3 +1707,20 @@ sub chop_tree
   $node->minimize_node;
 }
 
+sub close_and_transfer {
+  my $tmpfilefh = shift;
+  my $outfile = shift;
+  my $tmpoutfile = shift;
+  close $tmpfilefh;
+  unless(system("lsrcp $tmpoutfile ecs2a:$outfile") == 0) {
+    warn ("warn lsrcp tempfile, $!\n");
+    unless(system("cp $tmpoutfile $outfile") == 0) {
+      warn ("warn cp tempfile, $!\n");
+    }
+  }
+  unless(system("rm -f $tmpoutfile") == 0) {
+    warn ("error deleting tempfile, $!\n");
+  }
+}
+
+1;
