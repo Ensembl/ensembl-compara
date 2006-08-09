@@ -542,6 +542,8 @@ sub getEnsemblMapping {
     } elsif ($base eq 'Protein Sequence') {
 	if ($realm eq 'UniProt') {
 	    $smap = 'uniprot/swissprot_acc';
+	} elsif ($realm eq 'TrEMBL') {
+	    $smap = 'uniprot/sptrembl';
 	} elsif ($realm =~ /Ensembl/) {
 	    $smap = 'ensembl_peptide';
 	}

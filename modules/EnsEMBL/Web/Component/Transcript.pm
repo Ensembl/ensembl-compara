@@ -249,7 +249,7 @@ sub _sort_similarity_links{
     }
    my $text = $display_id;
     (my $A = $externalDB ) =~ s/_predicted//;
-warn ".... $externalDB -- $A ...";
+#warn ".... $externalDB -- $A ...";
     if( $urls and $urls->is_linked( $A ) ) {
       my $link;
       $link = $urls->get_url( $A, $primary_id );
