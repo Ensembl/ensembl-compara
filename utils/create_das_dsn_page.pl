@@ -168,7 +168,7 @@ qq{
     <MAINTAINER email="helpdesk\@ensembl.org" />
     <VERSION uri="latest" created="%s">
       <COORDINATES uri="ensembl_location_chromosome" taxid="%d" source="Chromosome" authority="%s" version="%s" test_range="%s"/>
-      <CAPABILITY type="das1:features" query_uri="http://www.ensembl.org/das/%s/features" />
+      <CAPABILITY type="das1:features" query_uri="http://$SiteDefs::ENSEMBL_SERVERNAME/das/%s/features" />
       $capability
       <PROPERTY name="label" value="ENSEMBL" />
     </VERSION>
