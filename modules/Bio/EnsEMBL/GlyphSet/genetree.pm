@@ -60,12 +60,19 @@ sub _init {
 
 # basic scaling : probably will need some fine tunning
   my $scale = 100;
+
+  if ($max_distance > 10) {
+      $scale = 75;
+  }
+
   if ($max_distance > 100) {
       $scale = 50;
   }
+
+
   $scale *= ($bitmap_length / 600);
 
-#  warn("SCALE : $bitmap_length * $scale * $oldscale * $max_distance");  
+  warn("SCALE : $bitmap_length * $scale * $oldscale * $max_distance");  
   
   my @alignments;
   my %xcs;
