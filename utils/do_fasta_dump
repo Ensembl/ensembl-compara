@@ -769,7 +769,7 @@ sub ssaha_servers {
   info( 1, "Creating cdna ssaha server");
 
   # Prep directories
-  my $ssaha_dir = $DUMPDIR eq $basedir."release-$release" ? $basedir : $DUMPDIR; 
+  my $ssaha_dir = $DUMPDIR eq $basedir."release-$release" ? $basedir : $DUMPDIR."/"; 
   my $dna_dir = $ssaha_dir."ssaha/dna/";
   my $cdna_dir = $ssaha_dir."ssaha/release-$release/";
   utils::Tool::check_dir($cdna_dir);
@@ -793,7 +793,7 @@ sub ssaha_servers {
 
   my @toplevel;
   foreach my $types (keys %$created_files) {
-    next unless $types =~ /toplevel|cdna_all/;
+    next unless $types =~ /toplevel|chromosome|cdna_all/; #toplevel dna matches chr or toplevel
     my $seqio = $created_files->{$types};
     next unless $seqio;
     my $fh = $seqio->file;
@@ -806,9 +806,9 @@ sub ssaha_servers {
     push @toplevel, $fh;
   }
 
-  warn @toplevel;
   return if -e $dna_server; # only when new assembly
-  info (2, "New ssaha dna command: $command $dna_server @toplevel");
+  info (2, "New ssaha dna server created");
+  info (1, "ssaha dna command: $command $dna_server @toplevel");
   system("$command $dna_server @toplevel");
   return;
 }
