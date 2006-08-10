@@ -163,12 +163,14 @@ sub fetch_compara_ncbi_taxa {
 
   #$root = $root->find_node_by_name('Mammalia');
   
-  $root->minimize_tree if($self->{'minimize_tree'});
+  $root = $root->minimize_tree if($self->{'minimize_tree'});
   
   $root->print_tree($self->{'scale'});
   
   my $newick = $root->newick_format;
   print("$newick\n");
+  my $nhx = $root->nhx_format;
+  print("$nhx\n");
 
   $self->{'root'} = $root;
   
@@ -411,6 +413,40 @@ sub dumpTreeAsNewick
 }
 
 
+sub dumpTreeAsNHX 
+{
+  my $self = shift;
+  my $tree = shift;
+  
+  warn("missing tree\n") unless($tree);
+
+  # newick_simple_format is a synonymous of newick_format method
+  my $nhx;
+  if ($self->{'nhx_gene_id'}) {
+    $nhx = $tree->nhx_format("gene_id");
+  } else {
+    $nhx = $tree->nhx_format;
+  }
+
+  if($self->{'dump'}) {
+    my $aln_file = "proteintree_". $tree->node_id;
+    $aln_file =~ s/\/\//\//g;  # converts any // in path to /
+    $aln_file .= ".nhx";
+    
+    # we still call this newick_file as we dont need it for much else
+    $self->{'newick_file'} = $aln_file;
+    
+    open(OUTSEQ, ">$aln_file")
+      or $self->throw("Error opening $aln_file for write");
+  } else {
+    open OUTSEQ, ">&STDOUT";
+  }
+
+  print OUTSEQ "$nhx\n\n";
+  close OUTSEQ;
+}
+
+
 sub drawPStree
 {
   my $self = shift;
@@ -418,6 +454,7 @@ sub drawPStree
   unless($self->{'newick_file'}) {
     $self->{'dump'} = 1;
     dumpTreeAsNewick($self, $self->{'root'});
+    dumpTreeAsNHX($self, $self->{'root'});
   }
   
   my $ps_file = "proteintree_". $self->{'root'}->taxon_id;
