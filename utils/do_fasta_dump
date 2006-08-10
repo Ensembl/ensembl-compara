@@ -131,7 +131,7 @@ if ( $blast_dir !~ /$release/ && $TYPES[0] ne 'pre') {
 
 # Validate DUMPDIR
 our $basedir = "/mysql/dumps/";
-$DUMPDIR   ||= $basedir."release-$release";
+$DUMPDIR   ||= $basedir."release-$release/";
 utils::Tool::check_dir($DUMPDIR);
 
 my %db_names = ( 'ENSEMBL_DB'      => 'core',
