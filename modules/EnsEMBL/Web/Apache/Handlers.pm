@@ -324,7 +324,13 @@ sub transHandler {
     if( $DSN eq 'dsn' ) {
       $path_info = join ('/',@path_segments );
     } else {
-      my( $das_species, $assembly, $type, $subtype ) = split /\./, $DSN;
+# Because assemblies might contain dots themselves - we split DSN on dots
+# the first element will be species, the last - source name, and all the field in the middle are the assembly
+      my @dsn_fields = split /\./, $DSN;
+      my $das_species = shift @dsn_fields;
+      my $type = pop @dsn_fields;
+      my $assembly = join ('.', @dsn_fields);
+
       $command = $path_segments[1];
       my $FN = "/ensemblweb/wwwdev/server/perl/das/$command";
       $das_species = map_alias_to_species( $das_species );
@@ -335,7 +341,6 @@ sub transHandler {
       $r->subprocess_env->{'ENSEMBL_SPECIES' }     = $das_species;
       $r->subprocess_env->{'ENSEMBL_DAS_ASSEMBLY'} = $assembly;
       $r->subprocess_env->{'ENSEMBL_DAS_TYPE'}     = $type;
-      $r->subprocess_env->{'ENSEMBL_DAS_SUBTYPE'}  = $subtype;
       $r->subprocess_env->{'ENSEMBL_SCRIPT'}  = $command;
       my $error_filename = '';
       foreach my $dir ( @PERL_TRANS_DIRS ) {
