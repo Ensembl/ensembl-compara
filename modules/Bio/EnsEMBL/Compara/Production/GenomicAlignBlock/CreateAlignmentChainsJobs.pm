@@ -205,16 +205,18 @@ sub createAlignmentChainsJobs
 
   my $count=0;
 
-  my $sql = "select g2.dnafrag_id from genomic_align g1, genomic_align g2 where g1.method_link_species_set_id = ? and g1.genomic_align_block_id=g2.genomic_align_block_id and g1.dnafrag_id = ? and g2.dnafrag_id != ? group by g2.dnafrag_id";
+  my $sql = "select g2.dnafrag_id from genomic_align g1, genomic_align g2 where g1.method_link_species_set_id = ? and g1.genomic_align_block_id=g2.genomic_align_block_id and g1.dnafrag_id = ? and g1.genomic_align_id != g2.genomic_align_id group by g2.dnafrag_id";
   my $sth = $self->{'comparaDBA'}->dbc->prepare($sql);
 
+  my $reverse_pairs; # used to avoid getting twice the same results for self-comparisons
   foreach my $qy_dna_object (@{$query_dna_list}) {
     my $qy_dnafrag_id = $qy_dna_object->dnafrag->dbID;
-    $sth->execute($self->{'method_link_species_set'}->dbID, $qy_dnafrag_id, $qy_dnafrag_id);
+    $sth->execute($self->{'method_link_species_set'}->dbID, $qy_dnafrag_id);
     my $tg_dnafrag_id;
     $sth->bind_columns(\$tg_dnafrag_id);
     while ($sth->fetch()) {
       next unless (defined $target_dna_hash{$tg_dnafrag_id});
+      next if (defined($reverse_pairs->{$qy_dnafrag_id}->{$tg_dnafrag_id}));
       
       my $input_hash = {};
       $input_hash->{'qyDnaFragID'} = $qy_dnafrag_id;
@@ -225,6 +227,7 @@ sub createAlignmentChainsJobs
       if ($qy_dna_object > $DEFAULT_DUMP_MIN_SIZE) {
         $input_hash->{'target_nib_dir'} = $self->{'target_collection'}->dump_loc;
       }
+      $reverse_pairs->{$tg_dnafrag_id}->{$qy_dnafrag_id} = 1;
 
       my $input_id = main::encode_hash($input_hash);
       #printf("create_job : %s : %s\n", $self->{'pair_aligner'}->logic_name, $input_id);
