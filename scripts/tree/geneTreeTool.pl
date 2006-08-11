@@ -54,7 +54,6 @@ GetOptions('help'             => \$help,
            'port=s'           => \$compara_conf{'-port'},
            'db=s'             => \$compara_conf{'-dbname'},
            'file=s'           => \$self->{'newick_file'},
-           'treefam_file=s'   => \$self->{'treefam_file'},
            'tree_id=i'        => \$self->{'tree_id'},
            'clusterset_id=i'  => \$self->{'clusterset_id'},
            'gene=s'           => \$self->{'gene_stable_id'},
@@ -85,6 +84,7 @@ GetOptions('help'             => \$help,
            'v|verbose=s'      => \$self->{'verbose'},
            'analyze|analyse'  => \$self->{'analyze'},
            'test|_orthotree_treefam'=> \$self->{'_orthotree_treefam'},
+           '_treefam_file=s'   => \$self->{'_treefam_file'},
            '_readonly|readonly=s'       => \$self->{'_readonly'},
            '_pattern|pattern'           => \$self->{'_pattern'},
            '_list_defs|list_defs=s'     => \$self->{'_list_defs'},
@@ -148,7 +148,7 @@ elsif ($self->{'gene_stable_id'} and $self->{'clusterset_id'}) {
 elsif ($self->{'newick_file'}) {
   parse_newick($self);
 }
-elsif ($self->{'treefam_file'}) {
+elsif ($self->{'_treefam_file'}) {
   # internal purposes
   _compare_treefam($self);
   $self->{'keep_leaves'} = 0;
@@ -271,7 +271,7 @@ if (defined($self->{'clusterset_id'}) && $self->{'_check_mfurc'}) {
   exit(0);
 }
 
-if(defined($self->{'clusterset_id'}) && !($self->{'treefam_file'})) {
+if(defined($self->{'clusterset_id'}) && !($self->{'_treefam_file'})) {
   my $treeDBA = $self->{'comparaDBA'}->get_ProteinTreeAdaptor;
   $self->{'clusterset'} = $treeDBA->fetch_node_by_node_id($self->{'clusterset_id'});
 
@@ -1382,14 +1382,14 @@ sub _compare_treefam
   my $self = shift;
   my $treefam_entry = '';
   my $treefam_nhx = '';
-  my $oneTonebigtrees = 0;
-  my $outfile = $self->{treefam_file};
+  #my $oneTonebigtrees = 0;
+  my $outfile = $self->{'_treefam_file'};
   $outfile .= ".gp.txt";
   my $io = new Bio::Root::IO();my ($tmpfilefh,$tempfile) = $io->tempfile(-dir => "/tmp"); #internal purposes
   #  open OUTFILE, ">$outfile" or die "couldnt open outfile: $!\n" if ($self->{'_orthotree_treefam'});
   print $tmpfilefh "tree_type,tree_id,gpair_link,type,sub_type\n" if ($self->{'_orthotree_treefam'});
-  print("load from file ", $self->{'treefam_file'}, "\n") if $self->{'debug'};
-  open (FH, $self->{'treefam_file'}) or die("Could not open treefam_nhx file [$self->{'treefam_file'}]");
+  print("load from file ", $self->{'_treefam_file'}, "\n") if $self->{'debug'};
+  open (FH, $self->{'_treefam_file'}) or die("Could not open treefam_nhx file [$self->{'_treefam_file'}]");
   my $cluster_count = 0;
   while(<FH>) {
     $treefam_entry .= $_;
@@ -1452,6 +1452,11 @@ sub _compare_treefam
       } else {
         $differ_leaves{$leaf_name} = 1;
       }
+    }
+
+    unless (defined($gt)) {
+      # this treefam tree doesnt overlap any of the genetrees
+      $self->{'_tf_nomatch'}{$treefamid} = 1;
     }
 
     foreach my $treeid (keys %{$tf_gt_map{$treefamid}}) {
@@ -1524,6 +1529,17 @@ sub _compare_treefam
   }
   #print STDERR "bigtrees (2000 limit) with one-one gt-tf = $oneTonebigtrees\n";
   _close_and_transfer($tmpfilefh,$outfile,$tempfile);
+
+  # tf_nomatch results
+  my $tf_nomatch_results_string = "";
+  foreach my $treefamid (keys %{$self->{'_tf_nomatch'}}) {
+    $tf_nomatch_results_string .= sprintf("$treefamid, null\n");
+  }
+  $outfile = $self->{'_treefam_file'};
+  $outfile .= "_tf_nomatch.gp.txt";
+  open (TFNOMATCH, ">$outfile") or die "couldnt open outfile: $!\n";
+  print TFNOMATCH "$tf_nomatch_results_string";
+  close TFNOMATCH;
 }
 
 
