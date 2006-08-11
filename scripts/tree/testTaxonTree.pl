@@ -31,6 +31,7 @@ $self->{'outputFasta'} = undef;
 $self->{'noSplitSeqLines'} = undef;
 $self->{'cdna'} = 0;
 $self->{'scale'} = 100;
+$self->{'drawtree'} = 0;
 my $state = 4;
 
 my $conf_file;
@@ -45,6 +46,7 @@ GetOptions('help'        => \$help,
            'reroot=i'    => \$self->{'new_root_id'},
            'align'       => \$self->{'print_align'},
            'cdna'        => \$self->{'cdna'},
+           'draw'        => \$self->{'drawtree'},
            'scale=f'     => \$self->{'scale'},
            'mini'        => \$self->{'minimize_tree'},
            'count'       => \$self->{'stats'},
@@ -162,19 +164,17 @@ sub fetch_compara_ncbi_taxa {
 
 
   #$root = $root->find_node_by_name('Mammalia');
-  
+
   $root = $root->minimize_tree if($self->{'minimize_tree'});
-  
   $root->print_tree($self->{'scale'});
-  
+
   my $newick = $root->newick_format;
   print("$newick\n");
   my $nhx = $root->nhx_format;
   print("$nhx\n");
 
   $self->{'root'} = $root;
-  
-  drawPStree($self);
+  drawPStree($self) if ($self->{'drawtree'});
 }
 
 sub fetch_protein_tree {
