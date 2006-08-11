@@ -55,6 +55,21 @@ my $species_defs = EnsEMBL::Web::SpeciesDefs->new();
 $species_defs || pod2usage("$0: SpeciesDefs config not found");
 
 
+# Sort out dumpdir ----------------------------------------------------------
+my $sitedefs_release =  $SiteDefs::ENSEMBL_VERSION;
+$dumpdir ||= "/mysql/dumps/release-$sitedefs_release";  #should be cluster CDSL "/mysqld/current/var"
+if( $dumpdir !~/^\// ){
+  pod2usage("[*DIE] Must provide the full path to dumpdir: $dumpdir" ) 
+}
+
+# Check species -------------------------------------------------------------
+if ( @SPECIES ) {
+  @SPECIES = @{ utils::Tool::check_species(\@SPECIES) }; 
+} else {
+  @SPECIES = @{ utils::Tool::all_species()};  
+}
+
+
 # Log file -------------------------------------------------------------------
 my $time1 = time;
 
@@ -66,6 +81,9 @@ unless ($no_log) {
   open(STDERR, "> $logfile") || die "Can't create file:$!\n";
 }
 
+info(1, "Dumping data to $dumpdir" );
+
+
 # Web user db conf -----------------------------------------------------------
 my %web_userdb = (
 	   USER => $species_defs->ENSEMBL_USERDB_USER,
@@ -76,24 +94,6 @@ my %web_userdb = (
 	   DRIVER => 'mysql',
 	  );
 
-
-
-
-# Sort out dumpdir ----------------------------------------------------------
-my $sitedefs_release =  $SiteDefs::ENSEMBL_VERSION;
-$dumpdir ||= "/mysql/dumps/release-$sitedefs_release";  #should be cluster CDSL "/mysqld/current/var"
-info(1, "Dumping data to $dumpdir" );
-if( $dumpdir !~/^\// ){
-  pod2usage("[*DIE] Must provide the full path to dumpdir: $dumpdir" ) 
-}
-
-
-# Check species -------------------------------------------------------------
-if ( @SPECIES ) {
-  @SPECIES = @{ utils::Tool::check_species(\@SPECIES) }; 
-} else {
-  @SPECIES = @{ utils::Tool::all_species()};  
-}
 
 foreach my $sp( @SPECIES ){
   # Hard-code all databases _never_ to dump
