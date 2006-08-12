@@ -36,6 +36,7 @@ sub init_label {
 
 
   my $label = new Sanger::Graphics::Glyph::Text({
+    'y' => 0,
     'font'      => $fontname,
     'ptsize'    => $fontsize,
     'height'    => $res[3],

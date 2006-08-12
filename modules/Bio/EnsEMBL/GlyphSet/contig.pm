@@ -261,9 +261,11 @@ sub _init_non_assembled_contig {
     );
     if( $res[0] ) {
       my $tglyph = new Sanger::Graphics::Glyph::Text({
-        'x'          => ($rend + $rstart)/2,
-        'height'     => $h,
-        'y'          => $ystart+4,
+        'x'          => ($rend + $rstart - $res[2]/$pix_per_bp)/2,
+        'height'     => $res[3],
+        'width'      => $res[2]/$pix_per_bp,
+        'textwidth'  => $res[2],
+        'y'          => $ystart+($h-$res[3])/2+2,
         'font'       => $fontname,
         'ptsize'     => $fontsize,
         'colour'     => 'white',

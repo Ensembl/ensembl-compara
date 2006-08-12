@@ -81,7 +81,7 @@ sub _init {
     $Composite3->push( new Sanger::Graphics::Glyph::Text({
       'x'         => $Composite3->{'x'},
       'y'         => $h,
-      'height'    => $th+4,
+      'height'    => $th,
       'width'     => $res[2]/$pix_per_bp,
       'font'      => $fontname,
       'ptsize'    => $fontsize,
@@ -95,7 +95,7 @@ sub _init {
     $Composite3->push( new Sanger::Graphics::Glyph::Text({
       'x'         => $Composite3->{'x'},
       'y'         => $h+2 + $th,
-      'height'    => $th+4,
+      'height'    => $th,
       'width'     => $res[2]/$pix_per_bp,
       'font'      => $fontname,
       'ptsize'    => $fontsize,

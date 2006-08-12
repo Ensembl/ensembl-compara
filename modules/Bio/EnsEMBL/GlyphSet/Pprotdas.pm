@@ -239,12 +239,11 @@ sub _init {
 	# Label - disabled for now
 	if( 0 ){
 	    my $desc = $pfsave->das_feature_label() || $key;
-	    my $text = new Sanger::Graphics::Glyph::Text
-	      ({
+	    my $text = new Sanger::Graphics::Glyph::Text({
 		'font'   => $font,
 		'text'   => $desc,
 		'x'      => $row[0]->start(),
-		'y'      => $h + 1,
+		'y'      => $h,
 		'height' => $fontheight,
 		'width'  => $fontwidth * length($desc),
 		'colour' => $black,

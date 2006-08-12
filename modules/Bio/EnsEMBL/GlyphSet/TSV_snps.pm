@@ -135,10 +135,11 @@ sub _init {
     my $W = ($res[2]+4)/$pix_per_bp;
 
     my $tglyph = new Sanger::Graphics::Glyph::Text({
-      'x'         => $S,
+      'x'         => $S-$res[2]/$pix_per_bp/2,
       'y'         => $height + 3,
       'height'    => $font_h_bp,
-      'width'     => 0,
+      'width'     => $res[2]/$pix_per_bp,
+      'textwidth' => $res[2],
       'font'      => $fontname,
       'ptsize'    => $fontsize,
       'colour'    => 'black',

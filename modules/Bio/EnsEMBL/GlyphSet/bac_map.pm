@@ -105,13 +105,24 @@ sub zmenu {
     qq(02:length: @{[$f->length]} bps)                     => '',
     qq(03:Centre on clone:)                                => $self->href($f),
     };
+    my $emblref = qq(http://www.ebi.ac.uk/cgi-bin/dbfetch?) . $_;
     foreach(@{$f->get_all_attribute_values('embl_acc')}) {
-        $zmenu->{"12:EMBL: $_" } = '';
+        $zmenu->{"12:EMBL: $_" } = $emblref;
     }
     (my $state = $f->get_scalar_attribute('state'))=~s/^\d\d://;
     my $bac_info = ('Interpolated', 'Start located', 'End located', 'Both ends located') [$f->get_scalar_attribute('BACend_flag')];
 
-    $zmenu->{"13:Organisation: @{[$f->get_scalar_attribute('organisation')]}"} = '' if $f->get_scalar_attribute('organisation');
+    $zmenu->{"13:HTGS_phase: @{[$f->get_scalar_attribute('htg')]}"} = '' if $f->get_scalar_attribute('htg');
+    $zmenu->{"13:Remark: @{[$f->get_scalar_attribute('remark')]}" } = '' if $f->get_scalar_attribute('remark');
+
+    $zmenu->{"14:Organisation: @{[$f->get_scalar_attribute('organisation')]}"} = '' if $f->get_scalar_attribute('organisation');
+    if($state =~/Committed|FinishAc|Accessioned/ && $f->get_scalar_attribute('synonym')){
+      my $stateref= qq(http://www.sanger.ac.uk/cgi-bin/humace/clone_status?clone_name=) .$f->get_scalar_attribute('synonym') ;
+      $zmenu->{"16:State: $state"    } = $stateref;
+    } elsif($state) {
+      $zmenu->{"16:State: $state"    } = '';
+    }
+
     $zmenu->{"14:State: $state"                                  } = '' if $state;
     $zmenu->{"15:Seq length: @{[$f->get_scalar_attribute('seq_len')]}"  } = '' if $f->get_scalar_attribute('seq_len');
     $zmenu->{"16:FP length:  @{[$f->get_scalar_attribute('fp_size')]}"  } = '' if $f->get_scalar_attribute('fp_size');

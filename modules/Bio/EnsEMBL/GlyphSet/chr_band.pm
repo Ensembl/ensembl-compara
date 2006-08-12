@@ -100,10 +100,12 @@ sub _init {
   # only add the lable if the box is big enough to hold it...
     if( $res[0] && $stain ne "tip" && $stain ne "acen"){
       my $tglyph = new Sanger::Graphics::Glyph::Text({
-        'x'      => int(($vc_band_end + $vc_band_start)/2),
-        'y'      => 0,
+        'x'      => int(($vc_band_end + $vc_band_start-$res[2]/$pix_per_bp)/2),
+        'y'      => 1,
+        'width'  => $res[2]/$pix_per_bp,
+        'textwidth' => $res[2],
         'font'   => $fontname,
-        'height' => $h + 4,
+        'height' => $h,
         'ptsize' => $fontsize,
         'colour' => $fontcolour,
         'text'   => $res[0],

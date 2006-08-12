@@ -54,7 +54,7 @@ sub _init {
 
    $self->push(new Sanger::Graphics::Glyph::Text({
      'x'          => 1 ,
-     'y'          => 1,
+     'y'          => -1,
      'height'     => $th_o,
      'font'       => $fontname_o,
      'ptsize'     => $fontsize_o,
@@ -82,7 +82,7 @@ sub _init {
     }));
     $self->push(new Sanger::Graphics::Glyph::Text({
       'x'         => ($x * $COL_WIDTH) + $BOX_WIDTH,
-      'y'         => $y * $BOX_HEIGHT * 2 + ( $th_o-$th_i)/2 + 1,
+      'y'         => $y * $BOX_HEIGHT * 2 + ( $th_o-$th_i)/2 - 1,
       'font'      => $fontname_i,
       'ptsize'    => $fontsize_i,
       'height'     => $th_i,

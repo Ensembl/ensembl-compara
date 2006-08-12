@@ -59,18 +59,20 @@ sub _init {
 
     my $S =  ( $snpref->[0]+$snpref->[1] )/2;
     my @res = $self->get_text_width( 0, $aa_change, '', 'font'=>$fontname, 'ptsize' => $fontsize );
-    my $W = ($res[2]+4)/$pix_per_bp;
+    my $W = $res[2]/$pix_per_bp;
     my $tglyph = new Sanger::Graphics::Glyph::Text({
-      'x'         => $S,
-      'y'         => $h + 4,
+      'x'         => $S-$W/2,
+      'y'         => $h+4,
       'height'    => $font_h_bp,
-      'width'     => 0,
+      'width'     => $res[2]/$pix_per_bp,
+      'textwidth' => $res[2],
       'font'      => $fontname,
       'ptsize'    => $fontsize,
       'colour'    => 'black',
       'text'      => $aa_change,
       'absolutey' => 1,
     });
+    $W += 4/$pix_per_bp;
     my $allele =  $snp->allele_string;
     my $chr_start = $snp->start() + $offset;
     my $chr_end   = $snp->end() + $offset;

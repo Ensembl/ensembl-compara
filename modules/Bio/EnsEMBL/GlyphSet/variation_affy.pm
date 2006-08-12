@@ -33,7 +33,7 @@ sub features {
       sort { $a->[0] <=> $b->[0] }
       map  { [ $ct{$_->display_consequence} * 1e9 + $_->start, $_ ] }
       grep { $_->map_weight < 4 } @$vf_ref;
-    if(@vari_features) {
+    if(@vari_features  && !$self->{'config'}->{'variation_legend_features'} ) {
       $self->{'config'}->{'variation_legend_features'}->{'variations'} = { 'priority' => 1000, 'legend' => [] };
     }
   }

@@ -92,6 +92,7 @@ sub _init {
 	if ($key{'syn'}){
 	$self->push(new Sanger::Graphics::Glyph::Rect({
 		'x'        => $x,
+                'y'        => 4,
 		'width'    => $BOX_WIDTH,
 		'height'   => $BOX_HEIGHT,
 		'colour'   =>  $Config->get('Pprot_snp', 'syn'),
@@ -118,6 +119,7 @@ sub _init {
 	if ($key{'snp'}){
 	$self->push(new Sanger::Graphics::Glyph::Rect({
 		'x'        => $x,
+                'y'        => 4,
 		'width'    => $BOX_WIDTH,
 		'height'   => $BOX_HEIGHT,
 		'colour'   =>  $Config->get('Pprot_snp', 'snp'),

@@ -59,7 +59,7 @@ sub _init {
 	my $text = $i * $divs;
 	my $tglyph = new Sanger::Graphics::Glyph::Text({
 	    'x'      	=> $i * $divs,
-	    'y'      	=> 8,
+	    'y'      	=> 6,
 	    'height'	=> $fontheight,
 	    'font'   	=> $fontname,
 	    'ptsize'   	=> $fontsize,
@@ -75,7 +75,7 @@ sub _init {
     my $text = "0";
     my $tglyph = new Sanger::Graphics::Glyph::Text({
 	'x'      	=> 0,
-	'y'      	=> 8,
+	'y'      	=> 6,
 	'height'	=> $fontheight,
         'font'   	=> $fontname,
 	    'ptsize'   	=> $fontsize,
@@ -90,17 +90,23 @@ sub _init {
     $text = $len;
     
     # label last tick
+    my @res = $self->get_text_width( 0, $text,'', 'font'=>$fontname, 'ptsize' => $fontsize );
+    my $tmp_width = $res[2]/$pix_per_bp;
+
     my $endglyph = new Sanger::Graphics::Glyph::Text({
-	'x'      	=> $im_width,
-	'y'      	=> 8,
+	'x'      	=> $im_width-$res[2],
+        'width'         => $res[2],
+        'textwidth'     => $res[2],
+	'y'      	=> 6,
 	'height'	=> $fontheight,
         'font'   	=> $fontname,
-	    'ptsize'   	=> $fontsize,
-            'halign'    => 'right',
+        'ptsize'   	=> $fontsize,
+        'halign'    => 'right',
 
 	'colour' 	=> $feature_colour,
 	'text'   	=> $text,
 	'absolutex'  => 1,
+	'absolutewidth'  => 1,
 	'absolutey' => 1,
     });
     $self->push($endglyph);

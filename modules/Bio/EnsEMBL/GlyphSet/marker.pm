@@ -83,7 +83,7 @@ sub _init {
     my @res = $self->get_text_width( 0, $fid, '', 'font'=>$fontname, 'ptsize' => $fontsize );
     my $glyph = new Sanger::Graphics::Glyph::Text({
       'x'         => $S,
-      'y'         => $row_height + 2,
+      'y'         => $row_height,
       'height'    => $h,
       'width'     => 0,
       'halign'    => 'left',

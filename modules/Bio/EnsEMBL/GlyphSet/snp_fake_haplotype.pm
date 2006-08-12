@@ -271,17 +271,23 @@ sub do_glyphs {
 
   
   if ( ($end-$start + 1) > $res[2]/$pix_per_bp) {
+    if( $res[0] eq 'A' and $res[0] ne $allele_string ) {
+      @res = $self->get_text_width( 0, $allele_string, '', 'font'=>$fontname, 'ptsize' => $fontsize );
+    }
+
+    my $tmp_width = $res[2]/$pix_per_bp;
     my $textglyph = new Sanger::Graphics::Glyph::Text({
-      'x'          => ( $end + $start - 1)/2,
-      'y'          => 2+$offset,
-      'width'      => 0,
+      'x'          => ( $end + $start - 1 - $tmp_width)/2,
+      'y'          => 1+$offset,
+      'width'      => $tmp_width,
+      'textwidth'  => $res[2],
       'height'     => $th,
       'font'       => $fontname,
       'ptsize'     => $fontsize,
       'colour'     => $text_colour || "white",
       'text'       => $allele_string,
       'absolutey'  => 1,
-    }) if $allele_string;
+    }) if $res[0];
     $self->push( $textglyph ) if defined $textglyph;
   }
   return 1;

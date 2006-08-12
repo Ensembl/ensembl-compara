@@ -119,7 +119,7 @@ sub _init {
 
 ## Now we do the rendering of the features...
 
-  my %points = ( '5p' => [ 5, 10 ], '3p' => [ 0, 0 ], '5pr' => [ 5, 10 ], '3pr' => [ 0, 0 ] );
+  my %points = ( '5p' => [ .5, 1 ], '3p' => [ 0, 0 ], '5pr' => [ .5, 1 ], '3pr' => [ 0, 0 ] );
 
   my $seq = $vc->seq();
   my $H=0;
@@ -137,17 +137,20 @@ sub _init {
         'x'    => $start -1 ,
         'y'    => 0,
         'width'  => $end - $start +1 ,
-        'height' => $th_i+4,
+        'height' => $th_i + 2,
         'colour' => $colour,
         'absolutey' => 1,
       }));
       if( $pix_per_bp > $tw_i ) {
         my $O = -1;
         foreach( split //, substr($seq, $start-1, $end-$start+1 ) ) {
+          my @res = $self->get_text_width( $pix_per_bp, $_,'', 'font'=>$FONT_I, 'ptsize' => $FONTSIZE_I );
+          my $tmp_width = $res[2]/$pix_per_bp;
           $Composite->push( new Sanger::Graphics::Glyph::Text({
-            'x'      => $start+$O,
-            'y'      => 2,
-            'width'    => 1,
+            'x'      => $start+0.5+$O- $tmp_width/2,
+            'y'      => 0,
+            'width'    => $tmp_width,
+            'textwidth' => $res[2],
             'height'   => $th_i,
             'font'     => $FONT_I,
             'ptsize'  => $FONTSIZE_I,
@@ -163,8 +166,8 @@ sub _init {
       foreach my $tag ( keys %points ) {
         my $X = $f->{ $tag };
         next if $X eq '';
-        my $h1 = $points{ $tag }[0];
-        my $h2 = $points{ $tag }[1];
+        my $h1 = $points{ $tag }[0] * ($th_i+2);
+        my $h2 = $points{ $tag }[1] * ($th_i+2);
         if( $X < $f->{'start'} ) { ## LH tag
           unless($f->{'start'}<1) {
             if($X<1) { ## DO NOT DRAW DOWN TAG

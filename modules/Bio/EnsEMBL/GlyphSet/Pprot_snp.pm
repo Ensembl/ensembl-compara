@@ -6,7 +6,6 @@ use Bio::EnsEMBL::GlyphSet;
 @ISA = qw(Bio::EnsEMBL::GlyphSet);
 use Sanger::Graphics::Glyph::Rect;
 use Sanger::Graphics::Glyph::Poly;
-use Sanger::Graphics::Glyph::Text;
 use Sanger::Graphics::Bump;
 
 sub init_label {

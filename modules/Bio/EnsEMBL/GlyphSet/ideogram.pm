@@ -203,10 +203,12 @@ sub _init {
    my @res = $self->get_text_width( ($vc_band_end-$vc_band_start)*$pix_per_bp, $bandname, '', 'font'=>$fontname, 'ptsize' => $fontsize );
    if( $res[0] && $stain ne "tip" && $stain ne "acen" && $stain ne 'stalk' ){
       my $tglyph = new Sanger::Graphics::Glyph::Text({
-        'x'      => int(($vc_band_end + $vc_band_start)/2),
-        'y'      => 4,
+        'x'      => int(($vc_band_end + $vc_band_start-$res[2]/$pix_per_bp)/2),
+        'y'      => ($h-$res[3])/2+1,
+        'width'  => $res[2]/$pix_per_bp,
+        'textwidth' => $res[2],
         'font'   => $fontname,
-        'height' => $h+4,
+        'height' => $res[3],
         'ptsize' => $fontsize,
         'colour' => $fontcolour,
         'text'   => $res[0],

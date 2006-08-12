@@ -173,7 +173,7 @@ sub _init {
         if( $last_text_X + $W/$pix_per_bp * 1.5 < $box_start ) {
           $self->push(new Sanger::Graphics::Glyph::Text({
             'x'         => $box_start - $global_start,
-            'y'         => 8,
+            'y'         => 5,
             'height'    => $H,
             'font'      => $fontname,
             'ptsize'    => $fontsize,

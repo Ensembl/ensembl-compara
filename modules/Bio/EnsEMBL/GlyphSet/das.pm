@@ -725,9 +725,10 @@ sub feature_label {
 
     my $y_offset = ($row_height - $self->{'textheight_i'})/2;
     my $tglyph = new Sanger::Graphics::Glyph::Text({
-      'x'          => ( $end + $start - 1)/2,
+      'x'          => ( $end + $start - 1 -$res[2]/$self->{'pix_per_bp'})/2,
       'y'          => $y_offset,
-      'width'      => 0,
+      'width'      => $res[2]/$self->{'pix_per_bp'},
+      'textwidth'  => $res[2],
       'height'     => $self->{'textheight_i'},
       'font'       => $self->{'fontname_i'},
       'ptsize'     => $self->{'fontsize_i'},
@@ -741,7 +742,7 @@ sub feature_label {
   elsif( uc($self->{'extras'}->{'labelflag'}) eq 'U') {	# draw Under feature
     my @res = $self->get_text_width( 0, $text, '', 'font'=>$self->{'fontname_o'}, 'ptsize' => $self->{'fontsize_o'} );
     my $y_offset = ($row_height + $glyph_height)/2;
-    $y_offset += 2; # give a couple of pixels gap under the glyph
+    $y_offset += 1; # give a couple of pixels gap under the glyph
 #warn "$text ............. $start .............. $res[2] / $self->{'pix_per_bp'}" ;
     my $tglyph = new Sanger::Graphics::Glyph::Text({
       'x'          => $start -1,

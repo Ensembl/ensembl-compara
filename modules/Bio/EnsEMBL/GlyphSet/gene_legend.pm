@@ -65,7 +65,7 @@ sub _init {
       }));
       $self->push(new Sanger::Graphics::Glyph::Text({
         'x'         => $im_width * $x/$NO_OF_COLUMNS + $BOX_WIDTH,
-        'y'         => $y * ( $th + 3 ) + 1,
+        'y'         => $y * ( $th + 3 ),
         'height'    => $th,
         'valign'    => 'center',
         'halign'    => 'left',

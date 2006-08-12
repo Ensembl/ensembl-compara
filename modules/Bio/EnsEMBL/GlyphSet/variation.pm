@@ -15,6 +15,7 @@ sub features {
   if( exists( $self->{'config'}->{'snps'} ) ) {
     my $snps = $self->{'config'}->{'snps'} || [];
     if(@$snps && !$self->{'config'}->{'variation_legend_features'} ) {
+warn ref($self)."........................";
       $self->{'config'}->{'variation_legend_features'}->{'variations'} = { 'priority' => 1000, 'legend' => [] };
     }
     return $snps;
@@ -26,7 +27,8 @@ sub features {
       sort { $a->[0] <=> $b->[0] }
       map  { [ $ct{$_->display_consequence} * 1e9 + $_->start, $_ ] }
       grep { $_->map_weight < 4 } @$vf_ref;
-    if(@vari_features) {
+    if(@vari_features && !$self->{'config'}->{'variation_legend_features'} ) {
+warn "...................".ref($self)."........................";
       $self->{'config'}->{'variation_legend_features'}->{'variations'} = { 'priority' => 1000, 'legend' => [] };
     }
     return \@vari_features;

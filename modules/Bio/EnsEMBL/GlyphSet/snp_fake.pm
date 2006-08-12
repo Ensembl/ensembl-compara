@@ -44,10 +44,14 @@ sub _init {
 	$start = ( $end + $start-$tmp_width )/2;
 	$end =  $start+$tmp_width ;
       }
+      if( $res[0] ne $label ) {
+        @res = $self->get_text_width( ($end-$start+1)*$pix_per_bp, $label,'', 'font'=>$fontname, 'ptsize' => $fontsize );
+      }
       my $textglyph = new Sanger::Graphics::Glyph::Text({
-        'x'          => ( $end + $start - 1 )/2,
+        'x'          => ( $end + $start - 1 - $res[2]/$pix_per_bp)/2,
         'y'          => ($h-$th)/2,
-        'width'      => 0,
+        'width'      => $res[2]/$pix_per_bp,
+        'textwidth'  => $res[2],
         'height'     => $th,
         'font'       => $fontname,
         'ptsize'     => $fontsize,
@@ -58,10 +62,13 @@ sub _init {
       $self->push( $textglyph );
     } elsif( $res[0] eq 'A' && $label =~ /^[-\w](\/[-\w])+$/ ) {
       for (my $i = 0; $i < 3; $i ++ ) {
+        my @res = $self->get_text_width( ($end-$start+1)*$pix_per_bp, $alleles[$i],'', 'font'=>$fontname, 'ptsize' => $fontsize );
+        my $tmp_width = $res[2]/$pix_per_bp;
 	my $textglyph = new Sanger::Graphics::Glyph::Text({
-          'x'          => ( $end + $start - 1 )/2,
+          'x'          => ( $end + $start - 1  - $tmp_width)/2,
           'y'          => 3 + ($th+2) * $i,
-          'width'      => 0,
+          'width'      => $tmp_width,
+          'textwidth'  => $res[2],
           'height'     => $th,
         'font'       => $fontname,
         'ptsize'     => $fontsize,

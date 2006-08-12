@@ -93,9 +93,9 @@ sub _init {
   );
 
   my( $fontname, $fontsize ) = $self->get_font_details( 'innertext' );
-  my($X_1,$X_2,$X_3,$H) = $self->get_text_width(0,'X','','font'=>$fontname,'ptsize'=>$fontsize);
+  my($X_1,$X_2,$W,$H) = $self->get_text_width(0,'X','','font'=>$fontname,'ptsize'=>$fontsize);
 
-  my @common_text = ( 'height' => $H + 2, 'font' => $fontname, 'ptsize' => $fontsize, @common, 'y' => 2 );
+  my @common_text = ( 'height' => $H, 'font' => $fontname, 'ptsize' => $fontsize, @common, 'y' => 0 );
   if( $lefttext ) {
     my($text,$part,$W,$H) = $self->get_text_width( 0, $lefttext, '', @common_text );
     my $start        = $P;
@@ -106,17 +106,17 @@ sub _init {
   }
   if( $centretext ) {
     my($text,$part,$W,$H) = $self->get_text_width( 0, $centretext, '', @common_text );
-    my $start        = $im_width/2;
+    my $start        = ($im_width-$W)/2;
     $self->push( new Sanger::Graphics::Glyph::Text({
-      'x' => $start, 'text' => $centretext, 'halign' => 'center', @common_text
+      'x' => $start, 'text' => $centretext, 'width' => $W, 'halign' => 'center', @common_text, 'textwidth' => $W
     }));
     push @lines, $im_width/2 - $O-$W/2, $im_width/2 + $O+$W/2;
   }
   if( $righttext ) {
     my($text,$part,$W,$H) = $self->get_text_width( 0, $righttext, '', @common_text );
-    my $start        = $im_width - $P;
+    my $start        = $im_width - $P - $W;
     $self->push( new Sanger::Graphics::Glyph::Text({
-      'x' => $start, 'text' => $righttext, 'halign' => 'right', @common_text
+      'x' => $start, 'text' => $righttext, 'halign' => 'right', 'width' => $W,  @common_text, 'textwidth' => $W
     }));
     push @lines, $im_width - $P-$O-$W, $im_width -$P+$O;
   }

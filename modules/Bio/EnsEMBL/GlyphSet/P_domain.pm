@@ -108,7 +108,7 @@ sub _init {
       'halign' => 'left',
       'text'   => $desc,
       'x'      => $row[0]->start(),
-      'y'      => $h + 2,
+      'y'      => $h,
       'height' => $th,
       'width'  => $res[2]/$pix_per_bp,
       'colour' => $colour,

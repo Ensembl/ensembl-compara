@@ -189,7 +189,7 @@ sub _init {
         if( $res[0]) {
         $self->push(new Sanger::Graphics::Glyph::Text({
             'x'         => $box_start - $global_start,
-            'y'         => $yc - 9,
+            'y'         => $yc - $fontheight - 1,
             'height'    => $fontheight,
             'font'      => $fontname,
             'ptsize'    => $fontsize,
