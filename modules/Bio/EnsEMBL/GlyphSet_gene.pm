@@ -189,14 +189,14 @@ sub _init {
          $bump_end = $bitmap_length if ($bump_end > $bitmap_length);
       my $row = & Sanger::Graphics::Bump::bump_row(
          $bump_start, $bump_end, $bitmap_length, \@bitmap );
-      $tglyph->y($tglyph->{'y'} + $row * (2+$H) + 1 + ( $START_ROW * 6 ));
+      $tglyph->y($tglyph->{'y'} + $row * (2+$H) + ($START_ROW-1) * 6);
       $self->push( $tglyph );
     ##################################################
     # Draw little taggy bit to indicate start of gene
     ##################################################
       $self->push( new Sanger::Graphics::Glyph::Rect({
         'x'            => $gr->{'start'}-1,
-        'y'            => $tglyph->y - 1,
+        'y'            => $tglyph->y + 2,
         'width'        => 0,
         'height'       => 4,
         'bordercolour' => $gr->{'col'},
@@ -204,7 +204,7 @@ sub _init {
       }));
       $self->push( new Sanger::Graphics::Glyph::Rect({
         'x'            => $gr->{'start'}-1,
-        'y'            => $tglyph->y - 1 + 4,
+        'y'            => $tglyph->y + 2 + 4,
         'width'        => 3/$pix_per_bp,
         'height'       => 0,
         'bordercolour' => $gr->{'col'},
@@ -212,7 +212,7 @@ sub _init {
       }));
       $self->unshift(new Sanger::Graphics::Glyph::Rect({
         'x'         => $gr->{'start'}-1 - 1/$pix_per_bp,
-        'y'         => $tglyph->y()-1,
+        'y'         => $tglyph->y()+1,
         'width'     => $tglyph->width()  +1 + 2/$pix_per_bp,
         'height'    => $tglyph->height()+2,
         'colour'    => $colours->{'superhi'},

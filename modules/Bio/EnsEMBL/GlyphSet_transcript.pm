@@ -168,7 +168,7 @@ sub compact_init {
           my( $txt, $bit, $w,$th ) = $self->get_text_width( 0, $line, '', 'ptsize' => $fontsize, 'font' => $fontname );
           $Composite->push( new Sanger::Graphics::Glyph::Text({
             'x'         => $Composite->x(),
-            'y'         => $y + $h + $i*($th+1) + 2,
+            'y'         => $y + $h + $i*($th+1),
             'height'    => $th,
             'width'     => $w / $pix_per_bp,
             'font'      => $fontname,
@@ -488,7 +488,7 @@ sub expanded_init {
             my( $txt, $bit, $w,$th ) = $self->get_text_width( 0, $line, '', 'ptsize' => $fontsize, 'font' => $fontname );
             $Composite->push( new Sanger::Graphics::Glyph::Text({
               'x'         => $Composite->x(),
-              'y'         => $y + $h + $i*($th+1) + 2,
+              'y'         => $y + $h + $i*($th+1),
               'height'    => $th,
               'width'     => $w / $pix_per_bp,
               'font'      => $fontname,
@@ -843,7 +843,7 @@ sub as_expanded_init {
 
 			$Composite->push( new Sanger::Graphics::Glyph::Text({
 			    'x'         => $Composite->x(),
-			    'y'         => $y + $h + ($i*$th+1) + 2,
+			    'y'         => $y + $h + $i*($th+1),
             'height'    => $th,
             'width'     => $w / $pix_per_bp,
             'font'      => $fontname,
@@ -947,10 +947,8 @@ sub as_compact_init {
     my @bitmap        = undef;
     my $colours       = $self->colours();
     my %used_colours; 
-    my $fontname      =  $Config->species_defs->ENSEMBL_STYLE->{'GRAPHIC_FONT'}; 
+  my( $fontname, $fontsize ) = $self->get_font_details( 'outertext' );
     my $pix_per_bp    = $Config->transform->{'scalex'};
-    my $_w            = $Config->texthelper->width($fontname) / $pix_per_bp;
-    my $_h            = $Config->texthelper->height($fontname);
     my $bitmap_length = $Config->image_width(); #int($Config->container_width() * $pix_per_bp);
 
     my $strand        = $self->strand();
@@ -1048,27 +1046,30 @@ sub as_compact_init {
 	$Composite->push($Composite2);
 
 	my $bump_height = $h + 2;
-	if( $Config->{'_add_labels'} ) {
-	    if(my $text_label = $self->gene_text_label($gene) ) {
-		my @lines = split "\n", $text_label;
-		$lines[0] = "<- $lines[0]" if $gene_strand < 1;
-		$lines[0] = $lines[0].' ->' if $gene_strand >= 1;
-		for( my $i=0; $i<@lines; $i++ ){
-		    my $line = $lines[$i];
-		    $Composite->push( new Sanger::Graphics::Glyph::Text({
-			'x'         => $Composite->x(),
-			'y'         => $y + $h + ($i*$_h) + 2,
-			'height'    => $_h,
-			'width'     => $_w * length(" $line "),
-			'font'      => $fontname,
-			'colour'    => $colour,
-			'text'      => $line,
-			'absolutey' => 1,
-		    }));
-		    $bump_height += $_h;
-		}
-	    }
-	}
+    if( $Config->{'_add_labels'} ) {
+      if(my $text_label = $self->gene_text_label($gene) ) {
+        my @lines = split "\n", $text_label;
+        $lines[0] = "< $lines[0]" if $strand < 1;
+        $lines[0] = $lines[0].' >' if $strand >= 1;
+        for( my $i=0; $i<@lines; $i++ ){
+          my $line = $lines[$i].' ';
+          my( $txt, $bit, $w,$th ) = $self->get_text_width( 0, $line, '', 'ptsize' => $fontsize, 'font' => $fontname );
+          $Composite->push( new Sanger::Graphics::Glyph::Text({
+            'x'         => $Composite->x(),
+            'y'         => $y + $h + $i*($th+1),
+            'height'    => $th,
+            'width'     => $w / $pix_per_bp,
+            'font'      => $fontname,
+            'ptsize'    => $fontsize,
+            'halign'    => 'left',
+            'colour'    => $colour,
+            'text'      => $line,
+            'absolutey' => 1,
+          }));
+          $bump_height += $th+1;
+        }
+      }
+    }
 
 	########## bump it baby, yeah! bump-nology!
 	my $bump_start = int($Composite->x * $pix_per_bp);

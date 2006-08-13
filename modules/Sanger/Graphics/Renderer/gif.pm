@@ -11,7 +11,7 @@ package Sanger::Graphics::Renderer::gif;
 use strict;
 use Sanger::Graphics::Renderer;
 use GD;
-use GD::Text::Align;
+## use GD::Text::Align;
 # use Math::Bezier;
 use vars qw(@ISA);
 @ISA = qw(Sanger::Graphics::Renderer);
@@ -152,31 +152,39 @@ sub render_Text {
   my $colour = $self->colour($glyph->{'colour'});
     
     ########## Stock GD fonts
+  my $left = $glyph->{'pixelx'};
+  if( $glyph->{'halign'} eq 'right' ) {
+    $left += $glyph->{'pixelwidth'} - $glyph->{'textwidth'};
+  } elsif( $glyph->{'halign'} ne 'left' ) {
+    $left += ($glyph->{'pixelwidth'} - $glyph->{'textwidth'})/2;
+  }
+
   my $font = $glyph->font();
   if($font eq "Tiny") {
-      $self->{'canvas'}->string(gdTinyFont, $glyph->{'pixelx'}, $glyph->{'pixely'}, $glyph->text(), $colour);
+    $self->{'canvas'}->string(gdTinyFont,  $left, $glyph->{'pixely'}, $glyph->text(), $colour);
   } elsif($font eq "Small") {
-    $self->{'canvas'}->string(gdSmallFont, $glyph->{'pixelx'}, $glyph->{'pixely'}, $glyph->text(), $colour);
+    $self->{'canvas'}->string(gdSmallFont, $left, $glyph->{'pixely'}, $glyph->text(), $colour);
   } elsif($font eq "MediumBold") {
-    $self->{'canvas'}->string(gdMediumBoldFont, $glyph->{'pixelx'}, $glyph->{'pixely'}, $glyph->text(), $colour);
+    $self->{'canvas'}->string(gdMediumBoldFont, $left, $glyph->{'pixely'}, $glyph->text(), $colour);
   } elsif($font eq "Large") {
-    $self->{'canvas'}->string(gdLargeFont, $glyph->{'pixelx'}, $glyph->{'pixely'}, $glyph->text(), $colour);
+    $self->{'canvas'}->string(gdLargeFont, $left, $glyph->{'pixely'}, $glyph->text(), $colour);
   } elsif($font eq "Giant") {
-    $self->{'canvas'}->string(gdGiantFont, $glyph->{'pixelx'}, $glyph->{'pixely'}, $glyph->text(), $colour);
+    $self->{'canvas'}->string(gdGiantFont, $left, $glyph->{'pixely'}, $glyph->text(), $colour);
   } elsif($font) {
     ######### If we didn't recognise it already, assume it's a TrueType font
-    my ($cx, $cy)      = $glyph->pixelcentre();
-    my $xpt = $glyph->{'pixelx'} + 
-            ( $glyph->{'halign'} eq 'left' ? 0 : $glyph->{'halign'} eq 'right' ? 1 : 0.5 ) * $glyph->{'pixelwidth'};
-    my $X = GD::Text::Align->new( $self->{'canvas'},
-      'valign' => $glyph->{'valign'} || 'center',
-      'halign' => $glyph->{'halign'} || 'center',
-      'colour' => $colour,
-      'font'   => "$self->{'ttf_path'}$font.ttf",
-      'ptsize' => $glyph->ptsize(),
-      'text'   => $glyph->text()
-    );
-    $X->draw( $xpt, $cy, $glyph->angle()||0 );
+    
+
+  $self->{'canvas'}->stringTTF( $colour, $self->{'ttf_path'}.$font.'.ttf', $glyph->ptsize, 0, $left, $glyph->{'pixely'}+$glyph->{'pixelheight'}, $glyph->{'text'} );
+
+###  my ($cx, $cy)      = $glyph->pixelcentre();
+###  my $xpt = $glyph->{'pixelx'} + 
+###            ( $glyph->{'halign'} eq 'left' ? 0 : $glyph->{'halign'} eq 'right' ? 1 : 0.5 ) * $glyph->{'pixelwidth'};
+###    my $X = GD::Text::Align->new( $self->{'canvas'},
+###      'valign' => $glyph->{'valign'} || 'center', 'halign' => $glyph->{'halign'} || 'center',
+###      'colour' => $colour,                        'font'   => "$self->{'ttf_path'}$font.ttf",
+###      'ptsize' => $glyph->ptsize(),               'text'   => $glyph->text()
+###    );
+###    $X->draw( $xpt, $cy, $glyph->angle()||0 );
   }
 }
 
@@ -286,7 +294,7 @@ sub render_Poly {
 }
 
 sub render_Composite {
-    my ($self, $glyph) = @_;
+    my ($self, $glyph,$Ta) = @_;
 
     #########
     # draw & colour the fill area if specified
@@ -296,7 +304,7 @@ sub render_Composite {
     #########
     # now loop through $glyph's children
     #
-    $self->SUPER::render_Composite($glyph);
+    $self->SUPER::render_Composite($glyph,$Ta);
 
     #########
     # draw & colour the bounding area if specified

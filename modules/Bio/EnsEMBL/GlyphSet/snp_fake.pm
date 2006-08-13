@@ -65,7 +65,7 @@ sub _init {
         my @res = $self->get_text_width( ($end-$start+1)*$pix_per_bp, $alleles[$i],'', 'font'=>$fontname, 'ptsize' => $fontsize );
         my $tmp_width = $res[2]/$pix_per_bp;
 	my $textglyph = new Sanger::Graphics::Glyph::Text({
-          'x'          => ( $end + $start - 1  - $tmp_width)/2,
+          'x'          => ( $end + $start  - 1 - $tmp_width)/2,
           'y'          => 3 + ($th+2) * $i,
           'width'      => $tmp_width,
           'textwidth'  => $res[2],

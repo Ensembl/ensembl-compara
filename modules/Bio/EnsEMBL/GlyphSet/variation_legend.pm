@@ -9,7 +9,8 @@ our @ISA = qw(Bio::EnsEMBL::GlyphSet);
 
 sub init_label {
   my ($self) = @_;
-  return if( defined $self->{'config'}->{'_no_label'} );
+  my $Config        = $self->{'config'};
+  return if( defined $Config->{'_no_label'} );
   $self->init_label_text( 'SNP legend' );
 }
 
@@ -30,30 +31,20 @@ sub _init {
   return unless $Config->{'variation_legend_features'};
   my %features = %{$Config->{'variation_legend_features'}};
   return unless %features;
-
-# Set up a separating line...
-  my $rect = new Sanger::Graphics::Glyph::Rect({
-    'x'         => 0,
-    'y'         => 0,
-    'width'     => $im_width,
-    'height'    => 0,
-    'colour'    => 'grey50',
-    'absolutey' => 1,
-    'absolutex' => 1,'absolutewidth'=>1,
-  });
-  $self->push($rect);
-
+ 
   my ($x,$y) = (0,0);
   my( $fontname, $fontsize ) = $self->get_font_details( 'legend' );
   my @res = $self->get_text_width( 0, 'X', '', 'font'=>$fontname, 'ptsize' => $fontsize );
   my $th = $res[3];
   my $pix_per_bp = $self->{'config'}->transform()->{'scalex'};
 
+  my $FLAG = 0;
   foreach (sort { $features{$b}->{'priority'} <=> $features{$a}->{'priority'} } keys %features) {
     @colours = @{$features{$_}->{'legend'}};
     $y++ unless $x==0;
     $x=0;
     while( my ($legend, $colour) = splice @colours, 0, 2 ) {
+      $FLAG = 1;
       my $tocolour='';
       ($tocolour,$colour) = ($1,$2) if $colour =~ /(.*):(.*)/;
       $self->push(new Sanger::Graphics::Glyph::Rect({
@@ -84,6 +75,20 @@ sub _init {
         $y++;
       }
     }
+  }
+# Set up a separating line...
+  my $rect = new Sanger::Graphics::Glyph::Rect({
+    'x'         => 0,
+    'y'         => 0,
+    'width'     => $im_width,
+    'height'    => 0,
+    'colour'    => 'grey50',
+    'absolutey' => 1,
+    'absolutex' => 1,'absolutewidth'=>1,
+  });
+  $self->push($rect);
+  unless( $FLAG ) {
+    $self->errorTrack( "No SNPs in this panel" );
   }
 }
 

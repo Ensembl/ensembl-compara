@@ -17,8 +17,10 @@ sub debug {
   my( $self, $pos, $tag ) = @_;
   $tag = "$ENV{'ENSEMBL_SCRIPT'}_$tag";
   if( $pos eq 'start' ) {
+    $self->species_defs->{'timer'}->push( "AA".$tag,5 ) if $self->species_defs->{'timer'};
     &eprof_start( $tag ) if $self->species_defs->ENSEMBL_DEBUG_FLAGS & 32;
   } else {
+    $self->species_defs->{'timer'}->push( "BB".$tag,5 ) if $self->species_defs->{'timer'};
     &eprof_end( $tag ) if $self->species_defs->ENSEMBL_DEBUG_FLAGS & 32;
   }
 }

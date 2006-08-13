@@ -207,7 +207,7 @@ sub render_Poly {
 }
 
 sub render_Composite {
-    my ($self, $glyph) = @_;
+    my ($self, $glyph,$Ta) = @_;
 
     #########
     # draw & colour the bounding area if specified
@@ -217,7 +217,7 @@ sub render_Composite {
     #########
     # now loop through $glyph's children
     #
-    $self->SUPER::render_Composite($glyph);
+    $self->SUPER::render_Composite($glyph,$Ta);
 }
 
 sub render_Sprite {

@@ -66,6 +66,8 @@ sub new {
                      ( $show_labels  eq 'yes' ? $label_width  + $margin : 0 );
   my $panel_width  = $image_width - $panel_start - $margin;
   
+  my $timer = $self->can('species_defs') ? $self->species_defs->{'timer'} : undef;
+
   $self->{'__extra_block_spacing__'} -= $inter_space;
   ## loop over all turned on & tuned in glyphsets
   my @strands_to_show = $self->{'strandedness'} == 1 ? (1) : (1, -1);
@@ -202,7 +204,8 @@ sub new {
         'absolutey' => 1,
         'x'         => -$panel_start + $margin + 2,
         'y'         => -2,
-        'width'     => 1,
+        'width'     => 6,
+        'textwidth'     => 6,
         'height'    => 6,
         'colour'    => 'red',
         'absolutex' => 1, 'absolutewidth' => 1, 'pixperbp' => $x_scale
@@ -238,12 +241,15 @@ sub new {
     $bgcolour_flag = 1 if($bgcolours->[0] ne $bgcolours->[1]);
 
     ## go ahead and do all the database work
+    $timer->push("Starting GlyphSets",8) if $timer;
     for my $glyphset (@glyphsets) {
       ## load everything from the database
+      my $NAME = $glyphset->check();
       my $ref_glyphset = ref($glyphset);
       eval {
         $glyphset->__init();
       };
+      $timer->push("GlyphSets $ref_glyphset($NAME) finished...",8) if $timer;
       ## don't waste any more time on this row if there's nothing in it
       if( $@ || scalar @{$glyphset->{'glyphs'} } ==0 ) {
 	if( $@ ){ warn( $@ ) }
@@ -273,9 +279,7 @@ sub new {
       ## set up the "bumping button" label for this strip
       if(defined $glyphset->label() && $show_labels eq 'yes' ) {
         my $gh = $glyphset->label->height || $Config->texthelper->height($glyphset->label->font());
-        $glyphset->label->y(
-          ( ($glyphset->maxy() - $glyphset->miny() - $gh) / 2) + $gminy
-        );
+        $glyphset->label->y( ( ($glyphset->maxy() - $glyphset->miny() - $gh) / 2) + $gminy );
         $glyphset->label->height($gh);
         $glyphset->label()->pixelwidth( $label_width );
         $glyphset->push( $glyphset->label() );
@@ -310,15 +314,18 @@ sub new {
 sub render {
   my ($self, $type) = @_;
   
+ my $timer = $self->can('species_defs') ? $self->species_defs->{'timer'} : undef;
   ## build the name/type of render object we want
   my $renderer_type = qq(Sanger::Graphics::Renderer::$type);
   $self->dynamic_use( $renderer_type );
+  $timer->push("Used renderer $type",8) if $timer;
   ## big, shiny, rendering 'GO' button
   my $renderer = $renderer_type->new(
     $self->{'config'},
     $self->{'__extra_block_spacing__'},
     $self->{'glyphsets'}
   );
+  $timer->push("Created $type",8) if $timer;
   return $renderer->canvas();
 }
 

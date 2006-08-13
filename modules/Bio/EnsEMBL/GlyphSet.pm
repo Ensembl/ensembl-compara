@@ -12,6 +12,7 @@ use CGI qw(escapeHTML);
 use vars qw(@ISA $AUTOLOAD);
 
 @ISA=qw(Sanger::Graphics::GlyphSet);
+our %cache;
 
 #########
 # constructor
@@ -58,10 +59,16 @@ sub species_defs { return $_[0]->{'config'}->{'species_defs'}; }
 sub get_text_width {
   my( $self, $width, $text, $short_text, %parameters ) = @_;
 
-  my $KEY = "$width--$text--$short_text--$parameters{'font'}--$parameters{'ptsize'}";
-  return @{$self->{'_cache_'}{$KEY}} if $self->{'_cache_'}{$KEY};
-  $width ||= 1e6;
+  my $KEY;
+  if($parameters{'font'} =~ /Cour/i && length($text)==1 ) {
+    $KEY = "$width--X--$short_text--$parameters{'font'}--$parameters{'ptsize'}";
+  } else {
+    $KEY = "$width--$text--$short_text--$parameters{'font'}--$parameters{'ptsize'}";
+  }
+  return @{$cache{$KEY}} if exists $cache{$KEY};
+## return @{$self->{'_cache_'}{$KEY}} if exists $self->{'_cache_'}{$KEY};
   my $font   = $self->{'config'}->species_defs->ENSEMBL_STYLE->{'GRAPHIC_TTF_PATH'}.($parameters{'font'}||'arial').'.ttf';
+  $width ||= 1e6;
   my $ptsize =  $parameters{'ptsize'}||10;
   my $gd_text = GD::Text->new();
   eval {
@@ -101,6 +108,7 @@ sub get_text_width {
       }
     }
     $self->{'_cache_'}{$KEY} = \@res;
+    $cache{$KEY} = \@res;
     return @res;
   }
 }
@@ -309,8 +317,10 @@ sub errorTrack {
 
   my $length = $self->{'config'}->image_width();
   $self->push( new Sanger::Graphics::Glyph::Text({
-    'x'         => $x || int($length/2), # int( ($length - $res[2])/2 ),
+    'x'         => $x || int(($length - $res[2])/2 ),
     'y'         => $y || 2,
+    'width'     => $res[2],
+    'textwidth'     => $res[2],
     'height'    => $res[3],
     'halign'    => 'center',
     'font'      => $font,

@@ -411,11 +411,14 @@ sub _init {
           'absolutey'  => 1
         });
         $composite->push($line);
+          my @res = $self->get_text_width( 0, $tag->{'letter'},'', 'font'=>$FONT, 'ptsize' => $FONTSIZE );
+          my $tmp_width = $res[2]/$pix_per_bp;
         my $tglyph = new Sanger::Graphics::Glyph::Text({
-          'x'          => $start - 1,
-          'y'          => 1,
-          'width'      => $end - $start +1,
-          'height'     => $H+4,
+          'x'          => ($end + $start - 1/4 - $tmp_width)/2,
+          'y'          => ($h-$H)/2,
+          'width'      => $tmp_width,
+          'textwidth'  => $res[2],
+          'height'     => $H,
           'font'       => $FONT,
           'ptsize'     => $FONTSIZE,
           'halign'     => 'center',
@@ -614,15 +617,16 @@ sub _init {
          # print STDERR "X: $label - $label_colour\n";
          my $tglyph = new Sanger::Graphics::Glyph::Text({
            'x'          => $start - 1,
-           'y'          => 1,
+           'y'          => ($h-$H)/2,
            'z' => 5,
            'width'      => $end-$start+1,
-           'height'     => $H+4,
+           'height'     => $H,
            'font'       => $FONT,
            'ptsize'     => $FONTSIZE,
            'halign'     => 'center',
            'colour'     => $label_colour,
            'text'       => $label,
+           'textwidth'  => $bp_textwidth*$pix_per_bp,
            'absolutey'  => 1,
            'absolutez'  => 1,
          });
@@ -634,12 +638,13 @@ sub _init {
           # print STDERR "X: $label - $label_colour\n";
           my $tglyph = new Sanger::Graphics::Glyph::Text({
             'x'          => $start-1,
-            'y'          => 1,
+            'y'          => ($h-$H)/2-1,
             'width'      => $end-$start+1,
+            'textwidth'  => $bp_textwidth*$pix_per_bp,
             'font'       => $FONT,
             'ptsize'     => $FONTSIZE,
             'halign'     => 'center',
-            'height'     => $H+4,
+            'height'     => $H,
             'colour'     => $label_colour,
             'text'       => $label,
             'absolutey'  => 1,
@@ -650,9 +655,9 @@ sub _init {
         $rowheight += $H+2;
         my $tglyph = new Sanger::Graphics::Glyph::Text({
           'x'          => $start - 1,
-          'y'          => $strand < 0 ? $h+2 : 2+$h,
+          'y'          => $strand < 0 ? $h+3 : 3+$h,
           'width'      => $bp_textwidth,
-          'height'     => $H+2,
+          'height'     => $H,
           'font'       => $FONT,
           'ptsize'     => $FONTSIZE,
           'halign'     => 'left',

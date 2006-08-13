@@ -72,7 +72,7 @@ sub _init {
 
   $scale *= ($bitmap_length / 600);
 
-  warn("SCALE : $bitmap_length * $scale * $oldscale * $max_distance");  
+# warn("SCALE : $bitmap_length * $scale * $oldscale * $max_distance");  
   
   my @alignments;
   my %xcs;
@@ -390,3 +390,4 @@ sub zmenu {
 1;
 
 
+€ý5:68:q

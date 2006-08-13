@@ -242,7 +242,7 @@ sub _init {
     );
     push @glyphs, [ $Composite, $row ];
   }
-  foreach (@glyphs) { $_->[0]->y( $_->[0]->y - (12+$H) * $_->[1] * $strand ) ; }
+  foreach (@glyphs) { $_->[0]->y( $_->[0]->y - (18+$H) * $_->[1] * $strand ) ; }
   $self->push( map { $_->[0] } @glyphs );
 }
 

@@ -144,7 +144,7 @@ sub expanded_init {
            'height'     => $h,
            'absolutey'  => 1,
         }));
-        $self->draw_cigar_feature($Composite, $f->[2], $h, $feature_colour, 'black', $pix_per_bp );
+        $self->draw_cigar_feature($Composite, $f->[2], $h, $feature_colour, 'black', $pix_per_bp, $strand_flag eq 'r'  );
       } else {
         my $START = $f->[0] < 1 ? 1 : $f->[0];
         my $END   = $f->[1] > $length ? $length : $f->[1];
@@ -222,7 +222,7 @@ sub compact_init {
     my $cigar;
     eval { $cigar = $f->[2]->cigar_string; };
     if($DRAW_CIGAR || $cigar =~ /$regexp/ ) {
-      $self->draw_cigar_feature($self, $f->[2], $h, $feature_colour, 'black', $pix_per_bp );
+      $self->draw_cigar_feature($self, $f->[2], $h, $feature_colour, 'black', $pix_per_bp, $strand_flag eq 'r' );
     } else {
       $self->push(new Sanger::Graphics::Glyph::Rect({
         'x'          => $X-1,
