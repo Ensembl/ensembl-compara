@@ -251,7 +251,7 @@ sub dumpGenomicAlignment {
     my $DB_NAME = $dbs{$db};
     foreach my $table ( keys %tables ) {
       my $source = $tables{ $table }[0];
-         $source .= ';db=$db' unless $db eq 'core';
+         $source .= ";db=$db" unless $db eq 'core';
       my $type   = $tables{ $table }[1];
       my $sth    = $conf->{'dbh'}->prepare(
         "select a.logic_name, ad.display_label, t.hit_name, count(*) as hits
@@ -466,149 +466,90 @@ sub dumpGene {
     my $COREDB = $conf->{'dbs'}->{'ENSEMBL_DB'};
     my $SANGDB = $conf->{'dbs'}->{'ENSEMBL_VEGA'};
     my $ESTGENEDB = $conf->{'dbs'}->{'ENSEMBL_OTHERFEATURES'};
-    my %sths = (
-        'Ensembl' => $conf->{'dbh'}->prepare(qq(
-select gsi.stable_id as gsid, tsi.stable_id as tsid, trsi.stable_id as trsid,
-       x.display_label as disp_id, x.dbprimary_acc as db_id, xd.db_display_name as db, xs.synonym as s,
-       g.description,
-       Z_x.display_label as disp_id_1, Z_x.dbprimary_acc as db_id_1, Z_xd.db_display_name as db_1, Z_xs.synonym as s_1,
-       Y_x.display_label as disp_id_2, Y_x.dbprimary_acc as db_id_2, Y_xd.db_display_name as db_2, Y_xs.synonym as s_2
-  from $COREDB.gene_stable_id as gsi, $COREDB.gene as g,
-       $COREDB.transcript_stable_id as tsi,
-       $COREDB.transcript as t left join
-       $COREDB.translation as tr on t.transcript_id = tr.transcript_id left join
-       $COREDB.translation_stable_id as trsi on tr.translation_id = trsi.translation_id left join
-       $COREDB.object_xref as ox on tr.translation_id = ox.ensembl_id and ox.ensembl_object_type = 'Translation'
- left join
-       $COREDB.xref as x on ox.xref_id = x.xref_id left join
-       $COREDB.external_db as xd on xd.external_db_id = x.external_db_id left join
-       $COREDB.external_synonym as xs on xs.xref_id = x.xref_id left join
-       $COREDB.object_xref as Z_ox on t.transcript_id = Z_ox.ensembl_id and Z_ox.ensembl_object_type = 'Transcript' left join
-       $COREDB.xref as Z_x on Z_ox.xref_id = Z_x.xref_id left join
-       $COREDB.external_db as Z_xd on Z_xd.external_db_id = Z_x.external_db_id left join
-       $COREDB.external_synonym as Z_xs on Z_xs.xref_id = Z_x.xref_id left join
-       $COREDB.object_xref as Y_ox on t.gene_id = Y_ox.ensembl_id and Y_ox.ensembl_object_type = 'Gene' left join
-       $COREDB.xref as Y_x on Y_ox.xref_id = Y_x.xref_id left join
-       $COREDB.external_db as Y_xd on Y_xd.external_db_id = Y_x.external_db_id left join
-       $COREDB.external_synonym as Y_xs on Y_xs.xref_id = Y_x.xref_id 
- where t.gene_id = gsi.gene_id and t.transcript_id = tsi.transcript_id and t.gene_id = g.gene_id
- order by gsi.stable_id, tsi.stable_id
-        ))
-    );
-    my @TYPES = ( "Ensembl" );
-
-    if( $SANGDB ) {
-      $sths{'Vega'} 
-        = $conf->{'dbh'}->prepare(qq(
-select gsi.stable_id as gsid, tsi.stable_id as tsid, trsi.stable_id as trsid,
-       x.display_label as disp_id, x.dbprimary_acc as db_id, xd.db_display_name as db, '' as s,
-       g.description,
-       Z_x.display_label as disp_id_1, Z_x.dbprimary_acc as db_id_1, Z_xd.db_display_name as db_1, '' as s_1,
-       Y_x.display_label as disp_id_2, Y_x.dbprimary_acc as db_id_2, Y_xd.db_display_name as db_2, '' as s_2
-  from $SANGDB.gene_stable_id as gsi, $SANGDB.gene as g,
-       $SANGDB.transcript_stable_id as tsi,
-       $SANGDB.transcript as t left join
-       $SANGDB.translation as tr on t.transcript_id = tr.transcript_id left join
-       $SANGDB.translation_stable_id as trsi on tr.translation_id = trsi.translation_id left join
-       $SANGDB.object_xref as ox on tr.translation_id = ox.ensembl_id and ox.ensembl_object_type = 'Translation' left join
-       $SANGDB.xref as x on ox.xref_id = x.xref_id left join
-       $SANGDB.external_db as xd on xd.external_db_id = x.external_db_id left join
-       $SANGDB.object_xref as Z_ox on t.transcript_id = Z_ox.ensembl_id and Z_ox.ensembl_object_type = 'Transcript' left join
-       $SANGDB.xref as Z_x on Z_ox.xref_id = Z_x.xref_id left join
-       $SANGDB.external_db as Z_xd on Z_xd.external_db_id = Z_x.external_db_id left join
-       $SANGDB.object_xref as Y_ox on t.gene_id = Y_ox.ensembl_id and Y_ox.ensembl_object_type = 'gene' left join
-       $SANGDB.xref as Y_x on Y_ox.xref_id = Y_x.xref_id left join
-       $SANGDB.external_db as Y_xd on Y_xd.external_db_id = Y_x.external_db_id
- where t.gene_id = gsi.gene_id and t.transcript_id = tsi.transcript_id and t.gene_id = g.gene_id
- order by gsi.stable_id, tsi.stable_id
-       ));
-       push @TYPES, 'Vega';
-     }
-
-    if( $ESTGENEDB ) {
-    $sths{'Ensembl EST'} = $conf->{'dbh'}->prepare(qq(
-select gsi.stable_id as gsid, tsi.stable_id as tsid, trsi.stable_id as trsid,
-       x.display_label, x.dbprimary_acc, xd.db_display_name, '' as s, g.description
-  from $ESTGENEDB.gene_stable_id as gsi, $ESTGENEDB.gene as g,
-       $ESTGENEDB.transcript_stable_id as tsi,
-       $ESTGENEDB.transcript as t left join
-       $ESTGENEDB.translation as tr on t.transcript_id = tr.transcript_id left join
-       $ESTGENEDB.translation_stable_id as trsi on tr.translation_id = trsi.translation_id left join
-       $ESTGENEDB.object_xref as ox on tr.translation_id = ox.ensembl_id and ox.ensembl_object_type = 'Translation' left join
-       $ESTGENEDB.xref as x on ox.xref_id = x.xref_id left join
-       $ESTGENEDB.external_db as xd on xd.external_db_id = x.external_db_id
- where t.gene_id = gsi.gene_id and t.transcript_id = tsi.transcript_id and t.gene_id = g.gene_id
- order by gsi.stable_id, tsi.stable_id
-    ));
-	push @TYPES, 'Ensembl EST';
-    }
+    my %DBS = ( 'core' => $COREDB );
+    $DBS{'vega'}          = $SANGDB    if $SANGDB;
+    $DBS{'otherfeatures'} = $ESTGENEDB if $ESTGENEDB;
 
     open O, ">$conf->{'directory'}/Gene.txt";
-    foreach my $GENETYPE ( @TYPES ) {
-        my $sth = $sths{$GENETYPE};
-        $sth->execute();
-        my $extras =  $GENETYPE eq 'Vega' ? '&db=vega' : '';
-           $extras .= $GENETYPE eq 'Ensembl EST' ? '&db=est' : '';
-        my $old_gid     = '';
-        my $old_desc     = '';
-        my $transcripts = {};
-        my $peptides    = {};
-        my $external_ids= {};
-        my %IDX         = ();
-        while( my($gid, $tid, $trid, $dispid, $dbid, $db, $s, $desc, $dispid2,$dbid2,$db2,$s2,$dispid3,$dbid3,$db3,$s3 ) = $sth->fetchrow_array() ) {
-          $desc =~ s/[\r\n\t\s ]+/ /g;
-            if($gid eq $old_gid) {
-                if( $db ) {
-                  $external_ids->{$db}{$dispid}   = 1; $external_ids->{$db}{$dbid}   = 1; $external_ids->{$db}{$s} = 1 if $s;
-                  $IDX{$dbid}                     = 1; $IDX{$dispid}                 = 1; $IDX{$s} = 1 if $s;
-                }
-                if( $db2 ) {
-                  $external_ids->{$db2}{$dispid2} = 1; $external_ids->{$db2}{$dbid2} = 1; $external_ids->{$db}{$s2} = 1 if $s2;
-                  $IDX{$dbid2}                    = 1; $IDX{$dispid2}                = 1; $IDX{$s2} = 1 if $s2;
-                }
-                if( $db3 ) {
-                  $external_ids->{$db3}{$dispid3} = 1; $external_ids->{$db3}{$dbid3} = 1; $external_ids->{$db}{$s3} = 1 if $s3;
-                  $IDX{$dbid3}                    = 1; $IDX{$dispid3}                = 1; $IDX{$s3} = 1 if $s3;
-                }
-                $transcripts->{ $tid }=1;
-                $peptides->{ $trid }=1 if $trid;
-                $IDX{$tid} = 1;
-                $IDX{$trid} = 1 if $trid;
-            } else {
-                print O &geneLine(
-                  $conf->{'species'},
-                  $GENETYPE, $old_gid, $extras,
-                  join(' ',$old_gid, $old_desc, keys %IDX),
-                  $transcripts, $peptides, $external_ids, $old_desc
-                );
-                $old_gid = $gid;
-                $old_desc = $desc;
-                $transcripts = { $tid => 1 };
-                $peptides = {};
-                $peptides->{ $trid } = 1 if $trid;
-                $external_ids= {  };
-                %IDX         = ( $tid=>1 );
-                $IDX{$trid} = 1 if $trid;
-                if( $db ) {
-                  $external_ids->{$db}{$dispid}   = 1; $external_ids->{$db}{$dbid}   = 1; $external_ids->{$db}{$s} = 1 if $s;
-                  $IDX{$dbid}                     = 1; $IDX{$dispid}                 = 1; $IDX{$s} = 1 if $s;
-                }
-                if( $db2 ) {
-                  $external_ids->{$db2}{$dispid2} = 1; $external_ids->{$db2}{$dbid2} = 1; $external_ids->{$db}{$s2} = 1 if $s2;
-                  $IDX{$dbid2}                    = 1; $IDX{$dispid2}                = 1; $IDX{$s2} = 1 if $s2;
-                }
-                if( $db3 ) {
-                  $external_ids->{$db3}{$dispid3} = 1; $external_ids->{$db3}{$dbid3} = 1; $external_ids->{$db}{$s3} = 1 if $s3;
-                  $IDX{$dbid3}                    = 1; $IDX{$dispid3}                = 1; $IDX{$s3} = 1 if $s3;
-                }
-            }
-        }
-        print O &geneLine(
-            $conf->{'species'},
-            $GENETYPE, $old_gid, $extras,
-            join(' ',$old_gid, $old_desc, keys %IDX),
-            $transcripts, $peptides, $external_ids, $old_desc
+warn "START...";
+    foreach my $DB ( keys %DBS ) {
+      my $DBNAME = $DBS{$DB};
+      my $extra = $DB ne 'core' ? ";db=$DB" : '';
+      my %xrefs = ();
+      foreach my $type( qw(Gene Transcript Translation) ) {
+        my $T = $conf->{'dbh'}->selectall_arrayref(
+     "select ox.ensembl_id, x.display_label, x.dbprimary_acc, ed.db_display_name, es.synonym
+        from $DBNAME.object_xref as ox, $DBNAME.xref as x, $DBNAME.external_db as ed left join $DBNAME.external_synonym as es on es.xref_id = x.xref_id
+       where ox.ensembl_object_type = '$type' and ox.xref_id = x.xref_id and x.external_db_id = ed.external_db_id"
         );
+        foreach ( @$T ) {
+          $xrefs{$type}{$_->[0]}{$_->[3]}{$_->[1]}=1 if $_->[1];
+          $xrefs{$type}{$_->[0]}{$_->[3]}{$_->[2]}=1 if $_->[2];
+          $xrefs{$type}{$_->[0]}{$_->[3]}{$_->[4]}=1 if $_->[3];
+        }
+        warn "XREF $type query...";
+      }
+      my $gene_info = $conf->{'dbh'}->selectall_arrayref(qq(
+select gsi.gene_id, tsi.transcript_id, trsi.translation_id,
+       gsi.stable_id as gsid, tsi.stable_id as tsid, trsi.stable_id as trsid,
+       g.description, ed.db_display_name, x.display_label, ad.display_label, ad.description, g.source, g.status, g.biotype
+  from $DBNAME.gene_stable_id as gsi, $DBNAME.gene as g,
+       $DBNAME.transcript_stable_id as tsi,
+       $DBNAME.analysis_description as ad,
+       $DBNAME.transcript as t left join
+       $DBNAME.translation as tr on t.transcript_id = tr.transcript_id left join
+       $DBNAME.translation_stable_id as trsi on tr.translation_id = trsi.translation_id left join
+       $DBNAME.xref as x on g.display_xref_id = x.xref_id left join
+       $DBNAME.external_db as ed on ed.external_db_id = x.external_db_id
+ where t.gene_id = gsi.gene_id and t.transcript_id = tsi.transcript_id and t.gene_id = g.gene_id and g.analysis_id = ad.analysis_id
+ order by gsi.stable_id, tsi.stable_id
+      ));
+warn "Gene query...";
+      my %old;
+      foreach my $row (@$gene_info) {
+        my($g,$t,$tr,$gs,$ts,$trs,$d,$ddb,$dn,$a,$ad,$s,$st,$bt) = @$row;
+        if( $old{'g'} != $g ) {
+          if( $old{'g'} ) {
+            print O &geneLine( $conf->{'species'}, $old{'s'}.' '.$old{'bt'}, $old{'gs'}, $old{'alt'}, $extra, join( ' ', grep{$_}keys %{$old{'i'}}), $old{'t'},$old{'tr'},$old{'e'},$old{'d'} );
+          }
+          %old = (
+            'g' => $g,
+            'gs' => $gs,
+            'd'  => $d,
+            'tr' => {$trs=>1},
+            't'  => {$ts=>1},
+            'e'  => {},
+            'i'  => {$gs=>1,$d=>1,$dn=>1}, 
+            'alt' => $dn ? "($ddb: $dn)" : "",
+            'a'   => $a,
+            'ad'  => $ad,
+            's'   => ucfirst($s),
+            'st'  => $st,
+            'bt'  => $bt
+          );
+         $old{'s'}=~s/base/Base/;
+          foreach my $db( keys %{$xrefs{'Gene'}{$g}||{}} ) {
+            foreach my $K( keys %{$xrefs{'Gene'}{$g}{$db}} ) { $old{'e'}{$db}{$K}=1; $old{'i'}{$K}=1; }
+          }
+          foreach my $db( keys %{$xrefs{'Transcript'}{$t}||{}} ) {
+            foreach my $K( keys %{$xrefs{'Transcript'}{$t}{$db}} ) { $old{'e'}{$db}{$K}=1; $old{'i'}{$K}=1; }
+          }
+          foreach my $db( keys %{$xrefs{'Translation'}{$tr}||{}} ) {
+            foreach my $K( keys %{$xrefs{'Translation'}{$tr}{$db}} ) { $old{'e'}{$db}{$K}=1;  $old{'i'}{$K}=1; }
+          }
+        } else {
+          $old{'t'}{$ts}=1;
+          $old{'tr'}{$trs}=1;
+          foreach my $db( keys %{$xrefs{'Transcript'}{$t}||{}} ) {
+            foreach my $K( keys %{$xrefs{'Transcript'}{$t}{$db}} ) { $old{'e'}{$db}{$K}=1; $old{'i'}{$K}=1; }
+          }
+          foreach my $db( keys %{$xrefs{'Translation'}{$tr}||{}} ) {
+            foreach my $K( keys %{$xrefs{'Translation'}{$tr}{$db}} ) { $old{'e'}{$db}{$K}=1; $old{'i'}{$K}=1; }
+          }
+        }
+      }
+      print O &geneLine( $conf->{'species'}, $old{'s'}.' '.$old{'bt'}, $old{'gs'}, $old{'alt'}, $extra, join( ' ', grep{$_}keys %{$old{'i'}}), $old{'t'},$old{'tr'},$old{'e'},$old{'d'} );
+      warn "FINISHED...... genes...";
     }
     my %old_ids = (
       'Gene' => qq(select distinct sie.old_stable_id, gsi.stable_id 
@@ -726,14 +667,14 @@ sub geneLineOld {
 }
 
 sub geneLine {
-  my ($species, $X, $gid, $extra, $IDX, $transcripts, $peptides, $external_identifiers, $description )=@_;
+  my ($species, $X, $gid, $altid, $extra, $IDX, $transcripts, $peptides, $external_identifiers, $description )=@_;
   return if $gid eq '';
   my $T = scalar (keys %$transcripts);
   my $P = scalar (keys %$peptides);
   my $EX = scalar (keys %$external_identifiers);
   return join( "\t",
     (INC_SPECIES?"$species\t":"").qq($X Gene),
-    qq($gid),
+    qq($gid $altid),
     qq(/$species/geneview?gene=$gid$extra),
     qq($IDX),
     qq($X gene $gid has $T transcript).($T==1?'':'s').qq(: ).join(', ',sort keys(%$transcripts)).

@@ -82,12 +82,11 @@ my $types = check_types(\@TYPES);
 die "\n\n[DIE] You must provide an ensembl release number e.g. --release 30" unless $release;
 
 # Load modules needed for reading config -------------------------------------
-#info(1, "Using config in $SERVERROOT/conf" );
 require EnsEMBL::Web::SpeciesDefs;      # Loaded at run time
 require EnsEMBL::Web::DBSQL::DBConnection;
 
 my $SPECIES_DEFS = EnsEMBL::Web::SpeciesDefs->new(); 
-$SPECIES_DEFS || die "$0: SpeciesDefs config not found";
+$SPECIES_DEFS || die "\n\n[DIE] $0: SpeciesDefs config not found";
 
 
 # Check species if user defined.  Else use all species
@@ -96,6 +95,21 @@ if (@SPECIES) {
 }
 else {
   @SPECIES = @{ utils::Tool::all_species()};
+}
+
+
+# Check the ENSEMBL_VERSION is up to date and matchs user's request
+if ( my $sitedefs_release =  $SiteDefs::ENSEMBL_VERSION ne $release) {
+ die "[*DIE] Ensembl release version requested is $release but site defs is configured to use $sitedefs_release";
+}
+
+my $blast_dir = $SPECIES_DEFS->get_config($SPECIES[0],"ENSEMBL_BLAST_DATA_PATH");
+
+if ( $blast_dir !~ /$release/ ) {
+  if ($TYPES[0] eq 'all') {
+    die "[*DIE] Ensembl release version requested is $release but blast dir is configured to be $blast_dir";
+  }
+  warning (1, "WILL PUSH BLAST FILES TO $blast_dir.  Kill job if not correct.");
 }
 
 
@@ -108,6 +122,9 @@ unless ($no_log) {
   open(STDERR, "> $logfile") || die "Can't create file:$!\n";
 }
 
+info(2, "Will push blast files to $blast_dir");
+
+
 # Start with a species further down in the alphabet
 if ($start_with) {
   foreach (sort @SPECIES) {
@@ -117,17 +134,6 @@ if ($start_with) {
   }
 }
 
-
-# Check the ENSEMBL_VERSION is up to date and matchs user's request
-if ( my $sitedefs_release =  $SiteDefs::ENSEMBL_VERSION ne $release) {
- die "[*DIE] Ensembl release version requested is $release but site defs is configured to use $sitedefs_release";
-}
-
- my $blast_dir = $SPECIES_DEFS->get_config($SPECIES[0],"ENSEMBL_BLAST_DATA_PATH");
-
-if ( $blast_dir !~ /$release/ && $TYPES[0] ne 'pre') {
-  die "[*DIE] Ensembl release version requested is $release but blast dir is configured to be $blast_dir";
-}
 
 # Validate DUMPDIR
 our $basedir = "/mysql/dumps/";
@@ -317,7 +323,7 @@ sub get_data {
   my $gene_adaptor = $dbAdaptor->get_GeneAdaptor;
 
   # temporary hack for Mus and rat until the assembly mapping is fixed 
-  if(!defined($minimise_memory) && $species ne 'Mus_musculus' && $species ne 'Rattus_norvegicus'){
+  if(!defined($minimise_memory)){
     $sliceAdaptor->cache_toplevel_seq_mappings();
   }
   else{
@@ -770,7 +776,7 @@ sub ssaha_servers {
 
   # Prep directories
   my $ssaha_dir = $DUMPDIR eq $basedir."release-$release" ? $basedir : $DUMPDIR."/"; 
-  my $dna_dir = $ssaha_dir."ssaha/dna/";
+  my $dna_dir = $basedir."ssaha/dna/";
   my $cdna_dir = $ssaha_dir."ssaha/release-$release/";
   utils::Tool::check_dir($cdna_dir);
   utils::Tool::check_dir($dna_dir);
@@ -793,7 +799,7 @@ sub ssaha_servers {
 
   my @toplevel;
   foreach my $types (keys %$created_files) {
-    next unless $types =~ /toplevel|chromosome|cdna_all/; #toplevel dna matches chr or toplevel
+    next unless $types =~ /toplevel|dna\.chromosome|cdna_all/; #toplevel dna matches chr or toplevel
     my $seqio = $created_files->{$types};
     next unless $seqio;
     my $fh = $seqio->file;
