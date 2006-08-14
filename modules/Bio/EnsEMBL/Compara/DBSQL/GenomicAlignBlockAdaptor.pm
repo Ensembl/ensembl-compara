@@ -678,6 +678,7 @@ sub fetch_all_by_MethodLinkSpeciesSet_DnaFrag_DnaFrag {
               genomic_align ga1, genomic_align ga2
           WHERE 
               ga1.genomic_align_block_id = ga2.genomic_align_block_id
+              AND ga1.genomic_align_id != ga2.genomic_align_id
               AND ga2.method_link_species_set_id = $method_link_species_set_id
               AND ga1.dnafrag_id = $dnafrag_id1 AND ga2.dnafrag_id = $dnafrag_id2
       };
@@ -704,7 +705,9 @@ sub fetch_all_by_MethodLinkSpeciesSet_DnaFrag_DnaFrag {
              $dnafrag_id1, $dnafrag_start1, $dnafrag_end1, $dnafrag_strand1, $cigar_line1, $level_id1,
              $genomic_align_id2, $genomic_align_block_id2, $method_link_species_set_id2,
              $dnafrag_id2, $dnafrag_start2, $dnafrag_end2, $dnafrag_strand2, $cigar_line2, $level_id2) = $sth->fetchrow_array) {
-
+    ## Skip if this genomic_align_block has been defined already
+    next if (defined($all_genomic_align_blocks->{$genomic_align_block_id1}));
+    $all_genomic_align_blocks->{$genomic_align_block_id1} = 1;
     my $gab = new Bio::EnsEMBL::Compara::GenomicAlignBlock
       (-adaptor => $self,
        -dbID => $genomic_align_block_id1,
