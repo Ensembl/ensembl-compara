@@ -267,7 +267,7 @@ sub getUserByID {
 
   my $sql = qq(
     SELECT user_id, name, org, email
-    FROM USERACCOUNT
+    FROM user
     WHERE user_id = "$id" 
   );
 
@@ -292,7 +292,7 @@ sub getUserByEmail {
 
   my $sql = qq(
     SELECT user_id, name, org, salt
-    FROM USERACCOUNT
+    FROM user
     WHERE email = "$email" 
   );
 
@@ -317,7 +317,7 @@ sub getUserByCode {
 
   my $sql = qq(
     SELECT user_id, name, org, salt
-    FROM USERACCOUNT
+    FROM user
     WHERE password = "$code"
   );
 
@@ -334,23 +334,6 @@ sub getUserByCode {
   return $details;
 }
 
-sub getUserPrivilege {
-  my ($self, $id, $access_level) = @_;
-  my $ok = 0;
-  return $ok unless $self->{'_handle'};
-
-  my $sql = qq(
-    SELECT privilege
-    FROM USERPRIVILEGE p
-    WHERE user_id = "$id"
-    AND privilege = "$access_level"
-  );
-  my $R = $self->{'_handle'}->selectall_arrayref($sql); 
-  $ok = $R->[0] ? 1 : 0;
-
-  return $ok;
-}
-
 sub createUserAccount {
   my ($self, $record) = @_;
   return unless $self->{'_handle'};
@@ -365,7 +348,7 @@ sub createUserAccount {
   my $encrypted = Digest::MD5->new->add($password.$salt)->hexdigest();
 
   my $sql = qq(
-    INSERT INTO USERACCOUNT SET  
+    INSERT INTO user SET  
       name          = "$name", 
       email         = "$email", 
       salt          = "$salt",
@@ -403,7 +386,7 @@ sub updateUserAccount {
   my $result;
     if ($user_id > 0) {
     my $sql = qq(
-      UPDATE USERACCOUNT SET  
+      UPDATE user SET  
         name          = "$name", 
         email         = "$email", 
         org           = "$org",
@@ -432,7 +415,7 @@ sub validateUser {
     my $encrypted = Digest::MD5->new->add($password.$salt)->hexdigest();
     my $sql = qq(
       SELECT user_id
-      FROM USERACCOUNT
+      FROM user
       WHERE email = "$email" AND password = "$encrypted"
     );
     my $R = $self->{'_handle'}->selectall_arrayref($sql); 
@@ -468,7 +451,7 @@ sub resetPassword {
   my $encrypted = Digest::MD5->new->add($password.$salt)->hexdigest();
  
   my $sql = qq(
-    UPDATE USERACCOUNT  
+    UPDATE user  
     SET 
       password  = "$encrypted",
       salt      = "$salt"
@@ -490,7 +473,7 @@ sub saveBookmark {
   return {} unless ($user_id && $url);
 
   my $sql = qq(
-    INSERT INTO USERBOOKMARKS 
+    INSERT INTO bookmark 
     SET user_id = $user_id, 
         name    = "$title", 
         url     = "$url"
@@ -509,7 +492,7 @@ sub getBookmarksByUser {
   my $results = [];
   my $sql = qq(
     SELECT bm_id, name, url
-    FROM USERBOOKMARKS
+    FROM bookmark
     WHERE user_id = $user_id
   ); 
   my $T = $self->{'_handle'}->selectall_arrayref($sql);
@@ -533,7 +516,7 @@ sub deleteBookmarks {
   return 0 unless (ref($bookmarks) eq 'ARRAY' && scalar(@$bookmarks) > 0);
   
   foreach my $bookmark (@$bookmarks) {
-    my $sql = "DELETE FROM USERBOOKMARKS where bm_id = $bookmark";
+    my $sql = "DELETE FROM bookmark where bm_id = $bookmark";
     my $sth = $self->{'_handle'}->prepare($sql);
     my $result = $sth->execute();
   }
@@ -549,7 +532,7 @@ sub getGroupsByUser {
   my $results = [];
   my $sql = qq(
     SELECT g.group_id, g.name, g.title, g.blurb
-    FROM USERGROUP g, GROUPMEMBER m
+    FROM webgroup g, group_member m
     WHERE g.group_id = m.group_id 
     AND m.user_id = $user_id
   ); 
@@ -577,7 +560,7 @@ sub getGroupsByType {
   my $results = [];
   my $sql = qq(
     SELECT group_id, name, title, blurb
-    FROM USERGROUP
+    FROM webgroup
     WHERE type = "$type" 
     ORDER BY title
   ); 
@@ -604,7 +587,7 @@ sub getAllGroups {
   my $results = [];
   my $sql = qq(
     SELECT group_id, name, title, blurb, type
-    FROM USERGROUP
+    FROM webgroup
     ORDER BY title
   ); 
   my $T = $self->{'_handle'}->selectall_arrayref($sql);
@@ -645,7 +628,7 @@ Functions on the user database
 
 =head1 RELATED MODULES
 
-See also: EnsEMBL::Web::SpeciesDefs->.pm
+See also: EnsEMBL::Web::SpeciesDefs.pm
 
 =head1 FEED_BACK
 
