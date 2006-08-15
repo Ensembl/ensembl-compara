@@ -193,16 +193,7 @@ sub get_user_id {
   my $self = shift;
 
   ## do we have one in the current session?
-  my $user_id = $ENV{'ENSEMBL_USER'};
-
-  ## if not, look for a cookie
-  if (!$user_id) {
-    #my $cgi = ;
-    #my $cookie = $cgi->cookie('ENSEMBL_USER');
-    #if ($cookie) {
-    #  $user_id = $self->web_user_db->decryptID($cookie);
-    #}
-  }
+  my $user_id = $ENV{'ENSEMBL_USER_ID'};
 
   return $user_id;
 }
@@ -212,7 +203,7 @@ sub get_user_id {
 sub action {
   my $self = shift;
   my $permitted = 1; ## default is to allow access, so ordinary pages don't break!
-  my $user_id = 0;
+  my $user_id = $self->get_user_id;
 
 =pod
   if ($self->restrict) { ## check for script-level access restrictions
@@ -265,11 +256,16 @@ sub _node_hop {
       else { 
         $URL .= $object->script;
       }
+
       ## unpack returned parameters into a URL
       my $tally = 0;
       my $param_count = scalar(keys %parameter);
       $URL .= '?' if $param_count;
       foreach my $param_name (keys %parameter) {
+        if ($param_name eq 'set_cookie') {
+          $self->login($parameter{$param_name});
+          next;
+        }
         if (ref($parameter{$param_name}) eq 'ARRAY') {
           foreach my $param_value (@{$parameter{$param_name}}) {
             $URL .= ';' if $tally > 0;
@@ -307,7 +303,25 @@ sub logout {
   my $r = $self->page->renderer->{'r'};
   $r->headers_out->add( 'Set-cookie' => $cookie );
   $r->err_headers_out->add( 'Set-cookie' => $cookie );
-  $r->subprocess_env->{'ENSEMBL_USER'} = '';
+  $r->subprocess_env->{'ENSEMBL_USER_ID'} = '';
+  return 1;
+}
+
+sub login {
+  my ($self, $user_id) = @_;
+  
+  my $encrypted = EnsEMBL::Web::DBSQL::UserDB::encryptID($user_id);
+  my $cookie = CGI::Cookie->new(
+      -name    => EnsEMBL::Web::SpeciesDefs->ENSEMBL_USER_COOKIE,
+      -value   => $encrypted,
+      -domain  => EnsEMBL::Web::SpeciesDefs->ENSEMBL_COOKIEHOST,
+      -path    => "/",
+      -expires => "Monday, 31-Dec-2010 23:59:59 GMT"
+  );
+  
+  my $r = $self->page->renderer->{'r'};
+  $r->headers_out->add( 'Set-cookie' => $cookie );
+  $r->err_headers_out->add( 'Set-cookie' => $cookie );
   return 1;
 }
 
