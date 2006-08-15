@@ -65,7 +65,9 @@ sub change_block_attribute {
 
 sub delete_block {
   my( $self, $code ) = @_;
+  my $priority = $self->{'blocks'}{$code}{'options'}{'priority'};
   delete $self->{'blocks'}{$code};
+  $self->{'block_order'}[$priority] = [ grep { $_ ne $code } @{ $self->{'block_order'}[$priority] } ];
 }
 
 sub block {
