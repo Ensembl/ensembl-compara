@@ -280,7 +280,13 @@ sub delete_alignments {
   my ($self, $mlss, $qy_dnafrag, $tg_dnafrag) = @_;
 
   my $dbc = $self->db->dbc;
-  my $sql = "select ga1.genomic_align_block_id, ga1.genomic_align_id, ga2.genomic_align_id from genomic_align ga1, genomic_align ga2 where ga1.genomic_align_block_id=ga2.genomic_align_block_id and ga1.dnafrag_id = ? and ga2.dnafrag_id = ? and ga1.method_link_species_set_id = ?";
+  my $sql = "SELECT ga1.genomic_align_block_id, ga1.genomic_align_id, ga2.genomic_align_id
+      FROM genomic_align ga1, genomic_align ga2
+      WHERE ga1.genomic_align_block_id=ga2.genomic_align_block_id
+      AND ga1.dnafrag_id = ?
+      AND ga2.dnafrag_id = ?
+      AND ga1.genomic_align_id <> ga2.genomic_align_id
+      AND ga1.method_link_species_set_id = ?";
   my $sth = $dbc->prepare($sql);
   $sth->execute($qy_dnafrag->dbID, $tg_dnafrag->dbID, $mlss->dbID);
 
