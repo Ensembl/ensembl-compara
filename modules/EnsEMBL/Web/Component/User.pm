@@ -49,7 +49,8 @@ sub _show_details {
 
   $html .= qq(<p><strong>Name</strong>: $name</p>
 <p><strong>Email address</strong>: $email</p>
-<p><strong>Organisation</strong>: $org</p>);
+<p><strong>Organisation</strong>: $org</p>
+<p><a href="/common/update_account">Update account details</a> | <a href="/common/change_password">Change password</a></p>);
 
   return $html;
 }

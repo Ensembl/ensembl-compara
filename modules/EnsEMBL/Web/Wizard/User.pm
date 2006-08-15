@@ -10,8 +10,12 @@ use Mail::Mailer;
 
 our @ISA = qw(EnsEMBL::Web::Wizard);
 
-## define fields available to the forms in this wizard
-our %form_fields = (
+
+sub _init {
+  my ($self, $object) = @_;
+
+  ## define fields available to the forms in this wizard
+  my %form_fields = (
       'user_id'   => {
           'type'=>'Integer', 
           'label'=>'', 
@@ -78,15 +82,10 @@ our %form_fields = (
           'label'=> 'Members',
           'values'=>'members',
       },
-);
+  );
 
-sub default_order {
-  my @order = qw(name org email password ensembl_announce ensembl_dev);
-  return \@order;
-}
-
-## define the nodes available to wizards based on this type of object
-our %all_nodes = (
+  ## define the nodes available to wizards based on this type of object
+  my %all_nodes = (
       ## login nodes - generally free access
       'details'      => {
                       'form' => 1,
@@ -165,22 +164,20 @@ our %all_nodes = (
       },
 );
 
+  my $help_email = $object->species_defs->ENSEMBL_HELPDESK_EMAIL;
 
-our %message = (
-  'duplicate' => "Sorry, we appear to have a user with this email address already. Please try again.",
-  'invalid' => "Sorry, the email address and password did not match a valid account. Please try again.",
-  'not_found' => "Sorry, that email address is not in our database. Please try again.",
-  'save_failed' => 'Sorry, there was a problem saving your details. Please try again later.',
-  'save_ok' => "Thank you for registering with Ensembl!",
-  'update_ok' => "Thank you - your changes have been saved.",
-  'send_failed' => qq(Sorry, there was a problem sending your new password. Please contact <a href="mailto:webmaster\@ensembl.org">webmaster\@ensembl.org</a> for assistance.),
-  'send_ok' => "Your new password has been sent to your registered email address.",
-  'no_delete' => 'Sorry, there was a problem deleting your bookmarks. Please try again later.',
-  'log_back' => 'Please log back into Ensembl using your new password.',
+  my %message = (
+    'duplicate' => "Sorry, we appear to have a user with this email address already. Please try again.",
+    'invalid' => "Sorry, the email address and password did not match a valid account. Please try again.",
+    'not_found' => "Sorry, that email address is not in our database. Please try again.",
+    'save_failed' => 'Sorry, there was a problem saving your details. Please try again later.',
+    'save_ok' => "Thank you for registering with Ensembl!",
+    'update_ok' => "Thank you - your changes have been saved.",
+    'send_failed' => qq(Sorry, there was a problem sending your new password. Please contact <a href="mailto:$help_email">$help_email</a> for assistance.),
+    'send_ok' => "Your new password has been sent to your registered email address.",
+    'no_delete' => 'Sorry, there was a problem deleting your bookmarks. Please try again later.',
+    'log_back' => 'Please log back into Ensembl using your new password.',
 );
-
-sub _init {
-  my ($self, $object) = @_;
 
   ## get useful data from object
   my $user_id = $object->get_user_id;
@@ -263,7 +260,6 @@ sub _mail {
 
 sub accountview { 
   ## doesn't do anything wizardy, just displays some info and links
-warn '= '.$ENV{EnsEMBL::Web::SpeciesDefs->ENSEMBL_USER_COOKIE};
   return 1;
 }
 
@@ -339,19 +335,22 @@ sub details {
   my $node = 'details';
  
   my $id = $object->get_user_id;
+  my @fields = qw(name email);
   if ($id) {
     my $details = $object->get_user_by_id($id);
     $object->param('name', $$details{'name'});
     $object->param('email', $$details{'email'});
     $object->param('org', $$details{'org'});
-    ## remove password widget
-    splice(@{$all_nodes{$node}{'input_fields'}}, 2, 1);
   }
+  else {
+    push(@fields, 'password');
+  }
+  push(@fields, 'org', 'mailing', 'ensembl_announce', 'ensembl_dev');
  
   my $form = EnsEMBL::Web::Form->new( 'details', "/$species/$script", 'post' );
 
   $wizard->add_title($node, $form, $object);
-  $wizard->add_widgets($node, $form, $object);
+  $wizard->add_widgets($node, $form, $object, \@fields);
   $wizard->add_buttons($node, $form, $object);
 
 
