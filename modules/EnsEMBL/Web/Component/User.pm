@@ -87,15 +87,30 @@ sub _show_groups {
 
 sub _show_bookmarks {
   my( $panel, $object, $id ) = @_;
-
-## Get the user's bookmark list
+  my $editable = $panel->ajax_is_available;
+  ## Get the user's bookmark list
   my @bookmarks = @{$object->get_bookmarks($id)};
 
-## return the message
+  ## return the message
   my $html = "<h3>My bookmarks</h3>\n";
 
   if (scalar(@bookmarks) > 0) {
-    $html .= "<ul>\n";
+    if ($editable) {
+      $html .= _show_editable_bookmarks(@bookmarks);
+    } else {
+      $html .= _show_static_bookmarks(@bookmarks);
+    }
+  }
+  else {
+    $html .= "<p>You have no bookmarks set.</p>";
+  }
+
+  return $html;
+}
+
+sub _show_static_bookmarks {
+    my @bookmarks = @_;
+    my $html = "<ul>\n";
     foreach my $bookmark (@bookmarks) {
       my $name = $$bookmark{'bm_name'};
       my $url  = $$bookmark{'bm_url'};
@@ -103,11 +118,37 @@ sub _show_bookmarks {
     }
     $html .= qq(</ul>
 <p><a href="/common/manage_bookmarks">Manage bookmarks</a></p>);
-  }
-  else {
-    $html .= "<p>You have no bookmarks set.</p>";
-  }
+    return $html;
+}
 
+sub _show_editable_bookmarks {
+    my @bookmarks = @_;
+    my $html = "<div>";
+    my $count = 0;
+    foreach my $bookmark (@bookmarks) {
+      my $name = $$bookmark{'bm_name'};
+      my $url  = $$bookmark{'bm_url'};
+      $html .= _inplace_editor_for_bookmarks($count, $bookmark) . qq(<div class='bookmark_item' onmouseover="show_manage_links('bookmark_manage_$count')" onmouseout="hide_manage_links('bookmark_manage_$count')" id='bookmark_$count'><span class='bullet'><img src='/img/red_bullet.gif' width='4' height='8'></span><a href="$url" title='$url' id='bookmark_name_$count'>$name</a>) . _manage_links($count, $bookmark) . qq(</div>);
+      $count++;
+    }
+    $html .= "</div>";
+    return $html;
+}
+
+sub _manage_links {
+  my ($id, $bookmark) = @_;
+  my $bookmark_id   = $$bookmark{'bm_id'};
+  my $user_id = $ENV{'ENSEMBL_USER_ID'}; 
+  my $html = qq(<div class="bookmark_manage" style='display: none;' id='bookmark_manage_$id'><a href='#' onclick='javascript:show_inplace_editor($id);'>edit</a> &middot; <a href='#' onclick='javascript:delete_bookmark($id, $bookmark_id, $user_id)'>delete</a></div>);
+  return $html;
+}
+
+sub _inplace_editor_for_bookmarks {
+  my ($id, $bookmark) = @_;
+  my $bookmark_id   = $$bookmark{'bm_id'};
+  my $bookmark_url   = $$bookmark{'bm_url'};
+  my $user_id = $ENV{'ENSEMBL_USER_ID'}; 
+  my $html = "<div id='bookmark_editor_$id' class='bookmark_editor' style='display: none'><form action='javascript:save_bookmark($id, $bookmark_id, $user_id);'><input type='text' id='bookmark_text_field_$id' value='" . $$bookmark{'bm_name'} . "'> <div id='bookmark_editor_spinner_$id' style='display: none'><img src='/img/ajax-loader.gif' width='16' height='16' />'</div><div style='display: inline' id='bookmark_editor_links_$id'><a href='#' onclick='javascript:save_bookmark($id, $bookmark_id, $user_id);'>save</a> &middot; <a href='#' onclick='javascript:hide_inplace_editor($id);'>cancel</a></div></form></div>";
   return $html;
 }
 
