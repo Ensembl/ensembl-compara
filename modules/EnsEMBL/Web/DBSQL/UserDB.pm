@@ -484,6 +484,29 @@ sub saveBookmark {
   return $result;
 }
 
+sub rename_bookmark {
+  my ($self, $bookmark_id, $new_name) = @_;
+  my $sql = qq(
+    UPDATE bookmark 
+    SET name = '$new_name' 
+    WHERE bm_id = $bookmark_id;
+  );
+  my $sth = $self->{'_handle'}->prepare($sql);
+  my $result = $sth->execute();
+  return $new_name;
+}
+
+sub delete_bookmark {
+  my ($self, $bookmark_id) = @_;
+  my $sql = qq(
+    DELETE FROM bookmark 
+    WHERE bm_id = $bookmark_id;
+  );
+  my $sth = $self->{'_handle'}->prepare($sql);
+  my $result = $sth->execute();
+  return "";
+}
+
 sub getBookmarksByUser {
   my ($self, $user_id) = @_;
   return [] unless $self->{'_handle'};
