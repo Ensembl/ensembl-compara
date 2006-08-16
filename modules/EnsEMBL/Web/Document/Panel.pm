@@ -584,6 +584,10 @@ sub popup_help {
   return $html;
 }
 
+sub ajax_is_available { 
+  return 1;
+}
+
 
 1;
 
