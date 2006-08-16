@@ -10,7 +10,6 @@ our @ISA = qw( EnsEMBL::Web::Configuration );
 ## Account management
 ##-----------------------------------------------------------------------------
 
-
 sub user_login {
   my $self   = shift;
   my $object = $self->{'object'};
@@ -20,6 +19,8 @@ sub user_login {
   my $wizard = EnsEMBL::Web::Wizard::User->new($object);
   $wizard->add_nodes([qw(login validate accountview)]);
   $wizard->default_node('login');
+
+  $self->add_javascript_libraries;
                                                                                 
   ## chain the nodes together
   $wizard->add_outgoing_edges([
@@ -29,6 +30,12 @@ sub user_login {
 
   $self->add_wizard($wizard);
   $self->wizard_panel('Ensembl User Login');
+}
+
+sub add_javascript_libraries {
+  my $self = shift;
+  $self->{page}->javascript->add_source( "/js/prototype-1.4.0.js" );
+  $self->{page}->javascript->add_source( "/js/accountview.js" );
 }
 
 sub register {
@@ -182,6 +189,8 @@ sub add_bookmark {
   ## and accountview
   my $wizard = EnsEMBL::Web::Wizard::User->new($object);
                                                     
+  $self->add_javascript_libraries;
+
   $wizard->add_nodes([qw(name_bookmark save_bookmark accountview)]);
   $wizard->default_node('accountview');
 
