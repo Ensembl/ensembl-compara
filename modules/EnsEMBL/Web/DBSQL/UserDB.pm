@@ -266,7 +266,7 @@ sub getUserByID {
   return $details unless $self->{'_handle'};
 
   my $sql = qq(
-    SELECT user_id, name, org, email
+    SELECT user_id, name, org, email, extra
     FROM user
     WHERE user_id = "$id" 
   );
@@ -280,6 +280,7 @@ sub getUserByID {
     'name'    => $record[1],
     'org'     => $record[2],
     'email'   => $record[3],
+    'extra'   => $record[4],
   };
   return $details;
 }
@@ -291,7 +292,7 @@ sub getUserByEmail {
   return $details unless $self->{'_handle'};
 
   my $sql = qq(
-    SELECT user_id, name, org, salt
+    SELECT user_id, name, salt, org, extra
     FROM user
     WHERE email = "$email" 
   );
@@ -303,11 +304,14 @@ sub getUserByEmail {
   $details = {
     'user_id' => $record[0],
     'name'    => $record[1],
-    'org'     => $record[2],
-    'salt'    => $record[3],
+    'salt'    => $record[2],
+    'org'     => $record[3],
+    'extra'   => $record[4],
   };
   return $details;
 }
+
+## This method validates a user from a URL sent via email (lost password)
 
 sub getUserByCode {
   my ($self, $code) = @_;
@@ -316,7 +320,7 @@ sub getUserByCode {
   return $details unless $self->{'_handle'};
 
   my $sql = qq(
-    SELECT user_id, name, org, salt
+    SELECT user_id, name, salt, UNIX_TIMESTAMP(expires), org, extra
     FROM user
     WHERE password = "$code"
   );
@@ -325,12 +329,24 @@ sub getUserByCode {
   return {} unless $R->[0];
 
   my @record = @{$R->[0]};
-  $details = {
-    'user_id' => $record[0],
-    'name'    => $record[1],
-    'org'     => $record[2],
-    'salt'    => $record[3],
-  };
+  my $expires = $record[3];
+  my $limit = time() + (86400 * 7);  ## 7-day limit
+  if (!$expires || $expires > $limit) {
+    my $user_id = $record[0];
+    $details = {
+      'user_id' => $user_id,
+      'name'    => $record[1],
+      'salt'    => $record[2],
+      'org'     => $record[4],
+      'extra'   => $record[5],
+    };
+    if ($expires) {
+      ## reset expiry so user can log in
+      $sql = qq(UPDATE user SET expires = null WHERE user_id = "$user_id");
+      my $sth = $self->{'_handle'}->prepare($sql);
+      my $result = $sth->execute();
+    }
+  }
   return $details;
 }
 
@@ -344,6 +360,7 @@ sub createUserAccount {
   my $email     = $details{'email'}; 
   my $password  = $details{'password'}; 
   my $org       = $details{'org'}; 
+  my $extra     = $details{'extra'}; 
   my $salt      = _random_string(8); 
   my $encrypted = Digest::MD5->new->add($password.$salt)->hexdigest();
 
@@ -354,6 +371,7 @@ sub createUserAccount {
       salt          = "$salt",
       password      = "$encrypted",
       org           = "$org",
+      extra         = "$extra",
       date_created  = NOW()
   );
   
@@ -382,6 +400,7 @@ sub updateUserAccount {
   my $name      = $details{'name'}; 
   my $email     = $details{'email'}; 
   my $org       = $details{'org'}; 
+  my $extra     = $details{'extra'}; 
 
   my $result;
     if ($user_id > 0) {
@@ -390,7 +409,9 @@ sub updateUserAccount {
         name          = "$name", 
         email         = "$email", 
         org           = "$org",
-        last_updated  = NOW()
+        extra         = "$extra",
+        last_updated  = NOW(),
+        updated_by    = $user_id
       WHERE user_id   = $user_id
     );
   
@@ -414,7 +435,7 @@ sub validateUser {
     my $salt = $user{'salt'};
     my $encrypted = Digest::MD5->new->add($password.$salt)->hexdigest();
     my $sql = qq(
-      SELECT user_id
+      SELECT user_id, expires
       FROM user
       WHERE email = "$email" AND password = "$encrypted"
     );
@@ -422,7 +443,9 @@ sub validateUser {
     return unless $R->[0];
 
     my @record = @{$R->[0]};
-    if ($record[0]) {
+    my $user_id = $record[0];
+    my $expires = $record[1];
+    if ($user_id && !$expires) {
       $$result{'user_id'} = $record[0];
     }
     else {
@@ -443,9 +466,14 @@ sub resetPassword {
   my $id        = $$record{'user_id'};
   return unless $id > 0;
 
+  my $expires = undef;
   my $password  = $$record{'password'};
   if (!$password && $$record{'reset'} eq 'auto') { ## resetting lost password
-    $password   = _random_string(16); 
+    $password   = _random_string(16);
+    ## set time string manually, since it MUST be null if not auto-resetting
+    my @now     = localtime();
+    my $year    = $now[5] + 1900;
+    $expires    = $year.'-'.$now[4].'-'.$now[3].' '.$now[2].':'.$now[1].':'.$now[0];
   }
   my $salt      = _random_string(8); 
   my $encrypted = Digest::MD5->new->add($password.$salt)->hexdigest();
@@ -454,7 +482,8 @@ sub resetPassword {
     UPDATE user  
     SET 
       password  = "$encrypted",
-      salt      = "$salt"
+      salt      = "$salt",
+      expires   = "$expires"
     WHERE user_id = "$id"
   );
   my $sth = $self->{'_handle'}->prepare($sql);
