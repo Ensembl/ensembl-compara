@@ -17,15 +17,23 @@ sub init_label {
   my $type = $self->{'container'}->coord_system->name();
 
   $type = $SHORT{lc($type)} || ucfirst( $type );
-
-  my $species = '';
-  if( $self->{'config'}->{'multi'} ) {
-    $species = join '', map { substr($_,0,1) } split( /_/, $self->{'config'}->{'species'}),'.',' ';
-  }
   my $chr = $self->{'container'}->seq_region_name();
-  $chr = "$species$type $chr";
-  $self->init_label_text ( "$chr band" );
+  my $chr_raw = $chr;
+  $chr = "$type $chr" unless $chr =~ /^$type/i;
+  if( $self->{'config'}->{'multi'} ) {
+	if( length($chr) > 9 ) {
+  	  $chr = $chr_raw;
+    }
+    $chr = join( '', map { substr($_,0,1) } split( /_/, $self->{'config'}->{'species'}),'.')." $chr";
+  }
+  my $band_present = 0;
+  foreach my $band (@{$self->{'container'}->get_all_KaryotypeBands()}) {
+	$band_present = 1 if $band->name();
+  }
+  my $label = $band_present ? "$chr band" : "$chr";
+  $self->init_label_text(ucfirst($label));
 }
+
 
 sub _init {
   my ($self) = @_;
