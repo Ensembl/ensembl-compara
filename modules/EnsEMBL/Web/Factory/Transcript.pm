@@ -8,6 +8,16 @@ use EnsEMBL::Web::Factory;
 use EnsEMBL::Web::Proxy::Object;
 our @ISA = qw(  EnsEMBL::Web::Factory );
 
+sub createObjectsFast {
+  my $self = shift;
+  my $adaptor_call = sprintf( "get_%sAdaptor", $self->param('type') || 'Transcript' );
+  $self->DataObjects( EnsEMBL::Web::Proxy::Object->new(
+    'Transcript', 
+    $self->database($self->param('db')||'core')->$adaptor_call->fetch_by_stable_id( $self->param('transcript') ),
+    $self->__data 
+  ));
+}
+
 sub createObjects {   
   my $self = shift;
   my ($identifier, @fetch_calls, $transobj);

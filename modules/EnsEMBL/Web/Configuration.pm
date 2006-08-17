@@ -158,6 +158,7 @@ sub context_location {
   }
   my $flag = "location$self->{flag}";
   return if $self->{page}->menu->block($flag);
+  my $no_sequence = $obj->species_defs->NO_SEQUENCE;
   if( $q_string ) {
     my $flag = "location$self->{flag}";
     $self->add_block( $flag, 'bulletted', $header, 'raw'=>1 ); ##RAW HTML!
@@ -167,38 +168,44 @@ sub context_location {
        'href' => "/$species/mapview?chr=".$obj->seq_region_name,
        'title' => 'MapView - show chromosome summary' );
     }
-    $self->add_entry( $flag, 'text' => 'Graphical view',
-      'href'=> "/$species/contigview?l=$q_string",
-      'title'=> "ContigView - detailed sequence display of $header" );
+    unless( $no_sequence ) {
+      $self->add_entry( $flag, 'text' => 'Graphical view',
+        'href'=> "/$species/contigview?l=$q_string",
+        'title'=> "ContigView - detailed sequence display of $header" );
+    }
     $self->add_entry( $flag, 'text' => 'Graphical overview',
       'href'=> "/$species/cytoview?l=$q_string",
       'title' => "CytoView - sequence overview of $header" );
-    $self->add_entry( $flag, 'text' => 'Export information about region',
-      'title' => "ExportView - export information about $header",
-      'href' => "/$species/exportview?l=$q_string"
-    );
-    $self->add_entry( $flag, 'text' => 'Export sequence as FASTA',
-      'title' => "ExportView - export sequence of $header as FASTA",
-      'href' => "/$species/exportview?l=$q_string;format=fasta;action=format"
-    );
-    $self->add_entry( $flag, 'text' => 'Export EMBL file',
-      'title' => "ExportView - export sequence of $header as EMBL",
-      'href' => "/$species/exportview?l=$q_string;format=embl;action=format"
-    );
-    if( $obj->species_defs->multidb('ENSEMBL_MART_ENSEMBL') && !$obj->species_defs->ENSEMBL_NOMART ) {
-      $self->add_entry( $flag, 'icon' => '/img/biomarticon.gif' , 'text' => 'Export Gene info in region',
-        'title' => "BioMart - export Gene information in $header",
-        'href' => "/$species/martlink?l=$q_string;type=gene_region" );
+    unless( $no_sequence ) {
+      $self->add_entry( $flag, 'text' => 'Export information about region',
+        'title' => "ExportView - export information about $header",
+        'href' => "/$species/exportview?l=$q_string"
+      );
+      $self->add_entry( $flag, 'text' => 'Export sequence as FASTA',
+        'title' => "ExportView - export sequence of $header as FASTA",
+        'href' => "/$species/exportview?l=$q_string;format=fasta;action=format"
+      );
+      $self->add_entry( $flag, 'text' => 'Export EMBL file',
+        'title' => "ExportView - export sequence of $header as EMBL",
+        'href' => "/$species/exportview?l=$q_string;format=embl;action=format"
+      );
     }
-    if( $obj->species_defs->multidb( 'ENSEMBL_MART_SNP' ) ) {
-      $self->add_entry( $flag, 'icon' => '/img/biomarticon.gif' , 'text' => 'Export SNP info in region',
-        'title' => "BioMart - export SNP information in $header",
-        'href' => "/$species/martlink?l=$q_string;type=snp_region" ) if $obj->species_defs->databases->{'ENSEMBL_VARIATION'};
-    }
-    if( $obj->species_defs->multidb( 'ENSEMBL_MART_VEGA' ) ) {
-      $self->add_entry( $flag,  'icon' => '/img/biomarticon.gif' , 'text' => 'Export Vega info in region',
-        'title' => "BioMart - export Vega gene features in $header",
-        'href' => "/$species/martlink?l=$q_string;type=vega_region" ) if $obj->species_defs->databases->{'ENSEMBL_VEGA'};
+   unless ( $obj->species_defs->ENSEMBL_NOMART) {
+      if( $obj->species_defs->multidb('ENSEMBL_MART_ENSEMBL') && !$obj->species_defs->ENSEMBL_NOMART ) {
+        $self->add_entry( $flag, 'icon' => '/img/biomarticon.gif' , 'text' => 'Export Gene info in region',
+          'title' => "BioMart - export Gene information in $header",
+          'href' => "/$species/martlink?l=$q_string;type=gene_region" );
+      }
+      if( $obj->species_defs->multidb( 'ENSEMBL_MART_SNP' ) ) {
+        $self->add_entry( $flag, 'icon' => '/img/biomarticon.gif' , 'text' => 'Export SNP info in region',
+          'title' => "BioMart - export SNP information in $header",
+          'href' => "/$species/martlink?l=$q_string;type=snp_region" ) if $obj->species_defs->databases->{'ENSEMBL_VARIATION'};
+      }
+      if( $obj->species_defs->multidb( 'ENSEMBL_MART_VEGA' ) ) {
+        $self->add_entry( $flag,  'icon' => '/img/biomarticon.gif' , 'text' => 'Export Vega info in region',
+          'title' => "BioMart - export Vega gene features in $header",
+          'href' => "/$species/martlink?l=$q_string;type=vega_region" ) if $obj->species_defs->databases->{'ENSEMBL_VEGA'};
+      }
     }
   }
 }

@@ -202,9 +202,16 @@ sub add_tracks {
       my @logicnames = ( split /\s+/,
                           $config->get( $art, 'logicname' ) );
       my @good_lnames = grep{$features{$_}} @logicnames;
-      scalar( @good_lnames ) || next;
-      $config->set( $art, 'on', 'on' );
-      $config->set( $art, 'logicname', join( " ", @good_lnames ) );
+      if( @logicnames  ) {
+        if( @good_lnames ) {
+          $config->set( $art, 'on', 'on' );
+          $config->set( $art, 'logicname', join( " ", @good_lnames ) );
+        } else {
+          $config->set( $art, 'on', 'off' );
+        }
+      } elsif( $config->is_available_artefact( $art ) ) {
+        $config->set( $art, 'on', 'on' );
+      }
     }
   }
   return 1;
@@ -489,9 +496,11 @@ sub render {
     $HTML .= $image->render_image_button();
     $HTML .= sprintf qq(<div style="text-align: center; font-weight: bold">%s</div>), $self->caption if $self->caption;
   } elsif( $self->button eq 'drag' ) {
+$self->{'species_defs'}{'timer'}->push("Starting Image Tag",5);
     $image->{'id'} = "p_$self->{'panel_number'}_i";
     my $tag = $image->render_image_tag();
     ## Now we have the image dimensions, we can set the correct DIV width
+$self->{'species_defs'}{'timer'}->push("Finished Image Tag",5);
     if( $self->menu_container ) {
       $HTML .= $self->menu_container->render_html;
       $HTML .= $self->menu_container->render_js;
@@ -502,12 +511,14 @@ sub render {
     ### outside this module!
     $HTML .= sprintf '<div style="text-align:center"><div class="center" style="margin:auto;border:0px;padding:0px;width:%dpx">',  $image->{'width'}+2;
     $HTML .= sprintf qq(<div id="p_$self->{'panel_number'}" style="border: solid 1px black; position: relative; width:%dpx">%s), $image->{'width'},$tag;
+$self->{'species_defs'}{'timer'}->push("Starting Image Map",5);
     if( $self->imagemap eq 'yes' ) {
       $HTML .= $image->render_image_map
     }
     $HTML .= "</div>";
     $HTML .= sprintf qq(<div style="text-align: center; font-weight: bold">%s</div>), $self->caption if $self->caption;
     $HTML .= '</div></div>';
+$self->{'species_defs'}{'timer'}->push("Finishing Image Map",5);
   } else {
     my $tag = $image->render_image_tag();
     ## Now we have the image dimensions, we can set the correct DIV width 
@@ -532,6 +543,7 @@ sub render {
     my %URLS;
     foreach( sort @{$self->{'image_formats'}} ) {
       my $T = $image->render($_);
+$self->{'species_defs'}{'timer'}->push("Finishing rendering $_",5);
       $URLS{$_} = $T->{'URL'};
       $URLS{$_}.='.eps' if lc($_) eq 'postscript';
     }
@@ -543,6 +555,7 @@ sub render {
   $HTML .= $self->tailnote;
     
   $self->{'width'} = $image->{'width'};
+$self->{'species_defs'}{'timer'}->push("Returning from renderer....",5);
   return $HTML
 }
 

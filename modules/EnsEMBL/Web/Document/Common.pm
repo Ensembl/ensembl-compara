@@ -48,12 +48,14 @@ sub _common_HTML {
 ## Main document attributes...
   $self->set_doc_type( 'XHTML', '1.0 Trans' );
   $self->_init();
+$self->_prof('A');
   $self->add_body_attr( 'id' => 'ensembl-webpage' );
 #  --- Stylesheets
   $self->stylesheet->add_sheet( 'all',    $self->species_defs->ENSEMBL_TMPL_CSS );
   $self->stylesheet->add_sheet( 'all',    $self->species_defs->ENSEMBL_PAGE_CSS );
   $self->stylesheet->add_sheet( 'print', '/css/printer-styles.css' );
   $self->stylesheet->add_sheet( 'screen', '/css/screen-styles.css' );
+$self->_prof('B');
 
 ## Set up the version information etc for the title of the page, masthead etc
 
@@ -71,6 +73,7 @@ sub _common_HTML {
   $self->masthead->logo_w         = $style->{'SITE_LOGO_WIDTH'};
   $self->masthead->logo_h         = $style->{'SITE_LOGO_HEIGHT'};
 
+$self->_prof('C');
 #  --- The sidebar
   $self->menu->site_name          = $self->species_defs->ENSEMBL_SITE_NAME;
   $self->menu->archive            = $self->species_defs->ARCHIVE_VERSION;

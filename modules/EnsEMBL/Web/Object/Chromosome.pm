@@ -43,8 +43,8 @@ sub is_golden_path {
 =cut
 
 sub max_chr_length {
-	my $self = shift;
-	return $self->species_defs->MAX_CHR_LENGTH;
+  my $self = shift;
+  return $self->species_defs->MAX_CHR_LENGTH;
 }
 
 #----------------------
@@ -58,8 +58,8 @@ sub max_chr_length {
 =cut
 
 sub length {
-	my $self = shift;
-	return $self->Obj->length;
+  my $self = shift;
+  return $self->Obj->length;
 }
 
 #----------------------
@@ -91,8 +91,8 @@ sub seq_region_type { return $_[0]->Obj ? $_[0]->Obj->coord_system->name : ''; }
 =cut
 
 sub all_chromosomes{
-	my $self = shift ;
-	return $self->species_defs->ENSEMBL_CHROMOSOMES;
+  my $self = shift ;
+  return $self->species_defs->ENSEMBL_CHROMOSOMES;
 }
 
 #----------------------------------------------------------------------------
@@ -262,7 +262,7 @@ sub get_synteny_nav {
 
 =head2 parse_user_data
 
- Arg[1]		 : $parser - a Data::Bio::Text parser object
+ Arg[1]     : $parser - a Data::Bio::Text parser object
  Example     : 
  Description : Parses user input and stores each feature as an object 
  Return type : None
@@ -288,7 +288,7 @@ sub parse_user_data {
 
 =head2 find_available_anchor_points
 
- Arg[1]		 : EnsEMBL::Web::Object::Chromosome
+ Arg[1]     : EnsEMBL::Web::Object::Chromosome
  Example     : my @types = @{$object->find_available_anchor_points};
  Description : Looks in species_defs for available anchor points, ie non-emprty tables
  Return type : Arrayref
@@ -296,31 +296,32 @@ sub parse_user_data {
 =cut
 
 sub find_available_anchor_points {
-	my $self=shift;
-	my $species      = $self->species;
-	my $species_defs = $self->species_defs;
-	#define possible anchor here - where 'table' value is undef then option added by default
-	my $all_anchor_points = [
-							 {'table'=>'karyotype',      'value'=>'band',   'name'=>'Band'},
-							 {'table'=>'',               'value'=>'region', 'name'=>'Region'},
-						 	 {'table'=>'marker_feature', 'value'=>'marker', 'name'=>'Marker'},
-						   	 {'table'=>'' ,              'value'=>'bp',     'name'=>'Base pair'},
-						   	 {'table'=>'' ,              'value'=>'gene',   'name'=>'Gene'},
-						   	 {'table'=>'' ,              'value'=>'peptide','name'=>'Peptide'},	
-							];
+  my $self=shift;
+  my $species      = $self->species;
+  my $species_defs = $self->species_defs;
+  #define possible anchor here - where 'table' value is undef then option added by default
+  my $all_anchor_points = [
+    {'table'=>'karyotype',      'value'=>'band',   'name'=>'Band'},
+    {'table'=>'',               'value'=>'region', 'name'=>'Region'},
+    {'table'=>'marker_feature', 'value'=>'marker', 'name'=>'Marker'},
+    {'table'=>'misc_feature',   'value'=>'misc_feature', 'name'=>'Clone'},
+    {'table'=>'' ,              'value'=>'bp',     'name'=>'Base pair'},
+    {'table'=>'gene' ,          'value'=>'gene',   'name'=>'Gene'},
+    {'table'=>'translation' ,   'value'=>'peptide','name'=>'Peptide'},  
+  ];
 
-	my $avail_anchor_points = [];
-	foreach my $poss_anchor (@$all_anchor_points) {
-		if ($poss_anchor->{'table'}) {
-			if ($species_defs->get_table_size( {-db=>'ENSEMBL_DB',-table => $poss_anchor->{'table'}},$species )) {
-				push @$avail_anchor_points, {'value'=>$poss_anchor->{'value'}, 'name'=>$poss_anchor->{'name'} };
-			}
-		}
-		else {
-			push @$avail_anchor_points, {'value'=>$poss_anchor->{'value'}, 'name'=>$poss_anchor->{'name'} };
-		}
-	}
-	return $avail_anchor_points;
+  my $avail_anchor_points = [];
+  foreach my $poss_anchor (@$all_anchor_points) {
+    if ($poss_anchor->{'table'}) {
+      if ($species_defs->get_table_size( {-db=>'ENSEMBL_DB',-table => $poss_anchor->{'table'}},$species )) {
+        push @$avail_anchor_points, {'value'=>$poss_anchor->{'value'}, 'name'=>$poss_anchor->{'name'} };
+      }
+    }
+    else {
+      push @$avail_anchor_points, {'value'=>$poss_anchor->{'value'}, 'name'=>$poss_anchor->{'name'} };
+    }
+  }
+  return $avail_anchor_points;
 }
 
 1;

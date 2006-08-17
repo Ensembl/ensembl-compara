@@ -14,7 +14,7 @@ sub init {
   $self->{'_userdatatype_ID'}   = 255;
   $self->{'_all_chromosomes'}   = 'yes';
 
-  $self->{'general'}->{'Vkar2view'} = {
+  $self->{'general'}->{'Vkar2view Vsupercontigs'} = {
     '_artefacts'    => [qw(Videogram)],
     '_options'      => [],
     '_settings'     => {
@@ -30,6 +30,20 @@ sub init {
       'width'       => 12,
       'padding'     => 3,
     },
+    'Vsupercontigs' => {
+       'on'          => 'off',
+       'pos'         => '400',
+       'width'       =>  20,
+       'totalwidth'  =>  100,
+       'padding'     =>  6,
+       'col'         => 'blue',
+       'col_ctgs1'    => 'green',
+       'col_ctgs2'    => 'darkgreen',
+       'lab'         => 'black',
+       'available'   => 'features MAPSET_SUPERCTGS',
+
+    }
+
   };
 }
 1;

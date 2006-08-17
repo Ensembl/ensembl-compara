@@ -39,7 +39,8 @@ sub new {
   $| = 1;
 ## Input module...
   my $script = $parameters{'scriptname'} || $ENV{'ENSEMBL_SCRIPT'};
-  my $input = new CGI;                                               $self->_prof("Parameters initialised from input");
+  my $input = $parameters{'cgi'} || new CGI;
+  $self->_prof("Parameters initialised from input");
 ## Page module...
 
 ## Compile and create renderer ... [ Apache, File, ... ]
@@ -65,12 +66,15 @@ sub new {
   $self->{'format'} = $input->param('_format') || $parameters{'outputtype'} || DEFAULT_OUTPUTTYPE;
   my $method = "_initialize_".($self->{'format'});
 
-  $self->page->$method();                                            $self->_prof("Output method initialized" );
+  $self->page->$method();
+  $self->_prof("Output method initialized" );
 
 ## Finally we get to the Factory module!
   $self->factory = EnsEMBL::Web::Proxy::Factory->new(
     $parameters{'objecttype'}, { '_input' => $input, '_apache_handle' => $rend->{'r'} }
-  );                                                                 $self->_prof("Factory compiled");
+  );
+  $self->factory->__data->{'timer'} = $self->{'timer'};
+  $self->_prof("Factory compiled and objects created...");
 
   return $self if $self->factory->has_fatal_problem();
   eval { $self->factory->createObjects(); };
@@ -420,13 +424,13 @@ sub simple_webpage {
   my $self = __PACKAGE__->new( 'objecttype' => shift );
   if( $self->has_a_problem ) {
      $self->render_error_page;
-  } 
-  else {
+  } else {
     foreach my $object( @{$self->dataObjects} ) {
       $self->configure( $object, $object->script, 'context_menu', 'context_location' );
     }
     $self->action;
   }
+  warn $self->timer->render();
 }
 
 sub wrapper {

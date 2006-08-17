@@ -12,7 +12,8 @@ sub new {
     'image_width' => 64,
     'alt'         => 'Repeats'
   ); 
-  $self->add_checkbox( 'repeat_lite', 'All repeats' ) if $self->{'config'}->is_available_artefact( 'repeat_lite' );
+  return unless $self->{'config'}->is_available_artefact( 'database_tables ENSEMBL_DB.repeat_feature ' );
+  $self->add_checkbox( 'repeat_lite', 'All repeats' );
 
   my %T;
   foreach my $c ( @{$self->{'configs'}||[]}, $self->{'config'} ) {

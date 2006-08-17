@@ -86,6 +86,7 @@ sub _createObjectsLocation {
   my( $DB, $TYPE ) = $self->_dataset( $type );
   return unless $DB;
   my($sr,$start,$end) = $self->param('l') =~ /^(\w+):(-?[.\w]+)-([.\w]+)$/;
+  if( $DB =~ /(snp|vega)/ ) {
   return $self->_link(
     'schema'            => [ 'default' ],
     'dataset'           => [ $DB ],
@@ -94,9 +95,22 @@ sub _createObjectsLocation {
     $DB.'_collection_chromosome' => [ 1 ],
     $DB.'_chr_name'     => [ $sr ],
     $DB.'_collection_chromosome_coordinates' => [ 1 ],
-    $DB.$TYPE.'_chrom_start' => [ $start ],
-    $DB.$TYPE.'_chrom_end'   => [ $end ]
+    $DB.'_chrom_start' => [ $start ],
+    $DB.'_chrom_end'   => [ $end ]
   );
+  } else {
+  return $self->_link(
+    'schema'            => [ 'default' ],
+    'dataset'           => [ $DB ],
+    'stage_initialised' => [ 'start', 'filter' ],
+    'stage'             => [ 'output' ],
+    $DB.'_collection_chromosome' => [ 1 ],
+    $DB.'_chromosome_name'     => [ $sr ],
+    $DB.'_collection_chromosome_coordinates' => [ 1 ],
+    $DB.'_start' => [ $start ],
+    $DB.'_end'   => [ $end ]
+  );
+  }
 }
 
 sub _createObjects_family {
@@ -109,7 +123,23 @@ sub _createObjects_family {
     'stage_initialised' => [ 'start', 'filter' ],
     'stage'             => [ 'output' ],
     $DB.'_collection_family_domain_id_list' => [ 1 ],
-    $DB.'_protein_fam_id_filters'     => [ 'family_ids' ],
+    $DB.'_protein_fam_id_filters'     => [ 'ensembl_family' ],
+    $DB.'_protein_fam_id_filters_list' => [ $self->param('family_id') ]
+  );
+}
+
+sub _createObjects_familyseq {
+  my $self = shift;
+  my( $DB, $TYPE ) = $self->_dataset( 'core' );
+  return unless $DB;
+  return $self->_link( 
+    'schema'            => [ 'default' ],
+    'dataset'           => [ $DB ],
+    'stage_initialised' => [ 'start', 'filter' ],
+    'stage'             => [ 'output' ],
+    'outtype'           => [ 'sequences' ],
+    $DB.'_collection_family_domain_id_list' => [ 1 ],
+    $DB.'_protein_fam_id_filters'     => [ 'ensembl_family' ],
     $DB.'_protein_fam_id_filters_list' => [ $self->param('family_id') ]
   );
 }
@@ -124,7 +154,7 @@ sub _createObjects_domain {
     'stage_initialised' => [ 'start', 'filter' ],
     'stage'             => [ 'output' ],
     $DB.'_collection_family_domain_id_list' => [ 1 ],
-    $DB.'_protein_fam_id_filters'     => [ 'interpro_ids' ],
+    $DB.'_protein_fam_id_filters'     => [ 'interpro' ],
     $DB.'_protein_fam_id_filters_list' => [ $self->param('domain_id') ]
   );
 }

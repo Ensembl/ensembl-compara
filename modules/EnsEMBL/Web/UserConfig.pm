@@ -581,70 +581,7 @@ sub is_available_artefact {
  
 sub _is_available_artefact{
   my $self     = shift;
-  my $available = shift;
-
-  my @test = split( ' ', $available );
-  if( ! $test[0] ){ return 999; } # No test found - return pass.
-
-  my( $success, $fail ) = ($test[0] =~ s/^!//) ? ( 0, 1 ) : ( 1, 0 );
-
-  if( $test[0] eq 'database_tables' ){ # Then test using get_table_size
-    my( $database, $table ) = split( '\.', $test[1] );
-    return $self->{'species_defs'}->get_table_size(
-          { -db    => $database, -table => $table },
-          $self->{'species'}
-      ) ? $success : $fail;
-  } elsif( $test[0] eq 'multi' ) { # See whether the traces database is specified
-    my( $type,$species ) = split /\|/,$test[1],2;
-    my %species = $self->{'species_defs'}->multi($type, $self->{'species'});
-    return $success if exists( $species{$species} );
-    return $fail;
-  } elsif( $test[0] eq 'multialignment' ) { # See whether the traces database is specified
-    my( $alignment_id ) = $test[1];
-    my %alignment = $self->{'species_defs'}->multi('ALIGNMENTS', $alignment_id);
-    return $success if (scalar(keys %alignment));
-    return $fail;
-  } elsif( $test[0] eq 'database_features' ){ # See whether the given database is specified
-    my $ft = $self->{'species_defs'}->other_species($self->{'species'},'DB_FEATURES') || {};
-    my @T = split /\|/, $test[1];
-    my $flag = 1;
-    foreach( @T ) {
-      $flag = 0 if $ft->{uc($_)};
-    }
-    return $fail if $flag;
-    return $success;
-  } elsif( $test[0] eq 'databases' ){ # See whether the given database is specified
-    my $db = $self->{'species_defs'}->other_species($self->{'species'},'databases')  || {};
-    return $fail unless $db->{$test[1]}       ;
-    return $fail unless $db->{$test[1]}{NAME} ;
-    return $success;
-  } elsif( $test[0] eq 'features' ){ # See whether the given db feature is specified
-    my $ft = $self->{'species_defs'}->other_species($self->{'species'},'DB_FEATURES') || {};
-    my @T = split /\|/, $test[1];
-    my $flag = 1;
-    foreach( @T ) {
-      $flag = 0 if $ft->{uc($_)};
-    }
-    return $fail if $flag;
-    return $success;
-  } elsif( $test[0] eq 'any_feature' ){ # See whether any of the given db features is specified
-    my $ft = $self->{'species_defs'}->other_species($self->{'species'},'DB_FEATURES') || {};
-    shift @test;
-    foreach (@test) {
-      return $success if $ft->{uc($_)};
-    }
-    return $fail;
-  } elsif( $test[0] eq 'species') {
-    if($reg->get_alias($self->{'species'},"no throw") ne $reg->get_alias($test[1],"no throw")){
-      return $fail;
-    }
-  } elsif( $test[0] eq 'das_source' ){ # See whether the given DAS source is specified
-    my $source = $self->{'species_defs'}->ENSEMBL_INTERNAL_DAS_SOURCES || {};
-    return $fail unless $source->{$test[1]}   ;
-    return $success;
-  }
-
-  return $success; # Test not found - assume a pass anyway!
+  return $self->{'species_defs'}->_is_available_artefact( $self->{'species'}, @_ );
 }
 
 #########
@@ -877,9 +814,13 @@ sub ADD_ALL_DNA_FEATURES {
   $POS = shift || 2400;
   $self->add_new_track_cdna( 'Harvard_manual', 'Manual annot.', $POS++, 'URL_KEY' => 'NULL', 'ZMENU' => [ '###ID###', 'Internal identifier', '' ], @_ );
 
+  $self->add_new_track_cdna( 'medaka_cdna',    'Medaka cDNAs',    $POS++, @_ );
+
   $self->add_new_track_cdna( 'human_cdna', 'Human cDNAs',   $POS++, @_ );
   $self->add_new_track_cdna( 'dog_cdna',   'Dog cDNAs',     $POS++, @_ );
   $self->add_new_track_cdna( 'rat_cdna',   'Rat cDNAs',     $POS++, @_ );
+  $self->add_new_track_cdna( 'platypus_cdnas', 'Platypus cDNAs',   $POS++, @_ );
+
   $self->add_new_track_cdna( 'zfish_cdna', 'D.rerio cDNAs', $POS++,
         'SUBTYPE'    => sub { return $_[0] =~ /WZ/ ? 'WZ' : ( $_[0] =~ /IMCB/ ? 'IMCB_HOME' : 'EMBL' ) },
         'ID'         => sub { return $_[0] =~ /WZ(.*)/ ? $1 : $_[0] },
@@ -932,7 +873,6 @@ sub ADD_ALL_DNA_FEATURES {
 
   foreach ( @EST_DB_CDNA ) {
     my($A,$B,@T) = @$_;
-    warn ".. $A $B ..";
     $self->add_new_track_cdna( "otherfeatures_$A",  $B, $POS++,
                               'FEATURES'  => $A, 'available' => "database_features ENSEMBL_OTHERFEATURES.$A",
                               'THRESHOLD' => 0, 'DATABASE' => 'otherfeatures', @T, @_ );
@@ -958,6 +898,10 @@ sub ADD_ALL_EST_FEATURES {
   $self->add_new_track_est( 'macaque_est',  'Macaque ESTs',   $POS++, @_ );
   $self->add_new_track_est( 'yeast_est',  'Yeast ESTs',   $POS++, @_ );
   $self->add_new_track_est( 'human_est',    'Human ESTs',      $POS++, @_ );
+  $self->add_new_track_est( 'medaka_est',    'Medaka ESTs',    $POS++, @_ );
+  $self->add_new_track_est( 'platypus_ests', 'Platypus ESTs',   $POS++, @_ );
+
+  $self->add_new_track_est( 'species_est',  'Dog ESTs',      $POS++, @_ );
   $self->add_new_track_est( 'mouse_est',    'Mouse ESTs',      $POS++, @_ );
   $self->add_new_track_est( 'zfish_est',    'D.rerio ESTs',    $POS++, @_ );
   $self->add_new_track_est( 'Btaurus_Exonerate_EST',    'B.taurus ESTs',    $POS++, @_ );
@@ -1053,15 +997,16 @@ sub ADD_ALL_CLONE_TRACKS {
   $self->add_clone_track( 'cloneset_30k',   '30k TPA clones', $POS++, @_ );
   $self->add_clone_track( 'cloneset_32k',   '32k clones',     $POS++, @_ );
   $self->add_clone_track( 'acc_bac_map',    'Acc. BAC map',   $POS++, @_ );
-  $self->add_clone_track( 'bac_map',        'BAC map',        $POS++, 'thresholds' => { 20000 => {'FEATURES'=>'acc_bac_map'}}, @_ );
+  $self->add_clone_track( 'seq_bac_map',    'Sequenced BAC map',   $POS++, @_ );
+  $self->add_clone_track( 'bac_map',        'BAC map',        $POS++, 'thresholds' => { 20000 => {'FEATURES'=>'acc_bac_map seq_bac_map'}}, @_ );
   $self->add_clone_track( 'bacs',           'BACs',           $POS++, @_ );
   $self->add_clone_track( 'bacs_bands',     'Band BACs',      $POS++, @_ );
   $self->add_clone_track( 'bacends',        'BAC ends',       $POS++, @_ );
-  $self->add_clone_track( 'extra_bacs',     'Extra BACs',     $POS++, @_ );
+  $self->add_clone_track( 'extra_bacs',     'Extra BACs',     $POS++, 'thresholds' => { 20000 => { 'navigation' => 'off', 'height' => 4, 'threshold' => 50000 } }, @_ );
   $self->add_clone_track( 'ex_bac_map',        'BAC map',     $POS++, 'FEATURES' => 'bac_map', 'DATABASE' => 'otherfeatures', 'available' => 'database_tables ENSEMBL_OTHERFEATURES.misc_set',  @_ );
   $self->add_clone_track( 'tilepath_cloneset', 'Mouse Tilepath', $POS++, @_ );
   $self->add_clone_track( 'tilepath',       'Human tilepath clones', $POS++, @_ );
-  $self->add_clone_track( 'fosmid_map',     'Fosmid map',     $POS++, 'colour_set' => 'fosmids', @_ );
+  $self->add_clone_track( 'fosmid_map',     'Fosmid map',     $POS++, 'colour_set' => 'fosmids', 'thresholds' => { 20000 => { 'navigation' => 'off', 'height' => 4, 'threshold' => 50000 }}, @_ );
 }
 
 sub ADD_ALL_PROTEIN_FEATURES {
@@ -1073,6 +1018,9 @@ sub ADD_ALL_PROTEIN_FEATURES {
   $self->add_new_track_protein( 'Uniprot_wublastx',    'UniProtKB (v. genscans)',       $POS++, @_ );
   $self->add_new_track_protein( 'Uniprot_mammal',      'UniProtKB (mammal)',       $POS++, @_ );
   $self->add_new_track_protein( 'Uniprot_non_mammal',  'UniProtKB (non-mammal)',       $POS++, @_ );
+  $self->add_new_track_protein( 'uniprot_vertebrate_mammal',  'UniProtKB (mammal)',       $POS++, @_ );
+  $self->add_new_track_protein( 'uniprot_vertebrate_non_mammal',  'UniProtKB (non-mammal)',       $POS++, @_ );
+  $self->add_new_track_protein( 'uniprot_non_vertebrate',         'UniProtKB (non-vertebrate)',    $POS++, @_ );
   $self->add_new_track_protein( 'drosophila-peptides', 'Dros. peptides', $POS++, @_ );
   $self->add_new_track_protein( 'swall_high_sens',     'UniProtKB', $POS++, @_ );
   $self->add_new_track_protein( 'anopheles_peptides',  'Mos. peptides',  $POS++,
@@ -1084,8 +1032,11 @@ sub ADD_ALL_PROTEIN_FEATURES {
   $self->add_new_track_protein( 'riken_prot',          'Riken proteins', $POS++, @_ );
   $self->add_new_track_protein( 'wormpep',             'Worm proteins',  $POS++, @_ );
   $self->add_new_track_protein( 'human_protein',       'Human proteins', $POS++, @_ );
+
   $self->add_new_track_protein( 'human_refseq',        'Human RefSeqs', $POS++, @_ );
-  $self->add_new_track_protein( 'dog_protein',         'Dog proteins', $POS++, @_ );
+  $self->add_new_track_protein( 'species_protein',     'Dog proteins', $POS++, @_ );
+  $self->add_new_track_protein( 'platypus_protein', 'Platypus Proteins',   $POS++, @_ );
+
   $self->add_new_track_protein( 'Btaurus_Exonerate_Protein',         'Cow proteins', $POS++, @_ );
   $self->add_new_track_protein( 'cow_proteins',        'Cow proteins', $POS++, @_ );
   $self->add_new_track_protein( 'cow_protein',         'Cow proteins', $POS++, @_ );
@@ -1202,8 +1153,16 @@ sub ADD_ALL_TRANSCRIPTS {
   $self->add_new_track_transcript( 'refseq',    'Refseq proteins', 'refseq_gene',    $POS++, @_ );
   $self->add_new_track_transcript( 'rprot',     'Rodent proteins', 'prot_gene',      $POS++, @_ );
   $self->add_new_track_transcript( 'jamboree_cdnas',   'X.trop. jambo. genes',   'prot_gene',   $POS++, @_ );
+  $self->add_new_track_transcript( 'oxford_genes', 'Oxford Genes', 'oxford_genes', $POS++, @_ );
+  $self->add_new_track_transcript( 'platypus_protein', 'Platypus/Other Genes', 'platypus_protein', $POS++, @_ );
+  $self->add_new_track_transcript( 'medaka_protein',   'Medaka genes',   'medaka_gene',   $POS++, @_ );
+  $self->add_new_track_transcript( 'gff_prediction',   'MGP genes',   'medaka_gene',   $POS++, @_ );
 
   $self->add_new_track_transcript( 'dog_protein',   'Dog genes',   'dog_protein',   $POS++, @_ );
+  $self->add_new_track_transcript( 'species_protein', 'Dog protein',       'prot_gene', $POS++,  @_ );
+  $self->add_new_track_transcript( 'human_one2one_mus_orth', 'Hs/Mm orth', 'prot_gene', $POS++,  @_ );
+  $self->add_new_track_transcript( 'mus_one2one_human_orth', 'Ms/Hs orth', 'prot_gene', $POS++,  @_ );
+
   $self->add_new_track_transcript( 'cow_proteins',   'Cow genes',   'cow_protein',   $POS++, @_ );
  # $self->add_new_track_transcript( 'vectorbase_0_5',   'VectorBase genes',   'vectorbase_0_5',   $POS++, @_ );
   $self->add_new_track_transcript( 'tigr_0_5',   'TIGR genes',   'tigr_0_5',   $POS++, @_ );
@@ -1328,6 +1287,19 @@ sub ADD_GENE_TRACKS {
     'gene_col'             => 'cow_protein', @_
   );
 
+
+  $self->add_new_track_gene( 'oxford_genes', 'Oxford Genes', 'oxford_genes', $POS++,
+    'gene_label'           => sub { return $_[0]->stable_id },
+    'gene_col'             => 'oxford', @_
+  );
+
+  $self->add_new_track_gene( 'platypus_protein', 'Platypus/Other Genes', 'platypus_protein', $POS++,
+    'logic_name'           => 'platypus_protein other_protein',
+    'gene_label'           => sub { return $_[0]->stable_id },
+    'gene_col'             => sub { return $_[0]->analysis->logic_name }, @_
+  );
+
+
 #  $self->add_new_track_gene( 'VectorBase_0_5', 'VectorBase proteins', 'vectorbase_0_5', $POS++,
 #    'gene_label'           => sub { return $_[0]->stable_id },
 #    'gene_col'             => 'vectorbase_0_5', @_
@@ -1337,6 +1309,13 @@ sub ADD_GENE_TRACKS {
     'gene_label'           => sub { return $_[0]->stable_id },
     'gene_col'             => 'tigr_0_5', @_
   );
+
+  $self->add_new_track_gene( 'medaka_protein',  "Medaka protein",  'medaka_gene', $POS++, 'gene_col' => 'medaka_protein' , @_ );
+  $self->add_new_track_gene( 'gff_prediction',  "MGP genes",       'medaka_gene', $POS++, 'gene_col' => 'gff_prediction', @_ );
+
+  $self->add_new_track_gene( 'species_protein', 'Dog protein', 'prot_gene', $POS++, @_ );
+  $self->add_new_track_gene( 'human_one2one_mus_orth', 'Hs/Mm orth', 'prot_gene', $POS++, @_ );
+  $self->add_new_track_gene( 'mus_one2one_human_orth', 'Ms/Hs orth', 'prot_gene', $POS++, @_ );
 
   $self->add_new_track_gene( 'jamboree_cdnas',  "X.trop. Jambo",  'prot_gene', $POS++,
                              'gene_label' => sub { return $_[0]->stable_id }, 'gene_col' => sub { return $_[0]->biotype }, @_ );

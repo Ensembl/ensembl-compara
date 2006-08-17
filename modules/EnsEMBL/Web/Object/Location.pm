@@ -435,4 +435,14 @@ sub get_source {
   }
 }
 
+sub get_all_misc_sets {
+  my $self = shift;
+  my $temp  = $self->database('core')->get_db_adaptor('core')->get_MiscSetAdaptor()->fetch_all;
+  my $result = {};
+  foreach( @$temp ) {
+    $result->{$_->code} = $_;
+  }
+  return $result;
+}
+
 1;

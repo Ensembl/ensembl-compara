@@ -309,6 +309,37 @@ sub _location_from_URL {
 
 #----------------- Create objects ----------------------------------------------
 
+sub createObjectsFast {
+  my $self = shift;
+## Only takes one set of parameters... and this has additional 
+## useful information included...
+## /Homo_sapiens/fragment/contigviewbottom?l=chr:st-end;strand=1;type=chromosome
+  $self->get_databases($self->__gene_databases, 'comara', 'blast');
+  if( $self->param('l') =~ /^([-\w\.]+):(-?\d+)-(\d+)$/) {
+    my $seq_region         = $1;
+    my $start              = $2;
+    my $end                = $3;
+    my $strand             = $self->param('strand') || 1;
+    my $seq_region_type    = $self->param('type');
+    my $slice = $self->_slice_adaptor()->fetch_by_region( $seq_region_type, $seq_region, $start, $end, $strand );
+    my $seq_region_length  = $self->param('srlen');
+    my $data = EnsEMBL::Web::Proxy::Object->new( 'Location', {
+      'type'               => "SeqRegion",
+      'real_species'       => $self->__species,
+      'name'               => $seq_region,
+      'seq_region_name'    => $seq_region,
+      'seq_region_type'    => $seq_region_type,
+      'seq_region_start'   => $start,
+      'seq_region_end'     => $end,
+      'seq_region_strand'  => $strand,
+      'raw_feature_strand' => $strand,
+      'seq_region_length'  => $slice->seq_region_length
+    },$self->__data);
+    $data->attach_slice( $slice );
+    $self->DataObjects( $data );
+  }
+}
+
 sub createObjects { 
   my $self      = shift;    
   $self->get_databases($self->__gene_databases, 'compara','blast');
@@ -386,6 +417,8 @@ sub createObjects {
         $location = $self->_location_from_Marker( $temp_id, $seq_region );
       } elsif( $ftype eq 'band' ) {
         $location = $self->_location_from_Band( $temp_id, $seq_region );
+      } elsif( $ftype eq 'misc_feature' ) {
+        $location = $self->_location_from_MiscFeature( $temp_id );
       } elsif( $ftype eq 'region' ) {
         $location = $self->_location_from_SeqRegion( $temp_id );
       } else {
@@ -616,13 +649,6 @@ sub _marker_adaptor {
   my $self = shift;
   return $self->__species_hash->{'adaptors'}{'marker'} ||=
     $self->database('core',$self->__species)->get_MarkerAdaptor();
-}
-
-sub _predtranscript_adaptor {
-  my $self = shift;
-  my $db   = shift || 'core';
-  return $self->__species_hash->{'adaptors'}{"predtranscript_$db"} ||=
-    $self->database($db,$self->__species)->get_PredictionTranscriptAdaptor();
 }
 
 1;

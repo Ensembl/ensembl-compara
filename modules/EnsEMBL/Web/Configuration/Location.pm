@@ -29,12 +29,15 @@ sub context_menu {
        'href' => "/$species/mapview?chr=".$obj->seq_region_name );
   }
   $header =~s/<br \/>/ /;
+unless( $obj->species_defs->NO_SEQUENCE ) {
   $menu->add_entry( $flag, 'code' => 'cv_link', 'text' => 'Graphical view',
        'title' => "ContigView - genome browser view of $header",
                                   'href' => "/$species/contigview?l=$q_string" );
+}
   $menu->add_entry( $flag, 'text' => 'Graphical overview',
        'title' => "CytoView - genome browser overview of $header",
                                   'href' => "/$species/cytoview?l=$q_string" );
+unless( $obj->species_defs->NO_SEQUENCE ) {
   $menu->add_entry( $flag, 'text' => 'Export information about region',
     'title' => "ExportView - export information about $header",
     'href' => "/$species/exportview?l=$q_string"
@@ -47,6 +50,7 @@ sub context_menu {
     'title' => "ExportView - export sequence of $header as EMBL",
     'href' => "/$species/exportview?l=$q_string;format=embl;action=format" 
   );
+}
   unless ( $obj->species_defs->ENSEMBL_NOMART) {
       $menu->add_entry( $flag, 'icon' => '/img/biomarticon.gif' , 'text' => 'Export Gene info in region',
         'title' => "BioMart - export Gene information in $header",
@@ -324,12 +328,12 @@ sub cytoview {
     push @URL_configs, $obj->user_config_hash( 'cytoview' ) if @H;
   }
   $self->add_panel( $bottom );
-  if( $obj->species eq 'Homo_sapiens' || $obj->species eq 'Mus_musculus' ) {
-    my $panel_form = $self->new_panel( '',
-      'code' => 'form_#', 'caption' => 'Export data', 'status' => 'panel_export',
-      'params' => { 'l' => $q_string }
-    );
-    $self->add_form( $panel_form, qw(misc_set EnsEMBL::Web::Component::Location::misc_set_form) );
+  my $panel_form = $self->new_panel( '',
+    'code' => 'form_#', 'caption' => 'Export data', 'status' => 'panel_export',
+    'params' => { 'l' => $q_string }
+  );
+  $self->add_form( $panel_form, qw(misc_set EnsEMBL::Web::Component::Location::misc_set_form) );
+  if( $panel_form->{'forms'}{'misc_set'} ) {
     $panel_form->add_components(qw(misc_set EnsEMBL::Web::Component::Location::misc_set));
     $self->add_panel( $panel_form );
   }
@@ -390,6 +394,16 @@ sub top_start_end {
     }
   }
   return ( $start, $end );
+}
+
+sub fragment_contigview_ideogram {
+  my $self = shift;
+  my $obj  = $self->{object};
+  my $ideo = $self->new_panel( 'Image',
+    'code'    => "ideogram_#", 'caption' => $obj->seq_region_type_and_name, 'status'  => 'panel_ideogram', # @common
+  );
+  $ideo->add_components(qw(image EnsEMBL::Web::Component::Location::ideogram));
+  $self->add_panel( $ideo );
 }
 
 sub contigview {

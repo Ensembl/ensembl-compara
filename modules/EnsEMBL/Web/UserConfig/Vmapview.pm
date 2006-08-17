@@ -14,7 +14,7 @@ sub init {
   $self->{'_userdatatype_ID'} = 109;
 
   $self->{'general'}->{'Vmapview'} = {
-    '_artefacts'   => [qw(Vsnps Vpercents Vgenes Videogram Vrefseqs)],
+    '_artefacts'   => [qw(Vsnps Vpercents Vgenes Vsupercontigs Videogram Vrefseqs)],
     '_options'   => [],
 
     '_settings' => {
@@ -67,7 +67,23 @@ sub init {
       'totalwidth'  => 100,
       'col'         => 'g',
       'padding'     => 6,
+    },
+
+    'Vsupercontigs' => {
+       'on'          => 'off',
+       'pos'         => '400',
+       'width'       =>  20,
+       'totalwidth'  =>  100,
+       'padding'     =>  6,
+       'col'         => 'blue',
+       'col_ctgs1'    => 'green',
+       'col_ctgs2'    => 'darkgreen',
+       'lab'         => 'black',
+       'include_labelling' => 1,
+       'available'   => 'features MAPSET_SUPERCTGS',
+
     }
+
   };
 }
 1;

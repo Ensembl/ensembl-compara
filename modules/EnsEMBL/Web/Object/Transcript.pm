@@ -27,8 +27,9 @@ sub default_track_by_gene {
       gsc gid slam gws_h gws_s )
     ),
     map( {($_, $_.'_transcript')} qw(
-      vectorbase tigr_0_5
+      vectorbase tigr_0_5 species_protein human_one2one_mus_orth mus_one2one_human_orth
       cdna_all targettedgenewise
+      medaka_protein gff_prediction
       genebuilderbeeflymosandswall gsten flybase wormbase
       ensembl sgd homology_low cow_proteins refseq mouse_protein dog_protein
       jamboree_cdnas ciona_dbest_ncbi ciona_est_seqc ciona_est_seqn
@@ -853,6 +854,7 @@ sub get_markedup_trans_seq {
   eval {
     my $pep_obj = $trans->translate;
     $peptide = $pep_obj->seq();
+warn "...... $peptide ....";
     $can_translate = 1;
     $flip = 0;
     my $startphase = $trans->translation->start_Exon->phase;
@@ -868,7 +870,7 @@ sub get_markedup_trans_seq {
     for( my $i= $cd_start + $S - 1; ($i+2)<= $cd_end; $i+=3) {
       $bps[$i]{'bg'}=$bps[$i+1]{'bg'}=$bps[$i+2]{'bg'} = "c$flip";
       $bps[$i]{'peptide'}=$bps[$i+2]{'peptide'}='-';    # puts dash a beginging AND end of codon
-      $bps[$i+1]{'peptide'}=substr($peptide,int( ($i+1-$cd_start)/3 ), 1 ) || '.';
+      $bps[$i+1]{'peptide'}=substr($peptide,int( ($i+1-$cd_start)/3 ), 1 ) || ($i+1 < $cd_end ? '*' : '.');
       $flip = 1-$flip;
     }
     $peptide = '';

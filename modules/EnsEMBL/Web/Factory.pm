@@ -14,6 +14,11 @@ sub DataObjects {
   push @{$self->{'data'}{'_dataObjects'}}, @_ if @_;
   return $self->{'data'}{'_dataObjects'};
 }
+
+sub createObjectsFast {
+  my $self = shift;
+  $self->createObjects(@_);
+}
 sub clearDataObjects {
   my $self = shift;
   $self->{'data'}{'_dataObjects'} = [];

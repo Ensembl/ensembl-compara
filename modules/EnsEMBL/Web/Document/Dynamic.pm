@@ -10,7 +10,7 @@ use Data::Dumper qw(Dumper);
 sub set_title {
   my $self  = shift;
   my $title = shift;
-  $self->title->set( $self->species_defs->ENSEMBL_SITE_NAME.' v'.$self->species_defs->ENSEMBL_VERSION.': '.$self->species_defs->SPECIES_BIO_NAME.' '.$title );
+  $self->title->set( $self->species_defs->ENSEMBL_SITE_NAME.' release '.$self->species_defs->ENSEMBL_VERSION.': '.$self->species_defs->SPECIES_BIO_NAME.' '.$title );
 }
 
 sub _initialize_TextGz {
@@ -65,18 +65,20 @@ sub _initialize_HTML {
   );
 
   $self->call_child_functions( 'common_page_elements','dynamic_page_elements' );
-
+  $self->_prof( "page elements configured" );
   $self->_common_HTML();
+  $self->_prof( "common HTML called" );
   $self->_script_HTML();
+  $self->_prof( "script HTML called" );
   $self->helplink->kw = $ENV{'ENSEMBL_SCRIPT'}.';se=1';
 ## Let us set up the search box...
   $self->searchbox->sp_common  = $self->species_defs->SPECIES_COMMON_NAME;
 #  --- First the search index drop down
+  $self->_prof( "page decs configured" );
   if( $ENV{'ENSEMBL_SPECIES'} ne 'Multi' && $ENV{'ENSEMBL_SPECIES'} ne 'common' ) { # If we are in static content for a species
     foreach my $K ( sort @{($self->species_defs->ENSEMBL_SEARCH_IDXS)||[]} ) {
       $self->searchbox->add_index( $K );
     }
-    my $T = $self->species_defs->SEARCH_LINKS || {};
     ## Now grab the default search links for the species
     my $T = $self->species_defs->SEARCH_LINKS || {};
     my $flag = 0;
@@ -108,11 +110,14 @@ warn $self->species_defs;
   $self->javascript->add_source('/js/help.js');
   $self->javascript->add_source('/js/new_support.js');
 
+  $self->_prof( "search box set up configured" );
+
 #  --- and the search box links...
 
   $self->call_child_functions( 'extra_configuration' );
   $self->call_child_functions( 'common_menu_items', 'dynamic_menu_items' );
 
+  $self->_prof( "menu items configured" );
 }
 
 1;

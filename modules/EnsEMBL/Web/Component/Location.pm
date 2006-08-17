@@ -416,7 +416,8 @@ sub cytoview {
      $wuc->{'image_frame_colour'} = 'red' if $panel->option( 'red_edge' ) eq 'yes';
 ## Now we need to add the repeats...
 
-  add_repeat_tracks( $object, $wuc );
+  add_repeat_tracks( $object, $wuc ) unless
+    $object->species_defs->get_table_size( { -db => 'ENSEMBL_DB', -table => 'repeat_feature' }, $object->species );
   add_das_tracks( $object, $wuc );
 
   $wuc->{_object} = $object;
@@ -1048,9 +1049,11 @@ sub contigviewzoom_ajax {
 
 sub contigviewzoom {
   my($panel, $object) = @_;
+$object->__data->{'timer'}->push("Starting zoom...",4);
   my $slice = $object->database('core')->get_SliceAdaptor()->fetch_by_region(
     $object->seq_region_type, $object->seq_region_name, $panel->option('start'), $panel->option('end'), 1
   );
+$object->__data->{'timer'}->push("Fetched slice...",4);
   my $wuc = $object->user_config_hash( 'contigviewzoom', 'contigviewbottom' );
      $wuc->container_width( $panel->option('end') - $panel->option('start') + 1 );
      $wuc->set_width( $object->param('image_width') );
@@ -1070,12 +1073,15 @@ sub contigviewzoom {
 
   $wuc->{_object} = $object;
 
+$object->__data->{'timer'}->push("Configured WUC...",4);
   my $image    = $object->new_image( $slice, $wuc, $object->highlights );
+$object->__data->{'timer'}->push("Created image object WUC...",4);
   $image->imagemap = 'yes';
   my $panel_no = ++ $object->__data->{'_cv_panel_no'};
      $image->{'panel_number'} = $panel_no;
      $image->set_button( 'drag', 'panel_number' => $panel_no, 'title' => 'Click or drag to centre display' );
   $panel->print( $image->render );
+$object->__data->{'timer'}->push("Rendered image...",4);
   $object->__data->{'_cv_parameter_hash'}{ "p_${panel_no}_px_start" } = $wuc->get('_settings','label_width' ) + 3 * $wuc->get('_settings','margin') + $wuc->get('_settings','button_width');
   $object->__data->{'_cv_parameter_hash'}{ "p_${panel_no}_px_end"   } = $wuc->get('_settings','width') - $wuc->get('_settings','margin');
   $object->__data->{'_cv_parameter_hash'}{ "p_${panel_no}_bp_start" } = $panel->option('start');
@@ -1089,7 +1095,8 @@ sub contigviewzoom {
 
 sub misc_set {
   my( $panel, $object ) =@_;
-  $panel->print( $panel->form( 'misc_set' )->render );
+  my $T = $panel->form( 'misc_set' );
+  $panel->print( $T->render ) if $T;
   return 1;
 }
 
@@ -1101,25 +1108,14 @@ sub misc_set_form {
     { 'value' =>'Text' , 'name' => 'Text (Tab separated values)' },
   ];
 
-  my $miscsets;
-  if( $object->species eq 'Homo_sapiens' ) {
-    $miscsets = [
-      { 'value' => 'tilepath'     , 'name' => 'Tile path clones' },
-      { 'value' => 'cloneset_1mb' , 'name' => '1mb clone set'    },
-      { 'value' => 'cloneset_32k' , 'name' => '32k clone set'    },
-      { 'value' => 'cloneset_30k' , 'name' => '30k TPA set'    }
-    ];
-  } elsif( $ENV{'ENSEMBL_SPECIES'} eq 'Mus_musculus' ) {
-    $miscsets = [
-      { 'value' => 'acc_bac_map' , 'name' => 'Accessioned clones' },
-      { 'value' => 'bac_map'     , 'name' => 'BAC clones'         },
-      { 'value' => 'cloneset_1mb'  , 'name' => '1mb clone set'      },
-      { 'value' => 'cloneset_0_5mb', 'name' => '0.5mb clone set'      },
-      { 'value' => 'tilepath_cloneset','name' => 'Tilepath clone set'      },
-      { 'value' => 'extra_bacs',    'name' => 'Extra BACs set'      },
-      { 'value' => 'fosmid_map'    , 'name' => 'Fosmid map'      },
-    ];
+  my $miscsets = [];
+  my $misc_set_keys = $object->species_defs->EXPORTABLE_MISC_SETS || [];
+
+  my $misc_sets = $object->get_all_misc_sets();
+  foreach my $T ( @$misc_set_keys ) {
+    push @$miscsets , { 'value' => $T, 'name' => $misc_sets->{$T}->name } if $misc_sets->{$T};
   }
+  return undef unless @$miscsets;
 
   my $output_types = [
    { 'value' => 'set',    'name' => "Features on this chromosome" },

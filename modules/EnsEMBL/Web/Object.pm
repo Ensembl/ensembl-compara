@@ -64,6 +64,9 @@ sub location_URL {
   my $name  = $feature->seq_region_name;
   my $start = $feature->start;
   my $end   = $feature->end;
+     $script = $script||'contigview';
+     $script = 'cytoview' if $script eq 'contigview' && $self->species_defs->NO_SEQUENCE;
+
   return $self->URL( 'script' => $script||'contigview', 'l'=>"$name:$start-$end", 'context' => $context || 0 );
 }
 

@@ -231,7 +231,8 @@ sub add_form {
   if( $self->dynamic_use( $module_name ) ) {
     no strict 'refs';
     eval {
-      $self->{'forms'}{$key} = &$function_name( $self, $self->{'object'} );
+      my $T = &$function_name( $self, $self->{'object'} );
+      $self->{'forms'}{$key} = $T if $T;
     };
     if( $@ ) {
       warn $@;
@@ -485,6 +486,7 @@ sub print          {
     $self->renderer->print( @_ );
   }
 }
+
 sub printf {
   my($self,$template,@pars) = @_;
   if( $self->{'_delayed_write_'} ) {

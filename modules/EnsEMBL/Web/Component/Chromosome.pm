@@ -52,7 +52,8 @@ sub chr_map {
   $image->imagemap           = 'no';
   $image->cacheable          = 'yes';
   $image->image_name         = 'mapview-'.$species.'-'.$chr_name;
-  $image->set_button('form', 'id'=>'vclick', 'URL'=>"/$species/contigview", 'hidden'=> $hidden);
+  my $script = $object->species_defs->NO_SEQUENCE ? 'cytoview' : 'contigview';
+  $image->set_button('form', 'id'=>'vclick', 'URL'=>"/$species/$script", 'hidden'=> $hidden);
   $image->add_tracks($object, $config_name);
   $image->karyotype($object, '', $config_name);
   $image->caption = 'Click on the image above to zoom into that point';
@@ -72,18 +73,26 @@ sub stats {
   my $label = "Chromosome $chr_name";
  
   my @orderlist = (    
-           'Length',
-           'known protein_coding Gene Count',
-           'novel protein_coding Gene Count',
-           'pseudogene Gene Count',
-           'miRNA Gene Count',
-           'ncRNA Gene Count',
-           'rRNA Gene Count',
-           'snRNA Gene Count',
-           'snoRNA Gene Count',
-           'tRNA Gene Count',
-           'misc_RNA Gene Count',
-           'SNP Count');
+    'Length',
+    'known protein_coding Gene Count',
+    'novel protein_coding Gene Count',
+    'pseudogene Gene Count',
+    'miRNA Gene Count',
+    'ncRNA Gene Count',
+    'rRNA Gene Count',
+    'snRNA Gene Count',
+    'snoRNA Gene Count',
+    'tRNA Gene Count',
+    'misc_RNA Gene Count',
+    'SNP Count',
+    'Number of fingerprint contigs',
+    'Number of clones selected for sequencing',
+    'Number of clones sent for sequencing',
+    'Number of accessioned sequence clones',
+    'Number of finished sequence clones',
+    'Total number of sequencing clones',
+    'Raw percentage of map covered by sequence clones',
+  );
   my $html = qq(<br /><table cellpadding="4">);
   my $stats;
   my %chr_stats;
@@ -99,6 +108,9 @@ sub stats {
     my $value = $chr->thousandify( $chr_stats{$stat} );
     next if !$value;
     my $bps_label = ($stat eq "Length") ? 'bps' : '&nbsp;';
+       $bps_label = '%' if $stat =~ /percentage/;
+    $stat = 'Estimated length' if $stat eq 'Length' && $chr->species_defs->NO_SEQUENCE;
+    $stat =~ s/Raw p/P/;
     $stat =~ s/protein_coding/Protein-coding/; 
     $stat =~ s/_/ /g; 
     $stat =~ s/ Count$/s/;
@@ -162,7 +174,7 @@ sub change_chr_form {
 sub jump_to_contig {
   my ( $panel, $object ) = @_;
 
-  my $label = 'Jump to ContigView';
+  my $label = $object->species_defs->NO_SEQUENCE ? 'Jump to CytoView' : 'Jump to ContigView';
   my $html = qq(
    <div>
      @{[ $panel->form( 'jump_to_contig' )->render() ]}
@@ -185,10 +197,8 @@ sub jump_to_contig_form {
   $form->add_element(
         'type' => 'Information',
         'value' => qq(<p>
-      Choose two features from this
-      chromosome as anchor points and display the region between them.
-      Both features must be mapped to the current $sitetype golden
-      tiling path.  If you select "None" for the second feature,
+      Choose two features from this chromosome as anchor points and display the region between them.
+      Both features must be mapped to the current $sitetype assembly.  If you select "None" for the second feature,
       the display will be based around the first feature.
     </p>
     <p>

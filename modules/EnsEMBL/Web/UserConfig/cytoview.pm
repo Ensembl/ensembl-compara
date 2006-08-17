@@ -369,7 +369,8 @@ $self->{'general'}->{'cytoview'} = {
     'col' => 'gray50',
     'threshold' => '1000',
     'navigation_threshold' => '1000',
-    'navigation' => 'on'
+    'navigation' => 'on',
+    'available' => 'features ENSEMBL_DB/repeat_feature'
   }, 
   'sub_repeat' => {
     'on'  => "on",

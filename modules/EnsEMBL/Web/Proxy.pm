@@ -29,6 +29,7 @@ sub new {
       '_script'          => $data->{_script}          || $ENV{'ENSEMBL_SCRIPT'},
       '_feature_types'   => $data->{_feature_types}   || [],
       '_feature_ids'     => $data->{_feature_ids}   || [],
+      'timer'     => $data->{timer}   || [],
       '_group_ids'       => $data->{_group_ids}   || [],
       %extra_elements
     },
@@ -55,6 +56,7 @@ sub new {
   Unable to compile any $supertype modules of type "<b>$type</b>".
 </p>) );
   }
+  $self->species_defs->{'timer'} = $data->{timer};
   return $self;
 }
 

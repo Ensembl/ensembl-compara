@@ -281,6 +281,7 @@ sub html_line {
 
 sub _init( ) {
   my $self = shift;
+  $self->_prof( "....." );
   foreach my $entry ( @{$self->{'head_order'}}, @{$self->{'body_order'}} ) {
     my($O,$classname) = @$entry;
     next unless $self->dynamic_use( $classname ); 
@@ -293,6 +294,7 @@ sub _init( ) {
     $self->{$O} = $T;
     my $method_name = ref($self)."::$O";
     no strict 'refs'; 
+    $self->_prof( "$classname....." );
     *$method_name = sub :lvalue { $_[0]{$O} };
   }
 }
