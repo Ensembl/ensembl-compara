@@ -117,6 +117,7 @@ sub new {
   Arg[2]     : Bio::EnsEMBL::Compara::MethodLinkSpeciesSet $method_link_species_set
   Arg[3]     : [optional] boolean $expanded (def. FALSE)
   Arg[4]     : [optional] boolean $solve_overlapping (def. FALSE)
+  Arg[5]     : [optional] Bio::EnsEMBL::Slice $target_slice
   Example    :
       my $align_slice = $align_slice_adaptor->fetch_by_Slice_MethodLinkSpeciesSet(
               $query_slice, $method_link_species_set);
@@ -129,6 +130,9 @@ sub new {
                By default overlapping alignments are ignored. You can choose to
                reconciliate the alignments by means of a fake alignment setting the
                solve_overlapping option to TRUE.
+               In order to restrict the AlignSlice to alignments with a given
+               genomic region, you can specify a target_slice. All alignments which
+               do not match this slice will be ignored.
   Returntype : Bio::EnsEMBL::Compara::AlignSlice
   Exceptions : thrown if wrong arguments are given
   Caller     : $obejct->methodname
@@ -136,7 +140,7 @@ sub new {
 =cut
 
 sub fetch_by_Slice_MethodLinkSpeciesSet {
-  my ($self, $reference_slice, $method_link_species_set, $expanded, $solve_overlapping) = @_;
+  my ($self, $reference_slice, $method_link_species_set, $expanded, $solve_overlapping, $target_slice) = @_;
 
   throw("[$reference_slice] is not a Bio::EnsEMBL::Slice")
       unless ($reference_slice and ref($reference_slice) and
@@ -144,10 +148,16 @@ sub fetch_by_Slice_MethodLinkSpeciesSet {
   throw("[$method_link_species_set] is not a Bio::EnsEMBL::Compara::MethodLinkSpeciesSet")
       unless ($method_link_species_set and ref($method_link_species_set) and
           $method_link_species_set->isa("Bio::EnsEMBL::Compara::MethodLinkSpeciesSet"));
-  
+
   # Use cache whenever possible
   my $key = $reference_slice->name.":".$method_link_species_set->dbID.":".($expanded?"exp":"cond").
       ":".($solve_overlapping?"fake-overlap":"non-overlap");
+  if (defined($target_slice)) {
+    throw("[$target_slice] is not a Bio::EnsEMBL::Slice")
+        unless ($target_slice and ref($target_slice) and
+            $target_slice->isa("Bio::EnsEMBL::Slice"));
+    $key .= ":".$target_slice->name();
+  }
   return $self->{'_cache'}->{$key} if (defined($self->{'_cache'}->{$key}));
 
   my $genomic_align_block_adaptor = $self->db->get_GenomicAlignBlockAdaptor;
@@ -155,6 +165,33 @@ sub fetch_by_Slice_MethodLinkSpeciesSet {
           $method_link_species_set,
           $reference_slice
       );
+
+  ## Remove all alignments not matching the target slice if any
+  if (defined($target_slice)) {
+    ## Get the DnaFrag for the target Slice
+    my $target_dnafrag = $self->db->get_DnaFragAdaptor->fetch_by_Slice($target_slice);
+    if (!$target_dnafrag) {
+      throw("Cannot get a DnaFrag for the target Slice");
+    }
+
+    ## Loop through all the alignment blocks and test whether they match the target slice or not
+    for (my $i = 0; $i < @$genomic_align_blocks; $i++) {
+      my $this_genomic_align_block = $genomic_align_blocks->[$i];
+      my $hits_the_target_slice = 0;
+      foreach my $this_genomic_align (@{$this_genomic_align_block->get_all_non_reference_genomic_aligns}) {
+        if ($this_genomic_align->dnafrag->dbID == $target_dnafrag->dbID and
+            $this_genomic_align->dnafrag_start <= $target_slice->end and
+            $this_genomic_align->dnafrag_end >= $target_slice->start) {
+          $hits_the_target_slice = 1;
+          last;
+        }
+      }
+      if (!$hits_the_target_slice) {
+        splice(@$genomic_align_blocks, $i, 1);
+        $i--;
+      }
+    }
+  }
 
   my $align_slice = new Bio::EnsEMBL::Compara::AlignSlice(
           -adaptor => $self,
