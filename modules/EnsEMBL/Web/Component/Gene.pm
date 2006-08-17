@@ -346,6 +346,7 @@ sub name {
         }
       }
     }
+
   }
   my( $display_name, $dbname, $ext_id, $dbname_disp, $info_text ) = $object->display_xref();
   return 1 unless defined $display_name;
@@ -407,7 +408,7 @@ sub stable_id {
   my $geneid    = $object->stable_id ;
   return 1 unless $geneid;
   my $vega_link = '';
-  if( $db_type eq 'Vega' ){
+  if( $db eq 'vega' ){
     $vega_link = sprintf qq(<span class="small">[%s]</span>),
       $object->get_ExtURL_link( "View $o_type @{[$object->stable_id]} in Vega", 'VEGA_'.uc($o_type), $object->stable_id )
   }
