@@ -68,7 +68,6 @@ if ($release_details && $$release_details[0]) {
         last;
     }
 }
-
 else {
     if (!$date || $date !~ /\d{4}-\d{2}-\d{2}/) { 
         # no valid date supplied, so default to 1st of next month
@@ -133,6 +132,10 @@ foreach my $sp (sort @species) {
         print "Sorry, unable to add record for $sp as no species ID found\n";
     }
 }
+
+#exit if this is Vega with no presites
+my $st = $SD->get_config( $species[0],'ENSEMBL_SITE_NAME');
+exit if ($st eq 'Vega');
 
 ## Add pre species to release_species table
 
