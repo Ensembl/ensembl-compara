@@ -30,9 +30,11 @@ if( $webpage->has_problem_type( 'fatal' ) ) {
   $webpage->redirect("/$ENV{'ENSEMBL_SPECIES'}/mapview?error=2$extra_URL"); ## this means not all on same chromosome
 } else { ## grab the object and check to see if it is less than 5Mb
   my $object = $webpage->dataObjects->[0]; 
+  my $script =  $object->length < 1.0001e6 * ($object->species_defs->ENSEMBL_GENOME_SIZE || 1) ? 'contigview' : 'cytoview';
+     $script = 'cytoview' if $object->species_defs->NO_SEQUENCE;
   my $URL = sprintf( "/%s/%s?l=%s:%d-%s",
     $ENV{'ENSEMBL_SPECIES'},
-    $object->length < 1.0001e6 * ($object->species_defs->ENSEMBL_GENOME_SIZE || 1) ? 'contigview' : 'cytoview',
+    $script,
     $object->seq_region_name,
     $object->seq_region_start,
     $object->seq_region_end
