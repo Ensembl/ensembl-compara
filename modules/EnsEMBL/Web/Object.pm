@@ -296,4 +296,24 @@ sub get_DASCollection{
   return $data->{_das_collection};
 }
 
+
+=head2alternative_object_from_factory
+
+  Arg [1]     : type of Object
+  Example     : $obj->alternative_object_from_factory( 'Transcript' )
+  Description : Adds a new W::P::O to an exising one
+
+=cut
+
+sub alternative_object_from_factory {
+  my( $self,$type ) =@_;
+  my $t_fact = EnsEMBL::Web::Proxy::Factory->new( $type, $self->__data );
+  if( $t_fact->can( 'createObjects' ) ) {
+    $t_fact->createObjects;
+    $self->__data->{lc($type)} = $t_fact->DataObjects;
+    $self->__data->{'objects'} = $t_fact->__data->{'objects'};
+  }
+}
+
+
 1;

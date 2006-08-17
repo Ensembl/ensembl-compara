@@ -97,7 +97,7 @@ sub new {
   my $conffile = $SiteDefs::ENSEMBL_CONF_DIRS[0].'/'.$ENSEMBL_CONFIG_FILENAME;
   $self->{'_filename'} = $conffile;
 
-warn "NEW.... $CONF";
+#warn "NEW.... $CONF";
   $self->parse unless $CONF;
 
   ## Diagnostic - sets up back trace of point at which new was
@@ -588,8 +588,11 @@ sub _parse {
  ## So lets get on with the multiple alignment hash;
 	my $q = qq{
 	    SELECT ml.type, gd.name, mlss.name, mlss.method_link_species_set_id
-	    FROM method_link ml, method_link_species_set mlss, genome_db gd, species_set ss 
-	    WHERE mlss.method_link_id = ml.method_link_id AND mlss.species_set_id=ss.species_set_id AND ss.genome_db_id = gd.genome_db_id AND ml.type in ('MLAGAN', 'BLASTZ_NET')};
+	    FROM   method_link ml, method_link_species_set mlss, genome_db gd, species_set ss 
+	    WHERE  mlss.method_link_id = ml.method_link_id 
+        AND    mlss.species_set_id=ss.species_set_id 
+        AND    ss.genome_db_id = gd.genome_db_id 
+        AND    ml.type in ('MLAGAN','BLASTZ_NET','BLASTZ_RAW')};
 
         my $sth = $dbh->prepare( $q );
         my $rv  = $sth->execute || die( $sth->errstr );
@@ -600,9 +603,9 @@ sub _parse {
         foreach my $row ( @$results ) {
           my ($type, $species, $name, $id) = (uc($row->[0]), $row->[1], $row->[2], $row->[3]);
           $species =~ tr/ /_/;
-	  $tree->{$KEY}->{$id}->{'id'} = $id;
-	  $tree->{$KEY}->{$id}->{'name'} = $name;
-	  $tree->{$KEY}->{$id}->{'type'} = $type;
+	      $tree->{$KEY}->{$id}->{'id'} = $id;
+	      $tree->{$KEY}->{$id}->{'name'} = $name;
+	       $tree->{$KEY}->{$id}->{'type'} = $type;
           $tree->{$KEY}->{$id}->{'species'}->{$species} = 1;
         }
 
