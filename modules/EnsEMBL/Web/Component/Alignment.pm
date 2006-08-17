@@ -255,18 +255,101 @@ sub output_DnaDnaAlignFeature {
   }
 }
 
-sub output_External {
+=head2 output_External_trans_al
+
+ Arg[1]	     : information panel (EnsEMBL::Web::Document::Panel::Information)
+ Arg[2]	     : object (EnsEMBL::Web::Proxy::Object)
+ Example     : $panel->add_components(qw(trans_alignment  EnsEMBL::Web::Component::Alignment::output_External_trans_al)
+ Description : Formats pairwise alignment of transcript and external record
+
+=cut
+
+sub output_External_trans_al {
   my( $panel, $object ) = @_;
-  foreach my $align ( @{$object->Obj||[]} ) {
-    $panel->print(
-      "<pre>",
-        map( { $_->{'alignment'} } @{ $align->{'internal_seqs'} } ),
-      "</pre>"
-    );
-  }
+  my $html;
+  my $label = 'Transcript alignment';
+  my $al = $panel->{'params'}{'trans_alignment'}; 
+  $html = "<pre>$al</pre>";
+  $panel->add_row( $label, $html );
   return 1;
 }
 
+
+=head2 output_External_exon_al
+
+ Arg[1]	     : information panel (EnsEMBL::Web::Document::Panel::Information)
+ Arg[2]	     : object (EnsEMBL::Web::Proxy::Object)
+ Example     : $panel->add_components(qw(exon_alignment  EnsEMBL::Web::Component::Alignment::output_External_exon_al)
+ Description : Formats pairwise alignment of exon and external alignment
+
+=cut
+
+sub output_External_exon_al {
+  my( $panel, $object ) = @_;
+  my $html;
+  my $label = 'Exon alignment';
+  my $al = $panel->{'params'}{'exon_alignment'};
+  $html = "<pre>$al</pre>";
+  $panel->add_row( $label, $html );
+  return 1;
+}
+
+
+=head2 output_External_exon_al
+
+ Arg[1]	     : information panel (EnsEMBL::Web::Document::Panel::Information)
+ Arg[2]	     : object (EnsEMBL::Web::Proxy::Object)
+ Example     : $panel->add_components(qw(external_info  EnsEMBL::Web::Component::Alignment::external_information)
+ Description : Formats link to an external record
+
+=cut
+
+sub external_information {
+  my( $panel, $object ) = @_;
+  my $html;	
+  my $label = 'External record';
+  my $id = $panel->{'params'}{'external_id'};
+  my $link;
+  my $evidence = $object->get_supporting_evidence;
+  foreach my $hit (keys %{$evidence->{'hits'}}) {
+	  if ($hit eq $id) {
+		  $link = $evidence->{'hits'}->{$hit}->{'link'};
+	  }
+  }
+  $html = "<p><a href=$link>$id</a></p>";
+  $panel->add_row( $label, $html );
+  return 1;
+}
+
+
+=head2 exon_infomration
+
+ Arg[1]	     : information panel (EnsEMBL::Web::Document::Panel::Information)
+ Arg[2]	     : object (EnsEMBL::Web::Proxy::Object)
+ Example     : $panel->add_components(qw(exon_info  EnsEMBL::Web::Component::Alignment::exon_information)
+ Description : Formats display of exon cDNA coordinates
+
+=cut
+
+sub exon_information {
+  my( $panel, $object ) = @_;
+  my $label = 'Exon information';
+  my $exon_id = $panel->{'params'}{'exon_id'};
+  my $trans = $object->Obj;
+  my $db = $object->get_db || 'core';
+  my $exon = $object->get_exon($exon_id,$db);
+  my $trmapper = Bio::EnsEMBL::TranscriptMapper->new($trans);
+  my @cdna_coords = $trmapper->genomic2cdna($exon->start, $exon->end, $exon->strand);
+  my ($cdna_start,$cdna_end);
+  foreach my $map (@cdna_coords) {
+	  $cdna_start = $map->start;
+	  $cdna_end   = $map->end;
+  }
+  my $html = "<p><strong>$exon_id</strong></p>";
+  $html .= "transcript start = ${cdna_start}bp, transcript end = ${cdna_end}bp";
+  $panel->add_row( $label, $html );
+  return 1;
+}
 
 sub output_GeneTree {
   my( $panel, $object ) = @_;
@@ -279,6 +362,5 @@ sub output_GeneTree {
   print $alignio $tree->get_SimpleAlign();
   $panel->print("<pre>$var</pre>\n");
 }
-
 
 1;
