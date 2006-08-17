@@ -22,7 +22,7 @@ sub new {
                            avail => 1 },
 
                fasta  => { text  => 'FASTA',
-                           url   => "$exportURL;format=embl;action=format",
+                           url   => "$exportURL;format=fasta;action=format",
                            avail => 1 },
 
                gene   => { text  => 'Ensembl Gene List',

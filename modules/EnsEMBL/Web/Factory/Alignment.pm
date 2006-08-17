@@ -21,11 +21,6 @@ our @ISA = qw(  EnsEMBL::Web::Factory );
 
 =cut
 
-sub _prob {
-  my( $self, $caption, $error ) = @_;
-  $self->problem( 'fatal', $caption, $self->web_usage.$error );
-}
-
 sub _createObjects {
   my( $self, $objects, $class ) = @_;
   my $obj  = EnsEMBL::Web::Proxy::Object->new( 'Alignment', $objects, $self->__data );
@@ -33,6 +28,13 @@ sub _createObjects {
   $obj->class( $class );
   $self->DataObjects( $obj );
 }
+
+
+sub _prob {
+  my( $self, $caption, $error ) = @_;
+  $self->problem( 'fatal', $caption, $self->web_usage.$error );
+}
+
 
 sub web_usage {
   my $self = shift;
@@ -212,86 +214,106 @@ sub usage_External {
     [];
 }
 
-sub createObjects_External {
-  my $self      = shift;
-  my $seqid     = $self->param( 'sequence' );
-  my $db        = $self->param('db') || 'core';    # internal db to retrieve from
-  my $ext_db    = $self->param('ext_db');    # external db to retrieve from
-  my $tranid    = $self->param('transcript');
-  my $exonid    = $self->param('exon');
-  my $geneid    = $self->param('gene');
-  # Get handle for core database
-  my $database = $self->get_databases($db)->{$db};
-  unless ($database){
-    $self->problem( 'fatal', 'Database Error', "Could not connect to the required $db database." ); 
-    return ;
-  }
-  # Get the external sequence 
-  my $ext_seq = $self->get_ext_seq( $seqid, $ext_db );
-  unless( $ext_seq ) {
-    $self->problem( 'fatal', "External Feature Alignment Does Not Exist", "The sequence for feature $seqid could not be retrieved.");
-    return;
-  }
-  my $seq_type = $self->determine_sequence_type( $ext_seq );
-  my @int_seq;
-  my $exon_obj;
-  my @tran_obj_list;
 
-  # Populate the objects to get int seq
-  if( $tranid ){
-    my $tran_obj;
-    my $tran_apt = $database->get_TranscriptAdaptor;
-    eval { $tran_obj =( $tran_apt->fetch_by_stable_id( $tranid ) || $tran_apt->fetch_by_dbID( $tranid )); };
-    unless( $tran_obj ) {
-      $self->problem( 'fatal',  "Feature not found", "No transcript object was found corresponding to the ID: $tranid ");
-      return;
-    }
-    push @tran_obj_list, $tran_obj;
-  } elsif( $geneid ){
-    my $gene_obj;
-    my $gene_apt = $database->get_GeneAdaptor;
-    eval { $gene_obj = ($gene_apt->fetch_by_stable_id( $geneid ) || $gene_apt->fetch_by_dbID( $geneid)); };
-    unless( $gene_obj ) {
-      $self->problem( 'fatal',  "Feature not found", "No gene object was found corresponding to the ID: $geneid ");
-      return;
-    }
-    # Get a list of transcripts corresponding to the geneid
-    @tran_obj_list = @{$gene_obj->get_all_Transcripts};
-  } elsif( $exonid ){
-    my $exon_apt = $database->get_ExonAdaptor;
-    eval { $exon_obj =( $exon_apt->fetch_by_stable_id( $exonid ) || $exon_apt->fetch_by_dbID( $exonid )); };
-    unless( $exon_obj ) {
-      $self->problem( 'fatal',  "Feature not found", "No exon object was found corresponding to the ID: $exonid ");
-    }
-  } else {
-    $self->problem('fatal', "Please supply an identifier", "This page requires a gene or transcript to align to" );
-    return;
+=head2 createObjects_External
+
+ Arg[1]      : none
+ Example     : $self->createObjects_External
+ Description : Creates a W::P::O containing a transcript W::P::O plus details of alignments.
+               Used for viewing of supporting evidence alignments
+ Return type : Nothing
+
+=cut
+
+sub createObjects_External {
+	my $self      = shift;
+	my $seqid     = $self->param( 'sequence' );
+	my $db        = $self->param('db') || 'core';
+	my $ext_db    = $self->param('ext_db');    # external db to retrieve from
+	my $tranid    = $self->param('transcript');
+	my $exonid    = $self->param('exon');
+	
+	#data structure to store alignment details
+	my $details;
+	$details->{'external_db'} = $ext_db;
+	$details->{'external_id'} = $seqid;
+	$details->{'exon_id'}     = $exonid;
+	
+	unless ($tranid && $exonid )  {
+		$self->problem('fatal', "Please supply an identifier", "This page requires a transcript and an exon to align to." );
+		return;
+	}
+	
+	# Get handle for core database
+	my $database = $self->get_databases($db)->{$db};
+	unless ($database){
+		$self->problem( 'fatal', 'Database Error', "Could not connect to the required $db database." ); 
+		return ;
+	}
+	# Get the external sequence and type
+	my $ext_seq = $self->get_ext_seq( $seqid, $ext_db );
+	unless( $ext_seq ) {
+		$self->problem( 'fatal', "External Feature Alignment Does Not Exist", "The sequence for feature $seqid could not be retrieved.");
+		return;
+	}
+	my $seq_type = $self->determine_sequence_type( $ext_seq );
+	$details->{'sequence_type'} = $seq_type;
+	
+	my ($trans_obj, $exon_obj);
+	
+	#get B::E::Transcript and sequence
+	my $tran_apt = $database->get_TranscriptAdaptor;
+	eval { $trans_obj =( $tran_apt->fetch_by_stable_id( $tranid ) || $tran_apt->fetch_by_dbID( $tranid )); };
+	unless( $trans_obj ) {
+		$self->problem( 'fatal',  "Feature not found", "No transcript object was found corresponding to the ID: $tranid ");
+		return;
+	}
+	my $trans_sequence = $self->get_int_seq( $trans_obj, $seq_type);
+	$details->{'transcript_sequence'} = $trans_sequence;
+	
+	#get B::E::Exon and sequence
+	my $exon_apt = $database->get_ExonAdaptor;
+	eval { $exon_obj =( $exon_apt->fetch_by_stable_id( $exonid ) || $exon_apt->fetch_by_dbID( $exonid )); };
+	unless( $exon_obj ) {
+		$self->problem( 'fatal',  "Feature not found", "No exon object was found corresponding to the ID: $exonid ");
+	}
+	my $exon_sequence;
+	if ($seq_type eq 'PEP') {
+		if ($trans_obj) {
+			unless ($exon_sequence = $self->get_int_seq( $exon_obj, $seq_type, $trans_obj) ) {
+				$self->problem('fatal', "Unable to obtain sequence of non coding exon", "" );
+				return;
+			}
+		} else {
+			$self->problem('fatal', "No transcript object supplied", "Can't get peptide sequence from an exon without a transcript." );
+			return;
+		}
+	} else {
+		$exon_sequence = $self->get_int_seq( $exon_obj, $seq_type);
+	}
+	if( $exon_sequence ) {
+		$details->{'exon_sequence'} = $exon_sequence;
+	} elsif ($seq_type eq 'DNA') {
+		$self->problem('fatal', "Unable to obtain internal sequence","" );
+	}
+	unless( $details->{'exon_sequence'}) {
+	  $self->problem('fatal', "Unable to obtain sequence of non-coding transcript", "" );
+	  return;
   }
-  if( $exon_obj ){
-    my $is = $self->get_int_seq( $exon_obj, $seq_type);
-    if( $is ) {
-      push @int_seq , $is if $is;
-    } else {
-      $self->problem('fatal', "Unable to obtain internal sequence", "Unable to align peptide with non-coding transcript" );
-    } 
-  } else{
-    @int_seq = grep { $_ } map { $self->get_int_seq( $_, $seq_type) } @tran_obj_list;      
-    if( @tran_obj_list && !@int_seq ) {
-      $self->problem('fatal', "Unable to obtain internal sequence", "Unable to align peptide with non-coding transcript" );
-    }
-  }
-  if( @int_seq ) {
-    my @internal;
-    my $seqtype = $self->determine_sequence_type( $ext_seq);
-    my $alignment;
-    foreach my $int ( @int_seq ) { 
-      push @internal, { 'seq' => $_, 'alignment' => $self->get_alignment( $ext_seq, $int, $seqtype ) };
-    }
-    $self->_createObjects( [ {'external_seq' => $ext_seq, 'internal_seqs' => \@internal, 'seqtype' => $seqtype} ], 'External' );
-  } else { 
-    $self->problem('fatal', "Ensembl Alignment Error", "The Ensembl sequence could not be retrieved.");
-  }
+
+  #get transcript and exon alignments
+  my $trans_alignment =  $self->get_alignment( $ext_seq, $trans_sequence, $seq_type );
+  $details->{'trans_alignment'} = $trans_alignment;
+  my $exon_alignment =  $self->get_alignment( $ext_seq, $exon_sequence, $seq_type );
+  $details->{'exon_alignment'} = $exon_alignment;
+
+  #create object
+  $self->_createObjects( [ $details ], 'External' );
+  #add a W::P::O for the transcript
+  my $obj  = $self->DataObjects->[0];
+  $obj->alternative_object_from_factory( 'Transcript' );
 }
+
 
 ## Support functions....
 
@@ -326,18 +348,28 @@ sub save_seq {
   return ($seq_file)
 }
 
+=head2 get_Alignment
+
+ Arg[1]      : external sequence
+ Arg[2]      : internal sequence (transcript, exon or translation)
+ Arg[3]      : type of sequence (DNA or PEP)
+ Example     : my $alig =  $self->get_alignment( $ext_seq, $int_seq, $seq_type )
+ Description : Runs either matcher or wise2 for pairwise sequence alignment
+               Uses custom output format pairln if available
+               Used for viewing of supporting evidence alignments
+ Return type : alignment
+
+=cut
+
 sub get_alignment{
   my $self = shift;
   my $ext_seq  = shift || return undef();
   my $int_seq  = shift || return undef();
-  my $seq_type = shift || return undef();
-
   $int_seq =~ s/<br \/>//g;
-
+  my $seq_type = shift || return undef();
   my $int_seq_file = $self->save_seq($int_seq);
   my $ext_seq_file = $self->save_seq($ext_seq);
-
-  my $dnaAlignExe = "%s/bin/matcher -asequence %s -bsequence %s -outfile %s";
+  my $dnaAlignExe = "%s/bin/matcher -asequence %s -bsequence %s -outfile %s %s";
   my $pepAlignExe = "%s/bin/psw -m %s/wisecfg/blosum62.bla %s %s > %s";
 
   my $out_file = time().int(rand()*100000000).$$;
@@ -345,20 +377,34 @@ sub get_alignment{
 
   my $command;
   if( $seq_type eq 'DNA' ){
-    $command = sprintf( $dnaAlignExe, $self->species_defs->ENSEMBL_EMBOSS_PATH, $int_seq_file, $ext_seq_file, $out_file );
-  } elsif( $seq_type eq 'PEP' ){
-    $command = sprintf( $pepAlignExe, $self->species_defs->ENSEMBL_WISE2_PATH, $self->species_defs->ENSEMBL_WISE2_PATH, $int_seq_file, $ext_seq_file, $out_file );
-  } else{ 
-    return undef;
+	  $command = sprintf( $dnaAlignExe, $self->species_defs->ENSEMBL_EMBOSS_PATH, $int_seq_file, $ext_seq_file, $out_file, '-aformat3 pairln' );
+	  `$command`;
+	  unless (open( OUT, "<$out_file" )) {
+		  $command = sprintf( $dnaAlignExe, $self->species_defs->ENSEMBL_EMBOSS_PATH, $int_seq_file, $ext_seq_file, $out_file );
+		  `$command`;
+	  }
+	  unless (open( OUT, "<$out_file" )) {
+		  $self->problem('fatal', "Cannot open alignment file.", $!);
+	  }
   }
 
-  my $retval = `$command`;
-  open( OUT, "<$out_file" ) or $self->problem('fatal', "Cannot open alignment file.", $!);
+  elsif( $seq_type eq 'PEP' ){
+	  $command = sprintf( $pepAlignExe, $self->species_defs->ENSEMBL_WISE2_PATH, $self->species_defs->ENSEMBL_WISE2_PATH, $int_seq_file, $ext_seq_file, $out_file );
+	  `$command`;
+	  unless (open( OUT, "<$out_file" )) {
+		  $self->problem('fatal', "Cannot open alignment file.", $!);
+	  }
+  }
+  else { return undef; }
+
   my $alignment ;
   while( <OUT> ){
     if( $_ =~ /# Report_file/o ){ next; }
+	if( $_ =~ /#----.*/ ){ next; }
+	if( $_ =~ /\/\/\s*/){ next;}
     $alignment .= $_;
   }
+  $alignment =~ s/\n+$//;
   unlink( $out_file );
   unlink( $int_seq_file );
   unlink( $ext_seq_file );
@@ -373,19 +419,22 @@ sub split60 {
 }
 
 sub get_int_seq {
-  my $self = shift;
-  my $obj      = shift  || return undef();
-  my $seq_type = shift  || return undef(); # DNA || PEP
+  my $self      = shift;
+  my $obj       = shift  || return undef();
+  my $seq_type  = shift  || return undef(); # DNA || PEP
+  my $other_obj = shift;
   my $fasta_prefix = join( '', '>',$obj->stable_id(),"<br />\n");
 
   if( $seq_type eq "DNA" ){
     return $fasta_prefix.$self->split60($obj->seq->seq());
-  } elsif( $seq_type eq "PEP" ){
-    if( $obj->isa('Bio::EnsEMBL::Exon') && $obj->peptide() ){
-      return $fasta_prefix.$self->split60($obj->peptide()->seq());
-    } elsif( $obj->translate ) { 
-      return $fasta_prefix.$self->split60($obj->translate->seq());
-    }
+  }
+  elsif( $seq_type eq "PEP" ){
+	if ($obj->isa('Bio::EnsEMBL::Exon') && $other_obj->isa('Bio::EnsEMBL::Transcript') ) {
+	  return $fasta_prefix.$self->split60($obj->peptide($other_obj)->seq()) if ($obj->peptide($other_obj) && $other_obj->translate);
+	}
+    elsif( $obj->translate ) {
+	  return $fasta_prefix.$self->split60($obj->translate->seq());
+	}
   }
   return undef;
 }
