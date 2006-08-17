@@ -22,6 +22,7 @@ sub _threshold_update {
       foreach (keys %{$thresholds->{$th}}) {
 warn $self->check()," SETTING $_ to ",$thresholds->{$th}{$_};
         $self->set_my_config( $_, $thresholds->{$th}{$_} );
+warn "... ", $self->my_config( $_ );
       }
     }
   }
@@ -29,6 +30,9 @@ warn $self->check()," SETTING $_ to ",$thresholds->{$th}{$_};
 
 sub features {
   my ($self) = @_;
+  my $T = $self->my_config('FEATURES');
+  my @T = split /\s+/,$T;
+
   my @sorted =  
     map { $_->[1] }
     sort { $a->[0] <=> $b->[0] }
@@ -37,7 +41,9 @@ sub features {
       $_->get_scalar_attribute('state') + $_->get_scalar_attribute('BACend_flag')/4
       ), $_]
     }
-    @{$self->{'container'}->get_all_MiscFeatures( $self->my_config( 'FEATURES' ), $self->my_config( 'DATABASE' ) )};
+    map { @{$self->{'container'}->get_all_MiscFeatures( $_ )||[]} }
+    (split /\s+/, $self->my_config( 'FEATURES' ));
+
   return \@sorted;
 }
 
@@ -147,8 +153,18 @@ sub zmenu {
       $bac_info = ('Interpolated', 'Start located', 'End located', 'Both ends located') [$bac_info];
     }
 
+    $zmenu->{"31:HTGS_phase: @{[$f->get_scalar_attribute('htg')]}"}            = '' if $f->get_scalar_attribute('htg');
+    $zmenu->{"32:Remark: @{[$f->get_scalar_attribute('remark')]}"}             = '' if $f->get_scalar_attribute('remark');
+
     $zmenu->{"33:Organisation: @{[$f->get_scalar_attribute('organisation')]}"} = '' if $f->get_scalar_attribute('organisation');
-    $zmenu->{"34:State: $state"                                  } = '' if $state;
+
+     my $state_link = '';
+     $state_link = qq(http://www.sanger.ac.uk/cgi-bin/humace/clone_status?clone_name=).$f->get_scalar_attribute('synonym')
+       if $state =~ /Committed|FinishAc|Accessioned/ &&
+          $f->get_scalar_attribute('synonym') &&
+          $f->get_scalar_attribute('organisation') eq 'SC';
+    $zmenu->{"34:State: $state"                                         } = $state_link if $state;
+
     $zmenu->{"40:Seq length: @{[$f->get_scalar_attribute('seq_len')]}"  } = '' if $f->get_scalar_attribute('seq_len');
     $zmenu->{"40:FP length:  @{[$f->get_scalar_attribute('fp_size')]}"  } = '' if $f->get_scalar_attribute('fp_size');
     $zmenu->{"50:Super contig:  @{[$f->get_scalar_attribute('supercontig')]}" } = '' if $f->get_scalar_attribute('supercontig');

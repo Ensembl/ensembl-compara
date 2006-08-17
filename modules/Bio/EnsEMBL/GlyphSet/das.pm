@@ -12,6 +12,7 @@ use Bio::EnsEMBL::Glyph::Symbol::box;	# default symbol for features
 use Data::Dumper;
 use POSIX qw(floor);
 use HTML::Entities;
+use Time::HiRes qw(time);
 
 sub init_label {
   my ($self) = @_;
@@ -830,6 +831,7 @@ sub _init {
 
   my $styles;
 
+my $timer = time();
   if ($dastype !~ /^ensembl_location/) {
       my $ga =  $self->{'container'}->adaptor->db->get_GeneAdaptor();
       my $genes = $ga->fetch_all_by_Slice( $self->{'container'});
@@ -905,9 +907,9 @@ sub _init {
 	      $_->das_end > 0
 	  } @{ $features || [] };
   }
-  
-  $configuration->{'features'} = \@das_features;
 
+  $configuration->{'features'} = \@das_features;
+warn "DAS fetch.... ",time()-$timer;
   # hash styles by type
   my %styles;
   if( $styles && @$styles && $configuration->{'use_style'} ) {

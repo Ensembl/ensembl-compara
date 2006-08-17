@@ -167,7 +167,7 @@ sub my_config {
 
 sub set_my_config {
   my( $self, $key, $val ) = @_;
-  $self->{'config'}->set($self->check(), $key, $val );
+  $self->{'config'}->set($self->check(), $key, $val, 1);
   $self->{'_my_config_'}{ $key } = $val;
   return $self->{'_my_config_'}{$key};
 }

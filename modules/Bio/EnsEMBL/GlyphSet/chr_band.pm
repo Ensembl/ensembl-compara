@@ -46,6 +46,8 @@ sub _init {
   my $white  = 'white';
   my $black  = 'black';
  
+  my $no_sequence = $self->{'config'}->species_defs->NO_SEQUENCE;
+
   my %COL = ();
   $COL{'gpos100'} = 'black'; #add_rgb([200,200,200]);
   $COL{'tip'}     = 'slategrey';
@@ -139,6 +141,7 @@ sub _init {
     });
     foreach my $script (qw(contigview cytoview)) {
       next if $script eq $ENV{'ENSEMBL_SCRIPT'};
+      next if $script eq 'contigview' && $no_sequence;
       $gband->{'zmenu'}{ "01:Display in $script" } = "/@{[$self->{container}{_config_file_name_}]}/$script?l=$chr:$band_start-$band_end";
     }    
     if( @{[$self->{container}{_config_file_name_}]} =~ /Anopheles_gambiae/i ){

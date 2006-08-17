@@ -35,7 +35,7 @@ sub _init {
   my( $txt, $bit, $w,$th ) = $self->get_text_width( 0, $text_to_display, '', 'ptsize' => $FONTSIZE, 'font' => $FONT );
 
   $self->push( new Sanger::Graphics::Glyph::Text({
-    'x'         => 1,
+    'x'         => 0,
     'y'         => 1,
     'height'    => $th,
     'font'      => $FONT,

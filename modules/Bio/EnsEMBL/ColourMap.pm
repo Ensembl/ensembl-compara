@@ -69,6 +69,18 @@ sub new {
     hi                 green
     default            violet2 
   ));
+  $self->colourSet( 'oxford_genes',
+    'hi'         => 'highlight1',
+    'superhi'    => 'highlight2',
+    'oxford' => [ 'darkred', 'Oxford genes' ]
+  );
+  $self->colourSet( 'platypus_protein',
+    'hi'         => 'highlight1',
+    'superhi'    => 'highlight2',
+    'platypus_protein' => [ 'blue', 'Platypus protein' ],
+    'other_protein' => [ 'black', 'Other protein' ],
+  );
+
   $self->colourSet( 'dog_protein',
     'hi'         => 'highlight1',
     'superhi'    => 'highlight2',
@@ -190,6 +202,9 @@ sub new {
     'tge_gw'        => [ 'orchid4', 'Aligned protein' ],
     'targettedgenewise' => [ 'orchid4', 'Aligned protein' ],
     'protein_coding'  => [ 'orchid4', 'Aligned protein' ], 
+    'mus_one2one_human_orth' => [ 'orchid2', 'Mm/Hs orth. gene' ],
+    'human_one2one_mus_orth' => [ 'orchid3', 'Hs/Mm orth. gene' ],
+    'species_protein'        => [ 'orchid1', 'Gene' ],
     'xtrop_cdna'      => [ 'orchid2', 'Aligned cDNA' ],
     'xtrop_cDNA'      => [ 'orchid2', 'Aligned cDNA' ],
     '_col'            => [ 'orchid4', 'Aligned protein' ], 
@@ -323,6 +338,7 @@ sub new {
     'col_Reserved'    => 'gray80',
     'col_DraftAc'     => 'gold2',
     'col_FinishAc'    => 'gold3',
+    'col_Selected'    => 'green',
     'col_Abandoned'   => 'gray80',
     'col_Accessioned' => 'thistle2',
     'col_Unknown'     => 'gray80',
@@ -333,6 +349,7 @@ sub new {
     'lab_PreDraftAc'  => 'black',
     'lab_Redundant'   => 'black',
     'lab_Reserved'    => 'black',
+    'lab_Selected'    => 'black',
     'lab_DraftAc'     => 'black',
     'lab_FinishAc'    => 'black',
     'lab_Abandoned'   => 'black',

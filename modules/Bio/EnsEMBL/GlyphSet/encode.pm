@@ -37,6 +37,10 @@ sub zmenu {
     "02:length: @{[$f->length]} bps" => '',
     "03:View this region" => $self->href($f),
   };
+  if( $self->{'container'}{'_config_file_name_'} ne 'Homo_sapiens' ) {
+    $zmenu->{'04:View in human Ensembl'} = 'http://www.ensembl.org/Homo_sapiens/cytoview?misc_feature='.$f->get_scalar_attribute('description');
+  }
+
   return $zmenu;
 }
 

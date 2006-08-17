@@ -28,7 +28,7 @@ sub _init {
  
   warn "$w - $th - $bit - $text_to_display....";
   $self->push( new Sanger::Graphics::Glyph::Text({
-    'x'         => 1, 
+    'x'         => 0, 
     'y'         => 1,
     'height'    => $th,
     'font'      => $FONT,

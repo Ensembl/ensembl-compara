@@ -45,8 +45,7 @@ sub _init {
     return;
   }
 
-  my $priority = ($self->{container}{_config_file_name_} eq 'Homo_sapiens' ? 
-                  $PRIORITY : undef);
+  my $priority = ($self->{container}{_config_file_name_} eq 'Homo_sapiens' ? $PRIORITY : undef);
 
   my $previous_start = $L + 1e9;
   my $previous_end   = -1e9 ;
