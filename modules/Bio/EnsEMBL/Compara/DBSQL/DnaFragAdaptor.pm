@@ -227,6 +227,27 @@ sub fetch_all_by_GenomeDB_region {
 }
 
 
+=head2 fetch_by_Slice
+
+  Arg [1]    : Bio::EnsEMBL::Slice $slice
+  Example    : $dnafrag = $dnafrag_adaptor->fetch_by_Slice($slice);
+  Description: Retrieves the DnaFrag corresponding to this
+               Bio::EnsEMBL::Slice object
+  Returntype : Bio::EnsEMBL::Compara::DnaFrag
+  Exceptions : thrown if $slice is not a Bio::EnsEMBL::Slice
+  Caller     : general
+
+=cut
+
+sub fetch_by_Slice {
+  my ($self, $slice) = @_;
+
+  my $genome_db_adaptor = $self->db->get_GenomeDBAdaptor;
+  my $genome_db = $genome_db_adaptor->fetch_by_Slice($slice);
+
+  return $self->fetch_by_GenomeDB_and_name($genome_db, $slice->seq_region_name);
+}
+
 =head2 fetch_all
 
  Title   : fetch_all
