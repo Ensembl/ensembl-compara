@@ -83,7 +83,7 @@ sub context_menu {
   }
 
   if( @options_as ) {
-    $menu->add_entry( $flag, 'text' => "View alignment with ...", 'href' => $options_as[0]{'href'},
+    $menu->add_entry( $flag, code => 'asv_link', 'text' => "View alignment with ...", 'href' => $options_as[0]{'href'},
       'options' => \@options_as, 'title' => "AlignSliceView - graphical view of alignment"
     );
   }

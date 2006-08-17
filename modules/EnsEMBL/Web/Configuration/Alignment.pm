@@ -2,8 +2,8 @@ package EnsEMBL::Web::Configuration::Alignment;
 
 use strict;
 use EnsEMBL::Web::Configuration;
+use EnsEMBL::Web::Document::Panel::Information;
 
-## Function to configure marker view
 our @ISA = qw( EnsEMBL::Web::Configuration );
 
 sub alignview {
@@ -52,25 +52,41 @@ sub alignview_Family {
   );
 }
 
-sub alignview_External {
-  my $self = shift;
-  my $object  = $self->{object};
-  my $seqid   = $object->param( 'sequence' );
-  my $tranid  = $object->param('transcript');
-  my $exonid  = $object->param('exon');
-  my $geneid  = $object->param('gene');
-  my $title = "Alignment between External Feature: $seqid and";
 
-  $title .= " Gene ID: $geneid" if $geneid;
-  $title .= " Exon ID: $exonid" if $exonid;
-  $title .= " Transcript ID: $tranid" if $tranid;
-    
-  if( my $panel1 = $self->new_panel( '', 'code'    => "info", 'caption' => $title) ) {
-    $panel1->add_components(qw(
-      output EnsEMBL::Web::Component::Alignment::output_External
-    ));
-    $self->add_panel( $panel1 );
-  }
+=head2 alignviewExternal
+
+ Arg[1]      : none
+ Example     : $self->alignviewExternal
+ Description : Creates Information Panel for viewing alignments of supporting evidence
+ Return type : Nothing
+
+=cut
+
+sub alignview_External {
+	my $self   = shift;
+	my $obj = $self->{'object'};
+	my $data = $obj->__data;
+	#get transcript W::P::O added in the Alignment Factory
+	my $trans = $data->{'transcript'}->[0];
+
+	$self->set_title("Alignment with external sequence");
+	foreach my $detail ( $obj->Obj ) {
+        my $panel = new EnsEMBL::Web::Document::Panel::Information(
+									  'code'    => "info$self->{flag}",
+			  						  'caption' => 'Alignments of exon and transcript with an external sequence',
+									  'object'  => $trans,
+								      'params'  => @{$detail},
+									);
+		$panel->add_components(qw(
+								  stable_id       EnsEMBL::Web::Component::Gene::stable_id
+								  information     EnsEMBL::Web::Component::Transcript::information
+								  exon_info       EnsEMBL::Web::Component::Alignment::exon_information
+								  external_info   EnsEMBL::Web::Component::Alignment::external_information
+								  exon_alignment  EnsEMBL::Web::Component::Alignment::output_External_exon_al
+								  trans_alignment EnsEMBL::Web::Component::Alignment::output_External_trans_al
+								 ));
+		$self->add_panel( $panel );
+	}
 }
 
 
@@ -146,8 +162,6 @@ sub alignview_AlignSlice {
 				   ));
 	$self->add_panel( $panel1 );
     }
-
-
 }
 
 sub alignview_DnaDnaAlignFeature {
@@ -191,5 +205,89 @@ sub alignview_DnaDnaAlignFeature {
     $self->add_entry( 'secondary', 'text' => 'Graphical overview', 'href' => $url );
   }
 }
+
+
+=head2 context_Menu
+
+ Arg[1]      : none
+ Example     : $self->context_menu
+ Description : Creates Context Menu for AlignView (external alignments only at present)
+ Return type : Nothing
+
+=cut
+
+sub context_menu {
+  my $self = shift;
+  my $obj      = $self->{'object'};
+  my $data = $obj->__data;
+  my $trans;
+  #only proceed for external alignment view
+  return unless ($trans = $data->{'transcript'}->[0]);
+
+
+
+  my $species  = $obj->species;
+  my $script_name = $self->{page}->script_name; 
+  my $script = lc($script_name);
+  my $q_string_g = $trans->gene ? sprintf( "db=%s;gene=%s", $trans->get_db, $trans->gene->stable_id ) : undef;
+  my $q_string   = sprintf( "db=%s;transcript=%s" , $trans->get_db , $trans->stable_id );
+
+  my $flag     = "gene$self->{flag}";
+  $self->add_block( $flag, 'bulleted', $trans->stable_id );
+
+  #get other params needed for 'Jump to Vega alignview'
+  my $data = $obj->__data;
+  my @o =  $obj->Obj;
+  my ($detail) = @{pop @o};
+  my $exon_id = $detail->{'exon_id'};
+  my $external_id = $detail->{'external_id'};
+  my $trans_id = $trans->stable_id;
+
+  if( $trans->get_db eq 'vega' ) {
+    $self->add_entry( $flag,
+      'code'  => 'vega_link',
+      'text'  => "Jump to Vega",
+      'icon'  => '/img/vegaicon.gif',
+      'title' => 'Vega - Information about transcript '.$trans->stable_id." in Vega exonview",
+      'href'  => "http://vega.sanger.ac.uk/$species/alignview?transcript=$trans_id;exon=$exon_id;sequence=$external_id;seq_type=N" );
+  }
+
+  $self->add_entry( $flag,
+    'code' => 'gene_info',
+    'text' => "Gene information",
+    'href' => "/$species/geneview?$q_string_g"
+  ) if $q_string_g;
+
+  $self->add_entry( $flag,
+    'code' => 'genomic_seq',
+    'text' => "Genomic sequence",
+    'href' => "/$species/geneseqview?$q_string_g"
+  ) if $q_string_g;
+
+  $self->add_entry( $flag,
+    'code' => 'trans_info',
+    'text' => "Transcript information",
+    'href' => "/$species/transview?$q_string"
+  );
+
+  $self->add_entry( $flag,
+    'code' => 'exon_info',
+    'text' => "Exon information",
+    'href' => "/$species/exonview?$q_string"
+  );
+
+  $self->add_entry( $flag,
+    'code' => 'pep_info',
+    'text' => 'Protein information',
+    'href' => "/$species/protview?$q_string"
+  ) if $trans->translation_object;
+
+  $self->add_entry( $flag,
+    'code' => 'exp_data',
+    'text' => "Export transcript data",
+    'href' => "/$species/exportview?type1=transcript;anchor1=@{[$trans->stable_id]}"
+  );
+}
+
 
 1;
