@@ -48,11 +48,10 @@ sub gene_colour {
 }
 sub colour {
   my ($self, $gene, $transcript, $colours, %highlights) = @_;
-
   if($transcript && exists $highlights{lc($transcript->stable_id)}) {
     return ($colours->{'col'}, $colours->{'hi'});
   }
-  return ( $colours->{'col'}, $self->analysis_logic_name, undef );
+  return ( $colours->{'col'}, ucfirst($self->analysis_logic_name), undef );
 }
 
 sub href {

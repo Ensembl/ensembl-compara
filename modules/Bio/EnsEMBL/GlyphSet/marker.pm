@@ -22,6 +22,8 @@ sub _init {
 
   my $slice         = $self->{'container'};
   my $Config        = $self->{'config'};
+  return unless ( $Config->_is_available_artefact( 'database_tables ENSEMBL_DB.marker_feature' ) );
+
   my $L             = $slice->length();
   my $pix_per_bp    = $Config->transform->{'scalex'};
   my $bitmap_length = int($slice->length() * $pix_per_bp);

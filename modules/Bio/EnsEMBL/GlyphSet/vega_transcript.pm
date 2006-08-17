@@ -392,6 +392,23 @@ sub legend {
 	}
 }
 
+sub colour {
+  my ($self, $gene, $transcript, $colours, %highlights) = @_;
+  my $highlight = undef;
+  my $type = $gene->biotype.'_'.$gene->status;
+  my @colour = @{$colours->{$type}||['black','transcript']};
+  if(exists $highlights{lc($transcript->stable_id)}) {
+    $highlight = $colours->{'superhi'};
+  } elsif(exists $highlights{lc($transcript->external_name)}) {
+    $highlight = $colours->{'superhi'};
+  } elsif(exists $highlights{lc($gene->stable_id)}) {
+    $highlight = $colours->{'hi'};
+  } elsif( my $ccds_att = $transcript->get_all_Attributes('ccds')->[0] ) {
+    $highlight = $colours->{'ccdshi'};
+  }
+
+  return (@colour, $highlight); 
+}
 
 sub error_track_name { 
     my $self = shift;
