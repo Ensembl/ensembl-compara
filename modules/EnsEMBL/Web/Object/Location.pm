@@ -19,16 +19,6 @@ sub slice            {
     $self->seq_region_type, $self->seq_region_name, $self->seq_region_start, $self->seq_region_end, $self->seq_region_strand );
 }
 
-sub alternative_object_from_factory {
-  my( $self,$type ) =@_;
-  my $t_fact = EnsEMBL::Web::Proxy::Factory->new( $type, $self->__data );
-  if( $t_fact->can( 'createObjects' ) ) {
-    $t_fact->createObjects;
-    $self->__data->{lc($type)} = $t_fact->DataObjects;
-    $self->__data->{'objects'} = $t_fact->__data->{'objects'};
-  }
-}
-
 sub get_snp { return $_[0]->__data->{'snp'}[0] if $_[0]->__data->{'snp'}; }
 
 sub attach_slice       { $_[0]->Obj->{'slice'} = $_[1];              }

@@ -19,6 +19,8 @@ sub get_alignment{
   my $int_seq   = shift || return undef();
   my $seq_type  = shift || return undef();
 
+  warn "this method is also in the factory, should be deprecated in one of the two!";
+
   my $int_seq_file = $self->save_seq($int_seq);
   my $ext_seq_file = $self->save_seq($ext_seq);
 
@@ -47,9 +49,8 @@ sub get_alignment{
     }
     unlink( $out_file );
   }
- warn "$int_seq_file $ext_seq_file $out_file";
- unlink( $int_seq_file );
- unlink( $ext_seq_file );
+  unlink( $int_seq_file );
+  unlink( $ext_seq_file );
  
   return $alignment;
 }

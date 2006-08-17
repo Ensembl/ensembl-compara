@@ -1164,5 +1164,25 @@ sub vega_projection {
 }
 
 
+=head2 get_exon
+
+ Arg[1]	     : EnsEMBL::Web::Proxy::Object
+ Arg[2]	     : exon stable id
+ Example     : my $exon = $object->get_exon($id);
+ Description : get an exon from the stable_id
+ Return type : B::E::Exon
+
+=cut
+
+sub get_exon {
+	my $self    = shift;
+	my $exon_id = shift;
+	my $db      = shift;
+	my $dbs     = $self->DBConnection->get_DBAdaptor($db);
+	my $exon_adaptor = $dbs->get_ExonAdaptor;
+	my $exon    = $exon_adaptor->fetch_by_stable_id($exon_id,1 );
+	return $exon;
+}
+
 1;
 
