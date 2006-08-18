@@ -182,9 +182,13 @@ sub submitGenome
   # check for ncbi table
   if (defined $ncbi_taxon) {
     $genome_name = $ncbi_taxon->binomial;
-  } else {
+  }
+  # Some NCBI taxons for complete genomes have no binomial, so one has
+  # to go to the species level - A.G.
+  if (!defined $genome_name) {
     $genome_name = $meta->get_Species->binomial;
   }
+
 
   my ($cs) = @{$genomeDBA->get_CoordSystemAdaptor->fetch_all()};
   my $assembly = $cs->version;
