@@ -314,7 +314,7 @@ sub init {
       'str' => 'r',
       'colours' => {$self->{'_colourmap'}->colourSet( 'marker' )},
       'labels' => 'on',
-      'available'=> 'features markers', 
+      'available'=> 'database_tables ENSEMBL_DB.marker_feature',
     },
 
     'qtl' => {
