@@ -8,11 +8,12 @@
 <h2>Ensembl BlastView Configuration</h2>
 <h3 class="boxed">Contents</h3>
 <ol>
-<li><a href="#Intro">Introduction</a></li>
+<li><a href="#Intro">Introduction</a>
  <ul>
    <li><a href="#EnsConfig">Ensembl Configuration Overview</a></li>
    <li><a href="#BlastViewConfig">BlastView Configuration</a></li>
  </ul>
+</li>
 <li><a href="#seq">Registering Sequence Databases</a></li>
 <li><a href="#methods">Registering Search Methods</a></li>
 <li><a href="#links">Registering Method vs. Database Links</a></li>
@@ -43,7 +44,7 @@ within $ENSEMBL ROOT, in the following directory;
 <kbd>$ENSEMBL_ROOT/conf/ini-files/DEFAULTS.ini</kbd>
 </p>
 
-<p>Species-specific configuration are stored in (hereafter refered to as <SPECIES>.ini), for example:<br />
+<p>Species-specific configuration are stored in (hereafter refered to as &lt;SPECIES&gt;.ini), for example:<br />
 <kbd>$ENSEMBL_ROOT/conf/ini-files/Homo_sapiens.ini<br />
 $ENSEMBL_ROOT/conf/ini-files/Danio_rerio.ini</kbd>
 </p>
@@ -68,7 +69,7 @@ key2 = value2
 <p>Databases and methods are generally species independent, and 
 their configurations are therefore stored in the <kbd>DEFAULTS.ini</kbd> file. 
 Method vs. sequence database linkage, however, is species specific, 
-and stored in the <SPECIES>.ini files.</p>
+and stored in the &lt;SPECIES&gt;.ini files.</p>
 
 <p>For interface responsiveness search reports are parsed once and the results stored in a database.  The location of this database is configured in the MULTI.ini file.</p>
 
@@ -109,7 +110,7 @@ DEFAULT = LATESTGP
 
 <p>It is also possible to register species-specific database types in the corresponding <kbd>&lt;SPECIES&gt;.ini</kbd> files.
 However, as non-empty sections in <kbd>&lt;SPECIES&gt;</kbd> take precedence over those in <kbd>DEFAULTS.ini</kbd>, one must
-copy all other types relevent to the species. For example, in <kbd>Homo_sapiens.ini</kbd>:
+copy all other types relevent to the species. For example, in <kbd>Homo_sapiens.ini</kbd>:</p>
 <pre>
 [BLAST_DATASOURCES]
 # Homo_sapiens-specific database type:
@@ -162,14 +163,14 @@ for example, run blast searches on the same machine as the web server.</p>
 
 <p>Unfortunately, it is not currently possible to override the blast method wrappers on a per-species basis. This
 is a known limitation of the system, and may be addressed in the future. However, you still need to add a
-"stub" <kbd>ENSEMBL BLAST METHODS</kbd> section for each species, e.g. within <kbd>Homo_sapiens.ini</kbd>:
+"stub" <kbd>ENSEMBL BLAST METHODS</kbd> section for each species, e.g. within <kbd>Homo_sapiens.ini</kbd>:</p>
 <pre>
 [ENSEMBL_BLAST_METHODS]
 # Register of BlastView sequence databases.
 # Accept defaults
-</pre></p>
+</pre>
 
-<p>In addition to the ENSEMBL BLAST METHODS section, there are several attributes in the general section that also affect method configuration. These are:
+<p>In addition to the ENSEMBL BLAST METHODS section, there are several attributes in the general section that also affect method configuration. These are:</p>
 <pre>
 # Path to binaries on local machine
 ENSEMBL_BINARIES_PATH = /usr/local/bin
@@ -190,43 +191,63 @@ ENSEMBL_BLASTX_PROGRAM_NAME = wublastx
 ENSEMBL_BLASTP_PROGRAM_NAME = wublastp
 ENSEMBL_TBLASTN_PROGRAM_NAME = wutblastn
 ENSEMBL_TBLASTX_PROGRAM_NAME = wutblastx
-</pre></p>
+</pre>
 
 <h3 class="boxed"><a id="links" name="links">Registering </a>Method vs. Database Links</h3>
-<p>Method/database links are species-specific, and therefore entered in the <kbd>&lt;SPECIES&gt;</kbd> files. Each method
-must have a corresponding section named &lt;METHOD&gt; DATASOURCES, where &lt;METHOD&gt; refers to one of the
-method types registered in <kbd>DEFAULTS.ini</kbd>, e.g. BLASTN DATASOURCES, SSAHA DATASOURCES.</p>
+<p>As the blast/ssaha databases are species-specific they must be configured in their corresponding <kbd>&lt;Genus_species&gt;.ini</kbd> files. </p>
 
-<p>The &lt;METHOD&gt; DATASOURCES section contains links to one or more sequence databases, where the key=value pairs correspond to; &lt;DATABASE&gt; (refering to one of the database types registered in <kbd>DEFAULTS.ini</kbd>), and
-&lt;LOCATOR&gt; (refering to the filesystem or TCP-IP location of the database).</p>
+<p>Each of the method types registered in <code>DEFAULTS.ini</code> (e.g. BLASTN, SSAHA etc.) must have 
+must have a corresponding section named <code>[&lt;METHOD&gt;_DATASOURCES]</code> in the <kbd>&lt;Genus_species&gt;.ini</kbd> e.g. <code>[BLASTN_DATASOURCES]</code>.</p>
 
-<p>In addition to the &lt;DATABASE&gt; = &lt;LOCATOR&gt; entries in the &lt;METHOD&gt; DATASOURCES section, a
-DATASOURCE TYPE key is used to specify the query type (dna/peptide) that the search method expects as input.
-For example, <kbd>Homo_sapiens.ini</kbd> contains:</p>
+<p>The <code>[&lt;METHOD&gt;_DATASOURCES]</code> section contains:</p>
+<ol>
+<li><p>A <code>DATASOURCE_TYPE = dna</code> or <code>DATASOURCE_TYPE = peptide</code> key=value pair 
+to specify the query type (dna/peptide) that the search method expects as input (see example below).</li>
+<li>  <code>&lt;DATABASE&gt; = &lt;LOCATOR&gt;</code> (KEY = value) pairs which are links to one or more sequence databases. 
+  <ul>
+  <li><code>&lt;DATABASE&gt;</code> is one of the database types registered in <kbd>DEFAULTS.ini</kbd> (e.g. CDNA_ALL, LATESTGP, PEP_KNOWN)</li>
+   <li><p><code>&lt;LOCATOR&gt;</code> refers to the filesystem or TCP-IP location of the database.  For 
+the blast databases the &lt;LOCATOR&gt;  
+ can either be the full name of the file (see example below), or the file name can be replaced with 
+<code>&lt;DATABASE&gt;    =  %_</code> e.g.
+<pre>
+LATESTGP      = %_
+</pre>  
+In the later case, the file name will be autogenerated on server start up to use the files with the name 
+<code>Genus_species.Assembly.Release.sequencetype.subset.fa</code></li>
+  </ul>
+</li>
+</ol>
 
+<h4>Example:</h4>
 <pre>[BLASTN_DATASOURCES]
 DATASOURCE_TYPE = dna
-LATESTGP = Homo_sapiens.NCBI33.contig.fa
-CDNA_ALL = Homo_sapiens.NCBI33.cdna.fa
-CDNA_GENSCAN = Homo_sapiens.NCBI33.cdna_genscan.fa
+LATESTGP      = Homo_sapiens.NCBI36.40.dna.seqlevel.fa 
+CDNA_ALL      = Homo_sapiens.NCBI36.40.cdna.all.fa
+CDNA_ABINITIO = Homo_sapiens.NCBI36.40.cdna.abinitio.fa
+
 [TBLASTX_DATASOURCES]
 DATASOURCE_TYPE = dna
-LATESTGP = Homo_sapiens.NCBI33.contig.fa
-CDNA_ALL = Homo_sapiens.NCBI33.cdna.fa
-CDNA_GENSCAN = Homo_sapiens.NCBI33.cdna_genscan.fa
+LATESTGP      = Homo_sapiens.NCBI36.40.dna.seqlevel.fa 
+CDNA_ALL      = Homo_sapiens.NCBI36.40.cdna.all.fa
+CDNA_ABINITIO = Homo_sapiens.NCBI36.40.cdna.abinitio.fa
+
 [TBLASTN_DATASOURCES]
 DATASOURCE_TYPE = peptide
-LATESTGP = Homo_sapiens.NCBI33.contig.fa
-CDNA_ALL = Homo_sapiens.NCBI33.cdna.fa
-CDNA_GENSCAN = Homo_sapiens.NCBI33.cdna_genscan.fa
+LATESTGP      = Homo_sapiens.NCBI36.40.dna.seqlevel.fa 
+CDNA_ALL      = Homo_sapiens.NCBI36.40.cdna.all.fa
+CDNA_ABINITIO = Homo_sapiens.NCBI36.40.cdna.abinitio.fa
+
 [BLASTP_DATASOURCES]
 DATASOURCE_TYPE = peptide
-PEP_ALL = Homo_sapiens.NCBI33.pep.fa
-PEP_GENSCAN = Homo_sapiens.NCBI33.pep_genscan.fa
+PEP_ALL       = Homo_sapiens.NCBI36.40.pep.all.fa
+PEP_ABINITIO  = Homo_sapiens.NCBI36.40.pep.abinitio.fa
+
 [BLASTX_DATASOURCES]
 DATASOURCE_TYPE = dna
-PEP_ALL = Homo_sapiens.NCBI33.pep.fa
-PEP_GENSCAN = Homo_sapiens.NCBI33.pep_genscan.fa
+PEP_ALL       = Homo_sapiens.NCBI36.40.pep.all.fa
+PEP_ABINITIO  = Homo_sapiens.NCBI36.40.pep.abinitio.fa
+
 [SSAHA_DATASOURCES]
 DATASOURCE_TYPE = dna
 LATESTGP = ssaha01:50001
@@ -255,7 +276,7 @@ Next, a script can be run that creates the database automatically. E.g.
 <pre>$ $ENSEMBL_ROOT/utils/utils/blast_database.pl</pre>
 The correct execution of this script can be checked as follows:
 <pre>$ mysqldump -u admin_user -p secret ensembl_blast</pre>
-The above should result in output similar to the following. Note that the blast result, blast hit and blast hsp
+<p>The above should result in output similar to the following. Note that the blast result, blast hit and blast hsp
 tables are timestamped. Re-running the blast database.pl script will cause the blast result, blast hit and
 blast hsp tables to be rotated, meaning that, whilst old results/hsps/hits will still be available, new searches
 will be stored in the new tables. It is simple, therefore, to maintain the ENSEMBL BLAST database by dropping
@@ -325,7 +346,7 @@ deleted before server restart (this is a filesystem cache of the config):
 For further details about how BlastView works, please see the BlastView technical documentation:
 <pre>In preperation. Contact <a href="mailto:whs@sanger.ac.uk">whs@sanger.ac.uk</a> for a draft.</pre>
 
-Please address all comments/suggestions on this document, or on BlastView in general to: <a href="mailto:helpdesk@ensembl.org">helpdesk@ensembl.org</a>
+<p>Please address all comments/suggestions on this document, or on BlastView in general to: <a href="mailto:helpdesk@ensembl.org">helpdesk@ensembl.org</a>
  (cc <a href="maito:whs@sanger.ac.uk">whs@sanger.ac.uk</a>).</p>
 
 </body>
