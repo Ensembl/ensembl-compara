@@ -44,7 +44,7 @@ my $outdir = "/$SERVERROOT";
 if ( $site_type eq 'pre') {
   $outdir .= "/sanger-plugins/pre/htdocs/";
  }
-elsif ( $sitetype eq 'mirror') {
+elsif ( $site_type eq 'mirror') {
   $outdir .= $mirror ? $mirror : 'public-plugins/mirror';
   $outdir .= '/htdocs/';
 }
@@ -52,7 +52,7 @@ else {
   $outdir .= "/public-plugins/ensembl/htdocs/";
 }
 
-my $top = $outdir.'sitemap.pl';
+my $top = $outdir.'sitemap.html';
 open TOP, ">$top";
 
 # Start page
