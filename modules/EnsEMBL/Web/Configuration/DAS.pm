@@ -78,4 +78,21 @@ sub dna {
 
 }
 
+sub sequence {
+    my $self = shift;
+
+    my $page = $self->{'page'};
+    $page->set_doc_type('XML', 'DASSEQUENCE');
+
+    my $component = 'EnsEMBL::Web::Component::DAS::Reference';
+
+    if( my $das_panel = $self->new_panel( '',
+                                          'code' => 'das',
+                                          ) ) {
+        $das_panel->add_components("das_features", $component.'::sequence');
+        $self->add_panel( $das_panel );
+    }
+
+}
+
 1;

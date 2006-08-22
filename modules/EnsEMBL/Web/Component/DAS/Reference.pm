@@ -160,4 +160,44 @@ sub dna {
     }
 }
 
+sub sequence {
+    my( $panel, $object ) = @_;
+
+    my $segment_tmp = qq{<SEQUENCE id="%s" start="%s" stop="%s" version="1.0">\n};
+    my $error_tmp = qq{<ERRORSEGMENT id="%s" start="%s" stop="%s" />\n};
+
+    my $features = $object->DNA();
+
+    foreach my $segment (@{$features || []}) {
+        if ($segment->{'TYPE'} && $segment->{'TYPE'} eq 'ERROR') {
+            $panel->print( sprintf ($error_tmp,
+                                $segment->{'REGION'},
+                                $segment->{'START'} || '',
+                                $segment->{'STOP'} || ''));
+            next;
+        }
+
+        $panel->print( sprintf ($segment_tmp,
+                                $segment->{'REGION'},
+                                $segment->{'START'} || '',
+                                $segment->{'STOP'} || ''));
+
+
+
+ #       $panel->print( sprintf ($feature_tmp,
+ #                               $segment->{'STOP'}  - $segment->{'START'} + 1 ));
+
+
+        my $pattern = '.{60}';
+        my $seq = $segment->{'SEQ'};
+        while ($seq =~ /($pattern)/g) {
+            $panel->print ("$1\n");
+        }
+        my $tail = length($seq) % 60;
+
+        $panel->print (substr($seq, -$tail));
+        $panel->print (qq{\n</SEQUENCE>\n});
+    }
+}
+
 1;
