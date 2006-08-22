@@ -159,7 +159,8 @@ sub sources {
 
 	my $id = sprintf("ENSEMBL_%s_%s", $sourcesIds{$source} || $source, $assembly);
 	my $capability = $source eq 'reference' ?
-	    qq{<CAPABILITY type="das1:entry_points" query_uri="http://$SiteDefs::ENSEMBL_SERVERNAME/das/%s/entry_points"/>} :
+	    qq{<CAPABILITY type="das1:entry_points" query_uri="http://$SiteDefs::ENSEMBL_SERVERNAME/das/%s/entry_points"/>
+      <CAPABILITY type="das1:sequence" query_uri="http://$SiteDefs::ENSEMBL_SERVERNAME/das/%s/sequence"/>} :
 	    qq{<CAPABILITY type="das1:stylesheet" query_uri="http://$SiteDefs::ENSEMBL_SERVERNAME/das/%s/stylesheet"/> };
 
 	print sprintf 
@@ -173,7 +174,7 @@ qq{
       <PROPERTY name="label" value="ENSEMBL" />
     </VERSION>
   </SOURCE>
-}, $id, $dsn, $sources->{$dsn}{description}, $today, $ta->fetch_node_by_name($vsp)->taxon_id, $assembly, $assembly, $species_info->{$species}->{'test_range'}, $dsn, $dsn;
+}, $id, $dsn, $sources->{$dsn}{description}, $today, $ta->fetch_node_by_name($vsp)->taxon_id, $assembly, $assembly, $species_info->{$species}->{'test_range'}, $dsn, $dsn, $dsn;
     }
     print "</SOURCES>\n";
 
