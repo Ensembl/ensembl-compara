@@ -156,6 +156,7 @@ if ($@) {
 
 # For each species ----------------------------------------------------------
 for my $sp( sort @SPECIES ){  # users selected spp
+  my $species_time = time ();
 
   # Work out species folder name and empty if you are dumping --type all
   my $sp_release = $SPECIES_DEFS->get_config($sp,"SPECIES_RELEASE_VERSION");
@@ -206,6 +207,9 @@ for my $sp( sort @SPECIES ){  # users selected spp
     $created_files = undef;
     $fhs = undef;
   }
+  my $sp_time_taken = time - $species_time;
+  my $hours = localtime(time -$species_time)->hour -1;
+  info(2, "Species time $sp $hours hours");
 }
 
 
@@ -322,7 +326,6 @@ sub get_data {
   my $sliceAdaptor = $dbAdaptor->get_SliceAdaptor;
   my $gene_adaptor = $dbAdaptor->get_GeneAdaptor;
 
-  # temporary hack for Mus and rat until the assembly mapping is fixed 
   if(!defined($minimise_memory)){
     $sliceAdaptor->cache_toplevel_seq_mappings();
   }
