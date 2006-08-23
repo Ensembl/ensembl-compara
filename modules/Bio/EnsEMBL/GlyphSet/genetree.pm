@@ -302,7 +302,8 @@ sub features {
 	  $f->{_cigar_line} = $tree->cigar_line;
 
 
-	  if (my $database_spp = $self->{'config'}->{_object}->DBConnection->get_databases_species( $f->{_species}, 'core') ) {
+	  if ( $self->{'config'}->{_object}->DBConnection->{'species_defs'}->valid_species($f->{_species}) and
+my $database_spp = $self->{'config'}->{_object}->DBConnection->get_databases_species( $f->{_species}, 'core') ) {
 
 	      my $geneadaptor_spp = $database_spp->{'core'}->get_GeneAdaptor;
 	      if ( my $gene_spp = $geneadaptor_spp->fetch_by_stable_id( $f->{_gene})) {
