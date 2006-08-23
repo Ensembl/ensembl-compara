@@ -81,7 +81,7 @@ unless ($no_log) {
   open(STDERR, "> $logfile") || die "Can't create file:$!\n";
 }
 
-info(1, "Dumping data to $dumpdir" );
+utils::Tool::info(1, "Dumping data to $dumpdir" );
 
 
 # Web user db conf -----------------------------------------------------------
@@ -128,11 +128,11 @@ foreach my $sp( @SPECIES ){
 
   foreach my $db( @dbs ){
     if( $kill_list{$db} ){
-      info( 1, "Skipping $db (kill list)" );
+      utils::Tool::info( 1, "Skipping $db (kill list)" );
       next;
     }
     unless ( $all_db_info{$db} ){
-      warning( 1, "$db is not a valid DB for $sp; select from:\n ".
+      utils::Tool::warning( 1, "$db is not a valid DB for $sp; select from:\n ".
 	     join( "\n       ", sort keys %all_db_info ) );
       next;
     }
@@ -143,7 +143,7 @@ foreach my $sp( @SPECIES ){
     }
 
     unless ( $all_db_info{$db}{NAME} ){
-      warning( 1, "DB $db has no NAME, skipping" );
+      utils::Tool::warning( 1, "DB $db has no NAME, skipping" );
       next;
     }
 
@@ -156,20 +156,20 @@ foreach my $sp( @SPECIES ){
       $all_db_info{$db}{NODATA} = " --nodata";
     }
 
-    info( 2, "Dumping $sp $db: ".$all_db_info{$db}{NAME} );
+    utils::Tool::info( 2, "Dumping $sp $db: ".$all_db_info{$db}{NAME} );
     dump_mysql( \%{ $all_db_info{$db} }, $no_zip);
   }
   @dbs = ();
-  info( 1, "Dumps for $sp completed" );
+  utils::Tool::info( 1, "Dumps for $sp completed" );
 }
-info( 1, "All dumps completed" );
+utils::Tool::info( 1, "All dumps completed" );
 
 
 # Work out timings ---------------------------------------------------------
 my $time_taken = time - $time1;
 my $hours      = localtime($time_taken)->hour -1;
-info (2, "Used $logfile.") if $logfile;
-info (2, " Time taken: $hours:". localtime($time_taken)->min."mins");
+utils::Tool::info (2, "Used $logfile.") if $logfile;
+utils::Tool::info (2, " Time taken: $hours:". localtime($time_taken)->min."mins");
 
 $email ||= 'ensembl-webteam@sanger.ac.uk';
 utils::Tool::mail_log( $logfile, $email, "" ) if $logfile;
@@ -246,10 +246,10 @@ sub dump_mysql {
 
     # Otherwise just zip it
     unless ( $no_zip ) {
-      info( 1, "Starting gzip for $f");
+      utils::Tool::info( 1, "Starting gzip for $f");
 
       my $ret_value = system ("cat $f | gzip -c > $f.table.gz");
-      info( 1, "finished gzip for $DB.$f");
+      utils::Tool::info( 1, "finished gzip for $DB.$f");
       unlink($f) unless $ret_value;
     }
   }
@@ -277,7 +277,7 @@ sub split_data {
 
   # Core dna file compression ~66%, RefSNP table = 75%
   # Feature dna compression = 88 %
-  info("Creating ${name}.${chunk}.txt.table"); 
+  utils::Tool::info("Creating ${name}.${chunk}.txt.table"); 
   while(<IN>){
     $bytes += length $_;
     if ($bytes > 3500000000){
@@ -289,7 +289,7 @@ sub split_data {
       $chunk++;
       open (OUT, ">$name.$chunk.txt.table") or die "Can't create ${name}.${chunk}.txt.table: $!\n";
 
-      info ("Creating $DB ${name}.${chunk}.txt.table"); 
+      utils::Tool::info ("Creating $DB ${name}.${chunk}.txt.table"); 
       $bytes = 0;
     }
     else{
@@ -323,14 +323,14 @@ sub create_dumpdir {
 
 
   if( -e $db_dumpdir ){
-    info( 1, "Removing existing copy of $db_dumpdir" );
+    utils::Tool::info( 1, "Removing existing copy of $db_dumpdir" );
     system("rm -Rf $db_dumpdir") && die "Couldn't delete $db_dumpdir";
   }
 
   utils::Tool::check_dir( $db_dumpdir );
   system("chmod 777 $db_dumpdir");
   unless ( -d $db_dumpdir && -w $db_dumpdir ){ 
-    warning("$db_dumpdir is not a directory or is not writable" ) && next;
+    utils::Tool::warning("$db_dumpdir is not a directory or is not writable" ) && next;
   }
   return $db_dumpdir;
 }
@@ -344,32 +344,6 @@ sub rename_files {
   system ("mv $sp_dumpdir/$db_name.mysql40_compatible.sql.gz $sp_dumpdir/$new_db.mysql40_compatible.sql.gz" );
 
   return;
-}
-#-----------------------------------------------------------------------------
-sub info{
-  my $v   = shift;
-  my $msg = shift;
-  if( ! defined($msg) ){ $msg = $v; $v = 0 }
-  $msg || ( carp("Need a warning message" ) && return );
- 
-  if ($v > 1) {
-      warn( "[INFO_2] ".$msg."\n" );
-  }
-  else {
-      warn( "[INFO] ".$msg."\n" );
-  }
-  return 1;
-}
-
-#----------------------------------------------------------------------
-sub warning{
-  my $v   = shift;
-  my $msg = shift;
-  if( ! defined($msg) ){ $msg = $v; $v = 0 }
-  $msg || ( carp("Need a warning message" ) && return );
-
-  warn( "[WARN] ".$msg."\n" );
-  return 1;
 }
 
 

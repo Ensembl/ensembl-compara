@@ -170,7 +170,7 @@ sub sz {
   return($size, $rss); # return 0 for share, to avoid undef warnings
 }
 
-
+#------------------------------------------------------------------------
 sub info{
   my $v   = shift;
   my $msg = shift;
@@ -179,7 +179,13 @@ sub info{
 
   if( $v > $VERBOSITY ){ return 1 }
   my @sz = sz();
-  warn( "[INFO] ".$msg." (@sz)\n" );
+  if ($v > 1) {
+    warn( "[INFO_2] ".$msg." (@sz)\n" );
+  }
+  else {
+    warn( "[INFO] ".$msg." (@sz)\n" );
+  }
+
   return 1;
 }
 
