@@ -273,7 +273,7 @@ sub align_interval {
         "10:Start: $s2s" => "", 
         "15:End: $s2e" => "", 
         "20:Length: $s2l" => '', 
-        "23:View in contigveiw" => $cview,
+        "23:View in contigview" => $cview,
         "25:----------------" => '',
         "30:Interval Start:$ss" => '', 
         "35:Interval End: $se" => '', 
