@@ -139,16 +139,6 @@ sub get_config {
 }
 
 #----------------------------------------------------------------------
-=head2 info
-
-  Arg[1]      : verbosity
-  Arg[1]      : message
-  Example     : utils::Tool::info(1, "Current release is $release");
-  Description : Prints message to STDERR
-  Return type : none
-
-=cut
-
 sub sz {
   my $size = `ps $$ -o vsz |tail -1`;
   chomp $size;
@@ -171,13 +161,23 @@ sub sz {
 }
 
 #------------------------------------------------------------------------
+=head2 info
+
+  Arg[1]      : verbosity
+  Arg[1]      : message
+  Example     : utils::Tool::info(1, "Current release is $release");
+  Description : Prints message to STDERR
+  Return type : none
+
+=cut
+
 sub info{
   my $v   = shift;
   my $msg = shift;
   if( ! defined($msg) ){ $msg = $v; $v = 0 }
   $msg || ( carp("Need a warning message" ) && return );
 
-  if( $v > $VERBOSITY ){ return 1 }
+  #if( $v > $VERBOSITY ){ return 1 }
   my @sz = sz();
   if ($v > 1) {
     warn( "[INFO_2] ".$msg." (@sz)\n" );
