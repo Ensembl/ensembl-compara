@@ -141,10 +141,13 @@ sub breadcrumbs {
   my @DATA = split '/', $filename;
   my $file = pop @DATA;
   pop @DATA if $file eq 'index.html';
+  my $level = 0;
   foreach my $part ( @DATA ) {
+    next if ($part eq 'info' && $level == 0); ## omit top-level info [OUGHT TO OMIT ALL DIRS WITH NO INDEX!]
     $DIR.=$part.'/';
     if( $DIR ne '/' && $SD->ENSEMBL_BREADCRUMBS->{$DIR} ) {
       $out .= sprintf qq(<a href="%s" title="%s" class="breadcrumb">%s</a> $pointer ), $DIR, $SD->ENSEMBL_BREADCRUMBS->{$DIR}[1], $SD->ENSEMBL_BREADCRUMBS->{$DIR}[0];
+      $level++;
     }
   }
   return $out;
