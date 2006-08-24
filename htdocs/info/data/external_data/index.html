@@ -21,7 +21,6 @@ flexibility, efficiency and data persistence.
 
 <p>You may also share your data source with others if you wish to do so.</p>
 
-<!--
 <p>Ensembl offers you the ability to display your own data sets in:</p>
 
 <ul class="spaced">
@@ -29,7 +28,6 @@ flexibility, efficiency and data persistence.
 <li>ContigView and CytoView</li>
 <li>GeneView, TransView and ProtView</li>
 </ul>
--->
 
 
 <h3 class="boxed" id="upload">Uploaded Data Sets</h3>
@@ -39,23 +37,7 @@ Ensembl provides a simple, form-based upload function to store small custom
 data sets directly in the genome browser.
 </p>
 
-<p>
-To annotate features along the genome sequence like Ensembl does on
-<a href="/default/contigview">ContigView</a> and
-<a href="/default/cytoview">CytoView</a>, open the 'DAS Sources' menu on these
-displays.
-The 'Manage sources' option will lead to a DasConfView web form.
-Select 'Upload your data' to start the upload dialogue.
-</p>
-
-<p>
-Custom data sets are generally specified as a list of features, where each
-line is a tab-delimited record of chromosome number, start base, end base and
-feature name values.
-More detailed specification of the supported upload format would be available
-from the DasConfView 
-<a href="javascript:void(window.open('/default/helpview?se=1;kw=dasconfview', 'helpview', 'width=700, height=550, resizable, scrollbars'))">help document</a>.
-</p>
+<h4>Upload to KaryoView</h4>
 
 <p>
 For species with assembled chromosomes, Ensembl
@@ -85,8 +67,34 @@ would be available from the KaryoView
 <a href="javascript:void(window.open('/default/helpview?kw=karyoview;se=1','helpview','width=700,height=550,resizable,scrollbars'))">help document</a>.
 </p>
 
+<h4>Upload to ContigView, etc.</h4>
+
+<p>
+To annotate features along the genome sequence like Ensembl does on
+<a href="/default/contigview">ContigView</a> and
+<a href="/default/cytoview">CytoView</a>, open the 'DAS Sources' menu on these
+displays.
+The 'Manage sources' option will lead to a DasConfView web form.
+Select 'Upload your data' to start the upload dialogue.
+</p>
+
+<p>
+Custom data sets are generally specified as a list of features, where each
+line is a tab-delimited record of chromosome number, start base, end base and
+feature name values.
+More detailed specification of the supported upload format would be available
+from the DasConfView 
+<a href="javascript:void(window.open('/default/helpview?se=1;kw=dasconfview', 'helpview', 'width=700, height=550, resizable, scrollbars'))">help document</a>.
+</p>
+
 
 <h3 class="boxed" id="url">URL-based Data Sets</h3>
+
+<h4>URL datasets in KaryoView</h4>
+
+<p>These work much the same way as file uploads - see section above.</p>
+
+<h4>URL datasets in ContigView, etc.</h4>
 
 <p>
 The addition of URL-based data sets provides a very simple means to add rather
