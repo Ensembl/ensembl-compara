@@ -67,7 +67,7 @@ sub get_text_width {
   }
   return @{$cache{$KEY}} if exists $cache{$KEY};
 ## return @{$self->{'_cache_'}{$KEY}} if exists $self->{'_cache_'}{$KEY};
-  my $font   = $self->{'config'}->species_defs->ENSEMBL_STYLE->{'GRAPHIC_TTF_PATH'}."/".($parameters{'font'}||'arial').'.ttf';
+  my $font   = $self->{'config'}->species_defs->ENSEMBL_STYLE->{'GRAPHIC_TTF_PATH'}.($parameters{'font'}||'arial').'.ttf';
   $width ||= 1e6;
   my $ptsize =  $parameters{'ptsize'}||10;
   my $gd_text = GD::Text->new();
