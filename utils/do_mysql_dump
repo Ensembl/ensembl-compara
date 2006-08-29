@@ -222,9 +222,9 @@ sub dump_mysql {
   system( "$compatible > $compatible_file" ) and die( "Cannot create compatible file: $compatible: $!" );
 
   unless ( $no_zip ) {
-    my $dump_command_d = $dump_command . " -d $DB | gzip -c > $DB.sql.gz";
+    my $dump_command_d = $dump_command . " -d $DB | gzip -9 -c > $DB.sql.gz";
     system( $dump_command_d ) and die( "Cannot $dump_command_d: $!" );
-    system( "gzip $compatible_file" ) and die( "Cannot gzip $compatible_file: $!");
+    system( "gzip -9 $compatible_file" ) and die( "Cannot gzip $compatible_file: $!");
   }
 
   # Rename ensembl_web_user_db so they include the release number
@@ -248,7 +248,7 @@ sub dump_mysql {
     unless ( $no_zip ) {
       utils::Tool::info( 1, "Starting gzip for $f");
 
-      my $ret_value = system ("cat $f | gzip -c > $f.table.gz");
+      my $ret_value = system ("cat $f | gzip -9 -c > $f.table.gz");
       utils::Tool::info( 1, "finished gzip for $DB.$f");
       unlink($f) unless $ret_value;
     }
@@ -257,7 +257,7 @@ sub dump_mysql {
   foreach my $h (<*.gz>){
     system("/bin/sum $h >> CHECKSUMS");
   }
-  system("gzip CHECKSUMS");
+  system("gzip -9 CHECKSUMS");
 
   return 1;
 }
@@ -283,7 +283,7 @@ sub split_data {
     if ($bytes > 3500000000){
       print OUT $_;
       close (OUT);
-      system ("gzip $name.$chunk.txt.table"); # gzip file
+      system ("gzip -9 $name.$chunk.txt.table"); # gzip file
 
       # Prepare and open next file
       $chunk++;
@@ -296,7 +296,7 @@ sub split_data {
       print OUT $_;
     }
   }
-  system ("gzip $name.$chunk.txt.table"); # gzip file
+  system ("gzip -9 $name.$chunk.txt.table"); # gzip file
   close(IN);
   close OUT;
   unlink $file;
