@@ -863,7 +863,7 @@ sub compress {
       split_data($fh);
     }
     else {
-      system("gzip $fh") ==0 or utils::Tool::warning(1, "Can't gzip file $! $fh");
+      system("gzip -9 $fh") ==0 or utils::Tool::warning(1, "Can't gzip file $! $fh");
     }
   }
 }
@@ -907,7 +907,7 @@ sub split_data {
     if ($bytes > 3500000000){
       print OUT $_;
       close (OUT);
-      system ("gzip $name.$chunk.$ext"); # gzip file
+      system ("gzip -9 $name.$chunk.$ext"); # gzip file
 
       # Prepare and open next file
       $chunk++;
@@ -920,7 +920,7 @@ sub split_data {
       print OUT $_;
     }
   }
-  system ("gzip $name.$chunk.$ext"); # gzip file
+  system ("gzip -9 $name.$chunk.$ext"); # gzip file
   close(IN);
   close OUT;
   unlink $file;
