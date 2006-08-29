@@ -256,24 +256,6 @@ sub _output_story {
     return $html;
 }
 
-#-----------------------------------------------------------------
-# DB EDITOR WIZARD COMPONENTS    
-#-----------------------------------------------------------------
-
-sub which_rel { _wrap_form($_[0], $_[1], 'which_rel'); }
-sub select    { _wrap_form($_[0], $_[1], 'select'); }
-sub enter     { _wrap_form($_[0], $_[1], 'enter'); }
-sub preview   { _wrap_form($_[0], $_[1], 'preview'); }
-
-sub _wrap_form {
-  my ( $panel, $object, $node ) = @_;
-  my $html = qq(<div class="formpanel" style="width:80%">);
-  $html .= $panel->form($node)->render();
-  $html .= '</div>';
-  $panel->print($html);
-  return 1;
-}
-
 1;
 
 __END__

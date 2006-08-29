@@ -6,7 +6,6 @@ no warnings "uninitialized";
 use CGI qw(escape);
 
 use EnsEMBL::Web::Object;
-use EnsEMBL::Web::Factory::News;
 
 our @ISA = qw(EnsEMBL::Web::Object);
 
@@ -59,21 +58,6 @@ sub sort_items {
   ## sort unique items
   @$sorted = sort $sub @unique;
   return $sorted;
-}
-
-## Admin frontend
-
-sub save_to_db {
-    my ($self, $record) = @_;
-    my $result;
-    my %item = %{$record};
-    if ($$record{'news_item_id'}) { # saving updates to an existing item
-        $result = $self->EnsEMBL::Web::Factory::News::news_adaptor->update_news_item($record);
-    }
-    else { # inserting a new item into database
-        $result = $self->EnsEMBL::Web::Factory::News::news_adaptor->add_news_item($record);
-    }
-    return $result;
 }
 
 
