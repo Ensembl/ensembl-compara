@@ -299,51 +299,30 @@ sub seq_region {
 
 # Population genotype table and Allele Frequency Table ######################
 
-=head2 genotype_freqs;
+=head2 all_freqs
 
  Arg1        : panel
  Arg2        : data object
- Example     :  $genotype_panel->add_components( qw(genotype_freqs EnsEMBL::Web::Component::SNP::genotype_freqs) ); 
- Description : prints a table of variation genotypes, their Population ids, genotypes, frequencies  etc. in spreadsheet format
+ Example     : $allele_panel->add_components( qw(all_freqs EnsEMBL::Web::Component::SNP::all_freqs) );
+ Description : prints a table of allele and genotype frequencies for the variation per population
  Return type : 1
 
 =cut
 
-sub genotype_freqs {
+sub all_freqs {
   my ( $panel, $object ) = @_;
-  my $freq_data = $object->pop_table;
+  my $freq_data = $object->freqs;
   return [] unless %$freq_data;
 
-  format_frequencies($panel, $object, $freq_data, "Genotypes");
+  format_frequencies($panel, $object, $freq_data);
   return 1;
 }
-
-=head2 allele_freqs
-
- Arg1        : panel
- Arg2        : data object
- Example     : $allele_panel->add_components( qw(allele_freqs EnsEMBL::Web::Component::SNP::allele_freqs) );
- Description : prints a table of allele frequencies for the variation
- Return type : 1
-
-=cut
-
-sub allele_freqs {
-  my ( $panel, $object ) = @_;
-  my $freq_data = $object->allele_freqs;
-  return [] unless %$freq_data;
-
-  format_frequencies($panel, $object, $freq_data, "Alleles");
-  return 1;
-}
-
 
 =head2 format_frequencies
 
  Arg1        : panel
  Arg2        : data object 
  Arg3        : frequency data
- Arg4        : data type i.e. "Alleles" or "Genotypes"
  Example     : format_frequencies($panel, $object, $freq_data, "Alleles");
  Description : prints a table of allele or genotype frequencies for the variation
  Return type : 1
@@ -351,18 +330,25 @@ sub allele_freqs {
 =cut
 
 sub format_frequencies {
-  my ( $panel, $object, $freq_data, $data_type ) = @_;
+  my ( $panel, $object, $freq_data ) = @_;
   my %freq_data = %{ $freq_data };
   my %columns;
 
   foreach my $pop_id (sort { $freq_data{$a}{pop_info}{Name} cmp $freq_data{$b}{pop_info}{Name}} keys %freq_data) {
     my %pop_row;
 
-    # Freqs and genotypes/alleles ---------------------------------------------
-    my @freq = @{ $freq_data{$pop_id}{Frequency} };
+    # Freqs alleles ---------------------------------------------
+    my @allele_freq = @{ $freq_data{$pop_id}{AlleleFrequency} };
 
-    foreach my $gt ( @{ $freq_data{$pop_id}{$data_type} } ) {
-      $pop_row{$gt} = sprintf("%.3f", shift @freq ) || 'no data';
+    foreach my $gt ( @{ $freq_data{$pop_id}{Alleles} } ) {
+      $pop_row{"Alleles&nbsp;<br />$gt"} = sprintf("%.3f", shift @allele_freq ) || 'no data';
+    }
+
+    # Freqs genotypes ---------------------------------------------
+    my @genotype_freq = @{ $freq_data{$pop_id}{GenotypeFrequency} };
+
+    foreach my $gt ( @{ $freq_data{$pop_id}{Genotypes} } ) {
+      $pop_row{"Genotypes&nbsp;<br />$gt"} = sprintf("%.3f", shift @genotype_freq ) || 'no data';
     }
 
     # Add a name, size and description if it exists ---------------------------
@@ -388,11 +374,11 @@ sub format_frequencies {
 
   # Format table columns ------------------------------------------------------
   my @header_row;
-  foreach my $col (sort keys %columns) {
+  foreach my $col (sort {$a cmp $b} keys %columns) {
     next if $col eq 'pop';
     if ($col !~ /Population|Description/) {
       unshift (@header_row, {key  =>$col,  'align'=>'left',
- 			     title => "$data_type&nbsp;<br />$col" });
+ 			     title => $col });
     }
     else {
       push (@header_row, {key  =>$col, 'align'=>'left', title => "&nbsp;$col&nbsp;"  });

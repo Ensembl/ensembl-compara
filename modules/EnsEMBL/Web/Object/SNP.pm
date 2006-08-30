@@ -324,42 +324,16 @@ sub tagged_snp {
 
 # Population Genotype frequencies and Allele Frequencies ######################
 
-=head2 pop_table
+=head2 freqs
 
   Arg[1]      : Bio::EnsEMBL::Variation::Variation object
-  Example     : my ($header_row, $rows) = $object->pop_table
-  Description : gets Population genotypes for this Variation
-  Return type : hash of data, key is pop name, second key is type of data
-
-=cut
-
-sub pop_table {
-  my $self = shift;
-  return {} unless $self->pop_genotype_obj;
-
-  my %data;
-  foreach my $pop_gt_obj ( @{ $self->pop_genotype_obj } ) {
-    my $pop_obj = $pop_gt_obj->population;
-    my $pop_id  = $self->pop_id($pop_obj);
-    push (@{ $data{$pop_id}{Frequency} }, $pop_gt_obj->frequency);
-    push (@{ $data{$pop_id}{Genotypes} }, $self->pop_genotypes($pop_gt_obj));
-    next if $data{$pop_id}{pop_info};
-    $data{$pop_id}{pop_info} = $self->pop_info($pop_obj);
-  }
-  return (\%data);
-}
-
-
-=head2 allele_freqs
-
-  Arg[1]      : Bio::EnsEMBL::Variation::Variation object
-  Example     : my $data = $object->allele_freqs;
-  Description : gets allele frequencies for this Variation
+  Example     : my $data = $object->freqs;
+  Description : gets allele and genotype frequencies for this Variation
   Return type : hash of data, 
 
 =cut
 
-sub allele_freqs {
+sub freqs {
   my $self = shift;
   my $allele_list = $self->vari->get_all_Alleles;
   return {} unless $allele_list;
@@ -369,15 +343,26 @@ sub allele_freqs {
     my $pop_obj = $allele_obj->population;
     next unless $pop_obj;
     my $pop_id  = $self->pop_id($pop_obj);
-    push (@{ $data{$pop_id}{Frequency} }, $allele_obj->frequency);
+    push (@{ $data{$pop_id}{AlleleFrequency} }, $allele_obj->frequency);
     push (@{ $data{$pop_id}{Alleles} },   $allele_obj->allele);
 
     next if $data{$pop_id}{pop_info};
     $data{$pop_id}{pop_info} = $self->pop_info($pop_obj);
   }
+
+  # Add genotype data;
+  return {} unless $self->pop_genotype_obj;
+
+  foreach my $pop_gt_obj ( @{ $self->pop_genotype_obj } ) {
+    my $pop_obj = $pop_gt_obj->population;
+    my $pop_id  = $self->pop_id($pop_obj);
+    push (@{ $data{$pop_id}{GenotypeFrequency} }, $pop_gt_obj->frequency);
+    push (@{ $data{$pop_id}{Genotypes} }, $self->pop_genotypes($pop_gt_obj));
+    next if $data{$pop_id}{pop_info};
+    $data{$pop_id}{pop_info} = $self->pop_info($pop_obj);
+  }
   return \%data;
 }
-
 
 
 # Methods used by pop_table --------------------------------------------------
