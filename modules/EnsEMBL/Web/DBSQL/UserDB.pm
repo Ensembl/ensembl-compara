@@ -418,8 +418,8 @@ sub updateUserAccount {
     my $sth = $self->{'_handle'}->prepare($sql);
     $result = $sth->execute();
   }
-
-  return $result;
+  return $user_id if $result;
+  return 0;
 }
 
 
