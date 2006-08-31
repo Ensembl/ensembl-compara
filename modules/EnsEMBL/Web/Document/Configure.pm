@@ -50,6 +50,23 @@ sub common_menu_items {
   );
 
   $doc->menu->add_block( 'local', 'bulleted', 'Other Links', 'priority' => 25 );
+
+  my @info_sections = (
+    {'href' => '/info/',          'text'  => 'Table of Contents'},
+    {'href' => '/info/helpdesk',  'text'  => 'Helpdesk'},
+    {'href' => '/info/about/',    'text'  => 'About Ensembl'},
+    {'href' => '/info/data/',     'text'  => 'Ensembl Data'},
+    {'href' => '/info/software/', 'text'  => 'Ensembl Software'},
+  );
+
+  $doc->menu->add_entry(
+        'local',
+        'href'=>'/info/',
+        'text'=>'Help & Documentation',
+        'options'=>\@info_sections,
+      );
+
+
   if( $doc->species_defs->multidb && $doc->species_defs->multidb->{'ENSEMBL_WEBSITE'} ) { 
     $doc->menu->add_entry( 'local',
       'code'  => "whatsnew",
@@ -72,6 +89,7 @@ sub common_menu_items {
 sub static_menu_items {
   my( $self, $doc ) = @_;
 
+=pod
   $doc->menu->add_block( 'docs', 'bulleted', 'Help and Documentation', 'priority' => 24 );
   $doc->menu->add_entry( 'docs',
     'href' => '/info/helpdesk',
@@ -97,6 +115,7 @@ sub static_menu_items {
     'title' => 'API, Installation, CVS, Versions',
     'icon' => '/img/infoicon.gif',
   );
+=cut
 }
 
 sub dynamic_menu_items {
