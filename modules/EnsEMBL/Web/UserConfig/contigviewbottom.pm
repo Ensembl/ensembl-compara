@@ -21,11 +21,13 @@ sub init {
 ## Only features whose key is in this array gets displayed as a track....
        qw( blast_new ),
        qw( tp32k assemblyexception
-        repeat_lite variation variation_affy100 variation_affy500
-        genotyped_variation_line
+        repeat_lite 
+        variation variation_affy100 variation_affy500
+        genotyped_variation_line 
+        predicted_features
+        signal_map
         trna   cpg eponine marker operon rnai ex_profile qtl ep1_h ep1_s
         first_ef
-
         all_affy 
 
         alternative_assembly
@@ -95,30 +97,32 @@ sub init {
 ## CDNA/MRNA TRACKS ##
 ## EST TRACKS ##
 ## OTHER (SIMPLE) FEATURES ##
-         [ 'variation'       => 'SNPs'  ],
-         [ 'genotyped_variation_line'       => 'Genotyped SNPs'  ],
-         [ 'variation_affy100'       => 'Affy 100k SNP'  ],
-         [ 'variation_affy500'       => 'Affy 500k SNP'  ],
-         [ 'glovar_snp'      => 'Glovar SNPs' ], ## not ready for prime time yet
+         [ 'variation'                => 'SNPs'  ],
+         [ 'genotyped_variation_line' => 'Genotyped SNPs'  ],
+         [ 'variation_affy100'        => 'Affy 100k SNP'  ],
+         [ 'variation_affy500'        => 'Affy 500k SNP'  ],
+         [ 'predicted_features'       => 'Predicted Features'  ],
+         [ 'signal_map'               => 'Signal map'  ],
+         [ 'glovar_snp'               => 'Glovar SNPs' ], ## not ready for prime time yet
         #[ 'glovar_trace'   => 'Glovar traces'], ## not ready for prime time yet
-         [ 'trna'            => 'tRNA'        ],
-         [ 'cpg'             => 'CpG islands'     ],
-         [ 'eponine'         => 'Eponine regions'   ],
-         [ 'ep1_h'         => 'Ecore (Human)'   ],
-         [ 'ep1_s'         => 'Ecore (Mouse)'   ],
+         [ 'trna'                     => 'tRNA'        ],
+         [ 'cpg'                      => 'CpG islands'     ],
+         [ 'eponine'                  => 'Eponine regions'   ],
+         [ 'ep1_h'                    => 'Ecore (Human)'   ],
+         [ 'ep1_s'           => 'Ecore (Mouse)'   ],
          [ 'first_ef'        => 'First EF'    ],
          [ 'marker'          => 'Markers'       ],
          [ 'qtl'             => 'QTLs'     ],
          [ 'operon'          => 'Operon'      ],
-         [ 'regulatory_regions' => 'Regulatory features'  ],
-         [ 'regulatory_search_regions' => 'Regulatory search regions'  ],
+         [ 'regulatory_regions'       => 'Regulatory features'  ],
+         [ 'regulatory_search_regions'=> 'Regulatory search regions'  ],
          [ 'rnai'            => 'RNAi'        ],
          [ 'ex_profile'      => 'Exp. profile'    ],
          [ 'alternative_assembly'     => 'Vega assembly' ],
 ### Other ###
          [ 'encode_region'   => 'ENCODE' ],
 ## MICROARRAY TRACKS ##
-         [ 'all_affy'            => 'All-Probe-Sets' ],
+         [ 'all_affy'                => 'All-Probe-Sets' ],
 ## Matches ##
       ],
       'compara' => [ ],
@@ -388,6 +392,7 @@ sub init {
       'pos' => '4523',
       'str' => 'r',
       'col' => 'blue',
+      'threshold' => '50',
       'colours' => {$self->{'_colourmap'}->colourSet('variation')},
       'available'=> 'databases ENSEMBL_VARIATION', 
     },
@@ -418,6 +423,30 @@ sub init {
       'available'=> 'species Homo_sapiens',  
     }, 
 
+    'predicted_features' => {
+      'on'  => "off",
+      'bump_width' => 0,
+      'dep' => 0.1,
+      'pos' => '4527',
+      'str' => 'r',
+      'col' => 'blue',
+      'track_label' => 'Predicted Features',
+      'glyphset'    => 'predicted_features',
+      'available'=> 'species Homo_sapiens',  
+    }, 
+
+   'signal_map' => {
+      'on'  => "off",
+      'bump_width' => 0,
+      'dep' => 0.1,
+      'pos' => '4527',
+      'str' => 'r',
+      'col' => 'blue',
+      'track_label' => 'Signal map',
+      'glyphset'    => 'signal_map',
+      'available'=> 'species Homo_sapiens',  
+    }, 
+
    'genotyped_variation_line' => {
       'on'  => "off",
       'bump_width' => 0,
@@ -425,6 +454,7 @@ sub init {
       'pos' => '4524',
       'str' => 'r',
       'col' => 'blue',
+      'threshold' => '100',
       'colours' => {$self->{'_colourmap'}->colourSet('variation')},
       'available'=> 'database_tables ENSEMBL_VARIATION.population_genotype', 
     },
