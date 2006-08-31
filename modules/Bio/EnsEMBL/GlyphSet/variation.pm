@@ -12,10 +12,19 @@ sub my_label { return "SNPs"; }
 
 sub features {
   my ($self) = @_;
+  my $Config = $self->{'config'};
+  my $type = $self->check();
+  my $max_length     = $Config->get( $type, 'threshold' )  || 1000;
+  my $slice_length  = $self->{'container'}->length;
+  if($slice_length > $max_length*1010) {
+    $self->errorTrack('Variation features not displayed for more than '.$max_length.'Kb');
+    return;
+  }
+
   if( exists( $self->{'config'}->{'snps'} ) ) {
     my $snps = $self->{'config'}->{'snps'} || [];
     if(@$snps && !$self->{'config'}->{'variation_legend_features'} ) {
-warn ref($self)."........................";
+      #warn ref($self)."........................";
       $self->{'config'}->{'variation_legend_features'}->{'variations'} = { 'priority' => 1000, 'legend' => [] };
     }
     return $snps;
@@ -28,7 +37,7 @@ warn ref($self)."........................";
       map  { [ $ct{$_->display_consequence} * 1e9 + $_->start, $_ ] }
       grep { $_->map_weight < 4 } @$vf_ref;
     if(@vari_features && !$self->{'config'}->{'variation_legend_features'} ) {
-warn "...................".ref($self)."........................";
+      #warn "...................".ref($self)."........................";
       $self->{'config'}->{'variation_legend_features'}->{'variations'} = { 'priority' => 1000, 'legend' => [] };
     }
     return \@vari_features;
