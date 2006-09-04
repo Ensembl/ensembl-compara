@@ -140,7 +140,7 @@ sub build_homology_clusters {
   my $starttime = time();
    
   my $root = new Bio::EnsEMBL::Compara::NestedSet;
-  $root->name("ORTHO_CLUSTERS");
+  $root->name("PROTEIN_TREE");
   $treeDBA->store($root);
   printf("root_id %d\n", $root->node_id);
     
@@ -148,7 +148,7 @@ sub build_homology_clusters {
   # create Cluster MLSS
   #
   $self->{'cluster_mlss'} = new Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
-  $self->{'cluster_mlss'}->method_link_type('ORTHO_CLUSTERS'); 
+  $self->{'cluster_mlss'}->method_link_type('PROTEIN_TREE'); 
   my @genomeDB_set;
   foreach my $gdb_id (@species_set) {
     my $gdb = $self->{'comparaDBA'}->get_GenomeDBAdaptor->fetch_by_dbID($gdb_id);
@@ -300,7 +300,7 @@ sub build_cluster_around_gene_stable_id {
   my $gene_stable_id = shift;
 
   my $root = new Bio::EnsEMBL::Compara::NestedSet;
-  $root->name("ORTHO_CLUSTERS");
+  $root->name("PROTEIN_TREE");
   $self->{'comparaDBA'}->get_ProteinTreeAdaptor->store($root);
 
   my $MA = $self->{'comparaDBA'}->get_MemberAdaptor;
