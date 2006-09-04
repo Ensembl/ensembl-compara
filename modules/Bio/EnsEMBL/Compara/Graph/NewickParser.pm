@@ -92,11 +92,25 @@ sub parse_newick_into_tree
                     $attribute =~ s/\s+//;
                     my($key,$value) = split '=', $attribute;
                     # we assume only one value per key
+                    # shortcut duplication mapping
+                    if ($key eq 'D') {
+                      $key = "Duplication";
+                      # this is a small hack that will work for
+                      # treefam nhx trees
+                      $value =~ s/Y/1/;
+                      $value =~ s/N/0/;
+                    }
                     $node->add_tag("$key","$value");
                 }
             }
             # $token = next_token(\$newick, ",);");
             #$node->distance_to_parent($token);
+            # Force a duplication = 0 for some strange treefam internal nodes
+            unless ($node->is_leaf) {
+              if (!defined($node->get_tagvalue("Duplication"))) {
+                $node->add_tag("Duplication",0);
+              }
+            }
             if($debug) { print("NHX tags: $token"); $node->print_node; }
             $token = next_token(\$newick, ",);"); #move to , or )
         }
