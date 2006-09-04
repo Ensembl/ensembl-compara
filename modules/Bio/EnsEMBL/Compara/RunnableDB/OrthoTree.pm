@@ -781,7 +781,8 @@ sub store_gene_link_as_homology
   # create method_link_species_set
   #
   my $mlss = new Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
-  $mlss->method_link_type("ENSEMBL_HOMOLOGUES");
+  $mlss->method_link_type("ENSEMBL_ORTHOLOGUES") unless ($type eq 'between_species_paralog' || $type eq 'within_species_paralog');
+  $mlss->method_link_type("ENSEMBL_PARALOGUES") if ($type eq 'between_species_paralog' || $type eq 'within_species_paralog');
   if ($protein1->genome_db->dbID == $protein2->genome_db->dbID) {
     $mlss->species_set([$protein1->genome_db]);
   } else {
@@ -793,7 +794,7 @@ sub store_gene_link_as_homology
   my $homology = new Bio::EnsEMBL::Compara::Homology;
   $homology->description($type);
   $homology->subtype($subtype);
-  $homology->method_link_type("ENSEMBL_HOMOLOGUES");
+  $homology->method_link_type($mlss->method_link_type);
   $homology->method_link_species_set($mlss);
   #$homology->dbID(-1);
 
