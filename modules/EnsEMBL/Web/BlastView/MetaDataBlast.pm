@@ -83,7 +83,7 @@ STAGE_SETUP:{
         $entry->set_cgi_name('_pfetch_accession');
         $entry->set_label( "<B>Or</B> Enter a sequence ID or accession ".
                            "(EMBL, UniProt, RefSeq)" );
-        my $sp = $SiteDefs::ENSEMBL_PERL_SPECIES;
+        my $sp = $SiteDefs::ENSEMBL_PRIMARY_SPECIES;
         # Only enabled if an ENSEMBL_PFETCH_SERVER is configured
         if( ! $SPECIES_DEFS->get_config($sp, 'ENSEMBL_PFETCH_SERVER') ){
           $entry->set_label( '' );
@@ -156,8 +156,8 @@ STAGE_SETUP:{
 
       my @species  = sort $DEFS->dice(-out=>'species');
       my %valid_sp = map{$_,1} @species;
-      my $def_sp   = ( $valid_sp{$SiteDefs::ENSEMBL_PERL_SPECIES} ?
-                       $SiteDefs::ENSEMBL_PERL_SPECIES : $species[0] );
+      my $def_sp   = ( $valid_sp{$SiteDefs::ENSEMBL_PRIMARY_SPECIES} ?
+                       $SiteDefs::ENSEMBL_PRIMARY_SPECIES : $species[0] );
 
     SPECIES_SELECT:{
         my $entry = $form->addobj_form_entry();
@@ -180,7 +180,7 @@ STAGE_SETUP:{
 #      $form->set_default
 #        (sub{
 #           my %valid = map{ $_, 1  } $DEFS->dice(-out=>'species');
-#           if( my $sp = $SiteDefs::ENSEMBL_PERL_SPECIES ){
+#           if( my $sp = $SiteDefs::ENSEMBL_PRIMARY_SPECIES ){
 #             $valid{ $sp } && return $sp;
 #           }
 #           my( $sp ) = sort keys %valid;
@@ -372,7 +372,7 @@ STAGE_CONFIGURE:{
   $stage->set_name( 'configure' );
   $stage->add_javascript_files( '/js/ensFormElementControl.js' );
 
-  my $sp = $SiteDefs::ENSEMBL_PERL_SPECIES;
+  my $sp = $SiteDefs::ENSEMBL_PRIMARY_SPECIES;
   my %methods = %{$SPECIES_DEFS->get_config($sp, 'ENSEMBL_BLAST_METHODS')};
 
  BLOCK_RUN:{
@@ -743,7 +743,7 @@ Seq %s: %s (%s letters)%s/;
 }
 
 #----------------------------------------------------------------------
-my $sp = $SiteDefs::ENSEMBL_PERL_SPECIES;
+my $sp = $SiteDefs::ENSEMBL_PRIMARY_SPECIES;
 my %methods = %{$SPECIES_DEFS->get_config($sp, 'ENSEMBL_BLAST_METHODS')};
 sub method_processing_callback{
 

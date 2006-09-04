@@ -1265,11 +1265,8 @@ sub external_links {
   my $FN        = $object->temp_file_name( undef, 'XXX/X/X/XXXXXXXXXXXXXXX' );
   my $file      = $object->species_defs->ENSEMBL_TMP_DIR_IMG."/$FN";
   $object->make_directory( $file );
-  my $SERVER    = $object->species_defs->ENSEMBL_SERVERNAME;
-  my $PROTOCOL  = $object->species_defs->ENSEMBL_PROTOCOL;
-  my $PORT      = $object->species_defs->ENSEMBL_PROXY_PORT || $object->species_defs->ENSEMBL_PORT;
 
-  my $URL       = "http://$SERVER:$PORT".$object->species_defs->ENSEMBL_TMP_URL_IMG."/$FN";
+  my $URL       = $object->species_defs->ENSEMBL_BASE_URL.$object->species_defs->ENSEMBL_TMP_URL_IMG."/$FN";
   if( open NHX,   ">$file" ) {
       print NHX $tree->nhx_format('simple');
       close NHX;
@@ -1285,7 +1282,7 @@ sub external_links {
   my $FN2        = $object->temp_file_name( undef, 'XXX/X/X/XXXXXXXXXXXXXXX' );
   my $file2      = $object->species_defs->ENSEMBL_TMP_DIR_IMG."/$FN2";
   $object->make_directory( $file2 );
-  my $URL2       = "http://$SERVER:$PORT".$object->species_defs->ENSEMBL_TMP_URL_IMG."/$FN2";
+  my $URL2       = $object->species_defs->ENSEMBL_BASE_URL.$object->species_defs->ENSEMBL_TMP_URL_IMG."/$FN2";
   if( open FASTA,   ">$file2" ) {
       print FASTA $var;
       close FASTA;
@@ -1293,7 +1290,7 @@ sub external_links {
   }
 
   my $jalview = qq{
-    <applet archive="http://$SERVER:$PORT/jalview/jalview.jar"
+    <applet archive=").$object->species_defs->ENSEMBL_BASE_URL.qq(/jalview/jalview.jar"
         code="jalview.ButtonAlignApplet.class" width="100" height="35" style="border:0"
         alt = "[Java must be enabled to view alignments]">
       <param name="input" value="$URL2" />
@@ -1312,7 +1309,8 @@ sub external_links {
 <script type="text/javascript" src="/js/atv.js"></script>
 
 <form>
-    <input style="background-color:white;vertical-align:top; margin: 5px; border: 1; width:70px; height:23px" type=button value="ATV" onClick="openATV(\'http://$SERVER:$PORT\',\'$URL\' )">
+    <input style="background-color:white;vertical-align:top; margin: 5px; border: 1; width:70px; height:23px" type=button value="ATV" onClick="openATV(\'}.
+    $object->species_defs->ENSEMBL_BASE_URL.qq{\',\'$URL\' )">
     $jalview
 </form>
 };

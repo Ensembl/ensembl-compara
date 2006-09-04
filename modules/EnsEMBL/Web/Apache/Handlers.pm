@@ -436,7 +436,7 @@ $SPECIES_MAP{multi} = 'Multi';                           # Multispecies
 $SPECIES_MAP{Multi} = 'Multi';                           # Multispecies
 $SPECIES_MAP{BioMart} = 'biomart';                           # Multispecies
 $SPECIES_MAP{biomart} = 'biomart';                           # Multispecies
-$SPECIES_MAP{perl}  = $SiteDefs::ENSEMBL_PERL_SPECIES;   # Def species
+$SPECIES_MAP{perl}  = $SiteDefs::ENSEMBL_PRIMARY_SPECIES;   # Def species
 map{ $SPECIES_MAP{lc($_)} = $_ } values( %SPECIES_MAP );     # Self-mapping
 
 sub map_alias_to_species{

@@ -200,18 +200,14 @@ sub template_INCLUDE {
 
 sub template_PAGE {
   my( $r, $rel ) = @_;
-  my $root = $SD->ENSEMBL_PROTOCOL."://".$SD->ENSEMBL_SERVERNAME.(
-    $SD->ENSEMBL_PROTOCOL eq 'http' ? ( $SD->ENSEMBL_PROXY_PORT == 80 ? '' : ":".$SD->ENSEMBL_PROXY_PORT ) :
-                                      ( $SD->ENSEMBL_PROXY_PORT == 443 ? '' : ":".$SD->ENSEMBL_PROXY_PORT ) )."/";
-  return "$root$rel"; 
+  my $root = $SD->ENSEMBL_BASE_URL;
+  return "$root/$rel"; 
 }
 
 sub template_LINK {
   my( $r, $rel ) = @_;
-  my $root = $SD->ENSEMBL_PROTOCOL."://".$SD->ENSEMBL_SERVERNAME.(
-    $SD->ENSEMBL_PROTOCOL eq 'http' ? ( $SD->ENSEMBL_PROXY_PORT == 80 ? '' : ":".$SD->ENSEMBL_PROXY_PORT ) :
-                                      ( $SD->ENSEMBL_PROXY_PORT == 443 ? '' : ":".$SD->ENSEMBL_PROXY_PORT ) )."/";
-  return qq(<a href="$root$rel">$root$rel</a>); 
+  my $root = $SD->ENSEMBL_BASE_URL;
+  return qq(<a href="$root/$rel">$root/$rel</a>); 
 }
 
 sub template_RANDOM {

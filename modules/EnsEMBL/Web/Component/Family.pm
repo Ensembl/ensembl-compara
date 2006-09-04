@@ -103,9 +103,7 @@ sub jalview_link_for {
   my $count     = @$refs;
   my $outcount = 0;
   return unless $count;
-  my $SERVER    = $object->species_defs->ENSEMBL_SERVERNAME;
-  my $PROTOCOL  = $object->species_defs->ENSEMBL_PROTOCOL;
-  my $PORT      = $object->species_defs->ENSEMBL_PROXY_PORT || $object->species_defs->ENSEMBL_PORT;
+  my $BASE      = $object->species_defs->ENSEMBL_BASE_URL;
   my $FN        = $object->temp_file_name( undef, 'XXX/X/X/XXXXXXXXXXXXXXX' );
   my $file      = $object->species_defs->ENSEMBL_TMP_DIR_IMG."/$FN";
   $object->make_directory( $file );
@@ -126,10 +124,10 @@ sub jalview_link_for {
   <tr>
     <td>Click to view multiple alignments of the $count $type members of this family.</td>
     <td>
-      <applet archive="$PROTOCOL://$SERVER:$PORT/jalview/jalview.jar"
+      <applet archive="$BASE/jalview/jalview.jar"
         code="jalview.ButtonAlignApplet.class" width="100" height="35" style="border:0"
         alt = "[Java must be enabled to view alignments]">
-      <param name="input" value="$PROTOCOL://$SERVER:$PORT$URL" />
+      <param name="input" value="$BASE/$URL" />
       <param name="type" value="URL" />
       <param name=format value="FASTA" />
       <param name="fontsize" value="10" />

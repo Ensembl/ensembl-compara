@@ -130,7 +130,7 @@ sub new {
 =cut
 
 sub name {
-  return $ENV{'ENSEMBL_SPECIES'}|| $ENSEMBL_PERL_SPECIES;
+  return $ENV{'ENSEMBL_SPECIES'}|| $ENSEMBL_PRIMARY_SPECIES;
 }
 
 #----------------------------------------------------------------------
@@ -178,7 +178,7 @@ sub valid_species(){
 
 sub AUTOLOAD {
   my $self = shift;
-  my $species = shift || $ENV{'ENSEMBL_SPECIES'} || $ENSEMBL_PERL_SPECIES;
+  my $species = shift || $ENV{'ENSEMBL_SPECIES'} || $ENSEMBL_PRIMARY_SPECIES;
   my $var = our $AUTOLOAD;
   $var =~ s/.*:://;
   return $self->get_config( $species, $var );
@@ -1234,7 +1234,7 @@ sub get_table_size{
 sub set_write_access {
   my $self = shift;
   my $type = shift;
-  my $species = shift || $ENV{'ENSEMBL_SPECIES'} || $ENSEMBL_PERL_SPECIES;
+  my $species = shift || $ENV{'ENSEMBL_SPECIES'} || $ENSEMBL_PRIMARY_SPECIES;
   if( $type =~ /ENSEMBL_(\w+)/ ) {
 ## If the value is defined then we will create the adaptor here...
     my $key = $1;
