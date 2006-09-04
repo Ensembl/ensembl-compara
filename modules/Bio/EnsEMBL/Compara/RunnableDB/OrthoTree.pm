@@ -651,13 +651,22 @@ sub ancient_residual_test
   return undef if($count2>1);
 
   #passed all the tests -> it's a simple ortholog
+  # print $ancestor->node_id, " ", $ancestor->name,"\n";
+
+  # little hack to work around some weird treefam trees
+  if ($self->{'_treefam'}) {
+    my $dup_value = $ancestor->get_tagvalue("Duplication");
+    if ($dup_value eq '') {
+      $dup_value = 0;
+      $ancestor->add_tag("Duplication",0) ;
+    }
+  }
+
   if($ancestor->get_tagvalue("Duplication") > 0) {
-#    $genepairlink->add_tag("orthotree_type", 'outspecies_paralog_one2one_geneloss');
     $genepairlink->add_tag("orthotree_type", 'apparent_ortholog_one2one');
     my $taxon = $self->get_ancestor_taxon_level($ancestor);
     $genepairlink->add_tag("orthotree_subtype", $taxon->name);
   } else {
-#    $genepairlink->add_tag("orthotree_type", 'ortholog_one2one_geneloss');
     $genepairlink->add_tag("orthotree_type", 'ortholog_one2one');
     my $taxon = $self->get_ancestor_taxon_level($ancestor);
     $genepairlink->add_tag("orthotree_subtype", $taxon->name);
@@ -772,7 +781,7 @@ sub store_gene_link_as_homology
   # create method_link_species_set
   #
   my $mlss = new Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
-  $mlss->method_link_type("TREE_HOMOLOGIES");
+  $mlss->method_link_type("ENSEMBL_HOMOLOGUES");
   if ($protein1->genome_db->dbID == $protein2->genome_db->dbID) {
     $mlss->species_set([$protein1->genome_db]);
   } else {
@@ -784,7 +793,7 @@ sub store_gene_link_as_homology
   my $homology = new Bio::EnsEMBL::Compara::Homology;
   $homology->description($type);
   $homology->subtype($subtype);
-  $homology->method_link_type("TREE_HOMOLOGIES");
+  $homology->method_link_type("ENSEMBL_HOMOLOGUES");
   $homology->method_link_species_set($mlss);
   #$homology->dbID(-1);
 
@@ -924,7 +933,9 @@ sub _treefam_genepairlink_stats
     $tree_type = "TF" if $self->{'_treefam'};
     my $tree_id = $self->{'protein_tree'}->node_id unless $self->{'_treefam'};
     $tree_id = $self->{'_treefam'} if $self->{'_treefam'};
-    $self->{_gpresults} .= "$tree_type,$tree_id,$stids[0]"."_"."$stids[1]".","."$type,$subtype\n";
+    my $dup = $genepairlink->get_tagvalue('ancestor')->get_tagvalue('Duplication');
+    my $dup_alg = $genepairlink->get_tagvalue('ancestor')->get_tagvalue('Duplication_alg') || 0;
+    $self->{_gpresults} .= "$tree_type,$tree_id,$stids[0]"."_"."$stids[1]".","."$type,$subtype,$dup,$dup_alg\n";
 
   }
   printf("%1.3f secs to analyze genepair links\n", time()-$tmp_time) if($self->debug > 1);
