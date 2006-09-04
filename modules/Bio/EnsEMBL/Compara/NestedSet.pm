@@ -490,7 +490,7 @@ sub nhx_format {
   my $self = shift;
   my $format_mode = shift;
   
-  $format_mode="transcript_id" unless(defined($format_mode));
+  $format_mode="protein_id" unless(defined($format_mode));
   my $nhx = $self->_internal_nhx_format($format_mode); 
   $nhx .= ";";
   return $nhx;
