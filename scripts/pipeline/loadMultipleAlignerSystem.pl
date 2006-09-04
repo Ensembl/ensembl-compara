@@ -21,6 +21,7 @@ my %hive_params ;
 my %member_loading_params;
 my %synteny_map_builder_params;
 my $multiple_aligner_params;
+my %conservation_score_params;
 
 my %compara_conf = ();
 #$compara_conf{'-user'} = 'ensadmin';
@@ -139,6 +140,11 @@ sub parse_conf {
       }
       elsif($type eq 'MULTIPLE_ALIGNER') {
         push(@$multiple_aligner_params, $confPtr);
+      }
+      elsif($type eq 'CONSERVATION_SCORE') {
+        die "You cannot have more than one CONSERVATION_SCORE block in your configuration file"
+            if (%conservation_score_params);
+        %conservation_score_params = %{$confPtr};
       }
     }
   }
@@ -338,6 +344,7 @@ sub prepareGenomeAnalysis
     $mlss->method_link_type($method_link_type);
 
     my $gdbs = [];
+
     foreach my $gdb_id (@{$this_multiple_aligner_params->{'species_set'}}) {
       my $gdb = $self->{'comparaDBA'}->get_GenomeDBAdaptor->fetch_by_dbID($gdb_id);
       push @{$gdbs}, $gdb;
@@ -390,6 +397,66 @@ sub prepareGenomeAnalysis
 
   $dataflowRuleDBA->create_rule($synteny_map_builder_analysis, $multiple_aligner_analysis);
   $ctrlRuleDBA->create_rule($synteny_map_builder_analysis, $multiple_aligner_analysis);
+
+  #
+  # Conservation scores
+  #
+  my ($method_link_id, $method_link_type);
+  if (defined $conservation_score_params{'method_link'}) {
+      ($method_link_id, $method_link_type) = @{$conservation_score_params{'method_link'}};
+    } else {
+	($method_link_id, $method_link_type) = qw(11 GERP);
+    }
+  my $sql = "INSERT ignore into method_link SET method_link_id=$method_link_id, type='$method_link_type'";
+  $self->{'hiveDBA'}->dbc->do($sql);
+
+  foreach my $this_multiple_aligner_params (@$multiple_aligner_params) {
+
+      my $mlss = new Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
+      $mlss->method_link_type($method_link_type);
+  
+      my $gdbs = [];
+  
+      foreach my $gdb_id (@{$this_multiple_aligner_params->{'species_set'}}) {
+	  my $gdb = $self->{'comparaDBA'}->get_GenomeDBAdaptor->fetch_by_dbID($gdb_id);
+	  push @{$gdbs}, $gdb;
+      }
+      $mlss->species_set($gdbs);
+      if (defined($conservation_score_params{method_link_species_set_id})) {
+	  $mlss->dbID($conservation_score_params{method_link_species_set_id});
+      }
+      $self->{'comparaDBA'}->get_MethodLinkSpeciesSetAdaptor->store($mlss);
+  }
+
+  $parameters = "";
+  if (defined $conservation_score_params{'param_file'}) {
+    $parameters .= "param_file=>\'" . $conservation_score_params{'param_file'} ."\',";
+  }
+  if (defined $conservation_score_params{'window_sizes'}) {
+    $parameters .= "window_sizes=>\'" . $conservation_score_params{'window_sizes'} ."\',";
+  }
+  if (defined $conservation_score_params{'tree_file'}) {
+    $parameters .= "tree_file=>\'" . $conservation_score_params{'tree_file'} ."\',";
+  }
+
+  $parameters = "{$parameters}";
+
+  my $conservation_score_analysis = Bio::EnsEMBL::Analysis->new(
+      -logic_name      => 'Gerp',
+      -module          => 'Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::Gerp',
+      -parameters      => $parameters
+    );
+
+  $self->{'comparaDBA'}->get_AnalysisAdaptor()->store($conservation_score_analysis);
+  $stats = $analysisStatsDBA->fetch_by_analysis_id($conservation_score_analysis->dbID);
+  $stats->batch_size(1);
+  $stats->hive_capacity(60);
+  $stats->status('BLOCKED');
+  $stats->update();
+
+  $dataflowRuleDBA->create_rule($multiple_aligner_analysis, $conservation_score_analysis);
+
+  $ctrlRuleDBA->create_rule($multiple_aligner_analysis, $conservation_score_analysis);
 
   #
   # blast_template
