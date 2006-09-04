@@ -84,7 +84,7 @@ sub fetch_input {
 
   my @species_set = @{$self->{'species_set'}};
   $self->{'cluster_mlss'} = new Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
-  $self->{'cluster_mlss'}->method_link_type('ORTHO_CLUSTERS'); 
+  $self->{'cluster_mlss'}->method_link_type('PROTEIN_TREES'); 
   my @genomeDB_set;
   foreach my $gdb_id (@species_set) {
     my $gdb = $self->{'comparaDBA'}->get_GenomeDBAdaptor->fetch_by_dbID($gdb_id);
@@ -384,7 +384,7 @@ sub store_clusters {
   my $clusterset = $self->{'ccEngine'}->clusterset;
   throw("no clusters generated") unless($clusterset);
   
-  $clusterset->name("ORTHO_CLUSTERS");
+  $clusterset->name("PROTEIN_TREES");
   $treeDBA->store_node($clusterset);
   printf("root_id %d\n", $clusterset->node_id);
   $self->{'clusterset_id'} = $clusterset->node_id;
@@ -393,7 +393,7 @@ sub store_clusters {
   # create Cluster MLSS
   #
 #  $self->{'cluster_mlss'} = new Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
-#  $self->{'cluster_mlss'}->method_link_type('ORTHO_CLUSTERS'); 
+#  $self->{'cluster_mlss'}->method_link_type('PROTEIN_TREES'); 
 #  my @genomeDB_set;
 #  foreach my $gdb_id (@species_set) {
 #    my $gdb = $self->{'comparaDBA'}->get_GenomeDBAdaptor->fetch_by_dbID($gdb_id);
