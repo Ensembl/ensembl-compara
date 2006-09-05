@@ -176,7 +176,7 @@ sub enter_details   {
     $html .= qq(<p><strong>Register with Ensembl to bookmark your favourite pages, manage your BLAST tickets and more!</strong></p>);
   }
 
-  $html .= $panel->form('details')->render();
+  $html .= $panel->form('enter_details')->render();
   $html .= '</div>';
   $panel->print($html);
   return 1;

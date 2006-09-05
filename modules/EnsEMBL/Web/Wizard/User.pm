@@ -279,7 +279,7 @@ sub enter_details {
   my $wizard = $self->{wizard};
   my $script = $object->script;
   my $species = $object->species;
-  my $node = 'details';
+  my $node = 'enter_details';
  
   my $id = $object->get_user_id;
   my @fields = qw(name email);
@@ -293,7 +293,7 @@ sub enter_details {
     $object->param('next_node', 'preview');
   }
  
-  my $form = EnsEMBL::Web::Form->new( 'details', "/$species/$script", 'post' );
+  my $form = EnsEMBL::Web::Form->new($node, "/$species/$script", 'post' );
 
   $wizard->add_title($node, $form, $object);
   $wizard->add_widgets($node, $form, $object);
