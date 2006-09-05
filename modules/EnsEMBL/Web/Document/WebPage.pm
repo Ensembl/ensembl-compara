@@ -92,7 +92,6 @@ sub new {
 sub configure {
   my( $self, $object, @functions ) = @_;
   my $objecttype = $object ? $object->__objecttype : 'Static';
-
   $objecttype = 'DAS' if ($objecttype =~ /^DAS::.+/);
 
   my $flag = 0;
@@ -111,7 +110,6 @@ sub configure {
                            # of the script.
       my $CONF = $config_module_name->new( $self->page, $object, $flag );
       foreach my $FN ( @functions ) { 
-	 
         if( $CONF->can($FN) ) {
                            # If this configuration module can perform this
                            # function do so...
@@ -130,22 +128,22 @@ sub configure {
     <pre>%s</pre>), $self->_format_error($@) )
               )
             );
-	}
-      }
+	        }
+        }
         else {
 
-	    if ($objecttype eq 'DAS') {
+	        if ($objecttype eq 'DAS') {
 		
-		$self->problem('Fatal', 'Bad request', 'Unimplemented');
+		        $self->problem('Fatal', 'Bad request', 'Unimplemented');
 
-
-	    } else {
-
-		warn "Can't do menu function $FN";
+	        } 
+          else {
+		        warn "Can't do menu function $FN";
+	        }
+	      }
 	    }
-	    }
-	}
-    } elsif( $self->dynamic_use_failure( $config_module_name ) !~ /^Can't locate/ ) { 
+    } 
+    elsif( $self->dynamic_use_failure( $config_module_name ) !~ /^Can't locate/ ) { 
                            # Handle "use" failures gracefully... 
                            # Firstly skip Can't locate errors
                            # o/w display a "compile time" error message.
@@ -159,7 +157,7 @@ sub configure {
     </p>
     <pre>%s</pre>), $self->_format_error( $self->dynamic_use_failure( $config_module_name )) )
         )
-      )
+      );
     }
   }
   $self->add_error_panels(); # Add error panels to end of display!!
@@ -209,17 +207,6 @@ sub action {
   my $permitted = 1; ## default is to allow access, so ordinary pages don't break!
   my $user_id = $self->get_user_id;
 
-=pod
-  if ($self->restrict) { ## check for script-level access restrictions
-    my $id = $self->get_user_id;
-
-    my $groups = $self->groups;
-
-    warn "RESTRICTED ACCESS! Permitted group(s): @$groups";
-    $permitted = 0;
-  }
-=cut
-
   if ($permitted) {
     if ($self->{wizard}) {
       my $object = ${$self->dataObjects}[0];
@@ -241,13 +228,15 @@ sub _node_hop {
   $loop++;
 
   if ($loop > 10 || !$self->{wizard}->isa_node($node) || $self->{wizard}->isa_page($node)) {
-    ## render page if not a processing node or function has recursed too many times!
+    ## render page if not a processing node or doesn't exist
     $self->render;
   }
   else {
     ## do whatever processing is required by this node
     my $object = ${$self->dataObjects}[0];
-    my %parameter = %{$self->{wizard}->$node($object)};
+    my $return_value = $self->{wizard}->$node($object);
+
+    my %parameter = %{$return_value} if (ref($return_value) =~ /HASH/);
     if (my $next_node = $parameter{'hop'}) {
       $self->_node_hop($next_node, $loop);
     }
@@ -267,7 +256,7 @@ sub _node_hop {
       $URL .= '?' if $param_count;
       foreach my $param_name (keys %parameter) {
         if ($param_name eq 'set_cookie') {
-          $self->login($parameter{$param_name});
+          $self->login($parameter{'set_cookie'});
           next;
         }
         if (ref($parameter{$param_name}) eq 'ARRAY') {
@@ -430,7 +419,7 @@ sub simple_webpage {
     }
     $self->action;
   }
-  warn $self->timer->render();
+  #warn $self->timer->render();
 }
 
 sub wrapper {

@@ -11,8 +11,13 @@ use Mail::Mailer;
 our @ISA = qw(EnsEMBL::Web::Wizard);
 
 
+
 sub _init {
   my ($self, $object) = @_;
+
+  
+  my $expiry =  86400 * 3; ## expiry period for temporary server-set passwords, in seconds
+  my $exp_text = '3 days'; ## expiry period in words (used in emails, etc.)
 
   ## define fields available to the forms in this wizard
   my %form_fields = (
@@ -27,8 +32,21 @@ sub _init {
       },
       'password'  => {
           'type'=>'Password', 
-          'label'=>'Password',
+          'label'=>'New Password',
           'required'=>'yes',
+      },
+      'confirm_password'  => {
+          'type'=>'Password', 
+          'label'=>'Confirm Password',
+          'required'=>'yes',
+      },
+      'expiry'   => {
+          'type'=>'Constant', 
+          'value'=>$expiry, 
+      },
+      'exp_text'   => {
+          'type'=>'Constant', 
+          'value'=>$exp_text, 
       },
       'name'      => {
           'type'=>'String', 
@@ -67,111 +85,76 @@ sub _init {
           'label'=> 'Current bookmarks',
           'values'=>'bookmarks',
       },
-      'pub_groups'  => {
-          'type' => 'MultiSelect',
-          'label'=> 'Subscriptions to public groups',
-          'values'=>'pub_groups',
-      },
-      'res_groups'  => {
-          'type' => 'MultiSelect',
-          'label'=> 'Subscriptions to restricted groups',
-          'values'=>'res_groups',
-      },
-      'members'  => {
-          'type' => 'MultiSelect',
-          'label'=> 'Members',
-          'values'=>'members',
-      },
   );
 
   ## define the nodes available to wizards based on this type of object
   my %all_nodes = (
-      ## login nodes - generally free access
-      'details'      => {
+      'enter_details'      => {
                       'form' => 1,
                       'title' => 'Please enter your details',
-                      'input_fields'  => [qw(name email password org mailing ensembl_announce ensembl_dev)],
-                      'restricted' => 0,
+                      'input_fields'  => [qw(name email org mailing ensembl_announce ensembl_dev)],
       },
       'preview'      => {
                       'form' => 1,
                       'title' => 'Please check your details',
-                      'show_fields'  => [qw(name email password org ensembl_announce ensembl_dev)],
-                      'pass_fields'  => [qw(name email password org ensembl_announce ensembl_dev)],
+                      'show_fields'  => [qw(name email org ensembl_announce ensembl_dev)],
+                      'pass_fields'  => [qw(name email org ensembl_announce ensembl_dev)],
                       'back' => 1,
-                      'restricted' => 0,
       },
       'login'       => {
                       'form' => 1,
                       'input_fields'  => [qw(email password)],
-                      'restricted' => 0,
       },
-      'lost_password' => {
+      'validate'      => {'button'=>'Login'},
+      'lookup_lost'      => {'button'=>'Send'},
+      'lookup_reg'      => {},
+      'send_link'       => {},
+      'set_cookie'      => {},
+
+      'enter_password' => {
+                      'form' => 1,
+                      'input_fields'  => [qw(password confirm_password)],
+      },
+      'save_password'=> {'button'=>'Save'},
+
+      'enter_email' => {
                       'form' => 1,
                       'input_fields'  => [qw(email)],
-                      'restricted' => 0,
       },
-      'acknowledge'   => {'page' => 1, 'restricted' => 0},
-      'check_new'     => {'button'=> 'Register', 'restricted' => 0},
-      'check_old'     => {'button'=>'Reset', 'restricted' => 0},
-      'validate'      => {'button'=>'Login', 'restricted' => 0},
-      'save'          => {'restricted' => 0},
-      'send_link'     => {'restricted' => 0},
-
-      ## account nodes - restricted access
-      'new_password' => {
-                      'form' => 1,
-                      'input_fields'  => [qw(password)],
-                      'restricted' => 1,
+      'thanks_lost'   => {'title' => 'Reactivation Code Sent',
+                        'page' => 1,
       },
-      'reset_password'=> {'button'=>'Save', 'restricted' => 1},
-
+      'thanks_reg'   => {'title' => 'Activation Code Sent',
+                        'page' => 1,
+      },
       'accountview'   => {'title' => 'Account Details',
                         'page' => 1,
-                        'restricted' => 1},
+      },
       'name_bookmark' => {
                       'form' => 1,
                       'title' => 'Save bookmark',
                       'show_fields'  => [qw(bm_url)],
                       'pass_fields'  => [qw(bm_url user_id)],
                       'input_fields'  => [qw(bm_name)],
-                      'restricted' => 1
       },
-      'save_bookmark' => {'button'=>'Save', 'restricted' => 1},
+      'save_bookmark' => {'button'=>'Save'},
       'select_bookmarks' => {
                       'form' => 1,
                       'title' => 'Select bookmarks to delete',
                       'input_fields'  => [qw(bookmarks)],
-                      'restricted' => 1
       },
-      'delete_bookmarks' => {'button'=>'Delete', 'restricted' => 1},
-      'show_groups' => {
-                      'form' => 1,
-                      'title' => 'Unsubscribe',
-                      'input_fields'  => [qw(pub_groups res_groups)],
-                      'restricted' => 1
-      },
-      'delete_groups' => {'button'=>'Remove', 'restricted' => 1},
-      'select_members' => {
-                      'form' => 1,  
-                      'input_fields' => [qw(members)],
-                      'restricted' => 1
-      },
-      'delete_members' => {'button'=>'Delete', 'restricted' => 1},
-      'list_members' => {
-                      'page' => 1,
-                      'restricted' => 1
-      },
+      'delete_bookmarks' => {'button'=>'Delete'},
 );
 
   my $help_email = $object->species_defs->ENSEMBL_HELPDESK_EMAIL;
 
   my %message = (
     'duplicate' => "Sorry, we appear to have a user with this email address already. Please try again.",
+    'password_mismatch' => 'Sorry, the two passwords do not match - please try again.',
     'invalid' => "Sorry, the email address and password did not match a valid account. Please try again.",
     'not_found' => "Sorry, that email address is not in our database. Please try again.",
     'save_failed' => 'Sorry, there was a problem saving your details. Please try again later.',
-    'save_ok' => "Thank you for registering with Ensembl!",
+    'save_ok' => "Thank you for registering with Ensembl! An activation link has been sent to your email address.",
     'update_ok' => "Thank you - your changes have been saved.",
     'send_failed' => qq(Sorry, there was a problem sending your new password. Please contact <a href="mailto:$help_email">$help_email</a> for assistance.),
     'send_ok' => "Your new password has been sent to your registered email address.",
@@ -181,7 +164,6 @@ sub _init {
 
   ## get useful data from object
   my $user_id = $object->get_user_id;
-warn "User $user_id";
   my @bookmarks = @{ $object->get_bookmarks($user_id) };
   my @bm_values;
   foreach my $bookmark (@bookmarks) {
@@ -191,54 +173,18 @@ warn "User $user_id";
     push @bm_values, {'value'=>$bm_id,'name'=>"$bm_name ($bm_url)"};
   }
 
-  ## get available groups
-  my @all_groups = @{ $object->get_all_groups }; 
-  my ($pub_values, $priv_values, $res_values);
-  foreach my $group (@all_groups) {
-    my $group_id  = $$group{'group_id'};
-    my $title     = $$group{'title'};
-    my $type      = $$group{'type'};
-    if ($type eq 'public') {
-      push @$pub_values, {'value'=>$group_id,'name'=>"$title"};
-    }
-    elsif ($type eq 'private') {
-      push @$priv_values, {'value'=>$group_id,'name'=>"$title"};
-    }
-    elsif ($type eq 'restricted') {
-      push @$res_values, {'value'=>$group_id,'name'=>"$title"};
-    }
-  }
-=pod
-  ## get group members
-  my @mem_values;
-  my $group_name = $object->param('group');
-  my @members = @{ $object->get_members($group_name) };
-  foreach my $member (@members) {
-    my $mem_id      = $$member{'user_id'};
-    my $mem_name    = $$member{'name'};
-    my $mem_email   = $$member{'email'};
-    my $mem_status  = $$member{'status'};
-    my $label = "$mem_name ($mem_email)";
-    $label .= ' <strong>Administrator</strong>' if $mem_status eq 'admin';
-    push @mem_values, {'value'=>$mem_id,'name'=>$label};
-  }
-=cut
   my $details   = $object->get_user_by_id($user_id);
 
   my $data = {
+    'expiry'      =>  $expiry,
+    'exp_text'    =>  $exp_text,
     'details'     => $details,
     'bookmarks'   => \@bm_values,
-    'pub_groups'  => $pub_values,
-    'priv_groups' => $priv_values,
-    'res_groups'  => $res_values,
-    #'members'     => \@mem_values,
   };
 
   return [$data, \%form_fields, \%all_nodes, \%message];
 }
 
-
-##----------------------- UTILITIES --------------------------------------
 
 sub _mail {
   my ($self, $to, $from, $reply, $subject, $body) = @_;
@@ -285,8 +231,8 @@ sub validate {
   my ($is_ok, $not_ok, $result);
   if (my $code = $object->param('code')) {
     $result = $object->get_user_by_code($code);
-    $is_ok  = 'new_password';
-    $not_ok = 'lost_password';
+    $is_ok  = 'enter_password';
+    $not_ok = 'enter_email';
     $parameter{'code'} = $code;
   }
   else {
@@ -296,10 +242,10 @@ sub validate {
   }
 
   ## select response based on results
-  if ($result && $$result{'user_id'}) {  
+  if ($result && $$result{'user_id'}) {  ## user OK - proceed with login
     $parameter{'node'} = 'set_cookie';
     $parameter{'next_node'} = $is_ok; 
-    $parameter{'user_id'} = $$result{'user_id'}; ## next node will set cookie
+    $parameter{'user_id'} = $$result{'user_id'}; 
   }
   else {
     $parameter{'node'} = $not_ok; ## return to input node
@@ -322,11 +268,12 @@ sub set_cookie {
   $parameter{'set_cookie'}  = $object->param('user_id'); ## sets a cookie, i.e. logs in
   $parameter{'node'}        = $object->param('next_node'); 
   $parameter{'error'}       = 0;
+  $parameter{'feedback'}    = $object->param('feedback');
 
   return \%parameter;
 }
 
-sub details {
+sub enter_details {
   my ($self, $object) = @_;
 
   my $wizard = $self->{wizard};
@@ -336,25 +283,72 @@ sub details {
  
   my $id = $object->get_user_id;
   my @fields = qw(name email);
-  if ($id) {
+  if ($id) { ## updating existing account
     my $details = $object->get_user_by_id($id);
     $object->param('name', $$details{'name'});
     $object->param('email', $$details{'email'});
     $object->param('org', $$details{'org'});
   }
-  else {
-    push(@fields, 'password');
+  else { ## new account
+    $object->param('next_node', 'preview');
   }
-  push(@fields, 'org', 'mailing', 'ensembl_announce', 'ensembl_dev');
  
   my $form = EnsEMBL::Web::Form->new( 'details', "/$species/$script", 'post' );
 
   $wizard->add_title($node, $form, $object);
-  $wizard->add_widgets($node, $form, $object, \@fields);
+  $wizard->add_widgets($node, $form, $object);
   $wizard->add_buttons($node, $form, $object);
 
 
   return $form;
+}
+
+sub lookup_lost {
+  my ($self, $object) = @_;
+  my %parameter; 
+
+  ## do a database check to see if this user already exists
+  my %details = %{$object->get_user_by_email($object->param('email'))};
+  my $user_exists = $details{'user_id'} ? 1 : 0;
+
+  if (!$user_exists) {  
+    $parameter{'error'} = 1;
+    $parameter{'feedback'} = 'not_found';
+    $parameter{'node'} = 'enter_email'; ## return to input node
+  }
+  else { ## reset password
+    $parameter{'lost'} = 1; 
+    $parameter{'node'} = 'save_password'; 
+    $parameter{'user_id'} = $details{'user_id'};
+    $parameter{'expiry'} = $self->data('expiry'); 
+warn "Expires ".$self->data('expiry');
+  }
+
+  return \%parameter;
+}
+
+sub lookup_reg {
+  my ($self, $object) = @_;
+  my %parameter; 
+
+  ## do a database check to see if this user already exists
+  my %details = %{$object->get_user_by_email($object->param('email'))};
+  my $user_exists = $details{'user_id'} ? 1 : 0;
+
+  if ($user_exists) {  
+    $parameter{'error'} = 1;
+    $parameter{'feedback'} = 'duplicate';
+    $parameter{'node'} = 'enter_details'; ## duplicate, so return to input node
+  }
+  else {
+    $parameter{'node'} = 'preview'; ## genuine new user, so continue
+  }
+  my @passable = qw(name email org ensembl_announce ensembl_dev);
+  foreach my $p (@passable) {
+    $parameter{$p} = $object->param($p);
+  }
+
+  return \%parameter;
 }
 
 sub preview {
@@ -371,40 +365,7 @@ sub preview {
   return $form;
 }
 
-sub check_new {
-  my ($self, $object) = @_;
-  my %parameter; 
-
-  ## do a database check to see if this user already exists
-  my %details = %{$object->get_user_by_email($object->param('email'))};
-  my $user_exists = $details{'user_id'} ? 1 : 0;
-
-  ## select response based on results
-  if ($user_exists) {  
-    $parameter{'node'} = 'details'; ## return to input node
-    $parameter{'error'} = 1;
-    $parameter{'feedback'} = 'duplicate';
-    $parameter{'name'}              = $object->param('name');
-    $parameter{'email'}             = $object->param('email');
-    $parameter{'org'}               = $object->param('org');
-    $parameter{'ensembl_announce'}  = $object->param('ensembl_announce');
-    $parameter{'ensembl_dev'}       = $object->param('ensembl_dev');
-  }
-  else {
-    $parameter{'node'} = 'save'; ## if genuine new user, save details
-    ## pass form parameters to next node
-    $parameter{'name'}              = $object->param('name');
-    $parameter{'email'}             = $object->param('email');
-    $parameter{'password'}          = $object->param('password');
-    $parameter{'org'}               = $object->param('org');
-    $parameter{'ensembl_announce'}  = $object->param('ensembl_announce');
-    $parameter{'ensembl_dev'}       = $object->param('ensembl_dev');
-  }
-
-  return \%parameter;
-}
-
-sub save {
+sub save_details {
   my ($self, $object) = @_;
   my %parameter; 
 
@@ -414,7 +375,9 @@ sub save {
     $$record{'user_id'} = $id; 
   }
   my $result = $object->save_user($record);
+
   if ($result) {  
+
     ## send out mailing list subscriptions
     my $message;
     if ($object->param('ensembl_announce') || $object->param('ensembl_dev')) {
@@ -433,19 +396,20 @@ sub save {
       }
     }
 
-    ## take to account page
-    $parameter{'node'} = 'accountview';
-    $parameter{'error'} = 0;
-    if ($id) {
+    ## direct to next page
+    if ($id) { ## update
+      $parameter{'node'} = 'accountview';
+      $parameter{'error'} = 0;
       $parameter{'feedback'} = 'update_ok'; 
     }
-    else {
-      $parameter{'feedback'} = 'save_ok'; 
+    else { ## new account
+      $parameter{'node'} = 'send_link';
+      $parameter{'user_id'} = $result;
+      $parameter{'expiry'} = $object->{wizard}->data('expiry'); 
     }
-    $parameter{'set_cookie'} = $result; ## next node will set cookie
   }
   else {
-    $parameter{'node'} = 'register'; 
+    $parameter{'node'} = 'enter_details'; 
     $parameter{'error'} = 1;
     $parameter{'feedback'} = 'save_failed';
   }
@@ -453,16 +417,114 @@ sub save {
   return \%parameter;
 }
 
-sub new_password {
+sub save_password {
+  my ($self, $object) = @_;
+  my %parameter; 
+
+  my $id = $object->user_id || $object->param('user_id');
+  $object->param('user_id', $id); ## make sure param is set, or we can't save record!
+
+  ## set password
+  my $record = $self->create_record($object);
+  my $code = $object->set_password($record);
+
+  if ($code) {
+    if ($object->param('expiry')) { ## password has been auto-set
+      $parameter{'node'} = 'send_link'; 
+      $parameter{'code'} = $code; 
+      $parameter{'user_id'} = $id; 
+      $parameter{'lost'} = $object->param('lost'); 
+    }
+    else {
+      $parameter{'node'}  = 'accountview'; 
+    }
+  }
+  else {
+    $parameter{'error'} = 1;
+    $parameter{'feedback'} = 'save_failed';
+    ## N.B. If node is left blank, will go to default for the originating wizard
+  }
+
+  return \%parameter;
+}
+
+sub send_link {
+  ## Sends email with account (re)activation link.
+  my ($self, $object) = @_;
+  my %parameter; 
+
+  ## send password link to user
+  my $id = $object->user_id || $object->param('user_id');
+  my %details =  %{ $object->get_user_by_id($id) }; 
+  my $email = $details{'email'};
+  my $name  = $details{'name'};
+
+  if ($email) {
+
+    my $exp_text = $self->data('exp_text');
+    my $help_email  = $object->species_defs->ENSEMBL_HELPDESK_EMAIL;
+    my $base_url    = $object->species_defs->ENSEMBL_BASE_URL;
+    my $website     = $object->species_defs->ENSEMBL_SITETYPE;
+    my $link = "$base_url/common/set_password?node=validate;code=".$object->param('code');
+
+    my $message = "Dear $name\n\n";
+    my $subject;
+    if ($object->param('lost')) {
+
+      $parameter{'node'} = 'thanks_lost'; 
+      $subject = "$website - Lost Password";
+      $message .= qq(We have received a lost password request from your $website account. Please use the link below to reset your password:
+
+$link
+
+);
+    }
+    else {
+
+      $parameter{'node'} = 'thanks_reg'; 
+      $subject = "Welcome to $website";
+      $message .= qq(Thank you for registering with $website. To activate your account, please use the link below; you will be asked to set a password so that you can log in.
+
+$link;activate=1
+
+);
+    }
+    $message .= qq(Please note that the code expires after $exp_text. If you have any problems, you can reply to this email to contact the $website Helpdesk.
+
+
+Regards
+
+$website Helpdesk
+    );
+
+    $self->_mail($email, $help_email, $help_email, $subject, $message);
+  }
+
+  return \%parameter;
+}
+
+sub thanks_lost {} ## stub - doesn't do anything wizardy!
+sub thanks_reg  {} ## stub - doesn't do anything wizardy!
+
+sub enter_password {
   my ($self, $object) = @_;
 
   my $wizard = $self->{wizard};
   my $script = $object->script;
   my $species = $object->species;
  
-  $wizard->field('password', 'label', 'New password'); 
-  my $node = 'new_password';
+  my $node = 'enter_password';
   my $form = EnsEMBL::Web::Form->new( $node, "/$species/$script", 'post' );
+
+  if ($object->param('activate')) {
+    $wizard->field('password', 'label', 'Password'); 
+  }
+  else {
+    $form->add_element(
+      'type'  => 'Information',
+      'value' => 'Please choose a new password for your account',
+    ); 
+  }
 
   $wizard->add_widgets($node, $form, $object);
   if (my $code = $object->param('code')) {
@@ -473,132 +535,42 @@ sub new_password {
   return $form;
 }
 
-sub save_password {
+sub compare {
+  ## Compare two passwords to ensure user has typed correctly
   my ($self, $object) = @_;
   my %parameter; 
-
-  my ($next, $id);
-  if (my $code = $object->param('code')) {
-    $next = 'logout';
-    my $details = $object->get_user_by_code($code);
-    $id = $$details{'user_id'};
+  
+  my $pass1 = $object->param('password');
+  my $pass2 = $object->param('confirm_password');
+  $parameter{'user_id'}  = $object->user_id;
+  if ($pass1 eq $pass2) {
+    $parameter{'node'} = 'save_password';
+    $parameter{'password'} = $pass1;
   }
   else {
-    $next = 'accountview';
-    $id = $object->get_user_id;
-  }
-
-  my $record = $self->create_record($object);
-  $parameter{'node'} = $next;
-  if ($id) {
-    $$record{'user_id'} = $id; 
-    my $result = $object->set_password($record);
-    $parameter{'error'} = 0;
-    $parameter{'feedback'} = 'update_ok'; 
-  }
-  else {
+    $parameter{'node'} = 'enter_password';
     $parameter{'error'} = 1;
-    $parameter{'feedback'} = 'save_failed';
+    $parameter{'feedback'} = 'password_mismatch';
   }
 
   return \%parameter;
 }
 
-sub lost_password {
+sub enter_email {
   my ($self, $object) = @_;
 
   my $wizard = $self->{wizard};
   my $script = $object->script;
   my $species = $object->species;
   
-  my $form = EnsEMBL::Web::Form->new( 'lost_password', "/$species/$script", 'post' );
+  my $form = EnsEMBL::Web::Form->new( 'enter_email', "/$species/$script", 'post' );
 
-  $wizard->add_widgets('lost_password', $form, $object);
-  $wizard->add_buttons('lost_password', $form, $object);
+  $wizard->add_widgets('enter_email', $form, $object);
+  $wizard->add_buttons('enter_email', $form, $object);
 
   return $form;
 } 
 
-sub check_old {
-  my ($self, $object) = @_;
-  my %parameter; 
-
-  ## do a database check to see if this user already exists
-  my %details = %{$object->get_user_by_email($object->param('email'))};
-  my $user_exists = $details{'user_id'} ? 1 : 0;
-
-  ## select response based on results
-  if (!$user_exists) {  
-    $parameter{'node'} = 'lost_password'; ## return to input node
-    $parameter{'error'} = 1;
-    $parameter{'feedback'} = 'not_found';
-  }
-  else {
-    $parameter{'error'} = 0;
-    $parameter{'user_id'} = $details{'user_id'};
-    $parameter{'node'} = 'send_link'; ## reset password
-  }
-
-  return \%parameter;
-}
-
-sub send_link {
-  my ($self, $object) = @_;
-  my %parameter; 
-
-  ## reset password
-  my $id = $object->param('user_id');
-  if ($id) {
-    my $record = $self->create_record($object);
-    $$record{'reset'}   = 'auto'; 
-    my $code = $object->set_password($record);
-
-    ## send password link to user
-    my $server  = $ENV{'SERVER_NAME'};
-    my $port    = $ENV{'SERVER_PORT'};
-    $server = $server.':'.$port if $port != 80; ## include non-default ports only in URL
-    my %details =  %{ $object->get_user_by_id($id) }; 
-    my $email = $details{'email'};
-    my $name  = $details{'name'};
-
-    if ($email) {
-      my $message = qq(Dear $name
-
-We have received a lost password request from your Ensembl account. Please click on the link below to reset your Ensembl password:
-
-http://$server/common/reset_password?code=$code
-
-Regards
-
-The Ensembl Web Team
-);
-
-      $self->_mail($email, 'webmaster@ensembl.org', 'webmaster@ensembl.org',
-                  'www.ensembl.org - Lost Password', $message);
-  
-      ## forward to next node
-      $parameter{'node'} = 'acknowledge'; 
-      $parameter{'error'} = 0;
-    }
-    else {
-      $parameter{'node'} = 'lost_password'; ## return to input node
-      $parameter{'error'} = 1;
-      $parameter{'feedback'} = 'send_failed';
-    }
-  }
-  else {
-    $parameter{'node'} = 'lost_password'; ## return to input node
-    $parameter{'error'} = 1;
-    $parameter{'feedback'} = 'send_failed';
-  }
-
-
-  return \%parameter;
-}
-
-sub acknowledge {
-  ## doesn't do anything wizardy!
-}
 
 sub logout {
   my ($self, $object) = @_;
@@ -612,19 +584,6 @@ sub logout {
   return \%parameter;
 }
 
-sub select_members {
-  my ($self, $object) = @_;
-
-}
-
-sub delete_members {
-  my ($self, $object) = @_;
-
-}
-
-sub list_members {
-  ## doesn't do anything wizardy!
-}
 
 #------------------ USER CUSTOMISATION METHODS -------------------------
 
@@ -680,7 +639,6 @@ sub save_bookmark {
     return \%parameter;
   }
 
-  warn "No bookmark :(";
   $parameter{'error'} = 1;
   $parameter{'feedback'} = 'no_bookmark';
 
@@ -724,50 +682,6 @@ sub delete_bookmarks {
   return \%parameter;
 }
 
-sub show_groups {
-  my ($self, $object) = @_;
-
-  my $wizard = $self->{wizard};
-  my $script = $object->script;
-  my $species = $object->species;
-
-  my $form = EnsEMBL::Web::Form->new( 'show_groups', "/$species/$script", 'post' );
-
-  $wizard->simple_form('show_groups', $form, $object, 'input');
-
-  return $form;
-}
-
 1;
-
-__END__
-                                                                                
-=head1 Ensembl::Web::Wizard
-
-=head2 SYNOPSIS
-
-=head2 DESCRIPTION
-
-=head2 METHODS                                                                                
-=head3 B<method_name>
-                                                                                
-Description:
-
-Arguments:     
-                                                                                
-Returns:  
-
-=head2 BUGS AND LIMITATIONS
-                                                                                
-=head2 AUTHOR
-                                                                                
-Anne Parker, Ensembl Web Team
-Support enquiries: helpdesk\@ensembl.org
-                                                                                
-=head2 COPYRIGHT
-                                                                                
-See http://www.ensembl.org/info/about/code_licence.html
-                                                                                
-=cut                                                                  
 
                                                                                 

@@ -133,18 +133,20 @@ sub node_value {
 
 sub isa_node {
   my ($self, $node) = @_;
-  return $self->{'_nodes'}{$node};
+  my $boolean = $self->{'_nodes'}{$node} ? 1 : 0;
+  return $boolean;
 }
 
 sub isa_page {
   my ($self, $node) = @_;
-  my $page = $self->{'_nodes'}{$node}{'form'} || $self->{'_nodes'}{$node}{'page'};
-  return $page;
+  my $boolean = $self->{'_nodes'}{$node}{'form'} || $self->{'_nodes'}{$node}{'page'};
+  return $boolean;
 }
 
 sub isa_form {
   my ($self, $node) = @_;
-  return $self->{'_nodes'}{$node}{'form'};
+  my $boolean = $self->{'_nodes'}{$node}{'form'} ? 1 : 0;
+  return $boolean;
 }
 
 sub chain_nodes {
@@ -415,6 +417,7 @@ sub pass_fields {
 
 sub add_widgets {
   my ($self, $node, $form, $object, $fields) = @_;
+warn "Node $node";
   if (!$fields) {
     $fields = $self->{'_nodes'}{$node}{'input_fields'} || $self->default_order;
   } 

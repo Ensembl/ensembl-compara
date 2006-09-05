@@ -26,7 +26,6 @@ sub accountview {
 
   my $id = $object->get_user_id;
   $html .= _show_details($panel, $object, $id);
-  #$html .= _show_groups($panel, $object, $id);
   $html .= _show_bookmarks($panel, $object, $id);
   $html .= _show_blast($panel, $object, $id);
 
@@ -50,37 +49,7 @@ sub _show_details {
   $html .= qq(<p><strong>Name</strong>: $name</p>
 <p><strong>Email address</strong>: $email</p>
 <p><strong>Organisation</strong>: $org</p>
-<p><a href="/common/update_account">Update account details</a> | <a href="/common/change_password">Change password</a></p>);
-
-  return $html;
-}
-
-sub _show_groups {
-  my( $panel, $object, $id ) = @_;
-
-## Get the user's group list
-  my @groups = @{$object->get_groups_by_user($id)};
-
-## return the message
-  my $html = "<h3>My Groups</h3>\n";
-
-  if (scalar(@groups) > 0) {
-    $html .= "<ul>\n";
-    foreach my $group (@groups) {
-      my $name    = $$group{'name'};
-      my $title   = $$group{'title'};
-      my $status  = $$group{'status'};
-      my $extra;
-      if ($status eq 'admin') {
-        $extra = qq( [<a href="/common/user_gp_del?group=$name;node=list_members">member list</a> | <a href="/common/user_gp_add?group=$name">add member</a> | <a href="/common/user_gp_delete?group=$name">delete member</a>]);
-      }
-      $html .= qq(<li>$title $extra</li>);
-    }
-    $html .= qq(</ul>);
-  }
-  else {
-    $html .= "<p>You have not subscribed to any groups.</p>";
-  }
+<p><a href="/common/update_account">Update account details</a> | <a href="/common/set_password">Change password</a></p>);
 
   return $html;
 }
@@ -199,8 +168,8 @@ sub login {
   return 1;
 }
 
-sub details   { 
-  my ( $panel, $object, $node ) = @_;
+sub enter_details   { 
+  my ( $panel, $object ) = @_;
   my $html = qq(<div class="formpanel" style="width:80%">);
 
   if (!$object->param('email')) { ## new registration
@@ -215,51 +184,58 @@ sub details   {
 
 sub preview           { _wrap_form($_[0], $_[1], 'preview'); }
 
-sub new_password      { 
-  my ( $panel, $object, $node ) = @_;
+sub enter_password      { 
+  my ( $panel, $object ) = @_;
   my $html = qq(<div class="formpanel" style="width:80%">);
 
   if ($object->param('code')) { ## resetting lost password
     $html .= qq(<p><strong>Please enter a new password to reactivate your account.</strong></p>);
   }
 
-  $html .= $panel->form('new_password')->render();
+  $html .= $panel->form('enter_password')->render();
   $html .= '</div>';
   $panel->print($html);
   return 1;
 }
 
-sub lost_password {
+sub enter_email {
   my ( $panel, $object ) = @_;
+  
+  my $help_email  = $object->species_defs->ENSEMBL_HELPDESK_EMAIL;
   my $html = qq(<div class="formpanel" style="width:80%">);
-  $html .= qq(<p>Please note that information on resetting your password will be emailed to your <strong>current registered email address</strong>. If you have changed your email address as well as losing your password, please contact <a href="mailto:webmaster\@ensembl.org">webmaster\@ensembl.org</a> for assistance. Thank you.</p>);
-  $html .= $panel->form('lost_password')->render();
+  $html .= qq(<p>Please note that information on resetting your password will be emailed to your <strong>current registered email address</strong>. If you have changed your email address as well as losing your password, please contact <a href="mailto:$help_email">$help_email</a> for assistance. Thank you.</p>);
+  $html .= $panel->form('enter_email')->render();
   $html .= '</div>';
   $panel->print($html);
   return 1;
 }
 
-sub acknowledge {
+sub thanks_lost {
   my ( $panel, $object ) = @_;
-  my $html = '<div>Thank you. An email has been sent to your current registered email address - please check your mailbox and click on the link provided.</div>';
+  my $exp_text = $panel->{wizard}->data('exp_text');
+
+  my $html = qq(<p>An activation code has been sent to your registered email address; follow the enclosed instructions to log back in and reset your password.</p>
+<p>Please note that the code expires after $exp_text.</p>
+);
+    
   $panel->print($html);
   return 1;
 }
 
-sub list_members {
+
+sub thanks_reg {
   my ( $panel, $object ) = @_;
-  my $html = '<div>';
-  warn (keys %{$object->[1]});
-  #my @members = @{ $object->[1]->{'wizard'}->attrib('members') };
-  #foreach my $member (@members) {
-  #  my $text = $$member{'name'};
-  #  my $text = $member;
-  #  $html .= qq(<p>$text</p>);
-  #}
-  $html .= '</div>';
+  my $exp_text = $panel->{wizard}->data('exp_text');
+
+  my $website   = $ENV{'SERVER_SITETYPE'};
+  my $html =  qq(<p>Thank you for registering with $website. An email has been sent to your address with an activation code; follow the instructions to return to this website and activate your new account.</p>
+<p>Please note that the code expires after $exp_text.</p>
+);
+
   $panel->print($html);
   return 1;
 }
+
 
 ##-----------------------------------------------------------------
 ## USER CUSTOMISATION COMPONENTS    
@@ -286,26 +262,6 @@ sub select_bookmarks {
 }
 
 sub name_bookmark     { _wrap_form($_[0], $_[1], 'name_bookmark'); }
-
-sub show_groups {
-  my ( $panel, $object ) = @_;
-
-  my $user_id = $object->get_user_id;
-  my @groups = @{ $object->get_groups_by_user($user_id) };
-
-  my $html = qq(<div class="formpanel" style="width:80%">);
-  if (scalar(@groups)) {
-    $html .= qq(<p>Select the group subscriptions you wish to remove:</p>);
-    $html .= $panel->form('show_groups')->render();
-  }
-  else {
-    $html .= qq(<p>You have no subscriptions at the moment.</p>);
-  }
-  $html .= '</div>';
-  
-  $panel->print($html);
-  return 1;
-}
 
 1;
 

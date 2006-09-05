@@ -324,14 +324,14 @@ sub getUserByCode {
     FROM user
     WHERE password = "$code"
   );
+warn $sql;
 
   my $R = $self->{'_handle'}->selectall_arrayref($sql); 
   return {} unless $R->[0];
 
   my @record = @{$R->[0]};
   my $expires = $record[3];
-  my $limit = time() + (86400 * 7);  ## 7-day limit
-  if (!$expires || $expires > $limit) {
+  if (!$expires || time() < $expires) {
     my $user_id = $record[0];
     $details = {
       'user_id' => $user_id,
@@ -458,7 +458,7 @@ sub validateUser {
   return $result;
 }
 
-sub resetPassword {
+sub setPassword {
   my ($self, $record) = @_;
   return unless $self->{'_handle'};
 
@@ -466,15 +466,8 @@ sub resetPassword {
   my $id        = $$record{'user_id'};
   return unless $id > 0;
 
-  my $expires = undef;
-  my $password  = $$record{'password'};
-  if (!$password && $$record{'reset'} eq 'auto') { ## resetting lost password
-    $password   = _random_string(16);
-    ## set time string manually, since it MUST be null if not auto-resetting
-    my @now     = localtime();
-    my $year    = $now[5] + 1900;
-    $expires    = $year.'-'.$now[4].'-'.$now[3].' '.$now[2].':'.$now[1].':'.$now[0];
-  }
+  my $password  = $$record{'password'} || _random_string(16);
+  my $expiry    = $$record{'expiry'};
   my $salt      = _random_string(8); 
   my $encrypted = Digest::MD5->new->add($password.$salt)->hexdigest();
  
@@ -482,10 +475,14 @@ sub resetPassword {
     UPDATE user  
     SET 
       password  = "$encrypted",
-      salt      = "$salt",
-      expires   = "$expires"
-    WHERE user_id = "$id"
-  );
+      salt      = "$salt");
+  if ($expiry) {
+    $sql .= qq(,
+      expires   = DATE_ADD(NOW(), INTERVAL $expiry SECOND)
+    );
+  }
+  $sql .= qq( WHERE user_id = "$id");
+
   my $sth = $self->{'_handle'}->prepare($sql);
   my $result = $sth->execute();
  
