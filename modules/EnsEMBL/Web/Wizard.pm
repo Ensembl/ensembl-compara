@@ -313,6 +313,10 @@ sub show_fields {
         $count++;
       }
     }
+    elsif ($field_info{'type'} eq 'CheckBox') {
+      my $v = $object->param($field) || $self->{'_data'}{'record'}{$field};
+      $output = $v =~ /yes|y|1/i ? 'yes' : 'no';
+    }
     elsif ($field_info{'type'} eq 'Password') { ## mask passwords
       $output = '******';
     }
