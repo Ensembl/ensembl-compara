@@ -1025,7 +1025,7 @@ sub map_random_chromosome {
   }
 
   my ($slice_start, $slice_end, $slice_strand);
-  if ($frag_strand eq "+") {
+  if ($frag_strand ne "-") {
     $slice_start = $start - $chrom_start + $frag_start;
     $slice_end = $end - $chrom_start + $frag_start;
   } else {
