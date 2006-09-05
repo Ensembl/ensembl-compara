@@ -968,88 +968,115 @@ sub get_chromosome_specificity_for_tables {
 
 =cut
 
+my $hap_mappings;
+
 sub map_random_chromosome {
   my ($species_name, $seq_region_name, $start, $end) = @_;
+  my $slices;
 
-  my ($chrom_start, $chrom_end, $frag_name, $frag_start, $frag_end, $frag_strand);
+  my $random_sql = "SELECT chrom, chromStart, chromEnd, frag, fragStart, fragEnd, strand".
+  " FROM chr${seq_region_name}_gold where chromStart <= ? and chromEnd >= ? ORDER BY chromStart";
+  my $random_sth = $ucsc_dbc->prepare($random_sql);
+  $random_sth->execute($end, $start - 1);
+  my $all_data = $random_sth->fetchall_arrayref;
 
-  if ($seq_region_name =~ /_random$/ or $seq_region_name =~ /_hap/) {
-    ## Get mapping information from goldenpath table
-    my $random_sql = "SELECT chrom, chromStart, chromEnd, frag, fragStart, fragEnd, strand".
-    " FROM chr${seq_region_name}_gold where chromStart <= ? and chromEnd >= ? ORDER BY chromStart";
-    my $random_sth = $ucsc_dbc->prepare($random_sql);
-    $random_sth->execute($end, $start - 1);
-    my $all_data = $random_sth->fetchall_arrayref;
-    if (scalar(@$all_data) != 1) {
-      ## This may happen if a chain span a gap in the assembly. We try to rescue the alignment
-      ## if the gap corresponds to a gap in the clone sequence.
-      my $data = shift(@$all_data);
-      $chrom_start = $data->[1];
-      $chrom_end = $data->[2];
-      $frag_name = $data->[3];
-      $frag_start = $data->[4];
-      $frag_end = $data->[5];
-      $frag_strand = $data->[6];
-      foreach my $data (@$all_data) {
-        my $this_chrom_start = $data->[1];
-        my $this_chrom_end = $data->[2];
-        my $this_frag_name = $data->[3];
-        my $this_frag_start = $data->[4];
-        my $this_frag_end = $data->[5];
-        my $this_frag_strand = $data->[6];
-        if ($frag_name ne $this_frag_name) {
-          return undef;
-        }
-        if ($frag_strand ne $this_frag_strand) {
-          return undef;
-        }
-        if ($chrom_start < $this_chrom_start
-            and $frag_start < $this_frag_start
-            and $chrom_end < $this_chrom_end
-            and $frag_end < $this_frag_end) {
-          $chrom_end = $this_chrom_end;
-          $frag_end = $this_frag_end;
+  my $slice_adaptor = Bio::EnsEMBL::Registry->get_adaptor($species_name, "core", "Slice");
+
+  if ($seq_region_name =~ /_hap/) {
+    if (!$hap_mappings) {
+      my @hap_slices = grep {$_->get_all_Attributes("non_ref")->[0]}
+          @{$slice_adaptor->fetch_all("chromosome", undef, 1)};
+      foreach my $this_hap_slice ( @hap_slices ) {
+        my $projections = $this_hap_slice->project("clone");
+        foreach my $this_p ( @$projections ) {
+          if (defined($hap_mappings->{$this_p->to_Slice->seq_region_name})) {
+            print "ALREADY DEFINED ", $this_p->to_Slice->seq_region_name, "\n";
+          } else {
+            $hap_mappings->{$this_p->to_Slice->seq_region_name}->{projection} = $this_p;
+            $hap_mappings->{$this_p->to_Slice->seq_region_name}->{slice} = $this_hap_slice;
+          }
         }
       }
-    } else {
-      $chrom_start = $all_data->[0]->[1];
-      $chrom_end = $all_data->[0]->[2];
-      $frag_name = $all_data->[0]->[3];
-      $frag_start = $all_data->[0]->[4];
-      $frag_end = $all_data->[0]->[5];
-      $frag_strand = $all_data->[0]->[6];
+    }
+    my $can_be_mapped = 1;
+    my $slice;
+    foreach my $data (@$all_data) {
+      my $chrom_start = $data->[1];
+      my $chrom_end = $data->[2];
+      my $frag_name = $data->[3];
+      my $frag_start = $data->[4];
+      my $frag_end = $data->[5];
+      my $frag_strand = ($data->[6] eq "-")?-1:1;
+      ## Check coordinates
+      if ($hap_mappings->{$frag_name}) {
+        my $proj = $hap_mappings->{$frag_name}->{projection};
+        if (!defined($slice)) {
+          $slice = $hap_mappings->{$frag_name}->{slice};
+        } elsif ($slice != $hap_mappings->{$frag_name}->{slice}) {
+          $can_be_mapped = 0;
+          last;
+        }
+        if (($proj->from_start != $chrom_start + 1)
+            or ($proj->from_end != $chrom_end)
+            or ($proj->to_Slice->seq_region_name ne $frag_name)
+            or ($proj->to_Slice->start != $frag_start + 1)
+            or ($proj->to_Slice->end != $frag_end)
+            or ($proj->to_Slice->strand != $frag_strand)) {
+          $can_be_mapped = 0;
+          last;
+        }
+      }
+    }
+    return undef if (!$can_be_mapped);
+    return $slice->sub_Slice($start, $end);
+
+  } elsif ($seq_region_name =~ /_random$/) {
+    ## Get mapping information from goldenpath table
+    foreach my $data (@$all_data) {
+      my $chrom_start = $data->[1];
+      my $chrom_end = $data->[2];
+      my $frag_name = $data->[3];
+      my $frag_start = $data->[4];
+      my $frag_end = $data->[5];
+      my $frag_strand = $data->[6];
+
+      my ($slice_start, $slice_end, $slice_strand);
+      $slice_start = $start - $chrom_start + $frag_start;
+      $slice_end = $end - $chrom_start + $frag_start;
+      if ($frag_strand ne "-") {
+        $slice_strand = 1;
+      } else {
+        $slice_strand = -1;
+      }
+    
+      my $slice = $slice_adaptor->fetch_by_region(undef, $frag_name, $slice_start, $slice_end, $slice_strand);
+      if (!defined($slice)) {
+        ## Fake slice. Used to give a more useful warning message!
+        print STDERR "Cannot find the slice!\n";
+        $slice = new Bio::EnsEMBL::Slice(
+              -seq_region_name => "--".$frag_name,
+              -start => $frag_start,
+              -end => $frag_end,
+              -strand => ($frag_strand eq "+")?1:-1,
+              -coord_system => new Bio::EnsEMBL::CoordSystem(-name => "unknown", -rank => 100),
+          );
+        return $slice;
+      }
+      push(@$slices, $slice);
     }
 
   } else {
     return undef;
   }
 
-  my ($slice_start, $slice_end, $slice_strand);
-  if ($frag_strand ne "-") {
-    $slice_start = $start - $chrom_start + $frag_start;
-    $slice_end = $end - $chrom_start + $frag_start;
-  } else {
-    print STDERR "random chromosome maps on a reversed fragent. Not supported at the moment!\n";
-    return undef;
-  }
 
-  my $slice_adaptor = Bio::EnsEMBL::Registry->get_adaptor($species_name, "core", "Slice");
-  my $slice = $slice_adaptor->fetch_by_region(undef, $frag_name, $slice_start, $slice_end);
-  if (!defined($slice)) {
-    ## Fake slice. Used to give a more useful warning message!
-    print STDERR "Cannot find the slice!\n";
-    $slice = new Bio::EnsEMBL::Slice(
-          -seq_region_name => "--".$frag_name,
-          -start => $frag_start,
-          -end => $frag_end,
-          -strand => ($frag_strand eq "+")?1:-1,
-          -coord_system => new Bio::EnsEMBL::CoordSystem(-name => "unknown", -rank => 100),
-      );
-    return $slice;
+  my $projections = [];
+  foreach my $this_slice (@$slices) {
+    push(@$projections, @{$this_slice->project("toplevel")});
   }
-
-  my $projections = $slice->project("toplevel");
   if (@$projections != 1) {
+#     print "Projecting ", $slice->name, "\n";
+
     ## This may happen if a chain span a gap in the assembly. We try to rescue the alignment
     ## if the gap corresponds to a gap in the clone sequence.
     my $gapped_seq_region_name;
@@ -1062,18 +1089,29 @@ sub map_random_chromosome {
         $gapped_start = $this_projection->to_Slice->start;
         $gapped_end = $this_projection->to_Slice->end;
         $gapped_strand = $this_projection->to_Slice->strand;
-      } elsif ($gapped_seq_region_name ne $this_projection->to_Slice->seq_region_name
-          or $gapped_strand != $this_projection->to_Slice->strand) {
-        return $slice;
       } else {
+        if ($gapped_seq_region_name ne $this_projection->to_Slice->seq_region_name) {
+          ## A clone might be on both the haplotype and the ref sequence. Keep the haplotype
+          my $name1 = $gapped_seq_region_name;
+          my $name2 = $this_projection->to_Slice->seq_region_name;
+          if ($name1 =~ /^c${name2}_/) {
+            $gapped_seq_region_name = $name1;
+          } elsif ($name2 =~ /^c${name1}_/) {
+            $gapped_seq_region_name = $name2;
+          } else {
+            return undef;
+          }
+        } elsif ($gapped_strand != $this_projection->to_Slice->strand) {
+          return undef;
+        }
         $gapped_start = $this_projection->to_Slice->start
             if ($gapped_start > $this_projection->to_Slice->start);
         $gapped_end = $this_projection->to_Slice->end
             if ($gapped_end < $this_projection->to_Slice->end);
       }
     }
-    $slice = $slice_adaptor->fetch_by_region(undef,
-        $gapped_seq_region_name, $gapped_start, $gapped_end);
+    my $slice = $slice_adaptor->fetch_by_region(undef,
+        $gapped_seq_region_name, $gapped_start, $gapped_end, $gapped_strand);
     return $slice;
   }
 
