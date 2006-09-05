@@ -291,6 +291,7 @@ CREATE TABLE member (
   chr_start                   int(10),
   chr_end                     int(10),
   chr_strand                  tinyint(1) NOT NULL,
+  display_label               varchar(128) default NULL,
 
   FOREIGN KEY (taxon_id) REFERENCES taxon(taxon_id),
   FOREIGN KEY (genome_db_id) REFERENCES genome_db(genome_db_id),
