@@ -116,6 +116,7 @@ sub _init {
                       'input_fields'  => [qw(password confirm_password)],
       },
       'save_password'=> {'button'=>'Save'},
+      'save_details' => {'button'=>'Save'},
 
       'enter_email' => {
                       'form' => 1,
