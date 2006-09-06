@@ -7,9 +7,9 @@ use strict;
 use warnings;
 no warnings "uninitialized";
 use EnsEMBL::Web::Component::Slice;
-use EnsEMBL::Web::Component::Transcript qw(_sort_similarity_links);
+#use EnsEMBL::Web::Component::Transcript qw(_sort_similarity_links);
 
-#use Data::Dumper;
+use Data::Dumper;
 use Bio::AlignIO;
 use IO::String;
 
@@ -325,28 +325,21 @@ sub name {
   
   if($page_type eq 'Transcript'){
     my $trans= $object->transcript;
-# Check cache
-    unless ($object->__data->{'similarity_links'}){
-      my @similarity_links = @{$object->get_similarity_hash($trans)};
-      if(@similarity_links){
-        EnsEMBL::Web::Component::Transcript::_sort_similarity_links($object, @similarity_links);
-      }
-    }
-    my @links = @{$object->__data->{'similarity_links'}||[]};
-  #look for any vega links and display here as well as in the similarity matches section                   
-    if(@links){
-      foreach my $link(@links){
-        my($key, $text)= @$link;
-        if($key eq 'Havana transcripts'){
-          if($text =~ m{(<a.+>.+</a>)}){   
-            push @vega_info, $1;
-          } else {
-            push @vega_info, $text;
-          }
-        }
-      }
-    }
 
+
+    my @similarity_links= @{$object->get_similarity_hash($trans)};
+  
+    my @vega_links= grep {$_->{db_display_name} eq 'Havana transcripts'} @similarity_links;
+    my $urls= $object->ExtURL;
+  
+    foreach my $link(@vega_links){
+
+      my $id= $link->{display_id};
+      my $href= $urls->get_url('Vega_transcript', $id);
+      push @vega_info, [$id, $href];
+
+
+    }
   }
   my( $display_name, $dbname, $ext_id, $dbname_disp, $info_text ) = $object->display_xref();
   return 1 unless defined $display_name;
@@ -387,9 +380,12 @@ sub name {
 
   if(@vega_info){
     foreach my $info(@vega_info){
+      my $id= $$info[0];
+      my $href= $$info[1];
+      
       $html .= qq(
         <p>
-          This transcript is identical to Vega transcript: $info
+          This transcript is identical to Vega transcript: <a href="$href">$id</a> 
        </p>
      );
     }
