@@ -51,6 +51,11 @@ perl create_mlss.pl
     [--name name]
     [--source source]
     [--url url]
+    [--compara name]
+    [--reg_conf file]
+    [--f] force
+    [--pw] pairwise
+    [--sg] singleton
 
 =head1 OPTIONS
 
@@ -85,22 +90,32 @@ aliases given in the registry_configuration_file. DEFAULT VALUE: compara-master
 
 It should be an existing method_link_type. E.g. TRANSLATED_BLAT, BLASTZ_NET, MLAGAN...
 
-=head2 genome_db_id
+=head2 --genome_db_id
 
 This should be a list of genome_db_ids. You can separate them by commas or specify them in
 as many --genome_db_id options as you want
 
-=head2 name
+=head2 --name
 
 The name for this MethodLinkSpeciesSet
 
-=head2 source
+=head2 --source
 
 The source for this MethodLinkSpeciesSet
 
-=head2 url
+=head2 --url
 
 The url for this MethodLinkSpeciesSet
+
+=head2 --pw
+
+From a list of genome_db_id 1,2,3,4, it will create all possible pairwise combinaison 
+i.e. [1,2] [1,3] [1,4] [2,3] [2,4] [3,4] for a given  method link.
+
+=head2 --sg
+
+From a list of genome_db_id 1,2,3,4, it will create a mlss for each single genome_db_id 
+in the list i.e. [1] [2] [3] [4] for a given  method link.
 
 =head2 Examples
 
@@ -109,6 +124,7 @@ perl create_mlss.pl
 perl create_mlss.pl --method_link_type BLASTZ_NET --genome_db_id 1,2
 
 perl create_mlss.pl --method_link_type MLAGAN --genome_db_id 1,2,3,4 --name "4 species MLAGAN" --source "ensembl" --url ""
+
 
 
 =head1 INTERNAL METHODS
@@ -127,22 +143,35 @@ my $reg_conf;
 my $compara = "compara-master";
 my $yes = 0;
 my $method_link_type;
+my @input_genome_db_ids;
 my @genome_db_ids;
 my $name;
 my $source;
 my $url;
+my $force = 0;
+my $pairwise = 0;
+my $singleton = 0;
 
 GetOptions(
     "help" => \$help,
     "reg_conf=s" => \$reg_conf,
     "compara=s" => \$compara,
     "method_link_type=s" => \$method_link_type,
-    "genome_db_id=s@" => \@genome_db_ids,
+    "genome_db_id=s@" => \@input_genome_db_ids,
     "name=s" => \$name,
     "source=s" => \$source,
     "url=s" => \$url,
+    "f" => \$force,
+    "pw" => \$pairwise,
+    "sg" => \$singleton
   );
-@genome_db_ids = split(/,/,join(',',@genome_db_ids));
+
+if ($pairwise && $singleton) {
+  warn("You can store pairwise way and singleton way at the same time. Please choose one.\n");
+  exit 1;
+}
+
+@input_genome_db_ids = split(/,/,join(',',@input_genome_db_ids));
 
 
 # Print Help and exit if help is requested
@@ -170,101 +199,136 @@ if (!$method_link_type) {
   print "METHOD_LINK_TYPE = $method_link_type\n";
 }
 
-if (!@genome_db_ids) {
-  my @genome_dbs = ask_for_genome_dbs($compara_dba);
-  @genome_db_ids = map {$_->dbID} @genome_dbs;
+my @new_input_genome_db_ids;
+if ($pairwise) {
+  while (my $gdb_id1 = shift @input_genome_db_ids) {
+    foreach my $gdb_id2 (@input_genome_db_ids) {
+      push @new_input_genome_db_ids, [$gdb_id1, $gdb_id2]
+    }
+  }
+} elsif ($singleton) {
+  foreach my $gdb_id (@input_genome_db_ids) {
+    push @new_input_genome_db_ids, [$gdb_id]
+  }
+} else {
+  push @new_input_genome_db_ids, \@input_genome_db_ids;
 }
 
-if (!$name) {
-  if ($method_link_type eq "FAMILY") {
-    $name = "families";
-  } elsif ($method_link_type eq "MLAGAN") {
-    $name = scalar(@genome_db_ids)." species MLAGAN";
-  } else {
-    foreach my $this_genome_db_id (@genome_db_ids) {
-      my $species_name = $gdba->fetch_by_dbID($this_genome_db_id)->name;
-      $species_name =~ s/(\S)\S+ /$1\./;
-      $species_name = substr($species_name, 0, 5);
-      $name .= $species_name."-";
-    }
-    $name =~ s/\-$//;
-    my $type = lc($method_link_type);
-    $type =~ s/ensembl_//;
-    $type =~ s/_/\-/g;
-    $name .= " $type";
-    if ($method_link_type eq "BLASTZ_NET") {
-      if ($name =~ /H\.sap/) {
-        $name .= " (on H.sap)";
-      } elsif ($name =~ /M\.mus/) {
-        $name .= " (on M.mus)";
+foreach my $genome_db_ids (@new_input_genome_db_ids) {
+
+  if (!$genome_db_ids) {
+    my @genome_dbs = ask_for_genome_dbs($compara_dba);
+    $genome_db_ids = [ map {$_->dbID} @genome_dbs ];
+  }
+  
+  if (!$name) {
+    if ($method_link_type eq "FAMILY") {
+      $name = "families";
+    } elsif ($method_link_type eq "MLAGAN") {
+      $name = scalar(@{$genome_db_ids})." species MLAGAN";
+    } else {
+      foreach my $this_genome_db_id (@{$genome_db_ids}) {
+        my $species_name = $gdba->fetch_by_dbID($this_genome_db_id)->name;
+        $species_name =~ s/(\S)\S+ /$1\./;
+        $species_name = substr($species_name, 0, 5);
+        $name .= $species_name."-";
+      }
+      $name =~ s/\-$//;
+      my $type = lc($method_link_type);
+      $type =~ s/ensembl_//;
+      $type =~ s/_/\-/g;
+      $name .= " $type";
+      if ($method_link_type eq "BLASTZ_NET") {
+        if ($name =~ /H\.sap/) {
+          $name .= " (on H.sap)";
+        } elsif ($name =~ /M\.mus/) {
+          $name .= " (on M.mus)";
+        }
       }
     }
+    unless ($force) {
+      $name = prompt("Set the name for this MethodLinkSpeciesSet", $name);
+    }
   }
-  $name = prompt("Set the name for this MethodLinkSpeciesSet", $name);
-}
-
-if (!$source) {
-  $source = prompt("Set the source for this MethodLinkSpeciesSet", "ensembl");
-}
-
-if (!defined $url) {
-  $url = prompt("Set the url for this MethodLinkSpeciesSet", "");
-}
-##
-#################################################
-
-#################################################
-## Check if the MethodLinkSpeciesSet already exits
-my $mlss = $mlssa->fetch_by_method_link_type_genome_db_ids($method_link_type, \@genome_db_ids);
-if ($mlss) {
-  print "This MethodLinkSpeciesSet already exists in the database!\n  $method_link_type: ",
-    join(" - ", map {$_->name."(".$_->assembly.")"} @{$mlss->species_set}), "\n",
-    "  Name: ", $mlss->name, "\n",
-    "  Source: ", $mlss->source, "\n",
-    "  URL: $url\n";
-  print "  MethodLinkSpeciesSet has dbID: ", $mlss->dbID, "\n";
-  exit(0);
-}
-##
-#################################################
-
-#################################################
-## Get the Bio::EnsEMBL::Compara::GenomeDB
-my $all_genome_dbs;
-foreach my $this_genome_db_id (@genome_db_ids) {
-  my $this_genome_db = $gdba->fetch_by_dbID($this_genome_db_id);
-  if (!UNIVERSAL::isa($this_genome_db, "Bio::EnsEMBL::Compara::GenomeDB")) {
-    throw("Cannot get any Bio::EnsEMBL::Compara::GenomeDB using dbID #$this_genome_db_id");
+  
+  if (!$source) {
+    if ($force) {
+      $source = "ensembl";
+    } else {
+      $source = prompt("Set the source for this MethodLinkSpeciesSet", "ensembl");
+    }
   }
-  push(@$all_genome_dbs, $this_genome_db);
-}
-##
-#################################################
-
-print "You are about to store the following MethodLinkSpeciesSet\n  $method_link_type: ",
+  
+  if (!defined $url) {
+    if ($force) {
+      $url = "";
+    } else {
+      $url = prompt("Set the url for this MethodLinkSpeciesSet", "");
+    }
+  }
+  ##
+  #################################################
+  
+  #################################################
+  ## Check if the MethodLinkSpeciesSet already exits
+  my $mlss = $mlssa->fetch_by_method_link_type_genome_db_ids($method_link_type, $genome_db_ids);
+  if ($mlss) {
+    print "This MethodLinkSpeciesSet already exists in the database!\n  $method_link_type: ",
+      join(" - ", map {$_->name."(".$_->assembly.")"} @{$mlss->species_set}), "\n",
+        "  Name: ", $mlss->name, "\n",
+          "  Source: ", $mlss->source, "\n",
+            "  URL: $url\n";
+    print "  MethodLinkSpeciesSet has dbID: ", $mlss->dbID, "\n";
+    $name = undef if ($pairwise || $singleton);
+    next;
+#    exit(0);
+  }
+  ##
+  #################################################
+  
+  #################################################
+  ## Get the Bio::EnsEMBL::Compara::GenomeDB
+  my $all_genome_dbs;
+  foreach my $this_genome_db_id (@{$genome_db_ids}) {
+    my $this_genome_db = $gdba->fetch_by_dbID($this_genome_db_id);
+    if (!UNIVERSAL::isa($this_genome_db, "Bio::EnsEMBL::Compara::GenomeDB")) {
+      throw("Cannot get any Bio::EnsEMBL::Compara::GenomeDB using dbID #$this_genome_db_id");
+    }
+    push(@$all_genome_dbs, $this_genome_db);
+  }
+  ##
+  #################################################
+  print "You are about to store the following MethodLinkSpeciesSet\n  $method_link_type: ",
     join(" - ", map {$_->name."(".$_->assembly.")"} @$all_genome_dbs), "\n",
-    "  Name: $name\n",
-    "  Source: $source\n",
-    "  URL: $url\n",
-    "\nDo you want to continue? [y/N]? ";
-
-my $resp = <STDIN>;
-if ($resp !~ /^y$/i and $resp !~ /^yes$/i) {
-  print "Cancelled.\n";
-  exit(0);
+      "  Name: $name\n",
+        "  Source: $source\n",
+          "  URL: $url\n";
+  unless ($force) {
+    print "\nDo you want to continue? [y/N]? ";
+    
+    my $resp = <STDIN>;
+    if ($resp !~ /^y$/i and $resp !~ /^yes$/i) {
+      print "Cancelled.\n";
+      $name = undef if ($pairwise || $singleton);
+      next;
+#      exit(0);
+    }
+  }
+  
+  my $new_mlss = new Bio::EnsEMBL::Compara::MethodLinkSpeciesSet(
+                                                                 -method_link_type => $method_link_type,
+                                                                 -species_set => $all_genome_dbs,
+                                                                 -name => $name,
+                                                                 -source => $source,
+                                                                 -url => $url);
+  
+  $mlssa->store($new_mlss);
+  print "  MethodLinkSpeciesSet has dbID: ", $new_mlss->dbID, "\n";
+  $name = undef if ($pairwise || $singleton);
 }
-my $new_mlss = new Bio::EnsEMBL::Compara::MethodLinkSpeciesSet(
-    -method_link_type => $method_link_type,
-    -species_set => $all_genome_dbs,
-    -name => $name,
-    -source => $source,
-    -url => $url);
-
-$mlssa->store($new_mlss);
-print "  MethodLinkSpeciesSet has dbID: ", $new_mlss->dbID, "\n";
 
 exit(0);
-
+  
 
 ###############################################################################
 ## SUBROUTINES
