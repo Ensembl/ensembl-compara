@@ -12,3 +12,22 @@ function archive( release ) {
   document.location = URL.replace(/^https?:\/\/[^\/]+/,'http://'+release+'.archive.ensembl.org');
   return true; 
 }
+
+function bookmark_link() {
+  URL = document.location.href;
+
+  var page_title;
+  titles = document.getElementsByTagName("title");
+  // assume first title tag is actual page title
+  children = titles[0].childNodes;
+  for (i=0; i<children.length; i++) {
+    child = children[i];
+    // look for text node
+    if (child.nodeType == 3) {
+      page_title = child.nodeValue;
+    }
+  }
+  
+  document.location = '/common/add_bookmark?node=name_bookmark;bm_name=' + page_title + ';bm_url=' + URL;
+  return true;  
+}
