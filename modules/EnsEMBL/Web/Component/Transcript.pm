@@ -7,7 +7,7 @@ use Data::Dumper;
 use strict;
 use warnings;
 use Exporter;
-our @EXPORT = qw(_sort_similarity_links);  ##dunno if this is needed
+#our @EXPORT = qw(_sort_similarity_links);  ##dunno if this is needed
 no warnings "uninitialized";
 
 ## No sub stable_id   <- uses Gene's stable_id
