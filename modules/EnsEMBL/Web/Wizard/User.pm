@@ -591,15 +591,6 @@ sub logout {
 sub name_bookmark {
   my ($self, $object) = @_;
 
-  ## set CGI variables, since input is from link, not form
-  my $user_id   = $object->get_user_id; 
-  my $url       = $ENV{'HTTP_REFERER'};
-  my $server    = $ENV{'SERVER_NAME'};
-  (my $bm_name = $url) =~ s#http://$server(:[0-9]+)?##;
-  $object->param('bm_url', $url); 
-  $object->param('bm_name', $bm_name); 
-  $object->param('user_id', $user_id); 
- 
   my $wizard = $self->{wizard};
   my $script = $object->script;
   my $species = $object->species;
@@ -622,27 +613,19 @@ sub save_bookmark {
   my $wizard = $self->{wizard};
   
   my %parameter;
-  $parameter{'node'} = 'accountview';
 
-  my $user_id = $object->param('user_id'); 
-  my $bm_name = $object->param('bm_name'); 
-  my $url     = $object->param('bm_url'); 
-  if ($user_id && $url) {
+  ## save bookmark
+  my $record = $self->create_record($object);
+  my $result = $object->save_bookmark($record);
 
-    ## save bookmark
-    my $result = $object->save_bookmark($user_id, $url, $bm_name);
-
-    ## set response
-    unless ($result) {
-      $parameter{'error'} = 1;
-      $parameter{'feedback'} = 'no_bookmark';
-    }
-    return \%parameter;
+  ## set response
+  if ($result) {
+    $parameter{'node'} = 'accountview';
   }
-
-  $parameter{'error'} = 1;
-  $parameter{'feedback'} = 'no_bookmark';
-
+  else {
+    $parameter{'error'} = 1;
+    $parameter{'feedback'} = 'no_bookmark';
+  }
   return \%parameter;
 }
 

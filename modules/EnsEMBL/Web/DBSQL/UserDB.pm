@@ -494,14 +494,18 @@ sub setPassword {
 #------------------------------------------------------------------------------
 
 sub saveBookmark {
-  my ($self, $user_id, $url, $title) = @_;
+  my ($self, $record) = @_;
   return {} unless $self->{'_handle'};
+
+  my $user_id = $$record{'user_id'};
+  my $name    = $$record{'bm_name'};
+  my $url     = $$record{'bm_url'};
   return {} unless ($user_id && $url);
 
   my $sql = qq(
     INSERT INTO bookmark 
     SET user_id = $user_id, 
-        name    = "$title", 
+        name    = "$name", 
         url     = "$url"
   );
   my $sth = $self->{'_handle'}->prepare($sql);
