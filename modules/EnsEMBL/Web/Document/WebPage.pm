@@ -241,35 +241,45 @@ sub _node_hop {
       $self->_node_hop($next_node, $loop);
     }
     else {
-      my $URL = '/'.$object->species.'/';
+      my $URL;
       if (my $exit = $parameter{'exit'}) {
-        $URL .= $exit;
-        delete($parameter{'exit'}); ## don't need to pass this parameter along
+        $URL = $exit;
       }
       else { 
-        $URL .= $object->script;
+        $URL = '/'.$object->species.'/'.$object->script;
       }
 
       ## unpack returned parameters into a URL
       my $tally = 0;
       my $param_count = scalar(keys %parameter);
-      $URL .= '?' if $param_count;
+      if ($param_count && !$parameter{'exit'}) {
+        $URL .= '?';
+      }
       foreach my $param_name (keys %parameter) {
         if ($param_name eq 'set_cookie') {
-          $self->login($parameter{'set_cookie'});
+          if ($parameter{'set_cookie'}) {
+            $self->login($parameter{'set_cookie'});
+          }
+          else {
+            $self->logout;
+          }
           next;
         }
-        if (ref($parameter{$param_name}) eq 'ARRAY') {
-          foreach my $param_value (@{$parameter{$param_name}}) {
-            $URL .= ';' if $tally > 0;
-            $URL .= $param_name.'='.$param_value;    
+
+        ## assemble rest of url for non-exit redirects
+        if (!$parameter{'exit'}) {
+          if (ref($parameter{$param_name}) eq 'ARRAY') {
+            foreach my $param_value (@{$parameter{$param_name}}) {
+              $URL .= ';' if $tally > 0;
+              $URL .= $param_name.'='.$param_value;    
+            }
           }
+          else {
+            $URL .= ';' if $tally > 0;
+            $URL .= $param_name.'='.$parameter{$param_name};    
+          }
+          $tally++;
         }
-        else {
-          $URL .= ';' if $tally > 0;
-          $URL .= $param_name.'='.$parameter{$param_name};    
-        }
-        $tally++;
       }
       my $r = $self->page->renderer->{'r'};
 

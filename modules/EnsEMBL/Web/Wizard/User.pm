@@ -216,10 +216,18 @@ sub login {
   my $wizard = $self->{wizard};
   my $script = $object->script;
   my $species = $object->species;
-  
-  my $form = EnsEMBL::Web::Form->new( 'login', "/$species/$script", 'post' );
+  my $node = 'login'; 
+ 
+  my $form = EnsEMBL::Web::Form->new($node, "/$species/$script", 'post' );
 
-  $wizard->simple_form('login', $form, $object, 'input');
+  $wizard->add_title($node, $form, $object);
+  $wizard->add_widgets($node, $form, $object);
+  $form->add_element(
+    'type'  => 'Hidden',
+    'name'  => 'url',
+    'value' => $object->param('url'),
+  );
+  $wizard->add_buttons($node, $form, $object);
 
   return $form;
 }
@@ -238,8 +246,9 @@ sub validate {
   }
   else {
     $result = $object->validate_user($object->param('email'), $object->param('password'));
-    $is_ok  = 'accountview';
+    $is_ok  = 'back_to_page';
     $not_ok = 'login';
+    $parameter{'url'} = $object->param('url');
   }
 
   ## select response based on results
@@ -268,8 +277,7 @@ sub set_cookie {
 
   $parameter{'set_cookie'}  = $object->param('user_id'); ## sets a cookie, i.e. logs in
   $parameter{'node'}        = $object->param('next_node'); 
-  $parameter{'error'}       = 0;
-  $parameter{'feedback'}    = $object->param('feedback');
+  $parameter{'url'}         = $object->param('url');
 
   return \%parameter;
 }
@@ -299,7 +307,6 @@ sub enter_details {
   $wizard->add_title($node, $form, $object);
   $wizard->add_widgets($node, $form, $object);
   $wizard->add_buttons($node, $form, $object);
-
 
   return $form;
 }
@@ -578,9 +585,16 @@ sub logout {
   my %parameter; 
 
   $parameter{'set_cookie'}  = 0; ## sets a blank cookie, i.e. logs out
-  $parameter{'exit'}        = 'user_login'; 
-  $parameter{'feedback'}    = 'log_back';
-  $parameter{'error'}       = 0;
+  $parameter{'exit'}  = $object->param('url'); 
+
+  return \%parameter;
+}
+
+sub back_to_page {
+  my ($self, $object) = @_;
+  my %parameter;
+
+  $parameter{'exit'}  = $object->param('url'); 
 
   return \%parameter;
 }
@@ -609,7 +623,6 @@ sub name_bookmark {
 
 sub save_bookmark {
   my ($self, $object) = @_;
-
   my $wizard = $self->{wizard};
   
   my %parameter;
@@ -620,7 +633,8 @@ sub save_bookmark {
 
   ## set response
   if ($result) {
-    $parameter{'node'} = 'accountview';
+    $parameter{'node'} = 'back_to_page';
+    $parameter{'url'} = $object->param('bm_url');
   }
   else {
     $parameter{'error'} = 1;

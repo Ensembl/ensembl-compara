@@ -22,9 +22,9 @@ sub user_login {
   my $object = $self->{'object'};
                                                                                 
   ## the "user login" wizard uses 4 nodes: enter login details, validate password,
-  ## set cookie and accountview
+  ## set cookie and return to original page
   my $wizard = EnsEMBL::Web::Wizard::User->new($object);
-  $wizard->add_nodes([qw(login validate set_cookie accountview)]);
+  $wizard->add_nodes([qw(login validate set_cookie back_to_page)]);
   $wizard->default_node('login');
 
   $self->_add_javascript_libraries;
@@ -33,11 +33,22 @@ sub user_login {
   $wizard->add_outgoing_edges([
           ['login'=>'validate'],
           ['validate'=>'set_cookie'],
-          ['set_cookie'=>'accountview'],
+          ['set_cookie'=>'back_to_page'],
   ]);
 
   $self->add_wizard($wizard);
   $self->wizard_panel('Ensembl User Login');
+}
+
+sub user_logout {
+  my $self   = shift;
+  my $object = $self->{'object'};
+  
+  ## the "user logout" wizard consists of a single node!                                                                              
+  my $wizard = EnsEMBL::Web::Wizard::User->new($object);
+  $wizard->add_nodes([qw(logout)]);
+  $wizard->default_node('logout');
+  $self->add_wizard($wizard);
 }
 
 sub register {
@@ -171,7 +182,7 @@ sub context_menu {
 
 
     $self->add_entry( $flag, 'text' => "Account summary",
-                                    'href' => "/common/user_login?node=accountview" );
+                                    'href' => "/common/update_account?node=accountview" );
     $self->add_entry( $flag, 'text' => "Update my details",
                                     'href' => "/common/update_account" );
     $self->add_entry( $flag, 'text' => "Change my password",
@@ -179,7 +190,7 @@ sub context_menu {
     $self->add_entry( $flag, 'text' => "Manage my bookmarks",
                                     'href' => "/common/manage_bookmarks" );
     $self->add_entry( $flag, 'text' => "Log out",
-                                    'href' => "/common/user_logout" );
+                                    'href' => "javascript:logout_link()" );
    }
   else {
     my $flag = 'ac_full';
@@ -205,7 +216,51 @@ sub add_bookmark {
   my $self   = shift;
   my $object = $self->{'object'};
 
-  ## the bookmark wizard uses 3 nodes: set name of bookmark, save bookmark 
+  ## the bookmark wizard uses 4 nodes: set name of bookmark, save bookmark 
+  ## and return to bookmarked URL, plus accountview as fallback
+  my $wizard = EnsEMBL::Web::Wizard::User->new($object);
+                                                    
+  $self->_add_javascript_libraries;
+
+  $wizard->add_nodes([qw(name_bookmark save_bookmark back_to_page accountview)]);
+  $wizard->default_node('accountview'); ## don't want user to access nodes without parameters!
+
+  ## chain the nodes together
+  $wizard->add_outgoing_edges([
+          ['name_bookmark'=>'save_bookmark'],
+          ['save_bookmark'=>'back_to_page'],
+  ]);
+
+  $self->add_wizard($wizard);
+  $self->wizard_panel('Bookmarks');
+}
+
+sub manage_bookmarks {
+  my $self   = shift;
+  my $object = $self->{'object'};
+
+  ## the bookmark wizard uses 3 nodes: select bookmarks, delete bookmarks 
+  ## and accountview
+  my $wizard = EnsEMBL::Web::Wizard::User->new($object);
+                                                    
+  $wizard->add_nodes([qw(select_bookmarks delete_bookmarks accountview)]);
+  $wizard->default_node('select_bookmarks');
+
+  ## chain the nodes together
+  $wizard->add_outgoing_edges([
+          ['select_bookmarks'=>'delete_bookmarks'],
+          ['delete_bookmarks'=>'accountview'],
+  ]);
+
+  $self->add_wizard($wizard);
+  $self->wizard_panel('Bookmarks');
+}
+
+sub add_config {
+  my $self   = shift;
+  my $object = $self->{'object'};
+
+  ## the bookmark wizard uses 3 nodes: set name of config, save config 
   ## and accountview
   my $wizard = EnsEMBL::Web::Wizard::User->new($object);
                                                     
@@ -224,7 +279,7 @@ sub add_bookmark {
   $self->wizard_panel('Bookmarks');
 }
 
-sub manage_bookmarks {
+sub manage_configs {
   my $self   = shift;
   my $object = $self->{'object'};
 
