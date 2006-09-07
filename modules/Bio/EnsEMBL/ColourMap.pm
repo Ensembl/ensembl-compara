@@ -386,6 +386,14 @@ sub new {
     'lab2' => 'black',
   );
 
+  $self->colourSet( 'medaka_gene',
+    'hi'         => 'highlight1',
+    'superhi'    => 'highlight2',
+    'medaka_protein' => [ 'blue', 'Medaka protein' ],
+    'gff_prediction' => [ 'darkblue', 'MGP gene' ],
+    'protein_coding' => [ 'darkblue', 'MGP gene' ],
+  );
+
   return $self;
 }
 
