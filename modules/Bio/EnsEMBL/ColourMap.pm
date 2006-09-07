@@ -86,16 +86,17 @@ sub new {
     'superhi'    => 'highlight2',
     'dog_protein' => [ 'blue', 'Dog protein' ]
   );
+
+  $self->colourSet( 'human_ensembl_proteins',
+    'hi'         => 'highlight1',
+    'superhi'    => 'highlight2',
+    'human_ensembl_proteins' => [ 'blue', 'Projected human gene' ]
+  );
+
   $self->colourSet( 'cow_protein',
     'hi'         => 'highlight1',
     'superhi'    => 'highlight2',
     'cow_protein' => [ 'blue', 'Cow protein' ]
-  );
-  $self->colourSet( 'vectorbase_gene',
-    'hi'         => 'highlight1',
-    'superhi'    => 'highlight2',
-    map { ( "vectorbase$_" => [ $core{$_}[0], "Vectorbase (@{[$core{$_}[1]]})" ] )} keys %core
-		    #'vectorbase' => [ 'black', 'VectorBase protein' ]
   );
   $self->colourSet( 'tigr_0_5',
     'hi'         => 'highlight1',
@@ -140,6 +141,11 @@ sub new {
     'hi'         => 'highlight1',
     'superhi'    => 'highlight2',
     map {( "wormbase$_" => [ $core{$_}[0], "Wormbase (@{[$core{$_}[1]]})" ] )} keys %core
+  );
+  $self->colourSet( 'vectorbase_gene',
+    'hi'         => 'highlight1',
+    'superhi'    => 'highlight2',
+    map { ( "vectorbase$_" => [ $core{$_}[0], "Vectorbase (@{[$core{$_}[1]]})" ] )} keys %core
   );
   $self->colourSet( 'flybase_gene',
     'hi'         => 'highlight1',

@@ -25,7 +25,7 @@ sub colour {
     $highlight = $colours->{'hi'};
   }
 
-  return (@{$colours->{'human_ensembl_proteins'}}, $highlight);
+  return (@{$colours->{'human_ensembl_proteins'} || []}, $highlight);
 }
 
 sub gene_colour {
