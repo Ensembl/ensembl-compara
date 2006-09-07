@@ -108,7 +108,9 @@ sub write_output {
       $dataflow_output_id .= ",method_link_species_set_id=>".
           $self->msa_method_link_species_set_id();
     }
-    if ($self->tree_file()) {
+    if ($self->tree_analysis_data_id()) {
+      $dataflow_output_id .= ",tree_analysis_data_id=>'".$self->tree_analysis_data_id()."'";
+    } elsif ($self->tree_file()) {
       $dataflow_output_id .= ",tree_file=>'".$self->tree_file()."'";
     }
     $self->dataflow_output_id("{$dataflow_output_id}");
@@ -283,6 +285,12 @@ sub tree_file {
   return $self->{'_tree_file'};
 }
 
+sub tree_analysis_data_id {
+  my $self = shift;
+  $self->{'_tree_analysis_data_id'} = shift if(@_);
+  return $self->{'_tree_analysis_data_id'};
+}
+
 ##########################################
 #
 # internal methods
@@ -324,6 +332,9 @@ sub get_params {
   }
   if(defined($params->{'tree_file'})) {
     $self->tree_file($params->{'tree_file'});
+  }
+  if(defined($params->{'tree_analysis_data_id'})) {
+    $self->tree_analysis_data_id($params->{'tree_analysis_data_id'});
   }
   return 1;
 }
