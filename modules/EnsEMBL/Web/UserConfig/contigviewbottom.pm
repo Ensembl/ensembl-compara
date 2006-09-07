@@ -24,7 +24,7 @@ sub init {
         repeat_lite 
         variation variation_affy100 variation_affy500
         genotyped_variation_line 
-        predicted_features
+        histone_modifications
         signal_map
         trna   cpg eponine marker operon rnai ex_profile qtl ep1_h ep1_s
         first_ef
@@ -101,7 +101,7 @@ sub init {
          [ 'genotyped_variation_line' => 'Genotyped SNPs'  ],
          [ 'variation_affy100'        => 'Affy 100k SNP'  ],
          [ 'variation_affy500'        => 'Affy 500k SNP'  ],
-         [ 'predicted_features'       => 'Predicted Features'  ],
+         [ 'histone_modifications'       => 'Histone modifications'  ],
          [ 'signal_map'               => 'Signal map'  ],
          [ 'glovar_snp'               => 'Glovar SNPs' ], ## not ready for prime time yet
         #[ 'glovar_trace'   => 'Glovar traces'], ## not ready for prime time yet
@@ -423,28 +423,30 @@ sub init {
       'available'=> 'species Homo_sapiens',  
     }, 
 
-    'predicted_features' => {
+    'histone_modifications' => {
       'on'  => "off",
       'bump_width' => 0,
       'dep' => 0.1,
       'pos' => '4527',
       'str' => 'r',
       'col' => 'blue',
-      'track_label' => 'Predicted Features',
-      'glyphset'    => 'predicted_features',
-      'available'=> 'species Homo_sapiens',  
+      'threshold' => '50',
+      'track_label' => 'Histone modifications',
+      'glyphset'    => 'histone_modifications',
+      'available'=> 'databases ENSEMBL_FUNCGEN',  
     }, 
 
    'signal_map' => {
       'on'  => "off",
       'bump_width' => 0,
       'dep' => 0.1,
-      'pos' => '4527',
+      'pos' => '4528',
       'str' => 'r',
       'col' => 'blue',
+      'key' => 'Nimblegen_CHIP2_data',  # name of a subset of experimental chips
       'track_label' => 'Signal map',
       'glyphset'    => 'signal_map',
-      'available'=> 'species Homo_sapiens',  
+      'available'=> 'databases ENSEMBL_FUNCGEN', 
     }, 
 
    'genotyped_variation_line' => {

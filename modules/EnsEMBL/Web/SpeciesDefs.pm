@@ -199,9 +199,9 @@ sub AUTOLOAD {
 
 sub configure_registry {
   my $self = shift;
-warn "CR";
   my %adaptors = (
     'VARIATION' => 'Bio::EnsEMBL::Variation::DBSQL::DBAdaptor', 
+    'FUNCGEN'   => 'Bio::EnsEMBL::Funcgen::DBSQL::DBAdaptor', 
     'SNP'       => 'Bio::EnsEMBL::ExternalData::SNPSQL::DBAdaptor',
     'GLOVAR'    => 'Bio::EnsEMBL::ExternalData::Glovar::DBAdaptor',
     'LITE'      => 'Bio::EnsEMBL::Lite::DBAdaptor',

@@ -255,7 +255,6 @@ sub _location_from_SeqRegion {
     $start = 1 if $start < 1;     ## Truncate slice to start of seq region
     ($start,$end) = ($end, $start) if $start > $end;
     foreach my $system ( @{$self->__coord_systems} ) {
-warn "SR ... $system";
       my $slice;
       eval { $slice = $self->_slice_adaptor->fetch_by_region( $system->name, $chr, $start, $end, $strand ); };
       warn $@ if $@;

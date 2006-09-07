@@ -205,7 +205,7 @@ sub _process_blast {
   my $ticket;
   my $_process_blast_called_at = time();
 
-  warn "Processing BLAST in Apache: $r";
+  #warn "Processing BLAST in Apache: $r";
 
   $ticket = $ENV{'ticket'};
   ## Lets work out when to run this!!
