@@ -14,19 +14,19 @@ function archive( release ) {
 }
 
 function login_link() {
-  URL = document.location.href;
+  URL = escape(document.location.href);
   document.location = '/common/user_login?url=' + URL;
   return true;  
 }
 
 function logout_link() {
-  URL = document.location.href;
+  URL = escape(document.location.href);
   document.location = '/common/user_logout?url=' + URL;
   return true;  
 }
 
 function bookmark_link() {
-  URL = document.location.href;
+  URL = escape(document.location.href);
 
   var page_title;
   titles = document.getElementsByTagName("title");
