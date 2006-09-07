@@ -9,7 +9,7 @@ use Apache::Constants qw(:common :response M_GET);
 
 our $SD = EnsEMBL::Web::SpeciesDefs->new();
 
-use CGI qw(header escapeHTML);
+use CGI qw(header escapeHTML unescape);
 use CGI::Cookie;
 use SiteDefs;
 use strict;
@@ -243,7 +243,7 @@ sub _node_hop {
     else {
       my $URL;
       if (my $exit = $parameter{'exit'}) {
-        $URL = $exit;
+        $URL = CGI::unescape($exit);
       }
       else { 
         $URL = '/'.$object->species.'/'.$object->script;

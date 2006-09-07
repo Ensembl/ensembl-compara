@@ -7,6 +7,7 @@ no warnings "uninitialized";
 use EnsEMBL::Web::Wizard;
 use EnsEMBL::Web::Form;
 use Mail::Mailer;
+use CGI;
 
 our @ISA = qw(EnsEMBL::Web::Wizard);
 
@@ -85,6 +86,20 @@ sub _init {
           'label'=> 'Current bookmarks',
           'values'=>'bookmarks',
       },
+      'config_name'   => {
+          'type'=>'String', 
+          'label'=>'Name of this configuration', 
+          'required'=>'yes',
+      },
+      'config_type'   => {
+          'type'=>'String', 
+          'label'=>'Script configured', 
+      },
+      'configs' => {
+          'type' => 'MultiSelect',
+          'label'=> 'Saved configurations',
+          'values'=>'configs',
+      },
   );
 
   ## define the nodes available to wizards based on this type of object
@@ -145,6 +160,20 @@ sub _init {
                       'input_fields'  => [qw(bookmarks)],
       },
       'delete_bookmarks' => {'button'=>'Delete'},
+      'name_config' => {
+                      'form' => 1,
+                      'title' => 'Save configuration',
+                      'show_fields'  => [qw(config_type)],
+                      'pass_fields'  => [qw(config_type user_id)],
+                      'input_fields'  => [qw(config_name)],
+      },
+      'save_config' => {'button'=>'Save'},
+      'select_configs' => {
+                      'form' => 1,
+                      'title' => 'Select configurations to delete',
+                      'input_fields'  => [qw(configs)],
+      },
+      'delete_configs' => {'button'=>'Delete'},
 );
 
   my $help_email = $object->species_defs->ENSEMBL_HELPDESK_EMAIL;
@@ -166,14 +195,23 @@ sub _init {
   ## get useful data from object
   my $user_id = $object->get_user_id;
   my @bookmarks = @{ $object->get_bookmarks($user_id) };
-  my @bm_values;
+  my (@bm_values, @config_values);
   foreach my $bookmark (@bookmarks) {
     my $bm_id   = $$bookmark{'bm_id'};
     my $bm_name = $$bookmark{'bm_name'};
     my $bm_url  = $$bookmark{'bm_url'};
     push @bm_values, {'value'=>$bm_id,'name'=>"$bm_name ($bm_url)"};
   }
-
+=pod
+  my @configs = @{ $object->get_configs($user_id) };
+  my @bm_values;
+  foreach my $config (@configs) {
+    my $config_id   = $$config{'config_id'};
+    my $config_name = $$config{'config_name'};
+    my $config_type = $$config{'config_type'};
+    push @config_values, {'value'=>$config_id,'name'=>"$config_name ($config_type)"};
+  }
+=cut
   my $details   = $object->get_user_by_id($user_id);
 
   my $data = {
@@ -181,6 +219,7 @@ sub _init {
     'exp_text'    =>  $exp_text,
     'details'     => $details,
     'bookmarks'   => \@bm_values,
+    'configs'     => \@config_values,
   };
 
   return [$data, \%form_fields, \%all_nodes, \%message];
@@ -220,12 +259,14 @@ sub login {
  
   my $form = EnsEMBL::Web::Form->new($node, "/$species/$script", 'post' );
 
+  my $url = CGI::escape($object->param('url'));
+
   $wizard->add_title($node, $form, $object);
   $wizard->add_widgets($node, $form, $object);
   $form->add_element(
     'type'  => 'Hidden',
     'name'  => 'url',
-    'value' => $object->param('url'),
+    'value' => $url,
   );
   $wizard->add_buttons($node, $form, $object);
 
@@ -275,9 +316,10 @@ sub set_cookie {
   my ($self, $object) = @_;
   my %parameter; 
 
+  my $url = CGI::escape($object->param('url'));
   $parameter{'set_cookie'}  = $object->param('user_id'); ## sets a cookie, i.e. logs in
   $parameter{'node'}        = $object->param('next_node'); 
-  $parameter{'url'}         = $object->param('url');
+  $parameter{'url'}         = $url;
 
   return \%parameter;
 }
@@ -584,8 +626,10 @@ sub logout {
   my ($self, $object) = @_;
   my %parameter; 
 
+  my $url = CGI::escape($object->param('url'));
+
   $parameter{'set_cookie'}  = 0; ## sets a blank cookie, i.e. logs out
-  $parameter{'exit'}  = $object->param('url'); 
+  $parameter{'exit'}  = $url; 
 
   return \%parameter;
 }
@@ -594,13 +638,16 @@ sub back_to_page {
   my ($self, $object) = @_;
   my %parameter;
 
-  $parameter{'exit'}  = $object->param('url'); 
+  my $url = CGI::escape($object->param('url'));
 
+  $parameter{'exit'}  = $url; 
   return \%parameter;
 }
 
 
-#------------------ USER CUSTOMISATION METHODS -------------------------
+########################### USER CUSTOMISATION METHODS #######################################
+
+#--------------------------------- BOOKMARKS -------------------------------------------------
 
 sub name_bookmark {
   my ($self, $object) = @_;
@@ -608,10 +655,10 @@ sub name_bookmark {
   my $wizard = $self->{wizard};
   my $script = $object->script;
   my $species = $object->species;
-  
-  my $form = EnsEMBL::Web::Form->new( 'name_bookmark', "/$species/$script", 'post' );
-
   my $node = 'name_bookmark';
+  
+  my $form = EnsEMBL::Web::Form->new($node, "/$species/$script", 'post' );
+
   $wizard->add_title($node, $form, $object);
   $wizard->show_fields($node, $form, $object);
   $wizard->add_widgets($node, $form, $object);
@@ -637,6 +684,7 @@ sub save_bookmark {
     $parameter{'url'} = $object->param('bm_url');
   }
   else {
+    $parameter{'node'} = 'accountview';
     $parameter{'error'} = 1;
     $parameter{'feedback'} = 'no_bookmark';
   }
@@ -649,10 +697,11 @@ sub select_bookmarks {
   my $wizard = $self->{wizard};
   my $script = $object->script;
   my $species = $object->species;
+  my $node = 'select_bookmarks';
 
-  my $form = EnsEMBL::Web::Form->new( 'select_bookmarks', "/$species/$script", 'post' );
+  my $form = EnsEMBL::Web::Form->new($node, "/$species/$script", 'post' );
 
-  $wizard->simple_form('select_bookmarks', $form, $object, 'input');
+  $wizard->simple_form($node, $form, $object, 'input');
 
   return $form;
 }
@@ -673,6 +722,88 @@ sub delete_bookmarks {
     push @deletes, $object->param('bookmarks');
   }
   my $result = $object->delete_bookmarks(\@deletes);
+  unless ($result) {
+    $parameter{'error'} = 1;
+    $parameter{'feedback'} = 'no_delete';
+  }
+  return \%parameter;
+}
+
+#------------------------------ USER CONFIGS -------------------------------------------------
+
+sub name_config {
+  my ($self, $object) = @_;
+
+  my $wizard = $self->{wizard};
+  my $script = $object->script;
+  my $species = $object->species;
+  my $node = 'name_config';
+  
+  my $form = EnsEMBL::Web::Form->new($node, "/$species/$script", 'post' );
+
+  $wizard->add_title($node, $form, $object);
+  $wizard->show_fields($node, $form, $object);
+  $wizard->add_widgets($node, $form, $object);
+  $wizard->pass_fields($node, $form, $object);
+  $wizard->add_buttons($node, $form, $object);
+
+  return $form;
+}
+
+sub save_config {
+  my ($self, $object) = @_;
+  my $wizard = $self->{wizard};
+  
+  my %parameter;
+
+  ## save config
+  my $record = $self->create_record($object);
+  my $result = $object->save_config($record);
+
+  ## set response
+  if ($result) {
+    $parameter{'node'} = 'back_to_page';
+    $parameter{'url'} = $object->param('bm_url');
+  }
+  else {
+    $parameter{'node'} = 'accountview';
+    $parameter{'error'} = 1;
+    $parameter{'feedback'} = 'no_config';
+  }
+  return \%parameter;
+}
+
+sub select_configs {
+  my ($self, $object) = @_;
+
+  my $wizard = $self->{wizard};
+  my $script = $object->script;
+  my $species = $object->species;
+  my $node = 'select_configs';
+
+  my $form = EnsEMBL::Web::Form->new($node, "/$species/$script", 'post' );
+
+  $wizard->simple_form($node, $form, $object, 'input');
+
+  return $form;
+}
+
+sub delete_configs {
+  my ($self, $object) = @_;
+  my $wizard = $self->{wizard};
+
+  my %parameter;
+  $parameter{'node'} = 'accountview';
+
+  ## get list of configs to delete
+  my @deletes;
+  if (ref($object->param('configs')) eq 'ARRAY') {
+    @deletes = @{ $object->param('configs') };
+  }
+  else {
+    push @deletes, $object->param('configs');
+  }
+  my $result = $object->delete_configs(\@deletes);
   unless ($result) {
     $parameter{'error'} = 1;
     $parameter{'feedback'} = 'no_delete';
