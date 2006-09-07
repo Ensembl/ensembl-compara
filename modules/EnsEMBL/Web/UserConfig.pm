@@ -1161,6 +1161,7 @@ sub ADD_ALL_TRANSCRIPTS {
   $self->add_new_track_transcript( 'dog_protein',   'Dog genes',   'dog_protein',   $POS++, @_ );
   $self->add_new_track_transcript( 'species_protein', 'Dog protein',       'prot_gene', $POS++,  @_ );
   $self->add_new_track_transcript( 'human_one2one_mus_orth', 'Hs/Mm orth', 'prot_gene', $POS++,  @_ );
+  $self->add_new_track_transcript( 'human_ensembl_proteins',   'Human genes',   'human_ensembl_proteins',   $POS++, @_ );
   $self->add_new_track_transcript( 'mus_one2one_human_orth', 'Ms/Hs orth', 'prot_gene', $POS++,  @_ );
 
   $self->add_new_track_transcript( 'cow_proteins',   'Cow genes',   'cow_protein',   $POS++, @_ );
@@ -1286,7 +1287,10 @@ sub ADD_GENE_TRACKS {
     'gene_label'           => sub { return $_[0]->stable_id },
     'gene_col'             => 'cow_protein', @_
   );
-
+ $self->add_new_track_gene( 'human_ensembl_proteins', 'Human genes', 'human_ensembl_proteins', $POS++,
+    'gene_label'           => sub { return $_[0]->stable_id },
+    'gene_col'             => 'human_ensembl_proteins', @_
+  );
 
   $self->add_new_track_gene( 'oxford_genes', 'Oxford Genes', 'oxford_genes', $POS++,
     'gene_label'           => sub { return $_[0]->stable_id },
