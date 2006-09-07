@@ -13,6 +13,18 @@ function archive( release ) {
   return true; 
 }
 
+function login_link() {
+  URL = document.location.href;
+  document.location = '/common/user_login?url=' + URL;
+  return true;  
+}
+
+function logout_link() {
+  URL = document.location.href;
+  document.location = '/common/user_logout?url=' + URL;
+  return true;  
+}
+
 function bookmark_link() {
   URL = document.location.href;
 
