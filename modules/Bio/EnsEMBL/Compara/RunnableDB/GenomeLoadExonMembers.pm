@@ -234,6 +234,7 @@ sub store_all_coding_exons
         $exon_member->source_name("ENSEMBLEXON");
         
         my $seq_string = $exon->peptide($transcript)->seq;
+        $seq_string =~ s/\*/X/g; ## a star in the seq breaks the pipe to the cast filter for Blast
         if ($seq_string =~ /^X+$/) {
           warn("X+ in sequence from exon " . $exon->stable_id."\n");
         }
