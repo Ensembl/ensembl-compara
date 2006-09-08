@@ -128,12 +128,24 @@ aliases
 
 =over
 
+=item B<[--original_seq]>
+
+Dumps orignal sequences instead of the aligned ones.
+
+NB: This won't work properly with some file formats
+like clustalw
+
+=item B<[--masked_seq num]>
+
+0 for unmasked sequence (default); 1 for soft-masked sequence;
+2 for hard-masked sequence
+
 =item B<[--output_format clustalw|fasta|...]>
-  
+
 The type of output you want. "clustalw" is the default.
 
 =item B<[--output_file filename]>
-  
+
 The name of the output file. By default the output is the
 standard output
 
@@ -175,8 +187,15 @@ perl DumpMultiAlign.pl
         aliases
 
   Ouput:
+    [--original_seq]
+        Dumps orignal sequences instead of the aligned ones.
+        NB: This won't work properly with some file formats
+        like clustalw
+    [--masked_seq num]
+        0 for unmasked sequence (default); 1 for soft-masked sequence;
+        2 for hard-masked sequence
     [--output_format clustalw|fasta|...]
-        The type of output you want. "clustalw" is the default.
+        The type of output you want. "fasta" is the default.
     [--output_file filename]
         The name of the output file. By default the output is the
         standard output
@@ -199,8 +218,10 @@ my $seq_region_start = 75000000;
 my $seq_region_end = 75010000;
 my $alignment_type = "BLASTZ_NET";
 my $set_of_species = "human:mouse";
+my $original_seq = undef;
+my $masked_seq = 0;
 my $output_file = undef;
-my $output_format = "clustalw";
+my $output_format = "fasta";
 my $help;
 
 GetOptions(
@@ -214,6 +235,8 @@ GetOptions(
     "seq_region_end=i" => \$seq_region_end,
     "alignment_type=s" => \$alignment_type,
     "set_of_species=s" => \$set_of_species,
+    "original_seq" => \$original_seq,
+    "masked_seq=i" => \$masked_seq,
     "output_format=s" => \$output_format,
     "output_file=s" => \$output_file,
   );
@@ -283,7 +306,17 @@ foreach my $this_genomic_align_block (@$genomic_align_blocks) {
     my $seq_name = $this_genomic_align->dnafrag->genome_db->name;
     $seq_name =~ s/(.)\w* (.)\w*/$1$2/;
     $seq_name .= $this_genomic_align->dnafrag->name;
-    my $aligned_sequence = $this_genomic_align->aligned_sequence;
+    my $aligned_sequence;
+    if ($masked_seq == 1) {
+      $this_genomic_align->original_sequence($this_genomic_align->get_Slice->get_repeatmasked_seq(undef,1)->seq);
+    } elsif ($masked_seq == 2) {
+      $this_genomic_align->original_sequence($this_genomic_align->get_Slice->get_repeatmasked_seq()->seq);
+    }
+    if ($original_seq) {
+      $aligned_sequence = $this_genomic_align->original_sequence;
+    } else {
+      $aligned_sequence = $this_genomic_align->aligned_sequence;
+    }
     my $seq = Bio::LocatableSeq->new(
             -SEQ    => $aligned_sequence,
             -START  => $this_genomic_align->dnafrag_start,
