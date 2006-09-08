@@ -141,11 +141,11 @@ sub context_menu {
 
   my @genes = @{ $obj->get_genes };
   foreach my $gene (@genes) {
-	  my $name = scalar @genes > 1 ? $gene->stable_id : "";
+	  my $name = scalar @genes > 1 ? $gene->stable_id." -" : "";
 	  $self->add_entry(
         "snp$self->{flag}", 
         'code' => 'gene_snp_info',
-        'text' => "$name -  GeneSNP info",
+        'text' => "$name GeneSNP info",
 	"title" => "GeneSNPView - SNPs and their coding consequences",
 	'href' => "/$species/genesnpview?gene=".$gene->stable_id
     );
