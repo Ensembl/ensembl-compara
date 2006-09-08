@@ -13,6 +13,14 @@ use Data::Dumper;
 use POSIX qw(floor);
 use HTML::Entities;
 use Time::HiRes qw(time);
+my %colour_gradient = {
+#FFFFFF
+#F7f7fa
+#eeeef5
+#e6e6f0
+#000080
+
+};
 
 sub init_label {
   my ($self) = @_;
@@ -949,9 +957,13 @@ warn "DAS fetch.... ",time()-$timer;
       $configuration->{use_score} = $score;
       my $fg_merge = uc($Config->get($das_config_key, 'fg_merge') || $Extra->{'fg_merge'} || 'A');
       $configuration->{'fg_merge'} = $fg_merge;
-
   } elsif ($score eq 'S') {
       $renderer = "RENDER_signalmap";
+      $configuration->{use_score} = $score;
+      my $fg_merge = uc($Config->get($das_config_key, 'fg_merge') || $Extra->{'fg_merge'} || 'A');
+      $configuration->{'fg_merge'} = $fg_merge;
+  } elsif ($score eq 'C') {
+      $renderer = "RENDER_colourgradient";
       $configuration->{use_score} = $score;
       my $fg_merge = uc($Config->get($das_config_key, 'fg_merge') || $Extra->{'fg_merge'} || 'A');
       $configuration->{'fg_merge'} = $fg_merge;
@@ -1439,6 +1451,133 @@ sub RENDER_signalmap {
 	    'absolutex' => 1,
 	}) );
     }
+
+	return 1;
+
+}   # END RENDER_signalmap
+
+
+sub RENDER_colourgradient{
+    my( $self, $configuration ) = @_;
+
+# Display histogram only on a reverse strand
+    return if ($configuration->{'STRAND'} == 1);
+
+    my @features = sort { abs($a->das_score) <=> abs($b->das_score)  } @{$configuration->{'features'}};
+
+    
+    if (@features) {
+	my $f = $features[0];
+	if($f->das_type_id() eq '__ERROR__') {
+	    $self->errorTrack(
+			      'Error retrieving '.$self->{'extras'}->{'caption'}.' features ('.$f->das_id.')'
+			      );
+	    return -1 ;   # indicates no features drawn because of DAS error
+	}
+    } else {
+	$self->errorTrack( 'No '.$self->{'extras'}->{'caption'}.' features in this region' );
+	return 0;
+    }
+	
+    my ($min_value, $max_value) = ($features[0]->das_score || 0, $features[-1]->das_score || 0);
+    my ($min_score, $max_score) = (abs($min_value), abs($max_value));
+
+    my $row_height = 20;
+    my $pix_per_score = $max_score / $row_height;
+    my $bp_per_pix = 1 / $self->{pix_per_bp};
+
+    $configuration->{h} = $row_height;
+
+    # flag to indicate if not all features have been displayed 
+    my $more_features = 0;
+    my ($gScore, $gWidth, $fCount, $gStart, $mScore) = (0, 0, 0, 0, $min_score);
+
+# Draw the axis
+
+    $self->push( new Sanger::Graphics::Glyph::Line({
+	'x'         => 0,
+        'y'         => $row_height + 1,
+	'width'     => $configuration->{'length'},
+	'height'    => 0,
+	'absolutey' => 1,
+	'colour'    => 'red',
+	'dotted'    => 1,
+    }));
+
+    foreach my $f (@features) {
+	my $START = $f->das_start() < 1 ? 1 : $f->das_start();
+	my $END   = $f->das_end()   > $configuration->{'length'}  ? $configuration->{'length'} : $f->das_end();
+
+	my $width = ($END - $START +1);
+	my $score = $f->das_score || 0;
+
+	my $Composite = new Sanger::Graphics::Glyph::Composite({
+	    'y'         => 0,
+	    'x'         => $START-1,
+	    'absolutey' => 1,
+	});
+
+	my $height = abs($score) / $pix_per_score;
+	my $y_offset = 	0;
+	$y_offset-- if (! $score);
+
+	my ($href, $zmenu ) = $self->zmenu( $f );
+
+        my $rc = 255 - (238 * $height / $row_height);
+        my $bc = 255 - (127 * $height / $row_height);
+        my $col = sprintf("%02x%02x%02x", $score > 0 ? $rc : $bc, $rc, $score > 0 ? $bc : $rc);
+
+
+        $zmenu->{"90:Colour: \#$col"} = '';
+
+	$Composite->{'href'} = $href if $href;
+	$Composite->{'zmenu'} = $zmenu;
+
+	# make clickable box to anchor zmenu
+	$Composite->push( new Sanger::Graphics::Glyph::Space({
+	    'x'         => $START - 1,
+	    'y'         => 0,
+	    'width'     => $width,
+	    'height'    => $score ? $row_height : 1,
+	    'absolutey' => 1
+	    }) );
+
+
+	my $style = $self->get_featurestyle($f, $configuration);
+	my $fdata = $self->get_featuredata($f, $configuration, $y_offset);
+	my $symbol = $self->get_symbol ($style, $fdata, $y_offset);
+
+	$symbol->{'style'}->{'height'} = $row_height;
+	$symbol->{'feature'}->{'orientation'} = 1;
+	$symbol->{'feature'}->{'row_height'} = $row_height + 5;
+	$symbol->{'feature'}->{'y_offset'}  = $y_offset;
+
+
+	$symbol->{'style'}->{'colour'} = $col;
+	$symbol->{'style'}->{'fgcolor'} = $col;
+	$symbol->{'style'}->{'bgcolor'} = $col;
+#	warn(Data::Dumper::Dumper($symbol));# if (! $f->das_score);
+
+	$Composite->push($symbol->draw);
+
+	$self->push( $Composite );
+    } # END loop over features
+
+
+
+    $self->push( new Sanger::Graphics::Glyph::Text({
+	'text'      => $max_value,
+      'height'     => $self->{'textheight_i'},
+      'font'       => $self->{'fontname_i'},
+      'ptsize'     => $self->{'fontsize_i'},
+      'halign' => 'left',
+	'colour'    => 'red',
+	'y' => 1,
+	'x' => 3,
+	'absolutey' => 1,
+	'absolutex' => 1,
+    }) );
+
 
 	return 1;
 
