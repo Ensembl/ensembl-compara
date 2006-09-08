@@ -317,13 +317,24 @@ foreach my $this_genomic_align_block (@$genomic_align_blocks) {
     } else {
       $aligned_sequence = $this_genomic_align->aligned_sequence;
     }
-    my $seq = Bio::LocatableSeq->new(
-            -SEQ    => $aligned_sequence,
-            -START  => $this_genomic_align->dnafrag_start,
-            -END    => $this_genomic_align->dnafrag_end,
-            -ID     => $seq_name,
-            -STRAND => $this_genomic_align->dnafrag_strand
-        );
+    my $seq;
+    if ($this_genomic_align->dnafrag_strand == -1) {
+      $seq = Bio::LocatableSeq->new(
+              -SEQ    => $aligned_sequence,
+              -START  => $this_genomic_align->dnafrag_end,
+              -END    => $this_genomic_align->dnafrag_start,
+              -ID     => $seq_name,
+              -STRAND => $this_genomic_align->dnafrag_strand
+          );
+    } else {
+      $seq = Bio::LocatableSeq->new(
+              -SEQ    => $aligned_sequence,
+              -START  => $this_genomic_align->dnafrag_start,
+              -END    => $this_genomic_align->dnafrag_end,
+              -ID     => $seq_name,
+              -STRAND => $this_genomic_align->dnafrag_strand
+          );
+    }
     $simple_align->add_seq($seq);
   }
   push(@$all_aligns, $simple_align);
