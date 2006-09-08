@@ -347,6 +347,7 @@ sub _uniquify {
 sub _HTMLize {
   my $string = shift;
   $string =~ s/"/&quot;/g;
+  $string =~ s/%20/ /g;
   return $string;
 }
 
@@ -445,6 +446,7 @@ warn "Node $node";
       'label'         => $field_info{'label'},
       'comment'       => $field_info{'comment'},
       'required'      => $field_info{'required'},
+      'class'         => $field_info{'class'},
       'rows'          => $field_info{'rows'},
       'notes'         => $field_info{'notes'},
       'select'        => $field_info{'select'},
