@@ -794,7 +794,7 @@ sub _parse {
                 r.release_id    as release_id,
                 DATE_FORMAT(r.date, '%b %Y') as short_date
           FROM
-                release r order by r.release_id desc);
+                `release` r order by r.release_id desc);
 
 	# Store in conf.packed
 	$tree->{RELEASE_INFO} = [];
