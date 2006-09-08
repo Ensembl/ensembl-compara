@@ -27,7 +27,8 @@ sub accountview {
   my $id = $object->get_user_id;
   $html .= _show_details($panel, $object, $id);
   $html .= _show_bookmarks($panel, $object, $id);
-  $html .= _show_blast($panel, $object, $id);
+  #$html .= _show_configs($panel, $object, $id);
+  #$html .= _show_blast($panel, $object, $id);
 
   $panel->print($html);
   return 1;
@@ -53,6 +54,8 @@ sub _show_details {
 
   return $html;
 }
+
+#---------------------- BOOKMARKS ------------------------------------------------------
 
 sub _show_bookmarks {
   my( $panel, $object, $id ) = @_;
@@ -92,12 +95,13 @@ sub _show_static_bookmarks {
 
 sub _show_editable_bookmarks {
     my @bookmarks = @_;
-    my $html = "<div>";
+    my $html = "<div><p>Mouse over a bookmark name for edit and delete options.</p>";
     my $count = 0;
     foreach my $bookmark (@bookmarks) {
       my $name = $$bookmark{'bm_name'};
       my $url  = $$bookmark{'bm_url'};
-      $html .= _inplace_editor_for_bookmarks($count, $bookmark) . qq(<div class='bookmark_item' onmouseover="show_manage_links('bookmark_manage_$count')" onmouseout="hide_manage_links('bookmark_manage_$count')" id='bookmark_$count'><span class='bullet'><img src='/img/red_bullet.gif' width='4' height='8'></span><a href="$url" title='$url' id='bookmark_name_$count'>$name</a>) . _manage_links($count, $bookmark) . qq(</div>);
+      $html .= _inplace_editor_for_bookmarks($count, $bookmark) . qq(
+<div class='bookmark_item' onmouseover="show_manage_links('bookmark_manage_$count')" onmouseout="hide_manage_links('bookmark_manage_$count')" id='bookmark_$count'><span class='bullet'><img src='/img/red_bullet.gif' width='4' height='8'></span><a href="$url" title='$url' id='bookmark_name_$count'>$name</a>) . _manage_links($count, $bookmark) . qq(</div>);
       $count++;
     }
     $html .= "</div>";
@@ -120,6 +124,47 @@ sub _inplace_editor_for_bookmarks {
   my $html = "<div id='bookmark_editor_$id' class='bookmark_editor' style='display: none'><form action='javascript:save_bookmark($id, $bookmark_id, $user_id);'><input type='text' id='bookmark_text_field_$id' value='" . $$bookmark{'bm_name'} . "'> <div id='bookmark_editor_spinner_$id' style='display: none'><img src='/img/ajax-loader.gif' width='16' height='16' />'</div><div style='display: inline' id='bookmark_editor_links_$id'><a href='#' onclick='javascript:save_bookmark($id, $bookmark_id, $user_id);'>save</a> &middot; <a href='#' onclick='javascript:hide_inplace_editor($id);'>cancel</a></div></form></div>";
   return $html;
 }
+
+#----------------------- USER CONFIGS ---------------------------------------------
+
+sub _show_configs {
+  my( $panel, $object, $id ) = @_;
+  my $editable = $panel->ajax_is_available;
+  ## Get the user's config list
+  my @configs = @{$object->get_configs($id)};
+
+  ## return the message
+  my $html = "<h3>My saved configurations</h3>\n";
+
+  if (scalar(@configs) > 0) {
+    if ($editable) {
+      $html .= _show_editable_configs(@configs);
+    } else {
+      $html .= _show_static_configs(@configs);
+    }
+  }
+  else {
+    $html .= "<p>You have no saved configurations.</p>";
+  }
+
+  return $html;
+}
+
+sub _show_static_configs {
+    my @configs = @_;
+    my $html = "<ul>\n";
+    foreach my $config (@configs) {
+      my $name = $$config{'config_name'};
+      my $type = $$config{'config_type'};
+    
+      $html .= qq(<li>$name ($type)</li>);
+    }
+    $html .= qq(</ul>
+<p><a href="/common/manage_configs">Manage configurations</a></p>);
+    return $html;
+}
+
+#--------------------------- BLAST -------------------------------------------
 
 sub _show_blast {
   my( $panel, $object, $id ) = @_;
@@ -242,7 +287,7 @@ sub thanks_reg {
 ##-----------------------------------------------------------------
 
 sub select_bookmarks {
-  my ( $panel, $object, $node ) = @_;
+  my ( $panel, $object) = @_;
 
   ## Get the user's bookmark list
   my $id = $object->get_user_id;
@@ -250,7 +295,7 @@ sub select_bookmarks {
 
   my $html = qq(<div class="formpanel" style="width:80%">);
   if (scalar(@bookmarks)) {
-    $html .= $panel->form($node)->render();
+    $html .= $panel->form('select_bookmarks')->render();
   }
   else {
     $html .= qq(<p>You have no bookmarks set at the moment. To set a bookmark, go to any Ensembl content page whilst logged in (any 'view' page such as GeneView, or static content such as documentation), and click on the "Bookmark this page" link in the lefthand menu.</p>);
@@ -262,6 +307,28 @@ sub select_bookmarks {
 }
 
 sub name_bookmark     { _wrap_form($_[0], $_[1], 'name_bookmark'); }
+
+sub select_configs {
+  my ( $panel, $object) = @_;
+
+  ## Get the user's bookmark list
+  my $id = $object->get_user_id;
+  my @configs = @{$object->get_configs($id)};
+
+  my $html = qq(<div class="formpanel" style="width:80%">);
+  if (scalar(@configs)) {
+    $html .= $panel->form('select_configs')->render();
+  }
+  else {
+    $html .= qq(<p>You have no configurations saved in your account at the moment. To save a configuration, go to any configurable Ensembl 'view' (such as ContigView) whilst logged in, and click on the "Save this configuration" link in the lefthand menu.</p>);
+  }
+  $html .= '</div>';
+  
+  $panel->print($html);
+  return 1;
+}
+
+sub name_config     { _wrap_form($_[0], $_[1], 'name_config'); }
 
 1;
 

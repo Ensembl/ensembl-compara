@@ -216,7 +216,7 @@ sub add_bookmark {
   my $self   = shift;
   my $object = $self->{'object'};
 
-  ## the bookmark wizard uses 4 nodes: set name of bookmark, save bookmark 
+  ## the add bookmark wizard uses 4 nodes: set name of bookmark, save bookmark 
   ## and return to bookmarked URL, plus accountview as fallback
   my $wizard = EnsEMBL::Web::Wizard::User->new($object);
                                                     
@@ -239,10 +239,12 @@ sub manage_bookmarks {
   my $self   = shift;
   my $object = $self->{'object'};
 
-  ## the bookmark wizard uses 3 nodes: select bookmarks, delete bookmarks 
+  ## the manage bookmark wizard uses 3 nodes: select bookmarks, delete bookmarks 
   ## and accountview
   my $wizard = EnsEMBL::Web::Wizard::User->new($object);
                                                     
+  $self->_add_javascript_libraries;
+
   $wizard->add_nodes([qw(select_bookmarks delete_bookmarks accountview)]);
   $wizard->default_node('select_bookmarks');
 
@@ -260,44 +262,46 @@ sub add_config {
   my $self   = shift;
   my $object = $self->{'object'};
 
-  ## the bookmark wizard uses 3 nodes: set name of config, save config 
-  ## and accountview
+  ## the add config wizard uses 4 nodes: set name of config, save config 
+  ## and return to configured page, plus accountview as fallback
   my $wizard = EnsEMBL::Web::Wizard::User->new($object);
                                                     
   $self->_add_javascript_libraries;
 
-  $wizard->add_nodes([qw(name_bookmark save_bookmark accountview)]);
-  $wizard->default_node('accountview');
+  $wizard->add_nodes([qw(name_config save_config back_to_page accountview)]);
+  $wizard->default_node('accountview'); ## don't want user to access nodes without parameters!
 
   ## chain the nodes together
   $wizard->add_outgoing_edges([
-          ['name_bookmark'=>'save_bookmark'],
-          ['save_bookmark'=>'accountview'],
+          ['name_config'=>'save_config'],
+          ['save_config'=>'back_to_page'],
   ]);
 
   $self->add_wizard($wizard);
-  $self->wizard_panel('Bookmarks');
+  $self->wizard_panel('Saved Configurations');
 }
 
 sub manage_configs {
   my $self   = shift;
   my $object = $self->{'object'};
 
-  ## the bookmark wizard uses 3 nodes: select bookmarks, delete bookmarks 
+  ## the manage config wizard uses 3 nodes: select configs, delete configs 
   ## and accountview
   my $wizard = EnsEMBL::Web::Wizard::User->new($object);
                                                     
-  $wizard->add_nodes([qw(select_bookmarks delete_bookmarks accountview)]);
-  $wizard->default_node('select_bookmarks');
+  $self->_add_javascript_libraries;
+
+  $wizard->add_nodes([qw(select_configs delete_configs accountview)]);
+  $wizard->default_node('select_configs');
 
   ## chain the nodes together
   $wizard->add_outgoing_edges([
-          ['select_bookmarks'=>'delete_bookmarks'],
-          ['delete_bookmarks'=>'accountview'],
+          ['select_configs'=>'delete_configs'],
+          ['delete_configs'=>'accountview'],
   ]);
 
   $self->add_wizard($wizard);
-  $self->wizard_panel('Bookmarks');
+  $self->wizard_panel('Saved Configurations');
 }
 
 

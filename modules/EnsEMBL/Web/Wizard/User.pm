@@ -85,6 +85,7 @@ sub _init {
           'type' => 'MultiSelect',
           'label'=> 'Current bookmarks',
           'values'=>'bookmarks',
+          'class' => 'formblock', ## long text, so checkboxes need to be on separate lines
       },
       'config_name'   => {
           'type'=>'String', 
@@ -671,17 +672,17 @@ sub name_bookmark {
 sub save_bookmark {
   my ($self, $object) = @_;
   my $wizard = $self->{wizard};
-  
   my %parameter;
 
   ## save bookmark
   my $record = $self->create_record($object);
+  $$record{'user_id'} = $object->user_id;
   my $result = $object->save_bookmark($record);
 
   ## set response
   if ($result) {
     $parameter{'node'} = 'back_to_page';
-    $parameter{'url'} = $object->param('bm_url');
+    $parameter{'url'} = CGI::escape($object->param('bm_url'));
   }
   else {
     $parameter{'node'} = 'accountview';
@@ -701,7 +702,9 @@ sub select_bookmarks {
 
   my $form = EnsEMBL::Web::Form->new($node, "/$species/$script", 'post' );
 
-  $wizard->simple_form($node, $form, $object, 'input');
+  $wizard->add_title($node, $form, $object);
+  $wizard->add_widgets($node, $form, $object);
+  $wizard->add_buttons($node, $form, $object);
 
   return $form;
 }
