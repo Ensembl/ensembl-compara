@@ -423,64 +423,52 @@ sub copy_all_dnafrags {
 sub copy_dna_dna_alignements {
   my ($old_dba, $new_dba, $method_link_species_sets) = @_;
 
-  my $user = $new_dba->dbc->username;
-  my $pass = $new_dba->dbc->password;
-  my $host = $new_dba->dbc->host;
-  my $port = $new_dba->dbc->port;
-  my $dbname = $new_dba->dbc->dbname;
+  my $old_user = $old_dba->dbc->username;
+  my $old_pass = $old_dba->dbc->password?"-p".$old_dba->dbc->password:"";
+  my $old_host = $old_dba->dbc->host;
+  my $old_port = $old_dba->dbc->port;
+  my $old_dbname = $old_dba->dbc->dbname;
 
+  my $new_user = $new_dba->dbc->username;
+  my $new_pass = $new_dba->dbc->password?"-p".$new_dba->dbc->password:"";
+  my $new_host = $new_dba->dbc->host;
+  my $new_port = $new_dba->dbc->port;
+  my $new_dbname = $new_dba->dbc->dbname;
+
+  my $mysqldump = "mysqldump -u$old_user $old_pass -h$old_host -P$old_port".
+      " --skip-disable-keys --insert-ignore -t $old_dbname";
+  my $mysql = "mysql -u$new_user $new_pass -h$new_host -P$new_port $new_dbname";
+
+  $new_dba->dbc->do("ALTER TABLE `genomic_align_block` DISABLE KEYS");
+  $new_dba->dbc->do("ALTER TABLE `genomic_align` DISABLE KEYS");
+  $new_dba->dbc->do("ALTER TABLE `genomic_align_group` DISABLE KEYS");
   foreach my $this_method_link_species_set (@$method_link_species_sets) {
-    my $sql = "SELECT * FROM genomic_align_block WHERE genomic_align_block_id >= ".
+    ## For DNA-DNA alignments, the method_link_id is < 100.
+    next if ($this_method_link_species_set->method_link_id >= 100);
+    print "Copying dna-dna alignments for ", $this_method_link_species_set->name,
+        " (", $this_method_link_species_set->dbID, "): ";
+    my $where = "genomic_align_block_id >= ".
         ($this_method_link_species_set->dbID * 10**10)." AND genomic_align_block_id < ".
         (($this_method_link_species_set->dbID + 1) * 10**10);
-    my $sth_fetch = $old_dba->dbc->prepare($sql);
-    $sth_fetch->execute();
-    my $all_rows = $sth_fetch->fetchall_arrayref;
-    if (!@$all_rows) {
-      next;
-    }
-    my $filename = "/tmp/genomic_align_block.populate_new_database.".$this_method_link_species_set->dbID.".$$.txt";
-    open(TEMP, ">$filename") or die;
-    foreach my $this_row (@$all_rows) {
-      print TEMP join("\t", @$this_row), "\n";
-    }
-    close(TEMP);
-    print "Copying dna-dna alignments for ", $this_method_link_species_set->name, ":\n . ";
-    system("mysqlimport", "-u$user", "-p$pass", "-h$host", "-P$port", "-L", "-l", "-i", $dbname, $filename);
-    unlink("$filename");
-
-    $sql = "SELECT * FROM genomic_align WHERE genomic_align_id >= ".
+    my $pipe = "$mysqldump -w \"$where\" genomic_align_block | $mysql";
+    system($pipe);
+    print ".";
+    $where = "genomic_align_id >= ".
         ($this_method_link_species_set->dbID * 10**10)." AND genomic_align_id < ".
         (($this_method_link_species_set->dbID + 1) * 10**10);
-    $sth_fetch = $old_dba->dbc->prepare($sql);
-    $sth_fetch->execute();
-    $all_rows = $sth_fetch->fetchall_arrayref;
-    $filename = "/tmp/genomic_align.populate_new_database.".$this_method_link_species_set->dbID.".$$.txt";
-    open(TEMP, ">$filename") or die;
-    foreach my $this_row (@$all_rows) {
-      print TEMP join("\t", @$this_row), "\n";
-    }
-    close(TEMP);
-    print " . ";
-    system("mysqlimport", "-u$user", "-p$pass", "-h$host", "-P$port", "-L", "-l", "-i", $dbname, $filename);
-    unlink("$filename");
-
-    $sql = "SELECT * FROM genomic_align_group WHERE group_id >= ".
+    $pipe = "$mysqldump -w \"$where\" genomic_align | $mysql";
+    system($pipe);
+    print ".";
+    $where = "group_id >= ".
         ($this_method_link_species_set->dbID * 10**10)." AND group_id < ".
         (($this_method_link_species_set->dbID + 1) * 10**10);
-    $sth_fetch = $old_dba->dbc->prepare($sql);
-    $sth_fetch->execute();
-    $all_rows = $sth_fetch->fetchall_arrayref;
-    $filename = "/tmp/genomic_align_group.populate_new_database.".$this_method_link_species_set->dbID.".$$.txt";
-    open(TEMP, ">$filename") or die;
-    foreach my $this_row (@$all_rows) {
-      print TEMP join("\t", @$this_row), "\n";
-    }
-    close(TEMP);
-    print " . ";
-    system("mysqlimport", "-u$user", "-p$pass", "-h$host", "-P$port", "-L", "-l", "-i", $dbname, $filename);
-    unlink("$filename");
+    $pipe = "$mysqldump -w \"$where\" genomic_align_group | $mysql";
+    system($pipe);
+    print "ok!\n";
   }
+  $new_dba->dbc->do("ALTER TABLE `genomic_align_block` ENABLE KEYS");
+  $new_dba->dbc->do("ALTER TABLE `genomic_align` ENABLE KEYS");
+  $new_dba->dbc->do("ALTER TABLE `genomic_align_group` ENABLE KEYS");
 }
 
 
