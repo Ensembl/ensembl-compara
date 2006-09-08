@@ -141,10 +141,11 @@ sub context_menu {
 
   my @genes = @{ $obj->get_genes };
   foreach my $gene (@genes) {
-    $self->add_entry(
+	  my $name = $gene->stable_id;
+	  $self->add_entry(
         "snp$self->{flag}", 
         'code' => 'gene_snp_info',
-        'text' => "Gene SNP info",
+        'text' => "$name -  GeneSNP info",
 	"title" => "GeneSNPView - SNPs and their coding consequences",
 	'href' => "/$species/genesnpview?gene=".$gene->stable_id
     );
