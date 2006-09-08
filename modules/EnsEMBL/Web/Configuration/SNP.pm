@@ -141,7 +141,7 @@ sub context_menu {
 
   my @genes = @{ $obj->get_genes };
   foreach my $gene (@genes) {
-	  my $name = $gene->stable_id;
+	  my $name = scalar @genes > 1 ? $gene->stable_id : "";
 	  $self->add_entry(
         "snp$self->{flag}", 
         'code' => 'gene_snp_info',
