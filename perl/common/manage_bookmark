@@ -1,0 +1,32 @@
+#! /usr/local/bin/perl
+
+use strict;
+use warnings;
+no warnings "uninitialized";
+
+use EnsEMBL::Web::SpeciesDefs;
+use EnsEMBL::Web::DBSQL::UserDB;
+
+warn("AJAX: Updating bookmark"); 
+
+my $T = new CGI;
+my $bookmark = $T->param('bookmark');
+my $user = $T->param('user');
+my $name = $T->param('name');
+my $action = $T->param('action');
+my $user_id = $ENV{'ENSEMBL_USER_ID'};
+
+print "Content-type: text/plain\n\n";
+
+if ($user eq $user_id) {
+  my $user_adaptor = EnsEMBL::Web::DBSQL::UserDB->new();
+  if ($action eq 'update') {
+    print $user_adaptor->rename_bookmark($bookmark, $name); 
+  } elsif ($action eq 'delete') {
+    print $user_adaptor->delete_bookmark($bookmark); 
+  }
+} else {
+  print "No access";
+}
+
+1;
