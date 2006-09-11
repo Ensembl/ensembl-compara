@@ -115,7 +115,7 @@ sub context_karyoview {
   $self->{page}->menu->add_block( $flag, 'bulleted', "Display your data" );
 
 
-  $self->{page}->menu->add_entry( $flag, 'text' => "Select another display",
+  $self->{page}->menu->add_entry( $flag, 'text' => "Input new data",
                                   'href' => "/$species/karyoview" );
 
   $self->{page}->menu->add_entry( $flag, 
