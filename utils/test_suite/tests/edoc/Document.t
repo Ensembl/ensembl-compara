@@ -16,7 +16,10 @@ BEGIN {
   $start_dir = "$location/files/edoc/modules/";
   $export = "$location/files/edoc/export/";
   $support = "$location/files/edoc/support/";
-  $document = EnsEMBL::Web::Tools::Document->new( (directory => [ $start_dir ]) );
+  $document = EnsEMBL::Web::Tools::Document->new( (
+                  directory => [ $start_dir ], 
+                  identifier => "###"
+              ) );
 }
 
 my @found_modules = @{ $document->find_modules };
