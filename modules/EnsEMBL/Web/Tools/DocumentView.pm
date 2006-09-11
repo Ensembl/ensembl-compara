@@ -16,8 +16,8 @@ my %SupportFilesLocation_of;
 my $CVSROOT = "http://cvs.sanger.ac.uk/cgi-bin/viewcvs.cgi/ensembl-webcode/modules/";
 
 sub new {
-  ## c
-  ## Inside-out class for writing documentation HTML.
+  ### c
+  ### Inside-out class for writing documentation HTML.
   my ($class, %params) = @_;
   my $self = bless \my($scalar), $class;
   $Location_of{$self} = defined $params{location} ? $params{location} : "";
@@ -27,7 +27,7 @@ sub new {
 }
 
 sub write_package_frame {
-  ## Writes the HTML package listing.
+  ### Writes the HTML package listing.
   my ($self, $packages) = @_;
   open (my $fh, ">", $self->location . "/package.html") or die "$!: " . $self->location;
   print $fh $self->html_header("", "list");
@@ -41,6 +41,7 @@ sub write_package_frame {
 }
 
 sub write_method_frame {
+  ### Writes a complete list of methods from all modules to an HTML file.
   my ($self, $methods) = @_;
   open (my $fh, ">", $self->location . "/methods.html") or die "$!: " . $self->location;
   print $fh $self->html_header("", "list");
@@ -64,6 +65,7 @@ sub write_method_frame {
 }
 
 sub write_hierarchy {
+  ### Returns a formatted list of inheritance and subclass information for a given module.
   my ($self, $module) = @_;
   my $html = "";
   if (@{ $module->inheritance }) {
@@ -96,11 +98,13 @@ sub write_hierarchy {
 }
 
 sub write_module_page {
+  ### Writes the complete HTML documentation page for a module. 
   my ($self, $module) = @_;
   open (my $fh, ">", $self->_html_path_from_package($module->name));
   print $fh $self->html_header($module->name);
   print $fh "<div class='title'><h1>" . $module->name . "</h1>";
   print $fh "<a href='" . cvs_link($module->name) . "'>Source code</a>\n";
+  print $fh "&middot; <a href='" . $self->link_for_package($module->name) . "'>Permalink</a>\n";
   print $fh "</div>";
   print $fh "<div class='content'>";
   print $fh "<div class='classy'>";
@@ -119,6 +123,7 @@ sub write_module_page {
 }
 
 sub cvs_link {
+  ### Returns a link to a source code file in CVS.
   my $package = shift;
   my $link = $CVSROOT;
   my $file = $package;
@@ -127,6 +132,7 @@ sub cvs_link {
 }
 
 sub write_module_pages {
+  ### Writes module documentation page for every found module.
   my ($self, $modules) = @_;
   foreach my $module (@{ $modules }) {
     $self->write_module_page($module);
@@ -134,7 +140,7 @@ sub write_module_pages {
 }
 
 sub toc_html {
-  ## Returns the table of contents for the module methods.
+  ### Returns the table of contents for the module methods.
   my ($self, $module) = @_;
   my $html = "";
   $html .= qq(<h3>Overview</h3>\n);
@@ -173,6 +179,7 @@ sub toc_html {
 }
 
 sub methods_html {
+  ### Returns a formatted list of method names and documentation.
   my ($self, $module) = @_;
   my $html = "";
   $html .= qq(<h3>Methods</h3>);
@@ -201,17 +208,38 @@ sub methods_html {
 }
 
 sub markup_documentation {
+  ### Parses documentation for special e! doc markup. Links to other modules and methods can be included between double braces. For example: { { EnsEMBL::Web::Tools::Document::Module::new } } is parsed to {{EnsEMBL::Web::Tools::Document::Module::new}}. Simple method and module names can also be used. {{markup_documentation}} does not perform any error checking on the names of modules and methods. 
   my ($self, $documentation) = @_;
   my $markup = $documentation; 
   $_ = $documentation;
-  while (/{{(.*)}}/g) {
-    my $link = "<a href='#$1'>$1</a>";
-    $markup =~ s/{{$1}}/$link/;
+  while (/{{(.*?)}}/g) {
+    my $name = $1;
+    if ($name =~ /\:\:/) {
+      my @elements = split /\:\:/, $name;
+      if ($elements[$#elements] =~ /^[a-z]/) {
+        my $package = "";
+        my $path = "";
+        my $method = $elements[$#elements];
+        for (my $n = 0; $n < $#elements; $n++) {  
+          $package .= $elements[$n] . "::";
+        }
+        $package =~ s/\:\:$//;
+        my $link = "<a href='" . $self->link_for_package($package) . "#$method'>" . $package . "::" . $method . "</a>";
+        $markup =~ s/{{$name}}/$link/;
+      } else {
+        my $link = "<a href='" . $self->link_for_package($name) . "'>" . $name . "</a>";
+        $markup =~ s/{{$name}}/$link/;
+      }
+    } else {
+      my $link = "<a href='#$name'>$name</a>";
+      $markup =~ s/{{$name}}/$link/;
+    }
   } 
   return $markup;
 }
 
 sub write_base_frame {
+  ### Writes the home page for the e! doc.
   my ($self, $modules) = @_;
   open (my $fh, ">", $self->location . "/base.html");
   my $total = 0;
@@ -246,6 +274,7 @@ sub write_base_frame {
 }
 
 sub write_frameset {
+  ### Writes the frameset for the e! doc collection.
   my $self = shift;
   open (my $fh, ">", $self->location . "/index.html");
   print $fh qq(
@@ -274,12 +303,13 @@ sub write_frameset {
 }
 
 sub link_for_method {
+  ### Returns the HTML formatted link to a method page in a module page.
   my ($self, $method) = @_;
   return "<a href='" . $self->link_for_package($method->package->name) . "#" . $method->name . "' target='base'>" . $method->name . "</a>";
 }
 
 sub copy_support_files {
-  ## Copies support files (stylesheets etc) to the export location.
+  ### Copies support files (stylesheets etc) to the export location (set by {{support}}.
   my $self = shift;
   my $source = $self->support;
   my $destination = $self->location;
@@ -289,9 +319,9 @@ sub copy_support_files {
 }
 
 sub html_header {
-  ## ($package, $class) Returns an HTML header. When supplied, $package
-  ## is used to determine relative links and $class determins the class
-  ## of the HTML body.
+  ### ($package, $class) Returns an HTML header. When supplied, $package
+  ### is used to determine relative links and $class determins the class
+  ### of the HTML body.
   my ($self, $package, $class) = @_;
   if ($class) {
     $class = " class='" . $class . "'";
@@ -317,7 +347,7 @@ sub html_header {
 }
 
 sub html_footer {
-  ## Returns a simple HTML footer
+  ### Returns a simple HTML footer
   return qq(
     </body>
     </html>
@@ -325,20 +355,21 @@ sub html_footer {
 }
 
 sub _html_path_from_package {
-  ## Returns an export location from a package name
+  ### Returns an export location from a package name
   my ($self, $package) = @_;
   my $path = $self->location . "/" . $self->path_from_package($package) . ".html";
   return $path;
 }
 
 sub link_for_package {
+  ### Returns the HTML location of a package, excluding &lt;A HREF&gt; markup.
   my ($self, $package) = @_;
   my $path = $self->base_url . "/" . $self->path_from_package($package) . ".html";
   return $path;
 }
 
 sub path_from_package {
-  ## Returns file system path to package
+  ### Returns file system path to package
   my ($self, $package) = @_;
   my @elements = split(/::/, $package);
   my $file = pop @elements;
@@ -357,7 +388,7 @@ sub path_from_package {
 }
 
 sub element_count_from_package {
-  ## Returns the number of elements in a package name.
+  ### Returns the number of elements in a package name.
   my $package = shift;
   if ($package) {
     my @elements = split(/::/, $package);
@@ -367,27 +398,28 @@ sub element_count_from_package {
 }
 
 sub location {
-  ## a
+  ### a
   my $self = shift;
   $Location_of{$self} = shift if @_;
   return $Location_of{$self};
 }
 
 sub support {
-  ## a
+  ### a
   my $self = shift;
   $SupportFilesLocation_of{$self} = shift if @_;
   return $SupportFilesLocation_of{$self};
 }
 
 sub base_url {
-  ## a
+  ### a
   my $self = shift;
   $BaseURL_of{$self} = shift if @_;
   return $BaseURL_of{$self};
 }
 
 sub DESTROY {
+  ### d
   my $self = shift;
   delete $Location_of{$self};
   delete $SupportFilesLocation_of{$self};

@@ -15,19 +15,19 @@ my %Identifier_of;
 my $writer = EnsEMBL::Web::Tools::DocumentView->new;
 
 sub new {
-  ## c
-  ## Inside-out class for automatically generating documentation in 
-  ## e! doc format.
+  ### c
+  ### Inside-out class for automatically generating documentation in 
+  ### e! doc format.
   my ($class, %params) = @_;
   my $self = bless \my($scalar), $class;
   $Directory_of{$self} = defined $params{directory} ? $params{directory} : [];
   $Modules_of{$self} = defined $params{modules} ? $params{modules} : [];
-  $Identifier_of{$self} = defined $params{identifier} ? $params{identifier} : "###";
+  $Identifier_of{$self} = defined $params{identifier} ? $params{identifier} : "##";
   return $self;
 }
 
 sub find_modules {
-  ## Recursively finds modules located in the directory parameter.
+  ### Recursively finds modules located in the directory parameter.
   my $self = shift;
   my $code_ref = sub { $self->wanted(@_) };
   find($code_ref, @{ $self->directory });   
@@ -74,6 +74,7 @@ sub find_modules {
 }
 
 sub module_by_name {
+  ### Returns a module object ({{EnsEMBL::Web::Tools::Document::Module}}) for a given fully qualified name. 
   my ($self, $name) = @_;
   my $return = 0;
   foreach my $module (@{ $self->modules }) {
@@ -86,8 +87,8 @@ sub module_by_name {
 }
 
 sub wanted {
-  ## Callback method used to find packages in the directory of
-  ## interest.
+  ### Callback method used to find packages in the directory of
+  ### interest.
   my $self = shift;
   if ($File::Find::name!~ /CVS/ && $_ =~ /pm$/) {
     print "Indexing " . $_ . "\n";
@@ -98,9 +99,9 @@ sub wanted {
 }
 
 sub _add_module {
-  ## Adds a new module object to the array of found modules.
-  ## The new module will find methods within that package on
-  ## instantiation.
+  ### Adds a new module object to the array of found modules.
+  ### The new module will find methods within that package on
+  ### instantiation.
   my ($self, $module, $location) = @_;
   my $new_module = EnsEMBL::Web::Tools::Document::Module->new((
                      name => $module,
@@ -113,8 +114,8 @@ sub _add_module {
 }
 
 sub _package_name {
-  ## (filename) Reads package name from .pm file
-  ## Returns $package
+  ### (filename) Reads package name from .pm file
+  ### Returns $package
   my ($self, $filename) = @_;
   open (my $fh, $filename) or die "$!: $filename";
   my $package = "";
@@ -132,7 +133,7 @@ sub _package_name {
 
 
 sub generate_html {
-  ## (location) Writes HTML documentation to specified export location.
+  ### (location) Writes HTML documentation to specified export location.
   my ($self, $location, $base, $support) = @_;
   $writer->location($location);
   $writer->support($support);
@@ -148,28 +149,28 @@ sub generate_html {
 }
 
 sub directory {
-  ## a
+  ### a
   my $self = shift;
   $Directory_of{$self} = shift if @_;
   return $Directory_of{$self};
 }
 
 sub modules {
-  ## a
+  ### a
   my $self = shift;
   $Modules_of{$self} = shift if @_;
   return $Modules_of{$self};
 }
 
 sub identifier {
-  ## a
+  ### a
   my $self = shift;
   $Identifier_of{$self} = shift if @_;
   return $Identifier_of{$self};
 }
 
 sub methods {
-  ## Returns all method objets for all found modules
+  ### Returns all method objets for all found modules
   my $self = shift;
   my @methods = ();
   foreach my $module (@{ $self->modules }) {
@@ -183,6 +184,7 @@ sub methods {
 }
 
 sub DESTROY {
+  ### d
   my $self = shift;
   delete $Directory_of{$self};
   delete $Modules_of{$self};
