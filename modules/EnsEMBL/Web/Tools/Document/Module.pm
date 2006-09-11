@@ -1,6 +1,6 @@
 package EnsEMBL::Web::Tools::Document::Module;
 
-## Inside-out class for representing Perl modules.
+### Inside-out class for representing Perl modules.
 
 #use strict;
 use warnings;
@@ -16,12 +16,14 @@ my %Lines_of;
 my %Location_of;
 my %Overview_of;
 my %Identifier_of;
+my %Keywords_of;
 
-my $default_comment_code = "##";
+my $default_comment_code = "###";
+my $default_keywords = "a accessor c constructor d desctructor";
 
 sub new {
-  ## c
-  ## Inside-out class for representing Perl modules.
+  ### c
+  ### Inside-out class for representing Perl modules.
   my ($class, %params) = @_;
   my $self = bless \my($scalar), $class;
   $Methods_of{$self} = defined $params{methods} ? $params{methods} : [];
@@ -32,6 +34,7 @@ sub new {
   $Lines_of{$self} = defined $params{lines} ? $params{lines} : "";
   $Overview_of{$self} = defined $params{overview} ? $params{overview} : "";
   $Identifier_of{$self} = defined $params{identifier} ? $params{identifier} : $default_comment_code;
+  $Keywords_of{$self} = defined $params{keywords} ? $params{keywords} : $default_keywords;
   if ($params{find_methods}) {
     $self->find_methods;
   }
@@ -39,6 +42,8 @@ sub new {
 }
 
 sub coverage {
+  ### Calculates and returns the documentation coverage for all callabel methods in a module. This includes any inherited methods. Use {{module_coverage}} to calculate the documentation coverage for a module's methods only.
+
   my $self = shift;
   my $count = 0;
   my $total = 0;
@@ -57,6 +62,7 @@ sub coverage {
 }
 
 sub module_coverage {
+  ### Calculates and returns the documentation coverage for a module's methods. This does not include inherited methods (see {{coverage}}).
   my $self = shift;
   my $count = 0;
   my $total = 0;
@@ -75,7 +81,7 @@ sub module_coverage {
 }
 
 sub types {
-  ## Returns an array of all types of method.
+  ### Returns an array of all types of methods.
   my $self = shift;
   my @types = ();
   my %type_count = ();
@@ -89,8 +95,8 @@ sub types {
 }
 
 sub methods_of_type {
-  ## Returns all methods of a particular type. Useful when used with
-  ## types. Includes methods inherited from superclasses.
+  ### Returns all methods of a particular type. Useful when used with
+  ### types. Includes methods inherited from superclasses.
   my ($self, $type) = @_;
   my @methods = ();
   foreach my $method (@{ $self->all_methods }) {
@@ -102,9 +108,9 @@ sub methods_of_type {
 }
 
 sub find_methods {
-  ## Scans package files for method definitions, and creates
-  ## new method objects for each one found. Method object 
-  ## references are stored in the methods array.
+  ### Scans package files for method definitions, and creates
+  ### new method objects for each one found. Method object 
+  ### references are stored in the methods array.
   my $self = shift;
   my %documentation = %{ $self->_parse_package_file };
   foreach my $method (keys %{ $documentation{methods} }) {
@@ -135,8 +141,8 @@ sub find_methods {
 }
 
 sub _parse_package_file {
-  ## Opens and parses Perl package files for methods and comments
-  ## in e! doc format.
+  ### Opens and parses Perl package files for methods and comments
+  ### in e! doc format.
   my $self = shift;
   my %docs = ();
   open (my $fh, $self->location);
@@ -186,7 +192,7 @@ sub _parse_package_file {
         $docs{methods}{$sub}{type} = "method";
       }
       if ($#elements == 0) {
-        $comment = $self->keywords($comment);
+        $comment = $self->convert_keyword($comment) . ". ";
         $docs{methods}{$sub}{type} = lc($comment);
       } elsif ($#elements == 1) {
         if ($elements[0] =~ /eturn/) {
@@ -210,70 +216,79 @@ sub _parse_package_file {
   return \%docs;
 }
 
-sub keywords {
+sub convert_keyword {
+  ### Accepts a single abbreviation and returns its long form. This method is called on all lines that contain a single word, and replaces shorcuts with longer descriptions. For example, 'a' is elongates to 'accessor'. Keywords can be specified using {keyword}. 
   my ($self, $comment) = @_;
-  my %keywords = qw(a accessor c constructor d destructor);
+  my %keywords = split / /, $self->keywords; 
   my $return_keyword = $comment;
   if ($keywords{$comment}) {
     $return_keyword = $keywords{$comment};
-    warn $return_keyword;
+    #warn $return_keyword;
   }
-  return $return_keyword;
+  return ucfirst($return_keyword);
 }
 
 sub add_method {
-  ## Adds a method name to the method array.
+  ### Adds a method name to the method array.
   my ($self, $method) = @_;
   push @{ $self->methods }, $method;
 }
 
+sub keywords {
+  ### a
+  ### Accepts a string with key-value pairings, a la qw(). For example: 'a accessor c constructor d destructor'.
+  my $self = shift;
+  $Keywords_of{$self} = shift if @_;
+  return $Keywords_of{$self};
+}
+
 sub name {
-  ## a
+  ### a
   my $self = shift;
   $Name_of{$self} = shift if @_;
   return $Name_of{$self};
 }
 
 sub inheritance {
-  ## a
+  ### a
   my $self = shift;
   $Inheritance_of{$self} = shift if @_;
   return $Inheritance_of{$self};
 }
 
 sub superclass {
-  ## Convenience accessor for inheritance 
+  ### Convenience accessor for inheritance 
   return inheritance(@_);
 }
 
 sub location {
-  ## a
+  ### a
   my $self = shift;
   $Location_of{$self} = shift if @_;
   return $Location_of{$self};
 }
 
 sub subclasses {
-  ## a
+  ### a
   my $self = shift;
   $Subclasses_of{$self} = shift if @_;
   return $Subclasses_of{$self};
 }
 
 sub add_subclass {
-  ## Adds a subclass to the subclass array.
+  ### Adds a subclass to the subclass array.
   my ($self, $subclass) = @_;
   push @{ $self->subclasses }, $subclass;
 }
 
 sub add_superclass {
-  ## Adds a superclass to the inheritance array.
+  ### Adds a superclass to the inheritance array.
   my ($self, $superclass) = @_;
   push @{ $self->inheritance}, $superclass;
 }
 
 sub all_methods {
-  ## returns all methods from this class, and its superclasses.
+  ### returns all methods from this class, and its superclasses.
   my $self = shift;
   my @return_methods = @{ $self->methods };
   foreach my $superclass (@{ $self->inheritance}) {
@@ -283,35 +298,35 @@ sub all_methods {
 }
 
 sub methods {
-  ## a
+  ### a
   my $self = shift;
   $Methods_of{$self} = shift if @_;
   return $Methods_of{$self};
 }
 
 sub identifier {
-  ## a
+  ### a
   my $self = shift;
   $Identifier_of{$self} = shift if @_;
   return $Identifier_of{$self};
 }
 
 sub lines {
-  ## a
+  ### a
   my $self = shift;
   $Lines_of{$self} = shift if @_;
   return $Lines_of{$self};
 }
 
 sub overview_documentation {
-  ## a
+  ### a
   my $self = shift;
   $Overview_of{$self} = shift if @_;
   return $Overview_of{$self};
 }
 
 sub DESTROY {
-  ## d
+  ### d
   my $self = shift;
   delete $Methods_of{$self};
   delete $Name_of{$self};

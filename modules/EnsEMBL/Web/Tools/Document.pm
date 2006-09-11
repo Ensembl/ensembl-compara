@@ -22,7 +22,7 @@ sub new {
   my $self = bless \my($scalar), $class;
   $Directory_of{$self} = defined $params{directory} ? $params{directory} : [];
   $Modules_of{$self} = defined $params{modules} ? $params{modules} : [];
-  $Identifier_of{$self} = defined $params{identifier} ? $params{identifier} : "##";
+  $Identifier_of{$self} = defined $params{identifier} ? $params{identifier} : "###";
   return $self;
 }
 

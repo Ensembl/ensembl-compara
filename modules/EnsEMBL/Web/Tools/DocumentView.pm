@@ -182,7 +182,7 @@ sub methods_html {
     if ($method->type !~ /unknown/) {
       $count++;
       $html .= qq(<b><a name=") . $method->name . qq("></a>) . $method->name . qq(</b><br />\n);
-      $html .= $method->documentation;
+      $html .= $self->markup_documentation($method->documentation);
       $html .= qq(<br />\n);
       if ($method->result) {
         $html .= qq(Returns: <i>) . $method->result . qq(</i><br />\n);
@@ -198,6 +198,17 @@ sub methods_html {
   }
   $html .= qq(</ul>);
   return $html;
+}
+
+sub markup_documentation {
+  my ($self, $documentation) = @_;
+  my $markup = $documentation; 
+  $_ = $documentation;
+  while (/{{(.*)}}/g) {
+    my $link = "<a href='#$1'>$1</a>";
+    $markup =~ s/{{$1}}/$link/;
+  } 
+  return $markup;
 }
 
 sub write_base_frame {
@@ -272,7 +283,9 @@ sub copy_support_files {
   my $self = shift;
   my $source = $self->support;
   my $destination = $self->location;
-  my $cp = `cp $source/styles.css $destination/`;
+  if ($source) {
+    my $cp = `cp $source/styles.css $destination/`;
+  }
 }
 
 sub html_header {

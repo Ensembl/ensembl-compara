@@ -12,8 +12,8 @@ my %Module_of;
 my %Documentation_of;
 
 sub new {
-  ## c
-  ## Inside-out class for representing Perl methods.
+  ### c
+  ### Inside-out class for representing Perl methods.
   my ($class, %params) = @_;
   my $self = bless \my($scalar), $class;
   $Name_of{$self} = defined $params{name} ? $params{name} : "";
@@ -25,46 +25,47 @@ sub new {
 }
 
 sub name {
-  ## a
+  ### a
   my $self = shift;
   $Name_of{$self} = shift if @_;
   return $Name_of{$self};
 }
 
 sub documentation {
-  ## a
+  ### a
   my $self = shift;
   $Documentation_of{$self} = shift if @_;
   return $Documentation_of{$self};
 }
 
 sub type {
-  ## a
+  ### a
   my $self = shift;
   $Type_of{$self} = shift if @_;
   return $Type_of{$self};
 }
 
 sub result {
-  ## a
+  ### a
   my $self = shift;
   $Result_of{$self} = shift if @_;
   return $Result_of{$self};
 }
 
 sub module {
-  ## a
+  ### a
   my $self = shift;
   $Module_of{$self} = shift if @_;
   return $Module_of{$self};
 }
 
 sub package {
-  ## Convenience accessor pointing to module object
+  ### Convenience accessor pointing to module object
   return module(@_);
 }
 
 sub DESTROY {
+  ### d
   my $self = shift;
   delete $Name_of{$self};
   delete $Documentation_of{$self};
