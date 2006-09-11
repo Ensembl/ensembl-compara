@@ -15,7 +15,7 @@ print "Exporting to $export\n";
 print "Searching for documentation\n";
 my $document = EnsEMBL::Web::Tools::Document->new( (
                  directory => \@locations,
-                 identifier => "##"
+                 identifier => "###"
                ) );
 
 $document->find_modules;

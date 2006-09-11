@@ -2,7 +2,7 @@ E! DOC: automatic documentation
 
 OVERVIEW:
 
-The document.pl script will generate documentation in e! doc format.
+The document.pl script will generate documentation in e! doc format. To update the documentation, you can just run the update_docs script, which calls document.pl with a set of default values, and copies them to the correct location.
 
 USAGE:
 
