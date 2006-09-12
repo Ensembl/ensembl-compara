@@ -74,7 +74,6 @@ foreach my $sp (@$species) {
     (my $vsp = $sp) =~ s/\_/ /g;
     $species_info->{$sp}->{'species'} = $vsp;
     $species_info->{$sp}->{'taxon_id'} = $ta->fetch_node_by_name($vsp)->taxon_id;
-    $species_info->{$sp}->{'test_range'} = sprintf("%s:1,100000", $search_info->{'MAPVIEW1_TEXT'} || $search_info->{'DEFAULT1_TEXT'});
 
     my $db_info = $species_defs->get_config($sp, 'databases')->{'ENSEMBL_DB'};
     my $db = Bio::EnsEMBL::DBSQL::DBAdaptor->new(
@@ -94,12 +93,13 @@ foreach my $sp (@$species) {
 
     $shash->{$mapmaster}->{description} = sprintf("%s Reference server based on %s assembly. Contains %d top level entries.", $sp, $species_defs->get_config($sp,'ENSEMBL_GOLDEN_PATH'), scalar(@toplevel_slices));
 
+    $shash->{$mapmaster}->{'test_range'} = sprintf("%s:1,100000", $search_info->{'MAPVIEW1_TEXT'} || $search_info->{'DEFAULT1_TEXT'});
     foreach my $feature ( qw(karyotype transcripts ditags cagetags)) {
-	my $db = 'ENSEMBL_DB';
+	my $dbn = 'ENSEMBL_DB';
 	my $table = $featuresMasterTable{$feature};
 	my $rv = $species_defs->get_table_size(
 					      { 
-						  -db => $db, 
+						  -db => $dbn, 
 						  -table=> $table 
 					      },
 					      $sp
@@ -108,8 +108,13 @@ foreach my $sp (@$species) {
 
 	next unless $rv;
 
-
+        my $sql = qq{ select s.name, t.seq_region_start, t.seq_region_end from $table t, seq_region s where t.seq_region_id = s.seq_region_id limit 1};
+        my $sth = $db->dbc->prepare($sql);
+        $sth->execute();
+        my @r = $sth->fetchrow();
+        print STDERR "\t\t\tTEST REGION : ", join('*', @r), "\n";
 	my $dsn = sprintf("%s.%s.%s", $sp, $species_defs->get_config($sp,'ENSEMBL_GOLDEN_PATH'), $feature);
+ 	$shash->{$dsn}->{'test_range'} = sprintf("%s:%s,%s",@r); 
 	$shash->{$dsn}->{mapmaster} = "http://$SiteDefs::ENSEMBL_SERVERNAME/das/$mapmaster";
 	$shash->{$dsn}->{description} = sprintf("Annotation source for %s %s", $sp, $feature);
     }
@@ -174,7 +179,7 @@ qq{
       <PROPERTY name="label" value="ENSEMBL" />
     </VERSION>
   </SOURCE>
-}, $id, $dsn, $sources->{$dsn}{description}, $today, $ta->fetch_node_by_name($vsp)->taxon_id, $assembly, $assembly, $species_info->{$species}->{'test_range'}, $dsn, $dsn, $dsn;
+}, $id, $dsn, $sources->{$dsn}{description}, $today, $ta->fetch_node_by_name($vsp)->taxon_id, $assembly, $assembly, $sources->{$dsn}->{'test_range'}, $dsn, $dsn, $dsn;
     }
     print "</SOURCES>\n";
 
