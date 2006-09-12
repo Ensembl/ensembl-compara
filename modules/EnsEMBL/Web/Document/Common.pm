@@ -61,6 +61,7 @@ $self->_prof('B');
 
 #  --- The release bar...
   $self->release->site_name       = $self->species_defs->ENSEMBL_SITE_NAME;
+  $self->release->database        = $self->species_defs->ENSEMBL_HOST.':'.$self->species_defs->ENSEMBL_HOST_PORT;
   $self->release->version         = $self->species_defs->ENSEMBL_VERSION;
   (my $DATE = $self->species_defs->ARCHIVE_VERSION ) =~ s/(\d+)/ \1/g;
   $self->release->date            = $DATE;
