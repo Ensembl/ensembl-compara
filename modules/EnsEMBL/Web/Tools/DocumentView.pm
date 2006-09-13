@@ -30,7 +30,7 @@ sub write_package_frame {
   ### Writes the HTML package listing.
   my ($self, $packages) = @_;
   open (my $fh, ">", $self->location . "/package.html") or die "$!: " . $self->location;
-  print $fh $self->html_header("", "list");
+  print $fh $self->html_header( (class => "list" ));
   print $fh qq(<div class='heading'>Packages</div>);
   print $fh qq(<ul>);
   foreach my $package (@{ $packages }) {
@@ -44,7 +44,7 @@ sub write_method_frame {
   ### Writes a complete list of methods from all modules to an HTML file.
   my ($self, $methods) = @_;
   open (my $fh, ">", $self->location . "/methods.html") or die "$!: " . $self->location;
-  print $fh $self->html_header("", "list");
+  print $fh $self->html_header( (class => "list" ));
   print $fh qq(<div class='heading'>Methods</div>);
   print $fh qq(<ul>);
   my %exists = ();
@@ -101,7 +101,7 @@ sub write_module_page {
   ### Writes the complete HTML documentation page for a module. 
   my ($self, $module) = @_;
   open (my $fh, ">", $self->_html_path_from_package($module->name));
-  print $fh $self->html_header($module->name);
+  print $fh $self->html_header( (package => $module->name) );
   print $fh "<div class='title'><h1>" . $module->name . "</h1>";
   print $fh "<a href='" . cvs_link($module->name) . "'>Source code</a>\n";
   print $fh "&middot; <a href='" . $self->link_for_package($module->name) . "'>Permalink</a>\n";
@@ -322,7 +322,10 @@ sub html_header {
   ### ($package, $class) Returns an HTML header. When supplied, $package
   ### is used to determine relative links and $class determins the class
   ### of the HTML body.
-  my ($self, $package, $class) = @_;
+  my ($self, %params) = @_;
+  my $package = $params{package};
+  my $class = $params{class};
+  my $title = $params{title} ? $params{title} : "e! doc";
   if ($class) {
     $class = " class='" . $class . "'";
   } else {
