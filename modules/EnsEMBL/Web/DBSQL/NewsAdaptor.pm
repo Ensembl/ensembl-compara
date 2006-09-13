@@ -169,7 +169,7 @@ sub fetch_releases {
                 DATE_FORMAT(r.date, '%Y-%m-%d (%D %M %Y)') as full_date,
                 DATE_FORMAT(r.date, '%b %Y') as short_date
         FROM
-                release r);
+                ens_release r);
 
     if ($release) {
         $sql .= qq( WHERE r.release_id = "$release" );

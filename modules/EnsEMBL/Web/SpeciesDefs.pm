@@ -410,7 +410,7 @@ sub _parse {
   warn '-' x 78 , "\n[CONF]    [INFO] Parsing .ini files\n" ;
   $CONF->{'_storage'} = {};
   my $BC = $self->bread_crumb_creator();
-  my $defaults;
+  my ($defaults, $common);
 
 ###### Loop for each species exported from SiteDefs
   
@@ -519,6 +519,7 @@ sub _parse {
       }
     }
 
+    $common = $tree;
 
 #### INI FILE BLAST DATABASES
 # Creates default file name of format
@@ -789,24 +790,24 @@ sub _parse {
     ## ENSEMBL WEBSITE
     if( $tree->{'databases'}->{'ENSEMBL_WEBSITE'} ){
       if( my $dbh = $self->db_connect( $tree, 'ENSEMBL_WEBSITE' ) ) {
-	my $sql = qq(
+	      my $sql = qq(
           SELECT
                 r.release_id    as release_id,
                 DATE_FORMAT(r.date, '%b %Y') as short_date
           FROM
-                `release` r order by r.release_id desc);
+                ens_release r order by r.release_id desc);
 
-	# Store in conf.packed
-	$tree->{RELEASE_INFO} = [];
-	my $query = $dbh->prepare($sql);
+	      # Store in conf.packed
+	      $tree->{RELEASE_INFO} = [];
+	      my $query = $dbh->prepare($sql);
         $query->execute;
-	while (my $row = $query->fetchrow_hashref) {
-	  push @{ $tree->{'RELEASE_INFO'} }, $row ;
-	}
-
+	      while (my $row = $query->fetchrow_hashref) {
+	        push @{ $tree->{'RELEASE_INFO'} }, $row ;
+	      }
       }
     }
 
+    $common = $tree;
 
 ## CORE DATABASE....
     $tree->{'REPEAT_TYPES'} = {};
@@ -1017,6 +1018,10 @@ sub _parse {
 ###### Update object with species config
     $CONF->{'_storage'}{$filename} = $tree;
   }
+  ## Tidy up 'Common'
+  $common->{'SPECIES_BIO_NAME'} = '&nbsp;';
+  $common->{'SPECIES_COMMON_NAME'} = '&nbsp;';
+  $CONF->{'_storage'}{'common'} = $common;
   print STDERR "-" x 78, "\n";
   return 1;
 }
