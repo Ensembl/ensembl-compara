@@ -14,22 +14,25 @@ my %Suffix_of;
 my %Method_of;
 my %Results_of;
 my %Parameters_of;
+my %Warnings_of;
 
 sub new {
   ### c
-  ### Inside-out class for finding plugin modules
+  ### Inside-out class for finding and calling plugin modules.
   my ($class, %params) = @_;
   my $self = bless \my($scalar), $class;
   $Children_of{$self} = [];
   $Locations_of{$self} = defined $params{locations} ? $params{locations} : [];
   $Suffix_of{$self} = defined $params{suffix} ? $params{suffix} : "";
   $Method_of{$self} = defined $params{method} ? $params{method} : "";
-  $Results_of{$self} = undef;
   $Parameters_of{$self} = defined $params{parameters} ? $params{parameters} : [];
+  $Warnings_of{$self} = undef
+  $Results_of{$self} = undef;
   return $self;
 }
 
 sub include {
+  ### Dynamically includes found moledules in the locations specified by {{locations}}, ending in a specified (optional) suffix. Any previously loaded modules are not loaded again.
   my $self = shift;
   my $success = 1;
   foreach my $module (@{ $self->locations }) {
@@ -45,6 +48,7 @@ sub include {
 }
 
 sub create_all {
+  ### Creates an instance of each class found by {{include}}, and stores references to the objects in the {{results}} array.
   my $self = shift;
   foreach my $child (@{ $self->children }) {
     my $temp = new $child;
@@ -55,6 +59,7 @@ sub create_all {
 }
 
 sub call {
+  ### Calls one or more methods on the classes found by {{include}}. The results are stored in the {{results}} array.
   my ($self, @methods) = @_;
   my %results = ();
   foreach my $child (@{ $self->children }) {
@@ -68,6 +73,7 @@ sub call {
 }
 
 sub add_result {
+  ### Accepts a key value pair, and stores the value in the results hash against the key.
   my ($self, $key, $result) = @_;
   if (!$self->results) {
     $self->results({});
@@ -76,11 +82,13 @@ sub add_result {
 }
 
 sub result_for {
+  ### Returns a result from the {{result}} array for a particular class. If {{call}} has been called, this is the result of whatever methods were called against the class. If {{create_all}} has been called most recently, it will return the object reference for that class.
   my ($self, $key) = @_;
   return $self->results->{$key};
 }
 
 sub add_child {
+  ### Adds a child to the {{children}} array.
   my ($self, $child) = @_;
   push @{ $self->children }, $child;
 }
@@ -127,6 +135,13 @@ sub parameters {
   return $Parameters_of{$self};
 }
 
+sub warnings {
+  ### a
+  my $self = shift;
+  $Warnings_of{$self} = shift if @_;
+  return $Warnings_of{$self};
+}
+
 sub DESTROY {
   ### d
   my $self = shift;
@@ -135,6 +150,8 @@ sub DESTROY {
   delete $Suffix_of{$self};
   delete $Method_of{$self};
   delete $Parameters_of{$self};
+  delete $Results_of{$self};
+  delete $Warnings_of{$self};
 }
 
 } 
