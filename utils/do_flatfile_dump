@@ -9,6 +9,7 @@ use Getopt::Long;
 use Pod::Usage;
 use strict;
 use Time::localtime;
+use Data::Dumper;
 use vars qw( $SERVERROOT );
 BEGIN{
   $SERVERROOT = dirname( $Bin );
@@ -99,8 +100,17 @@ foreach my $spp (@species){
   my $slice_adaptor = $db->get_SliceAdaptor();
   $slice_adaptor->cache_toplevel_seq_mappings();
 
-  foreach my $slice (@{ $slice_adaptor->fetch_all('toplevel', undef, 
-						  $inc_dupes, $inc_nonref) } ){
+   # Sort slices 
+   my %chr_sorter;
+   my $i = 1;
+   foreach ( reverse @{$SPECIES_DEFS->ENSEMBL_CHROMOSOMES || []} ) { 
+     $chr_sorter{$_}= $i++;
+   }
+
+   my @slices = sort {$chr_sorter{$b->seq_region_name} <=> $chr_sorter{$a->seq_region_name} || $a->seq_region_name cmp $b->seq_region_name  } @{ $slice_adaptor->fetch_all('toplevel', undef, $inc_dupes, $inc_nonref) || [] };
+
+
+  foreach my $slice (@slices) {
     # generate list of 'unbreakable' blocks around genes
     my ($blocks, $too_long)= generate_blocklist($slice, $spp);
     push (@too_long, @$too_long);
@@ -118,7 +128,7 @@ foreach my $spp (@species){
       $count++;
       if($count >= $CHUNK){
         foreach my $format (sort keys %$formats_dir) {
-          ftp_bundle($format, $formats_dir->{$format}, $batch, $spp) unless $nobundle;
+          ftp_bundle($format, $formats_dir->{$format}, $batch, $spp, \%chr_sorter) unless $nobundle;
         }
         $batch++;
         $count = 0;
@@ -373,7 +383,7 @@ sub dump_format {
 
 #------------------------------------------------------------------------------
 sub ftp_bundle{
-  my ($format, $spp_dumpdir, $batch, $spp) = @_;
+  my ($format, $spp_dumpdir, $batch, $spp, $chr_sorter) = @_;
   my $count = 0;
   my $spp = $ENV{'ENSEMBL_SPECIES'};
   my $gz;
@@ -381,7 +391,9 @@ sub ftp_bundle{
 
   utils::Tool::info(1, "Generating compressed data archives for FTP site (chunk=$CHUNK)..");
   opendir DIR, "$spp_dumpdir" or warn "$spp_dumpdir: $!\n";
-  my @f = readdir DIR;
+
+  # Chromosome sorter
+  my  @f = sort {$chr_sorter->{$b} <=> $chr_sorter->{$a} || $a cmp $b  } (readdir DIR);
   closedir(DIR);
 
   unless (-d "$spp_dumpdir/FTP"){
@@ -391,7 +403,6 @@ sub ftp_bundle{
 
   $gz = gzopen("$spp_dumpdir/FTP/$spp.".($batch*$CHUNK).".dat.gz","wb") || die $!;
  HOP: while (@f){
-
     my $filename = shift(@f);
     utils::Tool::info(1, "Processing $filename...");
 
