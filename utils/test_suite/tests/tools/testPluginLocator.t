@@ -32,6 +32,7 @@ my $locator = EnsEMBL::Web::Tools::PluginLocator->new((
 
 isa_ok($locator, 'EnsEMBL::Web::Tools::PluginLocator');
 ok($locator->include == 1);
+ok(!$locator->warnings);
 
 ok(EnsEMBL::One::Interface::ZMenu->ident() eq 'one');
 ok(EnsEMBL::Two::Interface::ZMenu->ident() eq 'two');

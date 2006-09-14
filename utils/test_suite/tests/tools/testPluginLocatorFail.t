@@ -25,3 +25,7 @@ my $locator_fail = EnsEMBL::Web::Tools::PluginLocator->new((
                                method    => "ident"
                                                   ));
 ok($locator_fail->include == 0);
+
+foreach my $warning (@{ $locator_fail->warnings }) {
+  ok($warning =~ /Can't locate EnsEMBL\/NoNoNo\/Interface\/ZMenu.pm/);
+}
