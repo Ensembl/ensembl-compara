@@ -37,10 +37,13 @@ sub include {
   my $success = 1;
   foreach my $module (@{ $self->locations }) {
     $module .= "::" . $self->suffix;
-    warn "ADDING: " . $module;
     if ($self->dynamic_use($module)) {
       $self->add_child($module);
     } else {
+      if (!$self->warnings) {
+        $self->warnings([]);
+      }
+      push @{ $self->warnings }, $self->dynamic_use_failure($module);
       $success = 0;
     }
   }
@@ -52,7 +55,6 @@ sub create_all {
   my $self = shift;
   foreach my $child (@{ $self->children }) {
     my $temp = new $child;
-   # warn "TEMP: " . $temp;
     $self->add_result($child, $temp);
   }
   return $self->results;
