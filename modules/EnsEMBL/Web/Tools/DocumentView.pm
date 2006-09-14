@@ -1,8 +1,8 @@
 package EnsEMBL::Web::Tools::DocumentView;
 
 
-## 'View' component of the e! doc documentation system. This class
-## controls the display of the documentation information collected.
+### 'View' component of the e! doc documentation system. This class
+### controls the display of the documentation information collected.
 
 use strict;
 use warnings;
@@ -77,7 +77,11 @@ sub write_hierarchy {
     }
     $html .= "</ul>\n";
     $html .= "</div>";
-  }  
+  } else {
+    $html .= "<div class='hier'>";
+    $html .= "No superclasses\n";
+    $html .= "</div>";
+  } 
 
   if (@{ $module->subclasses } > 0) {
     $html .= "<div class='hier'>";
@@ -87,6 +91,10 @@ sub write_hierarchy {
       $html .= "<li><a href='" . $self->link_for_package($subclass->name) . "'> " . $subclass->name. "</a></li>";
     }
     $html .= "</ul>\n";
+    $html .= "</div>";
+  } else {
+    $html .= "<div class='hier'>";
+    $html .= "No subclasses\n";
     $html .= "</div>";
   }
 
@@ -144,14 +152,7 @@ sub toc_html {
   my ($self, $module) = @_;
   my $html = "";
   $html .= qq(<h3>Overview</h3>\n);
-  #$html .= "OVER: " . $module->name . ": " . $module->overview;
-  #warn "OVER: " . $module->name . ": " . $module->overview;
-  #if ($module->overview_documentation) {
-  #  $html .= "Overview: " . $module->name;
-  #  $html .= "<br />\n";
-  #  $html .= "Overview: " . $module->overview_documentation;
-  #  $html .= "<br />\n";
-  #}
+  $html .= $module->overview;
   foreach my $type (@{ $module->types }) {
     $html .= "<h4>" . ucfirst($type) . "</h4>\n";
     $html .= "<ul>";

@@ -130,12 +130,8 @@ sub find_methods {
     }
   }
 
-  $self->overview_documentation($documentation{overview});
-
   if ($documentation{overview}) {
-  #  $self->overview_documentation($documentation{overview});
-  #  $self->overview_documentation("TEST");
-    warn "HOVOVER: " . $self->name . " : " . $self->overview_documentation;
+     $self->overview($documentation{overview});
   }
 
 }
@@ -168,9 +164,10 @@ sub _parse_package_file {
       $docs{overview} = "";
     }
 
-    if ($package && $sub eq "" && /^##/) {
-      #$docs{overview} .= $_;  
-      #$docs{overview} = "found";
+    if ($package && $sub eq "" && /^$comment_code /) {
+      my $temp = $_;
+      $temp =~ s/$comment_code//g;
+      $docs{overview} .= $temp;  
     } 
 
     if (/^sub /) { 
@@ -192,8 +189,9 @@ sub _parse_package_file {
         $docs{methods}{$sub}{type} = "method";
       }
       if ($#elements == 0) {
-        $comment = $self->convert_keyword($comment) . ". ";
+        $comment = ucfirst($self->convert_keyword($comment));
         $docs{methods}{$sub}{type} = lc($comment);
+        $comment .= ". ";
       } elsif ($#elements == 1) {
         if ($elements[0] =~ /eturn/) {
           $docs{methods}{$sub}{return} = $elements[1];
@@ -225,7 +223,7 @@ sub convert_keyword {
     $return_keyword = $keywords{$comment};
     #warn $return_keyword;
   }
-  return ucfirst($return_keyword);
+  return $return_keyword;
 }
 
 sub add_method {
@@ -319,6 +317,13 @@ sub lines {
 }
 
 sub overview_documentation {
+  ### a
+  my $self = shift;
+  $Overview_of{$self} = shift if @_;
+  return $Overview_of{$self};
+}
+
+sub overview {
   ### a
   my $self = shift;
   $Overview_of{$self} = shift if @_;
