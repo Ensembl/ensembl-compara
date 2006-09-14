@@ -15,9 +15,10 @@ sub new {
 sub on_click        :lvalue { $_[0]{'on_click'};   }
 
 sub render { 
-    return sprintf( '<input type="button" name="%s" value="%s" class="red-button" %s />', 
+    return sprintf( '<input type="button" name="%s" id="%s" value="%s" class="red-button" %s />', 
 		    CGI::escapeHTML($_[0]->name) || 'submit', 
+        CGI::escapeHTML($_[0]->id) || 'button_'.CGI::escapeHTML($_[0]->name),
 		    CGI::escapeHTML($_[0]->value), 
-		    $_[0]->on_click ? sprintf("onClick=\"%s\"", $_[0]->on_click) : '');
+		    $_[0]->on_click ? sprintf("onclick=\"%s\"", $_[0]->on_click) : '');
 }  
 1;
