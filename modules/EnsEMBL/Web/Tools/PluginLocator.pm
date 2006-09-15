@@ -33,6 +33,10 @@ sub new {
 
 sub include {
   ### Dynamically includes found moledules in the locations specified by {{locations}}, ending in a specified (optional) suffix. Any previously loaded modules are not loaded again.
+  ### Returns true even if modules failed to load. Anything calling
+  ### {{include}} should check for {{warnings}} if it's important that
+  ### a particular module is loaded.
+
   my $self = shift;
   my $success = 1;
   foreach my $module (@{ $self->locations }) {
@@ -44,7 +48,6 @@ sub include {
         $self->warnings([]);
       }
       push @{ $self->warnings }, $self->dynamic_use_failure($module);
-      $success = 0;
     }
   }
   return $success;
