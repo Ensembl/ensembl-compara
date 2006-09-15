@@ -279,6 +279,43 @@ sub fetch_glossary {
   }} @$T ];
 }
 
+sub fetch_movies {
+  my ($self, $status) = @_;
+  return [] unless $self->db;
+  my $results = [];
+
+  my $sql = 'SELECT movie_id, title, filename, filesize, frame_count, frame_rate FROM help_movie ';
+  $sql .= qq( WHERE status = "$status" ) if $status;
+  $sql .= 'ORDER BY title ASC';
+  my $T = $self->db->selectall_arrayref($sql);
+  return [ map {{
+    'movie_id'    => $_->[0],
+    'title'       => $_->[1],
+    'filename'    => $_->[2],
+    'filesize'    => $_->[3],
+    'frame_count' => $_->[4],
+    'frame_rate'  => $_->[5],
+  }} @$T ];
+}
+
+sub fetch_movie_by_id {
+  my ($self, $id) = @_;
+  return [] unless $self->db;
+  my $results = [];
+
+  my $sql = qq(SELECT title, filename, filesize, width, height, frame_count, frame_rate FROM help_movie where movie_id = "$id");
+  my $T = $self->db->selectrow_arrayref($sql);
+  return {
+    'movie_id'    => $id,
+    'title'       => $T->[0],
+    'filename'    => $T->[1],
+    'filesize'    => $T->[2],
+    'width'       => $T->[3],
+    'height'      => $T->[4],
+    'frame_count' => $T->[5],
+    'frame_rate'  => $T->[6],
+  };
+}
 
 ############ HELPDB INTERFACE QUERIES ###############
 

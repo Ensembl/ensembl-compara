@@ -21,15 +21,16 @@ sub help_adaptor {
 }
 
 sub createObjects { 
-  my $self         = shift;
-  my $keywords     = $self->param( 'kw' );
-  my $ids          = $self->param( 'ids' );
+  my $self        = shift;
+  my $keywords    = $self->param( 'kw' );
+  my $ids         = $self->param( 'ids' );
+  my $movie_id    = $self->param( 'movie' );
 
   my $results    = [];
   my $index = [];
 
-  ## we only want live entries for the helpview index
-  my $status = $self->script =~ /view$/ ? 'live' : '';
+  ## we only want live entries for the public pages
+  my $status = $self->script =~ /view$|Online/ ? 'live' : '';
 
   ## Help schema switch
   my $modular = $self->species_defs->ENSEMBL_MODULAR_HELP;
@@ -66,13 +67,24 @@ sub createObjects {
     $results = $self->help_adaptor->$method_id( $ids );
   }
   $index = $self->help_adaptor->$index($status);
-  my $glossary = $self->help_adaptor->fetch_glossary($status);
+  my $glossary    = $self->help_adaptor->fetch_glossary($status);
+
+  ## get Flash movie info; 
+  my ($movie, $movie_list);  
+  if ($movie_id) {
+    $movie = $self->help_adaptor->fetch_movie_by_id($movie_id);
+  }
+  else {
+    $movie_list = $self->help_adaptor->fetch_movies($status);
+  }
 
   $self->DataObjects( new EnsEMBL::Web::Proxy::Object(
     'Help', {
-      'index'   => $index,
+      'results'     => $results,
+      'index'       => $index,
       'glossary'    => $glossary,
-      'results' => $results,
+      'movie_list'  => $movie_list,
+      'movie'       => $movie,
     }, $self->__data
   ) ); 
 }

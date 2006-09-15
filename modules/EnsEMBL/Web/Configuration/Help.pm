@@ -75,6 +75,69 @@ sub glossaryview {
   }
 }
 
+sub Workshops_Online {
+  my $self = shift;
+  my $object = $self->{object};
+
+  $self->set_title('Ensembl Workshops Online');
+
+  my $panel_1 = $self->new_panel( 'Image',
+      'code'    => "info$self->{flag}",
+      'object'  => $self->{object},
+  );
+  my $panel_2;
+
+  if ($object->param('movie')) {
+      
+    if ($panel_1) {
+      $panel_1->add_components(qw(
+        intro          EnsEMBL::Web::Component::Help::movie_intro
+      ));
+      $self->add_panel( $panel_1 );
+    }
+
+    if( $panel_2 = $self->new_panel( 'Image',
+      'code'    => "info$self->{flag}",
+      'object'  => $self->{object},
+    )) {
+
+      $self->{page}->javascript->add_source( "/js/flash.js" );
+      ## stop the movie on page load
+      $self->{page}->add_body_attr('onload', 'StopMovie();');
+
+      $panel_2->add_components(qw(
+        embed_movie          EnsEMBL::Web::Component::Help::embed_movie
+        control_movie        EnsEMBL::Web::Component::Help::control_movie
+      ));
+      $self->add_form( $panel_2, qw(control_movie     EnsEMBL::Web::Component::Help::control_movie_form) );
+      $self->add_panel( $panel_2 );
+    }
+
+  }
+
+  else {
+      
+    if ($panel_1) {
+      $panel_1->caption('Animated Tutorials - Table of Contents');
+      $panel_1->add_components(qw(
+        intro          EnsEMBL::Web::Component::Help::movie_index_intro
+      ));
+      $self->add_panel( $panel_1 );
+    }
+
+    if( $panel_2 = $self->new_panel( 'SpreadSheet',
+      'code'    => "info$self->{flag}",
+      'object'  => $self->{object},
+    )) {
+      $panel_2->add_components(qw(
+        movie_index          EnsEMBL::Web::Component::Help::movie_index
+      ));
+      $self->add_panel( $panel_2 );
+    }
+  }
+}
+
+
 sub context_menu {
   my $self = shift;
   my $object = $self->{object};
@@ -99,6 +162,51 @@ sub context_menu {
     }
     $self->add_entry( lc($row->{'category'}), %hash );
   }
+}
+
+sub helpdesk_menu {
+  my $self = shift;
+  my $object = $self->{object};
+
+  $self->add_block( 'movies', 'bulleted', 'Helpdesk' );
+    
+  $self->add_entry( 'movies', 'text'=>'Browse Help Articles', 'href'=>'/default/helpview' );
+  $self->add_entry( 'movies', 'text'=>'Animated Tutorials', 'href'=>'/common/Workshops_Online' );
+}
+
+sub admin_menu {
+  my $self = shift;
+
+    ## remove normal menu items
+  $self->delete_block('whattodo');
+  $self->delete_block('docs');
+  $self->delete_block('links');
+  $self->delete_miniad;
+
+    ## replace with dba links
+  my $flag = 'item';
+  $self->add_block( $flag, 'bulleted', "Popup Help Sections" );
+  $self->add_entry( $flag, 'text' => "Add Section",
+                                'href' => "/common/add_help_item" );
+  $self->add_entry( $flag, 'text' => "Edit Section",
+                                'href' => "/common/edit_help_item" );
+
+  $flag = 'article';
+  $self->add_block( $flag, 'bulleted', "HelpView Articles" );
+  $self->add_entry( $flag, 'text' => "Add Article",
+                                'href' => "/common/add_help_article" );
+  $self->add_entry( $flag, 'text' => "Edit Intro/Summary",
+                                'href' => "/common/edit_help_article" );
+  $self->add_entry( $flag, 'text' => "Rearrange Sections",
+                                'href' => "/common/sort_article_items" );
+
+  $flag = 'glossary';
+  $self->add_block( $flag, 'bulleted', "Glossary" );
+  $self->add_entry( $flag, 'text' => "Add Word",
+                                'href' => "/common/add_word" );
+  $self->add_entry( $flag, 'text' => "Edit Word",
+                                'href' => "/common/edit_word" );
+
 }
 
 1;

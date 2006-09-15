@@ -2,6 +2,7 @@ package EnsEMBL::Web::Component::Help;
 
 use EnsEMBL::Web::Component;
 use EnsEMBL::Web::Form;
+use Image::Size;
 
 our @ISA = qw( EnsEMBL::Web::Component);
 use strict;
@@ -168,6 +169,168 @@ sub glossary {
 
   $panel->print($html);
   return 1;
+}
+
+sub movie_index_intro {
+  my($panel,$object) = @_;
+
+  my $html = qq(
+<p>The following Flash tutorials will show you how to use Ensembl to find particular types of information
+and complete specific tasks.</p>
+  );
+
+  $panel->print($html);
+  return 1;
+}
+
+sub movie_index {
+  my($panel,$object) = @_;
+  my $movie_list = $object->movie_list;
+
+  if (ref($movie_list) eq 'ARRAY' && @$movie_list) {
+    $panel->add_columns( 
+      {'key' => "title", 'title' => 'Title', 'width' => '60%', 'align' => 'left' },
+      {'key' => "mins", 'title' => 'Running time (approx.)', 'width' => '20%', 'align' => 'left' },
+      {'key' => "size", 'title' => 'File size', 'width' => '20%', 'align' => 'left' },
+    );
+    foreach my $entry (@$movie_list) {     
+      my $id    = $$entry{'movie_id'};
+      my $title = $$entry{'title'};
+      my $size  = $$entry{'filesize'};
+      my $mins  = $$entry{'frame_count'} / ($$entry{'frame_rate'} * 60);
+      $panel->add_row({
+        'title' => qq(<a href="/common/Workshops_Online?movie=$id">$title</a>),
+        'mins'  => "$mins mins",
+        'size'  => "$size GB",
+      });
+    }
+  }
+  return 1;
+}
+
+sub movie_intro {
+  my($panel,$object) = @_;
+
+  my $html = qq(<p>Click on the 'Play' button below the image to start the tutorial. You can also click on the progress bar to skip forwards and backwards.</p>
+  );
+
+  $panel->print($html);
+  return 1;
+}
+
+sub embed_movie {
+  my($panel,$object) = @_;
+  my $movie = $object->movie;
+
+  ## we hard-code this so that mirror sites don't have to keep downloading
+  ## dozens of megabytes of Flash movies :)
+  my $path = 'http://ensarc-1-14.internal.sanger.ac.uk:10041/flash/'; ## CHANGE TO 'www.ensembl.org' ONCE FILES ARE ON THE WEB NODES!
+  my $uri  = $path.$movie->{'filename'};
+
+  my $html = qq(<div class="flash"><object type="application/x-shockwave-flash" id="movie" data="$uri" width="750" height="500">
+<param name="movie" value="$uri" /> 
+<param name="wmode" value="transparent" />
+</object></div>);
+
+  $panel->print($html);
+  return 1;
+}
+
+sub control_movie {
+  my ( $panel, $object ) = @_;
+  my $label = '';
+  my $html = qq(
+   <div>
+     @{[ $panel->form( 'control_movie' )->render() ]}
+  </div>);
+
+  $panel->print($html);
+  return 1;
+}
+
+sub control_movie_form {
+
+  my( $panel, $object ) = @_;
+  my $script = $object->script;
+  my $movie = $object->movie;
+  my $frame_count = $movie->{'frame_count'};
+  my $frame_rate  = $movie->{'frame_rate'};
+
+  my $form = EnsEMBL::Web::Form->new( 'control_movie', "/common/$script", 'get' );
+  my $controls = "'control_movie_1', 'control_movie_2', 'control_movie_4', 'control_movie_14'";
+  my $progress = "'control_movie_1', 'control_movie_5', 'control_movie_6', 'control_movie_7', 'control_movie_8', 'control_movie_9', 'control_movie_10', 'control_movie_11', 'control_movie_12', 'control_movie_13'";
+
+  $form->add_element(
+    'type'     => 'Button',
+    'on_click' => "hiliteButton('control_movie_1', $controls);PlayMovie($frame_count);",
+    'name'     => 'Play',
+    'value'    => 'Play',
+    'spanning' => 'inline',
+  );
+  $form->add_element(
+    'type'     => 'Button',
+    'on_click' => "hiliteButton('control_movie_2', $controls);StopMovie();",
+    'name'     => 'Stop',
+    'value'    => 'Stop',
+    'spanning' => 'inline',
+  );
+  $form->add_element(
+      'type'      => 'StaticImage',
+      'name'      => 'spacer',
+      'src'       => '/img/blank.gif',
+      'alt'       => ' ',
+      'width'     => 100,
+      'height'    => 25,
+      'spanning'  => 'inline',
+    );
+  $form->add_element(
+    'type'     => 'Button',
+    'on_click' => "hiliteButton('control_movie_4', $progress);RewindMovie();",
+    'name'     => 'Rewind',
+    'value'    => '|<<',
+    'spanning' => 'inline',
+  );
+  for (my $i=1; $i<10; $i++) {
+    my $tenth = int(($frame_count / 10) * $i);
+    $form->add_element(
+      'type'     => 'Button',
+      'on_click' => "SkipToFrame($tenth);",
+      'name'     => "Skip$i",
+      'value'    => '  ',
+      'spanning' => 'inline',
+    );
+  }
+  $form->add_element(
+    'type'     => 'Button',
+    'on_click' => "hiliteButton('control_movie_14', $progress);EndOfMovie();",
+    'name'     => 'End',
+    'value'    => '>>|',
+    'spanning' => 'inline',
+  );
+  $form->add_element(
+      'type'      => 'StaticImage',
+      'name'      => 'spacer',
+      'src'       => '/img/blank.gif',
+      'alt'       => ' ',
+      'width'     => 100,
+      'height'    => 25,
+      'spanning'  => 'inline',
+    );
+  $form->add_element(
+    'type'     => 'Button',
+    'on_click' => 'ZoominMovie()',
+    'name'     => 'Zoomin',
+    'value'    => 'Zoom In',
+    'spanning' => 'inline',
+  );
+  $form->add_element(
+    'type'     => 'Button',
+    'on_click' => 'ZoomoutMovie()',
+    'name'     => 'Zoomout',
+    'value'    => 'Zoom Out',
+    'spanning' => 'inline',
+  );
+  return $form;
 }
 
 
