@@ -4,6 +4,8 @@ use strict;
 use warnings;
 
 use EnsEMBL::Web::Interface::ZMenuView;
+use EnsEMBL::Web::Interface::ZMenuItem::Placeholder;
+use EnsEMBL::Web::Interface::ZMenuItem::Text;
 
 {
 
@@ -23,13 +25,20 @@ sub new {
   $Ident_of{$self}   = defined $params{ident} ? $params{ident} : "";
   $Content_of{$self} = defined $params{content} ? $params{conent} : [];
   $View_of{$self} = defined $params{view} ? $params{view} : new EnsEMBL::Web::Interface::ZMenuView->new( ( zmenu => $self ) );
+  $self->add_content(EnsEMBL::Web::Interface::ZMenuItem::Placeholder->new( ( name => 'placeholder', text => 'Loading...' ) ));
   return $self; 
 } 
+
+sub populate {
+  ### Default population method. Each menu type is initialised by a call to {{populate}} in the appropriate ZMenu subclass (for example {{EnsEMBL::Web::Interface::ZMenu::ensembl_transcript::populate}}. Subclasses should implement this method to appropriately setup the menu for display. This empty method is in place for safe failover.
+  my $self = shift;
+  $self->remove_placeholder;
+}
 
 sub linkage {
   ### Returns the linkage view of the zmenu. In essence, this sends a linkage method request to the zmenu view object, which by default is an instance of {{EnsEMBL::Web::Interface::ZmenuView}}. You can replace this if you want to change the output behaviour of the zmenu.
   my $self = shift;
-  return $self->view->linkage;
+  return $self->view->ajax_linkage;
 }
 
 sub overview {
@@ -38,17 +47,45 @@ sub overview {
   return $self->view->text;
 }
 
+sub json {
+  ### Returns a representation of the ZMenu as a JSON string. Used for asynchronous calls. This method returns the same as {{EnsEMBL::Web::Interface::ZMenuView::json}, but without the escaped quotes. 
+  my $self = shift;
+  my $json = $self->view->json;
+  $json =~ s/\\'/"/g;
+  return $json;
+}
+
 sub add_content {
-  ### Adds a new content row to the zmenu. Accepts a hash ref.
+  ### Adds a new content row to the zmenu. Accepts an object of the {{EnsEMBL::Web::Interface::ZMenuItem}} family. 
   my ($self, $content) = @_;
   push @{ $self->content }, $content;
 }
 
+sub remove_content_with_name {
+  my ($self, $name) = @_;
+  my @removal = ();
+  my $count = 0;
+  foreach my $content (@{ $self->content }) {
+    if ($content->name eq $name) {
+      push @removal, $count;
+    }
+    $count++; 
+  }
+
+  foreach my $index (@removal) {
+    my $rem = splice(@{ $self->content }, $index, 1);
+  }
+}
+
+sub remove_placeholder {
+  my $self = shift;
+  $self->remove_content_with_name('placeholder');
+}
+
 sub add_text {
   ### Adds a new text row to the zmenu.
-  my ($self, $content) = @_;
-  $content->{type} = 'text';
-  $self->add_content($content);
+  my ($self, $name, $text) = @_;
+  $self->add_content(EnsEMBL::Web::Interface::ZMenuItem::Text->new( (text => $text, name => $name)) );
 }
 
 sub size {

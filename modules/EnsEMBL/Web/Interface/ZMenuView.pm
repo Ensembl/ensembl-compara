@@ -39,6 +39,33 @@ sub linkage {
   return $link;
 }
 
+sub ajax_linkage {
+  ### Returns the zmenu as a contents of an HTML link. Useful for imagemaps.
+  my $self = shift;
+  my $link = qq(alt="Click for menu" );
+  $link .= qq(href="javascript:void(0)" );
+  $link .= qq(title="AJAX" );
+  $link .= qq(onclick=");
+  $link .= qq(menu\(') . $self->json .  
+           qq('\));
+  $link .= qq(");
+  return $link;
+}
+
+sub json {
+  my $self = shift;
+  my $json = "{ menu: { title: '" . $self->zmenu->title . 
+                    "', ident: '" . $self->zmenu->ident . 
+                    "', type: '" . $self->zmenu->type . "', items: [";
+  foreach my $item (@{ $self->zmenu->content }) {
+    $json .= " { text: '" . $item->display . "' }, ";
+  }
+  $json .= "] } }";
+  $json =~ s/'/\\'/g;
+  warn "JSON: " . $json;
+  return $json;
+}
+
 sub text {
   ### Returns a simple string representation of a zmenu.
   my $self = shift;
