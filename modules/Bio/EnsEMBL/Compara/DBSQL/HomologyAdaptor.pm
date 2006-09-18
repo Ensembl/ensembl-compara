@@ -301,18 +301,19 @@ sub _columns {
              h.n
              h.s
              h.lnl
-             h.threshold_on_ds);
+             h.threshold_on_ds,
+             h.node_id);
 }
 
 sub _objs_from_sth {
   my ($self, $sth) = @_;
   
   my ($homology_id, $stable_id, $description, $dn, $ds, $n, $s, $lnl, $threshold_on_ds,
-      $method_link_species_set_id, $subtype);
+      $method_link_species_set_id, $subtype, $node_id);
 
   $sth->bind_columns(\$homology_id, \$stable_id, \$method_link_species_set_id,
                      \$description, \$subtype, \$dn, \$ds,
-                     \$n, \$s, \$lnl, \$threshold_on_ds);
+                     \$n, \$s, \$lnl, \$threshold_on_ds, \$node_id);
 
   my @homologies = ();
   
@@ -330,7 +331,8 @@ sub _objs_from_sth {
        '_lnl' => $lnl,
        '_threshold_on_ds' => $threshold_on_ds,
        '_adaptor' => $self,
-       '_this_one_first' => $self->{'_this_one_first'}});
+       '_this_one_first' => $self->{'_this_one_first'},
+       '_node_id' => $node_id});
   }
   
   return \@homologies;  
@@ -377,9 +379,9 @@ sub store {
   }
   
   unless($hom->dbID) {
-    my $sql = "INSERT INTO homology (stable_id, method_link_species_set_id, description, subtype) VALUES (?,?,?,?)";
+    my $sql = "INSERT INTO homology (stable_id, method_link_species_set_id, description, subtype, node_id) VALUES (?,?,?,?,?)";
     my $sth = $self->prepare($sql);
-    $sth->execute($hom->stable_id,$hom->method_link_species_set_id,$hom->description, $hom->subtype);
+    $sth->execute($hom->stable_id,$hom->method_link_species_set_id,$hom->description, $hom->subtype, $hom->node_id);
     $hom->dbID($sth->{'mysql_insertid'});
   }
 
