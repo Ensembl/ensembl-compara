@@ -226,6 +226,7 @@ sub copy {
   $mycopy->genome_db_id($self->genome_db_id);
   $mycopy->sequence_id($self->sequence_id);
   $mycopy->gene_member_id($self->gene_member_id);
+  $mycopy->display_label($self->display_label);
   
   return $mycopy;
 }
@@ -279,6 +280,23 @@ sub stable_id {
   my $self = shift;
   $self->{'_stable_id'} = shift if(@_);
   return $self->{'_stable_id'};
+}
+
+=head2 display_label
+
+  Arg [1]    : string $display_label (optional)
+  Example    :
+  Description:
+  Returntype :
+  Exceptions :
+  Caller     :
+
+=cut
+
+sub display_label {
+  my $self = shift;
+  $self->{'_display_label'} = shift if(@_);
+  return $self->{'_display_label'};
 }
 
 =head2 version
