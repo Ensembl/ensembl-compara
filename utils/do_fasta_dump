@@ -5,6 +5,10 @@ use warnings;
 
 package do_fasta_dump;
 
+### Script used to dump cDNA, peptide, RNA and DNA (masked and non-masked sequences)
+### used on the FTP site, for blast databases and the ssaha server
+### See additional options/documentation at end of script
+
 use Carp;
 use FindBin qw($Bin);
 use File::Basename qw( dirname );
@@ -306,8 +310,10 @@ sub get_data {
   my $load_exons   = 1;
 
   # Dump even non-reference region
-  my $sliceAdaptor = $dbAdaptor->get_SliceAdaptor;
-  my $gene_adaptor = $dbAdaptor->get_GeneAdaptor;
+  my $sliceAdaptor   = $dbAdaptor->get_SliceAdaptor;
+  my $gene_adaptor   = $dbAdaptor->get_GeneAdaptor;
+  my $meta_container = $dbAdaptor->get_MetaContainer();
+  my @analyses = @{$meta_container->list_value_by_key('repeat.analysis ')};
 
   if(!defined($minimise_memory)){
     $sliceAdaptor->cache_toplevel_seq_mappings();
@@ -335,7 +341,7 @@ sub get_data {
 	  dump_dna( $seqio, $slice, 'dna' );
 	}
 	if ( my $seqio_masked = $fhs->{'dna_toplevel_masked'} ){
-	  dump_dna( $seqio_masked, $slice->get_repeatmasked_seq, 'dna_rm' );
+	  dump_dna( $seqio_masked, $slice->get_repeatmasked_seq(\@analyses), 'dna_rm' );
 	}
       }
 
@@ -358,9 +364,9 @@ sub get_data {
 	  #info (1, "M4: DNA");
 	  my $seqio_masked = Bio::SeqIO->new('-format' => 'Fasta', 
 					  '-file' => sprintf ($file,"dna_rm"));
-	  #dump_dna( $seqio_masked, $slice->get_repeatmasked_seq, 'dna_rm' );
+	  #dump_dna( $seqio_masked, $slice->get_repeatmasked_seq(\@analyses), 'dna_rm' );
 	  #dump_dna( $seqio_masked, $slice->get_repeatmasked_seq([('RepeatMask','Dust','TRF','Mono_sup_RepeatMask')]), 'dna_rm' );
-	  dump_dna_masked( $seqio_masked, $slice, mask_sequence($slice), 'dna_rm' );
+	  dump_dna_masked( $seqio_masked, $slice, mask_sequence($slice, \@analyses), 'dna_rm' );
 
 	  # Need to add these so they are closed and gzipped
 	  $fhs->{"$chr_toplevel.dna_rm.chromosome.$seq_name.fa"} = $seqio_masked;
@@ -464,7 +470,7 @@ sub get_data {
 	  dump_dna( $seqio, $segment->to_Slice, 'dna:seqlevel', $location );
 	}
 	if( my $seqio = $fhs->{'dna_seqlevel_masked'} ){
-	  dump_dna( $seqio, $segment->to_Slice->get_repeatmasked_seq,
+	  dump_dna( $seqio, $segment->to_Slice->get_repeatmasked_seq(\@analyses),
 		     'dna_rm:seqlevel', $location );
 	}
       }
@@ -646,6 +652,7 @@ sub dump_dna{
   return 1;
 }
 
+#------------------------------------------------------------------------
 sub dump_dna_masked{
   my ($seqio, $slice, $seqstr, $type_str, $location) = @_;
   return if $no_data;
@@ -668,6 +675,75 @@ sub dump_dna_masked{
   $seqio->write_seq($seq);
   return 1;
 }
+
+#------------------------------------------------------------------------
+sub process_size {
+  my $size = `ps $$ -o vsz |tail -1`;
+  chomp $size;
+  my $unit = chop $size;
+  #if ($unit eq "K") do nothing, we want size in Kb
+  if ($unit eq "M"){
+    $size *= 1024;
+  } elsif ($unit eq "G"){
+    $size *= 1048576;   # 1024*1024
+  }
+  return $size;
+}
+
+#-----------------------------------------------------------------------
+sub mask_sequence {
+
+  ### Input arg 1: slice
+  ### Input arg 2: optional arrayref of repeat.analysis types from meta table
+
+  my ($slice, $logic_names) = (@_);
+  my $seq_region = $slice->seq_region_name;
+
+  my $chunk_start = $slice->start;
+  my $chunk_size  = 10000000;
+  my $chunk_end   = $chunk_start + $chunk_size-1;
+
+  if ($chunk_end > $slice->end) {
+    $chunk_end = $slice->end;
+  }
+
+  my $slice_seq;
+
+  while ($chunk_start <= $slice->end) {
+    my $chunk_slice_name = $slice->coord_system->name . ":" .$slice->coord_system->version . ":" .$slice->seq_region_name . ":" . $chunk_start . ":" . $chunk_end . ":1";
+
+    #print STDERR " Chunk slice name = $chunk_slice_name\n";
+
+    my $chunk_slice = $slice->adaptor->fetch_by_name($chunk_slice_name);
+    
+#    foreach my $lname (@$logic_names) {
+#      my $rfs = $chunk_slice->get_all_RepeatFeatures($lname);
+#      foreach my $old_f (@$rfs) {
+#        my $f = $old_f->transfer( $slice );
+#        $padstr = 'N' x $length;
+#        
+#      }
+#
+#    }
+
+    my $chunk_seq =  $chunk_slice->get_repeatmasked_seq($logic_names)->seq;
+
+    $slice_seq .= $chunk_seq;
+
+    $chunk_start += $chunk_size;
+    $chunk_end   += $chunk_size;
+    if ($chunk_end > $slice->end) {
+      $chunk_end = $slice->end;
+    }
+  }
+
+ # if (CORE::length($slice_seq) != $slice->length) {
+ #   print STDERR "Length difference for slice sequence\n";
+ # }
+
+  return $slice_seq;
+}
+
 
 #------------------------------------------------------------------------------
 sub blast_indexes {
@@ -1265,69 +1341,6 @@ http://www.ebi.ac.uk/biomart/ for more information.
 return ($warning .$text{$key});
 }
 
-sub process_size {
-  my $size = `ps $$ -o vsz |tail -1`;
-  chomp $size;
-  my $unit = chop $size;
-  #if ($unit eq "K") do nothing, we want size in Kb
-  if ($unit eq "M"){
-    $size *= 1024;
-  } elsif ($unit eq "G"){
-    $size *= 1048576;   # 1024*1024
-  }
-  return $size;
-}
-
-sub mask_sequence {
-  my ($slice,$logic_names) = (@_);
-
-
-  my $seq_region = $slice->seq_region_name;
-
-  my $chunk_start = $slice->start;
-  my $chunk_size  = 10000000;
-  my $chunk_end   = $chunk_start + $chunk_size-1;
-
-  if ($chunk_end > $slice->end) {
-    $chunk_end = $slice->end;
-  }
-
-  my $slice_seq;
-
-  while ($chunk_start <= $slice->end) {
-    my $chunk_slice_name = $slice->coord_system->name . ":" .$slice->coord_system->version . ":" .$slice->seq_region_name . ":" . $chunk_start . ":" . $chunk_end . ":1";
-
-    #print STDERR " Chunk slice name = $chunk_slice_name\n";
-
-    my $chunk_slice = $slice->adaptor->fetch_by_name($chunk_slice_name);
-    
-#    foreach my $lname (@$logic_names) {
-#      my $rfs = $chunk_slice->get_all_RepeatFeatures($lname);
-#      foreach my $old_f (@$rfs) {
-#        my $f = $old_f->transfer( $slice );
-#        $padstr = 'N' x $length;
-#        
-#      }
-#
-#    }
-
-    my $chunk_seq =  $chunk_slice->get_repeatmasked_seq($logic_names)->seq;
-
-    $slice_seq .= $chunk_seq;
-
-    $chunk_start += $chunk_size;
-    $chunk_end   += $chunk_size;
-    if ($chunk_end > $slice->end) {
-      $chunk_end = $slice->end;
-    }
-  }
-
- # if (CORE::length($slice_seq) != $slice->length) {
- #   print STDERR "Length difference for slice sequence\n";
- # }
-
-  return $slice_seq;
-}
 
 1;
 
