@@ -229,9 +229,7 @@ sub graphs {
     $self->{'holding_node'}->unlink_all;
     my @graphs;
     my %already_seen_nodes;
-    my $counter=0;
     foreach my $node (values %{$self->{'cache_nodes'}}) {
-      $counter++;
       next if ($already_seen_nodes{$node});
       my $nodes = $node->all_nodes_in_graph;
       for my $n (@{$nodes}) {
