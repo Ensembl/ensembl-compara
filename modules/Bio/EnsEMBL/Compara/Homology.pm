@@ -562,6 +562,26 @@ sub homology_key {
   return $homology_key;
 }
 
+=head2 node_id
+
+  Arg [1]    : int $node_id (optional)
+  Example    : $node_id = $homology->node_id();
+               $homology->subtype($node_id);
+  Description: getter/setter of integer that refer to a node_id in the protein_tree data.
+  Returntype : int
+  Exceptions : none
+  Caller     : general
+
+=cut
+
+sub node_id {
+  my $self = shift;
+
+  $self->{'_node_id'} = shift if(@_);
+  $self->{'_node_id'} = '' unless($self->{'_node_id'});
+  return $self->{'_node_id'};
+  
+}
 
 1;
 
