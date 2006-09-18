@@ -11,3 +11,8 @@ ALTER TABLE analysis_description ADD COLUMN displayable BOOLEAN DEFAULT 1 NOT NU
 # Add display_label column to member table
 
 ALTER TABLE member ADD COLUMN display_label VARCHAR(128) DEFAULT NULL
+
+# Add ancestor_node_id to homology table
+
+ALTER TABLE homology ADD COLUMN node_id int(10) unsigned DEFAULT NULL
+
