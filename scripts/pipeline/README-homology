@@ -192,6 +192,12 @@ available or if it's unable to connect to core databases.
  $ ./comparaLoadGenomes.pl -conf my_compara.conf
  $ ./loadHomologySystem.pl -conf my_compara.conf
 
+If you are running this for the Ensembl production release, make sure
+you are in sycn with the method_link_species_set in the compara master db.
+If not create the synchronized method_link_species_set with the ensembl-compara/scripts/pipeline/create_mlss.pl
+
+Also load the ncbi taxonomy data, see ensembl-compara/scripts/taxonomy/README-taxonomy
+
 At this point the system is ready to run
 
 
