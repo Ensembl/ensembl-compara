@@ -1,3 +1,5 @@
+
+
 #!/bin/sh
 #
 # When run under LSF $LSB_HOSTS contains a list of hosts
@@ -6,6 +8,9 @@
 #
 # Parse host list and start MPI on the hosts
 #
+
+#LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/ensembl/lib
+#export LD_LIBRARY_PATH 
 
 nb_arg=$#
 peptide_file=$1
@@ -20,11 +25,17 @@ if [ ! -e $peptide_file ]; then
  exit 2;
 fi
 
-for HOST in $LSB_HOSTS; do
- echo $HOST >> /tmp/hostfile.$LSB_JOBID
-done
+echo "priting out LD_LIBRARY_PATH 1"
+echo $LD_LIBRARY_PATH
+LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/ensembl/lib
+echo "priting out LD_LIBRARY_PATH 2"
+echo $LD_LIBRARY_PATH
 
-lamboot  -v  /tmp/hostfile.$LSB_JOBID
+##for HOST in $LSB_HOSTS; do
+## echo $HOST >> /tmp/hostfile.$LSB_JOBID
+##done
+
+##lamboot  -v  /tmp/hostfile.$LSB_JOBID
 
 # ADDME: check lamboot actually ran; bail if it didn't
 
@@ -34,12 +45,19 @@ lamboot  -v  /tmp/hostfile.$LSB_JOBID
 # fast communication on SMP node.  Check the docs
 #
 
-mpirun C -ssi rpi usysv /usr/local/ensembl/bin/clustalw-mpi -infile=$peptide_file -outfile=$peptide_file.clw
+# Parse the LSF hostlist into a format openmpi understands and find the number of CPUs we are running on.
+echo $LSB_MCPU_HOSTS | awk '{for(i=1;i <=NF;i=i+2) print $i " slots=" $(i+1); }' >> /tmp/hostfile.$LSB_JOBID
+CPUS=`echo $LSB_MCPU_HOSTS | awk '{for(i=2;i <=NF;i=i+2) { tot+=$i; } print tot }'`
+
+# Now run our executable # Do not mess with the options without reading the openMPI FAQ!
+mpirun  --mca mpi_paffinity_alone 1 --mca btl tcp,self  --hostfile /tmp/hostfile.$LSB_JOBID  --np $CPUS /usr/local/ensembl/bin/clustalw-mpi -infile=$peptide_file -outfile=$peptide_file.clw
+
+##mpirun C -ssi rpi usysv /usr/local/ensembl/bin/clustalw-mpi -infile=$peptide_file -outfile=$peptide_file.clw
 
 #
 # shutdown MPI
 
-lamhalt
+##lamhalt
 
 rm /tmp/hostfile.$LSB_JOBID
 
