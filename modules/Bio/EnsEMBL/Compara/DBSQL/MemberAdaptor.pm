@@ -645,7 +645,8 @@ sub columns {
           'm.chr_end',
           'm.chr_strand',
           'm.sequence_id',
-          'm.gene_member_id'
+          'm.gene_member_id',
+          'm.display_label'
           ];
 }
 
@@ -678,6 +679,7 @@ sub init_instance_from_rowhash {
   $member->sequence_id($rowhash->{'sequence_id'});
   $member->gene_member_id($rowhash->{'gene_member_id'});
   $member->source_name($rowhash->{'source_name'});
+  $member->display_label($rowhash->{'display_label'});
   $member->adaptor($self);
 
   return $member;
@@ -776,8 +778,8 @@ sub store {
   
   my $sth = $self->prepare("INSERT ignore INTO member (stable_id,version, source_name,
                               taxon_id, genome_db_id, description,
-                              chr_name, chr_start, chr_end, chr_strand)
-                            VALUES (?,?,?,?,?,?,?,?,?,?)");
+                              chr_name, chr_start, chr_end, chr_strand,display_label)
+                            VALUES (?,?,?,?,?,?,?,?,?,?,?)");
 
   my $insertCount = $sth->execute($member->stable_id,
                   $member->version,
@@ -788,7 +790,8 @@ sub store {
                   $member->chr_name,
                   $member->chr_start,
                   $member->chr_end,
-                  $member->chr_strand);
+                  $member->chr_strand,
+                  $member->display_label);
   if($insertCount>0) {
     #sucessful insert
     $member->dbID( $sth->{'mysql_insertid'} );
