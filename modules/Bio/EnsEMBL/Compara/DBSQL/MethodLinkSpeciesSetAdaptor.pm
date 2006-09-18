@@ -178,7 +178,7 @@ sub store {
   my $method_link_insert_sql = qq{INSERT INTO method_link (type) VALUES(?)};
 
   my $method_link_species_set_sql = qq{
-        INSERT INTO method_link_species_set (
+        INSERT IGNORE INTO method_link_species_set (
           method_link_species_set_id,
           method_link_id,
           species_set_id,
