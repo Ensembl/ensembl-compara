@@ -774,7 +774,8 @@ sub store_gene_link_as_homology
   my $type = $genepairlink->get_tagvalue('orthotree_type');
   return unless($type);
   my $subtype = $genepairlink->get_tagvalue('taxon_name');
-  
+  my $ancestor = $genepairlink->get_tagvalue('ancestor');
+
   my ($protein1, $protein2) = $genepairlink->get_nodes;
 
   #
@@ -794,6 +795,7 @@ sub store_gene_link_as_homology
   my $homology = new Bio::EnsEMBL::Compara::Homology;
   $homology->description($type);
   $homology->subtype($subtype);
+  $homology->node_id($ancestor->node_id);
   $homology->method_link_type($mlss->method_link_type);
   $homology->method_link_species_set($mlss);
   #$homology->dbID(-1);
