@@ -68,11 +68,12 @@ check metazoa_32.pep.formatdb.log if it is ok delete it
 rm -f metazoa_32.pep.formatdb.log
 cd -
 
+Now send to isg-help@sanger.ac.uk for farm distribution.
+
 Create the index file for future run of mcl
 
 awk 'BEGIN {idx=0} {print idx,$1;idx++}' /data/blastdb/Ensembl/family/metazoa_32.index > metazoa_32.tab
 
-Now send to ssg-isg@sanger.ac.uk for farm distribution.
 
 
 7- Prepare files to run blastp
@@ -83,7 +84,7 @@ cd ../blast_in
  Distribute peptide ids in several files. Each of them will contain 100 ids,
  and would correspond to one blastp job.
 
-~/src/ensembl_main/ensembl-compara/scripts/family/SplitPeptides.pl /data/blastdb/Ensembl/family/metazoa_32.index
+~/src/ensembl_main/ensembl-compara/scripts/family/SplitPeptides.pl -maxids 500 /data/blastdb/Ensembl/family/metazoa_32.index
 
   The created files are named: PeptideSet.1, PeptideSet.2, ..., PeptideSet.n
   so that they are suitable for LSF job array creation. 
@@ -176,6 +177,7 @@ ls |while read i;do echo -n $i" ";awk '/^Subject/ {printf $NF" "} /^Job was exec
 grep Exited job_status|sed "s/\./ /g"|awk '{print $2}'|sort -n > job_status.ids
 
 awk 'BEGIN {s=0;e=0;i=0} i==15 {print;i=0} s==0 {s=$1;e=$1;next} $1==e+1 {e=$1;next} $1>e+1 && e==s {printf s",";s=$1;e=$1;i++;next} $1>e+1 && e!=s {printf s"-"e",";s=$1;e=$1;i++;next} END {print s"-"e}' job_status.ids > job_status.ids.collapse
+'4
 
 grep Exited job_status |awk '{print $1}'|while read i;do del blast_out/$i;done
 
@@ -213,7 +215,7 @@ dimensions 588097x588097
 
 ~/src/ensembl_main/ensembl-compara/scripts/family/mcxassemble.sh family_32
 
- This takes about an hour and will generate a family_32.sym matrix file. Check the matrix for symmetry
+ This takes about an hour and will generate a family_32.bin matrix file. Check the matrix for symmetry
 (this step can be skipped)
 
 ~/src/ensembl_main/ensembl-compara/scripts/family/mcx.sh family_32
@@ -222,7 +224,7 @@ dimensions 588097x588097
 
 (mclheader
 mcltype matrix
-dimensions 467417x467417
+dimensions 588097x588097
 )
 (mclmatrix
 begin
@@ -331,7 +333,7 @@ cd ../clustalw_mpi
 
 mysql -h ecs2 -P3362 -N -u ensro -e "select m.stable_id from member m, family_member fm where m.member_id=fm.member_id and fm.family_id=1" abel_ensembl_compara_32 > 1.ids
 
-fastafetch /data/blastdb/Ensembl/family/metazoa_32.pep /data/blastdb/Ensembl/family/metazoa_32.index 1.ids | grep -v "^Message:" > 1.ids.pep
+fastafetch /data/blastdb/Ensembl/family/metazoa_32.pep /data/blastdb/Ensembl/family/metazoa_32.index -F true 1.ids > 1.ids.pep
 
 bsub  -o 1.out -n10 -R"linux span[ptile=2]" ~/src/ensembl_main/ensembl-compara/scripts/family/run_clustalw_mpi.sh 1.ids.pep
 
@@ -390,8 +392,7 @@ select m.source_name,count(*) from family_member fm, member m where fm.member_id
 
        ensembl-compara/scripts/family/assemble-consensus.pl
        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-       assemble-consensus.pl family_32.description family_32.description.SWISSPROT-consensus \
-family_32.description.SPTREMBL-consensus  > family_32.description-consensus 2> family_32.description-consensus.err
+       assemble-consensus.pl family_32.description family_32.description.SWISSPROT-consensus family_32.description.SPTREMBL-consensus  > family_32.description-consensus 2> family_32.description-consensus.err
 
 
 update the family description in ensembl_family_32 with the data in family_32.description-consensus using ensembl-compara/scripts/family/LoadDescriptionInFamily.pl 
