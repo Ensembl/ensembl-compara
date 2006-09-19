@@ -324,7 +324,7 @@ sub get_data {
 
   foreach my $slice( @{$sliceAdaptor->fetch_all('toplevel', undef, 1)} ){
     info( 1, "Start toplevel ". $slice->name );
-     my $coord_system = $slice->coord_system->name;
+    my $coord_system = $slice->coord_system->name;
 
     # Toplevel DNA dumps ------------------------------------------------------
     if ($fhs->{'dna_toplevel_masked'} or $fhs->{'dna_toplevel'}) {
@@ -375,68 +375,21 @@ sub get_data {
     }
     # End dna_toplevel (masked and not masked) ------------------------------
     if(scalar( grep{$_ !~ /^dna|abinitio|\/dna\// } keys %$fhs ))  {
-      if(!defined($minimise_memory)){
+      if($minimise_memory){
+	my @gene_ids = @{$gene_adaptor->list_dbIDs()};
+	info( 1, "dumping the data for ".scalar(@gene_ids)." genes" );
+	foreach my $gene_id ( @gene_ids ){
+	  my $gene = $gene_adaptor->fetch_by_dbID($gene_id);
+	  dump_data_for_gene($gene, $fhs);
+	}
+      }
+      else {
 	foreach my $gene( @{$slice->get_all_Genes(undef,undef,$load_exons)} ){
-	  foreach my $transcript( @{$gene->get_all_Transcripts} ){
-	    my $logic_name = lc($gene->analysis->logic_name);
-	    my $subtype;
-	    my $ccds = "";
-	    if   ( $logic_name =~/ncrna/)     { $subtype = 'ncrna';}
-	    elsif( ! $transcript->translation ){ $subtype = 'pseudogene' }
-	    elsif( $transcript->is_known   ){ $subtype = 'known'      }
-	    else                            { $subtype = 'novel'      }
-	    
-	    if ($logic_name eq 'pseudogene' && $subtype ne 'pseudogene') {
-	      utils::Tool::warning(1, "Logic name is set to pseudogene, but transcript has translation:".$transcript->translation);
-	    }
-	    # If it is a ccds, $subtype = ccds instead
-	    if( $transcript->translation ) {
-	      foreach my $xref ( @{$transcript->translation->get_all_DBEntries} ) {
-		if ($xref->database eq 'CCDS') {
-		  $subtype = "known-ccds";
-		  $ccds =   $xref->primary_id . '.' . $xref->version;
-		  if( my $seqio = $fhs->{'cdna_known-ccds'} ){
-		    dump_cdna_rna($seqio, $transcript, "cdna:$subtype", $gene, $ccds);
-		  }
-		  if( my $seqio = $fhs->{'pep_known-ccds'} and $subtype eq 'known-ccds' ){
-		    dump_pep( $seqio, $transcript, "pep:$subtype", $gene, $ccds);
-		  }
-		}
-	      }
-	    }
-	    if( ( my $seqio = $fhs->{'cdna_all'} and $subtype ne 'ncrna') ) {
-	      dump_cdna_rna( $seqio, $transcript, "cdna:$subtype", $gene, $ccds);
-	    }
-	    if( my $seqio = $fhs->{'cdna_known'} and $subtype eq 'known' ){
-	      dump_cdna_rna( $seqio, $transcript, 'cdna:known', $gene);
-	    }
-	    if( my $seqio = $fhs->{'cdna_pseudo'} and $subtype eq 'pseudogene' ){
-	      dump_cdna_rna( $seqio, $transcript, 'cdna:pseudogene', $gene);
-	    }
-	    if( my $seqio = $fhs->{'cdna_novel'} and $subtype eq 'novel' ){
-	    dump_cdna_rna( $seqio, $transcript, 'cdna:novel', $gene);
-	  }
-	    
-	    if( my $seqio = $fhs->{'pep_all'} and $subtype ne 'pseudogene'
-		and $subtype ne 'ncrna'){
-	      dump_pep( $seqio, $transcript, "pep:$subtype", $gene, $ccds);
-	    }
-	    if( my $seqio = $fhs->{'pep_known'} and $subtype eq 'known' ){
-	      dump_pep( $seqio, $transcript, 'pep:known', $gene);
-	    }
-	    if( my $seqio = $fhs->{'pep_novel'} and $subtype eq 'novel' ){
-	      dump_pep( $seqio, $transcript, 'pep:novel', $gene);
-	    }
-	    
-	    if( ( my $seqio = $fhs->{'ncrna'} and $subtype eq 'ncrna' ) ) {
-	      $subtype = $gene->biotype;
-	      dump_cdna_rna( $seqio, $transcript, "$logic_name:$subtype",$gene);
-	    }
-
-	  }
+	  dump_data_for_gene($gene, $fhs);
 	}
       }
     }
+
     # Abinitio dumps ----------------------------------------------------------
     #info (1, "Abinitio section");
     if ( scalar (grep {$_ =~ /_abinitio/ } keys %$fhs ))  {
@@ -478,71 +431,6 @@ sub get_data {
     #info( 1, "End toplevel ". $slice->name );
   }
 
-  if($minimise_memory){
-    my @gene_ids = @{$gene_adaptor->list_dbIDs()};
-    info( 1, "dumping the data for ".scalar(@gene_ids)." genes" );
-    foreach my $gene_id ( @gene_ids ){
-      my $gene = $gene_adaptor->fetch_by_dbID($gene_id);
-      foreach my $transcript( @{$gene->get_all_Transcripts} ){
-	my $logic_name = lc($gene->analysis->logic_name);
-	my $subtype;
-	my $ccds = "";
-	if   ( $logic_name =~/ncrna/)     { $subtype = 'ncrna';}
-	elsif( ! $transcript->translation ){ $subtype = 'pseudogene' }
-	elsif( $transcript->is_known   ){ $subtype = 'known'      }
-	else                            { $subtype = 'novel'      }
-	
-	if ($logic_name eq 'pseudogene' && $subtype ne 'pseudogene') {
-	  utils::Tool::warning(1, "Logic name is set to pseudogene, but transcript has translation:".$transcript->translation);
-	}
-	# If it is a ccds, $subtype = ccds instead
-	if( $transcript->translation ) {
-	  foreach my $xref ( @{$transcript->translation->get_all_DBEntries} ) {
-	    if ($xref->database eq 'CCDS') {
-	      $subtype = "known-ccds";
-	      $ccds =   $xref->primary_id . '.' . $xref->version;
-	      if( my $seqio = $fhs->{'cdna_known-ccds'} ){
-		dump_cdna_rna($seqio, $transcript, "cdna:$subtype", $gene, $ccds);
-	      }
-	      if( my $seqio = $fhs->{'pep_known-ccds'} and $subtype eq 'known-ccds' ){
-		dump_pep( $seqio, $transcript, "pep:$subtype", $gene, $ccds);
-	      }
-	    }
-	  }
-	}
-	if( ( my $seqio = $fhs->{'cdna_all'} and $subtype ne 'ncrna') ) {
-	  dump_cdna_rna( $seqio, $transcript, "cdna:$subtype", $gene, $ccds);
-	}
-	if( my $seqio = $fhs->{'cdna_known'} and $subtype eq 'known' ){
-	  dump_cdna_rna( $seqio, $transcript, 'cdna:known', $gene);
-	}
-	if( my $seqio = $fhs->{'cdna_pseudo'} and $subtype eq 'pseudogene' ){
-	  dump_cdna_rna( $seqio, $transcript, 'cdna:pseudogene', $gene);
-	}
-	if( my $seqio = $fhs->{'cdna_novel'} and $subtype eq 'novel' ){
-	  dump_cdna_rna( $seqio, $transcript, 'cdna:novel', $gene);
-	}
-	
-	if( my $seqio = $fhs->{'pep_all'} and $subtype ne 'pseudogene'
-	    and $subtype ne 'ncrna'){
-	  dump_pep( $seqio, $transcript, "pep:$subtype", $gene, $ccds);
-	}
-	if( my $seqio = $fhs->{'pep_known'} and $subtype eq 'known' ){
-	  dump_pep( $seqio, $transcript, 'pep:known', $gene);
-	}
-	if( my $seqio = $fhs->{'pep_novel'} and $subtype eq 'novel' ){
-	  dump_pep( $seqio, $transcript, 'pep:novel', $gene);
-	}
-	
-	if( ( my $seqio = $fhs->{'ncrna'} and $subtype eq 'ncrna' ) ) {
-	  $subtype = $gene->biotype;
-	  dump_cdna_rna( $seqio, $transcript, "$logic_name:$subtype",$gene);
-	}
-	
-      }
-    }
-  }
-
   # Delete empty files ----------------------------------------------------
   foreach my $type (keys %$fhs) {
     my $seqio = $fhs->{$type};
@@ -563,6 +451,67 @@ sub get_data {
 
 
 #------------------------------------------------------------------------------
+sub dump_data_for_gene {
+  my ($gene, $fhs) = @_;
+  foreach my $transcript( @{$gene->get_all_Transcripts} ){
+    my $logic_name = lc($gene->analysis->logic_name);
+    my $subtype;
+    my $ccds = "";
+    if   ( $logic_name =~/ncrna/)     { $subtype = 'ncrna';}
+    elsif( ! $transcript->translation ){ $subtype = 'pseudogene' }
+    elsif( $transcript->is_known   ){ $subtype = 'known'      }
+    else                            { $subtype = 'novel'      }
+    
+    if ($logic_name eq 'pseudogene' && $subtype ne 'pseudogene') {
+      utils::Tool::warning(1, "Logic name is set to pseudogene, but transcript has translation:".$transcript->translation);
+    }
+    # If it is a ccds, $subtype = ccds instead
+    if( $transcript->translation ) {
+      foreach my $xref ( @{$transcript->translation->get_all_DBEntries} ) {
+	if ($xref->database eq 'CCDS') {
+	  $subtype = "known-ccds";
+	  $ccds =   $xref->primary_id . '.' . $xref->version;
+	  if( my $seqio = $fhs->{'cdna_known-ccds'} ){
+	    dump_cdna_rna($seqio, $transcript, "cdna:$subtype", $gene, $ccds);
+	  }
+	  if( my $seqio = $fhs->{'pep_known-ccds'} and $subtype eq 'known-ccds' ){
+	    dump_pep( $seqio, $transcript, "pep:$subtype", $gene, $ccds);
+	  }
+	}
+      }
+    }
+    if( ( my $seqio = $fhs->{'cdna_all'} and $subtype ne 'ncrna') ) {
+      dump_cdna_rna( $seqio, $transcript, "cdna:$subtype", $gene, $ccds);
+    }
+    if( my $seqio = $fhs->{'cdna_known'} and $subtype eq 'known' ){
+      dump_cdna_rna( $seqio, $transcript, 'cdna:known', $gene);
+    }
+    if( my $seqio = $fhs->{'cdna_pseudo'} and $subtype eq 'pseudogene' ){
+      dump_cdna_rna( $seqio, $transcript, 'cdna:pseudogene', $gene);
+    }
+    if( my $seqio = $fhs->{'cdna_novel'} and $subtype eq 'novel' ){
+      dump_cdna_rna( $seqio, $transcript, 'cdna:novel', $gene);
+    }
+    
+    if( my $seqio = $fhs->{'pep_all'} and $subtype ne 'pseudogene'
+	and $subtype ne 'ncrna'){
+      dump_pep( $seqio, $transcript, "pep:$subtype", $gene, $ccds);
+    }
+    if( my $seqio = $fhs->{'pep_known'} and $subtype eq 'known' ){
+      dump_pep( $seqio, $transcript, 'pep:known', $gene);
+    }
+    if( my $seqio = $fhs->{'pep_novel'} and $subtype eq 'novel' ){
+      dump_pep( $seqio, $transcript, 'pep:novel', $gene);
+    }
+    
+    if( ( my $seqio = $fhs->{'ncrna'} and $subtype eq 'ncrna' ) ) {
+      $subtype = $gene->biotype;
+      dump_cdna_rna( $seqio, $transcript, "$logic_name:$subtype",$gene);
+    }
+  }
+}
+
+#---------------------------------------------------------------------
 #FORMAT >STABLE_ID TYPE:SUBTYPE TOPLEVEL:SLICE_NAME gene:genename
 #>ENST00000289823 cdna:known chromosome:NCBI34:8:21922367:21927699:1
 #gene:ENSG00000158815
@@ -843,7 +792,11 @@ sub ssaha_servers {
   utils::Tool::check_dir($dna_dir);
 
   my $command = "ssaha2Build -save ";
-  my $assembly = $SPECIES_DEFS->get_config($species,"ENSEMBL_GOLDEN_PATH");
+
+  # Get assembly 
+  my $cs_adaptor   = $db_adaptor->get_CoordSystemAdaptor;
+  my ($highest_cs) = @{$cs_adaptor->fetch_all()};
+  my $assembly     = $highest_cs->version();
 
   # cdna SSAHA (rebuilt each release)
   my %ini_datasources = %{ $SPECIES_DEFS->get_config($species, "SSAHA2_DATASOURCES")|| {} };
