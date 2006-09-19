@@ -131,6 +131,10 @@ sub show_news {
   my $prev_rel = 0;
   my $rel_selected = $object->param('release_id') || $object->param('rel');
 
+  if ($rel_selected) {
+    $html .= "<h2>Release $rel_selected</h2>";
+  }
+
   my @generic_items = @{$object->generic_items};
   my @species_items = @{$object->species_items};
 
