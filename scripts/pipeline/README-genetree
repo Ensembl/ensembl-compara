@@ -2,21 +2,30 @@
 For now, the genetree process is an add-on to the homology pipeline.
 Please start reading README-homology first.
 
-1- Load the NCBI taxonomy data 
-   ~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Ideally this should be a job by itself in the pipeline but for now, it's done by hand :)
+# 1- Load the NCBI taxonomy data 
+#    ~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# These instructions are in the README-homology file as of ensembl v40
+# 
+# Ideally this should be a job by itself in the pipeline but for now,
+# it's done by hand :)
+#
+# All instructions to do it are in
+# ensembl-compara/scripts/taxonomy/README-taxonomy
 
-All instructions to do it are in ensembl-compara/scripts/taxonomy/README-taxonomy
 
-2- Create the other gene tree-related tables in the database
-   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# 2- Create the other gene tree-related tables in the database
+#   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# These tables are already in the main ensembl-compara/sql/table.sql
+# file as of ensembl v40.
+#
+# $ mysql -hia64e -uensadmin -pensembl abel_compara_tree_37 \
+#   < ensembl-compara/sql/protein_tree.sql
+#
+# This will create 3 tables
+# protein_tree_nodes
+# protein_tree_member
+# protein_tree_tags
 
-mysql -hia64e -uensadmin -pensembl abel_compara_tree_37 < ensembl-compara/sql/protein_tree.sql
-
-This will create 3 tables
-protein_tree_node
-protein_tree_member
-protein_tree_tag
 
 3- Copy and modify the compara-hive config file
    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -29,15 +38,53 @@ must exist.
   $ cp compara-hive-homology.conf.example my_compara.conf
   <editor> my_compara.conf
 
-   { TYPE => GENE_TREE,
-     'cluster_params' => '{species_set=>[3,4,5,7,10,11,13,14,15,16,17,18,22,24,25,26,27,28,29,31,32,33,34,35,36], brh=>1, all_best=>0, bsr_threshold=>0.33}',
-     'breakcluster_params' => '{species_set=>[3,4,5,7,10,11,13,14,15,16,17,18,22,24,25,26,27,28,29,31,32,33,34,35,36], bsr_threshold_increase=>0.1}',
-     'max_gene_count' => 2000,
-     'species_tree_file' => "{species_tree_file=>'/ecs2/work2/avilella/hive/avilella_compara_homology_40/compara_encode_species_tree_40_mfurc.nh'}",
-     'rap_jar_file' => '/ecs2/work2/avilella/bin/rap.jar'
-   },
- 
-One example of the species_tree_file can be found in ensembl-compara/scripts/pipeline/species_tree_rap.nh
+ { TYPE => GENE_TREE,
+    'cluster_params' => 
+        '{'
+        .'species_set=>[3,4,5,7,10,11,13,14,15,16,17,18,22,24,25,26,27,28,29,31,32,33,34,35,36],'
+        .'brh=>1,'
+        .'all_best=>0,'
+        .'bsr_threshold=>0.33'
+        .'}',
+     'breakcluster_params' => 
+        '{'
+        .'species_set=>[3,4,5,7,10,11,13,14,15,16,17,18,22,24,25,26,27,28,29,31,32,33,34,35,36],'
+        .'bsr_threshold_increase=>0.1'
+        .'}',
+    'max_gene_count' => 2000,
+    'species_tree_file' => 
+        '{'
+        .'species_tree_file=>'
+                .'"/ecs2/work2/avilella/hive/avilella_compara_homology_40/'
+                .'compara_encode_species_tree_40_mfurc.nh"'
+        .'}',
+    'rap_jar_file' => '/ecs2/work2/avilella/bin/rap.jar'
+  },
+
+One example of the species_tree_file can be found in
+ensembl-compara/scripts/pipeline/species_tree_rap.nh
+
+
+4- Create the species tree file 
+   ~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+An annotated phylogenetic tree file representing the species in the
+compara DB and their relative distances is required for the final rap
+tree building stage. The file must be in Nexus (.nh) format, with all
+levels enclosed with a '()ROOT:0.0;' level. A curated nh file
+containing the ensembl species is available at ???. An unweighted file
+based on the NCBI taxonomy can be generated using compara's
+taxonTreeTool.pl as follows;
+
+ $ $BASEDIR/ensembl-compara/scripts/taxonomy/taxonTreeTool.pl \
+   -url mysql://ensro@ia64e:3306/abel_compara_tree_37 \
+   -taxa_compara -mini \
+   | tail n 1
+
+The file that is to be used for rap should be configured in the
+'species_tree_file' setting of my_compara.GENE_TREE.
+
+
 
 5- Run the configure scripts
    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
