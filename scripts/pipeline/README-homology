@@ -1,3 +1,22 @@
+ABOUT
+~~~~~
+
+This document describes how to run the ensembl-compara homology
+pipeline.
+
+- Loads the longest peptide for each gene locii in each configured
+  species database into the compara DB's member table.
+
+- Loads each UniProt protein into the member table (metazoa only for
+  now; needs extending for e.g. viridiplantae). Only needed if the
+  family pipeline is to be run subsequently.
+
+- Performs all-against-all blastp searched of the member proteins in
+  the DB, and loads the processed results into the homology_member
+  table.
+
+- Run this pipeline in preparation for running the family or gene-tree
+  pipelines.
 
 
 1- code API needed and executable
@@ -9,6 +28,7 @@
   ensembl-compara
   ensembl-hive
   ensembl-analysis
+  ensembl-pipeline
 
   executables
   ~~~~~~~~~~~
@@ -23,8 +43,13 @@
 
 bioperl code;
 
-  $ cvs -d :ext:bio.perl.org:/home/repository/bioperl co -r branch-1-2  \
-    bioperl-live
+  $ cvs -d :ext:bio.perl.org:/home/repository/bioperl \
+    co -r branch-1-2 bioperl-live
+
+bioperl-run code (for the CodeML runnable/parser)
+  
+  $ cvs -d :ext:bio.perl.org:/home/repository/bioperl \
+    co -r bioperl-run-release-1-4-0 bioperl-run
 
 core ensembl code
 
@@ -38,6 +63,10 @@ ensembl-analysis code (for Runnables)
 
   $ cvs -d :ext:cvs.sanger.ac.uk:/nfs/ensembl/cvsroot co ensembl-analysis
 
+ensembl-pipeline code (deprecated by ensembl-analysis, but some legacy...)
+
+  $ cvs -d :ext:cvs.sanger.ac.uk:/nfs/ensembl/cvsroot co ensembl-pipeline
+
 ensembl-hive code
 
   $ cvs -d :ext:cvs.sanger.ac.uk:/nfs/ensembl/cvsroot co  ensembl-hive
@@ -49,6 +78,7 @@ in tcsh
   $ setenv BASEDIR   /some/path/to/modules
   $ setenv PERL5LIB ${BASEDIR}/ensembl/modules:${PERL5LIB}
   $ setenv PERL5LIB ${BASEDIR}/ensembl-compara/modules:${PERL5LIB}
+  $ setenv PERL5LIB ${BASEDIR}/ensembl-pipeline/modules:${PERL5LIB}
   $ setenv PERL5LIB ${BASEDIR}/ensembl-analysis/modules:${PERL5LIB}
   $ setenv PERL5LIB ${BASEDIR}/ensembl-hive/modules:${PERL5LIB}
   $ setenv PERL5LIB ${BASEDIR}/bioperl-live:${PERL5LIB}
@@ -58,6 +88,7 @@ in bash
   $ BASEDIR=/some/path/to/modules
   $ export PERL5LIB=${BASEDIR}/ensembl/modules:${PERL5LIB}
   $ export PERL5LIB=${BASEDIR}/ensembl-compara/modules:${PERL5LIB}
+  $ export PERL5LIB=${BASEDIR}/ensembl-pipeline/modules:${PERL5LIB}
   $ export PERL5LIB=${BASEDIR}/ensembl-analysis/modules:${PERL5LIB}
   $ export PERL5LIB=${BASEDIR}/ensembl-hive/modules:${PERL5LIB}
   $ export PERL5LIB=${BASEDIR}/bioperl-live:${PERL5LIB}
@@ -79,15 +110,15 @@ in bash
 Pick a mysql instance and create a database;
 
   $ mysql -hecs2 -P3361 -uensadmin -pxxxx \
-    -e "create database ensembl_compara_jess_23_1"
+    -e "create database my_ensembl_compara_40_1"
 
 And load the schemas;
 
-  $ mysql -hecs2 -P3361 -uensadmin -pxxxx ensembl_compara_jess_23_1 \
+  $ mysql -hecs2 -P3361 -uensadmin -pxxxx my_ensembl_compara_40_1 \
     < $BASEDIR/ensembl-hive/sql/tables.sql
-  $ mysql -hecs2 -P3361 -uensadmin -pxxxx ensembl_compara_jess_23_1 \
+  $ mysql -hecs2 -P3361 -uensadmin -pxxxx my_ensembl_compara_40_1 \
     < $BASEDIR/ensembl-compara/sql/table.sql
-  $ mysql -hecs2 -P3361 -uensadmin -pxxxx ensembl_compara_jess_23_1 \
+  $ mysql -hecs2 -P3361 -uensadmin -pxxxx my_ensembl_compara_40_1 \
     < $BASEDIR/ensembl-compara/sql/pipeline-tables.sql
 
 You now need to load the NCBI taxonomy data into the ncbi_taxa_name
@@ -96,11 +127,11 @@ and ncbi_taxa_node tables. See the following file;
   $BASEDIR/ensembl-compara/scripts/taxonomy/README-taxonomy
 
 You may alternatively be able to copy taxonomy tables from an existing
-compara db, e.g.
+compara db (this may take a few mins), e.g.
 
-  $ mysqldump -hecs2 -P3365 -uensadmin -pxxxx --no-create-info \
+  $ mysqldump -hecs2 -P3365 -uensro --no-create-info \
     ncbi_taxonomy ncbi_taxa_node ncbi_taxa_name \
-    | mysql -hecs2 -P3361 -uensadmin -pxxxx ensembl_compara_jess_23_1
+    | mysql -hecs2 -P3361 -uensadmin -pxxxx my_ensembl_compara_40_1
 
 
 3- Choose a working directory with enough disk space
@@ -109,10 +140,12 @@ The homology pipeline takes several GB of space for fasta databases and
 error and output from the RunnableDBs
 
 fasta blast database directory =
-/nfs/ecs4/work2/ensembl/jessica/data/blastDB/ensembl_compara_jess_23_1
+/nfs/ecs4/work2/ensembl/jessica/data/blastDB/my_ensembl_compara_40_1
 
+You only need to create this dir if you want to capture the LSF out
+and err files, see the IMPORTANT note below;
 hive worker output directory =
-/nfs/ecs4/work2/ensembl/jessica/data/hive_output/ensembl_compara_jess_23_1
+/nfs/ecs4/work2/ensembl/jessica/data/hive_output/my_ensembl_compara_40_1
 
 
 4- Copy and modify the compara-hive config file
@@ -126,9 +159,13 @@ must exist.
   $ cp compara-hive-homology.conf.example my_compara.conf
   <editor> my_compara.conf
 
-If you are just interested in building the orthologs, and are not
-going to run the family pipeline later, comment out the TYPE=>UNIPROT
-directives.
+If you are just interested in building the orthologs/gene-trees, and
+are not going to run the family pipeline later, comment out the
+TYPE=>UNIPROT directives.
+
+If you are going to build gene-trees and are not interested in the
+old-style (pre-v39) ENSEMBL_ORTHOLOGS, comment out the TYPE=>dNdS and
+TYPE=>HOMOLOGY directives.
 
 IMPORTANT: The hive system can generate an awful lot of log outputs
 that are dumped in the hive_output_dir. When a pipeline runs fine,
@@ -159,9 +196,9 @@ These environment variables cannot be set in either ::Config::Blast or
 ::Config::General;
 
 in tcsh:
-  $ setenv PATH /path/to/wublast/binaries:$PATH
-  $ setenv BLASTMAT /path/to/blast/matrix:$BLASTMAT
-  $ setenv BLASTFILTER /path/to/blast/filter:$BLASTFILTER
+  $ setenv PATH /usr/local/ensembl/bin:$PATH
+  $ setenv BLASTMAT /usr/local/ensembl/data/blastmat:$BLASTMAT
+  $ setenv BLASTFILTER /usr/local/ensembl/bin:$BLASTFILTER
 
 
 5- Run the configure scripts
@@ -211,13 +248,19 @@ scripts to an existing directory in the PATH
   tcsh$ setenv PATH ${PATH}:${BASEDIR}/ensembl-hive/scripts
   bash$ export PATH=$PATH:$BASEDIR/ensembl-hive/scripts
 
+You may also need to set the LSB_DEFAULTPROJECT environment variable
+if you are using LSF across the sanger farm;
+
+  tcsh$ setenv LSB_DEFAULTPROJECT ensembl-compara
+  bash$ export LSB_DEFAULTPROJECT=ensembl-compara
+       
 There are two beekepers, one which uses LSF job submission system, and
 another that uses the local machine only. If using the local machine,
 add the -local flag to the command and the workers will run as 
 background system commands rather than being submited to an LSF resource.
 
  $ beekeeper.pl \
-   -url mysql://user:password@ecs2:3361/ensembl_compara_jess_23_1 -loop
+   -url mysql://user:password@ecs2:3361/my_ensembl_compara_40_1 -loop
 
 where 'user' and 'password' allow write access to the database
 
