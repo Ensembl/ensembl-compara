@@ -138,6 +138,19 @@ sub peptide {
 }
 
 
+=head2 peptide_seq
+
+ Arg1        : data object
+ Description : fetches peptide seq  off the core API object 
+ Return type : string
+
+=cut
+
+sub peptide_seq {
+  my $self = shift;
+  return $self->Obj->get_peptide;
+}
+
 =head2 release
 
  Arg1        : data object

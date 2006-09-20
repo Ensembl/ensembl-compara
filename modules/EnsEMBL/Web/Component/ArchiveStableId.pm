@@ -94,7 +94,6 @@ sub status {
   my($panel, $object) = @_;
   my $id = $object->stable_id.".".$object->version;
   my $param = $object->type eq 'Translation' ? 'peptide' : lc($object->type);
-
   my $status;
   my $current_obj = $object->get_current_object($object->type);
   my $current_release = $object->species_defs->ENSEMBL_VERSION;
@@ -181,6 +180,17 @@ sub archive {
     else {
       $text = "No archive available for $id";
     }
+
+    # Add protein sequence if old version of peptide
+
+    if ($object->type eq 'Translation') {
+      my $seq = $object->peptide_seq;
+
+      if ($seq) {
+	$seq =~ s#(.{1,60})#$1<br />#g;
+	$text .= "<br /><kbd>>$id<br />$seq</kbd>";
+      }
+    }
     $panel->add_row("Archive", $text);
   }
   return 1;
@@ -198,7 +208,6 @@ sub archive {
 sub associated_ids {
   my($panel, $object) = @_;
   my $type = $object->type;
-
   my ($id_type, $id_type2);
   if ($type eq 'Gene') {
     ($id_type, $id_type2) = ("transcript", "peptide");
@@ -214,29 +223,39 @@ sub associated_ids {
   }
 
   my $url = qq( <a href="idhistoryview?%s=%s">%s</a>);
+
+  # e.g. Get all gene ids;  Do map to rm duplicate IDS
   my %ids = map { $_->stable_id => $_; } @{ $object->$id_type || [] };
 
   foreach (keys %ids) {
     my $html;
     $html .= "<p>".ucfirst($id_type). sprintf ($url, $id_type, $_, $_). "</p>";
 
-    my %ids2 = map { $_->stable_id => $_; } @{ $object->$id_type2 || [] };
-    foreach (keys %ids2) {
-      $html .= "<p>".ucfirst($id_type2). sprintf ($url, $id_type2, $_, $_);
+    my %id2;  # need to uniquify these
+    foreach  ( @{ $object->$id_type2 || [] }) {
+      my $stable_id2 = $_->stable_id;
+      next unless $stable_id2;
+      $id2{$stable_id2} = $_;
+    }
+
+    foreach my $stable_id2 (keys %id2) {
+      $html .= "<p>".ucfirst($id_type2). sprintf ($url, $id_type2, $stable_id2, $stable_id2);
+
       if ($id_type2 eq 'peptide') {
-	my $peptide_obj = $ids2{$_};
+	my $peptide_obj = $id2{$stable_id2};
 	my $seq = $peptide_obj->get_peptide;
+
 	if ($seq) {
 	  $seq =~ s#(.{1,60})#$1<br />#g;
 	  $html .= "<br /><kbd>$seq</kbd>";
 	}
-	else {
-	  $html .= qq( (sequence same as <a href="protview?peptide=$_">current release</a>));
+	else  {
+	  $html .= qq( (sequence same as <a href="protview?peptide=$stable_id2">current release</a>));
 	}
       }
       $html .= "</p>";
     }
-    $panel->add_row( "Associated $id_type, $id_type2 in archive", $html);
+    $panel->add_row( "Associated IDs in archive", $html);
   }
   return 1;
 }
