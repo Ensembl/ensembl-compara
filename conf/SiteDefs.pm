@@ -88,7 +88,7 @@ use Sys::Hostname;
 use Exporter();
 @ISA=qw(Exporter);
 
-$VERSION=40;
+$VERSION=41;
 
 #### START OF VARIABLE DEFINITION #### DO NOT REMOVE OR CHANGE THIS COMMENT ####
 
