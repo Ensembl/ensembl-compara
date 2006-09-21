@@ -285,7 +285,7 @@ sub dynamic_use {
   Returntype: Depends on the parameter
   Exceptions:
   Caller    :
-  Example   : my $val = $sitedefs->get_config('Homo_sapiens','ENSEMBL_PREFIX')
+  Example   : my $val = $sitedefs->get_config('Homo_sapiens','ENSEMBL_VERSION')
 
 =cut
 
