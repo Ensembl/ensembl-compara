@@ -26,6 +26,70 @@ sub new {
   return $self;
 }
 
+sub write_info_page {
+  ### Writes information page for the documentation.
+  my ($self, $packages) = @_;
+  open (my $fh, ">", $self->location . "/info.html") or die "$!: " . $self->location;
+  print $fh $self->html_header();
+  print $fh "<div class='front'>";
+  print $fh "<h1><i><span style='color: #3366bb'>e</span><span style='color: #880000'>!</span></i> documentation info</h1>";
+  print $fh qq(<div class='coverage'>);
+  print $fh qq(<table>);
+  print $fh qq(<tr>);
+  print $fh qq(<td width='40%'><b>Family</b></td>);
+  print $fh qq(<td width='20%' align='center'><b>Size</b></td>);
+  print $fh qq(<td width='40%' align='center'><b>Average coverage</b></td>);
+  print $fh qq(</tr>);
+  my %count;
+  my %total;
+  my %average;
+  foreach my $module (@{ $packages }) {
+    my @elements = split /::/, $module->name;  
+    my $final = pop @elements;
+    my $family = "";
+    foreach my $element (@elements) {
+      $family .= $element . "::";
+      if (!$count{$family}) { 
+        $count{$family} = 0;
+      }
+      $count{$family}++;
+    }
+  }
+
+  foreach my $module (@{ $packages }) {
+    foreach my $family (keys %count) {
+      if (!$total{$family}) {
+        $total{$family} = 0;
+      }
+      if ($module->name =~ /$family/) {
+        $total{$family} += $module->coverage;
+      }
+    }
+  }
+
+  foreach my $family (keys %count) {
+    $average{$family} = ($total{$family} / $count{$family});  
+  }
+
+  foreach my $family (reverse sort { $average{$a} <=> $average{$b} } keys %average) {
+    my $text = $family;
+    $text =~ s/::$//;
+
+    print $fh "<tr>";
+    print $fh "<td>" . $text. "</td>";
+    print $fh "<td align='center'>" . $count{$family}  . "</td>";
+    print $fh "<td align='center' >" . sprintf("%.0f", $average{$family}) . " %</td>";
+    print $fh "</tr>";
+
+  }
+
+  print $fh qq(</table><br /><br />);
+  print $fh "<a href='base.html'>&larr; Home</a>";
+  print $fh "<br /><br />";
+  print $fh qq(</div>);
+  print $fh $self->html_footer;
+}
+
 sub write_package_frame {
   ### Writes the HTML package listing.
   my ($self, $packages) = @_;
@@ -249,7 +313,7 @@ sub write_base_frame {
   my $lines = 0;
   foreach my $module (@{ $modules }) {
     $count++;
-    $total += $module->module_coverage;
+    $total += $module->coverage;
     $methods += @{ $module->methods };
     $lines += $module->lines;
   }
@@ -257,7 +321,7 @@ sub write_base_frame {
   if ($count == 0) {
     warn "No modules indexed!";
   } else {
-    my $coverage = $total / $count; 
+    $coverage = $total / $count; 
   }
   print $fh $self->html_header;
   print $fh "<div class='front'>";
@@ -267,7 +331,8 @@ sub write_base_frame {
   print $fh qq(</div>);
   print $fh "<div class='date'>" . $count . " modules<br />\n";
   print $fh "" . $methods . " methods<br />\n";
-  print $fh "" . $lines . " lines of source code<br />\n";
+  print $fh "" . $lines . " lines of source code<br /><br />\n";
+  print $fh "<a href='info.html'>More info &rarr;</a><br />\n";
   print $fh "</div>";
   print $fh "<div class='date'>Last built: " . localtime() . "</div>";
   print $fh "</div>";

@@ -139,6 +139,7 @@ sub generate_html {
   $writer->support($support);
   $writer->base_url($base);
 
+  $writer->write_info_page($self->modules);
   $writer->write_package_frame($self->modules);
   $writer->write_method_frame($self->methods);
   $writer->write_base_frame($self->modules);
