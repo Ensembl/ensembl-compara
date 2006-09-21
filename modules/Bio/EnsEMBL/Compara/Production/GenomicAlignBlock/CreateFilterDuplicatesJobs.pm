@@ -54,6 +54,7 @@ use Bio::EnsEMBL::Compara::Production::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Compara::Production::DnaFragChunk;
 use Bio::EnsEMBL::Compara::Production::DnaFragChunkSet;
 use Bio::EnsEMBL::Compara::Production::DnaCollection;
+use Bio::EnsEMBL::Utils::Exception;
 
 use Bio::EnsEMBL::Pipeline::RunnableDB;
 our @ISA = qw(Bio::EnsEMBL::Pipeline::RunnableDB);
@@ -171,22 +172,21 @@ sub createFilterDuplicatesJobs
 
   my $dnafrag_id_list = $dna_collection->get_all_dnafrag_ids;
 
-  if (defined $region  && scalar @{$dnafrag_id_list} != 1) {
-    throw("For a defined region, only one dnafrag_id is expected.\n");
-  }
-
   my $count = 0;
+  my %already_seen_dnafrag_ids;
   foreach my $dnafrag_id (@{$dnafrag_id_list}) {
+    next if (defined $already_seen_dnafrag_ids{$dnafrag_id});
     my $input_hash = {};
     $input_hash->{'dnafrag_id'} = $dnafrag_id;
-    $input_hash->{'seq_region_start'} = $seq_region_start;
-    $input_hash->{'seq_region_end'} = $seq_region_end;
+    $input_hash->{'seq_region_start'} = $seq_region_start if (defined $seq_region_start);
+    $input_hash->{'seq_region_end'} = $seq_region_end if (defined $seq_region_end);
     my $input_id = main::encode_hash($input_hash);
     #printf("create_job : %s : %s\n", $analysis->logic_name, $input_id);
     Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob
         (-input_id       => $input_id,
          -analysis       => $analysis,
          -input_job_id   => 0);
+    $already_seen_dnafrag_ids{$dnafrag_id} = 1;
     $count++;
   }
   printf("created %d jobs for analysis logic_name %s\n", $count, $analysis->logic_name);
