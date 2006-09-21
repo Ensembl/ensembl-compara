@@ -442,11 +442,13 @@ sub store_featurePair_as_genomicAlignBlock
 
   $self->{'comparaDBA'}->get_GenomicAlignBlockAdaptor->store($GAB);
   
-  my $track_sql = "INSERT IGNORE INTO genomic_align_block_job_track ".
-                  "(genomic_align_block_id, analysis_job_id) ".
-                  "VALUES (".$GAB->dbID.",".$self->input_job->dbID.")";
-  print("$track_sql\n") if($self->debug);
-  $self->{'comparaDBA'}->dbc->do($track_sql);
+  if ($self->debug) {
+    my $track_sql = "INSERT IGNORE INTO genomic_align_block_job_track ".
+      "(genomic_align_block_id, analysis_job_id) ".
+        "VALUES (".$GAB->dbID.",".$self->input_job->dbID.")";
+    print("$track_sql\n") if($self->debug);
+    $self->{'comparaDBA'}->dbc->do($track_sql);
+  }
 
   if($self->debug > 2) { print_simple_align($GAB->get_SimpleAlign, 80);}
 
