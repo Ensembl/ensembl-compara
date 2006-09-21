@@ -244,14 +244,19 @@ sub create_chunks
   my $chromosomes = [];
   if(defined $self->{'region'}) {
     my ($coord_system_name, $seq_region_name, $seq_region_start, $seq_region_end) = split(/:/,  $self->{'region'});
-    print("fetch by region coord:$coord_system_name seq_name:$seq_region_name\n");
-    push @{$chromosomes}, $SliceAdaptor->fetch_by_region($coord_system_name, $seq_region_name);
+    if (defined $seq_region_name && $seq_region_name ne "") {
+      print("fetch by region coord:$coord_system_name seq_name:$seq_region_name\n");
+      push @{$chromosomes}, $SliceAdaptor->fetch_by_region($coord_system_name, $seq_region_name);
+    } else {
+      print("fetch by region coord:$coord_system_name\n");
+      $chromosomes = $SliceAdaptor->fetch_all($coord_system_name);
+    }
   } else {
     # use of ('toplevel', undef,0,1) to include all duplicate reference sequences such as the PAR in
     # Y chromosome
     $chromosomes = $SliceAdaptor->fetch_all('toplevel',undef,0,1);
   }
-
+  print("number of seq_regions ".scalar @{$chromosomes}."\n");
   $self->{'chunkset_counter'} = 1;
   $self->{'current_chunkset'} = new Bio::EnsEMBL::Compara::Production::DnaFragChunkSet;
   $self->{'current_chunkset'}->description(sprintf("collection_id:%d group:%d",
