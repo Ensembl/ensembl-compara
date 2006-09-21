@@ -20,15 +20,12 @@ sub features {
     $self->errorTrack('Variation features not displayed for more than '.$max_length.'Kb');
     return;
   }
+  return $self->fetch_features;
+}
 
-  if( exists( $self->{'config'}->{'snps'} ) ) {
-    my $snps = $self->{'config'}->{'snps'} || [];
-    if(@$snps && !$self->{'config'}->{'variation_legend_features'} ) {
-      #warn ref($self)."........................";
-      $self->{'config'}->{'variation_legend_features'}->{'variations'} = { 'priority' => 1000, 'legend' => [] };
-    }
-    return $snps;
-  } else {
+sub fetch_features {
+  my ($self) = @_;
+  unless( exists( $self->{'config'}->{'snps'} ) ) {
     my %ct = %Bio::EnsEMBL::Variation::VariationFeature::CONSEQUENCE_TYPES;
     my $vf_ref = $self->{'container'}->get_all_VariationFeatures();
     my @vari_features =
@@ -40,8 +37,13 @@ sub features {
       #warn "...................".ref($self)."........................";
       $self->{'config'}->{'variation_legend_features'}->{'variations'} = { 'priority' => 1000, 'legend' => [] };
     }
-    return \@vari_features;
+    $self->{'config'}->{'snps'} = \@vari_features;
   }
+  my $snps = $self->{'config'}->{'snps'} || [];
+  if(@$snps && !$self->{'config'}->{'variation_legend_features'} ) {
+    $self->{'config'}->{'variation_legend_features'}->{'variations'} = { 'priority' => 1000, 'legend' => [] };
+  }
+  return $snps;
 }
 
 sub href {
