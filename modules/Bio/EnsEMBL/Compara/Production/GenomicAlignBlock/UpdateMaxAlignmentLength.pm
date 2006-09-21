@@ -270,17 +270,35 @@ sub remove_alignment_data_inconsistencies {
     }
     
     if (scalar @gab_ids) {
-      my $sql_gab_to_exec = $sql_gab . "(" . join(",", @gab_ids) . ");";
-      my $sql_ga_to_exec = $sql_ga . "(" . join(",", @ga_ids) . ");";
-      my $sql_gag_to_exec = $sql_gag . "(" . join(",", @ga_ids) . ");";
-      
-      foreach my $sql ($sql_gab_to_exec,$sql_ga_to_exec,$sql_gag_to_exec) {
-        my $sth = $dba->dbc->prepare($sql);
+      for (my $i=0; $i < scalar @gab_ids; $i=$i+20000) {
+        my (@gab_ids_to_delete);
+        for (my $j = $i; ($j < scalar @gab_ids && $j < $i+20000); $j++) {
+          push @gab_ids_to_delete, $gab_ids[$j];
+        }
+        my $sql_gab_to_exec = $sql_gab . "(" . join(",", @gab_ids_to_delete) . ");";
+        my $sth = $dba->dbc->prepare($sql_gab_to_exec);
         $sth->execute;
         $sth->finish;
       }
     }
+    if (scalar @ga_ids) {
+      for (my $i=0; $i < scalar @ga_ids; $i=$i+20000) {
+        my (@ga_ids_to_delete);
+        for (my $j = $i; ($j < scalar @ga_ids && $j < $i+20000); $j++) {
+          push @ga_ids_to_delete, $ga_ids[$j];
+        }
+        my $sql_ga_to_exec = $sql_ga . "(" . join(",", @ga_ids_to_delete) . ");";
+        my $sql_gag_to_exec = $sql_gag . "(" . join(",", @ga_ids_to_delete) . ");";
+        
+        foreach my $sql ($sql_ga_to_exec,$sql_gag_to_exec) {
+          my $sth = $dba->dbc->prepare($sql);
+          $sth->execute;
+          $sth->finish;
+        }
+      }
+    }
   }
 }
+
 
 1;
