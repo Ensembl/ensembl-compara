@@ -29,7 +29,7 @@ Options:
  -dbname      compara database name or alias
  -cs_genome_db_id   genome_db_id of the consensus species (e.g. 1 for Homo_sapiens)
  -qy_genome_db_id   genome_db_id of the query species (e.g. 2 for Mus_musculus)
- -alignment_type type of alignment stored e.g.TRANSLATED_BLAT (default: WGA_BLAT) 
+ -alignment_type type of alignment stored e.g.TRANSLATED_BLAT (default: TRANSLATED_BLAT) 
  -conf_file registry conf file
  -tab  0 or 1 (1)tab delimited files or (0)use DBAdaptor and load line by line (default)
 
