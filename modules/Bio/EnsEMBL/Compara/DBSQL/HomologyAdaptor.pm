@@ -301,7 +301,7 @@ sub _columns {
              h.n
              h.s
              h.lnl
-             h.threshold_on_ds,
+             h.threshold_on_ds
              h.node_id);
 }
 
