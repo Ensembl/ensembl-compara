@@ -333,14 +333,14 @@ sub run {
 sub write_output {
   my $self = shift;
 
-  my $disconnect_when_inactive_default = $self->{'comparaDBA'}->disconnect_when_inactive;
-  $self->{'comparaDBA'}->disconnect_when_inactive(0);
+  my $disconnect_when_inactive_default = $self->{'comparaDBA'}->dbc->disconnect_when_inactive;
+  $self->{'comparaDBA'}->dbc->disconnect_when_inactive(0);
 
   bless $self, "Bio::EnsEMBL::Analysis::RunnableDB::AlignmentFilter";
   $self->write_output;
   bless $self, "Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::AlignmentChains";
 
-  $self->{'comparaDBA'}->disconnect_when_inactive($disconnect_when_inactive_default);
+  $self->{'comparaDBA'}->dbc->disconnect_when_inactive($disconnect_when_inactive_default);
 }
 
 1;
