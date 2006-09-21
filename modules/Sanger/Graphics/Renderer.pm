@@ -132,7 +132,7 @@ my $T = time();
     }
   }
   foreach (sort keys %$Ta) {
-    warn sprintf( "%30s %8.3f %5d %8.6f", $_, $Ta->{$_}[0], $Ta->{$_}[1], $Ta->{$_}[0]/$Ta->{$_}[1] );
+    #warn sprintf( "%30s %8.3f %5d %8.6f", $_, $Ta->{$_}[0], $Ta->{$_}[1], $Ta->{$_}[0]/$Ta->{$_}[1] );
   }
   $timer->push( "Pushed glyphs", 9 ) if $timer;
   

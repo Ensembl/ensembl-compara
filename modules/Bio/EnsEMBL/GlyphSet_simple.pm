@@ -86,7 +86,6 @@ sub _init {
   
   my $VirtualContig   = $self->{'container'};
   if( $self->can( '_threshold_update' ) ) {
-warn "UPDATAING THRESH FOR .... $type";
     $self->_threshold_update();
   }
   my $Config          = $self->{'config'};
@@ -107,9 +106,9 @@ warn "UPDATAING THRESH FOR .... $type";
   my $navigation     = $Config->get( $type, 'navigation' )           || 'on';
   my $max_length_nav = $Config->get( $type, 'navigation_threshold' ) || 15000000;
   
-  warn "H.................",$Config->get( $type, 'height' );
+  #warn "H.................",$Config->get( $type, 'height' );
   ## VC to long to display featues dump an error message
-  warn ">>>$type ... LEN $max_length $max_length_nav $vc_length";
+  #warn ">>>$type ... LEN $max_length $max_length_nav $vc_length";
   if( $vc_length > $max_length *1010 ) {
     $self->errorTrack( $self->my_label." only displayed for less than $max_length Kb.");
     return;
@@ -149,7 +148,7 @@ warn "UPDATAING THRESH FOR .... $type";
     #warn 
     $h = $self->{'extras'}{'height'};
   }
-  warn ">>>$type ... HEIGHT $h NAV $navigation ";
+  #  warn ">>>$type ... HEIGHT $h NAV $navigation ";
   my $previous_start = $vc_length + 1e9;
   my $previous_end   = -1e9 ;
   my ($T,$C,$C1) = 0;
