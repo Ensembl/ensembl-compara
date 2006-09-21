@@ -66,7 +66,7 @@ $self->prepareChainSystem;
 
 foreach my $dnaCollectionConf (@{$self->{'dna_collection_conf_list'}}) {
   print("creating ChunkAndGroup jobs\n");
-  $self->storeMaskingOptions($dnaCollectionConf);
+#  $self->storeMaskingOptions($dnaCollectionConf);
   $self->createChunkAndGroupDnaJobs($dnaCollectionConf);
 }
 
