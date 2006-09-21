@@ -282,7 +282,7 @@ sub create_dirs_for_dumps {
     elsif ($type =~ /seqlevel/) {  # contig, chunk, chromosome for Scerevisiae
       $seqtype = "dna";
       $idtype = "seqlevel";
-      $idtype = $cs_adaptor->fetch_sequence_level->name if $release < 40;
+      #$idtype = $cs_adaptor->fetch_sequence_level->name if $release < 40;
     }
     else {
       ($seqtype, $idtype) = split (/_/, $type);
@@ -808,6 +808,7 @@ sub ssaha_servers {
     unlink $fh || warn "Can't delete $fh: $!" if -z $fh;    # delete empty file
     next unless $types =~ /toplevel$|dna\.chromosome|cdna_all/; #toplevel dna matches chr or toplevel
     next unless -e $fh;
+    push @toplevel, $fh;
 
     if ($no_dumpdata) {
       if (-e "$fh.gz") {
@@ -817,11 +818,10 @@ sub ssaha_servers {
       }
     }
 
-    if ($types eq 'cdna_all') {
+    if ($types eq 'cdna_all' && $TYPES[0] ne 'pre') {  # no cDNA ssaha for pre site
       create_cdna_ssaha($ini_datasources, $species, $assembly, $release, $command, $fh);
       next;
     }
-    push @toplevel, $fh;
   }
 
   # read dir for toplevel files if $no_dumpdata
