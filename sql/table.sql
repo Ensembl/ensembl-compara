@@ -286,7 +286,7 @@ CREATE TABLE member (
   genome_db_id                int(10) unsigned, # FK genome_db.genome_db_id
   sequence_id                 int(10) unsigned, # FK sequence.sequence_id
   gene_member_id              int(10) unsigned, # FK member.member_id
-  description                 varchar(255),
+  description                 text DEFAULT NULL,
   chr_name                    char(40),
   chr_start                   int(10),
   chr_end                     int(10),
