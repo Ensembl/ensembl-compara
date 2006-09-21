@@ -231,8 +231,10 @@ sub filter_duplicates {
       printf("dnafrag %s %s %d:%d has %d GABs\n", $dnafrag->coord_system_name, $dnafrag->name, 
              $region_start, $region_end, scalar(@$genomic_align_block_list));
 
-      foreach my $gab (@{$genomic_align_block_list}) {
-        $self->assign_jobID_to_genomic_align_block($gab);
+      if ($self->debug) {
+        foreach my $gab (@{$genomic_align_block_list}) {
+          $self->assign_jobID_to_genomic_align_block($gab);
+        }
       }
 
       # first sort the list for processing
@@ -358,12 +360,14 @@ sub removed_equals_from_genomic_align_block_list {
       next if($self->{'delete_hash'}->{$gab2->dbID}); #already deleted so skip it
     
       if(genomic_align_blocks_identical($gab1, $gab2)) {
-        if($gab1->{'analysis_job_id'} == $gab2->{'analysis_job_id'}) {
-          printf("WARNING!!!!!! identical GABs dbID:%d,%d  SAME JOB:%d,%d\n", 
-               $gab1->dbID, $gab2->dbID, 
-               $gab1->{'analysis_job_id'},$gab2->{'analysis_job_id'},);
-          print("  "); print_gab($gab1);
-          print("  "); print_gab($gab2);
+        if ($self->debug) {
+          if($gab1->{'analysis_job_id'} == $gab2->{'analysis_job_id'}) {
+            printf("WARNING!!!!!! identical GABs dbID:%d,%d  SAME JOB:%d,%d\n", 
+                   $gab1->dbID, $gab2->dbID, 
+                   $gab1->{'analysis_job_id'},$gab2->{'analysis_job_id'},);
+            print("  "); print_gab($gab1);
+            print("  "); print_gab($gab2);
+          }
         }
         if($gab1->dbID < $gab2->dbID) {
           $self->{'delete_hash'}->{$gab2->dbID} = $gab2;
@@ -550,21 +554,24 @@ sub process_overlap_for_chunk_edge_truncation {
       $self->{'delete_hash'}->{$gab1->dbID} = $gab1;
     }
     $self->{'truncate_count'}++;  
-
-    if($gab1->{'analysis_job_id'} == $gab2->{'analysis_job_id'}) {
-      printf("TRUNCATE GABs %d %d\n", $gab2->dbID, $gab1->dbID);
-      if($self->{'delete_hash'}->{$gab1->dbID}) { print("  DEL ");} else{ print("      ");}
-      print_gab($gab1);
-      if($self->{'delete_hash'}->{$gab2->dbID}) { print("  DEL ");} else{ print("      ");}
-       print_gab($gab2);
-    } 
+    if ($self->debug) {
+      if($gab1->{'analysis_job_id'} == $gab2->{'analysis_job_id'}) {
+        printf("TRUNCATE GABs %d %d\n", $gab2->dbID, $gab1->dbID);
+        if($self->{'delete_hash'}->{$gab1->dbID}) { print("  DEL ");} else{ print("      ");}
+        print_gab($gab1);
+        if($self->{'delete_hash'}->{$gab2->dbID}) { print("  DEL ");} else{ print("      ");}
+        print_gab($gab2);
+      } 
+    }
   }
   else {
     $self->{'not_truncate_count'}++;
-    if($gab1->{'analysis_job_id'} == $gab2->{'analysis_job_id'}) {
-      printf("overlaping GABs %d %d - not truncate\n", $gab2->dbID, $gab1->dbID);
-      print("      "); print_gab($gab1);
-      print("      "); print_gab($gab2);
+    if ($self->debug) {
+      if($gab1->{'analysis_job_id'} == $gab2->{'analysis_job_id'}) {
+        printf("overlaping GABs %d %d - not truncate\n", $gab2->dbID, $gab1->dbID);
+        print("      "); print_gab($gab1);
+        print("      "); print_gab($gab2);
+      }
     }
   }
 }
