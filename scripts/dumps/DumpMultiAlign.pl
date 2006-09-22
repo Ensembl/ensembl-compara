@@ -214,8 +214,8 @@ my $dbname = "compara";
 my $species = "human";
 my $coord_system = "chromosome";
 my $seq_region = "14";
-my $seq_region_start = 75000000;
-my $seq_region_end = 75010000;
+my $seq_region_start;
+my $seq_region_end;
 my $alignment_type = "BLASTZ_NET";
 my $set_of_species = "human:mouse";
 my $original_seq = undef;
@@ -296,7 +296,13 @@ my $genomic_align_blocks =
     $genomic_align_block_adaptor->fetch_all_by_MethodLinkSpeciesSet_Slice(
         $method_link_species_set, $query_slice);
 
-my $all_aligns;
+my $alignIO = Bio::AlignIO->newFh(
+        -interleaved => 0,
+        -fh => \*STDOUT,
+        -format => $output_format,
+        -idlength => 10
+    );
+  
 foreach my $this_genomic_align_block (@$genomic_align_blocks) {
   my $simple_align = Bio::SimpleAlign->new();
   $simple_align->id("GAB#".$this_genomic_align_block->dbID);
@@ -304,8 +310,9 @@ foreach my $this_genomic_align_block (@$genomic_align_blocks) {
 
   foreach my $this_genomic_align (@{$this_genomic_align_block->get_all_GenomicAligns}) {
     my $seq_name = $this_genomic_align->dnafrag->genome_db->name;
-    $seq_name =~ s/(.)\w* (.)\w*/$1$2/;
+    $seq_name =~ s/(.)\w* (...)\w*/$1$2/;
     $seq_name .= $this_genomic_align->dnafrag->name;
+    $seq_name = $simple_align->id().":".$seq_name if ($output_format eq "fasta");
     my $aligned_sequence;
     if ($masked_seq == 1) {
       $this_genomic_align->original_sequence($this_genomic_align->get_Slice->get_repeatmasked_seq(undef,1)->seq);
@@ -337,18 +344,8 @@ foreach my $this_genomic_align_block (@$genomic_align_blocks) {
     }
     $simple_align->add_seq($seq);
   }
-  push(@$all_aligns, $simple_align);
-}
-
-my $alignIO = Bio::AlignIO->newFh(
-        -interleaved => 0,
-        -fh => \*STDOUT,
-        -format => $output_format,
-        -idlength => 10
-    );
-  
-foreach my $this_align (@$all_aligns) {
-  print $alignIO $this_align;
+  print $alignIO $simple_align;
+  $this_genomic_align_block = undef;
 }
 
 exit;
