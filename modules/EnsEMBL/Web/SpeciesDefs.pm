@@ -521,6 +521,48 @@ sub _parse {
 
     $common = $tree;
 
+    ## get some info from core meta table
+    unless ($filename eq 'MULTI') {
+      ## hash of keys (other than taxonomy) that we want to use
+      my %meta_map = (
+        'species.ensembl_alias_name' => 'ENSEMBL_COMMON_NAME',
+        'assembly.default' => 'ENSEMBL_GOLDEN_PATH',
+      );
+
+      my $dbh = $self->db_connect( $tree, 'ENSEMBL_DB' );
+      my $sql = qq(SELECT * FROM meta WHERE meta_key != 'patch' ORDER BY meta_id);
+      my $sth = $dbh->prepare( $sql );
+      my $rst  = $sth->execute || die( $sth->errstr );
+      my $results = $sth->fetchall_arrayref();
+      my @taxonomy = ();
+      foreach my $row (@$results) {
+        my $key   = $row->[1];
+        my $value = $row->[2];
+        if ($key eq 'species.classification') {
+          push(@taxonomy, $value);
+        }
+        elsif (my $v = $meta_map{$key}) {
+          $tree->{'general'}{$v} = $value;
+        }
+      }
+      $sth->finish();
+      $dbh->disconnect();
+
+      ## Do species name and group
+      $tree->{'general'}{'SPECIES_BIO_NAME'} = $taxonomy[1].' '.$taxonomy[0];
+      $tree->{'general'}{'SPECIES_GROUP'} = 'Eukaryotes';
+      foreach my $taxon (@taxonomy) {
+        if ($taxon eq 'Mammalia') {
+          $tree->{'general'}{'SPECIES_GROUP'} = 'Mammals';
+          last;
+        }
+        if ($taxon eq 'Chordata') {
+          $tree->{'general'}{'SPECIES_GROUP'} = 'Chordates';
+          last;
+        }
+      }
+    }
+
 #### INI FILE BLAST DATABASES
 # Creates default file name of format
 # Anopheles_gambiae.AgamP3.39.dna_rm.seqlevel.fa if the value "%_" is in ini file
@@ -528,18 +570,18 @@ sub _parse {
     foreach my $blast_type (keys %$tree) {
       next unless $blast_type =~ /_DATASOURCES/;
       foreach my $source ( keys %{$tree->{$blast_type}} ) {
-	my $file = $tree->{$blast_type}{$source};
-	next unless $file =~ /^%_/;
-	my $assembly = $tree->{'general'}{'ENSEMBL_GOLDEN_PATH'};
-	(my $type = lc($source)) =~ s/_/\./ ;
-	if ($type =~ /latestgp/) {
-	  $type =~ s/latestgp(.*)/dna$1\.seqlevel/;
-	  $type =~ s/.masked/_rm/;
-	}
-	$type = "ncrna" if $type eq 'rna.nc';
-	my $new_file = sprintf( '%s.%s.%s.%s', $filename, $assembly, $SiteDefs::ENSEMBL_VERSION, $type ).".fa";
-	#print "AUTOGENERATING $source......$new_file\t";
-	$tree->{$blast_type}{$source} = $new_file;
+	      my $file = $tree->{$blast_type}{$source};
+	      next unless $file =~ /^%_/;
+	      my $assembly = $tree->{'general'}{'ENSEMBL_GOLDEN_PATH'};
+	      (my $type = lc($source)) =~ s/_/\./ ;
+	      if ($type =~ /latestgp/) {
+	        $type =~ s/latestgp(.*)/dna$1\.seqlevel/;
+	        $type =~ s/.masked/_rm/;
+	      }
+	      $type = "ncrna" if $type eq 'rna.nc';
+	      my $new_file = sprintf( '%s.%s.%s.%s', $filename, $assembly, $SiteDefs::ENSEMBL_VERSION, $type ).".fa";
+	      #print "AUTOGENERATING $source......$new_file\t";
+	      $tree->{$blast_type}{$source} = $new_file;
       }
     }
 
@@ -584,50 +626,50 @@ sub _parse {
         my %sections = (
           'SYNTENY' => 'GENE_MULTIPLE',
         );
- ## We've done the DB hash...
- ## So lets get on with the multiple alignment hash;
-	my $q = qq{
-	    SELECT ml.type, gd.name, mlss.name, mlss.method_link_species_set_id
-	    FROM   method_link ml, method_link_species_set mlss, genome_db gd, species_set ss 
-	    WHERE  mlss.method_link_id = ml.method_link_id 
-        AND    mlss.species_set_id=ss.species_set_id 
-        AND    ss.genome_db_id = gd.genome_db_id 
-        AND    ml.type in ('MLAGAN','BLASTZ_NET','BLASTZ_RAW')};
+        ## We've done the DB hash...
+        ## So lets get on with the multiple alignment hash;
+	      my $q = qq{
+	        SELECT ml.type, gd.name, mlss.name, mlss.method_link_species_set_id
+	        FROM   method_link ml, method_link_species_set mlss, genome_db gd, species_set ss 
+	        WHERE  mlss.method_link_id = ml.method_link_id 
+          AND    mlss.species_set_id=ss.species_set_id 
+          AND    ss.genome_db_id = gd.genome_db_id 
+          AND    ml.type in ('MLAGAN','BLASTZ_NET','BLASTZ_RAW')};
 
-        my $sth = $dbh->prepare( $q );
-        my $rv  = $sth->execute || die( $sth->errstr );
-        my $results = $sth->fetchall_arrayref();
-        my $thash;
+          my $sth = $dbh->prepare( $q );
+          my $rv  = $sth->execute || die( $sth->errstr );
+          my $results = $sth->fetchall_arrayref();
+          my $thash;
 
-	my $KEY = 'ALIGNMENTS';
-        foreach my $row ( @$results ) {
-          my ($type, $species, $name, $id) = (uc($row->[0]), $row->[1], $row->[2], $row->[3]);
-          $species =~ tr/ /_/;
-	      $tree->{$KEY}->{$id}->{'id'} = $id;
-	      $tree->{$KEY}->{$id}->{'name'} = $name;
-	       $tree->{$KEY}->{$id}->{'type'} = $type;
-          $tree->{$KEY}->{$id}->{'species'}->{$species} = 1;
-        }
+	        my $KEY = 'ALIGNMENTS';
+          foreach my $row ( @$results ) {
+            my ($type, $species, $name, $id) = (uc($row->[0]), $row->[1], $row->[2], $row->[3]);
+            $species =~ tr/ /_/;
+	          $tree->{$KEY}->{$id}->{'id'} = $id;
+	          $tree->{$KEY}->{$id}->{'name'} = $name;
+	          $tree->{$KEY}->{$id}->{'type'} = $type;
+            $tree->{$KEY}->{$id}->{'species'}->{$species} = 1;
+          }
 
 #	warn("$KEY: ". Data::Dumper::Dumper($tree->{$KEY}));
 
-        $sth->finish();
-        $dbh->disconnect();
-      }
+          $sth->finish();
+          $dbh->disconnect();
+        }
     
-      if( $tree->{'databases'}->{'ENSEMBL_COMPARA'} ){
-        $dbh = $self->db_connect( $tree, 'ENSEMBL_COMPARA' );
-      }
+        if( $tree->{'databases'}->{'ENSEMBL_COMPARA'} ){
+          $dbh = $self->db_connect( $tree, 'ENSEMBL_COMPARA' );
+        }
 
-      if($dbh) {
-        my %sections = (
-          'ENSEMBL_ORTHOLOGUES' => 'GENE',
-          'HOMOLOGOUS_GENE'     => 'GENE',
-          'HOMOLOGOUS'          => 'GENE',
-        );
+        if($dbh) {
+          my %sections = (
+            'ENSEMBL_ORTHOLOGUES' => 'GENE',
+            'HOMOLOGOUS_GENE'     => 'GENE',
+            'HOMOLOGOUS'          => 'GENE',
+          );
         # We've done the DB hash...
         # So lets get on with the DNA, SYNTENY and GENE hashes;
-	my $q = qq{select ml.type, gd1.name, gd2.name from genome_db gd1, genome_db gd2, species_set ss1, species_set ss2 , method_link ml, method_link_species_set mls1, method_link_species_set mls2 where mls1.method_link_species_set_id = mls2.method_link_species_set_id and ml.method_link_id = mls1.method_link_id and ml.method_link_id = mls2.method_link_id and gd1.genome_db_id != gd2.genome_db_id and mls1.species_set_id = ss1.species_set_id and mls2.species_set_id = ss2.species_set_id and ss1.genome_db_id = gd1.genome_db_id and ss2.genome_db_id = gd2.genome_db_id};
+	        my $q = qq{select ml.type, gd1.name, gd2.name from genome_db gd1, genome_db gd2, species_set ss1, species_set ss2 , method_link ml, method_link_species_set mls1, method_link_species_set mls2 where mls1.method_link_species_set_id = mls2.method_link_species_set_id and ml.method_link_id = mls1.method_link_id and ml.method_link_id = mls2.method_link_id and gd1.genome_db_id != gd2.genome_db_id and mls1.species_set_id = ss1.species_set_id and mls2.species_set_id = ss2.species_set_id and ss1.genome_db_id = gd1.genome_db_id and ss2.genome_db_id = gd2.genome_db_id};
 
         my $sth = $dbh->prepare( $q );
         my $rv  = $sth->execute || die( $sth->errstr );
