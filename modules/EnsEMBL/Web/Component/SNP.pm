@@ -230,7 +230,7 @@ sub moltype {
 
 sub ld_data {
   my ( $panel, $object ) = @_;
-  my %pop_names ;#= %{_ld_populations($object) ||{} };
+  my %pop_names = %{_ld_populations($object) ||{} };
   my $label = "Linkage disequilibrium <br />data";
   my %tag_data  = %{$object->tagged_snp ||{} };
 
