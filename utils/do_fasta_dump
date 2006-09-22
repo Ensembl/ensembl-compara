@@ -120,7 +120,7 @@ unless ($no_log) {
   open(STDERR, "> $logfile") || die "Can't create file:$!\n";
 }
 
-info(2, "Will push blast files to $blast_dir");
+info(2, "Will push blast files to $blast_dir") unless $no_indexes;
 
 
 # Start with a species further down in the alphabet
@@ -144,6 +144,7 @@ my %db_names = ( 'ENSEMBL_DB'      => 'core',
 
 
 # Create directory for ssaha and blast
+info (1, "Creating dir for ssaha and/or blast") unless $no_indexes && $no_ssaha;
 our $ssaha_machine = $release % 2 ? "ensarc-1-11" : "ensarc-1-12";
 eval{
   system("ssh -i /nfs/WWW/.ssh/blastsrv $MACHINE mkdir -p /data/blastdb/ensembl/release-$release") unless $no_indexes;
@@ -807,8 +808,6 @@ sub ssaha_servers {
 
     unlink $fh || warn "Can't delete $fh: $!" if -z $fh;    # delete empty file
     next unless $types =~ /toplevel$|dna\.chromosome|cdna_all/; #toplevel dna matches chr or toplevel
-    next unless -e $fh;
-    push @toplevel, $fh;
 
     if ($no_dumpdata) {
       if (-e "$fh.gz") {
@@ -817,15 +816,17 @@ sub ssaha_servers {
 	system("gunzip $fh.gz");
       }
     }
+    next unless -e $fh;
 
     if ($types eq 'cdna_all' && $TYPES[0] ne 'pre') {  # no cDNA ssaha for pre site
       create_cdna_ssaha($ini_datasources, $species, $assembly, $release, $command, $fh);
       next;
     }
-  }
+    push @toplevel, $fh;
+  }  # end foreach type
 
   # read dir for toplevel files if $no_dumpdata
-  if ($no_dumpdata) {
+  if ($no_dumpdata && $created_files->{dna_toplevel}  ) {
     my $dnadir = "$sp_folder/dna";
     opendir(DIR, $dnadir) or die "can't open dir $dnadir:$!";
     while (defined(my $file = readdir(DIR))) {
