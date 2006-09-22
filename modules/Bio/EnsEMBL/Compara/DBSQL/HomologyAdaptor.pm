@@ -84,10 +84,10 @@ sub fetch_all_by_Member_paired_species {
   my $sth =  $self->generic_fetch_sth($constraint, $join);
   
   my ($homology_id, $stable_id, $method_link_species_set_id, $description, $dn, 
-      $ds, $n, $s, $lnl, $threshold_on_ds, $subtype);
+      $ds, $n, $s, $lnl, $threshold_on_ds, $subtype, $node_id);
   
   $sth->bind_columns(\$homology_id, \$stable_id, \$method_link_species_set_id, \$description, \$subtype,
-                     \$dn, \$ds, \$n, \$s, \$lnl, \$threshold_on_ds);
+                     \$dn, \$ds, \$n, \$s, \$lnl, \$threshold_on_ds, \$node_id);
 
   my @homology_ids = ();
   
