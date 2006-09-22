@@ -7,8 +7,6 @@ sub populate {
   my $self = shift;
   $self->SUPER::populate;
   $self->title($self->ident);
-  $self->add_text('info1', 'Data');
-  $self->add_text('info2', 'More data');
 }
 
 1;

@@ -6,13 +6,16 @@ use warnings;
 use EnsEMBL::Web::Interface::ZMenuView;
 use EnsEMBL::Web::Interface::ZMenuItem::Placeholder;
 use EnsEMBL::Web::Interface::ZMenuItem::Text;
+use EnsEMBL::Web::Interface::ZMenuItem::Link;
+use EnsEMBL::Web::Interface::ZMenuItem::HTML;
 
 {
 
 my %Title_of;
 my %Type_of;
 my %Ident_of;
-my %Content_of;
+my %Add_list_of;
+my %Remove_list_of;
 my %View_of;
 
 sub new {
@@ -23,16 +26,20 @@ sub new {
   $Title_of{$self}   = defined $params{title} ? $params{title} : "";
   $Type_of{$self}    = defined $params{type} ? $params{type} : "";
   $Ident_of{$self}   = defined $params{ident} ? $params{ident} : "";
-  $Content_of{$self} = defined $params{content} ? $params{conent} : [];
+  $Add_list_of{$self} = defined $params{add} ? $params{add} : [];
+  $Remove_list_of{$self} = defined $params{remove} ? $params{remove} : [];
   $View_of{$self} = defined $params{view} ? $params{view} : new EnsEMBL::Web::Interface::ZMenuView->new( ( zmenu => $self ) );
-  $self->add_content(EnsEMBL::Web::Interface::ZMenuItem::Placeholder->new( ( name => 'placeholder', text => 'Loading...' ) ));
+  if (defined $params{placeholder}) {
+    $self->add_content(EnsEMBL::Web::Interface::ZMenuItem::Placeholder->new( ( name => 'placeholder', text => 'Loading...' ) ));
+  }
   return $self; 
 } 
 
 sub populate {
-  ### Default population method. Each menu type is initialised by a call to {{populate}} in the appropriate ZMenu subclass (for example {{EnsEMBL::Web::Interface::ZMenu::ensembl_transcript::populate}}. Subclasses should implement this method to appropriately setup the menu for display. This empty method is in place for safe failover.
+  ### Default population method. Each menu type is initialised by a call to {{populate}} in the appropriate ZMenu subclass (for example {{EnsEMBL::Web::Interface::ZMenu::ensembl_transcript::populate}}. Subclasses should implement this method to appropriately setup the menu for display. 
   my $self = shift;
-  $self->remove_placeholder;
+#  $self->remove_placeholder;
+  return $self->add_list, $self->remove_list;
 }
 
 sub linkage {
@@ -58,23 +65,12 @@ sub json {
 sub add_content {
   ### Adds a new content row to the zmenu. Accepts an object of the {{EnsEMBL::Web::Interface::ZMenuItem}} family. 
   my ($self, $content) = @_;
-  push @{ $self->content }, $content;
+  push @{ $self->add_list }, $content;
 }
 
 sub remove_content_with_name {
   my ($self, $name) = @_;
-  my @removal = ();
-  my $count = 0;
-  foreach my $content (@{ $self->content }) {
-    if ($content->name eq $name) {
-      push @removal, $count;
-    }
-    $count++; 
-  }
-
-  foreach my $index (@removal) {
-    my $rem = splice(@{ $self->content }, $index, 1);
-  }
+  push @{ $self->remove_list }, $name;
 }
 
 sub remove_placeholder {
@@ -86,6 +82,18 @@ sub add_text {
   ### Adds a new text row to the zmenu.
   my ($self, $name, $text) = @_;
   $self->add_content(EnsEMBL::Web::Interface::ZMenuItem::Text->new( (text => $text, name => $name)) );
+}
+
+sub add_link {
+  ### Adds a new text row to the zmenu.
+  my ($self, %params) = @_;
+  $self->add_content(EnsEMBL::Web::Interface::ZMenuItem::Link->new( %params ) );
+}
+
+sub add_html {
+  ### Adds a new text row to the zmenu.
+  my ($self, %params) = @_;
+  $self->add_content(EnsEMBL::Web::Interface::ZMenuItem::HTML->new( %params ) );
 }
 
 sub size {
@@ -135,11 +143,18 @@ sub content_with_name {
   return $hash;
 }
 
-sub content {
+sub add_list {
   ### a
   my $self = shift;
-  $Content_of{$self} = shift if @_;
-  return $Content_of{$self};
+  $Add_list_of{$self} = shift if @_;
+  return $Add_list_of{$self};
+}
+
+sub remove_list {
+  ### a
+  my $self = shift;
+  $Remove_list_of{$self} = shift if @_;
+  return $Remove_list_of{$self};
 }
 
 sub DESTROY {
@@ -148,7 +163,8 @@ sub DESTROY {
   delete $Title_of{$self};
   delete $Type_of{$self};
   delete $Ident_of{$self};
-  delete $Content_of{$self};
+  delete $Remove_list_of{$self};
+  delete $Add_list_of{$self};
   delete $View_of{$self};
 }
 
