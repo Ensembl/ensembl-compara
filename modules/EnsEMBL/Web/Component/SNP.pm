@@ -230,38 +230,20 @@ sub moltype {
 
 sub ld_data {
   my ( $panel, $object ) = @_;
-  my $pop_names = _ld_populations($object) ;
+  my %pop_names ;#= %{_ld_populations($object) ||{} };
   my $label = "Linkage disequilibrium <br />data";
+  my %tag_data  = %{$object->tagged_snp ||{} };
 
-  unless (@$pop_names) {
+  my %ld = (%pop_names, %tag_data);
+  unless (keys %ld) {
     $panel->add_row($label, "<h5>No linkage data for this SNP</h5>");
     return 1;
   }
 
-  $panel->add_row($label, link_to_ldview($panel, $object, $pop_names) );
+  $panel->add_row($label, link_to_ldview($panel, $object, \%ld) );
   return 1;
 }
 
-
-=head2 tagged_snp
-
- Arg1        : panel
- Arg2        : data object
- Example     : $panel1->add_rows(qw(tagged_snp EnsEMBL::Web::Component::SNP::tagged_snp) );
- Description : adds a label and html to the panel
-               the populations in which this snp is tagged, if it is tagged an any in two_col_table format
- Return type : 1
-
-=cut
-
-sub tagged_snp {
-  my ( $panel, $object ) = @_;
-  my $label = 'SNP in tagged set for these populations';
-  my $snp_data  = $object->tagged_snp;
-  return 1 unless @$snp_data;
-  $panel->add_row($label, link_to_ldview($panel, $object, $snp_data) );
-  return 1;
-}
 
 
 =head2 seq_region
@@ -779,7 +761,7 @@ sub _format_parent {
 
    Arg1        : panel
    Arg2        : object
-   Arg3        : population data
+   Arg3        : hash ref of population data
    Example     : link_to_ldview($panel, $object, \%pop_data);
    Description : Make links from these populations to LDView
    Return type : Table of HTML links to LDView
@@ -791,13 +773,14 @@ sub link_to_ldview {
   my $output = "<table width='100%' class='hidden' border=0><tr>";
   $output .="<td> <b>Links to LDview per population:</b></td></tr><tr>";
   my $count = 0;
-  for my $pop_name (sort {$a cmp $b} @$pops) {
+  for my $pop_name (sort {$a cmp $b} keys %$pops) {
+    my $tag = $pops->{$pop_name} eq 1 ? "" : " (Tag SNP)";
     $count++;
     $output .= "<td><a href='ldview?snp=". $object->name;
     $output .=  ";c=".$object->param('c') if $object->param('c');
     $output .=  ";w=".($object->param('w') || "20000");
-    $output .=	";bottom=opt_pop_$pop_name:on'>$pop_name</a></td>";
-    if ($count ==4) {
+    $output .=	";bottom=opt_pop_$pop_name:on'>$pop_name</a>$tag</td>";
+    if ($count ==3) {
       $count = 0;
       $output .= "</tr><tr>";
     }
@@ -819,14 +802,14 @@ sub link_to_ldview {
 sub _ld_populations {
   my $object = shift;
   my $pop_ids = $object->ld_pops_for_snp;
-  return [] unless @$pop_ids;
+  return {} unless @$pop_ids;
 
-  my @pops;
+  my %pops;
   foreach (@$pop_ids) {
     my $pop_obj = $object->pop_obj_from_id($_);
-    push @pops, $pop_obj->{$_}{Name};
+    $pops{ $pop_obj->{$_}{Name} } = 1;
   }
-  return \@pops;
+  return \%pops;
 }
 
 

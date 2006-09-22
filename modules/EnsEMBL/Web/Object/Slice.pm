@@ -93,6 +93,28 @@ sub valids {
 }
 
 
+=head2 sources
+
+ Arg1        : Web slice obj
+ Description : gets all variation sources
+ Return type : hashref with keys as valid options, value = 1
+
+=cut
+
+sub sources {
+  my $self = shift;
+  my $vari_adaptor = $self->Obj->adaptor->db->get_db_adaptor('variation');
+  unless ($vari_adaptor) {
+    warn "ERROR: Can't get variation adaptor";
+    return ();
+  }
+  my $valids = $self->valids;
+  my @sources = @{ $vari_adaptor->get_VariationAdaptor->get_all_sources() || []};
+  my %sources = map { $valids->{'opt_'.lc($_)} ? ( $_ => 1 ):()  } @sources;
+  %sources = map{( $_ => 1 ) } @sources unless keys %sources;
+  return \%sources;
+}
+
 =head2 getVariationFeatures 
 
  Arg1        : Web slice obj
@@ -145,8 +167,8 @@ sub get_genotyped_VariationFeatures {
 
 sub filter_snps {
   my ( $self, $snps ) = @_;
-
-  my $valids = $self->valids;
+  my $sources = $self->sources;
+  my $valids  = $self->valids;
   my @filtered_snps = 
     map  { $_->[1] }               # Remove the schwartzian index
       sort { $a->[0] <=> $b->[0] }   #   Sort snps on schwartzian index
@@ -163,7 +185,7 @@ sub filter_snps {
     grep { scalar map { $valids->{'opt_'.lc($_)}?1:() } @{$_->get_consequence_type()}  }
 
       # Filter our unwanted sources
-      grep { scalar map { $valids->{'opt_'.lc($_)}?1:() } @{$_->get_all_sources()}  }
+      grep { scalar map { $sources->{$_} ?1:() } @{$_->get_all_sources()}  }
       #grep { $valids->{'opt_'.lc($_->source)} }
 
 	# Filter our unwanted classes
@@ -252,6 +274,7 @@ sub munge_gaps {
 sub filter_munged_snps {
   my ( $self, $snps, $gene ) = @_;
   my $valids = $self->valids;
+  my $sources = $self->sources;
 
   my @filtered_snps =
 # [fake_s, fake_e, SNP]              Remove the schwartzian index
@@ -269,7 +292,7 @@ sub filter_munged_snps {
 
 # [ fake_s, fake_e, SNP ]   Filter our unwanted sources
       #grep { $valids->{'opt_'.lc($_->[2]->source)} }
-      grep { scalar map { $valids->{'opt_'.lc($_)}?1:() } @{$_->[2]->get_all_sources()}  }
+      grep { scalar map { $sources->{$_} ?1:() } @{$_->[2]->get_all_sources()}  }
 
 # [ fake_s, fake_e, SNP ]   Filter our unwanted classes
     grep { $valids->{'opt_'.$_->[2]->var_class} }

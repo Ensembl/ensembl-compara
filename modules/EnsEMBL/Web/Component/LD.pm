@@ -151,7 +151,7 @@ sub ldview_image_menu {
     'configname'  => 'LD_population',
     'configs'    =>  [$object->user_config_hash('ldview')],
     'panel'       => 'bottom',
-    'leftmenus'  => [qw(Features Population Source Options Export ImageSize)],
+    'leftmenus'  => [qw(Features Population Options Export ImageSize)],
     'rightmenus' => [qw(SNPHelp)],
   );
   $panel->print( $mc->render_html );

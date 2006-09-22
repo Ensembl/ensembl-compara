@@ -303,22 +303,22 @@ sub ancestor {
   Description : The "is_tagged" call returns an array ref of populations 
                 objects Bio::Ensembl::Variation::Population where this SNP 
                 is a tag SNP
-  Return type : arrayref of pop_name
+  Return type : hashref of pop_name
 
 =cut
 
 sub tagged_snp { 
   my $self = shift;
   my  @vari_mappings = @{ $self->get_variation_features };
-  return [] unless @vari_mappings;
+  return {} unless @vari_mappings;
 
-  my @pops;
+  my %pops;
   foreach my $vf ( @vari_mappings ) {
     foreach my $pop_obj ( @{ $vf->is_tagged } ) {
-      push @pops, $self->pop_name($pop_obj);
+      $pops{$self->pop_name($pop_obj)} = "Tag SNP";
     }
   }
-  return \@pops or [];
+  return \%pops or {};
 }
 
 
