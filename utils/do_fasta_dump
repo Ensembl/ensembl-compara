@@ -122,15 +122,8 @@ unless ($no_log) {
 
 info(2, "Will push blast files to $blast_dir") unless $no_indexes;
 
-
 # Start with a species further down in the alphabet
-if ($start_with) {
-  foreach (sort @SPECIES) {
-    last if $start_with eq $_;
-    info(1, "Skipping $_ and all species until $start_with");
-    shift @SPECIES;
-  }
-}
+@SPECIES  = @{ utils::Tool::start_with_species($start_with, \@SPECIES) } if $start_with;
 
 
 # Validate DUMPDIR
@@ -158,7 +151,7 @@ if ($@) {
 # For each species ----------------------------------------------------------
 for my $sp( sort @SPECIES ){  # users selected spp
   my $species_time = time ();
-
+  info( 2, gmtime(time));
   # Work out species folder name and empty if you are dumping --type all
   my $sp_release = $SPECIES_DEFS->get_config($sp,"SPECIES_RELEASE_VERSION");
   $sp_release =~ s/\.//g;
@@ -196,8 +189,9 @@ for my $sp( sort @SPECIES ){  # users selected spp
     $created_files = undef;
   }
   my $sp_time_taken = time - $species_time;
-  my $hours = localtime(time -$species_time)->hour -1;
-  info(2, "Species time $sp $hours hours");
+  my $hours = localtime(time -$species_time)->hour;
+  info(2, "Species time $sp $hours hours". localtime($sp_time_taken)->min."mins");
+  info( 2, gmtime(time));
 }
 
 

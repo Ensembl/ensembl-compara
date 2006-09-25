@@ -30,24 +30,25 @@ my $MAX_SIZE = 1000000;
 my $GENE_MAX = 3000000; # if gene > $GENE_MAX, skips gene and prints warning
 our $VERBOSITY;
 my $logfile;
-my $no_log;
+my ($no_log, $start_with);
 my $dumpdir;
 my $nobundle;
 my $readme_only;
 my ($help, $info, $email);
 
-&GetOptions( 'maxsize:s' => \$MAX_SIZE,
-             'format:s'	 => \@user_formats,
-             'species:s' => \@species,
-             'logfile:s' => \$logfile,
-	     'email:s'   => \$email,
-	     'no_log'    => \$no_log,
-             'dumpdir:s' => \$dumpdir,
-             'nobundle'	 => \$nobundle,
-             'readme_only'=> \$readme_only,
-             'verbose'	 => \$VERBOSITY,
-             'info'      => \$info,
-             'help|h'	 => \$help,
+&GetOptions( 'maxsize:s'    => \$MAX_SIZE,
+             'format:s'	    => \@user_formats,
+             'species:s'    => \@species,
+             'logfile:s'    => \$logfile,
+	     'email:s'      => \$email,
+	     'no_log'       => \$no_log,
+             'dumpdir:s'    => \$dumpdir,
+             'nobundle'	    => \$nobundle,
+	     'start_with:s' => \$start_with,
+             'readme_only'  => \$readme_only,
+             'verbose'	    => \$VERBOSITY,
+             'info'         => \$info,
+             'help|h'	    => \$help,
            ) || pod2usage(2);
 
 pod2usage(-verbose => 2) if $info;
@@ -59,6 +60,9 @@ if (@species) {
 else {
   @species = @{ utils::Tool::all_species() };
 }
+
+@species  = @{ utils::Tool::start_with_species($start_with, \@species) } if $start_with;
+
 my $time1 = time;
 @user_formats = qw(embl genbank) if (!$user_formats[0]);
 $VERBOSITY ||= 2;
@@ -81,7 +85,6 @@ unless ($no_log) {
 $dumpdir ||= "/mysql/dumps/release-$sitedefs_release";
 
 foreach my $spp (@species){
-  $ENV{'ENSEMBL_SPECIES'} = $spp;
   my $formats_dir = setup_directories($SPECIES_DEFS, $spp, \@user_formats);
 
   my $batch = 0;
@@ -385,7 +388,6 @@ sub dump_format {
 sub ftp_bundle{
   my ($format, $spp_dumpdir, $batch, $spp, $chr_sorter) = @_;
   my $count = 0;
-  my $spp = $ENV{'ENSEMBL_SPECIES'};
   my $gz;
   my $CHUNK = $spp eq "Mus_musculus" ? 100 : 1000;
 
@@ -393,8 +395,15 @@ sub ftp_bundle{
   opendir DIR, "$spp_dumpdir" or warn "$spp_dumpdir: $!\n";
 
   # Chromosome sorter
-  my  @f = sort {$chr_sorter->{$b} <=> $chr_sorter->{$a} || $a cmp $b  } (readdir DIR);
-  closedir(DIR);
+  my @files;
+  while (defined( my $file = readdir(DIR) )) {
+    if (-d "$file" || $file !~ /^\w/ || $file !~ /.*$format$/x) {
+      utils::Tool::info (1, "Rejected directory or file: $file");
+      next;
+    }
+    push @files, $file;
+  }
+  closedir (DIR);
 
   unless (-d "$spp_dumpdir/FTP"){
     system("mkdir $spp_dumpdir/FTP");
@@ -402,21 +411,15 @@ sub ftp_bundle{
   }
 
   $gz = gzopen("$spp_dumpdir/FTP/$spp.".($batch*$CHUNK).".dat.gz","wb") || die $!;
- HOP: while (@f){
-    my $filename = shift(@f);
-    utils::Tool::info(1, "Processing $filename...");
 
-    if(-d "$filename" || $filename !~ /^\w/ || $filename !~ /.*$format$/x){
-      utils::Tool::info (1, "Rejected directory or file: $filename");
-      next HOP;
-    }
+  foreach my $filename ( sort {$chr_sorter->{$b} <=> $chr_sorter->{$a} || $a cmp $b  } @files ){
+    utils::Tool::info(1, "Processing $filename...");
 
     if (!-f "$spp_dumpdir/$filename"){
       utils::Tool::warning (1, "ERROR: Cannot find $filename!");
-      next HOP;
+      next;
     }
 
- 
     open (FILE, "$spp_dumpdir/$filename") || die $!;
     while(<FILE>){
       $gz->gzwrite($_);
@@ -439,6 +442,7 @@ sub ftp_bundle{
   utils::Tool::info(1, "Deleting the individual files and replacing with the zips");
   system ("mv $spp_dumpdir/FTP/* $spp_dumpdir/");
   system ("rm -r $spp_dumpdir/FTP");
+  return;
 }
 
 #-----------------------------------------------------------------------

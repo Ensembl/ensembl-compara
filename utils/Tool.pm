@@ -25,7 +25,7 @@ require EnsEMBL::Web::SpeciesDefs;
 
 =head2 all_species
 
-  Arg[1]      :
+  Arg[1]      : 
   Example     : my @all_species = @{ utils::Tool::all_species };
   Description : returns a list of all the species configured in SiteDefs
                 ENSEMBL_SPECIES
@@ -35,6 +35,30 @@ require EnsEMBL::Web::SpeciesDefs;
 
 sub all_species {
   return $SiteDefs::ENSEMBL_SPECIES || [];
+}
+
+#------------------------------------------------------------------------
+
+=head2 start_with_species
+
+  Arg[1]      : arrayref
+  Example     : my @species = @{ utils::Tool::start_with_species };
+  Description : returns a list of all the species configured in SiteDefs
+                ENSEMBL_SPECIES
+  Return type : arrayref
+
+=cut
+
+sub start_with_species {
+  my ($start_with, $species) = @_;
+  ### Start with a species further down in the alphabet
+
+  foreach (sort @$species) {
+    last if $start_with eq $_;
+    info(1, "Skipping $_ and all species until $start_with");
+    shift @$species;
+  }
+  return $species || [] ;
 }
 
 #----------------------------------------------------------------------
