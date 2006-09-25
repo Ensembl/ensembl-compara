@@ -40,7 +40,7 @@ use utils::Tool;
 our $MACHINE = "blastsrv11";
 our $no_data;
 our $no_dumpdata;
-my ($no_compress, $no_log, $no_indexes, $no_ssaha);
+my ($no_compress, $no_log, $no_indexes, $no_ssaha, $no_remotedirs);
 our @TYPES;
 our $release;
 my (@SPECIES, @DATABASES);
@@ -60,17 +60,18 @@ my ($help, $info);
 	    'dumpdir:s'  => \$DUMPDIR,
 	    'logfile:s'  => \$logfile,
 	    'email:s'    => \$email,
-	    'minimise_memory' => \$minimise_memory,
+	    'minimise_memory'   => \$minimise_memory,
 
-	    'no_compress' => \$no_compress,
-	    'no_log'     => \$no_log,
-            'no_ssaha'   => \$no_ssaha,
-	    'no_data'    => \$no_data,
-            'no_indexes' => \$no_indexes,
-	    'no_dumpdata' => \$no_dumpdata,
-	    'start_with:s' => \$start_with,   # optional
-	    'help'       => \$help,           # info
-	    'info'       => \$info,
+	    'no_compress'       => \$no_compress,
+	    'no_log'            => \$no_log,
+	    'no_remotedirs'     => \$no_remotedirs,
+            'no_ssaha'          => \$no_ssaha,
+	    'no_data'           => \$no_data,
+            'no_indexes'        => \$no_indexes,
+	    'no_dumpdata'       => \$no_dumpdata,
+	    'start_with:s'      => \$start_with,   # optional
+	    'help'              => \$help,           # info
+	    'info'              => \$info,
 	   ) || pod2usage(2);
 
 pod2usage(-verbose => 2) if $info;
@@ -139,14 +140,16 @@ my %db_names = ( 'ENSEMBL_DB'      => 'core',
 # Create directory for ssaha and blast
 info (1, "Creating dir for ssaha and/or blast") unless $no_indexes && $no_ssaha;
 our $ssaha_machine = $release % 2 ? "ensarc-1-11" : "ensarc-1-12";
-eval{
-  system("ssh -i /nfs/WWW/.ssh/blastsrv $MACHINE mkdir -p /data/blastdb/ensembl/release-$release") unless $no_indexes;
-  system("ssh -i /nfs/WWW/.ssh/blastsrv $ssaha_machine mkdir -p /ensemblweb/ssaha2/HashTables/release-$release") unless $no_ssaha;
-};
-if ($@) {
-  utils::Tool::warning(1, "$@") unless $@ =~ /File exists/;
-}
 
+unless ($no_remotedirs) {
+  eval{
+    system("ssh -i /nfs/WWW/.ssh/blastsrv $MACHINE mkdir -p /data/blastdb/ensembl/release-$release") unless $no_indexes;
+    system("ssh -i /nfs/WWW/.ssh/blastsrv $ssaha_machine mkdir -p /ensemblweb/ssaha2/HashTables/release-$release") unless $no_ssaha;
+  };
+  if ($@) {
+    utils::Tool::warning(1, "$@") unless $@ =~ /File exists/;
+  }
+}
 
 # For each species ----------------------------------------------------------
 for my $sp( sort @SPECIES ){  # users selected spp
@@ -323,8 +326,9 @@ sub get_data {
     }
   }
 
-  foreach my $slice( @{$sliceAdaptor->fetch_all('toplevel', undef, 1)} ){
-    info( 1, "Start toplevel ". $slice->name );
+  # Sort these by incr slice length for more efficient memory usage
+  foreach my $slice( sort {$a->seq_region_length <=> $b->seq_region_length} @{$sliceAdaptor->fetch_all('toplevel', undef, 1)} ){
+    info( 1, "Start toplevel ". $slice->name. " length:". $slice->seq_region_length );
     my $coord_system = $slice->coord_system->name;
 
     # Toplevel DNA dumps ------------------------------------------------------
@@ -1323,8 +1327,8 @@ do_fasta_dumps - Dump Ensembl databases to text files and gzip them
 do_fasta_dumps [options]
 
 Options:
-  --help, --info, --verbose, --minimise_memory, --no_data --no_log, --no_indexes --no_dumpdata --no_ssaha 
-  --species, --database, --type, --logfile,  --start_with   --dumpdir --email
+  --help, --info, --verbose, --minimise_memory, --no_log, --no_indexes --no_dumpdata --no_ssaha 
+  --species, --database, --type, --logfile,  --start_with   --dumpdir --email --no_remotedirs
 
 Example:
  nohup time ./do_fasta_dump --type all --release 23 --email ek3@sanger.ac.uk
@@ -1380,6 +1384,9 @@ B<--no_indexes>
 
 B<--no_dumpdata>
   Skip the dumping data phase.  Use if already have the gzipped fasta files but need to generate blast database index files and/or build ssaha servers from existing fa.gz files.
+
+B<--no_remotedirs>
+  Skips creation of directory on ssaha machine and blast machine
 
 B<--no_ssaha>
   Turns off generation of ssaha server

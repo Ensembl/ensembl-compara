@@ -397,10 +397,7 @@ sub ftp_bundle{
   # Chromosome sorter
   my @files;
   while (defined( my $file = readdir(DIR) )) {
-    if (-d "$file" || $file !~ /^\w/ || $file !~ /.*$format$/x) {
-      utils::Tool::info (1, "Rejected directory or file: $file");
-      next;
-    }
+    next if (-d "$file" || $file !~ /^\w/ || $file !~ /.*$format$/x) ;
     push @files, $file;
   }
   closedir (DIR);
