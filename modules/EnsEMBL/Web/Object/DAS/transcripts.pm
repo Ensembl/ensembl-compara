@@ -23,7 +23,7 @@ sub Features {
     foreach my $e (@ftids) {
 	my ($f, @exon_groups);
 
-	if ($e =~ /^ENSE/) {
+	if ($e =~ /^ENS(.+)?E\d/) {
 	    if (my $exon = $dba->get_ExonAdaptor->fetch_by_stable_id($e)) {
 		if (my $trans = $dba->get_TranscriptAdaptor->fetch_all_by_exon_stable_id($e)) {
 		    my %genes;
@@ -88,7 +88,7 @@ sub Features {
     foreach my $g (@groups) {
 	my ($gene, @transcripts, $f, @segment_features);
 	
-	if ($g =~ /^ENSG/) {
+	if ($g =~ /^ENS(.+)?G\d/) {
 	    if ($gene = $dba->get_GeneAdaptor->fetch_by_stable_id($g)) {
 		push @transcripts, @{$gene->get_all_Transcripts || []};
 # Might need a shift by $gene->slice->seq_region_start -1 
@@ -99,7 +99,7 @@ sub Features {
 		};
 	    }
 
-	} elsif ($g =~ /^ENST/) {
+	} elsif ($g =~ /^ENS(.+)?T\d/) {
 	    if ($gene = $dba->get_GeneAdaptor->fetch_by_transcript_stable_id($g)) {
 		my $trans = $dba->get_TranscriptAdaptor->fetch_by_stable_id($g);
 		push @transcripts, $trans;
