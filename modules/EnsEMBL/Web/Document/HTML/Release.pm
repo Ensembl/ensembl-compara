@@ -8,6 +8,9 @@ sub new { return shift->SUPER::new( 'version' => '??', 'date' => '??? ????', 'si
 sub version   :lvalue { $_[0]{'version'}; }
 sub date      :lvalue { $_[0]{'date'}; }
 sub site_name :lvalue { $_[0]{'site_name'}; }
+sub dbserver  :lvalue { $_[0]{'dbserver'}; }
+sub db        :lvalue { $_[0]{'db'}; }
+
 sub render { 
   $_[0]->printf( qq(
 <div id="release-t">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</div>
