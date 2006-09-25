@@ -266,6 +266,10 @@ sub create_chunks
   my $starttime = time();
   foreach my $chr (@{$chromosomes}) {
     #print "fetching dnafrag\n";
+    
+    if (defined $self->{'region'}) {
+      next unless (scalar @{$chr->get_all_Attributes('toplevel')});
+    }
 
     my ($dnafrag) = @{$dnafragDBA->fetch_all_by_GenomeDB_region(
                       $genome_db,
