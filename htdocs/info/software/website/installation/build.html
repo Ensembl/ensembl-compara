@@ -560,11 +560,12 @@ usr/local/ensembl with your chosen server-root.</p>
 <ol start="2">
 <li>
 <p>Log into the Sanger CVS server (using a password of "CVSUSER"):</p>
-<kbd>cvs -d :pserver:cvsuser@cvsro.sanger.ac.uk:/cvsroot/CVSmaster login</kbd>
+<!--<kbd>cvs -d :pserver:cvsuser@cvsro.sanger.ac.uk:/cvsroot/CVSmaster login</kbd>-->
+<kbd>cvs -d :pserver:cvsuser@cvs.sanger.ac.uk:/cvsroot/ensembl login</kbd>
 </li>
 <li>
 <p>To check out the most recent stable version of the ensembl API and web code from CVS (i.e. to download the code from the Sanger CVS server onto your local machine) you need to use the latest branch of the code.  Please note the code on the CVS HEAD is under development and unstable.  Use the following command making sure you use the code that matches your databases:</p>
-<kbd>cvs -d :pserver:cvsuser@cvsro.sanger.ac.uk:/cvsroot/CVSmaster \<br />
+<kbd>cvs -d :pserver:cvsuser@cvsro.sanger.ac.uk:/cvsroot/ensembl \<br />
 &nbsp; co -r branch-ensembl-[[SPECIESDEFS::ENSEMBL_VERSION]] ensembl-api ensembl-website</kbd>
 <p>A listing of your server-root should now look something like:</p>
 <table>
@@ -597,7 +598,8 @@ usr/local/ensembl with your chosen server-root.</p>
 <li>
 <p>Check the BioMart code out of CVS (downloads the code from the Sanger CVS server onto your local
 machine):</p>
-<kbd>cvs -d :pserver:cvsuser@cvsro.sanger.ac.uk:/cvsroot/CVSmaster \<br />
+<!--<kbd>cvs -d :pserver:cvsuser@cvsro.sanger.ac.uk:/cvsroot/CVSmaster \<br />-->
+<kbd>cvs -d :pserver:cvsuser@cvsro.sanger.ac.uk:/cvsroot/ensembl \<br />
 &nbsp; co -r release-0_4 biomart-plib biomart-web</kbd>
 </li>
 </ol>
