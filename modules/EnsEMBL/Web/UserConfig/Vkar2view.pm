@@ -14,8 +14,8 @@ sub init {
   $self->{'_userdatatype_ID'}   = 255;
   $self->{'_all_chromosomes'}   = 'yes';
 
-  $self->{'general'}->{'Vkar2view Vsupercontigs'} = {
-    '_artefacts'    => [qw(Videogram)],
+  $self->{'general'}->{'Vkar2view'} = {
+    '_artefacts'    => [qw(Videogram Vsupercontigs)],
     '_options'      => [],
     '_settings'     => {
       'opt_zclick'  => 1,
