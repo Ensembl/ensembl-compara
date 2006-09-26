@@ -123,3 +123,13 @@ insert into ncbi_taxa_name (taxon_id, name, name_class) values (9258,"Platypus",
 insert into ncbi_taxa_name (taxon_id, name, name_class) values (9258,"platypus","ensembl common name");
 insert into ncbi_taxa_name (taxon_id, name, name_class) values (9823,"Pig","ensembl alias name");
 insert into ncbi_taxa_name (taxon_id, name, name_class) values (9823,"pig","ensembl common name");
+insert into ncbi_taxa_name (taxon_id, name, name_class) values (9685,"Cat","ensembl alias name");
+insert into ncbi_taxa_name (taxon_id, name, name_class) values (9685,"cat","ensembl common name");
+
+# Need to check these alias name with Web team
+insert into ncbi_taxa_name (taxon_id, name, name_class) values (42254,"Shrew","ensembl alias name");
+insert into ncbi_taxa_name (taxon_id, name, name_class) values (42254,"European shrew","ensembl common name");
+insert into ncbi_taxa_name (taxon_id, name, name_class) values (30611,"Galago","ensembl alias name");
+insert into ncbi_taxa_name (taxon_id, name, name_class) values (30611,"small-eared galago","ensembl common name");
+insert into ncbi_taxa_name (taxon_id, name, name_class) values (59463,"Microbat","ensembl alias name");
+insert into ncbi_taxa_name (taxon_id, name, name_class) values (59463,"little brown bat","ensembl common name");
