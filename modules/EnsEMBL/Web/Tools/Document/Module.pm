@@ -19,7 +19,7 @@ my %Identifier_of;
 my %Keywords_of;
 
 my $default_comment_code = "###";
-my $default_keywords = "a accessor c constructor d desctructor x deprecated";
+my $default_keywords = "a accessor c constructor d desctructor x deprecated i initialiser";
 
 sub new {
   ### c
