@@ -482,6 +482,7 @@ sub print_node {
 
   print("(");
   if(defined $self->get_tagvalue("Duplication") && $self->get_tagvalue("Duplication") ne '' && $self->get_tagvalue("Duplication") > 0) { print("DUP "); }
+  if(defined $self->get_tagvalue("Bootstrap") && $self->get_tagvalue("Bootstrap") ne '') { my $bootstrap_value = $self->get_tagvalue("Bootstrap"); print("B=$bootstrap_value "); }
   printf("%s %d,%d)", $self->node_id, $self->left_index, $self->right_index);
   printf("%s\n", $self->name);
 }
@@ -538,6 +539,11 @@ sub _internal_nhx_format {
         # this only applies to internal nodes, hence the name of the
         # method and the reason we can safely add this here
         $nhx .= ":D=N";
+    }
+    if(defined $self->get_tagvalue("Bootstrap") && $self->get_tagvalue("Bootstrap") ne '') { 
+      my $bootstrap_value = $self->get_tagvalue("Bootstrap");
+        # mark as duplication
+        $nhx .= ":B=$bootstrap_value";
     }
     my $taxon_id;
     if($self->isa('Bio::EnsEMBL::Compara::AlignedMember')) {
