@@ -1,5 +1,5 @@
 #! /bin/bash
 
-time perl -I `pwd`/modules document.pl `pwd`/docs_draw/ /docs/ `pwd`/support/ `pwd`/draw/Bio `pwd`/draw/Sanger `pwd`/modules/EnsEMBL/Web `pwd`/modules/Bio `pwd`/modules/ExaLead `pwd`/modules/GO `pwd`/modules/Acme `pwd`/modules/Apache
+time perl -I `pwd`/modules document.pl `pwd`/docs_draw/ /docs/ `pwd`/support/ `pwd`/draw/modules/Bio `pwd`/draw/modules/Sanger `pwd`/modules/EnsEMBL/Web `pwd`/modules/ExaLead `pwd`/modules/Acme 
 rm -r ../../htdocs/docs
 cp -r `pwd`/docs_draw ../../htdocs/docs
