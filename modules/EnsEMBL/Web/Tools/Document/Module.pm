@@ -184,6 +184,9 @@ sub _parse_package_file {
       my ($trash, $comment) = split /$comment_code/;
       $comment =~ s/^\s+|\s+$//g;
       chomp $comment;
+      if ($comment eq "") {
+        $comment .= "<br /><br />";
+      }
       my @elements = split /\s+/, $comment;
       if (!$docs{methods}{$sub}{type}) {
         $docs{methods}{$sub}{type} = "method";

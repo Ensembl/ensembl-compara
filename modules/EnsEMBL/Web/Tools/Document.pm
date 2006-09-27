@@ -12,17 +12,21 @@ use File::Find;
 my %Directory_of;
 my %Modules_of;
 my %Identifier_of;
+my %Keywords_of;
 my $writer = EnsEMBL::Web::Tools::DocumentView->new;
 
 sub new {
   ### c
   ### Inside-out class for automatically generating documentation in 
   ### e! doc format.
+  ###
+  ### A new line
   my ($class, %params) = @_;
   my $self = bless \my($scalar), $class;
   $Directory_of{$self} = defined $params{directory} ? $params{directory} : [];
   $Modules_of{$self} = defined $params{modules} ? $params{modules} : [];
   $Identifier_of{$self} = defined $params{identifier} ? $params{identifier} : "##";
+  $Keywords_of{$self} = defined $params{keywords} ? $params{keywords} : ();
   return $self;
 }
 
@@ -107,6 +111,7 @@ sub _add_module {
                      name => $module,
                      location => $location,
                      identifier => $self->identifier,
+                     keywords => $self->keywords,
                      find_methods => "yes"
                    ));
   #warn "ADDING: " . $new_module->name;
@@ -170,6 +175,13 @@ sub identifier {
   return $Identifier_of{$self};
 }
 
+sub keywords {
+  ### a
+  my $self = shift;
+  $Keywords_of{$self} = shift if @_;
+  return $Keywords_of{$self};
+}
+
 sub methods {
   ### Returns all method objets for all found modules
   my $self = shift;
@@ -189,6 +201,8 @@ sub DESTROY {
   my $self = shift;
   delete $Directory_of{$self};
   delete $Modules_of{$self};
+  delete $Identifier_of{$self};
+  delete $Keywords_of{$self};
 }
 
 }

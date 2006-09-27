@@ -61,7 +61,7 @@ sub write_info_page {
       if (!$total{$family}) {
         $total{$family} = 0;
       }
-      if ($module->name =~ /$family/) {
+      if ($module->name =~ /^$family/) {
         $total{$family} += $module->coverage;
       }
     }
