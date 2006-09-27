@@ -46,5 +46,12 @@ sub Stylesheet {
 </STYLESHEET>
 };
 }
+sub EntryPoints {
+    my ($self) = @_;
+
+    my $collection;
+
+    return $collection;
+}
 
 1;
