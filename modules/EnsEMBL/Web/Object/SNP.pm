@@ -24,20 +24,23 @@ our @ISA = qw(EnsEMBL::Web::Object);
 
 
 
+# Location ----------------------------------------------------------------------
+
 sub location_string {
 
-  ### Variation_object_calls
+  ### Variation_location
   ### Example    : my $location = $self->location_string;
   ### Description: Gets chr:start-end for the SNP with 100 bases on either side
   ### Returns string: chr:start-end
-
-  my( $sr, $st ) = $_[0]->_seq_region_;
+  my ($self, $unique) = @_;
+  my( $sr, $st ) = $self->_seq_region_($unique);
   return $sr ? "$sr:@{[$st-100]}-@{[$st+100]}" : undef;
 }
 
 
 sub _seq_region_ {
 
+  ### Variation_location
   ### Args        : $unique
   ###               if $unique=1 -> returns undef if there are more than one 
   ###               variation features returned)
@@ -71,27 +74,47 @@ sub _seq_region_ {
 }
 
 
-sub seq_region_name    { my( $sr,$st) = $_[0]->_seq_region_; return $sr; }
-sub seq_region_start   { my( $sr,$st) = $_[0]->_seq_region_; return $st; }
-sub seq_region_end     { my( $sr,$st) = $_[0]->_seq_region_; return $st; }
-sub seq_region_strand  { return 1; }
-sub seq_region_type    { my($sr,$st,$type) = $_[0]->_seq_region_; return $type; }
-
-
+sub seq_region_name    {
+  ### Variation_location 
+  ### a
+  my( $sr,$st) = $_[0]->_seq_region_; return $sr; 
+}
+sub seq_region_start   {
+  ### Variation_location 
+  ### a
+  my( $sr,$st) = $_[0]->_seq_region_; return $st; 
+}
+sub seq_region_end     {
+  ### Variation_location 
+  ### a
+  my( $sr,$st) = $_[0]->_seq_region_; return $st; 
+}
+sub seq_region_strand  {
+  ### Variation_location 
+  ### a
+  return 1; 
+}
+sub seq_region_type    { 
+  ### Variation_location
+  ### a
+  my($sr,$st,$type) = $_[0]->_seq_region_; return $type; 
+}
 
 sub seq_region_data {
 
-   ### Variation_object_calls 
+   ### Variation_location
    ### Args       : none
    ### Example    : my ($seq_region, $start, $type) = $object->seq_region_data;
-   ### Description: Gets the sequence region, start and coordinate system name
-   ### Returns $seq_region, $start, $seq_type
+   ### Description: Only returns sequence region, start and coordinate system name 
+   ###              if this Variation Object maps to one Variation Feature obj
+   ### Returns $seq_region, $start, $seq_type. Returns undef if multiple mapping
 
   my($sr,$st,$type) = $_[0]->_seq_region_(1); 
   return ($sr, $st, $type);
 }
 
 
+# Variation calls ----------------------------------------------------------------
 sub vari {
 
   ### Variation_object_calls
@@ -224,13 +247,15 @@ sub alleles {
   ### Returns Array or string
 
   my $self = shift;
-  my  @vari_mappings = @{ $self->get_variation_features };
 
-  my %allele_string;
-  if (@vari_mappings) {
-    map { $allele_string{$_->allele_string} = 1; } @vari_mappings;
-    return (keys %allele_string) unless scalar (keys %allele_string) > 1;
-  }
+  my  @vari_mappings = @{ $self->unique_variation_feature };
+  return $vari_mappings[0]->allele_string unless $#vari_mappings > 0;
+
+  #my %allele_string;
+  #if (@vari_mappings) {
+  #  map { $allele_string{$_->allele_string} = 1; } @vari_mappings;
+  #  return (keys %allele_string) unless scalar (keys %allele_string) > 1;
+  #}
 
   # Several mappings or no mappings
   my @allele_obj = @{$self->vari->get_all_Alleles};
@@ -504,7 +529,7 @@ sub extra_pop {
 }
 
 
-# Individual table ##########################################################
+# Individual table -----------------------------------------------------
 
 sub individual_table {
 
@@ -675,6 +700,35 @@ sub variation_feature_mapping { ## used for snpview
 
 # Calls for variation features -----------------------------------------------
 
+sub unique_variation_feature { 
+
+  ### Variation_features
+  ### Description: returns {{Bio::Ensembl::Variation::Feature}} object if
+  ### this {{Bio::Ensembl::Variation}} has a unique mapping
+  ### Returns undef if no mapping
+  ### Returns a arrayref of single Bio::Ensembl::Variation::Feature object if one mapping
+  ### Returns a arrayref of Bio::Ensembl::Variation::Feature object if multiple mapping
+
+  my $self = shift;
+  my @variation_features = @{ $self->get_variation_features || [] };
+  return undef unless  @variation_features;
+  return \@variation_features unless $#variation_features > 0; # if unique mapping
+
+  # Must have multiple mapping
+  my ($sr, $start, $type) = $self->seq_region_data;
+  return \@variation_features unless $sr; #$sr undef if no unique mapping
+
+  my @return;
+  foreach (@variation_features) {  # try to find vf which matches unique mapping
+    next unless $self->start($_) eq $start;
+    next unless $self->region_name($_) eq $sr;
+    next unless $self->region_type($_) eq $type;
+    push @return, $_;
+  }
+  return \@return;
+}
+
+
 
 sub get_variation_features {
 
@@ -684,7 +738,7 @@ sub get_variation_features {
   ### Returns Arrayref of Bio::EnsEMBL::Variation::VariationFeatures
 
    my $self = shift;
-   return unless $self->vari;
+   return [] unless $self->vari;
 
    # return VariationFeatures that were added by add_variation_feature if
    # present
@@ -749,7 +803,6 @@ sub start {
 
   my ($self, $vari_feature) = @_;
   return $vari_feature->start;
-
 }
 
 
@@ -799,7 +852,7 @@ sub ld_pops_for_snp {
   ### Returns array ref of population IDs
 
   my $self = shift;
-  my @vari_mappings = @{ $self->get_variation_features };
+  my @vari_mappings = @{ $self->unique_variation_feature };
   return [] unless @vari_mappings;
 
   my @pops;
