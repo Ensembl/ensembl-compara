@@ -72,7 +72,7 @@ sub fetch_by_dbID {
    my ($self,$dbid) = @_;
 
    if( !defined $dbid) {
-       $self->throw("Must fetch by dbid");
+       throw("Must fetch by dbid");
    }
 
    # check to see whether all the GenomeDBs have already been created
@@ -130,7 +130,7 @@ sub fetch_by_name_assembly {
   my ($self, $name, $assembly) = @_;
 
   unless($name) {
-    $self->throw('name arguments are required');
+    throw('name arguments are required');
   }
 
   my $sth;
@@ -172,7 +172,7 @@ sub fetch_by_registry_name {
   my ($self, $name) = @_;
 
   unless($name) {
-    $self->throw('name arguments are required');
+    throw('name arguments are required');
   }
 
   my $species_db_adaptor = Bio::EnsEMBL::Registry->get_DBAdaptor($name, "core");
@@ -183,6 +183,36 @@ sub fetch_by_registry_name {
   my $species_name = $species_db_adaptor->get_MetaContainer->get_Species->binomial;
   my $species_assembly = $species_db_adaptor->get_CoordSystemAdaptor->fetch_all->[0]->version;
    
+  return $self->fetch_by_name_assembly($species_name, $species_assembly);
+}
+
+=head2 fetch_by_Slice
+
+  Arg [1]    : Bio::EnsEMBL::Slice $slice
+  Example    : $gdb = $gdba->fetch_by_Slice($slice);
+  Description: Retrieves the genome db corresponding to this
+               Bio::EnsEMBL::Slice object
+  Returntype : Bio::EnsEMBL::Compara::GenomeDB
+  Exceptions : thrown if $slice is not a Bio::EnsEMBL::Slice
+  Caller     : general
+
+=cut
+
+sub fetch_by_Slice {
+  my ($self, $slice) = @_;
+
+  unless (UNIVERSAL::isa($slice, "Bio::EnsEMBL::Slice")) {
+    throw("[$slice] must be a Bio::EnsEMBL::Slice");
+  }
+  unless ($slice->adaptor) {
+    throw("[$slice] must have an adaptor");
+  }
+
+  my $species_name = 
+      $slice->adaptor->db->get_MetaContainer->get_Species->binomial;
+  my ($highest_cs) = @{$slice->adaptor->db->get_CoordSystemAdaptor->fetch_all()};
+  my $species_assembly = $highest_cs->version();
+
   return $self->fetch_by_name_assembly($species_name, $species_assembly);
 }
 
