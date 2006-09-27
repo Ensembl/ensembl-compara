@@ -736,6 +736,8 @@ sub _create_underlying_Slices {
 sub _sort_GenomicAlignBlocks {
   my ($genomic_align_blocks) = @_;
   my $sorted_genomic_align_blocks = [];
+  return $sorted_genomic_align_blocks if (!$genomic_align_blocks);
+
   my $last_end;
   foreach my $this_genomic_align_block (sort _sort_gabs @{$genomic_align_blocks}) {
     if (!defined($last_end) or
@@ -801,6 +803,7 @@ sub _sort_gabs {
 sub _sort_and_compile_GenomicAlignBlocks {
   my ($genomic_align_blocks) = @_;
   my $sorted_genomic_align_blocks = [];
+  return $sorted_genomic_align_blocks if (!$genomic_align_blocks);
 
   ##############################################################################################
   ##
