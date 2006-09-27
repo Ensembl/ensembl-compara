@@ -66,7 +66,14 @@ sub new {
 sub species_defs         { $_[0][1]{'_species_defs'}  ||= EnsEMBL::Web::SpeciesDefs->new(); }
 sub user_details         { $_[0][1]{'_user_details'}  ||= 1; } # EnsEMBL::Web::User::Details->new( $_[0]->{_web_user_db}); }
 sub species :lvalue      { $_[0][1]{'_species'}; }
-sub script               { $_[0][1]{'_script'};  }
+sub script               { 
+  ### a
+  my ($self, $value) = @_;
+  if ($value) {
+    $_[0][1]{'_script'} = $value;
+  }
+  return $_[0][1]{'_script'}; 
+}
 sub __supertype  :lvalue { $_[0][3]; }
 sub __objecttype :lvalue { $_[0][0]; }
 sub __data       :lvalue { $_[0][1]; }
