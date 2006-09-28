@@ -260,8 +260,8 @@ sub methods_html {
         $complete = $method->package->name . "::" . $method->name;
         $html .= qq(Inherited from <a href=") . $self->link_for_package($method->package->name) . qq(">) . $method->package->name . "</a><br />";
       }
-      $html .= "<div id='" . $complete . "' style='display: none;'>" . $complete . "</div>";
       $html .= qq(<a href="javascript:void(0);" onClick="toggle_method('$complete')" id=') . $complete . qq(_link'>View source</a>\n);
+      $html .= "<div id='" . $complete . "' style='display: none;'>" . $complete . "</div>";
       $html .= qq(<br /><br />\n);
     } 
   }
