@@ -11,7 +11,7 @@
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::AlignSlice::Slice - These obejcts contain all the information needed
+Bio::EnsEMBL::Compara::AlignSlice::Slice - These objects contain all the information needed
 for mapping features through genomic alignments
 
 =head1 INHERITING
@@ -170,7 +170,7 @@ sub genome_db {
   my ($self, $genome_db) = @_;
 
   if (defined($genome_db)) {
-    throw("[$genome_db] must bu a Bio::EnsEMBL::Compara::GenomeDB obejct")
+    throw("[$genome_db] must bu a Bio::EnsEMBL::Compara::GenomeDB object")
       unless ($genome_db and ref($genome_db) and $genome_db->isa("Bio::EnsEMBL::Compara::GenomeDB"));
     $self->{genome_db} = $genome_db;
   }

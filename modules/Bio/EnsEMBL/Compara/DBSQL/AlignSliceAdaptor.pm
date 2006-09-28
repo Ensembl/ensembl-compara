@@ -135,7 +135,7 @@ sub new {
                do not match this slice will be ignored.
   Returntype : Bio::EnsEMBL::Compara::AlignSlice
   Exceptions : thrown if wrong arguments are given
-  Caller     : $obejct->methodname
+  Caller     : $object->methodname
 
 =cut
 
@@ -214,7 +214,7 @@ sub fetch_by_Slice_MethodLinkSpeciesSet {
   Description: Destroy the cache
   Returntype : none
   Exceptions : none
-  Caller     : $obejct->methodname
+  Caller     : $object->methodname
 
 =cut
 

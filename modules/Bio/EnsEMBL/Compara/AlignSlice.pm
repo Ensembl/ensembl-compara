@@ -46,7 +46,7 @@ MODES
 Two modes are currently available: condensed and expanded mode. The default mode is "condensed". In
 condensed mode, no gaps are allowed in the reference Slice which means that information about deletions
 in the reference species (i.e. insertions in the other species) are lost. On the other hand, the
-first Bio::EnsEMBL::Compara::AlignSlice::Slice obejct corresponds to the original Bio::EnsEMBL::Slice.
+first Bio::EnsEMBL::Compara::AlignSlice::Slice object corresponds to the original Bio::EnsEMBL::Slice.
 
 In the expanded mode, the first Bio::EnsEMBL::Compara::AlignSlice::Slice is expanded in order to
 accomodate the gaps corresponding to the deletions (insertions). Bear in mind that in expanded mode, the
@@ -104,7 +104,7 @@ map features from one species onto the others.
   
   use Bio::EnsEMBL::Compara::AlignSlice;
   
-  ## You may create your own AlignSlice obejcts but if you are interested in
+  ## You may create your own AlignSlice objects but if you are interested in
   ## getting AlignSlice built with data from an EnsEMBL Compara database you
   ## should consider using the Bio::EnsEMBL::Compara::DBSQL::AlignSliceAdaptor
   ## instead
