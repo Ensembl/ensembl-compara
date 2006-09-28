@@ -13,15 +13,15 @@ Bio::EnsEMBL::Compara::RunnableDB::RAP
 
 =head1 SYNOPSIS
 
-my $db      = Bio::EnsEMBL::Compara::DBAdaptor->new($locator);
-my $repmask = Bio::EnsEMBL::Compara::RunnableDB::RAP->new ( 
+my $db  = Bio::EnsEMBL::Compara::DBAdaptor->new($locator);
+my $rap = Bio::EnsEMBL::Compara::RunnableDB::RAP->new ( 
                                                     -db      => $db,
                                                     -input_id   => $input_id
                                                     -analysis   => $analysis );
-$repmask->fetch_input(); #reads from DB
-$repmask->run();
-$repmask->output();
-$repmask->write_output(); #writes to DB
+$rap->fetch_input(); #reads from DB
+$rap->run();
+$rap->output();
+$rap->write_output(); #writes to DB
 
 =cut
 
