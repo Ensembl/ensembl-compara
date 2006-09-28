@@ -56,7 +56,7 @@ warn "Class ".$self->{'class'};
 	          CGI::escapeHTML($V->{'value'}),
             $checked eq 'yes' ? ' checked="checked"' : '', 
             CGI::escapeHTML($self->id), $K, 
-            $self->{'noescape'} ? $V->{'name'} : CGI::escapeHTML($V->{'name'});
+            $self->{'noescape'} ? $V->{'name'} : CGI::escapeHTML($V->{'name'}
         );
         $K++;
     }

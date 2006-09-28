@@ -1287,8 +1287,8 @@ sub transcriptsnpview_menu    {
   $user_config->{'Populations'}    = \@populations;
 
 
-  my $pop_adaptor = $object->Obj->adaptor->db->get_db_adaptor('variation')->get_PopulationAdaptor;
-  $user_config->{'snp_haplotype_reference'}    =  $pop_adaptor->get_reference_strain_name();
+  my $individual_adaptor = $object->Obj->adaptor->db->get_db_adaptor('variation')->get_IndividualAdaptor;
+  $user_config->{'snp_haplotype_reference'}    =  $individual_adaptor->get_reference_strain_name();
 
   my $left =  [qw( Features Source SNPClasses SNPTypes Strains SNPContext THExport ImageSize )]; # removed SNPValid
 

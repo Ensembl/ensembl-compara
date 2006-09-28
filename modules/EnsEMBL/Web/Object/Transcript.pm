@@ -105,6 +105,9 @@ sub get_Slice {
 #-- Transcript SNP view -----------------------------------------------
 
 sub get_transcript_Slice {
+
+  ### TSV
+
   my( $self, $context, $ori ) = @_;
 
   my $db  = $self->get_db ;
@@ -119,20 +122,15 @@ sub get_transcript_Slice {
 }
 
 
-# Copied from EnsEMBL/Web/Object/Gene.pm for Transcript sample View
-
-=head2 transcript
-
- Args        : Web user config, arrayref of slices (see example)
- Example     : my $slice = $object->get_Slice(
-		  $wuc,  [ 'context',      'normal', '500%'  ],
-				 );
- Description : Gets slices for transcript sample view
- Return type : hash ref of slices
-
-=cut
 
 sub get_transcript_slices {
+
+ ### TSV
+ ### Args        : Web user config, arrayref of slices (see example)
+ ### Example     : my $slice = $object->get_Slice( $wuc, ['context', 'normal', '500%'] );
+ ### Description : Gets slices for transcript sample view
+ ### Returns  hash ref of slices
+
   my( $self, $slice_config ) = @_;
   # name, normal/munged, zoom/extent
   if( $slice_config->[1] eq 'normal') {
@@ -146,6 +144,9 @@ sub get_transcript_slices {
 
 
 sub get_munged_slice {
+
+ ### TSV
+
   my $self = shift;
   my $config_name = shift;
   my $master_config = $self->user_config_hash( $config_name );
@@ -220,8 +221,13 @@ sub get_munged_slice {
 
 }
 
-# Valid user selections
+
 sub valids {
+ 
+  ### TSV
+  ### Description: Valid user selections
+  ### Returns hashref
+
   my $self = shift;
   my %valids = ();    ## Now we have to create the snp filter....
   foreach( $self->param() ) {
@@ -232,6 +238,9 @@ sub valids {
 
 
 sub extent {
+
+ ### TSV
+
   my $self = shift;
   my $extent = $self->param( 'context' );
   if( $extent eq 'FULL' ) {
@@ -242,7 +251,10 @@ sub extent {
 
 
 sub getFakeMungedVariationsOnSlice {
-  my( $self, $slice, $subslices ) = @_;
+
+ ### TSV
+
+   my( $self, $slice, $subslices ) = @_;
   my $sliceObj = EnsEMBL::Web::Proxy::Object->new(
         'Slice', $slice, $self->__data
        );
@@ -267,6 +279,11 @@ sub getAllelesConsequencesOnSlice {
   my $allele_features = $sample_slice->get_all_differences_Slice() || [];
   return ([], []) unless @$allele_features;
 
+  foreach (@$allele_features) {
+      print STDERR $_->variation_name."\n" unless $_->allele_string;
+  }
+
+
   my @filtered_af =
     sort {$a->[2]->start <=> $b->[2]->start}
 
@@ -287,7 +304,6 @@ sub getAllelesConsequencesOnSlice {
 	 @$allele_features;
 
   return ([], []) unless @filtered_af;
-
 
   # consequences of AlleleFeatures on the transcript
   my @slice_alleles = map { $_->[2]->transfer($self->Obj->slice) } @filtered_af;
@@ -316,27 +332,35 @@ sub getAllelesConsequencesOnSlice {
 
 
 sub var_class {
-  my ($self, $allele) = @_;
+
+ ### TSV
+
+   my ($self, $allele) = @_;
   my $allele_string = join "|", $allele->ref_allele_string(), $allele->allele_string;
 
  return &variation_class($allele_string);
 }
 
 sub ambig_code {
-  my ($self, $allele) = @_;
+
+ ### TSV
+
+   my ($self, $allele) = @_;
   my $allele_string = join "|", $allele->ref_allele_string(), $allele->allele_string;
 
  return &ambiguity_code($allele_string);
 }
 
 
-#return type list
-# arg[1] (optional) : "default" - returns samples checked by default
-#                   : "display" - returns samples for dropdown list with 
-#                     with default ones first
-#                   : no arg - returns selected samples
-
 sub get_samples {
+
+  ### TSV
+  ### Arg (optional) : type string
+  ###  -"default": returns samples checked by default
+  ###  -"display": returns samples for dropdown list with default ones first
+  ### Description: returns selected samples (by default)
+  ### Returns type list
+
   my $self    = shift;
   my $options = shift;
 
@@ -346,16 +370,16 @@ sub get_samples {
     return ();
   }
 
-  my $pop_adaptor = $vari_adaptor->get_PopulationAdaptor;
+  my $individual_adaptor = $vari_adaptor->get_IndividualAdaptor;
 
   if ($options eq 'default') {
-    return sort  @{$pop_adaptor->get_default_strains};
+    return sort  @{$individual_adaptor->get_default_strains};
   }
 
   my %default_pops;
-  map {$default_pops{$_} = 1 } @{$pop_adaptor->get_default_strains};
+  map {$default_pops{$_} = 1 } @{$individual_adaptor->get_default_strains};
   my %db_pops;
-  foreach ( sort  @{$pop_adaptor->get_display_strains} ) {
+  foreach ( sort  @{$individual_adaptor->get_display_strains} ) {
     next if $default_pops{$_}; 
     $db_pops{$_} = 1;
   }
@@ -388,6 +412,9 @@ sub get_samples {
 
 
 sub get_source {
+
+  ### TSV
+
   my $self = shift;
   my $default = shift;
 
@@ -407,6 +434,9 @@ sub get_source {
 }
 
 sub munge_gaps {
+ 
+ ### TSV
+
   my( $self, $slice_code, $bp, $bp2  ) = @_;
   my $subslices = $self->__data->{'slices'}{ $slice_code }[2];
   unless ($subslices) {
@@ -424,7 +454,10 @@ sub munge_gaps {
 }
 
 sub munge_gaps_split {
-  my( $self, $slice_code, $bp, $bp2, $obj_ref  ) = @_;
+
+ ### TSV
+
+   my( $self, $slice_code, $bp, $bp2, $obj_ref  ) = @_;
   my $subslices = $self->__data->{'slices'}{ $slice_code }[2];
   my @return = ();
   foreach( @$subslices ) {
@@ -451,17 +484,15 @@ sub munge_gaps_split {
 }
 
 sub read_coverage {
+ 
+ ### TSV
+
   my ( $self, $sample, $sample_slice) = @_;
-  #my $pop_adaptor = $self->Obj->adaptor->db->get_db_adaptor('variation')->get_PopulationAdaptor;
-  #my $sample_obj = $pop_adaptor->fetch_by_name($sample); 
 
-
-  # NASTY HACK
-  my $pop_adaptor = $self->Obj->adaptor->db->get_db_adaptor('variation')->get_IndividualAdaptor;
-  my $sample_objs = $pop_adaptor->fetch_all_by_name($sample);
+  my $individual_adaptor = $self->Obj->adaptor->db->get_db_adaptor('variation')->get_IndividualAdaptor;
+  my $sample_objs = $individual_adaptor->fetch_all_by_name($sample);
   return ([],[]) unless @$sample_objs; 
   my $sample_obj = $sample_objs->[0];
-  # --- end nasty hack
 
   my $rc_adaptor = $self->Obj->adaptor->db->get_db_adaptor('variation')->get_ReadCoverageAdaptor;
   my $coverage_level = $rc_adaptor->get_coverage_levels;
@@ -470,7 +501,10 @@ sub read_coverage {
 }
 
 sub munge_read_coverage {
-  my ($self, $coverage_obj ) = @_;
+
+ ### TSV
+
+   my ($self, $coverage_obj ) = @_;
   my @filtered_obj =
     sort { $a->[2]->start <=> $b->[2]->start }
     map  { $self->munge_gaps_split( "TSV_transcript", $_->start, $_->end, $_ ) }
@@ -479,7 +513,10 @@ sub munge_read_coverage {
 }
 
 sub generate_query_hash {
-  my $self = shift;
+
+ ### TSV
+
+   my $self = shift;
   return {
 	  'transcript' => $self->stable_id,
 	  'db'         => $self->get_db,
@@ -1133,7 +1170,7 @@ sub rna_notation {
     }
     push @strings, $string;
   }
-  warn join "\n", @strings;
+ # warn join "\n", @strings;
   return @strings;
 }
 
