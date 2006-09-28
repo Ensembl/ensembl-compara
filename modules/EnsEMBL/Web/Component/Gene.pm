@@ -615,7 +615,7 @@ sub orthologues {
   my $ALIGNVIEW = 0;
   my $matching_orthologues = 0;
   my %SP = ();
-  foreach my $species (keys %orthologue_list) {
+  foreach my $species (sort keys %orthologue_list) {
     $html .= sprintf( qq(
         <tr>
           <th rowspan="@{[scalar(keys %{$orthologue_list{$species}})]}"><em>%s</em></th>), $species );
