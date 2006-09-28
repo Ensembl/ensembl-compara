@@ -61,6 +61,7 @@ sub _init {
 
   foreach my $allele_ref (  @$alleles ) {
     my $allele = $allele_ref->[2];
+    next unless $allele;
     my $conseq_type = shift @consequences;
     next unless $conseq_type;
     next if $allele->end < $transcript->start - $EXTENT;

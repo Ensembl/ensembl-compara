@@ -19,8 +19,8 @@ sub _init {
   return unless scalar @snps;
 
   # Get reference strain name for start of track:
-  my $pop_adaptor = $self->{'container'}->adaptor->db->get_db_adaptor('variation')->get_PopulationAdaptor;
-  my $golden_path =  $pop_adaptor->get_reference_strain_name();
+  my $individual_adaptor = $self->{'container'}->adaptor->db->get_db_adaptor('variation')->get_IndividualAdaptor;
+  my $golden_path =  $individual_adaptor->get_reference_strain_name();
   my $reference_name = $Config->{'reference'} || $golden_path;
 
 
@@ -32,6 +32,7 @@ sub _init {
     my( $strain, $allele_ref, $coverage_ref ) = @$data;
     $strain_alleles{$strain} = {};  # every strain should be in here
     foreach my $a_ref ( @$allele_ref ) {
+      next unless $a_ref->[2];
       $strain_alleles{$strain}{ join "::", $a_ref->[2]->{'_variation_id'}, $a_ref->[2]->{'start'} } = $a_ref->[2]->allele_string ;
     }
     foreach my $c_ref ( @$coverage_ref ) {
