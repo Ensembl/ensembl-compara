@@ -13,8 +13,6 @@ my %Location_of;
 my %BaseURL_of;
 my %SupportFilesLocation_of;
 
-my $CVSROOT = "http://cvs.sanger.ac.uk/cgi-bin/viewcvs.cgi/ensembl-webcode/modules/";
-
 sub new {
   ### c
   ### Inside-out class for writing documentation HTML.
@@ -175,7 +173,7 @@ sub write_module_page {
   open (my $fh, ">", $self->_html_path_from_package($module->name));
   print $fh $self->html_header( (package => $module->name) );
   print $fh "<div class='title'><h1>" . $module->name . "</h1>";
-  print $fh "<a href='" . cvs_link($module->name) . "'>Source code</a>\n";
+  print $fh "<a href='" . cvs_link($module->name) . "' target='_new'>Source code</a>\n";
   print $fh "&middot; <a href='" . $self->link_for_package($module->name) . "'>Permalink</a>\n";
   print $fh "</div>";
   print $fh "<div class='content'>";
@@ -190,17 +188,15 @@ sub write_module_page {
   print $fh "<div class='footer'>&larr; <a href='" .
             ("../" x element_count_from_package($module->name)) .
             "base.html'>Home</a>";
-  print $fh " &middot; <a href='" . cvs_link($module->name) . "'>Source code</a>";
+  print $fh " &middot; <a href='" . cvs_link($module->name) . "' target='_new'>Source code</a>";
   print $fh $self->html_footer;
 }
 
 sub cvs_link {
   ### Returns a link to a source code file in CVS.
   my $package = shift;
-  my $link = $CVSROOT;
-  my $file = $package;
-  $file =~ s/::/\//g;
-  return $link . $file . ".pm?view=markup";
+  my $link = "/common/highlight_method/" . $package . "::";
+  return $link; 
 }
 
 sub write_module_pages {
@@ -252,6 +248,7 @@ sub methods_html {
   my $count = 0;
   foreach my $method (sort { $a->name cmp $b->name } @{ $module->all_methods }) {
     if ($method->type !~ /unknown/) {
+      my $complete = $module->name . "::" . $method->name;
       $count++;
       $html .= qq(<b><a name=") . $method->name . qq("></a>) . $method->name . qq(</b><br />\n);
       $html .= $self->markup_documentation($method->documentation);
@@ -260,9 +257,12 @@ sub methods_html {
         $html .= qq(Returns: <i>) . $method->result . qq(</i><br />\n);
       }
       if ($method->package->name ne $module->name) {
+        $complete = $method->package->name . "::" . $method->name;
         $html .= qq(Inherited from <a href=") . $self->link_for_package($method->package->name) . qq(">) . $method->package->name . "</a><br />";
       }
-      $html .= qq(<br />\n);
+      $html .= "<div id='" . $complete . "' style='display: none;'>" . $complete . "</div>";
+      $html .= qq(<a href="javascript:void(0);" onClick="toggle_method('$complete')" id=') . $complete . qq(_link'>View source</a>\n);
+      $html .= qq(<br /><br />\n);
     } 
   }
   if (!$count) {
@@ -380,7 +380,7 @@ sub copy_support_files {
   my $source = $self->support;
   my $destination = $self->location;
   if ($source) {
-    my $cp = `cp $source/styles.css $destination/`;
+    my $cp = `cp $source/* $destination/`;
   }
 }
 
@@ -402,18 +402,48 @@ sub html_header {
     <!--#set var="decor" value="none"-->
     <html>
     <head>
-      <title>e! doc</title>
-      <link href=");
-   if (element_count_from_package($package)) {
-     $html .= ("../" x element_count_from_package($package));
-   }
-   $html .=
-    qq(styles.css" rel="stylesheet" type="text/css" media="all" />
+      <title>e! doc</title>);
+   $html .= $self->include_javascript($package, 'prototype.js');
+   $html .= $self->include_javascript($package, 'scriptaculous.js');
+   $html .= $self->include_javascript($package, 'display.js');
+   $html .= $self->include_stylesheet($package, 'styles.css');
+   $html .= qq(
     </head>
     <body $class>
   );
   return $html;
 }
+
+sub include_stylesheet {
+  ### Returns the HTML to include a CSS stylesheet.
+  my ($self, $package, $stylesheet) = @_;
+  my $html .= qq(<link href=");
+  $html .= $self->package_prefix($package);
+  $html .=
+    qq(styles.css" rel="stylesheet" type="text/css" media="all" />);
+  return $html;
+}
+
+sub include_javascript {
+  ### Returns HTML to include a javascript file.
+  my ($self, $package, $script) = @_;
+  my $html = qq(
+      <script type="text/javascript" src=");
+  $html .= $self->package_prefix($package);
+  $html .= qq($script"></script>\n);
+  return $html;
+}
+
+sub package_prefix {
+  ### Returns the relative path prefix for a particular 
+  ### package name.
+  my ($self, $package) = @_;
+  my $html = "";
+  if (element_count_from_package($package)) {
+     $html .= ("../" x element_count_from_package($package));
+  }
+  return $html;
+} 
 
 sub html_footer {
   ### Returns a simple HTML footer
