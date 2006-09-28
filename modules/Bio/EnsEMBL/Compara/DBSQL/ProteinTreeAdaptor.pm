@@ -32,6 +32,26 @@ our @ISA = qw(Bio::EnsEMBL::Compara::DBSQL::NestedSetAdaptor);
 # FETCH methods
 ###########################
 
+=head2 fetch_AlignedMember_by_member_id_root_id
+
+  Arg[1]     : int member_id of a peptide member (longest translation)
+  Arg[2]     : [optional] int clusterset_id (def. 0)
+  Example    :
+
+      my $aligned_member = $proteintree_adaptor->
+                            fetch_AlignedMember_by_member_id_root_id
+                            (
+                             $member->get_longest_peptide_Member->member_id
+                            );
+
+  Description: Fetches from the database the protein_tree that contains the member_id
+  Returntype : Bio::EnsEMBL::Compara::ProteinTree
+  Exceptions :
+  Caller     :
+
+=cut
+
+
 sub fetch_AlignedMember_by_member_id_root_id {
   my ($self, $member_id, $root_id) = @_;
     
