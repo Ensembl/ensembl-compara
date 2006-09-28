@@ -252,10 +252,11 @@ sub methods_html {
       $count++;
       $html .= qq(<b><a name=") . $method->name . qq("></a>) . $method->name . qq(</b><br />\n);
       $html .= $self->markup_documentation($method->documentation);
-      $html .= qq(<br />\n);
+      $html .= $self->markup_table($method->table);
       if ($method->result) {
-        $html .= qq(Returns: <i>) . $method->result . qq(</i><br />\n);
+        $html .= qq(<i>) . $self->markup_documentation($method->result) . qq(</i>\n);
       }
+      $html .= qq(<br />\n);
       if ($method->package->name ne $module->name) {
         $complete = $method->package->name . "::" . $method->name;
         $html .= qq(Inherited from <a href=") . $self->link_for_package($method->package->name) . qq(">) . $method->package->name . "</a><br />";
@@ -269,6 +270,28 @@ sub methods_html {
     $html .= qq(No documented methods.);
   }
   $html .= qq(</ul>);
+  return $html;
+}
+
+sub markup_table {
+  my ($self, $table) = @_; 
+  my $html = "";
+  if (keys %{ $table }) {
+    $html = "<br />\n";
+    $html .= "<table width='65%' cellpadding='4' cellspacing='0'>\n";
+    my %table = %{ $table };
+    my $row_count = 0;
+    my $classname = "";
+    foreach my $key (sort keys %table) {
+      $row_count++;
+      $classname = "";
+      if ($row_count % 2) {
+        $classname = "class='filled'"; 
+      }
+      $html .= "<tr><td $classname valign='top'>$key</td><td $classname>" . $self->markup_documentation($table{$key}) . "</td></tr>\n"; 
+    }
+    $html .= "</table>\n";
+  }
   return $html;
 }
 

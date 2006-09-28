@@ -10,6 +10,7 @@ my %Result_of;
 my %Type_of;
 my %Module_of;
 my %Documentation_of;
+my %Table_of;
 
 sub new {
   ### c
@@ -19,6 +20,7 @@ sub new {
   $Name_of{$self} = defined $params{name} ? $params{name} : "";
   $Module_of{$self} = defined $params{module} ? $params{module} : "";
   $Documentation_of{$self} = defined $params{documentation} ? $params{documentation} : "";
+  $Table_of{$self} = defined $params{table} ? $params{table} : {};
   $Type_of{$self} = defined $params{type} ? $params{type} : "unknown";
   $Result_of{$self} = defined $params{result} ? $params{result} : "";
   return $self;
@@ -59,6 +61,13 @@ sub module {
   return $Module_of{$self};
 }
 
+sub table {
+  ### a
+  my $self = shift;
+  $Table_of{$self} = shift if @_;
+  return $Table_of{$self};
+}
+
 sub package {
   ### Convenience accessor pointing to module object
   return module(@_);
@@ -72,6 +81,7 @@ sub DESTROY {
   delete $Type_of{$self};
   delete $Result_of{$self};
   delete $Module_of{$self};
+  delete $Table_of{$self};
 }
 
 }

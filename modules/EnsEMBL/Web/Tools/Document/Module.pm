@@ -121,6 +121,9 @@ sub find_methods {
                        result => $documentation{methods}{$method}->{return},
                        module => $self
                      ));
+    if ($documentation{table}{$method}) {
+      $new_method->table($documentation{table}{$method});
+    }
     $self->add_method($new_method);
   }
   if ($documentation{isa}) {
@@ -129,6 +132,7 @@ sub find_methods {
       $self->add_superclass($class);
     }
   }
+
 
   if ($documentation{overview}) {
      $self->overview($documentation{overview});
@@ -146,6 +150,7 @@ sub _parse_package_file {
   my $package = "";
   my $lines = "";
   my $comment_code = $self->identifier;
+  my $table = 0;
   while (<$fh>) {
     my $block = 0;
     $lines++;
@@ -178,7 +183,9 @@ sub _parse_package_file {
       if (!$docs{methods}) {
         $docs{methods} = {};
       }
+      $table = "";
       $docs{methods}{$sub} = {};
+      $docs{table}{$sub} = {};
     }
     if ($sub && /$comment_code/) {
       my ($trash, $comment) = split /$comment_code/;
@@ -186,7 +193,24 @@ sub _parse_package_file {
       chomp $comment;
       if ($comment eq "") {
         $comment .= "<br /><br />";
+        $table = "";
       }
+
+      if ($comment =~ /[A-Z].*\s*:\s+\w+/) {
+        ($table, $trash) = split(/:/, $comment);
+      }
+      if ($table) {
+        if ($comment !~ /^.eturns:/) {
+          my $table_content = $comment;
+          $table_content =~ s/$table\s*://;
+          if (!$docs{table}{$sub}->{$table}) {
+            $docs{table}{$sub}->{$table} = ""; 
+          }
+          $docs{table}{$sub}->{$table} .= $table_content . " ";
+          $block = 1;
+        }
+      }
+
       my @elements = split /\s+/, $comment;
       if (!$docs{methods}{$sub}{type}) {
         $docs{methods}{$sub}{type} = "method";
@@ -195,10 +219,10 @@ sub _parse_package_file {
         $comment = ucfirst($self->convert_keyword($comment));
         $docs{methods}{$sub}{type} = lc($comment);
         $comment .= ". ";
-      } elsif ($#elements == 1) {
-        if ($elements[0] =~ /eturn/) {
-          $docs{methods}{$sub}{return} = $elements[1];
-          #print "RETURN: " . $docs{$sub}{return} . "\n";
+      } else {
+        if ($elements[0] =~ /^.eturns/) {
+          $docs{methods}{$sub}{return} = "@elements";
+          $table = "";
           $block = 1;
         }
       }
