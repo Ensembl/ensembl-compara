@@ -134,3 +134,16 @@ div.coverage {
 div.date {
   padding-top: 20px;
 }
+
+div.definitions table {
+  font-size: 13px;
+}
+
+div.definitions td {
+  border: 1px solid #efefef;
+}
+
+div.definitions td.filled {
+  border: 1px solid #efefef;
+  background: #eeeeff;
+}
