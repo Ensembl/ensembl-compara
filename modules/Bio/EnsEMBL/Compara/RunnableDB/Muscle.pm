@@ -13,21 +13,21 @@ Bio::EnsEMBL::Compara::RunnableDB::Muscle
 
 =head1 SYNOPSIS
 
-my $db      = Bio::EnsEMBL::Compara::DBAdaptor->new($locator);
-my $repmask = Bio::EnsEMBL::Compara::RunnableDB::Muscle->new ( 
+my $db     = Bio::EnsEMBL::Compara::DBAdaptor->new($locator);
+my $muscle = Bio::EnsEMBL::Compara::RunnableDB::Muscle->new ( 
                                                     -db      => $db,
-                                                    -input_id   => $input_id
+                                                    -input_id   => $input_id,
                                                     -analysis   => $analysis );
-$repmask->fetch_input(); #reads from DB
-$repmask->run();
-$repmask->output();
-$repmask->write_output(); #writes to DB
+$muscle->fetch_input(); #reads from DB
+$muscle->run();
+$muscle->output();
+$muscle->write_output(); #writes to DB
 
 =cut
 
 =head1 DESCRIPTION
 
-This Analysis/RunnableDB is designed to take a Family as input
+This Analysis/RunnableDB is designed to take a Family (or Homology) as input
 Run a MUSCLE multiple alignment on it, and store the resulting alignment
 back into the family_member table.
 
@@ -69,6 +69,7 @@ use POSIX qw(ceil floor);
 
 use Bio::EnsEMBL::Hive;
 our @ISA = qw(Bio::EnsEMBL::Hive::Process);
+
 
 =head2 fetch_input
 
@@ -527,6 +528,5 @@ sub parse_and_store_alignment_into_proteintree
 
   return undef;
 }
-
 
 1;

@@ -13,12 +13,12 @@ Bio::EnsEMBL::Compara::RunnableDB::NJTREE_PHYML
 
 =head1 SYNOPSIS
 
-my $db      = Bio::EnsEMBL::Compara::DBAdaptor->new($locator);
+my $db           = Bio::EnsEMBL::Compara::DBAdaptor->new($locator);
 my $njtree_phyml = Bio::EnsEMBL::Compara::RunnableDB::NJTREE_PHYML->new
   (
-   -db      => $db,
-   -input_id   => $input_id
-   -analysis   => $analysis 
+   -db         => $db,
+   -input_id   => $input_id,
+   -analysis   => $analysis
   );
 $njtree_phyml->fetch_input(); #reads from DB
 $njtree_phyml->run();
@@ -31,7 +31,7 @@ $njtree_phyml->write_output(); #writes to DB
 =head1 DESCRIPTION
 
 This Analysis/RunnableDB is designed to take ProteinTree as input
-This must already have a multiple alignment run on it.  It uses that alignment
+This must already have a multiple alignment run on it. It uses that alignment
 as input into the NJTREE PHYML program which then generates a phylogenetic tree
 
 input_id/parameters format eg: "{'protein_tree_id'=>1234}"
@@ -90,10 +90,7 @@ our @ISA = qw(Bio::EnsEMBL::Hive::Process);
 sub fetch_input {
   my( $self) = @_;
 
-  $self->{'transition_transversion_ratio'}           = 0.0;
-  $self->{'number_of_substitution_rate_categories'}  = 4;
-  $self->{'gamma_distribution_parameter'}            = 1;
-  $self->{'cdna'}                                    = 1;
+  $self->{'cdna'}           = 1;
   $self->{'max_gene_count'} = 1000000;
 
   $self->check_job_fail_options;
@@ -108,7 +105,10 @@ sub fetch_input {
 
   #create a Compara::DBAdaptor which shares the same DBI handle
   #with the Pipeline::DBAdaptor that is based into this runnable
-  $self->{'comparaDBA'} = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(-DBCONN=>$self->db->dbc);
+  $self->{'comparaDBA'} = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new
+    (
+     -DBCONN=>$self->db->dbc
+    );
 
   $self->get_params($self->parameters);
   $self->get_params($self->input_id);
@@ -117,7 +117,8 @@ sub fetch_input {
   unless($self->{'protein_tree'}) {
     throw("undefined ProteinTree as input\n");
   }
-  if ($self->{'protein_tree'}->get_tagvalue('gene_count') > $self->{'max_gene_count'}) {
+  if ($self->{'protein_tree'}->get_tagvalue('gene_count') 
+      > $self->{'max_gene_count'}) {
     $self->dataflow_output_id($self->input_id, 2);
     $self->input_job->update_status('FAILED');
     $self->{'protein_tree'}->release_tree;
@@ -138,7 +139,6 @@ sub fetch_input {
     Args    :   none
     
 =cut
-
 
 sub run
 {
@@ -205,7 +205,8 @@ sub get_params {
          fetch_node_by_node_id($params->{'protein_tree_id'});
   }
   $self->{'cdna'} = $params->{'cdna'} if(defined($params->{'cdna'}));
-  $self->{'max_gene_count'} = $params->{'max_gene_count'} if(defined($params->{'max_gene_count'}));
+  $self->{'max_gene_count'} = 
+    $params->{'max_gene_count'} if(defined($params->{'max_gene_count'}));
 
   if(defined($params->{'species_tree_file'})) {
     $self->{'species_tree_file'} = $params->{'species_tree_file'};
@@ -232,18 +233,24 @@ sub run_njtree_phyml
   my $starttime = time()*1000;
 
   $self->{'cdna'} = 1; #always use cdna for njtree_phyml
-  $self->{'input_aln'} = $self->dumpTreeMultipleAlignmentToWorkdir($self->{'protein_tree'});
+  $self->{'input_aln'} = $self->dumpTreeMultipleAlignmentToWorkdir
+    (
+     $self->{'protein_tree'}
+    );
   return unless($self->{'input_aln'});
   
   $self->{'newick_file'} = $self->{'input_aln'} . "_njtree_phyml_tree.txt ";
 
   my $njtree_phyml_executable = '';
   unless (-e $njtree_phyml_executable) {
-    # md5sum e76e7e2c78ab718f8a117fc173475c48  /ecs2/work2/avilella/bin/alpha-dec-osf4.0/njtree
-    $njtree_phyml_executable = "/ecs2/work2/avilella/bin/alpha-dec-osf4.0/njtree";
+    # md5sum e76e7e2c78ab718f8a117fc173475c48
+    # /ecs2/work2/avilella/bin/alpha-dec-osf4.0/njtree
+    $njtree_phyml_executable 
+      = "/ecs2/work2/avilella/bin/alpha-dec-osf4.0/njtree";
     if (-e "/proc/version") {
       # it is a linux machine
-      # md5sum 92f85c3968130fda73044a21d69df86f  /ecs2/work2/avilella/bin/i386/njtree
+      # md5sum 92f85c3968130fda73044a21d69df86f
+      # /ecs2/work2/avilella/bin/i386/njtree
       $njtree_phyml_executable = "/ecs2/work2/avilella/bin/i386/njtree";
     }
   }
@@ -252,14 +259,19 @@ sub run_njtree_phyml
   #     $njtree_phyml_executable = "/usr/local/ensembl/bin/njtree";
   #   }
 
-  throw("can't find a njtree executable to run\n") unless(-e $njtree_phyml_executable);
-  throw("can't find species_tree_file\n") unless( -e $self->{'species_tree_file'});
+  throw("can't find a njtree executable to run\n") 
+    unless(-e $njtree_phyml_executable);
+  throw("can't find species_tree_file\n") 
+    unless(-e $self->{'species_tree_file'});
 
-  #./njtree best -f spec-v4.1.nh -p tree -o $BASENAME.best.nhx $BASENAME.nucl.mfa -b 100 2>/dev/null
+  # ./njtree best -f spec-v4.1.nh -p tree -o $BASENAME.best.nhx \
+  # $BASENAME.nucl.mfa -b 100 2>&1/dev/null
+
   my $cmd = $njtree_phyml_executable;
-
   $cmd .= " best ";
-  $cmd .= " -f ". $self->{'species_tree_file'} if (defined($self->{'species_tree_file'}));
+  if (defined($self->{'species_tree_file'})) {
+    $cmd .= " -f ". $self->{'species_tree_file'};
+  }
   $cmd .= " ". $self->{'input_aln'};
   $cmd .= " -p tree ";
   my $num_bootstrap = $self->{'num_bootstrap'} || 100;
@@ -315,11 +327,13 @@ sub dumpTreeMultipleAlignmentToWorkdir
   
   my $leafcount = scalar(@{$tree->get_all_leaves});
   if($leafcount<3) {
-    printf(STDERR "tree cluster %d has <3 proteins - can not build a tree\n", $tree->node_id);
+    printf(STDERR "tree cluster %d has <3 proteins - can not build a tree\n", 
+           $tree->node_id);
     return undef;
   }
-  
-  $self->{'file_root'} = $self->worker_temp_directory. "proteintree_". $tree->node_id;
+
+  $self->{'file_root'} = 
+    $self->worker_temp_directory. "proteintree_". $tree->node_id;
   $self->{'file_root'} =~ s/\/\//\//g;  # converts any // in path to /
 
   my $aln_file = $self->{'file_root'} . ".aln";
@@ -332,16 +346,25 @@ sub dumpTreeMultipleAlignmentToWorkdir
   open(OUTSEQ, ">$aln_file")
     or $self->throw("Error opening $aln_file for write");
 
-  # Using append_taxon_id will give nice seqnames_taxonids needed for njtree species_tree matching
-  my $sa = $tree->get_SimpleAlign(-id_type => 'MEMBER', -cdna=>$self->{'cdna'}, -stop2x => 1, -append_taxon_id => 1);
+  # Using append_taxon_id will give nice seqnames_taxonids needed for
+  # njtree species_tree matching
+  my $sa = $tree->get_SimpleAlign
+    (
+     -id_type => 'MEMBER',
+     -cdna=>$self->{'cdna'},
+     -stop2x => 1,
+     -append_taxon_id => 1
+    );
   $sa->set_displayname_flat(1);
-  my $alignIO = Bio::AlignIO->newFh(-fh => \*OUTSEQ,
-                                    -format => "fasta"
-                                   );
+  my $alignIO = Bio::AlignIO->newFh
+    (
+     -fh => \*OUTSEQ,
+     -format => "fasta"
+    );
   print $alignIO $sa;
 
   close OUTSEQ;
-  
+
   $self->{'input_aln'} = $aln_file;
   return $aln_file;
 }
@@ -386,7 +409,9 @@ sub store_tags
   unless (defined($self->{'no_bootstrap'})) {
     if(defined($node->get_tagvalue("B"))) {
       my $bootstrap_value = $node->get_tagvalue("B");
-      if($self->debug) { printf("store bootstrap : $bootstrap_value "); $node->print_node; }
+      if($self->debug) {
+        printf("store bootstrap : $bootstrap_value "); $node->print_node;
+      }
       $node->store_tag('Bootstrap', $bootstrap_value);
     }
   }
@@ -415,10 +440,11 @@ sub parse_newick_into_proteintree
   #parse newick into a new tree object structure
   my $newick = '';
   print("load from file $newick_file\n") if($self->debug);
-  open (FH, $newick_file) or throw("Could not open newick file [$newick_file]");
+  open (FH, $newick_file) or throw("Couldnt open newick file [$newick_file]");
   while(<FH>) { $newick .= $_;  }
   close(FH);
-  my $newtree = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($newick);
+  my $newtree = 
+    Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($newick);
   $newtree->print_tree(20) if($self->debug > 1);
   # get rid of the taxon_id needed by njtree -- name tag
   foreach my $leaf (@{$newtree->get_all_leaves}) {
@@ -427,9 +453,10 @@ sub parse_newick_into_proteintree
     my $member_name = $1;
     $leaf->add_tag('name', $member_name);
   }
-  
-  #leaves of newick tree are named with member_id of members from input tree
-  #move members (leaves) of input tree into newick tree to mirror the 'member_id' nodes
+
+  # Leaves of newick tree are named with member_id of members from
+  # input tree move members (leaves) of input tree into newick tree to
+  # mirror the 'member_id' nodes
   foreach my $member (@{$tree->get_all_leaves}) {
     my $tmpnode = $newtree->find_node_by_name($member->member_id);
     if($tmpnode) {
@@ -441,11 +468,11 @@ sub parse_newick_into_proteintree
     }
   }
   
-  # merge the trees so that the children of the newick tree are now attached to the 
-  # input tree's root node
+  # Merge the trees so that the children of the newick tree are now
+  # attached to the input tree's root node
   $tree->merge_children($newtree);
 
-  #newick tree is now empty so release it
+  # Newick tree is now empty so release it
   $newtree->release_tree;
 
   $tree->print_tree if($self->debug);
