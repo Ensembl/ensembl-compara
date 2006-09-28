@@ -32,6 +32,7 @@ sub location_string {
   ### Example    : my $location = $self->location_string;
   ### Description: Gets chr:start-end for the SNP with 100 bases on either side
   ### Returns string: chr:start-end
+
   my ($self, $unique) = @_;
   my( $sr, $st ) = $self->_seq_region_($unique);
   return $sr ? "$sr:@{[$st-100]}-@{[$st+100]}" : undef;
@@ -75,8 +76,10 @@ sub _seq_region_ {
 
 
 sub seq_region_name    {
+
   ### Variation_location 
   ### a
+
   my( $sr,$st) = $_[0]->_seq_region_; return $sr; 
 }
 sub seq_region_start   {

@@ -158,15 +158,15 @@ sub status {
 
 
 
- sub alleles {
+sub alleles {
 
-### General_table_info
- ### Arg1        : panel
- ### Arg2        : data object
- ### Example     : $panel1->add_rows(qw(alleles EnsEMBL::Web::Component::SNP::alleles) );
- ### Description : adds a label and html for the Variations alleles
- ###              adds a line describing the ancestor allele if this exists
- ### Returns  1
+  ### General_table_info
+  ### Arg1        : panel
+  ### Arg2        : data object
+  ### Example     : $panel1->add_rows(qw(alleles EnsEMBL::Web::Component::SNP::alleles) );
+  ### Description : adds a label and html for the Variations alleles
+  ###              adds a line describing the ancestor allele if this exists
+  ### Returns  1
 
    my ( $panel, $object ) = @_;
    my $label = 'Alleles';
@@ -272,12 +272,12 @@ sub seq_region {
 
 sub all_freqs {
 
-### Population_genotype_alleles
- ### Arg1        : panel
- ### Arg2        : data object
- ### Example     : $allele_panel->add_components( qw(all_freqs EnsEMBL::Web::Component::SNP::all_freqs) );
- ### Description : prints a table of allele and genotype frequencies for the variation per population
- ### Returns  1
+  ### Population_genotype_alleles
+  ### Arg1        : panel
+  ### Arg2        : data object
+  ### Example     : $allele_panel->add_components( qw(all_freqs EnsEMBL::Web::Component::SNP::all_freqs) );
+  ### Description : prints a table of allele and genotype frequencies for the variation per population
+  ### Returns  1
 
   my ( $panel, $object ) = @_;
   my $freq_data = $object->freqs;
@@ -290,13 +290,13 @@ sub all_freqs {
 
 sub format_frequencies {
 
-### Population_genotype_alleles
- ### Arg1        : panel
- ### Arg2        : data object 
- ### Arg3        : frequency data
- ### Example     : format_frequencies($panel, $object, $freq_data, "Alleles");
- ### Description : prints a table of allele or genotype frequencies for the variation
- ### Returns  1
+  ### Population_genotype_alleles
+  ### Arg1        : panel
+  ### Arg2        : data object 
+  ### Arg3        : frequency data
+  ### Example     : format_frequencies($panel, $object, $freq_data, "Alleles");
+  ### Description : prints a table of allele or genotype frequencies for the variation
+  ### Returns  1
 
   my ( $panel, $object, $freq_data ) = @_;
   my %freq_data = %{ $freq_data };
@@ -307,14 +307,12 @@ sub format_frequencies {
 
     # Freqs alleles ---------------------------------------------
     my @allele_freq = @{ $freq_data{$pop_id}{AlleleFrequency} };
-
     foreach my $gt ( @{ $freq_data{$pop_id}{Alleles} } ) {
       $pop_row{"Alleles&nbsp;<br />$gt"} = sprintf("%.3f", shift @allele_freq ) || 'no data';
     }
 
     # Freqs genotypes ---------------------------------------------
-    my @genotype_freq = @{ $freq_data{$pop_id}{GenotypeFrequency} };
-
+    my @genotype_freq = @{ $freq_data{$pop_id}{GenotypeFrequency} || [] };
     foreach my $gt ( @{ $freq_data{$pop_id}{Genotypes} } ) {
       $pop_row{"Genotypes&nbsp;<br />$gt"} = sprintf("%.3f", shift @genotype_freq ) || 'no data';
     }
@@ -330,7 +328,6 @@ sub format_frequencies {
     }
     $pop_row{Description} = "<small>". ($description ||"-") ."</small>";
 
-
     # Super and sub populations ----------------------------------------------
     my $super_string = _sort_extra_pops($object, $freq_data{$pop_id}{pop_info}{"Super-Population"});
     $pop_row{"Super-Population"} =  $super_string;
@@ -341,7 +338,6 @@ sub format_frequencies {
     $panel->add_row(\%pop_row); 
     map {  $columns{$_} = 1 if $pop_row{$_};  } (keys %pop_row);
   }
-
 
   # Format table columns ------------------------------------------------------
   my @header_row;
