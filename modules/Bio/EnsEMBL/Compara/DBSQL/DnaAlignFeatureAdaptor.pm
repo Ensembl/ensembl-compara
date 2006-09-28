@@ -248,7 +248,7 @@ sub fetch_all_by_species_region {
             $type = "D";
           }
         } else {
-          throw "no double gaps can occur in a pairwise aligment!";
+          throw "no double gaps can occur in a pairwise alignment!";
         }
         $num++;
       }
