@@ -13,10 +13,10 @@ Bio::EnsEMBL::Compara::RunnableDB::OrthoTree
 
 =head1 SYNOPSIS
 
-my $db      = Bio::EnsEMBL::Compara::DBAdaptor->new($locator);
+my $db    = Bio::EnsEMBL::Compara::DBAdaptor->new($locator);
 my $otree = Bio::EnsEMBL::Compara::RunnableDB::OrthoTree->new ( 
                                                     -db      => $db,
-                                                    -input_id   => $input_id
+                                                    -input_id   => $input_id,
                                                     -analysis   => $analysis );
 $otree->fetch_input(); #reads from DB
 $otree->run();
@@ -28,8 +28,8 @@ $otree->write_output(); #writes to DB
 =head1 DESCRIPTION
 
 This Analysis/RunnableDB is designed to take ProteinTree as input
-This must already have a rooted tree with duplication/sepeciation tags on the nodes.  
-It analyzes that tree structure to pick Orthologues and Paralogs.
+This must already have a rooted tree with duplication/sepeciation tags on the nodes.
+It analyzes that tree structure to pick Orthologues and Paralogs for each genepair.
 
 input_id/parameters format eg: "{'protein_tree_id'=>1234}"
     protein_tree_id : use 'id' to fetch a cluster from the ProteinTree
