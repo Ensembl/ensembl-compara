@@ -489,13 +489,17 @@ sub align_sequence_display {
 		      }
 
 		  } else {
+			if ($sindex < $slice_length) {
 		      my $pos = $sstrand > 0 ? ($sindex + $linenumbers[0] + 1) : ($linenumbers[0] + 1 - $sindex);
 		      push @ht, sprintf("%*s:%*u %s", $max_region, $as->seq_region_name, $lineformat, $pos);
+			}
 		  }
 		
 	      } else {
 		  if (@linenumbers) {
+			if ($sindex < $slice_length) {
 		      push @ht, sprintf("%*u %s", $lineformat, $sindex + $linenumbers[0] + 1);
+			}
 		  }
 	      }
 
