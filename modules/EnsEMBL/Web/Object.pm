@@ -12,26 +12,36 @@ use Bio::EnsEMBL::VDrawableContainer;
 our @ISA =qw(EnsEMBL::Web::Proxiable);
  
 sub EnsemblObject   {
-## ($?) Sets/returns the data object [deprecated]
+### ($?) Sets/returns the data object [deprecated]
   my $self = shift;
   warn "EnsemblObject - TRY TO AVOID - THIS NEEDS TO BE REMOVED... Use Obj instead...";
   $self->{'data'}{'_object'}    = shift if @_;
   return $self->{'data'}{'_object'};
 }
 
+sub prefix {
+  ### a
+  my ($self, $value) = @_;
+  warn "PREFIX: $value";
+  if ($value) {
+    $self->{'prefix'} = $value;
+  }
+  return $self->{'prefix'};
+}
+
 sub Obj {
-## () Returns the data object
+### () Returns the data object
   return $_[0]{'data'}{'_object'};
 }
 
 sub dataobj { 
-## () Returns the data object [deprecated]
+### () Returns the data object [deprecated]
   warn "dataobj - TRY TO AVOID - THIS NEEDS TO BE REMOVED... Use Obj instead...";
   return $_[0]->Obj;
 }
 
 sub highlights {
-## (@highlights?) If parameters passed adds them to highlights array, returns highlights array.
+### (@highlights?) If parameters passed adds them to highlights array, returns highlights array.
   my $self = shift;
   unless( exists( $self->{'data'}{'_highlights'}) ) {
     my @highlights = $self->param('h');
@@ -47,15 +57,15 @@ sub highlights {
 }
 
 sub highlights_string {
-## () Returns highlight string for passing around contigview
+### () Returns highlight string for passing around contigview
   return join '|', @{$_[0]->highlights};
 }
 
 ## Object support functions...
 
 sub mapview_link {
-## ($feature) Returns name of seq_region $feature is on. If the passed features is
-## on a "real chromosome" then this is encapsulated in a link to mapview.
+### ($feature) Returns name of seq_region $feature is on. If the passed features is
+### on a "real chromosome" then this is encapsulated in a link to mapview.
   my( $self, $feature ) = @_;
   my $coords = $feature->coord_system_name; 
   my $name   = $feature->seq_region_name;
@@ -67,8 +77,8 @@ sub mapview_link {
 }
 
 sub location_URL {
-## ($feature,$script?,$context?) Returns a link to contigview style display ($script if set), based on feature, with context
-## specified by optionsl third parameter.
+### ($feature,$script?,$context?) Returns a link to contigview style display ($script if set), based on feature, with context
+### specified by optionsl third parameter.
   my( $self, $feature, $script, $context ) = @_;
   my $name  = $feature->seq_region_name;
   my $start = $feature->start;
@@ -80,18 +90,18 @@ sub location_URL {
 }
 
 sub      URL {
-## (%params) Returns an absolute link to another script. %params hash is used as the parameters for the link.
-## Note keys species and script are handled differently - as these are not passed as parameters but set the
-## species and script name respectively in the URL
+### (%params) Returns an absolute link to another script. %params hash is used as the parameters for the link.
+### Note keys species and script are handled differently - as these are not passed as parameters but set the
+### species and script name respectively in the URL
   my $self = shift; return $self->_URL( 0,@_ );
 }
 sub full_URL {
-## (%params) Same as URL but also includes full protocol/domain/port in URL
+### (%params) Same as URL but also includes full protocol/domain/port in URL
   my $self = shift; return $self->_URL( 1,@_ );
 }
 
 sub _URL { 
-## ($full,%params) Support function for URL and full_URL [private]
+### ($full,%params) Support function for URL and full_URL [private]
   my( $self, $full, %details ) = @_;
   my $SPECIES = $ENV{'ENSEMBL_SPECIES'}; $SPECIES = $details{'species'} if exists $details{'species'};
   my $SCRIPT  = '';                      $SCRIPT  = $details{'script'}  if exists $details{'script'};
@@ -135,10 +145,13 @@ sub generate_query_url {
 }
 
 sub new_image {
-  my $self  = shift;
+  my $self = shift;
   my $image = EnsEMBL::Web::Document::Image->new( $self->species_defs );
      $image->drawable_container = Bio::EnsEMBL::DrawableContainer->new( @_ );
      $image->set_extra( $self );
+     if ($self->prefix) {
+       $image->prefix($self->prefix);
+     }
   return $image;
 }
 
