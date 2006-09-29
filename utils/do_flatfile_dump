@@ -30,7 +30,7 @@ my $MAX_SIZE = 1000000;
 my $GENE_MAX = 3000000; # if gene > $GENE_MAX, skips gene and prints warning
 our $VERBOSITY;
 my $logfile;
-my ($no_log, $start_with);
+my ($no_log, $start_with, $end_with);
 my $dumpdir;
 my $nobundle;
 my $readme_only;
@@ -45,6 +45,7 @@ my ($help, $info, $email);
              'dumpdir:s'    => \$dumpdir,
              'nobundle'	    => \$nobundle,
 	     'start_with:s' => \$start_with,
+	     'end_with:s'   => \$end_with,
              'readme_only'  => \$readme_only,
              'verbose'	    => \$VERBOSITY,
              'info'         => \$info,
@@ -62,6 +63,8 @@ else {
 }
 
 @species  = @{ utils::Tool::start_with_species($start_with, \@species) } if $start_with;
+
+@species  = @{ utils::Tool::end_with_species($end_with, \@species) } if $end_with;
 
 my $time1 = time;
 @user_formats = qw(embl genbank) if (!$user_formats[0]);
@@ -110,8 +113,14 @@ foreach my $spp (@species){
      $chr_sorter{$_}= $i++;
    }
 
-   my @slices = sort {$chr_sorter{$b->seq_region_name} <=> $chr_sorter{$a->seq_region_name} || $a->seq_region_name cmp $b->seq_region_name  } @{ $slice_adaptor->fetch_all('toplevel', undef, $inc_dupes, $inc_nonref) || [] };
-
+  my @slices;
+  if (keys %chr_sorter) {
+    utils::Tool::info(1, "Using chr sorter");
+    @slices = sort {$chr_sorter{$b->seq_region_name} <=> $chr_sorter{$a->seq_region_name} || $a->seq_region_name cmp $b->seq_region_name  } @{ $slice_adaptor->fetch_all('toplevel', undef, $inc_dupes, $inc_nonref) || [] };
+  }
+  else {
+    @slices =  @{ $slice_adaptor->fetch_all('toplevel', undef, $inc_dupes, $inc_nonref) || [] };
+  }
 
   foreach my $slice (@slices) {
     # generate list of 'unbreakable' blocks around genes
@@ -409,7 +418,14 @@ sub ftp_bundle{
 
   $gz = gzopen("$spp_dumpdir/FTP/$spp.".($batch*$CHUNK).".dat.gz","wb") || die $!;
 
-  foreach my $filename ( sort {$chr_sorter->{$b} <=> $chr_sorter->{$a} || $a cmp $b  } @files ){
+
+  # If species has chr, use sorter
+  if (keys %$chr_sorter) {
+    utils::Tool::info(1, "Using chr sorter");
+    @files  =   sort {$chr_sorter->{$b} <=> $chr_sorter->{$a} || $a cmp $b  } @files ;
+  }
+
+  foreach my $filename ( @files ){
     utils::Tool::info(1, "Processing $filename...");
 
     if (!-f "$spp_dumpdir/$filename"){
@@ -540,7 +556,8 @@ do_flatfile_dump [options]
 
 Options:
   --help, --info, --verbose, --species, --format, --maxsize,
-  --logfile, --dumpdir, --nobundle --readme_only --email
+  --logfile, --dumpdir, --nobundle --readme_only --email 
+  --start_with --end_with
 
 E.g.: time ./do_flatfile_dump --species Anopheles_gambiae
 
@@ -589,6 +606,12 @@ B<--nobundle>
 
 B<--readme_only>
   Optional: Flag to generate the README files but not actually run the dumps
+
+B<--start_with>
+  Optional: give it a species name and it will skip all species before this in the alphabet.
+
+B<--end_with>
+  Optional: give it a species name and it will skip all species after this in the alphabet.
 
 =head1 DESCRIPTION
 

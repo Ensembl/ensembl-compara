@@ -47,7 +47,7 @@ my (@SPECIES, @DATABASES);
 our $DUMPDIR;
 my ($logfile, $email);
 my $minimise_memory;
-my $start_with;
+my ($start_with, $end_with);
 my ($help, $info);
 
 
@@ -68,8 +68,9 @@ my ($help, $info);
             'no_ssaha'          => \$no_ssaha,
 	    'no_data'           => \$no_data,
             'no_indexes'        => \$no_indexes,
-	    'no_dumpdata'       => \$no_dumpdata,
+	    'no_dumpdata'       => \$no_dumpdata,  # optional
 	    'start_with:s'      => \$start_with,   # optional
+	    'end_with:s'        => \$end_with,     # optional
 	    'help'              => \$help,           # info
 	    'info'              => \$info,
 	   ) || pod2usage(2);
@@ -125,7 +126,7 @@ info(2, "Will push blast files to $blast_dir") unless $no_indexes;
 
 # Start with a species further down in the alphabet
 @SPECIES  = @{ utils::Tool::start_with_species($start_with, \@SPECIES) } if $start_with;
-
+@SPECIES  = @{ utils::Tool::end_with_species($end_with, \@SPECIES) } if $end_with;
 
 # Validate DUMPDIR
 our $basedir = "/mysql/dumps/";
@@ -154,7 +155,7 @@ unless ($no_remotedirs) {
 # For each species ----------------------------------------------------------
 for my $sp( sort @SPECIES ){  # users selected spp
   my $species_time = time ();
-  info( 2, gmtime(time));
+
   # Work out species folder name and empty if you are dumping --type all
   my $sp_release = $SPECIES_DEFS->get_config($sp,"SPECIES_RELEASE_VERSION");
   $sp_release =~ s/\.//g;
@@ -194,7 +195,6 @@ for my $sp( sort @SPECIES ){  # users selected spp
   my $sp_time_taken = time - $species_time;
   my $hours = localtime(time -$species_time)->hour;
   info(2, "Species time $sp $hours hours". localtime($sp_time_taken)->min."mins");
-  info( 2, gmtime(time));
 }
 
 
@@ -212,6 +212,14 @@ exit;
 ######################### END OF PROGRAM ######################################
 
 sub check_types {
+
+  ### Description: Checks the types of dumps you want to do
+  ### There is a list of recognised types (%valid_types)
+  ### but these can be grouped into 'compound types' (%compound_types)
+  ### This subroutine validates the types of dumps requested by user
+  ### and expands the compound_types into valid types if necessary
+  ### Returns hashref
+
   my $types = shift;
   my %valid_types = map{ $_ => 1 }
     qw(
@@ -238,7 +246,6 @@ sub check_types {
     );
 
 
-  # Validate types  and return hashref
   return utils::Tool::validate_types(\%valid_types, \%compound_types, $types);
 }
 
@@ -246,6 +253,11 @@ sub check_types {
 #-----------------------------------------------------------------------------
 
 sub create_dirs_for_dumps {
+
+  ### Aim: Creates Bio::SeqIO objects for filehandles used for the dumping
+  ### Returns string, hashref for filehandles where key is the type of dump
+  ### and value is the Bio::SeqIO
+
   my ($sp, $SPECIES_DEFS, $sp_folder, $types, $db_adaptor) = @_;
 
   # Get assembly and check against ini file -------------
@@ -301,6 +313,13 @@ sub create_dirs_for_dumps {
 
 #------------------------------------------------------------------------------
 sub get_data {
+
+  ### Loops through, creating a slice for each toplevel
+  ### Starts with the shortest toplevel (uses less memory for longer)
+  ### Passes the appropriate subroutine the correct filehandle and slice
+  ### Returns hashref for filehandles where key is the type of dump
+  ### and value is the Bio::SeqIO
+
   my $dbAdaptor    = shift || die( 'Need a DBAdaptor' );
   my $species      = shift || die( 'Need a species' );
   my $fhs          = shift || die( 'Need a hashref of types to dump' );
@@ -449,6 +468,12 @@ sub get_data {
 
 #------------------------------------------------------------------------------
 sub dump_data_for_gene {
+
+  ### Arg1 : Bio::Ensembl::Gene object
+  ### Arg2 : hashref for filehandles where key is the type of dump and 
+  ### value is the Bio::SeqIO
+  ### Returns 1
+
   my ($gene, $fhs) = @_;
   foreach my $transcript( @{$gene->get_all_Transcripts} ){
     my $logic_name = lc($gene->analysis->logic_name);
@@ -506,6 +531,7 @@ sub dump_data_for_gene {
       dump_cdna_rna( $seqio, $transcript, "$logic_name:$subtype",$gene);
     }
   }
+  return 1;
 }
 
 #---------------------------------------------------------------------
@@ -514,6 +540,9 @@ sub dump_data_for_gene {
 #gene:ENSG00000158815
 
 sub dump_cdna_rna {
+
+  ### Returns 1
+
   my( $seqio, $transcript, $type, $gene, $ccds_id) = @_;
   return if $no_data;
   $ccds_id ||= " ";
@@ -537,7 +566,11 @@ sub dump_cdna_rna {
 #------------------------------------------------------------------------------
 #>ENSP00000328693 pep:novel chromosome:NCBI34:1:904515:910768:1
 #>gene:ENSG00000158815:transcript:ENST00000328693
+
 sub dump_pep {
+
+  ### Returns 1
+
   my ($seqio, $transcript, $type, $gene, $ccds_id) = @_;
   return if $no_data;
   $ccds_id ||= " ";
@@ -576,6 +609,9 @@ sub dump_pep {
 
 #----------------------------------------------------------------------
 sub dump_dna{
+
+  ### Returns 1
+
   my ($seqio, $slice, $type_str, $location) = @_;
   return if $no_data;
 
@@ -600,6 +636,9 @@ sub dump_dna{
 
 #------------------------------------------------------------------------
 sub dump_dna_masked{
+
+  ### Returns 1
+
   my ($seqio, $slice, $seqstr, $type_str, $location) = @_;
   return if $no_data;
 
@@ -639,8 +678,8 @@ sub process_size {
 #-----------------------------------------------------------------------
 sub mask_sequence {
 
-  ### Input arg 1: slice
-  ### Input arg 2: optional arrayref of repeat.analysis types from meta table
+  ### Arg 1: slice
+  ### Arg 2: optional arrayref of repeat.analysis types from meta table
 
   my ($slice, $logic_names) = (@_);
   my $seq_region = $slice->seq_region_name;
@@ -1327,8 +1366,11 @@ do_fasta_dumps - Dump Ensembl databases to text files and gzip them
 do_fasta_dumps [options]
 
 Options:
-  --help, --info, --verbose, --minimise_memory, --no_log, --no_indexes --no_dumpdata --no_ssaha 
-  --species, --database, --type, --logfile,  --start_with   --dumpdir --email --no_remotedirs
+  --help, --info, --verbose, --minimise_memory, 
+  --no_log, --no_indexes --no_dumpdata --no_ssaha 
+  --database, --type, --logfile,  
+  --start_with --end_with --species
+  --dumpdir --email --no_remotedirs
 
 Example:
  nohup time ./do_fasta_dump --type all --release 23 --email ek3@sanger.ac.uk
@@ -1396,6 +1438,9 @@ B<--minimise_memory>
 
 B<--start_with>
   Optional: give it a species name and it will skip all species before this in the alphabet.
+
+B<--end_with>
+  Optional: give it a species name and it will skip all species after this in the alphabet.
 
 =head1 DESCRIPTION
 
