@@ -28,8 +28,12 @@ $otree->write_output(); #writes to DB
 =head1 DESCRIPTION
 
 This Analysis/RunnableDB is designed to take ProteinTree as input
-This must already have a rooted tree with duplication/sepeciation tags on the nodes.
-It analyzes that tree structure to pick Orthologues and Paralogs for each genepair.
+
+This must already have a rooted tree with duplication/sepeciation tags
+on the nodes.
+
+It analyzes that tree structure to pick Orthologues and Paralogs for
+each genepair.
 
 input_id/parameters format eg: "{'protein_tree_id'=>1234}"
     protein_tree_id : use 'id' to fetch a cluster from the ProteinTree
@@ -38,7 +42,8 @@ input_id/parameters format eg: "{'protein_tree_id'=>1234}"
 
 =head1 CONTACT
 
-  Contact Jessica Severin on module implemetation/design detail: jessica@ebi.ac.uk
+  Contact Albert Vilella on module implementation: avilella@ebi.ac.uk
+  Contact Jessica Severin on module design detail: jessica@ebi.ac.uk
   Contact Abel Ureta-Vidal on EnsEMBL/Compara: abel@ebi.ac.uk
   Contact Ewan Birney on EnsEMBL in general: birney@sanger.ac.uk
 
@@ -94,7 +99,10 @@ sub fetch_input {
 
   #create a Compara::DBAdaptor which shares the same DBI handle
   #with the Pipeline::DBAdaptor that is based into this runnable
-  $self->{'comparaDBA'} = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(-DBCONN=>$self->db->dbc);
+  $self->{'comparaDBA'} = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new
+    (
+     -DBCONN=>$self->db->dbc
+    );
 
   $self->get_params($self->parameters);
   $self->get_params($self->input_id);
@@ -103,7 +111,7 @@ sub fetch_input {
   my $starttime = time();
   $self->{'protein_tree'} =  $self->{'comparaDBA'}->get_ProteinTreeAdaptor->
          fetch_tree_at_node_id($self->{'protein_tree_id'});
-         
+
   if($self->debug) {
     $self->{'protein_tree'}->print_tree($self->{'tree_scale'});
     printf("time to fetch tree : %1.3f secs\n" , time()-$starttime);
@@ -140,11 +148,11 @@ sub run
 
     Title   :   write_output
     Usage   :   $self->write_output
-    Function:   parse clustalw output and update family and family_member tables
-    Returns :   none
-    Args    :   none
-    
-=cut
+
+    Function: parse clustalw output and update homology and
+              homology_member tables
+    Returns : none 
+    Args    : none =cut
 
 sub write_output {
   my $self = shift;
@@ -220,8 +228,8 @@ sub run_analysis
     
   my @all_protein_leaves = @{$tree->get_all_leaves};
   
-  #precalculate the ancestor species_hash (caches into the metadata of nodes)
-  #also augments the Duplication tagging
+  #precalculate the ancestor species_hash (caches into the metadata of
+  #nodes) also augments the Duplication tagging
   $self->get_ancestor_species_hash($tree);
   
   if($self->debug) {
@@ -229,11 +237,12 @@ sub run_analysis
     printf("%d proteins in tree\n", scalar(@all_protein_leaves));
   }
   
-  #compare every gene in the tree with every other
-  #each gene/gene pairing is a potential ortholog/paralog
-  #and thus we need to analyze every possibility
-  #accomplish by creating a fully connected graph between all the genes
-  #under the tree (hybrid graph structure) and then analyze each gene/gene link
+  #compare every gene in the tree with every other each gene/gene
+  #pairing is a potential ortholog/paralog and thus we need to analyze
+  #every possibility
+  #Accomplish by creating a fully connected graph between all the
+  #genes under the tree (hybrid graph structure) and then analyze each
+  #gene/gene link
   $tmp_time = time();
   printf("build fully linked graph\n") if($self->debug);
   my @genepairlinks;
@@ -243,22 +252,28 @@ sub run_analysis
       my $taxon_level = $self->get_ancestor_taxon_level($ancestor);
       my $distance = $protein1->distance_to_ancestor($ancestor) +
                      $protein2->distance_to_ancestor($ancestor);
-      my $genepairlink = new Bio::EnsEMBL::Compara::Graph::Link($protein1, $protein2, $distance);
+      my $genepairlink = new Bio::EnsEMBL::Compara::Graph::Link
+        (
+         $protein1, $protein2, $distance
+        );
       $genepairlink->add_tag("hops", 0);
       $genepairlink->add_tag("ancestor", $ancestor);
       $genepairlink->add_tag("taxon_name", $taxon_level->name);
       push @genepairlinks, $genepairlink;
     }
   }
-  printf("%1.3f secs build links and features\n", time()-$tmp_time) if($self->debug>1);
+  printf("%1.3f secs build links and features\n", time()-$tmp_time) 
+    if($self->debug>1);
   
-  $self->{'protein_tree'}->print_tree($self->{'tree_scale'}) if($self->debug);
+  $self->{'protein_tree'}->print_tree($self->{'tree_scale'}) 
+    if($self->debug);
 
   #sort the gene/gene links by distance
   #   makes debug display easier to read, not required by algorithm
   $tmp_time = time();
   printf("sort links\n") if($self->debug);
-  my @sorted_genepairlinks = sort {$a->distance_between <=> $b->distance_between} @genepairlinks;
+  my @sorted_genepairlinks = 
+    sort {$a->distance_between <=> $b->distance_between} @genepairlinks;
   printf("%1.3f secs to sort links\n", time()-$tmp_time) if($self->debug > 1);
 
   #analyze every gene pair (genepairlink) to get its classification
@@ -269,18 +284,23 @@ sub run_analysis
   foreach my $genepairlink (@sorted_genepairlinks) {
     $self->analyze_genepairlink($genepairlink);
   }
-  printf("%1.3f secs to analyze genepair links\n", time()-$tmp_time) if($self->debug > 1);
+  printf("%1.3f secs to analyze genepair links\n", time()-$tmp_time) 
+    if($self->debug > 1);
   
   #display summary stats of analysis 
   my $runtime = time()*1000-$starttime;  
-  $self->{'protein_tree'}->store_tag('OrthoTree_runtime_msec', $runtime) unless ($self->{'_readonly'});
+  $self->{'protein_tree'}->store_tag('OrthoTree_runtime_msec', $runtime) 
+    unless ($self->{'_readonly'});
   if($self->debug) {
     printf("%d proteins in tree\n", scalar(@{$tree->get_all_leaves}));
     printf("%d pairings\n", scalar(@genepairlinks));
     printf("%d old homologies\n", $self->{'old_homology_count'});
     printf("orthotree homologies\n");
     foreach my $type (keys(%{$self->{'orthotree_homology_counts'}})) {
-      printf("  %13s : %d\n", $type, $self->{'orthotree_homology_counts'}->{$type});
+      printf
+        (
+         "  %13s : %d\n", $type, $self->{'orthotree_homology_counts'}->{$type}
+        );
     }
   }
 
@@ -307,10 +327,16 @@ sub analyze_genepairlink
   elsif($self->one2many_ortholog_test($genepairlink)) { } 
   elsif($self->outspecies_test($genepairlink)) { }
   else {
-    printf("OOPS!!!! %s - %s\n", $protein1->gene_member->stable_id, $protein2->gene_member->stable_id);
+    printf
+      (
+       "OOPS!!!! %s - %s\n",
+       $protein1->gene_member->stable_id,
+       $protein2->gene_member->stable_id
+      );
   }
   
-  $self->{'old_homology_count'}++ if($genepairlink->get_tagvalue('old_homology'));
+  $self->{'old_homology_count'}++ 
+    if($genepairlink->get_tagvalue('old_homology'));
 
   my $type = $genepairlink->get_tagvalue('orthotree_type');
   if($type) {
@@ -349,7 +375,8 @@ sub display_link_analysis
   } else { printf("%5s ", ""); }
   
   print("ancestor:(");
-  if($ancestor->get_tagvalue("Duplication") eq '1'){print("DUP ");} else{print"    ";}
+  if($ancestor->get_tagvalue("Duplication") eq '1'){print("DUP ");} 
+  else{print"    ";}
   printf("%9s)", $ancestor->node_id);
 
   my $taxon_level = $ancestor->get_tagvalue('taxon_level');
@@ -358,7 +385,7 @@ sub display_link_analysis
          $genepairlink->get_tagvalue('orthotree_subtype'),
          $taxon_level->name
         );
-         
+
   return undef;
 }
 
@@ -391,7 +418,6 @@ sub load_species_tree
 }
 
 
-
 sub get_ancestor_species_hash
 {
   my $self = shift;
@@ -417,12 +443,13 @@ sub get_ancestor_species_hash
       unless(defined($species_hash->{$genome_db_id})) {
         $species_hash->{$genome_db_id} = $t_species_hash->{$genome_db_id};
       } else {
-        #this species already existed in one of the other children 
-        #this means this species was duplciated at this point between the species
+        #this species already existed in one of the other children
+        #this means this species was duplciated at this point between
+        #the species
         $is_dup=1;
         $duplication_hash->{$genome_db_id} = 1;
         $species_hash->{$genome_db_id} += $t_species_hash->{$genome_db_id};
-      }    
+      }
     }
   }
   
@@ -432,13 +459,15 @@ sub get_ancestor_species_hash
   $node->add_tag("species_hash", $species_hash);
   if($is_dup && !($self->{'_treefam'})) {
     my $original_duplication_value = $node->get_tagvalue('Duplication');
-    $original_duplication_value = 0 unless (defined $original_duplication_value);
+    $original_duplication_value = 0 
+      unless (defined $original_duplication_value);
 
     if ($original_duplication_value == 0) {
       # RAP did not predict a duplication here
       $node->add_tag("duplication_hash", $duplication_hash);
       $node->store_tag("Duplication", 1)  unless ($self->{'_readonly'});
-      $node->store_tag("Duplication_alg", 'species_count') unless ($self->{'_readonly'});
+      $node->store_tag("Duplication_alg", 'species_count') 
+        unless ($self->{'_readonly'});
 
     } elsif ($original_duplication_value == 1) {
       my $dup_alg = $node->get_tagvalue("Duplication_alg");
@@ -446,7 +475,8 @@ sub get_ancestor_species_hash
         # RAP did predict a duplication here but not species_count
         $node->add_tag("duplication_hash", $duplication_hash);
         $node->store_tag("Duplication", 2) unless ($self->{'_readonly'});
-        $node->store_tag("Duplication_alg", 'species_count') unless ($self->{'_readonly'});
+        $node->store_tag("Duplication_alg", 'species_count') 
+          unless ($self->{'_readonly'});
       }
 
     }
@@ -465,10 +495,11 @@ sub get_ancestor_taxon_level
 
   #printf("\ncalculate ancestor taxon level\n");
   my $taxon_tree = $self->{'taxon_tree'};
-  my $species_hash = $self->get_ancestor_species_hash($ancestor);    
+  my $species_hash = $self->get_ancestor_species_hash($ancestor);
   
   foreach my $gdbID (keys(%$species_hash)) {
-    my $gdb = $self->{'comparaDBA'}->get_GenomeDBAdaptor->fetch_by_dbID($gdbID);
+    my $gdb = 
+      $self->{'comparaDBA'}->get_GenomeDBAdaptor->fetch_by_dbID($gdbID);
     my $taxon = $taxon_tree->find_node_by_node_id($gdb->taxon_id);
     throw("oops missing taxon " . $gdb->taxon_id ."\n") unless($taxon);
 
@@ -479,8 +510,10 @@ sub get_ancestor_taxon_level
     }
   }
   $ancestor->add_tag("taxon_level", $taxon_level);
-  $ancestor->store_tag("taxon_id", $taxon_level->taxon_id) unless ($self->{'_readonly'});
-  $ancestor->store_tag("name", $taxon_level->name) unless ($self->{'_readonly'});
+  $ancestor->store_tag("taxon_id", $taxon_level->taxon_id) 
+    unless ($self->{'_readonly'});
+  $ancestor->store_tag("name", $taxon_level->name) 
+    unless ($self->{'_readonly'});
 
   #$ancestor->print_tree($self->{'tree_scale'});
   #$taxon_level->print_tree(10);
@@ -509,7 +542,8 @@ sub genepairlink_fetch_homology
   my ($homology_id) = @$ref;
   return undef unless($homology_id);
   
-  my $homology = $self->{'comparaDBA'}->get_HomologyAdaptor->fetch_by_dbID($homology_id);
+  my $homology = 
+    $self->{'comparaDBA'}->get_HomologyAdaptor->fetch_by_dbID($homology_id);
   $genepairlink->add_tag("old_homology", $homology);
 
   return $homology;
@@ -635,7 +669,8 @@ sub ancient_residual_test
   #test 3: getting a bit more complex:
   #  - genes are from different species
   #  - there is evidence for duplication events elsewhere in the history
-  #  - but these two genes are the only remaining representative of the ancestor
+  #  - but these two genes are the only remaining representative of
+  #    the ancestor
 
   my ($pep1, $pep2) = $genepairlink->get_nodes;
   return undef if($pep1->genome_db_id == $pep2->genome_db_id);
@@ -683,7 +718,8 @@ sub one2many_ortholog_test
   #test 4: getting a bit more complex yet again:
   #  - genes are from different species
   #  - but there is evidence for duplication events in the history
-  #  - one of the genes is the only remaining representative of the ancestor in its species
+  #  - one of the genes is the only remaining representative of the
+  #  ancestor in its species
   #  - but the other gene has multiple copies in it's species 
   #  (first level of orthogroup analysis)
 
@@ -698,7 +734,10 @@ sub one2many_ortholog_test
   
   #one of the genes must be the only copy of the gene
   #and the other must appear more than once in the ancestry
-  return undef unless (($count1==1 and $count2>1) or ($count1>1 and $count2==1));
+  return undef unless 
+    (
+     ($count1==1 and $count2>1) or ($count1>1 and $count2==1)
+    );
   return undef if ($ancestor->get_tagvalue('Duplication'));
 
   #passed all the tests -> it's a one2many ortholog
@@ -782,7 +821,8 @@ sub store_gene_link_as_homology
   # create method_link_species_set
   #
   my $mlss = new Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
-  $mlss->method_link_type("ENSEMBL_ORTHOLOGUES") unless ($type eq 'between_species_paralog' || $type eq 'within_species_paralog');
+  $mlss->method_link_type("ENSEMBL_ORTHOLOGUES") 
+    unless ($type eq 'between_species_paralog' || $type eq 'within_species_paralog');
   $mlss->method_link_type("ENSEMBL_PARALOGUES") if ($type eq 'between_species_paralog' || $type eq 'within_species_paralog');
   if ($protein1->genome_db->dbID == $protein2->genome_db->dbID) {
     $mlss->species_set([$protein1->genome_db]);
@@ -801,7 +841,9 @@ sub store_gene_link_as_homology
   #$homology->dbID(-1);
 
   # NEED TO BUILD THE Attributes (ie homology_members)
-  my ($cigar_line1, $perc_id1, $perc_pos1, $cigar_line2, $perc_id2, $perc_pos2) = $self->generate_attribute_arguments($protein1, $protein2); 
+  my ($cigar_line1, $perc_id1, $perc_pos1,
+      $cigar_line2, $perc_id2, $perc_pos2) = 
+        $self->generate_attribute_arguments($protein1, $protein2);
 
   # QUERY member
   #
@@ -827,10 +869,10 @@ sub store_gene_link_as_homology
 
   $homology->add_Member_Attribute([$protein2->gene_member, $attribute]);
   
+  $self->{'comparaDBA'}->get_HomologyAdaptor()->store($homology) 
+    if($self->{'store_homologies'});
   
-  $self->{'comparaDBA'}->get_HomologyAdaptor()->store($homology) if($self->{'store_homologies'});
-  
-  my $stable_id;  
+  my $stable_id;
   if($protein1->taxon_id < $protein2->taxon_id) {
     $stable_id = $protein1->taxon_id() . "_" . $protein2->taxon_id . "_";
   } else {
@@ -840,12 +882,12 @@ sub store_gene_link_as_homology
   $homology->stable_id($stable_id);
   #TODO: update the stable_id of the homology
   
-  if($self->debug) { 
+  if($self->debug) {
     print("store: ");
     $homology->print_homology;
   }
 
-  return undef;  
+  return undef;
 }
 
 sub _treefam_genepairlink_stats
@@ -866,8 +908,10 @@ sub _treefam_genepairlink_stats
   #compare every gene in the tree with every other
   #each gene/gene pairing is a potential ortholog/paralog
   #and thus we need to analyze every possibility
-  #accomplish by creating a fully connected graph between all the genes
-  #under the tree (hybrid graph structure) and then analyze each gene/gene link
+  #Accomplish by creating a fully connected graph between all the
+  #genes under the tree (hybrid graph structure) and then analyze each
+  #gene/gene link
+
   $tmp_time = time();
   printf("build fully linked graph\n") if($self->debug);
   my @genepairlinks;
@@ -877,22 +921,26 @@ sub _treefam_genepairlink_stats
       my $taxon_level = $self->get_ancestor_taxon_level($ancestor);
       my $distance = $protein1->distance_to_ancestor($ancestor) +
                      $protein2->distance_to_ancestor($ancestor);
-      my $genepairlink = new Bio::EnsEMBL::Compara::Graph::Link($protein1, $protein2, $distance);
+      my $genepairlink = new Bio::EnsEMBL::Compara::Graph::Link
+        ($protein1, $protein2, $distance);
       $genepairlink->add_tag("hops", 0);
       $genepairlink->add_tag("ancestor", $ancestor);
       $genepairlink->add_tag("taxon_name", $taxon_level->name);
       push @genepairlinks, $genepairlink;
     }
   }
-  printf("%1.3f secs build links and features\n", time()-$tmp_time) if($self->debug>1);
+  printf("%1.3f secs build links and features\n", time()-$tmp_time) 
+    if($self->debug>1);
   
-  $self->{'protein_tree'}->print_tree($self->{'tree_scale'}) if($self->debug);
+  $self->{'protein_tree'}->print_tree($self->{'tree_scale'}) 
+    if($self->debug);
 
   #sort the gene/gene links by distance
   #   makes debug display easier to read, not required by algorithm
   $tmp_time = time();
   printf("sort links\n") if($self->debug);
-  my @sorted_genepairlinks = sort {$a->distance_between <=> $b->distance_between} @genepairlinks;
+  my @sorted_genepairlinks = 
+    sort {$a->distance_between <=> $b->distance_between} @genepairlinks;
   printf("%1.3f secs to sort links\n", time()-$tmp_time) if($self->debug > 1);
 
   #analyze every gene pair (genepairlink) to get its classification
@@ -911,7 +959,11 @@ sub _treefam_genepairlink_stats
     elsif($self->one2many_ortholog_test($genepairlink)) { } 
     elsif($self->outspecies_test($genepairlink)) { }
     else {
-      printf("OOPS!!!! %s - %s\n", $protein1->gene_member->stable_id, $protein2->gene_member->stable_id);
+      printf
+        ("OOPS!!!! %s - %s\n",
+         $protein1->gene_member->stable_id,
+         $protein2->gene_member->stable_id
+        );
     }
     my $stid1;
     if (defined($protein1->gene_member)) {
@@ -936,12 +988,15 @@ sub _treefam_genepairlink_stats
     $tree_type = "TF" if $self->{'_treefam'};
     my $tree_id = $self->{'protein_tree'}->node_id unless $self->{'_treefam'};
     $tree_id = $self->{'_treefam'} if $self->{'_treefam'};
-    my $dup = $genepairlink->get_tagvalue('ancestor')->get_tagvalue('Duplication');
-    my $dup_alg = $genepairlink->get_tagvalue('ancestor')->get_tagvalue('Duplication_alg') || 0;
+    my $dup = 
+      $genepairlink->get_tagvalue('ancestor')->get_tagvalue('Duplication');
+    my $dup_alg = 
+      $genepairlink->get_tagvalue('ancestor')->get_tagvalue('Duplication_alg') || 0;
     $self->{_gpresults} .= "$tree_type,$tree_id,$stids[0]"."_"."$stids[1]".","."$type,$subtype,$dup,$dup_alg\n";
 
   }
-  printf("%1.3f secs to analyze genepair links\n", time()-$tmp_time) if($self->debug > 1);
+  printf("%1.3f secs to analyze genepair links\n", time()-$tmp_time) 
+    if($self->debug > 1);
 }
 
 sub generate_attribute_arguments {
