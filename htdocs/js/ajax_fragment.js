@@ -54,13 +54,10 @@ function panel_loaded(response) {
   update.style.display = 'block';
   title = ego(json.fragment.id + "_title");
   title.innerHTML = json.fragment.title;
-  //alert(start_bp);
-  //alert(end_bp);
   init_view('f_1');
   draw_single_red_box('f_1', start_cv, end_cv, start_bp, end_bp, start_px, end_px);
   update_red_boxes();
   F = document.forms['panel_form'];
-  alert(F.elements.length);
   F.appendChild(new_element('f_1_URL', '/Homo_sapiens/contigview?c=[[s]]:[[c]];w=[[w]]'));
   F.appendChild(new_element('f_1_bp_end', end_bp));
   F.appendChild(new_element('f_1_bp_start', start_bp));
@@ -68,7 +65,6 @@ function panel_loaded(response) {
   F.appendChild(new_element('f_1_px_end', end_px));
   F.appendChild(new_element('f_1_px_start', start_px));
   F.appendChild(new_element('f_1_visible', '1'));
-  alert(F.elements.length);
 }
 
 function new_element(name, value) {
