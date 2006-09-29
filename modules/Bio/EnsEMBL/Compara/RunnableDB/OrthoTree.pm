@@ -152,7 +152,9 @@ sub run
     Function: parse clustalw output and update homology and
               homology_member tables
     Returns : none 
-    Args    : none =cut
+    Args    : none 
+
+=cut
 
 sub write_output {
   my $self = shift;
