@@ -26,7 +26,6 @@ sub prefix {
   if ($value) { 
     $self->{'prefix'} = $value;
   }
-  warn "SETTING PREFIX: " . $self . ": " . $self->{'prefix'};
   return $self->{'prefix'};
 }
 

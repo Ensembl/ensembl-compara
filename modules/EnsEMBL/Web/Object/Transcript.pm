@@ -278,9 +278,11 @@ sub getAllelesConsequencesOnSlice {
   # Get all features on slice
   my $allele_features = $sample_slice->get_all_differences_Slice() || [];
   return ([], []) unless @$allele_features;
-
   foreach (@$allele_features) {
-      print STDERR $_->variation_name."\n" unless $_->allele_string;
+#      print STDERR $_->variation_name."\n" unless $_->allele_string;
+ #   next unless  $_->variation_name eq 'rs31744050';
+#    warn $_->allele_string ;
+ #   warn $_;
   }
 
 
@@ -322,6 +324,7 @@ sub getAllelesConsequencesOnSlice {
       # [ fake_s, fake_e, SNP ]   Filter our unwanted consequences
       push @valid_conseq,  $_ ;
       push @valid_alleles, $allele_feature;
+      warn "\n\n2 $sample ",$allele_feature->[2]->allele_string if  $allele_feature->[2]->variation_name eq 'rs31744050';
       last;
     }
   }

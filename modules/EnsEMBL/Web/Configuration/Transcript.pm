@@ -141,6 +141,7 @@ sub transcriptsnpview {
 
  $self->update_configs_from_parameter( 'bottom', qw(TSV_context TSV_sampletranscript TSV_transcript) );
  foreach my $source ( @sources ) {
+   # don't restore default if any sources are on
    $restore_default = 0 if $script_config->get(lc("opt_$source") ) eq 'on';
  }
 
@@ -155,6 +156,14 @@ sub transcriptsnpview {
      }
      $script_config->set(lc("opt_$source"), $switch, 1);
    }
+ }
+ elsif ($obj->param('bottom')) {
+   my $param_sources = join "|" , @sources;
+   foreach( split /\|/, ($obj->param('bottom') ) ) {
+     next unless $_ =~ /opt_($param_sources):(.*)/i;
+     $script_config->set("opt_$1", $2, 1);
+   }
+   $script_config->save;
  }
 
  # Need this to make yellow dropdowns work

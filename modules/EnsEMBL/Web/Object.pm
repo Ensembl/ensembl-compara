@@ -22,7 +22,7 @@ sub EnsemblObject   {
 sub prefix {
   ### a
   my ($self, $value) = @_;
-  warn "PREFIX: $value";
+#  warn "PREFIX: $value";
   if ($value) {
     $self->{'prefix'} = $value;
   }

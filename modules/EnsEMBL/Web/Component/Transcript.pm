@@ -1206,7 +1206,7 @@ sub _sample_configs {
     $sample_config->{'id'}         = $object->stable_id;
     $sample_config->{'subslices'}  = $sub_slices;
     $sample_config->{'extent'}     = $extent;
-
+warn "-------------", $sample_config;
     ## Get this transcript only, on the sample slice
     my $transcript;
 
@@ -1246,9 +1246,14 @@ sub _sample_configs {
       'coverage_obj'    => $munged_coverage,
     };
 
+    foreach (@$allele_info) {
+      next unless $_->[2]->variation_name eq 'rs31744050';
+      warn "3 $sample ",$_->[2]->allele_string;
+      warn $_->[2];
+    }
     unshift @haplotype, [ $sample, $allele_info, $munged_coverage ];
     $sample_config->container_width( $fake_length );
-
+  
     ## Finally the variation features (and associated transcript_variation_features )...  Not sure exactly which call to make on here to get 
 
     ## Now push onto config hash...
@@ -1416,6 +1421,8 @@ sub get_page_data {
       # Other
       my $chr = $sample_slice->seq_region_name;
       my $snp_alleles = join "/", ($allele->ref_allele_string, $allele->allele_string);
+      warn "sp ", $allele->allele_string if $allele->variation_name eq 'rs31744050';
+      warn $allele if $allele->variation_name eq 'rs31744050';
       my $aa_alleles = $conseq_type->aa_alleles || [];
       my $aa_coord = $conseq_type->aa_start;
       $aa_coord .= $aa_coord == $conseq_type->aa_end ? "": $conseq_type->aa_end;
