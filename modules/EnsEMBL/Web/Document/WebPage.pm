@@ -256,6 +256,7 @@ sub _node_hop {
         $URL .= '?';
       }
       foreach my $param_name (keys %parameter) {
+        warn "CHECKING for USER keys: " . $param_name;
         if ($param_name eq 'set_cookie') {
           if ($parameter{'set_cookie'}) {
             $self->login($parameter{'set_cookie'});
@@ -312,7 +313,7 @@ sub logout {
 
 sub login {
   my ($self, $user_id) = @_;
-  
+  warn "USER LOGIN: " . $user_id; 
   my $encrypted = EnsEMBL::Web::DBSQL::UserDB::encryptID($user_id);
   my $cookie = CGI::Cookie->new(
       -name    => EnsEMBL::Web::SpeciesDefs->ENSEMBL_USER_COOKIE,

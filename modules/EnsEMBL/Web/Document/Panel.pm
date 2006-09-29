@@ -14,10 +14,20 @@ sub new {
     'forms' => {},
     'components'   => {},
     'component_order' => [],
+    'prefix' => 'p',
     @_
   };
   bless $self, $class;
   return $self;
+}
+
+sub prefix {
+  my ($self, $value) = @_;
+  if ($value) { 
+    $self->{'prefix'} = $value;
+  }
+  warn "SETTING PREFIX: " . $self . ": " . $self->{'prefix'};
+  return $self->{'prefix'};
 }
 
 sub clear_components { $_[0]{'components'} = {}; $_[0]->{'component_order'} = []; }
@@ -358,6 +368,30 @@ sub render {
   }
 }
 
+sub params {
+  ### a
+  my $self = shift;
+  return $self->{params};
+}
+
+sub caption {
+  ### a
+  my $self = shift;
+  return $self->{caption};
+}
+
+sub status {
+  ### a
+  my $self = shift;
+  return $self->{status};
+}
+
+sub code {
+  ### a
+  my $self = shift;
+  return $self->{code};
+}
+
 sub _content {
   my $self = shift;
   my $output = $self->content();
@@ -517,6 +551,7 @@ sub content {
       my $result;
       (my $module_name = $function_name ) =~s/::\w+$//;
       if( $self->dynamic_use( $module_name ) ) {
+        $self->{'object'}->prefix($self->prefix);
         no strict 'refs';
         eval {
           $result = &$function_name( $self, $self->{'object'} );

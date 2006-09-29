@@ -29,6 +29,7 @@ sub new {
     'button_name'        => undef,
     'button_id'          => undef,
     'format'             => 'png',
+    'prefix'             => 'p',
 
     'image_formats'      => []
   };
@@ -36,6 +37,14 @@ sub new {
   return $self;
 }
 
+sub prefix {
+  ### a
+  my ($self, $value) = @_;
+  if ($value) {
+    $self->{'prefix'} = $value;
+  }
+  return $self->{'prefix'};
+}
 sub set_extra {
   my( $self, $object ) = @_;
   foreach( keys %formats ) {
@@ -497,7 +506,7 @@ sub render {
     $HTML .= sprintf qq(<div style="text-align: center; font-weight: bold">%s</div>), $self->caption if $self->caption;
   } elsif( $self->button eq 'drag' ) {
 $self->{'species_defs'}{'timer'}->push("Starting Image Tag",5);
-    $image->{'id'} = "p_$self->{'panel_number'}_i";
+    $image->{'id'} = $self->{'prefix'} . "_$self->{'panel_number'}_i";
     my $tag = $image->render_image_tag();
     ## Now we have the image dimensions, we can set the correct DIV width
 $self->{'species_defs'}{'timer'}->push("Finished Image Tag",5);
@@ -510,7 +519,7 @@ $self->{'species_defs'}{'timer'}->push("Finished Image Tag",5);
     ### butted up to another container! - if you need a vertical padding of 10px add it
     ### outside this module!
     $HTML .= sprintf '<div style="text-align:center"><div class="center" style="margin:auto;border:0px;padding:0px;width:%dpx">',  $image->{'width'}+2;
-    $HTML .= sprintf qq(<div id="p_$self->{'panel_number'}" style="border: solid 1px black; position: relative; width:%dpx">%s), $image->{'width'},$tag;
+    $HTML .= sprintf qq(<div id="$self->{'prefix'}_$self->{'panel_number'}" style="border: solid 1px black; position: relative; width:%dpx">%s), $image->{'width'},$tag;
 $self->{'species_defs'}{'timer'}->push("Starting Image Map",5);
     if( $self->imagemap eq 'yes' ) {
       $HTML .= $image->render_image_map

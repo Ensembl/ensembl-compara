@@ -10,6 +10,7 @@ use constant DEFAULT_ENCODING        => 'ISO-8859-1';
 use constant DEFAULT_LANGUAGE        => 'en-gb';
 
 use EnsEMBL::Web::Root;
+use EnsEMBL::Web::Tools::PluginLocator;
 our @ISA = qw(EnsEMBL::Web::Root);
 
 our %DOCUMENT_TYPES = (
@@ -37,33 +38,22 @@ our %DOCUMENT_TYPES = (
     },
 );
 
-sub child_objects {
-  my $self = shift;
-  unless( $self->{'children'} ) {
-    $self->{'children'} = [];
-    foreach my $root( 'EnsEMBL::Web', reverse @{$self->species_defs->ENSEMBL_PLUGIN_ROOTS} ) {
-      my $class_name = $root. '::Document::Configure';
-      if( $self->dynamic_use( $class_name ) ) {
-        push @{$self->{'children'}}, new $class_name;
-      } else {
-        (my $CS = $class_name ) =~ s/::/\\\//g;
-        my $error = $self->dynamic_use_failure( $class_name );
-        my $message = "^Can't locate $CS.pm in ";
-        warn "MENU ERROR: Can't compile $class_name due to $error" unless $error =~ /$message/;
-      }
-    }
+sub plugin_locator {
+  ### a
+  my ($self, $locator) = @_;
+  if ($locator) {
+    $self->{'plugin_locator'} = $locator;
   }
-  return @{$self->{'children'}};
+  return $self->{'plugin_locator'};
 }
 
 sub call_child_functions {
-  my( $self, @fns ) = @_;
-  return unless @fns;
-  foreach my $child ( $self->child_objects ) {
-    foreach my $fn ( @fns ) {
-      $child->$fn( $self ) if $child->can( $fn );
-    }
+  my $self = shift;
+  if (!$self->plugin_locator->results) {
+    $self->plugin_locator->include;
+    $self->plugin_locator->create_all;
   }
+  $self->plugin_locator->call(@_);
 }
 
 sub set_doc_type {
@@ -88,9 +78,15 @@ sub new {
     'head_order'        => [],
     'body_order'        => [],
     '_renderer'         => $renderer,
-    'timer'             => $timer
+    'timer'             => $timer,
+    'plugin_locator'    => EnsEMBL::Web::Tools::PluginLocator->new( (
+                                         locations  => [ 'EnsEMBL::Web', @{ $species_defs->ENSEMBL_PLUGIN_ROOTS } ], 
+                                         suffix     => "Document::Configure",
+                                         method     => "new"
+                                                                  ) )
   };
   bless $self, $class;
+  $self->plugin_locator->parameters([ $self ]);
   return $self;
 }
 
