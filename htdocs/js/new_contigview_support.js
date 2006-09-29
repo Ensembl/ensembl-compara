@@ -20,16 +20,43 @@ function p2b( n, px ) {
   return Math.floor( px*scale + 1.0*bp_start )
 }
 
-function b2p( n, bp ) {
+function b2p_old( n, bp ) {
   F = document.forms[ 'panel_form' ];
+  alert(n);
   bp_start  = F.elements[n+'_bp_start'].value;
   px_start  = F.elements[n+'_px_start'].value;
   bp_len    = F.elements[n+'_bp_end'].value-bp_start+1;
   scale     =(F.elements[n+'_px_end'].value-px_start+1)/bp_len;
+  alert(F.elements[n+'_bp_start'].value);
+  alert(F.elements[n+'_bp_end'].value);
   bp -= bp_start;
   if( bp<0 )      { px = 0; }
   if( bp>bp_len ) { px = bp_len; }
   return Math.floor( bp*scale + 1.0*px_start )
+}
+
+function b2p(n, bp) {
+  F = document.forms[ 'panel_form' ];
+  bp_start  = F.elements[n+'_bp_start'].value;
+  bp_end = F.elements[n+'_bp_end'].value;
+  px_start  = F.elements[n+'_px_start'].value;
+  px_end = F.elements[n+'_px_end'].value;
+  return b2p_single(bp, bp_start, bp_end, px_start, px_end);
+}
+
+function b2p_single(bp, start, end, start_px, end_px) {
+  /*
+  alert('single');
+  alert('bp: ' + bp);
+  alert('start: ' + start);
+  alert('end: ' + end);
+  */
+  bp_len    = end - start + 1;
+  scale     = (end_px - start_px + 1)  / bp_len;
+  bp -= start;
+  if( bp<0 )      { px = 0; }
+  if( bp>bp_len ) { px = bp_len; }
+  return Math.floor( bp*scale + 1.0*start_px )
 }
 
 /* panel expansion contraction code */
@@ -63,6 +90,32 @@ function contigview_init( id_1, id_2 ) {
   for(l=id_2;l>=id_1;l--) {
     n='p_'+l;
 /* create panel specific red boxes */
+    init_view(n);
+  }
+  cv_draw_red_boxes( id_1, id_2 );
+  update_red_boxes();
+}
+
+function update_red_boxes() {
+  B = ego( 'ensembl-webpage' );
+  for(i=0;i<4;i++) {
+    var D = dce('div');
+    var I = dce('img');
+    sa(D,'id',red_box_divs[i]);
+    D.className = 'redbox';
+    D.style.backgroundColor = 'red';
+    sa(I,'src', '/img/blank.gif');
+    ac(D,I);
+    ac(B,D);
+    rs(D,1,1);
+    rs(I,1,1);
+  }
+  var D = dce('div');
+  sa(D,'id','zmenus');
+  ac(B,D);
+}
+
+function init_view(n){
     if( !ego( n+'_rl' ) ) {
       A = ego( n );
       if(A) {
@@ -90,25 +143,7 @@ function contigview_init( id_1, id_2 ) {
 */
       }
       }
-    }
-  }
-  cv_draw_red_boxes( id_1, id_2 );
-  B = ego( 'ensembl-webpage' );
-  for(i=0;i<4;i++) {
-    var D = dce('div');
-    var I = dce('img');
-    sa(D,'id',red_box_divs[i]);
-    D.className = 'redbox';
-    D.style.backgroundColor = 'red';
-    sa(I,'src', '/img/blank.gif');
-    ac(D,I);
-    ac(B,D);
-    rs(D,1,1);
-    rs(I,1,1);
-  }
-  var D = dce('div');
-  sa(D,'id','zmenus');
-  ac(B,D);
+   }
 }
 
 function cv_change_panel_state( pn, id_1, id_2 ) {
@@ -159,6 +194,33 @@ function cv_draw_red_boxes( id_1, id_2 ) {
         if( A.areas[i].onclick || A.areas[i].onmouseover ) A.areas[i].href  = "javascript:void(0)" ;
       } 
     }
+  }
+  return true;
+}
+
+function draw_single_red_box(name, start_cv, end_cv, start, end, start_px, end_px) {
+  I = egi(name+'_i');
+  X = egX( I ); Y = egY( I ); W = egW( I ); H = egH( I );
+  Z = ego( name );
+  if( Z ) {
+    Z.style.borderColor = 'black';
+  }
+  sx = b2p_single(start_cv, start, end, start_px, end_px);
+  ex = b2p_single(end_cv, start, end, start_px, end_px);
+  show( ego(name+'_rl') ); 
+  show( ego(name+'_rr') );
+  show( ego(name+'_rt') );
+  show( ego(name+'_rb') );
+  m2( ego( name+'_rl') , sx, 2, 1, H-3 );
+  m2( ego( name+'_rr') , ex, 2, 1, H-3 );
+  m2( ego( name+'_rt') , sx, 2, ex-sx, 1 );
+  m2( ego( name+'_rb') , sx, H-2, ex-sx, 1 );
+  A = ego( name+'_i_map' )
+  if( A ) {
+    for(i=0;i<A.areas.length;i++) {
+      A.areas[i].onmousedown = select_start;
+      if( A.areas[i].onclick || A.areas[i].onmouseover ) A.areas[i].href  = "javascript:void(0)" ;
+    } 
   }
   return true;
 }
