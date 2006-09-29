@@ -1505,7 +1505,7 @@ sub restrict_between_alignment_positions {
 
   ## Trim all GenomicAligns
   foreach my $genomic_align (@{$genomic_align_block->get_all_GenomicAligns}) {
-    my @cigar = grep {$_} split(/(\d*[DM])/, $genomic_align->cigar_line);
+    my @cigar = grep {$_} split(/(\d*[GDM])/, $genomic_align->cigar_line);
 
     ## Trim start of cigar_line if needed
     if ($length_of_truncated_seq_at_the_start >= 0) {
@@ -1513,7 +1513,7 @@ sub restrict_between_alignment_positions {
       my $original_seq_length = 0;
       my $new_cigar_piece = "";
       while (my $cigar = shift(@cigar)) {
-        my ($num, $type) = ($cigar =~ /^(\d*)([DM])/);
+        my ($num, $type) = ($cigar =~ /^(\d*)([GDM])/);
         $num = 1 if ($num eq "");
         $aligned_seq_length += $num;
         if ($aligned_seq_length >= $length_of_truncated_seq_at_the_start) {
@@ -1547,7 +1547,7 @@ sub restrict_between_alignment_positions {
       my $original_seq_length = 0;
       my $new_cigar_piece = "";
       while (my $cigar = shift(@cigar)) {
-        my ($num, $type) = ($cigar =~ /^(\d*)([DM])/);
+        my ($num, $type) = ($cigar =~ /^(\d*)([GDM])/);
         $num = 1 if ($num eq "");
         $aligned_seq_length += $num;
         if ($aligned_seq_length >= $final_aligned_length) {
@@ -1590,10 +1590,19 @@ sub restrict_between_alignment_positions {
   Arg[1]     : [optional] int $start, refers to the reference_dnafrag
   Arg[2]     : [optional] int $end, refers to the reference_dnafrag
   Arg[3]     : [optional] Bio::EnsEMBL::Compara::GenomicAlign $reference_GenomicAlign
+  Arg[4]     : [optional] boolean $skip_empty_GenomicAligns
   Example    : none
   Description: restrict this GenomicAlignBlock. It returns a new object unless no
                restriction is needed. In that case, it returns the original unchanged
                object
+               It might be the case that the restricted region coincide with a gap
+               in one or several GenomicAligns. By default these GenomicAligns are
+               returned with a dnafrag_end equals to its dnafrag_start + 1. For instance,
+               a GenomicAlign with dnafrag_start = 12345 and dnafrag_end = 12344
+               correspond to a block which goes on this region from before 12345 to
+               after 12344, ie just between 12344 and 12345. You can choose to remove
+               these empty GenomicAligns by setting $skip_empty_GenomicAligns to any
+               true value.
   Returntype : Bio::EnsEMBL::Compara::GenomicAlignBlock object
   Exceptions : none
   Caller     : general
@@ -1602,7 +1611,7 @@ sub restrict_between_alignment_positions {
 =cut
 
 sub restrict_between_reference_positions {
-  my ($self, $start, $end, $reference_genomic_align) = @_;
+  my ($self, $start, $end, $reference_genomic_align, $skip_empty_GenomicAligns) = @_;
   my $genomic_align_block;
   my $new_reference_genomic_align;
   my $new_genomic_aligns;
@@ -1612,6 +1621,10 @@ sub restrict_between_reference_positions {
   $start = $reference_genomic_align->dnafrag_start if (!defined($start));
   $end = $reference_genomic_align->dnafrag_end if (!defined($end));
 
+  if ($start > $reference_genomic_align->dnafrag_end or $end < $reference_genomic_align->dnafrag_start) {
+    # restricting outside of boundaries => return undef obejct
+    return undef;
+  }
   my $excess_at_the_start = $start - $reference_genomic_align->dnafrag_start;
   my $excess_at_the_end  = $reference_genomic_align->dnafrag_end - $end;
 
@@ -1647,9 +1660,9 @@ sub restrict_between_reference_positions {
          -dbID                => $gag->dbID);
       push @gags, $new_gag;
     }
-    if (scalar @gags) {
+#     if (scalar @gags) {
       $new_genomic_align->genomic_align_groups(\@gags);
-    }
+#     }
     if ($this_genomic_align == $reference_genomic_align) {
       $new_reference_genomic_align = $new_genomic_align;
     }
@@ -1664,7 +1677,7 @@ sub restrict_between_reference_positions {
   $genomic_align_block->reference_slice($self->reference_slice);
   throw("Reference GenomicAlign not found!") if (!$genomic_align_block->reference_genomic_align);
 
-  my @reference_cigar = grep {$_} split(/(\d*[DM])/, $new_reference_genomic_align->cigar_line);
+  my @reference_cigar = grep {$_} split(/(\d*[GDM])/, $new_reference_genomic_align->cigar_line);
   ## Parse start of cigar_line for the reference GenomicAlign
   my $length_of_truncated_seq_at_the_start = 0; # num. of bp in the alignment to be trimmed
   if ($excess_at_the_start >= 0) {
@@ -1672,7 +1685,7 @@ sub restrict_between_reference_positions {
     my $original_seq_length = 0;
     my $new_cigar_piece = "";
     while (my $cigar = shift(@reference_cigar)) {
-      my ($num, $type) = ($cigar =~ /^(\d*)([DM])/);
+      my ($num, $type) = ($cigar =~ /^(\d*)([GDM])/);
       $num = 1 if ($num eq "");
       $length_of_truncated_seq_at_the_start += $num;
       if ($type eq "M") {
@@ -1748,7 +1761,7 @@ sub restrict_between_reference_positions {
   }
   ## Trim all remaining the GenomicAligns
   foreach my $genomic_align (@{$genomic_align_block->get_all_non_reference_genomic_aligns}) {
-    my @cigar = grep {$_} split(/(\d*[DM])/, $genomic_align->cigar_line);
+    my @cigar = grep {$_} split(/(\d*[GDM])/, $genomic_align->cigar_line);
 
     ## Trim start of cigar_line if needed
     if ($length_of_truncated_seq_at_the_start >= 0) {
@@ -1756,7 +1769,7 @@ sub restrict_between_reference_positions {
       my $original_seq_length = 0;
       my $new_cigar_piece = "";
       while (my $cigar = shift(@cigar)) {
-        my ($num, $type) = ($cigar =~ /^(\d*)([DM])/);
+        my ($num, $type) = ($cigar =~ /^(\d*)([GDM])/);
         $num = 1 if ($num eq "");
         $aligned_seq_length += $num;
         if ($aligned_seq_length >= $length_of_truncated_seq_at_the_start) {
@@ -1818,6 +1831,18 @@ sub restrict_between_reference_positions {
     $genomic_align->cigar_line(join("", @cigar));
   }
 
+  if ($skip_empty_GenomicAligns) {
+    my $reference_genomic_align = $genomic_align_block->reference_genomic_align();
+    my $genomic_align_array = $genomic_align_block->genomic_align_array;
+    for (my $i=0; $i<@$genomic_align_array; $i++) {
+      if ($genomic_align_array->[$i]->dnafrag_start > $genomic_align_array->[$i]->dnafrag_end) {
+        splice(@$genomic_align_array, $i, 1);
+        $i--;
+      }
+    }
+    $genomic_align_block->reference_genomic_align($reference_genomic_align);
+  }
+
   if ($negative_strand) {
     $genomic_align_block->reverse_complement();
   }
@@ -1854,8 +1879,13 @@ sub _print {
   length = ", ($self->length or "-undef-"), "
   alignments: \n";
   foreach my $this_genomic_align (@{$self->genomic_align_array()}) {
-    print $FILEH "    - ", $this_genomic_align->genome_db->name, " ",
-        $this_genomic_align->get_Slice->name, "\n";
+    if ($self->reference_genomic_align and $self->reference_genomic_align == $this_genomic_align) {
+      print $FILEH "    * ", $this_genomic_align->genome_db->name, " ",
+          ($this_genomic_align->get_Slice?$this_genomic_align->get_Slice->name:"kk"), "\n";
+    } else {
+      print $FILEH "    - ", $this_genomic_align->genome_db->name, " ",
+          ($this_genomic_align->get_Slice?$this_genomic_align->get_Slice->name:"kk"), "\n";
+    }
   }
   verbose($verbose);
 
