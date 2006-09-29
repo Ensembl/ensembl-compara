@@ -24,12 +24,13 @@ sub _init {
   return unless $self->strand() == -1;
 
   my $Config        = $self->{'config'};
+  warn "dddddddddd", $Config;
   my $transcript = $Config->{'transcript'}->{'transcript'};
   my $consequences_ref = $Config->{'transcript'}->{'consequences'};
   my $alleles      = $Config->{'transcript'}->{'allele_info'};
   return unless $alleles && $consequences_ref;
-
-
+  warn "TSV_SNPS  ", $Config->{'transcript'}->{'sample'};
+  warn "ddd snps! ", $alleles;
   # Drawing params
   my( $fontname, $fontsize ) = $self->get_font_details( 'innertext' );
   my $pix_per_bp    = $Config->transform->{'scalex'};
@@ -62,6 +63,8 @@ sub _init {
   foreach my $allele_ref (  @$alleles ) {
     my $allele = $allele_ref->[2];
     next unless $allele;
+    warn "AF ", $allele->allele_string if $allele->variation_name eq 'rs31744050';
+    warn $allele if $allele->variation_name eq 'rs31744050';
     my $conseq_type = shift @consequences;
     next unless $conseq_type;
     next if $allele->end < $transcript->start - $EXTENT;
@@ -104,6 +107,7 @@ sub _init {
     # Type and colour -------------------------------------------
     my $type = $conseq_type->display_consequence;
     my $colour = $colour_map->{$type}->[0];
+
     my @tmp;
     push @tmp, ("13:amino acid: $aa_change->[0] to $aa_change->[1]", '' ) if $aa_change->[1];
 
