@@ -405,6 +405,30 @@ sub parse { # Called to create hash
   while(my @T = caller($C) ) { $self->{'_parse_caller_array'}[$C] = \@T; $C++; }
 }
 
+sub _parse_date {
+  my $date = shift;
+  my %parsed;
+  my @a = ($date =~ /(\d{2})(\d{2})(.+)/);
+
+  my %months = ('01'=>'Jan', '02'=>'Feb', '03'=>'Mar', '04'=>'Apr',
+                  '05'=>'May', '06'=>'Jun', '07'=>'July','08'=>'Aug',
+                  '09'=>'Sep', '10'=>'Oct', '11'=>'Nov', '12'=>'Dec');
+  my $month = $months{$a[1]};
+
+  my $year = $a[0];
+  if ($year < 70) {
+    $year = '20'.$year;
+  }
+  else {
+    $year = '19'.$year;
+  }
+
+  $parsed{'date'} = $month.' '.$year;
+  $parsed{'string'} = $a[2]; 
+
+  return \%parsed;
+}
+
 sub _parse {
   my $self = shift; 
   warn '-' x 78 , "\n[CONF]    [INFO] Parsing .ini files\n" ;
@@ -528,7 +552,6 @@ sub _parse {
         'species.ensembl_alias_name'  => 'ENSEMBL_COMMON_NAME',
         'assembly.default'            => 'ENSEMBL_GOLDEN_PATH',
         'assembly.name'               => 'ASSEMBLY_ID',
-        'assembly.date'               => 'ASSEMBLY_DATE',
       );
 
       my $dbh = $self->db_connect( $tree, 'ENSEMBL_DB' );
@@ -542,6 +565,15 @@ sub _parse {
         my $value = $row->[2];
         if ($key eq 'species.classification') {
           push(@taxonomy, $value);
+        }
+        elsif ($key eq 'assembly.date') {
+          my $assembly = _parse_date($value);
+          $tree->{'general'}{'ASSEMBLY_DATE'} = $assembly->{'date'};
+        }
+        elsif ($key eq 'genebuild.version') {
+          my $genebuild = _parse_date($value);
+          $tree->{'general'}{'GENEBUILD_DATE'} = $genebuild->{'date'};
+          $tree->{'general'}{'GENEBUILD_BY'} = $genebuild->{'string'};  
         }
         elsif (my $v = $meta_map{$key}) {
           $tree->{'general'}{$v} = $value;
