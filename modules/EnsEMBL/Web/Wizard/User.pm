@@ -92,7 +92,7 @@ sub _init {
           'label'=>'Name of this configuration', 
           'required'=>'yes',
       },
-      'config_type'   => {
+      'script'   => {
           'type'=>'String', 
           'label'=>'Script configured', 
       },
@@ -164,8 +164,8 @@ sub _init {
       'name_config' => {
                       'form' => 1,
                       'title' => 'Save configuration',
-                      'show_fields'  => [qw(config_type)],
-                      'pass_fields'  => [qw(config_type user_id)],
+                      'show_fields'  => [qw(script)],
+                      'pass_fields'  => [qw(script user_id)],
                       'input_fields'  => [qw(config_name)],
       },
       'save_config' => {'button'=>'Save'},
@@ -203,16 +203,14 @@ sub _init {
     my $bm_url  = $$bookmark{'bm_url'};
     push @bm_values, {'value'=>$bm_id,'name'=>"$bm_name ($bm_url)"};
   }
-=pod
   my @configs = @{ $object->get_configs($user_id) };
   my @bm_values;
   foreach my $config (@configs) {
     my $config_id   = $$config{'config_id'};
     my $config_name = $$config{'config_name'};
-    my $config_type = $$config{'config_type'};
-    push @config_values, {'value'=>$config_id,'name'=>"$config_name ($config_type)"};
+    my $script      = $$config{'script'};
+    push @config_values, {'value'=>$config_id,'name'=>"$config_name ($script)"};
   }
-=cut
   my $details   = $object->get_user_by_id($user_id);
 
   my $data = {
@@ -372,7 +370,6 @@ sub lookup_lost {
     $parameter{'node'} = 'save_password'; 
     $parameter{'user_id'} = $details{'user_id'};
     $parameter{'expiry'} = $self->data('expiry'); 
-warn "Expires ".$self->data('expiry');
   }
 
   return \%parameter;
@@ -640,7 +637,6 @@ sub back_to_page {
   my %parameter;
 
   my $url = CGI::escape($object->param('url'));
-
   $parameter{'exit'}  = $url; 
   return \%parameter;
 }
@@ -744,10 +740,23 @@ sub name_config {
   
   my $form = EnsEMBL::Web::Form->new($node, "/$species/$script", 'post' );
 
+  ## parse URL for name of originating script
+  my $url = $object->param('url');
+  $url =~ m#/([a-zA-z]+view)#;
+  my $config_script = $1;
+  $object->param('script', $config_script); 
+  $object->param('config_name', $config_script); 
+  $object->param('user_id', $object->user_id); 
+
   $wizard->add_title($node, $form, $object);
   $wizard->show_fields($node, $form, $object);
   $wizard->add_widgets($node, $form, $object);
   $wizard->pass_fields($node, $form, $object);
+  $form->add_element(
+    'type'  => 'Hidden',
+    'name'  => 'url',
+    'value' => $object->param('url'),
+  );
   $wizard->add_buttons($node, $form, $object);
 
   return $form;
@@ -755,18 +764,19 @@ sub name_config {
 
 sub save_config {
   my ($self, $object) = @_;
-  my $wizard = $self->{wizard};
-  
+  my $wizard = $self->{wizard}; 
+ 
   my %parameter;
 
   ## save config
   my $record = $self->create_record($object);
+  $$record{'session_id'} = $ENV{'ENSEMBL_FIRSTSESSION'};
   my $result = $object->save_config($record);
 
   ## set response
   if ($result) {
     $parameter{'node'} = 'back_to_page';
-    $parameter{'url'} = $object->param('bm_url');
+    $parameter{'url'} = CGI::escape($object->param('url'));
   }
   else {
     $parameter{'node'} = 'accountview';
