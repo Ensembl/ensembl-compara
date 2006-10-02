@@ -549,7 +549,7 @@ sub _parse {
     unless ($filename eq 'MULTI') {
       ## hash of keys (other than taxonomy) that we want to use
       my %meta_map = (
-        'species.ensembl_alias_name'  => 'ENSEMBL_COMMON_NAME',
+        'species.ensembl_alias_name'  => 'SPECIES_COMMON_NAME',
         'assembly.default'            => 'ENSEMBL_GOLDEN_PATH',
         'assembly.name'               => 'ASSEMBLY_ID',
       );
