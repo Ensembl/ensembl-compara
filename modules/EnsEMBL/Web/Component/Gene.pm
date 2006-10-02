@@ -989,6 +989,15 @@ sub genetreeview_menu {
     return 0;
 }
 
+sub nogenetree {
+  my ($panel, $object) = @_;
+  my $html = qq(
+    <p>This gene has no orthologues in Ensembl Compara, so a gene tree cannot be built.</p>
+  );
+  $panel->print( $html );
+  return 1;
+} 
+
 
 sub genesnpview_menu    {  return gene_menu( @_, 'genesnpview_transcript', 
    [qw( Features  Source SNPClasses SNPValid SNPTypes SNPContext ImageSize THExport)], ['SNPHelp'] ); }
