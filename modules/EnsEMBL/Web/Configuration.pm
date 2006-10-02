@@ -210,85 +210,16 @@ sub context_location {
   }
 }
 
-sub context_user {
-  ## This menu only appears on user pages, e.g. account management, db admin
-  ## Menus for general dynamic pages are in Document::Configure::common_menu_items
-
-  my $self = shift;
-  my $obj = $self->{object};
-
-  ## this menu clashes with mini one on non-account pages, so remove it
-  $self->delete_block('ac_mini');
-
-  ## Is the user logged in?
-  my $user_id = $ENV{'ENSEMBL_USER'};
-
-  if ($user_id) {
-    my $flag = 'user';
-    $self->add_block( $flag, 'bulleted', "My Account" );
-
-
-    $self->add_entry( $flag, 'text' => "Account summary",
-                                    'href' => "/common/user_login?node=accountview" );
-    $self->add_entry( $flag, 'text' => "Update my details",
-                                    'href' => "/common/user_update" );
-    $self->add_entry( $flag, 'text' => "Change my password",
-                                    'href' => "/common/user_pw_change" );
-    $self->add_entry( $flag, 'text' => "Manage my bookmarks",
-                                    'href' => "/common/user_manage_bkmarks" );
-    $self->add_entry( $flag, 'text' => "Log out",
-                                    'href' => "/common/user_logout" );
-
-    ## get user status
-    my $help_access = $obj->get_user_privilege($user_id, 'help');
-    my $news_access = $obj->get_user_privilege($user_id, 'news');
-
-    $flag = 'help';
-    if ($help_access) {
-      $self->add_block( $flag, 'bulleted', "Helpdesk Admin" );
-      $self->add_entry( $flag, 'text' => "Add Help Item",
-                                    'href' => "/common/help_add" );
-      $self->add_entry( $flag, 'text' => "Edit Help Item",
-                                    'href' => "/common/help_edit" );
-      $self->add_entry( $flag, 'text' => "Build Help Article",
-                                    'href' => "/common/help_article" );
-    }
-
-    $flag = 'news';
-    if ($news_access) {
-      $self->add_block( $flag, 'bulleted', "News DB Admin" );
-      $self->add_entry( $flag, 'text' => "Add News",
-                                    'href' => "/common/news_add" );
-      $self->add_entry( $flag, 'text' => "Edit News",
-                                    'href' => "/common/news_edit" );
-      $self->add_entry( $flag, 'text' => "Add old news",
-                                    'href' => "/common/news_add_old" );
-      $self->add_entry( $flag, 'text' => "Edit old news",
-                                    'href' => "/common/news_edit_old" );
-    }
-  }
-  else {
-    my $flag = 'ac_full';
-    $self->add_block( $flag, 'bulleted', "My Account" );
-    
-    $self->add_entry( $flag, 'text' => "Login",
-                                  'href' => "/common/user_login" );
-    $self->add_entry( $flag, 'text' => "Register",
-                                  'href' => "/common/user_register" );
-    $self->add_entry( $flag, 'text' => "Lost Password",
-                                  'href' => "/common/user_pw_lost" );
-    $self->add_entry( $flag, 'text' => "About User Accounts",
-                                    'href' => "/info/about/accounts.html" );
-  }
-
-}
-
-
 sub wizard_panel {
-  my ($self, $caption) = @_;
+  ### Wrapper to automatically create panels for a wizard
+  ### Makes the assumption that
+  ### 1. The node contains a single component with the same name as the node
+  ### 2. If the wizard is in a plugin, the component methods are in the same plugin
+  my ($self, $caption, $plugin) = @_;
   my $object = $self->{object};
   my $wizard = $self->{wizard};
   my $node = $wizard->current_node($object);
+  my $namespace = $wizard->namespace;
 
   ## determine object type
   my @module_bits = split('::', ref($wizard));
@@ -312,9 +243,9 @@ sub wizard_panel {
         'wizard'  => $self->{wizard})
     ) {
       my $method = $type.'::'.$node;
-      $panel->add_components($node, 'EnsEMBL::Web::Component::'.$method);
+      $panel->add_components($node, $namespace.'::Component::'.$method);
       if ($wizard->isa_form($node)) {
-        $panel->add_form($self->{page}, $node, 'EnsEMBL::Web::Wizard::'.$method);
+        $panel->add_form($self->{page}, $node, $namespace.'::Wizard::'.$method);
       }
       $self->{page}->content->add_panel($panel);
     }
