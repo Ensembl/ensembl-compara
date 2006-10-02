@@ -130,7 +130,7 @@ sub get_synteny_local_genes {
     
     my $self = shift ;
     return @{$self->{'_local_genes'}} if $self->{'_local_genes'};
-    
+
     my $slice;
     my @localgenes;
     my $pre = $self->param('pre');
@@ -142,10 +142,9 @@ sub get_synteny_local_genes {
     $num = -$num if $pre;
     my $start = $loc < 1 ? 1 : $loc;
     $start = $chr_length if $start > $chr_length;
-    
+   
     if( $num < 0 ) {
-        $slice = $sliceAdaptor->fetch_by_region
-      ('chromosome', $chr, 1, $start );
+        $slice = $sliceAdaptor->fetch_by_region('chromosome', $chr, 1, $start );
         @localgenes = @{$slice->get_all_Genes( undef, 'core' )};
         if(@localgenes>-$num) {
             @localgenes = @localgenes[$num..-1]; 
@@ -158,18 +157,19 @@ sub get_synteny_local_genes {
         } else { 
             $start = 1;
         }
-    } else {
-    $slice = $sliceAdaptor->fetch_by_region
-      ( 'chromosome', $chr, $start, $chr_length );
-         @localgenes = @{$slice->get_all_Genes( undef, 'core' )};
-        if(@localgenes>$num) {
-            @localgenes = @localgenes[0..($num-1)]; 
-        } elsif(@localgenes==0) {
-      $slice = $sliceAdaptor->fetch_by_region('chromosome', $chr, 1 , $start);
-      @localgenes = @{$slice->get_all_Genes( undef, 'core' )};
-      @localgenes = @localgenes[(-$num)..-1] if(@localgenes>$num);
-      $start = 1;
-        }
+    } 
+    else {
+      $slice = $sliceAdaptor->fetch_by_region( 'chromosome', $chr, $start, $chr_length );
+      @localgenes = @{$slice->get_all_Genes(  undef, 'core' )};
+      if(@localgenes>$num) {
+        @localgenes = @localgenes[0..($num-1)]; 
+      } 
+      elsif(@localgenes==0) {
+        $slice = $sliceAdaptor->fetch_by_region('chromosome', $chr, 1 , $start);
+        @localgenes = @{$slice->get_all_Genes( undef, 'core' )};
+        @localgenes = @localgenes[(-$num)..-1] if(@localgenes>$num);
+        $start = 1;
+      }
     }
 #    foreach my $gene( @localgenes ){ 
 #      $gene->start( $gene->start + $start - 1 ); 
