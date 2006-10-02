@@ -23,9 +23,12 @@ sub new {
     $self->{'_node_defs'}   = $node_defs;
     $self->{'_messages'}    = $messages;
   }
+  (my $namespace = $class) =~ s/::Wizard::[a-zA-Z_]+$//;
+  $self->{'_namespace'} = $namespace;
   return $self;
 }
 
+sub namespace { return $_[0]{'_namespace'}; }
 
 sub data { 
   my ($self, $name, $value) = @_;
@@ -422,7 +425,6 @@ sub pass_fields {
 
 sub add_widgets {
   my ($self, $node, $form, $object, $fields) = @_;
-warn "Node $node";
   if (!$fields) {
     $fields = $self->{'_nodes'}{$node}{'input_fields'} || $self->default_order;
   } 
