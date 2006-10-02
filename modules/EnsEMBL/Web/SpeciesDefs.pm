@@ -559,6 +559,7 @@ sub _parse {
       my $sth = $dbh->prepare( $sql );
       my $rst  = $sth->execute || die( $sth->errstr );
       my $results = $sth->fetchall_arrayref();
+      print STDERR "\t  [WARN] NO METADATA!!\n" if !@$results;
       my @taxonomy = ();
       foreach my $row (@$results) {
         my $key   = $row->[1];
@@ -569,21 +570,28 @@ sub _parse {
         elsif ($key eq 'assembly.date') {
           my $assembly = _parse_date($value);
           $tree->{'general'}{'ASSEMBLY_DATE'} = $assembly->{'date'};
+          print STDERR "\t  [WARN] NO ASSEMBLY DATE\n" if !$assembly->{'date'};
         }
         elsif ($key eq 'genebuild.version') {
           my $genebuild = _parse_date($value);
           $tree->{'general'}{'GENEBUILD_DATE'} = $genebuild->{'date'};
           $tree->{'general'}{'GENEBUILD_BY'} = $genebuild->{'string'};  
+          print STDERR "\t  [WARN] NO GENEBUILD DATE $v\n" if !$genebuild->{'date'};
+          print STDERR "\t  [WARN] NO GENEBUILD NAME $v\n" if !$genebuild->{'string'};
         }
         elsif (my $v = $meta_map{$key}) {
           $tree->{'general'}{$v} = $value;
+          print STDERR "\t  [WARN] EMPTY VARIABLE $v\n" if !$value;
         }
       }
       $sth->finish();
       $dbh->disconnect();
 
       ## Do species name and group
-      $tree->{'general'}{'SPECIES_BIO_NAME'} = $taxonomy[1].' '.$taxonomy[0];
+      (my $ininame = $filename) =~ s/_/ /g;
+      my $bioname = $taxonomy[1].' '.$taxonomy[0];
+      $tree->{'general'}{'SPECIES_BIO_NAME'} = $ininame;
+      print STDERR "\t  [WARN] SPECIES NAME MISMATCH!\n" if $ininame ne $bioname;
       $tree->{'general'}{'SPECIES_GROUP'} = 'Eukaryotes';
       foreach my $taxon (@taxonomy) {
         if ($taxon eq 'Mammalia') {
