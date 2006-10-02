@@ -174,39 +174,5 @@ sub helpdesk_menu {
   $self->add_entry( 'movies', 'text'=>'Animated Tutorials', 'href'=>'/common/Workshops_Online' );
 }
 
-sub admin_menu {
-  my $self = shift;
-
-    ## remove normal menu items
-  $self->delete_block('whattodo');
-  $self->delete_block('docs');
-  $self->delete_block('links');
-  $self->delete_miniad;
-
-    ## replace with dba links
-  my $flag = 'item';
-  $self->add_block( $flag, 'bulleted', "Popup Help Sections" );
-  $self->add_entry( $flag, 'text' => "Add Section",
-                                'href' => "/common/add_help_item" );
-  $self->add_entry( $flag, 'text' => "Edit Section",
-                                'href' => "/common/edit_help_item" );
-
-  $flag = 'article';
-  $self->add_block( $flag, 'bulleted', "HelpView Articles" );
-  $self->add_entry( $flag, 'text' => "Add Article",
-                                'href' => "/common/add_help_article" );
-  $self->add_entry( $flag, 'text' => "Edit Intro/Summary",
-                                'href' => "/common/edit_help_article" );
-  $self->add_entry( $flag, 'text' => "Rearrange Sections",
-                                'href' => "/common/sort_article_items" );
-
-  $flag = 'glossary';
-  $self->add_block( $flag, 'bulleted', "Glossary" );
-  $self->add_entry( $flag, 'text' => "Add Word",
-                                'href' => "/common/add_word" );
-  $self->add_entry( $flag, 'text' => "Edit Word",
-                                'href' => "/common/edit_word" );
-
-}
 
 1;
