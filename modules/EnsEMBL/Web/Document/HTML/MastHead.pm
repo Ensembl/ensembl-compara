@@ -29,17 +29,24 @@ sub render {
     );
   }
   else {
-    my $species_text = '<span style="font-size: 1.5em; color:#fff">.</span>';
-    my $species_name;
-    if( $_[0]->sp_bio && $ENV{'ENSEMBL_SPECIES'}) {
-      if ($_[0]->sp_common =~ /\./) {
-       $species_name = '<i>'.$_[0]->sp_common.'</i>';
+    my $species_text;
+    if ($ENV{'ENSEMBL_SPECIES'} eq 'common') {
+      (my $view = $_[0]->sub_title) =~ s/_/ /;
+      $species_text = qq( <span class="commonname serif">$view</span>);
+    }
+    else {
+      $species_text = '<span style="font-size: 1.5em; color:#fff">.</span>';
+      my $species_name;
+      if( $_[0]->sp_bio && $ENV{'ENSEMBL_SPECIES'}) {
+        if ($_[0]->sp_common =~ /\./) {
+          $species_name = '<i>'.$_[0]->sp_common.'</i>';
+        }
+        else {
+          $species_name = $_[0]->sp_common;
+        }
+        $species_text = sprintf( '<a href="/%s/" class="section">%s</a>',  $_[0]->sp_bio, $species_name );
+        $species_text .= qq( <span class="viewname serif">@{[$_[0]->sub_title]}</span>) if $_[0]->sub_title;
       }
-      else {
-       $species_name = $_[0]->sp_common;
-      }
-      $species_text = sprintf( '<a href="/%s/" class="section">%s</a>',  $_[0]->sp_bio, $species_name );
-      $species_text .= qq( <span class="viewname serif">@{[$_[0]->sub_title]}</span>) if $_[0]->sub_title;
     }
     $_[0]->printf( qq(
 <div id="masthead">
