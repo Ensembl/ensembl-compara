@@ -196,7 +196,7 @@ sub retrieve_DnaAlignFeature {
         'end'      => $end,
         'strand'   => $strand,
         'length'   => $f->end-$f->start+1,
-        'label'    => "@{[$f->hstart]}-@{[$f->hend]}",
+        'label'    => $f->display_id." (@{[$f->hstart]}-@{[$f->hend]})",
         'gene_id'  => ["@{[$f->hstart]}-@{[$f->hend]}"],
         'extra' => [ $f->alignment_length, $f->hstrand * $f->strand, $f->percent_id, $f->score, $f->p_value ]
       };
