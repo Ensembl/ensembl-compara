@@ -470,7 +470,7 @@ sub genetreeview {
   my $obj    = $self->{'object'};
   
   $self->update_configs_from_parameter('image', qw(genetreeview genetreeview) );
-  $self->set_title( 'Gene Splice Report for '.$obj->stable_id );
+  $self->set_title( 'Gene Tree Report for '.$obj->stable_id );
   my $params = { 'gene' => $obj->stable_id, 'db' => $obj->get_db  };
 
   if( my $panel1 = $self->new_panel( 'Information',
@@ -486,33 +486,49 @@ sub genetreeview {
      ));
     $self->add_panel( $panel1 );
 
-}
-
-
-  if( my $panel2 = $self->new_panel( 'Image',
-    'code'    => "image#",
-    'caption' => 'Gene Tree for gene '.$obj->stable_id,
-    'params' => $params
-  ) ) {
-    $self->initialize_zmenu_javascript;
-    $self->initialize_ddmenu_javascript;
-    $panel2->add_components(qw(
-      menu  EnsEMBL::Web::Component::Gene::genetreeview_menu
-      image EnsEMBL::Web::Component::Gene::genetreeview
-    ));
-    $self->add_panel( $panel2 );
   }
 
-  if( my $panel3 = $self->new_panel( 'Information',
-    'code'    => "info#",
-    'caption' => 'Gene Orthologues',
-  ) ) {
-    $panel3->add_components(qw(
-      orthologues    EnsEMBL::Web::Component::Gene::orthologues
-     ));
-    $self->add_panel( $panel3 );
+  ## Does this gene have orthologues from which we can build a tree?
+  my $has_orthologues = $obj->get_homology_matches('ENSEMBL_ORTHOLOGUES');
+  if ($has_orthologues) {
+    if( my $panel2 = $self->new_panel( 'Image',
+      'code'    => "image#",
+      'caption' => 'Gene Tree for gene '.$obj->stable_id,
+      'params' => $params
+      ) ) {
+      $self->initialize_zmenu_javascript;
+      $self->initialize_ddmenu_javascript;
+      $panel2->add_components(qw(
+        menu  EnsEMBL::Web::Component::Gene::genetreeview_menu
+        image EnsEMBL::Web::Component::Gene::genetreeview
+      ));
+      $self->add_panel( $panel2 );
+    }
 
-}
+    if( my $panel3 = $self->new_panel( 'Information',
+      'code'    => "info#",
+      'caption' => 'Gene Orthologues',
+      ) ) {
+      $panel3->add_components(qw(
+        orthologues    EnsEMBL::Web::Component::Gene::orthologues
+      ));
+      $self->add_panel( $panel3 );
+
+    }
+  }
+  else {
+    if( my $panel2 = $self->new_panel( 'Image',
+      'code'    => "image#",
+      'caption' => 'Gene Tree for gene '.$obj->stable_id,
+      'params' => $params
+      ) ) {
+      $panel2->add_components(qw(
+        notree  EnsEMBL::Web::Component::Gene::nogenetree
+      ));
+      $self->add_panel( $panel2 );
+    }
+
+  }
 
 }
 
