@@ -53,7 +53,7 @@ sub spreadsheet_featureTable {
   }
 
   $panel->add_columns(
-    {'key' => 'loc', 'title' => 'Location', 'width' => '25%', 'align' => 'left' },
+    {'key' => 'loc', 'title' => 'Genomic location', 'width' => '25%', 'align' => 'left' },
   );
   if ($data_type eq 'Gene') {
     $panel->add_columns(
@@ -61,12 +61,19 @@ sub spreadsheet_featureTable {
     );
   } else {
     $panel->add_columns(
-      {'key' => 'length', 'title' => 'Length', 'width' => '10%', 'align' => 'center' },
+      {'key' => 'length', 'title' => 'Genomic length', 'width' => '10%', 'align' => 'center' },
     );
   }
-  $panel->add_columns(
-    {'key' => 'names', 'title' => 'Name(s)', 'width' => '25%', 'align' => 'left' },
-  );
+  if ($data_type =~ /Align/) {
+    $panel->add_columns(
+      {'key' => 'names', 'title' => 'Feature Location', 'width' => '25%', 'align' => 'left' },
+    );
+  }
+  else {
+    $panel->add_columns(
+      {'key' => 'names', 'title' => 'Name(s)', 'width' => '25%', 'align' => 'left' },
+    );
+  }
   # add extra columns
   $C = 0;
   for( @{$extra_columns||[]} ) {
