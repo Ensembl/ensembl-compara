@@ -215,7 +215,7 @@ sub wizard_panel {
   ### Makes the assumption that
   ### 1. The node contains a single component with the same name as the node
   ### 2. If the wizard is in a plugin, the component methods are in the same plugin
-  my ($self, $caption, $plugin) = @_;
+  my ($self, $caption) = @_;
   my $object = $self->{object};
   my $wizard = $self->{wizard};
   my $node = $wizard->current_node($object);
