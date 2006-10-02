@@ -99,7 +99,7 @@ sub stats {
   foreach my $attrib (@{$chr->Obj->get_all_Attributes()}) {
     my $name = $attrib->name();
     my $value = $attrib->value();
-    $chr_stats{$attrib->name()} = $attrib->value();
+    $chr_stats{$attrib->name()} += $attrib->value();
   }
 
   $chr_stats{'Length'} = ($chr->chr_name eq 'ALL') ? $chr->max_chr_length : $chr->length ;
