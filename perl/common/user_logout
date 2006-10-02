@@ -2,26 +2,6 @@
 
 package user_logout;
 
-use strict;
-use warnings;
-no warnings "uninitialized";
-
 use EnsEMBL::Web::Document::WebPage;
-
-my $webpage= new EnsEMBL::Web::Document::WebPage(
-  'use_proxy'  => 1,
-  'renderer'   => 'Apache',
-  'outputtype' => 'HTML',
-  'scriptname' => 'user_logout',
-  'objecttype' => 'User',
-);
-if( $webpage->has_a_problem() ) {
-  $webpage->render_error_page( $webpage->problem->[0] );
-} else {
-  $webpage->logout;
-  my $home = '/';
-  $webpage->redirect($home);
-}
-
-
+EnsEMBL::Web::Document::WebPage::simple( 'User' );
 1;
