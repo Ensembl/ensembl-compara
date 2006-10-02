@@ -19,7 +19,7 @@ if( $webpage->has_a_problem() ) {
   $webpage->render_error_page( $webpage->problem->[0] );
 } else {
   foreach my $object( @{$webpage->dataObjects} ) {
-    $webpage->configure( $object, 'Workshops_Online', 'tutorial_menu' );
+    $webpage->configure( $object, 'Workshops_Online', 'helpdesk_menu' );
   }
   $webpage->action();
 }
