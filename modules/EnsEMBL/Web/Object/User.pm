@@ -59,12 +59,20 @@ sub set_password { return $_[0]->web_user_db->setPassword($_[1]); }
 
 
 sub save_bookmark {
-  my ($self, $user_id, $url, $title) = @_;
-  return $self->web_user_db->saveBookmark($user_id, $url, $title);
+  my ($self, $record) = @_;
+  return $self->web_user_db->saveBookmark($record);
 }
 
 sub get_bookmarks { return $_[0]->web_user_db->getBookmarksByUser($_[1]); }
 sub delete_bookmarks { return $_[0]->web_user_db->deleteBookmarks($_[1]); }
+
+sub save_config {
+  my ($self, $record) = @_;
+  return $self->web_user_db->saveConfig($record);
+}
+
+sub get_configs { return $_[0]->web_user_db->getConfigsByUser($_[1]); }
+sub delete_configs { return $_[0]->web_user_db->deleteConfigs($_[1]); }
 
 
 1;
