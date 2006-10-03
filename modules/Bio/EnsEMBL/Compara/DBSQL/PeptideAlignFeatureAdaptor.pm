@@ -206,7 +206,7 @@ sub store {
       push @pafList, $pepFeature;
     }
     elsif($feature->isa('Bio::EnsEMBL::Compara::PeptideAlignFeature')) {
-      push @pafList, $pepFeature;
+      push @pafList, $feature;
     }
   }
 
