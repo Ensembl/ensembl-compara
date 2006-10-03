@@ -1206,7 +1206,7 @@ sub _sample_configs {
     $sample_config->{'id'}         = $object->stable_id;
     $sample_config->{'subslices'}  = $sub_slices;
     $sample_config->{'extent'}     = $extent;
-warn "-------------", $sample_config;
+
     ## Get this transcript only, on the sample slice
     my $transcript;
 
@@ -1246,11 +1246,6 @@ warn "-------------", $sample_config;
       'coverage_obj'    => $munged_coverage,
     };
 
-    foreach (@$allele_info) {
-      next unless $_->[2]->variation_name eq 'rs31744050';
-      warn "3 $sample ",$_->[2]->allele_string;
-      warn $_->[2];
-    }
     unshift @haplotype, [ $sample, $allele_info, $munged_coverage ];
     $sample_config->container_width( $fake_length );
   
@@ -1358,18 +1353,24 @@ sub get_page_data {
       @coverage_obj = sort {$a->start <=> $b->start} @$raw_coverage_obj;
     }
 
-    my @cp_consequences = @$consequences; # cp so original can be used later
+    my $index = 0;
     foreach my $allele_ref (  @$allele_info ) {
       my $allele = $allele_ref->[2];
-      my $conseq_type = shift @cp_consequences;
-      next unless $conseq_type;
-      next unless $allele;
+      my $conseq_type = $consequences->[$index];
+      $index++;
+      next unless $conseq_type && $allele;
+
+      # Check consequence obj and allele feature obj have same alleles
+      my $tmp = join "", @{$conseq_type->alleles || []};
+      $tmp =~ tr/ACGT/TGCA/ if ( $object->Obj->strand ne $allele->strand);
+      warn "ERROR: Allele call on alleles ", $allele->allele_string, " Allele call on ConsequenceType is different: $tmp" if $allele->allele_string ne $tmp;
 
       # Type
       my $type = join ", ", @{$conseq_type->type || []};
       if ($type eq 'SARA') {
 	$type .= " (Same As Ref. Assembly)";
       }
+
       
       # Position
       my $offset = $sample_slice->strand > 0 ? $sample_slice->start - 1 :  $sample_slice->end + 1;
@@ -1396,7 +1397,6 @@ sub get_page_data {
 	$codon =~ s/(\w{$position})(\w)(.*)/$1<b>$2<\/b>$3/; 
       }
 
-
       my $status;
       if ( grep { $_ eq "Sanger"} @{$allele->get_all_sources() || []} ) {
 	#if ($allele->source eq 'Sanger') {
@@ -1421,8 +1421,7 @@ sub get_page_data {
       # Other
       my $chr = $sample_slice->seq_region_name;
       my $snp_alleles = join "/", ($allele->ref_allele_string, $allele->allele_string);
-      warn "sp ", $allele->allele_string if $allele->variation_name eq 'rs31744050';
-      warn $allele if $allele->variation_name eq 'rs31744050';
+
       my $aa_alleles = $conseq_type->aa_alleles || [];
       my $aa_coord = $conseq_type->aa_start;
       $aa_coord .= $aa_coord == $conseq_type->aa_end ? "": $conseq_type->aa_end;

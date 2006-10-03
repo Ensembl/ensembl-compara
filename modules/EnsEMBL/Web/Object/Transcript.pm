@@ -278,13 +278,6 @@ sub getAllelesConsequencesOnSlice {
   # Get all features on slice
   my $allele_features = $sample_slice->get_all_differences_Slice() || [];
   return ([], []) unless @$allele_features;
-  foreach (@$allele_features) {
-#      print STDERR $_->variation_name."\n" unless $_->allele_string;
- #   next unless  $_->variation_name eq 'rs31744050';
-#    warn $_->allele_string ;
- #   warn $_;
-  }
-
 
   my @filtered_af =
     sort {$a->[2]->start <=> $b->[2]->start}
@@ -320,11 +313,11 @@ sub getAllelesConsequencesOnSlice {
     my $allele_feature = shift @filtered_af;
     foreach my $type (@{ $_->type || [] }) {
       next unless $valids->{ 'opt_'.lc($type) } ;
+      warn "Allele undefined for ", $allele_feature->[2]->variation_name."\n" unless $allele_feature->[2]->allele_string;
 
       # [ fake_s, fake_e, SNP ]   Filter our unwanted consequences
       push @valid_conseq,  $_ ;
       push @valid_alleles, $allele_feature;
-      warn "\n\n2 $sample ",$allele_feature->[2]->allele_string if  $allele_feature->[2]->variation_name eq 'rs31744050';
       last;
     }
   }

@@ -576,8 +576,8 @@ sub _parse {
           my $genebuild = _parse_date($value);
           $tree->{'general'}{'GENEBUILD_DATE'} = $genebuild->{'date'};
           $tree->{'general'}{'GENEBUILD_BY'} = $genebuild->{'string'};  
-          print STDERR "\t  [WARN] NO GENEBUILD DATE $v\n" if !$genebuild->{'date'};
-          print STDERR "\t  [WARN] NO GENEBUILD NAME $v\n" if !$genebuild->{'string'};
+          print STDERR "\t  [WARN] NO GENEBUILD DATE \n" if !$genebuild->{'date'};
+          print STDERR "\t  [WARN] NO GENEBUILD NAME \n" if !$genebuild->{'string'};
         }
         elsif (my $v = $meta_map{$key}) {
           $tree->{'general'}{$v} = $value;
