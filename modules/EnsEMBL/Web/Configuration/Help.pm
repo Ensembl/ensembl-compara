@@ -103,7 +103,7 @@ sub Workshops_Online {
 
       $self->{page}->javascript->add_source( "/js/flash.js" );
       ## stop the movie on page load
-      $self->{page}->add_body_attr('onload', 'StopMovie();');
+      $self->{page}->add_body_attr('onload', 'StopMovie();RewindMovie()');
 
       $panel_2->add_components(qw(
         embed_movie          EnsEMBL::Web::Component::Help::embed_movie
