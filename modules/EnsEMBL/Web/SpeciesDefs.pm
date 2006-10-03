@@ -1066,7 +1066,7 @@ sub _parse {
  	$sth = $dbh->prepare(qq(
                      SELECT count(*) 
                      FROM meta 
-                     WHERE meta_key = "population.default_strain";
+                     WHERE meta_key = "individual.default_strain";
                   )
  			    );
  	eval {
