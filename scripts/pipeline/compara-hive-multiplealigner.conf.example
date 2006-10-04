@@ -8,26 +8,37 @@
   '-dbname'   => "abel_mlagan_final_test",
   '-adaptor'  => "Bio::EnsEMBL::Compara::DBSQL::DBAdaptor",
  },
+
  { TYPE => HIVE,
    'hive_output_dir' => "/ecs2/work3/abel/hive/abel_mlagan_final_test/workers",
    'name'            => "mlagan",
    # name is used to make this pipeline independent from other ones
  },
+
  { TYPE => MEMBER_LOADING,
    'exon_min_length' => 20
  },
+
  { TYPE => SYNTENY_MAP_BUILDER,
    'strict_map' => 1,
-#   'cutoff_score' => 100,
-#   'cutoff_evalue' => 1e-5,
+   'logic_name' => "Mercator",
+   # 'module' => "My::Own::Module", # module: By default, the module will be
+          # "Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::$logic_name"
+   # 'cutoff_score' => 100,
+   # 'cutoff_evalue' => 1e-5,
  },
-## NB: You can have several MULTIPLEALIGNER blocks. Each of them will result in a different set
-## of multiple alignments
+
+  ## NB: You can have several MULTIPLEALIGNER blocks. Each of them will result
+  ## in a different set of multiple alignments
  { TYPE => MULTIPLE_ALIGNER,
    'species_set' => [1,2,3],
    'tree_file' => '/ecs2/work3/abel/hive/abel_mlagan_final/hmr.tree',
+   'logic_name' => "Mlagan",
+   # 'module' => "My::Own::Module", # module: By default, the module will be
+          # "Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::$logic_name"
    'method_link' => [9, 'MLAGAN'],
  },
+
  { TYPE => 'BLASTP_TEMPLATE',
    '-program'         => 'wublastp',
    '-program_version' => '1',
@@ -39,6 +50,7 @@
    '-gff_feature'     => undef,
    'fasta_dir'        => "/ecs2/work3/abel/hive/abel_mlagan_final_test/blastDB",
  },
+
  { TYPE => SPECIES,
    'abrev'          => 'Hs35i',
    'genome_db_id'   => 1,
@@ -51,6 +63,7 @@
    'dbname'         => "homo_sapiens_core_36_35i",
    'species'        => "Homo sapiens"
  },
+
  { TYPE => SPECIES,
    'abrev'          => 'Mm34d',
    'genome_db_id'   => 2,
@@ -63,6 +76,7 @@
    'dbname'         => "mus_musculus_core_36_34d",
    'species'        => "Mus musculus"
  },
+
  { TYPE => SPECIES,
    'abrev'          => 'Rn34f',
    'genome_db_id'   => 3,
