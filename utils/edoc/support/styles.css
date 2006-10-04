@@ -135,8 +135,17 @@ div.date {
   padding-top: 20px;
 }
 
-div.definitions table {
+table {
   font-size: 13px;
+}
+
+div.methods td {
+  border: 1px solid #d0d0d0;
+}
+
+div.methods td.filled {
+  border: 1px solid #d0d0d0;
+  background: #fff;
 }
 
 div.definitions td {
@@ -146,4 +155,9 @@ div.definitions td {
 div.definitions td.filled {
   border: 1px solid #efefef;
   background: #eeeeff;
+}
+
+div.indent {
+  margin: 0px;
+  padding: 10px;
 }
