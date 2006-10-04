@@ -175,7 +175,10 @@ sub movie_index_intro {
   my($panel,$object) = @_;
 
   my $html = qq(
+<h2>Animated Tutorials</h2>
+
 <p>The tutorials listed below are Flash animations of some of our training presentations, with added popup notes in place of a soundtrack. We are gradually adding to the list, so please check back regularly (the list will also be included in the bimonthly Release Email, which is sent to the <a href="/info/about/contact.html">ensembl-announce mailing list</a>).</p>
+<p>Please note that files are around 3MB per minute, so if you are on a dialup connection, playback may be jerky.</p>
   );
 
   $panel->print($html);
@@ -190,19 +193,16 @@ sub movie_index {
     $panel->add_columns( 
       {'key' => "title", 'title' => 'Title', 'width' => '60%', 'align' => 'left' },
       {'key' => "mins", 'title' => 'Running time (minutes)', 'width' => '20%', 'align' => 'left' },
-      {'key' => "size", 'title' => 'File size', 'width' => '20%', 'align' => 'left' },
     );
     foreach my $entry (@$movie_list) {     
       my $id    = $$entry{'movie_id'};
       my $title = $$entry{'title'};
-      my $size  = $$entry{'filesize'};
       my $time  = $$entry{'frame_count'} / ($$entry{'frame_rate'} * 60);
       my $mins  = int($time);
       my $secs  = int(($time - $mins) * 60);
       $panel->add_row({
         'title' => qq(<a href="/common/Workshops_Online?movie=$id">$title</a>),
         'mins'  => "$mins:$secs",
-        'size'  => "$size GB",
       });
     }
   }
