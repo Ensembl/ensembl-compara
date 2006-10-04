@@ -69,21 +69,9 @@ my $self = bless {};
 $self->{'comparaDBA'}   = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(%compara_conf);
 $self->{'hiveDBA'}      = new Bio::EnsEMBL::Hive::DBSQL::DBAdaptor(-DBCONN => $self->{'comparaDBA'}->dbc);
 
-if (%hive_params) {
-  if (defined($hive_params{'hive_output_dir'})) {
-    die("\nERROR!! hive_output_dir doesn't exist, can't configure\n  ", $hive_params{'hive_output_dir'} , "\n")
-      if(($hive_params{'hive_output_dir'} ne "") and !(-d $hive_params{'hive_output_dir'}));
-    $self->{'comparaDBA'}->get_MetaContainer->delete_key('hive_output_dir');
-    $self->{'comparaDBA'}->get_MetaContainer->store_key_value('hive_output_dir', $hive_params{'hive_output_dir'});
-  }
-  if (defined($hive_params{'name'})) {
-    $self->{'comparaDBA'}->get_MetaContainer->delete_key('name');
-    $self->{'comparaDBA'}->get_MetaContainer->store_key_value('name', $hive_params{'name'});
-  }
-}
+$self->set_hive_metadata();
 
-
-$self->prepareGenomeAnalysis();
+$self->setup_pipeline();
 
 exit(0);
 
@@ -151,122 +139,230 @@ sub parse_conf {
 }
 
 
-#
-# need to make sure analysis 'SubmitGenome' is in database
-# this is a generic analysis of type 'genome_db_id'
-# the input_id for this analysis will be a genome_db_id
-# the full information to access the genome will be in the compara database
-# also creates 'GenomeLoadMembers' analysis and
-# 'GenomeDumpFasta' analysis in the 'genome_db_id' chain
-sub prepareGenomeAnalysis
+#####################################################################
+##
+## set_hive_metadata
+##
+#####################################################################
+
+sub set_hive_metadata {
+  my ($self, %hive_params) = @_;
+
+  if (%hive_params) {
+    if (defined($hive_params{'hive_output_dir'})) {
+      die("\nERROR!! hive_output_dir doesn't exist, can't configure\n  ", $hive_params{'hive_output_dir'} , "\n")
+        if(($hive_params{'hive_output_dir'} ne "") and !(-d $hive_params{'hive_output_dir'}));
+      $self->{'comparaDBA'}->get_MetaContainer->delete_key('hive_output_dir');
+      $self->{'comparaDBA'}->get_MetaContainer->store_key_value('hive_output_dir', $hive_params{'hive_output_dir'});
+    }
+    if (defined($hive_params{'name'})) {
+      $self->{'comparaDBA'}->get_MetaContainer->delete_key('name');
+      $self->{'comparaDBA'}->get_MetaContainer->store_key_value('name', $hive_params{'name'});
+    }
+  }
+}
+
+
+#####################################################################
+##
+## setup_hive_metadata
+##
+#####################################################################
+
+sub setup_pipeline
 {
   #yes this should be done with a config file and a loop, but...
   my $self = shift;
 
   my $dataflowRuleDBA = $self->{'hiveDBA'}->get_DataflowRuleAdaptor;
   my $ctrlRuleDBA = $self->{'hiveDBA'}->get_AnalysisCtrlRuleAdaptor;
-  my $analysisStatsDBA = $self->{'hiveDBA'}->get_AnalysisStatsAdaptor;
+  $self->{'analysisStatsDBA'} = $self->{'hiveDBA'}->get_AnalysisStatsAdaptor;
   my $stats;
 
+  # ANALYSIS 1 - SubmitGenome
+  my $submit_genome_analysis = $self->create_submit_genome_analysis();
+
+  # ANALYSIS 2 - GenomeLoadExonMembers
+  my $genome_load_exon_member_analysis = $self->create_member_loading_analysis(%member_loading_params);
+
+  # DATA FLOW from SubmitGenome (1) to GenomeLoadExonMembers (2)
+  $dataflowRuleDBA->create_rule($submit_genome_analysis, $genome_load_exon_member_analysis);
+
+  # ANALYSIS 3 - GenomeSubmitPep
+  my $genome_submitpep_analysis = $self->create_genome_submitpep_analysis();
+
+  # DATA FLOW from GenomeLoadExonMembers (2) to GenomeSubmitPep (3)
+  $dataflowRuleDBA->create_rule($genome_load_exon_member_analysis, $genome_submitpep_analysis);
+
+  # ANALYSIS 4 - GenomeDumpFasta
+  my $genome_dumpfasta_analysis = $self->create_genome_dumpfasta_analysis(%analysis_template);
+
+  # DATA FLOW from GenomeLoadExonMembers (2) to GenomeDumpFasta (4)
+  $dataflowRuleDBA->create_rule($genome_load_exon_member_analysis, $genome_dumpfasta_analysis);
+
+  # ANALYSIS 5 - SyntenyMapBuilder
+  my $synteny_map_builder_analysis = $self->create_synteny_map_builder_analysis(%synteny_map_builder_params);
+
+  # ANALYSIS 6 - CreateBlastRules
+  #    (it comes before SyntenyMapBuilder in the pipeline but needs to know about
+  #    the logic_name of the SyntenyMapBuilder)
+  my $parameters = "{phylumBlast=>0, selfBlast=>0,cr_analysis_logic_name=>'".
+      $synteny_map_builder_analysis->logic_name."'}";
+  my $create_blast_rules_analysis = $self->create_create_blast_rules_analysis($parameters);
+
+  # DATA FLOW from GenomeDumpFasta (4) to CreateBlastRules (6)
+  $dataflowRuleDBA->create_rule($genome_dumpfasta_analysis, $create_blast_rules_analysis);
+
+  # CreateBlastRules (6) has to wait for GenomeLoadExonMembers (2), GenomeSubmitPep (3)
+  # and GenomeDumpFasta (4) before running:
+  $ctrlRuleDBA->create_rule($genome_load_exon_member_analysis, $create_blast_rules_analysis);
+  $ctrlRuleDBA->create_rule($genome_submitpep_analysis, $create_blast_rules_analysis);
+  $ctrlRuleDBA->create_rule($genome_dumpfasta_analysis, $create_blast_rules_analysis);
+
+  # SyntenyMapBuilder (5) has to wait for CreateBlastRules (6) and all the SubmitPep_* and
+  # blast_* analyses created by the GenomeSubmitPep and GenomeDumpFasta jobs. The extra
+  # control rules from the SubmitPep_* and blast_* analyses are created by the
+  # CreateBlastRules jobs.
+  $ctrlRuleDBA->create_rule($create_blast_rules_analysis, $synteny_map_builder_analysis);
+
+
+  # ANALYSIS 7 - Conservation scores
+  my $conservation_score_analysis = $self->create_conservation_score_analysis(%conservation_score_params);
+
+
+  # ANALYSIS 8 - MultipleAligner
+  $self->create_multiple_aligner_analysis($multiple_aligner_params, $synteny_map_builder_analysis,
+      $conservation_score_analysis);
+
+
   #
-  # SubmitGenome
+  # blast_template
   #
-  my $submit_analysis = Bio::EnsEMBL::Pipeline::Analysis->new(
+  # create an unlinked analysis called blast_template
+  # it will not have rules so it will never execute
+  # used to store module,parameters... to be used as template for
+  # the dynamic creation of the analyses like blast_1_NCBI34
+  my $blast_template = new Bio::EnsEMBL::Pipeline::Analysis(%analysis_template);
+  $blast_template->logic_name("blast_template");
+  eval { $self->{'comparaDBA'}->get_AnalysisAdaptor()->store($blast_template); };
+
+  return 1;
+}
+
+
+#####################################################################
+##
+## create_submit_genome_analysis
+##
+#####################################################################
+
+sub create_submit_genome_analysis {
+  my ($self) = @_;
+
+  my $submit_genome_analysis = Bio::EnsEMBL::Pipeline::Analysis->new(
       -db_version      => '1',
       -logic_name      => 'SubmitGenome',
       -input_id_type   => 'genome_db_id',
       -module          => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy'
     );
-  $self->{'comparaDBA'}->get_AnalysisAdaptor()->store($submit_analysis);
-  $stats = $analysisStatsDBA->fetch_by_analysis_id($submit_analysis->dbID);
+  $self->{'comparaDBA'}->get_AnalysisAdaptor()->store($submit_genome_analysis);
+  my $stats = $self->{'analysisStatsDBA'}->fetch_by_analysis_id($submit_genome_analysis->dbID);
   $stats->batch_size(7000);
   $stats->hive_capacity(-1);
   $stats->update();
 
-  return $submit_analysis
-    unless($analysis_template{fasta_dir});
+  return $submit_genome_analysis;
+}
 
-  #
-  # GenomeLoadExonMembers
-  #
+
+#####################################################################
+##
+## create_member_loading_analysis
+##
+#####################################################################
+
+sub create_member_loading_analysis {
+  my ($self, %member_loading_params) = @_;
+
   my $parameters = "{'min_length'=>".$member_loading_params{'exon_min_length'}."}";
-  my $load_analysis = Bio::EnsEMBL::Pipeline::Analysis->new
+  my $member_loading_analysis = Bio::EnsEMBL::Pipeline::Analysis->new
     (-db_version      => '1',
      -logic_name      => 'GenomeLoadExonMembers',
      -input_id_type   => 'genome_db_id',
      -module          => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeLoadExonMembers',
      -parameters      => $parameters);
-  $self->{'comparaDBA'}->get_AnalysisAdaptor()->store($load_analysis);
-  $stats = $analysisStatsDBA->fetch_by_analysis_id($load_analysis->dbID);
+  $self->{'comparaDBA'}->get_AnalysisAdaptor()->store($member_loading_analysis);
+  my $stats = $self->{'analysisStatsDBA'}->fetch_by_analysis_id($member_loading_analysis->dbID);
   $stats->batch_size(1);
   $stats->hive_capacity(-1); #unlimited
   $stats->update();
 
-  $dataflowRuleDBA->create_rule($submit_analysis, $load_analysis);
-#
-  # GenomeSubmitPep
-  #
-  my $submitpep_analysis = Bio::EnsEMBL::Pipeline::Analysis->new(
+  return $member_loading_analysis;
+}
+
+
+#####################################################################
+##
+## create_genome_submitpep_analysis
+##
+#####################################################################
+
+sub create_genome_submitpep_analysis {
+  my ($self) = @_;
+
+  my $genome_submitpep_analysis = Bio::EnsEMBL::Pipeline::Analysis->new(
       -db_version      => '1',
       -logic_name      => 'GenomeSubmitPep',
       -input_id_type   => 'genome_db_id',
       -module          => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeSubmitPep'
     );
-  $self->{'comparaDBA'}->get_AnalysisAdaptor()->store($submitpep_analysis);
-  $stats = $analysisStatsDBA->fetch_by_analysis_id($submitpep_analysis->dbID);
+  $self->{'comparaDBA'}->get_AnalysisAdaptor()->store($genome_submitpep_analysis);
+  my $stats = $self->{'analysisStatsDBA'}->fetch_by_analysis_id($genome_submitpep_analysis->dbID);
   $stats->batch_size(1);
   $stats->hive_capacity(3);
   $stats->update();
 
-  $dataflowRuleDBA->create_rule($load_analysis, $submitpep_analysis);
+  return $genome_submitpep_analysis
+}
 
-  if(defined($self->{'pipelineDBA'})) {
-    my $rule = Bio::EnsEMBL::Pipeline::Rule->new('-goalAnalysis'=>$submitpep_analysis);
-    $rule->add_condition($load_analysis->logic_name());
-    unless(checkIfRuleExists($self->{'pipelineDBA'}, $rule)) {
-      $self->{'pipelineDBA'}->get_RuleAdaptor->store($rule);
-    }
-  }
 
-  #
-  # GenomeDumpFasta
-  #
-  my $dumpfasta_analysis = Bio::EnsEMBL::Pipeline::Analysis->new(
+#####################################################################
+##
+## create_genome_dumpfasta_analysis
+##
+#####################################################################
+
+sub create_genome_dumpfasta_analysis {
+  my ($self, %analysis_template) = @_; 
+
+  my $genome_dumpfasta_analysis = Bio::EnsEMBL::Pipeline::Analysis->new(
       -db_version      => '1',
       -logic_name      => 'GenomeDumpFasta',
       -input_id_type   => 'genome_db_id',
       -module          => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDumpFasta',
       -parameters      => 'fasta_dir=>'.$analysis_template{fasta_dir}.',',
     );
-  $self->{'comparaDBA'}->get_AnalysisAdaptor()->store($dumpfasta_analysis);
-  $stats = $analysisStatsDBA->fetch_by_analysis_id($dumpfasta_analysis->dbID);
+  $self->{'comparaDBA'}->get_AnalysisAdaptor()->store($genome_dumpfasta_analysis);
+  my $stats = $self->{'analysisStatsDBA'}->fetch_by_analysis_id($genome_dumpfasta_analysis->dbID);
   $stats->batch_size(1);
   $stats->hive_capacity(-1);
   $stats->update();
 
-  $dataflowRuleDBA->create_rule($load_analysis, $dumpfasta_analysis);
+  return $genome_dumpfasta_analysis;
+}
 
-  if(defined($self->{'pipelineDBA'})) {
-    my $rule = Bio::EnsEMBL::Pipeline::Rule->new('-goalAnalysis'=>$dumpfasta_analysis);
-    $rule->add_condition($load_analysis->logic_name());
-    unless(checkIfRuleExists($self->{'pipelineDBA'}, $rule)) {
-      $self->{'pipelineDBA'}->get_RuleAdaptor->store($rule);
-    }
-  }
 
-  #
-  # SyntenyMapBuilder
-  #
-  $parameters = "";
-  my $synteny_map_builder_logic_name = "Mercator"; #Default value
-  if (defined $synteny_map_builder_params{'logic_name'}) {
-    $synteny_map_builder_logic_name = $synteny_map_builder_params{'logic_name'};
-  }
-  my $synteny_map_builder_module =
-      "Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::$synteny_map_builder_logic_name";
-  if (defined $synteny_map_builder_params{'module'}) {
-    $synteny_map_builder_module = $synteny_map_builder_params{'module'};
-  }
+#####################################################################
+##
+## create_synteny_map_builder_analysis
+##
+#####################################################################
+
+sub create_synteny_map_builder_analysis {
+  my ($self, %synteny_map_builder_params) = @_;
+
+  my $parameters = "";
+  my ($logic_name, $module) = set_logic_name_and_module(\%synteny_map_builder_params, "Mercator");
 
   if (defined $synteny_map_builder_params{'strict_map'}) {
     $parameters .= "strict_map => " . $synteny_map_builder_params{'strict_map'} .",";
@@ -279,58 +375,64 @@ sub prepareGenomeAnalysis
   }
   $parameters = "{$parameters}";
   my $synteny_map_builder_analysis = Bio::EnsEMBL::Analysis->new(
-      -logic_name      => $synteny_map_builder_logic_name,
-      -module          => $synteny_map_builder_module,
+      -logic_name      => $logic_name,
+      -module          => $module,
       -parameters      => $parameters
     );
   $self->{'comparaDBA'}->get_AnalysisAdaptor()->store($synteny_map_builder_analysis);
-  $stats = $analysisStatsDBA->fetch_by_analysis_id($synteny_map_builder_analysis->dbID);
+  my $stats = $self->{'analysisStatsDBA'}->fetch_by_analysis_id($synteny_map_builder_analysis->dbID);
   $stats->batch_size(1);
   $stats->hive_capacity(1);
   $stats->status('BLOCKED');
   $stats->update();
 
-  #
-  # CreateBlastRules
-  #    (it comes before SyntenyMapBuilder in the pipeline but needs to know about
-  #    the logic_name of the SyntenyMapBuilder)
-  #
-  $parameters = "{phylumBlast=>0, selfBlast=>0,cr_analysis_logic_name=>'$synteny_map_builder_logic_name'}";
-  my $blastrules_analysis = Bio::EnsEMBL::Pipeline::Analysis->new(
+  return $synteny_map_builder_analysis;
+}
+
+
+#####################################################################
+##
+## create_create_blast_rules_analysis
+##
+#####################################################################
+
+sub create_create_blast_rules_analysis {
+  my ($self, $parameters) = @_;
+
+  my $create_blast_rules_analysis = Bio::EnsEMBL::Pipeline::Analysis->new(
       -db_version      => '1',
       -logic_name      => 'CreateBlastRules',
       -input_id_type   => 'genome_db_id',
       -module          => 'Bio::EnsEMBL::Compara::RunnableDB::CreateBlastRules',
       -parameters      => $parameters
     );
-  $self->{'comparaDBA'}->get_AnalysisAdaptor()->store($blastrules_analysis);
-  $stats = $analysisStatsDBA->fetch_by_analysis_id($blastrules_analysis->dbID);
+  $self->{'comparaDBA'}->get_AnalysisAdaptor()->store($create_blast_rules_analysis);
+  my $stats = $self->{'analysisStatsDBA'}->fetch_by_analysis_id($create_blast_rules_analysis->dbID);
   $stats->batch_size(1);
   $stats->hive_capacity(1);
   $stats->status('BLOCKED');
   $stats->update();
 
-  $dataflowRuleDBA->create_rule($dumpfasta_analysis, $blastrules_analysis);
-  $ctrlRuleDBA->create_rule($load_analysis, $blastrules_analysis);
-  $ctrlRuleDBA->create_rule($submitpep_analysis, $blastrules_analysis);
-  $ctrlRuleDBA->create_rule($dumpfasta_analysis, $blastrules_analysis);
+  return $create_blast_rules_analysis;
+}
 
-  $ctrlRuleDBA->create_rule($blastrules_analysis, $synteny_map_builder_analysis);
 
-  #
-  # MultipleAligner
-  #
+#####################################################################
+##
+## create_multiple_aligner_analysis
+##
+#####################################################################
+
+sub create_multiple_aligner_analysis {
+  my ($self, $multiple_aligner_params, $synteny_map_builder_analysis, $conservation_score_analysis) = @_;
+
+  my $dataflowRuleDBA = $self->{'hiveDBA'}->get_DataflowRuleAdaptor;
+  my $ctrlRuleDBA = $self->{'hiveDBA'}->get_AnalysisCtrlRuleAdaptor;
+
   foreach my $this_multiple_aligner_params (@$multiple_aligner_params) {
 
-    my $this_multiple_aligner_logic_name = "Pecan"; #Default value
-    if (defined $this_multiple_aligner_params->{'logic_name'}) {
-      $this_multiple_aligner_logic_name = $this_multiple_aligner_params->{'logic_name'};
-    }
-    my $this_multiple_aligner_module =
-        "Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::$this_multiple_aligner_logic_name";
-    if (defined $this_multiple_aligner_params->{'module'}) {
-      $this_multiple_aligner_module = $this_multiple_aligner_params->{'module'};
-    }
+    my ($this_logic_name, $this_module) = set_logic_name_and_module(
+        $this_multiple_aligner_params, "Pecan");
 
     my ($method_link_id, $method_link_type);
     if($this_multiple_aligner_params->{'method_link'}) {
@@ -366,6 +468,7 @@ sub prepareGenomeAnalysis
       if (defined $this_multiple_aligner_params->{'tree_string'}) {
         $tree_string = $this_multiple_aligner_params->{'tree_string'};
       } elsif (defined $this_multiple_aligner_params->{'tree_file'}) {
+        my $tree_file = $this_multiple_aligner_params->{'tree_file'};
         open TREE_FILE, $tree_file || throw("Can not open $tree_file");
         $tree_string = join("", <TREE_FILE>);
         close TREE_FILE;
@@ -381,31 +484,47 @@ sub prepareGenomeAnalysis
             -analysis       => $synteny_map_builder_analysis
           );
     }
+    my $parameters = "";
+    my $multiple_aligner_analysis = Bio::EnsEMBL::Analysis->new(
+        -logic_name      => $this_logic_name,
+        -module          => $this_module,
+        -parameters      => $parameters
+      );
+    $self->{'comparaDBA'}->get_AnalysisAdaptor()->store($multiple_aligner_analysis);
+    my $stats = $self->{'analysisStatsDBA'}->fetch_by_analysis_id($multiple_aligner_analysis->dbID);
+    $stats->batch_size(1);
+    $stats->hive_capacity(5);
+    $stats->status('BLOCKED');
+    $stats->update();
+
+    $dataflowRuleDBA->create_rule($synteny_map_builder_analysis, $multiple_aligner_analysis);
+    $ctrlRuleDBA->create_rule($synteny_map_builder_analysis, $multiple_aligner_analysis);
+
+    $dataflowRuleDBA->create_rule($multiple_aligner_analysis, $conservation_score_analysis);
+    $ctrlRuleDBA->create_rule($multiple_aligner_analysis, $conservation_score_analysis);
   }
-  $parameters = "";
-  my $multiple_aligner_analysis = Bio::EnsEMBL::Analysis->new(
-      -logic_name      => $this_multiple_aligner_logic_name,
-      -module          => $this_multiple_aligner_module,
-      -parameters      => $parameters
-    );
-  $self->{'comparaDBA'}->get_AnalysisAdaptor()->store($multiple_aligner_analysis);
-  $stats = $analysisStatsDBA->fetch_by_analysis_id($multiple_aligner_analysis->dbID);
-  $stats->batch_size(1);
-  $stats->hive_capacity(5);
-  $stats->status('BLOCKED');
-  $stats->update();
+}
 
-  $dataflowRuleDBA->create_rule($synteny_map_builder_analysis, $multiple_aligner_analysis);
-  $ctrlRuleDBA->create_rule($synteny_map_builder_analysis, $multiple_aligner_analysis);
 
-  #
-  # Conservation scores
-  #
+#####################################################################
+##
+## create_conservation_score_analysis
+##
+#####################################################################
+
+sub create_conservation_score_analysis {
+  my ($self, %conservation_score_params) = @_;
+
+  return undef if (!%conservation_score_params);
+
+  my ($logic_name, $module) = set_logic_name_and_module(
+      \%conservation_score_params, "Gerp");
+
   my ($method_link_id, $method_link_type);
   if (defined $conservation_score_params{'method_link'}) {
       ($method_link_id, $method_link_type) = @{$conservation_score_params{'method_link'}};
     } else {
-	($method_link_id, $method_link_type) = qw(11 GERP);
+      ($method_link_id, $method_link_type) = qw(11 GERP);
     }
   my $sql = "INSERT ignore into method_link SET method_link_id=$method_link_id, type='$method_link_type'";
   $self->{'hiveDBA'}->dbc->do($sql);
@@ -414,21 +533,21 @@ sub prepareGenomeAnalysis
 
       my $mlss = new Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
       $mlss->method_link_type($method_link_type);
-  
+
       my $gdbs = [];
-  
+
       foreach my $gdb_id (@{$this_multiple_aligner_params->{'species_set'}}) {
-	  my $gdb = $self->{'comparaDBA'}->get_GenomeDBAdaptor->fetch_by_dbID($gdb_id);
-	  push @{$gdbs}, $gdb;
+          my $gdb = $self->{'comparaDBA'}->get_GenomeDBAdaptor->fetch_by_dbID($gdb_id);
+          push @{$gdbs}, $gdb;
       }
       $mlss->species_set($gdbs);
       if (defined($conservation_score_params{method_link_species_set_id})) {
-	  $mlss->dbID($conservation_score_params{method_link_species_set_id});
+          $mlss->dbID($conservation_score_params{method_link_species_set_id});
       }
       $self->{'comparaDBA'}->get_MethodLinkSpeciesSetAdaptor->store($mlss);
   }
 
-  $parameters = "";
+  my $parameters = "";
   if (defined $conservation_score_params{'param_file'}) {
     $parameters .= "param_file=>\'" . $conservation_score_params{'param_file'} ."\',";
   }
@@ -442,32 +561,38 @@ sub prepareGenomeAnalysis
   $parameters = "{$parameters}";
 
   my $conservation_score_analysis = Bio::EnsEMBL::Analysis->new(
-      -logic_name      => 'Gerp',
-      -module          => 'Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::Gerp',
+      -logic_name      => $logic_name,
+      -module          => $module,
       -parameters      => $parameters
     );
 
   $self->{'comparaDBA'}->get_AnalysisAdaptor()->store($conservation_score_analysis);
-  $stats = $analysisStatsDBA->fetch_by_analysis_id($conservation_score_analysis->dbID);
+  my $stats = $self->{'analysisStatsDBA'}->fetch_by_analysis_id($conservation_score_analysis->dbID);
   $stats->batch_size(1);
   $stats->hive_capacity(60);
   $stats->status('BLOCKED');
   $stats->update();
 
-  $dataflowRuleDBA->create_rule($multiple_aligner_analysis, $conservation_score_analysis);
+  return $conservation_score_analysis;
+}
 
-  $ctrlRuleDBA->create_rule($multiple_aligner_analysis, $conservation_score_analysis);
+#####################################################################
+##
+## set_logic_name_and_module
+##
+#####################################################################
 
-  #
-  # blast_template
-  #
-  # create an unlinked analysis called blast_template
-  # it will not have rules so it will never execute
-  # used to store module,parameters... to be used as template for
-  # the dynamic creation of the analyses like blast_1_NCBI34
-  my $blast_template = new Bio::EnsEMBL::Pipeline::Analysis(%analysis_template);
-  $blast_template->logic_name("blast_template");
-  eval { $self->{'comparaDBA'}->get_AnalysisAdaptor()->store($blast_template); };
+sub set_logic_name_and_module {
+  my ($params, $default) = @_;
 
-  return 1;
+  my $logic_name = $default; #Default value
+  if (defined $params->{'logic_name'}) {
+    $logic_name = $params->{'logic_name'};
+  }
+  my $module = "Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::$logic_name";
+  if (defined $params->{'module'}) {
+    $module = $params->{'module'};
+  }
+
+  return ($logic_name, $module);
 }
