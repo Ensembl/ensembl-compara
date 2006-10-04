@@ -53,6 +53,21 @@ cd ~/src/ensembl_main/ensembl-compara/sql
 mysql -h ia64g -P3306 -uensadmin -pxxxx abel_compara_mlagan < table.sql
 mysql -h ia64g -P3306 -uensadmin -pxxxx abel_compara_mlagan < pipeline-tables.sql
 
+Add an entry in your registry configuration file:
+
+new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(
+    -host => 'ia64g',
+    -user => 'ensadmin',
+    -pass => 'XXXXXXXX',
+    -port => 3306,
+    -species => 'abel_compara_mlagan',
+    -dbname => 'abel_compara_mlagan');
+
+Populate the database with data from the master DB:
+
+~/src/ensembl_main/ensembl-compara/scripts/pipeline/populate_new_database.pl \
+  --master compara-master --new abel_compara_mlagan
+
 3- Choose a working directory with some disk space
    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 The multiple aligner pipeline tries to minize the amount of output data for workers. But if 
@@ -85,6 +100,13 @@ You can have several multiple alignment pipelines working in the same HIVE. To d
 MULTIPLE_ALIGNER block in the configuration file and change the corresponding list of species and the
 tree file. The HIVE will run the all-vs-all balstp jobs and then build a Synteny map for each
 multiple alignment pipeline. The resulting syntenies will be used to feed the multiple aligner.
+
+You can also have a CONSERVATION_SCORE block if you want to run Gerp or any other similar software
+to get constrained elements and conservation scores from the resulting multiple alignments.
+
+For the SYNTENY_MAP_BUILDER, the MULTIPLE_ALIGNER and the CONSERVATION_SCORE blocks you can specify
+the logic_name for the method. You can also specify the module name. If none is given, the hive will
+use the Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::$logic_name module.
 
 5- Run the configure scripts
    ~~~~~~~~~~~~~~~~~~~~~~~~~
