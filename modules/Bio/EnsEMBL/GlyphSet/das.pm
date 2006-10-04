@@ -1518,6 +1518,11 @@ sub RENDER_colourgradient{
 	my $width = ($END - $START +1);
 	my $score = $configuration->{'fg_data'} eq 'o' ? ($f->das_score || 0) : ((($f->das_score || 0) - $min_value) * 100 / $score_range);
 
+	if ($score < $min_value) {
+	   $score = $min_value;
+	} elsif ($score > $max_value) {
+	   $score = $max_value;
+	}
 	my $Composite = new Sanger::Graphics::Glyph::Composite({
 	    'y'         => 0,
 	    'x'         => $START-1,
@@ -1540,7 +1545,7 @@ sub RENDER_colourgradient{
 	    'x'         => $START - 1,
 	    'y'         => 0,
 	    'width'     => $width,
-	    'height'    => $score ? $row_height : 1,
+	    'height'    => $row_height,
 	    'absolutey' => 1
 	    }) );
 
