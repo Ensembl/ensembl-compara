@@ -56,6 +56,10 @@ sub new {
       $das_data{stylesheet} or $das_data{stylesheet} = 'n';
       $das_data{score} or $das_data{score} = 'n';
       $das_data{fg_merge} or $das_data{fg_merge} = 'a';
+      $das_data{fg_grades} or $das_data{fg_grades} = 20;
+      $das_data{fg_data} or $das_data{fg_data} = 'o';
+      $das_data{fg_min} or $das_data{fg_min} = 0;
+      $das_data{fg_max} or $das_data{fg_max} = 100;
       $das_data{group} or $das_data{group} = 'y';
       $das_data{strand} or $das_data{strand} = 'b';
       if (exists $das_data{enable}) {

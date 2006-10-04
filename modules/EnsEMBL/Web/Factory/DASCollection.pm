@@ -94,6 +94,10 @@ sub createObjects {
 	$source_confdata->{stylesheet} = 'Y' if ($source_confdata->{stylesheet} eq '1'); # 
 	$source_confdata->{score} ||= 'N';
 	$source_confdata->{fg_merge} ||= 'A';
+	$source_confdata->{fg_grades} ||= 20;
+	$source_confdata->{fg_data} ||= 'O';
+	$source_confdata->{fg_min} ||= 0;
+	$source_confdata->{fg_max} ||= 100;
 
 	$source_confdata->{name} ||= $source;
 	$source_confdata->{group} ||= 'N';
@@ -121,7 +125,7 @@ sub createObjects {
 	   $source_confdata->{url} .= "/$source_confdata->{dsn}";
         }
 #	warn("ADD EXTERNAL: $source");
-#	warn(Dumper($source_confdata));
+#	warn(Dumper($source_confdata)) if ($source =~ /colour/i);
 	$source_confdata->{conftype} ||= 'external';
 	
 	$sources_conf{$source} = $source_confdata;
@@ -209,7 +213,7 @@ sub createObjects {
 
     my @confkeys = qw( name type);
 
-    my @allkeys = ('strand', 'labelflag', 'label', 'url', 'conftype', 'group', 'stylesheet', 'score', 'fg_merge', 'caption', 'active', 'color', 'depth', 'help', 'linktext', 'linkurl' );
+    my @allkeys = ('strand', 'labelflag', 'label', 'url', 'conftype', 'group', 'stylesheet', 'score', 'fg_merge', 'fg_grades', 'fg_data', 'fg_min', 'fg_max', 'caption', 'active', 'color', 'depth', 'help', 'linktext', 'linkurl' );
     my @arr_keys = ('enable', 'mapping');
 
 # DAS sources can be added from URL 
@@ -247,6 +251,10 @@ sub createObjects {
 	$das_data{stylesheet} or $das_data{stylesheet} = 'n';
 	$das_data{score} or $das_data{score} = 'n';
 	$das_data{fg_merge} or $das_data{fg_merge} = 'a';
+	$das_data{fg_grades} or $das_data{fg_grades} = 20;
+	$das_data{fg_data} or $das_data{fg_data} = 'o';
+	$das_data{fg_min} or $das_data{fg_min} = 0;
+	$das_data{fg_max} or $das_data{fg_max} = 100;
 	if (exists $das_data{enable}) {
 	    my @enable_on = split(/\,/, $das_data{enable});
 	    delete $das_data{enable};
@@ -322,6 +330,10 @@ sub createObjects {
 		$das_data{labelflag} = $self->param('DASlabelflag');
 		$das_data{score} = $self->param('DASscore');
 		$das_data{fg_merge} = $self->param('DASfg_merge');
+		$das_data{fg_grades} = $self->param('DASfg_grades');
+		$das_data{fg_data} = $self->param('DASfg_data');
+		$das_data{fg_min} = $self->param('DASfg_min');
+		$das_data{fg_max} = $self->param('DASfg_max');
 		$das_data{group} = $self->param('DASgroup');
 		@{$das_data{enable}} = $self->param('DASenable');
 		$das_data{conftype} = 'external';
@@ -367,6 +379,7 @@ sub createObjects {
 		$sources_conf{$das_name}->{$key} = $das_data->{$key};
 	    }
 
+#	    warn("EDIT: ".Dumper($das_data));
 	    $extdas->add_das_source($das_data);
 	    $DASsel{$das_name} = 1;
 	} else {
@@ -453,7 +466,6 @@ sub createObjects {
 
 	$source_conf->{active} = defined ($DASsel{$source}) ? 1 : 0;
 
-
 	my $das_adapt = Bio::EnsEMBL::ExternalData::DAS::DASAdaptor->new
 	    ( 
 	      -name       => $source,
@@ -472,6 +484,10 @@ sub createObjects {
 	      -stylesheet => $source_conf->{stylesheet}|| '',
 	      -score      => $source_conf->{score} || '',
 	      -fg_merge      => $source_conf->{fg_merge} || '',
+	      -fg_grades => $source_conf->{fg_grades},
+	      -fg_data => $source_conf->{fg_data} || '',
+	      -fg_min => $source_conf->{fg_min},
+	      -fg_max => $source_conf->{fg_max},
 	      -conftype   => $source_conf->{conftype}  || 'external',
 	      -active     => $source_conf->{active}    || 0, 
 	      -description => $source_conf->{description}    || '', 
