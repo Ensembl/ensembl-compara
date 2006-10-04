@@ -17,7 +17,11 @@ sub new {
       'DEFAULT_COLOUR' => 'grey50',
       'STYLESHEET'     => 'Y',
       'SCORE' => 'N',
-      'FG_MERGE' => 'A'
+      'FG_MERGE' => 'A',
+      'FG_GRADES' => 20,
+      'FG_DATA' => 'O',
+      'FG_MIN' => 0,
+      'FG_MAX' => 100,
     },
   };
   bless($self,$class);
@@ -63,6 +67,10 @@ sub add_das_source {
     'stylesheet' => $href->{stylesheet},
     'score' => $href->{score},
     'fg_merge' => $href->{fg_merge},
+    'fg_data' => $href->{fg_data},
+    'fg_grades' => $href->{fg_grades},
+    'fg_max' => $href->{fg_max},
+    'fg_min' => $href->{fg_min},
     'species'    => $self->{'proxiable'}->species,
   } );
 
@@ -82,6 +90,10 @@ sub add_das_source {
     $config->set( "managed_extdas_$key", "stylesheet", $href->{stylesheet} ? $href->{stylesheet} : $self->{'defaults'}{'STYLESHEET'}, 1);
     $config->set( "managed_extdas_$key", "score", $href->{score} ? $href->{score} : $self->{'defaults'}{'SCORE'}, 1);
     $config->set( "managed_extdas_$key", "fg_merge", $href->{fg_merge} ? $href->{fg_merge} : $self->{'defaults'}{'FG_MERGE'}, 1);
+    $config->set( "managed_extdas_$key", "fg_grades", $href->{fg_grades} ? $href->{fg_grades} : $self->{'defaults'}{'FG_GRADES'}, 1);
+    $config->set( "managed_extdas_$key", "fg_data", $href->{fg_data} ? $href->{fg_data} : $self->{'defaults'}{'FG_DATA'}, 1);
+    $config->set( "managed_extdas_$key", "fg_min", $href->{fg_min} ? $href->{fg_min} : $self->{'defaults'}{'FG_MIN'}, 1);
+    $config->set( "managed_extdas_$key", "fg_max", $href->{fg_max} ? $href->{fg_max} : $self->{'defaults'}{'FG_MAX'}, 1);
     $config->set( "managed_extdas_$key", "lflag",      $href->{labelflag} ? $href->{labelflag} : $self->{'defaults'}{'LABELFLAG'},    1);
     $config->set( "managed_extdas_$key", "manager",    'das',                                                                         1);
     $config->set( "managed_extdas_$key", "col",        $href->{col} || $href->{color} ,                                               1);

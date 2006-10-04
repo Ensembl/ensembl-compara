@@ -72,7 +72,7 @@ sub display_wizard_status {
     return if (defined($object->param('_das_submit')));
     my %source_conf = ();        
 
-    my @confkeys = qw( stylesheet fg_merge score strand label caption type depth domain group name protocol labelflag color help url linktext linkurl);
+    my @confkeys = qw( stylesheet fg_merge fg_grades fg_data fg_min fg_max score strand label caption type depth domain group name protocol labelflag color help url linktext linkurl);
     my $step;
 
     if (defined(my $new_das = $object->param('_das_add'))) {
@@ -95,6 +95,7 @@ sub display_wizard_status {
 	foreach my $key (@confkeys) {
 	    my $hkey ="DAS${key}";
 	    $object->param( "$hkey", $das_adapt->$key);
+#warn("S: $hkey :". $das_adapt->$key);
 	}
 	$object->param("DASenable", @{$das_adapt->enable});
 	$object->param("DAStype", @{$das_adapt->mapping});

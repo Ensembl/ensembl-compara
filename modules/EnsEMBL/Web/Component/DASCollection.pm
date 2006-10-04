@@ -289,7 +289,7 @@ sub das_wizard {
     my %source_conf = ();        
     my $step;
 
-    my @confkeys = qw( fg_merge stylesheet score strand label dsn caption type depth domain group name protocol labelflag color help url linktext linkurl);
+    my @confkeys = qw(fg_grades fg_data fg_max fg_min fg_merge stylesheet score strand label dsn caption type depth domain group name protocol labelflag color help url linktext linkurl);
 
     if (defined(my $new_das = $object->param('_das_add'))) {
         $step = 1;
@@ -487,9 +487,9 @@ sub das_wizard {
     
     my @sparams; 
     if ($step == 1) {
-	@sparams = grep { /^DAS/ && /edit|link|enable|type|name|label|help|color|group|strand|depth|labelflag|stylesheet|score|fg_merge/} $object->param();
+	@sparams = grep { /^DAS/ && /edit|link|enable|type|name|label|help|color|group|strand|depth|labelflag|stylesheet|score|^fg_/} $object->param();
     } elsif ($step == 2) {
-	@sparams = grep { /^DAS/ && /edit|link|user_|sourcetype|protocol|domain|dsn|registry|dsns|paste_data|name|label|help|color|group|strand|depth|labelflag|stylesheet|score|fg_merge/} $object->param();
+	@sparams = grep { /^DAS/ && /edit|link|user_|sourcetype|protocol|domain|dsn|registry|dsns|paste_data|name|label|help|color|group|strand|depth|labelflag|stylesheet|score|^fg_/} $object->param();
 	push @sparams, 'DAStype' if ($source_conf{sourcetype} eq 'das_file' && (! $object->param("DASdsn")));
     } elsif ($step == 3) {
 	@sparams = grep { /^DAS/ && /edit|user_|protocol|domain|dsn|registry|dsns|paste_data|enable|type/} $object->param();
@@ -579,7 +579,7 @@ sub added_sources {
 	    $add_link .= $das_adapt->group;
 	}
 
-	if ($das_adapt->depth != 10) {
+	if ($das_adapt->depth && ($das_adapt->depth != 10)) {
 	    $add_link .= '+depth=';
 	    $add_link .= $das_adapt->depth;
 	}
@@ -594,7 +594,25 @@ sub added_sources {
 	    $add_link .= $das_adapt->fg_merge;
 	}
 
+	if ($das_adapt->fg_grades){
+	    $add_link .= '+fg_grades=';
+	    $add_link .= $das_adapt->fg_grades;
+	}
 	
+	if ($das_adapt->fg_data) {
+	    $add_link .= '+fg_data=';
+	    $add_link .= $das_adapt->fg_data;
+	}
+
+	if ($das_adapt->fg_max) {
+	    $add_link .= '+fg_max=';
+	    $add_link .= $das_adapt->fg_max;
+	}
+
+	if ($das_adapt->fg_min) {
+	    $add_link .= '+fg_min=';
+	    $add_link .= $das_adapt->fg_min;
+	}
 	if (my $link_url = $das_adapt->linkurl) {
 	    $add_link .= '+linkurl=';
 	    $link_url =~ s/\?/\$3F/g;
@@ -1052,8 +1070,39 @@ sub das_wizard_3 {
                        'value' => $option,
 		       'on_change' => 'submit'
 		       );
- 
-    if ($option eq 'h') {
+	
+    if ($option eq 'c') {
+	$option = $das_conf->{fg_grades} || 20;
+	$form->add_element('type'=>'String', 'name'=>'DASfg_grades', 'label'=>'Grades:', 'value'=> $option);
+
+ 	my @dtypes = ('o' => 'Original', 'n' => 'Normalize');
+
+    	$option = lc($das_conf->{fg_data} || 'o');
+    	my @dvalues;
+
+    	do {
+		my $id = shift @dtypes;
+		my $label = shift @dtypes;
+        	push @dvalues, {'name'=>$label, 'value'=>$id};
+    	} while (@dtypes);
+
+    	$form->add_element('select'=>'select',
+                       'type'=>'DropDown',
+                       'name'=>'DASfg_data',
+                       'label'=>'Data:',
+                       'values'=>\@dvalues,
+                       'value' => $option,
+		       'on_change' => 'submit'
+		       );
+	
+	if ($option eq 'l') {
+		$option = $das_conf->{fg_max} || 100;
+		$form->add_element('type'=>'String', 'name'=>'DASfg_max', 'label'=>'Max score:', 'value'=> $option);
+		$option = $das_conf->{fg_min} || 0;
+		$form->add_element('type'=>'String', 'name'=>'DASfg_min', 'label'=>'Min score:', 'value'=> $option);
+        }
+
+    } elsif ($option eq 'h') {
 	$option = lc($das_conf->{fg_merge} || 'a');
 	my @scvalues;
 	foreach ( 'Average Score', 'Max Score') {
