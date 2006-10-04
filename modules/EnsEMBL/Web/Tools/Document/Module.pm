@@ -151,6 +151,7 @@ sub _parse_package_file {
   my $lines = "";
   my $comment_code = $self->identifier;
   my $table = 0;
+  my $block_table = 0;
   while (<$fh>) {
     my $block = 0;
     $lines++;
@@ -195,9 +196,19 @@ sub _parse_package_file {
         $comment .= "<br /><br />";
         $table = "";
       }
+      
+      if ($comment eq "___") {
+         if ($block_table) {
+           $block_table = 0;
+         } else {
+           $block_table = 1;
+         }
+      }
 
       if ($comment =~ /[A-Z].*\s*:\s+\w+/) {
-        ($table, $trash) = split(/:/, $comment);
+        if (!$block_table) {
+          ($table, $trash) = split(/:/, $comment);
+        }
       }
       if ($table) {
         if ($comment !~ /^.eturns:/) {
@@ -215,7 +226,7 @@ sub _parse_package_file {
       if (!$docs{methods}{$sub}{type}) {
         $docs{methods}{$sub}{type} = "method";
       }
-      if ($#elements == 0) {
+      if ($#elements == 0 and $comment ne '___') {
         $comment = ucfirst($self->convert_keyword($comment));
         $docs{methods}{$sub}{type} = lc($comment);
         $comment .= ". ";

@@ -173,7 +173,7 @@ sub write_module_page {
   open (my $fh, ">", $self->_html_path_from_package($module->name));
   print $fh $self->html_header( (package => $module->name) );
   print $fh "<div class='title'><h1>" . $module->name . "</h1>";
-  print $fh "<a href='" . cvs_link($module->name) . "' target='_new'>Source code</a>\n";
+  print $fh "<a href='" . source_code_link($module->name) . "' target='_new'>Source code</a>\n";
   print $fh "&middot; <a href='" . $self->link_for_package($module->name) . "'>Permalink</a>\n";
   print $fh "</div>";
   print $fh "<div class='content'>";
@@ -188,12 +188,12 @@ sub write_module_page {
   print $fh "<div class='footer'>&larr; <a href='" .
             ("../" x element_count_from_package($module->name)) .
             "base.html'>Home</a>";
-  print $fh " &middot; <a href='" . cvs_link($module->name) . "' target='_new'>Source code</a>";
+  print $fh " &middot; <a href='" . source_code_link($module->name) . "' target='_new'>Source code</a>";
   print $fh $self->html_footer;
 }
 
-sub cvs_link {
-  ### Returns a link to a source code file in CVS.
+sub source_code_link {
+  ### Returns a link to the AJAX source code view 
   my $package = shift;
   my $link = "/common/highlight_method/" . $package . "::";
   return $link; 
@@ -212,7 +212,7 @@ sub toc_html {
   my ($self, $module) = @_;
   my $html = "";
   $html .= qq(<h3>Overview</h3>\n);
-  $html .= $module->overview;
+  $html .= $self->markup_documentation($module->overview);
   foreach my $type (@{ $module->types }) {
     $html .= "<h4>" . ucfirst($type) . "</h4>\n";
     $html .= "<ul>";
@@ -239,6 +239,45 @@ sub toc_html {
   return $html;
 }
 
+sub markup_documentation {
+  ### Marks up documentation text for links and embedded tables. See also {{markup_links}} and {{markup_embedded_table}}.
+  my ($self, $overview) = @_;
+  my $html = "";
+  my @contents = split(/___/, $overview);
+  my $count = 0;
+  foreach my $content (@contents) {
+    $count++;
+    if ($count == 1) {
+      $html .= $content;
+    }
+    if ($count == 2) {
+      $html .= $self->markup_embedded_table($content);
+    }
+    if ($count == 3) {
+      $html .= $content;
+      $count = 0;
+    }
+  }
+  return $self->markup_links($html);
+}
+
+sub markup_embedded_table {
+  ### Marks up key value pairs when embedded in documentation. An embedded table should be delineated with a starting and ending triple underscore. 
+  my ($self, $table) = @_; 
+  my $html = "";
+  my @rows = split(/\n/, $table);
+  my $count = 0;
+  my %content = ();
+  foreach my $row (@rows) {
+    $count++;
+    my ($key, $value) = split(/:/, $row);
+    if ($key && $value) {
+      $content{$key} = $value;
+    }
+  }
+  return $self->markup_method_table(\%content);
+}
+
 sub methods_html {
   ### Returns a formatted list of method names and documentation.
   my ($self, $module) = @_;
@@ -252,9 +291,9 @@ sub methods_html {
       $count++;
       $html .= qq(<b><a name=") . $method->name . qq("></a>) . $method->name . qq(</b><br />\n);
       $html .= $self->markup_documentation($method->documentation);
-      $html .= $self->markup_table($method->table);
+      $html .= $self->markup_method_table($method->table);
       if ($method->result) {
-        $html .= qq(<i>) . $self->markup_documentation($method->result) . qq(</i>\n);
+        $html .= qq(<i>) . $self->markup_links($method->result) . qq(</i>\n);
       }
       $html .= qq(<br />\n);
       if ($method->package->name ne $module->name) {
@@ -273,11 +312,12 @@ sub methods_html {
   return $html;
 }
 
-sub markup_table {
+sub markup_method_table {
+  ### Returns tabulated documentation.
   my ($self, $table) = @_; 
   my $html = "";
   if (keys %{ $table }) {
-    $html = "<br />\n";
+    $html = "<div class='indent'>\n";
     $html .= "<table width='65%' cellpadding='4' cellspacing='0'>\n";
     my %table = %{ $table };
     my $row_count = 0;
@@ -288,15 +328,15 @@ sub markup_table {
       if ($row_count % 2) {
         $classname = "class='filled'"; 
       }
-      $html .= "<tr><td $classname valign='top'>$key</td><td $classname>" . $self->markup_documentation($table{$key}) . "</td></tr>\n"; 
+      $html .= "<tr><td $classname valign='top'>$key</td><td $classname>" . $self->markup_links($table{$key}) . "</td></tr>\n"; 
     }
-    $html .= "</table>\n";
+    $html .= "</table></div>\n";
   }
   return $html;
 }
 
-sub markup_documentation {
-  ### Parses documentation for special e! doc markup. Links to other modules and methods can be included between double braces. For example: { { EnsEMBL::Web::Tools::Document::Module::new } } is parsed to {{EnsEMBL::Web::Tools::Document::Module::new}}. Simple method and module names can also be used. {{markup_documentation}} does not perform any error checking on the names of modules and methods. 
+sub markup_links {
+  ### Parses documentation for special e! doc markup. Links to other modules and methods can be included between double braces. For example: { { EnsEMBL::Web::Tools::Document::Module::new } } is parsed to {{EnsEMBL::Web::Tools::Document::Module::new}}. Simple method and module names can also be used. {{markup_links}} does not perform any error checking on the names of modules and methods. 
   my ($self, $documentation) = @_;
   my $markup = $documentation; 
   $_ = $documentation;
