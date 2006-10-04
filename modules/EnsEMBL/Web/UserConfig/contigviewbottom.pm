@@ -430,6 +430,7 @@ sub init {
       'pos' => '4527',
       'str' => 'r',
       'col' => 'blue',
+      'compact'  => 1,
       #'threshold' => '50',
       'track_label' => 'Histone modifications',
       'glyphset'    => 'histone_modifications',
@@ -443,7 +444,8 @@ sub init {
       'pos' => '4528',
       'str' => 'r',
       'col' => 'blue',
-      'key' => 'Nimblegen_CHIP2_data',  # name of a subset of experimental chips
+      'compact'     => 1,
+      #'key' => 'Nimblegen_CHIP2_data',  # name of a subset of experimental chips
       'track_label' => 'Signal map',
       'glyphset'    => 'signal_map',
       'available'=> 'databases ENSEMBL_FUNCGEN', 

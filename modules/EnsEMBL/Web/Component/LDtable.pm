@@ -13,32 +13,31 @@ no warnings "uninitialized";
 use Spreadsheet::WriteExcel;
 
 
-=head2 ld_values
-
-   Arg[1]      :  The data object
-   Example     :  my $return = ld_values($object);
-   Description : Array of pairwise values which can then be formatted to be a table
-                 in text, html, excel format etc. Only the bottom left half of the 
-                 table''s values are filled in to avoid duplicating the data
-                 displayed.
-                 The last SNP column is not rendered as all pairwise data 
-                 for this SNP is already displayed elsewhere in the table
-                 The first SNP row is not displayed as this would just 
-                 duplicated data
-   Return type :  hashref.  Keys are the type of LD data (r2, dprime)
-                  For each $return{"r2"} there are two keys: data, and text
-                  The text string is the title for the table
-                  The data is an array ref with three array refs: start postitions, 
-                  snpnames and the rest of the table data
-                  Each value in the array is an arrayrefs with 
-                       arrayref of SNP start positions in basepair (start order)
-                       Arrayref of SNP names in start order
-                       Arrayref 2 dimensional array of LD values
-
-=cut
-
-
 sub ld_values {
+
+  ### Arg1      :  The data object
+  ### Example     :  my $return = ld_values($object);
+  ### Description : Array of pairwise values which can then be formatted to be a table
+  ###               in text, html, excel format etc. Only the bottom left half of the 
+  ###               in text, html, excel format etc. Only the bottom left half of the 
+  ###               table''s values are filled in to avoid duplicating the data
+  ###               displayed.
+  ###               The last SNP column is not rendered as all pairwise data 
+  ###               for this SNP is already displayed elsewhere in the table
+  ###               The first SNP row is not displayed as this would just 
+  ###               duplicated data
+  ### Returns  hashref
+  ### Return info : 
+  ###     Keys are the type of LD data (r2, dprime)
+  ###     For each $return{"r2"} there are two keys: data, and text
+  ###     The text string is the title for the table
+  ###     The data is an array ref with three array refs: start postitions, 
+  ###     snpnames and the rest of the table data
+  ###     Each value in the array is an arrayrefs with 
+  ###       arrayref of SNP start positions in basepair (start order)
+  ###       Arrayref of SNP names in start order
+  ###       Arrayref 2 dimensional array of LD values
+
   my $object = shift;
   my %pops;
   my @bottom = $object->param('bottom');
@@ -129,7 +128,6 @@ sub ld_values {
       }
       my $location = $object->seq_region_name .":".$object->seq_region_start.
 	"-".$object->seq_region_end;
-      warn $pop_name;
       $return{$ldtype}{$pop_name}{"text"} = "Pairwise $display values for $location.  Population: $pop_name";
       $return{$ldtype}{$pop_name}{"data"} = [\@starts_list, \@snp_names, \@table];
     } # end foreach
@@ -140,18 +138,14 @@ sub ld_values {
 
 ###############################################################################
 
-=head2 html_lddata
-
-   Arg[1]      : panel, object
-   Description : Calls ld_values function which returns the data in text format
-                 This function formats the data into HTML
-                 It prints a title and the LD values in an HTML table to the panel.
-   Return type : 1
-
-=cut
-
 
 sub html_lddata {
+  ###  Args      : panel, object
+  ###  Description : Calls ld_values function which returns the data in text format
+  ###              This function formats the data into HTML
+  ###               It prints a title and the LD values in an HTML table to the panel.
+  ###  Returns 1
+
   my ($panel, $object) = @_;
   my $return = ld_values($object);
   return 1 unless defined $return && %$return;
@@ -216,20 +210,17 @@ sub html_lddata {
 ###############################################################################
 
 
-=head2 text_lddata
-
-   Arg 0      :  Either a string with "No data" message or Arrayref 
-                 Each value in the array is an arrayrefs with 
-                      arrayref of SNP start positions in basepair (start order)
-                      Arrayref of SNP names in start order
-                      Arrayref 2 dimensional array of LD values
-   Example     : $self->text_ldtable({$title, \@starts, \@snps, \@table});
-   Description : prints text formatted table for LD data
-   Return type : text string
-
-=cut
-
 sub text_lddata {
+
+  ### Args      :  Either a string with "No data" message or Arrayref 
+  ###               Each value in the array is an arrayrefs with 
+  ###                    arrayref of SNP start positions in basepair (start order)
+  ###                    Arrayref of SNP names in start order
+  ###                    Arrayref 2 dimensional array of LD values
+  ### Example     : $self->text_ldtable({$title, \@starts, \@snps, \@table});
+  ### Description : prints text formatted table for LD data
+  ### Returns text (string)
+
   my ($panel, $object) = @_;
   my $return = ld_values($object);
   return 1 unless %$return;

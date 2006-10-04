@@ -6,8 +6,21 @@ use EnsEMBL::Web::Configuration;
 our @ISA = qw( EnsEMBL::Web::Configuration );
 use POSIX qw(floor ceil);
 
-## Function to configure contigview
- 
+### Functions to configure contigview, ldview etc
+
+###   The description of each component indicates the usual Panel subtype e.g. Panel::Image.
+###  my $info_panel = $self->new_panel( "Information",
+###    "code"    => "info#",
+###     "caption"=> "Linkage disequilibrium report: [[object->type]] [[object->name]]"
+### 				   )) {
+### 
+###     $info_panel->add_components(qw(
+###     focus                EnsEMBL::Web::Component::LD::focus
+###     prediction_method    EnsEMBL::Web::Component::LD::prediction_method
+###     population_info      EnsEMBL::Web::Component::LD::population_info
+### 				  ));
+###     $self->{page}->content->add_panel( $info_panel );
+
 sub context_menu {
   my $self = shift;
   my $obj  = $self->{object};

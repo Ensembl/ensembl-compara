@@ -350,12 +350,14 @@ sub transHandler {
         next unless -r $filename;
         $r->filename( $filename );
         $r->uri( "/perl/das/$DSN/$command" );
+  $r->push_handlers( PerlCleanupHandler => \&Apache::SizeLimit::handler );
         return OK;
       }
       if( -r $error_filename ) {
         $r->subprocess_env->{'ENSEMBL_DAS_ERROR'}  = 'unknown-command';
         $r->filename( $error_filename );
         $r->uri( "/perl/das/$DSN/$command" );
+  $r->push_handlers( PerlCleanupHandler => \&Apache::SizeLimit::handler );
         return OK;
       }
       return DECLINED;
@@ -386,6 +388,7 @@ sub transHandler {
         $r->uri( "/perl/$species/$script" );
         $r->subprocess_env->{'PATH_INFO'} = "/$path_info" if $path_info;
         warn sprintf( "SCRIPT:%-10d /%s/%s?%s\n", $$, $species, $script, $querystring ) if $ENSEMBL_DEBUG_FLAGS | 8 && ($script ne 'ladist' && $script ne 'la' );
+  $r->push_handlers( PerlCleanupHandler => \&Apache::SizeLimit::handler );
         return OK;
       }
     } else {

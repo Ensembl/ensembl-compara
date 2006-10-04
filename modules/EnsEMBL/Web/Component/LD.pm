@@ -1,15 +1,35 @@
 package EnsEMBL::Web::Component::LD;
 
-# Puts together chunks of XHTML for LD-based displays
+### Description: This class consists of methods which output chunks 
+### of XHTML for LD based displays.  
+### The page is based on a slice created round a gene or SNP
 
-### TESTING #############################################################
-# TEST SNPs  gives and ERROR 1065427
+### This object is called from a Configuration object e.g.
+### from package {{EnsEMBL::Web::Configuration::Location}}
+
+### For each component to be displayed, you need to create 
+### an appropriate panel object and then add the component. 
+### See {{EnsEMBL::Web::Configuration::Location}}
+
+### Args : Except where indicated, all methods take the same two arguments
+### a {{EnsEMBL::Web::Document::Panel}} object and a 
+### {{EnsEMBL::Web::Proxy::Object}} object (data). 
+
+### Returns : In general components return true on completion. 
+### If true is returned and the components are chained (see notes in 
+### {{Ensembl::Web::Configuration}}) then the subsequence components are ignored.
+### if false is returned any subsequent components are executed.
+### Note: Variation objects have all the data (flanks, alleles) but no position
+### Note: VariationFeature objects have position (but also short cut 
+### calls to allele etc.)  for contigview
+
+
+
+# TEST SNPs -------------------------------------------------------------
+# ERROR 1065427
 # 3858116 has TSC sources, 557122 hapmap (works), 2259958 (senza-hit), 625 multi-hit, lots of LD 2733052, 2422821, 12345
 # Problem snp  	1800704 has no upstream, downstream seq,  slow one: 431235
-# Variation object: has all the data (flanks, alleles) but no position
-# VariationFeature: has position (but also short cut calls to allele etc.) 
-#                   for contigview
-########################################################################
+
 
 use strict;
 use warnings;
@@ -23,13 +43,13 @@ use POSIX qw(floor ceil);
 
 
 ## Info panel functions ################################################
-# focus              : i.e. gene, SNP (rs5050)or slice
-# prediction_method  : standard blurb about calculation of LD
-# population_info    : name, size, description of population
-#                      super/sub population info if exists
-########################################################################
 
 sub focus {
+
+  ### Information_panel
+  ### Purpose : outputs focus of page e.g.. gene, SNP (rs5050)or slice
+  ### Description : adds pair of values (type of focus e.g gene or snp and the ID) to panel if the paramater "gene" or "snp" is defined
+
   my ( $panel, $object ) = @_;
   my ( $info, $focus );
   if ( $object->param("gene") ) {
@@ -57,22 +77,33 @@ sub focus {
 #-----------------------------------------------------------------------------
 
 sub prediction_method {
- my($panel, $object) = @_;
- my $label = "Prediction method";
- my $info = 
- "<p>LD values were calculated by a pairwise
+
+  ### Information_panel
+  ### Purpose: standard blurb about calculation of LD
+  ### Description : Adds text information about the prediction method
+
+  my($panel, $object) = @_;
+  my $label = "Prediction method";
+  my $info = 
+    "<p>LD values were calculated by a pairwise
  estimation between SNPs genotyped in the same individuals and within a
  100kb window.  An established method was used to estimate the maximum 
  likelihood of the proportion that each possible haplotype contributed to the
  double heterozygote.</p>";
-
- $panel->add_row( $label, $info );
- return 1;
+  
+  $panel->add_row( $label, $info );
+  return 1;
 }
 
 #-----------------------------------------------------------------------------
 
 sub population_info {
+
+  ### Information_panel
+  ### Purpose    : outputs name, size, description of population and 
+  ### super/sub population info if exists
+  ### Description : Returns information about the population.  Calls helper function print_pop_info to get population data (name, size, description, whether the SNP is tagged)
+
   my ( $panel, $object ) = @_;
   my $pop_names  = $object->current_pop_name;
 
@@ -99,8 +130,11 @@ sub population_info {
 
 
 
-# Use this if there is more than one mapping for SNP  -----------------------
 sub mappings {
+
+  ### Use this if there is more than one mapping for SNP 
+  ### Description : table showing Variation feature mappings to genomic locations. May only display when a SNP maps to more than one location
+
   my ( $panel, $object ) = @_;
   my $view = "ldview";
   my $snp  = $object->__data->{'snp'};
@@ -143,6 +177,14 @@ sub mappings {
 # IMAGE CALLS ################################################################
 
 sub ldview_image_menu {
+
+  ### Image_panel
+  ### Example  : $image_panel->add_components(qw(
+  ###    menu  EnsEMBL::Web::Component::LD::ldview_image_menu
+  ###    image EnsEMBL::Web::Component::LD::ldview_image    ));
+  ### Description : Creates a menu container for ldview and adds it to the panel
+  ### Returns 0
+
   my($panel, $object ) = @_;
   my $user_config = $object->user_config_hash( 'LD_population' );
   $user_config->{'Populations'}    = $object->pops_for_slice(100000);
@@ -162,6 +204,12 @@ sub ldview_image_menu {
 #-----------------------------------------------------------------------------
 
 sub ldview_image {
+
+  ### Image_panel
+  ### Description : Gets the slice, creates the user config
+  ### Creates the image, imagemap and renders the image
+  ### Returns 0
+
   my($panel, $object) = @_;
   my ($seq_region, $start, $end, $seq_type ) = ($object->seq_region_name, $object->seq_region_start, $object->seq_region_end, $object->seq_region_type);
 
@@ -214,6 +262,10 @@ sub ldview_image {
 
 #-------------------------------------------------------------------------
 sub ldview_noimage {
+
+  ### Image_panel
+  ### Description : Adds an HTML string to the panel if the LD cannot be mapped uniquely
+
   my ($panel, $object) = @_;
   $panel->print("<p>Unable to draw context as we cannot uniquely determine the SNP's location</p>");
   return 1;
@@ -223,6 +275,10 @@ sub ldview_noimage {
 # OPTIONS FORM CALLS ##############################################
 
 sub options {
+
+  ### Dumping_form
+  ### Description: Adds text to the page instructing user how to navigate round page
+
   my ( $panel, $object ) = @_;
   $panel->print("<p>Use the yellow drop down menus at the top of the image to configure display and data you wish to dump.  If no LD values are displayed, zoom out, choose another population or another region. </p>");
   my $html = qq(
@@ -236,6 +292,12 @@ sub options {
 
 
 sub options_form {
+
+  ### Dumping_form
+  ### Description :  Creates a new form to dump LD data in different formats
+  ### (html, text, in the future excel and haploview)
+  ### Returns        $form
+
   my ($panel, $object ) = @_;
   my $form = EnsEMBL::Web::Form->new('ldview_form', "/@{[$object->species]}/ldtableview", 'get' );
 
@@ -313,13 +375,22 @@ sub options_form {
 ###############################################################################
 
 sub tagged_snp {
-  my ($object, $pop_name)  = @_;
-  my $snps = $object->__data->{'snp'};
-  return 0 unless $snps && @$snps;
-  my $snp_data  = $snps->[0]->tagged_snp;
-  return unless @$snp_data;
 
-  for my $pop_id (@$snp_data) {
+  ### Arg1 : object
+  ### Arg2 : population name (string)
+  ### Description : Gets the {{EnsEMBL::Web::Object::SNP}} object off the 
+  ### proxy object and checks if SNP is tagged in the current population.  
+  ### Returns 0 if no SNP.
+  ### Returns "Yes" if SNP is tagged in the population name supplied, else
+  ### returns no
+
+  my ($object, $pop_name)  = @_;
+  my $snp = $object->__data->{'snp'}->[0];
+  return 0 unless $snp && @$snp;
+  my $snp_data  = $snp->tagged_snp;
+  return unless keys %$snp_data;
+
+  for my $pop_id (keys %$snp_data) {
     return "Yes" if $pop_id eq $pop_name;
   }
   return "No";
@@ -327,10 +398,17 @@ sub tagged_snp {
 
 
 
-
 # Internal LD calls: Population Info  ---------------------------------------
 
 sub print_pop_info {
+
+  ### Internal_call
+  ###Arg1      : population object
+  ### Arg2      : label (e.g. "Super-Population" or "Sub-Population")
+  ### Example     :   print_pop_info($super_pop, "Super-Population"). 
+  ### Description : Returns information about the population: name, size, description and whether it is a tagged SNP
+  ### Returns HTML string with population data
+
   my ($object, $pop, $label ) = @_;
   my $count;
   my $return;
@@ -360,6 +438,15 @@ sub print_pop_info {
 
 
 sub _pop_url {
+
+  ### Internal_call
+  ### Arg 1       : Proxy object
+  ### Arg 2       : Population name (to be displayed)
+  ### Arg 3       : dbSNP population ID (variable to be linked to)
+  ### Example     : _pop_url($pop_name, $pop_dbSNPID);
+  ### Description : makes pop_name into a link
+  ### Returns HTML string of link to population in dbSNP
+
   my ($object, $pop_name, $pop_dbSNP) = @_;
   return $pop_name unless $pop_dbSNP;
   return $object->get_ExtURL_link( $pop_name, 'DBSNPPOP', $pop_dbSNP->[0] );
@@ -369,177 +456,4 @@ sub _pop_url {
 #------------------------------------------------------------------------------
 
 1;
-
-__END__
-
-=head1 EnsEMBL::Web::Component::LD;
-
-=head2 SYNOPSIS
-
-This object is called from a Configuration object e.g. from package EnsEMBL::Web::Configuration::Location;
-   
-   use EnsEMBL::Web::Component::LD;
-
-For each component to be displayed, you need to create an appropriate panel object and then add the component.  The description of each component indicates the usual Panel subtype e.g. Panel::Image.
-
-  my $info_panel = $self->new_panel( "Information",
-    "code"    => "info#",
-    "caption"=> "Linkage disequilibrium report: [[object->type]] [[object->name]]"
-				   )) {
-
-    $info_panel->add_components(qw(
-    focus                EnsEMBL::Web::Component::LD::focus
-    prediction_method    EnsEMBL::Web::Component::LD::prediction_method
-    population_info      EnsEMBL::Web::Component::LD::population_info
-				  ));
-    $self->{page}->content->add_panel( $info_panel );
-
-=head2 DESCRIPTION
-
-This class consists of methods for displaying data related to linkage disequilibrium for a slice, a slice based on a gene or a slice based on a SNP.  Current components include:
-
-=head2 METHODS
-
-Except where indicated, all methods take the same two arguments, a Document::Panel object and a Proxy::Object object (data). In general components return true on completion. If true is returned and the components are chained (see notes in Ensembl::Web::Configuration) then the subsequence components are ignored; if false is returned any subsequent components are executed.
-
-Methods for information panel:
-  focus
-  prediction_method
-  population_info
-
-If there is more than one mapping for a SNP:
-  mappings
-
-For the image panel:
-  ldview_image_menu
-  ldview_image
-  ldview_noimage
-
-For section on dumping out the data:
-  options
-  options_form
-
-=head3 B<Accessor methods>
-
-=over 4
-
-=item B<tagged_snp>          Returns "Yes" if tagged SNP, else "No" or 0
-
-=item B<print_pop_info>      Returns HTML string with population data
-
-=item B<_pop_url>            Returns HTML string of link to population in dbSNP
-
-=back
-
-
-
-=head3 package EnsEMBL::Web::Document::DropDown::Menu:
-
-
-=head3 B<focus>
-
-    Description : adds pair of values (type of focus e.g gene or snp and the ID) to panel if the paramater "gene" or "snp" is defined
-
-
-=head3 B<prediction_method>
-
-   Description : Adds text information about the prediction method
-
-
-=head3 B<population_info>
-
-   Description : Returns information about the population.  Calls helper function print_pop_info to get population data (name, size, description, whether the SNP is tagged)
-
-
-
-=head3 B<mappings>
-
- Description : table showing Variation feature mappings to genomic locations. May only display when a SNP maps to more than one location
-
-
-=head2 -Image calls-
-
-=head3 B<ldview_image_menu>
-
- Example  : $image_panel->add_components(qw(
-      menu  EnsEMBL::Web::Component::LD::ldview_image_menu
-      image EnsEMBL::Web::Component::LD::ldview_image
-    ));
- Description : Creates a menu container for ldview and adds it to the panel
- Return type : 0
-
-
-=head3 B<ldview_image>
-
- Example  : $image_panel->add_components(qw(
-      menu  EnsEMBL::Web::Component::LD::ldview_image_menu
-      image EnsEMBL::Web::Component::LD::ldview_image
-    ));
- Description : Gets the slice, creates the user config
-               Creates the image, imagemap and renders the image
- Return type : 0
-
-
-
-=head3 B<ldview_noimage>
-
- Description : Adds an HTML string to the panel if the LD cannot be mapped uniquely
-
-
-=head3 B<options>
-
- Description: Adds text to the page instructing user how to navigate round page
-
-
-=head3 B<options_form>
-
-  Description :  Creates a new form to dump LD data in different formats (html, text, in the future excel and haploview)
-  Return      :  $form
-
-
-=head2 -ACCESSOR CALLS-
-
-=head3 B<tagged_snp>
-
-    Arg[1]      : Object
-    Description : Gets the SNP object off the proxy object and checks if SNP is
-                  a tagged SNP in the current population
-    Return type : string "Yes" or "No" or 0
-
-
-=head3 B<print_pop_info> 
-
-  Arg[1]      : population object
-  Arg[1]      : label (e.g. "Super-Population" or "Sub-Population")
-  Example     : From population_info
-                print_pop_info($super_pop, "Super-Population"). 
-  Description : Returns information about the population: name, size, description and whether it is a tagged SNP
-  Return type : html string
-
-
-=head3 B<_pop_url>  ### ALSO IN SNP RENDERER
-
-   Arg 1       : Proxy object
-   Arg 2       : Population name (to be displayed)
-   Arg 3       : dbSNP population ID (variable to be linked to)
-   Example     : _pop_url($pop_name, $pop_dbSNPID);
-   Description : makes pop_name into a link
-   Return type : html string
-
-
-=head2 BUGS AND LIMITATIONS
-
-None known at present.
-
-
-=head2 AUTHOR
-
-Fiona Cunningham, Ensembl Web Team
-Support enquiries: helpdesk\@ensembl.org
-
-=head2 COPYRIGHT
-
-See http://www.ensembl.org/info/about/code_licence.html
-
-=cut
 
