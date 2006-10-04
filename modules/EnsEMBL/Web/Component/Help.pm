@@ -225,10 +225,12 @@ sub embed_movie {
 
   ## we hard-code this so that mirror sites don't have to keep downloading
   ## dozens of megabytes of Flash movies :)
-  my $path = 'http://www.ensembl.org/flash/'; ## CHANGE TO 'www.ensembl.org' ONCE FILES ARE ON THE WEB NODES!
-  my $uri  = $path.$movie->{'filename'};
+  my $path  = 'http://www.ensembl.org/flash/'; 
+  my $uri   = $path.$movie->{'filename'};
+  my $w     = $movie->{'width'};
+  my $h     = $movie->{'height'};
 
-  my $html = qq(<div class="flash"><object type="application/x-shockwave-flash" id="movie" data="$uri" width="750" height="500">
+  my $html = qq(<div class="flash"><object type="application/x-shockwave-flash" id="movie" data="$uri" width="$w" height="$h">
 <param name="movie" value="$uri" /> 
 <param name="wmode" value="transparent" />
 </object></div>);
