@@ -8,19 +8,12 @@ use Sanger::Graphics::Glyph::Rect;
 use Sanger::Graphics::Glyph::Text;
 use Sanger::Graphics::Glyph::Intron;
 use Sanger::Graphics::Bump;
+use Sanger::Graphics::ColourMap;
 use Bio::EnsEMBL::Glyph::Symbol::box;	# default symbol for features
 use Data::Dumper;
 use POSIX qw(floor);
 use HTML::Entities;
 use Time::HiRes qw(time);
-my %colour_gradient = {
-#FFFFFF
-#F7f7fa
-#eeeef5
-#e6e6f0
-#000080
-
-};
 
 sub init_label {
   my ($self) = @_;
@@ -967,6 +960,10 @@ warn "DAS fetch.... ",time()-$timer;
       $configuration->{use_score} = $score;
       my $fg_merge = uc($Config->get($das_config_key, 'fg_merge') || $Extra->{'fg_merge'} || 'A');
       $configuration->{'fg_merge'} = $fg_merge;
+      $configuration->{'fg_grades'} = $Config->get($das_config_key, 'fg_grades') || $Extra->{'fg_grades'} || 20;
+      $configuration->{'fg_data'} = $Config->get($das_config_key, 'fg_data') || $Extra->{'fg_data'} || 'o';
+      $configuration->{'fg_max'} = $Config->get($das_config_key, 'fg_max') || $Extra->{'fg_max'} || 100;
+      $configuration->{'fg_min'} = $Config->get($das_config_key, 'fg_min') || $Extra->{'fg_min'} || 0;
   } else {
       $renderer = $renderer ? "RENDER_$renderer" : ($group eq 'N' ? 'RENDER_simple' : 'RENDER_grouped');  
   }
@@ -1463,8 +1460,9 @@ sub RENDER_colourgradient{
 # Display histogram only on a reverse strand
     return if ($configuration->{'STRAND'} == 1);
 
-    my @features = sort { abs($a->das_score) <=> abs($b->das_score)  } @{$configuration->{'features'}};
 
+#    my @features = sort { abs($a->das_score) <=> abs($b->das_score)  } @{$configuration->{'features'}};
+    my @features = sort { ($a->das_score) <=> ($b->das_score)  } @{$configuration->{'features'}};
     
     if (@features) {
 	my $f = $features[0];
@@ -1479,17 +1477,22 @@ sub RENDER_colourgradient{
 	return 0;
     }
 	
-    my ($min_value, $max_value) = ($features[0]->das_score || 0, $features[-1]->das_score || 0);
-    my ($min_score, $max_score) = (abs($min_value), abs($max_value));
+    my ($min_value, $max_value) = $configuration->{'fg_data'} eq 'o' ? ($features[0]->das_score || 0, $features[-1]->das_score || 0) : ($configuration->{'fg_min'}, $configuration->{fg_max});
+    my ($min_score, $max_score) = $configuration->{'fg_data'} eq 'o' ? ($min_value, $max_value): (0, 100);
 
     my $row_height = 20;
-    my $pix_per_score = $max_score / $row_height;
+
+    my $score_range = $max_value - $min_value;
+    my $score_per_grade =  ($max_score - $min_score)/ $configuration->{'fg_grades'};
     my $bp_per_pix = 1 / $self->{pix_per_bp};
+
+    my $cm = new Sanger::Graphics::ColourMap;
+    my @cg = $cm->build_linear_gradient($configuration->{'fg_grades'}, ['yellow', 'green', 'blue']);
+
+#    warn (join('*','M', $min_value, $max_value, $score_per_grade));
 
     $configuration->{h} = $row_height;
 
-    # flag to indicate if not all features have been displayed 
-    my $more_features = 0;
     my ($gScore, $gWidth, $fCount, $gStart, $mScore) = (0, 0, 0, 0, $min_score);
 
 # Draw the axis
@@ -1504,12 +1507,16 @@ sub RENDER_colourgradient{
 	'dotted'    => 1,
     }));
 
+# To make sure that the features with lowest and highest scores get displayed 
+    push @features, $features[0];
+    push @features, $features[-2];
+
     foreach my $f (@features) {
 	my $START = $f->das_start() < 1 ? 1 : $f->das_start();
 	my $END   = $f->das_end()   > $configuration->{'length'}  ? $configuration->{'length'} : $f->das_end();
 
 	my $width = ($END - $START +1);
-	my $score = $f->das_score || 0;
+	my $score = $configuration->{'fg_data'} eq 'o' ? ($f->das_score || 0) : ((($f->das_score || 0) - $min_value) * 100 / $score_range);
 
 	my $Composite = new Sanger::Graphics::Glyph::Composite({
 	    'y'         => 0,
@@ -1517,19 +1524,14 @@ sub RENDER_colourgradient{
 	    'absolutey' => 1,
 	});
 
-	my $height = abs($score) / $pix_per_score;
-	my $y_offset = 	0;
-	$y_offset-- if (! $score);
 
+	my $grade = int(($score - $min_score) / $score_per_grade);
+	#warn("S:$score: $grade\n");
+	my $y_offset = 	0;
 	my ($href, $zmenu ) = $self->zmenu( $f );
 
-        my $rc = 255 - (238 * $height / $row_height);
-        my $bc = 255 - (127 * $height / $row_height);
-        my $col = sprintf("%02x%02x%02x", $score > 0 ? $rc : $bc, $rc, $score > 0 ? $bc : $rc);
-
-
-        $zmenu->{"90:Colour: \#$col"} = '';
-
+        my $col = $cg[$grade];
+        $zmenu->{"90:Colour: \#$col ($score : $grade)"} = '';
 	$Composite->{'href'} = $href if $href;
 	$Composite->{'zmenu'} = $zmenu;
 
@@ -1556,7 +1558,6 @@ sub RENDER_colourgradient{
 	$symbol->{'style'}->{'colour'} = $col;
 	$symbol->{'style'}->{'fgcolor'} = $col;
 	$symbol->{'style'}->{'bgcolor'} = $col;
-#	warn(Data::Dumper::Dumper($symbol));# if (! $f->das_score);
 
 	$Composite->push($symbol->draw);
 
