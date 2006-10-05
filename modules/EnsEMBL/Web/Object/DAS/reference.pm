@@ -121,7 +121,7 @@ sub Features {
 	} 
 
 	my @ss;
-
+	$ids ||= {};
 	push @ss, {
 	    'ID' => $slice->seq_region_name, 
 	    'START' => $slice->start, 
