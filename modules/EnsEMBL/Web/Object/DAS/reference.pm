@@ -20,13 +20,11 @@ sub Features {
 	}
 
 	my ($region_name, $region_start, $region_end) = ($s->name);
-
 	if ($s->name =~ /^([-\w\.]+):([\.\w]+),([\.\w]+)$/ ) {
 	    ($region_name,$region_start,$region_end) = ($1,$2,$3);
 	}
 
-	my $slice = $self->database('core', $self->real_species)->get_SliceAdaptor->fetch_by_region('', $region_name, $region_start, $region_end, 1 );
-
+	my $slice = $self->database('core', $self->real_species)->get_SliceAdaptor->fetch_by_region('', $region_name, $region_start, $region_end, $s->seq_region_strand);
 	my $subparts = 'yes';
 	my $superparts = 'no';
 
@@ -62,14 +60,13 @@ sub Features {
 
 
 	my @segment_features;
-
 	my @projected_segments = @{$slice->project("seqlevel") || []};
 	foreach my $psegment (@projected_segments) {
 	    my $start      = $psegment->from_start;
 	    my $end        = $psegment->from_end;
 	    my $ctg_slice  = $psegment->to_Slice;
 	    my $ORI        = $ctg_slice->strand;
-	    my $feature = { 'start' => $start, 'end' => $end, 'name' => $ctg_slice->seq_region_name, 'strand' => $ctg_slice->strand };
+	    my $feature = { 'start' => $start, 'end' => $end, 'name' => $ctg_slice->seq_region_name, 'strand' => $ORI };
 
 
 	    foreach ( @coord_systems ) {
@@ -82,7 +79,6 @@ sub Features {
 	    push @segment_features, $feature;
 	    
 	}
-
 	my ($ids, $sids);
 
 	foreach my $f (@segment_features) {
@@ -188,7 +184,7 @@ sub Features {
     }
 
 
-#    warn(Data::Dumper::Dumper(\@features));
+ #   warn(Data::Dumper::Dumper(\@features));
 
     return \@features;
 }
