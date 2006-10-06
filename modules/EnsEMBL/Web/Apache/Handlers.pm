@@ -16,6 +16,15 @@ my $process_start_time;
 my $oracle_home;
 use Sys::Hostname;
 use Data::Dumper;
+
+use Exporter;
+
+our @ISA = qw(Exporter);
+
+our $ENSEMBL_USER_DB_HANDLE;
+our @EXPORT = qw($ENSEMBL_USER_DB_HANDLE);
+our @EXPORT_OK = qw($ENSEMBL_USER_DB_HANDLE);
+
 1;
 
 my $BLAST_LAST_RUN;
@@ -29,6 +38,7 @@ my $BLAST_LAST_RUN;
 ############################################
 
 sub childInitHandler {
+  my $r = shift;
   $requests = 0;
   my $T2 = hostname();
   my $TT = "".reverse $$;
@@ -39,12 +49,18 @@ sub childInitHandler {
   $process_start_time = time;
   srand( time() ^ $TT );
 
+  my $T =  new EnsEMBL::Web::DBSQL::UserDB( $r );
+  $ENSEMBL_USER_DB_HANDLE = $T->{'_handle'};
   if( $ENSEMBL_DEBUG_FLAGS & 8 ){
     print STDERR "Child $$: - initialised at @{[time]}\n";
   }
 }
 
 sub childExitHandler {
+  my $r = shift;
+  if( $ENSEMBL_USER_DB_HANDLE ) {
+    $ENSEMBL_USER_DB_HANDLE->disconnect(); 
+  }
   if( $ENSEMBL_DEBUG_FLAGS & 8 ){
     print STDERR ( "Child $$: - reaped      at @{[time]} - ".
 		   "Time: @{[time-$process_start_time]} ".
