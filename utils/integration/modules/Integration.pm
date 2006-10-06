@@ -4,11 +4,14 @@ use strict;
 use warnings;
 
 use IntegrationView;
+use Integration::Log::YAML;
 use Integration::Task;
 
 {
 
 my %Checkout_of;
+my %Log_of;
+my %LogLocation_of;
 my %StartCommand_of;
 my %StopCommand_of;
 my %HtdocsLocation_of;
@@ -22,10 +25,12 @@ sub new {
   my $self = bless \my($scalar), $class;
   $Checkout_of{$self} = defined $params{checkout} ? $params{checkout} : [];
   $HtdocsLocation_of{$self} = defined $params{htdocs} ? $params{htdocs} : "";
+  $LogLocation_of{$self} = defined $params{log_location} ? $params{log_location} : "";
   $StartCommand_of{$self} = defined $params{start} ? $params{start} : "";
   $StopCommand_of{$self} = defined $params{stop} ? $params{stop} : "";
   $Configuration_of{$self} = defined $params{configuration} ? $params{configuration} : [];
   $View_of{$self} = defined $params{view} ? $params{view} : IntegrationView->new(( server => $self, output => $self->htdocs_location));
+  $Log_of{$self} = Integration::Log::YAML->new(( location => $self->log_location));
   return $self;
 }
 
@@ -114,6 +119,7 @@ sub start_command {
   ### a
   my $self = shift;
   $StartCommand_of{$self} = shift if @_;
+  $self->update_log;
   return $StartCommand_of{$self};
 }
 
@@ -130,6 +136,34 @@ sub configuration {
   my $self = shift;
   $Configuration_of{$self} = shift if @_;
   return $Configuration_of{$self};
+}
+
+sub log {
+  ### a
+  ### Returns an array ref of {{Integration::Task}} objects.
+  my $self = shift;
+  $Log_of{$self} = shift if @_;
+  return $Log_of{$self};
+}
+
+sub update_log {
+  my $self = shift;
+  my $event = { date => time, status => "ok" };
+  $self->log_event($event);
+  $self->log->save;
+}
+
+sub log_event {
+  ### Adds a new event to the log
+  my ($self, $event) = @_;
+  $self->log->add_event($event);
+}
+
+sub log_location {
+  ### a
+  my $self = shift;
+  $LogLocation_of{$self} = shift if @_;
+  return $LogLocation_of{$self};
 }
 
 sub checkout_tasks {
@@ -159,6 +193,8 @@ sub DESTROY {
   delete $Checkout_of{$self};
   delete $StartCommand_of{$self};
   delete $StopCommand_of{$self};
+  delete $LogLocation_of{$self};
+  delete $Log_of{$self};
 }
 
 }
