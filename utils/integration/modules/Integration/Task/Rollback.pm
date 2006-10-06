@@ -35,11 +35,9 @@ sub rollback {
   my $self = shift;
   if (-e $self->source) {
     my $command = "rm -r " . $self->source;
-    warn "ROLLBACK: $command";
     my $rm = `$command`;
   }
   my $command = "mv " . $self->destination . " " . $self->source;
-  warn "ROLLBACK: $command";
   my $mv = `$command`;
   return 1;
 }

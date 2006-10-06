@@ -79,7 +79,7 @@ sub test_results {
     $total++;
     if ($test->did_fail) {
       $failed++;
-      if ($test->critical) {
+      if ($test->critical eq "yes") {
         $critical++;
       }
     } else {
