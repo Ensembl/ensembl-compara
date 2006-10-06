@@ -59,7 +59,11 @@ sub generate_html {
   $self->output_location($self->server->htdocs_location);
   open (OUTPUT, ">", $self->output_location . "/harmony/index.html") or return 0;
   print OUTPUT $self->html_header;
-  print OUTPUT "Are you not entertained?";
+  print OUTPUT "<h3>Harmony</h3>";
+  print OUTPUT "<b>This version of Ensembl is synchronised with the CVS head branch</b>\n";
+  print OUTPUT "<ul>\n";
+  print OUTPUT "<li><a href='http://head.ensembl.org'>Return home</a></li>";
+  print OUTPUT "<\ul>\n";
   print OUTPUT $self->html_footer;
   return 1;
 }

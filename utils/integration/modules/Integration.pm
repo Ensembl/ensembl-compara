@@ -51,7 +51,9 @@ sub message {
 sub configure {
   ### Performs configuration tasks to setup the integration server.
   my $self = shift;
-  $self->message("Configuring: are you not entertained?", "red");
+
+  $self->message("Configuring new checkout", "yellow");
+
   my $warnings = 0;
 
   foreach my $task (@{ $self->configuration }) {
@@ -60,15 +62,18 @@ sub configure {
   return 1;
 }
 
-sub start {
+sub start_server {
   ### Starts an integration server. Any configuration tasks should be 
   ### performed when {{configure}} is called.
   my ($self) = shift;
+
   my $command = $self->start_command;
   my $start = `$command`;
+
+  $self->message("Ensembl is up to date", "green");
 }
 
-sub stop {
+sub stop_server {
   ### Stops an integration server.
   my ($self) = shift;
   my $command = $self->stop_command;

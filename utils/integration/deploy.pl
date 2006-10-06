@@ -12,9 +12,10 @@ use Integration::Task::Copy;
 use Integration::Task::Checkout;
 use Integration::Task::Move;
 use Integration::Task::Mkdir;
+use Integration::Task::Delete;
 
 my $checkout_location = "./checkout";
-my $htdocs_location = "./checkout/sanger-plugins/head/htdocs";
+my $htdocs_location = "/ensemblweb/head/checkout/sanger-plugins/head/htdocs";
 my $cvs_repository = "cvs.sanger.ac.uk";
 my $cvs_root = "/nfs/ensembl/cvsroot/";
 my $release = "branch-ensembl-40";
@@ -23,15 +24,15 @@ my $cvs_username = "mw4";
 my $integration = Integration->new(( htdocs => $htdocs_location ));
 
 if (-e $checkout_location) {
-  my $rm = `rm -r $checkout_location`;
+  my $rm = `rm -r $checkout_location*`;
 }
 
 if (-e 'bioperl') {
-  my $rm = `rm -r bioperl`;
+  my $rm = `rm -r bioperl*`;
 }
 
 if (-e 'biomart') {
-  my $rm = `rm -r biomart`;
+  my $rm = `rm -r biomart*`;
 }
 
 my $checkout_task = Integration::Task::Checkout->new((
@@ -110,7 +111,22 @@ $integration->add_configuration_task(Integration::Task::Mkdir->new((source => "c
 $integration->add_configuration_task(Integration::Task::Mkdir->new((source => "checkout/logs")));
 $integration->add_configuration_task(Integration::Task::Mkdir->new((source => "checkout/tmp")));
 
+$integration->add_configuration_task(Integration::Task::Delete->new((source => "/ensemblweb/head/checkout")));
+
+my $checkout_copy_task = Integration::Task::Copy->new((
+                             source      => "checkout", 
+                             destination => "/ensemblweb/head"
+                           ));
+
+$integration->add_configuration_task($checkout_copy_task);
+
+$integration->stop_command('/ensemblweb/head/checkout/ctrl_scripts/stop_server');
+$integration->stop_server;
+
 $integration->configure;
+
+$integration->start_command('/ensemblweb/head/checkout/ctrl_scripts/start_server');
+$integration->start_server;
 
 $integration->test;
 $integration->generate_output;
