@@ -83,7 +83,7 @@ MAIN:{
   # TODO: Use EnsEMBL::Web::Input for CGI handling
   $CGI = CGI->new();
   unless( $CGI->param ) {
-    my $tsp = $ENV{'ENSEMBL_SPECIES'} eq 'Multi' ? $SPECIES_DEFS->ENSEMBL_PERL_SPECIES : $ENV{'ENSEMBL_SPECIES'};
+    my $tsp = $ENV{'ENSEMBL_SPECIES'} eq 'Multi' ? $SPECIES_DEFS->ENSEMBL_PRIMARY_SPECIES : $ENV{'ENSEMBL_SPECIES'};
     $CGI->param( 'species', $tsp );
   }
 
@@ -202,7 +202,7 @@ MAIN:{
     }
 
     if( my $hsp_id = $CGI->param('hsp_id') ){
-      my $sp = $ENV{'ENSEMBL_SPECIES'} eq 'Multi' ? $SPECIES_DEFS->ENSEMBL_PERL_SPECIES : $ENV{'ENSEMBL_SPECIES'};
+      my $sp = $ENV{'ENSEMBL_SPECIES'} eq 'Multi' ? $SPECIES_DEFS->ENSEMBL_PRIMARY_SPECIES : $ENV{'ENSEMBL_SPECIES'};
       my $blast_adpt = $DBCONNECTION->get_databases_species($sp, 'blast')->{'blast'};
       my @args = ( $hsp_id, $blast_adpt );
       eval{ $hsp = Bio::Search::HSP::EnsemblHSP->retrieve( @args ) };
@@ -211,7 +211,7 @@ MAIN:{
     }
     
     if( my $hit_id = $CGI->param('hit_id') ){
-      my $sp = $ENV{'ENSEMBL_SPECIES'} eq 'Multi' ? $SPECIES_DEFS->ENSEMBL_PERL_SPECIES : $ENV{'ENSEMBL_SPECIES'};
+      my $sp = $ENV{'ENSEMBL_SPECIES'} eq 'Multi' ? $SPECIES_DEFS->ENSEMBL_PRIMARY_SPECIES : $ENV{'ENSEMBL_SPECIES'};
       my $blast_adpt = $DBCONNECTION->get_databases_species($sp, 'blast')->{'blast'};
       my @args = ( $hit_id, $blast_adpt );
       eval{ $hit = Bio::Search::Hit::EnsemblHit->retrieve( @args ) };
@@ -372,7 +372,7 @@ sub get_suspend_page{
 sub fetch_blast_adaptor{
   my $blast_adaptor;
   my $page = shift;
-  my $sp = $ENV{'ENSEMBL_SPECIES'} eq 'Multi' ? $SPECIES_DEFS->ENSEMBL_PERL_SPECIES : $ENV{'ENSEMBL_SPECIES'};
+  my $sp = $ENV{'ENSEMBL_SPECIES'} eq 'Multi' ? $SPECIES_DEFS->ENSEMBL_PRIMARY_SPECIES : $ENV{'ENSEMBL_SPECIES'};
   eval {
     $blast_adaptor = $DBCONNECTION->get_databases_species( $sp, 'blast' )->{'blast'};
   };
