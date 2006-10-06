@@ -11,6 +11,8 @@ our $failed_modules;
 
 use Text::Wrap;
 sub new {
+### Constructor
+### Constructs the class - as its a base class contains nothing.!
   my $class = shift;
   my $self  = {};
   bless $self,$class;
@@ -18,6 +20,7 @@ sub new {
 }
 
 sub _format_error {
+### Format an error message by wrapping text to 120 columns
   my $self = shift;
   $Text::Wrap::columns = 120;
   my $out = CGI::escapeHTML( join "\n", map { Text::Wrap::wrap( '', '... ', $_ ) } split /\n/, join '', @_ );
@@ -26,6 +29,7 @@ sub _format_error {
 }
 
 sub dynamic_use {
+### Equivalent of USE - but used at runtime
   my( $self, $classname ) = @_;
   unless( $classname ) {
     my @caller = caller(0);
@@ -53,11 +57,13 @@ sub dynamic_use {
 }
 
 sub dynamic_use_failure {
+### Return error message cached if use previously failed!
   my( $self, $classname ) = @_;
   return $failed_modules->{$classname};
 }
 
 sub neat_sr_name {
+### Returns seq-region name formatted neatly...
   my( $self, $type, $name ) = @_;
   return $name if $name =~ /^$type/;
   (my $neat_type = ucfirst(lc($type)) ) =~ s/contig/Contig/;
@@ -65,6 +71,7 @@ sub neat_sr_name {
 }
 
 sub thousandify {
+### Retuns comma separated version of number...
   my( $self, $value ) = @_;
   local $_ = reverse $value;
   s/(\d\d\d)(?=\d)(?!\d*\.)/$1,/g;
@@ -72,6 +79,7 @@ sub thousandify {
 }
 
 sub round_bp {
+### Returns #bp formatted neatly as either m/k
   my( $self, $value ) = @_;
   if( $value > 2e6 ) { return sprintf '%0.2fm', $value/1e6; }
   if( $value > 2e3 ) { return sprintf '%0.2fk', $value/1e3; }
@@ -79,6 +87,7 @@ sub round_bp {
 }
 
 sub evaluate_bp {
+### Reverse of round BP - takes a value with a K/M/G at the end and converts to integer value...
   my( $self, $value ) = @_;
   $value =~ s/,//g;
   return $value * 1e3 if( $value =~ /K/i );
@@ -90,6 +99,7 @@ sub evaluate_bp {
 our %roman2arabic = qw(I 1 V 5 X 10 L 50 C 100 D 500 M 1000);
 
 sub de_romanize {
+### Converts a number from roman (IV...) format to number...
   my( $self, $string ) = @_;
   return 0 if $string eq '';
   return 0 unless $string =~ /^(?: M{0,3}) (?: D?C{0,3} | C[DM]) (?: L?X{0,3} | X[LC]) (?: V?I{0,3} | I[VX])$/ix;
@@ -104,8 +114,8 @@ sub de_romanize {
 }
 
 sub seq_region_sort {
+### Used to sort chromosomes into a sensible order!
   my( $self, $chr_1, $chr_2 ) = @_;
-
   if( $chr_1 =~ /^\d+/ ) {
     return $chr_2 =~ /^\d+/ ? ( $chr_1 <=> $chr_2 || $chr_1 cmp $chr_2 ) : -1;
   } elsif( $chr_2 =~ /^\d+/ ) {
@@ -125,8 +135,8 @@ sub seq_region_sort {
 
 our @random_ticket_chars = ('A'..'Z','a'..'f');
 
-
 sub ticket {
+### Returns a random ticket string
   my $self = shift;
   my $date = time() + shift;
   my($sec, $msec) = gettimeofday;
@@ -151,12 +161,14 @@ sub ticket {
 #
 
 sub temp_file_name {
+### Creates a random filename
   my( $self, $extn, $template ) = @_;
   $template ||= 'XXX/X/X/XXXXXXXXXXXXXXX';
   return $self->templatize( $self->ticket, $template ).($extn?".$extn":'');
 }
 
 sub make_directory {
+### Creates a writeable directory - making sure all parents exist!
   my( $self, $path ) = @_;
   my ($volume, $dir_path, $file) = splitpath( $path );
   mkpath( $dir_path, 0, 0777 );
@@ -164,6 +176,7 @@ sub make_directory {
 }
 
 sub temp_file_create {
+### Creates a temporary file name and makes sure its parent directory exists
   my $self = shift;
   my $FN = $self->temp_file_name( @_ );
   (my $path = $FN) =~ s/\/[^\/]*$//;
@@ -172,6 +185,7 @@ sub temp_file_create {
 }
 
 sub templatize {
+### Takes a string, and a template pattern and returns the string with "/" from the template inserted...
   my( $self, $ticket, $template ) = @_;
   $template =~ s/\/+/\//g;
   $ticket   =~ s/[^A-Za-z!_]//g;
