@@ -591,8 +591,8 @@ sub spellcheck {
   $aspell_opts .= " --personal=$ensembl_dict"; 
 
   my $timestamp = time();
-  my $filename .= 'spell_'.$timestamp;
-  my $cache = new EnsEMBL::Web::File::Text($object->[1]->{'_species_defs'});
+  my $filename .= $timestamp;
+  my $cache = new EnsEMBL::Web::File::Text('spell',$object->[1]->{'_species_defs'});
   $cache->set_cache_filename($filename);
   my $result = $cache->save_aspell($object, $text);
 
