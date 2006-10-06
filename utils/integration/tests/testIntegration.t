@@ -65,7 +65,6 @@ ok ($integration->configure == 1);
 file_exists_ok('checkout/conf/Plugins.pm');
 
 ok ($integration->test == 100);
-#ok ($integration->generate_output == 1);
 
 $integration->update_log;
 file_exists_ok($log_location);

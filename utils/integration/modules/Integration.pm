@@ -16,6 +16,7 @@ my %StartCommand_of;
 my %StopCommand_of;
 my %HtdocsLocation_of;
 my %Configuration_of;
+my %Tests_of;
 my %View_of;
 
 sub new {
@@ -29,6 +30,7 @@ sub new {
   $StartCommand_of{$self} = defined $params{start} ? $params{start} : "";
   $StopCommand_of{$self} = defined $params{stop} ? $params{stop} : "";
   $Configuration_of{$self} = defined $params{configuration} ? $params{configuration} : [];
+  $Tests_of{$self} = defined $params{tests} ? $params{tests} : [];
   $View_of{$self} = defined $params{view} ? $params{view} : IntegrationView->new(( server => $self, output => $self->htdocs_location));
   $Log_of{$self} = Integration::Log::YAML->new(( location => $self->log_location));
   return $self;
@@ -87,11 +89,10 @@ sub stop_server {
 
 sub test {
   ### Runs all automated tests in the test suite and returns the test percentage. The code isn't clean until the bar turns green.
-  #my $self = shift;
-  #my $start = new Benchmark;
-  #my $end = new Benchmark;
-  #my $diff = timediff($end, $start);
-  #$self->set_benchmark('test', timestr($diff, 'all')); 
+  my $self = shift;
+  foreach my $task (@{ $self->tests }) {
+    $task->process;
+  }
   return 100;
 } 
 
@@ -166,6 +167,13 @@ sub log_location {
   return $LogLocation_of{$self};
 }
 
+sub tests {
+  ### a
+  my $self = shift;
+  $Tests_of{$self} = shift if @_;
+  return $Tests_of{$self};
+}
+
 sub checkout_tasks {
   ### a
   ### Returns an array ref of {{Integration::Task}} objects to be performed at checkout.
@@ -184,6 +192,11 @@ sub add_checkout_task {
   push @{ $self->checkout_tasks }, $task;
 }
 
+sub add_test_task {
+  my ($self, $task) = @_;
+  push @{ $self->tests }, $task;
+}
+
 sub DESTROY {
   ### d
   my $self = shift;
@@ -195,6 +208,7 @@ sub DESTROY {
   delete $StopCommand_of{$self};
   delete $LogLocation_of{$self};
   delete $Log_of{$self};
+  delete $Tests_of{$self};
 }
 
 }
