@@ -6,6 +6,7 @@ use EnsEMBL::Web::Root;
 use LWP::UserAgent;
 use HTTP::Request;
 use HTTP::Response;
+use Compress::Zlib;
 
 our $TMP_IMG_FORMAT     = 'XXX/X/X/XXXXXXXXXXXXXXX';
 our @ISA =qw(EnsEMBL::Web::Root);
@@ -29,25 +30,31 @@ sub new {
 
 
 sub set_cache_filename {
-  my ($self, $filename) = @_;
+  my ($self, $prefix, $filename) = @_;
   
   $self->{'cache'}      = 1;
   my $MD5 = hex(substr( md5_hex($filename), 0, 6 )); ## Just the first 6 characters will do!
   my $c1  = $EnsEMBL::Web::Root::random_ticket_chars[($MD5>>5)&31];
   my $c2  = $EnsEMBL::Web::Root::random_ticket_chars[$MD5&31];
   
-  $self->{'token'}      = "$c1$c2$filename";
-  $self->{'filename'}   = "$c1/$c2/$filename";
-warn "File will be ".$self->{'filename'};
-  $self->{'file_root' } = $self->{'species_defs'}->ENSEMBL_TMP_DIR;
+  $self->{'token'}      = "$prefix:$c1$c2$filename";
+  $self->{'filename'}   = "$prefix/$c1/$c2/$filename";
+  $self->{'file_root' } = $self->{'species_defs'}->ENSEMBL_TMP_DIR_CACHE;
 }
 
 
 sub filename { 
   my $self = shift;
-  return $self->{'file_root'}.'/'.$self->{'filename'};
+  return $self->{'file_root'}.'/'.$self->{'filename'}.'.gz';
 }
 
+sub print {
+  my( $self, $string ) = @_;
+  my $fh = $self->_prep_output();
+  return unless $fh;
+  $fh->gzwrite( $string ); 
+  $fh->gzclose();
+}
 
 sub save {
   my( $self, $object, $param ) = @_;
@@ -66,8 +73,9 @@ sub save {
       $fh = $self->_prep_output($out);
       if ($fh) {
         while (<IN>) {
-          print $fh $_;
+          $fh->gzwrite( $_ );
         }
+        $fh->gzclose;
         close(IN);
         $result{'file'} = $out;
       } 
@@ -86,7 +94,10 @@ sub save {
     my $response = $useragent->request($request);
     if( $response->is_success && $response->content) {
       $fh = $self->_prep_output($out);
-      print $fh $response->content if $fh;
+      if( $fh ) {
+        $fh->gzwrite( $response->content );
+        $fh->gzclose;
+      }
       $result{'file'} = $out;
     }
     else {
@@ -98,7 +109,10 @@ sub save {
     my $data = $object->param($param);
     if ($data) {
       $fh = $self->_prep_output($out);
-      print $fh $data if $fh;
+      if( $fh ) {
+        $fh->gzwrite( $data );
+        $fh->gzclose;
+      }
       $result{'file'} = $out;
     }
     else {
@@ -107,33 +121,34 @@ sub save {
     }
   }
 
-  if ($fh) {
-    close($fh);
-  }
-  else {
-    $result{'error'} = 'no_cache';
-  }
+  $result{'error'} = 'no_cache'  unless $fh;
   return \%result;
 }
 
 sub _prep_output {
   my ($self, $out) = @_;
-  my $fh;
+  $out ||= $self->filename;
   $self->make_directory( $out );
-  open($fh, ">$out") || warn qq(Cannot open local cache file for saving: $!);
+  my $fh = gzopen( $out, 'wb' );
+  warn qq(Cannot open local cache file for saving: $!) unless $fh;
   return $fh;
 }
 
+sub exists {
+  my $self = shift;
+  return -e $self->filename && -r $self->filename;
+}
 sub retrieve {
   my( $self, $cache ) = @_;
+  $cache ||= $self->filename;
   
-  my $open = open (IN, '<', $cache) || warn qq(Cannot open cached upload for parsing: $!);
+  my $fh = gzopen ( $cache, "rb" ) || warn qq(Cannot open cached upload for parsing: $!);
   my $data;
-  if( $open ) {
-    while (<IN>) {
-      $data .= $_;
-    }
-    close(IN);
+  if( $fh ) {
+    $data = '';
+    my $buffer = '';
+    $data .= $buffer while $fh->gzread( $buffer ) > 0;
+    $fh->gzclose;
   }
   return $data;
 }
@@ -150,7 +165,7 @@ Caching:
 
   my $tmpfilename = $cgi->tmpFileName($filename);
   my $cache = new EnsEMBL::Web::File::Data($species_defs);
-  $cache->set_cache_filename($tmpfilename);
+  $cache->set_cache_filename('tmp',$tmpfilename);
   $cache->save($tmpfilename);
   my $cachename = $cache->filename;
 
