@@ -370,7 +370,7 @@ $self->{'general'}->{'cytoview'} = {
     'threshold' => '1000',
     'navigation_threshold' => '1000',
     'navigation' => 'on',
-    'available' => 'features ENSEMBL_DB/repeat_feature'
+    'available' => 'features ENSEMBL_DB.repeat_feature'
   }, 
   'sub_repeat' => {
     'on'  => "on",
@@ -379,7 +379,8 @@ $self->{'general'}->{'cytoview'} = {
     'col' => 'gray50',
     'threshold' => '2000',
     'navigation_threshold' => '1000',
-    'navigation' => 'on'
+    'navigation' => 'on',
+    'available' => 'features ENSEMBL_DB.repeat_feature'
   }, 
   'ruler' => {
     'on'  => "on",
@@ -458,6 +459,6 @@ $self->{'general'}->{'cytoview'} = {
 };
 $self->ADD_GENE_TRACKS();
 $self->ADD_SYNTENY_TRACKS();
-$self->ADD_ALL_CLONE_TRACKS();
+$self->ADD_ALL_CLONE_TRACKS(0,'on'=>'on');
 }
 1;
