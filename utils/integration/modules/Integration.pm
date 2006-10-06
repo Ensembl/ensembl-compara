@@ -17,6 +17,8 @@ my %StopCommand_of;
 my %HtdocsLocation_of;
 my %Configuration_of;
 my %Tests_of;
+my %TestResult_of;
+my %CriticalFail_of;
 my %View_of;
 
 sub new {
@@ -31,6 +33,8 @@ sub new {
   $StopCommand_of{$self} = defined $params{stop} ? $params{stop} : "";
   $Configuration_of{$self} = defined $params{configuration} ? $params{configuration} : [];
   $Tests_of{$self} = defined $params{tests} ? $params{tests} : [];
+  $TestResult_of{$self} = undef; 
+  $CriticalFail_of{$self} = undef; 
   $View_of{$self} = defined $params{view} ? $params{view} : IntegrationView->new(( server => $self, output => $self->htdocs_location));
   $Log_of{$self} = Integration::Log::YAML->new(( location => $self->log_location));
   return $self;
@@ -90,10 +94,24 @@ sub stop_server {
 sub test {
   ### Runs all automated tests in the test suite and returns the test percentage. The code isn't clean until the bar turns green.
   my $self = shift;
+  my $total = 0;
+  my $failed = 0;
+  my $passed = 0;
   foreach my $task (@{ $self->tests }) {
     $task->process;
+    if ($task->did_fail) {
+      $failed++;
+      if ($task->critical) {
+        $self->critical_fail("yes");
+      }
+    } else {
+      $passed++;
+    }
+    $total++;
   }
-  return 100;
+  my $result = ($passed / $total) * 100;
+  $self->test_result($result);
+  return $result; 
 } 
 
 sub generate_output {
@@ -174,6 +192,20 @@ sub tests {
   return $Tests_of{$self};
 }
 
+sub test_result {
+  ### a
+  my $self = shift;
+  $TestResult_of{$self} = shift if @_;
+  return $TestResult_of{$self};
+}
+
+sub critical_fail {
+  ### a
+  my $self = shift;
+  $CriticalFail_of{$self} = shift if @_;
+  return $CriticalFail_of{$self};
+}
+
 sub checkout_tasks {
   ### a
   ### Returns an array ref of {{Integration::Task}} objects to be performed at checkout.
@@ -209,6 +241,8 @@ sub DESTROY {
   delete $LogLocation_of{$self};
   delete $Log_of{$self};
   delete $Tests_of{$self};
+  delete $TestResult_of{$self};
+  delete $CriticalFail_of{$self};
 }
 
 }

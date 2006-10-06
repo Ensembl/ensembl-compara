@@ -61,11 +61,32 @@ sub generate_html {
   print OUTPUT $self->html_header;
   print OUTPUT "<h3>Harmony</h3>";
   print OUTPUT "<b>This version of Ensembl is synchronised with the CVS head branch</b>\n";
+  print OUTPUT $self->test_results;
   print OUTPUT "<ul>\n";
   print OUTPUT "<li><a href='http://head.ensembl.org'>Return home</a></li>";
   print OUTPUT "<\ul>\n";
   print OUTPUT $self->html_footer;
   return 1;
+}
+
+sub test_results {
+  my $self = shift;
+  my $total = 0;
+  my $passed = 0;
+  my $failed = 0;
+  foreach my $test (@{ $self->server->tests }) {
+    $total++;
+    if ($test->did_fail) {
+      $failed++;
+    } else {
+      $passed++;
+    }
+  }
+  my $html = "<h3>Tests</h3>";
+  $html .= "Tests run: $total<br />\n";
+  $html .= "Tests passed: $passed<br />\n";
+  $html .= "Tests failed: $failed<br />\n";
+  return $html;
 }
 
 sub html_header {
