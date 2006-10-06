@@ -19,6 +19,7 @@ sub new {
     'drawable_container' => undef,
     'menu_container'     => undef,
     'imagemap'           => 'no',
+    'image_type'         => 'image',
     'image_name'         => undef,
     'cacheable'          => 'no',
 
@@ -62,7 +63,7 @@ sub karyotype {
   
   if( $self->cacheable eq 'yes' ) {
     my $image = new EnsEMBL::Web::File::Image( $self->{'species_defs'} );
-    $image->set_cache_filename( $self->image_name );
+    $image->set_cache_filename( $self->image_type, $self->image_name );
     warn "CACHE.... ",$image->filename;
     return if -e $image->filename."png" && -f $image->filename."png";
   }
@@ -449,6 +450,7 @@ sub button             : lvalue { $_[0]->{'button'}; }
 sub button_id          : lvalue { $_[0]->{'button_id'}; }
 sub button_name        : lvalue { $_[0]->{'button_name'}; }
 sub button_title       : lvalue { $_[0]->{'button_title'}; }
+sub image_type         : lvalue { $_[0]->{'image_type'}; }
 sub image_name         : lvalue { $_[0]->{'image_name'}; }
 sub cacheable          : lvalue { $_[0]->{'cacheable'}; }
 
@@ -465,7 +467,7 @@ sub exists {
   my $self = shift;
   return 0 unless $self->cacheable eq 'yes';
   my $image = new EnsEMBL::Web::File::Image( $self->{'species_defs'} );
-  $image->set_cache_filename( $self->image_name );
+  $image->set_cache_filename( $self->image_type, $self->image_name );
   return $image->exists;
 }
 
@@ -479,7 +481,7 @@ sub render {
     $image->{'img_map'} = 1;
   }
   if( $self->cacheable eq 'yes' ) {
-    $image->set_cache_filename( $self->image_name );
+    $image->set_cache_filename( $self->image_type, $self->image_name );
   } else {
     $image->set_tmp_filename( );
   }
@@ -505,11 +507,11 @@ sub render {
     $HTML .= $image->render_image_button();
     $HTML .= sprintf qq(<div style="text-align: center; font-weight: bold">%s</div>), $self->caption if $self->caption;
   } elsif( $self->button eq 'drag' ) {
-$self->{'species_defs'}{'timer'}->push("Starting Image Tag",5);
+    $self->{'species_defs'}{'timer'}->push("Starting Image Tag",5);
     $image->{'id'} = $self->{'prefix'} . "_$self->{'panel_number'}_i";
     my $tag = $image->render_image_tag();
     ## Now we have the image dimensions, we can set the correct DIV width
-$self->{'species_defs'}{'timer'}->push("Finished Image Tag",5);
+# $self->{'species_defs'}{'timer'}->push("Finished Image Tag",5);
     if( $self->menu_container ) {
       $HTML .= $self->menu_container->render_html;
       $HTML .= $self->menu_container->render_js;
@@ -527,7 +529,7 @@ $self->{'species_defs'}{'timer'}->push("Starting Image Map",5);
     $HTML .= "</div>";
     $HTML .= sprintf qq(<div style="text-align: center; font-weight: bold">%s</div>), $self->caption if $self->caption;
     $HTML .= '</div></div>';
-$self->{'species_defs'}{'timer'}->push("Finishing Image Map",5);
+# $self->{'species_defs'}{'timer'}->push("Finishing Image Map",5);
   } else {
     my $tag = $image->render_image_tag();
     ## Now we have the image dimensions, we can set the correct DIV width 
@@ -564,7 +566,7 @@ $self->{'species_defs'}{'timer'}->push("Finishing rendering $_",5);
   $HTML .= $self->tailnote;
     
   $self->{'width'} = $image->{'width'};
-$self->{'species_defs'}{'timer'}->push("Returning from renderer....",5);
+#  $self->species_defs->{'timer'}->push("Returning from renderer....",5);
   return $HTML
 }
 

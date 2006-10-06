@@ -36,14 +36,15 @@ sub dc :lvalue { $_[0]->{'dc'}; }
 
 sub set_cache_filename {
   my $self     = shift;
+  my $type     = shift;
   my $filename = shift;
   $self->{'cache'}      = 1;
   my $MD5 = hex(substr( md5_hex($filename), 0, 6 )); ## Just the first 6 characters will do!
   my $c1  = $EnsEMBL::Web::Root::random_ticket_chars[($MD5>>5)&31];
   my $c2  = $EnsEMBL::Web::Root::random_ticket_chars[$MD5&31];
   
-  $self->{'token'}      = "$c1$c2$filename";
-  $self->{'filename'}   = "$c1/$c2/$filename";
+  $self->{'token'}      = "$type:$c1$c2$filename";
+  $self->{'filename'}   = "$type/$c1/$c2/$filename";
 
   $self->{'file_root' } = $self->{'species_defs'}->ENSEMBL_TMP_DIR_CACHE;
   $self->{'URL_root'}   = $self->{'species_defs'}->ENSEMBL_TMP_URL_CACHE;
@@ -101,18 +102,17 @@ sub extraStyle {
 
 sub render_image_tag {
   my $self = shift;
-$self->{'species_defs'}{'timer'}->push("Starting render",6);
+# $self->{'species_defs'}{'timer'}->push("Starting render",6);
   my $IF = $self->render( @_ );
-$self->{'species_defs'}{'timer'}->push("Finished render",6);
-  my($width, $height ) = imgsize( $IF->{'file'} );
-$self->{'species_defs'}{'timer'}->push("Got image size",6);
+# $self->{'species_defs'}{'timer'}->push("Finished render",6);
+  my( $width, $height ) = imgsize( $IF->{'file'} );
+# $self->{'species_defs'}{'timer'}->push("Got image size",6);
   my $HTML;
   if ($width > 5000) {
     my $url = $IF->{'URL'};
     $HTML = qq(<p style="text-align:left">The image produced was $width pixels wide, which may be too large for some web browsers to display. If you would like to see the image, please right-click (MAC: Ctrl-click) on the link below and choose the 'Save Image' option from the pop-up menu. Alternatively, try reconfiguring KaryoView, either merging the features into a single track (step 1) or selecting one chromosome at a time (Step 3).</p>
 <p><a href="$url">Image download</a></p>);
-  }
-  else {
+  } else {
     $HTML = sprintf '<img src="%s" alt="%s" title="%s" style="width: %dpx; height: %dpx; %s" %s />',
                        $IF->{'URL'}, $self->{'text'}, $self->{'text'},
                        $width, $height,
@@ -177,9 +177,10 @@ sub render {
     }
   }
   my $image;
-$self->{'species_defs'}{'timer'}->push( "RAW RENDER START", 7);
+# $self->{'species_defs'}{'timer'}->push( "RAW RENDER START", 7);
+#  warn ".... $format ....";
   eval { $image    = $self->dc->render($format); };
-$self->{'species_defs'}{'timer'}->push( "RAW RENDER END", 7);
+# $self->{'species_defs'}{'timer'}->push( "RAW RENDER END", 7);
   if( $image ) {
     if( $format eq 'imagemap' ) {
       if( $self->{'cache'} ) { ## Now we write the image...
@@ -195,7 +196,7 @@ $self->{'species_defs'}{'timer'}->push( "RAW RENDER END", 7);
       binmode IMG_OUT;
       print IMG_OUT $image;
       close(IMG_OUT);
-$self->{'species_defs'}{'timer'}->push( "FILE WRITE END", 7);
+# $self->{'species_defs'}{'timer'}->push( "FILE WRITE END", 7);
       return { 'URL' => $self->URL($format), 'file' => $file };
     }
   } else {
