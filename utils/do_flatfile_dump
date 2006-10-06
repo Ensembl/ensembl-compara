@@ -88,6 +88,7 @@ unless ($no_log) {
 $dumpdir ||= "/mysql/dumps/release-$sitedefs_release";
 
 foreach my $spp (@species){
+  my $sp_time = time;
   my $formats_dir = setup_directories($SPECIES_DEFS, $spp, \@user_formats);
 
   my $batch = 0;
@@ -104,14 +105,16 @@ foreach my $spp (@species){
   my $db =  $databases->{'core'} ||
     die( "Could not retrieve core database for $spp" );
   my $slice_adaptor = $db->get_SliceAdaptor();
+  utils::Tool::info(1, "Caching top level mappings");
   $slice_adaptor->cache_toplevel_seq_mappings();
+  utils::Tool::info(1, "Got db connection and species dirs");
 
-   # Sort slices 
-   my %chr_sorter;
-   my $i = 1;
-   foreach ( reverse @{$SPECIES_DEFS->ENSEMBL_CHROMOSOMES || []} ) { 
-     $chr_sorter{$_}= $i++;
-   }
+  # Sort slices 
+  my %chr_sorter;
+    my $i = 1;
+  foreach ( reverse @{ $SPECIES_DEFS->get_config($spp,"ENSEMBL_CHROMOSOMES") || [] } ) { 
+    $chr_sorter{$_}= $i++;
+  }
 
   my @slices;
   if (keys %chr_sorter) {
@@ -119,6 +122,7 @@ foreach my $spp (@species){
     @slices = sort {$chr_sorter{$b->seq_region_name} <=> $chr_sorter{$a->seq_region_name} || $a->seq_region_name cmp $b->seq_region_name  } @{ $slice_adaptor->fetch_all('toplevel', undef, $inc_dupes, $inc_nonref) || [] };
   }
   else {
+    utils::Tool::info(1, "Unsorted results");
     @slices =  @{ $slice_adaptor->fetch_all('toplevel', undef, $inc_dupes, $inc_nonref) || [] };
   }
 
@@ -157,6 +161,10 @@ foreach my $spp (@species){
   foreach (@too_long){
     utils::Tool::warning (1, "Gene skipped cos greater than $GENE_MAX: $_");
   }
+
+  my $sp_time_taken = time - $sp_time;
+  my $sp_hours      = localtime($sp_time_taken)->hour -1;
+  utils::Tool::info (2, "Used $logfile. Time taken: $sp_hours:". localtime($sp_time_taken)->min."mins");
 } # end foreach spp
 
 
@@ -200,7 +208,6 @@ sub setup_directories {
       or die "Couldn't open file $spp_dumpdir/README: $!\n";
     print README $text;
     close README;
-
 
     next if $readme_only;
     $formats_dir{$format} = $spp_dumpdir;

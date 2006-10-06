@@ -27,7 +27,8 @@ BEGIN{
 use utils::Tool;
 
 our $MYSQL_BIN = "/mysqld/current/bin";   # this should be a cluster-wide CDSL
-my ($dumpdir, $help, $info, $logfile, $email, $no_data, $no_zip, $no_log);
+my ($dumpdir, $help, $info, $logfile, $email, $start_with, $end_with);
+my ($no_data, $no_zip, $no_log);
 my @SPECIES ;
 my @dbs;
 
@@ -36,6 +37,8 @@ my @dbs;
 	    'database:s'     => \@dbs,
 	    'logfile:s'      => \$logfile,
 	    'no_log'         => \$no_log,
+	    'start_with:s' => \$start_with,
+	    'end_with:s'   => \$end_with,
 	    'email:s'        => \$email,
 	    'dumpdir:s'      => \$dumpdir,
 	    'help'           => \$help,
@@ -68,6 +71,9 @@ if ( @SPECIES ) {
 } else {
   @SPECIES = @{ utils::Tool::all_species()};  
 }
+@SPECIES  = @{ utils::Tool::start_with_species($start_with, \@SPECIES) } if $start_with;
+
+@SPECIES  = @{ utils::Tool::end_with_species($end_with, \@SPECIES) } if $end_with;
 
 
 # Log file -------------------------------------------------------------------
@@ -361,7 +367,7 @@ do_mysql_dump [options]
 
 Options:
   --help, --info, --species, --database, --logfile --dumpdir
-  --no_data  --no_zip --email --no_log
+  --no_data  --no_zip --email --no_log --start_with --end_with
 
 =head1 OPTIONS
 
@@ -396,6 +402,12 @@ B<--no_data>
 
 B<--no_zip>
    Default is to gzip all files.  This options turns it off.
+
+B<--start_with>
+  Optional: give it a species name and it will skip all species before this in the alphabet.
+
+B<--end_with>
+  Optional: give it a species name and it will skip all species after this in the alphabet.
 
 
 =head1 DESCRIPTION
