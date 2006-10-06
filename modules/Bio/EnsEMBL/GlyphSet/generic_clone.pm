@@ -33,6 +33,7 @@ sub features {
   my $T = $self->my_config('FEATURES');
   my @T = split /\s+/,$T;
 
+  my $db = $self->my_config('DATABASE');
   my @sorted =  
     map { $_->[1] }
     sort { $a->[0] <=> $b->[0] }
@@ -41,9 +42,7 @@ sub features {
       $_->get_scalar_attribute('state') + $_->get_scalar_attribute('BACend_flag')/4
       ), $_]
     }
-    map { @{$self->{'container'}->get_all_MiscFeatures( $_ )||[]} }
-    (split /\s+/, $self->my_config( 'FEATURES' ));
-
+    map { @{$self->{'container'}->get_all_MiscFeatures( $_, $db )||[]} } @T
   return \@sorted;
 }
 
