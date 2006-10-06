@@ -817,6 +817,7 @@ sub ADD_ALL_DNA_FEATURES {
   $self->add_new_track_cdna( 'medaka_cdna',    'Medaka cDNAs',    $POS++, @_ );
 
   $self->add_new_track_cdna( 'human_cdna', 'Human cDNAs',   $POS++, @_ );
+  $self->add_new_track_cdna( 'chimp_cdna', 'Chimp cDNAs',     $POS++, @_ );
   $self->add_new_track_cdna( 'dog_cdna',   'Dog cDNAs',     $POS++, @_ );
   $self->add_new_track_cdna( 'rat_cdna',   'Rat cDNAs',     $POS++, @_ );
   $self->add_new_track_cdna( 'platypus_cdnas', 'Platypus cDNAs',   $POS++, @_ );
@@ -1040,6 +1041,7 @@ sub ADD_ALL_PROTEIN_FEATURES {
   $self->add_new_track_protein( 'Btaurus_Exonerate_Protein',         'Cow proteins', $POS++, @_ );
   $self->add_new_track_protein( 'cow_proteins',        'Cow proteins', $POS++, @_ );
   $self->add_new_track_protein( 'cow_protein',         'Cow proteins', $POS++, @_ );
+  $self->add_new_track_protein( 'medaka_protein',      'Medaka proteins', $POS++, @_ );
   $self->add_new_track_protein( 'fugu_protein',        'Fugu proteins', $POS++, @_ );
   $self->add_new_track_protein( 'fish_protein',        'Fish proteins', $POS++, @_ );
   $self->add_new_track_protein( 'macaque_protein',     'Macaque proteins', $POS++, @_ );
