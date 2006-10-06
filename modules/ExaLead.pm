@@ -1,6 +1,9 @@
 package ExaLead;
 use strict;
 
+### The Exalead class heirarchy is a Perl wrapper around the Exalead one
+### XML search engine output
+
 ## packages used to grab content of XML
 use XML::Simple;
 use LWP;
@@ -21,6 +24,8 @@ use ExaLead::HitGroup;
 use ExaLead::HitCategory;
 
 sub new {
+### c
+### Store information about hits
   my( $class ) = @_;
   my $self = {
     'engineURL'  => '',
@@ -42,34 +47,106 @@ sub new {
   return $self;
 }
 
-sub engineURL :lvalue { $_[0]->{'engineURL'}; } # get/set string
-sub rootURL   :lvalue { $_[0]->{'rootURL'}; } # get/set string
-sub nmatches  :lvalue { $_[0]->{'nmatches'};  } # get/set int
-sub nhits     :lvalue { $_[0]->{'nhits'};     } # get/set int
-sub start     :lvalue { $_[0]->{'start'};     } # get/set int
-sub end       :lvalue { $_[0]->{'end'};       } # get/set int
-sub last      :lvalue { $_[0]->{'last'};      } # get/set int
-sub estimated :lvalue { $_[0]->{'estimated'}; } # get/set int
+sub engineURL :lvalue {
+### a
+### URL for search engine itself - that generates the XML hits
+  $_[0]->{'engineURL'};
+}
 
-sub query :lvalue { $_[0]->{'query'}; } # get/set Query object
+sub rootURL   :lvalue {
+### a
+### URL for the wrapper script
+  $_[0]->{'rootURL'};
+}
 
-sub addGroup  { push @{$_[0]{'groups'}}, $_[1]; }
-sub addSpellingSuggestion  { push @{$_[0]{'spellings'}}, $_[1]; }
-sub addKeyword  { push @{$_[0]{'keywords'}}, $_[1]; }
-sub addHit      { push @{$_[0]{'hits'}},   $_[1]; }
+sub nmatches  :lvalue {
+### a
+### Taken from <Hits> element of the XML returned
+  $_[0]->{'nmatches'};
+}
+sub nhits     :lvalue {
+### a
+### Taken from <Hits> element of the XML returned
+  $_[0]->{'nhits'};
+}
+sub start     :lvalue {
+### a
+### Taken from <Hits> element of the XML returned
+  $_[0]->{'start'};
+}
+sub end       :lvalue {
+### a
+### Taken from <Hits> element of the XML returned
+  $_[0]->{'end'};
+}
+sub last      :lvalue { 
+### a
+### Taken from <Hits> element of the XML returned
+  $_[0]->{'last'};
+}
+sub estimated :lvalue {
+### a
+### Taken from <Hits> element of the XML returned
+  $_[0]->{'estimated'};
+}
 
-sub spellingsuggestions { return @{$_[0]{'spellings'}};         }
-sub keywords { return @{$_[0]{'keywords'}};         }
-sub groups { return @{$_[0]{'groups'}};         }
-sub hits   { return @{$_[0]{'hits'}};           }
+sub query :lvalue {
+### a
+### get/set {{Exalead::Query}} object, which summarises the
+### query that was sentto the sarch engine
+  $_[0]->{'query'};
+}
+
+sub addGroup  {
+### Add a {{Exalead::Query}} object - these are used to hold the different
+### categorisation of matches (in Ensembl's case these
+### are Feature type and Species)
+  push @{$_[0]{'groups'}}, $_[1];
+}
+sub addSpellingSuggestion  {
+### Add a {{Exalead::SpellingSuggestion}} object - exalead comes back with
+### alternative spellings if it cannot find the requested ID
+  push @{$_[0]{'spellings'}}, $_[1];
+}
+sub addKeyword  {
+### Add a {{Exalead::Keyword}} object
+  push @{$_[0]{'keywords'}}, $_[1];
+}
+sub addHit      {
+### Add a {{Exalead::Hit}} object - these are the actual URL responses
+### for "pages" which match the request.
+ push @{$_[0]{'hits'}},   $_[1];
+}
+
+sub groups {
+### Returns array of {{Exalead::Group}} objects previously added
+  return @{$_[0]{'groups'}};
+}
+sub spellingsuggestions {
+### Returns array of {{Exalead::SpellingSuggestion}} objects previously added
+  return @{$_[0]{'spellings'}};
+}
+sub keywords {
+### Returns array of {{Exalead::Keywords}} objects previously added
+ return @{$_[0]{'keywords'}};
+}
+sub hits   {
+### Returns array of {{Exalead::Hits}} objects previously added
+  return @{$_[0]{'hits'}};
+}
 
 ## Parser and associated functions...
 
 sub parse {
+### Main function in the Exalead module, constructs the approprate request URL,
+### and retrieves the XML, which then calls the inner function _parse, which
+### actually parses the XML created the Exalead::* objects
   my( $self, $q ) = @_;
-  my $search_URL = $self->engineURL.'?_f=xml2';
+  my $search_URL = $self->engineURL;
+  my $join = '?';
   foreach my $VAR ( $q->param() ) {
-    $search_URL .= join '', map { "&$VAR=".CGI::escape($_) } $q->param( $VAR );
+    $search_URL .= $join. join( '&', map { "$VAR=".CGI::escape($_) } $q->param( $VAR ) );
+    $join = '&';
   }
   warn $search_URL;
   my $ua = LWP::UserAgent->new();
@@ -78,6 +155,9 @@ sub parse {
 }
 
 sub _parse {
+### The guts of the parser, takes an XML string, and converts it into a nested hash/array
+### data structure using XML::Simple, which is then traversed to store the results
+### returned by the search engine for later use
   my( $self, $XML ) = @_;
 ## Convert XML to object hash....
   my $xml = XMLin( $XML, ForceArray=>1, KeyAttr=>[] );
@@ -151,6 +231,7 @@ sub _parse {
 }
 
 sub _parse_category_tree {
+### Recursive parser for the main category trees (stored in {{Exalead::Group}} object)
   my( $self, $category ) = @_;
   my @links = qw( exclude reset refine );
   my $cat_array = [];
@@ -166,6 +247,7 @@ sub _parse_category_tree {
 }
 
 sub _parse_hit_category_tree {
+### Recursive parser for the hit category trees (stored in {{Exalead::Hit}} object)
   my( $self, $category ) = @_;
   my $cat_array = [];
   foreach my $cat (@$category) {

@@ -5,6 +5,7 @@ our $class   = __PACKAGE__;
 our %dict = reverse( our %inv = map { ($_,sprintf "%02b",ord($_)>>1&3) } split //,'ACGT' );
 
 sub encode($$) {
+### Encode perl into FASTA - class name becomes FASTA header
   local $_ = shift;
   my $t = shift;
   my $hash_bang = $t =~ /^(#\!.*)/m ? "$1\n\n" : "";
@@ -16,6 +17,7 @@ sub encode($$) {
 }
 
 sub decode($) {
+### Decode FASTA back into perl
   local $_ = shift;
   s/.*^>$class//sm;
   s/(.)/$inv{$1}/ges;
