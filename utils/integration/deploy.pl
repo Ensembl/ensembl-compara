@@ -29,8 +29,12 @@ my $htdocs_location = $config->{htdocs_location};
 my $cvs_repository = $config->{repository}; 
 my $cvs_root = $config->{root}; 
 my $cvs_username = $config->{username}; 
+my $log_location = $config->{log_location}; 
 
-my $integration = Integration->new(( htdocs => $htdocs_location ));
+my $integration = Integration->new(( 
+                                    htdocs => $htdocs_location,
+                                    log_location => $log_location
+                                  ));
 
 if (-e $checkout_location) {
   my $rm = `rm -r $checkout_location*`;
