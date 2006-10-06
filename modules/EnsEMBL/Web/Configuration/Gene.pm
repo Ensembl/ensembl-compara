@@ -470,7 +470,7 @@ sub genetreeview {
   my $obj    = $self->{'object'};
   
   $self->update_configs_from_parameter('image', qw(genetreeview genetreeview) );
-  $self->set_title( 'Gene Tree Report for '.$obj->stable_id );
+  $self->set_title( 'Gene Tree for '.$obj->stable_id );
   my $params = { 'gene' => $obj->stable_id, 'db' => $obj->get_db  };
 
   if( my $panel1 = $self->new_panel( 'Information',
