@@ -76,7 +76,8 @@ $page->page->content->add_panel( new EnsEMBL::Web::Document::Panel(
 ));
 }
 foreach my $group ( $renderer->exalead->groups ) {
-  my $block_name = CGI::escapeHTML( $group->name );
+  my $name = $group->name; $name =~ s/answergroup\.//;
+  my $block_name = CGI::escapeHTML( $name );
   if( $group->link( 'reset' ) ) {
     $block_name =  sprintf qq(<a href="%s"><img align="top" src="/img/14-r.gif" height="14" width="14" alt="[R]" border="0" /></a> %s\n), $group->link( 'reset' )->URL, $block_name;
   }
@@ -85,7 +86,7 @@ foreach my $group ( $renderer->exalead->groups ) {
     $block_content .= render_category( $renderer, $category, 0 );
   }
   $block_content .= '</dl>';
-  $page->page->menu->add_block( $group->name, 'raw', $block_name, 'html' => $block_content, 'raw'=>1 );
+  $page->page->menu->add_block( $name, 'raw', $block_name, 'html' => $block_content, 'raw'=>1 );
 }
 
 if( $renderer->exalead->keywords ) {
