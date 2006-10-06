@@ -1,5 +1,10 @@
 package EnsEMBL::Web::Object;
 
+### Base object class - all Ensembl web objects are derived from this class,
+### this class is derived from proxiable - as it is usually proxied through an
+### {{EnsEMBL::Web::Proxy}} object to handle the dynamic multiple inheritance 
+### functionality.
+
 use strict;
 use warnings;
 no warnings "uninitialized";
@@ -12,7 +17,8 @@ use Bio::EnsEMBL::VDrawableContainer;
 our @ISA =qw(EnsEMBL::Web::Proxiable);
  
 sub EnsemblObject   {
-### ($?) Sets/returns the data object [deprecated]
+### Deprecated
+### Sets/gets the underlying Ensembl object wrapped by the web object
   my $self = shift;
   warn "EnsemblObject - TRY TO AVOID - THIS NEEDS TO BE REMOVED... Use Obj instead...";
   $self->{'data'}{'_object'}    = shift if @_;
@@ -30,18 +36,24 @@ sub prefix {
 }
 
 sub Obj {
-### () Returns the data object
+### a 
+### Gets the underlying Ensembl object wrapped by the web object
   return $_[0]{'data'}{'_object'};
 }
 
 sub dataobj { 
-### () Returns the data object [deprecated]
+### Deprecated
+### a 
+### Gets the underlying Ensembl object wrapped by the web object
   warn "dataobj - TRY TO AVOID - THIS NEEDS TO BE REMOVED... Use Obj instead...";
   return $_[0]->Obj;
 }
 
 sub highlights {
-### (@highlights?) If parameters passed adds them to highlights array, returns highlights array.
+### a
+### The highlights array is passed between web-requests to highlight selected items (e.g. Gene around
+### which contigview had been rendered. If any data is passed this is stored in the highlights array
+### and an arrayref of (unique) elements is returned.
   my $self = shift;
   unless( exists( $self->{'data'}{'_highlights'}) ) {
     my @highlights = $self->param('h');
@@ -57,14 +69,13 @@ sub highlights {
 }
 
 sub highlights_string {
-### () Returns highlight string for passing around contigview
+### Returns the highlights area as a | separated list for passing in URLs.
   return join '|', @{$_[0]->highlights};
 }
 
-## Object support functions...
-
 sub mapview_link {
-### ($feature) Returns name of seq_region $feature is on. If the passed features is
+### Parameter $feature
+### Returns name of seq_region $feature is on. If the passed features is
 ### on a "real chromosome" then this is encapsulated in a link to mapview.
   my( $self, $feature ) = @_;
   my $coords = $feature->coord_system_name; 
@@ -77,8 +88,8 @@ sub mapview_link {
 }
 
 sub location_URL {
-### ($feature,$script?,$context?) Returns a link to contigview style display ($script if set), based on feature, with context
-### specified by optionsl third parameter.
+### Parameters: $feature, $script, $context
+### Returns a link to a contigview style display, based on feature, with context
   my( $self, $feature, $script, $context ) = @_;
   my $name  = $feature->seq_region_name;
   my $start = $feature->start;
@@ -95,17 +106,15 @@ sub      URL {
 ### species and script name respectively in the URL
   my $self = shift; return $self->_URL( 0,@_ );
 }
+
 sub full_URL {
-### (%params) Same as URL but also includes full protocol/domain/port in URL
+### Returns a full (http://...) link to another script. Wrapper around {{_URL}} function
   my $self = shift; return $self->_URL( 1,@_ );
 }
 
 sub _URL { 
-### ($full,%params) Support function for URL and full_URL [private]
+### Returns either a full link or absolute link to a script
   my( $self, $full, %details ) = @_;
-  my $SPECIES = $ENV{'ENSEMBL_SPECIES'}; $SPECIES = $details{'species'} if exists $details{'species'};
-  my $SCRIPT  = '';                      $SCRIPT  = $details{'script'}  if exists $details{'script'};
-
   my $URL  = $full ? $self->species_defs->ENSEMBL_BASE_URL : '';
      $URL .=  "/".(exists $details{'species'} ? $details{'species'} : $self->species);
      $URL .=  exists $details{'script'}  ? "/$details{'script'}"  : '';
@@ -115,6 +124,7 @@ sub _URL {
 }
 
 sub seq_region_type_human_readable {
+### Returns the type of seq_region in "human readable form" (in this case just first letter captialised)
   my $self = shift;
   unless( $self->can('seq_region_type') ) {
     $self->{'data'}->{'_drop_through_'} = 1;
@@ -124,6 +134,7 @@ sub seq_region_type_human_readable {
 }
 
 sub seq_region_type_and_name {
+### Returns the type/name of seq_region in human readable form - if the coord system type is part of the name this is dropped.
   my $self = shift;
   unless( $self->can('seq_region_name') ) {
     $self->{'data'}->{'_drop_through_'} = 1;
@@ -326,15 +337,12 @@ sub get_DASCollection{
 }
 
 
-=head2alternative_object_from_factory
-
-  Arg [1]     : type of Object
-  Example     : $obj->alternative_object_from_factory( 'Transcript' )
-  Description : Adds a new W::P::O to an exising one
-
-=cut
-
 sub alternative_object_from_factory {
+### There may be occassions when a script needs to work with features of
+### more than one type. in this case we create a new {{EnsEMBL::Web::Proxy::Factory}}
+### object for the alternative data type and retrieves the data (based on the standard URL
+### parameters for the new factory) attach it to the universal datahash {{__data}}
+
   my( $self,$type ) =@_;
   my $t_fact = EnsEMBL::Web::Proxy::Factory->new( $type, $self->__data );
   if( $t_fact->can( 'createObjects' ) ) {
