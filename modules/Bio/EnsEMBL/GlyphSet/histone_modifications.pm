@@ -1,31 +1,38 @@
 package Bio::EnsEMBL::GlyphSet::histone_modifications;
 use strict;
 use vars qw(@ISA);
-use Bio::EnsEMBL::GlyphSet_simple;
+use Bio::EnsEMBL::GlyphSet;
+#use Sanger::Graphics::Glyph::Text;
+use Sanger::Graphics::Glyph::Rect;
 use Bio::EnsEMBL::Utils::Eprof qw(eprof_start eprof_end eprof_dump); 
-@ISA = qw(Bio::EnsEMBL::GlyphSet_simple);
+@ISA = qw(Bio::EnsEMBL::GlyphSet);
 use Data::Dumper;
 
-sub my_label { return "Histone modification"; }
+sub init_label {
+  my $self = shift;
+  return   $self->init_label_text("Histone modifications");
+}
 
 
-sub init {
+sub _init {
   my ($self) = @_;
   $self->bumped( $self->my_config( 'compact' ) ? 'no' : 'yes' );
 
-  if ($self->my_config('compact')) {
-    $self->init_collapse;    # do just blue track
+#  if ($self->my_config('compact')) {
+#    $self->init_compact;    # do just blue track
     
-  }
-  else {
-    $self->init_expand; # do both tracks
-    $self->init_collapse; # do both tracks
-  }
+#  }
+#  else {
+  my $offset = $self->init_expand; # do both tracks
+    $self->init_compact($offset); # do both tracks
+  # need spacer glyph
+#  }
   return 1;
 }
 
-sub features { #init_compact {
-  my ($self) = @_;
+sub init_compact {
+  my ($self, $offset) = @_;
+  $offset ||= 0;
 
   my $adaptor = $self->{'container'}->adaptor();
   if(!$adaptor) {
@@ -41,7 +48,7 @@ sub features { #init_compact {
   my $pf_adaptor = $db->get_PredictedFeatureAdaptor();
   if( $pf_adaptor ) {
     my $features = $pf_adaptor->fetch_all_by_Slice($self->{'container'});
-    return $features;
+    $self->render_predicted_features( $features, $offset );
   } 
   else {
     warn("Funcgen database must be attached to core database to " .
@@ -51,20 +58,40 @@ sub features { #init_compact {
 }
 
 
-sub zmenu {
+sub render_predicted_features {
+  my ( $self, $features, $offset ) = @_;
+
+  foreach my $f (@$features ) {
+    my $Glyph = new Sanger::Graphics::Glyph::Rect({
+	'y'         => $offset,
+        'height'    => 10,
+	'x'         => $f->start -1,
+        'width'     => $f->end - $f->start,
+	'absolutey' => 1,          # in pix rather than bp
+        'colour'    => "blue",
+        'zmenu'     => $self->predicted_features_zmenu($f),
+    });
+    $self->push( $Glyph );
+  }
+}
+
+sub predicted_features_zmenu {
   my ($self, $f ) = @_;
-  my $pos =  $f->start."-".$f->end;
+  my $slice_start   = $self->{'container'}->start + 1;
+  my $pos =  ($slice_start + $f->start)."-".($f->end+$slice_start);
   my $score = sprintf("%.3f", $f->score());
   my %zmenu = ( 
   	       caption               => ($f->display_label || ''),
   	       "03:bp:   $pos"       => '',
   	       "04:type:        ".($f->type->name() || '-') => '',
   	       "05:description: ".($f->type->description() || '-') => '',
+               "06:analysis: ".($f->analysis->logic_name() || "-") => '',
   	       "09:score: ".$score => '',
  	      );
 
-   return \%zmenu;
+   return \%zmenu || {};
  }
+
 
 sub init_expand {
 
@@ -96,21 +123,22 @@ sub init_expand {
   my $analysis = $db->get_AnalysisAdaptor->fetch_by_logic_name("VSN_GLOG");# normalisation method
 
   my $configuration = {length => $slice->seq_region_length, 
-		       offset => 0,  };
-
+		       offset => 0, 
+		       analysis => $analysis};
+  my $drawn_flag = 0;
   # get_all_experiment_names method takes one arg: a displayable flag
   foreach my $name (@{ $exp_adaptor->get_all_experiment_names(1) || [] } ) {
     my $experiment = $exp_adaptor->fetch_by_name($name);
 
     # The wiggley tracks should be displayed for each contiguous set of  
     # each experiment. They need separating on experiment (and contig set).
-    
     my @experiment_chip_sets = @{$exp_chip_adaptor->fetch_contigsets_by_experiment_dbID($experiment->dbID()) || []};
 
     foreach my $set ( @experiment_chip_sets ) {
       # returns arrayref with ExperimentalChips in that set (first element is set name)
       $configuration->{'features'} = ();
       $configuration->{'track_name'} = shift @$set;
+
 
       #get features for slice and experimtenal chip set
       my @oligo_features = @{$oligo_feature_adaptor->fetch_all_by_Slice_ExperimentalChips($slice, $set) || [] };
@@ -127,15 +155,20 @@ sub init_expand {
 			      'end'   => $end,
 			};
       }
+      next unless @draw_features;
+      $drawn_flag = 1;
       $configuration->{'features'} = \@draw_features;
-      $self->RENDER_signalmap($configuration);       # render these on track
+      $self->render_signalmap($configuration);       # render these on track
     }
   }
-  return 1;
+  unless ($drawn_flag) {
+    $self->errorTrack( "No ".$self->my_label." in this region" ) if $self->{'config'}->get('_settings','opt_empty_tracks')==1;
+  }
+  return $configuration->{'offset'};
 }
 
 
-sub RENDER_signalmap {
+sub render_signalmap {
   my( $self, $configuration ) = @_;
 
   my $row_height = 60;
@@ -216,6 +249,7 @@ sub RENDER_signalmap {
 	}) );
       }
 
+
   # Draw wiggly plot -------------------------------------------------
   foreach my $f (@features) {
     # keep within the window we're drawing
@@ -237,9 +271,38 @@ sub RENDER_signalmap {
     $self->push( $Glyph );
   } # END loop over features
 
-  $configuration->{'offset'} += $row_height +9;
+
+  # Add line of text -------------------------------------------
+  my @res_analysis = $self->get_text_width( 0, $configuration->{'track_name'},
+					    '', 'font'=>$fontname_i, 
+					    'ptsize' => $fontsize_i );
+
+  $self->push( new Sanger::Graphics::Glyph::Text({
+	'text'      => $configuration->{'track_name'},
+        'height'    => $textheight_i,
+	'width'     => $res_analysis[2],
+        'font'      => $fontname_i,
+        'ptsize'    => $fontsize_i,
+        'halign'    => 'left',
+        'valign'    => 'bottom',
+	'colour'    => $colour,
+	'y'         => $offset + $row_height,
+	'x'         => 1,
+	'absolutey' => 1,
+	'absolutex' => 1,
+    }) );
+  
+  $self->push( new Sanger::Graphics::Glyph::Space({
+        'height'    => 9,
+	'width'     => 1,
+        'y'         => $offset + $row_height + $textheight_i,
+        'x'         => 0,
+	'absolutey' => 1,  # puts in pix rather than bp
+	'absolutex' => 1,
+		  }));
+
+  $configuration->{'offset'} += $row_height + $textheight_i +9;
   return 1;
 }   # END RENDER_signalmap
-
 
 1;
