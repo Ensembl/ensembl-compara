@@ -98,7 +98,6 @@ sub start_server {
   my $command = $self->start_command;
   my $start = `$command`;
 
-  $self->message("Ensembl is up to date", "green");
 }
 
 sub stop_server {
@@ -191,6 +190,9 @@ sub update_log {
     $status = "critical";
   }
   my $event = { date => time, status => $status };
+  if ($status eq "ok") {
+    $self->message("Ensembl is up to date", "green");
+  }
   $self->log_event($event);
   $self->log->save;
 }
