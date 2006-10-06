@@ -1353,7 +1353,8 @@ sub create_genetree_image {
 
   my $image  = $object->new_image( $tree, $wuc, [$object->stable_id] );
 #  $image->cacheable   = 'yes';
-  $image->image_name  = 'genetree-'.($object->param('image_width')).'-'.$object->stable_id;
+  $image->image_type  = 'genetree';
+  $image->image_name  = ($object->param('image_width')).'-'.$object->stable_id;
   $image->imagemap           = 'yes';
   return $image;
 }     
