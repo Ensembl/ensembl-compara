@@ -129,7 +129,11 @@ foreach my $sp ( @species ) {
   foreach my $db_name ( qw(ENSEMBL_DB ENSEMBL_VEGA ENSEMBL_OTHERFEATURES ENSEMBL_CDNA) ) {
     next unless $tree->{'databases'}->{$db_name}{'NAME'};
     my $dbh = $SD->db_connect( $tree, $db_name );
-    my %analyses = (0=>'Coordinatesystems', map {@$_} @{$dbh->selectall_arrayref("select analysis_id,logic_name from analysis")});
+    my %analyses = (0=>'Coordinatesystems', map {@$_} @{$dbh->selectall_arrayref(
+"select a.analysis_id, concat( a.logic_name, if( isnull(ad.analysis_id),'****NO DESCRIPTION****',
+  concat( '(',if(ad.displayable,'**','--'),display_label,')' )) )
+   from analysis as a left join analysis_description as ad on a.analysis_id = ad.analysis_id"
+)});
     my %used     = map {($_=>1)} keys %analyses;
     foreach my $K ( sort keys %queries ) {
       my $results = $dbh->selectall_arrayref( $queries{$K} );
