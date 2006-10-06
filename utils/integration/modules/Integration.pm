@@ -58,6 +58,7 @@ sub checkout {
 
 sub rollback {
   my $self = shift;
+  warn "ROLLING BACK to previous version";
   $self->stop_server;
   foreach my $task (@{ $self->rollback_tasks }) {
     $task->rollback;
