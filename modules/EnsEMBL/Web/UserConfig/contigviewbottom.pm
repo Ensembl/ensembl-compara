@@ -25,7 +25,6 @@ sub init {
         variation variation_affy100 variation_affy500
         genotyped_variation_line 
         histone_modifications
-        signal_map
         trna   cpg eponine marker operon rnai ex_profile qtl ep1_h ep1_s
         first_ef
         all_affy 
@@ -102,7 +101,6 @@ sub init {
          [ 'variation_affy100'        => 'Affy 100k SNP'  ],
          [ 'variation_affy500'        => 'Affy 500k SNP'  ],
          [ 'histone_modifications'       => 'Histone modifications'  ],
-         [ 'signal_map'               => 'Signal map'  ],
          [ 'glovar_snp'               => 'Glovar SNPs' ], ## not ready for prime time yet
         #[ 'glovar_trace'   => 'Glovar traces'], ## not ready for prime time yet
          [ 'trna'                     => 'tRNA'        ],
@@ -427,7 +425,7 @@ sub init {
       'on'  => "off",
       'bump_width' => 0,
       'dep' => 0.1,
-      'pos' => '4527',
+      'pos' => '4528',
       'str' => 'r',
       'col' => 'blue',
       'compact'  => 1,
@@ -437,19 +435,6 @@ sub init {
       'available'=> 'databases ENSEMBL_FUNCGEN',  
     }, 
 
-   'signal_map' => {
-      'on'  => "off",
-      'bump_width' => 0,
-      'dep' => 0.1,
-      'pos' => '4528',
-      'str' => 'r',
-      'col' => 'blue',
-      'compact'     => 1,
-      #'key' => 'Nimblegen_CHIP2_data',  # name of a subset of experimental chips
-      'track_label' => 'Signal map',
-      'glyphset'    => 'signal_map',
-      'available'=> 'databases ENSEMBL_FUNCGEN', 
-    }, 
 
    'genotyped_variation_line' => {
       'on'  => "off",
