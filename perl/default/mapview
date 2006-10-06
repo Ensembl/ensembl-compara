@@ -3,6 +3,6 @@
 package mapview;
 
 use EnsEMBL::Web::Document::WebPage;
-EnsEMBL::Web::Document::WebPage::simple( 'Chromosome' );
+simple_webpage( 'Chromosome' );
 
 1;
