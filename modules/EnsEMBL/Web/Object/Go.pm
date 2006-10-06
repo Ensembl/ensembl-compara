@@ -13,6 +13,37 @@ sub acc_id  { return $_[0]->Obj->{'acc_id'} if $_[0]->Obj->{'acc_id'}; }
 sub name  { return $_[0]->Obj->{'term'}->name if $_[0]->Obj->{'term'}; }
 sub families { return $_[0]->Obj->{'families'} if $_[0]->Obj->{'families'};}
 
+sub count_genes {
+  my( $self, $id ) = @_;
+  return scalar $self->db_entry_adaptor->list_gene_ids_by_extids($id);
+}
+
+sub load_genes {
+  my( $self, $id ) = @_;
+  my $acc_id = $self->acc_id;
+  unless( $self->Obj->{'families'}{$acc_id} ) { 
+    my $ga  = $self->gene_adaptor;
+    my $fa  = $self->family_adaptor;
+    my $array_ref = [];
+    my @genes = $self->db_entry_adaptor->list_gene_ids_by_extids($acc_id);
+    foreach my $gene (@genes) {
+      my $subarray_ref = [];
+      my $gene_obj = $ga->fetch_by_dbID($gene);
+      push (@$subarray_ref, $gene_obj);
+      if($self->param('display')) {
+        my $fam_obj = $fa->fetch_by_Member_source_stable_id( 'ENSEMBLGENE', $gene_obj->stable_id );
+        push (@$subarray_ref, $fam_obj->[0]);
+      }
+      push (@$array_ref, $subarray_ref);
+    }
+    $self->Obj->{'families'}{$acc_id} = $array_ref;
+  } 
+  return $self->Obj->{'families'}{$acc_id};
+}
+
+sub db_entry_adaptor { return $_[0]->Obj->{_db_entry_adaptor} ||= $_[0]->database('core')->get_DBEntryAdaptor(); }
+sub gene_adaptor     { return $_[0]->Obj->{_gene_adaptor}     ||= $_[0]->database('core')->get_GeneAdaptor(); }
+sub family_adaptor   { return $_[0]->Obj->{_family_adaptor}   ||= $_[0]->database('compara')->get_FamilyAdaptor(); }
 sub iterator { 
     my $graph = $_[0]->Obj->{'graph'};
     my $iterator = $graph->create_iterator();
@@ -47,16 +78,22 @@ sub get_geneinfo {
   my $array_ref = $_[0]->Obj->{'families'}{$acc_id};
   my $results = [];
   
+  my $go_map = $_[0]->database('core')->dbc->db_handle->selectall_arrayref(
+    'select distinct t.gene_id, gx.linkage_type
+  from transcript as t, translation as tr,
+       object_xref as ox, go_xref as gx,
+       xref as x, external_db as ed
+ where ed.db_name="GO" and ed.external_db_id=x.external_db_id and
+       x.dbprimary_acc = ? and x.xref_id = ox.xref_id and
+       ox.ensembl_id = tr.translation_id and tr.transcript_id = t.transcript_id and
+       ox.object_xref_id = gx.object_xref_id', {}, $acc_id
+  );
+  my %go_evidence;
+  foreach( @$go_map ) { push @{$go_evidence{$_->[0]}},$_->[1]; }
   foreach my $subarray_ref (@$array_ref) {
     my @subarray = @$subarray_ref;
     my $gene = $subarray[0];
-    my $ev = '???';
-    foreach my $dbl( @{$gene->get_all_DBLinks} ){
-        next if ! $dbl->isa('Bio::EnsEMBL::GoXref');
-        next if $dbl->display_id ne $acc_id;
-        $ev = join( ',', @{$dbl->get_all_linkage_types} );
-        last;
-    }
+    my $ev = $go_evidence{ $gene->dbID } ? join( ', ', @{$go_evidence{ $gene->dbID }}) : '???';
     push @$results, {
         'stable_id'     => $gene->stable_id,
         'evidence'      => $ev,

@@ -28,8 +28,7 @@ sub goview {
     }
      $self->initialize_zmenu_javascript;
      $self->add_panel( $panel );
-  }
-  else {
+  } else {
     ## Panel 1 - initial/search view
     if( $panel = $self->new_panel( 'Information',
         'code'    => "info#", 'caption' => 'Ensembl GO Search' ) ) {
