@@ -13,13 +13,16 @@ use Integration::Task::Checkout;
 use Integration::Task::Move;
 use Integration::Task::Mkdir;
 use Integration::Task::Delete;
+use YAML qw(LoadFile);
 
-my $checkout_location = "./checkout";
-my $htdocs_location = "/ensemblweb/head/checkout/sanger-plugins/head/htdocs";
-my $cvs_repository = "cvs.sanger.ac.uk";
-my $cvs_root = "/nfs/ensembl/cvsroot/";
-my $release = "branch-ensembl-40";
-my $cvs_username = "mw4";
+my $config_file = "checkout/sanger-plugins/head/conf/deploy.yml"; 
+my $config = LoadFile($config_file);
+
+my $checkout_location = $config->{checkout_location}; 
+my $htdocs_location = $config->{htdocs_location}; 
+my $cvs_repository = $config->{repository}; 
+my $cvs_root = $config->{root}; 
+my $cvs_username = $config->{username}; 
 
 my $integration = Integration->new(( htdocs => $htdocs_location ));
 
