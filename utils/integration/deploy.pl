@@ -100,7 +100,7 @@ my $copy_task = Integration::Task::Copy->new((
                            ));
 
 my $apache_copy_task = Integration::Task::Copy->new((
-                             source      => "support/src", 
+                             source      => "/ensemblweb/head/src", 
                              destination => "checkout/src"
                            ));
 
