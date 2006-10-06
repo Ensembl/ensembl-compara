@@ -74,10 +74,14 @@ sub test_results {
   my $total = 0;
   my $passed = 0;
   my $failed = 0;
+  my $critical = 0;
   foreach my $test (@{ $self->server->tests }) {
     $total++;
     if ($test->did_fail) {
       $failed++;
+      if ($test->critical) {
+        $critical++;
+      }
     } else {
       $passed++;
     }
@@ -86,6 +90,7 @@ sub test_results {
   $html .= "Tests run: $total<br />\n";
   $html .= "Tests passed: $passed<br />\n";
   $html .= "Tests failed: $failed<br />\n";
+  $html .= "Critical failures: $critical<br />\n";
   return $html;
 }
 
