@@ -121,6 +121,25 @@ sub name{
 }
 
 
+=head2 get_short_name
+
+  Arg [1]    : (optional) string $value
+  Example    : $gdb->name('Homo sapiens');
+  Description: The name of this genome in the Gspe ('G'enera
+               'spe'cies) format.
+  Returntype : string
+  Exceptions : none
+  Caller     : general
+
+=cut
+
+sub get_short_name {
+  my $self = shift;
+  my $name = $self->name;
+  $name =~  s/(\S)\S+\s(\S{3})\S+/$1$2/;
+  return $name;
+}
+
 
 =head2 dbID
 
