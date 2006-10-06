@@ -1,7 +1,9 @@
 package ExaLead::QueryParameter;
 use strict;
 
+### Encapsulates the exalead XML <QueryParameter /> element
 sub new {
+### c
   my( $class, $name, $value ) = @_;
   my $self = {
     'name'   => $name,
@@ -11,7 +13,13 @@ sub new {
   return $self;
 }
 
-sub name  :lvalue { $_[0]->{'name'};    } # get/set string
-sub value :lvalue { $_[0]->{'value'};   } # get/set string
+sub name  :lvalue {
+### a
+  $_[0]->{'name'};
+}
+sub value :lvalue {
+### a
+  $_[0]->{'value'};
+}
 
 1;

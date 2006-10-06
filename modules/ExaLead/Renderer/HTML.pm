@@ -72,9 +72,11 @@ sub _render_text {
 sub _render_group {
   my( $self, $group ) = @_;
   if( $group->link( 'reset' ) ) {
+    my $name = $group->name ;
+    $name =~ s/answergroup\.//;
     return sprintf qq(<dt><a href="%s">%s</a></dt>\n),
       $group->link( 'reset' )->URL,
-      CGI::escapeHTML( $group->name )
+      CGI::escapeHTML( $name )
 
   } else {
     return sprintf '<dt>'.CGI::escapeHTML( $group->name )."</dt>\n";
@@ -127,7 +129,7 @@ sub _render_hit {
     $hit->field('title')->getHighlighted, $extra,
     $hit->field('description')->getHighlighted,
     join( '&nbsp;&nbsp; ',
-      map { '<strong>'.CGI::escapeHTML( $_->name ).'</strong>: '.
+      map { '<strong>'.CGI::escapeHTML( $_->name =~ /answergroup\.(.*)/?$1:$_->name ).'</strong>: '.
             $self->_render_hitcats( $_->children ) } $hit->groups );
 }
 

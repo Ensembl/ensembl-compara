@@ -2,6 +2,7 @@ package ExaLead::Category;
 use strict;
 
 sub new {
+### c
   my( $class, $name, $count, $gcount, $state ) = @_;
   my $self = {
     'name'     => $name,
@@ -15,14 +16,40 @@ sub new {
   return $self;
 }
 
-sub name   :lvalue { $_[0]->{'name'};     } # get/set string
-sub count  :lvalue { $_[0]->{'count'};    } # get/set int
-sub gcount :lvalue { $_[0]->{'gcount'};   } # get/set int
-sub children       { @{$_[0]->{'children'}}; } # get arrayref
-sub links          { %{$_[0]->{'links'}};    } # get hashref
+sub name   :lvalue {
+### a
+  $_[0]->{'name'};
+}
+sub count  :lvalue {
+### a
+  $_[0]->{'count'};
+}
+sub gcount :lvalue {
+### a
+  $_[0]->{'gcount'};
+}
+sub children       {
+### a
+### returns the child arrayref as an array of {{Exalead::Category}} objects
+  @{$_[0]->{'children'}};
+} # get arrayref
+sub links          {
+### a
+  %{$_[0]->{'links'}};
+} # get hashref
 
-sub addLink        { $_[0]->{'links'}{$_[1]} = $_[2]; } # set string,string
-sub link   :lvalue { $_[0]->{'links'}{$_[1]}; }
-sub addChildren    { $_[0]->{'children'}     = $_[1]; } # set arrayref of E::C
+sub addLink        {
+### adds a link to the links hash
+  $_[0]->{'links'}{$_[1]} = $_[2];
+}
+sub link   :lvalue {
+### a
+  $_[0]->{'links'}{$_[1]};
+}
+sub addChildren    {
+### a
+### Sets the childrens arrayref to an arrayref of {{Exalead::Category}} objects
+  $_[0]->{'children'}    = $_[1];
+}
 
 1;
