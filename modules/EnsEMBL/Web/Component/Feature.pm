@@ -294,7 +294,8 @@ sub key_to_pointers {
         $wuc->container_width(25);
         my $image    = $object->new_image($details, $wuc);
         $image->cacheable  = 'no';
-        $image->image_name = "pointer-$ftype";
+        $image->image_type = 'pointer';
+        $image->image_name = $ftype;
         $html .= $image->render;
 
         $html .= "</td><td>$ftype</td></tr>\n";

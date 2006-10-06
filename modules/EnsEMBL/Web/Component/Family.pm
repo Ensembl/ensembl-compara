@@ -21,7 +21,8 @@ sub karyotype_image {
   my $wuc = $object->get_userconfig( 'Vkaryotype' );
   my $image    = $object->new_karyotype_image();
   $image->cacheable  = 'yes';
-  $image->image_name = "family-$species-".$object->stable_id;
+  $image->image_type = "family";
+  $image->image_name = "$species-".$object->stable_id;
   $image->imagemap = 'yes';
   unless( $image->exists ) {
     my $genes   = $object->get_all_genes;

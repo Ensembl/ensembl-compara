@@ -51,7 +51,8 @@ sub chr_map {
   my $image    = $object->new_karyotype_image();
   $image->imagemap           = 'no';
   $image->cacheable          = 'yes';
-  $image->image_name         = 'mapview-'.$species.'-'.$chr_name;
+  $image->image_type         = 'mapview';
+  $image->image_name         = $species.'-'.$chr_name;
   my $script = $object->species_defs->NO_SEQUENCE ? 'cytoview' : 'contigview';
   $image->set_button('form', 'id'=>'vclick', 'URL'=>"/$species/$script", 'hidden'=> $hidden);
   $image->add_tracks($object, $config_name);
@@ -321,7 +322,8 @@ sub synteny_map {
     );
     $image->imagemap           = 'yes';
     # $image->cacheable          = 'yes';
-    $image->image_name         = 'syntenyview-'.$species.'-'.$chr.'-'.$other;
+    $image->image_type         = 'syntenyview';
+    $image->image_name         = $species.'-'.$chr.'-'.$other;
 
     $panel->add_image( $image->render, $image->{'width'} );
     foreach my $o (@$raw_data) { ## prevents memory leak!
@@ -348,23 +350,27 @@ sub syn_matches {
         );
     my $data = $object->get_synteny_matches;
     my ($sp_links, $arrow, $other_links, $data_row);
+    my $old_id = '';
     foreach my $row ( @$data ) {
 
-        my $sp_stable_id        = $$row{'sp_stable_id'};
-        my $sp_synonym          = $$row{'sp_synonym'};
-        my $sp_length           = $$row{'sp_length'};
-        my $other_stable_id     = $$row{'other_stable_id'};
-        my $other_synonym       = $$row{'other_synonym'};
-        my $other_length        = $$row{'other_length'};
-        my $other_chr           = $$row{'other_chr'};
-        my $homologue_no        = $$row{'homologue_no'};
+        my $sp_stable_id        = $row->{'sp_stable_id'};
+        my $sp_synonym          = $row->{'sp_synonym'};
+        my $sp_length           = $row->{'sp_length'};
+        my $other_stable_id     = $row->{'other_stable_id'};
+        my $other_synonym       = $row->{'other_synonym'};
+        my $other_length        = $row->{'other_length'};
+        my $other_chr           = $row->{'other_chr'};
+        my $homologue_no        = $row->{'homologue_no'};
 
         $arrow = $homologue_no ? '-&gt;' : '';
-
-        $sp_links = qq(<a href="/$species/geneview?gene=$sp_stable_id"><strong>$sp_synonym</strong></a> \($sp_length\)<br />[<a href="/$species/contigview?gene=$sp_stable_id">ContigView</a>]);
+        my $sp_links = '';
+        if( $old_id ne $sp_stable_id ) { 
+          $sp_links = qq(<a href="/$species/geneview?gene=$sp_stable_id"><strong>$sp_synonym</strong></a> \($sp_length\)<br />[<a href="/$species/contigview?gene=$sp_stable_id">ContigView</a>]);
+          $old_id = $sp_stable_id;
+        }
         if( $other_stable_id ) {
           $other_links = qq(<a href="/$other/geneview?gene=$other_stable_id"><strong>$other_synonym</strong></a><br />);
-          $other_links .= "($other_length)<br />";
+          $other_links .= "($other_chr: $other_length)<br />";
           $other_links .= qq([<a href="/$other/contigview?gene=$other_stable_id" title="Chr $other_chr: $other_length">ContigView</a>] [<a href="/$species/multicontigview?gene=$sp_stable_id;s1=$other;g1=$other_stable_id">MultiContigView</a>]);
         } else {
           $other_links = 'No homologues';
@@ -438,7 +444,8 @@ sub kv_display {
   my $image    = $object->new_karyotype_image();
   $image->imagemap    = 'yes';
   $image->cacheable   = 'no';
-  $image->image_name  = 'karyoview-'.$object->species.'-'.$object->chr_name;
+  $image->image_type  = 'karyoview';
+  $image->image_name  = $object->species.'-'.$object->chr_name;
   ## Add features
   my @params = $object->param;
   my $tracks = 0;

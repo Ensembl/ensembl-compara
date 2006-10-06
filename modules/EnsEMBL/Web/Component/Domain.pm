@@ -48,7 +48,8 @@ sub karyotype_image {
   my $wuc   = $data->get_userconfig( 'Vkaryotype' );
   my $image = $data->new_karyotype_image();
   $image->cacheable  = 'yes';
-  $image->image_name = "domain-$species-".$data->domainAcc;
+  $image->image_type = 'domain';
+  $image->image_name = "$species-".$data->domainAcc;
   $image->imagemap = 'yes';
   unless( $image->exists ) { 
     my $genes   = $data->get_all_genes;
