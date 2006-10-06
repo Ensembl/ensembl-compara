@@ -12,9 +12,10 @@ my $type = "gene";
 my $ident = "ENSG00000164823";
 
 my $zmenu = EnsEMBL::Web::Interface::ZMenu->new( ( 
-                   title => $title,
-                   type => $type,
-                   ident => $ident
+                    title => $title,
+                     type => $type,
+                    ident => $ident,
+              placeholder => 'yes'
                  ) );
 
 isa_ok($zmenu, "EnsEMBL::Web::Interface::ZMenu");
@@ -23,47 +24,16 @@ ok($zmenu->title eq $title);
 ok($zmenu->type eq $type);
 ok($zmenu->ident eq $ident);
 
-my @content = ( 
-                { 
-                  type => 'text',
-                  value => 'BP: 90983269-91009271'
-                },
-                { 
-                  type => 'text',
-                  value => 'Length: 26003'
-                },
-                { 
-                  type => 'text',
-                  value => 'Protein coding'
-                },
-                {
-                  name => 'geneview link',
-                  type => 'link',
-                  value => 'http://www.ensembl.org/Homo_sapiens/geneview?gene=ENSG00000164823;db=core',
-                  text => '<a href="{{value}}">View</a>'
-                }
-              );
+isa_ok($zmenu->add_list->[0], 'EnsEMBL::Web::Interface::ZMenuItem::Placeholder');
+ok($zmenu->add_list->[0]->type eq 'placeholder'); 
+ok($zmenu->add_list->[0]->name eq 'placeholder'); 
 
-$zmenu->content(\@content);
-my @zmenu_content = @{ $zmenu->content };
-ok($zmenu_content[0]->{type} eq 'text'); 
-ok($zmenu_content[0]->{value} eq 'BP: 90983269-91009271'); 
+$zmenu->add_text('new text', 'Some text');
+isa_ok($zmenu->add_list->[1], 'EnsEMBL::Web::Interface::ZMenuItem::Text');
+ok($zmenu->add_list->[1]->type eq 'text'); 
+ok($zmenu->add_list->[1]->name eq 'new text'); 
+ok($zmenu->add_list->[1]->text eq 'Some text'); 
 
-my %named_content = %{ $zmenu->content_with_name('geneview link') }; 
-ok($named_content{type} eq 'link');
-ok($named_content{value} eq 'http://www.ensembl.org/Homo_sapiens/geneview?gene=ENSG00000164823;db=core');
+$zmenu->remove_placeholder();
 
-ok ($zmenu->size == 4);
-$zmenu->add_content({ name => 'gene id', 
-                      type => 'text',
-                      value => 'ENS12398129378' });
-ok ($zmenu->size == 5);
-
-$zmenu->add_text({ name => 'another gene id', value => 'ENS12937129378' });
-ok ($zmenu->size == 6);
-
-@zmenu_content = @{ $zmenu->content };
-%named_content = %{ $zmenu_content[5] };
-ok ($named_content{type} eq 'text');
-ok ($named_content{name} eq 'another gene id');
-ok ($zmenu->overview eq $zmenu->title);
+ok($zmenu->remove_list->[0] eq 'placeholder');

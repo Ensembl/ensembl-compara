@@ -24,7 +24,11 @@ my $locator_fail = EnsEMBL::Web::Tools::PluginLocator->new((
                                suffix    => "Interface::ZMenu",
                                method    => "ident"
                                                   ));
-ok($locator_fail->include == 0);
+
+### Should return true even if modules failed to load. Anything calling
+### {{include}} should check for {{warnings}} if it's important that
+### a particular module loaded.
+ok($locator_fail->include == 1);
 
 foreach my $warning (@{ $locator_fail->warnings }) {
   ok($warning =~ /Can't locate EnsEMBL\/NoNoNo\/Interface\/ZMenu.pm/);
