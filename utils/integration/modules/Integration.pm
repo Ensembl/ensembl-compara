@@ -76,7 +76,7 @@ sub configure {
   my $self = shift;
 
   foreach my $task (@{ $self->rollback_tasks }) {
-    $task->perform;
+    $task->process;
   }
 
   $self->message("Configuring new checkout", "yellow");
