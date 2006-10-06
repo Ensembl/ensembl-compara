@@ -13,6 +13,7 @@ use Integration::Task::Checkout;
 use Integration::Task::Move;
 use Integration::Task::Mkdir;
 use Integration::Task::Delete;
+use Integration::Task::Rollback;
 use Integration::Task::Test::Ping;
 use YAML qw(LoadFile);
 use Carp;
@@ -111,6 +112,13 @@ $integration->add_checkout_task(Integration::Task::Move->new((
 
 $integration->checkout;
 
+my $rollback_task = Integration::Task::Rollback->new((
+                             source      => "/ensemblweb/head/checkout",
+                             prefix      => "rollback_"
+                           ));
+
+$integration->add_rollback_task($rollback_task);
+
 my $copy_task = Integration::Task::Copy->new((
                              source      => "support/Plugins.pm", 
                              destination => "checkout/conf"
@@ -126,12 +134,6 @@ $integration->add_configuration_task($apache_copy_task);
 $integration->add_configuration_task(Integration::Task::Mkdir->new((source => "checkout/img")));
 $integration->add_configuration_task(Integration::Task::Mkdir->new((source => "checkout/logs")));
 $integration->add_configuration_task(Integration::Task::Mkdir->new((source => "checkout/tmp")));
-
-my $rollback_task = Integration::Task::Rollback->new((
-                             source      => "/ensemblweb/head/checkout"
-                           ));
-
-$integration->add_configuration_task($rollback_task);
 
 my $checkout_copy_task = Integration::Task::Copy->new((
                              source      => "checkout", 
@@ -162,15 +164,14 @@ $integration->test;
 
 if ($integration->critical_fail) {
   warn "CRITICAL FAILURE: " . $integration->test_result . "% pass rate";
-  $integration->stop_server;
-  $rollback_task->rollback;
-  $integration->start_server;
+  $integration->rollback;
+} else {
+  $rollback_task->purge;
 }
 
 if ($integration->test_result < 100) {
   warn "TESTS FAILED: " . $integration->test_result . "% pass rate";
 }
 
-
 $integration->generate_output;
-
+$integration->update_log;
