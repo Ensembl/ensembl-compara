@@ -110,7 +110,8 @@ sub new {
       for my $strand (@strands_to_show) {
 	my $tmp_gs_store = {};
 	for my $row ($Config->subsections( 1 )) {
-	  next unless (($Config->get($row, 'on')||"") eq "on");
+	  next unless (($Config->get($row, 'on')||"") eq "on");  ## Skip if this is turned off
+          next unless $Config->is_available_artefact($row);      ## Skip if not available for this species!
 	  my $str_tmp = $Config->get($row, 'str');
 	  next if (defined $str_tmp && $str_tmp eq "r" && $strand != -1);
 	  next if (defined $str_tmp && $str_tmp eq "f" && $strand != 1);
@@ -128,8 +129,7 @@ sub new {
 	    eval { # Generic glyphsets need to have the type passed as a fifth parameter...
 	      $GlyphSet = new $classname( $Container, $Config, $self->{'highlights'}, $strand, { 'config_key' => $row } );
 	    };
-	  }
-	  else {
+	  } else {
 	    $classname = qq($self->{'prefix'}::GlyphSet::$row);
 	    next unless $self->dynamic_use( $classname );
 	    ## generate a set for both strands
@@ -150,15 +150,10 @@ sub new {
 	## install the glyphset managers, we've just cached the ones we need...
 
 	foreach my $manager ( reverse sort keys %manager_cache ) {
-
-	  next unless $self->dynamic_use(
-					 $self->{'prefix'}.qq(::GlyphSet::$manager)
-					);
+	  next unless $self->dynamic_use( $self->{'prefix'}.qq(::GlyphSet::$manager) );
 	  my $classname = $self->{'prefix'}.qq(::GlyphSetManager::$manager);
 	  next unless $self->dynamic_use( $classname );
-	  my $gsm = new $classname(
-				   $Container, $Config, $self->{'highlights'}, $strand
-				  );
+	  my $gsm = new $classname( $Container, $Config, $self->{'highlights'}, $strand );
 
 	  for my $glyphset (sort { $a->managed_name cmp $b->managed_name } $gsm->glyphsets()) {
 	    my $row = $glyphset->managed_name();
