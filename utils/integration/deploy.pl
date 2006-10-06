@@ -13,6 +13,7 @@ use Integration::Task::Checkout;
 use Integration::Task::Move;
 use Integration::Task::Mkdir;
 use Integration::Task::Delete;
+use Integration::Task::Test::Ping;
 use YAML qw(LoadFile);
 use Carp;
 
@@ -30,6 +31,8 @@ my $cvs_repository = $config->{repository};
 my $cvs_root = $config->{root}; 
 my $cvs_username = $config->{username}; 
 my $log_location = $config->{log_location}; 
+my $proxy = $config->{proxy}; 
+my $server = $config->{server}; 
 
 my $integration = Integration->new(( 
                                     htdocs => $htdocs_location,
@@ -141,6 +144,25 @@ $integration->configure;
 $integration->start_command('/ensemblweb/head/checkout/ctrl_scripts/start_server');
 $integration->start_server;
 
+my $server_up_test = Integration::Task::Test::Ping->new((
+                                               target   => $server,
+                                               proxy    => $proxy,
+                                               search   => "Ensembl",
+                                               name     => "Server start",
+                                               critical => "yes"
+                                                       ));
+
+$integration->add_test_task($server_up_test);
+
 $integration->test;
+
+if ($integration->critical_fail) {
+  warn "CRITICAL FAILURE: " . $integration->test_result . "% pass rate";
+}
+
+if ($integration->test_result < 100) {
+  warn "TESTS FAILED: " . $integration->test_result . "% pass rate";
+}
+
 $integration->generate_output;
 
