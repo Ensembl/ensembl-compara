@@ -127,7 +127,11 @@ $integration->add_configuration_task(Integration::Task::Mkdir->new((source => "c
 $integration->add_configuration_task(Integration::Task::Mkdir->new((source => "checkout/logs")));
 $integration->add_configuration_task(Integration::Task::Mkdir->new((source => "checkout/tmp")));
 
-$integration->add_configuration_task(Integration::Task::Delete->new((source => "/ensemblweb/head/checkout")));
+my $rollback_task = Integration::Task::Rollback->new((
+                             source      => "/ensemblweb/head/checkout"
+                           ));
+
+$integration->add_configuration_task($rollback_task);
 
 my $checkout_copy_task = Integration::Task::Copy->new((
                              source      => "checkout", 
@@ -147,7 +151,7 @@ $integration->start_server;
 my $server_up_test = Integration::Task::Test::Ping->new((
                                                target   => $server,
                                                proxy    => $proxy,
-                                               search   => "Ensembl",
+                                               search   => "Mammalian genomes",
                                                name     => "Server start",
                                                critical => "yes"
                                                        ));
@@ -158,11 +162,15 @@ $integration->test;
 
 if ($integration->critical_fail) {
   warn "CRITICAL FAILURE: " . $integration->test_result . "% pass rate";
+  $integration->stop_server;
+  $rollback_task->rollback;
+  $integration->start_server;
 }
 
 if ($integration->test_result < 100) {
   warn "TESTS FAILED: " . $integration->test_result . "% pass rate";
 }
+
 
 $integration->generate_output;
 
