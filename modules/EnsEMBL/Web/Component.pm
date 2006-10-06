@@ -6,9 +6,24 @@ $Data::Dumper::Indent = 3;
 use EnsEMBL::Web::Form;
 use HTML::Entities;
 use HTML::Parser;
+use EnsEMBL::Web::File::Text;
+use Exporter;
 
-@EnsEMBL::Web::Component::ISA = qw(EnsEMBL::Web::Root);
+our @ISA = qw(EnsEMBL::Web::Root Exporter);
+our @EXPORT_OK = qw(cache cache_print);
+our @EXPORT    = @EXPORT_OK;
 
+sub cache {
+  my( $panel, $obj, $type, $name ) = @_;
+  my $cache = new EnsEMBL::Web::File::Text( $obj->species_defs );
+  $cache->set_cache_filename( $type, $name );
+  return $cache;
+}
+
+sub cache_print {
+  my( $cache, $string_ref ) =@_;
+  $cache->print( $$string_ref ) if $string_ref;
+}
 
 sub format_das_panel {
   my( $panel, $object,$status, $URL ) = @_;
