@@ -206,7 +206,7 @@ sub get_homology_matches{
       my ($homologue, $homology_desc, $homology_subtype) = @{$homology};
       next unless ($homology_desc =~ /$homology_description/);
       my $homologue_id = $homologue->stable_id;
-      my $homology_desc= $desc_mapping{$homology_desc};   # mapping to more readable form
+         $homology_desc= $desc_mapping{$homology_desc};   # mapping to more readable form
       $homology_desc= "no description" unless (defined $homology_desc);
       $homology_list{$displayspp}{$homologue_id}{'homology_desc'}    = $homology_desc ;
       $homology_list{$displayspp}{$homologue_id}{'homology_subtype'} = $homology_subtype ;
@@ -231,7 +231,9 @@ sub get_homology_matches{
         $homology_list{$displayspp}{$homologue_id}{'display_id'} = $display_id;
         $homology_list{$displayspp}{$homologue_id}{'description'} = $gene_spp->description || 'No description';
         $homology_list{$displayspp}{$homologue_id}{'location'}= $gene_spp->feature_Slice->name;
-        $database_spp->{'core'}->dbc->disconnect_if_idle();
+        if( $spp ne $self->{'species'} ) { 
+          $database_spp->{'core'}->dbc->disconnect_if_idle();
+        }
       }
       $order++;
     }
