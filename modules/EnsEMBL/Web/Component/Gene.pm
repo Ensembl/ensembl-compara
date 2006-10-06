@@ -623,7 +623,7 @@ sub orthologues {
     my $ALIGNVIEW = 0;
     my $matching_orthologues = 0;
     my %SP = ();
-    foreach my $species (keys %orthologue_list) {
+    foreach my $species (sort keys %orthologue_list) {
       $html .= sprintf( qq(
         <tr>
           <th rowspan="@{[scalar(keys %{$orthologue_list{$species}})]}"><em>%s</em></th>), $species );
@@ -681,8 +681,6 @@ sub orthologues {
 
 sub paralogues {
   my( $panel, $gene ) = @_;
-
-
   # make the paralogues panel a collapsable one
   my $label  = 'Paralogue Prediction';
   my $status = 'status_gene_paralogues';
@@ -801,74 +799,6 @@ sub das {
    my $URL = _flip_URL( $object, $status );
    EnsEMBL::Web::Component::format_das_panel($panel, $object, $status, $URL);
 }
-
-sub paralogues {
-  my( $panel, $gene ) = @_;
-
-  my $paralogue = $gene->get_homology_matches('ENSEMBL_HOMOLOGUES', 'within_species_paralog');
-  return 1 unless $paralogue;
-
-  # make the paralogues panel a collapsable one
-  my $label  = 'Paralogue Prediction';
-  my $status = 'status_gene_paralogues';
-  my $URL    = _flip_URL($gene, $status );
-  if( $gene->param($status) eq 'off' ) {
-    $panel->add_row( $label, '', "$URL=on" );
-    return 0;
-  }
-
-## call table method here
-  my $db = $gene->get_db() ;
-  my %paralogue_list = %{$paralogue};
-  my $html = qq(
-      <p>
-        The following gene(s) have been identified as putative paralogues (within species):
-      </p>
-      <table>);
-  $html .= qq(
-        <tr>
-          <th>Taxonomy Level</th><th>Gene identifier</th>
-        </tr>);
-  my $STABLE_ID = $gene->stable_id; my $C = 1;
-  foreach my $species (sort keys %paralogue_list){
- # foreach my $stable_id (sort keys %{$paralogue_list{$species}}){
-  foreach my $stable_id (sort {$paralogue_list{$species}{$a}{'order'} <=> $paralogue_list{$species}{$b}{'order'}} keys %{$paralogue_list{$species}}){
-
-    my $OBJ = $paralogue_list{$species}{$stable_id};
-    my $description = $OBJ->{'description'};
-       $description = "No description" if $description eq "NULL";
-    my $paralogue_subtype = $OBJ->{'homology_subtype'};
-       $paralogue_subtype = "&nbsp;" unless (defined $paralogue_subtype);
-    if($OBJ->{'display_id'}) {
-      (my $spp = $OBJ->{'spp'}) =~ tr/ /_/ ;
-      my $link = qq(/$spp/geneview?gene=$stable_id;db=$db);
-      if( $description =~ s/\[\w+:(\w+)\;\w+:(\w+)\]//g ) {
-        my ($edb, $acc) = ($1, $2);
-        if( $acc ) {
-          $description .= "[".$gene->get_ExtURL_link("Source: $edb ($acc)", $edb, $acc)."]";
-        }
-      }
-      $html .= qq(
-        <tr>
-          <td>$paralogue_subtype</td>
-          <td><a href="$link">$stable_id</a> (@{[ $OBJ->{'display_id'} ]})<br />
-              <span class="small">$description</span></td>
-        </tr>);
-    } else {
-      $html .= qq(
-        <tr>
-          <td>$paralogue_subtype</td>
-          <td>$stable_id<br /><span class="small">$description</span></td>
-        </tr>);
-    }
-  }
-  }
-  $html .= qq(</table>);
-
-  $panel->add_row( 'Paralogue Prediction', $html, "$URL=off" );
-  return 1;
-}
-
 
 sub _flip_URL {
   my( $gene, $code ) = @_;
