@@ -19,6 +19,7 @@ my %Configuration_of;
 my %Tests_of;
 my %TestResult_of;
 my %CriticalFail_of;
+my %Rollback_of;
 my %View_of;
 
 sub new {
@@ -32,6 +33,7 @@ sub new {
   $StartCommand_of{$self} = defined $params{start} ? $params{start} : "";
   $StopCommand_of{$self} = defined $params{stop} ? $params{stop} : "";
   $Configuration_of{$self} = defined $params{configuration} ? $params{configuration} : [];
+  $Rollback_of{$self} = defined $params{rollback} ? $params{rollback} : [];
   $Tests_of{$self} = defined $params{tests} ? $params{tests} : [];
   $TestResult_of{$self} = undef; 
   $CriticalFail_of{$self} = undef; 
@@ -54,6 +56,16 @@ sub checkout {
   return 1;
 }
 
+sub rollback {
+  my $self = shift;
+  $self->stop_server;
+  foreach my $task (@{ $self->rollback_tasks }) {
+    $task->rollback;
+  }
+  $self->message("Build failed: rolled back", "red");
+  $self->start_server;
+}
+
 sub message {
   my ($self, $message, $colour) = @_;
   $self->view->message($message, $colour);
@@ -62,6 +74,10 @@ sub message {
 sub configure {
   ### Performs configuration tasks to setup the integration server.
   my $self = shift;
+
+  foreach my $task (@{ $self->rollback_tasks }) {
+    $task->perform;
+  }
 
   $self->message("Configuring new checkout", "yellow");
 
@@ -138,7 +154,6 @@ sub start_command {
   ### a
   my $self = shift;
   $StartCommand_of{$self} = shift if @_;
-  $self->update_log;
   return $StartCommand_of{$self};
 }
 
@@ -167,7 +182,14 @@ sub log {
 
 sub update_log {
   my $self = shift;
-  my $event = { date => time, status => "ok" };
+  my $status = "ok";
+  if ($self->test_result < 100) {
+    $status = "failed";
+  }
+  if ($self->critical_fail) {
+    $status = "critical";
+  }
+  my $event = { date => time, status => $status };
   $self->log_event($event);
   $self->log->save;
 }
@@ -190,6 +212,18 @@ sub tests {
   my $self = shift;
   $Tests_of{$self} = shift if @_;
   return $Tests_of{$self};
+}
+
+sub rollback_tasks {
+  ### a
+  my $self = shift;
+  $Rollback_of{$self} = shift if @_;
+  return $Rollback_of{$self};
+}
+
+sub add_rollback_task {
+  my ($self, $task) = @_;
+  push @{ $self->rollback_tasks }, $task;
 }
 
 sub test_result {
@@ -243,6 +277,7 @@ sub DESTROY {
   delete $Tests_of{$self};
   delete $TestResult_of{$self};
   delete $CriticalFail_of{$self};
+  delete $Rollback_of{$self};
 }
 
 }
