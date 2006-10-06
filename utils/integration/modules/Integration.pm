@@ -36,8 +36,7 @@ sub checkout {
   $self->message("Checkout in progress.", "red");
 
   foreach my $task (@{ $self->checkout_tasks }) {
-    my @modules = @{ $task->modules };
-    $self->message("Checkout in progress: @modules", "red");
+    $self->message("Checkout in progress", "red");
     $task->process;
   }
 
