@@ -14,9 +14,15 @@ use Integration::Task::Move;
 use Integration::Task::Mkdir;
 use Integration::Task::Delete;
 use YAML qw(LoadFile);
+use Carp;
 
-my $config_file = "checkout/sanger-plugins/head/conf/deploy.yml"; 
-my $config = LoadFile($config_file);
+my $config_file = "./checkout/sanger-plugins/head/conf/deploy.yml"; 
+my $config = undef;
+if (-e $config_file) {
+  $config = LoadFile($config_file);
+} else {
+  croak "Error opening config file: $config_file\n $!";
+}
 
 my $checkout_location = $config->{checkout_location}; 
 my $htdocs_location = $config->{htdocs_location}; 
