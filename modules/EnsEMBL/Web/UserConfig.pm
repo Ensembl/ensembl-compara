@@ -1138,9 +1138,7 @@ sub ADD_ALL_TRANSCRIPTS {
   $self->add_new_track_transcript( 'gsten',     'Genoscope genes', 'genoscope_gene', $POS++, @_ );
   $self->add_new_track_transcript( 'rna',       'ncRNA genes',     'rna_gene',       $POS++, 'available' => 'features NCRNA|MIRNA',      @_ );
   $self->add_new_track_transcript( 'erna',       'e! ncRNA genes', 'rna_gene',   $POS++, 'available' => 'features ensembl_ncRNA', 'legend_type' => 'rna',        @_ );
-  $self->add_new_track_transcript( 'singapore_est',  'Sing. EST genes',       'est_gene',     $POS++, 'available' => 'features singapore_est', @_ );
-  $self->add_new_track_transcript( 'singapore_protein',  'Sing. Protein genes',       'prot_gene',     $POS++, 'available' => 'features singapore_protein', @_ );
-  $self->add_new_track_transcript( 'est',       'EST genes',       'est_gene',       $POS++, 'available' => 'databases ENSEMBL_OTHERFEATURES', @_ );
+
   $self->add_new_track_transcript( 'ciona_dbest_ncbi', "3/5' EST genes (dbEST)", 'estgene', $POS++, @_) ;
   $self->add_new_track_transcript( 'ciona_est_seqc',   "3' EST genes (Kyoto)", 'estgene', $POS++, @_) ;
   $self->add_new_track_transcript( 'ciona_est_seqn',   "5' EST genes (Kyoto)",  'estgene',$POS++, @_) ;
@@ -1159,7 +1157,7 @@ sub ADD_ALL_TRANSCRIPTS {
   $self->add_new_track_transcript( 'oxford_genes', 'Oxford Genes', 'oxford_genes', $POS++, @_ );
   $self->add_new_track_transcript( 'oxford_fgu', 'Oxford FGU Genes', 'oxford_fgu', $POS++, @_ );
   $self->add_new_track_transcript( 'platypus_protein', 'Platypus/Other Genes', 'platypus_protein', $POS++, @_ );
-  $self->add_new_track_transcript( 'medaka_protein',   'Medaka genes',   'medaka_gene',   $POS++, @_ );
+#  $self->add_new_track_transcript( 'medaka_protein',   'Medaka genes',   'medaka_gene',   $POS++, @_ );
   $self->add_new_track_transcript( 'gff_prediction',   'MGP genes',   'medaka_gene',   $POS++, @_ );
 
   $self->add_new_track_transcript( 'dog_protein',   'Dog genes',   'dog_protein',   $POS++, @_ );
@@ -1182,6 +1180,24 @@ sub ADD_ALL_TRANSCRIPTS {
   $self->add_new_track_transcript('vega_igsf', 'IgSF genes', 'vega_gene',
     $POS++, 'glyph' => 'vega_transcript', 'logic_name' => 'otter_igsf',
     'available'=>'features VEGA_GENES_OTTER_IGSF', @_);  
+## OTHER FEATURES DATABASE TRANSCRIPTS....
+  $self->add_new_track_transcript( 'est',       'EST genes',       'est_gene', $POS++,
+    'available' => 'databases_features ENSEMBL_OTHERFEATURES.estgene', @_ );
+
+  $self->add_new_track_transcript( 'medaka_transcriptcoalescer', 'TransCoalescer Genes',     'medaka_genes',$POS++,
+    'available' => "database_features ENSEMBL_OTHERFEATURES.medaka_transcriptcoalescer" , @_ );
+  $self->add_new_track_transcript( 'medaka_genome_project', 'Medaka GP Genes',     'medaka_genes',$POS++,
+    'available' => "database_features ENSEMBL_OTHERFEATURES.medaka_genome_project", @_ );
+  $self->add_new_track_transcript( 'singapore_est', 'Singapore EST Genes', 'est_gene', $POS++,
+     'available' => "database_features ENSEMBL_OTHERFEATURES.singapore_est", @_ );
+  $self->add_new_track_transcript( 'singapore_protein', 'Singapore Protein Genes', 'prot_gene', $POS++,
+     'available' => "database_features ENSEMBL_OTHERFEATURES.singapore_protein", @_ );
+  $self->add_new_track_transcript( 'chimp_cdna', 'Chimp cDNA Genes', 'chimp_genes', $POS++,
+     'available' => "database_features ENSEMBL_OTHERFEATURES.chimp_cdna", @_ );
+  $self->add_new_track_transcript( 'chimp_cdna', 'Human cDNA Genes', 'chimp_genes', $POS++,
+     'available' => "database_features ENSEMBL_OTHERFEATURES.human_cdna", @_ );
+  $self->add_new_track_transcript( 'chimp_est', 'Chimp EST Genes', 'chimp_genes', $POS++,
+     'available' => "database_features ENSEMBL_OTHERFEATURES.chimp_est", @_ );
   return $POS;
 }
 
@@ -1344,10 +1360,44 @@ sub ADD_GENE_TRACKS {
   $self->add_new_track_gene( 'mouse_protein', 'Mouse Protein Genes', 'prot_gene', $POS++, 'gene_col' => '_col',  @_ );
   $self->add_new_track_gene( 'targettedgenewise', 'Targetted Genewise Genes', 'prot_gene', $POS++, 'gene_col' => '_col',  @_ );
   $self->add_new_track_gene( 'cdna_all', 'cDNA Genes', 'prot_gene', $POS++, 'gene_col' => '_col',  @_ );
-  $self->add_new_track_gene( 'singapore_est',     'Singapore EST Genes',     'est_gene',  $POS++, 'database' => 'otherfeatures', 'gene_col' => 'estgene', @_ );
-  $self->add_new_track_gene( 'singapore_protein', 'Singapore Protein Genes', 'prot_gene', $POS++, 'database' => 'otherfeatures', 'gene_col' => '_col', @_ );
+  $self->add_new_track_gene( 'medaka_transcriptcoalescer', 'TransCoalescer Genes',     'medaka_genes',
+    $POS++, 'database' => 'otherfeatures', 'gene_col' => 'transcriptcoalescer',
+    'available' => "database_features ENSEMBL_OTHERFEATURES.medaka_transcriptcoalescer" ,
+    'label_threshold' => 500,
+    @_ );
+  $self->add_new_track_gene( 'medaka_genome_project', 'Medaka GP Genes',     'medaka_genes',
+    $POS++, 'database' => 'otherfeatures', 'gene_col' => 'genome_project',
+    'available' => "database_features ENSEMBL_OTHERFEATURES.medaka_genome_project",
+    'label_threshold' => 500,
+     @_ );
+  $self->add_new_track_gene( 'singapore_est', 'Singapore EST Genes', 'est_gene', $POS++,
+     'database' => 'otherfeatures', 'gene_col' => 'estgene', 
+     'available' => "database_features ENSEMBL_OTHERFEATURES.singapore_est",
+     'label_threshold' => 500,
+     @_ );
+  $self->add_new_track_gene( 'singapore_protein', 'Singapore Protein Genes', 'prot_gene',
+     $POS++, 'database' => 'otherfeatures', 'gene_col' => '_col', 
+     'available' => "database_features ENSEMBL_OTHERFEATURES.singapore_protein",
+     'label_threshold' => 500,
+     @_ );
+  $self->add_new_track_gene( 'chimp_cdna', 'Chimp cDNA Genes', 'chimp_genes', $POS++,
+     'database' => 'otherfeatures', 'gene_col' => 'chimp_cdna', 
+     'available' => "database_features ENSEMBL_OTHERFEATURES.chimp_cdna",
+     'label_threshold' => 500,
+     @_ );
+  $self->add_new_track_gene( 'chimp_cdna', 'Human cDNA Genes', 'chimp_genes', $POS++,
+     'database' => 'otherfeatures', 'gene_col' => 'human_cdna', 
+     'available' => "database_features ENSEMBL_OTHERFEATURES.human_cdna",
+     'label_threshold' => 500,
+     @_ );
+  $self->add_new_track_gene( 'chimp_est', 'Chimp EST Genes', 'chimp_genes', $POS++,
+     'database' => 'otherfeatures', 'gene_col' => 'chimp_est', 
+     'available' => "database_features ENSEMBL_OTHERFEATURES.chimp_est",
+     'label_threshold' => 500,
+     @_ );
   $self->add_new_track_gene( 'estgene', 'EST Genes', 'est_gene', $POS++,
-                             'database' => 'otherfeatures', 'available' => 'databases ENSEMBL_OTHERFEATURES',
+                             'database' => 'otherfeatures',
+                             'available' => 'database_features ENSEMBL_OTHERFEATURES.estgene',
                              'logic_name' => 'genomewise estgene', 'label_threshold' => 500, # 'on' => 'off',
                              'gene_col' => 'estgene', @_ );
   $self->add_new_track_gene( 'otter', 'Vega Genes', 'vega_gene', $POS++,
