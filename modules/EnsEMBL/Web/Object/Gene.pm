@@ -194,11 +194,11 @@ sub get_homology_matches{
   # hash to convert descriptions into more readable form
 
     my %desc_mapping = (
-      'ortholog_one2one'          => '1 to 1',
-      'apparent_ortholog_one2one' => '1 to 1 (apparent)', 
-      'ortholog_one2many'         => '1 to many',
+      'ortholog_one2one'          => '1-to-1',
+      'apparent_ortholog_one2one' => '1-to-1 (apparent)', 
+      'ortholog_one2many'         => '1-to-many',
       'between_species_paralog'   => 'paralogue (between species)',
-      'ortholog_many2many'        => 'many to many',
+      'ortholog_many2many'        => 'many-to-many',
       'within_species_paralog'    => 'paralog (within species)'
     );
 
