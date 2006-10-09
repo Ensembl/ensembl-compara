@@ -24,16 +24,19 @@ sub process {
   my @lines = <INPUT>;
   my @update = ();
   close INPUT;
+  warn "INPLACE EDIT!";
   foreach my $edit_array (@{ $self->edits }) {
     my $search = $edit_array->[0];
     my $replace = $edit_array->[1];
+    warn "SEARCH: " . $search;
+    warn "REPLACE: " . $replace;
     open (OUTPUT, ">", $self->destination);
     my $count = 0;
     foreach my $line (@lines) {
       my $print = $line; 
       chomp $print;
-      if ($print eq $search) {
-        $print = $replace;
+      if ($print =~ /$search/) {
+        $print =~ s/$search/$replace/g;
       }
       print OUTPUT $print . "\n";
       $update[$count] = $print;
