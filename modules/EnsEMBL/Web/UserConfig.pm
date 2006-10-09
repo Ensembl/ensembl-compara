@@ -1032,6 +1032,7 @@ sub ADD_ALL_PROTEIN_FEATURES {
   $self->add_new_track_protein( 'BeeProteinSimilarity','Bee pep. evid.',  $POS++, @_ );
   $self->add_new_track_protein( 'riken_prot',          'Riken proteins', $POS++, @_ );
   $self->add_new_track_protein( 'wormpep',             'Worm proteins',  $POS++, @_ );
+  $self->add_new_track_protein( 'remaneipep',          'C.remanei proteins',  $POS++, @_ );
   $self->add_new_track_protein( 'human_protein',       'Human proteins', $POS++, @_ );
 
   $self->add_new_track_protein( 'human_refseq',        'Human RefSeqs', $POS++, @_ );
@@ -1156,6 +1157,7 @@ sub ADD_ALL_TRANSCRIPTS {
   $self->add_new_track_transcript( 'rprot',     'Rodent proteins', 'prot_gene',      $POS++, @_ );
   $self->add_new_track_transcript( 'jamboree_cdnas',   'X.trop. jambo. genes',   'prot_gene',   $POS++, @_ );
   $self->add_new_track_transcript( 'oxford_genes', 'Oxford Genes', 'oxford_genes', $POS++, @_ );
+  $self->add_new_track_transcript( 'oxford_fgu', 'Oxford FGU Genes', 'oxford_fgu', $POS++, @_ );
   $self->add_new_track_transcript( 'platypus_protein', 'Platypus/Other Genes', 'platypus_protein', $POS++, @_ );
   $self->add_new_track_transcript( 'medaka_protein',   'Medaka genes',   'medaka_gene',   $POS++, @_ );
   $self->add_new_track_transcript( 'gff_prediction',   'MGP genes',   'medaka_gene',   $POS++, @_ );
@@ -1227,6 +1229,8 @@ sub ADD_SIMPLE_TRACKS {
   $self->add_new_simple_track( 'protein_binding_site',     'Protein binding site','red', $POS++, @_ );
   $self->add_new_simple_track( 'scaffold',                 'Scaffold',            'red', $POS++, @_ );
   $self->add_new_simple_track( 'allele',                   'Allele',              'red', $POS++, @_ );
+  $self->add_new_simple_track( 'RNAi',                     'RNAi',              'red', $POS++, @_ );
+  $self->add_new_simple_track( 'fosmid',                   'Fosmid',              'red', $POS++, @_ );
   $self->add_new_simple_track( 'transposable_element_insertion_site', 'Transposable element insertion site', 'red', $POS++, @_ );
   $self->add_new_simple_track( 'transposable_element',     'Transposable element','red', $POS++, @_ );
   $self->add_new_simple_track( 'rescue_fragment',          'Rescue fragment',     'red', $POS++, @_ );
@@ -1275,6 +1279,10 @@ sub ADD_GENE_TRACKS {
     'gene_col'   => sub { return $_[0]->analysis->logic_name },
     'gene_label' => sub { return $_[0]->stable_id },
     'logic_name' => 'Homology_low Homology_medium Homology_high BeeProtein'
+  );
+  $self->add_new_track_gene( 'oxford_FGU', 'Oxford FGU Genes', 'oxford_fgu', $POS++,
+    'gene_col'   => 'oxford_fgu',
+    'gene_label' => sub { return $_[0]->stable_id }, @_
   );
   $self->add_new_track_gene( 'gsten', 'Genoscope Genes', 'genoscope_gene', $POS++,
     'gene_label'           => sub { return $_[0]->stable_id },
