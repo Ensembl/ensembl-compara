@@ -57,9 +57,11 @@ sub message {
 sub generate_html {
   my $self = shift;
   $self->output_location($self->server->htdocs_location);
+  my $now = gmtime;
   open (OUTPUT, ">", $self->output_location . "/harmony/index.html") or return 0;
   print OUTPUT $self->html_header;
   print OUTPUT "<h3>Harmony</h3>";
+  print OUTPUT "<h4>Last update: $now";
   if ($self->server->critical_fail eq 'yes') {
     print OUTPUT "<b>The most recent Ensembl build failed with critical errors.</b> This version of Ensembl is not synchronised with the CVS head branch\n";
   } else {
