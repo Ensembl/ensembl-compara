@@ -80,7 +80,7 @@ sub new {
     '_renderer'         => $renderer,
     'timer'             => $timer,
     'plugin_locator'    => EnsEMBL::Web::Tools::PluginLocator->new( (
-                                         locations  => [ 'EnsEMBL::Web', @{ $species_defs->ENSEMBL_PLUGIN_ROOTS } ], 
+                                         locations  => [ 'EnsEMBL::Web', reverse @{ $species_defs->ENSEMBL_PLUGIN_ROOTS } ], 
                                          suffix     => "Document::Configure",
                                          method     => "new"
                                                                   ) )
