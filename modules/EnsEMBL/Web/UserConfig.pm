@@ -1245,7 +1245,7 @@ sub ADD_SIMPLE_TRACKS {
   $self->add_new_simple_track( 'protein_binding_site',     'Protein binding site','red', $POS++, @_ );
   $self->add_new_simple_track( 'scaffold',                 'Scaffold',            'red', $POS++, @_ );
   $self->add_new_simple_track( 'allele',                   'Allele',              'red', $POS++, @_ );
-  $self->add_new_simple_track( 'RNAi',                     'RNAi',              'red', $POS++, @_ );
+#  $self->add_new_simple_track( 'RNAi',                     'RNAi',              'red', $POS++, @_ );
   $self->add_new_simple_track( 'fosmid',                   'Fosmid',              'red', $POS++, @_ );
   $self->add_new_simple_track( 'transposable_element_insertion_site', 'Transposable element insertion site', 'red', $POS++, @_ );
   $self->add_new_simple_track( 'transposable_element',     'Transposable element','red', $POS++, @_ );
