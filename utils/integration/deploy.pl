@@ -19,6 +19,21 @@ use Integration::Task::Test::Ping;
 use YAML qw(LoadFile);
 use Carp;
 
+chdir "/ensemblweb/head/checkout/"; 
+my $cvs = `cvs -n -q up`;
+my @cvs_output = split(/\n/, $cvs);
+my $run = 0;
+foreach my $output (@cvs_output) {
+  print $output . "\n";
+  if ($output =~ /^U/) {
+    $run = 1;
+  }
+}
+
+if ($run == 0) {
+  exit;
+}
+
 my $config_file = "./checkout/sanger-plugins/head/conf/deploy.yml"; 
 
 if ($ARGV[0]) {
