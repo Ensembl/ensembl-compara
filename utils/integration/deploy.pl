@@ -54,9 +54,9 @@ if (-e 'biomart') {
 
 my $checkout_task = Integration::Task::Checkout->new((
                               destination => "checkout",
-                              repository  => "cvs.sanger.ac.uk",
-                              root        => "/nfs/ensembl/cvsroot/",
-                              username    => "mw4",
+                              repository  => $cvs_repository,
+                              root        => $cvs_root,
+                              username    => $cvs_username,
                               name        => "checkout"
                            ));
 
@@ -68,9 +68,9 @@ $integration->add_checkout_task($checkout_task);
 
 my $mart_task = Integration::Task::Checkout->new((
                               destination => "biomart",
-                              repository  => "cvs.sanger.ac.uk",
-                              root        => "/nfs/ensembl/cvsroot/",
-                              username    => "mw4",
+                              repository  => $cvs_repository,
+                              root        => $cvs_root,
+                              username    => $cvs_username,
                               release     => "release-0_4",
                               name        => "biomart"
                            ));
@@ -173,5 +173,5 @@ if ($integration->test_result < 100) {
   warn "TESTS FAILED: " . $integration->test_result . "% pass rate";
 }
 
-$integration->generate_output;
 $integration->update_log;
+$integration->generate_output;
