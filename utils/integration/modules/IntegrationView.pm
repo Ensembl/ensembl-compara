@@ -61,9 +61,14 @@ sub generate_html {
   open (OUTPUT, ">", $self->output_location . "/harmony/index.html") or return 0;
   print OUTPUT $self->html_header;
   print OUTPUT "<h3>Harmony</h3>";
-  print OUTPUT "<h4>Last update: $now";
+  print OUTPUT "<h4>Last update: $now</h4>";
   if ($self->server->critical_fail eq 'yes') {
-    print OUTPUT "<b>The most recent Ensembl build failed with critical errors.</b> This version of Ensembl is not synchronised with the CVS head branch\n";
+    my $rollback_event = $self->server->log->latest_ok_event;
+    my $rollback_build = $rollback_event->{build};
+    my $failed_event = $self->server->log->latest_event;
+    my $failed_build = $failed_event->{build};
+    print OUTPUT "<b>Build $failed_build failed with critical errors on " . $failed_event->{date} . ".</b> Harmony rolled back this server to build $rollback_build (" . $rollback_event->{date}. ")";
+
   } else {
     print OUTPUT "<b>This version of Ensembl is synchronised with the CVS head branch</b>\n";
   }

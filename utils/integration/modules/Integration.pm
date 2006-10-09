@@ -63,10 +63,11 @@ sub rollback {
   foreach my $task (@{ $self->rollback_tasks }) {
     $task->rollback;
   }
-  my $rollback_build = $self->log->latest_ok_build_number;
+  my $rollback_event = $self->log->latest_ok_event;
+  my $rollback_build = $rollback_event->{build};
   my $failed_build = $self->log->latest_event->{build} + 1;
   my $now = gmtime;
-  $self->message("Build $failed_build failed: rolled back to build $rollback_build ($now)", "red");
+  $self->message("$now - Build $failed_build failed: rolled back to build $rollback_build (" . $rollback_event->{date}. ")", "red");
   $self->start_server;
 }
 
@@ -186,13 +187,14 @@ sub log {
 sub update_log {
   my $self = shift;
   my $status = "ok";
+  my $now = gmtime;
   if ($self->test_result < 100) {
     $status = "failed";
   }
   if ($self->critical_fail) {
     $status = "critical";
   }
-  my $event = { date => time, status => $status };
+  my $event = { date => $now, status => $status };
   if ($status eq "ok") {
     $self->message("Ensembl is up to date", "green");
   }
