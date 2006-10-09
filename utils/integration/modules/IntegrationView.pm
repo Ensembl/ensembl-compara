@@ -75,6 +75,7 @@ sub generate_html {
   print OUTPUT $self->test_results;
   print OUTPUT "<ul>\n";
   print OUTPUT "<li><a href='http://head.ensembl.org'>Return home</a></li>";
+  print OUTPUT "<li><a href='about.html'>About Harmony</a></li>";
   print OUTPUT "<\ul>\n";
   print OUTPUT $self->html_footer;
   return 1;
