@@ -14,11 +14,17 @@ use Integration::Task::Move;
 use Integration::Task::Mkdir;
 use Integration::Task::Delete;
 use Integration::Task::Rollback;
+use Integration::Task::Symlink;
 use Integration::Task::Test::Ping;
 use YAML qw(LoadFile);
 use Carp;
 
 my $config_file = "./checkout/sanger-plugins/head/conf/deploy.yml"; 
+
+if ($ARGV[0]) {
+  $config_file = $ARGV[0];
+}
+
 my $config = undef;
 if (-e $config_file) {
   $config = LoadFile($config_file);
@@ -26,6 +32,7 @@ if (-e $config_file) {
   croak "Error opening config file: $config_file\n $!";
 }
 
+my $lock = "./lock/locked";
 my $checkout_location = $config->{checkout_location}; 
 my $htdocs_location = $config->{htdocs_location}; 
 my $cvs_repository = $config->{repository}; 
@@ -44,12 +51,14 @@ if (-e $checkout_location) {
   my $rm = `rm -r $checkout_location*`;
 }
 
-if (-e 'bioperl') {
-  my $rm = `rm -r bioperl*`;
-}
-
 if (-e 'biomart') {
   my $rm = `rm -r biomart*`;
+}
+
+if (-e $lock) {
+  exit;
+} else {
+  my $touch = `touch $lock`;
 }
 
 my $checkout_task = Integration::Task::Checkout->new((
@@ -92,24 +101,6 @@ $integration->add_checkout_task(Integration::Task::Copy->new((
                                      ))
                                );
 
-my $bioperl_task = Integration::Task::Checkout->new((
-                                     destination => "bioperl",
-                                     repository  => "cvs.open-bio.org",
-                                     root        => "/home/repository/bioperl",
-                                     username    => "cvs",
-                                     protocol    => "pserver",
-                                     name        => "bioperl"
-                                   ));
-
-$bioperl_task->add_module('bioperl-live');
-$integration->add_checkout_task($bioperl_task);
-
-$integration->add_checkout_task(Integration::Task::Move->new((
-                                     source      => "bioperl",
-                                     destination => "checkout/bioperl-live" 
-                                     ))
-                               );
-
 $integration->checkout;
 
 my $rollback_task = Integration::Task::Rollback->new((
@@ -129,8 +120,14 @@ my $apache_copy_task = Integration::Task::Copy->new((
                              destination => "checkout/src"
                            ));
 
+my $bioperl_link = Integration::Task::Symlink->new((
+                             source      => "/ensemblweb/shared/bioperl/bioperl-release-1-2-3", 
+                             destination => "checkout/bioperl-live"
+                           ));
+
 $integration->add_configuration_task($copy_task);
 $integration->add_configuration_task($apache_copy_task);
+$integration->add_configuration_task($bioperl_link);
 $integration->add_configuration_task(Integration::Task::Mkdir->new((source => "checkout/img")));
 $integration->add_configuration_task(Integration::Task::Mkdir->new((source => "checkout/logs")));
 $integration->add_configuration_task(Integration::Task::Mkdir->new((source => "checkout/tmp")));
@@ -175,3 +172,5 @@ if ($integration->test_result < 100) {
 
 $integration->update_log;
 $integration->generate_output;
+
+my $rm = `rm $lock`;
