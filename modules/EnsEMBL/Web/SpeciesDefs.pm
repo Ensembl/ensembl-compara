@@ -1525,7 +1525,7 @@ sub _is_available_artefact{
     my( $database, $table ) = split( '\.', $test[1] );
     return $self->get_table_size(
           { -db    => $database, -table => $table },
-          $self->{'species'}
+          $def_species
       ) ? $success : $fail;
   } elsif( $test[0] eq 'multi' ) { # See whether the traces database is specified
     my( $type,$species ) = split /\|/,$test[1],2;
