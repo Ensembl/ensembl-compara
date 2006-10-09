@@ -74,6 +74,19 @@ sub new {
     'superhi'    => 'highlight2',
     'oxford' => [ 'darkred', 'Oxford genes' ]
   );
+  $self->colourSet( 'chimp_genes',
+    'hi'         => 'highlight1',
+    'superhi'    => 'highlight2',
+    'chimp_est'  => [ 'purple1', 'Chimp EST genes' ],
+    'chimp_cdna' => [ 'chartreuse3', 'Chimp cDNA genes' ],
+    'human_cdna' => [ 'mediumspringgreen', 'Human cDNA genes' ]
+  );
+  $self->colourSet( 'medaka_genes',
+    'hi'         => 'highlight1',
+    'superhi'    => 'highlight2',
+    'transcriptcoalescer' => [ 'darkgreen', 'Medaka Transcript Coalescer genes' ],
+    'genome_project'      => [ 'darkred', 'Medaka Genome Project genes' ]
+  );
   $self->colourSet( 'platypus_protein',
     'hi'         => 'highlight1',
     'superhi'    => 'highlight2',
