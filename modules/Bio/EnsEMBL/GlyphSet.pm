@@ -76,14 +76,15 @@ sub get_text_width {
       $gd_text->set_font( $font, $ptsize );
     } elsif( $parameters{'font'} eq 'Tiny' ) {
       $gd_text->set_font( gdTinyFont );
-    } elsif( $parameters{'font'} eq 'Small' ) {
-      $gd_text->set_font( gdSmallFont );
     } elsif( $parameters{'font'} eq 'MediumBold' ) {
       $gd_text->set_font( gdMediumBoldFont );
     } elsif( $parameters{'font'} eq 'Large' ) {
       $gd_text->set_font( gdLargeFont );
     } elsif( $parameters{'font'} eq 'Giant' ) {
       $gd_text->set_font( gdGiantFont );
+    } else {
+      $parameters{'font'} = 'Small';
+      $gd_text->set_font( gdSmallFont );
     }
   };
 

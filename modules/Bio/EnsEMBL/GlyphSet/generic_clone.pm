@@ -42,7 +42,7 @@ sub features {
       $_->get_scalar_attribute('state') + $_->get_scalar_attribute('BACend_flag')/4
       ), $_]
     }
-    map { @{$self->{'container'}->get_all_MiscFeatures( $_, $db )||[]} } @T
+    map { @{$self->{'container'}->get_all_MiscFeatures( $_, $db )||[]} } @T;
   return \@sorted;
 }
 
@@ -125,7 +125,7 @@ warn "FISH................. ";
 sub zmenu {
   my ($self, $f ) = @_;
   return if $self->my_config('navigation') ne 'on';
-  my $name = $f->get_first_scalar_attribute(qw(name well_name clone_name sanger_project synonym embl_acc));
+  my $name = $f->get_first_scalar_attribute(qw(name well_name clone_name sanger_project synonym embl_acc alt_well_name bacend_well_name));
   my $zmenu = { 
     qq(caption)                                            => qq(Clone: $name),
     qq(01:bp: @{[$f->seq_region_start]}-@{[$f->seq_region_end]}) => '',
@@ -135,11 +135,13 @@ sub zmenu {
     my @names = ( 
       [ 'name'           => '20:Name' ] ,
       [ 'well_name'      => '21:Well name' ],
-      [ 'sanger_project' => '22:Sanger project' ],
-      [ 'clone_name'     => '23:Library name' ],
-      [ 'synonym'        => '24:Synonym' ],
-      [ 'embl_acc'       => '25:EMBL accession', 'EMBL' ],
-      [ 'bacend'         => '29:BAC end acc', 'EMBL' ],
+      [ 'sanger_project' => '32:Sanger project' ],
+      [ 'clone_name'     => '33:Library name' ],
+      [ 'synonym'        => '34:Synonym' ],
+      [ 'embl_acc'       => '35:EMBL accession', 'EMBL' ],
+      [ 'bacend'         => '39:BAC end acc', 'EMBL' ],
+      [ 'alt_well_name'    => '22:Well name' ],
+      [ 'bacend_well_name' => '31:BAC end well' ],
     );
     foreach my $ref (@names ) {
       foreach(@{$f->get_all_attribute_values($ref->[0])||[]}) {
@@ -152,23 +154,23 @@ sub zmenu {
       $bac_info = ('Interpolated', 'Start located', 'End located', 'Both ends located') [$bac_info];
     }
 
-    $zmenu->{"31:HTGS_phase: @{[$f->get_scalar_attribute('htg')]}"}            = '' if $f->get_scalar_attribute('htg');
-    $zmenu->{"32:Remark: @{[$f->get_scalar_attribute('remark')]}"}             = '' if $f->get_scalar_attribute('remark');
+    $zmenu->{"41:HTGS_phase: @{[$f->get_scalar_attribute('htg')]}"}            = '' if $f->get_scalar_attribute('htg');
+    $zmenu->{"42:Remark: @{[$f->get_scalar_attribute('remark')]}"}             = '' if $f->get_scalar_attribute('remark');
 
-    $zmenu->{"33:Organisation: @{[$f->get_scalar_attribute('organisation')]}"} = '' if $f->get_scalar_attribute('organisation');
+    $zmenu->{"43:Organisation: @{[$f->get_scalar_attribute('organisation')]}"} = '' if $f->get_scalar_attribute('organisation');
 
      my $state_link = '';
      $state_link = qq(http://www.sanger.ac.uk/cgi-bin/humace/clone_status?clone_name=).$f->get_scalar_attribute('synonym')
        if $state =~ /Committed|FinishAc|Accessioned/ &&
           $f->get_scalar_attribute('synonym') &&
           $f->get_scalar_attribute('organisation') eq 'SC';
-    $zmenu->{"34:State: $state"                                         } = $state_link if $state;
+    $zmenu->{"44:State: $state"                                         } = $state_link if $state;
 
-    $zmenu->{"40:Seq length: @{[$f->get_scalar_attribute('seq_len')]}"  } = '' if $f->get_scalar_attribute('seq_len');
-    $zmenu->{"40:FP length:  @{[$f->get_scalar_attribute('fp_size')]}"  } = '' if $f->get_scalar_attribute('fp_size');
-    $zmenu->{"50:Super contig:  @{[$f->get_scalar_attribute('supercontig')]}" } = '' if $f->get_scalar_attribute('supercontig');
-    $zmenu->{"80:BAC flags:  $bac_info"                          } = '' if $bac_info;
-    $zmenu->{"90:FISH:  @{[$f->get_scalar_attribute('fish')]}"       } = '' if $f->get_scalar_attribute('fish');
+    $zmenu->{"50:Seq length: @{[$f->get_scalar_attribute('seq_len')]}"  } = '' if $f->get_scalar_attribute('seq_len');
+    $zmenu->{"50:FP length:  @{[$f->get_scalar_attribute('fp_size')]}"  } = '' if $f->get_scalar_attribute('fp_size');
+    $zmenu->{"60:Super contig:  @{[$f->get_scalar_attribute('supercontig')]}" } = '' if $f->get_scalar_attribute('supercontig');
+    $zmenu->{"90:BAC flags:  $bac_info"                          } = '' if $bac_info;
+    $zmenu->{"99:FISH:  @{[$f->get_scalar_attribute('fish')]}"       } = '' if $f->get_scalar_attribute('fish');
     return $zmenu;
 }
 

@@ -103,6 +103,11 @@ sub new {
     'superhi'    => 'highlight2',
     'tigr_0_5' => [ 'blue', 'TIGR protein' ]
   );
+  $self->colourSet( 'oxford_fgu',
+    'hi'         => 'highlight1',
+    'superhi'    => 'highlight2',
+    'oxford_fgu' => [ 'blue', 'Oxford FGU Gene Pred.' ]
+  );
   $self->colourSet( 'ensembl_gene',
     'hi'         => 'highlight1',
     'superhi'    => 'highlight2',
