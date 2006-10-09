@@ -125,7 +125,7 @@ warn "FISH................. ";
 sub zmenu {
   my ($self, $f ) = @_;
   return if $self->my_config('navigation') ne 'on';
-  my $name = $f->get_first_scalar_attribute(qw(name well_name clone_name sanger_project synonym embl_acc alt_well_name bacend_well_name));
+  my $name = $f->get_first_scalar_attribute(qw(name well_name clone_name sanger_project synonym embl_acc alt_well_name bacend_well_nam));
   my $zmenu = { 
     qq(caption)                                            => qq(Clone: $name),
     qq(01:bp: @{[$f->seq_region_start]}-@{[$f->seq_region_end]}) => '',
@@ -141,7 +141,7 @@ sub zmenu {
       [ 'embl_acc'       => '35:EMBL accession', 'EMBL' ],
       [ 'bacend'         => '39:BAC end acc', 'EMBL' ],
       [ 'alt_well_name'    => '22:Well name' ],
-      [ 'bacend_well_name' => '31:BAC end well' ],
+      [ 'bacend_well_nam' => '31:BAC end well' ],
     );
     foreach my $ref (@names ) {
       foreach(@{$f->get_all_attribute_values($ref->[0])||[]}) {

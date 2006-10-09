@@ -14,7 +14,10 @@ sub my_label {
 
 sub features {
   my ($self) = @_;
-  return $self->{'container'}->get_all_AffyFeatures( $self->my_config('FEATURES') );
+warn $self->my_config('FEATURES');
+  my $T = $self->{'container'}->get_all_OligoFeatures( $self->my_config('FEATURES') );
+warn @$T;
+  return $T;
 }
 
 ## Return the image label and the position of the label
