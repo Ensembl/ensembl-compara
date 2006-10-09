@@ -250,10 +250,12 @@ sub add_form {
       <p>Unable to execute <strong>$function_name</strong> to add form:</p>
       $error) );
     }
-    my $DATA = $self->form($key)->render_js;
-    $page->javascript->add_source( $DATA->{'scripts'} );
-    $page->javascript->add_script( $DATA->{'head_vars'} );
-    $page->add_body_attr( 'onload' => $DATA->{'body_code'} );
+    if( $self->form($key) ) {
+      my $DATA = $self->form($key)->render_js;
+      $page->javascript->add_source( $DATA->{'scripts'} );
+      $page->javascript->add_script( $DATA->{'head_vars'} );
+      $page->add_body_attr( 'onload' => $DATA->{'body_code'} );
+    }
   } else {
     $self->printf( qq(<h4>Compile error</h4>
     <p>Unable to compile <strong>$module_name</strong></p>
