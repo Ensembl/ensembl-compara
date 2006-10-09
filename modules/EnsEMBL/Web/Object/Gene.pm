@@ -180,65 +180,70 @@ sub get_homology_matches{
   $homology_source = "ENSEMBL_HOMOLOGUES" unless (defined $homology_source);
   $homology_description= "ortholog" unless (defined $homology_description);
 
-  
-  my %homologues = %{$self->fetch_homology_species_hash($homology_source, $homology_description)};
-  return unless keys %homologues;
-  my $gene = $self->Obj;
-  my $geneid = $gene->stable_id;
-  my %homology_list;
-  my $adaptor_call = $self->param('gene_adaptor') || 'get_GeneAdaptor';
+  unless( $self->{'homology_matches'}{$homology_source.'::'.$homology_description} ) { 
+    my %homologues = %{$self->fetch_homology_species_hash($homology_source, $homology_description)};
+    unless( keys %homologues ) {
+      $self->{'homology_matches'}{$homology_source.'::'.$homology_description} = {};
+      return {};
+    }
+    my $gene = $self->Obj;
+    my $geneid = $gene->stable_id;
+    my %homology_list;
+    my $adaptor_call = $self->param('gene_adaptor') || 'get_GeneAdaptor';
 
   # hash to convert descriptions into more readable form
 
-  my %desc_mapping = (
-    'ortholog_one2one'          => '1 to 1',
-    'apparent_ortholog_one2one' => '1 to 1 (apparent)', 
-    'ortholog_one2many'         => '1 to many',
-    'between_species_paralog'   => 'paralogue (between species)',
-    'ortholog_many2many'        => 'many to many',
-    'within_species_paralog'    => 'paralog (within species)'
-  );
+    my %desc_mapping = (
+      'ortholog_one2one'          => '1 to 1',
+      'apparent_ortholog_one2one' => '1 to 1 (apparent)', 
+      'ortholog_one2many'         => '1 to many',
+      'between_species_paralog'   => 'paralogue (between species)',
+      'ortholog_many2many'        => 'many to many',
+      'within_species_paralog'    => 'paralog (within species)'
+    );
 
-  foreach my $displayspp (keys (%homologues)){
-    ( my $spp = $displayspp ) =~ tr/ /_/;
-    my $order=0;
-    foreach my $homology (@{$homologues{$displayspp}}){
-      my ($homologue, $homology_desc, $homology_subtype) = @{$homology};
-      next unless ($homology_desc =~ /$homology_description/);
-      my $homologue_id = $homologue->stable_id;
-         $homology_desc= $desc_mapping{$homology_desc};   # mapping to more readable form
-      $homology_desc= "no description" unless (defined $homology_desc);
-      $homology_list{$displayspp}{$homologue_id}{'homology_desc'}    = $homology_desc ;
-      $homology_list{$displayspp}{$homologue_id}{'homology_subtype'} = $homology_subtype ;
-      $homology_list{$displayspp}{$homologue_id}{'spp'}              = $displayspp ;
-      $homology_list{$displayspp}{$homologue_id}{'description'}      = $homologue->description ;
-      $homology_list{$displayspp}{$homologue_id}{'order'}            = $order ;
+    foreach my $displayspp (keys (%homologues)){
+      ( my $spp = $displayspp ) =~ tr/ /_/;
+      my $order=0;
+      foreach my $homology (@{$homologues{$displayspp}}){
+        my ($homologue, $homology_desc, $homology_subtype) = @{$homology};
+        next unless ($homology_desc =~ /$homology_description/);
+        my $homologue_id = $homologue->stable_id;
+           $homology_desc= $desc_mapping{$homology_desc};   # mapping to more readable form
+        $homology_desc= "no description" unless (defined $homology_desc);
+        $homology_list{$displayspp}{$homologue_id}{'homology_desc'}    = $homology_desc ;
+        $homology_list{$displayspp}{$homologue_id}{'homology_subtype'} = $homology_subtype ;
+        $homology_list{$displayspp}{$homologue_id}{'spp'}              = $displayspp ;
+        $homology_list{$displayspp}{$homologue_id}{'description'}      = $homologue->description ;
+        $homology_list{$displayspp}{$homologue_id}{'order'}            = $order ;
       
-      if ($self->species_defs->valid_species($spp)){
-        my $database_spp = $self->DBConnection->get_databases_species( $spp, 'core') ;
-        unless( $database_spp->{'core'} ) {
-          warn "NO CORE DB CONNECTION ($spp)";
-          next;
+        if ($self->species_defs->valid_species($spp)){
+          my $database_spp = $self->DBConnection->get_databases_species( $spp, 'core') ;
+          unless( $database_spp->{'core'} ) {
+            warn "NO CORE DB CONNECTION ($spp)";
+            next;
+          }
+          my $geneadaptor_spp = $database_spp->{'core'}->$adaptor_call;
+                  my $gene_spp = $geneadaptor_spp->fetch_by_stable_id( $homologue->stable_id, 1 );
+          unless ( $gene_spp ) {
+            warn "Gene @{[$homologue->stable_id]} not in core database for $spp";
+            next;
+          }
+          my $display_xref = $gene_spp->display_xref;
+          my $display_id = $display_xref ?  $display_xref->display_id() : 'Novel Ensembl prediction';
+          $homology_list{$displayspp}{$homologue_id}{'display_id'} = $display_id;
+          $homology_list{$displayspp}{$homologue_id}{'description'} = $gene_spp->description || 'No description';
+          $homology_list{$displayspp}{$homologue_id}{'location'}= $gene_spp->feature_Slice->name;
+          if( $spp ne $self->{'species'} ) { 
+            $database_spp->{'core'}->dbc->disconnect_if_idle();
+          }
         }
-        my $geneadaptor_spp = $database_spp->{'core'}->$adaptor_call;
-                my $gene_spp = $geneadaptor_spp->fetch_by_stable_id( $homologue->stable_id, 1 );
-        unless ( $gene_spp ) {
-          warn "Gene @{[$homologue->stable_id]} not in core database for $spp";
-          next;
-        }
-        my $display_xref = $gene_spp->display_xref;
-        my $display_id = $display_xref ?  $display_xref->display_id() : 'Novel Ensembl prediction';
-        $homology_list{$displayspp}{$homologue_id}{'display_id'} = $display_id;
-        $homology_list{$displayspp}{$homologue_id}{'description'} = $gene_spp->description || 'No description';
-        $homology_list{$displayspp}{$homologue_id}{'location'}= $gene_spp->feature_Slice->name;
-        if( $spp ne $self->{'species'} ) { 
-          $database_spp->{'core'}->dbc->disconnect_if_idle();
-        }
+        $order++;
       }
-      $order++;
     }
+    $self->{'homology_matches'}{$homology_source.'::'.$homology_description} = \%homology_list;
   }
-  return \%homology_list;
+  return $self->{'homology_matches'}{$homology_source.'::'.$homology_description};
 }
 
 
