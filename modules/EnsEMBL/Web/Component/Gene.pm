@@ -563,7 +563,7 @@ sub orthologues {
     $html = $cache_obj->retrieve();
     return 1 unless $html;
   } else {
-    my $orthologue = $gene->get_homology_matches('ENSEMBL_HOMOLOGUES', 'ortholog');
+    my $orthologue = $gene->get_homology_matches('ENSEMBL_ORTHOLOGUES');
     unless( $orthologue ) {
       cache_print( $cache_obj, undef );
       return 1;
@@ -698,7 +698,7 @@ sub paralogues {
     $html = $cache_obj->retrieve;
     return 1 unless $html;
   } else {
-    my $paralogue = $gene->get_homology_matches('ENSEMBL_HOMOLOGUES', 'within_species_paralog');
+    my $paralogue = $gene->get_homology_matches('ENSEMBL_PARALOGUES', 'within_species_paralog');
     unless( $paralogue ) {
       cache_print( $cache_obj, undef );
       return 1;
@@ -1313,7 +1313,7 @@ sub external_links {
   }
 
   my $jalview = qq{
-    <applet archive=").$object->species_defs->ENSEMBL_BASE_URL.qq(/jalview/jalview.jar"
+    <applet archive="}.($object->species_defs->ENSEMBL_BASE_URL).qq{/jalview/jalview.jar"
         code="jalview.ButtonAlignApplet.class" width="100" height="35" style="border:0"
         alt = "[Java must be enabled to view alignments]">
       <param name="input" value="$URL2" />
