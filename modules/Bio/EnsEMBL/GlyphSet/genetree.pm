@@ -301,19 +301,22 @@ sub features {
 	  $f->{_length}  = $tree->gene_member->chr_end- $tree->gene_member->chr_start;
 	  $f->{_cigar_line} = $tree->cigar_line;
 
-
-	  if ( $self->{'config'}->{_object}->DBConnection->{'species_defs'}->valid_species($f->{_species}) and
-my $database_spp = $self->{'config'}->{_object}->DBConnection->get_databases_species( $f->{_species}, 'core') ) {
-
-	      my $geneadaptor_spp = $database_spp->{'core'}->get_GeneAdaptor;
-	      if ( my $gene_spp = $geneadaptor_spp->fetch_by_stable_id( $f->{_gene})) {
-		  if (my $display_xref = $gene_spp->display_xref) {
-		      $f->{label} = $f->{_display_id} =  sprintf("%s %s", $display_xref->display_id, $f->{_species});
-
-		  }
-	      }
-	      $database_spp->{'core'}->dbc->disconnect_if_idle();
+	  if (my $display_label = $tree->gene_member->display_label) {
+	      $f->{label} = $f->{_display_id} =  sprintf("%s %s", $display_label, $f->{_species});
 	  }
+
+#	  if ( $self->{'config'}->{_object}->DBConnection->{'species_defs'}->valid_species($f->{_species}) and
+#my $database_spp = $self->{'config'}->{_object}->DBConnection->get_databases_species( $f->{_species}, 'core') ) {
+#
+#	      my $geneadaptor_spp = $database_spp->{'core'}->get_GeneAdaptor;
+#	      if ( my $gene_spp = $geneadaptor_spp->fetch_by_stable_id( $f->{_gene})) {
+#		  if (my $display_xref = $gene_spp->display_xref) {
+#		      $f->{label} = $f->{_display_id} =  sprintf("%s %s", $display_xref->display_id, $f->{_species});
+#
+#		  }
+#	      }
+#	      $database_spp->{'core'}->dbc->disconnect_if_idle();
+#	  }
       }
   } else {
       $f->{'_name'} = $tree->name;
