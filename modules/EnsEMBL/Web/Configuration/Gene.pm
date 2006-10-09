@@ -489,8 +489,9 @@ sub genetreeview {
   }
 
   ## Does this gene have orthologues from which we can build a tree?
-  my $has_orthologues = $obj->get_homology_matches('ENSEMBL_ORTHOLOGUES');
-  if ($has_orthologues) {
+  my @keys_orth = keys %{$obj->get_homology_matches('ENSEMBL_ORTHOLOGUES', 'ortholog')};
+  my @keys_para = keys %{$obj->get_homology_matches('ENSEMBL_PARALOGUES',  'paralog')};
+  if (@keys_orth || @keys_para) {
     if( my $panel2 = $self->new_panel( 'Image',
       'code'    => "image#",
       'caption' => 'Gene Tree for gene '.$obj->stable_id,
@@ -504,19 +505,29 @@ sub genetreeview {
       ));
       $self->add_panel( $panel2 );
     }
-
-    if( my $panel3 = $self->new_panel( 'Information',
-      'code'    => "info#",
-      'caption' => 'Gene Orthologues',
-      ) ) {
-      $panel3->add_components(qw(
-        orthologues    EnsEMBL::Web::Component::Gene::orthologues
-      ));
-      $self->add_panel( $panel3 );
-
+    if(@keys_orth) {
+      if( my $panel3 = $self->new_panel( 'Information',
+        'code'    => "orth#",
+        'caption' => 'Gene Orthologues',
+        ) ) {
+        $panel3->add_components(qw(
+          orthologues    EnsEMBL::Web::Component::Gene::orthologues
+        ));
+        $self->add_panel( $panel3 );
+      }
     }
-  }
-  else {
+    if(@keys_para) {
+      if( my $panel4 = $self->new_panel( 'Information',
+        'code'    => "para#",
+        'caption' => 'Gene Paralogues',
+        ) ) {
+        $panel4->add_components(qw(
+          paralogues    EnsEMBL::Web::Component::Gene::paralogues
+        ));
+        $self->add_panel( $panel4 );
+      }
+    }
+  } else {
     if( my $panel2 = $self->new_panel( 'Image',
       'code'    => "image#",
       'caption' => 'Gene Tree for gene '.$obj->stable_id,
@@ -527,9 +538,7 @@ sub genetreeview {
       ));
       $self->add_panel( $panel2 );
     }
-
   }
-
 }
 
 1;

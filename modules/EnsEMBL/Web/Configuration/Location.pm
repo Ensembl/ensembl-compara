@@ -332,7 +332,7 @@ sub cytoview {
   my $self = shift;
   my $obj    = $self->{object};
   $self->update_configs_from_parameter( 'bottom', 'cytoview' );
-  $self->add_das_soruces( 'cytoview' );
+  $self->add_das_sources( 'cytoview' );
   my $q_string = sprintf( '%s:%s-%s', $obj->seq_region_name, $obj->seq_region_start, $obj->seq_region_end );
   my @common = (
     
