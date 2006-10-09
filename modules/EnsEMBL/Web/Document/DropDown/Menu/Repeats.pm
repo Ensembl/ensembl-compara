@@ -12,7 +12,7 @@ sub new {
     'image_width' => 64,
     'alt'         => 'Repeats'
   ); 
-  return unless $self->{'config'}->is_available_artefact( 'database_tables ENSEMBL_DB.repeat_feature ' );
+  return unless $self->{'config'}->_is_available_artefact( 'database_tables ENSEMBL_DB.repeat_feature ' );
   $self->add_checkbox( 'repeat_lite', 'All repeats' );
 
   my %T;
