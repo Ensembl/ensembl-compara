@@ -1050,11 +1050,11 @@ sub contigviewzoom_ajax {
 
 sub contigviewzoom {
   my($panel, $object) = @_;
-$object->timer->push("Starting zoom...",4);
+#$object->timer->push("Starting zoom...",4);
   my $slice = $object->database('core')->get_SliceAdaptor()->fetch_by_region(
     $object->seq_region_type, $object->seq_region_name, $panel->option('start'), $panel->option('end'), 1
   );
-$object->timer->push("Fetched slice...",4);
+#$object->timer->push("Fetched slice...",4);
   my $wuc = $object->user_config_hash( 'contigviewzoom', 'contigviewbottom' );
      $wuc->container_width( $panel->option('end') - $panel->option('start') + 1 );
      $wuc->set_width( $object->param('image_width') );
@@ -1074,15 +1074,15 @@ $object->timer->push("Fetched slice...",4);
 
   $wuc->{_object} = $object;
 
-$object->timer->push("Configured WUC...",4);
+#$object->timer->push("Configured WUC...",4);
   my $image    = $object->new_image( $slice, $wuc, $object->highlights );
-$object->timer->push("Created image object WUC...",4);
+#$object->timer->push("Created image object WUC...",4);
   $image->imagemap = 'yes';
   my $panel_no = ++ $object->__data->{'_cv_panel_no'};
      $image->{'panel_number'} = $panel_no;
      $image->set_button( 'drag', 'panel_number' => $panel_no, 'title' => 'Click or drag to centre display' );
   $panel->print( $image->render );
-$object->timer->push("Rendered image...",4);
+#$object->timer->push("Rendered image...",4);
   $object->__data->{'_cv_parameter_hash'}{ "p_${panel_no}_px_start" } = $wuc->get('_settings','label_width' ) + 3 * $wuc->get('_settings','margin') + $wuc->get('_settings','button_width');
   $object->__data->{'_cv_parameter_hash'}{ "p_${panel_no}_px_end"   } = $wuc->get('_settings','width') - $wuc->get('_settings','margin');
   $object->__data->{'_cv_parameter_hash'}{ "p_${panel_no}_bp_start" } = $panel->option('start');
@@ -1117,6 +1117,7 @@ sub misc_set_form {
     push @$miscsets , { 'value' => $T, 'name' => $misc_sets->{$T}->name } if $misc_sets->{$T};
   }
   return undef unless @$miscsets;
+warn "GENERATING FORM";
 
   my $output_types = [
    { 'value' => 'set',    'name' => "Features on this chromosome" },
