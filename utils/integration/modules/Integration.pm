@@ -63,7 +63,9 @@ sub rollback {
   foreach my $task (@{ $self->rollback_tasks }) {
     $task->rollback;
   }
-  $self->message("Build failed: rolled back", "red");
+  my $rollback_build = $self->log->latest_ok_build_number;
+  my $failed_build = $self->log->latest_event;
+  $self->message("Build $failed_build failed: rolled back to build $rollback_build", "red");
   $self->start_server;
 }
 

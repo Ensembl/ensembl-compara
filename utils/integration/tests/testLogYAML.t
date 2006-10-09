@@ -42,3 +42,12 @@ ok($log->log->[1]->{status} eq "failed");
 ok($log->log->[0]->{build} == 1);
 ok($log->log->[1]->{build} == 2);
 ok($log->log->[2]->{build} == 20);
+
+ok(@{ $log->events_with_status('ok') } == 2);
+ok(@{ $log->events_with_status('failed') } == 1);
+ok(@{ $log->events_with_status('critical') } == 0);
+
+ok($log->latest_ok_event->{event} eq 'event_3');
+ok($log->latest_ok_build_number == 20);
+ok($log->latest_event->{build} == 20);
+ok($log->latest_event->{event} eq 'event_3');

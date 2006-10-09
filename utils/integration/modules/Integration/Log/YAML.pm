@@ -59,6 +59,42 @@ sub add_event {
   push @{ $self->log }, $event;
 }
 
+sub latest_ok_event {
+  my $self = shift;
+  my @events = @{ $self->events_with_status('ok') };
+  my $latest = 0;
+  my $recent = undef; 
+  foreach my $event (@events) {
+    if ($event->{build} > $latest) {
+      $latest = $event->{build};
+      $recent = $event;
+    }
+  }
+  return $recent;
+}
+
+sub latest_event {
+  my $self = shift;
+  my @events = @{ $self->log };
+  return $events[$#events];
+}
+
+sub latest_ok_build_number {
+  my $self = shift;
+  return $self->latest_ok_event->{build};
+}
+
+sub events_with_status {
+  my ($self, $status) = @_;
+  my @events = ();
+  foreach my $event (@{ $self->log }) {
+    if ($event->{status} eq $status) {
+      push @events, $event;
+    }
+  }
+  return \@events;
+}
+
 sub location {
   ### a
   my $self = shift;

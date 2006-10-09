@@ -60,7 +60,11 @@ sub generate_html {
   open (OUTPUT, ">", $self->output_location . "/harmony/index.html") or return 0;
   print OUTPUT $self->html_header;
   print OUTPUT "<h3>Harmony</h3>";
-  print OUTPUT "<b>This version of Ensembl is synchronised with the CVS head branch</b>\n";
+  if ($self->server->critical_fail eq 'yes') {
+    print OUTPUT "<b>The most recent Ensembl build failed with critical errors.</b> This version of Ensembl is not synchronised with the CVS head branch\n";
+  } else {
+    print OUTPUT "<b>This version of Ensembl is synchronised with the CVS head branch</b>\n";
+  }
   print OUTPUT $self->test_results;
   print OUTPUT "<ul>\n";
   print OUTPUT "<li><a href='http://head.ensembl.org'>Return home</a></li>";
