@@ -196,7 +196,7 @@ sub update_log {
   }
   my $event = { date => $now, status => $status };
   if ($status eq "ok") {
-    $self->message("Ensembl is up to date", "green");
+    $self->message("Ensembl is up-to-date", "green");
   }
   $self->log_event($event);
   $self->log->save;
