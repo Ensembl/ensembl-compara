@@ -1,0 +1,78 @@
+#!/usr/local/bin/perl
+
+use strict;
+use warnings;
+
+package show_ssaha;
+
+use FindBin qw($Bin);
+use File::Basename qw( dirname );
+use Data::Dumper;
+
+our $SERVERROOT;
+BEGIN{
+  $SERVERROOT = dirname( $Bin );
+  unshift @INC, "$SERVERROOT/conf";
+  unshift @INC, "$SERVERROOT";
+  eval{ require SiteDefs };
+  if ($@){ die "Can't use SiteDefs.pm - $@\n"; }
+  map{ unshift @INC, $_ } @SiteDefs::ENSEMBL_LIB_DIRS;
+}
+
+use EnsEMBL::Web::SpeciesDefs;
+
+my $SD = EnsEMBL::Web::SpeciesDefs->new();
+
+my @species = sort $SD->valid_species();
+print "@species";
+
+my %configured_servers = map { $_->[1] ? ($_->[0],[split /:/, $_->[1]{'LATESTGP'}]):()} map { [$_,$SD->other_species($_,'SSAHA2_DATASOURCES')] } @species;
+
+my $live_sites = {};
+foreach my $species ( keys %configured_servers ) {
+  my $T = $configured_servers{$species};
+  $live_sites->{$T->[0]}{$T->[1]} = $species;
+}
+
+my @servers = map { sprintf "ssaha%02d", $_ } (1..10);
+
+my $ssh_command = "ssh -i /nfs/WWW/.ssh/blastsrv ssaha@";
+
+my $ssaha = {};
+foreach my $server ( @servers ) {
+  my @lines = `$ssh_command$server 'ps --cols 200 -C ssaha2Server -o %a'`;
+  foreach(@lines) {
+warn $_;
+    if(/ssaha2?Server\s*-port\s*(\d+)\s*.*?HashTables\/(.*)/) {
+      push @{$ssaha->{$server}{$2}{'ports'}}, $1;
+    } else {
+      warn $_;
+    }
+  }
+  @lines = `$ssh_command$server 'cd /data/ssaha; find HashTables | grep HashTables`;
+  foreach(@lines) {
+    chomp;
+    if(/HashTables\/(.*)\.(base|body|head|name|size)$/) {
+      push @{$ssaha->{$server}{$1}{'files'}}, $2;
+    } else {
+      warn $_;
+    }
+  }
+}
+
+my @RES = ();
+foreach my $machine ( sort keys %$ssaha ) {
+  foreach my $species ( sort keys %{$ssaha->{$machine}} ) {
+    my $d = $ssaha->{$machine}{$species};
+    my $ports = "@{$d->{'ports'}||[]}" || "not running";
+    my $files = join " ", sort @{$d->{'files'}||[]};
+    $files = $files eq '' ? '-----' : ($files eq "base body head name size" ? "#ALL#" : "some-");
+    my $live  = substr( $live_sites->{ $machine }{ $ports },0, 15);
+    delete( $live_sites->{ $machine }{$ports} );
+    push @RES, sprintf "%-7s %-11s %-5s %-15s %-50s \n", $machine, $ports, $files, $live, $species;
+  }
+}
+warn Data::Dumper::Dumper( $live_sites );
+printf "%-7s  %-11s %-5s %-15s %-50s\n", qw(Machine Ports(s) Files Live Species);
+print sort @RES;
+
