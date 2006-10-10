@@ -61,6 +61,8 @@ sub generate_html {
   open (OUTPUT, ">", $self->output_location . "/harmony/index.html") or return 0;
   print OUTPUT $self->html_header;
   print OUTPUT "<h3>Harmony</h3>";
+  print OUTPUT "Harmony is the web team's continuous integration and testing framework. <a href='about.html'>About &rarr;</a>\n";
+  print OUTPUT "<br /><br />";
   print OUTPUT "<h4>Last update: $now</h4>";
   if ($self->server->critical_fail eq 'yes') {
     my $rollback_event = $self->server->log->latest_ok_event;
@@ -75,7 +77,6 @@ sub generate_html {
   print OUTPUT $self->test_results;
   print OUTPUT "<ul>\n";
   print OUTPUT "<li><a href='http://head.ensembl.org'>Return home</a></li>";
-  print OUTPUT "<li><a href='about.html'>About Harmony</a></li>";
   print OUTPUT "<\ul>\n";
   print OUTPUT $self->html_footer;
   return 1;
