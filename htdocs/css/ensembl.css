@@ -136,4 +136,146 @@ p.affil-link { text-align:center; margin-top:4em; }
 /* end funky menu styling */
 
 
+/********************** Wizard stylings ************************/
 
+div.progress_bar {
+  padding-bottom: 10px;
+}
+
+div.progress_bar td {
+  border-top: 1px solid #3366bb;
+  border-bottom: 1px solid #3366bb;
+  color: #3366bb;
+  background: #fff9af;
+  text-align: center;
+}
+
+div.progress_bar td.todo {
+  background: #9bb9dd;
+}
+
+div.wizard {
+  padding: 20px;
+}
+
+div.wizard label {
+  padding-bottom: 15px;
+}
+div.wizard_previous {
+  padding-top: 45px;
+}
+
+div.wizard_check {
+  width: 90%;
+  border: 1px solid #9bb9dd;
+  background: #efefef;
+  color: #3366bb;
+  padding: 5px;
+}
+
+div.wizard_check b {
+  color: #333;
+}
+
+div#wizard_ticket{
+  width: 45%;
+  float: left;
+}
+
+div#wizard_ticket{
+  width: 45%;
+  float: left;
+}
+
+div#blast_queue_ticket {
+  padding: 20px;
+}
+
+div#blast_queue_message {
+  width: 60%;
+  padding: 5px;
+  float: left; 
+}
+
+div#blast_queue_stamp {
+  width: 30%;
+  float: right; 
+  text-align: right;
+}
+
+div#blast_queue_stamp_content {
+  width: 70%;
+  text-align: center;
+  padding: 5px;
+}
+
+div#blast_queue_stamp_content td {
+  border: 3px solid #9bb9dd;
+  color: #3366bb;
+  text-align: center;
+  background: #efefef;
+}
+
+div#blast_queue_stamp_content td.time {
+  background: #9bb9dd;
+  color: #efefef;
+  font-weight: bold;
+  padding: 1px;
+}
+
+div#blast_queue_stamp_content h1 {
+  margin: 0px;
+  padding: 0px;
+}
+
+div#blast_queue_stamp_content sup {
+  font-size: 50%;
+}
+
+div#blast_queue_ticket h2 {
+  margin: 0px;
+  padding: 0px 0px 10px 0px; 
+  color: #3366bb; 
+}
+
+div#evangelism_container {
+  margin-top: 50px;
+  padding: 5px;
+  width: 90%;
+  border: 1px solid #00cc00;
+  background: #ddFFdd;
+}
+
+div#evangelism_title  {
+  font-weight: bold;
+}
+
+div#evangelism_content {
+  padding: 6px;
+}
+
+div.wizard ul{
+  padding: 0px;
+  margin: 5px 0px 8px 18px;
+}
+
+div.bookmark_item {
+  padding: 3px;
+}
+
+div.bookmark_manage {
+  display: inline;
+  padding-left: 5px;
+}
+
+div.bookmark_editor {
+  display: inline;
+}
+
+div.bookmark_manage a:visited, div.bookmark_editor a:visited {
+  color: #3366bb;
+}
+
+span.bullet {
+  padding-right: 10px;
+}

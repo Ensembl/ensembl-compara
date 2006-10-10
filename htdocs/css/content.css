@@ -68,6 +68,7 @@ div.panel h3.plain { border:none; background-color:transparent; }
 #page ul.level2 li { list-style-image:url(/img/blue_bullet.gif); }
 
 #page ul.spaced li { margin-bottom:0.5em;}
+#page ol.spaced li { margin-bottom:0.5em;}
 
 dt { font-weight:bold; }
                                                                                 
@@ -83,6 +84,9 @@ img.float-right { float:right; padding-left:10px; }
 .screenshot { text-align:center; margin:auto; padding:10px; }
 
 .karyomap { text-align:center; margin:auto; }
+
+.flash { margin:20px auto; }
+.tutorial { width:675px; height:600px; }
 
 /* JavaScript dropdown menus on images*/
                                                                                    
