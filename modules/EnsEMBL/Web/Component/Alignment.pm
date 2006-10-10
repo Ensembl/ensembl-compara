@@ -255,6 +255,19 @@ sub output_DnaDnaAlignFeature {
   }
 }
 
+sub output_External {
+  my( $panel, $object ) = @_;
+  foreach my $align ( @{$object->Obj||[]} ) {
+    $panel->print(
+      "<pre>",
+        map( { $_->{'alignment'} } @{ $align->{'internal_seqs'} } ),
+      "</pre>"
+    );
+  }
+  return 1;
+}
+
+
 =head2 output_External_trans_al
 
  Arg[1]	     : information panel (EnsEMBL::Web::Document::Panel::Information)

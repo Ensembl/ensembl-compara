@@ -65,6 +65,7 @@ sub createObjects {
   my $class                = $self->param('class');
   unless( $class ) {
     $class = 'External' if $self->param('sequence');
+    $class = 'Supporting' if $self->param('sequence') && $self->param('exon') && $self->param('trans');
     $class = 'Family'   if $self->param('family_stable_id');
   }
   if( $class ) {
@@ -226,6 +227,88 @@ sub usage_External {
 =cut
 
 sub createObjects_External {
+  my $self      = shift;
+  my $seqid     = $self->param( 'sequence' );
+  my $db        = $self->param('db') || 'core';    # internal db to retrieve from
+  my $ext_db    = $self->param('ext_db');    # external db to retrieve from
+  my $tranid    = $self->param('transcript');
+  my $exonid    = $self->param('exon');
+  my $geneid    = $self->param('gene');
+  # Get handle for core database
+  my $database = $self->get_databases($db)->{$db};
+  unless ($database){
+    $self->problem( 'fatal', 'Database Error', "Could not connect to the required $db database." );
+    return ;
+  }
+  # Get the external sequence
+  my $ext_seq = $self->get_ext_seq( $seqid, $ext_db );
+  unless( $ext_seq ) {
+    $self->problem( 'fatal', "External Feature Alignment Does Not Exist", "The sequence for feature $seqid could not be retrieved.");
+    return;
+  }
+  my $seq_type = $self->determine_sequence_type( $ext_seq );
+  my @int_seq;
+  my $exon_obj;
+  my @tran_obj_list;
+
+  # Populate the objects to get int seq
+  if( $tranid ){
+    my $tran_obj;
+    my $tran_apt = $database->get_TranscriptAdaptor;
+    eval { $tran_obj =( $tran_apt->fetch_by_stable_id( $tranid ) || $tran_apt->fetch_by_dbID( $tranid )); };
+    unless( $tran_obj ) {
+      $self->problem( 'fatal',  "Feature not found", "No transcript object was found corresponding to the ID: $tranid ");
+      return;
+    }
+    push @tran_obj_list, $tran_obj;
+  } elsif( $geneid ){
+    my $gene_obj;
+    my $gene_apt = $database->get_GeneAdaptor;
+    eval { $gene_obj = ($gene_apt->fetch_by_stable_id( $geneid ) || $gene_apt->fetch_by_dbID( $geneid)); };
+    unless( $gene_obj ) {
+      $self->problem( 'fatal',  "Feature not found", "No gene object was found corresponding to the ID: $geneid ");
+      return;
+    }
+    # Get a list of transcripts corresponding to the geneid
+    @tran_obj_list = @{$gene_obj->get_all_Transcripts};
+  } elsif( $exonid ){
+    my $exon_apt = $database->get_ExonAdaptor;
+    eval { $exon_obj =( $exon_apt->fetch_by_stable_id( $exonid ) || $exon_apt->fetch_by_dbID( $exonid )); };
+    unless( $exon_obj ) {
+      $self->problem( 'fatal',  "Feature not found", "No exon object was found corresponding to the ID: $exonid ");
+    }
+  } else {
+    $self->problem('fatal', "Please supply an identifier", "This page requires a gene or transcript to align to" );
+    return;
+  }
+  if( $exon_obj ){
+    my $is = $self->get_int_seq( $exon_obj, $seq_type);
+    if( $is ) {
+      push @int_seq , $is if $is;
+    } else {
+      $self->problem('fatal', "Unable to obtain internal sequence", "Unable to align peptide with non-coding transcript" );
+    }
+  } else{
+    @int_seq = grep { $_ } map { $self->get_int_seq( $_, $seq_type) } @tran_obj_list;
+    if( @tran_obj_list && !@int_seq ) {
+      $self->problem('fatal', "Unable to obtain internal sequence", "Unable to align peptide with non-coding transcript" );
+    }
+  }
+  if( @int_seq ) {
+    my @internal;
+    my $seqtype = $self->determine_sequence_type( $ext_seq);
+    my $alignment;
+warn "$ext_seq @int_seq";
+    foreach my $int ( @int_seq ) {
+      push @internal, { 'seq' => $_, 'alignment' => $self->get_alignment( $ext_seq, $int, $seqtype ) };
+    }
+    $self->_createObjects( [ {'external_seq' => $ext_seq, 'internal_seqs' => \@internal, 'seqtype' => $seqtype} ], 'External' );
+  } else {
+    $self->problem('fatal', "Ensembl Alignment Error", "The Ensembl sequence could not be retrieved.");
+  }
+}
+
+sub createObjects_Supporting {
 	my $self      = shift;
 	my $seqid     = $self->param( 'sequence' );
 	my $db        = $self->param('db') || 'core';
@@ -308,7 +391,7 @@ sub createObjects_External {
   $details->{'exon_alignment'} = $exon_alignment;
 
   #create object
-  $self->_createObjects( [ $details ], 'External' );
+  $self->_createObjects( [ $details ], 'Supporting' );
   #add a W::P::O for the transcript
   my $obj  = $self->DataObjects->[0];
   $obj->alternative_object_from_factory( 'Transcript' );

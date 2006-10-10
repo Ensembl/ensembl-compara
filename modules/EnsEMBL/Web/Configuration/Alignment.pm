@@ -53,7 +53,7 @@ sub alignview_Family {
 }
 
 
-=head2 alignviewExternal
+=head2 alignview_External
 
  Arg[1]      : none
  Example     : $self->alignviewExternal
@@ -63,6 +63,27 @@ sub alignview_Family {
 =cut
 
 sub alignview_External {
+  my $self = shift;
+  my $object  = $self->{object};
+  my $seqid   = $object->param( 'sequence' );
+  my $tranid  = $object->param('transcript');
+  my $exonid  = $object->param('exon');
+  my $geneid  = $object->param('gene');
+  my $title = "Alignment between External Feature: $seqid and";
+
+  $title .= " Gene ID: $geneid" if $geneid;
+  $title .= " Exon ID: $exonid" if $exonid;
+  $title .= " Transcript ID: $tranid" if $tranid;
+
+  if( my $panel1 = $self->new_panel( '', 'code'    => "info", 'caption' => $title) ) {
+    $panel1->add_components(qw(
+      output EnsEMBL::Web::Component::Alignment::output_External
+    ));
+    $self->add_panel( $panel1 );
+  }
+}
+
+sub alignview_Supporting {
 	my $self   = shift;
 	my $obj = $self->{'object'};
 	my $data = $obj->__data;
