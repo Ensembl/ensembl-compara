@@ -1,4 +1,4 @@
-package Integration::Task::Copy;
+package Integration::Task::EDoc;
 
 use strict;
 use warnings;
