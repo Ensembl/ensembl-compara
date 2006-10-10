@@ -118,7 +118,7 @@ sub retrieve_OligoProbe {
       push(@$results, $unmapped);
     }
     else {
-      my $names = join ' ', map { /:(.*):\1/? $1 : $_ } sort @{$ap->get_all_complete_names()};
+      my $names = join ' ', map { /^(.*):(.*):\2/? "$1:$2" : $_ } sort @{$ap->get_all_complete_names()};
       foreach my $f (@{$ap->get_all_OligoFeatures()}) {
         push @$results, {
           'region'   => $f->seq_region_name,

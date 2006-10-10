@@ -18,7 +18,7 @@ no warnings "uninitialized";
 
 our %pointer_defaults = ( 
             'Gene'      => ['blue', 'lharrow'],
-            'AffyProbe' => ['red', 'rharrow'],
+            'OligoProbe' => ['red', 'rharrow'],
   );
 
 
