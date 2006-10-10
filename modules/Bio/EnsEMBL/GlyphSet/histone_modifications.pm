@@ -2,15 +2,21 @@ package Bio::EnsEMBL::GlyphSet::histone_modifications;
 use strict;
 use vars qw(@ISA);
 use Bio::EnsEMBL::GlyphSet;
-#use Sanger::Graphics::Glyph::Text;
+use Sanger::Graphics::Glyph::Text;
 use Sanger::Graphics::Glyph::Rect;
 use Bio::EnsEMBL::Utils::Eprof qw(eprof_start eprof_end eprof_dump); 
 @ISA = qw(Bio::EnsEMBL::GlyphSet);
 use Data::Dumper;
 
 sub init_label {
+
+  ### Returns (string) the label for the track
+
   my $self = shift;
-  return   $self->init_label_text("Histone modifications");
+  my $HELP_LINK = $self->check();
+  $self->init_label_text( "Histone modificiations",$HELP_LINK );
+  $self->bumped( $self->{'config'}->get($HELP_LINK, 'compact') ? 'no' : 'yes' );
+  return;
 }
 
 
@@ -18,84 +24,23 @@ sub _init {
   my ($self) = @_;
   $self->bumped( $self->my_config( 'compact' ) ? 'no' : 'yes' );
 
-#  if ($self->my_config('compact')) {
-#    $self->init_compact;    # do just blue track
-    
-#  }
-#  else {
-  my $offset = $self->init_expand; # do both tracks
-    $self->init_compact($offset); # do both tracks
-  # need spacer glyph
-#  }
+  if ($self->my_config('compact')) {
+    $self->init_compact;    # do just blue track    
+  }
+  else {
+    $self->init_expand(); # do both tracks
+    $self->init_compact(); # do both tracks
+    $self->render_space_glyph();
+  }
   return 1;
 }
 
-sub init_compact {
-  my ($self, $offset) = @_;
-  $offset ||= 0;
-
-  my $adaptor = $self->{'container'}->adaptor();
-  if(!$adaptor) {
-    warn('Cannot get histone modifications without attached adaptor');
-    return [];
-  }
-
-  my $db = $adaptor->db->get_db_adaptor('funcgen');
-  if (!$db) {
-    warn ("Cannot connect to funcgen");
-    return [];
-  }
-  my $pf_adaptor = $db->get_PredictedFeatureAdaptor();
-  if( $pf_adaptor ) {
-    my $features = $pf_adaptor->fetch_all_by_Slice($self->{'container'});
-    $self->render_predicted_features( $features, $offset );
-  } 
-  else {
-    warn("Funcgen database must be attached to core database to " .
-	    "retrieve funcgen information" );
-    return [];
-  }
-}
-
-
-sub render_predicted_features {
-  my ( $self, $features, $offset ) = @_;
-
-  foreach my $f (@$features ) {
-    my $Glyph = new Sanger::Graphics::Glyph::Rect({
-	'y'         => $offset,
-        'height'    => 10,
-	'x'         => $f->start -1,
-        'width'     => $f->end - $f->start,
-	'absolutey' => 1,          # in pix rather than bp
-        'colour'    => "blue",
-        'zmenu'     => $self->predicted_features_zmenu($f),
-    });
-    $self->push( $Glyph );
-  }
-}
-
-sub predicted_features_zmenu {
-  my ($self, $f ) = @_;
-  my $slice_start   = $self->{'container'}->start + 1;
-  my $pos =  ($slice_start + $f->start)."-".($f->end+$slice_start);
-  my $score = sprintf("%.3f", $f->score());
-  my %zmenu = ( 
-  	       caption               => ($f->display_label || ''),
-  	       "03:bp:   $pos"       => '',
-  	       "04:type:        ".($f->type->name() || '-') => '',
-  	       "05:description: ".($f->type->description() || '-') => '',
-               "06:analysis: ".($f->analysis->logic_name() || "-") => '',
-  	       "09:score: ".$score => '',
- 	      );
-
-   return \%zmenu || {};
- }
-
-
 sub init_expand {
 
-  ### Returns arrayref of features
+  ### Wiggle plot
+  ### Description: gets data for the 'wiggle plot' and passes to
+  ### {{render_signalmap}} for drawing
+  ### Returns 1
 
   my ($self) = @_;
   my $slice = $self->{'container'};
@@ -122,9 +67,9 @@ sub init_expand {
   my @results;
   my $analysis = $db->get_AnalysisAdaptor->fetch_by_logic_name("VSN_GLOG");# normalisation method
 
-  my $configuration = {length => $slice->seq_region_length, 
-		       offset => 0, 
+  my $configuration = {length => $slice->length, 
 		       analysis => $analysis};
+
   my $drawn_flag = 0;
   # get_all_experiment_names method takes one arg: a displayable flag
   foreach my $name (@{ $exp_adaptor->get_all_experiment_names(1) || [] } ) {
@@ -164,11 +109,17 @@ sub init_expand {
   unless ($drawn_flag) {
     $self->errorTrack( "No ".$self->my_label." in this region" ) if $self->{'config'}->get('_settings','opt_empty_tracks')==1;
   }
-  return $configuration->{'offset'};
+  return 1;
 }
 
 
 sub render_signalmap {
+
+  ### Wiggle plot
+  ### Arg1 : configuration hashref with arrayref of feature objects (hashref)
+  ### Description: draws wiggle plot using the score of the features
+  ### Returns 1
+
   my( $self, $configuration ) = @_;
 
   my $row_height = 60;
@@ -214,14 +165,14 @@ sub render_signalmap {
 
   $self->push( new Sanger::Graphics::Glyph::Text({
 	'text'      => $display_max_score,
-        'height'    => $textheight_i,
 	'width'     => $res_i[2],
         'font'      => $fontname_i,
         'ptsize'    => $fontsize_i,
         'halign'    => 'right',
         'valign'    => 'top',
 	'colour'    => 'red',
-	'y'         => $offset,
+        'height'    => $textheight_i,
+ 	'y'         => $offset,
 	'x'         => -3 - $res_i[2],
 	'absolutey' => 1,
 	'absolutex' => 1,
@@ -252,7 +203,6 @@ sub render_signalmap {
 
   # Draw wiggly plot -------------------------------------------------
   foreach my $f (@features) {
-    # keep within the window we're drawing
     my $START = $f->{'start'} < 1 ? 1 : $f->{'start'};
     my $END   = $f->{'end'}   > $configuration->{'length'}  ? $configuration->{'length'} : $f->{'end'};
     my $score = $f->{'score'} || 0;
@@ -269,7 +219,9 @@ sub render_signalmap {
         'colour'    => $colour,
     });
     $self->push( $Glyph );
-  } # END loop over features
+  }
+
+  $offset = $self->_offset($row_height);
 
 
   # Add line of text -------------------------------------------
@@ -279,30 +231,172 @@ sub render_signalmap {
 
   $self->push( new Sanger::Graphics::Glyph::Text({
 	'text'      => $configuration->{'track_name'},
-        'height'    => $textheight_i,
 	'width'     => $res_analysis[2],
         'font'      => $fontname_i,
         'ptsize'    => $fontsize_i,
         'halign'    => 'left',
         'valign'    => 'bottom',
 	'colour'    => $colour,
-	'y'         => $offset + $row_height,
+	'y'         => $offset,
+        'height'    => $textheight_i,
 	'x'         => 1,
 	'absolutey' => 1,
 	'absolutex' => 1,
     }) );
-  
+
+  $self->_offset($textheight_i);  #update offset
+  $self->render_space_glyph(5);
+  return 1;
+}
+
+
+
+sub init_compact {
+
+  ### Predicted features
+  ### Gets data for the predicted features track
+
+  my ($self) = @_;
+
+  my $adaptor = $self->{'container'}->adaptor();
+  if(!$adaptor) {
+    warn('Cannot get histone modifications without attached adaptor');
+    return [];
+  }
+
+  my $db = $adaptor->db->get_db_adaptor('funcgen');
+  if (!$db) {
+    warn ("Cannot connect to funcgen");
+    return [];
+  }
+  my $pf_adaptor = $db->get_PredictedFeatureAdaptor();
+
+  if( $pf_adaptor ) {
+    my $features = $pf_adaptor->fetch_all_by_Slice($self->{'container'});
+    my $colour = "blue";
+    $self->render_predicted_features( $features, $colour );
+    $self->render_track_name($features->[0]->type->name, $colour);
+  } 
+  else {
+    warn("Funcgen database must be attached to core database to " .
+	    "retrieve funcgen information" );
+    return [];
+  }
+  return 1;
+}
+
+
+sub render_predicted_features {
+
+  ### Predicted features
+  ### Draws the predicted features track
+  ### Arg1: arrayref of Feature objects
+  ### Arg2: colour of the track
+
+  my ( $self, $features, $colour ) = @_;
+
+  foreach my $f (@$features ) {
+    my $Glyph = new Sanger::Graphics::Glyph::Rect({
+	'y'         => $self->_offset,
+        'height'    => 10,
+	'x'         => $f->start -1,
+        'width'     => $f->end - $f->start,
+	'absolutey' => 1,          # in pix rather than bp
+        'colour'    => $colour,
+        'zmenu'     => $self->predicted_features_zmenu($f),
+    });
+    $self->push( $Glyph );
+  }
+  $self->_offset(10);
+  return 1;
+}
+
+
+sub predicted_features_zmenu {
+
+  ### Predicted features
+  ### Creates zmenu for predicted features track
+  ### Arg1: arrayref of Feature objects
+
+  my ($self, $f ) = @_;
+  my $slice_start   = $self->{'container'}->start + 1;
+  my $pos =  ($slice_start + $f->start)."-".($f->end+$slice_start);
+  my $score = sprintf("%.3f", $f->score());
+  my %zmenu = ( 
+  	       caption               => ($f->display_label || ''),
+  	       "03:bp:   $pos"       => '',
+  	       "04:type:        ".($f->type->name() || '-') => '',
+  	       "05:description: ".($f->type->description() || '-') => '',
+               "06:analysis: ".($f->analysis->logic_name() || "-") => '',
+  	       "09:score: ".$score => '',
+ 	      );
+
+   return \%zmenu || {};
+ }
+
+
+sub render_track_name {
+
+  ### Predicted features
+  ### Draws the name of the predicted features track
+  ### Arg1: arrayref of Feature objects
+  ### Arg2: colour of the track
+
+  my ( $self, $name, $colour ) = @_;
+  my( $fontname_i, $fontsize_i ) = $self->get_font_details( 'innertext' );
+  my @res_analysis = $self->get_text_width( 0, $name,
+					    '', 'font'=>$fontname_i, 
+					    'ptsize' => $fontsize_i );
+
+  $self->push( new Sanger::Graphics::Glyph::Text({
+	'text'      => $name,
+        'height'    => $res_analysis[3],
+	'width'     => $res_analysis[2],
+        'font'      => $fontname_i,
+        'ptsize'    => $fontsize_i,
+        'halign'    => 'left',
+        'valign'    => 'bottom',
+	'colour'    => $colour,
+	'y'         => $self->_offset,
+	'x'         => 1,
+	'absolutey' => 1,
+	'absolutex' => 1,
+    }) );
+
+  $self->_offset($res_analysis[3]);
+  return 1;
+}
+
+
+sub render_space_glyph {
+
+  ### Draws a an empty glyph as a spacer
+  ### Arg1 : (optional) integer for space height,
+
+  my ($self, $space) = @_;
+  $space ||= 9;
   $self->push( new Sanger::Graphics::Glyph::Space({
-        'height'    => 9,
+        'height'    => $space,
 	'width'     => 1,
-        'y'         => $offset + $row_height + $textheight_i,
+        'y'         => $self->_offset,
         'x'         => 0,
 	'absolutey' => 1,  # puts in pix rather than bp
 	'absolutex' => 1,
 		  }));
-
-  $configuration->{'offset'} += $row_height + $textheight_i +9;
+  $self->_offset($space);
   return 1;
-}   # END RENDER_signalmap
+}
+
+
+sub _offset {
+
+  ### Arg1 : (optional) number to add to offset
+  ### Description: Getter/setter for offset
+  ### Returns : integer
+
+  my ($self, $offset) = @_;
+  $self->{'offset'} += $offset if $offset;
+  return $self->{'offset'} || 0;
+}
 
 1;
