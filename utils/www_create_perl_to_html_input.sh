@@ -122,4 +122,10 @@ cvs -q up
 echo "Change back to server root directory";
 cd $PERLMOD_LOC
 
+# generate e! docs:
+echo "Generating e! docs:";
+rm -r $PERLMOD_LOC/htdocs/docs 
+perl $PERLMOD_LOC/utils/edoc/update_docs.pl
+cp -r $PERLMOD_LOC/utils/edoc/temp $PERLMOD_LOC/htdocs/docs
+
 exit 0
