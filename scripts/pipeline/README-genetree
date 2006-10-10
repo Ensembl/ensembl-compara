@@ -18,13 +18,13 @@ Please start reading README-homology first.
 # These tables are already in the main ensembl-compara/sql/table.sql
 # file as of ensembl v40.
 #
-# $ mysql -hia64e -uensadmin -pensembl abel_compara_tree_37 \
+# $ mysql -hcompara1 -uensadmin -pensembl abel_compara_tree_41 \
 #   < ensembl-compara/sql/protein_tree.sql
 #
 # This will create 3 tables
-# protein_tree_nodes
+# protein_tree_node
 # protein_tree_member
-# protein_tree_tags
+# protein_tree_tag
 
 
 3- Copy and modify the compara-hive config file
@@ -62,7 +62,7 @@ must exist.
   },
 
 One example of the species_tree_file can be found in
-ensembl-compara/scripts/pipeline/species_tree_rap.nh
+ensembl-compara/scripts/pipeline/species_tree.rap
 
 
 4- Create the species tree file 
@@ -72,12 +72,14 @@ An annotated phylogenetic tree file representing the species in the
 compara DB and their relative distances is required for the final rap
 tree building stage. The file must be in Nexus (.nh) format, with all
 levels enclosed with a '()ROOT:0.0;' level. A curated nh file
-containing the ensembl species is available at ???. An unweighted file
-based on the NCBI taxonomy can be generated using compara's
-taxonTreeTool.pl as follows;
+containing the ensembl species is available at
+ensembl_compara/scripts/pipeline/species_tree.rap
+
+An unweighted file based on the NCBI taxonomy can be generated using
+compara's taxonTreeTool.pl as follows;
 
  $ $BASEDIR/ensembl-compara/scripts/taxonomy/taxonTreeTool.pl \
-   -url mysql://ensro@ia64e:3306/abel_compara_tree_37 \
+   -url mysql://ensro@compara1:3306/abel_compara_tree_41 \
    -taxa_compara -mini \
    | tail n 1
 
@@ -103,6 +105,3 @@ available or if it's unable to connect to core databases.
 
 At this point the system is ready to run using the beekeeper.pl script
 as explained in the README-homology
-
-
-
