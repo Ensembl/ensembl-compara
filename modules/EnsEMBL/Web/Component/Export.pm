@@ -449,12 +449,14 @@ sub fasta_trans {
   my %options = map { $_=>1 } $transObj->param('options');
   my $slice_name = '';
   my $id = $transcript->stable_id;
-  my $pep_id = $transcript->translation->stable_id;
 
   $id = "$extra:$id" if $extra;
   $out.= format_fasta( "$id cdna:$id_type $slice_name", $transcript->spliced_seq          ) if $options{'cdna'};
   $out.= format_fasta( "$id cds:$id_type $slice_name",  $transcript->translateable_seq    ) if $options{'coding'}  && $transcript->translation;
-  $out.= format_fasta( "$id peptide:$pep_id pep:$id_type $slice_name",  $transcript->translate->seq       ) if $options{'peptide'} && $transcript->translation;
+  if ($options{'peptide'} && $transcript->translation) {
+	my $pep_id = $transcript->translation->stable_id; 
+	$out.= format_fasta( "$id peptide:$pep_id pep:$id_type $slice_name",  $transcript->translate->seq) ;
+  }
   $out.= format_fasta( "$id utr3:$id_type $slice_name", $transcript->three_prime_utr->seq ) if $options{'utr3'}    && $transcript->three_prime_utr;
   $out.= format_fasta( "$id utr5:$id_type $slice_name", $transcript->five_prime_utr->seq  ) if $options{'utr5'}    && $transcript->five_prime_utr;
   return $out;
