@@ -96,6 +96,7 @@ sub configure {
 
   my $flag = 0;
   my @T = ('EnsEMBL::Web', '', @{$ENSEMBL_PLUGINS});
+my $FUNCTIONS_CALLED = {};
   while( my ($module_root, $X) = splice( @T, 0, 2) ) {
                            # Starting with the standard EnsEMBL module configure
                            # the script....
@@ -111,12 +112,10 @@ sub configure {
       my $CONF = $config_module_name->new( $self->page, $object, $flag );
       foreach my $FN ( @functions ) { 
         if( $CONF->can($FN) ) {
-                           # If this configuration module can perform this
-                           # function do so...
+                           # If this configuration module can perform this function do so...
           $self->{wizard} = $CONF->{wizard};
           eval { $CONF->$FN(); };
-          if( $@ ) { 
-                           # Catch any errors and display as a "configuration runtime error"
+          if( $@ ) { # Catch any errors and display as a "configuration runtime error"
             $self->page->content->add_panel( 
               new EnsEMBL::Web::Document::Panel(
                'caption' => 'Configuration module runtime error',
@@ -128,22 +127,12 @@ sub configure {
     <pre>%s</pre>), $self->_format_error($@) )
               )
             );
-	        }
+	      } else {
+            $FUNCTIONS_CALLED->{$FN} = 1;
+          }
         }
-        else {
-
-	        if ($objecttype eq 'DAS') {
-		
-		        $self->problem('Fatal', 'Bad request', 'Unimplemented');
-
-	        } 
-          else {
-		        warn "Can't do menu function $FN";
-	        }
-	      }
-	    }
-    } 
-    elsif( $self->dynamic_use_failure( $config_module_name ) !~ /^Can't locate/ ) { 
+      }
+    } elsif( $self->dynamic_use_failure( $config_module_name ) !~ /^Can't locate/ ) { 
                            # Handle "use" failures gracefully... 
                            # Firstly skip Can't locate errors
                            # o/w display a "compile time" error message.
@@ -158,6 +147,15 @@ sub configure {
     <pre>%s</pre>), $self->_format_error( $self->dynamic_use_failure( $config_module_name )) )
         )
       );
+    }
+  }
+  foreach my $FN ( @functions ) {
+    unless( $FUNCTIONS_CALLED->{$FN} ) {
+      if( $objecttype eq 'DAS' ) {
+        $self->problem('Fatal', 'Bad request', 'Unimplemented');
+      } else {
+        warn "Can't do configuration functiona $FN on $objecttype objects";
+      }
     }
   }
   $self->add_error_panels(); # Add error panels to end of display!!
