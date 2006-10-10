@@ -1,10 +1,11 @@
-#! /usr/bin/perl -w
+#! /usr/local/bin/perl
 
 use strict;
 use warnings;
 
 BEGIN {
-  push @INC, "./modules";
+  push @INC, "/ensemblweb/head/integration/modules";
+  $SIG{INT} = \&CATCH;
 }
 
 use Integration;
@@ -15,30 +16,36 @@ use Integration::Task::Mkdir;
 use Integration::Task::Delete;
 use Integration::Task::Rollback;
 use Integration::Task::Symlink;
+use Integration::Task::EDoc;
 use Integration::Task::Test::Ping;
 use YAML qw(LoadFile);
 use Carp;
 
-chdir "/ensemblweb/head/checkout/"; 
-my $cvs = `cvs -n -q up`;
-my @cvs_output = split(/\n/, $cvs);
+open (INPUT, "/ensemblweb/head/integration/cvs.update") or die;
+
 my $run = 0;
-foreach my $output (@cvs_output) {
-  print $output . "\n";
+foreach my $output (<INPUT>) {
   if ($output =~ /^U/) {
     $run = 1;
   }
 }
 
 if ($run == 0) {
-  exit;
+  print "Everything is up to date - exiting.\n";
+#  exit;
+} else {
+  print "Updates found - syncing server.\n";
 }
 
-my $config_file = "./checkout/sanger-plugins/head/conf/deploy.yml"; 
+close INPUT;
+
+my $config_file = "./deploy.yml"; 
 
 if ($ARGV[0]) {
   $config_file = $ARGV[0];
 }
+
+print "Using: $config_file\n";
 
 my $config = undef;
 if (-e $config_file) {
@@ -47,7 +54,7 @@ if (-e $config_file) {
   croak "Error opening config file: $config_file\n $!";
 }
 
-my $lock = "./lock/locked";
+my $lock = "/ensemblweb/head/integration/lock/locked";
 my $checkout_location = $config->{checkout_location}; 
 my $htdocs_location = $config->{htdocs_location}; 
 my $cvs_repository = $config->{repository}; 
@@ -71,13 +78,14 @@ if (-e 'biomart') {
 }
 
 if (-e $lock) {
+  print "Locked - exiting\n";
   exit;
 } else {
   my $touch = `touch $lock`;
 }
 
 my $checkout_task = Integration::Task::Checkout->new((
-                              destination => "checkout",
+                              destination => $checkout_location,
                               repository  => $cvs_repository,
                               root        => $cvs_root,
                               username    => $cvs_username,
@@ -105,14 +113,14 @@ $mart_task->add_module('biomart-web');
 $integration->add_checkout_task($mart_task);
 
 $integration->add_checkout_task(Integration::Task::Copy->new((
-                                     source      => "biomart/biomart-plib",
-                                     destination => "checkout/biomart-plib" 
+                                     source      => "/ensemblweb/head/integration/biomart/biomart-plib",
+                                     destination => "/ensemblweb/head/integration/checkout/biomart-plib" 
                                      ))
                                );
 
 $integration->add_checkout_task(Integration::Task::Copy->new((
-                                     source      => "biomart/biomart-web",
-                                     destination => "checkout/biomart-web" 
+                                     source      => "/ensemblweb/head/integration/biomart/biomart-web",
+                                     destination => "/ensemblweb/head/integration/checkout/biomart-web" 
                                      ))
                                );
 
@@ -126,33 +134,36 @@ my $rollback_task = Integration::Task::Rollback->new((
 $integration->add_rollback_task($rollback_task);
 
 my $copy_task = Integration::Task::Copy->new((
-                             source      => "support/Plugins.pm", 
-                             destination => "checkout/conf"
+                             source      => "/ensemblweb/head/integration/support/Plugins.pm", 
+                             destination => "/ensemblweb/head/integration/checkout/conf"
                            ));
 
 my $apache_copy_task = Integration::Task::Copy->new((
                              source      => "/ensemblweb/head/src", 
-                             destination => "checkout/src"
+                             destination => "/ensemblweb/head/integration/checkout/src"
                            ));
 
 my $bioperl_link = Integration::Task::Symlink->new((
                              source      => "/ensemblweb/shared/bioperl/bioperl-release-1-2-3", 
-                             destination => "checkout/bioperl-live"
+                             destination => "/ensemblweb/head/integration/checkout/bioperl-live"
                            ));
 
 $integration->add_configuration_task($copy_task);
 $integration->add_configuration_task($apache_copy_task);
 $integration->add_configuration_task($bioperl_link);
-$integration->add_configuration_task(Integration::Task::Mkdir->new((source => "checkout/img")));
-$integration->add_configuration_task(Integration::Task::Mkdir->new((source => "checkout/logs")));
-$integration->add_configuration_task(Integration::Task::Mkdir->new((source => "checkout/tmp")));
+$integration->add_configuration_task(Integration::Task::Mkdir->new((source => "/ensemblweb/head/integration/checkout/img")));
+$integration->add_configuration_task(Integration::Task::Mkdir->new((source => "/ensemblweb/head/integration/checkout/logs")));
+$integration->add_configuration_task(Integration::Task::Mkdir->new((source => "/ensemblweb/head/integration/checkout/tmp")));
+
+$integration->add_configuration_task(Integration::Task::EDoc->new((source => "/ensemblweb/head/integration/checkout/utils/edoc", destination => "/ensemblweb/head/integration/checkout/htdocs/docs")));
 
 my $checkout_copy_task = Integration::Task::Copy->new((
-                             source      => "checkout", 
+                             source      => "/ensemblweb/head/integration/checkout", 
                              destination => "/ensemblweb/head"
                            ));
 
 $integration->add_configuration_task($checkout_copy_task);
+
 
 $integration->stop_command('/ensemblweb/head/checkout/ctrl_scripts/stop_server');
 $integration->stop_server;
@@ -189,3 +200,10 @@ $integration->update_log;
 $integration->generate_output;
 
 my $rm = `rm $lock`;
+
+sub CATCH {
+  my $sig = shift;
+  print "SIGINT caught - exiting";
+  my $rm = `rm $lock`;
+  exit;
+}
