@@ -1184,9 +1184,9 @@ sub ADD_ALL_TRANSCRIPTS {
   $self->add_new_track_transcript( 'est',       'EST genes',       'est_gene', $POS++,
     'available' => 'databases_features ENSEMBL_OTHERFEATURES.estgene', @_ );
 
-  $self->add_new_track_transcript( 'medaka_transcriptcoalescer', 'TransCoalescer Genes',     'medaka_genes',$POS++,
+  $self->add_new_track_transcript( 'medaka_transcriptcoalescer', 'EST Genes',     'medaka_genes',$POS++,
     'available' => "database_features ENSEMBL_OTHERFEATURES.medaka_transcriptcoalescer" , @_ );
-  $self->add_new_track_transcript( 'medaka_genome_project', 'Medaka GP Genes',     'medaka_genes',$POS++,
+  $self->add_new_track_transcript( 'medaka_genome_project', 'MGP Genes',     'medaka_genes',$POS++,
     'available' => "database_features ENSEMBL_OTHERFEATURES.medaka_genome_project", @_ );
   $self->add_new_track_transcript( 'singapore_est', 'Singapore EST Genes', 'est_gene', $POS++,
      'available' => "database_features ENSEMBL_OTHERFEATURES.singapore_est", @_ );
@@ -1360,12 +1360,12 @@ sub ADD_GENE_TRACKS {
   $self->add_new_track_gene( 'mouse_protein', 'Mouse Protein Genes', 'prot_gene', $POS++, 'gene_col' => '_col',  @_ );
   $self->add_new_track_gene( 'targettedgenewise', 'Targetted Genewise Genes', 'prot_gene', $POS++, 'gene_col' => '_col',  @_ );
   $self->add_new_track_gene( 'cdna_all', 'cDNA Genes', 'prot_gene', $POS++, 'gene_col' => '_col',  @_ );
-  $self->add_new_track_gene( 'medaka_transcriptcoalescer', 'TransCoalescer Genes',     'medaka_genes',
+  $self->add_new_track_gene( 'medaka_transcriptcoalescer', 'EST Genes',     'medaka_genes',
     $POS++, 'database' => 'otherfeatures', 'gene_col' => 'transcriptcoalescer',
     'available' => "database_features ENSEMBL_OTHERFEATURES.medaka_transcriptcoalescer" ,
     'label_threshold' => 500,
     @_ );
-  $self->add_new_track_gene( 'medaka_genome_project', 'Medaka GP Genes',     'medaka_genes',
+  $self->add_new_track_gene( 'medaka_genome_project', 'MGP Genes',     'medaka_genes',
     $POS++, 'database' => 'otherfeatures', 'gene_col' => 'genome_project',
     'available' => "database_features ENSEMBL_OTHERFEATURES.medaka_genome_project",
     'label_threshold' => 500,
