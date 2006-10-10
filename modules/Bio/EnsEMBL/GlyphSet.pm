@@ -334,7 +334,7 @@ sub errorTrack {
     'pixperbp'  => $self->{'config'}->{'transform'}->{'scalex'} ,
   }) );
 
-    return;
+    return $res[3];
 }
 
 1;

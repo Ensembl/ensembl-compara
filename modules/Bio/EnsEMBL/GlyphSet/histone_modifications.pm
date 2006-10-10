@@ -14,7 +14,7 @@ sub init_label {
 
   my $self = shift;
   my $HELP_LINK = $self->check();
-  $self->init_label_text( "Histone modificiations",$HELP_LINK );
+  $self->init_label_text( "Histone mod.",$HELP_LINK );
   $self->bumped( $self->{'config'}->get($HELP_LINK, 'compact') ? 'no' : 'yes' );
   return;
 }
@@ -44,6 +44,15 @@ sub init_expand {
 
   my ($self) = @_;
   my $slice = $self->{'container'};
+  my $type = $self->check();
+  my $max_length     = $self->{'config'}->get( $type, 'threshold' )  || 500;
+  my $slice_length  = $slice->length;
+  if($slice_length > $max_length*1010) {
+    my $height = $self->errorTrack('Tiling array data not displayed for more than '.$max_length.'Kb');
+    $self->_offset($height+4);
+    return;
+  }
+
   my $adaptor = $slice->adaptor();
   if(!$adaptor) {
     warn('Cannot get prediction features without attached adaptor');
@@ -107,7 +116,8 @@ sub init_expand {
     }
   }
   unless ($drawn_flag) {
-    $self->errorTrack( "No ".$self->my_label." in this region" ) if $self->{'config'}->get('_settings','opt_empty_tracks')==1;
+   my $height = $self->errorTrack( "No tiling array data in this region", 0, $self->_offset ) if $self->{'config'}->get('_settings','opt_empty_tracks')==1;
+   $self->_offset($height + 4);
   }
   return 1;
 }
@@ -271,16 +281,22 @@ sub init_compact {
   }
   my $pf_adaptor = $db->get_PredictedFeatureAdaptor();
 
-  if( $pf_adaptor ) {
-    my $features = $pf_adaptor->fetch_all_by_Slice($self->{'container'});
+  unless ($pf_adaptor) {
+    warn("Funcgen database must be attached to core database to " .
+	 "retrieve funcgen information" );
+    return 1;
+  }
+
+  my $features = $pf_adaptor->fetch_all_by_Slice($self->{'container'});
+  if (@$features) {
     my $colour = "blue";
     $self->render_predicted_features( $features, $colour );
     $self->render_track_name($features->[0]->type->name, $colour);
-  } 
-  else {
-    warn("Funcgen database must be attached to core database to " .
-	    "retrieve funcgen information" );
-    return [];
+  }
+  elsif ( $self->my_config('compact') ) {
+    $self->init_expand();
+    $self->errorTrack( "No predicted features in this region", 0, $self->_offset ) if $self->{'config'}->get('_settings','opt_empty_tracks')==1;
+    $self->render_space_glyph();
   }
   return 1;
 }
