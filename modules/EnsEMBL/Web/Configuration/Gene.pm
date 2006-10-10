@@ -233,6 +233,7 @@ sub geneview {
       description   EnsEMBL::Web::Component::Gene::description
       method        EnsEMBL::Web::Component::Gene::method
       transcripts   EnsEMBL::Web::Component::Gene::transcripts
+      alignments    EnsEMBL::Web::Component::Gene::alignments
       orthologues   EnsEMBL::Web::Component::Gene::orthologues
       paralogues    EnsEMBL::Web::Component::Gene::paralogues
       diseases      EnsEMBL::Web::Component::Gene::diseases

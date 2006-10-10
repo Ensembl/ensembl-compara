@@ -19,9 +19,9 @@ sub default_track_by_gene {
 
   my %mappings_db = qw(
     vega evega_transcript
-    otherfeatures est_transcript
   );
-  my %mappings_logic_name = (
+  my %mappings_db_ln = (
+    'core' => {
     map( {( $_, $_ )} qw( 
       genscan fgenesh genefinder snap ciona_snap
       gsc gid slam gws_h gws_s )
@@ -49,10 +49,20 @@ sub default_track_by_gene {
       beeprotein       homology_low_transcript
       otter            vega_transcript
     )
+    },
+    'otherfeatures' => { qw(
+      estgene est_transcript ), 
+      map( {($_, $_.'_transcript')} qw(
+        singapore_est singapore_protein chimp_cdna chimp_est human_est
+        medaka_transcriptcoalescer medaka_genome_project
+      ) )
+    }
   );
+
   return lc($logic).'_transcript' if $db eq 'otherfeatures' && lc($logic) =~ /^singapore_(est|protein)$/;
   return $mappings_db{ lc( $db ) } ||
-         $mappings_logic_name{ lc( $logic ) } || 'ensembl_transcript';
+         $mappings_db_ln{ lc($db) }{ lc( $logic ) } ||
+         'ensembl_transcript';
 }
 
 sub type_name         { my $self = shift; return $self->species_defs->translate('Transcript'); }
@@ -61,6 +71,10 @@ sub stable_id         { my $self = shift; return $self->Obj->stable_id;  }
 sub feature_type      { my $self = shift; return $self->Obj->type;       }
 sub version           { my $self = shift; return $self->Obj->version;    }
 sub logic_name        { my $self = shift; return $self->gene ? $self->gene->analysis->logic_name : $self->Obj->analysis->logic_name; }
+sub display_label        {
+  my $self = shift;
+  return $self->Obj->analysis->display_label || $self->logic_name;
+}
 sub coord_system      { my $self = shift; return $self->Obj->slice->coord_system->name; }
 sub seq_region_type   { my $self = shift; return $self->coord_system; }
 sub seq_region_name   { my $self = shift; return $self->Obj->slice->seq_region_name; }
@@ -650,11 +664,11 @@ sub gene_type {
   my $db = $self->get_db;
   my $type = '';
   if( $db eq 'core' ){
-    $type = $self->logic_name;
+    $type = $self->display_label;
     $type ||= $self->db_type;
   } else {
-    $type = $self->db_type;
-    $type ||= $self->logic_name;
+    $type = $self->display_label;
+    $type ||= $self->db_type;
   }
   $type ||= $db;
   if( $type !~ /[A-Z]/ ){ $type = ucfirst($type) } #All lc, so format

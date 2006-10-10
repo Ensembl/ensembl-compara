@@ -117,12 +117,6 @@ sub align_markup_options {
   return 1;
 }
 
-sub markup_options {
-  my( $panel, $object ) =@_;
-  $panel->add_row( 'Markup options', "<div>@{[ $panel->form( 'markup_options' )->render ]}</div>" );
-  return 1;
-}
-
 sub align_markup_options_form {
   my( $panel, $object ) = @_;
   my $form = EnsEMBL::Web::Form->new( 'align_markup_options', "/@{[$object->species]}/geneseqalignview", 'post' );
@@ -549,6 +543,45 @@ sub method {
   return 1;
 }
 
+sub alignments {
+  my( $panel, $gene ) = @_;
+  my $label  = 'Alignments';
+  my $status = 'status_gene_alignments';
+  my $FLAG = 0;
+  my $URL = _flip_URL( $gene, $status );
+
+  my $html = qq{<p><b>This gene can be viewed in genomic alignment with other species</b></p>} ;
+
+  my %alignments = $gene->species_defs->multiX('ALIGNMENTS');
+  my $species = $gene->species;
+
+  foreach my $id (
+    sort { 10 *($alignments{$b}->{'type'} cmp $alignments{$a}->{'type'}) + ($a <=> $b) }
+    grep { $alignments{$_}->{'species'}->{$species} }
+    keys (%alignments)
+  ) {
+    my $label = $alignments{$id}->{'name'};
+    my $KEY = "opt_align_${id}";
+    my @species = grep {$_ ne $species} sort keys %{$alignments{$id}->{'species'}};
+    if ( scalar(@species) == 1) {
+     ($label = $species[0]) =~ s/_/ /g;
+    }
+    $html .= sprintf( qq(&nbsp;&nbsp;&nbsp;<a href="/%s/alignsliceview?l=%s:%s-%s;align=%s">view genomic alignment with <b>%s</b></a> <br/>),
+       $gene->species,
+       $gene->seq_region_name,
+       $gene->seq_region_start,
+       $gene->seq_region_end,
+       $KEY,
+       $label
+    );
+    $FLAG = 1;
+  }
+  if( $FLAG ) {
+    $panel->add_row( $label, $html, "$URL=off" );
+  }
+  return 1;
+}
+
 sub orthologues {
   my( $panel, $gene ) = @_;
   my $label = 'Orthologue Prediction';
@@ -564,46 +597,13 @@ sub orthologues {
     return 1 unless $html;
   } else {
     my $orthologue = $gene->get_homology_matches('ENSEMBL_ORTHOLOGUES');
-    unless( $orthologue ) {
+    unless( keys %{$orthologue} ) {
       cache_print( $cache_obj, undef );
       return 1;
     }
     my %orthologue_list = %{$orthologue};
 
 # Find the selected method_link_set
-    my $especies = $ENV{ENSEMBL_SPECIES};
-
-    my $FLAG = 0;
-    my $as_html = qq{<br/> <b>This gene can be viewed in genomic alignment with other species</b><br/><br/>} ;
-
-    my %alignments = $gene->species_defs->multiX('ALIGNMENTS');
-    my $species = $gene->species;
-
-    foreach my $id (
-      sort { 10 *($alignments{$b}->{'type'} cmp $alignments{$a}->{'type'}) + ($a <=> $b) }
-      grep { $alignments{$_}->{'species'}->{$species} }
-      keys (%alignments)
-    ) {
-
-      my $label = $alignments{$id}->{'name'};
-      my $KEY = "opt_align_${id}";
-
-      my @species = grep {$_ ne $species} sort keys %{$alignments{$id}->{'species'}};
-      if ( scalar(@species) == 1) {
-       ($label = $species[0]) =~ s/_/ /g;
-      }
-
-      $as_html .= sprintf( qq(&nbsp;&nbsp;&nbsp;<a href="/%s/alignsliceview?l=%s:%s-%s;align=%s">view genomic alignment with <b>%s</b></a> <br/>),
-         $gene->species,
-         $gene->seq_region_name,
-         $gene->seq_region_start,
-         $gene->seq_region_end,
-         $KEY,
-         $label);
-
-      $FLAG = 1;
-    }
-    $as_html = '' unless $FLAG;
     $html = qq(
       <p>
         The following gene(s) have been identified as putative
@@ -671,7 +671,6 @@ sub orthologues {
       # $html .= qq(\n      <p><a href="$FULL_URL">View all genes in MultiContigView</a>;);
       $html .= qq(\n      <p><a href="/@{[$gene->species]}/alignview?class=Homology;gene=$STABLE_ID">View alignments of homologies</a>.</p>) if $ALIGNVIEW;
     }
-    $html .= $as_html;
     cache_print( $cache_obj, \$html );
     return 1 unless($matching_orthologues);
   }
@@ -699,7 +698,7 @@ sub paralogues {
     return 1 unless $html;
   } else {
     my $paralogue = $gene->get_homology_matches('ENSEMBL_PARALOGUES', 'within_species_paralog');
-    unless( $paralogue ) {
+    unless( keys %{$paralogue} ) {
       cache_print( $cache_obj, undef );
       return 1;
     }

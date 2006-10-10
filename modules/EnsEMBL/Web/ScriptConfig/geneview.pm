@@ -13,6 +13,7 @@ sub init {
     status_gene_stable_id   on
     status_gene_transcripts on
     status_das_sources      on
+    status_gene_alignments  on
     status_gene_orthologues on
     status_gene_paralogues  on
     context                 0
