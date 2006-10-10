@@ -6,7 +6,7 @@ use Bio::EnsEMBL::GlyphSet_feature;
 
 sub my_label { 
   my $self = shift;
-  return $self->my_config('caption') || 'Affy microarray';
+  return $self->my_config('caption') || 'Oligo microarray';
 }
 
 ## Retrieve all MiscFeatures from the misc_set table of the database
@@ -34,8 +34,8 @@ sub image_label {
 sub href {
   my ($self, $id, $fd ) = @_;
   my $f = $fd->[0][2];
-  my $tmpl = "/%s/featureview?type=AffyProbe;id=%s";
-  return sprintf( "/%s/featureview?type=AffyProbe;id=%s", $self->{container}{_config_file_name_}, $f->probeset );
+  my $tmpl = "/%s/featureview?type=OligoProbe;id=%s";
+  return sprintf( "/%s/featureview?type=OligoProbe;id=%s", $self->{container}{_config_file_name_}, $f->probeset );
 }
 
 ## Create the zmenu...
@@ -44,7 +44,7 @@ sub zmenu {
   my ($self, $id, $fd ) = @_;
   my $f = $fd->[0][2];
   return {
-    'caption' => "Affy feature: ".$f->probeset,
+    'caption' => "Oligo feature: ".$f->probeset,
     'Probe set details: ' => $self->href( $id, $fd )
   };
 }
