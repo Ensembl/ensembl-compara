@@ -5,7 +5,7 @@ use Bio::EnsEMBL::GlyphSet_transcript;
 @ISA = qw(Bio::EnsEMBL::GlyphSet_transcript);
 
 sub my_label {
-    return 'Medaka TransCoalescer trans.';
+    return 'EST trans.';
 }
 
 sub colours {
