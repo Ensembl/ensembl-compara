@@ -221,16 +221,11 @@ sub dump_mysql {
   system("rm -f ./[r-z]*.sql");
   system("rm -f ./*.sql");
 
-  # Create a mysql 4.0 compatible sql file
   # DON'T USE THE -T OPTION COS IT STOPS IT WORKING
-  my $compatible_file = $DB.".mysql40_compatible.sql";
-  my $compatible = "$dump_command --no_data --compatible=mysql40 $DB ";
-  system( "$compatible > $compatible_file" ) and die( "Cannot create compatible file: $compatible: $!" );
 
   unless ( $no_zip ) {
     my $dump_command_d = $dump_command . " -d $DB | gzip -9 -c > $DB.sql.gz";
     system( $dump_command_d ) and die( "Cannot $dump_command_d: $!" );
-    system( "gzip -9 $compatible_file" ) and die( "Cannot gzip $compatible_file: $!");
   }
 
   # Rename ensembl_web_user_db so they include the release number
@@ -347,8 +342,6 @@ sub rename_files {
 
   my $new_db = "$db_name"."_$sitedefs_release";
   system ("mv $sp_dumpdir/$db_name.sql.gz $sp_dumpdir/$new_db.sql.gz" );
-  system ("mv $sp_dumpdir/$db_name.mysql40_compatible.sql.gz $sp_dumpdir/$new_db.mysql40_compatible.sql.gz" );
-
   return;
 }
 
