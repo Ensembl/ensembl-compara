@@ -105,6 +105,7 @@ sub run
       -tree_string => $self->tree_string,
       -analysis => $self->analysis,
       -parameters => $self->{_java_options},
+      -max_block_size => $self->{_max_block_size},
       );
   $self->{'_runnable'} = $runnable;
   $runnable->run_analysis;
@@ -243,6 +244,9 @@ sub get_params {
   }
   if(defined($params->{'tree_analysis_data_id'})) {
     $self->{_tree_analysis_data_id} = $params->{'tree_analysis_data_id'};
+  }
+  if(defined($params->{'max_block_size'})) {
+    $self->{_max_block_size} = $params->{'max_block_size'};
   }
 
   return 1;
