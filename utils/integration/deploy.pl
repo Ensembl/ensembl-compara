@@ -14,6 +14,7 @@ use Integration::Task::Checkout;
 use Integration::Task::Move;
 use Integration::Task::Mkdir;
 use Integration::Task::Delete;
+use Integration::Task::Execute;
 use Integration::Task::Rollback;
 use Integration::Task::Symlink;
 use Integration::Task::EDoc;
@@ -157,6 +158,8 @@ $integration->add_configuration_task(Integration::Task::Mkdir->new((source => "/
 
 $integration->add_configuration_task(Integration::Task::EDoc->new((source => "/ensemblweb/head/integration/checkout/utils/edoc", destination => "/ensemblweb/head/integration/checkout/htdocs/docs")));
 
+$integration->add_configuration_task(Integration::Task::Execute->new((source => "/ensemblweb/head/integration/checkout/ctrl_scripts/start_server")));
+
 my $checkout_copy_task = Integration::Task::Copy->new((
                              source      => "/ensemblweb/head/integration/checkout", 
                              destination => "/ensemblweb/head"
@@ -164,14 +167,10 @@ my $checkout_copy_task = Integration::Task::Copy->new((
 
 $integration->add_configuration_task($checkout_copy_task);
 
-
-$integration->stop_command('/ensemblweb/head/checkout/ctrl_scripts/stop_server');
-$integration->stop_server;
+$integration->add_configuration_task(Integration::Task::Execute->new((source => "/ensemblweb/head/checkout/ctrl_scripts/stop_server")));
+$integration->add_configuration_task(Integration::Task::Execute->new((source => "/ensemblweb/head/checkout/ctrl_scripts/start_server")));
 
 $integration->configure;
-
-$integration->start_command('/ensemblweb/head/checkout/ctrl_scripts/start_server');
-$integration->start_server;
 
 my $server_up_test = Integration::Task::Test::Ping->new((
                                                target   => $server,
