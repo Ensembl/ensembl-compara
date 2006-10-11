@@ -71,9 +71,9 @@ sub new {
   my ($class,@args) = @_;
   my $self = $class->SUPER::new(@args);
   my ($workdir, $fasta_files, $tree_string, $parameters,
-      $jar_file, $java_class, $exonerate) =
+      $jar_file, $java_class, $exonerate, $max_block_size) =
         rearrange(['WORKDIR', 'FASTA_FILES', 'TREE_STRING','PARAMETERS',
-            'JAR_FILE', 'JAVA_CLASS', 'EXONERATE'], @args);
+            'JAR_FILE', 'JAVA_CLASS', 'EXONERATE', 'MAX_BLOCK_SIZE'], @args);
 
   chdir $self->workdir;
   $self->fasta_files($fasta_files) if (defined $fasta_files);
@@ -81,6 +81,7 @@ sub new {
   $self->parameters($parameters) if (defined $parameters);
   $self->jar_file($jar_file) if (defined $jar_file);
   $self->java_class($java_class) if (defined $java_class);
+  $self->max_block_size($max_block_size) if (defined $max_block_size);
   unless (defined $self->program) {
     if (defined($self->analysis) and defined($self->analysis->program)) {
       $self->program($self->analysis->program);
@@ -155,6 +156,12 @@ sub exonerate {
   my $self = shift;
   $self->{'_exonerate'} = shift if(@_);
   return $self->{'_exonerate'};
+}
+
+sub max_block_size {
+  my $self = shift;
+  $self->{'_max_block_size'} = shift if(@_);
+  return $self->{'_max_block_size'};
 }
 
 =head2 run_analysis
@@ -264,7 +271,19 @@ print "Reading $alignment_file...\n";
   $this_genomic_align->aligned_sequence($seq);
   $this_genomic_align_block->add_GenomicAlign($this_genomic_align);
 
-  $self->output([$this_genomic_align_block]);
+  # Split block if it is too long
+  if ($self->max_block_size() and $this_genomic_align_block->length > $self->max_block_size()) {
+    my $splited_gabs = [];
+    my $num_of_chunks = POSIX::ceil( $this_genomic_align_block->length / $self->max_block_size());
+    for (my $start = 1; $start < $num_of_chunks; $start += $self->max_block_size()) {
+      my $new_gab = $this_genomic_align_block->restrict_between_alignment_positions(
+          $start, $start + $self->max_block_size() - 1);
+      push(@$splited_gabs, $new_gab);
+    }
+    $self->output($splited_gabs);
+  } else {
+    $self->output([$this_genomic_align_block]);
+  }
 }
 
 
