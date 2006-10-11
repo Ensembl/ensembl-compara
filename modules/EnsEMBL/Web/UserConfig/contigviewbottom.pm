@@ -429,7 +429,7 @@ sub init {
       'str' => 'r',
       'col' => 'blue',
       'compact'  => 1,
-      #'threshold' => '50',
+      'threshold' => '200',
       'track_label' => 'Histone modifications',
       'glyphset'    => 'histone_modifications',
       'available'=> 'databases ENSEMBL_FUNCGEN',  
