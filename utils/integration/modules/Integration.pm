@@ -12,8 +12,6 @@ use Integration::Task;
 my %Checkout_of;
 my %Log_of;
 my %LogLocation_of;
-my %StartCommand_of;
-my %StopCommand_of;
 my %HtdocsLocation_of;
 my %Configuration_of;
 my %Tests_of;
@@ -30,8 +28,6 @@ sub new {
   $Checkout_of{$self} = defined $params{checkout} ? $params{checkout} : [];
   $HtdocsLocation_of{$self} = defined $params{htdocs} ? $params{htdocs} : "";
   $LogLocation_of{$self} = defined $params{log_location} ? $params{log_location} : "";
-  $StartCommand_of{$self} = defined $params{start} ? $params{start} : "";
-  $StopCommand_of{$self} = defined $params{stop} ? $params{stop} : "";
   $Configuration_of{$self} = defined $params{configuration} ? $params{configuration} : [];
   $Rollback_of{$self} = defined $params{rollback} ? $params{rollback} : [];
   $Tests_of{$self} = defined $params{tests} ? $params{tests} : [];
@@ -56,10 +52,17 @@ sub checkout {
   return 1;
 }
 
+sub purge_rollback {
+  my $self = shift;
+  warn "PURGING previous version";
+  foreach my $task (@{ $self->rollback_tasks }) {
+    $task->purge;
+  }
+}
+
 sub rollback {
   my $self = shift;
   warn "ROLLING BACK to previous version";
-  $self->stop_server;
   foreach my $task (@{ $self->rollback_tasks }) {
     $task->rollback;
   }
@@ -68,7 +71,6 @@ sub rollback {
   my $failed_build = $self->log->latest_event->{build} + 1;
   my $now = gmtime;
   $self->message("$now - Build $failed_build failed: rolled back to build $rollback_build (" . $rollback_event->{date}. ")", "red");
-  $self->start_server;
 }
 
 sub message {
@@ -92,23 +94,6 @@ sub configure {
     $warnings += $task->process;
   }
   return 1;
-}
-
-sub start_server {
-  ### Starts an integration server. Any configuration tasks should be 
-  ### performed when {{configure}} is called.
-  my ($self) = shift;
-
-  my $command = $self->start_command;
-  my $start = `$command`;
-
-}
-
-sub stop_server {
-  ### Stops an integration server.
-  my ($self) = shift;
-  my $command = $self->stop_command;
-  my $start = `$command`;
 }
 
 sub test {
@@ -152,20 +137,6 @@ sub view {
   my $self = shift;
   $View_of{$self} = shift if @_;
   return $View_of{$self};
-}
-
-sub start_command {
-  ### a
-  my $self = shift;
-  $StartCommand_of{$self} = shift if @_;
-  return $StartCommand_of{$self};
-}
-
-sub stop_command {
-  ### a
-  my $self = shift;
-  $StopCommand_of{$self} = shift if @_;
-  return $StopCommand_of{$self};
 }
 
 sub configuration {
@@ -278,8 +249,6 @@ sub DESTROY {
   delete $View_of{$self};
   delete $Configuration_of{$self};
   delete $Checkout_of{$self};
-  delete $StartCommand_of{$self};
-  delete $StopCommand_of{$self};
   delete $LogLocation_of{$self};
   delete $Log_of{$self};
   delete $Tests_of{$self};
