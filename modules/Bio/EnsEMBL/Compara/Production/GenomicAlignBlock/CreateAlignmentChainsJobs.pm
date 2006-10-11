@@ -52,7 +52,7 @@ use Bio::EnsEMBL::Utils::Exception;
 
 our @ISA = qw(Bio::EnsEMBL::Hive::Process);
 
-my $DEFAULT_DUMP_MIN_SIZE = 11500000;
+#my $DEFAULT_DUMP_MIN_SIZE = 11500000;
 
 sub fetch_input {
   my $self = shift;
@@ -194,13 +194,36 @@ sub createAlignmentChainsJobs
 
   my $analysis = $self->db->get_AnalysisAdaptor->fetch_by_logic_name('AlignmentChains');
 
-  my $query_dna_list  = $self->{'query_collection'}->get_all_dna_objects;
+  my (%qy_dna_hash, %tg_dna_hash);
+
+  foreach my $obj (@{$self->{'query_collection'}->get_all_dna_objects}) {
+    my @dna_chunks;
+    if ($obj->isa("Bio::EnsEMBL::Compara::Production::DnaFragChunkSet")) {
+      push @dna_chunks, @{$obj->get_all_DnaFragChunks};
+    } else {
+      push @dna_chunks, $obj;
+    }
+    foreach my $chunk (@dna_chunks) {
+      my $dnafrag = $chunk->dnafrag;
+      if (not exists $qy_dna_hash{$dnafrag->dbID}) {
+        $qy_dna_hash{$dnafrag->dbID} = $dnafrag;
+      }
+    }
+  }
   my %target_dna_hash;
   foreach my $dna_object (@{$self->{'target_collection'}->get_all_dna_objects}) {
+    my @dna_chunks;
     if ($dna_object->isa('Bio::EnsEMBL::Compara::Production::DnaFragChunkSet')) {
-      throw("At this stage, AlignmentChains job only work out of DnaFragChunk, not DnaFragChunkSet\n");
+      push @dna_chunks, @{$dna_object->get_all_DnaFragChunks};
+    } else {
+      push @dna_chunks, $dna_object;
     }
-    $target_dna_hash{$dna_object->dnafrag->dbID} = $dna_object;
+    foreach my $chunk (@dna_chunks) {
+      my $dnafrag = $chunk->dnafrag;
+      if (not exists $tg_dna_hash{$dnafrag->dbID}) {
+        $tg_dna_hash{$chunk->dnafrag->dbID} = $dnafrag;
+      }
+    }
   }
 
   my $count=0;
@@ -209,23 +232,38 @@ sub createAlignmentChainsJobs
   my $sth = $self->{'comparaDBA'}->dbc->prepare($sql);
 
   my $reverse_pairs; # used to avoid getting twice the same results for self-comparisons
-  foreach my $qy_dna_object (@{$query_dna_list}) {
-    my $qy_dnafrag_id = $qy_dna_object->dnafrag->dbID;
+  foreach my $qy_dnafrag_id (keys %qy_dna_hash) {
     $sth->execute($self->{'method_link_species_set'}->dbID, $qy_dnafrag_id);
+
     my $tg_dnafrag_id;
     $sth->bind_columns(\$tg_dnafrag_id);
     while ($sth->fetch()) {
-      next unless (defined $target_dna_hash{$tg_dnafrag_id});
+
+      next unless exists $tg_dna_hash{$tg_dnafrag_id};
       next if (defined($reverse_pairs->{$qy_dnafrag_id}->{$tg_dnafrag_id}));
       
       my $input_hash = {};
       $input_hash->{'qyDnaFragID'} = $qy_dnafrag_id;
-      if ($qy_dna_object > $DEFAULT_DUMP_MIN_SIZE) {
-        $input_hash->{'query_nib_dir'} = $self->{'query_collection'}->dump_loc;
-      }
       $input_hash->{'tgDnaFragID'} = $tg_dnafrag_id;
-      if ($qy_dna_object > $DEFAULT_DUMP_MIN_SIZE) {
-        $input_hash->{'target_nib_dir'} = $self->{'target_collection'}->dump_loc;
+
+
+      if ($self->{'query_collection'}->dump_loc) {
+        my $nib_file = $self->{'query_collection'}->dump_loc 
+            . "/" 
+            . $qy_dna_hash{$qy_dnafrag_id}->name 
+            . ".nib";
+        if (-e $nib_file) {
+          $input_hash->{'query_nib_dir'} = $self->{'query_collection'}->dump_loc;
+        }
+      }
+      if ($self->{'target_collection'}->dump_loc) {
+        my $nib_file = $self->{'target_collection'}->dump_loc 
+            . "/" 
+            . $tg_dna_hash{$tg_dnafrag_id}->name
+            . ".nib";
+        if (-e $nib_file) {
+          $input_hash->{'target_nib_dir'} = $self->{'target_collection'}->dump_loc;
+        }
       }
       $reverse_pairs->{$tg_dnafrag_id}->{$qy_dnafrag_id} = 1;
 
