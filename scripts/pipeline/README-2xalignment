@@ -1,0 +1,108 @@
+
+
+1 - code API needed and executable
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    Perl code:
+
+    bioperl
+    ensembl (use a stable branch)
+    ensembl-compara
+    ensembl-hive
+    ensembl-pipeline
+    ensebml-analysis
+
+    executables:
+
+    blastz, lavToAxt, faToNib, axtChain
+
+    See other documentation for how to get hold of these.
+
+2 - Environment set-up
+    ~~~~~~~~~~~~~~~~~~
+
+    set BASEDIR to  /some/path/to/your/code/checkouts/
+
+    PERL5LIB needs to include:
+    ${BASEDIR}/ensembl/modules
+    ${BASEDIR}/ensembl-pipeline/modules
+    ${BASEDIR}/bioperl
+    ${BASEDIR}/ensembl-compara
+    ${BASEDIR}/ensembl-hive
+    ${BASEDIR}/ensembl-analysis
+
+    PATH need to include:
+
+    ${BASEDIR}/ensembl-hive/scripts
+
+    Also, copy ensembl-analysis/modules/Bio/EnsEMBL/Analysis/Config/General.pm.example to
+    General.pm, and make sure BIN_DIR is set to the directory containing the executables
+    above. 
+
+
+3 - Create a hive/compara database
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    Example: database klh_compara_human_pangolin_blastz on genebuild1
+
+    mysql -h genebuild1 -uensadmin -pxxxx -e "create database klh_compara_human_pangolin_blastz";
+
+    cd $BASEDIR/ensembl-hive/sql
+    mysql -h genebuild1 -uensadmin -pxxxx klh_compara_human_pangolin_blastz < tables.sql
+
+    cd $BASEDIR/ensembl-compara/sql
+    mysql -h genebuild1 -uensadmin -pxxxx klh_compara_human_pangolin_blastz < table.sql
+    mysql -h genebuild1 -uensadmin -pxxxx klh_compara_human_pangolin_blastz < pipeline-tables.sql
+
+4- Copy and modify your compara-hive config file
+   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+   cp $BASEDIR/ensembl-compara/scripts/pipeline/compara-hive-2xalignment.conf.example ./compara_2x.conf
+
+   Now change the relevant details of the sections. The comments in the 
+   file should help you to do this. Take particular care that after editing, the
+   resulting file is still valid perl. You can check this with
+
+5 - Run the configure scripts for raw alignment
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    perl $BASEDIR/ensembl-compara/scripts/pipeline/comparaLoadGenomes.pl -conf ./compara_2x.conf
+    perl $BASEDIR/ensembl-compara/scripts/pipeline/loadPairAlignerSystem.pl -conf ./compara_2x.conf
+
+6 - Run the beekeeper to generate raw alignment
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    beekeeper.pl -url mysql://ensadmin:xxxx@ia64g:3306/klh_compara_human_pangolin_blastz -loop
+
+    Now wait. The raw alignment can take 1-3 days of wall-clock time
+    (depending on farm load). 
+
+
+7 - Run the configure script for alignment processing
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    
+    perl $BASEDIR/ensembl-compara/scripts/pipeline/load2xAlignmentFilterSystem.pl -conf ./compara_2x.conf
+
+
+8 - Run the beekeeper for alignment processing
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    beekeeper.pl -url mysql://ensadmin:xxxx@ia64g:3306/klh_compara_human_pangolin_blastz -loop
+
+
+=======
+Gotchas
+=======
+
+a. Your config file is not valid perl
+
+   Check it with perl -c before running the set-up script(s)
+
+b. Impedence mismatch between core databases and core code
+
+   You need to make sure that your core databases are on the same schema
+   branch, which is matched by your core code check-out. This is crucial;
+   if there's a problem with this, you will probably get silent death of
+   your blastz jobs. 
+
+[list to be added to]

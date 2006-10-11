@@ -1,0 +1,163 @@
+[
+  #
+  # details of the compara/hive database
+  #
+  {     
+    TYPE => COMPARA,
+    -host     => 'comparahost',
+    -port     => 'comparaport',
+    -user     => 'comparauser',
+    -pass     => 'comparapass',
+    -dbname   => 'compara_db_name',
+    -adaptor  => 'Bio::EnsEMBL::Compara::DBSQL::DBAdaptor',
+  },
+
+  #
+  # hive setting
+  #
+  { 
+    TYPE => HIVE,
+  },
+
+  #
+  # species details, including core database
+  # 
+  { 
+    TYPE => SPECIES,
+    species        => 'Homo sapiens',
+    abrev          => 'Hs36',
+    genome_db_id   => 1,
+    taxon_id       => 9606,
+    phylum         => 'Vertebrata',
+    module         => 'Bio::EnsEMBL::DBSQL::DBAdaptor',
+    host           => 'human_host',
+    port           => 'human_port',
+    user           => 'human_ro_user'',
+    dbname         => 'human_db_name',
+  },
+  { 
+    TYPE => SPECIES,
+    species        => 'Felis catus',
+    abrev          => 'Fc1',
+    genome_db_id   => 40,
+    taxon_id       => 9685,
+    phylum         => 'Vertebrata',
+    module         => 'Bio::EnsEMBL::DBSQL::DBAdaptor',
+    host           => 'cat_host',
+    port           => 'cat_port',
+    user           => 'cat_ro_user',
+    dbname         => 'cat_db_name',
+  },
+
+  #
+  # dna collections for splitting/grouping the genomes into sensible-sized bits
+  # 
+  { 
+    TYPE => DNA_COLLECTION,
+    collection_name       => 'human genome',
+    genome_db_id          => 1,
+    genome_name_assembly  => 'Homo sapiens:NCBI36',
+    # if your genome comprises some "large" pieces, as human does, it will be 
+    # necessary to split these for the sake of efficiency. 30Mb chunks seems to 
+    # work well
+    chunk_size            => 30000000,
+    group_set_size        => undef,
+    overlap               => 0,
+    # in human, make sure assemblu_excpetion_type_PAR is set to 0; 
+    # this makes sure that the Y PAR is hard-masked
+    masking_options       => "{default_soft_masking => 1, assembly_exception_type_PAR => 0}",
+    # set the below to the location of the pre-dumped nib-files; this directory
+    # can contain any subset of the top-level sequences. So if it's not practical
+    # to dump all top-level sequences (i.e. of there are more than a few hundred)
+    # then just dump the large ones. All non-pre-dumped nib files will be created
+    # on the fly in /tmp and removed afterwards. 
+    dump_loc              => '/data/blastdb/Ensembl/Human/NCBI36/nib',
+  },
+
+  { 
+    TYPE => DNA_COLLECTION,
+
+    collection_name       => 'cat genome',
+    genome_db_id          => 40,
+    genome_name_assembly  => 'Felis catus:CAT',
+    # max size of single DNA piece; for 2x genomes, it is fine to
+    # set this to a value longer than the length of the longest
+    # scaffold so that no sequence splitting is performed
+    # longest scaffold if you don't want you 
+    chunk_size            => 1600000,
+    # groups several sequences into a single file, ensuring that
+    # the total DNA length of the file does not exceed this value. Necessary
+    # for the 2x genomes, for the sake of efficency. 
+    group_set_size        => 4000000,
+    overlap               => 0,
+    # 2x genomes will often be masked with supplementary repeat
+    # libraries generated ab initio. It's not clear whether it's
+    # safe to mask with these for the BLASTZ, so we don't; 
+    # defining explicitly the repeat logic_names that we wish to mask with
+    # achieves this
+    masking_options       => "{default_soft_masking => 1, logic_names => ['RepeatMask', 'Dust', 'TRF']}",
+  },
+
+  #
+  # set-up for raw alignment
+  #
+  { TYPE => PAIR_ALIGNER,
+
+    logic_name_prefix => 'BlastZ',
+    method_link => [10, 'BLASTZ_RAW'],
+    analysis_template => {
+        -program    => 'blastz',
+        -parameters => "{method_link=>'BLASTZ_RAW',options=>'T=1 L=3000 H=2200 M=40000000 O=400 E=30'}",
+        -module     => 'Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::BlastZ',
+    },
+
+    query_collection_name     => 'cat genome',
+    target_collection_name    => 'human genome',
+    filter_duplicates_options => 'all',
+    # set the following to about 50 to be kind to the mysql instances
+
+    # optional; default batch-size = 1,  3 is optimal for blastz 
+    batch_size                => 3, 
+    max_parallel_workers      => 50,
+
+  }, 
+
+  #
+  # set-up for alignment chains
+  # 
+  { TYPE => CHAIN_CONFIG,
+    method_link => [2001, 'HIVE_CHAIN'],
+    input_method_link_type => 'BLASTZ_RAW',
+
+    query_collection_name => 'cat genome',
+    target_collection_name => 'human genome',
+
+    output_group_type => 'chain',
+    max_gap => 50,
+
+    max_parallel_workers => 50,
+  },
+
+  # 
+  # set-up for alignment nets
+  #
+  { 
+    TYPE => NET_CONFIG,
+    
+    method_link => [3001, 'CONTIG_AWARE_NET'],
+    input_method_link_type => 'HIVE_CHAIN',
+
+    net_method => 'ContigAwareNet',
+
+    query_collection_name => 'cat genome',
+    target_collection_name => 'human genome',
+    
+    input_group_type => 'chain',
+    output_group_type => 'chain',
+    max_gap => 50,
+    
+    max_parallel_workers => 50,
+  },
+
+  { TYPE => END }
+]
