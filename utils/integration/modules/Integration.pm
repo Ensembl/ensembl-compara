@@ -69,7 +69,7 @@ sub rollback {
   my $rollback_event = $self->log->latest_ok_event;
   my $rollback_build = $rollback_event->{build};
   my $failed_build = $self->log->latest_event->{build} + 1;
-  my $now = gmtime;
+  my $now = `date`;
   $self->message("$now - Build $failed_build failed: rolled back to build $rollback_build (" . $rollback_event->{date}. ")", "red");
 }
 
@@ -102,6 +102,7 @@ sub test {
   my $total = 0;
   my $failed = 0;
   my $passed = 0;
+  $self->message("Testing new checkout", "yellow");
   foreach my $task (@{ $self->tests }) {
     $task->process;
     if ($task->did_fail) {
@@ -158,7 +159,7 @@ sub log {
 sub update_log {
   my $self = shift;
   my $status = "ok";
-  my $now = gmtime;
+  my $now = `date`;
   if ($self->test_result < 100) {
     $status = "failed";
   }
@@ -167,7 +168,7 @@ sub update_log {
   }
   my $event = { date => $now, status => $status };
   if ($status eq "ok") {
-    $self->message("Ensembl is up-to-date", "green");
+    $self->message("Ensembl is up-to-date (" . `date` . ")", "green");
   }
   $self->log_event($event);
   $self->log->save;

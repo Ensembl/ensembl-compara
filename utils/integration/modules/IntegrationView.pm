@@ -57,7 +57,7 @@ sub message {
 sub generate_html {
   my $self = shift;
   $self->output_location($self->server->htdocs_location);
-  my $now = gmtime;
+  my $now = `date`;
   open (OUTPUT, ">", $self->output_location . "/harmony/index.html") or return 0;
   print OUTPUT $self->html_header;
   print OUTPUT "<h3>Integration server status:</h3>";
