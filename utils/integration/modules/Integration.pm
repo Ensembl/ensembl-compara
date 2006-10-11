@@ -17,6 +17,7 @@ my %Configuration_of;
 my %Tests_of;
 my %TestResult_of;
 my %CriticalFail_of;
+my %Event_of;
 my %Rollback_of;
 my %View_of;
 
@@ -33,6 +34,7 @@ sub new {
   $Tests_of{$self} = defined $params{tests} ? $params{tests} : [];
   $TestResult_of{$self} = undef; 
   $CriticalFail_of{$self} = undef; 
+  $Event_of{$self} = { date => '?', status => '?' }; 
   $View_of{$self} = defined $params{view} ? $params{view} : IntegrationView->new(( server => $self, output => $self->htdocs_location));
   $Log_of{$self} = Integration::Log::YAML->new(( location => $self->log_location));
   return $self;
@@ -48,7 +50,7 @@ sub checkout {
     $self->message("Checkout in progress", "red");
     $task->process;
   }
-
+  $self->event->{checkout} = "yes";
   return 1;
 }
 
@@ -166,7 +168,12 @@ sub update_log {
   if ($self->critical_fail) {
     $status = "critical";
   }
-  my $event = { date => $now, status => $status };
+  my $event = $self->event; 
+  $event->{date} = $now;
+  $event->{status} = $status;
+  if ($self->test_result) {
+    $event->{test} = $self->test_result;
+  }
   if ($status eq "ok") {
     $self->message("Ensembl is up-to-date (" . `date` . ")", "green");
   }
@@ -220,6 +227,13 @@ sub critical_fail {
   return $CriticalFail_of{$self};
 }
 
+sub event {
+  ### a
+  my $self = shift;
+  $Event_of{$self} = shift if @_;
+  return $Event_of{$self};
+}
+
 sub checkout_tasks {
   ### a
   ### Returns an array ref of {{Integration::Task}} objects to be performed at checkout.
@@ -253,6 +267,7 @@ sub DESTROY {
   delete $LogLocation_of{$self};
   delete $Log_of{$self};
   delete $Tests_of{$self};
+  delete $Event_of{$self};
   delete $TestResult_of{$self};
   delete $CriticalFail_of{$self};
   delete $Rollback_of{$self};
