@@ -48,7 +48,7 @@ sub init_expand {
   my $max_length     = $self->{'config'}->get( $type, 'threshold' )  || 500;
   my $slice_length  = $slice->length;
   if($slice_length > $max_length*1010) {
-    my $height = $self->errorTrack('Tiling array data not displayed for more than '.$max_length.'Kb');
+    my $height = $self->errorTrack('Tiling array data only displayed for less than '.$max_length.'Kb');
     $self->_offset($height+4);
     return;
   }
