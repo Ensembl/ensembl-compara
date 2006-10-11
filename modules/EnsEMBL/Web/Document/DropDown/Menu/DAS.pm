@@ -21,8 +21,7 @@ sub new {
   my $ext_das = new EnsEMBL::Web::ExternalDAS( $self->{'location'} );
   $ext_das->getConfigs($script, $script);
 
-  my %das_add    = map{$_,1} (CGI::param( "add_das_source" ) || ());
-  foreach my $dconf (keys %das_add) {
+  foreach my $dconf (CGI::param("add_das_source")) {
       $dconf =~ s/[\(|\)]//g;
       my @das_keys = split(/\s/, $dconf);
       my %das_data = map { split (/\=/, $_,2) } @das_keys; 
