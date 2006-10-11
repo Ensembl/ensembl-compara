@@ -335,7 +335,7 @@ sub name {
 
     }
   }
-  my( $display_name, $dbname, $ext_id, $dbname_disp, $info_text ) = $object->display_xref();
+  my( $display_name, $dbname, $ext_id, $dbname_disp, $info_text ) = $object->display_xref(); $info_text = '';
   return 1 unless defined $display_name;
   my $label = $object->type_name();
   my $lc_type = lc($label);
@@ -360,8 +360,8 @@ sub name {
 
   my $html = qq(
   <p>
-    <strong>$linked_display_name</strong> $info_text<span class="small">($dbname_disp ID)</span>
-    <span class="small">. To view all $site_type genes linked to the name <a href="/@{[$object->species]}/featureview?type=Gene;id=$display_name">click here</a>.</span>
+    <strong>$linked_display_name</strong> $info_text ($dbname_disp)
+    <span class="small">To view all $site_type genes linked to the name <a href="/@{[$object->species]}/featureview?type=Gene;id=$display_name">click here</a>.</span>
   </p>);
   if(my @CCDS = grep { $_->dbname eq 'CCDS' } @{$object->Obj->get_all_DBLinks} ) {
     my %T = map { $_->primary_id,1 } @CCDS;
