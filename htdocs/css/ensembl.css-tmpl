@@ -279,3 +279,7 @@ div.bookmark_manage a:visited, div.bookmark_editor a:visited {
 span.bullet {
   padding-right: 10px;
 }
+
+div.fragment {
+  display: none;
+}

@@ -219,7 +219,7 @@ function draw_single_red_box(name, start_cv, end_cv, start, end, start_px, end_p
   if( A ) {
     for(i=0;i<A.areas.length;i++) {
       A.areas[i].onmousedown = select_start;
-      if( A.areas[i].onclick || A.areas[i].onmouseover ) A.areas[i].href  = "javascript:void(0)" ;
+      //if( A.areas[i].onclick || A.areas[i].onmouseover ) A.areas[i].href  = "javascript:void(0)" ;
     } 
   }
   return true;

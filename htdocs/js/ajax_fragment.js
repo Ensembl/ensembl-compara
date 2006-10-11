@@ -54,6 +54,7 @@ function panel_loaded(response) {
   update.style.display = 'block';
   title = ego(json.fragment.id + "_title");
   title.innerHTML = json.fragment.title;
+  hide_spinner(json.fragment.id);
   init_view('f_1');
   draw_single_red_box('f_1', start_cv, end_cv, start_bp, end_bp, start_px, end_px);
   update_red_boxes();
@@ -95,4 +96,51 @@ function getElementsByClass(searchClass,node,tag) {
 		}
 	}
 	return classElements;
+}
+
+function toggle_fragment(name) {
+  update = ego(name + "_update"); 
+  if (update.style.display == "none") {
+    display_fragment(name);
+  } else {
+    hide_fragment(name);
+  }
+}
+
+function display_fragment(name) {
+  toggle_box = ego(name + "_toggle");
+  toggle_box.src = "/img/dd_menus/min-box.gif";
+  update = ego(name + "_update");
+  update.style.display = "block";
+}
+
+function hide_fragment(name) {
+  toggle_box = ego(name + "_toggle");
+  toggle_box.src = "/img/dd_menus/plus-box.gif";
+  update = ego(name + "_update");
+  update.style.display = "none";
+}
+
+function toggle_spinner(name) {
+  spinner = ego(name + "_spinner"); 
+  if (update.style.display == "none") {
+    display_spinner(name);
+  } else {
+    hide_spinner(name);
+  }
+}
+
+function display_spinner(name) {
+  spinner = ego(name + "_spinner"); 
+  spinner.style.display = "block";
+}
+
+function hide_spinner(name) {
+  spinner = ego(name + "_spinner"); 
+  spinner.style.display = "none";
+}
+
+function update_fragment(caller, params) {
+  json = eval( '(' + params + ')' );
+  alert(json.fragment);
 }
