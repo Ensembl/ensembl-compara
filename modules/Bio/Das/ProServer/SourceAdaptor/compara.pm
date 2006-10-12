@@ -5,6 +5,7 @@ use Bio::EnsEMBL::Compara::GenomicAlignGroup;
 use Bio::EnsEMBL::Compara::GenomicAlignBlock;
 use Bio::EnsEMBL::Compara::DnaFrag;
 use Bio::EnsEMBL::DnaDnaAlignFeature;
+use Bio::EnsEMBL::Utils::Exception;
 
 use base qw( Bio::Das::ProServer::SourceAdaptor );
 
@@ -14,20 +15,18 @@ sub init
 
     $self->{'capabilities'} = { 'features' => '1.0' };
 
-#    my $registry = $ENV{'PWD'}.'/reg.pl';
     my $registry = $self->config()->{'registry'};
     unless (defined $registry) {
-      die "registry not defined\n";
+     throw("registry not defined\n");
     }
-    print "registry: $registry\n";
+
     if (not $Bio::EnsEMBL::Registry::registry_register->{'seen'}) {
         Bio::EnsEMBL::Registry->load_all($registry);
     }
 
     my $db      = "Bio::EnsEMBL::Registry";
-    my $dbname  = $self->config()->{'database'};
-
     $db->no_version_check(1);
+    my $dbname  = $self->config()->{'database'};
 
     $self->{'compara'}{'meta_con'} =
         $db->get_adaptor($dbname, 'compara', 'MetaContainer') or
@@ -107,12 +106,12 @@ sub build_features
     foreach my $gdb (@$genomedbs){
         if ($gdb->name eq $species1) {
             $sps1_gdb = $gdb;
-        } elsif($gdb->name eq $species2) {
+        } elsif(defined($species2) and $gdb->name eq $species2) {
             $sps2_gdb = $gdb;
         }
     }
 
-    unless(defined $sps2_gdb && defined $sps1_gdb) {
+    unless(defined $sps1_gdb && (!defined($species2) or defined $sps2_gdb)) {
         die "no $species1 or no $species2 -- check spelling\n";
     }
 
@@ -121,9 +120,17 @@ sub build_features
 
     return ( ) if (!defined $dnafrag1);
 
-    my $method_link_species_set =
-        $mlss_adaptor->fetch_by_method_link_type_GenomeDBs(
-            $method_link, [$sps1_gdb, $sps2_gdb]);
+    my $method_link_species_set;
+    if (defined($species2)) {
+        $method_link_species_set =
+            $mlss_adaptor->fetch_by_method_link_type_GenomeDBs(
+                $method_link, [$sps1_gdb, $sps2_gdb]);
+    } else {
+        $method_link_species_set =
+            $mlss_adaptor->fetch_by_method_link_type_GenomeDBs(
+                $method_link, [$sps1_gdb]);
+        $species2 = $species1;
+    }
 
     my $genomic_align_blocks =
         $genomic_align_block_adaptor->fetch_all_by_MethodLinkSpeciesSet_DnaFrag(
@@ -134,6 +141,28 @@ sub build_features
     $ensspecies =~ tr/ /_/;
 
     my $grouping = $self->config()->{'group'} || 'by_group_chr';
+
+    my $group_coordinates;
+    if ($grouping eq 'by_group_chr') {
+      foreach my $gab (@$genomic_align_blocks) {
+        my $genomic_align2 = $gab->get_all_non_reference_genomic_aligns()->[0];
+        my $group_id = $genomic_align2->genomic_align_groups->[0]->dbID;
+        my $chr_name = $genomic_align2->dnafrag->name;
+        my $chr_start = $genomic_align2->dnafrag_start;
+        my $chr_end = $genomic_align2->dnafrag_end;
+        if (!defined($group_coordinates->{$group_id}->{$chr_name})) {
+          $group_coordinates->{$group_id}->{$chr_name}->{start} = $chr_start;
+          $group_coordinates->{$group_id}->{$chr_name}->{end} = $chr_end;
+        } else {
+          if ($chr_start < $group_coordinates->{$group_id}->{$chr_name}->{start}) {
+            $chr_start = $group_coordinates->{$group_id}->{$chr_name}->{start};
+          }
+          if ($chr_end > $group_coordinates->{$group_id}->{$chr_name}->{end}) {
+            $chr_end = $group_coordinates->{$group_id}->{$chr_name}->{end};
+          }
+        }
+      }
+    }
 
     foreach my $gab (@$genomic_align_blocks) {
         $genomic_align_block_adaptor->retrieve_all_direct_attributes($gab);
@@ -155,8 +184,9 @@ sub build_features
         my $grouplabel;
 
         if ($grouping eq 'by_group_chr') {
-            $group = sprintf('%s:%s', $group2, $name2);
-            $grouplabel = sprintf('group %s, chr %s', $group2, $name2);
+            $group = $group2;
+            $grouplabel = $name2.":".$group_coordinates->{$group2}->{$name2}->{start}.
+                "-".$group_coordinates->{$group2}->{$name2}->{end};
         } elsif ($grouping eq 'by_group') {
             $group = sprintf('%s', $group2);
             $grouplabel = sprintf('group %s', $group2);
@@ -166,10 +196,9 @@ sub build_features
         }
         if (defined $group && defined $grouplabel) {
           push @results, {
-                          'id'    => $gab->dbID,
-                          'source'=> 'Compara',
-                          'type'  => 'alignment',
-                          'method'=> $method_link,
+                          'id'    => "$name2: $start2-$end2",
+                          'type'  => $method_link,
+                          'method'=> 'Compara',
                           'start' => $genomic_align1->dnafrag_start,
                           'end'   => $genomic_align1->dnafrag_end,
                           'ori'   => ($genomic_align1->dnafrag_strand() == 1 ? '+' : '-'),
