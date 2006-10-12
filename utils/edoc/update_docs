@@ -1,5 +1,5 @@
 #! /bin/bash
 
 perl ./update_docs.pl
-rm -r ../../htdocs/docs
-cp -r `pwd`/temp ../../htdocs/docs
+rm -r ../../htdocs/info/software/website/docs
+cp -r `pwd`/temp ../../htdocs/info/software/website/docs

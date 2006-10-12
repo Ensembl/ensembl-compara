@@ -124,8 +124,8 @@ cd $PERLMOD_LOC
 
 # generate e! docs:
 echo "Generating e! docs:";
-rm -r $PERLMOD_LOC/htdocs/docs 
+rm -r $PERLMOD_LOC/htdocs/info/software/website/docs 
 perl $PERLMOD_LOC/utils/edoc/update_docs.pl
-cp -r $PERLMOD_LOC/utils/edoc/temp $PERLMOD_LOC/htdocs/docs
+cp -r $PERLMOD_LOC/utils/edoc/temp $PERLMOD_LOC/htdocs/info/software/website/docs
 
 exit 0

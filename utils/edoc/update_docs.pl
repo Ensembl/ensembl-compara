@@ -44,7 +44,7 @@ my $point_1 = time();
 $document->find_modules;
 
 my $point_2 = time();
-$document->generate_html( $EXPORT, '/docs/', $SUPPORT );
+$document->generate_html( $EXPORT, '/info/software/website/docs/', $SUPPORT );
 my $end = time();
 
 print "Directories documented:\n";
