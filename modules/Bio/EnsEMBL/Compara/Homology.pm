@@ -137,7 +137,7 @@ sub get_SimpleAlign {
     my $cigar_end = $attribute->cigar_end;
     $cigar_start = 1 unless (defined $cigar_start);
     $cigar_end = $peptide_member->seq_length unless (defined $cigar_end);
-    print STDERR "cigar_start $cigar_start cigar_end $cigar_end\n";
+    #print STDERR "cigar_start $cigar_start cigar_end $cigar_end\n";
     my $seq = Bio::LocatableSeq->new(-SEQ    => $seqstr,
                                      -START  => $cigar_start,
                                      -END    => $cigar_end,
