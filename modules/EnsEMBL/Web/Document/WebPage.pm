@@ -415,7 +415,9 @@ sub add_error_panels {
   }
 }
 
-sub DESTROY { Bio::EnsEMBL::Registry->disconnect_all(); }
+sub DESTROY {
+  Bio::EnsEMBL::Registry->disconnect_all();
+}
 
 sub simple { simple_webpage( @_ ); }
 sub simple_webpage {

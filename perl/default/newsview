@@ -1,5 +1,4 @@
 #!/usr/local/bin/perl
-
 package newsview;
 
 use strict;
@@ -50,6 +49,7 @@ if( $webpage->has_a_problem() ) {
     }
     $webpage->render();
   }
+  $object->__data->{'news_db'}->disconnect;
 }
 
 

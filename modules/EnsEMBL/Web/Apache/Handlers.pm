@@ -78,6 +78,7 @@ sub initHandler {
 ## Retrieve the firstsession_ID and User ID from the cookie (ENSEMBL_FIRSTSESSION and ENSEMBL_USER_ID)
   my $headers_in = $r->headers_in;
   my %cookies = CGI::Cookie->parse($r->header_in('Cookie'));
+# warn $r->protocol();
   $r->subprocess_env->{'ENSEMBL_FIRSTSESSION'} =
     %cookies && $cookies{$ENSEMBL_FIRSTSESSION_COOKIE} &&
     EnsEMBL::Web::DBSQL::UserDB::decryptID($cookies{$ENSEMBL_FIRSTSESSION_COOKIE}->value) || 0;

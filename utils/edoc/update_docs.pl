@@ -7,7 +7,7 @@ use Data::Dumper;
 use warnings;
 use Time::HiRes qw(time);
 
-my @modules = qw( EnsEMBL ExaLead Acme );
+my @modules = qw( EnsEMBL ExaLead.pm ExaLead Acme );
 
 BEGIN{
   unshift @INC, "$Bin/../../conf";

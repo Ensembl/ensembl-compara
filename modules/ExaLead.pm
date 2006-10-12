@@ -41,10 +41,31 @@ sub new {
     'groups' => [],
     'hits'   => [],
     'query_string' => '',
-    'hidden_fields' => []
+    'hidden_fields' => [],
+    '__status'      => 'no_search',
+    '__error'       => undef,
+    '__timeout'     => 30
   };
   bless $self, $class;
   return $self;
+}
+
+sub __timeout :lvalue {
+### a
+### Sets the timeout period for XML retrival
+  $_[0]->{'__timeout'};
+}
+
+sub __status :lvalue {
+### a
+### either 'no_search', 'search' or 'failure'
+  $_[0]->{'__status'};
+}
+
+sub __error :lvalue {
+### a
+### error string if failure occurs
+  $_[0]->{'__error'};
 }
 
 sub engineURL :lvalue {
@@ -143,6 +164,7 @@ sub parse {
 ### actually parses the XML created the Exalead::* objects
   my( $self, $q ) = @_;
   my $search_URL = $self->engineURL;
+# $search_URL =~ s/1/2/;
   my $join = '?';
   foreach my $VAR ( $q->param() ) {
     $search_URL .= $join. join( '&', map { "$VAR=".CGI::escape($_) } $q->param( $VAR ) );
@@ -150,8 +172,14 @@ sub parse {
   }
   warn $search_URL;
   my $ua = LWP::UserAgent->new();
+     $ua->timeout( $self->__timeout ); ## Allow 30 seconds for a response!!
   my $res = $ua->get( $search_URL );
-  $self->_parse( $res->content );
+  if( $res->is_success ) {
+    $self->_parse( $res->content );
+  } else {
+    $self->__status = 'failure';
+    $self->__error  = $res->message eq 'read timeout' ? 'Exalead search engine timed out after '.$self->__timeout.' seconds' : $res->message;
+  }
 }
 
 sub _parse {
@@ -160,9 +188,15 @@ sub _parse {
 ### returned by the search engine for later use
   my( $self, $XML ) = @_;
 ## Convert XML to object hash....
-  my $xml = XMLin( $XML, ForceArray=>1, KeyAttr=>[] );
+  my $xml = eval { XMLin( $XML, ForceArray=>1, KeyAttr=>[] ) };
+  if( $@ ) {
+    $self->__status = 'failure';
+    (my $error = $@) =~ s/ at \/.*/./sm;
+    $self->__error  = $error;
+    return;
+  } 
   $self->{'XML'} = $xml;
-
+  $self->__status = 'search';
 ## Parse Query....
   my $Q = $xml->{'Query'}[0];
   my $query = new ExaLead::Query( $Q->{'query'}, $Q->{'context'} );

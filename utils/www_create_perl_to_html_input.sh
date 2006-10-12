@@ -33,7 +33,7 @@
 
 . /etc/profile
 
-PERLMOD_LOC="/ensemblweb/www/www_37"   # current server root
+PERLMOD_LOC="/ensemblweb/www/www_41"   # current server root
 #PERLMOD_LOC="/ensemblweb/www/server"   # current server root
 
 PDOC_LOC="$PERLMOD_LOC/htdocs/info/software/Pdoc"    # where you want Pdocs created
@@ -46,16 +46,16 @@ F1=bioperl-live
 F2=ensembl
 F3=ensembl-analysis
 F4=ensembl-compara
-F5=ensembl-draw
+#F5=ensembl-draw
 F6=ensembl-external
 F7=ensembl-pipeline
-F8=ensembl-variation
 F9=perl
+F8=ensembl-variation
 F10=biomart-web
 F11=biomart-plib
 F12=public-plugins
-F13=modules
-F14=conf
+F13=ensembl-functgenomics
+#F14=conf
 
 rm -f $P2WDOC_LOC/make_html_docs.*
 

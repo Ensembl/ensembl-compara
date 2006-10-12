@@ -180,6 +180,7 @@ sub _parse_package_file {
       $package = "";
       $sub = $_;
       $sub =~ s/^sub |{.*//g;
+      $sub =~ s/:lvalue//; ## REALLY NEED TO SET A FLAG HERE FOR LVALUE FUNCTIONS....
       $sub =~ s/\W+//g;
       if (!$docs{methods}) {
         $docs{methods} = {};

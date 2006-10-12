@@ -27,6 +27,15 @@ sub db {
   return $self->{'dbh'};
 }
                                                                                 
+sub disconnect {
+  my $self = shift;
+  $self->{'dbh'}->disconnect if $self->{'dbh'};
+}
+sub DESTROY {
+  my $self = shift;
+  warn $self->disconnect;
+}
+
 ############################## SELECT QUERIES #################################
 
 #---------------------- QUERIES FOR NEWS_ITEM TABLE --------------------------

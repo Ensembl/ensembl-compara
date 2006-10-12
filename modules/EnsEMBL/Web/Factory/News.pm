@@ -15,7 +15,8 @@ sub news_adaptor {
       $self->problem( 'Fatal', 'News Database', 'Do not know how to connect to news (website) database');
       return undef;
     }
-    $self->__data->{'news_db'} ||= EnsEMBL::Web::DBSQL::NewsAdaptor->new( $DB );  }
+    $self->__data->{'news_db'} ||= EnsEMBL::Web::DBSQL::NewsAdaptor->new( $DB );
+  }
   return $self->__data->{'news_db'};
 }
 

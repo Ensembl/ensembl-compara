@@ -32,6 +32,7 @@ sub init {
       'show_alignsliceview'   => 'yes',
       'imagemap'          => 'yes',
       'show_labels' => 'no',
+      'opt_zclick'     => 1,
       'show_buttons' => 'no',
       'bgcolor'           => 'background1',
       'bgcolour1'         => 'background1',

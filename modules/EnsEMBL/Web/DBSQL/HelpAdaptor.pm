@@ -19,6 +19,15 @@ sub db {
   return $self->{'dbh'};
 }
 
+sub disconnect {
+  my $self = shift;
+  $self->{'dbh'}->disconnect       if $self->{'dbh'};
+  $self->{'dbh_write'}->disconnect if $self->{'dbh_write'};
+}
+sub DESTROY {
+  my $self = shift;
+  $self->disconnect;
+}
 sub db_write {
   my $self = shift;
   my $SD = EnsEMBL::Web::SpeciesDefs->new;

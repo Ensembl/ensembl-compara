@@ -71,6 +71,7 @@ if( $fullfile ) {
     }
   }
 }
+warn $out if $out =~ s/\s+$//;
 if( $out ) {
   print '<pre style=\"font-size:10pt;color:#336;">';
   print $out;
