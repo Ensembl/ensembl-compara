@@ -37,7 +37,8 @@ mkdir $EXPORT, 0755 unless -e $EXPORT;
 my $start = time();
 my $document = EnsEMBL::Web::Tools::Document->new( (
   directory => \@locations,
-  identifier => "###"
+  identifier => "###",
+  server_root => $SERVER_ROOT
 ) );
 
 my $point_1 = time();
