@@ -201,6 +201,33 @@ sub fetch_all_by_source_taxon {
 }
 
 
+=head2 get_source_taxon_count
+
+  Arg [1]    : 
+  Example    : my $sp_gene_count = $memberDBA->get_source_taxon_count('ENSEMBLGENE',$taxon_id);
+  Description: 
+  Returntype : int
+  Exceptions : 
+  Caller     : 
+
+=cut
+
+sub get_source_taxon_count {
+  my ($self,$source_name,$taxon_id) = @_;
+
+  $self->throw("source_name and taxon_id args are required") 
+    unless($source_name && $taxon_id);
+
+  my $sth = $self->prepare
+    ("SELECT COUNT(*) FROM member WHERE source_name=? AND taxon_id=?");
+  $sth->execute($source_name, $taxon_id);
+  my ($count) = $sth->fetchrow_array();
+  $sth->finish;
+
+  return $count;
+}
+
+
 =head2 fetch_by_relation
 
   DEPRECATED: use fetch_all_by_relation instead
