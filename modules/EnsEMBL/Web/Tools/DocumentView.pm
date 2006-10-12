@@ -173,6 +173,7 @@ sub write_module_page {
   open (my $fh, ">", $self->_html_path_from_package($module->name));
   print $fh $self->html_header( (package => $module->name) );
   print $fh "<div class='title'><h1>" . $module->name . "</h1>";
+  print $fh "Location: " . $module->location . "<br />\n";
   print $fh "<a href='" . source_code_link($module->name) . "' target='_new'>Source code</a>\n";
   print $fh "&middot; <a href='" . $self->link_for_package($module->name) . "'>Permalink</a>\n";
   print $fh "</div>";
