@@ -13,6 +13,7 @@ my %Directory_of;
 my %Modules_of;
 my %Identifier_of;
 my %Keywords_of;
+my %ServerRoot_of;
 my $writer = EnsEMBL::Web::Tools::DocumentView->new;
 
 sub new {
@@ -27,6 +28,10 @@ sub new {
   $Modules_of{$self} = defined $params{modules} ? $params{modules} : [];
   $Identifier_of{$self} = defined $params{identifier} ? $params{identifier} : "##";
   $Keywords_of{$self} = defined $params{keywords} ? $params{keywords} : ();
+  $ServerRoot_of{$self} = defined $params{server_root} ? $params{server_root} : "";
+  if ($self->server_root) {
+    $writer->server_root($self->server_root);
+  }
   return $self;
 }
 
@@ -182,6 +187,13 @@ sub keywords {
   return $Keywords_of{$self};
 }
 
+sub server_root {
+  ### a
+  my $self = shift;
+  $ServerRoot_of{$self} = shift if @_;
+  return $ServerRoot_of{$self};
+}
+
 sub methods {
   ### Returns all method objets for all found modules
   my $self = shift;
@@ -203,6 +215,7 @@ sub DESTROY {
   delete $Modules_of{$self};
   delete $Identifier_of{$self};
   delete $Keywords_of{$self};
+  delete $ServerRoot_of{$self};
 }
 
 }

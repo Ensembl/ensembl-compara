@@ -11,6 +11,7 @@ use warnings;
 
 my %Location_of;
 my %BaseURL_of;
+my %ServerRoot_of;
 my %SupportFilesLocation_of;
 
 sub new {
@@ -20,6 +21,7 @@ sub new {
   my $self = bless \my($scalar), $class;
   $Location_of{$self} = defined $params{location} ? $params{location} : "";
   $BaseURL_of{$self} = defined $params{base} ? $params{base} : "";
+  $ServerRoot_of{$self} = defined $params{server_root} ? $params{server_root} : "";
   $SupportFilesLocation_of{$self} = defined $params{support} ? $params{support} : "";
   return $self;
 }
@@ -173,7 +175,10 @@ sub write_module_page {
   open (my $fh, ">", $self->_html_path_from_package($module->name));
   print $fh $self->html_header( (package => $module->name) );
   print $fh "<div class='title'><h1>" . $module->name . "</h1>";
-  print $fh "Location: " . $module->location . "<br />\n";
+  my $location = $module->location;
+  my $root = $self->server_root;
+  $location =~ s/$root//g;
+  print $fh "Location: " . $location . "<br />\n";
   print $fh "<a href='" . source_code_link($module->name) . "' target='_new'>Source code</a>\n";
   print $fh "&middot; <a href='" . $self->link_for_package($module->name) . "'>Permalink</a>\n";
   print $fh "</div>";
@@ -581,12 +586,20 @@ sub base_url {
   return $BaseURL_of{$self};
 }
 
+sub server_root {
+  ### a
+  my $self = shift;
+  $ServerRoot_of{$self} = shift if @_;
+  return $ServerRoot_of{$self};
+}
+
 sub DESTROY {
   ### d
   my $self = shift;
   delete $Location_of{$self};
   delete $SupportFilesLocation_of{$self};
   delete $BaseURL_of{$self};
+  delete $ServerRoot_of{$self};
 }
 
 }
