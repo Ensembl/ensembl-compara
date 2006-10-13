@@ -24,7 +24,7 @@ sub colour {
 
   my $highlight = undef;
   my $type = $transcript->biotype() || $gene->biotype();
-  my $colour = $colours->{ $type =~ /pseudo/i ? 'rna-pseudo' : 'rna-real' };
+  my $colour = $colours->{ ($type =~ /pseudo/i ? 'rna-pseudo' : 'rna-real'). ($transcript->status||$gene->status) };
 
   if(exists $highlights{lc($transcript->stable_id)}) {
     $highlight = $colours->{'superhi'};
@@ -42,7 +42,7 @@ sub gene_colour {
 
   my $highlight = undef;
   my $type = $gene->biotype();
-  my $colour = $colours->{ $type =~ /pseudo/i ? 'rna-pseudo' : 'rna-real' };
+  my $colour = $colours->{ ($type =~ /pseudo/i ? 'rna-pseudo' : 'rna-real').$gene->status };
 
   if(exists $highlights{lc($gene->stable_id)}) {
     $highlight = $colours->{'hi'};
@@ -82,7 +82,7 @@ sub zmenu {
   my $type = $transcript->biotype() || $gene->biotype();
   
   my $zmenu = {
-    'caption'             => "ncRNA",
+    'caption'             => $type.' ('.($transcript->status||$gene->status).')',
     "00:$id"    => "",
     "01:Gene:$gid"          => "/@{[$self->{container}{_config_file_name_}]}/geneview?gene=$gid",
     "02:Transcr:$tid"        => "/@{[$self->{container}{_config_file_name_}]}/transview?transcript=$tid",          
@@ -106,7 +106,7 @@ sub gene_zmenu {
   my $id   = $gene->external_name() eq '' ? $gid : $gene->external_name();
   my $type = $gene->biotype();
   my $zmenu = {
-    'caption'             => "ncRNA",
+    'caption'             => $type.' ('.($gene->status).')',
     "01:Gene:$gid"          => qq(/@{[$self->{container}{_config_file_name_}]}/geneview?gene=$gid),
     "06:$type"   => '',
   };
@@ -133,6 +133,7 @@ sub text_label {
   my $short_labels = $Config->get('_settings','opt_shortlabels');
   unless( $short_labels ){
   my $type = $legend_map{$transcript->biotype} || $transcript->biotype;
+     $type .= ' ('.($transcript->status||$gene->status).')';
   $id .= " \n$type ";
   }
   return $id;
@@ -145,6 +146,7 @@ sub gene_text_label {
   my $short_labels = $Config->get('_settings','opt_shortlabels');
   unless( $short_labels ){
     my $type = $legend_map{$gene->biotype} || $gene->biotype;
+       $type .= ' ('.($gene->status).')';
       $id .= " \n$type ";
   }
   return $id;
@@ -162,8 +164,11 @@ sub legend {
   my ($self, $colours) = @_;
   return ('ncRNA', 1000,
       [
-        'RNA'			=> $colours->{'rna-real'}[0],
-        'RNA pseudogene'	=> $colours->{'rna-psuedo'}[0],
+        'RNA (Known)'		=> $colours->{'rna-realKNOWN'}[0],
+        'RNA (Predicted)'       => $colours->{'rna-realPREDICTED'}[0],
+        'RNA (Novel)'		=> $colours->{'rna-realNOVEL'}[0],
+        'RNA pseudogene (Known)'=> $colours->{'rna-psuedoKNOWN'}[0],
+        'RNA pseudogene (Novel)'=> $colours->{'rna-psuedoNOVEL'}[0],
       ]
   );
 }
