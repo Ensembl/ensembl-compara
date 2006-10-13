@@ -124,7 +124,7 @@ sub parse_conf {
         %netConf = %{$confPtr};
 
         if (exists $netConf{net_method} and 
-            not Bio::EnsEMBL::Compara::Production::GenomicAlignBlock
+            not Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::SimpleNets
               ->SUPPORTED_METHOD($netConf{net_method})) {
           die("Method '" . $netConf{net_method} . "' is not supported by SimpleNets"); 
         }
