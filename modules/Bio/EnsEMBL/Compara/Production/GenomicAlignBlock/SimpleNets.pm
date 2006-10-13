@@ -251,7 +251,7 @@ my @ALLOWABLE_METHODS = qw(ContigAwareNet);
 
 
 sub SUPPORTED_METHOD {
-  my ($class, $method ) = shift;
+  my ($class, $method ) = @_;
 
   my $allowed = 0;
   foreach my $meth (@ALLOWABLE_METHODS) {
