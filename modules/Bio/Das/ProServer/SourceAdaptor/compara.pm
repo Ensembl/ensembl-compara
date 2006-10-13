@@ -34,9 +34,8 @@ The main species. Features will be shown for this species.
 =head2 other_species
 
 The other species. This DAS track will show alignments between this_species and other_species.
-You will have to skip this one for self-alignments.
-
-At the moment this module only suppports pairwise alignments.
+You will have to skip this one for self-alignments. You can add more than one other species
+separated by comas.
 
 =head2 analysis
 
@@ -75,7 +74,7 @@ module), the group_type is "default". You can choose another group_type using th
   port        = 9013
 
   [Hsap-Mmus-blastznet]
-  registry    = /nfs/acari/jh7/src/ComparaDAS/ProServer/eg/reg.pl
+  registry        = /home/foo/ProServer/eg/reg.pl
   state           = on
   adaptor         = compara
   database        = ensembl-compara-41
@@ -86,7 +85,7 @@ module), the group_type is "default". You can choose another group_type using th
   group_type      = default
 
   [Mmus-Hsap-blastznet]
-  registry    = /nfs/acari/jh7/src/ComparaDAS/ProServer/eg/reg.pl
+  registry        = /home/foo/ProServer/eg/reg.pl
   state           = on
   adaptor         = compara
   database        = ensembl-compara-41
@@ -95,6 +94,16 @@ module), the group_type is "default". You can choose another group_type using th
   analysis        = BLASTZ_NET
   description     = Mouse-Human blastz-net alignments
   group_type      = default
+
+  [primates-mlagan-hs]
+  registry        = /home/foo/ProServer/eg/reg.pl
+  state           = on
+  adaptor         = compara
+  database        = ensembl-compara-41
+  this_species    = Homo sapiens
+  other_species   = Pan troglodytes, Macaca mulatta
+  analysis        = MLAGAN
+  description     = Primates Mlagan alignments on human
 
 
 =cut
@@ -170,7 +179,7 @@ sub build_features
     my $dasend      = $opts->{'end'} || return ( );
 
     my $species1    = $self->config()->{'this_species'};
-    my $species2    = $self->config()->{'other_species'};
+    my @other_species = split(/\s*\,\s*/, $self->config()->{'other_species'});
     my $chr1        = $daschr;
     my $start1      = $dasstart;
     my $end1        = $dasend;
@@ -201,131 +210,148 @@ sub build_features
         $self->{'compara'}{'genomic_align_group_adaptor'};
 
     my $genomedbs = $self->{'compara'}{'genomedbs'};
-    my $sps1_gdb;
-    my $sps2_gdb;
+    my $species1_genome_db;
+    my @other_species_genome_dbs;
 
-    foreach my $gdb (@$genomedbs){
-        if ($gdb->name eq $species1) {
-            $sps1_gdb = $gdb;
-        } elsif(defined($species2) and $gdb->name eq $species2) {
-            $sps2_gdb = $gdb;
+    ## Get the Bio::EnsEMBL::Compara::GenomeDB object for the primary species
+    foreach my $this_genome_db (@$genomedbs){
+      if ($this_genome_db->name eq $species1) {
+        $species1_genome_db = $this_genome_db;
+      }
+    }
+    if (!defined($species1_genome_db)) {
+      die "No species called $species1 in the database -- check spelling\n";
+    }
+
+    ## Get the Bio::EnsEMBL::Compara::GenomeDB objects for the remaining species
+    foreach my $this_other_species (@other_species) {
+      my $this_other_genome_db;
+      foreach my $this_genome_db (@$genomedbs){
+        if ($this_genome_db->name eq $this_other_species) {
+          $this_other_genome_db = $this_genome_db;
+          last;
         }
+      }
+      if (!defined($this_other_genome_db)) {
+        die "No species called $this_other_species in the database -- check spelling\n";
+      }
+      push(@other_species_genome_dbs, $this_other_genome_db);
     }
 
-    unless(defined $sps1_gdb && (!defined($species2) or defined $sps2_gdb)) {
-        die "no $species1 or no $species2 -- check spelling\n";
-    }
-
+    ## Fetch the Bio::EnsEMBL::Compara::DnaFrag object for the query segment
     my $dnafrag1 =
-        $dnafrag_adaptor->fetch_by_GenomeDB_and_name($sps1_gdb, $chr1);
+        $dnafrag_adaptor->fetch_by_GenomeDB_and_name($species1_genome_db, $chr1);
 
     return ( ) if (!defined $dnafrag1);
 
+    ## Fetch the Bio::EnsEMBL::Compara::MethodLinkSpeciesSet object
     my $method_link_species_set;
-    if (defined($species2)) {
-        $method_link_species_set =
-            $mlss_adaptor->fetch_by_method_link_type_GenomeDBs(
-                $method_link, [$sps1_gdb, $sps2_gdb]);
-    } else {
-        $method_link_species_set =
-            $mlss_adaptor->fetch_by_method_link_type_GenomeDBs(
-                $method_link, [$sps1_gdb]);
-        $species2 = $species1;
-    }
+    $method_link_species_set =
+        $mlss_adaptor->fetch_by_method_link_type_GenomeDBs(
+            $method_link, [$species1_genome_db, @other_species_genome_dbs]);
 
+    ## Fetch the alginments on the query segment
     my $genomic_align_blocks =
         $genomic_align_block_adaptor->fetch_all_by_MethodLinkSpeciesSet_DnaFrag(
             $method_link_species_set, $dnafrag1, $start1, $end1);
 
-    my @results = ();
-    my $ensspecies = $species2;
-    $ensspecies =~ tr/ /_/;
-
+    ## Get the start and end coordinates for each group. The coordinates are indexed
+    ## by species_name and chr_name to ensure the continuity in the coordinates.
     my $group_type = $self->config()->{'group_type'};
-
     my $group_coordinates;
     foreach my $gab (@$genomic_align_blocks) {
-      my $genomic_align2 = $gab->get_all_non_reference_genomic_aligns()->[0];
-      next if(!$genomic_align2->genomic_align_group_by_type($group_type));
-      my $group_id = $genomic_align2->genomic_align_group_by_type($group_type)->dbID;
-      my $chr_name = $genomic_align2->dnafrag->name;
-      my $chr_start = $genomic_align2->dnafrag_start;
-      my $chr_end = $genomic_align2->dnafrag_end;
-      if (!defined($group_coordinates->{$group_id}->{$chr_name})) {
-        $group_coordinates->{$group_id}->{$chr_name}->{start} = $chr_start;
-        $group_coordinates->{$group_id}->{$chr_name}->{end} = $chr_end;
-      } else {
-        if ($chr_start < $group_coordinates->{$group_id}->{$chr_name}->{start}) {
-          $chr_start = $group_coordinates->{$group_id}->{$chr_name}->{start};
-        }
-        if ($chr_end > $group_coordinates->{$group_id}->{$chr_name}->{end}) {
-          $chr_end = $group_coordinates->{$group_id}->{$chr_name}->{end};
+      my $genomic_align = $gab->reference_genomic_align;
+      next if(!$genomic_align->genomic_align_group_by_type($group_type));
+      my $group_id = $genomic_align->genomic_align_group_by_type($group_type)->dbID;
+      foreach my $genomic_align2 (@{$gab->get_all_non_reference_genomic_aligns()}) {
+        my $species_name = $genomic_align2->dnafrag->genome_db->name;
+        my $chr_name = $genomic_align2->dnafrag->name;
+        my $chr_start = $genomic_align2->dnafrag_start;
+        my $chr_end = $genomic_align2->dnafrag_end;
+        if (!defined($group_coordinates->{$group_id}->{$species_name}->{$chr_name})) {
+          $group_coordinates->{$group_id}->{$species_name}->{$chr_name}->{start} = $chr_start;
+          $group_coordinates->{$group_id}->{$species_name}->{$chr_name}->{end} = $chr_end;
+        } else {
+          if ($chr_start < $group_coordinates->{$group_id}->{$species_name}->{$chr_name}->{start}) {
+            $chr_start = $group_coordinates->{$group_id}->{$species_name}->{$chr_name}->{start};
+          }
+          if ($chr_end > $group_coordinates->{$group_id}->{$species_name}->{$chr_name}->{end}) {
+            $chr_end = $group_coordinates->{$group_id}->{$species_name}->{$chr_name}->{end};
+          }
         }
       }
     }
 
+    ## Build the results array
+    my @results = ();
+
     foreach my $gab (@$genomic_align_blocks) {
-        $genomic_align_block_adaptor->retrieve_all_direct_attributes($gab);
+      $genomic_align_block_adaptor->retrieve_all_direct_attributes($gab);
 
-        my $genomic_align1          = $gab->reference_genomic_align();
-        my $other_genomic_aligns    =
-            $gab->get_all_non_reference_genomic_aligns();
+      my $genomic_align1 = $gab->reference_genomic_align();
+      my $other_genomic_aligns = $gab->get_all_non_reference_genomic_aligns();
+      my $group_id = $genomic_align1->genomic_align_group_by_type($group_type)?
+          $genomic_align1->genomic_align_group_by_type($group_type)->dbID:undef;
 
-        my $genomic_align2          = $other_genomic_aligns->[0];
+      my $id = $gab->dbID;
+      my $label;
+      my $group_label;
+      # note will contain the perc_id if it exists
+      my $note = $gab->perc_id?$gab->perc_id.'% identity':undef;
 
-        my ($start2,$end2,$name2,$group2) = (
-            $genomic_align2->dnafrag_start(),
-            $genomic_align2->dnafrag_end(),
-            $genomic_align2->dnafrag->name(),
-            defined $genomic_align2->genomic_align_group_by_type($group_type)?
-                $genomic_align2->genomic_align_group_by_type($group_type)->dbID():undef
-        );
+      ## Set link, linktxt, grouplink, grouplinktxt
+      my @links;
+      my @link_txts;
+      my @group_links;
+      my @group_link_txts;
+      foreach my $this_genomic_align (@{$gab->get_all_non_reference_genomic_aligns()}) {
+        my ($species2, $name2, $start2, $end2, $group2) = (
+            $this_genomic_align->dnafrag->genome_db->name(),
+            $this_genomic_align->dnafrag->name(),
+            $this_genomic_align->dnafrag_start(),
+            $this_genomic_align->dnafrag_end(),
+            $this_genomic_align->genomic_align_group_by_type($group_type),
+          );
+        my $ens_species = $species2;
+        $ens_species =~ s/ /_/g;
+        push(@links, sprintf($link_template, $ens_species, $name2, $start2, $end2, $species2));
+        push(@link_txts, sprintf("%s:%d,%d in %s", $name2, $start2, $end2, $species2));
+        next if (!defined($group_id));
+        my $group_start2 = $group_coordinates->{$group_id}->{$species2}->{$name2}->{start};
+        my $group_end2 = $group_coordinates->{$group_id}->{$species2}->{$name2}->{end};
+        $group_label = "$name2: $group_start2-$group_end2";
+        push(@group_links, sprintf($link_template, $ens_species, $name2,
+            $group_start2, $group_end2));
+        push(@group_link_txts, sprintf("%s:%d,%d in %s", $name2,
+            $group_start2, $group_end2, $species2));
+      }
 
-        if (defined $group2) {
-          my $group_start2 = $group_coordinates->{$group2}->{$name2}->{start};
-          my $group_end2 = $group_coordinates->{$group2}->{$name2}->{end};
-          push @results, {
-                          'id'    => "$name2: $start2-$end2",
-                          'type'  => $method_link,
-                          'method'=> 'Compara',
-                          'start' => $genomic_align1->dnafrag_start,
-                          'end'   => $genomic_align1->dnafrag_end,
-                          'ori'   => ($genomic_align1->dnafrag_strand() == 1 ? '+' : '-'),
-                          'score' => $gab->score(),
-                          'note'  => sprintf('%d%% identity with %s:%d,%d in %s',
-                                             $gab->perc_id?$gab->perc_id:0,
-                                             $name2, $start2, $end2,
-                                             $species2),
-                          'link'  => sprintf($link_template,
-                                             $ensspecies, $name2, $start2, $end2),
-                          'linktxt' => sprintf("%s:%d,%d in %s",
-                                             $name2, $start2, $end2, $species2),
-                          'group' => "$group2 on chr. $name2",
-                          'grouplabel'=> "$name2: $group_start2-$group_end2",
-                          'grouplink' => sprintf($link_template,
-                                             $ensspecies, $name2, $group_start2, $group_end2),
-                          'grouplinktxt' => sprintf("%s:%d,%d in %s",
-                                             $name2, $group_start2, $group_end2, $species2),
-                         };
-        } else {
-          push @results, {
-                          'id'    => $gab->dbID,
-                          'type'  => $method_link,
-                          'method'=> 'Compara',
-                          'start' => $genomic_align1->dnafrag_start,
-                          'end'   => $genomic_align1->dnafrag_end,
-                          'ori'   => ($genomic_align1->dnafrag_strand() == 1 ? '+' : '-'),
-                          'score' => $gab->score(),
-                          'note'  => sprintf('%d%% identity with %s:%d,%d in %s',
-                                             $gab->perc_id?$gab->perc_id:0,
-                                             $name2, $start2, $end2,
-                                             $species2),
-                          'link'  => sprintf($link_template,
-                                             $ensspecies, $name2, $start2, $end2),
-                          'linktxt'   => sprintf("%s:%d,%d in %s",
-                                                 $name2, $start2, $end2, $species2),
-                         }
-        }
+      if (@other_species_genome_dbs < 2) {
+        ## for pairwise and self-alignments
+        my $ga = $gab->get_all_non_reference_genomic_aligns()->[0];
+        $label = $ga->dnafrag->name.": ".$ga->dnafrag_start."-".$ga->dnafrag_end;
+      } else {
+        ## for multiple alignments
+        $group_label = $group_id?"group $group_id":undef;
+      }
+
+      push @results, {
+          'id'    => $id,
+          'label' => $label,
+          'type'  => $method_link,
+          'method'=> 'Compara',
+          'start' => $genomic_align1->dnafrag_start,
+          'end'   => $genomic_align1->dnafrag_end,
+          'ori'   => ($genomic_align1->dnafrag_strand() == 1 ? '+' : '-'),
+          'score' => $gab->score(),
+          'note'  => $note,
+          'link'  => [@links],
+          'linktxt' => [@link_txts],
+          'group' => $group_id,
+          'grouplabel'=> $group_label,
+          'grouplink' => [@group_links],
+          'grouplinktxt' => [@group_link_txts],
+        };
     }
 
     return @results;
