@@ -1413,6 +1413,7 @@ sub get_original_strand {
 
   Arg[1]     : [optional] int $start, refers to the start of the alignment
   Arg[2]     : [optional] int $end, refers to the start of the alignment
+  Arg[3]     : [optional] boolean $skip_empty_GenomicAligns
   Example    : none
   Description: restrict this GenomicAlignBlock. It returns a new object unless no
                restriction is needed. In that case, it returns the original unchanged
@@ -1447,7 +1448,7 @@ sub get_original_strand {
 =cut
 
 sub restrict_between_alignment_positions {
-  my ($self, $start, $end) = @_;
+  my ($self, $start, $end, $skip_empty_GenomicAligns) = @_;
   my $genomic_align_block;
   my $new_reference_genomic_align;
   my $new_genomic_aligns;
@@ -1579,6 +1580,18 @@ sub restrict_between_alignment_positions {
     ## Save genomic_align's cigar_line
     $genomic_align->aligned_sequence(0);
     $genomic_align->cigar_line(join("", @final_cigar));
+  }
+
+  if ($skip_empty_GenomicAligns) {
+    my $reference_genomic_align = $genomic_align_block->reference_genomic_align();
+    my $genomic_align_array = $genomic_align_block->genomic_align_array;
+    for (my $i=0; $i<@$genomic_align_array; $i++) {
+      if ($genomic_align_array->[$i]->dnafrag_start > $genomic_align_array->[$i]->dnafrag_end) {
+        splice(@$genomic_align_array, $i, 1);
+        $i--;
+      }
+    }
+    $genomic_align_block->reference_genomic_align($reference_genomic_align) if ($reference_genomic_align);
   }
 
   return $genomic_align_block;
