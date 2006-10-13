@@ -190,6 +190,7 @@ sub get_handle {
 	$dbh = $init_h->{dbh};
     }
     else {
+warn "CONNECTING TO GO $$";
 	$dbh = DBI->connect($dsn, @params) || confess($DBI::errstr);
     }
 ##    my $dbh = DBI->connect($dsn);
@@ -233,6 +234,12 @@ sub GO::AppHandles::AppHandleSqlImpl::commit {
     if ($self->is_transactional) {
 	$self->dbh->commit;
     }
+}
+
+sub DESTROY {
+  my $self = shift;
+warn "DESTROYING GO CONNECTION $$";
+  $self->disconnect;
 }
 
 sub disconnect {

@@ -31,8 +31,12 @@ sub load_genes {
       my $gene_obj = $ga->fetch_by_dbID($gene);
       push (@$subarray_ref, $gene_obj);
       if($self->param('display')) {
-        my $fam_obj = $fa->fetch_by_Member_source_stable_id( 'ENSEMBLGENE', $gene_obj->stable_id );
-        push (@$subarray_ref, $fam_obj->[0]);
+        my $fam_obj = $fa->fetch_by_Member_source_stable_id( 'ENSEMBLGENE', $gene_obj->stable_id ); 
+        if( $fam_obj ) {
+          push (@$subarray_ref, $fam_obj->[0]);
+        } else {
+          warn "NO FAMILY OBJ ", $gene_obj->stable_id ;
+        }
       }
       push (@$array_ref, $subarray_ref);
     }
@@ -111,11 +115,10 @@ sub get_faminfo {
   foreach my $subarray_ref (@$array_ref) {
     my @subarray = @$subarray_ref;
     my $family = $subarray[1];
-
-    push @$results, {
-        'stable_id'     => $family->stable_id,
-        'description'   => $family->description
-    }
+    push @$results, $family ? {
+      'stable_id'     => $family->stable_id,
+      'description'   => $family->description
+    } : {};
   }
   return $results;
 }

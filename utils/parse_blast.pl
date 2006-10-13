@@ -23,6 +23,8 @@ use EnsEMBL::Web::SpeciesDefs;
 
 my $token    = shift @ARGV;
 my $filename = shift @ARGV;
+(my $FN2 = $filename) =~ s/parsing/done/;
+(my $FN3 = $filename) =~ s/parsing/error/;
 if( ! $token ){ die( "runblast.pl called with no token" ) }
 my @bits = split( '/', $token );
 my $ticket = join( '',$bits[-3],$bits[-2] ); # Ticket = 3rd + 2nd to last dirs
@@ -31,12 +33,20 @@ my $ticket = join( '',$bits[-3],$bits[-2] ); # Ticket = 3rd + 2nd to last dirs
 my $SPECIES_DEFS = EnsEMBL::Web::SpeciesDefs->new();
 my $DBCONNECTION = EnsEMBL::Web::DBSQL::DBConnection->new( undef, $SPECIES_DEFS );
 
-my $blast_adaptor = $DBCONNECTION->get_databases_species( $SPECIES_DEFS->ENSEMBL_PERL_SPECIES, 'blast')->{'blast'};
+my $blast_adaptor = $DBCONNECTION->get_databases_species( $SPECIES_DEFS->ENSEMBL_PRIMARY_SPECIES, 'blast')->{'blast'};
 $blast_adaptor->ticket( $ticket );
 
-my $runnable = Bio::Tools::Run::Search->retrieve( $token, $blast_adaptor  );
+my $runnable = eval { Bio::Tools::Run::Search->retrieve( $token, $blast_adaptor  ) };
 
-if( ! $runnable ){ die( "Token $token not found" ) }
+warn "HERE";
+if( ! $runnable ){ 
+  warn "Renaming $filename -> $FN3";
+  rename $filename, $FN3;
+  open O, ">>$FN3";
+  print O $@;
+  close O;
+  die( "Token $token not found" );
+}
 $runnable->verbose(1);
 
 eval{
@@ -51,8 +61,15 @@ eval{
   $runnable->status("COMPLETED");
   $runnable->store;
 };
-(my $FN2 = $filename) =~ s/parsing/done/;
-warn "Renaming $filename -> $FN2";
-if( $@ ){ die( $@ ) }
-rename $filename, $FN2;
+if( $@ ){
+  warn "Renaming $filename -> $FN3";
+  rename $filename, $FN3;
+  open O, ">>$FN3";
+  print O $@;
+  close O;
+  die( $@ );
+} else {
+  warn "Renaming $filename -> $FN2";
+  rename $filename, $FN2;
+}
 exit 0;

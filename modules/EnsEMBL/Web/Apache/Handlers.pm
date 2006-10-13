@@ -170,7 +170,7 @@ BEGIN {
     $LOAD_COMMAND = \&_load_command_alpha;
   } elsif( $Config{'osname'} eq 'linux' ) {
     $LOAD_COMMAND = \&_load_command_linux;
-  } $LOAD_COMMAND = \&_load_command_null;
+  }# $LOAD_COMMAND = \&_load_command_null;
 };
 
 sub _load_command_null {
@@ -268,6 +268,7 @@ sub _process_blast {
         flock FH, LOCK_UN;
         my $COMMAND = "$ENSEMBL_BLASTSCRIPT $blast_file $FILE2";
       ## NOW WE PARSE THE BLAST FILE.....
+warn "EXECUTING BLAST $COMMAND";
         `$COMMAND`;
         if( $ticket && ( $_process_blast_called_at + 30>time() )) {
           $loads = _get_loads();

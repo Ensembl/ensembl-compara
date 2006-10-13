@@ -69,7 +69,7 @@ cd $PERLMOD_LOC
 echo "Check out ensembl-pipeline and ensembl analysis"
 cvs co ensembl-pipeline ensembl-analysis
 
-for i in bioperl-live ensembl ensembl-analysis ensembl-compara ensembl-draw ensembl-external ensembl-variation perl modules conf biomart-web biomart-plib public-plugins ensembl-pipeline
+for i in bioperl-live ensembl ensembl-analysis ensembl-compara ensembl-functgenomics ensembl-external ensembl-variation perl biomart-web biomart-plib public-plugins ensembl-pipeline
 do
         mkdir $PDOC_LOC/$i
   	echo "CURRENT MODULE: $i"

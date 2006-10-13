@@ -200,7 +200,7 @@ sub family {
     my $gene_total   = scalar(@gene_info);  
     for (my $i=0; $i<$gene_total; $i++) {
        my %gene   = %{$gene_info[$i]};
-       my %family = %{$family_info[$i]};
+       my %family = %{$family_info[$i]||{}};
 
        # start paragraphs for content
        my $id_txt = '<p>';
@@ -216,10 +216,20 @@ sub family {
        $desc_txt .= $gene{'description'};
 
        # family ID and description
-       my $fid     = $family{'stable_id'};
-       my $desc    = $family{'description'};
-       $fam_txt .= qq(<a href="/$species/familyview?family=$fid">$fid</a><br /><em>$desc</em>);
-
+       if( $family{'stable_id'} ) { 
+         my $fid     = $family{'stable_id'};
+         my $desc    = $family{'description'};
+         $fam_txt .= qq(<a href="/$species/familyview?family=$fid">$fid</a><br /><em>$desc</em>);
+       } else {
+         $fam_txt .= '--';
+       }
+       if( $family{'stable_id'} ) {
+         my $fid     = $family{'stable_id'};
+         my $desc    = $family{'description'};
+         $fam_txt .= qq(<a href="/$species/familyview?family=$fid">$fid</a><br /><em>$desc</em>);
+       } else {
+        $fam_txt .= '--';
+       }
        # close all paragraphs
        $id_txt .= '</p>';
        $desc_txt .= '</p>';

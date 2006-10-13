@@ -106,6 +106,7 @@ sub fetch_news_items {
 #warn $sql;
 
 
+warn $sql;
   my $T = $self->db->selectall_arrayref($sql, {});
   return [] unless $T;
 
