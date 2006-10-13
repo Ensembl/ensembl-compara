@@ -140,26 +140,25 @@ sub build_features
     my $ensspecies = $species2;
     $ensspecies =~ tr/ /_/;
 
-    my $grouping = $self->config()->{'group'} || 'by_group_chr';
+    my $group_type = $self->config()->{'group_type'};
 
     my $group_coordinates;
-    if ($grouping eq 'by_group_chr') {
-      foreach my $gab (@$genomic_align_blocks) {
-        my $genomic_align2 = $gab->get_all_non_reference_genomic_aligns()->[0];
-        my $group_id = $genomic_align2->genomic_align_groups->[0]->dbID;
-        my $chr_name = $genomic_align2->dnafrag->name;
-        my $chr_start = $genomic_align2->dnafrag_start;
-        my $chr_end = $genomic_align2->dnafrag_end;
-        if (!defined($group_coordinates->{$group_id}->{$chr_name})) {
-          $group_coordinates->{$group_id}->{$chr_name}->{start} = $chr_start;
-          $group_coordinates->{$group_id}->{$chr_name}->{end} = $chr_end;
-        } else {
-          if ($chr_start < $group_coordinates->{$group_id}->{$chr_name}->{start}) {
-            $chr_start = $group_coordinates->{$group_id}->{$chr_name}->{start};
-          }
-          if ($chr_end > $group_coordinates->{$group_id}->{$chr_name}->{end}) {
-            $chr_end = $group_coordinates->{$group_id}->{$chr_name}->{end};
-          }
+    foreach my $gab (@$genomic_align_blocks) {
+      my $genomic_align2 = $gab->get_all_non_reference_genomic_aligns()->[0];
+      next if(!$genomic_align2->genomic_align_group_by_type($group_type));
+      my $group_id = $genomic_align2->genomic_align_group_by_type($group_type)->dbID;
+      my $chr_name = $genomic_align2->dnafrag->name;
+      my $chr_start = $genomic_align2->dnafrag_start;
+      my $chr_end = $genomic_align2->dnafrag_end;
+      if (!defined($group_coordinates->{$group_id}->{$chr_name})) {
+        $group_coordinates->{$group_id}->{$chr_name}->{start} = $chr_start;
+        $group_coordinates->{$group_id}->{$chr_name}->{end} = $chr_end;
+      } else {
+        if ($chr_start < $group_coordinates->{$group_id}->{$chr_name}->{start}) {
+          $chr_start = $group_coordinates->{$group_id}->{$chr_name}->{start};
+        }
+        if ($chr_end > $group_coordinates->{$group_id}->{$chr_name}->{end}) {
+          $chr_end = $group_coordinates->{$group_id}->{$chr_name}->{end};
         }
       }
     }
@@ -177,24 +176,13 @@ sub build_features
             $genomic_align2->dnafrag_start(),
             $genomic_align2->dnafrag_end(),
             $genomic_align2->dnafrag->name(),
-            defined $genomic_align2->genomic_align_groups->[0]?$genomic_align2->genomic_align_groups->[0]->dbID():undef
+            defined $genomic_align2->genomic_align_group_by_type($group_type)?
+                $genomic_align2->genomic_align_group_by_type($group_type)->dbID():undef
         );
 
-        my $group;
-        my $grouplabel;
-
-        if ($grouping eq 'by_group_chr') {
-            $group = $group2;
-            $grouplabel = $name2.":".$group_coordinates->{$group2}->{$name2}->{start}.
-                "-".$group_coordinates->{$group2}->{$name2}->{end};
-        } elsif ($grouping eq 'by_group') {
-            $group = sprintf('%s', $group2);
-            $grouplabel = sprintf('group %s', $group2);
-        } elsif ($grouping eq 'by_chr') {
-            $group = sprintf('%s', $name2);
-            $grouplabel = sprintf('chr %s', $name2);
-        }
-        if (defined $group && defined $grouplabel) {
+        if (defined $group2) {
+          my $group_start2 = $group_coordinates->{$group2}->{$name2}->{start};
+          my $group_end2 = $group_coordinates->{$group2}->{$name2}->{end};
           push @results, {
                           'id'    => "$name2: $start2-$end2",
                           'type'  => $method_link,
@@ -209,11 +197,15 @@ sub build_features
                                              $species2),
                           'link'  => sprintf($link_template,
                                              $ensspecies, $name2, $start2, $end2),
-                          'linktxt'   => sprintf("%s:%d,%d in %s",
-                                                 $name2, $start2, $end2, $species2),
-                          'group' => $group,
-                          'grouplabel'=> $grouplabel,
-                         }
+                          'linktxt' => sprintf("%s:%d,%d in %s",
+                                             $name2, $start2, $end2, $species2),
+                          'group' => "$group2 on chr. $name2",
+                          'grouplabel'=> "$name2: $group_start2-$group_end2",
+                          'grouplink' => sprintf($link_template,
+                                             $ensspecies, $name2, $group_start2, $group_end2),
+                          'grouplinktxt' => sprintf("%s:%d,%d in %s",
+                                             $name2, $group_start2, $group_end2, $species2),
+                         };
         } else {
           push @results, {
                           'id'    => $gab->dbID,
