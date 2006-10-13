@@ -39,6 +39,7 @@ in Perl, and does not rely on Jim Kent's original Axt tools
 package Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::SimpleNets;
 
 use strict;
+use Bio::EnsEMBL::Utils::Exception qw(throw warning);
 use Bio::EnsEMBL::Hive::Process;
 use Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::AlignmentProcessing;
 
@@ -225,7 +226,6 @@ sub run {
   } else {
     $output = $self->ContigAwareNet();
   }
-
  
   $self->cleanse_output($output);
   $self->output($output);
@@ -328,6 +328,8 @@ sub ContigAwareNet {
 
             my $cut_block = $block->restrict_between_reference_positions($reg_start,
                                                                          $reg_end);
+            $cut_block->score($block->score);
+
             if (defined $cut_block) {
               push @cut_blocks, $cut_block;
               $contigs_of_blocks{$cut_block} = $seg;
