@@ -1,3 +1,104 @@
+#
+# Bio::Das::ProServer::SourceAdaptor::compara
+#
+# Copyright EnsEMBL Team
+#
+# You may distribute this module under the same terms as perl itself
+#
+# pod documentation - main docs before the code
+
+=head1 NAME
+
+Bio::Das::ProServer::SourceAdaptor::compara - Extension of the ProServer for e! genomic alignments
+
+=head1 INHERITANCE
+
+This module inherits attributes and methods from Bio::Das::ProServer::SourceAdaptor
+
+=head1 DAS CONFIGURATION FILE
+
+There are some specific parameters for this module you can use in the DAS server configuration file
+
+=head2 registry
+
+Your registryu configuration file to connect to the compara database
+
+=head2 database
+
+The species name in your Registry configuration file.
+
+=head2 this_species
+
+The main species. Features will be shown for this species.
+
+=head2 other_species
+
+The other species. This DAS track will show alignments between this_species and other_species.
+You will have to skip this one for self-alignments.
+
+At the moment this module only suppports pairwise alignments.
+
+=head2 analysis
+
+The method_link_type. This defines the type of alignments. E.g. TRANSLATED_BLAT, BLASTZ_NET...
+See perldoc Bio::EnsEMBL::Compara::MethodLinkSpeciesSet for more details about the
+method_link_type
+
+=head2 group_type
+
+The type of grouping used. The alignments can be grouped in the database. The DB supports
+several grouping schema, each of them has a name. By default (in the e! API and in this
+module), the group_type is "default". You can choose another group_type using this parameter.
+
+=head2 Example
+
+=head3 registry configuration file
+
+  use strict;
+  use Bio::EnsEMBL::Utils::ConfigRegistry;
+  use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
+
+  new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(
+      -host => 'ensembldb.ensembl.org',
+      -user => 'anonymous',
+      -port => 3306,
+      -species => 'ensembl-compara-41',
+      -dbname => 'ensembl_compara_41');
+
+
+=head3 DAS server configuration file
+
+  [general]
+  hostname    = ecs4b.internal.sanger.ac.uk
+  prefork     = 6
+  maxclients  = 100
+  port        = 9013
+
+  [Hsap-Mmus-blastznet]
+  registry    = /nfs/acari/jh7/src/ComparaDAS/ProServer/eg/reg.pl
+  state           = on
+  adaptor         = compara
+  database        = ensembl-compara-41
+  this_species    = Homo sapiens
+  other_species   = Mus musculus
+  analysis        = BLASTZ_NET
+  description     = Human-mouse blastz-net alignments
+  group_type      = default
+
+  [Mmus-Hsap-blastznet]
+  registry    = /nfs/acari/jh7/src/ComparaDAS/ProServer/eg/reg.pl
+  state           = on
+  adaptor         = compara
+  database        = ensembl-compara-41
+  this_species    = Mus musculus
+  other_species   = Homo sapiens
+  analysis        = BLASTZ_NET
+  description     = Mouse-Human blastz-net alignments
+  group_type      = default
+
+
+=cut
+
 package Bio::Das::ProServer::SourceAdaptor::compara;
 
 use strict;
