@@ -52,6 +52,7 @@ package Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::BlastZ;
 
 use strict;
 use Bio::EnsEMBL::Analysis::Runnable::Blastz;
+use Bio::EnsEMBL::Utils::Exception qw(throw warning);
 
 use Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::PairAligner;
 our @ISA = qw(Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::PairAligner);
@@ -70,25 +71,33 @@ sub configure_defaults {
 sub configure_runnable {
   my $self = shift;
 
-  my ($first_qy_chunk) = @{$self->query_DnaFragChunkSet->get_all_DnaFragChunks};
-  my ($first_db_chunk) = @{$self->db_DnaFragChunkSet->get_all_DnaFragChunks};
+  my (@db_chunk) = @{$self->db_DnaFragChunkSet->get_all_DnaFragChunks};
 
   #
   # get the sequences and create the runnable
   #
   my $qyChunkFile;
   if($self->query_DnaFragChunkSet->count == 1) {
-    $qyChunkFile = $self->dumpChunkToWorkdir($first_qy_chunk);
+    my ($qy_chunk) = @{$self->query_DnaFragChunkSet->get_all_DnaFragChunks};
+    $qyChunkFile = $self->dumpChunkToWorkdir($qy_chunk);
   } else {
     $qyChunkFile = $self->dumpChunkSetToWorkdir($self->query_DnaFragChunkSet);
   }
 
-  if ($self->db_DnaFragChunkSet->count > 1) {
-    throw("blastz can not use more than 1 sequence in the database/target file. You may
-have specified a group_set_size in the target_dna_collection. In the case of blastz this should only be used for query_dna_collection");
+  my @db_chunk_files;
+  #if ($self->db_DnaFragChunkSet->count > 1) {
+    #throw("blastz can not use more than 1 sequence in the database/target file.\n" .
+    #      "You may have specified a group_set_size in the target_dna_collection.\n" .
+    #      "In the case of blastz this should only be used for query_dna_collection");
+  #}
+  foreach my $db_chunk (@{$self->db_DnaFragChunkSet->get_all_DnaFragChunks}) {
+    push @db_chunk_files, $self->dumpChunkToWorkdir($db_chunk);
   }
 
-  my $dbChunkFile = $self->dumpChunkToWorkdir($first_db_chunk);
+  if (@db_chunk_files > 1) {
+    warning("you have given a chunkset for the database; dumping individual chunks\n" .
+            "and creating a runnable for each one");
+  }
 
   my $program = $self->analysis->program_file;
   $program = 'blastz' unless($program);
@@ -99,19 +108,25 @@ have specified a group_set_size in the target_dna_collection. In the case of bla
     print("  program : $program\n");
   }
   
-  $self->delete_fasta_dumps_but_these([$qyChunkFile,$dbChunkFile]);
+  $self->delete_fasta_dumps_but_these([$qyChunkFile,@db_chunk_files]);
  
-  my $runnable =  new Bio::EnsEMBL::Analysis::Runnable::Blastz (
-                    -query      => $dbChunkFile,
-                    -database   => $qyChunkFile,
-                    -options    => $self->options,
-                    -program    => $program,
-		    -analysis   => $self->analysis,
-                  );
+  foreach my $dbChunkFile (@db_chunk_files) {
+    my $runnable = Bio::EnsEMBL::Analysis::Runnable::Blastz->
+        new(
+            -query      => $dbChunkFile,
+            -database   => $qyChunkFile,
+            -options    => $self->options,
+            -program    => $program,
+            -analysis   => $self->analysis,
+            );
+    
+    if($self->debug >1) {
+      my ($fid) = $dbChunkFile =~ /([^\/]+)$/;
+      $runnable->resultsfile($self->worker_temp_directory . "/results.$fid.");
+      $runnable->results_to_file(1);  # switch on whether to use pipe or /tmp file
+    }
 
-  if($self->debug >1) {
-    $runnable->results_to_file(1);  # switch on whether to use pipe or /tmp file
-    $runnable->resultsfile($self->worker_temp_directory . "/results." . time);
+    $self->runnable($runnable);
   }
 
   #
@@ -121,8 +136,6 @@ have specified a group_set_size in the target_dna_collection. In the case of bla
   #
   #
                   
-  $self->runnable($runnable);
-  
   return 1;
 }
 
