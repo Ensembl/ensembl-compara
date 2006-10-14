@@ -105,9 +105,9 @@ foreach my $spp (@species){
   my $db =  $databases->{'core'} ||
     die( "Could not retrieve core database for $spp" );
   my $slice_adaptor = $db->get_SliceAdaptor();
-  utils::Tool::info(1, "Caching top level mappings");
+#  utils::Tool::info(1, "Caching top level mappings");
   $slice_adaptor->cache_toplevel_seq_mappings();
-  utils::Tool::info(1, "Got db connection and species dirs");
+#  utils::Tool::info(1, "Got db connection and species dirs");
 
   # Sort slices 
   my %chr_sorter;
@@ -118,11 +118,11 @@ foreach my $spp (@species){
 
   my @slices;
   if (keys %chr_sorter) {
-    utils::Tool::info(1, "Using chr sorter");
+ #   utils::Tool::info(1, "Using chr sorter");
     @slices = sort {$chr_sorter{$b->seq_region_name} <=> $chr_sorter{$a->seq_region_name} || $a->seq_region_name cmp $b->seq_region_name  } @{ $slice_adaptor->fetch_all('toplevel', undef, $inc_dupes, $inc_nonref) || [] };
   }
   else {
-    utils::Tool::info(1, "Unsorted results");
+ #   utils::Tool::info(1, "Unsorted results");
     @slices =  @{ $slice_adaptor->fetch_all('toplevel', undef, $inc_dupes, $inc_nonref) || [] };
   }
 
@@ -192,7 +192,7 @@ sub setup_directories {
     unless (lc($format) eq "embl" || lc($format) eq "genbank"){
       die "[*DIE] unrecognized dump format - use embl or genbank\n";
     }
-    utils::Tool::info(2, "species = $spp $format");
+ #   utils::Tool::info(2, "species = $spp $format");
 
     # Make dumpdir
     my $spp_dir = join "_", (lc ($spp), $sitedefs_release, $sp_release);
@@ -200,7 +200,7 @@ sub setup_directories {
     unless (-d "$spp_dumpdir"){
       system("mkdir -p $spp_dumpdir") ==0 or die "Can't create dir $!";
     }
-    utils::Tool::info (1,"Made dump directory: $spp_dumpdir");
+#    utils::Tool::info (1,"Made dump directory: $spp_dumpdir");
 
     # Do README file
     my $text = readme($format, $spp);
@@ -307,7 +307,7 @@ sub chunk_seq_region {
   my $cs_ver  = $slice->coord_system->version();
   my $seq_region = $slice->seq_region_name();
 
-  utils::Tool::info(1, "Chunking ". $slice->seq_region_name());
+#  utils::Tool::info(1, "Chunking ". $slice->seq_region_name());
 
   # Get the first and last base of this slice that has defined sequence.
   # We do not want to dump megabases of gaps common at the ends of chromosomes
@@ -407,7 +407,7 @@ sub ftp_bundle{
   my $gz;
   my $CHUNK = $spp eq "Mus_musculus" ? 100 : 1000;
 
-  utils::Tool::info(1, "Generating compressed data archives for FTP site (chunk=$CHUNK)..");
+#  utils::Tool::info(1, "Generating compressed data archives for FTP site (chunk=$CHUNK)..");
   opendir DIR, "$spp_dumpdir" or warn "$spp_dumpdir: $!\n";
 
   # Chromosome sorter
@@ -420,7 +420,7 @@ sub ftp_bundle{
 
   unless (-d "$spp_dumpdir/FTP"){
     system("mkdir $spp_dumpdir/FTP");
-    utils::Tool::info (1, "Made dir $spp_dumpdir/FTP");
+#    utils::Tool::info (1, "Made dir $spp_dumpdir/FTP");
   }
 
   $gz = gzopen("$spp_dumpdir/FTP/$spp.".($batch*$CHUNK).".dat.gz","wb") || die $!;
@@ -428,12 +428,12 @@ sub ftp_bundle{
 
   # If species has chr, use sorter
   if (keys %$chr_sorter) {
-    utils::Tool::info(1, "Using chr sorter");
+ #   utils::Tool::info(1, "Using chr sorter");
     @files  =   sort {$chr_sorter->{$b} <=> $chr_sorter->{$a} || $a cmp $b  } @files ;
   }
 
   foreach my $filename ( @files ){
-    utils::Tool::info(1, "Processing $filename...");
+ #   utils::Tool::info(1, "Processing $filename...");
 
     if (!-f "$spp_dumpdir/$filename"){
       utils::Tool::warning (1, "ERROR: Cannot find $filename!");
@@ -451,7 +451,7 @@ sub ftp_bundle{
 
   # Tidy up the directories
   opendir(DIR, $spp_dumpdir) or die " can't open dir $spp_dumpdir:$!";
-  print "In directory $spp_dumpdir\n";
+#  print "In directory $spp_dumpdir\n";
   while (defined(my $file = readdir(DIR))) {
     next if $file =~/\.gz$|^FTP$|README/;
     next if $file =~/^\.+$/;
@@ -459,7 +459,7 @@ sub ftp_bundle{
   }
   close DIR;
 
-  utils::Tool::info(1, "Deleting the individual files and replacing with the zips");
+#  utils::Tool::info(1, "Deleting the individual files and replacing with the zips");
   system ("mv $spp_dumpdir/FTP/* $spp_dumpdir/");
   system ("rm -r $spp_dumpdir/FTP");
   return;
