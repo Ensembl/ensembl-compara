@@ -32,8 +32,14 @@ my %featuresMasterTable = (
 			   'karyotype' => 'karyotype',
 			   'transcripts' => 'gene',
 			   'ditags' => 'ditag_feature',
-			   'cagetags' => 'ditag_feature'
+			   'cagetags' => 'ditag_feature',
 			   );
+my %featuresQuery = (
+	'karyotype' => qq{ select s.name, t.seq_region_start, t.seq_region_end from karyotype t, seq_region s where t.seq_region_id = s.seq_region_id limit 1},
+	'transcripts' => qq{ select s.name, t.seq_region_start, t.seq_region_end from gene t, seq_region s where t.seq_region_id = s.seq_region_id limit 1},
+	'ditags' => qq{ select s.name, t.seq_region_start, t.seq_region_end from seq_region s, ditag_feature t, analysis a where a.logic_name = 'GIS_PET_Encode' and t.analysis_id = a.analysis_id and t.seq_region_id = s.seq_region_id limit 1},
+	'cagetags' => qq{ select s.name, t.seq_region_start, t.seq_region_end from seq_region s, ditag_feature t, analysis a where a.logic_name = 'FANTOM_CAGE' and t.analysis_id = a.analysis_id and t.seq_region_id = s.seq_region_id limit 1},
+);
 
 my %sourcesIds = (
 		  'reference' => 1,
@@ -86,6 +92,8 @@ foreach my $sp (@$species) {
 						 );
 
     my @toplevel_slices = @{$db->get_SliceAdaptor->fetch_all('toplevel', undef, 1)};
+    my %thash;
+    map {$thash{$_->seq_region_name } = $_} @toplevel_slices;
 
     print STDERR scalar(@toplevel_slices), " toplevel entry points\n";
     my $mapmaster = sprintf("%s.%s.reference", $sp, $species_defs->get_config($sp,'ENSEMBL_GOLDEN_PATH'));
@@ -93,7 +101,13 @@ foreach my $sp (@$species) {
 
     $shash->{$mapmaster}->{description} = sprintf("%s Reference server based on %s assembly. Contains %d top level entries.", $sp, $species_defs->get_config($sp,'ENSEMBL_GOLDEN_PATH'), scalar(@toplevel_slices));
 
-    $shash->{$mapmaster}->{'test_range'} = sprintf("%s:1,100000", $search_info->{'MAPVIEW1_TEXT'} || $search_info->{'DEFAULT1_TEXT'});
+
+    my $sl = $thash{$search_info->{'MAPVIEW1_TEXT'} || $search_info->{'DEFAULT1_TEXT'}} || $toplevel_slices[0];
+    #warn Data::Dumper::Dumper(\%thash);
+
+    $shash->{$mapmaster}->{'test_range'} = sprintf("%s:%d,%d", $sl->seq_region_name, $sl->start, $sl->end);
+
+
     foreach my $feature ( qw(karyotype transcripts ditags cagetags)) {
 	my $dbn = 'ENSEMBL_DB';
 	my $table = $featuresMasterTable{$feature};
@@ -104,22 +118,20 @@ foreach my $sp (@$species) {
 					      },
 					      $sp
 					      );
-	print STDERR "\t $sp : $feature : $table => ", $rv || 'Off',  "\n";
 
-	next unless $rv;
-
-        my $sql = qq{ select s.name, t.seq_region_start, t.seq_region_end from $table t, seq_region s where t.seq_region_id = s.seq_region_id limit 1};
+	print STDERR "\t $sp : $feature => Off\n" and next unless $rv;
+        my $sql = $featuresQuery{$feature};
         my $sth = $db->dbc->prepare($sql);
         $sth->execute();
         my @r = $sth->fetchrow();
+	print STDERR "\t $sp : $feature => Off\n" and next unless @r;
+	print STDERR "\t $sp : $feature : $table => ", $rv || 'Off',  "\n";
         print STDERR "\t\t\tTEST REGION : ", join('*', @r), "\n";
 	my $dsn = sprintf("%s.%s.%s", $sp, $species_defs->get_config($sp,'ENSEMBL_GOLDEN_PATH'), $feature);
  	$shash->{$dsn}->{'test_range'} = sprintf("%s:%s,%s",@r); 
 	$shash->{$dsn}->{mapmaster} = "http://$SiteDefs::ENSEMBL_SERVERNAME/das/$mapmaster";
 	$shash->{$dsn}->{description} = sprintf("Annotation source for %s %s", $sp, $feature);
     }
-
-    
 }
 
 if ($sources_page) {
