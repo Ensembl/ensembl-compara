@@ -6,6 +6,8 @@ use vars qw(@ISA);
 use Bio::EnsEMBL::GlyphSet_transcript;
 use Bio::EnsEMBL::Utils::Eprof qw(eprof_start eprof_end eprof_dump);
 
+use EnsEMBL::Web::Interface::ZMenu;
+
 @ISA = qw(Bio::EnsEMBL::GlyphSet_transcript);
 
 sub my_label {
@@ -94,6 +96,28 @@ sub gene_href {
 
 sub zmenu {
   my ($self, $gene, $transcript) = @_;
+  my $ajax = 1;
+  if ($ajax) {
+    return $self->ajax_zmenu($gene);
+  } else {
+    return $self->static_zmenu($gene, $transcript);
+  } 
+}
+
+sub ajax_zmenu {
+  my ($self, $gene) = @_;
+  my $zmenu = EnsEMBL::Web::Interface::ZMenu->new( (  
+                                     title => $gene->stable_id(),
+                                     type  => 'ensembl_transcript',
+                                     ident => $gene->stable_id(),
+                               placeholder => 'yes'
+                                      ) );
+  return $zmenu;
+}
+
+sub static_zmenu { 
+  my ($self, $gene, $transcript) = @_;
+  warn "MENU ON ENSEMBL GENE: $gene";
   my $translation = $transcript->translation;
   my $tid = $transcript->stable_id();
   my $pid = $translation ? $translation->stable_id() : '';
