@@ -570,7 +570,7 @@ sub _internal_nhx_format {
     #simplified: name only on leaves, dist only if has parent
     if($self->parent) {
       if($self->is_leaf) {
-        $nhx .= sprintf("\"%s\"", $self->name);
+        $nhx .= sprintf("%s", $self->name);
       }
       $nhx .= sprintf(":%1.4f", $self->distance_to_parent);
     }
@@ -627,7 +627,7 @@ sub _internal_newick_format {
     #simplified: name only on leaves, dist only if has parent
     if($self->parent) {
       if($self->is_leaf) {
-        $newick .= sprintf("\"%s\"", $self->name);
+        $newick .= sprintf("%s", $self->name);
       }
       $newick .= sprintf(":%1.4f", $self->distance_to_parent);
     }
