@@ -1106,8 +1106,8 @@ sub _parse {
     $CONF->{'_storage'}{$filename} = $tree;
   }
   ## Tidy up 'Common'
-  $common->{'SPECIES_BIO_NAME'} = '&nbsp;';
-  $common->{'SPECIES_COMMON_NAME'} = '&nbsp;';
+  $common->{'SPECIES_BIO_NAME'} = '';
+  $common->{'SPECIES_COMMON_NAME'} = '';
   $CONF->{'_storage'}{'common'} = $common;
   print STDERR "-" x 78, "\n";
   return 1;
