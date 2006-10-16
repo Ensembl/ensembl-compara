@@ -30,7 +30,7 @@ BEGIN{
 }
 
 use EnsEMBL::Web::SpeciesDefs;                  
-use EnsEMBL::Web::DBSQL::NewsAdaptor;
+use EnsEMBL::Sanger_admin::DBSQL::NewsAdaptor;
 
 my $SD = EnsEMBL::Web::SpeciesDefs->new;
 my $release_id = $SiteDefs::VERSION;
@@ -38,7 +38,7 @@ print "\n\n";
 
 # Connect to web database and get news adaptor
 my $web_db = $SD->databases->{'ENSEMBL_WEBSITE'};
-my $wa = EnsEMBL::Web::DBSQL::NewsAdaptor->new($web_db);
+my $wa = EnsEMBL::Sanger_admin::DBSQL::NewsAdaptor->new($web_db);
 
 # Check database to see if this release is included already, then
 # give the user the option to update the release date
