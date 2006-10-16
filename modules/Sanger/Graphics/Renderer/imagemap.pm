@@ -7,6 +7,7 @@ package Sanger::Graphics::Renderer::imagemap;
 use strict;
 use Sanger::Graphics::Renderer;
 use Sanger::Graphics::JSTools;
+use EnsEMBL::Web::Interface::ZMenuCollection;
 use vars qw(@ISA);
 @ISA = qw(Sanger::Graphics::Renderer);
 
@@ -106,6 +107,25 @@ sub render_Line {
 
 sub _getHref {
   my( $self, $glyph ) = @_; 
+  if($self->{'show_zmenus'}==1) {
+    my $zmenu = $glyph->zmenu();
+    if (ref($zmenu) eq 'EnsEMBL::Web::Interface::ZMenu') {
+      return $self->_getHref_dynamic($zmenu, $glyph);
+    } else {
+      return $self->_getHref_static($glyph);
+    }
+  }
+}
+
+sub _getHref_dynamic {
+  my ($self, $zmenu) = @_;
+  my $collection = EnsEMBL::Web::Interface::ZMenuCollection->new();
+  $collection->process($zmenu->populate);
+  return $collection->linkage($zmenu);
+}
+
+sub _getHref_static {
+  my( $self, $glyph ) = @_; 
   my %actions = ();
   my @X = qw( title onmouseover onmouseout alt href );
   foreach(@X) {
@@ -125,10 +145,10 @@ sub _getHref {
         $actions{'alt'} = "Click for Menu";   
       } else {   
         delete $actions{'alt'};   
-        $actions{'onmouseover'} = &Sanger::Graphics::JSTools::js_menu($zmenu);   
+        $actions{'onmouseover'} = &Sanger::Graphics::JSTools::js_menu($zmenu);
       }
       $actions{'href'} ||= qq"javascript:void(0)";   
-    }
+    } 
   }
   $actions{'nohref'}='nohref' if keys %actions && !$actions{'href'};
   return join '', map { qq( $_="$actions{$_}") } keys %actions; 
