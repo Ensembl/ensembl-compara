@@ -21,6 +21,10 @@ function login_link() {
 
 function logout_link() {
   URL = escape(document.location.href);
+  // return to home page if logging out from account management
+  if (URL.indexOf('logout') > -1 || URL.indexOf('account') > -1) {
+    URL = '/';
+  }
   document.location = '/common/user_logout?url=' + URL;
   return true;  
 }
