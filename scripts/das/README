@@ -22,7 +22,7 @@ version 2.
 it here
 http://search.cpan.org/~wadg/Config-IniFiles-2.38/IniFiles.pm
 
-4. Include ProServer/lib and in your PERL5LIB environment variable and
+4. Include ProServer/lib and CPAN/lib in your PERL5LIB environment variable and
 ProServer/eg in your PATH environment variable
 
 5. modify ProServer1/eg/proserver so it does not run in tainted mode
@@ -34,7 +34,9 @@ to
 #!/usr/local/bin/perl -w
 
 6. Create your configuration file, taking compara_das.ini as an example
-or by looking at perldoc Bio::Das::ProServer::SourceAdaptor::compara
+or by looking at perldoc Bio::Das::ProServer::SourceAdaptor::compara.
+You will also need to create a registry file. See registry.example.pl 
+for an example.
 
 7. Start your DAS server 
 
@@ -46,8 +48,35 @@ ensembl-compara/scripts/das/kill_server.sh das_conf.ini
 
 
 IMPORTANT NOTE FOR WEB SERVICES
-
+-------------------------------
 If you intend to run your DAS server as a publicly available
 web service, please read further for correct security setting.
+The main thing is that the DAS proserver needs to be run in perl
+tainted mode for added security (See "http://www.ayni.com/perldoc/perl5.8.0/pod/perlsec.html" 
+or "perldoc perlsec").
 
-Need to add something here...
+Running in tainted mode requires a bit more code modification to
+have your DAS server working.
+
+Follow the step 1 to 3 above then continue with the followings
+
+4. cd to your ProServer directory that you have downloaded in step 2
+and copy the compara.pm DAS module to the right place in this directory
+
+cd /path/to/ProServer1
+cp /path/to/ensembl-compara/modules/Bio/Das/ProServer/SourceAdaptor/compara.pm /path/to/ProServer1/Bio/Das/ProServer/SourceAdaptor
+
+5.move to eg directory and copy starting/killing script
+
+cp /path/to/ensembl-compara/scripts/das/start-server.sh .
+cp /path/to/ensembl-compara/scripts/das/kill-server.sh .
+
+cd eg
+emacs proserver (or vi proserver, use whatever preferred text editor)
+
+change line 9 from
+use lib qw(./blib/lib ../blib/lib . .. );
+to
+use lib qw(./blib/lib ../blib/lib . .. /YOUR/PATH/TO/ensembl/modules /YOUR/PATH/TO/ensembl-compara/modules /YOUR/PATH/TO/CPAN/lib);
+
+Then follow steps 6 to 8 described above
