@@ -66,6 +66,7 @@ use vars qw ( @ISA @EXPORT @EXPORT_OK %EXPORT_TAGS $VERSION
   $ENSEMBL_COOKIEHOST
   $ENSEMBL_USER_COOKIE
   $ENSEMBL_USER_ID
+  $ENSEMBL_LOGINS
   $ENSEMBL_SESSION_COOKIE
   $ENSEMBL_FIRSTSESSION_COOKIE
   $ENSEMBL_CONFIG_FILENAME
@@ -134,7 +135,7 @@ $ENSEMBL_PROXY_PORT     = undef; # Port used for self-referential URLs:
                                  # Set to undef if not using proxy-forwarding
 
 $ENSEMBL_SITETYPE       = "EnsEMBL";
-$ARCHIVE_VERSION        = "Oct2006";    # Change this to the archive site for this version
+$ARCHIVE_VERSION        = "Dec2006";    # Change this to the archive site for this version
 $EARLIEST_ARCHIVE       = 25;
 $ENSEMBL_USER           = getpwuid($>); # Auto-set web serveruser
 $ENSEMBL_GROUP          = getgrgid($)); # Auto-set web server group
@@ -258,6 +259,7 @@ $ENSEMBL_USERDB_PASS            = '';
 
 $ENSEMBL_USER_COOKIE            = 'ENSEMBL_WWW_USER';
 $ENSEMBL_USER_ID                = 0;
+$ENSEMBL_LOGINS                 = 0;
 $ENSEMBL_SESSION_COOKIE         = 'ENSEMBL_WWW_SESSION';
 $ENSEMBL_FIRSTSESSION_COOKIE    = 'ENSEMBL_WWW_FIRSTSESSION';
 $ENSEMBL_COOKIEHOST             = '';       #.ensembl.org';
@@ -515,6 +517,7 @@ $ENSEMBL_TEMPLATE_ROOT = $ENSEMBL_SERVERROOT.'/biomart-web/conf';
   $ENSEMBL_COOKIEHOST
   $ENSEMBL_USER_COOKIE
   $ENSEMBL_USER_ID
+  $ENSEMBL_LOGINS
   $ENSEMBL_SESSION_COOKIE
   $ENSEMBL_FIRSTSESSION_COOKIE
   $ENSEMBL_CONFIG_FILENAME
@@ -583,6 +586,7 @@ $ENSEMBL_TEMPLATE_ROOT = $ENSEMBL_SERVERROOT.'/biomart-web/conf';
     $ENSEMBL_COOKIEHOST
     $ENSEMBL_USER_COOKIE
     $ENSEMBL_USER_ID
+    $ENSEMBL_LOGINS
     $ENSEMBL_SESSION_COOKIE
     $ENSEMBL_FIRSTSESSION_COOKIE
     $ENSEMBL_CONFIG_FILENAME
@@ -676,6 +680,7 @@ $ENSEMBL_TEMPLATE_ROOT = $ENSEMBL_SERVERROOT.'/biomart-web/conf';
     $ENSEMBL_COOKIEHOST
     $ENSEMBL_USER_COOKIE
     $ENSEMBL_USER_ID
+    $ENSEMBL_LOGINS
     $ENSEMBL_SESSION_COOKIE
     $ENSEMBL_MINIAD_DIR
     $ENSEMBL_MODULAR_HELP
