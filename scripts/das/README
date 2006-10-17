@@ -7,7 +7,7 @@ to display whole genome alignment as DAS features.
 We have used ProServer version 1 DAS server and tested the display on
 Ensembl website DAS client only.
 
-1. Make sure you have the Ensembl core and compara code installed.
+1. Make sure you have the Ensembl core, compara code and Bioperl (version 1.2.3) installed.
 
 Look at this page for all the details
 http://www.ensembl.org/info/software/api_installation.html
@@ -77,6 +77,6 @@ emacs proserver (or vi proserver, use whatever preferred text editor)
 change line 9 from
 use lib qw(./blib/lib ../blib/lib . .. );
 to
-use lib qw(./blib/lib ../blib/lib . .. /YOUR/PATH/TO/ensembl/modules /YOUR/PATH/TO/ensembl-compara/modules /YOUR/PATH/TO/CPAN/lib);
+use lib qw(./blib/lib ../blib/lib . .. /YOUR/PATH/TO/ensembl/modules /YOUR/PATH/TO/ensembl-compara/modules /YOUR/PATH/TO/CPAN/lib /YOUR/PATH/TO/bioperl-1-2-3);
 
 Then follow steps 6 to 8 described above
