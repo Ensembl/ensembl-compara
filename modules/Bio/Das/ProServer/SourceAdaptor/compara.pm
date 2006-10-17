@@ -123,7 +123,8 @@ sub init
 {
     my ($self) = @_;
 
-    $self->{'capabilities'} = { 'features' => '1.0' };
+    $self->{'capabilities'} = { 'features' => '1.0',
+                                'stylesheet' => '1.0' };
 
     my $registry = $self->config()->{'registry'};
     unless (defined $registry) {
@@ -338,8 +339,7 @@ sub build_features
       push @results, {
           'id'    => $id,
           'label' => $label,
-          'type'  => $method_link,
-          'method'=> 'Compara',
+          'method'=> $method_link,
           'start' => $genomic_align1->dnafrag_start,
           'end'   => $genomic_align1->dnafrag_end,
           'ori'   => ($genomic_align1->dnafrag_strand() == 1 ? '+' : '-'),
@@ -351,10 +351,35 @@ sub build_features
           'grouplabel'=> $group_label,
           'grouplink' => [@group_links],
           'grouplinktxt' => [@group_link_txts],
+          'typecategory' => 'Whole genome alignment',
+          'type'  => 'Compara'
         };
     }
 
     return @results;
+}
+
+sub das_stylesheet
+{
+    my $self = shift;
+
+    return <<EOT;
+<!DOCTYPE DASSTYLE SYSTEM "http://www.biodas.org/dtd/dasstyle.dtd">
+<DASSTYLE>
+    <STYLESHEET version="1.0">
+        <CATEGORY id="Whole genome alignment">
+            <TYPE id="Compara">
+                <GLYPH>
+                    <BOX>
+                        <FGCOLOR>blue</FGCOLOR>
+                        <BGCOLOR>aquamarine2</BGCOLOR>
+                    </BOX>
+                </GLYPH>
+            </TYPE>
+        </CATEGORY>
+    </STYLESHEET>
+</DASSTYLE>
+EOT
 }
 
 1;
