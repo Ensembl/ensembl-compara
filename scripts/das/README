@@ -22,8 +22,8 @@ version 2.
 it here
 http://search.cpan.org/~wadg/Config-IniFiles-2.38/IniFiles.pm
 
-4. Include ProServer/lib and CPAN/lib in your PERL5LIB environment variable and
-ProServer/eg in your PATH environment variable
+4. Include ProServer directory and CPAN module directory in your PERL5LIB
+environment variable and ProServer/eg in your PATH environment variable
 
 5. modify ProServer1/eg/proserver so it does not run in tainted mode
 
