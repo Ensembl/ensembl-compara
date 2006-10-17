@@ -45,3 +45,9 @@ ensembl-compara/scripts/das/start_server.sh das_conf.ini
 ensembl-compara/scripts/das/kill_server.sh das_conf.ini
 
 
+IMPORTANT NOTE FOR WEB SERVICES
+
+If you intend to run your DAS server as a publicly available
+web service, please read further for correct security setting.
+
+Need to add something here...
