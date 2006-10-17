@@ -8,6 +8,37 @@ our @ISA  = qw(EnsEMBL::Web::Root);
 sub common_menu_items {
   my( $self, $doc ) = @_;
 ## Now the links on the left hand side....
+
+  if ($doc->species_defs->ENSEMBL_LOGINS) {
+    ## Is the user logged in?
+    my $user_id = $ENV{'ENSEMBL_USER_ID'};
+
+    my $user_adaptor = EnsEMBL::Web::DBSQL::UserDB->new();
+    my $user = $user_adaptor->getUserByID($user_id);
+
+    my $flag = 'ac_mini';
+    $doc->menu->add_block( $flag, 'bulleted', "My Ensembl", 'priority' => 0 );
+
+    if ($user_id) {
+
+      $doc->menu->add_entry( $flag, 'text' => $user->{'name'} . qq( &middot; <a href="javascript:logout_link()">log out</a>),
+                                  'icon' => '/img/infoicon.gif',
+                                  'raw'  => 1);
+      $doc->menu->add_entry( $flag, 'text' => "Bookmark this page",
+                                  'code' => 'bookmark',
+                                  'href' => "javascript:bookmark_link()" );
+      $doc->menu->add_entry( $flag, 'text' => "Go to my account",
+                                  'href' => "/common/update_account?node=accountview" );
+    }
+    else {
+      $doc->menu->add_entry( $flag, 'text' => "Login/Register",
+                                  'href' => "javascript:login_link()" );
+      $doc->menu->add_entry( $flag, 'text' => "About User Accounts",
+                                  'href' => "/info/about/accounts.html",
+                                  'icon' => '/img/infoicon.gif' );
+    }
+  }
+
   my $release = $doc->species_defs->ENSEMBL_VERSION;
   my $single_species = $ENV{'ENSEMBL_SPECIES'} && $ENV{'ENSEMBL_SPECIES'} ne 'Multi' 
       && $ENV{'ENSEMBL_SPECIES'} ne 'common' ? 1 : 0;
