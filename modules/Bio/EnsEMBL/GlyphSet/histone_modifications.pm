@@ -310,13 +310,18 @@ sub render_predicted_features {
   ### Arg2: colour of the track
 
   my ( $self, $features, $colour ) = @_;
+  my $length = $self->{'container'}->length;
 
   foreach my $f (@$features ) {
+    my $start = $f->start;
+    my $end   = $f->end;
+    $start = 1 if $start < 1;
+    $end   = $length if $end > $length;
     my $Glyph = new Sanger::Graphics::Glyph::Rect({
 	'y'         => $self->_offset,
         'height'    => 10,
-	'x'         => $f->start -1,
-        'width'     => $f->end - $f->start,
+	'x'         => $start -1,
+        'width'     => $end - $start,
 	'absolutey' => 1,          # in pix rather than bp
         'colour'    => $colour,
         'zmenu'     => $self->predicted_features_zmenu($f),
