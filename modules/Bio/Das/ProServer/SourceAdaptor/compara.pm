@@ -111,10 +111,7 @@ module), the group_type is "default". You can choose another group_type using th
 package Bio::Das::ProServer::SourceAdaptor::compara;
 
 use strict;
-use Bio::EnsEMBL::Compara::GenomicAlignGroup;
-use Bio::EnsEMBL::Compara::GenomicAlignBlock;
-use Bio::EnsEMBL::Compara::DnaFrag;
-use Bio::EnsEMBL::DnaDnaAlignFeature;
+use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::Utils::Exception;
 
 use base qw( Bio::Das::ProServer::SourceAdaptor );
@@ -154,15 +151,6 @@ sub init
     $self->{'compara'}{'genomic_align_block_adaptor'} =
         $db->get_adaptor($dbname, 'compara', 'GenomicAlignBlock') or
             die "can't get $dbname, 'compara', 'GenomicAlignBlock'\n";
-
-    $self->{'compara'}{'genomic_align_adaptor'} =
-        $db->get_adaptor($dbname, 'compara', 'GenomicAlign') or
-            die "can't get $dbname, 'compara', 'GenomicAlign'\n";
-
-    $self->{'compara'}{'genomic_align_group_adaptor'} =
-        $db->get_adaptor($dbname, 'compara', 'GenomicAlignGroup') or
-            die "can't get $dbname, 'compara', 'GenomicAlignGroup'\n";
-
 
     my $genome_db_adaptor =
         $db->get_adaptor($dbname, 'compara', 'GenomeDB') or
@@ -205,10 +193,6 @@ sub build_features
     my $dnafrag_adaptor             = $self->{'compara'}{'dnafrag_adaptor'};
     my $genomic_align_block_adaptor =
         $self->{'compara'}{'genomic_align_block_adaptor'};
-    my $genomic_align_adaptor       =
-        $self->{'compara'}{'genomic_align_adaptor'};
-    my $genomic_align_group_adaptor =
-        $self->{'compara'}{'genomic_align_group_adaptor'};
 
     my $genomedbs = $self->{'compara'}{'genomedbs'};
     my $species1_genome_db;
