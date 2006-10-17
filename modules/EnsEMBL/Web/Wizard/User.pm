@@ -203,14 +203,16 @@ sub _init {
     my $bm_url  = $$bookmark{'bm_url'};
     push @bm_values, {'value'=>$bm_id,'name'=>"$bm_name ($bm_url)"};
   }
+=pod
   my @configs = @{ $object->get_configs($user_id) };
-  my @bm_values;
+  my @config_values;
   foreach my $config (@configs) {
     my $config_id   = $$config{'config_id'};
     my $config_name = $$config{'config_name'};
     my $script      = $$config{'script'};
     push @config_values, {'value'=>$config_id,'name'=>"$config_name ($script)"};
   }
+=cut
   my $details   = $object->get_user_by_id($user_id);
 
   my $data = {

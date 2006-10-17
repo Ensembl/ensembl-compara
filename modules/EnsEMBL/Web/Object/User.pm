@@ -71,7 +71,7 @@ sub save_config {
   return $self->web_user_db->saveConfig($record);
 }
 
-sub get_configs { return $_[0]->web_user_db->getConfigsByUser($_[1]); }
+#sub get_configs { return $_[0]->web_user_db->getConfigsByUser($_[1]); }
 sub delete_configs { return $_[0]->web_user_db->deleteConfigs($_[1]); }
 
 
