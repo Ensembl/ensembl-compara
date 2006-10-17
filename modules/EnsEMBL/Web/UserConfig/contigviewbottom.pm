@@ -423,12 +423,11 @@ sub init {
 
     'histone_modifications' => {
       'on'  => "off",
-      'bump_width' => 0,
       'dep' => 0.1,
       'pos' => '4528',
       'str' => 'r',
       'col' => 'blue',
-      'compact'  => 1,
+      'compact'  => 0,
       'threshold' => '200',
       'track_label' => 'Histone modifications',
       'glyphset'    => 'histone_modifications',
