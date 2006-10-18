@@ -105,8 +105,25 @@ foreach my $sp (@$species) {
     my $sl = $thash{$search_info->{'MAPVIEW1_TEXT'} || $search_info->{'DEFAULT1_TEXT'}} || $toplevel_slices[0];
     #warn Data::Dumper::Dumper(\%thash);
 
-    $shash->{$mapmaster}->{'test_range'} = sprintf("%s:%d,%d", $sl->seq_region_name, $sl->start, $sl->end);
+    my $cs = $sl->coord_system;
+    my $csa = $cs->{adaptor};
 
+    if (my $lcs = $csa->fetch_by_rank($cs->rank + 1)) {
+      my $path;
+
+      eval {
+	$path = $sl->project($lcs->name);
+	};
+
+      if ($path) {
+	$path = $path->[0]->to_Slice;
+        $shash->{$mapmaster}->{'test_range'} = sprintf("%s:%d,%d", $path->seq_region_name, $path->start, $path->end);
+      } else {
+    	$shash->{$mapmaster}->{'test_range'} = sprintf("%s:%d,%d", $sl->seq_region_name, $sl->start, $sl->end);
+      }
+    } else {
+    	$shash->{$mapmaster}->{'test_range'} = sprintf("%s:%d,%d", $sl->seq_region_name, $sl->start, $sl->end);
+    }
 
     foreach my $feature ( qw(karyotype transcripts ditags cagetags)) {
 	my $dbn = 'ENSEMBL_DB';
