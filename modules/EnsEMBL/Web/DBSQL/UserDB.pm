@@ -698,15 +698,17 @@ sub find_records {
 }
 
 sub insert_record {
- my ($self, %params) = shift;
- my $user_id = $params{user_id};
- my $name = $params{name};
+ my ($self, %params) = @_;
+ my $user_id = $params{user};
+ my $type = $params{type};
  my $data = $params{data};
+ warn "INSERTING: " . $user_id . ": " . $type . ": " . $data;
  my $sql = qq(
     INSERT INTO records 
     SET user_id = $user_id,
-        type    = "$name",
-        data    = "$data"
+        type    = "$type",
+        data    = "$data",
+        created_at=CURRENT_TIMESTAMP
   );
   my $sth = $self->{'_handle'}->prepare($sql);
   my $result = $sth->execute();

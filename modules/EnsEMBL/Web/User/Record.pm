@@ -14,8 +14,11 @@ my %Fields_of;
 my %Type_of;
 
 sub AUTOLOAD {
-  ### AUTOLOAD method for getting and setting record attributes. Attributes 
-  ### should be named after columns in the appropriate database table.
+  ### AUTOLOAD method for getting and setting record attributes, and processing
+  ### find_by requests. Attributes should be named after columns in the
+  ### appropriate database table.
+  ###
+  ### Attribute names are not validated against the database table.
   my ($self, $value) = @_;
   my ($key) = ($AUTOLOAD =~ /::([a-z].*)$/);
   if ($value) {
@@ -32,8 +35,8 @@ sub AUTOLOAD {
 
 sub new {
   ### Inside-out class representing persitent user information. This class 
-  ### follows the Active Record design pattern: it contains both the logic
-  ### required to create and manipulate a piece of persistent data, and
+  ### follows the Active Record design pattern: it contains both the domain 
+  ### logic required to create and manipulate a piece of persistent data, and
   ### the information necessary to maintain this data in a database. 
   my ($class, %params) = @_;
   my $self = bless \my($scalar), $class;
@@ -42,8 +45,9 @@ sub new {
   $User_of{$self} = defined $params{'user'} ? $params{'user'} : 0;
   $Fields_of{$self} = {}; 
   if ($params{'data'}) {
-    $self->data($params{'data'});
-    #$Fields_of{$self} = eval($params{'data'}); 
+    #$self->data($params{'data'});
+    my $eval = eval($params{'data'});
+    $Fields_of{$self} = $eval; 
   } else {
     $Fields_of{$self} = {}; 
   }
@@ -53,6 +57,9 @@ sub new {
 sub save {
   my $self = shift;
   my $dump = Dumper($self->fields);
+  $dump =~ s/'/\\'/g;
+  $dump =~ s/^\$VAR1 = //;
+  #warn "PREPARING: " . $dump;
   $self->adaptor->insert_record(( 
                                   user => $self->user, 
                                   type => $self->type,
