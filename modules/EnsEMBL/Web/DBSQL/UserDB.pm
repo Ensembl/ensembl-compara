@@ -660,6 +660,60 @@ sub getAllGroups {
   return $results;
 }
 
+sub find_records {
+  my ($self, %params) = @_; 
+  my $find_key;
+  my $find_value;
+  my $type = $params{type};
+  foreach my $key (keys %params) {
+    warn "KEY: $key";
+    if ($key ne "type") {
+      $find_key = $key;
+      $find_value = $params{$key};
+      warn "KEY: FIND $find_key BY $find_value";
+    }
+  }
+  my $results = [];
+  my $sql = qq(
+    SELECT * 
+    FROM records 
+    WHERE type = "$type" AND $find_key = "$find_value" 
+  ); 
+  my $T = $self->{'_handle'}->selectall_arrayref($sql);
+  return [] unless $T;
+  for (my $i=0; $i<scalar(@$T);$i++) {
+    my @array = @{$T->[$i]};
+    push (@$results,
+      {
+      'id'          => $array[0],
+      'user_id'     => $array[1],
+      'type'        => $array[2],
+      'data'        => $array[3],
+      'created_at'  => $array[4],
+      'modified_at' => $array[5],
+      }
+    );
+  }
+  return $results;
+}
+
+sub insert_record {
+ my ($self, %params) = shift;
+ my $user_id = $params{user_id};
+ my $name = $params{name};
+ my $data = $params{data};
+ my $sql = qq(
+    INSERT INTO records 
+    SET user_id = $user_id,
+        type    = "$name",
+        data    = "$data"
+  );
+  my $sth = $self->{'_handle'}->prepare($sql);
+  my $result = $sth->execute();
+
+  return $result;
+}
+
 1;
 
 __END__
