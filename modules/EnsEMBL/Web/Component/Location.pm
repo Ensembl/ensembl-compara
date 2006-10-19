@@ -19,6 +19,7 @@ Contact the EnsEMBL development mailing list for info <ensembl-dev@ebi.ac.uk>
 package EnsEMBL::Web::Component::Location;
 
 use EnsEMBL::Web::Component;
+use Bio::EnsEMBL::AlignStrainSlice;
 use Bio::EnsEMBL::ExternalData::DAS::DASAdaptor;
 use Bio::EnsEMBL::ExternalData::DAS::DAS;
 use EnsEMBL::Web::ExternalDAS;
@@ -1571,4 +1572,41 @@ sub contigview_form {
   return 1;
 }
 
+##################################################################
+
+sub sequencealignview {
+
+  ### SequenceAlignView
+  ### Returns 1
+
+  my( $panel, $object ) = @_;
+  my $width = $object->param("display_width") || 60;
+
+  #Get slice
+  my $refslice = $object->slice;
+  my @strain_slices;
+  my @individuals = ($object->get_individuals('display'));
+  foreach my $individual ( @individuals ) {
+    my $individual_slice = $refslice->get_by_strain( $individual );
+    next unless $individual_slice;
+    push @strain_slices, $individual_slice;
+  }
+
+  my $align_slice = Bio::EnsEMBL::AlignStrainSlice->new(-SLICE => $refslice,
+                                                     -STRAINS => \@strain_slices);
+  my $length =  $align_slice->length;
+  my $info;
+  foreach my $strain_slice (@strain_slices) {
+
+    #get coordinates of variation in alignSlice
+    my @allele_features = @{$strain_slice->get_all_differences_Slice() || []};
+
+    foreach my $af ( @allele_features ){
+      my $new_feature = $align_slice->alignFeature($af, $strain_slice);
+      $info .= "Coordinates of the feature in AlignSlice are: ". $new_feature->start. "-". $af->start. "<br />";
+    }
+  }
+  $panel->add_row( "Alignment", "<p>$info</p>" );
+  return 1;
+}
 1;    

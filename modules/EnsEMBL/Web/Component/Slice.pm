@@ -60,121 +60,121 @@ sub align_sequence_display {
   my $max_region = -1;
 
   if ($aselect eq 'NONE') {
-      push @slice_display, $slice;
-      my $spe = $object->species;
-      $SeqDNA->{$spe} = $slice->seq;
-      push @{$SeqSlices->{$spe}}, $slice->name;
+    push @slice_display, $slice;
+    my $spe = $object->species;
+    $SeqDNA->{$spe} = $slice->seq;
+    push @{$SeqSlices->{$spe}}, $slice->name;
   } else {
-      my $mlss_adaptor = $comparadb->get_adaptor("MethodLinkSpeciesSet");
-      my $method_link_species_set = $mlss_adaptor->fetch_by_dbID($aselect); 
+    my $mlss_adaptor = $comparadb->get_adaptor("MethodLinkSpeciesSet");
+    my $method_link_species_set = $mlss_adaptor->fetch_by_dbID($aselect); 
 
-      my $asa = $comparadb->get_adaptor("AlignSlice" );
-      my $align_slice = $asa->fetch_by_Slice_MethodLinkSpeciesSet($slice, $method_link_species_set);
+    my $asa = $comparadb->get_adaptor("AlignSlice" );
+    my $align_slice = $asa->fetch_by_Slice_MethodLinkSpeciesSet($slice, $method_link_species_set);
 
-      my @selected_species = grep {$_ } $object->param("ms_$aselect");
+    my @selected_species = grep {$_ } $object->param("ms_$aselect");
 
 # I could not find a better way to distinguish between pairwise alignments
 # and multiple alignments. The difference is that in case of multiple alignments
 # there are checkboxes for all species from the alignment apart from the reference species: So we need to add the reference species to the list of selected species. In case of pairwise alignments the list remains empty - that will force the display of all available species in the alignment
-      if ( scalar (@{$method_link_species_set->species_set}) > 2) {
-	  unshift @selected_species, $object->species;
+    if ( scalar (@{$method_link_species_set->species_set}) > 2) {
+      unshift @selected_species, $object->species;
+    }
+
+    push @slice_display, @{$align_slice->get_all_Slices(@selected_species)};
+    
+    push @tsa, (time - $ts);
+
+    $alignments_no = scalar(@slice_display);  
+
+    foreach my $sl (@slice_display) {
+      my @lsa = ();
+      my $ff = time;
+      my $idx = 0;
+      #	  push @lsa, (time - $ff);
+      my $sq = $sl->seq;
+      push @lsa, (time - $ff);
+      my $ass = $sl->isa('Bio::EnsEMBL::Compara::AlignSlice::Slice') ? 1 : 0;
+      my $spe = $ass ? $sl->seq_region_name : $object->species;
+      $spe =~ s/ /_/g;
+      
+      $SeqDNA->{$spe} =$sq." ";
+
+      foreach my $s (split(//, $sq)) {
+	$SEQ[$idx++]->{uc($s)} ++;
       }
 
-      push @slice_display, @{$align_slice->get_all_Slices(@selected_species)};
-
-      push @tsa, (time - $ts);
-
-      $alignments_no = scalar(@slice_display);  
-
-      foreach my $sl (@slice_display) {
-	  my @lsa = ();
-	  my $ff = time;
-	  my $idx = 0;
-#	  push @lsa, (time - $ff);
-	  my $sq = $sl->seq;
-	  push @lsa, (time - $ff);
-	  my $ass = $sl->isa('Bio::EnsEMBL::Compara::AlignSlice::Slice') ? 1 : 0;
-	  my $spe = $ass ? $sl->seq_region_name : $object->species;
-	  $spe =~ s/ /_/g;
-	 
-	  $SeqDNA->{$spe} =$sq." ";
-
-	  foreach my $s (split(//, $sq)) {
-	      $SEQ[$idx++]->{uc($s)} ++;
-	  }
-
-#	  warn("\t$spe: ".join('*', @lsa)."\n");
+      #	  warn("\t$spe: ".join('*', @lsa)."\n");
 
 
 ### In case we need to display coordinates relative to a coordinate system - 
 ### get the format of line numbering
-	  if ($ass) {
-	      foreach my $ss (@{$sl->get_all_underlying_Slices}) {
-		  next if ($ss->seq_region_name eq 'GAP');
-		  push @{$SeqSlices->{$spe}}, $ss->name;
-		  if ( (my $srn_length = length($ss->seq_region_name)) > $max_region) {
-		      $max_region = $srn_length;
-		  }
-		  $max_position = $ss->start if ($ss->start > $max_position);
-		  $max_position = $ss->end if ($ss->end > $max_position);
-	      }
-	  } else {
-	      $max_position = $sl->start if ($sl->start > $max_position);
-	      $max_position = $sl->end if ($sl->end > $max_position);
-	      if ( (my $srn_length = length($sl->seq_region_name)) > $max_region) {
-		  $max_region = $srn_length;
-	      }
-
-	      push @{$SeqSlices->{$spe}}, $sl->name;
+      if ($ass) {
+	foreach my $ss (@{$sl->get_all_underlying_Slices}) {
+	  next if ($ss->seq_region_name eq 'GAP');
+	  push @{$SeqSlices->{$spe}}, $ss->name;
+	  if ( (my $srn_length = length($ss->seq_region_name)) > $max_region) {
+	    $max_region = $srn_length;
 	  }
+	  $max_position = $ss->start if ($ss->start > $max_position);
+	  $max_position = $ss->end if ($ss->end > $max_position);
+	}
+      } else {
+	$max_position = $sl->start if ($sl->start > $max_position);
+	$max_position = $sl->end if ($sl->end > $max_position);
+	if ( (my $srn_length = length($sl->seq_region_name)) > $max_region) {
+	  $max_region = $srn_length;
+	}
+
+	push @{$SeqSlices->{$spe}}, $sl->name;
       }
-      push @tsa, (time - $ts);
+    }
+    push @tsa, (time - $ts);
 
-      if ($alignments_no > 1 && (my $conservation = $object->param("conservation") ne 'off')) {
+    if ($alignments_no > 1 && (my $conservation = $object->param("conservation") ne 'off')) {
 	  my $num = int(scalar(@slice_display) + 1) / 2;
-
+	  
 	  foreach my $nt (@SEQ) {
-	      $nt->{S} = join('', grep {$nt->{$_} > $num} keys(%{$nt}));
-	      $nt->{S} =~ s/[-.]//;
+	    $nt->{S} = join('', grep {$nt->{$_} > $num} keys(%{$nt}));
+	    $nt->{S} =~ s/[-.]//;
 	  }
 
-#      warn("SEQ:".Dumper(\@SEQ));
+	  #      warn("SEQ:".Dumper(\@SEQ));
 	  push @tsa, (time - $ts);
 
 	  foreach my $sl (@slice_display) {
-	  
-	      my $idx = 0;
-	      my $ass = $sl->isa('Bio::EnsEMBL::Compara::AlignSlice::Slice') ? 1 : 0;
-	      my $spe = $ass ? $sl->seq_region_name : $object->species;
-	      $spe =~ s/ /_/g;
-	      my $sequence = $SeqDNA->{$spe};
-	
-	      my $f = 0;
-	      my $ms = 0;
-	      my @csrv = ();
-	      foreach my $sym (split(//, $sequence)) {
-		  if (uc ($sym) eq $SEQ[$idx++]->{S}) {
-		      if ($f == 0) {
-			  $f = 1;
-			  $ms = $idx;
-		      }
-		  } else {
-		      if ($f == 1) {
-			  $f = 0;
-			  push @csrv, [$ms, $idx];
-		      }
-		  }
-	      }
-	      if ($f == 1) {
+	    
+	    my $idx = 0;
+	    my $ass = $sl->isa('Bio::EnsEMBL::Compara::AlignSlice::Slice') ? 1 : 0;
+	    my $spe = $ass ? $sl->seq_region_name : $object->species;
+	    $spe =~ s/ /_/g;
+	    my $sequence = $SeqDNA->{$spe};
+	    
+	    my $f = 0;
+	    my $ms = 0;
+	    my @csrv = ();
+	    foreach my $sym (split(//, $sequence)) {
+	      if (uc ($sym) eq $SEQ[$idx++]->{S}) {
+		if ($f == 0) {
+		  $f = 1;
+		  $ms = $idx;
+		}
+	      } else {
+		if ($f == 1) {
+		  $f = 0;
 		  push @csrv, [$ms, $idx];
+		}
 	      }
+	    }
+	    if ($f == 1) {
+	      push @csrv, [$ms, $idx];
+	    }
 	      
-	      $DNA->{$spe} = \@csrv;
+	    $DNA->{$spe} = \@csrv;
 	  }
-      }
-      push @tsa, (time - $ts);
-  }
- 
+	}
+    push @tsa, (time - $ts);
+  } # end if ($aselect eq'NONE')
+  
 #  warn("DNA:".Dumper($DNA));
 
   my $t1 = time;
@@ -193,432 +193,429 @@ sub align_sequence_display {
   my $t_set = $object->param('title_display') ne 'off' ? 1 : 0 ;
 
   foreach my $as (@slice_display) {
-      my $ass = $as->isa('Bio::EnsEMBL::Compara::AlignSlice::Slice') ? 1 : 0;
-      my $spe = $ass ? $as->seq_region_name : $object->species;
-      $spe =~ s/ /_/g;
-      my @fl = $spe =~ m/^(.)|_(.)/g;
-      my $abbr = $alignments_no > 1 ? join("",@fl, " ") : '';
-      my $sequence = $SeqDNA->{$spe};
+    my $ass = $as->isa('Bio::EnsEMBL::Compara::AlignSlice::Slice') ? 1 : 0;
+    my $spe = $ass ? $as->seq_region_name : $object->species;
+    $spe =~ s/ /_/g;
+    my @fl = $spe =~ m/^(.)|_(.)/g;
+    my $abbr = $alignments_no > 1 ? join("",@fl, " ") : '';
+    my $sequence = $SeqDNA->{$spe};
       
-      my $csrv = $DNA->{$spe};
+    my $csrv = $DNA->{$spe};
 
-      my $slice_length = length($sequence);
-      warn("SLENGTH:$spe:$slice_length\n");
-      my @markup_bins;
+    my $slice_length = length($sequence);
+    warn("SLENGTH:$spe:$slice_length\n");
+    my @markup_bins;
 
-      my $h;
+    my $h;
       
-# Mark final bp
-      push @markup_bins, { 'pos' => $slice_length, 'mark' => 1 };
+    # Mark final bp
+    push @markup_bins, { 'pos' => $slice_length, 'mark' => 1 };
 
 
-# Split the sequence into lines of $width bp length.
-# Mark start and end of each line
-      my $bin = 0;
-      my $binE = int(($slice_length-1) / $width);
+    # Split the sequence into lines of $width bp length.
+    # Mark start and end of each line
+    my $bin = 0;
+    my $binE = int(($slice_length-1) / $width);
 
-      while ($bin < $binE) {
-	  my $pp = $bin * $width + 1;
-	  push @markup_bins, { 'pos' => $pp };
+    while ($bin < $binE) {
+      my $pp = $bin * $width + 1;
+      push @markup_bins, { 'pos' => $pp };
 
-	  $pp += ($width - 1);
-	  push @markup_bins, { 'pos' => $pp, 'mark' => 1 };
-	  $bin ++;
+      $pp += ($width - 1);
+      push @markup_bins, { 'pos' => $pp, 'mark' => 1 };
+      $bin ++;
+    }
+    push @markup_bins, { 'pos' => $bin * $width + 1 };
+
+    while ($sequence =~ m/(\-+[\w\s])/gc) {
+      my $txt = sprintf("%d bp", pos($sequence) - $-[0] - 1);
+      push @markup_bins, { 'pos' => $-[0]+1, 'mask' => $ins_On, 'text' => $txt };
+      push @markup_bins, { 'pos' => pos($sequence), 'mask' => -$ins_On, 'text' => $txt };
+    }
+
+    foreach my $c (@$csrv) {
+      #	  warn("CS:".join('*', @$c));
+      push @markup_bins, { 'pos' => $c->[0], 'mask' => $cs_On };
+      if ($c->[1] % $width == 0) {
+	push @markup_bins, { 'pos' => $c->[1]+1, 'mask' => -$cs_On };
+      } else {
+	push @markup_bins, { 'pos' => $c->[1], 'mask' => -$cs_On };
       }
-      push @markup_bins, { 'pos' => $bin * $width + 1 };
-
-      while ($sequence =~ m/(\-+[\w\s])/gc) {
-	  my $txt = sprintf("%d bp", pos($sequence) - $-[0] - 1);
-	  push @markup_bins, { 'pos' => $-[0]+1, 'mask' => $ins_On, 'text' => $txt };
-	  push @markup_bins, { 'pos' => pos($sequence), 'mask' => -$ins_On, 'text' => $txt };
-      }
-
-      foreach my $c (@$csrv) {
-#	  warn("CS:".join('*', @$c));
-	  push @markup_bins, { 'pos' => $c->[0], 'mask' => $cs_On };
-	  if ($c->[1] % $width == 0) {
-	      push @markup_bins, { 'pos' => $c->[1]+1, 'mask' => -$cs_On };
-	  } else {
-	      push @markup_bins, { 'pos' => $c->[1], 'mask' => -$cs_On };
-	  }
-      }
+    }
       
-      if (  $object->param( 'codons_display' ) ne 'off' ) {
+    if (  $object->param( 'codons_display' ) ne 'off' ) {
       my @transcripts =  map  { @{$_->get_all_Transcripts } } @{$as->get_all_Genes()} ;
       if ($ass) {
-	  foreach my $t (grep {$_->coding_region_start < $slice_length && $_->coding_region_end > 0 } @transcripts) {
-#	      warn(join('*', 'T:', $spe, $t->stable_id, $t->coding_region_start, $t->coding_region_end, $t->strand));
-	      next if (! defined($t->translation));
+	foreach my $t (grep {$_->coding_region_start < $slice_length && $_->coding_region_end > 0 } @transcripts) {
+	  #	      warn(join('*', 'T:', $spe, $t->stable_id, $t->coding_region_start, $t->coding_region_end, $t->strand));
+	  next if (! defined($t->translation));
 
-	      foreach my $c (@{$t->translation->all_start_codon_mappings || []}) {
-		  warn(join('*', "SCod:", $spe, $t->stable_id, $c->start, $c->end, $t->strand, "\n"));
+	  foreach my $c (@{$t->translation->all_start_codon_mappings || []}) {
+	    warn(join('*', "SCod:", $spe, $t->stable_id, $c->start, $c->end, $t->strand, "\n"));
 
-		  my ($start, $end) = ($c->start, $c->end);
-		  if ($t->strand < 0) {
-		      ($start, $end) = ($slice_length - $end, $slice_length - $start);
-		  }
+	    my ($start, $end) = ($c->start, $c->end);
+	    if ($t->strand < 0) {
+	      ($start, $end) = ($slice_length - $end, $slice_length - $start);
+	    }
 
 
-		  next if ($end < 1 || $start > $slice_length);
-		  $start = 1 unless $start > 0;
-		  $end = $slice_length unless $end < $slice_length;
+	    next if ($end < 1 || $start > $slice_length);
+	    $start = 1 unless $start > 0;
+	    $end = $slice_length unless $end < $slice_length;
 
-		  my $txt = sprintf("START(%s)",$t->stable_id);
-		  push @markup_bins, { 'pos' => $start, 'mask' => $codon_On, 'text' => $txt };
-		  push @markup_bins, { 'pos' => $end+1, 'mask' => - $codon_On, 'text' => $txt  };
+	    my $txt = sprintf("START(%s)",$t->stable_id);
+	    push @markup_bins, { 'pos' => $start, 'mask' => $codon_On, 'text' => $txt };
+	    push @markup_bins, { 'pos' => $end+1, 'mask' => - $codon_On, 'text' => $txt  };
 		  
-	      }
-
-	      foreach my $c (@{$t->translation->all_end_codon_mappings ||[]}) {
-		  warn(join('*', 'ECod:', $spe, $t->stable_id, $c->{start}, $c->{end}, $t->strand, "\n"));
-		  
-		  my ($start, $end) = ($c->start, $c->end);
-
-		  if ($t->strand < 0) {
-		      ($start, $end) = ($slice_length - $end, $slice_length - $start);
-		  }
-
-
-		  next if ($end < 1 || $start > $slice_length);
-		  $start = 1 unless $start > 0;
-		  $end = $slice_length unless $end < $slice_length;
-
-		  my $txt = sprintf("STOP(%s)",$t->stable_id);
-		  push @markup_bins, { 'pos' => $start, 'mask' => $codon_On, 'text' => $txt };
-		  push @markup_bins, { 'pos' => $end+1, 'mask' => - $codon_On, 'text' => $txt  };
-		  
-	      }
 	  }
+
+	  foreach my $c (@{$t->translation->all_end_codon_mappings ||[]}) {
+	    warn(join('*', 'ECod:', $spe, $t->stable_id, $c->{start}, $c->{end}, $t->strand, "\n"));
+	    
+	    my ($start, $end) = ($c->start, $c->end);
+
+	    if ($t->strand < 0) {
+	      ($start, $end) = ($slice_length - $end, $slice_length - $start);
+	    }
+
+
+	    next if ($end < 1 || $start > $slice_length);
+	    $start = 1 unless $start > 0;
+	    $end = $slice_length unless $end < $slice_length;
+
+	    my $txt = sprintf("STOP(%s)",$t->stable_id);
+	    push @markup_bins, { 'pos' => $start, 'mask' => $codon_On, 'text' => $txt };
+	    push @markup_bins, { 'pos' => $end+1, 'mask' => - $codon_On, 'text' => $txt  };
+	    
+	  }
+	}  # end foreach $t
       } else {
-	  foreach my $t (grep {$_->coding_region_start < $slice_length && $_->coding_region_end > 0 } @transcripts) {
-	      my ($start, $end) = ($t->coding_region_start, $t->coding_region_end);
-#		  warn(join('*', 'T:', $spe, $t->stable_id, $start, $end, $t->strand, "\n"));
-	      if ((my $x = $start) > -2) {
-		  $x = 1 if ($x < 1);
-		  my $txt = sprintf("START(%s)",$t->stable_id);
-		  push @markup_bins, { 'pos' => $x, 'mask' => $codon_On, 'text' => $txt };
-		  push @markup_bins, { 'pos' => $start + 3, 'mask' => - $codon_On, 'text' => $txt  };
-		  
-	      }
-
-	      if ((my $x = $end) < $slice_length) {
-		  $x -= 2;
-		  $x = 1 if ($x < 1);
-		  my $txt = sprintf("STOP(%s)",$t->stable_id);
-		  push @markup_bins, { 'pos' => $x, 'mask' => $codon_On, 'text' => $txt };
-		  push @markup_bins, { 'pos' => $end+1, 'mask' => - $codon_On, 'text' => $txt  };
-		  
-	      }
+	foreach my $t (grep {$_->coding_region_start < $slice_length && $_->coding_region_end > 0 } @transcripts) {
+	  my ($start, $end) = ($t->coding_region_start, $t->coding_region_end);
+	  #		  warn(join('*', 'T:', $spe, $t->stable_id, $start, $end, $t->strand, "\n"));
+	  if ((my $x = $start) > -2) {
+	    $x = 1 if ($x < 1);
+	    my $txt = sprintf("START(%s)",$t->stable_id);
+	    push @markup_bins, { 'pos' => $x, 'mask' => $codon_On, 'text' => $txt };
+	    push @markup_bins, { 'pos' => $start + 3, 'mask' => - $codon_On, 'text' => $txt  };  
 	  }
 
-      }
-  }
-      my @exons = ();
-
-      if ((my $exontype = $object->param( 'exon_display' )) ne 'off') {
-	  if( $exontype eq 'prediction' ){
-	      my( $s, $e ) = ( $as->start, $as->end );
-	      @exons = ( grep{ $_->seq_region_start<=$e && $_->seq_region_end  >=$s }
-			 map { @{$_->get_all_Exons } }
-			 @{$as->get_all_PredictionTranscripts } );
-	  } else {
-	      $exontype ='' unless( $exontype eq 'vega' or $exontype eq 'est' );
-	      my @genes = @{$as->get_all_Genes('', $exontype)} ;
-	      
-	      @exons = $orthologue->{$spe} ?
-		  map  { @{$_->get_all_Exons } } grep { $orthologue->{$spe}->{$_->stable_id} } @{$as->get_all_Genes('', $exontype)} :
-		  map  { @{$_->get_all_Exons } } @{$as->get_all_Genes('', $exontype)} ;
+	  if ((my $x = $end) < $slice_length) {
+	    $x -= 2;
+	    $x = 1 if ($x < 1);
+	    my $txt = sprintf("STOP(%s)",$t->stable_id);
+	    push @markup_bins, { 'pos' => $x, 'mask' => $codon_On, 'text' => $txt };
+	    push @markup_bins, { 'pos' => $end+1, 'mask' => - $codon_On, 'text' => $txt  };
+	    
 	  }
-      }
-	  
-      my $ori = $object->param('exon_ori');
-      if( $ori eq 'fwd' ) {
-	  @exons = grep{$_->seq_region_strand > 0} @exons; # Only fwd exons
-      } elsif( $ori eq 'rev' ){
-	  @exons = grep{$_->seq_region_strand < 0} @exons; # Only rev exons
-      }
-      
-# Mark exons
-      foreach my $e (sort {$a->{start} <=> $b->{start} }@exons) {
-	  if ($ass) {
-	      next if $e->seq_region_end < 1 || $e->seq_region_start > $slice_length;
-
-	  } else {
-	      next if $e->seq_region_end < $sstart || $e->seq_region_start > $send;
-	  }
-
-	  my ($start, $end) = ($e->start, $e->end);
-
-	  if ($start < 1) {
-	      $start = 1;
-	  }
-	  if ($end > $slice_length) {
-	      $end = $slice_length-1;
-	  }
-
-	  if ($e->strand < 0) {
-	      ($start, $end) = ($slice_length-$end, $slice_length - $start);
-	  }
-
-#	  warn("E:".join('*', $e->start, $e->end, $e->stable_id, $e->strand, $e->seq_region_start, $e->seq_region_end, $sstrand, $start, $end));
-
-	  push @markup_bins, { 'pos' => $start, 'mask' => $exon_On, 'text' => $e->stable_id };
-	  push @markup_bins, { 'pos' => $end+1, 'mask' => -$exon_On, 'text' => $e->stable_id  };
-
-
-
-
-	  my $bin = int($start / $width);
-	  my $binE = int(($end-1) / $width);
-
-# Mark again the start of each line that the exon covers with exon style
-	  while ($bin < $binE) {
-
-	      $bin ++;
-	      my $pp = $bin * $width;
-	      push @markup_bins, { 'pos' => $pp, 'mask' => -$exon_On, 'mark' => 1, 'text' =>  $e->stable_id };
-	      push @markup_bins, { 'pos' => $pp+1, 'mask' => $exon_On, 'text' => $e->stable_id };
-
-	  }
-      }
-
-#      warn(Dumper(\@markup_bins));
-
-# Mark SNPs
-
-      my @snps = $object->param( 'snp_display' )  eq 'snp' ? @{$as->get_all_VariationFeatures} : ();
-      foreach my $s (@snps) {
-	  my ($st, $en, $allele, $id, $mask) = ($s->start, $s->end, $s->allele_string, $s->variation_name, $snp_On);
-
-#	  warn("S:".join('*', $st, $en, $allele, $id, $s->strand, $sstrand));
-
-	  if ($en < $st) {
-	      ($st, $en) = ($en, $st);
-	      $mask = $snp_Del;
-	  }
-	  $en ++;
-
-
-	  push @markup_bins, { 'pos' => $st, 'mask' => $mask, 'textSNP' => $allele, 'mark' => 0, 'snpID' => $id };
-	  push @markup_bins, { 'pos' => $en, 'mask' => -$mask  };
-
-
-	  my $bin = int(($st-1) / $width);
-	  my $binE = int(($en-2) / $width);
+	}
 	
-	  while ($bin < $binE) {
-	      $bin ++;
-	      my $pp = $bin * $width + 1;
-	      push @markup_bins, { 'pos' => $pp, 'mask' => $mask, 'textSNP' => $allele   };
-	      push @markup_bins, { 'pos' => $pp-1, 'mark' => 1, 'mask' => -$mask  };
-	  }
       }
+    } # if object->param('codon_display')
 
-#      warn(Dumper(\@markup_bins));
-      my @markup  = sort {($a->{pos} <=> $b->{pos})*10 + 5*($a->{mark} <=> $b->{mark})  } @markup_bins;
-#      warn(Dumper(\@markup));
+    my @exons = ();
 
-      my @ht = ();
-      push @ht, $abbr;
-      
-      if ($object->param('line_numbering') eq 'slice') {
-	  if ($ass) {
-	      my $srt = substr($sequence, 0, $width);
-	      if ($srt =~ m/[ATGCN]/g) {
-		  my ($oslice, $pos) = $as->get_original_seq_region_position(pos($srt) );
-		  
-		  push @ht, sprintf("%*s:%*u ", $max_region, $oslice->seq_region_name, $lineformat, $pos);
-	      } else {
-		  push @ht, sprintf("%*s ", $lineformat+$max_region+1, "");
-	      }
-
-	  } else {
-	      push @ht, sprintf("%*s:%*u ", $max_region, $as->seq_region_name, $lineformat, $linenumbers[0] + 1);
-	  }
-	  
+    if ((my $exontype = $object->param( 'exon_display' )) ne 'off') {
+      if( $exontype eq 'prediction' ){
+	my( $s, $e ) = ( $as->start, $as->end );
+	@exons = ( grep{ $_->seq_region_start<=$e && $_->seq_region_end  >=$s }
+		   map { @{$_->get_all_Exons } }
+		   @{$as->get_all_PredictionTranscripts } );
       } else {
-	  if (@linenumbers) {
-	      push @ht, sprintf("%*u ", $lineformat, $linenumbers[0] + 1);
-	  }
+	$exontype ='' unless( $exontype eq 'vega' or $exontype eq 'est' );
+	my @genes = @{$as->get_all_Genes('', $exontype)} ;
+	      
+	@exons = $orthologue->{$spe} ?
+	  map  { @{$_->get_all_Exons } } grep { $orthologue->{$spe}->{$_->stable_id} } @{$as->get_all_Genes('', $exontype)} :
+	    map  { @{$_->get_all_Exons } } @{$as->get_all_Genes('', $exontype)} ;
       }
+    }
+	  
+    my $ori = $object->param('exon_ori');
+    if( $ori eq 'fwd' ) {
+      @exons = grep{$_->seq_region_strand > 0} @exons; # Only fwd exons
+    } elsif( $ori eq 'rev' ){
+      @exons = grep{$_->seq_region_strand < 0} @exons; # Only rev exons
+    }
+      
+    # Mark exons
+    foreach my $e (sort {$a->{start} <=> $b->{start} }@exons) {
+      if ($ass) {
+	next if $e->seq_region_end < 1 || $e->seq_region_start > $slice_length;
+	
+      } else {
+	next if $e->seq_region_end < $sstart || $e->seq_region_start > $send;
+      }
+
+      my ($start, $end) = ($e->start, $e->end);
+
+      if ($start < 1) {
+	$start = 1;
+      }
+      if ($end > $slice_length) {
+	$end = $slice_length-1;
+      }
+
+      if ($e->strand < 0) {
+	($start, $end) = ($slice_length-$end, $slice_length - $start);
+      }
+
+      #	  warn("E:".join('*', $e->start, $e->end, $e->stable_id, $e->strand, $e->seq_region_start, $e->seq_region_end, $sstrand, $start, $end));
+
+      push @markup_bins, { 'pos' => $start, 'mask' => $exon_On, 'text' => $e->stable_id };
+      push @markup_bins, { 'pos' => $end+1, 'mask' => -$exon_On, 'text' => $e->stable_id  };
+
+
+
+
+      my $bin = int($start / $width);
+      my $binE = int(($end-1) / $width);
+
+      # Mark again the start of each line that the exon covers with exon style
+      while ($bin < $binE) {
+	$bin ++;
+	my $pp = $bin * $width;
+	push @markup_bins, { 'pos' => $pp, 'mask' => -$exon_On, 'mark' => 1, 'text' =>  $e->stable_id };
+	push @markup_bins, { 'pos' => $pp+1, 'mask' => $exon_On, 'text' => $e->stable_id };
+
+      }
+    }
+
+    #      warn(Dumper(\@markup_bins));
+
+    # Mark SNPs
+
+    my @snps = $object->param( 'snp_display' )  eq 'snp' ? @{$as->get_all_VariationFeatures} : ();
+    foreach my $s (@snps) {
+      my ($st, $en, $allele, $id, $mask) = ($s->start, $s->end, $s->allele_string, $s->variation_name, $snp_On);
+
+      #	  warn("S:".join('*', $st, $en, $allele, $id, $s->strand, $sstrand));
+
+      if ($en < $st) {
+	($st, $en) = ($en, $st);
+	$mask = $snp_Del;
+      }
+      $en ++;
+
+
+      push @markup_bins, { 'pos' => $st, 'mask' => $mask, 'textSNP' => $allele, 'mark' => 0, 'snpID' => $id };
+      push @markup_bins, { 'pos' => $en, 'mask' => -$mask  };
+
+
+      my $bin = int(($st-1) / $width);
+      my $binE = int(($en-2) / $width);
+	
+      while ($bin < $binE) {
+	$bin ++;
+	my $pp = $bin * $width + 1;
+	push @markup_bins, { 'pos' => $pp, 'mask' => $mask, 'textSNP' => $allele   };
+	push @markup_bins, { 'pos' => $pp-1, 'mark' => 1, 'mask' => -$mask  };
+      }
+    } # end foreach $s (@snps)
+
+    #      warn(Dumper(\@markup_bins));
+    my @markup  = sort {($a->{pos} <=> $b->{pos})*10 + 5*($a->{mark} <=> $b->{mark})  } @markup_bins;
+    #      warn(Dumper(\@markup));
+
+    my @ht = ();
+    push @ht, $abbr;
+      
+    if ($object->param('line_numbering') eq 'slice') {
+      if ($ass) {
+	my $srt = substr($sequence, 0, $width);
+	if ($srt =~ m/[ATGCN]/g) {
+	  my ($oslice, $pos) = $as->get_original_seq_region_position(pos($srt) );
+		  
+	  push @ht, sprintf("%*s:%*u ", $max_region, $oslice->seq_region_name, $lineformat, $pos);
+	} else {
+	  push @ht, sprintf("%*s ", $lineformat+$max_region+1, "");
+	}
+
+      } else {
+	push @ht, sprintf("%*s:%*u ", $max_region, $as->seq_region_name, $lineformat, $linenumbers[0] + 1);
+      }
+	  
+    } else {
+      if (@linenumbers) {
+	push @ht, sprintf("%*u ", $lineformat, $linenumbers[0] + 1);
+      }
+    }
      
-      my $smask = 0;
+    my $smask = 0;
 
-      my @title;
-      my $sindex = 0;
-      my $notes;
+    my @title;
+    my $sindex = 0;
+    my $notes;
 
- #     warn("MARK:".Dumper(\@markup));
-      for (my $i = 1; $i < (@markup); $i++) {
-	  my $p = $markup[$i -1];
-	  if ($p->{mask}) {
-	      $smask += $p->{mask};
-	      if ($p->{mask} > 0) {
-		  push @title, $p->{text} if ($p->{text} ne $title[-1]);
-	      } else {
-		  @title = grep { $_ ne $p->{text}} @title;
-	      }
-	  }
+    #     warn("MARK:".Dumper(\@markup));
+    for (my $i = 1; $i < (@markup); $i++) {
+      my $p = $markup[$i -1];
+      if ($p->{mask}) {
+	$smask += $p->{mask};
+	if ($p->{mask} > 0) {
+	  push @title, $p->{text} if ($p->{text} ne $title[-1]);
+	} else {
+	  @title = grep { $_ ne $p->{text}} @title;
+	}
+      }
+      
+      if ($p->{snpID}) {
+	push @$notes, sprintf("{<a href=\"/%s/snpview?snp=%s\">base %u:%s</a>}", $spe, $p->{snpID}, $p->{pos}, $p->{textSNP});
+      }
 
-	  if ($p->{snpID}) {
-	      push @$notes, sprintf("{<a href=\"/%s/snpview?snp=%s\">base %u:%s</a>}", $spe, $p->{snpID}, $p->{pos}, $p->{textSNP});
-	  }
+      my $c = $markup[$i];
+      next if ($p->{pos} == $c->{pos} && (! $c->{mark} || $p->{mask} == -8));
+      
+      my $w = $c->{pos} - $p->{pos};
 
-	  my $c = $markup[$i];
-	  next if ($p->{pos} == $c->{pos} && (! $c->{mark} || $p->{mask} == -8));
+      $w++ if ($c->{mark} && (!defined($c->{mask})));
 
-	  my $w = $c->{pos} - $p->{pos};
-
-	  $w++ if ($c->{mark} && (!defined($c->{mask})));
-
-	  my $sq = $p->{mark} ? '' : substr($sequence, $p->{pos}-1, $w);
+      my $sq = $p->{mark} ? '' : substr($sequence, $p->{pos}-1, $w);
 
 
-	  if ($p->{mark} && ! defined($c->{mark})) {
-	      push @ht, $BR, $abbr;
+      if ($p->{mark} && ! defined($c->{mark})) {
+	push @ht, $BR, $abbr;
 
 	      
-	      if ($object->param('line_numbering') eq 'slice') {
-		  if ($ass) {
-		      my $srt = substr($sequence, $sindex, $width);
-		      if ($srt =~ m/[ATGCN]/g) {
-			  my ($oslice, $pos) = $as->get_original_seq_region_position( $sindex + pos($srt) );
-			  push @ht, sprintf("%*s:%*u ", $max_region, $oslice->seq_region_name, $lineformat, $pos);
-		      } else {
-			  push @ht, sprintf("%*s ", $lineformat + $max_region + 1, "");
-		      }
-
-		  } else {
-			if ($sindex < $slice_length) {
-		      my $pos = $sstrand > 0 ? ($sindex + $linenumbers[0] + 1) : ($linenumbers[0] + 1 - $sindex);
-		      push @ht, sprintf("%*s:%*u %s", $max_region, $as->seq_region_name, $lineformat, $pos);
-			}
-		  }
-		
-	      } else {
-		  if (@linenumbers) {
-			if ($sindex < $slice_length) {
-		      push @ht, sprintf("%*u %s", $lineformat, $sindex + $linenumbers[0] + 1);
-			}
-		  }
-	      }
-
+	if ($object->param('line_numbering') eq 'slice') {
+	  if ($ass) {
+	    my $srt = substr($sequence, $sindex, $width);
+	    if ($srt =~ m/[ATGCN]/g) {
+	      my ($oslice, $pos) = $as->get_original_seq_region_position( $sindex + pos($srt) );
+	      push @ht, sprintf("%*s:%*u ", $max_region, $oslice->seq_region_name, $lineformat, $pos);
+	    } else {
+	      push @ht, sprintf("%*s ", $lineformat + $max_region + 1, "");
+	    }
+	    
+	  } else {
+	    if ($sindex < $slice_length) {
+	      my $pos = $sstrand > 0 ? ($sindex + $linenumbers[0] + 1) : ($linenumbers[0] + 1 - $sindex);
+	      push @ht, sprintf("%*s:%*u %s", $max_region, $as->seq_region_name, $lineformat, $pos);
+	    }
 	  }
+		
+	} else {
+	  if (@linenumbers) {
+	    if ($sindex < $slice_length) {
+	      push @ht, sprintf("%*u %s", $lineformat, $sindex + $linenumbers[0] + 1);
+	    }
+	  }
+	}
+      }
 
 
-	  if (length($sq)) {
-	      my $tag_title = $t_set ? ($p->{textSNP} || join(':', @title)) : '';
+      if (length($sq)) {
+	my $tag_title = $t_set ? ($p->{textSNP} || join(':', @title)) : '';
 
-#  my ($exon_On, $cs_On, $snp_On, $snp_Del, $ins_On, $codon_On) = (1, 16, 32, 64, 128, 256);
-	      my $NBP = 'n';
-	      my $sclass = $NBP;
+	#  my ($exon_On, $cs_On, $snp_On, $snp_Del, $ins_On, $codon_On) = (1, 16, 32, 64, 128, 256);
+	my $NBP = 'n';
+	my $sclass = $NBP;
+	
+	if ($smask & 0x0F) {
+	  $sclass = 'e';
+	}
 
-	      if ($smask & 0x0F) {
-		  $sclass = 'e';
-	      }
-
-	      if ($smask & 0x40) {
-		  $sclass .= 'd';
-	      } elsif ($smask & 0x20) {
-		  $sclass .= 's';
-	      } elsif ($smask & 0xF00) {
-		  $sclass .= 'o';
-	      } elsif ($smask & 0x10) {
-		  $sclass .= 'c';
-	      }
+	if ($smask & 0x40) {
+	  $sclass .= 'd';
+	} elsif ($smask & 0x20) {
+	  $sclass .= 's';
+	} elsif ($smask & 0xF00) {
+	  $sclass .= 'o';
+	} elsif ($smask & 0x10) {
+	  $sclass .= 'c';
+	}
 	  
 
-	      my $span_open;
-	      if ($sclass ne $NBP || $tag_title) {
-		  $span_open = sprintf (qq{<span%s%s>}, 
-			$sclass ne 'mn' ? qq{ id="$sclass"} : '',
-			$tag_title ? qq{ title="$tag_title"} : '');
-
-		  push @ht, $span_open, $sq, "</span>";
-	      } else {
-		  push @ht, $sq;
-	      }
-	  }
-
-	  $sindex += length($sq);
-
-	  if ($sindex % $width == 0 && length($sq) != 0) {
-	      if ($object->param('line_numbering') eq 'slice') {
-		  if ($ass) {
-		      my $srt = substr($sequence, $sindex-$width, $width);
-		      my $posa = -1;
-
-		      while ($srt =~ m/[AGCT]/g) {
-			  $posa = pos($srt);
-		      }
-
-		      if ($posa > 0) { 
-			  my ($oslice, $pos) = $as->get_original_seq_region_position( $sindex + $posa - $width);			  
-			  push @ht, sprintf(" %*s:%*u", $max_region, $oslice->seq_region_name, $lineformat, $pos);
-		      } else {
-			  push @ht, sprintf(" %*s", $lineformat + $max_region + 1, "");
-		      }
-
-		  } else {
-		      my $pos = $sstrand > 0 ? ($sindex + $linenumbers[0]) : ($linenumbers[0] - $sindex + 2);
-		      push @ht, sprintf(" %*s:%*u", $max_region, $as->seq_region_name, $lineformat, $pos);
-		  }
-		
-	      } else {
-		  if (@linenumbers) {
-		      push @ht, sprintf(" %*u %s", $lineformat, $sindex + $linenumbers[0]);
-		  }
-	      }
-
-	      if ($notes) {
-		  push @ht, join('|', " ", @$notes);
-		  $notes = undef;
-	      }
-
-	      push @ht, "\n";
-	  }
-       
+	my $span_open;
+	if ($sclass ne $NBP || $tag_title) {
+	  $span_open = sprintf (qq{<span%s%s>}, 
+				$sclass ne 'mn' ? qq{ id="$sclass"} : '',
+				$tag_title ? qq{ title="$tag_title"} : '');
+	  
+	  push @ht, $span_open, $sq, "</span>";
+	} else {
+	  push @ht, $sq;
+	}
       }
-      if (@linenumbers && ($sindex % $width  != 0)) {
-	  if ($object->param('line_numbering') eq 'slice') {
-	      if ($ass) {
-		  my $wd = $sindex % $width;
-		  my $srt = substr($sequence, -$wd);
-		  my $posa = -1;
-		  while ($srt =~ m/[AGCT]/g) {
-		      $posa = pos($srt);
-		  }
 
-		  if ($posa > 0) { 
-		      my ($oslice, $pos) = $as->get_original_seq_region_position( $sindex + $posa - $wd);			  
-		      push @ht, sprintf("%*s %*s:%*u", $width - $wd, " ", $max_region, $oslice->seq_region_name, $lineformat, $pos);
-		  } else {
-		      push @ht, sprintf(" %*s", $lineformat + $max_region + 1, "");
-		  }
-		  
-	      } else {
-		  my $w = $width - ($sindex % $width);
-		  push @ht, sprintf("%*s %*s:%*u", $w, " ", $max_region, $as->seq_region_name, $lineformat, $sindex + $linenumbers[0]);
-	      }
+      $sindex += length($sq);
+
+      if ($sindex % $width == 0 && length($sq) != 0) {
+	if ($object->param('line_numbering') eq 'slice') {
+	  if ($ass) {
+	    my $srt = substr($sequence, $sindex-$width, $width);
+	    my $posa = -1;
+	    
+	    while ($srt =~ m/[AGCT]/g) {
+	      $posa = pos($srt);
+	    }
+
+	    if ($posa > 0) { 
+	      my ($oslice, $pos) = $as->get_original_seq_region_position( $sindex + $posa - $width);			  
+	      push @ht, sprintf(" %*s:%*u", $max_region, $oslice->seq_region_name, $lineformat, $pos);
+	    } else {
+	      push @ht, sprintf(" %*s", $lineformat + $max_region + 1, "");
+	    }
+
 	  } else {
-	      my $w = $width - ($sindex % $width) + $lineformat;
-	      push @ht, sprintf(" %*u", $w, $sindex + $linenumbers[0]);
+	    my $pos = $sstrand > 0 ? ($sindex + $linenumbers[0]) : ($linenumbers[0] - $sindex + 2);
+	    push @ht, sprintf(" %*s:%*u", $max_region, $as->seq_region_name, $lineformat, $pos);
 	  }
-      }
-
-      if ($notes) {
+	  
+	} else {
+	  if (@linenumbers) {
+	    push @ht, sprintf(" %*u %s", $lineformat, $sindex + $linenumbers[0]);
+	  }
+	}
+	
+	if ($notes) {
 	  push @ht, join('|', " ", @$notes);
+	  $notes = undef;
+	}
+
+	push @ht, "\n";
       }
+      
+    }  #end for @markup
 
-      push @ht, "\n";
+    if (@linenumbers && ($sindex % $width  != 0)) {
+      if ($object->param('line_numbering') eq 'slice') {
+	if ($ass) {
+	  my $wd = $sindex % $width;
+	  my $srt = substr($sequence, -$wd);
+	  my $posa = -1;
+	  while ($srt =~ m/[AGCT]/g) {
+	    $posa = pos($srt);
+	  }
 
-      my $html = join('',@ht);
+	  if ($posa > 0) { 
+	    my ($oslice, $pos) = $as->get_original_seq_region_position( $sindex + $posa - $wd);			  
+	    push @ht, sprintf("%*s %*s:%*u", $width - $wd, " ", $max_region, $oslice->seq_region_name, $lineformat, $pos);
+	  } else {
+	    push @ht, sprintf(" %*s", $lineformat + $max_region + 1, "");
+	  }
+		  
+	} else {
+	  my $w = $width - ($sindex % $width);
+	  push @ht, sprintf("%*s %*s:%*u", $w, " ", $max_region, $as->seq_region_name, $lineformat, $sindex + $linenumbers[0]);
+	}
+      } else {
+	my $w = $width - ($sindex % $width) + $lineformat;
+	push @ht, sprintf(" %*u", $w, $sindex + $linenumbers[0]);
+      }
+    }
 
-      @{$html_hash->{"${ind}_$spe"}} = split(/$BR/, $html);
-      $ind ++;
+    if ($notes) {
+      push @ht, join('|', " ", @$notes);
+    }
 
-  
-  }
+    push @ht, "\n";
+    
+    my $html = join('',@ht);
+
+    @{$html_hash->{"${ind}_$spe"}} = split(/$BR/, $html);
+    $ind ++;
+  }  # end foreach?
 
 
   push @tsa, (time - $ts);
@@ -626,17 +623,17 @@ sub align_sequence_display {
   my $hhh;
 
   if ($alignments_no > 1) {
-      while (1) {
-	  my $hi;
-	  foreach my $k (sort keys %{$html_hash}) {
-	      $hi .= shift (@{$html_hash->{$k}});
-	  }
-
-	  $hhh .= "$hi\n";
-	  last if (!$hi);
+    while (1) {
+      my $hi;
+      foreach my $k (sort keys %{$html_hash}) {
+	$hi .= shift (@{$html_hash->{$k}});
       }
+
+      $hhh .= "$hi\n";
+      last if (!$hi);
+    }
   } else {
-      $hhh = join('', @{$html_hash->{"1_$species"}});
+    $hhh = join('', @{$html_hash->{"1_$species"}});
   }
 
   push @tsa, (time - $ts);
@@ -670,17 +667,17 @@ sub align_sequence_display {
   my $Chrs;
   (my $spa = $species) =~ s/ /_/g;
   foreach my $sp ( $spa, grep {$_ ne $spa} keys %$SeqSlices) {
-      $Chrs .= qq{<p><br/><b>$sp&gt;<br/></b>};
+    $Chrs .= qq{<p><br/><b>$sp&gt;<br/></b>};
 
-      foreach my $loc (@{$SeqSlices->{$sp}}) {
-	  my ($stype, $assembly, $region, $start, $end, $strand) = split (/:/ , $loc);
-	  $Chrs .= qq{<p><a href="/$sp/contigview?l=$region:$start-$end">$loc</a></p>};
-      }
+    foreach my $loc (@{$SeqSlices->{$sp}}) {
+      my ($stype, $assembly, $region, $start, $end, $strand) = split (/:/ , $loc);
+      $Chrs .= qq{<p><a href="/$sp/contigview?l=$region:$start-$end">$loc</a></p>};
+    }
   }
-#  warn(Dumper($SeqSlices));
+  #  warn(Dumper($SeqSlices));
 
 
-#  $Chrs = qq{<p><br/><b>$sp&gt;</b>}.join("<br/>", @{$SeqSlices->{$sp}})."</p>";
+  #  $Chrs = qq{<p><br/><b>$sp&gt;</b>}.join("<br/>", @{$SeqSlices->{$sp}})."</p>";
 
   $panel->add_row( 'Marked_up_sequence', qq(
     $KEY
@@ -688,7 +685,7 @@ sub align_sequence_display {
     <pre>\n$hhh\n</pre>
   ) );
 
-      push @tsa, (time - $ts);
+  push @tsa, (time - $ts);
 
   my $t2 = time;
 
@@ -696,6 +693,7 @@ sub align_sequence_display {
 
 }
 
+#---------------------------------------------------------------------------------------
 sub sequence_display {
   my( $panel, $object ) = @_;
 

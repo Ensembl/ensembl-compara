@@ -19,7 +19,9 @@ sub script_name {
   $scriptname ||= $ENV{'ENSEMBL_SCRIPT'};
   $scriptname = ucfirst( $scriptname );
   $scriptname =~ s/view/View/g;
-  ## GeneSliceView AlignSliceView
+  ## SequenceAlignView GeneSeqAlignView
+  $scriptname =~ s/(align)/ucfirst($1)/eg;
+  ## GeneSeqView AlignSliceView
   $scriptname =~ s/(slice)/ucfirst($1)/eg;
   ## SNPView GeneSNPView
   $scriptname =~ s/(snp)/uc($1)/ieg;
