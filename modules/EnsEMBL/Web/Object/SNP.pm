@@ -252,7 +252,7 @@ sub alleles {
   my $self = shift;
 
   my  @vari_mappings = @{ $self->unique_variation_feature };
-  return $vari_mappings[0]->allele_string unless $#vari_mappings > 0;
+  return $vari_mappings[0]->allele_string if @vari_mappings == 1;
 
   #my %allele_string;
   #if (@vari_mappings) {
@@ -714,7 +714,7 @@ sub unique_variation_feature {
 
   my $self = shift;
   my @variation_features = @{ $self->get_variation_features || [] };
-  return undef unless  @variation_features;
+  return [] unless  @variation_features;
   return \@variation_features unless $#variation_features > 0; # if unique mapping
 
   # Must have multiple mapping

@@ -445,4 +445,43 @@ sub get_all_misc_sets {
   return $result;
 }
 
+# Sequence Align View ---------------------------------------------------
+
+sub get_individuals {
+
+  ### SequenceAlignView
+  ### Arg (optional) : type string
+  ###  -"default": returns samples checked by default
+  ###  -"display": returns all samples (for dropdown list) with default ones first
+  ### Description: returns selected samples (by default)
+  ### Returns list
+
+  my $self    = shift;
+  my $options = shift;
+
+  my $vari_adaptor = $self->database('variation')->get_db_adaptor('variation');
+  unless ($vari_adaptor) {
+    warn "ERROR: Can't get variation adaptor";
+    return ();
+  }
+
+  my $individual_adaptor = $vari_adaptor->get_IndividualAdaptor;
+
+  if ($options eq 'default') {
+    return sort  @{$individual_adaptor->get_default_strains};
+  }
+
+  my %default_pops;
+  map {$default_pops{$_} = 1 } @{$individual_adaptor->get_default_strains};
+  my %db_pops;
+  foreach ( sort  @{$individual_adaptor->get_display_strains} ) {
+    next if $default_pops{$_};
+    $db_pops{$_} = 1;
+  }
+
+  if ($options eq 'display') { # return list of pops with default first
+    return (sort keys %default_pops), (sort keys %db_pops);
+  }
+  return ();
+}
 1;
