@@ -457,6 +457,13 @@ sub create_multiple_aligner_analysis {
     }
     $self->{'comparaDBA'}->get_MethodLinkSpeciesSetAdaptor->store($mlss);
 
+    #add entry into meta table linking gerp to it's multiple aligner mlss_id
+    if (defined($this_multiple_aligner_params->{gerp_mlss_id})) {
+	my $key = "gerp_" . $this_multiple_aligner_params->{gerp_mlss_id};
+	my $value = $mlss->dbID;
+	$self->{'comparaDBA'}->get_MetaContainer->store_key_value($key, $value);
+    }
+
     ## Create a Synteny Map Builder job per Multiple Aligner
     if (defined $this_multiple_aligner_params->{'species_set'}) {
       my $input_id = 'gdb_ids=> [' . join(",",@{$this_multiple_aligner_params->{'species_set'}}) . ']';
@@ -485,6 +492,16 @@ sub create_multiple_aligner_analysis {
           );
     }
     my $parameters = "";
+
+    if (defined $this_multiple_aligner_params->{'max_block_size'}) {
+	$parameters .= "max_block_size=>" . $this_multiple_aligner_params->{'max_block_size'} .",";
+    }
+    
+    if (defined $this_multiple_aligner_params->{'java_options'}) {
+	$parameters .= "java_options=>\'" . $this_multiple_aligner_params->{'java_options'} ."\',";
+    }
+    $parameters = "{$parameters}";
+
     my $multiple_aligner_analysis = Bio::EnsEMBL::Analysis->new(
         -logic_name      => $this_logic_name,
         -module          => $this_module,
@@ -521,30 +538,62 @@ sub create_conservation_score_analysis {
       \%conservation_score_params, "Gerp");
 
   my ($method_link_id, $method_link_type);
-  if (defined $conservation_score_params{'method_link'}) {
-      ($method_link_id, $method_link_type) = @{$conservation_score_params{'method_link'}};
-    } else {
-      ($method_link_id, $method_link_type) = qw(11 GERP);
-    }
-  my $sql = "INSERT ignore into method_link SET method_link_id=$method_link_id, type='$method_link_type'";
+  my ($method_link_id_cs, $method_link_type_cs) = qw(501 GERP_CONSERVATION_SCORE);
+  my ($method_link_id_ce, $method_link_type_ce) = qw(11 GERP_CONSTRAINED_ELEMENT);
+  if (defined $conservation_score_params{'method_links'}) {
+      foreach my $method_link (@{$conservation_score_params{'method_links'}}) {
+	  ($method_link_id, $method_link_type) = @$method_link;
+
+	  if ($method_link_type eq "GERP_CONSERVATION_SCORE") {
+	      $method_link_id_cs = $method_link_id;
+	      $method_link_type_cs = $method_link_type;
+	  }
+	  if ($method_link_type eq "GERP_CONSTRAINED_ELEMENT") {
+	      $method_link_id_ce = $method_link_id;
+	      $method_link_type_ce = $method_link_type;
+	  }
+      }
+  }
+
+  my $sql = "INSERT ignore into method_link SET method_link_id=$method_link_id_cs, type='$method_link_type_cs'";
+  $self->{'hiveDBA'}->dbc->do($sql);
+
+  $sql = "INSERT ignore into method_link SET method_link_id=$method_link_id_ce, type='$method_link_type_ce'";
   $self->{'hiveDBA'}->dbc->do($sql);
 
   foreach my $this_multiple_aligner_params (@$multiple_aligner_params) {
+      foreach my $method_link_type ($method_link_type_cs, $method_link_type_ce) {
 
-      my $mlss = new Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
-      $mlss->method_link_type($method_link_type);
+	  my $mlss = new Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
+	  $mlss->method_link_type($method_link_type);
+	  
+	  my $gdbs = [];
+	  
+	  foreach my $gdb_id (@{$this_multiple_aligner_params->{'species_set'}}) {
+	      my $gdb = $self->{'comparaDBA'}->get_GenomeDBAdaptor->fetch_by_dbID($gdb_id);
+	      push @{$gdbs}, $gdb;
+	  }
+	  $mlss->species_set($gdbs);
 
-      my $gdbs = [];
+	  #use method_link_species_set id from config file if defined
+	  if ($method_link_type eq "GERP_CONSERVATION_SCORE") {
+	      if (defined($conservation_score_params{'method_link_species_set_id_cs'})) {
+		  $mlss->dbID($conservation_score_params{'method_link_species_set_id_cs'});
+	      }
+	  } else {
+	      if (defined($conservation_score_params{'method_link_species_set_id_ce'})) {
+		  $mlss->dbID($conservation_score_params{'method_link_species_set_id_ce'});
+	      }
+	  }
+	  
+	  $self->{'comparaDBA'}->get_MethodLinkSpeciesSetAdaptor->store($mlss);
 
-      foreach my $gdb_id (@{$this_multiple_aligner_params->{'species_set'}}) {
-          my $gdb = $self->{'comparaDBA'}->get_GenomeDBAdaptor->fetch_by_dbID($gdb_id);
-          push @{$gdbs}, $gdb;
+	  #add gerp conservation score mlss id for use in 
+	  #create_multiple_aligner_analysis to create entry into meta table
+	  if ($method_link_type eq "GERP_CONSERVATION_SCORE") {
+	      $this_multiple_aligner_params->{gerp_mlss_id} = $mlss->dbID;
+	  }
       }
-      $mlss->species_set($gdbs);
-      if (defined($conservation_score_params{method_link_species_set_id})) {
-          $mlss->dbID($conservation_score_params{method_link_species_set_id});
-      }
-      $self->{'comparaDBA'}->get_MethodLinkSpeciesSetAdaptor->store($mlss);
   }
 
   my $parameters = "";
@@ -557,6 +606,8 @@ sub create_conservation_score_analysis {
   if (defined $conservation_score_params{'tree_file'}) {
     $parameters .= "tree_file=>\'" . $conservation_score_params{'tree_file'} ."\',";
   }
+  
+  $parameters .= "constrained_element_method_link_type=>\'" . $method_link_type_ce ."\',";
 
   $parameters = "{$parameters}";
 
