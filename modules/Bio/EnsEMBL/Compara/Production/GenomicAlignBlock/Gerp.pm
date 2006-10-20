@@ -200,18 +200,25 @@ sub write_output {
 # getter/setter methods
 # 
 ##########################################
-#read from input_id of analysis_job table
+#read from input_id from analysis_job table
 sub genomic_align_block_id {
   my $self = shift;
   $self->{'_genomic_align_block_id'} = shift if(@_);
   return $self->{'_genomic_align_block_id'};
 }
 
-#read from input_id of analysis_job table
+#read species_set from analysis_job table
 sub species_set {
   my $self = shift;
   $self->{'_species_set'} = shift if(@_);
   return $self->{'_species_set'};
+}
+
+#read method_link_type from analysis table
+sub constrained_element_method_link_type {
+  my $self = shift;
+  $self->{'_constrained_element_method_link_type'} = shift if(@_);
+  return $self->{'_constrained_element_method_link_type'};
 }
 
 #read from parameters of analysis table
@@ -277,6 +284,9 @@ sub get_params {
     }
     if (defined($params->{'window_sizes'})) {
 	$self->window_sizes($params->{'window_sizes'});
+    }
+    if (defined($params->{'constrained_element_method_link_type'})) {
+	$self->constrained_element_method_link_type($params->{'constrained_element_method_link_type'});
     }
 
     #read from input_id in analysis_job table
@@ -430,7 +440,12 @@ sub _parse_cons_file {
     my $gab = $gaba->fetch_by_dbID($self->genomic_align_block_id);
 
     my $mlssa = $self->{'comparaDBA'}->get_MethodLinkSpeciesSetAdaptor;
-    my $mlss = $mlssa->fetch_by_method_link_type_genome_db_ids("GERP", $self->species_set);
+
+    my $mlss = $mlssa->fetch_by_method_link_type_genome_db_ids($self->constrained_element_method_link_type, 
+							       $self->species_set);
+    unless ($mlss) {
+	throw("Invalid method_link_species_set\n");
+    }
 
     open CONS, $cons_file || throw("Could not open $cons_file");
     while (<CONS>) {
@@ -452,9 +467,9 @@ sub _parse_cons_file {
 			$genomic_align->dbID(0);
 		    }
 		}
-
 		$constrained_gab->score($rej_subs);
 		$constrained_gab->method_link_species_set($mlss);
+
 		$gaba->store($constrained_gab);
 	    }
     }
