@@ -11,6 +11,7 @@ our $AUTOLOAD;
 my %Adaptor_of;
 my %User_of;
 my %Fields_of;
+my %Id_of;
 my %Type_of;
 
 sub AUTOLOAD {
@@ -43,6 +44,7 @@ sub new {
   $Adaptor_of{$self} = defined $params{'adaptor'} ? $params{'adaptor'} : undef;
   $Type_of{$self} = defined $params{'type'} ? $params{'type'} : "record";
   $User_of{$self} = defined $params{'user'} ? $params{'user'} : 0;
+  $Id_of{$self} = defined $params{'id'} ? $params{'id'} : "";
   $Fields_of{$self} = {}; 
   if ($params{'data'}) {
     #$self->data($params{'data'});
@@ -54,17 +56,32 @@ sub new {
   return $self;
 }
 
+sub delete {
+  my $self = shift;
+  $self->adaptor->delete_record((
+                                  id => $self->id
+                               ));
+}
+
 sub save {
   my $self = shift;
   my $dump = Dumper($self->fields);
   $dump =~ s/'/\\'/g;
   $dump =~ s/^\$VAR1 = //;
-  #warn "PREPARING: " . $dump;
-  $self->adaptor->insert_record(( 
+  if ($self->id) {
+    $self->adaptor->update_record((
+                                    id => $self->id,
                                   user => $self->user, 
                                   type => $self->type,
                                   data => $dump 
-                               ));
+                                 ));
+  } else {
+    $self->adaptor->insert_record(( 
+                                  user => $self->user, 
+                                  type => $self->type,
+                                  data => $dump 
+                                 ));
+  }
   return 1;
 }
 
@@ -102,6 +119,13 @@ sub user {
   return $User_of{$self};
 }
 
+sub id {
+  ### a
+  my $self = shift;
+  $Id_of{$self} = shift if @_;
+  return $Id_of{$self};
+}
+
 sub find_records {
   my %params = @_;
   my $user_adaptor = EnsEMBL::Web::DBSQL::UserDB->new();
@@ -109,9 +133,10 @@ sub find_records {
   my @records = ();
   foreach my $result (@{ $results }) {
     my $record = EnsEMBL::Web::User::Record->new(( 
+                                         id => $result->{id}, 
                                        type => $result->{type},
                                        user => $result->{user_id},
-                                       data => $result->{data} 
+                                       data => $result->{data}
                                                 ));
     
     push @records, $record;
@@ -120,11 +145,13 @@ sub find_records {
 }
 
 sub DESTROY {
+  ### d
   my $self = shift;
   delete $Adaptor_of{$self};
   delete $Type_of{$self};
   delete $User_of{$self};
   delete $Fields_of{$self};
+  delete $Id_of{$self};
 }
 
 }
