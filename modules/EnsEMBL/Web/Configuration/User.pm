@@ -9,7 +9,7 @@ our @ISA = qw( EnsEMBL::Web::Configuration );
 sub _add_javascript_libraries {
   ## JS libraries for AJAX bookmark editor
   my $self = shift;
-  $self->{page}->javascript->add_source( "/js/prototype-1.4.0.js" );
+  $self->{page}->javascript->add_source( "/js/prototype.js" );
   $self->{page}->javascript->add_source( "/js/accountview.js" );
 }
 
@@ -187,8 +187,6 @@ sub context_menu {
                                     'href' => "/common/update_account" );
     $self->add_entry( $flag, 'text' => "Change my password",
                                     'href' => "/common/set_password" );
-    $self->add_entry( $flag, 'text' => "Manage my bookmarks",
-                                    'href' => "/common/manage_bookmarks" );
     $self->add_entry( $flag, 'text' => "Log out",
                                     'href' => "javascript:logout_link()" );
    }
