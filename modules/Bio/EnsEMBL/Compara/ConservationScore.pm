@@ -139,6 +139,7 @@ my $pack_type = "f";
        Returntype : Bio::EnsEMBL::Compara::ConservationScore
        Exceptions : none
        Caller     : general
+       Status     : At risk
 =cut
 
 sub new {
@@ -190,6 +191,7 @@ sub new {
   Exceptions : thrown if the argument is not a
                Bio::EnsEMBL::DBSQL::ConservationScoreAdaptor object
   Caller     : general
+  Status     : At risk
 
 =cut
 
@@ -222,6 +224,7 @@ sub adaptor {
                genomic_align_block_id
   Warning    : warns if getting data from other sources fails.
   Caller     : general
+  Status     : At risk
 
 =cut
 
@@ -266,6 +269,7 @@ sub genomic_align_block {
                defined genomic_align_block 
   Warning    : warns if getting data from other sources fails.
   Caller     : general
+  Status     : At risk
 
 =cut
 
@@ -308,6 +312,7 @@ sub genomic_align_block_id {
   Returntype : integer, Returns 1 if value not defined
   Exceptions : none
   Caller     : general
+  Status     : At risk
 
 =cut
 
@@ -329,6 +334,7 @@ sub window_size {
   Returntype : integer. Return 1 if value not defined
   Exceptions : none
   Caller     : general
+  Status     : At risk
 
 =cut
 
@@ -351,6 +357,7 @@ sub position {
   Returntype : integer.
   Exceptions : none
   Caller     : general
+  Status     : At risk
 
 =cut
 
@@ -375,6 +382,7 @@ sub seq_region_pos {
   Returntype : string (either packed or space delimited)
   Exceptions : none
   Caller     : general
+  Status     : At risk
 
 =cut
 
@@ -397,6 +405,7 @@ sub observed_score {
   Returntype : string (either packed or space delimited)
   Exceptions : none
   Caller     : general
+  Status     : At risk
 
 =cut
 
@@ -419,6 +428,7 @@ sub expected_score {
   Returntype : string (either packed or space delimited)
   Exceptions : none
   Caller     : general
+  Status     : At risk
 
 =cut
 
@@ -440,6 +450,7 @@ sub diff_score {
   Returntype : float
   Exceptions : none
   Caller     : general
+  Status     : At risk
 
 =cut
 
@@ -461,6 +472,7 @@ sub y_axis_min {
   Returntype : float
   Exceptions : none
   Caller     : general
+  Status     : At risk
 
 =cut
 
@@ -483,6 +495,7 @@ sub y_axis_max {
   Returntype : boolean
   Exceptions : none
   Caller     : general
+  Status     : At risk
 
 =cut
 
@@ -502,6 +515,7 @@ sub packed {
   Returntype : none
   Exceptions : none
   Caller     : general
+  Status     : At risk
 
 =cut
 
@@ -518,12 +532,16 @@ sub reverse {
     
     #swap position orientation and reverse position in alignment
     my $end = $self->position + (($num_scores - 1) * $self->window_size);
-    $self->position($self->genomic_align_block->length - $end);
+    #10.10.06 +1 so position starts at 1 not 0
+    #$self->position($self->genomic_align_block->length - $end);
+    $self->position($self->genomic_align_block->length - $end + 1);
 
     #swap position orientation and reverse seq_region_pos in alignment
     if (defined $self->seq_region_pos) {
 	$end = $self->seq_region_pos + (($num_scores - 1) * $self->window_size);
-	$self->seq_region_pos($self->genomic_align_block->length - $end);
+	#10.10.06 +1 so position starts at 1 not 0
+	#$self->seq_region_pos($self->genomic_align_block->length - $end);
+	$self->seq_region_pos($self->genomic_align_block->length - $end + 1);
     }
 
     #reverse score strings
@@ -553,7 +571,6 @@ sub _reverse_score {
 	    $rev_str .= $scores[$i];	
 	} 
     }
-
     return $rev_str;
 }
 
