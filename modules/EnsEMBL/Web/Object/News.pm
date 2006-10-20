@@ -12,7 +12,7 @@ our @ISA = qw(EnsEMBL::Web::Object);
 
 #------------------- ACCESSOR FUNCTIONS -----------------------------
 
-sub releases   { return $_[0]->Obj->{'releases'};   }
+sub releases   { return $_[0]->Obj->{'releases'};   } ### a
 sub all_cats   { return $_[0]->Obj->{'all_cats'};   }
 sub all_spp   { return $_[0]->Obj->{'all_spp'};   }
 sub valid_spp   { return $_[0]->Obj->{'valid_spp'};   }
