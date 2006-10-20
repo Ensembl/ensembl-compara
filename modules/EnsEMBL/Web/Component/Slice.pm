@@ -131,57 +131,57 @@ sub align_sequence_display {
     push @tsa, (time - $ts);
 
     if ($alignments_no > 1 && (my $conservation = $object->param("conservation") ne 'off')) {
-	  my $num = int(scalar(@slice_display) + 1) / 2;
+      my $num = int(scalar(@slice_display) + 1) / 2;
 	  
-	  foreach my $nt (@SEQ) {
-	    $nt->{S} = join('', grep {$nt->{$_} > $num} keys(%{$nt}));
-	    $nt->{S} =~ s/[-.]//;
-	  }
+      foreach my $nt (@SEQ) {
+	$nt->{S} = join('', grep {$nt->{$_} > $num} keys(%{$nt}));
+	$nt->{S} =~ s/[-.]//;
+      }
 
-	  #      warn("SEQ:".Dumper(\@SEQ));
-	  push @tsa, (time - $ts);
+      #      warn("SEQ:".Dumper(\@SEQ));
+      push @tsa, (time - $ts);
 
-	  foreach my $sl (@slice_display) {
-	    
-	    my $idx = 0;
-	    my $ass = $sl->isa('Bio::EnsEMBL::Compara::AlignSlice::Slice') ? 1 : 0;
-	    my $spe = $ass ? $sl->seq_region_name : $object->species;
-	    $spe =~ s/ /_/g;
-	    my $sequence = $SeqDNA->{$spe};
-	    
-	    my $f = 0;
-	    my $ms = 0;
-	    my @csrv = ();
-	    foreach my $sym (split(//, $sequence)) {
-	      if (uc ($sym) eq $SEQ[$idx++]->{S}) {
-		if ($f == 0) {
-		  $f = 1;
-		  $ms = $idx;
-		}
-	      } else {
-		if ($f == 1) {
-		  $f = 0;
-		  push @csrv, [$ms, $idx];
-		}
-	      }
+      foreach my $sl (@slice_display) {
+	
+	my $idx = 0;
+	my $ass = $sl->isa('Bio::EnsEMBL::Compara::AlignSlice::Slice') ? 1 : 0;
+	my $spe = $ass ? $sl->seq_region_name : $object->species;
+	$spe =~ s/ /_/g;
+	my $sequence = $SeqDNA->{$spe};
+	
+	my $f = 0;
+	my $ms = 0;
+	my @csrv = ();
+	foreach my $sym (split(//, $sequence)) {
+	  if (uc ($sym) eq $SEQ[$idx++]->{S}) {
+	    if ($f == 0) {
+	      $f = 1;
+	      $ms = $idx;
 	    }
+	  } else {
 	    if ($f == 1) {
+	      $f = 0;
 	      push @csrv, [$ms, $idx];
 	    }
-	      
-	    $DNA->{$spe} = \@csrv;
 	  }
 	}
+	if ($f == 1) {
+	  push @csrv, [$ms, $idx];
+	}
+	
+	$DNA->{$spe} = \@csrv;
+      }
+    }
     push @tsa, (time - $ts);
   } # end if ($aselect eq'NONE')
   
-#  warn("DNA:".Dumper($DNA));
-
+  #  warn("DNA:".Dumper($DNA));
+  
   my $t1 = time;
   my ($exon_On, $cs_On, $snp_On, $snp_Del, $ins_On, $codon_On) = (1, 16, 32, 64, 128, 256);
   my @linenumbers = $object->get_slice_object->line_numbering();
   my ($lineformat)  =  $object->param('line_numbering') eq 'slice' ? length($max_position) : sort{$b<=>$a} map{length($_)} @linenumbers;
-
+  
   if (@linenumbers) {
       $linenumbers[0] --;
   }
@@ -199,7 +199,7 @@ sub align_sequence_display {
     my @fl = $spe =~ m/^(.)|_(.)/g;
     my $abbr = $alignments_no > 1 ? join("",@fl, " ") : '';
     my $sequence = $SeqDNA->{$spe};
-      
+    
     my $csrv = $DNA->{$spe};
 
     my $slice_length = length($sequence);
@@ -207,7 +207,7 @@ sub align_sequence_display {
     my @markup_bins;
 
     my $h;
-      
+    
     # Mark final bp
     push @markup_bins, { 'pos' => $slice_length, 'mark' => 1 };
 
@@ -252,7 +252,7 @@ sub align_sequence_display {
 
 	  foreach my $c (@{$t->translation->all_start_codon_mappings || []}) {
 	    warn(join('*', "SCod:", $spe, $t->stable_id, $c->start, $c->end, $t->strand, "\n"));
-
+	    
 	    my ($start, $end) = ($c->start, $c->end);
 	    if ($t->strand < 0) {
 	      ($start, $end) = ($slice_length - $end, $slice_length - $start);
