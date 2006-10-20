@@ -697,13 +697,47 @@ sub find_records {
   return $results;
 }
 
+sub delete_record {
+  my ($self, %params) = @_;
+  my $id = $params{id};
+  warn "DELETING: " . $id;
+  my $sql = qq(
+    DELETE FROM records 
+    WHERE id = $id
+  );
+  my $sth = $self->{'_handle'}->prepare($sql);
+  my $result = $sth->execute();
+
+  return $result;
+}
+
+sub update_record {
+  my ($self, %params) = @_;
+  my $id = $params{id};
+  my $user_id = $params{user};
+  my $type = $params{type};
+  my $data = $params{data};
+  warn "UPDATING: " . $user_id . ": " . $type . ": " . $data;
+  my $sql = qq(
+    UPDATE records 
+    SET user_id = $user_id,
+        type    = "$type",
+        data    = "$data"
+    WHERE id = $id
+  );
+  my $sth = $self->{'_handle'}->prepare($sql);
+  my $result = $sth->execute();
+
+  return $result;
+}
+
 sub insert_record {
- my ($self, %params) = @_;
- my $user_id = $params{user};
- my $type = $params{type};
- my $data = $params{data};
- warn "INSERTING: " . $user_id . ": " . $type . ": " . $data;
- my $sql = qq(
+  my ($self, %params) = @_;
+  my $user_id = $params{user};
+  my $type = $params{type};
+  my $data = $params{data};
+  warn "INSERTING: " . $user_id . ": " . $type . ": " . $data;
+  my $sql = qq(
     INSERT INTO records 
     SET user_id = $user_id,
         type    = "$type",
