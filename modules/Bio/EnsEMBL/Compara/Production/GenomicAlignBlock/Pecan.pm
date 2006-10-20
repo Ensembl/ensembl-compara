@@ -105,7 +105,6 @@ sub run
       -tree_string => $self->tree_string,
       -analysis => $self->analysis,
       -parameters => $self->{_java_options},
-      -max_block_size => $self->{_max_block_size},
       );
   $self->{'_runnable'} = $runnable;
   $runnable->run_analysis;
@@ -120,20 +119,60 @@ sub write_output {
   $gaba->use_autoincrement(0);
   my $gaa = $self->{'comparaDBA'}->get_GenomicAlignAdaptor;
   $gaa->use_autoincrement(0);
+
+  my $gaga = $self->{'comparaDBA'}->get_GenomicAlignGroupAdaptor;
+
   foreach my $gab (@{$self->{'_runnable'}->output}) {
-    foreach my $ga (@{$gab->genomic_align_array}) {
-      $ga->adaptor($gaa);
-      $ga->method_link_species_set($mlss);
-      $ga->level_id(1);
-      unless (defined $gab->length) {
-        $gab->length(length($ga->aligned_sequence));
+      foreach my $ga (@{$gab->genomic_align_array}) {
+	  $ga->adaptor($gaa);
+	  $ga->method_link_species_set($mlss);
+	  $ga->level_id(1);
+	  unless (defined $gab->length) {
+	      $gab->length(length($ga->aligned_sequence));
+	  }
       }
-    }
-    $gab->adaptor($gaba);
-    $gab->method_link_species_set($mlss);
-    $gaba->store($gab);
+      $gab->adaptor($gaba);
+      $gab->method_link_species_set($mlss);
+      my $group;
+      
+      # Split block if it is too long and store as groups
+      if ($self->max_block_size() and $gab->length > $self->max_block_size()) {
+	  my $splited_gabs = [];
+	  for (my $start = 1; $start <= $gab->length; $start += $self->max_block_size()) {
+	      my $new_gab = $gab->restrict_between_alignment_positions(
+			      $start, $start + $self->max_block_size() - 1, 1);
+	      
+	      foreach my $genomic_align (@{$new_gab->genomic_align_array}) {
+		  push @$group, $genomic_align;
+	      }
+	      $gaba->store($new_gab);
+	      $self->_write_gerp_dataflow($new_gab, $mlss);
+	  }
+	  my $gag = Bio::EnsEMBL::Compara::GenomicAlignGroup->new
+	      (-type => "split",
+	       -genomic_align_array => $group);
+	  $gaga->store($gag);
+      } else {
+	  $gaba->store($gab);
+	  $self->_write_gerp_dataflow($gab, $mlss);
+      }
   }
   return 1;
+}
+
+sub _write_gerp_dataflow {
+    my ($self, $gab, $mlss) = @_;
+    
+    my $species_set = "[";
+    my $genome_db_set  = $mlss->species_set;
+    
+    foreach my $genome_db (@$genome_db_set) {
+	$species_set .= $genome_db->dbID . ","; 
+    }
+    $species_set .= "]";
+    
+    my $output_id = "{genomic_align_block_id=>" . $gab->dbID . ",species_set=>" .  $species_set . "}";
+    $self->dataflow_output_id($output_id);
 }
 
 ##########################################
@@ -213,6 +252,13 @@ sub method_link_species_set_id {
   $self->{'_method_link_species_set_id'} = shift if(@_);
   return $self->{'_method_link_species_set_id'};
 }
+
+sub max_block_size {
+  my $self = shift;
+  $self->{'_max_block_size'} = shift if(@_);
+  return $self->{'_max_block_size'};
+}
+
 
 ##########################################
 #

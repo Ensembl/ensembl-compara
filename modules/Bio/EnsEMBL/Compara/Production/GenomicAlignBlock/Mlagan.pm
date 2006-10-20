@@ -93,6 +93,8 @@ sub write_output {
   my $mlssa = $self->{'comparaDBA'}->get_MethodLinkSpeciesSetAdaptor;
   my $mlss = $mlssa->fetch_by_dbID($self->method_link_species_set_id);
   my $gaba = $self->{'comparaDBA'}->get_GenomicAlignBlockAdaptor;
+  my $gaga = $self->{'comparaDBA'}->get_GenomicAlignGroupAdaptor;
+
   foreach my $gab (@{$self->{'_runnable'}->output}) {
     foreach my $ga (@{$gab->genomic_align_array}) {
       $ga->method_link_species_set($mlss);
@@ -109,9 +111,38 @@ sub write_output {
       }
     }
     $gab->method_link_species_set($mlss);
-    $gaba->store($gab);
+    
+    my $group;
+    # Split block if it is too long and store as groups
+    if ($self->max_block_size() and $gab->length > $self->max_block_size()) {
+	my $splited_gabs = [];
+	
+	for (my $start = 1; $start <= $gab->length; $start += $self->max_block_size()) {
+	    my $new_gab = $gab->restrict_between_alignment_positions(
+			   $start, $start + $self->max_block_size() - 1, 1);
 
-    #21/04/2006 kfb added for gerp analysis
+	    foreach my $genomic_align (@{$new_gab->genomic_align_array}) {
+		push @$group, $genomic_align;
+	    }
+
+	    $gaba->store($new_gab);
+	    $self->_write_gerp_dataflow($new_gab, $mlss);
+	}
+	my $gag = Bio::EnsEMBL::Compara::GenomicAlignGroup->new
+	    (-type => "split",
+	     -genomic_align_array => $group);
+	$gaga->store($gag);
+    } else {
+	$gaba->store($gab);
+	$self->_write_gerp_dataflow($gab, $mlss);
+    }
+  }
+  return 1;
+}
+
+sub _write_gerp_dataflow {
+    my ($self, $gab, $mlss) = @_;
+
     my $species_set = "[";
     my $genome_db_set  = $mlss->species_set;
 
@@ -122,8 +153,7 @@ sub write_output {
       
     my $output_id = "{genomic_align_block_id=>" . $gab->dbID . ",species_set=>" .  $species_set . "}";
     $self->dataflow_output_id($output_id);
-  }
-  return 1;
+
 }
 
 ##########################################
@@ -198,6 +228,13 @@ sub method_link_species_set_id {
   return $self->{'_method_link_species_set_id'};
 }
 
+sub max_block_size {
+  my $self = shift;
+  $self->{'_max_block_size'} = shift if(@_);
+  return $self->{'_max_block_size'};
+}
+
+
 ##########################################
 #
 # internal methods
@@ -225,6 +262,9 @@ sub get_params {
   }
   if(defined($params->{'tree_analysis_data_id'})) {
     $self->{_tree_analysis_data_id} = $params->{'tree_analysis_data_id'};
+  }
+  if(defined($params->{'max_block_size'})) {
+    $self->{_max_block_size} = $params->{'max_block_size'};
   }
 
   return 1;
