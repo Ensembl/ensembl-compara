@@ -6,6 +6,7 @@ no warnings "uninitialized";
 
 use EnsEMBL::Web::SpeciesDefs;
 use EnsEMBL::Web::DBSQL::UserDB;
+use EnsEMBL::Web::User::Record;
 
 warn("AJAX: Updating bookmark"); 
 
@@ -21,9 +22,17 @@ print "Content-type: text/plain\n\n";
 if ($user eq $user_id) {
   my $user_adaptor = EnsEMBL::Web::DBSQL::UserDB->new();
   if ($action eq 'update') {
-    print $user_adaptor->rename_bookmark($bookmark, $name); 
+    my @records = EnsEMBL::Web::User::Record->find_bookmark_by_id($bookmark);
+    my $record = $records[0];
+    $record->adaptor($user_adaptor);
+    $record->name($name);
+    $record->save;
+    print $name;
   } elsif ($action eq 'delete') {
-    print $user_adaptor->delete_bookmark($bookmark); 
+    my @records = EnsEMBL::Web::User::Record->find_bookmark_by_id($bookmark);
+    my $record = $records[0];
+    $record->adaptor($user_adaptor);
+    $record->delete;
   }
 } else {
   print "No access";
