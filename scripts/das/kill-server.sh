@@ -3,14 +3,14 @@
 inifile=$1
 
 if [ ! -f ${inifile} ]; then
-    print -u2 "Can not find ini-file '${inifile}'"
+    echo "Can not find ini-file '${inifile}'"
     exit 1
 fi
 
 pidfile=${inifile}.pid
 
 if [ ! -f ${pidfile} ]; then
-    print -u2 "Can not find pid-file '${pidfile}'"
+    echo "Can not find pid-file '${pidfile}'"
     exit 1
 fi
 
