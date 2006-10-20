@@ -471,6 +471,7 @@ sub fetch_all_by_MethodLinkSpeciesSet_Slice {
                 -strand => $this_genomic_align_block->reference_genomic_align->dnafrag_strand
             );
         $feature = $feature->transfer($reference_slice);
+	next if (!$feature);
         $this_genomic_align_block->reference_slice($reference_slice);
         $this_genomic_align_block->reference_slice_start($feature->start);
         $this_genomic_align_block->reference_slice_end($feature->end);
