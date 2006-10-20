@@ -3,7 +3,7 @@ Using a compara database as a DAS source
 ========================================
 
 Here is a small document that describe how you can set up a DAS server
-to display whole genome alignment as DAS features.
+to display whole genome alignment and conservation scores as DAS features.
 We have used ProServer version 1 DAS server and tested the display on
 Ensembl website DAS client only.
 
@@ -34,7 +34,8 @@ to
 #!/usr/local/bin/perl -w
 
 6. Create your configuration file, taking compara_das.ini as an example
-or by looking at perldoc Bio::Das::ProServer::SourceAdaptor::compara.
+or by looking at perldoc Bio::Das::ProServer::SourceAdaptor::compara or
+Bio::Das::ProServer::SourceAdaptor::conservation_score
 You will also need to create a registry file. See registry.example.pl 
 for an example.
 
