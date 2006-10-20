@@ -84,10 +84,10 @@ sub context_menu {
                     'text' => 'Peptide sequences (FASTA)', 'title' => 'BioMart: Peptide sequences FASTA',
         'href' => "/@{[$self->{object}->species]}/martlink?type=familyseq;family_id=".$self->{object}->stable_id );
   $self->{page}->menu->add_entry( "family$self->{flag}", 'text' => 'Export alignments',
-    'href' => sprintf( '/%s/alignview?family_stable_id=%s', $self->{object}->species, $self->{object}->stable_id ),
+    'href' => sprintf( '/%s/alignview?class=Family;family_stable_id=%s', $self->{object}->species, $self->{object}->stable_id ),
     'options' => [
-       map { { 'href'=> sprintf( '/%s/alignview?family_stable_id=%s;format=%s',
-                                 $self->{object}->species, $self->{object}->stable_id, lc($_) ), 'text' => "Export as $_ format" } }
+       map { { 'href'=> sprintf( '/%s/alignview?class=Family;family_stable_id=%s;format=%s',
+         $self->{object}->species, $self->{object}->stable_id, lc($_) ), 'text' => "Export as $_ format" } }
        qw(FASTA MSF ClustalW Selex Pfam Mega Nexus Phylip PSI)
     ]
   );
