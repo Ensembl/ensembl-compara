@@ -122,7 +122,7 @@ sub transcriptsnpview {
   $self->initialize_zmenu_javascript;
   $self->set_title( 'Transcript SNP Report for '.$obj->stable_id );
 
- if ( $obj->gene->length >3000000){
+ if ( $obj->gene && $obj->gene->length >3000000){
    my $panel_return = new EnsEMBL::Web::Document::Panel(
 	  'caption' => 'Exception: for '.$obj->stable_id,
           'object_type' => 'transcript',

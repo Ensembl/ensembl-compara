@@ -27,17 +27,15 @@ no warnings "uninitialized";
 sub align_sequence_display {
   my( $panel, $object ) = @_;
 
-  my $object_id = $object->stable_id;
   my $slice   = $object->get_slice_object->Obj;
   my $sstrand = $slice->strand; # SNP strand bug has been fixed in snp_display function
   my $sstart  = $slice->start;
   my $send    = $slice->end;
-  my $slength = $slice->length;
 
   my $species = $object->species;
   my $orthologue = {
       $species => {
-	  $object_id => 1
+	  $object->stable_id => 1
 	  }
       };
   
@@ -242,7 +240,7 @@ sub align_sequence_display {
 	push @markup_bins, { 'pos' => $c->[1], 'mask' => -$cs_On };
       }
     }
-      
+ 
     if (  $object->param( 'codons_display' ) ne 'off' ) {
       my @transcripts =  map  { @{$_->get_all_Transcripts } } @{$as->get_all_Genes()} ;
       if ($ass) {
@@ -311,7 +309,7 @@ sub align_sequence_display {
 	}
 	
       }
-    } # if object->param('codon_display')
+    } # if object->param('codon_display') ----------------------------
 
     my @exons = ();
 

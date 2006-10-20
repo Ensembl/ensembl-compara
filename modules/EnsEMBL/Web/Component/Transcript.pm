@@ -1215,6 +1215,8 @@ sub _sample_configs {
       $transcript = $test_transcript;  # Only display on e transcripts...
       last;
     }
+    next unless $transcript;
+
     my $raw_coding_start = defined( $transcript->coding_region_start ) ? $transcript->coding_region_start : $transcript->start;
     my $raw_coding_end   = defined( $transcript->coding_region_end )   ? $transcript->coding_region_end : $transcript->end;
     my $coding_start = $raw_coding_start + $object->munge_gaps( 'TSV_transcript', $raw_coding_start );
