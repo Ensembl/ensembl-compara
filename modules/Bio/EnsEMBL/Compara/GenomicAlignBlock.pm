@@ -1453,8 +1453,8 @@ sub restrict_between_alignment_positions {
   my $new_reference_genomic_align;
   my $new_genomic_aligns;
 
-  $start = 1 if (!defined($start));
-  $end = $self->length if (!defined($end));
+  $start = 1 if (!defined($start) or $start < 1);
+  $end = $self->length if (!defined($end) or $end > $self->length);
 
   my $length_of_truncated_seq_at_the_start = $start - 1;
   my $length_of_truncated_seq_at_the_end = $self->length - $end;
@@ -1472,24 +1472,43 @@ sub restrict_between_alignment_positions {
     my $dnafrag_strand = $this_genomic_align->dnafrag_strand;
     my $cigar_line = $this_genomic_align->cigar_line;
     my $new_genomic_align = new Bio::EnsEMBL::Compara::GenomicAlign(
-          -method_link_species_set => $this_genomic_align->method_link_species_set,
-          -dnafrag => $this_genomic_align->dnafrag,
+          -adaptor => $this_genomic_align->adaptor,
           -dnafrag_start => $this_genomic_align->dnafrag_start,
           -dnafrag_end => $this_genomic_align->dnafrag_end,
           -dnafrag_strand => $dnafrag_strand,
           -cigar_line => $cigar_line,
-          -level_id => $this_genomic_align->level_id
-      );
-    my @gags;
-    foreach my $gag (@{$this_genomic_align->genomic_align_groups}) {
-      my $new_gag = Bio::EnsEMBL::Compara::GenomicAlignGroup->new
-        (-type                => $gag->type,
-         -dbID                => $gag->dbID);
-      push @gags, $new_gag;
+    );
+    if ($this_genomic_align->{method_link_species_set_id}) {
+	$new_genomic_align->method_link_species_set_id($this_genomic_align->method_link_species_set_id);
+    } 
+    if ($this_genomic_align->{method_link_species_set}) {
+	$new_genomic_align->method_link_species_set($this_genomic_align->method_link_species_set);
     }
-    if (scalar @gags) {
-      $new_genomic_align->genomic_align_groups(\@gags);
+
+    if ($this_genomic_align->{dnafrag_id}) {
+	$new_genomic_align->dnafrag_id($this_genomic_align->dnafrag_id);
+    } 
+    if ($this_genomic_align->{dnafrag}) {
+	$new_genomic_align->dnafrag($this_genomic_align->dnafrag);
     }
+
+    if ($this_genomic_align->{level_id}) {
+	$new_genomic_align->level_id($this_genomic_align->level_id);
+    }
+
+    if ($this_genomic_align->{genomic_align_groups}) {
+	my @gags;
+	foreach my $gag (@{$this_genomic_align->genomic_align_groups}) {
+	    my $new_gag = Bio::EnsEMBL::Compara::GenomicAlignGroup->new
+		(-type                => $gag->type,
+		 -dbID                => $gag->dbID);
+	    push @gags, $new_gag;
+	}
+	if (scalar @gags) {
+	    $new_genomic_align->genomic_align_groups(\@gags);
+	}
+    }
+
     if ($self->reference_genomic_align and $this_genomic_align == $self->reference_genomic_align) {
       $new_reference_genomic_align = $new_genomic_align;
     }
@@ -1593,6 +1612,7 @@ sub restrict_between_alignment_positions {
     }
     $genomic_align_block->reference_genomic_align($reference_genomic_align) if ($reference_genomic_align);
   }
+  $genomic_align_block->length($final_aligned_length);
 
   return $genomic_align_block;
 }
