@@ -38,7 +38,6 @@ $blast_adaptor->ticket( $ticket );
 
 my $runnable = eval { Bio::Tools::Run::Search->retrieve( $token, $blast_adaptor  ) };
 
-warn "HERE";
 if( ! $runnable ){ 
   warn "Renaming $filename -> $FN3";
   rename $filename, $FN3;

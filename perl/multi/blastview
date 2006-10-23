@@ -247,7 +247,7 @@ MAIN:{
 
   if( $stage eq 'setup' or $stage eq 'configure' ){
     if( $BLAST->modified ){
-      warn( "STORING BLAST: $TICKET [PID=$$ TIME=".(time()-1060600000)."]" );
+#      warn( "STORING BLAST: $TICKET [PID=$$ TIME=".(time()-1060600000)."]" );
       $BLAST->store;
     }
   }
@@ -2294,7 +2294,6 @@ sub populate_result_summary{
   }
   if( $oldstyle ){ save_state() }
 
-  warn "@data_view_types";
   my $flag = 0;
   # Decide which sections/columns user has requested
   foreach my $type ( @data_view_types ){
