@@ -26,8 +26,9 @@ sub accountview {
   my $html;
 
   my $id = $object->get_user_id;
-  $html .= _show_details($panel, $object, $id);
+ # $html .= _show_details($panel, $object, $id);
   $html .= _show_bookmarks($panel, $object, $id);
+  $html .= _show_groups($panel, $object, $id);
   #$html .= _show_configs($panel, $object, $id);
   #$html .= _show_blast($panel, $object, $id);
 
@@ -56,6 +57,19 @@ sub _show_details {
   return $html;
 }
 
+sub _show_groups {
+  my( $panel, $object, $id ) = @_;
+  my $html .= "<h3>Groups</h3>";
+  $html .= "Ensembl users can join together to share configuration settings and other information as groups. Your groups are listed below."; 
+  $html .= "<ul>\n";
+  $html .= "<li><a href=''>Cambridge University Undergraduates</a> (administrator)</li>\n";
+  $html .= "<li>Addenbrookes Hospital group (member)</li>\n";
+  $html .= "<li>Research team (invited)</li>\n";
+  $html .= "</ul>\n";
+  $html .= "<a href='/start'>Start your own group &rarr;</a>";
+  return $html;
+}
+
 #---------------------- BOOKMARKS ------------------------------------------------------
 
 sub _show_bookmarks {
@@ -65,7 +79,7 @@ sub _show_bookmarks {
   my @bookmarks = EnsEMBL::Web::User::Record->find_bookmark_by_user_id($id);
 
   ## return the message
-  my $html = "<h3>My bookmarks</h3>\n";
+  my $html = "<h3>Bookmarks</h3>\n";
 
   if (scalar(@bookmarks) > 0) {
     if ($editable) {
@@ -136,7 +150,7 @@ sub _show_configs {
   my @configs = @{$object->get_configs($id)};
 
   ## return the message
-  my $html = "<h3>My saved configurations</h3>\n";
+  my $html = "<h3>Saved configurations</h3>\n";
 
   if (scalar(@configs) > 0) {
     if ($editable) {
@@ -175,7 +189,7 @@ sub _show_blast {
   my $blast = {};
 
 ## return the message
-  my $html = "<h3>My BLAST tickets</h3>\n";
+  my $html = "<h3>BLAST tickets</h3>\n";
 
   if (keys %$blast) {
     $html .= "<ul>\n";
