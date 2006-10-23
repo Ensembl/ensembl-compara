@@ -114,11 +114,6 @@ sub context_menu {
     'text' => "Gene information",
     'href' => "/$species/geneview?$q_string_g"
   ) if $q_string_g;
-  $self->add_entry( $flag,
-    'code' => 'gene_splice_info',
-    'text' => "Gene splice site image",
-    'href' => "/$species/genespliceview?$q_string_g"
-  ) if $q_string_g;
 
   $self->add_entry( $flag,
     'code'  => 'gene_reg_info',
@@ -127,12 +122,36 @@ sub context_menu {
     'href'  => "/$species/generegulationview?$q_string_g" 
   ) if $obj->species_defs->get_table_size({ -db => 'ENSEMBL_DB', -table => 'regulatory_feature'}) && $obj->gene;
 
-  unless ( $obj->get_db eq 'vega' ) {
-  $self->add_entry( $flag,
-    'coed' => 'gene_var_info',
-    'text' => "Gene variation info.",
-    'href' => "/$species/genesnpview?$q_string_g"
-  ) if $obj->species_defs->databases->{'ENSEMBL_VARIATION'} && $q_string_g; 
+  if ( $obj->get_db eq 'core' ) {
+   $self->add_entry( $flag,
+		      'code'  => 'genomic_seq_align',
+		      'text'  => "Genomic sequence alignment",
+		      'title' => 'GeneSeqAlignView - View marked up sequence of gene '.$obj->stable_id.' aligned to other species',
+		      'href'  => "/$species/geneseqalignview?$q_string" );
+
+    $self->add_entry( $flag,
+		      'code'  => 'gene_splice_info',
+		      'text'  => "Gene splice site image",
+		      'title' => 'GeneSpliceView - Graphical diagram of alternative splicing of '.$obj->stable_id,
+		      'href'  => "/$species/genespliceview?$q_string" ) if $q_string_g;;
+
+    $self->add_entry( $flag,
+		      'code'  => 'genetree',
+		      'text'  => "Gene tree info",
+		      'title' => 'GeneTreeView - View graphic display of the gene tree for gene '.$obj->stable_id,
+		      'href'  => "/$species/genetreeview?$q_string" );
+
+    $self->add_entry( $flag,
+		      'coed' => 'gene_var_info',
+		      'text' => "Gene variation info.",
+		      'href' => "/$species/genesnpview?$q_string_g"
+		    ) if $obj->species_defs->databases->{'ENSEMBL_VARIATION'} && $q_string_g; 
+    $self->add_entry( $flag,
+		      'code'  => 'id_history',
+		      'text'  => 'ID history',
+		      'title' => 'ID history - Protein stable ID history for'. $obj->stable_id,
+		      'href'  => "/$species/idhistoryview?$q_string") if $obj->species_defs->get_table_size({-db  => "ENSEMBL_DB", -table => 'gene_archive'});
+    
   }
 
   $self->add_entry( $flag,
@@ -140,12 +159,6 @@ sub context_menu {
     'text' => "Genomic sequence",
     'href' => "/$species/geneseqview?$q_string_g"
   ) if $q_string_g;
-
- $self->add_entry( $flag,
-    'code'  => 'id_history',
-    'text'  => 'ID history',
-    'title' => 'ID history - Protein stable ID history for'. $obj->stable_id,
-    'href'  => "/$species/idhistoryview?$q_string") if $obj->species_defs->get_table_size({-db  => "ENSEMBL_DB", -table => 'gene_archive'});
 
   $self->add_entry( $flag,
     'code' => 'trans_info',

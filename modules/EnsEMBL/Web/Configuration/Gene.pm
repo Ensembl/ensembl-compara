@@ -342,11 +342,6 @@ sub context_menu {
     'text'  => "Gene information",
     'title' => 'GeneView - Information about gene '.$obj->stable_id,
     'href'  => "/$species/geneview?$q_string" );
-  $self->add_entry( $flag,
-    'code'  => 'gene_splice_info',
-    'text'  => "Gene splice site image",
-    'title' => 'GeneSpliceView - Graphical diagram of alternative splicing of '.$obj->stable_id,
-    'href'  => "/$species/genespliceview?$q_string" );
 
  $self->add_entry( $flag,
     'code'  => 'gene_reg_info',
@@ -361,32 +356,38 @@ sub context_menu {
     'title' => 'GeneSeqView - View marked up sequence of gene '.$obj->stable_id,
     'href'  => "/$species/geneseqview?$q_string" );
 
-  $self->add_entry( $flag,
-    'code'  => 'genomic_seq_align',
-    'text'  => "Genomic sequence alignment",
-    'title' => 'GeneSeqAlignView - View marked up sequence of gene '.$obj->stable_id.' aligned to other species',
-    'href'  => "/$species/geneseqalignview?$q_string" );
+  if ($obj->get_db eq 'core' ) {
+    $self->add_entry( $flag,
+		      'code'  => 'genomic_seq_align',
+		      'text'  => "Genomic sequence alignment",
+		      'title' => 'GeneSeqAlignView - View marked up sequence of gene '.$obj->stable_id.' aligned to other species',
+		      'href'  => "/$species/geneseqalignview?$q_string" );
 
-  $self->add_entry( $flag,
-    'code'  => 'genetree',
-    'text'  => "Gene tree info",
-    'title' => 'GeneTreeView - View graphic display of the gene tree for gene '.$obj->stable_id,
-    'href'  => "/$species/genetreeview?$q_string" );
+    $self->add_entry( $flag,
+		      'code'  => 'gene_splice_info',
+		      'text'  => "Gene splice site image",
+		      'title' => 'GeneSpliceView - Graphical diagram of alternative splicing of '.$obj->stable_id,
+		      'href'  => "/$species/genespliceview?$q_string" );
 
-  unless ($obj->get_db eq 'vega' ) {
-  $self->add_entry( $flag,
-    'code'  => 'gene_var_info',
-    'text'  => "Gene variation info.",
-    'title' => 'GeneSNPView - View of consequences of variations on gene '.$obj->stable_id,
-    'href'  => "/$species/genesnpview?$q_string" ) if $obj->species_defs->databases->{'ENSEMBL_VARIATION'};
+    $self->add_entry( $flag,
+		      'code'  => 'genetree',
+		      'text'  => "Gene tree info",
+		      'title' => 'GeneTreeView - View graphic display of the gene tree for gene '.$obj->stable_id,
+		      'href'  => "/$species/genetreeview?$q_string" );
+
+    $self->add_entry( $flag,
+		      'code'  => 'gene_var_info',
+		      'text'  => "Gene variation info.",
+		      'title' => 'GeneSNPView - View of consequences of variations on gene '.$obj->stable_id,
+		      'href'  => "/$species/genesnpview?$q_string" ) if $obj->species_defs->databases->{'ENSEMBL_VARIATION'};
+
+
+    $self->add_entry( $flag,
+		      'code'  => 'id_history',
+		      'text'  => 'ID history',
+		      'title' => 'ID history - Gene stable ID history for'. $obj->stable_id,
+		      'href'  => "/$species/idhistoryview?$q_string") if $obj->species_defs->get_table_size({-db  => "ENSEMBL_DB", -table => 'gene_archive'});
   }
-
-  $self->add_entry( $flag,
-    'code'  => 'id_history',
-    'text'  => 'ID history',
-    'title' => 'ID history - Gene stable ID history for'. $obj->stable_id,
-    'href'  => "/$species/idhistoryview?$q_string") if $obj->species_defs->get_table_size({-db  => "ENSEMBL_DB", -table => 'gene_archive'});
-
   my @transcripts = 
       map { {
         'href'  => sprintf( '/%s/transview?db=%s;transcript=%s', $species, $obj->get_db, $_->stable_id ),
@@ -396,33 +397,33 @@ sub context_menu {
 
   if( @transcripts ) {
 
-  # Variation: TranscriptSNP view
-  # if meta_key in variation meta table has default strain listed
-    if ( $obj->species_defs->VARIATION_STRAIN &&  $obj->get_db ne 'vega'  ) { 
+    # Variation: TranscriptSNP view
+    # if meta_key in variation meta table has default strain listed
+    if ( $obj->species_defs->VARIATION_STRAIN &&  $obj->get_db eq 'core'  ) { 
       my $strain =  $obj->species_defs->translate( "strain" )."s";
-    # Transcript SNP View
-    my @sample_links =
-      map { {
-        'href'    => sprintf( '/%s/transcriptsnpview?db=%s;transcript=%s', $species, $obj->get_db, $_->stable_id ),
-	  'text'  => $_->stable_id,
-	}} sort{ $a->stable_id cmp $b->stable_id } @{ $obj->get_all_transcripts };
+      # Transcript SNP View
+      my @sample_links =
+	map { {
+	  'href'    => sprintf( '/%s/transcriptsnpview?db=%s;transcript=%s', $species, $obj->get_db, $_->stable_id ),
+	    'text'  => $_->stable_id,
+	  }} sort{ $a->stable_id cmp $b->stable_id } @{ $obj->get_all_transcripts };
 
       $self->add_entry( $flag,
-       'code'  => 'compare_samples',
-       'text'  => "Compare SNPs in transcript",
-       'title' => "TranscriptSNP View - Compare transcript variation in different $strain",
-       'href'  => $sample_links[0]{'href'},
-       'options' => \@sample_links,
-      );
+			'code'  => 'compare_samples',
+			'text'  => "Compare SNPs in transcript",
+			'title' => "TranscriptSNP View - Compare transcript variation in different $strain",
+			'href'  => $sample_links[0]{'href'},
+			'options' => \@sample_links,
+		      );
     }
 
     $self->add_entry( $flag,
-      'code'  => 'trans_info',
-      'text'  => "Transcript information",
-      'title' => "TransView - Detailed transcript information",
-      'href'  => $transcripts[0]{'href'},
-      'options' => \@transcripts
-    );
+		      'code'  => 'trans_info',
+		      'text'  => "Transcript information",
+		      'title' => "TransView - Detailed transcript information",
+		      'href'  => $transcripts[0]{'href'},
+		      'options' => \@transcripts
+		    );
 
 
     my @exons = ();

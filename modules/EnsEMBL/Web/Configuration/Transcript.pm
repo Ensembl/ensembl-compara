@@ -61,7 +61,7 @@ sub exonview {
   $self->{page}->set_title( 'Exon Report for '.$self->{object}->stable_id )
 }
 
-sub transview_tn {
+sub transview_tn { #tetraodon
   my $self = shift;
   $self->transview();
   if( $self->{object}->Obj->isa('Bio::EnsEMBL::PredictionTranscript') ) {
@@ -332,32 +332,36 @@ sub context_menu {
     'href' => "/$species/geneseqview?$q_string_g"
   ) if $q_string_g;
 
-  unless ( $obj->get_db eq 'vega' ) {
-  # Variation: GeneSNPView
-  $self->add_entry( $flag,
-    'coed' => 'gene_var_info',
-    'text' => "Gene variation info.",
-    'href' => "/$species/genesnpview?$q_string_g"
-  ) if $obj->species_defs->databases->{'ENSEMBL_VARIATION'} && $q_string_g; 
-  }
- $self->add_entry( $flag,
-    'code'  => 'id_history',
-    'text'  => 'ID history',
-    'title' => 'ID history - Transcript stable ID history for'. $obj->stable_id,
-    'href'  => "/$species/idhistoryview?$q_string") if $obj->species_defs->get_table_size({-db  => "ENSEMBL_DB", -table => 'gene_archive'});
 
-  # Variation: TranscriptSNP view
-  # if meta_key in variation meta table has default strain listed
-  if ( $obj->species_defs->VARIATION_STRAIN &&  $obj->get_db ne 'vega' ) { 
-    my $strain =  $obj->species_defs->translate( "strain" )."s";
+  if ( $obj->get_db eq 'core' && $q_string_g) {
+    # Variation: GeneSNPView
     $self->add_entry( $flag,
-		      'code'  => 'TSV',
-		      'text'  => "Compare transcript SNPs",
-		      'title' => "TranscriptSNPView - Compare variation in different $strain for this transcript ".$obj->stable_id,
-		      'href'  => "/$species/transcriptsnpview?$q_string" 
-		    );
-  }
+		      'coed' => 'gene_var_info',
+		      'text' => "Gene variation info.",
+		      'href' => "/$species/genesnpview?$q_string_g"
+		    ) if $obj->species_defs->databases->{'ENSEMBL_VARIATION'} && $q_string_g; 
 
+
+    # ID History
+    $self->add_entry( $flag,
+		      'code'  => 'id_history',
+		      'text'  => 'ID history',
+		      'title' => 'ID history - Transcript stable ID history for'. $obj->stable_id,
+		      'href'  => "/$species/idhistoryview?$q_string") if $obj->species_defs->get_table_size({-db  => "ENSEMBL_DB", -table => 'gene_archive'});
+    
+
+    # Variation: TranscriptSNP view
+    # if meta_key in variation meta table has default strain listed
+    if ( $obj->species_defs->VARIATION_STRAIN ) { 
+      my $strain =  $obj->species_defs->translate( "strain" )."s";
+      $self->add_entry( $flag,
+			'code'  => 'TSV',
+			'text'  => "Compare transcript SNPs",
+			'title' => "TranscriptSNPView - Compare variation in different $strain for this transcript ".$obj->stable_id,
+			'href'  => "/$species/transcriptsnpview?$q_string" 
+		      );
+    }
+  } # end if core and has gene
 
   $self->add_entry( $flag,
     'code' => 'trans_info',
