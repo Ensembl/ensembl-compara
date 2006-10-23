@@ -156,7 +156,7 @@ use vars qw($VERSION $HOW_BIG_IS_IT $MAX_PROCESS_SIZE
 $VERSION = '0.03';
 $CHECK_EVERY_N_REQUESTS = 1;
 $REQUEST_COUNT = 1;
-$MAX_PROCESS_SIZE  = 500000; 	# Setting in perl.startup doesn't work?
+$MAX_PROCESS_SIZE  = 100000; 	# Setting in perl.startup doesn't work?
 $MIN_SHARE_SIZE    = 0;
 $MAX_UNSHARED_SIZE = 0;
 $WIN32 = 0;
@@ -336,7 +336,6 @@ sub setmax_unshared {
 }
 
 sub handler {
-warn "A::SL";
     my $r = shift || Apache->request;
     if ($r->is_main()) {
         # we want to operate in a cleanup handler

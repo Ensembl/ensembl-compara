@@ -323,6 +323,7 @@ sub format_frequencies {
 
     # Descriptions too long. Only display first sentence
     (my $description = $freq_data{$pop_id}{pop_info}{Description}) =~ s/International HapMap project.*/International HapMap project\.\.\./;
+    $description =~ s/<.*?>//g;
     if (length $description > 220) {
       $description = substr($description, 0, 220) ."...";
     }

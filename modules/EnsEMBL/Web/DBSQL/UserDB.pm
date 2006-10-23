@@ -25,7 +25,7 @@ sub new {
   my $self = { '_request' => $r };
   if(defined( EnsEMBL::Web::SpeciesDefs->ENSEMBL_USERDB_NAME ) and EnsEMBL::Web::SpeciesDefs->ENSEMBL_USERDB_NAME ne '') {
     eval {
-      $self->{'_handle'} =
+      $self->{'_handle'} =  $EnsEMBL::Web::Apache::Handlers::ENSEMBL_USER_DB_HANDLE ||=
          DBI->connect(
  	  	"dbi:mysql:@{[EnsEMBL::Web::SpeciesDefs->ENSEMBL_USERDB_NAME]}:@{[EnsEMBL::Web::SpeciesDefs->ENSEMBL_USERDB_HOST]}:@{[EnsEMBL::Web::SpeciesDefs->ENSEMBL_USERDB_PORT]}",
 		EnsEMBL::Web::SpeciesDefs->ENSEMBL_USERDB_USER,

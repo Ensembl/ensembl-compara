@@ -21,6 +21,9 @@ use Exporter;
 
 our @ISA = qw(Exporter);
 
+our $THIS_HOST;
+our $LOG_INFO; 
+our $LOG_TIME; 
 our $ENSEMBL_USER_DB_HANDLE;
 our @EXPORT = qw($ENSEMBL_USER_DB_HANDLE);
 our @EXPORT_OK = qw($ENSEMBL_USER_DB_HANDLE);
@@ -37,6 +40,14 @@ my $BLAST_LAST_RUN;
 ##       session_ID, firstsession_ID and user_ID 
 ############################################
 
+sub fixupHandler {
+  my $r = shift;
+  my @X = localtime();
+  my ($A,$B) = $LOG_INFO =~ /SCRIPT:(.{8}:\d+) +\d{4}-\d\d-\d\d \d\d:\d\d:\d\d (.*)$/;
+  warn sprintf( "ENDSCR:%-19s %04d-%02d-%02d %02d:%02d:%02d %10.3f %s\n",
+    $A, $X[5]+1900, $X[4]+1, $X[3], $X[2],$X[1],$X[0], time()-$LOG_TIME, $B );
+}
+
 sub childInitHandler {
   my $r = shift;
   $requests = 0;
@@ -49,7 +60,8 @@ sub childInitHandler {
   $process_start_time = time;
   srand( time() ^ $TT );
 
-  my $T =  new EnsEMBL::Web::DBSQL::UserDB( $r );
+  $THIS_HOST = `hostname`;
+  my $T =  new EnsEMBL::Web::DBSQL::UserDB( $r ); # $T->{_handle}->disconnect; $T->{_handle}=undef;
   $ENSEMBL_USER_DB_HANDLE = $T->{'_handle'};
   if( $ENSEMBL_DEBUG_FLAGS & 8 ){
     print STDERR "Child $$: - initialised at @{[time]}\n";
@@ -78,7 +90,6 @@ sub initHandler {
 ## Retrieve the firstsession_ID and User ID from the cookie (ENSEMBL_FIRSTSESSION and ENSEMBL_USER_ID)
   my $headers_in = $r->headers_in;
   my %cookies = CGI::Cookie->parse($r->header_in('Cookie'));
-# warn $r->protocol();
   $r->subprocess_env->{'ENSEMBL_FIRSTSESSION'} =
     %cookies && $cookies{$ENSEMBL_FIRSTSESSION_COOKIE} &&
     EnsEMBL::Web::DBSQL::UserDB::decryptID($cookies{$ENSEMBL_FIRSTSESSION_COOKIE}->value) || 0;
@@ -341,6 +352,16 @@ sub transHandler {
     my $command = '';
     if( $DSN eq 'dsn' ) {
       $path_info = join ('/',@path_segments );
+      if( $ENSEMBL_DEBUG_FLAGS & 8 ) {
+        my @X = localtime();
+        $LOG_INFO = sprintf( "SCRIPT:%8s:%-10d %04d-%02d-%02d %02d:%02d:%02d /%s/%s?%s\n",
+          substr($THIS_HOST,0,8), $$, $X[5]+1900, $X[4]+1, $X[3], $X[2],$X[1],$X[0],
+          'das','dsn','' );
+        warn $LOG_INFO;
+        $LOG_TIME = time();
+        $r->push_handlers( PerlCleanupHandler   => \&fixupHandler );
+        $r->push_handlers( PerlCleanupHandler => \&Apache::SizeLimit::handler );
+      }
     } else {
 # Because assemblies might contain dots themselves - we split DSN on dots
 # the first element will be species, the last - source name, and all the field in the middle are the assembly
@@ -368,14 +389,32 @@ sub transHandler {
         next unless -r $filename;
         $r->filename( $filename );
         $r->uri( "/perl/das/$DSN/$command" );
-  $r->push_handlers( PerlCleanupHandler => \&Apache::SizeLimit::handler );
+        if( $ENSEMBL_DEBUG_FLAGS & 8 ) {
+          my @X = localtime();
+          $LOG_INFO = sprintf( "SCRIPT:%8s:%-10d %04d-%02d-%02d %02d:%02d:%02d /%s/%s?%s\n",
+            substr($THIS_HOST,0,8), $$, $X[5]+1900, $X[4]+1, $X[3], $X[2],$X[1],$X[0],
+            'das', "$DSN/$command", $querystring );
+          warn $LOG_INFO;
+          $LOG_TIME = time();
+          $r->push_handlers( PerlCleanupHandler   => \&fixupHandler );
+          $r->push_handlers( PerlCleanupHandler => \&Apache::SizeLimit::handler );
+        }
         return OK;
       }
       if( -r $error_filename ) {
         $r->subprocess_env->{'ENSEMBL_DAS_ERROR'}  = 'unknown-command';
         $r->filename( $error_filename );
         $r->uri( "/perl/das/$DSN/$command" );
-  $r->push_handlers( PerlCleanupHandler => \&Apache::SizeLimit::handler );
+        if( $ENSEMBL_DEBUG_FLAGS & 8 ) {
+          my @X = localtime();
+          $LOG_INFO = sprintf( "SCRIPT:%8s:%-10d %04d-%02d-%02d %02d:%02d:%02d /%s/%s?%s\n",
+            substr($THIS_HOST,0,8), $$, $X[5]+1900, $X[4]+1, $X[3], $X[2],$X[1],$X[0],
+            'das', "$DSN/$command", $querystring );
+          warn $LOG_INFO;
+          $LOG_TIME = time();
+          $r->push_handlers( PerlCleanupHandler   => \&fixupHandler );
+          $r->push_handlers( PerlCleanupHandler => \&Apache::SizeLimit::handler );
+        }
         return OK;
       }
       return DECLINED;
@@ -405,8 +444,16 @@ sub transHandler {
         $r->filename( $filename );
         $r->uri( "/perl/$species/$script" );
         $r->subprocess_env->{'PATH_INFO'} = "/$path_info" if $path_info;
-        warn sprintf( "SCRIPT:%-10d /%s/%s?%s\n", $$, $species, $script, $querystring ) if $ENSEMBL_DEBUG_FLAGS | 8 && ($script ne 'ladist' && $script ne 'la' );
-  $r->push_handlers( PerlCleanupHandler => \&Apache::SizeLimit::handler );
+        if( $ENSEMBL_DEBUG_FLAGS & 8 && $script ne 'ladist' && $script ne 'la' ) {
+          my @X = localtime();
+          $LOG_INFO = sprintf( "SCRIPT:%8s:%-10d %04d-%02d-%02d %02d:%02d:%02d /%s/%s?%s\n",
+           substr($THIS_HOST,0,8), $$, $X[5]+1900, $X[4]+1, $X[3], $X[2],$X[1],$X[0],
+           $species, $script, $querystring ) if $ENSEMBL_DEBUG_FLAGS | 8 && ($script ne 'ladist' && $script ne 'la' );
+          warn $LOG_INFO;
+          $LOG_TIME = time();
+          $r->push_handlers( PerlCleanupHandler   => \&fixupHandler );
+          $r->push_handlers( PerlCleanupHandler => \&Apache::SizeLimit::handler );
+        }
         return OK;
       }
     } else {

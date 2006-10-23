@@ -170,7 +170,6 @@ sub parse {
     $search_URL .= $join. join( '&', map { "$VAR=".CGI::escape($_) } $q->param( $VAR ) );
     $join = '&';
   }
-  warn $search_URL;
   my $ua = LWP::UserAgent->new();
      $ua->timeout( $self->__timeout ); ## Allow 30 seconds for a response!!
   my $res = $ua->get( $search_URL );

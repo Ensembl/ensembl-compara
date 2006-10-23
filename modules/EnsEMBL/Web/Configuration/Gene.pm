@@ -247,7 +247,7 @@ sub geneview {
     'code'    => "dasinfo#", 'caption' => 'Gene DAS Report', 'params' => $params, 'status'  => 'panel_das'
   ) ) {
     $panel2->add_components(qw(
-      das           EnsEMBL::Web::Component::Gene::das
+      das           EnsEMBL::Web::Component::Translation::das
     ));
     $self->add_panel( $panel2 );
   }

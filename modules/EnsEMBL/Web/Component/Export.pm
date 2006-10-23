@@ -549,7 +549,6 @@ sub features {
   
   if( $checked{'gene'} ) {
     foreach my $DB ( __gene_databases( $object->species_defs ) ) { 
-    warn $DB;
     foreach my $g ( @{$object->slice->get_all_Genes(undef,$DB)} ) {
       foreach my $t ( @{$g->get_all_Transcripts} ) {
         foreach my $f ( @{$t->get_all_Exons} ) {

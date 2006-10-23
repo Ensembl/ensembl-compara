@@ -23,7 +23,6 @@ sub createObjects {
   my ($identifier, @fetch_calls, $transobj);
   my $db          = $self->param( 'db' ) || 'core';
      $db          = 'otherfeatures' if $db eq 'est';
-warn $db;
   my $db_adaptor  = $self->database($db) ;	
   unless ($db_adaptor){
     $self->problem('Fatal', 

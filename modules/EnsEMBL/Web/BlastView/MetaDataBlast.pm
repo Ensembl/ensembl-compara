@@ -822,8 +822,8 @@ sub method_processing_callback{
   my $num_seqs = scalar( $blast->seqs );
   my $num_jobs = $num_dbs * $num_seqs;
   my $priority;
-  if   ( $num_jobs < 25 ){ $priority = 'offline'  }#'blast_test' }
-  elsif( $num_jobs < 50 ){ $priority = 'slow'     }#'blast_test' }
+  if   ( $num_jobs < 5  ){ $priority = 'offline'  }#'blast_test' }
+  elsif( $num_jobs < 15 ){ $priority = 'slow'     }#'blast_test' }
   else                   { $priority = 'basement' }#'blast_test' }
   $method->priority( $priority );
 
