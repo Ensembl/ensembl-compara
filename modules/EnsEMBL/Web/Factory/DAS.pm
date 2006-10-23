@@ -55,37 +55,24 @@ sub createObjects {
   my @locations;
 
   if( my @segments = $self->param('segment')) {
-      foreach my $segment (grep { $_ } @segments) {
-	  if ($segment =~ /^([-\w\.]+):(-?[\.\w]+),([\.\w]+)$/ ) {
-	      my($sr,$start,$end) = ($1,$2,$3);
-	      $start = $self->evaluate_bp($start);
-	      $end   = $self->evaluate_bp($end);
-	      if (my $loc = $self->_location_from_SeqRegion( $sr,$start,$end,1,1)) {
-#		  warn(Data::Dumper::Dumper($loc));
-
-		  push @locations, $loc;
-	      } else {
-		  push @locations, {
-		      'REGION' => $sr,
-		      'START' => $start,
-		      'STOP' => $end,
-		      'TYPE' => 'ERROR'
-		      };
-
-	      }
-	  } else {
-	      if (my $loc = $self->_location_from_SeqRegion( $segment,undef,undef,1,1)) {
-		  push @locations, $loc;
-	      } else {
-		  push @locations, {
-		      'REGION' => $segment,
-		      'START' => '',
-		      'STOP' => '',
-		      'TYPE' => 'ERROR'
-		      };
-	      }
-	  }
+    foreach my $segment (grep { $_ } @segments) {
+      if( $segment =~ /^([-\w\.]+):(-?[\.\w]+),([\.\w]+)$/ ) {
+        my($sr,$start,$end) = ($1,$2,$3);
+        $start = $self->evaluate_bp($start);
+        $end   = $self->evaluate_bp($end);
+        if (my $loc = $self->_location_from_SeqRegion( $sr,$start,$end,1,undef)) {
+          push @locations, $loc;
+        } else {
+          push @locations, { 'REGION' => $sr, 'START' => $start, 'STOP' => $end, 'TYPE' => 'ERROR' };
+        }
+      } else {
+        if (my $loc = $self->_location_from_SeqRegion( $segment,undef,undef,1,undef)) {
+          push @locations, $loc;
+        } else {
+          push @locations, { 'REGION' => $segment, 'START' => '', 'STOP' => '', 'TYPE' => 'ERROR' };
+        }
       }
+    }
   }
 
   $self->clear_problems();
@@ -100,16 +87,13 @@ sub createObjects {
   $self->groupIDs(@group_ids);
 
   my $source = $ENV{ENSEMBL_DAS_TYPE};
-
   
   my $T = EnsEMBL::Web::Proxy::Object->new( "DAS::$source", \@locations, $self->__data );
-  if ($self->has_a_problem) {
-      $self->clear_problems();
-      return $self->problem( 'Fatal', 'Unknown Source', "Could not locate source <b>$source</b>." );
+  if( $self->has_a_problem ) {
+    $self->clear_problems();
+    return $self->problem( 'Fatal', 'Unknown Source', "Could not locate source <b>$source</b>." );
   }
-
   $self->DataObjects( $T );
-
 }
 
 sub _location_from_SeqRegion {
@@ -128,9 +112,7 @@ sub _location_from_SeqRegion {
       warn $@ if $@;
       next if $@;
       if( $slice ) {
-        if( $start >  $slice->seq_region_length || $end >  $slice->seq_region_length ) {
-	    next;
-        }
+        next if( $start >  $slice->seq_region_length || $end >  $slice->seq_region_length );
         return $self->_create_from_slice( $system->name, "$chr\:$start,$end", $slice, undef, undef, $keep_slice );
       }
     }
@@ -141,16 +123,13 @@ sub _location_from_SeqRegion {
       my $TS;
       eval { $TS = $self->_slice_adaptor->fetch_by_region( $system->name, $chr ); };
       next if $@;
-      if( $TS ) {
-        return $self->_create_from_slice( $system->name , $chr, $self->expand($TS), '', $chr, $keep_slice );
-      }
+      return $self->_create_from_slice( $system->name , $chr, $self->expand($TS), '', $chr, $keep_slice ) if $TS;
     }
-    if ($chr) {
+    if( $chr ) {
       $self->problem( "fatal", "Locate error","Cannot locate region $chr on the current assembly." );
+    } else {
+      $self->problem( "fatal", "Please enter a location","A location is required to build this page." );
     }
-    else {
-    $self->problem( "fatal", "Please enter a location","A location is required to build this page." );
-  }
     return undef;
   }
 }
