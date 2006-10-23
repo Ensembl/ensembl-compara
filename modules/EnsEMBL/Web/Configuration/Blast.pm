@@ -26,7 +26,7 @@ sub blastview {
   my $here = $wizard->current_node($object);
   if ($here eq 'blast_submit') {
     warn("Adding Ajax javascript files");
-    $self->{page}->javascript->add_source( "/js/prototype-1.4.0.js" );
+    $self->{page}->javascript->add_source( "/js/prototype.js" );
     $self->{page}->javascript->add_source( "/js/blastview.js" );
   }
   $self->wizard_panel('Blastview');

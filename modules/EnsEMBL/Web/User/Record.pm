@@ -20,12 +20,12 @@ sub AUTOLOAD {
   ### appropriate database table.
   ###
   ### Attribute names are not validated against the database table.
-  my ($self, $value) = @_;
+  my $self = shift;
   my ($key) = ($AUTOLOAD =~ /::([a-z].*)$/);
+  my ($value, $options) = @_;
   if ($value) {
     if (my ($find, $by) = ($key =~ /find_(.*)_by_(.*)/)) {
-      #warn "FIND " . $find . " BY " . $by;
-      return find_records(( type => $find, $by => $value )); 
+      return find_records(( type => $find, $by => $value, options => $options)); 
     } else {
       ## perform set
       $self->fields($key, $value);
@@ -140,6 +140,12 @@ sub find_records {
                                                 ));
     
     push @records, $record;
+  }
+  if ($params{options}) {
+    my %options = %{ $params{options} };
+    if ($options{order_by}) {
+      @records = sort { $b->click <=> $a->click } @records;
+    }
   }
   return @records;
 }

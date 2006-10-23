@@ -665,12 +665,14 @@ sub find_records {
   my $find_key;
   my $find_value;
   my $type = $params{type};
+  my %options;
+  if ($params{options}) {
+    %options = %{ $params{options} }; 
+  }
   foreach my $key (keys %params) {
-    warn "KEY: $key";
     if ($key ne "type") {
       $find_key = $key;
       $find_value = $params{$key};
-      warn "KEY: FIND $find_key BY $find_value";
     }
   }
   my $results = [];

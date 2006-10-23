@@ -8,6 +8,7 @@ use CGI::Cookie;
 
 use EnsEMBL::Web::Object;
 use EnsEMBL::Web::Factory::User;
+use EnsEMBL::Web::User::Record;
 
 our @ISA = qw(EnsEMBL::Web::Object);
 
@@ -59,8 +60,23 @@ sub set_password { return $_[0]->web_user_db->setPassword($_[1]); }
 
 
 sub save_bookmark {
-  my ($self, $record) = @_;
-  return $self->web_user_db->saveBookmark($record);
+  ### Saves a bookmark. Accepts a hashref with the following key-value pairs:
+  ### ---
+  ### bm_url: The URL to be bookmarked
+  ### bm_name: The name of the page to be saved
+  ### user_id: The id of the user 
+  ### --- 
+  my ($self, $params) = @_;
+  my $url = $params->{bm_url};
+  my $name = $params->{bm_name};
+  my $user_id = $params->{user_id};
+ 
+  my $record = EnsEMBL::Web::User::Record->new(( adaptor => $self->web_user_db ));
+  $record->type('bookmark');
+  $record->user($user_id); 
+  $record->url($url);
+  $record->name($name);
+  $record->save;
 }
 
 sub get_bookmarks { return $_[0]->web_user_db->getBookmarksByUser($_[1]); }
