@@ -8,9 +8,14 @@ my $release_id = $SiteDefs::VERSION;
 my $web_db = $SD->databases->{'ENSEMBL_WEBSITE'};
 my $wa = EnsEMBL::Web::DBSQL::NewsAdaptor->new($web_db);
 
-my $results = $wa->fetch_news_items( { 'release' => $release_id } );
-
 my $species_hash = $wa->fetch_species;
+my $species = {reverse%$species_hash};
+my $pars = { 'release' => $SiteDefs::VERSION };
+my $species_id = $species->{$ENV{'ENSEMBL_SPECIES'}};
+   $pars{ 'species'=>$species_id } if $species_id;
+my $this_species = $ENV{'ENSEMBL_SPECIES'}||'common';
+my $results = $wa->fetch_news_items( $pars };
+
 $wa->disconnect;
 
 print "Content-type: xml/rss\n\n";
@@ -39,7 +44,7 @@ foreach my $E ( @$results ) {
     <item>
       <title>$E->{'title'}</title>
       <description>$C</description>
-      <link>http://www.ensembl.org/).$species_hash->{$E->{'species'}[0]}.qq(/newsview?rel=$release_id#$E->{'news_item_id'}</link>
+      <link>http://www.ensembl.org/).$this_species.qq(/newsview?rel=$release_id#$E->{'news_item_id'}</link>
     </item>);
 }
 print "
