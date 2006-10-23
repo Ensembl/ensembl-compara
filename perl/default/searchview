@@ -14,6 +14,11 @@ $Data::Dumper::Indent = 1;
 
 my $page = new EnsEMBL::Web::Document::WebPage;
 
+if( $page->{'species_defs'}->ENSEMBL_SEARCH ne 'searchview' ) {
+  CGI::redirect( sprintf( "/%s/%s?%s", $ENV{'ENSEMBL_SPECIES'}, $page->{'species_defs'}->ENSEMBL_SEARCH, $ENV{'QUERY_STRING'} ) );
+  exit;
+}
+
 my $exalead = new ExaLead;
    $exalead->engineURL = $page->{'species_defs'}->ENSEMBL_SEARCH_URL; 
    $exalead->__timeout = 30;

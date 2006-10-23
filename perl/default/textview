@@ -23,6 +23,11 @@ my $AVINDEXROOT = $SD->ENSEMBL_ALTAVISTA_INDEX_PATH;
 my $MODE = 'r';
 my $q    = new CGI();
 
+if( $SD->ENSEMBL_SEARCH ne 'textview' ) {
+  CGI::redirect( sprintf( "/%s/%s?%s", $ENV{'ENSEMBL_SPECIES'}, $SD->ENSEMBL_SEARCH, $ENV{'QUERY_STRING'} ) );
+  exit;
+}
+
 my $rend     = new EnsEMBL::Web::Document::Renderer::Apache( );
 my $document = new EnsEMBL::Web::Document::Dynamic( $rend,undef, $SD);
 
