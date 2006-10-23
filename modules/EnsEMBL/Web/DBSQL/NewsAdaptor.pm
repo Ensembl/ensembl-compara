@@ -1,8 +1,7 @@
 package EnsEMBL::Web::DBSQL::NewsAdaptor;
 
-#--------------------------------------------------------------------------
-# SQL calls for the "what's new" elements of the ENSEMBL_WEBSITE database
-#--------------------------------------------------------------------------
+### SQL calls for connecting to the ENSEMBL_WEBSITE database and 
+### selecting news-related data
 
 use strict;
 use warnings;
@@ -12,6 +11,7 @@ use DBI;
 use EnsEMBL::Web::SpeciesDefs;
                               
 sub new {
+### c
   my( $class, $DB ) = @_;
   my $self = ref($DB) ? $DB : {}; ## don't crash site if no news db!
   bless $self, $class;
@@ -19,6 +19,7 @@ sub new {
 }
 
 sub db {
+### Opens a read-only MySQL database connection
   my $self = shift;
   $self->{'dbh'} ||= DBI->connect(
       "DBI:mysql:database=$self->{'NAME'};host=$self->{'HOST'};port=$self->{'PORT'}",
@@ -28,10 +29,13 @@ sub db {
 }
                                                                                 
 sub disconnect {
+### Disconnects from the MySQL database
   my $self = shift;
   $self->{'dbh'}->disconnect if $self->{'dbh'};
 }
+
 sub DESTROY {
+### d
   my $self = shift;
   warn $self->disconnect;
 }
@@ -45,19 +49,27 @@ sub DESTROY {
 # it can be used as a general search as well as with the web admin interface
 
 sub fetch_news_items {
+### Runs a SELECT query to retrieve news items from the database
+### Arguments (1) NewsAdaptor object; 
+### (2) a hash reference of criteria and values - current valid criteria are item id, release,
+### category, priority, species, status, and can be included in any combination
+### (3) optional boolean flag indicating whether to select *only* those stories that apply to all species
+### (4) optional integer - maximum number of records to return 
   my ($self, $where, $generic, $limit) = @_;
   my $results = [];
   return [] unless $self->db;
 
   ## map option keywords to actual SQL
   my %where_def = (
-    'item_id'=>'n.news_item_id = '.$$where{'item_id'},
-    'release'=>'n.release_id = "'.$$where{'release'}.'"',
-    'category'=>'n.news_cat_id = '.$$where{'category'},
-    'priority'=>'n.priority = '.$$where{'priority'},
-    'species'=>'n.news_item_id = i.news_item_id AND i.species_id = '.$$where{'species'},
-    'status'=>'n.status = "'.$$where{'status'}.'"',
+    'item_id'=>'n.news_item_id = '.$where->{'item_id'},
+    'release'=>'n.release_id = "'.$where->{'release'}.'"',
+    'category'=>'n.news_cat_id = '.$where->{'category'},
+    'priority'=>'n.priority = '.$where->{'priority'},
+    'status'=>'n.status = "'.$where->{'status'}.'"',
   );
+  if ($where->{'species'}) {
+    $where_def{'species'} = 'n.news_item_id = i.news_item_id AND i.species_id = '.$where->{'species'};
+  }
 
   ## add selected options to modifier strings
   my $where_str;
@@ -96,7 +108,7 @@ sub fetch_news_items {
             n.news_cat_id = c.news_cat_id
     );
   }
-  elsif ($$where{'species'} > 0) {
+  elsif ($where->{'species'} > 0) {
     $sql .= ', item_species i  WHERE n.news_cat_id = c.news_cat_id';
   }
   else {
@@ -105,8 +117,6 @@ sub fetch_news_items {
   $sql .= " $where_str GROUP BY n.news_item_id ORDER BY n.priority DESC $limit_str";
 #warn $sql;
 
-
-warn $sql;
   my $T = $self->db->selectall_arrayref($sql, {});
   return [] unless $T;
 
@@ -161,10 +171,11 @@ warn $sql;
 
 #--------------------- QUERIES FOR ADDITIONAL TABLES --------------------------
 
-# Input: optional species arg
-# Returns arrayref of results
-
 sub fetch_releases {
+### Fetches details of Ensembl releases (date, etc) 
+### Arguments (1) hashref of options - current valid keys are release and species
+### Returns arrayref of hashes containing release details
+
     my ($self, $extra) = @_;
     my $results = [];
     return [] unless $self->db;
@@ -211,6 +222,10 @@ sub fetch_releases {
 }
 
 sub fetch_species {
+### Fetches names of Ensembl species  
+### Arguments (1) release id (integer)
+### Returns arrayref of hashes containing species details
+
     my ($self, $release_id) = @_;
     my $results = {};
 
@@ -251,6 +266,9 @@ sub fetch_species {
 }
 
 sub fetch_cats {
+### Fetches names of Ensembl news categories 
+### Returns arrayref of hashes containing category details
+
     my $self = shift;
     my $results = [];
 
@@ -295,30 +313,6 @@ sub fetch_random_ad {
                                                                                 
   my $record = $self->db->selectall_arrayref($sql);
   return unless ($record && ref($record) eq 'ARRAY' && ref($record->[0]) eq 'ARRAY');
-  my @array = @{$record->[0]};
-  my $result = {
-      'image' => $array[0],
-      'alt'   => $array[1],
-      'url'   => $array[2],
-  };
-  return $result;
-}
-
-sub fetch_pre_ad {
-  my $self = shift;
-  return unless $self->db;
-                                                                                
-  my $sql = qq(
-    SELECT image, alt, url
-    FROM miniad
-    WHERE start_date < NOW() AND end_date > NOW()
-    AND url LIKE '%pre.ensembl.org%'
-    ORDER BY rand()
-    LIMIT 1
-  );
-                                                                                
-  my $record = $self->db->selectall_arrayref($sql);
-  return unless ($record && ref($record) eq 'ARRAY');
   my @array = @{$record->[0]};
   my $result = {
       'image' => $array[0],
