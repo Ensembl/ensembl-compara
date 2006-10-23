@@ -197,7 +197,10 @@ sub _atag {
       $_atag.= sprintf( qq( $_="%s"), CGI::escapeHTML( $entry->{$_}) ) if exists $entry->{$_};
     }
     if( $entry->{'href'} =~ m|^https?://([^/]+)| ) {
-      $_atag .= qq( target="$1");
+      my $base_url = EnsEMBL::Web::SpeciesDefs->ENSEMBL_BASE_URL; 
+      if ($entry->{'href'} !~ m/$base_url/) {
+        $_atag .= qq( target="$1");
+      }
     }
     my $V = exists( $entry->{'raw'} ) ? $entry->{'text'} : CGI::escapeHTML( $entry->{'text'} );
     return $_atag ? "<a$_atag>$V</a>" : $V;
