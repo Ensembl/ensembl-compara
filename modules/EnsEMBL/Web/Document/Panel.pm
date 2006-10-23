@@ -287,12 +287,7 @@ sub render_Text {
 
 sub render_XML {
   my $self = shift;
-  my $temp_renderer = $self->renderer;
-  $self->renderer = new EnsEMBL::Web::Document::Renderer::String();
   $self->content();
-  my $value = $self->renderer->value(); 
-  $self->renderer = $temp_renderer;
-  $self->renderer->print( $value )
 }
 
 sub content_Text() { 
