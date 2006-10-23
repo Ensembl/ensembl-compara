@@ -178,7 +178,7 @@ sub context_menu {
 
   if ($user_id) {
     my $flag = 'user';
-    $self->add_block( $flag, 'bulleted', "My Ensembl" );
+    $self->add_block( $flag, 'bulleted', "Your Ensembl" );
 
 
     $self->add_entry( $flag, 'text' => "Account summary",
@@ -192,7 +192,7 @@ sub context_menu {
    }
   else {
     my $flag = 'ac_full';
-    $self->add_block( $flag, 'bulleted', "My Ensembl" );
+    $self->add_block( $flag, 'bulleted', "Your Ensembl" );
 
     $self->add_entry( $flag, 'text' => "Login",
                                   'href' => "/common/user_login" );
