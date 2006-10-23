@@ -97,7 +97,7 @@ sub update_account {
   ]);
 
   $self->add_wizard($wizard);
-  $self->wizard_panel('Update your details');
+  $self->wizard_panel('Update details');
 }
 
 sub set_password {
@@ -183,9 +183,9 @@ sub context_menu {
 
     $self->add_entry( $flag, 'text' => "Account summary",
                                     'href' => "/common/update_account?node=accountview" );
-    $self->add_entry( $flag, 'text' => "Update my details",
+    $self->add_entry( $flag, 'text' => "Update details",
                                     'href' => "/common/update_account" );
-    $self->add_entry( $flag, 'text' => "Change my password",
+    $self->add_entry( $flag, 'text' => "Change password",
                                     'href' => "/common/set_password" );
     $self->add_entry( $flag, 'text' => "Log out",
                                     'href' => "javascript:logout_link()" );
