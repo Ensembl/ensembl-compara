@@ -82,9 +82,10 @@ sub _init {
       'href'  => $href,
       'zmenu' => {
       'caption' => $label." Domain",
-        $key     => $href,
-        ($prsave->idesc() ? ($prsave->idesc,'') : ()),
-        "aa: $minx - $maxx"
+        "01: $label: $key"     => $href,
+        ($prsave->interpro_ac() ? ("02:InterPro: ".$prsave->interpro_ac, $self->ID_URL( 'INTERPRO', $prsave->interpro_ac ) ) : ()),
+        ($prsave->idesc() ? ("03:".$prsave->idesc,'') : ()),
+        "04:aa: $minx - $maxx"
       },
     });
     $Composite->push(@rect);

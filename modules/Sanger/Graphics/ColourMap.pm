@@ -708,11 +708,14 @@ sub hex_by_name {
 }
 
 sub rgb_by_name {
-    my ($self, $name) = @_;
-    $name = lc($name);
-    my $hex=$self->{$name};
-    $hex=$name if (! $hex) and $name=~/^[0-9a-f]{6}$/;
-    return $self->rgb_by_hex($hex);
+  my ($self, $name) = @_;
+  $name = lc($name);
+  my $hex=$self->{$name};
+  $hex=$name if (! $hex) and $name=~/^[0-9a-f]{6}$/;
+  unless( $hex ) {
+    warn "Unknown colour name $name";
+    return (hex(0), hex(0), hex(0));
+  }
 }
 
 sub names {
@@ -729,8 +732,8 @@ sub rgb_by_hex {
     my ($self, $hex) = @_;
 
     unless($hex){
-        warn "Cannot map hex colour in colourmap\n";
-        return(hex(0), hex(0), hex(0));
+      warn "Cannot map hex colour in colourmap\n";
+      return(hex(0), hex(0), hex(0));
     }
     my ($hred, $hgreen, $hblue) = unpack("A2A2A2", $hex);
     return (hex($hred), hex($hgreen), hex($hblue));

@@ -58,7 +58,7 @@ sub new {
     pfam               grey33
     tigrfam            red
     superfamily        blue
-    smart              chatreuse3
+    smart              chartreuse3
     pirs               gold3
 
     ncoils             darkblue
@@ -67,7 +67,7 @@ sub new {
     tmhmm              darkgreen
 
     hi                 green
-    default            violet2 
+    default            violet 
   ));
   $self->colourSet( 'oxford_genes',
     'hi'         => 'highlight1',

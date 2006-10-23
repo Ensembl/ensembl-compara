@@ -20,9 +20,7 @@ sub _threshold_update {
   foreach my $th ( sort { $a<=>$b} keys %$thresholds ) {
     if( $container_length > $th * 1000 ) {
       foreach (keys %{$thresholds->{$th}}) {
-warn $self->check()," SETTING $_ to ",$thresholds->{$th}{$_};
         $self->set_my_config( $_, $thresholds->{$th}{$_} );
-warn "... ", $self->my_config( $_ );
       }
     }
   }
@@ -91,7 +89,6 @@ sub tag {
     };
   }
   if( $f->get_scalar_attribute('fish') ) {
-warn "FISH................. ";
     push @result, {
       'style' => 'left-triangle',
       'colour' => $self->{'colours'}{"fish_tag"},

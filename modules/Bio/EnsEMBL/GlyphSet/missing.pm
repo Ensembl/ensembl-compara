@@ -26,7 +26,6 @@ sub _init {
 
   my( $txt, $bit, $w,$th ) = $self->get_text_width( 0, $text_to_display, '', 'ptsize' => $FONTSIZE, 'font' => $FONT );
  
-  warn "$w - $th - $bit - $text_to_display....";
   $self->push( new Sanger::Graphics::Glyph::Text({
     'x'         => 0, 
     'y'         => 1,

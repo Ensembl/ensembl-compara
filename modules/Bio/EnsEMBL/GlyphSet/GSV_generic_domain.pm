@@ -26,8 +26,6 @@ sub _init {
 
   my $Config        = $self->{'config'};
   my $trans_ref = $Config->{'transcript'};
-  warn "@{[ keys %$trans_ref ]}";
-  warn "... $type ... $key ...".$self->my_config('pos')." ... @{$trans_ref->{$key}||[]}";
   my $offset = $self->{'container'}->start - 1;
     
   my $y             = 0;

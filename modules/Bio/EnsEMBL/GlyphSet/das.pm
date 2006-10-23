@@ -910,7 +910,6 @@ my $timer = time();
   }
 
   $configuration->{'features'} = \@das_features;
-warn "DAS fetch.... ",time()-$timer;
   # hash styles by type
   my %styles;
   if( $styles && @$styles && $configuration->{'use_style'} ) {
