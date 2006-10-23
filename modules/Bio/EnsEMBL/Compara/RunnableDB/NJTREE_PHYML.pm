@@ -244,14 +244,14 @@ sub run_njtree_phyml
   my $njtree_phyml_executable = '';
   unless (-e $njtree_phyml_executable) {
     # md5sum e76e7e2c78ab718f8a117fc173475c48
-    # /ecs2/work2/avilella/bin/alpha-dec-osf4.0/njtree
+    # /lustre/work1/ensembl/avilella/bin/alpha-dec-osf4.0/njtree
     $njtree_phyml_executable 
-      = "/ecs2/work2/avilella/bin/alpha-dec-osf4.0/njtree";
+      = "/lustre/work1/ensembl/avilella/bin/alpha-dec-osf4.0/njtree";
     if (-e "/proc/version") {
       # it is a linux machine
       # md5sum 92f85c3968130fda73044a21d69df86f
-      # /ecs2/work2/avilella/bin/i386/njtree
-      $njtree_phyml_executable = "/ecs2/work2/avilella/bin/i386/njtree";
+      # /lustre/work1/ensembl/avilella/bin/i386/njtree
+      $njtree_phyml_executable = "/lustre/work1/ensembl/avilella/bin/i386/njtree";
     }
   }
   # FIXME - ask systems to add it to ensembl bin
