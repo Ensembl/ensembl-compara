@@ -52,7 +52,7 @@ sub common_menu_items {
         'options'=>\@bookmark_sections,       );
 
 
-      $doc->menu->add_entry( $flag, 'text' => "Go to your account",
+      $doc->menu->add_entry( $flag, 'text' => "Your account",
                                   'href' => "/common/update_account?node=accountview" );
     }
     else {
