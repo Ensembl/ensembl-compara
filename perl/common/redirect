@@ -1,0 +1,34 @@
+#! /usr/local/bin/perl
+
+use strict;
+use warnings;
+no warnings "uninitialized";
+
+use EnsEMBL::Web::User::Record;
+use EnsEMBL::Web::DBSQL::UserDB;
+
+my $T = new CGI;
+my $id = $T->param('id');
+my $url = $T->param('url');
+
+$url =~ s/\\\?/\?/g;
+$url =~ s/!and!/&/g;
+
+warn "REDIRECT URL: ". $url;
+
+my $adaptor = EnsEMBL::Web::DBSQL::UserDB->new();
+my @records = EnsEMBL::Web::User::Record->find_bookmark_by_id($id);
+my $record = $records[0];
+
+my $click = $record->click;
+if ($click) {
+  $record->click($click + 1)
+} else {
+  $record->click(1);
+}
+$record->adaptor($adaptor);
+$record->save;
+
+print "Location: $url";
+
+1;
