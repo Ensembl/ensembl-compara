@@ -98,7 +98,6 @@ sub _initialize_HTML {
     }
   } else { # If we are in general static content...
     ## Grab all the search indexes...
-warn $self->species_defs;
     foreach my $K ( $self->species_defs->all_search_indexes ) {
       $self->searchbox->add_index( $K );
     }

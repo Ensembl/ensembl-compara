@@ -6,6 +6,7 @@ use EnsEMBL::Web::Timer;
 use EnsEMBL::Web::SpeciesDefs;
 use Exporter;
 use Apache::Constants qw(:common :response M_GET);
+use EnsEMBL::Web::DBSQL::UserDB;
 
 our $SD = EnsEMBL::Web::SpeciesDefs->new();
 

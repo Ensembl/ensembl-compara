@@ -64,7 +64,6 @@ sub karyotype {
   if( $self->cacheable eq 'yes' ) {
     my $image = new EnsEMBL::Web::File::Image( $self->{'species_defs'} );
     $image->set_cache_filename( $self->image_type, $self->image_name );
-    warn "CACHE.... ",$image->filename;
     return if -e $image->filename."png" && -f $image->filename."png";
   }
   $config ||= 'Vkaryotype';
