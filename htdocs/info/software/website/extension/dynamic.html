@@ -1,21 +1,130 @@
 <html>
   <head>
-    <meta name="navigation" content="Template" />
-    <title>Ensembl Web Template</title>
+    <meta name="navigation" content="Extension" />
+    <title>Extending dynamic content</title>
   </head>
 <body>
                                                                                 
 <h2>Dynamic Content</h2>
 
-<p>For most users, it will be sufficient to use plugins in <kbd>public-plugins/mirror</kbd> to modify existing pages.  This has the advantage of leaving the Ensembl code in <kbd>modules</kbd> intact.  Currently the Object/Factory/Configuration are pluggable but most other scripts are not.  Hopefully <kbd>EnsEMBL/Web/UserConfig.pm</kbd> will be pluggable in late 2006.</p> 
+<p>For most users, it will be sufficient to use plugins in <kbd>public-plugins/mirror</kbd> to modify existing pages.  This has the advantage of leaving the Ensembl code in <kbd>modules</kbd> intact.  Currently the Object/Factory/Configuration are pluggable but most other scripts are not.  Hopefully <kbd>EnsEMBL/Web/UserConfig.pm</kbd> will be pluggable in late 2006/ early 2007.</p> 
+
+<h3 class="boxed">Using Plugins</h3>
+<p>Here we use extending synteny view as an example of using Plugins to 
+extend the standard Ensembl web page</p>
+
+<ol>
+<li>
+<p>First, add or edit the configuration module to add in 
+the extra panel by calling your plugin (e.g. 'MyExtension'):
+</p> 
+  <pre class="code">
+  package EnsEMBL::MyExtension::Configuration::Chromosome;
+  use strict;
+  use EnsEMBL::Web::Configuration;
+  our @ISA = qw( EnsEMBL::Web::Configuration );
 
 
-<h3>Coding a new Dynamic Page</h3>
+  sub syntenyview {
+    my $self = shift;
+    if( $TP = $self->{page}->content->panel( "info$self->{flag}" ) ) {
+      $TP->add_component_last(qw(
+       syteny EnsEMBL::MyExtension::Component::Chromosome::syteny_links
+      ));
+    }
+  }
+  1;
+  </pre>
+</li>
+ <li>Create a new namespace for your plugins, e.g. <code>
+   public-plugins/myextension/modules/EnsEMBL/MyExtension</code></li>
+
+ <li><p>Then add the additional component in your own "MyExtension" plugin.</p>
+  <pre class="code">
+  package EnsEMBL::MyExtension::Component::Chromosome;
+  use strict;
+
+  sub synteny_links {
+    my( $panel, $obj ) = @_;
+    $synteny_info = $obj->_get_synteny_stats();
+    $HTML = '' ; ## munge $synteny_info into HTML....
+    $panel->add_row( 'SyntenyView', $HTML );
+  }
+  1;
+  </pre>
+  </li>
+  <li>Add the function call to a plugin object 
+<pre class="code">
+  package EnsEMBL::Development::Object::Server;
+  use strict;
+  use EnsEMBL::Web::Object;
+  our @ISA = qw(EnsEMBL::Web::Object);
+
+  sub _get_synteny_stats {
+    my $self = shift;
+    my $ensembl_object = $self->Obj;
+    my %synteny_info = ();
+    ## get synteny info....
+    return \%synteny_info;
+  }
+  1;
+  </pre>
+</li>
+</ol>
+
+<p>Note: At the moment the drawing code is not plugable.  So 
+to extend the zmenu you would have to patch the appropriate drawing code 
+track.  We are working on a z-menu solution using AJAX</p>
+
+
+
+<h3 class="boxed">Extending an Ensembl Class</h3>
+<ol>
+  <li>Create a new namespace for your plugins, e.g. <code>
+   public-plugins/myextension/modules/EnsEMBL/MyExtension</code></li>
+
+  <li>Create your module that inherets from EnsEMBL::Web::Component, e.g. <code>
+   .../EnsEMBL/MyExtension/Component/Gene.pm</code></li>
+
+  <li>Create the 'Configuration' module for the 'Component', e.g. <code>
+   .../EnsEMBL/MyExtension/Configuration/Gene.pm</code></li>
+
+  <li>Use the 'Configuration' module to use your 'Component', e.g. 
+<pre class="code">
+  # MyExtension-specific GeneView configuration.
+  sub geneview{
+    my $self   = shift;
+    my $document = $self->{page};
+    my $content  = $document->content;
+
+    # Top (Gene) Panel
+    my $panel = $content->panel('info0');
+    $panel->replace_component
+        qw( name EnsEMBL::MyExtension::Component::Gene::name );
+  }
+</pre></li>
+  <li>Edit the <code>$ENSROOT/conf/Plugins.pm</code> file so your plugins get used;
+   <pre class="code">
+    $SiteDefs::ENSEMBL_PLUGINS =
+     [ 'EnsEMBL::MyExtension'   =>
+        $SiteDefs::ENSEMBL_SERVERROOT.'public-plugins/myextension' ]
+   </pre>
+<p>
+This means the directory gets added to the perl library path below the default 'modules' directory. 
+Any perl modules that you add will therefore be used in preference to the default ones. 
+This holds for API modules as well as web ones.
+</p>
+
+   </li>
+</ol>
+
+
+<h3 class="boxed">Coding a new Dynamic Page</h3>
 
 <p>As in the previous version of Ensembl, standard dynamic pages are created 
 via a 'view' script in /perl/default, e.g. geneview. However the modules used by this script have been reorganised.</p>
 
-<p>To create a totally new dynamic page (or to replace an old-style dynamic page with the new code), you need the following 5 Perl files:</p>
+<p>To create a totally new dynamic page you need to create 5 Perl files:</p>
 
 <ul>
 <li>view script</li>

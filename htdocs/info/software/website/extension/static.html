@@ -1,13 +1,16 @@
 <html>
   <head>
-    <meta name="navigation" content="Template" />
-    <title>Ensembl Web Template</title>
+    <meta name="author" content="webteam" />
+    <meta name="navigation" content="Information" />
+    <meta name="navigation" content="Software" />
+    <meta name="navigation" content="Extension" />
+    <title>Ensembl Web Static content </title>
   </head>
 <body>
                                                                                 
   <h2>Static Content</h2>
 
-<p>Static pages no longer contain template code. A typical static page consists 
+<p>From release 32, static pages no longer contain template code. A typical static page consists 
 of just the content of that page wrapped in a "bare-bones" HTML document, 
 thus:</p>
 
@@ -32,7 +35,7 @@ thus:</p>
 
 <p>Note that a &lt;title&gt; element is required, as this is parsed by the wrapper code and inserted into the finished HTML document. The &lt;meta&gt; tag is optional, but if you want to add files to the Information, this tag will allow autogeneration of the breadcrumb navigation at the top of the page.</p>
 
-<p>Also, the top-level header in the document should be H2, since H1 is used for the 'Ensembl' title in the template.</p>
+<p>The top-level header in the document should be an &lt;h2&gt; tag, since &lt;h1&gt; is used for the 'Ensembl' title in the template.</p>
 
 
 <p>All static pages live in /htdocs and are processed through mod_perl.
