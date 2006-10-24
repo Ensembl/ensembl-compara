@@ -31,7 +31,7 @@ sub render {
   else {
     my $species_text;
     if ($ENV{'ENSEMBL_SPECIES'} eq 'common') {
-      (my $view = $_[0]->sub_title) =~ s/_/ /;
+      (my $view = $_[0]->sub_title) =~ s/_/ /g;
       $species_text = qq( <span class="commonname serif">$view</span>);
     }
     else {
