@@ -198,7 +198,7 @@ sub info{
   $msg || ( carp("Need a warning message" ) && return );
 
   #if( $v > $VERBOSITY ){ return 1 }
-  my @sz = sz();
+  my @sz = () ;#sz();
   if ($v > 1) {
     warn( "[INFO_2] ".$msg." (@sz)\n" );
   }
