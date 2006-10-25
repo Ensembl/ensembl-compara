@@ -1636,8 +1636,11 @@ sub restrict_between_alignment_positions {
                after 12344, ie just between 12344 and 12345. You can choose to remove
                these empty GenomicAligns by setting $skip_empty_GenomicAligns to any
                true value.
-  Returntype : Bio::EnsEMBL::Compara::GenomicAlignBlock object
-  Exceptions : none
+  Returntype : Bio::EnsEMBL::Compara::GenomicAlignBlock object in scalar context. In
+               list context, returns the previous object and the start and end
+               positions of the restriction in alignment coordinates (from 1 to
+               alignment_length)
+  Exceptions : return undef if reference positions lie outside of the alignment
   Caller     : general
 
 
@@ -1655,8 +1658,8 @@ sub restrict_between_reference_positions {
   $end = $reference_genomic_align->dnafrag_end if (!defined($end));
 
   if ($start > $reference_genomic_align->dnafrag_end or $end < $reference_genomic_align->dnafrag_start) {
-    # restricting outside of boundaries => return undef obejct
-    return undef;
+    # restricting outside of boundaries => return undef object
+    return wantarray ? (undef, undef, undef) : undef;
   }
   my $excess_at_the_start = $start - $reference_genomic_align->dnafrag_start;
   my $excess_at_the_end  = $reference_genomic_align->dnafrag_end - $end;
@@ -1665,7 +1668,9 @@ sub restrict_between_reference_positions {
   ## restriction when either excess_at_the_start or excess_at_the_end are 0 as a (multiple)
   ## alignment may start or end with gaps in the reference species. In that case, we want to
   ## trim these gaps from the alignment as they fall just outside of the region of interest
-  return $self if ($excess_at_the_start < 0 and $excess_at_the_end < 0);
+  if ($excess_at_the_start < 0 and $excess_at_the_end < 0) {
+    return wantarray ? ($self, 1, $self->length) : $self;
+  }
 
   my $negative_strand = ($reference_genomic_align->dnafrag_strand == -1);
 
@@ -1772,8 +1777,9 @@ sub restrict_between_reference_positions {
   ## Skip if no restriction is needed. Return original object! This may happen when
   ## either excess_at_the_start or excess_at_the_end are 0 but the alignment does not
   ## start or end with gaps in the reference species.
-  return $self if ($length_of_truncated_seq_at_the_start <= 0 and
-      $length_of_truncated_seq_at_the_end <= 0);
+  if ($length_of_truncated_seq_at_the_start <= 0 and $length_of_truncated_seq_at_the_end <= 0) {
+    return wantarray ? ($self, 1, $self->length) : $self;
+  }
 
   $new_reference_genomic_align->aligned_sequence(0);
   $new_reference_genomic_align->cigar_line(join("", @reference_cigar));
@@ -1880,6 +1886,10 @@ sub restrict_between_reference_positions {
     $genomic_align_block->reverse_complement();
   }
 
+  if (wantarray) {
+    return ($genomic_align_block, $length_of_truncated_seq_at_the_start + 1,
+        $self->length - $length_of_truncated_seq_at_the_end);
+  }
   return $genomic_align_block;
 }
 
