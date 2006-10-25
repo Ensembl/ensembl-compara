@@ -94,7 +94,7 @@ sub blast_submit {
     </div>
   );
 
-  $html .= qq(<br /><br /><a href="#" onclick="javascript:start_periodic_updates($javascript_delay, '$update_div')">Start periodic updates</a>);
+  $html .= "<br /><br /><a href=\"#\" onclick=\"javascript:start_periodic_updates($javascript_delay, '$update_div', '" . $object->job->id . "')\">Start updates</a>";
 
   $panel->print($html); 
 
@@ -167,7 +167,7 @@ sub render_progress_bar {
   return $html;
 }
 
-sub searchview {
+sub blastsearchview {
   my($panel, $object) = @_;
   my $ticket = $object->param('ticket');
 
@@ -394,7 +394,7 @@ sub render_previous_searches_form {
       <div class='wizard_check'>
         <div id='wizard_ticket'>
           <b>Retrieve search results:</b><br /> 
-          <form method="get" action="searchview">
+          <form method="get" action="blastsearchview">
             <input type="text" name="ticket" id="ticket" value="Ticket number">
             <input type="submit" value="Look up >" class="red-button">
           </form>
