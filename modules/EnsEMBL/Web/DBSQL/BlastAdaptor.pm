@@ -319,6 +319,7 @@ sub jobs_with_status {
 sub job_with_ticket {
   my ($self, $ticket) = @_;
   my @jobs = (); 
+  warn "SQL TICKET: " . $ticket;
   my $sql = "
     SELECT 
       job.id, job.ticket, sequence.sequence, sequence.species, job.status
@@ -330,7 +331,9 @@ sub job_with_ticket {
     ;"; 
 
   my @results = @{ $self->db->selectall_arrayref($sql) };
+  warn $sql;
   if (@results) {
+    warn "SQL RESULT: " . $results[0];
     return EnsEMBL::Web::Object::BlastRequest->new_from_database($results[0]);
   } else {
     return 0;
