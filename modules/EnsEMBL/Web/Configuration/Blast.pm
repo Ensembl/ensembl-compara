@@ -33,7 +33,7 @@ sub blastview {
   warn("Configured Blastview for $here");
 }
 
-sub searchview {
+sub blastsearchview {
   my $self   = shift;
   my $object = $self->{'object'};
   my $ticket = $object->param('ticket');
@@ -41,13 +41,13 @@ sub searchview {
   ## TODO: Change the add_body_attr call below to take settings from
   ## global config
 
-  $self->{page}->javascript->add_source( "/js/prototype-1.4.0.js" );
+  $self->{page}->javascript->add_source( "/js/prototype.js" );
   $self->{page}->javascript->add_source( "/js/blastview.js" );
   #$self->{page}->add_body_attr( 'onload' => "javascript:start_periodic_updates(10000, 'blast_queue_ticket', '$ticket', 'update_status')");
 
   my $panel = $self->new_panel('Image', 'code' => 'info', 'object' => $object);
   if ($panel) {
-    $panel->add_components(qw(show_news EnsEMBL::Web::Component::Blast::searchview));
+    $panel->add_components(qw(show_news EnsEMBL::Web::Component::Blast::blastsearchview));
   }
 
   $self->{page}->content->add_panel($panel);
