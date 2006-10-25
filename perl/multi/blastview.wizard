@@ -1,0 +1,28 @@
+#!/usr/local/bin/perl
+
+package blastview;
+
+use strict;
+use warnings;
+no warnings "uninitialized";
+
+use EnsEMBL::Web::Document::WebPage;
+
+my $webpage= new EnsEMBL::Web::Document::WebPage(
+  'use_proxy'  => 1,
+  'renderer'   => 'Apache',
+  'outputtype' => 'HTML',
+  'scriptname' => 'blastview',
+  'objecttype' => 'Blast',
+);
+if( $webpage->has_a_problem() ) {
+  $webpage->render_error_page( $webpage->problem->[0] );
+} else {
+  foreach my $object( @{$webpage->dataObjects} ) {
+    $webpage->configure( $object, 'blastview', 'context_menu' );
+  }
+  $webpage->action();
+}
+
+1;
+
