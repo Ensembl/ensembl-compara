@@ -21,6 +21,21 @@ my %View_of;
 sub new {
   ### c
   ### Inside-out class for z-menus.
+  ### Arg 1: class name
+  ### Arg 2: parameter hash
+  ### Description: Constructor method for {{EnsEMBL::Web::Interface::ZMenu}}
+  ###              objects. Receives a parameter hash of the following keys:
+  ### Title param:       title of the zmenu
+  ### Type:        type of zmenu
+  ### Ident:       unique identifier of zmenu (really should be unique!)
+  ### Add:         array of {{EnsEMBL::Web::Interface::ZMenuItem}} objects
+  ###              add to the ZMenu
+  ### Remove:      array of strings of ZMenuItem objects to remove from
+  ###              the ZMenu
+  ### View:        The {{EnsEMBL::Web::Interface::ZMenuView}} object to
+  ###              use for rendering. A new one is automatically created
+  ###              if no object is specified.
+  ### Returns:    A new {{EnsEMBL::Web::Interface::ZMenu}}.
   my ($class, %params) = @_;
   my $self = bless \my($scalar), $class;
   $Title_of{$self}   = defined $params{title} ? $params{title} : "";
@@ -55,7 +70,7 @@ sub overview {
 }
 
 sub json {
-  ### Returns a representation of the ZMenu as a JSON string. Used for asynchronous calls. This method returns the same as {{EnsEMBL::Web::Interface::ZMenuView::json}, but without the escaped quotes. 
+  ### Returns a representation of the ZMenu as a JSON string. Used for asynchronous calls. This method returns the same as {{EnsEMBL::Web::Interface::ZMenuView::json}}, but without the escaped quotes. 
   my $self = shift;
   my $json = $self->view->json;
   $json =~ s/\\'/"/g;
