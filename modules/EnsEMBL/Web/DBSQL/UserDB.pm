@@ -493,6 +493,8 @@ sub setPassword {
 # USER ACCOUNT - customisation methods
 #------------------------------------------------------------------------------
 
+#------------------------ BOOKMARKS -------------------------------------------
+
 sub saveBookmark {
   my ($self, $record) = @_;
   return {} unless $self->{'_handle'};
@@ -577,33 +579,7 @@ sub deleteBookmarks {
   return 1;
 }
 
-sub getGroupsByUser {
-  my ($self, $user_id) = @_;
-  return [] unless $self->{'_handle'};
-  return [] unless $user_id;
-
-  my $results = [];
-  my $sql = qq(
-    SELECT g.group_id, g.name, g.title, g.blurb
-    FROM webgroup g, group_member m
-    WHERE g.group_id = m.group_id 
-    AND m.user_id = $user_id
-  ); 
-  my $T = $self->{'_handle'}->selectall_arrayref($sql);
-  return [] unless $T;
-  for (my $i=0; $i<scalar(@$T);$i++) {
-    my @array = @{$T->[$i]};
-    push (@$results,
-      {
-      'group_id'  => $array[0],
-      'name'      => $array[1],
-      'title'     => $array[2],
-      'blurb'     => $array[3],
-      }
-    );
-  }
-  return $results;
-}
+#------------------------ GROUPS -------------------------------------------
 
 sub getGroupsByType {
   my ($self, $type) = @_;
@@ -612,10 +588,10 @@ sub getGroupsByType {
 
   my $results = [];
   my $sql = qq(
-    SELECT group_id, name, title, blurb
+    SELECT webgroup_id, name, blurb
     FROM webgroup
     WHERE type = "$type" 
-    ORDER BY title
+    ORDER BY name
   ); 
   my $T = $self->{'_handle'}->selectall_arrayref($sql);
   return [] unless $T;
@@ -623,13 +599,45 @@ sub getGroupsByType {
     my @array = @{$T->[$i]};
     push (@$results,
       {
-      'group_id'  => $array[0],
-      'name'      => $array[1],
-      'title'     => $array[2],
-      'blurb'     => $array[3],
+      'webgroup_id' => $array[0],
+      'name'        => $array[1],
+      'blurb'       => $array[2],
       }
     );
   }
+  return $results;
+}
+
+sub getGroupByID {
+  my ($self, $id) = @_;
+  return {} unless $self->{'_handle'};
+  return {} unless $id;
+
+  my $sql = qq(
+    SELECT g.webgroup_id, g.name, g.blurb, g.type, u1.name, u1.org, 
+          g.created_at, u2.name, u2.org, g.modified_at
+    FROM webgroup as g, user as u1, user as u2
+    WHERE g.webgroup_id  = "$id" 
+      AND g.created_by = u1.user_id
+      AND g.modified_by = u2.user_id
+    ORDER BY g.name
+  ); 
+  my $T = $self->{'_handle'}->selectall_arrayref($sql);
+  return {} unless $T;
+  my @array = @{$T->[0]};
+  my $results = {
+      'webgroup_id'   => $array[0],
+      'name'          => $array[1],
+      'blurb'         => $array[2],
+      'type'          => $array[3],
+      'creator_name'  => $array[4],
+      'creator_org'   => $array[5],
+      'created_at'    => $array[6],
+      'modifier_name' => $array[7],
+      'modifier_org'  => $array[8],
+      'modified_at'   => $array[9],
+      };
+
   return $results;
 }
 
@@ -639,9 +647,9 @@ sub getAllGroups {
 
   my $results = [];
   my $sql = qq(
-    SELECT group_id, name, title, blurb, type
+    SELECT webgroup_id, name, blurb, type
     FROM webgroup
-    ORDER BY title
+    ORDER BY name
   ); 
   my $T = $self->{'_handle'}->selectall_arrayref($sql);
   return [] unless $T;
@@ -649,16 +657,231 @@ sub getAllGroups {
     my @array = @{$T->[$i]};
     push (@$results,
       {
-      'group_id'  => $array[0],
-      'name'      => $array[1],
-      'title'     => $array[2],
-      'blurb'     => $array[3],
-      'type'      => $array[4],
+      'webgroup_id' => $array[0],
+      'name'        => $array[1],
+      'blurb'       => $array[2],
+      'type'        => $array[3],
       }
     );
   }
   return $results;
 }
+
+sub createGroup {
+  my ($self, $record) = @_;
+  return {} unless $self->{'_handle'};
+
+  my $name          = $record->{'name'};
+  my $blurb         = $record->{'blurb'};
+  my $type          = $record->{'type'};
+  my $status        = $record->{'status'};
+  my $user_id       = $record->{'user_id'};
+
+  my $sql = qq(INSERT INTO webgroup
+                SET 
+                  webgroup_id = NULL,
+                  name = "$name", 
+                  blurb = "$blurb",
+                  type = "$type",
+                  status = "$status",
+                  created_at = NOW(),
+                  created_by = "$user_id",
+  );
+  my $sth = $self->{'_handle'}->prepare($sql);
+  my $result = $sth->execute();
+
+  ## get new group ID
+  if ($result) {
+    # get id for inserted record
+    $sql = "SELECT LAST_INSERT_ID()";
+    my $T = $self->{'_handle'}->selectall_arrayref($sql);
+    return '' unless $T;
+    my @A = @{$T->[0]}[0];
+    $result = $A[0];
+  }
+  return $result;
+}
+
+sub updateGroup {
+  my ($self, $record) = @_;
+  return {} unless $self->{'_handle'};
+
+  my $webgroup_id   = $record->{'webgroup_id'};
+  my $name          = $record->{'name'};
+  my $blurb         = $record->{'blurb'};
+  my $type          = $record->{'type'};
+  my $status        = $record->{'status'};
+  my $user_id       = $record->{'user_id'};
+
+  my $sql = qq(UPDATE webgroup
+                SET 
+                  name = "$name", 
+                  blurb = "$blurb",
+                  type = "$type",
+                  status = "$status",
+                  modified_at = NOW(),
+                  modified_by = "$user_id",
+                WHERE webgroup_id = "$webgroup_id"
+  );
+  my $sth = $self->{'_handle'}->prepare($sql);
+  my $result = $sth->execute();
+
+  if ($result) {
+    return $webgroup_id;
+  }
+  else {
+    return 0;
+  }
+}
+
+sub getMembership {
+  my ($self, $record) = @_;
+  my $results = [];
+  return $results unless $self->{'_handle'};
+
+  my %criteria = (
+    'm.user_id'     => $record->{'user_id'},
+    'm.webgroup_id' => $record->{'webgroup_id'},
+    'm.level'       => $record->{'level'},
+    'm.status'      => $record->{'status'},
+  );
+
+  my $sql = qq(SELECT g.webgroup_id, g.name, g.blurb, g.type, g.status,
+                      u1.name, u1.org, g.created_at, u2.name, u2.org, g.modified_at,
+                      m.user_id, m.level, m.status
+              FROM webgroup as g, group_member as m, user as u1, user as u2
+              WHERE g.webgroup_id = m.webgroup_id
+                AND g.created_by = u1.user_id
+                AND g.modified_by = u2.user_id
+      );
+  while (my ($column, $value) = each (%criteria)) {
+    if ($value) {
+      $sql .= qq( AND $column = "$value");
+    }
+  }
+  $sql .= qq( ORDER BY g.name);
+
+  my $T = $self->{'_handle'}->selectall_arrayref($sql);
+  return [] unless $T;
+  for (my $i=0; $i<scalar(@$T);$i++) {
+    my @array = @{$T->[$i]};
+    push (@$results,
+      {
+      'webgroup_id'   => $array[0],
+      'group_name'    => $array[1],
+      'group_blurb'   => $array[2],
+      'group_type'    => $array[3],
+      'group_status'  => $array[4],
+      'creator_name'  => $array[5],
+      'creator_org'   => $array[6],
+      'created_at'    => $array[7],
+      'modifier_name' => $array[8],
+      'modifier_org'  => $array[9],
+      'modified_at'   => $array[10],
+      'member_id'     => $array[11],
+      'member_level'  => $array[12],
+      'member_status' => $array[13],
+      }
+    );
+  }
+  return $results;
+}
+
+=pod
+sub saveMembership {
+## NB Unlike single-table saves, we decide between update and insert in the adaptor,
+## because a cross-reference needs to do a query to check for existing entries instead of
+## relying on the presence of id parameters
+  my ($self, $record) = @_;
+  my $result = {};
+  return $result unless $self->{'_handle'};
+
+  my $logged_in = $record->{'logged_in'};
+  my $user_id   = $record->{'user_id'};
+  my $webgroup_id  = $record->{'webgroup_id'};
+  my $status    = $record->{'status'};
+  my $level     = $record->{'level'};
+  return {} unless ($user_id && $group_id);
+  return {} unless ($status || $level);
+
+  ## Is this user already a member of this group?
+  my $sql = qq(SELECT user_id FROM group_member 
+                WHERE user_id = "$user_id"
+                AND webgroup_id = "$webgroup_id"
+  );
+  my $T = $self->db->selectall_arrayref($sql);
+  if ($T->[0][0]) {
+  ## User is already a member, so update status and/or level
+    $sql = 'UPDATE group_member SET ';
+    if ($status) {
+      $sql .= qq( status = "$status");
+    }
+    if ($status && $level) {
+      $sql .= ',';
+    }
+    if ($level) {
+      $sql .= qq( level = "$level");
+    }
+    $sql = qq(last_updated = NOW(), updated_by = "$logged_in"
+                WHERE user_id = "$user_id"
+                AND webgroup_id = "$webgroup_id"
+    );
+  }
+  else {
+  ## Create new member record
+    $sql = qq(INSERT INTO group_member SET user_id = $user_id, webgroup_id = $webgroup_id, );
+    if ($status) {
+      $sql .= qq(status = "$status", );
+    }
+    else {
+      $sql .= qq(status = 'inactive', );
+    }
+    if ($level) {
+      $sql .= qq(level = "$level", );
+    }
+    else {
+      $sql .= qq(level = "member", );
+    }
+    $sql .= qq(created_at = NOW(), created_by = "$logged_in");
+  }
+
+  my $sth = $self->{'_handle'}->prepare($sql);
+  my $result = $sth->execute();
+
+  return $result;
+}
+
+sub getGroupAdmins {
+  my ($self, $group) = @_;
+  return [] unless $self->{'_handle'};
+  return [] unless $group;
+
+  my $results = [];
+  my $sql = qq(
+    SELECT u.user_id, u.name, u.email
+    FROM user as u, group_member as m
+    WHERE u.user_id = m.user_id
+      AND m.webgroup_id = "$group"
+      AND m.level = "administrator"
+    ORDER BY u.name
+  ); 
+  my $T = $self->{'_handle'}->selectall_arrayref($sql);
+  return [] unless $T;
+  for (my $i=0; $i<scalar(@$T);$i++) {
+    my @array = @{$T->[$i]};
+    push (@$results,
+      {
+      'user_id'  => $array[0],
+      'name'      => $array[1],
+      'email'     => $array[2],
+      }
+    );
+  }
+  return $results;
+}
+=cut
+
+#------------------------ GENERIC 'RECORD' QUERIES ---------------------------
 
 sub find_records {
   my ($self, %params) = @_; 
