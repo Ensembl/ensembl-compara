@@ -510,6 +510,68 @@ sub get_SimpleAlign {
 }
 
 
+=head2 get_all_ConservationScores
+
+  Arg  1     : (opt) integer $display_size (default 700)
+  Arg  2     : (opt) string $display_type (one of "AVERAGE" or "MAX") (default "MAX")
+  Arg  3     : (opt) integer $window_size
+  Example    : my $conservation_scores =
+                    $align_slice->get_all_ConservationScores(1000, "MAX", 10);
+  Description: Retrieve the corresponding
+               Bio::EnsEMBL::Compara::ConservationScore objects for the
+               Bio::EnsEMBL::Compara::GenomicAlignBlock objects underlying
+               this Bio::EnsEMBL::Compara::AlignSlice object. This method
+               calls the Bio::EnsEMBL::Compara::DBSQL::ConservationScoreAdaptor->
+               fetch_all_by_GenomicAlignBlock() method. It sets up the align_start,
+               align_end and slice_length and map the resulting objects onto
+               the AlignSlice. $diaplay_slize, $display_type and $window_size
+               are passed as it to the fetch_all_by_GenomicAlignBlock() method.
+               Please refer to the documentation in
+               Bio::EnsEMBL::Compara::DBSQL::ConservationScoreAdaptor
+               for more details.
+  Returntype : ref. to an array of Bio::EnsEMBL::Compara::ConservationScore 
+               objects.
+  Caller     : object::methodname
+  Status     : At risk
+
+=cut
+
+sub get_all_ConservationScores {
+  my ($self, $display_size, $display_type, $window_size) = @_;
+  my $all_conservation_scores = [];
+
+  my $conservation_score_adaptor = $self->adaptor->db->get_ConservationScoreAdaptor();
+  foreach my $this_genomic_align_block (@{$self->get_all_GenomicAlignBlocks()}) {
+    my $all_these_conservation_scores = $conservation_score_adaptor->fetch_all_by_GenomicAlignBlock(
+        $this_genomic_align_block, $this_genomic_align_block->{_alignslice_from},
+        $this_genomic_align_block->{_alignslice_to}, $self->get_all_Slices()->[0]->length, 
+        $display_size, $display_type, $window_size);
+#     ## Debug
+#     print "PARAMETERS FOR fetch_all_by_GenomicAlignBlock(): ", join(", ", 
+#         $this_genomic_align_block->dbID, $this_genomic_align_block->{_alignslice_from},
+#         $this_genomic_align_block->{_alignslice_to}, $self->get_all_Slices()->[0]->length), "\n";
+    foreach my $this_conservation_score (@$all_these_conservation_scores) {
+      $this_conservation_score->position($this_conservation_score->position +
+          $this_genomic_align_block->{_alignslice_from} - 1 +
+          $this_genomic_align_block->{_alignslice_start});
+      push (@$all_conservation_scores, $this_conservation_score);
+    }
+  }
+#   ## Debug
+#   foreach my $this_conservation_score (@$all_conservation_scores) {
+#     print "CONS_SCORE: ", join(" -- ",
+#         "gab_id=".$this_conservation_score->genomic_align_block_id,
+#         "pos=".$this_conservation_score->position,
+#         "win_size=".$this_conservation_score->window_size,
+#         "expect=".$this_conservation_score->expected_score,
+#         "observ=".$this_conservation_score->observed_score,
+#         "diff=".$this_conservation_score->diff_score,
+#         ), "\n";
+#   }
+
+  return $all_conservation_scores;
+}
+
 =head2 _create_underlying_Slices (experimental)
 
   Arg[1]     : listref of Bio::EnsEMBL::Compara::GenomicAlignBlocks
@@ -547,8 +609,13 @@ sub _create_underlying_Slices {
   }
   @$sorted_genomic_align_blocks = reverse(@$sorted_genomic_align_blocks) if ($strand == -1);
   foreach my $this_genomic_align_block (@$sorted_genomic_align_blocks) {
-    $this_genomic_align_block = $this_genomic_align_block->restrict_between_reference_positions(
+    my $original_genomic_align_block = $this_genomic_align_block;
+    my ($from, $to);
+    ($this_genomic_align_block, $from, $to) = $this_genomic_align_block->restrict_between_reference_positions(
         $self->reference_Slice->start, $self->reference_Slice->end);
+    $original_genomic_align_block->{_alignslice_from} = $from;
+    $original_genomic_align_block->{_alignslice_to} = $to;
+
     my $reference_genomic_align = $this_genomic_align_block->reference_genomic_align;
     my ($this_pos, $this_gap_between_genomic_align_blocks);
     if ($strand == 1) {
@@ -584,6 +651,7 @@ sub _create_underlying_Slices {
       $align_slice_length += $this_gap_between_genomic_align_blocks;
     }
     $reference_genomic_align->genomic_align_block->reference_slice_start($align_slice_length + 1);
+    $original_genomic_align_block->{_alignslice_start} = $align_slice_length;
     if ($expanded) {
       $align_slice_length += CORE::length($reference_genomic_align->aligned_sequence("+FAKE_SEQ"));
       $big_mapper->add_Mapper($reference_genomic_align->get_Mapper);
