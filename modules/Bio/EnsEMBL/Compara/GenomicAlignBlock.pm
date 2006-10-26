@@ -51,7 +51,7 @@ GET VALUES
   my $length = $genomic_align_block->length;
   my alignment_strings = $genomic_align_block->alignment_strings;
   my $genomic_align_block_is_on_the_original_strand =
-      $genomic_align_block->orginal_strand;
+      $genomic_align_block->get_original_strand;
 
 =head1 OBJECT ATTRIBUTES
 
