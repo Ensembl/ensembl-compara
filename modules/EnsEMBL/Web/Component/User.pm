@@ -1,7 +1,6 @@
 package EnsEMBL::Web::Component::User;
 
 use EnsEMBL::Web::Component;
-use EnsEMBL::Web::Object::Group;
 
 use strict;
 use warnings;
