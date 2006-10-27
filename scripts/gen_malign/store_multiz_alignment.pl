@@ -34,24 +34,39 @@ selected database.
 =head1 USAGE
 
 store_multiz_alignment.pl [-help]
-  -host mysql_host_server (for ensembl_compara DB)
-  -dbuser db_username (default = 'ensro')
-  -dbname ensembl_compara_database
-  -port mysql_host_port (default = 3352)
-  -conf_file compara_conf_file
+  --host mysql_host_server (for ensembl_compara DB)
+  --dbuser db_username (default = 'ensro')
+  --dbname ensembl_compara_database
+  --port mysql_host_port (default = 3352)
+  --conf_file compara_conf_file
       see an example in ensembl-compara/modules/Bio/EnsEMBL/Compara/Compara.conf.example
-  -multiz_file file_containing_multiz_alignemnts
-  -skip (ignores unknown genome assemblies and skips the whole alignment)
-  -force (ignores unknown genome assemblies but stores the remaining sequences of the aligment)
-  -score minimum_score_threhold (default No minimum)
-  -min_seq minimum_number_of_sequences_in_the_multiple_alignment (default No minimum)
+  --multiz_file file_containing_multiz_alignemnts
+  --skip (ignores unknown genome assemblies and skips the whole alignment)
+  --force (ignores unknown genome assemblies but stores the remaining sequences of the aligment)
+  --score minimum_score_threhold (default No minimum)
+  --min_seq minimum_number_of_sequences_in_the_multiple_alignment (default No minimum)
+  --species string describing all the species used for this alignments. Use the UCSC species
+      names concatenated with underscores '_', like hg18_panTro1_rheMac2_mm8_rn4_oryCun1_canFam2
+  --load_dnafrags (loads all the toplevel seq_regions from the core db as dnafrags in the
+      compara one)
 
-store_multiz_alignment.pl [-help]
-  -host mysql_host_server (for ensembl_compara DB)
-  -dbuser db_username (default = 'root')
-  -dbname ensembl_compara_database
-  -port mysql_host_port (default = 3303)
-  -mavid directory_containing_mavid_alignemnts_and_map_file
+=head1 BEFORE RUNNING THE SCRIPT
+
+=head2 Download multiz files
+
+All the files should be in the same directory. They are expected to have the extension <.maf>.
+Gzipped and bzip2'ed files are allowed.
+
+=head2 Download the goldenpath files from UCSC
+
+There might some subtle differences between the ensembl and the ucsc assemblies in chromosomes Un,
+genescaffold and so on. They are not mandatory, but these files will allow this script to map most
+of the regions onto ensembl toplevel coordinates.
+
+You can have one single file per species. If UCSC provides this information in several files,
+you will have to concatenate them. The filename must be the UcscSpeciesName_gold.txt like
+danRer3_gold.txt or panTro1_gold.txt
+
 
 =head1 KNOWN BUGS
 
@@ -83,10 +98,9 @@ use Bio::EnsEMBL::Compara::DBSQL::GenomicAlignAdaptor;
 use Bio::EnsEMBL::Compara::GenomicAlign;
 use Bio::EnsEMBL::Mapper;
 use Bio::EnsEMBL::Compara::DnaFrag;
-use Bio::EnsEMBL::Utils::Exception qw( verbose );
 use Getopt::Long;
 
-verbose("WARNING");
+verbose("OFF");
 
 ###############################################################################
 ##  CONFIGURATION VARIABLES:
@@ -94,16 +108,23 @@ verbose("WARNING");
 ##           species naming system.
 ###############################################################################
 my $ucsc_2_ensembl = {
-      "hg16"    => {'name' => "Homo sapiens", 'assembly' => "NCBI34"},
-      "hg17"    => {'name' => "Homo sapiens", 'assembly' => "NCBI35"},
-      "mm3"     => {'name' => "Mus musculus", 'assembly' => "NCBIM32"},
-      "mm5"     => {'name' => "Mus musculus", 'assembly' => "NCBIM33"},
-      "rn3"     => {'name' => "Rattus norvegicus", 'assembly' => "RGSC3.1"},
+      "hg18"    => {'name' => "Homo sapiens", 'assembly' => "NCBI36"},
+      "panTro1" => {'name' => "Pan troglodytes", 'assembly' => "CHIMP1A"},
+      "rheMac2" => {'name' => "Macaca mulatta", 'assembly' => "MMUL_1"},
+      "mm8"     => {'name' => "Mus musculus", 'assembly' => "NCBIM36"},
+      "rn4"     => {'name' => "Rattus norvegicus", 'assembly' => "RGSC3.4"},
+      "oryCun1" => {'name' => "Oryctolagus cuniculus", 'assembly' => "RABBIT"},
+      "canFam2" => {'name' => "Canis familiaris", 'assembly' => "BROADD2"},
+      "bosTau2" => {'name' => "Bos taurus", 'assembly' => "Btau_2.0"},
+      "dasNov1" => {'name' => "Dasypus novemcinctus", 'assembly' => "ARMA"},
+      "loxAfr1" => {'name' => "Loxodonta africana", 'assembly' => "BROADE1"},
+      "echTel1" => {'name' => "Echinops telfairi", 'assembly' => "TENREC"},
+      "monDom4" => {'name' => "Monodelphis domestica", 'assembly' => "BROADO3"},
       "galGal2" => {'name' => "Gallus gallus", 'assembly' => "WASHUC1"},
-      "panTro1" => {'name' => "Pan troglodytes", 'assembly' => "CHIMP1"},
-      "canFam1" => {'name' => "Canis familiaris", 'assembly' => "BROADD1"},
-      "fr1"     => {'name' => "Fugu rubripes", 'assembly' => "FUGU2"},
-      "danRer1"     => {'name' => "Danio rerio", 'assembly' => "ZFISH3"},
+      "xenTro1" => {'name' => "Xenopus tropicalis", 'assembly' => "JGI4.1"},
+      "danRer3" => {'name' => "Danio rerio", 'assembly' => "ZFISH5"},
+      "tetNig1" => {'name' => "Tetraodon nigroviridis", 'assembly' => "TETRAODON7"},
+      "fr1"     => {'name' => "Takifugu rubripes", 'assembly' => "FUGU3"},
 # 
 #       "hg16" => {'name' => "Homo sapiens", 'assembly' => "NCBI34"},
 #       "hg17" => {'name' => "Homo sapiens", 'assembly' => "NCBI35"},
@@ -113,6 +134,7 @@ my $ucsc_2_ensembl = {
 #       "Gg2" => {'name' => "Gallus gallus", 'assembly' => "WASHUC1"},
 #       "Pt1" => {'name' => "Pan troglodytes", 'assembly' => "CHIMP1"},
     };
+
 ###############################################################################
 
 my $usage = qq{USAGE:
@@ -173,6 +195,7 @@ if (!$multiz_dir or !opendir(MULTIZ_DIR, $multiz_dir)) {
 my @multiz_files = grep { /\.maf/ } readdir(MULTIZ_DIR);
 closedir(MULTIZ_DIR);
 
+
 ## Get Compara adaptors
 my $genome_db_adaptor = Bio::EnsEMBL::Registry->get_adaptor($dbname, 'compara', 'GenomeDB');
 die "Cannot get adaptor for '$dbname', 'compara', 'GenomeDB'" if (!$genome_db_adaptor);
@@ -211,13 +234,15 @@ foreach my $this_species (@species) {
     next if ($resp =~ /^y/i);
     exit(1);
   }
+#   print STDERR "get $this_species name " . $ucsc_2_ensembl->{$this_species}->{'name'} . " assem " . $ucsc_2_ensembl->{$this_species}->{'assembly'} . "\n";										
+
   $genome_db->{$this_species} = eval{$genome_db_adaptor->fetch_by_name_assembly(
       $ucsc_2_ensembl->{$this_species}->{'name'},
       $ucsc_2_ensembl->{$this_species}->{'assembly'}
       );};
   if (!$genome_db->{$this_species}) {
     warning("Assembly ".$ucsc_2_ensembl->{$this_species}->{'assembly'}." of species [$this_species] is not loaded!");
-    print "Do you want to continue with the remaining speceis? ";
+    print "Do you want to continue with the remaining species? ";
     my $resp = <STDIN>;
     next if ($resp =~ /^y/i);
     exit(1);
@@ -227,6 +252,8 @@ foreach my $this_species (@species) {
   }
   push (@$species_set, $genome_db->{$this_species});
 }
+
+# print STDERR "check_sequences $check_sequences skip $skip\n";
 
 my $method_link_species_set = new Bio::EnsEMBL::Compara::MethodLinkSpeciesSet(
         -adaptor => $method_link_species_set_adaptor,
@@ -239,6 +266,8 @@ my $method_link_species_set = new Bio::EnsEMBL::Compara::MethodLinkSpeciesSet(
 $method_link_species_set = $method_link_species_set_adaptor->store($method_link_species_set);
 
 foreach my $multiz_file (@multiz_files) {
+#     print "file $multiz_file\n";
+
   ## Open file, decompressing it on the fly if needed
   if ($multiz_file =~ /\.gz$/) {
     open(MULTIZ, "gunzip -c $multiz_dir/$multiz_file |") || die;
@@ -250,9 +279,10 @@ foreach my $multiz_file (@multiz_files) {
 
   my @all_these_genomic_aligns; # array of Bio::EnsEMBL::Compara::GenomicAlign objects to store as a single multiple alignment
   while (<MULTIZ>) {
+    next if ($_ =~ /^$/ or $_ =~ /^#/);
     ## For all lines that are not "s" lines (parts of the multiple alignment)
-    if (!/^s\s+([^\.]+)\.chr(\S+)\s+(\d+)\s+(\d+)\s+([\+\-])\s+\d+\s+(.+)$/) {
-      
+    if (!/^s\s+([^\.]+)\.(\S+)\s+(\d+)\s+(\d+)\s+([\+\-])\s+(\d+)\s+(.+)$/) {
+
       ## Stores multiple alignment
       if (@all_these_genomic_aligns) {
         # -force option can produce alignments with one sequence only!!
@@ -277,7 +307,7 @@ foreach my $multiz_file (@multiz_files) {
         $print_multiple_alignment = "";
         $score = undef;
       }
-      
+
       ## Retrieves score of the multiple alignment
       if (/^a/ && /score=(\-?\d+(\.\d+)?)/) {
         $score = $1;
@@ -285,21 +315,27 @@ foreach my $multiz_file (@multiz_files) {
           $malign_warning .= "- score=$score -";
         }
         $all_alignments_counter++;
+      } else {
+        throw("Error while parsing line $_");
       }
-      
+
       next;
     }
-  
+
     ## Next is for "s" lines only  
     $print_multiple_alignment .= "  $1.chr$2 $3 (l=$4) ($5) $6\n";
-    
+
     my $species = $1;
     my $chromosome = $2;
     my $start_pos = $3;
     my $length = $4;
     my $strand = ($5 eq '+')?1:-1;
-    my $aligned_sequence = $6;
+    my $chr_length = $6;
+    my $aligned_sequence = $7;
     
+    $chromosome =~ s/^chr//;
+# 	     print STDERR "species=$species chr=$chromosome start=$start_pos len=$length strand=$strand \n";
+
     ## Deal with unknown assemblies
     if (!defined($ucsc_2_ensembl->{$species})) {
       $print_multiple_alignment =~ s/\n$/  **NOT AVAILABLE**\n/;;
@@ -316,8 +352,8 @@ foreach my $multiz_file (@multiz_files) {
         die "Cannot map UCSC species name: $species\n";
       }
     }
-    
-    my $genomic_align = get_this_genomic_align($species, $chromosome, $start_pos, $length, $strand,
+
+    my $genomic_align = get_this_genomic_align($species, $chromosome, $chr_length, $start_pos, $length, $strand,
           $aligned_sequence);
     next if (!$genomic_align);
 
@@ -361,7 +397,7 @@ foreach my $multiz_file (@multiz_files) {
     }
     push(@all_these_genomic_aligns, $genomic_align);
   }
-    
+ 
   ## Stores multiple alignment
   if (@all_these_genomic_aligns) {
     # -force option can produce alignments with one sequence only!!
@@ -414,68 +450,65 @@ exit(0);
 =cut
 
 my $dnafrag_mapper;
-my $dnafrag_length;
 sub get_this_genomic_align {
-  my ($species, $name, $start_pos, $length, $strand, $aligned_sequence) = @_;
+  my ($species, $name, $seq_region_length, $start_pos, $length, $strand, $aligned_sequence) = @_;
 
   my ($dnafrag_start, $dnafrag_end);
+
+  if ($genome_db->{$species}->name eq "Bos taurus" and $name =~ /scaffold(\d+)/) {
+    $name = "ChrUn.$1"; # cow scaffold in ensembl are called ChrUn.XXXXX
+  }
+  if ($genome_db->{$species}->name eq "Bos taurus" and $name eq "X") {
+    $name = "30"; # cow chr.30 is named chr.X in UCSC
+  }
+
   my $dnafrag = $dnafrag_adaptor->fetch_by_GenomeDB_and_name($genome_db->{$species}, $name);
   if (!$dnafrag) {
+
+    my ($seq_region_start, $seq_region_end);
+    if ($strand == -1) {
+      $seq_region_start = $seq_region_length-($start_pos + $length - 1);
+      $seq_region_end = $seq_region_length-($start_pos);
+    } else {
+      $seq_region_start = $start_pos + 1;
+      $seq_region_end = $start_pos + $length;
+    }
     ## This chromosome does not exist in EnsEMBL, we have to map it using the golden path
     if (!defined($dnafrag_mapper->{"${species}_${name}"})) {
       $dnafrag_mapper->{"${species}_${name}"} = get_this_dnafrag_mapper($species, $name);
     }
-    if (!defined($dnafrag_length->{"${species}_${name}"})) {
-      $dnafrag_length->{"${species}_${name}"} = get_this_ucsc_chromosome_length($species, $name);
-    }
 
-    my @mapped_objects;
-    if ($strand == -1) {
-      @mapped_objects = $dnafrag_mapper->{"${species}_${name}"}->map_coordinates(
-              $name,
-              $dnafrag_length->{"${species}_${name}"}-($start_pos + $length - 1),
-              $dnafrag_length->{"${species}_${name}"}-($start_pos),
-              $strand,
-              'chromosome');
+    if (!$dnafrag_mapper->{"${species}_${name}"}) {
+      ## File does not exist. 
+      ($dnafrag, $dnafrag_start, $dnafrag_end) = map_on_toplevel($species,
+          $name, $seq_region_start, $seq_region_end, $strand);
     } else {
-      @mapped_objects = $dnafrag_mapper->{"${species}_${name}"}->map_coordinates(
+      my @mapped_objects = $dnafrag_mapper->{"${species}_${name}"}->map_coordinates(
               $name,
-              ($start_pos + 1),
-              ($start_pos + $length),
+              $seq_region_start,
+              $seq_region_end,
               $strand,
               'chromosome');
-    }
+      if (scalar(@mapped_objects) == 1 and $mapped_objects[0]->isa("Bio::EnsEMBL::Mapper::Coordinate")) {
 
-    if (scalar(@mapped_objects) == 1 and $mapped_objects[0]->isa("Bio::EnsEMBL::Mapper::Coordinate")) {
-      $dnafrag = $dnafrag_adaptor->fetch_by_GenomeDB_and_name(
-              $genome_db->{$species},
-              $mapped_objects[0]->id
-          );
-      if (!$dnafrag) {
-        ## DnaFrags are not in the compara DB. Try to project on toplevel coord system
-        my $slice_adaptor = $genome_db->{$species}->db_adaptor->get_SliceAdaptor;
-        my $slice = ($slice_adaptor->fetch_by_region(undef, $mapped_objects[0]->id)
-                or $slice_adaptor->fetch_by_region(undef, $mapped_objects[0]->id.".1"));
-        my $projection_segments;
-        $projection_segments = $slice->project('toplevel') if (defined($slice));
-        if ($projection_segments and scalar(@$projection_segments) == 1) {
-          my $projected_start = $projection_segments->[0]->from_start;
-          my $projected_end = $projection_segments->[0]->from_end;
-          my $projected_slice = $projection_segments->[0]->to_Slice;
-          $dnafrag = $dnafrag_adaptor->fetch_by_GenomeDB_and_name(
-                  $genome_db->{$species},
-                  $projected_slice->seq_region_name
-              );
-          $dnafrag_start = $mapped_objects[0]->start + $projected_slice->start - $projected_start;
-          $dnafrag_end = $mapped_objects[0]->end + $projected_slice->end - $projected_end;
+        $dnafrag = $dnafrag_adaptor->fetch_by_GenomeDB_and_name(
+                $genome_db->{$species},
+                $mapped_objects[0]->id
+            );
+        if (!$dnafrag) {
+          ## DnaFrags are not in the compara DB. Try to project on toplevel coord system
+          ($dnafrag, $dnafrag_start, $dnafrag_end) = map_on_toplevel($species,
+              $mapped_objects[0]->id, $mapped_objects[0]->start, $mapped_objects[0]->end,
+              $mapped_objects[0]->strand);
+          if (!$dnafrag) {
+            $all_warnings{"Mapping $species.".$mapped_objects[0]->id. " on $species.chr$name"}++;
+            $malign_warning .= "- $species.chr$name (".$mapped_objects[0]->id.") -";
+            return undef;
+          }
         } else {
-          $all_warnings{"Mapping $species.".$mapped_objects[0]->id. " on $species.chr$name"}++;
-          $malign_warning .= "- $species.chr$name (".$mapped_objects[0]->id.") -";
-          return undef;
+          $dnafrag_start = $mapped_objects[0]->start;
+          $dnafrag_end = $mapped_objects[0]->end;
         }
-      } else {
-        $dnafrag_start = $mapped_objects[0]->start;
-        $dnafrag_end = $mapped_objects[0]->end;
       }
     }
   } else {
@@ -489,7 +522,6 @@ sub get_this_genomic_align {
       throw("Cannot understand strand $strand");
     }
   }
-  
   ## Deal with unknown dnafrags
   if (!$dnafrag) {
     $print_multiple_alignment =~ s/\n$/  **NOT AVAILABLE**\n/;;
@@ -519,34 +551,6 @@ sub get_this_genomic_align {
       );
 
   return $genomic_align;
-}
-
-
-=head2 get_this_ucsc_chromosome_length
-
- Arg[1]      : string $short_UCSC_species_name
- Arg[2]      : string $chromosome_name
- Example     : get_this_ucsc_chromosome_length("galGal2", "chrX");
- Description : This function reads the chromInfo file corresponding to this
-               species and returns the length of the choosen chromosome
- ReturnType  : integer
- Exception   : return 0 if the data is not found
- Caller      : methodname
-
-=cut
-
-sub get_this_ucsc_chromosome_length {
-  my ($species, $name) = @_;
-  my $dnafrag_mapper;
-
-  ## Get the length of the chromosome
-  my $chromosome_length = qx"fgrep 'chr$name' $multiz_dir/${species}_chromInfo.txt";
-  if (defined($chromosome_length)) {
-    ($chromosome_length) = ($chromosome_length =~ /^\S+\s+(\d+)/);
-  }
-  $chromosome_length = 0 if (!defined($chromosome_length));
-
-  return $chromosome_length;
 }
 
 
@@ -592,6 +596,38 @@ sub get_this_dnafrag_mapper {
   close(GOLD);
 
   return $dnafrag_mapper;
+}
+
+
+=head2 map_on_top_level
+
+
+=cut
+
+sub map_on_toplevel {
+  my ($species, $seq_region_name, $start, $end, $strand) = @_;
+  my ($dnafrag, $dnafrag_start, $dnafrag_end, $dnafrag_strand);
+
+  my $slice_adaptor = $genome_db->{$species}->db_adaptor->get_SliceAdaptor;
+  my $slice = ($slice_adaptor->fetch_by_region(undef, $seq_region_name, $start, $end, $strand)
+          or $slice_adaptor->fetch_by_region(undef, $seq_region_name.".1", $start, $end, $strand));
+  return ($dnafrag, $dnafrag_start, $dnafrag_end, $dnafrag_strand) if (!$slice);
+  my $projection_segments;
+  $projection_segments = $slice->project('toplevel') if (defined($slice));
+  if ($projection_segments and scalar(@$projection_segments) == 1) {
+    my $projected_start = $projection_segments->[0]->from_start;
+    my $projected_end = $projection_segments->[0]->from_end;
+    my $projected_slice = $projection_segments->[0]->to_Slice;
+    $dnafrag = $dnafrag_adaptor->fetch_by_GenomeDB_and_name(
+            $genome_db->{$species},
+            $projected_slice->seq_region_name
+        );
+    $dnafrag_start = $start + $projected_slice->start - $projected_start;
+    $dnafrag_end = $end + $projected_slice->end - $projected_end;
+    $dnafrag_strand = $projected_slice->strand;
+  }
+
+  return ($dnafrag, $dnafrag_start, $dnafrag_end, $dnafrag_strand);
 }
 
 
