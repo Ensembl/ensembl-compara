@@ -1,6 +1,7 @@
 package EnsEMBL::Web::DBSQL::UserDB;
 # File Apache/EnsEMBL/UserDB.pm
 
+# TODO: 1987 called, it wants its data structure back:
 #  _userdatatype_ID and its uses
 #   1  WebUserConfig/contigviewbottom
 #   2  WebUserConfig/contigviewtop
@@ -17,6 +18,7 @@ use EnsEMBL::Web::SpeciesDefs;
 use Digest::MD5;
 use strict;
 use CGI::Cookie;
+use EnsEMBL::Web::Object::User;
 
 sub new {
   my $caller = shift;
@@ -259,6 +261,14 @@ sub _random_string {
   return $random_string;
 }
 
+sub find_user_by_user_id {
+  my ($self, $id) = @_;
+  warn "FIND USER BY ID";
+  my $user = EnsEMBL::Web::Object::User->new({ adaptor => $self, id => $id });
+  return $user;
+}
+
+
 sub getUserByID {
   my ($self, $id) = @_;
 
@@ -276,9 +286,11 @@ sub getUserByID {
 
   my @record = @{$R->[0]};
   $details = {
+    'id' => $record[0],
     'user_id' => $record[0],
     'name'    => $record[1],
     'org'     => $record[2],
+    'organisation' => $record[2],
     'email'   => $record[3],
     'extra'   => $record[4],
   };
@@ -315,6 +327,8 @@ sub getUserByEmail {
 
 sub getUserByCode {
   my ($self, $code) = @_;
+  my ($self, $id) = @_;
+  
 
   my $details = {};
   return $details unless $self->{'_handle'};
@@ -887,7 +901,10 @@ sub find_records {
   my ($self, %params) = @_; 
   my $find_key;
   my $find_value;
-  my $type = $params{type};
+  my $type = undef;
+  if ($params{type}) {
+    $type = $params{type};
+  }
   my %options;
   if ($params{options}) {
     %options = %{ $params{options} }; 
@@ -901,9 +918,10 @@ sub find_records {
   my $results = [];
   my $sql = qq(
     SELECT * 
-    FROM records 
-    WHERE type = "$type" AND $find_key = "$find_value" 
-  ); 
+    FROM records WHERE $find_key = "$find_value"); 
+  if ($type) {
+    $sql .= qq( AND type = "$type"); 
+  } 
   my $T = $self->{'_handle'}->selectall_arrayref($sql);
   return [] unless $T;
   for (my $i=0; $i<scalar(@$T);$i++) {

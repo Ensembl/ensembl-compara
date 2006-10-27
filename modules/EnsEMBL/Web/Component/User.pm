@@ -1,7 +1,7 @@
 package EnsEMBL::Web::Component::User;
 
 use EnsEMBL::Web::Component;
-use EnsEMBL::Web::User::Record;
+use EnsEMBL::Web::Object::Group;
 
 use strict;
 use warnings;
@@ -75,8 +75,9 @@ sub _show_groups {
 sub _show_bookmarks {
   my( $panel, $object, $id ) = @_;
   my $editable = $panel->ajax_is_available;
+
   ## Get the user's bookmark list
-  my @bookmarks = EnsEMBL::Web::User::Record->find_bookmark_by_user_id($id);
+  my @bookmarks = $object->bookmark_records;
 
   ## return the message
   my $html = "<h3>Bookmarks</h3>\n";

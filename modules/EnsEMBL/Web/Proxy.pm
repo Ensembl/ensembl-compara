@@ -8,8 +8,38 @@ use vars qw($AUTOLOAD);
 our  @ISA = qw( EnsEMBL::Web::Root );
 
 sub new {
-  my( $class, $supertype, $type, $data, %extra_elements ) = @_;
+  ### Creates a new Proxy object. Usually called from {{EnsEMBL::Web::Proxy::Object}}.
+  ###
+  ### The {{EnsEMBL::Web::Factory}} of a particular Ensembl type (such as
+  ### {{EnsEMBL::Web::Factory::User}} sets up necessary parameters in the 
+  ### {{EnsEMBL::Web::Factory::User::createObjects}} style method. This method
+  ### usually calls {{EnsEMBL::Web::Factory::dataObjects}}, setting a newly
+  ### created {{EnsEMBL::Web::Proxy::Object}} as the Factory's data object.
+  ###
+  ### On creating a new {{EnsEMBL::Web::Proxy::Object}}, a data type (such as 'User'),
+  ### an "object" and a set of data parameters are used to configure the new 
+  ### data object are specified. These values are passed back to this method:
+  ### <li> The data type is accessible as $type</li>
+  ### <li> The data parameters are accessible as the $data hashref</li>
+  ### <li> The "object" is accessible via the _object key of the 
+  ###      %extra_elements hash</li> 
+  ###
+  ### The "object" can be a reference to any Perl type, blessed or unblessed, and
+  ### is passed on to the Ensembl data type (such as Location, User etc) as part
+  ### of a hashref with many other configuration settings (the SpeciesDefs object, 
+  ### the user id, the script config settings), which may or may not have been set
+  ### by default, or been configured in the data parameters passed in from the
+  ### {{EnsEMBL::Web::Proxy::Object}} instantiation.
+  ### 
+  ### In essence, should you want a set of parameters to be sent 
+  ### to a particular Ensembl data type for use in initialising an object
+  ### of that type, these parameters should be sent as the "object" when a 
+  ### new {{EnsEMBL::Web::Proxy::Object}} is defined in the type's Factory.
+  ### 
+  ### It is interesting to note that this instantiation process contains all the hall
+  ### marks of a good Poirot novel: obfuscation, misdirection, intrege and murder.
 
+  my( $class, $supertype, $type, $data, %extra_elements ) = @_;
   my $self  = [
     $type,
     {

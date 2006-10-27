@@ -225,7 +225,7 @@ sub action {
 sub _node_hop {
   my ($self, $node, $loop) = @_;
   $loop++;
-
+  warn "WIZARD NODE: " . $node;
   if ($loop > 10 || !$self->{wizard}->isa_node($node) || $self->{wizard}->isa_page($node)) {
     ## render page if not a processing node or doesn't exist
     $self->render;
@@ -233,6 +233,7 @@ sub _node_hop {
   else {
     ## do whatever processing is required by this node
     my $object = ${$self->dataObjects}[0];
+    warn "OBJECT FOR WIZARD: " . $object->[0];
     my $return_value = $self->{wizard}->$node($object);
 
     my %parameter = %{$return_value} if (ref($return_value) =~ /HASH/);

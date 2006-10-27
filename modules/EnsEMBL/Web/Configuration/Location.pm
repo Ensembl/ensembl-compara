@@ -3,6 +3,8 @@ package EnsEMBL::Web::Configuration::Location;
 use strict;
 
 use EnsEMBL::Web::Configuration;
+use EnsEMBL::Web::Interface::FragmentCollection;
+
 our @ISA = qw( EnsEMBL::Web::Configuration );
 use POSIX qw(floor ceil);
 
@@ -454,20 +456,50 @@ sub contigview {
   $self->update_configs_from_parameter( 'bottom', 'contigviewbottom' );
   $self->add_das_sources('contigviewbottom');
 
+  $self->{page}->add_body_attr( 'onload' => 'populate_fragments(); ');
+  $self->{page}->javascript->add_source("/js/ajax_fragment.js");
+
   my $last_rendered_panel = undef;
   my @common = ( 'params' => { 'l'=>$q_string, 'h' => $obj->highlights_string } );
 
 ## Initialize the ideogram image...
   my @rendered_panels = ();
+  my @fragment_panels = ();
+  my $ajax_ideogram = 'on';
+  my $ajax_detailed = 'off';
+
+  my $max_length = ($obj->species_defs->ENSEMBL_GENOME_SIZE||1) * 1.001e6;
+
+  my $fragment = $self->new_panel('Fragment',
+                                 'code' => "fragment_#",
+                                caption => $obj->seq_region_type_and_name,
+                                 status => 'loading',
+                                display => 'on',
+                                           @common);
+  $fragment->add_component('image_fragment', 'EnsEMBL::Web::Component::Location::ideogram');
+  if ($fragment) {
+    my($start,$end) = $self->top_start_end( $obj, $max_length );
+    $fragment->add_option( 'start', $start );
+    $fragment->add_option( 'end',   $end   );
+  }
+  if ($ajax_ideogram eq 'on') {
+    $self->add_panel($fragment);
+    push @fragment_panels, $fragment;
+  }
+
   my $ideo = $self->new_panel( 'Image',
     'code'    => "ideogram_#", 'caption' => $obj->seq_region_type_and_name, 'status'  => 'panel_ideogram', @common
   );
   if( $obj->param('panel_ideogram') ne 'off' ) {
-    $last_rendered_panel = $ideo;
-    push @rendered_panels, $ideo;
+    if ($ajax_ideogram eq 'off') {
+      $last_rendered_panel = $ideo;
+      push @rendered_panels, $ideo;
+    }
   }
   $ideo->add_components(qw(image EnsEMBL::Web::Component::Location::ideogram));
-  $self->add_panel( $ideo );
+  if ($ajax_ideogram eq 'off') {
+   $self->add_panel( $ideo );
+  }
 
 ## Now the overview panel...
   my $over = $self->new_panel( 'Image',
@@ -492,6 +524,26 @@ sub contigview {
   );
 
 ## Big switch time.... 
+
+  my $view_fragment = $self->new_panel('Fragment',
+                                 'code' => "fragment_#",
+                                caption => "Detailed view",
+                                 status => 'loading',
+                                display => 'on',
+                                           @common);
+  $view_fragment->add_components(qw(
+      menu  EnsEMBL::Web::Component::Location::contigviewbottom_menu
+      nav   EnsEMBL::Web::Component::Location::contigviewbottom_nav
+      image EnsEMBL::Web::Component::Location::contigviewbottom
+                  ));
+
+  my ($start,$end) = $self->top_start_end( $obj, $max_length );
+  $view_fragment->add_option( 'start', $start );
+  $view_fragment->add_option( 'end',   $end   );
+  if ($ajax_detailed eq 'on') {
+    $self->add_panel($view_fragment);
+  }
+
   my @URL_configs;
   my $URL    = $obj->param('data_URL');
   my @H = map { /^URL:(.*)/ ? $1 : () } @{ $obj->highlights( $URL ? "URL:$URL" : () ) };
@@ -505,15 +557,22 @@ sub contigview {
     $self->{page}->content->add_panel( $bottom );
   } else {
     if( $obj->param('panel_bottom') ne 'off' ) {
-      push @rendered_panels, $bottom;
-      push @URL_configs, $obj->user_config_hash( 'contigviewbottom' ) if @H;
+      if ($ajax_detailed eq 'off') {
+        push @rendered_panels, $bottom;
+        push @URL_configs, $obj->user_config_hash( 'contigviewbottom' ) if @H;
+      }
     }
     $bottom->add_components(qw(
       menu  EnsEMBL::Web::Component::Location::contigviewbottom_menu
       nav   EnsEMBL::Web::Component::Location::contigviewbottom_nav
       image EnsEMBL::Web::Component::Location::contigviewbottom
     ));
-    $self->add_panel( $bottom );
+    if ($ajax_detailed eq 'off') {
+      $self->add_panel( $bottom );
+    }
+
+
+    # base pair panel
     my $base = $self->new_panel( 'Image',
       'code'    => "basepair_#", 'caption' => 'Basepair view', 'status'  => 'panel_zoom', @common
     );
@@ -637,7 +696,7 @@ sub alignsliceview {
     my $max_length = ($obj->species_defs->ENSEMBL_GENOME_SIZE||1) * 1.001e6;
     if( $obj->param('panel_top') ne 'off' ) {
 	my($start,$end) = $self->top_start_end( $obj, $max_length );
-	$last_rendered_panel->add_option( 'red_box' , [ $start, $end ] ) if $last_rendered_panel;
+	#$last_rendered_panel->add_option( 'red_box' , [ $start, $end ] ) if $last_rendered_panel;
 	$over->add_option( 'start', $start );
 	$over->add_option( 'end',   $end   );
 	$over->add_option( 'red_edge', 'yes' );
@@ -664,7 +723,7 @@ sub alignsliceview {
     } else {
 	if( $obj->param('panel_bottom') ne 'off' ) {
 	    if( $last_rendered_panel ) {
-		$last_rendered_panel->add_option( 'red_box' , [ $obj->seq_region_start, $obj->seq_region_end ] );
+		#$last_rendered_panel->add_option( 'red_box' , [ $obj->seq_region_start, $obj->seq_region_end ] );
 		$bottom->add_option( 'red_edge', 'yes' );
 	    }
 	    $last_rendered_panel = $bottom;
@@ -686,7 +745,7 @@ sub alignsliceview {
            $base->add_option( 'start', $start );
            $base->add_option( 'end',   $end );
            if( $last_rendered_panel ) {
-               $last_rendered_panel->add_option( 'red_box' , [ $start, $end ] );
+               #$last_rendered_panel->add_option( 'red_box' , [ $start, $end ] );
                $bottom->add_option( 'red_edge', 'yes' );
            }
            $last_rendered_panel = $base;

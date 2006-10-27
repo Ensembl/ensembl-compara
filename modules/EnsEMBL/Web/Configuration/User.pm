@@ -52,6 +52,23 @@ sub user_logout {
 }
 
 sub register {
+  my $self = shift;
+  my $version = "old";
+  if ($version eq "old") {
+    $self->hash_register;
+  } else {
+    $self->command_register;
+  }
+}
+
+sub command_register {
+  my $self = shift;
+  my $user = EnsEMBL::Web::Wizard::Data::User(( object => $self->{'object'} ));
+  my $wizard = EnsEMBL::Web::Wizard->new(( delegate => $user ));
+  
+}
+
+sub hash_register {
   my $self   = shift;
   my $object = $self->{'object'};
 

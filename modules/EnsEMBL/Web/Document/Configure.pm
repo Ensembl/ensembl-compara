@@ -3,30 +3,29 @@ package EnsEMBL::Web::Document::Configure;
 use CGI qw(escapeHTML);
 
 use EnsEMBL::Web::Root;
-use EnsEMBL::Web::User::Record;
 our @ISA  = qw(EnsEMBL::Web::Root);
 
 sub common_menu_items {
   my( $self, $doc ) = @_;
 ## Now the links on the left hand side....
-
+  warn "DOCUMENT: " . $doc->{'_object'};
   if ($doc->species_defs->ENSEMBL_LOGINS) {
     ## Is the user logged in?
     my $user_id = $ENV{'ENSEMBL_USER_ID'};
 
     my $user_adaptor = EnsEMBL::Web::DBSQL::UserDB->new();
-    my $user = $user_adaptor->getUserByID($user_id);
 
     my $flag = 'ac_mini';
     $doc->menu->add_block( $flag, 'bulleted', "Your Ensembl", 'priority' => 0 );
 
     if ($user_id) {
 
-      $doc->menu->add_entry( $flag, 'text' => $user->{'name'} . qq( &middot; <a href="javascript:logout_link()">log out</a>),
+      my $user = $user_adaptor->find_user_by_user_id($user_id);
+      $doc->menu->add_entry( $flag, 'text' => $user->name . qq( &middot; <a href="javascript:logout_link()">log out</a>),
                                   'icon' => '/img/infoicon.gif',
                                   'raw'  => 1);
 
-      my @records = EnsEMBL::Web::User::Record->find_bookmark_by_user_id($user_id, {order_by => 'click' }); 
+      my @records = $user->bookmark_records({order_by => 'click' }); 
       my @bookmark_sections = ();
       my $max_bookmarks = 5;
       if ($#records < $max_bookmarks) {
@@ -36,6 +35,7 @@ sub common_menu_items {
         my $url = $records[$n]->url;
         $url =~ s/\?/\\\?/g;
         $url =~ s/&/!and!/g;
+        $url =~ s/;/!with!/g;
         push @bookmark_sections, { href => "/common/redirect?url=" . $url . "&id=" . $records[$n]->id, 
                                    text => $records[$n]->name }; 
       }
@@ -51,6 +51,11 @@ sub common_menu_items {
         'text'=>'Bookmarks',
         'options'=>\@bookmark_sections,       );
 
+     #$doc->menu->add_entry(
+     #           $flag,
+     #           'href' => 'javascript:bookmark_link()',
+     #           'text' => 'Add bookmark'
+     #           );
 
       $doc->menu->add_entry( $flag, 'text' => "Your account",
                                   'href' => "/common/update_account?node=accountview" );
