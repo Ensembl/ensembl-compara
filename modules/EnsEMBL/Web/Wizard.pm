@@ -13,7 +13,7 @@ our @ISA = qw(EnsEMBL::Web::Root);
 
 sub new {
   my ($class, $object) = @_;
-  my $self = {'_nodes' => {}, '_access_level' => ''};
+  my $self = {'_nodes' => {}};
   bless $self, $class;
   my $init = $class.'::_init';
   if ($self->can($init)) { 
@@ -57,17 +57,20 @@ sub redefine_node {
   }
 }
 
+sub node_access {
+  my ($self, $node, $data) = @_;
+  return unless ($node);
+  if ($data && ref($data) eq 'HASH') {
+    for (my ($type, $value) = each (%$data)) {
+      $self->{'_node_defs'}{$node}{'access'}{$type} = $value;
+    }
+  }
+  return $self->{'_node_defs'}{$node}{'access'};
+}
+
 sub get_fields    { return $_[0]->{'_fields'}; }
 sub get_node_def  { return $_[0]->{'_node_defs'}{$_[1]}; }
 sub get_message   { return $_[0]->{'_messages'}{$_[1]}; }
-
-sub access_level {
-  my ($self, $level) = @_;
-  if ($level) {
-    $self->{'_access_level'} = $level;
-  }
-  return $self->{'_access_level'};
-}
 
 ## 'FLOWCHART' FUNCTIONS
 
@@ -220,22 +223,6 @@ sub get_incoming_edges {
     push @edges, $edge if $check_hash{$edge} < 2;
   }
   return \@edges;
-}
-
-sub node_restriction {
-  my ($self, $node, $value) = @_;
-  if ($value) {
-    $self->{'_nodes'}{$node}{'restricted'} = $value;
-  }
-  return $self->{'_nodes'}{$node}{'restricted'};
-}
-
-sub lock_all_nodes {
-  my $self = shift;
-  my $value = shift || 1;
-  foreach my $node (@{$self->{'_nodes'}}) {
-    $self->{'_nodes'}{$node}{'_restricted'} = $value;
-  }
 }
 
 ##---------------- PROGRESS BAR FUNCTIONS ---------------------------------

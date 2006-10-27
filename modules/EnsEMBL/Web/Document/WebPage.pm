@@ -7,6 +7,7 @@ use EnsEMBL::Web::SpeciesDefs;
 use Exporter;
 use Apache::Constants qw(:common :response M_GET);
 use EnsEMBL::Web::DBSQL::UserDB;
+use EnsEMBL::Web::User;
 
 our $SD = EnsEMBL::Web::SpeciesDefs->new();
 
@@ -155,7 +156,7 @@ my $FUNCTIONS_CALLED = {};
       if( $objecttype eq 'DAS' ) {
         $self->problem('Fatal', 'Bad request', 'Unimplemented');
       } else {
-        warn "Can't do configuration functiona $FN on $objecttype objects";
+        warn "Can't do configuration function $FN on $objecttype objects";
       }
     }
   }
@@ -202,21 +203,36 @@ sub get_user_id {
 
 ## wrapper around redirect and render
 sub action {
-  my $self = shift;
-  my $permitted = 1; ## default is to allow access, so ordinary pages don't break!
+  my ($self, $access) = @_;
   my $user_id = $self->get_user_id;
+  my $permitted;
+
+  if ($access) {
+  ## check script-wide access rules
+    $permitted = $self->check_access($access);
+  }
+  else {
+    $permitted = 1; ## default is to allow access, so ordinary pages don't break!
+  }
 
   if ($permitted) {
     if ($self->{wizard}) {
       my $object = ${$self->dataObjects}[0];
       my $node = $self->{wizard}->current_node($object);
-      $self->_node_hop($node);
+      $access = $self->{wizard}->node_access($node);
+      if ($access) {
+        $permitted = $self->check_access($access);
+      }
+      if ($permitted) {
+        $self->_node_hop($node);
+      }
     }
     else { ## not a wizard page after all!
       $self->render;
     }
   }
-  else {
+
+  if (!$permitted) {
     my $URL = '/common/access_denied';
     $self->redirect($URL);
   }
@@ -290,6 +306,41 @@ sub _node_hop {
       $r->status( REDIRECT );
     }
   }
+}
+
+sub check_access {
+  my ($self, $access) = @_;
+  my $ok = 0;
+
+  if ($access->{'login'} && $self->get_user_id) {
+    $ok = 1;
+  }
+  else {
+    return unless $self->get_user_id;
+    my $object = ${$self->dataObjects}[0];
+    my $user;
+    if ($object->__objecttype eq 'User') {
+      $user = $object;
+    } 
+    else {
+      #$user = EnsEMBL::Web::Object::User->new();
+    }
+    if ($access->{'group'}) {
+      my $membership = $user->get_membership($object->user_id, $access->{'group'});
+      my $member = $membership->[0];
+      if ($member->{'member_status'} eq 'active') {
+        if ($access->{'level'}) {
+          warn 'Access ', $access->{'level'}, ', User ', $member->{'member_level'};
+          $ok = 1 if $member->{'member_level'} eq $access->{'level'};
+        }
+        else {
+          $ok = 1;
+        }
+      }
+    }
+  }
+
+  return $ok;
 }
 
 sub logout {
@@ -423,14 +474,28 @@ sub DESTROY {
 
 sub simple { simple_webpage( @_ ); }
 sub simple_webpage {
-  my $self = __PACKAGE__->new( 'objecttype' => shift );
+  my ($type, $access) = @_;
+  my $self = __PACKAGE__->new( 'objecttype' => $type );
   if( $self->has_a_problem ) {
      $self->render_error_page;
   } else {
     foreach my $object( @{$self->dataObjects} ) {
       $self->configure( $object, $object->script, 'context_menu', 'context_location' );
     }
-    $self->action;
+=pod
+    my $object = $self->dataObjects->[0];
+    ## get access parameters
+    while (my ($k, $v) = each (%$access)) {
+      next if $v;
+      if ($k eq 'user_id') {
+        $access->{'user_id'} = $object->user_id;
+      }
+      else {
+        $access->{$k} = $object->param($k);
+      } 
+    }
+=cut
+    $self->action($access);
   }
   #warn $self->timer->render();
 }

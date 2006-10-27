@@ -1,5 +1,7 @@
 package EnsEMBL::Web::Factory::News;
 
+### Factory for creating News objects
+
 use strict;
 
 use EnsEMBL::Web::Factory;
@@ -8,6 +10,7 @@ use EnsEMBL::Web::DBSQL::NewsAdaptor;
 our @ISA = qw(EnsEMBL::Web::Factory);
 
 sub news_adaptor {
+### Creates a NewsAdaptor object for database access
   my $self = shift;
   unless( $self->__data->{'news_db'} ) {
     my $DB = $self->species_defs->databases->{'ENSEMBL_WEBSITE'};
@@ -21,7 +24,9 @@ sub news_adaptor {
 }
 
 
-sub createObjects { 
+sub createObjects {
+### Creates a Proxy::Object of type News, containing a list of news stories
+### plus values for dropdown lists on forms (releases, species, etc) 
   my $self          = shift;
 
 ## identify which item and/or release we're talking about

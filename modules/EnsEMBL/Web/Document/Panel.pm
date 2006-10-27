@@ -370,11 +370,14 @@ sub params {
   return $self->{params};
 }
 
+=pod
+## getter/setter already defined, above!
 sub caption {
   ### a
   my $self = shift;
   return $self->{caption};
 }
+=cut
 
 sub status {
   ### a

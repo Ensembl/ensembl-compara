@@ -23,9 +23,18 @@ sub _wrap_form {
 
 sub accountview {
   my( $panel, $object ) = @_;
-  my $html;
 
   my $id = $object->get_user_id;
+  my %details = %{$object->get_user_by_id($id)};
+
+## Get the user's full name
+  my $name  = $details{'name'};
+  my $email = $details{'email'};
+  my $org   = $details{'org'};
+  my $caption = "Account Details - $name";
+  $panel->caption($caption);
+
+  my $html;
  # $html .= _show_details($panel, $object, $id);
   $html .= _show_bookmarks($panel, $object, $id);
   $html .= _show_groups($panel, $object, $id);
@@ -59,14 +68,31 @@ sub _show_details {
 
 sub _show_groups {
   my( $panel, $object, $id ) = @_;
+  my $groups = $object->get_membership({'user_id'=>$id});
   my $html .= "<h3>Groups</h3>";
   $html .= "Ensembl users can join together to share configuration settings and other information as groups. Your groups are listed below."; 
   $html .= "<ul>\n";
-  $html .= "<li><a href=''>Cambridge University Undergraduates</a> (administrator)</li>\n";
-  $html .= "<li>Addenbrookes Hospital group (member)</li>\n";
-  $html .= "<li>Research team (invited)</li>\n";
+
+  foreach my $group (@$groups) {
+    my $group_id      = $group->{'webgroup_id'};
+    my $group_name    = $group->{'group_name'};
+    my $member_level  = $group->{'member_level'};
+    my $member_status = $group->{'member_status'};
+    if ($member_status eq 'active' || $member_status eq 'pending') {
+      $html .= qq(<li><a href="/common/group_details?webgroup_id=$group_id">$group_name</a>); 
+      if ($member_level ne 'member') {
+        $html .= " ($member_level)";
+      }
+      if ($member_status eq 'pending') {
+         $html .= " - awaiting approval of application to join";
+      }
+      $html .= '</li>';
+    }
+  }
+
   $html .= "</ul>\n";
-  $html .= "<a href='/start'>Start your own group &rarr;</a>";
+  $html .= qq(<p><a href="/common/join_a_group">Join another group &rarr;</a></p>
+<p><a href="/common/start_a_group">Start your own group &rarr;</a></p>);
   return $html;
 }
 
@@ -346,6 +372,82 @@ sub select_configs {
 }
 
 sub name_config     { _wrap_form($_[0], $_[1], 'name_config'); }
+
+sub show_groups     { _wrap_form($_[0], $_[1], 'show_groups'); }
+
+sub groupview {
+  my( $panel, $object ) = @_;
+
+  my $webgroup_id = $object->param('webgroup_id');
+  my $membership = $object->get_membership({'user_id'=>$object->user_id, 'webgroup_id'=>$webgroup_id});
+  my $group = $membership->[0];
+
+  my $group_name    = $group->{'group_name'};
+  my $group_blurb   = $group->{'group_blurb'};
+  my $member_level  = $group->{'member_level'};
+  my $creator_name  = $group->{'creator_name'};
+  my $creator_org   = $group->{'creator_org'};
+  my $created_at    = $group->{'created_at'};
+  my $modifier_name = $group->{'modifier_name'};
+  my $modifier_org  = $group->{'modifier_org'};
+  my $modified_at   = $group->{'modified_at'};
+
+  my $html = qq(
+<h4>Group name - $group_name</h4>
+<p>$group_blurb</p>);
+
+  if ($member_level eq 'administrator' || $member_level eq 'superuser') {
+    ## extra info and options for admins
+    $html .= qq(<p><strong>Group created by</strong>: $creator_name ($creator_org) at $created_at);
+    if ($modifier_name) {
+      $html .= qq(<br /><strong>Details modified by</strong>: $modifier_name ($modifier_org) at $modified_at);
+    }
+    $html .= qq(</p>
+<a href="/common/group_details?node=edit_group;webgroup_id=$webgroup_id">Edit group details</a> | <a href="/common/manage_members?webgroup_id=$webgroup_id">Manage member list</a></p>);
+  }
+
+  $html .= qq(<h4>Your membership status</h4>
+<p>$member_level</p>
+<h4>Stored configurations for this group</h4>
+<p>[List for members, form for admins]</p>
+<h4>Private pages for this group</h4>
+<p>[List for members, form for admins]</p>
+);
+
+  $panel->print($html);
+  return 1;
+}
+
+sub edit_group  { _wrap_form($_[0], $_[1], 'edit_group'); }
+
+sub admin_groups {
+}
+
+sub show_members {
+  my( $panel, $object ) = @_;
+
+  my $html = qq(
+<form action="/common/manage_members">
+<h4>Membership Requests Pending Approval</h4>
+<table class="spreadsheet">
+<tr><th>Name and organisation</th><th>Date Submitted</th><th></th></tr>
+<tr class="tint"><td>Q (Q Continuum)</td><td>1 Jan 2406</td><td><input type="submit" name="member_id" value="Approve"></td></tr>
+<tr><td>William Riker (USS Enterprise)</td><td>1 Apr 2406</td><td><input type="submit" name="member_id" value="Approve"></td></tr>
+<tr class="tint"><td>Miles O'Brien (USS Defiant)</td><td>4 Jul 2406</td><td><input type="submit" name="member_id" value="Approve"></td></tr>
+</table>
+<h4>Current Members</h4>
+<table class="spreadsheet">
+<tr><th>Name and organisation</th><th>Position</th></th><th></tr>
+<tr class="tint"><td>Jean-Luc Picard (USS Enterprise)</td><td>administrator</td><td></td></tr>
+<tr><td>Catherine Janeway (USS Voyager)</td><td>member</td><td><input type="submit" name="member_id" value="Remove from group"> <input type="submit" name="member_id" value="Ban from group"></td></tr>
+<tr class="tint"><td>Benjamin Sisko (Deep Space Nine)</td><td>member</td><td><input type="submit" name="member_id" value="Remove from group"> <input type="submit" name="member_id" value="Ban from group"></td></tr>
+</table>
+</form>
+  );
+
+  $panel->print($html);
+  return 1;
+}
 
 1;
 

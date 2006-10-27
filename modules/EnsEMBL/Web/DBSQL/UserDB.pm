@@ -752,13 +752,16 @@ sub getMembership {
   my ($self, $record) = @_;
   my $results = [];
   return $results unless $self->{'_handle'};
-
-  my %criteria = (
-    'm.user_id'     => $record->{'user_id'},
-    'm.webgroup_id' => $record->{'webgroup_id'},
-    'm.level'       => $record->{'level'},
-    'm.status'      => $record->{'status'},
-  );
+  my %criteria;
+  
+  if (ref($record) eq 'HASH') {
+    %criteria = (
+      'm.user_id'     => $record->{'user_id'},
+      'm.webgroup_id' => $record->{'webgroup_id'},
+      'm.level'       => $record->{'level'},
+      'm.status'      => $record->{'status'},
+    );
+  }
 
   my $sql = qq(SELECT g.webgroup_id, g.name, g.blurb, g.type, g.status,
                       u1.name, u1.org, g.created_at, u2.name, u2.org, g.modified_at,

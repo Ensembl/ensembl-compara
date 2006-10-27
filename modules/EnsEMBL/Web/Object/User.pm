@@ -5,6 +5,7 @@ use warnings;
 no warnings "uninitialized";
 use CGI qw(escape);
 use CGI::Cookie;
+use Mail::Mailer;
 
 use EnsEMBL::Web::User::Record;
 
@@ -185,8 +186,7 @@ sub set_cookie {
 sub save_user {
   my ($self, $record) = @_;
   my $result;
-  my %details = %{$record};
-  if ($details{'user_id'}) { # saving updates to an existing item
+  if ($record->{'user_id'}) { # saving updates to an existing item
     $result = $self->web_user_db->updateUserAccount($record);
   }
   else { # inserting a new item into database
@@ -228,5 +228,72 @@ sub can {
 
 sub get_bookmarks { return $_[0]->web_user_db->getBookmarksByUser($_[1]); }
 sub delete_bookmarks { return $_[0]->web_user_db->deleteBookmarks($_[1]); }
+
+sub save_config {
+  my ($self, $record) = @_;
+  return $self->web_user_db->saveConfig($record);
+}
+
+#sub get_configs { return $_[0]->web_user_db->getConfigsByUser($_[1]); }
+sub delete_configs { return $_[0]->web_user_db->deleteConfigs($_[1]); }
+
+sub get_groups_by_user { return $_[0]->web_user_db->getGroupsByUser($_[1]); }
+sub get_groups_by_type { return $_[0]->web_user_db->getGroupsByType($_[1]); }
+sub get_group_by_id    { return $_[0]->web_user_db->getGroupByID($_[1]); }
+sub get_membership     { return $_[0]->web_user_db->getMembership($_[1]); }
+sub save_membership     { return $_[0]->web_user_db->saveMembership($_[1]); }
+
+sub save_group {
+  my ($self, $record) = @_;
+  my $result;
+  if ($record->{'webgroup_id'}) { # saving updates to an existing item
+    $result = $self->web_user_db->updateGroup($record);
+  }
+  else { # inserting a new item into database
+    $result = $self->web_user_db->createGroup($record);
+  }
+  return $result;
+}
+
+sub notify_admin {
+  my ($self, $record) = @_;
+
+  my $member = $record->{'user_id'};
+  my $group  = $record->{'group_id'};
+
+  ## get the admin details for this group
+  my $admins = $self->web_user_db->getGroupAdmins($group);
+  my $member_name   = $self->user_name;
+  my $member_email  = $self->email;
+  my $member_org    = $self->org;
+
+  my @mail_attributes = ();
+  my @T = localtime();
+  my $date = sprintf "%04d-%02d-%02d %02d:%02d:%02d", $T[5]+1900, $T[4]+1, $T[3], $T[2], $T[1], $T[0];
+  push @mail_attributes,
+    [ 'Date',         $date ],
+    [ 'Name',         $member_name ],
+    [ 'Email',        $member_email ],
+  my $message = '';
+  $message .= join "\n", map {sprintf("%-16.16s %s","$_->[0]:",$_->[1])} @mail_attributes;
+  $message .= "\n\nComments:\n\n@{[$self->param('comments')]}\n\n";
+  my $mailer = new Mail::Mailer 'smtp', Server => "localhost";
+  my $sitetype = ucfirst(lc($self->species_defs->ENSEMBL_SITETYPE))||'Ensembl';
+
+  my ($recipient, $count);
+  foreach my $adm (@$admins) {
+    my $admin_name  = $adm->{'name'};
+    my $admin_email = $adm->{'email'};
+    $recipient .= "$admin_name <$admin_email>";
+    $recipient .= ", " if $count > 0;
+    $count++;
+  }
+
+  $mailer->open({ 'To' => $recipient, 'Subject' => "$sitetype website Helpdesk", });
+  print $mailer $message;
+  $mailer->close();
+  return 1;
+
+}
 
 1;

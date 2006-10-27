@@ -46,8 +46,8 @@ sub SIMPLEALIGN_DEFAULT { return 'clustalw'; }
 
 sub format_form {
   my( $panel, $object ) = @_;
-  my $class = $object->param('class');
   my $form = EnsEMBL::Web::Form->new( 'format_form', "/@{[$object->species]}/alignview", 'get' );
+  my $class = $object->param('class');
   foreach my $K ( 'class', param_list( $class ) ) {
     $form->add_element( 'type' => 'Hidden', 'name' => $K, 'value' => $object->param($K) );
   }

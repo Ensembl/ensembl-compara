@@ -237,7 +237,7 @@ sub wizard_panel {
     }
     ## create generic panel
     if (my $panel = $self->new_panel('Image',
-        'code'    => "info$self->{flag}",
+        'code'    => "wizard",
         'caption' => $caption,
         'object'  => $self->{object},
         'wizard'  => $self->{wizard})

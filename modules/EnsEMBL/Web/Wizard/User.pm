@@ -16,9 +16,9 @@ our @ISA = qw(EnsEMBL::Web::Wizard);
 sub _init {
   my ($self, $object) = @_;
 
-  
   my $expiry =  86400 * 3; ## expiry period for temporary server-set passwords, in seconds
   my $exp_text = '3 days'; ## expiry period in words (used in emails, etc.)
+
 
   ## define fields available to the forms in this wizard
   my %form_fields = (
@@ -101,6 +101,17 @@ sub _init {
           'label'=> 'Saved configurations',
           'values'=>'configs',
       },
+      'groups' => {
+          'type' => 'MultiSelect',
+      },
+      'group_title'   => {
+          'type'=>'String', 
+          'label'=>'Group title', 
+      },
+      'group_blurb'   => {
+          'type'=>'Text', 
+          'label'=>'Description of group', 
+      },
   );
 
   ## define the nodes available to wizards based on this type of object
@@ -131,8 +142,11 @@ sub _init {
                       'form' => 1,
                       'input_fields'  => [qw(password confirm_password)],
       },
-      'save_password'=> {'button'=>'Save'},
-      'save_details' => {'button'=>'Save'},
+      'save_password' => {'button'=>'Save'},
+      'save_details'  => {'button'=>'Save'},
+      'save_bookmark' => {'button'=>'Save'},
+      'save_config'   => {'button'=>'Save'},
+      'save_group'    => {'button'=>'Save'},
 
       'enter_email' => {
                       'form' => 1,
@@ -154,7 +168,6 @@ sub _init {
                       'pass_fields'  => [qw(bm_url user_id)],
                       'input_fields'  => [qw(bm_name)],
       },
-      'save_bookmark' => {'button'=>'Save'},
       'select_bookmarks' => {
                       'form' => 1,
                       'title' => 'Select bookmarks to delete',
@@ -168,13 +181,28 @@ sub _init {
                       'pass_fields'  => [qw(script user_id)],
                       'input_fields'  => [qw(config_name)],
       },
-      'save_config' => {'button'=>'Save'},
       'select_configs' => {
                       'form' => 1,
                       'title' => 'Select configurations to delete',
                       'input_fields'  => [qw(configs)],
       },
       'delete_configs' => {'button'=>'Delete'},
+      'show_groups' => {
+                      'form' => 1,
+                      'title' => 'Select a group to join',
+      },
+      'groupview'   => {'title' => 'Group Details',
+                        'page' => 1,
+      },
+      'edit_group' => {
+                      'form' => 1,
+                      'title' => 'Edit Group Details',
+                      'access' => {'level'=>'administrator', 'group'=>$object->param('webgroup_id')},
+                      'input_fields'  => [qw(group_title group_blurb)],
+      },
+      'show_members' => {'title' => 'Membership List',
+                        'page' => 1,
+      },
 );
 
   my $help_email = $object->species_defs->ENSEMBL_HELPDESK_EMAIL;
@@ -215,6 +243,7 @@ sub _init {
 =cut
   my $details   = $object->get_user_by_id($user_id);
 
+ 
   my $data = {
     'expiry'      =>  $expiry,
     'exp_text'    =>  $exp_text,
@@ -822,6 +851,208 @@ sub delete_configs {
   unless ($result) {
     $parameter{'error'} = 1;
     $parameter{'feedback'} = 'no_delete';
+  }
+  return \%parameter;
+}
+
+#------------------------------ USER CONFIGS -------------------------------------------------
+
+sub show_groups {
+  my ($self, $object) = @_;
+
+  my $wizard = $self->{wizard};
+  my $script = $object->script;
+  my $species = $object->species;
+  my $node = 'show_groups';
+
+  my $form = EnsEMBL::Web::Form->new($node, "/$species/$script", 'post' );
+
+  $form->add_element(
+        'name'  => 'open_subhead',
+        'type'  => 'SubHeader',
+        'value' => 'Open Groups',
+  );
+  $form->add_element(
+        'name'  => 'open_blurb',
+        'type'  => 'Information',
+        'value' => "Open groups can be joined by anyone. If you select any of these groups, you will get instant access to any custom configurations created by the group's administrator.",
+  );
+  my $group_list = $object->get_groups_by_type('open');
+  foreach my $group (@$group_list) {
+    $form->add_element(
+      'type'  => 'CheckBox',
+      'label' => $group->{'title'},
+      'name'  => 'group',
+      'value' => $group->{'group_id'},
+      'notes' => $group->{'blurb'},
+    );
+    $form->add_element(
+      'type'  => 'Hidden',
+      'name'  => 'group_'.$group->{'group_id'},
+      'value' => 'open',
+    );
+  }
+  
+  $form->add_element(
+      'name'  => 'restricted_subhead',
+      'type'  => 'SubHeader',
+      'value' => 'Restricted Groups',
+  );
+  $form->add_element(
+      'name'  => 'restricted_blurb',
+      'type'  => 'Information',
+      'value' => "Before you can join a restricted group, you have to be approved by the group's moderator. You can request to join such a group here, and you will receive a reply by email.",
+  );
+  $group_list = $object->get_groups_by_type('restricted');
+  foreach my $group (@$group_list) {
+    $form->add_element(
+      'type'  => 'CheckBox',
+      'label' => $group->{'title'},
+      'name'  => 'groups',
+      'value' => $group->{'group_id'},
+      'notes' => $group->{'blurb'},
+    );
+    $form->add_element(
+      'type'  => 'Hidden',
+      'name'  => 'group_'.$group->{'group_id'},
+      'value' => 'restricted',
+    );
+  }
+  $wizard->add_buttons($node, $form, $object);
+
+  return $form;
+}
+
+sub save_membership {
+  my ($self, $object) = @_;
+  my $wizard = $self->{wizard};
+  my (%parameter, %record, %result);
+
+  my @groups = $object->param('groups');
+  $record{'user_id'} = $object->user_id;
+  $record{'logged_in'} = $object->user_id;
+  foreach my $group (@groups) {
+    $record{'group_id'} = $group;
+    my $type = $object->param('group_'.$group);
+    if ($type eq 'open') {
+      $record{'status'} = 'active';
+    }
+    elsif ($type eq 'restricted') {
+      $record{'status'} = 'pending';
+      $object->notify_admin(\%record);
+    }
+    else {
+      next;
+    }
+    $result{$group} = $object->save_membership(\%record);
+  }
+
+  ## set response
+  if (keys %result) {
+    $parameter{'node'} = 'accountview';
+    $parameter{'error'} = 0;
+  }
+  else {
+    $parameter{'error'} = 1;
+  }
+  return \%parameter;
+}
+
+sub groupview { 
+  ## doesn't do anything wizardy, just displays some info and links
+  return 1;
+}
+
+sub edit_group {
+  my ($self, $object) = @_;
+
+  my $wizard = $self->{wizard};
+  my $script = $object->script;
+  my $species = $object->species;
+  my $node = 'edit_group';
+
+  my $form = EnsEMBL::Web::Form->new($node, "/$species/$script", 'post' );
+
+  $wizard->add_widgets($node, $form, $object);
+  $wizard->pass_fields($node, $form, $object);
+  $wizard->add_buttons($node, $form, $object);
+
+  return $form;
+}
+
+sub save_group {
+  my ($self, $object) = @_;
+  my $wizard = $self->{wizard}; 
+ 
+  my %parameter;
+
+  ## save config
+  my $record = $self->create_record($object);
+  my $result = $object->save_group($record);
+
+  ## set response
+  if ($result) {
+    $parameter{'node'} = 'groupview';
+  }
+  else {
+    $parameter{'node'} = 'accountview';
+    $parameter{'error'} = 1;
+    $parameter{'feedback'} = 'no_groupsave';
+  }
+  return \%parameter;
+}
+
+sub admin_groups {
+### Displays a list of the groups that an administrator is in charge of
+  my ($self, $object) = @_;
+
+  my $wizard = $self->{wizard};
+  my $script = $object->script;
+  my $species = $object->species;
+  my $node = 'admin_groups';
+=pod
+  my $form = EnsEMBL::Web::Form->new($node, "/$species/$script", 'post' );
+
+  $wizard->add_widgets($node, $form, $object);
+  $wizard->pass_fields($node, $form, $object);
+  $wizard->add_buttons($node, $form, $object);
+
+  return $form;
+=cut
+}
+
+sub show_members {
+  my ($self, $object) = @_;
+
+  my $wizard = $self->{wizard};
+  my $script = $object->script;
+  my $species = $object->species;
+  my $node = 'show_members';
+=pod
+  my $form = EnsEMBL::Web::Form->new($node, "/$species/$script", 'post' );
+
+  $wizard->add_widgets($node, $form, $object);
+  $wizard->pass_fields($node, $form, $object);
+  $wizard->add_buttons($node, $form, $object);
+
+  return $form;
+=cut
+}
+
+sub activate_member {
+  my ($self, $object) = @_;
+  my $wizard = $self->{wizard}; 
+ 
+  my %parameter;
+
+  ## save config
+  my $record = $self->create_record($object);
+  my $result = 1; #$object->save_membership($record);
+
+  ## set response
+  $parameter{'node'} = 'show_members';
+  if (!$result) {
+    $parameter{'error'} = 1;
   }
   return \%parameter;
 }

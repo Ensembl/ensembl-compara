@@ -166,6 +166,76 @@ sub lost_password {
   $self->wizard_panel('Lost Password');
 }
 
+sub group_details {
+  my $self   = shift;
+
+  my $object = $self->{'object'};
+
+  my $wizard = EnsEMBL::Web::Wizard::User->new($object);
+                                                    
+  ## the group wizard uses 3 nodes: edit group details, save group details and a landing page
+  $wizard->add_nodes([qw(edit_group save_group groupview)]);
+  $wizard->default_node('groupview');
+
+  $self->_add_javascript_libraries;
+                                                                                
+  ## chain the nodes together
+  $wizard->add_outgoing_edges([
+          ['edit_group'=>'save_group'],
+          ['save_group'=>'groupview'],
+  ]);
+
+  $self->add_wizard($wizard);
+  $self->wizard_panel('Group Details');
+}
+
+sub join_a_group {
+  my $self   = shift;
+
+  my $object = $self->{'object'};
+
+  my $wizard = EnsEMBL::Web::Wizard::User->new($object);
+                                                    
+  ## the group registration wizard uses 3 nodes: show list of available groups,
+  ## save group and a landing page
+  $wizard->add_nodes([qw(show_groups save_membership accountview)]);
+  $wizard->default_node('show_groups');
+
+  $self->_add_javascript_libraries;
+                                                                                
+  ## chain the nodes together
+  $wizard->add_outgoing_edges([
+          ['show_groups'=>'save_group'],
+          ['save_group'=>'accountview'],
+  ]);
+
+  $self->add_wizard($wizard);
+  $self->wizard_panel('Join a Group');
+}
+
+sub manage_members {
+  my $self   = shift;
+
+  my $object = $self->{'object'};
+
+  my $wizard = EnsEMBL::Web::Wizard::User->new($object);
+                                                    
+  ## the manage members wizard uses 3 nodes: show list of members,
+  ## activate member
+  $wizard->add_nodes([qw(show_members activate_member)]);
+  $wizard->default_node('show_members');
+
+  $self->_add_javascript_libraries;
+                                                                                
+  ## chain the nodes together
+  $wizard->add_outgoing_edges([
+          ['show_members'=>'activate_member'],
+  ]);
+
+  $self->add_wizard($wizard);
+  $self->wizard_panel('Manage Members');
+}
+
 sub access_denied {
   my $self   = shift;
 

@@ -1,5 +1,7 @@
 package EnsEMBL::Web::Component::News;
 
+### Contains methods to output components of news pages
+
 use EnsEMBL::Web::Component;
 use EnsEMBL::Web::Form;
 
@@ -14,6 +16,7 @@ no warnings "uninitialized";
 ##-----------------------------------------------------------------
 
 sub select_news {
+### Standard form wrapper - see select_news_form, below
   my ( $panel, $object ) = @_;
   my $html = qq(<div class="formpanel" style="width:80%">);
   $html .= $panel->form( 'select_news' )->render();
@@ -23,6 +26,8 @@ sub select_news {
 }
 
 sub select_news_form {
+### Creates a Form object and adds elements with which to select news stories 
+### by release, species or category
   my( $panel, $object ) = @_;
   my $script = $object->script;
   my $species = $object->species;
@@ -99,9 +104,9 @@ sub select_news_form {
 }
 
 sub no_data {
+### Creates a user-friendly error message for user queries that produce no results
   my( $panel, $object ) = @_;
 
-## get species and release so we can give a friendly error message :)
   my $sp_id = $object->param('species_id');
   my $spp = $object->all_spp;
   my $sp_name = $$spp{$sp_id};
@@ -114,7 +119,6 @@ sub no_data {
     $rel_no = $$rel_array{'release_number'} if $$rel_array{'release_id'} == $rel_id;
   }
 
-## return the message
   my $html = "<p>Sorry, <i>$sp_name</i> was not present in Ensembl Release $rel_no. Please try again.</p>";
 
   $panel->print($html);
@@ -122,6 +126,8 @@ sub no_data {
 }
 
 sub show_news {
+### Outputs a list of all the news stories selected by a user query; releases and/or categories
+### are separated by headings where appropriate
   my( $panel, $object ) = @_;
   my $sp_dir = $object->species;
   (my $sp_title = $sp_dir) =~ s/_/ /;
@@ -242,6 +248,7 @@ sub show_news {
 }
 
 sub _output_cat_heading {
+### "Private" method used by show_news (above) to format headers
     my ($cat_id, $cat_name, $release) = @_;
     my $anchor = $release eq 'all' ? '' : qq( id="cat$cat_id") ;
     my $html = qq(<h3 class="boxed"$anchor>$cat_name</h3>\n);
@@ -249,6 +256,7 @@ sub _output_cat_heading {
 }
 
 sub _output_story {
+### "Private" method used by show_news (above) to format stories
     my ($title, $content) = @_;
     
     my $html = "<h4>$title</h4>\n";
@@ -262,144 +270,4 @@ sub _output_story {
 
 1;
 
-__END__
-                                                                                
-=head1 Ensembl::Web::Component::News
-                                                                                
-=head2 SYNOPSIS
-                                                                                
-This package is called from a Configuration object
-                                                                                
-    use EnsEMBL::Web::Component::News;
-                                                                                
-For each component to be displayed, you need to create an appropriate panel object and then add the component. The description of each component indicates the usual Panel subtype, e.g. Panel::Image.
-
-For examples of how to use the components, see EnsEMBL::Web::Configuration::News
-                                                                                
-=head2 DESCRIPTION
-                                                                                
-This class consists of methods for displaying Ensembl news stories as XHTML. Current components include forms for updating the database, forms for selecting news stories, and a component to output the stories selected.
-
-=head2 METHODS
-
-Except where indicated, all methods take the same two arguments, a Document::Panel object and a Proxy::Object object (data). In general components return true on completion. If true is returned and the components are chained (see notes in Ensembl::Web::Configuration) then the subsequence components are ignored; if false is returned any subsequent components are executed.
-
-=head3 B<METHODS FOR SELECTING & DISPLAYING NEWS>
-                                                                                
-=head4 B<select_news>
-                                                                                
-Description: Wraps the select_news_form (see below) in a DIV and passes the HTML back to the Panel::Image object for rendering 
-
-=head4 B<select_news_form>
-                                                                                
-Description: Creates a Form object and adds widgets to select release, species, and/or news category
-
-Returns:    An Ensembl::Web::Document::Form object
-
-=head4 B<no_data>
-                                                                                
-Description: method to be called if no news items can be found for the user's chosen criteria. It passes an XHTML error message back to the Panel::Image object for rendering
-
-=head4 B<show_news>
-                                                                                
-Description: method to be called if news items are available. Formats the available stories, sorted by release and category, and passes the resulting XHTML back to the Panel::Image object for rendering
-
-=head4 B<_output_cat_heading>
-                                                                                
-Description: Private method for formatting a category heading
-
-Arguments:  Category ID (integer), category name (string)
-
-Returns:    string (XHTML)
-
-=head4 B<_output_story>
-                                                                                
-Description: Private method for formatting an individual news item
-
-Arguments:  Story title (string), story content (string)
-
-Returns:    string (XHTML)
-
-=head3 B<METHODS FOR CREATING A DB INTERFACE>
-
-The next three methods are form wrappers which assemble the appropriate sub-forms and pass the resulting XHTML back to the Panel::Image object for rendering
-                                                                                
-=head4 B<select_to_add>
-
-Description: Includes a confirmation message if the user has successfully completed a previous database insertion, then displays a select_release form (below) as Step 1 of the insertion process.
-
-=head4 B<select_to_edit>
-
-Description: Includes a confirmation message if the user has successfully completed a previous database update, then displays a select_item form showing stories for the current release, plus a select_release form in case the user wishes to correct an old item of news.
-
-=head4 B<select_item_only>
-                                                                                
-Description: Displays the select_item form for a chosen release, e.g. as Step 2 of the insertion process.
-
-=head4 B<select_item_form>
-                                                                                
-Description: Creates a small form with a dropdown box containing a list of news item for a given release
-
-Returns:    An Ensembl::Web::Document::Form object
-
-=head4 B<select_release_form>
-                                                                                
-Description: Creates a small form with a dropdown box containing a list of releases
-
-Returns:    An Ensembl::Web::Document::Form object
-
-The next 5 methods create the form used to either add or edit a news item
-
-=head4 B<add_item>
-                                                                                
-Description:  Wraps the add_item_form (see below) in a DIV and passes the HTML back to the Panel::Image object for rendering
-
-=head4 B<edit_item>
-                                                                                
-Description:  Wraps the edit_item_form (see below) in a DIV and passes the HTML back to the Panel::Image object for rendering
-
-=head4 B<add_item_form>
-                                                                                
-Description: Creates a Form object, adds the _item_form widgets (see below) plus appropriately-labelled submit buttons
-
-Returns:    An Ensembl::Web::Document::Form object
-
-=head4 B<edit_item_form>
-                                                                                
-Description: Creates a Form object, adds the _item_form widgets (see below) plus appropriately-labelled submit buttons
-
-Returns:    An Ensembl::Web::Document::Form object
-
-=head4 B<_item_form>
-                                                                                
-Description: Adds a set of form widgets (for either adding or updating a news item) to an Ensembl::Web::Document::Form object
-
-Returns:    true
-
-The final set of interface components allow the user to preview an item before saving it to the database
-
-=head4 B<preview_item>
-                                                                                
-Description: Displays the user's input as XHTML (so that any syntax errors can easily be spotted) and also creates a preview_item_form so that input can be passed along to the database update/insertion calls in the originating perl script 
-
-=head4 B<preview_item_form>
-                                                                                
-Description: Creates a Form object consisting mainly of 'hidden' input plus a submit button
-
-Returns:    An Ensembl::Web::Document::Form object
-
-=head2 BUGS AND LIMITATIONS
-                                                                                
-The admin interface has been exhibiting an intermittent bug when forwarding via a CGI redirect (i.e. when saving new or edited data), but hopefully this has been fixed by always using /Multi as the 'species' directory :)
-                                                                                                                                                              
-=head2 AUTHOR
-                                                                                
-Anne Parker, Ensembl Web Team
-Support enquiries: helpdesk\@ensembl.org
-                                                                                
-=head2 COPYRIGHT
-                                                                                
-See http://www.ensembl.org/info/about/code_licence.html
-                                                                                
-=cut
 

@@ -22,9 +22,16 @@ sub valid_rels   { return $_[0]->Obj->{'valid_rels'};   }
 sub generic_items { return $_[0]->Obj->{'generic_items'}; }
 sub species_items { return $_[0]->Obj->{'species_items'}; }
 
-## Custom sort
-
 sub sort_items {
+### Complex custom sort for news stories. Will weed out duplicate news items if passed
+### a set of concatenated lists (see arguments), and output in a variety of orders
+### Arguments (1) an E::W::Proxy::Object(News) 
+### (2) a reference to an array of hashes (news items) - this can be one or more arrays that
+### have been concatenated
+### (3) string : current accepted value is 'headline', which sorts only by priority; the 
+### default is to sort by release, category, priority, then number of species
+### Returns a reference to an array of hashes (news items)
+ 
   my ($self, $items, $order) = @_;
 
   ## in case we are merging lists, remove duplicates
