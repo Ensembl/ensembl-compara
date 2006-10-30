@@ -17,7 +17,10 @@ my $species = $q->param('species') || undef;
 my $query   = $q->param('query');
 my $URL;
 
-if ( ## sequence coordinates
+if ($species && !$query) { ## nothing to search for
+  $URL = "/$species/";
+}
+elsif ( ## sequence coordinates
   ## match any of the following:
   ## chrID:nnn-nnn
   ## chrID:nnn..nnn
