@@ -1,0 +1,57 @@
+#!/usr/local/bin/perl
+
+package psychic;
+
+### Script which handles input from a generic search box and 
+### tries to guess what the user wants to do!
+
+use strict;
+use warnings;
+no warnings "uninitialized";
+
+use EnsEMBL::Web::Document::WebPage;
+
+my $webpage = new EnsEMBL::Web::Document::WebPage;
+my $q = CGI->new();
+my $species = $q->param('species') || undef;
+my $query   = $q->param('query');
+my $URL;
+
+if ( ## sequence coordinates
+  ## match any of the following:
+  ## chrID:nnn-nnn
+  ## chrID:nnn..nnn
+  ## chrID:nnn,nnn
+  ## chrID:n,nnn,nnn-n,nnn,nnn
+  ## chrID:n,nnn,nnn..n,nnn,nnn
+  $species && (
+  $query =~ /chr([-\.\w]+):([\d|,]+)[\.|-]{1,2}([\d|,]+)/i    
+  || $query =~ /chr([-\.\w]+):(\d+)[-|\.|,]{1,2}(\d+)/i    
+  )) {
+  if ($3 - $2 > 5000000 || $2 - $3 > 5000000) {
+    $URL = "/$species/cytoview?region=$1;start=$2;end=$3"; 
+  }
+  else { 
+    $URL = "/$species/contigview?region=$1;start=$2;end=$3"; 
+  }
+}
+elsif ( ## pairs of identifiers
+  ## str.string..str.string
+  ## str.string-str.string
+  $species && ($query =~ /([\w|\.]+\w+)[\.|-]{1,2}([\w|\.]+)/) 
+  ) { 
+ $URL = "/$species/jump_to_contig?type1=all;type2=all;anchor1=$1;anchor2=$2"; 
+}
+elsif ($query =~ /[ACGT]{12,}/) { ## raw sequence of at least 12 nucleotides - dna BLAST
+ $URL = "/Multi/blastview?species=$species;_query_sequence=$query;query=dna;database=dna"; 
+}
+elsif ($query =~ /[A-Z]{12,}/) { ## raw sequence of at least 12 amino acids - peptide BLAST
+ $URL = "/Multi/blastview?species=$species;_query_sequence=$query;query=peptide;database=peptide"; 
+}
+else { ## fall back to searchview
+  $URL = "/perl/searchview?species=$species;idx=All;q=$query";
+}
+
+$webpage->redirect($URL);
+
+1;
