@@ -406,21 +406,28 @@ sub createObjects {
   if( @anchorview ) {
     foreach my $O ( @anchorview ) {
       my( $ftype, $temp_id ) = @$O;
-      if( $ftype eq 'gene' ) {
+      if( $ftype eq 'gene' || $ftype eq 'all' ) {
         $location = $self->_location_from_Gene( $temp_id );
-      } elsif( $ftype eq 'transcript' ) { 
+      } 
+      if(!$location && ($ftype eq 'transcript' || $ftype eq 'all') ) { 
         $location = $self->_location_from_Transcript( $temp_id );
-      } elsif( $ftype eq 'peptide' ) { 
+      } 
+      if(!$location && ($ftype eq 'peptide' || $ftype eq 'all') ) { 
         $location = $self->_location_from_Peptide( $temp_id );
-      } elsif( $ftype eq 'marker' ) {
+      } 
+      if(!$location && $ftype eq 'marker') {
         $location = $self->_location_from_Marker( $temp_id, $seq_region );
-      } elsif( $ftype eq 'band' ) {
+      } 
+      if(!$location && $ftype eq 'band') {
         $location = $self->_location_from_Band( $temp_id, $seq_region );
-      } elsif( $ftype eq 'misc_feature' ) {
+      } 
+      if (!$location && ($ftype eq 'misc_feature' || $ftype eq 'all') ) {
         $location = $self->_location_from_MiscFeature( $temp_id );
-      } elsif( $ftype eq 'region' ) {
+      } 
+      if(!$location && ($ftype eq 'region' || $ftype eq 'all') ) {
         $location = $self->_location_from_SeqRegion( $temp_id );
-      } else {
+      } 
+      if (!$location) {
         $location = $self->_location_from_SeqRegion( $seq_region, $temp_id, $temp_id );
       }
       $self->DataObjects( $location ) if $location;
