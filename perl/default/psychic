@@ -45,6 +45,12 @@ elsif ( ## pairs of identifiers
   ) { 
  $URL = "/$species/jump_to_contig?type1=all;type2=all;anchor1=$1;anchor2=$2"; 
 }
+elsif ($query =~ /^BLA_\w+$/) { ## Blast ticket
+ $URL = "/Multi/blastview/$query"; 
+}
+elsif ($query =~ /^\w+\.mart$/) { ## Mart query
+ $URL = "/Multi/martview/$query"; 
+}
 elsif ($query =~ /[ACGT]{12,}/) { ## raw sequence of at least 12 nucleotides - dna BLAST
  $URL = "/Multi/blastview?species=$species;_query_sequence=$query;query=dna;database=dna"; 
 }
