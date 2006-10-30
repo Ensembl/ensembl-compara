@@ -19,6 +19,12 @@ sub _init {
   my $expiry =  86400 * 3; ## expiry period for temporary server-set passwords, in seconds
   my $exp_text = '3 days'; ## expiry period in words (used in emails, etc.)
 
+  my $webgroup_id = $object->param('webgroup_id');
+  my @group_types = (
+      {'value'=>'open', 'name'=>'Open - anyone can join and get instant access to group settings'}, 
+      {'value'=>'restricted', 'name'=>'Restricted - membership must be approved by an administrator'}, 
+      {'value'=>'private', 'name'=>'Private - membership by invitation only'},
+  );
 
   ## define fields available to the forms in this wizard
   my %form_fields = (
@@ -104,13 +110,17 @@ sub _init {
       'groups' => {
           'type' => 'MultiSelect',
       },
-      'group_title'   => {
+      'group_name'   => {
           'type'=>'String', 
-          'label'=>'Group title', 
+          'label'=>'Group name', 
       },
       'group_blurb'   => {
           'type'=>'Text', 
           'label'=>'Description of group', 
+      },
+      'group_type' => {
+          'type' => 'DropDown',
+          'values' => 'group_types',
       },
   );
 
@@ -194,17 +204,19 @@ sub _init {
       'groupview'   => {'title' => 'Group Details',
                         'page' => 1,
       },
-      'edit_group' => {
-                      'form' => 1,
-                      'title' => 'Edit Group Details',
-                      'access' => {'level'=>'administrator', 'group'=>$object->param('webgroup_id')},
-                      'input_fields'  => [qw(group_title group_blurb)],
-      },
       'show_members' => {'title' => 'Membership List',
                         'page' => 1,
       },
+      'edit_group' => {
+                      'form' => 1,
+                      'title' => 'Edit Group Details',
+                      'access' => {'level'=>'administrator', 'group'=>$webgroup_id},
+                      'input_fields'  => [qw(group_name group_blurb group_type)],
+      },
 );
 
+=pod
+=cut
   my $help_email = $object->species_defs->ENSEMBL_HELPDESK_EMAIL;
 
   my %message = (
@@ -250,6 +262,7 @@ sub _init {
     'details'     => $details,
     'bookmarks'   => \@bm_values,
     'configs'     => \@config_values,
+    'group_types' => \@group_types,
   };
 
   return [$data, \%form_fields, \%all_nodes, \%message];
@@ -971,6 +984,27 @@ sub edit_group {
   my $species = $object->species;
   my $node = 'edit_group';
 
+  if (!$object->param('webgroup_id')) {
+    $wizard->redefine_node($node, 'title', 'Enter Group Details');
+  }
+
+  my $form = EnsEMBL::Web::Form->new($node, "/$species/$script", 'post' );
+
+  $wizard->add_widgets($node, $form, $object);
+  $wizard->pass_fields($node, $form, $object);
+  $wizard->add_buttons($node, $form, $object);
+
+  return $form;
+}
+
+sub enter_group {
+  my ($self, $object) = @_;
+
+  my $wizard = $self->{wizard};
+  my $script = $object->script;
+  my $species = $object->species;
+  my $node = 'enter_group';
+
   my $form = EnsEMBL::Web::Form->new($node, "/$species/$script", 'post' );
 
   $wizard->add_widgets($node, $form, $object);
@@ -988,6 +1022,7 @@ sub save_group {
 
   ## save config
   my $record = $self->create_record($object);
+  $record->{'user_id'} = $object->user_id;
   my $result = $object->save_group($record);
 
   ## set response

@@ -338,6 +338,9 @@ sub check_access {
         }
       }
     }
+    else {
+      $ok = 1;
+    }
   }
 
   return $ok;

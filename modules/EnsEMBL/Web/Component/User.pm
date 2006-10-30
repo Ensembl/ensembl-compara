@@ -91,7 +91,7 @@ sub _show_groups {
 
   $html .= "</ul>\n";
   $html .= qq(<p><a href="/common/join_a_group">Join another group &rarr;</a></p>
-<p><a href="/common/start_a_group">Start your own group &rarr;</a></p>);
+<p><a href="/common/group_details?node=edit_group">Start your own group &rarr;</a></p>);
   return $html;
 }
 

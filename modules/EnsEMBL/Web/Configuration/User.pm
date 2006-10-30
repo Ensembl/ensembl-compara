@@ -189,6 +189,30 @@ sub group_details {
   $self->wizard_panel('Group Details');
 }
 
+sub start_a_group {
+  my $self   = shift;
+
+  my $object = $self->{'object'};
+
+  my $wizard = EnsEMBL::Web::Wizard::User->new($object);
+                                                    
+  ## the group creation wizard uses 3 nodes: enter group details
+  ## save group and a landing page
+  $wizard->add_nodes([qw(enter_group save_group groupview)]);
+  $wizard->default_node('enter_group');
+
+  $self->_add_javascript_libraries;
+                                                                                
+  ## chain the nodes together
+  $wizard->add_outgoing_edges([
+          ['enter_group'=>'save_group'],
+          ['save_group'=>'groupview'],
+  ]);
+
+  $self->add_wizard($wizard);
+  $self->wizard_panel('Start a Group');
+}
+
 sub join_a_group {
   my $self   = shift;
 

@@ -685,10 +685,10 @@ sub createGroup {
   my ($self, $record) = @_;
   return {} unless $self->{'_handle'};
 
-  my $name          = $record->{'name'};
-  my $blurb         = $record->{'blurb'};
-  my $type          = $record->{'type'};
-  my $status        = $record->{'status'};
+  my $name          = $record->{'group_name'};
+  my $blurb         = $record->{'group_blurb'};
+  my $type          = $record->{'group_type'};
+  my $status        = $record->{'group_status'};
   my $user_id       = $record->{'user_id'};
 
   my $sql = qq(INSERT INTO webgroup
@@ -699,10 +699,10 @@ sub createGroup {
                   type = "$type",
                   status = "$status",
                   created_at = NOW(),
-                  created_by = "$user_id",
+                  created_by = "$user_id"
   );
   my $sth = $self->{'_handle'}->prepare($sql);
-  my $result = $sth->execute();
+  my $result; # = $sth->execute();
 
   ## get new group ID
   if ($result) {
