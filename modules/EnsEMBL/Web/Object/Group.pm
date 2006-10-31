@@ -134,8 +134,21 @@ sub users {
 
 sub add_user {
   my ($self, $user) = @_;
-  push @{ $Users_of{$self} }, $user;
-  $self->taint('users');
+  if (!$self->is_user_member($user)) {
+    push @{ $Users_of{$self} }, $user;
+    $self->taint('users');
+  }
+}
+
+sub is_user_member {
+  my ($self, $user) = @_;
+  my $found = 0;
+  foreach my $check_user(@{ $self->users }) {
+    if ($user->id == $check_user->id) {
+      $found = 1;
+    }
+  }
+  return $found;
 }
 
 sub remove_user {

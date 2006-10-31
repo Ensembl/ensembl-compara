@@ -82,7 +82,6 @@ sub find_groups_by_user_id {
                                              )); 
       warn "CREATING GROUP " . $group ." for USER " . $self->name;
       warn "CREATED BY " . $result->{created_by};
-      $group->add_user($self);
       push @{ $return }, $group;
     }
   } 
