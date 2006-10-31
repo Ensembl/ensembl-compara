@@ -4,6 +4,7 @@ use strict;
 use warnings;
 no warnings "uninitialized";
 
+use EnsEMBL::Web::Object::Group;
 use EnsEMBL::Web::Wizard;
 use EnsEMBL::Web::Form;
 use Mail::Mailer;
@@ -60,6 +61,11 @@ sub _init {
           'label'=>'Your Name', 
           'required'=>'yes',
       },
+      'group_name'      => {
+          'type'=>'String', 
+          'label'=>'Group name', 
+          'required'=>'yes',
+      },
       'org'       => {
           'type'=>'String', 
           'label'=>'Organisation',
@@ -67,6 +73,21 @@ sub _init {
       'mailing'       => {
           'type'=>'SubHeader', 
           'value'=>'Sign me up for the following mailing lists:',
+      },
+      'group_private_check'=> {
+          'type'=>'CheckBox', 
+          'label'=>'Private',
+          'notes'=>'Private group',
+      },
+      'group_public_check'=> {
+          'type'=>'CheckBox', 
+          'label'=>'Public',
+          'notes'=>'Public group',
+      },
+      'group_open_check'=> {
+          'type'=>'CheckBox', 
+          'label'=>'Open',
+          'notes'=>'Open group',
       },
       'ensembl_announce'=> {
           'type'=>'CheckBox', 
@@ -142,7 +163,13 @@ sub _init {
                       'form' => 1,
                       'input_fields'  => [qw(email password)],
       },
-      'validate'      => {'button'=>'Login'},
+      'add_group'       => { 'form' => 1, title => 'Your new group',
+                             'input_fields' => [ qw(group_name) ] },
+      'group_settings'       => { 'form' => 1, title => 'Group settings',
+                             'input_fields' => [ qw(group_open_check
+                                                    group_public_check
+                                                    group_private_check
+                                                    ) ] },
       'lookup_lost'      => {'button'=>'Send'},
       'lookup_reg'      => {},
       'send_link'       => {},
@@ -290,6 +317,32 @@ sub _mail {
 sub accountview { 
   ## doesn't do anything wizardy, just displays some info and links
   return 1;
+}
+
+sub add_group {
+  my ($self, $object) = @_;
+  my $wizard = $self->{wizard};
+  my $script = $object->script;
+  my $species = $object->species;
+  my $node = 'add_group';
+  my $form = EnsEMBL::Web::Form->new($node, '/' . $species . '/' . $script, 'post');
+  $wizard->add_title($node, $form, $object);
+  $wizard->add_widgets($node, $form, $object);
+  $wizard->add_buttons($node, $form, $object);
+  return $form;
+}
+
+sub group_settings {
+  my ($self, $object) = @_;
+  my $wizard = $self->{wizard};
+  my $script = $object->script;
+  my $species = $object->species;
+  my $node = 'group_settings';
+  my $form = EnsEMBL::Web::Form->new($node, '/' . $species . '/' . $script, 'post');
+  $wizard->add_title($node, $form, $object);
+  $wizard->add_widgets($node, $form, $object);
+  $wizard->add_buttons($node, $form, $object);
+  return $form;
 }
 
 sub login {
@@ -1015,16 +1068,30 @@ sub enter_group {
 }
 
 sub save_group {
-  my ($self, $object) = @_;
+  my ($self, $user) = @_;
   my $wizard = $self->{wizard}; 
  
   my %parameter;
 
   ## save config
-  my $record = $self->create_record($object);
-  $record->{'user_id'} = $object->user_id;
-  my $result = $object->save_group($record);
+  ## create_record returns an array with:
+  ## group_name
+  ## user_id
+  ## group_blurb
 
+  my $record = $self->create_record($user);
+  $record->{'user_id'} = $user->user_id;
+  my $group = EnsEMBL::Web::Object::Group->new((
+                                        name => $record->{'group_name'}, 
+                                        description => $record->{'group_blurb'}, 
+                                        type => 'open',
+                                        status => 'active',
+                                        adaptor => $user->adaptor
+                                      ));
+  $user->add_group($group);
+  $user->save;
+
+  my $result = 1;
   ## set response
   if ($result) {
     $parameter{'node'} = 'groupview';

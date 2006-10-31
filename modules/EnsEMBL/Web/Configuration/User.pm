@@ -189,6 +189,20 @@ sub group_details {
   $self->wizard_panel('Group Details');
 }
 
+#sub start_a_group {
+#  my $self = shift;
+#  my $user = $self->{'object'};
+#  my $wizard = EnsEMBL::Web::Wizard::User->new($user);
+#  $wizard->add_nodes([ qw(add_group group_settings) ]);
+#  $wizard->default_node('add_group');
+#  $self->_add_javascript_libraries;
+#  $wizard->add_outgoing_edges([
+#    [ 'add_group' => 'group_settings' ],
+#    [ 'group_settings' => 'save_group' ]
+#  ]);
+#  $self->add_wizard($wizard);
+#  $self->wizard_panel('Start a new group');
+
 sub start_a_group {
   my $self   = shift;
 

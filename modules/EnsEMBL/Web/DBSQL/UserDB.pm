@@ -996,6 +996,111 @@ sub insert_record {
   return $result;
 }
 
+sub insert_user {
+  my ($self, %params) = @_;
+  my $name = $params{name};
+  my $email = $params{email};
+  my $data = $params{data};
+  warn "INSERTING: " . $name;
+  my $sql = qq(
+    INSERT INTO user 
+    SET name    = "$name",
+        email   = "$email",
+        data    = "$data",
+        created_at=CURRENT_TIMESTAMP
+  );
+  my $sth = $self->{'_handle'}->prepare($sql);
+  my $result = $sth->execute();
+
+  return $result;
+}
+
+sub insert_group {
+  my ($self, %params) = @_;
+  my $name = $params{name};
+  my $description = $params{description};
+  my $type = $params{type};
+  my $status = $params{status};
+  warn "INSERTING: " . $name;
+  my $sql = qq(
+    INSERT INTO webgroup
+    SET name        = "$name",
+        blurb       = "$description",
+        type        = "$type",
+        status      = "$status",
+        created_at  = CURRENT_TIMESTAMP
+  );
+  warn "SQL\n$sql";
+  my $sth = $self->{'_handle'}->prepare($sql);
+  my $result = $sth->execute();
+  return $self->last_inserted_id;
+}
+
+sub add_relationship {
+  my ($self, %params) = @_;
+  my $from_id = $params{from};
+  my $to_id = $params{to};
+  my $level = $params{level};
+  my $status = $params{status};
+  my $sql = qq(
+    INSERT INTO group_member 
+    SET webgroup_id = "$from_id",
+        user_id     = "$to_id",
+        level       = "$level",
+        status      = "$status",
+        created_at  = CURRENT_TIMESTAMP
+  );
+  my $sth = $self->{'_handle'}->prepare($sql);
+  my $result = $sth->execute();
+}
+
+sub groups_for_user_id {
+  my ($self, $user_id) = @_;
+  #  SELECT group_member.level,
+  #         group_member.status,
+  warn "FINDING GROUPS FOR USER ID: $user_id";
+  my $sql = qq(
+    SELECT 
+           webgroup.webgroup_id,
+           webgroup.name,
+           webgroup.type,
+           webgroup.status 
+    FROM group_member 
+    LEFT JOIN webgroup
+    ON (group_member.webgroup_id = webgroup.webgroup_id)
+     WHERE group_member.user_id = $user_id;
+  );
+
+  my $R = $self->{'_handle'}->selectall_arrayref($sql);
+  my $results = [];
+  if ($R->[0]) {
+    my @records = @{$R};  
+    foreach my $record (@records) {
+      my $details = {
+           'id'      => $record->[0],
+           'name'    => $record->[1],
+           'type'    => $record->[2],
+           'status'  => $record->[3],
+         };
+      push @{ $results }, $details;
+    }
+  }
+  return $results;
+
+}
+
+sub last_inserted_id {
+  my ($self, $result) = @_;
+  my $reult;
+  my $sql = "SELECT LAST_INSERT_ID()";
+  my $T = $self->{'_handle'}->selectall_arrayref($sql);
+  return '' unless $T;
+  my @A = @{$T->[0]}[0];
+  $result = $A[0];
+  return $result;
+}
+
+
 1;
 
 __END__

@@ -66,17 +66,18 @@ sub _show_details {
 }
 
 sub _show_groups {
-  my( $panel, $object, $id ) = @_;
-  my $groups = $object->get_membership({'user_id'=>$id});
+  my( $panel, $user, $id ) = @_;
+  #my $groups = $user->get_membership({'user_id'=>$id});
+  my @groups = @{ $user->groups };
   my $html .= "<h3>Groups</h3>";
   $html .= "Ensembl users can join together to share configuration settings and other information as groups. Your groups are listed below."; 
   $html .= "<ul>\n";
 
-  foreach my $group (@$groups) {
-    my $group_id      = $group->{'webgroup_id'};
-    my $group_name    = $group->{'group_name'};
-    my $member_level  = $group->{'member_level'};
-    my $member_status = $group->{'member_status'};
+  foreach my $group (@groups) {
+    my $group_id      = $group->id;
+    my $group_name    = $group->name;
+    my $member_level  = $group->level;
+    my $member_status = $group->status;
     if ($member_status eq 'active' || $member_status eq 'pending') {
       $html .= qq(<li><a href="/common/group_details?webgroup_id=$group_id">$group_name</a>); 
       if ($member_level ne 'member') {
@@ -245,11 +246,37 @@ sub denied {
 ## USER REGISTRATION COMPONENTS    
 ##-----------------------------------------------------------------
 
+sub add_group {
+  my ($panel, $user) = @_;
+  my $html = qq(<div class="formpanel" style="width:50%">);
+  $html .= "You can create a new Ensembl group from here. Ensembl groups";
+  $html .= "allow you to share customisations and settings between collections";
+  $html .= " of users.<br /><br />";
+  $html .= "Setting up a new group takes about 2 minutes.";
+  $html .= "<br />";
+  $html .= $panel->form('add_group')->render();
+  $html .= qq(</div>);
+  $panel->print($html);
+  return 1;
+}
+
+sub group_settings {
+  my ($panel, $user) = @_;
+  my $html = qq(<div class="formpanel" style="width:50%">);
+  $html .= "Group settings.";
+  $html .= "<br />";
+  $html .= $panel->form('group_settings')->render();
+  $html .= qq(</div>);
+  $panel->print($html);
+  return 1;
+}
+
 sub login {
   my ( $panel, $object ) = @_;
   my $html = qq(<div class="formpanel" style="width:50%">);
   $html .= $panel->form('login')->render();
   $html .= qq(<p><a href="/common/register">Register</a> | <a href="/common/lost_password">Lost password</a></p>);
+  $html .= $panel->form('enter_details')->render();
   $html .= '</div>';
   $panel->print($html);
   return 1;

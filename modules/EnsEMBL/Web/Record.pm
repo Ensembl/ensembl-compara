@@ -13,6 +13,7 @@ my %Adaptor_of;
 my %Fields_of;
 my %ParameterSet_of;
 my %Records_of;
+my %Tainted_of;
 my %Id_of;
 
 sub AUTOLOAD {
@@ -58,8 +59,9 @@ sub new {
   $Adaptor_of{$self} = defined $params{'adaptor'} ? $params{'adaptor'} : undef;
   $Records_of{$self} = defined $params{'records'} ? $params{'records'} : [];
   $ParameterSet_of{$self} = defined $params{'parameter_set'} ? $params{'parameter_set'} : undef;
-  $Id_of{$self} = defined $params{'id'} ? $params{'id'} : "";
+  $Id_of{$self} = defined $params{'id'} ? $params{'id'} : undef;
   $Fields_of{$self} = {};
+  $Tainted_of{$self} = {};
   if ($params{'data'}) {
     #$self->data($params{'data'});
     my $eval = eval($params{'data'});
@@ -68,6 +70,15 @@ sub new {
     $Fields_of{$self} = {};
   }
   return $self;
+}
+
+
+sub taint {
+  ### Marks a particular collection of records for an update. Tainted 
+  ### records are updated in the database when the Recrod's save method
+  ### is called.
+  my ($self, $type) = @_;
+  $self->tainted->{$type} = 1;
 }
 
 sub dump_data {
@@ -96,6 +107,13 @@ sub records {
   my $self = shift;
   $Records_of{$self} = shift if @_;
   return $Records_of{$self};
+}
+
+sub tainted {
+  ### a
+  my $self = shift;
+  $Tainted_of{$self} = shift if @_;
+  return $Tainted_of{$self};
 }
 
 sub adaptor {
@@ -167,6 +185,7 @@ sub DESTROY {
   delete $Id_of{$self};
   delete $Records_of{$self};
   delete $ParameterSet_of{$self};
+  delete $Tainted_of{$self};
 }
 
 }

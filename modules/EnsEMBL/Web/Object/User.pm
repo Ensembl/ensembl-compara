@@ -8,6 +8,7 @@ use CGI::Cookie;
 use Mail::Mailer;
 
 use EnsEMBL::Web::User::Record;
+use EnsEMBL::Web::Object::Group;
 
 our @ISA = qw(EnsEMBL::Web::Record);
 
@@ -56,9 +57,30 @@ sub new {
     $Organisation_of{$self} = $details->{'organisation'};
     my @records = $self->find_records_by_user_id($params{'id'});
     $self->records(\@records);
+    $self->groups($self->find_groups_by_user_id($params{'id'}));
   }
 
   return $self;
+}
+
+sub find_groups_by_user_id {
+  my ($self, $user_id) = @_;
+  my $results = $self->adaptor->groups_for_user_id($user_id);
+  my $return = [];
+  if ($results) {
+    foreach my $result (@{ $results }) {
+      my $group = EnsEMBL::Web::Object::Group->new((
+                                           adaptor => $self->adaptor,
+                                           name => $result->{name},
+                                           type => $result->{type},
+                                           status => $result->{status},
+                                           id => $result->{id}
+                                             )); 
+      warn "CREATING GROUP " . $group ." for USER " . $self->name;
+      push @{ $return }, $group;
+    }
+  } 
+  return $return;
 }
 
 sub groups {
@@ -66,6 +88,18 @@ sub groups {
   my $self = shift;
   $Groups_of{$self} = shift if @_;
   return $Groups_of{$self};
+}
+
+sub add_group {
+  ### Adds a group to the user
+  my ($self, $group) = @_;
+  my $id = $self->id;
+  $group->created_by($id);
+  $group->modified_by($id);
+  $group->add_user($self);
+  warn "ADDING GROUP: " . $group->name;
+  $self->taint('groups');
+  push @{ $self->groups }, $group;
 }
 
 sub name {
@@ -126,13 +160,33 @@ sub prefix {
 sub save {
   my $self = shift;
   my $data = "";
-  my $result = $self->adaptor->add_user((
-                                       name => $self->name,
-                                       email => $self->email,
-                                       password => $self->password,
-                                       organisation => $self->organisation,
-                                       data => $data
-                                    ));
+  my $id = $self->id;
+  my %params = (
+                   name => $self->name,
+                   email => $self->email,
+                   password => $self->password,
+                   organisation => $self->organisation,
+                   data => $data
+               );
+
+  if (!$id) {
+    my $result = $self->adaptor->add_user(%params);
+  } else {
+    if ($self->tainted->{'user'}) {
+      $params{id} = $id;
+      my $result = $self->adaptor->update_user((%params));
+    }
+  }
+
+  if ($self->tainted->{'groups'}) {
+    foreach my $group (@{ $self->groups }) {
+      if (ref($group) ne "ARRAY") { 
+        $group->modified_by($id);
+        $group->save;
+      }
+    }
+  }
+
 }
 
 sub web_user_db {
@@ -244,6 +298,12 @@ sub get_membership     { return $_[0]->web_user_db->getMembership($_[1]); }
 sub save_membership     { return $_[0]->web_user_db->saveMembership($_[1]); }
 
 sub save_group {
+  ### Saves a group
+  ### The record has contains the following keys from the wizard:
+  ### group_name 
+  ### user_id
+  ### group_blurb 
+
   my ($self, $record) = @_;
   my $result;
   if ($record->{'webgroup_id'}) { # saving updates to an existing item
