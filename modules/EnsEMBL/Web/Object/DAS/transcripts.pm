@@ -10,7 +10,7 @@ sub Types {
     my $self = shift;
 
     my @features;
-    push @features, ['exon', '', '', 'Unknown number'];
+    push @features, ['exon', '', '', ''];
     return \@features;
 }
 

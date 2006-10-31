@@ -196,7 +196,7 @@ sub Types {
     my $csa = $self->database('core', $self->real_species)->get_CoordSystemAdaptor();
 
     foreach my $cs (@{$csa->fetch_all()}) {
-      push @$collection, [$cs->name, $cs->version, '', 'Unknown number'];
+      push @$collection, [$cs->name, $cs->version, '', ''];
     }
     return $collection;
 }
