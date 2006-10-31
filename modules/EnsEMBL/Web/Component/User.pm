@@ -402,21 +402,19 @@ sub name_config     { _wrap_form($_[0], $_[1], 'name_config'); }
 sub show_groups     { _wrap_form($_[0], $_[1], 'show_groups'); }
 
 sub groupview {
-  my( $panel, $object ) = @_;
+  my( $panel, $user) = @_;
+  my $webgroup_id = $user->param('webgroup_id');
+  my $group = $user->find_group_by_group_id($webgroup_id);
 
-  my $webgroup_id = $object->param('webgroup_id');
-  my $membership = $object->get_membership({'user_id'=>$object->user_id, 'webgroup_id'=>$webgroup_id});
-  my $group = $membership->[0];
-
-  my $group_name    = $group->{'group_name'};
-  my $group_blurb   = $group->{'group_blurb'};
-  my $member_level  = $group->{'member_level'};
-  my $creator_name  = $group->{'creator_name'};
-  my $creator_org   = $group->{'creator_org'};
-  my $created_at    = $group->{'created_at'};
-  my $modifier_name = $group->{'modifier_name'};
-  my $modifier_org  = $group->{'modifier_org'};
-  my $modified_at   = $group->{'modified_at'};
+  my $group_name    = $group->name;
+  my $group_blurb   = $group->blurb;
+  my $member_level  = $user->is_administrator($group) ? "Administrator" : "Member";  
+  my $creator_name  = ""; 
+  my $creator_org   = ""; 
+  my $created_at    = $group->created_at;
+  my $modifier_name = ""; 
+  my $modifier_org  = ""; 
+  my $modified_at   = $group->modified_at;
 
   my $html = qq(
 <h4>Group name - $group_name</h4>

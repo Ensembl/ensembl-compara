@@ -77,10 +77,20 @@ sub find_groups_by_user_id {
                                            id => $result->{id}
                                              )); 
       warn "CREATING GROUP " . $group ." for USER " . $self->name;
+      $group->add_user($self);
       push @{ $return }, $group;
     }
   } 
   return $return;
+}
+
+sub find_group_by_group_id {
+  my ($self, $group_id) = @_;
+  foreach my $group (@{ $self->groups }) {
+    if ($group->id == $group_id) {
+      return $group;
+    }
+  }
 }
 
 sub groups {
@@ -88,6 +98,17 @@ sub groups {
   my $self = shift;
   $Groups_of{$self} = shift if @_;
   return $Groups_of{$self};
+}
+
+sub is_administrator {
+  my ($self, $group) = @_; 
+  my $return = 0;
+  foreach my $user (@{ $group->administrators }) {
+    if ($user->id == $self->id) {
+      $return = 1;
+    }
+  }
+  return $return;
 }
 
 sub add_group {

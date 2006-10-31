@@ -20,6 +20,7 @@ my %Status_of;
 my %CreatedBy_of;
 my %ModifiedBy_of;
 my %Users_of;
+my %Administrators_of;
 
 sub new {
   ### c
@@ -31,8 +32,51 @@ sub new {
   $Status_of{$self} = defined $params{'status'} ? $params{'status'} : "active";
   $CreatedBy_of{$self} = defined $params{'created_by'} ? $params{'created_by'} : 0;
   $ModifiedBy_of{$self} = defined $params{'modified_by'} ? $params{'modified_by'} : 0;
-  $Users_of{$self} = defined $params{'users'} ? $params{'users'} : undef;
+  $Users_of{$self} = defined $params{'users'} ? $params{'users'} : [];
+  $Administrators_of{$self} = defined $params{'administrators'} ? $params{'administrators'} : [];
+  if ($params{id}) {
+    $self->update_users;
+  }
   return $self;
+}
+
+sub find_users_by_level {
+  my ($self, $level) = @_;
+  my $result = [];
+  warn "FINDING USERS BY LEVEL $level";
+  foreach my $user (@{ $self->users }) {
+    warn "CHECKING USER " . $user->name;
+    if ($user->level($self) eq $level) {
+      push @{ $result }, $user;
+    }
+  }
+  return $result;
+}
+
+sub find_user_by_user_id {
+}
+
+sub update_users {
+  my $self = shift;
+
+  my $results = $self->adaptor->find_users_by_group_id($self->id);
+  if ($results) {
+    $self->users([]);
+    foreach my $result (@{ $results }) {
+      my $user = EnsEMBL::Web::Object::User->new({
+                                            adaptor => $self->adaptor,
+                                            name => $result->{'name'},          
+                                            email => $result->{'email'},
+                                              });
+      $user->id($result->{'id'});
+      push @{ $self->users }, $user; 
+
+      if ($result->{'level'} eq 'administrator') {
+        push @{ $self->administrators }, $user;
+      }
+
+    }
+  }
 }
 
 sub save {
@@ -79,7 +123,6 @@ sub add_user {
   $self->taint('users');
 }
 
-
 sub remove_user {
 }
 
@@ -125,6 +168,13 @@ sub modified_by {
   return $ModifiedBy_of{$self};
 }
 
+sub administrators {
+  ### a
+  my $self = shift;
+  $Administrators_of{$self} = shift if @_;
+  return $Administrators_of{$self};
+}
+
 
 sub DESTROY {
   my $self = shift;
@@ -134,6 +184,7 @@ sub DESTROY {
   delete $Status_of{$self};
   delete $CreatedBy_of{$self};
   delete $ModifiedBy_of{$self};
+  delete $Administrators_of{$self};
 }
 
 }

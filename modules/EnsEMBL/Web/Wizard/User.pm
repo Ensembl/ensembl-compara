@@ -1107,6 +1107,7 @@ sub save_group {
     $parameter{'error'} = 1;
     $parameter{'feedback'} = 'no_groupsave';
   }
+
   return \%parameter;
 }
 

@@ -268,6 +268,36 @@ sub find_user_by_user_id {
   return $user;
 }
 
+sub find_users_by_group_id {
+  my ($self, $id) = @_;
+  my $sql = qq(
+    SELECT user.user_id, user.name, user.email, group_member.level 
+    FROM user 
+    LEFT JOIN group_member 
+    ON (group_member.user_id = user.user_id) 
+    WHERE group_member.webgroup_id = '$id';
+  );
+  my $R = $self->{'_handle'}->selectall_arrayref($sql);
+  my $results = [];
+  if ($R->[0]) {
+    my @records = @{$R};
+    foreach my $record (@records) {
+      my $details = {
+           'id'      => $record->[0],
+           'name'    => $record->[1],
+           'email'   => $record->[2],
+           'level'   => $record->[3],
+         };
+      push @{ $results }, $details;
+    }
+  }
+  return $results;
+}
+
+sub find_users_by_level {
+  my ($self, $level) = @_;
+  warn "FINDING USERS BY LEVEL";
+}
 
 sub getUserByID {
   my ($self, $id) = @_;
