@@ -99,6 +99,15 @@ the one set in ENSEMBL_REGISTRY will be used if defined, if not
 
 =back
 
+=head2 DATA
+
+=over
+
+=item B<[--species "Species name"]>
+
+Copy data for this species only. This option can be used several times in order to restrict
+the copy to several species.
+
 =item B<[--[no]skip-data]>
 
 Do not store DNA-DNA alignments nor synteny data.
@@ -118,6 +127,7 @@ my $skip_data = 0;
 my $master = "compara-master";
 my $old = undef;
 my $new = undef;
+my @species;
 
 GetOptions(
     "help" => \$help,
@@ -126,6 +136,7 @@ GetOptions(
     "master=s" => \$master,
     "old=s" => \$old,
     "new=s" => \$new,
+    "species=s" => \@species,
   );
 
 
@@ -161,10 +172,11 @@ copy_table($master_dba, $new_dba, "ncbi_taxa_node");
 copy_table($master_dba, $new_dba, "method_link");
 
 ## Get all the genome_dbs with a default assembly
-my $all_default_genome_dbs = get_all_default_genome_dbs($master_dba);
+my $all_default_genome_dbs = get_all_default_genome_dbs($master_dba, @species);
 
 ## Store them in the new DB
-store_objects($new_dba->get_GenomeDBAdaptor, $all_default_genome_dbs, "all default genome_dbs");
+store_objects($new_dba->get_GenomeDBAdaptor, $all_default_genome_dbs,
+    @species?"default genome_dbs for ".join(", ", @species):"all default genome_dbs");
 
 ## Get all the MethodLinkSpeciesSet for the default assemblies
 my $all_default_method_link_species_sets = get_all_method_link_species_sets($master_dba, $all_default_genome_dbs);
@@ -285,6 +297,7 @@ sub update_schema_version {
 =head2 get_all_default_genome_dbs
 
   Arg[1]      : Bio::EnsEMBL::Compara::DBSQL::DBAdaptor $compara_dba
+  Arg[2]      : (optional) list_of_strings @species_names
   Description : get the list of all the default GenomeDBs, i.e. the
                 GenomeDBs where the default_assembly is true.
   Returns     : listref of Bio::EnsEMBL::Compara::GenomeDB objects
@@ -293,7 +306,7 @@ sub update_schema_version {
 =cut
 
 sub get_all_default_genome_dbs {
-  my ($compara_dba) = @_;
+  my ($compara_dba, @species_names) = @_;
 
   throw("[$compara_dba] should be a Bio::EnsEMBL::Compara::DBSQL::DBAdaptor")
       unless (UNIVERSAL::isa($compara_dba, "Bio::EnsEMBL::Compara::DBSQL::DBAdaptor"));
@@ -303,7 +316,22 @@ sub get_all_default_genome_dbs {
       unless ($genome_db_adaptor);
 
   my $all_genome_dbs = $genome_db_adaptor->fetch_all();
-  return [sort {$a->dbID <=> $b->dbID} grep {$_->assembly_default} @$all_genome_dbs];
+  $all_genome_dbs = [sort {$a->dbID <=> $b->dbID} grep {$_->assembly_default} @$all_genome_dbs];
+  if (@species_names) {
+    GENOME_DB:
+    for (my $i = 0; $i < @$all_genome_dbs; $i++) {
+      my $this_genome_db = $all_genome_dbs->[$i];
+      foreach my $this_species_name (@species_names) {
+        if ($this_genome_db->name eq $this_species_name) {
+          next GENOME_DB;
+        }
+      }
+      ## this_genome_db is not in the list of species_names
+      splice(@$all_genome_dbs, $i, 1);
+      $i--;
+    }
+  }
+  return $all_genome_dbs;
 }
 
 
