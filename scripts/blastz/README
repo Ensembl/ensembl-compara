@@ -1,7 +1,7 @@
 
 Example for Hs35 against Mm33
 
-1- download the sql data from ucsc
+(1)- download the sql data from ucsc
 
 cd /ecs2/work3/abel/blastz/Hs35Mm33/
 mkdir ucsc_sql;cd ucsc_sql
@@ -28,7 +28,8 @@ You may also download the goldenpath data if you want to map alignments on the *
 grep gold index.html | grep -e random -e hap | awk -F "\"" '{print $6}' | while read i; do wget -t 5 \
 http://hgdownload.cse.ucsc.edu/goldenPath/hg17/database/$i; done
 
-2- set up a mysql database
+
+(2)- set up a mysql database with UCSC data
 
 mysql -h ecs2 -P3366 -u ensadmin -pensembl -e "create database abel_ucsc_chain_data_Hs35Mm33"
 
@@ -38,17 +39,34 @@ ls *.sql|while read i;do mysql -h ecs2 -P3366 -u ensadmin -pensembl abel_ucsc_ch
 
  load the data
 
-ls *.gz|sed "s/\.gz//"|while read i;do echo "Loading $i...";gunzip $i.gz;mysqlimport -h ecs2 -P3366 -u ensadmin -pensembl abel_ucsc_chain_data_Hs35Mm33 $i;gzip $i;echo $i loaded;done
+ls *.gz|sed "s/\.gz//"|while read i;do echo "Loading $i...";gunzip $i.gz; \
+mysqlimport -h ecs2 -P3366 -u ensadmin -pensembl -L abel_ucsc_chain_data_Hs35Mm33 $i; \
+gzip $i;echo $i loaded;done
 
-mysqlimport didn not work on ia64e so use the following instead:
+# mysqlimport didn not work on ia64e so use the following instead:
 
 ls *.gz | sed "s/\.txt.gz//" | while read i ; do echo "Loading $i..." ; gunzip $i.txt.gz ; mysql -h ia64e -pensembl -u ensadmin -e "load data local infile '/ecs2/scratch3/cara/UCSC/Mm33Xt1/ucsc_sql/$i.txt' into table $i" cara_ucsc_chain_data_xenTro1mm5 ; gzip $i.txt ; echo $i loaded ; done
 
-Load in compara
+
+(3)- create a mysql database for ensembl data
+
+mysql -u ensadmin -pensembl -h compara1 -e "CREATE DATABASE jh7_ensembl_Hsap_Cfam_41"
+
+ create tables
+
+mysql -u ensadmin -pensembl -h compara1 jh7_ensembl_Hsap_Cfam_41 < ~/src/ensembl_main/ensembl-compara/sql/table.sql
+
+ IMPORTANT - Set up your registry. The conf file must have data for connecting to the master, both
+uscs and e! DBs and the two core DBs
+
+ populate tables with master data
+
+~/src/ensembl_main/ensembl-compara/scripts/pipeline/populate_new_database.pl --reg-conf ../reg.conf --master compara-master --new ensemblHsapCfam
+
+
+(4)- Load data into e! DB
 
 cd ..; mkdir load; cd load
-
-NB: You need to have an ensembl_compara database with method_link_species_sets, method_links, dnafrags and genome_dbs!!
 
 Run the script first with the --check_length option first to see if the chromosomes lengths match between ensembl and UCSC 
 /nfs/acari/abel/src/ensembl_main/ensembl-compara/scripts/blastz/LoadUcscNetData.pl \
