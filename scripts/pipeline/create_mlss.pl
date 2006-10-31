@@ -216,7 +216,7 @@ if ($pairwise) {
 
 foreach my $genome_db_ids (@new_input_genome_db_ids) {
 
-  if (!$genome_db_ids) {
+  if (!@$genome_db_ids) {
     my @genome_dbs = ask_for_genome_dbs($compara_dba);
     $genome_db_ids = [ map {$_->dbID} @genome_dbs ];
   }
