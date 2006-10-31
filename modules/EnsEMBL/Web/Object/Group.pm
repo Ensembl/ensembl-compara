@@ -54,6 +54,13 @@ sub find_users_by_level {
 }
 
 sub find_user_by_user_id {
+  my ($self, $user_id) = @_;
+  foreach my $user (@{ $self->users }) {
+    if ($user->id eq $user_id) {
+      return $user;
+    }
+  }
+  return 0;
 }
 
 sub update_users {
@@ -91,10 +98,13 @@ sub save {
   if ($self->id) {
     warn "UPDATING GROUP: " . $self->id;
     $params{id} = $self->id;
-    $self->adaptor->update_group(%params);
+    $self->adaptor->update_group(%params, ('modified_by', $self->modified_by) );
   } else {
     warn "INSERTING NEW GROUP";
-    $self->id($self->adaptor->insert_group(%params));
+    $self->id($self->adaptor->insert_group(%params, 
+                                          ('created_by', $self->created_by,
+                                           'modified_by', $self->modified_by)
+                                          ));
   }
 
   if ($self->tainted->{users}) {

@@ -76,7 +76,7 @@ sub _show_groups {
   foreach my $group (@groups) {
     my $group_id      = $group->id;
     my $group_name    = $group->name;
-    my $member_level  = $group->level;
+    my $member_level  = $user->is_administrator($group) ? "Administrator" : "member";
     my $member_status = $group->status;
     if ($member_status eq 'active' || $member_status eq 'pending') {
       $html .= qq(<li><a href="/common/group_details?webgroup_id=$group_id">$group_name</a>); 
@@ -409,7 +409,7 @@ sub groupview {
   my $group_name    = $group->name;
   my $group_blurb   = $group->blurb;
   my $member_level  = $user->is_administrator($group) ? "Administrator" : "Member";  
-  my $creator_name  = ""; 
+  my $creator_name  = $group->find_user_by_user_id($group->created_by)->name; 
   my $creator_org   = ""; 
   my $created_at    = $group->created_at;
   my $modifier_name = ""; 
@@ -420,7 +420,7 @@ sub groupview {
 <h4>Group name - $group_name</h4>
 <p>$group_blurb</p>);
 
-  if ($member_level eq 'administrator' || $member_level eq 'superuser') {
+  if ($member_level eq 'Administrator' || $member_level eq 'superuser') {
     ## extra info and options for admins
     $html .= qq(<p><strong>Group created by</strong>: $creator_name ($creator_org) at $created_at);
     if ($modifier_name) {

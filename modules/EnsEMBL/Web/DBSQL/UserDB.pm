@@ -1054,6 +1054,8 @@ sub insert_group {
   my $description = $params{description};
   my $type = $params{type};
   my $status = $params{status};
+  my $modified_by = $params{modified_by};
+  my $created_by = $params{created_by};
   warn "INSERTING: " . $name;
   my $sql = qq(
     INSERT INTO webgroup
@@ -1061,6 +1063,8 @@ sub insert_group {
         blurb       = "$description",
         type        = "$type",
         status      = "$status",
+        modified_by = "$modified_by",
+        created_by  = "$created_by",
         created_at  = CURRENT_TIMESTAMP
   );
   warn "SQL\n$sql";
@@ -1097,7 +1101,9 @@ sub groups_for_user_id {
            webgroup.webgroup_id,
            webgroup.name,
            webgroup.type,
-           webgroup.status 
+           webgroup.status,
+           webgroup.created_by,
+           webgroup.modified_by
     FROM group_member 
     LEFT JOIN webgroup
     ON (group_member.webgroup_id = webgroup.webgroup_id)
@@ -1110,10 +1116,12 @@ sub groups_for_user_id {
     my @records = @{$R};  
     foreach my $record (@records) {
       my $details = {
-           'id'      => $record->[0],
-           'name'    => $record->[1],
-           'type'    => $record->[2],
-           'status'  => $record->[3],
+           'id'           => $record->[0],
+           'name'         => $record->[1],
+           'type'         => $record->[2],
+           'status'       => $record->[3],
+           'created_by'   => $record->[4],
+           'modified_by'  => $record->[5],
          };
       push @{ $results }, $details;
     }
