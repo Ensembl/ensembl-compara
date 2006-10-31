@@ -189,6 +189,18 @@ sub Features {
     return \@features;
 }
 
+sub Types {
+    my ($self) = @_;
+
+    my $collection;
+    my $csa = $self->database('core', $self->real_species)->get_CoordSystemAdaptor();
+
+    foreach my $cs (@{$csa->fetch_all()}) {
+      push @$collection, [$cs->name, $cs->version, '', 'Unknown number'];
+    }
+    return $collection;
+}
+
 
 sub EntryPoints {
     my ($self) = @_;
@@ -196,7 +208,7 @@ sub EntryPoints {
     my $slice_adaptor = $self->database('core', $self->real_species)->get_SliceAdaptor();
 
 
-    my @chromosome_slices = @{$slice_adaptor->fetch_all('chromosome')};
+#    my @chromosome_slices = @{$slice_adaptor->fetch_all('chromosome')};
     my $collection;
 
     my @toplevel_slices = @{$slice_adaptor->fetch_all('toplevel', undef, 1)};

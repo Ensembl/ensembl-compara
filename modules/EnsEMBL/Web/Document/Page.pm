@@ -35,6 +35,7 @@ our %DOCUMENT_TYPES = (
     'DASDNA' => '"http://www.biodas.org/dtd/dasdna.dtd"',
     'DASSEQUENCE' => '"http://www.biodas.org/dtd/dassequence.dtd"',
     'DASSTYLE' =>  '"http://www.biodas.org/dtd/dasstyle.dtd"',
+    'DASTYPES' =>  '"http://www.biodas.org/dtd/dastypes.dtd"',
     },
 );
 

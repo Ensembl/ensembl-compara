@@ -39,6 +39,23 @@ sub features {
 
 }
 
+sub types{
+    my $self = shift;
+
+    my $page = $self->{'page'};
+    $page->set_doc_type('XML', 'DASTYPES');
+
+    my $component = "EnsEMBL::Web::Component::DAS";
+
+    if( my $das_panel = $self->new_panel( '',
+                                          'code' => 'das',
+                                          ) ) {
+        $das_panel->add_components("das_features", $component.'::types');
+        $self->add_panel( $das_panel );
+    }
+
+}
+
 # Only applicable to a reference server
 
 sub entry_points {

@@ -6,6 +6,14 @@ use warnings;
 use EnsEMBL::Web::Object::DAS;
 our @ISA = qw(EnsEMBL::Web::Object::DAS);
 
+sub Types {
+    my $self = shift;
+
+    my @features;
+    push @features, ['exon', '', '', 'Unknown number'];
+    return \@features;
+}
+
 sub Features {
     my $self = shift;
 

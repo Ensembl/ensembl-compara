@@ -15,9 +15,9 @@ sub new {
 
 sub real_species       :lvalue { $_[0]->{'data'}{'real_species'}};
 
-sub Obj { 
-  return $_[0]{'data'}{'_object'}[0]->Obj; 
-}
+#sub Obj { 
+#  return $_[0]{'data'}{'_object'}[0]->Obj; 
+#}
 
 sub Locations { return @{$_[0]{data}{_object}}; }
 
@@ -46,11 +46,16 @@ sub Stylesheet {
 </STYLESHEET>
 };
 }
+
 sub EntryPoints {
     my ($self) = @_;
-
     my $collection;
+    return $collection;
+}
 
+sub Types {
+    my ($self) = @_;
+    my $collection;
     return $collection;
 }
 

@@ -6,6 +6,22 @@ use warnings;
 use EnsEMBL::Web::Object::DAS;
 our @ISA = qw(EnsEMBL::Web::Object::DAS);
 
+sub Types {
+    my $self = shift;
+
+    my @segments = $self->Locations;
+    my @features;
+    my $dba = $self->database('core', $self->real_species); #->get_SliceAdaptor
+    
+    my $sth = $dba->prepare("SELECT stain, count(*) FROM karyotype GROUP BY stain");
+    $sth->execute();
+    while (my @row = $sth->fetchrow_array) {
+        push @features, [ $row[0], '', '',$row[1] ]
+    }
+
+    return \@features;
+}
+
 sub Features {
     my $self = shift;
 

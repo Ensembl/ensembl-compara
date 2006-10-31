@@ -7,21 +7,40 @@ use EnsEMBL::Web::Object::DAS;
 our @ISA = qw(EnsEMBL::Web::Object::DAS);
 
 use Bio::EnsEMBL::Map::DBSQL::DitagFeatureAdaptor;
+my @ditag_analysis = qw(FANTOM_CAGE);
+sub Types {
+    my $self = shift;
+
+    my @segments = $self->Locations;
+    my @features;
+    my $dba = $self->database('core', $self->real_species);
+
+    my $dfa = $dba->get_DitagFeatureAdaptor;
+    my $da = $dba->get_DitagAdaptor;
+
+    my $tHash;
+
+    foreach my $ft (@{$dfa->fetch_all || [] }) {
+        next unless grep {$_ eq $ft->analysis->logic_name} @ditag_analysis;
+        $tHash->{ $ft->ditag_side } ++;
+    }
+    foreach my $t (sort keys %$tHash) {
+        push @features, [$t, 'FANTOM_CAGE', '', $tHash->{$t} ];
+    }
+    return \@features;
+}
 
 sub Features {
     my $self = shift;
+    my $dba = $self->database('core', $self->real_species); 
 
     my $species = $self->real_species;
-    my $dba = $self->{data}->{_databases}->{_dbs}->{$species}->{'core'};
 
 
     my @segments = $self->Locations;
     my @features;
 
     my @fts = grep { $_ } @{$self->FeatureTypes || []};
-
-    my @ditag_analysis = qw(FANTOM_CAGE);
-
     my $dfa = $dba->get_DitagFeatureAdaptor; 
     my $da = $dba->get_DitagAdaptor;
 
