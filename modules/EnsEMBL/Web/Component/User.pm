@@ -410,11 +410,11 @@ sub groupview {
   my $group_blurb   = $group->blurb;
   my $member_level  = $user->is_administrator($group) ? "Administrator" : "Member";  
   my $creator_name  = $group->find_user_by_user_id($group->created_by)->name; 
-  my $creator_org   = ""; 
-  my $created_at    = $group->created_at;
-  my $modifier_name = ""; 
-  my $modifier_org  = ""; 
-  my $modified_at   = $group->modified_at;
+  my $creator_org   = $group->find_user_by_user_id($group->created_by)->organisation; 
+  my $created_at    = localtime($group->created_at);
+  my $modifier_name = $group->find_user_by_user_id($group->modified_by)->name; 
+  my $modifier_org  = $group->find_user_by_user_id($group->modified_by)->organisation; 
+  my $modified_at   = localtime($group->modified_at);
 
   my $html = qq(
 <h4>Group name - $group_name</h4>

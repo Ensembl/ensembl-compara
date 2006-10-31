@@ -76,6 +76,8 @@ sub find_groups_by_user_id {
                                            status => $result->{status},
                                            created_by => $result->{created_by},
                                            modified_by => $result->{modified_by},
+                                           created_at => $result->{created_at},
+                                           modified_at => $result->{modified_at},
                                            id => $result->{id}
                                              )); 
       warn "CREATING GROUP " . $group ." for USER " . $self->name;

@@ -19,6 +19,8 @@ my %Type_of;
 my %Status_of;
 my %CreatedBy_of;
 my %ModifiedBy_of;
+my %CreatedAt_of;
+my %ModifiedAt_of;
 my %Users_of;
 my %Administrators_of;
 
@@ -32,6 +34,8 @@ sub new {
   $Status_of{$self} = defined $params{'status'} ? $params{'status'} : "active";
   $CreatedBy_of{$self} = defined $params{'created_by'} ? $params{'created_by'} : 0;
   $ModifiedBy_of{$self} = defined $params{'modified_by'} ? $params{'modified_by'} : 0;
+  $CreatedAt_of{$self} = defined $params{'created_at'} ? $params{'created_at'} : 0;
+  $ModifiedAt_of{$self} = defined $params{'modified_at'} ? $params{'modified_at'} : 0;
   $Users_of{$self} = defined $params{'users'} ? $params{'users'} : [];
   $Administrators_of{$self} = defined $params{'administrators'} ? $params{'administrators'} : [];
   if ($params{id}) {
@@ -74,6 +78,7 @@ sub update_users {
                                             adaptor => $self->adaptor,
                                             name => $result->{'name'},          
                                             email => $result->{'email'},
+                                            organisation => $result->{'org'},
                                               });
       $user->id($result->{'id'});
       push @{ $self->users }, $user; 
@@ -178,6 +183,20 @@ sub modified_by {
   return $ModifiedBy_of{$self};
 }
 
+sub created_at {
+  ### a
+  my $self = shift;
+  $CreatedAt_of{$self} = shift if @_;
+  return $CreatedAt_of{$self};
+}
+
+sub modified_at {
+  ### a
+  my $self = shift;
+  $ModifiedAt_of{$self} = shift if @_;
+  return $ModifiedAt_of{$self};
+}
+
 sub administrators {
   ### a
   my $self = shift;
@@ -194,6 +213,8 @@ sub DESTROY {
   delete $Status_of{$self};
   delete $CreatedBy_of{$self};
   delete $ModifiedBy_of{$self};
+  delete $CreatedAt_of{$self};
+  delete $ModifiedAt_of{$self};
   delete $Administrators_of{$self};
 }
 

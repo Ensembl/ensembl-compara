@@ -271,7 +271,7 @@ sub find_user_by_user_id {
 sub find_users_by_group_id {
   my ($self, $id) = @_;
   my $sql = qq(
-    SELECT user.user_id, user.name, user.email, group_member.level 
+    SELECT user.user_id, user.name, user.email, user.org, group_member.level 
     FROM user 
     LEFT JOIN group_member 
     ON (group_member.user_id = user.user_id) 
@@ -283,10 +283,12 @@ sub find_users_by_group_id {
     my @records = @{$R};
     foreach my $record (@records) {
       my $details = {
-           'id'      => $record->[0],
-           'name'    => $record->[1],
-           'email'   => $record->[2],
-           'level'   => $record->[3],
+           'id'           => $record->[0],
+           'name'         => $record->[1],
+           'email'        => $record->[2],
+           'org'          => $record->[3],
+           'organisation' => $record->[3],
+           'level'        => $record->[4],
          };
       push @{ $results }, $details;
     }
@@ -1103,7 +1105,9 @@ sub groups_for_user_id {
            webgroup.type,
            webgroup.status,
            webgroup.created_by,
-           webgroup.modified_by
+           webgroup.modified_by,
+           UNIX_TIMESTAMP(webgroup.created_at),
+           UNIX_TIMESTAMP(webgroup.modified_at)
     FROM group_member 
     LEFT JOIN webgroup
     ON (group_member.webgroup_id = webgroup.webgroup_id)
@@ -1122,6 +1126,8 @@ sub groups_for_user_id {
            'status'       => $record->[3],
            'created_by'   => $record->[4],
            'modified_by'  => $record->[5],
+           'created_at'   => $record->[6],
+           'modified_at'  => $record->[7],
          };
       push @{ $results }, $details;
     }
