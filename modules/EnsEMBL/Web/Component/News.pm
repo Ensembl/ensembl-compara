@@ -142,7 +142,9 @@ sub show_news {
   }
 
   my @generic_items = @{$object->generic_items};
+warn "Total generic = ".@generic_items;
   my @species_items = @{$object->species_items};
+warn "Total specific = ".@species_items;
 
 ## sort the news items
   my ($all_sorted, $gen_sorted, $sp_sorted);
@@ -154,6 +156,9 @@ sub show_news {
     $gen_sorted = $object->sort_items(\@generic_items);
     $sp_sorted  = $object->sort_items(\@species_items);
   }
+warn "Total sorted = ".@$all_sorted if $all_sorted;
+warn "Total generic sorted = ".@$gen_sorted if $gen_sorted;
+warn "Total specific sorted = ".@$sp_sorted if $sp_sorted;
 
 ## Get lookup hashes
   my $releases = $object->releases;
@@ -177,10 +182,14 @@ sub show_news {
   if ($sp_dir eq 'Multi') {
     @sections = ("Ensembl News");
   }
+  elsif ($rel_selected eq 'all') {
+    @sections = ("$sp_title News");
+  }
   else {
     @sections = ("$sp_title News", "Other News");
   }
   for (my $i=0; $i<scalar(@sections); $i++) {
+warn "DOIN' THE NEWS!!";
     my ($header, $current_items);
     if ($sp_dir eq 'Multi' || $rel_selected eq 'all') {
       $current_items = $all_sorted;
