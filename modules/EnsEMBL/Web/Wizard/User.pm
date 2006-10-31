@@ -131,6 +131,10 @@ sub _init {
       'groups' => {
           'type' => 'MultiSelect',
       },
+      'webgroup_id'   => {
+          'type'=>'Integer', 
+          'label'=>'', 
+      },
       'group_name'   => {
           'type'=>'String', 
           'label'=>'Group name', 
@@ -239,6 +243,7 @@ sub _init {
                       'title' => 'Edit Group Details',
                       'access' => {'level'=>'administrator', 'group'=>$webgroup_id},
                       'input_fields'  => [qw(group_name group_blurb group_type)],
+                      'pass_fields'  => [qw(webgroup_id)],
       },
 );
 
@@ -1095,6 +1100,7 @@ sub save_group {
   ## set response
   if ($result) {
     $parameter{'node'} = 'groupview';
+    $parameter{'webgroup_id'} = $group->id;
   }
   else {
     $parameter{'node'} = 'accountview';

@@ -716,6 +716,9 @@ sub createGroup {
   return $result;
 }
 
+sub update_group {
+}
+
 sub updateGroup {
   my ($self, $record) = @_;
   return {} unless $self->{'_handle'};
