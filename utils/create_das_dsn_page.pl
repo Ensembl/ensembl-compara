@@ -103,27 +103,32 @@ foreach my $sp (@$species) {
 
 
     my $sl = $thash{$search_info->{'MAPVIEW1_TEXT'} || $search_info->{'DEFAULT1_TEXT'}} || $toplevel_slices[0];
+    $shash->{$mapmaster}->{'test_range'} = sprintf("%s:%d,%d", $sl->seq_region_name, $sl->start, $sl->end);
+
     #warn Data::Dumper::Dumper(\%thash);
 
     my $cs = $sl->coord_system;
     my $csa = $cs->{adaptor};
 
     if (my $lcs = $csa->fetch_by_rank($cs->rank + 1)) {
-      my $path;
+	my @projected_segments = @{$sl->project($lcs->name) || []};
+	if (my $pseg = shift @projected_segments) {
+      	  my $path;
 
-      eval {
-	$path = $sl->project($lcs->name);
-	};
+      	  eval {
+	    $path = $sl->project($lcs->name);
+	  };
 
-      if ($path) {
-	$path = $path->[0]->to_Slice;
-        $shash->{$mapmaster}->{'test_range'} = sprintf("%s:%d,%d", $path->seq_region_name, $path->start, $path->end);
-      } else {
-    	$shash->{$mapmaster}->{'test_range'} = sprintf("%s:%d,%d", $sl->seq_region_name, $sl->start, $sl->end);
-      }
-    } else {
-    	$shash->{$mapmaster}->{'test_range'} = sprintf("%s:%d,%d", $sl->seq_region_name, $sl->start, $sl->end);
+      	  if ($path) {
+            warn (join('*', $cs->name, $lcs->name, $path, $path->[0]));
+	    $path = $path->[0]->to_Slice;
+            $shash->{$mapmaster}->{'test_range'} = sprintf("%s:%d,%d", $path->seq_region_name, $path->start, $path->end);
+      	  }
+    	}
     }
+
+    print STDERR "\t $sp : reference => On\n";
+    print STDERR "\t\t\tTEST REGION : ", $shash->{$mapmaster}->{'test_range'}, "\n";
 
     foreach my $feature ( qw(karyotype transcripts ditags cagetags)) {
 	my $dbn = 'ENSEMBL_DB';
