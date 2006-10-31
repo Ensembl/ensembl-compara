@@ -4,6 +4,8 @@ package das::features;
 
 use EnsEMBL::Web::Document::WebPage;
 
+print "X-Das-Status: 200\n";
+print "X-Das-Version: DAS/1.5\n";
 
 EnsEMBL::Web::Document::WebPage::wrapper( "DAS", 
 					  'outputtype' => 'XML',
