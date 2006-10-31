@@ -453,7 +453,7 @@ my $dnafrag_mapper;
 sub get_this_genomic_align {
   my ($species, $name, $seq_region_length, $start_pos, $length, $strand, $aligned_sequence) = @_;
 
-  my ($dnafrag_start, $dnafrag_end);
+  my ($dnafrag_start, $dnafrag_end, $dnafrag_strand);
 
   if ($genome_db->{$species}->name eq "Bos taurus" and $name =~ /scaffold(\d+)/) {
     $name = "ChrUn.$1"; # cow scaffold in ensembl are called ChrUn.XXXXX
@@ -480,7 +480,7 @@ sub get_this_genomic_align {
 
     if (!$dnafrag_mapper->{"${species}_${name}"}) {
       ## File does not exist. 
-      ($dnafrag, $dnafrag_start, $dnafrag_end) = map_on_toplevel($species,
+      ($dnafrag, $dnafrag_start, $dnafrag_end, $dnafrag_strand) = map_on_toplevel($species,
           $name, $seq_region_start, $seq_region_end, $strand);
     } else {
       my @mapped_objects = $dnafrag_mapper->{"${species}_${name}"}->map_coordinates(
@@ -497,7 +497,7 @@ sub get_this_genomic_align {
             );
         if (!$dnafrag) {
           ## DnaFrags are not in the compara DB. Try to project on toplevel coord system
-          ($dnafrag, $dnafrag_start, $dnafrag_end) = map_on_toplevel($species,
+          ($dnafrag, $dnafrag_start, $dnafrag_end, $dnafrag_strand) = map_on_toplevel($species,
               $mapped_objects[0]->id, $mapped_objects[0]->start, $mapped_objects[0]->end,
               $mapped_objects[0]->strand);
           if (!$dnafrag) {
@@ -512,6 +512,7 @@ sub get_this_genomic_align {
       }
     }
   } else {
+    $dnafrag_strand = $strand;
     if ($strand == 1) {
       $dnafrag_start = $start_pos + 1;
       $dnafrag_end = $start_pos + $length;
@@ -544,7 +545,7 @@ sub get_this_genomic_align {
           -dnafrag => $dnafrag,
           -dnafrag_start => $dnafrag_start,
           -dnafrag_end => $dnafrag_end,
-          -dnafrag_strand => $strand,
+          -dnafrag_strand => $dnafrag_strand,
           -aligned_sequence => $aligned_sequence,
           -group_id => 0,
           -level_id => 1
