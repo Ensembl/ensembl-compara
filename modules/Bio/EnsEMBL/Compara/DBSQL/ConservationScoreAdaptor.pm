@@ -997,11 +997,11 @@ sub _get_alignment_scores {
 
 	    my $aligned_score = 0;
 	    if ($PAD_ZEROS) {
-		$aligned_score = _add_to_bucket($self, $display_type, $obs_score, $exp_score, $diff_score, $pos, 1, scalar(@$aligned_scores), $genomic_align_block_id, $window_size);  
+		$aligned_score = _add_to_bucket($self, $display_type, $obs_score, $exp_score, $diff_score, $pos - $align_start + 1, 1, scalar(@$aligned_scores), $genomic_align_block_id, $window_size);  
 	    } else {
 		#this doesn't work yet but seems a better way to go 
 		#$aligned_score = _add_to_bucket_NO_PAD($self, $display_type, $diff_score, $pos, 1, scalar(@$aligned_scores), $genomic_align_block_id, $window_size);  
-		$aligned_score = _add_to_bucket($self, $display_type, $obs_score, $exp_score, $diff_score, $pos, 1, scalar(@$aligned_scores), $genomic_align_block_id, $window_size);  
+		$aligned_score = _add_to_bucket($self, $display_type, $obs_score, $exp_score, $diff_score, $pos - $align_start + 1, 1, scalar(@$aligned_scores), $genomic_align_block_id, $window_size);  
 	    }
 	    if ($aligned_score) {
 		push(@$aligned_scores, $aligned_score);
@@ -1052,7 +1052,6 @@ sub _get_alignment_scores {
 	    }
 	}
     }
-
 
     #need to shift positions if align_start is in an uncalled region because
     #need to add the uncalled positions up to the start of the next called 
@@ -1131,11 +1130,10 @@ sub _add_to_bucket {
 
 	$_bucket->{cnt}++;
 
-	#check to see if reached size of bucket NB end_pos is in slice coords
+	#check to see if filled bucket NB end_pos is in slice coords
 	#so multiply size (number of bases/bucket) by number of buckets used so
 	#far (plus 1 because it starts at 0)
-	if ($end_pos >= ($_bucket->{size} *  (1+int(($end_pos-$win_size)/$_bucket->{size})))) {
-	#if ($end_pos >= ($_bucket->{size} * ($num_buckets+1))) {
+	if ($end_pos >= ($_bucket->{size} * ($num_buckets+1))) {
 
 	    #take average position 
 	    $p = int(($end_pos + $_bucket->{start_pos})/2);
@@ -1164,23 +1162,9 @@ sub _add_to_bucket {
 	}
 	$_bucket->{cnt}++;
 
-	#not sure which to choose yet. Doesn't seem to make much difference
-	#but need to check further. 
-	#In essence, the original method, num_buckets starts at 1 and so the
-	#same number of buckets will be filled even in I start to the left of
-	#the gab start. The new method will effectively start at the correct
-	#bucket number and work from there so the resolution is the same
-	#shouldn't make any difference to cigar_line method because bucket_size
-	#is dependant on the slice length so whatever slice you choose, you 
-	#will always get display_size points. For get_alignment_scores 
-	#bucket_size is dependant on a larger, alignslice size
-
-	#18.10.06 this top one doesn't work for contig view because I end up
-	#getting one end_pos pre bucket and so end up with far too many
-	#scores. Go back to original!
-
-	#if ($end_pos >= ($_bucket->{size} *  (1+int(($end_pos-$win_size)/$_bucket->{size})))) {
-
+	#check to see if filled bucket NB end_pos is in slice coords
+	#so multiply size (number of bases/bucket) by number of buckets used so
+	#far (plus 1 because it starts at 0)
 	if ($end_pos >= ($_bucket->{size} * ($num_buckets+1))) {
 	    $p = int(($end_pos + $_bucket->{start_pos})/2);
 	    $s = int(($end_seq_region_pos + $_bucket->{start_seq_region_pos})/2);
