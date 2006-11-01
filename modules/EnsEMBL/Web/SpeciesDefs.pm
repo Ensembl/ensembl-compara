@@ -606,7 +606,49 @@ sub _parse {
           last;
         }
       }
+      
+      ## Also get archive assembly info for each species
+      $dbh = $self->db_connect( $tree, 'ENSEMBL_WEBSITE' );
+      $tree->{'archive'} = {};
+
+      $sql = qq(SELECT r.release_id, r.assembly_name 
+                    FROM release_species r, species s 
+                    WHERE r.species_id = s.species_id
+                      AND s.name = "$filename" 
+                      AND r.assembly_name != ''
+                    ORDER BY release_id);
+      $sth = $dbh->prepare( $sql );
+      $rst  = $sth->execute || die( $sth->errstr );
+      $results = $sth->fetchall_arrayref();
+      foreach my $row (@$results) {
+        my $release_id  = $row->[0];
+        my $assembly    = $row->[1];
+        $tree->{'archive'}{$release_id} = $assembly;
+      }
+      $sth->finish();
+      $dbh->disconnect();
     }
+
+    ## Also cache miniad data
+    my @miniads;
+    my $dbh = $self->db_connect( $tree, 'ENSEMBL_WEBSITE' );
+    my $sql = qq(SELECT image, alt, url 
+              FROM miniad
+              WHERE start_date < NOW() AND end_date > NOW()
+    );
+    my $sth = $dbh->prepare( $sql );
+    my $rst  = $sth->execute || die( $sth->errstr );
+    my $results = $sth->fetchall_arrayref();
+    foreach my $r (@$results) {
+      push @miniads, {
+        'image' => $r->[0],
+        'alt'   => $r->[1],
+        'url'   => $r->[2],
+      };
+    }
+    $tree->{'miniads'} = \@miniads;
+    $sth->finish();
+    $dbh->disconnect();
 
 #### INI FILE BLAST DATABASES
 # Creates default file name of format
