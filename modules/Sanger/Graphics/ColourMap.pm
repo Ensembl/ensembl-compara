@@ -1,4 +1,4 @@
-#########
+########
 # Author: rmp@sanger.ac.uk
 # Maintainer: webmaster@sanger.ac.uk
 # Created: 2001
@@ -716,6 +716,7 @@ sub rgb_by_name {
     warn "Unknown colour name $name";
     return (hex(0), hex(0), hex(0));
   }
+  return $self->rgb_by_hex($hex);
 }
 
 sub names {
