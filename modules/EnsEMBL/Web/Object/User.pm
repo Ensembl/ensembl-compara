@@ -88,6 +88,29 @@ sub find_groups_by_user_id {
   return $return;
 }
 
+sub find_groups_by_type {
+  my ($self, $type) = @_;
+  my $results = $self->adaptor->groups_for_type($type);
+  my $return = [];
+  if ($results) {
+    foreach my $result (@{ $results }) {
+      my $group = EnsEMBL::Web::Object::Group->new((
+                                           adaptor => $self->adaptor,
+                                           name => $result->{name},
+                                           type => $result->{type},
+                                           status => $result->{status},
+                                           created_by => $result->{created_by},
+                                           modified_by => $result->{modified_by},
+                                           created_at => $result->{created_at},
+                                           modified_at => $result->{modified_at},
+                                           id => $result->{id}
+                                             )); 
+      warn "CREATING GROUP " . $group ." for USER " . $self->name;
+      push @{ $return }, $group;
+    }
+  }
+  return $return; 
+}
 sub find_group_by_group_id {
   my ($self, $group_id) = @_;
   foreach my $group (@{ $self->groups }) {
@@ -181,6 +204,7 @@ sub prefix {
   my ($self, $value) = @_;
   return undef;
 }
+
 
 sub save {
   my $self = shift;

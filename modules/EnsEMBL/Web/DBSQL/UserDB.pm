@@ -271,7 +271,13 @@ sub find_user_by_user_id {
 sub find_users_by_group_id {
   my ($self, $id) = @_;
   my $sql = qq(
-    SELECT user.user_id, user.name, user.email, user.org, group_member.level 
+    SELECT 
+      user.user_id,
+      user.name,
+      user.email,
+      user.org,
+      group_member.level,
+      group_member.status
     FROM user 
     LEFT JOIN group_member 
     ON (group_member.user_id = user.user_id) 
@@ -289,6 +295,7 @@ sub find_users_by_group_id {
            'org'          => $record->[3],
            'organisation' => $record->[3],
            'level'        => $record->[4],
+           'status'       => $record->[5],
          };
       push @{ $results }, $details;
     }
@@ -1091,6 +1098,49 @@ sub add_relationship {
   );
   my $sth = $self->{'_handle'}->prepare($sql);
   my $result = $sth->execute();
+}
+
+sub groups_for_type {
+  my ($self, $type) = @_;
+
+  warn "FINDING GROUPS FOR TYPE: $type";
+
+  my $sql = qq(
+    SELECT 
+           webgroup.webgroup_id,
+           webgroup.name,
+           webgroup.type,
+           webgroup.status,
+           webgroup.created_by,
+           webgroup.modified_by,
+           UNIX_TIMESTAMP(webgroup.created_at),
+           UNIX_TIMESTAMP(webgroup.modified_at)
+    FROM group_member 
+    LEFT JOIN webgroup
+    ON (group_member.webgroup_id = webgroup.webgroup_id)
+     WHERE webgroup.type = '$type';
+  );
+
+  my $R = $self->{'_handle'}->selectall_arrayref($sql);
+  my $results = [];
+  if ($R->[0]) {
+    my @records = @{$R};  
+    foreach my $record (@records) {
+      my $details = {
+           'id'           => $record->[0],
+           'name'         => $record->[1],
+           'type'         => $record->[2],
+           'status'       => $record->[3],
+           'created_by'   => $record->[4],
+           'modified_by'  => $record->[5],
+           'created_at'   => $record->[6],
+           'modified_at'  => $record->[7],
+         };
+      push @{ $results }, $details;
+    }
+  }
+
+  return $results;
 }
 
 sub groups_for_user_id {

@@ -236,19 +236,22 @@ sub join_a_group {
                                                     
   ## the group registration wizard uses 3 nodes: show list of available groups,
   ## save group and a landing page
-  $wizard->add_nodes([qw(show_groups save_membership accountview)]);
+  $wizard->add_nodes([qw(show_groups process_membership accountview)]);
   $wizard->default_node('show_groups');
 
   $self->_add_javascript_libraries;
                                                                                 
   ## chain the nodes together
   $wizard->add_outgoing_edges([
-          ['show_groups'=>'save_group'],
-          ['save_group'=>'accountview'],
+          ['show_groups'=>'process_membership'],
+          ['process_membership'=>'accountview'],
   ]);
 
   $self->add_wizard($wizard);
   $self->wizard_panel('Join a Group');
+}
+
+sub process_membership {
 }
 
 sub manage_members {

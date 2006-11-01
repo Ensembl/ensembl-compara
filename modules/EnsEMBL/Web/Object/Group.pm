@@ -23,6 +23,7 @@ my %CreatedAt_of;
 my %ModifiedAt_of;
 my %Users_of;
 my %Administrators_of;
+my %StatusCollection_of;
 
 sub new {
   ### c
@@ -38,6 +39,7 @@ sub new {
   $ModifiedAt_of{$self} = defined $params{'modified_at'} ? $params{'modified_at'} : 0;
   $Users_of{$self} = defined $params{'users'} ? $params{'users'} : [];
   $Administrators_of{$self} = defined $params{'administrators'} ? $params{'administrators'} : [];
+  $StatusCollection_of{$self} = defined $params{'status_collection'} ? $params{'status_collection'} : {};
   if ($params{id}) {
     $self->update_users;
   }
@@ -86,8 +88,21 @@ sub update_users {
       if ($result->{'level'} eq 'administrator') {
         push @{ $self->administrators }, $user;
       }
+  
+      if ($result->{'status'}) {
+        $self->assign_status_to_user($result->{'status'}, $user);
+      }
 
     }
+  }
+}
+
+sub assign_status_to_user {
+  my ($self, $status, $user) = @_;
+  if ($self->status_collection->{$status}) {
+    push @{ $self->status_collection->{$status} }, $user;
+  } else {
+    $self->status_collection->{$status} = [ $user ];
   }
 }
 
@@ -130,6 +145,14 @@ sub users {
   my $self = shift;
   $Users_of{$self} = shift if @_;
   return $Users_of{$self};
+}
+
+sub find_users_by_status {
+  my ($self, $status) = @_;
+  if ($self->status_collection->{$status}) {
+    return $self->status_collection->{$status};
+  }
+  return [];
 }
 
 sub add_user {
@@ -217,6 +240,12 @@ sub administrators {
   return $Administrators_of{$self};
 }
 
+sub status_collection {
+  ### a
+  my $self = shift;
+  $StatusCollection_of{$self} = shift if @_;
+  return $StatusCollection_of{$self};
+}
 
 sub DESTROY {
   my $self = shift;
@@ -229,6 +258,7 @@ sub DESTROY {
   delete $CreatedAt_of{$self};
   delete $ModifiedAt_of{$self};
   delete $Administrators_of{$self};
+  delete $StatusCollection_of{$self};
 }
 
 }

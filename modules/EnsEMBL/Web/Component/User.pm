@@ -448,26 +448,14 @@ sub admin_groups {
 }
 
 sub show_members {
-  my( $panel, $object ) = @_;
-
-  my $html = qq(
-<form action="/common/manage_members">
-<h4>Membership Requests Pending Approval</h4>
-<table class="spreadsheet">
-<tr><th>Name and organisation</th><th>Date Submitted</th><th></th></tr>
-<tr class="tint"><td>Q (Q Continuum)</td><td>1 Jan 2406</td><td><input type="submit" name="member_id" value="Approve"></td></tr>
-<tr><td>William Riker (USS Enterprise)</td><td>1 Apr 2406</td><td><input type="submit" name="member_id" value="Approve"></td></tr>
-<tr class="tint"><td>Miles O'Brien (USS Defiant)</td><td>4 Jul 2406</td><td><input type="submit" name="member_id" value="Approve"></td></tr>
-</table>
-<h4>Current Members</h4>
-<table class="spreadsheet">
-<tr><th>Name and organisation</th><th>Position</th></th><th></tr>
-<tr class="tint"><td>Jean-Luc Picard (USS Enterprise)</td><td>administrator</td><td></td></tr>
-<tr><td>Catherine Janeway (USS Voyager)</td><td>member</td><td><input type="submit" name="member_id" value="Remove from group"> <input type="submit" name="member_id" value="Ban from group"></td></tr>
-<tr class="tint"><td>Benjamin Sisko (Deep Space Nine)</td><td>member</td><td><input type="submit" name="member_id" value="Remove from group"> <input type="submit" name="member_id" value="Ban from group"></td></tr>
-</table>
-</form>
-  );
+  my( $panel, $user) = @_;
+  my $group = $user->find_group_by_group_id($user->param('webgroup_id'));
+  my @users = @{ $group->find_users_by_status('active') };
+  my @pending_users = @{ $group->find_users_by_status('pending') };
+  my $html = "'" . $group->name . "' has " . ($#users + 1) . "active user" . ("s" ? $#users > 0 : ""); 
+  if (@pending_users) {
+    my $html .= "(" + ($#pending_users + 1) + " pending requests)";
+  } 
 
   $panel->print($html);
   return 1;

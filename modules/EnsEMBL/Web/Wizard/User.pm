@@ -188,6 +188,7 @@ sub _init {
       'save_bookmark' => {'button'=>'Save'},
       'save_config'   => {'button'=>'Save'},
       'save_group'    => {'button'=>'Save'},
+      'process_membership' => {'button'=>'Save'},
 
       'enter_email' => {
                       'form' => 1,
@@ -928,6 +929,20 @@ sub delete_configs {
 
 #------------------------------ USER CONFIGS -------------------------------------------------
 
+sub process_membership {
+  my ($self, $user) = @_;
+  my $wizard = $self->{wizard}; 
+ 
+  warn "PROCESS MEMBERSHIP: " . $user->name;
+  warn "PARAM: " . $user->param;
+  #foreach my $key (keys $user->param) {
+  #  warn "PROCESS KEY: " . $key;
+  #}
+  my %parameter;
+  $parameter{'node'} = 'accountview'; 
+  return \%parameter;
+}
+
 sub show_groups {
   my ($self, $object) = @_;
 
@@ -938,60 +953,59 @@ sub show_groups {
 
   my $form = EnsEMBL::Web::Form->new($node, "/$species/$script", 'post' );
 
-  $form->add_element(
+  my $groups = $object->find_groups_by_type('open');
+
+  if (@{ $groups }) {
+    $form->add_element(
         'name'  => 'open_subhead',
         'type'  => 'SubHeader',
         'value' => 'Open Groups',
-  );
-  $form->add_element(
+    );
+    $form->add_element(
         'name'  => 'open_blurb',
         'type'  => 'Information',
         'value' => "Open groups can be joined by anyone. If you select any of these groups, you will get instant access to any custom configurations created by the group's administrator.",
-  );
-  my $group_list = $object->get_groups_by_type('open');
-  foreach my $group (@$group_list) {
-    $form->add_element(
-      'type'  => 'CheckBox',
-      'label' => $group->{'title'},
-      'name'  => 'group',
-      'value' => $group->{'group_id'},
-      'notes' => $group->{'blurb'},
     );
-    $form->add_element(
-      'type'  => 'Hidden',
-      'name'  => 'group_'.$group->{'group_id'},
-      'value' => 'open',
-    );
+    $wizard->add_list_of_groups($groups, $form);
   }
   
-  $form->add_element(
+  my $restricted_groups = $object->find_groups_by_type('restricted');
+  if (@{ $restricted_groups }) {
+    $form->add_element(
       'name'  => 'restricted_subhead',
       'type'  => 'SubHeader',
       'value' => 'Restricted Groups',
-  );
-  $form->add_element(
+    );
+    $form->add_element(
       'name'  => 'restricted_blurb',
       'type'  => 'Information',
       'value' => "Before you can join a restricted group, you have to be approved by the group's moderator. You can request to join such a group here, and you will receive a reply by email.",
-  );
-  $group_list = $object->get_groups_by_type('restricted');
-  foreach my $group (@$group_list) {
-    $form->add_element(
-      'type'  => 'CheckBox',
-      'label' => $group->{'title'},
-      'name'  => 'groups',
-      'value' => $group->{'group_id'},
-      'notes' => $group->{'blurb'},
     );
-    $form->add_element(
-      'type'  => 'Hidden',
-      'name'  => 'group_'.$group->{'group_id'},
-      'value' => 'restricted',
-    );
-  }
+
+    $wizard->add_list_of_groups($restricted_groups, $form);
+  } 
+
   $wizard->add_buttons($node, $form, $object);
 
   return $form;
+}
+
+sub add_list_of_groups {
+  my ($self, $groups, $form) = @_;
+  foreach my $group (@{ $groups }) {
+    $form->add_element(
+      'type'  => 'CheckBox',
+      'label' => $group->name,
+      'name'  => 'group',
+      'value' => $group->id,
+      'notes' => $group->blurb,
+    );
+    $form->add_element(
+      'type'  => 'Hidden',
+      'name'  => 'group_'.$group->id,
+      'value' => 'open',
+    );
+  }
 }
 
 sub save_membership {
