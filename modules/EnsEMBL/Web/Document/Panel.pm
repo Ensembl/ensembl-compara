@@ -317,7 +317,7 @@ sub render {
     my $HTML = qq(\n<div class="panel">);
     my $cap = '';
     if( exists $self->{'status'} ) {
-      my $URL = sprintf '/%s/%s?%s=%s', $self->{'object'}->species, $self->{'object'}->script, $self->{'status'}, $status eq 'on' ? 'off' : 'on';
+      my $URL = sprintf '/%s/%s?%s=%s', $self->{'object'}->species, $self->{'object'}->script, $self->{'status'}, $status ne 'off' ? 'off' : 'on';
       foreach my $K (keys %{$self->{'params'}||{}} ) {
         $URL .= sprintf ';%s=%s', CGI::escape( $K ), CGI::escape( $self->{'params'}{$K} );
       }

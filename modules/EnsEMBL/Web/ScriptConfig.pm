@@ -60,7 +60,7 @@ sub update_from_input {
       if( scalar(@values) > 1 ) {
         $self->set( $key, \@values );
       } else {
-        $self->set( $key, $input->param( $key ) );
+        $self->set( $key, $input->param( $key ), $key=~ /^panel_/ );
       }
     }
   }
