@@ -589,23 +589,17 @@ sub launch_BLAT {
     my $lsf_error_file = "$dir/${prefix1}.$seq_region1/bsub.$job_name-\${LSB_JOBINDEX}.err";
     my $bsub_in = 
           ". /usr/local/lsf/conf/profile.lsf\n".
-          "lsrcp ecs4a:$DNA_DIR/$species1_dir/$seq_region1.fa /tmp/$job_name-\${LSB_JOBINDEX}.$$.tg.$seq_region1.fa\n".
-          "lsrcp ecs4b:$DNA_DIR/$species2_dir/seq_regions.sets/\${LSB_JOBINDEX}.fa /tmp/$job_name-\${LSB_JOBINDEX}.$$.qy.$seq_region1.fa\n".
           "$BIN_DIR/LaunchBLAT.pl".
-              " -fastadb /tmp/$job_name-\${LSB_JOBINDEX}.$$.tg.$seq_region1.fa".
+              " -fastadb $DNA_DIR/$species1_dir/$seq_region1.fa".
               " -target_type dnax".
               " -Nooc $ooc_file".
 #              " -idqy $DNA_DIR/$species2_dir/seq_regions.sets/\${LSB_JOBINDEX}".
 #              " -indexqy $DNA_DIR/$species2_dir/seq_regions.index".
 #              " -fastafetch $BIN_DIR/fastafetch.pl".
-              " -fastaqy /tmp/$job_name-\${LSB_JOBINDEX}.$$.qy.$seq_region1.fa".
+              " -fastaqy $DNA_DIR/$species2_dir/seq_regions.sets/\${LSB_JOBINDEX}.fa".
               " -query_type dnax".
-              " 2> /tmp/$job_name-\${LSB_JOBINDEX}.err\n".
+              " 2> $lsf_error_file\n".
           "status=\$?\n".
-          "lsrcp /tmp/$job_name-\${LSB_JOBINDEX}.err ecs4c:$lsf_error_file\n".
-          "rm -f /tmp/$job_name-\${LSB_JOBINDEX}.err\n".
-          "rm -f /tmp/$job_name-\${LSB_JOBINDEX}.$$.tg.$seq_region1.fa\n".
-          "rm -f /tmp/$job_name-\${LSB_JOBINDEX}.$$.qy.$seq_region1.fa\n".
           "exit \$status\n";
 
     my $count = 1;
