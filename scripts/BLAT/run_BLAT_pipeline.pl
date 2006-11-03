@@ -383,48 +383,35 @@ sub dump_dna {
   if (!$db_adaptor) {
     throw("Cannot connect to core database for $species!");
   }
+  my $top_level_slices = $db_adaptor->get_SliceAdaptor->fetch_all("toplevel");
 
   my $phusion = $species_directory;
   $phusion =~ s/^(.)[^\_]+\_(.).+/$1$2/;
 
-  my $sql =  qq{
-          SELECT
-            sr.name,
-            cs.name,
-            sr.length
-          FROM
-            coord_system cs,
-            seq_region sr,
-            seq_region_attrib sra,
-            attrib_type at
-          WHERE
-            sra.attrib_type_id = at.attrib_type_id
-            AND at.code = 'toplevel'
-            AND sr.seq_region_id = sra.seq_region_id
-            AND sr.coord_system_id = cs.coord_system_id
-            AND sr.name not like "\%_NT_\%"
-            AND sr.name not like "\%_DR_\%"
-            AND sr.name not like "UNKN"
-      };
-  if (defined($seq_region_names) and @$seq_region_names) {
-    $sql .= "\n            AND sr.name IN (\"".join("\", \"", @$seq_region_names) ."\")";
-  }
-  $sql .= "\n            ORDER BY cs.name, sr.name";
-
-  my $sth = $db_adaptor->dbc->prepare($sql);
-  $sth->execute;
   open(SEQ_REGIONS, ">$DNA_DIR/$species_directory/seq_regions")
       or throw("Cannot open $DNA_DIR/$species_directory/seq_regions for writting!");
   open(INDEX, ">$DNA_DIR/$species_directory/seq_regions.index")
       or throw("Cannot open seq_regions.index for writting!");
 
-  my $all_values = $sth->fetchall_arrayref;
+  my $all_slices;
+  foreach my $this_slice (@$top_level_slices) {
+    if (defined($seq_region_names) and @$seq_region_names) {
+      foreach my $this_seq_region_name (@$seq_region_names) {
+        if ($this_slice->seq_region_name eq $this_seq_region_name) {
+          push(@$all_slices, $this_slice);
+          last;
+        }
+      }
+    } else {
+      push(@$all_slices, $this_slice);
+    }
+  }
 
-  while (my $values = shift(@$all_values)) {
-    my $seq_region_name = $values->[0];
+  while (my $this_slice = shift(@$all_slices)) {
+    my $seq_region_name = $this_slice->seq_region_name;
     my @seq_region_names = ($seq_region_name);
-    my $coordinate_system_name = $values->[1];
-    my $length = $values->[2];
+    my $coordinate_system_name = $this_slice->coord_system_name;
+    my $length = $this_slice->seq_region_length;
 
     if (!defined($coord_systems->{$coordinate_system_name})) {
       $coord_systems->{$coordinate_system_name} = "clump_files";
@@ -458,14 +445,14 @@ sub dump_dna {
     print SEQ_REGIONS "${coordinate_system_name}_${seq_region_name}\n";
 
 
-    while ($size < 10000000 and @$all_values and @seq_region_names<1000 
-        and $all_values->[0]->[1] eq $coordinate_system_name and
+    while ($size < 10000000 and @$all_slices and @seq_region_names<1000 
+        and $all_slices->[0]->coord_system_name eq $coordinate_system_name and
         $coord_systems->{$coordinate_system_name} eq "clump_files") {
 
-      $values = shift(@$all_values);
-      $seq_region_name = $values->[0];
+      $this_slice = shift(@$all_slices);
+      $seq_region_name = $this_slice->seq_region_name;
       push(@seq_region_names, $seq_region_name);
-      $length = $values->[2];
+      $length = $this_slice->seq_region_length;
 
       $base_id = $phusion.".".$coordinate_system_name.":".$seq_region_name;
       for (my $i=1;$i<=$length;$i+=$chunk_size-$overlap) {
