@@ -1,67 +1,108 @@
 
-Example for Hs35 against Mm33
+Example for Homo sapiens NCBI36 against Canis familiaris BROADD2
 
 (1)- download the sql data from ucsc
 
-cd /ecs2/work3/abel/blastz/Hs35Mm33/
+mkdir HsapNCBI36.vs.CfamBROADD2; cd HsapNCBI36.vs.CfamBROADD2
 mkdir ucsc_sql;cd ucsc_sql
 
-wget -t 5 http://hgdownload.cse.ucsc.edu/goldenPath/hg17/database
+wget -t 5 http://hgdownload.cse.ucsc.edu/goldenPath/hg18/database
 
-(replace hg17 with the species abbreviation of interest (check by going to a webpage and typing in the URL -- it should be a valid webpage)
+(replace hg18 with the species abbreviation of interest (check by going to a
+webpage and typing in the URL -- it should be a valid webpage)
 
-Then you have to know what is the mouse abbreviation used by UCSC, here is mm5
+Then you have to know what is the dog abbreviation used by UCSC, here is CanFam2.
+To find out what the abreviation might be, use:
 
-
-to find out what the abreviation might be 
 grep "net" index.html |awk -F "\"" '{print $6}'|grep ^net
+
 and check through the output for an abbreviation that looks relevent.
 
 Then wget the files with:
 
-grep Mm5 index.html |awk -F "\"" '{print $6}'|grep -e net -e chain|while read i;do wget -t 5 http://hgdownload.cse.ucsc.edu/goldenPath/hg17/database/$i;done
+grep CanFam2 index.html | awk -F "\"" '{print $6}' | grep -e net -e chain | \
+while read i; do wget -t 5 \
+http://hgdownload.cse.ucsc.edu/goldenPath/hg18/database/$i; done
 
-again remembering to replace hg17 with the relevent species abbreviation. Note they tend to be in the format of canFam1 or xenTro1 or galGal2 for more recently added species.
+again remembering to replace hg18 with the relevent species abbreviation.
+Note they tend to be in the format of CanFam1 or xenTro1 or galGal2 for
+more recently added species.
 
-You may also download the goldenpath data if you want to map alignments on the *_random and hap chromosomes:
+You may also download the goldenpath data for the target species if you want
+to map alignments on the *_random and hap chromosomes:
 
-grep gold index.html | grep -e random -e hap | awk -F "\"" '{print $6}' | while read i; do wget -t 5 \
-http://hgdownload.cse.ucsc.edu/goldenPath/hg17/database/$i; done
+grep gold index.html | grep -e random -e hap | awk -F "\"" '{print $6}' | \
+while read i; do wget -t 5 \
+http://hgdownload.cse.ucsc.edu/goldenPath/hg18/database/$i; done
 
 
 (2)- set up a mysql database with UCSC data
 
-mysql -h ecs2 -P3366 -u ensadmin -pensembl -e "create database abel_ucsc_chain_data_Hs35Mm33"
+mysql -h compara1 -P 3306 -u ensadmin -pensembl -e "create database jh7_ucsc_Hsap_Cfam_42"
 
  create the tables
 
-ls *.sql|while read i;do mysql -h ecs2 -P3366 -u ensadmin -pensembl abel_ucsc_chain_data_Hs35Mm33 < $i;done
+ls *.sql | while read i; do mysql -h compara1 -P 3306 -u ensadmin -pensembl jh7_ucsc_Hsap_Cfam_42 < $i;done
 
  load the data
 
-ls *.gz|sed "s/\.gz//"|while read i;do echo "Loading $i...";gunzip $i.gz; \
-mysqlimport -h ecs2 -P3366 -u ensadmin -pensembl -L abel_ucsc_chain_data_Hs35Mm33 $i; \
-gzip $i;echo $i loaded;done
+ls *.gz | sed "s/\.gz//" | while read i; do echo "Loading $i..."; gunzip $i.gz; \
+mysqlimport -h compara1 -P 3306 -u ensadmin -pensembl -L jh7_ucsc_Hsap_Ggap_42 $i; \
+gzip $i; echo $i loaded; done
 
-# mysqlimport didn not work on ia64e so use the following instead:
+ You can also get the goldenpath for the query species. The script expects
+ these data in one single table called query_gold. Here is an example on how
+ to do this:
 
-ls *.gz | sed "s/\.txt.gz//" | while read i ; do echo "Loading $i..." ; gunzip $i.txt.gz ; mysql -h ia64e -pensembl -u ensadmin -e "load data local infile '/ecs2/scratch3/cara/UCSC/Mm33Xt1/ucsc_sql/$i.txt' into table $i" cara_ucsc_chain_data_xenTro1mm5 ; gzip $i.txt ; echo $i loaded ; done
+mkdir query; cd query
+
+wget -t 5 http://hgdownload.cse.ucsc.edu/goldenPath/canFam2/database/
+
+grep gold.txt.gz index.html | awk -F "\"" '{print $6}' | while read i; do wget -t 5 \
+http://hgdownload.cse.ucsc.edu/goldenPath/canFam2/database/$i; done
+
+grep gold.sql index.html | head -1 | awk -F "\"" '{print $6}' | while read i; do wget -t 5 \
+http://hgdownload.cse.ucsc.edu/goldenPath/canFam2/database/$i -O query_gold.sql; done
+
+sed -r -i -e 's/\w+_gold/query_gold/' query_gold.sql
+
+sed -r -i -e 's/UNIQUE KEY/KEY/' query_gold.sql
+
+mysql -h compara1 -P 3306 -u ensadmin -pensembl jh7_ucsc_Hsap_Cfam_42 < query_gold.sql
+
+mysql -h compara1 -P 3306 -u ensadmin -pensembl \
+-e "ALTER TABLE query_gold ADD KEY region (chrom, chromStart)" \
+jh7_ucsc_Hsap_Cfam_42
+
+ls *.gz|sed "s/\.gz//"|while read i;do echo "Loading $i...";gunzip $i.gz; mv $i query_gold.txt; \
+mysqlimport -h compara1 -P 3306 -u ensadmin -pensembl -L jh7_ucsc_Hsap_Cfam_42 query_gold.txt; \
+mv query_gold.txt $i; gzip $i;echo $i loaded;done
+
+cd ..
 
 
 (3)- create a mysql database for ensembl data
 
-mysql -u ensadmin -pensembl -h compara1 -e "CREATE DATABASE jh7_ensembl_Hsap_Cfam_41"
+mysql -u ensadmin -pensembl -h compara1 -e "CREATE DATABASE jh7_ensembl_Hsap_Cfam_42"
 
  create tables
 
-mysql -u ensadmin -pensembl -h compara1 jh7_ensembl_Hsap_Cfam_41 < ~/src/ensembl_main/ensembl-compara/sql/table.sql
+mysql -u ensadmin -pensembl -h compara1 jh7_ensembl_Hsap_Cfam_42 < ~/src/ensembl_main/ensembl-compara/sql/table.sql
 
  IMPORTANT - Set up your registry. The conf file must have data for connecting to the master, both
 uscs and e! DBs and the two core DBs
 
+ create the new method_link_species_set in the master database
+
+~/src/ensembl_main/ensembl-compara/scripts/pipeline/create_mlss.pl \
+--reg-conf ../reg.conf --master compara-master --method_link_type BLASTZ_NET \
+--genome_db_id 22 --genome_db_id 39 --source ucsc \
+--url http://hgdownload.cse.ucsc.edu/goldenPath/hg18/database/
+
  populate tables with master data
 
-~/src/ensembl_main/ensembl-compara/scripts/pipeline/populate_new_database.pl --reg-conf ../reg.conf --master compara-master --new ensemblHsapCfam
+~/src/ensembl_main/ensembl-compara/scripts/pipeline/populate_new_database.pl --reg-conf ../reg.conf \
+--master compara-master --new ensemblHsapCfam --species "Homo sapiens" --species "Canis familiaris"
 
 
 (4)- Load data into e! DB
@@ -69,32 +110,33 @@ uscs and e! DBs and the two core DBs
 cd ..; mkdir load; cd load
 
 Run the script first with the --check_length option first to see if the chromosomes lengths match between ensembl and UCSC 
-/nfs/acari/abel/src/ensembl_main/ensembl-compara/scripts/blastz/LoadUcscNetData.pl \
- --ucsc_dbname ucscHs35Mm33 --dbname abelcompara26 --tSpecies human --qSpecies Mm5 \
- --reg_conf /nfs/acari/abel/.Registry.conf --check_length
+
+/nfs/acari/jh7/src/ensembl_main/ensembl-compara/scripts/blastz/LoadUcscNetData.pl \
+ --ucsc_dbname ucscHsapCfam --dbname ensemblHsapCfam --tSpecies hg18 --qSpecies canFam2 \
+ --reg_conf ../reg.conf --check_length
 
 Then load the data: 
-mysql -h ecs2 -P3366 -u ensro -N -e "show tables" abel_ucsc_chain_data_Hs35Mm33 |\
- grep -v gold |awk -F "_chain" '/^chr/ {print $1}'| sort -u |\
- while read i; do bsub -o $i.out \
-   /nfs/acari/abel/src/ensembl_main/ensembl-compara/scripts/blastz/LoadUcscNetData.pl \
-   --ucsc_dbname ucscHs35Mm33 \
-   --dbname abelcompara26 \
-   --tSpecies human \
-   --tName $i \
-   --qSpecies Mm5 \
-   --method_link_type BLASTZ_NET \
-   --reg_conf /nfs/acari/abel/.Registry.conf \
- ;done
+mysql -h compara1 -P 3306 -u ensro -N -e "show tables" jh7_ucsc_Hsap_Cfam_42 |\
+  grep -v gold |awk -F "_chain" '/^chr/ {print $1}'| sort -u |\
+  while read i; do bsub -o $i.out -J hg18-CanFam2-$i -q long \
+    /nfs/acari/jh7/src/ensembl_main/ensembl-compara/scripts/blastz/LoadUcscNetData.pl \
+    --ucsc_dbname ucscHsapCfam \
+    --dbname ensemblHsapCfam \
+    --tSpecies hg18 \
+    --tName $i \
+    --qSpecies CanFam2 \
+    --method_link_type BLASTZ_NET \
+    --reg_conf ../reg.conf \
+  ;done
 
 Here is another example:
 mysql -h ia64f -u ensro -N -e "show tables" jh7_ucsc_chain_net_Hg17RheMac1 | \
   grep -v gold | awk -F "_chain" '/^chr/ {print $1}'| sort -u | \
-  while read i; do bsub -o $i.out -J hg17-RheMac1-$i -q basement \
+  while read i; do bsub -o $i.out -J hg18-RheMac1-$i -q basement \
     /nfs/acari/jh7/src/ensembl_main/ensembl-compara/scripts/blastz/LoadUcscNetData.pl \
     --ucsc_dbname ucsc_compara \
     --dbname ensembl_compara \
-    --tSpecies hg17 \
+    --tSpecies hg18 \
     --tName $i \
     --qSpecies RheMac1 \
     --method_link_type BLASTZ_NET \
@@ -105,21 +147,19 @@ WARNING:
 
 1. The taxon_id is hard coded into the loading script so that it knows which matrix to use. This needs to be added each time a new species is added. 
 
-2. The method_link_species_set_id is automatically set if it does not exist before. You probably want to create one with a specific dbID!
-
- The only requirement here is that the registry alias name of the --qSpecies (in the example Mm5) has 
-to be the same as the name of the netMm5 table in the UCSC database.
+ The only requirement here is that the registry alias name of the --qSpecies (in the example canFam2) has 
+to be the same as the name of the netCanFam2 table in the UCSC database.
 For example, if the net table from UCSC is named netGalGal2, one of registry alias name of the corresponding chicken core
 database has to be GalGal2.
 And obviously you should have aliases set for -tSpecies, whatever you like. You should also have aliases set for the 
 ucsc databases e.g. here
 
-new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(-host => 'ecs2',
+new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(-host => 'compara1',
                                             -user => 'ensadmin',
                                             -pass => 'ensembl',
                                             -port => 3366,
                                             -disconnect_when_inactive => 1,
-                                            -species => 'ucscHs35Mm33',
-                                            -dbname => 'abel_ucsc_chain_data_Hs35Mm33');
+                                            -species => 'ucscHsapCfam',
+                                            -dbname => 'jh7_ucsc_Hsap_Cfam_42');
 
-the only alias is ucscHs35Mm33.
+the only alias is ucscHsapCfam.
