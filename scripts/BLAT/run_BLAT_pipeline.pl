@@ -246,6 +246,7 @@ if ($help or !$species1 or !$species2) {
 ## Uses $reg_conf if supllied. Uses ENV{ENSMEBL_REGISTRY} instead if defined. Uses
 ## ~/.ensembl_init if all the previous fail.
 ##
+Bio::EnsEMBL::Registry->no_version_check(1);
 Bio::EnsEMBL::Registry->load_all($reg_conf);
 
 my $BIN_DIR = "$base_dir/bin";
@@ -485,7 +486,7 @@ sub dump_dna {
     }
 
     $job_name .= "+" if (@seq_region_names > 1);
-    my $run_str = "bsub -q $queue -m ecs4_hosts -o $lsf_output_file".
+    my $run_str = "bsub -q $queue -o $lsf_output_file".
       " -J\"$job_name\"".
       " $base_dir/bin/DumpChromosomeFragments.pl".
       " -dbname $species".
