@@ -528,6 +528,7 @@ sub fetch_and_load_nets {
 
   my $chromosome_specific_chain_tables = get_chromosome_specificity_for_tables(
       $ucsc_dbc, $qSpecies, "chain");
+  my $query_golden_path_is_available = check_table($ucsc_dbc, "query_gold");
 
   $sth->execute();
 
@@ -624,9 +625,14 @@ sub fetch_and_load_nets {
           }
         }
         $qdnafrag_length = $slice->length();
-        $q_needs_mapping = 1;
-      } elsif ($chromosome_specific_chain_tables and $qSpecies eq "Self") {
-        $slice = map_random_chromosome($tSpecies, $n_qName, ($n_qStart + 1), $n_qEnd);
+        $q_needs_mapping = "map_non_toplevel_seqregion";
+#       } elsif ($chromosome_specific_chain_tables and $qSpecies eq "Self") {
+      } else {
+        if ($chromosome_specific_chain_tables and $qSpecies eq "Self") {
+          $slice = map_random_chromosome($tSpecies, $n_qName, ($n_qStart + 1), $n_qEnd);
+        } elsif ($query_golden_path_is_available) {
+          $slice = map_random_chromosome($qSpecies, $n_qName, ($n_qStart + 1), $n_qEnd, "query_gold");
+        }
         if (!defined($slice)) {
           print STDERR "$net_index (#$n_chainId): daf not stored because $qBinomial seqname ",
               $n_qName, " [", ($n_qStart + 1), "-", $n_qEnd, "] is not in dnafrag table (4)\n";
@@ -637,12 +643,8 @@ sub fetch_and_load_nets {
               ") not in dnafrag table (5)\n";
           next FETCH_NET;
         }
-        $q_needs_mapping = 1;
+        $q_needs_mapping = "map_random_chromosome";
         $qdnafrag = $qdnafrags{$slice->seq_region_name};
-      } else {
-        print STDERR "$net_index (#$n_chainId): daf not stored because $qBinomial seqname ",
-            $n_qName, " [", ($n_qStart + 1), "-", $n_qEnd, "] not in dnafrag table (6)\n";
-        next FETCH_NET;
       }
     } else {
       $qdnafrag_length = $qdnafrag->length();
@@ -748,7 +750,7 @@ sub fetch_and_load_nets {
         $cl_tEnd = $slice->end;
       }
 
-      if ($q_needs_mapping and $qSpecies ne "Self") {
+      if ($q_needs_mapping eq "map_non_toplevel_seqregion") {
         my ($slice, $coords, $seq_regions) = map_non_toplevel_seqregion($qSpecies,
           $c_qName, $cl_qStart, $cl_qEnd, $c_qStrand);
         my %seq_regions;
@@ -795,13 +797,18 @@ sub fetch_and_load_nets {
           $start += $coord->length;
         }
       } else {
-        if ($q_needs_mapping and $qSpecies eq "Self") {
-          my $slice = map_random_chromosome($tSpecies, $c_qName, $cl_qStart, $cl_qEnd);
+        if ($q_needs_mapping eq "map_random_chromosome") {
+          my $slice;
+          if ($qSpecies eq "Self") {
+            $slice = map_random_chromosome($tSpecies, $c_qName, $cl_qStart, $cl_qEnd);
+          } else {
+            $slice = map_random_chromosome($qSpecies, $c_qName, $cl_qStart, $cl_qEnd, "query_gold");
+          }
           if (!defined($slice)) {
             print STDERR "$net_index (#$n_chainId): daf not stored because $qBinomial seqname ",
                 $c_qName, " (", ($c_qStart), " - ", $c_qEnd, ") is not in dnafrag table (12)\n";
             next FETCH_CHAIN;
-          } elsif (!defined($tdnafrags{$slice->seq_region_name})) {
+          } elsif (!defined($qdnafrags{$slice->seq_region_name})) {
             print STDERR "$net_index (#$n_chainId): daf not stored because $qBinomial seqname ",
                 $c_qName, " (", $slice->seq_region_name, ") not in dnafrag table (13)\n";
             next FETCH_CHAIN;
@@ -953,12 +960,46 @@ sub get_chromosome_specificity_for_tables {
 }
 
 
+=head2 check_table
+
+  Arg[1]     : Bio::EnsEMBL::DBSQL::DBConnection $ucsc_compara_dbc
+  Arg[2]     : string $table_name
+  Example    : $table_exists = check_table($ucsc_compara_dbc, "query_gold");
+  Description: Check whether a table called $table_name exists in the
+               database
+  Returntype : boolean
+
+=cut
+
+sub check_table {
+  my ($ucsc_dbc, $table_name) = @_;
+
+  my $sql = "show tables like '$table_name'";
+  $sth = $ucsc_dbc->prepare($sql);
+  $sth->execute;
+
+  my ($table_name);
+
+  $sth->bind_columns(\$table_name);
+
+  my $table_count = 0;
+
+  while( $sth->fetch() ) {
+    $table_count++;
+  }
+  $sth->finish;
+
+  return $table_count;
+}
+
+
 =head2 map_random_chromosome
 
   Arg[1]     : string $species_name
   Arg[2]     : string $seq_region_name
   Arg[3]     : int $start (inclusive coordinates)
   Arg[4]     : int $end (inclusive coordinates)
+  Arg[5]     : (optional) string table_name
   Example    :
   Description: This method tries to match the EnsEMBL Slice corresponding
                to the piece of UCSC random chromosome. The UCSC random
@@ -971,13 +1012,14 @@ sub get_chromosome_specificity_for_tables {
 my $hap_mappings;
 
 sub map_random_chromosome {
-  my ($species_name, $seq_region_name, $start, $end) = @_;
+  my ($species_name, $seq_region_name, $start, $end, $table_name) = @_;
   my $slices;
 
-  my $random_sql = "SELECT chrom, chromStart, chromEnd, frag, fragStart, fragEnd, strand".
-  " FROM chr${seq_region_name}_gold where chromStart <= ? and chromEnd >= ? ORDER BY chromStart";
+  my $random_sql = "SELECT chrom, chromStart, chromEnd, frag, fragStart, fragEnd, strand FROM ".
+    ($table_name?$table_name:"chr${seq_region_name}_gold").
+    " WHERE chrom = ? and chromStart <= ? and chromEnd >= ? ORDER BY chromStart";
   my $random_sth = $ucsc_dbc->prepare($random_sql);
-  $random_sth->execute($end, $start - 1);
+  $random_sth->execute("chr${seq_region_name}", $end, $start - 1);
   my $all_data = $random_sth->fetchall_arrayref;
 
   my $slice_adaptor = Bio::EnsEMBL::Registry->get_adaptor($species_name, "core", "Slice");
@@ -1030,7 +1072,7 @@ sub map_random_chromosome {
     return undef if (!$can_be_mapped);
     return $slice->sub_Slice($start, $end);
 
-  } elsif ($seq_region_name =~ /_random$/) {
+  } else {
     ## Get mapping information from goldenpath table
     foreach my $data (@$all_data) {
       my $chrom_start = $data->[1];
@@ -1052,7 +1094,6 @@ sub map_random_chromosome {
       my $slice = $slice_adaptor->fetch_by_region(undef, $frag_name, $slice_start, $slice_end, $slice_strand);
       if (!defined($slice)) {
         ## Fake slice. Used to give a more useful warning message!
-        print STDERR "Cannot find the slice!\n";
         $slice = new Bio::EnsEMBL::Slice(
               -seq_region_name => "--".$frag_name,
               -start => $frag_start,
@@ -1060,13 +1101,12 @@ sub map_random_chromosome {
               -strand => ($frag_strand eq "+")?1:-1,
               -coord_system => new Bio::EnsEMBL::CoordSystem(-name => "unknown", -rank => 100),
           );
+        print STDERR "Cannot find the slice (", $slice->name, ")!\n";
         return $slice;
       }
       push(@$slices, $slice);
     }
 
-  } else {
-    return undef;
   }
 
 
@@ -1074,8 +1114,9 @@ sub map_random_chromosome {
   foreach my $this_slice (@$slices) {
     push(@$projections, @{$this_slice->project("toplevel")});
   }
-  if (@$projections != 1) {
-#     print "Projecting ", $slice->name, "\n";
+  if (!@$projections) {
+    return undef;
+  } elsif (@$projections > 1) {
 
     ## This may happen if a chain span a gap in the assembly. We try to rescue the alignment
     ## if the gap corresponds to a gap in the clone sequence.
@@ -1100,6 +1141,11 @@ sub map_random_chromosome {
             $gapped_seq_region_name = $name2;
           } else {
             return undef;
+          }
+          if ($seq_region_name !~ /_hap/) {
+            ## Use the reference sequence
+            $gapped_seq_region_name =~ s/^c//;
+            $gapped_seq_region_name =~ s/_.//;
           }
         } elsif ($gapped_strand != $this_projection->to_Slice->strand) {
           return undef;
