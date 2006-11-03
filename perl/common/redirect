@@ -13,6 +13,7 @@ my $url = $T->param('url');
 
 $url =~ s/\\\?/\?/g;
 $url =~ s/!and!/&/g;
+$url =~ s/!with!/;/g;
 
 warn "REDIRECT URL: ". $url;
 
@@ -28,6 +29,8 @@ if ($click) {
 }
 $record->adaptor($adaptor);
 $record->save;
+
+warn "REDIRECT: " . $url;
 
 print "Location: $url";
 
