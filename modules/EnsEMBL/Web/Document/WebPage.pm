@@ -311,7 +311,10 @@ sub _node_hop {
 sub check_access {
   my ($self, $access) = @_;
   my $ok = 0;
-
+  warn "CHECKING ACCESS";
+  foreach my $key (keys %{ $access }) {
+     warn "ACCESS KEY: " . $key;
+  }
   if ($access->{'login'} && $self->get_user_id) {
     $ok = 1;
   }
