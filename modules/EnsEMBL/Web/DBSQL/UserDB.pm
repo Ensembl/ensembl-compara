@@ -963,7 +963,7 @@ sub find_records {
   my $results = [];
   my $sql = qq(
     SELECT * 
-    FROM records WHERE $find_key = "$find_value"); 
+    FROM record WHERE $find_key = "$find_value"); 
   if ($type) {
     $sql .= qq( AND type = "$type"); 
   } 
@@ -990,7 +990,7 @@ sub delete_record {
   my $id = $params{id};
   warn "DELETING: " . $id;
   my $sql = qq(
-    DELETE FROM records 
+    DELETE FROM record 
     WHERE id = $id
   );
   my $sth = $self->{'_handle'}->prepare($sql);
@@ -1007,7 +1007,7 @@ sub update_record {
   my $data = $params{data};
   warn "UPDATING: " . $user_id . ": " . $type . ": " . $data;
   my $sql = qq(
-    UPDATE records 
+    UPDATE record
     SET user_id = $user_id,
         type    = "$type",
         data    = "$data"
@@ -1026,7 +1026,7 @@ sub insert_record {
   my $data = $params{data};
   warn "INSERTING: " . $user_id . ": " . $type . ": " . $data;
   my $sql = qq(
-    INSERT INTO records 
+    INSERT INTO record 
     SET user_id = $user_id,
         type    = "$type",
         data    = "$data",
