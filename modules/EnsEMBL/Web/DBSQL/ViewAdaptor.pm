@@ -1,5 +1,8 @@
 package EnsEMBL::Web::DBSQL::ViewAdaptor;
 
+### An inside-out class that acts as a simple wrapper for Perl DBI,
+### enabling quick'n'dirty development of simple database front-ends
+
 use strict;
 use warnings;
 no warnings 'uninitialized';
@@ -18,6 +21,7 @@ my %Password_of;
 my %Handle_of;
 
 sub new {
+  ### c
   my ($class, %params) = @_;
   my $self = bless \my($scalar), $class;
   $Hostname_of{$self}          = defined $params{hostname} ? $params{hostname} : "";
@@ -32,6 +36,7 @@ sub new {
 
 sub handle {
   ### a
+  ### Returns a database handle (creates one if it doesn't exist)
   my $self = shift;
   $Handle_of{$self} = shift if @_;
   if ($Handle_of{$self}) {
@@ -42,6 +47,8 @@ sub handle {
 }
 
 sub discover {
+  ### Extracts a list of column names from a given table
+  ### Returns: a reference to an array of strings
   my $self = shift;
   my $sql = "DESCRIBE " . $self->table . ";"; 
   my $results = $self->query($sql);
@@ -54,6 +61,8 @@ sub discover {
 
 
 sub query {
+  ### Simple wrapper for a SELECT query
+  ### Argument: string (SQL)
   my ($self, $sql) = @_;
   my $results = $self->handle->selectall_hashref($sql, "Field");
   if ($results) {
@@ -63,6 +72,7 @@ sub query {
 }
 
 sub create_handle {
+  ### Creates a standard DBI database handle
   my $self = shift;
   my $dbh = DBI->connect(
                          "DBI:mysql:database=" . $self->database . 
@@ -80,6 +90,7 @@ sub create_handle {
 }
 
 sub disconnect {
+  ### Simple wrapper for DBI disconnect
   my $self = shift;
   #$self->handle->disconnect;
 }
@@ -127,6 +138,7 @@ sub password {
 }
 
 sub DESTROY {
+  ### d
   my $self = shift;
   $self->disconnect;
   delete $Hostname_of{$self};
