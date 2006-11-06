@@ -1,66 +1,48 @@
 #!/usr/local/bin/perl -w
-###############################################################################
-#
-#   Name:           SpeciesDefs.pm
-#
-#   Description:    module to create/store/retrieve a config data structure
-#                   from the species.ini files
-#
-###############################################################################
-
-=head1 NAME
-
-SpeciesDefs - Ensembl web configuration accessor
-
-=head1 SYNOPSIS
-
-  use SpeciesDefs;
-  my $speciesdefs  = SpeciesDefs->new;
-
-  # List all configured species
-  my @species = $speciesdefs->valid_species();
-
-  # Test to see whether a species is configured
-  if( scalar( $species_defs->valid_species('Homo_sapiens') ){ }
-
-  # Getting a setting (parameter value/section data) from the config
-  my $sp_name = $speciesdefs->get_config('Homo_sapiens','SPECIES_COMMON_NAME');
-
-  # Alternative setting getter - uses autoloader
-  my $sp_bio_name = $speciesdefs->SPECIE_%S_COMMON_NAME('Homo_sapiens');
-
-  # Can also use the ENSEMBL_SPECIES environment variable
-  ENV{'ENSEMBL_SPECIES'} = 'Homo_sapiens';
-  my $sp_bio_name = $speciesdefs->SPECIES_COMMON_NAME;
-
-  # Getting a parameter with multiple values
-  my( @chromosomes ) = @{$speciesdefs->ENSEMBL_CHROMOSOMES};
-
-=head1 DESCRIPTION
-
-This module provides programatic access to the web site configuration
-data stored in the $ENSEMBL_SERVERROOT/conf/*.ini (INI) files. See
-$ENSEMBL_SERVERROOT/conf/ini.README for details.
-
-Due to the overhead implicit in parsing the INI files, two levels of
-caching (memory, filesystem) have been implemented. To update changes
-made to an INI file, the running process (e.g. httpd) must be halted,
-and the $ENSEMBL_SERVERROOT/conf/config.packed file removed. In the
-absence of a cache, the INI files are automatically parsed parsed at
-object instantiation. In the case of the Ensembl web site, this occurs
-at server startup via the $ENSEMBL_SERVERROOT/conf/perl.startup
-script. The filesystem cache is not enabled by default; the
-SpeciesDefs::store method is used to do this explicitly.
-
-=head1 CONTACT
-
-Email questions to the ensembl developer mailing list <ensembl-dev@ebi.ac.uk>
-
-=head1 METHODS
-
-=cut
 
 package EnsEMBL::Web::SpeciesDefs;
+
+### SpeciesDefs - Ensembl web configuration accessor
+
+### This module provides programatic access to the web site configuration
+### data stored in the $ENSEMBL_SERVERROOT/conf/*.ini (INI) files. See
+### $ENSEMBL_SERVERROOT/conf/ini.README for details.
+
+### Owing to the overhead implicit in parsing the INI files, two levels of
+### caching (memory, filesystem) have been implemented. To update changes
+### made to an INI file, the running process (e.g. httpd) must be halted,
+### and the $ENSEMBL_SERVERROOT/conf/config.packed file removed. In the
+### absence of a cache, the INI files are automatically parsed parsed at
+### object instantiation. In the case of the Ensembl web site, this occurs
+### at server startup via the $ENSEMBL_SERVERROOT/conf/perl.startup
+### script. The filesystem cache is not enabled by default; the
+### SpeciesDefs::store method is used to do this explicitly.
+
+### Example usage:
+
+###  use SpeciesDefs;
+###  my $speciesdefs  = SpeciesDefs->new;
+
+###  # List all configured species
+###  my @species = $speciesdefs->valid_species();
+
+###  # Test to see whether a species is configured
+###  if( scalar( $species_defs->valid_species('Homo_sapiens') ){ }
+
+###  # Getting a setting (parameter value/section data) from the config
+###  my $sp_name = $speciesdefs->get_config('Homo_sapiens','SPECIES_COMMON_NAME');
+
+###  # Alternative setting getter - uses autoloader
+###  my $sp_bio_name = $speciesdefs->SPECIE_%S_COMMON_NAME('Homo_sapiens');
+
+###  # Can also use the ENSEMBL_SPECIES environment variable
+###  ENV{'ENSEMBL_SPECIES'} = 'Homo_sapiens';
+###  my $sp_bio_name = $speciesdefs->SPECIES_COMMON_NAME;
+
+###  # Getting a parameter with multiple values
+###  my( @chromosomes ) = @{$speciesdefs->ENSEMBL_CHROMOSOMES};
+
+
 use strict;
 use warnings;
 no warnings "uninitialized";
@@ -77,20 +59,8 @@ use DBI;
 use SiteDefs qw(:ALL);
 our ( $AUTOLOAD, $CONF );
 
-#----------------------------------------------------------------------
-
-=head2 new
-
-  Arg       : None
-  Function  : SpeciesDefs constructor
-  Returntype: SpeciesDefs object
-  Exceptions: 
-  Caller    : 
-  Example   : 
-
-=cut
-
 sub new {
+  ### c
   my $class = shift;
 
   my $self = bless( {}, $class );
@@ -116,40 +86,19 @@ sub new {
   return $self;
 }
 
-#----------------------------------------------------------------------
-
-=head2 name (rename method to species?)
-
-  Arg [1]   : None
-  Function  : Retrieves the current species
-  Returntype: char
-  Exceptions:
-  Caller    :
-  Example   : my $species = $species_defs->name();
-
-=cut
 
 sub name {
+  ### a
+  ### returns the name of the current species
+  ## TO DO - rename method to 'species'
   return $ENV{'ENSEMBL_SPECIES'}|| $ENSEMBL_PRIMARY_SPECIES;
 }
 
-#----------------------------------------------------------------------
-
-=head2 valid_species
-
-  Arg       : list of species (defaults to all configured species)
-  Function  : Filters the list of species to those configured in the object.
-              If an empty list is passes, returns a list of all configured
-              species
-  Returntype: list of configured species
-  Exceptions:
-  Caller    :
-  Example   : @all_species = $species_defs->valid_species();
-              if( scalar( $species_defs->valid_species('Homo_sapiens') ){ }
-
-=cut
 
 sub valid_species(){
+  ### Filters the list of species to those configured in the object.
+  ### If an empty list is passes, returns a list of all configured species
+  ### Returns: array of configured species names
   my $self = shift;
   my %test_species = map{ $_=>1 } @_;
 
@@ -163,20 +112,8 @@ sub valid_species(){
   return @valid_species;
 }
 
-#----------------------------------------------------------------------
-
-=head2 AUTOLOAD
-
-  Arg       : species (optional)
-  Function  : Retrieves the [general] parameter indicated by the method name
-  Returntype: Depends
-  Exceptions:
-  Caller    :
-  Example   : $val = $species_defs->PARAMETER_NAME()
-
-=cut
-
 sub AUTOLOAD {
+  ### a
   my $self = shift;
   my $species = shift || $ENV{'ENSEMBL_SPECIES'} || $ENSEMBL_PRIMARY_SPECIES;
   my $var = our $AUTOLOAD;
@@ -184,20 +121,10 @@ sub AUTOLOAD {
   return $self->get_config( $species, $var );
 }
 
-#----------------------------------------------------------------------
-# uses $CONF to load the registry
-
-=head2 configure_registry
-
-  Arg       : None
-  Function  : loads the adaptor into the registry from the CONF definitions
-  Returntype: none
-  Exceptions: none
-  Caller    : parse
-
-=cut
 
 sub configure_registry {
+  ### Loads the adaptor into the registry from the CONF definitions
+  ### Returns: none
   my $self = shift;
   my %adaptors = (
     'VARIATION' => 'Bio::EnsEMBL::Variation::DBSQL::DBAdaptor', 
@@ -263,6 +190,9 @@ sub configure_registry {
 }
 
 sub dynamic_use {
+  ### Dynamically includes a required module
+  ### Argument: class name of the module to include
+  ### Returns: boolean
   my( $self, $classname ) = @_;
   my( $parent_namespace, $module ) = $classname =~/^(.*::)(.*)$/ ? ($1,$2) : ('::',$classname);
   no strict 'refs';
@@ -276,20 +206,10 @@ sub dynamic_use {
   return 1;
 }
 
-=head2 get_config
-
-  Arg [1]   : species name
-  Arg [2]   : parameter name
-  Function  : Returns the config value for a given species and
-              a given config key
-  Returntype: Depends on the parameter
-  Exceptions:
-  Caller    :
-  Example   : my $val = $sitedefs->get_config('Homo_sapiens','ENSEMBL_VERSION')
-
-=cut
-
 sub get_config {
+  ## Returns the config value for a given species and a given config key
+  ### Arguments: species name(string), parameter name (string)
+  ### Returns:  parameter value (any type), or undef on failure
   my $self = shift;
   my $species = shift;
   my $var     = shift || $species;
@@ -306,23 +226,12 @@ sub get_config {
   warn "UNDEF ON $var [$species]. Called from ", (caller(1))[1] , " line " , (caller(1))[2] , "\n" if $ENSEMBL_DEBUG_FLAGS & 4;
   return undef;
 }
-#----------------------------------------------------------------------
-
-=head2 set_config
-
-  Arg [1]   : species name
-  Arg [2]   : parameter name
-  Arg [3]   : parameter value
-  Function  : Overrides the config value for a given species
-              and a given config key (use with care!)
-  Returntype: 
-  Exceptions: 
-  Caller    : 
-  Example   : $sitedefs->set_config('Homo_sapiens','ENSEMBL_PREFIX','XYZ');
-
-=cut
 
 sub set_config {
+  ### Overrides the config value for a given species and a given config key 
+  ### (use with care!)
+  ### Arguments: species name (string), parameter name (string), parameter value (any)
+  ### Returns: boolean
   my $self = shift;
   my $species = shift;
   my $key = shift;
@@ -332,40 +241,20 @@ sub set_config {
   return 1;
 }
 
-#----------------------------------------------------------------------
-
-=head2 retrieve
-
-  Arg       : None
-  Function  : Retrieves stored configuration from disk
-  Returntype: bool
-  Exceptions: The filesystem-cache file cannot be opened
-  Caller    :
-  Example   : eval{$sitedefs->retrieve}; $@ && die("Can't retrieve: $@");
-
-=cut
-
 sub retrieve {
+  ### Retrieves stored configuration from disk
+  ### Returns: boolean
+  ### Exceptions: The filesystem-cache file cannot be opened
   my $self = shift;
   my $Q = lock_retrieve( $self->{'_filename'} ) or die( "Can't open $self->{'_filename'}: $!" ); 
   ( $CONF->{'_storage'}, $CONF->{'_multi'} ) = @$Q if ref($Q) eq 'ARRAY';
   return 1;
 }
 
-#----------------------------------------------------------------------
-
-=head2 store
-
-  Arg       : None
-  Function  : Creates filesystem-cache by storing config to disk. 
-  Returntype: boolean
-  Exceptions: 
-  Caller    : perl.startup, on first (validation) pass of httpd.conf
-  Example   : $speciesdefs->store
-
-=cut
-
 sub store {
+  ### Creates filesystem-cache by storing config to disk. 
+  ### Returns: boolean 
+  ### Caller: perl.startup, on first (validation) pass of httpd.conf
   my $self = shift;
   die "[CONF]    [FATAL] Could not write to $self->{'_filename'}: $!" unless
     lock_nstore( [ $CONF->{'_storage'}, $CONF->{'_multi'} ], $self->{_filename} );
@@ -373,21 +262,10 @@ sub store {
 }
 
 
-#----------------------------------------------------------------------
-
-=head2 parse
-
-  Arg [1]   : None
-  Function  : Parses the <species>.ini configuration files and
-              runs data availability checks
-  Returntype: Boolean
-  Exceptions:
-  Caller    : $self->new when filesystem and memory caches are empty
-  Example   : $self->parse
-
-=cut
-
-sub parse { # Called to create hash
+sub parse {
+  ### Retrieves a stored configuration or creates a new one
+  ### Returns: boolean
+  ### Caller: $self->new when filesystem and memory caches are empty
   my  $self  = shift;
   if( ! $SiteDefs::ENSEMBL_CONFIG_BUILD and -e $self->{_filename} ){
     warn( ( '-' x 78 ) ."\n",
@@ -405,7 +283,10 @@ sub parse { # Called to create hash
   while(my @T = caller($C) ) { $self->{'_parse_caller_array'}[$C] = \@T; $C++; }
 }
 
-sub _parse_date {
+sub _convert_date {
+  ### Converts a date from a species database into a human-friendly format for web display 
+  ### Argument: date in format YYMM with optional string attached
+  ### Returns: hash ref {'date' => 'Mmm YYYY', 'string' => 'xxxxx'}
   my $date = shift;
   my %parsed;
   my @a = ($date =~ /(\d{2})(\d{2})(.*)/);
@@ -433,6 +314,9 @@ sub _parse_date {
 }
 
 sub _parse {
+  ### Does the actual parsing of .ini files and now also gets
+  ### some information from the databases (assembly details, miniads)
+  ### Returns: boolean
   my $self = shift; 
   warn '-' x 78 , "\n[CONF]    [INFO] Parsing .ini files\n" ;
   $CONF->{'_storage'} = {};
@@ -571,12 +455,12 @@ sub _parse {
           push(@taxonomy, $value);
         }
         elsif ($key eq 'assembly.date') {
-          my $assembly = _parse_date($value);
+          my $assembly = _convert_date($value);
           $tree->{'general'}{'ASSEMBLY_DATE'} = $assembly->{'date'};
           print STDERR "\t  [WARN] NO ASSEMBLY DATE\n" if !$assembly->{'date'};
         }
         elsif ($key eq 'genebuild.version') {
-          my $genebuild = _parse_date($value);
+          my $genebuild = _convert_date($value);
           $tree->{'general'}{'GENEBUILD_DATE'} = $genebuild->{'date'};
           $tree->{'general'}{'GENEBUILD_BY'} = $genebuild->{'string'};  
           print STDERR "\t  [WARN] NO GENEBUILD DATE \n" if !$genebuild->{'date'};
@@ -1155,75 +1039,46 @@ sub _parse {
   return 1;
 }
 
-#----------------------------------------------------------------------
-
-=head2 DESTROY
-
-  Arg       : None
-  Function  : SpeciesDefs destructor
-  Returntype: 
-  Exceptions: 
-  Caller    : 
-  Example   : 
-
-=cut
-
 sub DESTROY { }
 
-#----------------------------------------------------------------------
-
-=head2 other_species
-
-  Arg [1]   : 
-  Function  : Deprecated - use get_config instead
-  Returntype: 
-  Exceptions: 
-  Caller    : 
-  Example   : 
-
-=cut
 
 sub anyother_species {
+  ### DEPRECATED - use get_config instead
   my ($self, $var) = @_;
   my( $species ) = keys %{$CONF->{'_storage'}};
   return $self->get_config( $species, $var );
 }
 sub other_species {
+  ### DEPRECATED - use get_config instead
   my ($self, $species, $var) = @_;
   return $self->get_config( $species, $var );
 }
 
 sub multidb {
-  my( $self, $type ) = @_;
+  ### a
+  my $self = shift;
   return $CONF->{'_multi'} && $CONF->{'_multi'}{'databases'};
 }
 
 sub multi {
+  ### a
+  ### Arguments: configuration type (string), species name (string)
   my( $self, $type, $species ) = @_;
   $species ||= $ENV{'ENSEMBL_SPECIES'};
   return $CONF->{'_multi'} && $CONF->{'_multi'}{$type} && $CONF->{'_multi'}{$type}{$species} ? %{$CONF->{'_multi'}{$type}{$species}} : ();
 }
 
 sub multiX {
+  ### a
+  ### Arguments: configuration type (string)
   my( $self, $type ) = @_;
   return $CONF->{'_multi'} && $CONF->{'_multi'}{$type} ? %{$CONF->{'_multi'}{$type}} : ();
 }
 
-#----------------------------------------------------------------------
-
-=head2 db_connect
-
-  Arg [0]   : hashref - root of config structure
-  Arg [1]   : str     - name of database
-  Function  : Connects to the specified database 
-  Returntype: DBI database handle
-  Exceptions: 
-  Caller    : 
-  Example   : 
-
-=cut
-
 sub db_connect {
+  ### Connects to the specified database 
+  ### Arguments: configuration tree (hash ref), database name (string)
+  ### Returns: DBI database handle
   my $self    = shift;
   my $tree    = shift @_ || die( "Have no data! Can't continue!" );
   my $db_name = shift @_ || confess( "No database specified! Can't continue!" );
@@ -1278,20 +1133,10 @@ sub db_connect {
   return $dbh;
 }
 
-#----------------------------------------------------------------------
-
-=head2 db_connect_multi_species
-
-  Arg [0]   : 
-  Function  : 
-  Returntype: 
-  Exceptions: 
-  Caller    : 
-  Example   : 
-
-=cut
-
 sub db_connect_multi_species {
+  ### Wrapper for db_connect, for use with multispecies configurations
+  ### Arguments: database name (string)
+  ### Returns: DBI database handle
   my $db_name = shift || die( "No database specified! Can't continue!" );
   
   my $self = EnsEMBL::Web::SpeciesDefs->new();
@@ -1302,25 +1147,12 @@ sub db_connect_multi_species {
 }
 
 
-#----------------------------------------------------------------------
-
-=head2 get_table_size
-
-  Arg [1]   : hashref
-  Function  : Returns the number of rows in a given table for a given database
-  Returntype: integer
-  Exceptions: 
-  Caller    : 
-  Example   : $rv = $speciesdefs->get_table_size({ -db => 'ENSEMBL_DB', 
-                                                   -table=>'feature' });
-
-=cut
-## Accessor function for table size,
-## Input - hashref: -db    = database   (e.g. 'ENSEMBL_DB'), 
-##                  -table = table name (e.g. 'feature' )
-## Returns - Number of rows in the table
-
 sub get_table_size{
+### Accessor function for table size,
+### Arguments: hashref: {-db => 'database' (e.g. 'ENSEMBL_DB'), 
+###                      -table =>'table name' (e.g. 'feature' ) }
+###            species name (string)
+### Returns: Number of rows in the table
 
 ## Get/check args
   my $self    = shift;
@@ -1350,22 +1182,10 @@ sub get_table_size{
   return $table_size->{$database}->{$table};
 } 
 
-#----------------------------------------------------------------------
-
-=head2 set_write_access
-
-  Arg [1]   : database type
-  Arg [2]   : species
-  Function  : sets write access to Ensembl database
-  Returntype: none
-  Exceptions: 
-  Caller    : 
-  Example   : species_defs->set_write_access('ENSEMBL_DB',$species)
-
-
-=cut
-
 sub set_write_access {
+  ### sets a given database adaptor to write access instead of read-only
+  ### Arguments: database type (e.g. 'core'), species name (string)
+  ### Returns: none
   my $self = shift;
   my $type = shift;
   my $species = shift || $ENV{'ENSEMBL_SPECIES'} || $ENSEMBL_PRIMARY_SPECIES;
@@ -1386,6 +1206,8 @@ sub set_write_access {
 }
 
 sub create_martRegistry {
+  ### Creates mart registry (XML)
+  ### Returns: registry content (string)
   my $self = shift;
   my $multi = $CONF->{'_multi'};
   warn "@{[keys %{$multi->{'databases'}}]}";
@@ -1423,11 +1245,8 @@ includeDatasets = ""
   return $reg;
 }
 
-##############################################################################
-## Diagnostic function!! 
-##############################################################################
-
 sub dump {
+  ## Diagnostic function!! 
   my ($self, $FH, $level, $Q) = @_;
   foreach (sort keys %$Q) {
     print $FH "    " x $level, $_;
@@ -1442,18 +1261,19 @@ sub dump {
   }
 }
 
-##############################################################################
-## Dictionary functionality... to be expanded....
 
 sub translate {
+  ### Dictionary functionality (not currently used)
+  ### Arguments: word to be translated (string)
+  ### Returns: translated word (string) or original word if not found
   my( $self, $word ) = @_;
   return $word unless $self->ENSEMBL_DICTIONARY;  
   return $self->ENSEMBL_DICTIONARY->{$word}||$word;
 }
 
-##############################################################################
 
 sub all_search_indexes {
+  ### a
   my %A = map { $_, 1 } map { @{ $CONF->{_storage}{$_}{ENSEMBL_SEARCH_IDXS}||[] } } keys %{$CONF->{_storage}};
   return sort keys %A;
 }
@@ -1462,9 +1282,10 @@ sub all_search_indexes {
 ## Additional parsing / creation codes...
 
 sub create_robots_txt {
-## This is to try and stop search engines killing e! - it gets created each
-## time on server startup and gets placed in the first directory in the htdocs
-## tree.
+  ### This is to try and stop search engines killing e! - it gets created each
+  ### time on server startup and gets placed in the first directory in the htdocs
+  ### tree.
+  ### Returns: none
   my $self = shift;
   my $root = $ENSEMBL_HTDOCS_DIRS[0];
   if( open FH, ">$root/robots.txt" ) { 
@@ -1490,9 +1311,11 @@ Disallow:
 }
 
 sub bread_crumb_creator {
-## Create the bread-crumbs hash to speed up rendering of bread-crumbs in web-pages
-## loops through all htdocs trees looking for index files to grab the "navigation"
-## meta tag from...
+  ### Create the breadcrumbs hash, which is used to autogenerate navigation in the static content.
+  ### The hash is stored in the cached config to speed up rendering of bread-crumbs in web-pages.
+  ###
+  ### This method loops through all htdocs trees looking for index files to grab the "navigation"
+  ### meta tag from...
   my $self = shift;
   my @dirs = ( '/' );
   my $ENSEMBL_BREADCRUMBS = {};
@@ -1554,6 +1377,11 @@ sub bread_crumb_creator {
 }
 
 sub _is_available_artefact{
+  ### Checks to see if a given artefact is available (or not available)
+  ### in the stored configuration for a particular species
+  ### Arguments: species name (defaults to the current species), 
+  ###   artefact to check for (string - artefact type and id, space separated)
+  ### Returns: boolean
   my $self     = shift;
   my $def_species  = shift || $ENV{'ENSEMBL_SPECIES'};
   my $available = shift;
@@ -1561,25 +1389,26 @@ sub _is_available_artefact{
   my @test = split( ' ', $available );
   if( ! $test[0] ){ return 999; } # No test found - return pass.
 
+  ## Is it a positive (IS) or a negative (IS NOT) check?
   my( $success, $fail ) = ($test[0] =~ s/^!//) ? ( 0, 1 ) : ( 1, 0 );
 
-  if( $test[0] eq 'database_tables' ){ # Then test using get_table_size
+  if( $test[0] eq 'database_tables' ){ ## Then test using get_table_size
     my( $database, $table ) = split( '\.', $test[1] );
     return $self->get_table_size(
           { -db    => $database, -table => $table },
           $def_species
       ) ? $success : $fail;
-  } elsif( $test[0] eq 'multi' ) { # See whether the traces database is specified
+  } elsif( $test[0] eq 'multi' ) { ## Is the traces database specified?
     my( $type,$species ) = split /\|/,$test[1],2;
     my %species = $self->multi($type, $self->{'species'});
     return $success if exists( $species{$species} );
     return $fail;
-  } elsif( $test[0] eq 'multialignment' ) { # See whether the traces database is specified
+  } elsif( $test[0] eq 'multialignment' ) { ## Is the traces database specified?
     my( $alignment_id ) = $test[1];
     my %alignment = $self->multi('ALIGNMENTS', $alignment_id);
     return $success if (scalar(keys %alignment));
     return $fail;
-  } elsif( $test[0] eq 'database_features' ){ # See whether the given database is specified
+  } elsif( $test[0] eq 'database_features' ){ ## Is the given database specified?
     my $ft = $self->other_species($def_species,'DB_FEATURES') || {};
     my @T = split /\|/, $test[1];
     my $flag = 1;
@@ -1588,12 +1417,12 @@ sub _is_available_artefact{
     }
     return $fail if $flag;
     return $success;
-  } elsif( $test[0] eq 'databases' ){ # See whether the given database is specified
+  } elsif( $test[0] eq 'databases' ){ ## Is the given database specified?
     my $db = $self->other_species($def_species,'databases')  || {};
     return $fail unless $db->{$test[1]}       ;
     return $fail unless $db->{$test[1]}{NAME} ;
     return $success;
-  } elsif( $test[0] eq 'features' ){ # See whether the given db feature is specified
+  } elsif( $test[0] eq 'features' ){ ## Is the given db feature specified?
     my $ft = $self->other_species($def_species,'DB_FEATURES') || {};
     my @T = split /\|/, $test[1];
     my $flag = 1;
@@ -1602,7 +1431,7 @@ sub _is_available_artefact{
     }
     return $fail if $flag;
     return $success;
-  } elsif( $test[0] eq 'any_feature' ){ # See whether any of the given db features is specified
+  } elsif( $test[0] eq 'any_feature' ){ ## Are any of the given db features specified?
     my $ft = $self->other_species($def_species,'DB_FEATURES') || {};
     shift @test;
     foreach (@test) {
@@ -1615,13 +1444,13 @@ sub _is_available_artefact{
     if(Bio::EnsEMBL::Registry->get_alias($def_species,"no throw") ne Bio::EnsEMBL::Registry->get_alias($test[1],"no throw")){
       return $fail;
     }
-  } elsif( $test[0] eq 'das_source' ){ # See whether the given DAS source is specified
+  } elsif( $test[0] eq 'das_source' ){ ## Is the given DAS source specified?
     my $source = $self->ENSEMBL_INTERNAL_DAS_SOURCES || {};
     return $fail unless $source->{$test[1]}   ;
     return $success;
   }
 
-  return $success; # Test not found - assume a pass anyway!
+  return $success; ## Test not found - pass anyway to prevent borkage!
 }
 
 1;
