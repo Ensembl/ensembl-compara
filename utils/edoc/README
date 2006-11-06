@@ -24,16 +24,16 @@ Where:
 
 MORE INFORMATION:
 
-The tool parses double hashed comments from source code files and builds an inheritance map before putting everything together as a set of HTML pages. The pages list all packages and all methods, providing a pretty simple browser-based API search.
+The tool parses triple hashed comments from source code files and builds an inheritance map before putting everything together as a set of HTML pages. The pages list all packages and all methods, providing a pretty simple browser-based API search.
 
-Documentation for a particular method can appear anywhere inside the method definition, so long as it is preceeded by a double hash. For example:
+Documentation for a particular method can appear anywhere inside the method definition, so long as it is preceeded by a triple hash. For example:
 
 sub gene_structure {
 ## Extends the slice on the correct strand.
 ...
 }
 
-Documentation comments can also be multi lined, so long as each line is double hashed:
+Documentation comments can also be multi lined, so long as each line is triple hashed:
 
 sub format_frequencies {
 ## Formats the raw frequency information obtained
@@ -65,6 +65,6 @@ sub frequencies {
 ...
 }
 
-The documentation identifier (ie, the double hash) can be set to any string with the identifier method.
+The documentation identifier (ie, the triple hash) can be set to any string with the identifier method.
 
 
