@@ -50,6 +50,7 @@ use Bio::EnsEMBL::Compara::DnaFragRegion;
 use Bio::EnsEMBL::Compara::Production::DBSQL::DBAdaptor;;
 use Bio::EnsEMBL::Utils::Exception;
 use Bio::EnsEMBL::Compara::Graph::NewickParser;
+use Bio::EnsEMBL::Compara::NestedSet;
 
 use Bio::EnsEMBL::Hive::Process;
 
@@ -116,9 +117,9 @@ sub write_output {
   my $mlssa = $self->{'comparaDBA'}->get_MethodLinkSpeciesSetAdaptor;
   my $mlss = $mlssa->fetch_by_dbID($self->method_link_species_set_id);
   my $gaba = $self->{'comparaDBA'}->get_GenomicAlignBlockAdaptor;
-  $gaba->use_autoincrement(0);
+#   $gaba->use_autoincrement(0);
   my $gaa = $self->{'comparaDBA'}->get_GenomicAlignAdaptor;
-  $gaa->use_autoincrement(0);
+#   $gaa->use_autoincrement(0);
 
   my $gaga = $self->{'comparaDBA'}->get_GenomicAlignGroupAdaptor;
 
@@ -438,7 +439,8 @@ sub _update_tree {
   my $ordered_dnafrag_regions = [];
 
   my $idx = 1;
-  foreach my $this_leaf (@{$tree->get_all_leaves}) {
+  my $all_leaves = $tree->get_all_leaves;
+  foreach my $this_leaf (@$all_leaves) {
     my $these_dnafrag_regions = [];
     ## Look for DnaFragRegions belonging to this genome_db_id
     foreach my $this_dnafrag_region (@$all_dnafrag_regions) {
@@ -454,16 +456,12 @@ sub _update_tree {
 
     } elsif (@$these_dnafrag_regions > 1) {
       ## If more than 1 has been found...
-      my $first_dnafrag_region = shift(@$these_dnafrag_regions);
-      my $copy = $this_leaf->copy;
-      $copy->name("seq".$idx++);
-      push(@$ordered_dnafrag_regions, $first_dnafrag_region);
-      $this_leaf->add_child($copy);
-      $copy = $this_leaf->children->[0]->copy;
       foreach my $this_dnafrag_region (@$these_dnafrag_regions) {
-        $copy->name("seq".$idx++);
+        my $new_node = new Bio::EnsEMBL::Compara::NestedSet;
+        $new_node->name("seq".$idx++);
+        $new_node->distance_to_parent(0);
         push(@$ordered_dnafrag_regions, $this_dnafrag_region);
-        $this_leaf->add_child($copy);
+        $this_leaf->add_child($new_node);
       }
 
     } else {
@@ -474,7 +472,8 @@ sub _update_tree {
   }
   $self->dnafrag_regions($ordered_dnafrag_regions);
 
-  if (scalar(@$all_dnafrag_regions) != scalar(@$ordered_dnafrag_regions)) {
+  if (scalar(@$all_dnafrag_regions) != scalar(@$ordered_dnafrag_regions) or
+      scalar(@$all_dnafrag_regions) != scalar(@{$tree->get_all_leaves})) {
     throw("Tree has a wrong number of leaves after updating the node names");
   }
 
