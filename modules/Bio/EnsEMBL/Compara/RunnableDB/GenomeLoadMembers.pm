@@ -14,14 +14,14 @@ Bio::EnsEMBL::Compara::RunnableDB::GenomeLoadMembers
 =head1 SYNOPSIS
 
 my $db      = Bio::EnsEMBL::Compara::DBAdaptor->new($locator);
-my $repmask = Bio::EnsEMBL::Compara::RunnableDB::GenomeLoadMembers->new (
+my $g_load_members = Bio::EnsEMBL::Compara::RunnableDB::GenomeLoadMembers->new (
                                                     -db      => $db,
                                                     -input_id   => $input_id
                                                     -analysis   => $analysis );
-$repmask->fetch_input(); #reads from DB
-$repmask->run();
-$repmask->output();
-$repmask->write_output(); #writes to DB
+$g_load_members->fetch_input(); #reads from DB
+$g_load_members->run();
+$g_load_members->output();
+$g_load_members->write_output(); #writes to DB
 
 =cut
 
@@ -124,27 +124,27 @@ sub run
   my $self = shift;
 
   $self->{'comparaDBA'}->dbc->disconnect_when_inactive(0);
-  $self->{'coreDBA'}->dbc->disconnect_when_inactive(0);  
-  
+  $self->{'coreDBA'}->dbc->disconnect_when_inactive(0);
+
   # main routine which takes a genome_db_id (from input_id) and
   # access the ensembl_core database, useing the SliceAdaptor
   # it will load all slices, all genes, and all transscripts
   # and convert them into members to be stored into compara
   $self->loadMembersFromCoreSlices();
-  
+
   $self->{'comparaDBA'}->dbc->disconnect_when_inactive(1);
   $self->{'coreDBA'}->dbc->disconnect_when_inactive(1);
-                                          
+
   return 1;
 }
 
 sub write_output 
-{  
+{
   my $self = shift;
 
   my $output_id = "{'gdb'=>" . $self->{'genome_db'}->dbID .
                   ",'ss'=>" . $self->{'pepSubset'}->dbID . "}";
-  $self->input_job->input_id($output_id);                    
+  $self->input_job->input_id($output_id);
   return 1;
 }
 
@@ -230,7 +230,7 @@ sub store_gene_and_all_transcripts
 #    };
 #    next if ($next);
     my $translation = $transcript->translation;
-    
+
     if(defined($self->{'pseudo_stableID_prefix'})) {
       $transcript->stable_id($self->{'pseudo_stableID_prefix'} ."T_". $transcript->dbID);
       $translation->stable_id($self->{'pseudo_stableID_prefix'} ."P_". $translation->dbID);
@@ -246,7 +246,7 @@ sub store_gene_and_all_transcripts
     }
 
     my $description = $self->fasta_description($gene, $transcript);
- 
+
     my $pep_member = Bio::EnsEMBL::Compara::Member->new_from_transcript(
          -transcript=>$transcript,
          -genome_db=>$self->{'genome_db'},
@@ -269,17 +269,17 @@ sub store_gene_and_all_transcripts
                                                                   -gene=>$gene,
                                                                   -genome_db=>$self->{'genome_db'});
       print(" => member " . $gene_member->stable_id) if($self->{'verbose'});
-      
+
       eval {
         $MemberAdaptor->store($gene_member);
         print(" : stored") if($self->{'verbose'});
       };
-      
+
       $self->{'geneSubset'}->add_member($gene_member);
       print("\n") if($self->{'verbose'});
       $gene_member_not_stored = 0;
     }
-    
+
     $MemberAdaptor->store($pep_member);
     $MemberAdaptor->store_gene_peptide_link($gene_member->dbID, $pep_member->dbID);
     print(" : stored\n") if($self->{'verbose'});
