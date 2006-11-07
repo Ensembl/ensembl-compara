@@ -10,7 +10,7 @@
          (MYOLU-*59463.bat)Chiroptera-9397)Laurasiatheria-314145, 
         (ECHTE*-9371.tenrec,LOXAF*-9785.elephant)Afrotheria-311790, 
         DASNO*-9361.armadillo)Eutheria-9347,MONDO*-13616.opossum)Theria-32525,
-       ORNAN-*9258.platypus)Mammalia-40674,
+       ORNAN*-9258.platypus)Mammalia-40674,
       CHICK*-9031)Amniota-32524,
      XENTR*-8364.frog)Tetrapoda-32523,
     (BRARE*-7955.zebrafish, 
@@ -20,5 +20,5 @@
   (((DROME*-7227.fly,DROPS-*7237.fly)Sophophora-32341,
     (AEDAE*-7159.mosquito,ANOGA*-7165.mosquito)Culicidae-7157)Diptera-7147, 
    APIME-*7460.honeybee)Endopterygota-33392,
-  SCHMA*-6183.fluke,
+  SCHMA-*6183.fluke,
   (CAEEL*-6239.worm,CAEBR-*6238.worm,CAERE-*31234.worm)Caenorhabditis-6237)Bilateria-33213)Eukaryota-2759;
