@@ -163,13 +163,10 @@ sub remove_body_element{
 
 sub replace_body_element{
   my( $self, $code, $function ) = @_;
-  warn "REPLACING " . $code . " WITH " . $function;
   my $elements = $self->{'body_order'};
   for( my $i=0; $i<@{$elements}; $i++ ){
     if( $elements->[$i]->[0] eq $code ){
-      warn "CHECKING " . $elements->[$i]->[0];
       $elements->[$i]->[1] = $function;
-      warn "FUNCTION" . $elements->[$i]->[1];
       last;
     }
   }

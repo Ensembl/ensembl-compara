@@ -276,6 +276,7 @@ sub login {
   my $html = qq(<div class="formpanel" style="width:50%">);
   $html .= $panel->form('login')->render();
   $html .= qq(<p><a href="/common/register">Register</a> | <a href="/common/lost_password">Lost password</a></p>);
+  #$html .= $panel->form('enter_details')->render();
   $html .= '</div>';
   $panel->print($html);
   return 1;

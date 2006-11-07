@@ -80,8 +80,8 @@ sub find_groups_by_user_id {
                                            modified_at => $result->{modified_at},
                                            id => $result->{id}
                                              )); 
-      warn "CREATING GROUP " . $group ." for USER " . $self->name;
-      warn "CREATED BY " . $result->{created_by};
+      #warn "CREATING GROUP " . $group ." for USER " . $self->name;
+      #warn "CREATED BY " . $result->{created_by};
       push @{ $return }, $group;
     }
   } 

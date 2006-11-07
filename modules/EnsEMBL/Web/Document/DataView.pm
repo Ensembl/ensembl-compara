@@ -13,14 +13,72 @@ sub simple {
   my $self = __PACKAGE__->new(('objecttype' => $type, 'doctype' => 'View'));
   my $cgi = CGI->new; 
 
+  my $result = undef;
+
   if ($cgi->param) {
-    my $action = "dataview_" . $definition->action;
-    $self->redirect($definition->on_complete);
+    my $action = $definition->action;
+    my $adaptor = $definition->data_definition->adaptor;
+    warn "ACTION: " . $action;
+    warn "ADAPTOR: " . $adaptor;
+    my $user = undef;
+    my $incoming = $cgi->Vars;
+    if ($action eq "create") {
+      my $fields = $definition->data_definition->discover;
+
+      my $create_parameters = $self->parameters_for_fields($fields, $incoming);
+
+      if ($ENV{'ENSEMBL_USER_ID'} eq $incoming->{'user_id'}) {
+        $user = $incoming->{'user_id'};    
+      }
+
+      $result = $adaptor->create(( set =>        $create_parameters, 
+                                   definition => $fields, 
+                                   user =>       $user
+                                ));
+    }
+
+    if ($result) {
+      $self->map_relationships($definition, $incoming, $result, $user);
+      $self->redirect($definition->on_complete);
+    } else {
+      $self->redirect($definition->on_error);
+    }
   } else {
     CGI::header;
     $self->page->render($definition);
   } 
 
+}
+
+sub map_relationships {
+  my ($self, $definition, $incoming, $result, $user) = @_;
+
+  my $adaptor = $definition->data_definition->adaptor;
+
+  foreach my $relationship (@{ $definition->data_definition->relationships }) {
+    warn "MAPPING " . $relationship->from . " " . $relationship->type . " " . $relationship->to;
+    $fields = $definition->data_definition->discover($relationship->link_table);
+    my $relationship_parameters = $self->parameters_for_fields($fields, $incoming);
+    my $from_id = $relationship->from . "_id";
+    $relationship_parameters->{$from_id} = $result;
+    $result = $adaptor->create(( 
+                              set   => $relationship_parameters, 
+                              table => $relationship->link_table,
+                              user  => $user
+                            ));
+  }
+}
+
+sub parameters_for_fields {
+  my ($self, $fields, $incoming) = @_;
+  my $parameters = {};
+  foreach my $field (@{ $fields }) {
+    my $field_name = $field->{'Field'};
+    if ($incoming->{$field_name}) {
+      $parameters->{$field_name} = $incoming->{$field_name};
+    }
+  } 
+  return $parameters;
 }
 
 sub dataview_create {

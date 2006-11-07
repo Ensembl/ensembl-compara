@@ -46,11 +46,20 @@ sub handle {
   return $Handle_of{$self};
 }
 
+sub last_inserted_id {
+}
+
 sub discover {
-  ### Extracts a list of column names from a given table
-  ### Returns: a reference to an array of strings
-  my $self = shift;
-  my $sql = "DESCRIBE " . $self->table . ";"; 
+  ### Queries the database metadata for information about available fields. 
+  ### Returns: a reference to an array of hashrefs. Each hashref
+  ### contains the defintion of the database field. For example, the name 
+  ### of the field can be accessed by $fields->[0]->{'Field'}.
+  my ($self, $query_table) = @_;
+  my $table = $self->table;
+  if ($query_table) {
+    $table = $query_table;
+  } 
+  my $sql = "DESCRIBE " . $table . ";"; 
   my $results = $self->query($sql);
   my $fields = [];
   foreach my $key (keys %{ $results }) {
@@ -59,6 +68,74 @@ sub discover {
   return $fields;
 }
 
+sub create {
+  ### Creates a new entry in the table
+  my ($self, %params) = @_;
+
+  my %set_parameters = %{ $params{set} };
+  my @definition = undef;
+  my $user = undef;
+
+  if ($params{definition}) {
+    @definition = @{ $params{definition} };
+  } 
+
+  if ($params{user}) {
+    $user = $params{user};
+  }
+
+  my $table = $self->table;
+  if ($params{table}) {
+    $table = $params{table};
+    @definition = @{ $self->discover($table) };
+  }
+
+  my $sql = "INSERT INTO " . $table . " SET ";
+  foreach my $key (keys %set_parameters) {
+    $sql .= $key . " = '" . $set_parameters{$key} . "', ";
+  }
+  if ($self->definition_contains('created_at', @definition)) {
+    $sql .= "created_at=CURRENT_TIMESTAMP, ";
+  }
+  if ($self->definition_contains('modified_at', @definition)) {
+    $sql .= "modified_at=CURRENT_TIMESTAMP, ";
+  }
+  if ($user) {
+    $sql .= "created_by = '" . $user . "', ";
+    $sql .= "modified_by = '" . $user . "', ";
+  }
+  $sql =~ s/, $//;
+  $sql .= ";";
+  warn $sql;
+  my $sth = $self->handle->prepare($sql);
+  my $result = $sth->execute();
+  if ($result) {
+    $result = $self->last_inserted_id;
+  }
+  return $result;
+}
+
+sub last_inserted_id {
+  my ($self) = @_;
+  my $sql = "SELECT LAST_INSERT_ID()";
+  my $T = $self->handle->selectall_arrayref($sql);
+  return '' unless $T;
+  my @A = @{$T->[0]}[0];
+  my $result = $A[0];
+  return $result;
+}
+
+
+sub definition_contains {
+  my ($self, $name, @definition) = @_;
+  my $found = 0;
+  foreach my $field (@definition) {
+    if ($field->{'Field'} eq $name) {
+      $found = 1;
+    }
+  }
+  return $found;
+}
 
 sub query {
   ### Simple wrapper for a SELECT query

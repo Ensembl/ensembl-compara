@@ -8,8 +8,10 @@ use warnings;
 my %Title_of;
 my %PageElements_of;
 my %FormElements_of;
+my %ConfigurationElements_of;
 my %Action_of;
 my %OnComplete_of;
+my %OnError_of;
 my %DataDefinition_of;
 
 sub new {
@@ -20,7 +22,9 @@ sub new {
   $PageElements_of{$self}   = defined $params{page_elements} ? $params{page_elements} : [];
   $FormElements_of{$self}   = defined $params{form_elements} ? $params{form_elements} : [];
   $DataDefinition_of{$self} = defined $params{data_definition} ? $params{data_definition} : undef;
+  $ConfigurationElements_of{$self} = defined $params{configuration_elements} ? $params{configuration_elements} : undef;
   $Action_of{$self}         = defined $params{action} ? $params{action} : undef;
+  $OnError_of{$self}         = defined $params{error} ? $params{error} : undef;
   return $self;
 }
 
@@ -29,6 +33,22 @@ sub title {
   my $self = shift;
   $Title_of{$self} = shift if @_;
   return $Title_of{$self};
+}
+
+sub configuration_elements {
+  ### a
+  my $self = shift;
+  $ConfigurationElements_of{$self} = shift if @_;
+  return $ConfigurationElements_of{$self};
+}
+
+sub add_configuration_element {
+  ### Adds a configuration element to the dataview.
+  my ($self, $key, $value) = @_;
+  if (!$self->configuration_elements) {
+    $self->configuration_elements([]);
+  }
+  push @{ $self->configuration_elements }, { 'key' => $key, 'value' => $value };
 }
 
 sub on_complete {
@@ -64,6 +84,13 @@ sub form_elements {
   my $self = shift;
   $FormElements_of{$self} = shift if @_;
   return $FormElements_of{$self};
+}
+
+sub on_error {
+  ### a
+  my $self = shift;
+  $OnError_of{$self} = shift if @_;
+  return $OnError_of{$self};
 }
 
 sub label_for_form_element {
@@ -110,6 +137,8 @@ sub DESTROY {
   delete $Action_of{$self};
   delete $OnComplete_of{$self};
   delete $FormElements_of{$self};
+  delete $ConfigurationElements_of{$self};
+  delete $OnError_of{$self};
 }
 
 }
