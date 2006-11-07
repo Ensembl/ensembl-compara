@@ -118,14 +118,20 @@ sub _known_feature {
   my( $self, $type, $parameter ) = @_;
   my $db        = $self->param('db')||'core';
   my $name      = $self->param($parameter)||$self->param('peptide') || $self->param('transcript') || $self->param('gene');
-  my @features  = undef;
+  my $sitetype = $self->species_defs->ENSEMBL_SITETYPE || 'Ensembl';
+  my @features  = ();
   my $adaptor;
   my $adaptor_name = "get_$type".'Adaptor';
   eval { $adaptor = $self->database($db)->$adaptor_name;};
     die ("Datafactory: Unknown DBAdapter in get_known_feature: $@") if ($@);
-  eval { $features[0] = $adaptor->fetch_by_display_label($name); };
-  unless($@){
-    eval { @features = @{$adaptor->fetch_all_by_external_name($name)}; };
+  eval {
+    my $f = $adaptor->fetch_by_display_label($name);
+    push @features,$f if $f;
+  };
+  unless(@features) {
+    eval {
+      @features = @{$adaptor->fetch_all_by_external_name($name)};
+    };
   }
   if( $@ ) {
     $self->problem('fatal', "Error retrieving $type from database", "An error occured while trying to retrieve the $type $name. ");
@@ -145,7 +151,7 @@ sub _known_feature {
       $self->problem('unmapped');
     }
     else {
-      $self->problem('fatal', "$type '$name' not found", "The identifier '$name' is not present in the current release of the Ensembl database. ")  ;
+      $self->problem('fatal', "$type '$name' not found", "The identifier '$name' is not present in the current release of the $sitetype database. ")  ;
     }
   }
   return;
