@@ -111,11 +111,31 @@ sub fetch_all_by_Member_paired_species {
 }
 
 
+=head2 fetch_all_by_Member_method_link_type
+
+  Arg [1]    : Bio::EnsEMBL::Compara::Member $member
+  Arg [2]    : string $method_link_type
+  Example    : $homologies = $HomologyAdaptor->fetch_all_by_Member_method_link_type(
+                   $member, "ENSEMBL_ORTHOLOGUES");
+  Description: fetch the homology relationships where the given member is implicated
+               in a relationship of the type defined by $method_link_type.
+  Returntype : an array reference of Bio::EnsEMBL::Compara::Homology objects
+  Exceptions : none
+  Caller     : 
+
+=cut
+
 sub fetch_all_by_Member_method_link_type {
   my ($self, $member, $method_link_type) = @_;
 
   unless ($member->isa('Bio::EnsEMBL::Compara::Member')) {
     throw("The argument must be a Bio::EnsEMBL::Compara::Member object, not $member");
+  }
+
+  unless ($member->genome_db_id) {
+    warning("Cannot get Homologues for a Bio::EnsEMBL::Compara::Member (".$member->source_name.
+        "::".$member->stable_id.") with no GenomeDB");
+    return [];
   }
 
   throw("method_link_type arg is required\n")
