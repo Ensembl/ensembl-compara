@@ -234,6 +234,7 @@ sub get_homology_matches{
           $homology_list{$displayspp}{$homologue_id}{'display_id'} = $display_id;
           $homology_list{$displayspp}{$homologue_id}{'description'} = $gene_spp->description || 'No description';
           $homology_list{$displayspp}{$homologue_id}{'location'}= $gene_spp->feature_Slice->name;
+		  $homology_list{$displayspp}{$homologue_id}{'chromosome'}= $gene_spp->feature_Slice->seq_region_name;
           if( $spp ne $self->{'species'} ) { 
             $database_spp->{'core'}->dbc->disconnect_if_idle();
           }

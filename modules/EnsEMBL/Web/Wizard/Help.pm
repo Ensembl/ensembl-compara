@@ -11,7 +11,9 @@ our @ISA = qw(EnsEMBL::Web::Wizard);
 
 sub _init {
   my ($self, $object) = @_;
-     
+  
+  my $sitetype= ucfirst(lc($object->species_defs->ENSEMBL_SITETYPE)) || 'Ensembl';
+  
   my @problems = (
       {'value'=>'',   'name' => '-- Select problem type --'},
       {'group' => 'Helpdesk feedback', 'value'=>'Gene structure',   'name' => 'Gene structure'},
@@ -75,7 +77,7 @@ sub _init {
   my %all_nodes = (
     'hv_intro' => {
       'form' => 1,
-      'title' => 'Ensembl Help',
+      'title' => "$sitetype Help",
       'input_fields' => [qw(intro kw hilite)],
     },
     'hv_search' => {
@@ -90,7 +92,7 @@ sub _init {
     },
     'hv_contact' => {
       'form' => 1,
-      'title' => 'Contact Helpdesk',
+      'title' => "$sitetype Help",
       'input_fields' => [qw(name email category comments)],
     },
     'hv_email' => {
