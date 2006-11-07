@@ -180,6 +180,8 @@ sub new {
     'protein_coding_NOVEL'             => [ 'blue', 'Novel Protein coding' ],
     'protein_coding_in_progress_NOVEL' => [ 'cornflowerblue', 'Novel Protein coding (in progress)'],
     'protein_coding_PREDICTED'         => [ 'steelblue4', 'Predicted Protein coding'] ,
+    'processed_transcript_PREDICTED'   => [ 'steelblue4', 'Predicted Processed transcript'] ,
+    'processed_transcript_UNKNOWN'     => [ 'steelblue2', 'Processed transcript'] ,
     'processed_transcript_NOVEL'       => [ 'skyblue3', 'Novel Processed transcript' ],
     'processed_transcript_PUTATIVE'    => [ 'lightslateblue', 'Putative Processed transcript' ],
     'total_pseudogene_UNKNOWN'         => [ 'grey70', 'Total Pseudogenes' ],

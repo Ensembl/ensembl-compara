@@ -275,32 +275,34 @@ sub zmenu {
     my $pid = $translation->stable_id() if $translation;
     my $gid = $gene->stable_id();
     my $id   = $transcript->external_name() eq '' ? $tid : ( $transcript->external_db.": ".$transcript->external_name() );
-	my $type = $self->format_vega_name($gene);
+	my $gtype = $self->format_vega_name($gene);
+	my $ttype = $self->format_vega_name($gene,$transcript);
     my $zmenu = {
-        'caption' 	    => $self->my_config('zmenu_caption'),
-        "00:$id"	    => "",
-        '01:Type: '.$type => "",
-		'02:Author: '.$author => "",
-    	"05:Gene:$gid"   => "/@{[$self->{container}{_config_file_name_}]}/geneview?gene=$gid;db=core",
-        "06:Transcr:$tid"=> "/@{[$self->{container}{_config_file_name_}]}/transview?transcript=$tid;db=core",
-        "08:Exon:$tid"	 => "/@{[$self->{container}{_config_file_name_}]}/exonview?transcript=$tid;db=core",
-        '09:Supporting evidence'    => "/@{[$self->{container}{_config_file_name_}]}/exonview?transcript=$tid;db=core#evidence",
-        '10:Export cDNA'  => "/@{[$self->{container}{_config_file_name_}]}/exportview?option=cdna;action=select;format=fasta;type1=transcript;anchor1=$tid",
+        'caption' 	               => $self->my_config('zmenu_caption'),
+        "00:$id"	               => "",
+		"01:Transcript class: ".$ttype => "",
+        '02:Gene type: '.$gtype     => "",
+		'03:Author: '.$author      => "",
+    	"07:Gene:$gid"             => "/@{[$self->{container}{_config_file_name_}]}/geneview?gene=$gid;db=core",
+        "08:Transcr:$tid"          => "/@{[$self->{container}{_config_file_name_}]}/transview?transcript=$tid;db=core",
+        "10:Exon:$tid"	           => "/@{[$self->{container}{_config_file_name_}]}/exonview?transcript=$tid;db=core",
+        '11:Supporting evidence'   => "/@{[$self->{container}{_config_file_name_}]}/exonview?transcript=$tid;db=core#evidence",
+        '12:Export cDNA'           => "/@{[$self->{container}{_config_file_name_}]}/exportview?option=cdna;action=select;format=fasta;type1=transcript;anchor1=$tid",
     };
 
     if ($pid) {
-        $zmenu->{"07:Peptide:$pid"} =  "/@{[$self->{container}{_config_file_name_}]}/protview?peptide=$pid";
-        $zmenu->{'11:Export Peptide'}	= "/@{[$self->{container}{_config_file_name_}]}/exportview?option=peptide;action=select;format=fasta;type1=peptide;anchor1=$pid";
+        $zmenu->{"09:Peptide:$pid"}   =  "/@{[$self->{container}{_config_file_name_}]}/protview?peptide=$pid";
+        $zmenu->{'13:Export Peptide'} = "/@{[$self->{container}{_config_file_name_}]}/exportview?option=peptide;action=select;format=fasta;type1=peptide;anchor1=$pid";
     }
 
 	if (my $ccds_att = $transcript->get_all_Attributes('ccds')->[0]) {
 		my $id = $ccds_att->value;
-		$zmenu->{"03:CCDS:$id"} = $self->ID_URL( 'CCDS', $id );
+		$zmenu->{"04:CCDS:$id"} = $self->ID_URL( 'CCDS', $id );
 	}
 
 	if ($script_name eq 'multicontigview') {
 		if (my $href = $self->get_hap_alleles_and_orthologs_urls($gene)) {
-			$zmenu->{"04:Realign display around this gene"} =  "$href";
+			$zmenu->{"05:Realign display around this gene"} =  "$href";
 		}
 	}
 
@@ -323,11 +325,11 @@ sub gene_zmenu {
 		$author =   'not defined';
 	}
     my $zmenu = {
-        'caption' 	          => $self->my_config('zmenu_caption'),
-        "00:$id"	          => "",
-        '01:Type: ' . $type   => "",
-		'02:Author: '.$author => "",
-        "04:Gene:$gid"        => qq(/@{[$self->{container}{_config_file_name_}]}/geneview?gene=$gid;db=core),
+        'caption' 	             => $self->my_config('zmenu_caption'),
+        "00:$id"	             => "",
+        '01:Gene Type: ' . $type => "",
+		'02:Author: '.$author    => "",
+        "04:Gene:$gid"           => qq(/@{[$self->{container}{_config_file_name_}]}/geneview?gene=$gid;db=core),
     };
 	if ($script_name eq 'multicontigview') {
 		if (my $href = $self->get_hap_alleles_and_orthologs_urls($gene)) {
@@ -343,7 +345,7 @@ sub text_label {
     my $Config = $self->{config};
     my $short_labels = $Config->get('_settings','opt_shortlabels');
     unless( $short_labels ){
-        my $type = $self->format_vega_name($gene);
+        my $type = $self->format_vega_name($gene,$transcript);
         $id .= " \n$type ";
     }
     return $id;

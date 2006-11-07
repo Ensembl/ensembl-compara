@@ -77,7 +77,7 @@ sub expanded_init {
   my ($T,$C1,$C) = (0, 0, 0 ); ## Diagnostic counters....
   my $K = 0;
 
-  warn ">>>>> $other_species $METHOD <<<<<";
+#  warn ">>>>> $other_species $METHOD in expanded init<<<<<";
   foreach my $f ( @{$self->features( $other_species, $METHOD )} ){
     next if $strand_flag eq 'b' && $strand != $f->hstrand || $f->end < 1 || $f->start > $length ;
     push @{$id{$f->hseqname().':'. ($f->group_id||("00".$K++)) }}, [$f->start,$f];
@@ -89,12 +89,14 @@ sub expanded_init {
   my $BLOCK = 0;
   my $script = $ENV{'ENSEMBL_SCRIPT'} eq 'multicontigview' ? 'contigview' : $ENV{'ENSEMBL_SCRIPT'};
   my $SHORT = $self->species_defs->ENSEMBL_SHORTEST_ALIAS->{ $Config->get( $type, 'species' ) };
+  my $domain = $Config->get( $type, 'linkto' );
   my $HREF  = $Config->get( $type, 'linkto' )."/$SHORT/$script";
 
   # sort alignments by size
   my @s_i = sort {($id{$b}[0][1]->hend() - $id{$b}[0][1]->hstart()) <=> ($id{$a}[0][1]->hend() - $id{$a}[0][1]->hstart())} keys %id;
   foreach my $i (@s_i){
     my @F = sort { $a->[0] <=> $b->[0] } @{$id{$i}};
+
     $T+=@F; ## Diagnostic report....
     my( $seqregion,$group ) = split /:/, $i;
     my $START = $F[0][0] < 1 ? 1 : $F[0][0];
@@ -175,16 +177,18 @@ sub expanded_init {
     }
     $Composite->href(  "$HREF?$ZZ" );
 
-	#decide whether to jump within or between species;
-	my $jump_type = $self_species eq $species_2 ? "chromosome $seqregion" : $species_2;
+#	warn "HREF = $HREF";
 
-    $Composite->zmenu( {
-      'caption' => $caption,
-      "01:$seqregion: $start-$end" => '',
-      "02:Jump to $jump_type"        => "$HREF?$ZZ",
-      "03:Orientation: @{[ $F[0][1]->hstrand * $F[0][1]->strand>0 ? 'Forward' : 'Reverse' ]}"         => ''
-    } );
-    $self->push( $Composite );
+
+	#decide whether to jump within or between species;
+#	my $jump_type = $self_species eq $species_2 ? "chromosome $seqregion" : $species_2;
+
+	my $zmenu = {
+				 'caption' => $caption,
+				 "01:$seqregion: $start-$end" => '',
+				 "99:Orientation: @{[ $F[0][1]->hstrand * $F[0][1]->strand>0 ? 'Forward' : 'Reverse' ]}"         => '',
+				};
+
     if(exists $highlights{$i}) {
       $self->unshift(new Sanger::Graphics::Glyph::Rect({
         'x'         => $Composite->x() - 1/$pix_per_bp,
@@ -195,6 +199,72 @@ sub expanded_init {
         'absolutey' => 1,
       }));
     }
+	#add more detailed links for non chained alignments
+	if (scalar(@F) == 1) {
+		my $chr_2 = $F[0][1]->hseqname;
+		my $s_2   = $F[0][1]->hstart;
+		my $e_2   = $F[0][1]->hend;
+		my $CONTIGVIEW_TEXT_LINK =  $compara ? 'Jump to ContigView' : 'Centre on this match' ;
+		my $END   = $F[0][1]->end;
+		my $START  =$F[0][0];
+		($START,$END) = ($END, $START) if $END<$START; # Flip start end YUK!
+		my( $rs, $re ) = $self->slice2sr( $START, $END );
+
+		#z menu links depend on whether jumping within or between species;
+		my $jump_type;
+		if( $self->species_defs->ENSEMBL_SITETYPE eq 'Vega' ) { #st3 - checked and OK
+			if( $self_species eq $species_2 ) {
+				$jump_type = "chromosome $chr_2";
+				if( $compara ) {			
+					$CONTIGVIEW_TEXT_LINK = "Go to chromosome $chr";
+				}
+			} else {	
+				$jump_type = "$other_species chr $chr_2";
+				if( $compara) {			
+					$CONTIGVIEW_TEXT_LINK = "Go to $self_species chr $chr";
+				}
+			}
+		} else {
+			$jump_type = $species_2;
+		}
+
+		my $short_self    = $Config->species_defs->ENSEMBL_SHORTEST_ALIAS->{ $self_species };
+		my $short_other   = $Config->species_defs->ENSEMBL_SHORTEST_ALIAS->{ $other_species };
+		my $HREF_TEMPLATE = "/$short_self/dotterview?c=$chr:%d;s1=$other_species;c1=%s:%d";
+		my $COMPARA_HTML_EXTRA = '';
+		my $MCV_TEMPLATE  = "/$short_self/multicontigview?c=%s:%d;w=%d;s1=$short_other;c1=%s:%d;w1=%d$COMPARA_HTML_EXTRA";
+        $zmenu->{"02:Jump to $jump_type"}    = "$domain/$short_other/contigview?l=$chr_2:$s_2-$e_2";
+		$zmenu->{"03:$CONTIGVIEW_TEXT_LINK"} = "/$short_self/contigview?l=$chr:$rs-$re";
+
+		my $href = sprintf $HREF_TEMPLATE, ($rs+$re)/2, $chr_2, ($s_2 + $e_2)/2;
+		$zmenu->{ '04:Dotter' }  = $href;
+		$zmenu->{'05:Alignment'} = "alignview?class=DnaDnaAlignFeature;l=$chr:$rs-$re;s1=$other_species;l1=$chr_2:$s_2-$e_2;type=$METHOD";
+
+		my $MULTICONTIGVIEW_TEXT_LINK = 'MultiContigView'; 
+		my $METHOD         = $Config->get($type, 'method' );
+
+		my $link = 0;
+		my $TAG_PREFIX;
+		if( $compara) {
+			$link = $Config->get($type,'join');
+			$TAG_PREFIX  = uc( $compara eq 'primary' ?
+							   join ( '_', $METHOD, $self_species, $other_species ) :
+							   join ( '_', $METHOD, $other_species, $self_species ) );
+			my $C=1;
+			foreach my $T ( @{$Config->{'other_slices'}||[]} ) {
+				if( $T->{'species'} ne $self_species && $T->{'species'} ne $other_species ) {
+					$C++;
+					$COMPARA_HTML_EXTRA.=";s$C=".$Config->species_defs->ENSEMBL_SHORTEST_ALIAS->{ $T->{'species'} };
+				}
+			}
+			$MULTICONTIGVIEW_TEXT_LINK = 'Centre on this match';
+		}
+		$zmenu->{ "06:$MULTICONTIGVIEW_TEXT_LINK" } = sprintf( $MCV_TEMPLATE, $chr, ($rs+$re)/2, $WIDTH/2, $chr_2, ($s_2+$e_2)/2, $WIDTH/2 );
+    } else {
+		$zmenu->{"02:Jump to $species_2"} = "$HREF?$ZZ";
+	}
+    $Composite->zmenu($zmenu);
+    $self->push( $Composite );
   }
 ## No features show "empty track line" if option set....
   $self->errorTrack( "No ". $self->{'config'}->get($type,'label')." features in this region" ) unless( $C || $Config->get('_settings','opt_empty_tracks')==0 );
@@ -256,8 +326,8 @@ sub compact_init {
   my $X = -1e8;
   my $CONTIGVIEW_TEXT_LINK =  $compara ? 'Jump to ContigView' : 'Centre on this match' ;
   my $MCV_TEMPLATE  = "/$short_self/multicontigview?c=%s:%d;w=%d;s1=$short_other;c1=%s:%d;w1=%d$COMPARA_HTML_EXTRA";
-  
-#  warn "!>>>>> $other_species $METHOD <<<<<";
+
+#  warn "!>>>>> $other_species $METHOD in compact init<<<<<";
   my @T = sort { $a->[0] <=> $b->[0] }
     map { [$_->start, $_ ] }
     grep { !( ($strand_flag eq 'b' && $strand != $_->hstrand) ||

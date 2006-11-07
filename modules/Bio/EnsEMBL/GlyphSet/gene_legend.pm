@@ -49,11 +49,14 @@ sub _init {
   my $th = $res[3];
   my $pix_per_bp = $self->{'config'}->transform()->{'scalex'};
 
+  my %seen;
   foreach (sort { $features{$b}->{'priority'} <=> $features{$a}->{'priority'} } keys %features) {
     @colours = @{$features{$_}->{'legend'}};
     $y++ unless $x==0;
     $x=0;
     while( my ($legend, $colour) = splice @colours, 0, 2 ) {
+		next if $seen{"$legend:$colour"};
+		$seen{"$legend:$colour"} = 1;
       $self->push(new Sanger::Graphics::Glyph::Rect({
         'x'         => $im_width * $x/$NO_OF_COLUMNS,
         'y'         => $y * ( $th + 3 ) + 2,

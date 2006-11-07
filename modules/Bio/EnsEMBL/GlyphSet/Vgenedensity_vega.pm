@@ -8,27 +8,25 @@ sub init_label {
     my $self = shift;
     my $Config = $self->{'config'};
     my $track = $self->check;
-    my @logic_names = @{ $Config->get($track, 'logicname') };
-    my @labels = @{ $Config->get($track, 'label') };
-    my @colours = @{ $Config->get($track, 'colour') };
-    
+    my @logic_names =  $Config->get($track, 'logicname');
+    my @labels = @{$Config->get($track, 'label')};
+    my @colours = split ' ',@{$Config->get($track, 'colour')}[0];
     my $chr = $self->{'container'}->{'chr'};
     my $slice_adapt   = $self->{'container'}->{'sa'};
     my $density_adapt = $self->{'container'}->{'da'};
     my $chr_slice = $slice_adapt->fetch_by_region('chromosome', $chr);
-
-    my ($i, $last_max);
+    my ($i, $last_max);	
     foreach my $label (@labels) {
         my $logic_name = shift @logic_names;
         my $colour = shift @colours;
-	my $density;
-        if ($logic_name) {
-            $density = $density_adapt->fetch_Featureset_by_Slice($chr_slice, $logic_name, 150, 1);
+		my $density;
+		foreach my $ln (split ' ', $logic_name) {
+            $density = $density_adapt->fetch_Featureset_by_Slice($chr_slice, $ln, 150, 1);
             $last_max = $density->max_value;
         }
 	
 	## draw label only if there is genes of this type or if we have
-        ## a two-line label
+    ## a two-line label
 	if ($last_max) { 
             my $text = new Sanger::Graphics::Glyph::Text({
                 'text'      => $label,
@@ -47,9 +45,8 @@ sub _init {
     my $self = shift;
     my $Config = $self->{'config'};
     my $track = $self->check;
-    my @logic_names = @{ $Config->get($track, 'logicname') };
-    my @colours = @{ $Config->get($track, 'colour') };
-
+    my @logic_names =  split ' ',$Config->get($track, 'logicname');
+    my @colours = split ' ',@{ $Config->get($track, 'colour') }[0];
     my $chr = $self->{'container'}->{'chr'};
     my $slice_adapt   = $self->{'container'}->{'sa'};  
     my $density_adapt = $self->{'container'}->{'da'};
@@ -92,7 +89,7 @@ sub _init {
                 'y'      => 0,
                 'width'  => $_->end-$_->start,
                 'height' => $_->scaledvalue,
-		'colour' => $Config->get('_colours', $colours[1])->[0],
+	        	'colour' => $Config->get('_colours', $colours[1])->[0],
                 'absolutey' => 1,
             }));
         }
@@ -105,7 +102,7 @@ sub _init {
             'y'      => 0,
             'width'  => $_->end-$_->start,
             'height' => $_->scaledvalue,
-	    'bordercolour' => $Config->get('_colours', $colours[0])->[0],
+    	    'bordercolour' => $Config->get('_colours', $colours[0])->[0],
             'absolutey' => 1,
             'href'   => "/@{[$self->{container}{_config_file_name_}]}/contigview?chr=$chr;vc_start=$_->{'chromosomestart'};vc_end=$_->{'chromosomeend'}"
             }));
