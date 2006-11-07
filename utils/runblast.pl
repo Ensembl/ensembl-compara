@@ -34,7 +34,7 @@ my $ticket = join( '',$bits[-3],$bits[-2] ); # Ticket = 3rd + 2nd to last dirs
 my $SPECIES_DEFS = EnsEMBL::Web::SpeciesDefs->new();
 my $DBCONNECTION = EnsEMBL::Web::DBSQL::DBConnection->new( undef, $SPECIES_DEFS );
 
-my $blast_adaptor = $DBCONNECTION->get_databases_species( $SPECIES_DEFS->ENSEMBL_PERL_SPECIES, 'blast')->{'blast'};
+my $blast_adaptor = $DBCONNECTION->get_databases_species( $SPECIES_DEFS->ENSEMBL_PRIMARY_SPECIES, 'blast')->{'blast'};
 
 $blast_adaptor->ticket( $ticket );
 
