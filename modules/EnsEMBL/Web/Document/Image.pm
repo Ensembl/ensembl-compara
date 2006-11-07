@@ -208,8 +208,15 @@ sub add_tracks {
         $object->database('core')->get_DensityTypeAdaptor->fetch_all
     };
     foreach my $art ( $config->artefacts() ) {
-      my @logicnames = ( split /\s+/,
+	  my @logicnames;
+	  if (ref($config->get( $art, 'logicname' )) eq 'ARRAY') {
+		  my $array_ref = $config->get( $art, 'logicname' );
+		  @logicnames = join(' ',@$array_ref);
+	  }
+	  else {
+		@logicnames = ( split /\s+/,
                           $config->get( $art, 'logicname' ) );
+	  }
       my @good_lnames = grep{$features{$_}} @logicnames;
       if( @logicnames  ) {
         if( @good_lnames ) {

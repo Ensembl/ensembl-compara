@@ -421,29 +421,6 @@ sub _get_haplotype_database{
     return  $self->_get_database( $db_info, 'Bio::EnsEMBL::ExternalData::Haplotype::DBAdaptor' );
 }
 
-=head2 _get_glovar_database
-
- Arg[1]      : String  
-                Species name
- 
- Example     : $self->_get_glovar_database($species)
- Description : Gets glovar database connection
- Return type : Bio::EnsEMBL::ExternalData::Glovar::DBAdaptor
-
-=cut
-
-sub _get_glovar_database{
-    my ($self, $species) = @_;
-    my $db_info =  $self->_get_database_info($species, 'ENSEMBL_GLOVAR') ||
-        die( "No Glovar database for this species");
-    my $ora_home = $self->{'species_defs'}->ENSEMBL_ORACLE_HOME;
-    warn("Trying to initialize and Oracle DBI driver but no ORACLE_HOME environment found!\n") if ($ora_home eq ''); 
-    $ENV{'ORACLE_HOME'} = $ora_home;
-    $ENV{'LD_LIBRARY_PATH'} = $self->{'species_defs'}->LD_LIBRARY_PATH;
-    my $dba = $reg->get_DBAdaptor($species, 'glovar');
-    $reg->add_DNAAdaptor($species, 'glovar', $species, 'core');
-    return $dba;
-}
 
 =head2 _get_fasta_database
 

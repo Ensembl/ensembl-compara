@@ -1172,7 +1172,7 @@ sub ADD_ALL_TRANSCRIPTS {
   $self->add_new_track_transcript( 'tigr_0_5',   'TIGR genes',   'tigr_0_5',   $POS++, @_ );
   $self->add_new_track_transcript( 'homology_low', 'Bee genes',    'bee_pre_gene',   $POS++, @_ );
   # trancripts for Vega
-  $self->add_new_track_transcript('vega', 'Vega genes', 'vega_gene',
+  $self->add_new_track_transcript('vega', 'Havana genes', 'vega_gene',
     $POS++, 'glyph' => 'vega_transcript', 'logic_name' => 'otter',
     'available'=>'features VEGA_GENES_OTTER', @_);
   $self->add_new_track_transcript('vega_corf', 'CORF genes', 'vega_gene',
@@ -1180,7 +1180,10 @@ sub ADD_ALL_TRANSCRIPTS {
     'available'=>'features VEGA_GENES_OTTER_CORF', @_);
   $self->add_new_track_transcript('vega_igsf', 'IgSF genes', 'vega_gene',
     $POS++, 'glyph' => 'vega_transcript', 'logic_name' => 'otter_igsf',
-    'available'=>'features VEGA_GENES_OTTER_IGSF', @_);  
+    'available'=>'features VEGA_GENES_OTTER_IGSF', @_); 
+   $self->add_new_track_transcript('vega_external', 'External genes', 'vega_gene',
+    $POS++, 'glyph' => 'vega_transcript', 'logic_name' => 'otter_external',
+    'available'=>'features VEGA_GENES_OTTER_EXTERNAL', @_);
 ## OTHER FEATURES DATABASE TRANSCRIPTS....
   $self->add_new_track_transcript( 'est',       'EST genes',       'est_gene', $POS++,
     'available' => 'databases_features ENSEMBL_OTHERFEATURES.estgene', @_ );
@@ -1409,7 +1412,7 @@ sub ADD_GENE_TRACKS {
                              'gene_col'             => sub { return $_[0]->biotype.'_'.$_[0]->status; },
                              'gene_label'           => sub { $_[0]->external_name || $_[0]->stable_id; }, @_ );
 #for genes in Vega
-  $self->add_new_track_gene( 'vega_gene', 'Vega Genes', 'vega_gene', $POS++,
+  $self->add_new_track_gene( 'vega_gene', 'Havana Genes', 'vega_gene', $POS++,
     'available' => 'features VEGA_GENES_OTTER', 'glyphset' => 'vega_gene',
     'logic_name' => 'otter', 'gene_col' => 'vega_gene', @_);
   $self->add_new_track_gene( 'vega_corf_gene', 'CORF Genes', 'vega_gene', $POS++,
@@ -1418,6 +1421,9 @@ sub ADD_GENE_TRACKS {
   $self->add_new_track_gene( 'vega_igsf_gene', 'IgSF Genes', 'vega_gene', $POS++,
     'available' => 'features VEGA_GENES_OTTER_IGSF', 'glyphset' => 'vega_gene',
     'logic_name' => 'otter_igsf', 'gene_col' => 'vega_gene', @_);
+  $self->add_new_track_gene( 'vega_external_gene', 'External Genes', 'vega_gene', $POS++,
+    'available' => 'features VEGA_GENES_OTTER_EXTERNAL', 'glyphset' => 'vega_gene',
+    'logic_name' => 'otter_external', 'gene_col' => 'vega_gene', @_);
   $self->add_new_track_gene( 'ciona_dbest_ncbi', "3/5' EST genes (dbEST)", 'estgene', $POS++, 'on' => 'off', 
                              'gene_label' => sub { return $_[0]->stable_id }, 'gene_col' => sub { return $_[0]->biotype }, @_ );
   $self->add_new_track_gene( 'targettedgenewise', "Targetted genewise", 'prot_gene', $POS++, 'available' => 'features TargettedGenewise', 'logic_name' => 'TargettedGenewise', 'gene_col' => '_col', @_ );

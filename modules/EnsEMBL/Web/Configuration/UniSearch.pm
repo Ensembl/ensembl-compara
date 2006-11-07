@@ -41,7 +41,7 @@ sub context_menu {
   if ($SD->ENSEMBL_SITETYPE ne 'Archive EnsEMBL') {
     $self->add_entry( 'help',  'href'=>"/@{[$obj->species]}/blastview", 'text' => 'Sequence search' );
   }
-  my $species = $obj->species =~ /^multi$/i ? $obj->species_defs->ENSEMBL_PERL_SPECIES : $obj->species;
+  my $species = $obj->species =~ /^multi$/i ? $obj->species_defs->ENSEMBL_PRIMARY_SPECIES : $obj->species;
   $self->add_entry( 'help',  'href'=>"/$species/unisearch",  'text' => 'Full text search' );
   $self->add_entry( 'help',  'href'=>"/Multi/martview",  'icon' => '/img/biomarticon.gif', 'text' => 'BioMart data mining' );
   return 1;
