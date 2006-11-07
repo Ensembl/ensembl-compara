@@ -44,11 +44,13 @@ perl LoadUcscNetData.pl
   [--help]                    this menu
    --ucsc_dbname string       (e.g. ucscMm33Rn3) one of the ucsc source database Bio::EnsEMBL::Registry aliases
    --dbname string            (e.g. compara25) one of the compara destination database Bio::EnsEMBL::Registry aliases
-   --tName string             (e.g. chr15) one of the chromosome name used by UCSC on their target species (tSpecies)
-                              on the base of which alignments will be retrieved
    --tSpecies string          (e.g. mouse) the UCSC target species (i.e. a Bio::EnsEMBL::Registry alias)
                               to which tName refers to
    --qSpecies string          (e.g. Rn3) the UCSC query species (i.e. a Bio::EnsEMBL::Registry alias)
+  [--tName string]            (e.g. chr15) one of the chromosome name used by UCSC on their target species (tSpecies)
+                              on the base of which alignments will be retrieved
+  [--qName string]            (e.g. chrM) one of the chromosome name used by UCSC on their query species (qSpecies)
+                              on the base of which alignments will be retrieved
   [--check_length]            check the chromosome length between ucsc and ensembl, then exit
   [--method_link_type string] (e.g. BLASTZ_NET) type of alignment queried (default: BLASTZ_NET)
   [--reg_conf filepath]       the Bio::EnsEMBL::Registry configuration file. If none given, 
@@ -240,6 +242,7 @@ my $dbname;
 my $tSpecies;
 my $tName;
 my $qSpecies;
+my $qName;
 my $reg_conf;
 my $start_net_index = 0;
 my $method_link_type = "BLASTZ_NET";
@@ -257,11 +260,13 @@ $0
   [--help]                    this menu
    --ucsc_dbname string       (e.g. ucscMm33Rn3) one of the ucsc source database Bio::EnsEMBL::Registry aliases
    --dbname string            (e.g. compara25) one of the compara destination database Bio::EnsEMBL::Registry aliases
-   --tName string             (e.g. chr15) one of the chromosome name used by UCSC on their target species (tSpecies)
-                              on the base of which alignments will be retrieved
    --tSpecies string          (e.g. mouse) the UCSC target species (i.e. a Bio::EnsEMBL::Registry alias)
                               to which tName refers to
    --qSpecies string          (e.g. Rn3) the UCSC query species (i.e. a Bio::EnsEMBL::Registry alias)
+  [--tName string]            (e.g. chr15) one of the chromosome name used by UCSC on their target species (tSpecies)
+                              on the base of which alignments will be retrieved
+  [--qName string]            (e.g. chrM) one of the chromosome name used by UCSC on their query species (qSpecies)
+                              on the base of which alignments will be retrieved
   [--check_length]            check the chromosome length between ucsc and ensembl, then exit
   [--method_link_type string] (e.g. BLASTZ_NET) type of alignment queried (default: BLASTZ_NET)
   [--reg_conf filepath]       the Bio::EnsEMBL::Registry configuration file. If none given, 
@@ -297,6 +302,7 @@ GetOptions('help' => \$help,
            'tSpecies=s' => \$tSpecies,
            'tName=s' => \$tName,
            'qSpecies=s' => \$qSpecies,
+           'qName=s' => \$qName,
            'check_length' => \$check_length,
            'reg_conf=s' => \$reg_conf,
            'start_net_index=i' => \$start_net_index,
@@ -475,21 +481,19 @@ if ($load_chains) {
     }
   
 } else {
+  my $filter = "";
   if (defined $tName) {
-    $sql = "
-        SELECT
-          level, tName, tStart, tEnd, qName, 1, qStart, qEnd, \"+\", chainId
-        FROM net$qSpecies
-        WHERE type!=\"gap\" AND tName = \"$tName\"
-        ORDER BY tStart, chainId";
-  } else {
-    $sql = "
-        SELECT
-          level, tName, tStart, tEnd, qName, 1, qStart, qEnd, \"+\", chainId
-        FROM net$qSpecies
-        WHERE type!=\"gap\"
-        ORDER BY tStart, chainId";
+    $filter .= " AND tName = \"$tName\"";
   }
+  if (defined $qName) {
+    $filter .= " AND qName = \"$qName\"";
+  }
+  $sql = "
+      SELECT
+        level, tName, tStart, tEnd, qName, 1, qStart, qEnd, \"+\", chainId
+      FROM net$qSpecies
+      WHERE type!=\"gap\" $filter
+      ORDER BY tStart, chainId";
   $sth = $ucsc_dbc->prepare($sql);
   fetch_and_load_nets($sth);
 }
@@ -978,9 +982,9 @@ sub check_table {
   $sth = $ucsc_dbc->prepare($sql);
   $sth->execute;
 
-  my ($table_name);
+  my ($temp);
 
-  $sth->bind_columns(\$table_name);
+  $sth->bind_columns(\$temp);
 
   my $table_count = 0;
 
