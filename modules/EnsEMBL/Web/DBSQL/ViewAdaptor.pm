@@ -60,12 +60,59 @@ sub discover {
     $table = $query_table;
   } 
   my $sql = "DESCRIBE " . $table . ";"; 
-  my $results = $self->query($sql);
+  my $results = $self->query($sql, 'Field');
   my $fields = [];
   foreach my $key (keys %{ $results }) {
     push @{ $fields }, $results->{$key};
   }
   return $fields;
+}
+
+sub edit {
+  ### Updates an existing entry in the table
+  my ($self, %params) = @_;
+  my %set_parameters = %{ $params{set} };
+  my $id = $params{id};
+  my @definition = undef;
+  my $user = undef;
+  if ($params{definition}) {
+    @definition = @{ $params{definition} };
+  } 
+  if ($params{user}) {
+    $user = $params{user};
+  }
+  my $table = $self->table;
+  my $sql = "UPDATE $table ";
+  $sql .= $self->set_sql_with_parameters(\%set_parameters, \@definition, $user);
+  $sql .= "WHERE " . $table . "_id='" . $id . "'";  
+  return $self->execute($sql);
+}
+
+sub execute {
+  my ($self, $sql) = @_;
+  my $sth = $self->handle->prepare($sql);
+  my $result = $sth->execute();
+  return $result;
+}
+
+sub set_sql_with_parameters {
+  my ($self, $set, $def, $user) = @_;
+  my $sql = "SET ";
+  foreach my $key (keys %{ $set }) {
+    $sql .= $key . " = '" . $set->{$key} . "', ";
+  }
+  if ($self->definition_contains('created_at', @{ $def })) {
+    $sql .= "created_at=CURRENT_TIMESTAMP, ";
+  }
+  if ($self->definition_contains('modified_at', @{ $def })) {
+    $sql .= "modified_at=CURRENT_TIMESTAMP, ";
+  }
+  if ($user) {
+    $sql .= "created_by = '" . $user . "', ";
+    $sql .= "modified_by = '" . $user . "', ";
+  }
+  $sql =~ s/, $//;
+  return $sql;
 }
 
 sub create {
@@ -90,29 +137,24 @@ sub create {
     @definition = @{ $self->discover($table) };
   }
 
-  my $sql = "INSERT INTO " . $table . " SET ";
-  foreach my $key (keys %set_parameters) {
-    $sql .= $key . " = '" . $set_parameters{$key} . "', ";
-  }
-  if ($self->definition_contains('created_at', @definition)) {
-    $sql .= "created_at=CURRENT_TIMESTAMP, ";
-  }
-  if ($self->definition_contains('modified_at', @definition)) {
-    $sql .= "modified_at=CURRENT_TIMESTAMP, ";
-  }
-  if ($user) {
-    $sql .= "created_by = '" . $user . "', ";
-    $sql .= "modified_by = '" . $user . "', ";
-  }
-  $sql =~ s/, $//;
+  my $sql = "INSERT INTO " . $table . " ";
+  $sql .= $self->set_sql_with_parameters(\%set_parameters, \@definition, $user);
   $sql .= ";";
-  warn $sql;
-  my $sth = $self->handle->prepare($sql);
-  my $result = $sth->execute();
-  if ($result) {
-    $result = $self->last_inserted_id;
+  if ($self->execute) {
+    return $self->last_inserted_id;
   }
-  return $result;
+  return undef; 
+}
+
+sub fetch_id {
+  my ($self, $id) = @_;
+  my $table = $self->table;
+  my $id_field = $table . "_id";
+  my $sql = "";
+  $sql .= "SELECT * FROM " . $table . " ";
+  $sql .= "WHERE " . $id_field . " = '" . $id . "'";
+  $sql .= ";";
+  return $self->query($sql, $id_field);
 }
 
 sub last_inserted_id {
@@ -140,10 +182,12 @@ sub definition_contains {
 sub query {
   ### Simple wrapper for a SELECT query
   ### Argument: string (SQL)
-  my ($self, $sql) = @_;
-  my $results = $self->handle->selectall_hashref($sql, "Field");
-  if ($results) {
-    warn "FOUND!";
+  my ($self, $sql, $key) = @_;
+  my $results = undef;
+  if ($key) {
+    $results = $self->handle->selectall_hashref($sql, $key);
+  } else {
+    $results = $self->handle->selectall_hashref($sql);
   }
   return $results;
 }

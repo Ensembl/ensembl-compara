@@ -15,11 +15,9 @@ sub simple {
 
   my $result = undef;
 
-  if ($cgi->param) {
+  if ($cgi->param('action')) {
     my $action = $definition->action;
     my $adaptor = $definition->data_definition->adaptor;
-    warn "ACTION: " . $action;
-    warn "ADAPTOR: " . $adaptor;
     my $user = undef;
     my $incoming = $cgi->Vars;
     if ($action eq "create") {
@@ -35,14 +33,29 @@ sub simple {
                                    definition => $fields, 
                                    user =>       $user
                                 ));
+      if ($result) {
+        $self->map_relationships($definition, $incoming, $result, $user);
+      }
+    } elsif ($action eq "edit") {
+      my $fields = $definition->data_definition->discover;
+      my $edit_parameters = $self->parameters_for_fields($fields, $incoming);
+      if ($ENV{'ENSEMBL_USER_ID'} eq $incoming->{'user_id'}) {
+        $user = $incoming->{'user_id'};    
+      }
+      $result = $adaptor->edit((
+                                 set =>     $edit_parameters,
+                                 definition => $fields,
+                                 user =>       $user,
+                                 id   =>       $incoming->{'id'}
+                              ));
     }
 
     if ($result) {
-      $self->map_relationships($definition, $incoming, $result, $user);
       $self->redirect($definition->on_complete);
     } else {
       $self->redirect($definition->on_error);
     }
+
   } else {
     CGI::header;
     $self->page->render($definition);

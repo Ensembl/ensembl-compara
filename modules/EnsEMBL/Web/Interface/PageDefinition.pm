@@ -51,6 +51,11 @@ sub add_configuration_element {
   push @{ $self->configuration_elements }, { 'key' => $key, 'value' => $value };
 }
 
+sub value_for_form_element {
+  my ($self, $name) = @_;
+  return $self->data_definition->data->{$name};
+}
+
 sub on_complete {
   ### a
   my $self = shift;
