@@ -25,33 +25,27 @@ $data->adaptor(EnsEMBL::Web::DBSQL::ViewAdaptor->new((
                                                        database => $database,
                                                        username => $username,
                                                        password => $password,
-                                                       table    => 'webgroup'
+                                                       table    => 'record'
                                                     )) );
 
-my $relationship = EnsEMBL::Web::DBSQL::Relationship::HasMany->new(( 
-                                       table => 'webgroup',
-                                       has_many => 'users', 
-                                       linked_by => 'group_member'
-                                       ));
-
-$data->add_relationship($relationship);
-$data->discover;
-$data->id($cgi->param('id'));
-$data->populate;
+$data->add_field({'Field' => 'name', 'Type' => 'varchar(255)'});
+$data->add_field({'Field' => 'blurb', 'Type' => 'text'});
+$data->add_field({'Field' => 'created_at', 'Type' => 'timestamp'});
+$data->add_field({'Field' => 'modified_at', 'Type' => 'timestamp'});
 
 $page->data_definition($data);
-$page->title('Edit a group');
-$page->action('edit');
-$page->on_complete('http://ensarc-1-14.internal.sanger.ac.uk:6700/dataview/updated.html');
-$page->on_error('http://ensarc-1-14.internal.sanger.ac.uk:6700/dataview/error.html');
+$page->title('Save configuration');
+$page->action('create');
+$page->on_complete('http://ensarc-1-14.internal.sanger.ac.uk:6700/dataview/config_saved.html');
+$page->on_error('http://ensarc-1-14.internal.sanger.ac.uk:6700/dataview/config_failed.html');
 
-$page->add_text('You can create a new group of users here. You will automatically be added to your new group.');
+$page->add_text('Describe your configuration here, and then click "Submit" to save it. Once saved, you can share your configuration with groups you administer.');
 
-$page->add_configuration_element('level', 'administrator');
-$page->add_form_element('name', "Your group name");
-$page->add_form_element('blurb', "A description of your group");
-$page->add_form_element('type', "Type");
-$page->add_form_element('status', "Status");
+# User id is added automatically if a user is logged in.
+$page->add_configuration_element('record', 'yes');
+$page->add_configuration_element('type', 'configuration'); 
+$page->add_form_element('name', "Configuration name");
+$page->add_form_element('blurb', "A brief description of your configuration");
 
 EnsEMBL::Web::Document::DataView::simple('User', $page);
 
