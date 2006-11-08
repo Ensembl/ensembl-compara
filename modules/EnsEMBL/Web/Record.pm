@@ -1,5 +1,14 @@
 package EnsEMBL::Web::Record;
 
+### Inside-out class representing persistent user information. This class
+### follows the Active Record design pattern: it contains both the domain
+### logic required to create and manipulate a piece of persistent data, and
+### the information necessary to maintain this data in a database.
+  
+### It allows the storage of arbitrary hash keys and their values 
+### (user bookmarks, etc) in a single database field, and uses autoloading
+### to enable new data to be stored at will without the need for additional code
+
 use strict;
 use warnings;
 use EnsEMBL::Web::DBSQL::UserDB;
@@ -25,14 +34,14 @@ sub AUTOLOAD {
   my $self = shift;
   my ($key) = ($AUTOLOAD =~ /::([a-z].*)$/);
   my ($value, $options) = @_;
-#  warn "AUTOLOADING $key";
+  #warn "AUTOLOADING $key";
   if ($value) {
     if (my ($find, $by) = ($key =~ /find_(.*)_by_(.*)/)) {
       if ($find eq "records") {
          $find = "";
-         warn "FINDING ALL RECORDS";
+         #warn "FINDING ALL RECORDS";
       }
-      warn "FINDING: $find " . $by . ": " . $value;
+      #warn "FINDING RECORDS: $find " . $by . ": " . $value;
       return find_records(( type => $find, $by => $value, options => $options));
     } else {
       ## perform set
@@ -50,10 +59,7 @@ sub AUTOLOAD {
 }
 
 sub new {
-  ### Inside-out class representing persitent user information. This class
-  ### follows the Active Record design pattern: it contains both the domain
-  ### logic required to create and manipulate a piece of persistent data, and
-  ### the information necessary to maintain this data in a database.
+  ### c
   my ($class, %params) = @_;
   my $self = bless \my($scalar), $class;
   $Adaptor_of{$self} = defined $params{'adaptor'} ? $params{'adaptor'} : undef;
@@ -75,13 +81,15 @@ sub new {
 
 sub taint {
   ### Marks a particular collection of records for an update. Tainted 
-  ### records are updated in the database when the Recrod's save method
+  ### records are updated in the database when the Record's save method
   ### is called.
   my ($self, $type) = @_;
   $self->tainted->{$type} = 1;
 }
 
 sub dump_data {
+  ### Uses Data::Dumper to format a record's data for storage, 
+  ### and also handles escaping of quotes to avoid SQL errors
   my $self = shift;
   my $dump = Dumper($self->fields);
   $dump =~ s/'/\\'/g;
@@ -138,6 +146,9 @@ sub id {
 }
 
 sub records_of_type {
+  ### Returns an array of records
+  ### Argument 1: Type - string corresponding to a type of record, e.g. 'bookmark'
+  ### Argument 2: Options - hash ref ('order_by' => sort expression, e.g.) 
   my ($self, $type, $options) = @_;
   my @return = ();
   if ($self->records) {
