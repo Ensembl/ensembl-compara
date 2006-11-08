@@ -8,6 +8,7 @@ use warnings;
 no warnings 'uninitialized';
 
 use DBI;
+use Data::Dumper;
 use EnsEMBL::Web::SpeciesDefs;
 
 {
@@ -108,8 +109,12 @@ sub set_sql_with_parameters {
     $sql .= "modified_at=CURRENT_TIMESTAMP, ";
   }
   if ($user) {
-    $sql .= "created_by = '" . $user . "', ";
-    $sql .= "modified_by = '" . $user . "', ";
+    if ($self->definition_contains('created_by', @{ $def })) {
+      $sql .= "created_by = '" . $user . "', ";
+    }
+    if ($self->definition_contains('modified_by', @{ $def })) {
+      $sql .= "modified_by = '" . $user . "', ";
+    }
   }
   $sql =~ s/, $//;
   return $sql;
@@ -122,6 +127,7 @@ sub create {
   my %set_parameters = %{ $params{set} };
   my @definition = undef;
   my $user = undef;
+  my $record = undef;
 
   if ($params{definition}) {
     @definition = @{ $params{definition} };
@@ -129,6 +135,20 @@ sub create {
 
   if ($params{user}) {
     $user = $params{user};
+  }
+
+  if ($params{record}) {
+    $record = $params{record}; 
+    my $dump = $self->dump_data(\%set_parameters);
+
+    foreach my $key (keys %set_parameters) {
+      delete $set_parameters{$key};
+    }
+
+    $set_parameters{type} = $record;
+    $set_parameters{data} = $dump;
+    $set_parameters{user_id} = $user;
+
   }
 
   my $table = $self->table;
@@ -140,10 +160,22 @@ sub create {
   my $sql = "INSERT INTO " . $table . " ";
   $sql .= $self->set_sql_with_parameters(\%set_parameters, \@definition, $user);
   $sql .= ";";
+  warn "SQL: " . $sql;
   if ($self->execute($sql)) {
     return $self->last_inserted_id;
   }
   return undef; 
+}
+
+sub create_record {
+}
+
+sub dump_data {
+  my ($self, $data) = @_;
+  my $dump = Dumper($data);
+  $dump =~ s/'/\\'/g;
+  $dump =~ s/^\$VAR1 = //;
+  return $dump;
 }
 
 sub fetch_id {

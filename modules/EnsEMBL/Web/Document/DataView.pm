@@ -3,6 +3,7 @@ package EnsEMBL::Web::Document::DataView;
 use EnsEMBL::Web::Document::WebPage;
 use EnsEMBL::Web::DBSQL::ViewAdaptor;
 use CGI;
+use strict;
 our @ISA = qw(EnsEMBL::Web::Document::WebPage);
 
 {
@@ -21,20 +22,30 @@ sub simple {
     my $user = undef;
     my $incoming = $cgi->Vars;
     if ($action eq "create") {
-      my $fields = $definition->data_definition->discover;
+      if ($incoming->{'record'}) {
+        ## create user record
+        warn "CREATING USER RECORD";
+        my $fields = $definition->data_definition->fields;
+        my $record_data = $self->parameters_for_fields($fields, $incoming);
+        my $user = $self->verify_user_id($incoming); 
 
-      my $create_parameters = $self->parameters_for_fields($fields, $incoming);
+        $result = $adaptor->create(( set =>        $record_data, 
+                                     definition => $fields, 
+                                     user =>       $user,
+                                     record =>     $incoming->{'type'}
+                                  ));
+      } else {
+        my $fields = $definition->data_definition->discover;
+        my $create_parameters = $self->parameters_for_fields($fields, $incoming);
+        my $user = $self->verify_user_id($incoming); 
 
-      if ($ENV{'ENSEMBL_USER_ID'} eq $incoming->{'user_id'}) {
-        $user = $incoming->{'user_id'};    
-      }
-
-      $result = $adaptor->create(( set =>        $create_parameters, 
-                                   definition => $fields, 
-                                   user =>       $user
-                                ));
-      if ($result) {
-        $self->map_relationships($definition, $incoming, $result, $user);
+        $result = $adaptor->create(( set =>        $create_parameters, 
+                                     definition => $fields, 
+                                     user =>       $user
+                                  ));
+        if ($result) {
+          $self->map_relationships($definition, $incoming, $result, $user);
+        }
       }
     } elsif ($action eq "edit") {
       my $fields = $definition->data_definition->discover;
@@ -70,7 +81,7 @@ sub map_relationships {
 
   foreach my $relationship (@{ $definition->data_definition->relationships }) {
     warn "MAPPING " . $relationship->from . " " . $relationship->type . " " . $relationship->to;
-    $fields = $definition->data_definition->discover($relationship->link_table);
+    my $fields = $definition->data_definition->discover($relationship->link_table);
     my $relationship_parameters = $self->parameters_for_fields($fields, $incoming);
     my $from_id = $relationship->from . "_id";
     $relationship_parameters->{$from_id} = $result;
@@ -92,6 +103,15 @@ sub parameters_for_fields {
     }
   } 
   return $parameters;
+}
+
+sub verify_user_id {
+  my ($self, $incoming) = @_;
+  my $user = undef;
+  if ($ENV{'ENSEMBL_USER_ID'} eq $incoming->{'user_id'}) {
+    $user = $incoming->{'user_id'};    
+  }
+  return $user;
 }
 
 sub dataview_create {
