@@ -19,6 +19,7 @@ h5 { font-size:1em;   color:#000; margin:0px; padding:0px;}
 .viewname { font-size:1em; font-style:italic; color:[[HEADING]]; }
 img  { border: 0px }
 hr   { display: none; }
+hr.show { display: block; }
 /* ul li { list-style:none outside none; } */
 
 a { color:inherit; text-decoration:none; } /* neutral style for anchor target */
@@ -70,6 +71,7 @@ kbd.line { display:block; margin-left:20px; }
 #masthead a.section { font-size:1.5em; color:#36b; }
 
 #search, #closewindow { position: absolute; right: 0.4em; top: 0.4em; z-index: 10; left:auto; margin:0px; padding:0px; text-align: right; border: 0px; }
+#accountlinks a { font-weight:bold; text-decoration:none; }
           
 #release, #release-t { top: 5em; position: absolute; }
 #release, #release-t {  margin: 1px 0px; 
@@ -82,8 +84,10 @@ kbd.line { display:block; margin-left:20px; }
 #release div { padding-left: 0.5em; }
 #release a   { text-decoration:none; }
 #help        { z-index: 30; padding: 0.5em; height:1.5em; position:absolute; top:4.5em; right: 0px; margin: 0.5em 1em; }
-#help a      { background-color:[[RELEASE_EDGE]]; color:#fff; font-weight:bold;
+/* #help a      { background-color:[[RELEASE_EDGE]]; color:#fff; font-weight:bold;
                font-style:italic; padding:2px; border:1px outset [[RELEASE_EDGE]];
+               text-decoration:none; } */
+#help a      { color:#fff; font-weight:bold; padding:2px;
                text-decoration:none; }
 #page       { right: 0px; left: 0px; z-index: 1; margin: 0px; padding: 0px; top: 0em; background: none; width: 100%; }
 #copy #a1, #page #i1    { padding: 0px 0px 0px 210px; background: none; }

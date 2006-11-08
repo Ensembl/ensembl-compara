@@ -44,6 +44,8 @@ div.col-wrapper {
 .col-wrapper { display: block; }
 /* */
 
+div.col { float:left; margin:0 1%; }
+
 div.col1 { float:left; width:96%; margin:0 1%; }
 
 div.col2 { float:left; width:47%; margin:0 1%; }
@@ -55,9 +57,27 @@ div.narrow3 { float:left; width:27%; margin: 0 2.5% }
 /* HEADINGS */
 h2 { margin-bottom:0.5em; }
 
-h3.boxed, div.panel h3 { color:[[HEADING]]; background-color:[[BACKGROUND2]]; margin-top: 0.7em; margin-bottom:1em; padding:2px 4px 2px 4px; border:1px solid [[BACKGROUND1]]; }
+.boxed, div.panel h3 { color:[[HEADING]]; background-color:[[BACKGROUND2]]; border:1px solid [[BACKGROUND1]]; margin-top: 0.7em; margin-bottom:1em; padding:2px 4px 2px 4px; }
+
+div.boxed { padding:10px; color:[[TEXTCOLOR]]; } 
+div.boxed h3 { margin-top:-0.2em; }
 
 div.panel h3.plain { border:none; background-color:transparent; }
+
+div.alt { color:[[RELEASE_EDGE]]; background-color:[[RELEASE_PALE]]; border:1px solid [[RELEASE_BG]]; }
+hr.alt { background-color:[[RELEASE_EDGE]]; }
+div.alt h2, div.alt h3 { color:[[RELEASE_EDGE]]; margin-top:1em; }
+div.alt h2.first, div.alt h3.first { margin-top:0em; }
+div.alt p { color:[[RELEASE_EDGE]]; margin-top:-0.5em; }
+div.alt a { text-decoration:none; }
+div.alt a:visited { color:[[RELEASE_EDGE]]; }
+div.alt a:hover { color:[[LINK_HOVER]]; }
+
+div.pale { background-color:[[BACKGROUND5]]; border:1px solid [[BACKGROUND1]]; }
+div.pale a { text-decoration:none; }
+
+div.pre { color:#339966; background-color:#eefff8; border:1px solid #aaeecc; }
+
 
 /* LISTS */
 #page ol li { list-style-type:decimal; list-style-image:none; }
@@ -261,10 +281,18 @@ ul.flush li { margin-left:-2em; }
 /* Ensembl homepage */
 
 .sp-thumb { float:left; padding-right:4px; clear:left; }
-dl.species-list dt { margin:0px; padding:0px; min-height:15px;
-  font-size:115%; font-style:italic; font-weight:bold; }
-dl.species-list dd { margin:0px 0px 2px 0px; padding:0px; min-height:25px; }
+dl.species-list dt { margin:0px; padding:0px; min-height:15px;   font-size:120%; font-style:italic; font-weight:bold; }
+dl.species-list dd { margin:-2px 0px 2px 0px; padding:0px; min-height:40px; }
 dl.species-list dt a, dl.species-list dd a { text-decoration:none; }
+
+dl.species-list-small dt { margin:0px; padding:0px; min-height:15px; font-style:italic; font-weight:bold; }
+dl.species-list-small dd { margin:-2px 0px 2px 0px; padding:0px; min-height:30px; }
+dl.species-list-small dt a, dl.species-list dd a { text-decoration:none; }
+
+ul.species-list span.species-name { margin:0px; padding:0px;
+  font-style:italic; font-weight:bold; }
+ul.species-list li a { text-decoration:none; }
+div.species-news p { margin:0px; padding:4px 0px; font-size:110%; min-height:40px; }
 
 /* Species homepages */
 
