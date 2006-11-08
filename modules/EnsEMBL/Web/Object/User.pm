@@ -300,7 +300,6 @@ sub save_user {
 
 sub set_password { return $_[0]->web_user_db->setPassword($_[1]); }
 
-
 sub save_bookmark {
   ### Saves a bookmark. Accepts a hashref with the following key-value pairs:
   ### ---
@@ -329,16 +328,6 @@ sub can {
   return $can;
 }
 
-sub get_bookmarks { return $_[0]->web_user_db->getBookmarksByUser($_[1]); }
-sub delete_bookmarks { return $_[0]->web_user_db->deleteBookmarks($_[1]); }
-
-sub save_config {
-  my ($self, $record) = @_;
-  return $self->web_user_db->saveConfig($record);
-}
-
-#sub get_configs { return $_[0]->web_user_db->getConfigsByUser($_[1]); }
-sub delete_configs { return $_[0]->web_user_db->deleteConfigs($_[1]); }
 
 sub get_groups_by_user { return $_[0]->web_user_db->getGroupsByUser($_[1]); }
 sub get_groups_by_type { return $_[0]->web_user_db->getGroupsByType($_[1]); }

@@ -266,35 +266,10 @@ sub _init {
     'log_back' => 'Please log back into Ensembl using your new password.',
 );
 
-  ## get useful data from object
-  my $user_id = $object->get_user_id;
-  my @bookmarks = @{ $object->get_bookmarks($user_id) };
-  my (@bm_values, @config_values);
-  foreach my $bookmark (@bookmarks) {
-    my $bm_id   = $$bookmark{'bm_id'};
-    my $bm_name = $$bookmark{'bm_name'};
-    my $bm_url  = $$bookmark{'bm_url'};
-    push @bm_values, {'value'=>$bm_id,'name'=>"$bm_name ($bm_url)"};
-  }
-=pod
-  my @configs = @{ $object->get_configs($user_id) };
-  my @config_values;
-  foreach my $config (@configs) {
-    my $config_id   = $$config{'config_id'};
-    my $config_name = $$config{'config_name'};
-    my $script      = $$config{'script'};
-    push @config_values, {'value'=>$config_id,'name'=>"$config_name ($script)"};
-  }
-=cut
-  my $details   = $object->get_user_by_id($user_id);
-
  
   my $data = {
     'expiry'      =>  $expiry,
     'exp_text'    =>  $exp_text,
-    'details'     => $details,
-    'bookmarks'   => \@bm_values,
-    'configs'     => \@config_values,
     'group_types' => \@group_types,
   };
 

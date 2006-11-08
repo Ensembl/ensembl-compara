@@ -13,9 +13,114 @@ sub _add_javascript_libraries {
   $self->{page}->javascript->add_source( "/js/accountview.js" );
 }
 
+sub context_menu {
+  my $self = shift;
+  my $obj = $self->{object};
+
+  ## this menu clashes with mini one on non-account pages, so remove it
+  $self->delete_block('ac_mini');
+
+  ## Is the user logged in?
+  my $user_id = $ENV{'ENSEMBL_USER_ID'};
+
+  if ($user_id) {
+    my $flag = 'user';
+    $self->add_block( $flag, 'bulleted', "Your Ensembl" );
+
+
+    $self->add_entry( $flag, 'text' => "Account summary",
+                                    'href' => "/common/update_account?node=accountview" );
+    $self->add_entry( $flag, 'text' => "Update details",
+                                    'href' => "/common/update_account" );
+    $self->add_entry( $flag, 'text' => "Change password",
+                                    'href' => "/common/set_password" );
+    $self->add_entry( $flag, 'text' => "Log out",
+                                    'href' => "javascript:logout_link()" );
+  }
+  else {
+    my $flag = 'ac_full';
+    $self->add_block( $flag, 'bulleted', "Your Ensembl" );
+
+    $self->add_entry( $flag, 'text' => "Login",
+                                  'href' => "/common/user_login" );
+    $self->add_entry( $flag, 'text' => "Register",
+                                  'href' => "/common/register" );
+    $self->add_entry( $flag, 'text' => "Lost Password",
+                                  'href' => "/common/lost_password" );
+    $self->add_entry( $flag, 'text' => "About User Accounts",
+                                    'href' => "/info/about/accounts.html" );
+  }
+
+}
+
+sub accountview {
+  my $self   = shift;
+  my $object = $self->{'object'};
+  my $details = $object->get_user_by_id($object->user_id);
+  
+  $self->_add_javascript_libraries;
+
+  if (my $panel1 = $self->new_panel( 'TwoColumn',
+    'code'    => "info$self->{flag}",
+    'object'  => $self->{object},
+    'caption' => 'You are logged in as '.$details->{'name'},
+    ) ) {
+    $panel1->add_components(qw(
+        bookmarks     EnsEMBL::Web::Component::User::bookmarks
+        groups        EnsEMBL::Web::Component::User::groups
+        about         EnsEMBL::Web::Component::User::about
+        whatsnew      EnsEMBL::Web::Component::User::whatsnew
+    ));
+  
+    # finally, add the complete panel to the page object
+    $self->add_panel( $panel1 );
+    $self->{page}->set_title('Your Account Details');
+  }                                                                              
+}
+
+sub user_menu {
+  my $self = shift;
+  my $obj = $self->{object};
+
+  my $flag = 'groups';
+
+  $self->add_block( $flag, 'bulleted', "Groups" );
+
+  $self->add_entry( $flag, 'text' => "Join a group",
+                           'href' => "/common/join_a_group" );
+  $self->add_entry( $flag, 'text' => "Start a new group",
+                           'href' => "/common/start_a_group" );
+   
+}
+
+sub groupview {
+  my $self   = shift;
+  my $object = $self->{'object'};
+  my $details = $object->get_user_by_id($object->user_id);
+  
+  $self->_add_javascript_libraries;
+
+  if (my $panel1 = $self->new_panel( 'Image',
+    'code'    => "info$self->{flag}",
+    'object'  => $self->{object},
+    'caption' => 'Group Details',
+    ) ) {
+    $panel1->add_components(qw(
+        group_details     EnsEMBL::Web::Component::User::group_details
+        group_configs     EnsEMBL::Web::Component::User::group_configs
+        group_bookmarks   EnsEMBL::Web::Component::User::group_bookmarks
+    ));
+  
+    # finally, add the complete panel to the page object
+    $self->add_panel( $panel1 );
+    $self->{page}->set_title('Group Details');
+  } 
+}
+
 ##-----------------------------------------------------------------------------
 ## Account management
 ##-----------------------------------------------------------------------------
+
 
 sub user_login {
   my $self   = shift;
@@ -99,9 +204,9 @@ sub update_account {
 
   my $wizard = EnsEMBL::Web::Wizard::User->new($object);
                                                     
-  ## the user registration wizard uses 4 nodes: enter data, preview data,
-  ## save data and a landing page
-  $wizard->add_nodes([qw(enter_details preview save_details accountview)]);
+  ## the user registration wizard uses 3 nodes: enter data, preview data,
+  ## and save data 
+  $wizard->add_nodes([qw(enter_details preview save_details)]);
   $wizard->default_node('enter_details');
 
   $self->_add_javascript_libraries;
@@ -110,7 +215,6 @@ sub update_account {
   $wizard->add_outgoing_edges([
           ['enter_details'=>'preview'],
           ['preview'=>'save_details'],
-          ['save_details'=>'accountview'],
   ]);
 
   $self->add_wizard($wizard);
@@ -122,10 +226,10 @@ sub set_password {
   my $object = $self->{'object'};
 
   ## the password wizard uses 5 nodes: validate, enter new password, compare passwords, 
-  ## save password, and accountview
+  ## and save password
   my $wizard = EnsEMBL::Web::Wizard::User->new($object);
     
-  $wizard->add_nodes([qw(validate set_cookie enter_password compare save_password accountview)]);
+  $wizard->add_nodes([qw(validate set_cookie enter_password compare save_password)]);
   $wizard->default_node('enter_password');
 
   $self->_add_javascript_libraries;
@@ -136,7 +240,6 @@ sub set_password {
           ['set_cookie'=>'enter_password'],
           ['enter_password'=>'compare'],
           ['compare'=>'save_password'],
-          ['save_password'=>'accountview'],
   ]);
 
   $self->add_wizard($wizard);
@@ -173,8 +276,8 @@ sub group_details {
 
   my $wizard = EnsEMBL::Web::Wizard::User->new($object);
                                                     
-  ## the group wizard uses 3 nodes: edit group details, save group details and a landing page
-  $wizard->add_nodes([qw(edit_group save_group groupview)]);
+  ## the group wizard uses 3 nodes: edit group details, and save group details
+  $wizard->add_nodes([qw(edit_group save_group)]);
   $wizard->default_node('groupview');
 
   $self->_add_javascript_libraries;
@@ -182,7 +285,6 @@ sub group_details {
   ## chain the nodes together
   $wizard->add_outgoing_edges([
           ['edit_group'=>'save_group'],
-          ['save_group'=>'groupview'],
   ]);
 
   $self->add_wizard($wizard);
@@ -210,9 +312,9 @@ sub start_a_group {
 
   my $wizard = EnsEMBL::Web::Wizard::User->new($object);
                                                     
-  ## the group creation wizard uses 3 nodes: enter group details
-  ## save group and a landing page
-  $wizard->add_nodes([qw(enter_group save_group groupview)]);
+  ## the group creation wizard uses 2 nodes: enter group details
+  ## and save group
+  $wizard->add_nodes([qw(enter_group save_group)]);
   $wizard->default_node('enter_group');
 
   $self->_add_javascript_libraries;
@@ -220,7 +322,6 @@ sub start_a_group {
   ## chain the nodes together
   $wizard->add_outgoing_edges([
           ['enter_group'=>'save_group'],
-          ['save_group'=>'groupview'],
   ]);
 
   $self->add_wizard($wizard);
@@ -234,9 +335,9 @@ sub join_a_group {
 
   my $wizard = EnsEMBL::Web::Wizard::User->new($object);
                                                     
-  ## the group registration wizard uses 3 nodes: show list of available groups,
-  ## save group and a landing page
-  $wizard->add_nodes([qw(show_groups process_membership accountview)]);
+  ## the group registration wizard uses 2 nodes: show list of available groups,
+  ## and save membership 
+  $wizard->add_nodes([qw(show_groups process_membership)]);
   $wizard->default_node('show_groups');
 
   $self->_add_javascript_libraries;
@@ -244,7 +345,6 @@ sub join_a_group {
   ## chain the nodes together
   $wizard->add_outgoing_edges([
           ['show_groups'=>'process_membership'],
-          ['process_membership'=>'accountview'],
   ]);
 
   $self->add_wizard($wizard);
@@ -292,46 +392,6 @@ sub access_denied {
     ## add panel to page
     $self->add_panel( $panel1 );
   }
-}
-
-sub context_menu {
-  my $self = shift;
-  my $obj = $self->{object};
-
-  ## this menu clashes with mini one on non-account pages, so remove it
-  $self->delete_block('ac_mini');
-
-  ## Is the user logged in?
-  my $user_id = $ENV{'ENSEMBL_USER_ID'};
-
-  if ($user_id) {
-    my $flag = 'user';
-    $self->add_block( $flag, 'bulleted', "Your Ensembl" );
-
-
-    $self->add_entry( $flag, 'text' => "Account summary",
-                                    'href' => "/common/update_account?node=accountview" );
-    $self->add_entry( $flag, 'text' => "Update details",
-                                    'href' => "/common/update_account" );
-    $self->add_entry( $flag, 'text' => "Change password",
-                                    'href' => "/common/set_password" );
-    $self->add_entry( $flag, 'text' => "Log out",
-                                    'href' => "javascript:logout_link()" );
-   }
-  else {
-    my $flag = 'ac_full';
-    $self->add_block( $flag, 'bulleted', "Your Ensembl" );
-
-    $self->add_entry( $flag, 'text' => "Login",
-                                  'href' => "/common/user_login" );
-    $self->add_entry( $flag, 'text' => "Register",
-                                  'href' => "/common/register" );
-    $self->add_entry( $flag, 'text' => "Lost Password",
-                                  'href' => "/common/lost_password" );
-    $self->add_entry( $flag, 'text' => "About User Accounts",
-                                    'href' => "/info/about/accounts.html" );
-  }
-
 }
 
 ##--------------------------------------------------------------------------------------------

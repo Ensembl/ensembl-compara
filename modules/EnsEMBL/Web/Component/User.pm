@@ -20,86 +20,9 @@ sub _wrap_form {
 
 ##-----------------------------------------------------------------
 
-sub accountview {
-  my( $panel, $object ) = @_;
 
-  my $id = $object->get_user_id;
-  my %details = %{$object->get_user_by_id($id)};
-
-## Get the user's full name
-  my $name  = $details{'name'};
-  my $email = $details{'email'};
-  my $org   = $details{'org'};
-  my $caption = "Account Details - $name";
-  $panel->caption($caption);
-
-  my $html;
- # $html .= _show_details($panel, $object, $id);
-  $html .= _show_bookmarks($panel, $object, $id);
-  $html .= _show_groups($panel, $object, $id);
-  #$html .= _show_configs($panel, $object, $id);
-  #$html .= _show_blast($panel, $object, $id);
-
-  $panel->print($html);
-  return 1;
-}
-
-sub _show_details {
-  my( $panel, $object, $id ) = @_;
-
-  my %details = %{$object->get_user_by_id($id)};
-
-## Get the user's full name
-  my $name  = $details{'name'};
-  my $email = $details{'email'};
-  my $org   = $details{'org'};
-
-## return the message
-  my $html = "<h3>Personal details</h3>";
-
-  $html .= qq(<p><strong>Name</strong>: $name</p>
-<p><strong>Email address</strong>: $email</p>
-<p><strong>Organisation</strong>: $org</p>
-<p><a href="/common/update_account">Update account details</a> | <a href="/common/set_password">Change password</a></p>);
-
-  return $html;
-}
-
-sub _show_groups {
-  my( $panel, $user, $id ) = @_;
-  #my $groups = $user->get_membership({'user_id'=>$id});
-  my @groups = @{ $user->groups };
-  my $html .= "<h3>Groups</h3>";
-  $html .= "Ensembl users can join together to share configuration settings and other information as groups. Your groups are listed below."; 
-  $html .= "<ul>\n";
-
-  foreach my $group (@groups) {
-    my $group_id      = $group->id;
-    my $group_name    = $group->name;
-    my $member_level  = $user->is_administrator($group) ? "Administrator" : "member";
-    my $member_status = $group->status;
-    if ($member_status eq 'active' || $member_status eq 'pending') {
-      $html .= qq(<li><a href="/common/group_details?webgroup_id=$group_id">$group_name</a>); 
-      if ($member_level ne 'member') {
-        $html .= " ($member_level)";
-      }
-      if ($member_status eq 'pending') {
-         $html .= " - awaiting approval of application to join";
-      }
-      $html .= '</li>';
-    }
-  }
-
-  $html .= "</ul>\n";
-  $html .= qq(<p><a href="/common/join_a_group">Join another group &rarr;</a></p>
-<p><a href="/common/group_details?node=edit_group">Start your own group &rarr;</a></p>);
-  return $html;
-}
-
-#---------------------- BOOKMARKS ------------------------------------------------------
-
-sub _show_bookmarks {
-  my( $panel, $object, $id ) = @_;
+sub bookmarks {
+  my( $panel, $object) = @_;
   my $editable = $panel->ajax_is_available;
 
   ## Get the user's bookmark list
@@ -116,10 +39,10 @@ sub _show_bookmarks {
     }
   }
   else {
-    $html .= "<p>You have no bookmarks set.</p>";
+    $html .= qq(<p>You have no bookmarks set.</p>
+<p><strong>Tip: You can bookmark any page by clicking on the link near the bottom of the lefthand menu.</strong></p>);
   }
-
-  return $html;
+  $panel->add_content('left', $html);
 }
 
 sub _show_static_bookmarks {
@@ -167,6 +90,53 @@ sub _inplace_editor_for_bookmarks {
   my $html = "<div id='bookmark_editor_$id' class='bookmark_editor' style='display: none'><form action='javascript:save_bookmark($id, $bookmark_id, $user_id);'><input type='text' id='bookmark_text_field_$id' value='" . $bookmark_name . "'> <div id='bookmark_editor_spinner_$id' style='display: none'><img src='/img/ajax-loader.gif' width='16' height='16' />'</div><div style='display: inline' id='bookmark_editor_links_$id'><a href='#' onclick='javascript:save_bookmark($id, $bookmark_id, $user_id);'>save</a> &middot; <a href='#' onclick='javascript:hide_inplace_editor($id);'>cancel</a></div></form></div>";
   return $html;
 }
+
+sub whatsnew {
+  my( $panel, $object, $id ) = @_;
+
+## return the message
+  my $html = "<h3>What's New in Ensembl</h3>";
+
+  $html .= qq(<ul>
+<li>Headline 1</li>
+<li>Headline 2</li>
+<li>Headline 3</li>
+</ul>
+);
+  $panel->add_content('right', $html);
+}
+
+
+sub groups {
+  my( $panel, $object, $id ) = @_;
+
+## return the message
+  my $html = "<h3>Your Groups</h3>";
+
+  $html .= qq(<ul>
+<li>Group 1</li>
+<li>Group 2</li>
+<li>Group 3</li>
+</ul>
+);
+  $panel->add_content('left', $html);
+}
+
+sub about {
+  my( $panel, $object, $id ) = @_;
+
+## return the message
+  my $html = qq(<div class="notice">);
+
+  $html .= qq(<h4>About Ensembl User Accounts</h4>
+<p>User accounts allow you to save your favourite settings,
+so that if you log in from another machine or share a computer
+with your lab colleagues, you can easily retrieve them.</p>
+);
+  $html .= '</div>';
+  $panel->add_content('right', $html);
+}
+
 
 #----------------------- USER CONFIGS ---------------------------------------------
 

@@ -880,7 +880,8 @@ sub find_records {
     FROM record WHERE $find_key = "$find_value"); 
   if ($type) {
     $sql .= qq( AND type = "$type"); 
-  } 
+  }
+#warn "SQL:\n$sql"; 
   my $T = $self->{'_handle'}->selectall_arrayref($sql);
   return [] unless $T;
   for (my $i=0; $i<scalar(@$T);$i++) {
