@@ -1,6 +1,6 @@
 #!/usr/local/bin/perl
 
-package accountview;
+package groupview;
 
 use strict;
 use warnings;
@@ -11,7 +11,7 @@ use EnsEMBL::Web::Document::WebPage;
 my $webpage= new EnsEMBL::Web::Document::WebPage(
   'renderer'   => 'Apache',
   'outputtype' => 'HTML',
-  'scriptname' => 'accountview',
+  'scriptname' => 'groupview',
   'objecttype' => 'User',
 );
 
@@ -19,8 +19,8 @@ if( $webpage->has_a_problem() ) {
   $webpage->render_error_page( $webpage->problem->[0] );
 } else {
   foreach my $object( @{$webpage->dataObjects} ) {
-    $webpage->configure( $object, 'accountview', 'context_menu', 'user_menu' );
+    $webpage->configure( $object, 'groupview', 'context_menu', 'group_menu' );
   }
-  $webpage->action({'login' => 1}); ## page only accessible to logged-in users
+  $webpage->action({'group' => ''}); ## page only accessible to group members
 }
 1;
