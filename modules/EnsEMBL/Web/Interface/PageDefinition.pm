@@ -53,7 +53,11 @@ sub add_configuration_element {
 
 sub value_for_form_element {
   my ($self, $name) = @_;
-  return $self->data_definition->data->{$name};
+  if ($self->data_definition->data) {
+    return $self->data_definition->data->{$name};
+  } else {
+    return undef;
+  }
 }
 
 sub on_complete {

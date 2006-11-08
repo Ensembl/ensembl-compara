@@ -140,7 +140,7 @@ sub create {
   my $sql = "INSERT INTO " . $table . " ";
   $sql .= $self->set_sql_with_parameters(\%set_parameters, \@definition, $user);
   $sql .= ";";
-  if ($self->execute) {
+  if ($self->execute($sql)) {
     return $self->last_inserted_id;
   }
   return undef; 
