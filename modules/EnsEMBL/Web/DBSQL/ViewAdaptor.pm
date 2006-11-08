@@ -82,10 +82,16 @@ sub edit {
   if ($params{user}) {
     $user = $params{user};
   }
+
+  if ($params{record}) {
+    %set_parameters = %{ $self->record_parameters(\%set_parameters, $params{record}, $user) };
+  }
+
   my $table = $self->table;
   my $sql = "UPDATE $table ";
   $sql .= $self->set_sql_with_parameters(\%set_parameters, \@definition, $user);
   $sql .= "WHERE " . $table . "_id='" . $id . "'";  
+  warn "SQL: " . $sql;
   return $self->execute($sql);
 }
 
@@ -116,7 +122,7 @@ sub set_sql_with_parameters {
       $sql .= "modified_by = '" . $user . "', ";
     }
   }
-  $sql =~ s/, $//;
+  $sql =~ s/, $/ /;
   return $sql;
 }
 
@@ -138,17 +144,7 @@ sub create {
   }
 
   if ($params{record}) {
-    $record = $params{record}; 
-    my $dump = $self->dump_data(\%set_parameters);
-
-    foreach my $key (keys %set_parameters) {
-      delete $set_parameters{$key};
-    }
-
-    $set_parameters{type} = $record;
-    $set_parameters{data} = $dump;
-    $set_parameters{user_id} = $user;
-
+    %set_parameters = %{ $self->record_parameters(\%set_parameters, $params{record}, $user) };
   }
 
   my $table = $self->table;
@@ -167,7 +163,20 @@ sub create {
   return undef; 
 }
 
-sub create_record {
+sub record_parameters {
+  my ($self, $parameters, $record, $user) = @_;
+  my %set_parameters = %{ $parameters };
+  my $dump = $self->dump_data($parameters);
+
+  foreach my $key (keys %set_parameters) {
+    delete $set_parameters{$key};
+  }
+
+  $set_parameters{type} = $record;
+  $set_parameters{data} = $dump;
+  $set_parameters{user_id} = $user;
+
+  return \%set_parameters;
 }
 
 sub dump_data {
@@ -186,6 +195,7 @@ sub fetch_id {
   $sql .= "SELECT * FROM " . $table . " ";
   $sql .= "WHERE " . $id_field . " = '" . $id . "'";
   $sql .= ";";
+  warn "SQL: " . $sql;
   return $self->query($sql, $id_field);
 }
 

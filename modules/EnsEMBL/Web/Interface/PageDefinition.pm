@@ -53,11 +53,21 @@ sub add_configuration_element {
 
 sub value_for_form_element {
   my ($self, $name) = @_;
+  my $return_value = undef;
   if ($self->data_definition->data) {
-    return $self->data_definition->data->{$name};
-  } else {
-    return undef;
+    $return_value = $self->data_definition->data->{$name};
   }
+  if (!$return_value && $self->data_definition->data) {
+    my $eval_string = $self->data_definition->data->{data};
+    my $data = eval($eval_string);
+    foreach my $key (%{ $data }) {
+      if (!$data->{$key}) {
+        delete $data->{$key};
+      }
+    }
+    $return_value = $data->{$name};
+  }
+  return $return_value;
 }
 
 sub on_complete {

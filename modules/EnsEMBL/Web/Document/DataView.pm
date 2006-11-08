@@ -24,7 +24,6 @@ sub simple {
     if ($action eq "create") {
       if ($incoming->{'record'}) {
         ## create user record
-        warn "CREATING USER RECORD";
         my $fields = $definition->data_definition->fields;
         my $record_data = $self->parameters_for_fields($fields, $incoming);
         my $user = $self->verify_user_id($incoming); 
@@ -48,17 +47,30 @@ sub simple {
         }
       }
     } elsif ($action eq "edit") {
-      my $fields = $definition->data_definition->discover;
-      my $edit_parameters = $self->parameters_for_fields($fields, $incoming);
-      if ($ENV{'ENSEMBL_USER_ID'} eq $incoming->{'user_id'}) {
-        $user = $incoming->{'user_id'};    
-      }
-      $result = $adaptor->edit((
+      if ($incoming->{'record'}) {
+        my $fields = $definition->data_definition->fields;
+        my $edit_parameters = $self->parameters_for_fields($fields, $incoming);
+        my $user = $self->verify_user_id($incoming); 
+
+        $result = $adaptor->edit((
+                                 set =>        $edit_parameters,
+                                 definition => $fields,
+                                 user =>       $user,
+                                 id   =>       $incoming->{'id'},
+                                 record =>     $incoming->{'type'}
+                                ));
+
+      } else {
+        my $fields = $definition->data_definition->discover;
+        my $edit_parameters = $self->parameters_for_fields($fields, $incoming);
+        my $user = $self->verify_user_id($incoming); 
+        $result = $adaptor->edit((
                                  set =>     $edit_parameters,
                                  definition => $fields,
                                  user =>       $user,
                                  id   =>       $incoming->{'id'}
-                              ));
+                                ));
+      }
     }
 
     if ($result) {
