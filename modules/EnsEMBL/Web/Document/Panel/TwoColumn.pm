@@ -5,6 +5,7 @@ package EnsEMBL::Web::Document::Panel::TwoColumn;
 ### $panel->add_content('r', $html);
 ### $panel->add_content('left', $html);
 ### (both the full name of the columns and the initial l or r are supported)
+### Panel widths can be altered, but need to add up to 94%
 
 
 use strict;

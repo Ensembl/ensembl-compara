@@ -42,7 +42,7 @@ sub new {
 }
 
 sub coverage {
-  ### Calculates and returns the documentation coverage for all callabel methods in a module. This includes any inherited methods. Use {{module_coverage}} to calculate the documentation coverage for a module's methods only.
+  ### Calculates and returns the documentation coverage for all callable methods in a module. This includes any inherited methods. Use {{module_coverage}} to calculate the documentation coverage for a module's methods only.
 
   my $self = shift;
   my $count = 0;

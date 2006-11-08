@@ -483,12 +483,12 @@ sub _get_cdna_database{
                 Species name
  
  Example     : $self->_get_disease_database($species)
- Description : Gets disease database connection
+ Description : Gets disease database connection. N.B. This database no longer exists - 
+               Ensembl now uses xrefs to store MIM data
  Return type : DiseaseHandler
 
 =cut
 
-## change return type at later date
 sub _get_disease_database{
     my $self = shift;
     my $db_info =  $self->_get_database_info( shift, 'ENSEMBL_DISEASE' ) ||
@@ -1009,7 +1009,7 @@ sub non_fatal_error{
     return $self->{'non_fatal_error'};
 }
 
-=head2 new
+=head2 dynamic_use
 
   Arg [1]    : string $classname
                The name of the class to "use"
