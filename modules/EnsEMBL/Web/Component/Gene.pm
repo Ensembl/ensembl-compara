@@ -712,18 +712,31 @@ sub paralogues {
         <tr>
           <th>Taxonomy Level</th><th>Gene identifier</th>
         </tr>);
+    my %paralogue_map = qw(SEED BRH PIP RHS);
+
     my $STABLE_ID = $gene->stable_id; my $C = 1;
+    my $FULL_URL  = qq(/@{[$gene->species]}/multicontigview?gene=$STABLE_ID);
+    my $ALIGNVIEW = 0;
+    my $matching_paralogues = 0;
     foreach my $species (sort keys %paralogue_list){
  # foreach my $stable_id (sort keys %{$paralogue_list{$species}}){
       foreach my $stable_id (sort {$paralogue_list{$species}{$a}{'order'} <=> $paralogue_list{$species}{$b}{'order'}} keys %{$paralogue_list{$species}}){
 
         my $OBJ = $paralogue_list{$species}{$stable_id};
+        my $matching_paralogues = 1;    
         my $description = $OBJ->{'description'};
            $description = "No description" if $description eq "NULL";
+        my $paralogue_desc = $paralogue_map{ $OBJ->{'homology_desc'} } || $OBJ->{'homology_desc'};
         my $paralogue_subtype = $OBJ->{'homology_subtype'};
            $paralogue_subtype = "&nbsp;" unless (defined $paralogue_subtype);
         if($OBJ->{'display_id'}) {
           (my $spp = $OBJ->{'spp'}) =~ tr/ /_/ ;
+          my $EXTRA = qq(<span class="small">[<a href="/@{[$gene->species]}/multicontigview?gene=$STABLE_ID;s1=$spp;g1=$stable_id;context=1000">MultiContigView</a>]</span>);
+          if( $paralogue_desc ne 'DWGA' ) {
+            $EXTRA .= qq(&nbsp;<span class="small">[<a href="/@{[$gene->species]}/alignview?class=Homology;gene=$STABLE_ID;g1=$stable_id">Align</a>]</span>);
+            $ALIGNVIEW = 1;
+          }
+          $FULL_URL .= ";s$C=$spp;g$C=$stable_id";$C++;
           my $link = qq(/$spp/geneview?gene=$stable_id;db=$db);
           if( $description =~ s/\[\w+:(\w+)\;\w+:(\w+)\]//g ) {
             my ($edb, $acc) = ($1, $2);
@@ -734,23 +747,25 @@ sub paralogues {
           $html .= qq(
         <tr>
           <td>$paralogue_subtype</td>
-          <td><a href="$link">$stable_id</a> (@{[ $OBJ->{'display_id'} ]})<br />
+          <td><a href="$link">$stable_id</a> (@{[ $OBJ->{'display_id'} ]}) $EXTRA<br />
               <span class="small">$description</span></td>
         </tr>);
         } else {
           $html .= qq(
         <tr>
           <td>$paralogue_subtype</td>
-          <td>$stable_id<br /><span class="small">$description</span></td>
-        </tr>);
+          <td>$stable_id <br /><span class="small">$description</span></td>
+       </tr>);
         }
       }
     }
-    $html .= qq(</table>);
-    cache_print( $cache_obj, \$html );
-  }
+   $html .= qq(</table>);
+   if( keys %paralogue_list ) {
+      $html .= qq(\n      <p><a href="/@{[$gene->species]}/alignview?class=Homology;gene=$STABLE_ID">View alignments of homologies</a>.</p>) if $ALIGNVIEW;    }
+   cache_print( $cache_obj, \$html );
+ } 
 
-  $panel->add_row( 'Paralogue Prediction', $html, "$URL=off" );
+  $panel->add_row( $label, $html, "$URL=off" );
   return 1;
 }
 
@@ -1359,3 +1374,4 @@ sub create_genetree_image {
 }     
 
 1;
+
