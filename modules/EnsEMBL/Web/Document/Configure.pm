@@ -20,6 +20,7 @@ sub common_menu_items {
 
     if ($user_id) {
       $doc->menu->add_entry( $flag, 'text' => "Bookmark this page",
+                                    'code' => 'bookmark',
                                   'href' => "javascript:bookmark_link()" );
 
       my $user = $user_adaptor->find_user_by_user_id($user_id);
@@ -89,8 +90,12 @@ sub dynamic_menu_items {
   if ($user_id) {
     my $flag = 'ac_mini';
       ## to do - add a check for configurability
-      $doc->menu->add_entry( $flag, 'text' => "Save this configuration",
+      my $configurable = 1;
+      if ($configurable) {
+        $doc->menu->add_entry_after( $flag, 'bookmark', 
+                                    'text' => "Save this configuration",
                                   'href' => "javascript:config_link()" );
+      }
   }
 }
 
