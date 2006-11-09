@@ -83,7 +83,11 @@ sub render_options {
   my @options = split(/,/, $option_string); 
   foreach my $option (@options) {
     my $selected = "";
-    $self->print("<input type='radio' name='" . $field_name. "' value='" . $option . "'");
+    my $value = $option;
+    if ($settings{values}->{$option}) {
+      $value = $settings{values}->{$option};
+    }
+    $self->print("<input type='radio' name='" . $field_name. "' value='" . $value. "'");
     if ($page->value_for_form_element($field_name)) {
       if ($page->value_for_form_element($field_name) eq $option) {
         $self->print(" checked='yes' ");
