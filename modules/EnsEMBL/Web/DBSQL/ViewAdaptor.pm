@@ -32,6 +32,13 @@ sub new {
   $Username_of{$self}          = defined $params{username} ? $params{username} : "";
   $Password_of{$self}          = defined $params{password} ? $params{password} : "";
   $Handle_of{$self}            = defined $params{handle}   ? $params{handle}   : undef;
+  if (defined $params{db}) {
+    $Hostname_of{$self} = $params{db}->{HOST};
+    $Port_of{$self} = $params{db}->{PORT};
+    $Database_of{$self} = $params{db}->{NAME};
+    $Username_of{$self} = $params{db}->{USER};
+    $Password_of{$self} = $params{db}->{PASS};
+  }
   return $self;
 }
 
