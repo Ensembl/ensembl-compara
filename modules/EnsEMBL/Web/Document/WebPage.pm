@@ -33,6 +33,7 @@ sub new {
   my $self = {
     'page'    => undef,
     'factory' => undef,
+    'access'  => undef,
     'timer'   => new EnsEMBL::Web::Timer(),
     'species_defs' => $SD
   };
@@ -43,6 +44,10 @@ sub new {
   my $script = $parameters{'scriptname'} || $ENV{'ENSEMBL_SCRIPT'};
   my $input = $parameters{'cgi'} || new CGI;
   $self->_prof("Parameters initialised from input");
+
+## Access restriction parameters
+  $self->{'access'} = $parameters{'access'};
+
 ## Page module...
 
 ## Compile and create renderer ... [ Apache, File, ... ]
@@ -62,7 +67,7 @@ sub new {
     $doc_module = "EnsEMBL::Web::Document::".DEFAULT_DOCUMENT;
     $self->dynamic_use( $doc_module ); 
   }
-  $self->page = new $doc_module( $rend, $self->{'timer'}, $self->{'species_defs'} );          $self->_prof("Page object compiled and initialized");
+  $self->page = new $doc_module( $rend, $self->{'timer'}, $self->{'species_defs'}, $self->{'access'} );          $self->_prof("Page object compiled and initialized");
 
 ## Initialize output type! [ HTML, XML, Excel, Txt ]
   $self->{'format'} = $input->param('_format') || $parameters{'outputtype'} || DEFAULT_OUTPUTTYPE;
@@ -203,8 +208,9 @@ sub get_user_id {
 
 ## wrapper around redirect and render
 sub action {
-  my ($self, $access) = @_;
+  my $self = shift;
   my $user_id = $self->get_user_id;
+  my $access = $self->{'access'};
   my $permitted;
 
   if ($access) {
@@ -481,7 +487,7 @@ sub DESTROY {
 sub simple { simple_webpage( @_ ); }
 sub simple_webpage {
   my ($type, $access) = @_;
-  my $self = __PACKAGE__->new( 'objecttype' => $type );
+  my $self = __PACKAGE__->new( 'objecttype' => $type, {'access'=>$access} );
   if( $self->has_a_problem ) {
      $self->render_error_page;
   } else {

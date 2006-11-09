@@ -64,14 +64,21 @@ sub set_doc_type {
   $self->{'doc_type_version'} = $V;
 }
 
+sub access_restrictions {
+  my $self = shift;
+  return $self->{'access'};
+}
+
 sub new {
   my( $class )     = shift;
   my $renderer     = shift;
   my $timer        = shift;
   my $species_defs = shift;
+  my $access       = shift;
   my $self = {
     'body_attr'         => {},
     'species_defs'      => $species_defs,
+    'access'            => $access,
     'doc_type'          => DEFAULT_DOCTYPE,
     'doc_type_version'  => DEFAULT_DOCTYPE_VERSION,
     'encoding'          => DEFAULT_ENCODING,
