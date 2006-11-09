@@ -7,6 +7,7 @@ use Data::Dumper;
 use strict;
 use warnings;
 use Exporter;
+use EnsEMBL::Web::Form;
 #our @EXPORT = qw(_sort_similarity_links);  ##dunno if this is needed
 no warnings "uninitialized";
 
@@ -1306,6 +1307,18 @@ sub transcriptsnpview_menu    {
   return 0;
 }
 
+sub table_info {
+
+  ### Adds text to panel defined in Configuration::Transcript 
+  ### just above spreadsheet tables
+  ### Returns 0
+
+  my ($panel, $object)= @_;
+  my $samples = join ", ", ($object->get_samples("default"));
+  my $strain = $object->species_defs->translate("strain")."s";
+  $panel->print("These $strain are displayed by default: $samples. <br />Use the yellow dropdown menus at the top of the image above to customise which $strain and types of SNPs are displayed in the tables below.");
+  return 0;
+}
 
 sub spreadsheet_TSVtable {
   my( $panel, $object ) = @_;

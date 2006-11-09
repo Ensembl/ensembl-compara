@@ -213,6 +213,18 @@ sub transcriptsnpview {
     $self->add_panel( $panel2 );
   }
 
+
+## Panel 3 info
+ if (my $panel_table_info = $self->new_panel('',
+		    'code'    => "instructions",
+		    'caption' => "Image data",
+					    )) {
+   $panel_table_info->add_components( qw( 
+	  table_info  EnsEMBL::Web::Component::Transcript::table_info
+					));
+   $self->add_panel($panel_table_info);
+ }
+
 ## Panel 3 - finally a set of spreadsheet tables showing the information from the image..
  my $counts = $obj->__data->{'sample'}{"snp_counts"};
 
