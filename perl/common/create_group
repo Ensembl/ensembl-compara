@@ -45,10 +45,13 @@ $page->add_text('You can create a new group of users here. You will automaticall
 $page->add_configuration_element('level', 'administrator');
 $page->add_form_element('name', "Your group name");
 $page->add_form_element('blurb', "A description of your group");
-$page->add_form_element('type', "Type", { labels => {
-                                                               'open' => 'an open group'
-                                                               }
-                                                    });
+$page->add_form_element('type', "Type", { 'labels' => {
+                                                      'open' => 'an open group'
+                                                    },
+                                          'values' => {
+                                                      'open' => '1'
+                                                    }
+                                        });
 
 EnsEMBL::Web::Document::DataView::simple('User', $page);
 
