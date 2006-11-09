@@ -44,7 +44,6 @@ sub AUTOLOAD {
       #warn "FINDING RECORDS: $find " . $by . ": " . $value;
       return find_records(( type => $find, $by => $value, options => $options));
     } else {
-      ## perform set
       if (my ($type) = ($key =~ /(.*)_records/)) {
         return $self->records_of_type($type, $value);
       }

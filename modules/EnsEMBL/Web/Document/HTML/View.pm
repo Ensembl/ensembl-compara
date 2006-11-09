@@ -79,6 +79,7 @@ sub render_options {
   my $option_string = $field->{'Type'};
   $option_string =~ s/enum|\(|\)|'//g;
   $self->print($page->label_for_form_element($field_name) . ":\n<br /><br />\n");
+  my %settings = %{ $page->options_for_form_element($field_name) };
   my @options = split(/,/, $option_string); 
   foreach my $option (@options) {
     my $selected = "";
@@ -92,7 +93,13 @@ sub render_options {
         $self->print(" checked='yes' ");
       }
     }
-    $self->print(" /> " . ucfirst($option) . "<br />");
+    $self->print(" /> ");
+    if ($settings{labels}->{$option}) {
+      $self->print(ucfirst($settings{labels}->{$option}));
+    } else {
+      $self->print(ucfirst($option));
+    }
+    $self->print("<br />");
   }
 }
 

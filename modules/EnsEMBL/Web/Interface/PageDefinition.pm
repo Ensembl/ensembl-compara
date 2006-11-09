@@ -124,8 +124,19 @@ sub label_for_form_element {
 }
 
 sub add_form_element {
-  my ($self, $element, $title) = @_;
-  push @{$self->form_elements}, { name => $element, label => $title};
+  my ($self, $element, $title, $options) = @_;
+  push @{$self->form_elements}, { name => $element, label => $title, options => $options};
+}
+
+sub options_for_form_element {
+  my ($self, $name) = @_;
+  my $options = {};
+  foreach my $element (@{ $self->form_elements }) {
+    if ($element->{name} eq $name) {
+      $options = $element->{options};
+    }
+  }
+  return $options;
 }
 
 sub add_element {

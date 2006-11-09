@@ -465,7 +465,7 @@ sub contigview {
 ## Initialize the ideogram image...
   my @rendered_panels = ();
   my @fragment_panels = ();
-  my $ajax_ideogram = 'on';
+  my $ajax_ideogram = 'off';
   my $ajax_detailed = 'off';
 
   my $max_length = ($obj->species_defs->ENSEMBL_GENOME_SIZE||1) * 1.001e6;
