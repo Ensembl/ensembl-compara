@@ -73,8 +73,11 @@ div.alt a { text-decoration:none; }
 div.alt a:visited { color:[[RELEASE_EDGE]]; }
 div.alt a:hover { color:[[LINK_HOVER]]; }
 
-div.pale { background-color:[[BACKGROUND5]]; border:1px solid [[BACKGROUND1]]; }
+div.pale {  background-color:[[BACKGROUND3]]; border:1px solid [[BACKGROUND1]]; }
 div.pale a { text-decoration:none; }
+
+div.white {  background-color:#fff; border:1px solid [[BACKGROUND1]]; }
+div.white a { text-decoration:none; }
 
 div.pre { color:#339966; background-color:#eefff8; border:1px solid #aaeecc; }
 
@@ -97,11 +100,11 @@ dd { margin-bottom:1em; }
 
 /****************************** IMAGES ************************************/
 
-img.float-left { float:left; padding-right:10px; }
+img.float-left { float:left; margin-right:10px; }
 
-img.float-right { float:right; padding-left:10px; }
+img.float-right { float:right; margin-left:10px; }
 
-.screenshot { text-align:center; margin:auto; padding:10px; }
+.screenshot { text-align:center; margin:10px auto; }
 
 .karyomap { text-align:center; margin:auto; }
 
