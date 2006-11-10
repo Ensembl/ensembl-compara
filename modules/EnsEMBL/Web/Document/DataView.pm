@@ -10,8 +10,14 @@ our @ISA = qw(EnsEMBL::Web::Document::WebPage);
 
 
 sub simple {
-  my ($type, $definition) = @_;
-  my $self = __PACKAGE__->new(('objecttype' => $type, 'doctype' => 'View'));
+  my ($type, $definition, $parameter) = @_;
+  my $self = __PACKAGE__->new(('objecttype' => $type, 'doctype' => 'View', 'access' => $parameter->{'access'}));
+
+  ## Configure menus
+  if (my $context = $parameter->{'context'}) {
+    $self->configure($type, @$context);
+  }
+
   my $cgi = CGI->new; 
 
   my $result = undef;

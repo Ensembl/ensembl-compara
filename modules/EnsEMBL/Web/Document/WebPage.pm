@@ -98,12 +98,22 @@ sub new {
 
 sub configure {
   my( $self, $object, @functions ) = @_;
-  my $objecttype = $object ? $object->__objecttype : 'Static';
+  my $objecttype;
+  if (ref($object)) { ## Actual object
+    $objecttype = $object->__objecttype;
+  }
+  elsif ($object =~ /^\w+$/) { ## String (type of E::W object)
+    $objecttype = $object;
+  }
+  else {
+    $objecttype = 'Static';
+  }
   $objecttype = 'DAS' if ($objecttype =~ /^DAS::.+/);
+warn "*** Object $objecttype";
 
   my $flag = 0;
   my @T = ('EnsEMBL::Web', '', @{$ENSEMBL_PLUGINS});
-my $FUNCTIONS_CALLED = {};
+  my $FUNCTIONS_CALLED = {};
   while( my ($module_root, $X) = splice( @T, 0, 2) ) {
                            # Starting with the standard EnsEMBL module configure
                            # the script....
