@@ -292,8 +292,8 @@ dl.species-list-small dt { margin:0px; padding:0px; min-height:15px; font-style:
 dl.species-list-small dd { margin:-2px 0px 2px 0px; padding:0px; min-height:30px; }
 dl.species-list-small dt a, dl.species-list dd a { text-decoration:none; }
 
-ul.species-list span.species-name { margin:0px; padding:0px;
-  font-style:italic; font-weight:bold; }
+ul.species-list li { margin-left:-20px; padding:0px; }
+ul.species-list span.sp { font-size:120%; font-style:italic; font-weight:bold; }
 ul.species-list li a { text-decoration:none; }
 div.species-news p { margin:0px; padding:4px 0px; font-size:110%; min-height:40px; }
 
