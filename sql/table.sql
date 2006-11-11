@@ -254,8 +254,8 @@ CREATE TABLE dnafrag_region (
   
   FOREIGN KEY (dnafrag_id) REFERENCES dnafrag(dnafrag_id),
 
-  UNIQUE unique_synteny (synteny_region_id,dnafrag_id),
-  UNIQUE unique_synteny_reversed (dnafrag_id,synteny_region_id)
+  KEY synteny (synteny_region_id,dnafrag_id),
+  KEY synteny_reversed (dnafrag_id,synteny_region_id)
 ) COLLATE=latin1_swedish_ci;
 
 
@@ -356,8 +356,10 @@ CREATE TABLE analysis_description (
   description                text,
   display_label              varchar(255),
   displayable                boolean not null default 1,
+  web_data                   text,
 
-  KEY analysis_idx( analysis_id )
+  UNIQUE KEY analysis_idx( analysis_id )
+
 ) COLLATE=latin1_swedish_ci;
 
 ------------------------------------------------------------------------------------
