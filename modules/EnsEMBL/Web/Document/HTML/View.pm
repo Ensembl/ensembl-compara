@@ -79,14 +79,10 @@ sub render_options {
   my $option_string = $field->{'Type'};
   $option_string =~ s/enum|\(|\)|'//g;
   $self->print($page->label_for_form_element($field_name) . ":\n<br /><br />\n");
-  my %settings = %{ $page->options_for_form_element($field_name) };
   my @options = split(/,/, $option_string); 
   foreach my $option (@options) {
     my $selected = "";
-    my $value = $option;
-    if ($settings{values}->{$option}) {
-      $value = $settings{values}->{$option};
-    }
+    my $value = $page->value_for_selection_element($field_name, $option);
     $self->print("<input type='radio' name='" . $field_name. "' value='" . $value. "'");
     if ($page->value_for_form_element($field_name)) {
       if ($page->value_for_form_element($field_name) eq $option) {
@@ -98,10 +94,10 @@ sub render_options {
       }
     }
     $self->print(" /> ");
-    if ($settings{labels}->{$option}) {
-      $self->print(ucfirst($settings{labels}->{$option}));
-    } else {
-      $self->print(ucfirst($option));
+    $self->print($page->label_for_form_element($field_name, $option));
+    my $description = $page->description_for_form_element($field_name, $option);
+    if ($description) {
+      $self->print(" (" . $description . ")");
     }
     $self->print("<br />");
   }
