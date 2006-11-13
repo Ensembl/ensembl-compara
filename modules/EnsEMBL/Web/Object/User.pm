@@ -9,6 +9,7 @@ use Mail::Mailer;
 
 use EnsEMBL::Web::User::Record;
 use EnsEMBL::Web::Object::Group;
+use EnsEMBL::Web::DBSQL::UserDB;
 
 our @ISA = qw(EnsEMBL::Web::Record);
 
@@ -51,6 +52,9 @@ sub new {
   
   ## Flesh out the object from the database 
   if ($params{'id'}) {
+    if (!$self->adaptor) {
+      $self->adaptor(EnsEMBL::Web::DBSQL::UserDB->new);
+    }
     my $details = $self->adaptor->find_user_by_user_id($params{'id'});
     $Name_of{$self} = $details->{'name'};
     $Email_of{$self} = $details->{'email'};
