@@ -263,9 +263,29 @@ sub _random_string {
 
 sub find_user_by_user_id {
   my ($self, $id) = @_;
-  warn "FIND USER BY ID";
-  my $user = EnsEMBL::Web::Object::User->new({ adaptor => $self, id => $id });
-  return $user;
+
+  my $details = {};
+  return $details unless $self->{'_handle'};
+
+  my $sql = qq(
+    SELECT user_id, name, organisation, email, extra
+    FROM user
+    WHERE user_id = "$id" 
+  );
+
+  my $R = $self->{'_handle'}->selectall_arrayref($sql); 
+  return {} unless $R->[0];
+
+  my @record = @{$R->[0]};
+  $details = {
+    'id' => $record[0],
+    'user_id' => $record[0],
+    'name'    => $record[1],
+    'organisation' => $record[2],
+    'email'   => $record[3],
+    'extra'   => $record[4],
+  };
+  return $details;
 }
 
 sub find_users_by_group_id {
@@ -275,7 +295,7 @@ sub find_users_by_group_id {
       user.user_id,
       user.name,
       user.email,
-      user.org,
+      user.organisation,
       group_member.level,
       group_member.status
     FROM user 
@@ -292,7 +312,6 @@ sub find_users_by_group_id {
            'id'           => $record->[0],
            'name'         => $record->[1],
            'email'        => $record->[2],
-           'org'          => $record->[3],
            'organisation' => $record->[3],
            'level'        => $record->[4],
            'status'       => $record->[5],
@@ -315,7 +334,7 @@ sub getUserByID {
   return $details unless $self->{'_handle'};
 
   my $sql = qq(
-    SELECT user_id, name, org, email, extra
+    SELECT user_id, name, organisation, email, extra
     FROM user
     WHERE user_id = "$id" 
   );
@@ -328,7 +347,6 @@ sub getUserByID {
     'id' => $record[0],
     'user_id' => $record[0],
     'name'    => $record[1],
-    'org'     => $record[2],
     'organisation' => $record[2],
     'email'   => $record[3],
     'extra'   => $record[4],
@@ -343,7 +361,7 @@ sub getUserByEmail {
   return $details unless $self->{'_handle'};
 
   my $sql = qq(
-    SELECT user_id, name, salt, org, extra
+    SELECT user_id, name, salt, organisation, extra
     FROM user
     WHERE email = "$email" 
   );
@@ -356,7 +374,7 @@ sub getUserByEmail {
     'user_id' => $record[0],
     'name'    => $record[1],
     'salt'    => $record[2],
-    'org'     => $record[3],
+    'organisation'     => $record[3],
     'extra'   => $record[4],
   };
   return $details;
@@ -373,7 +391,7 @@ sub getUserByCode {
   return $details unless $self->{'_handle'};
 
   my $sql = qq(
-    SELECT user_id, name, salt, UNIX_TIMESTAMP(expires), org, extra
+    SELECT user_id, name, salt, UNIX_TIMESTAMP(expires), organisation, extra
     FROM user
     WHERE password = "$code"
   );
@@ -390,7 +408,7 @@ warn $sql;
       'user_id' => $user_id,
       'name'    => $record[1],
       'salt'    => $record[2],
-      'org'     => $record[4],
+      'organisation'=> $record[4],
       'extra'   => $record[5],
     };
     if ($expires) {
@@ -412,7 +430,7 @@ sub createUserAccount {
   my $name      = $details{'name'}; 
   my $email     = $details{'email'}; 
   my $password  = $details{'password'}; 
-  my $org       = $details{'org'}; 
+  my $organisation = $details{'organisation'}; 
   my $extra     = $details{'extra'}; 
   my $salt      = _random_string(8); 
   my $encrypted = Digest::MD5->new->add($password.$salt)->hexdigest();
@@ -423,7 +441,7 @@ sub createUserAccount {
       email         = "$email", 
       salt          = "$salt",
       password      = "$encrypted",
-      org           = "$org",
+      organisation  = "$organisation",
       extra         = "$extra",
       date_created  = NOW()
   );
@@ -452,7 +470,7 @@ sub updateUserAccount {
   my $user_id   = $details{'user_id'};
   my $name      = $details{'name'}; 
   my $email     = $details{'email'}; 
-  my $org       = $details{'org'}; 
+  my $organisation = $details{'organisation'}; 
   my $extra     = $details{'extra'}; 
 
   my $result;
@@ -461,7 +479,7 @@ sub updateUserAccount {
       UPDATE user SET  
         name          = "$name", 
         email         = "$email", 
-        org           = "$org",
+        organisation  = "$organisation",
         extra         = "$extra",
         last_updated  = NOW(),
         updated_by    = $user_id
@@ -581,8 +599,8 @@ sub getGroupByID {
   return {} unless $id;
 
   my $sql = qq(
-    SELECT g.webgroup_id, g.name, g.blurb, g.type, u1.name, u1.org, 
-          g.created_at, u2.name, u2.org, g.modified_at
+    SELECT g.webgroup_id, g.name, g.blurb, g.type, u1.name, u1.organisation, 
+          g.created_at, u2.name, u2.organisation, g.modified_at
     FROM webgroup as g, user as u1, user as u2
     WHERE g.webgroup_id  = "$id" 
       AND g.created_by = u1.user_id
@@ -720,7 +738,7 @@ sub getMembership {
   }
 
   my $sql = qq(SELECT g.webgroup_id, g.name, g.blurb, g.type, g.status,
-                      u1.name, u1.org, g.created_at, u2.name, u2.org, g.modified_at,
+                      u1.name, u1.organisation, g.created_at, u2.name, u2.organisation, g.modified_at,
                       m.user_id, m.level, m.status
               FROM webgroup as g, group_member as m, user as u1, user as u2
               WHERE g.webgroup_id = m.webgroup_id
