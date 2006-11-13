@@ -10,7 +10,7 @@ use EnsEMBL::Web::Document::Static;
 use EnsEMBL::Web::SpeciesDefs;
 #use EnsEMBL::Web::User;
 use Data::Dumper;
-# use EnsEMBL::Web::Root;
+use EnsEMBL::Web::Root;
 
 our $SD = EnsEMBL::Web::SpeciesDefs->new();
 
@@ -196,6 +196,13 @@ sub template_INCLUDE {
   $r->log->error("Cannot include virtual file: does not exist or permission denied ", $include);
   $content = "[Cannot include virtual file: does not exist or permission denied]";
   return $content;
+}
+
+sub template_SCRIPT {
+  my( $r, $include ) = @_;
+  EnsEMBL::Web::Root->dynamic_use($include);
+  my $content = $include->render();
+  return "$content";
 }
 
 sub template_PAGE {
