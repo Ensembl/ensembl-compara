@@ -3,6 +3,7 @@ package EnsEMBL::Web::User::Record;
 use strict;
 use warnings;
 use EnsEMBL::Web::Record;
+use EnsEMBL::Web::DBSQL::UserDB;
 
 our @ISA = qw(EnsEMBL::Web::Record);
 
@@ -17,6 +18,9 @@ sub new {
   my $self = $class->SUPER::new(%params);
   $Type_of{$self} = defined $params{'type'} ? $params{'type'} : "record";
   $User_of{$self} = defined $params{'user'} ? $params{'user'} : 0;
+  if (!$self->adaptor) {
+    $self->adaptor(EnsEMBL::Web::DBSQL::UserDB->new());
+  }
   return $self;
 }
 
