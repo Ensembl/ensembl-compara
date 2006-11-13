@@ -191,14 +191,79 @@ sub store{
 }
 
 
+=head2 fetch_all_by_MethodLinkSpeciesSet_Slice
+
+  Arg  1     : Bio::EnsEMBL::Compara::MethodLinkSpeciesSet $method_link_species_set
+  Arg  2     : Bio::EnsEMBL::Slice $original_slice
+  Example    : my $synteny_regions =
+                  $synteny_region_adaptor->fetch_all_by_MethodLinkSpeciesSet_Slice(
+                      $method_link_species_set, $original_slice);
+  Description: Retrieve the corresponding
+               Bio::EnsEMBL::Compara::SyntenyRegion objects.
+  Returntype : ref. to an array of Bio::EnsEMBL::Compara::SyntenyRegion objects.
+  Exceptions : Returns ref. to an empty array if no matching
+               Bio::EnsEMBL::Compara::SyntenyRegion object can be retrieved
+  Caller     : $object->method_name
+  Status     : Medium risk
+
+=cut
+
+sub fetch_all_by_MethodLinkSpeciesSet_Slice {
+  my ($self, $method_link_species_set, $reference_slice) = @_;
+  my $all_synteny_regions = []; # Returned value
+
+  ## method_link_species_set will be checked in the fetch_all_by_MethodLinkSpeciesSet_DnaFrag method
+
+  ## Check original_slice
+  unless(UNIVERSAL::isa($reference_slice, 'Bio::EnsEMBL::Slice')) {
+    throw("[$reference_slice] should be a Bio::EnsEMBL::Slice object\n");
+  }
+
+  my $dnafrag_adaptor = $self->db->get_DnaFragAdaptor;
+
+  my $projection_segments = $reference_slice->project('toplevel');
+  return [] if(!@$projection_segments);
+
+  foreach my $this_projection_segment (@$projection_segments) {
+    my $this_slice = $this_projection_segment->to_Slice;
+    my $this_dnafrag = $dnafrag_adaptor->fetch_by_Slice($this_slice);
+    next if (!$this_dnafrag);
+    my $these_synteny_regions = $self->fetch_all_by_MethodLinkSpeciesSet_DnaFrag(
+            $method_link_species_set,
+            $this_dnafrag,
+            $this_slice->start,
+            $this_slice->end,
+        );
+
+    push (@$all_synteny_regions, @$these_synteny_regions);
+  }
+
+  return $all_synteny_regions;
+}
+
+
 =head2 fetch_by_MethodLinkSpeciesSet_DnaFrag
+
+ Status      : Deprecated. Use fetch_all_by_MethodLinkSpeciesSet_DnaFrag
+               instead
+
+=cut
+
+sub fetch_by_MethodLinkSpeciesSet_DnaFrag {
+  my $self = shift(@_);
+
+  return $self->fetch_all_by_MethodLinkSpeciesSet_DnaFrag(@_);
+}
+
+
+=head2 fetch_all_by_MethodLinkSpeciesSet_DnaFrag
 
   Arg 1      : Bio::EnsEMBL::Compara::MethodLinkSpeciesSet $mlss
   Arg 2      : Bio::EnsEMBL::Compara::DnaFrag $dnafrag
   Arg 3 (opt): int $start
   Arg 4 (opt): int $end
   Example    : my $these_synteny_regions = $synteny_region_adaptor->
-                  fetch_by_MethodLinkSpeciesSet_DnaFrag(
+                  fetch_all_by_MethodLinkSpeciesSet_DnaFrag(
                   $mlss, $dnafrag, 100000, 200000);
   Description: Fetches the Bio::EnsEMBL::Compara::SyntenyRegion
                objects in this region for the set of species
@@ -206,10 +271,11 @@ sub store{
   Returntype : listref of Bio::EnsEMBL::Compara::SyntenyRegion objects
   Exception  : Thrown if the argument is not defined
   Caller     :
+  Status     : Stable
 
 =cut
 
-sub fetch_by_MethodLinkSpeciesSet_DnaFrag {
+sub fetch_all_by_MethodLinkSpeciesSet_DnaFrag {
   my ($self, $mlss, $dnafrag, $start, $end) = @_;
 
   if (!UNIVERSAL::isa($mlss, "Bio::EnsEMBL::Compara::MethodLinkSpeciesSet")) {
