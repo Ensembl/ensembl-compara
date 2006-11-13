@@ -4,6 +4,7 @@ use strict;
 use Bio::EnsEMBL::Compara::BaseRelation;
 use Bio::EnsEMBL::Utils::Argument;
 use Bio::EnsEMBL::Utils::Exception;
+use Bio::SimpleAlign;
 use IO::File;
 
 our @ISA = qw(Bio::EnsEMBL::Compara::BaseRelation);
