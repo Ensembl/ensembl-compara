@@ -129,6 +129,7 @@ sub stable_id{
 
 }
 
+
 =head2 method_link_species_set_id
 
  Title   : method_link_species_set_id
@@ -182,7 +183,7 @@ sub dbID{
 
 =cut
 
-sub adaptor{
+sub adaptor {
    my $obj = shift;
    if( @_ ) {
       my $value = shift;
@@ -190,6 +191,27 @@ sub adaptor{
     }
     return $obj->{'adaptor'};
 
+}
+
+
+=head2 get_all_DnaFragRegions
+
+ Arg  1     : -none-
+ Example    : my $all_dnafrag_regions = $obj->get_all_DnaFragRegions();
+ Description: returns all the DnaFragRegion objects for this syntenic
+              region
+ Returntype : a ref. to an array of Bio::EnsEMBL::Compara::DnaFragRegion
+              objects
+ Exception  : 
+ Caller     :
+ Status     : Stable
+
+=cut
+
+sub get_all_DnaFragRegions {
+  my $obj = shift;
+
+  return $obj->children();
 }
 
 1;
