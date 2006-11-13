@@ -74,7 +74,7 @@ sub href {
 
 sub zmenu {
   my ($self, $id) = @_;
-  my $ajax = 1;
+  my $ajax = 0;
   if ($ajax) {
     return $self->ajax_zmenu($id);
   } else {

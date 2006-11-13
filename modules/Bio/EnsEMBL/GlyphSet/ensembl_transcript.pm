@@ -96,7 +96,7 @@ sub gene_href {
 
 sub zmenu {
   my ($self, $gene, $transcript) = @_;
-  my $ajax = 1;
+  my $ajax = 0;
   if ($ajax) {
     return $self->ajax_zmenu($gene);
   } else {
