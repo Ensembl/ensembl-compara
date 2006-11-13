@@ -7,10 +7,11 @@ use warnings;
 
 sub render {
   my $html = "";
-  if ($ENV{'ENSEMBL_USER_ID'}) {
-    $html .= "Log in or register";
-  } else {
+  my $user_id = $ENV{'ENSEMBL_USER_ID'};
+  if ($user_id > 0) {
     $html .= "Logged in";
+  } else {
+    $html .= "Log in or register";
   }
   return $html;
 }
