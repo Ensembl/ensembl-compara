@@ -25,6 +25,9 @@ sub features {
     }
     return $data;
   } else {
+    my $f = $slice->adaptor->db->get_RegulatoryFeatureAdaptor->fetch_all_by_Slice_constraint( $slice );
+    warn "in reg features";
+    warn @$f;
     return $slice->adaptor->db->get_RegulatoryFeatureAdaptor->fetch_all_by_Slice_constraint( $slice );  # $logic name is second param
   }
 }
@@ -56,6 +59,11 @@ sub zmenu {
     }
     elsif ($analysis eq "tiffin") {
       $feature_link = "http://servlet.sanger.ac.uk/tiffin/motif.jsp?acc=$name";
+    }
+    elsif ($analysis =~ /enhancer_/i ) {
+      my ($id) = $name =~ /LBNL-(\d+)/;
+      $feature_link = "http://enhancer.lbl.gov/cgi-bin/imagedb.pl?form=presentation&show=1&experiment_id=$id";
+      $name .=" [LBNL Enhancer]";
     }
      $return->{"01:Feature: $name"} = $feature_link;
 
