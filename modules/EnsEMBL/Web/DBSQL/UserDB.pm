@@ -944,7 +944,7 @@ sub update_record {
     SET user_id = $user_id,
         type    = "$type",
         data    = "$data"
-    WHERE id = $id
+    WHERE record_id = $id
   );
   my $sth = $self->{'_handle'}->prepare($sql);
   my $result = $sth->execute();
