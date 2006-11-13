@@ -83,12 +83,19 @@ sub fetch_by_dbIDs {
 
 =head2 fetch_by_source_stable_id
 
-  Arg [1]    : string $source_name
+  Arg [1]    : (optional) string $source_name
   Arg [2]    : string $stable_id
-  Example    : 
-  Description: 
-  Returntype : 
-  Exceptions : 
+  Example    : my $member = $ma->fetch_by_source_stable_id(
+                   "Uniprot/SWISSPROT", "O93279");
+  Example    : my $member = $ma->fetch_by_source_stable_id(
+                   undef, "O93279");
+  Description: Fetches the member corresponding to this $stable_id.
+               Although two members from different sources might
+               have the same stable_id, this never happens in a normal
+               compara DB. You can set the first argument to undef
+               like in the second example.
+  Returntype : Bio::EnsEMBL::Compara::Member object
+  Exceptions : throws if $stable_id is undef
   Caller     : 
 
 =cut
@@ -96,17 +103,16 @@ sub fetch_by_dbIDs {
 sub fetch_by_source_stable_id {
   my ($self,$source_name, $stable_id) = @_;
 
-  unless(defined $source_name) {
-    $self->throw("fetch_by_source_stable_id must have an source_name");
-  }
   unless(defined $stable_id) {
-    $self->throw("fetch_by_source_stable_id must have an stable_id");
+    throw("fetch_by_source_stable_id must have an stable_id");
   }
 
 #  my $source_id = $self->get_source_id_from_name($source_name);
   
   #construct a constraint like 't1.table1_id = 1'
-  my $constraint = "m.source_name = '$source_name' AND m.stable_id = '$stable_id'";
+  my $constraint = "";
+  $constraint = "m.source_name = '$source_name' AND " if ($source_name);
+  $constraint .= "m.stable_id = '$stable_id'";
 
   #return first element of _generic_fetch list
   my ($obj) = @{$self->_generic_fetch($constraint)};
