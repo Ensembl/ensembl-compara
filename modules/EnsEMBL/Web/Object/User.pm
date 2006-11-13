@@ -51,7 +51,7 @@ sub new {
   
   ## Flesh out the object from the database 
   if ($params{'id'}) {
-    my $details = $self->adaptor->getUserByID($params{'id'});
+    my $details = $self->adaptor->find_user_by_user_id($params{'id'});
     $Name_of{$self} = $details->{'name'};
     $Email_of{$self} = $details->{'email'};
     $Organisation_of{$self} = $details->{'organisation'};
@@ -185,6 +185,7 @@ sub organisation {
   return $Organisation_of{$self};
 }
 
+
 sub param {
   ### a
   ### TODO: This method needs refactoring. Object data classes should
@@ -194,7 +195,7 @@ sub param {
   my $self = shift;
   my @incoming = @_;
   if (@incoming) {
-    return $self->parameter_set->cgi->param($incoming[0]);
+    return $self->parameter_set->cgi->param(@incoming);
   } else {
     return $self->parameter_set->cgi->param;
   }
@@ -257,12 +258,6 @@ sub DESTROY {
 
 
 #------------------- ACCESSOR FUNCTIONS -----------------------------
-
-sub user_id   { return $_[0]->get_user_id; }
-sub user_name { return $_[0]->Obj->{'user_name'}; }
-sub email     { return $_[0]->Obj->{'email'}; }
-sub password  { return $_[0]->Obj->{'password'}; }
-sub org       { return $_[0]->Obj->{'org'}; }
 
 sub get_user_id {
   my $self = shift;
