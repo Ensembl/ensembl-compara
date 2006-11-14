@@ -278,4 +278,9 @@ sub errorTrack {
 
 sub commify { CORE::shift; local $_ = reverse $_[0]; s/(\d\d\d)(?=\d)(?!\d*\.)/$1,/g; return scalar reverse $_; }
 
+sub check {
+  my $self   = shift;
+  my ($name) = ref($self) =~ /::([^:]+)$/;
+  return $name;
+} 
 1;
