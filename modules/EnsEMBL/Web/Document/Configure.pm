@@ -1,8 +1,11 @@
 package EnsEMBL::Web::Document::Configure;
 
 use CGI qw(escapeHTML);
+use strict;
+use warnings;
 
 use EnsEMBL::Web::Root;
+use EnsEMBL::Web::Object::User;
 our @ISA  = qw(EnsEMBL::Web::Root);
 
 sub common_menu_items {
@@ -23,7 +26,7 @@ sub common_menu_items {
                                     'code' => 'bookmark',
                                   'href' => "javascript:bookmark_link()" );
 
-      my $user = $user_adaptor->find_user_by_user_id($user_id);
+      my $user = EnsEMBL::Web::Object::User->new({ id => $user_id });
 
       ## Link to existing bookmarks
       my @records = $user->bookmark_records({order_by => 'click' });

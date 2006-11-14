@@ -51,24 +51,6 @@ sub add_configuration_element {
   push @{ $self->configuration_elements }, { 'key' => $key, 'value' => $value };
 }
 
-sub value_for_form_element {
-  my ($self, $name) = @_;
-  my $return_value = undef;
-  if ($self->data_definition->data) {
-    $return_value = $self->data_definition->data->{$name};
-  }
-  if (!$return_value && $self->data_definition->data) {
-    my $eval_string = $self->data_definition->data->{data};
-    my $data = eval($eval_string);
-    foreach my $key (%{ $data }) {
-      if (!$data->{$key}) {
-        delete $data->{$key};
-      }
-    }
-    $return_value = $data->{$name};
-  }
-  return $return_value;
-}
 
 sub on_complete {
   ### a
@@ -114,13 +96,71 @@ sub on_error {
 
 sub label_for_form_element {
   ## TODO: Unify elements and data definitions into single data structure
-  my ($self, $name) = @_; 
+  my ($self, $name, $option) = @_; 
   foreach my $element (@{ $self->form_elements }) {
     if ($element->{name} eq $name) {
-      return $element->{label};
+      if (defined $element->{options} && $element->{options}->label_for_field($option)) {
+        return $element->{options}->label_for_field($option);
+      }
+      if ($option) {
+        return ucfirst($option);
+      } else {
+        return $element->{label};
+      }
     }  
   }
   return undef;
+}
+
+sub value_for_selection_element {
+  ### Returns the value associated to an option in a selection element. By default, 
+  ### these form elements (selects, radio buttons etc) return the same value as their
+  ### default label.
+  my ($self, $name, $option) = @_;
+  foreach my $element (@{ $self->form_elements }) {
+    if ($element->{name} eq $name) {
+      if (defined $element->{options} && $element->{options}->value_for_field($option)) {
+        return $element->{options}->value_for_field($option);
+      }
+    }  
+  }
+  return $option;
+}
+
+sub description_for_form_element {
+  ### Returns a description for a form element
+  my ($self, $name, $option) = @_;
+
+  foreach my $element (@{ $self->form_elements }) {
+    if ($element->{name} eq $name) {
+      if (defined $element->{options} && $element->{options}->description_for_field($option)) {
+        return $element->{options}->description_for_field($option);
+      }
+    }
+  }
+
+  return undef;
+}
+
+sub value_for_form_element {
+  ### Returns the value of a form element, as determined by the data retrieved from the 
+  ### database. For possible return values for enumerated types, use {{value_for_selection_element}}
+  my ($self, $name) = @_;
+  my $return_value = undef;
+  if ($self->data_definition->data) {
+    $return_value = $self->data_definition->data->{$name};
+  }
+  if (!$return_value && $self->data_definition->data) {
+    my $eval_string = $self->data_definition->data->{data};
+    my $data = eval($eval_string);
+    foreach my $key (%{ $data }) {
+      if (!$data->{$key}) {
+        delete $data->{$key};
+      }
+    }
+    $return_value = $data->{$name};
+  }
+  return $return_value;
 }
 
 sub add_form_element {

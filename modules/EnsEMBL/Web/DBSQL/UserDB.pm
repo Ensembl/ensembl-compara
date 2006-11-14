@@ -893,6 +893,12 @@ sub find_records {
     }
   }
   my $results = [];
+  
+  ## maintain compatibility between schema versions
+  if ($find_key eq 'id') {
+    $find_key = "record_id";
+  }
+
   my $sql = qq(
     SELECT * 
     FROM record WHERE $find_key = "$find_value"); 
@@ -924,7 +930,7 @@ sub delete_record {
   warn "DELETING: " . $id;
   my $sql = qq(
     DELETE FROM record 
-    WHERE id = $id
+    WHERE record_id = $id
   );
   my $sth = $self->{'_handle'}->prepare($sql);
   my $result = $sth->execute();

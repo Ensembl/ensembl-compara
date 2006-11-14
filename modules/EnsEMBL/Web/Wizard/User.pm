@@ -7,11 +7,11 @@ no warnings "uninitialized";
 use EnsEMBL::Web::Object::Group;
 use EnsEMBL::Web::Wizard;
 use EnsEMBL::Web::Form;
+use EnsEMBL::Web::User::Record;
 use Mail::Mailer;
 use CGI;
 
 our @ISA = qw(EnsEMBL::Web::Wizard);
-
 
 
 sub _init {
@@ -749,9 +749,19 @@ sub save_bookmark {
   my %parameter;
 
   ## save bookmark
-  my $record = $self->create_record($object);
-  $$record{'user_id'} = $object->user_id;
-  my $result = $object->save_bookmark($record);
+  #my $record = $self->create_record($object);
+  #$$record{'user_id'} = $object->user_id;
+  #my $result = $object->save_bookmark($record);
+  my $result = 0;
+  if ($ENV{'ENSEMBL_USER_ID'}) {
+    my $bookmark = EnsEMBL::Web::User::Record->new(( 
+                                                     type => 'bookmark',
+                                                     user => $ENV{'ENSEMBL_USER_ID'}
+                                                  )); 
+    $bookmark->url($object->param('bm_url'));
+    $bookmark->name($object->param('bm_name'));
+    $result = $bookmark->save;
+  }
 
   ## set response
   if ($result) {
