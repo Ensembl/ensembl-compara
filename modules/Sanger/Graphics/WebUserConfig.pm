@@ -19,6 +19,10 @@ use Data::Dumper;
 # 'general' settings are overridden by 'user' settings
 #
 
+sub is_available_artefact {
+  return 1;
+}
+
 sub new {
     my $class = shift;
     my $self = {
