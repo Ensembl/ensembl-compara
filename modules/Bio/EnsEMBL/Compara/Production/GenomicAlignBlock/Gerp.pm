@@ -456,7 +456,7 @@ sub _parse_cons_file {
 
 		#create new genomic align blocks by converting alignment 
 		#coords to chromosome coords
-		my $constrained_gab = $gab->restrict_between_alignment_positions($start, $end); 
+		my $constrained_gab = $gab->restrict_between_alignment_positions($start, $end, "skip"); 
 
 		#if no restriction was required, it returns the original gab
 		#back but I need to reset the dbID in this case otherwise I end
@@ -707,10 +707,6 @@ sub _build_tree_string {
     # Remove quotes around node labels
     $tree_string =~ s/"(_\d+_)"/$1/g;
 
-    # Remove branch length if 0
-    $tree_string =~ s/\:0\.0+(\D)/$1/g;
-    $tree_string =~ s/\:0([^\.\d])/$1/g;
-
     $tree->release_tree;
  
     my $modified_tree_file = $self->worker_temp_directory . $TREE_FILE;
@@ -750,13 +746,18 @@ sub _update_tree {
 	    ## If only 1 has been found...
 	    $this_leaf->name(_get_name_from_GenomicAlign($these_genomic_aligns->[0]));
 	} elsif (@$these_genomic_aligns > 1) {
-	    ## If more than 1 has been found...
-	    foreach my $this_genomic_align (@$these_genomic_aligns) {
-		my $new_node = new Bio::EnsEMBL::Compara::NestedSet;
-		$new_node->name(_get_name_from_GenomicAlign($this_genomic_align));
-		$new_node->distance_to_parent(0);
-		$this_leaf->add_child($new_node);
+	    ## If more than 1 has been found, create as many bifurcations as needed
+	    for (my $i=0; $i<@$these_genomic_aligns-1; $i++) {
+	      my $new_node = new Bio::EnsEMBL::Compara::NestedSet;
+	      $new_node->name(_get_name_from_GenomicAlign($these_genomic_aligns->[$i]));
+	      $new_node->distance_to_parent(0);
+	      $this_leaf->add_child($new_node);
+	      my $new_internal_node = new Bio::EnsEMBL::Compara::NestedSet;
+	      $new_internal_node->distance_to_parent(0);
+	      $this_leaf->add_child($new_internal_node);
+	      $this_leaf = $new_internal_node;
 	    }
+	    $this_leaf->name(_get_name_from_GenomicAlign($these_genomic_aligns->[-1]));
 	    
 	} else {
 	    ## If none has been found...
