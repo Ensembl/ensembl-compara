@@ -338,7 +338,7 @@ sub _writeMultiFastaAlignment {
 	#$seq_name =~ s/(\w*) (\w*)/$1_$2/;
 
 	#add _ to either side of genome_db id to make GERP like it
-	my $seq_name = "_" . $genomic_align->dnafrag->genome_db->dbID . "_";
+	my $seq_name = _get_name_from_GenomicAlign($genomic_align);
 	
 	my $aligned_sequence = $genomic_align->aligned_sequence;
 	my $seq = Bio::LocatableSeq->new(
@@ -748,17 +748,14 @@ sub _update_tree {
 
 	if (@$these_genomic_aligns == 1) {
 	    ## If only 1 has been found...
-	    $this_leaf->name("_" . $these_genomic_aligns->[0]->dnafrag->genome_db_id . "_"); 
+	    $this_leaf->name(_get_name_from_GenomicAlign($these_genomic_aligns->[0]));
 	} elsif (@$these_genomic_aligns > 1) {
 	    ## If more than 1 has been found...
-	    my $first_genomic_align = shift(@$these_genomic_aligns);
-	    my $copy = $this_leaf->copy;
-	    $copy->name("_" . $these_genomic_aligns->[0]->dnafrag->genome_db_id . "_");
-	    $this_leaf->add_child($copy);
-	    $copy = $this_leaf->children->[0]->copy;
 	    foreach my $this_genomic_align (@$these_genomic_aligns) {
-		$copy->name("_" . $these_genomic_aligns->[0]->dnafrag->genome_db_id . "_");
-		$this_leaf->add_child($copy);
+		my $new_node = new Bio::EnsEMBL::Compara::NestedSet;
+		$new_node->name(_get_name_from_GenomicAlign($this_genomic_align));
+		$new_node->distance_to_parent(0);
+		$this_leaf->add_child($new_node);
 	    }
 	    
 	} else {
@@ -775,6 +772,25 @@ sub _update_tree {
     }
     
     return $tree;
+}
+
+
+#  Arg [1]    : Bio::EnsEMBL::Compara::GenomicAlign
+#  Example    : _get_name_from_GenomicAlign($genomic_align);
+#  Description:
+#  Returntype : string $name
+#  Exception  :
+#  Warning    :
+
+sub _get_name_from_GenomicAlign {
+  my ($genomic_align) = @_;
+
+  my $name = "_" . $genomic_align->dnafrag->genome_db->dbID . "_" .
+    $genomic_align->dnafrag_id . "_" .
+    $genomic_align->dnafrag_start . "_" .
+    $genomic_align->dnafrag_end->genome_db->dbID . "_";
+
+  return $name;
 }
 
 1;
