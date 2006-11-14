@@ -7,7 +7,7 @@ use strict;
 use warnings;
 no warnings "uninitialized";
 use EnsEMBL::Web::Component::Slice;
-#use EnsEMBL::Web::Component::Transcript qw(_sort_similarity_links);
+use EnsEMBL::Web::Component::Transcript qw(_sort_similarity_links);
 
 use Data::Dumper;
 use Bio::AlignIO;
@@ -582,6 +582,68 @@ sub alignments {
   return 1;
 }
 
+sub get_synonyms {
+  my $match_id = shift;
+  my @matches = @_;
+  my $ids;
+  foreach my $m (@matches){
+    my $dbname = $m->db_display_name;
+    my $disp_id = $m->display_id();
+    if ( $dbname =~/HGNC/ && $disp_id=~/$match_id/){
+      my $synonyms = $m->get_all_synonyms();
+      foreach my $syn (@$synonyms){
+      $ids = $ids .", " .$syn; 
+     }   
+    }
+  }
+  $ids=~s/^\,\s*//;
+  my $syns;
+  if ($ids =~/^\w/){
+    $syns = "<b>Synonyms:   </b>" .$ids;
+  } 
+  return $syns;
+}
+
+sub similarity{
+  my( $panel, $gene ) = @_;
+  my $FLAG = 0; 
+  my $label = 'Similarity Matches';
+  my $html;
+  my $matches =$gene->get_database_matches;   
+  my @links = _sort_similarity_links($gene, @$matches);
+  $html .= qq(<p>This gene corresponds to the following database identifiers:</p><table cellpadding="4">);
+  my $old_key = '';
+  my %seen_links;
+ 
+  foreach my $l (@links) {
+     return 1 unless @$l;
+     foreach my $link (@$l) {
+        my ($key, $text) = @$link;
+        $seen_links{$key}++;
+        my $k = ($seen_links{$key} > 1) ? '' : $key.':';
+        if ($key=~/HGNC/){
+          my $temp = $text;
+          my @t = split(/\<|\>/, $temp);
+          my $id = $t[4];
+          my $synonyms = get_synonyms($id, @$matches);     
+          unless($text =~ $gene->display_xref && $synonyms!~/\w/){  
+            $html .= qq(<tr><th style="white-space: nowrap; padding-right: 1em">$k</th><td>);
+            $html .= $text . $synonyms ; 
+            $FLAG =1;
+          }
+        }
+     }
+  }
+  $html .= qq(</td></tr></table>);
+
+  if( $FLAG ) {
+   $panel->add_row( $label, $html );
+  }
+
+  return 1;
+}
+
+
 sub orthologues {
   my( $panel, $gene ) = @_;
   my $label = 'Orthologue Prediction';
@@ -637,8 +699,8 @@ sub orthologues {
         my $description = $OBJ->{'description'};
            $description = "No description" if $description eq "NULL";
         my $orthologue_desc = $orthologue_map{ $OBJ->{'homology_desc'} } || $OBJ->{'homology_desc'};
-     # my $orthologue_dnds_ratio = $OBJ->{'homology_dnds_ratio'};
-     #    $orthologue_dnds_ratio = '&nbsp;' unless (defined $orthologue_dnds_ratio);
+   #     my $orthologue_dnds_ratio = $OBJ->{'homology_dnds_ratio'};
+   #      $orthologue_dnds_ratio = '&nbsp;' unless (defined $orthologue_dnds_ratio);
         my $last_col;
         if(exists( $OBJ->{'display_id'} )) {
           (my $spp = $OBJ->{'spp'}) =~ tr/ /_/ ;
@@ -1372,6 +1434,6 @@ sub create_genetree_image {
   $image->imagemap           = 'yes';
   return $image;
 }     
-
+ 
 1;
 
