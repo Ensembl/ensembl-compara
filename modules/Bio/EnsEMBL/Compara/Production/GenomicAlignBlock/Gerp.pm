@@ -788,7 +788,7 @@ sub _get_name_from_GenomicAlign {
   my $name = "_" . $genomic_align->dnafrag->genome_db->dbID . "_" .
     $genomic_align->dnafrag_id . "_" .
     $genomic_align->dnafrag_start . "_" .
-    $genomic_align->dnafrag_end->genome_db->dbID . "_";
+    $genomic_align->dnafrag_end . "_";
 
   return $name;
 }
