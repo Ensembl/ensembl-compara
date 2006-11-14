@@ -1,0 +1,24 @@
+#! /usr/local/bin/perl
+
+use strict;
+use warnings;
+no warnings "uninitialized";
+
+use EnsEMBL::Web::User::Record;
+use EnsEMBL::Web::Document::HTML::SpeciesList;
+
+my $T = new CGI;
+my $favourites= $T->param('favourites');
+my $list = $T->param('list');
+
+my $user = EnsEMBL::Web::Object::User->new({ id => $ENV{'ENSEMBL_USER_ID'}});
+
+my ($record) = $user->species_records;
+if ($record) {
+  $record->delete
+}
+
+my $url = "/index.html";
+print "Location: $url";
+
+1;

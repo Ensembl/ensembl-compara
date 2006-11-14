@@ -4,6 +4,7 @@ package dataview;
 
 use EnsEMBL::Web::Document::DataView;
 use EnsEMBL::Web::Interface::PageDefinition;
+use EnsEMBL::Web::Interface::FormDefinition;
 use EnsEMBL::Web::DBSQL::DataDefinition;
 use EnsEMBL::Web::DBSQL::ViewAdaptor;
 use EnsEMBL::Web::DBSQL::Relationship::HasMany;
@@ -45,13 +46,13 @@ $page->add_text('You can create a new group of users here. You will automaticall
 $page->add_configuration_element('level', 'administrator');
 $page->add_form_element('name', "Your group name");
 $page->add_form_element('blurb', "A description of your group");
-$page->add_form_element('type', "Type", { 'labels' => {
-                                                      'open' => 'an open group'
-                                                    },
-                                          'values' => {
-                                                      'open' => '1'
-                                                    }
-                                        });
+
+$page->add_form_element('type', "Type", EnsEMBL::Web::Interface::FormDefinition->new((
+                                        labels => [ { "open" => "Open group" }, 
+                                                    { "restricted" => "Restricted group" },
+                                                    { "private" => "Private group" },
+                                                  ]
+                       )));
 
 EnsEMBL::Web::Document::DataView::simple('User', $page);
 
