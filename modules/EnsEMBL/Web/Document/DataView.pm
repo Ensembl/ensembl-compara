@@ -22,7 +22,7 @@ sub simple {
 
   my $result = undef;
 
-  if ($cgi->param('action')) {
+  if ($cgi->param('dataview_action')) {
     my $action = $definition->action;
     my $adaptor = $definition->data_definition->adaptor;
     my $user = undef;

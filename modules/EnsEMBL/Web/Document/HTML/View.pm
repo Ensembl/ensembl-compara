@@ -156,7 +156,7 @@ sub print_form_header {
   my $user_id = $ENV{'ENSEMBL_USER_ID'};
   my $id = CGI->new()->param('id');
   $self->print('<form method="POST"><ul>' . "\n");
-  $self->print('<input type="hidden" name="action" value="' . $page->action . '" />'. "\n");
+  $self->print('<input type="hidden" name="dataview_action" value="' . $page->action . '" />'. "\n");
 
   if ($id) {
     $self->print('<input type="hidden" name="id" value="' . $id . '" />'. "\n");
