@@ -86,7 +86,7 @@ ul.favourites-species-list {
   padding-left: 20px;
 }
 
-ul#favourites_list li, ul#species_list li { cursor:pointer; }
+ul#favourites_list li, ul#species_list li { cursor:move; }
 
 div.tab_content_panel {
   padding: 0px 5px 5px 5px;
