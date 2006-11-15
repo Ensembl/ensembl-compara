@@ -265,6 +265,24 @@ sub fetch_species {
     return $results;
 }
 
+sub fetch_species_id {
+### Fetches ID of a named Ensembl species  
+### Arguments: species name (string)
+### Returns integer
+
+    my ($self, $name) = @_;
+    my $results = {};
+
+    return unless $self->db;
+    return unless ($name && $name =~ /^[a-z]+_[a-z]+$/i);
+
+    my $sql = qq(SELECT species_id FROM species WHERE name = "$name");
+
+    my $T = $self->db->selectrow_arrayref($sql);
+    return unless $T;
+    return $T->[0];
+}
+
 sub fetch_cats {
 ### Fetches names of Ensembl news categories 
 ### Returns arrayref of hashes containing category details
@@ -299,6 +317,31 @@ sub fetch_cats {
     return $results;
 }
 
+sub fetch_cat_id {
+### Fetches ID of a category by code or name  
+### Arguments: category code or name (string)
+### Returns integer
+
+    my ($self, $string) = @_;
+
+    return unless $self->db;
+    return unless ($string);
+    
+
+    my $sql = qq(SELECT news_cat_id FROM news_cat);
+    if ($string =~ /^[a-z]+$/) { ## code values are single lower-case word
+      $sql .= qq( WHERE code = "$string");
+    }
+    else {
+      $sql .= qq( WHERE name = "$string");
+    }
+
+    my $T = $self->db->selectrow_arrayref($sql);
+    return unless $T;
+    return $T->[0];
+}
+
+
 sub fetch_random_ad {
   my $self = shift;
   return unless $self->db;
@@ -321,6 +364,74 @@ sub fetch_random_ad {
   };
   return $result;
 }
+
+sub fetch_species_data {
+
+### Select query to get data for species lists, including vega, pre and previous release 
+    my $self = shift;
+    my $release_num = shift;
+    my @results;
+
+    return [] unless $self->db;
+
+    my $sql = qq(
+        SELECT 
+                s.species_id, 
+                s.name, 
+                s.vega, 
+                rs.assembly_name,
+                rs.pre_name
+        FROM 
+                release_species rs,
+                species s
+        WHERE
+                s.species_id = rs.species_id
+                and release_id = $release_num
+    );
+
+    my $T = $self->db->selectall_arrayref($sql);
+    return [] unless $T;
+
+    for (my $i=0; $i<scalar(@$T);$i++) {
+        my @array = @{$T->[$i]};
+        $results[$array[0]] = {
+            'name'      => $array[1],
+            'vega'      => $array[2],
+            'assembly'  => $array[3],
+            'pre'       => $array[4],
+          };
+    }
+
+    my $prev_rel = $release_num - 1;
+    $sql = qq(
+        SELECT
+                s.species_id,
+                rs.assembly_name,
+                rs.pre_name
+        FROM
+                release_species rs,
+                species s
+        WHERE
+                s.species_id = rs.species_id
+                and release_id = $prev_rel
+
+    );
+
+    my $P = $self->db->selectall_arrayref($sql);
+    return [] unless $P;
+
+    for (my $i=0; $i<scalar(@$P);$i++) {
+      my @array = @{$P->[$i]};
+      my $sp_id = $array[0];
+      if ($results[$sp_id]) {
+        $results[$sp_id]{'prev_assembly'} = $array[1];
+        $results[$sp_id]{'prev_pre'}      = $array[2];
+      }
+    }
+
+    return \@results;
+}
+
 
 #------------------------- Select queries for archive.ensembl.org -------------
 
