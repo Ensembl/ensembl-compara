@@ -81,6 +81,66 @@ div.white a { text-decoration:none; }
 
 div.pre { color:#339966; background-color:#eefff8; border:1px solid #aaeecc; }
 
+ul.favourites-species-list {
+  margin: 10px 0px 0px 0px;
+  padding-left: 20px;
+}
+
+div.tab_content_panel {
+  padding: 0px 5px 5px 5px;
+}
+
+div.tab_footer {
+  padding: 4px;
+}
+
+div.tab a, div.tab a:link, div.tab a:visited {
+  text-decoration: none;
+}
+
+div.selected a, div.selected a:link, div.selected a:visited {
+  color: #111;
+}
+
+#pre_tab, #pre {
+  color:#339966;
+  background-color:#eefff8;
+}
+
+#pre_tab selected {
+  border-bottom: 1px solid #eefff8; 
+}
+
+div.tab {
+  position: relative;
+  left: 0px;
+  top: 1px;
+  float: left;
+  width: 35%;
+  padding: 5px;
+  background: [[BACKGROUND3]];
+  border-top: 1px solid [[BACKGROUND1]];
+  border-right: 1px solid [[BACKGROUND1]];
+  border-left: 1px solid [[BACKGROUND1]];
+  border-bottom: 1px solid [[BACKGROUND1]];
+  margin-right: 3px;
+}
+
+div.selected {
+  background: #fff;
+  border-bottom: 1px solid white;
+  font-weight: bold;
+}
+
+div.tab_content {
+  border: 1px solid [[BACKGROUND1]];
+  padding: 5px;
+}
+
+div.pre_content {
+  background-color:#eefff8
+}
+
 
 /* LISTS */
 #page ol li { list-style-type:decimal; list-style-image:none; }
