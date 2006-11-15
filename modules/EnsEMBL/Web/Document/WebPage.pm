@@ -109,7 +109,6 @@ sub configure {
     $objecttype = 'Static';
   }
   $objecttype = 'DAS' if ($objecttype =~ /^DAS::.+/);
-warn "*** Object $objecttype";
 
   my $flag = 0;
   my @T = ('EnsEMBL::Web', '', @{$ENSEMBL_PLUGINS});
