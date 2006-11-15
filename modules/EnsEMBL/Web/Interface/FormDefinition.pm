@@ -78,7 +78,7 @@ sub label_for_field {
   ### Returns the label for a particular field.
   my ($self, $name) = @_;
   foreach my $field (@{ $self->labels }) {
-    if ($field->{name} eq $name) {
+    if ($field->{name} && $name && ($field->{name} eq $name)) {
       return $field->{label};
     }
   }
