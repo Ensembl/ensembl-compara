@@ -486,6 +486,8 @@ sub _objs_from_sth {
     push @pafs, $paf;
 
   }
+  $sth->finish;
+
   return \@pafs
 }
 
