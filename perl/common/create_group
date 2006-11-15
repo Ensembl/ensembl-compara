@@ -11,11 +11,6 @@ use EnsEMBL::Web::DBSQL::Relationship::HasMany;
 
 my $page = EnsEMBL::Web::Interface::PageDefinition->new();
 my $data = EnsEMBL::Web::DBSQL::DataDefinition->new();
-my $hostname = "ecs3";
-my $port = "3307";
-my $database = "ensembl_web_user_db";
-my $username = "ensadmin";
-my $password = "ensembl";
 
 $data->adaptor(EnsEMBL::Web::DBSQL::ViewAdaptor->new(( 
                                                        hostname => $hostname,
