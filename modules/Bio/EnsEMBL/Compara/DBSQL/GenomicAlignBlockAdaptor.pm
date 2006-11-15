@@ -177,7 +177,9 @@ sub store {
   if (!defined($genomic_align_block->method_link_species_set->dbID)) {
     throw("Attached Bio::EnsEMBL::Compara::MethodLinkSpeciesSet object has no dbID");
   }
-  throw if (!$genomic_align_block->genomic_align_array);
+  if (!$genomic_align_block->genomic_align_array or !@{$genomic_align_block->genomic_align_array}) {
+    throw("This block does not contain any GenomicAlign. Nothing to store!");
+  }
   foreach my $genomic_align (@{$genomic_align_block->genomic_align_array}) {
     # check if every GenomicAlgin has a dbID
     if (!defined($genomic_align->dnafrag->dbID)) {
@@ -312,6 +314,9 @@ sub fetch_by_dbID {
                           -perc_id => $perc_id,
                           -length => $length
                   );
+    if (!$self->lazy_loading) {
+      $genomic_align_block = $self->retrieve_all_direct_attributes($genomic_align_block);
+    }
   }
 
   return $genomic_align_block;
