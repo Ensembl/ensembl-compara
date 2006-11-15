@@ -177,7 +177,7 @@ sub store {
   if (!defined($genomic_align_block->method_link_species_set->dbID)) {
     throw("Attached Bio::EnsEMBL::Compara::MethodLinkSpeciesSet object has no dbID");
   }
-  if (!$genomic_align_block->genomic_align_array or !@{$genomic_align_block->genomic_align_array}) {
+  if (!$genomic_align_block->genomic_align_array or @{$genomic_align_block->genomic_align_array} < 2) {
     throw("This block does not contain any GenomicAlign. Nothing to store!");
   }
   foreach my $genomic_align (@{$genomic_align_block->genomic_align_array}) {
