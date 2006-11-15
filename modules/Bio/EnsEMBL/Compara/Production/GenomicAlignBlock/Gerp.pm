@@ -774,6 +774,26 @@ sub _update_tree {
 	$child->disavow_parent;
     }
     
+    ## Gerp wants unrooted trees. Takes one of the two children and attach the other one to it
+    if ($tree->get_child_count() == 2 and scalar(@{$tree->get_all_leaves()}) >= 3) {
+      my $distance = $tree->children->[0]->distance_to_parent +
+          $tree->children->[1]->distance_to_parent;
+      my $new_root;
+      my $new_child;
+      if ($tree->children->[0]->get_child_count >= 2) {
+        $new_root = $tree->children->[0];
+        $new_child = $tree->children->[1];
+      } else {
+        $new_root = $tree->children->[1];
+        $new_child = $tree->children->[0];
+      }
+      $new_root->disavow_parent();
+      $new_child->disavow_parent;
+      $new_child->distance_to_parent($distance);
+      $new_root->add_child($new_child);
+      $tree = $new_root;
+    }
+
     return $tree;
 }
 
