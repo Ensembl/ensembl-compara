@@ -462,6 +462,8 @@ sub _parse_cons_file {
 		#back but I need to reset the dbID in this case otherwise I end
 		#up trying to store the original gab again!
 		if (defined $constrained_gab->dbID && $constrained_gab->dbID == $gab->dbID) {
+		    ## This loads the underlying GenomicAlign objects before deleting the internal IDs
+		    $gab->get_all_GenomicAligns;
 		    $constrained_gab->dbID(0);
 		    foreach my $genomic_align (@{$constrained_gab->get_all_GenomicAligns}) {
 			$genomic_align->dbID(0);
