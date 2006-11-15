@@ -92,8 +92,8 @@ function contigview_init( id_1, id_2 ) {
 /* create panel specific red boxes */
     init_view(n);
   }
-  cv_draw_red_boxes( id_1, id_2 );
-  update_red_boxes();
+  //cv_draw_red_boxes( id_1, id_2 );
+  //update_red_boxes();
 }
 
 function update_red_boxes() {

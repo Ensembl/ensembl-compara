@@ -1,4 +1,4 @@
-/*  Prototype JavaScript framework, version 1.5.0_rc1
+/*  Prototype JavaScript framework, version 1.4.0
  *  (c) 2005 Sam Stephenson <sam@conio.net>
  *
  *  Prototype is freely distributable under the terms of an MIT-style license.
@@ -7,14 +7,11 @@
 /*--------------------------------------------------------------------------*/
 
 var Prototype = {
-  Version: '1.5.0_rc1',
-  BrowserFeatures: {
-    XPath: !!document.evaluate
-  },
-
+  Version: '1.4.0',
   ScriptFragment: '(?:<script.*?>)((\n|\r|.)*?)(?:<\/script>)',
+
   emptyFunction: function() {},
-  K: function(x) { return x }
+  K: function(x) {return x}
 }
 
 var Class = {
@@ -28,42 +25,22 @@ var Class = {
 var Abstract = new Object();
 
 Object.extend = function(destination, source) {
-  for (var property in source) {
+  for (property in source) {
     destination[property] = source[property];
   }
   return destination;
 }
 
-Object.extend(Object, {
-  inspect: function(object) {
-    try {
-      if (object === undefined) return 'undefined';
-      if (object === null) return 'null';
-      return object.inspect ? object.inspect() : object.toString();
-    } catch (e) {
-      if (e instanceof RangeError) return '...';
-      throw e;
-    }
-  },
-
-  keys: function(object) {
-    var keys = [];
-    for (var property in object)
-      keys.push(property);
-    return keys;
-  },
-
-  values: function(object) {
-    var values = [];
-    for (var property in object)
-      values.push(object[property]);
-    return values;
-  },
-
-  clone: function(object) {
-    return Object.extend({}, object);
+Object.inspect = function(object) {
+  try {
+    if (object == undefined) return 'undefined';
+    if (object == null) return 'null';
+    return object.inspect ? object.inspect() : object.toString();
+  } catch (e) {
+    if (e instanceof RangeError) return '...';
+    throw e;
   }
-});
+}
 
 Function.prototype.bind = function() {
   var __method = this, args = $A(arguments), object = args.shift();
@@ -73,9 +50,9 @@ Function.prototype.bind = function() {
 }
 
 Function.prototype.bindAsEventListener = function(object) {
-  var __method = this, args = $A(arguments), object = args.shift();
+  var __method = this;
   return function(event) {
-    return __method.apply(object, [( event || window.event)].concat(args).concat($A(arguments)));
+    return __method.call(object, event || window.event);
   }
 }
 
@@ -125,69 +102,40 @@ PeriodicalExecuter.prototype = {
   },
 
   registerCallback: function() {
-    this.timer = setInterval(this.onTimerEvent.bind(this), this.frequency * 1000);
-  },
-
-  stop: function() {
-    if (!this.timer) return;
-    clearInterval(this.timer);
-    this.timer = null;
+    setInterval(this.onTimerEvent.bind(this), this.frequency * 1000);
   },
 
   onTimerEvent: function() {
     if (!this.currentlyExecuting) {
       try {
         this.currentlyExecuting = true;
-        this.callback(this);
+        this.callback();
       } finally {
         this.currentlyExecuting = false;
       }
     }
   }
 }
+
+/*--------------------------------------------------------------------------*/
+
+function $() {
+  var elements = new Array();
+
+  for (var i = 0; i < arguments.length; i++) {
+    var element = arguments[i];
+    if (typeof element == 'string')
+      element = document.getElementById(element);
+
+    if (arguments.length == 1)
+      return element;
+
+    elements.push(element);
+  }
+
+  return elements;
+}
 Object.extend(String.prototype, {
-  gsub: function(pattern, replacement) {
-    var result = '', source = this, match;
-    replacement = arguments.callee.prepareReplacement(replacement);
-
-    while (source.length > 0) {
-      if (match = source.match(pattern)) {
-        result += source.slice(0, match.index);
-        result += (replacement(match) || '').toString();
-        source  = source.slice(match.index + match[0].length);
-      } else {
-        result += source, source = '';
-      }
-    }
-    return result;
-  },
-
-  sub: function(pattern, replacement, count) {
-    replacement = this.gsub.prepareReplacement(replacement);
-    count = count === undefined ? 1 : count;
-
-    return this.gsub(pattern, function(match) {
-      if (--count < 0) return match[0];
-      return replacement(match);
-    });
-  },
-
-  scan: function(pattern, iterator) {
-    this.gsub(pattern, iterator);
-    return this;
-  },
-
-  truncate: function(length, truncation) {
-    length = length || 30;
-    truncation = truncation === undefined ? '...' : truncation;
-    return this.length > length ?
-      this.slice(0, length - truncation.length) + truncation : this;
-  },
-
-  strip: function() {
-    return this.replace(/^\s+/, '').replace(/\s+$/, '');
-  },
-
   stripTags: function() {
     return this.replace(/<\/?[^>]+>/gi, '');
   },
@@ -205,7 +153,7 @@ Object.extend(String.prototype, {
   },
 
   evalScripts: function() {
-    return this.extractScripts().map(function(script) { return eval(script) });
+    return this.extractScripts().map(eval);
   },
 
   escapeHTML: function() {
@@ -222,13 +170,10 @@ Object.extend(String.prototype, {
   },
 
   toQueryParams: function() {
-    var match = this.strip().match(/[^?]*$/)[0];
-    if (!match) return {};
-    var pairs = match.split('&');
+    var pairs = this.match(/^\??(.*)$/)[1].split('&');
     return pairs.inject({}, function(params, pairString) {
-      var pair  = pairString.split('=');
-      var value = pair[1] ? decodeURIComponent(pair[1]) : undefined;
-      params[decodeURIComponent(pair[0])] = value;
+      var pair = pairString.split('=');
+      params[pair[0]] = pair[1];
       return params;
     });
   },
@@ -245,7 +190,7 @@ Object.extend(String.prototype, {
       ? oStringList[0].charAt(0).toUpperCase() + oStringList[0].substring(1)
       : oStringList[0];
 
-    for (var i = 1, length = oStringList.length; i < length; i++) {
+    for (var i = 1, len = oStringList.length; i < len; i++) {
       var s = oStringList[i];
       camelizedString += s.charAt(0).toUpperCase() + s.substring(1);
     }
@@ -253,39 +198,12 @@ Object.extend(String.prototype, {
     return camelizedString;
   },
 
-  inspect: function(useDoubleQuotes) {
-    var escapedString = this.replace(/\\/g, '\\\\');
-    if (useDoubleQuotes)
-      return '"' + escapedString.replace(/"/g, '\\"') + '"';
-    else
-      return "'" + escapedString.replace(/'/g, '\\\'') + "'";
+  inspect: function() {
+    return "'" + this.replace('\\', '\\\\').replace("'", '\\\'') + "'";
   }
 });
 
-String.prototype.gsub.prepareReplacement = function(replacement) {
-  if (typeof replacement == 'function') return replacement;
-  var template = new Template(replacement);
-  return function(match) { return template.evaluate(match) };
-}
-
 String.prototype.parseQuery = String.prototype.toQueryParams;
-
-var Template = Class.create();
-Template.Pattern = /(^|.|\r|\n)(#\{(.*?)\})/;
-Template.prototype = {
-  initialize: function(template, pattern) {
-    this.template = template.toString();
-    this.pattern  = pattern || Template.Pattern;
-  },
-
-  evaluate: function(object) {
-    return this.template.gsub(this.pattern, function(match) {
-      var before = match[1];
-      if (before == '\\') return match[2];
-      return before + (object[match[3]] || '').toString();
-    });
-  }
-}
 
 var $break    = new Object();
 var $continue = new Object();
@@ -304,14 +222,6 @@ var Enumerable = {
     } catch (e) {
       if (e != $break) throw e;
     }
-    return this;
-  },
-
-  eachSlice: function(number, iterator) {
-    var index = -number, slices = [], array = this.toArray();
-    while ((index += number) < array.length)
-      slices.push(array.slice(index, index+number));
-    return slices.collect(iterator || Prototype.K);
   },
 
   all: function(iterator) {
@@ -324,7 +234,7 @@ var Enumerable = {
   },
 
   any: function(iterator) {
-    var result = false;
+    var result = true;
     this.each(function(value, index) {
       if (result = !!(iterator || Prototype.K)(value, index))
         throw $break;
@@ -340,7 +250,7 @@ var Enumerable = {
     return results;
   },
 
-  detect: function(iterator) {
+  detect: function (iterator) {
     var result;
     this.each(function(value, index) {
       if (iterator(value, index)) {
@@ -381,15 +291,6 @@ var Enumerable = {
     return found;
   },
 
-  inGroupsOf: function(number, fillWith) {
-    fillWith = fillWith || null;
-    var results = this.eachSlice(number);
-    if (results.length > 0) (number - results.last().length).times(function() {
-      results.last().push(fillWith)
-    });
-    return results;
-  },
-
   inject: function(memo, iterator) {
     this.each(function(value, index) {
       memo = iterator(memo, value, index);
@@ -408,7 +309,7 @@ var Enumerable = {
     var result;
     this.each(function(value, index) {
       value = (iterator || Prototype.K)(value, index);
-      if (result == undefined || value >= result)
+      if (value >= (result || value))
         result = value;
     });
     return result;
@@ -418,7 +319,7 @@ var Enumerable = {
     var result;
     this.each(function(value, index) {
       value = (iterator || Prototype.K)(value, index);
-      if (result == undefined || value < result)
+      if (value <= (result || value))
         result = value;
     });
     return result;
@@ -470,7 +371,8 @@ var Enumerable = {
 
     var collections = [this].concat(args).map($A);
     return this.map(function(value, index) {
-      return iterator(collections.pluck(index));
+      iterator(value = collections.pluck(index));
+      return value;
     });
   },
 
@@ -492,7 +394,7 @@ var $A = Array.from = function(iterable) {
     return iterable.toArray();
   } else {
     var results = [];
-    for (var i = 0, length = iterable.length; i < length; i++)
+    for (var i = 0; i < iterable.length; i++)
       results.push(iterable[i]);
     return results;
   }
@@ -500,12 +402,11 @@ var $A = Array.from = function(iterable) {
 
 Object.extend(Array.prototype, Enumerable);
 
-if (!Array.prototype._reverse)
-  Array.prototype._reverse = Array.prototype.reverse;
+Array.prototype._reverse = Array.prototype.reverse;
 
 Object.extend(Array.prototype, {
   _each: function(iterator) {
-    for (var i = 0, length = this.length; i < length; i++)
+    for (var i = 0; i < this.length; i++)
       iterator(this[i]);
   },
 
@@ -530,7 +431,7 @@ Object.extend(Array.prototype, {
 
   flatten: function() {
     return this.inject([], function(array, value) {
-      return array.concat(value && value.constructor == Array ?
+      return array.concat(value.constructor == Array ?
         value.flatten() : [value]);
     });
   },
@@ -543,7 +444,7 @@ Object.extend(Array.prototype, {
   },
 
   indexOf: function(object) {
-    for (var i = 0, length = this.length; i < length; i++)
+    for (var i = 0; i < this.length; i++)
       if (this[i] == object) return i;
     return -1;
   },
@@ -552,29 +453,21 @@ Object.extend(Array.prototype, {
     return (inline !== false ? this : this.toArray())._reverse();
   },
 
-  reduce: function() {
-    return this.length > 1 ? this : this[0];
-  },
-
-  uniq: function() {
-    return this.inject([], function(array, value) {
-      return array.include(value) ? array : array.concat([value]);
-    });
-  },
-
-  clone: function() {
-    return [].concat(this);
+  shift: function() {
+    var result = this[0];
+    for (var i = 0; i < this.length - 1; i++)
+      this[i] = this[i + 1];
+    this.length--;
+    return result;
   },
 
   inspect: function() {
     return '[' + this.map(Object.inspect).join(', ') + ']';
   }
 });
-
-Array.prototype.toArray = Array.prototype.clone;
 var Hash = {
   _each: function(iterator) {
-    for (var key in this) {
+    for (key in this) {
       var value = this[key];
       if (typeof value == 'function') continue;
 
@@ -594,7 +487,7 @@ var Hash = {
   },
 
   merge: function(hash) {
-    return $H(hash).inject(this, function(mergedHash, pair) {
+    return $H(hash).inject($H(this), function(mergedHash, pair) {
       mergedHash[pair.key] = pair.value;
       return mergedHash;
     });
@@ -602,8 +495,6 @@ var Hash = {
 
   toQueryString: function() {
     return this.map(function(pair) {
-      if (!pair.value && pair.value !== 0) pair[1] = '';
-      if (!pair.key) return;
       return pair.map(encodeURIComponent).join('=');
     }).join('&');
   },
@@ -632,10 +523,10 @@ Object.extend(ObjectRange.prototype, {
 
   _each: function(iterator) {
     var value = this.start;
-    while (this.include(value)) {
+    do {
       iterator(value);
       value = value.succ();
-    }
+    } while (this.include(value));
   },
 
   include: function(value) {
@@ -654,9 +545,9 @@ var $R = function(start, end, exclusive) {
 var Ajax = {
   getTransport: function() {
     return Try.these(
-      function() {return new XMLHttpRequest()},
       function() {return new ActiveXObject('Msxml2.XMLHTTP')},
-      function() {return new ActiveXObject('Microsoft.XMLHTTP')}
+      function() {return new ActiveXObject('Microsoft.XMLHTTP')},
+      function() {return new XMLHttpRequest()}
     ) || false;
   },
 
@@ -670,18 +561,18 @@ Ajax.Responders = {
     this.responders._each(iterator);
   },
 
-  register: function(responder) {
-    if (!this.include(responder))
-      this.responders.push(responder);
+  register: function(responderToAdd) {
+    if (!this.include(responderToAdd))
+      this.responders.push(responderToAdd);
   },
 
-  unregister: function(responder) {
-    this.responders = this.responders.without(responder);
+  unregister: function(responderToRemove) {
+    this.responders = this.responders.without(responderToRemove);
   },
 
   dispatch: function(callback, request, transport, json) {
     this.each(function(responder) {
-      if (typeof responder[callback] == 'function') {
+      if (responder[callback] && typeof responder[callback] == 'function') {
         try {
           responder[callback].apply(responder, [request, transport, json]);
         } catch (e) {}
@@ -696,6 +587,7 @@ Ajax.Responders.register({
   onCreate: function() {
     Ajax.activeRequestCount++;
   },
+
   onComplete: function() {
     Ajax.activeRequestCount--;
   }
@@ -707,15 +599,19 @@ Ajax.Base.prototype = {
     this.options = {
       method:       'post',
       asynchronous: true,
-      contentType:  'application/x-www-form-urlencoded',
-      encoding:     'UTF-8',
       parameters:   ''
     }
     Object.extend(this.options, options || {});
+  },
 
-    this.options.method = this.options.method.toLowerCase();
-    this.options.parameters = $H(typeof this.options.parameters == 'string' ?
-      this.options.parameters.toQueryParams() : this.options.parameters);
+  responseIsSuccess: function() {
+    return this.transport.status == undefined
+        || this.transport.status == 0
+        || (this.transport.status >= 200 && this.transport.status < 300);
+  },
+
+  responseIsFailure: function() {
+    return !this.responseIsSuccess();
   }
 }
 
@@ -731,137 +627,74 @@ Ajax.Request.prototype = Object.extend(new Ajax.Base(), {
   },
 
   request: function(url) {
-    var params = this.options.parameters;
-    if (params.any()) params['_'] = '';
-
-    if (!['get', 'post'].include(this.options.method)) {
-      // simulate other verbs over post
-      params['_method'] = this.options.method;
-      this.options.method = 'post';
-    }
-
-    this.url = url;
-
-    // when GET, append parameters to URL
-    if (this.options.method == 'get' && params.any())
-      this.url += (this.url.indexOf('?') >= 0 ? '&' : '?') +
-        params.toQueryString();
+    var parameters = this.options.parameters || '';
+    if (parameters.length > 0) parameters += '&_=';
 
     try {
+      this.url = url;
+      if (this.options.method == 'get' && parameters.length > 0)
+        this.url += (this.url.match(/\?/) ? '&' : '?') + parameters;
+
       Ajax.Responders.dispatch('onCreate', this, this.transport);
 
-      this.transport.open(this.options.method.toUpperCase(), this.url,
-        this.options.asynchronous, this.options.username,
-        this.options.password);
+      this.transport.open(this.options.method, this.url,
+        this.options.asynchronous);
 
-      if (this.options.asynchronous)
-        setTimeout(function() { this.respondToReadyState(1) }.bind(this), 10);
+      if (this.options.asynchronous) {
+        this.transport.onreadystatechange = this.onStateChange.bind(this);
+        setTimeout((function() {this.respondToReadyState(1)}).bind(this), 10);
+      }
 
-      this.transport.onreadystatechange = this.onStateChange.bind(this);
       this.setRequestHeaders();
 
-      var body = this.options.method == 'post' ?
-        (this.options.postBody || params.toQueryString()) : null;
+      var body = this.options.postBody ? this.options.postBody : parameters;
+      this.transport.send(this.options.method == 'post' ? body : null);
 
-      this.transport.send(body);
-
-      /* Force Firefox to handle ready state 4 for synchronous requests */
-      if (!this.options.asynchronous && this.transport.overrideMimeType)
-        this.onStateChange();
-    }
-    catch (e) {
+    } catch (e) {
       this.dispatchException(e);
     }
+  },
+
+  setRequestHeaders: function() {
+    var requestHeaders =
+      ['X-Requested-With', 'XMLHttpRequest',
+       'X-Prototype-Version', Prototype.Version];
+
+    if (this.options.method == 'post') {
+      requestHeaders.push('Content-type',
+        'application/x-www-form-urlencoded');
+
+      /* Force "Connection: close" for Mozilla browsers to work around
+       * a bug where XMLHttpReqeuest sends an incorrect Content-length
+       * header. See Mozilla Bugzilla #246651.
+       */
+      if (this.transport.overrideMimeType)
+        requestHeaders.push('Connection', 'close');
+    }
+
+    if (this.options.requestHeaders)
+      requestHeaders.push.apply(requestHeaders, this.options.requestHeaders);
+
+    for (var i = 0; i < requestHeaders.length; i += 2)
+      this.transport.setRequestHeader(requestHeaders[i], requestHeaders[i+1]);
   },
 
   onStateChange: function() {
     var readyState = this.transport.readyState;
-    if (readyState > 1)
+    if (readyState != 1)
       this.respondToReadyState(this.transport.readyState);
   },
 
-  setRequestHeaders: function() {
-    var headers = {
-      'X-Requested-With': 'XMLHttpRequest',
-      'X-Prototype-Version': Prototype.Version,
-      'Accept': 'text/javascript, text/html, application/xml, text/xml, */*'
-    };
-
-    if (this.options.method == 'post') {
-      headers['Content-type'] = this.options.contentType +
-        (this.options.encoding ? '; charset=' + this.options.encoding : '');
-
-      /* Force "Connection: close" for older Mozilla browsers to work
-       * around a bug where XMLHttpRequest sends an incorrect
-       * Content-length header. See Mozilla Bugzilla #246651.
-       */
-      if (this.transport.overrideMimeType &&
-          (navigator.userAgent.match(/Gecko\/(\d{4})/) || [0,2005])[1] < 2005)
-            headers['Connection'] = 'close';
-    }
-
-    // user-defined headers
-    if (typeof this.options.requestHeaders == 'object') {
-      var extras = this.options.requestHeaders;
-
-      if (typeof extras.push == 'function')
-        for (var i = 0; i < extras.length; i += 2)
-          headers[extras[i]] = extras[i+1];
-      else
-        $H(extras).each(function(pair) { headers[pair.key] = pair.value });
-    }
-
-    for (var name in headers)
-      this.transport.setRequestHeader(name, headers[name]);
-  },
-
-  success: function() {
-    return !this.transport.status
-        || (this.transport.status >= 200 && this.transport.status < 300);
-  },
-
-  respondToReadyState: function(readyState) {
-    var state = Ajax.Request.Events[readyState];
-    var transport = this.transport, json = this.evalJSON();
-
-    if (state == 'Complete') {
-      try {
-        (this.options['on' + this.transport.status]
-         || this.options['on' + (this.success() ? 'Success' : 'Failure')]
-         || Prototype.emptyFunction)(transport, json);
-      } catch (e) {
-        this.dispatchException(e);
-      }
-    }
-
-    try {
-      (this.options['on' + state] || Prototype.emptyFunction)(transport, json);
-      Ajax.Responders.dispatch('on' + state, this, transport, json);
-    } catch (e) {
-      this.dispatchException(e);
-    }
-
-    if (state == 'Complete') {
-      if ((this.getHeader('Content-type') || '').strip().
-        match(/^(text|application)\/(x-)?(java|ecma)script(;.*)?$/i))
-          this.evalResponse();
-
-      // avoid memory leak in MSIE: clean up
-      this.transport.onreadystatechange = Prototype.emptyFunction;
-    }
-  },
-
-  getHeader: function(name) {
+  header: function(name) {
     try {
       return this.transport.getResponseHeader(name);
-    } catch (e) { return null }
+    } catch (e) {}
   },
 
   evalJSON: function() {
     try {
-      var json = this.getHeader('X-JSON');
-      return json ? eval('(' + json + ')') : null;
-    } catch (e) { return null }
+      return eval(this.header('X-JSON'));
+    } catch (e) {}
   },
 
   evalResponse: function() {
@@ -870,6 +703,35 @@ Ajax.Request.prototype = Object.extend(new Ajax.Base(), {
     } catch (e) {
       this.dispatchException(e);
     }
+  },
+
+  respondToReadyState: function(readyState) {
+    var event = Ajax.Request.Events[readyState];
+    var transport = this.transport, json = this.evalJSON();
+
+    if (event == 'Complete') {
+      try {
+        (this.options['on' + this.transport.status]
+         || this.options['on' + (this.responseIsSuccess() ? 'Success' : 'Failure')]
+         || Prototype.emptyFunction)(transport, json);
+      } catch (e) {
+        this.dispatchException(e);
+      }
+
+      if ((this.header('Content-type') || '').match(/^text\/javascript/i))
+        this.evalResponse();
+    }
+
+    try {
+      (this.options['on' + event] || Prototype.emptyFunction)(transport, json);
+      Ajax.Responders.dispatch('on' + event, this, transport, json);
+    } catch (e) {
+      this.dispatchException(e);
+    }
+
+    /* Avoid memory leak in MSIE: clean up the oncomplete event handler */
+    if (event == 'Complete')
+      this.transport.onreadystatechange = Prototype.emptyFunction;
   },
 
   dispatchException: function(exception) {
@@ -882,37 +744,41 @@ Ajax.Updater = Class.create();
 
 Object.extend(Object.extend(Ajax.Updater.prototype, Ajax.Request.prototype), {
   initialize: function(container, url, options) {
-    this.container = {
-      success: (container.success || container),
-      failure: (container.failure || (container.success ? null : container))
+    this.containers = {
+      success: container.success ? $(container.success) : $(container),
+      failure: container.failure ? $(container.failure) :
+        (container.success ? null : $(container))
     }
 
     this.transport = Ajax.getTransport();
     this.setOptions(options);
 
     var onComplete = this.options.onComplete || Prototype.emptyFunction;
-    this.options.onComplete = (function(transport, param) {
+    this.options.onComplete = (function(transport, object) {
       this.updateContent();
-      onComplete(transport, param);
+      onComplete(transport, object);
     }).bind(this);
 
     this.request(url);
   },
 
   updateContent: function() {
-    var receiver = this.container[this.success() ? 'success' : 'failure'];
+    var receiver = this.responseIsSuccess() ?
+      this.containers.success : this.containers.failure;
     var response = this.transport.responseText;
 
-    if (!this.options.evalScripts) response = response.stripScripts();
+    if (!this.options.evalScripts)
+      response = response.stripScripts();
 
-    if (receiver = $(receiver)) {
-      if (this.options.insertion)
+    if (receiver) {
+      if (this.options.insertion) {
         new this.options.insertion(receiver, response);
-      else
-        receiver.update(response);
+      } else {
+        Element.update(receiver, response);
+      }
     }
 
-    if (this.success()) {
+    if (this.responseIsSuccess()) {
       if (this.onComplete)
         setTimeout(this.onComplete.bind(this), 10);
     }
@@ -941,7 +807,7 @@ Ajax.PeriodicalUpdater.prototype = Object.extend(new Ajax.Base(), {
   },
 
   stop: function() {
-    this.updater.options.onComplete = undefined;
+    this.updater.onComplete = undefined;
     clearTimeout(this.timer);
     (this.onComplete || Prototype.emptyFunction).apply(this, arguments);
   },
@@ -961,208 +827,55 @@ Ajax.PeriodicalUpdater.prototype = Object.extend(new Ajax.Base(), {
     this.updater = new Ajax.Updater(this.container, this.url, this.options);
   }
 });
-function $(element) {
-  if (arguments.length > 1) {
-    for (var i = 0, elements = [], length = arguments.length; i < length; i++)
-      elements.push($(arguments[i]));
-    return elements;
-  }
-  if (typeof element == 'string')
-    element = document.getElementById(element);
-  return Element.extend(element);
-}
-
-if (Prototype.BrowserFeatures.XPath) {
-  document._getElementsByXPath = function(expression, parentElement) {
-    var results = [];
-    var query = document.evaluate(expression, $(parentElement) || document,
-      null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
-    for (var i = 0, len = query.snapshotLength; i < len; i++)
-      results.push(query.snapshotItem(i));
-    return results;
-  }
-}
-
 document.getElementsByClassName = function(className, parentElement) {
-  if (Prototype.BrowserFeatures.XPath) {
-    var q = ".//*[contains(concat(' ', @class, ' '), ' " + className + " ')]";
-    return document._getElementsByXPath(q, parentElement);
-  } else {
-    var children = ($(parentElement) || document.body).getElementsByTagName('*');
-    var elements = [], child;
-    for (var i = 0, length = children.length; i < length; i++) {
-      child = children[i];
-      if (Element.hasClassName(child, className))
-        elements.push(Element.extend(child));
-    }
+  var children = ($(parentElement) || document.body).getElementsByTagName('*');
+  return $A(children).inject([], function(elements, child) {
+    if (child.className.match(new RegExp("(^|\\s)" + className + "(\\s|$)")))
+      elements.push(child);
     return elements;
-  }
+  });
 }
 
 /*--------------------------------------------------------------------------*/
 
-if (!window.Element)
+if (!window.Element) {
   var Element = new Object();
-
-Element.extend = function(element) {
-  if (!element) return;
-  if (_nativeExtensions || element.nodeType == 3) return element;
-
-  if (!element._extended && element.tagName && element != window) {
-    var methods = Object.clone(Element.Methods), cache = Element.extend.cache;
-
-    if (element.tagName == 'FORM')
-      Object.extend(methods, Form.Methods);
-    if (['INPUT', 'TEXTAREA', 'SELECT'].include(element.tagName))
-      Object.extend(methods, Form.Element.Methods);
-
-    for (var property in methods) {
-      var value = methods[property];
-      if (typeof value == 'function')
-        element[property] = cache.findOrStore(value);
-    }
-
-    var methods = Object.clone(Element.Methods.Simulated), cache = Element.extend.cache;
-    for (var property in methods) {
-      var value = methods[property];
-      if ('function' == typeof value && !(property in element))
-        element[property] = cache.findOrStore(value);
-    }
-  }
-
-  element._extended = true;
-  return element;
 }
 
-Element.extend.cache = {
-  findOrStore: function(value) {
-    return this[value] = this[value] || function() {
-      return value.apply(null, [this].concat($A(arguments)));
-    }
-  }
-}
-
-Element.Methods = {
+Object.extend(Element, {
   visible: function(element) {
     return $(element).style.display != 'none';
   },
 
-  toggle: function(element) {
-    element = $(element);
-    Element[Element.visible(element) ? 'hide' : 'show'](element);
-    return element;
+  toggle: function() {
+    for (var i = 0; i < arguments.length; i++) {
+      var element = $(arguments[i]);
+      Element[Element.visible(element) ? 'hide' : 'show'](element);
+    }
   },
 
-  hide: function(element) {
-    $(element).style.display = 'none';
-    return element;
+  hide: function() {
+    for (var i = 0; i < arguments.length; i++) {
+      var element = $(arguments[i]);
+      element.style.display = 'none';
+    }
   },
 
-  show: function(element) {
-    $(element).style.display = '';
-    return element;
+  show: function() {
+    for (var i = 0; i < arguments.length; i++) {
+      var element = $(arguments[i]);
+      element.style.display = '';
+    }
   },
 
   remove: function(element) {
     element = $(element);
     element.parentNode.removeChild(element);
-    return element;
   },
 
   update: function(element, html) {
-    html = typeof html == 'undefined' ? '' : html.toString();
     $(element).innerHTML = html.stripScripts();
     setTimeout(function() {html.evalScripts()}, 10);
-    return element;
-  },
-
-  replace: function(element, html) {
-    element = $(element);
-    if (element.outerHTML) {
-      element.outerHTML = html.stripScripts();
-    } else {
-      var range = element.ownerDocument.createRange();
-      range.selectNodeContents(element);
-      element.parentNode.replaceChild(
-        range.createContextualFragment(html.stripScripts()), element);
-    }
-    setTimeout(function() {html.evalScripts()}, 10);
-    return element;
-  },
-
-  inspect: function(element) {
-    element = $(element);
-    var result = '<' + element.tagName.toLowerCase();
-    $H({'id': 'id', 'className': 'class'}).each(function(pair) {
-      var property = pair.first(), attribute = pair.last();
-      var value = (element[property] || '').toString();
-      if (value) result += ' ' + attribute + '=' + value.inspect(true);
-    });
-    return result + '>';
-  },
-
-  recursivelyCollect: function(element, property) {
-    element = $(element);
-    var elements = [];
-    while (element = element[property])
-      if (element.nodeType == 1)
-        elements.push(Element.extend(element));
-    return elements;
-  },
-
-  ancestors: function(element) {
-    return $(element).recursivelyCollect('parentNode');
-  },
-
-  descendants: function(element) {
-    element = $(element);
-    return $A(element.getElementsByTagName('*'));
-  },
-
-  previousSiblings: function(element) {
-    return $(element).recursivelyCollect('previousSibling');
-  },
-
-  nextSiblings: function(element) {
-    return $(element).recursivelyCollect('nextSibling');
-  },
-
-  siblings: function(element) {
-    element = $(element);
-    return element.previousSiblings().reverse().concat(element.nextSiblings());
-  },
-
-  match: function(element, selector) {
-    element = $(element);
-    if (typeof selector == 'string')
-      selector = new Selector(selector);
-    return selector.match(element);
-  },
-
-  up: function(element, expression, index) {
-    return Selector.findElement($(element).ancestors(), expression, index);
-  },
-
-  down: function(element, expression, index) {
-    return Selector.findElement($(element).descendants(), expression, index);
-  },
-
-  previous: function(element, expression, index) {
-    return Selector.findElement($(element).previousSiblings(), expression, index);
-  },
-
-  next: function(element, expression, index) {
-    return Selector.findElement($(element).nextSiblings(), expression, index);
-  },
-
-  getElementsBySelector: function() {
-    var args = $A(arguments), element = $(args.shift());
-    return Selector.findChildElements(element, args);
-  },
-
-  getElementsByClassName: function(element, className) {
-    element = $(element);
-    return document.getElementsByClassName(className, element);
   },
 
   getHeight: function(element) {
@@ -1176,58 +889,31 @@ Element.Methods = {
 
   hasClassName: function(element, className) {
     if (!(element = $(element))) return;
-    var elementClassName = element.className;
-    if (elementClassName.length == 0) return false;
-    if (elementClassName == className ||
-        elementClassName.match(new RegExp("(^|\\s)" + className + "(\\s|$)")))
-      return true;
-    return false;
+    return Element.classNames(element).include(className);
   },
 
   addClassName: function(element, className) {
     if (!(element = $(element))) return;
-    Element.classNames(element).add(className);
-    return element;
+    return Element.classNames(element).add(className);
   },
 
   removeClassName: function(element, className) {
     if (!(element = $(element))) return;
-    Element.classNames(element).remove(className);
-    return element;
-  },
-
-  observe: function() {
-    Event.observe.apply(Event, arguments);
-    return $A(arguments).first();
-  },
-
-  stopObserving: function() {
-    Event.stopObserving.apply(Event, arguments);
-    return $A(arguments).first();
+    return Element.classNames(element).remove(className);
   },
 
   // removes whitespace-only text node children
   cleanWhitespace: function(element) {
     element = $(element);
-    var node = element.firstChild;
-    while (node) {
-      var nextNode = node.nextSibling;
+    for (var i = 0; i < element.childNodes.length; i++) {
+      var node = element.childNodes[i];
       if (node.nodeType == 3 && !/\S/.test(node.nodeValue))
-        element.removeChild(node);
-      node = nextNode;
+        Element.remove(node);
     }
-    return element;
   },
 
   empty: function(element) {
     return $(element).innerHTML.match(/^\s*$/);
-  },
-
-  childOf: function(element, ancestor) {
-    element = $(element), ancestor = $(ancestor);
-    while (element = element.parentNode)
-      if (element == ancestor) return true;
-    return false;
   },
 
   scrollTo: function(element) {
@@ -1235,7 +921,6 @@ Element.Methods = {
     var x = element.x ? element.x : element.offsetLeft,
         y = element.y ? element.y : element.offsetTop;
     window.scrollTo(x, y);
-    return element;
   },
 
   getStyle: function(element, style) {
@@ -1258,9 +943,8 @@ Element.Methods = {
 
   setStyle: function(element, style) {
     element = $(element);
-    for (var name in style)
+    for (name in style)
       element.style[name.camelize()] = style[name];
-    return element;
   },
 
   getDimensions: function(element) {
@@ -1297,7 +981,6 @@ Element.Methods = {
         element.style.left = 0;
       }
     }
-    return element;
   },
 
   undoPositioned: function(element) {
@@ -1310,105 +993,23 @@ Element.Methods = {
         element.style.bottom =
         element.style.right = '';
     }
-    return element;
   },
 
   makeClipping: function(element) {
     element = $(element);
-    if (element._overflow) return element;
-    element._overflow = element.style.overflow || 'auto';
+    if (element._overflow) return;
+    element._overflow = element.style.overflow;
     if ((Element.getStyle(element, 'overflow') || 'visible') != 'hidden')
       element.style.overflow = 'hidden';
-    return element;
   },
 
   undoClipping: function(element) {
     element = $(element);
-    if (!element._overflow) return element;
-    element.style.overflow = element._overflow == 'auto' ? '' : element._overflow;
-    element._overflow = null;
-    return element;
+    if (element._overflow) return;
+    element.style.overflow = element._overflow;
+    element._overflow = undefined;
   }
-}
-
-Element.Methods.Simulated = {
-  hasAttribute: function(element, attribute) {
-    return $(element).getAttributeNode(attribute).specified;
-  }
-}
-
-// IE is missing .innerHTML support for TABLE-related elements
-if(document.all){
-  Element.Methods.update = function(element, html) {
-    element = $(element);
-    html = typeof html == 'undefined' ? '' : html.toString();
-    var tagName = element.tagName.toUpperCase();
-    if (['THEAD','TBODY','TR','TD'].indexOf(tagName) > -1) {
-      var div = document.createElement('div');
-      switch (tagName) {
-        case 'THEAD':
-        case 'TBODY':
-          div.innerHTML = '<table><tbody>' +  html.stripScripts() + '</tbody></table>';
-          depth = 2;
-          break;
-        case 'TR':
-          div.innerHTML = '<table><tbody><tr>' +  html.stripScripts() + '</tr></tbody></table>';
-          depth = 3;
-          break;
-        case 'TD':
-          div.innerHTML = '<table><tbody><tr><td>' +  html.stripScripts() + '</td></tr></tbody></table>';
-          depth = 4;
-      }
-      $A(element.childNodes).each(function(node){
-        element.removeChild(node)
-      });
-      depth.times(function(){ div = div.firstChild });
-
-      $A(div.childNodes).each(
-        function(node){ element.appendChild(node) });
-    } else {
-      element.innerHTML = html.stripScripts();
-    }
-    setTimeout(function() {html.evalScripts()}, 10);
-    return element;
-  }
-}
-
-Object.extend(Element, Element.Methods);
-
-var _nativeExtensions = false;
-
-if(/Konqueror|Safari|KHTML/.test(navigator.userAgent))
-  ['', 'Form', 'Input', 'TextArea', 'Select'].each(function(tag) {
-    var className = 'HTML' + tag + 'Element';
-    if(window[className]) return;
-    var klass = window[className] = {};
-    klass.prototype = document.createElement(tag ? tag.toLowerCase() : 'div').__proto__;
-  });
-
-Element.addMethods = function(methods) {
-  Object.extend(Element.Methods, methods || {});
-
-  function copy(methods, destination, onlyIfAbsent) {
-    onlyIfAbsent = onlyIfAbsent || false;
-    var cache = Element.extend.cache;
-    for (var property in methods) {
-      var value = methods[property];
-      if (!onlyIfAbsent || !(property in destination))
-        destination[property] = cache.findOrStore(value);
-    }
-  }
-
-  if (typeof HTMLElement != 'undefined') {
-    copy(Element.Methods, HTMLElement.prototype);
-    copy(Element.Methods.Simulated, HTMLElement.prototype, true);
-    copy(Form.Methods, HTMLFormElement.prototype);
-    [HTMLInputElement, HTMLTextAreaElement, HTMLSelectElement].each(function(klass) {
-      copy(Form.Element.Methods, klass.prototype);
-    });
-    _nativeExtensions = true;
-  }
-}
+});
 
 var Toggle = new Object();
 Toggle.display = Element.toggle;
@@ -1428,8 +1029,7 @@ Abstract.Insertion.prototype = {
       try {
         this.element.insertAdjacentHTML(this.adjacency, this.content);
       } catch (e) {
-        var tagName = this.element.tagName.toLowerCase();
-        if (tagName == 'tbody' || tagName == 'tr') {
+        if (this.element.tagName.toLowerCase() == 'tbody') {
           this.insertContent(this.contentFromAnonymousTable());
         } else {
           throw e;
@@ -1528,176 +1128,76 @@ Element.ClassNames.prototype = {
 
   add: function(classNameToAdd) {
     if (this.include(classNameToAdd)) return;
-    this.set($A(this).concat(classNameToAdd).join(' '));
+    this.set(this.toArray().concat(classNameToAdd).join(' '));
   },
 
   remove: function(classNameToRemove) {
     if (!this.include(classNameToRemove)) return;
-    this.set($A(this).without(classNameToRemove).join(' '));
+    this.set(this.select(function(className) {
+      return className != classNameToRemove;
+    }).join(' '));
   },
 
   toString: function() {
-    return $A(this).join(' ');
+    return this.toArray().join(' ');
   }
 }
 
 Object.extend(Element.ClassNames.prototype, Enumerable);
-var Selector = Class.create();
-Selector.prototype = {
-  initialize: function(expression) {
-    this.params = {classNames: []};
-    this.expression = expression.toString().strip();
-    this.parseExpression();
-    this.compileMatcher();
+var Field = {
+  clear: function() {
+    for (var i = 0; i < arguments.length; i++)
+      $(arguments[i]).value = '';
   },
 
-  parseExpression: function() {
-    function abort(message) { throw 'Parse error in selector: ' + message; }
-
-    if (this.expression == '')  abort('empty expression');
-
-    var params = this.params, expr = this.expression, match, modifier, clause, rest;
-    while (match = expr.match(/^(.*)\[([a-z0-9_:-]+?)(?:([~\|!]?=)(?:"([^"]*)"|([^\]\s]*)))?\]$/i)) {
-      params.attributes = params.attributes || [];
-      params.attributes.push({name: match[2], operator: match[3], value: match[4] || match[5] || ''});
-      expr = match[1];
-    }
-
-    if (expr == '*') return this.params.wildcard = true;
-
-    while (match = expr.match(/^([^a-z0-9_-])?([a-z0-9_-]+)(.*)/i)) {
-      modifier = match[1], clause = match[2], rest = match[3];
-      switch (modifier) {
-        case '#':       params.id = clause; break;
-        case '.':       params.classNames.push(clause); break;
-        case '':
-        case undefined: params.tagName = clause.toUpperCase(); break;
-        default:        abort(expr.inspect());
-      }
-      expr = rest;
-    }
-
-    if (expr.length > 0) abort(expr.inspect());
+  focus: function(element) {
+    $(element).focus();
   },
 
-  buildMatchExpression: function() {
-    var params = this.params, conditions = [], clause;
-
-    if (params.wildcard)
-      conditions.push('true');
-    if (clause = params.id)
-      conditions.push('element.id == ' + clause.inspect());
-    if (clause = params.tagName)
-      conditions.push('element.tagName.toUpperCase() == ' + clause.inspect());
-    if ((clause = params.classNames).length > 0)
-      for (var i = 0; i < clause.length; i++)
-        conditions.push('Element.hasClassName(element, ' + clause[i].inspect() + ')');
-    if (clause = params.attributes) {
-      clause.each(function(attribute) {
-        var value = 'element.getAttribute(' + attribute.name.inspect() + ')';
-        var splitValueBy = function(delimiter) {
-          return value + ' && ' + value + '.split(' + delimiter.inspect() + ')';
-        }
-
-        switch (attribute.operator) {
-          case '=':       conditions.push(value + ' == ' + attribute.value.inspect()); break;
-          case '~=':      conditions.push(splitValueBy(' ') + '.include(' + attribute.value.inspect() + ')'); break;
-          case '|=':      conditions.push(
-                            splitValueBy('-') + '.first().toUpperCase() == ' + attribute.value.toUpperCase().inspect()
-                          ); break;
-          case '!=':      conditions.push(value + ' != ' + attribute.value.inspect()); break;
-          case '':
-          case undefined: conditions.push(value + ' != null'); break;
-          default:        throw 'Unknown operator ' + attribute.operator + ' in selector';
-        }
-      });
-    }
-
-    return conditions.join(' && ');
+  present: function() {
+    for (var i = 0; i < arguments.length; i++)
+      if ($(arguments[i]).value == '') return false;
+    return true;
   },
 
-  compileMatcher: function() {
-    this.match = new Function('element', 'if (!element.tagName) return false; \
-      return ' + this.buildMatchExpression());
+  select: function(element) {
+    $(element).select();
   },
 
-  findElements: function(scope) {
-    var element;
-
-    if (element = $(this.params.id))
-      if (this.match(element))
-        if (!scope || Element.childOf(element, scope))
-          return [element];
-
-    scope = (scope || document).getElementsByTagName(this.params.tagName || '*');
-
-    var results = [];
-    for (var i = 0, length = scope.length; i < length; i++)
-      if (this.match(element = scope[i]))
-        results.push(Element.extend(element));
-
-    return results;
-  },
-
-  toString: function() {
-    return this.expression;
+  activate: function(element) {
+    element = $(element);
+    element.focus();
+    if (element.select)
+      element.select();
   }
 }
 
-Object.extend(Selector, {
-  matchElements: function(elements, expression) {
-    var selector = new Selector(expression);
-    return elements.select(selector.match.bind(selector)).collect(Element.extend);
-  },
+/*--------------------------------------------------------------------------*/
 
-  findElement: function(elements, expression, index) {
-    if (typeof expression == 'number') index = expression, expression = false;
-    return Selector.matchElements(elements, expression || '*')[index || 0];
-  },
-
-  findChildElements: function(element, expressions) {
-    return expressions.map(function(expression) {
-      return expression.strip().split(/\s+/).inject([null], function(results, expr) {
-        var selector = new Selector(expr);
-        return results.inject([], function(elements, result) {
-          return elements.concat(selector.findElements(result || element));
-        });
-      });
-    }).flatten();
-  }
-});
-
-function $$() {
-  return Selector.findChildElements(document, $A(arguments));
-}
 var Form = {
-  reset: function(form) {
-    $(form).reset();
-    return form;
-  },
-
-  serializeElements: function(elements) {
-    return elements.inject([], function(queryComponents, element) {
-      var queryComponent = Form.Element.serialize(element);
-      if (queryComponent) queryComponents.push(queryComponent);
-      return queryComponents;
-    }).join('&');
-  }
-};
-
-Form.Methods = {
   serialize: function(form) {
-    return Form.serializeElements($(form).getElements());
+    var elements = Form.getElements($(form));
+    var queryComponents = new Array();
+
+    for (var i = 0; i < elements.length; i++) {
+      var queryComponent = Form.Element.serialize(elements[i]);
+      if (queryComponent)
+        queryComponents.push(queryComponent);
+    }
+
+    return queryComponents.join('&');
   },
 
   getElements: function(form) {
-    return $A($(form).getElementsByTagName('*')).inject([],
-      function(elements, child) {
-        if (Form.Element.Serializers[child.tagName.toLowerCase()])
-          elements.push(Element.extend(child));
-        return elements;
-      }
-    );
+    form = $(form);
+    var elements = new Array();
+
+    for (tagName in Form.Element.Serializers) {
+      var tagElements = form.getElementsByTagName(tagName);
+      for (var j = 0; j < tagElements.length; j++)
+        elements.push(tagElements[j]);
+    }
+    return elements;
   },
 
   getInputs: function(form, typeName, name) {
@@ -1708,68 +1208,53 @@ Form.Methods = {
       return inputs;
 
     var matchingInputs = new Array();
-    for (var i = 0, length = inputs.length; i < length; i++) {
+    for (var i = 0; i < inputs.length; i++) {
       var input = inputs[i];
       if ((typeName && input.type != typeName) ||
           (name && input.name != name))
         continue;
-      matchingInputs.push(Element.extend(input));
+      matchingInputs.push(input);
     }
 
     return matchingInputs;
   },
 
   disable: function(form) {
-    form = $(form);
-    form.getElements().each(function(element) {
+    var elements = Form.getElements(form);
+    for (var i = 0; i < elements.length; i++) {
+      var element = elements[i];
       element.blur();
       element.disabled = 'true';
-    });
-    return form;
+    }
   },
 
   enable: function(form) {
-    form = $(form);
-    form.getElements().each(function(element) {
+    var elements = Form.getElements(form);
+    for (var i = 0; i < elements.length; i++) {
+      var element = elements[i];
       element.disabled = '';
-    });
-    return form;
+    }
   },
 
   findFirstElement: function(form) {
-    return $(form).getElements().find(function(element) {
+    return Form.getElements(form).find(function(element) {
       return element.type != 'hidden' && !element.disabled &&
         ['input', 'select', 'textarea'].include(element.tagName.toLowerCase());
     });
   },
 
   focusFirstElement: function(form) {
-    form = $(form);
-    form.findFirstElement().activate();
-    return form;
-  }
-}
-
-Object.extend(Form, Form.Methods);
-
-/*--------------------------------------------------------------------------*/
-
-Form.Element = {
-  focus: function(element) {
-    $(element).focus();
-    return element;
+    Field.activate(Form.findFirstElement(form));
   },
 
-  select: function(element) {
-    $(element).select();
-    return element;
+  reset: function(form) {
+    $(form).reset();
   }
 }
 
-Form.Element.Methods = {
+Form.Element = {
   serialize: function(element) {
     element = $(element);
-    if (element.disabled) return '';
     var method = element.tagName.toLowerCase();
     var parameter = Form.Element.Serializers[method](element);
 
@@ -1793,52 +1278,20 @@ Form.Element.Methods = {
 
     if (parameter)
       return parameter[1];
-  },
-
-  clear: function(element) {
-    $(element).value = '';
-    return element;
-  },
-
-  present: function(element) {
-    return $(element).value != '';
-  },
-
-  activate: function(element) {
-    element = $(element);
-    element.focus();
-    if (element.select)
-      element.select();
-    return element;
-  },
-
-  disable: function(element) {
-    element = $(element);
-    element.disabled = true;
-    return element;
-  },
-
-  enable: function(element) {
-    element = $(element);
-    element.blur();
-    element.disabled = false;
-    return element;
   }
 }
-
-Object.extend(Form.Element, Form.Element.Methods);
-var Field = Form.Element;
-
-/*--------------------------------------------------------------------------*/
 
 Form.Element.Serializers = {
   input: function(element) {
     switch (element.type.toLowerCase()) {
+      case 'submit':
+      case 'hidden':
+      case 'password':
+      case 'text':
+        return Form.Element.Serializers.textarea(element);
       case 'checkbox':
       case 'radio':
         return Form.Element.Serializers.inputSelector(element);
-      default:
-        return Form.Element.Serializers.textarea(element);
     }
     return false;
   },
@@ -1860,20 +1313,24 @@ Form.Element.Serializers = {
   selectOne: function(element) {
     var value = '', opt, index = element.selectedIndex;
     if (index >= 0) {
-      opt = Element.extend(element.options[index]);
-      // Uses the new potential extension if hasAttribute isn't native.
-      value = opt.hasAttribute('value') ? opt.value : opt.text;
+      opt = element.options[index];
+      value = opt.value;
+      if (!value && !('value' in opt))
+        value = opt.text;
     }
     return [element.name, value];
   },
 
   selectMany: function(element) {
-    var value = [];
+    var value = new Array();
     for (var i = 0; i < element.length; i++) {
-      var opt = Element.extend(element.options[i]);
-      if (opt.selected)
-        // Uses the new potential extension if hasAttribute isn't native.
-        value.push(opt.hasAttribute('value') ? opt.value : opt.text);
+      var opt = element.options[i];
+      if (opt.selected) {
+        var optValue = opt.value;
+        if (!optValue && !('value' in opt))
+          optValue = opt.text;
+        value.push(optValue);
+      }
     }
     return [element.name, value];
   }
@@ -1947,7 +1404,9 @@ Abstract.EventObserver.prototype = {
   },
 
   registerFormCallbacks: function() {
-    Form.getElements(this.element).each(this.registerCallback.bind(this));
+    var elements = Form.getElements(this.element);
+    for (var i = 0; i < elements.length; i++)
+      this.registerCallback(elements[i]);
   },
 
   registerCallback: function(element) {
@@ -1957,7 +1416,11 @@ Abstract.EventObserver.prototype = {
         case 'radio':
           Event.observe(element, 'click', this.onElementEvent.bind(this));
           break;
-        default:
+        case 'password':
+        case 'text':
+        case 'textarea':
+        case 'select-one':
+        case 'select-multiple':
           Event.observe(element, 'change', this.onElementEvent.bind(this));
           break;
       }
@@ -1992,10 +1455,6 @@ Object.extend(Event, {
   KEY_RIGHT:    39,
   KEY_DOWN:     40,
   KEY_DELETE:   46,
-  KEY_HOME:     36,
-  KEY_END:      35,
-  KEY_PAGEUP:   33,
-  KEY_PAGEDOWN: 34,
 
   element: function(event) {
     return event.target || event.srcElement;
@@ -2051,7 +1510,7 @@ Object.extend(Event, {
 
   unloadCache: function() {
     if (!Event.observers) return;
-    for (var i = 0, length = Event.observers.length; i < length; i++) {
+    for (var i = 0; i < Event.observers.length; i++) {
       Event.stopObserving.apply(this, Event.observers[i]);
       Event.observers[i][0] = null;
     }
@@ -2059,7 +1518,7 @@ Object.extend(Event, {
   },
 
   observe: function(element, name, observer, useCapture) {
-    element = $(element);
+    var element = $(element);
     useCapture = useCapture || false;
 
     if (name == 'keypress' &&
@@ -2067,11 +1526,11 @@ Object.extend(Event, {
         || element.attachEvent))
       name = 'keydown';
 
-    Event._observeAndCache(element, name, observer, useCapture);
+    this._observeAndCache(element, name, observer, useCapture);
   },
 
   stopObserving: function(element, name, observer, useCapture) {
-    element = $(element);
+    var element = $(element);
     useCapture = useCapture || false;
 
     if (name == 'keypress' &&
@@ -2082,16 +1541,13 @@ Object.extend(Event, {
     if (element.removeEventListener) {
       element.removeEventListener(name, observer, useCapture);
     } else if (element.detachEvent) {
-      try {
-        element.detachEvent('on' + name, observer);
-      } catch (e) {}
+      element.detachEvent('on' + name, observer);
     }
   }
 });
 
 /* prevent memory leaks in IE */
-if (navigator.appVersion.match(/\bMSIE\b/))
-  Event.observe(window, 'unload', Event.unloadCache, false);
+Event.observe(window, 'unload', Event.unloadCache, false);
 var Position = {
   // set to true if needed, warning: firefox performance problems
   // NOT neeeded for page scrolling, only if draggable contained in
@@ -2138,8 +1594,7 @@ var Position = {
       valueL += element.offsetLeft || 0;
       element = element.offsetParent;
       if (element) {
-        if(element.tagName=='BODY') break;
-        var p = Element.getStyle(element, 'position');
+        p = Element.getStyle(element, 'position');
         if (p == 'relative' || p == 'absolute') break;
       }
     } while (element);
@@ -2195,6 +1650,17 @@ var Position = {
         element.offsetWidth;
   },
 
+  clone: function(source, target) {
+    source = $(source);
+    target = $(target);
+    target.style.position = 'absolute';
+    var offsets = this.cumulativeOffset(source);
+    target.style.top    = offsets[1] + 'px';
+    target.style.left   = offsets[0] + 'px';
+    target.style.width  = source.offsetWidth + 'px';
+    target.style.height = source.offsetHeight + 'px';
+  },
+
   page: function(forElement) {
     var valueT = 0, valueL = 0;
 
@@ -2211,10 +1677,8 @@ var Position = {
 
     element = forElement;
     do {
-      if (!window.opera || element.tagName=='BODY') {
-        valueT -= element.scrollTop  || 0;
-        valueL -= element.scrollLeft || 0;
-      }
+      valueT -= element.scrollTop  || 0;
+      valueL -= element.scrollLeft || 0;
     } while (element = element.parentNode);
 
     return [valueL, valueT];
@@ -2315,5 +1779,3 @@ if (/Konqueror|Safari|KHTML/.test(navigator.userAgent)) {
     return [valueL, valueT];
   }
 }
-
-Element.addMethods();

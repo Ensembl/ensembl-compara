@@ -32,7 +32,6 @@ function fragment(caller) {
 function panel_loaded(response) {
   json = eval( '(' + response.responseText + ')' );
   html = "";
-
   for (i = 0; i < json.fragment.components.length; i++) {
     for (var element in json.fragment.components[i]) {
       html = html + json.fragment.components[i][element].html;
@@ -53,11 +52,13 @@ function panel_loaded(response) {
   }
   update.style.display = 'block';
   title = ego(json.fragment.id + "_title");
+  //hide_spinner(json.fragment.id);
   title.innerHTML = json.fragment.title;
-  hide_spinner(json.fragment.id);
-  init_view('f_1');
-  draw_single_red_box('f_1', start_cv, end_cv, start_bp, end_bp, start_px, end_px);
-  update_red_boxes();
+  //alert(response.responseText);
+  //alert(json.fragment.id);
+  //init_view('f_1');
+  //draw_single_red_box('f_1', start_cv, end_cv, start_bp, end_bp, start_px, end_px);
+  //update_red_boxes();
   F = document.forms['panel_form'];
   F.appendChild(new_element('f_1_URL', '/Homo_sapiens/contigview?c=[[s]]:[[c]];w=[[w]]'));
   F.appendChild(new_element('f_1_bp_end', end_bp));
