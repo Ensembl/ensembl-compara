@@ -4,6 +4,7 @@ use strict;
 use warnings;
 
 use EnsEMBL::Web::Object::User;
+use EnsEMBL::Web::DBSQL::NewsAdaptor;
 use EnsEMBL::Web::SpeciesDefs;
 
 {
@@ -23,7 +24,7 @@ sub render {
     $id_to_species{$count} = $species;
   }
   
-  my %species_description = setup_species_descriptions();
+  my %species_description = setup_species_descriptions($species_defs);
 
   my $user = EnsEMBL::Web::Object::User->new({ id => $ENV{'ENSEMBL_USER_ID'} });
   my $html = "";
@@ -50,10 +51,45 @@ sub render {
 }
 
 sub setup_species_descriptions {
+  my $species_defs = shift;
   my %description = ();
-  $description{'Homo sapiens'} = qq(<span class="small normal">NCBI&nbsp;36</span><span class="small normal"> | <a href="http://vega.sanger.ac.uk/Homo_sapiens/">Vega</a>);
-  $description{'Mus musculus'} = qq(<span class="small normal">NCBI&nbsp;m36</span><span class="small normal"> | <a href="http://vega.sanger.ac.uk/Mus_musculus/">Vega</a>);
-  $description{'Danio rerio'} = qq(<span class="small normal">Zv&nbsp;6</span><span class="small normal"> | <a href="http://vega.sanger.ac.uk/Danio_rerio/">Vega</a>);
+
+  my $updated = '<strong class="alert">UPDATED!</strong>';
+  my $new     = '<strong class="alert">NEW!</strong>';
+
+  my $DB = $species_defs->databases->{'ENSEMBL_WEBSITE'};
+  my $adaptor = EnsEMBL::Web::DBSQL::NewsAdaptor->new( $DB );
+
+  my @current_species = @{$adaptor->fetch_species_data($species_defs->ENSEMBL_VERSION)};
+
+  foreach my $species (@current_species) {
+    my ($html, $short);
+    my $sp = $species->{'name'};
+    $html = qq( <span class="small normal">).$species->{'assembly'};
+    $short = $html;
+    if (!$species->{'prev_assembly'}) {
+      $html .= ' '.$new;
+      $short = $html.'</span>';
+    }
+    elsif ($species->{'prev_assembly'} && $species->{'prev_assembly'} ne $species->{'assembly'}) {
+      $html .= ' '.$updated;
+      $short = $html.'</span>';
+    }
+    if ($species->{'vega'} eq 'Y') {
+      $html .= qq( | <a href="http://vega.sanger.ac.uk/$sp/">Vega</a>);
+    }
+    if ($species->{'pre'}) {
+      $html .= ' | ';
+      if ($species->{'prev_assembly'} ne $species->{'assembly'}) {
+        $html .= $updated.' ';
+      }
+      $html .= qq(<a href="http://pre.ensembl.org/$sp/"><i><span class="red">pr<span class="blue">e</span>!</span></i></a>);
+    }
+    $html .= qq(</span>);
+    (my $name = $sp) =~ s/_/ /;
+    $description{$name} = [$html, $short];
+  }
+
   return %description;
 }
 
@@ -94,7 +130,7 @@ sub render_species_list {
     my $species_filename = $species_name;
     $species_filename =~ s/ /_/g;
     $html .= "<dt class='species-list'><a href='/$species_filename/'><img src='/img/species/thumb_$species_filename.png' alt='$species_name' title='Browse $species_name' class='sp-thumb' height='40' width='40' /></a><a href='/$species_filename/'>$species_name</a></dt>\n";
-    $html .= "<dd>" . $description{$species_name} . "</dd>\n";
+    $html .= "<dd>" . $description{$species_name}[0] . "</dd>\n";
   }
   $html .= "</dl>\n";
   $html .= "</ul>\n";
@@ -114,7 +150,7 @@ sub render_species_list {
     my $species_filename = $species_name;
     $species_filename =~ s/ /_/g;
     if (!$favourites{$id}) {
-      $html .= "<li><span class='sp'><a href='/$species_filename/'>$species_name</a></span><span class='small normal'> </span></li>\n";
+      $html .= "<li><span class='sp'><a href='/$species_filename/'>$species_name</a></span>".$description{$species_name}[1]."</li>\n";
       $favourites{$id} = 1;
     }
   }
