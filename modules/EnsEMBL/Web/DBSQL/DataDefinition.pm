@@ -53,7 +53,10 @@ sub discover {
 }
 
 sub populate {
-  my ($self) = @_;
+  my ($self, $id) = @_;
+  if ($id) {
+    $self->id($id);
+  }
   $self->data($self->adaptor->fetch_id($self->id)->{$self->id});
 }
 
