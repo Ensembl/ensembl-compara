@@ -15,7 +15,6 @@ sub init_label {
 
 sub _init {
   my ($self) = @_;
-
   return unless ($self->strand() == -1);
 
   my $BOX_WIDTH     = 20;
@@ -50,7 +49,7 @@ sub _init {
   my $pix_per_bp = $self->{'config'}->transform()->{'scalex'};
 
   my %seen;
-  foreach (sort { $features{$b}->{'priority'} <=> $features{$a}->{'priority'} } keys %features) {
+  foreach (sort { $features{$a}->{'priority'} <=> $features{$b}->{'priority'} } keys %features) {
     @colours = @{$features{$_}->{'legend'}};
     $y++ unless $x==0;
     $x=0;
