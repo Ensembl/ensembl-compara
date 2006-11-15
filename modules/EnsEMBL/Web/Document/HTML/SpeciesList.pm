@@ -16,7 +16,7 @@ sub render {
   my %id_to_species = ();
   my $count = 0;
 
-  foreach my $species ($species_defs->valid_species) {
+  foreach my $species (sort $species_defs->valid_species) {
     $count++; 
     $species =~ s/_/ /g;
     $species_id{$species} = $count;
@@ -72,7 +72,7 @@ sub render_species_list {
     foreach my $name (("Homo sapiens", "Mus musculus", "Danio rerio")) {
       push @favourite_species, $species_id{$name};
     }
-    @species_list = sort keys %id_to_species;
+    @species_list = sort {$a <=> $b} keys %id_to_species;
   } else {
     @favourite_species = split(/,/, $species->favourites); 
     @species_list = split(/,/, $species->list); 
