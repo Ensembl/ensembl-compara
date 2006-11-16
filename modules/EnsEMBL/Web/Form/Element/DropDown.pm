@@ -70,8 +70,8 @@ sub render {
     $output = '';
     my $K = 0;
     foreach my $V ( @{$self->values} ) {
-      $output .= sprintf( qq(    <div class="radiocheck"><input id="%s_%d" class="radio" type="radio" name="%s" value="%s" %s /><label for="%s_%d">%s</label></div>\n),
-        CGI::escapeHTML($self->id), $K, CGI::escapeHTML($self->name), CGI::escapeHTML($V->{'value'}),
+      $output .= sprintf( qq(    <div class="%s"><input id="%s_%d" class="radio" type="radio" name="%s" value="%s" %s /><label for="%s_%d">%s</label></div>\n),
+        $self->class||'radiocheck', CGI::escapeHTML($self->id), $K, CGI::escapeHTML($self->name), CGI::escapeHTML($V->{'value'}),
         $self->value eq $V->{'value'} ? ' checked="checked"' : '', CGI::escapeHTML($self->id), $K,
         CGI::escapeHTML($V->{'name'})
       );
