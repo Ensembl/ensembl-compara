@@ -160,6 +160,15 @@ sub value_for_form_element {
     }
     $return_value = $data->{$name};
   }
+  if (!$return_value) {  
+    foreach my $element (@{ $self->form_elements }) {
+      if ($element->{name} eq $name) {
+        if (defined $element->{options} && $element->{options}->value_for_field($name)) {
+          $return_value = $element->{options}->value_for_field($name);
+        }
+      }
+    }
+  } 
   return $return_value;
 }
 
