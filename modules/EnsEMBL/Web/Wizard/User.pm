@@ -547,7 +547,7 @@ sub save_password {
   my ($self, $object) = @_;
   my %parameter; 
 
-  my $id = $object->user_id || $object->param('user_id');
+  my $id = $object->id || $object->param('user_id');
   $object->param('user_id', $id); ## make sure param is set, or we can't save record!
 
   ## set password
@@ -580,7 +580,7 @@ sub send_link {
   my %parameter; 
 
   ## send password link to user
-  my $id = $object->user_id || $object->param('user_id');
+  my $id = $object->id || $object->param('user_id');
   my %details =  %{ $object->get_user_by_id($id) }; 
   my $email = $details{'email'};
   my $name  = $details{'name'};
@@ -668,7 +668,7 @@ sub compare {
   
   my $pass1 = $object->param('password');
   my $pass2 = $object->param('confirm_password');
-  $parameter{'user_id'}  = $object->user_id;
+  $parameter{'user_id'}  = $object-id;
   if ($pass1 eq $pass2) {
     $parameter{'node'} = 'save_password';
     $parameter{'password'} = $pass1;
@@ -834,7 +834,7 @@ sub name_config {
   my $config_script = $1;
   $object->param('script', $config_script); 
   $object->param('config_name', $config_script); 
-  $object->param('user_id', $object->user_id); 
+  $object->param('user_id', $object->id); 
 
   $wizard->add_title($node, $form, $object);
   $wizard->show_fields($node, $form, $object);
@@ -999,8 +999,8 @@ sub save_membership {
   my (%parameter, %record, %result);
 
   my @groups = $object->param('groups');
-  $record{'user_id'} = $object->user_id;
-  $record{'logged_in'} = $object->user_id;
+  $record{'user_id'} = $object->id;
+  $record{'logged_in'} = $object->id;
   foreach my $group (@groups) {
     $record{'group_id'} = $group;
     my $type = $object->param('group_'.$group);
@@ -1084,7 +1084,7 @@ sub save_group {
   ## group_blurb
 
   my $record = $self->create_record($user);
-  $record->{'user_id'} = $user->user_id;
+  $record->{'user_id'} = $user->id;
   my $group = EnsEMBL::Web::Object::Group->new((
                                         name => $record->{'group_name'}, 
                                         description => $record->{'group_blurb'}, 
