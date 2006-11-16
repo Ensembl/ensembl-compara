@@ -36,7 +36,8 @@ use warnings;
 no warnings "uninitialized";
 
 use EnsEMBL::Web::Component;
-use Spreadsheet::WriteExcel;
+use EnsEMBL::Web::Form;
+#use Spreadsheet::WriteExcel;
 our @ISA = qw( EnsEMBL::Web::Component);
 use POSIX qw(floor ceil);
 
