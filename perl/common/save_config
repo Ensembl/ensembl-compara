@@ -6,6 +6,7 @@ use CGI;
 
 use EnsEMBL::Web::Document::DataView;
 use EnsEMBL::Web::Interface::PageDefinition;
+use EnsEMBL::Web::Interface::FormDefinition;
 use EnsEMBL::Web::DBSQL::DataDefinition;
 use EnsEMBL::Web::DBSQL::ViewAdaptor;
 use EnsEMBL::Web::DBSQL::Relationship::HasMany;
@@ -13,11 +14,6 @@ use EnsEMBL::Web::DBSQL::Relationship::HasMany;
 my $cgi = CGI->new;
 my $page = EnsEMBL::Web::Interface::PageDefinition->new();
 my $data = EnsEMBL::Web::DBSQL::DataDefinition->new();
-my $hostname = "ecs3";
-my $port = "3307";
-my $database = "ensembl_web_user_db";
-my $username = "ensadmin";
-my $password = "ensembl";
 
 $data->adaptor(EnsEMBL::Web::DBSQL::ViewAdaptor->new(( 
                                                        hostname => $hostname,
@@ -44,7 +40,10 @@ $page->add_text('Describe your configuration here, and then click "Submit" to sa
 # User id is added automatically if a user is logged in.
 $page->add_configuration_element('record', 'yes');
 $page->add_configuration_element('type', 'configuration'); 
-$page->add_form_element('name', "Configuration name");
+$page->add_form_element('name', "Configuration name", EnsEMBL::Web::Interface::FormDefinition->new((
+                                        values => [ { "name" => "Example" } ]
+                       )));
+
 $page->add_form_element('blurb', "A brief description of your configuration");
 
 EnsEMBL::Web::Document::DataView::simple('User', $page);
