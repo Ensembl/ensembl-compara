@@ -668,7 +668,7 @@ sub compare {
   
   my $pass1 = $object->param('password');
   my $pass2 = $object->param('confirm_password');
-  $parameter{'user_id'}  = $object-id;
+  $parameter{'user_id'}  = $object->id;
   if ($pass1 eq $pass2) {
     $parameter{'node'} = 'save_password';
     $parameter{'password'} = $pass1;
