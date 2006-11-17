@@ -157,12 +157,12 @@ sub _render_configs {
   my $html;
 
   my @configs = $user->config_records({ order_by => 'click' });
-  if ($#configs > 0) {
+  if (@configs) {
     my $table = EnsEMBL::Web::Interface::Table->new(( 
                                        class => "ss", 
                                        style => "border-collapse:collapse"
                                                   ));
-    foreach my $record ($user->config_records({ order_by => 'click' })) {
+    foreach my $record (@configs) {
       my $row = EnsEMBL::Web::Interface::Table::Row->new();
       $row->add_column({ width => "16px", content => "<img src='/img/bullet_star.png' width='16' height='16' />" });
       $row->add_column({ content => "<a href=''>" . $record->name . "</a>" });
@@ -187,17 +187,17 @@ sub _render_bookmarks {
 
   my @bookmarks = $user->bookmark_records({ order_by => 'click' });
 
-  if ($#bookmarks > 0) {
+  if (@bookmarks) {
     my $table = EnsEMBL::Web::Interface::Table->new(( 
                                        class => "ss", 
                                        style => "border-collapse:collapse"
                                                   ));
     foreach my $record (@bookmarks) {
       my $row = EnsEMBL::Web::Interface::Table::Row->new();
-      $row->add_column({ width => "16px", content => "<img src='/img/bullet_star.png' width='16' height='16' />" });
-      $row->add_column({ content => "<a href=''>" . $record->name . "</a>" });
-      $row->add_column({ content => "<a href='/common/bookmark?id=" . $record->id . "'>Edit</a>" });
-      $row->add_column({ content => "<a href='/common/remove_bookmark?id=" . $record->id . "'>Delete</a>" });
+      $row->add_column({ width => '16px', content => '<img src="/img/bullet_star.png" width="16" height="16" />' });
+      $row->add_column({ content => '<a href="' . $record->url. '">' .$record->name . '</a>' });
+      $row->add_column({ content => '<a href="/common/bookmark?id=' . $record->id . '">Edit</a>' });
+      $row->add_column({ content => '<a href="/common/remove_bookmark?id=' . $record->id . '">Delete</a>' });
       $table->add_row($row);
     }
  
@@ -214,7 +214,7 @@ sub _render_filters {
   my $html;
 
   my @filters = $user->news_records;
-  if ($#filters > 0) {
+  if (@filters) {
     my $table = EnsEMBL::Web::Interface::Table->new(( 
                                        class => "ss", 
                                        style => "border-collapse:collapse"
@@ -228,7 +228,7 @@ sub _render_filters {
       elsif ($record->topic) {
         $row->add_column({ content => $record->topic });
       }
-      $row->add_column({ content => "<a href='/common/news_filter?id=" . $record->id . "'>Edit</a>" });
+      $row->add_column({ content => "<a href='/common/filter_news?id=" . $record->id . "'>Edit</a>" });
       $table->add_row($row);
     }
  
@@ -237,177 +237,6 @@ sub _render_filters {
   else {
     $html = "You do not have any news filters set up.";
   } 
-  return $html;
-}
-
-=pod
-sub bookmarks {
-  ### Displays a list of bookmarks with facility to edit each (via AJAX or wizard)
-  my( $panel, $object) = @_;
-  my $editable = $panel->ajax_is_available;
-
-  ## Get the user's bookmark list
-  my @bookmarks = $object->bookmark_records;
-
-  ## return the message
-  my $html = "<h3>Bookmarks</h3>\n";
-
-  if (scalar(@bookmarks) > 0) {
-    if ($editable) {
-      $html .= _show_editable_bookmarks(@bookmarks);
-    } else {
-      $html .= _show_static_bookmarks(@bookmarks);
-    }
-  }
-  else {
-    $html .= qq(<p>You have no bookmarks set.</p>
-<p><strong>Tip: You can bookmark any page (except account management pages) by clicking on the bookmark link near the top of the lefthand menu.</strong></p>);
-  }
-  $panel->add_content('left', $html);
-}
-
-sub _show_static_bookmarks {
-    ### Lists bookmarks with links to a wizard
-    my @bookmarks = @_;
-    my $html = "<ul>\n";
-    foreach my $bookmark (@bookmarks) {
-      my $name = $bookmark->name;
-      my $url  = $bookmark->url;
-      $html .= qq(<li><a href="$url">$name</a></li>);
-    }
-    $html .= qq(</ul>
-<p><a href="/common/manage_bookmarks">Manage bookmarks</a></p>);
-    return $html;
-}
-
-sub _show_editable_bookmarks {
-    ### Lists bookmarks with AJAX controls
-    my @bookmarks = @_;
-    my $html = "<div><p>Mouse over a bookmark name for edit and delete options.</p>";
-    my $count = 0;
-    foreach my $bookmark (@bookmarks) {
-      my $name = $bookmark->name;
-      my $url  = $bookmark->url;
-      $html .= _inplace_editor_for_bookmarks($count, $bookmark) . qq(
-<div class='bookmark_item' onmouseover="show_manage_links('bookmark_manage_$count')" onmouseout="hide_manage_links('bookmark_manage_$count')" id='bookmark_$count'><span class='bullet'><img src='/img/red_bullet.gif' width='4' height='8'></span><a href="$url" title='$url' id='bookmark_name_$count'>$name</a>) . _manage_links($count, $bookmark) . qq(</div>);
-      $count++;
-    }
-    $html .= "</div>";
-    return $html;
-}
-
-sub _manage_links {
-  ### Outputs AJAX edit/delete links
-  my ($id, $bookmark) = @_;
-  my $bookmark_id   = $bookmark->id;
-  my $user_id = $ENV{'ENSEMBL_USER_ID'}; 
-  my $html = qq(<div class="bookmark_manage" style='display: none;' id='bookmark_manage_$id'><a href='#' onclick='javascript:show_inplace_editor($id);'>edit</a> &middot; <a href='#' onclick='javascript:delete_bookmark($id, $bookmark_id, $user_id)'>delete</a></div>);
-  return $html;
-}
-
-sub _inplace_editor_for_bookmarks {
-  ### Outputs AJAX-powered editing form
-  my ($id, $bookmark) = @_;
-  my $bookmark_id   = $bookmark->id;
-  my $bookmark_name   = $bookmark->name;
-  my $bookmark_url   = $bookmark->url;
-  my $user_id = $ENV{'ENSEMBL_USER_ID'}; 
-  my $html = "<div id='bookmark_editor_$id' class='bookmark_editor' style='display: none'><form action='javascript:save_bookmark($id, $bookmark_id, $user_id);'><input type='text' id='bookmark_text_field_$id' value='" . $bookmark_name . "'> <div id='bookmark_editor_spinner_$id' style='display: none'><img src='/img/ajax-loader.gif' width='16' height='16' />'</div><div style='display: inline' id='bookmark_editor_links_$id'><a href='#' onclick='javascript:save_bookmark($id, $bookmark_id, $user_id);'>save</a> &middot; <a href='#' onclick='javascript:hide_inplace_editor($id);'>cancel</a></div></form></div>";
-  return $html;
-}
-
-#sub groups {
-#  my( $panel, $object, $id ) = @_;
-#
-### return the message
-#  my $html = "<h3>Your Groups</h3>";
-#
-#  $html .= qq(<ul>
-#<li>Group 1</li>
-#<li>Group 2</li>
-#<li>Group 3</li>
-#</ul>
-#);
-#  $panel->add_content('left', $html);
-#}
-
-sub about {
-  my( $panel, $object, $id ) = @_;
-
-## return the message
-  my $html = qq(<div class="notice">);
-
-  $html .= qq(<h4>About Ensembl User Accounts</h4>
-<p>User accounts allow you to save your favourite settings,
-so that if you log in from another machine or share a computer
-with your lab colleagues, you can easily retrieve them.</p>
-);
-  $html .= '</div>';
-  $panel->add_content('right', $html);
-}
-
-
-#----------------------- USER CONFIGS ---------------------------------------------
-
-sub _show_configs {
-  my( $panel, $object, $id ) = @_;
-  my $editable = $panel->ajax_is_available;
-  ## Get the user's config list
-  my @configs = @{$object->get_configs($id)};
-
-  ## return the message
-  my $html = "<h3>Saved configurations</h3>\n";
-
-  if (scalar(@configs) > 0) {
-    if ($editable) {
-      $html .= _show_editable_configs(@configs);
-    } else {
-      $html .= _show_static_configs(@configs);
-    }
-  }
-  else {
-    $html .= "<p>You have no saved configurations.</p>";
-  }
-
-  return $html;
-}
-
-sub _show_static_configs {
-    my @configs = @_;
-    my $html = "<ul>\n";
-    foreach my $config (@configs) {
-      my $name = $$config{'config_name'};
-      my $type = $$config{'config_type'};
-    
-      $html .= qq(<li>$name ($type)</li>);
-    }
-    $html .= qq(</ul>
-<p><a href="/common/manage_configs">Manage configurations</a></p>);
-    return $html;
-}
-
-#--------------------------- BLAST -------------------------------------------
-
-sub _show_blast {
-  my( $panel, $object, $id ) = @_;
-
-## Get the user's BLAST ticket list
-  my $blast = {};
-
-## return the message
-  my $html = "<h3>BLAST tickets</h3>\n";
-
-  if (keys %$blast) {
-    $html .= "<ul>\n";
-    while( my ($text, $url) = each %$blast) {
-      $html .= qq(<li><a href="$url">$text</a></li>);
-    }
-    $html .= "</ul>\n";
-  }
-  else {
-    $html .= "<p>You do not have any saved BLAST tickets.</p>";
-  }
-
   return $html;
 }
 
