@@ -31,23 +31,18 @@ sub blurb {
   my( $panel, $object) = @_;
 
   my $html = qq(
-<script type='text/javascript'>
+<div class="pale boxed" id="intro">);
 
-function hide_intro() {
-  Effect.Fade('intro');
-}
-
-</script>
-
-<div class="col-wrapper">
-
-<div class="pale boxed" id="intro">
-<b>Your account</b><br />
-This is your account page. From here you can manage your bookmarks, configurations and groups.
-</div>
-
-</div>
+  if (my $feedback = $object->param('feedback')) {
+    $html .= "<p><strong>Thank you - your changes have been saved.</strong></p>";
+  }
+  else {
+    $html .= qq(
+<h4>Your account</h4>
+<p>This is your account page. From here you can manage your bookmarks, configurations and groups.</p>
 );
+  }
+  $html .= '</div>';
 
   $panel->print($html);
   return 1;
@@ -56,9 +51,15 @@ This is your account page. From here you can manage your bookmarks, configuratio
 sub configs {
   my( $panel, $user) = @_;
 
+  my $configTab= EnsEMBL::Web::Interface::Tab->new(( 
+                                     name => 'config', 
+                                     label => 'Configurations', 
+                                     content => _render_configs($user) 
+                                                ));
+
   my $newsTab= EnsEMBL::Web::Interface::Tab->new(( 
                                      name => 'news', 
-                                     label => 'News', 
+                                     label => 'News Filters', 
                                      content => _render_filters($user) 
                                                 ));
 
@@ -70,7 +71,7 @@ sub configs {
 
   my $tabview = EnsEMBL::Web::Interface::TabView->new(( 
                                       name => "config",
-                                      tabs => [ $bookmarkTab, $newsTab ]
+                                      tabs => [ $configTab, $bookmarkTab, $newsTab ]
                                                      ));
 
   $panel->add_content('left', $tabview->render . "<br />");
@@ -150,51 +151,92 @@ sub details {
   $panel->add_content('right', $html);
 }
 
-sub _render_table {
-  my $rows = shift;
 
-  my $html = qq(<table class="ss" style="border-collapse:collapse">);
-  my $count = 0;
-  my $colour = 'bg1';
-  foreach my $row (@$rows) {
-    $count++;
-    $colour = 'bg1';
-    if ($count % 2) {
-      $colour = 'bg2';
+sub _render_configs {
+  my $user = shift;
+  my $html;
+
+  my @configs = $user->config_records({ order_by => 'click' });
+  if ($#configs > 0) {
+    my $table = EnsEMBL::Web::Interface::Table->new(( 
+                                       class => "ss", 
+                                       style => "border-collapse:collapse"
+                                                  ));
+    foreach my $record ($user->config_records({ order_by => 'click' })) {
+      my $row = EnsEMBL::Web::Interface::Table::Row->new();
+      $row->add_column({ width => "16px", content => "<img src='/img/bullet_star.png' width='16' height='16' />" });
+      $row->add_column({ content => "<a href=''>" . $record->name . "</a>" });
+      $row->add_column({ content => "<a href='/common/config?id=" . $record->id . "'>Edit</a>" });
+      $row->add_column({ content => "<a href='/common/remove_config?id=" . $record->id . "'>Delete</a>" });
+      $table->add_row($row);
     }
-    $html .= qq(<tr class="$colour">$row</tr>);
+ 
+    $html = $table->render;
   }
-  $html .= "</table>\n";
-
+  else {
+    $html = "You do not have any saved configurations.";
+  } 
   return $html;
 }
 
 
+
 sub _render_bookmarks {
   my $user = shift;
-  my @rows;
-  my $table = EnsEMBL::Web::Interface::Table->new(( 
+  my $html;
+
+  my @bookmarks = $user->bookmark_records({ order_by => 'click' });
+
+  if ($#bookmarks > 0) {
+    my $table = EnsEMBL::Web::Interface::Table->new(( 
                                        class => "ss", 
                                        style => "border-collapse:collapse"
                                                   ));
-  foreach my $record ($user->bookmark_records({ order_by => 'click' })) {
-    my $row = EnsEMBL::Web::Interface::Table::Row->new();
-    $row->add_column({ width => "16px", content => "<img src='/img/bullet_star.png' width='16' height='16' />" });
-    $row->add_column({ content => "<a href=''>" . $record->name . "</a>" });
-    $row->add_column({ content => "<a href='/common/bookmark?id=" . $record->id . "'>Edit</a>" });
-    $row->add_column({ content => "<a href='/common/remove_bookmark?id=" . $record->id . "'>Delete</a>" });
-    $table->add_row($row);
-  }
+    foreach my $record (@bookmarks) {
+      my $row = EnsEMBL::Web::Interface::Table::Row->new();
+      $row->add_column({ width => "16px", content => "<img src='/img/bullet_star.png' width='16' height='16' />" });
+      $row->add_column({ content => "<a href=''>" . $record->name . "</a>" });
+      $row->add_column({ content => "<a href='/common/bookmark?id=" . $record->id . "'>Edit</a>" });
+      $row->add_column({ content => "<a href='/common/remove_bookmark?id=" . $record->id . "'>Delete</a>" });
+      $table->add_row($row);
+    }
  
-  my $html = $table->render; 
+    $html = $table->render; 
+  }
+  else {
+    $html = "You do not have any bookmarks saved.";
+  } 
   return $html;
 }
 
 sub _render_filters {
   my $user = shift;
+  my $html;
 
-  my $html = "Filters!";
-
+  my @filters = $user->news_records;
+  if ($#filters > 0) {
+    my $table = EnsEMBL::Web::Interface::Table->new(( 
+                                       class => "ss", 
+                                       style => "border-collapse:collapse"
+                                                  ));
+    foreach my $record (@filters) {
+      my $row = EnsEMBL::Web::Interface::Table::Row->new();
+      $row->add_column({ width => "16px", content => "<img src='/img/bullet_star.png' width='16' height='16' />" });
+      if ($record->species) {
+        $row->add_column({ content => $record->species });
+      }
+      elsif ($record->topic) {
+        $row->add_column({ content => $record->topic });
+      }
+      $row->add_column({ content => "<a href='/common/news_filter?id=" . $record->id . "'>Edit</a>" });
+      $table->add_row($row);
+    }
+ 
+    $html = $table->render; 
+  }
+  else {
+    $html = "You do not have any news filters set up.";
+  } 
   return $html;
 }
 
