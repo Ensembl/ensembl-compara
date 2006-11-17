@@ -42,7 +42,7 @@ function hide_intro() {
 <div class="col-wrapper">
 
 <div class="pale boxed" id="intro">
-<b>Your account</b>
+<b>Your account</b><br />
 This is your account page. From here you can manage your bookmarks, configurations and groups.
 </div>
 
