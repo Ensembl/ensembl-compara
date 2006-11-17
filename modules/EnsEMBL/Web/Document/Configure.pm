@@ -6,6 +6,7 @@ use warnings;
 
 use EnsEMBL::Web::Root;
 use EnsEMBL::Web::Object::User;
+
 our @ISA  = qw(EnsEMBL::Web::Root);
 
 sub common_menu_items {
@@ -26,7 +27,7 @@ sub common_menu_items {
                                     'code' => 'bookmark',
                                   'href' => "javascript:bookmark_link()" );
 
-      my $user = EnsEMBL::Web::Object::User->new({ id => $user_id });
+      my $user = EnsEMBL::Web::Object::User->new({'adaptor'=>$user_adaptor, 'id'=>$user_id});
 
       ## Link to existing bookmarks
       my @records = $user->bookmark_records({order_by => 'click' });
@@ -56,6 +57,8 @@ sub common_menu_items {
       }
       $doc->menu->add_entry( $flag, 'text' => "Your account",
                                   'href' => "/common/accountview" );
+      $doc->menu->add_entry( $flag, 'text' => "Log out",
+                                  'href' => "javascript:logout_link()" );
 
     }
     else {
