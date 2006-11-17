@@ -51,11 +51,17 @@ elsif ($query =~ /^BLA_\w+$/) { ## Blast ticket
 elsif ($query =~ /^\w+\.mart$/) { ## Mart query
  $URL = "/Multi/martview/$query"; 
 }
-elsif ($query =~ /[ACGT]{12,}/) { ## raw sequence of at least 12 nucleotides - dna BLAST
+elsif ($query =~ /[ACGT]{12,}/i) { ## raw sequence of at least 12 nucleotides - dna BLAST
  $URL = "/Multi/blastview?species=$species;_query_sequence=$query;query=dna;database=dna"; 
 }
 elsif ($query =~ /[A-Z]{12,}/) { ## raw sequence of at least 12 amino acids - peptide BLAST
  $URL = "/Multi/blastview?species=$species;_query_sequence=$query;query=peptide;database=peptide"; 
+}
+elsif ($species && $query =~ /^(chromosome|chr)\s([a-z0-9]+)/i) { ## chromosome name
+  $URL = "/$species/mapview?chr=$2";
+}
+elsif ($query =~ /^(Gene|AffyProbe|Domain|Disease|Family|Marker|OligoProbe|Peptide|SNP|Sequence)\s(.+)/i) { ## various Ensembl object types
+  $URL = "/perl/searchview?species=$species;idx=$1;q=$2";
 }
 else { ## fall back to searchview
   $URL = "/perl/searchview?species=$species;idx=All;q=$query";
