@@ -66,7 +66,7 @@ sub _init {
           'label'=>'Group name', 
           'required'=>'yes',
       },
-      'org'       => {
+      'organisation'    => {
           'type'=>'String', 
           'label'=>'Organisation',
       },
@@ -154,13 +154,13 @@ sub _init {
       'enter_details'      => {
                       'form' => 1,
                       'title' => 'Please enter your details',
-                      'input_fields'  => [qw(name email org mailing ensembl_announce ensembl_dev)],
+                      'input_fields'  => [qw(name email organisation mailing ensembl_announce ensembl_dev)],
       },
       'preview'      => {
                       'form' => 1,
                       'title' => 'Please check your details',
-                      'show_fields'  => [qw(name email org ensembl_announce ensembl_dev)],
-                      'pass_fields'  => [qw(name email org ensembl_announce ensembl_dev)],
+                      'show_fields'  => [qw(name email organisation ensembl_announce ensembl_dev)],
+                      'pass_fields'  => [qw(name email organisation ensembl_announce ensembl_dev)],
                       'back' => 1,
       },
       'login'       => {
@@ -408,14 +408,11 @@ sub enter_details {
   my $script = $object->script;
   my $species = $object->species;
   my $node = 'enter_details';
- 
-  my $id = $object->get_user_id;
-  my @fields = qw(name email);
-  if ($id) { ## updating existing account
-    my $details = $object->get_user_by_id($id);
-    $object->param('name', $$details{'name'});
-    $object->param('email', $$details{'email'});
-    $object->param('org', $$details{'org'});
+
+  if ($object) { ## updating existing account
+    $wizard->field('name', 'value', $object->name);
+    $wizard->field('email', 'value', $object->email);
+    $wizard->field('organisation', 'value', $object->organisation);
   }
   else { ## new account
     $object->param('next_node', 'preview');
@@ -469,7 +466,7 @@ sub lookup_reg {
   else {
     $parameter{'node'} = 'preview'; ## genuine new user, so continue
   }
-  my @passable = qw(name email org ensembl_announce ensembl_dev);
+  my @passable = qw(name email organisation ensembl_announce ensembl_dev);
   foreach my $p (@passable) {
     $parameter{$p} = $object->param($p);
   }
@@ -590,7 +587,8 @@ sub send_link {
     my $exp_text = $self->data('exp_text');
     my $help_email  = $object->species_defs->ENSEMBL_HELPDESK_EMAIL;
     my $base_url    = $object->species_defs->ENSEMBL_BASE_URL;
-    my $website     = $object->species_defs->ENSEMBL_SITETYPE;
+    ## Fix case on site type: EnsEMBL -> Ensembl
+    my $website     = ucfirst(lc($object->species_defs->ENSEMBL_SITETYPE));
     my $link = "$base_url/common/set_password?node=validate;code=".$object->param('code');
 
     my $message = "Dear $name\n\n";
