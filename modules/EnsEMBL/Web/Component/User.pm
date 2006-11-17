@@ -1,6 +1,8 @@
 package EnsEMBL::Web::Component::User;
 
 use EnsEMBL::Web::Component;
+use EnsEMBL::Web::Proxy::Object;
+use EnsEMBL::Web::DBSQL::NewsAdaptor;
 
 use strict;
 use warnings;
@@ -18,10 +20,116 @@ sub _wrap_form {
   return 1;
 }
 
-##-----------------------------------------------------------------
+##---------- ACCOUNTVIEW ----------------------------------------
 
+sub blurb {
+  my( $panel, $object) = @_;
 
+  my $html = qq(
+<script type='text/javascript'>
+
+function hide_intro() {
+  Effect.Fade('intro');
+}
+
+</script>
+
+<div class="col-wrapper">
+
+<div class="pale boxed" id="intro">
+<b>Your account</b> &middot; <a href="javascript:void(0);" onClick="hide_intro();">Hide this message</a><br />
+This is your account page. From here you can manage your bookmarks, configurations and groups.
+</div>
+
+</div>
+);
+
+  $panel->print($html);
+  return 1;
+}
+
+sub configs {
+  my( $panel, $user) = @_;
+
+  my $html = qq(
+<script type='text/javascript'>
+
+var tabs = [ 'bookmarks', 'news' ];
+
+function switch_tab(element) {
+  reset_tabs();
+  document.getElementById(element + "_tab").className = "tab selected";
+  document.getElementById(element).style.display = "block";
+}
+
+function reset_tabs() {
+  for (var n = 0; n < tabs.length; n++) {
+    document.getElementById(tabs[n] + "_tab").className = "tab";
+  document.getElementById(tabs[n]).style.display = "none";
+  }
+}
+
+</script>
+
+<div class="box_tabs">
+  <div class="tab selected" id="bookmarks_tab"><a href="javascript:void(0);" onClick="switch_tab("bookmarks");">Bookmarks</a></div>
+  <div class="tab" id="news_tab"><a href="javascript:void(0);" onClick="switch_tab("news");">News Filters</a></div>
+  <br clear="all" />
+  <div class="tab_content">
+    <div class="tab_content_panel" id="bookmarks">);
+  $html .= _render_bookmarks($user);
+  $html .= qq(</div>
+    <div class="tab_content_panel" style="display:none;" id="groups">);
+  $html .= _render_filters($user);
+  $html .= qq(</div>
+  </div>
+</div>);
+
+  $panel->add_content('left', $html);
+}
+
+sub groups {
+  my( $panel, $object) = @_;
+
+  my $html = "Groups!";
+
+  $panel->add_content('left', $html);
+}
+
+sub details {
+  my( $panel, $user) = @_;
+
+  my $html = sprintf(qq(<div class="boxed">
+<strong>%s</strong>
+<ul style="margin: 0px; padding: 5px 15px;">
+<li>%s</li>
+<li>%s</li>
+</ul>
+<a href="/common/update">Update details</a>
+</div>), $user->name, $user->email, $user->organisation);
+
+  $panel->add_content('right', $html);
+}
+
+sub _render_bookmarks {
+  my $user = shift;
+
+  my $html = "Bookmarks!";
+
+  return $html;
+}
+
+sub _render_filters {
+  my $user = shift;
+
+  my $html = "Filters!";
+
+  return $html;
+}
+
+=pod
 sub bookmarks {
+  ### Displays a list of bookmarks with facility to edit each (via AJAX or wizard)
   my( $panel, $object) = @_;
   my $editable = $panel->ajax_is_available;
 
@@ -40,12 +148,13 @@ sub bookmarks {
   }
   else {
     $html .= qq(<p>You have no bookmarks set.</p>
-<p><strong>Tip: You can bookmark any page by clicking on the link near the bottom of the lefthand menu.</strong></p>);
+<p><strong>Tip: You can bookmark any page (except account management pages) by clicking on the bookmark link near the top of the lefthand menu.</strong></p>);
   }
   $panel->add_content('left', $html);
 }
 
 sub _show_static_bookmarks {
+    ### Lists bookmarks with links to a wizard
     my @bookmarks = @_;
     my $html = "<ul>\n";
     foreach my $bookmark (@bookmarks) {
@@ -59,6 +168,7 @@ sub _show_static_bookmarks {
 }
 
 sub _show_editable_bookmarks {
+    ### Lists bookmarks with AJAX controls
     my @bookmarks = @_;
     my $html = "<div><p>Mouse over a bookmark name for edit and delete options.</p>";
     my $count = 0;
@@ -74,6 +184,7 @@ sub _show_editable_bookmarks {
 }
 
 sub _manage_links {
+  ### Outputs AJAX edit/delete links
   my ($id, $bookmark) = @_;
   my $bookmark_id   = $bookmark->id;
   my $user_id = $ENV{'ENSEMBL_USER_ID'}; 
@@ -82,6 +193,7 @@ sub _manage_links {
 }
 
 sub _inplace_editor_for_bookmarks {
+  ### Outputs AJAX-powered editing form
   my ($id, $bookmark) = @_;
   my $bookmark_id   = $bookmark->id;
   my $bookmark_name   = $bookmark->name;
@@ -90,22 +202,6 @@ sub _inplace_editor_for_bookmarks {
   my $html = "<div id='bookmark_editor_$id' class='bookmark_editor' style='display: none'><form action='javascript:save_bookmark($id, $bookmark_id, $user_id);'><input type='text' id='bookmark_text_field_$id' value='" . $bookmark_name . "'> <div id='bookmark_editor_spinner_$id' style='display: none'><img src='/img/ajax-loader.gif' width='16' height='16' />'</div><div style='display: inline' id='bookmark_editor_links_$id'><a href='#' onclick='javascript:save_bookmark($id, $bookmark_id, $user_id);'>save</a> &middot; <a href='#' onclick='javascript:hide_inplace_editor($id);'>cancel</a></div></form></div>";
   return $html;
 }
-
-sub whatsnew {
-  my( $panel, $object, $id ) = @_;
-
-## return the message
-  my $html = "<h3>What's New in Ensembl</h3>";
-
-  $html .= qq(<ul>
-<li>Headline 1</li>
-<li>Headline 2</li>
-<li>Headline 3</li>
-</ul>
-);
-  $panel->add_content('right', $html);
-}
-
 
 sub groups {
   my( $panel, $object, $id ) = @_;
@@ -211,6 +307,7 @@ sub denied {
   $panel->print($html);
   return 1;
 }
+=cut
 
 ##-----------------------------------------------------------------
 ## USER REGISTRATION COMPONENTS    
@@ -256,7 +353,7 @@ sub enter_details   {
   my ( $panel, $object ) = @_;
   my $html = qq(<div class="formpanel" style="width:80%">);
 
-  if (!$object->param('email')) { ## new registration
+  if (!$object->id) { ## new registration
     $html .= qq(<p><strong>Register with Ensembl to bookmark your favourite pages, manage your BLAST tickets and more!</strong></p>);
   }
 

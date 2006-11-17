@@ -1,5 +1,8 @@
 package EnsEMBL::Web::Configuration::User;
 
+### Configuration for all views based on the User object, including
+### account management 
+
 use strict;
 use EnsEMBL::Web::Configuration;
 use EnsEMBL::Web::Wizard::User;
@@ -7,13 +10,15 @@ use EnsEMBL::Web::Wizard::User;
 our @ISA = qw( EnsEMBL::Web::Configuration );
 
 sub _add_javascript_libraries {
-  ## JS libraries for AJAX bookmark editor
+  ## 'private' method to load commonly-used JS libraries
   my $self = shift;
-  $self->{page}->javascript->add_source( "/js/prototype.js" );
-  $self->{page}->javascript->add_source( "/js/accountview.js" );
+  $self->{page}->javascript->add_source( "/js/prototype.js" );  ## AJAX
+  $self->{page}->javascript->add_source( "/js/accountview.js" ); ## link magic!
+  $self->{page}->javascript->add_source( "/js/scriptaculous.js" ); ## Cool interactive stuff!
 }
 
 sub context_menu {
+  ### General context menu for all user management pages
   my $self = shift;
   my $obj = $self->{object};
 
@@ -29,7 +34,7 @@ sub context_menu {
 
 
     $self->add_entry( $flag, 'text' => "Account summary",
-                                    'href' => "/common/update_account?node=accountview" );
+                                    'href' => "/common/accountview" );
     $self->add_entry( $flag, 'text' => "Update details",
                                     'href' => "/common/update_account" );
     $self->add_entry( $flag, 'text' => "Change password",
@@ -53,36 +58,77 @@ sub context_menu {
 
 }
 
+sub access_denied {
+  my $self   = shift;
+
+  if (my $panel1 = $self->new_panel( 'Image',
+    'code'    => "info$self->{flag}",
+    'object'  => $self->{object},
+    'caption' => 'Access Denied',
+    ) ) {
+    $panel1->add_components(qw(
+        denied        EnsEMBL::Web::Component::User::denied
+    ));
+
+    ## add panel to page
+    $self->add_panel( $panel1 );
+  }
+}
+
 sub accountview {
+  ### Dynamic view displaying information about a user account
   my $self   = shift;
   my $object = $self->{'object'};
-  my $details = $object->get_user_by_id($object->user_id);
+  my $details = $object->get_user_by_id($object->id);
   
   $self->_add_javascript_libraries;
 
-  if (my $panel1 = $self->new_panel( 'TwoColumn',
+  if (my $panel1 = $self->new_panel( 'Image',
     'code'    => "info$self->{flag}",
     'object'  => $self->{object},
-    'caption' => 'You are logged in as '.$details->{'name'},
     ) ) {
     $panel1->add_components(qw(
-        bookmarks     EnsEMBL::Web::Component::User::bookmarks
-        groups        EnsEMBL::Web::Component::User::groups
-        about         EnsEMBL::Web::Component::User::about
-        whatsnew      EnsEMBL::Web::Component::User::whatsnew
+        blurb     EnsEMBL::Web::Component::User::blurb
+    ));
+    $self->add_panel( $panel1 );
+  }
+  if (my $panel2 = $self->new_panel( 'TwoColumn',
+    'code'    => "info$self->{flag}",
+    'object'  => $self->{object},
+    ) ) {
+    $panel2->set_column_width('left', '67%');
+    $panel2->set_column_width('right', '27%');
+    $panel2->add_components(qw(
+        configs     EnsEMBL::Web::Component::User::configs
+        groups      EnsEMBL::Web::Component::User::groups
+        details     EnsEMBL::Web::Component::User::details
     ));
   
-    # finally, add the complete panel to the page object
-    $self->add_panel( $panel1 );
-    $self->{page}->set_title('Your Account Details');
+    $self->add_panel( $panel2 );
   }                                                                              
+  $self->{page}->set_title('Your Account Details');
 }
 
 sub user_menu {
+  ### Context menu specific to user management pages
   my $self = shift;
-  my $obj = $self->{object};
+  my $user = $self->{object};
 
-  my $flag = 'groups';
+  my $filter_id = 7;
+
+  my $flag = 'news';
+
+  $self->add_block( $flag, 'bulleted', "News" );
+
+  $self->add_entry( $flag, 'text' => "Add News Filter",
+                           'href' => "/common/filter_news" );
+  $self->add_entry( $flag, 'text' => "Edit News Filter",
+                           'href' => "/common/filter_news?id=$filter_id" );
+  $self->add_entry( $flag, 'text' => "Ensembl mailing lists",
+                           'href' => "/info/about/contact.html#mailing_lists",
+                           'icon' => '/img/infoicon.gif' );
+
+  $flag = 'groups';
 
   $self->add_block( $flag, 'bulleted', "Groups" );
 
@@ -94,6 +140,7 @@ sub user_menu {
 }
 
 sub groupview {
+  ### Dynamic view displaying information about a user-group
   my $self   = shift;
   my $object = $self->{'object'};
   my $details = $object->get_user_by_id($object->user_id);
@@ -376,24 +423,6 @@ sub manage_members {
   $self->add_wizard($wizard);
   $self->wizard_panel('Manage Members');
 }
-
-sub access_denied {
-  my $self   = shift;
-
-  if (my $panel1 = $self->new_panel( 'Image',
-    'code'    => "info$self->{flag}",
-    'object'  => $self->{object},
-    'caption' => 'Access Denied',
-    ) ) {
-    $panel1->add_components(qw(
-        denied        EnsEMBL::Web::Component::User::denied
-    ));
-
-    ## add panel to page
-    $self->add_panel( $panel1 );
-  }
-}
-
 ##--------------------------------------------------------------------------------------------
 ## Account options
 ##--------------------------------------------------------------------------------------------
@@ -402,14 +431,14 @@ sub add_bookmark {
   my $self   = shift;
   my $object = $self->{'object'};
 
-  ## the add bookmark wizard uses 4 nodes: set name of bookmark, save bookmark 
-  ## and return to bookmarked URL, plus accountview as fallback
+  ## the add bookmark wizard uses 3 nodes: set name of bookmark, save bookmark 
+  ## and return to bookmarked URL
   my $wizard = EnsEMBL::Web::Wizard::User->new($object);
                                                     
   $self->_add_javascript_libraries;
 
-  $wizard->add_nodes([qw(name_bookmark save_bookmark back_to_page accountview)]);
-  $wizard->default_node('accountview'); ## don't want user to access nodes without parameters!
+  $wizard->add_nodes([qw(name_bookmark save_bookmark back_to_page)]);
+  $wizard->default_node('back_to_page'); 
 
   ## chain the nodes together
   $wizard->add_outgoing_edges([
@@ -425,19 +454,17 @@ sub manage_bookmarks {
   my $self   = shift;
   my $object = $self->{'object'};
 
-  ## the manage bookmark wizard uses 3 nodes: select bookmarks, delete bookmarks 
-  ## and accountview
+  ## the manage bookmark wizard uses 2 nodes: select bookmarks and delete bookmarks 
   my $wizard = EnsEMBL::Web::Wizard::User->new($object);
                                                     
   $self->_add_javascript_libraries;
 
-  $wizard->add_nodes([qw(select_bookmarks delete_bookmarks accountview)]);
+  $wizard->add_nodes([qw(select_bookmarks delete_bookmarks)]);
   $wizard->default_node('select_bookmarks');
 
   ## chain the nodes together
   $wizard->add_outgoing_edges([
           ['select_bookmarks'=>'delete_bookmarks'],
-          ['delete_bookmarks'=>'accountview'],
   ]);
 
   $self->add_wizard($wizard);
@@ -449,13 +476,13 @@ sub add_config {
   my $object = $self->{'object'};
 
   ## the add config wizard uses 4 nodes: set name of config, save config 
-  ## and return to configured page, plus accountview as fallback
+  ## and return to configured page
   my $wizard = EnsEMBL::Web::Wizard::User->new($object);
                                                     
   $self->_add_javascript_libraries;
 
-  $wizard->add_nodes([qw(name_config save_config back_to_page accountview)]);
-  $wizard->default_node('accountview'); ## don't want user to access nodes without parameters!
+  $wizard->add_nodes([qw(name_config save_config back_to_page)]);
+  $wizard->default_node('back_to_page'); ## don't want user to access nodes without parameters!
 
   ## chain the nodes together
   $wizard->add_outgoing_edges([
@@ -471,19 +498,17 @@ sub manage_configs {
   my $self   = shift;
   my $object = $self->{'object'};
 
-  ## the manage config wizard uses 3 nodes: select configs, delete configs 
-  ## and accountview
+  ## the manage config wizard uses 2 nodes: select configs and delete configs 
   my $wizard = EnsEMBL::Web::Wizard::User->new($object);
                                                     
   $self->_add_javascript_libraries;
 
-  $wizard->add_nodes([qw(select_configs delete_configs accountview)]);
+  $wizard->add_nodes([qw(select_configs delete_configs)]);
   $wizard->default_node('select_configs');
 
   ## chain the nodes together
   $wizard->add_outgoing_edges([
           ['select_configs'=>'delete_configs'],
-          ['delete_configs'=>'accountview'],
   ]);
 
   $self->add_wizard($wizard);
