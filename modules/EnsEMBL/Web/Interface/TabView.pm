@@ -23,7 +23,7 @@ sub tabs {
 }
 
 sub render {
-  my ($self, $user) = @_;
+  my ($self) = @_;
 
   my @tabs = @{ $self->tabs };
 
