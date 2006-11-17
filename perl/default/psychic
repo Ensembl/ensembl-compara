@@ -28,8 +28,8 @@ elsif ( ## sequence coordinates
   ## chrID:n,nnn,nnn-n,nnn,nnn
   ## chrID:n,nnn,nnn..n,nnn,nnn
   $species && (
-  $query =~ /chr([-\.\w]+):([\d|,]+)[\.|-]{1,2}([\d|,]+)/i    
-  || $query =~ /chr([-\.\w]+):(\d+)[-|\.|,]{1,2}(\d+)/i    
+  $query =~ /chr([-\.\w]+):([\d|,]+)[\.\.|-]([\d|,]+)/i    
+  || $query =~ /chr([-\.\w]+):(\d+)[-|\.\.|,](\d+)/i    
   )) {
   if ($3 - $2 > 5000000 || $2 - $3 > 5000000) {
     $URL = "/$species/cytoview?region=$1;start=$2;end=$3"; 
@@ -38,12 +38,11 @@ elsif ( ## sequence coordinates
     $URL = "/$species/contigview?region=$1;start=$2;end=$3"; 
   }
 }
-elsif ( ## pairs of identifiers
+elsif ($species && ($query =~ /\.\.|-/)) {  ## other pairs of identifiers
   ## str.string..str.string
   ## str.string-str.string
-  $species && ($query =~ /([\w|\.]+\w+)[\.|-]{1,2}([\w|\.]+)/) 
-  ) { 
- $URL = "/$species/jump_to_contig?type1=all;type2=all;anchor1=$1;anchor2=$2"; 
+  $query =~ /([\w|\.]+\w+)[\.\.|-]([\w|\.]+)/;
+  $URL = "/$species/jump_to_contig?type1=all;type2=all;anchor1=$1;anchor2=$2"; 
 }
 elsif ($query =~ /^BLA_\w+$/) { ## Blast ticket
  $URL = "/Multi/blastview/$query"; 
