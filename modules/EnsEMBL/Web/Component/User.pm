@@ -111,10 +111,38 @@ sub details {
   $panel->add_content('right', $html);
 }
 
+sub _render_table {
+  my $rows = shift;
+
+  my $html = qq(<table class="ss" style="border-collapse:collapse">);
+  my $count = 0;
+  my $colour = 'bg1';
+  foreach my $row (@$rows) {
+    $count++;
+    $colour = 'bg1';
+    if ($count % 2) {
+      $colour = 'bg2';
+    }
+    $html .= qq(<tr class="$colour">$row</tr>);
+  }
+  $html .= "</table>\n";
+
+  return $html;
+}
+
+
 sub _render_bookmarks {
   my $user = shift;
+  my @rows;
 
-  my $html = "Bookmarks!";
+  foreach my $record ($user->bookmark_records({ order_by => 'click' })) {
+    push @rows, sprintf(qq(<td width="16px"><img src="/img/bullet_star.png" width="16" height="16" /></td>
+<td><a href="%s">%s</a></td>
+<td><a href="/common/bookmark?id="%s">Edit</a></td>
+<td><a href="/common/delete_bookmark?id="%s">Delete</a></td>
+),  $record->url, $record->name, $record->id, $record->id);
+  }
+  my $html = _render_table(\@rows);
 
   return $html;
 }
