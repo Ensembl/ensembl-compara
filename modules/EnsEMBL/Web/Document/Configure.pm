@@ -23,9 +23,10 @@ sub common_menu_items {
     $doc->menu->add_block( $flag, 'bulleted', "Your Ensembl", 'priority' => 0 );
 
     if ($user_id) {
-      $doc->menu->add_entry( $flag, 'text' => "Bookmark this page",
-                                    'code' => 'bookmark',
-                                  'href' => "javascript:bookmark_link()" );
+      $doc->menu->add_entry( $flag, 'text' => "Logged in &middot; <a href='javascript:logout_link()'>Log out</a>", 'raw' => 'yes');
+      #$doc->menu->add_entry( $flag, 'text' => "Bookmark this page",
+      #                              'code' => 'bookmark',
+      #                            'href' => "javascript:bookmark_link()" );
 
       my $user = EnsEMBL::Web::Object::User->new({'adaptor'=>$user_adaptor, 'id'=>$user_id});
 
@@ -43,27 +44,26 @@ sub common_menu_items {
           $url =~ s/&/!and!/g;
           $url =~ s/;/!with!/g;
           push @bookmark_sections, { href => "/common/redirect?url=" . $url . "&id=" . $records[$n]->id, 
-                                   text => $records[$n]->name }; 
+                                   text => $records[$n]->name, extra_icon => '/img/bullet_star.png' }; 
         }
 
-        push @bookmark_sections, { 'href' => '/common/accountview#bookmarks', 
-                                 'text'  => 'More bookmarks...' };
+        push @bookmark_sections, { 'href' => 'javascript:bookmark_link()', 
+                                 'text'  => 'Bookmark this page', extra_icon => '/img/bullet_toggle_plus.png' };
+
+        push @bookmark_sections, { 'href' => '/account', 
+                                 'text'  => 'More bookmarks...', extra_icon => '/img/bullet_go.png' };
 
         $doc->menu->add_entry(
           $flag,
-          'href'=>'/common/update_account?node=accountview',
+          'href'=>'/account',
           'text'=>'Bookmarks',
           'options'=>\@bookmark_sections,       );
       }
       $doc->menu->add_entry( $flag, 'text' => "Your account",
-                                  'href' => "/common/accountview" );
-      $doc->menu->add_entry( $flag, 'text' => "Log out",
-                                  'href' => "javascript:logout_link()" );
-
+                                  'href' => "/account/" );
     }
     else {
-      $doc->menu->add_entry( $flag, 'text' => "Login/Register",
-                                  'href' => "javascript:login_link()" );
+      $doc->menu->add_entry( $flag, 'text' => "<a href='javascript:login_link();'>Login</a> or <a href='/common/register'>Register</a>", 'raw' => 'yes');
       $doc->menu->add_entry( $flag, 'text' => "About User Accounts",
                                   'href' => "/info/about/accounts.html",
                                   'icon' => '/img/infoicon.gif' );

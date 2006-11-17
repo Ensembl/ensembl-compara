@@ -203,7 +203,9 @@ sub _atag {
       }
     }
     my $V = exists( $entry->{'raw'} ) ? $entry->{'text'} : CGI::escapeHTML( $entry->{'text'} );
-    return $_atag ? "<a$_atag>$V</a>" : $V;
+    my $icon = exists( $entry->{'extra_icon'} ) ? "<img src='" . $entry->{'extra_icon'} . "' />" : "";
+
+    return $_atag ? "$icon <a$_atag>$V</a>" : $V;
   }
 }
 
