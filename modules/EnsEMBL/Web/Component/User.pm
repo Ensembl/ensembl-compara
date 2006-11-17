@@ -4,6 +4,11 @@ use EnsEMBL::Web::Component;
 use EnsEMBL::Web::Proxy::Object;
 use EnsEMBL::Web::DBSQL::NewsAdaptor;
 
+use EnsEMBL::Web::Interface::TabView;
+use EnsEMBL::Web::Interface::Tab;
+use EnsEMBL::Web::Interface::Table;
+use EnsEMBL::Web::Interface::Table::Row;
+
 use strict;
 use warnings;
 no warnings "uninitialized";
@@ -51,49 +56,83 @@ This is your account page. From here you can manage your bookmarks, configuratio
 sub configs {
   my( $panel, $user) = @_;
 
-  my $html = qq(
-<script type='text/javascript'>
+  my $newsTab= EnsEMBL::Web::Interface::Tab->new(( 
+                                     name => 'news', 
+                                     label => 'News', 
+                                     content => _render_filters($user) 
+                                                ));
 
-var tabs = [ 'bookmarks', 'news' ];
+  my $bookmarkTab = EnsEMBL::Web::Interface::Tab->new(( 
+                                     name => 'bookmark', 
+                                     label => 'Bookmarks', 
+                                     content => _render_bookmarks($user)
+                                                     ));
 
-function switch_tab(element) {
-  reset_tabs();
-  document.getElementById(element + "_tab").className = "tab selected";
-  document.getElementById(element).style.display = "block";
-}
+  my $tabview = EnsEMBL::Web::Interface::TabView->new(( 
+                                      name => "config",
+                                      tabs => [ $bookmarkTab, $newsTab ]
+                                                     ));
 
-function reset_tabs() {
-  for (var n = 0; n < tabs.length; n++) {
-    document.getElementById(tabs[n] + "_tab").className = "tab";
-  document.getElementById(tabs[n]).style.display = "none";
-  }
-}
-
-</script>
-
-<div class="box_tabs">
-  <div class="tab selected" id="bookmarks_tab"><a href="javascript:void(0);" onClick="switch_tab("bookmarks");">Bookmarks</a></div>
-  <div class="tab" id="news_tab"><a href="javascript:void(0);" onClick="switch_tab("news");">News Filters</a></div>
-  <br clear="all" />
-  <div class="tab_content">
-    <div class="tab_content_panel" id="bookmarks">);
-  $html .= _render_bookmarks($user);
-  $html .= qq(</div>
-    <div class="tab_content_panel" style="display:none;" id="groups">);
-  $html .= _render_filters($user);
-  $html .= qq(</div>
-  </div>
-</div>);
-
-  $panel->add_content('left', $html);
+  $panel->add_content('left', $tabview->render . "<br />");
 }
 
 sub groups {
-  my( $panel, $object) = @_;
+  my( $panel, $user) = @_;
 
-  my $html = "Groups!";
+  my $membershipTab= EnsEMBL::Web::Interface::Tab->new(( 
+                                     name => 'membership', 
+                                     label => 'Membership', 
+                                     content => _render_membership($user), 
+                                                ));
 
-  $panel->add_content('left', $html);
+  my $joinTab = EnsEMBL::Web::Interface::Tab->new(( 
+                                     name => 'join', 
+                                     label => 'Join a group', 
+                                     content => "join" 
+                                                     ));
+
+  my $administerTab = EnsEMBL::Web::Interface::Tab->new(( 
+                                     name => 'administer', 
+                                     label => 'Administer groups', 
+                                     content => "admin" 
+                                                     ));
+
+  my $tabview = EnsEMBL::Web::Interface::TabView->new(( 
+                                      name => "group",
+                                      tabs => [
+                                                $membershipTab,
+                                                $joinTab,
+                                                $administerTab,
+                                              ]
+                                                     ));
+
+  $panel->add_content('left', $tabview->render);
+
+}
+
+sub _render_membership {
+  my ($user) = @_;
+  my @groups = @{ $user->groups };
+  my $html = "";
+  if ($#groups > 0) {
+  $html = "You are a member of the following groups:<br /><br />";
+  my $table = EnsEMBL::Web::Interface::Table->new(( 
+                                       class => "ss", 
+                                       style => "border-collapse:collapse"
+                                                  ));
+  foreach my $group (@groups) {
+    my $row = EnsEMBL::Web::Interface::Table::Row->new();
+    $row->add_column({ content => $group->name });
+    $row->add_column({ content => "<a href='/common/unsubscribe'>Leave group</a>"});
+    $table->add_row($row);
+  }
+
+  $html .= $table->render;
+  } else {
+    $html .= "You are not a member of any Ensembl groups.";
+  }
+
+  return $html;
 }
 
 sub details {
@@ -134,16 +173,20 @@ sub _render_table {
 sub _render_bookmarks {
   my $user = shift;
   my @rows;
-
+  my $table = EnsEMBL::Web::Interface::Table->new(( 
+                                       class => "ss", 
+                                       style => "border-collapse:collapse"
+                                                  ));
   foreach my $record ($user->bookmark_records({ order_by => 'click' })) {
-    push @rows, sprintf(qq(<td width="16px"><img src="/img/bullet_star.png" width="16" height="16" /></td>
-<td><a href="%s">%s</a></td>
-<td><a href="/common/bookmark?id="%s">Edit</a></td>
-<td><a href="/common/delete_bookmark?id="%s">Delete</a></td>
-),  $record->url, $record->name, $record->id, $record->id);
+    my $row = EnsEMBL::Web::Interface::Table::Row->new();
+    $row->add_column({ width => "16px", content => "<img src='/img/bullet_star.png' width='16' height='16' />" });
+    $row->add_column({ content => "<a href=''>" . $record->name . "</a>" });
+    $row->add_column({ content => "<a href='/common/bookmark?id=" . $record->id . "'>Edit</a>" });
+    $row->add_column({ content => "<a href='/common/remove_bookmark?id=" . $record->id . "'>Delete</a>" });
+    $table->add_row($row);
   }
-  my $html = _render_table(\@rows);
-
+ 
+  my $html = $table->render; 
   return $html;
 }
 
@@ -231,20 +274,20 @@ sub _inplace_editor_for_bookmarks {
   return $html;
 }
 
-sub groups {
-  my( $panel, $object, $id ) = @_;
-
-## return the message
-  my $html = "<h3>Your Groups</h3>";
-
-  $html .= qq(<ul>
-<li>Group 1</li>
-<li>Group 2</li>
-<li>Group 3</li>
-</ul>
-);
-  $panel->add_content('left', $html);
-}
+#sub groups {
+#  my( $panel, $object, $id ) = @_;
+#
+### return the message
+#  my $html = "<h3>Your Groups</h3>";
+#
+#  $html .= qq(<ul>
+#<li>Group 1</li>
+#<li>Group 2</li>
+#<li>Group 3</li>
+#</ul>
+#);
+#  $panel->add_content('left', $html);
+#}
 
 sub about {
   my( $panel, $object, $id ) = @_;
