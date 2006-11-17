@@ -60,7 +60,7 @@ sub common_menu_items {
           'options'=>\@bookmark_sections,       );
       }
       $doc->menu->add_entry( $flag, 'text' => "Your account",
-                                  'href' => "/account/" );
+                                  'href' => "/common/accountview" );
     }
     else {
       $doc->menu->add_entry( $flag, 'text' => "<a href='javascript:login_link();'>Login</a> or <a href='/common/register'>Register</a>", 'raw' => 'yes');
