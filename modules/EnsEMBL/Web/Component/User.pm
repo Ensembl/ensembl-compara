@@ -42,7 +42,7 @@ function hide_intro() {
 <div class="col-wrapper">
 
 <div class="pale boxed" id="intro">
-<b>Your account</b> &middot; <a href="javascript:void(0);" onClick="hide_intro();">Hide this message</a><br />
+<b>Your account</b>
 This is your account page. From here you can manage your bookmarks, configurations and groups.
 </div>
 
