@@ -587,8 +587,11 @@ sub send_link {
     my $exp_text = $self->data('exp_text');
     my $help_email  = $object->species_defs->ENSEMBL_HELPDESK_EMAIL;
     my $base_url    = $object->species_defs->ENSEMBL_BASE_URL;
+    my $website     = $object->species_defs->ENSEMBL_SITETYPE;
     ## Fix case on site type: EnsEMBL -> Ensembl
-    my $website     = ucfirst(lc($object->species_defs->ENSEMBL_SITETYPE));
+    if ($website eq 'EnsEMBL') {
+      $website = 'Ensembl';
+    }
     my $link = "$base_url/common/set_password?node=validate;code=".$object->param('code');
 
     my $message = "Dear $name\n\n";
