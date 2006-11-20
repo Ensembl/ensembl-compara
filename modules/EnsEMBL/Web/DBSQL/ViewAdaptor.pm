@@ -225,10 +225,22 @@ sub dump_data {
 sub fetch_id {
   my ($self, $id) = @_;
   my $table = $self->table;
+  my $key = $table . "_id";
+  return $self->fetch_by({ $key => $id });
+}
+
+sub fetch_by {
+  my ($self, $where) = @_;
+  my $sql_where = "";
+  foreach my $key (keys %{ $where }) {
+    $sql_where .= $key . " = '" . $where->{$key} . "', ";
+  }
+  $sql_where =~ s/, $//;
+  my $table = $self->table;
   my $id_field = $table . "_id";
   my $sql = "";
   $sql .= "SELECT * FROM " . $table . " ";
-  $sql .= "WHERE " . $id_field . " = '" . $id . "'";
+  $sql .= "WHERE " . $sql_where . ";"; 
   $sql .= ";";
   warn "SQL: " . $sql;
   return $self->query($sql, $id_field);

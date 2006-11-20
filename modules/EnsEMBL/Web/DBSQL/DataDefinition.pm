@@ -10,6 +10,7 @@ my %Relationships_of;
 my %Adaptor_of;
 my %Id_of;
 my %Ids_of;
+my %Where_of;
 my %Data_of;
 
 sub new {
@@ -20,8 +21,16 @@ sub new {
   $Adaptor_of{$self}   = defined $params{adaptor} ? $params{adaptor} : [];
   $Id_of{$self}   = defined $params{id} ? $params{id} : undef;
   $Ids_of{$self}   = defined $params{ids} ? $params{ids} : [];
+  $Where_of{$self}   = defined $params{where} ? $params{where} : {};
   $Data_of{$self}   = defined $params{data} ? $params{data} : undef;
   return $self;
+}
+
+sub where {
+  ### a
+  my $self = shift;
+  $Where_of{$self} = shift if @_;
+  return $Where_of{$self};
 }
 
 sub relationships {
@@ -104,6 +113,7 @@ sub DESTROY {
   delete $Id_of{$self};
   delete $Ids_of{$self};
   delete $Data_of{$self};
+  delete $Where_of{$self};
 }
 
 }
