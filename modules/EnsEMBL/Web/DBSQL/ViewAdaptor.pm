@@ -1,8 +1,5 @@
 package EnsEMBL::Web::DBSQL::ViewAdaptor;
 
-### An inside-out class that acts as a simple wrapper for Perl DBI,
-### enabling quick'n'dirty development of simple database front-ends
-
 use strict;
 use warnings;
 no warnings 'uninitialized';
@@ -10,6 +7,8 @@ no warnings 'uninitialized';
 use DBI;
 use Data::Dumper;
 use EnsEMBL::Web::SpeciesDefs;
+use EnsEMBL::Web::Object::User;
+use EnsEMBL::Web::DBSQL::SQL::Result;
 
 {
 
@@ -54,9 +53,6 @@ sub handle {
   return $Handle_of{$self};
 }
 
-sub last_inserted_id {
-}
-
 sub discover {
   ### Queries the database metadata for information about available fields. 
   ### Returns: a reference to an array of hashrefs. Each hashref
@@ -76,11 +72,19 @@ sub discover {
   return $fields;
 }
 
+sub exists {
+  ### Checks if a row exists in the table. 
+  my ($self, $id) = @_;
+
+}
+
 sub edit {
   ### Updates an existing entry in the table
   my ($self, %params) = @_;
+  my $result = EnsEMBL::Web::DBSQL::SQL::Result->new(( action => 'edit' ));
   my %set_parameters = %{ $params{set} };
   my $id = $params{id};
+  my @multiple_ids = @{ $params{multiple_ids} };
   my @definition = undef;
   my $user = undef;
   if ($params{definition}) {
@@ -94,12 +98,35 @@ sub edit {
     %set_parameters = %{ $self->record_parameters(\%set_parameters, $params{record}, $user) };
   }
 
+  if ($set_parameters{password}) {
+    my $salt = $params{salt}; 
+    warn "PASSWORD: " . $set_parameters{password};
+    my $password = $set_parameters{password};
+    $set_parameters{password} = EnsEMBL::Web::Object::User->encrypt($password);
+    warn "PASSWORD: " . $set_parameters{password};
+  }
+  
+  my $in = "'$id'";
+  if (@multiple_ids) {
+    warn "PERFORMING MULTIPLE UPDATES";
+    $in = join(", ", @multiple_ids);
+  }
+
   my $table = $self->table;
   my $sql = "UPDATE $table ";
   $sql .= $self->set_sql_with_parameters(\%set_parameters, \@definition, $user);
-  $sql .= "WHERE " . $table . "_id='" . $id . "'";  
+  $sql .= "WHERE " . $table . "_id IN (" . $in . ")";  
+
   warn "SQL: " . $sql;
-  return $self->execute($sql);
+
+  my $return = $self->execute($sql); 
+  $result->result($return);
+  $result->set_parameters(\%set_parameters);
+  if ($return) { 
+    $result->success("yes");
+  }
+
+  return $result;
 }
 
 sub execute {
@@ -136,7 +163,7 @@ sub set_sql_with_parameters {
 sub create {
   ### Creates a new entry in the table
   my ($self, %params) = @_;
-
+  my $result = EnsEMBL::Web::DBSQL::SQL::Result->new(( action => 'create' ));
   my %set_parameters = %{ $params{set} };
   my @definition = undef;
   my $user = undef;
@@ -163,11 +190,12 @@ sub create {
   my $sql = "INSERT INTO " . $table . " ";
   $sql .= $self->set_sql_with_parameters(\%set_parameters, \@definition, $user);
   $sql .= ";";
-  warn "SQL: " . $sql;
+
   if ($self->execute($sql)) {
-    return $self->last_inserted_id;
+    $result->last_inserted_id($self->last_inserted_id);
+    $result->success('yes');
   }
-  return undef; 
+  return $result; 
 }
 
 sub record_parameters {

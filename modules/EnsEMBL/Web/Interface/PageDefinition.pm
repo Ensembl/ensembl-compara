@@ -8,24 +8,41 @@ use warnings;
 my %Title_of;
 my %PageElements_of;
 my %FormElements_of;
+my %DisplayElements_of;
 my %ConfigurationElements_of;
 my %Action_of;
+my %Send_of;
 my %OnComplete_of;
 my %OnError_of;
 my %DataDefinition_of;
+
 
 sub new {
   my ($class, %params) = @_;
   my $self = bless \my($scalar), $class;
   $Title_of{$self}          = defined $params{title} ? $params{title} : "";
   $OnComplete_of{$self}     = defined $params{on_complete} ? $params{on_complete} : "";
+  $Send_of{$self}     = defined $params{send} ? $params{send} : {};
   $PageElements_of{$self}   = defined $params{page_elements} ? $params{page_elements} : [];
   $FormElements_of{$self}   = defined $params{form_elements} ? $params{form_elements} : [];
+  $DisplayElements_of{$self}   = defined $params{display_elements} ? $params{display_elements} : [];
   $DataDefinition_of{$self} = defined $params{data_definition} ? $params{data_definition} : undef;
   $ConfigurationElements_of{$self} = defined $params{configuration_elements} ? $params{configuration_elements} : undef;
   $Action_of{$self}         = defined $params{action} ? $params{action} : undef;
   $OnError_of{$self}         = defined $params{error} ? $params{error} : undef;
   return $self;
+}
+
+sub send_params {
+  ### a
+  my $self = shift;
+  $Send_of{$self} = shift if @_;
+  return $Send_of{$self};
+}
+
+sub send_id {
+  my $self = shift;
+  return $self->send_params->{id};
 }
 
 sub title {
@@ -51,8 +68,7 @@ sub add_configuration_element {
   push @{ $self->configuration_elements }, { 'key' => $key, 'value' => $value };
 }
 
-
-sub on_complete {
+sub on_complete{
   ### a
   my $self = shift;
   $OnComplete_of{$self} = shift if @_;
@@ -71,6 +87,18 @@ sub data_definition {
   my $self = shift;
   $DataDefinition_of{$self} = shift if @_;
   return $DataDefinition_of{$self};
+}
+
+sub display_elements {
+  ### a
+  my $self = shift;
+  $DisplayElements_of{$self} = shift if @_;
+  return $DisplayElements_of{$self};
+}
+
+sub add_display_element {
+  my ($self, $element, $title, $options) = @_;
+  push @{$self->display_elements}, { name => $element, label => $title, options => $options};
 }
 
 sub page_elements {
@@ -147,9 +175,17 @@ sub value_for_form_element {
   ### database. For possible return values for enumerated types, use {{value_for_selection_element}}
   my ($self, $name) = @_;
   my $return_value = undef;
+
+  my $options = $self->options_for_element($name);
+
+  if ($options && $options->is_conditional) {
+    return $return_value;
+  }
+
   if ($self->data_definition->data) {
     $return_value = $self->data_definition->data->{$name};
   }
+
   if (!$return_value && $self->data_definition->data) {
     my $eval_string = $self->data_definition->data->{data};
     my $data = eval($eval_string);
@@ -160,16 +196,27 @@ sub value_for_form_element {
     }
     $return_value = $data->{$name};
   }
+
+
   if (!$return_value) {  
-    foreach my $element (@{ $self->form_elements }) {
-      if ($element->{name} eq $name) {
-        if (defined $element->{options} && $element->{options}->value_for_field($name)) {
-          $return_value = $element->{options}->value_for_field($name);
-        }
-      }
+    if (defined $options && $options->value_for_field($name)) {
+          $return_value = $options->value_for_field($name);
     }
   } 
+
   return $return_value;
+}
+
+sub options_for_element {
+  my ($self, $name) = @_;
+  foreach my $element (@{ $self->form_elements }) {
+    if ($element->{name} eq $name) {
+      if ($element->{options}) {
+        return $element->{options};
+      }
+    }
+  }
+  return undef;
 }
 
 sub add_form_element {
@@ -213,11 +260,13 @@ sub DESTROY {
   delete $Title_of{$self};
   delete $PageElements_of{$self};
   delete $DataDefinition_of{$self};
+  delete $DisplayElements_of{$self};
   delete $Action_of{$self};
   delete $OnComplete_of{$self};
   delete $FormElements_of{$self};
   delete $ConfigurationElements_of{$self};
   delete $OnError_of{$self};
+  delete $Send_of{$self};
 }
 
 }

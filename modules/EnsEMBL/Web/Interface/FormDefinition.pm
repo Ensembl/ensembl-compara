@@ -8,14 +8,17 @@ use warnings;
 my %Values_of;
 my %Labels_of;
 my %Descriptions_of;
+my %Options_of;
 
 sub new {
   ### c
   my ($class, %params) = @_;
   my $self = bless \my($scalar), $class;
+
   $Values_of{$self}          = []; 
   $Labels_of{$self}          = [];
   $Descriptions_of{$self}    = [];
+  $Options_of{$self}         = [];
 
   foreach my $label (@{ $params{'labels'} }) {
     $self->add_label($label);
@@ -39,6 +42,18 @@ sub values {
   return $Values_of{$self};
 }
 
+sub options {
+  ### a
+  my $self = shift;
+  $Options_of{$self} = shift if @_;
+  return $Options_of{$self};
+}
+
+sub add_option {
+  my ($self, $option) = @_;
+  push @{ $self->options }, $option;
+}
+
 sub add_value {
   ### Adds a new value to the form definition, for a specified form field.
   ### Values are returned to the database handler, if defined for a field.
@@ -57,6 +72,16 @@ sub value_for_field {
     }
   }
   return undef;
+}
+
+sub is_conditional {
+  my ($self) = @_;
+  foreach my $option (@{ $self->options }) {
+    if ($option->{'conditional'}) {
+      return 1;
+    }
+  }
+  return 0;
 }
 
 sub labels {
@@ -118,6 +143,7 @@ sub DESTROY {
   delete $Values_of{$self};
   delete $Labels_of{$self};
   delete $Descriptions_of{$self};
+  delete $Options_of{$self};
 }
 
 }

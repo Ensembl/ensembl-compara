@@ -47,6 +47,10 @@ sub new {
   return $self;
 }
 
+sub user_table {
+  return "user_test";
+}
+
 sub create_session {
   my $self            = shift; 
   my $firstsession_ID = shift;
@@ -261,17 +265,18 @@ sub _random_string {
   return $random_string;
 }
 
-sub find_user_by_user_id {
-  my ($self, $id) = @_;
-
+sub find_user_by_email_and_password {
+  my ($self, %params)  = @_;
+  my $email = $params{email};
+  my $password = $params{password};
   my $details = {};
   return $details unless $self->{'_handle'};
-
   my $sql = qq(
-    SELECT user_id, name, organisation, email, extra
-    FROM user
-    WHERE user_id = "$id" 
+    SELECT ) . $self->user_table . qq(_id, name, organisation, email, data, salt, password 
+    FROM ) . $self->user_table . qq(
+    WHERE email = "$email" and password = "$password"; 
   );
+  warn "SQL: " . $sql;
 
   my $R = $self->{'_handle'}->selectall_arrayref($sql); 
   return {} unless $R->[0];
@@ -283,7 +288,40 @@ sub find_user_by_user_id {
     'name'    => $record[1],
     'organisation' => $record[2],
     'email'   => $record[3],
-    'extra'   => $record[4],
+    'data'   => $record[4],
+    'salt'   => $record[5],
+    'password'   => $record[6],
+  };
+  return $details;
+}
+
+sub find_user_by_user_id {
+  my ($self, $id) = @_;
+
+  my $details = {};
+  return $details unless $self->{'_handle'};
+
+  my $sql = qq(
+    SELECT ) . $self->user_table . qq(_id, name, organisation, email, data, salt, password 
+    FROM ) . $self->user_table . qq(
+    WHERE ) . $self->user_table . qq(_id = "$id" 
+  );
+
+  warn "SQL: " . $sql;
+
+  my $R = $self->{'_handle'}->selectall_arrayref($sql); 
+  return {} unless $R->[0];
+
+  my @record = @{$R->[0]};
+  $details = {
+    'id' => $record[0],
+    'user_id' => $record[0],
+    'name'    => $record[1],
+    'organisation' => $record[2],
+    'email'   => $record[3],
+    'data'   => $record[4],
+    'salt'   => $record[5],
+    'password'   => $record[6],
   };
   return $details;
 }
@@ -292,15 +330,15 @@ sub find_users_by_group_id {
   my ($self, $id) = @_;
   my $sql = qq(
     SELECT 
-      user.user_id,
+      user.) . $self->table_name . qq(user_id,
       user.name,
       user.email,
       user.organisation,
       group_member.level,
       group_member.status
-    FROM user 
+    FROM ) . $self->user_table . qq( 
     LEFT JOIN group_member 
-    ON (group_member.user_id = user.user_id) 
+    ON (group_member.user_id = user.) . $self->user_table . qq(_id) 
     WHERE group_member.webgroup_id = '$id';
   );
   my $R = $self->{'_handle'}->selectall_arrayref($sql);
@@ -334,9 +372,9 @@ sub getUserByID {
   return $details unless $self->{'_handle'};
 
   my $sql = qq(
-    SELECT user_id, name, organisation, email, extra
-    FROM user
-    WHERE user_id = "$id" 
+    SELECT ) . $self->user_table . qq(_id, name, organisation, email, data 
+    FROM ) . $self->user_table . qq( 
+    WHERE ) . $self->user_table . qq(_id = "$id" 
   );
 
   my $R = $self->{'_handle'}->selectall_arrayref($sql); 
@@ -361,8 +399,8 @@ sub getUserByEmail {
   return $details unless $self->{'_handle'};
 
   my $sql = qq(
-    SELECT user_id, name, salt, organisation, extra
-    FROM user
+    SELECT ) . $self->user_table . qq(_id, name, salt, organisation, data 
+    FROM ) . $self->user_table . qq( 
     WHERE email = "$email" 
   );
 
@@ -391,8 +429,8 @@ sub getUserByCode {
   return $details unless $self->{'_handle'};
 
   my $sql = qq(
-    SELECT user_id, name, salt, UNIX_TIMESTAMP(expires), organisation, extra
-    FROM user
+    SELECT ) . $self->user_table . qq(_id, name, salt, organisation, data 
+    FROM ) . $self->user_table . qq( 
     WHERE password = "$code"
   );
 warn $sql;
@@ -401,7 +439,7 @@ warn $sql;
   return {} unless $R->[0];
 
   my @record = @{$R->[0]};
-  my $expires = $record[3];
+  my $expires = undef;
   if (!$expires || time() < $expires) {
     my $user_id = $record[0];
     $details = {
@@ -413,7 +451,7 @@ warn $sql;
     };
     if ($expires) {
       ## reset expiry so user can log in
-      $sql = qq(UPDATE user SET expires = null WHERE user_id = "$user_id");
+      $sql = qq(UPDATE user SET expires = null WHERE ) . $self->user_table . qq(_id = "$user_id");
       my $sth = $self->{'_handle'}->prepare($sql);
       my $result = $sth->execute();
     }
@@ -442,7 +480,7 @@ sub createUserAccount {
       salt          = "$salt",
       password      = "$encrypted",
       organisation  = "$organisation",
-      extra         = "$extra",
+      data          = "$extra",
       date_created  = NOW()
   );
   
@@ -480,10 +518,10 @@ sub updateUserAccount {
         name          = "$name", 
         email         = "$email", 
         organisation  = "$organisation",
-        extra         = "$extra",
+        data          = "$extra",
         last_updated  = NOW(),
         updated_by    = $user_id
-      WHERE user_id   = $user_id
+      WHERE ) . $self->user_table . qq(_id   = $user_id
     );
   
     my $sth = $self->{'_handle'}->prepare($sql);
@@ -493,8 +531,16 @@ sub updateUserAccount {
   return 0;
 }
 
-
 sub validateUser {
+  my ($self, $email, $password) = @_;
+  return {} unless $self->{'_handle'};
+  my $result = {error => 'Problem with validation'};
+  my %user = %{$self->getUserByEmail($email)};
+  my $id = $user{'user_id'};
+  return $result;
+}
+
+sub validateUser_old {
   my ($self, $email, $password) = @_;
   return {} unless $self->{'_handle'};
 
@@ -506,8 +552,8 @@ sub validateUser {
     my $salt = $user{'salt'};
     my $encrypted = Digest::MD5->new->add($password.$salt)->hexdigest();
     my $sql = qq(
-      SELECT user_id, expires
-      FROM user
+      SELECT ) . $self->user_table . qq(_id, data 
+      FROM ) . $self->user_table . qq( 
       WHERE email = "$email" AND password = "$encrypted"
     );
     my $R = $self->{'_handle'}->selectall_arrayref($sql); 
@@ -516,7 +562,7 @@ sub validateUser {
     my @record = @{$R->[0]};
     my $user_id = $record[0];
     my $expires = $record[1];
-    if ($user_id && !$expires) {
+    if ($user_id) {
       $$result{'user_id'} = $record[0];
     }
     else {
@@ -552,7 +598,7 @@ sub setPassword {
       expires   = DATE_ADD(NOW(), INTERVAL $expiry SECOND)
     );
   }
-  $sql .= qq( WHERE user_id = "$id");
+  $sql .= qq( WHERE ) . $self->user_table . qq(_id = "$id");
 
   my $sth = $self->{'_handle'}->prepare($sql);
   my $result = $sth->execute();
@@ -603,8 +649,8 @@ sub getGroupByID {
           g.created_at, u2.name, u2.organisation, g.modified_at
     FROM webgroup as g, user as u1, user as u2
     WHERE g.webgroup_id  = "$id" 
-      AND g.created_by = u1.user_id
-      AND g.modified_by = u2.user_id
+      AND g.created_by = u1.) . $self->user_table . qq(_id
+      AND g.modified_by = u2.) . $self->user_table . qq(_id
     ORDER BY g.name
   ); 
   my $T = $self->{'_handle'}->selectall_arrayref($sql);
@@ -730,7 +776,7 @@ sub getMembership {
   
   if (ref($record) eq 'HASH') {
     %criteria = (
-      'm.user_id'     => $record->{'user_id'},
+      'm.' . $self->user_table . '_id'     => $record->{'user_id'},
       'm.webgroup_id' => $record->{'webgroup_id'},
       'm.level'       => $record->{'level'},
       'm.status'      => $record->{'status'},
@@ -739,11 +785,11 @@ sub getMembership {
 
   my $sql = qq(SELECT g.webgroup_id, g.name, g.blurb, g.type, g.status,
                       u1.name, u1.organisation, g.created_at, u2.name, u2.organisation, g.modified_at,
-                      m.user_id, m.level, m.status
+                      m.) . $self->user_table . qq(_id, m.level, m.status
               FROM webgroup as g, group_member as m, user as u1, user as u2
               WHERE g.webgroup_id = m.webgroup_id
-                AND g.created_by = u1.user_id
-                AND g.modified_by = u2.user_id
+                AND g.created_by = u1.) . $self->user_table . qq(_id
+                AND g.modified_by = u2.) . $self->user_table . qq(_id
       );
   while (my ($column, $value) = each (%criteria)) {
     if ($value) {
@@ -850,7 +896,7 @@ sub getGroupAdmins {
   my $results = [];
   my $sql = qq(
     SELECT u.user_id, u.name, u.email
-    FROM user as u, group_member as m
+    FROM ) . $self->user_table . qq( as u, group_member as m
     WHERE u.user_id = m.user_id
       AND m.webgroup_id = "$group"
       AND m.level = "administrator"
@@ -947,7 +993,7 @@ sub update_record {
   warn "UPDATING: " . $user_id . ": " . $type . ": " . $data;
   my $sql = qq(
     UPDATE record
-    SET user_id = $user_id,
+    SET ) . $self->user_table . qq(_id = $user_id,
         type    = "$type",
         data    = "$data"
     WHERE record_id = $id
@@ -966,7 +1012,7 @@ sub insert_record {
   warn "INSERTING: " . $user_id . ": " . $type . ": " . $data;
   my $sql = qq(
     INSERT INTO record 
-    SET user_id = $user_id,
+    SET ) . $self->user_table . qq(_id = $user_id,
         type    = "$type",
         data    = "$data",
         created_at=CURRENT_TIMESTAMP

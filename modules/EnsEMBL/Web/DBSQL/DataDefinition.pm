@@ -9,6 +9,7 @@ my %Fields_of;
 my %Relationships_of;
 my %Adaptor_of;
 my %Id_of;
+my %Ids_of;
 my %Data_of;
 
 sub new {
@@ -18,6 +19,7 @@ sub new {
   $Relationships_of{$self}   = defined $params{relationships} ? $params{relationships} : [];
   $Adaptor_of{$self}   = defined $params{adaptor} ? $params{adaptor} : [];
   $Id_of{$self}   = defined $params{id} ? $params{id} : undef;
+  $Ids_of{$self}   = defined $params{ids} ? $params{ids} : [];
   $Data_of{$self}   = defined $params{data} ? $params{data} : undef;
   return $self;
 }
@@ -54,6 +56,7 @@ sub discover {
 
 sub populate {
   my ($self, $id) = @_;
+  warn "Populating with ID: " .$id;
   if ($id) {
     $self->id($id);
   }
@@ -74,6 +77,13 @@ sub id {
   return $Id_of{$self};
 }
 
+sub ids {
+  ### a
+  my $self = shift;
+  $Ids_of{$self} = shift if @_;
+  return $Ids_of{$self};
+}
+
 sub data {
   ### a
   my $self = shift;
@@ -92,6 +102,7 @@ sub DESTROY {
   delete $Adaptor_of{$self};
   delete $Relationships_of{$self};
   delete $Id_of{$self};
+  delete $Ids_of{$self};
   delete $Data_of{$self};
 }
 

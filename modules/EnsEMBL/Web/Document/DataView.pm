@@ -2,12 +2,13 @@ package EnsEMBL::Web::Document::DataView;
 
 use EnsEMBL::Web::Document::WebPage;
 use EnsEMBL::Web::DBSQL::ViewAdaptor;
+use EnsEMBL::Web::DBSQL::SQL::Result;
+
 use CGI;
 use strict;
 our @ISA = qw(EnsEMBL::Web::Document::WebPage);
 
 {
-
 
 sub simple {
   my ($type, $definition, $parameter) = @_;
@@ -19,9 +20,9 @@ sub simple {
   }
 
   my $cgi = CGI->new; 
+  my $perform = 1;
 
   my $result = undef;
-
   if ($cgi->param('dataview_action')) {
     my $action = $definition->action;
     my $adaptor = $definition->data_definition->adaptor;
@@ -48,11 +49,19 @@ sub simple {
                                      definition => $fields, 
                                      user =>       $user
                                   ));
-        if ($result) {
+        if ($result->success) {
           $self->map_relationships($definition, $incoming, $result, $user);
         }
       }
     } elsif ($action eq "edit") {
+      if ($incoming->{'conditional'}) {
+        my $condition = $incoming->{'conditional'};
+        my $value = $definition->data_definition->data->{$condition};
+        if (!$incoming->{$condition} eq $value) {
+          $self->redirect($definition->on_error);
+          return 0;
+        }
+      }
       if ($incoming->{'record'}) {
         my $fields = $definition->data_definition->fields;
         my $edit_parameters = $self->parameters_for_fields($fields, $incoming);
@@ -68,21 +77,56 @@ sub simple {
 
       } else {
         my $fields = $definition->data_definition->discover;
+        my $multiple_ids = $definition->data_definition->ids;
         my $edit_parameters = $self->parameters_for_fields($fields, $incoming);
         my $user = $self->verify_user_id($incoming); 
+
+        foreach my $multi (@{ $multiple_ids }) {
+          my $result = $adaptor->fetch_id($multi, 'id');
+          if ($result->{$multi}) {
+            warn $multi . " EXISTS: UPDATING";
+          } else { 
+            warn $multi . " NEEDS CREATING";
+            $result = $adaptor->create(( set =>        $edit_parameters, 
+                                         definition => $fields, 
+                                         user =>       $user
+                                      ));
+          }
+        }
+
         $result = $adaptor->edit((
                                  set =>     $edit_parameters,
                                  definition => $fields,
                                  user =>       $user,
+                                 multiple_ids => $multiple_ids,
                                  id   =>       $incoming->{'id'}
                                 ));
       }
     }
 
-    if ($result) {
-      $self->redirect($definition->on_complete);
+    my $send = "";
+
+    if ($definition->send_params) {
+      foreach my $key (keys %{ $definition->send_params }) {
+        if ($definition->send_params->{$key} eq "yes") {
+          if ($key eq "id" and $action eq "create") {
+            $send .= "&id=" . $result->last_inserted_id; 
+          } elsif ($key eq 'password' && $result->set_parameters->{'password'}) {
+            $send .= "&key=" . $result->set_parameters->{'password'};
+          } else { 
+            $send .= "&$key=" . $incoming->{$key};
+          }
+        }
+      }
+      if ($send) {
+        $send = "?" . $send;
+      }
+    }
+
+    if ($result->success) {
+      $self->redirect($definition->on_complete . $send);
     } else {
-      $self->redirect($definition->on_error);
+      $self->redirect($definition->on_error . $send);
     }
 
   } else {
@@ -102,7 +146,7 @@ sub map_relationships {
     my $fields = $definition->data_definition->discover($relationship->link_table);
     my $relationship_parameters = $self->parameters_for_fields($fields, $incoming);
     my $from_id = $relationship->from . "_id";
-    $relationship_parameters->{$from_id} = $result;
+    $relationship_parameters->{$from_id} = $result->last_inserted_id;
     $result = $adaptor->create(( 
                               set   => $relationship_parameters, 
                               table => $relationship->link_table,
