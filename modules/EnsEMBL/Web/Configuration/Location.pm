@@ -456,8 +456,8 @@ sub contigview {
   $self->update_configs_from_parameter( 'bottom', 'contigviewbottom' );
   $self->add_das_sources('contigviewbottom');
 
-  $self->{page}->add_body_attr( 'onload' => 'populate_fragments(); ');
-  $self->{page}->javascript->add_source("/js/ajax_fragment.js");
+  #$self->{page}->add_body_attr( 'onload' => 'populate_fragments(); ');
+  #$self->{page}->javascript->add_source("/js/ajax_fragment.js");
 
   my $last_rendered_panel = undef;
   my @common = ( 'params' => { 'l'=>$q_string, 'h' => $obj->highlights_string } );
