@@ -15,7 +15,7 @@ function archive( release ) {
 
 function login_link() {
   URL = escape(document.location.href);
-  document.location = '/common/user_login?url=' + URL;
+  document.location = '/login.html?url=' + URL;
   return true;  
 }
 
