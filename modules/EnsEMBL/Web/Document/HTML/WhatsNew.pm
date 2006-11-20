@@ -135,7 +135,7 @@ sub render {
       $sp_name = 'all species';
     }
  
-    ## generate HTMLi
+    ## generate HTML
     $html .= '<p>';
     if ($sp_count == 1) {
       $html .= qq(<a href="/$sp_dir/"><img src="/img/species/thumb_$sp_dir.png" alt="" title="Go to the $sp_name home page" class="sp-thumb" height="30" width="30" /></a>);
@@ -151,7 +151,7 @@ sub render {
 
   $html .= "\n</div>\n";
 
-  if ($user_id < 1) {
+  if ($ENV{'ENSEMBL_LOGINS'} && $user_id < 1) {
     $html .= qq(<a href="javascript:login_link();">Log in</a> to see customised news &middot; <a href="/common/register">Register</a>);
   }
 
