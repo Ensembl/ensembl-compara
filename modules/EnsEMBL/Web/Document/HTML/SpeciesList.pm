@@ -39,7 +39,7 @@ sub render {
     $html .= "<div id='full_species'>\n";
     $html .= render_species_list($user, $species_defs, \%id_to_species, \%species_id, \%species_description); 
     $html .= "</div>\n";
-    if (!$user->name) {
+    if ($ENV{'ENSEMBL_LOGINS'} && !$user->name) {
       $html .= "<div id='login_message'>";
       $html .= "<a href='javascript:login_link()'>Log in</a> to customise this list &middot; <a href='/common/register'>Register</a>";
       $html .= "</div>\n";
