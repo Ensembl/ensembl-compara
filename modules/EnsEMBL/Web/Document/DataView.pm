@@ -80,6 +80,35 @@ sub simple {
         my $multiple_ids = $definition->data_definition->ids;
         my $edit_parameters = $self->parameters_for_fields($fields, $incoming);
         my $user = $self->verify_user_id($incoming); 
+        
+        foreach my $key (keys %{ $definition->data_definition->where }) {
+          foreach my $element (@{ $definition->data_definition->where->{$key} }) {
+            my $where_result = $adaptor->fetch_by({ $key => $element });
+            warn "MULTI UPDATE: " . $key . ": " . $element;
+            my $count = 0;
+            foreach my $new_id (keys %{ $where_result }) {
+              $count++;
+              warn "ADDING FOR UPDATE: " . $new_id;
+              push @{ $multiple_ids }, $new_id;
+            }
+            if ($count == 0) {
+              warn "NO RECORDS MATCHING " . $key . " = " . $element;
+              $edit_parameters->{$key} = $element; ## will be removed before updates 
+              $result = $adaptor->create(( set =>        $edit_parameters,
+                                           definition => $fields, 
+                                           user =>       $user
+                                        ));
+            }
+          }
+        }
+
+        ## We don't want to to overwrite the fields we have selected the rows by
+        ## in the forthcoming SQL updates, so remove them:
+
+        foreach my $key (keys %{ $definition->data_definition->where }) {
+          delete $edit_parameters->{$key};
+          delete $fields->{$key};
+        }
 
         foreach my $multi (@{ $multiple_ids }) {
           my $result = $adaptor->fetch_id($multi, 'id');
