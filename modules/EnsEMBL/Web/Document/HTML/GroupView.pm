@@ -13,7 +13,7 @@ sub render {
   my ($class, $request) = @_;
   my $user = EnsEMBL::Web::Object::User->new({ id => $ENV{'ENSEMBL_USER_ID'} });
   
-  my $bookmarkTab = EnsEMBL::Web::Interface::Tab->new(( name => 'bookmark', label => 'Bookmarks', content => render_bookmarks($user) ));
+  my $groupsTab= EnsEMBL::Web::Interface::Tab->new(( name => 'group', label => 'Bookmarks', content => render_bookmarks($user) ));
   my $groupTab = EnsEMBL::Web::Interface::Tab->new(( name => 'group', label => 'Groups', content => render_groups($user) ));
   my $tabview = EnsEMBL::Web::Interface::TabView->new(( tabs => [ $bookmarkTab, $groupTab ]));
 
@@ -36,7 +36,7 @@ sub render_user_details {
   $html .= "<li>" . $user->email . "</li>\n";
   $html .= "<li>" . $user->organisation . "</li>\n";
   $html .= "</ul>\n";
-  $html .= "<a href='/common/update'>Update details</a>";
+  $html .= "<a href='/common/update?id=" . $user->id . "'>Change details</a>";
   $html .= "</div>\n";
   return $html;
 }

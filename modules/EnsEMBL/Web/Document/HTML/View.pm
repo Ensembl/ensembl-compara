@@ -37,6 +37,12 @@ sub render_page {
     $self->print_linebreak;
   }
 
+  $self->print("<ul>\n");
+  foreach my $field (@{ $page->display_elements }) {
+    $self->render_display( $field, $page );
+  }
+  $self->print("</ul>\n");
+
   my @form_elements = @{ $page->form_elements };
 
   $self->print_form_header($page);
@@ -53,7 +59,11 @@ sub render_field {
   my ($self, $field, $page) = @_;
   my $type = $field->{'Type'};
   if ($type =~ /varchar/) {
-    $self->render_textfield($field, $page);
+    if ($field->{'Field'} eq 'password') {
+      $self->render_password_field($field, $page);
+    } else {
+      $self->render_textfield($field, $page);
+    }
   } elsif ($type =~ /text/) {
     $self->render_textarea($field, $page);
   } elsif ($type =~ /enum/) {
@@ -61,8 +71,16 @@ sub render_field {
   }
 }
 
-sub render_textfield {
+sub render_display {
   my ($self, $field, $page) = @_;
+  $self->print("<li>" . $field->{label} . ": " . $page->value_for_form_element($field->{name}) . "</li>\n");
+}
+
+sub render_textfield {
+  my ($self, $field, $page, $input_type) = @_;
+  if (!$input_type) {
+    $input_type = "text";
+  }
   my $field_name = $field->{'Field'};
   my ($field_size) = $field->{'Type'} =~ m/\((.*)\)/;
   my $value = "";
@@ -70,7 +88,12 @@ sub render_textfield {
   if ($page->value_for_form_element($field_name)) {
     $value = "value='" . $page->value_for_form_element($field_name) . "'";
   }
-  $self->print('<input type="text" name="' . $field_name . '" ' . $value . ' maxlength="' . $field_size . '"/>' . "\n");
+  $self->print('<input type="' . $input_type . '" name="' . $field_name . '" ' . $value . ' maxlength="' . $field_size . '"/>' . "\n");
+}
+
+sub render_password_field {
+  my ($self, $field, $page) = @_;
+  $self->render_textfield($field, $page, 'password');
 }
 
 sub render_options {
@@ -158,11 +181,29 @@ sub print_form_header {
   $self->print('<form method="POST"><ul>' . "\n");
   $self->print('<input type="hidden" name="dataview_action" value="' . $page->action . '" />'. "\n");
 
-  if ($id) {
+  if ($id) { ## ID of record to update
     $self->print('<input type="hidden" name="id" value="' . $id . '" />'. "\n");
   }
 
-  if ($user_id) {
+  foreach my $multiple_id (@{ $page->data_definition->ids }) {
+    $self->print('<input type="hidden" name="multiple_id" value="' . $multiple_id . '" />'. "\n");
+  }
+
+  my %included = ();
+  my @keys = keys %{ $page->data_definition->where }; 
+  if (@keys) {
+    $self->print("Note: You are editing multiple records.<br /><br />");
+  }
+  foreach my $where (@keys) {
+    foreach my $element (@{ $page->data_definition->where->{$where} }) {
+      if (!$included{$element}) {
+        $included{$element} = 1;
+        $self->print('<input type="hidden" name="' . $where .'" value="' . $element . '" />'. "\n");
+      }
+    }
+  }
+
+  if ($user_id) { ## ID of user 
     $self->print('<input type="hidden" name="user_id" value="' . $user_id . '" />'. "\n");
   }
 
