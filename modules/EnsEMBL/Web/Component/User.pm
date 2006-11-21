@@ -145,8 +145,8 @@ sub details {
 <li>%s</li>
 <li>%s</li>
 </ul>
-<a href="/common/update">Update details</a>
-</div>), $user->name, $user->email, $user->organisation);
+<a href="/common/update?id=%s">Update details</a>
+</div>), $user->name, $user->email, $user->organisation, $user->id);
 
   $panel->add_content('right', $html);
 }
