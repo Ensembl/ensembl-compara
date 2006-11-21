@@ -245,13 +245,15 @@ th.stacked { background-color:[[BACKGROUND3]]; border:1px solid [[BACKGROUND1]];
 
 td.stacked { padding:4px; } 
 
-table.ss, table.spreadsheet { width: 100%; }
+/* Striped spreadsheets */
+
+table.ss { width: 100%; }
 
 table.ss tr.ss_header { background-color:#ccc; border-width:1px 0px 0px 0px; border-color:#ccc; border-style:solid; }
 
-table.ss th, table.spreadsheet th { background-color: #ccc; border-width:1px 0px 0px 0px; border-color:#ccc; border-style:solid; padding:0.2em; vertical-align: top }
+table.ss th { background-color: #ccc; border-width:1px 0px 0px 0px; border-color:#ccc; border-style:solid; padding:0.2em; vertical-align: top }
 
-table.ss td, table.spreadsheet td { vertical-align: top; padding:0.2em; }
+table.ss td { vertical-align: top; padding:0.2em; }
 
 table.ss .left-border {  border-left:1px #ccc solid;  }
 
@@ -259,11 +261,11 @@ table.ss .right-border {  border-right:1px #ccc solid;  }
 
 table.ss .bottom-border {  border-bottom:1px #ccc solid;  }
 
-table.ss tr.bg1, table.spreadsheet tr.bg1 { background-color:#fff; }
+table.ss tr.bg1 { background-color:#fff; }
 
-table.ss tr.bg2, table.spreadsheet tr.bg2 { background-color:#f0f0f0; }
+table.ss tr.bg2 { background-color:#f0f0f0; } /* grey stripe */
 
-table.spreadsheet tr.tint { background-color:[[BACKGROUND3]]; }
+table.tint tr.bg2 { background-color:[[BACKGROUND3]]; } /* coloured stripe */
 
 table.info-image { width:100%; margin:10px 0px; }
 table.info-image td.image { text-align:center; padding-right:20px; }
