@@ -328,17 +328,18 @@ sub find_user_by_user_id {
 
 sub find_users_by_group_id {
   my ($self, $id) = @_;
+  my $table = $self->user_table;
   my $sql = qq(
     SELECT 
-      user.) . $self->table_name . qq(user_id,
+      user.) . $table . qq(_id,
       user.name,
       user.email,
       user.organisation,
       group_member.level,
       group_member.status
-    FROM ) . $self->user_table . qq( 
+    FROM ) . $table . qq( 
     LEFT JOIN group_member 
-    ON (group_member.user_id = user.) . $self->user_table . qq(_id) 
+    ON \(group_member.user_id = user.) . $table . qq(_id\) 
     WHERE group_member.webgroup_id = '$id';
   );
   my $R = $self->{'_handle'}->selectall_arrayref($sql);
