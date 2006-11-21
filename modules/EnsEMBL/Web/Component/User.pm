@@ -159,7 +159,7 @@ sub _render_configs {
   my @configs = $user->config_records({ order_by => 'click' });
   if (@configs) {
     my $table = EnsEMBL::Web::Interface::Table->new(( 
-                                       class => "ss", 
+                                       class => "ss tint", 
                                        style => "border-collapse:collapse"
                                                   ));
     foreach my $record (@configs) {
@@ -189,7 +189,7 @@ sub _render_bookmarks {
 
   if (@bookmarks) {
     my $table = EnsEMBL::Web::Interface::Table->new(( 
-                                       class => "ss", 
+                                       class => "ss tint", 
                                        style => "border-collapse:collapse"
                                                   ));
     foreach my $record (@bookmarks) {
@@ -216,7 +216,7 @@ sub _render_filters {
   my @filters = $user->news_records;
   if (@filters) {
     my $table = EnsEMBL::Web::Interface::Table->new(( 
-                                       class => "ss", 
+                                       class => "ss tint", 
                                        style => "border-collapse:collapse"
                                                   ));
     foreach my $record (@filters) {

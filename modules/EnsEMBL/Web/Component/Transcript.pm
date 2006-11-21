@@ -1562,10 +1562,10 @@ sub html_dump {
 
   $panel->print("<p>Format: tab separated per strain (SNP id; Type; Amino acid change;)</p>\n");
   my $header_row = join "</th><th>", ("bp position", @samples);
-  $panel->print("<table class='spreadsheet'>\n");
+  $panel->print("<table class='ss tint'>\n");
   $panel->print("<tr><th>$header_row</th></tr>\n");
 
-  my @background = ('class="tint"', ""); 
+  my @background = ('class="bg2"', ""); 
   my $user_config = $object->user_config_hash( 'genesnpview_snps' );
   my %colours = $user_config->{'_colourmap'}->colourSet('variation');
 
