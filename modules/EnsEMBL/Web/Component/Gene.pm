@@ -313,36 +313,36 @@ sub align_markup_options_form {
 
 sub name {
   my( $panel, $object ) = @_;
-  
   my $page_type= $object->[0];
   my @vega_info=();
-  
   if($page_type eq 'Transcript'){
     my $trans= $object->transcript;
-
-
     my @similarity_links= @{$object->get_similarity_hash($trans)};
-  
     my @vega_links= grep {$_->{db_display_name} eq 'Havana transcripts'} @similarity_links;
     my $urls= $object->ExtURL;
-  
     foreach my $link(@vega_links){
-
       my $id= $link->{display_id};
       my $href= $urls->get_url('Vega_transcript', $id);
       push @vega_info, [$id, $href];
-
-
     }
   }
   my( $display_name, $dbname, $ext_id, $dbname_disp, $info_text ) = $object->display_xref(); $info_text = '';
   return 1 unless defined $display_name;
   my $label = $object->type_name();
   my $lc_type = lc($label);
-  # link to external database
+
+  my ($prefix,$name);
+  if ($object->species eq 'Homo_sapiens' && $object->source eq 'vega_external') {
+	  ($prefix,$name) = split ':', $display_name;
+	  $display_name = $name;
+	  warn "only for vega genes";
+  }
+
   my $linked_display_name = $display_name;
   if( $ext_id ) {
     $linked_display_name = $object->get_ExtURL_link( $display_name, $dbname, $ext_id );
+	$linked_display_name = $prefix . ':' . $linked_display_name if $prefix;
+
   }
   my $site_type = ucfirst(lc($SiteDefs::ENSEMBL_SITETYPE));
 
@@ -357,7 +357,6 @@ sub name {
       $info_text =~s|($gene)|<a href="/$species/geneview?gene=$gene">$gene</a> |;
     }
   }
-
   my $html = qq(
   <p>
     <strong>$linked_display_name</strong> $info_text ($dbname_disp)
@@ -371,20 +370,16 @@ sub name {
     This $lc_type is a member of the human CCDS set: @{[join ', ', map {$object->get_ExtURL_link($_,'CCDS', $_)} @CCDS] }
   </p>);
   }
-
   if(@vega_info){
     foreach my $info(@vega_info){
       my $id= $$info[0];
       my $href= $$info[1];
-      
-      $html .= qq(
-        <p>
+      $html .= qq(<p>
           This transcript is identical to Vega transcript: <a href="$href">$id</a> 
        </p>
-     );
+      );
     }
-   } 
-  
+  }
   $panel->add_row( $label, $html );
   return 1;
 }
@@ -399,6 +394,11 @@ sub stable_id {
   return 1 unless $geneid;
   my $vega_link = '';
   if( $db eq 'vega' ){
+	#hack to display Vega source names nicely
+	my %matches = ('Vega_external' => 'External',
+				   'Vega_havana'   => 'Havana',
+				  );
+	$label = 'Vega '.$matches{$db_type}.' '.$o_type.' ID';
     $vega_link = sprintf qq(<span class="small">[%s]</span>),
       $object->get_ExtURL_link( "View $o_type @{[$object->stable_id]} in Vega", 'VEGA_'.uc($o_type), $object->stable_id )
   }
@@ -407,6 +407,72 @@ sub stable_id {
   );
   return 1;
 }
+
+sub author {
+    my ($panel, $obj) = @_;
+    my $label = 'Author';
+	unless ($obj->Obj->isa('Bio::EnsEMBL::Translation')) {
+		my $author = $obj->get_author_name;
+		my $text;
+		if ($author) {
+			$text .= "This locus was annotated by " . $author . " ";
+#			$text .= email_URL($obj->get_author_email);			
+		}
+		else {
+			$text = "unknown";
+		}
+		$panel->add_row($label, qq(<p>$text</p>));
+	}
+    return 1;
+}
+
+sub email_URL {
+    my $email = shift;
+    return qq(&lt;<a href='mailto:$email'>$email</a>&gt;) if $email;
+}
+
+sub version_and_date {
+    my ($panel, $obj) = @_; 
+    my $label = 'Version & Date';
+    my $version = $obj->version;
+	my $text = "Version $version";
+	return 1 unless $version;
+	eval {
+		my $mod_date = $obj->mod_date;
+		my $c_date = $obj->created_date;
+		if ($mod_date) {
+			$text .= qq(</p><p>Gene last modified on $mod_date);
+			if ($c_date) {
+				$text .= qq( (<span class="small">Created on $c_date</span>)<small>);
+			}
+		}	
+	};
+    $panel->add_row($label, qq(<p>$text</p>));
+    return 1;
+}
+
+=head2 type
+
+ Arg[1]	     : information panel (EnsEMBL::Web::Document::Panel::Information)
+ Arg[2]	     : object (EnsEMBL::Web::Proxy::Object) 
+ Example     : $panel1->add_component(qw(curated_locus EnsEMBL::Sanger_vega::Component::Gene::type));
+ Description : adds gene type to an information panel
+ Return type : true 
+
+=cut 	
+
+sub type {
+    my ($panel, $gene) = @_; 
+    my $label = 'Gene Type';
+    my $type = $gene->Obj->biotype.'_'.$gene->Obj->status;
+    # create a colourmap and use it to get label for gene type
+    my $cm = Bio::EnsEMBL::ColourMap->new($gene->species_defs);
+    my %gm = $cm->colourSet('vega_gene_havana');
+    my $text = $gm{$type}[1];
+    $panel->add_row($label, qq(<p>$text</p>));
+    return 1;
+}
+
 
 sub location {
   my( $panel, $object ) = @_;
@@ -432,31 +498,31 @@ sub location {
 
     # alternative (Vega) coordinates
     my $alt_assembly = $object->species_defs->ALTERNATIVE_ASSEMBLY;
-    if ($alt_assembly and lc($object->source) eq 'vega') {  
-    # set dnadb to 'vega' so that the assembly mapping is retrieved from there
-    my $reg = "Bio::EnsEMBL::Registry";
-    my $orig_group = $reg->get_DNAAdaptor($object->species, "vega")->group;
-    $reg->add_DNAAdaptor($object->species, "vega", $object->species, "vega") or warn "***********help";
+    if ( $alt_assembly and (lc($object->source) eq 'vega_external' || lc($object->source) eq 'vega_havana') ) {
+      # set dnadb to 'vega' so that the assembly mapping is retrieved from there
+      my $reg = "Bio::EnsEMBL::Registry";
+      my $orig_group = $reg->get_DNAAdaptor($object->species, "vega")->group;
+      $reg->add_DNAAdaptor($object->species, "vega", $object->species, "vega") or warn "***********help";
 
-    # project feature slice onto Vega assembly
-    my $alt_slices = $object->vega_projection($alt_assembly);
+      # project feature slice onto Vega assembly
+      my $alt_slices = $object->vega_projection($alt_assembly);
 
       # link to Vega if there is an ungapped mapping of whole gene
-    if ((scalar(@$alt_slices) == 1) && ($alt_slices->[0]->length == $object->feature_length) ) {
-      my $l = $alt_slices->[0]->seq_region_name.":".
+      if ((scalar(@$alt_slices) == 1) && ($alt_slices->[0]->length == $object->feature_length) ) {
+        my $l = $alt_slices->[0]->seq_region_name.":".
         $alt_slices->[0]->start."-".
-          $alt_slices->[0]->end;
-      my $url = $object->ExtURL->get_url('VEGA_CONTIGVIEW', $l);
-      $html .= "<p>This corresponds to ";
-      $html .= sprintf(qq(<a href="%s" target="external">%s-%s</a>),
+        $alt_slices->[0]->end;
+        my $url = $object->ExtURL->get_url('VEGA_CONTIGVIEW', $l);
+        $html .= "<p>This corresponds to ";
+        $html .= sprintf(qq(<a href="%s" target="external">%s-%s</a>),
                                                          $url,
                $object->thousandify($alt_slices->[0]->start),
                $object->thousandify($alt_slices->[0]->end)
               );
-      $html .= " in $alt_assembly coordinates.</p>";
-    } else {
-      $html .= "<p>There is no ungapped mapping of this $lc_type onto the $alt_assembly assembly.</p>";
-    }
+        $html .= " in $alt_assembly coordinates.</p>";
+      } else {
+        $html .= "<p>There is no ungapped mapping of this $lc_type onto the $alt_assembly assembly.</p>";
+      }
 
       # set dnadb back to the original group
       $reg->add_DNAAdaptor($object->species, "vega", $object->species, $orig_group);
