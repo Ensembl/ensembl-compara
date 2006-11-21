@@ -191,7 +191,7 @@ sub print_form_header {
 
   my %included = ();
   my @keys = keys %{ $page->data_definition->where }; 
-  if (@keys) {
+  if ($#keys > 0) {
     $self->print("Note: You are editing multiple records.<br /><br />");
   }
   foreach my $where (@keys) {
