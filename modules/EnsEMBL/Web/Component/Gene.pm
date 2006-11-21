@@ -335,15 +335,17 @@ sub name {
   if ($object->species eq 'Homo_sapiens' && $object->source eq 'vega_external') {
 	  ($prefix,$name) = split ':', $display_name;
 	  $display_name = $name;
-	  warn "only for vega genes";
+#	  warn "only for vega genes - prefix = $prefix";
   }
 
   my $linked_display_name = $display_name;
   if( $ext_id ) {
     $linked_display_name = $object->get_ExtURL_link( $display_name, $dbname, $ext_id );
-	$linked_display_name = $prefix . ':' . $linked_display_name if $prefix;
-
   }
+  if ( $prefix ) {
+	$linked_display_name = $prefix . ':' . $linked_display_name;
+  }
+
   my $site_type = ucfirst(lc($SiteDefs::ENSEMBL_SITETYPE));
 
   # If gene ID projected from other spp, put link on other spp geneID
