@@ -151,7 +151,7 @@ sub render {
     $html .= qq(<p><a href="/Multi/newsview?rel=current">More news</a>...</p>\n</div>\n);
   }
   else {
-    $html .= qq(<p>No news is currently available for this release.</p>);
+    $html .= qq(<p>No news is currently available for this release.</p>\n</div>\n);
   }
 
   if ($species_defs->ENSEMBL_LOGINS && $user_id < 1) {
