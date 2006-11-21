@@ -95,6 +95,12 @@ sub transview {
     neighbourhood EnsEMBL::Web::Component::Transcript::transcript_neighbourhood
     sequence    EnsEMBL::Web::Component::Transcript::marked_up_seq
   ));
+  if ($self->{'object'}->get_db eq 'vega') {
+	  $panel1->add_component_after(qw(
+	     location author EnsEMBL::Web::Component::Transcript::class));
+	   $panel1->add_component_after(qw(
+	     author version_and_date  EnsEMBL::Web::Component::Transcript::version));
+  }
   $self->add_panel( $panel1 );
   $self->initialize_zmenu_javascript;
   $self->set_title( 'Transcript Report for '.$self->{object}->stable_id )

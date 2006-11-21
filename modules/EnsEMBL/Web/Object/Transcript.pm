@@ -17,9 +17,6 @@ sub default_track_by_gene {
   my $db    = $self->get_db;
   my $logic = $self->logic_name;
 
-  my %mappings_db = qw(
-    vega evega_transcript
-  );
   my %mappings_db_ln = (
     'core' => {
     map( {( $_, $_ )} qw( 
@@ -56,12 +53,15 @@ sub default_track_by_gene {
         singapore_est singapore_protein chimp_cdna chimp_est human_est
         medaka_transcriptcoalescer medaka_genome_project
       ) )
-    }
+    },
+	'vega' => {
+			   otter          => 'evega_transcript',
+			   otter_external => 'evega_external_transcript',
+			  }
   );
 
   return lc($logic).'_transcript' if $db eq 'otherfeatures' && lc($logic) =~ /^singapore_(est|protein)$/;
-  return $mappings_db{ lc( $db ) } ||
-         $mappings_db_ln{ lc($db) }{ lc( $logic ) } ||
+  return $mappings_db_ln{ lc($db) }{ lc( $logic ) } ||
          'ensembl_transcript';
 }
 

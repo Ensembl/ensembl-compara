@@ -115,6 +115,15 @@ sub get_db {
   return $db eq 'est' ? 'otherfeatures' : $db;
 }
 
+sub get_author_name {
+    my $self = shift;
+    my $attribs = $self->Obj->get_all_Attributes('author');
+    if (@$attribs) {
+        return $attribs->[0]->value;
+    } else {
+        return undef;
+    }
+}
 
 sub gene_type {
   my $self = shift;
