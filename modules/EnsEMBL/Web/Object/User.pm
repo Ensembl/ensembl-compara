@@ -6,6 +6,7 @@ no warnings "uninitialized";
 use CGI qw(escape);
 use CGI::Cookie;
 use Mail::Mailer;
+use Digest::MD5 qw(md5_hex);
 
 use EnsEMBL::Web::User::Record;
 use EnsEMBL::Web::Object::Group;
@@ -20,6 +21,7 @@ my %Name_of;
 my %Email_of;
 my %Password_of;
 my %Organisation_of;
+my %Salt_of;
 my %Groups_of;
 
 sub new {
@@ -49,22 +51,39 @@ sub new {
   $Password_of{$self} = defined $params{'password'} ? $params{'password'} : "";
   $Organisation_of{$self} = defined $params{'organisation'} ? $params{'organisation'} : "";
   $Groups_of{$self} = defined $params{'groups'} ? $params{'groups'} : [];
+  $Salt_of{$self} = defined $params{'salt'} ? $params{'salt'} : [];
   
+  if (!$self->adaptor) {
+    $self->adaptor(EnsEMBL::Web::DBSQL::UserDB->new);
+  }
+
   ## Flesh out the object from the database 
   if ($params{'id'}) {
-    if (!$self->adaptor) {
-      $self->adaptor(EnsEMBL::Web::DBSQL::UserDB->new);
-    }
     my $details = $self->adaptor->find_user_by_user_id($params{'id'});
-    $Name_of{$self} = $details->{'name'};
-    $Email_of{$self} = $details->{'email'};
-    $Organisation_of{$self} = $details->{'organisation'};
+    $self->assign_fields($details);
     my @records = $self->find_records_by_user_id($params{'id'});
     $self->records(\@records);
     $self->groups($self->find_groups_by_user_id($params{'id'}));
+  } elsif ($params{'username'} && $params{'password'}) {
+     my $encrypted = $self->encrypt($params{'password'});
+     my $details = $self->adaptor->find_user_by_email_and_password(( email => $params{'username'}, 
+                                             password => $encrypted ));
+     $self->assign_fields($details);
   }
 
+
   return $self;
+}
+
+
+sub assign_fields {
+  my ($self, $details) = @_;
+  $Id_of{$self} = $details->{'id'};
+  $Name_of{$self} = $details->{'name'};
+  $Email_of{$self} = $details->{'email'};
+  $Organisation_of{$self} = $details->{'organisation'};
+  $Salt_of{$self} = $details->{'salt'};
+  $Password_of{$self} = $details->{'password'};
 }
 
 sub find_groups_by_user_id {
@@ -168,6 +187,13 @@ sub id {
   return $Id_of{$self};
 }
 
+sub salt {
+  ### a
+  my $self = shift;
+  $Salt_of{$self} = shift if @_;
+  return $Salt_of{$self};
+}
+
 sub email {
   ### a
   my $self = shift;
@@ -248,12 +274,19 @@ sub web_user_db {
   return $self->adaptor;
 }
 
+sub encrypt {
+  my ($self, $data) = @_;
+  warn "Encrypting: " . $data;
+  return md5_hex($data);
+}
+
 sub DESTROY {
   my $self = shift;
   delete $Id_of{$self};
   delete $Name_of{$self};
   delete $Email_of{$self};
   delete $Password_of{$self};
+  delete $Salt_of{$self};
   delete $Organisation_of{$self};
   delete $Groups_of{$self};
 }
