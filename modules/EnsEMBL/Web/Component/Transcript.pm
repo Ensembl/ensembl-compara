@@ -193,7 +193,10 @@ sub similarity_matches {
 
     # add table call here
   my $html;
-  unless ($transcript->species_defs->ENSEMBL_SITETYPE eq 'Vega') {
+  if ($transcript->species_defs->ENSEMBL_SITETYPE eq 'Vega') {
+    $html = qq(<p></p>);
+  }
+  else {
     $html = qq(<p><strong>This $entry entry corresponds to the following database identifiers:</strong></p>);
   }
   $html .= qq(<table cellpadding="4">);
@@ -1636,5 +1639,37 @@ sub text_dump {
   $panel->print("\n");
   return 1;
 }
+
+sub class {
+    my ($panel,$transcript) = @_;
+    my $label = 'Transcript Class';
+    my $t_class = $transcript->Obj->biotype;
+    return 1 unless $t_class;
+    my $species = $transcript->species;
+    $panel->add_row($label, qq(<p>$t_class</p>));
+    return 1;
+}
+
+=head2 version
+
+ Arg[1]	     : information panel (EnsEMBL::Web::Document::Panel::Information)
+ Arg[2]	     : object (EnsEMBL::Web::Proxy::Object)
+ Example     : $panel1->add_component(qw(curated_locus EnsEMBL::Sanger_vega::Component::Gene::version));
+ Description : adds version details to an information panel
+ Return type : true
+
+=cut
+
+sub version {
+    my ($panel, $obj) = @_; 
+    my $label = 'Version';
+    my $version = $obj->version;
+	return 1 unless $version;
+    $panel->add_row($label, qq(<p>$version</p>));
+    return 1;
+}
+
+
+
 
 1;
