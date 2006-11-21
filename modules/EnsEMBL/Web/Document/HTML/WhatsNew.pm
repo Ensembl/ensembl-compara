@@ -69,14 +69,12 @@ sub render {
 
   my $species_defs = EnsEMBL::Web::SpeciesDefs->new();
   my $release_id = $species_defs->ENSEMBL_VERSION;
-
-  my $user = EnsEMBL::Web::Object::User->new({ id => $ENV{'ENSEMBL_USER_ID'} });
+  my $user_id = $ENV{'ENSEMBL_USER_ID'};
+  my $user = EnsEMBL::Web::Object::User->new({ id => $user_id });
 
   my $DB = $species_defs->databases->{'ENSEMBL_WEBSITE'};
   my $adaptor = EnsEMBL::Web::DBSQL::NewsAdaptor->new( $DB );
   my @headlines;
-
-  my $user_id = $ENV{'ENSEMBL_USER_ID'};
 
   ## get news headlines
   my $criteria = {'release'=>$release_id};
@@ -84,17 +82,15 @@ sub render {
     $html .= "<h4>Your Ensembl headlines</h4>";
     ## check for user filters
     my @filters = $user->news_records;
-    if ($#filters) {
-      ## Look up species ids and category ids for use in query
-      foreach my $f (@filters) {
-        if ($f->species && $f->species ne 'none') {
-          my $species_id = $adaptor->fetch_species_id($f->species);
-          $criteria->{'species'} = $species_id;
-        }
-        elsif ($f->topic && $f->topic ne 'none') {
-          my $category_id = $adaptor->fetch_cat_id($f->topic);
-          $criteria->{'category'} = $category_id;
-        }
+    ## Look up species ids and category ids for use in query
+    foreach my $f (@filters) {
+      if ($f->species && $f->species ne 'none') {
+        my $species_id = $adaptor->fetch_species_id($f->species);
+        $criteria->{'species'} = $species_id;
+      }
+      if ($f->topic && $f->topic ne 'none') {
+        my $category_id = $adaptor->fetch_cat_id($f->topic);
+        $criteria->{'category'} = $category_id;
       }
     }
   }
