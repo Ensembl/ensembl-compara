@@ -40,16 +40,13 @@ $page->title('Select a news filter');
 if (my $id = $cgi->param('id')) {
   $page->action('edit');
   $data->populate($id);
-  $topic_types = 'enum(none,data,code,schema,feature)';
-  $sp_types = "enum('none',$sp_values)";
-  $topic_options->add_label({'none' => 'None (show all topics)'});
-  $sp_options->add_label({'none' => 'None (show all species)'});
 }
 else {
   $page->action('create');
-  $topic_types = 'enum(data,code,schema,feature)';
-  $sp_types = "enum($sp_values)";
 }
+$topic_types = 'set(data,code,schema,feature)';
+$sp_types = "set($sp_values)";
+
 $page->on_complete('/common/accountview');
 $page->on_error('/common/accountview');
 
