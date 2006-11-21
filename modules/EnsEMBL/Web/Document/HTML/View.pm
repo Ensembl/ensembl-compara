@@ -68,6 +68,8 @@ sub render_field {
     $self->render_textarea($field, $page);
   } elsif ($type =~ /enum/) {
     $self->render_options($field, $page);
+  } elsif ($type =~ /set/) {
+    $self->render_multi($field, $page);
   }
 }
 
@@ -125,6 +127,38 @@ sub render_options {
     $self->print("<br />");
   }
 }
+
+sub render_multi {
+### Creates a set of checkboxes for multiple select options
+  my ($self, $field, $page) = @_;
+  my $field_name = $field->{'Field'};
+  my $option_string = $field->{'Type'};
+  $option_string =~ s/set|\(|\)|'//g;
+  $self->print($page->label_for_form_element($field_name) . ":\n<br /><br />\n");
+  my @options = split(/,/, $option_string); 
+  foreach my $option (@options) {
+    my $selected = "";
+    my $value = $page->value_for_selection_element($field_name, $option);
+    $self->print("<input type='checkbox' name='" . $field_name. "' value='" . $value. "'");
+    if ($page->value_for_form_element($field_name)) {
+      if ($page->value_for_form_element($field_name) eq $option) {
+        $self->print(" checked='yes' ");
+      }
+    } else {
+      if ($option eq $field->{'Default'} ) {
+        $self->print(" checked='yes' ");
+      }
+    }
+    $self->print(" /> ");
+    $self->print($page->label_for_form_element($field_name, $option));
+    my $description = $page->description_for_form_element($field_name, $option);
+    if ($description) {
+      $self->print(" (" . $description . ")");
+    }
+    $self->print("<br />");
+  }
+}
+
 
 sub render_textarea {
   my ($self, $field, $page) = @_;
