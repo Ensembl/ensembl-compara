@@ -1459,8 +1459,8 @@ sub ADD_ALL_AS_TRANSCRIPTS {
     my $self = shift;
     my $POS  = shift || 2000;
     $self->add_new_track_transcript( 'ensembl',   'Ensembl genes',   'ensembl_gene',   $POS++, @_ );
-    $self->add_new_track_transcript( 'evega',     'Vega genes',      'vega_gene',      $POS++, 'available' => 'databases ENSEMBL_VEGA',    @_ );
-    
+    $self->add_new_track_transcript( 'evega',         'Vega Havana gene',      'vega_gene_havana',    $POS++, 'glyph' => 'evega_transcript', 'logic_name' => 'otter', 'available' => 'database_features ENSEMBL_VEGA.OTTER',    @_ );
+    $self->add_new_track_transcript( 'evega_external','Vega External gene',    'vega_gene_external',  $POS++, 'glyph' => 'evega_transcript', 'logic_name' => 'otter_external', 'available' => 'database_features ENSEMBL_VEGA.OTTER_EXTERNAL',    @_ );
     return $POS;
 }
 
@@ -1500,18 +1500,25 @@ sub ADD_AS_GENE_TRACKS {
 			       'gene_col'             => sub { return $_[0]->biotype eq 'bacterial_contaminant' ? '_BACCOM'    : ( $_[0]->biotype eq 'pseudogene' ? '_PSEUDO'    : '_'.$_[0]->external_status          ) },
 			       @_
 			       );
-    $self->add_new_track_gene( 'gsten', 'Genoscope Genes', 'genoscope_gene', $POS++,
+  $self->add_new_track_gene( 'gsten', 'Genoscope Genes', 'genoscope_gene', $POS++,
 			       'gene_label'           => sub { return $_[0]->stable_id },
 			       'gene_col'             => sub { return $_[0]->biotype eq 'Genoscope_predicted' ? '_GSTEN'    : '_HOX' },
 			       'logic_name'           => 'gsten hox cyt', @_
 			       );
-    
-    $self->add_new_track_gene( 'otter', 'Vega Genes', 'vega_gene', $POS++,
-			       'database' => 'vega', 'available' => 'databases ENSEMBL_VEGA',
-			       'gene_col'             => sub { return $_[0]->biotype.'_'.$_[0]->status; },
-			       'gene_label'           => sub { $_[0]->external_name || $_[0]->stable_id; }, @_ );
-
-    #for genes in Vega
+  #not sure this is actually used!!
+  $self->add_new_track_gene( 'otter', 'Vega Havana Genes', 'vega_gene_havana', $POS++,
+                             'database' => 'vega', 'available' => 'database_features ENSEMBL_VEGA.OTTER',
+                             'gene_col'             => sub { return $_[0]->biotype.'_'.$_[0]->status; },
+                             'gene_label'           => sub { $_[0]->external_name || $_[0]->stable_id; },
+                             'glyphset' => 'evega_gene',
+                               @_ );
+  $self->add_new_track_gene( 'otter_external', 'Vega External Genes', 'vega_gene_external', $POS++,
+                             'database' => 'vega', 'available' => 'database_features ENSEMBL_VEGA.OTTER_EXTERNAL',
+                              'gene_col'            => sub { return $_[0]->biotype.'_'.$_[0]->status; },
+                             'gene_label'           => sub { $_[0]->external_name || $_[0]->stable_id; },
+                             'glyphset' => 'evega_gene',
+                              @_ );    
+    #for genes in Vega website
     $self->add_new_track_gene( 'vega_gene', 'Vega Genes', 'vega_gene', $POS++,
 	'available' => 'features VEGA_GENES_OTTER', 'glyphset' => 'vega_gene',
 	'logic_name' => 'otter', 'gene_col' => 'vega_gene', @_);
