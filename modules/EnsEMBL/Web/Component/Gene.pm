@@ -314,28 +314,35 @@ sub align_markup_options_form {
 sub name {
   my( $panel, $object ) = @_;
   my $page_type= $object->[0];
+  my $site_type = ucfirst(lc($SiteDefs::ENSEMBL_SITETYPE));
+  my $species = $object->species;
+
+  #add links to Vega, or Ensembl depending on the source of the transcript
   my @vega_info=();
+  my $match_type = ($object->get_db eq 'vega') ? 'Ensembl' : 'Havana';
+  my $url_name   = ($object->get_db eq 'vega') ? 'Ensembl' : 'Vega';
   if($page_type eq 'Transcript'){
     my $trans= $object->transcript;
     my @similarity_links= @{$object->get_similarity_hash($trans)};
-    my @vega_links= grep {$_->{db_display_name} eq 'Havana transcripts'} @similarity_links;
+    my @vega_links= grep {$_->{db_display_name} eq $match_type.' transcripts'} @similarity_links;
     my $urls= $object->ExtURL;
     foreach my $link(@vega_links){
       my $id= $link->{display_id};
-      my $href= $urls->get_url('Vega_transcript', $id);
+      my $href= $urls->get_url($url_name.'_transcript', $id);#, $species);
       push @vega_info, [$id, $href];
     }
   }
-  my( $display_name, $dbname, $ext_id, $dbname_disp, $info_text ) = $object->display_xref(); $info_text = '';
+  my( $display_name, $dbname, $ext_id, $dbname_disp, $info_text ) = $object->display_xref();
+  $info_text = '';
   return 1 unless defined $display_name;
   my $label = $object->type_name();
   my $lc_type = lc($label);
 
+  #remove prefix from the URL for Vega External Genes
   my ($prefix,$name);
-  if ($object->species eq 'Homo_sapiens' && $object->source eq 'vega_external') {
+  if ($species eq 'Homo_sapiens' && $object->source eq 'vega_external') {
 	  ($prefix,$name) = split ':', $display_name;
 	  $display_name = $name;
-#	  warn "only for vega genes - prefix = $prefix";
   }
 
   my $linked_display_name = $display_name;
@@ -345,8 +352,6 @@ sub name {
   if ( $prefix ) {
 	$linked_display_name = $prefix . ':' . $linked_display_name;
   }
-
-  my $site_type = ucfirst(lc($SiteDefs::ENSEMBL_SITETYPE));
 
   # If gene ID projected from other spp, put link on other spp geneID
   if ($dbname_disp =~/^Projected/) {
@@ -377,7 +382,7 @@ sub name {
       my $id= $$info[0];
       my $href= $$info[1];
       $html .= qq(<p>
-          This transcript is identical to Vega transcript: <a href="$href">$id</a> 
+          This transcript is identical to $url_name transcript: <a href="$href">$id</a> 
        </p>
       );
     }
