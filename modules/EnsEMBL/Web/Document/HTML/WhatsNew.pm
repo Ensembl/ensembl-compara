@@ -77,8 +77,10 @@ sub render {
   my @headlines;
 
   ## get news headlines
-  my $criteria = {'release'=>$release_id, 'species'=>[], 'category'=>[]};
+  my $criteria = {'release'=>$release_id};
   if ($user_id > 0) {
+    $criteria->{'species'} = [];
+    $criteria->{'category'} = [];
     $html .= "<h4>Your Ensembl headlines</h4>";
     ## check for user filters
     my @filters = $user->news_records;
