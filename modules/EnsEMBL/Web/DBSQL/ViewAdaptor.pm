@@ -84,7 +84,10 @@ sub edit {
   my $result = EnsEMBL::Web::DBSQL::SQL::Result->new(( action => 'edit' ));
   my %set_parameters = %{ $params{set} };
   my $id = $params{id};
-  my @multiple_ids = @{ $params{multiple_ids} };
+  my @multiple_ids = undef;
+  if ($params{multiple_ids}) {
+    @multiple_ids = @{ $params{multiple_ids} };
+  }
   my @definition = undef;
   my $user = undef;
   if ($params{definition}) {
@@ -100,16 +103,14 @@ sub edit {
 
   if ($set_parameters{password}) {
     my $salt = $params{salt}; 
-    warn "PASSWORD: " . $set_parameters{password};
     my $password = $set_parameters{password};
     $set_parameters{password} = EnsEMBL::Web::Object::User->encrypt($password);
-    warn "PASSWORD: " . $set_parameters{password};
   }
   
   my $in = "'$id'";
-  if (@multiple_ids) {
-    warn "PERFORMING MULTIPLE UPDATES";
+  if ($#multiple_ids > 0) {
     $in = join(", ", @multiple_ids);
+    warn "PERFORMING MULTIPLE UPDATES: " . $in;
   }
 
   my $table = $self->table;
@@ -326,6 +327,7 @@ sub database {
   return $Database_of{$self};
 
 }
+
 sub table {
   ### a
   my $self = shift;
