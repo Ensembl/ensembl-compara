@@ -77,7 +77,7 @@ sub render {
   my @headlines;
 
   ## get news headlines
-  my $criteria = {'release'=>$release_id};
+  my $criteria = {'release'=>$release_id, 'species'=>[], 'category'=>[]};
   if ($user_id > 0) {
     $html .= "<h4>Your Ensembl headlines</h4>";
     ## check for user filters
@@ -86,11 +86,11 @@ sub render {
     foreach my $f (@filters) {
       if ($f->species && $f->species ne 'none') {
         my $species_id = $adaptor->fetch_species_id($f->species);
-        $criteria->{'species'} = $species_id;
+        push @{$criteria->{'species'}}, $species_id;
       }
       if ($f->topic && $f->topic ne 'none') {
         my $category_id = $adaptor->fetch_cat_id($f->topic);
-        $criteria->{'category'} = $category_id;
+        push @{$criteria->{'category'}}, $category_id;
       }
     }
   }

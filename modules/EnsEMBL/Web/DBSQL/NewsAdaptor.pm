@@ -67,15 +67,54 @@ sub fetch_news_items {
     'priority'=>'n.priority = '.$where->{'priority'},
     'status'=>'n.status = "'.$where->{'status'}.'"',
   );
-  if ($where->{'species'}) {
-    $where_def{'species'} = 'n.news_item_id = i.news_item_id AND i.species_id = '.$where->{'species'};
+  if (my $cat = $where->{'category'}) {
+    my $string;
+    if (ref($cat) eq 'ARRAY') {
+      if (scalar(@$cat) > 0) {
+        $string .= '(';
+        my $count = 0;
+        foreach my $id (@$cat) {
+          $string .= ' OR ' if $count > 0;
+          $string .= "n.news_cat_id = $id";
+          $count++;
+        }
+        $string .= ')';
+      }
+    }
+    else {
+      $string .= "n.news_cat_id = $cat";
+    }
+    $where_def{'category'} = $string;
+  }
+  if (my $sp = $where->{'species'}) {
+    my $string = 'n.news_item_id = i.news_item_id AND ';
+    if (ref($sp) eq 'ARRAY') { 
+      if (scalar(@$sp) > 0) {
+        $string .= '(';
+        my $count = 0;
+        foreach my $id (@$sp) {
+          $string .= ' OR ' if $count > 0;
+          $string .= "i.species_id = $id";
+          $count++;
+        }
+        $string .= ')';
+      }
+    }
+    else {
+      $string .= "i.species_id = $sp";
+    }
+    $where_def{'species'} = $string;
   }
 
   ## add selected options to modifier strings
   my $where_str;
   if ($where) {
     foreach my $param (keys %$where) {
-      $where_str .= ' AND '.$where_def{$param}.' ';
+      if ($where_def{$param}) {
+warn 'Parameter ', $param;
+        $where_str .= ' AND '.$where_def{$param}.' ';
+warn $where_def{$param};
+      }
     }
   }
 
