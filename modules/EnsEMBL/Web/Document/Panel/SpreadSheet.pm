@@ -7,12 +7,22 @@ use Exporter;
 our @ISA = qw(EnsEMBL::Web::Document::Panel);
 
 sub new { ## All now configured by the component!!
-  my $self = shift->SUPER::new( @_, '_intro'=>'','_tailnote'=>'' );
+  my $self = shift->SUPER::new(
+    @_, '_intro'=>'','_tailnote'=>'',
+    '_form_action' => '', '_form_hidden' => {}, '_form_buttons' => {}
+  );
   $self->{'_spreadsheet'} = new EnsEMBL::Web::Document::SpreadSheet( [], [], $self->{'_options'} );
   return $self;
 }
 
 sub spreadsheet { return $_[0]->{'_spreadsheet'}; }
+
+sub add_form {
+  my($self, $action, $hidden_fields, $buttons ) = @_;
+  $self->{_form_action } = $action;
+  $self->{_form_hidden } = $hidden_fields;
+  $self->{_form_buttons} = $buttons;
+}
 sub intro {
   my $self = shift;
   $self->{_intro} .= join '', @_;
@@ -87,12 +97,25 @@ sub _end {
   return undef unless @$columns;
 # Start the table...
   my $T = $self->spreadsheet->render();
+  if( $self->{_form_action} ) {
+    $self->printf( '<form action="%s" method="get">', $self->{_form_action} );
+    foreach( keys %{$self->{_form_hidden}} ) {
+      $self->printf( '<input type="hidden" name="%s" value="%s" />', $_, $self->{_form_hidden}{$_} );
+    }
+  }
   $self->print( qq(
 $self->{_intro}
 $T
 $self->{tailnote}
 $self->{_error_notes_}
 ) );
+  if( $self->{_form_action} ) {
+    $self->print( '<p class="center">');
+    foreach( keys %{$self->{_form_buttons}} ) {
+      $self->printf( '<input type="submit" class="red-button" name="%s" value="%s" />', $_, $self->{_form_buttons}{$_} );
+    }
+    $self->print( '</p></form>' );
+  }
   return; 
 }
 

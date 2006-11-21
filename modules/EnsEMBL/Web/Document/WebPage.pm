@@ -112,28 +112,31 @@ sub configure {
 
   my $flag = 0;
   my @T = ('EnsEMBL::Web', '', @{$ENSEMBL_PLUGINS});
+
   my $FUNCTIONS_CALLED = {};
   while( my ($module_root, $X) = splice( @T, 0, 2) ) {
-                           # Starting with the standard EnsEMBL module configure
-                           # the script....
-                           # Then loop through the plugins in order after that...
-                           # First work out what the module name is - to see if it
-                           # can be "used"
+
+   # Starting with the standard EnsEMBL module configure
+    # the script....
+    # Then loop through the plugins in order after that...
+    # First work out what the module name is - to see if it
+    # can be "used"
     $flag ++;
     my $config_module_name = $module_root."::Configuration::$objecttype";
+
     if( $self->dynamic_use( $config_module_name ) ) { ## Successfully used
-                           # If it has been successfully used then look for
-                           # the functions named in the script "configure" line
-                           # of the script.
+      # If it has been successfully used then look for
+      # the functions named in the script "configure" line
+      # of the script.
       my $CONF = $config_module_name->new( $self->page, $object, $flag );
       foreach my $FN ( @functions ) { 
         if( $CONF->can($FN) ) {
-                           # If this configuration module can perform this function do so...
+	  # If this configuration module can perform this function do so...
           $self->{wizard} = $CONF->{wizard};
           eval { $CONF->$FN(); };
           if( $@ ) { # Catch any errors and display as a "configuration runtime error"
             $self->page->content->add_panel( 
-              new EnsEMBL::Web::Document::Panel(
+					    new EnsEMBL::Web::Document::Panel(
                'caption' => 'Configuration module runtime error',
                'content' => sprintf( qq(
     <p>
@@ -141,9 +144,9 @@ sub configure {
       due to the following error:
     </p>
     <pre>%s</pre>), $self->_format_error($@) )
-              )
-            );
-	      } else {
+									     )
+					   );
+	  } else {
             $FUNCTIONS_CALLED->{$FN} = 1;
           }
         }

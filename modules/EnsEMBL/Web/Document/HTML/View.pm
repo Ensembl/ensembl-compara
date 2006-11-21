@@ -178,7 +178,7 @@ sub print_form_header {
   my ($self, $page) = @_;
   my $user_id = $ENV{'ENSEMBL_USER_ID'};
   my $id = CGI->new()->param('id');
-  $self->print('<form method="POST"><ul>' . "\n");
+  $self->print('<form method="post">' . "\n");
   $self->print('<input type="hidden" name="dataview_action" value="' . $page->action . '" />'. "\n");
 
   if ($id) { ## ID of record to update
@@ -216,7 +216,7 @@ sub print_form_header {
 
 sub print_form_footer {
   my $self = shift;
-  $self->print('</ul></form>' . "\n");
+  $self->print('</form>' . "\n");
 }
 
 sub in_form {
