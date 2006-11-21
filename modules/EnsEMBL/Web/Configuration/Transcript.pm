@@ -96,6 +96,7 @@ sub transview {
     sequence    EnsEMBL::Web::Component::Transcript::marked_up_seq
   ));
   if ($self->{'object'}->get_db eq 'vega') {
+	  $panel1->remove_component('similarity');
 	  $panel1->add_component_after(qw(
 	     location author EnsEMBL::Web::Component::Transcript::class));
 	   $panel1->add_component_after(qw(
