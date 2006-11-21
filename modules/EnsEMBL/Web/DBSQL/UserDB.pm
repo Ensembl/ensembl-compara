@@ -48,7 +48,7 @@ sub new {
 }
 
 sub user_table {
-  return "user_test";
+  return "user";
 }
 
 sub create_session {
