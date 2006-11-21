@@ -185,3 +185,11 @@ You might need to update the create_mlss_table.conf file with new species added.
 19. Update files in ensembl-webcode/htdocs/info/software/compara
 
 for schema change and tutorial
+
+20. Once the final compara db has been copied to ens-staging MySQL server, there
+is one last thing to do, update the display_label in member table
+
+mysql -hens-staging -uensro -N -e 'show databases like "%core\_42\_%"'|awk '{print "UPDATE "$1".xref x, "$1".gene g, "$1".gene_stable_id gsi, member m SET m.display_id=x.display_label WHERE g.display_xref_id=x.xref_id AND g.gene_id=gsi.gene_id AND m.stable_id=gsi.stable_id AND m.source_name=\"ENSEMBLGENE\";"}' > update_display_label.sql
+
+mysql -hens-staging -uensadmin -pxxxxx ensembl_compara_42 < update_display_label.sql
+
