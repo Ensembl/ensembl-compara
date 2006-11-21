@@ -99,57 +99,62 @@ sub render {
   @headlines = @{$adaptor->fetch_news_items($criteria, '', '5')};
   my %current_spp = %{$adaptor->fetch_species($release_id)};
 
-  ## format news headlines
-  foreach my $item (@headlines) {
+  if (scalar(@headlines) > 0) {
+    ## format news headlines
+    foreach my $item (@headlines) {
 
-    ## sort out species names
-    my $species = $item->{'species'};
-    my (@sp_ids, $sp_id, $sp_dir, $sp_name, $sp_count);
-    if (ref($species)) {
-      $sp_id = ${$species}[0];
-      @sp_ids = @{$species};
-    }
-    else {
-      $sp_id = $species;
-      @sp_ids = ($sp_id);
-    }
-    if ($sp_id) {
-      $sp_dir = $current_spp{$sp_id};
-      $sp_count = scalar(@sp_ids);
-      if ($sp_count > 1) {
-        for (my $j=0; $j<$sp_count; $j++) {
-          $sp_name .= ', ' unless $j == 0;
-          my @name_bits = split('_', $current_spp{$sp_ids[$j]});
-          $sp_name .= '<i>'.substr($name_bits[0], 0, 1).'. '.$name_bits[1].'</i>';
+      ## sort out species names
+      my $species = $item->{'species'};
+      my (@sp_ids, $sp_id, $sp_dir, $sp_name, $sp_count);
+      if (ref($species)) {
+        $sp_id = ${$species}[0];
+        @sp_ids = @{$species};
+      }
+      else {
+        $sp_id = $species;
+        @sp_ids = ($sp_id);
+      }
+      if ($sp_id) {
+        $sp_dir = $current_spp{$sp_id};
+        $sp_count = scalar(@sp_ids);
+        if ($sp_count > 1) {
+          for (my $j=0; $j<$sp_count; $j++) {
+            $sp_name .= ', ' unless $j == 0;
+            my @name_bits = split('_', $current_spp{$sp_ids[$j]});
+            $sp_name .= '<i>'.substr($name_bits[0], 0, 1).'. '.$name_bits[1].'</i>';
           }
         }
-      else {
-        ($sp_name = $sp_dir) =~ s/_/ /g;
-        $sp_name = "<i>$sp_name</i>";
+        else {
+          ($sp_name = $sp_dir) =~ s/_/ /g;
+          $sp_name = "<i>$sp_name</i>";
+        }
       }
-    }
-    else {
-      $sp_dir = 'Multi';
-      $sp_name = 'all species';
-    }
+      else {
+        $sp_dir = 'Multi';
+        $sp_name = 'all species';
+      } 
  
-    ## generate HTML
-    $html .= '<p>';
-    if ($sp_count == 1) {
-      $html .= qq(<a href="/$sp_dir/"><img src="/img/species/thumb_$sp_dir.png" alt="" title="Go to the $sp_name home page" class="sp-thumb" height="30" width="30" /></a>);
-    }
-    else {
-      $html .= qq(<img src="/img/ebang-30x30.png" alt="" class="sp-thumb" height="30" width="30" />);
-    }
+      ## generate HTML
+      $html .= '<p>';
+      if ($sp_count == 1) {
+        $html .= qq(<a href="/$sp_dir/"><img src="/img/species/thumb_$sp_dir.png" alt="" title="Go to the $sp_name home page" class="sp-thumb" height="30" width="30" /></a>);
+      }
+      else {
+        $html .= qq(<img src="/img/ebang-30x30.png" alt="" class="sp-thumb" height="30" width="30" />);
+      }
 
-    $html .= sprintf(qq(<strong><a href="/%s/newsview?rel=%s#cat%s" style="text-decoration:none">%s</a></strong> (<i>%s</i>)</p>),
+      $html .= sprintf(qq(<strong><a href="/%s/newsview?rel=%s#cat%s" style="text-decoration:none">%s</a></strong> (<i>%s</i>)</p>),
               $sp_dir, $release_id, $item->{'news_cat_id'}, $item->{'title'}, $sp_name);
 
+    }
+
+    $html .= qq(<p><a href="/Multi/newsview?rel=current">More news</a>...</p>\n</div>\n);
+  }
+  else {
+    $html .= qq(<p>No news is currently available for this release.</p>);
   }
 
-  $html .= "\n</div>\n";
-
-  if ($ENV{'ENSEMBL_LOGINS'} && $user_id < 1) {
+  if ($species_defs->ENSEMBL_LOGINS && $user_id < 1) {
     $html .= qq(<a href="javascript:login_link();">Log in</a> to see customised news &middot; <a href="/common/register">Register</a>);
   }
 
