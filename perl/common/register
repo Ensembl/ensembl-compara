@@ -26,11 +26,11 @@ $page->title('Register for Ensembl');
 $page->action('create');
 $page->send_params({ id => 'yes'});
 $page->on_complete('/common/activate');
-$page->on_error('/register/error.html');
+$page->on_error('/error/register.html');
 
 $page->add_configuration_element('salt', random_string(8));
 $page->add_form_element('name', "Your name");
-$page->add_form_element('email', "Your email address. You'll use this to log in to Ensembl");
+$page->add_form_element('email', "Your email address<br />(You'll use this to log in to Ensembl)");
 $page->add_form_element('organisation', "Organisation");
 
 EnsEMBL::Web::Document::DataView::simple('User', $page);
