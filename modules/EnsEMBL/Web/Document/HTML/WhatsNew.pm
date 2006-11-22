@@ -82,7 +82,6 @@ sub render {
   if ($user_id > 0) {
     $criteria->{'species'} = [];
     $criteria->{'category'} = [];
-    $html .= "<h4>Your Ensembl headlines</h4>";
     ## check for user filters
     my @filters = $user->news_records;
     ## Look up species ids and category ids for use in query
@@ -103,6 +102,8 @@ sub render {
   my %current_spp = %{$adaptor->fetch_species($release_id)};
 
   if (scalar(@headlines) > 0) {
+    $html .= "<h4>Your Ensembl headlines</h4>";
+
     ## format news headlines
     foreach my $item (@headlines) {
 
@@ -159,12 +160,19 @@ sub render {
 <p><a href="/Multi/newsview?rel=current">Other news</a>...</p>\n</div>\n);
     }
     else {
-      $html .= qq(<p>No news is currently available for this release.</p>\n</div>\n);
+      $html .= qq(<p>No news is currently available for release $release_id.</p>\n</div>\n);
     }
   }
 
-  if ($species_defs->ENSEMBL_LOGINS && $user_id < 1) {
-    $html .= qq(<a href="javascript:login_link();">Log in</a> to see customised news &middot; <a href="/common/register">Register</a>);
+  if ($species_defs->ENSEMBL_LOGINS) {
+    if ($user_id > 0) {
+      if (!$filtered) {
+        $html .= qq(Go to <a href="/common/accountview">your account</a> to customise this news panel);
+      }
+    }
+    else {
+      $html .= qq(<a href="javascript:login_link();">Log in</a> to see customised news &middot; <a href="/common/register">Register</a>);
+    }
   }
 
   $html .= qq(
