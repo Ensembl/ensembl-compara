@@ -239,7 +239,6 @@ sub geneview {
       diseases      EnsEMBL::Web::Component::Gene::diseases
     ));
 	if ($obj->get_db eq 'vega') {
-	   $panel1->remove_component('similarity');
 	   $panel1->add_component_after(qw(
 	     stable_id author EnsEMBL::Web::Component::Gene::author
 	   ));
