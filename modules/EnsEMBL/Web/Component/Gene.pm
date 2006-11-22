@@ -312,112 +312,92 @@ sub align_markup_options_form {
 }
 
 sub name {
-  my( $panel, $object ) = @_;
-  my $page_type= $object->[0];
-  my $site_type = ucfirst(lc($SiteDefs::ENSEMBL_SITETYPE));
-  my $species = $object->species;
+	my( $panel, $object ) = @_;
+	my $page_type= $object->[0];
+	my $site_type = ucfirst(lc($SiteDefs::ENSEMBL_SITETYPE));
 
-  #add links to Vega, or Ensembl depending on the source of the transcript
-  my @vega_info=();
-  my $match_type = ($object->get_db eq 'vega') ? 'Ensembl' : 'Havana';
-  my $url_name   = ($object->get_db eq 'vega') ? 'Ensembl' : 'Vega';
-  if($page_type eq 'Transcript'){
-    my $trans= $object->transcript;
-    my @similarity_links= @{$object->get_similarity_hash($trans)};
-    my @vega_links= grep {$_->{db_display_name} eq $match_type.' transcripts'} @similarity_links;
-    my $urls= $object->ExtURL;
-    foreach my $link(@vega_links){
-      my $id= $link->{display_id};
-      my $href= $urls->get_url($url_name.'_transcript', $id);#, $species);
-      push @vega_info, [$id, $href];
-    }
-  }
-  my( $display_name, $dbname, $ext_id, $dbname_disp, $info_text ) = $object->display_xref();
-  $info_text = '';
-  return 1 unless defined $display_name;
-  my $label = $object->type_name();
-  my $lc_type = lc($label);
+	#add links to Vega, or Ensembl depending on the source of the transcript
+	my @vega_info=();
+	my $match_type = ($object->get_db eq 'vega') ? 'Ensembl' : 'Havana';
+	my $url_name   = ($object->get_db eq 'vega') ? 'Ensembl' : 'Vega';
+	if($page_type eq 'Transcript'){
+		my $trans= $object->transcript;
+		my @similarity_links= @{$object->get_similarity_hash($trans)};
+		my @vega_links= grep {$_->{db_display_name} eq $match_type.' transcripts'} @similarity_links;
+		my $urls= $object->ExtURL;
+		foreach my $link(@vega_links){
+			my $id= $link->{display_id};
+			my $href= $urls->get_url($url_name.'_transcript', $id);
+			push @vega_info, [$id, $href];
+		}
+	}
+	
+	my( $display_name, $dbname, $ext_id, $dbname_disp, $info_text ) = $object->display_xref();
+	$info_text = '';
+	return 1 unless defined $display_name;
+	my $label = $object->type_name();
+	my $lc_type = lc($label);
 
-  #remove prefix from the URL for Vega External Genes
-  my ($prefix,$name);
-  if ($species eq 'Homo_sapiens' && $object->source eq 'vega_external') {
-	  ($prefix,$name) = split ':', $display_name;
-	  $display_name = $name;
-  }
+	#set display xref
+	my $linked_display_name = $display_name;
+	if( $ext_id ) {
+		$linked_display_name = $object->get_ExtURL_link( $display_name, $dbname, $ext_id );
+	}
 
-  my $linked_display_name = $display_name;
-  if( $ext_id ) {
-    $linked_display_name = $object->get_ExtURL_link( $display_name, $dbname, $ext_id );
-  }
-  if ( $prefix ) {
-	$linked_display_name = $prefix . ':' . $linked_display_name;
-  }
-
-  # If gene ID projected from other spp, put link on other spp geneID
-  if ($dbname_disp =~/^Projected/) {
-    $linked_display_name = $display_name; # i.e. don't link it
-    if ($info_text) {
-      $info_text =~ /from (.+) gene (.+)/;
-      my ($species, $gene) = ($1, $2);
-      $info_text =~ s|$species|<i>$species</i>| if $species =~ /\w+ \w+/;
-      $species =~ s/ /_/;
-      $info_text =~s|($gene)|<a href="/$species/geneview?gene=$gene">$gene</a> |;
-    }
-  }
-  my $html;
-  if ($dbname_disp =~/HGNC/){
-     my ($disp_table, $HGNC_table) = @{get_HGNC_synonyms($object)};
-     $html = $disp_table;
-     if ($HGNC_table=~/\w/){
-       $html .= qq(<p>This gene also corresponds to the following database identifiers:</p>);
-       $html .= $HGNC_table;
-     }
-     if(my @CCDS = grep { $_->dbname eq 'CCDS' } @{$object->Obj->get_all_DBLinks} ) {
-       my %T = map { $_->primary_id,1 } @CCDS;
-       @CCDS = sort keys %T;
-       $html .= qq(
-       <p>
-        This $lc_type is a member of the human CCDS set: @{[join ', ', map {$object->get_ExtURL_link($_,'CCDS', $_)} @CCDS] } 
-       </p>);
-     }
-     if(@vega_info){
-      foreach my $info(@vega_info){
-        my $id= $$info[0];
-        my $href= $$info[1];
-        $html .= qq(
-          <p>
-           This transcript is identical to Vega transcript: <a href="$href">$id</a>
-         </p>
-        );
-      }
-     }
-    }  else {
-   $html = qq(
-   <p>
-     <strong>$linked_display_name</strong> $info_text ($dbname_disp)
-     <span class="small">To view all $site_type genes linked to the name <a href="/@{[$object->species]}/featureview?type=Gene;id=$display_name">click here</a>.</span>
-   </p>);
-   if(my @CCDS = grep { $_->dbname eq 'CCDS' } @{$object->Obj->get_all_DBLinks} ) {
-     my %T = map { $_->primary_id,1 } @CCDS;
-     @CCDS = sort keys %T;
-     $html .= qq(
-   <p>
-     This $lc_type is a member of the human CCDS set: @{[join ', ', map {$object->get_ExtURL_link($_,'CCDS', $_)} @CCDS] }
-   </p>);
-   }
-  }
-  if(@vega_info){
-    foreach my $info(@vega_info){
-      my $id= $$info[0];
-      my $href= $$info[1];
-      $html .= qq(<p>
+	# If gene ID projected from other spp, put link on other spp geneID
+	if ($dbname_disp =~/^Projected/) {
+		$linked_display_name = $display_name; # i.e. don't link it
+		if ($info_text) {
+			$info_text =~ /from (.+) gene (.+)/;
+			my ($species, $gene) = ($1, $2);
+			$info_text =~ s|$species|<i>$species</i>| if $species =~ /\w+ \w+/;
+			$species =~ s/ /_/;
+			$info_text =~s|($gene)|<a href="/$species/geneview?gene=$gene">$gene</a> |;
+		}
+	}
+	my $html;
+	if ($dbname_disp =~/HGNC/){
+		my ($disp_table, $HGNC_table) = @{get_HGNC_synonyms($object)};
+		$html = $disp_table;
+		unless ($object->get_db eq 'vega') {
+			if ($HGNC_table=~/\w/){
+				$html .= qq(<p>This gene also corresponds to the following database identifiers:</p>);
+				$html .= $HGNC_table;
+			}
+			if(my @CCDS = grep { $_->dbname eq 'CCDS' } @{$object->Obj->get_all_DBLinks} ) {
+				my %T = map { $_->primary_id,1 } @CCDS;
+				@CCDS = sort keys %T;
+				$html .= qq(<p>
+                   This $lc_type is a member of the human CCDS set: @{[join ', ', map {$object->get_ExtURL_link($_,'CCDS', $_)} @CCDS] } 
+                   </p>);
+			}
+		}		
+	}
+	else {
+		$html = qq(<p>
+           <strong>$linked_display_name</strong> $info_text ($dbname_disp)
+           <span class="small">To view all $site_type genes linked to the name <a href="/@{[$object->species]}/featureview?type=Gene;id=$display_name">click here</a>.</span>
+           </p>);
+		if(my @CCDS = grep { $_->dbname eq 'CCDS' } @{$object->Obj->get_all_DBLinks} ) {
+			my %T = map { $_->primary_id,1 } @CCDS;
+			@CCDS = sort keys %T;
+			$html .= qq(<p>
+               This $lc_type is a member of the human CCDS set: @{[join ', ', map {$object->get_ExtURL_link($_,'CCDS', $_)} @CCDS] }
+               </p>);
+		}
+	}
+	if(@vega_info){
+		foreach my $info(@vega_info){
+			my $id= $$info[0];
+			my $href= $$info[1];
+			$html .= qq(<p>
           This transcript is identical to $url_name transcript: <a href="$href">$id</a> 
        </p>
       );
-    }
-  }
-  $panel->add_row( $label, $html );
-  return 1;
+		}
+	}
+	$panel->add_row( $label, $html );
+	return 1;
 }
 
 sub stable_id {
@@ -686,8 +666,19 @@ sub database{
 
 sub get_HGNC_synonyms {
   my $self = shift;
+  my $species = $self->species;
   my ($display_name, $dbname, $ext_id, $dbname_disp, $info_text ) = $self->display_xref();
+  my ($prefix,$name);
+  #remove prefix from the URL for Vega External Genes
+  if ($species eq 'Homo_sapiens' && $self->source eq 'vega_external') {
+	($prefix,$name) = split ':', $display_name;
+	$display_name = $name;
+  }
   my $linked_display_name = $self->get_ExtURL_link( $display_name, $dbname, $ext_id );
+  if ( $prefix ) {
+	$linked_display_name = $prefix . ':' . $linked_display_name;
+  }
+
   my $site_type = ucfirst(lc($SiteDefs::ENSEMBL_SITETYPE));
   my ($disp_id_table, $HGNC_table, %syns, %text_info );
   my $syn_count = 0;
@@ -729,28 +720,32 @@ sub get_HGNC_synonyms {
  $disp_id_table = qq(<table width="$display_width" cellpadding="4">);
  if ($match_count >=2 ){$HGNC_table = qq(<table width="$width" cellpadding="4">);}
 
- foreach my $k (keys (%text_info)){
-   my $syn = $syns{$k};
-   my $syn_entry;
+SYN: foreach my $k (keys (%text_info)){
+	 my $syn = $syns{$k};
+	 my $syn_entry;
 
-  if ($k=~/$display_name/){
-      if ($disp_syn == 1) { $syn_entry = qq(<td>$syn</td>); }
-      $disp_id_table .= qq(
+	 if ($k=~/$display_name/){
+		 #don't want to show synonyms for ensembl-vega genes
+		 if ( ($species eq 'Homo_sapiens') && ($self->source eq 'vega_external') ) {
+			 next SYN unless ($k eq $display_name);
+		 }
+		 if ($disp_syn == 1) { $syn_entry = qq(<td>$syn</td>); }
+		 $disp_id_table .= qq(
        <tr>
         <td><strong>$linked_display_name</strong> ($dbname_disp)</td>$syn_entry
         <td><span class="small"> To view all $site_type genes linked to the name <a href="/@{[$self->species]}/featureview?type=Gene;id=$display_name">click here</a>.</span></td>
         </tr>
       );
-   } else {
-     if ($syn_count >= 1) { $syn_entry = qq(<td>$syn</td>); }
-     my $text = $text_info{$k};
-     $HGNC_table .= qq(
+	 } else {
+		 if ($syn_count >= 1) { $syn_entry = qq(<td>$syn</td>); }
+		 my $text = $text_info{$k};
+		 $HGNC_table .= qq(
       <tr>
        <td><strong>$text</strong> ($dbname_disp)</td>$syn_entry
        <td><span class="small"> To view all $site_type genes linked to the name <a href="/@{[$self->species]}/featureview?type=Gene;id=$k">click here</a>.</span></td>
        </tr>
       );
-   }
+	 }
  }
 
  $disp_id_table .=qq(</table>);
