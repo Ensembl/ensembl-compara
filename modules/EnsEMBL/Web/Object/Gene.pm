@@ -7,7 +7,7 @@ no warnings "uninitialized";
 use EnsEMBL::Web::Object;
 use EnsEMBL::Web::Proxy::Object;
 use EnsEMBL::Web::Proxy::Factory;
-
+use EnsEMBL::Web::Component::Transcript qw(_sort_similarity_links);
 
 @EnsEMBL::Web::Object::Gene::ISA = qw(EnsEMBL::Web::Object);
 
@@ -215,7 +215,7 @@ sub get_homology_matches{
       ( my $spp = $displayspp ) =~ tr/ /_/;
       my $order=0;
       foreach my $homology (@{$homologues{$displayspp}}){
-        my ($homologue, $homology_desc, $homology_subtype) = @{$homology};
+        my ($homologue, $homology_desc, $homology_subtype, $query_perc_id, $target_perc_id) = @{$homology};
         next unless ($homology_desc =~ /$homology_description/);
         my $homologue_id = $homologue->stable_id;
            $homology_desc= $desc_mapping{$homology_desc};   # mapping to more readable form
@@ -225,6 +225,8 @@ sub get_homology_matches{
         $homology_list{$displayspp}{$homologue_id}{'spp'}              = $displayspp ;
         $homology_list{$displayspp}{$homologue_id}{'description'}      = $homologue->description ;
         $homology_list{$displayspp}{$homologue_id}{'order'}            = $order ;
+        $homology_list{$displayspp}{$homologue_id}{'query_perc_id'}    = $query_perc_id ;
+        $homology_list{$displayspp}{$homologue_id}{'target_perc_id'}   = $target_perc_id ;
       
         if ($self->species_defs->valid_species($spp)){
           my $database_spp = $self->DBConnection->get_databases_species( $spp, 'core') ;
@@ -294,14 +296,18 @@ sub fetch_homology_species_hash {
  
  foreach my $homology (@{$homologies_array}){
     next unless ($homology->description =~ /$homology_description/);
+    my ($query_perc_id, $target_perc_id, $genome_db_name, $target_member);
     foreach my $member_attribute (@{$homology->get_all_Member_Attribute}) {
       my ($member, $attribute) = @{$member_attribute};
-      next if ($member->stable_id eq $query_member->stable_id);
-     # push (@{$homologues{$member->genome_db->name}}, [ $member, $homology->description, $homology->dnds_ratio ]);
-
-      push (@{$homologues{$member->genome_db->name}}, [ $member, $homology->description, $homology->subtype ]);
-      
-    }
+      if ($member->stable_id eq $query_member->stable_id) {
+          $query_perc_id = $attribute->perc_id;
+      } else {
+          $target_perc_id = $attribute->perc_id;
+          $genome_db_name = $member->genome_db->name;
+          $target_member = $member;
+      }
+    }  
+    push (@{$homologues{$genome_db_name}}, [ $target_member, $homology->description, $homology->subtype, $query_perc_id, $target_perc_id ]);
   }
 
   foreach my $species_name (keys %homologues){
