@@ -37,7 +37,7 @@ sub render_page {
     $self->print_linebreak;
   }
 
-  $self->print("<ul>\n");
+  $self->print("<ul class='spaced'>\n");
   foreach my $field (@{ $page->display_elements }) {
     $self->render_display( $field, $page );
   }
@@ -49,7 +49,7 @@ sub render_page {
 
   foreach my $field (@form_elements) {
     $self->render_field( $page->definition_for_data_field($field->{name}), $page );
-    $self->print_linebreak;
+    #$self->print_linebreak;
   }
 
   $self->render_submit_button;
@@ -58,6 +58,7 @@ sub render_page {
 sub render_field {
   my ($self, $field, $page) = @_;
   my $type = $field->{'Type'};
+  $self->print(qq(<div class="formblock">\n));
   if ($type =~ /varchar/) {
     if ($field->{'Field'} eq 'password') {
       $self->render_password_field($field, $page);
@@ -71,11 +72,34 @@ sub render_field {
   } elsif ($type =~ /set/) {
     $self->render_multi($field, $page);
   }
+  $self->print(qq(</div>\n));
 }
 
 sub render_display {
   my ($self, $field, $page) = @_;
   $self->print("<li>" . $field->{label} . ": " . $page->value_for_form_element($field->{name}) . "</li>\n");
+}
+
+sub render_form_label {
+  my ($self, $page, $field_name) = @_;
+  if ($field_name) {
+    my $html = qq(<h6><label for="$field_name">);
+    $html .= $page->label_for_form_element($field_name);
+    $html .= '</h6>';  
+    return $html;
+  }
+  return undef;
+}
+
+sub render_form_widget {
+  my ($self, $widget) = @_;
+  if ($widget) {
+    my $html = qq(<div class="formcontent">
+$widget
+</div>);
+    return $html;
+  }
+  return undef;
 }
 
 sub render_textfield {
@@ -86,11 +110,12 @@ sub render_textfield {
   my $field_name = $field->{'Field'};
   my ($field_size) = $field->{'Type'} =~ m/\((.*)\)/;
   my $value = "";
-  $self->print($page->label_for_form_element($field_name) . ":\n<br />\n");
+  $self->print($self->render_form_label($page, $field_name));
   if ($page->value_for_form_element($field_name)) {
     $value = "value='" . $page->value_for_form_element($field_name) . "'";
   }
-  $self->print('<input type="' . $input_type . '" name="' . $field_name . '" ' . $value . ' maxlength="' . $field_size . '"/>' . "\n");
+  my $widget = qq(<input type="$input_type" name="$field_name" $value maxlength="$field_size" />);
+  $self->print($self->render_form_widget($widget));
 }
 
 sub render_password_field {
@@ -103,29 +128,31 @@ sub render_options {
   my $field_name = $field->{'Field'};
   my $option_string = $field->{'Type'};
   $option_string =~ s/enum|\(|\)|'//g;
-  $self->print($page->label_for_form_element($field_name) . ":\n<br /><br />\n");
+  $self->print($self->render_form_label($page, $field_name));
+  my $widget = '';
   my @options = split(/,/, $option_string); 
   foreach my $option (@options) {
     my $selected = "";
     my $value = $page->value_for_selection_element($field_name, $option);
-    $self->print("<input type='radio' name='" . $field_name. "' value='" . $value. "'");
+    $widget .= qq(<input type="radio" name="$field_name" value="$value");
     if ($page->value_for_form_element($field_name)) {
       if ($page->value_for_form_element($field_name) eq $option) {
-        $self->print(" checked='yes' ");
+        $widget .= ' checked="yes" ';
       }
     } else {
       if ($option eq $field->{'Default'} ) {
-        $self->print(" checked='yes' ");
+        $widget .= ' checked="yes" ';
       }
     }
-    $self->print(" /> ");
-    $self->print($page->label_for_form_element($field_name, $option));
+    $widget .= ' /> ';
+    $widget .= $page->label_for_form_element($field_name, $option);
     my $description = $page->description_for_form_element($field_name, $option);
     if ($description) {
-      $self->print(" (" . $description . ")");
+      $widget .= " ($description)";
     }
-    $self->print("<br />");
+    #$self->print("<br />");
   }
+  $self->print($self->render_form_widget($widget));
 }
 
 sub render_multi {
@@ -134,41 +161,44 @@ sub render_multi {
   my $field_name = $field->{'Field'};
   my $option_string = $field->{'Type'};
   $option_string =~ s/set|\(|\)|'//g;
-  $self->print($page->label_for_form_element($field_name) . ":\n<br /><br />\n");
+  $self->print($self->render_form_label($page, $field_name));
+  my $widget = '';
   my @options = split(/,/, $option_string); 
   foreach my $option (@options) {
     my $selected = "";
     my $value = $page->value_for_selection_element($field_name, $option);
-    $self->print("<input type='checkbox' name='" . $field_name. "' value='" . $value. "'");
+    $widget .= qq(<input type="checkbox" name="$field_name" value="$value");
     if ($page->value_for_form_element($field_name)) {
       if ($page->value_for_form_element($field_name) eq $option) {
-        $self->print(" checked='yes' ");
+        $widget .= ' checked="yes" ';
       }
     } else {
       if ($option eq $field->{'Default'} ) {
-        $self->print(" checked='yes' ");
+        $widget .= ' checked="yes" ';
       }
     }
-    $self->print(" /> ");
-    $self->print($page->label_for_form_element($field_name, $option));
+    $widget .= ' /> ';
+    $widget .= $page->label_for_form_element($field_name, $option);
     my $description = $page->description_for_form_element($field_name, $option);
     if ($description) {
-      $self->print(" (" . $description . ")");
+      $widget .= " ($description)";
     }
-    $self->print("<br />");
+    #$self->print("<br />");
   }
+  $self->print($self->render_form_widget($widget));
 }
 
 
 sub render_textarea {
   my ($self, $field, $page) = @_;
   my $field_name = $field->{'Field'};
-  $self->print($page->label_for_form_element($field_name) . ":\n<br />\n");
-  $self->print('<textarea name="' . $field_name .'">');
+  $self->print($self->render_form_label($page, $field_name));
+  my $widget = qq(<textarea name="$field_name">);
   if ($page->value_for_form_element($field_name)) {
-    $self->print($page->value_for_form_element($field_name));
+    $widget .= $page->value_for_form_element($field_name);
   }
-  $self->print('</textarea>');
+  $widget .= '</textarea>';
+  $self->print($self->render_form_widget($widget));
 }
 
 sub render_text {
@@ -178,7 +208,10 @@ sub render_text {
 
 sub render_submit_button {
   my $self = shift;
-  $self->print('<input type="submit" value="Submit" class="red-button" />' . "\n");
+  $self->print('<div class="formblock"><h6></h6>');
+  my $widget = qq(<input type="submit" value="Submit" class="red-button" />);
+  $self->print($self->render_form_widget($widget));
+  $self->print('</div>');
 }
 
 sub render_error_page {
@@ -212,7 +245,7 @@ sub print_form_header {
   my ($self, $page) = @_;
   my $user_id = $ENV{'ENSEMBL_USER_ID'};
   my $id = CGI->new()->param('id');
-  $self->print('<form method="post">' . "\n");
+  $self->print(qq(<div class="formpanel-left" style="width:70%">\n<form method="post">\n));
   $self->print('<input type="hidden" name="dataview_action" value="' . $page->action . '" />'. "\n");
 
   if ($id) { ## ID of record to update
@@ -250,7 +283,7 @@ sub print_form_header {
 
 sub print_form_footer {
   my $self = shift;
-  $self->print('</form>' . "\n");
+  $self->print("</form>\n</div>\n");
 }
 
 sub in_form {
