@@ -33,6 +33,7 @@ sub exonview {
     information EnsEMBL::Web::Component::Transcript::information
     location    EnsEMBL::Web::Component::Gene::location
     description EnsEMBL::Web::Component::Gene::description
+    database    EnsEMBL::Web::Component::Gene::database
     opts        EnsEMBL::Web::Component::Transcript::exonview_options
   ));
   $self->{page}->content->add_panel( $panel1 );
@@ -85,6 +86,7 @@ sub transview {
     information EnsEMBL::Web::Component::Transcript::information
     location    EnsEMBL::Web::Component::Gene::location
     description EnsEMBL::Web::Component::Gene::description
+    database    EnsEMBL::Web::Component::Gene::database
     method      EnsEMBL::Web::Component::Gene::method
     similarity  EnsEMBL::Web::Component::Transcript::similarity_matches
     go          EnsEMBL::Web::Component::Transcript::go
