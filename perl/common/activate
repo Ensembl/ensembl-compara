@@ -10,6 +10,7 @@ use EnsEMBL::Web::Interface::PageDefinition;
 use EnsEMBL::Web::Interface::FormDefinition;
 use EnsEMBL::Web::DBSQL::DataDefinition;
 use EnsEMBL::Web::DBSQL::ViewAdaptor;
+use EnsEMBL::Web::SpeciesDefs;
 
 my $page = EnsEMBL::Web::Interface::PageDefinition->new();
 my $data = EnsEMBL::Web::DBSQL::DataDefinition->new();
@@ -19,22 +20,31 @@ $data->adaptor(EnsEMBL::Web::DBSQL::ViewAdaptor->new((
                                                        table  => 'user'
                                                     )) );
 
+my $sd = EnsEMBL::Web::SpeciesDefs->new();
+my $site_info = {};
+my $sitetype = $sd->ENSEMBL_SITETYPE;
+my $sitename = $sitetype eq 'EnsEMBL' ? 'Ensembl' : $sitetype;
+my $site_info->{'name'} = $sitename;
+my $site_info->{'base_url'}    = $sd->ENSEMBL_BASE_URL;
+my $site_info->{'mail_server'} = $sd->ENSEMBL_MAIL_SERVER;
+my $site_info->{'help_email'}  = $sd->ENSEMBL_HELPDESK_EMAIL;
+
 if (!$cgi->param('welcome_email')) {
   my $user = EnsEMBL::Web::Object::User->new({ id => $cgi->param('id') });
-  send_activation_email($user);
+  send_activation_email($user, $site_info);
 } elsif ($cgi->param('welcome_email') eq 'yes') {
   my $user = EnsEMBL::Web::Object::User->new({ id => $cgi->param('id') });
-  send_welcome_email($user);
+  send_welcome_email($user, $site_info);
 }
 
 $data->discover;
 $data->populate($cgi->param('id'));
 $page->data_definition($data);
-$page->title('Activate your Ensembl account');
+$page->title("Activate your $sitename account");
 $page->action('edit');
 $page->send_params({ id => 'yes', salt => 'yes', password => 'yes' });
 $page->on_complete('/common/set_cookie');
-$page->on_error('/register/error.html');
+$page->on_error('/error/activate.html');
 
 $page->add_configuration_element('conditional', 'salt');
 $page->add_configuration_element('welcome_email', 'yes');
@@ -51,41 +61,61 @@ $page->add_form_element('password', "Your password");
 EnsEMBL::Web::Document::DataView::simple('User', $page);
 
 sub send_activation_email {
-  my $user = shift;
+  my ($user, $site_info) = @_;
+  my $sitename = $site_info->{'name'};
   my $message = qq(
-  Welcome to Ensembl,
+  Welcome to $sitename,
 
-  Thanks for registering with Ensembl.
+  Thanks for registering with $sitename.
   
   You just need to activate your account, using the activation code below:
   
   Activation code: ) . $user->salt . qq(
  
   Or by clicking on this link:
-  http://www.ensembl.org/activate?id=) . $user->id . qq(  
+  http://) . $site_info{'base_url'} . qq(/activate?id=) . $user->id . qq(  
+
 
   Many thanks,
 
-  James, Matt, Fiona and Anne
-  The Ensembl web team
+  The $sitename web team
+
+
+
+  $sitename Privacy Statement: http://) . $site_info{'base_url'} . qq(/info/about/privacy.html
   );
-  send_email($user, "Your new Ensembl account", $message);
+  send_email($site_info, $user, "Your new $sitename account", $message);
 }
 
 sub send_welcome_email {
-  my $user = shift;
-  my $message = qq(Welcome to Ensembl);
-  send_email($user, "Welcome to Ensembl", $message);
+  my ($user, $site_info) = @_;
+  my $sitename = $site_info->{'name'};
+  my $message = qq(Welcome to $sitename.
+  Your account is now activated. More information on how to make the most of 
+  your account can be found at:
+
+  http://) . $site_info{'base_url'} . qq(/info/about/accounts.html
+
+
+  Many thanks,
+
+  The $sitename web team
+
+
+
+  $sitename Privacy Statement: http://) . $site_info{'base_url'} . qq(/info/about/privacy.html
+  );
+  send_email($site_info, $user, "Welcome to $sitename", $message);
 }
 
 sub send_email {
-  my ($user, $subject, $message) = @_;
+  my ($site_info, $user, $subject, $message) = @_;
   warn "Sending email to: " . $user->email;
-  my $mailer = new Mail::Mailer 'smtp', Server => "mail.sanger.ac.uk";
+  my $mailer = new Mail::Mailer 'smtp', Server => $site_info->{'mail_server'};
   $mailer->open({
                 'To'      => $user->email,
-                'From'    => "Ensembl",
-                'Reply-To'=> "helpdesk\@ensembl.org",
+                'From'    => $site_info->{'name'},
+                'Reply-To'=> $site_info->{'help_email'},
                 'Subject' => $subject
                 });
   print $mailer $message;
