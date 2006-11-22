@@ -1,0 +1,53 @@
+<html>
+<head>
+<title>Log in to Ensembl</title>
+</head>
+<body>
+<h1>Log in to your Ensembl account</h1>
+<br /><br />
+You can log into your Ensembl account here.
+<br /><br />
+<form action="/common/login" method="post">
+Username: <br />
+<input type="text" size="20" name="username" />
+<br/ ><br/ >
+Password: <br />
+<input type="password" size="20" name="password" />
+<br/ ><br/ >
+<input type="hidden" size="20" name="url" id="url" />
+<input type="submit" value="Log in" class="red-button">
+</form>
+<script type="text/javascript">
+
+var params = getParameters();
+
+document.getElementById('url').value = unescape(params['url']);
+
+function getParameters() {
+
+   var params = new Array();
+   var url = window.location.href;
+   var paramsStart = url.indexOf("?");
+   var hasMoreParams = true;
+
+   if(paramsStart != -1){
+
+     var paramString = url.substr(paramsStart + 1);
+     var params = paramString.split("&");
+     for(var i = 0 ; i < params.length ; i++) {
+
+       var pairArray = params[i].split("=");
+
+       if(pairArray.length == 2){
+         params[pairArray[0]] = pairArray[1];
+       }
+
+     }
+     return params;
+   }
+   return null;
+}
+
+</script>
+</body>
+</html>

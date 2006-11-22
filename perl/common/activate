@@ -1,0 +1,96 @@
+#!/usr/local/bin/perl
+
+package activate;
+
+use CGI;
+
+my $cgi = new CGI;
+use EnsEMBL::Web::Document::DataView;
+use EnsEMBL::Web::Interface::PageDefinition;
+use EnsEMBL::Web::Interface::FormDefinition;
+use EnsEMBL::Web::DBSQL::DataDefinition;
+use EnsEMBL::Web::DBSQL::ViewAdaptor;
+
+my $page = EnsEMBL::Web::Interface::PageDefinition->new();
+my $data = EnsEMBL::Web::DBSQL::DataDefinition->new();
+my $db = $EnsEMBL::Web::Apache::Handlers::ENSEMBL_USER_DB_HANDLE;
+$data->adaptor(EnsEMBL::Web::DBSQL::ViewAdaptor->new((
+                                                       handle => $db,
+                                                       table  => 'user'
+                                                    )) );
+
+if (!$cgi->param('welcome_email')) {
+  my $user = EnsEMBL::Web::Object::User->new({ id => $cgi->param('id') });
+  send_activation_email($user);
+} elsif ($cgi->param('welcome_email') eq 'yes') {
+  my $user = EnsEMBL::Web::Object::User->new({ id => $cgi->param('id') });
+  send_welcome_email($user);
+}
+
+$data->discover;
+$data->populate($cgi->param('id'));
+$page->data_definition($data);
+$page->title('Activate your Ensembl account');
+$page->action('edit');
+$page->send_params({ id => 'yes', salt => 'yes', password => 'yes' });
+$page->on_complete('/common/set_cookie');
+$page->on_error('/register/error.html');
+
+$page->add_configuration_element('conditional', 'salt');
+$page->add_configuration_element('welcome_email', 'yes');
+
+$page->add_display_element('name', "User name");
+$page->add_display_element('organisation', "Organisation");
+
+$conditional = EnsEMBL::Web::Interface::FormDefinition->new();
+$conditional->add_option({ 'conditional' => 1 });
+
+$page->add_form_element('salt', "Your activation code", $conditional);
+$page->add_form_element('password', "Your password");
+
+EnsEMBL::Web::Document::DataView::simple('User', $page);
+
+sub send_activation_email {
+  my $user = shift;
+  my $message = qq(
+  Welcome to Ensembl,
+
+  Thanks for registering with Ensembl.
+  
+  You just need to activate your account, using the activation code below:
+  
+  Activation code: ) . $user->salt . qq(
+ 
+  Or by clicking on this link:
+  http://www.ensembl.org/activate?id=) . $user->id . qq(  
+
+  Many thanks,
+
+  James, Matt, Fiona and Anne
+  The Ensembl web team
+  );
+  send_email($user, "Your new Ensembl account", $message);
+}
+
+sub send_welcome_email {
+  my $user = shift;
+  my $message = qq(Welcome to Ensembl);
+  send_email($user, "Welcome to Ensembl", $message);
+}
+
+sub send_email {
+  my ($user, $subject, $message) = @_;
+  warn "Sending email to: " . $user->email;
+  my $mailer = new Mail::Mailer 'smtp', Server => "mail.sanger.ac.uk";
+  $mailer->open({
+                'To'      => $user->email,
+                'From'    => "Ensembl",
+                'Reply-To'=> "helpdesk\@ensembl.org",
+                'Subject' => $subject
+                });
+  print $mailer $message;
+  $mailer->close();
+
+}
+
+1;

@@ -1,0 +1,31 @@
+#! /usr/bin/perl
+
+package set_cookie;
+
+use EnsEMBL::Web::Object::User;
+use CGI;
+my $cgi = new CGI;
+my $user = EnsEMBL::Web::Object::User->new({ id => $cgi->param('id') });
+
+my $url = "/index.html";
+
+if ($user) {
+  if ($user->password eq $cgi->param('key')) {
+    my $encrypted = EnsEMBL::Web::DBSQL::UserDB::encryptID($user->id);
+    my $cookie = CGI::Cookie->new(
+       -name    => EnsEMBL::Web::SpeciesDefs->ENSEMBL_USER_COOKIE,
+       -value   => $encrypted,
+       -domain  => EnsEMBL::Web::SpeciesDefs->ENSEMBL_COOKIEHOST,
+       -path    => "/",
+       -expires => "Monday, 31-Dec-2010 23:59:59 GMT"
+    );
+    print "Set-cookie: $cookie";
+  } else {
+    $url = "/failed.html";
+  }
+}
+
+print "Location: $url";
+
+1;
+
