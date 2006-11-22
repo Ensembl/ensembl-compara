@@ -75,6 +75,7 @@ sub render {
   my $DB = $species_defs->databases->{'ENSEMBL_WEBSITE'};
   my $adaptor = EnsEMBL::Web::DBSQL::NewsAdaptor->new( $DB );
   my @headlines;
+  my $filtered = 0;
 
   ## get news headlines
   my $criteria = {'release'=>$release_id};
@@ -87,10 +88,12 @@ sub render {
     ## Look up species ids and category ids for use in query
     foreach my $f (@filters) {
       if ($f->species && $f->species ne 'none') {
+        $filtered = 1;
         my $species_id = $adaptor->fetch_species_id($f->species);
         push @{$criteria->{'species'}}, $species_id;
       }
       if ($f->topic && $f->topic ne 'none') {
+        $filtered = 1;
         my $category_id = $adaptor->fetch_cat_id($f->topic);
         push @{$criteria->{'category'}}, $category_id;
       }
@@ -151,7 +154,13 @@ sub render {
     $html .= qq(<p><a href="/Multi/newsview?rel=current">More news</a>...</p>\n</div>\n);
   }
   else {
-    $html .= qq(<p>No news is currently available for this release.</p>\n</div>\n);
+    if ($filtered) {
+      $html .= qq(<p>No news could be found for your selected species/topics.</p>
+<p><a href="/Multi/newsview?rel=current">Other news</a>...</p>\n</div>\n);
+    }
+    else {
+      $html .= qq(<p>No news is currently available for this release.</p>\n</div>\n);
+    }
   }
 
   if ($species_defs->ENSEMBL_LOGINS && $user_id < 1) {
