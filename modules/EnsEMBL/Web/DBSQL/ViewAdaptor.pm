@@ -90,15 +90,22 @@ sub edit {
   }
   my @definition = undef;
   my $user = undef;
+  my $label = undef;
+
   if ($params{definition}) {
     @definition = @{ $params{definition} };
   } 
+
+  if ($params{label}) {
+    $label = $params{label};
+  }
+
   if ($params{user}) {
     $user = $params{user};
   }
 
   if ($params{record}) {
-    %set_parameters = %{ $self->record_parameters(\%set_parameters, $params{record}, $user) };
+    %set_parameters = %{ $self->record_parameters(\%set_parameters, $params{record}, $user, $label) };
   }
 
   if ($set_parameters{password}) {
@@ -204,7 +211,10 @@ sub create {
 }
 
 sub record_parameters {
-  my ($self, $parameters, $record, $user) = @_;
+  my ($self, $parameters, $record, $ident, $ident_label) = @_;
+  if (!$ident_label) {
+    $ident_label = "user_id";
+  }
   my %set_parameters = %{ $parameters };
   my $dump = $self->dump_data($parameters);
 
@@ -214,7 +224,6 @@ sub record_parameters {
 
   $set_parameters{type} = $record;
   $set_parameters{data} = $dump;
-  $set_parameters{user_id} = $user;
 
   return \%set_parameters;
 }
@@ -365,6 +374,9 @@ sub DESTROY {
   delete $Password_of{$self};
 }
 
+sub disconnect {
+  $self->handle->disconnect();
+}
 
 }
 
