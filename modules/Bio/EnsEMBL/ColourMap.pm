@@ -65,7 +65,6 @@ sub new {
     seg                gold2
     signalp            pink
     tmhmm              darkgreen
-
     hi                 green
     default            violet 
   ));
@@ -170,7 +169,7 @@ sub new {
     'superhi'    => 'highlight2',
     map { ( "flybase$_" => [ $core{$_}[0], "Flybase (@{[$core{$_}[1]]})" ] )} keys %core
   );
-  $self->colourSet( 'vega_gene',
+  $self->colourSet( 'vega_gene_havana',
     'hi'                               => 'highlight1',
     'superhi'                          => 'highlight2',
     'ccdshi'                           => 'lightblue1',
@@ -192,6 +191,43 @@ sub new {
     'Ig_segment_NOVEL'                 => [ 'navy', 'Ig segment' ],
     'total_Ig_segment_UNKNOWN'         => [ 'midnightblue', 'Ig segment' ],
     'Ig_pseudogene_segment_UNKNOWN'    => [ 'mediumpurple4', 'Ig pseudogene' ],
+  );
+  $self->colourSet( 'vega_gene_external',
+    'hi'                               => 'highlight1',
+    'superhi'                          => 'highlight2',
+    'ccdshi'                           => 'lightblue1',
+    'protein_coding_KNOWN'             => [ 'orangered2', 'Known Protein coding'],
+    'processed_transcript_KNOWN'       => [ 'orangered2', 'Known Processed transcript'],
+    'protein_coding_NOVEL'             => [ 'orangered1', 'Novel Protein coding' ],
+    'protein_coding_PREDICTED'         => [ 'lightcoral', 'Predicted Protein coding'] ,
+    'processed_transcript_PREDICTED'   => [ 'lightcoral', 'Predicted Processed transcript'] ,
+    'processed_transcript_UNKNOWN'     => [ 'lightsalmon1', 'Processed transcript'] ,
+    'processed_transcript_NOVEL'       => [ 'lightsalmon2', 'Novel Processed transcript' ],
+    'processed_transcript_PUTATIVE'    => [ 'lightsalmon3', 'Putative Processed transcript' ],
+    'pseudogene_UNKNOWN'               => [ 'grey75', 'Pseudogene' ],
+    'processed_pseudogene_UNKNOWN'     => [ 'grey43', 'Processed pseudogene' ],
+    'unprocessed_pseudogene_UNKNOWN'   => [ 'grey32', 'Unprocessed pseudogene' ],
+    'Ig_segment_NOVEL'                 => [ 'chocolate3', 'Ig segment' ],
+    'Ig_pseudogene_segment_UNKNOWN'    => [ 'chocolate2', 'Ig pseudogene' ],
+  );
+  $self->colourSet( 'vega_gene_corf',
+    'hi'                               => 'highlight1',
+    'superhi'                          => 'highlight2',
+    'ccdshi'                           => 'lightblue1',
+    'protein_coding_KNOWN'             => [ 'olivedrab', 'Known Protein coding'],
+    'processed_transcript_KNOWN'       => [ 'olivedrab', 'Known Processed transcript'],
+    'protein_coding_NOVEL'             => [ 'seagreen2', 'Novel Protein coding' ],
+    'processed_transcript_NOVEL'       => [ 'palegreen2', 'Novel Processed transcript' ],
+  );
+  $self->colourSet( 'vega_gene_igsf',
+    'hi'                               => 'highlight1',
+    'superhi'                          => 'highlight2',
+    'ccdshi'                           => 'lightblue1',
+    'protein_coding_KNOWN'             => [ 'olivedrab', 'Known Protein coding'],
+    'processed_transcript_KNOWN'       => [ 'olivedrab', 'Known Processed transcript'],
+    'protein_coding_NOVEL'             => [ 'seagreen', 'Novel Protein coding' ],
+    'processed_transcript_NOVEL'       => [ 'palegreen', 'Novel Processed transcript' ],
+    'Ig_segment_NOVEL'                 => [ 'springreen3', 'Ig segment' ],
   );
   $self->colourSet( 'rna_gene',
     'hi'         => 'highlight1',
