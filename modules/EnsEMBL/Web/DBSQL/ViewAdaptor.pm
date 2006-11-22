@@ -375,6 +375,7 @@ sub DESTROY {
 }
 
 sub disconnect {
+  my $self = shift;
   $self->handle->disconnect();
 }
 
