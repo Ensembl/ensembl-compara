@@ -274,7 +274,8 @@ table.info-image td.image { text-align:center; padding-right:20px; }
 /****************************** FORMS **********************************/
 
 div.formpanel { padding:1em; margin:auto; border:1px solid #ccc;}
-div.formpanel div { margin-top:5px; }
+div.formpanel-left { padding:1em; border:1px solid #ccc;}
+div.formpanel div, div.formpanel-left div { margin-top:5px; }
 
 .formblock { left: 0px; right: 0px; position: relative; }
 .formblock p { width: 100%; padding: 0px; margin: 0px;  }
