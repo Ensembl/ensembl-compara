@@ -231,7 +231,6 @@ sub geneview {
       stable_id     EnsEMBL::Web::Component::Gene::stable_id
       location      EnsEMBL::Web::Component::Gene::location
       description   EnsEMBL::Web::Component::Gene::description
-      similarity    EnsEMBL::Web::Component::Gene::similarity
       method        EnsEMBL::Web::Component::Gene::method
       transcripts   EnsEMBL::Web::Component::Gene::transcripts
       alignments    EnsEMBL::Web::Component::Gene::alignments

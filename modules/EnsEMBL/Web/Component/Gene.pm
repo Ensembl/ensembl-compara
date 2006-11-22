@@ -364,18 +364,47 @@ sub name {
       $info_text =~s|($gene)|<a href="/$species/geneview?gene=$gene">$gene</a> |;
     }
   }
-  my $html = qq(
-  <p>
-    <strong>$linked_display_name</strong> $info_text ($dbname_disp)
-    <span class="small">To view all $site_type genes linked to the name <a href="/@{[$object->species]}/featureview?type=Gene;id=$display_name">click here</a>.</span>
-  </p>);
-  if(my @CCDS = grep { $_->dbname eq 'CCDS' } @{$object->Obj->get_all_DBLinks} ) {
-    my %T = map { $_->primary_id,1 } @CCDS;
-    @CCDS = sort keys %T;
-    $html .= qq(
-  <p>
-    This $lc_type is a member of the human CCDS set: @{[join ', ', map {$object->get_ExtURL_link($_,'CCDS', $_)} @CCDS] }
-  </p>);
+  my $html;
+  if ($dbname_disp =~/HGNC/){
+     my ($disp_table, $HGNC_table) = @{get_HGNC_synonyms($object)};
+     $html = $disp_table;
+     if ($HGNC_table=~/\w/){
+       $html .= qq(<p>This gene also corresponds to the following database identifiers:</p>);
+       $html .= $HGNC_table;
+     }
+     if(my @CCDS = grep { $_->dbname eq 'CCDS' } @{$object->Obj->get_all_DBLinks} ) {
+       my %T = map { $_->primary_id,1 } @CCDS;
+       @CCDS = sort keys %T;
+       $html .= qq(
+       <p>
+        This $lc_type is a member of the human CCDS set: @{[join ', ', map {$object->get_ExtURL_link($_,'CCDS', $_)} @CCDS] } 
+       </p>);
+     }
+     if(@vega_info){
+      foreach my $info(@vega_info){
+        my $id= $$info[0];
+        my $href= $$info[1];
+        $html .= qq(
+          <p>
+           This transcript is identical to Vega transcript: <a href="$href">$id</a>
+         </p>
+        );
+      }
+     }
+    }  else {
+   $html = qq(
+   <p>
+     <strong>$linked_display_name</strong> $info_text ($dbname_disp)
+     <span class="small">To view all $site_type genes linked to the name <a href="/@{[$object->species]}/featureview?type=Gene;id=$display_name">click here</a>.</span>
+   </p>);
+   if(my @CCDS = grep { $_->dbname eq 'CCDS' } @{$object->Obj->get_all_DBLinks} ) {
+     my %T = map { $_->primary_id,1 } @CCDS;
+     @CCDS = sort keys %T;
+     $html .= qq(
+   <p>
+     This $lc_type is a member of the human CCDS set: @{[join ', ', map {$object->get_ExtURL_link($_,'CCDS', $_)} @CCDS] }
+   </p>);
+   }
   }
   if(@vega_info){
     foreach my $info(@vega_info){
@@ -616,6 +645,144 @@ sub method {
   return 1;
 }
 
+sub database{
+  my( $panel, $gene ) = @_;
+  my $FLAG = 0;
+  my $label = 'Database Matches';
+  my $html;
+  my $matches =$gene->get_database_matches;
+  my @links = _sort_similarity_links($gene, @$matches);
+  $html .= qq(<p>This gene corresponds to the following database identifiers:</p><table cellpadding="4">);
+  my $old_key = '';
+  my %seen_links;
+
+  foreach my $l (@links) {
+     return 1 unless @$l;
+     foreach my $link (@$l) {
+        my ($key, $text) = @$link;
+        $seen_links{$key}++;
+        my $k = ($seen_links{$key} > 1) ? '' : $key.':';
+        if ($key=~/HGNC/){
+          my $temp = $text;
+          my @t = split(/\<|\>/, $temp);
+          my $id = $t[4];
+          my $synonyms = get_synonyms($id, @$matches);
+          unless($text =~ $gene->display_xref && $synonyms!~/\w/){
+            $html .= qq(<tr><th style="white-space: nowrap; padding-right: 1em">$k</th><td>);
+            $html .= $text . $synonyms ;
+            $FLAG =1;
+          }
+        }
+     }
+  }
+  $html .= qq(</td></tr></table>);
+
+  if( $FLAG ) {
+   $panel->add_row( $label, $html );
+  }
+
+  return 1;
+}
+
+sub get_HGNC_synonyms {
+  my $self = shift;
+  my ($display_name, $dbname, $ext_id, $dbname_disp, $info_text ) = $self->display_xref();
+  my $linked_display_name = $self->get_ExtURL_link( $display_name, $dbname, $ext_id );
+  my $site_type = ucfirst(lc($SiteDefs::ENSEMBL_SITETYPE));
+  my ($disp_id_table, $HGNC_table, %syns, %text_info );
+  my $syn_count = 0;
+  my $disp_syn = 0;
+
+  my $matches = $self->get_database_matches;
+  my @links = _sort_similarity_links ($self, @$matches);
+  my $match_count =0;
+  foreach my $l (@links){
+    return 1 unless @$l;
+    foreach my $link (@$l){
+     my ($key, $text)= @$link;
+     if ($key =~/HGNC/){
+       $match_count++;
+       my $temp = $text;
+       $text =~s/\<div\s*class="multicol"\>|\<\/div\>//;
+       my @t = split(/\<|\>/, $temp);
+       my $id = $t[4];
+       my $synonyms = get_synonyms($id, @$matches);
+       if ($id =~/$display_name/){
+         unless ($synonyms !~/\w/) {
+          $disp_syn = 1;
+          $syns{$id} = $synonyms;
+         }
+       }
+       $text_info{$id} = $text;
+       unless ($synonyms !~/\w/ || $id =~/$display_name/){
+        $syns{$id} = $synonyms;
+        $syn_count++;
+       }
+     }
+    }
+  }
+
+ my $width ="100%";
+ if ($syn_count == 0){ $width = "65%";}
+ my $display_width = "68%";
+ if ($disp_syn ==1) {$display_width = "100%";}
+ $disp_id_table = qq(<table width="$display_width" cellpadding="4">);
+ if ($match_count >=2 ){$HGNC_table = qq(<table width="$width" cellpadding="4">);}
+
+ foreach my $k (keys (%text_info)){
+   my $syn = $syns{$k};
+   my $syn_entry;
+
+  if ($k=~/$display_name/){
+      if ($disp_syn == 1) { $syn_entry = qq(<td>$syn</td>); }
+      $disp_id_table .= qq(
+       <tr>
+        <td><strong>$linked_display_name</strong> ($dbname_disp)</td>$syn_entry
+        <td><span class="small"> To view all $site_type genes linked to the name <a href="/@{[$self->species]}/featureview?type=Gene;id=$display_name">click here</a>.</span></td>
+        </tr>
+      );
+   } else {
+     if ($syn_count >= 1) { $syn_entry = qq(<td>$syn</td>); }
+     my $text = $text_info{$k};
+     $HGNC_table .= qq(
+      <tr>
+       <td><strong>$text</strong> ($dbname_disp)</td>$syn_entry
+       <td><span class="small"> To view all $site_type genes linked to the name <a href="/@{[$self->species]}/featureview?type=Gene;id=$k">click here</a>.</span></td>
+       </tr>
+      );
+   }
+ }
+
+ $disp_id_table .=qq(</table>);
+ if ($match_count >=2 ){$HGNC_table .= qq(</table>);}
+
+ my @tables = ($disp_id_table, $HGNC_table);
+ return \@tables;
+}
+
+
+sub get_synonyms {
+  my $match_id = shift;
+  my @matches = @_;
+  my $ids;
+  foreach my $m (@matches){
+    my $dbname = $m->db_display_name;
+    my $disp_id = $m->display_id();
+    if ( $dbname =~/HGNC/ && $disp_id=~/$match_id/){
+      my $synonyms = $m->get_all_synonyms();
+      foreach my $syn (@$synonyms){
+      $ids = $ids .", " .$syn;
+     }
+    }
+  }
+  $ids=~s/^\,\s*//;
+  my $syns;
+  if ($ids =~/^\w/){
+    $syns = "<b>Synonyms:   </b>" .$ids;
+  }
+  return $syns;
+}
+
 sub alignments {
   my( $panel, $gene ) = @_;
   my $label  = 'Alignments';
@@ -654,68 +821,6 @@ sub alignments {
   }
   return 1;
 }
-
-sub get_synonyms {
-  my $match_id = shift;
-  my @matches = @_;
-  my $ids;
-  foreach my $m (@matches){
-    my $dbname = $m->db_display_name;
-    my $disp_id = $m->display_id();
-    if ( $dbname =~/HGNC/ && $disp_id=~/$match_id/){
-      my $synonyms = $m->get_all_synonyms();
-      foreach my $syn (@$synonyms){
-      $ids = $ids .", " .$syn; 
-     }   
-    }
-  }
-  $ids=~s/^\,\s*//;
-  my $syns;
-  if ($ids =~/^\w/){
-    $syns = "<b>Synonyms:   </b>" .$ids;
-  } 
-  return $syns;
-}
-
-sub similarity{
-  my( $panel, $gene ) = @_;
-  my $FLAG = 0; 
-  my $label = 'Similarity Matches';
-  my $html;
-  my $matches =$gene->get_database_matches;   
-  my @links = _sort_similarity_links($gene, @$matches);
-  $html .= qq(<p>This gene corresponds to the following database identifiers:</p><table cellpadding="4">);
-  my $old_key = '';
-  my %seen_links;
- 
-  foreach my $l (@links) {
-     return 1 unless @$l;
-     foreach my $link (@$l) {
-        my ($key, $text) = @$link;
-        $seen_links{$key}++;
-        my $k = ($seen_links{$key} > 1) ? '' : $key.':';
-        if ($key=~/HGNC/){
-          my $temp = $text;
-          my @t = split(/\<|\>/, $temp);
-          my $id = $t[4];
-          my $synonyms = get_synonyms($id, @$matches);     
-          unless($text =~ $gene->display_xref && $synonyms!~/\w/){  
-            $html .= qq(<tr><th style="white-space: nowrap; padding-right: 1em">$k</th><td>);
-            $html .= $text . $synonyms ; 
-            $FLAG =1;
-          }
-        }
-     }
-  }
-  $html .= qq(</td></tr></table>);
-
-  if( $FLAG ) {
-   $panel->add_row( $label, $html );
-  }
-
-  return 1;
-}
-
 
 sub orthologues {
   my( $panel, $gene ) = @_;
@@ -774,12 +879,13 @@ sub orthologues {
         my $orthologue_desc = $orthologue_map{ $OBJ->{'homology_desc'} } || $OBJ->{'homology_desc'};
    #     my $orthologue_dnds_ratio = $OBJ->{'homology_dnds_ratio'};
    #      $orthologue_dnds_ratio = '&nbsp;' unless (defined $orthologue_dnds_ratio);
-        my $last_col;
+        my ($last_col, $EXTRA2);
         if(exists( $OBJ->{'display_id'} )) {
           (my $spp = $OBJ->{'spp'}) =~ tr/ /_/ ;
           my $EXTRA = qq(<span class="small">[<a href="/@{[$gene->species]}/multicontigview?gene=$STABLE_ID;s1=$spp;g1=$stable_id;context=1000">MultiContigView</a>]</span>);
           if( $orthologue_desc ne 'DWGA' ) {
-            $EXTRA .= qq(&nbsp;<span class="small">[<a href="/@{[$gene->species]}/alignview?class=Homology;gene=$STABLE_ID;g1=$stable_id">Align</a>]</span>);
+            $EXTRA .= qq(&nbsp;<span class="small">[<a href="/@{[$gene->species]}/alignview?class=Homology;gene=$STABLE_ID;g1=$stable_id">Align</a>]</span> );
+            $EXTRA2 = qq(<br /><span class="small">[Target &#37id: $OBJ->{'target_perc_id'}; Query &#37id: $OBJ->{'query_perc_id'}]</span>);
             $ALIGNVIEW = 1;
           }
           $FULL_URL .= ";s$C=$spp;g$C=$stable_id";$C++;
@@ -791,9 +897,9 @@ sub orthologues {
             }
           }
           $last_col = qq(<a href="$link">$stable_id</a> (@{[$OBJ->{'display_id'}]}) $EXTRA<br />).
-                      qq(<span class="small">$description</span>);
+                      qq(<span class="small">$description</span> $EXTRA2);
         } else {
-          $last_col = qq($stable_id<br /><span class="small">$description</span>);
+          $last_col = qq($stable_id<br /><span class="small">$description</span> $EXTRA2);
         }
         $html .= sprintf( qq(
               <td>$orthologue_desc</td>
@@ -852,6 +958,7 @@ sub paralogues {
     my $STABLE_ID = $gene->stable_id; my $C = 1;
     my $FULL_URL  = qq(/@{[$gene->species]}/multicontigview?gene=$STABLE_ID);
     my $ALIGNVIEW = 0;
+    my $EXTRA2;
     my $matching_paralogues = 0;
     foreach my $species (sort keys %paralogue_list){
  # foreach my $stable_id (sort keys %{$paralogue_list{$species}}){
@@ -869,6 +976,7 @@ sub paralogues {
           my $EXTRA = qq(<span class="small">[<a href="/@{[$gene->species]}/multicontigview?gene=$STABLE_ID;s1=$spp;g1=$stable_id;context=1000">MultiContigView</a>]</span>);
           if( $paralogue_desc ne 'DWGA' ) {
             $EXTRA .= qq(&nbsp;<span class="small">[<a href="/@{[$gene->species]}/alignview?class=Homology;gene=$STABLE_ID;g1=$stable_id">Align</a>]</span>);
+            $EXTRA2 = qq(<br /><span class="small">[Target &#37id: $OBJ->{'target_perc_id'}; Query &#37id: $OBJ->{'query_perc_id'}]</span>);
             $ALIGNVIEW = 1;
           }
           $FULL_URL .= ";s$C=$spp;g$C=$stable_id";$C++;
@@ -883,13 +991,13 @@ sub paralogues {
         <tr>
           <td>$paralogue_subtype</td>
           <td><a href="$link">$stable_id</a> (@{[ $OBJ->{'display_id'} ]}) $EXTRA<br />
-              <span class="small">$description</span></td>
+              <span class="small">$description</span>$EXTRA2</td>
         </tr>);
         } else {
           $html .= qq(
         <tr>
           <td>$paralogue_subtype</td>
-          <td>$stable_id <br /><span class="small">$description</span></td>
+          <td>$stable_id <br /><span class="small">$description</span>$EXTRA2</td>
        </tr>);
         }
       }
