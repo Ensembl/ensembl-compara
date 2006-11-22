@@ -99,6 +99,9 @@ sub fetch_news_items {
         }
         $string .= ')';
       }
+      else {
+        $string = ''; ## empty array, so delete the criterion
+      }
     }
     else {
       $string .= "i.species_id = $sp";
