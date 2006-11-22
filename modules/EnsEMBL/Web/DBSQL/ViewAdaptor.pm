@@ -188,6 +188,10 @@ sub create {
     @definition = @{ $self->discover($table) };
   }
 
+  foreach my $key (keys %set_parameters) {
+    $set_parameters{$key} =~ s/'/\\'/g;
+  }
+
   my $sql = "INSERT INTO " . $table . " ";
   $sql .= $self->set_sql_with_parameters(\%set_parameters, \@definition, $user);
   $sql .= ";";

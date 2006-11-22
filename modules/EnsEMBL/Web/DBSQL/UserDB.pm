@@ -735,6 +735,30 @@ sub createGroup {
 }
 
 sub update_group {
+  my ($self, %params) = @_;
+  my $id = $params{id};
+  my $name = $params{name};
+  my $description = $params{description};
+  my $type = $params{type};
+  my $status = $params{status};
+  my $modified_by = $params{modified_by};
+  my $created_by = $params{created_by};
+  warn "UPDATING: " . $name;
+  my $sql = qq(
+    UPDATE webgroup
+    SET name        = "$name",
+        blurb       = "$description",
+        type        = "$type",
+        status      = "$status",
+        modified_by = "$modified_by",
+        created_by  = "$created_by",
+        created_at  = CURRENT_TIMESTAMP
+    WHERE webgroup_id = ') . $id . qq(';
+  );
+  warn "SQL\n$sql";
+  my $sth = $self->{'_handle'}->prepare($sql);
+  my $result = $sth->execute();
+  return $self->last_inserted_id;
 }
 
 sub updateGroup {
@@ -1086,11 +1110,52 @@ sub add_relationship {
   my $result = $sth->execute();
 }
 
+sub remove_relationship {
+  my ($self, %params) = @_;
+  my $from_id = $params{from};
+  my $to_id = $params{to};
+  my $sql = qq(
+    DELETE FROM group_member 
+    WHERE webgroup_id = "$from_id" AND user_id = "$to_id";
+  );
+  warn $sql;
+  my $sth = $self->{'_handle'}->prepare($sql);
+  my $result = $sth->execute();
+}
+
+sub group_by_id {
+  my ($self, $id) = @_;
+  my $sql = qq(
+    SELECT webgroup_id, name, type, status, created_by, modified_by,
+           UNIX_TIMESTAMP(created_at), UNIX_TIMESTAMP(modified_at)
+    FROM webgroup
+    WHERE webgroup_id = ') . $id . "';";
+  my $R = $self->{'_handle'}->selectall_arrayref($sql);
+  my $results = [];
+  if ($R->[0]) {
+    my @records = @{$R};  
+    foreach my $record (@records) {
+      my $details = {
+           'id'           => $record->[0],
+           'name'         => $record->[1],
+           'type'         => $record->[2],
+           'status'       => $record->[3],
+           'created_by'   => $record->[4],
+           'modified_by'  => $record->[5],
+           'created_at'   => $record->[6],
+           'modified_at'  => $record->[7],
+         };
+      push @{ $results }, $details;
+    }
+  }
+  return $results;
+}
+
 sub groups_for_type {
-  my ($self, $type) = @_;
-
-  warn "FINDING GROUPS FOR TYPE: $type";
-
+  my ($self, $type, $status) = @_;
+  if (!$status) {
+    $status = "active";
+  }
   my $sql = qq(
     SELECT 
            webgroup.webgroup_id,
@@ -1101,10 +1166,8 @@ sub groups_for_type {
            webgroup.modified_by,
            UNIX_TIMESTAMP(webgroup.created_at),
            UNIX_TIMESTAMP(webgroup.modified_at)
-    FROM group_member 
-    LEFT JOIN webgroup
-    ON (group_member.webgroup_id = webgroup.webgroup_id)
-     WHERE webgroup.type = '$type';
+    FROM webgroup 
+    WHERE webgroup.type = '$type' and webgroup.status = '$status';
   );
 
   my $R = $self->{'_handle'}->selectall_arrayref($sql);
@@ -1130,9 +1193,10 @@ sub groups_for_type {
 }
 
 sub groups_for_user_id {
-  my ($self, $user_id) = @_;
-  #  SELECT group_member.level,
-  #         group_member.status,
+  my ($self, $user_id, $status) = @_;
+  if (!$status) {
+    $status = 'active';
+  }
   warn "FINDING GROUPS FOR USER ID: $user_id";
   my $sql = qq(
     SELECT 
@@ -1147,7 +1211,7 @@ sub groups_for_user_id {
     FROM group_member 
     LEFT JOIN webgroup
     ON (group_member.webgroup_id = webgroup.webgroup_id)
-     WHERE group_member.user_id = $user_id;
+     WHERE group_member.user_id = $user_id AND webgroup.status = '$status';
   );
 
   my $R = $self->{'_handle'}->selectall_arrayref($sql);
@@ -1185,37 +1249,3 @@ sub last_inserted_id {
 
 
 1;
-
-__END__
-# EnsEMBL module for EnsEMBL::Web::DBSQL::UserDB
-# Begat by James Smith <js5@sanger.ac.uk>
-# User Account methods by Anne Parker <ap5@sanger.ac.uk>
-
-=head1 NAME
-
-EnsEMBL::Web::DBSQL::UserDB - connects to the user database
-
-=head1 SYNOPSIS
-
-=head2 General
-
-Functions on the user database
-
-=head2 connect
-
-=head1 RELATED MODULES
-
-See also: EnsEMBL::Web::SpeciesDefs.pm
-
-=head1 FEED_BACK
-
-=head2 Mailing Lists
-
-User feedback is an integral part of the evolution of this and other
-EnsEMBL modules. Send your comments and suggestions to one of the
-EnsEMBL mailing lists.  Your participation is much appreciated.
-
-  http://www.ensembl.org/Dev/Lists - About the mailing lists
-
-=head2 Reporting Bugs
-
