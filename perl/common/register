@@ -1,7 +1,51 @@
 #!/usr/local/bin/perl
 
+use strict;
+use warnings;
+
 package register;
 
-use EnsEMBL::Web::Document::WebPage;
-EnsEMBL::Web::Document::WebPage::simple( 'User' );
+use CGI;
+
+use EnsEMBL::Web::Document::DataView;
+use EnsEMBL::Web::Interface::PageDefinition;
+use EnsEMBL::Web::DBSQL::DataDefinition;
+use EnsEMBL::Web::DBSQL::ViewAdaptor;
+
+my $page = EnsEMBL::Web::Interface::PageDefinition->new();
+my $data = EnsEMBL::Web::DBSQL::DataDefinition->new();
+my $db = $EnsEMBL::Web::Apache::Handlers::ENSEMBL_USER_DB_HANDLE;
+$data->adaptor(EnsEMBL::Web::DBSQL::ViewAdaptor->new((
+                                                       handle => $db,
+                                                       table  => 'user'
+                                                    )) );
+
+$data->discover;
+$page->data_definition($data);
+$page->title('Register for Ensembl');
+$page->action('create');
+$page->send_params({ id => 'yes'});
+$page->on_complete('/common/activate');
+$page->on_error('/register/error.html');
+
+$page->add_configuration_element('salt', random_string(8));
+$page->add_form_element('name', "Your name");
+$page->add_form_element('email', "Your email address. You'll use this to log in to Ensembl");
+$page->add_form_element('organisation', "Organisation");
+
+EnsEMBL::Web::Document::DataView::simple('User', $page);
+
+sub random_string {
+  my $length = shift || 8;
+
+  my @chars = ('a'..'z','A'..'Z','0'..'9','_');
+  my $random_string;
+  foreach (1..$length)
+  {
+    $random_string .= $chars[rand @chars];
+  }
+  return $random_string;
+}
+
+
 1;
