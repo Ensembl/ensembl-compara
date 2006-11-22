@@ -37,7 +37,9 @@ sub exonview {
     opts        EnsEMBL::Web::Component::Transcript::exonview_options
   ));
   $self->{page}->content->add_panel( $panel1 );
-
+  if ($self->{'object'}->get_db eq 'vega') {
+	  $panel1->remove_component('database');
+  }
   my $panel2 = new EnsEMBL::Web::Document::Panel::SpreadSheet(
     'code'    => "exons$self->{flag}",
     'caption' => 'Exon Information',
@@ -99,6 +101,7 @@ sub transview {
   ));
   if ($self->{'object'}->get_db eq 'vega') {
 	  $panel1->remove_component('similarity');
+	  $panel1->remove_component('database');
 	  $panel1->add_component_after(qw(
 	     location author EnsEMBL::Web::Component::Transcript::class));
 	   $panel1->add_component_after(qw(
