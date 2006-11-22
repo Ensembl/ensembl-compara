@@ -169,12 +169,9 @@ sub gene_text_label {
   return $id;
 }
 
-our $VEGA_TO_SHOW_ON_ENS;
-
 sub features {
   my ($self) = @_;
   my $genes = $self->{'container'}->get_all_Genes($self->my_config('logic_name'),'vega'); 
-  $VEGA_TO_SHOW_ON_ENS = [@$genes];
   return $genes;
 }
 
