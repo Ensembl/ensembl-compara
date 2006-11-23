@@ -207,6 +207,63 @@ sub fetch_by_Slice_MethodLinkSpeciesSet {
 }
 
 
+=head2 fetch_by_GenomicAlignBlock
+
+  Arg[1]     : Bio::EnsEMBL::Compara::GenomicAlignBlock $genomic_align_block
+  Arg[2]     : [optional] boolean $expanded (def. FALSE)
+  Arg[3]     : [optional] boolean $solve_overlapping (def. FALSE)
+  Example    :
+      my $align_slice = $align_slice_adaptor->fetch_by_GenomicAlignBlock(
+              $genomic_align_block);
+  Description: Uses this genomic_aling_block to create an AlignSlice.
+               Setting $expanded to anything different
+               from 0 or "" will create an AlignSlice in "expanded" mode. This means
+               that gaps are allowed in the reference species in order to allocate
+               insertions from other species.
+               By default overlapping alignments are ignored. You can choose to
+               reconciliate the alignments by means of a fake alignment setting the
+               solve_overlapping option to TRUE.
+  Returntype : Bio::EnsEMBL::Compara::AlignSlice
+  Exceptions : thrown if arg[1] is not a Bio::EnsEMBL::Compara::GenomicAlignBlock
+  Exceptions : thrown if $genomic_align_block has no method_link_species_set
+  Caller     : $object->methodname
+
+=cut
+
+sub fetch_by_GenomicAlignBlock {
+  my ($self, $genomic_align_block, $expanded, $solve_overlapping) = @_;
+
+  throw("[$genomic_align_block] is not a Bio::EnsEMBL::Compara::GenomicAlignBlock")
+      unless (UNIVERSAL::isa($genomic_align_block, "Bio::EnsEMBL::Compara::GenomicAlignBlock"));
+  my $method_link_species_set = $genomic_align_block->method_link_species_set();
+  throw("GenomicAlignBlock [$genomic_align_block] has no MethodLinkSpeciesSet")
+      unless ($method_link_species_set);
+  my $reference_genomic_align = $genomic_align_block->reference_genomic_align;
+  if (!$reference_genomic_align) {
+    $genomic_align_block->reference_genomic_align($genomic_align_block->get_all_GenomicAligns->[0]);
+    $reference_genomic_align = $genomic_align_block->reference_genomic_align;
+  }
+  my $reference_slice = $reference_genomic_align->get_Slice();
+
+  # Use cache whenever possible
+  my $key = $reference_slice->name.":".$method_link_species_set->dbID.":".($expanded?"exp":"cond").
+      ":".($solve_overlapping?"fake-overlap":"non-overlap");
+  return $self->{'_cache'}->{$key} if (defined($self->{'_cache'}->{$key}));
+
+  my $align_slice = new Bio::EnsEMBL::Compara::AlignSlice(
+          -adaptor => $self,
+          -reference_Slice => $reference_slice,
+          -Genomic_Align_Blocks => [$genomic_align_block],
+          -method_link_species_set => $method_link_species_set,
+          -expanded => $expanded,
+          -solve_overlapping => $solve_overlapping,
+      );
+  $self->{'_cache'}->{$key} = $align_slice;
+
+  return $align_slice;
+}
+
+
 =head2 flush_cache
 
   Arg[1]     : none
