@@ -54,8 +54,13 @@ $page->add_display_element('organisation', "Organisation");
 
 $conditional = EnsEMBL::Web::Interface::FormDefinition->new();
 $conditional->add_option({ 'conditional' => 1 });
+if ($cgi->param('code')) {
+  $conditional->add_value({ 'salt' => $cgi->param('code') });
+  $page->add_configuration_element('salt', $cgi->param('code'), $conditional);
+} else {
+  $page->add_form_element('salt', "Your activation code", $conditional);
+}
 
-$page->add_form_element('salt', "Your activation code", $conditional);
 $page->add_form_element('password', "Your password");
 
 EnsEMBL::Web::Document::DataView::simple('User', $page);
@@ -73,7 +78,7 @@ sub send_activation_email {
   Activation code: ) . $user->salt . qq(
  
   Or by clicking on this link:
-  ) . $site_info->{'base_url'} . qq(/common/activate?id=) . $user->id . qq(  
+  ) . $site_info->{'base_url'} . qq(/common/activate?id=) . $user->id . qq(&code=) . $user->salt . qq(  
 
 
   Many thanks,
