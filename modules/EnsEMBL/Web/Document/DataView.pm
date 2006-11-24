@@ -78,6 +78,7 @@ sub simple {
                                  id   =>       $incoming->{'id'},
                                  record =>     $incoming->{'type'},
                                  label =>      $incoming->{'ident'},
+                                  type =>      'relationship'
                                 ));
 
       } else {

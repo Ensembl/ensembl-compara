@@ -32,7 +32,7 @@ sub common_menu_items {
 
       ## Link to existing bookmarks
       my @records = $user->bookmark_records({order_by => 'click' });
-      if ($#records > 0) { 
+      if ($#records > -1) { 
         my @bookmark_sections = ();
         my $max_bookmarks = 5;
         if ($#records < $max_bookmarks) {
@@ -50,7 +50,7 @@ sub common_menu_items {
         push @bookmark_sections, { 'href' => 'javascript:bookmark_link()', 
                                  'text'  => 'Bookmark this page', extra_icon => '/img/bullet_toggle_plus.png' };
 
-        push @bookmark_sections, { 'href' => '/account', 
+        push @bookmark_sections, { 'href' => '/common/accountview', 
                                  'text'  => 'More bookmarks...', extra_icon => '/img/bullet_go.png' };
 
         $doc->menu->add_entry(
@@ -58,7 +58,11 @@ sub common_menu_items {
           'href'=>'/account',
           'text'=>'Bookmarks',
           'options'=>\@bookmark_sections,       );
+      } else {
+        $doc->menu->add_entry( $flag, 'text' => "Add bookmark",
+                                      'href' => "javascript:bookmark_link()" );
       }
+    
       $doc->menu->add_entry( $flag, 'text' => "Your account",
                                   'href' => "/common/accountview" );
     }

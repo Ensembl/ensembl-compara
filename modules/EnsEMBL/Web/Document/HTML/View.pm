@@ -55,7 +55,7 @@ sub render_page {
   }
 
   if ($#form_elements > -1) {
-    $self->render_submit_button;
+    $self->render_submit_button($page);
   }
 
   $self->print($page->footer);
@@ -219,9 +219,12 @@ sub render_text {
 }
 
 sub render_submit_button {
-  my $self = shift;
+  my ($self, $page) = @_;
   $self->print('<div class="formblock"><h6></h6>');
   my $widget = qq(<input type="submit" value="Submit" class="red-button" />);
+  if ($page->cancel) {
+    $widget .= qq( or <a href="javascript:history.go(-1);">cancel</a>);
+  }
   if ($self->check_form) {
     $widget = qq(<input type='button' value='Submit' class='red-button' onClick='perform_check();' />);
   }
