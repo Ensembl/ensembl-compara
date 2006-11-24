@@ -10,6 +10,7 @@ use EnsEMBL::Web::Interface::PageDefinition;
 use EnsEMBL::Web::Interface::FormDefinition;
 use EnsEMBL::Web::DBSQL::DataDefinition;
 use EnsEMBL::Web::DBSQL::ViewAdaptor;
+use EnsEMBL::Web::SpeciesDefs;
 
 my $page = EnsEMBL::Web::Interface::PageDefinition->new();
 my $data = EnsEMBL::Web::DBSQL::DataDefinition->new();
@@ -25,12 +26,8 @@ if (!$cgi->param('welcome_email')) {
 } elsif ($cgi->param('welcome_email') eq 'yes') {
   my $user = EnsEMBL::Web::Object::User->new({ id => $cgi->param('id') });
   send_welcome_email($user);
-  warn "========== SENDING WELCOME EMAIL";
-  warn "========== MAPPING GROUP: " . $cgi->param('group_id');
   if ($cgi->param('group_id')) {
-    warn "============= GETTING GROUP";
     my $group = EnsEMBL::Web::Object::Group->new(( id => $cgi->param('group_id') ));
-    warn "============= GROUP: " . $group->id;
     $user->add_group($group);
     $user->save;
   }
@@ -63,6 +60,7 @@ EnsEMBL::Web::Document::DataView::simple('User', $page);
 
 sub send_activation_email {
   my $user = shift;
+  my $species_defs = EnsEMBL::Web::SpeciesDefs->new();
   my $message = qq(
   Hello,
 
@@ -73,7 +71,7 @@ sub send_activation_email {
   Activation code: ) . $user->salt . qq(
  
   Alternatively, you can just click on this link:
-  http://www.ensembl.org/activate?id=) . $user->id . qq(  
+  ) . $species_defs->ENSEMBL_BASE_URL . qq(/common/activate?id=) . $user->id . qq(  
 
   If you have any problems, please don't hesitate to contact our help desk on
   helpdesk\@ensembl.org.

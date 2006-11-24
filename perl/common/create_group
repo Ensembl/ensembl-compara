@@ -30,8 +30,8 @@ $data->discover;
 $page->data_definition($data);
 $page->title('Create new group');
 $page->action('create');
-$page->on_complete('http://ensarc-1-14.internal.sanger.ac.uk:6700/dataview/created.html');
-$page->on_error('http://ensarc-1-14.internal.sanger.ac.uk:6700/dataview/error.html');
+$page->on_complete('/dataview/created.html');
+$page->on_error('/dataview/error.html');
 
 $page->add_text('You can create a new group of users here. You will automatically be added to your new group.');
 

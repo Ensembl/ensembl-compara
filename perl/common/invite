@@ -3,6 +3,7 @@
 package invite;
 
 use EnsEMBL::Web::Group::Record;
+use EnsEMBL::Web::SpeciesDefs;
 use CGI;
 my $cgi = new CGI;
 
@@ -34,6 +35,7 @@ print "Location: " . $url;
 
 sub send_invite_email {
   my ($group, $user, $record, $invite_email) = @_;
+  my $species_defs = EnsEMBL::Web::SpeciesDefs->new();
   my $message = qq(
   Hello,
   
@@ -43,7 +45,7 @@ sub send_invite_email {
   To accept this invitation, click on the following link:
 
   ) . $group->name . qq(
-  http://www.ensembl.org/common/accept?id=) . $record->id . qq(
+  ) . $species_defs->ENSEMBL_BASE_URL . qq(/common/accept?id=) . $record->id . qq(
   
   Your invitation code is: ) . $record->code . qq(
 
