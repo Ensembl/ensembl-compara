@@ -13,6 +13,7 @@ my %DisplayElements_of;
 my %ConfigurationElements_of;
 my %Action_of;
 my %Send_of;
+my %Cancel_of;
 my %OnComplete_of;
 my %OnError_of;
 my %DataDefinition_of;
@@ -32,6 +33,7 @@ sub new {
   $ConfigurationElements_of{$self} = defined $params{configuration_elements} ? $params{configuration_elements} : undef;
   $Action_of{$self}         = defined $params{action} ? $params{action} : undef;
   $OnError_of{$self}         = defined $params{error} ? $params{error} : undef;
+  $Cancel_of{$self}         = defined $params{cancel} ? $params{cancel} : undef;
   return $self;
 }
 
@@ -115,6 +117,13 @@ sub page_elements {
   my $self = shift;
   $PageElements_of{$self} = shift if @_;
   return $PageElements_of{$self};
+}
+
+sub cancel {
+  ### a
+  my $self = shift;
+  $Cancel_of{$self} = shift if @_;
+  return $Cancel_of{$self};
 }
 
 sub form_elements {
@@ -279,6 +288,7 @@ sub DESTROY {
   delete $ConfigurationElements_of{$self};
   delete $OnError_of{$self};
   delete $Send_of{$self};
+  delete $Cancel_of{$self};
 }
 
 }
