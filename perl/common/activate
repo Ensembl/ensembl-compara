@@ -73,7 +73,7 @@ sub send_activation_email {
   Activation code: ) . $user->salt . qq(
  
   Or by clicking on this link:
-  ) . $site_info->{'base_url'} . qq(/activate?id=) . $user->id . qq(  
+  ) . $site_info->{'base_url'} . qq(/common/activate?id=) . $user->id . qq(  
 
 
   Many thanks,
