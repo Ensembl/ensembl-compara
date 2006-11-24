@@ -176,7 +176,6 @@ sub map_relationships {
   my $adaptor = $definition->data_definition->adaptor;
 
   foreach my $relationship (@{ $definition->data_definition->relationships }) {
-    warn "MAPPING " . $relationship->from . " " . $relationship->type . " " . $relationship->to;
     my $fields = $definition->data_definition->discover($relationship->link_table);
     my $relationship_parameters = $self->parameters_for_fields($fields, $incoming);
     my $from_id = $relationship->from . "_id";
@@ -184,7 +183,8 @@ sub map_relationships {
     $result = $adaptor->create(( 
                               set   => $relationship_parameters, 
                               table => $relationship->link_table,
-                              user  => $user
+                              user  => $user,
+                              type  => "relationship"
                             ));
   }
 }

@@ -52,7 +52,11 @@ sub render_page {
     #$self->print_linebreak;
   }
 
-  $self->render_submit_button;
+  if ($#form_elements > -1) {
+    $self->render_submit_button;
+  }
+
+  $self->print($page->footer);
 }
 
 sub render_field {
