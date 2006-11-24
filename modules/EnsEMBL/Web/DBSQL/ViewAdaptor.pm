@@ -102,6 +102,11 @@ sub edit {
 
   if ($params{user}) {
     $user = $params{user};
+    delete $set_parameters{user_id};
+  }
+
+  foreach my $key (keys %set_parameters) {
+    $set_parameters{$key} =~ s/'/\\'/g;
   }
 
   if ($params{record}) {
@@ -139,6 +144,7 @@ sub edit {
 
 sub execute {
   my ($self, $sql) = @_;
+  warn "VIEW SQL: " . $sql; 
   my $sth = $self->handle->prepare($sql);
   my $result = $sth->execute();
   return $result;
@@ -183,6 +189,7 @@ sub create {
 
   if ($params{user}) {
     $user = $params{user};
+    delete $set_parameters{user_id};
   }
 
   if ($params{record}) {

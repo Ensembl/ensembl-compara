@@ -265,6 +265,34 @@ sub _random_string {
   return $random_string;
 }
 
+sub find_user_by_email {
+  my ($self, $email)  = @_;
+  my $details = {};
+  return $details unless $self->{'_handle'};
+  my $sql = qq(
+    SELECT ) . $self->user_table . qq(_id, name, organisation, email, data, salt, password 
+    FROM ) . $self->user_table . qq(
+    WHERE email = "$email"; 
+  );
+  warn "SQL: " . $sql;
+
+  my $R = $self->{'_handle'}->selectall_arrayref($sql); 
+  return {} unless $R->[0];
+
+  my @record = @{$R->[0]};
+  $details = {
+    'id' => $record[0],
+    'user_id' => $record[0],
+    'name'    => $record[1],
+    'organisation' => $record[2],
+    'email'   => $record[3],
+    'data'   => $record[4],
+    'salt'   => $record[5],
+    'password'   => $record[6],
+  };
+  return $details;
+}
+
 sub find_user_by_email_and_password {
   my ($self, %params)  = @_;
   my $email = $params{email};
@@ -849,70 +877,6 @@ sub getMembership {
   return $results;
 }
 
-=pod
-sub saveMembership {
-## NB Unlike single-table saves, we decide between update and insert in the adaptor,
-## because a cross-reference needs to do a query to check for existing entries instead of
-## relying on the presence of id parameters
-  my ($self, $record) = @_;
-  my $result = {};
-  return $result unless $self->{'_handle'};
-
-  my $logged_in = $record->{'logged_in'};
-  my $user_id   = $record->{'user_id'};
-  my $webgroup_id  = $record->{'webgroup_id'};
-  my $status    = $record->{'status'};
-  my $level     = $record->{'level'};
-  return {} unless ($user_id && $group_id);
-  return {} unless ($status || $level);
-
-  ## Is this user already a member of this group?
-  my $sql = qq(SELECT user_id FROM group_member 
-                WHERE user_id = "$user_id"
-                AND webgroup_id = "$webgroup_id"
-  );
-  my $T = $self->db->selectall_arrayref($sql);
-  if ($T->[0][0]) {
-  ## User is already a member, so update status and/or level
-    $sql = 'UPDATE group_member SET ';
-    if ($status) {
-      $sql .= qq( status = "$status");
-    }
-    if ($status && $level) {
-      $sql .= ',';
-    }
-    if ($level) {
-      $sql .= qq( level = "$level");
-    }
-    $sql = qq(last_updated = NOW(), updated_by = "$logged_in"
-                WHERE user_id = "$user_id"
-                AND webgroup_id = "$webgroup_id"
-    );
-  }
-  else {
-  ## Create new member record
-    $sql = qq(INSERT INTO group_member SET user_id = $user_id, webgroup_id = $webgroup_id, );
-    if ($status) {
-      $sql .= qq(status = "$status", );
-    }
-    else {
-      $sql .= qq(status = 'inactive', );
-    }
-    if ($level) {
-      $sql .= qq(level = "$level", );
-    }
-    else {
-      $sql .= qq(level = "member", );
-    }
-    $sql .= qq(created_at = NOW(), created_by = "$logged_in");
-  }
-
-  my $sth = $self->{'_handle'}->prepare($sql);
-  my $result = $sth->execute();
-
-  return $result;
-}
-
 sub getGroupAdmins {
   my ($self, $group) = @_;
   return [] unless $self->{'_handle'};
@@ -941,7 +905,6 @@ sub getGroupAdmins {
   }
   return $results;
 }
-=cut
 
 #------------------------ GENERIC 'RECORD' QUERIES ---------------------------
 
@@ -950,15 +913,21 @@ sub find_records {
   my $find_key;
   my $find_value;
   my $type = undef;
+  my $table = "user";
   if ($params{type}) {
     $type = $params{type};
+  }
+  if ($params{table}) {
+    $table = $params{table};
+    delete $params{table};
   }
   my %options;
   if ($params{options}) {
     %options = %{ $params{options} }; 
+    delete $params{options};
   }
   foreach my $key (keys %params) {
-    if ($key ne "type") {
+    if ($key ne "type" && $key ne "options") {
       $find_key = $key;
       $find_value = $params{$key};
     }
@@ -972,11 +941,11 @@ sub find_records {
 
   my $sql = qq(
     SELECT * 
-    FROM record WHERE $find_key = "$find_value"); 
+    FROM ) . $table . qq(_record WHERE $find_key = "$find_value"); 
   if ($type) {
     $sql .= qq( AND type = "$type"); 
   }
-#warn "SQL:\n$sql"; 
+warn "SQL:\n$sql"; 
   my $T = $self->{'_handle'}->selectall_arrayref($sql);
   return [] unless $T;
   for (my $i=0; $i<scalar(@$T);$i++) {
@@ -998,10 +967,14 @@ sub find_records {
 sub delete_record {
   my ($self, %params) = @_;
   my $id = $params{id};
+  my $table = "user"; 
+  if ($params{table}) {
+    $table = $params{table};
+  }
   warn "DELETING: " . $id;
   my $sql = qq(
-    DELETE FROM record 
-    WHERE record_id = $id
+    DELETE FROM ) . $table . qq(_record 
+    WHERE ) . $table . qq(_record_id = $id
   );
   my $sth = $self->{'_handle'}->prepare($sql);
   my $result = $sth->execute();
@@ -1015,14 +988,19 @@ sub update_record {
   my $user_id = $params{user};
   my $type = $params{type};
   my $data = $params{data};
+  my $table = "user"; 
+  if ($params{table}) {
+    $table = $params{table};
+  }
   warn "UPDATING: " . $user_id . ": " . $type . ": " . $data;
   my $sql = qq(
-    UPDATE record
-    SET ) . $self->user_table . qq(_id = $user_id,
+    UPDATE ) . $table . qq(_record
+    SET ) . $table . qq(_id = $user_id,
         type    = "$type",
         data    = "$data"
-    WHERE record_id = $id
+    WHERE ) . $table . qq(_record_id = $id
   );
+  warn $sql;
   my $sth = $self->{'_handle'}->prepare($sql);
   my $result = $sth->execute();
 
@@ -1034,10 +1012,14 @@ sub insert_record {
   my $user_id = $params{user};
   my $type = $params{type};
   my $data = $params{data};
+  my $table = "user"; 
+  if ($params{table}) {
+    $table = $params{table};
+  }
   warn "INSERTING: " . $user_id . ": " . $type . ": " . $data;
   my $sql = qq(
-    INSERT INTO record 
-    SET ) . $self->user_table . qq(_id = $user_id,
+    INSERT INTO ) . $table . qq(_record 
+    SET ) . $table . qq(_id = $user_id,
         type    = "$type",
         data    = "$data",
         created_at=CURRENT_TIMESTAMP
@@ -1045,7 +1027,7 @@ sub insert_record {
   my $sth = $self->{'_handle'}->prepare($sql);
   my $result = $sth->execute();
 
-  return $result;
+  return $self->last_inserted_id;
 }
 
 sub insert_user {
@@ -1106,6 +1088,7 @@ sub add_relationship {
         status      = "$status",
         created_at  = CURRENT_TIMESTAMP
   );
+  warn $sql;
   my $sth = $self->{'_handle'}->prepare($sql);
   my $result = $sth->execute();
 }
@@ -1169,7 +1152,7 @@ sub groups_for_type {
     FROM webgroup 
     WHERE webgroup.type = '$type' and webgroup.status = '$status';
   );
-
+  warn $sql;
   my $R = $self->{'_handle'}->selectall_arrayref($sql);
   my $results = [];
   if ($R->[0]) {
