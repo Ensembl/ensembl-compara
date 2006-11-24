@@ -3,11 +3,14 @@ package EnsEMBL::Web::Component::User;
 use EnsEMBL::Web::Component;
 use EnsEMBL::Web::Proxy::Object;
 use EnsEMBL::Web::DBSQL::NewsAdaptor;
+use EnsEMBL::Web::Group::Record;
 
 use EnsEMBL::Web::Interface::TabView;
 use EnsEMBL::Web::Interface::Tab;
 use EnsEMBL::Web::Interface::Table;
 use EnsEMBL::Web::Interface::Table::Row;
+
+use CGI;
 
 use strict;
 use warnings;
@@ -27,6 +30,194 @@ sub _wrap_form {
 
 ##---------- ACCOUNTVIEW ----------------------------------------
 
+sub group_details {
+  my( $panel, $object) = @_;
+  
+  my $cgi = new CGI;
+  my $group = EnsEMBL::Web::Object::Group->new(( id => $cgi->param('id') ));
+
+  my $html = "<div class='pale boxed' id='intro'>\n";
+  $html .= "<h4>" . $group->name . "</h4>";
+  $html .= "<a href='/common/edit_group?id=" . $group->id . "'>Update group details &rarr;</a>\n";
+  if (my $feedback = $object->param('feedback')) {
+    $html .= "<p><strong>$feedback</strong></p>";
+  }
+  
+  else {
+    $html .= ""; 
+  }
+
+  $html .= "</div>\n";
+
+  $panel->print($html);
+}
+
+sub group_users {
+  my( $panel, $object) = @_;
+  
+  my $cgi = new CGI;
+  my $group = EnsEMBL::Web::Object::Group->new(( id => $cgi->param('id') ));
+
+  my $html = "<h4>Members</h4>";
+
+  my $manageTab= EnsEMBL::Web::Interface::Tab->new(( 
+                                     name => 'manage', 
+                                     label => 'List membership', 
+                                     content => _render_group_users($group) 
+                                                ));
+
+  my $inviteTab = EnsEMBL::Web::Interface::Tab->new(( 
+                                     name => 'invite', 
+                                     label => 'Invite new member', 
+                                     content => _render_group_invite($group, $object)
+                                                     ));
+
+  my $pendingTab = EnsEMBL::Web::Interface::Tab->new(( 
+                                     name => 'pending', 
+                                     label => 'Pending members', 
+                                     content => _render_group_pending($group, $object)
+                                                     ));
+
+  my $tabview = EnsEMBL::Web::Interface::TabView->new(( 
+                                      name => "users",
+                                      tabs => [ $manageTab, $pendingTab, $inviteTab ]
+                                                     ));
+
+  $panel->print($html . "\n" . $tabview->render);
+}
+
+sub _render_group_pending {
+  my ($group, $user) = @_;
+  my $html = "";
+  my @invites = $group->invite_records;
+  if ($#invites > -1) {
+    my $table = EnsEMBL::Web::Interface::Table->new(( 
+                                         class => "ss", 
+                                         style => "border-collapse:collapse"
+                                                    ));
+    foreach my $invite (@invites) {
+      my $row = EnsEMBL::Web::Interface::Table::Row->new();
+      $row->add_column({ content => $invite->email });
+      $row->add_column({ content => ucfirst($invite->status) });
+      $row->add_column({ content => "<a href='/common/delete_invite?group_id=" . $group->id . "&invite_id=" . $invite->id . "&user_id=" . $user->id . "'>Remove</a>" });
+      $table->add_row($row);
+    }
+
+    $html .= $table->render;
+  } else {
+    $html = "You have no pending memberships.";
+  }
+  return $html;
+}
+
+sub _render_group_users {
+  my ($group) = @_;
+  my $html = "";
+  my @users = @{ $group->users };
+  my $table = EnsEMBL::Web::Interface::Table->new(( 
+                                       class => "ss", 
+                                       style => "border-collapse:collapse"
+                                                  ));
+  foreach my $user (@users) {
+    my $row = EnsEMBL::Web::Interface::Table::Row->new();
+    $row->add_column({ content => $user->name });
+    warn "CREATED BY: " . $group->created_by;
+    if ($user->id eq $group->created_by) {
+      $row->add_column({ content => "Owner" });
+      $row->add_column({ content => "" });
+      $row->add_column({ content => "" });
+    } else {
+
+      if ($user->is_administrator_of($group)) {
+        $row->add_column({ content => "Administrator" });
+        $row->add_column({ content => "Demote" });
+        $row->add_column({ content => "Remove" });
+      } else {
+        $row->add_column({ content => "Member" });
+        $row->add_column({ content => "Promote" });
+        $row->add_column({ content => "Remove" });
+      }
+
+    }
+
+    $table->add_row($row);
+  }
+
+  $html .= $table->render;
+
+  return $html;
+}
+
+sub _render_group_invite {
+  my ($group, $user) = @_;
+  my $html = "<b>Invite a new group member to join</b><br /><br />\n";
+  $html .= "<form action='/common/invite' action='post'>\n";
+  $html .= "Email address to invite:<br />\n";
+  $html .= "<input type='hidden' value='" . $user->id . "' name='user_id' />"; 
+  $html .= "<input type='hidden' value='" . $group->id . "' name='group_id' />"; 
+  $html .= "<input type='text' value='' size='30' name='invite_email' />"; 
+  $html .= "<input type='submit' value='Invite' />";
+  $html .= "</form>";
+  return $html;
+}
+
+sub group_general {
+  my( $panel, $object) = @_;
+  
+  my $cgi = new CGI;
+  my $group = EnsEMBL::Web::Object::Group->new(( id => $cgi->param('id') ));
+
+  my $html = "<h4>Settings</h4>";
+
+  my $configTab= EnsEMBL::Web::Interface::Tab->new(( 
+                                     name => 'config', 
+                                     label => 'Shared configurations', 
+                                     content => _render_group_configs($group) 
+                                                ));
+
+  my $bookmarkTab = EnsEMBL::Web::Interface::Tab->new(( 
+                                     name => 'bookmark', 
+                                     label => 'Shared bookmarks', 
+                                     content => _render_group_bookmarks($group)
+                                                     ));
+
+  my $tabview = EnsEMBL::Web::Interface::TabView->new(( 
+                                      name => "config",
+                                      tabs => [ $configTab, $bookmarkTab ]
+                                                     ));
+
+  $panel->print($html . $tabview->render . "\n");
+}
+
+sub _render_group_configs {
+  my ($group) = @_;
+  my $html = "You have not shared any configurations with the group.";
+  return $html;
+}
+
+sub _render_group_bookmarks {
+  my ($group) = @_;
+  my $html = "You have not shared any bookmarks with the group.";
+  return $html;
+}
+
+sub remove_group {
+  my( $panel, $object) = @_;
+
+  my $cgi = new CGI;
+  my $group = EnsEMBL::Web::Object::Group->new(( id => $cgi->param('id') ));
+
+  my $html = "<div class='white boxed' id='intro'>\n";
+  $html .= "<form action='remove_group' name='remove' id='remove' method='post'>\n";
+  $html .= "<input type='hidden' name='group_id' value='" . $group->id . "' />\n";
+  $html .= "Delete this group? <input type='button' value='Delete' onClick='reallyDelete()' />";
+  $html .= "</form>\n";
+  $html .= "</div>\n";
+  $html .= "&larr; <a href='accountview'>Back to your account</a>";
+
+  $panel->print($html);
+}
+
 sub blurb {
   my( $panel, $object) = @_;
 
@@ -34,7 +225,7 @@ sub blurb {
 <div class="pale boxed" id="intro">);
 
   if (my $feedback = $object->param('feedback')) {
-    $html .= "<p><strong>Thank you - your changes have been saved.</strong></p>";
+    $html .= "<p><strong>$feedback</strong></p>";
   }
   else {
     $html .= qq(
@@ -89,13 +280,13 @@ sub groups {
   my $joinTab = EnsEMBL::Web::Interface::Tab->new(( 
                                      name => 'join', 
                                      label => 'Join a group', 
-                                     content => "join" 
+                                     content => _render_join($user) 
                                                      ));
 
   my $administerTab = EnsEMBL::Web::Interface::Tab->new(( 
                                      name => 'administer', 
                                      label => 'Administer groups', 
-                                     content => "admin" 
+                                     content => _render_admin($user) 
                                                      ));
 
   my $tabview = EnsEMBL::Web::Interface::TabView->new(( 
@@ -111,11 +302,86 @@ sub groups {
 
 }
 
+sub _render_join {
+  my ($user) = @_;
+  my $html = "";
+  my @groups = @{ EnsEMBL::Web::Object::Group->all_groups_by_type('open') };
+  $html .= "<b>Open groups</b><br />";
+  if ($#groups > -1) {
+    $html .= "The following groups are currently accepting members. Click a group name for more information.<br /><br />";
+    my $table = EnsEMBL::Web::Interface::Table->new(( 
+                                         class => "ss", 
+                                         style => "border-collapse:collapse"
+                                                    ));
+    foreach my $group (@groups) {
+      my $row = EnsEMBL::Web::Interface::Table::Row->new();
+      $row->add_column({ content => "<a href=/common/group_info?id=" . $group->id . "'><b>" . $group->name. "</b></a>" });
+      if ($user->is_member_of($group) == 1) {
+        if ($user->is_administrator_of($group) == 1) {
+          $row->add_column({ content => "Administrator (<a href='/common/groupview?id=" . $group->id . "'>View</a>)"});
+        } else {
+          $row->add_column({ content => "Member (<a href='/common/unsubscribe?id=" . $group->id . "'>Leave</a>)"});
+        }
+      } else {
+        $row->add_column({ content => "<a href='/common/subscribe?id=" . $group->id . "'>Join group</a>"});
+      }
+      $table->add_row($row);
+    }
+ 
+    $html .= $table->render;
+
+  } else {
+    $html .= "There are currently no open groups available.";
+  }
+  $html .= "<br /><br/ >";
+  $html .= "<b>On request</b><br />";
+  $html .= "Other Ensembl groups are available to join on request. Enter the name of a group to request membership.<br /><br />"; 
+  $html .= "<form action='/common/request_membership' method='post'>\n";
+  my $name_table = EnsEMBL::Web::Interface::Table->new(( 
+                                         class => "ss", 
+                                         style => "border-collapse:collapse"
+                                                    ));
+  my $name_row = EnsEMBL::Web::Interface::Table::Row->new();
+  $name_row->add_column({ content => "Group name: " });
+  $name_row->add_column({ content => "<input type='text' name='group_name' />" });
+  $name_row->add_column({ content => "<input type='submit' value='Request' class='red_button' />" });
+  $name_table->add_row($name_row);
+  $html .= $name_table->render;
+  $html .= "</form>\n";
+  return $html;
+}
+
+sub _render_admin {
+  my ($user) = @_;
+  my $html = "";
+  my @groups = @{ $user->find_administratable_groups };
+  if ($#groups > -1) {
+    $html .= "<b>Your groups:</b><br /><br/ >";
+    my $table = EnsEMBL::Web::Interface::Table->new(( 
+                                         class => "ss", 
+                                         style => "border-collapse:collapse"
+                                                    ));
+    foreach my $group (@groups) {
+    my $row = EnsEMBL::Web::Interface::Table::Row->new();
+      $row->add_column({ content => $group->name });
+      $row->add_column({ content => "<a href='/common/groupview?id=" . $group->id . "'>View</a>"});
+      $table->add_row($row);
+    }
+
+    $html .= $table->render;
+
+  } else {
+    $html .= "You are not an administrator of any groups.<br /><br />";
+  }
+  $html .= "<br /><b><a href='/common/create_group'>Create a new group</a></b>, or <a href='/info/about/accounts.html'>learn more about Ensembl groups</a>.";
+  return $html;
+}
+
 sub _render_membership {
   my ($user) = @_;
   my @groups = @{ $user->groups };
   my $html = "";
-  if ($#groups > 0) {
+  if ($#groups > -1) {
   $html = "You are a member of the following groups:<br /><br />";
   my $table = EnsEMBL::Web::Interface::Table->new(( 
                                        class => "ss", 
@@ -124,7 +390,11 @@ sub _render_membership {
   foreach my $group (@groups) {
     my $row = EnsEMBL::Web::Interface::Table::Row->new();
     $row->add_column({ content => $group->name });
-    $row->add_column({ content => "<a href='/common/unsubscribe'>Leave group</a>"});
+    if ($user->is_administrator_of($group)) {
+      $row->add_column({ content => "Administrator (<a href='/common/groupview?id=" . $group->id . "'>View</a>)"});
+    } else {
+      $row->add_column({ content => "<a href='/common/unsubscribe?id=" . $group->id . "'>Leave group</a>"});
+    }
     $table->add_row($row);
   }
 
@@ -139,7 +409,7 @@ sub _render_membership {
 sub details {
   my( $panel, $user) = @_;
 
-  my $html = sprintf(qq(<div class="boxed">
+  my $html = sprintf(qq(<div class="boxed" style="max-width: 150px">
 <strong>%s</strong>
 <ul style="margin: 0px; padding: 5px 15px;">
 <li>%s</li>
@@ -417,7 +687,7 @@ sub groupview {
 
   my $group_name    = $group->name;
   my $group_blurb   = $group->blurb;
-  my $member_level  = $user->is_administrator($group) ? "Administrator" : "Member";  
+  my $member_level  = $user->is_administrator_of($group) ? "Administrator" : "Member";  
   my $creator_name  = $group->find_user_by_user_id($group->created_by)->name; 
   my $creator_org   = $group->find_user_by_user_id($group->created_by)->organisation; 
   my $created_at    = localtime($group->created_at);
