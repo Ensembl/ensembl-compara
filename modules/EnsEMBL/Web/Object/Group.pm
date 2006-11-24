@@ -8,6 +8,7 @@ use CGI::Cookie;
 
 use EnsEMBL::Web::Record;
 use EnsEMBL::Web::Object::User;
+use EnsEMBL::Web::DBSQL::UserDB;
 
 our @ISA = qw(EnsEMBL::Web::Record);
 
@@ -23,7 +24,10 @@ my %CreatedAt_of;
 my %ModifiedAt_of;
 my %Users_of;
 my %Administrators_of;
+my %RemovedUsers_of;
+my %AddedUsers_of;
 my %StatusCollection_of;
+my %LevelCollection_of;
 
 sub new {
   ### c
@@ -38,25 +42,35 @@ sub new {
   $CreatedAt_of{$self} = defined $params{'created_at'} ? $params{'created_at'} : 0;
   $ModifiedAt_of{$self} = defined $params{'modified_at'} ? $params{'modified_at'} : 0;
   $Users_of{$self} = defined $params{'users'} ? $params{'users'} : [];
-  $Administrators_of{$self} = defined $params{'administrators'} ? $params{'administrators'} : [];
+  $AddedUsers_of{$self} = defined $params{'added'} ? $params{'added'} : [];
+  $RemovedUsers_of{$self} = defined $params{'removed'} ? $params{'removed'} : [];
   $StatusCollection_of{$self} = defined $params{'status_collection'} ? $params{'status_collection'} : {};
-  if ($params{id}) {
+  $LevelCollection_of{$self} = defined $params{'level_collection'} ? $params{'level_collection'} : {};
+
+  if (!$self->adaptor) {
+    $self->adaptor(EnsEMBL::Web::DBSQL::UserDB->new);
+  }
+
+  if ($params{id} and !$params{defer}) {
+    my $details = $self->adaptor->group_by_id($params{'id'})->[0];
+    $self->populate_details($details);
+    my @records = $self->find_group_records_by_group_id($params{'id'});
+    $self->records(\@records);
     $self->update_users;
   }
   return $self;
 }
 
-sub find_users_by_level {
-  my ($self, $level) = @_;
-  my $result = [];
-  warn "FINDING USERS BY LEVEL $level";
-  foreach my $user (@{ $self->users }) {
-    warn "CHECKING USER " . $user->name;
-    if ($user->level($self) eq $level) {
-      push @{ $result }, $user;
-    }
-  }
-  return $result;
+sub populate_details {
+  my ($self, $details) = @_;
+  $self->id($details->{id});
+  $Name_of{$self} = $details->{name};
+  $Type_of{$self} = $details->{type};
+  $Status_of{$self} = $details->{status};
+  $CreatedBy_of{$self} = $details->{created_by};
+  $ModifiedBy_of{$self} = $details->{modified_by};
+  $CreatedAt_of{$self} = $details->{created_at};
+  $ModifiedAt_of{$self} = $details->{modified_at};
 }
 
 sub find_user_by_user_id {
@@ -69,9 +83,28 @@ sub find_user_by_user_id {
   return 0;
 }
 
+sub all_groups_by_type {
+  my ($self, $type) = @_;
+
+  if (!$self->adaptor) {
+    $self->adaptor(EnsEMBL::Web::DBSQL::UserDB->new);
+  }
+
+  my $results = $self->adaptor->groups_for_type($type);
+  my $groups = [];
+  if ($results) {
+    foreach my $result (@{ $results }) {
+      my $group = EnsEMBL::Web::Object::Group->new();
+      $group->populate_details($result);
+      $group->update_users;
+      push @{ $groups }, $group;
+    }
+  }
+  return $groups;
+}
+
 sub update_users {
   my $self = shift;
-
   my $results = $self->adaptor->find_users_by_group_id($self->id);
   if ($results) {
     $self->users([]);
@@ -86,7 +119,7 @@ sub update_users {
       push @{ $self->users }, $user; 
 
       if ($result->{'level'} eq 'administrator') {
-        push @{ $self->administrators }, $user;
+        $self->assign_level_to_user($result->{'level'}, $user);
       }
   
       if ($result->{'status'}) {
@@ -94,6 +127,15 @@ sub update_users {
       }
 
     }
+  }
+}
+
+sub assign_level_to_user {
+  my ($self, $level, $user) = @_;
+  if ($self->level_collection->{$level}) {
+    push @{ $self->level_collection->{$level} }, $user;
+  } else {
+    $self->level_collection->{$level} = [ $user ];
   }
 }
 
@@ -106,9 +148,35 @@ sub assign_status_to_user {
   }
 }
 
+sub find_users_by_status {
+  my ($self, $status) = @_;
+  if ($self->status_collection->{$status}) {
+    return $self->status_collection->{$status};
+  }
+  return [];
+}
+
+sub find_users_by_level {
+  my ($self, $level) = @_;
+  if ($self->level_collection->{$level}) {
+    return $self->level_collection->{$level};
+  }
+  return [];
+}
+
+sub find_level_for_user {
+  my ($self, $user) = @_;
+  foreach my $this_user (@{ $self->users }) {
+    if ($this_user->id eq $user->id) {
+      return $user->level;
+    }
+  }
+  return "member";
+}
+
 sub save {
   my $self = shift;
-  warn "PERFORMING GROUP SAVE:";
+  warn "PERFORMING GROUP SAVE";
   my %params = (
                  name        => $self->name,
                  description => $self->description,
@@ -117,6 +185,7 @@ sub save {
                );
   if ($self->id) {
     warn "UPDATING GROUP: " . $self->id;
+    warn "UPDATING GROUP: " . $self->status;
     $params{id} = $self->id;
     $self->adaptor->update_group(%params, ('modified_by', $self->modified_by) );
   } else {
@@ -128,16 +197,38 @@ sub save {
   }
 
   if ($self->tainted->{users}) {
-    foreach my $user (@{ $self->users }) {
-      my %relationship = (
-                         from    => $self->id,
-                         to      => $user->id,
-                         level   => 'administrator',
-                         status  => 'active'
-                       );
-      $self->adaptor->add_relationship(%relationship);
+    warn "ADDING RELATIONSHIP";
+    if ($self->added_users) {
+      foreach my $user (@{ $self->added_users }) {
+        warn "MAPPING " . $user->name;
+        my %relationship = (
+                           from    => $self->id,
+                           to      => $user->id,
+                           level   => "member", 
+                           status  => 'active'
+                         );
+        $self->adaptor->add_relationship(%relationship);
+      }
+      $self->added_users([]);
+    }
+    if ($self->removed_users) {
+      foreach my $user (@{ $self->removed_users }) {
+        my %relationship = (
+                           from    => $self->id,
+                           to      => $user->id,
+                         );
+        $self->adaptor->remove_relationship(%relationship);
+      }
     }
   }
+}
+
+sub add_relationship {
+  my ($self, %relationship) = @_;
+  if (!$self->adaptor) {
+    $self->adaptor(EnsEMBL::Web::DBSQL::UserDB->new);
+  }
+  $self->adaptor->add_relationship(%relationship);
 }
 
 sub users {
@@ -147,18 +238,13 @@ sub users {
   return $Users_of{$self};
 }
 
-sub find_users_by_status {
-  my ($self, $status) = @_;
-  if ($self->status_collection->{$status}) {
-    return $self->status_collection->{$status};
-  }
-  return [];
-}
-
 sub add_user {
   my ($self, $user) = @_;
+  my $level = "member";
   if (!$self->is_user_member($user)) {
     push @{ $Users_of{$self} }, $user;
+    $self->assign_level_to_user($level, $user);
+    push @{ $AddedUsers_of{$self} }, $user;
     $self->taint('users');
   }
 }
@@ -172,9 +258,6 @@ sub is_user_member {
     }
   }
   return $found;
-}
-
-sub remove_user {
 }
 
 sub name {
@@ -236,8 +319,7 @@ sub modified_at {
 sub administrators {
   ### a
   my $self = shift;
-  $Administrators_of{$self} = shift if @_;
-  return $Administrators_of{$self};
+  return $self->find_users_by_level('administrator');
 }
 
 sub status_collection {
@@ -245,6 +327,37 @@ sub status_collection {
   my $self = shift;
   $StatusCollection_of{$self} = shift if @_;
   return $StatusCollection_of{$self};
+}
+
+sub level_collection {
+  ### a
+  my $self = shift;
+  $LevelCollection_of{$self} = shift if @_;
+  return $LevelCollection_of{$self};
+}
+
+sub removed_users {
+  ### a
+  my $self = shift;
+  $RemovedUsers_of{$self} = shift if @_;
+  return $RemovedUsers_of{$self};
+}
+
+sub added_users {
+  ### a
+  my $self = shift;
+  $AddedUsers_of{$self} = shift if @_;
+  return $AddedUsers_of{$self};
+}
+
+sub remove_user {
+  ### Removes a user from the group
+  my ($self, $user) = @_;
+  if (!$self->removed_users) {
+    $self->removed_users([]);
+  }
+  push @{ $self->removed_users }, $user; 
+  $self->taint('users');
 }
 
 sub DESTROY {
@@ -259,6 +372,9 @@ sub DESTROY {
   delete $ModifiedAt_of{$self};
   delete $Administrators_of{$self};
   delete $StatusCollection_of{$self};
+  delete $LevelCollection_of{$self};
+  delete $RemovedUsers_of{$self};
+  delete $AddedUsers_of{$self};
 }
 
 }

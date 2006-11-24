@@ -69,6 +69,9 @@ sub new {
      my $details = $self->adaptor->find_user_by_email_and_password(( email => $params{'username'}, 
                                              password => $encrypted ));
      $self->assign_fields($details);
+  } elsif ($params{'email'} ) {
+     my $details = $self->adaptor->find_user_by_email($params{'email'});
+     $self->assign_fields($details);
   }
 
 
@@ -105,6 +108,7 @@ sub find_groups_by_user_id {
                                              )); 
       #warn "CREATING GROUP " . $group ." for USER " . $self->name;
       #warn "CREATED BY " . $result->{created_by};
+      $group->update_users;
       push @{ $return }, $group;
     }
   } 
@@ -134,6 +138,7 @@ sub find_groups_by_type {
   }
   return $return; 
 }
+
 sub find_group_by_group_id {
   my ($self, $group_id) = @_;
   foreach my $group (@{ $self->groups }) {
@@ -150,7 +155,29 @@ sub groups {
   return $Groups_of{$self};
 }
 
-sub is_administrator {
+sub find_administratable_groups {
+  my $self = shift;
+  my @return = ();
+  foreach my $group (@{ $self->groups }) {
+    if ($self->is_administrator_of($group)) {
+      push @return, $group;
+    }
+  }
+  return \@return;
+}
+
+sub is_member_of {
+  my ($self, $check_group) = @_;
+  my $return = 0;
+  foreach my $group (@{ $self->groups }) {
+    if ($group->id eq $check_group->id) {
+      $return = 1;
+    }
+  }
+  return $return;
+}
+
+sub is_administrator_of {
   my ($self, $group) = @_; 
   my $return = 0;
   foreach my $user (@{ $group->administrators }) {
@@ -171,6 +198,12 @@ sub add_group {
   warn "ADDING GROUP: " . $group->name;
   $self->taint('groups');
   push @{ $self->groups }, $group;
+}
+
+sub remove_group {
+  ### Remove a group from a user
+  my ($self, $group) = @_;
+  $group->remove_user($self);
 }
 
 sub name {
