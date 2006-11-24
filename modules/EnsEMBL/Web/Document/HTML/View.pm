@@ -9,11 +9,13 @@ our @ISA = qw(EnsEMBL::Web::Document::HTML);
 {
 
 my %InForm_of;
+my %CheckForm_of;
 
 sub new    { 
   my ($class, %params) = @_;
   my $self = shift->SUPER::new( 'html' => '' );
   $InForm_of{$self}          = defined $params{in_form} ? $params{in_form} : 0;
+  $CheckForm_of{$self}       = "";
   return $self;
 }
 
@@ -118,13 +120,19 @@ sub render_textfield {
   if ($page->value_for_form_element($field_name)) {
     $value = qq(value=") . $page->value_for_form_element($field_name) . qq(");
   }
-  my $widget = qq(<input type="$input_type" name="$field_name" $value maxlength="$field_size" />);
+  my $widget = qq(<input type="$input_type" id = "$field_name" name="$field_name" $value maxlength="$field_size" />);
   $self->print($self->render_form_widget($widget));
 }
 
 sub render_password_field {
   my ($self, $field, $page) = @_;
   $self->render_textfield($field, $page, 'password');
+  my $html = "<br /><br />";
+  $html .= "<h6><label for='password_confirm'>Confirm password</h6>";
+  my $widget = "<input type='password' name='password_confirm' id='password_confirm' />";
+  $html .= $self->render_form_widget($widget);
+  $self->check_form(1);
+  $self->print($html);
 }
 
 sub render_options {
@@ -138,7 +146,7 @@ sub render_options {
   foreach my $option (@options) {
     my $selected = "";
     my $value = $page->value_for_selection_element($field_name, $option);
-    $widget .= qq(<input type="radio" name="$field_name" value="$value");
+    $widget .= qq(<input type="radio" name="$field_name" id="$field_name" value="$value");
     if ($page->value_for_form_element($field_name)) {
       if ($page->value_for_form_element($field_name) eq $option) {
         $widget .= ' checked="yes" ';
@@ -214,8 +222,30 @@ sub render_submit_button {
   my $self = shift;
   $self->print('<div class="formblock"><h6></h6>');
   my $widget = qq(<input type="submit" value="Submit" class="red-button" />);
+  if ($self->check_form) {
+    $widget = qq(<input type='button' value='Submit' class='red-button' onClick='perform_check();' />);
+  }
+  $self->print($self->render_check_javascript);
   $self->print($self->render_form_widget($widget));
   $self->print('</div>');
+}
+
+sub render_check_javascript {
+  my $self = shift;
+  my $html = "<script type='text/javascript'>";
+  $html .= qq(
+    function perform_check() {
+      var pass1 = document.getElementById('password');
+      var pass2 = document.getElementById('password_confirm');
+      if (pass1.value == pass2.value) {
+        document.getElementById('view_form').submit();
+      } else {
+        alert("Your passwords don't match. Please re-enter them and try again.");
+      }
+    }
+  );
+  $html .= "</script>";
+  return $html;
 }
 
 sub render_error_page {
@@ -249,7 +279,7 @@ sub print_form_header {
   my ($self, $page) = @_;
   my $user_id = $ENV{'ENSEMBL_USER_ID'};
   my $id = CGI->new()->param('id');
-  $self->print(qq(<div class="formpanel-left" style="width:70%">\n<form method="post">\n));
+  $self->print(qq(<div class="formpanel-left" style="width:70%">\n<form id='view_form' method="post">\n));
   $self->print('<input type="hidden" name="dataview_action" value="' . $page->action . '" />'. "\n");
 
   if ($id) { ## ID of record to update
@@ -297,9 +327,17 @@ sub in_form {
   return $InForm_of{$self};
 }
 
+sub check_form {
+  ### a
+  my $self = shift;
+  $CheckForm_of{$self} = shift if @_;
+  return $CheckForm_of{$self};
+}
+
 sub DESTROY {
   my $self = shift;
   delete $InForm_of{$self};
+  delete $CheckForm_of{$self};
 }
 
 }
