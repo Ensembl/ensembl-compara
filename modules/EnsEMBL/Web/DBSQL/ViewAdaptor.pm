@@ -189,7 +189,9 @@ sub create {
 
   if ($params{user}) {
     $user = $params{user};
-    delete $set_parameters{user_id};
+    if ($params{type} ne "relationship") {
+      delete $set_parameters{user_id};
+    }
   }
 
   if ($params{record}) {
