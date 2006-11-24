@@ -173,13 +173,15 @@ sub description_for_form_element {
 sub value_for_form_element {
   ### Returns the value of a form element, as determined by the data retrieved from the 
   ### database. For possible return values for enumerated types, use {{value_for_selection_element}}
-  my ($self, $name) = @_;
+  my ($self, $name, $force) = @_;
   my $return_value = undef;
 
   my $options = $self->options_for_element($name);
 
+  if (!$force) {
   if ($options && $options->is_conditional) {
     return $return_value;
+  }
   }
 
   if ($self->data_definition->data) {
