@@ -99,7 +99,7 @@ sub _render_group_pending {
       my $row = EnsEMBL::Web::Interface::Table::Row->new();
       $row->add_column({ content => $invite->email });
       $row->add_column({ content => ucfirst($invite->status) });
-      $row->add_column({ content => "<a href='/common/delete_invite?group_id=" . $group->id . "&invite_id=" . $invite->id . "&user_id=" . $user->id . "'>Remove</a>" });
+      $row->add_column({ content => "<a href='/common/delete_invite?group_id=" . $group->id . "&invite_id=" . $invite->id . "&user_id=" . $user->id . "'>Delete</a>" });
       $table->add_row($row);
     }
 
@@ -124,18 +124,18 @@ sub _render_group_users {
     warn "CREATED BY: " . $group->created_by;
     if ($user->id eq $group->created_by) {
       $row->add_column({ content => "Owner" });
-      $row->add_column({ content => "" });
-      $row->add_column({ content => "" });
+      #$row->add_column({ content => "" });
+      #$row->add_column({ content => "" });
     } else {
 
       if ($user->is_administrator_of($group)) {
         $row->add_column({ content => "Administrator" });
-        $row->add_column({ content => "Demote" });
-        $row->add_column({ content => "Remove" });
+        #$row->add_column({ content => "Demote" });
+        #$row->add_column({ content => "Remove" });
       } else {
         $row->add_column({ content => "Member" });
-        $row->add_column({ content => "Promote" });
-        $row->add_column({ content => "Remove" });
+        #$row->add_column({ content => "Promote" });
+        #$row->add_column({ content => "Remove" });
       }
 
     }
@@ -315,7 +315,7 @@ sub _render_join {
                                                     ));
     foreach my $group (@groups) {
       my $row = EnsEMBL::Web::Interface::Table::Row->new();
-      $row->add_column({ content => "<a href=/common/group_info?id=" . $group->id . "'><b>" . $group->name. "</b></a>" });
+      $row->add_column({ content => "<a href='/common/group_info?id=" . $group->id . "'><b>" . $group->name. "</b></a>" });
       if ($user->is_member_of($group) == 1) {
         if ($user->is_administrator_of($group) == 1) {
           $row->add_column({ content => "Administrator (<a href='/common/groupview?id=" . $group->id . "'>View</a>)"});
@@ -364,6 +364,7 @@ sub _render_admin {
     foreach my $group (@groups) {
     my $row = EnsEMBL::Web::Interface::Table::Row->new();
       $row->add_column({ content => $group->name });
+      $row->add_column({ content => ucfirst($group->type) });
       $row->add_column({ content => "<a href='/common/groupview?id=" . $group->id . "'>View</a>"});
       $table->add_row($row);
     }
