@@ -27,6 +27,7 @@ $data->populate($cgi->param('id'));
 $page->data_definition($data);
 $page->title('Update your Ensembl account');
 $page->action('edit');
+$page->cancel('yes');
 $page->on_complete('/common/accountview');
 $page->on_error('/account/error.html');
 
