@@ -12,9 +12,9 @@ our @ISA = qw( EnsEMBL::Web::Configuration );
 sub _add_javascript_libraries {
   ## 'private' method to load commonly-used JS libraries
   my $self = shift;
-  $self->{page}->javascript->add_source( "/js/prototype.js" );  ## AJAX
-  $self->{page}->javascript->add_source( "/js/accountview.js" ); ## link magic!
-  $self->{page}->javascript->add_source( "/js/scriptaculous.js" ); ## Cool interactive stuff!
+  $self->{page}->javascript->add_source( "/js/prototype.js" );  ## Javascript library 
+  $self->{page}->javascript->add_source( "/js/accountview.js" ); ## link magic
+  $self->{page}->javascript->add_source( "/js/scriptaculous.js" ); ## Animations, drag and drop etc. 
 }
 
 sub context_menu {
@@ -36,7 +36,7 @@ sub context_menu {
     $self->add_entry( $flag, 'text' => "Account summary",
                                     'href' => "/common/accountview" );
     $self->add_entry( $flag, 'text' => "Update details",
-                                    'href' => "/common/update_account" );
+                                    'href' => "/common/update?id=" . $obj->id );
     $self->add_entry( $flag, 'text' => "Change password",
                                     'href' => "/common/set_password" );
     $self->add_entry( $flag, 'text' => "Log out",
@@ -73,6 +73,28 @@ sub access_denied {
     ## add panel to page
     $self->add_panel( $panel1 );
   }
+}
+
+sub groupview {
+  my $self   = shift;
+  my $object = $self->{'object'};
+  my $details = $object->get_user_by_id($object->id);
+  
+  $self->_add_javascript_libraries;
+
+  if (my $panel1 = $self->new_panel( 'Image',
+    'code'    => "info$self->{flag}",
+    'object'  => $self->{object},
+    ) ) {
+    $panel1->add_components(qw(
+        group_details   EnsEMBL::Web::Component::User::group_details
+        group_general   EnsEMBL::Web::Component::User::group_general
+        group_users     EnsEMBL::Web::Component::User::group_users
+        remove_group    EnsEMBL::Web::Component::User::remove_group
+    ));
+    $self->add_panel( $panel1 );
+  }
+  $self->{page}->set_title('Your Groups');
 }
 
 sub accountview {
@@ -137,31 +159,6 @@ sub user_menu {
   $self->add_entry( $flag, 'text' => "Start a new group",
                            'href' => "/common/start_a_group" );
    
-}
-
-sub groupview {
-  ### Dynamic view displaying information about a user-group
-  my $self   = shift;
-  my $object = $self->{'object'};
-  my $details = $object->get_user_by_id($object->user_id);
-  
-  $self->_add_javascript_libraries;
-
-  if (my $panel1 = $self->new_panel( 'Image',
-    'code'    => "info$self->{flag}",
-    'object'  => $self->{object},
-    'caption' => 'Group Details',
-    ) ) {
-    $panel1->add_components(qw(
-        group_details     EnsEMBL::Web::Component::User::group_details
-        group_configs     EnsEMBL::Web::Component::User::group_configs
-        group_bookmarks   EnsEMBL::Web::Component::User::group_bookmarks
-    ));
-  
-    # finally, add the complete panel to the page object
-    $self->add_panel( $panel1 );
-    $self->{page}->set_title('Group Details');
-  } 
 }
 
 ##-----------------------------------------------------------------------------
