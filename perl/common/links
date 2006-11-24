@@ -1,0 +1,10 @@
+#! /usr/local/bin/perl
+
+use strict;
+use warnings;
+no warnings "uninitialized";
+
+print "Content-type: text/plain\n\n";
+print "hello world";
+
+1;

@@ -19,8 +19,9 @@ if( $webpage->has_a_problem() ) {
   $webpage->render_error_page( $webpage->problem->[0] );
 } else {
   foreach my $object( @{$webpage->dataObjects} ) {
-    $webpage->configure( $object, 'groupview', 'context_menu', 'group_menu' );
+    $webpage->configure( $object, 'groupview', 'context_menu', 'user_menu' );
   }
-  $webpage->action({'group' => ''}); ## page only accessible to group members
+  $webpage->action({'login' => 1}); ## page only accessible to logged-in users
 }
+
 1;

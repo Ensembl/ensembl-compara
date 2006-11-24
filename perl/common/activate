@@ -10,7 +10,6 @@ use EnsEMBL::Web::Interface::PageDefinition;
 use EnsEMBL::Web::Interface::FormDefinition;
 use EnsEMBL::Web::DBSQL::DataDefinition;
 use EnsEMBL::Web::DBSQL::ViewAdaptor;
-use EnsEMBL::Web::SpeciesDefs;
 
 my $page = EnsEMBL::Web::Interface::PageDefinition->new();
 my $data = EnsEMBL::Web::DBSQL::DataDefinition->new();
@@ -20,34 +19,36 @@ $data->adaptor(EnsEMBL::Web::DBSQL::ViewAdaptor->new((
                                                        table  => 'user'
                                                     )) );
 
-my $sd = EnsEMBL::Web::SpeciesDefs->new();
-my $site_info = {};
-my $sitetype = $sd->ENSEMBL_SITETYPE;
-my $sitename = $sitetype eq 'EnsEMBL' ? 'Ensembl' : $sitetype;
-my $site_info->{'name'} = $sitename;
-my $site_info->{'base_url'}    = $sd->ENSEMBL_BASE_URL;
-my $site_info->{'mail_server'} = $sd->ENSEMBL_MAIL_SERVER;
-my $site_info->{'help_email'}  = $sd->ENSEMBL_HELPDESK_EMAIL;
-
 if (!$cgi->param('welcome_email')) {
   my $user = EnsEMBL::Web::Object::User->new({ id => $cgi->param('id') });
-  send_activation_email($user, $site_info);
+  send_activation_email($user);
 } elsif ($cgi->param('welcome_email') eq 'yes') {
   my $user = EnsEMBL::Web::Object::User->new({ id => $cgi->param('id') });
-  send_welcome_email($user, $site_info);
+  send_welcome_email($user);
+  warn "========== SENDING WELCOME EMAIL";
+  warn "========== MAPPING GROUP: " . $cgi->param('group_id');
+  if ($cgi->param('group_id')) {
+    warn "============= GETTING GROUP";
+    my $group = EnsEMBL::Web::Object::Group->new(( id => $cgi->param('group_id') ));
+    warn "============= GROUP: " . $group->id;
+    $user->add_group($group);
+    $user->save;
+  }
 }
+
 
 $data->discover;
 $data->populate($cgi->param('id'));
 $page->data_definition($data);
-$page->title("Activate your $sitename account");
+$page->title('Activate your Ensembl account');
 $page->action('edit');
 $page->send_params({ id => 'yes', salt => 'yes', password => 'yes' });
 $page->on_complete('/common/set_cookie');
-$page->on_error('/error/activate.html');
+$page->on_error('/register/error.html');
 
 $page->add_configuration_element('conditional', 'salt');
 $page->add_configuration_element('welcome_email', 'yes');
+$page->add_configuration_element('group_id', $cgi->param('group_id'));
 
 $page->add_display_element('name', "User name");
 $page->add_display_element('organisation', "Organisation");
@@ -61,61 +62,43 @@ $page->add_form_element('password', "Your password");
 EnsEMBL::Web::Document::DataView::simple('User', $page);
 
 sub send_activation_email {
-  my ($user, $site_info) = @_;
-  my $sitename = $site_info->{'name'};
+  my $user = shift;
   my $message = qq(
-  Welcome to $sitename,
+  Hello,
 
-  Thanks for registering with $sitename.
-  
-  You just need to activate your account, using the activation code below:
+  Thanks for registering with Ensembl. Before you can log in to your Ensembl
+  account, you need to verify your email address. To do so, cut and paste the 
+  activation code below into the activation page. 
   
   Activation code: ) . $user->salt . qq(
  
-  Or by clicking on this link:
-  http://) . $site_info{'base_url'} . qq(/activate?id=) . $user->id . qq(  
+  Alternatively, you can just click on this link:
+  http://www.ensembl.org/activate?id=) . $user->id . qq(  
 
+  If you have any problems, please don't hesitate to contact our help desk on
+  helpdesk\@ensembl.org.
 
   Many thanks,
 
-  The $sitename web team
-
-
-
-  $sitename Privacy Statement: http://) . $site_info{'base_url'} . qq(/info/about/privacy.html
+  The Ensembl team
   );
-  send_email($site_info, $user, "Your new $sitename account", $message);
+  send_email($user, "Your new Ensembl account", $message);
 }
 
 sub send_welcome_email {
-  my ($user, $site_info) = @_;
-  my $sitename = $site_info->{'name'};
-  my $message = qq(Welcome to $sitename.
-  Your account is now activated. More information on how to make the most of 
-  your account can be found at:
-
-  http://) . $site_info{'base_url'} . qq(/info/about/accounts.html
-
-
-  Many thanks,
-
-  The $sitename web team
-
-
-
-  $sitename Privacy Statement: http://) . $site_info{'base_url'} . qq(/info/about/privacy.html
-  );
-  send_email($site_info, $user, "Welcome to $sitename", $message);
+  my $user = shift;
+  my $message = qq(Welcome to Ensembl);
+  send_email($user, "Welcome to Ensembl", $message);
 }
 
 sub send_email {
-  my ($site_info, $user, $subject, $message) = @_;
+  my ($user, $subject, $message) = @_;
   warn "Sending email to: " . $user->email;
-  my $mailer = new Mail::Mailer 'smtp', Server => $site_info->{'mail_server'};
+  my $mailer = new Mail::Mailer 'smtp', Server => "mail.sanger.ac.uk";
   $mailer->open({
                 'To'      => $user->email,
-                'From'    => $site_info->{'name'},
-                'Reply-To'=> $site_info->{'help_email'},
+                'From'    => "Ensembl",
+                'Reply-To'=> "helpdesk\@ensembl.org",
                 'Subject' => $subject
                 });
   print $mailer $message;

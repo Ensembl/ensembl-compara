@@ -1,0 +1,60 @@
+#! /usr/bin/perl
+
+package accept;
+
+use strict;
+use warnings;
+
+use CGI;
+
+my $cgi = new CGI;
+use EnsEMBL::Web::Document::DataView;
+use EnsEMBL::Web::Interface::PageDefinition;
+use EnsEMBL::Web::Interface::FormDefinition;
+use EnsEMBL::Web::DBSQL::DataDefinition;
+use EnsEMBL::Web::DBSQL::ViewAdaptor;
+use EnsEMBL::Web::Group::Record;
+use EnsEMBL::Web::Object::Group;
+
+my @records = EnsEMBL::Web::Group::Record->find_invite_by_group_record_id($cgi->param('id'));
+my $email = $records[0]->email;
+my $group_id = $records[0]->group;
+my $group = EnsEMBL::Web::Object::Group->new(( id => $group_id ));
+
+my $page = EnsEMBL::Web::Interface::PageDefinition->new();
+my $data = EnsEMBL::Web::DBSQL::DataDefinition->new();
+my $db = $EnsEMBL::Web::Apache::Handlers::ENSEMBL_USER_DB_HANDLE;
+$data->adaptor(EnsEMBL::Web::DBSQL::ViewAdaptor->new((
+                                                       handle => $db,
+                                                       table  => 'group_record'
+                                                    )) );
+
+$data->add_field({'Field' => 'email', 'Type' => 'varchar(255)'});
+$data->add_field({'Field' => 'code', 'Type' => 'varchar(255)'});
+$data->add_field({'Field' => 'status', 'Type' => 'varchar(255)'});
+$data->populate($cgi->param('id'));
+
+$page->data_definition($data);
+$page->title('Join group');
+$page->action('edit');
+$page->send_params({ record_id => 'yes', code => 'yes' });
+$page->on_complete('/common/join_by_invite');
+$page->on_error('/account/bookmark_error.html');
+
+$page->add_text('Confirm your group membership to <b>"' . $group->name . '"</b> here.');
+
+my $conditional = EnsEMBL::Web::Interface::FormDefinition->new();
+$conditional->add_option({ 'conditional' => 1 });
+
+$page->add_configuration_element('conditional', 'code');
+$page->add_configuration_element('record', 'yes');
+$page->add_configuration_element('ident', 'group_id');
+$page->add_configuration_element('type', 'invite');
+$page->add_configuration_element('record_id', $cgi->param('id'));
+$page->add_configuration_element('status', 'accepted');
+$page->add_form_element('email', "Your email address");
+$page->add_form_element('code', "Your invitation code", $conditional);
+
+EnsEMBL::Web::Document::DataView::simple('User', $page);
+
+1;

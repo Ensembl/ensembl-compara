@@ -1,0 +1,91 @@
+#! /usr/bin/perl
+
+package invite;
+
+use EnsEMBL::Web::Group::Record;
+use CGI;
+my $cgi = new CGI;
+
+my $url = "/common/accountview";
+if ($ENV{'ENSEMBL_USER_ID'}) {
+  my $user = EnsEMBL::Web::Object::User->new({ id => $ENV{'ENSEMBL_USER_ID'} });
+  my $group = EnsEMBL::Web::Object::Group->new(( id => $cgi->param('group_id') )); 
+  $url = "/common/groupview?id=" . $group->id;
+  if ($cgi->param('user_id') eq $user->id) {
+    if ($user->is_administrator($group)) {
+
+      $record = EnsEMBL::Web::Group::Record->new((  user => $group->id, 
+                                                    type => "invite" ));
+      $record->email($cgi->param('invite_email'));
+      $record->status("pending");
+      $record->code(random_string());
+      $record->save;
+
+      send_invite_email($group, $user, $record, $cgi->param('invite_email'));
+      my $feedback = "Invitation email send to: " . $cgi->param('invite_email');
+      $url .= "&feedback=" . CGI::escape($feedback); 
+    } else {
+      $url = "/failed.html";
+    }
+  }
+}
+
+print "Location: " . $url;
+
+sub send_invite_email {
+  my ($group, $user, $record, $invite_email) = @_;
+  my $message = qq(
+  Hello,
+  
+  You have been invited by ) . $user->name . qq( to join a group
+  on the Ensembl Genome Browser. 
+
+  To accept this invitation, click on the following link:
+
+  ) . $group->name . qq(
+  http://www.ensembl.org/common/accept?id=) . $record->id . qq(
+  
+  Your invitation code is: ) . $record->code . qq(
+
+  If you do not wish to accept, please just disregard this email. 
+  
+  If you have any problems please don't hesitate to contact ) . $user->name . 
+  qq( 
+  or the Ensembl help desk, on helpdesk\@ensembl.org.
+
+  Many thanks,
+
+  The Ensembl team
+  );
+  send_email($invite_email, "Invitation to join an Ensembl group", $message);
+}
+
+sub send_email {
+  my ($email, $subject, $message) = @_;
+  warn "Sending email to: " . $email;
+  my $mailer = new Mail::Mailer 'smtp', Server => "mail.sanger.ac.uk";
+  $mailer->open({
+                'To'      => $email,
+                'From'    => "Ensembl",
+                'Reply-To'=> "helpdesk\@ensembl.org",
+                'Subject' => $subject
+                });
+  print $mailer $message;
+  $mailer->close();
+
+}
+
+sub random_string {
+  my $length = shift || 8;
+
+  my @chars = ('a'..'z','A'..'Z','0'..'9','_');
+  my $random_string;
+  foreach (1..$length)
+  {
+    $random_string .= $chars[rand @chars];
+  }
+  return $random_string;
+}
+
+
+1;

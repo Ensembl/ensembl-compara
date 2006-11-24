@@ -1,0 +1,22 @@
+#! /usr/bin/perl
+
+package remove_group;
+
+use CGI;
+my $cgi = new CGI;
+
+my $url = "/common/accountview";
+if ($ENV{'ENSEMBL_USER_ID'}) {
+  my $user = EnsEMBL::Web::Object::User->new({ id => $ENV{'ENSEMBL_USER_ID'} });
+  my $group = EnsEMBL::Web::Object::Group->new(( id => $cgi->param('group_id') )); 
+  if ($user->is_administrator($group)) {
+    $group->status('inactive');
+    $group->save;
+  } else {
+    $url = "/failed.html";
+  }
+}
+
+print "Location: " . $url;
+
+1;

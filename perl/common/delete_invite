@@ -1,0 +1,32 @@
+#! /usr/bin/perl
+
+package remove_group;
+
+use strict;
+use warnings;
+
+use EnsEMBL::Web::Group::Record;
+use CGI;
+my $cgi = new CGI;
+my $url = "/common/groupview";
+if ($ENV{'ENSEMBL_USER_ID'}) {
+  my $user = EnsEMBL::Web::Object::User->new({ id => $ENV{'ENSEMBL_USER_ID'} });
+  my $group = EnsEMBL::Web::Object::Group->new(( id => $cgi->param('group_id') )); 
+  $url = "/common/groupview?id=" . $group->id;
+  if ($cgi->param('user_id') eq $user->id) {
+    if ($user->is_administrator($group)) {
+      foreach my $record ($group->find_group_records_by_group_record_id($cgi->param('invite_id') )) {
+        if ($record->id eq $cgi->param('invite_id')) {
+          $record->delete;
+        }
+      }
+
+    } else {
+      $url = "/failed.html";
+    }
+  }
+}
+
+print "Location: " . $url;
+
+1;
