@@ -29,6 +29,7 @@ $data->discover;
 
 $page->data_definition($data);
 $page->title('Create new group');
+$page->cancel('yes');
 $page->action('create');
 $page->on_complete('/dataview/created.html');
 $page->on_error('/dataview/error.html');

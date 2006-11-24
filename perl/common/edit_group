@@ -34,7 +34,8 @@ $data->populate($cgi->param('id'));
 $page->data_definition($data);
 $page->title('Edit this group');
 $page->action('edit');
-$page->on_complete('/common/accountview');
+$page->cancel('yes');
+$page->on_complete('/common/groupview?id=' . $cgi->param('id'));
 $page->on_error('/error.html');
 
 $page->add_text('You can edit your group details here.');
