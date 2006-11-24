@@ -6,6 +6,7 @@ use warnings;
 {
 
 my %Title_of;
+my %Footer_of;
 my %PageElements_of;
 my %FormElements_of;
 my %DisplayElements_of;
@@ -21,6 +22,7 @@ sub new {
   my ($class, %params) = @_;
   my $self = bless \my($scalar), $class;
   $Title_of{$self}          = defined $params{title} ? $params{title} : "";
+  $Footer_of{$self}          = defined $params{footer} ? $params{footer} : "";
   $OnComplete_of{$self}     = defined $params{on_complete} ? $params{on_complete} : "";
   $Send_of{$self}     = defined $params{send} ? $params{send} : {};
   $PageElements_of{$self}   = defined $params{page_elements} ? $params{page_elements} : [];
@@ -52,6 +54,13 @@ sub title {
   return $Title_of{$self};
 }
 
+sub footer {
+  ### a
+  my $self = shift;
+  $Footer_of{$self} = shift if @_;
+  return $Footer_of{$self};
+}
+
 sub configuration_elements {
   ### a
   my $self = shift;
@@ -61,11 +70,11 @@ sub configuration_elements {
 
 sub add_configuration_element {
   ### Adds a configuration element to the dataview.
-  my ($self, $key, $value) = @_;
+  my ($self, $key, $value, $options) = @_;
   if (!$self->configuration_elements) {
     $self->configuration_elements([]);
   }
-  push @{ $self->configuration_elements }, { 'key' => $key, 'value' => $value };
+  push @{ $self->configuration_elements }, { 'key' => $key, 'value' => $value, 'options' => $options };
 }
 
 sub on_complete{
@@ -260,6 +269,7 @@ sub definition_for_data_field {
 sub DESTROY {
   my $self = shift;
   delete $Title_of{$self};
+  delete $Footer_of{$self};
   delete $PageElements_of{$self};
   delete $DataDefinition_of{$self};
   delete $DisplayElements_of{$self};
