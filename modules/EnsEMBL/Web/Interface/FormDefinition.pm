@@ -65,7 +65,6 @@ sub add_value {
 
 sub value_for_field {
   my ($self, $name) = @_;
-    warn "Field:" . $name;
   foreach my $field (@{ $self->values }) {
     if ($field->{name} eq $name) {
       return $field->{value};
@@ -103,8 +102,9 @@ sub add_label {
 sub label_for_field {
   ### Returns the label for a particular field.
   my ($self, $name) = @_;
+  $name =~ s/ //g;
   foreach my $field (@{ $self->labels }) {
-    if ($field->{name} && $name && ($field->{name} eq $name)) {
+    if ($field->{name} && $name && $field->{name} eq $name) {
       return $field->{label};
     }
   }
