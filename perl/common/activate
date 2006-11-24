@@ -61,9 +61,11 @@ $page->add_display_element('organisation', "Organisation");
 $conditional = EnsEMBL::Web::Interface::FormDefinition->new();
 $conditional->add_option({ 'conditional' => 1 });
 if ($cgi->param('code')) {
+  $page->add_text("<b>Thanks for confirming your email address.</b><br /><br /> To start using your new Ensembl user account, just choose a password below. You'll need to use this password each time you log in to Ensembl.");
   $conditional->add_value({ 'salt' => $cgi->param('code') });
   $page->add_configuration_element('salt', $cgi->param('code'), $conditional);
 } else {
+  $page->add_text("Before you can start using your Ensembl user account, you need to validate your email address. We've just send you an email containing an activation code. Enter this code below, and choose a password. You'll need to use this password each time you log in to Ensembl.");
   $page->add_form_element('salt', "Your activation code", $conditional);
 }
 
@@ -112,8 +114,12 @@ sub send_welcome_email {
   my ($user, $site_info) = @_;
   my $sitename = $site_info->{'name'};
   my $message = qq(Welcome to $sitename.
-  Your account is now activated. More information on how to make the most of 
-  your account can be found at:
+
+  Your account has been activated! In future, you can log in to $sitename using your email address and the password you chose during registration:
+  
+  Email: ) . $user->email . qq( 
+
+  More information on how to make the most of your account can be found here:
 
   ) . $site_info->{'base_url'} . qq(/info/about/accounts.html
 
