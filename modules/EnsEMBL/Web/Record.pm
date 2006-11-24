@@ -12,6 +12,7 @@ package EnsEMBL::Web::Record;
 use strict;
 use warnings;
 use EnsEMBL::Web::DBSQL::UserDB;
+use EnsEMBL::Web::Group::Record;
 use Data::Dumper;
 
 our $AUTOLOAD;
@@ -34,15 +35,23 @@ sub AUTOLOAD {
   my $self = shift;
   my ($key) = ($AUTOLOAD =~ /::([a-z].*)$/);
   my ($value, $options) = @_;
-  #warn "AUTOLOADING $key";
+  warn "AUTOLOADING $key";
   if ($value) {
     if (my ($find, $by) = ($key =~ /find_(.*)_by_(.*)/)) {
+      my $table = "user";
+      my $record_type = "User";
       if ($find eq "records") {
          $find = "";
-         #warn "FINDING ALL RECORDS";
       }
-      #warn "FINDING RECORDS: $find " . $by . ": " . $value;
-      return find_records(( type => $find, $by => $value, options => $options));
+      if ($find eq "group_records") {
+        $find = "";
+        $table = "group";
+      }
+      if ($by =~ /group_record/) {
+        $table = "group";  
+        $record_type = "Group";
+      }
+      return find_records(( record_type => $record_type, type => $find, $by => $value, table => $table, options => $options));
     } else {
       if (my ($type) = ($key =~ /(.*)_records/)) {
         return $self->records_of_type($type, $value);
@@ -165,12 +174,18 @@ sub records_of_type {
 }
 
 sub find_records {
-  my %params = @_;
+  my (%params) = @_;
+  my $record_type = "User";
+  if ($params{record_type}) {
+    $record_type = $params{record_type};
+    delete $params{record_type};
+  }
+  $record_type = "EnsEMBL::Web::" . $record_type . "::Record";
   my $user_adaptor = EnsEMBL::Web::DBSQL::UserDB->new();
   my $results = $user_adaptor->find_records(%params);
   my @records = ();
   foreach my $result (@{ $results }) {
-    my $record = EnsEMBL::Web::User::Record->new((
+    my $record = $record_type->new((
                                          id => $result->{id},
                                        type => $result->{type},
                                        user => $result->{user_id},
