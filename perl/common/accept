@@ -53,7 +53,13 @@ $page->add_configuration_element('type', 'invite');
 $page->add_configuration_element('record_id', $cgi->param('id'));
 $page->add_configuration_element('status', 'accepted');
 $page->add_form_element('email', "Your email address");
-$page->add_form_element('code', "Your invitation code", $conditional);
+
+if ($cgi->param('invite')) {
+  $conditional->add_value({ 'code' => $cgi->param('invite') });
+  $page->add_configuration_element('code', $cgi->param('invite'), $conditional);
+} else {
+  $page->add_form_element('code', "Your invitation code", $conditional);
+}
 
 EnsEMBL::Web::Document::DataView::simple('User', $page);
 

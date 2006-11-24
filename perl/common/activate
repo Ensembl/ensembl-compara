@@ -31,10 +31,16 @@ $site_info->{'help_email'}  = $sd->ENSEMBL_HELPDESK_EMAIL;
 
 if (!$cgi->param('welcome_email')) {
   my $user = EnsEMBL::Web::Object::User->new({ id => $cgi->param('id') });
-  send_activation_email($user, $site_info);
+  send_activation_email($user, $site_info, $cgi->param('group_id') );
 } elsif ($cgi->param('welcome_email') eq 'yes') {
   my $user = EnsEMBL::Web::Object::User->new({ id => $cgi->param('id') });
   send_welcome_email($user, $site_info);
+  if ($cgi->param('group_id')) {
+    my $group = EnsEMBL::Web::Object::Group->new(( id => $cgi->param('group_id') ));
+    $user->add_group($group);
+    $user->save;
+  }
+
 }
 
 $data->discover;
@@ -61,12 +67,16 @@ if ($cgi->param('code')) {
   $page->add_form_element('salt', "Your activation code", $conditional);
 }
 
+if ($cgi->param('group_id')) {
+  $page->add_configuration_element('group_id', $cgi->param('group_id'));
+}
+
 $page->add_form_element('password', "Your password");
 
 EnsEMBL::Web::Document::DataView::simple('User', $page);
 
 sub send_activation_email {
-  my ($user, $site_info) = @_;
+  my ($user, $site_info, $group_id) = @_;
   my $sitename = $site_info->{'name'};
   my $message = qq(
   Welcome to $sitename,
@@ -78,7 +88,13 @@ sub send_activation_email {
   Activation code: ) . $user->salt . qq(
  
   Or by clicking on this link:
-  ) . $site_info->{'base_url'} . qq(/common/activate?id=) . $user->id . qq(&code=) . $user->salt . qq(  
+  ) . $site_info->{'base_url'} . qq(/common/activate?id=) . $user->id . qq(&code=) . $user->salt;
+
+  if ($group_id) {
+    $message .= "&group_id=" . $group_id;
+  }
+
+  $message .= qq(  
 
 
   Many thanks,

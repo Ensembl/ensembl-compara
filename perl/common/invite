@@ -45,7 +45,7 @@ sub send_invite_email {
   To accept this invitation, click on the following link:
 
   ) . $group->name . qq(
-  ) . $species_defs->ENSEMBL_BASE_URL . qq(/common/accept?id=) . $record->id . qq(
+  ) . $species_defs->ENSEMBL_BASE_URL . qq(/common/accept?id=) . $record->id . qq(&invite=) . $record->code . qq(
   
   Your invitation code is: ) . $record->code . qq(
 
