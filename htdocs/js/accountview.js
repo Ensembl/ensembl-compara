@@ -9,6 +9,12 @@ var bookmark_editor_links_label = "bookmark_editor_links_";
 var bookmark_editor_spinner_label = "bookmark_editor_spinner_";
 var bookmark_text_field_label = "bookmark_text_field_";
 
+function reallyDelete(id) {
+  if (confirm("Are you sure you want to delete this group?")) { 
+    document.getElementById('remove').submit();
+  }
+}
+
 function show_inplace_editor(id) {
   var form_to_show = document.getElementById(bookmark_editor_label + id);
   var link_to_hide = document.getElementById(bookmark_label + id);

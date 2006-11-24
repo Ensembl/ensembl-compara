@@ -44,6 +44,6 @@ function bookmark_link() {
     }
   }
   
-  document.location = '/common/add_bookmark?node=name_bookmark;bm_name=' + page_title + ';bm_url=' + URL;
+  document.location = '/common/bookmark?node=name_bookmark;bm_name=' + page_title + ';bm_url=' + URL;
   return true;  
 }
