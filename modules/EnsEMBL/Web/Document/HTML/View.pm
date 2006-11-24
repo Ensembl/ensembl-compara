@@ -112,7 +112,7 @@ sub render_textfield {
   my $value = "";
   $self->print($self->render_form_label($page, $field_name));
   if ($page->value_for_form_element($field_name)) {
-    $value = "value='" . $page->value_for_form_element($field_name) . "'";
+    $value = qq(value=") . $page->value_for_form_element($field_name) . qq(");
   }
   my $widget = qq(<input type="$input_type" name="$field_name" $value maxlength="$field_size" />);
   $self->print($self->render_form_widget($widget));

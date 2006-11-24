@@ -56,8 +56,12 @@ sub simple {
     } elsif ($action eq "edit") {
       if ($incoming->{'conditional'}) {
         my $condition = $incoming->{'conditional'};
-        my $value = $definition->data_definition->data->{$condition};
+        my $value = $definition->value_for_form_element($condition, 1);
         if (!$incoming->{$condition} eq $value) {
+          warn "CONDITIONAL STATE NOT MET!";
+          warn "FIELD: " . $condition;
+          warn "EXPECT: " . $incoming->{$condition};
+          warn "ACTUAL: " . $value;
           $self->redirect($definition->on_error);
           return 0;
         }
@@ -72,7 +76,8 @@ sub simple {
                                  definition => $fields,
                                  user =>       $user,
                                  id   =>       $incoming->{'id'},
-                                 record =>     $incoming->{'type'}
+                                 record =>     $incoming->{'type'},
+                                 label =>      $incoming->{'ident'},
                                 ));
 
       } else {
