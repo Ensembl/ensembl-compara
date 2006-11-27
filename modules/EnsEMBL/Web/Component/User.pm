@@ -122,7 +122,7 @@ sub _render_group_users {
     my $row = EnsEMBL::Web::Interface::Table::Row->new();
     $row->add_column({ content => $user->name });
     warn "CREATED BY: " . $group->created_by;
-    if ($user->id eq $group->created_by) {
+    if ($user->id == $group->created_by) {
       $row->add_column({ content => "Owner" });
       $row->add_column({ content => "" });
       #$row->add_column({ content => "" });

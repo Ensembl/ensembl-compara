@@ -183,7 +183,8 @@ sub save {
                  name        => $self->name,
                  blurb       => $self->description,
                  type        => $self->type,
-                 status      => $self->status
+                 status      => $self->status,
+                 created_by  => $self->created_by
                );
   if ($self->id) {
     warn "UPDATING GROUP: " . $self->id;
