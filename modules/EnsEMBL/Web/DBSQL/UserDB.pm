@@ -766,7 +766,7 @@ sub update_group {
   my ($self, %params) = @_;
   my $id = $params{id};
   my $name = $params{name};
-  my $description = $params{description};
+  my $description = $params{blurb};
   my $type = $params{type};
   my $status = $params{status};
   my $modified_by = $params{modified_by};
@@ -936,7 +936,7 @@ sub find_records {
   
   ## maintain compatibility between schema versions
   if ($find_key eq 'id') {
-    $find_key = "record_id";
+    $find_key = "user_record_id";
   }
 
   my $sql = qq(
@@ -1109,7 +1109,7 @@ sub remove_relationship {
 sub group_by_id {
   my ($self, $id) = @_;
   my $sql = qq(
-    SELECT webgroup_id, name, type, status, created_by, modified_by,
+    SELECT webgroup_id, name, blurb, type, status, created_by, modified_by,
            UNIX_TIMESTAMP(created_at), UNIX_TIMESTAMP(modified_at)
     FROM webgroup
     WHERE webgroup_id = ') . $id . "';";
@@ -1121,12 +1121,13 @@ sub group_by_id {
       my $details = {
            'id'           => $record->[0],
            'name'         => $record->[1],
-           'type'         => $record->[2],
-           'status'       => $record->[3],
-           'created_by'   => $record->[4],
-           'modified_by'  => $record->[5],
-           'created_at'   => $record->[6],
-           'modified_at'  => $record->[7],
+           'blurb'        => $record->[2],
+           'type'         => $record->[3],
+           'status'       => $record->[4],
+           'created_by'   => $record->[5],
+           'modified_by'  => $record->[6],
+           'created_at'   => $record->[7],
+           'modified_at'  => $record->[8],
          };
       push @{ $results }, $details;
     }
@@ -1143,6 +1144,7 @@ sub groups_for_type {
     SELECT 
            webgroup.webgroup_id,
            webgroup.name,
+           webgroup.blurb,
            webgroup.type,
            webgroup.status,
            webgroup.created_by,
@@ -1161,12 +1163,13 @@ sub groups_for_type {
       my $details = {
            'id'           => $record->[0],
            'name'         => $record->[1],
-           'type'         => $record->[2],
-           'status'       => $record->[3],
-           'created_by'   => $record->[4],
-           'modified_by'  => $record->[5],
-           'created_at'   => $record->[6],
-           'modified_at'  => $record->[7],
+           'blurb'        => $record->[2],
+           'type'         => $record->[3],
+           'status'       => $record->[4],
+           'created_by'   => $record->[5],
+           'modified_by'  => $record->[6],
+           'created_at'   => $record->[7],
+           'modified_at'  => $record->[8],
          };
       push @{ $results }, $details;
     }
@@ -1185,6 +1188,7 @@ sub groups_for_user_id {
     SELECT 
            webgroup.webgroup_id,
            webgroup.name,
+           webgroup.blurb,
            webgroup.type,
            webgroup.status,
            webgroup.created_by,
@@ -1205,12 +1209,13 @@ sub groups_for_user_id {
       my $details = {
            'id'           => $record->[0],
            'name'         => $record->[1],
-           'type'         => $record->[2],
-           'status'       => $record->[3],
-           'created_by'   => $record->[4],
-           'modified_by'  => $record->[5],
-           'created_at'   => $record->[6],
-           'modified_at'  => $record->[7],
+           'blurb'        => $record->[2],
+           'type'         => $record->[3],
+           'status'       => $record->[4],
+           'created_by'   => $record->[5],
+           'modified_by'  => $record->[6],
+           'created_at'   => $record->[7],
+           'modified_at'  => $record->[8],
          };
       push @{ $results }, $details;
     }

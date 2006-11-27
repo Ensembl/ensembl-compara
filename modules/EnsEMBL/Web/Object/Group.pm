@@ -34,7 +34,7 @@ sub new {
   my ($class, %params) = @_;
   my $self = $class->SUPER::new(%params);
   $Name_of{$self} = defined $params{'name'} ? $params{'name'} : "";
-  $Description_of{$self} = defined $params{'description'} ? $params{'description'} : "";
+  $Description_of{$self} = defined $params{'description'} ? $params{'description'} : "DESCRIPTION";
   $Type_of{$self} = defined $params{'type'} ? $params{'type'} : "open";
   $Status_of{$self} = defined $params{'status'} ? $params{'status'} : "active";
   $CreatedBy_of{$self} = defined $params{'created_by'} ? $params{'created_by'} : 0;
@@ -67,6 +67,7 @@ sub populate_details {
   $Name_of{$self} = $details->{name};
   $Type_of{$self} = $details->{type};
   $Status_of{$self} = $details->{status};
+  $Description_of{$self} = $details->{blurb};
   $CreatedBy_of{$self} = $details->{created_by};
   $ModifiedBy_of{$self} = $details->{modified_by};
   $CreatedAt_of{$self} = $details->{created_at};
@@ -177,10 +178,10 @@ sub find_level_for_user {
 sub save {
   my $self = shift;
   warn "CHECKING FOR DATA TAINT: " . $self->tainted->{'users'};
-  warn "PERFORMING GROUP SAVE";
+  warn "PERFORMING GROUP SAVE: "  . $self->description;
   my %params = (
                  name        => $self->name,
-                 description => $self->description,
+                 blurb       => $self->description,
                  type        => $self->type,
                  status      => $self->status
                );

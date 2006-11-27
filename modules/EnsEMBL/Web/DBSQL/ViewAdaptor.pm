@@ -105,12 +105,12 @@ sub edit {
     delete $set_parameters{user_id};
   }
 
-  foreach my $key (keys %set_parameters) {
-    $set_parameters{$key} =~ s/'/\\'/g;
-  }
-
   if ($params{record}) {
     %set_parameters = %{ $self->record_parameters(\%set_parameters, $params{record}, $user, $label) };
+  }
+
+  foreach my $key (keys %set_parameters) {
+    $set_parameters{$key} =~ s/'/\\'/g;
   }
 
   if ($set_parameters{password}) {
@@ -144,7 +144,7 @@ sub edit {
 
 sub execute {
   my ($self, $sql) = @_;
-  warn "VIEW SQL: " . $sql; 
+  warn "=================== VIEW SQL: " . $sql; 
   my $sth = $self->handle->prepare($sql);
   my $result = $sth->execute();
   return $result;
@@ -195,7 +195,10 @@ sub create {
   }
 
   if ($params{record}) {
+    warn "CREATING FOR USER: " . $user;
     %set_parameters = %{ $self->record_parameters(\%set_parameters, $params{record}, $user) };
+    $set_parameters{user_id} = $user;
+    warn "USER: " . $set_parameters{user_id};
   }
 
   my $table = $self->table;
@@ -240,7 +243,7 @@ sub record_parameters {
 sub dump_data {
   my ($self, $data) = @_;
   my $dump = Dumper($data);
-  $dump =~ s/'/\\'/g;
+  #$dump =~ s/'/\\'/g;
   $dump =~ s/^\$VAR1 = //;
   return $dump;
 }
