@@ -55,7 +55,7 @@ sub common_menu_items {
 
         $doc->menu->add_entry(
           $flag,
-          'href'=>'/account',
+          'href'=>'/common/accountview',
           'text'=>'Bookmarks',
           'options'=>\@bookmark_sections,       );
       } else {
