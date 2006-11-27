@@ -41,11 +41,17 @@ if ($cgi->param('id')) {
 } else {
   $page->title('Add bookmark');
   $page->action('create');
-  $page->on_complete($cgi->param('url'));
+  if (!$cgi->param('forward')) {
+    $page->on_complete($cgi->param('url'));
+  } else {
+    $page->on_complete('/common/accountview');
+    $page->add_configuration_element('forward', $cgi->param('forward')); 
+  }
 }
 
 $page->data_definition($data);
 $page->on_error('/account/bookmark_error.html');
+$page->send_params({ forward => 'yes'});
 
 $page->cancel('yes');
 
