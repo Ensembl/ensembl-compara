@@ -494,7 +494,7 @@ sub _render_bookmarks {
  
     $html = $table->render; 
   } else {
-    $html = "You do not have any bookmarks saved.";
+    $html = "You do not have any bookmarks saved. <a href='/common/bookmark?forward=1'>Add a new bookmark &rarr;</a>";
   } 
 
   my @groups = @{ $user->groups };
