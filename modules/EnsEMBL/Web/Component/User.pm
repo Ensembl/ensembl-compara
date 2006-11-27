@@ -483,7 +483,7 @@ sub _render_bookmarks {
     foreach my $record (@bookmarks) {
       my $row = EnsEMBL::Web::Interface::Table::Row->new();
       $row->add_column({ width => '16px', content => '<img src="/img/bullet_star.png" width="16" height="16" />' });
-      $row->add_column({ content => '<a href="' . $record->url. '">' .$record->name . '</a>' });
+      $row->add_column({ content => '<a href="' . $record->url. '" title="' . $record->description . '">' .$record->name . '</a>' });
       $row->add_column({ content => '<a href="/common/bookmark?id=' . $record->id . '">Edit</a>' });
       if ($#admin_groups > -1) {
         $row->add_column({ content => '<a href="/common/share_record?id=' . $record->id . '">Share</a>' });
@@ -493,11 +493,54 @@ sub _render_bookmarks {
     }
  
     $html = $table->render; 
-  }
-  
-  else {
+  } else {
     $html = "You do not have any bookmarks saved.";
   } 
+
+  my @groups = @{ $user->groups };
+  if (@groups) {
+    my $found = 0;
+    my %group_bookmarks = ();
+    my %group_lookup = ();
+    foreach my $group (@groups) {
+      if (!$group_bookmarks{$group} ) {
+        $group_bookmarks{$group} = [];
+        $group_lookup{$group} = $group;
+      }
+      my @records = $group->bookmark_records;
+      if ($#records > -1) {
+        $found = 1;
+        push @{ $group_bookmarks{$group} }, @records; 
+      }
+    }
+
+    if ($found) {
+      $html .= "<br /><br /><b>Shared bookmarks</b><br />";
+      my $table = EnsEMBL::Web::Interface::Table->new(( 
+                                       class => "ss tint", 
+                                       style => "border-collapse:collapse"
+                                                  ));
+      foreach my $key (keys %group_bookmarks) {
+        my $group = $group_lookup{$key};
+        foreach my $record (@{ $group_bookmarks{$key} }) { 
+          my $row = EnsEMBL::Web::Interface::Table::Row->new();
+          $row->add_column({ content => "<a href='" . $record->url . "' title='" . $record->description . "'>" . $record->name . "</a>" });
+          $row->add_column({ content => $group->name });
+          if ($user->is_administrator_of($group)) {
+            $row->add_column({ content => "<a href='/common/bookmark?id=" . $record->id . "&class=group'>Edit</a>" }); 
+            $row->add_column({ content => "<a href='/common/remove_group_bookmark?id=" . $record->id . "&group_id=" . $group->id . "'>Remove</a>" }); 
+          } else {
+            $row->add_column({ content => "" });
+            $row->add_column({ content => "" });
+          }
+          $table->add_row($row);
+        }
+      }
+      $html .= $table->render;
+    }
+    
+  }
+
   return $html;
 }
 
