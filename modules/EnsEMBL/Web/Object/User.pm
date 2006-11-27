@@ -239,6 +239,7 @@ sub password {
   ### a
   my $self = shift;
   $Password_of{$self} = shift if @_;
+  $self->taint('user');
   return $Password_of{$self};
 }
 
@@ -286,8 +287,10 @@ sub save {
   if (!$id) {
     my $result = $self->adaptor->add_user(%params);
   } else {
+    warn "UPDATING USER";
     if ($self->tainted->{'user'}) {
       $params{id} = $id;
+      warn "===================== PERFORMING UPDATE";
       my $result = $self->adaptor->update_user((%params));
     }
   }

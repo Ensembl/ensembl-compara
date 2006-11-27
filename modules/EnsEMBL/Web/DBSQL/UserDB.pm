@@ -789,6 +789,29 @@ sub update_group {
   return $self->last_inserted_id;
 }
 
+sub update_user {
+  my ($self, %params) = @_;
+  my $id = $params{id};
+  my $name = $params{name};
+  my $email = $params{email};
+  my $password = $params{password};
+  my $organisation = $params{organisation};
+  warn "UPDATING: " . $name;
+  my $sql = qq(
+    UPDATE user 
+    SET name         = "$name",
+        email        = "$email",
+        password     = "$password",
+        organisation = "$organisation",
+        modified_at  = CURRENT_TIMESTAMP
+    WHERE user_id = ') . $id . qq(';
+  );
+  warn "SQL\n$sql";
+  my $sth = $self->{'_handle'}->prepare($sql);
+  my $result = $sth->execute();
+  return $self->last_inserted_id;
+}
+
 sub updateGroup {
   my ($self, $record) = @_;
   return {} unless $self->{'_handle'};
