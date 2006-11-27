@@ -277,8 +277,11 @@ sub fetch_by_GenomicAlignBlock {
 
 sub flush_cache {
   my ($self) = @_;
-
-  undef($self->{'_cache'});
+  foreach my $align_slice (values (%{$self->{'_cache'}})) {
+    undef $align_slice->{slices};
+    undef $align_slice->{_slices};
+  }
+  undef $self->{'_cache'};
 }
 
 1;
