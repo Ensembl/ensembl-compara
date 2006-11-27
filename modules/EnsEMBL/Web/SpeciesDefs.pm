@@ -284,18 +284,18 @@ sub parse {
 
 sub _convert_date {
   ### Converts a date from a species database into a human-friendly format for web display 
-  ### Argument: date in format YYMM with optional string attached
+  ### Argument: date in format YYYY-MM with optional -string attached
   ### Returns: hash ref {'date' => 'Mmm YYYY', 'string' => 'xxxxx'}
   my $date = shift;
   my %parsed;
-  my @a = ($date =~ /(\d{2})(\d{2})(.*)/);
+  my @a = ($date =~ /(\d{4})-(\d{2})-?(.*)/);
   my @now = localtime();
   my $thisyear = $now[5] + 1900;
   my %months = ('01'=>'Jan', '02'=>'Feb', '03'=>'Mar', '04'=>'Apr',
                   '05'=>'May', '06'=>'Jun', '07'=>'July','08'=>'Aug',
                   '09'=>'Sep', '10'=>'Oct', '11'=>'Nov', '12'=>'Dec');
 
-  my $year = '20'.$a[0];
+  my $year = $a[0];
   my $mon = $a[1];
   my $month;
   if ($mon && $mon < 13) {
