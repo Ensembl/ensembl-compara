@@ -176,6 +176,7 @@ sub find_level_for_user {
 
 sub save {
   my $self = shift;
+  warn "CHECKING FOR DATA TAINT: " . $self->tainted->{'users'};
   warn "PERFORMING GROUP SAVE";
   my %params = (
                  name        => $self->name,
@@ -195,9 +196,8 @@ sub save {
                                            'modified_by', $self->modified_by)
                                           ));
   }
-
-  if ($self->tainted->{users}) {
-    warn "ADDING RELATIONSHIP";
+  if ($self->tainted->{'users'}) {
+    warn "MODIFYING RELATIONSHIP";
     if ($self->added_users) {
       foreach my $user (@{ $self->added_users }) {
         warn "MAPPING " . $user->name;
@@ -212,6 +212,7 @@ sub save {
       $self->added_users([]);
     }
     if ($self->removed_users) {
+      warn "REMOVING RELATIONSHIP";
       foreach my $user (@{ $self->removed_users }) {
         my %relationship = (
                            from    => $self->id,
@@ -356,8 +357,10 @@ sub remove_user {
   if (!$self->removed_users) {
     $self->removed_users([]);
   }
+  warn "REMOVING REMOVE_USER: " . $user->name;
   push @{ $self->removed_users }, $user; 
   $self->taint('users');
+  warn "TAINT: " . $self->tainted->{'users'};
 }
 
 sub DESTROY {

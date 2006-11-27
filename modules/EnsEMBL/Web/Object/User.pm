@@ -203,6 +203,7 @@ sub add_group {
 sub remove_group {
   ### Remove a group from a user
   my ($self, $group) = @_;
+  $self->taint('groups');
   $group->remove_user($self);
 }
 
