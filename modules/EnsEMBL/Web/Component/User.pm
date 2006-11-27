@@ -124,18 +124,18 @@ sub _render_group_users {
     warn "CREATED BY: " . $group->created_by;
     if ($user->id eq $group->created_by) {
       $row->add_column({ content => "Owner" });
-      #$row->add_column({ content => "" });
+      $row->add_column({ content => "" });
       #$row->add_column({ content => "" });
     } else {
 
       if ($user->is_administrator_of($group)) {
         $row->add_column({ content => "Administrator" });
         #$row->add_column({ content => "Demote" });
-        #$row->add_column({ content => "Remove" });
+        $row->add_column({ content => "" });
       } else {
         $row->add_column({ content => "Member" });
         #$row->add_column({ content => "Promote" });
-        #$row->add_column({ content => "Remove" });
+        $row->add_column({ content => "<a href='/common/remove_user?user_id=" . $user->id . "&group_id=" . $group->id . "'>Remove</a>" });
       }
 
     }
@@ -197,7 +197,22 @@ sub _render_group_configs {
 
 sub _render_group_bookmarks {
   my ($group) = @_;
-  my $html = "You have not shared any bookmarks with the group.";
+  my @bookmarks = $group->bookmark_records;
+  my $html = "";
+  if ($#bookmarks > -1) {
+    my $table = EnsEMBL::Web::Interface::Table->new(( 
+                                         class => "ss", 
+                                         style => "border-collapse:collapse"
+                                                    ));
+    foreach my $bookmark (@bookmarks) {
+      my $row = EnsEMBL::Web::Interface::Table::Row->new();
+      $row->add_column({ content => "<a href='" . $bookmark->url . "'>" . $bookmark->name . "</a>" });
+      $table->add_row($row);  
+    }
+    $html .= $table->render;
+  } else {
+    $html = "You have not shared any bookmarks with the group.";
+  }
   return $html;
 }
 
@@ -333,21 +348,21 @@ sub _render_join {
   } else {
     $html .= "There are currently no open groups available.";
   }
-  $html .= "<br /><br/ >";
-  $html .= "<b>On request</b><br />";
-  $html .= "Other Ensembl groups are available to join on request. Enter the name of a group to request membership.<br /><br />"; 
-  $html .= "<form action='/common/request_membership' method='post'>\n";
-  my $name_table = EnsEMBL::Web::Interface::Table->new(( 
-                                         class => "ss", 
-                                         style => "border-collapse:collapse"
-                                                    ));
-  my $name_row = EnsEMBL::Web::Interface::Table::Row->new();
-  $name_row->add_column({ content => "Group name: " });
-  $name_row->add_column({ content => "<input type='text' name='group_name' />" });
-  $name_row->add_column({ content => "<input type='submit' value='Request' class='red_button' />" });
-  $name_table->add_row($name_row);
-  $html .= $name_table->render;
-  $html .= "</form>\n";
+  #$html .= "<br /><br/ >";
+  #$html .= "<b>On request</b><br />";
+  #$html .= "Other Ensembl groups are available to join on request. Enter the name of a group to request membership.<br /><br />"; 
+  #$html .= "<form action='/common/request_membership' method='post'>\n";
+  #my $name_table = EnsEMBL::Web::Interface::Table->new(( 
+  #                                       class => "ss", 
+  #                                       style => "border-collapse:collapse"
+  #                                                  ));
+  #my $name_row = EnsEMBL::Web::Interface::Table::Row->new();
+  #$name_row->add_column({ content => "Group name: " });
+  #$name_row->add_column({ content => "<input type='text' name='group_name' />" });
+  #$name_row->add_column({ content => "<input type='submit' value='Request' class='red_button' />" });
+  #$name_table->add_row($name_row);
+  #$html .= $name_table->render;
+  #$html .= "</form>\n";
   return $html;
 }
 
@@ -457,6 +472,7 @@ sub _render_bookmarks {
   my $html;
 
   my @bookmarks = $user->bookmark_records({ order_by => 'click' });
+  my @admin_groups = @{ $user->find_administratable_groups };
 
   if (@bookmarks) {
     my $table = EnsEMBL::Web::Interface::Table->new(( 
@@ -468,12 +484,16 @@ sub _render_bookmarks {
       $row->add_column({ width => '16px', content => '<img src="/img/bullet_star.png" width="16" height="16" />' });
       $row->add_column({ content => '<a href="' . $record->url. '">' .$record->name . '</a>' });
       $row->add_column({ content => '<a href="/common/bookmark?id=' . $record->id . '">Edit</a>' });
+      if ($#admin_groups > -1) {
+        $row->add_column({ content => '<a href="/common/share_record?id=' . $record->id . '">Share</a>' });
+      }
       $row->add_column({ content => '<a href="/common/remove_bookmark?id=' . $record->id . '">Delete</a>' });
       $table->add_row($row);
     }
  
     $html = $table->render; 
   }
+  
   else {
     $html = "You do not have any bookmarks saved.";
   } 
