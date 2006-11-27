@@ -1,0 +1,20 @@
+#! /usr/bin/perl
+
+package remove_group;
+
+use CGI;
+my $cgi = new CGI;
+
+my $url = "/common/groupview?id=" . $cgi->param('group_id');
+if ($ENV{'ENSEMBL_USER_ID'}) {
+  my $user = EnsEMBL::Web::Object::User->new({ id => $ENV{'ENSEMBL_USER_ID'} });
+  my $group = EnsEMBL::Web::Object::Group->new(( id => $cgi->param('group_id') )); 
+  if ($user->is_administrator_of($group)) {
+    my $record = EnsEMBL::Web::Group::Record->new(( id => $cgi->param('id') )); 
+    $record->delete;
+  }
+}
+
+print "Location: " . $url;
+
+1;
