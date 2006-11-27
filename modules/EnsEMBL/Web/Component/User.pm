@@ -207,6 +207,7 @@ sub _render_group_bookmarks {
     foreach my $bookmark (@bookmarks) {
       my $row = EnsEMBL::Web::Interface::Table::Row->new();
       $row->add_column({ content => "<a href='" . $bookmark->url . "'>" . $bookmark->name . "</a>" });
+      $row->add_column({ content => "<a href='/common/remove_group_bookmark?id=" . $bookmark->id . "&group_id=" . $group->id . "'>Remove</a>" });
       $table->add_row($row);  
     }
     $html .= $table->render;
