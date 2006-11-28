@@ -570,7 +570,7 @@ sub _render_filters {
     $html = $table->render; 
   }
   else {
-    $html = "You do not have any news filters set up.";
+    $html = qq(You do not have any news filters set up. <a href="/common/filter_news">Add a filter</a>);
   } 
   return $html;
 }

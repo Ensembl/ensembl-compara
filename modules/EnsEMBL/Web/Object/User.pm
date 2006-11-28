@@ -30,7 +30,7 @@ sub new {
   ### they should not inherit from {{EnsEMBL::Web::Proxiable}}).
   ### Need a new class which masks proxability, but still works with
   ### the existing site architecture.
-  warn "NEW OBJECT::USER";
+  #warn "NEW OBJECT::USER";
   my ($class, $param_hashref) = @_;
 
   ## Get the params from the hashref sent by the Proxy.
@@ -132,7 +132,7 @@ sub find_groups_by_type {
                                            modified_at => $result->{modified_at},
                                            id => $result->{id}
                                              )); 
-      warn "CREATING GROUP " . $group ." for USER " . $self->name;
+     # warn "CREATING GROUP " . $group ." for USER " . $self->name;
       push @{ $return }, $group;
     }
   }
@@ -195,7 +195,7 @@ sub add_group {
   $group->created_by($id);
   $group->modified_by($id);
   $group->add_user($self);
-  warn "ADDING GROUP: " . $group->name;
+ # warn "ADDING GROUP: " . $group->name;
   $self->taint('groups');
   push @{ $self->groups }, $group;
 }
@@ -432,7 +432,7 @@ sub notify_admin {
   my $admins = $self->web_user_db->getGroupAdmins($group);
   my $member_name   = $self->user_name;
   my $member_email  = $self->email;
-  my $member_org    = $self->org;
+  my $member_org    = $self->organisation;
 
   my @mail_attributes = ();
   my @T = localtime();

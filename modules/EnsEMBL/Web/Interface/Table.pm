@@ -49,12 +49,12 @@ sub render {
   my ($self) = @_;
   my $html = "<table class='" . $self->class . "' style='" . $self->style . "'>\n";
   my $count = 0;
-  my $colour = 'bg1';
+  my $colour = 'bg2';
   foreach my $row (@{ $self->elements }) {
     $count++;
-    $colour = 'bg1';
+    $colour = 'bg2';
     if ($count % 2) {
-      $colour = 'bg2';
+      $colour = 'bg1';
     }
     $html .= "<tr class=\"$colour\">\n";
     $html .= $row->render;
