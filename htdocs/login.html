@@ -3,20 +3,32 @@
 <title>Log in to Ensembl</title>
 </head>
 <body>
-<h1>Log in to your Ensembl account</h1>
-<br /><br />
-You can log into your Ensembl account here.
-<br /><br />
-<form action="/common/login" method="post">
-Username: <br />
-<input type="text" size="20" name="username" />
-<br/ ><br/ >
-Password: <br />
-<input type="password" size="20" name="password" />
-<br/ ><br/ >
-<input type="hidden" size="20" name="url" id="url" />
-<input type="submit" value="Log in" class="red-button">
-</form>
+<h1 style="margin-bottom:1em;">Log in to your Ensembl account</h1>
+
+<div class="formpanel-left" style="width:50%">
+  <form action="/common/login" method="post">
+  <div class="formblock">
+    <h6><label for="username">Username:</label></h6>
+    <div class="formcontent">
+      <input type="text" size="20" name="username" />
+    </div>
+  </div>
+  <div class="formblock">
+    <h6><label for="password">Password:</label></h6>
+    <div class="formcontent">
+    <input type="password" size="20" name="password" />
+    </div>
+  </div>
+  <div class="formblock">
+    <h6></h6>
+    <input type="hidden" size="20" name="url" id="url" />
+    <div class="formcontent">
+    <input type="submit" value="Log in" class="red-button">
+    </div>
+  </div>
+  </form>
+</div>
+
 <script type="text/javascript">
 
 var params = getParameters();
