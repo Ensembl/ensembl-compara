@@ -985,8 +985,12 @@ sub get_markedup_trans_seq {
 =cut
 
 sub get_similarity_hash{
+  my($self,$recurse) = @_;
+  $recurse = 1 unless defined $recurse;
   my $DBLINKS;
-  eval { $DBLINKS = $_[0]->transcript->get_all_DBLinks; };   
+  eval { $DBLINKS = $recurse ? $self->transcript->get_all_DBLinks
+                             : $self->transcript->get_all_DBEntries; };
+
   warn ("SIMILARITY_MATCHES Error on retrieving gene DB links $@") if ($@);    
   return $DBLINKS  || [];
 }

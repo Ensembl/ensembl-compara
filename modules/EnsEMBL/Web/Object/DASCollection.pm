@@ -153,7 +153,8 @@ sub getRegistrySources {
 		return 1 if ($src->{url} =~ /$keyText/); 
 		return 1 if ($src->{nickname} =~ /$keyText/); 
 		return 1 if ($src->{description} =~ /$keyText/); 
-		return 0; };
+		return 0;
+            };
 	}
 	
 	if ($keyMapping ne 'any') {
@@ -164,7 +165,8 @@ sub getRegistrySources {
 ### Special case for Ensembl Location
 		    return 1 if ($self->getEnsemblMapping($cs) =~ /^$keyMapping/);
 		}
-		return 0; };
+		return 0;
+            };
 	}
 											       
     }

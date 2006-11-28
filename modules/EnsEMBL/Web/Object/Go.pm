@@ -10,7 +10,14 @@ use EnsEMBL::Web::Proxy::Object;
 @EnsEMBL::Web::Object::Go::ISA = qw(EnsEMBL::Web::Object);
 
 sub acc_id  { return $_[0]->Obj->{'acc_id'} if $_[0]->Obj->{'acc_id'}; }
-sub name  { return $_[0]->Obj->{'term'}->name if $_[0]->Obj->{'term'}; }
+
+sub name  {
+  my $self = shift;
+  if( @{$self->Obj->{'terms'}||[]} ) {
+    return $self->Obj->{'terms'}->[0]->name;
+  }
+}
+
 sub families { return $_[0]->Obj->{'families'} if $_[0]->Obj->{'families'};}
 
 sub count_genes {
@@ -49,9 +56,10 @@ sub db_entry_adaptor { return $_[0]->Obj->{_db_entry_adaptor} ||= $_[0]->databas
 sub gene_adaptor     { return $_[0]->Obj->{_gene_adaptor}     ||= $_[0]->database('core')->get_GeneAdaptor(); }
 sub family_adaptor   { return $_[0]->Obj->{_family_adaptor}   ||= $_[0]->database('compara')->get_FamilyAdaptor(); }
 sub iterator { 
-    my $graph = $_[0]->Obj->{'graph'};
-    my $iterator = $graph->create_iterator();
-    return $iterator;
+  my $graph = $_[0]->Obj->{'graph'};
+  return undef unless $graph;
+  my $iterator = $graph->create_iterator();
+  return $iterator;
 }
 
 sub retrieve_features {
