@@ -109,12 +109,12 @@ sub init {
          [ 'ex_profile'      => 'Exp. profile'    ],
       ],
       'compara' => [ 
-        ['opt_match' => 'Blastz net'],
-        ['opt_tblat' => 'Translated BLAT'],
-        ['opt_join_match' => 'Join Blastz net'],
-        ['opt_join_tblat'   => 'Join tr. BLAT'],
-        ['opt_join_transcript'   => 'Join transcripts'],
-        ['opt_group_match' => 'Group Blastz net'],
+        ['opt_match'            => 'Blastz net'],
+        ['opt_tblat'            => 'Translated BLAT'],
+        ['opt_join_match'       => 'Join Blastz net'],
+        ['opt_join_tblat'       => 'Join tr. BLAT'],
+        ['opt_join_transcript'  => 'Join transcripts'],
+        ['opt_group_match'      => 'Group Blastz net'],
       ],
       'options' => [
          # 'name'            => 'caption'
