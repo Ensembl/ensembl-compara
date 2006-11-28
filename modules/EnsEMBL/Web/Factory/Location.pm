@@ -427,6 +427,9 @@ sub createObjects {
       if(!$location && ($ftype eq 'region' || $ftype eq 'all') ) {
         $location = $self->_location_from_SeqRegion( $temp_id );
       } 
+      if(!$location && ($ftype eq 'region' ) ) {
+        $location = $self->_location_from_MiscFeature( $temp_id );
+      }
       if (!$location) {
         $location = $self->_location_from_SeqRegion( $seq_region, $temp_id, $temp_id );
       }

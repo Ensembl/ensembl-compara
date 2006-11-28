@@ -47,7 +47,7 @@ sub createObjects {
 sub new_MultipleLocation {
   my( $self, @locations ) = @_;
   my $T = EnsEMBL::Web::Proxy::Object->new( 'MultipleLocation', \@locations, $self->__data );
-  $T->species = $locations[0]->real_species if @locations;
+  $T->species( $locations[0]->real_species ) if @locations;
   return $T;
 }
 

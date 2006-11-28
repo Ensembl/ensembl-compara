@@ -95,18 +95,59 @@ sub new {
 ##
 sub species_defs         { $_[0][1]{'_species_defs'}  ||= EnsEMBL::Web::SpeciesDefs->new(); }
 sub user_details         { $_[0][1]{'_user_details'}  ||= 1; } # EnsEMBL::Web::User::Details->new( $_[0]->{_web_user_db}); }
-sub species :lvalue      { $_[0][1]{'_species'}; }
+
+sub species {
+### a
+### sets/gets species
+  my $self = shift;
+  if(@_) {
+    $self->[1]{_species} = shift;
+  }
+  return $self->[1]{_species};
+}
+
 sub script               { 
   ### a
   my ($self, $value) = @_;
   if ($value) {
-    $_[0][1]{'_script'} = $value;
+    $self->[1]{'_script'} = $value;
   }
-  return $_[0][1]{'_script'}; 
+  return $self[1]{'_script'}; 
 }
-sub __supertype  :lvalue { $_[0][3]; }
-sub __objecttype :lvalue { $_[0][0]; }
-sub __data       :lvalue { $_[0][1]; }
+
+sub __supertype  :lvalue {
+### a
+### gets supertype of Proxy (i.e. Factory/Object;)
+  my $self = shift;
+  return $self->[3];
+}
+
+sub __objecttype :lvalue {
+### a
+### gets type of Object being proxied (e.g. Gene/Transcript/Location/...)
+  my $self = shift;
+  return $self->[0];
+}
+
+sub __children           {
+### a
+### returns a reference to the array of child (EnsEMBL::*::$supertype::$type) objects
+  my $self = shift;
+  return $self->[2];
+}
+
+sub __data       :lvalue {
+### a
+### return data hash
+  my $self = shift;
+  return $self->[1];
+}
+
+sub timer {
+  my $self = shift;
+  return $self->{'timer'};
+}
+
 sub __children           { return $_[0][2]; }
 
 sub has_a_problem     { return scalar(                               @{$_[0][1]{'_problem'}} ); }
@@ -121,6 +162,17 @@ sub problem {
 }
 
 sub AUTOLOAD {
+### Nasty Voodoo magic
+###
+### Loop through all the plugins and if they can perform the requested function
+### action it on the child objects....
+###
+### If the function sets __data->{'_drop_through_'} to 1 then no further action
+### is taken...
+###
+### If it sets it to a value other than one then this function is called after
+### the function has been called on all the other children
+
   my $self   = shift;
   ( my $fn     = our $AUTOLOAD ) =~ s/.*:://;
   my @return = ();
@@ -154,6 +206,10 @@ sub AUTOLOAD {
 }
 
 sub can {
+### Nasty Voodoo magic (part II)
+###
+### Because we have an {{AUTOLOAD}} function all functions are possible and can will always
+### return 1 - so we over-ride can to return 1 if any child can perform this function.
   my $self = shift;
   my $fn   = shift;
   foreach my $sub ( @{$self->__children} ) {
@@ -163,6 +219,11 @@ sub can {
 }
 
 sub ref {
+### Nasty Voodoo magic (part III)
+###
+### Ref will just return that you have a Proxy object - but we don't want to to do
+### so this function the underlying object type (and also what children are also
+
   my $self = shift;
   my $ref = ref( $self );
   my $object = join '::', 'EnsEMBL','Web',$self->__supertype,$self->__objecttype;

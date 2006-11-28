@@ -36,27 +36,44 @@ sub createObjects {
   }      
   my $fa = $ca->get_FamilyAdaptor;
 
-  my ($term, $graph, %families);
+  my ($terms, $graph, %families);
+  my $flag = 0;
   if ($acc_id || $query) {
     if ($acc_id=~/^(GO:\d+)/i) {
-        $acc_id = uc($1);
-        $term    = $ga->get_term({'acc'=>$acc_id});
-        $graph   = $ga->get_graph_by_terms([$term], $limit);
-    } else {
-        if (($query =~ /^(GO\:\d+)/i) || ($query =~ /^(\d+)$/)){
-            $query = uc( $1 );
-            $graph = $ga->get_graph_by_acc($query,$limit);
-        } else {
-            $term    = $ga->get_terms({'search'=>$query});
-            $graph   = $ga->get_graph_by_terms($term, $limit);
-        }
+      $acc_id = uc($1);
+      $terms    = $ga->get_terms({'acc'=>$acc_id});
+      if( @$terms ) {
+        $graph   = $ga->get_graph_by_terms( $terms, $limit);
+      } else {
+        $flag = 1;
+      }
+    } elsif( ($query =~ /^(GO\:\d+)/i) || ($query =~ /^(\d+)$/) ){
+      $query = uc( $1 );
+      $terms = $ga->get_terms({'acc'=>$query});
+      if( @$terms ) {
+        $acc_id = $query;
+        $graph   = $ga->get_graph_by_terms( $terms, $limit);
+      } else {
+        $flag = 1;
+      }
+    } elsif( $query ) {
+      $terms  = $ga->get_terms({'search'=>$query});
+      if( @$terms ) {
+        $graph   = $ga->get_graph_by_terms($terms, $limit);
+      } else {
+        $flag = 1;
+      }
     }
     # get genes associated with this graph
 ## Let us lazy load this....
   }
+  if( $flag == 1 ) {
+    $self->problem( 'Non-fatal', 'No results', "Did not find any results for search" );
+    return ;
+  }
   $self->DataObjects( new EnsEMBL::Web::Proxy::Object( 
         'Go', 
-        {'acc_id'=>$acc_id, 'term' => $term, 'graph' => $graph, 'families' => {} },
+        {'acc_id'=>$acc_id, 'terms' => $terms, 'graph' => $graph, 'families' => {} }, 
         $self->__data )
     );
  
