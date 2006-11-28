@@ -4,6 +4,10 @@ use strict;
 no strict 'refs';
 
 sub init {
+### Used by Constructor
+### init function called to set defaults for the passed
+### {{EnsEMBL::Web::ScriptConfig}} object
+
   my( $script_config ) = @_;
 
   $script_config->_set_defaults(qw(
