@@ -100,6 +100,7 @@ sub clearCookie {
 
 sub setConfigByName {
   my( $self, $r, $session_ID, $key, $value ) = @_;
+  warn "==> Set config by name: $session_ID, $key, $value";
   return unless $self->{'_handle'};
   unless($session_ID) {
     $session_ID = $self->create_session( 0, $r ? $r->uri : '' );
@@ -148,6 +149,7 @@ sub clearConfigByName {
 
 sub getConfigByName {
   my( $self, $session_ID, $key ) = @_;
+  warn "==> get config by name: $session_ID, $key";
   return unless $self->{'_handle'};
   return unless $session_ID;
   my( $key_ID ) = $self->{'_handle'}->selectrow_array( "select ID from USERDATATYPE where name = ?", {}, $key );
@@ -162,6 +164,7 @@ sub setConfig {
   my $session_ID      = shift;
   my $userdatatype_ID = shift || 1;
   my $value           = shift;
+  warn "==> set config";
   return unless( $self->{'_handle'} );
   unless($session_ID) {
     $session_ID = $self->create_session( 0, $r ? $r->uri : '' );
@@ -197,6 +200,7 @@ sub getConfig {
   my $self            = shift;
   my $session_ID      = shift;
   my $userdatatype_ID = shift || 1;  
+  warn "==> get config";
   return unless( $self->{'_handle'} && $session_ID > 0 );
   my $value = $self->{'_handle'}->selectrow_array(
     "select value
@@ -274,7 +278,7 @@ sub find_user_by_email {
     FROM ) . $self->user_table . qq(
     WHERE email = "$email"; 
   );
-  warn "SQL: " . $sql;
+  #warn "SQL: " . $sql;
 
   my $R = $self->{'_handle'}->selectall_arrayref($sql); 
   return {} unless $R->[0];
@@ -304,7 +308,7 @@ sub find_user_by_email_and_password {
     FROM ) . $self->user_table . qq(
     WHERE email = "$email" and password = "$password"; 
   );
-  warn "SQL: " . $sql;
+  #warn "SQL: " . $sql;
 
   my $R = $self->{'_handle'}->selectall_arrayref($sql); 
   return {} unless $R->[0];
@@ -335,7 +339,7 @@ sub find_user_by_user_id {
     WHERE ) . $self->user_table . qq(_id = "$id" 
   );
 
-  warn "SQL: " . $sql;
+  #warn "SQL: " . $sql;
 
   my $R = $self->{'_handle'}->selectall_arrayref($sql); 
   return {} unless $R->[0];
@@ -391,7 +395,7 @@ sub find_users_by_group_id {
 
 sub find_users_by_level {
   my ($self, $level) = @_;
-  warn "FINDING USERS BY LEVEL";
+  #warn "FINDING USERS BY LEVEL";
 }
 
 sub getUserByID {
@@ -462,7 +466,7 @@ sub getUserByCode {
     FROM ) . $self->user_table . qq( 
     WHERE password = "$code"
   );
-warn $sql;
+#warn $sql;
 
   my $R = $self->{'_handle'}->selectall_arrayref($sql); 
   return {} unless $R->[0];
@@ -771,7 +775,7 @@ sub update_group {
   my $status = $params{status};
   my $modified_by = $params{modified_by};
   my $created_by = $params{created_by};
-  warn "UPDATING: " . $name;
+  #warn "UPDATING: " . $name;
   my $sql = qq(
     UPDATE webgroup
     SET name        = "$name",
@@ -783,7 +787,7 @@ sub update_group {
         created_at  = CURRENT_TIMESTAMP
     WHERE webgroup_id = ') . $id . qq(';
   );
-  warn "SQL\n$sql";
+  #warn "SQL\n$sql";
   my $sth = $self->{'_handle'}->prepare($sql);
   my $result = $sth->execute();
   return $self->last_inserted_id;
@@ -796,7 +800,7 @@ sub update_user {
   my $email = $params{email};
   my $password = $params{password};
   my $organisation = $params{organisation};
-  warn "UPDATING: " . $name;
+  #warn "UPDATING: " . $name;
   my $sql = qq(
     UPDATE user 
     SET name         = "$name",
@@ -806,7 +810,7 @@ sub update_user {
         modified_at  = CURRENT_TIMESTAMP
     WHERE user_id = ') . $id . qq(';
   );
-  warn "SQL\n$sql";
+  #warn "SQL\n$sql";
   my $sth = $self->{'_handle'}->prepare($sql);
   my $result = $sth->execute();
   return $self->last_inserted_id;
@@ -968,7 +972,7 @@ sub find_records {
   if ($type) {
     $sql .= qq( AND type = "$type"); 
   }
-warn "SQL:\n$sql"; 
+#warn "SQL:\n$sql"; 
   my $T = $self->{'_handle'}->selectall_arrayref($sql);
   return [] unless $T;
   for (my $i=0; $i<scalar(@$T);$i++) {
@@ -994,7 +998,7 @@ sub delete_record {
   if ($params{table}) {
     $table = $params{table};
   }
-  warn "DELETING: " . $id;
+  #warn "DELETING: " . $id;
   my $sql = qq(
     DELETE FROM ) . $table . qq(_record 
     WHERE ) . $table . qq(_record_id = $id
@@ -1015,7 +1019,7 @@ sub update_record {
   if ($params{table}) {
     $table = $params{table};
   }
-  warn "UPDATING: " . $user_id . ": " . $type . ": " . $data;
+  #warn "UPDATING: " . $user_id . ": " . $type . ": " . $data;
   my $sql = qq(
     UPDATE ) . $table . qq(_record
     SET ) . $table . qq(_id = $user_id,
@@ -1023,7 +1027,7 @@ sub update_record {
         data    = "$data"
     WHERE ) . $table . qq(_record_id = $id
   );
-  warn $sql;
+  #warn $sql;
   my $sth = $self->{'_handle'}->prepare($sql);
   my $result = $sth->execute();
 
@@ -1039,7 +1043,7 @@ sub insert_record {
   if ($params{table}) {
     $table = $params{table};
   }
-  warn "INSERTING: " . $user_id . ": " . $type . ": " . $data;
+  #warn "INSERTING: " . $user_id . ": " . $type . ": " . $data;
   my $sql = qq(
     INSERT INTO ) . $table . qq(_record 
     SET ) . $table . qq(_id = $user_id,
@@ -1058,7 +1062,7 @@ sub insert_user {
   my $name = $params{name};
   my $email = $params{email};
   my $data = $params{data};
-  warn "INSERTING: " . $name;
+  #warn "INSERTING: " . $name;
   my $sql = qq(
     INSERT INTO user 
     SET name    = "$name",
@@ -1080,7 +1084,7 @@ sub insert_group {
   my $status = $params{status};
   my $modified_by = $params{modified_by};
   my $created_by = $params{created_by};
-  warn "INSERTING: " . $name;
+  #warn "INSERTING: " . $name;
   my $sql = qq(
     INSERT INTO webgroup
     SET name        = "$name",
@@ -1091,7 +1095,7 @@ sub insert_group {
         created_by  = "$created_by",
         created_at  = CURRENT_TIMESTAMP
   );
-  warn "SQL\n$sql";
+  #warn "SQL\n$sql";
   my $sth = $self->{'_handle'}->prepare($sql);
   my $result = $sth->execute();
   return $self->last_inserted_id;
@@ -1111,7 +1115,7 @@ sub add_relationship {
         status      = "$status",
         created_at  = CURRENT_TIMESTAMP
   );
-  warn $sql;
+  #warn $sql;
   my $sth = $self->{'_handle'}->prepare($sql);
   my $result = $sth->execute();
 }
@@ -1124,7 +1128,7 @@ sub remove_relationship {
     DELETE FROM group_member 
     WHERE webgroup_id = "$from_id" AND user_id = "$to_id";
   );
-  warn $sql;
+  #warn $sql;
   my $sth = $self->{'_handle'}->prepare($sql);
   my $result = $sth->execute();
 }
@@ -1177,7 +1181,7 @@ sub groups_for_type {
     FROM webgroup 
     WHERE webgroup.type = '$type' and webgroup.status = '$status';
   );
-  warn $sql;
+  #warn $sql;
   my $R = $self->{'_handle'}->selectall_arrayref($sql);
   my $results = [];
   if ($R->[0]) {

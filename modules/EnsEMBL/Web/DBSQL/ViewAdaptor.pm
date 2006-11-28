@@ -209,6 +209,7 @@ sub create {
 
   foreach my $key (keys %set_parameters) {
     $set_parameters{$key} =~ s/'/\\'/g;
+    $set_parameters{$key} =~ s/\\\\'/\\'/g;
   }
 
   my $sql = "INSERT INTO " . $table . " ";
