@@ -133,4 +133,10 @@ else{
   warn( ('=' x 78) . "\n\n" );
 }
 
+if( $Apache::Server::Starting != 1 ){ # Only parse the config on first pass
+  foreach(0..4) { warn "\n"; }
+  warn "*" x 78,"\n";
+  foreach(0..4) { warn "\n"; }
+}
+
 1;
