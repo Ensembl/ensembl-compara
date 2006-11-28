@@ -449,6 +449,17 @@ sub fragment_contigview_ideogram {
   $self->add_panel( $ideo );
 }
 
+sub configview {
+  my $self = shift;
+  my $obj  = $self->{object};
+  my $panel = $self->new_panel( 'Image',
+                                'code' => "save_#",
+                                'caption' => "Save configuration" 
+  );
+  $panel->add_components(qw(image EnsEMBL::Web::Component::Location::save_config));
+  $self->add_panel( $panel);
+}
+
 sub contigview {
   my $self   = shift;
   my $obj    = $self->{object};

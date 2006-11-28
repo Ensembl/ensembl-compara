@@ -154,10 +154,8 @@ sub user_menu {
 
   $self->add_block( $flag, 'bulleted', "Groups" );
 
-  $self->add_entry( $flag, 'text' => "Join a group",
-                           'href' => "/common/join_a_group" );
-  $self->add_entry( $flag, 'text' => "Start a new group",
-                           'href' => "/common/start_a_group" );
+  $self->add_entry( $flag, 'text' => "Create new group",
+                           'href' => "/common/create_group" );
    
 }
 
