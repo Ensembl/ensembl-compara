@@ -246,9 +246,12 @@ sub fetch_by_GenomicAlignBlock {
   my $reference_slice = $reference_genomic_align->get_Slice();
 
   # Use cache whenever possible
-  my $key = $reference_slice->name.":".$method_link_species_set->dbID.":".($expanded?"exp":"cond").
-      ":".($solve_overlapping?"fake-overlap":"non-overlap");
-  return $self->{'_cache'}->{$key} if (defined($self->{'_cache'}->{$key}));
+  my $key;
+  if ($genomic_align_block->dbID) {
+    $key = "gab_".$genomic_align_block->dbID.":".($expanded?"exp":"cond").
+        ":".($solve_overlapping?"fake-overlap":"non-overlap");
+    return $self->{'_cache'}->{$key} if (defined($self->{'_cache'}->{$key}));
+  }
 
   my $align_slice = new Bio::EnsEMBL::Compara::AlignSlice(
           -adaptor => $self,
@@ -257,8 +260,11 @@ sub fetch_by_GenomicAlignBlock {
           -method_link_species_set => $method_link_species_set,
           -expanded => $expanded,
           -solve_overlapping => $solve_overlapping,
+          -preserve_blocks => 1,
       );
-  $self->{'_cache'}->{$key} = $align_slice;
+  if ($key) {
+    $self->{'_cache'}->{$key} = $align_slice;
+  }
 
   return $align_slice;
 }
