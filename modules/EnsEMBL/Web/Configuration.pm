@@ -29,10 +29,12 @@ sub update_configs_from_parameter {
     $wsc->update_config_from_parameter( $val ) if $val;
   }
   foreach my $selfig_name ( @userconfigs ) {
-    my $wuc = $self->{object}->get_userconfig( $selfig_name );
+    $self->{'object'}->attach_image_config( $self->{'object'}->script, $config_name );
+    my $wuc = $self->{object}->get_userconfig( $config_name );
     if( $wuc ) {
       $wuc->reset() if $rst;
       $wuc->update_config_from_parameter( $val ) if $val;
+      $self->{object}->get_session->_temp_store( $self->{object}->script, $config_name );
     }
   }
 }

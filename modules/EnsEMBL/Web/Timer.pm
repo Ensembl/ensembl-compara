@@ -6,13 +6,36 @@ use Time::HiRes qw(time);
 ### * Diagnostics to count/time inner loops ({{start}}/{{end}})
 ### * Heirarchical diagnostics for timing execution of parts of pages ({{new}})
 use strict;
+use Class::Std;
+{
+  my %Benchmarks_of :ATTR( :get<benchmarks> );
+  my %Times_of      :ATTR( :get<times>      );
+  my %script_start_time_of  :ATTR( :get<script_start_time>  :set<script_start_time>  );
+  my %process_start_time_of :ATTR( :get<process_start_time> :set<process_start_time> );
+  my %process_child_count_of :ATTR( :get<process_child_count> :set<process_child_count> );
+  sub BUILD {
+  ### c
+    my( $class, $ident, $arg_ref ) = @_;
+    $Times_of{      $ident } = [];
+    $Benchmarks_of{ $ident } = {};
+  }
+
+sub new_child {
+  my $self = shift;
+  $process_child_count_of{ ident $self }++;
+  $self->set_script_start_time( time );
+}
+
+#---------------------------------------------------------------
+# Functions related to timing of method calls / low-level code..
+#---------------------------------------------------------------
 
 sub start {
 ### Start a new inner loop
   my( $self, $tag ) = @_;
 ## Only push new start time if actually started!!
-  unless( $self->{'_benchmarks'}{$tag}{'last_start'} ) { 
-    $self->{'_benchmarks'}{$tag}{'last_start'} = time();
+  unless( $Benchmarks_of{ ident $self }{$tag}{'last_start'} ) { 
+    $Benchmarks_of{ ident $self }{$tag}{'last_start'} = time();
   }
 }
 
@@ -20,45 +43,45 @@ sub end {
 ### Mark inner loop as finished
   my( $self, $tag ) = @_;
 ## Can't push if there is no start!
-  if( $self->{'_benchmarks'}{$tag}{'last_start'} ) {
-    my $time = time()-$self->{'_benchmarks'}{$tag}{'last_start'};
-    if( exists( $self->{'_benchmarks'}{$tag}{'min'} ) ) {
-      $self->{'_benchmarks'}{$tag}{'min'} = $time if $self->{'_benchmarks'}{$tag}{'min'} > $time;
-      $self->{'_benchmarks'}{$tag}{'max'} = $time if $self->{'_benchmarks'}{$tag}{'max'} < $time;
+  my $temp_ref = $Benchmarks_of{ ident $self }{$tag};
+  if( $temp_ref->{'last_start'} ) {
+    my $time = time()-$temp_ref->{'last_start'};
+    if( exists( $temp_ref->{'min'} ) ) {
+      $temp_ref->{'min'} = $time if $temp_ref->{'min'} > $time;
+      $temp_ref->{'max'} = $time if $temp_ref->{'max'} < $time;
     } else {
-      $self->{'_benchmarks'}{$tag}{'min'} = $time;
-      $self->{'_benchmarks'}{$tag}{'max'} = $time;
+      $temp_ref->{'min'} = $time;
+      $temp_ref->{'max'} = $time;
     }
-    $self->{'_benchmarks'}{$tag}{'count'}++;
-    $self->{'_benchmarks'}{$tag}{'time'}+= $time;
-    $self->{'_benchmarks'}{$tag}{'time2'}+= $time*$time;
-    delete( $self->{'_benchmarks'}{$tag}{'last_start'} );
+    $temp_ref->{ 'count' }++;
+    $temp_ref->{ 'time'  }+= $time;
+    $temp_ref->{ 'time2' }+= $time * $time;
+    delete( $temp_ref->{ 'last_start' } );
   }
 }
 
-sub new {
-### c
-  my $class = shift;
-  my $self = {'times'=>[],'_benchmarks'=>{}};
-  bless $self, $class;
-  $self->push( 'Script started' );
-  return $self;
-}
+#---------------------------------------------------------------
+# Functions related to timing blocks of page
+#---------------------------------------------------------------
 
+sub clear_benchmarks {
+  my $self = shift;
+  @{$Times_of{ ident $self }} = [];
+}
 sub push {
 ### Push a new tag onto the "heirarchical diagnsotics"
 ### Message is message to display and level is the depth of the tree
 ### for which the timing is recorded
   my( $self, $message, $level ) = @_;
   $level ||= 0;
-  push @{$self->{'times'}}, [ time(), $message, $level ];
+  push @{$Times_of{ ident $self }}, [ time(), $message, $level ];
 }
 
 sub render {
 ### Render both diagnostic tables if any data - tree timings from Push and diagnostic repeats from start/end
   my $self = shift;
   $self->push("Page rendered");
-  my $base_time = shift @{$self->{times}};
+  my $base_time = shift @{$Times_of{ ident $self }};
 
   my $diagnostics = "
 ================================================================
@@ -67,11 +90,11 @@ Script /$ENV{'ENSEMBL_SPECIES'}/$ENV{'ENSEMBL_SCRIPT'}
 Cumulative     Section\n";
   my @previous  = ();
   my $max_depth = 0;
-  foreach( @{$self->{'times'}} ) { $max_depth = $_->[2] if $max_depth < $_->[2]; }
+  foreach( @{$Times_of{ ident $self }} ) { $max_depth = $_->[2] if $max_depth < $_->[2]; }
 
   $diagnostics .= ('           ' x (2+$max_depth) ) . $base_time->[1]; 
   $base_time = $base_time->[0];
-  foreach( @{ $self->{'times'}} ) {
+  foreach( @{ $Times_of{ ident $self }} ) {
     $diagnostics .= sprintf( "\n" );
     foreach my $i (0..($max_depth+1)) {
       if( $i<=$_->[2] ) {
@@ -115,5 +138,6 @@ $benchmarks
 ";
 }
 
+}
 1;
 
