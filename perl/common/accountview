@@ -13,6 +13,7 @@ my $webpage= new EnsEMBL::Web::Document::WebPage(
   'outputtype' => 'HTML',
   'scriptname' => 'accountview',
   'objecttype' => 'User',
+  'access'     => {'login' => 1}, ## page only accessible to logged-in users
 );
 
 if( $webpage->has_a_problem() ) {
@@ -21,6 +22,6 @@ if( $webpage->has_a_problem() ) {
   foreach my $object( @{$webpage->dataObjects} ) {
     $webpage->configure( $object, 'accountview', 'context_menu', 'user_menu' );
   }
-  $webpage->action({'login' => 1}); ## page only accessible to logged-in users
+  $webpage->action(); 
 }
 1;

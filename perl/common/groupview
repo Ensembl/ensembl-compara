@@ -13,6 +13,7 @@ my $webpage= new EnsEMBL::Web::Document::WebPage(
   'outputtype' => 'HTML',
   'scriptname' => 'groupview',
   'objecttype' => 'User',
+  'access'     => {'group' => ''}, ## page only accessible to group members
 );
 
 if( $webpage->has_a_problem() ) {
