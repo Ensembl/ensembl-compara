@@ -16,6 +16,10 @@ sub update_config_from_parameter {
   $self->save( );
 }
 
+sub storable :lvalue {
+  my $self = shift;
+  $self->{_storable};
+}
 sub new {
   my $class   = shift;
   my $type    = shift;
