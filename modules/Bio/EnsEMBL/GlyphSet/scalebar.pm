@@ -31,7 +31,8 @@ sub init_label {
 	  if( length($chr) > 9 ) { 
 		$chr = $chr_raw;
 	  }
-    $chr = join( '', map { substr($_,0,1) } split( /_/, $self->{'config'}->{'species'}))." $chr";
+    (my $abbrev = $self->{'config'}->{'species'} ) =~ s/^(\w)\w+_(\w{3})\w+$/\1\2/g;
+    $chr = "$abbrev $chr";
     my $line = new Sanger::Graphics::Glyph::Rect({
       'z' => 11,
       'x' => -120,
