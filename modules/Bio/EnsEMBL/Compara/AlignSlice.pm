@@ -206,6 +206,31 @@ use Bio::SimpleAlign;
                  -method_link_species_set
                  -expanded
                  -solve_overlapping
+                 -preserve_blocks
+    -adaptor:  the Bio::EnsEMBL::Compara::DBSQL::AlignSliceAdaptor
+    -reference_slice:
+               Bio::EnsEMBL::Slice, the guide slice for this align_slice
+    -genomic_align_blocks:
+               listref of Bio::EnsEMBL::Compara::GenomicAlignBlock
+               objects containing to the alignments to be used for this
+               align_slice
+    -method_link_species_set;
+               Bio::EnsEMBL::Compara::MethodLinkSpeciesSet object for
+               all the previous genomic_align_blocks. At the moment all
+               the blocks should correspond to the same MethodLinkSpeciesSet
+    -expanded: boolean flag. If set to true, the AlignSlice will insert all
+               the gaps requiered by the alignments in the reference_slice
+               (see MODES elsewhere in this document)
+    -solve_overlapping:
+               boolean flag. If set to true, the AlignSlice will allow
+               overlapping alginments and solve indeterminations according
+               to the method described in OVERLAPPING ALIGNMENTS elsewhere
+               in this document
+    -preserve_blocks:
+               boolean flag. By default the AlignSlice trim the alignments
+               in order to fit the reference_slice. This flags tell the
+               AlignSlice to use the alignment block as they are (usually
+               this is only used by the AlignSliceAdaptor, use with care)
   Example    : my $align_slice =
                    new Bio::EnsEMBL::Compara::AlignSlice(
                        -adaptor => $align_slice_adaptor,
@@ -228,10 +253,10 @@ sub new {
   bless $self,$class;
 
   my ($adaptor, $reference_slice, $genomic_align_blocks, $method_link_species_set,
-      $expanded, $solve_overlapping) =
+      $expanded, $solve_overlapping, $preserve_blocks) =
       rearrange([qw(
           ADAPTOR REFERENCE_SLICE GENOMIC_ALIGN_BLOCKS METHOD_LINK_SPECIES_SET
-          EXPANDED SOLVE_OVERLAPPING
+          EXPANDED SOLVE_OVERLAPPING PRESERVE_BLOCKS
       )], @args);
 
   $self->adaptor($adaptor) if (defined ($adaptor));
@@ -254,7 +279,7 @@ sub new {
   }
 
   $self->_create_underlying_Slices($genomic_align_blocks, $self->{expanded},
-      $self->{solve_overlapping});
+      $self->{solve_overlapping}, $preserve_blocks);
 
   return $self;
 }
@@ -572,12 +597,14 @@ sub get_all_ConservationScores {
   return $all_conservation_scores;
 }
 
+
 =head2 _create_underlying_Slices (experimental)
 
   Arg[1]     : listref of Bio::EnsEMBL::Compara::GenomicAlignBlocks
                $genomic_align_blocks
   Arg[2]     : [optional] boolean $expanded (default = FALSE)
   Arg[3]     : [optional] boolean $solve_overlapping (default = FALSE)
+  Arg[4]     : [optional] boolean $preserve_blocks (default = FALSE)
   Example    : 
   Description: Creates a set of Bio::EnsEMBL::Compara::AlignSlice::Slices
                and attach it to this object. 
@@ -588,7 +615,7 @@ sub get_all_ConservationScores {
 =cut
 
 sub _create_underlying_Slices {
-  my ($self, $genomic_align_blocks, $expanded, $solve_overlapping) = @_;
+  my ($self, $genomic_align_blocks, $expanded, $solve_overlapping, $preserve_blocks) = @_;
 
   my $strand = $self->reference_Slice->strand;
   
@@ -611,8 +638,14 @@ sub _create_underlying_Slices {
   foreach my $this_genomic_align_block (@$sorted_genomic_align_blocks) {
     my $original_genomic_align_block = $this_genomic_align_block;
     my ($from, $to);
-    ($this_genomic_align_block, $from, $to) = $this_genomic_align_block->restrict_between_reference_positions(
-        $self->reference_Slice->start, $self->reference_Slice->end);
+    if ($preserve_blocks) {
+      ## Don't restrict the block. Set from and to to 1 and length respectively
+      $from = 1;
+      $to = $this_genomic_align_block->length;
+    } else {
+      ($this_genomic_align_block, $from, $to) = $this_genomic_align_block->restrict_between_reference_positions(
+          $self->reference_Slice->start, $self->reference_Slice->end);
+    }
     $original_genomic_align_block->{_alignslice_from} = $from;
     $original_genomic_align_block->{_alignslice_to} = $to;
 
@@ -654,7 +687,7 @@ sub _create_underlying_Slices {
     $original_genomic_align_block->{_alignslice_start} = $align_slice_length;
     if ($expanded) {
       $align_slice_length += CORE::length($reference_genomic_align->aligned_sequence("+FAKE_SEQ"));
-      $big_mapper->add_Mapper($reference_genomic_align->get_Mapper);
+      $big_mapper->add_Mapper($reference_genomic_align->get_Mapper(0));
     } else {
       $align_slice_length += $reference_genomic_align->dnafrag_end - $reference_genomic_align->dnafrag_start + 1;
       $big_mapper->add_Mapper($reference_genomic_align->get_Mapper(0,1));
