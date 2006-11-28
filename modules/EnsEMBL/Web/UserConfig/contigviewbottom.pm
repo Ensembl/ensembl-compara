@@ -812,7 +812,7 @@ sub init {
     foreach my $SPECIES (@species) {
       (my $species = $SPECIES ) =~ s/_\d+//;
       my $short = $self->{'species_defs'}->other_species( $species, 'SPECIES_COMMON_NAME' );
-      (my $abbrev = $species ) =~ s/^(\w)\w+_(\w)\w+$/\1\2/g;
+      (my $abbrev = $species ) =~ s/^(\w)\w+_(\w\w\w)\w*$/\1\2/g;
       $compara++;
       my $KEY = lc($SPECIES).'_'.lc($METHOD->[0]).'_match';
       $self->{'general'}->{'contigviewbottom'}{$KEY} = {
@@ -840,10 +840,10 @@ sub init {
   my %alignments = $self->{'species_defs'}->multiX('ALIGNMENTS');
   my $species = $ENV{ENSEMBL_SPECIES};
   foreach my $id (
-		  sort { 10 * ($alignments{$a}->{'type'} cmp $alignments{$b}->{'type'}) + ($a <=> $b) }
-		  grep { $alignments{$_}->{'species'}->{$species} } 
-		  keys (%alignments)) {
-
+    sort { 10 * ($alignments{$a}->{'type'} cmp $alignments{$b}->{'type'}) + ($a <=> $b) }
+    grep { $alignments{$_}->{'species'}->{$species} } 
+    keys (%alignments)
+  ) {
 
       my @species = grep {$_ ne $species} sort keys %{$alignments{$id}->{'species'}};
 

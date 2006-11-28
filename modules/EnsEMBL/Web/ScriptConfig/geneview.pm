@@ -19,5 +19,6 @@ sub init {
     context                 0
     das_sources             
   ));
+  $script_config->storable = 1;
 }
 1;

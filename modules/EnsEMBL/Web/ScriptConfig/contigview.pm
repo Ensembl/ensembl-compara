@@ -15,5 +15,6 @@ sub init {
     image_width    700
     context    1000
   ));
+  $script_config->storable = 1;
 }
 1;

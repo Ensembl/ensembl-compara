@@ -10,5 +10,6 @@ sub init {
     number                   off   
     das_sources             
   ));
+  $script_config->storable = 1;
 }
 1;
