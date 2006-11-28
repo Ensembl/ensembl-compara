@@ -28,7 +28,7 @@ sub update_configs_from_parameter {
     $wsc->reset() if $rst;
     $wsc->update_config_from_parameter( $val ) if $val;
   }
-  foreach my $selfig_name ( @userconfigs ) {
+  foreach my $config_name ( @userconfigs ) {
     $self->{'object'}->attach_image_config( $self->{'object'}->script, $config_name );
     my $wuc = $self->{object}->get_userconfig( $config_name );
     if( $wuc ) {
