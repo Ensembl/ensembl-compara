@@ -116,7 +116,7 @@ use Bio::EnsEMBL::Compara::GenomicAlignBlock;
 use Bio::EnsEMBL::Compara::GenomicAlign;
 use Bio::EnsEMBL::Compara::DnaFrag;
 use Bio::EnsEMBL::Feature;
-use Bio::EnsEMBL::Utils::Exception qw(throw info deprecate);
+use Bio::EnsEMBL::Utils::Exception;
 
 
 @ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor);
@@ -395,7 +395,9 @@ sub fetch_all_by_MethodLinkSpeciesSet {
 
   Arg  1     : Bio::EnsEMBL::Compara::MethodLinkSpeciesSet $method_link_species_set
   Arg  2     : Bio::EnsEMBL::Slice $original_slice
-  Arg  3     : [optional] integer $limit
+  Arg  3     : integer $limit_number [optional]
+  Arg  4     : integer $limit_index_start [optional]
+  Arg  5     : boolean $restrict_resulting_blocks [optional]
   Example    : my $genomic_align_blocks =
                   $genomic_align_block_adaptor->fetch_all_by_MethodLinkSpeciesSet_Slice(
                       $method_link_species_set, $original_slice);
@@ -412,7 +414,7 @@ sub fetch_all_by_MethodLinkSpeciesSet {
 =cut
 
 sub fetch_all_by_MethodLinkSpeciesSet_Slice {
-  my ($self, $method_link_species_set, $reference_slice, $limit) = @_;
+  my ($self, $method_link_species_set, $reference_slice, $limit_number, $limit_index_start, $restrict) = @_;
   my $all_genomic_align_blocks = []; # Returned value
 
   ## method_link_species_set will be checked in the fetch_all_by_MethodLinkSpeciesSet_DnaFrag method
@@ -423,7 +425,13 @@ sub fetch_all_by_MethodLinkSpeciesSet_Slice {
     throw("[$reference_slice] should be a Bio::EnsEMBL::Slice object\n");
   }
 
-  $limit = 0 if (!defined($limit));
+  $limit_number = 0 if (!defined($limit_number));
+  $limit_index_start = 0 if (!defined($limit_index_start));
+
+  if ($reference_slice->isa("Bio::EnsEMBL::Compara::AlignSlice::Slice")) {
+    return $reference_slice->get_all_GenomicAlignBlocks(
+        $method_link_species_set->method_link_type, $method_link_species_set->species_set);
+  }
 
   ## Get the Bio::EnsEMBL::Compara::GenomeDB object corresponding to the
   ## $reference_slice
@@ -458,7 +466,9 @@ sub fetch_all_by_MethodLinkSpeciesSet_Slice {
             $this_dnafrag,
             $this_slice->start,
             $this_slice->end,
-            $limit
+            $limit_number,
+            $limit_index_start,
+            $restrict
         );
 
     my $top_slice = $slice_adaptor->fetch_by_region($dnafrag_type, 
@@ -512,6 +522,7 @@ sub fetch_all_by_MethodLinkSpeciesSet_Slice {
   Arg  4     : integer $end [optional]
   Arg  5     : integer $limit_number [optional]
   Arg  6     : integer $limit_index_start [optional]
+  Arg  7     : boolean $restrict_resulting_blocks [optional]
   Example    : my $genomic_align_blocks =
                   $genomic_align_block_adaptor->fetch_all_by_MethodLinkSpeciesSet_DnaFrag(
                       $mlss, $dnafrag, 50000000, 50250000);
@@ -527,7 +538,7 @@ sub fetch_all_by_MethodLinkSpeciesSet_Slice {
 =cut
 
 sub fetch_all_by_MethodLinkSpeciesSet_DnaFrag {
-  my ($self, $method_link_species_set, $dnafrag, $start, $end, $limit_number, $limit_index_start) = @_;
+  my ($self, $method_link_species_set, $dnafrag, $start, $end, $limit_number, $limit_index_start, $restrict) = @_;
 
   my $genomic_align_blocks = []; # returned object
 
@@ -612,6 +623,17 @@ sub fetch_all_by_MethodLinkSpeciesSet_DnaFrag {
         );
     ## ... attach it to the corresponding Bio::EnsEMBL::Compara::GenomicAlignBlock
     $all_genomic_align_blocks->{$query_genomic_align_id}->add_GenomicAlign($this_genomic_align);
+  }
+  if (defined($start) and defined($end) and $restrict) {
+    my $restricted_genomic_align_blocks = [];
+    foreach my $this_genomic_align_block (@$genomic_align_blocks) {
+      $this_genomic_align_block = $this_genomic_align_block->restrict_between_reference_positions(
+          $start, $end, undef, "skip_empty_genomic_aligns");
+      if (@{$this_genomic_align_block->get_all_GenomicAligns()} > 1) {
+        push(@$restricted_genomic_align_blocks, $this_genomic_align_block);
+      }
+    }
+    $genomic_align_blocks = $restricted_genomic_align_blocks;
   }
   
   return $genomic_align_blocks;

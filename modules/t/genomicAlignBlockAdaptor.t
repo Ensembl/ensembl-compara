@@ -41,7 +41,7 @@ This script uses a small compara database build following the specifitions given
 This script (as far as possible) tests all the methods defined in the
 Bio::EnsEMBL::Compara::DBSQL::GenomicAlignBlockAdaptor module.
 
-This script includes 32 tests.
+This script includes 36 tests.
 
 =head1 AUTHOR
 
@@ -68,7 +68,7 @@ use strict;
 
 BEGIN { $| = 1;  
     use Test;
-    plan tests => 32;
+    plan tests => 36;
 }
 
 use Bio::EnsEMBL::Utils::Exception qw (warning verbose);
@@ -253,6 +253,68 @@ debug("Test Bio::EnsEMBL::Compara::DBSQL::GenomicAlignBlockAdaptor->fetch_all_by
       $all_fails .= " <$fail> " if ($fail);
     }
     ok($all_fails, undef);
+  };
+
+# 
+# 11
+# 
+debug("Test restrict option of the fetching methods");
+  $all_genomic_align_blocks = $genomic_align_block_adaptor->fetch_all_by_MethodLinkSpeciesSet_DnaFrag(
+          $method_link_species_set,
+          $genomic_align_1->dnafrag,
+          $genomic_align_1->dnafrag_start,
+          $genomic_align_1->dnafrag_end
+      );
+  do {
+    my $aligned_seq = $all_genomic_align_blocks->[0]->get_all_non_reference_genomic_aligns()->[0]->aligned_sequence();
+    my ($seq, $gap) = $aligned_seq =~ /^(\w+)(\-+)/;
+    $aligned_seq = substr($all_genomic_align_blocks->[0]->reference_genomic_align()->aligned_sequence(), 0, length($seq));
+    my $nucl = $aligned_seq =~ tr/ACGTNacgtn/ACGTacgtn/;
+    $all_genomic_align_blocks = $genomic_align_block_adaptor->fetch_all_by_MethodLinkSpeciesSet_DnaFrag(
+            $method_link_species_set,
+            $genomic_align_1->dnafrag,
+            $genomic_align_1->dnafrag_start + $nucl - 1,
+            $genomic_align_1->dnafrag_start + $nucl + length($gap),
+            undef, undef, "restrict"
+        );
+    ok(length($all_genomic_align_blocks->[0]->reference_genomic_align()->aligned_sequence()), length($gap) + 2,
+        "Check restriction 1 nucl before and after gap in secondary seq");
+    $all_genomic_align_blocks = $genomic_align_block_adaptor->fetch_all_by_MethodLinkSpeciesSet_DnaFrag(
+            $method_link_species_set,
+            $genomic_align_1->dnafrag,
+            $genomic_align_1->dnafrag_start + $nucl,
+            $genomic_align_1->dnafrag_start + $nucl + length($gap) - 1,
+            undef, undef, "restrict"
+        );
+    ok(scalar(@$all_genomic_align_blocks), 0,
+        "Check restriction when gap in secondary seq: block should not be returned");
+
+    my $slice = $slice_adaptor->fetch_by_region(
+            $genomic_align_1->dnafrag->coord_system_name,
+            $genomic_align_1->dnafrag->name,
+            $genomic_align_1->dnafrag_start + $nucl - 1,
+            $genomic_align_1->dnafrag_start + $nucl + length($gap),
+        );
+    $all_genomic_align_blocks = $genomic_align_block_adaptor->fetch_all_by_MethodLinkSpeciesSet_Slice(
+            $method_link_species_set,
+            $slice,
+            undef, undef, "restrict"
+        );
+    ok(length($all_genomic_align_blocks->[0]->reference_genomic_align()->aligned_sequence()), length($gap) + 2,
+        "Check restriction 1 nucl before and after gap in secondary seq");
+    $slice = $slice_adaptor->fetch_by_region(
+            $genomic_align_1->dnafrag->coord_system_name,
+            $genomic_align_1->dnafrag->name,
+            $genomic_align_1->dnafrag_start + $nucl,
+            $genomic_align_1->dnafrag_start + $nucl + length($gap) - 1 ,
+        );
+    $all_genomic_align_blocks = $genomic_align_block_adaptor->fetch_all_by_MethodLinkSpeciesSet_Slice(
+            $method_link_species_set,
+            $slice,
+            undef, undef, "restrict"
+        );
+    ok(scalar(@$all_genomic_align_blocks), 0,
+        "Check restriction when gap in secondary seq: block should not be returned");
   };
 
 # 
