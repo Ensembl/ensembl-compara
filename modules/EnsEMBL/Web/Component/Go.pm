@@ -15,6 +15,7 @@ sub accession {
   my $acc_id = $object->param('display') || $object->param('acc');
   my $label = 'GO Accession';
   my $name;
+  return unless $object->name;
   my $html = '<p>';
   if ( $object->param('display') ) {
     $name = $object->name;
@@ -34,6 +35,7 @@ sub gene_acc {
   my( $panel, $object ) = @_;
 
   my $acc_id = $object->acc_id;
+  return unless $object->name;
   my $name = $object->name;
   $panel->add_row( 'GO Accession', $acc_id ? "<p><strong>$acc_id</strong> ($name)</p>" : "<p>(none selected)</p>" );
   return 1;
@@ -113,6 +115,7 @@ sub tree {
 
     # create tree
     my $it = $object->iterator;
+    return unless $it;
     my %families = %{$object->families};
     my $id = $object->acc_id;
     my $query = $object->param('query');
@@ -186,7 +189,7 @@ sub family {
   my $species = $object->species;
 
   if ($id) {
-    $object->load_genes();
+    return unless $object->load_genes();
     my $table = EnsEMBL::Web::Document::SpreadSheet->new();
 
     $table->add_columns(
@@ -216,13 +219,6 @@ sub family {
        $desc_txt .= $gene{'description'};
 
        # family ID and description
-       if( $family{'stable_id'} ) { 
-         my $fid     = $family{'stable_id'};
-         my $desc    = $family{'description'};
-         $fam_txt .= qq(<a href="/$species/familyview?family=$fid">$fid</a><br /><em>$desc</em>);
-       } else {
-         $fam_txt .= '--';
-       }
        if( $family{'stable_id'} ) {
          my $fid     = $family{'stable_id'};
          my $desc    = $family{'description'};

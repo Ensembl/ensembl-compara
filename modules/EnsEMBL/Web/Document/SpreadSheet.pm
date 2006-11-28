@@ -136,6 +136,13 @@ sub _process {
         ( ref( $row ) eq 'HASH'    ? $row->{$col->{key}} :
           ( $row->can( $col->{key} ) ? $row->${\$col->{key}}() : '--'  )
         );
+      my $hidden_value = $value;
+      if( exists $col->{hidden_key} ) {
+        $hidden_value = ref( $row ) eq 'ARRAY' ? $row->[$counter] :
+          ( ref( $row ) eq 'HASH'    ? $row->{$col->{hidden_key}} :
+            ( $row->can( $col->{hidden_key} ) ? $row->${\$col->{hidden_key}}() : '--'  )
+          );
+      }
       my $class = '';
       if( $row_count == $#sorted_data && !$options->{'total'}) {
         $class .= ' bottom-border';
@@ -143,7 +150,7 @@ sub _process {
       my $style =  join ' ',
         exists $col->{align} ? qq(text-align:$col->{align};) : ( $col->{type} eq 'numeric' ? 'text-align:right;' : () ).
         exists $col->{width} ? qq(width:$col->{width};) : ();
-      my $TV = lc($value);
+      my $TV = lc($hidden_value);
       if( $flag == $counter ) {
         if( $TV eq $previous_row[$counter] ) {
           $flag = $counter+1;

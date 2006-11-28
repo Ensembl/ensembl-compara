@@ -140,15 +140,10 @@ sub dna {
       $block_end = $segment->{'STOP'} if $block_end > $segment->{'STOP'};
 # warn "$segment->{'REGION'} - $block_start - $block_end";
       my $slice = $object->subslice( $segment->{'REGION'}, $block_start, $block_end );
-      my $pattern = '.{60}';
       my $seq = $slice->seq;
       $seq =~ s/(.{60})/$1\n/g;
- #     while ($seq =~ /($pattern)/g) {
- #       $panel->print ("$1\n");
- #     }
- #     my $tail = length($seq) % 60;
- #     $panel->print( substr($seq, -$tail)."\n" );
-      $panel->print( $seq. ($seq =~ /\n$/ ? '' : "\n" ) );
+      $panel->print( $seq );
+      $panel->print( "\n" ) unless $seq =~ /\n$/;
       $block_start = $block_end + 1;
     }
     $panel->print( qq{</DNA>\n</SEQUENCE>\n} );

@@ -1554,7 +1554,7 @@ sub html_dump {
   foreach my $param ( $object->param() ) {
     $script_config->set($param, $object->param($param) , 1);
   }
-  $script_config->save;
+  # $script_config->save;
   my @samples = sort ( $object->get_samples );
 
   my $snp_data = get_page_data($panel, $object, \@samples );
@@ -1610,7 +1610,7 @@ sub text_dump {
   foreach my $param ( $object->param() ) {
     $script_config->set($param, $object->param($param) , 1);
   }
-  $script_config->save;
+  # $script_config->save;
   my @samples = sort ( $object->get_samples );
   $panel->print("Variation data for ".$object->stable_id);
   $panel->print("\nFormat: tab separated per strain (SNP id; Type; Amino acid change;)\n\n");

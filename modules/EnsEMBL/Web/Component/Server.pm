@@ -20,6 +20,8 @@ package EnsEMBL::Web::Component::Server;
 
 use EnsEMBL::Web::Component;
 use CGI qw(escapeHTML);
+use Bio::EnsEMBL::ColourMap;
+our $cm = Bio::EnsEMBL::ColourMap->new();
 our @ISA = qw( EnsEMBL::Web::Component);
 use strict;
 use warnings;
@@ -174,7 +176,7 @@ sub spreadsheet_Colours {
   my $colour  = $object->param('hex');
   my $hls     = $object->param('hls');
   my $sort_by = $object->param('sort');
-  my $cm = $object->get_userconfig_adaptor->{'colourmap'};
+  $cm ||= new Bio::EnsEMBL::ColourMap( $object->species_defs );
   my @keys;
   my %rgb;
   my %hls;

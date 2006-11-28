@@ -16,6 +16,7 @@ sub _initialize_HTML {
     title      EnsEMBL::Web::Document::HTML::Title
     stylesheet EnsEMBL::Web::Document::HTML::Stylesheet
     javascript EnsEMBL::Web::Document::HTML::Javascript
+    rss        EnsEMBL::Web::Document::HTML::RSS
     meta       EnsEMBL::Web::Document::HTML::Meta
   );
 
@@ -35,6 +36,8 @@ sub _initialize_HTML {
   $self->_common_HTML;
   $self->_script_HTML;
   $self->helplink->kw = $ENV{'ENSEMBL_SCRIPT'}.';se=1';
+  $self->rss->add( '/common/rss.xml', 'Ensembl website news feed', 'rss' );
+  $self->javascript->add_source('/js/prototype.js');
 }
 
 1;

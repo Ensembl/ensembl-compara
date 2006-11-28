@@ -605,7 +605,7 @@ sub domain_list{
   $panel->add_option( 'triangular', 1 );
   $panel->add_columns(
     { 'key' => 'desc',  'title' => 'Description',      'width' => '30%', 'align' => 'center' },
-    { 'key' => 'start', 'title' => 'Start',            'width' => '15%', 'align' => 'center' },
+    { 'key' => 'start', 'title' => 'Start',            'width' => '15%', 'align' => 'center' , 'hidden_key' => '_loc' },
     { 'key' => 'end',   'title' => 'End',              'width' => '15%', 'align' => 'center' },
     { 'key' => 'type',  'title' => 'Domain type',      'width' => '20%', 'align' => 'center' },
     { 'key' => 'acc',   'title' => 'Accession number', 'width' => '20%', 'align' => 'center' },
@@ -626,7 +626,8 @@ sub domain_list{
       'acc'   => $object->get_ExtURL_link( $id, uc($db), $id ),
       'start' => $domain->start,
       'end'   => $domain->end ,
-      'desc'  => $domain->idesc
+      'desc'  => $domain->idesc,
+      '_loc'  => join '::', $domain->start,$domain->end,
     } );
   }
   return 1;
@@ -639,7 +640,7 @@ sub other_feature_list {
   $panel->add_option( 'triangular', 1 );
   $panel->add_columns(
     { 'key' => 'type',  'title' => 'Domain type',      'width' => '60%', 'align' => 'center' },
-    { 'key' => 'start', 'title' => 'Start',            'width' => '30%', 'align' => 'center' },
+    { 'key' => 'start', 'title' => 'Start',            'width' => '30%', 'align' => 'center' , 'hidden_key' => '_loc' },
     { 'key' => 'end',   'title' => 'End',              'width' => '30%', 'align' => 'center' },
   );
   foreach my $domain ( 
@@ -650,7 +651,8 @@ sub other_feature_list {
     $panel->add_row( {
       'type'  => ucfirst($domain_type),
       'start' => $domain->[1]->start,
-      'end' => $domain->[1]->end
+      'end'   => $domain->[1]->end,
+      '_loc'  => join '::', $domain->[1]->start,$domain->[1]->end,
     } );
   }
   return 1; 

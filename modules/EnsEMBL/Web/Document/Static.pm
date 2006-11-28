@@ -14,6 +14,7 @@ sub _initialize {
     title      EnsEMBL::Web::Document::HTML::Title
     stylesheet EnsEMBL::Web::Document::HTML::Stylesheet
     meta       EnsEMBL::Web::Document::HTML::Meta
+    rss        EnsEMBL::Web::Document::HTML::RSS
     javascript EnsEMBL::Web::Document::HTML::Javascript
   );
 
@@ -33,6 +34,7 @@ sub _initialize {
 ## Let us set up the search box...
   $self->searchbox->sp_common  = $self->species_defs->SPECIES_COMMON_NAME;
 
+  $self->rss->add( '/common/rss.xml', 'Ensembl website news feed', 'rss' );
   if( $ENV{'ENSEMBL_SPECIES'} ) { # If we are in static content for a species
     foreach my $K ( sort @{($self->species_defs->ENSEMBL_SEARCH_IDXS)||[]} ) {
       $self->searchbox->add_index( $K );
@@ -56,6 +58,7 @@ sub _initialize {
 
   # add handy-dandy collapsing menu script
   $self->javascript->add_source('/js/core.js');
+  $self->javascript->add_source('/js/prototype.js');
   $self->javascript->add_source('/js/hier_menu.js');
   $self->javascript->add_script( 'addLoadEvent( coll_all )' );
 
