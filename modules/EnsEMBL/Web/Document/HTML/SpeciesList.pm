@@ -28,7 +28,8 @@ sub render {
 
   my $user = EnsEMBL::Web::Object::User->new({ id => $ENV{'ENSEMBL_USER_ID'} });
   my $html = "";
-  if ($request eq 'fragment') {
+
+  if ($request && $request eq 'fragment') {
     $html .= render_species_list($user, $species_defs, \%id_to_species, \%species_id, \%species_description); 
   } else {
     
@@ -39,7 +40,7 @@ sub render {
     $html .= "<div id='full_species'>\n";
     $html .= render_species_list($user, $species_defs, \%id_to_species, \%species_id, \%species_description); 
     $html .= "</div>\n";
-    if ($ENV{'ENSEMBL_LOGINS'} && !$user->name) {
+    if ($species_defs->ENSEMBL_LOGINS && !$user->name) {
       $html .= "<div id='login_message'>";
       $html .= "<a href='javascript:login_link()'>Log in</a> to customise this list &middot; <a href='/common/register'>Register</a>";
       $html .= "</div>\n";
@@ -65,7 +66,8 @@ sub setup_species_descriptions {
   foreach my $species (@current_species) {
     my ($html, $short);
     my $sp = $species->{'name'};
-    $html = qq( <span class="small normal">).$species->{'assembly'};
+    $html = qq( <span class="small normal">);
+    $html .= $species->{'assembly'} if $species->{'assembly'};
     $short = $html;
     if (!$species->{'prev_assembly'}) {
       $html .= ' '.$new;
@@ -75,19 +77,21 @@ sub setup_species_descriptions {
       $html .= ' '.$updated;
       $short = $html.'</span>';
     }
-    if ($species->{'vega'} eq 'Y') {
+    if ($species->{'vega'} && $species->{'vega'} eq 'Y') {
       $html .= qq( | <a href="http://vega.sanger.ac.uk/$sp/">Vega</a>);
     }
     if ($species->{'pre'}) {
       $html .= ' | ';
-      if ($species->{'prev_assembly'} ne $species->{'assembly'}) {
+      if (!$species->{'prev_pre'} || ($species->{'prev_pre'} && $species->{'prev_pre'} ne $species->{'pre'})) {
         $html .= $updated.' ';
       }
       $html .= qq(<a href="http://pre.ensembl.org/$sp/"><i><span class="red">pr<span class="blue">e</span>!</span></i></a>);
     }
     $html .= qq(</span>);
-    (my $name = $sp) =~ s/_/ /;
-    $description{$name} = [$html, $short];
+    if ($sp) {
+      (my $name = $sp) =~ s/_/ /;
+      $description{$name} = [$html, $short];
+    }
   }
 
   return %description;
