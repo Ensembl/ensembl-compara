@@ -126,7 +126,7 @@ sub render_species_list {
   }
 
   $html .= "<div id='static_favourite_species'>\n";
-  $html .= "<ul class='favourites-species-list'>\n";
+  $html .= "<div class='favourites-species-list'>\n";
   $html .= "<dl class='species-list'>\n";
   foreach my $id (@favourite_species) {
     $favourites{$id} = 1;
@@ -137,7 +137,7 @@ sub render_species_list {
     $html .= "<dd>" . $description{$species_name}[0] . "</dd>\n";
   }
   $html .= "</dl>\n";
-  $html .= "</ul>\n";
+  $html .= "</div>\n";
   $html .= "</div>\n";
 
   if (!$user->name) {
