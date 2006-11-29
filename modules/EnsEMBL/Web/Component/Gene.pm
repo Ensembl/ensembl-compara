@@ -358,11 +358,11 @@ sub name {
 	my $html;
 	if ($dbname_disp =~/HGNC/){
 		my ($disp_table, $HGNC_table) = @{get_HGNC_synonyms($object)};
-		$html = $disp_table;
-		unless ($object->get_db eq 'vega') {
+		if ($object->get_db eq 'vega') {
+                        $html = $disp_table;
+                } else   {  
 			if ($HGNC_table=~/\w/){
-				$html .= qq(<p>This gene also corresponds to the following database identifiers:</p>);
-				$html .= $HGNC_table;
+				$html = $HGNC_table;
 			}
 			if(my @CCDS = grep { $_->dbname eq 'CCDS' } @{$object->Obj->get_all_DBLinks} ) {
 				my %T = map { $_->primary_id,1 } @CCDS;
@@ -625,45 +625,6 @@ sub method {
   return 1;
 }
 
-sub database{
-  my( $panel, $gene ) = @_;
-  my $FLAG = 0;
-  my $label = 'Database Matches';
-  my $html;
-  my $matches =$gene->get_database_matches;
-  my @links = _sort_similarity_links($gene, @$matches);
-  $html .= qq(<p>This gene corresponds to the following database identifiers:</p><table cellpadding="4">);
-  my $old_key = '';
-  my %seen_links;
-
-  foreach my $l (@links) {
-     return 1 unless @$l;
-     foreach my $link (@$l) {
-        my ($key, $text) = @$link;
-        $seen_links{$key}++;
-        my $k = ($seen_links{$key} > 1) ? '' : $key.':';
-        if ($key=~/HGNC/){
-          my $temp = $text;
-          my @t = split(/\<|\>/, $temp);
-          my $id = $t[4];
-          my $synonyms = get_synonyms($id, @$matches);
-          unless($text =~ $gene->display_xref && $synonyms!~/\w/){
-            $html .= qq(<tr><th style="white-space: nowrap; padding-right: 1em">$k</th><td>);
-            $html .= $text . $synonyms ;
-            $FLAG =1;
-          }
-        }
-     }
-  }
-  $html .= qq(</td></tr></table>);
-
-  if( $FLAG ) {
-   $panel->add_row( $label, $html );
-  }
-
-  return 1;
-}
-
 sub get_HGNC_synonyms {
   my $self = shift;
   my $species = $self->species;
@@ -681,18 +642,15 @@ sub get_HGNC_synonyms {
 
   my $site_type = ucfirst(lc($SiteDefs::ENSEMBL_SITETYPE));
   my ($disp_id_table, $HGNC_table, %syns, %text_info );
-  my $syn_count = 0;
-  my $disp_syn = 0;
+  my $disp_syn == 0;
 
   my $matches = $self->get_database_matches;
   my @links = _sort_similarity_links ($self, @$matches);
-  my $match_count =0;
   foreach my $l (@links){
     return 1 unless @$l;
     foreach my $link (@$l){
      my ($key, $text)= @$link;
      if ($key =~/HGNC/){
-       $match_count++;
        my $temp = $text;
        $text =~s/\<div\s*class="multicol"\>|\<\/div\>//;
        my @t = split(/\<|\>/, $temp);
@@ -707,22 +665,30 @@ sub get_HGNC_synonyms {
        $text_info{$id} = $text;
        unless ($synonyms !~/\w/ || $id =~/$display_name/){
         $syns{$id} = $synonyms;
-        $syn_count++;
        }
      }
     }
   }
-
+ 
+ my @keys = keys %syns;
+ my $syn_count = @keys; 
  my $width ="100%";
- if ($syn_count == 0){ $width = "65%";}
- my $display_width = "68%";
- if ($disp_syn ==1) {$display_width = "100%";}
- $disp_id_table = qq(<table width="$display_width" cellpadding="4">);
- if ($match_count >=2 ){$HGNC_table = qq(<table width="$width" cellpadding="4">);}
+ $disp_id_table = qq(<table width="$width" cellpadding="4">);
+ $HGNC_table = qq(<table width="$width" cellpadding="4">);
 
 SYN: foreach my $k (keys (%text_info)){
 	 my $syn = $syns{$k};
 	 my $syn_entry;
+
+         if ($syn_count >= 1) { $syn_entry = qq(<td>$syn</td>); }
+         my $text = $text_info{$k};
+         $HGNC_table .= qq(
+          <tr>
+           <td><strong>$text</strong> ($dbname_disp)</td>$syn_entry
+           <td><span class="small"> To view all $site_type genes linked to the name <a href="/@{[$self->species]}/featureview?type=Gene;id=$k">click here</a>.</span></td>
+          </tr>
+         );
+
 
 	 if ($k=~/$display_name/){
 		 #don't want to show synonyms for ensembl-vega genes
@@ -736,20 +702,11 @@ SYN: foreach my $k (keys (%text_info)){
         <td><span class="small"> To view all $site_type genes linked to the name <a href="/@{[$self->species]}/featureview?type=Gene;id=$display_name">click here</a>.</span></td>
         </tr>
       );
-	 } else {
-		 if ($syn_count >= 1) { $syn_entry = qq(<td>$syn</td>); }
-		 my $text = $text_info{$k};
-		 $HGNC_table .= qq(
-      <tr>
-       <td><strong>$text</strong> ($dbname_disp)</td>$syn_entry
-       <td><span class="small"> To view all $site_type genes linked to the name <a href="/@{[$self->species]}/featureview?type=Gene;id=$k">click here</a>.</span></td>
-       </tr>
-      );
-	 }
+	 } 
  }
 
  $disp_id_table .=qq(</table>);
- if ($match_count >=2 ){$HGNC_table .= qq(</table>);}
+ $HGNC_table .= qq(</table>);
 
  my @tables = ($disp_id_table, $HGNC_table);
  return \@tables;
