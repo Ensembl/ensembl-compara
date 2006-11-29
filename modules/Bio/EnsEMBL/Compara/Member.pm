@@ -162,8 +162,13 @@ sub new_from_transcript {
     $self->stable_id($transcript->translation->stable_id);
     $self->source_name("ENSEMBLPEP");
 
-    $peptideBioSeq = $transcript->translate;
-    $seq_string = $peptideBioSeq->seq;
+   unless ($peptideBioSeq = $transcript->translate) {
+	throw("COREDB error: unable to get a BioSeq translation from ". $transcript->stable_id);
+    }
+    eval {
+	$seq_string = $peptideBioSeq->seq;
+    };
+    throw "COREDB error: can't get seq from peptideBioSeq" if $@;
     # OR
     #$seq_string = $transcript->translation->seq;
 
