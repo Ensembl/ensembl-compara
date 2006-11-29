@@ -1,0 +1,58 @@
+#!/usr/local/bin/perl
+
+package bookmark;
+
+use strict;
+use warnings;
+
+use CGI;
+
+use EnsEMBL::Web::Document::DataView;
+use EnsEMBL::Web::Interface::PageDefinition;
+use EnsEMBL::Web::Interface::FormDefinition;
+use EnsEMBL::Web::DBSQL::DataDefinition;
+use EnsEMBL::Web::User::Record;
+use EnsEMBL::Web::Group::Record;
+use EnsEMBL::Web::DBSQL::ViewAdaptor;
+
+my $cgi = CGI->new;
+my $page = EnsEMBL::Web::Interface::PageDefinition->new();
+my $data = EnsEMBL::Web::DBSQL::DataDefinition->new();
+my $db = $EnsEMBL::Web::Apache::Handlers::ENSEMBL_USER_DB_HANDLE; 
+$data->adaptor(EnsEMBL::Web::DBSQL::ViewAdaptor->new(( 
+                                                       handle => $db,
+                                                       table  => 'group_record'
+                                                    )) );
+
+my $user = EnsEMBL::Web::Object::User->new({ id => $ENV{'ENSEMBL_USER_ID'} });
+my @records = $user->find_records_by_user_record_id($cgi->param('id'));
+my $user_record = $records[0];
+my $enumerator = "";
+foreach my $group (@{ $user->find_administratable_groups }) {
+  $enumerator .= "" . $group->id . "', '";
+}
+$enumerator =~ s/, '$//;
+$data->add_field({'Field' => 'group_id', 'Type' => "enum('$enumerator')"});
+
+$page->title('Share ' . $user_record->type);
+$page->add_text('Select a group to share your ' . $user_record->type . ' with.');
+$page->action('create');
+
+$page->data_definition($data);
+$page->on_complete("/common/accountview");
+$page->on_error('/account/bookmark_error.html');
+$page->cancel('yes');
+
+my $form = EnsEMBL::Web::Interface::FormDefinition->new();
+
+foreach my $group (@{ $user->find_administratable_groups }) {
+  $form->add_label({ $group->id => $group->name });
+}
+
+$page->add_configuration_element('type', $user_record->type);
+$page->add_configuration_element('data', $user_record->dump_data);
+$page->add_form_element('group_id', "Group", $form);
+
+EnsEMBL::Web::Document::DataView::simple('User', $page);
+
+1;

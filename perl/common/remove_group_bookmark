@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 
-package remove_group;
+package remove_group_bookmark;
 
 use CGI;
 my $cgi = new CGI;

@@ -6,7 +6,8 @@ use CGI;
 my $cgi = new CGI;
 
 my $url = $cgi->param('url');
-$url =~ s/contigview/configview/g;
+my $id = $cgi->param('id');
+$url .= "&load_config=" . $id;
 print "Location: " . $url;
 
 1;

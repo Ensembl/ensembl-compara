@@ -10,7 +10,7 @@ my $user = EnsEMBL::Web::Object::User->new({
                                       password => $cgi->param('password')
                                            });
 
-my $url = "/failed.html";
+my $url = "/error/login_failed.html?url=" . $cgi->param('url');
 if ($user->name) {
   warn "OK: Logging in as " . $user->name;
   my $encrypted = EnsEMBL::Web::DBSQL::UserDB::encryptID($user->id);
