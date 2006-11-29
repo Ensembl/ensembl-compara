@@ -81,7 +81,7 @@ div.white a { text-decoration:none; }
 
 div.pre { color:#339966; background-color:#eefff8; border:1px solid #aaeecc; }
 
-ul.favourites-species-list {
+div.favourites-species-list {
   margin: 10px 0px 0px 0px;
   padding-left: 20px;
 }

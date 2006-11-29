@@ -4,25 +4,21 @@
 </head>
 <body>
 <div class="formpanel-left" style="width:70%">
-<h2>Log in to your Ensembl account</h2>
-You can log into your Ensembl account here. If you don't have an account, <a href="/common/register">register here</a>.
+<h2>Reset your Ensembl password</h2>
+<b>We couldn't find that email address in our records.</b>
 <br /><br />
-<form action="/common/login" method="post">
+If you don't have an Ensembl account, you can <a href="/common/register">register here</a>. Alternatively, you can try a different email address here.
+<form action="/common/forgotten" method="post">
 <div class="formblock">
-<h6><label for="username" />Email address:</h6>
+<h6><label for="email" />Email address:</h6>
 <div class="formcontent">
-<input type="text" size="20" name="username" />
-</div></div>
-<div class="formblock">
-<h6><label for="password" />Password:</h6>
-<div class="formcontent">
-<input type="password" size="20" name="password" />
+<input type="text" size="20" name="email" />
 </div></div>
 <input type="hidden" size="20" name="url" id="url" />
-<input type="submit" value="Log in" class="red-button">
+<input type="submit" value="Submit" class="red-button">
 </form>
 <br /><br />
-<a href="/forgotten.html">Forgotten your password?</a> &middot; Need help? <a href="mailto:helpdesk@ensembl.org">Contact Ensembl</a>
+Need help? <a href="mailto:helpdesk@ensembl.org">Contact Ensembl</a>
 
 <script type="text/javascript">
 

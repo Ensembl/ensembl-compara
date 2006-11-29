@@ -7,6 +7,7 @@ function cytoview_link() {
   document.location = URL.replace(/(\w+view)/,'cytoview');
   return true; 
 }
+
 function archive( release ) {
   URL = document.location.href;
   document.location = URL.replace(/^https?:\/\/[^\/]+/,'http://'+release+'.archive.ensembl.org');
@@ -16,6 +17,18 @@ function archive( release ) {
 function login_link() {
   URL = escape(document.location.href);
   document.location = '/login.html?url=' + URL;
+  return true;  
+}
+
+function config_link() {
+  URL = escape(document.location.href);
+  document.location = '/common/save_config?url=' + URL;
+  return true;  
+}
+
+function load_config(config_id) {
+  URL = escape(document.location.href);
+  document.location = '/common/load_config?id=' + config_id + '&url=' + URL;
   return true;  
 }
 

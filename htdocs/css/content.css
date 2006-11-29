@@ -44,6 +44,8 @@ div.col-wrapper {
 .col-wrapper { display: block; }
 /* */
 
+div.col { float:left; margin:0 1%; }
+
 div.col1 { float:left; width:96%; margin:0 1%; }
 
 div.col2 { float:left; width:47%; margin:0 1%; }
@@ -55,9 +57,92 @@ div.narrow3 { float:left; width:27%; margin: 0 2.5% }
 /* HEADINGS */
 h2 { margin-bottom:0.5em; }
 
-h3.boxed, div.panel h3 { color:#993333; background-color:#fff9af; margin-top: 0.7em; margin-bottom:1em; padding:2px 4px 2px 4px; border:1px solid #ffdf33; }
+.boxed, div.panel h3 { color:#993333; background-color:#fff9af; border:1px solid #ffdf33; margin-top: 0.7em; margin-bottom:1em; padding:2px 4px 2px 4px; }
+
+div.boxed { padding:10px; color:#333333; } 
+div.boxed h3 { margin-top:-0.2em; }
 
 div.panel h3.plain { border:none; background-color:transparent; }
+
+div.alt { color:#3366bb; background-color:#edeeef; border:1px solid #9bb9dd; }
+hr.alt { background-color:#3366bb; }
+div.alt h2, div.alt h3 { color:#3366bb; margin-top:1em; }
+div.alt h2.first, div.alt h3.first { margin-top:0em; }
+div.alt p { color:#3366bb; margin-top:-0.5em; }
+div.alt a { text-decoration:none; }
+div.alt a:visited { color:#3366bb; }
+div.alt a:hover { color:#cc0000; }
+
+div.pale {  background-color:#ffffcc; border:1px solid #ffdf33; }
+div.pale a { text-decoration:none; }
+
+div.white {  background-color:#fff; border:1px solid #ffdf33; }
+div.white a { text-decoration:none; }
+
+div.pre { color:#339966; background-color:#eefff8; border:1px solid #aaeecc; }
+
+div.favourites-species-list {
+  margin: 10px 0px 0px 0px;
+  padding-left: 20px;
+}
+
+ul#favourites_list li, ul#species_list li { cursor:move; }
+
+div.tab_content_panel {
+  padding: 0px 5px 5px 5px;
+}
+
+div.tab_footer {
+  padding: 4px;
+}
+
+div.tab a, div.tab a:link, div.tab a:visited {
+  text-decoration: none;
+}
+
+div.selected a, div.selected a:link, div.selected a:visited {
+  color: #111;
+}
+
+#pre_tab, #pre {
+  color:#339966;
+  background-color:#eefff8;
+}
+
+#pre_tab selected {
+  border-bottom: 1px solid #eefff8; 
+}
+
+div.tab {
+  position: relative;
+  left: 0px;
+  top: 1px;
+  float: left;
+  width: 35%;
+  padding: 5px;
+  background: #ffffcc;
+  border-top: 1px solid #ffdf33;
+  border-right: 1px solid #ffdf33;
+  border-left: 1px solid #ffdf33;
+  border-bottom: 1px solid #ffdf33;
+  margin-right: 3px;
+}
+
+div.selected {
+  background: #fff;
+  border-bottom: 1px solid white;
+  font-weight: bold;
+}
+
+div.tab_content {
+  border: 1px solid #ffdf33;
+  padding: 5px;
+}
+
+div.pre_content {
+  background-color:#eefff8
+}
+
 
 /* LISTS */
 #page ol li { list-style-type:decimal; list-style-image:none; }
@@ -77,11 +162,11 @@ dd { margin-bottom:1em; }
 
 /****************************** IMAGES ************************************/
 
-img.float-left { float:left; padding-right:10px; }
+img.float-left { float:left; margin-right:10px; }
 
-img.float-right { float:right; padding-left:10px; }
+img.float-right { float:right; margin-left:10px; }
 
-.screenshot { text-align:center; margin:auto; padding:10px; }
+.screenshot { text-align:center; margin:10px auto; }
 
 .karyomap { text-align:center; margin:auto; }
 
@@ -160,13 +245,15 @@ th.stacked { background-color:#ffffcc; border:1px solid #ffdf33;
 
 td.stacked { padding:4px; } 
 
-table.ss, table.spreadsheet { width: 100%; }
+/* Striped spreadsheets */
+
+table.ss { width: 100%; }
 
 table.ss tr.ss_header { background-color:#ccc; border-width:1px 0px 0px 0px; border-color:#ccc; border-style:solid; }
 
-table.ss th, table.spreadsheet th { background-color: #ccc; border-width:1px 0px 0px 0px; border-color:#ccc; border-style:solid; padding:0.2em; vertical-align: top }
+table.ss th { background-color: #ccc; border-width:1px 0px 0px 0px; border-color:#ccc; border-style:solid; padding:0.2em; vertical-align: top }
 
-table.ss td, table.spreadsheet td { vertical-align: top; padding:0.2em; }
+table.ss td { vertical-align: top; padding:0.2em; }
 
 table.ss .left-border {  border-left:1px #ccc solid;  }
 
@@ -174,11 +261,11 @@ table.ss .right-border {  border-right:1px #ccc solid;  }
 
 table.ss .bottom-border {  border-bottom:1px #ccc solid;  }
 
-table.ss tr.bg1, table.spreadsheet tr.bg1 { background-color:#fff; }
+table.ss tr.bg1 { background-color:#fff; }
 
-table.ss tr.bg2, table.spreadsheet tr.bg2 { background-color:#f0f0f0; }
+table.ss tr.bg2 { background-color:#f0f0f0; } /* grey stripe */
 
-table.spreadsheet tr.tint { background-color:#ffffcc; }
+table.tint tr.bg2 { background-color:#ffffcc; } /* coloured stripe */
 
 table.info-image { width:100%; margin:10px 0px; }
 table.info-image td.image { text-align:center; padding-right:20px; }
@@ -187,7 +274,8 @@ table.info-image td.image { text-align:center; padding-right:20px; }
 /****************************** FORMS **********************************/
 
 div.formpanel { padding:1em; margin:auto; border:1px solid #ccc;}
-div.formpanel div { margin-top:5px; }
+div.formpanel-left { padding:1em; border:1px solid #fff; }
+div.formpanel div, div.formpanel-left div { margin-top:5px; }
 
 .formblock { left: 0px; right: 0px; position: relative; }
 .formblock p { width: 100%; padding: 0px; margin: 0px;  }
@@ -261,10 +349,18 @@ ul.flush li { margin-left:-2em; }
 /* Ensembl homepage */
 
 .sp-thumb { float:left; padding-right:4px; clear:left; }
-dl.species-list dt { margin:0px; padding:0px; min-height:15px;
-  font-size:115%; font-style:italic; font-weight:bold; }
-dl.species-list dd { margin:0px 0px 2px 0px; padding:0px; min-height:25px; }
+dl.species-list dt { margin:0px; padding:0px; min-height:15px;   font-size:120%; font-style:italic; font-weight:bold; }
+dl.species-list dd { margin:-2px 0px 2px 0px; padding:0px; min-height:40px; }
 dl.species-list dt a, dl.species-list dd a { text-decoration:none; }
+
+dl.species-list-small dt { margin:0px; padding:0px; min-height:15px; font-style:italic; font-weight:bold; }
+dl.species-list-small dd { margin:-2px 0px 2px 0px; padding:0px; min-height:30px;  }
+dl.species-list-small dt a, dl.species-list dd a { text-decoration:none; }
+
+ul.species-list li { margin-left:-20px; padding:0px; cursor:pointer; }
+ul.species-list span.sp { font-size:120%; font-style:italic; font-weight:bold; }
+ul.species-list li a { text-decoration:none; }
+div.species-news p { margin:0px; padding:4px 0px; font-size:110%; min-height:40px; }
 
 /* Species homepages */
 
