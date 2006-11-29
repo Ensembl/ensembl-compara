@@ -112,7 +112,7 @@ sub script               {
   if ($value) {
     $self->[1]{'_script'} = $value;
   }
-  return $self[1]{'_script'}; 
+  return $self->[1]{'_script'}; 
 }
 
 sub __supertype  :lvalue {
