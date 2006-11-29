@@ -432,19 +432,11 @@ sub mappings {
       $panel->add_row({ %chr_info, %trans_info});
 
       unless (@table_header) {
-	push (@table_header,
-	      {key => 'transcript', title => 'Transcript: relative SNP position&nbsp;'},
-	     );
-	unless ($source eq 'Glovar') {
-	  push (@table_header,
-		{key => 'genesnpview', title => 'GeneSNPView link&nbsp;'},
-	       );
-	}
-
-
+	push (@table_header, {key => 'transcript', title => 'Transcript: relative SNP position&nbsp;'}, );
 	push @table_header, {key => 'translation', title => 'Translation: relative SNP position&nbsp;'} if $transcript_data->{'proteinname'} ;
 	push @table_header, {key => 'pepallele',   title =>'Amino Acid&nbsp;'} if $transcript_data->{'pepallele'} ;
 	push (@table_header, {key => 'conseq', title =>'Type'});
+        push (@table_header, {key => 'genesnpview', title => 'GeneSNPView link&nbsp;'},) ;
       }
       %chr_info = ();
     }
@@ -617,9 +609,9 @@ sub individual {
 
     my $pop_string = join ", ", @populations;
     my %tmp_row =  (
-		  Individual => $ind_data{$ind_id}{Name}."<br />(".
-		    $ind_data{$ind_id}{Gender}.")",
-		  Genotype   => $genotype,
+		  Individual => "<small>".$ind_data{$ind_id}{Name}."<br />(".
+		    $ind_data{$ind_id}{Gender}.")</small>",
+		  Genotype   => "<small>$genotype</small>",
 		  Description=> "<small>".($description ||"-") ."</small>", 
                   Populations=> "<small>".($pop_string ||"-") ."</small>",
 		  Father     => "<small>".($father||"-") ."</small>",
