@@ -62,10 +62,10 @@ sub _seq_region_ {
   }
   else {
     my @vari_mappings = @{ $self->get_variation_features };
-    return undef unless  @vari_mappings;
+    return (undef, undef, undef, "no") unless  @vari_mappings;
 
     if ($unique) {
-      return undef if $#vari_mappings > 0;
+      return (undef, undef, undef, "multiple") if $#vari_mappings > 0;
     }
     $seq_region  = $self->region_name($vari_mappings[0]);
     $start       = $self->start($vari_mappings[0]);
@@ -105,15 +105,17 @@ sub seq_region_type    {
 
 sub seq_region_data {
 
-   ### Variation_location
-   ### Args       : none
-   ### Example    : my ($seq_region, $start, $type) = $object->seq_region_data;
-   ### Description: Only returns sequence region, start and coordinate system name 
-   ###              if this Variation Object maps to one Variation Feature obj
-   ### Returns $seq_region, $start, $seq_type. Returns undef if multiple mapping
+  ### Variation_location
+  ### Args       : none
+  ### Example    : my ($seq_region, $start, $type) = $object->seq_region_data;
+  ### Description: Only returns sequence region, start and coordinate system name 
+  ###              if this Variation Object maps to one Variation Feature obj
+  ### Returns $seq_region, $start, $seq_type, $error(optional) which specifies
+  ### 'no' if no mapping or 'multiple' if has several hits
+  ### If there is an error, the first 3 args returned are undef
 
-  my($sr,$st,$type) = $_[0]->_seq_region_(1); 
-  return ($sr, $st, $type);
+  my($sr,$st,$type, $error) = $_[0]->_seq_region_(1); 
+  return ($sr, $st, $type, $error);
 }
 
 

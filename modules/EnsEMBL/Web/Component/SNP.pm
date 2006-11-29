@@ -433,7 +433,7 @@ sub mappings {
 
       unless (@table_header) {
 	push (@table_header,
-	      {key => 'transcript', title => 'Transcript: start-end&nbsp;'},
+	      {key => 'transcript', title => 'Transcript: relative SNP position&nbsp;'},
 	     );
 	unless ($source eq 'Glovar') {
 	  push (@table_header,
@@ -442,8 +442,8 @@ sub mappings {
 	}
 
 
-	push @table_header, {key => 'translation', title => 'Translation: start-end&nbsp;'} if $transcript_data->{'proteinname'} ;
-	push @table_header, {key => 'pepallele',   title =>'Peptide allele&nbsp;'} if $transcript_data->{'pepallele'} ;
+	push @table_header, {key => 'translation', title => 'Translation: relative SNP position&nbsp;'} if $transcript_data->{'proteinname'} ;
+	push @table_header, {key => 'pepallele',   title =>'Amino Acid&nbsp;'} if $transcript_data->{'pepallele'} ;
 	push (@table_header, {key => 'conseq', title =>'Type'});
       }
       %chr_info = ();

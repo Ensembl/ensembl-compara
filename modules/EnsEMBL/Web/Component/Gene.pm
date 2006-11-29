@@ -1436,7 +1436,7 @@ sub table_info {
   ### Returns 0
 
   my ($panel, $object)= @_;
-  $panel->print("The yellow dropdown menus at the top of the image above can be used to customise the exon context and types of SNPs displayed in both the image above and tables below.");
+  $panel->print("The yellow dropdown menus at the top of the image above can be used to customise the exon context and types of SNPs displayed in both the image above and tables below.  Please note the default 'Context' settings will probably filter out some intronic SNPs.");
   return 0;
 }
 

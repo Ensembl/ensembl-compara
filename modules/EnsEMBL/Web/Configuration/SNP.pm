@@ -20,7 +20,12 @@ sub snpview {
     'params' => $params
   );
 
-  my $multiple_mapping_flag = $obj->seq_region_data ? 0 : 1;
+  my $bad_mapping_flag = $obj->seq_region_data ? 0 : 1;
+  if ($bad_mapping_flag) {
+    my @tmp = ($obj->seq_region_data);
+    $bad_mapping_flag = $tmp[3] || "incorrect";
+  }
+
   # Description : prints a two col table with info abou the SNP
   if (my $info_panel = $self->new_panel('Information',
     'code'    => "info$self->{flag}",
@@ -37,24 +42,24 @@ sub snpview {
     seq_region EnsEMBL::Web::Component::SNP::seq_region
 				  ));
 
-    $info_panel->remove_component("ld_data") if $multiple_mapping_flag;
+    $info_panel->remove_component("ld_data") if $bad_mapping_flag;
     $self->{page}->content->add_panel( $info_panel );
   }
 
   #  Description : genomic location of SNP
-  my $caption = $multiple_mapping_flag ? " has multiple mappings" : " is located in the following transcripts";
+  my $caption = $bad_mapping_flag ? " has $bad_mapping_flag mappings" : " is located in the following transcripts";
   if ( my $mapping_panel = $self->new_panel('SpreadSheet',
     'code'    => "mappings $self->{flag}",
     'caption' => "SNP ". $obj->name.$caption,
      @params,
     'status'  => 'panel_locations',
-    'null_data' => '<p>There are no transcripts that contain this SNP.</p>'
+    'null_data' => '<p>There are no transcripts that contain this SNP either because there is no mapping or because it was removed from Ensembl because its alleles did not match the reference sequence.</p>'
 				    )) {
     $mapping_panel->add_components( qw(mappings EnsEMBL::Web::Component::SNP::mappings) );
     $self->{page}->content->add_panel( $mapping_panel );
   }
 
-  return if $multiple_mapping_flag;
+  return if $bad_mapping_flag;
 
   # prints a table of variation genotypes, alleles, their Population ids, genotypes, frequencies  etc. in spreadsheet format
 if (
