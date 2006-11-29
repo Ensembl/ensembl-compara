@@ -1472,6 +1472,18 @@ sub genesnpview_legend {
   return 0;
 }
 
+sub table_info {
+
+  ### Adds text to panel defined in Configuration::Gene
+  ### just above spreadsheet tables
+  ### Returns 0
+
+  my ($panel, $object)= @_;
+  $panel->print("The yellow dropdown menus at the top of the image above can be used to customise the intron context and types of SNPs displayed in both the image above and tables below.");
+  return 0;
+}
+
+
 sub too_big {
   my( $panel, $object ) = @_;
   my $object_type = $panel->{'object_type'};
