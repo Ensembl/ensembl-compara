@@ -399,7 +399,7 @@ sub context_menu {
 
     $self->add_entry( $flag,
 		      'code'  => 'genetree',
-		      'text'  => "Gene tree info",
+		      'text'  => "Gene tree info.",
 		      'title' => 'GeneTreeView - View graphic display of the gene tree for gene '.$obj->stable_id,
 		      'href'  => "/$species/genetreeview?$q_string" );
 
@@ -408,7 +408,12 @@ sub context_menu {
 		      'text'  => "Gene variation info.",
 		      'title' => 'GeneSNPView - View of consequences of variations on gene '.$obj->stable_id,
 		      'href'  => "/$species/genesnpview?$q_string" ) if $obj->species_defs->databases->{'ENSEMBL_VARIATION'};
-
+ 
+    $self->add_entry($flag,
+                     'code'   => 'ld_info',
+                     'text'   => 'LD info',
+                     'title'  => 'Linkage disequilibrium data',
+                     'href'    => "/$species/ldview?$q_string",) if $obj->species_defs->VARIATION_LD;
 
     $self->add_entry( $flag,
 		      'code'  => 'id_history',

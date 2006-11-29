@@ -642,7 +642,7 @@ sub get_HGNC_synonyms {
 
   my $site_type = ucfirst(lc($SiteDefs::ENSEMBL_SITETYPE));
   my ($disp_id_table, $HGNC_table, %syns, %text_info );
-  my $disp_syn == 0;
+  my $disp_syn = 0;
 
   my $matches = $self->get_database_matches;
   my @links = _sort_similarity_links ($self, @$matches);
