@@ -1197,11 +1197,11 @@ sub factor {
 
 
 sub genespliceview_menu {  return gene_menu( @_, 'genesnpview_transcript',
-   [qw( Features SNPContext ImageSize THExport )], ['GeneSpliceHelp'] ); }
+   [qw( Features SNPContext THExport ImageSize )], ['GeneSpliceHelp'] ); }
 
 sub genetreeview_menu {
     my($panel, $object, $configname, $left, $right ) =  
-	(@_, 'genetreeview', [qw( ImageSize GTExport )], ['GeneTreeHelp'] );
+	(@_, 'genetreeview', [qw( GTExport ImageSize )], ['GeneTreeHelp'] );
 
     my $mc = $object->new_menu_container(
 					 'configname'  => $configname,
@@ -1227,7 +1227,7 @@ sub nogenetree {
 
 
 sub genesnpview_menu    {  return gene_menu( @_, 'genesnpview_transcript', 
-   [qw( Features  Source SNPClasses SNPValid SNPTypes SNPContext ImageSize THExport)], ['SNPHelp'] ); }
+   [qw( Features  Source SNPClasses SNPValid SNPTypes SNPContext THExport ImageSize)], ['SNPHelp'] ); }
 
 sub gene_menu { 
   my($panel, $object, $configname, $left, $right ) = @_;
