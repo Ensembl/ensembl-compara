@@ -81,7 +81,7 @@ sub childExitHandler {
   }
 }
 
-sub initHandler {
+sub postReadRequestHandler {
   $requests ++;
   my $r = shift; # Get the connection handler
   $r->push_handlers( PerlTransHandler => \&transHandler );
