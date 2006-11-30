@@ -489,11 +489,14 @@ sub render_user_groups {
   my $first = 1;
   foreach my $group (@all_groups) {
     my $class = "very_dark";
+    warn "GROUP: " . $group->name;
     if (!$included{$group->id}) {
       if ($group->type eq 'restricted') {
         $group->load;
         my @invites = $group->invite_records;
         foreach my $invite (@invites) {
+          warn "INVITE:" . $invite->email;
+          warn "INVITE:" . $invite->status;
           if ($invite->email eq $user->email && $invite->status eq 'pending') {
             $class = "invite";
             $html .= "<tr>\n";
