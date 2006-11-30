@@ -212,7 +212,7 @@ sub find_records {
     my $record = $record_type->new((
                                          id => $result->{id},
                                        type => $result->{type},
-                                       user => $result->{user_id},
+                                       user => $result->{user},
                                        data => $result->{data},
                                  created_at => $result->{created_at},
                                 modified_at => $result->{modified_at}
