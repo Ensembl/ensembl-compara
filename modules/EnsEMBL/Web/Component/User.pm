@@ -4,7 +4,7 @@ use EnsEMBL::Web::Component;
 use EnsEMBL::Web::Proxy::Object;
 use EnsEMBL::Web::DBSQL::NewsAdaptor;
 use EnsEMBL::Web::Group::Record;
-
+use Data::Dumper;
 use EnsEMBL::Web::Interface::TabView;
 use EnsEMBL::Web::Interface::Tab;
 use EnsEMBL::Web::Interface::Table;
@@ -191,7 +191,13 @@ sub group_general {
 
 sub _render_group_configs {
   my ($group) = @_;
-  my $html = "You have not shared any configurations with the group.";
+  my @configurations = $group->configuration_records;
+  my $html = "";
+  if ($#configurations > -1) {
+    $html = render_config_collection({ collection => \@configurations, remove_link => "remove_group_config", group => $group });
+  } else {
+    $html = "You have not shared any configurations with the group.";
+  }
   return $html;
 }
 
@@ -442,31 +448,94 @@ sub details {
 sub _render_configs {
   my $user = shift;
   my $html;
+  my @configs = $user->configuration_records();
+  if ($#configs > -1) {
+    $html = render_config_collection({ collection => \@configs, share => 'yes', remove_link => "remove_config" });
+    my $found = 0;
+    my %group_configs = ();
+    my %group_lookups = ();
 
-  my @configs = $user->config_records({ order_by => 'click' });
-  if (@configs) {
-    my $table = EnsEMBL::Web::Interface::Table->new(( 
-                                       class => "ss tint", 
-                                       style => "border-collapse:collapse"
-                                                  ));
-    foreach my $record (@configs) {
-      my $row = EnsEMBL::Web::Interface::Table::Row->new();
-      $row->add_column({ width => "16px", content => "<img src='/img/bullet_star.png' width='16' height='16' />" });
-      $row->add_column({ content => "<a href=''>" . $record->name . "</a>" });
-      $row->add_column({ content => "<a href='/common/config?id=" . $record->id . "'>Edit</a>" });
-      $row->add_column({ content => "<a href='/common/remove_config?id=" . $record->id . "'>Delete</a>" });
-      $table->add_row($row);
+    foreach my $group (@{ $user->groups }) {
+      if (!$group_configs{$group}) {
+        $group_configs{$group} = [];
+        $group_lookups{$group} = $group;
+      }
+      my @records = $group->configuration_records;
+      if ($#records > -1) {
+        $found = 1;
+        push @{ $group_configs{$group} }, @records; 
+      }
     }
- 
-    $html = $table->render;
-  }
-  else {
+    if ($found) { 
+      $html .= "<br /><br /><b>Shared configurations</b><br />";
+      my $table = EnsEMBL::Web::Interface::Table->new((
+                                         class => "ss tint",
+                                         style => "border-collapse:collapse"
+                                                    ));
+
+      foreach my $key (sort keys %group_configs) {
+        my $row = EnsEMBL::Web::Interface::Table::Row->new();
+        my $group = $group_lookups{$key};
+        foreach my $config (@{ $group_configs{$key} }) {
+          $row->add_column({ content => $config->name });
+          $row->add_column({ content => $group->name });
+          if ($user->is_administrator_of($group)) {
+            $row->add_column({ content => "<a href='/common/remove_group_config?id=" . $config->id . "&group_id=" . $group->id . "'>Remove</a>" });
+          } else {
+            $row->add_column({ content => "" });
+          }
+        }
+        $table->add_row($row);
+      }
+
+      $html .= $table->render;
+
+    }
+  } else {
     $html = "You do not have any saved configurations.";
   } 
   return $html;
 }
 
+sub render_config_collection {
+  my ($params) = @_;
+  my @configs = @{ $params->{collection} };
+  my $share = $params->{share};
+  my $link = $params->{remove_link};
+  my $group = $params->{group};
+  my $html = "";
+  my $view_mapping = { "contigviewbottom" => "contigview" };
+  my $table = EnsEMBL::Web::Interface::Table->new(( 
+                                     class => "ss tint", 
+                                     style => "border-collapse:collapse"
+                                                ));
+  foreach my $record (@configs) {
+    my $config_string = $record->config;
+    $config_string  =~ s/&quote;/'/g;
+    my $config = eval($config_string);
+    my $views = "";
+    foreach my $view (keys %{ $config }) {
+      $views .= ucfirst($view_mapping->{$view}) . ", ";
+    }
+    $views =~ s/, //;
+    my $row = EnsEMBL::Web::Interface::Table::Row->new();
+    $row->add_column({ width => "16px", content => "<img src='/img/bullet_star.png' width='16' height='16' />" });
+    $row->add_column({ content => "" . $record->name . "" });
+    $row->add_column({ content => "$views" });
+    if ($share) {
+      $row->add_column({ content => "<a href='/common/share_record?id=" . $record->id . "'>Share</a>" });
+    }
+    my $extra = "";
+    if ($group) {
+      $extra = "&group_id=" . $group->id; 
+    }
+    $row->add_column({ content => "<a href='/common/" . $link . "?id=" . $record->id . "$extra'>Delete</a>" });
+    $table->add_row($row);
+  }
 
+  $html = $table->render;
+  return $html;
+}
 
 sub _render_bookmarks {
   my $user = shift;

@@ -1060,9 +1060,10 @@ sub save_config {
   my $user_id = $ENV{'ENSEMBL_USER_ID'};
   my $dump = Dumper($config_record);
   $dump =~ s/^\$VAR1 = //;
+  $dump =~ s/'/&quote;/g;
   my $html = "";
   $html .= qq(
-<form id='view_form' action="/common/save_config" method="post">
+<form id='view_form' action="/common/perform_save_config" method="post">
 <input type="hidden" name="dataview_action" value="create" />
 <input type="hidden" name="user_id" value="$user_id" />
 <input type="hidden" name="record" value="yes" />

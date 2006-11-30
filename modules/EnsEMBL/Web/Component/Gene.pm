@@ -311,6 +311,94 @@ sub align_markup_options_form {
   return $form;
 }
 
+sub user_notes {
+  my( $panel, $object ) = @_;
+  my $user = EnsEMBL::Web::Object::User->new({ id => $ENV{'ENSEMBL_USER_ID'} });
+  my $uri = CGI::escape($ENV{'REQUEST_URI'});
+  my $html = "";
+  my $stable_id = $object->stable_id;
+  my @annotations = $user->annotation_records;
+  if ($#annotations > -1) {
+    $html .= "<ul>";
+    foreach my $annotation (sort { $a->created_at cmp $b->created_at } @annotations) {
+      warn "CREATED AT: " . $annotation->created_at;
+      if ($annotation->stable_id eq $stable_id) {
+        $html .= "<li>";
+        $html .= "<b>" . $annotation->title . "</b><br />";
+        $html .= $annotation->annotation;
+        $html .= "<br /><a href='/common/gene_annotation?url=$uri&id=" . $annotation->id . "&stable_id=$stable_id'>Edit</a>";
+        $html .= "</li>";
+      }
+    }
+    $html .= "</ul>";
+  }
+
+  $html .= "<a href='/common/gene_annotation?url=" . $uri . "&stable_id=" . $stable_id . "'>Add new note</a>";
+
+  $panel->add_row('Your notes', $html); 
+  
+}
+
+sub group_notes {
+  my( $panel, $object ) = @_;
+  my $user = EnsEMBL::Web::Object::User->new({ id => $ENV{'ENSEMBL_USER_ID'} });
+  my @groups = @{ $user->groups };
+  my $uri = CGI::escape($ENV{'REQUEST_URI'});
+  my $stable_id = $object->stable_id;
+  my $html = "";
+  my $found = 0;
+  my %included_annotations = ();
+  foreach my $annotation ($user->annotation_records) {
+    if ($annotation->stable_id eq $stable_id) {
+      $included_annotations{$annotation->id} = "yes";
+    }
+  }
+  foreach my $group (@groups) {
+    my $title_added = 0;
+    my $group_annotations = 0;
+    foreach my $group_member (@ { $group->users }) {
+      $group_member->load;
+      my @annotations = $group_member->annotation_records;
+      if ($#annotations > -1) {
+        foreach my $annotation (@annotations) {
+          if (!$included_annotations{$annotation->id}) {
+            $group_annotations = 1;
+          }
+        }
+      }
+    }
+
+    if ($group_annotations) {
+      foreach my $group_member (@ { $group->users }) {
+        $group_member->load;
+        my @annotations = $group_member->annotation_records;
+        if ($#annotations > -1) {
+          if (!$title_added) {
+            $html .= "<h4>" . $group->name . "</h4>";
+            $title_added = 1;
+          }
+          $html .= "<ul>";
+          foreach my $annotation (sort { $a->created_at cmp $b->created_at } @annotations) {
+            if (!$included_annotations{$annotation->id}) {
+              $found = 1;
+              $html .= "<li>";
+              $html .= "<b>" . $annotation->title . "</b> (added by " . $group_member->name . ")<br />";
+              $html .= $annotation->annotation;
+              $html .= "</li>";
+              $included_annotations{$annotation->id} = "yes";
+            }
+          }
+          $html .= "</ul>";
+        }
+      }
+    }
+  }
+
+  if ($found) {
+    $panel->add_row('Group notes', $html); 
+  }
+}
+
 sub name {
 	my( $panel, $object ) = @_;
 	my $page_type= $object->[0];
