@@ -598,6 +598,87 @@ sub get_all_ConservationScores {
 }
 
 
+=head2 get_all_constrained_elements
+
+  Arg  1     : (opt) string $method_link_type (default = GERP_CONSTRAINED_ELEMENT")
+  Arg  2     : (opt) listref Bio::EnsEMBL::Compara::GenomeDB $species_set
+               (default, the set of species from the MethodLinkSpeciesSet used
+               to build this AlignSlice)
+  Example    : my $constrained_elements =
+                    $align_slice->get_all_constrained_elements();
+  Description: Retrieve the corresponding constrained elements for these alignments.
+               Objects will be located on this AlignSlice, i.e. the
+               reference_slice, reference_slice_start, reference_slice_end
+               and reference_slice_strand will refer to this AlignSlice
+               object
+  Returntype : ref. to an array of Bio::EnsEMBL::Compara::GenomicAlignBlock
+               objects.
+  Caller     : object::methodname
+  Status     : At risk
+
+=cut
+
+sub get_all_constrained_elements {
+  my ($self, $method_link_type, $species_set) = @_;
+  my $all_constrained_elements = [];
+
+  $method_link_type ||= "GERP_CONSTRAINED_ELEMENT";
+  my $key_cache = "_constrained_elements_".$method_link_type;
+  if ($species_set) {
+    $key_cache .= "::" . join("-", sort map {s/\W/_/g} map {$_->name} @$species_set);
+  } else {
+    $species_set = $self->{_method_link_species_set}->species_set;
+  }
+
+  if (!defined($self->{$key_cache})) {
+    my $method_link_species_set_adaptor = $self->adaptor->db->get_MethodLinkSpeciesSetAdaptor();
+    my $method_link_species_set = $method_link_species_set_adaptor->fetch_by_method_link_type_GenomeDBs(
+        $method_link_type, $self->{_method_link_species_set}->species_set);
+
+    if ($method_link_species_set) {
+      my $genomic_align_block_adaptor = $self->adaptor->db->get_GenomicAlignBlockAdaptor();
+      $all_constrained_elements = $genomic_align_block_adaptor->fetch_all_by_MethodLinkSpeciesSet_Slice(
+          $method_link_species_set, $self->reference_Slice);
+      my $big_mapper = $self->{_reference_Mapper};
+      foreach my $this_genomic_align_block (@{$all_constrained_elements}) {
+        my $reference_slice_start;
+        my $reference_slice_end;
+        my $reference_slice_strand;
+        my @alignment_coords = $big_mapper->map_coordinates(
+            "sequence", # $self->genomic_align->dbID,
+            $this_genomic_align_block->reference_slice_start + $this_genomic_align_block->reference_slice->start - 1,
+            $this_genomic_align_block->reference_slice_end + $this_genomic_align_block->reference_slice->start - 1,
+            $this_genomic_align_block->reference_slice_strand,
+            "sequence" # $from_mapper->from
+        );
+        foreach my $alignment_coord (@alignment_coords) {
+          next if (!$alignment_coord->isa("Bio::EnsEMBL::Mapper::Coordinate"));
+          if (!defined($reference_slice_strand)) {
+            $reference_slice_start = $alignment_coord->start;
+            $reference_slice_end = $alignment_coord->end;
+            $reference_slice_strand = $alignment_coord->strand;
+          } else {
+            if ($alignment_coord->start < $reference_slice_start) {
+              $reference_slice_start = $alignment_coord->start;
+            }
+            if ($alignment_coord->end > $reference_slice_end) {
+              $reference_slice_end = $alignment_coord->end;
+            }
+          }
+        }
+        $this_genomic_align_block->reference_slice($self);
+        $this_genomic_align_block->reference_slice_start($reference_slice_start);
+        $this_genomic_align_block->reference_slice_end($reference_slice_end);
+        $this_genomic_align_block->reference_slice_strand($reference_slice_strand);
+      }
+    }
+    $self->{$key_cache} = $all_constrained_elements;
+  }
+
+  return $self->{$key_cache};
+}
+
+
 =head2 _create_underlying_Slices (experimental)
 
   Arg[1]     : listref of Bio::EnsEMBL::Compara::GenomicAlignBlocks
@@ -739,6 +820,7 @@ sub _create_underlying_Slices {
     $self->{slices}->{$species->name} = [new Bio::EnsEMBL::Compara::AlignSlice::Slice(
             -length => $align_slice_length,
             -requesting_slice => $self->reference_Slice,
+            -align_slice => $self,
             -method_link_species_set => $self->{_method_link_species_set},
             -genome_db => $species,
             -expanded => $expanded,
@@ -753,6 +835,7 @@ sub _create_underlying_Slices {
           $align_slice_length,
           $self->reference_Slice->strand
       );
+  $self->{_reference_Mapper} = $big_mapper;
 
   foreach my $this_genomic_align_block (@$sorted_genomic_align_blocks) {
 
@@ -795,6 +878,7 @@ sub _create_underlying_Slices {
       my $new_underlying_slice = new Bio::EnsEMBL::Compara::AlignSlice::Slice(
               -length => $align_slice_length,
               -requesting_slice => $self->reference_Slice,
+              -align_slice => $self,
               -method_link_species_set => $self->{_method_link_species_set},
               -genome_db => $this_genomic_align->dnafrag->genome_db,
               -expanded => $expanded,

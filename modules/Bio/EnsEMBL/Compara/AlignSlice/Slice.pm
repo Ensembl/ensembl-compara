@@ -100,9 +100,9 @@ sub new {
   my $self = {};
   bless $self,$class;
 
-  my ($length, $requesting_slice, $method_link_species_set, $genome_db, $expanded) =
+  my ($length, $requesting_slice, $align_slice, $method_link_species_set, $genome_db, $expanded) =
       rearrange([qw(
-          LENGTH REQUESTING_SLICE METHOD_LINK_SPECIES_SET GENOME_DB EXPANDED
+          LENGTH REQUESTING_SLICE ALIGN_SLICE METHOD_LINK_SPECIES_SET GENOME_DB EXPANDED
       )], @args);
 
   my $version = "";
@@ -113,8 +113,10 @@ sub new {
     $name =~ s/\:/_/g;
     $version .= $name;
   }
+  $self->{_align_slice} = $align_slice if ($align_slice);
   if ($method_link_species_set and ref($method_link_species_set) and
       $method_link_species_set->isa("Bio::EnsEMBL::Compara::MethodLinkSpeciesSet")) {
+    $self->{_method_link_species_set} = $method_link_species_set;
     $version .= "+".$method_link_species_set->method_link_type;
     my $species_set = $method_link_species_set->species_set();
     if ($species_set) {
@@ -247,49 +249,6 @@ sub get_all_Slice_Mapper_pairs {
   my $slice_mapper_pairs = ($self->{slice_mapper_pairs} or []);
 
   return $slice_mapper_pairs;
-}
-
-
-=head2 add_GenomicAlign
-
-  Arg[1]     : Bio::EnsEMBL::Compara::GenomicAlign $genomic_align
-  Example    : $slice->add_GenomicAlign($genomic_align);
-  Description: Attaches a GenomicAlign to this compara Slice
-  Returntype : list ref of Bio::EnsEMBL::Compara::GenomicAlign objects
-  Exceptions : throws if $genomic_align is not a
-               Bio::EnsEMBL::Compara::GenomicAlign object
-
-=cut
-
-sub add_GenomicAlign {
-  my ($self, $genomic_align) = @_;
-
-  if (!$genomic_align or !ref($genomic_align) or
-      !$genomic_align->isa("Bio::EnsEMBL::Compara::GenomicAlign")) {
-    throw("[$genomic_align] must be a Bio::EnsEMBL::Compara::GenomicAlign object");
-  }
-  push(@{$self->{genomic_aligns}}, $genomic_align);
-
-  return $self->{genomic_aligns};
-}
-
-
-=head2 get_all_GenomicAligns
-
-  Arg[1]     : - none -
-  Example    : $genomic_aligns = $slice->get_all_GenomicAligns();
-  Description: Returns all GenomicAligns attached to this compara Slice
-  Returntype : list ref of Bio::EnsEMBL::Compara::GenomicAlign objects
-  Exceptions : returns a ref to an empty list if no GenomicAligns have
-               been attahced so far.
-
-=cut
-
-sub get_all_GenomicAligns {
-  my ($self) = @_;
-  my $genomic_aligns = ($self->{genomic_aligns} or []);
-
-  return $genomic_aligns;
 }
 
 
@@ -793,15 +752,15 @@ sub _map_position_using_cigar_line {
   my $mapped_pos = 0;
 
 
-  my @cigar = grep {$_} split(/(\d*[IDM])/, $cigar_line);
+  my @cigar = grep {$_} split(/(\d*[GIDM])/, $cigar_line);
   my $original_count = 0;
   my $mapped_count = 0;
   my $pending_count = 0;
 
   foreach my $cigar_piece (@cigar) {
-    my ($num, $mode) = $cigar_piece =~ /(\d*)([IDM])/;
+    my ($num, $mode) = $cigar_piece =~ /(\d*)([GIDM])/;
     $num = 1 if ($num eq "");
-    if ($mode eq "D") {
+    if ($mode eq "D" or $mode eq "G") {
       $pending_count += $num;
     } elsif ($mode eq "I") {
       $original_count += $num;
@@ -1722,7 +1681,6 @@ sub get_all_underlying_Slices {
   return $underlying_slices;
 }
 
-
 =head2 get_original_seq_region_position
 
   Arg  [1]   : int $position
@@ -1749,6 +1707,51 @@ sub get_original_seq_region_position {
   my $underlying_slice = $self->get_all_underlying_Slices($position, $position, 1)->[0];
 
   return ($underlying_slice, $underlying_slice->start);
+}
+
+
+=head2 get_all_constrained_elements
+
+  Arg  1     : (opt) string $method_link_type (default = GERP_CONSTRAINED_ELEMENT")
+  Arg  2     : (opt) listref Bio::EnsEMBL::Compara::GenomeDB $species_set
+               (default, the set of species from the MethodLinkSpeciesSet used
+               to build this AlignSlice)
+  Example    : my $constrained_elements =
+                    $align_slice->get_all_constrained_elements();
+  Description: Retrieve the corresponding constrained elements for these alignments.
+               Objects will be mapped on this AlignSlice::Slice, i.e. the
+               reference_slice, reference_slice_start, reference_slice_end
+               and reference_slice_strand will refer to this AlignSlice::Slice
+               object
+  Returntype : ref. to an array of Bio::EnsEMBL::Compara::GenomicAlignBlock
+               objects.
+  Caller     : object::methodname
+  Status     : At risk
+
+=cut
+
+sub get_all_constrained_elements {
+  my ($self, $method_link_type, $species_set) = @_;
+  my $all_constrained_elements = [];
+
+  return [] if (!$self->{_align_slice});
+  my $all_original_constrained_elements = $self->{_align_slice}->
+      get_all_constrained_elements($method_link_type, $species_set);
+  foreach my $this_constrained_element (@$all_original_constrained_elements) {
+    foreach my $this_genomic_align (@{$this_constrained_element->get_all_GenomicAligns}) {
+      if ($this_genomic_align->genome_db->name eq $self->genome_db->name) {
+        my $constrained_slice = $this_genomic_align->get_Slice;
+        my $slices = $self->map_original_Slice($constrained_slice);
+        $this_constrained_element->reference_slice($self);
+        $this_constrained_element->reference_slice_start($slices->[0]->start);
+        $this_constrained_element->reference_slice_end($slices->[0]->end);
+        $this_constrained_element->reference_slice_strand($slices->[0]->strand);
+        push(@$all_constrained_elements, $this_constrained_element);
+      }
+    }
+  }
+
+  return $all_constrained_elements;
 }
 
 
