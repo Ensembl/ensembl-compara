@@ -1059,6 +1059,8 @@ sub save_config {
   warn "Config: " . $config_record;
   my $user_id = $ENV{'ENSEMBL_USER_ID'};
   my $dump = Dumper($config_record);
+  my $config_url = $ENV{'REQUEST_URI'};
+  $config_url =~ s/configview/contigview/;
   $dump =~ s/^\$VAR1 = //;
   $dump =~ s/'/&quote;/g;
   my $html = "";
@@ -1070,9 +1072,10 @@ sub save_config {
 <input type="hidden" name="type" value="configuration" />
 <input type="hidden" name="url" value="/common/accountview" />
 <input type="hidden" name="config" value="$dump" />
+<input type="hidden" name="config_url" value="$config_url" />
 <div class="formblock">
 <h6><label for="name">Configuration name</h6><div class="formcontent">
-<input type="text" id = "name" name="name" value="Example" maxlength="255" />
+<input type="text" id = "name" name="name" value="" maxlength="255" />
 </div></div>
 <div class="formblock">
 <h6><label for="blurb">A brief description of your configuration</h6><div class="formcontent">

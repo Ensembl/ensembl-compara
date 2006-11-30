@@ -429,7 +429,163 @@ sub _render_membership {
   return $html;
 }
 
+
+sub user_details {
+  my( $panel, $user) = @_;
+  my $html = "<div class='pale boxed'>";
+  $html .= qq(This is your Ensembl account home page. From here you can manage
+                your saved settings, update your details and join or create new 
+                Ensembl groups.<br /><br />To learn more about how to get the most
+                from your Ensembl account, read our <a href='/info/about/accounts.html'>introductory guide</a>.);
+  $html .= "</div>";
+   
+  $panel->print($html);
+}
+
+sub user_groups {
+  my( $panel, $user) = @_;
+  my @groups = @{ $user->groups };
+  my $html = "";
+  $html .= "<div class='user_setting'>\n";
+  $html .= render_user_groups($user, @groups);
+  $html .= "</div>\n";
+  $panel->print($html);
+}
+
+sub render_user_groups {
+  my ($user, @groups) = @_;
+  my $html = qq(
+  <table width='100%' cellpadding='4' cellspacing='0'>
+    <tr>
+      <td class='settings_header' colspan='4'><b>Groups</b> &middot <a href='/common/create_group'>New group &rarr;</a></td>
+    </tr>\n);
+  my %included = ();
+  if ($#groups> -1) {
+    my $class = "";
+    foreach my $group (@groups) {
+
+      if ($class eq "dark") {
+        $class = "";
+      } else {
+        $class = "dark";
+      }
+      $included{$group->id} = "yes"; 
+      $html .= "<tr>\n";
+      $html .= "<td class='$class'>" . $group->name . "</td>";
+      $html .= "<td class='$class'>" . $group->description . "</td>";
+      if ($user->is_administrator_of($group)) {
+        $html .= "<td class='$class'><a href='/common/groupview?id=" . $group->id . "'>Group settings</a></td>";
+      } else {
+        $html .= "<td class='$class'><a href='/common/unsubscribe?id=" . $group->id . "'>Unsubscribe</a></td>";
+      }
+      $html .= "</tr>\n";
+    }
+  } else {
+    $html .= "<tr><td class='dark'>You have not subscribed to any Ensembl groups.</td><td class='dark' style='text-align:right;' colspan='2'><a href='/info/about/groups.html'>Learn more about how to join and start a groups&rarr;</a></td></tr>\n";
+  }
+
+  my @all_groups = @{ EnsEMBL::Web::Object::Group->all_groups_by_type('restricted') };
+  push @all_groups, @{ EnsEMBL::Web::Object::Group->all_groups_by_type('open') };
+  my $first = 1;
+  foreach my $group (@all_groups) {
+    my $class = "very_dark";
+    if (!$included{$group->id}) {
+      if ($group->type eq 'restricted') {
+        $group->load;
+        my @invites = $group->invite_records;
+        foreach my $invite (@invites) {
+          if ($invite->email eq $user->email && $invite->status eq 'pending') {
+            $class = "invite";
+            $html .= "<tr>\n";
+            $html .= "<td class='$class'>" . $group->name . "</td>";
+            $html .= "<td class='$class'>" . $group->description. "</td>";
+            $html .= "<td class='$class'><a href='/common/join_by_invite?record_id=" . $invite->id . "&invite=" . $invite->code . "'>Accept invite</a></td>";
+            $html .= "</tr>\n";
+            $class = "very_dark";
+          }
+        }
+      } else {
+        $html .= "<tr>\n";
+        if ($first) {
+          $class .= " top";
+          $first = 0;
+        }
+        $html .= "<td class='$class'>" . $group->name . "</td>";
+        $html .= "<td class='$class'>" . $group->description . "</td>";
+        $html .= "<td class='$class'><a href='/common/subscribe?id=" . $group->id . "'>Subscribe</a></td>";
+        $html .= "</tr>\n";
+      }
+    }
+  }
+
+  $html .= "</table>\n";
+  return $html;
+}
+
+
+sub user_settings {
+  my( $panel, $user) = @_;
+  my @configurations = $user->configuration_records;
+  my @bookmarks = $user->bookmark_records;
+  my $html = "";
+  $html .= "<div class='user_setting'>\n";
+  $html .= render_user_configuration_table($user, @configurations);
+  $html .= "</div>\n";
+
+  $html .= "<div class='user_setting'>\n";
+  $html .= render_user_bookmark_table($user, @bookmarks);
+  $html .= "</div>\n";
+  $panel->print($html);
+}
+
+sub render_user_bookmark_table {
+  my ($user, @bookmarks) = @_;
+  my $html = qq(
+  <table width='100%' cellpadding='4' cellspacing='0'>
+    <tr>
+      <td class='settings_header' colspan='5'><b>Bookmarks</b> &middot <a href='/common/bookmark?forward=1'>New bookmark &rarr;</a></td>
+    </tr>\n);
+  if ($#bookmarks > -1) {
+    foreach my $bookmark (@bookmarks) {
+      $html .= "<tr>";
+      $html .= "<td><a href='" . $bookmark->url . "' title='" . $bookmark->description . "'>" . $bookmark->name . "</a></td>"; 
+      $html .= "<td style='text-align:right;'><a href='/common/remove_bookmark?id=" . $bookmark->id . "'>Delete</a></td>"; 
+      $html .= "</tr>";
+    }
+  } else {
+    $html .= "<tr><td class='dark' style='text-align:left;'>You have not saved any bookmarks.</td><td class='dark' style='text-align: right;'><a href='/info/about/bookmarks.html'>Learn more about saving frequently used pages &rarr;</a></td></tr>\n";
+  }
+  $html .= "</table>\n";
+  return $html;
+}
+
+sub render_user_configuration_table {
+  my ($user, @configurations) = @_;
+  my $html = qq(
+  <table width='100%' cellpadding='4' cellspacing='0'>
+    <tr>
+      <td class='settings_header' colspan='4'><b>Configurations</b></td>
+    </tr>);
+
+  if ($#configurations > -1) {
+    foreach my $config (@configurations) {
+      $html .= "<tr>";
+      $html .= "<td><a href='" . $config->config_url . "?load_config=" . $config->id . "'>" . $config->name . "</a></td>";
+      $html .= "<td>" . $config->blurb . "</td>\n";
+      $html .= "<td style='text-align: right;'><a href='/common/remove_record?id=" . $config->id . "'>Delete</a></td>";
+      $html .= "</tr>\n";
+    }
+  } else {
+    $html .= "<tr><td class='dark' style='text-align:left;'>You have not saved any configurations.</td><td class='dark' style='text-align: right;'><a href='/info/about/configurations.html'>Learn more about custom configurations &rarr;</a></td></tr>\n";
+  }
+
+  $html .= "</table>\n";
+
+  return $html;
+}
+
 sub details {
+  ### x
   my( $panel, $user) = @_;
 
   my $html = sprintf(qq(<div class="boxed" style="max-width: 150px">

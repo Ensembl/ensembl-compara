@@ -100,35 +100,44 @@ sub groupview {
 sub accountview {
   ### Dynamic view displaying information about a user account
   my $self   = shift;
-  my $object = $self->{'object'};
-  my $details = $object->get_user_by_id($object->id);
+  my $user = $self->{'object'};
   
   $self->_add_javascript_libraries;
 
-  if (my $panel1 = $self->new_panel( 'Image',
-    'code'    => "info$self->{flag}",
-    'object'  => $self->{object},
-    ) ) {
-    $panel1->add_components(qw(
-        blurb     EnsEMBL::Web::Component::User::blurb
+  if( my $details_panel = $self->new_panel( 'Image',
+    'code'    => "details#",
+    'caption' => 'Account summary for '. $user->name . " (" . $user->email . ")",
+  )) {
+    $details_panel->add_components(qw(
+      user_details EnsEMBL::Web::Component::User::user_details
     ));
-    $self->add_panel( $panel1 );
+    $self->add_panel( $details_panel);
   }
-  if (my $panel2 = $self->new_panel( 'TwoColumn',
-    'code'    => "info$self->{flag}",
-    'object'  => $self->{object},
-    ) ) {
-    $panel2->set_column_width('left', '67%');
-    $panel2->set_column_width('right', '27%');
-    $panel2->add_components(qw(
-        configs     EnsEMBL::Web::Component::User::configs
-        groups      EnsEMBL::Web::Component::User::groups
-        details     EnsEMBL::Web::Component::User::details
+
+  if( my $settings_panel = $self->new_panel( 'Image',
+    'code'    => "details#",
+    'caption' => 'Saved settings',
+    'status'  => 'settings_panel'
+  )) {
+    $settings_panel->add_components(qw(
+      user_settings EnsEMBL::Web::Component::User::user_settings
     ));
-  
-    $self->add_panel( $panel2 );
-  }                                                                              
-  $self->{page}->set_title('Your Account Details');
+    $self->add_panel( $settings_panel);
+  }
+
+  if( my $settings_panel = $self->new_panel( 'Image',
+    'code'    => "details#",
+    'caption' => 'Ensembl groups',
+    'status'  => 'group_panel'
+  )) {
+    $settings_panel->add_components(qw(
+      user_groups EnsEMBL::Web::Component::User::user_groups
+    ));
+    $self->add_panel( $settings_panel);
+  }
+
+  $self->{page}->set_title('Account summary: ' . $user->name);
+
 }
 
 sub user_menu {
