@@ -61,6 +61,12 @@ sub new {
   return $self;
 }
 
+sub load {
+  my $self = shift;
+  my @records = $self->find_group_records_by_group_id($self->id);
+  $self->records(\@records);
+}
+
 sub populate_details {
   my ($self, $details) = @_;
   $self->id($details->{id});
