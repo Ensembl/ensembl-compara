@@ -42,13 +42,12 @@ sub send_invite_email {
   You have been invited by ) . $user->name . qq( to join a group
   on the Ensembl Genome Browser. 
 
-  To accept this invitation, click on the following link:
+  To accept this invitation, go to your account summary page in Ensembl, or 
+  click on the following link:
 
   ) . $group->name . qq(
   ) . $species_defs->ENSEMBL_BASE_URL . qq(/common/accept?id=) . $record->id . qq(&invite=) . $record->code . qq(
   
-  Your invitation code is: ) . $record->code . qq(
-
   If you do not wish to accept, please just disregard this email. 
   
   If you have any problems please don't hesitate to contact ) . $user->name . 
