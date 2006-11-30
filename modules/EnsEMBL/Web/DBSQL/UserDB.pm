@@ -100,7 +100,7 @@ sub clearCookie {
 
 sub setConfigByName {
   my( $self, $r, $session_ID, $key, $value ) = @_;
-  warn "==> Set config by name: $session_ID, $key, $value";
+  #warn "==> Set config by name: $session_ID, $key, $value";
   return unless $self->{'_handle'};
   unless($session_ID) {
     $session_ID = $self->create_session( 0, $r ? $r->uri : '' );
@@ -149,7 +149,7 @@ sub clearConfigByName {
 
 sub getConfigByName {
   my( $self, $session_ID, $key ) = @_;
-  warn "==> get config by name: $session_ID, $key";
+  #warn "==> get config by name: $session_ID, $key";
   return unless $self->{'_handle'};
   return unless $session_ID;
   my( $key_ID ) = $self->{'_handle'}->selectrow_array( "select ID from USERDATATYPE where name = ?", {}, $key );
@@ -164,7 +164,7 @@ sub setConfig {
   my $session_ID      = shift;
   my $userdatatype_ID = shift || 1;
   my $value           = shift;
-  warn "==> set config";
+  #warn "==> set config";
   return unless( $self->{'_handle'} );
   unless($session_ID) {
     $session_ID = $self->create_session( 0, $r ? $r->uri : '' );
@@ -200,7 +200,7 @@ sub getConfig {
   my $self            = shift;
   my $session_ID      = shift;
   my $userdatatype_ID = shift || 1;  
-  warn "==> get config";
+  #warn "==> get config";
   return unless( $self->{'_handle'} && $session_ID > 0 );
   my $value = $self->{'_handle'}->selectrow_array(
     "select value
@@ -980,7 +980,7 @@ sub find_records {
     push (@$results,
       {
       'id'          => $array[0],
-      'user_id'     => $array[1],
+      'user'        => $array[1],
       'type'        => $array[2],
       'data'        => $array[3],
       'created_at'  => $array[4],
@@ -1210,7 +1210,7 @@ sub groups_for_user_id {
   if (!$status) {
     $status = 'active';
   }
-  warn "FINDING GROUPS FOR USER ID: $user_id";
+  #warn "FINDING GROUPS FOR USER ID: $user_id";
   my $sql = qq(
     SELECT 
            webgroup.webgroup_id,
