@@ -327,7 +327,7 @@ sub user_notes {
         $html .= "<b>" . $annotation->title . "</b><br />";
         $html .= $annotation->annotation;
         $html .= "<br /><a href='/common/gene_annotation?url=$uri&id=" . $annotation->id . "&stable_id=$stable_id'>Edit</a>";
-        $html .= "&middot; <a href='/common/remove_record?url=$uri&id=" . $annotation->id . "'>Delete</a>";
+        $html .= " &middot; <a href='/common/remove_record?url=$uri&id=" . $annotation->id . "'>Delete</a>";
         $html .= "</li>";
       }
     }
