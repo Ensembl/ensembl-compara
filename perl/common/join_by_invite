@@ -21,8 +21,9 @@ my $cgi = new CGI;
 my $record_id = $cgi->param('record_id');
 warn "RECORD ID: " . $record_id;
 my @records = EnsEMBL::Web::Group::Record->find_invite_by_group_record_id($record_id);
-my $email = $records[0]->email;
-my $group_id = $records[0]->group;
+my $record = $records[0];
+my $email = $record->email;
+my $group_id = $record->group;
 
 my $user = EnsEMBL::Web::Object::User->new({ email => $email });
 
@@ -62,6 +63,8 @@ EnsEMBL::Web::Document::DataView::simple('User', $page);
   warn "WORKING WITH USER: " . $user->id . ": " . $user->email;
   $user->add_group($group);
   $user->save;
+  $record->status('accepted');
+  $record->save;
 
   my $url = "/common/accountview";
   print "Location: " . $url;

@@ -24,13 +24,16 @@ $data->adaptor(EnsEMBL::Web::DBSQL::ViewAdaptor->new((
 $data->add_field({'Field' => 'name', 'Type' => 'varchar(255)'});
 $data->add_field({'Field' => 'blurb', 'Type' => 'text'});
 $data->add_field({'Field' => 'config', 'Type' => 'text'});
+$data->add_field({'Field' => 'config_url', 'Type' => 'text'});
 $data->add_field({'Field' => 'created_at', 'Type' => 'timestamp'});
 $data->add_field({'Field' => 'modified_at', 'Type' => 'timestamp'});
 
 $page->data_definition($data);
 $page->title('Save configuration');
 $page->action('create');
-$page->on_complete($cgi->param('url'));
+my $url = $cgi->param('config_url');
+$url =~ s/configview/contigview/;
+$page->on_complete($url);
 $page->on_error('http://ensarc-1-14.internal.sanger.ac.uk:6700/dataview/config_failed.html');
 
 $page->add_text('Describe your configuration here, and then click "Submit" to save it. Once saved, you can share your configuration with groups you administer.');
