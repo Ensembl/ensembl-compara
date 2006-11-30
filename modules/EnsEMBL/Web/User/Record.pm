@@ -38,6 +38,12 @@ sub user {
   return $User_of{$self};
 }
 
+sub user_id {
+  ### a
+  my $self = shift;
+  return $self->user(@_);
+}
+
 sub delete {
   my $self = shift;
   $self->adaptor->delete_record((
