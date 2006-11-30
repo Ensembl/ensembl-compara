@@ -241,13 +241,30 @@ sub record_parameters {
   return \%set_parameters;
 }
 
+#sub dump_data {
+#  my ($self, $data) = @_;
+#  my $dump = Dumper($data);
+#  #$dump =~ s/'/\\'/g;
+#  $dump =~ s/^\$VAR1 = //;
+#  return $dump;
+#}
+
 sub dump_data {
+  ### Uses Data::Dumper to format a record's data for storage,
+  ### and also handles escaping of quotes to avoid SQL errors
   my ($self, $data) = @_;
-  my $dump = Dumper($data);
+  my $temp_fields = {};
+  foreach my $key (keys %{ $data }) {
+    $temp_fields->{$key} = $data->{$key};
+    $temp_fields->{$key} =~ s/'/\\'/g;
+  }
+  my $dump = Dumper($temp_fields);
   #$dump =~ s/'/\\'/g;
   $dump =~ s/^\$VAR1 = //;
   return $dump;
 }
+
+
 
 sub fetch_id {
   my ($self, $id) = @_;
