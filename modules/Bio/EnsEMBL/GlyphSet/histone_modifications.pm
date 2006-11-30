@@ -24,39 +24,13 @@ sub _init {
   my ($self) = @_;
   $self->bumped( $self->my_config( 'compact' ) ? 'no' : 'yes' );
 
-  if ($self->my_config('compact')) {
-    $self->init_compact;    # do just blue track    
-  }
-  else {
-    $self->init_expand(); # do both tracks
-    $self->init_compact(); # do both tracks
-    $self->render_space_glyph();
-  }
-  return 1;
-}
-
-sub init_expand {
-
-  ### Wiggle plot
-  ### Description: gets data for the 'wiggle plot' and passes to
-  ### {{render_signalmap}} for drawing
-  ### Returns 1
-
-  my ($self) = @_;
   my $slice = $self->{'container'};
-  my $type = $self->check();
-  my $max_length     = $self->{'config'}->get( $type, 'threshold' )  || 500;
+  my $max_length     = $self->{'config'}->get( $self->check(), 'threshold' )  || 500;
   my $slice_length  = $slice->length;
   if($slice_length > $max_length*1010) {
     my $height = $self->errorTrack('Tiling array data only displayed for less than '.$max_length.'Kb');
     $self->_offset($height+4);
     return;
-  }
-
-  my $adaptor = $slice->adaptor();
-  if(!$adaptor) {
-    warn('Cannot get prediction features without attached adaptor');
-    return [];
   }
 
   my $db = $slice->adaptor->db->get_db_adaptor('funcgen');
@@ -65,65 +39,116 @@ sub init_expand {
     return [];
   }
   my $exp_adaptor  = $db->get_ExperimentAdaptor;
-  my $exp_chip_adaptor  = $db->get_ExperimentalChipAdaptor;
-  my $oligo_feature_adaptor = $db->get_OligoFeatureAdaptor;
 
-  if (!$exp_adaptor or !$exp_chip_adaptor or !$oligo_feature_adaptor) {
-    warn ("Cannot get get adaptors: $exp_chip_adaptor, $exp_adaptor, $oligo_feature_adaptor");
+  if (!$exp_adaptor) {
+    warn ("Cannot get get adaptors: $exp_adaptor");
     return [];
   }
 
-  my @results;
-  my $analysis = $db->get_AnalysisAdaptor->fetch_by_logic_name("VSN_GLOG");# normalisation method
+  my $vanalysis = $db->get_AnalysisAdaptor->fetch_by_logic_name("VSN_GLOG");# normalisation method
+  my $sanger_analysis = $db->get_AnalysisAdaptor->fetch_by_logic_name("SangerPCR");# normalisation method
 
-  my $configuration = {length => $slice->length, 
-               analysis => $analysis};
-
-  my $drawn_flag = 0;
   # get_all_experiment_names method takes one arg: a displayable flag
+  my %drawn_pf_flag;
+  my %drawn_wiggle_flag;
+
   foreach my $name (@{ $exp_adaptor->get_all_experiment_names(1) || [] } ) {
     my $experiment = $exp_adaptor->fetch_by_name($name);
+    my $experiment_id = $experiment->dbID;
+    my $analysis = $experiment_id > 1 ? $sanger_analysis : $vanalysis;
 
-    # The wiggley tracks should be displayed for each contiguous set of  
-    # each experiment. They need separating on experiment (and contig set).
-    my @experiment_chip_sets = @{$exp_chip_adaptor->fetch_contigsets_by_experiment_dbID($experiment->dbID()) || []};
+    if ($self->my_config('compact')) {
+      $drawn_wiggle_flag{1} = 1;
+      $drawn_pf_flag{ $self->pred_features($experiment_id)} = 1;    # do just blue track    
+      next if $drawn_pf_flag{1};
 
-    foreach my $set ( @experiment_chip_sets ) {
-      # returns arrayref with ExperimentalChips in that set (first element is set name)
-      $configuration->{'features'} = ();
-      $configuration->{'track_name'} = shift @$set;
-
-
-      #get features for slice and experimtenal chip set
-      my @oligo_features = @{$oligo_feature_adaptor->fetch_all_by_Slice_ExperimentalChips($slice, $set) || [] };
-
-      my @draw_features;
-      foreach my $oligo_feature ( @oligo_features ){
-    # restrict features to experimental chips
-    my $score =  $oligo_feature->get_result_by_Analysis_ExperimentalChips($analysis, $set);
-    my $start  = $oligo_feature->start; #50mer probe
-    my $end    = $oligo_feature->end;
-
-    push @draw_features, {'score' => $score,
-                  'start' => $start,
-                  'end'   => $end,
-            };
-      }
-      next unless @draw_features;
-      $drawn_flag = 1;
-      $configuration->{'features'} = \@draw_features;
-      $self->render_signalmap($configuration);       # render these on track
+      $drawn_wiggle_flag{ $self->wiggle_plot($experiment_id, $analysis) } = 1;
+      $self->errorTrack( "No predicted features in this region", 0, $self->_offset ) if $self->{'config'}->get('_settings','opt_empty_tracks')==1;
+      $self->render_space_glyph();
+      next;
     }
+
+    $drawn_wiggle_flag{$self->wiggle_plot($experiment_id, $analysis)} = 1; # do both tracks
+    $drawn_pf_flag {$self->pred_features($experiment_id)} = 1; # do both tracks
   }
-  unless ($drawn_flag) {
-   my $height = $self->errorTrack( "No tiling array data in this region", 0, $self->_offset ) if $self->{'config'}->get('_settings','opt_empty_tracks')==1;
-   $self->_offset($height + 4);
+
+  return if $drawn_pf_flag{1} && $drawn_wiggle_flag{1};
+
+  my $error;
+  if (!$drawn_pf_flag{1}  && !$drawn_wiggle_flag{1}) {
+    $error = "predicted features or tiling array data";
   }
+  elsif (!$drawn_pf_flag{1}) {
+    $error = "predicted features";
+  }
+  elsif (!$drawn_wiggle_flag{1}) {
+    $error = "tiling array data";
+  }
+  
+  my $height = $self->errorTrack( "No $error in this region", 0, $self->_offset ) if $self->{'config'}->get('_settings','opt_empty_tracks')==1;
+  $self->_offset($height + 4);
+
   return 1;
 }
 
+sub wiggle_plot {
 
-sub render_signalmap {
+  ### Wiggle plot
+  ### Description: gets data for the 'wiggle plot' and passes to
+  ### {{render_wiggle_plot}} for drawing
+  ### Returns 1
+
+  my ($self, $experiment_id, $analysis) = @_;
+  my $slice = $self->{'container'};
+
+  my $db = $slice->adaptor->db->get_db_adaptor('funcgen');
+  if(!$db) {
+    warn('Cannot connect to funcgen db');
+    return [];
+  }
+  my $exp_chip_adaptor  = $db->get_ExperimentalChipAdaptor;
+  my $oligo_feature_adaptor = $db->get_OligoFeatureAdaptor;
+
+  if (!$exp_chip_adaptor or !$oligo_feature_adaptor) {
+    warn ("Cannot get get adaptors: $exp_chip_adaptor, $oligo_feature_adaptor");
+    return [];
+  }
+
+  my $drawn_wiggle_flag = 0;
+  my $configuration = {length => $slice->length, 
+		       analysis => $analysis};
+
+  my @experiment_chip_sets = @{$exp_chip_adaptor->fetch_contigsets_by_experiment_dbID($experiment_id) || []};
+
+  foreach my $set ( @experiment_chip_sets ) {
+    # returns arrayref with ExperimentalChips in that set (first element is set name)
+    $configuration->{'features'} = ();
+    $configuration->{'track_name'} = shift @$set;
+
+    #get features for slice and experimtenal chip set
+    my @oligo_features = @{$oligo_feature_adaptor->fetch_all_by_Slice_ExperimentalChips($slice, $set) || [] };
+
+    my @draw_features;
+    foreach my $oligo_feature ( @oligo_features ){
+      # restrict features to experimental chips
+      my $score =  $oligo_feature->get_result_by_Analysis_ExperimentalChips($analysis, $set);
+      my $start  = $oligo_feature->start; #50mer probe
+      my $end    = $oligo_feature->end;
+      push @draw_features, {'score' => $score,
+			    'start' => $start,
+			    'end'   => $end,
+			   };
+    }
+    next unless @draw_features;
+    $drawn_wiggle_flag = 1;
+    $configuration->{'features'} = \@draw_features;
+    $self->render_wiggle_plot($configuration);       # render these on track
+  }
+  return $drawn_wiggle_flag;
+}
+
+
+sub render_wiggle_plot {
 
   ### Wiggle plot
   ### Arg1 : configuration hashref with arrayref of feature objects (hashref)
@@ -134,7 +159,7 @@ sub render_signalmap {
 
   my $row_height = 60;
   my $colour     = "contigblue1";
-  my $offset     = $configuration->{'offset'};
+  my $offset     = $self->_offset();
   my @features   = sort { $a->{score} <=> $b->{score}  } @{$configuration->{'features'}};
   my ($min_score, $max_score) = ($features[0]->{'score'} || 0, $features[-1]->{'score'}|| 0);
 
@@ -267,12 +292,13 @@ sub render_signalmap {
 
 
 
-sub init_compact {
+sub pred_features {
 
   ### Predicted features
   ### Gets data for the predicted features track
+  ### Returns 1 if draws features, 0 if no features
 
-  my ($self) = @_;
+  my ($self, $experiment_id) = @_;
 
   my $adaptor = $self->{'container'}->adaptor();
   if(!$adaptor) {
@@ -293,17 +319,13 @@ sub init_compact {
     return 1;
   }
 
-  my $features = $pf_adaptor->fetch_all_by_Slice($self->{'container'});
-  if (@$features) {
-    my $colour = "blue";
-    $self->render_predicted_features( $features, $colour );
-    $self->render_track_name($features->[0]->type->name, $colour);
-  }
-  elsif ( $self->my_config('compact') ) {
-    $self->init_expand();
-    $self->errorTrack( "No predicted features in this region", 0, $self->_offset ) if $self->{'config'}->get('_settings','opt_empty_tracks')==1;
-    $self->render_space_glyph();
-  }
+  my $features = $pf_adaptor->fetch_all_by_Slice_experiment_id($self->{'container'}, $experiment_id);
+  return 0 unless @$features;
+
+  my $colour = "blue";
+  $self->render_predicted_features( $features, $colour );
+  $self->render_track_name($features->[0]->type->name, $colour);
+  $self->render_space_glyph();
   return 1;
 }
 
