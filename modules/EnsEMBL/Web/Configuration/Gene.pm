@@ -263,6 +263,25 @@ sub geneview {
     $self->add_panel( $panel1 );
   }
 
+## Bonus Panel - user annotations 
+
+  my $user = EnsEMBL::Web::Object::User->new({ id => $ENV{'ENSEMBL_USER_ID'} });
+  if ($user->id) {
+    if( my $annotation_panel = $self->new_panel( 
+                                     'Information',
+                                     'code'    => "dasinfo#",
+                                     'caption' => 'Notes',
+                                     'params' => $params,
+                                     'status'  => 'panel_annotation') )
+    {
+      $annotation_panel->add_components(qw(
+        user_notes        EnsEMBL::Web::Component::Gene::user_notes
+        group_notes        EnsEMBL::Web::Component::Gene::group_notes
+      ));
+      $self->add_panel($annotation_panel);
+    }
+  }
+
 ## Panel 2 - DAS configuration panel...
 
   if( my $panel2 = $self->new_panel( 'Information',

@@ -4,6 +4,7 @@ use strict;
 
 use EnsEMBL::Web::Configuration;
 use EnsEMBL::Web::Interface::FragmentCollection;
+use CGI;
 
 our @ISA = qw( EnsEMBL::Web::Configuration );
 use POSIX qw(floor ceil);
@@ -23,6 +24,21 @@ use POSIX qw(floor ceil);
 ### 				  ));
 ###     $self->{page}->content->add_panel( $info_panel );
 
+sub load_configuration {
+  my ($self, $config) = @_;
+  my $obj  = $self->{object};
+  my $config_string = $config->config;
+  $config_string =~ s/&quote;/'/g;
+  warn $config_string;
+  my $config_data = eval($config_string);
+  foreach my $key (keys %{ $config_data }) {
+    warn "ADDING CONFIG SETTINGS FOR: " . $key;
+    my $wuc = $obj->user_config_hash($key);
+    $wuc->{'user'} = $config_data; 
+    $wuc->save;
+  }
+}
+
 sub context_menu {
   my $self = shift;
   my $obj  = $self->{object};
@@ -38,6 +54,42 @@ sub context_menu {
   }
 
   $menu->add_block( $flag, 'bulleted', $header, 'raw' => 1 );
+
+  my $cgi = new CGI;
+  my $load = $cgi->param('load_config');
+
+  my $user = EnsEMBL::Web::Object::User->new({ 'id' => $ENV{'ENSEMBL_USER_ID'} });
+  my @configurations = ();
+
+  foreach my $config ($user->configuration_records) {
+    if ($load && $load eq $config->id) {
+      $self->load_configuration($config);
+    }
+    push @configurations, { 'href' => 'javascript:load_config(' . $config->id . ');',
+                               'text'  => $config->name, 
+                             };
+  }
+
+  foreach my $group (@{ $user->groups }) {
+    foreach my $config ( $group->configuration_records ) {
+      if ($load && $load eq $config->id) {
+        $self->load_configuration($config);
+      }
+      push @configurations, { 'href' => 'javascript:load_config(' . $config->id . ');',
+                              'text'  => $config->name . " (" . $group->name . ")", 
+                            };
+    }
+  }
+
+  if ($#configurations > -1) {
+    $menu->add_entry(
+            $flag,
+            'href'=>'/common/accountview',
+            'text'=>'Configurations',
+            'options'=>\@configurations
+          );
+  }
+
   if( $self->mapview_possible( $obj->seq_region_name ) ) {
     $menu->add_entry( $flag, 'code' => 'mv_link', 'text' => "View of @{[$obj->seq_region_type_and_name]}",
        'title' => "MapView - Overview of @{[$obj->seq_region_type_and_name]} including feature sumarries",
