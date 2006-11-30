@@ -25,6 +25,8 @@ my %ParameterSet_of;
 my %Records_of;
 my %Tainted_of;
 my %Id_of;
+my %CreatedAt_of;
+my %ModifiedAt_of;
 
 sub AUTOLOAD {
   ### AUTOLOAD method for getting and setting record attributes, and processing
@@ -35,7 +37,7 @@ sub AUTOLOAD {
   my $self = shift;
   my ($key) = ($AUTOLOAD =~ /::([a-z].*)$/);
   my ($value, $options) = @_;
-  warn "AUTOLOADING $key";
+  #warn "AUTOLOADING $key";
   if ($value) {
     if (my ($find, $by) = ($key =~ /find_(.*)_by_(.*)/)) {
       my $table = "user";
@@ -74,11 +76,15 @@ sub new {
   $Records_of{$self} = defined $params{'records'} ? $params{'records'} : [];
   $ParameterSet_of{$self} = defined $params{'parameter_set'} ? $params{'parameter_set'} : undef;
   $Id_of{$self} = defined $params{'id'} ? $params{'id'} : undef;
+  $CreatedAt_of{$self} = defined $params{'created_at'} ? $params{'created_at'} : undef;
+  $ModifiedAt_of{$self} = defined $params{'modified_at'} ? $params{'modified_at'} : undef;
   $Fields_of{$self} = {};
   $Tainted_of{$self} = {};
   if ($params{'data'}) {
     #$self->data($params{'data'});
     my $eval = eval($params{'data'});
+    warn "EVALUATING FIELDS for " . $params{'id'};
+    warn $eval;
     $Fields_of{$self} = $eval;
   } else {
     $Fields_of{$self} = {};
@@ -99,8 +105,13 @@ sub dump_data {
   ### Uses Data::Dumper to format a record's data for storage, 
   ### and also handles escaping of quotes to avoid SQL errors
   my $self = shift;
-  my $dump = Dumper($self->fields);
-  $dump =~ s/'/\\'/g;
+  my $temp_fields = {};
+  foreach my $key (keys %{ $self->fields }) {
+    $temp_fields->{$key} = $self->fields->{$key};
+    $temp_fields->{$key} =~ s/'/\\'/g;
+  }
+  my $dump = Dumper($temp_fields);
+  #$dump =~ s/'/\\'/g;
   $dump =~ s/^\$VAR1 = //;
   return $dump;
 }
@@ -110,6 +121,7 @@ sub fields {
   my ($self, $key, $value) = @_;
   if ($key) {
     if ($value) {
+      $value =~ s/'/\\'/g;
       $Fields_of{$self}->{$key} = $value;
     }
     return $Fields_of{$self}->{$key}
@@ -153,6 +165,20 @@ sub id {
   return $Id_of{$self};
 }
 
+sub created_at {
+  ### a
+  my $self = shift;
+  $CreatedAt_of{$self} = shift if @_;
+  return $CreatedAt_of{$self};
+}
+
+sub modified_at {
+  ### a
+  my $self = shift;
+  $ModifiedAt_of{$self} = shift if @_;
+  return $ModifiedAt_of{$self};
+}
+
 sub records_of_type {
   ### Returns an array of records
   ### Argument 1: Type - string corresponding to a type of record, e.g. 'bookmark'
@@ -189,7 +215,9 @@ sub find_records {
                                          id => $result->{id},
                                        type => $result->{type},
                                        user => $result->{user_id},
-                                       data => $result->{data}
+                                       data => $result->{data},
+                                 created_at => $result->{created_at},
+                                modified_at => $result->{modified_at}
                                                 ));
     push @records, $record;
   }
@@ -208,6 +236,8 @@ sub DESTROY {
   delete $Adaptor_of{$self};
   delete $Fields_of{$self};
   delete $Id_of{$self};
+  delete $CreatedAt_of{$self};
+  delete $ModifiedAt_of{$self};
   delete $Records_of{$self};
   delete $ParameterSet_of{$self};
   delete $Tainted_of{$self};
