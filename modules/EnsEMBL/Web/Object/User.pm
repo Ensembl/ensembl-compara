@@ -59,6 +59,7 @@ sub new {
 
   ## Flesh out the object from the database 
   if ($params{'id'}) {
+    warn "New user with ID: " . $params{'id'};
     my $details = $self->adaptor->find_user_by_user_id($params{'id'});
     $self->assign_fields($details);
     my @records = $self->find_records_by_user_id($params{'id'});
@@ -78,6 +79,12 @@ sub new {
   return $self;
 }
 
+
+sub load {
+  my $self = shift;
+  my @records = $self->find_records_by_user_id($self->id);
+  $self->records(\@records);
+}
 
 sub assign_fields {
   my ($self, $details) = @_;
@@ -225,6 +232,9 @@ sub salt {
   ### a
   my $self = shift;
   $Salt_of{$self} = shift if @_;
+  if (@_) {
+    $self->taint('user');
+  }
   return $Salt_of{$self};
 }
 
@@ -239,7 +249,9 @@ sub password {
   ### a
   my $self = shift;
   $Password_of{$self} = shift if @_;
-  $self->taint('user');
+  if (@_) {
+    $self->taint('user');
+  }
   return $Password_of{$self};
 }
 
@@ -280,6 +292,7 @@ sub save {
                    name => $self->name,
                    email => $self->email,
                    password => $self->password,
+                   salt => $self->salt,
                    organisation => $self->organisation,
                    data => $data
                );
@@ -287,10 +300,10 @@ sub save {
   if (!$id) {
     my $result = $self->adaptor->add_user(%params);
   } else {
-    warn "UPDATING USER";
+    warn "UPDATING USER: " . $self->id . ", " . $self->name;
     if ($self->tainted->{'user'}) {
       $params{id} = $id;
-      warn "===================== PERFORMING UPDATE";
+      #warn "===================== PERFORMING UPDATE";
       my $result = $self->adaptor->update_user((%params));
     }
   }
@@ -313,7 +326,7 @@ sub web_user_db {
 
 sub encrypt {
   my ($self, $data) = @_;
-  warn "Encrypting: " . $data;
+  #warn "Encrypting: " . $data;
   return md5_hex($data);
 }
 

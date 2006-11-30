@@ -177,8 +177,8 @@ sub find_level_for_user {
 
 sub save {
   my $self = shift;
-  warn "CHECKING FOR DATA TAINT: " . $self->tainted->{'users'};
-  warn "PERFORMING GROUP SAVE: "  . $self->description;
+  #warn "CHECKING FOR DATA TAINT: " . $self->tainted->{'users'};
+  #warn "PERFORMING GROUP SAVE: "  . $self->description;
   my %params = (
                  name        => $self->name,
                  blurb       => $self->description,
@@ -187,22 +187,22 @@ sub save {
                  created_by  => $self->created_by
                );
   if ($self->id) {
-    warn "UPDATING GROUP: " . $self->id;
-    warn "UPDATING GROUP: " . $self->status;
+    #warn "UPDATING GROUP: " . $self->id;
+    #warn "UPDATING GROUP: " . $self->status;
     $params{id} = $self->id;
     $self->adaptor->update_group(%params, ('modified_by', $self->modified_by) );
   } else {
-    warn "INSERTING NEW GROUP";
+    #warn "INSERTING NEW GROUP";
     $self->id($self->adaptor->insert_group(%params, 
                                           ('created_by', $self->created_by,
                                            'modified_by', $self->modified_by)
                                           ));
   }
   if ($self->tainted->{'users'}) {
-    warn "MODIFYING RELATIONSHIP";
+    #warn "MODIFYING RELATIONSHIP";
     if ($self->added_users) {
       foreach my $user (@{ $self->added_users }) {
-        warn "MAPPING " . $user->name;
+        #warn "MAPPING " . $user->name;
         my %relationship = (
                            from    => $self->id,
                            to      => $user->id,
@@ -214,7 +214,7 @@ sub save {
       $self->added_users([]);
     }
     if ($self->removed_users) {
-      warn "REMOVING RELATIONSHIP";
+      #warn "REMOVING RELATIONSHIP";
       foreach my $user (@{ $self->removed_users }) {
         my %relationship = (
                            from    => $self->id,
@@ -359,10 +359,10 @@ sub remove_user {
   if (!$self->removed_users) {
     $self->removed_users([]);
   }
-  warn "REMOVING REMOVE_USER: " . $user->name;
+  #warn "REMOVING REMOVE_USER: " . $user->name;
   push @{ $self->removed_users }, $user; 
   $self->taint('users');
-  warn "TAINT: " . $self->tainted->{'users'};
+  #warn "TAINT: " . $self->tainted->{'users'};
 }
 
 sub DESTROY {
