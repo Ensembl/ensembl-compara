@@ -1,0 +1,63 @@
+#!/usr/local/bin/perl
+
+package bookmark;
+
+use CGI;
+
+use EnsEMBL::Web::Document::DataView;
+use EnsEMBL::Web::Interface::PageDefinition;
+use EnsEMBL::Web::Interface::FormDefinition;
+use EnsEMBL::Web::DBSQL::DataDefinition;
+use EnsEMBL::Web::DBSQL::ViewAdaptor;
+
+my $cgi = CGI->new;
+my $page = EnsEMBL::Web::Interface::PageDefinition->new();
+my $data = EnsEMBL::Web::DBSQL::DataDefinition->new();
+my $db = $EnsEMBL::Web::Apache::Handlers::ENSEMBL_USER_DB_HANDLE; 
+
+my $class = "user";
+if ($cgi->param('class')) {
+  $class = $cgi->param('class');
+}
+
+my $table = $class . "_record";
+
+$data->adaptor(EnsEMBL::Web::DBSQL::ViewAdaptor->new(( 
+                                                       handle => $db,
+                                                       table  => $table 
+                                                    )) );
+
+$data->add_field({'Field' => 'title', 'Type' => 'varchar(255)'});
+$data->add_field({'Field' => 'annotation', 'Type' => 'text'});
+$data->add_field({'Field' => 'stable_id', 'Type' => 'varchar(255)'});
+$data->add_field({'Field' => 'created_at', 'Type' => 'timestamp'});
+$data->add_field({'Field' => 'modified_at', 'Type' => 'timestamp'});
+$page->on_complete($cgi->param('url'));
+if ($cgi->param('id')) {
+  $data->populate($cgi->param('id'));
+  $page->title('Edit gene annotation');
+  $page->action('edit');
+} else {
+  $page->title('Add annotation for ' . $cgi->param('stable_id'));
+  $page->action('create');
+}
+
+$page->data_definition($data);
+$page->on_error('/account/gene_annotation_error.html');
+
+$page->cancel('yes');
+
+$form = EnsEMBL::Web::Interface::FormDefinition->new();
+$form->add_value({ name => $cgi->param('name') });
+$form->add_value({ url => $cgi->param('annotation') });
+
+$page->add_configuration_element('record', 'yes');
+$page->add_configuration_element('type', 'annotation'); 
+$page->add_configuration_element('stable_id', $cgi->param('stable_id')); 
+$page->add_configuration_element('url', $cgi->param('url')); 
+$page->add_form_element('title', "Title", $form);
+$page->add_form_element('annotation', "Annotation notes", $form);
+
+EnsEMBL::Web::Document::DataView::simple('User', $page);
+
+1;

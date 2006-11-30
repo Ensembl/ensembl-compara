@@ -24,6 +24,7 @@ $data->adaptor(EnsEMBL::Web::DBSQL::ViewAdaptor->new((
 $data->discover;
 $page->data_definition($data);
 $page->title('Register for Ensembl');
+$page->footer('Need help? <a href="mailto:helpdesk@ensembl.org">Contact the helpdesk</a> &middot; <a href="/info/about/privacy.html">Privacy policy</a>');
 $page->action('create');
 $page->send_params({ id => 'yes'});
 $page->on_complete('/common/activate');
