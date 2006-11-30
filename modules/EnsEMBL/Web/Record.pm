@@ -83,8 +83,6 @@ sub new {
   if ($params{'data'}) {
     #$self->data($params{'data'});
     my $eval = eval($params{'data'});
-    warn "EVALUATING FIELDS for " . $params{'id'};
-    warn $eval;
     $Fields_of{$self} = $eval;
   } else {
     $Fields_of{$self} = {};
