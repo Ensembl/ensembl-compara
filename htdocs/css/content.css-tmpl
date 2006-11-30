@@ -200,8 +200,33 @@ span#ed { background-color:#12ff70; color:red; }
 span#ec { background-color:#b0e2ff; color:red; }
 span#eo { background-color:#ffd700; color:red; }
 
+div.user_setting {
+  padding-bottom: 25px;
+}
 
 /* TABLES */
+
+td.settings_header {
+  text-align: center;
+  border-bottom: 1px solid #666;
+}
+
+td.dark {
+  background: #efefef;
+}
+
+td.very_dark {
+  background: #dfdfdf;
+}
+
+td.invite {
+  background: #CCFFCC;
+}
+
+td.top {
+  border-top: 1px solid #d0d0d0;
+} 
+
 
 tr { vertical-align:top; }
 
