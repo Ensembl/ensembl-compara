@@ -1,0 +1,26 @@
+#! /usr/bin/perl
+
+package remove_record;
+
+use CGI;
+my $cgi = new CGI;
+
+my $url = "/index.html";
+
+if ($ENV{'ENSEMBL_USER_ID'}) {
+  $url = "/common/accountview";
+  if ($cgi->param('url')) {
+    $url = $cgi->param('url');
+  }
+  my $user = EnsEMBL::Web::Object::User->new({ id => $ENV{'ENSEMBL_USER_ID'} });
+  $user->load;
+  foreach my $record (@ { $user->records }) {
+    if ($record->id eq $cgi->param('id')) {
+     $record->delete;
+    }
+  }
+}
+
+print "Location: " . $url;
+
+1;
