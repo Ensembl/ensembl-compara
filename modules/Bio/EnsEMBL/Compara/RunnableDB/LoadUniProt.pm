@@ -99,7 +99,7 @@ sub fetch_input {
   $self->{'taxon_id'} = undef;  #no ncbi_taxid filter, get all metzoa
   $self->{'genome_db_id'} = undef;
   $self->{'accession_number'} = 1;
-
+  $self->debug(1);
   if(defined($self->input_id)) {
     #print("input_id = ".$self->input_id."\n");
     my $input_hash = eval($self->input_id);
@@ -189,7 +189,7 @@ sub loadMembersFromUniprotIdList
     $index++;
     print("check/load $index ids\n") if($index % 100 == 0 and $self->debug);
     my $stable_id = $id;
-    $stable_id = $1 if($id =~ /$source:(.*)/);
+    $stable_id = $1 if($id =~ /^(\S+)\.\d+$/);
     my $member = $self->{'comparaDBA'}->get_MemberAdaptor->fetch_by_source_stable_id('Uniprot/'.$source, $stable_id);
     if($member and $member->sequence_id) {
       #print("$source $stable_id : already loadled in compara\n");
@@ -211,18 +211,21 @@ sub loadMembersFromUniprotIdList
 sub get_metazoa_uniprot_ids
 {
   my $self   = shift;
-  my $source = shift;  #'uniprot', 'swissprot' or 'sptrembl'
+  my $source = shift;  #'swissprot' or 'sptrembl'
 
-  my $cmd = "getz ".
-            "\"((([$source-tax: metazoa] ".
-              " ! [$source-org: */*]) ".
-              " ! [$source-org: *'\''*]) ".
-              " & [$source-SeqLength# 80:])\"";
-
-  print("$cmd\n") if($self->debug);
-  my @ids = split(/\s/, qx/$cmd/);
-  printf("fetched %d ids from %s\n", scalar(@ids), $source) if($self->debug);
-  return \@ids;
+#  my @taxonomy_division = qw(FUN HUM MAM ROD VRT INV);
+  my @taxonomy_division = qw(INV);
+  my $division = "STD";
+  $division = "PRE" if ($source eq "SPTREMBL");
+  my @all_ids;
+  foreach my $txd (@taxonomy_division) {
+    my $cmd = "mfetch -d uniprot -v av -i 'txd:$txd&div:$division'";
+    print("$cmd\n") if($self->debug);
+    my @ids = split(/\s/, qx/$cmd/);
+    push @all_ids, @ids;
+  }
+  printf("fetched %d ids from %s\n", scalar(@all_ids), $source) if($self->debug);
+  return \@all_ids;
 }
 
 
@@ -231,11 +234,10 @@ sub fetch_all_uniprot_ids_for_taxid
   my $self   = shift;
   my $source = shift;  #'uniprot', 'swissprot' or 'sptrembl'
   my $taxon_id = shift;
-  
-  my $cmd = "getz ".
-            "\"(([$source-txi: $taxon_id] ".
-             " ! [$source-org: */*]) ".
-             " ! [$source-org: *'\''*])\"";
+  my $division = "STD";
+  $division = "PRE" if ($source eq "SPTREMBL");
+
+  my $cmd = "mfetch -d uniprot -v av -i 'txi:$taxon_id&div:$division'";
 
   print("$cmd\n") if($self->debug);
   my @ids = split(/\s/, qx/$cmd/);
@@ -248,29 +250,34 @@ sub pfetch_and_store_by_ids {
   my $self = shift;
   my $source = shift;
 
-  my @orig_ids = @_;
-  my @ids;
+#  my @orig_ids = @_;
+#  my @ids;
+  my @ids = @_;
 
-  foreach my $id (@orig_ids) {
-    if($id =~ /(.*)\:(.*)/) {
-      #$source = $1;
-      $id = $2;
-    }
-    push @ids, $id;
-  }
+#  foreach my $id (@orig_ids) {
+#    if($id =~ /(.*)\:(.*)/) {
+#      #$source = $1;
+#      $id = $2;
+#    }
+#    push @ids, $id;
+#  }
   return unless(@ids);
-
   my $id_string = join(' ', @ids);
 
   open(IN, "pfetch -F $id_string |")
     or $self->throw("Error running pfetch for ids [$id_string]");
 
   my $fh = Bio::SeqIO->new(-fh=>\*IN, -format=>"swiss");
-
+  my $nb_seq = 0;
   while (my $seq = $fh->next_seq){
+    next if ($seq->length < 80);
     $self->store_bioseq($seq, $source);
+    $nb_seq++;
   }
   close IN;
+  if ($self->debug && $nb_seq != scalar @ids) {
+    print "Expected ", scalar @ids," seqs but only $nb_seq seen from $id_string\n";
+  }
 }
 
 
@@ -308,6 +315,7 @@ Member not stored.");
   } else {
     $member->stable_id($bioseq->display_id);
   }
+  $member->display_label($bioseq->display_id);
   $member->taxon_id($taxon->dbID);
   $member->description($bioseq->desc);
   $member->source_name($source);
@@ -321,6 +329,7 @@ Member not stored.");
 
   $self->{'subset'}->add_member($member);
   print("\n") if($self->debug);
+  return 1;
 }
 
 
