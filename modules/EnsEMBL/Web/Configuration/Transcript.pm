@@ -130,9 +130,9 @@ sub transcriptsnpview {
 
  if ( $obj->gene && $obj->gene->length >3000000){
    my $panel_return = new EnsEMBL::Web::Document::Panel(
-	  'caption' => 'Exception: for '.$obj->stable_id,
-          'object_type' => 'transcript',
-     );
+     'caption'     => 'Exception: for '.$obj->stable_id,
+     'object_type' => 'transcript',
+   );
    $panel_return->add_components(qw(too_big EnsEMBL::Web::Component::Gene::too_big    ));
    $self->add_panel( $panel_return );
    return 1;
@@ -169,7 +169,7 @@ sub transcriptsnpview {
      next unless $_ =~ /opt_($param_sources):(.*)/i;
      $script_config->set("opt_$1", $2, 1);
    }
-   $script_config->save;
+#   $script_config->save;
  }
 
  # Need this to make yellow dropdowns work
@@ -197,7 +197,7 @@ sub transcriptsnpview {
      $script_config->set("opt_pop_$1", $2, 1);
    }
  }
- $script_config->save;
+# $script_config->save;
 
  $self->update_configs_from_parameter( 'bottom', qw(TSV_context TSV_sampletranscript TSV_transcript) );
 

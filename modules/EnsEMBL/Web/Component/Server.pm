@@ -21,7 +21,7 @@ package EnsEMBL::Web::Component::Server;
 use EnsEMBL::Web::Component;
 use CGI qw(escapeHTML);
 use Bio::EnsEMBL::ColourMap;
-our $cm = Bio::EnsEMBL::ColourMap->new();
+our $cm;
 our @ISA = qw( EnsEMBL::Web::Component);
 use strict;
 use warnings;

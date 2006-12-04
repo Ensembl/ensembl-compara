@@ -23,9 +23,9 @@ sub _flip_URL_gene {
 }
 
 sub das {
-   my( $panel, $object ) = @_;
-   my $status   = 'status_das_sources';
-   my $URL = $object->__objecttype eq 'Gene' ? _flip_URL_gene( $object, $status ) :_flip_URL( $object, $status );
+  my( $panel, $object ) = @_;
+  my $status   = 'status_das_sources';
+  my $URL = $object->__objecttype eq 'Gene' ? _flip_URL_gene( $object, $status ) :_flip_URL( $object, $status );
 # Get parameters to be passed to dasconfview script
 
   my $script  = $object->script;
@@ -69,16 +69,16 @@ sub das {
   my @das_objs = @{$das_collection->Obj || []} ;
 
   foreach my $das ( grep {$_->adaptor->active} @das_objs ){
-      my $source = $das->adaptor;
-      my $source_nm = $source->name;
+    my $source = $das->adaptor;
+    my $source_nm = $source->name;
 
-      my $source_label = $source->label || $source->name;
-      my $label = "<a name=$source_nm></a>$source_label";
-      if (defined (my $error = $source->verify)) {
+    my $source_label = $source->label || $source->name;
+    my $label = "<a name=$source_nm></a>$source_label";
+    if (defined (my $error = $source->verify)) {
       my $msg = qq{Error retrieving features : $error};
       $panel->add_row( $label, qq(<p>$msg</p>) );
       next;
-      }
+    }
 
     my $location_features = 0;
     my @rhs_rows = ();
@@ -102,25 +102,25 @@ sub das {
           $uhash{$id}->{start}  = $feature->das_start;
           $uhash{$id}->{end}    = $feature->das_end;
           $uhash{$id}->{type_label}  = $feature->das_type;
-      if ($feature->das_type ne $feature->das_type_id) {
-          $uhash{$id}->{type_id}     = $feature->das_type_id;
-      }
+          if ($feature->das_type ne $feature->das_type_id) {
+            $uhash{$id}->{type_id}     = $feature->das_type_id;
+          }
           $uhash{$id}->{method_label}  = $feature->das_method;
-      if ($feature->das_method ne $feature->das_method_id) {
-          $uhash{$id}->{method_id}     = $feature->das_method_id;
-      }
-      $uhash{$id}->{feature_label} = $feature->das_feature_label;
-      if ($feature->das_feature_id ne $feature->das_feature_label) {
-          $uhash{$id}->{feature_id}     = $feature->das_feature_id;
-      }
-
-      $uhash{$id}->{score}  = $feature->das_score;
+          if ($feature->das_method ne $feature->das_method_id) {
+            $uhash{$id}->{method_id}     = $feature->das_method_id;
+          }
+          $uhash{$id}->{feature_label} = $feature->das_feature_label;
+          if ($feature->das_feature_id ne $feature->das_feature_label) {
+            $uhash{$id}->{feature_id}     = $feature->das_feature_id;
+          }
+ 
+          $uhash{$id}->{score}  = $feature->das_score;
 
           my $segment = $feature->das_segment->ref;
 
-      if (my $flink = $feature->das_link) {
-          my $href = $flink->{'href'};
-          $uhash{$id}->{label} = sprintf( $link_tmpl, $href, $segment, $feature->das_feature_label );
+          if (my $flink = $feature->das_link) {
+            my $href = $flink->{'href'};
+            $uhash{$id}->{label} = sprintf( $link_tmpl, $href, $segment, $feature->das_feature_label );
           } else {
             $uhash{$id}->{label} = $feature->das_feature_label;
           }
@@ -131,8 +131,8 @@ sub das {
         }
       }
       foreach my $id ( sort {
-      $uhash{$a}->{type_label} cmp $uhash{$b}->{type_label} ||
-      $uhash{$a}->{feature_label} cmp $uhash{$b}->{feature_label}
+        $uhash{$a}->{type_label} cmp $uhash{$b}->{type_label} ||
+        $uhash{$a}->{feature_label} cmp $uhash{$b}->{feature_label}
       } keys(%uhash )) {
 # Build up the type of feature location    : see FLabels hash few lines above for location types
         my $ftype = 0;
@@ -151,20 +151,19 @@ sub das {
             $ftype |= 1;
           }
         }
-    my $score = ($uhash{$id}->{score} > 0) ? sprintf("%.02f", $uhash{$id}->{score}) : "&nbsp;";
+        my $score = ($uhash{$id}->{score} > 0) ? sprintf("%.02f", $uhash{$id}->{score}) : "&nbsp;";
 
         my $fnote = sprintf("%s%s", (defined($uhash{$id}->{merged})) ? "Merged " : "", $FLabels{$ftype});
         push( @rhs_rows, sprintf( $row_tmpl,
-          $uhash{$id}->{type_label}  || '&nbsp;',
-      $uhash{$id}->{type_id} ? qq{($uhash{$id}->{type_id})} : '&nbsp;',
-          $uhash{$id}->{label} || "&nbsp",
-      $uhash{$id}->{feature_id} ? qq{($uhash{$id}->{feature_id})} : '&nbsp;',
-      $uhash{$id}->{method_label}  || '&nbsp;',
-      $uhash{$id}->{method_id} ? qq{($uhash{$id}->{method_id})} : '&nbsp;',
-          $fnote               || "&nbsp",
+          $uhash{$id}->{type_label}   || '&nbsp;',
+          $uhash{$id}->{type_id}       ? qq{($uhash{$id}->{type_id})} : '&nbsp;',
+          $uhash{$id}->{label}        || "&nbsp",
+          $uhash{$id}->{feature_id}    ? qq{($uhash{$id}->{feature_id})} : '&nbsp;',
+          $uhash{$id}->{method_label} || '&nbsp;',
+          $uhash{$id}->{method_id}     ? qq{($uhash{$id}->{method_id})} : '&nbsp;',
+          $fnote                      || "&nbsp",
           $uhash{$id}->{note}  ?  '<small>'.$uhash{$id}->{note}.'</small>' : '&nbsp;',
-      $score,
-
+          $score,
         ) );
       }
     } else {
@@ -175,58 +174,54 @@ sub das {
         next if ($feature->das_type_id() =~ /^(contig|component|karyotype|INIT_MET)$/i ||
                  $feature->das_type_id() =~ /^(contig|component|karyotype|INIT_MET):/i);
         if ($feature->start && $feature->end) {
-        $location_features ++;
-        next;
-    }
+          $location_features ++;
+          next;
+        }
         my $segment = $feature->das_segment->ref;
-    my $label = $feature->das_feature_label;
-    if (my $flink = $feature->das_link) {
-        my $href = $flink->{'href'};
-        $label = sprintf( $link_tmpl, $href, $segment, $label );
-    }
+        my $label = $feature->das_feature_label;
+        if (my $flink = $feature->das_link) {
+          my $href = $flink->{'href'};
+          $label = sprintf( $link_tmpl, $href, $segment, $label );
+        }
 
-    my $score  = ($feature->das_score > 0) ? sprintf("%.02f",$feature->das_score) : '&nbsp;';
+        my $score  = ($feature->das_score > 0) ? sprintf("%.02f",$feature->das_score) : '&nbsp;';
         my $note;
         if( $note = $feature->das_note ) {
-          $note=~s|((\S+?):(http://\S+))|
-            <a href="$3" target="$segment">[$2]</a>|ig;
-          $note=~s|([^"])(http://\S+)([^"])|
-            $1<a href="$2" target="$segment">$2</a>$3|ig;
-          $note=~s|((\S+?):navigation://(\S+))|
-            <a href="$script?gene=$3" >[$2]</a>|ig;
-          $note=~s|([^:])//\s+|$1<br \/>|ig;
+          $note=~s|((\S+?):(http://\S+))      |<a href="$3" target="$segment">[$2]</a>|igx;
+          $note=~s|([^"])(http://\S+)([^"])   |$1<a href="$2" target="$segment">$2</a>$3|igx;
+          $note=~s|((\S+?):navigation://(\S+))|<a href="$script?gene=$3" >[$2]</a>|igx;
+          $note=~s|([^:])//\s+                |$1<br \/>|igx;
         }
         push( @rhs_rows, sprintf( $row_tmpl,
-          $feature->das_type || '&nbsp;',
-          ($feature->das_type_id eq $feature->das_type) ? '&nbsp;' :
-          "(".$feature->das_type_id.")",
-          $label                || '&nbsp;',
-      ($feature->das_feature_id eq $feature->das_feature_label) ? '&nbsp;':
-          "(".$feature->das_feature_id.")",
-      $feature->das_method,
-      ($feature->das_method_id eq $feature->das_method) ? '&nbsp;':
-          "(".$feature->das_method_id.")",
-          $note              || '&nbsp;',
-      $score,
+          $feature->das_type                                       || '&nbsp;',
+          ($feature->das_type_id eq $feature->das_type)             ? '&nbsp;'
+                                                                    : "(".$feature->das_type_id.")",
+          $label                                                   || '&nbsp;',
+          ($feature->das_feature_id eq $feature->das_feature_label) ? '&nbsp;'
+                                                                    : "(".$feature->das_feature_id.")",
+          $feature->das_method,
+          ($feature->das_method_id eq $feature->das_method)         ? '&nbsp;'
+                                                                    : "(".$feature->das_method_id.")",
+          $note                                                    || '&nbsp;',
+          $score,
           '&nbsp;'
         ) );
       }
-  }
-
-    if( scalar( @rhs_rows ) == 0 ){
-    my $msg = "No annotation";
-    if ($location_features > 0) {
-        $msg = "There are $location_features location based features that are not displayed here. See Protein Features panel";
     }
 
-    $panel->add_row( $label, qq(<p>$msg</p>) );
+    if( scalar( @rhs_rows ) == 0 ){
+      my $msg = "No annotation";
+      if ($location_features > 0) {
+        $msg = "There are $location_features location based features that are not displayed here. See Protein Features panel";
+      }
+      $panel->add_row( $label, qq(<p>$msg</p>) );
     } else {
       $panel->add_row($label, qq(
 <table class="hidden">
   @rhs_rows
 </table>)
       );
-  }
+    }
   }
 
   ###### Collapse/expand switch for the DAS sources panel
@@ -238,7 +233,6 @@ sub das {
 
   my $form = EnsEMBL::Web::Form->new( 'dasForm', "/$species/$script", 'GET');
 
-
   my $params ='';
   my @cparams = qw ( db gene transcript peptide );
 
@@ -249,52 +243,54 @@ sub das {
   }
 
   foreach my $src ($object->param('das_sources')) {
-      $params .=";das_sources=$src";
+    $params .=";das_sources=$src";
   }
 
   foreach my $param (@cparams) {
     if( defined(my $v = $object->param($param)) ) {
-    $form->add_element(
-               'type' => 'Hidden',
-               'name' => $param,
-               'value' => $object->param($param)
-               );
+      $form->add_element(
+        'type'  => 'Hidden',
+        'name'  => $param,
+        'value' => $object->param($param)
+      );
     }
   }
 
+  warn "DAS SOURCES ... ", $object->param('das_sources');
   my %selected_sources = map {$_ => 1} $object->param('das_sources');
 
   my @mvalues;
 
   foreach my $das ( grep { $_->adaptor->conftype  ne 'url' } @das_objs ){
-      my $source = $das->adaptor;
-      my $name = $source->name;
-      my $source_label = $source->label || $source->name;
-      my $label = $source->authority ? qq(<a href=").$source->authority.qq(" target="_blank">$source_label</a>) : $source_label;
-      $label         .= " (".$source->description.")" if $source->description;
-      push @mvalues, { "value" => $name, "name"=>$label, 'checked' => $selected_sources{$name} ? 1 : 0 };
+    my $source = $das->adaptor;
+    my $name = $source->name;
+    my $source_label = $source->label || $source->name;
+    my $label = $source->authority ? qq(<a href=").$source->authority.qq(" target="_blank">$source_label</a>) : $source_label;
+    $label         .= " (".$source->description.")" if $source->description;
+    push @mvalues, { "value" => $name, "name"=>$label, 'checked' => $selected_sources{$name} ? 1 : 0 };
   }
 
 
-  $form->add_element('type' => 'MultiSelect',
-             'class' => 'radiocheck1col',
-             'noescape' => 1,
-             'name'=>'das_sources',
-             'label'=>'',
-             'values' => \@mvalues,
-             'spanning' => 'yes'
-             );
   $form->add_element(
-    'type'  => 'Submit', 'value' => 'Update', 'name' => 'Update', 'spanning' => 'yes'
+    'type'     => 'MultiSelect',
+    'class'    => 'radiocheck1col',
+    'noescape' => 1,
+    'name'     =>'das_sources',
+    'label'    =>'',
+    'values'   => \@mvalues,
+    'spanning' => 'yes'
+  );
+  $form->add_element(
+    'type'     => 'Submit', 'value' => 'Update', 'name' => 'Update', 'spanning' => 'yes'
   );
 
   $form->add_element(
-             'type'  => 'Button',
-             'value' => 'Manage Sources',
-             'name' => 'Manage',
-             'spanning' => 'yes',
-             'on_click' => "X=window.open('/@{[$species]}/dasconfview?conf_script=$script;$params','das_sources','left=10,top=10,resizable,scrollbars=yes');X.focus()"
-             );
+    'type'     => 'Button',
+    'value'    => 'Manage Sources',
+    'name'     => 'Manage',
+    'spanning' => 'yes',
+    'on_click' => "X=window.open('/@{[$species]}/dasconfview?conf_script=$script;$params','das_sources','left=10,top=10,resizable,scrollbars=yes');X.focus()"
+  );
 
   $panel->add_row( $label, $form->render(), "$URL=off" );
 
@@ -304,43 +300,41 @@ sub das {
 my @htext;
 
 sub parseHTML {
-    my ($html) = @_;
+  my ($html) = @_;
 
-    @htext = ();
+  @htext = ();
 
-    sub start_handler {
+  sub start_handler {
     my ($self, $tag, $text) = @_;
 
 # HTML tags that we allow go in here - rest will be encoded
-    if ($tag eq 'span' || $tag eq 'a' || $tag eq 'img' || $tag eq 'br' || $tag eq 'br/') {
-        if ($tag eq 'a') { # Make all das links open in a new window
+    if( $tag eq 'span' || $tag eq 'a' || $tag eq 'img' || $tag eq 'br' || $tag eq 'br/' ) {
+      if( $tag eq 'a' ) { # Make all das links open in a new window
         $text =~ s/\>$/ target="external"\>/;
-        }
-        push @htext, $text;
+      }
+      push @htext, $text;
     } else {
-        push @htext, encode_entities ($text);
+      push @htext, encode_entities( $text );
     }
 #   warn "+ $tag : $text\n";
     $self->handler(text => sub { my $tt = shift; push @htext, encode_entities ($tt) }, "dtext");
-    }
-
-    sub end_handler {
-        my ($self, $tag, $text) = @_;
+  }
+  sub end_handler {
+    my ($self, $tag, $text) = @_;
 #   warn "- $tag : $text\n";
     if ($tag eq 'span' || $tag eq 'a') {
-        push @htext, $text;
+      push @htext, $text;
     } else {
-        push @htext, encode_entities ($text);
+      push @htext, encode_entities ($text);
     }
-    }
+  }
 
-    my $p = HTML::Parser->new(api_version => 3);
-    $p->handler( start => \&start_handler, "self,tagname,text", );
-    $p->handler( end => \&end_handler, "self, tagname,text", );
-
-    $p->parse("<span>$html</span>");
-    $p->eof;
-    return join '', @htext;
+  my $p = HTML::Parser->new(api_version => 3);
+  $p->handler( start => \&start_handler, "self,tagname,text", );
+  $p->handler( end =>   \&end_handler,   "self,tagname,text", );
+  $p->parse("<span>$html</span>");
+  $p->eof;
+  return join '', @htext;
 }
 
 sub pep_stats {
@@ -348,7 +342,10 @@ sub pep_stats {
   my $pepstats = $object->get_pepstats();
   return unless %{$pepstats||{}};
   my $label = "Peptide stats";
-  my $HTML = qq(<table>@{[ map { sprintf( '<tr><th>%s:</th><td style="text-align: right">%s</td></tr>', $_, $object->thousandify($pepstats->{$_}) ) } sort keys %$pepstats ]}</table>);
+  my $HTML = qq(<table>@{[ map { sprintf(
+    '<tr><th>%s:</th><td style="text-align: right">%s</td></tr>',
+    $_, $object->thousandify($pepstats->{$_})
+  )} sort keys %$pepstats ]}</table>);
   $panel->add_row( $label, $HTML );
   return 1;
 }
@@ -359,10 +356,10 @@ sub information {
   my $transcript_id = $object->transcript->stable_id;
   my $HTML = qq(<p>This protein is a translation of transcript <a href="/@{[$object->species]}/transview?transcript=$transcript_id;db=@{[$object->get_db]}">$transcript_id</a>);
   if( $object->gene ) {
-  my $gene_id   = $object->gene->stable_id;
-  if( $gene_id ) {
-    $HTML .= qq(, which is a product of gene <a href="/@{[$object->species]}/geneview?gene=$gene_id;db=@{[$object->get_db]}">$gene_id</a>);
-  }
+    my $gene_id   = $object->gene->stable_id;
+    if( $gene_id ) {
+      $HTML .= qq(, which is a product of gene <a href="/@{[$object->species]}/geneview?gene=$gene_id;db=@{[$object->get_db]}">$gene_id</a>);
+    }
   }
   $HTML .= '.</p>';
   $panel->add_row( $label, $HTML );
@@ -417,8 +414,8 @@ sub image {
   $object->Obj->{'image_snps'}   = $object->pep_snps;
   $object->Obj->{'image_splice'} = $object->pep_splice_site( $object->Obj );
 
-  my $image     = $object->new_image( $object->Obj, $wuc, [], 1 ) ;
-     $image->imagemap           = 'yes';
+  my $image                      = $object->new_image( $object->Obj, $wuc, [], 1 ) ;
+     $image->imagemap            = 'yes';
   $panel->add_row( $label, $image->render );
   1;
 }
@@ -439,9 +436,9 @@ sub marked_up_seq_form {
   my $form = EnsEMBL::Web::Form->new( 'marked_up_seq', "/@{[$object->species]}/protview", 'get' );
   $form->add_element( 'type' => 'Hidden', 'name' => 'db',      'value' => $object->get_db    );
   if ($object->stable_id) {
-	  $form->add_element( 'type' => 'Hidden', 'name' => 'peptide', 'value' => $object->stable_id );
+    $form->add_element( 'type' => 'Hidden', 'name' => 'peptide', 'value' => $object->stable_id );
   } else {
-	  $form->add_element( 'type' => 'Hidden', 'name' => 'transcript', 'value' => $object->transcript->stable_id);
+    $form->add_element( 'type' => 'Hidden', 'name' => 'transcript', 'value' => $object->transcript->stable_id);
   }
   my $show = [{ 'value' => 'plain', 'name' => 'None' }, {'value'=>'exons', 'name'=>'Exons'} ];
   if( $object->species_defs->databases->{'ENSEMBL_VARIATION'}||$object->species_defs->databases->{'ENSEMBL_GLOVAR'} ) {
@@ -471,7 +468,7 @@ sub marked_up_seq {
   
   my $image_key;
   if( $show eq 'exons' || $show eq 'snps' ) {
-      $HTML .= qq(<img src="/img/help/protview_key1.gif" alt="[Key]" border="0" />);
+    $HTML .= qq(<img src="/img/help/protview_key1.gif" alt="[Key]" border="0" />);
   }
   $HTML .= "<div>@{[ $panel->form( 'markup_up_seq' )->render ]}</div>";
   $panel->add_row( $label, $HTML );
@@ -840,36 +837,28 @@ sub das_annotation {
       $a->das_feature_id cmp $b->das_feature_id ||
       $a->das_note       cmp $b->das_note
     } @features ){
-
       my $segment = $feature->das_segment->ref;
       my $id = $feature->das_feature_id;
       if( my $href = $feature->das_link ){
-    $id = sprintf( $link_tmpl, $href, $segment, $id )
+        $id = sprintf( $link_tmpl, $href, $segment, $id )
       }
       my $note;
       if( $note = $feature->das_note ){
-    $note=~s|((\S+?):(http://\S+))|
-      <A href="$3" target="$segment">[$2]</A>|ig;
-    $note=~s|([^"])(http://\S+)([^"])|
-      $1<A href="$2" target="$segment">$2</A>$3|ig;
-    
-    $note=~s|((\S+?):navigation://(\S+))|
-      <A href="protview?gene=$3" >[$2]</A>|ig;
-    #$note=~s|([^"])(navigation://\S+)([^"])|
-    #  $1<A href="$2">$2</A>$3|ig;
+        $note=~s|((\S+?):(http://\S+))      |<a href="$3" target="$segment">[$2]</a>|igx;
+        $note=~s|([^"])(http://\S+)([^"])   |$1<a href="$2" target="$segment">$2</a>$3|igx;
+        $note=~s|((\S+?):navigation://(\S+))|<a href="protview?gene=$3" >[$2]</a>|igx;
+       #$note=~s|([^"])(navigation://\S+)([^"])|$1<A href="$2">$2</A>$3|igx;
       }
-
       push( @rhs_rows, sprintf( $row_tmpl, 
-                #$feature->{-source} || '&nbsp;',
-                $feature->das_type || '&nbsp;',
-                $id                || '&nbsp;',
-                $note              || '&nbsp;' ) );
+        #$feature->{-source} || '&nbsp;',
+        $feature->das_type || '&nbsp;',
+        $id                || '&nbsp;',
+        $note              || '&nbsp;'
+      ));
     }
-   my $space_row;
-    $table_data[-1] = sprintf( $table_tmpl, 
-                   join($space_row, @rhs_rows ) );
+    my $space_row;
+    $table_data[-1] = sprintf( $table_tmpl, join($space_row, @rhs_rows ) );
   }
-
   return (@table_data);   
 }
 
@@ -886,55 +875,55 @@ sub das_annotation {
 =cut
 
 sub similarity_matches {
-    my $self = shift;
-    my $label = shift || 'Similarity Matches';
-    my $transl = $self->DataObj->translation;     
-    my $data = $self->DataObj();
-    # Check cache
-    unless ($transl->{'similarity_links'}) {
-        my @similarity_links = @{$data->get_similarity_hash($transl)};   
+  my $self = shift;
+  my $label = shift || 'Similarity Matches';
+  my $transl = $self->DataObj->translation;     
+  my $data = $self->DataObj();
+  # Check cache
+  unless ($transl->{'similarity_links'}) {
+    my @similarity_links = @{$data->get_similarity_hash($transl)};   
+    return unless (@similarity_links);
+    # sort links
+    $self->_sort_similarity_links(@similarity_links);
+  }
 
-        return unless (@similarity_links);
+  my %links = %{$transl->{'similarity_links'}};
+  return unless %links;
 
-        # sort links
-        $self->_sort_similarity_links(@similarity_links);
-    }
-
-    my %links = %{$transl->{'similarity_links'}};
-    return unless %links;
-
-    my $db = $data->get_db();
-    my $entry = $data->gene_type || 'Ensembl';
+  my $db = $data->get_db();
+  my $entry = $data->gene_type || 'Ensembl';
     # add table call here
-    my $html;
-    unless ($data->species_defs->ENSEMBL_SITETYPE eq 'Vega') {
-        $html = qq(
-                <p><strong>This $entry entry corresponds to the following database identifiers:</strong></p>);
-    }
-    $html .= qq(<table>);
-    foreach my $key (sort keys %links){
-        if (scalar (@{$links{$key}}) > 0){
-            my @sorted_links = sort @{$links{$key}};
-            $html .= qq(<tr><td class="nowrap"><strong>$key:</strong></td>\n<td>);
+  my $html;
+  unless ($data->species_defs->ENSEMBL_SITETYPE eq 'Vega') {
+    $html = qq(
+      <p><strong>This $entry entry corresponds to the following database identifiers:</strong></p>);
+  }
+  $html .= qq(<table>);
+  foreach my $key (sort keys %links){
+    if( scalar (@{$links{$key}}) > 0 ){
+      my @sorted_links = sort @{$links{$key}};
+      $html .= qq(<tr><td class="nowrap"><strong>$key:</strong></td>\n<td>);
 
-            if( $sorted_links[0] =~ /<br/i ){
-                $html .= join(' ', @sorted_links );
-            } else { # Need a BR each 5 entries
-                $html .= qq(<table><tr>);
-                my @sorted_lines;
-                for( my $i=0; $i<@sorted_links; $i++ ){
-                    my $line_num = int($i/4);
-                    if( ref(  $sorted_lines[$line_num] ) ne 'ARRAY' ){$sorted_lines[$line_num] = [];}
-                    push( @{$sorted_lines[$line_num]}, "<td>".$sorted_links[$i]."</td>" );
-                }
-                $html .= join( "</tr>\n<tr>", map{ join( ' ', @$_ ) } @sorted_lines );
-                $html .= qq(</tr></table>);
-            }
-            $html .= qq(</td></tr>);
-        }
-    }   
-    $html .= qq(</table>); 
-    return ($label , $html);
+      if( $sorted_links[0] =~ /<br/i ){
+        $html .= join(' ', @sorted_links );
+      } else { # Need a BR each 5 entries
+        $html .= qq(<table><tr>);
+        my @sorted_lines;
+        for( my $i=0; $i<@sorted_links; $i++ ){
+           my $line_num = int($i/4);
+           if( ref(  $sorted_lines[$line_num] ) ne 'ARRAY' ){
+             $sorted_lines[$line_num] = [];
+           }
+           push( @{$sorted_lines[$line_num]}, "<td>".$sorted_links[$i]."</td>" );
+         }
+         $html .= join( "</tr>\n<tr>", map{ join( ' ', @$_ ) } @sorted_lines );
+         $html .= qq(</tr></table>);
+       }
+       $html .= qq(</td></tr>);
+     }
+   }   
+   $html .= qq(</table>); 
+   return ($label , $html);
 }
 
 =head2 _sort_similarity_links
@@ -947,115 +936,106 @@ sub similarity_matches {
 =cut
 
 sub _sort_similarity_links{
-    my $self = shift;
-    my $transl = $self->DataObj->translation;
-    my @similarity_links = @_;
-    my $data = $self->DataObj();
-    my $database = $data->database;
-    my $db = $data->get_db() ;
-    my $urls = $self->ExtURL;
-    my %links ;
-    my $ALIGN_LINK = qq( [<a href="/@{[$self->species]}/alignview?transcript=%s&sequence=%s&db=%s" class="small" target="palignview">align</a>] );
-    # Nice names    
-    my %nice_names = (  
-            'protein_id'            => 'Protein ID', 
-            'drosophila_gene_id'    => 'Drosophila Gene',
-            'flybase_gene'          => 'Flybase Gene',
-            'flybase_symbol'        => 'Flybase Symbol',
-            'affy_hg_u133'          => 'Affymx Microarray U133',
-            'affy_hg_u95'           => 'Affymx Microarray U95',
-            'anopheles_symbol'      => 'Anopheles symbol',
-            'sanger_probe'          => 'Sanger Probe',
-            'wormbase_gene'         => 'Wormbase Gene',
-            'wormbase_transcript'   => 'Wormbase Transcript',
-            'wormpep_id'            => 'Wormpep ID',
-            'briggsae_hybrid'       => 'Briggsae Hybrid',
-            'sptrembl'              => 'SpTrEMBL',
-            'ens_hs_transcript'        => 'Ensembl Human Transcript',
-            'ens_hs_translation'    => 'Ensembl Human Translation',
-            'uniprot/sptrembl'      => 'UniProt/TrEMBL',
-            'uniprot/swissprot'     => 'UniProt/Swiss-Prot',
-            'pubmed'                => 'Sequence Publications',
-        );
+  my $self = shift;
+  my $transl = $self->DataObj->translation;
+  my @similarity_links = @_;
+  my $data = $self->DataObj();
+  my $database = $data->database;
+  my $db = $data->get_db() ;
+  my $urls = $self->ExtURL;
+  my %links ;
+  my $ALIGN_LINK = qq( [<a href="/@{[$self->species]}/alignview?transcript=%s&sequence=%s&db=%s" class="small" target="palignview">align</a>] );
+  # Nice names    
+  my %nice_names = (  
+    'protein_id'            => 'Protein ID', 
+    'drosophila_gene_id'    => 'Drosophila Gene',
+    'flybase_gene'          => 'Flybase Gene',
+    'flybase_symbol'        => 'Flybase Symbol',
+    'affy_hg_u133'          => 'Affymx Microarray U133',
+    'affy_hg_u95'           => 'Affymx Microarray U95',
+    'anopheles_symbol'      => 'Anopheles symbol',
+    'sanger_probe'          => 'Sanger Probe',
+    'wormbase_gene'         => 'Wormbase Gene',
+    'wormbase_transcript'   => 'Wormbase Transcript',
+    'wormpep_id'            => 'Wormpep ID',
+    'briggsae_hybrid'       => 'Briggsae Hybrid',
+    'sptrembl'              => 'SpTrEMBL',
+    'ens_hs_transcript'     => 'Ensembl Human Transcript',
+    'ens_hs_translation'    => 'Ensembl Human Translation',
+    'uniprot/sptrembl'      => 'UniProt/TrEMBL',
+    'uniprot/swissprot'     => 'UniProt/Swiss-Prot',
+    'pubmed'                => 'Sequence Publications',
+  );
                        
-    foreach my $type (sort @similarity_links) { 
-        my $link = "";
-        my $join_links = 0;
-        my $externalDB = $type->database();
-        my $display_id = $type->display_id();
-        my $primary_id = $type->primary_id();
+  foreach my $type (sort @similarity_links) { 
+    my $link = "";
+    my $join_links = 0;
+    my $externalDB = $type->database();
+    my $display_id = $type->display_id();
+    my $primary_id = $type->primary_id();
 
-        # remove all orthologs  
-        next if ($type->status() eq 'ORTH');
+    # remove all orthologs  
+    next if ($type->status() eq 'ORTH');
  
-        # ditch medline entries - redundant as we also have pubmed
-        next if lc($externalDB) eq "medline";
+    # ditch medline entries - redundant as we also have pubmed
+    next if lc($externalDB) eq "medline";
     
-        # Ditch celera genes from FlyBase
-        next if ($externalDB =~ /^flybase/i && $display_id =~ /^CG/ );
+    # Ditch celera genes from FlyBase
+    next if ($externalDB =~ /^flybase/i && $display_id =~ /^CG/ );
 
-        # remove internal links to self and transcripts
-        next if $externalDB eq "Vega_gene";
-        next if $externalDB eq "Vega_transcript";
-        next if $externalDB eq "Vega_translation";
+    # remove internal links to self and transcripts
+    next if $externalDB eq "Vega_gene";
+    next if $externalDB eq "Vega_transcript";
+    next if $externalDB eq "Vega_translation";
 
-        if( $externalDB eq "GO" ){ #&& $data->database('go')){
-            push @{$transl->{'go_links'}} , $display_id;
-            next;   
-        } 
-    elsif ($externalDB eq "GKB") {
-            my ($key, $primary_id) = split ':', $display_id;
-            push @{$transl->{'GKB_links'}{$key}} , $type ;
-            next;
-        } 
-    elsif ($externalDB eq "REFSEQ") { 
-        # strip off version
-        $display_id =~ s/(.*)\.\d+$/$1/o;
-    }  
-        elsif ($externalDB eq "protein_id") { 
-        # Can't link to srs if there is an Version - so strip it off
-        $primary_id =~ s/(.*)\.\d+$/$1/o;
+    if( $externalDB eq "GO" ){ #&& $data->database('go')){
+      push @{$transl->{'go_links'}} , $display_id;
+      next;   
+    } elsif ($externalDB eq "GKB") {
+      my ($key, $primary_id) = split ':', $display_id;
+      push @{$transl->{'GKB_links'}{$key}} , $type ;
+      next;
+    } elsif ($externalDB eq "REFSEQ") { 
+      # strip off version
+      $display_id =~ s/(.*)\.\d+$/$1/o;
+    } elsif ($externalDB eq "protein_id") { 
+      # Can't link to srs if there is an Version - so strip it off
+      $primary_id =~ s/(.*)\.\d+$/$1/o;
     }
-         
-        # Build external links
-        if ($urls and $urls->is_linked($externalDB)) {
-            $link = '<a href="'.$urls->get_url($externalDB, $primary_id).'">'. $display_id. '</a>';
-            if ( uc( $externalDB ) eq "REFSEQ" and $display_id =~ /^NP/) {
-                $link = '<a href="'.$urls->get_url('REFSEQPROTEIN',$primary_id).'">'. $display_id. '</a>';
-            } elsif ($externalDB eq "HUGO") {
-                $link = '<a href="' .$urls->get_url('GENECARD',$display_id) .'">Search GeneCards for '. $display_id. '</a>';
-            } elsif ($externalDB eq "MarkerSymbol") { # hack for mouse MGI IDs
-                $link = '<a href="' .$urls->get_url('MARKERSYMBOL',$primary_id) .'">'."$display_id ($primary_id)".'</a>';
-            } 
-            if( $type->isa('Bio::EnsEMBL::IdentityXref') ) {
-                $link .=' <span class="small"> [Target %id: '.$type->target_identity().'; Query %id: '.$type->query_identity().']</span>';            
-                $join_links = 1;    
-            }
-            if (( $data->species_defs->ENSEMBL_PFETCH_SERVER ) && 
-             ( $externalDB =~/^(SWISS|SPTREMBL|LocusLink|protein_id|RefSeq|EMBL|Gene-name|Uniprot)/i ) ) {  
-                my $seq_arg = $display_id;
-                $seq_arg = "LL_$seq_arg" if $externalDB eq "LocusLink";
-                $link .= sprintf( $ALIGN_LINK,
-                $transl->stable_id,
-                $seq_arg,
-                $db );
-            }
-            if ($externalDB =~/^(SWISS|SPTREMBL)/i) { # add Search GO link            
-                $link .= ' [<a href="'.$urls->get_url('GOSEARCH',$primary_id).'" class="small">Search GO</a>]';
-            }
-            if( $join_links  ) {
-                $link .= '<br />';
-            }
-        } else {
-            $link = " $display_id ";
-        }
-        my $display_name = $nice_names{lc($externalDB)} || ($externalDB =~ s/_/ /g, $externalDB)  ;
-        push (@{$links{$display_name}}, $link);         
+    # Build external links
+    if ($urls and $urls->is_linked($externalDB)) {
+      $link = '<a href="'.$urls->get_url($externalDB, $primary_id).'">'. $display_id. '</a>';
+      if ( uc( $externalDB ) eq "REFSEQ" and $display_id =~ /^NP/) {
+        $link = '<a href="'.$urls->get_url('REFSEQPROTEIN',$primary_id).'">'. $display_id. '</a>';
+      } elsif ($externalDB eq "HUGO") {
+        $link = '<a href="' .$urls->get_url('GENECARD',$display_id) .'">Search GeneCards for '. $display_id. '</a>';
+      } elsif ($externalDB eq "MarkerSymbol") { # hack for mouse MGI IDs
+        $link = '<a href="' .$urls->get_url('MARKERSYMBOL',$primary_id) .'">'."$display_id ($primary_id)".'</a>';
+      } 
+      if( $type->isa('Bio::EnsEMBL::IdentityXref') ) {
+        $link .=' <span class="small"> [Target %id: '.$type->target_identity().'; Query %id: '.$type->query_identity().']</span>';            
+        $join_links = 1;    
+      }
+      if (( $data->species_defs->ENSEMBL_PFETCH_SERVER ) && 
+        ( $externalDB =~/^(SWISS|SPTREMBL|LocusLink|protein_id|RefSeq|EMBL|Gene-name|Uniprot)/i ) ) {  
+        my $seq_arg = $display_id;
+        $seq_arg = "LL_$seq_arg" if $externalDB eq "LocusLink";
+        $link .= sprintf( $ALIGN_LINK, $transl->stable_id, $seq_arg, $db );
+      }
+      if ($externalDB =~/^(SWISS|SPTREMBL)/i) { # add Search GO link            
+        $link .= ' [<a href="'.$urls->get_url('GOSEARCH',$primary_id).'" class="small">Search GO</a>]';
+      }
+      if( $join_links  ) {
+        $link .= '<br />';
+      }
+    } else {
+      $link = " $display_id ";
     }
-    $transl->{'similarity_links'} = \%links ;
-    return $transl->{'similarity_links'};
+    my $display_name = $nice_names{lc($externalDB)} || ($externalDB =~ s/_/ /g, $externalDB)  ;
+    push (@{$links{$display_name}}, $link);         
+  }
+  $transl->{'similarity_links'} = \%links ;
+  return $transl->{'similarity_links'};
 }
-
-
 
 1; 
