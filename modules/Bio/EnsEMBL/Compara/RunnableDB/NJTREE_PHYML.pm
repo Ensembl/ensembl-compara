@@ -94,13 +94,6 @@ sub fetch_input {
   $self->{'max_gene_count'} = 1000000;
 
   $self->check_job_fail_options;
-
-#  if($self->input_job->retry_count >= 3) {
-#    $self->dataflow_output_id($self->input_id, 2);
-#    $self->input_job->update_status('FAILED');
-#    throw("NJTREE_PHYML job failed >3 times: try something else and FAIL it");
-#  }
-
   $self->throw("No input_id") unless defined($self->input_id);
 
   #create a Compara::DBAdaptor which shares the same DBI handle
@@ -113,6 +106,7 @@ sub fetch_input {
   $self->get_params($self->parameters);
   $self->get_params($self->input_id);
   $self->print_params if($self->debug);
+  $self->check_if_exit_cleanly;
 
   unless($self->{'protein_tree'}) {
     throw("undefined ProteinTree as input\n");
@@ -125,7 +119,7 @@ sub fetch_input {
     $self->{'protein_tree'} = undef;
     throw("NJTREE_PHYML : cluster size over threshold and FAIL it");
   }
-  
+
   return 1;
 }
 
@@ -137,12 +131,13 @@ sub fetch_input {
     Function:   runs NJTREE PHYML
     Returns :   none
     Args    :   none
-    
+
 =cut
 
-sub run
-{
+
+sub run {
   my $self = shift;
+  $self->check_if_exit_cleanly;
   $self->run_njtree_phyml;
 }
 
@@ -151,15 +146,17 @@ sub run
 
     Title   :   write_output
     Usage   :   $self->write_output
-    Function:   parse clustalw output and update family and family_member tables
+    Function:   stores proteintree
     Returns :   none
     Args    :   none
-    
+
 =cut
+
 
 sub write_output {
   my $self = shift;
 
+  $self->check_if_exit_cleanly;
   $self->store_proteintree;
 }
 
@@ -189,7 +186,7 @@ sub get_params {
 
   return unless($param_string);
   print("parsing parameter string : ",$param_string,"\n") if($self->debug);
-  
+
   my $params = eval($param_string);
   return unless($params);
 
@@ -198,7 +195,7 @@ sub get_params {
       print("  $key : ", $params->{$key}, "\n");
     }
   }
-    
+
   if(defined($params->{'protein_tree_id'})) {
     $self->{'protein_tree'} =  
          $self->{'comparaDBA'}->get_ProteinTreeAdaptor->
@@ -211,7 +208,11 @@ sub get_params {
   if(defined($params->{'species_tree_file'})) {
     $self->{'species_tree_file'} = $params->{'species_tree_file'};
   }
-  
+
+  if(defined($params->{'honeycomb_dir'})) {
+    $self->{'honeycomb_dir'} = $params->{'honeycomb_dir'};
+  }
+
   return;
 
 }
@@ -238,19 +239,14 @@ sub run_njtree_phyml
      $self->{'protein_tree'}
     );
   return unless($self->{'input_aln'});
-  
+
   $self->{'newick_file'} = $self->{'input_aln'} . "_njtree_phyml_tree.txt ";
 
   my $njtree_phyml_executable = '';
   unless (-e $njtree_phyml_executable) {
-    # md5sum e76e7e2c78ab718f8a117fc173475c48
-    # /lustre/work1/ensembl/avilella/bin/alpha-dec-osf4.0/njtree
-    $njtree_phyml_executable 
-      = "/lustre/work1/ensembl/avilella/bin/alpha-dec-osf4.0/njtree";
     if (-e "/proc/version") {
       # it is a linux machine
-      # md5sum 92f85c3968130fda73044a21d69df86f
-      # /lustre/work1/ensembl/avilella/bin/i386/njtree
+      # md5sum af1dd2092781aa704fefbecc36256619
       $njtree_phyml_executable = "/lustre/work1/ensembl/avilella/bin/i386/njtree";
     }
   }
@@ -274,8 +270,6 @@ sub run_njtree_phyml
   }
   $cmd .= " ". $self->{'input_aln'};
   $cmd .= " -p tree ";
-  my $num_bootstrap = $self->{'num_bootstrap'} || 100;
-  $cmd .= " -b $num_bootstrap " unless (defined($self->{'no_bootstrap'}));
   $cmd .= " -o " . $self->{'newick_file'};
   $cmd .= " 2>&1 > /dev/null" unless($self->debug);
 
@@ -406,13 +400,46 @@ sub store_tags
     $node->store_tag('Duplication', 0);
   }
 
-  unless (defined($self->{'no_bootstrap'})) {
-    if(defined($node->get_tagvalue("B"))) {
-      my $bootstrap_value = $node->get_tagvalue("B");
-      if($self->debug) {
+  if (defined($node->get_tagvalue("B"))) {
+    my $bootstrap_value = $node->get_tagvalue("B");
+    if (defined($bootstrap_value) && $bootstrap_value ne '') {
+      if ($self->debug) {
         printf("store bootstrap : $bootstrap_value "); $node->print_node;
       }
       $node->store_tag('Bootstrap', $bootstrap_value);
+    }
+  }
+  if (defined($node->get_tagvalue("DD"))) {
+    my $dubious_dup = $node->get_tagvalue("DD");
+    if (defined($dubious_dup) && $dubious_dup ne '') {
+      if ($self->debug) {
+        printf("store dubious_duplication : $dubious_dup "); $node->print_node;
+      }
+      $node->store_tag('dubious_duplication', $dubious_dup);
+    }
+  }
+  if (defined($node->get_tagvalue("E"))) {
+    my $n_lost = $node->get_tagvalue("E");
+    $n_lost =~ s/.{2}//;        # get rid of the initial $-
+    my @lost_taxa = split('-',$n_lost);
+    my %lost_taxa;
+    foreach my $taxon (@lost_taxa) {
+      $lost_taxa{$taxon} = 1;
+    }
+    foreach my $taxon (keys %lost_taxa) {
+      if ($self->debug) {
+        printf("store lost_taxon_id : $taxon "); $node->print_node;
+      }
+      $node->store_tag('lost_taxon_id', $taxon);
+    }
+  }
+  if (defined($node->get_tagvalue("SIS"))) {
+    my $sis_score = $node->get_tagvalue("SIS");
+    if (defined($sis_score) && $sis_score ne '') {
+      if ($self->debug) {
+        printf("store species_intersection_score : $sis_score "); $node->print_node;
+      }
+      $node->store_tag('species_intersection_score', $sis_score);
     }
   }
 
