@@ -100,6 +100,12 @@ sub parse_newick_into_tree
                       $value =~ s/Y/1/;
                       $value =~ s/N/0/;
                     }
+                    if ($key eq 'DD') {
+                      # this is a small hack that will work for
+                      # treefam nhx trees
+                      $value =~ s/Y/1/;
+                      $value =~ s/N/0/;
+                    }
                     $node->add_tag("$key","$value");
                 }
             }
