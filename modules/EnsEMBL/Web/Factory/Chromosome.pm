@@ -41,6 +41,7 @@ sub createObjects {
     eval { $sa = $database->get_SliceAdaptor(); };
     $self->problem( 'Fatal','EnsEMBL Error' ,"Sorry, can't retrieve chromosome information.") if($@);
     $chromosome = $sa->fetch_by_region( undef, $chr) unless ( $chr eq 'ALL' ); 
+    return;
   } else {
     eval { $sa = $self->database('core')->get_SliceAdaptor(); };
     $self->problem( 'Fatal','EnsEMBL Error' ,"Sorry, can't retrieve chromosome information.") if($@);
