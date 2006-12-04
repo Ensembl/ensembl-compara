@@ -11,6 +11,9 @@ use Sanger::Graphics::Glyph::Line;
 sub init_label {
     my ($self) = @_;
     my $Config = $self->{'config'};	
+    my $chr      	= $self->{'container'}->{'chr'};
+    my $chr_slice = $self->{'container'}->{'sa'}->fetch_by_region('chromosome', $chr);	
+    my $da = $self->{'container'}->{'da'};
     my $repeats = $da->fetch_Featureset_by_Slice($chr_slice, 'PercentageRepeat',150,1); 
     my $gc      = $da->fetch_Featureset_by_Slice($chr_slice, 'PercentGC', 150,1);
     return unless $repeats->size && $gc->size;
