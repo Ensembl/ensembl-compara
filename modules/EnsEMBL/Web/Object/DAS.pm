@@ -40,23 +40,23 @@ sub GroupIDs {
 }
 
 sub Stylesheet {
-    my $self = shift;
-    return qq{
+  my $self = shift;
+  return qq{
 <STYLESHEET version="1.0">
 </STYLESHEET>
 };
 }
 
 sub EntryPoints {
-    my ($self) = @_;
-    my $collection;
-    return $collection;
+  my ($self) = @_;
+  my $collection;
+  return $collection;
 }
 
 sub Types {
-    my ($self) = @_;
-    my $collection;
-    return $collection;
+  my ($self) = @_;
+  my $collection;
+  return $collection;
 }
 
 1;
