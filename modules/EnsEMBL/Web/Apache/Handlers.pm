@@ -7,110 +7,318 @@ use Apache::Constants qw(:common :response);
 use EnsEMBL::Web::DBSQL::UserDB;
 use EnsEMBL::Web::DBSQL::BlastAdaptor;
 use EnsEMBL::Web::Object::BlastJobMaster;
+use EnsEMBL::Web::Cookie;
+use EnsEMBL::Web::Registry;
 use Apache::SizeLimit;
 use Apache::URI ();
 use CGI::Cookie;
 use Time::HiRes qw(time);
-my $requests;
-my $process_start_time;
-my $oracle_home;
 use Sys::Hostname;
 use Data::Dumper;
+use Fcntl ':flock';
 
 use Exporter;
 
 our @ISA = qw(Exporter);
 
+our $oracle_home;
 our $THIS_HOST;
 our $LOG_INFO; 
 our $LOG_TIME; 
-our $ENSEMBL_USER_DB_HANDLE;
-our @EXPORT = qw($ENSEMBL_USER_DB_HANDLE);
-our @EXPORT_OK = qw($ENSEMBL_USER_DB_HANDLE);
+our $BLAST_LAST_RUN;
+our $ENSEMBL_WEB_REGISTRY;
+our @EXPORT    = qw($ENSEMBL_WEB_REGISTRY);
+our @EXPORT_OK = qw($ENSEMBL_WEB_REGISTRY);
+
+#======================================================================#
+# Set up apache-size-limit style load commands                         #
+#======================================================================#
+
+our $LOAD_COMMAND;
+use Config;
+BEGIN {
+  $LOAD_COMMAND = $Config{'osname'} eq 'dec_osf' ? \&_load_command_alpha
+                : $Config{'osname'} eq 'linux'   ? \&_load_command_linux
+                :                                  \&_load_command_null  ;
+};
+
+
+#======================================================================#
+# Setting up the directory lists for Perl/webpage                      #
+#======================================================================#
+# %s will be replaced by species name                                  #
+#======================================================================#
+our @PERL_TRANS_DIRS;
+our @HTDOCS_TRANS_DIRS;
+our %SPECIES_MAP;
+BEGIN {
+  foreach my $dir( @SiteDefs::ENSEMBL_PERL_DIRS ){
+    if( -d $dir ) {
+      if( -r $dir ){
+#       push( @PERL_TRANS_DIRS, "$dir/$ENSEMBL_SITETYPE" ); ## We think this has been deprecated....
+        push( @PERL_TRANS_DIRS, "$dir/%s"                );
+        push( @PERL_TRANS_DIRS, "$dir/multi"             ) if -d "$dir/multi"   && -r "$dir/multi";
+        push( @PERL_TRANS_DIRS, "$dir/private"           ) if -d "$dir/private" && -r "$dir/private";
+        push( @PERL_TRANS_DIRS, "$dir/default"           ) if -d "$dir/default" && -r "$dir/default";
+      } else {
+        warn "ENSEMBL_PERL_DIR $dir is not readable\n";
+      }
+    } else{
+      warn "ENSEMBL_PERL_DIR $dir does not exist\n";
+    }
+  }
+
+  foreach my $dir( @SiteDefs::ENSEMBL_HTDOCS_DIRS ){
+    if( -d $dir ) {
+      if( -r $dir ) {
+        push( @HTDOCS_TRANS_DIRS, "$dir/%s" );
+      } else {
+        warn "ENSEMBL_HTDOCS_DIR $dir is not readable\n";
+      }
+    } else {
+      warn "ENSEMBL_HTDOCS_DIR $dir does not exist\n";
+    }
+  }
+
+  %SPECIES_MAP = (
+    qw(
+      common  common   Common  common
+      Multi   Multi    multi   Multi
+      BioMart biomart  biomart biomart
+    ),
+    ( 'perl' => $SiteDefs::ENSEMBL_PRIMARY_SPECIES ),
+    map { lc($_) => $SiteDefs::ENSEMBL_SPECIES_ALIASES->{$_} } keys %{$SiteDefs::ENSEMBL_SPECIES_ALIASES}
+  );
+
+  foreach( values %SPECIES_MAP ) {
+    $SPECIES_MAP{lc($_)} = $_;
+  }     # Self-mapping
+};
 
 1;
 
-my $BLAST_LAST_RUN;
-############################################
-## Perl Apache init handler
-##------------------------------------------
-## Copes with the handling of session tracking and user identification
-##------------------------------------------
-## Sets the three sub process environment variables:
-##       session_ID, firstsession_ID and user_ID 
-############################################
-
-sub fixupHandler {
-  my $r = shift;
-  my @X = localtime();
-  my ($A,$B) = $LOG_INFO =~ /SCRIPT:(.{8}:\d+) +\d{4}-\d\d-\d\d \d\d:\d\d:\d\d (.*)$/;
-  warn sprintf( "ENDSCR:%-19s %04d-%02d-%02d %02d:%02d:%02d %10.3f %s\n",
-    $A, $X[5]+1900, $X[4]+1, $X[3], $X[2],$X[1],$X[0], time()-$LOG_TIME, $B );
-}
+#======================================================================#
+# Perl apache handlers.... in order they get executed!                 #
+#======================================================================#
 
 sub childInitHandler {
+### Child Init Handler
+### Sets up the web registry object - and initializes the timer!
+
   my $r = shift;
-  $requests = 0;
-  my $T2 = hostname();
-  my $TT = "".reverse $$;
-     $TT = ( $TT + $TT<<15 ) & 0xffffffff;
-  while( $T2=~s/(.{1,4})// ) {
-    $TT = $TT ^ unpack( "%32L*", $1 );
+  my $temp_hostname = hostname();
+  my $temp_proc_id  = "".reverse $$;
+  my $temp_seed     = ( $temp_proc_id + $temp_proc_id<<15 ) & 0xffffffff;
+  while( $temp_hostname=~s/(.{1,4})// ) {
+    $temp_seed = $temp_seed ^ unpack( "%32L*", $1 );
   }
-  $process_start_time = time;
-  srand( time() ^ $TT );
+  srand( time() ^ $temp_seed );
 
   $THIS_HOST = `hostname`;
-  my $T =  new EnsEMBL::Web::DBSQL::UserDB( $r ); # $T->{_handle}->disconnect; $T->{_handle}=undef;
-  $ENSEMBL_USER_DB_HANDLE = $T->{'_handle'};
-  if( $ENSEMBL_DEBUG_FLAGS & 8 ){
-    print STDERR "Child $$: - initialised at @{[time]}\n";
-  }
-}
 
-sub childExitHandler {
-  my $r = shift;
-  if( $ENSEMBL_USER_DB_HANDLE ) {
-    $ENSEMBL_USER_DB_HANDLE->disconnect(); 
-  }
+## Create the Registry...
+  $ENSEMBL_WEB_REGISTRY = EnsEMBL::Web::Registry->new();
+  $ENSEMBL_WEB_REGISTRY->timer->set_process_child_count( 0    );
+  $ENSEMBL_WEB_REGISTRY->timer->set_process_start_time(  time );
   if( $ENSEMBL_DEBUG_FLAGS & 8 ){
-    print STDERR ( "Child $$: - reaped      at @{[time]} - ".
-		   "Time: @{[time-$process_start_time]} ".
-		   "Req: $requests Size: ".
-		   "@{[&$Apache::SizeLimit::HOW_BIG_IS_IT()]}K\n" );
+    printf STDERR "Child %9d: - initialised at %30s\n", $$,''.gmtime();
   }
 }
 
 sub postReadRequestHandler {
-  $requests ++;
   my $r = shift; # Get the connection handler
-  $r->push_handlers( PerlTransHandler => \&transHandler );
+## Manipulate the Registry...
+  $ENSEMBL_WEB_REGISTRY->timer->set_script_start_time( time  ); ## This is the page rendering start time!
+  $r->push_handlers( PerlTransHandler =>   \&transHandler );
   $r->push_handlers( PerlCleanupHandler => \&cleanupHandler );
 
 ## Retrieve the firstsession_ID and User ID from the cookie (ENSEMBL_FIRSTSESSION and ENSEMBL_USER_ID)
-  my $headers_in = $r->headers_in;
-  my %cookies = CGI::Cookie->parse($r->header_in('Cookie'));
-  $r->subprocess_env->{'ENSEMBL_FIRSTSESSION'} =
-    %cookies && $cookies{$ENSEMBL_FIRSTSESSION_COOKIE} &&
-    EnsEMBL::Web::DBSQL::UserDB::decryptID($cookies{$ENSEMBL_FIRSTSESSION_COOKIE}->value) || 0;
-  $r->subprocess_env->{'ENSEMBL_USER_ID'} =
-    %cookies && $cookies{$ENSEMBL_USER_COOKIE} &&
-    EnsEMBL::Web::DBSQL::UserDB::decryptID($cookies{$ENSEMBL_USER_COOKIE}->value) || 0;
-  $r->subprocess_env->{'ENSEMBL_STARTTIME'} = time();
-
-  ## hack for oracle/AV problem: if child has used Oracle before, redirect
-  ## the request and kill the child
-  if( ($ENSEMBL_SITETYPE eq 'Vega') && $oracle_home && ($r->uri =~ /\/textview/) ) {
-    warn "[WARN] Killing child process to prevent Oracle/AV error.\n";
-    my $location = $r->uri;
-    if($r->args) {
-      $location .= "?" . $r->args;
+##   Setup User...
+##  $ENSEMBL_WEB_REGISTRY->initialize_session( $session_cookie ); ## Initialize the session information
+  my $user_cookie = EnsEMBL::Web::Cookie->new({
+    'host'    => $ENSEMBL_COOKIEHOST,
+    'name'    => $ENSEMBL_USER_COOKIE,
+    'value'   => '',
+    'env'     => 'ENSEMBL_USER_ID',
+    'hash'    => {
+      'offset'  => $ENSEMBL_ENCRYPT_0,
+      'key1'    => $ENSEMBL_ENCRYPT_1,
+      'key2'    => $ENSEMBL_ENCRYPT_2,
+      'key3'    => $ENSEMBL_ENCRYPT_3,
+      'expiry'  => $ENSEMBL_ENCRYPT_EXPIRY,
+      'refresh' => $ENSEMBL_ENCRYPT_REFRESH
     }
-    $r->headers_out->set(Location => $location);
-    $r->child_terminate;
-    return REDIRECT;
-  }
+  });
+  $ENSEMBL_WEB_REGISTRY->initialize_user({
+    'cookie'=> $user_cookie,
+    'r'     => $r
+  }); ## Initialize the user (and possibly group) objects
+## Unlikely to go to db - just store the IDs
   return;
+}
+
+sub headerParserHandler {
+  my $r = shift;
+}
+
+sub transHandler {
+  my $r = shift;      # Get the connection handler
+  my $u           = $r->parsed_uri;
+  my $file        = $u->path;
+  my $querystring = $u->query;
+
+  my $session_cookie = EnsEMBL::Web::Cookie->new({
+    'host'    => $ENSEMBL_COOKIEHOST,
+    'name'    => $ENSEMBL_FIRSTSESSION_COOKIE,
+    'value'   => '',
+    'env'     => 'ENSEMBL_FIRSTSESSION_ID',
+    'hash'    => {
+      'offset'  => $ENSEMBL_ENCRYPT_0,
+      'key1'    => $ENSEMBL_ENCRYPT_1,
+      'key2'    => $ENSEMBL_ENCRYPT_2,
+      'key3'    => $ENSEMBL_ENCRYPT_3,
+      'expiry'  => $ENSEMBL_ENCRYPT_EXPIRY,
+      'refresh' => $ENSEMBL_ENCRYPT_REFRESH
+    }
+  });
+  my @path_segments = split( m|/|, $file );
+  shift @path_segments; # Always empty
+  my $species   = shift @path_segments;
+
+  my $Tspecies = $species;
+  my $script    = undef;
+  my $path_info = undef;
+  if( $species eq 'das' ) { # we have a DAS request...
+    my $DSN = $path_segments[0];
+    my $command = '';
+    if( $path_segments[1] eq 'entry_points' && -e $SiteDefs::ENSEMBL_SERVERROOT."/htdocs/das/$DSN/entry_points" ||
+        $DSN eq 'dsn' ) {
+## Fall through this is a static page!!
+      $path_info = join ('/',@path_segments );
+    } else {
+# Because assemblies might contain dots themselves - we split DSN on dots
+# the first element will be species, the last - source name, and all the field in the middle are the assembly
+      my @dsn_fields = split /\./, $DSN;
+      my $das_species = shift @dsn_fields;
+      my $type = pop @dsn_fields;
+      my $assembly = join ('.', @dsn_fields);
+
+      $command = $path_segments[1];
+      my $FN = $SiteDefs::ENSEMBL_SERVERROOT."/perl/das/$command";
+      $das_species = $SPECIES_MAP{lc($das_species)} || '';
+      if( ! $das_species ) {
+        $command = 'das_error';
+        $r->subprocess_env->{'ENSEMBL_DAS_ERROR'} = 'unknown-species';
+      }
+      $ENSEMBL_WEB_REGISTRY->initialize_session({ 'r' => $r, 'cookie'  => $session_cookie, 'species' => $das_species, 'script'  => $command });
+      $r->subprocess_env->{'ENSEMBL_SPECIES'     } = $das_species;
+      $r->subprocess_env->{'ENSEMBL_DAS_ASSEMBLY'} = $assembly;
+      $r->subprocess_env->{'ENSEMBL_DAS_TYPE'    } = $type;
+      $r->subprocess_env->{'ENSEMBL_SCRIPT'      } = $command;
+      my $error_filename = '';
+      foreach my $dir ( @PERL_TRANS_DIRS ) {
+        my $filename = sprintf( $dir, $species )."/das/$command";
+        my $t_error_filename = sprintf( $dir, $species )."/das/das_error";
+        $error_filename ||= $t_error_filename if -r $t_error_filename;
+        next unless -r $filename;
+        $r->filename( $filename );
+        $r->uri( "/perl/das/$DSN/$command" );
+        if( $ENSEMBL_DEBUG_FLAGS & 8 ) {
+          my @X = localtime();
+          $LOG_INFO = sprintf( "SCRIPT:%8s:%-10d %04d-%02d-%02d %02d:%02d:%02d /%s/%s?%s\n",
+            substr($THIS_HOST,0,8), $$, $X[5]+1900, $X[4]+1, $X[3], $X[2],$X[1],$X[0],
+            'das', "$DSN/$command", $querystring );
+          warn $LOG_INFO;
+          $LOG_TIME = time();
+          $r->push_handlers( PerlCleanupHandler => \&cleanupHandler_script      );
+          $r->push_handlers( PerlCleanupHandler => \&cleanupHandler_blast       ) if $ENSEMBL_BLASTSCRIPT;
+          $r->push_handlers( PerlCleanupHandler => \&Apache::SizeLimit::handler );
+        }
+        return OK;
+      }
+      if( -r $error_filename ) {
+        $r->subprocess_env->{'ENSEMBL_DAS_ERROR'}  = 'unknown-command';
+        $r->filename( $error_filename );
+        $r->uri( "/perl/das/$DSN/$command" );
+        if( $ENSEMBL_DEBUG_FLAGS & 8 ) {
+          my @X = localtime();
+          $LOG_INFO = sprintf( "SCRIPT:%8s:%-10d %04d-%02d-%02d %02d:%02d:%02d /%s/%s?%s\n",
+            substr($THIS_HOST,0,8), $$, $X[5]+1900, $X[4]+1, $X[3], $X[2],$X[1],$X[0],
+            'das', "$DSN/$command", $querystring );
+          warn $LOG_INFO;
+          $LOG_TIME = time();
+          $r->push_handlers( PerlCleanupHandler => \&cleanupHandler_script      );
+          $r->push_handlers( PerlCleanupHandler => \&cleanupHandler_blast       ) if $ENSEMBL_BLASTSCRIPT;
+          $r->push_handlers( PerlCleanupHandler => \&Apache::SizeLimit::handler );
+        }
+        return OK;
+      }
+      return DECLINED;
+    }
+  } else {
+  # DECLINE this request if we cant find a valid species
+    if( $species && ($species = $SPECIES_MAP{lc($species)} || '' ) ) {
+      $script = shift @path_segments;
+      $path_info = join( '/', @path_segments );
+      unshift ( @path_segments, '', $species, $script );
+      my $newfile = join( '/', @path_segments );
+
+      if( $newfile ne $file ){ # Path is changed; REDIRECT
+        $r->uri( $newfile );
+        $r->headers_out->add( 'Location' => join( '?', $newfile, $querystring || () ) );
+        $r->child_terminate;
+        return REDIRECT;
+      }
+      # Mess with the environment
+      $r->subprocess_env->{'ENSEMBL_SPECIES'} = $species;
+      $r->subprocess_env->{'ENSEMBL_SCRIPT'}  = $script;
+      $ENSEMBL_WEB_REGISTRY->initialize_session({ 'r' => $r, 'cookie'  => $session_cookie, 'species' => $species, 'script'  => $script });
+      # Search the mod-perl dirs for a script to run
+      foreach my $dir( @PERL_TRANS_DIRS ){
+        $script || last;
+        my $filename = sprintf( $dir, $species ) ."/$script";
+        next unless -r $filename;
+        $r->filename( $filename );
+        $r->uri( "/perl/$species/$script" );
+        $r->subprocess_env->{'PATH_INFO'} = "/$path_info" if $path_info;
+        if( $ENSEMBL_DEBUG_FLAGS & 8 && $script ne 'ladist' && $script ne 'la' ) {
+          my @X = localtime();
+          $LOG_INFO = sprintf( "SCRIPT:%8s:%-10d %04d-%02d-%02d %02d:%02d:%02d /%s/%s?%s\n",
+           substr($THIS_HOST,0,8), $$, $X[5]+1900, $X[4]+1, $X[3], $X[2],$X[1],$X[0],
+           $species, $script, $querystring ) if $ENSEMBL_DEBUG_FLAGS | 8 && ($script ne 'ladist' && $script ne 'la' );
+          warn $LOG_INFO;
+          $LOG_TIME = time();
+          $r->push_handlers( PerlCleanupHandler => \&cleanupHandler_script      );
+          $r->push_handlers( PerlCleanupHandler => \&cleanupHandler_blast       ) if $ENSEMBL_BLASTSCRIPT;
+          $r->push_handlers( PerlCleanupHandler => \&Apache::SizeLimit::handler );
+        }
+        return OK;
+      }
+    } else {
+      $species = $Tspecies;
+      $script = join( '/', @path_segments );
+    }
+  }
+  # Search the htdocs dirs for a file to return
+  my $path = join( "/", $species || (), $script || (), $path_info || () );
+  $r->uri( "/$path" );
+  foreach my $dir( @HTDOCS_TRANS_DIRS ){
+#        $script || last;
+    my $filename = sprintf( $dir, $path );
+    if( -d $filename ) {
+      $r->uri( $r->uri . ($r->uri =~ /\/$/ ? '' : '/' ). 'index.html' );
+      $r->filename( $filename . ( $r->filename =~ /\/$/ ? '' : '/' ). 'index.html' );
+      $r->headers_out->add( 'Location' => $r->uri );
+      $r->child_terminate;
+      return REDIRECT;
+    }
+    next unless -r $filename;
+    $r->filename( $filename );
+    return OK;
+  }
+
+  # Give up
+  return DECLINED;
 }
 
 sub cleanupHandler {
@@ -121,7 +329,7 @@ sub cleanupHandler {
 
   return  if $r->subprocess_env->{'ENSEMBL_ENDTIME'};
   my $end_time    = time();
-  my $start_time  = $r->subprocess_env->{'ENSEMBL_STARTTIME'};
+  my $start_time  = $ENSEMBL_WEB_REGISTRY->timer->get_script_start_time;
   my $length      = $end_time- $start_time;
 
   if( $length >= $ENSEMBL_LONGPROCESS_MINTIME ) {
@@ -137,23 +345,27 @@ LONG PROCESS %10s IP:  %s  UA: %s
 ", $$,  scalar(gmtime($start_time)), $length, $size, $$, "$file?$query", $$, $r->subprocess_env->{'HTTP_X_FORWARDED_FOR'}, $r->header_in('User-Agent');
     }
   }
-  use Fcntl ':flock';
-## Now we do the BLAST parser stuff!!
-  _process_blast( $r ) if $ENV{'ENSEMBL_SCRIPT'} && $ENSEMBL_BLASTSCRIPT;
-  
-  if ($ENV{'ENSEMBL_SCRIPT'} && $ENSEMBL_BLASTSCRIPT) {
-    #&queue_pending_blast_jobs;
-  }
+
+                 ##----------------------------------------------------------------------
+                 ## Blast now has it's own clean up handler!!!!
+                 ##
+                 ## Now we do the BLAST parser stuff!!
+                 ##  _process_blast( $r ) if $ENV{'ENSEMBL_SCRIPT'} && $ENSEMBL_BLASTSCRIPT;
+                 ##
+                 ##  if ($ENV{'ENSEMBL_SCRIPT'} && $ENSEMBL_BLASTSCRIPT) {
+                 ##    #&queue_pending_blast_jobs;
+                 ##  }
+                 ##----------------------------------------------------------------------
 
 ## Now we check if the die file has been touched...
-  my $die_file = $ENSEMBL_SERVERROOT.'/logs/ensembl.die';
+  my $die_file = $ENSEMBL_SERVERROOT.'/conf/config.packed';
   if( -e $die_file ) {
     my @temp = stat $die_file;
     my $file_mod_time = $temp[9];
-    if( $file_mod_time >= $process_start_time ) { 
+    if( $file_mod_time >= $ENSEMBL_WEB_REGISTRY->timer->get_process_start_time ) {
       print STDERR sprintf "KILLING CHILD %10s\n", $$;
       if( $Apache::SizeLimit::WIN32 ) {
-        CORE::exit(-2); 
+        CORE::exit(-2);
       } else {
         $r->child_terminate();
       }
@@ -161,6 +373,29 @@ LONG PROCESS %10s IP:  %s  UA: %s
     return DECLINED;
   }
 }
+
+sub cleanupHandler_script {
+  my $r = shift;
+  my @X = localtime();
+  my ($A,$B) = $LOG_INFO =~ /SCRIPT:(.{8}:\d+) +\d{4}-\d\d-\d\d \d\d:\d\d:\d\d (.*)$/;
+  warn sprintf( "ENDSCR:%-19s %04d-%02d-%02d %02d:%02d:%02d %10.3f %s\n",
+    $A, $X[5]+1900, $X[4]+1, $X[3], $X[2],$X[1],$X[0], time()-$LOG_TIME, $B );
+}
+
+sub childExitHandler {
+  my $r = shift;
+  $ENSEMBL_WEB_REGISTRY->tidy_up if $ENSEMBL_WEB_REGISTRY; ## Disconnect from the DB
+  if( $ENSEMBL_DEBUG_FLAGS & 8 ){
+    printf STDERR "Child %9d: - reaped at      %30s;  Time: %11.6f;  Req:  %4d;  Size: %8dK\n",
+      $$, ''.gmtime(), time-$ENSEMBL_WEB_REGISTRY->timer->get_process_start_time,
+      $ENSEMBL_WEB_REGISTRY->timer->get_process_child_count,
+      &$Apache::SizeLimit::HOW_BIG_IS_IT()
+  }
+}
+
+#======================================================================#
+# BLAST Support functionality.                                         #
+#======================================================================#
 
 sub _run_blast_no_ticket {
   my( $loads, $seconds_since_last_run ) = @_;
@@ -174,17 +409,7 @@ sub _run_blast_ticket {
   return $loads->{'blast'} < 8;
 }
 
-use vars qw($LOAD_COMMAND);
-use Config;
-BEGIN {
-  if( $Config{'osname'} eq 'dec_osf' ) {
-    $LOAD_COMMAND = \&_load_command_alpha;
-  } elsif( $Config{'osname'} eq 'linux' ) {
-    $LOAD_COMMAND = \&_load_command_linux;
-  }# $LOAD_COMMAND = \&_load_command_null;
-};
-
-sub _load_command_null {
+sub  _load_command_null {
   return 1;
 }
 sub _load_command_alpha {
@@ -225,10 +450,11 @@ sub queue_pending_blast_jobs {
 
 }
 
-sub _process_blast {
+sub cleanupHandler_blast {
+warn "CHB started ($$)";
   my $r = shift;
   my $directory = $ENSEMBL_TMP_DIR_BLAST.'/pending';
-  my $FLAG = 0; 
+  my $FLAG = 0;
   my $count=0;
   my $ticket;
   my $_process_blast_called_at = time();
@@ -263,7 +489,7 @@ sub _process_blast {
         next if -z $file;     # Contains something
         my @STAT = stat( $file );
         next if $STAT[8]+5 > time(); # Was last modified more than 5 seconds ago!
-        next if $ticket && $file !~ /$ticket/; 
+        next if $ticket && $file !~ /$ticket/;
      ## We have a ticket...
         open  FH, $file;
         flock FH, LOCK_EX;
@@ -273,7 +499,7 @@ sub _process_blast {
           $blast_file = $1;
         }
         (my $FILE2 = $file) =~ s/pending/parsing/;
-        rename $file, $FILE2; 
+        rename $file, $FILE2;
         (my $FILE3 = $file) =~ s/pending/sent/;
         unlink $FILE3;
         flock FH, LOCK_UN;
@@ -292,306 +518,4 @@ warn "EXECUTING BLAST $COMMAND";
     }
   }
 }
-
-############################################
-## Perl Apache translation handler 
-##------------------------------------------
-## REDIRECT species aliases to 'binomial' species name
-##------------------------------------------
-## Finds the translated filesystem path for URLs containing
-##   a 'binomial' species.
-## Use the SiteDefs ENSEMBL_PERL_DIR and ENSEMBL_HTDOCS_DIR
-##  variables to add extra directories to the search path
-##------------------------------------------
-## Sets the two sub process environment variables:
-##   ENSEMBL_SPECIES and ENSEMBL_SCRIPT
-############################################
-
-# Set the heirarchy of mod-perl dirs to search through
-# %s will be replaced by species name
-my @PERL_TRANS_DIRS;
-foreach my $dir( @SiteDefs::ENSEMBL_PERL_DIRS ){
-  if( -d $dir ){
-    if( -r $dir ){ push( @PERL_TRANS_DIRS, 
-                         "$dir/".$ENSEMBL_SITETYPE,
-			 "$dir/%s",
-			 "$dir/multi", # Hack multi dir coz species=Multi
-			 "$dir/private",
-			 "$dir/default" ) }
-    else{ warn( "ENSEMBL_PERL_DIR $dir is not readable\n" ) }
-  }
-  else{ warn( "ENSEMBL_PERL_DIR $dir does not exist\n" ) }
-}
-
-# Set the heirarchy of htdocs content dirs to search through
-# %s will be replaced by species name
-my @HTDOCS_TRANS_DIRS;
-foreach my $dir( @SiteDefs::ENSEMBL_HTDOCS_DIRS ){
-  if( -d $dir ){
-    if( -r $dir ){ push( @HTDOCS_TRANS_DIRS, "$dir/%s" ) }
-    else{ warn( "ENSEMBL_HTDOCS_DIR $dir is not readable\n" ) }
-  }
-  else{ warn( "ENSEMBL_HTDOCS_DIR $dir does not exist\n" ) }
-}
-
-sub transHandler {
-  my $r = shift;      # Get the connection handler
-  my $u           = $r->parsed_uri;
-  my $file        = $u->path;
-  my $querystring = $u->query;
-
-  my @path_segments = split( m|/|, $file );
-  shift @path_segments; # Always empty
-  my $species   = shift @path_segments;
-
-  my $Tspecies = $species;
-  my $script    = undef;
-  my $path_info = undef;
-  if( $species eq 'das' ) { # we have a DAS request...
-    my $DSN = $path_segments[0];
-    my $command = '';
-    if( $DSN eq 'dsn' ) {
-      $path_info = join ('/',@path_segments );
-      if( $ENSEMBL_DEBUG_FLAGS & 8 ) {
-        my @X = localtime();
-        $LOG_INFO = sprintf( "SCRIPT:%8s:%-10d %04d-%02d-%02d %02d:%02d:%02d /%s/%s?%s\n",
-          substr($THIS_HOST,0,8), $$, $X[5]+1900, $X[4]+1, $X[3], $X[2],$X[1],$X[0],
-          'das','dsn','' );
-        warn $LOG_INFO;
-        $LOG_TIME = time();
-        $r->push_handlers( PerlCleanupHandler   => \&fixupHandler );
-        $r->push_handlers( PerlCleanupHandler => \&Apache::SizeLimit::handler );
-      }
-    } else {
-# Because assemblies might contain dots themselves - we split DSN on dots
-# the first element will be species, the last - source name, and all the field in the middle are the assembly
-      my @dsn_fields = split /\./, $DSN;
-      my $das_species = shift @dsn_fields;
-      my $type = pop @dsn_fields;
-      my $assembly = join ('.', @dsn_fields);
-
-      $command = $path_segments[1];
-      my $FN = "/ensemblweb/wwwdev/server/perl/das/$command";
-      $das_species = map_alias_to_species( $das_species );
-      if( ! $das_species ) {
-        $command = 'das_error';
-        $r->subprocess_env->{'ENSEMBL_DAS_ERROR'} = 'unknown-species';
-      }
-      $r->subprocess_env->{'ENSEMBL_SPECIES' }     = $das_species;
-      $r->subprocess_env->{'ENSEMBL_DAS_ASSEMBLY'} = $assembly;
-      $r->subprocess_env->{'ENSEMBL_DAS_TYPE'}     = $type;
-      $r->subprocess_env->{'ENSEMBL_SCRIPT'}  = $command;
-      my $error_filename = '';
-      foreach my $dir ( @PERL_TRANS_DIRS ) {
-        my $filename = sprintf( $dir, $species )."/das/$command";
-        my $t_error_filename = sprintf( $dir, $species )."/das/das_error";
-        $error_filename ||= $t_error_filename if -r $t_error_filename;
-        next unless -r $filename;
-        $r->filename( $filename );
-        $r->uri( "/perl/das/$DSN/$command" );
-        if( $ENSEMBL_DEBUG_FLAGS & 8 ) {
-          my @X = localtime();
-          $LOG_INFO = sprintf( "SCRIPT:%8s:%-10d %04d-%02d-%02d %02d:%02d:%02d /%s/%s?%s\n",
-            substr($THIS_HOST,0,8), $$, $X[5]+1900, $X[4]+1, $X[3], $X[2],$X[1],$X[0],
-            'das', "$DSN/$command", $querystring );
-          warn $LOG_INFO;
-          $LOG_TIME = time();
-          $r->push_handlers( PerlCleanupHandler   => \&fixupHandler );
-          $r->push_handlers( PerlCleanupHandler => \&Apache::SizeLimit::handler );
-        }
-        return OK;
-      }
-      if( -r $error_filename ) {
-        $r->subprocess_env->{'ENSEMBL_DAS_ERROR'}  = 'unknown-command';
-        $r->filename( $error_filename );
-        $r->uri( "/perl/das/$DSN/$command" );
-        if( $ENSEMBL_DEBUG_FLAGS & 8 ) {
-          my @X = localtime();
-          $LOG_INFO = sprintf( "SCRIPT:%8s:%-10d %04d-%02d-%02d %02d:%02d:%02d /%s/%s?%s\n",
-            substr($THIS_HOST,0,8), $$, $X[5]+1900, $X[4]+1, $X[3], $X[2],$X[1],$X[0],
-            'das', "$DSN/$command", $querystring );
-          warn $LOG_INFO;
-          $LOG_TIME = time();
-          $r->push_handlers( PerlCleanupHandler   => \&fixupHandler );
-          $r->push_handlers( PerlCleanupHandler => \&Apache::SizeLimit::handler );
-        }
-        return OK;
-      }
-      return DECLINED;
-    }
-  } else {
-  # DECLINE this request if we cant find a valid species
-    if( $species && ($species = map_alias_to_species($species)) ) {
-      $script = shift @path_segments;
-      $path_info = join( '/', @path_segments );
-      unshift ( @path_segments, '', $species, $script );
-      my $newfile = join( '/', @path_segments );
-
-      if( $newfile ne $file ){ # Path is changed; REDIRECT
-        $r->uri( $newfile );
-        $r->headers_out->add( 'Location' => join( '?', $newfile, $querystring || () ) );
-        $r->child_terminate;
-        return REDIRECT;
-      }
-      # Mess with the environment
-      $r->subprocess_env->{'ENSEMBL_SPECIES'} = $species;
-      $r->subprocess_env->{'ENSEMBL_SCRIPT'}  = $script;
-      # Search the mod-perl dirs for a script to run
-      foreach my $dir( @PERL_TRANS_DIRS ){
-        $script || last;
-        my $filename = sprintf( $dir, $species ) ."/$script";
-        next unless -r $filename;
-        $r->filename( $filename );
-        $r->uri( "/perl/$species/$script" );
-        $r->subprocess_env->{'PATH_INFO'} = "/$path_info" if $path_info;
-        if( $ENSEMBL_DEBUG_FLAGS & 8 && $script ne 'ladist' && $script ne 'la' ) {
-          my @X = localtime();
-          $LOG_INFO = sprintf( "SCRIPT:%8s:%-10d %04d-%02d-%02d %02d:%02d:%02d /%s/%s?%s\n",
-           substr($THIS_HOST,0,8), $$, $X[5]+1900, $X[4]+1, $X[3], $X[2],$X[1],$X[0],
-           $species, $script, $querystring ) if $ENSEMBL_DEBUG_FLAGS | 8 && ($script ne 'ladist' && $script ne 'la' );
-          warn $LOG_INFO;
-          $LOG_TIME = time();
-          $r->push_handlers( PerlCleanupHandler   => \&fixupHandler );
-          $r->push_handlers( PerlCleanupHandler => \&Apache::SizeLimit::handler );
-        }
-        return OK;
-      }
-    } else {
-      $species = $Tspecies;
-      $script = join( '/', @path_segments );
-    }
-  }
-  # Search the htdocs dirs for a file to return
-  my $path = join( "/", $species || (), $script || (), $path_info || () );
-  $r->uri( "/$path" );
-  foreach my $dir( @HTDOCS_TRANS_DIRS ){
-    my $filename = sprintf( $dir, $path );
-    if( -d $filename ) {
-      $r->uri( $r->uri . ($r->uri =~ /\/$/ ? '' : '/' ). 'index.html' );
-      $r->filename( $filename . ( $r->filename =~ /\/$/ ? '' : '/' ). 'index.html' );
-      $r->headers_out->add( 'Location' => $r->uri );
-      $r->child_terminate;
-      return REDIRECT;
-    }
-    -r $filename or next;
-    $r->filename( $filename );
-    return OK;
-  }
-
-  # Give up
-  return DECLINED;
-}
-
-#----------------------------------------------------------------------
-
-=head2 map_alias_to_species
-
-  Arg [0]   : string: species alias
-  Function  : maps species aliases to configured species
-  Returntype: string: configured species, empty string if unmapped
-  Exceptions: 
-  Caller    : transHandler
-  Example   : $sp = map_alias_to_species('human') || return DECLINED
-
-=cut
-
-my %SPECIES_MAP = map { lc($_), $SiteDefs::ENSEMBL_SPECIES_ALIASES->{$_} }
-                 keys %{$SiteDefs::ENSEMBL_SPECIES_ALIASES}; # Conf species
-# $SPECIES_MAP{biomart} = 'biomart';                           # Multispecies
-$SPECIES_MAP{common} = 'common';                           # Multispecies
-$SPECIES_MAP{Common} = 'common';                           # Multispecies
-$SPECIES_MAP{multi} = 'Multi';                           # Multispecies
-$SPECIES_MAP{Multi} = 'Multi';                           # Multispecies
-$SPECIES_MAP{BioMart} = 'biomart';                           # Multispecies
-$SPECIES_MAP{biomart} = 'biomart';                           # Multispecies
-$SPECIES_MAP{perl}  = $SiteDefs::ENSEMBL_PRIMARY_SPECIES;   # Def species
-map{ $SPECIES_MAP{lc($_)} = $_ } values( %SPECIES_MAP );     # Self-mapping
-
-sub map_alias_to_species{
-  my $species_alias = shift || ( warn( "Need a species alias" ) && return undef );
-  return $SPECIES_MAP{lc($species_alias)} || '';
-}
-
-#----------------------------------------------------------------------
-#
-# EnsEMBL module for Apache::EnsEMBL::Handler
-#
-# Begat by James Smith <js5@sanger.ac.uk>
-#
-
-# POD documentation - main docs after the code
-
-=head1 NAME
-
-Apache::EnsEMBL::Handlers - Apache Mod_perl handler hooks module
-to handle session tracking (and session_IDs), and to decide which
-script to run 
-
-=head1 SYNOPSIS
-
-=head2 General
-
-This mod_perl contains a number of apache handlers 
-
-=over 4
-
-=item *
-
-PerlInitHandler - initHandler
-
-Handles the initial stages of the session tracking, reading and
-setting the session cooking and setting up the subprocess
-environment variables C<ENSEMBL_FIRSTSESSION_ID> and C<ENSEMBL_SESSION_ID>
-
-=item *
-
-PerlTransHandler - transHandler
-
-Handles the URL translation phase, to set the environment
-variables C<ENSEMBL_SPECIES> and C<ENSEMBL_SCRIPT>  
-
-=item *
-
-PerlCleanupHandler - cleanupHandler
-
-Handles the final stages of the session tracking, updating the
-session stats, updating session length and exit pages.
-
-=back  
-
-=head2 initHandler 
-
-=head2 transHandler 
-
-=head2 cleanupHandler 
-
-=head1 RELATED MODULES
-
-See also: SiteDefs.pm Apache::EnsEMBL::DBSQL::UserDB.pm
-
-=head1 FEED_BACK
-
-=head2 Mailing Lists
-
-User feedback is an integral part of the evolution of this and other
-EnsEMBL modules. Send your comments and suggestions to one of the
-EnsEMBL mailing lists.  Your participation is much appreciated.
-
-  http://www.ensembl.org/Dev/Lists - About the mailing lists
-
-=head2 Reporting Bugs
-
-Report bugs to the EnsEMBL bug tracking system to help us keep track
-the bugs and their resolution.  Bug reports can be submitted via
-email or the web:
-
-  ensembl-dev@ebi.ac.uk
-
-=head1 AUTHOR
-
-James Smith 
-
-Email - js5@sanger.ac.uk
-
-=cut
 

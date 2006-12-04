@@ -22,14 +22,18 @@ sub update_configs_from_parameter {
   my( $self, $parameter_name, @userconfigs ) = @_;
   my $val = $self->{object}->param( $parameter_name );
   my $rst = $self->{object}->param( 'reset' );
-  return unless $val || $rst;
   my $wsc = $self->{object}->get_scriptconfig();
+  foreach my $config_name ( @userconfigs ) {
+    $self->{'object'}->attach_image_config( $self->{'object'}->script, $config_name );
+    $self->{'object'}->user_config_hash( $config_name );
+  }
+  return unless $val || $rst;
   if( $wsc ) {
     $wsc->reset() if $rst;
     $wsc->update_config_from_parameter( $val ) if $val;
   }
   foreach my $config_name ( @userconfigs ) {
-    $self->{'object'}->attach_image_config( $self->{'object'}->script, $config_name );
+    my $wuc = $self->{'object'}->user_config_hash( $config_name );
     my $wuc = $self->{object}->get_userconfig( $config_name );
     if( $wuc ) {
       $wuc->reset() if $rst;

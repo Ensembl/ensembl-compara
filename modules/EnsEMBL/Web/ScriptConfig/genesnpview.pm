@@ -42,5 +42,6 @@ sub init {
     opt_intronic               on
     opt_intergenic             on
   ));
+  $script_config->storable = 1;
 }
 1;

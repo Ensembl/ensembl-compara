@@ -13,6 +13,55 @@ my $reg = "Bio::EnsEMBL::Registry";
 # 'general' settings are overridden by 'user' settings
 #
 
+sub new {
+  my $class   = shift;
+  my $adaptor = shift;
+  my $type    = $class =~/([^:]+)$/ ? $1 : $class;
+  my $self = {
+    '_colourmap' 	=> $adaptor->colourmap,
+    '_font_face'        => $adaptor->get_species_defs->GRAPHIC_FONT       || 'Arial',
+    '_font_size'        => ( $adaptor->get_species_defs->GRAPHIC_FONTSIZE * $adaptor->get_species_defs->GRAPHIC_LABEL ) || 20,
+    '_texthelper' 	=> new Sanger::Graphics::TextHelper,
+    '_db'         	=> $adaptor->get_adaptor,
+    'type'              => $type,
+    'species'           => $ENV{'ENSEMBL_SPECIES'} || '', 
+    'species_defs'      => $adaptor->get_species_defs,
+    'exturl'            => $adaptor->get_exturl,
+    'general'           => {},
+    'user'        	=> {},
+    '_managers'         => {}, # contains list of added features....
+    '_useradded'        => {}, # contains list of added features....
+    '_userdatatype_ID'	=> 0, 
+    '_r'                => undef, # $adaptor->{'r'} || undef,
+    'no_load'     	=> undef,
+    'storable'          => 1,
+    'altered'           => 0
+  };
+
+  bless($self, $class);
+
+		
+  ########## init sets up defaults in $self->{'general'}
+  $self->init( ) if($self->can('init'));
+  $self->das_sources( @_ ) if(@_); # we have das sources!!
+
+  ########## load sets up user prefs in $self->{'user'}
+#  $self->load() unless(defined $self->{'no_load'});
+  return $self;
+}
+
+sub storable :lvalue {
+### a
+### Set whether this ScriptConfig is changeable by the User, and hence needs to
+### access the database to set storable do $script_config->storable = 1; in SC code...
+  $_[0]->{'storable'};
+}
+sub altered :lvalue {
+### a
+### Set to one if the configuration has been updated...
+  $_[0]->{'altered'};
+}
+
 sub TRIM   { return sub { return $_[0]=~/(^[^\.]+)\./ ? $1 : $_[0] }; }
 
 sub update_config_from_parameter {
@@ -381,44 +430,14 @@ sub add_clone_track {
   );
 }
 
-sub new {
-  my $class   = shift;
-  my $adaptor = shift;
-  my $type    = $class =~/([^:]+)$/ ? $1 : $class;
-  my $self = {
-    '_colourmap' 	=> $adaptor->{'colourmap'},
-    '_font_face'        => $adaptor->{'species_defs'}->GRAPHIC_FONT       || 'Arial',
-    '_font_size'        => ( $adaptor->{'species_defs'}->GRAPHIC_FONTSIZE * $adaptor->{'species_defs'}->GRAPHIC_LABEL ) || 20,
-    '_texthelper' 	=> new Sanger::Graphics::TextHelper,
-    '_db'         	=> $adaptor->{'user_db'},
-    'type'              => $type,
-    'species'           => $ENV{'ENSEMBL_SPECIES'} || '', 
-    'species_defs'      => $adaptor->{'species_defs'},
-    'exturl'            => $adaptor->{'exturl'},
-    'general'           => {},
-    'user'        	=> {},
-    '_managers'         => {}, # contains list of added features....
-    '_useradded'        => {}, # contains list of added features....
-    '_userdatatype_ID'	=> 0, 
-    '_r'                => $adaptor->{'r'} || undef,
-    'no_load'     	=> undef,
-  };
-
-  bless($self, $class);
-
-		
-  ########## init sets up defaults in $self->{'general'}
-  $self->init( ) if($self->can('init'));
-  $self->das_sources( @_ ) if(@_); # we have das sources!!
-
-  ########## load sets up user prefs in $self->{'user'}
-  $self->load() unless(defined $self->{'no_load'});
-  return $self;
-}
-
 sub set_species {
   my $self = shift;
   $self->{'species'} = shift; 
+}
+
+sub get_user_settings {
+  my $self = shift;
+  return $self->{'user'};
 }
 
 sub artefacts { my $self = shift; return @{ $self->{'general'}->{$self->{'type'}}->{'_artefacts'}||[]} };
@@ -462,6 +481,7 @@ sub _set {
 
 sub load {
   my ($self) = @_;
+# warn "LOAD UC";
   if($self->{'_db'}) {
     my $TEMP = $self->{'_db'}->getConfigByName( $ENV{'ENSEMBL_FIRSTSESSION'}, $self->{'type'} );
     eval {
@@ -484,18 +504,18 @@ sub reset {
   my ($self) = @_;
   my $script = $self->script();
   $self->{'user'}->{$script} = {}; 
-  $self->save( );
+  $self->altered = 1;
   return;
 }
 
 sub reset_subsection {
-    my ($self, $subsection) = @_;
-    my $script = $self->script();
-    return unless(defined $subsection);
+  my ($self, $subsection) = @_;
+  my $script = $self->script();
+  return unless(defined $subsection);
 
-    $self->{'user'}->{$script}->{$subsection} = {}; 
-    $self->save( );
-    return;
+  $self->{'user'}->{$script}->{$subsection} = {}; 
+  $self->altered = 1;
+  return;
 }
 
 sub dump {
@@ -636,17 +656,19 @@ sub useraddedsource {
 }
 
 sub set {
-    my ($self, $subsection, $key, $value, $force) = @_;
-    my $script = $self->script();
-    return unless(defined $key && defined $script && defined $subsection);
-    if( $force == 1 ) {
-	$self->{'user'}->{$script}->{$subsection} ||= {}; 
-    } else {
-    	return unless(defined $self->{'general'}->{$script});
-    	return unless(defined $self->{'general'}->{$script}->{$subsection});
-    	return unless(defined $self->{'general'}->{$script}->{$subsection}->{$key});
-    }
-    $self->{'user'}->{$script}->{$subsection}->{$key} = $value;
+  my ($self, $subsection, $key, $value, $force) = @_;
+  my $script = $self->script();
+  return unless(defined $key && defined $script && defined $subsection);
+  if( $force == 1 ) {
+    $self->{'user'}->{$script}->{$subsection} ||= {}; 
+  } else {
+    return unless(defined $self->{'general'}->{$script});
+    return unless(defined $self->{'general'}->{$script}->{$subsection});
+    return unless(defined $self->{'general'}->{$script}->{$subsection}->{$key});
+  }
+  return if $self->{'user'}->{$script}->{$subsection}->{$key} eq $value;
+  $self->altered = 1;
+  $self->{'user'}->{$script}->{$subsection}->{$key} = $value;
 }
 
 sub get {
