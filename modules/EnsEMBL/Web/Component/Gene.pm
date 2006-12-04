@@ -404,6 +404,7 @@ sub name {
 	my( $panel, $object ) = @_;
 	my $page_type= $object->[0];
 	my $site_type = ucfirst(lc($SiteDefs::ENSEMBL_SITETYPE));
+	my $sp = $object->species_defs->SPECIES_COMMON_NAME;
 
 	#add links to Vega, or Ensembl depending on the source of the transcript
 	my @vega_info=();
@@ -448,8 +449,8 @@ sub name {
 	if ($dbname_disp =~/HGNC/){
 		my ($disp_table, $HGNC_table) = @{get_HGNC_synonyms($object)};
 		if ($object->get_db eq 'vega') {
-                        $html = $disp_table;
-                } else   {  
+			$html = $disp_table;
+		} else   {  
 			if ($HGNC_table=~/\w/){
 				$html = $HGNC_table;
 			}
@@ -457,7 +458,7 @@ sub name {
 				my %T = map { $_->primary_id,1 } @CCDS;
 				@CCDS = sort keys %T;
 				$html .= qq(<p>
-                   This $lc_type is a member of the human CCDS set: @{[join ', ', map {$object->get_ExtURL_link($_,'CCDS', $_)} @CCDS] } 
+                   This $lc_type is a member of the $sp CCDS set: @{[join ', ', map {$object->get_ExtURL_link($_,'CCDS', $_)} @CCDS] } 
                    </p>);
 			}
 		}		
@@ -471,7 +472,7 @@ sub name {
 			my %T = map { $_->primary_id,1 } @CCDS;
 			@CCDS = sort keys %T;
 			$html .= qq(<p>
-               This $lc_type is a member of the human CCDS set: @{[join ', ', map {$object->get_ExtURL_link($_,'CCDS', $_)} @CCDS] }
+               This $lc_type is a member of the $sp CCDS set: @{[join ', ', map {$object->get_ExtURL_link($_,'CCDS', $_)} @CCDS] }
                </p>);
 		}
 	}
