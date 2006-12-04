@@ -70,6 +70,8 @@ use Bio::EnsEMBL::CoordSystem;
 use Bio::EnsEMBL::Compara::AlignSlice::Translation;
 use Bio::EnsEMBL::Utils::Argument qw(rearrange);
 use Bio::EnsEMBL::Utils::Exception qw(throw warning info verbose);
+use Scalar::Util qw(weaken);
+
 
 our @ISA = qw(Bio::EnsEMBL::Slice);
 
@@ -113,7 +115,7 @@ sub new {
     $name =~ s/\:/_/g;
     $version .= $name;
   }
-  $self->{_align_slice} = $align_slice if ($align_slice);
+  weaken($self->{_align_slice} = $align_slice) if ($align_slice);
   if ($method_link_species_set and ref($method_link_species_set) and
       $method_link_species_set->isa("Bio::EnsEMBL::Compara::MethodLinkSpeciesSet")) {
     $self->{_method_link_species_set} = $method_link_species_set;
@@ -461,6 +463,8 @@ sub _get_mapped_Gene {
     }
     if (grep {defined($_->start)} @$these_exons) { ## if any of the exons has been mapped
       my $new_transcript = $this_transcript->new(
+              -dbID => $this_transcript->dbID,
+              -adaptor => $this_transcript->adaptor,
               -stable_id => $this_transcript->stable_id,
               -version => $this_transcript->version,
               -external_db => $this_transcript->external_db,
@@ -596,6 +600,8 @@ sub _compile_mapped_Genes {
 
       foreach my $this_set_of_compatible_exons (@{$sets_of_compatible_exons}) {
         my $new_transcript = $old_transcript->new(
+                -dbID => $old_transcript->dbID,
+                -adaptor => $old_transcript->adaptor,
                 -stable_id => $old_transcript->stable_id,
                 -version => $old_transcript->version,
                 -external_db => $old_transcript->external_db,
