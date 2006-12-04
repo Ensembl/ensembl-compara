@@ -1638,7 +1638,7 @@ sub sequencealignview {
   foreach my $strain_slice (@strain_slices) {
 
     #get coordinates of variation in alignSlice
-    my @allele_features = @{$strain_slice->get_all_differences_Slice() || []};
+    my @allele_features = @{$strain_slice->get_all_AlleleFeatures_Slice() || []};
 
     foreach my $af ( @allele_features ){
       my $new_feature = $align_slice->alignFeature($af, $strain_slice);

@@ -290,7 +290,7 @@ sub getAllelesConsequencesOnSlice {
   my $valids = $self->valids;
 
   # Get all features on slice
-  my $allele_features = $sample_slice->get_all_differences_Slice() || [];
+  my $allele_features = $sample_slice->get_all_AlleleFeatures_Slice || [];
   return ([], []) unless @$allele_features;
 
   my @filtered_af =
