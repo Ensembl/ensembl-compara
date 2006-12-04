@@ -37,43 +37,34 @@ sub init {
       my $type = $feat->das_type || $feat->das_type_id || 'UNKNOWN';
 
       if ( ($feat->das_type_id =~ /^(contig|component|karyotype)$/i) || ($feat->das_type_id =~ /^(contig|component|karyotype):/i) || (! $feat->das_end )) {
-	  $skipped_features = 1;
-	  next;
+        $skipped_features = 1;
+        next;
       }
-
       my $fend = $feat->das_end();
-
       $feats_by_glyphset{$type} ||= [];
       push @{$feats_by_glyphset{$type}}, $feat
-
     }
-
     if (! scalar keys %feats_by_glyphset) {
-	next if ($skipped_features);
-	$feats_by_glyphset{'No annotation'} = [] 
+      next if ($skipped_features);
+      $feats_by_glyphset{'No annotation'} = [] 
     };
-
    # Add a separator (top)
     my $label = $Config->get($user_confkey, "label") || $source;
-
     $self->add_glyphset_separator ({ 
-        name=>$label,
-        confkey=>$user_confkey,
-	authority=>$authorities{$source},
-        order  => sprintf("%05d", $self->{order} -- )
+      'name'      => $label,
+      'confkey'   => $user_confkey,
+      'authority' => $authorities{$source},
+      'order'     => sprintf("%05d", $self->{order} -- )
     });
-
-
     foreach my $das_track( keys %feats_by_glyphset ) {
       my $extra_config = {};
-      $extra_config->{'name'}     = $das_track;
-      $extra_config->{'source_type'} = $stypes{$source},
-      $extra_config->{'confkey'}  = $user_confkey;
-      $extra_config->{'features'} = $feats_by_glyphset{$das_track};
-      $extra_config->{'order'}    = sprintf( "%05d", $self->{order} -- );
+      $extra_config->{'name'}         = $das_track;
+      $extra_config->{'source_type'}  = $stypes{$source},
+      $extra_config->{'confkey'}      = $user_confkey;
+      $extra_config->{'features'}     = $feats_by_glyphset{$das_track};
+      $extra_config->{'order'}        = sprintf( "%05d", $self->{order} -- );
       $self->add_glyphset( $extra_config );
     }
-
   }
 
   return 1;
@@ -81,41 +72,35 @@ sub init {
 
 
 sub add_glyphset {
-    my ($self,$config) = @_;	
-    my $glyphset;
-    eval {
-	$glyphset = new Bio::EnsEMBL::GlyphSet::Pprotdas
-	  ( $self->{'container'},
-	    $self->{'config'},
-	    $self->{'highlights'},
-	    $self->{'strand'},
-	    $config );
-    };
-    if($@) {
-	print STDERR "DAS GLYPHSET $config->{'name'} failed: $@\n";
-	return undef();
-    }
-
-    push @{$self->{'glyphsets'}}, $glyphset;
-    return 1;
+  my ($self,$config) = @_;	
+  my $glyphset;
+  eval {
+    $glyphset = new Bio::EnsEMBL::GlyphSet::Pprotdas(
+      $self->{'container'},  $self->{'config'},
+      $self->{'highlights'}, $self->{'strand'}, $config
+    );
+  };
+  if($@) {
+    print STDERR "DAS GLYPHSET $config->{'name'} failed: $@\n";
+    return undef();
+  }
+  push @{$self->{'glyphsets'}}, $glyphset;
+  return 1;
 }
 
 sub add_glyphset_separator{
   my ($self,$config) = @_;	
   my $glyphset;
   eval {
-    $glyphset = new Bio::EnsEMBL::GlyphSet::Pseparator
-      ( $self->{'container'},
-	$self->{'config'},
-	$self->{'highlights'},
-	$self->{'strand'},
-	$config );
+    $glyphset = new Bio::EnsEMBL::GlyphSet::Pseparator(
+      $self->{'container'},   $self->{'config'},
+      $self->{'highlights'}, $self->{'strand'},  $config
+    );
   };
   if($@) {
     print STDERR "DAS GLYPHSET $config->{'name'} failed: $@\n";
     return undef();
   }
-
   push @{$self->{'glyphsets'}}, $glyphset;
   return 1;
 }

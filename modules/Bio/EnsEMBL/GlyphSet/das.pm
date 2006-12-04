@@ -25,7 +25,7 @@ sub init_label {
     if (defined(my $v = CGI::param($param))) {
       if (ref($v) eq 'ARRAY') {
         foreach my $w (@$v) {
-            $params .= ";$param=$w";
+          $params .= ";$param=$w";
         }
       } else {
         $params .= ";$param=$v";
