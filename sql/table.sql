@@ -39,7 +39,7 @@ CREATE TABLE ncbi_taxa_node (
   right_index                     int(10) NOT NULL,
   root_id                         int(10) default 1 NOT NULL,
   
-  KEY (taxon_id),
+  PRIMARY KEY (taxon_id),
   KEY (parent_id),
   KEY (rank)
 ) COLLATE=latin1_swedish_ci;
