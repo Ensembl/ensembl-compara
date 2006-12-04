@@ -9,7 +9,7 @@ use Apache::Constants qw(:common :response M_GET);
 use EnsEMBL::Web::DBSQL::UserDB;
 use EnsEMBL::Web::User;
 
-our $SD = EnsEMBL::Web::SpeciesDefs->new();
+use EnsEMBL::Web::Apache::Handlers;
 
 use CGI qw(header escapeHTML unescape);
 use CGI::Cookie;
@@ -31,20 +31,20 @@ sub timer { return $_[0]{'timer'}; }
 sub new {
   my $class = shift;
   my $self = {
-    'page'    => undef,
-    'factory' => undef,
-    'access'  => undef,
-    'timer'   => new EnsEMBL::Web::Timer(),
-    'species_defs' => $SD
+    'page'         => undef,
+    'factory'      => undef,
+    'access'       => undef,
+    'timer'        => $ENSEMBL_WEB_REGISTRY->timer,
+    'species_defs' => $ENSEMBL_WEB_REGISTRY->species_defs
   };
   bless $self, $class;
   my %parameters = @_;
   $| = 1;
 ## Input module...
   my $script = $parameters{'scriptname'} || $ENV{'ENSEMBL_SCRIPT'};
-  my $input = $parameters{'cgi'} || new CGI;
+  my $input  = $parameters{'cgi'}        || new CGI;
+  $ENSEMBL_WEB_REGISTRY->get_session->set_input( $input );
   $self->_prof("Parameters initialised from input");
-
 ## Access restriction parameters
   $self->{'access'} = $parameters{'access'};
 
@@ -91,7 +91,7 @@ sub new {
   } else {
                                                                      $self->_prof("Objects created");
     my $sc = $self->factory->get_scriptconfig( );
-       $sc->update_from_input( $input, $rend->{'r'} ) if $sc;        $self->_prof("Script config updated from input");
+#       $sc->update_from_input( $input, $rend->{'r'} ) if $sc;        $self->_prof("Script config updated from input");
   }
   return $self;
 }
@@ -506,6 +506,7 @@ sub simple_webpage {
     foreach my $object( @{$self->dataObjects} ) {
       $self->configure( $object, $object->script, 'context_menu', 'context_location' );
     }
+    $self->factory->fix_session;
 =pod
     my $object = $self->dataObjects->[0];
     ## get access parameters
@@ -540,6 +541,7 @@ sub wrapper {
     foreach my $object( @{$self->dataObjects} ) {
       $self->configure( $object, $object->script, @{$params{'extra_config'}||[]} );
     }
+    $self->factory->fix_session;
     $self->action;
   }
 }
@@ -578,6 +580,7 @@ sub simple_with_redirect {
      foreach my $object( @{$self->dataObjects} ) {
        $self->configure( $object, $object->script, 'context_menu', 'context_location' );
      }
+    $self->factory->fix_session;
      $self->action;
   }
   return 1;

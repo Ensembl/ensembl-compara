@@ -546,6 +546,7 @@ sub content {
     $self->print( $self->{'content'} );
   }
   foreach my $component ($self->components) {
+#warn "Starting component $component";
     foreach my $function_name ( @{$self->{'components'}{$component}} ) { 
       my $result;
       (my $module_name = $function_name ) =~s/::\w+$//;
@@ -579,6 +580,7 @@ sub content {
       }
       last if $result;
     }
+#warn "Ending component $component";
   }
   $self->_end;
   return $self->buffer;
