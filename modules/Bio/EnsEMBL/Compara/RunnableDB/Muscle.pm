@@ -106,6 +106,7 @@ sub fetch_input {
   $self->get_params($self->parameters);
   $self->get_params($self->input_id);
   $self->print_params if($self->debug);
+  $self->check_if_exit_cleanly;
 
   if($self->{'family'}) {
     $self->{'input_fasta'} = $self->dumpFamilyPeptidesToWorkdir($self->{'family'});
@@ -139,6 +140,8 @@ sub fetch_input {
 sub run
 {
   my $self = shift;
+
+  $self->check_if_exit_cleanly;
   return unless($self->{'input_fasta'});  
   $self->{'muscle_output'} = $self->run_muscle;
 }
@@ -157,6 +160,7 @@ sub run
 sub write_output {
   my $self = shift;
 
+  $self->check_if_exit_cleanly;
   if($self->{'family'}) {
     $self->parse_and_store_alignment_into_family;
   } elsif($self->{'protein_tree'}) {
