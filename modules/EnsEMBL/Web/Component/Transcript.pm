@@ -1325,14 +1325,16 @@ sub table_info {
 
 sub spreadsheet_TSVtable {
   my( $panel, $object ) = @_;
-  my $sample =  $panel->{'sample'};
-  my $snp_data = get_page_data($panel, $object, [$sample] );
+  my $sample      =  $panel->{'sample'};
+  my $snp_data    = get_page_data($panel, $object, [$sample] );
+  my $strain_name = $object->species_defs->translate("strain");
 
   $panel->add_columns(
     { 'key' => 'ID',  },
     { 'key' => 'consequence', 'title' => 'Type', },
     { 'key' => 'chr' ,        'title' => "Chr: bp" },
-    { 'key' => 'Alleles',     'title' => 'Alleles', },
+    { 'key' => 'ref_alleles',  'title' => 'Ref. gt', },
+    { 'key' => 'Alleles',     'title' => ucfirst($strain_name)." gt", },
     { 'key' => 'Ambiguity',   'title' => 'Ambiguity',  },
     { 'key' => 'Codon',       'title' => "Transcript codon" ,  },
     { 'key' => 'cdscoord',  'title' => 'CDS coord.',  },
@@ -1438,7 +1440,6 @@ sub get_page_data {
 
       # Other
       my $chr = $sample_slice->seq_region_name;
-      my $snp_alleles = join "/", ($allele->ref_allele_string, $allele->allele_string);
 
       my $aa_alleles = $conseq_type->aa_alleles || [];
       my $aa_coord = $conseq_type->aa_start;
@@ -1450,7 +1451,8 @@ sub get_page_data {
 		'ID'          =>  qq(<a href="/@{[$object->species]}/snpview?snp=@{[$allele->variation_name]};source=@{[$allele->source]};chr=$chr;vc_start=$chr_start">@{[$allele->variation_name]}</a>),
 		'Class'       => $class || "-",
 		'Source'      => $sources || "-",
-		'Alleles'     => $snp_alleles || "-",
+	 	'ref_alleles' => $allele->ref_allele_string || "-",
+		'Alleles'     => $allele->allele_string || "-",
 		'Ambiguity'   => $object->ambig_code($allele),
 		'Status'      => $status,
 		'chr'         => "$chr:$pos",

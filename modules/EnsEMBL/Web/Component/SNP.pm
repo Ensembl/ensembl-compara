@@ -633,9 +633,9 @@ sub individual {
   }
 
 
-  my @header_row = ({key =>"Individual", title =>"Individual<br />(Gender)"} );
+  my @header_row = ({key =>"Individual", title =>"Individual<br />(gender)"} );
   push (@header_row, 
-	{key  =>"Genotype",    title => "Genotype"},
+	{key  =>"Genotype",    title => "Genotype<br />(forward strand)"},
 	{key  =>"Description", title => "Description"},
 	{key  =>"Populations", title => "Populations", width=>"250"}, 
 	{key  =>"Father",      title => "Father"},
