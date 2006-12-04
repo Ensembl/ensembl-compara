@@ -12,3 +12,8 @@ ALTER TABLE analysis_description ADD UNIQUE analysis_idx (analysis_id);
 # description: Add web_data column to analysis_description.
 
 ALTER TABLE analysis_description ADD COLUMN web_data TEXT;
+
+# Add a PRIMARY KEY to the ncbi_taxa_node.taxon_id
+
+ALTER TABLE ncbi_taxa_node DROP INDEX taxon_id;
+ALTER TABLE ncbi_taxa_node ADD PRIMARY KEY (taxon_id);
