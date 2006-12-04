@@ -9,11 +9,11 @@ sub new {
   my $type    = shift;
   my $adaptor = shift;
   my $self = {
-    '_db'       => $adaptor->{'user_db'},
-    '_r'        => $adaptor->{'r'},
+    '_db'       => $adaptor->get_adaptor,
+    '_r'        => $adaptor->get_request || undef,
     'type'      => $type,
     '_options'  => {},
-    'no_load'   => $adaptor->{'no_load'}
+    'no_load'   => undef
   };
 
   bless($self, $class);
@@ -73,7 +73,6 @@ sub update_config_from_parameter {
 
 sub update_from_input {
 ### Loop through the parameters and update the config based on the parameters passed!
-
   my( $self, $input ) = @_;
   my $flag = 0;
   foreach my $key ( $self->options ) {
@@ -124,11 +123,11 @@ sub set {
 
 
 
-sub set {
-  my( $self, $key, $value, $force ) = @_;
-  return unless $force || exists $self->{'_options'}{$key};
-  $self->{'_options'}{$key}{'user'}  = $value;
-}
+#sub set {
+#  my( $self, $key, $value, $force ) = @_;
+#  return unless $force || exists $self->{'_options'}{$key};
+#  $self->{'_options'}{$key}{'user'}  = $value;
+#}
 
 sub get {
   my( $self, $key ) = @_;
@@ -169,6 +168,7 @@ sub get_user_settings {
 sub load {
   my ($self) = @_;
   return unless $self->{'_db'};
+warn "LOAD SC";
   my $TEMP = $self->{'_db'}->getConfigByName( $ENV{'ENSEMBL_FIRSTSESSION'}, 'script::'.$self->{'type'} );
   my $diffs = {};
   eval { $diffs = Storable::thaw( $TEMP ) if $TEMP; };

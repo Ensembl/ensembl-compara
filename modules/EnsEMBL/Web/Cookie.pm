@@ -23,6 +23,7 @@ sub clear {
   $r->headers_out->add(  'Set-cookie' => $cookie );
   $r->err_headers_out->add( 'Set-cookie' => $cookie );
   $r->subprocess_env->{ $self->get_env } = 0;
+  $ENV{ $self->get_env } = 0;
 }
 
 sub create {
@@ -31,7 +32,7 @@ sub create {
   $self->set_value( $value );
   my $cookie = CGI::Cookie->new(
     -name    => $self->get_name,
-    -value   => $self->encryptID($self->get_value),
+    -value   => $self->encrypt_value($self->get_value),
     -domain  => $self->get_host,
     -path    => "/",
     -expires => "Monday, 31-Dec-2037 23:59:59 GMT"
@@ -39,6 +40,7 @@ sub create {
   $r->headers_out->add(     'Set-cookie' => $cookie );
   $r->err_headers_out->add( 'Set-cookie' => $cookie );
   $r->subprocess_env->{ $self->get_env } = $value;
+  $ENV{ $self->get_env }                 = $value;
 }
 
 sub retrieve {

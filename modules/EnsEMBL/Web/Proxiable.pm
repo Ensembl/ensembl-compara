@@ -4,6 +4,7 @@ use strict;
 use warnings;
 no warnings "uninitialized";
 
+use EnsEMBL::Web::Apache::Handlers;
 use EnsEMBL::Web::SpeciesDefs;
 use EnsEMBL::Web::User;
 use EnsEMBL::Web::ExtURL;
@@ -59,8 +60,27 @@ sub delete_param { my $self = shift; $self->{'data'}{'_input'}->delete(@_); }
 sub script       { return $_[0]{'data'}{'_script'}; }
 sub species      { return $_[0]{'data'}{'_species'}; }
 
+sub fix_session {
+### Fix the session back to the database - if a session object has been created
+### calls store on... this will check whether (a) there are any saveable
+### scriptconfigs AND (b) if any of the saveable scriptconfigs have been altered
+  my( $self, $r ) = @_;
+warn "FIX SESSION...............................";
+  my $session = $self->get_session;
+  $session->store($self->apache_handle) if $session;
+}
+
 sub DBConnection {
   $_[0]->{'data'}{'_databases'} ||= EnsEMBL::Web::DBSQL::DBConnection->new( $_[0]->species, $_[0]->species_defs );
+}
+sub session {
+  my $self = shift;
+  return $self->{'session'} ||= $ENSEMBL_WEB_REGISTRY->get_session;
+}
+
+sub get_session {
+  my $self = shift;
+  return $self->{'session'} || $ENSEMBL_WEB_REGISTRY->get_session;
 }
 sub database {      my $self = shift; $self->DBConnection->get_DBAdaptor( @_ ); }
 sub get_databases { my $self = shift; $self->DBConnection->get_databases( @_ ); }
@@ -80,39 +100,37 @@ sub user { $_[0]{'data'}{'_user'}         ||= EnsEMBL::Web::User->new(); }
 sub species_defs    { $_[0]{'data'}{'_species_defs'} ||= EnsEMBL::Web::SpeciesDefs->new(); }
 sub web_user_db { $_[0]{'data'}{'_web_user_db'}  ||= EnsEMBL::Web::DBSQL::UserDB->new( $_[0]->apache_handle ); }
 sub apache_handle { $_[0]{'data'}{'_apache_handle'}; }
-sub get_userconfig_adaptor {
-  return $_[0]{'data'}{'_wuc_adaptor'} ||= EnsEMBL::Web::UserConfigAdaptor->new(
-    $_[0]->species_defs->ENSEMBL_SITETYPE,
-    $_[0]->web_user_db,
-    $_[0]->apache_handle,
-    $_[0]->ExtURL,
-    $_[0]->species_defs
-  );
-}
+
 sub get_userconfig  {
-  my $self = shift;
-  my $wuca = $self->get_userconfig_adaptor || return;
-  return $wuca->getUserConfig( @_ );
+### Returns the named (or one based on script) {{EnsEMBL::Web::UserConfig}} object
+  my( $self, $key ) = @_;
+  my $session = $self->get_session || return;
+warn "JS5 GUC $key";
+  return $session->getImageConfig( $key ); ## No second parameter - this isn't cached!!
 }
+
 sub user_config_hash {
+### Retuns a copy of the script config stored in the database with the given key
   my $self = shift;
   my $key  = shift;
   my $type = shift || $key;
-  $self->__data->{'user_configs'}{$key} ||= $self->get_userconfig( $type );
+  my $session = $self->get_session;
+warn "JS5 UCH $key $type";
+  return $session ? $session->getImageConfig( $type, $key ) : undef; ## {'user_configs'}{$key} ||= $self->get_userconfig( $type );
 }
 
-sub get_scriptconfig_adaptor {
-  return $_[0]{'data'}{'_wsc_adaptor'} ||= EnsEMBL::Web::ScriptConfigAdaptor->new(
-    $_[0]->species_defs->ENSEMBL_PLUGIN_ROOTS,
-    $_[0]->web_user_db,
-    $_[0]->apache_handle
-  );
-}
-sub get_scriptconfig  {
+sub get_scriptconfig {
+### Returns the named (or one based on script) {{EnsEMBL::Web::ScriptConfig}} object
   my( $self, $key ) = @_;
   $key = $self->script unless defined $key;
-  my $wsca = $self->get_scriptconfig_adaptor || return;
-  return $self->{'data'}{'_script_configs_'}{$key} ||= $wsca->getScriptConfig( $key );
+  my $session = $self->get_session;
+  return $session ? $session->getScriptConfig( $key ) : undef;
+}
+
+sub attach_image_config {
+  my( $self, $key, $image_key ) = @_;
+  my $session = $self->get_session;
+  return $session ? $session->attachImageConfig( $key, $image_key ) : undef;
 }
 
 # Handling ExtURLs
@@ -148,6 +166,7 @@ sub new_menu_container {
   $N{'panel'}    = $params{'panel'}    || $params{'configname'} || $N{'script'};
   $N{'fields'}   = $params{'fields'}   || ( $self->can('generate_query_hash') ? $self->generate_query_hash : {} );
   if( $params{'configname'} ) {
+    warn ".. $params{'configname'}";
     $N{'config'}   = $self->user_config_hash( $params{'configname'} );
     $N{'config'}->set_species( $self->species );
   }
