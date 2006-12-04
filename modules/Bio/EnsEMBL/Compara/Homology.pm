@@ -468,7 +468,7 @@ sub TwoD_codon {
 sub print_homology {
   my $self = shift;
   
-  printf("Homology %s(%d) %s/%s : ", $self->stable_id, $self->dbID, $self->description, $self->subtype);
+  printf("Homology %d,%s,%s : ", $self->dbID, $self->description, $self->subtype);
   foreach my $member_attribute (@{$self->get_all_Member_Attribute}) {
     my ($member, $attribute) = @{$member_attribute};
     printf("%s(%d)\t", $member->stable_id, $member->dbID);
