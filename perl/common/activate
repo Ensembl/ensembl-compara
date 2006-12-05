@@ -56,7 +56,8 @@ $page->on_error('/error/activate.html');
 $page->add_configuration_element('conditional', 'salt');
 $page->add_configuration_element('welcome_email', 'yes');
 
-$page->add_display_element('name', "User name");
+$page->add_display_element('name', "Name");
+$page->add_display_element('email', "Email address");
 $page->add_display_element('organisation', "Organisation");
 
 $conditional = EnsEMBL::Web::Interface::FormDefinition->new();

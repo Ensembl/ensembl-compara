@@ -48,7 +48,7 @@ sub send_invite_email {
   ) . $group->name . qq(
   ) . $species_defs->ENSEMBL_BASE_URL . qq(/common/accept?id=) . $record->id . qq(&invite=) . $record->code . qq(
   
-  If you do not wish to accept, please just disregard this email. 
+  If you do not wish to accept, or have already accepted, please disregard this email. 
   
   If you have any problems please don't hesitate to contact ) . $user->name . 
   qq( 
