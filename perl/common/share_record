@@ -14,11 +14,12 @@ use EnsEMBL::Web::DBSQL::DataDefinition;
 use EnsEMBL::Web::User::Record;
 use EnsEMBL::Web::Group::Record;
 use EnsEMBL::Web::DBSQL::ViewAdaptor;
+use EnsEMBL::Web::Apache::Handlers;
 
 my $cgi = CGI->new;
 my $page = EnsEMBL::Web::Interface::PageDefinition->new();
 my $data = EnsEMBL::Web::DBSQL::DataDefinition->new();
-my $db = $EnsEMBL::Web::Apache::Handlers::ENSEMBL_USER_DB_HANDLE; 
+my $db = $ENSEMBL_WEB_REGISTRY->dbAdaptor;
 $data->adaptor(EnsEMBL::Web::DBSQL::ViewAdaptor->new(( 
                                                        handle => $db,
                                                        table  => 'group_record'
@@ -46,7 +47,7 @@ $page->cancel('yes');
 my $form = EnsEMBL::Web::Interface::FormDefinition->new();
 
 foreach my $group (@{ $user->find_administratable_groups }) {
-  $form->add_label({ $group->id => $group->name });
+  $form->add_label({ $group->id => $group->name . "<br />" });
 }
 
 $page->add_configuration_element('type', $user_record->type);
