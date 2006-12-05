@@ -32,6 +32,7 @@ sub common_menu_items {
       my $user = EnsEMBL::Web::Object::User->new({'adaptor'=>$user_adaptor, 'id'=>$user_id});
 
       ## Link to existing bookmarks
+      my %included = ();
       my @records = $user->bookmark_records({order_by => 'click' });
       my $found = 0;
       if ($#records > -1) { 
@@ -43,6 +44,7 @@ sub common_menu_items {
 
         for my $n (0..$max_bookmarks) {
           push @bookmark_sections, &bookmark_menu_item($records[$n]);
+          $included{$records[$n]->url} = "yes";
         }
 
       }
@@ -51,7 +53,9 @@ sub common_menu_items {
         $found = 1;
         my @bookmarks = $group->bookmark_records;   
         foreach my $bookmark (@bookmarks) {
-          push @bookmark_sections, &bookmark_menu_item($bookmark);
+          if (!$included{$bookmark->url}) {
+            push @bookmark_sections, &bookmark_menu_item($bookmark);
+          }
         }
       }
 
