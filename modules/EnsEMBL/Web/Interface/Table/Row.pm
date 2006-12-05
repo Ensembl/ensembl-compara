@@ -17,10 +17,14 @@ sub render {
   my $html = "";
   foreach my $column (@{ $self->elements }) {
     my $width = "";
+    my $style = "";
     if ($column->{width}) {
-      my $width = "width=\"" . $column->{width} . "\"";
+      $width = "width=\"" . $column->{width} . "\"";
     }
-    $html .= "<td $width>" . $column->{content} . "</td>\n";
+    if ($column->{align}) {
+      $style= "style='text-align: " . $column->{align} . "'";
+    }
+    $html .= "<td $width $style>" . $column->{content} . "</td>\n";
   }
   return $html;
 } 

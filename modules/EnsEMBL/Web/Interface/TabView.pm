@@ -12,7 +12,11 @@ sub new {
   ### c
   my ($class, %params) = @_;
   my $self = bless \my($scalar), $class;
-  $Tabs_of{$self}   = defined $params{tabs} ? $params{tabs} : [];
+  if (defined $params{tabs}) {
+    $self->tabs($params{tabs});
+  } else {
+    $Tabs_of{$self} = [];
+  }
   $Name_of{$self}   = defined $params{name} ? $params{name} : "";
   return $self;
 }
@@ -20,7 +24,14 @@ sub new {
 sub tabs {
   ### a
   my $self = shift;
-  $Tabs_of{$self} = shift if @_;
+  if (@_) {
+    my $tabs = shift;
+    foreach my $tab (@{ $tabs }) {
+      if ($tab) {
+        push @{ $Tabs_of{$self} }, $tab;
+      }
+    }
+  }
   return $Tabs_of{$self};
 }
 
