@@ -80,7 +80,7 @@ sub add_das_source {
   my @configs = @{$href->{enable}};
   foreach my $cname (@configs) {
     next if $cname eq 'geneview';
-    my $config = $self->{'configs'}->{$cname}
+    my $config = $self->{'configs'}->{$cname};
     next unless $config;
       
     $config->set( "managed_extdas_$key", "on",          'on',                                                                               1);
