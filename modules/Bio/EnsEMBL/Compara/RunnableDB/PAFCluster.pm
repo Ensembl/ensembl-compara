@@ -145,6 +145,7 @@ sub get_params {
 sub run
 {
   my $self = shift;  
+  #$self->analyze_table();
   $self->build_paf_clusters();
   return 1;
 }
@@ -172,9 +173,24 @@ sub write_output {
 #
 ##########################################
 
+# This will make sure that the indexes for paf are fine
+sub analyze_table {
+  my $self = shift;
+
+  my $starttime = time();
+
+  my $sql = "ANALYZE TABLE peptide_align_feature";
+
+  #print("$sql\n");
+  my $sth = $self->dbc->prepare($sql);
+  $sth->execute();
+  printf("  %1.3f secs to ANALYZE TABLE\n", (time()-$starttime));
+}
+
+
 sub build_paf_clusters {
   my $self = shift;
-    
+
   return unless($self->{'species_set'});
   my @species_set = @{$self->{'species_set'}};
   return unless @species_set;
@@ -183,29 +199,27 @@ sub build_paf_clusters {
 
   # create ConnectedComponents cluster building engine
   $self->{'ccEngine'} = new Bio::EnsEMBL::Compara::Graph::ConnectedComponents;
-   
-  #  
+
+  #
   # load all the self equal hits for each genome so we have our reference score
   #
-  
+
   $self->fetch_selfhit_score;
-  
-  #  
+
+  #
   # for each species pair, get all 'high scoring' hits and build clusters
-  # 
-  
+  #
+
   while (my $gdb_id1 = shift @species_set) {
     #first get paralogues
     $self->threshold_grow_for_species($gdb_id1);
-    
+
     foreach my $gdb_id2 (@species_set) {
       $starttime = time();
       $self->BRH_grow_for_species($gdb_id1, $gdb_id2);
       $self->threshold_grow_for_species($gdb_id1, $gdb_id2);
     }
   }
-    
-  
 }
 
 
