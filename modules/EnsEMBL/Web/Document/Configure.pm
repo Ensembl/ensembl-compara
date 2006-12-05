@@ -21,6 +21,7 @@ sub common_menu_items {
 
     my $flag = 'ac_mini';
     $doc->menu->add_block( $flag, 'bulleted', "Your Ensembl", 'priority' => 0 );
+    my @bookmark_sections = ();
 
     if ($user_id) {
       $doc->menu->add_entry( $flag, 'text' => "Logged in &middot; <a href='javascript:logout_link()'>Log out</a>", 'raw' => 'yes');
@@ -32,32 +33,42 @@ sub common_menu_items {
 
       ## Link to existing bookmarks
       my @records = $user->bookmark_records({order_by => 'click' });
+      my $found = 0;
       if ($#records > -1) { 
-        my @bookmark_sections = ();
+        $found = 1;
         my $max_bookmarks = 5;
         if ($#records < $max_bookmarks) {
           $max_bookmarks = $#records;
         }
+
         for my $n (0..$max_bookmarks) {
-          my $url = $records[$n]->url;
-          $url =~ s/\?/\\\?/g;
-          $url =~ s/&/!and!/g;
-          $url =~ s/;/!with!/g;
-          push @bookmark_sections, { href => "/common/redirect?url=" . $url . "&id=" . $records[$n]->id, 
-                                   text => $records[$n]->name, extra_icon => '/img/bullet_star.png' }; 
+          push @bookmark_sections, &bookmark_menu_item($records[$n]);
         }
 
+      }
+
+      foreach my $group (@{ $user->groups }) {
+        $found = 1;
+        my @bookmarks = $group->bookmark_records;   
+        foreach my $bookmark (@bookmarks) {
+          push @bookmark_sections, &bookmark_menu_item($bookmark);
+        }
+      }
+
+
+      if ($found) {
         push @bookmark_sections, { 'href' => 'javascript:bookmark_link()', 
-                                 'text'  => 'Bookmark this page', extra_icon => '/img/bullet_toggle_plus.png' };
+                                   'text'  => 'Bookmark this page', extra_icon => '/img/bullet_toggle_plus.png' };
 
         push @bookmark_sections, { 'href' => '/common/accountview', 
-                                 'text'  => 'More bookmarks...', extra_icon => '/img/bullet_go.png' };
+                                   'text'  => 'More bookmarks...', extra_icon => '/img/bullet_go.png' };
 
         $doc->menu->add_entry(
           $flag,
-          'href'=>'/common/accountview',
-          'text'=>'Bookmarks',
-          'options'=>\@bookmark_sections,       );
+            'href' => '/common/accountview',
+            'text' => 'Bookmarks',
+          'options'=> \@bookmark_sections );
+
       } else {
         $doc->menu->add_entry( $flag, 'text' => "Add bookmark",
                                       'href' => "javascript:bookmark_link()" );
@@ -74,6 +85,18 @@ sub common_menu_items {
     }
   }
 
+}
+
+sub bookmark_menu_item {
+  my $bookmark = shift;
+  my $url = $bookmark->url;
+  $url =~ s/\?/\\\?/g;
+  $url =~ s/&/!and!/g;
+  $url =~ s/;/!with!/g;
+  my $return = { href => $url,
+                 text => $bookmark->name,
+                 extra_icon => '/img/bullet_star.png' };
+  return $return;
 }
 
 sub static_menu_items {
