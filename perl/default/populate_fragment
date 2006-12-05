@@ -81,6 +81,7 @@ foreach my $key(keys %components) {
     $result = &$complete( $fragment, $object );
     if ($result) {
       $html{$complete} = $fragment->html;
+      warn "AJAX complete: $complete";
     }
   } else {
     $json_error = "error: 'Panel failed: Problems loading $module'";
