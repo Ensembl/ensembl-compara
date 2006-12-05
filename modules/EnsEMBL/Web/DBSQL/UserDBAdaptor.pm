@@ -44,6 +44,12 @@ use strict;
     $self->get_dbhandle->selectall_arrayref( @_ );
   }
 
+  sub selectall_hashref {
+### wrapper around DBI
+    my $self = shift;
+    $self->get_dbhandle->selectall_hashref( @_ );
+  }
+
   sub do {
 ### wrapper around DBI
     my $self = shift;

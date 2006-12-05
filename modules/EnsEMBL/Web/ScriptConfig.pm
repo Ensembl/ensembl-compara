@@ -167,8 +167,9 @@ sub get_user_settings {
 
 sub load {
   my ($self) = @_;
+  #warn "Loading from ScriptConfig";
   return unless $self->{'_db'};
-warn "LOAD SC";
+#warn "LOAD SC";
   my $TEMP = $self->{'_db'}->getConfigByName( $ENV{'ENSEMBL_FIRSTSESSION'}, 'script::'.$self->{'type'} );
   my $diffs = {};
   eval { $diffs = Storable::thaw( $TEMP ) if $TEMP; };
@@ -179,11 +180,13 @@ warn "LOAD SC";
 
 sub save {
   my ($self) = @_;
+  #warn "Saving from ScriptConfig";
   return unless $self->{'_db'};
   my $diffs = {};
   foreach my $key ( $self->options ) {
     $diffs->{$key} = $self->{'_options'}{$key}{'user'} if exists($self->{'_options'}{$key}{'user'}) && $self->{'_options'}{$key}{'user'} ne $self->{'_options'}{$key}{'default'};
   }
+  #warn "Diffs: " . $diffs;
   $self->{'_db'}->setConfigByName( $self->{'_r'}, $ENV{'ENSEMBL_FIRSTSESSION'}, 'script::'.$self->{'type'}, &Storable::nfreeze($diffs) );
   return;
 }

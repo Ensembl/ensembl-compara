@@ -481,7 +481,6 @@ sub _set {
 
 sub load {
   my ($self) = @_;
-# warn "LOAD UC";
   if($self->{'_db'}) {
     my $TEMP = $self->{'_db'}->getConfigByName( $ENV{'ENSEMBL_FIRSTSESSION'}, $self->{'type'} );
     eval {

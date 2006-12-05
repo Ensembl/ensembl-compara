@@ -4,7 +4,7 @@ use Class::Std;
 use EnsEMBL::Web::Session;
 use Digest::MD5;
 use strict;
-use Apache::Cookie;
+use CGI::Cookie;
 {
   my %DBAdaptor_of   :ATTR( :name<db_adaptor>   );
   my %SpeciesDefs_of :ATTR( :name<species_defs> );

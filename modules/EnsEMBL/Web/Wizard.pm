@@ -412,6 +412,8 @@ sub pass_fields {
 
 sub add_widgets {
   my ($self, $node, $form, $object, $fields) = @_;
+  warn "Wizard node: " . $node;
+  warn "Wizard fields: " . $self->{'_nodes'}{$node}{'form'};
   if (!$fields) {
     $fields = $self->{'_nodes'}{$node}{'input_fields'} || $self->default_order;
   } 

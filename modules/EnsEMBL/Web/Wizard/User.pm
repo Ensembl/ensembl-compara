@@ -337,7 +337,6 @@ sub login {
   my $form = EnsEMBL::Web::Form->new($node, "/$species/$script", 'post' );
 
   my $url = CGI::escape($object->param('url'));
-
   $wizard->add_title($node, $form, $object);
   $wizard->add_widgets($node, $form, $object);
   $form->add_element(
@@ -528,7 +527,7 @@ sub save_details {
     else { ## new account
       $parameter{'node'} = 'send_link';
       $parameter{'user_id'} = $result;
-      $parameter{'expiry'} = $object->{wizard}->data('expiry'); 
+      #$parameter{'expiry'} = $object->{wizard}->data('expiry'); 
     }
   }
   else {

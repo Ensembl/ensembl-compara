@@ -77,24 +77,57 @@ sub access_denied {
 
 sub groupview {
   my $self   = shift;
-  my $object = $self->{'object'};
-  my $details = $object->get_user_by_id($object->id);
+  my $user = $self->{'object'};
   
   $self->_add_javascript_libraries;
 
-  if (my $panel1 = $self->new_panel( 'Image',
-    'code'    => "info$self->{flag}",
-    'object'  => $self->{object},
-    ) ) {
-    $panel1->add_components(qw(
-        group_details   EnsEMBL::Web::Component::User::group_details
-        group_general   EnsEMBL::Web::Component::User::group_general
-        group_users     EnsEMBL::Web::Component::User::group_users
-        remove_group    EnsEMBL::Web::Component::User::remove_group
+  my $cgi = new CGI;
+  my $group = EnsEMBL::Web::Object::Group->new(( id => $cgi->param('id') ));
+
+  if( my $details_panel = $self->new_panel( 'Image',
+    'code'    => "group_details#",
+    'caption' => "Overview for '" . $group->name . "'"
+  )) {
+    $details_panel->add_components(qw(
+      group_details EnsEMBL::Web::Component::User::group_details
     ));
-    $self->add_panel( $panel1 );
+    $self->add_panel( $details_panel);
   }
-  $self->{page}->set_title('Your Groups');
+
+  if( my $settings_panel = $self->new_panel( 'Image',
+    'code'    => "group_details#",
+    'caption' => 'Shared settings',
+    'status'  => 'group_settings'
+  )) {
+    $settings_panel->add_components(qw(
+      group_settings EnsEMBL::Web::Component::User::group_settings
+    ));
+    $self->add_panel( $settings_panel);
+  }
+
+  if( my $members_panel = $self->new_panel( 'Image',
+    'code'    => "group_details#",
+    'caption' => 'Group members',
+    'status'  => 'group_members'
+  )) {
+    $members_panel->add_components(qw(
+      group_users EnsEMBL::Web::Component::User::group_users
+    ));
+    $self->add_panel($members_panel);
+  }
+
+  if( my $members_panel = $self->new_panel( 'Image',
+    'code'    => "group_details#",
+    'caption' => 'Delete group',
+    'status'  => 'delete_group'
+  )) {
+    $members_panel->add_components(qw(
+      delete_group EnsEMBL::Web::Component::User::delete_group
+    ));
+    $self->add_panel($members_panel);
+  }
+
+  $self->{page}->set_title('Manage group');
 }
 
 sub accountview {
@@ -149,22 +182,22 @@ sub user_menu {
 
   my $flag = 'news';
 
-  $self->add_block( $flag, 'bulleted', "News" );
+#  $self->add_block( $flag, 'bulleted', "News" );
+#
+#  $self->add_entry( $flag, 'text' => "Add News Filter",
+#                           'href' => "/common/filter_news" );
+#  $self->add_entry( $flag, 'text' => "Edit News Filter",
+#                           'href' => "/common/filter_news?id=$filter_id" );
+#  $self->add_entry( $flag, 'text' => "Ensembl mailing lists",
+#                           'href' => "/info/about/contact.html#mailing_lists",
+#                           'icon' => '/img/infoicon.gif' );
 
-  $self->add_entry( $flag, 'text' => "Add News Filter",
-                           'href' => "/common/filter_news" );
-  $self->add_entry( $flag, 'text' => "Edit News Filter",
-                           'href' => "/common/filter_news?id=$filter_id" );
-  $self->add_entry( $flag, 'text' => "Ensembl mailing lists",
-                           'href' => "/info/about/contact.html#mailing_lists",
-                           'icon' => '/img/infoicon.gif' );
-
-  $flag = 'groups';
-
-  $self->add_block( $flag, 'bulleted', "Groups" );
-
-  $self->add_entry( $flag, 'text' => "Create new group",
-                           'href' => "/common/create_group" );
+#  $flag = 'groups';
+#
+#  $self->add_block( $flag, 'bulleted', "Groups" );
+#
+#  $self->add_entry( $flag, 'text' => "Create new group",
+#                           'href' => "/common/create_group" );
    
 }
 

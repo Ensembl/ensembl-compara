@@ -20,6 +20,7 @@ my %Script_of    :ATTR( :set<script>   :get<script>   );
 my %Species_of   :ATTR( :set<species>  :get<species>  );
 my %SessionAdaptor_of :ATTR( :get<sessionadaptor> );                    # To allow it to be reset
 my %UserAdaptor_of    :ATTR( :get<useradaptor>    );                    # To allow it to be reset
+my %UserDB_of :ATTR( :get<userdb>    );                    # To allow it to be reset
 
 sub timer {
   my $self = shift;
@@ -57,6 +58,17 @@ sub userAdaptor {
 ### Lazy loaded User adaptor....
   my $self = shift;
   return $UserAdaptor_of{ ident $self } ||=
+    EnsEMBL::Web::DBSQL::UserAdaptor->new({
+      'db_adaptor'   => $self->dbAdaptor,   ## Web user db adaptor
+      'species_defs' => $self->species_defs ## Species defs..
+    });
+}
+
+sub userDB {
+### a
+### Lazy loaded User DB....
+  my $self = shift;
+  return $UserDB_of{ ident $self } ||=
     EnsEMBL::Web::DBSQL::UserAdaptor->new({
       'db_adaptor'   => $self->dbAdaptor,   ## Web user db adaptor
       'species_defs' => $self->species_defs ## Species defs..
