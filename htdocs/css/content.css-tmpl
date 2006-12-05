@@ -80,6 +80,7 @@ div.white {  background-color:#fff; border:1px solid [[BACKGROUND1]]; }
 div.white a { text-decoration:none; }
 
 div.pre { color:#339966; background-color:#eefff8; border:1px solid #aaeecc; }
+div.user_info { color:#111; background-color:#e7feff; border:1px solid #469fdd; }
 
 div.favourites-species-list {
   margin: 10px 0px 0px 0px;
@@ -211,8 +212,13 @@ td.settings_header {
   border-bottom: 1px solid #666;
 }
 
-td.dark {
+td.dark, div.dark {
   background: #efefef;
+}
+
+div.group a, div.group a:link, div.group a:visited {
+  text-decoration: none;
+  font-weight: bold;
 }
 
 td.very_dark {
@@ -224,7 +230,7 @@ td.invite {
 }
 
 td.top {
-  border-top: 1px solid #d0d0d0;
+  border-top: 1px solid #999;
 } 
 
 

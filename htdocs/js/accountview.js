@@ -15,71 +15,32 @@ function reallyDelete(id) {
   }
 }
 
-function show_inplace_editor(id) {
-  var form_to_show = document.getElementById(bookmark_editor_label + id);
-  var link_to_hide = document.getElementById(bookmark_label + id);
-  form_to_show.style.display = 'inline';
-  link_to_hide.style.display = 'none';
+function hide_info(id) {
+  Effect.Fade(id);
 }
 
-function hide_inplace_editor(id) {
-  var form_to_show = document.getElementById(bookmark_editor_label + id);
-  var link_to_hide = document.getElementById(bookmark_label + id);
-  form_to_show.style.display = 'none';
-  link_to_hide.style.display = 'block';
+function toggle_group_settings(id) {
+  if ($(element_name(id)).style.display == 'none') {
+    show_group_settings(id);
+  } else {
+    hide_group_settings(id);
+  }
 }
 
-function delete_bookmark(id, bookmark_id, user_id) {
-
-  $(bookmark_editor_links_label + id).style.display = 'none';
-  $(bookmark_editor_spinner_label + id).style.display = 'inline';
-
-  id_to_update = id;
-  var url = "/common/manage_bookmark";
-  var data = "bookmark=" + bookmark_id + "&user=" + user_id + "&action=delete";
-
-  var panelContent = new Ajax.Request(url, {
-                           method: 'get',
-                           parameters: data,
-                           onComplete: delete_response_received,
-                         });
+function element_name(id) {
+  return "group_" + id + "_settings";
 }
 
-function save_bookmark(id, bookmark_id, user_id) {
-
-  $(bookmark_editor_links_label + id).style.display = 'none';
-  $(bookmark_editor_spinner_label + id).style.display = 'inline';
-
-  id_to_update = id;
-  var url = "/common/manage_bookmark";
-  var data = "bookmark=" + bookmark_id + "&user=" + user_id + "&name=" + $(bookmark_text_field_label + id).value + "&action=update";
-
-  var panelContent = new Ajax.Request(url, {
-                           method: 'get',
-                           parameters: data,
-                           onComplete: response_received,
-                         });
+function element_image(id) {
+  return "group_" + id + "_image";
 }
 
-function response_received(response) {
-  $(bookmark_name_label + id_to_update).innerHTML = response.responseText;
-  hide_inplace_editor(id_to_update);
-  $(bookmark_text_field_label + id_to_update).value = response.responseText;
-  $(bookmark_editor_links_label + id_to_update).style.display = 'inline';
-  $(bookmark_editor_spinner_label + id_to_update).style.display = 'none';
+function show_group_settings(id) {
+  new Effect.BlindDown(element_name(id));
+  $(element_image(id)).src = "/img/minus.gif";
 }
 
-function delete_response_received(response) {
-  $(bookmark_label + id_to_update).style.display = "none";
-  $(bookmark_editor_label + id_to_update).style.display = "none";
-}
-
-function show_manage_links(id) {
-  var id_to_show = document.getElementById(id);
-  id_to_show.style.display = 'inline';
-}
-
-function hide_manage_links(id) {
-  var id_to_hide = document.getElementById(id);
-  id_to_hide.style.display = 'none';
+function hide_group_settings(id) {
+  new Effect.BlindUp(element_name(id));
+  $(element_image(id)).src = "/img/plus.gif";
 }
