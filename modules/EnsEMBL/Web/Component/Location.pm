@@ -488,11 +488,11 @@ sub add_das_tracks {
 
 ## Replace this with the code which gets DAS sources from the Session... probably need some cute cacheing
 
-  my @das_sources = array;
+  my @das_sources = ();
   foreach my $source ( @{$object->get_session->get_das_sorted_and_filtered( $object->species )} ) {
     my $config_key = 'managed_extdas_'.$source->get_key ;
-    next unless $wuc->get( $config_key ,'on' ) eq 'on';
-    push @das_sources, $config_key
+    next unless $config->get( $config_key ,'on' ) eq 'on';
+    push @das_sources, $config_key;
     my $adaptor = undef;
     my $source_config = $source->get_data;
     eval {
@@ -527,7 +527,7 @@ sub add_das_tracks {
   my $EXT = $object->species_defs->ENSEMBL_INTERNAL_DAS_SOURCES;
 
   foreach my $source ( sort { $EXT->{$a}->{'label'} cmp $EXT->{$b}->{'label'} }  keys %$EXT ) {
-    if ($wuc->get("managed_$source",'on') eq 'on') {
+    if ($config->get("managed_$source",'on') eq 'on') {
       push @das_sources, "managed_$source" ;
       my $adaptor = undef;
       my $dbname = $EXT->{$source};
@@ -554,7 +554,7 @@ sub add_das_tracks {
       }
     }
   }
-  $wuc->{'_managers'}{'das'} = \@das_sources;
+  $config->{'_managers'}{'das'} = \@das_sources;
 }
 
 sub contigviewbottom {
