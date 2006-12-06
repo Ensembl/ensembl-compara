@@ -22,7 +22,6 @@ use EnsEMBL::Web::Component;
 use Bio::EnsEMBL::AlignStrainSlice;
 use Bio::EnsEMBL::ExternalData::DAS::DASAdaptor;
 use Bio::EnsEMBL::ExternalData::DAS::DAS;
-use EnsEMBL::Web::ExternalDAS;
 use Data::Dumper;
 our @ISA = qw( EnsEMBL::Web::Component);
 use strict;
@@ -485,89 +484,77 @@ sub add_repeat_tracks {
 }
 
 sub add_das_tracks {
-  my( $object, $wuc ) = @_;
-  my @T = ();
+  my( $object, $config ) = @_;
 
-  my $ext_das = new EnsEMBL::Web::ExternalDAS( $object );
-  my $ds2 = $ext_das->{'data'};
-  my (@external_das, @internal_das) = ();
+## Replace this with the code which gets DAS sources from the Session... probably need some cute cacheing
 
-  my %das_list = map {(exists $ds2->{$_}->{'species'} && $ds2->{$_}->{'species'} ne $object->species) ? ():($_,$ds2->{$_}) } keys %$ds2;
-  foreach my $source ( sort { $das_list{$a}->{'label'} cmp $das_list{$b}->{'label'} } keys %das_list ) {
-      if( $wuc->get("managed_extdas_$source",'on') eq 'on' ) {
-	  push @external_das, "managed_extdas_$source";
-
-	  my $adaptor = undef;
-	  my $dbname = $das_list{$source};
-#	  warn("ADD:");
-#	  warn(Data::Dumper::Dumper($dbname));
-
-	  eval {
-	      my $URL = $dbname->{'URL'};
-	      $URL = "http://$URL" unless $URL =~ /https?:\/\//i;
-	      if (my $dsn = $dbname->{'dsn'}) {
-		  if ($URL !~ m!/das/$dsn!) {
-		      $URL .= "$URL/das" unless $URL =~ m!/das!;
-		      $URL .= "/$dbname->{'dsn'}";
-		  }
-	      } else {
-		  $URL .= "$URL/das" unless $URL =~ m!/das!;
-	      }
-	      my $stype = $dbname->{'type'} || 'ensembl_location';
-	      $adaptor = Bio::EnsEMBL::ExternalData::DAS::DASAdaptor->new(
-									  -url   => $URL,
-									  -dsn   => $dbname->{'dsn'},
-									  -type    => $stype,
-									  -mapping => $dbname->{'mapping'} || $stype,
-									  -name  => $dbname->{'name'},
-									  -ens   => $object->database('core'),
-									  -proxy_url => $object->species_defs->ENSEMBL_WWW_PROXY 
-									  );
-	  };
-	  if($@) {
-	      warn("DAS error >> $@ <<");
-	  } else {
-	      $object->database('core')->add_DASFeatureFactory( Bio::EnsEMBL::ExternalData::DAS::DAS->new( $adaptor ) );
-	  }
+  my @das_sources = array;
+  foreach my $source ( @{$object->get_session->get_das_sorted_and_filtered( $object->species )} ) {
+    my $config_key = 'managed_extdas_'.$source->get_key ;
+    next unless $wuc->get( $config_key ,'on' ) eq 'on';
+    push @das_sources, $config_key
+    my $adaptor = undef;
+    my $source_config = $source->get_data;
+    eval {
+      my $URL = $source_config->{'URL'};
+      $URL = "http://$URL" unless $URL =~ /https?:\/\//i;
+      if( my $dsn = $source_config->{'dsn'} ) {
+        if ($URL !~ m!/das/$dsn!) {
+          $URL .= "$URL/das" unless $URL =~ m!/das!;
+          $URL .= "/$source_config->{'dsn'}";
+        }
+      } else {
+        $URL .= "$URL/das" unless $URL =~ m!/das!;
       }
+      my $stype = $source_config->{'type'} || 'ensembl_location';
+      $adaptor = Bio::EnsEMBL::ExternalData::DAS::DASAdaptor->new(
+        -url       => $URL,
+        -dsn       => $source_config->{'dsn'},
+        -type      => $stype,
+        -mapping   => $source_config->{'mapping'} || $stype,
+        -name      => $source_config->{'name'},
+        -ens       => $object->database('core'),
+        -proxy_url => $object->species_defs->ENSEMBL_WWW_PROXY 
+      );
+    };
+    if($@) {
+      warn("DAS error >> $@ <<");
+    } else {
+      $object->database('core')->add_DASFeatureFactory( Bio::EnsEMBL::ExternalData::DAS::DAS->new( $adaptor ) );
+    }
   }
 
   my $EXT = $object->species_defs->ENSEMBL_INTERNAL_DAS_SOURCES;
 
   foreach my $source ( sort { $EXT->{$a}->{'label'} cmp $EXT->{$b}->{'label'} }  keys %$EXT ) {
-      if ($wuc->get("managed_$source",'on') eq 'on') {
-	  push @internal_das, "managed_$source" ;
-
-	  my $adaptor = undef;
-	  my $dbname = $EXT->{$source};
-	  eval {
-	      my $URL = $dbname->{'url'};
-	      $URL = "http://$URL" unless $URL =~ /https?:\/\//i;
-	      $URL .= "/das" unless $URL =~ m!/das!;
-	      $URL .= "/$dbname->{'dsn'}" if ($dbname->{'dsn'});
-	      my $stype = $dbname->{'type'} || 'ensembl_location';
-	      $adaptor = Bio::EnsEMBL::ExternalData::DAS::DASAdaptor->new(
-									  -url   => $URL,
-									  -dsn   => $dbname->{'dsn'},
-									  -type    => $stype,
-									  -mapping => $dbname->{'mapping'} || $stype,
-									  -name  => $dbname->{'name'},
-									  -ens   => $object->database('core'),
-									  -proxy_url => $object->species_defs->ENSEMBL_WWW_PROXY 
-									  );
-	  };
-	  if($@) {
-	      warn("DAS error >> $@ <<");
-	  } else {
-	      $object->database('core')->add_DASFeatureFactory( Bio::EnsEMBL::ExternalData::DAS::DAS->new( $adaptor ) );
-	  }
+    if ($wuc->get("managed_$source",'on') eq 'on') {
+      push @das_sources, "managed_$source" ;
+      my $adaptor = undef;
+      my $dbname = $EXT->{$source};
+      eval {
+        my $URL = $dbname->{'url'};
+        $URL = "http://$URL" unless $URL =~ /https?:\/\//i;
+        $URL .= "/das" unless $URL =~ m!/das!;
+        $URL .= "/$dbname->{'dsn'}" if ($dbname->{'dsn'});
+        my $stype = $dbname->{'type'} || 'ensembl_location';
+        $adaptor = Bio::EnsEMBL::ExternalData::DAS::DASAdaptor->new(
+          -url   => $URL,
+          -dsn   => $dbname->{'dsn'},
+          -type    => $stype,
+          -mapping => $dbname->{'mapping'} || $stype,
+          -name  => $dbname->{'name'},
+          -ens   => $object->database('core'),
+          -proxy_url => $object->species_defs->ENSEMBL_WWW_PROXY 
+        );
+      };
+      if($@) {
+        warn("DAS error >> $@ <<");
+      } else {
+        $object->database('core')->add_DASFeatureFactory( Bio::EnsEMBL::ExternalData::DAS::DAS->new( $adaptor ) );
       }
-
+    }
   }
-
-  push @T, @external_das, @internal_das;
-
-  $wuc->{'_managers'}{'das'} = \@T;
+  $wuc->{'_managers'}{'das'} = \@das_sources;
 }
 
 sub contigviewbottom {
@@ -638,55 +625,55 @@ sub this_link_scale {
 }
 
 sub multi_species_list { 
-	my( $object,$species ) = @_;
-	$species ||= $object->species;
-	my %species_hash;
-	my %dup_species;
-	foreach( $object->species_list() ) {
-		$dup_species{$_}++;
-	}
-	#if we have a self-compara or if we're in vega then get further details
-	if ( (grep {$dup_species{$_} > 1} keys %dup_species) || ($object->species_defs->ENSEMBL_SITE_NAME eq 'Vega') ) {
-		my @details = $object->species_and_seq_region_list;
-		my $C = 1;
-		my ($type,$srname) = split / / , $object->seq_region_type_and_name;
-		foreach my $assoc (@details) {
-			my ($sp,$sr) = split /:/, $assoc;
-			$species_hash{ 's'.$C } = $object->species_defs->ENSEMBL_SHORTEST_ALIAS->{$sp};
-			$species_hash{ 'sr'.$C++ } = $sr;
-		}
-	} else {
-		#otherwise just get species names
-		my %species_flag = ( $species => 1 );
-		my $C = 1;
-		foreach ($object->species_list()) {
-			next if $species_flag{$_};
-			$species_flag{ $_       } = 1;
-			$species_hash{ 's'.$C++ } = $object->species_defs->ENSEMBL_SHORTEST_ALIAS->{$_};
-		}
-	}
-	return %species_hash;
+    my( $object,$species ) = @_;
+    $species ||= $object->species;
+    my %species_hash;
+    my %dup_species;
+    foreach( $object->species_list() ) {
+        $dup_species{$_}++;
+    }
+    #if we have a self-compara or if we're in vega then get further details
+    if ( (grep {$dup_species{$_} > 1} keys %dup_species) || ($object->species_defs->ENSEMBL_SITE_NAME eq 'Vega') ) {
+        my @details = $object->species_and_seq_region_list;
+        my $C = 1;
+        my ($type,$srname) = split / / , $object->seq_region_type_and_name;
+        foreach my $assoc (@details) {
+            my ($sp,$sr) = split /:/, $assoc;
+            $species_hash{ 's'.$C } = $object->species_defs->ENSEMBL_SHORTEST_ALIAS->{$sp};
+            $species_hash{ 'sr'.$C++ } = $sr;
+        }
+    } else {
+        #otherwise just get species names
+        my %species_flag = ( $species => 1 );
+        my $C = 1;
+        foreach ($object->species_list()) {
+            next if $species_flag{$_};
+            $species_flag{ $_       } = 1;
+            $species_hash{ 's'.$C++ } = $object->species_defs->ENSEMBL_SHORTEST_ALIAS->{$_};
+        }
+    }
+    return %species_hash;
 }
 
 sub vega_nav_url {
-	my ($object,$def_url,$slice_bp,$gene_length) = @_;
-	my $vega_url;
-	my $obj = $object->[1]{'_object'}[0];
-	if ($obj->[1]{'_object'}{'type'} eq 'Gene') {
-		my $primary_gene    = $obj->[1]{'_object'}{'name'};
-		my $primary_species = $object->species;
-		$vega_url .= sprintf '/%s/%s?gene=%s', $primary_species, $object->script, $primary_gene;
-		my $input_params = $obj->[1]{'_input'};
-		foreach my $k (sort keys %$input_params) {
-			$vega_url .= ';'.$k.'='.$input_params->{$k}[0]	if ($k =~ /^[a-z]\d$/) ;
-		}
-		my $dbadap = $obj->[1]{'_databases'}{'_dbs'}{$primary_species}{'core'};
-		my $gadap = $dbadap->get_adaptor("Gene");
-		my $gene = $gadap->fetch_by_stable_id($primary_gene);
-		my $context = ($slice_bp - $gene_length) / 2;
-		$vega_url .= ';context='.$context;
-	}
-	return $vega_url ? $vega_url : $def_url;
+    my ($object,$def_url,$slice_bp,$gene_length) = @_;
+    my $vega_url;
+    my $obj = $object->[1]{'_object'}[0];
+    if ($obj->[1]{'_object'}{'type'} eq 'Gene') {
+        my $primary_gene    = $obj->[1]{'_object'}{'name'};
+        my $primary_species = $object->species;
+        $vega_url .= sprintf '/%s/%s?gene=%s', $primary_species, $object->script, $primary_gene;
+        my $input_params = $obj->[1]{'_input'};
+        foreach my $k (sort keys %$input_params) {
+            $vega_url .= ';'.$k.'='.$input_params->{$k}[0]    if ($k =~ /^[a-z]\d$/) ;
+        }
+        my $dbadap = $obj->[1]{'_databases'}{'_dbs'}{$primary_species}{'core'};
+        my $gadap = $dbadap->get_adaptor("Gene");
+        my $gene = $gadap->fetch_by_stable_id($primary_gene);
+        my $context = ($slice_bp - $gene_length) / 2;
+        $vega_url .= ';context='.$context;
+    }
+    return $vega_url ? $vega_url : $def_url;
 }
 
 sub contigviewbottom_nav { return bottom_nav( @_, 'contigviewbottom', {} ); }
@@ -706,7 +693,7 @@ sub ldview_nav           {
     'bottom' => $pop                   || undef,
     'source' => $_[1]->param('source'),
     'h'      => $_[1]->highlights_string || undef,
-  } );	
+  } );    
 }
 
 sub bottom_nav {
@@ -783,9 +770,9 @@ sub bottom_nav {
     }
     my $zoomurl = this_link_scale( $object, $zoombp, $hidden_fields_URL );
 
-	if ( ($object->species_defs->ENSEMBL_SITE_NAME eq 'Vega') && $gene_length) {
-		$zoomurl = vega_nav_url($object,$zoomurl,$zoombp,$gene_length);
-	}
+    if ( ($object->species_defs->ENSEMBL_SITE_NAME eq 'Vega') && $gene_length) {
+        $zoomurl = vega_nav_url($object,$zoomurl,$zoombp,$gene_length);
+    }
 
     my $unit_str = $zoombp;
     if( $zoom lt 'zoom5' ) {
@@ -820,19 +807,19 @@ sub bottom_nav {
   $output.= qq(</td>\n    <td class="center middle">);
   my $button_url;
   if ( ($object->species_defs->ENSEMBL_SITE_NAME eq 'Vega') && $gene_length) {
-	  $button_url = vega_nav_url($object,$hidden_fields_URL,int( $wid / 2),$gene_length);
+      $button_url = vega_nav_url($object,$hidden_fields_URL,int( $wid / 2),$gene_length);
   }
   else {
-	  $button_url =  this_link_scale( $object, int( $wid / 2), $hidden_fields_URL );
+      $button_url =  this_link_scale( $object, int( $wid / 2), $hidden_fields_URL );
   }
   $output.= sprintf(qq(<a href="%s" class="cv_plusminus">+</a>), $button_url) if exists $nav_options{'half'};
   $output.= qq(${zoom_HTML}) if exists $nav_options{'zoom'};
   if ( ($object->species_defs->ENSEMBL_SITE_NAME eq 'Vega') && $gene_length) {
-	  $button_url = vega_nav_url($object,$hidden_fields_URL,int( $wid * 2),$gene_length);
+      $button_url = vega_nav_url($object,$hidden_fields_URL,int( $wid * 2),$gene_length);
   }
   else {
-	  $button_url =  this_link_scale( $object, int( $wid * 2), $hidden_fields_URL );
-  }				  
+      $button_url =  this_link_scale( $object, int( $wid * 2), $hidden_fields_URL );
+  }                  
   $output.= sprintf(qq(<a href="%s" class="cv_plusminus">&#8211;</a>), $button_url ) if exists $nav_options{'half'};
 ############ Right 5mb/2mb/1mb/window
   $output.= qq(</td>\n    <td class="right middle">);
@@ -878,11 +865,11 @@ sub alignsliceviewbottom_menu {
 
     my @menu_items = qw(Features AlignCompara Repeats Options ASExport ImageSize);
     my $mc = $object->new_menu_container(
-					 'configname' => $configname,
-					 'panel'      => 'bottom',
-					 'leftmenus'  => \@menu_items,
-					 'rightmenus' => [qw(Help)],
-					 );
+                     'configname' => $configname,
+                     'panel'      => 'bottom',
+                     'leftmenus'  => \@menu_items,
+                     'rightmenus' => [qw(Help)],
+                     );
     $panel->print( $mc->render_html );
     $panel->print( $mc->render_js );
     return 0;
@@ -1197,7 +1184,7 @@ sub alignsliceviewbottom {
     my $scaling = $object->species_defs->ENSEMBL_GENOME_SIZE || 1;
     my $max_length = $scaling * 1e6;
     my $slice = $object->database('core')->get_SliceAdaptor()
-	->fetch_by_region( $object->seq_region_type, $object->seq_region_name, $object->seq_region_start, $object->seq_region_end, 1 );
+    ->fetch_by_region( $object->seq_region_type, $object->seq_region_name, $object->seq_region_start, $object->seq_region_end, 1 );
 
     my $wuc = $object->user_config_hash( 'alignsliceviewbottom_0', 'alignsliceviewbottom' );
 
@@ -1220,17 +1207,17 @@ sub alignsliceviewbottom {
 # If it's not we just choose the first alignment that we can find for this species
 
     if (! $method_link_species_set) {
-	my %alignments = $object->species_defs->multiX('ALIGNMENTS');
+    my %alignments = $object->species_defs->multiX('ALIGNMENTS');
 
-	foreach my $a (sort keys %alignments) {
-	    if ($alignments{$a}->{'species'}->{$species}) {
-		$aID = $a;
-		$wuc->get("alignslice", "id", $aID, 1);
-		$wuc->save;
-		$method_link_species_set = $mlss_adaptor->fetch_by_dbID($aID); 
-		last;
-	    }
-	}
+    foreach my $a (sort keys %alignments) {
+        if ($alignments{$a}->{'species'}->{$species}) {
+        $aID = $a;
+        $wuc->get("alignslice", "id", $aID, 1);
+        $wuc->save;
+        $method_link_species_set = $mlss_adaptor->fetch_by_dbID($aID); 
+        last;
+        }
+    }
     }
 
     my @selected_species = @{$wuc->get("alignslice", "species") || []};
@@ -1254,38 +1241,38 @@ sub alignsliceviewbottom {
     add_repeat_tracks( $object, $wuc );
 
     foreach my $as (@{$align_slice->get_all_Slices(@selected_species)}) {
-	(my $vsp = $as->genome_db->name) =~ s/ /_/g;
-	$id ++;
-	my $CONF = $object->user_config_hash( "alignsliceviewbottom_$id", "alignsliceviewbottom"  );
-	$CONF->{'align_slice'}  = 1;
-	$CONF->set('scalebar', 'label', $vsp);
-	$CONF->set('alignslice', 'align', $align);
-	$CONF->set_species($vsp);
-	$CONF->set('_settings','URL',$url,1);
-	$CONF->set('ensembl_transcript', 'compact', $t1, 1);
-	$CONF->set('evega_transcript', 'compact', $t2, 1);
-	$CONF->set('variation', 'on', $t3, 1 );
-	$CONF->container_width( $as->length );
-	$CONF->{'_managers'}{'sub_repeat'} = $wuc->{'_managers'}{'sub_repeat'};
-	$CONF->{_object} = $object;
-	$CONF->set_width($object->param('image_width') );
-	$CONF->set( '_settings', 'URL',   this_link($object).";bottom=%7Cbump_", 1);
-	$CONF->{'image_frame_colour'} = 'red' if $panel->option( 'red_edge' ) eq 'yes';
+    (my $vsp = $as->genome_db->name) =~ s/ /_/g;
+    $id ++;
+    my $CONF = $object->user_config_hash( "alignsliceviewbottom_$id", "alignsliceviewbottom"  );
+    $CONF->{'align_slice'}  = 1;
+    $CONF->set('scalebar', 'label', $vsp);
+    $CONF->set('alignslice', 'align', $align);
+    $CONF->set_species($vsp);
+    $CONF->set('_settings','URL',$url,1);
+    $CONF->set('ensembl_transcript', 'compact', $t1, 1);
+    $CONF->set('evega_transcript', 'compact', $t2, 1);
+    $CONF->set('variation', 'on', $t3, 1 );
+    $CONF->container_width( $as->length );
+    $CONF->{'_managers'}{'sub_repeat'} = $wuc->{'_managers'}{'sub_repeat'};
+    $CONF->{_object} = $object;
+    $CONF->set_width($object->param('image_width') );
+    $CONF->set( '_settings', 'URL',   this_link($object).";bottom=%7Cbump_", 1);
+    $CONF->{'image_frame_colour'} = 'red' if $panel->option( 'red_edge' ) eq 'yes';
 
-	red_box( $CONF, @{$panel->option('red_box')} ) if $panel->option( 'red_box' );
+    red_box( $CONF, @{$panel->option('red_box')} ) if $panel->option( 'red_box' );
 
-	$as->{species} = $as->genome_db->name;
-	$as->{compara} = $cmpstr;
-	$as->{_config_file_name_} = $vsp;
-	$as->{__type__} = 'alignslice';
+    $as->{species} = $as->genome_db->name;
+    $as->{compara} = $cmpstr;
+    $as->{_config_file_name_} = $vsp;
+    $as->{__type__} = 'alignslice';
 
-	if ($id == $num) {
-	    $as->{compara} = 'final' if ($cmpstr ne 'primary');
-	}
+    if ($id == $num) {
+        $as->{compara} = 'final' if ($cmpstr ne 'primary');
+    }
 
-	push @ARRAY, $as, $CONF;
-	$cmpstr = 'secondary';
-	
+    push @ARRAY, $as, $CONF;
+    $cmpstr = 'secondary';
+    
     }
 
     my $image = $object->new_image( \@ARRAY, $object->highlights );
@@ -1356,72 +1343,72 @@ sub alignsliceviewzoom {
     unshift @selected_species, $object->species if (@selected_species);
 
     if ($align_slice = $object->Obj->{_align_slice}) {
-	my $pAlignSlice = $align_slice->get_all_Slices($species)->[0];
-	my $gc = $align_slice->reference_Slice->start;
-	my $cigar_line = $pAlignSlice->get_cigar_line();
-	my @inters = split (/([MDG])/, $cigar_line);
-	my ($ms, $ds);
-	my $fc = 0;
-	while (@inters) {
-	    $ms = (shift (@inters) || 1);
-	    my $mtype = shift (@inters);
-	    
-	    $fc += $ms;
+    my $pAlignSlice = $align_slice->get_all_Slices($species)->[0];
+    my $gc = $align_slice->reference_Slice->start;
+    my $cigar_line = $pAlignSlice->get_cigar_line();
+    my @inters = split (/([MDG])/, $cigar_line);
+    my ($ms, $ds);
+    my $fc = 0;
+    while (@inters) {
+        $ms = (shift (@inters) || 1);
+        my $mtype = shift (@inters);
+        
+        $fc += $ms;
 
-	    if ($mtype =~ /M/) {
+        if ($mtype =~ /M/) {
 # Skip normal alignment and gaps in alignments
-		$gc+=$ms;
-		last if ($gc > $gstart);
-	    }
-	}
+        $gc+=$ms;
+        last if ($gc > $gstart);
+        }
+    }
 
-	$fcstart = $fc - ($gc - $gstart);
-	if ($gc < $gstart) {
-	    while (@inters) {
-		$ms = (shift (@inters) || 1);
-		my $mtype = shift (@inters);
-	    
-		$fc += $ms;
+    $fcstart = $fc - ($gc - $gstart);
+    if ($gc < $gstart) {
+        while (@inters) {
+        $ms = (shift (@inters) || 1);
+        my $mtype = shift (@inters);
+        
+        $fc += $ms;
 
-		if ($mtype =~ /M/) {
+        if ($mtype =~ /M/) {
 # Skip normal alignment and gaps in alignments
-		    $gc+=$ms;
-		    last if ($gc > $gend);
-		}
-	    }
-	}
-	$fcend = $fc - ($gc - $gend);
-	$align_slice = $align_slice->sub_AlignSlice( $fcstart +1 , $fcend +1);
+            $gc+=$ms;
+            last if ($gc > $gend);
+        }
+        }
+    }
+    $fcend = $fc - ($gc - $gend);
+    $align_slice = $align_slice->sub_AlignSlice( $fcstart +1 , $fcend +1);
     } else {
-	my $slice = $object->database('core')->get_SliceAdaptor()
-	    ->fetch_by_region($object->seq_region_type, $object->seq_region_name, $gstart, $gend, 1 );
+    my $slice = $object->database('core')->get_SliceAdaptor()
+        ->fetch_by_region($object->seq_region_type, $object->seq_region_name, $gstart, $gend, 1 );
 
-	my $query_slice_adaptor = Bio::EnsEMBL::Registry->get_adaptor($species, "core", "Slice");
+    my $query_slice_adaptor = Bio::EnsEMBL::Registry->get_adaptor($species, "core", "Slice");
     
-	my $query_slice= $query_slice_adaptor->fetch_by_region($slice->coord_system_name, $slice->seq_region_name, $slice->start, $slice->end);
+    my $query_slice= $query_slice_adaptor->fetch_by_region($slice->coord_system_name, $slice->seq_region_name, $slice->start, $slice->end);
 
-	my $comparadb = $object->database('compara');
-	my $mlss_adaptor = $comparadb->get_adaptor("MethodLinkSpeciesSet");
-	my $method_link_species_set = $mlss_adaptor->fetch_by_dbID($aID);
+    my $comparadb = $object->database('compara');
+    my $mlss_adaptor = $comparadb->get_adaptor("MethodLinkSpeciesSet");
+    my $method_link_species_set = $mlss_adaptor->fetch_by_dbID($aID);
 
-	my $asa = $comparadb->get_adaptor("AlignSlice" );
-	$align_slice = $asa->fetch_by_Slice_MethodLinkSpeciesSet($query_slice, $method_link_species_set, "expanded" );
+    my $asa = $comparadb->get_adaptor("AlignSlice" );
+    $align_slice = $asa->fetch_by_Slice_MethodLinkSpeciesSet($query_slice, $method_link_species_set, "expanded" );
 
     }
 
     my @SEQ = ();
     foreach my $as (@{$align_slice->get_all_Slices(@selected_species)}) {
-	my $seq = $as->seq;
-	my $ind = 0;
-	foreach (split(//, $seq)) {
-	    $SEQ[$ind++]->{uc($_)} ++;
-	}
+    my $seq = $as->seq;
+    my $ind = 0;
+    foreach (split(//, $seq)) {
+        $SEQ[$ind++]->{uc($_)} ++;
+    }
     }
 
     my $num = scalar(@selected_species) || 2;
 
     foreach my $nt (@SEQ) {
-	$nt->{S} = join('', grep {$nt->{$_} >= $num} keys(%{$nt}));
+    $nt->{S} = join('', grep {$nt->{$_} >= $num} keys(%{$nt}));
     }
 
     my @ARRAY;
@@ -1429,37 +1416,37 @@ sub alignsliceviewzoom {
     my $id = 0;
 
     foreach my $as (@{$align_slice->get_all_Slices(@selected_species)}) {
-	(my $vsp = $as->genome_db->name) =~ s/ /_/g;
-	$id ++;
-	my $wuc = $object->user_config_hash( "alignsliceviewzoom_$id", 'alignsliceviewbottom' );
-	$wuc->container_width( $panel->option('end') - $panel->option('start') + 1 );
-	$wuc->set_width( $object->param('image_width') );
-	$wuc->set( '_settings', 'opt_empty_tracks', 'off' );
-	$wuc->set( 'stranded_contig', 'on', 'off' );
-	$wuc->set( 'ensembl_transcript', 'on', 'off' );
-	$wuc->set( 'evega_transcript', 'on', 'off' );
-	$wuc->set( 'ruler', 'on', 'off' );
-	$wuc->set( 'repeat_lite', 'on', 'off' );
-	$wuc->{'image_frame_colour'} = 'red' if $panel->option( 'red_edge' ) eq 'yes';
-	$wuc->set( '_settings', 'URL',   this_link($object).";bottom=%7Cbump_", 1);
+    (my $vsp = $as->genome_db->name) =~ s/ /_/g;
+    $id ++;
+    my $wuc = $object->user_config_hash( "alignsliceviewzoom_$id", 'alignsliceviewbottom' );
+    $wuc->container_width( $panel->option('end') - $panel->option('start') + 1 );
+    $wuc->set_width( $object->param('image_width') );
+    $wuc->set( '_settings', 'opt_empty_tracks', 'off' );
+    $wuc->set( 'stranded_contig', 'on', 'off' );
+    $wuc->set( 'ensembl_transcript', 'on', 'off' );
+    $wuc->set( 'evega_transcript', 'on', 'off' );
+    $wuc->set( 'ruler', 'on', 'off' );
+    $wuc->set( 'repeat_lite', 'on', 'off' );
+    $wuc->{'image_frame_colour'} = 'red' if $panel->option( 'red_edge' ) eq 'yes';
+    $wuc->set( '_settings', 'URL',   this_link($object).";bottom=%7Cbump_", 1);
 
-	$wuc->set( '_settings', 'intercontainer', 0, 1 );
-	$wuc->set( 'alignment', 'on', 'on' );
-	$wuc->set( 'alignscalebar', 'on', 'off' );
-	$wuc->set( 'variation', 'on', 'off' );
-	$wuc->{_object} = $object;
-	$wuc->{'align_slice'}  = 1;
-	$wuc->set('scalebar', 'label', $vsp);
-	$wuc->set_species($vsp);
+    $wuc->set( '_settings', 'intercontainer', 0, 1 );
+    $wuc->set( 'alignment', 'on', 'on' );
+    $wuc->set( 'alignscalebar', 'on', 'off' );
+    $wuc->set( 'variation', 'on', 'off' );
+    $wuc->{_object} = $object;
+    $wuc->{'align_slice'}  = 1;
+    $wuc->set('scalebar', 'label', $vsp);
+    $wuc->set_species($vsp);
 
-	$as->{alignmatch} = \@SEQ;
-	$as->{exons_markup} = &exons_markup($as);
-	$as->{snps_markup} = &snps_markup($as);
-	if ($id == $num) {
-	    $as->{compara} = 'final' if ($cmpstr ne 'primary');
-	}
-	push @ARRAY, $as, $wuc;
-	$cmpstr = 'secondary';
+    $as->{alignmatch} = \@SEQ;
+    $as->{exons_markup} = &exons_markup($as);
+    $as->{snps_markup} = &snps_markup($as);
+    if ($id == $num) {
+        $as->{compara} = 'final' if ($cmpstr ne 'primary');
+    }
+    push @ARRAY, $as, $wuc;
+    $cmpstr = 'secondary';
     }
 
     my $image    = $object->new_image( \@ARRAY, $object->highlights );
@@ -1487,37 +1474,37 @@ sub exons_markup {
        foreach my $t (@$tlist) {
          my $elist = $t->get_all_Exons();
          foreach my $ex (@$elist) {
-#	     warn("exon:".join('*', $ex->start, $ex->end, $ex->get_aligned_start, $ex->get_aligned_end, $ex->exon->start, $ex->exon->end)); 
+#         warn("exon:".join('*', $ex->start, $ex->end, $ex->get_aligned_start, $ex->get_aligned_end, $ex->exon->start, $ex->exon->end)); 
              next if (!$ex->start);
 
              my ($active_start, $active_end)  = (0, 0);
 
 # If you have questions about the code below - please send them to Javier Herrero <jherrero@ebi.ac.uk> :)
 
-	     if ($ex->strand > 0) {
-		 if ($ex->end <= $slice_length && $ex->exon->end - $ex->exon->start + 1  == $ex->get_aligned_end  ) {
-		     $active_end = 1;
-		 }
+         if ($ex->strand > 0) {
+         if ($ex->end <= $slice_length && $ex->exon->end - $ex->exon->start + 1  == $ex->get_aligned_end  ) {
+             $active_end = 1;
+         }
 
-	     
-		 if ($ex->get_aligned_start == 1 && $ex->start > 0) {
-		     $active_start = 1;
-		 }
-	     } else {
-		 if ($ex->end <= $slice_length && $ex->get_aligned_start == 1) {
-		     $active_end = 1;
-		 }
+         
+         if ($ex->get_aligned_start == 1 && $ex->start > 0) {
+             $active_start = 1;
+         }
+         } else {
+         if ($ex->end <= $slice_length && $ex->get_aligned_start == 1) {
+             $active_end = 1;
+         }
 
-		 if ($ex->start > 0 && $ex->exon->end - $ex->exon->start + 1  == $ex->get_aligned_end ) {
-		     $active_start = 1;
-		 }
-	     }
+         if ($ex->start > 0 && $ex->exon->end - $ex->exon->start + 1  == $ex->get_aligned_end ) {
+             $active_start = 1;
+         }
+         }
 
 #warn("EXON:".join('*', $slice_length, $ex->start, $ex->end, $ex->get_aligned_start, $ex->get_aligned_end, $ex->exon->start, $ex->exon->end, $active_start, $active_end)); 
             push @exons, {
                  'start' => $ex->start,
                  'end' => $ex->end,
-		 'strand'  => $ex->strand,
+         'strand'  => $ex->strand,
                  'active_start' => $active_start,
                  'active_end' => $active_end,
                  }
