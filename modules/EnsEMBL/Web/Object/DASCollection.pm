@@ -106,7 +106,6 @@ sub getEnsemblMapping {
           : $realm eq 'IPI_ID'        ? 'ipi_id'
           :                             'unknown'
           ;
-    } 
   } elsif ($base eq 'Protein Sequence') {
     $smap = $realm eq 'UniProt'       ? 'uniprot/swissprot_acc'
           : $realm eq 'TrEMBL'        ? 'uniprot/sptrembl'

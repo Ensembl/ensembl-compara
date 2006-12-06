@@ -159,7 +159,7 @@ sub new_menu_container {
     'script'       => $self->script,
     'scriptconfig' => $self->get_scriptconfig,
     'width'        => $self->param('image_width'),
-    'object'    => $params{'object'}
+    'object'       => $self
   );
 
   $N{'location'} = $self->location if $self->can('location');

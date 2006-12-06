@@ -12,6 +12,7 @@ sub  new {
   my $width = ( $param{'scriptconfig'} ?
                 $param{'scriptconfig'}->get('image_width') : $param{'config'} ? $param{'config'}->get('_settings','width') : 0
               ) || 700;
+warn $param{'object'};
   my $self = {
     'leftmenus'   => [],
     'rightmenus'  => [],

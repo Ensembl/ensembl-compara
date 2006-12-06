@@ -489,7 +489,7 @@ sub add_das_tracks {
 ## Replace this with the code which gets DAS sources from the Session... probably need some cute cacheing
 
   my @das_sources = ();
-  foreach my $source ( @{$object->get_session->get_das_sorted_and_filtered( $object->species )} ) {
+  foreach my $source ( @{$object->get_session->get_das_filtered_and_sorted( $object->species )} ) {
     my $config_key = 'managed_extdas_'.$source->get_key ;
     next unless $config->get( $config_key ,'on' ) eq 'on';
     push @das_sources, $config_key;
@@ -852,7 +852,7 @@ sub bottom_menu {
     'configname' => $configname,
     'panel'      => 'bottom',
     'leftmenus'  => [qw(Features Compara DAS Repeats Options Export ImageSize)],
-    'rightmenus' => [qw(Help)],
+    'rightmenus' => [qw(Help)]
   );
   $panel->print( $mc->render_html );
   $panel->print( $mc->render_js );
