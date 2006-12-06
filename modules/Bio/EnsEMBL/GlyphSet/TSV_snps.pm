@@ -194,13 +194,14 @@ sub zmenu {
   my $seq_region_name = $self->{'container'}->seq_region_name();
   my $href = "/@{[$self->{container}{_config_file_name_}]}/snpview?snp=@{[$allele->variation_name]};source=@{[$allele->source]};chr=$seq_region_name;vc_start=$chr_start";
 	
-
+  my $strain = $self->species_defs->translate("strain");
   my $zmenu = {
 	       'caption'               => 'SNP '.$allele->variation_name,
 	       "19:".$type             => '',
 	       @$tmp,
-	       "09:alleles: ".( length($ref_allele) <16 ? $ref_allele : substr($ref_allele,0,14).'..')."/".
-		  (length($alt_allele)<16 ? $alt_allele : substr($alt_allele,0,14).'..')
+               "09:reference allele: ".( length($ref_allele) <16 ? $ref_allele : substr($ref_allele,0,14).'..') 
+                                       => '',
+	       "10:$strain genotype: ".(length($alt_allele)<16 ? $alt_allele : substr($alt_allele,0,14).'..')
                                        => '',
 	       '01:SNP properties'     => $href,
 	       "03:bp $pos"            => '',
