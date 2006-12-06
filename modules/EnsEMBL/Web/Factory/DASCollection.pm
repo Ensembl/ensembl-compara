@@ -37,7 +37,6 @@ use Bio::EnsEMBL::ExternalData::DAS::DAS;
 
 use EnsEMBL::Web::Factory;
 use EnsEMBL::Web::Problem;
-use EnsEMBL::Web::ExternalDAS;
 use EnsEMBL::Web::Proxy::Object;
 use SOAP::Lite;
 use Data::Dumper;
@@ -106,23 +105,23 @@ sub createObjects {
   }
 
 # Add external sources (ones added by user)
-  my $extdas = new EnsEMBL::Web::ExternalDAS( $self );
+### THIS NOW NEEDS TO COME OUT OF THE session object.....
 #    $extdas->getConfigs($conf_script, $conf_script);
-  my %daslist = %{$extdas->{'data'}};
+  my $daslist = $self->get_session->get_das;
    
-  for my $source ( keys %daslist ) {
-    my %valid_scripts = map{ $_, 1 } @{$daslist{$source}->{enable} || [] };
+  for my $source ( keys %$daslist ) {
+    my $source_config = $daslist->{$source}->get_data;
+    my %valid_scripts = map{ $_, 1 } @{$source_config->{enable} || [] };
     $valid_scripts{$conf_script} || next;
-    my $das_species = $daslist{$source}->{'species'};
+    my $das_species = $source_config->{'species'};
     next if( $das_species && $das_species ne '' && $das_species ne $ENV{'ENSEMBL_SPECIES'} );
-    my $source_confdata = $daslist{$source};
-    if ($source_confdata->{url} =~ m!/das$!) {
-      $source_confdata->{url} .= "/$source_confdata->{dsn}";
+    if ($source_config->{url} =~ m!/das$!) {
+      $source_config->{url} .= "/$source_config->{dsn}";
     }
 #  warn("ADD EXTERNAL: $source");
 #  warn(Dumper($source_confdata)) if ($source =~ /colour/i);
-    $source_confdata->{conftype} ||= 'external';
-    $sources_conf{$source} = $source_confdata;
+    $source_config->{conftype} ||= 'external';
+    $sources_conf{$source}    = $source_config;
   }
 
 # Get parameters of the view that has called upon dasconfview
@@ -192,7 +191,9 @@ sub createObjects {
     $self->delete_param('add_das_source');
   }
   foreach (keys (%das_del)){
-    $extdas->delete_das_source($_);
+## Replace with session call
+    $self->get_session->remove_das_source($_);
+##    $extdas->delete_das_source($_);
     delete($sources_conf{$_});
   }
   foreach (keys %urldas_del){
@@ -263,7 +264,9 @@ sub createObjects {
         $sources_conf{$das_name}->{$key} = $das_data{$key};
       }
     }
-    $extdas->add_das_source(\%das_data);
+## Replace with session call...
+    $self->get_session->add_das_source_from_hash( \%das_data );
+##    $extdas->add_das_source(\%das_data);
     $DASsel{$das_name} = 1 if ($das_data{active});
   }
 
@@ -336,7 +339,8 @@ sub createObjects {
         foreach my $key( @confkeys, @allkeys, @arr_keys, 'conftype', 'active') {
           $sources_conf{$das_name}->{$key} = $das_data{$key};
         }
-        $extdas->add_das_source(\%das_data);
+## replace with session call
+        $self->session->add_das_source_from_hashref(\%das_data);
         $DASsel{$das_name} = 1;
       }
     } elsif (my $das_name = $self->param("DASedit")) { # Edit source
@@ -364,7 +368,8 @@ sub createObjects {
       }
 
 #      warn("EDIT: ".Dumper($das_data));
-      $extdas->add_das_source($das_data);
+## Replace with session call...
+      $self->session->add_das_source_from_hashref($das_data);
       $DASsel{$das_name} = 1;
     } else {
       my $err = 0;
@@ -414,7 +419,8 @@ sub createObjects {
         foreach my $key( @confkeys, @allkeys, 'dsn', 'enable', 'mapping') {
           $sources_conf{$das_name}->{$key} = $das_data->{$key};
         }
-        $extdas->add_das_source($das_data);
+## Replace with session calll
+        $self->session->add_das_source_from_hashref($das_data);
         $DASsel{$das_name} = 1;
       }
     }
@@ -477,7 +483,8 @@ sub createObjects {
       push @das_objs, $das_obj;
     } else {
       $DASsel{$source} = 0;
-      $extdas->delete_das_source($source);
+### Replace with sesssion call
+      $self->get_session->remove_das_source( $source );
     }
   }
   my @selection = grep {$DASsel{$_}} keys %DASsel;
@@ -508,7 +515,6 @@ sub getEnsemblMapping {
           : $realm eq 'IPI_ID'        ? 'ipi_id'
           :                             'unknown'
           ;
-    } 
   } elsif ($base eq 'Protein Sequence') {
     $smap = $realm eq 'UniProt'       ? 'uniprot/swissprot_acc'
           : $realm eq 'TrEMBL'        ? 'uniprot/sptrembl'
