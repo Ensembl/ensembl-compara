@@ -16,14 +16,14 @@ function reallyDelete(id) {
 }
 
 function hide_info(id) {
-  Effect.Fade(id);
   var data = "id=" + id;
   var url = "/common/hide_info";
   var ajax_info = new Ajax.Request(url, {
                            method: 'get',
                            parameters: data,
-                           onComplete: info_is_hidden,
+                           onComplete: info_is_hidden
                          });
+  Effect.Fade(id);
 }
 
 function info_is_hidden(response) {
