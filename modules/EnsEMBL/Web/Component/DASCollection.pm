@@ -491,7 +491,7 @@ sub added_sources {
     $add_link .= '+fg_data='.   $das_adapt->fg_data     if $das_adapt->fg_data;
     $add_link .= '+fg_max='.    $das_adapt->fg_max      if $das_adapt->fg_max;
     $add_link .= '+fg_min='.    $das_adapt->fg_min      if $das_adapt->fg_min;
-    $add_link .= '+linktext='   $das_adapt->linktext    IF $das_adapt->linktext;
+    $add_link .= '+linktext='.  $das_adapt->linktext    if $das_adapt->linktext;
     if( my $link_url = $das_adapt->linkurl ) {
       $add_link .= '+linkurl=';
       $link_url =~ s/\?/\$3F/g;
@@ -527,7 +527,7 @@ sub added_sources {
      <td>$das_action</td>
      <td style="padding:3px" >&nbsp;</td>
      <td colspan="3">$das_url</td>
-  </tr>(;
+  </tr>);
     } else {
       push @das_form, {'action'=>$das_action, 'name'=> $das_name, 'url'=>$das_url, 'dsn'=>$das_dsn, 'type'=>$das_type, 'sendurl' => $das_send};
     }

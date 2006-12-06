@@ -26,6 +26,7 @@ sub new {
     '_db'       => $adaptor->{'user_db'},
     '_r'        => $adaptor->{'r'},
     '_data'     => {},
+    '_type'     => 'external',
     '_altered'  => 0,
     '_deleted'  => 0
   };
