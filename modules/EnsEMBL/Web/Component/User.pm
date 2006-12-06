@@ -730,6 +730,7 @@ sub render_user_bookmark_table {
       $html .= "</tr>";
     }
   } else {
+    $html .= "<tr><td colspan='2' style='text-align:center;'><img src='/img/bookmark_example.gif' width='754' height='96' /></td></tr>\n";
     $html .= "<tr><td class='dark' style='text-align:left;'>You have not saved any bookmarks.</td><td class='dark' style='text-align: right;'><a href='/info/about/bookmarks.html'>Learn more about saving frequently used pages &rarr;</a></td></tr>\n";
   }
   $html .= "</table>\n";
@@ -741,10 +742,14 @@ sub render_user_configuration_table {
   my $user = $params{user};
   my @configurations = @{ $params{configurations} };
   my @admin_groups = @{ $params{admin_groups } };
+  my $is_admin = 0;
+  if ($#admin_groups > -1) {
+    $is_admin = 1;
+  } 
   my $html = qq(
   <table width='100%' cellpadding='4' cellspacing='0'>
     <tr>
-      <td class='settings_header' colspan='4'><b>Configurations</b></td>
+      <td class='settings_header' colspan='5'><b>Configurations</b></td>
     </tr>);
   my $class = "dark";
   if ($#configurations > -1) {
@@ -753,10 +758,15 @@ sub render_user_configuration_table {
       $html .= "<tr>";
       $html .= "<td class='$class'><a href='" . $config->config_url . "?load_config=" . $config->id . "'>" . $config->name . "</a></td>";
       $html .= "<td class='$class'>" . $config->blurb . "</td>\n";
+      $html .= "<td class='$class' style='text-align:right;'><a href='/common/edit_config?id=" . $config->id . "'>Edit</a></td>"; 
+      if ($is_admin) {
+      $html .= "<td class='$class' style='text-align:right;'><a href='/common/share_record?id=" . $config->id . "'>Share</a></td>"; 
+      }
       $html .= "<td class='$class' style='text-align: right;'><a href='/common/remove_record?id=" . $config->id . "'>Delete</a></td>";
       $html .= "</tr>\n";
     }
   } else {
+    $html .= "<tr><td colspan='2' style='text-align:center;'><img src='/img/config_example.gif' width='754' height='73' /></td></tr>\n";
     $html .= "<tr><td class='dark' style='text-align:left;'>You have not saved any configurations.</td><td class='dark' style='text-align: right;'><a href='/info/about/configurations.html'>Learn more about custom configurations &rarr;</a></td></tr>\n";
   }
 
