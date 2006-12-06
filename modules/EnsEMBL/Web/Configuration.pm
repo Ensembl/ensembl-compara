@@ -33,8 +33,9 @@ sub update_configs_from_parameter {
     $wsc->update_config_from_parameter( $val ) if $val;
   }
   foreach my $config_name ( @userconfigs ) {
+warn "$config_name...";
     my $wuc = $self->{'object'}->user_config_hash( $config_name );
-    my $wuc = $self->{object}->get_userconfig( $config_name );
+#    my $wuc = $self->{'object'}->get_userconfig( $config_name );
     if( $wuc ) {
       $wuc->reset() if $rst;
       $wuc->update_config_from_parameter( $val ) if $val;
