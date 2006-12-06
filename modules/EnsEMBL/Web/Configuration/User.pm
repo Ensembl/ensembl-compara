@@ -144,7 +144,7 @@ sub accountview {
     $details_panel->add_components(qw(
       user_details EnsEMBL::Web::Component::User::user_details
     ));
-    $self->add_panel( $details_panel);
+    $self->add_panel( $details_panel );
   }
 
   if( my $settings_panel = $self->new_panel( 'Image',
@@ -155,7 +155,7 @@ sub accountview {
     $settings_panel->add_components(qw(
       user_settings EnsEMBL::Web::Component::User::user_settings
     ));
-    $self->add_panel( $settings_panel);
+    $self->add_panel( $settings_panel );
   }
 
   if( my $settings_panel = $self->new_panel( 'Image',
@@ -166,9 +166,17 @@ sub accountview {
     $settings_panel->add_components(qw(
       user_groups EnsEMBL::Web::Component::User::user_groups
     ));
-    $self->add_panel( $settings_panel);
+    $self->add_panel( $settings_panel );
   }
 
+  if( my $misc_panel = $self->new_panel( 'Information',
+    'code'    => "details#",
+  )) {
+    $misc_panel->add_components(qw(
+      user_other_settings EnsEMBL::Web::Component::User::user_other_settings
+    ));
+    $self->add_panel( $misc_panel );
+  }
   $self->{page}->set_title('Account summary: ' . $user->name);
 
 }
