@@ -408,9 +408,9 @@ print "Reference sequence: ", substr($exon->seq->seq,0,5), "...", substr($exon->
 my $strainSlice = $exon->feature_Slice->get_by_strain($strain_name); #get strainSlice for the exon
 #print the strain sequence for that exon
 print "Strain sequence:    ", substr($strainSlice->seq,0,5), "...", substr($strainSlice->seq,82,5),"...",substr($strainSlice->seq,90,5),"...", "\n";
-my $differences = $strainSlice->get_all_differences_Slice(); #get differences between reference and strain sequence in the exon
-foreach my $diff (@{$differences}){
-  print "Allele Feature start-end-allele_string: ",$diff->start,"-",$diff->end,"-",$diff->allele_string,"\n";
+my $afs = $strainSlice->get_all_AlleleFeatures_Slice(); #get AlleleFeature between reference and strain sequence in the exon
+foreach my $af (@{$afs}){
+  print "Allele Feature start-end-allele_string: ",$af->start,"-",$af->end,"-",$af->allele_string,"\n";
 }
 exit 0;
 </pre>
