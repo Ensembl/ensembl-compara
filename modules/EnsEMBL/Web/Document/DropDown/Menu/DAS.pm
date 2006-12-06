@@ -31,13 +31,7 @@ sub new {
     $self->add_checkbox( "managed_$source", $source_config->{'label'} || $source );
   }
 
-  my $ext_das = $self->{'object'}->get_session->get_das();
-  foreach my $source (
-    map  { $_->[1] }
-    sort { $a->[0] cmp $b->[0] }
-    map  { [ $_->get_data->{'label'}, $_ ] }
-    grep { !( exists $_->get_data->{'species'} && $_->get_data->{'species'} ne $self->{'species'} )} @$ext_das
-  ) { 
+  foreach my $source (@{ $config->{object}->get_session->get_das_filtered_and_sorted() }) { 
     my $source_config = $source->get_data;
     my @valid_views = defined ($source_config->{enable}) ? @{$source_config->{enable}} : (defined($source_config->{on}) ? @{$source_config->{on}} : []);
     next unless grep { $_ eq $script } @valid_views ;  # skip those that not configured for this view

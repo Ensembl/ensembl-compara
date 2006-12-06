@@ -177,6 +177,15 @@ sub get_das {
   return $Das_sources_of{ ident $self };
 }
 
+sub get_das_filtered_and_sorted {
+  my( $self, $species ) = @_;
+  return 
+    map  { $_->[1] }
+    sort { $a->[0] cmp $b->[0] }
+    map  { [ $_->get_data->{'label'}, $_ ] }
+    grep { !( exists $_->get_data->{'species'} && $_->get_data->{'species'} ne $self->{'species'} )} 
+    values %{ $self->get_das };
+}
 sub get_das_config {
 ### DAS
 ### Retrieve an individual externally configured DAS source
