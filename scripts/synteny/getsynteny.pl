@@ -8,44 +8,44 @@ use Bio::EnsEMBL::Analysis;
 use Getopt::Long;
 
 my $usage = "
-getsynteny.pl  -host ecs1b.sanger.ac.uk 
-               -user ensro
-               -dbname ensembl_compara_10_1
-               -chr_names \"22\"
-               -species1 \"Homo sapiens\"
-               -assembly1 NCBI30
-               -species2 \"Mus musculus\"
-               -assembly2 MGSC3
-               -conf_file Compara.conf
+getsynteny.pl  --host ensembldb.ensembl.org
+               --user anonymous
+               --dbname ensembl_compara_41
+               --chr_names \"22\"
+               --species1 \"Homo sapiens\"
+               [--assembly1 NCBI30]
+               --species2 \"Mus musculus\"
+               [--assembly2 MGSC3]
+               [--method_link_type SYNTENY]
 
-$0 [-help]
-   -host compara_db_host_server
-   -user username (default = 'ensro')
-   -dbname compara_database_name
-   -chr_names \"20,21,22\" (default = \"all\")
-   -species1 (e.g. \"Homo sapiens\") from which alignments are queried and chr_names refer to
-   -assembly1 (e.g. NCBI30) assembly version of species1
-   -species2 (e.g. \"Mus musculus\") to which alignments are queried
-   -assembly2 (e.g. MGSC3) assembly version of species2
-   -conf_file comparadb_configuration_file
-              (see an example in ensembl-compara/modules/Bio/EnsEMBL/Compara/Compara.conf.example)
+$0 [--help]
+   --host               compara_db_host_server (default = 'ensembldb.ensembl.org')
+   --user               username (default = 'anonymous')
+   --dbname             compara_database_name (default = 'ensembl_compara_41')
+   --chr_names          \"20,21,22\" (default = \"all\")
+   --species1           from which alignments are queried and chr_names
+                        refer to (e.g. \"Homo sapiens\" is default) 
+   [--assembly1]        assembly version of species1 (e.g. NCBI36, default is undef)
+   --species2           to which alignments are queried (e.g. \"Mus musculus\" is default)
+   [--assembly2]        assembly version of species2 (e.g. NCBIM36, default is undef)
+   [--method_link_type] (default = 'SYNTENY')
+
 
 ";
 
 my $help = 0;
-my $host = 'ecs2d.internal.sanger.ac.uk';
-my $user = 'ensro';
-my $pass = '';
-my $dbname = 'ensembl_compara_15_1';
+my $host = 'ensembldb.ensembl.org';
+my $user = 'anonymous';
+my $pass;
+my $dbname = 'ensembl_compara_41';
 
 my $species1 = 'Homo sapiens';
-my $species1_assembly = 'NCBI33';
+my $species1_assembly;
 my $species2 = 'Mus musculus';
-my $species2_assembly = 'MGSC3';
-my $assembly_type = "WGA";
+my $species2_assembly;
+my $method_link_type = "SYNTENY";
 
 my $chr_names = "all";
-my $conf_file = "./Compara.conf";
 
 $| = 1;
 
@@ -59,76 +59,77 @@ $| = 1;
             'species2:s' => \$species2,
             'assembly2:s' => \$species2_assembly,
             'chr_names=s' => \$chr_names,
-            'conf_file=s' => \$conf_file);
+            'method_link_type=s' => \$method_link_type);
 
 if ($help) {
   print $usage;
   exit 0;
 }
 
-my $compdb = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor (-host        => $host,
-                                                          -user        => $user,
-                                                          -dbname      => $dbname,
-                                                          -pass        => $pass,
-                                                          -conf_file   => $conf_file);
+my $dba = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor (-host        => $host,
+                                                       -user        => $user,
+                                                       -pass        => $pass,
+                                                       -dbname      => $dbname);
 
-my $coredb = $compdb->get_db_adaptor($species1,$species1_assembly);
+my $gdba = $dba->get_GenomeDBAdaptor;
+my $dfa = $dba->get_DnaFragAdaptor;
+my $mlssa = $dba->get_MethodLinkSpeciesSetAdaptor;
+my $sra = $dba->get_SyntenyRegionAdaptor;
 
-my $sa = $compdb->get_SyntenyAdaptor;
-$species1 =~ s/ /_/;
-$species2 =~ s/ /_/;
-$sa->setSpecies(undef, $species1, $species2);
-my $ca = $coredb->get_ChromosomeAdaptor;
+my $gdb1 = $gdba->fetch_by_name_assembly($species1,$species1_assembly);
+my $gdb2 = $gdba->fetch_by_name_assembly($species2,$species2_assembly);
 
-my @chromosomes;
+my $mlss = $mlssa->fetch_by_method_link_type_GenomeDBs($method_link_type, [$gdb1, $gdb2]);
+
+my $dfgs;
 
 if (defined $chr_names and $chr_names ne "all") {
   my @chr_names = split /,/, $chr_names;
   foreach my $chr_name (@chr_names) {
-    push @chromosomes, $ca->fetch_by_chr_name($chr_name);
+    push @{$dfgs}, $dfa->fetch_by_GenomeDB_and_name($gdb1, $chr_name);
   }
 } else {
-  @chromosomes = @{$ca->fetch_all}
+  $dfgs = $dfa->fetch_all_by_GenomeDB_region($gdb1);
 }
 
-foreach my $chr (@chromosomes) {
-  my $length = $chr->length;
+my $total_nb_syntenies = 0;
+foreach my $df (@{$dfgs}) {
+  my $syntenies = $sra->fetch_all_by_MethodLinkSpeciesSet_DnaFrag($mlss, $df);
 
-  print STDERR "Got chr ".$chr->chr_name." length $length\n";
-  
-  my $start = 1;
-  my $end = $length;
-  
-  my $chr_name = $chr->chr_name;
-  open SYN,"> $chr_name.dbsyn.gff";
-  
-  my $synteny = $sa->get_synteny_for_chromosome($chr_name,$start,$end);
+  next unless (scalar @{$syntenies});
+  print STDERR "For DnaFrag ".$df->name.", length ",$df->length,", ";
+  print STDERR "got features " . scalar @{$syntenies} . "\n";
+  $total_nb_syntenies += scalar @{$syntenies};
 
-  print STDERR "Got features " . scalar(@{$synteny}) . "\n";
-    
-  foreach my $sr (@{$synteny}) {
+  my $dfname = $df->name;
 
-    my ($strand,$hstrand) = qw(+ +);
+  foreach my $sr (@{$syntenies}) {
+    my ($species1_dfr_string, $species2_dfr_string);
+    foreach my $dfr (@{$sr->get_all_DnaFragRegions}) {
+      my $strand = "+";
 
-    if ($sr->{rel_ori} < 0) {
-      $hstrand = "-";
+      if ($dfr->dnafrag_strand < 0) {
+        $strand = "-";
+      }
+      if ($dfr->dnafrag->genome_db->name eq $species1) {
+        $species1_dfr_string = $dfr->dnafrag->name . "\t" .
+          "synteny\t" .
+          "similarity\t" .
+          $dfr->dnafrag_start . "\t" .
+          $dfr->dnafrag_end . "\t" .
+          "0.0" . "\t" .
+          $strand . "\t" .
+          ".\t" ;
+      } elsif ($dfr->dnafrag->genome_db->name eq $species2) {
+        $species2_dfr_string = $dfr->dnafrag->name . "\t" .
+          $dfr->dnafrag_start . "\t" .
+          $dfr->dnafrag_end . "\t" .
+          $strand . "\t" .
+          ".\n";
+      }
     }
-      
-    # print out a in gff format
-    print SYN  
-        $sr->{chr_name} . "\t" .
-        "synteny\t" .
-        "similarity\t" .
-        $sr->{chr_start} . "\t" .
-        $sr->{chr_end} . "\t" .
-        "0.0" . "\t" .
-        $strand . "\t" .
-        ".\t" .
-        $sr->{hit_chr_name} . "\t" .
-        $sr->{hit_chr_start} . "\t" .
-        $sr->{hit_chr_end} . "\t" .
-        $hstrand . "\t" .
-        ".\n" 
+    print $species1_dfr_string . $species2_dfr_string;
   }
-  close SYN;
 }
+
+print STDERR "Total number of_synteny regions $total_nb_syntenies\n";
