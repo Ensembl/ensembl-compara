@@ -113,6 +113,7 @@ sub store {
 ### Only work with storable configs and only if they or attached
 ### image configs have been altered!
   my($self,$r) = @_;
+warn "... $r ...";
   foreach my $config_key ( keys %{$Configs_of{ ident $self }||{}} ) {
     my $sc_hash_ref = $Configs_of{ ident $self }{$config_key}||{};
 ## Cannot store unless told to do so by script config
@@ -123,10 +124,11 @@ sub store {
       'diffs'         => $sc_hash_ref->{'config'}->get_user_settings(),
       'image_configs' => {}
     };
+warn "$config_key - $to_store";
 ## get the script config diffs
     foreach my $image_config_key ( keys %{$Configs_of{ ident $self }{$config_key}{'image_configs'}||{} } ) {
-warn "      | `-- ImageConfig: $image_config_key";
       my $image_config = $ImageConfigs_of{ ident $self }{$image_config_key};
+warn "      | `-- ImageConfig: $image_config_key", $image_config->altered;
       next          unless $image_config->storable; ## Cannot store unless told to do so by image config
       $to_store = 1 if     $image_config->altered;  ## Only store if image config has changed...
       $data->{'image_configs'}{$image_config_key}  = $image_config->get_user_settings();
@@ -141,10 +143,25 @@ warn "      `- STORED!";
   $self->save_das;
 }
 
+## DAS functionality - most of this is moved from EnsEMBL::Web::ExternalDAS which
+## will be deprecated - and now stores each source in the database separately
+## currently only works with External DAS sources - not Internally configured DAS
+## sources, making these changes should make the re-work to use registry more
+## useful - as we can add an "add_das_source_from_registry" call as well as
+## the add_das_source_from_URL and add_das_source_from_hashref
+
 sub get_das {
-  my $self = shift;
+### DAS
+### Retrieve all externally configured DAS sources
+### An optional "true" value forces the re-retrival of das sources, otherwise
+### retrieved from the session hash...
+  my( $self, $force ) = @_; 
+## This is cached so return it unless "Force" is set to load in other stuff
+  return $Das_sources_of{ ident $self } if keys %{ $Das_sources_of{ ident $self } } && ! $force;
+## No session so cannot have anything configured!
   return unless $self->get_session_id;
   my $data;
+## Get all DAS configurations from database!
   my $hashref = $self->get_adaptor->getConfigsByType( $self->get_session_id, 'das' );
   my $TEMP;
   foreach my $key ( keys %$hashref ) {
@@ -152,14 +169,17 @@ sub get_das {
     $TEMP = $hashref->{$key};
     $TEMP = eval( $TEMP );
     next unless $TEMP;
+## Create new DAS source and load from value in database...
     my $DAS = EnsEMBL::Web::DASConfig->new( $self->get_adaptor );
        $DAS->load( $TEMP );
     $Das_sources_of{ ident $self }{$key} = $DAS;
   }
-  return $TEMP;
+  return $Das_sources_of{ ident $self };
 }
 
 sub get_das_config {
+### DAS
+### Retrieve an individual externally configured DAS source
   my( $self, $key )  = @_;
   return $Das_sources_of{ ident $self }{$key} if exists $Das_sources_of{ ident $self }{$key};
   my $TEMP = $self->get_adaptor->getConfigByName( $self->get_session_id, 'das', $key );
@@ -172,8 +192,10 @@ sub get_das_config {
   }
   return $Das_sources_of{ ident $self }{$key};
 }
+
 sub save_das {
-### Save das configuration
+### DAS
+### Save all externally configured DAS sources back to the database
   my( $self, $r ) = @_;
   foreach my $source ( values %{$Das_sources_of{ ident $self }} ) {
     next if $source->is_altered;
@@ -182,6 +204,50 @@ sub save_das {
     } else {
       $self->get_adaptor->setConfigByName(   $self->create_session_id($r), 'das', $source->get_name, $source->get_data );
     }
+  }
+}
+
+sub add_das_source_from_URL {
+### DAS
+### Create a new DAS source from a configuration hashref
+  my( $self, $hash_ref ) = @_;
+  my $DAS = EnsEMBL::Web::DasConfig->new( $self->get_adaptor );
+  $DAS->create_from_URL( $hash_ref );
+## We have a duplicate so need to do something clever!
+  if( exists $Das_sources_of{ ident $self }{$DAS->key} ) {
+## Return without adding source if the "unique_string" is the same...
+    return if $Das_sources_of{ ident $self }{$DAS->get_key}->unique_string eq $DAS->unique_string;
+## Otherwise touch the "key"
+    $DAS->touch_key;          #adds a ".sec.msec"
+  }
+## Attach the DAS source..
+  $Das_sources_of{ ident $self }{ $DAS->key } = $DAS;
+}
+
+sub add_das_source_hash_ref {
+### DAS
+### Create a new DAS source from a hash_ref
+  my( $self, $hash_ref ) = @_;
+  my $DAS = EnsEMBL::Web::DasConfig->new( $self->get_adaptor );
+  $DAS->create_from_hash_ref( $hash_ref );
+## We have a duplicate so need to do something clever!
+  if( exists $Das_sources_of{ ident $self }{$DAS->get_key} ) {
+## Return without adding source if the "unique_string" is the same...
+    return if $Das_sources_of{ ident $self }{$DAS->get_key}->unique_string eq $DAS->unique_string;
+## Otherwise touch the "key"
+    $DAS->touch_key;          #adds a ".sec.msec"
+## May return without adding source
+  }
+## Attach the DAS source..
+  $Das_sources_of{ ident $self }{ $DAS->get_key } = $DAS;
+}
+ 
+sub remove_das_source {
+### DAS
+### Remove a DAS source from the configuration 
+  my( $self, $key ) = @_;
+  if( exists $Das_sources_of{ ident $self }{ $key } ) {
+    $Das_sources_of{ ident $self }{ $key }->delete;
   }
 }
 
