@@ -118,14 +118,23 @@ sub group_users {
 
 sub info_box {
   my($user, $message, $name) = @_;
-  my $html = "<div class='user_info boxed' id='$name'>";
-  $html .= "<div>\n";
-  $html .= "<img src='/img/infoicon.gif' width='11' height='11'> " . $message;
-  $html .= "</div>\n";
-  $html .= "<div style='text-align: right; font-size: 80%;'>\n";
-  $html .= "<a href='javascript:void(0);' onclick='hide_info(\"$name\");'>Hide this message</a>";
-  $html .= "</div>\n";
-  $html .= "</div>\n";
+  my $found = 0;
+  foreach my $record ($user->info_records) {
+    if ($record->name eq $name) {
+      $found = 1;
+    }
+  }
+  my $html = "";
+  if (!$found) {
+    $html = "<div class='user_info boxed' id='$name'>";
+    $html .= "<div>\n";
+    $html .= "<img src='/img/infoicon.gif' width='11' height='11'> " . $message;
+    $html .= "</div>\n";
+    $html .= "<div style='text-align: right; font-size: 80%;'>\n";
+    $html .= "<a href='javascript:void(0);' onclick='hide_info(\"$name\");'>Hide this message</a>";
+    $html .= "</div>\n";
+    $html .= "</div>\n";
+  }
   return $html;
 }
 
@@ -518,6 +527,21 @@ sub user_details {
                 Ensembl groups.<br /><br />To learn more about how to get the most
                 from your Ensembl account, read our <a href='/info/about/accounts.html'>introductory guide</a>.);
   $html .= "</div>";
+   
+  $panel->print($html);
+}
+
+sub user_other_settings {
+  my( $panel, $user) = @_;
+  my @records = $user->info_records;
+  my $html = "";
+
+  if ($#records > -1) {
+  $html = "<div class='white boxed'>";
+  $html .= qq(<b>Ensembl preferences:</b>);
+  $html .= qq(<ul><li><a href='/common/reset_info_boxes'>Reset infomation boxes</a></li></ul>);
+  $html .= "</div>";
+  }
    
   $panel->print($html);
 }
