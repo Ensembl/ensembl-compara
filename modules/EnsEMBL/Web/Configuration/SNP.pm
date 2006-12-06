@@ -65,7 +65,7 @@ sub snpview {
 if (
  my $frequency_panel = $self->new_panel('SpreadSheet',
     'code'    => "pop frequencies$self->{flag}",
-    'caption' => "Genotype and Allele frequencies per population",
+    'caption' => "Population genotypes and allele frequencies",
     @params,
     'status'  => 'panel_frequencies',
     'null_data' => '<p>This SNP has no allele or genotype frequencies per population.</p>'
@@ -73,6 +73,19 @@ if (
 
   $frequency_panel->add_components( qw(all_freqs EnsEMBL::Web::Component::SNP::all_freqs) );
   $self->{page}->content->add_panel( $frequency_panel );
+}
+
+
+  # Description : individual genotypes -----------------------------------
+if (
+  my $individual_panel = $self->new_panel('SpreadSheet',
+    'code'    => "individual $self->{flag}",
+    'caption' => "Individual genotypes for SNP ". $obj->name,
+     @params,
+    'status'  => 'panel_individual',
+					 )) {
+  $individual_panel->add_components( qw(individual EnsEMBL::Web::Component::SNP::individual) );
+  $self->{page}->content->add_panel( $individual_panel );
 }
 
 # Neighbourhood image -------------------------------------------------------
@@ -125,17 +138,6 @@ if (
     ));
   }
   $self->{page}->content->add_panel( $image_panel );
-}
-  # Description : individual genotypes -----------------------------------
-if (
-  my $individual_panel = $self->new_panel('SpreadSheet',
-    'code'    => "individual $self->{flag}",
-    'caption' => "Individual genotypes for SNP ". $obj->name,
-     @params,
-    'status'  => 'panel_individual',
-					 )) {
-  $individual_panel->add_components( qw(individual EnsEMBL::Web::Component::SNP::individual) );
-  $self->{page}->content->add_panel( $individual_panel );
 }
 }
 

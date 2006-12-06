@@ -401,7 +401,7 @@ sub pop_genotypes {
   ### Returns String
 
   my ($self, $pop_genotype_obj)  = @_;
-  return $pop_genotype_obj->allele1."|".$pop_genotype_obj->allele2;
+  return join "|", sort($pop_genotype_obj->allele1, $pop_genotype_obj->allele2);
 
 }
 

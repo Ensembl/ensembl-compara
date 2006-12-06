@@ -294,7 +294,7 @@ sub format_frequencies {
   ### Arg1        : panel
   ### Arg2        : data object 
   ### Arg3        : frequency data
-  ### Example     : format_frequencies($panel, $object, $freq_data, "Alleles");
+  ### Example     : format_frequencies($panel, $object, $freq_data);
   ### Description : prints a table of allele or genotype frequencies for the variation
   ### Returns  1
 
@@ -307,7 +307,7 @@ sub format_frequencies {
 
     # Freqs alleles ---------------------------------------------
     my @allele_freq = @{ $freq_data{$pop_id}{AlleleFrequency} };
-    foreach my $gt ( @{ $freq_data{$pop_id}{Alleles} } ) {
+    foreach my $gt (  @{ $freq_data{$pop_id}{Alleles} } ) {
       $pop_row{"Alleles&nbsp;<br />$gt"} = sprintf("%.3f", shift @allele_freq ) || 'no data';
     }
 
@@ -342,7 +342,7 @@ sub format_frequencies {
 
   # Format table columns ------------------------------------------------------
   my @header_row;
-  foreach my $col (sort {$a cmp $b} keys %columns) {
+  foreach my $col (sort {$b cmp $a} keys %columns) {
     next if $col eq 'pop';
     if ($col !~ /Population|Description/) {
       unshift (@header_row, {key  =>$col,  'align'=>'left',
