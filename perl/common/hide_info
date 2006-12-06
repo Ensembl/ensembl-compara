@@ -1,0 +1,25 @@
+#! /usr/local/bin/perl
+
+package hide_info;
+
+use CGI;
+
+use strict;
+use warnings;
+no warnings "uninitialized";
+
+use EnsEMBL::Web::User::Record;
+
+my $cgi = new CGI;
+
+my $record = EnsEMBL::Web::User::Record->new(( type => 'info' ));
+
+$record->user($ENV{ENSEMBL_USER_ID});
+$record->name($cgi->param('id'));
+warn "AJAX: " . $record;
+$record->save;
+
+print "Content-type: text/plain\n\n";
+print "Done:";
+
+1;

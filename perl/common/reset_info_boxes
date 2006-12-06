@@ -1,0 +1,26 @@
+#! /usr/local/bin/perl
+
+package reset_info_boxes;
+
+use CGI;
+
+use strict;
+use warnings;
+no warnings "uninitialized";
+
+use EnsEMBL::Web::User::Record;
+use EnsEMBL::Web::Object::User;
+
+my $cgi = new CGI;
+
+if ($ENV{ENSEMBL_USER_ID}) {
+  my $user = EnsEMBL::Web::Object::User->new({ id => $ENV{ENSEMBL_USER_ID} });
+  foreach my $info_box ($user->info_records) {
+    $info_box->delete;
+  }  
+}
+my $url = "/common/accountview";
+
+print "Location: " . $url;
+
+1;
