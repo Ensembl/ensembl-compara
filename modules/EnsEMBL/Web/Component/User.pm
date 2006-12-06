@@ -539,7 +539,7 @@ sub user_other_settings {
   if ($#records > -1) {
   $html = "<div class='white boxed'>";
   $html .= qq(<b>Ensembl preferences:</b>);
-  $html .= qq(<ul><li><a href='/common/reset_info_boxes'>Reset infomation boxes</a></li></ul>);
+  $html .= qq(<ul><li><a href='/common/reset_info_boxes'>Show all infomation boxes</a></li></ul>);
   $html .= "</div>";
   }
    
