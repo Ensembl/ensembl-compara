@@ -287,7 +287,7 @@ sub _render_bookmarks {
   my $html;
   $html .= &info_box($user, qq(<p>Bookmarks allow you to save frequently used pages from Ensembl and elsewhere. When browsing Ensembl, you can add new bookmarks by clicking the 'Add bookmark' link in the sidebar.<br /><a href="/info/about/bookmarks.html">Learn more about saving frequently used pages &rarr;</a></p>) , 'user_bookmark_info');
   if ($#bookmarks > -1) {
-    $html .= render_settings_table($user, \@records);
+    $html .= _render_settings_table($user, \@records);
   }
   else {
     $html .= qq(<p class="center"><img src="/img/bookmark_example.gif" /></p>);
@@ -311,7 +311,7 @@ sub _render_configs {
   my $html;
   $html .= &info_box($user, qq(You can save custom configurations (DAS sources, decorations, additional drawing tracks, etc), and return to them later or share them with fellow group members. Look for the 'Save configuration link' in the sidebar when browsing Ensembl.<br /><a href="/info/about/configurations.html">Learn more about custom configurations &rarr;</a></p>), 'user_configuration_info');
   if ($#configurations > -1) {
-    #$html .= render_settings_table($user, \@records);
+    $html .= _render_settings_table($user, \@records);
   }
   else {
     $html .= qq(<p class="center"><img src="/img/config_example.gif" /></p>);
@@ -330,9 +330,27 @@ sub _render_notes {
 
 sub _render_news {
   my $user = shift;
+  my @filters = $user->news_records;
+  my @records;
+  foreach my $filter (@filters) {
+    my $data;
+    my $count = 0;
+    while (my ($k, $v) = each(%$filter)) {
+      $data .= ', ' if $count > 0;
+      $data .= uc($k) . ':' . $v;
+      $count++;
+    } 
+    push @records, {'id' => $filter->id, 'data' => [$data] };
+  }
 
   my $html;
-
+  $html .= &info_box($user, qq(You can filter the news headlines on the home page and share these settings with fellow group members.<br /><a href="/info/about/news_filters.html">Learn more about news filters &rarr;</a></p>), 'news_filter_info');
+  if ($#filters > -1) {
+    $html .= _render_settings_table($user, \@records);
+  }
+  else {
+    $html .= qq(<p class="center">You do not have any filters set, so you will see general headlines.</p>);
+  }
   return $html;
 }
 
