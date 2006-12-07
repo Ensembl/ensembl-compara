@@ -3,6 +3,7 @@
 package EnsEMBL::Web::ExternalDAS;
 use strict;
 use Data::Dumper;
+
 sub new {
   my( $class, $proxiable ) = @_;
   my $self = { 
@@ -39,69 +40,69 @@ warn "JS5 DAS ... $key->$value ...";
 }
 
 sub add_das_source {
-  my( $self, $href ) = @_;
+  my( $self, $hash_ref ) = @_;
 
   $self->amend_source( {
-    'enable'     => $href->{enable},
-    'mapping'    => $href->{mapping},
-    'select'     => $href->{select},
+    'enable'     => $hash_ref->{enable},
+    'mapping'    => $hash_ref->{mapping},
+    'select'     => $hash_ref->{select},
     'on'         => 'on',
-    'name'       => $href->{name},
-    'color'      => $href->{color},           
-    'col'        => $href->{col},           
-    'help'       => $href->{help},           
-    'mapping'    => $href->{mapping},           
-    'active'     => $href->{active},           
-    'URL'        => $href->{url},
-    'dsn'        => $href->{dsn},
-    'linktext'   => $href->{linktext},
-    'linkurl'    => $href->{linkurl},
-    'caption'    => $href->{caption},
-    'label'      => $href->{label},
-    'url'        => $href->{url},
-    'protocol'   => $href->{protocol},
-    'domain'     => $href->{domain},
-    'type'       => $href->{type},
-    'labelflag'  => $href->{labelflag},
-    'strand'     => $href->{strand},
-    'group'      => $href->{group},
-    'depth'      => $href->{depth},
-    'stylesheet' => $href->{stylesheet},
-    'score'      => $href->{score},
-    'fg_merge'   => $href->{fg_merge},
-    'fg_data'    => $href->{fg_data},
-    'fg_grades'  => $href->{fg_grades},
-    'fg_max'     => $href->{fg_max},
-    'fg_min'     => $href->{fg_min},
+    'name'       => $hash_ref->{name},
+    'color'      => $hash_ref->{color},           
+    'col'        => $hash_ref->{col},           
+    'help'       => $hash_ref->{help},           
+    'mapping'    => $hash_ref->{mapping},           
+    'active'     => $hash_ref->{active},           
+    'URL'        => $hash_ref->{url},
+    'dsn'        => $hash_ref->{dsn},
+    'linktext'   => $hash_ref->{linktext},
+    'linkurl'    => $hash_ref->{linkurl},
+    'caption'    => $hash_ref->{caption},
+    'label'      => $hash_ref->{label},
+    'url'        => $hash_ref->{url},
+    'protocol'   => $hash_ref->{protocol},
+    'domain'     => $hash_ref->{domain},
+    'type'       => $hash_ref->{type},
+    'labelflag'  => $hash_ref->{labelflag},
+    'strand'     => $hash_ref->{strand},
+    'group'      => $hash_ref->{group},
+    'depth'      => $hash_ref->{depth},
+    'stylesheet' => $hash_ref->{stylesheet},
+    'score'      => $hash_ref->{score},
+    'fg_merge'   => $hash_ref->{fg_merge},
+    'fg_data'    => $hash_ref->{fg_data},
+    'fg_grades'  => $hash_ref->{fg_grades},
+    'fg_max'     => $hash_ref->{fg_max},
+    'fg_min'     => $hash_ref->{fg_min},
     'species'    => $self->{'proxiable'}->species,
   } );
 
-  my $key     = $href->{name};
-  my @configs = @{$href->{enable}};
+  my $key     = $hash_ref->{name};
+  my @configs = @{$hash_ref->{enable}};
   foreach my $cname (@configs) {
     next if $cname eq 'geneview';
     my $config = $self->{'configs'}->{$cname};
     next unless $config;
-      
-    $config->set( "managed_extdas_$key", "on",          'on',                                                                               1);
-    $config->set( "managed_extdas_$key", "dep",         defined($href->{depth}) ? $href->{depth}      : $self->{'defaults'}{'DEPTH'},       1);
-    $config->set( "managed_extdas_$key", "group",       $href->{group}          ? $href->{group}      : $self->{'defaults'}{'GROUP'},       1);
-    $config->set( "managed_extdas_$key", "str",         $href->{strand}         ? $href->{strand}     : $self->{'defaults'}{'STRAND'},      1);
-    $config->set( "managed_extdas_$key", "stylesheet",  $href->{stylesheet}     ? $href->{stylesheet} : $self->{'defaults'}{'STYLESHEET'},  1);
-    $config->set( "managed_extdas_$key", "score",       $href->{score}          ? $href->{score}      : $self->{'defaults'}{'SCORE'},       1);
-    $config->set( "managed_extdas_$key", "fg_merge",    $href->{fg_merge}       ? $href->{fg_merge}   : $self->{'defaults'}{'FG_MERGE'},    1);
-    $config->set( "managed_extdas_$key", "fg_grades",   $href->{fg_grades}      ? $href->{fg_grades}  : $self->{'defaults'}{'FG_GRADES'},   1);
-    $config->set( "managed_extdas_$key", "fg_data",     $href->{fg_data}        ? $href->{fg_data}    : $self->{'defaults'}{'FG_DATA'},     1);
-    $config->set( "managed_extdas_$key", "fg_min",      $href->{fg_min}         ? $href->{fg_min}     : $self->{'defaults'}{'FG_MIN'},      1);
-    $config->set( "managed_extdas_$key", "fg_max",      $href->{fg_max}         ? $href->{fg_max}     : $self->{'defaults'}{'FG_MAX'},      1);
-    $config->set( "managed_extdas_$key", "lflag",       $href->{labelflag}      ? $href->{labelflag}  : $self->{'defaults'}{'LABELFLAG'},   1);
-    $config->set( "managed_extdas_$key", "manager",     'das',                                                                              1);
-    $config->set( "managed_extdas_$key", "col",         $href->{col} || $href->{color} ,                                                    1);
-    $config->set( "managed_extdas_$key", "enable",      $href->{enable} ,                                                                   1);
-    $config->set( "managed_extdas_$key", "mapping",     $href->{mapping} ,                                                                  1);
-#   $config->set( "managed_extdas_$key", "help",        $href->{help} || '',                                                                1);
-    $config->set( "managed_extdas_$key", "linktext",    $href->{linktext} || '',                                                            1);
-    $config->set( "managed_extdas_$key", "linkurl",     $href->{linkurl} || '',                                                             1);
+    my $def = $self->{'defaults'};  
+    $config->set( "managed_extdas_$key", "on",          'on',                                                                  1);
+    $config->set( "managed_extdas_$key", "dep",         defined($hash_ref->{depth}) ? $hash_ref->{depth}      : $def->{'DEPTH'},       1);
+    $config->set( "managed_extdas_$key", "group",       $hash_ref->{group}          ? $hash_ref->{group}      : $def->{'GROUP'},       1);
+    $config->set( "managed_extdas_$key", "str",         $hash_ref->{strand}         ? $hash_ref->{strand}     : $def->{'STRAND'},      1);
+    $config->set( "managed_extdas_$key", "stylesheet",  $hash_ref->{stylesheet}     ? $hash_ref->{stylesheet} : $def->{'STYLESHEET'},  1);
+    $config->set( "managed_extdas_$key", "score",       $hash_ref->{score}          ? $hash_ref->{score}      : $def->{'SCORE'},       1);
+    $config->set( "managed_extdas_$key", "fg_merge",    $hash_ref->{fg_merge}       ? $hash_ref->{fg_merge}   : $def->{'FG_MERGE'},    1);
+    $config->set( "managed_extdas_$key", "fg_grades",   $hash_ref->{fg_grades}      ? $hash_ref->{fg_grades}  : $def->{'FG_GRADES'},   1);
+    $config->set( "managed_extdas_$key", "fg_data",     $hash_ref->{fg_data}        ? $hash_ref->{fg_data}    : $def->{'FG_DATA'},     1);
+    $config->set( "managed_extdas_$key", "fg_min",      $hash_ref->{fg_min}         ? $hash_ref->{fg_min}     : $def->{'FG_MIN'},      1);
+    $config->set( "managed_extdas_$key", "fg_max",      $hash_ref->{fg_max}         ? $hash_ref->{fg_max}     : $def->{'FG_MAX'},      1);
+    $config->set( "managed_extdas_$key", "lflag",       $hash_ref->{labelflag}      ? $hash_ref->{labelflag}  : $def->{'LABELFLAG'},   1);
+    $config->set( "managed_extdas_$key", "manager",     'das',                                                                 1);
+    $config->set( "managed_extdas_$key", "col",         $hash_ref->{col} || $hash_ref->{color} ,                                       1);
+    $config->set( "managed_extdas_$key", "enable",      $hash_ref->{enable} ,                                                      1);
+    $config->set( "managed_extdas_$key", "mapping",     $hash_ref->{mapping} ,                                                     1);
+#   $config->set( "managed_extdas_$key", "help",        $hash_ref->{help} || '',                                                   1);
+    $config->set( "managed_extdas_$key", "linktext",    $hash_ref->{linktext} || '',                                               1);
+    $config->set( "managed_extdas_$key", "linkurl",     $hash_ref->{linkurl} || '',                                                1);
 ##3 we need to store the configuration...
     $config->save;
   }
@@ -110,10 +111,10 @@ sub add_das_source {
 }
 
 sub amend_source {
-  my( $self, $hashref ) = @_;
-#  my $key = join('/', $hashref->{'url'}, $hashref->{'dsn'}, $hashref->{'type'});
-  my $key = $hashref->{'name'};
-  $self->{'data'}->{ $key } = $hashref;
+  my( $self, $hash_ref ) = @_;
+#  my $key = join('/', $hash_ref->{'url'}, $hash_ref->{'dsn'}, $hash_ref->{'type'});
+  my $key = $hash_ref->{'name'};
+  $self->{'data'}->{ $key } = $hash_ref;
   return $key;
 }
 
@@ -133,8 +134,8 @@ sub get_sources {
   my $self = shift;
   my $session = $self->{'proxiable'}->session;
   if( $session ) {
-    foreach my $hashref ( $session->get_das() ) {
-      $self->{'data'}{$hashref->{'key'}} = $hashref;
+    foreach my $hash_ref ( $session->get_das() ) {
+      $self->{'data'}{$hash_ref->{'key'}} = $hash_ref;
     }
   }
   return;

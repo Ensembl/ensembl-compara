@@ -93,7 +93,7 @@ sub getConfigsByType {
   return unless( $self->get_db_adaptor && $session_id > 0 );
   my( $type_id ) = $self->get_db_adaptor->selectrow_array( "select type_id from type where code = ?", {}, $type );
   return unless $type_id;
-  my %configs = map {($_=>$1)} @{$self->get_db_adaptor->selectall_arrayref( "select key, data from session_record where session_id = ? and type_id = ?", {}, $session_id, $type_id )||{}};
+  my %configs = map {($_->[0]=>$_->[1])} @{$self->get_db_adaptor->selectall_arrayref( "select code, data from session_record where session_id = ? and type_id = ?", {}, $session_id, $type_id )||{}};
   return \%configs;
 }
 

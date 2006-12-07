@@ -26,7 +26,7 @@ sub new {
     'type'              => $type,
     'species'           => $ENV{'ENSEMBL_SPECIES'} || '', 
     'species_defs'      => $adaptor->get_species_defs,
-    'exturl'            => $adaptor->get_exturl,
+    'exturl'            => $adaptor->exturl,
     'general'           => {},
     'user'        	=> {},
     '_managers'         => {}, # contains list of added features....

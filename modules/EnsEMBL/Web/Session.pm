@@ -23,6 +23,7 @@ our @ISA = qw(EnsEMBL::Web::Root);
   my %Session_id_of    :ATTR( :name<session_id>   );
 ## Modified parameters built in BUILD fnuction...
   my %Configs_of       :ATTR;
+  my %Internal_das_of  :ATTR;
   my %Das_sources_of   :ATTR;
   my %ImageConfigs_of  :ATTR;
   my %Path_of          :ATTR( :get<path> );
@@ -75,6 +76,10 @@ sub input {
   return $self->get_input(@_);
 }
 
+sub exturl {
+  my $self = shift;
+  return $ExtURL_of{ident $self} ||= EnsEMBL::Web::ExtURL->new( $self->get_species, $self->get_species_defs );
+}
 sub colourmap {
 ### Gets the colour map
   my $self = shift;
@@ -113,7 +118,6 @@ sub store {
 ### Only work with storable configs and only if they or attached
 ### image configs have been altered!
   my($self,$r) = @_;
-warn "... $r ...";
   foreach my $config_key ( keys %{$Configs_of{ ident $self }||{}} ) {
     my $sc_hash_ref = $Configs_of{ ident $self }{$config_key}||{};
 ## Cannot store unless told to do so by script config
@@ -134,7 +138,7 @@ warn "      | `-- ImageConfig: $image_config_key", $image_config->altered;
       $data->{'image_configs'}{$image_config_key}  = $image_config->get_user_settings();
     }
     if( $to_store ) {
-      my $d =  Data::Dumper->new( [$data], [qw(data)] );
+      my $d =  Data::Dumper->new( [$data], [qw($data)] );
          $d->Indent(1);
       $self->get_adaptor->setConfigByName( $self->create_session_id($r), 'script', $config_key, $d->Dump );
 warn "      `- STORED!";
@@ -143,6 +147,27 @@ warn "      `- STORED!";
   $self->save_das;
 }
 
+sub get_internal_das {
+  my( $self, $force ) = @_;
+  return $Internal_das_of{ ident $self } if keys %{ $Internal_das_of{ ident $self } } && ! $force;
+  my $data;
+  my $ini_confdata = $self->get_species_defs->ENSEMBL_INTERNAL_DAS_SOURCES;
+  return {} unless ref( $ini_confdata ) eq 'HASH';
+  foreach my $source ( keys %$ini_confdata ){
+    my $source_confdata = $ini_confdata->{$source};
+    next unless $source_confdata && ref($source_confdata) eq 'HASH';
+    unless( defined $source_confdata->{enable} ) {
+      @{ $source_confdata->{enable} } = @{ $source_confdata->{on}||[] } ;
+    }
+    my $dsn = $source_confdata->{dsn};
+    $source_confdata->{url} .= "/$dsn" if ($source_confdata->{url} !~ /$dsn$/);
+    my $DAS = EnsEMBL::Web::DASConfig->new( $self->get_adaptor );
+       $DAS->load( $source_confdata );
+       $DAS->set_internal();
+    $Internal_das_of{ ident $self }{ $source } = $DAS;
+  }
+  return $Internal_das_of{ ident $self };
+}
 ## DAS functionality - most of this is moved from EnsEMBL::Web::ExternalDAS which
 ## will be deprecated - and now stores each source in the database separately
 ## currently only works with External DAS sources - not Internally configured DAS
@@ -165,10 +190,13 @@ sub get_das {
   my $hashref = $self->get_adaptor->getConfigsByType( $self->get_session_id, 'das' );
   my $TEMP;
   foreach my $key ( keys %$hashref ) {
+warn "... $key ...";
     next if exists $Das_sources_of{ ident $self }{$key};
     $TEMP = $hashref->{$key};
+warn $TEMP;
     $TEMP = eval( $TEMP );
     next unless $TEMP;
+warn $TEMP;
 ## Create new DAS source and load from value in database...
     my $DAS = EnsEMBL::Web::DASConfig->new( $self->get_adaptor );
        $DAS->load( $TEMP );
@@ -209,11 +237,16 @@ sub save_das {
 ### Save all externally configured DAS sources back to the database
   my( $self, $r ) = @_;
   foreach my $source ( values %{$Das_sources_of{ ident $self }} ) {
-    next if $source->is_altered;
+warn "....  ",$source->get_key;
+    next unless $source->is_altered;
     if( $source->is_deleted ) {
+warn "DEL   ",$source->get_key;
       $self->get_adaptor->resetConfigByName( $self->get_session_id, 'das', $source->get_name );
     } else {
-      $self->get_adaptor->setConfigByName(   $self->create_session_id($r), 'das', $source->get_name, $source->get_data );
+warn "STORE ",$source->get_key;
+      my $d =  Data::Dumper->new( [$source->get_data], qw[$data] );
+         $d->Indent(1);
+      $self->get_adaptor->setConfigByName(   $self->create_session_id($r), 'das', $source->get_name, $d->Dump );
     }
   }
 }
@@ -222,7 +255,7 @@ sub add_das_source_from_URL {
 ### DAS
 ### Create a new DAS source from a configuration hashref
   my( $self, $hash_ref ) = @_;
-  my $DAS = EnsEMBL::Web::DasConfig->new( $self->get_adaptor );
+  my $DAS = EnsEMBL::Web::DASConfig->new( $self->get_adaptor );
   $DAS->create_from_URL( $hash_ref );
 ## We have a duplicate so need to do something clever!
   if( exists $Das_sources_of{ ident $self }{$DAS->key} ) {
@@ -235,11 +268,11 @@ sub add_das_source_from_URL {
   $Das_sources_of{ ident $self }{ $DAS->key } = $DAS;
 }
 
-sub add_das_source_hash_ref {
+sub add_das_source_from_hashref {
 ### DAS
 ### Create a new DAS source from a hash_ref
   my( $self, $hash_ref ) = @_;
-  my $DAS = EnsEMBL::Web::DasConfig->new( $self->get_adaptor );
+  my $DAS = EnsEMBL::Web::DASConfig->new( $self->get_adaptor );
   $DAS->create_from_hash_ref( $hash_ref );
 ## We have a duplicate so need to do something clever!
   if( exists $Das_sources_of{ ident $self }{$DAS->get_key} ) {

@@ -19,6 +19,7 @@ use strict;
       $arg_ref->{'species_defs'}->ENSEMBL_USERDB_PASS,
       {RaiseError=>1,PrintError=>0}
     );
+    $DBHandle_of{ $ident }{'mysql_auto_reconnect'} = 1;
   }
 
   sub disconnect {

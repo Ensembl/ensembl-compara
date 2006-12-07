@@ -23,8 +23,8 @@ sub new {
   my $class   = shift;
   my $adaptor = shift;
   my $self = {
-    '_db'       => $adaptor->{'user_db'},
-    '_r'        => $adaptor->{'r'},
+#    '_db'       => $adaptor->{'user_db'},
+#    '_r'        => $adaptor->{'r'},
     '_data'     => {},
     '_type'     => 'external',
     '_altered'  => 0,
@@ -33,6 +33,16 @@ sub new {
 
   bless($self, $class);
   return $self;
+}
+
+sub set_internal {
+  my $self = shift;
+  $self->{_type} = 'internal';
+}
+
+sub set_external {
+  my $self = shift;
+  $self->{_type} = 'external';
 }
 
 sub touch_key {
@@ -91,7 +101,7 @@ sub is_altered {
 ### a
 ### Set to one if the configuration has been updated...
   my $self = shift;
-  $self->{'_altered'};
+  return $self->{'_altered'};
 }
 
 sub delete {

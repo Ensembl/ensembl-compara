@@ -64,46 +64,56 @@ sub createObjects {
   my $conf_script = $self->param("conf_script") || $self->script;
 
 # Read the DAS config from the ini files
-  my $das_conftype = "ENSEMBL_INTERNAL_DAS_SOURCES"; # combined GeneDAS and Internal DAS
+#  my $das_conftype = "ENSEMBL_INTERNAL_DAS_SOURCES"; # combined GeneDAS and Internal DAS
   my %sources_conf;
-  my $ini_confdata = $self->species_defs->$das_conftype() || {};
-  ref( $ini_confdata ) eq 'HASH' or die("$das_conftype badly configured" );
-  foreach my $source( keys %$ini_confdata ){
-    my $source_confdata = $ini_confdata->{$source} || ( warn( "$das_conftype source $source not configured" ) && next );
-    ref( $source_confdata ) eq 'HASH' || ( warn( "$das_conftype source $source badly configured" ) && next );
-
-  # Is source enabled for this view?
-    if (! defined($source_confdata->{enable})) {
-        @{$source_confdata->{enable}} = @{ $source_confdata->{on} || []}; # 
-    }
-
-    my $dsn = $source_confdata->{dsn};
-    $source_confdata->{url} .= "/$dsn" if ($source_confdata->{url} !~ /$dsn$/);
-    my %valid_scripts = map{ $_, 1 } @{$source_confdata->{enable}};
+#  my $ini_confdata = $self->species_defs->$das_conftype() || {};
+#  ref( $ini_confdata ) eq 'HASH' or die("$das_conftype badly configured" );
+#  foreach my $source( keys %$ini_confdata ){
+#    my $source_confdata = $ini_confdata->{$source} || ( warn( "$das_conftype source $source not configured" ) && next );
+#    ref( $source_confdata ) eq 'HASH' || ( warn( "$das_conftype source $source badly configured" ) && next );
+#
+#  # Is source enabled for this view?
+#    if (! defined($source_confdata->{enable})) {
+#        @{$source_confdata->{enable}} = @{ $source_confdata->{on} || []}; # 
+#    }
+#
+#    my $dsn = $source_confdata->{dsn};
+#    $source_confdata->{url} .= "/$dsn" if ($source_confdata->{url} !~ /$dsn$/);
+#    my %valid_scripts = map{ $_, 1 } @{$source_confdata->{enable}};
+#    $valid_scripts{$conf_script} || next;
+#    $source_confdata->{conftype} = 'internal'; # Denotes where conf is from
+#    $source_confdata->{type} ||= 'ensembl_location'; # 
+#    $source_confdata->{color} ||= $source_confdata->{col}; # 
+#    $source_confdata->{id} = $source;
+#    $source_confdata->{description} ||= $source_confdata->{label} ;
+#    $source_confdata->{stylesheet} ||= 'N';
+#    $source_confdata->{stylesheet} = 'Y' if ($source_confdata->{stylesheet} eq '1'); # 
+#    $source_confdata->{score} ||= 'N';
+#    $source_confdata->{fg_merge} ||= 'A';
+#    $source_confdata->{fg_grades} ||= 20;
+#    $source_confdata->{fg_data} ||= 'O';
+#    $source_confdata->{fg_min} ||= 0;
+#    $source_confdata->{fg_max} ||= 100;
+#  
+#    $source_confdata->{name} ||= $source;
+#    $source_confdata->{group} ||= 'N';
+#    $source_confdata->{group} = 'Y' if ($source_confdata->{group} eq '1'); # 
+#    
+#  #  warn("ADD INTERNAL: $source");
+#  #  warn(Dumper($source_confdata));
+#    $sources_conf{$source} = $source_confdata;
+#  }
+#
+  my $daslist = $self->get_session->get_internal_das; 
+  for my $source( keys %$daslist ) {
+    my $source_config = $daslist->{$source}->get_data;
+    my %valid_scripts = map{ $_, 1 } @{$source_config->{enable} || [] };
     $valid_scripts{$conf_script} || next;
-    $source_confdata->{conftype} = 'internal'; # Denotes where conf is from
-    $source_confdata->{type} ||= 'ensembl_location'; # 
-    $source_confdata->{color} ||= $source_confdata->{col}; # 
-    $source_confdata->{id} = $source;
-    $source_confdata->{description} ||= $source_confdata->{label} ;
-    $source_confdata->{stylesheet} ||= 'N';
-    $source_confdata->{stylesheet} = 'Y' if ($source_confdata->{stylesheet} eq '1'); # 
-    $source_confdata->{score} ||= 'N';
-    $source_confdata->{fg_merge} ||= 'A';
-    $source_confdata->{fg_grades} ||= 20;
-    $source_confdata->{fg_data} ||= 'O';
-    $source_confdata->{fg_min} ||= 0;
-    $source_confdata->{fg_max} ||= 100;
-  
-    $source_confdata->{name} ||= $source;
-    $source_confdata->{group} ||= 'N';
-    $source_confdata->{group} = 'Y' if ($source_confdata->{group} eq '1'); # 
-    
-  #  warn("ADD INTERNAL: $source");
-  #  warn(Dumper($source_confdata));
-    $sources_conf{$source} = $source_confdata;
+    my $das_species = $source_config->{'species'};
+    next if( $das_species && $das_species ne '' && $das_species ne $ENV{'ENSEMBL_SPECIES'} );
+    $source_config->{conftype} ||= 'internal';
+    $sources_conf{$source}    = $source_config;
   }
-
 # Add external sources (ones added by user)
 ### THIS NOW NEEDS TO COME OUT OF THE session object.....
 #    $extdas->getConfigs($conf_script, $conf_script);
@@ -115,7 +125,7 @@ sub createObjects {
     $valid_scripts{$conf_script} || next;
     my $das_species = $source_config->{'species'};
     next if( $das_species && $das_species ne '' && $das_species ne $ENV{'ENSEMBL_SPECIES'} );
-    if ($source_config->{url} =~ m!/das$!) {
+    if ($source_config->{url} =~ /\/das$/) {
       $source_config->{url} .= "/$source_config->{dsn}";
     }
 #  warn("ADD EXTERNAL: $source");
@@ -264,7 +274,7 @@ sub createObjects {
       }
     }
 ## Replace with session call...
-    $self->get_session->add_das_source_from_hash( \%das_data );
+    $self->get_session->add_das_source_from_hashref( \%das_data );
 ##    $extdas->add_das_source(\%das_data);
     $DASsel{$das_name} = 1 if ($das_data{active});
   }
@@ -419,6 +429,8 @@ sub createObjects {
           $sources_conf{$das_name}->{$key} = $das_data->{$key};
         }
 ## Replace with session calll
+warn "GO TO ADDING DAS DATA:...";
+warn Data::Dumper::Dumper( $das_data );
         $self->session->add_das_source_from_hashref($das_data);
         $DASsel{$das_name} = 1;
       }
