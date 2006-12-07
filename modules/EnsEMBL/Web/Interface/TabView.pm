@@ -7,6 +7,7 @@ use warnings;
 
 my %Tabs_of;
 my %Name_of;
+my %Width_of;
 
 sub new {
   ### c
@@ -18,6 +19,7 @@ sub new {
     $Tabs_of{$self} = [];
   }
   $Name_of{$self}   = defined $params{name} ? $params{name} : "";
+  $Width_of{$self}   = defined $params{width} ? $params{width} : 0;
   return $self;
 }
 
@@ -42,15 +44,27 @@ sub name {
   return $Name_of{$self};
 }
 
+sub width {
+  ### a
+  my $self = shift;
+  $Width_of{$self} = shift if @_;
+  return $Width_of{$self};
+}
+
 sub render {
   my ($self) = @_;
 
   my @tabs = @{ $self->tabs };
   my $name = $self->name;
+  my $fixed_width = $self->width;
   my $full_width = 80;
-  my $tab_width = 80 / ($#tabs + 1);
+  my $tab_width = int(80 / ($#tabs + 1));
   my $html = $self->render_javascript;
-  $html .= "<div class='box_tabs'>\n";
+  $html .= '<div class="box_tabs"';
+  if ($fixed_width) {
+    $html .= 'style="width:' . $fixed_width . 'px;"';
+  }
+  $html .= ">\n";
   my $class = "tab selected"; 
   foreach my $tab (@tabs) {
     $html .= "<div class='$class' id='" . $tab->name . "_tab' style='width: $tab_width%;'><a href='javascript:void(0);' onClick='" . $name . "_switch_tab(\"" . $tab->name . "\");'>" . $tab->label . "</a></div>";
@@ -107,6 +121,7 @@ sub DESTROY {
   my ($self) = shift;
   delete $Tabs_of{$self};
   delete $Name_of{$self};
+  delete $Width_of{$self};
 }
 
 }
