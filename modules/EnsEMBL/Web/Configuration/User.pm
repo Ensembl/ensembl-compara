@@ -32,11 +32,10 @@ sub context_menu {
     my $flag = 'user';
     $self->add_block( $flag, 'bulleted', "Your Ensembl" );
 
-
     $self->add_entry( $flag, 'text' => "Account summary",
                                     'href' => "/common/accountview" );
     $self->add_entry( $flag, 'text' => "Update details",
-                                    'href' => "/common/update?id=" . $obj->id );
+                                    'href' => "/common/update?id=$user_id" );
     $self->add_entry( $flag, 'text' => "Change password",
                                     'href' => "/common/set_password" );
     $self->add_entry( $flag, 'text' => "Log out",
@@ -55,7 +54,6 @@ sub context_menu {
     $self->add_entry( $flag, 'text' => "About User Accounts",
                                     'href' => "/info/about/accounts.html" );
   }
-
 }
 
 sub access_denied {
