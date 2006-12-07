@@ -44,6 +44,18 @@ Bio::EnsEMBL::Slice object on which this Bio::EnsEMBL::Compara::AlignSlice::Exon
 
 A string describing the mapping of this exon on the slice
 
+=item phase
+
+This exon results from the mapping of a real exon. It may suffer indels and duplications
+during the process which makes this mapped exon unreadable by a translation machinery.
+The phase is set to -1 by default.
+
+=item end_phase
+
+This exon results from the mapping of a real exon. It may suffer indels and duplications
+during the process which makes this mapped exon unreadable by a translation machinery.
+The end_phase is set to -1 by default.
+
 =back
 
 =head1 AUTHORS
@@ -117,6 +129,9 @@ sub new {
 #   $self->to_genomic_align_id($to_genomic_align_id) if (defined($to_genomic_align_id));
   $self->slice($align_slice) if (defined($align_slice));
   $self->original_rank($original_rank) if (defined($original_rank));
+
+  $self->phase(-1);
+  $self->end_phase(-1);
 
   return $self->map_Exon_on_Slice($from_mapper, $to_mapper);
 }
