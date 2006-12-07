@@ -178,59 +178,6 @@ sub accountview {
   $self->{page}->set_title('Account summary: ' . $user->name);
 }
 
-=pod
-sub accountview {
-  ### Dynamic view displaying information about a user account
-  my $self   = shift;
-  my $user = $self->{'object'};
-  
-  $self->_add_javascript_libraries;
-
-  if( my $details_panel = $self->new_panel( 'Image',
-    'code'    => "details#",
-    'caption' => 'Account summary for '. $user->name . " (" . $user->email . ")",
-  )) {
-    $details_panel->add_components(qw(
-      user_details EnsEMBL::Web::Component::User::user_details
-    ));
-    $self->add_panel( $details_panel );
-  }
-
-  if( my $settings_panel = $self->new_panel( 'Image',
-    'code'    => "details#",
-    'caption' => 'Saved settings',
-    'status'  => 'settings_panel'
-  )) {
-    $settings_panel->add_components(qw(
-      user_settings EnsEMBL::Web::Component::User::user_settings
-    ));
-    $self->add_panel( $settings_panel );
-  }
-
-  if( my $settings_panel = $self->new_panel( 'Image',
-    'code'    => "details#",
-    'caption' => 'Ensembl groups',
-    'status'  => 'group_panel'
-  )) {
-    $settings_panel->add_components(qw(
-      user_groups EnsEMBL::Web::Component::User::user_groups
-    ));
-    $self->add_panel( $settings_panel );
-  }
-
-  if( my $misc_panel = $self->new_panel( 'Information',
-    'code'    => "details#",
-  )) {
-    $misc_panel->add_components(qw(
-      user_other_settings EnsEMBL::Web::Component::User::user_other_settings
-    ));
-    $self->add_panel( $misc_panel );
-  }
-  $self->{page}->set_title('Account summary: ' . $user->name);
-
-}
-=cut
-
 sub user_menu {
   ### Context menu specific to user management pages
   my $self = shift;

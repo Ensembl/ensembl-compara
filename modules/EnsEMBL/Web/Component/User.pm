@@ -137,6 +137,92 @@ sub user_tabs {
   $panel->print($tabview->render . '<br />');
 }
 
+sub settings_mixer {
+  my( $panel, $user) = @_;
+  my @groups = @{ $user->groups };
+  my $html = "<div id='the_mixer' class='white boxed'>\n";
+  my $hidden = 0;
+  my $last = 0;
+  my $first = 0;
+  my $n = 0;
+  my $total = 4; 
+  for my $n ( 1 .. $total) {
+    if ($n == 1) { $first = 1; }; 
+    if ($n == $total - 1) { $last = 1; }; 
+    $html .= &mixer($groups[($n - 1)], $n, $hidden, $first, $last, $user);
+    $hidden = 1;
+    $first = 0;
+  }
+  $html .= "</div>\n";
+  $panel->print($html);
+}
+
+sub mixer {
+  my ($group, $ident, $hidden, $first, $last, $user) = @_;
+  my $style = "";
+  if ($hidden) {
+    $style = "style='display: none;'";
+  }
+  my $html .= "<div $style id='mixer_" . $ident . "'>";
+  $html .= "<table width='100%' cellpadding='4' cellspacing='0'>";
+  $html .= "<tr>\n";
+  if ($first) {
+    $html .= "<td width='20%' style='text-align: right;'>Show settings for </td>\n";
+  } else {
+    $html .= "<td width='20%' style='text-align: right;'>and </td>\n";
+  }
+  $html .= "<td width='60%' style='text-align: left;'><select id='mixer_" . $ident . "_select' onChange='javascript:mixer_change(\"" . $ident . "\")'>" . &options_for_user($user, $ident) . "</select>";
+  $html .= "</td>\n";
+  $html .= "<td width='10%' style='text-align: right'>";
+  if (!$last) {
+    $html .= "<a href='javascript:void(0);' onclick='javascript:add_mix(" . ($ident + 1) . ");'>Add</td>\n";
+  }
+  $html .= "</td>";
+  $html .= "<td width='10%' style='text-align: right'>";
+  if (!$first) {
+    $html .= "<a href='javascript:void(0);' onclick='javascript:remove_mix(" . $ident . ");'>Remove</td>\n";
+  }
+  $html .= "</td>";
+  $html .= "</tr>\n";
+  $html .= "</table>";
+  $html .= "</div>";
+  return $html;
+}
+
+sub options_for_user {
+  my ($user, $ident) = @_;
+  my $your_settings = { description => "Your account", value => "user" };
+  my @items = ();
+  push @items, $your_settings;
+  foreach my $group (@{ $user->groups }) {
+    push @items, { description => $group->name, value => $group->id };
+  }
+  my $html = "";
+  my $count = 0;
+  my $selected = "";
+  foreach my $item (@items) {
+    $count++;
+    $selected = "";
+    if ($count == $ident) {
+      $selected = "selected";
+    }
+    $html .= "<option value='" . $item->{value} . "' $selected>" . $item->{description} . "</option>\n";
+  }
+  return $html;
+}
+
+sub user_details {
+  my( $panel, $user) = @_;
+  my $html = "<div class='pale boxed'>";
+  $html .= qq(This is your Ensembl account home page. From here you can manage
+                your saved settings, update your details and join or create new 
+                Ensembl groups.<br /><br />To learn more about how to get the most
+                from your Ensembl account, read our <a href='/info/about/accounts.html'>introductory guide</a>.);
+  $html .= "</div>";
+   
+  $panel->print($html);
+}
+
 sub user_prefs {
   my( $panel, $user) = @_;
   my @records = $user->info_records;
