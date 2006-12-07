@@ -250,8 +250,11 @@ sub fetch_by_GenomicAlignBlock {
   if ($genomic_align_block->dbID) {
     $key = "gab_".$genomic_align_block->dbID.":".($expanded?"exp":"cond").
         ":".($solve_overlapping?"fake-overlap":"non-overlap");
-    return $self->{'_cache'}->{$key} if (defined($self->{'_cache'}->{$key}));
+  } else {
+    $key = "gab_".$genomic_align_block.":".($expanded?"exp":"cond").
+        ":".($solve_overlapping?"fake-overlap":"non-overlap");
   }
+  return $self->{'_cache'}->{$key} if (defined($self->{'_cache'}->{$key}));
 
   my $align_slice = new Bio::EnsEMBL::Compara::AlignSlice(
           -adaptor => $self,
@@ -262,9 +265,7 @@ sub fetch_by_GenomicAlignBlock {
           -solve_overlapping => $solve_overlapping,
           -preserve_blocks => 1,
       );
-  if ($key) {
-    $self->{'_cache'}->{$key} = $align_slice;
-  }
+  $self->{'_cache'}->{$key} = $align_slice;
 
   return $align_slice;
 }
@@ -284,8 +285,7 @@ sub fetch_by_GenomicAlignBlock {
 sub flush_cache {
   my ($self) = @_;
   foreach my $align_slice (values (%{$self->{'_cache'}})) {
-    undef $align_slice->{slices};
-    undef $align_slice->{_slices};
+    $align_slice->DESTROY;
   }
   undef $self->{'_cache'};
 }

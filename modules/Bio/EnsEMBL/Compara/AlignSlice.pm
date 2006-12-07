@@ -600,7 +600,7 @@ sub get_all_ConservationScores {
 
 =head2 get_all_constrained_elements
 
-  Arg  1     : (opt) string $method_link_type (default = GERP_CONSTRAINED_ELEMENT")
+  Arg  1     : (opt) string $method_link_type (default = GERP_CONSTRAINED_ELEMENT)
   Arg  2     : (opt) listref Bio::EnsEMBL::Compara::GenomeDB $species_set
                (default, the set of species from the MethodLinkSpeciesSet used
                to build this AlignSlice)
@@ -1194,6 +1194,13 @@ sub _compile_GenomicAlignBlocks {
       );
   
   return $fake_genomic_align_block;
+}
+
+
+sub DESTROY {
+  my $self = shift;
+  ## Remove circular reference in order to allow Perl to clear the object
+  $self->{all_genomic_align_blocks} = undef;
 }
 
 1;
