@@ -38,9 +38,9 @@ sub info_box {
   }
   my $html = "";
   if (!$found) {
-    $html = "<div class='user_info boxed' id='$name'>";
+    $html = "<div class='alt boxed' id='$name'>";
     $html .= "<div>\n";
-    $html .= "<img src='/img/infoicon.gif' width='11' height='11'> " . $message;
+    $html .= "<img src='/img/infoicon.gif' style='width:11px;height:11px;padding-bottom:0.3em;' > " . $message;
     $html .= "</div>\n";
     $html .= "<div style='text-align: right; font-size: 80%;'>\n";
     $html .= "<a href='javascript:void(0);' onclick='hide_info(\"$name\");'>Hide this message</a>";
@@ -124,7 +124,7 @@ sub user_tabs {
 
   my $tabview = EnsEMBL::Web::Interface::TabView->new(( 
                                       name => "settings",
-                                      width => '770',
+                                      #width => '770',
                                       tabs => [
                                                 $bookmarkTab,
                                                 $configTab,
@@ -244,16 +244,50 @@ sub user_prefs {
 sub _render_settings_table {
   my ($user, $records) = @_;
   my @admin_groups = @{ $user->find_administratable_groups };
+  my $is_admin = 0;
+  if ($#admin_groups > -1) {
+    $is_admin = 1;
+  }
+
+  my $html = qq(<table class="ss">);
+  my $class = 'bg1';
+
+  foreach my $row (@$records) {
+    $class = &toggle_class($class);
+    $html .= qq(<tr class="$class">);
+    my $id = $row->{'id'};
+    my @data = @{$row->{'data'}};
+    foreach my $column (@data) {
+      $html .= qq(<td>$column</td>);
+    }
+    if ($row->{'editable'}) {
+      $html .= qq(<td style="text-align:right;"><a href="/common/bookmark?id=$id">Edit</a></td>);
+    }
+    if ($is_admin) {
+      $html .= qq(<td style="text-align:right;"><a href="/common/share_record?id=$id">Share</a></td>);
+    }
+    $html .= qq(<td style="text-align:right;"><a href="/common/remove_bookmark?id=$id">Delete</a></td>);
+    $html .= "</tr>";
+  }
+
+  $html .= '</table>';
+  return $html;
 }
 
 sub _render_bookmarks {
   my $user = shift;
   my @bookmarks = $user->bookmark_records;
+  my @records;
+  foreach my $bookmark (@bookmarks) {
+    push @records, {'id' => $bookmark->id, 'editable' => 1, 'data' => [
+      '<a href="' . $bookmark->url . '" title="' . $bookmark->description . '">' . $bookmark->name . '</a>',
+    ]};
+  }
 
   my $html;
   $html .= &info_box($user, qq(<p>Bookmarks allow you to save frequently used pages from Ensembl and elsewhere. When browsing Ensembl, you can add new bookmarks by clicking the 'Add bookmark' link in the sidebar.<br /><a href="/info/about/bookmarks.html">Learn more about saving frequently used pages &rarr;</a></p>) , 'user_bookmark_info');
   if ($#bookmarks > -1) {
-    #$html .= render_settings_table($user, \@bookmarks);
+    $html .= render_settings_table($user, \@records);
   }
   else {
     $html .= qq(<p class="center"><img src="/img/bookmark_example.gif" /></p>);
@@ -265,11 +299,19 @@ sub _render_bookmarks {
 sub _render_configs {
   my $user = shift;
   my @configurations = $user->configuration_records;
+  my @records;
+  foreach my $config (@configurations) {
+    push @records, {'id' => $config->id, 'data' => [
+      '<a href="' . $config->config_url . '?load_config=' . $config->id . '">' . $config->name . '</a>',
+      $config->blurb,
+    ]};
+  }
+
 
   my $html;
   $html .= &info_box($user, qq(You can save custom configurations (DAS sources, decorations, additional drawing tracks, etc), and return to them later or share them with fellow group members. Look for the 'Save configuration link' in the sidebar when browsing Ensembl.<br /><a href="/info/about/configurations.html">Learn more about custom configurations &rarr;</a></p>), 'user_configuration_info');
   if ($#configurations > -1) {
-    #$html .= render_settings_table($user, \@configurations);
+    #$html .= render_settings_table($user, \@records);
   }
   else {
     $html .= qq(<p class="center"><img src="/img/config_example.gif" /></p>);
