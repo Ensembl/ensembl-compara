@@ -147,6 +147,55 @@ sub accountview {
     $self->add_panel( $details_panel );
   }
 
+  if( my $mixer_panel = $self->new_panel( 'Image',
+    'code'    => "mixer#",
+  )) {
+    $mixer_panel->add_components(qw(
+      settings_mixer EnsEMBL::Web::Component::User::settings_mixer
+    ));
+    $self->add_panel( $mixer_panel );
+  }
+
+  if( my $tabs_panel = $self->new_panel( 'Image',
+    'code'    => "user_tabs#",
+  )) {
+    $tabs_panel->add_components(qw(
+      user_tabs  EnsEMBL::Web::Component::User::user_tabs
+    ));
+    $self->add_panel( $tabs_panel );
+  }
+
+  if( my $prefs_panel = $self->new_panel( 'Image',
+    'code'    => "user_prefs#",
+  )) {
+    $prefs_panel->add_components(qw(
+      user_prefs  EnsEMBL::Web::Component::User::user_prefs
+    ));
+    $self->add_panel( $prefs_panel );
+  }
+
+
+  $self->{page}->set_title('Account summary: ' . $user->name);
+}
+
+=pod
+sub accountview {
+  ### Dynamic view displaying information about a user account
+  my $self   = shift;
+  my $user = $self->{'object'};
+  
+  $self->_add_javascript_libraries;
+
+  if( my $details_panel = $self->new_panel( 'Image',
+    'code'    => "details#",
+    'caption' => 'Account summary for '. $user->name . " (" . $user->email . ")",
+  )) {
+    $details_panel->add_components(qw(
+      user_details EnsEMBL::Web::Component::User::user_details
+    ));
+    $self->add_panel( $details_panel );
+  }
+
   if( my $settings_panel = $self->new_panel( 'Image',
     'code'    => "details#",
     'caption' => 'Saved settings',
@@ -180,6 +229,7 @@ sub accountview {
   $self->{page}->set_title('Account summary: ' . $user->name);
 
 }
+=cut
 
 sub user_menu {
   ### Context menu specific to user management pages
