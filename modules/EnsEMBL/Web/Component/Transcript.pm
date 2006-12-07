@@ -1333,7 +1333,7 @@ sub spreadsheet_TSVtable {
     { 'key' => 'ID',  },
     { 'key' => 'consequence', 'title' => 'Type', },
     { 'key' => 'chr' ,        'title' => "Chr: bp" },
-    { 'key' => 'ref_alleles',  'title' => 'Ref. gt', },
+    { 'key' => 'ref_alleles',  'title' => 'Ref. genotype', },
     { 'key' => 'Alleles',     'title' => ucfirst($strain_name)." gt", },
     { 'key' => 'Ambiguity',   'title' => 'Ambiguity',  },
     { 'key' => 'Codon',       'title' => "Transcript codon" ,  },
