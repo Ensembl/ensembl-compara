@@ -1,48 +1,56 @@
 #!/usr/local/bin/perl
 
-package dataview;
+package bookmark;
 
 use CGI;
 
 use EnsEMBL::Web::Document::DataView;
 use EnsEMBL::Web::Interface::PageDefinition;
+use EnsEMBL::Web::Interface::FormDefinition;
 use EnsEMBL::Web::DBSQL::DataDefinition;
 use EnsEMBL::Web::DBSQL::ViewAdaptor;
-use EnsEMBL::Web::DBSQL::Relationship::HasMany;
+use EnsEMBL::Web::Apache::Handlers;
 
 my $cgi = CGI->new;
 my $page = EnsEMBL::Web::Interface::PageDefinition->new();
 my $data = EnsEMBL::Web::DBSQL::DataDefinition->new();
+my $db = $ENSEMBL_WEB_REGISTRY->dbAdaptor; 
+
+my $class = "user";
+if ($cgi->param('class')) {
+  $class = $cgi->param('class');
+}
+
+my $table = $class . "_record";
 
 $data->adaptor(EnsEMBL::Web::DBSQL::ViewAdaptor->new(( 
-                                                       hostname => $hostname,
-                                                       port     => $port,
-                                                       database => $database,
-                                                       username => $username,
-                                                       password => $password,
-                                                       table    => 'record'
+                                                       handle => $db,
+                                                       table  => $table 
                                                     )) );
 
 $data->add_field({'Field' => 'name', 'Type' => 'varchar(255)'});
 $data->add_field({'Field' => 'blurb', 'Type' => 'text'});
+$data->add_field({'Field' => 'config', 'Type' => 'text'});
 $data->add_field({'Field' => 'created_at', 'Type' => 'timestamp'});
 $data->add_field({'Field' => 'modified_at', 'Type' => 'timestamp'});
-$data->id($cgi->param('id'));
-$data->populate;
-
-$page->data_definition($data);
+$data->populate($cgi->param('id'));
 $page->title('Edit configuration');
 $page->action('edit');
-$page->on_complete('http://ensarc-1-14.internal.sanger.ac.uk:6700/dataview/config_edited.html');
-$page->on_error('http://ensarc-1-14.internal.sanger.ac.uk:6700/dataview/config_edit_failed.html');
+$page->on_complete('/common/accountview');
 
-$page->add_text('Describe your configuration here, and then click "Submit" to save it. Once saved, you can share your configuration with groups you administer.');
+$page->data_definition($data);
+$page->on_error('/account/bookmark_error.html');
 
-# User id is added automatically if a user is logged in.
+$page->cancel('yes');
+
+$form = EnsEMBL::Web::Interface::FormDefinition->new();
+$form->add_value({ name => $cgi->param('bm_name') });
+$form->add_value({ url => $cgi->param('bm_url') });
+
 $page->add_configuration_element('record', 'yes');
 $page->add_configuration_element('type', 'configuration'); 
-$page->add_form_element('name', "Configuration name");
-$page->add_form_element('blurb', "A brief description of your configuration");
+$page->add_form_element('name', "Configuration name", $form);
+$page->add_form_element('blurb', "Short description", $form);
 
 EnsEMBL::Web::Document::DataView::simple('User', $page);
 
