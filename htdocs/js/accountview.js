@@ -1,19 +1,79 @@
-var id_to_update;
-var status_id;
-
-var bookmark_label = "bookmark_";
-var bookmark_name_label = "bookmark_name_";
-var bookmark_editor_label = "bookmark_editor_";
-var bookmark_manager_label = "bookmark_manage_";
-var bookmark_editor_links_label = "bookmark_editor_links_";
-var bookmark_editor_spinner_label = "bookmark_editor_spinner_";
-var bookmark_text_field_label = "bookmark_text_field_";
+var displayed_settings = new Array();
+displayed_settings[0] = '';
+displayed_settings[1] = 'user';
 
 function reallyDelete(id) {
   if (confirm("Are you sure you want to delete this group?")) { 
     document.getElementById('remove').submit();
   }
 }
+
+function add_mix(ident) {
+  var element;
+  open = false;
+  while (open == false) {
+    element = "mixer_" + ident;
+    if ($(element).style.display == "block") {
+      ident = ident + 1;
+    } else {
+      $(element).style.display = "block";
+      open = "true";
+    }
+  }
+  add_to_display(ident);
+}
+
+function remove_mix(ident) {
+  var element = "mixer_" + ident;
+  $(element).style.display = "none"
+  remove_from_display(ident);
+}
+
+function mixer_change(ident) {
+  add_to_display(ident);
+}
+
+function add_to_display(ident) {
+  var element = group_id_for_ident(ident);
+  displayed_settings[ident] = (element);
+  filter_settings();
+}
+
+function remove_from_display(ident) {
+  displayed_settings[ident] = '';
+  filter_settings();
+}
+
+function filter_settings() {
+  for (var n = 0; n < displayed_settings.length; n++) {
+    if (displayed_settings[n] != '') {
+    }
+  }
+}
+
+function getElementsByClass(searchClass,node,tag) {
+  var classElements = new Array();
+  if ( node == null )
+    node = document;
+  if ( tag == null )
+    tag = '*';
+  var els = node.getElementsByTagName(tag);
+  var elsLen = els.length;
+  var pattern = new RegExp('(^|\\s)'+searchClass+'(\\s|$)');
+  for (i = 0, j = 0; i < elsLen; i++) {
+    if ( pattern.test(els[i].className) ) {
+      classElements[j] = els[i];
+      j++;
+    }
+  }
+  return classElements;
+}
+
+function group_id_for_ident(ident) {
+  var element = "mixer_" + ident + "_select";
+  return $(element).value;
+}
+
 
 function hide_info(id) {
   var data = "id=" + id;
