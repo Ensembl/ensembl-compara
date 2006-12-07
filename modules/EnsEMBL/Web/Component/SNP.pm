@@ -220,8 +220,12 @@ sub ld_data {
  ### Returns  1
 
   my ( $panel, $object ) = @_;
-  my %pop_names = %{_ld_populations($object) ||{} };
   my $label = "Linkage disequilibrium <br />data";
+  unless ($object->species_defs->VARIATION_LD) {
+    $panel->add_row($label, "<h5>No linkage data available for this species</h5>");
+    return;
+  }
+  my %pop_names = %{_ld_populations($object) ||{} };
   my %tag_data  = %{$object->tagged_snp ||{} };
 
   my %ld = (%pop_names, %tag_data);

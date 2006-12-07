@@ -175,15 +175,15 @@ sub context_menu {
   );
 
   if ( $obj->species_defs->VARIATION_LD ) {
-  $self->add_entry(
-        "snp$self->{flag}",
-        'code' => 'ld_info',
-        'text' => "$name - LD info",
-	"title" => "Linkage disequilibrium data",
-        'href' => "/$species/ldview?snp=$name"
-  );
-}
-
+    $self->add_entry(
+		     "snp$self->{flag}",
+		     'code' => 'ld_info',
+		     'text' => "$name - LD info",
+		     "title" => "Linkage disequilibrium data",
+		     'href' => "/$species/ldview?snp=$name"
+		    );
+  }
+  
 }
 
 
