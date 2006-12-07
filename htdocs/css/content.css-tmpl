@@ -68,7 +68,7 @@ div.alt { color:[[RELEASE_EDGE]]; background-color:[[RELEASE_PALE]]; border:1px 
 hr.alt { background-color:[[RELEASE_EDGE]]; }
 div.alt h2, div.alt h3 { color:[[RELEASE_EDGE]]; margin-top:1em; }
 div.alt h2.first, div.alt h3.first { margin-top:0em; }
-div.alt p { color:[[RELEASE_EDGE]]; margin-top:-0.5em; }
+div.alt p { color:#000; margin-top:-0.5em; }
 div.alt a { text-decoration:none; }
 div.alt a:visited { color:[[RELEASE_EDGE]]; }
 div.alt a:hover { color:[[LINK_HOVER]]; }
