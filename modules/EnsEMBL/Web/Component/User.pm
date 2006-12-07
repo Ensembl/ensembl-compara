@@ -265,13 +265,22 @@ sub _render_settings_table {
     foreach my $column (@data) {
       $html .= qq(<td>$column</td>);
     }
-    if ($row->{'editable'}) {
-      $html .= qq(<td style="text-align:right;"><a href="/common/bookmark?id=$id">Edit</a></td>);
+    if ($row->{ident} eq 'user') {
+      if ($row->{'edit_url'}) {
+        $html .= '<td style="text-align:right;"><a href="/common/' . $row->{'edit_url'} . qq(?id=$id">Edit</a></td>);
+      }
+      $html .= '<td style="text-align:right;">';
+      if ($is_admin) {
+        $html .= qq(<a href="/common/share_record?id=$id">Share</a>);
+      }
+      else {
+        $html .= '&nbsp;';
+      }
+      $html .= '</td><td style="text-align:right;"><a href="/common/' . $row->{'delete_url'} . qq(?id=$id">Delete</a></td>);
     }
-    if ($is_admin) {
-      $html .= qq(<td style="text-align:right;"><a href="/common/share_record?id=$id">Share</a></td>);
+    else {
+      $html .= '<td colspan="3" class="center">' . $row->{'group_name'} . '</td>';
     }
-    $html .= qq(<td style="text-align:right;"><a href="/common/remove_bookmark?id=$id">Delete</a></td>);
     $html .= "</tr>";
   }
 
@@ -284,28 +293,27 @@ sub _render_bookmarks {
   my @bookmarks = $user->bookmark_records;
   my @records;
   foreach my $bookmark (@bookmarks) {
-    push @records, {      'id' => $bookmark->id,
-                    'editable' => 1, 
-                      sortable => $bookmark->name,
-                         ident => 'user',
-                        'data' => [
-                                     '<a href="' . $bookmark->url . '" title="' . $bookmark->description . '">' . $bookmark->name . '</a>', 
-                                     ""
-                                  ]
-    };
+    my $description = $bookmark->description || '&nbsp;';
+    push @records, {  'id' => $bookmark->id, 
+                      'ident' => 'user',
+                      'sortable' => $bookmark->name,
+                      'edit_url' => 'bookmark', 
+                      'delete_url' => 'delete_bookmark',
+                      'data' => [
+      '<a href="' . $bookmark->url . '" title="' . $bookmark->description . '">' . $bookmark->name . '</a>', $description
+    ]};
   }
 
   foreach my $group (@{ $user->groups }) {
     foreach my $bookmark ($group->bookmark_records) {
-      push @records, {      'id' => $bookmark->id,
-                      'editable' => 1, 
-                        sortable => $bookmark->name,
-                           ident => $group->id,
-                          'data' => [
-                                       '<a href="' . $bookmark->url . '" title="' . $bookmark->description . '">' . $bookmark->name . '</a>', 
-                                       $group->name
-                                    ]
-      };
+      my $description = $bookmark->description || '&nbsp;';
+      push @records, {'id' => $bookmark->id, 
+                      'ident' => $group->id, 
+                      'sortable' => $bookmark->name,
+                      'group_name' => $group->name,
+                      'data' => [
+        '<a href="' . $bookmark->url . '" title="' . $bookmark->description . '">' . $bookmark->name . '</a>', $description
+      ]};
     }
   }
 
@@ -326,7 +334,8 @@ sub _render_configs {
   my @configurations = $user->configuration_records;
   my @records;
   foreach my $config (@configurations) {
-    push @records, {'id' => $config->id, 'data' => [
+    push @records, {'id' => $config->id,  'edit_url' => '', 'delete_url' => 'delete_record', 
+      'data' => [
       '<a href="' . $config->config_url . '?load_config=' . $config->id . '">' . $config->name . '</a>',
       $config->blurb,
     ]};
