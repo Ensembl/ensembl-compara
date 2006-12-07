@@ -243,6 +243,7 @@ sub user_prefs {
 
 sub _render_settings_table {
   my ($user, $records) = @_;
+  my @sorted_records = sort { $a->{sortable} cmp $b->{sortable} } @{ $records };
   my @admin_groups = @{ $user->find_administratable_groups };
   my $is_admin = 0;
   if ($#admin_groups > -1) {
@@ -252,7 +253,7 @@ sub _render_settings_table {
   my $html = qq(<table class="ss">);
   my $class = 'bg1';
 
-  foreach my $row (@$records) {
+  foreach my $row (@sorted_records) {
     $class = &toggle_class($class);
     my $style = "";
     if ($row->{ident} ne 'user') {
@@ -285,17 +286,26 @@ sub _render_bookmarks {
   foreach my $bookmark (@bookmarks) {
     push @records, {      'id' => $bookmark->id,
                     'editable' => 1, 
+                      sortable => $bookmark->name,
                          ident => 'user',
-           'data' => [
-      '<a href="' . $bookmark->url . '" title="' . $bookmark->description . '">' . $bookmark->name . '</a>', ""
-    ]};
+                        'data' => [
+                                     '<a href="' . $bookmark->url . '" title="' . $bookmark->description . '">' . $bookmark->name . '</a>', 
+                                     ""
+                                  ]
+    };
   }
 
   foreach my $group (@{ $user->groups }) {
     foreach my $bookmark ($group->bookmark_records) {
-      push @records, {'id' => $bookmark->id, 'editable' => 1, ident => $group->id, 'data' => [
-        '<a href="' . $bookmark->url . '" title="' . $bookmark->description . '">' . $bookmark->name . '</a>', $group->name
-      ]};
+      push @records, {      'id' => $bookmark->id,
+                      'editable' => 1, 
+                        sortable => $bookmark->name,
+                           ident => $group->id,
+                          'data' => [
+                                       '<a href="' . $bookmark->url . '" title="' . $bookmark->description . '">' . $bookmark->name . '</a>', 
+                                       $group->name
+                                    ]
+      };
     }
   }
 
