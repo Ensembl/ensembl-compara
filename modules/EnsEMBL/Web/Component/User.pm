@@ -39,9 +39,7 @@ sub info_box {
   my $html = "";
   if (!$found) {
     $html = "<div class='alt boxed' id='$name'>";
-    $html .= "<div>\n";
-    $html .= "<img src='/img/infoicon.gif' style='width:11px;height:11px;padding-bottom:0.3em;' > " . $message;
-    $html .= "</div>\n";
+    $html .= "<p><img src='/img/infoicon.gif' class='float-left' > " . $message . '</p>';
     $html .= "<div style='text-align: right; font-size: 80%;'>\n";
     $html .= "<a href='javascript:void(0);' onclick='hide_info(\"$name\");'>Hide this message</a>";
     $html .= "</div>\n";
@@ -285,7 +283,7 @@ sub _render_bookmarks {
   }
 
   my $html;
-  $html .= &info_box($user, qq(<p>Bookmarks allow you to save frequently used pages from Ensembl and elsewhere. When browsing Ensembl, you can add new bookmarks by clicking the 'Add bookmark' link in the sidebar.<br /><a href="/info/about/bookmarks.html">Learn more about saving frequently used pages &rarr;</a></p>) , 'user_bookmark_info');
+  $html .= &info_box($user, qq(Bookmarks allow you to save frequently used pages from Ensembl and elsewhere. When browsing Ensembl, you can add new bookmarks by clicking the 'Add bookmark' link in the sidebar.<br /><a href="/info/about/bookmarks.html">Learn more about saving frequently used pages &rarr;</a>) , 'user_bookmark_info');
   if ($#bookmarks > -1) {
     $html .= _render_settings_table($user, \@records);
   }
@@ -309,7 +307,7 @@ sub _render_configs {
 
 
   my $html;
-  $html .= &info_box($user, qq(You can save custom configurations (DAS sources, decorations, additional drawing tracks, etc), and return to them later or share them with fellow group members. Look for the 'Save configuration link' in the sidebar when browsing Ensembl.<br /><a href="/info/about/configurations.html">Learn more about custom configurations &rarr;</a></p>), 'user_configuration_info');
+  $html .= &info_box($user, qq(You can save custom configurations (DAS sources, decorations, additional drawing tracks, etc), and return to them later or share them with fellow group members. Look for the 'Save configuration link' in the sidebar when browsing Ensembl.<br /><a href="/info/about/configurations.html">Learn more about custom configurations &rarr;</a>), 'user_configuration_info');
   if ($#configurations > -1) {
     $html .= _render_settings_table($user, \@records);
   }
@@ -344,7 +342,7 @@ sub _render_news {
   }
 
   my $html;
-  $html .= &info_box($user, qq(You can filter the news headlines on the home page and share these settings with fellow group members.<br /><a href="/info/about/news_filters.html">Learn more about news filters &rarr;</a></p>), 'news_filter_info');
+  $html .= &info_box($user, qq(You can filter the news headlines on the home page and share these settings with fellow group members.<br /><a href="/info/about/news_filters.html">Learn more about news filters &rarr;</a>), 'news_filter_info');
   if ($#filters > -1) {
     $html .= _render_settings_table($user, \@records);
   }
