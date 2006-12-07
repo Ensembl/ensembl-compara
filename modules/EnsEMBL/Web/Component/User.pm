@@ -252,7 +252,11 @@ sub _render_settings_table {
 
   foreach my $row (@$records) {
     $class = &toggle_class($class);
-    $html .= qq(<tr class="$class">);
+    my $style = "";
+    if ($row->{ident} ne 'user') {
+      $style = "style='display:none;'";
+    }
+    $html .= qq(<tr class="$class ) . $row->{ident} . qq(" $style>);
     my $id = $row->{'id'};
     my @data = @{$row->{'data'}};
     foreach my $column (@data) {
@@ -277,9 +281,17 @@ sub _render_bookmarks {
   my @bookmarks = $user->bookmark_records;
   my @records;
   foreach my $bookmark (@bookmarks) {
-    push @records, {'id' => $bookmark->id, 'editable' => 1, 'data' => [
-      '<a href="' . $bookmark->url . '" title="' . $bookmark->description . '">' . $bookmark->name . '</a>',
+    push @records, {'id' => $bookmark->id, 'editable' => 1, ident => 'user', 'data' => [
+      '<a href="' . $bookmark->url . '" title="' . $bookmark->description . '">' . $bookmark->name . '</a>', ""
     ]};
+  }
+
+  foreach my $group (@{ $user->groups }) {
+    foreach my $bookmark ($group->bookmark_records) {
+      push @records, {'id' => $bookmark->id, 'editable' => 1, ident => $group->id, 'data' => [
+        '<a href="' . $bookmark->url . '" title="' . $bookmark->description . '">' . $bookmark->name . '</a>', $group->name
+      ]};
+    }
   }
 
   my $html;
