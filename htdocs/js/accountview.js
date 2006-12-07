@@ -35,19 +35,28 @@ function mixer_change(ident) {
 
 function add_to_display(ident) {
   var element = group_id_for_ident(ident);
+  set_style_for_class(displayed_settings[ident], 'none');
   displayed_settings[ident] = (element);
-  filter_settings();
+  set_style_for_displayed_settings('block');
 }
 
 function remove_from_display(ident) {
+  set_style_for_class(displayed_settings[ident], 'none');
   displayed_settings[ident] = '';
-  filter_settings();
 }
 
-function filter_settings() {
+function set_style_for_displayed_settings(style) {
   for (var n = 0; n < displayed_settings.length; n++) {
     if (displayed_settings[n] != '') {
+      set_style_for_class(displayed_settings[n], '');
     }
+  }
+}
+
+function set_style_for_class(new_class,style) {
+  var elements = getElementsByClass(new_class);
+  for (var i = 0; i < elements.length; i++) {
+    elements[i].style.display = style;
   }
 }
 
