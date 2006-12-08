@@ -104,7 +104,7 @@ sub user_tabs {
   my $groupTab= EnsEMBL::Web::Interface::Tab->new(( 
                                      name => 'groups', 
                                      label => 'Groups', 
-                                     content => '', 
+                                     content => _render_groups($user), 
                                                 ));
 
 
@@ -348,6 +348,99 @@ sub _render_settings_table {
   }
 
   $html .= '</table>';
+  return $html;
+}
+
+sub _render_groups {
+  my $user = shift;
+  my $html;
+  my @groups = @{ $user->groups };
+  my @group_rows = ();
+  my %included = ();
+  $html .= &info_box($user, qq(Subscribing to groups lets you access shared bookmarks, configurations and other settings. The groups you're subscribed to, and some other popular groups are listed below.<br /><a href="/info/about/bookmarks.html">Learn more about saving frequently used pages &rarr;</a>) , 'user_group_info');
+  if ($#groups > -1) {
+    $html .= "<h5>Your subscribed groups</h5>\n";
+    $html .= "<table width='100%' cellspacing='4' cellpadding='0'>\n";
+    my $class = "bg1";
+    foreach my $group (sort {$a->name cmp $b->name} @groups) {
+      $class = &toggle_class($class);
+      $included{$group->id} = 'yes';
+      $html .= "<tr class='$class'>\n";
+      $html .= "<td width='25%'>" . $group->name . "</td>";
+      $html .= "<td>" . $group->description . "</td>";
+      if ($user->is_administrator_of($group)) {
+        $html .= "<td style='text-align: right;'><a href='/common/groupview?id=" . $group->id . "'>Manage group</a></td>";
+      } else {
+        $html .= "<td style='text-align: right;'><a href='/common/unsubscribe?id=" . $group->id . "'>Unsubscribe</a></td>";
+      }
+      $html .= "</tr>\n";
+    }
+    $html .= "</table><br />\n";
+    foreach my $group (@groups) {
+      $html .= &_render_invites_for_group($group, $user);
+    }
+  }
+  else {
+    $html .= qq(<p class="center"><img src="/img/bookmark_example.gif" /></p>);
+  }  
+  $html .= "<br />";
+  $html .= &_render_all_groups($user, \%included);
+  $html .= "<br />";
+  $html .= qq(<p><a href="/common/create_group">Create a new group &rarr;</a></p>);
+  return $html;
+}
+
+sub _render_invites_for_group {
+  my ($group, $user) = @_;
+  my $html = "";
+  my $class = "";
+  if ($group->type eq 'restricted') {
+    $group->load;
+    my @invites = $group->invite_records;
+    if ($#invites > -1) {
+      $html .= "<table width='100%' cellspacing='4' cellpadding='0'>\n";
+    }
+    foreach my $invite (@invites) {
+      if ($invite->email eq $user->email && $invite->status eq 'pending') {
+        $class = "invite";
+        $html .= "<tr>\n";
+        $html .= "<td class='$class'>" . $group->name . "</td>";
+        $html .= "<td class='$class'>" . $group->description. "</td>";
+        $html .= "<td class='$class'><a href='/common/join_by_invite?record_id=" . $invite->id . "&invite=" . $invite->code . "'>Accept invite</a></td>";
+        $html .= "</tr>\n";
+        $class = "very_dark";
+      }
+    }
+    if ($#invites > -1) {
+      $html .= "</table>\n";
+    }
+  }
+  return $html;
+}
+
+sub _render_all_groups {
+  my ($user, $included) = @_;
+  my %included = ();
+  if ($included) {
+    %included = %{ $included }; 
+  }
+  my $html = "<h5>Publicly available groups</h5>";
+  $html .= "<table width='100%' cellpadding='4' cellspacing='0'><tr>";
+
+  my @all_groups = @{ EnsEMBL::Web::Object::Group->all_groups_by_type('open') };
+  my $class = "bg1";
+  foreach my $group (sort {$a->name cmp $b->name} @all_groups) {
+    if (!$included{$group->id}) {
+      $class = &toggle_class($class);
+      $html .= "<tr>\n";
+      $html .= "<td class='$class' width='25%'>" . $group->name . "</td>";
+      $html .= "<td class='$class'>" . $group->description . "</td>";
+      $html .= "<td class='$class' style='text-align: right;'><a href='/common/subscribe?id=" . $group->id . "'>Subscribe</a></td>";
+      $html .= "</tr>\n";
+    }
+  }
+
+  $html .= "</table>\n";
   return $html;
 }
 
