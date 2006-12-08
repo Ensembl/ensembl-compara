@@ -2,6 +2,7 @@ package EnsEMBL::Web::Interface::TabView;
 
 use strict;
 use warnings;
+use CGI;
 
 {
 
@@ -53,8 +54,16 @@ sub width {
 
 sub render {
   my ($self) = @_;
+  my $cgi = new CGI;
 
   my @tabs = @{ $self->tabs };
+
+  my $open = $tabs[0]->name;
+
+  if ($cgi->param('tab')) {
+    $open = $cgi->param('tab');
+  }
+
   my $name = $self->name;
   my $fixed_width = $self->width;
   my $full_width = 80;
@@ -65,21 +74,25 @@ sub render {
     $html .= 'style="width:' . $fixed_width . 'px;"';
   }
   $html .= ">\n";
-  my $class = "tab selected"; 
   foreach my $tab (@tabs) {
+    my $class = "tab";
+    if ($tab->name eq $open) {
+      $class = 'tab selected';
+    }
     $html .= "<div class='$class' id='" . $tab->name . "_tab' style='width: $tab_width%;'><a href='javascript:void(0);' onClick='" . $name . "_switch_tab(\"" . $tab->name . "\");'>" . $tab->label . "</a></div>";
-    $class = "tab";
   }
 
   $html .= "<br clear='all' />\n";
   $html .= "<div class='tab_content'>\n";
   
-  my $style = "";
   foreach my $tab (@tabs) {
+    my $style = "style='display: none;'";
+    if ($tab->name eq $open) {
+      $style = "";
+    } 
     $html .= "<div class='tab_content_panel' " . $style . " id='" . $tab->name . "'>\n";
     $html .= $tab->content;
     $html .= "</div>\n";
-    $style = "style='display: none;'";
   }
 
   $html .= "</div>\n";
