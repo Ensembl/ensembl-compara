@@ -94,7 +94,7 @@ if (defined $chr_names and $chr_names ne "all") {
 
 my $total_nb_syntenies = 0;
 foreach my $df (@{$dfgs}) {
-  my $syntenies = $sra->fetch_all_by_MethodLinkSpeciesSet_DnaFrag($mlss, $df);
+  my $syntenies = $sra->fetch_by_MethodLinkSpeciesSet_DnaFrag($mlss, $df);
 
   next unless (scalar @{$syntenies});
   print STDERR "For DnaFrag ".$df->name.", length ",$df->length,", ";
@@ -105,7 +105,7 @@ foreach my $df (@{$dfgs}) {
 
   foreach my $sr (@{$syntenies}) {
     my ($species1_dfr_string, $species2_dfr_string);
-    foreach my $dfr (@{$sr->get_all_DnaFragRegions}) {
+    foreach my $dfr (@{$sr->children}) {
       my $strand = "+";
 
       if ($dfr->dnafrag_strand < 0) {
