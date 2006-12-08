@@ -6,6 +6,7 @@ package filter_news;
 
 use CGI;
 
+use EnsEMBL::Web::Apache::Handlers;
 use EnsEMBL::Web::SpeciesDefs;
 use EnsEMBL::Web::Document::DataView;
 use EnsEMBL::Web::Interface::PageDefinition;
@@ -19,13 +20,10 @@ my $page = EnsEMBL::Web::Interface::PageDefinition->new();
 my $data = EnsEMBL::Web::DBSQL::DataDefinition->new();
 my $sd = EnsEMBL::Web::SpeciesDefs->new();
 
+my $db = $ENSEMBL_WEB_REGISTRY->dbAdaptor;
 $data->adaptor(EnsEMBL::Web::DBSQL::ViewAdaptor->new(( 
-                                                       hostname => $sd->ENSEMBL_USERDB_HOST,
-                                                       port     => $sd->ENSEMBL_USERDB_PORT,
-                                                       database => $sd->ENSEMBL_USERDB_NAME,
-                                                       username => $sd->ENSEMBL_USERDB_USER,
-                                                       password => $sd->ENSEMBL_USERDB_PASS,
-                                                       table    => 'record'
+                                                      handle => $db, 
+                                                      table    => 'user_record'
                                                     )) );
 
 my ($topic_types, $sp_types);
