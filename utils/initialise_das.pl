@@ -139,7 +139,7 @@ sub entry_points {
   print FH qq(<?xml version="1.0" standalone="no"?>\n<!DOCTYPE DASEP SYSTEM "http://www.biodas.org/dtd/dascep.dtd">\n<DASEP>\n  <ENTRY_POINTS href="$href" version="1.0">);
   foreach my $seg (@$entry_points) {
     printf FH qq(
-    <SEGMENT id="%s" start="%d" end="%d" orientation="+">%s</SEGMENT>), $seg->[0], $seg->[2]||1, $seg->[3]||$seg->[1], $seg->[0];
+    <SEGMENT id="%s" start="%d" stop="%d" orientation="+">%s</SEGMENT>), $seg->[0], 1, $seg->[1], $seg->[0];
   }
   print FH qq(\n  </ENTRY_POINTS>\n</DASEP>\n);
   close FH;
