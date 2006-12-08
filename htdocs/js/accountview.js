@@ -38,11 +38,13 @@ function add_to_display(ident) {
   set_style_for_class(displayed_settings[ident], 'none');
   displayed_settings[ident] = (element);
   set_style_for_displayed_settings('block');
+  save_mixer_settings();
 }
 
 function remove_from_display(ident) {
   set_style_for_class(displayed_settings[ident], 'none');
   displayed_settings[ident] = '';
+  save_mixer_settings();
 }
 
 function set_style_for_displayed_settings(style) {
@@ -58,6 +60,19 @@ function set_style_for_class(new_class,style) {
   for (var i = 0; i < elements.length; i++) {
     elements[i].style.display = style;
   }
+}
+
+function save_mixer_settings() {
+  var url = "/common/mixer";
+  var data = "settings=" + displayed_settings;
+  var ajax_info = new Ajax.Request(url, {
+                           method: 'get',
+                           parameters: data,
+                           onComplete: mixer_settings_saved 
+                         });
+}
+
+function mixer_settings_saved(response) {
 }
 
 function getElementsByClass(searchClass,node,tag) {
