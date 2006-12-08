@@ -18,7 +18,9 @@ if ($ENV{'ENSEMBL_USER_ID'}) {
   my $found = 0;
   my $record = undef;
   foreach my $this ($user->opentab_records) {
-    $record = $this;
+    if ($this->name eq $cgi->param('name')) {
+      $record = $this;
+    }
   }
 
   if (!$record) {
