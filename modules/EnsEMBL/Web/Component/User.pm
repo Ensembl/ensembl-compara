@@ -123,7 +123,11 @@ sub user_tabs {
   my $cgi = new CGI;
   my @opentabs = $user->opentab_records;
   if ($#opentabs > -1) {
-    $tabview->open($opentabs[0]->tab);
+    foreach my $opentab (@opentabs) {
+      if ($opentab->name eq $tabview->name) { 
+        $tabview->open($opentab->tab);
+      } 
+    }
   } 
 
   ## Override previous saved settings if necessary
@@ -280,25 +284,33 @@ $html .= qq(</ul>
 
 
 sub _render_settings_table {
-  my ($user, $records) = @_;
+  my ($records, $user) = @_;
   my @row_records = @{ $records };
   my $sort = 0;
-  my @sortables = $user->sortable_records;
-  my $sortable = $sortables[0];
-  my @presets = &mixer_presets_for_user($user);
+  my $sortable = undef;
+  my @sortables = undef;
+  my @presets = ();
+  if ($user) {
+    @sortables = $user->sortable_records;
+    $sortable = $sortables[0];
+    @presets = &mixer_presets_for_user($user);
+  }
   if (defined $sortable && $sortable->kind eq 'alpha') {
     $sort = 1;
   }
   if ($sort) {
     @row_records = sort { $a->{sortable} cmp $b->{sortable} } @{ $records };
   } 
-  my @admin_groups = @{ $user->find_administratable_groups };
+  my @admin_groups = ();
+  if ($user) {
+    @admin_groups = @{ $user->find_administratable_groups };
+  }
   my $is_admin = 0;
   if ($#admin_groups > -1) {
     $is_admin = 1;
   }
 
-  my $html = qq(<table class="ss">);
+  my $html = qq(<table class="ss" cellpadding='4' cellspacing='0'>);
   my $class = 'bg1';
  
   foreach my $row (@row_records) {
@@ -330,7 +342,11 @@ sub _render_settings_table {
     }
     if ($row->{ident} eq 'user') {
       if ($row->{'edit_url'}) {
-        $html .= '<td style="text-align:right;"><a href="/common/' . $row->{'edit_url'} . qq(?id=$id">Edit</a></td>);
+        $html .= '<td style="text-align:right;"><a href="/common/' . $row->{'edit_url'} . qq(?id=$id);
+        if ($row->{'group_id'}) {
+          $html .= '&class=group'; 
+        }
+        $html .= qq(">Edit</a></td>);
       }
       $html .= '<td style="text-align:right;">';
       if ($is_admin) {
@@ -339,7 +355,11 @@ sub _render_settings_table {
       else {
         $html .= '&nbsp;';
       }
-      $html .= '</td><td style="text-align:right;"><a href="/common/' . $row->{'delete_url'} . qq(?id=$id">Delete</a></td>);
+      $html .= '</td><td style="text-align:right;"><a href="/common/' . $row->{'delete_url'} . qq(?id=$id);
+      if ($row->{'group_id'}) {
+        $html .= '&group_id=' . $row->{'group_id'};
+      }
+      $html .= qq(">Delete</a></td>);
     }
     else {
       $html .= '<td colspan="3" class="center">&nbsp;</td>';
@@ -357,10 +377,11 @@ sub _render_groups {
   my @groups = @{ $user->groups };
   my @group_rows = ();
   my %included = ();
+  my @all_groups = @{ EnsEMBL::Web::Object::Group->all_groups_by_type('restricted') };
   $html .= &info_box($user, qq(Subscribing to groups lets you access shared bookmarks, configurations and other settings. The groups you're subscribed to, and some other popular groups are listed below.<br /><a href="/info/about/bookmarks.html">Learn more about saving frequently used pages &rarr;</a>) , 'user_group_info');
   if ($#groups > -1) {
     $html .= "<h5>Your subscribed groups</h5>\n";
-    $html .= "<table width='100%' cellspacing='4' cellpadding='0'>\n";
+    $html .= "<table width='100%' cellspacing='0' cellpadding='4'>\n";
     my $class = "bg1";
     foreach my $group (sort {$a->name cmp $b->name} @groups) {
       $class = &toggle_class($class);
@@ -375,10 +396,12 @@ sub _render_groups {
       }
       $html .= "</tr>\n";
     }
-    $html .= "</table><br />\n";
-    foreach my $group (@groups) {
-      $html .= &_render_invites_for_group($group, $user);
+    if ($#all_groups > -1) {
+      foreach my $group (@all_groups) {
+        $html .= &_render_invites_for_group($group, $user);
+      }
     }
+    $html .= "</table><br />\n";
   }
   else {
     $html .= qq(<p class="center"><img src="/img/bookmark_example.gif" /></p>);
@@ -397,22 +420,16 @@ sub _render_invites_for_group {
   if ($group->type eq 'restricted') {
     $group->load;
     my @invites = $group->invite_records;
-    if ($#invites > -1) {
-      $html .= "<table width='100%' cellspacing='4' cellpadding='0'>\n";
-    }
     foreach my $invite (@invites) {
       if ($invite->email eq $user->email && $invite->status eq 'pending') {
         $class = "invite";
         $html .= "<tr>\n";
         $html .= "<td class='$class'>" . $group->name . "</td>";
         $html .= "<td class='$class'>" . $group->description. "</td>";
-        $html .= "<td class='$class'><a href='/common/join_by_invite?record_id=" . $invite->id . "&invite=" . $invite->code . "'>Accept invite</a></td>";
+        $html .= "<td class='$class' style='text-align:right'><a href='/common/join_by_invite?record_id=" . $invite->id . "&invite=" . $invite->code . "'>Accept invite</a></td>";
         $html .= "</tr>\n";
         $class = "very_dark";
       }
-    }
-    if ($#invites > -1) {
-      $html .= "</table>\n";
     }
   }
   return $html;
@@ -454,7 +471,7 @@ sub _render_bookmarks {
                       'ident' => 'user',
                       'sortable' => $bookmark->name,
                       'edit_url' => 'bookmark', 
-                      'delete_url' => 'delete_bookmark',
+                      'delete_url' => 'remove_record',
                       'data' => [
       '<a href="' . $bookmark->url . '" title="' . $bookmark->description . '">' . $bookmark->name . '</a>', '&nbsp;' 
     ]};
@@ -475,7 +492,7 @@ sub _render_bookmarks {
   my $html;
   $html .= &info_box($user, qq(Bookmarks allow you to save frequently used pages from Ensembl and elsewhere. When browsing Ensembl, you can add new bookmarks by clicking the 'Add bookmark' link in the sidebar.<br /><a href="/info/about/bookmarks.html">Learn more about saving frequently used pages &rarr;</a>) , 'user_bookmark_info');
   if ($#records > -1) {
-    $html .= _render_settings_table($user, \@records);
+    $html .= _render_settings_table(\@records, $user);
   }
   else {
     $html .= qq(<p class="center"><img src="/img/bookmark_example.gif" /></p>);
@@ -500,7 +517,7 @@ sub _render_configs {
   my $html;
   $html .= &info_box($user, qq(You can save custom configurations (DAS sources, decorations, additional drawing tracks, etc), and return to them later or share them with fellow group members. Look for the 'Save configuration link' in the sidebar when browsing Ensembl.<br /><a href="/info/about/configurations.html">Learn more about custom configurations &rarr;</a>), 'user_configuration_info');
   if ($#records > -1) {
-    $html .= _render_settings_table($user, \@records);
+    $html .= _render_settings_table(\@records, $user);
   }
   else {
     $html .= qq(<p class="center"><img src="/img/config_example.gif" /></p>);
@@ -543,7 +560,7 @@ sub _render_news {
   my $html;
   $html .= &info_box($user, qq(You can filter the news headlines on the home page and share these settings with fellow group members.<br /><a href="/info/about/news_filters.html">Learn more about news filters &rarr;</a>), 'news_filter_info');
   if ($#records > -1) {
-    $html .= _render_settings_table($user, \@records);
+    $html .= _render_settings_table(\@records, $user);
   }
   else {
     $html .= qq(<p class="center">You do not have any filters set, so you will see general headlines.</p>
@@ -780,6 +797,226 @@ sub show_members {
 
   $panel->print($html);
   return 1;
+}
+
+sub delete_group {
+  my( $panel, $object) = @_;
+
+  my $cgi = new CGI;
+  my $group = EnsEMBL::Web::Object::Group->new(( id => $cgi->param('id') ));
+
+  my $html = "<div class='white boxed' id='intro'>\n";
+  $html .= "<form action='remove_group' name='remove' id='remove' method='post'>\n";
+  $html .= "<input type='hidden' name='group_id' value='" . $group->id . "' />\n";
+  $html .= "Delete this group? <input type='button' value='Delete' onClick='reallyDelete()' />";
+  $html .= "</form>\n";
+  $html .= "</div>\n";
+
+  $panel->print($html);
+}
+
+sub group_users {
+  my( $panel, $user) = @_;
+  my $cgi = new CGI;
+  my $group = EnsEMBL::Web::Object::Group->new(( id => $cgi->param('id') ));
+  my $html = "";
+  $html .= &group_users_tabview($user, $group);
+  $html .= "<br />";
+  $html .= "&larr; <a href='accountview'>Back to your account</a>";
+  $html .= "<br /><br />";
+  $panel->print($html);
+}
+
+sub group_users_tabview {
+  my ($user, $group) = @_;
+  
+  my $manageTab= EnsEMBL::Web::Interface::Tab->new(( 
+                                     name => 'manage', 
+                                     label => 'Group members', 
+                                     content => _render_group_users($group, $user) 
+                                                ));
+
+  my $settingsTab = EnsEMBL::Web::Interface::Tab->new(( 
+                                     name => 'sharedsettings', 
+                                     label => 'Shared settings', 
+                                     content => _render_group_settings($group, $user) 
+                                                ));
+
+  my $inviteTab = EnsEMBL::Web::Interface::Tab->new(( 
+                                     name => 'invite', 
+                                     label => 'Invite', 
+                                     content => _render_group_invite($group, $user)
+                                                     ));
+
+  my @invites = $group->invite_records;
+  my $pendingTab = undef;
+  if ($#invites > -1) {
+    my $label = "Invited members (" . ($#invites + 1) . ")";
+    $pendingTab = EnsEMBL::Web::Interface::Tab->new(( 
+                                     name => 'pending', 
+                                     label => $label, 
+                                     content => _render_group_pending(( group => $group, user => $user, invites => \@invites)
+                                                     )));
+  }
+
+  my $tabview = EnsEMBL::Web::Interface::TabView->new(( 
+                                      name => "groups",
+                                      tabs => [ $manageTab, $settingsTab, $pendingTab, $inviteTab ]
+                                                     ));
+
+  my $cgi = new CGI;
+  my @opentabs = $user->opentab_records;
+  if ($#opentabs > -1) {
+    foreach my $opentab (@opentabs) {
+      if ($opentab->name eq $tabview->name) { 
+        $tabview->open($opentab->tab);
+      } 
+    }
+  } 
+
+  ## Override previous saved settings if necessary
+  if ($cgi->param('tab')) {
+     $tabview->open($cgi->param('tab'));
+  }
+
+  return $tabview->render;
+}
+
+sub _render_group_settings {
+  my ($group) = @_;
+  my @bookmarks = $group->bookmark_records;
+  my @configurations = $group->configuration_records;
+  my @notes = $group->note_records;
+  my $html = "";
+  if ($#bookmarks > -1) {
+    $html .= "<h5>Bookmarks</h5>\n";
+    my @records = ();
+    foreach my $bookmark (@bookmarks) {
+      my $description = $bookmark->description || '&nbsp;';
+      push @records, {  'id' => $bookmark->id, 
+                        'group_id' => $group->id,
+                        'ident' => 'user',
+                        'sortable' => $bookmark->name,
+                        'edit_url' => 'bookmark', 
+                        'delete_url' => 'remove_group_record', 
+                        'data' => [
+        '<a href="' . $bookmark->url . '" title="' . $bookmark->description . '">' . $bookmark->name . '</a>', '&nbsp;' 
+      ]};
+    }
+    $html .= _render_settings_table(\@records);
+  }
+
+  if ($#configurations > -1) {
+    $html .= "<h5>Configurations</h5>\n";
+    my @records = ();
+    foreach my $configuration (@configurations) {
+      my $description = $configuration->blurb || '&nbsp;';
+      push @records, {  'id' => $configuration->id, 
+                        'group_id' => $group->id,
+                        'ident' => 'user',
+                        'sortable' => $configuration->name,
+                        'edit_url' => 'edit_config', 
+                        'delete_url' => 'remove_group_record', 
+                        'data' => [
+        '<a href="' . $configuration->config_url . '" title="' . $configuration->blurb . '">' . $configuration->name . '</a>', '&nbsp;' 
+      ]};
+    }
+    $html .= _render_settings_table(\@records);
+  }
+
+  return $html;
+}
+
+sub _render_group_pending {
+  my (%params) = @_;
+  my $group = $params{group};
+  my $user = $params{user};
+  my @invites = @{ $params{invites} };
+  my $html = "";
+  if ($#invites > -1) {
+    my $table = EnsEMBL::Web::Interface::Table->new(( 
+                                         class => "ss", 
+                                         style => "border-collapse:collapse"
+                                                    ));
+    foreach my $invite (@invites) {
+      my $row = EnsEMBL::Web::Interface::Table::Row->new();
+      $row->add_column({ content => $invite->email });
+      $row->add_column({ content => ucfirst($invite->status) });
+      $row->add_column({ content => "<a href='/common/delete_invite?group_id=" . $group->id . "&invite_id=" . $invite->id . "&user_id=" . $user->id . "'>Delete</a>" });
+      $table->add_row($row);
+    }
+
+    $html .= $table->render;
+  } else {
+    $html = "There are no pending memberships for this group.";
+  }
+  return $html;
+}
+
+sub _render_group_users {
+  my ($group, $user) = @_;
+  my $html = "";
+  $html .= &info_box($user, "This panel lists all members of this group. You can invite new users to join your group by entering their email address in the 'Invite' tab.", "group_members_info");
+  my @users = @{ $group->users };
+  my $table = EnsEMBL::Web::Interface::Table->new(( 
+                                       class => "ss", 
+                                       style => "border-collapse:collapse"
+                                                  ));
+  foreach my $user (@users) {
+    my $row = EnsEMBL::Web::Interface::Table::Row->new();
+    $row->add_column({ content => $user->name });
+    warn "CREATED BY: " . $group->created_by;
+    #if ($user->id == $group->created_by) {
+    #  $row->add_column({ content => "Owner" });
+    #  $row->add_column({ content => "" });
+      #$row->add_column({ content => "" });
+    #} else {
+
+      if ($user->is_administrator_of($group)) {
+        $row->add_column({ content => "Administrator" });
+        #$row->add_column({ content => "Demote" });
+        $row->add_column({ content => "" });
+      } else {
+        $row->add_column({ content => "Member" });
+        #$row->add_column({ content => "Promote" });
+        $row->add_column({ content => "<a href='/common/remove_user?user_id=" . $user->id . "&group_id=" . $group->id . "'>Unsubscribe</a>", align => "right" });
+      }
+
+    #}
+
+    $table->add_row($row);
+  }
+
+  $html .= $table->render;
+
+  return $html;
+}
+
+sub _render_group_invite {
+  my ($group, $user) = @_;
+  my $html = "<b>Invite a user to join this group</b><br /><br />\n";
+  $html .= "<form action='/common/invite' action='post'>\n";
+  $html .= "To invite a new member into this group, enter their email address. Users not already registered with Ensembl will be asked to do so before accepting your invite.<br /><br />\n";
+  $html .= "<input type='hidden' value='" . $user->id . "' name='user_id' />"; 
+  $html .= "<input type='hidden' value='" . $group->id . "' name='group_id' />"; 
+  $html .= "<input type='text' value='' size='30' name='invite_email' />"; 
+  $html .= "<input type='submit' value='Invite' />";
+  $html .= "</form>";
+  $html .= "<br />";
+  return $html;
+}
+
+sub group_details {
+  my( $panel, $user) = @_;
+  my $cgi = new CGI;
+  my $group = EnsEMBL::Web::Object::Group->new(( id => $cgi->param('id') ));
+  my $html = "<div class='pale boxed'>";
+  $html .= qq(This page allows administrators to manage their Ensembl group. From here you can invite new users to join your group, remove existing users, and decide which resources are shared between group members.<br />
+                <br />For more information about Ensembl groups, and how to use them,
+                read our <a href='/info/about/groups.html'>introductory guide</a>.);
+  $html .= "</div>";
+   
+  $panel->print($html);
 }
 
 1;
