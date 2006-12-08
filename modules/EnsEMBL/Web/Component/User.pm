@@ -60,18 +60,6 @@ sub toggle_class {
 
 ##---------- ACCOUNTVIEW ----------------------------------------
 
-sub user_details {
-  my( $panel, $user) = @_;
-  my $html = "<div>";
-  $html .= qq(<p>This is your Ensembl account home page. From here you can manage
-                your saved settings, update your details and join or create new 
-                Ensembl groups.</p><p>To learn more about how to get the most
-                from your Ensembl account, read our <a href='/info/about/accounts.html'>introductory guide</a>.</p>);
-  $html .= "</div>";
-   
-  $panel->print($html);
-}
-
 sub settings_mixer {
   my ($panel, $user) = @_;
   my $html = "<div>";
@@ -109,7 +97,7 @@ sub user_tabs {
 
   my $newsTab= EnsEMBL::Web::Interface::Tab->new(( 
                                      name => 'news', 
-                                     label => 'News', 
+                                     label => 'News filters', 
                                      content => _render_news($user), 
                                                 ));
 
@@ -119,9 +107,9 @@ sub user_tabs {
                                      content => '', 
                                                 ));
 
+
   my $tabview = EnsEMBL::Web::Interface::TabView->new(( 
                                       name => "settings",
-                                      #width => '770',
                                       tabs => [
                                                 $bookmarkTab,
                                                 $configTab,
@@ -130,6 +118,18 @@ sub user_tabs {
                                                 $groupTab,
                                               ]
                                                      ));
+
+
+  my $cgi = new CGI;
+  my @opentabs = $user->opentab_records;
+  if ($#opentabs > -1) {
+    $tabview->open($opentabs[0]->tab);
+  } 
+
+  ## Override previous saved settings if necessary
+  if ($cgi->param('tab')) {
+     $tabview->open($cgi->param('tab'));
+  }
 
   $panel->print($tabview->render . '<br />');
 }

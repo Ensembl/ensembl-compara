@@ -8,6 +8,20 @@ function reallyDelete(id) {
   }
 }
 
+function save_tab_change(tabview,element) {
+  var url = "/common/user_tabs";
+  var data = "tab=" + element + "&name=" + tabview;
+  var ajax_info = new Ajax.Request(url, {
+                           method: 'get',
+                           parameters: data,
+                           onComplete: mixer_settings_saved 
+                         });
+}
+
+function tab_change_saved(response) {
+  alert(response.responseText);
+}
+
 function add_mix(ident) {
   var element;
   open = false;
