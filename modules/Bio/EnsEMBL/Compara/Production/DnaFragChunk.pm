@@ -149,7 +149,6 @@ sub fetch_masked_sequence {
   }
 
   $self->sequence($seq);
-
   return $seq;
 }
 
@@ -199,6 +198,7 @@ sub bioseq {
 
   my $seq = undef;
 
+
   if(not defined($self->sequence())) {
     my $starttime = time();
     $seq = $self->fetch_masked_sequence;
@@ -206,7 +206,7 @@ sub bioseq {
 
     $self->sequence($seq);
   }
-
+  
   $seq = Bio::Seq->new(-seq        => $self->sequence(),
                        -display_id => $self->display_id(),
                        -primary_id => $self->sequence_id(),
@@ -293,6 +293,7 @@ sub sequence {
     $self->{'_sequence'} = shift;
     $self->sequence_id(0);
   }
+
   return $self->{'_sequence'} if(defined($self->{'_sequence'}));
 
   #lazy load the sequence if sequence_id is set
@@ -335,6 +336,59 @@ sub dump_to_fasta_file
   $output_seq->write_seq($bioseq);
   close OUTSEQ;
 
+  return $self;
+}
+
+#Version of dump_to_fasta_file that appends chunk_size portions of the 
+#sequence to fastafile. Useful if the sequence is very long eg opossum chr1 & 2
+#Must remember that fastafile should not exist beforehand otherwise it will be 
+#appended to so check if it exists and delete it
+sub dump_chunks_to_fasta_file 
+{
+  my $self = shift;
+  my $fastafile = shift;
+
+  #choosen because it is divisible by 60 (fasta line width used)
+  my $chunk_size = 99999960;
+  my $start = 1;
+  my $end = $chunk_size;
+  my $total_length = $self->length;
+
+  #check to see if the fastafile already exists and delete it if it does.
+  if (-e $fastafile) {
+     unlink $fastafile;
+  }
+
+  open(OUTSEQ, ">>$fastafile")
+      or $self->throw("Error opening $fastafile for write");
+  print OUTSEQ ">" . $self->display_id . "\n";
+
+  while ($start <= $total_length) {
+
+      $self->{'_slice'} = undef;
+      $self->{'_sequence'} = undef;
+
+      $self->seq_start($start);
+      $self->seq_end($end);
+
+      my $bioseq = $self->bioseq;
+
+      #increment start and end to do next chunk
+      $start = $end + 1;
+      
+      if ($end+$chunk_size < $total_length) {
+	  $end += $chunk_size;
+      } else {
+	  $end = $total_length;
+      }
+  
+      #write out sequence to fasta file
+      my $seq = $bioseq->seq;
+      $seq =~ s/(.{60})/$1\n/g;
+      $seq =~ s/\n$//;
+      print OUTSEQ $seq, "\n";
+  }
+  close OUTSEQ;
   return $self;
 }
 
