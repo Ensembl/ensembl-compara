@@ -26,6 +26,7 @@ if ($ENV{'ENSEMBL_USER_ID'}) {
   }
 
   $record->tab($cgi->param('tab'));
+  $record->name($cgi->param('name'));
   $record->save;
 
 }
