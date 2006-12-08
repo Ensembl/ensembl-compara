@@ -179,7 +179,7 @@ sub render_multi {
   foreach my $option (@options) {
     my $selected = "";
     my $value = $page->value_for_selection_element($field_name, $option);
-    $widget .= qq(<input type="checkbox" name="$field_name" value="$value");
+    $widget .= qq(<div class="radiocheck"><input type="checkbox" class="radio" name="$field_name" value="$value");
     if ($page->value_for_form_element($field_name)) {
       if ($page->value_for_form_element($field_name) eq $option) {
         $widget .= ' checked="yes" ';
@@ -195,7 +195,7 @@ sub render_multi {
     if ($description) {
       $widget .= " ($description)";
     }
-    #$self->print("<br />");
+    $widget .= "</div>\n";
   }
   $self->print($self->render_form_widget($widget));
 }
