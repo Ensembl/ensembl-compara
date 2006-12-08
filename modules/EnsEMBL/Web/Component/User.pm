@@ -244,6 +244,7 @@ sub user_prefs {
 sub _render_settings_table {
   my ($user, $records) = @_;
   my @sorted_records = sort { $a->{sortable} cmp $b->{sortable} } @{ $records };
+warn "Records @sorted_records";
   my @admin_groups = @{ $user->find_administratable_groups };
   my $is_admin = 0;
   if ($#admin_groups > -1) {
@@ -319,13 +320,13 @@ sub _render_bookmarks {
 
   my $html;
   $html .= &info_box($user, qq(Bookmarks allow you to save frequently used pages from Ensembl and elsewhere. When browsing Ensembl, you can add new bookmarks by clicking the 'Add bookmark' link in the sidebar.<br /><a href="/info/about/bookmarks.html">Learn more about saving frequently used pages &rarr;</a>) , 'user_bookmark_info');
-  if ($#bookmarks > -1) {
+  if ($#records > -1) {
     $html .= _render_settings_table($user, \@records);
   }
   else {
     $html .= qq(<p class="center"><img src="/img/bookmark_example.gif" /></p>);
   }  
-  $html .= "</table>\n";
+  $html .= qq(<p><a href="/common/bookmark?forward=1">Add a new bookmark &rarr;</a></p>);
   return $html;
 }
 
@@ -344,7 +345,7 @@ sub _render_configs {
 
   my $html;
   $html .= &info_box($user, qq(You can save custom configurations (DAS sources, decorations, additional drawing tracks, etc), and return to them later or share them with fellow group members. Look for the 'Save configuration link' in the sidebar when browsing Ensembl.<br /><a href="/info/about/configurations.html">Learn more about custom configurations &rarr;</a>), 'user_configuration_info');
-  if ($#configurations > -1) {
+  if ($#records > -1) {
     $html .= _render_settings_table($user, \@records);
   }
   else {
@@ -366,24 +367,34 @@ sub _render_news {
   my $user = shift;
   my @filters = $user->news_records;
   my @records;
+  my $both = 0;
   foreach my $filter (@filters) {
     my $data;
-    my $count = 0;
-    while (my ($k, $v) = each(%$filter)) {
-      $data .= ', ' if $count > 0;
-      $data .= uc($k) . ':' . $v;
-      $count++;
-    } 
-    push @records, {'id' => $filter->id, 'data' => [$data] };
+    if ($filter->topic) {
+      $data .= 'Topic: '.$filter->topic.' ';
+      $both = 1;
+    }
+    if (my $species = $filter->species) {
+      $species =~ s/_/ /;
+      $data .= '; ' if $both;
+      $data .= 'Species: '.$species;
+    }
+    my $sortable = $species ? 'species' : 'topic';
+    push @records, {'id' => $filter->id, 
+               'edit_url' => 'filter_news', 'delete_url' => 'delete_record', 
+               'ident' => 'user',
+               'data' => [$data] };
   }
 
   my $html;
   $html .= &info_box($user, qq(You can filter the news headlines on the home page and share these settings with fellow group members.<br /><a href="/info/about/news_filters.html">Learn more about news filters &rarr;</a>), 'news_filter_info');
-  if ($#filters > -1) {
+  if ($#records > -1) {
     $html .= _render_settings_table($user, \@records);
   }
   else {
-    $html .= qq(<p class="center">You do not have any filters set, so you will see general headlines.</p>);
+    $html .= qq(<p class="center">You do not have any filters set, so you will see general headlines.</p>
+<p><a href="/common/filter_news">Add a news filter &rarr;</a></p>
+);
   }
   return $html;
 }
