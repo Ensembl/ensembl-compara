@@ -160,12 +160,7 @@ sub gene_text_label {
     $id .= $eid ? " ($eid)" : '';
   }
   unless( $short_labels ){
-    $id .= "\n";
-    if( $gene->type eq 'bacterial_contaminant' ) {
-      $id.= 'Bacterial cont.';
-    } else {
-      $id .= $colours->{ $gene->analysis->logic_name."_".$gene->biotype."_".$gene->status }[1];
-    }
+    $id .= "\n".$colours->{ $gene->analysis->logic_name."_".$gene->biotype."_".$gene->status }[1];
   }
   return $id;
 }
