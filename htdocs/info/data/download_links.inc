@@ -212,6 +212,17 @@
 	    
 <tr>
 <td>
+<a target="ftp" href="ftp://ftp.ensembl.org/pub/current_ornithorhynchus_anatinus/"><i>Ornithorhynchus anatinus</i></a> (platypus)</td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_ornithorhynchus_anatinus/data/fasta/dna/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_ornithorhynchus_anatinus/data/fasta/cdna/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_ornithorhynchus_anatinus/data/fasta/pep/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_ornithorhynchus_anatinus/data/flatfiles/embl/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_ornithorhynchus_anatinus/data/flatfiles/genbank/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_ornithorhynchus_anatinus/data/mysql/">FTP</a></td>
+</tr>
+	    
+<tr>
+<td>
 <a target="ftp" href="ftp://ftp.ensembl.org/pub/current_oryctolagus_cuniculus/"><i>Oryctolagus cuniculus</i></a> (rabbit)</td>
 <td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_oryctolagus_cuniculus/data/fasta/dna/">FTP</a></td>
 <td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_oryctolagus_cuniculus/data/fasta/cdna/">FTP</a></td>
