@@ -244,7 +244,6 @@ sub user_prefs {
 sub _render_settings_table {
   my ($user, $records) = @_;
   my @sorted_records = sort { $a->{sortable} cmp $b->{sortable} } @{ $records };
-warn "Records @sorted_records";
   my @admin_groups = @{ $user->find_administratable_groups };
   my $is_admin = 0;
   if ($#admin_groups > -1) {
@@ -280,7 +279,7 @@ warn "Records @sorted_records";
       $html .= '</td><td style="text-align:right;"><a href="/common/' . $row->{'delete_url'} . qq(?id=$id">Delete</a></td>);
     }
     else {
-      $html .= '<td colspan="3" class="center">' . $row->{'group_name'} . '</td>';
+      $html .= '<td colspan="3" class="center">&nbsp;</td>';
     }
     $html .= "</tr>";
   }
@@ -301,7 +300,7 @@ sub _render_bookmarks {
                       'edit_url' => 'bookmark', 
                       'delete_url' => 'delete_bookmark',
                       'data' => [
-      '<a href="' . $bookmark->url . '" title="' . $bookmark->description . '">' . $bookmark->name . '</a>', $description
+      '<a href="' . $bookmark->url . '" title="' . $bookmark->description . '">' . $bookmark->name . '</a>', '&nbsp;' 
     ]};
   }
 
@@ -311,9 +310,8 @@ sub _render_bookmarks {
       push @records, {'id' => $bookmark->id, 
                       'ident' => $group->id, 
                       'sortable' => $bookmark->name,
-                      'group_name' => $group->name,
                       'data' => [
-        '<a href="' . $bookmark->url . '" title="' . $bookmark->description . '">' . $bookmark->name . '</a>', $description
+        '<a href="' . $bookmark->url . '" title="' . $bookmark->description . '">' . $bookmark->name . '</a>', $group->name
       ]};
     }
   }
