@@ -221,14 +221,10 @@ sub _trim_gab_left {
     #overlap between them so restrict to the end of the delete and try again.
     #If the delete is shorter than the match, there must be an overlap.
     foreach my $ga (@$gas) {
-	my @cig = ( $ga->cigar_line =~ /(\d*[GMD])/g );
-	
-	my $cigElem = $cig[0];
-	my $cigType = substr( $cigElem, -1, 1 );
-	my $cigLength = substr( $cigElem, 0 ,-1 );
+	my ($cigLength, $cigType) = ( $ga->cigar_line =~ /^(\d*)([GMD])/ );
 	$cigLength = 1 unless ($cigLength =~ /^\d+$/);
 
-	if ($cigType eq "D") {
+	if ($cigType eq "D" or $cigType eq "G") {
 	    $d_length = $cigLength; 
 	    if ($d_length < $min_d_length) {
 		$min_d_length = $d_length;
@@ -256,7 +252,7 @@ sub _trim_gab_left {
 	return $new_gab;
     }
     #otherwise try again with restricted gab
-    _trim_gab_left($new_gab);
+    return _trim_gab_left($new_gab);
 }
 
 #trim genomic align block from the right hand edge to first position having at
@@ -283,15 +279,10 @@ sub _trim_gab_right {
     #overlap between them so restrict to the end of the delete and try again.
     #If the delete is shorter than the match, there must be an overlap.
     foreach my $ga (@$gas) {
-	my @cig = ( $ga->cigar_line =~ /(\d*[GMD])/g );
-
-	my $num_elem = @cig;
-	my $cigElem = $cig[$num_elem-1];
-	my $cigType = substr( $cigElem, -1, 1 );
-	my $cigLength = substr( $cigElem, 0 ,-1 );
+	my ($cigLength, $cigType) = ( $ga->cigar_line =~ /(\d*)([GMD])$/ );
 	$cigLength = 1 unless ($cigLength =~ /^\d+$/);
 
-	if ($cigType eq "D") {
+	if ($cigType eq "D" or $cigType eq "G") {
 	    $d_length =$cigLength;
 	    if ($d_length < $min_d_length) {
 		$min_d_length = $d_length;
@@ -318,7 +309,7 @@ sub _trim_gab_right {
 	return $new_gab;
     }
     #otherwise try again with restricted gab
-    _trim_gab_right($new_gab);
+    return _trim_gab_right($new_gab);
 }
 
 sub _write_gerp_dataflow {
