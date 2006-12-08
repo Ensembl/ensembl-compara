@@ -47,7 +47,7 @@ sub set_external {
 
 sub touch_key {
   my $self = shift;
-  $self->{'_data'}{'name'} .= '.'.time();
+  $self->{'_data'}{'name'} .= '::'. $self->unique_string;
 }
 
 sub get_key {
@@ -121,6 +121,7 @@ sub amend {
   return if $self->is_deleted; ## Can't amend a deleted source!
   $self->mark_altered;
   $self->set_data( $hash_ref );
+  $self->dump();
 }
 
 sub dump {
@@ -138,6 +139,7 @@ sub create_from_URL {
     warn("WARNING: DAS source $das_name has not been added: Missing parameters");
     next;
   }
+  $das_data{name} = $das_name;
 # this bit should be handled outside when das confs are merged...
 #  if( my $src = $ext_das->{'data'}->{$das_name}){
 #    if (join('*',$src->{url}, $src->{dsn}, $src->{type}) eq join('*', $das_data{url}, $das_data{dsn}, $das_data{type})) {
@@ -154,8 +156,8 @@ sub create_from_URL {
 #    }
 #  }
       # Add to the conf list
-  $das_data{label}      ||= $das_data{name};
-  $das_data{caption}    ||= $das_data{name};
+  $das_data{label}      ||= $das_name;
+  $das_data{caption}    ||= $das_name;
 ## Set these to the dafault values....
   $das_data{stylesheet} ||= $DAS_DEFAULTS{STYLESHEET};
   $das_data{score}      ||= $DAS_DEFAULTS{SCORE};
@@ -166,7 +168,7 @@ sub create_from_URL {
   $das_data{fg_max}     ||= $DAS_DEFAULTS{FG_MAX};
   $das_data{group}      ||= $DAS_DEFAULTS{GROUP};
   $das_data{strand}     ||= $DAS_DEFAULTS{STRAND};
-  $das_data{enable}       = split /,/, $das_data{enable};
+  $das_data{enable}       = [split /,/, $das_data{enable}];
   $das_data{labelflag}  ||= $DAS_DEFAULTS{LABELFLAG};
 
   if (my $link_url = $das_data{linkurl}) {

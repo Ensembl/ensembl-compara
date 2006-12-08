@@ -25,14 +25,6 @@ use EnsEMBL::Web::Apache::SendDecPage;
 use EnsEMBL::Web::Apache::ServerError;
 use EnsEMBL::Web::Document::ColourChanger;
 
-#use EnsEMBL::Web::Root;
-#my $T = new EnsEMBL::Web::Root;
-#$T->dynamic_use( 'BioMart::Initializer' );
-#$T->dynamic_use( 'BioMart::Registry' );
-#$T->dynamic_use( 'BioMart::Dataset::TableSet' );
-#$T->dynamic_use( 'BioMart::Dataset::GenomicSequence' );
-#$T->dynamic_use( 'BioMart::Dataset::GenomicAlign' );
-
 use BioMart::Initializer;
 
 # below are needed for renewing from the saved martconf.packed file

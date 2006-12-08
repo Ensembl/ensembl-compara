@@ -23,9 +23,17 @@ sub update_configs_from_parameter {
   my $val = $self->{object}->param( $parameter_name );
   my $rst = $self->{object}->param( 'reset' );
   my $wsc = $self->{object}->get_scriptconfig();
+  my @das = $self->{object}->param( 'add_das_source' );
+  
   foreach my $config_name ( @userconfigs ) {
     $self->{'object'}->attach_image_config( $self->{'object'}->script, $config_name );
     $self->{'object'}->user_config_hash( $config_name );
+  }
+  if( @das ) {
+    $self->{object}->get_session( )->get_das();
+    foreach( @das ) {
+      $self->{object}->get_session( )->add_das_source_from_URL( $_ );
+    }
   }
   return unless $val || $rst;
   if( $wsc ) {
@@ -33,7 +41,6 @@ sub update_configs_from_parameter {
     $wsc->update_config_from_parameter( $val ) if $val;
   }
   foreach my $config_name ( @userconfigs ) {
-warn "$config_name...";
     my $wuc = $self->{'object'}->user_config_hash( $config_name );
 #    my $wuc = $self->{'object'}->get_userconfig( $config_name );
     if( $wuc ) {

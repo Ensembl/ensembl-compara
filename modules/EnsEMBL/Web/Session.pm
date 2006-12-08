@@ -193,10 +193,8 @@ sub get_das {
 warn "... $key ...";
     next if exists $Das_sources_of{ ident $self }{$key};
     $TEMP = $hashref->{$key};
-warn $TEMP;
     $TEMP = eval( $TEMP );
     next unless $TEMP;
-warn $TEMP;
 ## Create new DAS source and load from value in database...
     my $DAS = EnsEMBL::Web::DASConfig->new( $self->get_adaptor );
        $DAS->load( $TEMP );
@@ -244,8 +242,10 @@ warn "DEL   ",$source->get_key;
       $self->get_adaptor->resetConfigByName( $self->get_session_id, 'das', $source->get_name );
     } else {
 warn "STORE ",$source->get_key;
-      my $d =  Data::Dumper->new( [$source->get_data], qw[$data] );
+      my $d =  Data::Dumper->new( [$source->get_data], [qw($data)] );
          $d->Indent(1);
+warn ".... ". $source->get_name;
+warn ".... ". $self->get_session_id();
       $self->get_adaptor->setConfigByName(   $self->create_session_id($r), 'das', $source->get_name, $d->Dump );
     }
   }
@@ -256,16 +256,22 @@ sub add_das_source_from_URL {
 ### Create a new DAS source from a configuration hashref
   my( $self, $hash_ref ) = @_;
   my $DAS = EnsEMBL::Web::DASConfig->new( $self->get_adaptor );
+warn "HERE";
   $DAS->create_from_URL( $hash_ref );
+warn "HERE2 ",$DAS->get_key;
 ## We have a duplicate so need to do something clever!
-  if( exists $Das_sources_of{ ident $self }{$DAS->key} ) {
+warn join "\n  ","",keys %{ $Das_sources_of{ ident $self } };
+  if( exists $Das_sources_of{ ident $self }{$DAS->get_key} ) {
 ## Return without adding source if the "unique_string" is the same...
+warn "DUPLICATE ",$DAS->unique_string;
     return if $Das_sources_of{ ident $self }{$DAS->get_key}->unique_string eq $DAS->unique_string;
 ## Otherwise touch the "key"
-    $DAS->touch_key;          #adds a ".sec.msec"
+warn "TOUCH KEY";
+    $DAS->touch_key; ## Lets try again to see if there is duplicate!!
+    return if $Das_sources_of{ ident $self }{$DAS->get_key}->unique_string eq $DAS->unique_string;
   }
 ## Attach the DAS source..
-  $Das_sources_of{ ident $self }{ $DAS->key } = $DAS;
+  $Das_sources_of{ ident $self }{ $DAS->get_key } = $DAS;
 }
 
 sub add_das_source_from_hashref {
