@@ -1,0 +1,36 @@
+#/usr/bin/perl
+
+package sortable;
+
+use strict;
+use warnings;
+
+use EnsEMBL::Web::User::Record;
+use EnsEMBL::Web::Object::User;
+use CGI;
+
+
+my $cgi = new CGI;
+ 
+if ($ENV{'ENSEMBL_USER_ID'}) {
+
+  my $user = EnsEMBL::Web::Object::User->new({ id => $ENV{'ENSEMBL_USER_ID'} });
+  my $found = 0;
+  my $record = undef;
+  foreach my $this ($user->opentab_records) {
+    $record = $this;
+  }
+
+  if (!$record) {
+    $record = EnsEMBL::Web::User::Record->new(( type => 'opentab', user => $user->id));
+  }
+
+  $record->tab($cgi->param('tab'));
+  $record->save;
+
+}
+
+print "Content-type: text/plain\n\n";
+print "Done";
+
+1;
