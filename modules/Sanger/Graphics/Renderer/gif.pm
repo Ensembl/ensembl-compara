@@ -154,18 +154,19 @@ sub render_Rect {
 sub render_Text {
   my ($self, $glyph) = @_;
 
+  my $font   = $glyph->font();
   my $colour = $self->colour($glyph->{'colour'});
 
   ########## Stock GD fonts
-  my $left = $glyph->{'pixelx'};
+  my $left = $glyph->{'pixelx'} || 0;
   $glyph->{'halign'} ||= '';
+
   if($glyph->{'halign'} eq 'right' ) {
     $left += $glyph->{'pixelwidth'} - $glyph->{'textwidth'};
+
   } elsif( $glyph->{'halign'} ne 'left' ) {
     $left += ($glyph->{'pixelwidth'} - $glyph->{'textwidth'})/2;
   }
-
-  my $font = $glyph->font();
 
   if($font eq 'Tiny') {
     $self->{'canvas'}->string(gdTinyFont,  $left, $glyph->{'pixely'}, $glyph->text(), $colour);
