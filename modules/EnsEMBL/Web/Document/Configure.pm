@@ -89,6 +89,26 @@ sub common_menu_items {
     }
   }
 
+  ## Select a random miniad if available
+    if( $doc->species_defs->multidb && $doc->species_defs->multidb->{'ENSEMBL_WEBSITE'} ) {
+      my $db =
+      $doc->species_defs->databases ? $doc->species_defs->databases->{'ENSEMBL_WEBSITE'} : (
+        $doc->species_defs->multidb ? $doc->species_defs->multidb->{'ENSEMBL_WEBSITE'} : undef
+      );
+      return unless $db;
+      my $species = $ENV{'ENSEMBL_SPECIES'} || $ENV{'ENSEMBL_PRIMARY_SPECIES'} || 'common';
+      my $miniads = $doc->species_defs->get_config($species, 'miniads');
+      my $count = (ref($miniads) eq 'ARRAY') ? scalar(@$miniads) : 0;
+      if ($count) {
+        srand;
+        my $rand = int(rand($count));
+        my $miniad = $miniads->[$rand];
+        my $ad_html = $doc->wrap_ad($miniad);
+        $doc->menu->add_miniad($ad_html);
+      }
+    }
+
+
 }
 
 sub bookmark_menu_item {
