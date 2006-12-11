@@ -2,11 +2,70 @@
 
 package remove_group;
 
-use CGI;
-my $cgi = new CGI;
+use strict;
+use warnings;
 
+use EnsEMBL::Web::Document::DataView;
+use EnsEMBL::Web::Interface::PageDefinition;
+use EnsEMBL::Web::Interface::FormDefinition;
+use EnsEMBL::Web::DBSQL::DataDefinition;
+use EnsEMBL::Web::DBSQL::ViewAdaptor;
+
+use EnsEMBL::Web::Apache::Handlers;
+use Apache;
+use Data::Dumper;
+use CGI;
+
+my $cgi = new CGI;
 my $url = $cgi->param('url');
-$url =~ s/contigview/configview/g;
-print "Location: " . $url;
+my $script_name = "contigview";
+
+my $session = $ENSEMBL_WEB_REGISTRY->get_session;
+$session->set_input($cgi);
+my $string = $session->get_script_config_as_string($script_name);
+
+my $cgi = CGI->new;
+my $page = EnsEMBL::Web::Interface::PageDefinition->new();
+my $data = EnsEMBL::Web::DBSQL::DataDefinition->new();
+
+my $db = $ENSEMBL_WEB_REGISTRY->dbAdaptor;
+
+$data->adaptor(EnsEMBL::Web::DBSQL::ViewAdaptor->new((
+                                                       handle => $db,
+                                                       table  => 'user_record'
+                                                    )) );
+
+$data->add_field({'Field' => 'name', 'Type' => 'varchar(255)'});
+$data->add_field({'Field' => 'description', 'Type' => 'text'});
+$data->add_field({'Field' => 'config', 'Type' => 'text'});
+$data->add_field({'Field' => 'scriptconfig', 'Type' => 'text'});
+$data->add_field({'Field' => 'url', 'Type' => 'text'});
+$data->add_field({'Field' => 'created_at', 'Type' => 'timestamp'});
+$data->add_field({'Field' => 'modified_at', 'Type' => 'timestamp'});
+
+$page->data_definition($data);
+$page->title('Save configuration');
+$page->action('create');
+$page->on_complete($cgi->param('url'));
+$page->on_error('http://ensarc-1-14.internal.sanger.ac.uk:6700/dataview/config_failed.html');
+
+$page->add_text('Describe your configuration here, and then click "Submit" to save it. Once saved, you can share your configuration with groups you administer.');
+
+# User id is added automatically if a user is logged in.
+$page->add_configuration_element('record', 'yes');
+$page->add_configuration_element('type', 'configuration');
+$page->add_configuration_element('url', $cgi->param('url'));
+$page->add_configuration_element('scriptconfig', $string);
+
+$page->add_form_element('name', "Configuration name");
+$page->add_form_element('description', "A brief description of your configuration");
+
+EnsEMBL::Web::Document::DataView::simple('User', $page);
+
+# Bring it back
+#my $r = Apache->request();
+#$session->create_session_id($r);
+#$session->set_script_config_from_string($script_name, $string);
+
 
 1;
