@@ -158,14 +158,15 @@ sub render_Text {
   my $colour = $self->colour($glyph->{'colour'});
 
   ########## Stock GD fonts
-  my $left = $glyph->{'pixelx'} || 0;
-  $glyph->{'halign'} ||= '';
+  my $left      = $glyph->{'pixelx'}    || 0;
+  my $textwidth = $glyph->{'textwidth'} || 0;
+  my $halign    = $glyph->{'halign'}    || '';
 
-  if($glyph->{'halign'} eq 'right' ) {
-    $left += $glyph->{'pixelwidth'} - $glyph->{'textwidth'};
+  if($halign eq 'right' ) {
+    $left += $glyph->{'pixelwidth'} - $textwidth;
 
-  } elsif( $glyph->{'halign'} ne 'left' ) {
-    $left += ($glyph->{'pixelwidth'} - $glyph->{'textwidth'})/2;
+  } elsif($halign ne 'left' ) {
+    $left += ($glyph->{'pixelwidth'} - $textwidth)/2;
   }
 
   if($font eq 'Tiny') {
