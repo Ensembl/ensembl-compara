@@ -4,7 +4,7 @@ package login;
 
 use EnsEMBL::Web::Object::User;
 use EnsEMBL::Web::Apache::Handlers; 
-use Apache;
+use Apache2::RequestUtil;
 
 use CGI;
 my $cgi = new CGI;
@@ -28,7 +28,8 @@ my $user_cookie = EnsEMBL::Web::Cookie->new({
      'refresh' => $SD->ENSEMBL_ENCRYPT_REFRESH
    }
 });
-my $r = Apache->request();
+      my $r = Apache2::RequestUtil->request();
+#my $r = Apache->request();
 my $url = "/error/login_failed.html?url=" . $cgi->param('url');
 if ($user->name) {
   warn "OK: Logging in as " . $user->name;

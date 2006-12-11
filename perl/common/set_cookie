@@ -4,6 +4,7 @@ package set_cookie;
 
 use EnsEMBL::Web::Object::User;
 use EnsEMBL::Web::Apache::Handlers;
+use Apache2::RequestUtil;
 
 use CGI;
 my $cgi = new CGI;
@@ -39,7 +40,7 @@ if (!$ENV{'ENSEMBL_USER_ID'}) {
           'refresh' => $SD->ENSEMBL_ENCRYPT_REFRESH
         }
       });
-      my $r = Apache->request();
+      my $r = Apache2::RequestUtil->request();
       $user_cookie->create( $r , $user->id );
       CGI::redirect( $url );
 
