@@ -1,0 +1,133 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+
+  <meta name="author" content="web">
+
+  <meta name="navigation" content="Compara Mart">
+  <title>Compara Mart</title>
+
+
+</head>
+
+<body>
+
+<h2>Compara Mart</h2>
+
+<h3>Comparative Genomics Analysis</h3>
+
+For a full description of the methods and analysis see the corresponding pages :
+
+<br><a href="http://www.ensembl.org/info/data/compara/homology_method.html">Gene Orthology/Paralogy prediction method</a>
+<br><a href="http://www.ensembl.org/info/data/compara/index.html">Blastz-net / Translated Blat Pairwise Alignments, Pecan multiple alignments and GERP</a>
+
+
+
+
+<h3>Formatters used in ComparaMart</h3>
+
+<h4>AXT</h4>
+<p>Complete information about AXT format can be found  <a href="http://genome.ucsc.edu/goldenPath/help/axt.html">here</a>
+<p>Each alignment block in an axt file contains three lines: a summary line and 2 sequence lines. Blocks are separated from one another by blank lines. The summary line contains coordinate and size information about the alignment. It consists of 9 required fields.</p>
+
+<p>Alignment number : The alignment numbering starts with 0 and increments by 1. 
+<br>Chromosome (primary organism)
+<br>Alignment start (primary organism) : The first base is numbered 1.
+<br>Alignment end (primary organism) : The end base is included.
+<br>Chromosome (aligning organism)
+<br>Alignment start (aligning organism)
+<br>Alignment end (aligning organism)
+<br>Strand (aligning organism) : If the strand value is "-", the values of the aligning organism's start and end fields are relative to the reverse-complemented coordinates of its chromosome.
+<br>Score 
+
+<p><i>example:</i> BlastZ-net alignments between human chromosome 1 and the mouse genome</p>
+<code><pre>
+0     1       2040       2122    17   66048810   66048885 + 7968
+GATTGGAGGAAAGATGAGTGAGAGCATCAACTTCTCTCACAACCTAGGCCAGTAAGTAGTGCTTGTGCTCATCTCCTTGGCTG
+GGTTGGAGGGAAGATGAGTGAAGGGATCAATTTCTCTGATGACCTGGGCCGGTAGG-------TGTGGTGTCCTCTTTGTCTG
+
+1     1     123187     123246     7   25002102   25002162 + 148569
+CTGCCCCTGCCCTGACTCCCAGCCCTG-TGGGGGTCCTGACCGCACCTCACCTGGCTCAGA
+CTACTCCTGTCCCCACTCCCAGCCCTGCTGGGGGCCCTGACCCCACCTCTCCAGGCTCGGA
+</pre></code>
+
+<h4>AXTPLUS</h4>
+ 
+ <p>This formatter is an extension of the axt format, with an extended header 
+  and the freedom to have the query sequence (primary organism) in - strand (axt assumes 
+  always the query sequence to be in + strand)</p>
+  
+ <p>The header is now 12 spaced-separated columns (only 9 in the former axt format) :</p>
+ 
+<p>Alignment number 
+<br>Chromosome (primary organism)
+<br>Alignment start (primary organism) : The first base is numbered 1.
+<br>Alignment end (primary organism) : The end base is included.
+<br>Strand (primary organism)
+<br>Chromosome (aligning organism)
+<br>Alignment start (aligning organism)
+<br>Alignment end (aligning organism)
+<br>Strand (aligning organism) 
+<br>Score 
+<br>Chromosome length (primary organism) 
+<br>Chromosome length (aligning organism) 
+ 
+ <p><i>example:</i> BlastZ-net alignments between human chromosome 1 and the mouse genome</p>
+<code><pre>
+0     1      90200      90289 +     1  178533830  178533921 + 126712  247249719  197069962
+ATAGCCCATTAGGCCTCAATGAAGTCTTATGCAAGACCAGAAGCCAATTTGCCATTT--AAGGTGATTCTCCATGTTTCTGCTCTAACTGTG
+AAGGTCTATTAACTGTTGAATAAGTCTTACACAAACACAGAAGCCAATCCTCCTTTTTGTAGGTGATTCTCCATGCTGCTGTTCTCACTTGG
+
+1     1     122259     122362 +     7   24996509   24996614 + 148569  247249719  145134094
+GCTGATGATGGCTTTAGCACCACCGACACCGATCTCAAGTTCAAGGAGTGGGTGACCGAC--TGAGAGTGGGGACAACTCTGGGGAGGAGCCAGAGGGCAACAAGG
+GCTGATGACAGCTTTGGCACCACCGACATTGATCTCAAGTGCAAGGAACGAGTGACTGACAGTGAAAGTGGAGACAGCTCTGGGGAGGACCCAGAGGGTAACAAGG
+
+</pre></code>
+ 
+ 
+<h4>MAF</h4> 
+<p>Complete information about MAF format can be found  <a href="http://genome.ucsc.edu/FAQ/FAQformat#format5">here</a>
+
+<p>The MAF format is line-oriented. Each multiple alignment ends with a blank line. Each sequence in an alignment is on a single line, which can get quite long, but there is no length limit. Words in a line are delimited by any white space. Lines starting with # are considered to be comments. Lines starting with ## can be ignored by most programs, but contain meta-data of one form or another.
+<p>Each alignment begins with an 'a' line that set variables for the entire alignment block. The 'a' is followed by name=value pairs which correspond to the score of the alignment. 
+
+<br>The 's' lines together with the 'a' lines define a multiple alignment. The 's' lines have the following fields which are defined by position rather than name=value pairs.
+
+<p>src : The name of one of the source sequences for the alignment. For sequences that are resident in a browser assembly, the form 'database.chromosome' allows automatic creation of links to other assemblies. Non-browser sequences are typically reference by the species name alone.
+<p>start : The start of the aligning region in the source sequence. This is a zero-based number. If the strand field is '-' then this is the start relative to the reverse-complemented source sequence.
+<p>size : The size of the aligning region in the source sequence. This number is equal to the number of non-dash characters in the alignment text field below.
+<p>strand -- Either '+' or '-'. If '-', then the alignment is to the reverse-complemented source.
+<p>srcSize : The size of the entire source sequence, not just the parts involved in the alignment.
+<p>text : The nucleotides (or amino acids) in the alignment and any insertions (dashes) as well.
+<p><i>example: </i>GERP (Genomic Evolutionary Rate Profiling)</p>
+<code><pre>
+a score=8.617251
+s hsap.chr1  240616145      23 -      247249719 AAGGAGTCCTAGAATGGAGCACA 
+s ptro.chr1  223263538      23 -      229974691 AAGGAGTCCTAGAATGGAGCACA 
+s mmul.chr1  218580358      23 -      228252215 AAGGAGTCCTAGAATGGAGTATA 
+s cfam.chr5   28512329      23 -       91976430 AAGGAGTCCTAGGATGGAGTACA 
+s btau.chr1   81704165      23 +      102834029 AAGGAGTCCTGGAAAGGAGCACA 
+s mdom.chr4   43504342      16 -      430141050 AAGGAA-ACTAGCATGG------ 
+</pre></code>
+
+<h4>MFA, FASTAH & FASTAA</h4> 
+<p>Are FASTA like formatters for pairwise alignments, homologues and aligned homologues respectively. For the pairwise alignments the header is pre-defined with alignment coordinates, score and species name, but for the homologues the headers can be defined by the user by selecting any attributes available. 
+
+
+<p><i>example: </i>Human - Chicken Pairwise BlastZ-net alignment</p>
+<code><pre>
+>chr:1|start:5646|end:5996|strand:1|score:10605|Homo sapiens
+AGGGCCCGCTCACCTTGCTCCTGCTCCTTCTGCTGCTGCTTCTCCAGCTTTCGCTCCTTCATGCTGCGCAGCTTGGCCTT
+GCCGATGCCCCCAGCTTGGCGGATGGACTCTAGCAGAGTGGC-CAGCCACCGGAGGGGTCAACCACTTCCCTGGGAGCTC
+CCTGGACTGGAGCCGGGAGGTGGGGAACAGGGCAAGGAGGAAAGGCTGCTCAGGCA--GGGCTGGGGAAGCTTACTGTGT
+CCAAGAGCCTGCTGGGAGGGAAGTCACCTCCCCTCAAACGAGGAGCCCTGCGCTGGGGAGGCCGGACC-------TTTGG
+AGACTGTGTGTGGGGGCCTGGGCACTGACTTCTGCAACCAC
+>chr:1|start:62073494|end:62073803|strand:1|score:10605|Gallus gallus
+AGAGCCTCAGCACCTTGTTCTTGTTCCTTTTGCTTCTTCTTCTCCAGCTTCCTCTCCTTGACACTGCGGAGGTTGGCCTT
+CCCAATGCCCCCTGCCTGGCGAATGGATTCCAGGAGACTGGCACGCCCAGTTGAGGGGTTCACCACCTCCTTTGGGGCTC
+CCTGGACCGAAGCTG------------CAGGGACAGGAAGGA--------CATGCATCAGCCTCGGGTA-----------
+--------TAGCTGCAAGCCCAGCCAAATCCCCCCACAGAAAGGG--CTGCTCT---GATGCCCTGCCATCTTCTTTTTG
+GGACTGTGCG-------CCTGACACAGACACTTTCAGGCAC
+</pre></code>
+</body>
+</html>
