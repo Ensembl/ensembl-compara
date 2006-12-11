@@ -3,14 +3,15 @@ package EnsEMBL::Web::Apache::Handlers;
 
 use SiteDefs qw( :APACHE);
 use strict;
-use Apache::Constants qw(:common :response);
+use Apache2::Const qw(:common :http :methods);
 use EnsEMBL::Web::DBSQL::UserDB;
 use EnsEMBL::Web::DBSQL::BlastAdaptor;
 use EnsEMBL::Web::Object::BlastJobMaster;
 use EnsEMBL::Web::Cookie;
 use EnsEMBL::Web::Registry;
-use Apache::SizeLimit;
-use Apache::URI ();
+use Apache2::SizeLimit;
+use Apache2::URI ();
+use APR::URI ();
 use CGI::Cookie;
 use Time::HiRes qw(time);
 use Sys::Hostname;
@@ -27,8 +28,9 @@ our $LOG_INFO;
 our $LOG_TIME; 
 our $BLAST_LAST_RUN;
 our $ENSEMBL_WEB_REGISTRY;
-our @EXPORT    = qw($ENSEMBL_WEB_REGISTRY);
-our @EXPORT_OK = qw($ENSEMBL_WEB_REGISTRY);
+our $BIOMART_REGISTRY;
+our @EXPORT    = qw($ENSEMBL_WEB_REGISTRY $BIOMART_REGISTRY);
+our @EXPORT_OK = qw($ENSEMBL_WEB_REGISTRY $BIOMART_REGISTRY);
 
 #======================================================================#
 # Set up apache-size-limit style load commands                         #
@@ -81,10 +83,10 @@ BEGIN {
   }
 
   %SPECIES_MAP = (
+##      BioMart biomart  biomart biomart
     qw(
       common  common   Common  common
       Multi   Multi    multi   Multi
-      BioMart biomart  biomart biomart
     ),
     ( 'perl' => $SiteDefs::ENSEMBL_PRIMARY_SPECIES ),
     map { lc($_) => $SiteDefs::ENSEMBL_SPECIES_ALIASES->{$_} } keys %{$SiteDefs::ENSEMBL_SPECIES_ALIASES}
@@ -123,15 +125,26 @@ sub childInitHandler {
   if( $ENSEMBL_DEBUG_FLAGS & 8 ){
     printf STDERR "Child %9d: - initialised at %30s\n", $$,''.gmtime();
   }
+#  use BioMart::Initializer;
+#  my $MART_CONFFILE = "${SiteDefs::ENSEMBL_SERVERROOT}/conf/martRegistry.xml";
+#  eval {
+#    my $init = BioMart::Initializer->new( registryFile => $MART_CONFFILE );
+#    $main::BIOMART_REGISTRY = $init->getRegistry() || die "Can't get registry from initializer";
+#    warn $main::BIOMART_REGISTRY;
+#  }
+
 }
 
 sub postReadRequestHandler {
   my $r = shift; # Get the connection handler
 ## Manipulate the Registry...
+warn "STRSCRX: $$ ",$r->parsed_uri->path," : ", $r->parsed_uri->query;
   $ENSEMBL_WEB_REGISTRY->timer->set_script_start_time( time  ); ## This is the page rendering start time!
-  $r->push_handlers( PerlTransHandler =>   \&transHandler );
-  $r->push_handlers( PerlCleanupHandler => \&cleanupHandler );
-
+warn "         $$ TIMER....";
+#  $r->push_handlers( PerlTransHandler =>   \&transHandler );
+#warn "         $$ PTH....";
+#  $r->push_handlers( PerlCleanupHandler => \&cleanupHandler );
+#warn "         $$ PCH....";
 ## Retrieve the firstsession_ID and User ID from the cookie (ENSEMBL_FIRSTSESSION and ENSEMBL_USER_ID)
 ##   Setup User...
 ##  $ENSEMBL_WEB_REGISTRY->initialize_session( $session_cookie ); ## Initialize the session information
@@ -149,11 +162,13 @@ sub postReadRequestHandler {
       'refresh' => $ENSEMBL_ENCRYPT_REFRESH
     }
   });
+  warn "USER INITIALIZING $$";
   $ENSEMBL_WEB_REGISTRY->initialize_user({
     'cookie'=> $user_cookie,
     'r'     => $r
   }); ## Initialize the user (and possibly group) objects
 ## Unlikely to go to db - just store the IDs
+  warn "USER INITIALIZED $$";
   return;
 }
 
@@ -166,6 +181,7 @@ sub transHandler {
   my $u           = $r->parsed_uri;
   my $file        = $u->path;
   my $querystring = $u->query;
+warn "TH $$";
 
   my $session_cookie = EnsEMBL::Web::Cookie->new({
     'host'    => $ENSEMBL_COOKIEHOST,
@@ -188,6 +204,8 @@ sub transHandler {
   my $Tspecies = $species;
   my $script    = undef;
   my $path_info = undef;
+warn "TH--- $$";
+
   if( $species eq 'das' ) { # we have a DAS request...
     my $DSN = $path_segments[0];
     my $command = '';
@@ -232,7 +250,7 @@ sub transHandler {
           $LOG_TIME = time();
           $r->push_handlers( PerlCleanupHandler => \&cleanupHandler_script      );
           $r->push_handlers( PerlCleanupHandler => \&cleanupHandler_blast       ) if $ENSEMBL_BLASTSCRIPT;
-          $r->push_handlers( PerlCleanupHandler => \&Apache::SizeLimit::handler );
+          $r->push_handlers( PerlCleanupHandler => \&Apache2::SizeLimit::handler );
         }
         return OK;
       }
@@ -249,7 +267,7 @@ sub transHandler {
           $LOG_TIME = time();
           $r->push_handlers( PerlCleanupHandler => \&cleanupHandler_script      );
           $r->push_handlers( PerlCleanupHandler => \&cleanupHandler_blast       ) if $ENSEMBL_BLASTSCRIPT;
-          $r->push_handlers( PerlCleanupHandler => \&Apache::SizeLimit::handler );
+          $r->push_handlers( PerlCleanupHandler => \&Apache2::SizeLimit::handler );
         }
         return OK;
       }
@@ -263,11 +281,11 @@ sub transHandler {
       unshift ( @path_segments, '', $species, $script );
       my $newfile = join( '/', @path_segments );
 
-      if( $newfile ne $file ){ # Path is changed; REDIRECT
+      if( $newfile ne $file ){ # Path is changed; HTTP_TEMPORARY_REDIRECT
         $r->uri( $newfile );
         $r->headers_out->add( 'Location' => join( '?', $newfile, $querystring || () ) );
         $r->child_terminate;
-        return REDIRECT;
+        return HTTP_TEMPORARY_REDIRECT;
       }
       # Mess with the environment
       $r->subprocess_env->{'ENSEMBL_SPECIES'} = $species;
@@ -290,7 +308,7 @@ sub transHandler {
           $LOG_TIME = time();
           $r->push_handlers( PerlCleanupHandler => \&cleanupHandler_script      );
           $r->push_handlers( PerlCleanupHandler => \&cleanupHandler_blast       ) if $ENSEMBL_BLASTSCRIPT;
-          $r->push_handlers( PerlCleanupHandler => \&Apache::SizeLimit::handler );
+          $r->push_handlers( PerlCleanupHandler => \&Apache2::SizeLimit::handler );
         }
         return OK;
       }
@@ -300,9 +318,11 @@ sub transHandler {
     }
   }
   # Search the htdocs dirs for a file to return
+warn "HERE $$";
   my $path = join( "/", $species || (), $script || (), $path_info || () );
   $r->uri( "/$path" );
   foreach my $dir( @HTDOCS_TRANS_DIRS ){
+warn "HERE $$ $dir";
 #        $script || last;
     my $filename = sprintf( $dir, $path );
     if( -d $filename ) {
@@ -310,7 +330,7 @@ sub transHandler {
       $r->filename( $filename . ( $r->filename =~ /\/$/ ? '' : '/' ). 'index.html' );
       $r->headers_out->add( 'Location' => $r->uri );
       $r->child_terminate;
-      return REDIRECT;
+      return HTTP_TEMPORARY_REDIRECT;
     }
     next unless -r $filename;
     $r->filename( $filename );
@@ -323,6 +343,7 @@ sub transHandler {
 
 sub cleanupHandler {
   my $r = shift;      # Get the connection handler
+  warn "ENDSCRX: $$ ",$r->parsed_uri->path," : ", $r->parsed_uri->query;
 
   ## hack for oracle/AV problem: remember that this child has used Oracle
   $oracle_home ||= $ENV{'ORACLE_HOME'};
@@ -336,13 +357,13 @@ sub cleanupHandler {
     my $u           = $r->parsed_uri;
     my $file        = $u->path;
     my $query       = $u->query.$r->subprocess_env->{'ENSEMBL_REQUEST'};
-    my $size        = &$Apache::SizeLimit::HOW_BIG_IS_IT();
+    my $size        = &$Apache2::SizeLimit::HOW_BIG_IS_IT();
     $r->subprocess_env->{'ENSEMBL_ENDTIME'} = $end_time;
     if( $ENSEMBL_DEBUG_FLAGS & 8 ) {
       print STDERR sprintf "LONG PROCESS %10s DT: %24s Time: %10s Size: %10s
 LONG PROCESS %10s REQ: %s
 LONG PROCESS %10s IP:  %s  UA: %s
-", $$,  scalar(gmtime($start_time)), $length, $size, $$, "$file?$query", $$, $r->subprocess_env->{'HTTP_X_FORWARDED_FOR'}, $r->header_in('User-Agent');
+", $$,  scalar(gmtime($start_time)), $length, $size, $$, "$file?$query", $$, $r->subprocess_env->{'HTTP_X_FORWARDED_FOR'}, $r->headers_in->{'User-Agent'};
     }
   }
 
@@ -364,7 +385,7 @@ LONG PROCESS %10s IP:  %s  UA: %s
     my $file_mod_time = $temp[9];
     if( $file_mod_time >= $ENSEMBL_WEB_REGISTRY->timer->get_process_start_time ) {
       print STDERR sprintf "KILLING CHILD %10s\n", $$;
-      if( $Apache::SizeLimit::WIN32 ) {
+      if( $Apache2::SizeLimit::WIN32 ) {
         CORE::exit(-2);
       } else {
         $r->child_terminate();
@@ -389,7 +410,7 @@ sub childExitHandler {
     printf STDERR "Child %9d: - reaped at      %30s;  Time: %11.6f;  Req:  %4d;  Size: %8dK\n",
       $$, ''.gmtime(), time-$ENSEMBL_WEB_REGISTRY->timer->get_process_start_time,
       $ENSEMBL_WEB_REGISTRY->timer->get_process_child_count,
-      &$Apache::SizeLimit::HOW_BIG_IS_IT()
+      &$Apache2::SizeLimit::HOW_BIG_IS_IT()
   }
 }
 
@@ -451,7 +472,6 @@ sub queue_pending_blast_jobs {
 }
 
 sub cleanupHandler_blast {
-warn "CHB started ($$)";
   my $r = shift;
   my $directory = $ENSEMBL_TMP_DIR_BLAST.'/pending';
   my $FLAG = 0;

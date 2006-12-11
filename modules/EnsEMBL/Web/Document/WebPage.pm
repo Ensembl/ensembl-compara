@@ -5,7 +5,7 @@ use EnsEMBL::Web::Proxy::Factory;
 use EnsEMBL::Web::Timer;
 use EnsEMBL::Web::SpeciesDefs;
 use Exporter;
-use Apache::Constants qw(:common :response M_GET);
+use Apache2::Const qw(:common M_GET);
 use EnsEMBL::Web::DBSQL::UserDB;
 use EnsEMBL::Web::User;
 

@@ -46,7 +46,7 @@ sub create {
 sub retrieve {
   my( $self, $r ) = @_;
   return unless $r;
-  my %cookies = CGI::Cookie->parse($r->header_in('Cookie'));
+  my %cookies = CGI::Cookie->parse($r->headers_in->{'Cookie'});
   return unless exists $cookies{$self->get_name};
   my( $ID, $flag ) = $self->decrypt_value( $cookies{$self->get_name}->value );
   if( $flag eq 'expired' ) {      ## Remove the cookie!

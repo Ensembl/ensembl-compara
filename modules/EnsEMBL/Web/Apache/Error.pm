@@ -1,9 +1,7 @@
 package EnsEMBL::Web::Apache::Error;
        
 use strict;
-use Apache::Constants qw(:response :http);
-use Apache::File ();
-use Apache::Log ();
+use Apache2::Const qw(:common :http);
 use EnsEMBL::Web::Document::Renderer::Apache;
 use EnsEMBL::Web::Document::Panel;
 use EnsEMBL::Web::Document::Static;
@@ -40,7 +38,6 @@ sub handler {
     $ENV{'REDIRECT_ERROR_NOTES'}
   ) unless $error_subject;
   $r->content_type('text/html');
-  $r->send_http_header;
   $r->uri( $error_URL );
   return OK if $r->header_only;
   

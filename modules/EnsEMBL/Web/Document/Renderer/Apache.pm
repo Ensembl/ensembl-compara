@@ -1,10 +1,10 @@
 package EnsEMBL::Web::Document::Renderer::Apache;
 use strict;
-use Apache;
+use Apache2::RequestUtil;
 
 sub new {
   my $class = shift;
-  my $self = { 'r' => shift || (Apache->can('request') ? Apache->request() : undef )};
+  my $self = { 'r' => shift || (Apache2::RequestUtil->can('request') ? Apache2::RequestUtil->request() : undef )};
   bless $self, $class;
   return $self;
 }

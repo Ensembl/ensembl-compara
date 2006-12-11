@@ -1,8 +1,8 @@
 package EnsEMBL::Web::Apache::SendDecPage;
        
 use strict;
-use Apache::File ();
-use Apache::Log ();
+#use Apache::File ();
+# use Apache::Log ();
 use SiteDefs qw(:ALL);
 use EnsEMBL::Web::Document::Renderer::Apache;
 use EnsEMBL::Web::Document::Panel;
@@ -14,14 +14,15 @@ use EnsEMBL::Web::Root;
 
 our $SD = EnsEMBL::Web::SpeciesDefs->new();
 
-use Apache::Constants qw(:response :methods :http);
+use Apache2::Const qw(:common :methods :http);
 #############################################################
 # Mod_perl request handler all /htdocs pages
 #############################################################
 sub handler {
   my $r = shift;
+warn "SEND DEC PAGE HANDLER..................";
 ## First of all check that we should be doing something with the page...
-  $r->err_header_out('Ensembl-Error'=>"Problem in module EnsEMBL::Web::Apache::SendDecPage");
+  $r->err_headers_out->{'Ensembl-Error'=>"Problem in module EnsEMBL::Web::Apache::SendDecPage"};
   $r->custom_response(SERVER_ERROR, "/Crash");
     
   return DECLINED if $r->content_type ne 'text/html';
@@ -30,20 +31,19 @@ sub handler {
 
   if ($r->method_number == M_INVALID) {
     $r->log->error("Invalid method in request ", $r->the_request);
-    return NOT_IMPLEMENTED;
+    return HTTP_NOT_IMPLEMENTED;
   }
 
   return DECLINED                if $r->method_number == M_OPTIONS;
   return HTTP_METHOD_NOT_ALLOWED if $r->method_number == M_PUT;
-  return DECLINED                if -d $r->finfo;
-  unless (-e $r->finfo) {
+  return DECLINED                if -d $r->filename;
+  unless (-e $r->filename) {
     $r->log->error("File does not exist: ", $r->filename);
     return NOT_FOUND;
   }
   return HTTP_METHOD_NOT_ALLOWED if $r->method_number != M_GET;
 
-  my $fh = Apache::File->new($r->filename);
-  unless ($fh) {
+  unless( -r $r->filename) {
     $r->log->error("File permissions deny server access: ", $r->filename);
     return FORBIDDEN;
   }
@@ -85,7 +85,7 @@ sub handler {
   my $pageContent;
   {
     local($/) = undef;
-    $pageContent = <$fh>;
+    $pageContent = ${ $r->slurp_filename() }; #<$fh>;
   }
 
   return DECLINED if $pageContent =~ /<!--#set var="decor" value="none"-->/;
@@ -125,7 +125,7 @@ sub handler {
     print "Content-type: text/html\n\n";
   } else {
     $r->content_type('text/html');
-    $r->send_http_header;
+#    $r->send_http_header;
   }
     
   $page->render();
@@ -185,10 +185,10 @@ sub template_INCLUDE {
   foreach my $root (  @ENSEMBL_HTDOCS_DIRS ) {
     my $filename = "$root/$include";
     if( -f $filename && -e $filename) {
-      my $fh = Apache::File->new($filename);
-      if( $fh ) {
+      if( open FH, $filename ) {
         local($/) = undef;
-        $content = <$fh>;
+        $content = <FH>;
+        close FH;
         return $content;
       }
     }
@@ -245,9 +245,10 @@ sub template_RANDOM {
       my $index = int(rand() * scalar(@files));
       my $filename = $directory.$files[$index];
       my $fh = Apache::File->new($filename);
-      if( $fh  ) {
+      if( fopen FH, $filename ) {
         local($/) = undef;
-        $content = <$fh>;
+        $content = <FH>;
+        close FH;
         return $content;
       }                                           # No permission to read file! 
       $error = "No permission to access file: $include/$files[$index]";

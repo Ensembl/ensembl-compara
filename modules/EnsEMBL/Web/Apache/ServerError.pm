@@ -1,9 +1,7 @@
 package EnsEMBL::Web::Apache::ServerError;
      
 use strict;
-use Apache::Constants qw(:response :http);
-use Apache::File ();
-use Apache::Log ();
+use Apache2::Const qw(:common :http);
 use CGI qw(:html);
 use SiteDefs qw(:WEB);
 use Text::Wrap;
@@ -108,7 +106,7 @@ sub handler {
       )
     ));
       
-    if($r->err_header_out('ensembl_headers_out')){  
+    if($r->err_headers_out->{'ensembl_headers_out'}){  
       $page->content->render();
       $page->render_end();
     } else {
