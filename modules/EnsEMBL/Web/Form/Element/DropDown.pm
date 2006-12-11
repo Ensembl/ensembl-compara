@@ -59,7 +59,7 @@ sub render {
     my $ON_CHANGE = $self->{'on_change'} eq 'submit' ? 
 #       sprintf( "document.forms[%s].submit()", $self->form ) :
        sprintf( "document.%s.submit()", $self->{formname} ) :
-       sprintf( "check('%s',this,%s)", $self->type, $self->required eq 'yes'?1:0 );  
+       sprintf( "os_check('%s',this,%s)", $self->type, $self->required eq 'yes'?1:0 );  
     return sprintf( qq(%s<select name="%s" id="%s" class="normal" onChange="%s">\n%s</select>%s),
       $self->introduction,
       CGI::escapeHTML( $self->name ), CGI::escapeHTML( $self->id ),

@@ -11,7 +11,7 @@ sub render {
     $min = $1;
     $max = $2;
   }
-  my $extra = sprintf qq(class="%s" onKeyUp="check('%s',this,%s)" onChange="check( '%s', this, %s )" ),
+  my $extra = sprintf qq(class="%s" onKeyUp="os_check('%s',this,%s)" onChange="os_check( '%s', this, %s )" ),
     'range' , 'range', $self->required eq 'yes' ? 1 : 0 , 'range', $self->required eq 'yes' ? 1 : 0;
   return sprintf
     '%s<input type="text" name="%s_min" value="%s" id="%s_min" %s /> - <input type="text" name="%s_max" value="%s" id="%s_max" %s />%s%s',

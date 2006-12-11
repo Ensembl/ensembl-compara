@@ -17,7 +17,7 @@ sub render {
     $style = 'style="height:'.$height.'em"';
   }
   return sprintf(
-    qq(<textarea name="%s" id="%s" rows="%s" cols="%s" onKeyUp="check('text',this,%d)" onChange="check( 'text', this, %d )" %s>%s</textarea>),
+    qq(<textarea name="%s" id="%s" rows="%s" cols="%s" onKeyUp="os_check('text',this,%d)" onChange="os_check( 'text', this, %d )" %s>%s</textarea>),
     CGI::escapeHTML( $self->name ), CGI::escapeHTML( $self->id ),
     CGI::escapeHTML( $self->rows ) ? CGI::escapeHTML( $self->rows ) : '10', 
     CGI::escapeHTML( $self->cols ) ? 'style="'.CGI::escapeHTML( $self->rows ) * 1.2 : '',

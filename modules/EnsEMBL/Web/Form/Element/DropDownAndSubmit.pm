@@ -40,7 +40,7 @@ sub render {
         $v_hash{'value'}, $self->value eq $v_hash{'value'} ? ' selected="selected"' : '', $v_hash{'name'}
       );
     }
-    return sprintf( qq(%s<select name="%s" id="%s" class="normal" onChange="check('%s',this,%s)">\n%s</select>
+    return sprintf( qq(%s<select name="%s" id="%s" class="normal" onChange="os_check('%s',this,%s)">\n%s</select>
       <input type="submit" value="%s" class="red-button" />%s
     %s),
       $self->introduction,

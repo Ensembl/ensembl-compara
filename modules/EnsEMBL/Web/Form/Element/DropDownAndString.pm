@@ -58,8 +58,8 @@ sub render {
         $v_hash{'value'}, $selected ? ' selected="selected"' : '', $v_hash{'name'}
       );
     }
-    return sprintf( qq(%s<select name="%s" id="%s" class="normal" onChange="check('%s',this,%s)">\n%s</select>
-      <input type="text" name="%s" value="%s" id="%s" class="%s" onKeyUp="check('String',this,%s)" onChange="check('String',this,%s)" />%s
+    return sprintf( qq(%s<select name="%s" id="%s" class="normal" onChange="os_check('%s',this,%s)">\n%s</select>
+      <input type="text" name="%s" value="%s" id="%s" class="%s" onKeyUp="os_check('String',this,%s)" onChange="os_check('String',this,%s)" />%s
     %s),
       $self->introduction,
       CGI::escapeHTML( $self->name ), CGI::escapeHTML( $self->id ),
@@ -83,7 +83,7 @@ sub render {
     }
     return $self->introduction.$output.
       sprintf( 
-        qq(<input type="text" name="%s" value="%s" id="%s" class="%s" onKeyUp="check('String',this,%s)" onChange="check('String',this,%s)" />%s
+        qq(<input type="text" name="%s" value="%s" id="%s" class="%s" onKeyUp="os_check('String',this,%s)" onChange="os_check('String',this,%s)" />%s
         $s),
         CGI::escapeHTML( $self->string_name ), CGI::escapeHTML( $self->string_value ), CGI::escapeHTML( $self->id.'_string' ),
         $self->style, $self->required eq 'yes' ? 1 : 0, $self->required eq 'yes' ? 1 : 0,

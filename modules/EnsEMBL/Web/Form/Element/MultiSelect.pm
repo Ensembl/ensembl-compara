@@ -25,7 +25,7 @@ sub render {
 			   $V->{'value'}, $V->{'checked'} eq 'yes' ? ' selected="selected"' : '', $V->{'name'}
       );
     }
-    return sprintf( qq(%s<select multiple="multiple" name="%s" id="%s" class="normal" onChange="check('%s',this,%s)">%s</select>%s),
+    return sprintf( qq(%s<select multiple="multiple" name="%s" id="%s" class="normal" onChange="os_check('%s',this,%s)">%s</select>%s),
       $self->introduction,
       CGI::escapeHTML( $self->name ), CGI::escapeHTML( $self->id ),
       $self->type, $self->required eq 'yes'?1:0,
