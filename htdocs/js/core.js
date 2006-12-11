@@ -3,8 +3,10 @@
 
 function toggle_settings_drawer() {
   if ($('settings').style.display == 'none') {
+    $('settings_link').innerHTML = 'Hide settings';
     new Effect.BlindDown('settings');
   } else {
+    $('settings_link').innerHTML = 'Show settings';
     new Effect.BlindUp('settings');
   }
 }

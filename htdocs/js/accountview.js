@@ -14,12 +14,11 @@ function save_tab_change(tabview,element) {
   var ajax_info = new Ajax.Request(url, {
                            method: 'get',
                            parameters: data,
-                           onComplete: mixer_settings_saved 
+                           onComplete: tab_change_saved 
                          });
 }
 
 function tab_change_saved(response) {
-  alert(response.responseText);
 }
 
 function add_mix(ident) {
@@ -69,13 +68,6 @@ function set_style_for_displayed_settings(style) {
   }
 }
 
-function set_style_for_class(new_class,style) {
-  var elements = getElementsByClass(new_class);
-  for (var i = 0; i < elements.length; i++) {
-    elements[i].style.display = style;
-  }
-}
-
 function save_mixer_settings() {
   var url = "/common/mixer";
   var data = "settings=" + displayed_settings;
@@ -87,24 +79,6 @@ function save_mixer_settings() {
 }
 
 function mixer_settings_saved(response) {
-}
-
-function getElementsByClass(searchClass,node,tag) {
-  var classElements = new Array();
-  if ( node == null )
-    node = document;
-  if ( tag == null )
-    tag = '*';
-  var els = node.getElementsByTagName(tag);
-  var elsLen = els.length;
-  var pattern = new RegExp('(^|\\s)'+searchClass+'(\\s|$)');
-  for (i = 0, j = 0; i < elsLen; i++) {
-    if ( pattern.test(els[i].className) ) {
-      classElements[j] = els[i];
-      j++;
-    }
-  }
-  return classElements;
 }
 
 function group_id_for_ident(ident) {
