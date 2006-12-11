@@ -402,6 +402,8 @@ sub _parse {
           $DB_NAME = lc(sprintf( '%s_%s_%s_%s', $filename , $1, $SiteDefs::ENSEMBL_VERSION, $tree->{'general'}{'SPECIES_RELEASE_VERSION'} ));
         } elsif( $DB_NAME =~/%_(\w+)/ ) {
           $DB_NAME = lc(sprintf( '%s_%s_%s', $filename , $1, $SiteDefs::ENSEMBL_VERSION ));
+        } elsif( $DB_NAME =~/(\w+)_%_/ ) {
+          $DB_NAME = lc(sprintf( '%s_%s', $1, $SiteDefs::ENSEMBL_VERSION ));
         }
         if($tree->{'databases'}{$key} eq '') {
           delete $tree->{'databases'}{$key};
