@@ -202,7 +202,6 @@ $ENSEMBL_REGISTRY       = undef;
 @ENSEMBL_CONF_DIRS    = ($ENSEMBL_SERVERROOT.'/conf');
 @ENSEMBL_PERL_DIRS    = (
   $ENSEMBL_SERVERROOT.'/perl',
-#  $ENSEMBL_SERVERROOT.'/biomart-web/perl'
 );
 
 @ENSEMBL_HTDOCS_DIRS  = (
@@ -222,7 +221,6 @@ $ENSEMBL_REGISTRY       = undef;
   $ENSEMBL_SERVERROOT.'/ensembl-external/modules',
   $ENSEMBL_SERVERROOT.'/ensembl-mart/modules',
   $ENSEMBL_SERVERROOT.'/ensembl-genename/modules',
-  $ENSEMBL_SERVERROOT.'/biomart-web/modules',
   $ENSEMBL_SERVERROOT.'/biomart-perl/lib',
   $ENSEMBL_SERVERROOT.'/bioperl-live',
 );
