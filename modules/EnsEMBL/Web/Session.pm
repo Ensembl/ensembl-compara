@@ -118,6 +118,21 @@ sub store {
 ### Only work with storable configs and only if they or attached
 ### image configs have been altered!
   my($self,$r) = @_;
+  my @storables = @{ $self->storable_data($r) };
+  if ($#storables > -1) {
+    foreach my $storable (@storables) {
+      my $config_key = $storable->{config_key};
+      my $d = $storable->{data};
+      $self->get_adaptor->setConfigByName( $self->create_session_id($r), 'script', $config_key, $d->Dump );
+    }
+  }
+  $self->save_das;
+}
+
+sub storable_data {
+  ### Returns an array ref of hashes suitable for dumping to a database record. 
+  my($self,$r) = @_;
+  my $return_data = [];
   foreach my $config_key ( keys %{$Configs_of{ ident $self }||{}} ) {
     my $sc_hash_ref = $Configs_of{ ident $self }{$config_key}||{};
 ## Cannot store unless told to do so by script config
@@ -140,11 +155,10 @@ warn "      | `-- ImageConfig: $image_config_key", $image_config->altered;
     if( $to_store ) {
       my $d =  Data::Dumper->new( [$data], [qw($data)] );
          $d->Indent(1);
-      $self->get_adaptor->setConfigByName( $self->create_session_id($r), 'script', $config_key, $d->Dump );
-warn "      `- STORED!";
+      push @{ $return_data }, { config_key => $config_key, data => $d };
     }
   }
-  $self->save_das;
+  return $return_data; 
 }
 
 sub get_internal_das {
@@ -386,6 +400,19 @@ sub getScriptConfig {
     };
   }
   return $Configs_of{ ident  $self }{$script}{'config'};
+}
+
+sub get_script_config_as_string {
+  my ($self, $script) = @_;
+  if( $self->get_session_id ) {
+    return $self->get_adaptor->getConfigByName( $self->get_session_id, 'script', $script );
+  }
+  return undef; 
+}
+
+sub set_script_config_from_string {
+  my ($self, $script, $string) = @_;
+  $self->get_adaptor->setConfigByName( $self->get_session_id, 'script', $script, $string );
 }
 
 sub getImageConfig {
