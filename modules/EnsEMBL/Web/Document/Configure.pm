@@ -24,7 +24,7 @@ sub common_menu_items {
     my @bookmark_sections = ();
 
     if ($user_id) {
-      $doc->menu->add_entry( $flag, 'text' => "Logged in &middot; <a href='javascript:logout_link()'>Log out</a>", 'raw' => 'yes');
+      $doc->menu->add_entry( $flag, 'text' => "<a href='/common/accountview'>Your account</a> &middot; <a href='javascript:logout_link()'>Log out</a>", 'raw' => 'yes');
       #$doc->menu->add_entry( $flag, 'text' => "Bookmark this page",
       #                              'code' => 'bookmark',
       #                            'href' => "javascript:bookmark_link()" );
@@ -67,19 +67,26 @@ sub common_menu_items {
         push @bookmark_sections, { 'href' => '/common/accountview', 
                                    'text'  => 'More bookmarks...', extra_icon => '/img/bullet_go.png' };
 
-        $doc->menu->add_entry(
-          $flag,
-            'href' => '/common/accountview',
-            'text' => 'Bookmarks',
-          'options'=> \@bookmark_sections );
+      #  $doc->menu->add_entry(
+      #    $flag,
+      #      'href' => '/common/accountview',
+      #      'text' => 'Bookmarks',
+      #    'options'=> \@bookmark_sections );
 
       } else {
-        $doc->menu->add_entry( $flag, 'text' => "Add bookmark",
-                                      'href' => "javascript:bookmark_link()" );
+        #$doc->menu->add_entry( $flag, 'text' => "Add bookmark",
+        #                              'href' => "javascript:bookmark_link()" );
       }
+
+      #$doc->menu->add_entry( $flag, 'text' => "Your account",
+      #                            'href' => "/common/accountview" );
+
+      $doc->menu->add_entry( $flag, 'text' => "<a href='javascript:void(0);' onclick='javascript:toggle_settings_drawer();' id='settings_link'>Show settings</a>",
+                                    'raw' => "yes" );
+
+      $doc->menu->add_entry( $flag, 'text' => "Save bookmark",
+                                    'href' => "javascript:bookmark_link()" );
     
-      $doc->menu->add_entry( $flag, 'text' => "Your account",
-                                  'href' => "/common/accountview" );
     }
     else {
       $doc->menu->add_entry( $flag, 'text' => "<a href='javascript:login_link();'>Login</a> or <a href='/common/register'>Register</a>", 'raw' => 'yes');
@@ -150,7 +157,7 @@ sub dynamic_menu_items {
       my $configurable = 1;
       if ($configurable) {
         $doc->menu->add_entry_after( $flag, 'bookmark', 
-                                    'text' => "Save this configuration",
+                                    'text' => "Save configuration",
                                   'href' => "javascript:config_link()" );
       }
   }
