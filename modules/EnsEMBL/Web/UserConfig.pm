@@ -1230,17 +1230,12 @@ sub ADD_ALL_TRANSCRIPTS {
 sub ADD_ALL_OLIGO_TRACKS {
   my $self = shift;
   my $POS  = shift || 4000;
-  my @OLIGO = map { sort keys %{ $self->{'species_defs'}{'_storage'}->{$_}{'OLIGO'}||{} } } keys %{$self->{'species_defs'}{'_storage'}};
-#    qw( Canine ),    # Dog
-#    qw( Zebrafish ), # Zfish
-#    qw( Chicken ),   # Chicken
-#    qw( HG-Focus HG-U133A HG-U133A_2 HG-U133B HG-U133_Plus_2
-#        HG-U95Av2 HG-U95B HG-U95C HG-U95D HG-U95E
-#        U133_X3P ),  # Human
-#    qw( MG-U74Av2 MG-U74Bv2 MG-U74Cv2
-#        Mouse430A_2 Mouse430_2 Mu11KsubA Mu11KsubB ), # Mouse
-#    qw( Rat230_2 RG-U34A RG-U34B RG-U34C ),           # Rat
-#  );
+  my %T = map { %{ $self->{'species_defs'}{'_storage'}->{$_}{'OLIGO'}||{} } }
+          keys %{$self->{'species_defs'}{'_storage'}};
+  foreach (keys %{$self->{'species_defs'}{'_storage'}}) {
+    warn "$_\n  ",join "\n  ", keys %{ $self->{'species_defs'}{'_storage'}->{$_}{'OLIGO'} };
+  }
+  my @OLIGO = sort keys %T;
   foreach my $chipset (@OLIGO) {
     ( my $T = lc($chipset) ) =~ s/\W/_/g;
     ( my $T2 = $chipset ) =~ s/Plus_/+/i;
