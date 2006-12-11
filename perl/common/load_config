@@ -16,10 +16,8 @@ my ($host, $params) = split(/\?/, $url);
 my (@parameters) = split(/&/, $params); 
 my $new_params = "";
 foreach my $p (@parameters) {
-  warn "============> CHECKING: " . $p;
   if ($p !~ /bottom/) {
     $new_params .= "&" . $p;
-    warn "ADD " . $p;
   }
 }
 
@@ -34,10 +32,6 @@ if ($ENV{'ENSEMBL_USER_ID'}) {
     foreach my $configuration ($user->configuration_records) {
       if ($configuration->id eq $cgi->param('id')) {
         my $string = $configuration->scriptconfig;
-        warn "----------------";
-        warn "Record: " . $configuration->type;
-        warn "String: " . $string;
-        warn "----------------";
 
         my $r = Apache->request();
         $session->create_session_id($r);
@@ -49,7 +43,6 @@ if ($ENV{'ENSEMBL_USER_ID'}) {
   $url = '/error/config_failed.html';
 }
 
-warn "REDIRECT TO: " . $url;
 CGI::redirect($url);
 
 1;
