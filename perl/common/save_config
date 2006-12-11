@@ -62,10 +62,4 @@ $page->add_form_element('description', "A brief description of your configuratio
 
 EnsEMBL::Web::Document::DataView::simple('User', $page);
 
-# Bring it back
-#my $r = Apache->request();
-#$session->create_session_id($r);
-#$session->set_script_config_from_string($script_name, $string);
-
-
 1;

@@ -1,13 +1,55 @@
 #! /usr/bin/perl
 
-package remove_group;
+package load_config;
+
+use strict;
+use warnings;
+
+use EnsEMBL::Web::Apache::Handlers;
+use Apache;
 
 use CGI;
 my $cgi = new CGI;
-
+my $script_name = "contigview";
 my $url = $cgi->param('url');
-my $id = $cgi->param('id');
-$url .= "&load_config=" . $id;
-print "Location: " . $url;
+my ($host, $params) = split(/\?/, $url);
+my (@parameters) = split(/&/, $params); 
+my $new_params = "";
+foreach my $p (@parameters) {
+  warn "============> CHECKING: " . $p;
+  if ($p !~ /bottom/) {
+    $new_params .= "&" . $p;
+    warn "ADD " . $p;
+  }
+}
+
+$new_params =~ s/^&/\?/;
+$url = $host . $new_params;
+
+my $session = $ENSEMBL_WEB_REGISTRY->get_session;
+$session->set_input($cgi);
+if ($ENV{'ENSEMBL_USER_ID'}) {
+  my $user = EnsEMBL::Web::Object::User->new({ id => $ENV{'ENSEMBL_USER_ID'} });
+  if ($user) {
+    foreach my $configuration ($user->configuration_records) {
+      if ($configuration->id eq $cgi->param('id')) {
+        my $string = $configuration->scriptconfig;
+        warn "----------------";
+        warn "Record: " . $configuration->type;
+        warn "String: " . $string;
+        warn "----------------";
+
+        my $r = Apache->request();
+        $session->create_session_id($r);
+        $session->set_script_config_from_string($script_name, $string);
+      } 
+    }
+  }
+} else {
+  $url = '/error/config_failed.html';
+}
+
+warn "REDIRECT TO: " . $url;
+CGI::redirect($url);
 
 1;
