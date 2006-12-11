@@ -2,6 +2,18 @@
 
 // Return a link based on the current URL to the archive...
 
+function addLoadEvent(func) {
+  var oldonload = window.onload;
+  if( typeof window.onload != 'function' ) {
+    window.onload = func;
+  } else {
+    window.onload = function() {
+      oldonload();
+      func();
+    }
+  }
+}
+
 function cytoview_link() {
   URL = document.location.href;
   document.location = URL.replace(/(\w+view)/,'cytoview');

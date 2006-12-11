@@ -1,17 +1,5 @@
 // Javascript to do collapsible hierarchical menus
 
-function addLoadEvent(func) {
-  var oldonload = window.onload;
-  if( typeof window.onload != 'function' ) {
-    window.onload = func;
-  } else {
-    window.onload = function() {
-      oldonload();
-      func();
-    }
-  }
-}
-
 function codelinks() {
   pre_blocks = document.getElementsByTagName( 'pre' );
   if(!document.all){

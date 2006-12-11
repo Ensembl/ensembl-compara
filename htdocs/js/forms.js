@@ -37,7 +37,7 @@ function _valid( type, s ) {
     default            : return 1;
   }
 }
-function check( type, element, req ) {
+function os_check( type, element, req ) {
   V = _trim( element.value )
   if( type == 'selectrange' ) {
     V = _trim( element.options[element.selectedIndex].value );
