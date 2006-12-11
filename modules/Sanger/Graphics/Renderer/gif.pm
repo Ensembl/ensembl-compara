@@ -4,65 +4,70 @@
 # Created:       2001
 # Last Modified: dj3 2005-09-01 add chevron line style a la UCSC (ticket 25769)
 #                dj3 2005-08-31 add tiling ability to Polys (was just Rects)
-#                rmp 2005-08-09 hatched fill-pattern support (subs tile and render_Rect): set $glyph->{'hatched'} = true|false and $glyph->{'hatchcolour'} = "darkgrey";
+#                rmp 2005-08-09 hatched fill-pattern support (subs tile and render_Rect): set $glyph->{'hatched'} = true|false and $glyph->{'hatchcolour'} = 'darkgrey';
 #                rmp 2004-12-14 initial stringFT support
 #
 package Sanger::Graphics::Renderer::gif;
 use strict;
-use Sanger::Graphics::Renderer;
+use warnings;
+use base qw(Sanger::Graphics::Renderer);
 use GD;
 ## use GD::Text::Align;
 # use Math::Bezier;
-use vars qw(@ISA);
-@ISA = qw(Sanger::Graphics::Renderer);
 
 sub init_canvas {
   my ($self, $config, $im_width, $im_height) = @_;
   $self->{'im_width'}  = $im_width;
   $self->{'im_height'} = $im_height;
-  my $ST = $self->{'config'}->species_defs->ENSEMBL_STYLE;
-  my $font_path = $ST->{'GRAPHIC_TTF_PATH'} || "/usr/local/share/fonts/ttfonts/";
+  my $ST = {};
 
+  eval {
+    $self->{'config'}->species_defs->ENSEMBL_STYLE;
+  };
+
+  my $font_path        = $ST->{'GRAPHIC_TTF_PATH'} || '/usr/local/share/fonts/ttfonts/';
   $self->{'ttf_path'}  = $font_path;
-  my $canvas = GD::Image->new($im_width, $im_height);
+  my $canvas           = GD::Image->new($im_width, $im_height);
+
   $canvas->colorAllocate($config->colourmap->rgb_by_name($config->bgcolor()));
   $self->canvas($canvas);
 }
 
 sub add_canvas_frame {
-    my ($self, $config, $im_width, $im_height) = @_;
+  my ($self, $config, $im_width, $im_height) = @_;
 	
-    return if (defined $config->{'no_image_frame'});
+  return if (defined $config->{'no_image_frame'});
 	
-    # custom || default image frame colour
-    my $imageframecol = $config->{'image_frame_colour'} || 'black';
-	
-    my $framecolour = $self->colour($imageframecol);
+  # custom || default image frame colour
+  my $imageframecol = $config->{'image_frame_colour'} || 'black';
+  my $framecolour   = $self->colour($imageframecol);
 
-    # for contigview bottom box we need an extra thick border...
-    if ($config->script() eq "contigviewbottom"){		
-    	$self->{'canvas'}->rectangle(1, 1, $im_width-2, $im_height-2, $framecolour);		
-    }
+  # for contigview bottom box we need an extra thick border...
+  if ($config->script() eq 'contigviewbottom'){		
+    $self->{'canvas'}->rectangle(1, 1, $im_width-2, $im_height-2, $framecolour);		
+  }
 	
-    $self->{'canvas'}->rectangle(0, 0, $im_width-1, $im_height-1, $framecolour);
+  $self->{'canvas'}->rectangle(0, 0, $im_width-1, $im_height-1, $framecolour);
 }
 
 sub canvas {
-    my ($self, $canvas) = @_;
-    if(defined $canvas) {
-        $self->{'canvas'} = $canvas ;
-    } else {
-        return $self->{'canvas'}->gif();
-    }
+  my ($self, $canvas) = @_;
+
+  if(defined $canvas) {
+    $self->{'canvas'} = $canvas;
+
+  } else {
+    return $self->{'canvas'}->gif();
+  }
 }
 
 #########
 # colour caching routine.
 # GD can only store 256 colours, so need to cache the ones we colorAllocate. (Doh!)
-# 
+#
 sub colour {
   my ($self, $id) = @_;
-  $id ||= "black";
+  $id           ||= 'black';
   $self->{'_GDColourCache'}->{$id} ||= $self->{'canvas'}->colorAllocate($self->{'colourmap'}->rgb_by_name($id));
   return $self->{'_GDColourCache'}->{$id};
 }
@@ -72,109 +77,115 @@ sub colour {
 # should probably support different density hatching too
 #
 sub tile {
-    my ($self, $id, $pattern) = @_;
-    $id      ||= "darkgrey";
-    $pattern ||= "hatch_ne";
+  my ($self, $id, $pattern) = @_;
+  $id      ||= 'darkgrey';
+  $pattern ||= 'hatch_ne';
 
-    unless($self->{'_GDTileCache'}->{"$id:$pattern"}) {
-	my $tile = GD::Image->new(4,4);
-	my $bg   = $tile->colorAllocate(255,255,255);
-	my $fg   = $tile->colorAllocate($self->{'colourmap'}->rgb_by_name($id));
-	$tile->transparent($bg);
+  unless($self->{'_GDTileCache'}->{"$id:$pattern"}) {
+    my $tile = GD::Image->new(4,4);
+    my $bg   = $tile->colorAllocate(255,255,255);
+    my $fg   = $tile->colorAllocate($self->{'colourmap'}->rgb_by_name($id));
+    $tile->transparent($bg);
 
-	if($pattern eq "hatch_ne") {
-	    #########
-	    # stroke south-west:north-east
-	    #
-	    $tile->line(0,3,3,0,$fg);
+    if($pattern eq 'hatch_ne') {
+      #########
+      # stroke south-west:north-east
+      #
+      $tile->line(0,3,3,0,$fg);
 
-	} elsif($pattern eq "hatch_nw") {
-	    #########
-	    # stroke south-east:north-west
-	    #
-	    $tile->line(0,0,3,3, $fg);
+    } elsif($pattern eq 'hatch_nw') {
+      #########
+      # stroke south-east:north-west
+      #
+      $tile->line(0,0,3,3, $fg);
 
-	} elsif($pattern eq "hatch_vert") {
-	    #########
-	    # stroke vertical
-	    #
-	    $tile->line(0,0,0,3, $fg);
-	    $tile->line(2,0,2,3, $fg);
+    } elsif($pattern eq 'hatch_vert') {
+      #########
+      # stroke vertical
+      #
+      $tile->line(0,0,0,3, $fg);
+      $tile->line(2,0,2,3, $fg);
 
-	} elsif($pattern eq "hatch_hori") {
-	    #########
-	    # stroke horizontal
-	    #
-	    $tile->line(0,0,3,0, $fg);
-	    $tile->line(0,2,3,2, $fg);
-	}
-
-	$self->{'_GDTileCache'}->{"$id:$pattern"} = $tile;
+    } elsif($pattern eq 'hatch_hori') {
+      #########
+      # stroke horizontal
+      #
+      $tile->line(0,0,3,0, $fg);
+      $tile->line(0,2,3,2, $fg);
     }
-    return $self->{'_GDTileCache'}->{"$id:$pattern"};
+
+    $self->{'_GDTileCache'}->{"$id:$pattern"} = $tile;
+  }
+  return $self->{'_GDTileCache'}->{"$id:$pattern"};
 }
 
 sub render_Rect {
-    my ($self, $glyph) = @_;
-    my $canvas         = $self->{'canvas'};
-    my $gcolour        = $glyph->{'colour'};
-    my $gbordercolour  = $glyph->{'bordercolour'};
+  my ($self, $glyph) = @_;
+  my $canvas         = $self->{'canvas'};
+  my $gcolour        = $glyph->{'colour'};
+  my $gbordercolour  = $glyph->{'bordercolour'};
 
-    # (avc)
-    # this is a no-op to let us define transparent glyphs
-    # and which can still have an imagemap area BUT make
-    # sure it is smaller than the carrent largest glyph in
-    # this glyphset because its height is not recorded!
-    if (defined $gcolour && $gcolour eq 'transparent') {
-      return;
-    }
-    
-    my $bordercolour  = $self->colour($gbordercolour);
-    my $colour        = $self->colour($gcolour);
+  # (avc)
+  # this is a no-op to let us define transparent glyphs
+  # and which can still have an imagemap area BUT make
+  # sure it is smaller than the carrent largest glyph in
+  # this glyphset because its height is not recorded!
+  if (defined $gcolour && $gcolour eq 'transparent') {
+    return;
+  }
 
-    my $x1 = $glyph->{'pixelx'};
-    my $x2 = $glyph->{'pixelx'} + $glyph->{'pixelwidth'};
-    my $y1 = $glyph->{'pixely'};
-    my $y2 = $glyph->{'pixely'} + $glyph->{'pixelheight'};
+  my $bordercolour  = $self->colour($gbordercolour);
+  my $colour        = $self->colour($gcolour);
 
-    $canvas->filledRectangle($x1, $y1, $x2, $y2, $colour) if(defined $gcolour);
-    if($glyph->{'pattern'}) {
-	$canvas->setTile($self->tile($glyph->{'patterncolour'}, $glyph->{'pattern'}));
-	$canvas->filledRectangle($x1, $y1, $x2, $y2, gdTiled);
-    }
+  my $x1 = $glyph->{'pixelx'};
+  my $x2 = $glyph->{'pixelx'} + $glyph->{'pixelwidth'};
+  my $y1 = $glyph->{'pixely'};
+  my $y2 = $glyph->{'pixely'} + $glyph->{'pixelheight'};
 
-    $canvas->rectangle($x1, $y1, $x2, $y2, $bordercolour) if(defined $gbordercolour);
+  $canvas->filledRectangle($x1, $y1, $x2, $y2, $colour) if(defined $gcolour);
+  if($glyph->{'pattern'}) {
+    $canvas->setTile($self->tile($glyph->{'patterncolour'}, $glyph->{'pattern'}));
+    $canvas->filledRectangle($x1, $y1, $x2, $y2, gdTiled);
+  }
+
+  $canvas->rectangle($x1, $y1, $x2, $y2, $bordercolour) if(defined $gbordercolour);
 }
 
 sub render_Text {
   my ($self, $glyph) = @_;
 
   my $colour = $self->colour($glyph->{'colour'});
-    
-    ########## Stock GD fonts
+
+  ########## Stock GD fonts
   my $left = $glyph->{'pixelx'};
-  if( $glyph->{'halign'} eq 'right' ) {
+  $glyph->{'halign'} ||= '';
+  if($glyph->{'halign'} eq 'right' ) {
     $left += $glyph->{'pixelwidth'} - $glyph->{'textwidth'};
   } elsif( $glyph->{'halign'} ne 'left' ) {
     $left += ($glyph->{'pixelwidth'} - $glyph->{'textwidth'})/2;
   }
 
   my $font = $glyph->font();
-  if($font eq "Tiny") {
-    $self->{'canvas'}->string(gdTinyFont,  $left, $glyph->{'pixely'}, $glyph->text(), $colour);
-  } elsif($font eq "Small") {
-    $self->{'canvas'}->string(gdSmallFont, $left, $glyph->{'pixely'}, $glyph->text(), $colour);
-  } elsif($font eq "MediumBold") {
-    $self->{'canvas'}->string(gdMediumBoldFont, $left, $glyph->{'pixely'}, $glyph->text(), $colour);
-  } elsif($font eq "Large") {
-    $self->{'canvas'}->string(gdLargeFont, $left, $glyph->{'pixely'}, $glyph->text(), $colour);
-  } elsif($font eq "Giant") {
-    $self->{'canvas'}->string(gdGiantFont, $left, $glyph->{'pixely'}, $glyph->text(), $colour);
-  } elsif($font) {
-    ######### If we didn't recognise it already, assume it's a TrueType font
-    
 
-  $self->{'canvas'}->stringTTF( $colour, $self->{'ttf_path'}.$font.'.ttf', $glyph->ptsize, 0, $left, $glyph->{'pixely'}+$glyph->{'pixelheight'}, $glyph->{'text'} );
+  if($font eq 'Tiny') {
+    $self->{'canvas'}->string(gdTinyFont,  $left, $glyph->{'pixely'}, $glyph->text(), $colour);
+
+  } elsif($font eq 'Small') {
+    $self->{'canvas'}->string(gdSmallFont, $left, $glyph->{'pixely'}, $glyph->text(), $colour);
+
+  } elsif($font eq 'MediumBold') {
+    $self->{'canvas'}->string(gdMediumBoldFont, $left, $glyph->{'pixely'}, $glyph->text(), $colour);
+
+  } elsif($font eq 'Large') {
+    $self->{'canvas'}->string(gdLargeFont, $left, $glyph->{'pixely'}, $glyph->text(), $colour);
+
+  } elsif($font eq 'Giant') {
+    $self->{'canvas'}->string(gdGiantFont, $left, $glyph->{'pixely'}, $glyph->text(), $colour);
+
+  } elsif($font) {
+    #########
+    # If we didn't recognise it already, assume it's a TrueType font
+    $self->{'canvas'}->stringTTF( $colour, $self->{'ttf_path'}.$font.'.ttf', $glyph->ptsize, 0, $left, $glyph->{'pixely'}+$glyph->{'pixelheight'}, $glyph->{'text'} );
 
 ###  my ($cx, $cy)      = $glyph->pixelcentre();
 ###  my $xpt = $glyph->{'pixelx'} + 
@@ -213,104 +224,113 @@ sub render_Ellipse {
 }
 
 sub render_Intron {
-    my ($self, $glyph) = @_;
+  my ($self, $glyph) = @_;
 
-    my ($colour, $xstart, $xmiddle, $xend, $ystart, $ymiddle, $yend, $strand, $gy);
-    $colour  = $self->colour($glyph->{'colour'});
-    $gy      = $glyph->{'pixely'};
-    $strand  = $glyph->{'strand'};
-    $xstart  = $glyph->{'pixelx'};
-    $xend    = $xstart + $glyph->{'pixelwidth'};
-    $xmiddle = $xstart + $glyph->{'pixelwidth'} / 2;
-    $ystart  = $gy + $glyph->{'pixelheight'} / 2;
-    $yend    = $ystart;
-    $ymiddle = ($strand == 1)?$gy:($gy+$glyph->{'pixelheight'});
+  my ($colour, $xstart, $xmiddle, $xend, $ystart, $ymiddle, $yend, $strand, $gy);
+  $colour  = $self->colour($glyph->{'colour'});
+  $gy      = $glyph->{'pixely'};
+  $strand  = $glyph->{'strand'};
+  $xstart  = $glyph->{'pixelx'};
+  $xend    = $xstart + $glyph->{'pixelwidth'};
+  $xmiddle = $xstart + $glyph->{'pixelwidth'} / 2;
+  $ystart  = $gy + $glyph->{'pixelheight'} / 2;
+  $yend    = $ystart;
+  $ymiddle = ($strand == 1)?$gy:($gy+$glyph->{'pixelheight'});
 
-    $self->{'canvas'}->line($xstart, $ystart, $xmiddle, $ymiddle, $colour);
-    $self->{'canvas'}->line($xmiddle, $ymiddle, $xend, $yend, $colour);
+  $self->{'canvas'}->line($xstart, $ystart, $xmiddle, $ymiddle, $colour);
+  $self->{'canvas'}->line($xmiddle, $ymiddle, $xend, $yend, $colour);
 }
 
 sub render_Line {
-    my ($self, $glyph) = @_;
+  my ($self, $glyph) = @_;
 
-    my $colour = $self->colour($glyph->{'colour'});
-    my $x1     = $glyph->{'pixelx'} + 0;
-    my $y1     = $glyph->{'pixely'} + 0;
-    my $x2     = $x1 + $glyph->{'pixelwidth'};
-    my $y2     = $y1 + $glyph->{'pixelheight'};
+  my $colour = $self->colour($glyph->{'colour'});
+  my $x1     = $glyph->{'pixelx'} + 0;
+  my $y1     = $glyph->{'pixely'} + 0;
+  my $x2     = $x1 + $glyph->{'pixelwidth'};
+  my $y2     = $y1 + $glyph->{'pixelheight'};
 
-    if(defined $glyph->dotted()) {
-        $self->{'canvas'}->setStyle($colour,$colour,$colour,gdTransparent,gdTransparent,gdTransparent);
-        $self->{'canvas'}->line($x1, $y1, $x2, $y2, gdStyled);
-    } else {
-        $self->{'canvas'}->line($x1, $y1, $x2, $y2, $colour);
+  if(defined $glyph->dotted()) {
+    $self->{'canvas'}->setStyle($colour,$colour,$colour,gdTransparent,gdTransparent,gdTransparent);
+    $self->{'canvas'}->line($x1, $y1, $x2, $y2, gdStyled);
+
+  } else {
+    $self->{'canvas'}->line($x1, $y1, $x2, $y2, $colour);
+  }
+
+  if($glyph->chevron()) {
+    my $flip = ($glyph->{'strand'}<0);
+    my $len  = $glyph->chevron(); $len=4 if $len<4;
+    my $n    = int(($glyph->{'pixelwidth'} + $glyph->{'pixelheight'})/$len);
+    my $dx   = $glyph->{'pixelwidth'}  / $n; $dx*=-1 if $flip;
+    my $dy   = $glyph->{'pixelheight'} / $n; $dy*=-1 if $flip;
+    my $ix   = int($dx);
+    my $iy   = int($dy);
+    my $i1x  = int(-0.5*($ix-$iy));
+    my $i1y  = int(-0.5*($iy+$ix));
+    my $i2x  = int(-0.5*($ix+$iy));
+    my $i2y  = int(-0.5*($iy-$ix));
+
+    for (;$n;$n--) {
+      my $tx = int($n*$dx)+($flip ? $x2 : $x1);
+      my $ty = int($n*$dy)+($flip ? $y2 : $y1);
+      $self->{'canvas'}->line($tx, $ty, $tx+$i1x, $ty+$i1y, $colour);
+      $self->{'canvas'}->line($tx, $ty, $tx+$i2x, $ty+$i2y, $colour);
     }
-    if($glyph->chevron()) {
-        my $flip = ($glyph->{'strand'}<0);
-        my $len = $glyph->chevron(); $len=4 if $len<4;
-        my $n = int(($glyph->{'pixelwidth'} + $glyph->{'pixelheight'})/$len);
-        my $dx = $glyph->{'pixelwidth'} / $n;  $dx*=-1 if $flip;
-        my $dy = $glyph->{'pixelheight'} / $n; $dy*=-1 if $flip;
-        my $ix = int($dx);
-        my $iy = int($dy);
-        my $i1x = int(-0.5*($ix-$iy));
-        my $i1y = int(-0.5*($iy+$ix));
-        my $i2x = int(-0.5*($ix+$iy));
-        my $i2y = int(-0.5*($iy-$ix));
-        for (;$n;$n--){
-          my $tx = int($n*$dx)+($flip ? $x2 : $x1);
-          my $ty = int($n*$dy)+($flip ? $y2 : $y1);
-          $self->{'canvas'}->line($tx, $ty, $tx+$i1x, $ty+$i1y, $colour);
-          $self->{'canvas'}->line($tx, $ty, $tx+$i2x, $ty+$i2y, $colour);
-        }
-    }
+  }
 }
 
 sub render_Poly {
-    my ($self, $glyph) = @_;
+  my ($self, $glyph) = @_;
 
-    my $canvas         = $self->{'canvas'};
-    my $bordercolour = $self->colour($glyph->{'bordercolour'});
-    my $colour       = $self->colour($glyph->{'colour'});
-    my $poly         = new GD::Polygon;
+  my $canvas         = $self->{'canvas'};
+  my $bordercolour   = $self->colour($glyph->{'bordercolour'});
+  my $colour         = $self->colour($glyph->{'colour'});
+  my $poly           = new GD::Polygon;
 
-    return unless(defined $glyph->pixelpoints());
+  return unless(defined $glyph->pixelpoints());
 
-    my @points = @{$glyph->pixelpoints()};
-    my $pairs_of_points = (scalar @points)/ 2;
+  my @points = @{$glyph->pixelpoints()};
+  my $pairs_of_points = (scalar @points)/ 2;
 
-    for(my $i=0;$i<$pairs_of_points;$i++) {
-    	my $x = shift @points;
-    	my $y = shift @points;
-        $poly->addPt($x,$y);
-    }
+  for(my $i=0;$i<$pairs_of_points;$i++) {
+    my $x = shift @points;
+    my $y = shift @points;
+    $poly->addPt($x,$y);
+  }
 
-    if($glyph->{colour})        { $canvas->filledPolygon($poly, $colour); }
-    if($glyph->{'pattern'}) {
-	$canvas->setTile($self->tile($glyph->{'patterncolour'}, $glyph->{'pattern'}));
-	$canvas->filledPolygon($poly, gdTiled);
-    }
-    if($glyph->{bordercolour})  { $canvas->polygon($poly, $bordercolour); }
+  if($glyph->{colour}) {
+    $canvas->filledPolygon($poly, $colour);
+  }
+
+  if($glyph->{'pattern'}) {
+    $canvas->setTile($self->tile($glyph->{'patterncolour'}, $glyph->{'pattern'}));
+    $canvas->filledPolygon($poly, gdTiled);
+  }
+
+  if($glyph->{bordercolour}) {
+    $canvas->polygon($poly, $bordercolour);
+  }
 }
 
 sub render_Composite {
-    my ($self, $glyph,$Ta) = @_;
+  my ($self, $glyph, $Ta) = @_;
 
-    #########
-    # draw & colour the fill area if specified
-    #
-    $self->render_Rect($glyph) if(defined $glyph->{'colour'});
+  #########
+  # draw & colour the fill area if specified
+  #
+  $self->render_Rect($glyph) if(defined $glyph->{'colour'});
 
-    #########
-    # now loop through $glyph's children
-    #
-    $self->SUPER::render_Composite($glyph,$Ta);
+  #########
+  # now loop through $glyph's children
+  #
+  $self->SUPER::render_Composite($glyph,$Ta);
 
-    #########
-    # draw & colour the bounding area if specified
-    #
-    $glyph->{'colour'} = undef;
-    $self->render_Rect($glyph) if(defined $glyph->{'bordercolour'});
+  #########
+  # draw & colour the bounding area if specified
+  #
+  $glyph->{'colour'} = undef;
+  $self->render_Rect($glyph) if(defined $glyph->{'bordercolour'});
 }
 
 #sub render_Bezier {
@@ -327,7 +347,7 @@ sub render_Composite {
 #  my ($lx,$ly);
 #  while (@$points) {
 #    my ($x, $y) = splice(@$points, 0, 2);
-#    
+#
 #    $self->{'canvas'}->line($lx, $ly, $x, $y, $colour) if(defined($lx) && defined($ly));
 #    ($lx, $ly) = ($x, $y);
 #  }
@@ -335,18 +355,21 @@ sub render_Composite {
 
 sub render_Sprite {
   my ($self, $glyph) = @_;
-  my $spritename     = $glyph->{'sprite'} || "unknown";
+  my $spritename     = $glyph->{'sprite'} || 'unknown';
   my $config         = $self->config();
 
   unless(exists $config->{'_spritecache'}->{$spritename}) {
-    my $libref = $config->get("_settings", "spritelib");
-    my $lib    = $libref->{$glyph->{'spritelib'} || "default"};
+    my $libref = $config->get('_settings', 'spritelib');
+    my $lib    = $libref->{$glyph->{'spritelib'} || 'default'};
     my $fn     = "$lib/$spritename.gif";
-    unless( -r $fn ){ 
+
+    unless( -r $fn ){
       warn( "$fn is unreadable by uid/gid" );
       return;
     }
+
     $config->{'_spritecache'}->{$spritename} = GD::Image->newFromGif($fn);
+
     if( !$config->{'_spritecache'}->{$spritename} ) {
       $config->{'_spritecache'}->{$spritename} = GD::Image->newFromGif("$lib/missing.gif");
     }
@@ -359,13 +382,14 @@ sub render_Sprite {
 
   my $METHOD = $self->{'canvas'}->can('copyRescaled') ? 'copyRescaled' : 'copyResized' ;
   $self->{'canvas'}->$METHOD($sprite,
-				  $glyph->{'pixelx'},
-				  $glyph->{'pixely'},
-				  0,
-				  0,
-				  $glyph->{'pixelwidth'}  || 1,
-				  $glyph->{'pixelheight'} || 1,
-				  $width,
-				  $height);
+			     $glyph->{'pixelx'},
+			     $glyph->{'pixely'},
+			     0,
+			     0,
+			     $glyph->{'pixelwidth'}  || 1,
+			     $glyph->{'pixelheight'} || 1,
+			     $width,
+			     $height);
 }
+
 1;
