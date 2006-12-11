@@ -95,8 +95,12 @@ sub alignments {
   my $HTML = jalview_link_for( 'Ensembl', $ensembl_members, $object ) .
              jalview_link_for( '', \@all_pep_members, $object );
   if( $HTML ) {
-    $panel->add_row( 'Multiple alignments', "<table>$HTML</table>" );
+    $HTML = "<table>$HTML</table>";
   }
+  else {
+    $HTML = "<p>No alignment has been produced for this family.</p>";
+  }
+  $panel->add_row( 'Multiple alignments', $HTML );
 }
 
 sub jalview_link_for {
@@ -112,10 +116,14 @@ sub jalview_link_for {
   if( open FASTA,   ">$file" ) {;
     foreach my $member_attribute (@$refs){
       my ($member, $attribute) = @$member_attribute;
-      if($attribute->alignment_string($member)) {
-        print FASTA ">".$member->stable_id."\n";
-        print FASTA $attribute->alignment_string($member)."\n";
-        $outcount++;
+      my $align;
+      eval { $align = $attribute->alignment_string($member); };
+      unless ($@) {
+        if($attribute->alignment_string($member)) {
+          print FASTA ">".$member->stable_id."\n";
+          print FASTA $attribute->alignment_string($member)."\n";
+          $outcount++;
+        }
       }
     }
     close FASTA;
