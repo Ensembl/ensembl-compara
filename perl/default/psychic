@@ -21,51 +21,114 @@ $query=~ s/^\s+//g;
 $query=~ s/\s+$//g;
 $query=~ s/\s+/ /g;
 
+unless( $species ) {
+  $query .= ' ';
+  my %sp_hash = %{ $webpage->{'species_defs'}->ENSEMBL_SPECIES_ALIASES };
+  foreach my $sp ( keys %sp_hash ) {
+    if( lc(substr($query,0,length($sp)+1)) eq lc($sp).' ') {
+      $species = $sp_hash{$sp};
+      $query = substr($query, length($sp)+1 );
+    }
+  }
+  chop $query;
+}
+
+my $feature_maps = {qw(
+  gene       Gene
+  affyprobe  OligoProbe
+  oliogprobe OligoProbe
+  affy       OligoProbe
+  oligo      OligoProbe
+  snp        SNP
+  variaton   SNP
+  chr         Chromosome
+  clone       Sequence
+  contig      Sequence
+  chromosome  Sequence
+  supercontig Sequence
+  region      Sequence
+  sequence    Sequence
+  disease     Disease
+  domain      Domain
+  peptide     Gene
+  transcript  Gene
+  gene        Gene
+  translation Gene
+  cdna        GenomicAlignment
+  mrna        GenomicAlignment
+  protein     GenomicAlignment
+  domain      Domain
+  marker      Marker
+  family      Family
+)};
+
+my $index = '';
+if( $query=~/^(\w+)\b/ ) {
+  $index = $feature_maps->{lc($1)};
+  if( $index ) {
+    $query=~s/^\w+\W*//;
+  }
+} elsif( $query =~ s/^(chromosome)//i || $query =~ s/^(chr)//i ) {
+  $index = 'Chromosome';
+} elsif( $query =~/^(contig|clone|supercontig|region)/i ) {
+  $index = 'Sequence';
+}
+my $flag = 0;
 if($species) {
   if(!$query) { ## nothing to search for
     $URL = "/$species/";
-  } elsif ( ## sequence coordinates
+    $flag = 1;
+  } elsif( $index eq 'Sequence' || $index eq 'Chromosome' ) {
   ## match any of the following:
-    $query =~ /^(?:chr|chromosome|contig|clone|supercontig)\s*([-\.\w]+):([\d\.]+?[MKG]?)(-|\.\.|,)([\d\.]+?[MKG]?)$/i       ||
-  ## chrID:nnn-nnn
-  ## chrID:nnn..nnn
-  ## chrID:nnn,nnn
-  ## chrID:n,nnn,nnn-n,nnn,nnn
-  ## chrID:n,nnn,nnn..n,nnn,nnn 
-  ## regionID
-    $query =~ /^(?:chr|chromosome|contig|clone|supercontig)\s*([-\.\w]+):([\d,]+[MKG]?)(\.\.|-)([\d,]+[MKG]?)$/i ||
-    $query =~ /^(?:contig|clone|supercontig)\s*([-\.\w]+)$/i
-  ) {
-    my( $seq_region_name, $start, $end ) = ( $1, $2, $4 );
-    $start = $webpage->evaluate_bp( $start );
-    $end   = $webpage->evaluate_bp( $end   );
-    ($end,$start)=($start,$end) if $end < $start;
-    my $script = 'contigview';
-    $script = 'cytoview' if  $end - $start > 1000000;
-    if($start && $end ) {
-      $URL = sprintf( "/%s/%s?region=%s;start=%s;end=%s", $species, $script, $seq_region_name, $start, $end );
+    if( $query =~ /^\s*([-\.\w]+)[: ]([\d\.]+?[MKG]?)( |-|\.\.|,)([\d\.]+?[MKG]?)$/i       ||
+        $query =~ /^\s*([-\.\w]+)[: ]([\d,]+[MKG]?)( |\.\.|-)([\d,]+[MKG]?)$/i ) {
+      my( $seq_region_name, $start, $end ) = ( $1, $2, $4 );
+      $start = $webpage->evaluate_bp( $start );
+      $end   = $webpage->evaluate_bp( $end   );
+      ($end,$start)=($start,$end) if $end < $start;
+      my $script = 'contigview';
+         $script = 'cytoview' if  $end - $start > 1000000;
+      if($start && $end ) {
+        $URL = sprintf( "/%s/%s?region=%s;start=%s;end=%s", $species, $script, $seq_region_name, $start, $end );
+      } elsif( $index eq 'Chromosome' ) {
+        $URL = "/$species/mapview?chr=$seq_region_name";
+      } else {
+        $URL = sprintf( "/%s/%s?region=%s", $species, $script, $seq_region_name );
+      }
+    } elsif( $query =~ /^\s*([-\.\w]+)[: ]([\d\.]+?[MKG]?)$/i ) {
+      my( $seq_region_name, $start, $end ) = ( $1, $2 );
+      $start = $webpage->evaluate_bp( $start );
+      my $script = 'contigview';
+      if( $start ) {
+        $URL = sprintf( "/%s/%s?c=%s:%s;w=100000", $species, $script, $seq_region_name, $start );
+      }
+   
     } else {
-      $URL = sprintf( "/%s/%s?region=%s", $species, $script, $seq_region_name );
+      if( $index eq 'Chromosome' ) {
+        $URL = "/$species/mapview?chr=$query";
+      } else {
+        $URL = sprintf( "/%s/contigview?region=%s", $species, $query );
+      }
     }
+    $flag = 1;
   } elsif (  $query =~ /\.\.|-/ ) {  ## other pairs of identifiers
     ## str.string..str.string
     ## str.string-str.string
     $query =~ /([\w|\.]+\w+)(\.\.|-)([\w|\.]+)/;
     $URL = "/$species/jump_to_contig?type1=all;type2=all;anchor1=$1;anchor2=$2"; 
-  } elsif( $query =~ /^chr(omosome)?\s(\w+)/ ) {
-    $URL = "/$species/mapview?chr=$2"; 
-  } elsif( $query =~ /^(Gene|AffyProbe|Domain|Disease|Family|Marker|OligoProbe|Peptide|SNP|Sequence)\s(.+)/i ) {
-    $URL = "/$species/searchview;idx=$1;q=$2";
+    $flag = 1;
   }
 }
-unless( $URL ) {
+#unless($flag) {
+#  $URL = "/$species/searchview;idx=$1;q=$2";
+#}
+unless( $flag ) {
   $URL = $query =~ /^BLA_\w+$/            ? "/Multi/blastview/$query"       ## Blast ticket
        : $query =~ /^\w+\.mart$/          ? "/Multi/martview/$query"        ## MART query
        : $query =~ /[ACGT]{12,}/i         ? "/Multi/blastview?species=$species;_query_sequence=$query;query=dna;database=dna"         ## BLAST seq search
        : $query =~ /[A-Z]{12,}/           ? "/Multi/blastview?species=$species;_query_sequence=$query;query=peptide;database=peptide" ## BLAST aa search
-       : $query =~ /^(Gene|AffyProbe|Domain|Disease|Family|Marker|OligoProbe|Peptide|SNP|Sequence)\s(.+)/i 
-                                          ? "/perl/searchview?species=All;idx=$1;q=$2"
-       : "/perl/searchview?species=$species;idx=All;q=$query";
+       :                                    "/perl/searchview?species=$species;idx=$index;q=$query"
+       ;
 }
 $webpage->redirect($URL);
 
