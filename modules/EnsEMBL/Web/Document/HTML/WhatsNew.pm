@@ -20,48 +20,7 @@ sub render {
 ## JS tab-switching, plus Ensembl blurb
   my $html = qq(
 
-<script language="javascript">
-  function show_whatsnew() {
-    document.getElementById('whatsnew').style.display = 'block';
-    document.getElementById('whatsnew_tab').className = 'tab selected';
-    document.getElementById('aboutensembl').style.display = 'none';
-    document.getElementById('aboutensembl_tab').className = 'tab';
-  }
-
-  function show_aboutensembl() {
-    document.getElementById('whatsnew').style.display = 'none';
-    document.getElementById('whatsnew_tab').className = 'tab';
-    document.getElementById('aboutensembl').style.display = 'block';
-    document.getElementById('aboutensembl_tab').className = 'tab selected';
-  }
-</script>
-
-<div class="box_tabs">
-  <div class="tab selected" id="aboutensembl_tab">
-    <a href="javascript:void(0);" onClick="show_aboutensembl();">About Ensembl</a>
-  </div>
-  <div class="tab" id="whatsnew_tab">
-    <a href="javascript:void(0);" onClick="show_whatsnew();">What's new</a>
-  </div>
-  <br clear="all" />
-  <div class="tab_content">
-  <div class="tab_content_panel" id="aboutensembl">
-<a href="http://www.ensembl.org">Ensembl</a> is a joint project between <a
-   href="http://www.ebi.ac.uk">EMBL - EBI</a> and the <a
- href="http://www.sanger.ac.uk">Sanger Institute</a>
-   to develop a software system which produces and maintains automatic
-   annotation on selected eukaryotic genomes. Ensembl is primarily funded by
-   the <a href="http://www.wellcome.ac.uk/">Wellcome Trust</a>.</p>
-
-<p>This site provides <a href="/info/about/disclaimer.html" title="More information about free access">free access</a> to all the data and software from the Ensembl project.  Click on a species name to browse the data.</p>
-
-<p>Access to all the data produced by the project, and to
-   the software used to analyse and present it, is provided free and
-   without constraints.  Some data and software may be subject to <a href="/info/about/disclaimer.html" title="More information about access restrictions">third-party constraints</a>.</p>
-<p>For all enquiries, please <a href="/info/about/contact.html">contact the Ensembl HelpDesk</a> (<a
-   href="mailto:helpdesk\@ensembl.org">helpdesk\@ensembl.org</a>).
-  </div>
-  <div class="tab_content_panel" id="whatsnew" style="display: none;">
+<div class="pale boxed">
 <div class="species-news">
 );
 
@@ -69,6 +28,7 @@ sub render {
 
   my $species_defs = EnsEMBL::Web::SpeciesDefs->new();
   my $release_id = $species_defs->ENSEMBL_VERSION;
+
   my $user_id = $ENV{'ENSEMBL_USER_ID'};
   my $user = EnsEMBL::Web::Object::User->new({ id => $user_id });
 
@@ -102,7 +62,12 @@ sub render {
   my %current_spp = %{$adaptor->fetch_species($release_id)};
 
   if (scalar(@headlines) > 0) {
-    $html .= "<h4>Your Ensembl headlines</h4>";
+    
+    my @releases = @{$adaptor->fetch_releases({'release'=>$release_id})};
+    my $release_details = $releases[0];
+    my $release_date = $release_details->{'long_date'};
+
+    $html .= qq(<h3>Your Ensembl headlines: <span class="text">Release $release_id ($release_date)</span></h3><br />);
 
     ## format news headlines
     foreach my $item (@headlines) {
@@ -141,7 +106,7 @@ sub render {
       ## generate HTML
       $html .= '<p>';
       if ($sp_count == 1) {
-        $html .= qq(<a href="/$sp_dir/"><img src="/img/species/thumb_$sp_dir.png" alt="" title="Go to the $sp_name home page" class="sp-thumb" height="30" width="30" /></a>);
+        $html .= qq(<a href="/$sp_dir/"><img src="/img/species/thumb_$sp_dir.png" alt="" title="Go to the $sp_name home page" class="sp-thumb" style="height:30px;width:30px;border:1px solid #999" /></a>);
       }
       else {
         $html .= qq(<img src="/img/ebang-30x30.png" alt="" class="sp-thumb" height="30" width="30" />);
@@ -177,10 +142,6 @@ sub render {
 
   $html .= qq(
 </div>
-  <!-- common footer -->
-  </div>
-</div>
-
 );
 
   return $html;
