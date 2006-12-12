@@ -438,6 +438,7 @@ sub _parse {
       ## hash of keys (other than taxonomy) that we want to use
       my %meta_map = (
         'species.ensembl_alias_name'  => 'SPECIES_COMMON_NAME',
+        'species.common_name'         => 'SPECIES_DESCRIPTION',
         'assembly.default'            => 'ENSEMBL_GOLDEN_PATH',
         'assembly.name'               => 'ASSEMBLY_ID',
       );
