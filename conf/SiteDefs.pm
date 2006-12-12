@@ -210,8 +210,9 @@ $ENSEMBL_REGISTRY       = undef;
 );
 
 
+my $perl_version = sprintf( '%d.%d.%d', $] =~ /(\d)\.(\d{3})(\d{3})/ );
 @ENSEMBL_LIB_DIRS     = (
-  $ENSEMBL_SERVERROOT.'/apache2/lib/perl5/site_perl/5.8.3/i686-linux/',
+  $ENSEMBL_SERVERROOT."/apache2/lib/perl5/site_perl/$perl_version/i686-linux/",
   $ENSEMBL_SERVERROOT.'/modules',
   $ENSEMBL_SERVERROOT.'/ensembl/modules',
   $ENSEMBL_SERVERROOT.'/ensembl-compara/modules',
