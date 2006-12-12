@@ -14,17 +14,10 @@
 
 <h2>Compara Mart</h2>
 
-<h3>Comparative Genomics Analysis</h3>
+For a full description of the whole genome alignment methods see the corresponding page :
+<br><a href="http://www.ensembl.org/info/data/compara/index.html">Blastz-net / Translated Blat Pairwise Alignments, Pecan Multiple Alignments and GERP</a>
 
-For a full description of the methods and analysis see the corresponding pages :
-
-<br><a href="http://www.ensembl.org/info/data/compara/homology_method.html">Gene Orthology/Paralogy prediction method</a>
-<br><a href="http://www.ensembl.org/info/data/compara/index.html">Blastz-net / Translated Blat Pairwise Alignments, Pecan multiple alignments and GERP</a>
-
-
-
-
-<h3>Formatters used in ComparaMart</h3>
+<h3>Format used in ComparaMart Whole Genome Alignment (Pairwise and Multi Species)</h3>
 
 <h4>AXT</h4>
 <p>Complete information about AXT format can be found  <a href="http://genome.ucsc.edu/goldenPath/help/axt.html">here</a>
@@ -53,7 +46,7 @@ CTACTCCTGTCCCCACTCCCAGCCCTGCTGGGGGCCCTGACCCCACCTCTCCAGGCTCGGA
 
 <h4>AXTPLUS</h4>
  
- <p>This formatter is an extension of the axt format, with an extended header 
+ <p>This format is our own extension of the axt format, with an extended header 
   and the freedom to have the query sequence (primary organism) in - strand (axt assumes 
   always the query sequence to be in + strand)</p>
   
@@ -88,7 +81,7 @@ GCTGATGACAGCTTTGGCACCACCGACATTGATCTCAAGTGCAAGGAACGAGTGACTGACAGTGAAAGTGGAGACAGCTC
 <h4>MAF</h4> 
 <p>Complete information about MAF format can be found  <a href="http://genome.ucsc.edu/FAQ/FAQformat#format5">here</a>
 
-<p>As described above the MAF format is line-oriented. Each multiple alignment ends with a blank line. Each sequence in an alignment is on a single line, which can get quite long, but there is no length limit. Words in a line are delimited by any white space. Lines starting with # are considered to be comments. Lines starting with ## can be ignored by most programs, but contain meta-data of one form or another.
+<p>As described in the above the MAF format is line-oriented. Each multiple alignment ends with a blank line. Each sequence in an alignment is on a single line, which can get quite long, but there is no length limit. Words in a line are delimited by any white space. Lines starting with # are considered to be comments. Lines starting with ## can be ignored by most programs, but contain meta-data of one form or another.
 <p>Each alignment begins with an 'a' line that set variables for the entire alignment block. The 'a' is followed by name=value pairs which correspond to the score of the alignment. 
 
 <br>The 's' lines together with the 'a' lines define a multiple alignment. The 's' lines have the following fields which are defined by position rather than name=value pairs.
@@ -110,8 +103,8 @@ s btau.chr1   81704165      23 +      102834029 AAGGAGTCCTGGAAAGGAGCACA
 s mdom.chr4   43504342      16 -      430141050 AAGGAA-ACTAGCATGG------ 
 </pre></code>
 
-<h4>MFA, FASTAH & FASTAA</h4> 
-<p>Are FASTA like formatters for pairwise alignments, homologues and aligned homologues respectively. For the pairwise alignments the header is pre-defined with alignment coordinates, score and species name, but for the homologues the headers can be defined by the user by selecting any attributes available. 
+<h4>MFA</h4> 
+<p>Is a  FASTA like format for pairwise alignments. For the pairwise alignments the header is pre-defined with alignment coordinates, score and species name, and each Fasta blocks are separated from one another by a number sign (#). 
 
 
 <p><i>example: </i>Human - Chicken Pairwise BlastZ-net alignment</p>
@@ -128,6 +121,30 @@ CCCAATGCCCCCTGCCTGGCGAATGGATTCCAGGAGACTGGCACGCCCAGTTGAGGGGTTCACCACCTCCTTTGGGGCTC
 CCTGGACCGAAGCTG------------CAGGGACAGGAAGGA--------CATGCATCAGCCTCGGGTA-----------
 --------TAGCTGCAAGCCCAGCCAAATCCCCCCACAGAAAGGG--CTGCTCT---GATGCCCTGCCATCTTCTTTTTG
 GGACTGTGCG-------CCTGACACAGACACTTTCAGGCAC
+#
 </pre></code>
+
+
+
+<h3>Format used in ComparaMart Homologues</h3>
+
+For a full description of the Gene Orthology/Paralogy prediction method see the corresponding page :
+
+<br><a href="http://www.ensembl.org/info/data/compara/homology_method.html">Gene Orthology/Paralogy prediction method</a>
+
+<h4>FASTAH & FASTAA</h4> 
+<p>Are FASTA like format for homologues and aligned homologues respectively. The headers can be defined by the user by selecting any attributes available. Fasta blocks are separated from one another by a number sign (#). 
+
+
+<p><i>example: </i>Human - Mouse Homologues (Peptide)</p>
+<code><pre>
+>Homo sapiens|16|ENSG00000162073|ENST00000318782|ortholog_one2oneMAFLAGPRLLDWASSPPHLQFNKFVLTGYRPASSGSGCLRSLFYLHNELGNIYTHGLALLGFLVLVPMTMPWGQLGKDGWLGGTHCVACLAPPAGSVLYHLFMCHQGGSAVYARLLALDMCGVCLVNTLGALPIIHCTLACRPWLRPAALVGYTVLSGVAGWRALTAPSTSARLRAFGWQAAARLLVFGARGVGLGSGAPGSLPCYLRMDALALLGGLVNVARLPERWGPGRFDYWGNSHQIMHLLSVGSILQLHAGVVPDLLWAAHHACPRD>Mus musculus|17|ENSMUSG00000023909|ENSMUST00000024702|ortholog_one2oneMAFLTGPRLLDWASSPPHLQFNKFVLTGYRPASSGSGCLRSLFYLHNELGNIYTHGLALLGFLVLVPMTMPWSQLGKDGWLGGTHCVACLVPPAASVLYHLFMCHQGGSPVYTRLLALDMCGVCLVNTLGALPIIHCTLACRPWLRPAALMGYTALSGVAGWRALTAPSTSARLRAFGWQAGARLLVFGARGVGLGSGAPGSLPCYLRMDALALLGGLVNVARLPERWGPGRFDYWGNSHQIMHLLSVGSILQLHAGVVPDLLWAAHHACPPD#
+</pre></code>
+
+<p><i>example: </i>Human - Mouse Homologues (Aligned Peptide)</p>
+<code><pre>
+>Homo sapiens|12|ENSG00000182196|ENST00000315580|ortholog_one2oneMERAGPAGEEGGAREGRLLPRAPGAWVLRACAERAALEVGAASADTGVRGCGARGPAPLLASAGGGRARDGTWGVRTKGSGAALPSRPASRAAPRPEASSPPLPLEKARGGLSGPQGGRARGAMAHVGSRKRSRSRSRSR-G-RGSEKRKKKSRKDTSRNCSASTSQGRKASTAPGAEASPSPCITERSKQKARRRTRSSSSSSSSSSSSSSSSSSSSSSSSSDGRKKRGKYKDKRRKKKKK--RKKLKKKGKEKAEA-QQVEALPGPSLDQWHRSAGEEEDGPVLTDEQKSRIQAMKPMTKEEWDARQSIIRKVVDPETGRTRLIKGDGEVLEEIVTKERHREINKQATRGDCLAFQMRAGLLP>Mus musculus|5|ENSMUSG00000029404|ENSMUST00000031351|ortholog_one2one---------------------------------------------------------------------------------------------------------------------------MAHVGSRKRSRSRSRSRSGRRGSEKRSKRSSKDASRNCSASRSQGHKAGSASGVE--------ERSKHKAQRTSRSSSTSSSSS--SSSSA---SSSSSSDGRKKRAKHKEKKRKKKKKKRKKKLKKRVKEKAVAVHQAEALPGPSLDQWHRSAGEDNDGPVLTDEQKSRIQAMKPMTKEEWDARQSVIRKVVDPETGRTRLIKGDGEVLEEIVTKERHREINKQATRGDGLAFQMRTGLLP#
+</pre></code>
+
 </body>
 </html>
