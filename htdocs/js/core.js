@@ -1,5 +1,44 @@
 /* A place to dump random javascript */
 
+/* This is a bit of hacky code to pop up a debug window */
+var _debug_window;
+function debug_window() {
+  if( _debug_window ) { return; }
+  _debug_window=window.open('','__debug','height=400,width=600');
+  D = _debug_window.document;
+  h_3 = D.createElement( 'h3' );
+  h_3.appendChild( D.createTextNode('HI!') );
+  D.documentElement.appendChild(h_3);
+  D.documentElement.style.fontSize = '0.7em';
+  h_3.style.marginWidth = '0px';
+  u_l = D.createElement( 'ul' );
+  u_l.style.marginWidth = '0px';
+  u_l.setAttribute('id','debug_list');
+  D.documentElement.appendChild(u_l);
+}
+
+function debug( string ) {
+  if( _debug_window ) {
+    D = _debug_window.document;
+    l_i = D.createElement( 'li' );
+    l_i.documentElement.style.margin = '0px';
+    l_i.appendChild(D.createTextNode( string ) );
+    D.getElementById( 'debug_list' ).appendChild(l_i);
+    _debug_window.focus();
+  } else {
+    alert( string );
+  }
+}
+
+function debug_clear( ) {
+  if( _debug_window ) {
+    D = _debug_window.document;
+    u_l = D.getElementById( 'debug_list' );
+    while(u_l.hasChildNodes()) {
+      u_l.removeChild(u_l.firstChild);
+    }
+  }
+}
 
 function toggle_settings_drawer() {
   if ($('settings').style.display == 'none') {
