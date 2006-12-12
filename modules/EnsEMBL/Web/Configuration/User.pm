@@ -92,21 +92,8 @@ sub groupview {
     $self->add_panel( $details_panel);
   }
 
-  if( my $settings_panel = $self->new_panel( 'Image',
-    'code'    => "group_details#",
-    'caption' => 'Shared settings',
-    'status'  => 'group_settings'
-  )) {
-    $settings_panel->add_components(qw(
-      group_settings EnsEMBL::Web::Component::User::group_settings
-    ));
-    $self->add_panel( $settings_panel);
-  }
-
   if( my $members_panel = $self->new_panel( 'Image',
     'code'    => "group_details#",
-    'caption' => 'Group members',
-    'status'  => 'group_members'
   )) {
     $members_panel->add_components(qw(
       group_users EnsEMBL::Web::Component::User::group_users
@@ -116,8 +103,6 @@ sub groupview {
 
   if( my $members_panel = $self->new_panel( 'Image',
     'code'    => "group_details#",
-    'caption' => 'Delete group',
-    'status'  => 'delete_group'
   )) {
     $members_panel->add_components(qw(
       delete_group EnsEMBL::Web::Component::User::delete_group
@@ -137,7 +122,7 @@ sub accountview {
 
   if( my $details_panel = $self->new_panel( 'Image',
     'code'    => "details#",
-    'caption' => 'Account summary for '. $user->name . " (" . $user->email . ")",
+    'caption' => 'Account home page for '. $user->name . " (" . $user->email . ")",
   )) {
     $details_panel->add_components(qw(
       user_details EnsEMBL::Web::Component::User::user_details
