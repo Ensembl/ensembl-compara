@@ -15,6 +15,6 @@ if ($ENV{'ENSEMBL_USER_ID'}) {
   }
 }
 
-print "Location: " . $url;
+CGI::redirect($url);
 
 1;

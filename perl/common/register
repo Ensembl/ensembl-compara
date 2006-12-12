@@ -41,7 +41,7 @@ if ($cgi->param('email')) {
   my $user = EnsEMBL::Web::Object::User->new({ email => $cgi->param('email') });
   if ($user->id) {
     my $url = "/error/email.html";
-    print "Location:" . $url;
+    CGI::redirect($url);
   } else {
     EnsEMBL::Web::Document::DataView::simple('User', $page);
   }

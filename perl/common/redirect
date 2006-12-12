@@ -32,6 +32,6 @@ $record->save;
 
 warn "REDIRECT: " . $url;
 
-print "Location: $url";
+CGI::redirect($url);
 
 1;

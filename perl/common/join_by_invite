@@ -68,7 +68,7 @@ EnsEMBL::Web::Document::DataView::simple('User', $page);
   $record->save;
 
   my $url = "/common/accountview";
-  print "Location: " . $url;
+  CGI::redirect($url);
 }
 
 sub random_string {

@@ -1,4 +1,4 @@
-#/usr/bin/perl
+#! /usr/bin/perl
 
 package sortable;
 
@@ -31,6 +31,7 @@ if ($ENV{'ENSEMBL_USER_ID'}) {
   }
 
 }
-print "Location: " . $url;
+
+CGI::redirect($url);
 
 1;

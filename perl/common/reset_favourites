@@ -19,6 +19,6 @@ if ($record) {
 }
 
 my $url = "/index.html";
-print "Location: $url";
+CGI::redirect($url);
 
 1;

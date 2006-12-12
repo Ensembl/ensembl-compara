@@ -38,8 +38,8 @@ $page->add_form_element('organisation', "Organisation");
 EnsEMBL::Web::Document::DataView::simple('User', $page);
 
 } else {
-  my $fail_url = "/failed.html";
-  print "Location: " . $fail_url;
+  my $fail_url = "/error/failed.html";
+  CGI::redirect($fail_url);
 }
 
 

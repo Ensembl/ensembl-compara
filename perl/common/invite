@@ -31,7 +31,7 @@ if ($ENV{'ENSEMBL_USER_ID'}) {
   }
 }
 
-print "Location: " . $url;
+CGI::redirect($url);
 
 sub send_invite_email {
   my ($group, $user, $record, $invite_email) = @_;

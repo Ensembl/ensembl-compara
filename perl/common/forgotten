@@ -33,7 +33,7 @@ if ($cgi->param('email')) {
   }
 }
 
-print "Location:" . $url;
+CGI::redirect($url);
 
 sub send_activation_email {
   my ($user, $site_info) = @_;
