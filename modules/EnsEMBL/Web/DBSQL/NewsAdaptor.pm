@@ -37,7 +37,7 @@ sub disconnect {
 sub DESTROY {
 ### d
   my $self = shift;
-  warn $self->disconnect;
+  #warn $self->disconnect;
 }
 
 ############################## SELECT QUERIES #################################
@@ -228,7 +228,8 @@ sub fetch_releases {
                 r.release_id    as release_id,
                 r.number        as release_number,
                 DATE_FORMAT(r.date, '%Y-%m-%d (%D %M %Y)') as full_date,
-                DATE_FORMAT(r.date, '%b %Y') as short_date
+                DATE_FORMAT(r.date, '%b %Y') as short_date,
+                DATE_FORMAT(r.date, '%M %Y') as long_date
         FROM
                 ens_release r);
 
@@ -254,7 +255,8 @@ sub fetch_releases {
             'release_id'        => $array[0],
             'release_number'    => $array[1],
             'full_date'         => $array[2],
-            'short_date'        => $array[3]
+            'short_date'        => $array[3],
+            'long_date'         => $array[4]
             }
         );
     }
