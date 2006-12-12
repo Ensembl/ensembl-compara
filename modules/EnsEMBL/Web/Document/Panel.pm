@@ -551,7 +551,7 @@ sub content {
       my $result;
       (my $module_name = $function_name ) =~s/::\w+$//;
       if( $self->dynamic_use( $module_name ) ) {
-        $self->{'object'}->prefix($self->prefix);
+        $self->{'object'} && $self->{'object'}->prefix($self->prefix);
         no strict 'refs';
         eval {
           $result = &$function_name( $self, $self->{'object'} );
