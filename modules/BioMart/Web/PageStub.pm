@@ -1,5 +1,5 @@
 package BioMart::Web::PageStub;
-use EnsEMBL::Web::Apache::Handlers;
+use EnsEMBL::Web::RegObj;
 use EnsEMBL::Web::Document::Renderer::Apache;
 use EnsEMBL::Web::Document::Dynamic;
 use EnsEMBL::Web::Document::Static;
@@ -14,6 +14,7 @@ sub new {
   $page->masthead->sp_common ||= 'BioMart';
   $page->javascript->add_source( '/martview/js/martview.js'           );
   $page->javascript->add_script( 'addLoadEvent( setVisibleStatus )' );
+#  $page->javascript->add_script( 'addLoadEvent( debug_window )' );
   $page->stylesheet->add_sheet(  'all', '/martview/martview.css'      );
 
   my $self = { 'page' => $page, 'session' => $session };
@@ -24,6 +25,7 @@ sub new {
 sub start {
   my $self = shift;
   $self->{'page'}->render_start;
+#  print '<script type="text/javascript">debug_window()</script>';
   print qq(
 <div id="page"><div id="i1"><div id="i2"><div class="sptop">&nbsp;</div>
 <div id="main_body_content" class="panel">);
