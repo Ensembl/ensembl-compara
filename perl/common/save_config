@@ -12,7 +12,6 @@ use EnsEMBL::Web::DBSQL::DataDefinition;
 use EnsEMBL::Web::DBSQL::ViewAdaptor;
 
 use EnsEMBL::Web::RegObj;
-use Apache;
 use Data::Dumper;
 use CGI;
 
