@@ -21,6 +21,15 @@ a.glossary {text-decoration:none; border-bottom:1px dotted [[LINK]]; }
 
 /* LAYOUT */
 
+div#settings {
+  background: #efefef;
+  border-bottom: #666 1px solid;
+}
+
+div#settings_content {
+  padding: 7px;
+}
+
 .ch span { /*border: red 1px solid;*/ padding: 2px 2em 2px 2px; }
 li.ch { padding: 6px }
 

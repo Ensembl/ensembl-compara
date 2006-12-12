@@ -21,6 +21,15 @@ a.glossary {text-decoration:none; border-bottom:1px dotted #3366bb; }
 
 /* LAYOUT */
 
+div#settings {
+  background: #efefef;
+  border-bottom: #666 1px solid;
+}
+
+div#settings_content {
+  padding: 7px;
+}
+
 .ch span { /*border: red 1px solid;*/ padding: 2px 2em 2px 2px; }
 li.ch { padding: 6px }
 
@@ -68,7 +77,7 @@ div.alt { color:#3366bb; background-color:#edeeef; border:1px solid #9bb9dd; }
 hr.alt { background-color:#3366bb; }
 div.alt h2, div.alt h3 { color:#3366bb; margin-top:1em; }
 div.alt h2.first, div.alt h3.first { margin-top:0em; }
-div.alt p { color:#3366bb; margin-top:-0.5em; }
+div.alt p { color:#000; margin-top:-0.5em; }
 div.alt a { text-decoration:none; }
 div.alt a:visited { color:#3366bb; }
 div.alt a:hover { color:#cc0000; }
