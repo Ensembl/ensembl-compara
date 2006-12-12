@@ -29,8 +29,9 @@ $data->adaptor(EnsEMBL::Web::DBSQL::ViewAdaptor->new((
                                                     )) );
 
 $data->add_field({'Field' => 'name', 'Type' => 'varchar(255)'});
-$data->add_field({'Field' => 'blurb', 'Type' => 'text'});
+$data->add_field({'Field' => 'description', 'Type' => 'text'});
 $data->add_field({'Field' => 'config', 'Type' => 'text'});
+$data->add_field({'Field' => 'url', 'Type' => 'text'});
 $data->add_field({'Field' => 'created_at', 'Type' => 'timestamp'});
 $data->add_field({'Field' => 'modified_at', 'Type' => 'timestamp'});
 $data->populate($cgi->param('id'));
@@ -44,13 +45,10 @@ $page->on_error('/account/bookmark_error.html');
 $page->cancel('yes');
 
 $form = EnsEMBL::Web::Interface::FormDefinition->new();
-$form->add_value({ name => $cgi->param('bm_name') });
-$form->add_value({ url => $cgi->param('bm_url') });
-
 $page->add_configuration_element('record', 'yes');
 $page->add_configuration_element('type', 'configuration'); 
 $page->add_form_element('name', "Configuration name", $form);
-$page->add_form_element('blurb', "Short description", $form);
+$page->add_form_element('description', "Short description", $form);
 
 EnsEMBL::Web::Document::DataView::simple('User', $page);
 

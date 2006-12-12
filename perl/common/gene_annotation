@@ -1,6 +1,6 @@
 #!/usr/local/bin/perl
 
-package bookmark;
+package gene_annotation;
 
 use CGI;
 
@@ -10,11 +10,14 @@ use EnsEMBL::Web::Interface::FormDefinition;
 use EnsEMBL::Web::DBSQL::DataDefinition;
 use EnsEMBL::Web::RegObj;
 use EnsEMBL::Web::DBSQL::ViewAdaptor;
+use EnsEMBL::Web::Tools::URL;
 
 my $cgi = CGI->new;
 my $page = EnsEMBL::Web::Interface::PageDefinition->new();
 my $data = EnsEMBL::Web::DBSQL::DataDefinition->new();
 my $db = $ENSEMBL_WEB_REGISTRY->dbAdaptor;
+
+my $url = EnsEMBL::Web::Tools::URL->new(( url => $cgi->param('url') )); 
 
 my $class = "user";
 if ($cgi->param('class')) {
@@ -31,6 +34,7 @@ $data->adaptor(EnsEMBL::Web::DBSQL::ViewAdaptor->new((
 $data->add_field({'Field' => 'title', 'Type' => 'varchar(255)'});
 $data->add_field({'Field' => 'annotation', 'Type' => 'text'});
 $data->add_field({'Field' => 'stable_id', 'Type' => 'varchar(255)'});
+$data->add_field({'Field' => 'species', 'Type' => 'varchar(255)'});
 $data->add_field({'Field' => 'created_at', 'Type' => 'timestamp'});
 $data->add_field({'Field' => 'modified_at', 'Type' => 'timestamp'});
 $page->on_complete($cgi->param('url'));
@@ -54,8 +58,11 @@ $form->add_value({ url => $cgi->param('annotation') });
 
 $page->add_configuration_element('record', 'yes');
 $page->add_configuration_element('type', 'annotation'); 
-$page->add_configuration_element('stable_id', $cgi->param('stable_id')); 
+if ($cgi->param('stable_id')) {
+  $page->add_configuration_element('stable_id', $cgi->param('stable_id')); 
+}
 $page->add_configuration_element('url', $cgi->param('url')); 
+$page->add_configuration_element('species', $species); 
 $page->add_form_element('title', "Title", $form);
 $page->add_form_element('annotation', "Annotation notes", $form);
 

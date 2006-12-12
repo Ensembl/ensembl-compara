@@ -11,6 +11,7 @@ use Apache;
 use CGI;
 my $cgi = new CGI;
 my $script_name = "contigview";
+
 my $url = $cgi->param('url');
 my ($host, $params) = split(/\?/, $url);
 my (@parameters) = split(/&/, $params); 
@@ -44,5 +45,9 @@ if ($ENV{'ENSEMBL_USER_ID'}) {
 }
 
 CGI::redirect($url);
+
+sub prepare_url {
+  my ($url) = @_;
+}
 
 1;
