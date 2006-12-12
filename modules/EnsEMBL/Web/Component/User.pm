@@ -450,26 +450,29 @@ sub _render_invites_for_group {
 sub _render_all_groups {
   my ($user, $included) = @_;
   my %included = ();
+  my $html = "";
   if ($included) {
     %included = %{ $included }; 
   }
-  my $html = "<h5>Publicly available groups</h5>";
-  $html .= "<table width='100%' cellpadding='4' cellspacing='0'><tr>";
-
   my @all_groups = @{ EnsEMBL::Web::Object::Group->all_groups_by_type('open') };
-  my $class = "bg1";
-  foreach my $group (sort {$a->name cmp $b->name} @all_groups) {
-    if (!$included{$group->id}) {
-      $class = &toggle_class($class);
-      $html .= "<tr>\n";
-      $html .= "<td class='$class' width='25%'>" . $group->name . "</td>";
-      $html .= "<td class='$class'>" . $group->description . "</td>";
-      $html .= "<td class='$class' style='text-align: right;'><a href='/common/subscribe?id=" . $group->id . "'>Subscribe</a></td>";
-      $html .= "</tr>\n";
-    }
-  }
+  if ($#all_groups > -1) {
+    $html = "<h5>Publicly available groups</h5>";
+    $html .= "<table width='100%' cellpadding='4' cellspacing='0'><tr>";
 
-  $html .= "</table>\n";
+    my $class = "bg1";
+    foreach my $group (sort {$a->name cmp $b->name} @all_groups) {
+      if (!$included{$group->id}) {
+        $class = &toggle_class($class);
+        $html .= "<tr>\n";
+        $html .= "<td class='$class' width='25%'>" . $group->name . "</td>";
+        $html .= "<td class='$class'>" . $group->description . "</td>";
+        $html .= "<td class='$class' style='text-align: right;'><a href='/common/subscribe?id=" . $group->id . "'>Subscribe</a></td>";
+        $html .= "</tr>\n";
+      }
+    }
+
+    $html .= "</table>\n";
+  }
   return $html;
 }
 

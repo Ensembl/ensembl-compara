@@ -55,41 +55,6 @@ sub context_menu {
 
   $menu->add_block( $flag, 'bulleted', $header, 'raw' => 1 );
 
-  my $cgi = new CGI;
-  my $load = $cgi->param('load_config');
-
-  my $user = EnsEMBL::Web::Object::User->new({ 'id' => $ENV{'ENSEMBL_USER_ID'} });
-  my @configurations = ();
-
-  foreach my $config ($user->configuration_records) {
-    if ($load && $load eq $config->id) {
-      $self->load_configuration($config);
-    }
-    push @configurations, { 'href' => 'javascript:load_config(' . $config->id . ');',
-                               'text'  => $config->name, 
-                             };
-  }
-
-  foreach my $group (@{ $user->groups }) {
-    foreach my $config ( $group->configuration_records ) {
-      if ($load && $load eq $config->id) {
-        $self->load_configuration($config);
-      }
-      push @configurations, { 'href' => 'javascript:load_config(' . $config->id . ');',
-                              'text'  => $config->name . " (" . $group->name . ")", 
-                            };
-    }
-  }
-
-  if ($#configurations > -1) {
-    $menu->add_entry(
-            $flag,
-            'href'=>'/common/accountview',
-            'text'=>'Configurations',
-            'options'=>\@configurations
-          );
-  }
-
   if( $self->mapview_possible( $obj->seq_region_name ) ) {
     $menu->add_entry( $flag, 'code' => 'mv_link', 'text' => "View of @{[$obj->seq_region_type_and_name]}",
        'title' => "MapView - Overview of @{[$obj->seq_region_type_and_name]} including feature sumarries",
