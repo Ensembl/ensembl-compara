@@ -42,13 +42,23 @@ $data->add_field({'Field' => 'url', 'Type' => 'text'});
 $data->add_field({'Field' => 'created_at', 'Type' => 'timestamp'});
 $data->add_field({'Field' => 'modified_at', 'Type' => 'timestamp'});
 
-$page->data_definition($data);
-$page->title('Save configuration');
 $page->action('create');
-$page->on_complete($cgi->param('url'));
-$page->on_error('http://ensarc-1-14.internal.sanger.ac.uk:6700/dataview/config_failed.html');
-
+$page->title('Save configuration');
 $page->add_text('Describe your configuration here, and then click "Submit" to save it. Once saved, you can share your configuration with groups you administer.');
+
+if ($cgi->param('id')) {
+  $data->populate($cgi->param('id'));
+  $page->action('edit');
+  $page->title('Update configuration');
+ $page->add_text('Your configuration settings have changed. Update the details below, and click "Submit" to save your changes.');
+}
+
+$page->data_definition($data);
+$page->cancel('yes');
+$page->send_params({ id => 'yes' });
+$page->on_complete('/common/current_config?url=' . CGI::escape($cgi->param('url')));
+$page->on_error('/error/config_failed.html');
+
 
 # User id is added automatically if a user is logged in.
 $page->add_configuration_element('record', 'yes');
