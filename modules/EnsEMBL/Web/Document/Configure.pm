@@ -157,7 +157,7 @@ sub dynamic_menu_items {
       my $configurable = 1;
       if ($configurable) {
         $doc->menu->add_entry_after( $flag, 'bookmark', 
-                                    'text' => "Save configuration",
+                                    'text' => "Save view as...",
                                   'href' => "javascript:config_link()" );
       }
   }

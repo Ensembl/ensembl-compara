@@ -60,10 +60,12 @@ sub render {
   $html .= "<td style='padding-top: 5px;'>\n";
   my @configurations = $user->configuration_records;
   $html .= "Configurations";
-  $html .= list_for_records({ records => \@configurations, tag => 'user', selected => $group_id, type => 'configuration' });
+  my @current_configs = $user->current_config_records;
+  my $current_config = $current_configs[0];
+  $html .= list_for_records({ records => \@configurations, tag => 'user', selected => $group_id, type => 'configuration', current_config => $current_config });
   foreach my $group (@{ $user->groups }) {
     my @group_configurations = $group->configuration_records;
-    $html .= list_for_records({ records => \@group_configurations, tag => $group->id, selected => $group_id, type => 'configuration' });
+    $html .= list_for_records({ records => \@group_configurations, tag => $group->id, selected => $group_id, type => 'configuration', current_config => $current_config });
   }
   $html .= "</td>\n";
   $html .= "</tr>\n";
@@ -79,6 +81,7 @@ sub list_for_records {
   my $tag = $params->{tag};
   my $selected = $params->{selected};
   my $type = $params->{type};
+  my $current_config = $params->{current_config};
   my $html = "";
   if ($#records > -1) {
     $html .= "<ul>";
@@ -96,10 +99,18 @@ sub list_for_records {
         }
       }
       my $link = "<a href='" . $record->url . "' title='" . $record->description . "'>";
+      my $bold_start = "";
+      my $bold_end = "";
       if ($record->type eq 'configuration') {
+
+        if ($current_config->config eq $record->id) {
+          $bold_start = "<b>";
+          $bold_end = "</b>";
+        }
+
         $link = "<a href='javascript:void(0);' onclick='javascript:load_config_link(" . $record->id . ");'>";
       }
-      $html .= "<li class='all $tag' $style>" . $link . $record->name . "</li>\n"; 
+      $html .= "<li class='all $tag' $style>" . $bold_start . $link . $record->name . "</a>" . $bold_end . "</li>\n"; 
       if ($count > 10) {
         last;
       }

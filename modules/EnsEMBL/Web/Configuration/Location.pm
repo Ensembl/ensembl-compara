@@ -560,9 +560,9 @@ sub contigview {
                                 display => 'on',
                                            @common);
   $view_fragment->add_components(qw(
-      menu  EnsEMBL::Web::Component::Location::contigviewbottom_menu
-      nav   EnsEMBL::Web::Component::Location::contigviewbottom_nav
-      image EnsEMBL::Web::Component::Location::contigviewbottom
+      menu   EnsEMBL::Web::Component::Location::contigviewbottom_menu
+      nav    EnsEMBL::Web::Component::Location::contigviewbottom_nav
+      image  EnsEMBL::Web::Component::Location::contigviewbottom
                   ));
 
   my ($start,$end) = $self->top_start_end( $obj, $max_length );
@@ -578,6 +578,7 @@ sub contigview {
 
   if( $obj->length > $max_length ) {
     $bottom->add_components(qw(
+      config EnsEMBL::Web::Component::Location::contigviewbottom_config
       menu  EnsEMBL::Web::Component::Location::contigviewbottom_menu
       nav   EnsEMBL::Web::Component::Location::contigviewbottom_nav
       text  EnsEMBL::Web::Component::Location::contigviewbottom_text
@@ -591,6 +592,7 @@ sub contigview {
       }
     }
     $bottom->add_components(qw(
+      config EnsEMBL::Web::Component::Location::contigviewbottom_config
       menu  EnsEMBL::Web::Component::Location::contigviewbottom_menu
       nav   EnsEMBL::Web::Component::Location::contigviewbottom_nav
       image EnsEMBL::Web::Component::Location::contigviewbottom

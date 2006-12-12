@@ -22,6 +22,8 @@ use EnsEMBL::Web::Component;
 use Bio::EnsEMBL::AlignStrainSlice;
 use Bio::EnsEMBL::ExternalData::DAS::DASAdaptor;
 use Bio::EnsEMBL::ExternalData::DAS::DAS;
+use EnsEMBL::Web::RegObj;
+
 use Data::Dumper;
 our @ISA = qw( EnsEMBL::Web::Component);
 use strict;
@@ -456,6 +458,40 @@ sub contigviewbottom_text {
     <p>Alternatively <a href="javascript:cytoview_link()">View this page in Graphical Overview (CytoView)</a></p>
   </div>) 
   );
+  return 0;
+}
+
+sub contigviewbottom_config {
+  my($panel, $object) = @_;
+  my $script_name = "contigview";
+
+  my $session = $ENSEMBL_WEB_REGISTRY->get_session;
+  ##$session->set_input($cgi);
+  my $string = $session->get_script_config_as_string($script_name);
+  my $html = "";
+  if ($ENV{'ENSEMBL_USER_ID'}) {
+    my $user = EnsEMBL::Web::Object::User->new({ id => $ENV{'ENSEMBL_USER_ID'} });
+    my @current_configs = $user->current_config_records;
+    my $current_config = $current_configs[0];
+    if ($current_config) {
+      my @configurations = $user->configuration_records;
+      foreach my $configuration (@configurations) {
+        if ($configuration->id eq $current_config->config) {
+          my $saved_string = $configuration->scriptconfig . "\n";
+          $string =~ s/\n|\r|\f//g; 
+          $saved_string =~ s/\n|\r|\f//g; 
+          $html = "<div style='text-align: center; padding-bottom: 4px;'>";
+          if (length($saved_string) != length($string)) {
+            $html .= "You have changed the '" . $configuration->name . "' view configuration &middot; <a href='javascript:void(0);' onclick='config_link(" . $configuration->id . ");'><b>Save changes</b></a>";
+          } else {
+            $html .= "You are using the '" . $configuration->name . "' view configuration.";
+          }
+          $html .= "</div>";
+        }
+      }
+    }
+  }
+  $panel->print($html); 
   return 0;
 }
 
