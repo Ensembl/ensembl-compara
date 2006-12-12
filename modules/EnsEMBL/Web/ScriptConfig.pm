@@ -13,6 +13,7 @@ sub new {
     '_r'        => $adaptor->get_request || undef,
     'type'      => $type,
     '_options'  => {},
+    '_user_config_names' => {},
     'no_load'   => undef
   };
 
@@ -31,6 +32,13 @@ sub altered :lvalue {
 ### a
 ### Set to one if the configuration has been updated...
   $_[0]->{'altered'};
+}
+
+sub add_image_configs { ## Value indidates that the track can be configured for DAS (das) or not (nodas)
+  my( $self, $hash_ref ) = @_;
+  foreach( keys %$hash_ref ) {
+    $self->{_user_config_names}{$_} = $hash_ref->{$_};
+  }
 }
 
 sub _set_defaults {
@@ -118,6 +126,7 @@ sub set {
   return unless $force || exists $self->{'_options'}{$key};
   return if $self->{'_options'}{$key}{'user'}  eq $value;
   $self->altered = 1;
+warn "SETTING ",ref($value)," $value, $key";
   $self->{'_options'}{$key}{'user'}  = $value;
 }
 
@@ -133,10 +142,16 @@ sub get {
   my( $self, $key ) = @_;
   return undef unless exists $self->{'_options'}{$key};
   if( exists ($self->{'_options'}{$key}{'user'}) ) {
-    if( ref($self->{'_options'}{$key}{'user'}) eq 'ARRAYREF' ) {
+    if( ref($self->{'_options'}{$key}{'user'}) eq 'ARRAY' ) {
+warn "HERE....";
+warn @{$self->{'_options'}->{$key}->{'user'}};
       return @{$self->{'_options'}->{$key}->{'user'}};
     }
     return $self->{'_options'}{$key}{'user'};
+  }
+  if( ref($self->{'_options'}{$key}{'default'}) eq 'ARRAY' ) {
+warn "THERE....";
+    return @{$self->{'_options'}{$key}{'default'}};
   }
   return $self->{'_options'}{$key}{'default'};
 }

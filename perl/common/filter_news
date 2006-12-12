@@ -6,7 +6,7 @@ package filter_news;
 
 use CGI;
 
-use EnsEMBL::Web::Apache::Handlers;
+use EnsEMBL::Web::RegObj;
 use EnsEMBL::Web::SpeciesDefs;
 use EnsEMBL::Web::Document::DataView;
 use EnsEMBL::Web::Interface::PageDefinition;

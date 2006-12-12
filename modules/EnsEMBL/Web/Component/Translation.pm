@@ -243,6 +243,7 @@ sub das {
   }
 
   foreach my $src ($object->param('das_sources')) {
+warn "................ $src ...............";
     $params .=";das_sources=$src";
   }
 

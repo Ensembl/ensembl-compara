@@ -14,7 +14,7 @@ use EnsEMBL::Web::DBSQL::DataDefinition;
 use EnsEMBL::Web::User::Record;
 use EnsEMBL::Web::Group::Record;
 use EnsEMBL::Web::DBSQL::ViewAdaptor;
-use EnsEMBL::Web::Apache::Handlers;
+use EnsEMBL::Web::RegObj;
 
 my $cgi = CGI->new;
 my $page = EnsEMBL::Web::Interface::PageDefinition->new();

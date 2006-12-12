@@ -47,5 +47,11 @@ sub init {
     opt_stop_lost              on
 
   ));
+  $script_config->add_image_configs({qw(
+    ldview        nodas
+    LD_population nodas
+  )});
+  $script_config->storable = 1;
+
 }
 1;

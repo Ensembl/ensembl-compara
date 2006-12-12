@@ -15,7 +15,7 @@ use EnsEMBL::Web::Interface::PageDefinition;
 use EnsEMBL::Web::Interface::FormDefinition;
 use EnsEMBL::Web::DBSQL::DataDefinition;
 use EnsEMBL::Web::DBSQL::ViewAdaptor;
-use EnsEMBL::Web::Apache::Handlers;
+use EnsEMBL::Web::RegObj;
 
 my $cgi = new CGI;
 

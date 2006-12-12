@@ -19,6 +19,9 @@ sub init {
     image_width    700
     context    1000
   ));
+  $script_config->add_image_configs({qw(
+    contigviewbottom das
+  )});
   $script_config->storable = 1;
 }
 1;

@@ -11,7 +11,7 @@ use EnsEMBL::Web::Interface::FormDefinition;
 use EnsEMBL::Web::DBSQL::DataDefinition;
 use EnsEMBL::Web::DBSQL::ViewAdaptor;
 use EnsEMBL::Web::SpeciesDefs;
-use EnsEMBL::Web::Apache::Handlers;
+use EnsEMBL::Web::RegObj;
 
 my $page = EnsEMBL::Web::Interface::PageDefinition->new();
 my $data = EnsEMBL::Web::DBSQL::DataDefinition->new();

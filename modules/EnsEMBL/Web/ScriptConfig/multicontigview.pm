@@ -22,5 +22,10 @@ sub init {
     opt_group_match  on
     opt_group_tblat off
   ));
+
+  $script_config->add_image_configs({qw(
+    thjviewbottom nodas
+  )});
+  $script_config->storable = 1;
 }
 1;

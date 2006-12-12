@@ -8,7 +8,7 @@ use EnsEMBL::Web::Document::DataView;
 use EnsEMBL::Web::Interface::PageDefinition;
 use EnsEMBL::Web::Interface::FormDefinition;
 use EnsEMBL::Web::DBSQL::DataDefinition;
-use EnsEMBL::Web::Apache::Handlers;
+use EnsEMBL::Web::RegObj;
 use EnsEMBL::Web::DBSQL::ViewAdaptor;
 
 my $cgi = CGI->new;

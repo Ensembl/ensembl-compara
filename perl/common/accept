@@ -15,7 +15,7 @@ use EnsEMBL::Web::DBSQL::DataDefinition;
 use EnsEMBL::Web::DBSQL::ViewAdaptor;
 use EnsEMBL::Web::Group::Record;
 use EnsEMBL::Web::Object::Group;
-use EnsEMBL::Web::Apache::Handlers;
+use EnsEMBL::Web::RegObj;
 
 my @records = EnsEMBL::Web::Group::Record->find_invite_by_group_record_id($cgi->param('id'));
 my $email = $records[0]->email;

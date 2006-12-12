@@ -11,8 +11,11 @@ sub init {
     panel_variation         on
     show                    plain
     number                  off   
-    das_sources             
-  ));
+    das_sources),           []
+  );
+  $script_config->add_image_configs({qw(
+    protview das
+  )});
   $script_config->storable = 1;
 }
 1;

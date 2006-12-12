@@ -9,7 +9,7 @@ use Apache2::Const qw(:common M_GET);
 use EnsEMBL::Web::DBSQL::UserDB;
 use EnsEMBL::Web::User;
 
-use EnsEMBL::Web::Apache::Handlers;
+use EnsEMBL::Web::RegObj;
 
 use CGI qw(header escapeHTML unescape);
 use CGI::Cookie;

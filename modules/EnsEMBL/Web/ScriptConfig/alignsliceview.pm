@@ -74,4 +74,9 @@ opt_193_Rattus_norvegicus on
     opt_align_222 off
   ));
 }
+
+  $script_config->add_image_configs({qw(
+    alignsliceviewbottom nodas
+  )});
+$self->storable = 1;
 1;

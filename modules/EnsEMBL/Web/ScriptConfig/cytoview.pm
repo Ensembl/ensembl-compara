@@ -12,6 +12,9 @@ sub init {
     image_width      700
     context        10000
   ));
+  $script_config->add_image_configs({qw(
+    cytoview das
+  )});
   $script_config->storable = 1;
 }
 1;

@@ -42,6 +42,13 @@ sub init {
     opt_intronic               on
     opt_intergenic             on
   ));
+  $script_config->add_image_configs({qw(
+    genesnpview_transcript nodas
+    genesnpview_gene       nodas
+    genesnpview_context    nodas
+  )});
+  $script_config->storable = 1;
+
   $script_config->storable = 1;
 }
 1;

@@ -3,7 +3,7 @@
 package set_cookie;
 
 use EnsEMBL::Web::Object::User;
-use EnsEMBL::Web::Apache::Handlers;
+use EnsEMBL::Web::RegObj;
 use Apache2::RequestUtil;
 
 use CGI;

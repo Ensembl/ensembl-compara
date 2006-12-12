@@ -4,7 +4,7 @@ use strict;
 use warnings;
 no warnings "uninitialized";
 
-use EnsEMBL::Web::Apache::Handlers;
+use EnsEMBL::Web::RegObj;
 use EnsEMBL::Web::SpeciesDefs;
 use EnsEMBL::Web::User;
 use EnsEMBL::Web::ExtURL;
@@ -41,8 +41,7 @@ sub param {
     my $wsc = $self->get_scriptconfig( );
     if( $wsc ) {
       if( @_ > 1 ) { $wsc->set(@_); }
-      my $val = $wsc->get(@_);
-      my @val = ref($val) eq 'ARRAY' ? @$val : ($val);
+      my @val = $wsc->get(@_);
       return wantarray ? @val : $val[0];
     }
     return wantarray ? () : undef;

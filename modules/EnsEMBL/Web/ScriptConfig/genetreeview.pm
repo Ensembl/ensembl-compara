@@ -8,5 +8,10 @@ sub init {
     image_width          900
     width 900
   ));
+  $script_config->add_image_configs({qw(
+    genetreeview nodas
+  )});
+  $script_config->storable = 1;
+
 }
 1;

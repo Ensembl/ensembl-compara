@@ -134,6 +134,7 @@ sub storable_data {
   my($self,$r) = @_;
   my $return_data = [];
   foreach my $config_key ( keys %{$Configs_of{ ident $self }||{}} ) {
+warn "STORABLE DATA $config_key";
     my $sc_hash_ref = $Configs_of{ ident $self }{$config_key}||{};
 ## Cannot store unless told to do so by script config
     next unless $sc_hash_ref->{'config'}->storable;
@@ -249,17 +250,12 @@ sub save_das {
 ### Save all externally configured DAS sources back to the database
   my( $self, $r ) = @_;
   foreach my $source ( values %{$Das_sources_of{ ident $self }} ) {
-warn "....  ",$source->get_key;
     next unless $source->is_altered;
     if( $source->is_deleted ) {
-warn "DEL   ",$source->get_key;
       $self->get_adaptor->resetConfigByName( $self->get_session_id, 'das', $source->get_name );
     } else {
-warn "STORE ",$source->get_key;
       my $d =  Data::Dumper->new( [$source->get_data], [qw($data)] );
          $d->Indent(1);
-warn ".... ". $source->get_name;
-warn ".... ". $self->get_session_id();
       $self->get_adaptor->setConfigByName(   $self->create_session_id($r), 'das', $source->get_name, $d->Dump );
     }
   }
@@ -270,22 +266,19 @@ sub add_das_source_from_URL {
 ### Create a new DAS source from a configuration hashref
   my( $self, $hash_ref ) = @_;
   my $DAS = EnsEMBL::Web::DASConfig->new( $self->get_adaptor );
-warn "HERE";
   $DAS->create_from_URL( $hash_ref );
-warn "HERE2 ",$DAS->get_key;
 ## We have a duplicate so need to do something clever!
-warn join "\n  ","",keys %{ $Das_sources_of{ ident $self } };
   if( exists $Das_sources_of{ ident $self }{$DAS->get_key} ) {
-## Return without adding source if the "unique_string" is the same...
-warn "DUPLICATE ",$DAS->unique_string;
-    return if $Das_sources_of{ ident $self }{$DAS->get_key}->unique_string eq $DAS->unique_string;
-## Otherwise touch the "key"
-warn "TOUCH KEY";
+    if( $Das_sources_of{ ident $self }{$DAS->get_key}->unique_string ne $DAS->unique_string ) {
+## If not same URL touch the "key"
+      $DAS->touch_key;
+    }
     $DAS->touch_key; ## Lets try again to see if there is duplicate!!
-    return if $Das_sources_of{ ident $self }{$DAS->get_key}->unique_string eq $DAS->unique_string;
+    $DAS->mark_altered;
   }
 ## Attach the DAS source..
   $Das_sources_of{ ident $self }{ $DAS->get_key } = $DAS;
+  $self->update_configs_for_das( $DAS, qw(contigview geneview cytoview protview) );
 }
 
 sub add_das_source_from_hashref {
@@ -296,16 +289,59 @@ sub add_das_source_from_hashref {
   $DAS->create_from_hash_ref( $hash_ref );
 ## We have a duplicate so need to do something clever!
   if( exists $Das_sources_of{ ident $self }{$DAS->get_key} ) {
-## Return without adding source if the "unique_string" is the same...
-    return if $Das_sources_of{ ident $self }{$DAS->get_key}->unique_string eq $DAS->unique_string;
-## Otherwise touch the "key"
-    $DAS->touch_key;          #adds a ".sec.msec"
-## May return without adding source
+## If not same URL touch the "key"
+    if( $Das_sources_of{ ident $self }{$DAS->get_key}->unique_string ne $DAS->unique_string ) {
+      $DAS->touch_key;
+    }
+    $DAS->mark_altered;
   }
 ## Attach the DAS source..
   $Das_sources_of{ ident $self }{ $DAS->get_key } = $DAS;
+  $self->update_configs_for_das( $DAS, qw(contigview geneview cytoview protview) );
 }
  
+sub update_configs_for_das {
+  my( $self, $DAS, @configs ) = @_;
+  my %map = qw(
+    enable    enable
+    mapping   mapping
+    group     group
+    strand    str
+    labelflag lflag
+    depth     dep
+    color     col
+    stylesheet stylesheet
+  );
+  my $N = $DAS->get_name;
+  my %scripts  = map {($_=>1)} @{$DAS->get_data->{'enable'}||[]};
+  foreach my $sc_name (@configs) {
+    my $sc = $self->getScriptConfig( $sc_name );
+    foreach my $ic_name ( keys %{$sc->{'_user_config_names'}} ) {
+      next  unless $sc->{'_user_config_names'}{$ic_name} eq 'das';
+      $self->attachImageConfig( $sc_name, $ic_name );
+      my $T = $self->getImageConfig( $ic_name, $ic_name );
+      if( $scripts{ $sc_name } ) {
+        $T->set( "managed_extdas_$N", 'on' ,      'on' , 1);
+        $T->set( "managed_extdas_$N", 'manager' , 'das', 1);
+        foreach my $K (keys %map) {
+          $T->set( "managed_extdas_$N", $map{$K}, $DAS->get_data->{$K}, 1 );
+        }
+      } elsif( exists( $T->{'user'}->{$ic_name}->{$N} ) ) {
+        $T->reset( "managed_extdas_$N" );
+      }
+    }
+    my @das_tracks = $sc->get('das_sources');
+    my %das_tracks = map {$_=>1} @das_tracks;
+## NOW GENEVIEW / PROTVIEW saving
+    if( $scripts{$sc_name} && !$das_tracks{$N} ) {
+      $sc->set('das_sources',[@das_tracks,$N],1);
+warn "ADDING CONFIG..";
+    } elsif( ! $scripts{$sc_name} && $das_tracks{$N} ) {
+      delete $das_tracks{$N};
+      $sc->set('das_sources',[keys %das_tracks],1);
+    }
+  }
+}
 sub remove_das_source {
 ### DAS
 ### Remove a DAS source from the configuration 

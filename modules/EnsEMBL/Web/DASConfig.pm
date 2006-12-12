@@ -205,10 +205,41 @@ sub create_from_hash_ref {
   $self->amend(  $hash_ref );
 }
 
+sub update_from_hash_ref {
+  my( $self, $hash_ref ) = @_;
+  $self->mark_altered;
+  return;
+warn "....";
+  foreach my $key ( keys %$hash_ref ) {
+warn $key;
+    if( ref($self->{'_data'}{$key}) eq 'ARRAY' ) {
+warn "YAR";
+      my @old = sort @{$self->{'_data'}{$key}};
+      my @new = sort @{$hash_ref->{$key}};
+      my $C = 0;
+      foreach my $o (@old) {
+warn "ALTERED.... @old/@new";
+        $self->mark_altered if $o ne $new[$C];
+        $C++;
+      }
+    } else {
+warn "ARG ", $self->{'_data'}{$key},' = ', $hash_ref->{$key};
+      next if $self->{'_data'}{$key} eq $hash_ref->{$key};
+      $self->mark_altered;
+    }
+    $self->{'_data'}{$key} = $hash_ref->{$key}
+  }
+}
+
+=head
+
 sub attach_to_configs {
-  my( $self, @script_configs ) = @_;
-  foreach my $script_config ( @script_configs ) {
-    my @image_configs = @{$script_config->{'user'}{'image_configs'}};
+  my( $self, %script_config_names ) = @_;
+ ) {
+    my %image_configs = %{$script_config->{'_user_config_names'}}
+    foreach my $name ( keys %image_configs ) { 
+      next if $image_configs->{$name} ne 'das'; ## Only deal with dasable configs...
+      if( $script_configs ) 
 ## loop through each image_config
     foreach my $config ( @image_configs ) {
       next unless $config->is_das_enabled;
@@ -226,5 +257,6 @@ sub attach_to_configs {
     }
   }
 }
+=cut
 
 1;

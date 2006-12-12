@@ -17,20 +17,16 @@ use Time::HiRes qw(time);
 use Sys::Hostname;
 use Data::Dumper;
 use Fcntl ':flock';
+use EnsEMBL::Web::RegObj;
 
 use Exporter;
-
-our @ISA = qw(Exporter);
 
 our $oracle_home;
 our $THIS_HOST;
 our $LOG_INFO; 
 our $LOG_TIME; 
 our $BLAST_LAST_RUN;
-our $ENSEMBL_WEB_REGISTRY;
 our $BIOMART_REGISTRY;
-our @EXPORT    = qw($ENSEMBL_WEB_REGISTRY $BIOMART_REGISTRY);
-our @EXPORT_OK = qw($ENSEMBL_WEB_REGISTRY $BIOMART_REGISTRY);
 
 #======================================================================#
 # Set up apache-size-limit style load commands                         #
@@ -138,9 +134,7 @@ sub childInitHandler {
 sub postReadRequestHandler {
   my $r = shift; # Get the connection handler
 ## Manipulate the Registry...
-warn "STRSCRX: $$ ",$r->parsed_uri->path," : ", $r->parsed_uri->query;
   $ENSEMBL_WEB_REGISTRY->timer->set_script_start_time( time  ); ## This is the page rendering start time!
-warn "         $$ TIMER....";
 #  $r->push_handlers( PerlTransHandler =>   \&transHandler );
 #warn "         $$ PTH....";
 #  $r->push_handlers( PerlCleanupHandler => \&cleanupHandler );
@@ -162,13 +156,11 @@ warn "         $$ TIMER....";
       'refresh' => $ENSEMBL_ENCRYPT_REFRESH
     }
   });
-  warn "USER INITIALIZING $$";
   $ENSEMBL_WEB_REGISTRY->initialize_user({
     'cookie'=> $user_cookie,
     'r'     => $r
   }); ## Initialize the user (and possibly group) objects
 ## Unlikely to go to db - just store the IDs
-  warn "USER INITIALIZED $$";
   return;
 }
 
@@ -181,7 +173,6 @@ sub transHandler {
   my $u           = $r->parsed_uri;
   my $file        = $u->path;
   my $querystring = $u->query;
-warn "TH $$";
 
   my $session_cookie = EnsEMBL::Web::Cookie->new({
     'host'    => $ENSEMBL_COOKIEHOST,
@@ -204,7 +195,6 @@ warn "TH $$";
   my $Tspecies = $species;
   my $script    = undef;
   my $path_info = undef;
-warn "TH--- $$";
 
   if( $species eq 'das' ) { # we have a DAS request...
     my $DSN = $path_segments[0];
@@ -318,11 +308,9 @@ warn "TH--- $$";
     }
   }
   # Search the htdocs dirs for a file to return
-warn "HERE $$";
   my $path = join( "/", $species || (), $script || (), $path_info || () );
   $r->uri( "/$path" );
   foreach my $dir( @HTDOCS_TRANS_DIRS ){
-warn "HERE $$ $dir";
 #        $script || last;
     my $filename = sprintf( $dir, $path );
     if( -d $filename ) {
@@ -343,7 +331,6 @@ warn "HERE $$ $dir";
 
 sub cleanupHandler {
   my $r = shift;      # Get the connection handler
-  warn "ENDSCRX: $$ ",$r->parsed_uri->path," : ", $r->parsed_uri->query;
 
   ## hack for oracle/AV problem: remember that this child has used Oracle
   $oracle_home ||= $ENV{'ORACLE_HOME'};

@@ -15,6 +15,7 @@ package EnsEMBL::Web::DBSQL::UserDB;
 
 use DBI;
 use EnsEMBL::Web::SpeciesDefs;
+use EnsEMBL::Web::RegObj;
 use Digest::MD5;
 use strict;
 use CGI::Cookie;
@@ -27,13 +28,7 @@ sub new {
   my $self = { '_request' => $r };
   if(defined( EnsEMBL::Web::SpeciesDefs->ENSEMBL_USERDB_NAME ) and EnsEMBL::Web::SpeciesDefs->ENSEMBL_USERDB_NAME ne '') {
     eval {
-      $self->{'_handle'} =  $EnsEMBL::Web::Apache::Handlers::ENSEMBL_USER_DB_HANDLE ||=
-         DBI->connect(
- 	  	"dbi:mysql:@{[EnsEMBL::Web::SpeciesDefs->ENSEMBL_USERDB_NAME]}:@{[EnsEMBL::Web::SpeciesDefs->ENSEMBL_USERDB_HOST]}:@{[EnsEMBL::Web::SpeciesDefs->ENSEMBL_USERDB_PORT]}",
-		EnsEMBL::Web::SpeciesDefs->ENSEMBL_USERDB_USER,
-		EnsEMBL::Web::SpeciesDefs->ENSEMBL_USERDB_PASS,
-	        {RaiseError=>1,PrintError=>0}
-         );
+      $self->{'_handle'} =  $ENSEMBL_WEB_REGISTRY->dbAdaptor();
     };
     unless($self->{'_handle'}) {
        warn( "Unable to connect to authentication database: $DBI::errstr" );

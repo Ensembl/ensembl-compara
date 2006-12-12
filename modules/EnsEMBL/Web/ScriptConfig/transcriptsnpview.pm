@@ -43,6 +43,11 @@ sub init {
     opt_stop_lost              on
     opt_sara                   on
   ));
+  $script_config->add_image_configs({qw(
+    TSV_content'         nodas
+    TSV_sampletranscript nodas
+    TSV_content          nodas
+  )});
   $script_config->storable = 1;
 }
 1;

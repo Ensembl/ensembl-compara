@@ -17,8 +17,11 @@ sub init {
     status_gene_orthologues on
     status_gene_paralogues  on
     context                 0
-    das_sources             
-  ));
+    das_sources),           []
+  );
+  $script_config->add_image_configs({qw(
+    altsplice nodas
+  )});
   $script_config->storable = 1;
 }
 1;

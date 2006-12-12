@@ -5,7 +5,7 @@ package load_config;
 use strict;
 use warnings;
 
-use EnsEMBL::Web::Apache::Handlers;
+use EnsEMBL::Web::RegObj;
 use Apache;
 
 use CGI;

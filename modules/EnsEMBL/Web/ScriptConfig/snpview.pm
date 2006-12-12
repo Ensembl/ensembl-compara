@@ -44,8 +44,11 @@ sub init {
     opt_mnp       on
     opt_het       on
     opt_          on
-
-
   ));
+  $script_config->add_image_configs({qw(
+    snpview nodas
+  )});
+
+  $script_config->storable = 1;
 }
 1;
