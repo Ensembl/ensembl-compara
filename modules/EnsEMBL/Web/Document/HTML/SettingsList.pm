@@ -25,17 +25,24 @@ sub render {
   $html .= "<div id='settings_content'>\n";
   $html .= "<table width='100%' cellpadding='0' cellspacing='0'>\n";
   $html .= "<tr><td width='49%'>\n";
-  $html .= "<b>Settings for " . $user->name . "</b>&middot; <a href='javascript:void(0);' onclick='toggle_settings_drawer()'>Hide</a>\n";
+  $html .= "<b><a href='/common/accountview'>Your Ensembl account</a> &gt; " . $user->name . "</b> &middot; <a href='javascript:void(0);' onclick='toggle_settings_drawer()'>Hide</a>\n";
   $html .= "</td>\n";
-  $html .= "<td style='text-align: right;' width='49%'>Show: ";
+  $html .= "<td style='text-align: right;' width='49%'>Show from: ";
   $html .= "<select name='group_select' id='group_select' onChange='settings_drawer_change()'>\n";
-  $html .= "<option value='user'>Your settings</option>\n";
+  $html .= "<option value='user'>Your account</option>\n";
+  my @groups = @{ $user->groups };
+  if ($#groups > -1) {
+    $html .= "<optgroup label='Groups'>\n";
+  }
   foreach my $group (@{ $user->groups }) {
     my $selected = "";
     if ($group_id eq $group->id) {
       $selected = "selected";
     }
     $html .= "<option $selected value='" . $group->id . "'>" . $group->name . "</option>\n";
+  }
+  if ($#groups > -1) {
+    $html .= "</optgroup>\n";
   }
   $html .= "</select>";
   $html .= "</td>\n";
@@ -44,16 +51,20 @@ sub render {
   $html .= "<td style='padding-top: 5px;'>\n";
   $html .= "Bookmarks";
   my @user_bookmarks = $user->bookmark_records;
-  $html .= list_for_records({ records => \@user_bookmarks, tag => 'user', selected => $group_id });
+  $html .= list_for_records({ records => \@user_bookmarks, tag => 'user', selected => $group_id, type => 'bookmark' });
   foreach my $group (@{ $user->groups }) {
     my @group_bookmarks = $group->bookmark_records;
-    $html .= list_for_records({ records => \@group_bookmarks, tag => $group->id, selected => $group_id });
+    $html .= list_for_records({ records => \@group_bookmarks, tag => $group->id, selected => $group_id, type => 'bookmark' });
   }
   $html .= "</td>\n";
   $html .= "<td style='padding-top: 5px;'>\n";
-  $html .= "Configurations";
   my @configurations = $user->configuration_records;
-  $html .= list_for_records({ records => \@configurations, tag => 'user', selected => $group_id });
+  $html .= "Configurations";
+  $html .= list_for_records({ records => \@configurations, tag => 'user', selected => $group_id, type => 'configuration' });
+  foreach my $group (@{ $user->groups }) {
+    my @group_configurations = $group->configuration_records;
+    $html .= list_for_records({ records => \@group_configurations, tag => $group->id, selected => $group_id, type => 'configuration' });
+  }
   $html .= "</td>\n";
   $html .= "</tr>\n";
   $html .= "</table>";
@@ -67,6 +78,7 @@ sub list_for_records {
   my @records = @{ $params->{records} };
   my $tag = $params->{tag};
   my $selected = $params->{selected};
+  my $type = $params->{type};
   my $html = "";
   if ($#records > -1) {
     $html .= "<ul>";
@@ -96,6 +108,20 @@ sub list_for_records {
       $html .= "<li><i><a href='/common/accountview'>More settings &rarr;</a></i></li>"
     }
     $html .= "</ul>";
+  } else {
+    if ($type) {
+      my $style = "style='display: none;'";
+      if (!$selected) {
+        if ($tag eq 'user') {
+          $style = "";
+        }
+      } else {
+        if ($tag eq $selected) {
+          $style = "";
+        }
+      }
+      $html .= "<ul class='all $tag' $style><li>No saved " . $type . "s</li>\n<li><a href='/info'>Learn more about saving " . $type . "s &rarr;</a></li></ul>";
+    }
   }
   return $html;
 }

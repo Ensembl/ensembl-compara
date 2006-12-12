@@ -159,6 +159,9 @@ sub simple {
     }
 
     if ($result->success) {
+      if ($definition->on_complete =~ /\?/) {
+        $send =~ s/^\?/&/;
+      }
       $self->redirect($definition->on_complete . $send);
     } else {
       $self->redirect($definition->on_error . $send);
