@@ -357,44 +357,31 @@ sub group_notes {
   foreach my $group (@groups) {
     my $title_added = 0;
     my $group_annotations = 0;
-    foreach my $group_member (@ { $group->users }) {
-      $group_member->load;
-      my @annotations = $group_member->annotation_records;
-      if ($#annotations > -1) {
-        foreach my $annotation (@annotations) {
-          if (!$included_annotations{$annotation->id}) {
-            $group_annotations = 1;
-          }
-        }
+    my @annotations = $group->annotation_records;
+    foreach my $annotation (@annotations) {
+      if ($annotation->stable_id eq $stable_id) {
+        $group_annotations = 1;
       }
     }
-
     if ($group_annotations) {
-      foreach my $group_member (@ { $group->users }) {
-        $group_member->load;
-        my @annotations = $group_member->annotation_records;
-        if ($#annotations > -1) {
-          if (!$title_added) {
-            $html .= "<h4>" . $group->name . "</h4>";
-            $title_added = 1;
-          }
-          $html .= "<ul>";
-          foreach my $annotation (sort { $a->created_at cmp $b->created_at } @annotations) {
-            if (!$included_annotations{$annotation->id}) {
-              $found = 1;
-              $html .= "<li>";
-              $html .= "<b>" . $annotation->title . "</b> (added by " . $group_member->name . ")<br />";
-              $html .= $annotation->annotation;
-              $html .= "</li>";
-              $included_annotations{$annotation->id} = "yes";
-            }
-          }
-          $html .= "</ul>";
+      if (!$title_added) {
+        $html .= "<h4>" . $group->name . "</h4>";
+        $title_added = 1;
+      }
+      $html .= "<ul>";
+      foreach my $annotation (sort { $a->created_at cmp $b->created_at } @annotations) {
+        if (!$included_annotations{$annotation->id}) {
+          $found = 1;
+          $html .= "<li>";
+          $html .= "<b>" . $annotation->title . "</b><br />";
+          $html .= $annotation->annotation;
+          $html .= "</li>";
+          $included_annotations{$annotation->id} = "yes";
         }
       }
+      $html .= "</ul>";
     }
   }
-
   if ($found) {
     $panel->add_row('Group notes', $html); 
   }

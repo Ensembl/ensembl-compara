@@ -192,7 +192,7 @@ sub mixer {
   $html .= "<table width='100%' cellpadding='4' cellspacing='0'>";
   $html .= "<tr>\n";
   if ($first) {
-    $html .= "<td width='20%' style='text-align: right;'>Show settings for </td>\n";
+    $html .= "<td width='20%' style='text-align: right;'>Show for </td>\n";
   } else {
     $html .= "<td width='20%' style='text-align: right;'>and </td>\n";
   }
@@ -216,17 +216,18 @@ sub mixer {
 
 sub options_for_user {
   my ($user, $ident, $preset) = @_;
-  my $your_settings = { description => "Your account", value => "user" };
   my @items = ();
+  my $your_settings = { description => "Your account", value => "user" };
   push @items, $your_settings;
+  my $everything = { description => "Everything", value => "all" };
+  push @items, $everything;
   foreach my $group (@{ $user->groups }) {
     push @items, { description => $group->name, value => $group->id };
   }
-  my $everything = { description => "Everything", value => "all" };
-  push @items, $everything;
   my $html = "";
   my $count = 0;
   my $selected = "";
+  my $optgroup = 0;
   foreach my $item (@items) {
     $count++;
     $selected = "";
@@ -239,7 +240,14 @@ sub options_for_user {
         $selected = "selected";
       }
     }
+    if ($item->{value} ne 'user' && $item->{value} ne 'all' && !$optgroup) {
+      $optgroup = 1;
+      $html .= "<optgroup label='Groups'>\n";
+    }
     $html .= "<option value='" . $item->{value} . "' $selected>" . $item->{description} . "</option>\n";
+  }
+  if ($optgroup) {
+    $html .= "</optgroup>\n";
   }
   return $html;
 }
@@ -342,7 +350,11 @@ sub _render_settings_table {
     }
     if ($row->{ident} eq 'user') {
       if ($row->{'edit_url'}) {
-        $html .= '<td style="text-align:right;"><a href="/common/' . $row->{'edit_url'} . qq(?id=$id);
+        if ($row->{'absolute_url'}) {
+          $html .= '<td style="text-align:right;"><a href="' . $row->{'edit_url'};
+        } else {
+          $html .= '<td style="text-align:right;"><a href="/common/' . $row->{'edit_url'} . '?id=' . $id;
+        }
         if ($row->{'group_id'}) {
           $html .= '&class=group'; 
         }
@@ -497,7 +509,7 @@ sub _render_bookmarks {
   else {
     $html .= qq(<p class="center"><img src="/img/bookmark_example.gif" /></p>);
   }  
-  $html .= qq(<p><a href="/common/bookmark?forward=1">Add a new bookmark &rarr;</a></p>);
+  $html .= qq(<p><a href="/common/bookmark?forward=1"><b>Add a new bookmark </b>&rarr;</a></p>);
   return $html;
 }
 
@@ -505,14 +517,30 @@ sub _render_configs {
   my $user = shift;
   my @configurations = $user->configuration_records;
   my @records;
-  foreach my $config (@configurations) {
-    push @records, {'id' => $config->id,  'edit_url' => '', 'delete_url' => 'delete_record', 
-      'data' => [
-      '<a href="' . $config->config_url . '?load_config=' . $config->id . '">' . $config->name . '</a>',
-      $config->blurb,
+
+  foreach my $configuration (@configurations) {
+    my $description = $configuration->description || '&nbsp;';
+    push @records, {  'id' => $configuration->id, 
+                      'ident' => 'user',
+                      'sortable' => $configuration->name,
+                      'edit_url' => 'edit_config', 
+                      'delete_url' => 'remove_record',
+                      'data' => [
+      '<a href="' . $configuration->url . '" title="' . $configuration->description . '">' . $configuration->name . '</a>', '&nbsp;' 
     ]};
   }
 
+  foreach my $group (@{ $user->groups }) {
+    foreach my $configuration ($group->configuration_records) {
+      my $description = $configuration->description || '&nbsp;';
+      push @records, {'id' => $configuration->id, 
+                      'ident' => $group->id, 
+                      'sortable' => $configuration->name,
+                      'data' => [
+        '<a href="' . $configuration->url . '" title="' . $configuration->description . '">' . $configuration->name . '</a>', $group->name
+      ]};
+    }
+  }
 
   my $html;
   $html .= &info_box($user, qq(You can save custom configurations (DAS sources, decorations, additional drawing tracks, etc), and return to them later or share them with fellow group members. Look for the 'Save configuration link' in the sidebar when browsing Ensembl.<br /><a href="/info/about/configurations.html">Learn more about custom configurations &rarr;</a>), 'user_configuration_info');
@@ -521,6 +549,7 @@ sub _render_configs {
   }
   else {
     $html .= qq(<p class="center"><img src="/img/config_example.gif" /></p>);
+    $html .= qq(<p class="center">You haven't saved any Ensembl view configurations. <a href='/info'>Learn more about configurations &rarr;</a>);
   }
 
   return $html;
@@ -528,9 +557,42 @@ sub _render_configs {
 
 sub _render_notes {
   my $user = shift;
+  my @notes = $user->annotation_records;
+  my @records;
 
-  my $html;
+  foreach my $note (@notes) {
+    my $description = $note->annotation || '&nbsp;';
+    push @records, {  'id' => $note->id, 
+                      'ident' => 'user',
+                      'sortable' => $note->name,
+                      'absolute_url' => 'yes',
+                      'edit_url' => '/common/gene_annotation?url=/common/accountview&stable_id=' . $note->stable_id . "&id=" . $note->id, 
+                      'delete_url' => 'remove_record',
+                      'data' => [
+      '<a href="/default/geneview?gene=' . $note->stable_id. '" title="' . $note->title . '">' . $note->stable_id . ': ' . $note->title . '</a>', '&nbsp;' 
+    ]};
+  }
 
+  foreach my $group (@{ $user->groups }) {
+    foreach my $note ($group->annotation_records) {
+      my $description = $note->annotation || '&nbsp;';
+      push @records, {'id' => $note->id, 
+                      'ident' => $note->id, 
+                      'sortable' => $note->name,
+                      'data' => [
+        '<a href="/default/geneview?gene=' . $note->stable_id . '" title="' . $note->title. '">' . $note->stable_id . ': ' . $note->title . '</a>', $group->name
+      ]};
+    }
+  }
+
+  my $html = "";
+  $html .= &info_box($user, qq(Annotation notes from genes are listed here.), 'user_note_info');
+  if ($#records > -1) {
+    $html .= _render_settings_table(\@records, $user);
+  }
+  else {
+    $html .= qq(<p class="center">You haven't saved any Ensembl notes. <a href='/info'>Learn more about notes &rarr;</a>);
+  }
   return $html;
 }
 
