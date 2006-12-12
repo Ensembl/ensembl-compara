@@ -66,8 +66,10 @@ sub render {
     my @releases = @{$adaptor->fetch_releases({'release'=>$release_id})};
     my $release_details = $releases[0];
     my $release_date = $release_details->{'long_date'};
-
-    $html .= qq(<h3>Your Ensembl headlines: <span class="text">Release $release_id ($release_date)</span></h3><br />);
+  
+    $html .= '<h3>';
+    $html .= 'Your ' if $filtered;
+    $html .= qq(Ensembl headlines: <span class="text">Release $release_id ($release_date)</span></h3><br />);
 
     ## format news headlines
     foreach my $item (@headlines) {
