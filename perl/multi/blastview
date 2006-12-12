@@ -149,13 +149,13 @@ MAIN:{
   
   $CGI->param( 'ticket', $TICKET );
   $blast_adpt->ticket( $TICKET );
-  use Apache;
-  my $r = Apache->request();
+  use Apache2::RequestUtil;
+  my $r = Apache2::RequestUtil->request();
   $ENV{'ticket'} = $TICKET;
   $r->subprocess_env->{'ticket'} = $TICKET;
   if( $CGI->param('format') eq 'raw' ){
     &print_raw_format();
-    Apache::exit
+    exit;
   }
 
   # More cgi param processing - after retrieving state
@@ -237,7 +237,7 @@ MAIN:{
     $page->content->add_panel( EnsEMBL::Web::Document::Panel->new( 'raw' => $content ) );
     $page->content->render();
     $page->render_end();
-    Apache::exit;
+    exit;
   }
 
   #----------------------------------------------------------------------
