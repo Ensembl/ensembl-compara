@@ -42,10 +42,10 @@ function debug_clear( ) {
 
 function toggle_settings_drawer() {
   if ($('settings').style.display == 'none') {
-    $('settings_link').innerHTML = 'Hide settings';
+    $('settings_link').innerHTML = 'Hide account';
     new Effect.BlindDown('settings');
   } else {
-    $('settings_link').innerHTML = 'Show settings';
+    $('settings_link').innerHTML = 'Show account';
     new Effect.BlindUp('settings');
   }
 }
@@ -130,6 +130,12 @@ function login_link() {
 function config_link() {
   URL = escape(document.location.href);
   document.location = '/common/save_config?url=' + URL;
+  return true;  
+}
+
+function load_config_link(ident) {
+  URL = escape(document.location.href);
+  document.location = '/common/load_config?id=' + ident + '&url=' + URL;
   return true;  
 }
 
