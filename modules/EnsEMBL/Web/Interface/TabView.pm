@@ -2,13 +2,13 @@ package EnsEMBL::Web::Interface::TabView;
 
 use strict;
 use warnings;
-use CGI;
 
 {
 
 my %Tabs_of;
 my %Name_of;
 my %Width_of;
+my %Open_of;
 
 sub new {
   ### c
@@ -21,6 +21,7 @@ sub new {
   }
   $Name_of{$self}   = defined $params{name} ? $params{name} : "";
   $Width_of{$self}   = defined $params{width} ? $params{width} : 0;
+  $Open_of{$self}   = defined $params{open} ? $params{open} : undef;
   return $self;
 }
 
@@ -45,6 +46,13 @@ sub name {
   return $Name_of{$self};
 }
 
+sub open {
+  ### a
+  my $self = shift;
+  $Open_of{$self} = shift if @_;
+  return $Open_of{$self};
+}
+
 sub width {
   ### a
   my $self = shift;
@@ -54,16 +62,14 @@ sub width {
 
 sub render {
   my ($self) = @_;
-  my $cgi = new CGI;
 
   my @tabs = @{ $self->tabs };
 
-  my $open = $tabs[0]->name;
-
-  if ($cgi->param('tab')) {
-    $open = $cgi->param('tab');
+  if (!$self->open) {
+    $self->open($tabs[0]->name);
   }
 
+  my $open = $self->open;
   my $name = $self->name;
   my $fixed_width = $self->width;
   my $full_width = 80;
@@ -104,7 +110,8 @@ sub render_javascript {
   my $html = "";
   my $list = "'";
   my $name = $self->name;
-  foreach my $tab (@{ $self->tabs }) {
+  my @tabs = @{ $self->tabs };
+  foreach my $tab (@tabs) {
     $list .= $tab->name . "','";
   }
   $list =~ s/,'$//;
@@ -116,6 +123,7 @@ sub render_javascript {
   $html .= $name . "_reset_tabs();\n";
   $html .= "document.getElementById(element + \"_tab\").className = \"tab selected\";\n";
   $html .= "document.getElementById(element).style.display = \"block\";\n";
+  $html .= "save_tab_change('" . $self->name . "',element)\n";
   $html .= "}\n";
 
   $html .= "function " . $name . "_reset_tabs() {\n";
@@ -135,6 +143,7 @@ sub DESTROY {
   delete $Tabs_of{$self};
   delete $Name_of{$self};
   delete $Width_of{$self};
+  delete $Open_of{$self};
 }
 
 }
