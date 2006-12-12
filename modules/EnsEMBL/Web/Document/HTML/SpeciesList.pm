@@ -195,7 +195,13 @@ sub render_ajax_reorder_list {
   foreach my $species (@favourite_species) {
     $species = $id_to_species{$species};
     $favourites{$species} = 1;
-    $html .= "<li id='favourite_" . $species_id{$species} . "'>$species</li>\n";
+    (my $sp_dir = $species) =~ s/ /_/;
+    my $common = $species_defs->get_config($sp_dir, 'SPECIES_DESCRIPTION');
+    $html .= '<li id="favourite_' . $species_id{$species} . '"><em>' .$species.'</em>';
+    if ($common) {
+      $html .= " ($common)";
+    }
+    $html .= "</li>\n";
   }
 
   $html .= "</ul></div>\n";
@@ -204,7 +210,13 @@ sub render_ajax_reorder_list {
   foreach my $species (@species_list) {
     $species = $id_to_species{$species};
     if (!$favourites{$species}) {
-      $html .= "<li id='species_" . $species_id{$species} . "'>" . $species . "</li>\n"; 
+      (my $sp_dir = $species) =~ s/ /_/;
+      my $common = $species_defs->get_config($sp_dir, 'SPECIES_DESCRIPTION');
+      $html .= "<li id='species_" . $species_id{$species} . "'><em>" . $species . '</em>'; 
+      if ($common) {
+        $html .= " ($common)";
+      }
+      $html .= "</li>\n";
       $favourites{$species} = 1;
     }
   }
