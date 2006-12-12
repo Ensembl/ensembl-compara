@@ -111,7 +111,7 @@ sub render {
         $html .= qq(<a href="/$sp_dir/"><img src="/img/species/thumb_$sp_dir.png" alt="" title="Go to the $sp_name home page" class="sp-thumb" style="height:30px;width:30px;border:1px solid #999" /></a>);
       }
       else {
-        $html .= qq(<img src="/img/ebang-30x30.png" alt="" class="sp-thumb" height="30" width="30" />);
+        $html .= qq(<img src="/img/ebang-30x30.png" alt="" class="sp-thumb" style="height:30px;width:30px;border:1px solid #999" />);
       }
 
       $html .= sprintf(qq(<strong><a href="/%s/newsview?rel=%s#cat%s" style="text-decoration:none">%s</a></strong> (<i>%s</i>)</p>),
