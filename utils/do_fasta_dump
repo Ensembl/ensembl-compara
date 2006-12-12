@@ -330,6 +330,9 @@ sub get_data {
   my $sliceAdaptor   = $dbAdaptor->get_SliceAdaptor;
   my $gene_adaptor   = $dbAdaptor->get_GeneAdaptor;
   my $meta_container = $dbAdaptor->get_MetaContainer();
+ 
+  # Only use repeat mask features listed in the meta table
+  # Could optimise so only gets the start and end of the repeat feature rathan than whole feature
   my @analyses = @{$meta_container->list_value_by_key('repeat.analysis ')};
 
   if(!defined($minimise_memory)){
@@ -788,7 +791,10 @@ sub blast_indexes {
 
      system("$command $fh");
 
-     # Copy blast indexes across
+    # Do blast xdformat indexes
+    xdformat_blast_indexes($types, $fh, $release_dir);
+
+     # Copy blast indexes across------------------------------
      foreach my $index (@names ) {
         my $file = "$fh$index";
         (my $file_name = $file) =~ s#.*/##;
@@ -797,7 +803,7 @@ sub blast_indexes {
         unlink($file) || warn "Can't delete $file: $!" unless $file eq $fh;
      }
 
-     # Check ini file configuration
+     # Check ini file configuration--------------------------
      $types =~ s/dna_seqlevel/latestgp/;
      $types =~ s/ncrna/rna_nc/;
      if ($configured{$types}) {
@@ -815,16 +821,43 @@ sub blast_indexes {
 
 }
 
+
+#---------------------------------------------------------------------------
+sub xdformat_blast_indexes {
+
+  my ($types, $fh, $release_dir) = @_;
+
+  info (1, "xdformat indexes");
+  my $xdformat_command = "/ensweb/wwwdev/headfc1/src/xdformat";
+  my @names;
+  if ($types =~/^pep/) {
+    @names = qw( .xpd .xps .xpt);
+    system ("$xdformat_command -p $fh");
+  }
+  else {
+    @names = qw( .xnd .xns .xnt);
+    system ("$xdformat_command -n $fh");
+  }
+
+  foreach my $index (@names ) {
+    my $file = "$fh$index";
+    (my $file_name = $file) =~ s#.*/##;
+      utils::Tool::warning(1, "Error producing file $file") && next unless -s "$file";
+    system ("mv $file /mysqlg/dumps/$release_dir/xdformat/$file_name");
+  }
+  return 1;
+}
+
 #-----------------------------------------------------------------------------
 sub ssaha_servers {
   my ($created_files, $species, $sp_folder, $db_adaptor) = @_;
 
   my $dna_dir;
   if ($DUMPDIR eq $basedir."release-$release/") {
-    $dna_dir  = $basedir."ssaha2/dna/";
+    $dna_dir  = "/mysqlg/dumps/ssaha2/dna/";  #$basedir."ssaha2/dna/";
   } 
   elsif ( $DUMPDIR =~ /^$basedir/ ) {
-    $dna_dir  = $basedir."ssaha2/dna/";
+    $dna_dir  = "/mysqlg/dumps/ssaha2/dna/"; #$basedir."ssaha2/dna/";
   }
   else {
     $dna_dir = $DUMPDIR."/ssaha2/dna/"; 
@@ -894,8 +927,8 @@ sub create_dna_ssaha {
   else {
     utils::Tool::warning(1, "Add LATESTGP SSAHA2_DATASOURCES to $species ini file and correct file name in $dna_dir.");
   }
-  my $dna_server = "$dna_dir$port_dna.$species.$assembly.dna";  # only toplevel and rm
-  return  if -e $dna_server; # only when new assembly
+  my $dna_server = "$dna_dir$port_dna.$species.$assembly.dna";  # only toplevel but not rm
+  return  if -e "$dna_server.body"; # only when new assembly
 
 
   info (2, "Creating new ssaha dna server..");

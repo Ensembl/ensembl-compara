@@ -107,7 +107,7 @@ foreach my $sp( @SPECIES ){
 				ENSEMBL_COMPARA_MULTIPLE
 				ENSEMBL_BLAST_LOG
 				ENSEMBL_FASTA
-                                ENSEMBL_HELP
+                                ENSEMBL_HEALTHCHECK
 				ENSEMBL_GLOVAR );
   # Work out dumpdir ---------------------------------------------------------
   my @sp_dumpdirs;

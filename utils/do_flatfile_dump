@@ -88,6 +88,7 @@ unless ($no_log) {
 $dumpdir ||= "/mysql/dumps/release-$sitedefs_release";
 
 foreach my $spp (@species){
+  utils::Tool::info(2, "Species: $spp");
   my $sp_time = time;
   my $formats_dir = setup_directories($SPECIES_DEFS, $spp, \@user_formats);
 
