@@ -111,6 +111,7 @@ sub edit {
 
   foreach my $key (keys %set_parameters) {
     $set_parameters{$key} =~ s/'/\\'/g;
+    $set_parameters{$key} =~ s/\\.'/\\'/g;
   }
 
   if ($set_parameters{password}) {
@@ -209,7 +210,7 @@ sub create {
 
   foreach my $key (keys %set_parameters) {
     $set_parameters{$key} =~ s/'/\\'/g;
-    $set_parameters{$key} =~ s/\\\\'/\\'/g;
+    $set_parameters{$key} =~ s/\\.'/\\'/g;
   }
 
   my $sql = "INSERT INTO " . $table . " ";
