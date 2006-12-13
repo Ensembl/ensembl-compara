@@ -6,39 +6,43 @@ use strict;
 use warnings;
 no warnings "uninitialized";
 
+use CGI;
+
 use EnsEMBL::Web::SpeciesDefs;
 use EnsEMBL::Web::Document::WebPage;
 use EnsEMBL::Web::Document::Panel::Fragment;
 use EnsEMBL::Web::Root;
-our @ISA = qw(EnsEMBL::Web::Root);
 
-warn("AJAX: Populating fragment"); 
-
-my $T = new CGI;
-my $incoming = $T->Vars;
-my $id = $T->param('id');
-my $title = $T->param('title');
+my $cgi = new CGI;
+my $incoming = $cgi->Vars;
 my %params = ();
 my %components = ();
+
+warn "--------------------";
+warn("AJAX: Populating fragment"); 
 
 foreach my $key (keys %{ $incoming }) {
   if ($key =~ /^component_/) {
     $components{$key} = $incoming->{$key};
+    warn "COMPONENT: $key:" . $components{$key}; 
   } else {
     $params{$key} = $incoming->{$key};
-    warn "$key: " . $params{$key};
+    warn "PARAM: $key: " . $params{$key};
   }
 }
 
-my $chromosome;
-my $location;
-my $start;
-my $end;
+my $chromosome = undef;
+my $location = undef;
+my $start = undef;
+my $end = undef;
 
 if ($params{l}) {
   ($chromosome, $location) = split(/:/, $params{l});
-  ($start, $end) = split(/-/, $location); 
+  ($start, $end) = split(/-/, $location);
 }
+
+warn $cgi->param('url');
+warn $cgi->param('title'); 
 
 my $webpage= new EnsEMBL::Web::Document::WebPage(
   'use_proxy'  => 1,
@@ -50,67 +54,55 @@ my $webpage= new EnsEMBL::Web::Document::WebPage(
 
 my $object = $webpage->dataObjects->[0];
 my $species_defs = EnsEMBL::Web::SpeciesDefs->new();
-my $fragment = EnsEMBL::Web::Document::Panel::Fragment->new( 
+my $fragment = EnsEMBL::Web::Document::Panel::Fragment->new(
                                        object => $object,
-                                       'code' => "fragment_#",
+                                       'code' => $cgi->param('code'),
                                       caption => 'AJAX fragment',
                                        status => 'loading',
                                       display => 'on',
                                      );
 my $json_error = "";
+my $prefix = "f";
+my $json_components = "";
 
 my $max_length = ($object->species_defs->ENSEMBL_GENOME_SIZE||1) * 1.001e6;
 my($top_start, $top_end) = &top_start_end( $object, $max_length );
 $fragment->add_option( 'start', $top_start );
 $fragment->add_option( 'end',   $top_end   );
-
-warn "AJAX object: " .$object;
-my %html = ();
-my $prefix = "f";
+my $count = 0;
 foreach my $key(keys %components) {
   $components{$key} =~ /(.*)::(\w+)$/;
   my $complete = $components{$key};
   my $module = $1;
   my $function = $2;
-  my $result;
+  my $result = undef;
+  $count++;
+  warn "LOADING COMPONENT: " . $module . ": " . $function;
   if (EnsEMBL::Web::Root::dynamic_use($module, $module)) {
+    warn "LOADED! Creating fragment: $complete";
     no strict 'refs';
     $object->script('contigview');
     $object->get_scriptconfig('contigview');
     $object->prefix($prefix);
     $result = &$complete( $fragment, $object );
-    if ($result) {
-      $html{$complete} = $fragment->html;
-      warn "AJAX complete: $complete";
-    }
-  } else {
-    $json_error = "error: 'Panel failed: Problems loading $module'";
+
+    my $start_px = $object->__data->{'_cv_parameter_hash'}{ $prefix . "_" . $count . "_px_start" };
+    my $end_px = $object->__data->{'_cv_parameter_hash'}{ $prefix . "_" . $count . "_px_end" };
+    my $start_bp = $object->__data->{'_cv_parameter_hash'}{ $prefix . "_" . $count . "_bp_start" };
+    my $end_bp = $object->__data->{'_cv_parameter_hash'}{ $prefix . "_" . $count . "_bp_end" };
+    my $start_cv= $object->__data->{'_cv_parameter_hash'}{ $prefix . "_" . $count . "_cv_start" };
+    my $end_cv = $object->__data->{'_cv_parameter_hash'}{ $prefix . "_" . $count . "_cv_end" };
+    warn "START CV: " . $start_cv;
+    warn "END CV: " . $end_cv;
+
+    $json_components .= "{ $key: { html: '" . $fragment->html . "', start_bp: '$start_bp', end_bp: '$end_bp', start_cv: '$start_cv', end_cv: '$end_cv', start_px: '$start_px', end_px: '$end_px' } }, ";
   }
 }
 
-
+warn "--------------------";
+$json_components =~ s/, $//;
 print "Content-type: text/plain\n\n";
-
-my $json_component = "";
-my $count = 0;
-foreach my $key(keys %components) {
-  my $complete = $components{$key};
-  $count++;
-  $html{$complete} =~ s/"/\\"/;
-  $html{$complete} =~ s/'/\\'/;
-  my $start_px = $object->__data->{'_cv_parameter_hash'}{ $prefix . "_" . $count . "_px_start" }; 
-  my $end_px = $object->__data->{'_cv_parameter_hash'}{ $prefix . "_" . $count . "_px_end" }; 
-  my $start_bp = $object->__data->{'_cv_parameter_hash'}{ $prefix . "_" . $count . "_bp_start" }; 
-  my $end_bp = $object->__data->{'_cv_parameter_hash'}{ $prefix . "_" . $count . "_bp_end" }; 
-  my $start_cv= $object->__data->{'_cv_parameter_hash'}{ $prefix . "_" . $count . "_cv_start" }; 
-  my $end_cv = $object->__data->{'_cv_parameter_hash'}{ $prefix . "_" . $count . "_cv_end" }; 
-  warn "START CV: " . $start_cv;
-  warn "END CV: " . $end_cv;
-  $json_component .= " { '$complete': { html: '" . $html{$complete} . "', start_bp: '$start_bp', end_bp: '$end_bp', start_cv: '$start_cv', end_cv: '$end_cv', start_px: '$start_px', end_px: '$end_px' } }, "; 
-}
-
-my $json = "{ fragment: { id: '$id', title: '$title', components: [ $json_component ] }, location: { chromosome: '$chromosome', start: '$start', end: '$end' }, $json_error }";
-print $json;
+print "{ fragment: { id: '" . $cgi->param('id') . "', title: '" . $cgi->param('title') . "', components: [ $json_components ], location: { chromosome: '$chromosome', start: '$start', end: '$end' } } }";
 
 sub top_start_end {
   my($obj, $max_length ) = @_;
