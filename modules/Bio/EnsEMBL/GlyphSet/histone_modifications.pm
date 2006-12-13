@@ -368,8 +368,8 @@ sub predicted_features_zmenu {
   ### Arg1: arrayref of Feature objects
 
   my ($self, $f ) = @_;
-  my $slice_start   = $self->{'container'}->start + 1;
-  my $pos =  ($slice_start + $f->start)."-".($f->end+$slice_start);
+  my $slice_start   = $self->{'container'}->start -1;
+  my $pos =  ($slice_start + $f->start )."-".($f->end+$slice_start);
   my $score = sprintf("%.3f", $f->score());
   my %zmenu = ( 
     'caption'               => ($f->display_label || ''),
