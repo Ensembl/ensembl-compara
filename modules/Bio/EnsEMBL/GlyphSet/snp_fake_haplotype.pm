@@ -8,7 +8,7 @@ use Sanger::Graphics::Glyph::Text;
 use Sanger::Graphics::Glyph::Space;
 use Sanger::Graphics::Glyph::Rect;
 use Bio::EnsEMBL::GlyphSet;
-  
+use Data::Dumper;  
 our @ISA = qw(Bio::EnsEMBL::GlyphSet);
 
 sub _init {
@@ -17,6 +17,7 @@ sub _init {
   my $Config        = $self->{'config'};
   my @snps = @{$Config->{'snps'}};
   return unless scalar @snps;
+  return unless $Config->{'snp_fake_haplotype'};
 
   # Get reference strain name for start of track:
   my $individual_adaptor = $self->{'container'}->adaptor->db->get_db_adaptor('variation')->get_IndividualAdaptor;
@@ -24,7 +25,7 @@ sub _init {
   my $reference_name = $Config->{'reference'} || $golden_path;
 
 
-  # Get allele and coverage data from config -----------------------------
+  # Put allele and coverage data from config into hashes -----------------------
   my %strain_alleles;   # $strain_alleles{strain}{id::start} = allele
   my %coverage;         # $coverage{strain} = [ [start, end, level], [start, end, level]   ];
 
@@ -48,11 +49,11 @@ sub _init {
   my $info_text = "Comparison to $reference_name alleles (green = same allele; purple = different allele; white = data missing)";
 
   my( $fontname_c, $fontsize_c ) = $self->get_font_details( 'caption' );
-  my @res_c = $self->get_text_width( 0, 'X', '', 'font'=>$fontname_c, 'ptsize' => $fontsize_c );
+  my @res_c = $self->get_text_width( 0, 'X|X', '', 'font'=>$fontname_c, 'ptsize' => $fontsize_c );
   my $th_c = $res_c[3];
 
   my( $fontname, $fontsize ) = $self->get_font_details( 'innertext' );
-  my @res = $self->get_text_width( 0, 'X', '', 'font'=>$fontname, 'ptsize' => $fontsize );
+  my @res = $self->get_text_width( 0, 'X|X', '', 'font'=>$fontname, 'ptsize' => $fontsize );
   my $w  = $res[2];
   my $th = $res[3];
   my $pix_per_bp    = $Config->transform->{'scalex'};
@@ -102,14 +103,12 @@ sub _init {
     my $start = $snp_ref->[0];
     my $end   = $snp_ref->[1];
     my $snp   = $snp_ref->[2];
-    my $label =  $snp->allele_string;
 
-    my @res = $self->get_text_width( ($end-$start+1)*$pix_per_bp, $label, 'X', 'font'=>$fontname, 'ptsize' => $fontsize );
+    my @res = $self->get_text_width( ($end-$start+1)*$pix_per_bp, 'X|X', 'X|X', 'font'=>$fontname, 'ptsize' => $fontsize );
     my $tmp_width = ($w*2+$res[2])/$pix_per_bp;
-    my $two = $tmp_width;
-       $tmp_width =  $end-$start+1 if  $end-$start+1 < $tmp_width;
-    #warn "$end - $start - $tmp_width - $two";
+    $tmp_width =  $end-$start+1 if  $end-$start+1 < $tmp_width;
     push @widths, $tmp_width;
+    my $label =  $snp->allele_string;
 
     my ($golden_path_base) = split "\/", $label;
     my $reference_base;
@@ -132,10 +131,12 @@ sub _init {
 	  }
 	}
       }
+
+      # Golden path ne reference but still need the golden path track in there somewhere
       my $golden_colour = undef;
 
-      if ($reference_base) {
-	$golden_colour = $golden_path_base eq $reference_base ? $colours[0] : $colours[1],
+      if ($reference_base) { # determine colours for golden path row dp on reference colours
+	$golden_colour = $self->bases_match($golden_path_base, $reference_base) ? $colours[0] : $colours[1],
       }
       push @golden_path, {
 			  label   => $label,
@@ -147,10 +148,19 @@ sub _init {
 
     # Set ref base colour and draw glyphs ----------------------------------
     $colour = $colours[0] if $reference_base;
-    $snp_ref->[3] = { $reference_base => $colours[0] }  ;
+    $snp_ref->[3] = { $reference_base => $colours[0] };
+
+    # If ref base is like "G", have to define "G|G" as also having ref base colour
+    if (length $reference_base ==1) {
+      $snp_ref->[3]{ "$reference_base|$reference_base"} = $colours[0];
+    }
+    elsif ($reference_base =~/(\w)\|(\w)/) {
+      my $half_genotype = $1;
+      warn "[ERROR] This is a heterozygous allele $1 $2" if $1 ne $2;
+      $snp_ref->[3]{ "$half_genotype"} = $colours[0];
+    }
     $snp_ref->[4] = $reference_base ;
-    $self->do_glyphs($offset, $th, $tmp_width, $pix_per_bp, $fontname, $fontsize, $Config, $label, $snp_ref->[0], 
-		     $snp_ref->[1], $colour, $reference_base);
+    $self->do_glyphs($offset, $th, $tmp_width, $pix_per_bp, $fontname, $fontsize, $Config, $label, $snp_ref->[0],  $snp_ref->[1], $colour, $reference_base);
 
   } #end foreach $snp_ref
 
@@ -162,9 +172,7 @@ sub _init {
     foreach my $hash (@golden_path) {
       my $snp_ref = $hash->{snp_ref};
       my $text_colour = $hash->{colour} ? "white" : "black";
-      $self->do_glyphs($offset, $th, $widths[$c], $pix_per_bp, $fontname, $fontsize, $Config, $hash->{label}, 
-			$snp_ref->[0], $snp_ref->[1], 
-			$hash->{colour}||"white", $hash->{base}, $text_colour);
+      $self->do_glyphs($offset, $th, $widths[$c], $pix_per_bp, $fontname, $fontsize, $Config, $hash->{label}, $snp_ref->[0], $snp_ref->[1], $hash->{colour}||"white", $hash->{base}, $text_colour);
       $c++;
     }
   }
@@ -196,9 +204,8 @@ sub _init {
 
       # Determine colour ------------------------------------
       my $colour = "white";#undef;
-      my $text = $snp_ref->[4] ? "white" : "black";
-
-      if( $allele_string && $snp_ref->[4] ) {
+      my $text = $snp_ref->[4] ? "white" : "black"; # text colour white if ref base defined
+      if( $allele_string && $snp_ref->[4] ) {      # only fill in colour if ref base is defined
         $colour = $snp_ref->[3]{ $allele_string };
         unless($colour) {
           $colour = $snp_ref->[3]{ $allele_string } = 
@@ -250,7 +257,6 @@ sub strain_name_text {
 
 sub do_glyphs {
   my ($self, $offset, $th, $tmp_width, $pix_per_bp, $fontname, $fontsize, $Config, $label, $start, $end, $colour, $allele_string, $text_colour) = @_;
-
   my $length = exists $self->{'container'}{'ref'} ? $self->{'container'}{'ref'}->length : $self->{'container'}->length;
 
   $start = 1 if $start < 1;
@@ -294,5 +300,11 @@ sub do_glyphs {
   return 1;
 }
 
-
+sub bases_match {
+  my ($self, $one, $two) = @_;
+  $one .= "|$one" if length $one == 1;
+  $two .= "|$two" if length $two == 1;
+  my $return = $one eq $two ? 1 : 0;
+  return $return;
+}
 1;
