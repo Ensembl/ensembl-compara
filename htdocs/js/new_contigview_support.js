@@ -57,10 +57,11 @@ function _change_panel_state( n ) {
 */
 
 function view_init(n) {
+  alert(n);
   if( !ego( n+'_rl' ) ) {
     A = ego( n );
     if(A) {
-    A.onmousedown = select_start
+    A.onmousedown = select_start;
     for(k=0;k<edges.length;k++) {
       var L = edges.substr(k,1);
       d1=dce('div');

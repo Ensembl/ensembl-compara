@@ -1,4 +1,4 @@
-var panel_count = 0;
+var count = 0;
 
 function populate_fragments() {
   var fragments = getElementsByClass("fragment");
@@ -58,9 +58,8 @@ function panel_loaded(response) {
   }
 
   update.style.display = 'block';
-  var prefix = json.fragment.id;
-  panel_count = panel_count + 1;
-  var prefix = "f_" + panel_count; 
+  count = count + 1;
+  var prefix = "f_" + count; 
 
   $(json.fragment.id + "_title").innerHTML = json.fragment.title;
 
@@ -74,6 +73,7 @@ function panel_loaded(response) {
   F.appendChild(new_element(prefix + '_visible', '1'));
 
   view_init(prefix);
+
   //draw_red_box('f', 1, 'p', 2);
 
   /**
