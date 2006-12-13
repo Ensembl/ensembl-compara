@@ -21,7 +21,11 @@ $query=~ s/^\s+//g;
 $query=~ s/\s+$//g;
 $query=~ s/\s+/ /g;
 
-unless( $species ) {
+## Let us parse the first string to see if it is the name of a species or one
+## of its aliases... (should we do this if we specify a species in the drop
+## down!
+
+# unless( $species ) {
   $query .= ' ';
   my %sp_hash = %{ $webpage->{'species_defs'}->ENSEMBL_SPECIES_ALIASES };
   foreach my $sp ( keys %sp_hash ) {
@@ -31,7 +35,7 @@ unless( $species ) {
     }
   }
   chop $query;
-}
+# }
 
 my $feature_maps = {qw(
   gene       Gene
@@ -44,7 +48,7 @@ my $feature_maps = {qw(
   chr         Chromosome
   clone       Sequence
   contig      Sequence
-  chromosome  Sequence
+  chromosome  Chromosome
   supercontig Sequence
   region      Sequence
   sequence    Sequence
@@ -62,6 +66,10 @@ my $feature_maps = {qw(
   family      Family
 )};
 
+## Now we look to see if we can find a feature in the next part
+## of the search string - if so use that as the provisional name
+## of the index....
+
 my $index = '';
 if( $query=~/^(\w+)\b/ ) {
   $index = $feature_maps->{lc($1)};
@@ -74,6 +82,10 @@ if( $query=~/^(\w+)\b/ ) {
   $index = 'Sequence';
 }
 my $flag = 0;
+
+## We have a species so we can see if we can generate a mapview/contigview/cytoview
+## link....
+
 if($species) {
   if(!$query) { ## nothing to search for
     $URL = "/$species/";
@@ -111,11 +123,11 @@ if($species) {
       }
     }
     $flag = 1;
-  } elsif (  $query =~ /\.\.|-/ ) {  ## other pairs of identifiers
+  } elsif (  $query =~ /\.\./ ) {  ## other pairs of identifiers
     ## str.string..str.string
     ## str.string-str.string
-    $query =~ /([\w|\.]+\w+)(\.\.|-)([\w|\.]+)/;
-    $URL = "/$species/jump_to_contig?type1=all;type2=all;anchor1=$1;anchor2=$2"; 
+    $query =~ /([\w|\.]+\w)(\.\.)(\w[\w|\.]+)/;
+    $URL = "/$species/jump_to_contig?type1=all;type2=all;anchor1=$1;anchor2=$3"; 
     $flag = 1;
   }
 }
@@ -123,11 +135,11 @@ if($species) {
 #  $URL = "/$species/searchview;idx=$1;q=$2";
 #}
 unless( $flag ) {
-  $URL = $query =~ /^BLA_\w+$/            ? "/Multi/blastview/$query"       ## Blast ticket
-       : $query =~ /^\w+\.mart$/          ? "/Multi/martview/$query"        ## MART query
+  $URL = $query =~ /^BLA_\w+$/            ? "/Multi/blastview/$query"         ## Blast ticket
+       : $query =~ /^\w+\.mart$/          ? "/biomart/martview/$query"        ## MART query
        : $query =~ /[ACGT]{12,}/i         ? "/Multi/blastview?species=$species;_query_sequence=$query;query=dna;database=dna"         ## BLAST seq search
        : $query =~ /[A-Z]{12,}/           ? "/Multi/blastview?species=$species;_query_sequence=$query;query=peptide;database=peptide" ## BLAST aa search
-       :                                    "/perl/searchview?species=$species;idx=$index;q=$query"
+       :                                    "/default/searchview?species=$species;idx=$index;q=$query"
        ;
 }
 $webpage->redirect($URL);
