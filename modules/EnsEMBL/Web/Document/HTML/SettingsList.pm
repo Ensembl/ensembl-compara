@@ -103,7 +103,7 @@ sub list_for_records {
       my $bold_end = "";
       if ($record->type eq 'configuration') {
 
-        if ($current_config->config eq $record->id) {
+        if (defined $current_config && $current_config->config eq $record->id) {
           $bold_start = "<b>";
           $bold_end = "</b>";
         }

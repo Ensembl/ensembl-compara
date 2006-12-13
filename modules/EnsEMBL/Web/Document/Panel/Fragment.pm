@@ -45,7 +45,7 @@ sub placeholder {
 
 sub json {
   my $self = shift; 
-  my $json = "{ fragment: { species: '" . $ENV{ENSEMBL_SPECIES} . "', title: '" . $self->caption . "', id: '" . $self->code . "', params: [ " . $self->json_params . " ], components: [ " . $self->json_components . " ]";
+  my $json = "{ fragment: { code: '" . $self->code . "', species: '" . $ENV{ENSEMBL_SPECIES} . "', title: '" . $self->caption . "', id: '" . $self->code . "', params: [ " . $self->json_params . " ], components: [ " . $self->json_components . " ]";
   $json .= "} }";
   return $json;
 }
@@ -60,7 +60,14 @@ sub html {
 
 sub print {
   my ($self, $render) = @_;
+  $render = $self->escape($render);
   $self->html($render);
+}
+
+sub escape_quotes {
+  my ($self, $string) = @_;
+  $string =~ s/'/&quote;/g;
+  return $string;
 }
 
 sub json_params {

@@ -383,12 +383,14 @@ sub contigviewtop {
   my $slice = $object->database('core')->get_SliceAdaptor()->fetch_by_region(
     $object->seq_region_type, $object->seq_region_name, $panel->option('start'), $panel->option('end'), 1
   );
+
   my $wuc = $object->user_config_hash( 'contigviewtop' );
      $wuc->container_width( $panel->option('end')-$panel->option('start')+1 );
      $wuc->set_width(       $object->param('image_width') );
      $wuc->{'image_frame_colour'} = 'red' if $panel->option( 'red_edge' ) eq 'yes';
-  red_box( $wuc, @{$panel->option('red_box')} ) if $panel->option( 'red_box' );
 
+  red_box( $wuc, @{$panel->option('red_box')} ) if $panel->option( 'red_box' );
+  
   my $image    = $object->new_image( $slice, $wuc, $object->highlights );
      $image->imagemap = 'yes';
   my $click_left  = int( $wuc->transform->{'translatex'} );

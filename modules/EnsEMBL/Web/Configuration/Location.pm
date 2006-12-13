@@ -484,8 +484,8 @@ sub contigview {
   $self->update_configs_from_parameter( 'bottom', 'contigviewbottom' );
   $self->add_das_sources('contigviewbottom');
 
-  #$self->{page}->add_body_attr( 'onload' => 'populate_fragments(); ');
-  #$self->{page}->javascript->add_source("/js/ajax_fragment.js");
+  $self->{page}->add_body_attr( 'onload' => 'populate_fragments(); ');
+  $self->{page}->javascript->add_source("/js/ajax_fragment.js");
 
   my $last_rendered_panel = undef;
   my @common = ( 'params' => { 'l'=>$q_string, 'h' => $obj->highlights_string } );
@@ -494,12 +494,13 @@ sub contigview {
   my @rendered_panels = ();
   my @fragment_panels = ();
   my $ajax_ideogram = 'off';
-  my $ajax_detailed = 'off';
+  my $ajax_overview = 'on';
+  my $ajax_detailed = 'on';
 
   my $max_length = ($obj->species_defs->ENSEMBL_GENOME_SIZE||1) * 1.001e6;
 
   my $fragment = $self->new_panel('Fragment',
-                                 'code' => "fragment_#",
+                                 'code' => "fragment_1",
                                 caption => $obj->seq_region_type_and_name,
                                  status => 'loading',
                                 display => 'on',
@@ -530,19 +531,41 @@ sub contigview {
   }
 
 ## Now the overview panel...
+  my $max_length = ($obj->species_defs->ENSEMBL_GENOME_SIZE||1) * 1.001e6;
+  my $overview_fragment = $self->new_panel('Fragment',
+                                 'code' => "fragment_2",
+                                caption => "Overview",
+                                 status => 'loading',
+                                display => 'on',
+                                           @common);
+
+  $overview_fragment->add_component('image_fragment', 'EnsEMBL::Web::Component::Location::contigviewtop');
+  if ($overview_fragment) {
+    my($start,$end) = $self->top_start_end( $obj, $max_length );
+    $fragment->add_option( 'start', $start );
+    $fragment->add_option( 'end',   $end   );
+  }
+  if ($ajax_overview eq 'on') {
+    $self->add_panel($overview_fragment);
+    push @fragment_panels, $overview_fragment;
+  }
+
   my $over = $self->new_panel( 'Image',
     'code'    => "overview_#", 'caption' => 'Overview', 'status'  => 'panel_top', @common
   );
-  my $max_length = ($obj->species_defs->ENSEMBL_GENOME_SIZE||1) * 1.001e6;
   if( $obj->param('panel_top') ne 'off' ) {
     my($start,$end) = $self->top_start_end( $obj, $max_length );
     $over->add_option( 'start', $start );
     $over->add_option( 'end',   $end   );
-    push @rendered_panels, $over;
+    if ($ajax_overview eq 'off') {
+      push @rendered_panels, $over;
+    }
   }
 
   $over->add_components(qw(image EnsEMBL::Web::Component::Location::contigviewtop));
-  $self->add_panel( $over );
+  if ($ajax_overview eq 'off') {
+    $self->add_panel( $over );
+  }
 
   $self->initialize_zmenu_javascript_new;
   $self->initialize_ddmenu_javascript;
@@ -554,14 +577,14 @@ sub contigview {
 ## Big switch time.... 
 
   my $view_fragment = $self->new_panel('Fragment',
-                                 'code' => "fragment_#",
+                                 'code' => "fragment_3",
                                 caption => "Detailed view",
                                  status => 'loading',
                                 display => 'on',
                                            @common);
   $view_fragment->add_components(qw(
-      menu   EnsEMBL::Web::Component::Location::contigviewbottom_menu
-      nav    EnsEMBL::Web::Component::Location::contigviewbottom_nav
+      menu  EnsEMBL::Web::Component::Location::contigviewbottom_menu
+      nav   EnsEMBL::Web::Component::Location::contigviewbottom_nav
       image  EnsEMBL::Web::Component::Location::contigviewbottom
                   ));
 
