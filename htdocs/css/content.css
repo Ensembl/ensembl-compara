@@ -388,7 +388,7 @@ ul.flush li { margin-left:-2em; }
 
 /* Ensembl homepage */
 
-.sp-thumb { float:left; padding-right:4px; clear:left; }
+.sp-thumb { float:left; margin-right:4px; clear:left; }
 dl.species-list dt { margin:0px; padding:0px; min-height:15px;   font-size:120%; font-style:italic; font-weight:bold; }
 dl.species-list dd { margin:-2px 0px 2px 0px; padding:0px; min-height:40px; }
 dl.species-list dt a, dl.species-list dd a { text-decoration:none; }
