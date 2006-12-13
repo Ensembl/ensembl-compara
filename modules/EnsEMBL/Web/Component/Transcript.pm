@@ -1157,12 +1157,14 @@ sub transcriptsnpview {
       ]
     } sort { $a->[0] <=> $b->[0] } @$sample_snps;
 
-  $Configs->{'snps'}->set( 'snp_fake_haplotype', 'on', 'on' );
+  if (scalar @$haplotype) {
+    $Configs->{'snps'}->set( 'snp_fake_haplotype', 'on', 'on' );
+    $Configs->{'snps'}->{'snp_fake_haplotype'}  =  $haplotype;
+  }
   $Configs->{'snps'}->container_width(   $snp_fake_length   );
   $Configs->{'snps'}->{'snps'}        = \@fake_snps;
   $Configs->{'snps'}->{'reference'}   = $object->param('reference');
   $Configs->{'snps'}->{'fakeslice'}   = 1;
-  $Configs->{'snps'}->{'snp_fake_haplotype'}  =  $haplotype;
   $Configs->{'snps'}->{'URL'} =  $base_URL;
   return if $do_not_render;
 
@@ -1200,6 +1202,7 @@ sub _sample_configs {
   # THIS IS A HACK. IT ASSUMES ALL COVERAGE DATA IN DB IS FROM SANGER fc1
   # Only display coverage data if source Sanger is on
   my $display_coverage = $object->get_scriptconfig->get( "opt_sanger" ) eq 'off' ? 0 : 1;
+  my $individual_adaptor = $object->Obj->adaptor->db->get_db_adaptor('variation')->get_IndividualAdaptor;
 
   foreach my $sample ( $object->get_samples ) {
     my $sample_slice = $transcript_slice->get_by_strain( $sample );
@@ -1251,8 +1254,11 @@ sub _sample_configs {
       'coverage_level'  => $coverage_level,
       'coverage_obj'    => $munged_coverage,
     };
+    my ($individual) = @{$individual_adaptor->fetch_all_by_name($sample)};
+    if ($individual->type_individual eq 'Fully_inbred') {
+      unshift @haplotype, [ $sample, $allele_info, $munged_coverage ];
+    }
 
-    unshift @haplotype, [ $sample, $allele_info, $munged_coverage ];
     $sample_config->container_width( $fake_length );
   
     ## Finally the variation features (and associated transcript_variation_features )...  Not sure exactly which call to make on here to get 
@@ -1381,9 +1387,9 @@ sub get_page_data {
       next unless $conseq_type && $allele;
 
       # Check consequence obj and allele feature obj have same alleles
-      my $tmp = join "", @{$conseq_type->alleles || []};
-      $tmp =~ tr/ACGT/TGCA/ if ( $object->Obj->strand ne $allele->strand);
-      warn "ERROR: Allele call on alleles ", $allele->allele_string, " Allele call on ConsequenceType is different: $tmp" if $allele->allele_string ne $tmp;
+      #my $tmp = join "", @{$conseq_type->alleles || []};
+      #$tmp =~ tr/ACGT/TGCA/ if ( $object->Obj->strand ne $allele->strand);
+      #warn "ERROR: Allele call on alleles is", $allele->allele_string, ". Allele call on ConsequenceType is different: $tmp" if $allele->allele_string ne $tmp;
 
       # Type
       my $type = join ", ", @{$conseq_type->type || []};
