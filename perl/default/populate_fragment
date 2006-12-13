@@ -41,8 +41,6 @@ if ($params{l}) {
   ($start, $end) = split(/-/, $location);
 }
 
-warn $cgi->param('url');
-warn $cgi->param('title'); 
 
 my $webpage= new EnsEMBL::Web::Document::WebPage(
   'use_proxy'  => 1,
@@ -69,33 +67,29 @@ my $max_length = ($object->species_defs->ENSEMBL_GENOME_SIZE||1) * 1.001e6;
 my($top_start, $top_end) = &top_start_end( $object, $max_length );
 $fragment->add_option( 'start', $top_start );
 $fragment->add_option( 'end',   $top_end   );
-my $count = 0;
 foreach my $key(keys %components) {
   $components{$key} =~ /(.*)::(\w+)$/;
   my $complete = $components{$key};
   my $module = $1;
   my $function = $2;
   my $result = undef;
-  $count++;
-  warn "LOADING COMPONENT: " . $module . ": " . $function;
   if (EnsEMBL::Web::Root::dynamic_use($module, $module)) {
-    warn "LOADED! Creating fragment: $complete";
+    warn "Creating fragment: $complete";
     no strict 'refs';
     $object->script('contigview');
     $object->get_scriptconfig('contigview');
     $object->prefix($prefix);
     $result = &$complete( $fragment, $object );
 
-    my $start_px = $object->__data->{'_cv_parameter_hash'}{ $prefix . "_" . $count . "_px_start" };
-    my $end_px = $object->__data->{'_cv_parameter_hash'}{ $prefix . "_" . $count . "_px_end" };
-    my $start_bp = $object->__data->{'_cv_parameter_hash'}{ $prefix . "_" . $count . "_bp_start" };
-    my $end_bp = $object->__data->{'_cv_parameter_hash'}{ $prefix . "_" . $count . "_bp_end" };
-    my $start_cv= $object->__data->{'_cv_parameter_hash'}{ $prefix . "_" . $count . "_cv_start" };
-    my $end_cv = $object->__data->{'_cv_parameter_hash'}{ $prefix . "_" . $count . "_cv_end" };
-    warn "START CV: " . $start_cv;
-    warn "END CV: " . $end_cv;
-
+    my $start_px = $fragment->option('px_start'); 
+    my $end_px = $fragment->option('px_end');
+    my $start_bp = $fragment->option('bp_start'); 
+    my $end_bp = $fragment->option('bp_end');
+    my $start_cv = $fragment->option('cv_start');
+    my $end_cv = $fragment->option('cv_end');
+    
     $json_components .= "{ $key: { html: '" . $fragment->html . "', start_bp: '$start_bp', end_bp: '$end_bp', start_cv: '$start_cv', end_cv: '$end_cv', start_px: '$start_px', end_px: '$end_px' } }, ";
+    warn $json_components;
   }
 }
 
