@@ -301,11 +301,10 @@ sub find_available_anchor_points {
   my $species_defs = $self->species_defs;
   #define possible anchor here - where 'table' value is undef then option added by default
   my $all_anchor_points = [
+    {'table'=>'' ,              'value'=>'bp',     'name'=>'Base pair'},
     {'table'=>'karyotype',      'value'=>'band',   'name'=>'Band'},
-    {'table'=>'',               'value'=>'region', 'name'=>'Region'},
     {'table'=>'marker_feature', 'value'=>'marker', 'name'=>'Marker'},
     {'table'=>'misc_feature',   'value'=>'misc_feature', 'name'=>'Clone'},
-    {'table'=>'' ,              'value'=>'bp',     'name'=>'Base pair'},
     {'table'=>'gene' ,          'value'=>'gene',   'name'=>'Gene'},
     {'table'=>'translation' ,   'value'=>'peptide','name'=>'Peptide'},  
   ];
