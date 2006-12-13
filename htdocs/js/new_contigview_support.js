@@ -85,7 +85,6 @@ function view_init(n) {
     }
     }
   }
-  alert(n);
 }
 
 function contigview_init( id_1, id_2 ) {
