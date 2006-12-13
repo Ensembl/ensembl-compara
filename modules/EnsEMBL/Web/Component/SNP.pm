@@ -312,13 +312,15 @@ sub format_frequencies {
     # Freqs alleles ---------------------------------------------
     my @allele_freq = @{ $freq_data{$pop_id}{AlleleFrequency} };
     foreach my $gt (  @{ $freq_data{$pop_id}{Alleles} } ) {
-      $pop_row{"Alleles&nbsp;<br />$gt"} = sprintf("%.3f", shift @allele_freq ) || 'no data';
+      my $freq = _format_number(shift @allele_freq);
+      $pop_row{"Alleles&nbsp;<br />$gt"} = $freq;
     }
 
     # Freqs genotypes ---------------------------------------------
     my @genotype_freq = @{ $freq_data{$pop_id}{GenotypeFrequency} || [] };
     foreach my $gt ( @{ $freq_data{$pop_id}{Genotypes} } ) {
-      $pop_row{"Genotypes&nbsp;<br />$gt"} = sprintf("%.3f", shift @genotype_freq ) || 'no data';
+      my $freq = _format_number(shift @genotype_freq);
+      $pop_row{"Genotypes&nbsp;<br />$gt"} = $freq;
     }
 
     # Add a name, size and description if it exists ---------------------------
@@ -360,6 +362,20 @@ sub format_frequencies {
 
   $panel->add_columns(@header_row);
   return 1;
+}
+
+
+sub _format_number {
+
+  ### Population_genotype_alleles
+  ### Arg1 : null or a number
+  ### Returns "unknown" if null or formats the number to 3 decimal places
+
+  my $number = shift;
+  if ($number) {
+    return sprintf("%.3f", $number );
+  }
+  return  "unknown";
 }
 
 # Variation feature mapping table #############################################

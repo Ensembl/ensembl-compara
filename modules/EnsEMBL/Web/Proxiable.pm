@@ -104,7 +104,7 @@ sub get_userconfig  {
 ### Returns the named (or one based on script) {{EnsEMBL::Web::UserConfig}} object
   my( $self, $key ) = @_;
   my $session = $self->get_session || return;
-warn "JS5 GUC $key";
+#warn "JS5 GUC $key";
   return $session->getImageConfig( $key ); ## No second parameter - this isn't cached!!
 }
 
@@ -114,7 +114,7 @@ sub user_config_hash {
   my $key  = shift;
   my $type = shift || $key;
   my $session = $self->get_session;
-warn "JS5 UCH $key $type";
+#warn "JS5 UCH $key $type";
   return $session ? $session->getImageConfig( $type, $key ) : undef; ## {'user_configs'}{$key} ||= $self->get_userconfig( $type );
 }
 

@@ -354,9 +354,8 @@ sub freqs {
     my $pop_obj = $allele_obj->population;
     next unless $pop_obj;
     my $pop_id  = $self->pop_id($pop_obj);
-    push (@{ $data{$pop_id}{AlleleFrequency} }, $allele_obj->frequency);
+    push (@{ $data{$pop_id}{AlleleFrequency} }, $allele_obj->frequency || "");
     push (@{ $data{$pop_id}{Alleles} },   $allele_obj->allele);
-
     next if $data{$pop_id}{pop_info};
     $data{$pop_id}{pop_info} = $self->pop_info($pop_obj);
   }
