@@ -27,9 +27,9 @@
     ${BASEDIR}/ensembl/modules
     ${BASEDIR}/ensembl-pipeline/modules
     ${BASEDIR}/bioperl
-    ${BASEDIR}/ensembl-compara
-    ${BASEDIR}/ensembl-hive
-    ${BASEDIR}/ensembl-analysis
+    ${BASEDIR}/ensembl-compara/modules
+    ${BASEDIR}/ensembl-hive/modules
+    ${BASEDIR}/ensembl-analysis/modules
 
     PATH need to include:
 
@@ -81,7 +81,8 @@
 7 - Run the configure script for alignment processing
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     
-    perl $BASEDIR/ensembl-compara/scripts/pipeline/load2xAlignmentFilterSystem.pl -conf ./compara_2x.conf
+    perl $BASEDIR/ensembl-compara/scripts/pipeline/load2xAlignmentFilterSystem.pl\
+     -conf ./compara_2x.conf
 
 
 8 - Run the beekeeper for alignment processing
@@ -103,6 +104,13 @@ b. Impedence mismatch between core databases and core code
    You need to make sure that your core databases are on the same schema
    branch, which is matched by your core code check-out. This is crucial;
    if there's a problem with this, you will probably get silent death of
-   your blastz jobs. 
+   your blastz jobs. You can keep the compara-output files for debugging 
+   purposes if you add an entry 'hive_output_dir' to the meta-table 
+   of the compara db - but be careful and DON'T run a whole pipeline in 
+   debugging-mode - it will produce one output-file per job and you will
+   end up with > 500k files.
+   
+   INSERT INTO META(meta_key,meta_value) VALUES ('hive_output_dir','/path/to/scratch/') ;
+
 
 [list to be added to]
