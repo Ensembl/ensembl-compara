@@ -254,13 +254,20 @@ sub dump_data {
   ### Uses Data::Dumper to format a record's data for storage,
   ### and also handles escaping of quotes to avoid SQL errors
   my ($self, $data) = @_;
-  my $temp_fields = {};
+  my %temp_fields;
   foreach my $key (keys %{ $data }) {
-    $temp_fields->{$key} = $data->{$key};
-    $temp_fields->{$key} =~ s/'/\\'/g;
+    ## check for multi-value parameters
+    my $value = $data->{$key};
+    $value =~ s/'/\\'/g;
+    if ($value =~ /\0/) {
+      my @array = split('\0', $value);
+      $temp_fields{$key} = \@array;
+    }
+    else {
+      $temp_fields{$key} = $value;
+    }
   }
-  my $dump = Dumper($temp_fields);
-  #$dump =~ s/'/\\'/g;
+  my $dump = Dumper(\%temp_fields);
   $dump =~ s/^\$VAR1 = //;
   return $dump;
 }
