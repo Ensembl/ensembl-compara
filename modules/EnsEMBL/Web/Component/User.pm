@@ -346,6 +346,9 @@ sub _render_settings_table {
     my $id = $row->{'id'};
     my @data = @{$row->{'data'}};
     foreach my $column (@data) {
+      if (ref($column) eq 'ARRAY') {
+        $column = join(', ', @$column);
+      }
       $html .= qq(<td>$column</td>);
     }
     if ($row->{ident} eq 'user') {
@@ -361,7 +364,7 @@ sub _render_settings_table {
         $html .= qq(">Edit</a></td>);
       }
       $html .= '<td style="text-align:right;">';
-      if ($is_admin) {
+      if ($row->{'shareable'} && $is_admin) {
         $html .= qq(<a href="/common/share_record?id=$id">Share</a>);
       }
       else {
@@ -485,6 +488,7 @@ sub _render_bookmarks {
     push @records, {  'id' => $bookmark->id, 
                       'ident' => 'user',
                       'sortable' => $bookmark->name,
+                      'shareable' => 1,
                       'edit_url' => 'bookmark', 
                       'delete_url' => 'remove_bookmark',
                       'data' => [
@@ -526,6 +530,7 @@ sub _render_configs {
     push @records, {  'id' => $configuration->id, 
                       'ident' => 'user',
                       'sortable' => $configuration->name,
+                      'shareable' => 1,
                       'edit_url' => 'edit_config', 
                       'delete_url' => 'remove_record',
                       'data' => [
@@ -568,6 +573,7 @@ sub _render_notes {
     push @records, {  'id' => $note->id, 
                       'ident' => 'user',
                       'sortable' => $note->name,
+                      'shareable' => 1,
                       'absolute_url' => 'yes',
                       'edit_url' => '/common/gene_annotation?url=/common/accountview&stable_id=' . $note->stable_id . "&id=" . $note->id, 
                       'delete_url' => 'remove_record',
@@ -612,6 +618,9 @@ sub _render_news {
     }
     if ($filter->species) {
       my $species = $filter->species;
+      if (ref($species) eq 'ARRAY') {
+        $species = join(', ', @$species);
+      }
       $species =~ s/_/ /;
       $data .= '; ' if $both;
       $data .= 'Species: '.$species;
