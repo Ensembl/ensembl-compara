@@ -322,9 +322,18 @@ sub getAllelesConsequencesOnSlice {
 
   my @valid_conseq;
   my @valid_alleles;
-  foreach (sort {$a->start <=> $b->start} @$consequences ){  # conseq on our transcript
 
-    my $allele_feature = shift @filtered_af;
+  foreach (sort {$a->start <=> $b->start} @$consequences ){  # conseq on our transcript
+    my $last_af =  $valid_alleles[-1];
+    my $allele_feature;
+    if ($last_af && $last_af->[2]->start eq $_->start) {
+      $allele_feature = $last_af;
+    }
+    else {
+      $allele_feature = shift @filtered_af;
+    }
+      next unless $allele_feature;
+
     foreach my $type (@{ $_->type || [] }) {
       next unless $valids->{ 'opt_'.lc($type) } ;
       warn "Allele undefined for ", $allele_feature->[2]->variation_name."\n" unless $allele_feature->[2]->allele_string;

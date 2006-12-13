@@ -1018,7 +1018,7 @@ sub spreadsheet_variationTable {
     { 'key' => 'snptype', 'title' => 'Type', },
     { 'key' => 'chr' , 'title' => 'Chr: bp',  },
     { 'key' => 'Alleles', 'align' => 'center' },
-    { 'key' => 'Ambiguity', 'align' => 'center' },
+    { 'key' => 'Ambiguity', 'align' => 'center', },
     { 'key' => 'aachange', 'title' => 'AA change', 'align' => 'center' },
     { 'key' => 'aacoord',  'title' => 'AA co-ordinate', 'align' => 'center' },
     { 'key' => 'class', 'title' => 'Class', 'align' => 'center' },
@@ -1387,8 +1387,8 @@ sub get_page_data {
       next unless $conseq_type && $allele;
 
       # Check consequence obj and allele feature obj have same alleles
-      #my $tmp = join "", @{$conseq_type->alleles || []};
-      #$tmp =~ tr/ACGT/TGCA/ if ( $object->Obj->strand ne $allele->strand);
+      my $tmp = join "", @{$conseq_type->alleles || []};
+      $tmp =~ tr/ACGT/TGCA/ if ( $object->Obj->strand ne $allele->strand);
       #warn "ERROR: Allele call on alleles is", $allele->allele_string, ". Allele call on ConsequenceType is different: $tmp" if $allele->allele_string ne $tmp;
 
       # Type
