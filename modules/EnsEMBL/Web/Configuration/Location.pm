@@ -502,7 +502,8 @@ sub contigview {
   my $fragment = $self->new_panel('Fragment',
                                  'code' => "fragment_1",
                                 caption => $obj->seq_region_type_and_name,
-                                 status => 'loading',
+                                 status => 'panel_ideogram',
+                                loading => 'yes',
                                 display => 'on',
                                            @common);
   $fragment->add_component('image_fragment', 'EnsEMBL::Web::Component::Location::ideogram');
@@ -535,7 +536,8 @@ sub contigview {
   my $overview_fragment = $self->new_panel('Fragment',
                                  'code' => "fragment_2",
                                 caption => "Overview",
-                                 status => 'loading',
+                                 status => 'panel_top',
+                                loading => 'yes',
                                 display => 'on',
                                            @common);
 
@@ -579,7 +581,8 @@ sub contigview {
   my $view_fragment = $self->new_panel('Fragment',
                                  'code' => "fragment_3",
                                 caption => "Detailed view",
-                                 status => 'loading',
+                                 status => 'panel_bottom',
+                                loading => 'yes',
                                 display => 'on',
                                            @common);
   $view_fragment->add_components(qw(

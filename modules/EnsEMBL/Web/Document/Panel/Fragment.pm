@@ -109,8 +109,15 @@ sub loading_animation {
 
 sub html_collapse_expand_control {
   my $self = shift;
+  my $status = $self->{'object'} ? $self->{'object'}->param($self->{'status'}) : undef;
+  my $URL = sprintf '/%s/%s?%s=%s', $self->{'object'}->species, $self->{'object'}->script, $self->{'status'}, $status ne 'off' ? 'off' : 'on';
+
   my $html = "";
-  $html .= qq(<a class="print_hide" href="#" title="collapse panel"><img src="/img/dd_menus/min-box.gif" width="16" height="16" alt="-" /></a> );
+  if ($status eq 'off') {
+    $html .= qq(<a class="print_hide" href=") . $URL . qq(" title="expand panel"><img src="/img/dd_menus/plus-box.gif" width="16" height="16" alt="+" /></a> );
+  } else {
+    $html .= qq(<a class="print_hide" href=") . $URL . qq(" title="collapse panel"><img src="/img/dd_menus/min-box.gif" width="16" height="16" alt="-" /></a> );
+  }
   return $html;
 }
 
