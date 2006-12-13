@@ -399,13 +399,25 @@ sub contigviewtop {
      $image->{'panel_number'} = $panel_no;
      $image->set_button( 'drag', 'panel_number' => $panel_no, 'title' => 'Click or drag to centre display' );
   $panel->print( $image->render );
+
+  my $panel_URL = "/$ENV{ENSEMBL_SPECIES}/$ENV{ENSEMBL_SCRIPT}?c=[[s]]:[[c]];w=[[w]]";
+
+  ## Add options to panel - useful for AJAX calls
+  $panel->add_option( 'px_start', $click_left);
+  $panel->add_option( 'px_end', $click_right);
+  $panel->add_option( 'bp_start', $panel->option('start'));
+  $panel->add_option( 'bp_end', $panel->option('end'));
+  $panel->add_option( 'flag', 'cv');
+  $panel->add_option( 'visible', '1');
+  $panel->add_option( 'URL', $panel_URL);
+  
   $object->__data->{'_cv_parameter_hash'}{ "p_${panel_no}_px_start" } = $click_left,
   $object->__data->{'_cv_parameter_hash'}{ "p_${panel_no}_px_end"   } = $click_right,
   $object->__data->{'_cv_parameter_hash'}{ "p_${panel_no}_bp_start" } = $panel->option('start');
   $object->__data->{'_cv_parameter_hash'}{ "p_${panel_no}_bp_end"   } = $panel->option('end');
   $object->__data->{'_cv_parameter_hash'}{ "p_${panel_no}_flag"     } = 'cv';
   $object->__data->{'_cv_parameter_hash'}{ "p_${panel_no}_visible"  } = 1;
-  $object->__data->{'_cv_parameter_hash'}{ "p_${panel_no}_URL"      } = "/$ENV{ENSEMBL_SPECIES}/$ENV{ENSEMBL_SCRIPT}?c=[[s]]:[[c]];w=[[w]]";
+  $object->__data->{'_cv_parameter_hash'}{ "p_${panel_no}_URL"      } = $panel_URL;
 
   return 1;
 }
@@ -621,13 +633,29 @@ sub contigviewbottom {
      $image->set_button( 'drag', 'panel_number' => $panel_no, 'title' => 'Click or drag to centre display' );
   $panel->print( $image->render );
 
-  $object->__data->{'_cv_parameter_hash'}{ "p_${panel_no}_px_start" } = $wuc->get('_settings','label_width' ) + 3 * $wuc->get('_settings','margin') + $wuc->get('_settings','button_width');
-  $object->__data->{'_cv_parameter_hash'}{ "p_${panel_no}_px_end"   } = $wuc->get('_settings','width') - $wuc->get('_settings','margin');
-  $object->__data->{'_cv_parameter_hash'}{ "p_${panel_no}_bp_start" } = $object->seq_region_start;
-  $object->__data->{'_cv_parameter_hash'}{ "p_${panel_no}_bp_end"   } = $object->seq_region_end;
-  $object->__data->{'_cv_parameter_hash'}{ "p_${panel_no}_flag"     } = 'cv';
-  $object->__data->{'_cv_parameter_hash'}{ "p_${panel_no}_visible"  } = 1;
-  $object->__data->{'_cv_parameter_hash'}{ "p_${panel_no}_URL"      } = "/$ENV{ENSEMBL_SPECIES}/$ENV{ENSEMBL_SCRIPT}?c=[[s]]:[[c]];w=[[w]]";
+  my $px_start = $wuc->get('_settings','label_width' ) + 3 * $wuc->get('_settings','margin') + $wuc->get('_settings','button_width');
+  my $px_end = $wuc->get('_settings','width') - $wuc->get('_settings','margin');
+  my $bp_start = $object->seq_region_start;
+  my $bp_end = $object->seq_region_end;
+  my $flag = 'cv';
+  my $visible = 1;
+  my $panel_URL = "/$ENV{ENSEMBL_SPECIES}/$ENV{ENSEMBL_SCRIPT}?c=[[s]]:[[c]];w=[[w]]";
+
+  $panel->add_option( 'px_start', $px_start); 
+  $panel->add_option( 'px_end', $px_end);
+  $panel->add_option( 'bp_start', $bp_start);
+  $panel->add_option( 'bp_end', $bp_end);
+  $panel->add_option( 'flag', $flag);
+  $panel->add_option( 'visible', $visible);
+  $panel->add_option( 'URL', $panel_URL);
+
+  $object->__data->{'_cv_parameter_hash'}{ "p_${panel_no}_px_start" } = $px_start; 
+  $object->__data->{'_cv_parameter_hash'}{ "p_${panel_no}_px_end"   } = $px_end; 
+  $object->__data->{'_cv_parameter_hash'}{ "p_${panel_no}_bp_start" } = $bp_start; 
+  $object->__data->{'_cv_parameter_hash'}{ "p_${panel_no}_bp_end"   } = $bp_end; 
+  $object->__data->{'_cv_parameter_hash'}{ "p_${panel_no}_flag"     } = $flag;
+  $object->__data->{'_cv_parameter_hash'}{ "p_${panel_no}_visible"  } = $visible;
+  $object->__data->{'_cv_parameter_hash'}{ "p_${panel_no}_URL"      } = $panel_URL; 
 
   return 0;
 }
