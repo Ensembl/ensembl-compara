@@ -1,3 +1,5 @@
+var panel_count = 0;
+
 function populate_fragments() {
   var fragments = getElementsByClass("fragment");
   for (i = 0; i < fragments.length; i++) {
@@ -6,19 +8,22 @@ function populate_fragments() {
 }
 
 function fragment(caller) {
+  URL = escape(document.location.href);
   json = eval( '(' + caller + ')' );
-  var data = "id=" + json.fragment.id + "&";
+  var data = "code=" + json.fragment.code + "&id=" + json.fragment.id + "&";
   data = data + "title=" + json.fragment.title + "&";
-  for (i = 0; i < json.fragment.components.length; i++) {
-    for (var element in json.fragment.components[i]) {
-      data = data + "component_" + element + "=" + json.fragment.components[i][element] + "&";
+  for (var j = 0; j < json.fragment.components.length; j++) {
+    for (var element in json.fragment.components[j]) {
+      data = data + "component_" + element + "=" + json.fragment.components[j][element] + "&";
     }
   }
-  for (i = 0; i < json.fragment.params.length; i++) {
-    for (var element in json.fragment.params[i]) {
-      data = data + element + "=" + json.fragment.params[i][element] + "&";
+  for (var j = 0; j < json.fragment.params.length; j++) {
+    for (var element in json.fragment.params[j]) {
+      data = data + element + "=" + json.fragment.params[j][element] + "&";
     }
   }
+
+  data = data + "&url=" + URL;
 
   var url = "/" + json.fragment.species + "/populate_fragment";
   var ajax_panel = new Ajax.Request(url, {
@@ -30,7 +35,48 @@ function fragment(caller) {
 }
 
 function panel_loaded(response) {
-  json = eval( '(' + response.responseText + ')' );
+  var json = eval( '(' + response.responseText + ')' );
+  var html = "";
+  var update = $(json.fragment.id + "_update");
+
+  for (var j = 0; j < json.fragment.components.length; j++) {
+    for (var element in json.fragment.components[j]) {
+      html = html + unescape(json.fragment.components[j][element].html);
+      start_px = json.fragment.components[j][element].start_px;
+      end_px = json.fragment.components[j][element].end_px;
+      start_bp = json.fragment.components[j][element].start_bp;
+      end_bp = json.fragment.components[j][element].end_bp;
+      start_cv = json.fragment.components[j][element].start_cv;
+      end_cv = json.fragment.components[j][element].end_cv;
+    }
+  }
+
+  if (json.error) {
+    update.innerHTML = json.error;
+  } else { 
+    update.innerHTML = html;
+  }
+
+  update.style.display = 'block';
+  var prefix = json.fragment.id;
+  panel_count = panel_count + 1;
+  var prefix = "f_" + panel_count; 
+
+  $(json.fragment.id + "_title").innerHTML = json.fragment.title;
+
+  var F = document.forms['panel_form'];
+  F.appendChild(new_element(prefix + '_URL', '/Homo_sapiens/contigview?c=[[s]]:[[c]];w=[[w]]'));
+  F.appendChild(new_element(prefix + '_bp_end', end_bp));
+  F.appendChild(new_element(prefix + '_bp_start', start_bp));
+  F.appendChild(new_element(prefix + '_flag', 'cv'));
+  F.appendChild(new_element(prefix + '_px_end', end_px));
+  F.appendChild(new_element(prefix + '_px_start', start_px));
+  F.appendChild(new_element(prefix + '_visible', '1'));
+
+  view_init(prefix);
+  //draw_red_box('f', 1, 'p', 2);
+
+  /**
   html = "";
   for (i = 0; i < json.fragment.components.length; i++) {
     for (var element in json.fragment.components[i]) {
@@ -67,6 +113,7 @@ function panel_loaded(response) {
   F.appendChild(new_element('f_1_px_end', end_px));
   F.appendChild(new_element('f_1_px_start', start_px));
   F.appendChild(new_element('f_1_visible', '1'));
+  **/
 }
 
 function new_element(name, value) {
@@ -79,24 +126,6 @@ function new_element(name, value) {
 }
 
 function panel_loading(response) {
-}
-
-function getElementsByClass(searchClass,node,tag) {
-	var classElements = new Array();
-	if ( node == null )
-		node = document;
-	if ( tag == null )
-		tag = '*';
-	var els = node.getElementsByTagName(tag);
-	var elsLen = els.length;
-	var pattern = new RegExp('(^|\\s)'+searchClass+'(\\s|$)');
-	for (i = 0, j = 0; i < elsLen; i++) {
-		if ( pattern.test(els[i].className) ) {
-			classElements[j] = els[i];
-			j++;
-		}
-	}
-	return classElements;
 }
 
 function toggle_fragment(name) {

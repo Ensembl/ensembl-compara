@@ -56,41 +56,45 @@ function _change_panel_state( n ) {
     changes the panel from open to closed and updates the red boxes
 */
 
+function view_init(n) {
+  if( !ego( n+'_rl' ) ) {
+    A = ego( n );
+    if(A) {
+    A.onmousedown = select_start
+    for(k=0;k<edges.length;k++) {
+      var L = edges.substr(k,1);
+      d1=dce('div');
+      ac(A,d1);
+
+      sa(d1,'id',n+'_r'+L);
+      d1.className = 'redbox';
+
+      var i1=document.createElement('img');
+      ac(d1,i1);
+
+      i1.src = '/img/blank.gif';
+
+      i1.width  = 1;
+      i1.height  = 1;
+      i1.style.borderWidth = 0;
+/*
+      d2=dce('div');  sa(d2,'id',n+'_'+L);  d2.className = 'redbox';
+      ac(d2,i2);      ac(A,d2);
+      i2=dce('img');  i2.src = '/img/blank.gif'; i2.width = 1; i2.height  = 1; i2.style.borderWidth = 0;
+*/
+    }
+    }
+  }
+  alert(n);
+}
+
 function contigview_init( id_1, id_2 ) {
   edges = 'rltb';
   F = document.forms[ 'panel_form' ];
 /* initialize all the elements - including minimizing panels */
   for(l=id_2;l>=id_1;l--) {
     n='p_'+l;
-/* create panel specific red boxes */
-    if( !ego( n+'_rl' ) ) {
-      A = ego( n );
-      if(A) {
-      A.onmousedown = select_start
-      for(k=0;k<edges.length;k++) {
-        var L = edges.substr(k,1);
-        d1=dce('div');
-        ac(A,d1);
-
-        sa(d1,'id',n+'_r'+L);
-        d1.className = 'redbox';
-
-        var i1=document.createElement('img');
-        ac(d1,i1);
-
-        i1.src = '/img/blank.gif';
-
-        i1.width  = 1;
-        i1.height  = 1;
-        i1.style.borderWidth = 0;
-/*
-        d2=dce('div');  sa(d2,'id',n+'_'+L);  d2.className = 'redbox';
-        ac(d2,i2);      ac(A,d2);
-        i2=dce('img');  i2.src = '/img/blank.gif'; i2.width = 1; i2.height  = 1; i2.style.borderWidth = 0;
-*/
-      }
-      }
-    }
+    view_init(n);
   }
   cv_draw_red_boxes( id_1, id_2 );
   B = ego( 'ensembl-webpage' );
@@ -116,49 +120,52 @@ function cv_change_panel_state( pn, id_1, id_2 ) {
   cv_draw_red_boxes( id_1, id_2 );
 }
 
+function draw_red_box(prefix, panel_id, previous_prefix, previous_id) {
+  F = document.forms[ 'panel_form' ];
+  name = prefix+'_'+panel_id;
+  I = egi(name+'_i');
+  X = egX( I ); Y = egY( I ); W = egW( I ); H = egH( I );
+  Z = ego( name );
+  if( Z ) {
+   Z.style.borderColor = 'black';
+  }
+  if( F.elements[name+'_visible'].value == 1 ) {
+    l2 = previous_id;
+    fl  = 1 
+    while( fl && F.elements[previous_prefix+'_'+l2+'_visible'] ) {
+      name2 = previous_prefix+'_'+l2;
+      if( F.elements[name2+'_visible'].value == '1' ) {
+        ego( name2 ).style.borderColor = 'red';
+        sx = b2p( name, F.elements[name2+'_bp_start'].value );
+        ex = b2p( name, F.elements[name2+'_bp_end'].value );
+        show( ego(name+'_rl') ); 
+        show( ego(name+'_rr') );
+        show( ego(name+'_rt') );
+        show( ego(name+'_rb') );
+        m2( ego( name+'_rl') , sx, 2, 1, H-3 );
+        m2( ego( name+'_rr') , ex, 2, 1, H-3 );
+        m2( ego( name+'_rt') , sx, 2, ex-sx, 1 );
+        m2( ego( name+'_rb') , sx, H-2, ex-sx, 1 );
+        fl = 0;
+      }
+      l2++;
+    }
+  } else {
+    ego( name ).style.display = 'none'
+    egi( name+'_box' ).src = 'box-0.gif';
+  }
+  A = ego( name+'_i_map' )
+  if( A ) {
+    for(i=0;i<A.areas.length;i++) {
+      A.areas[i].onmousedown = select_start;
+      if( A.areas[i].onclick || A.areas[i].onmouseover ) A.areas[i].href  = "javascript:void(0)" ;
+    } 
+  }
+}
 
 function cv_draw_red_boxes( id_1, id_2 ) {
-  F = document.forms[ 'panel_form' ];
   for(loop=id_2;loop>=id_1;loop--) {
-    name = 'p_'+loop;
-    I = egi(name+'_i');
-    X = egX( I ); Y = egY( I ); W = egW( I ); H = egH( I );
-    Z = ego( name );
-    if( Z ) {
-     Z.style.borderColor = 'black';
-    }
-    if( F.elements[name+'_visible'].value == 1 ) {
-      l2 = loop+1;
-      fl  = 1 
-      while( fl && F.elements['p_'+l2+'_visible'] ) {
-        name2 = 'p_'+l2;
-        if( F.elements[name2+'_visible'].value == '1' ) {
-          ego( name2 ).style.borderColor = 'red';
-          sx = b2p( name, F.elements[name2+'_bp_start'].value );
-          ex = b2p( name, F.elements[name2+'_bp_end'].value );
-          show( ego(name+'_rl') ); 
-          show( ego(name+'_rr') );
-          show( ego(name+'_rt') );
-          show( ego(name+'_rb') );
-          m2( ego( name+'_rl') , sx, 2, 1, H-3 );
-          m2( ego( name+'_rr') , ex, 2, 1, H-3 );
-          m2( ego( name+'_rt') , sx, 2, ex-sx, 1 );
-          m2( ego( name+'_rb') , sx, H-2, ex-sx, 1 );
-          fl = 0;
-        }
-        l2++;
-      }
-    } else {
-      ego( name ).style.display = 'none'
-      egi( name+'_box' ).src = 'box-0.gif';
-    }
-    A = ego( name+'_i_map' )
-    if( A ) {
-      for(i=0;i<A.areas.length;i++) {
-        A.areas[i].onmousedown = select_start;
-        if( A.areas[i].onclick || A.areas[i].onmouseover ) A.areas[i].href  = "javascript:void(0)" ;
-      } 
-    }
+    draw_red_box('p', loop, 'p', loop+1);
   }
   return true;
 }

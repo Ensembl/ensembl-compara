@@ -127,9 +127,13 @@ function login_link() {
   return true;  
 }
 
-function config_link() {
+function config_link(ident) {
   URL = escape(document.location.href);
-  document.location = '/common/save_config?url=' + URL;
+  var location = '/common/save_config?url=' + URL;
+  if (ident) {
+    location = location + '&id=' + ident;
+  }
+  document.location = location;
   return true;  
 }
 
