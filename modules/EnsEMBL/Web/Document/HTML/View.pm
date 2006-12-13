@@ -175,13 +175,23 @@ sub render_multi {
   $option_string =~ s/set|\(|\)|'//g;
   $self->print($self->render_form_label($page, $field_name));
   my $widget = '';
-  my @options = split(/,/, $option_string); 
+  my @options = split(/,/, $option_string);
+
+  my $value = $page->value_for_form_element($field_name);
+  my @multi;
+  if (ref($value) eq 'ARRAY') {
+    @multi = @$value;
+  }
+  else {
+    @multi = ($value);
+  }
+ 
   foreach my $option (@options) {
     my $selected = "";
     my $value = $page->value_for_selection_element($field_name, $option);
     $widget .= qq(<div class="radiocheck"><input type="checkbox" class="radio" name="$field_name" value="$value");
     if ($page->value_for_form_element($field_name)) {
-      if ($page->value_for_form_element($field_name) eq $option) {
+      if (grep $_ eq $option, @multi) {
         $widget .= ' checked="yes" ';
       }
     } else {
