@@ -438,7 +438,6 @@ sub _parse {
       ## hash of keys (other than taxonomy) that we want to use
       my %meta_map = (
         'species.ensembl_alias_name'  => 'SPECIES_COMMON_NAME',
-        'species.common_name'         => 'SPECIES_DESCRIPTION',
         'assembly.default'            => 'ENSEMBL_GOLDEN_PATH',
         'assembly.name'               => 'ASSEMBLY_ID',
       );
@@ -467,6 +466,12 @@ sub _parse {
           $tree->{'general'}{'GENEBUILD_BY'} = $genebuild->{'string'};  
           print STDERR "\t  [WARN] NO GENEBUILD DATE \n" if !$genebuild->{'date'};
           print STDERR "\t  [WARN] NO GENEBUILD NAME \n" if !$genebuild->{'string'};
+        }
+        elsif ($key eq 'species.ensembl_common_name') {
+          $tree->{'general'}{'SPECIES_DESCRIPTION'} = $value;
+        }
+        elsif ($key eq 'species.common_name' && !$tree->{'general'}{'SPECIES_DESCRIPTION'}) {
+          $tree->{'general'}{'SPECIES_DESCRIPTION'} = $value;
         }
         elsif (my $v = $meta_map{$key}) {
           $tree->{'general'}{$v} = $value;
