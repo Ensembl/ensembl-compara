@@ -211,7 +211,7 @@ sub zmenu {
 	                               => '',
 	      };
 
- $zmenu->{"07:ambiguity code: ".&ambiguity_code(join "|", $ref_allele, $alt_allele)} = "" unless $type eq 'SARA';
+ $zmenu->{"11:ambiguity code: ".&ambiguity_code(join "|", $ref_allele, $alt_allele)} = "" unless $type eq 'SARA';
 
   return ($zmenu || {});
 }
