@@ -41,24 +41,19 @@ sub render {
   my $criteria = {'release'=>$release_id};
   if ($user_id > 0) {
     $criteria->{'species'} = [];
-    $criteria->{'category'} = [];
     ## check for user filters
     my @filters = $user->news_records;
-    ## Look up species ids and category ids for use in query
+    ## Look up species names for use in query
     foreach my $f (@filters) {
       if ($f->species && $f->species ne 'none') {
         $filtered = 1;
-        my $species_id = $adaptor->fetch_species_id($f->species);
-        push @{$criteria->{'species'}}, $species_id;
-      }
-      if ($f->topic && $f->topic ne 'none') {
-        $filtered = 1;
-        my $category_id = $adaptor->fetch_cat_id($f->topic);
-        push @{$criteria->{'category'}}, $category_id;
+        $criteria->{'species'} = $f->species;
       }
     }
   }
-  @headlines = @{$adaptor->fetch_news_items($criteria, '', '5')};
+
+  @headlines = @{$adaptor->fetch_headlines($criteria, '', '5')};
+
   my %current_spp = %{$adaptor->fetch_species($release_id)};
 
   if (scalar(@headlines) > 0) {
