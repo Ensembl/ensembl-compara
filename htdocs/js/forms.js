@@ -60,7 +60,7 @@ function on_load( list ) {
   for( e in list ) {
     el = list[e];
     if( document.forms[el.form] ) {
-      check( el.type, document.forms[el.form].elements[el.element],el.req)
+      os_check( el.type, document.forms[el.form].elements[el.element],el.req)
     }
   }
 }
