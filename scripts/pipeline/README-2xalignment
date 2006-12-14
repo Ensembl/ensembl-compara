@@ -91,6 +91,55 @@
     beekeeper.pl -url mysql://ensadmin:xxxx@ia64g:3306/klh_compara_human_pangolin_blastz -loop
 
 
+=====================
+Debugging strategies
+=====================
+
+- Signs that there is a problem
+
+  The majority of time in this pipeline is spent (a) performing searches/filters 
+  writing the results back to the database, or (b) creating and writing jobs for
+  the next stage of the pipeline. If after some time neither the genomic_align_block
+  table nor the analysis_job table are increasing in size, it's likely that something
+  is wrong. No jobs running on a the farm is also a sign that something is wrong
+  (submitted jobs are failing quickly). 
+
+  If you suspect that something is wrong, there is no harm in killing the beekeeper
+  during its sleep phase. It will work out what to do when it is restarted. After
+  killing it, you can run in again in non-loop mode to get a progress report:
+  
+  beekeeper.pl -url mysql://ensadmin:xxxx@ia64g:3306/klh_compara_human_pangolin_blastz -analysis_stats
+
+  This will indicate the analysis the pipeline has got stuck on. You now need
+  to find out why jobs from that analysis are failing. There are two main
+  strategies for this:
+
+
+(a) Keeping the output
+
+  You can keep the compara-output files for debugging 
+  purposes if you add an entry 'hive_output_dir' to the meta-table 
+  of the compara db - but be careful and DON'T run a whole pipeline in 
+  debugging-mode - it will produce one output-file per job and you will
+  end up with > 500k files.
+   
+  INSERT INTO META(meta_key,meta_value) VALUES ('hive_output_dir','/path/to/scratch/') ;
+
+(b) Run the worker locally
+
+  The Hive analogue of the ensembl-pipeline runner script is called runWorker.pl. 
+  You can debug a process that seems to be failing by running runWorker.pl locally
+  on the command line in debug mode:
+
+  runWorker.pl  -url mysql://ensadmin:xxxx@ia64g:3306/klh_compara_human_pangolin_blastz -job_id 10 -no_write -debug 4
+
+  Errors will be sent to screen. You will need to examine the analysis_job table 
+  to get the ID of a job belonging to the particular analysis that seems to be failing. 
+  Also, it might sometimes be useful to omit the "-no_write" flag, because
+  it is possible that the jobs are failing at the stage where they write to the
+  database. 
+
+
 =======
 Gotchas
 =======
@@ -104,13 +153,6 @@ b. Impedence mismatch between core databases and core code
    You need to make sure that your core databases are on the same schema
    branch, which is matched by your core code check-out. This is crucial;
    if there's a problem with this, you will probably get silent death of
-   your blastz jobs. You can keep the compara-output files for debugging 
-   purposes if you add an entry 'hive_output_dir' to the meta-table 
-   of the compara db - but be careful and DON'T run a whole pipeline in 
-   debugging-mode - it will produce one output-file per job and you will
-   end up with > 500k files.
-   
-   INSERT INTO META(meta_key,meta_value) VALUES ('hive_output_dir','/path/to/scratch/') ;
-
+   your blastz jobs.
 
 [list to be added to]
