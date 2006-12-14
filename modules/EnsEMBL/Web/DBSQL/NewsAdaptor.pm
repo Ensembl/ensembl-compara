@@ -208,6 +208,142 @@ sub fetch_news_items {
   return $results;
 }
 
+sub fetch_headlines {
+### Alternative function to select news by category OR species
+### Arguments (1) NewsAdaptor object; 
+### (2) a hash reference of criteria and values - current valid criteria are release, species,
+### (3) optional boolean flag indicating whether to select *only* those stories that apply to all species
+### (4) optional integer - maximum number of records to return 
+  my ($self, $where, $generic, $limit) = @_;
+  my $results = [];
+  return [] unless $self->db;
+
+  my $string;
+  if (my $sp = $where->{'species'}) {
+    if (ref($sp) eq 'ARRAY') {
+      if (scalar(@$sp) > 0) {
+        $string .= '(';
+        my $count = 0;
+        foreach my $name (@$sp) {
+          $string .= ' OR ' if $count > 0;
+          $string .= "s.name = '$name'";
+          $count++;
+        }
+        $string .= ')';
+      }
+      else {
+        $string = undef; ## empty array, so delete the criterion
+      }
+    }
+    else {
+      $string .= "s.name = '$sp'";
+    }
+    $where_def{'species'} = $string;
+  }
+
+  ## add selected options to modifier strings
+  my $where_str = ' AND n.release_id = "'.$where->{'release'}.'"';
+  if ($where) {
+    if ($where->{'species'}) {
+      $where_str .= ' AND n.news_item_id = i.news_item_id ';
+    }
+    $where_str .= ' AND (';
+    if ($where->{'species'}) {
+      $where_str .= $string;
+    }
+    $where_str .= ')';
+  }
+
+  my $limit_str = " LIMIT $limit " if $limit;
+
+  ## build SQL
+  my $sql = qq(
+        SELECT
+            n.news_item_id   as news_item_id,
+            n.release_id     as release_id,
+            n.news_cat_id    as news_cat_id,
+            n.title          as title,
+            n.content        as content,
+            n.priority       as priority,
+            c.priority       as cat_order,
+            n.status         as status
+        FROM
+            news_item n,
+            news_cat c
+  );
+  if ($generic) {
+    $sql .= qq(
+        LEFT JOIN
+            item_species i
+        ON
+            n.news_item_id = i.news_item_id
+        WHERE
+            i.news_item_id IS NULL
+        AND
+            n.news_cat_id = c.news_cat_id
+    );
+  }
+  elsif ($where->{'species'} > 0) {
+    $sql .= ', item_species i, species s  WHERE n.news_cat_id = c.news_cat_id AND i.species_id = s.species_id ';
+  }
+  else {
+    $sql .= ' WHERE n.news_cat_id = c.news_cat_id';
+  }
+  $sql .= " $where_str GROUP BY n.news_item_id ORDER BY n.priority DESC $limit_str";
+#warn $sql;
+
+  my $T = $self->db->selectall_arrayref($sql, {});
+  return [] unless $T;
+
+  my $running_total = scalar(@$T);
+  for (my $i=0; $i<$running_total;$i++) {
+    my @A = @{$T->[$i]};
+    my $species = [];
+    my $sp_count = 0;
+
+    unless ($generic) {
+      # get species list for each item
+      my $id = $A[0];
+      $sql = qq(
+         SELECT
+             s.species_id        as species_id
+         FROM
+             species s,
+             item_species i
+         WHERE   s.species_id = i.species_id
+         AND     i.news_item_id = $id
+      );
+ 
+      my $X = $self->db->selectall_arrayref($sql, {});
+
+      if ($X && $X->[0]) {
+        $sp_count = scalar(@$X);
+        for (my $j=0; $j<$sp_count;$j++) {
+          my @B = @{$X->[$j]};
+          push (@$species, $B[0]);
+        }
+      }
+    }
+    push (@$results,
+      {
+       'news_item_id'  => $A[0],
+       'release_id'    => $A[1],
+       'news_cat_id'   => $A[2],
+       'title'         => $A[3],
+       'content'       => $A[4],
+       'priority'      => $A[5],
+       'cat_order'     => $A[6],
+       'status'        => $A[7],
+       'species'       => $species,
+       'sp_count'      => $sp_count
+       }
+    );
+  }
+        
+  return $results;
+}
+
+
 
 #--------------------- QUERIES FOR ADDITIONAL TABLES --------------------------
 
