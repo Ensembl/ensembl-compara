@@ -393,7 +393,7 @@ sub _render_groups {
   my @group_rows = ();
   my %included = ();
   my @all_groups = @{ EnsEMBL::Web::Object::Group->all_groups_by_type('restricted') };
-  $html .= &info_box($user, qq(Subscribing to groups lets you access shared bookmarks, configurations and other settings. The groups you're subscribed to, and some other popular groups are listed below.<br /><a href="/info/about/bookmarks.html">Learn more about saving frequently used pages &rarr;</a>) , 'user_group_info');
+  $html .= &info_box($user, qq(Subscribing to groups lets you access shared bookmarks, configurations and other settings. The groups you're subscribed to, and some other popular groups are listed below.<br /><a href="/info/help/groups.html">Learn more about sharing customisations with Ensembl groups &rarr;</a>) , 'user_group_info');
   if ($#groups > -1) {
     $html .= "<h5>Your subscribed groups</h5>\n";
     $html .= "<table width='100%' cellspacing='0' cellpadding='4'>\n";
@@ -419,7 +419,7 @@ sub _render_groups {
     $html .= "</table><br />\n";
   }
   else {
-    $html .= qq(<p class="center"><img src="/img/bookmark_example.gif" /></p>);
+    $html .= qq(<p class="center">You are not subscribed to any Ensembl groups. &middot; <a href='/info/help/groups.html'>Learn more &rarr;</a> </p>);
   }  
   $html .= "<br />";
   $html .= &_render_all_groups($user, \%included);
@@ -509,7 +509,7 @@ sub _render_bookmarks {
   }
 
   my $html;
-  $html .= &info_box($user, qq(Bookmarks allow you to save frequently used pages from Ensembl and elsewhere. When browsing Ensembl, you can add new bookmarks by clicking the 'Add bookmark' link in the sidebar.<br /><a href="/info/about/bookmarks.html">Learn more about saving frequently used pages &rarr;</a>) , 'user_bookmark_info');
+  $html .= &info_box($user, qq(Bookmarks allow you to save frequently used pages from Ensembl and elsewhere. When browsing Ensembl, you can add new bookmarks by clicking the 'Add bookmark' link in the sidebar.<br /><a href="/info/help/custom.html#bookmarks">Learn more about saving frequently used pages &rarr;</a>) , 'user_bookmark_info');
   if ($#records > -1) {
     $html .= _render_settings_table(\@records, $user);
   }
@@ -551,7 +551,7 @@ sub _render_configs {
   }
 
   my $html;
-  $html .= &info_box($user, qq(You can save custom configurations (DAS sources, decorations, additional drawing tracks, etc), and return to them later or share them with fellow group members. Look for the 'Save configuration link' in the sidebar when browsing Ensembl.<br /><a href="/info/about/configurations.html">Learn more about custom configurations &rarr;</a>), 'user_configuration_info');
+  $html .= &info_box($user, qq(You can save custom configurations (DAS sources, decorations, additional drawing tracks, etc), and return to them later or share them with fellow group members. Look for the 'Save configuration link' in the sidebar when browsing Ensembl.<br /><a href="/info/help/custom.html#configurations">Learn more about custom configurations &rarr;</a>), 'user_configuration_info');
   if ($#records > -1) {
     $html .= _render_settings_table(\@records, $user);
   }
@@ -595,12 +595,12 @@ sub _render_notes {
   }
 
   my $html = "";
-  $html .= &info_box($user, qq(Annotation notes from genes are listed here.), 'user_note_info');
+  $html .= &info_box($user, qq(Annotation notes from genes are listed here. <a href='/info/help/custom.html#notes'>Learn more about notes &rarr;</a>), 'user_note_info');
   if ($#records > -1) {
     $html .= _render_settings_table(\@records, $user);
   }
   else {
-    $html .= qq(<p class="center">You haven't saved any Ensembl notes. <a href='/info'>Learn more about notes &rarr;</a>);
+    $html .= qq(<p class="center">You haven't saved any Ensembl notes. <a href='/info/help/custom.html#notes'>Learn more about notes &rarr;</a>);
   }
   return $html;
 }
@@ -632,7 +632,7 @@ sub _render_news {
   }
 
   my $html;
-  $html .= &info_box($user, qq(You can filter the news headlines on the home page and share these settings with fellow group members.<br /><a href="/info/about/news_filters.html">Learn more about news filters &rarr;</a>), 'news_filter_info');
+  $html .= &info_box($user, qq(You can filter the news headlines on the home page and share these settings with fellow group members.<br /><a href="/info/help/custom.html#news">Learn more about news filters &rarr;</a>), 'news_filter_info');
   if ($#records > -1) {
     $html .= _render_settings_table(\@records, $user);
   }
