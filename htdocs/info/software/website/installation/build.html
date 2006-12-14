@@ -117,12 +117,13 @@ the latest version, currently this is 2.0.3 and the file to download is mod_perl
   <kbd>tar zxf httpd-2.2.3.tar.gz<br />
   tar zxf mod_perl-2.0.3.tar.gz | tar xvf -<br />
   cd httpd-2.2.3<br />
-  ./configure --enable-deflate --prefix=$AP_DIR<br />
+  ./configure --enable-deflate --prefix=<em>Apache directory</em><br />
   cd ../mod_perl-2.0.3</kbd>
+  <p>The httpd.conf files etc assume you install this in an apache2 subdirectory of your websites server root.</p>
 </li>
 <li>
   <p>Build the perl makefile:</p>
-  <kbd>perl Makefile.PL PREFIX=$AP_DIR MP_APXS=$AP_DIR/bin/apxs</kbd>
+  <kbd>perl Makefile.PL PREFIX=<em>Apache directory</em> MP_APXS=<em>Apache directory</em>/bin/apxs</kbd>
 </li>
 <li>
   <p>Run the 'make' utility:</p>
