@@ -35,6 +35,11 @@ my $chromosome = undef;
 my $location = undef;
 my $start = undef;
 my $end = undef;
+ 
+my $code = $cgi->param('code');
+my $panel_number = $code;
+$panel_number =~ s/fragment_//;
+$panel_number--;
 
 if ($params{l}) {
   ($chromosome, $location) = split(/:/, $params{l});
@@ -54,19 +59,22 @@ my $object = $webpage->dataObjects->[0];
 my $species_defs = EnsEMBL::Web::SpeciesDefs->new();
 my $fragment = EnsEMBL::Web::Document::Panel::Fragment->new(
                                        object => $object,
-                                       'code' => $cgi->param('code'),
+                                       'code' => $code,
                                       caption => 'AJAX fragment',
                                        status => 'loading',
                                       display => 'on',
                                      );
 my $json_error = "";
-my $prefix = "f";
+my $prefix = "p";
 my $json_components = "";
 
 my $max_length = ($object->species_defs->ENSEMBL_GENOME_SIZE||1) * 1.001e6;
 my($top_start, $top_end) = &top_start_end( $object, $max_length );
 $fragment->add_option( 'start', $top_start );
 $fragment->add_option( 'end',   $top_end   );
+warn "----> AJAX PANEL NUMBER: " . $panel_number;
+$object->__data->{'_cv_panel_no'} = $panel_number;
+warn "----> AJAX PANEL NUMBER IN OBJECT: " . $object->__data->{'_cv_panel_no'};
 foreach my $key(keys %components) {
   $components{$key} =~ /(.*)::(\w+)$/;
   my $complete = $components{$key};
@@ -79,6 +87,7 @@ foreach my $key(keys %components) {
     $object->script('contigview');
     $object->get_scriptconfig('contigview');
     $object->prefix($prefix);
+
     $result = &$complete( $fragment, $object );
 
     my $start_px = $fragment->option('px_start'); 
@@ -89,14 +98,14 @@ foreach my $key(keys %components) {
     my $end_cv = $fragment->option('cv_end');
     
     $json_components .= "{ $key: { html: '" . $fragment->html . "', start_bp: '$start_bp', end_bp: '$end_bp', start_cv: '$start_cv', end_cv: '$end_cv', start_px: '$start_px', end_px: '$end_px' } }, ";
-    warn $json_components;
+    #warn $json_components;
   }
 }
 
 warn "--------------------";
 $json_components =~ s/, $//;
 print "Content-type: text/plain\n\n";
-print "{ fragment: { id: '" . $cgi->param('id') . "', title: '" . $cgi->param('title') . "', components: [ $json_components ], location: { chromosome: '$chromosome', start: '$start', end: '$end' } } }";
+print "{ fragment: { panel_number: '" . $panel_number . "', id: '" . $cgi->param('id') . "', title: '" . $cgi->param('title') . "', components: [ $json_components ], location: { chromosome: '$chromosome', start: '$start', end: '$end' } } }";
 
 sub top_start_end {
   my($obj, $max_length ) = @_;
