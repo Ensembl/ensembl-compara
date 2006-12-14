@@ -38,15 +38,9 @@ $page->on_error('/dataview/error.html');
 $page->add_text('You can create a new group of users here. You will automatically be added to your new group.');
 
 $page->add_configuration_element('level', 'administrator');
+$page->add_configuration_element('type', 'restricted');
 $page->add_form_element('name', "Your group name");
 $page->add_form_element('blurb', "A description of your group");
-
-$page->add_form_element('type', "Type", EnsEMBL::Web::Interface::FormDefinition->new((
-                                        labels => [ { "open" => "Open group" }, 
-                                                    { "restricted" => "Restricted group" },
-                                                    { "private" => "Private group" },
-                                                  ]
-                       )));
 
 EnsEMBL::Web::Document::DataView::simple('User', $page);
 
