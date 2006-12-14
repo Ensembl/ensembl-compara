@@ -10,10 +10,14 @@ use warnings;
 no warnings "uninitialized";
 
 use EnsEMBL::Web::Document::WebPage;
+use EnsEMBL::Web::RegObj;
+use CGI qw(escape);
 
 my $webpage = new EnsEMBL::Web::Document::WebPage;
-my $q = CGI->new();
+my $q = $ENSEMBL_WEB_REGISTRY->get_session->get_input;
 my $species = $q->param('species') || undef;
+my $index   = $q->param('idx')     || undef;
+warn "SPECIES: $species";
 my $query   = $q->param('query');
 my $URL;
 
@@ -28,14 +32,17 @@ $query=~ s/\s+/ /g;
 # unless( $species ) {
   $query .= ' ';
   my %sp_hash = %{ $webpage->{'species_defs'}->ENSEMBL_SPECIES_ALIASES };
-  foreach my $sp ( keys %sp_hash ) {
+  foreach my $sp ( sort keys %sp_hash ) {
+warn ".... $sp ....";
     if( lc(substr($query,0,length($sp)+1)) eq lc($sp).' ') {
+warn ".... setting to human ....";
       $species = $sp_hash{$sp};
       $query = substr($query, length($sp)+1 );
     }
   }
   chop $query;
 # }
+warn "SPECIES: $species";
 
 my $feature_maps = {qw(
   gene       Gene
@@ -70,25 +77,27 @@ my $feature_maps = {qw(
 ## of the search string - if so use that as the provisional name
 ## of the index....
 
-my $index = '';
+my $index_t = '';
 if( $query=~/^(\w+)\b/ ) {
-  $index = $feature_maps->{lc($1)};
-  if( $index ) {
+  $index_t = $feature_maps->{lc($1)};
+  if( $index_t ) {
     $query=~s/^\w+\W*//;
   }
 } elsif( $query =~ s/^(chromosome)//i || $query =~ s/^(chr)//i ) {
-  $index = 'Chromosome';
+  $index_t = 'Chromosome';
 } elsif( $query =~/^(contig|clone|supercontig|region)/i ) {
-  $index = 'Sequence';
+  $index_t = 'Sequence';
 }
 my $flag = 0;
+
+$index = $index_t if $index_t;
 
 ## We have a species so we can see if we can generate a mapview/contigview/cytoview
 ## link....
 
 if($species) {
   if(!$query) { ## nothing to search for
-    $URL = "/$species/";
+    $URL = URL( '/%s/', $species );
     $flag = 1;
   } elsif( $index eq 'Sequence' || $index eq 'Chromosome' ) {
   ## match any of the following:
@@ -101,25 +110,25 @@ if($species) {
       my $script = 'contigview';
          $script = 'cytoview' if  $end - $start > 1000000;
       if($start && $end ) {
-        $URL = sprintf( "/%s/%s?region=%s;start=%s;end=%s", $species, $script, $seq_region_name, $start, $end );
+        $URL = URL( "/%s/%s?region=%s;start=%s;end=%s", $species, $script, $seq_region_name, $start, $end );
       } elsif( $index eq 'Chromosome' ) {
         $URL = "/$species/mapview?chr=$seq_region_name";
       } else {
-        $URL = sprintf( "/%s/%s?region=%s", $species, $script, $seq_region_name );
+        $URL = URL( "/%s/%s?region=%s", $species, $script, $seq_region_name );
       }
     } elsif( $query =~ /^\s*([-\.\w]+)[: ]([\d\.]+?[MKG]?)$/i ) {
       my( $seq_region_name, $start, $end ) = ( $1, $2 );
       $start = $webpage->evaluate_bp( $start );
       my $script = 'contigview';
       if( $start ) {
-        $URL = sprintf( "/%s/%s?c=%s:%s;w=100000", $species, $script, $seq_region_name, $start );
+        $URL = URL( "/%s/%s?c=%s:%s;w=100000", $species, $script, $seq_region_name, $start );
       }
    
     } else {
       if( $index eq 'Chromosome' ) {
         $URL = "/$species/mapview?chr=$query";
       } else {
-        $URL = sprintf( "/%s/contigview?region=%s", $species, $query );
+        $URL = URL( "/%s/contigview?region=%s", $species, $query );
       }
     }
     $flag = 1;
@@ -127,7 +136,7 @@ if($species) {
     ## str.string..str.string
     ## str.string-str.string
     $query =~ /([\w|\.]+\w)(\.\.)(\w[\w|\.]+)/;
-    $URL = "/$species/jump_to_contig?type1=all;type2=all;anchor1=$1;anchor2=$3"; 
+    $URL = URL( '/%s/jump_to_contig?type1=all;type2=all;anchor1=%s;anchor2=%s', $species, $1, $3 );
     $flag = 1;
   }
 }
@@ -135,13 +144,16 @@ if($species) {
 #  $URL = "/$species/searchview;idx=$1;q=$2";
 #}
 unless( $flag ) {
-  $URL = $query =~ /^BLA_\w+$/            ? "/Multi/blastview/$query"         ## Blast ticket
-       : $query =~ /^\w+\.mart$/          ? "/biomart/martview/$query"        ## MART query
-       : $query =~ /[ACGT]{12,}/i         ? "/Multi/blastview?species=$species;_query_sequence=$query;query=dna;database=dna"         ## BLAST seq search
-       : $query =~ /[A-Z]{12,}/           ? "/Multi/blastview?species=$species;_query_sequence=$query;query=peptide;database=peptide" ## BLAST aa search
-       :                                    "/default/searchview?species=$species;idx=$index;q=$query"
+  $URL = $query =~ /^BLA_\w+$/            ? URL( '/Multi/blastview/%s', $query  )        ## Blast ticket
+       : $query =~ /[ACGT]{20,}/i         ? URL( '/Multi/blastview?species=%s;_query_sequence=%s;query=dna;database=dna', $species, $query )         ## BLAST seq search
+       : $query =~ /[A-Z]{20,}/i          ? URL( '/Multi/blastview?species=%s;_query_sequence=%s;query=peptide;database=peptide', $species, $query )         ## BLAST seq search
+       :                                    URL( '/default/%s?species=%s;idx=%s;q=%s',$webpage->{'species_defs'}->ENSEMBL_SEARCH, $species, $index, $query )
        ;
 }
 $webpage->redirect($URL);
 
+sub URL {
+  my( $template, @array ) = @_;
+  return sprintf $template, map { CGI::escape( $_ ) } @array;
+}
 1;
