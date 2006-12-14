@@ -1,5 +1,3 @@
-var count = 0;
-
 function populate_fragments() {
   var fragments = getElementsByClass("fragment");
   for (i = 0; i < fragments.length; i++) {
@@ -58,8 +56,8 @@ function panel_loaded(response) {
   }
 
   update.style.display = 'block';
-  count = count + 1;
-  var prefix = "f_" + count; 
+  var panel_number = parseInt(json.fragment.panel_number) + 1;
+  var prefix = "p_" + panel_number; 
 
   $(json.fragment.id + "_title").innerHTML = json.fragment.title;
 
@@ -74,7 +72,8 @@ function panel_loaded(response) {
 
   view_init(prefix);
 
-  //draw_red_box('f', 1, 'p', 2);
+  //draw_red_box('p', panel_number, 'p', (panel_number - 1));
+  cv_draw_red_boxes( 1, 3 )
 
   /**
   html = "";

@@ -396,6 +396,8 @@ sub contigviewtop {
   my $click_left  = int( $wuc->transform->{'translatex'} );
   my $click_right = int( $wuc->transform->{'scalex'} * ($panel->option('end')-$panel->option('start')+1) + int( $wuc->transform->{'translatex'} ) );
   my $panel_no = ++ $object->__data->{'_cv_panel_no'};
+  warn "--------------> DISPLAYING PANEL NUMBER: " . $panel_no;
+  warn "--------------> DISPLAYING PANEL NUMBER IN OBJECT: " . $object->__data->{'_cv_panel_no'};
      $image->{'panel_number'} = $panel_no;
      $image->set_button( 'drag', 'panel_number' => $panel_no, 'title' => 'Click or drag to centre display' );
   $panel->print( $image->render );
@@ -445,6 +447,8 @@ sub cytoview {
   my $click_left  = int( $wuc->transform->{'translatex'} );
   my $click_right = int( $wuc->transform->{'scalex'} * ($panel->option('end')-$panel->option('start')+1) + int( $wuc->transform->{'translatex'} ) );
   my $panel_no = ++ $object->__data->{'_cv_panel_no'};
+  warn "--------------> DISPLAYING PANEL NUMBER: " . $panel_no;
+  warn "--------------> DISPLAYING PANEL NUMBER IN OBJECT: " . $object->__data->{'_cv_panel_no'};
      $image->{'panel_number'} = $panel_no;
      $image->set_button( 'drag', 'panel_number' => $panel_no, 'title' => 'Click or drag to centre display' );
   $panel->print( $image->render );
@@ -629,6 +633,8 @@ sub contigviewbottom {
   my $image = $object->new_image( $slice, $wuc, $object->highlights );
   $image->imagemap = 'yes';
   my $panel_no = ++ $object->__data->{'_cv_panel_no'};
+  warn "--------------> DISPLAYING PANEL NUMBER: " . $panel_no;
+  warn "--------------> DISPLAYING PANEL NUMBER IN OBJECT: " . $object->__data->{'_cv_panel_no'};
      $image->{'panel_number'} = $panel_no;
      $image->set_button( 'drag', 'panel_number' => $panel_no, 'title' => 'Click or drag to centre display' );
   $panel->print( $image->render );
@@ -967,54 +973,6 @@ sub multi_bottom_menu {
   return 0;
 }
 
-sub contigviewzoom_nav_ajax {
-  my($self, $object, $start, $end) = @_;
-  warn("Zoom nav 1: " . $object);
-  warn("Zoom nav 2: " . $start);
-  warn("Zoom nav 3: " . $end);
-  my $wid = ($end - $start) + 1;
-  my %additional_hidden_values = ( 'h' => $object->highlights_string );
-  my $hidden_fields_string = join '', map { qq(<input type="input" name="$_" value="$additional_hidden_values{$_}" />) } keys %additional_hidden_values;
-  my $hidden_fields_URL    = join '', map { qq(;$_=$additional_hidden_values{$_}) } keys %additional_hidden_values;
-
-  my $zoom_ii = this_link( $object, ';zoom_width='.int($wid*2).$hidden_fields_URL );
-  my $zoom_h  = this_link( $object, ';zoom_width='.int($wid/2).$hidden_fields_URL );
-  my $pan_left_1_win  = this_link_offset( $object, -0.8 * $wid, $hidden_fields_URL );
-  my $pan_right_1_win = this_link_offset( $object,  0.8 * $wid, $hidden_fields_URL );
-
-  my $wuc = $object->user_config_hash( 'contigviewzoom', 'contigviewbottom' );
-  my $selected;
-  my $width = $object->param('image_width');
-  warn("Image WIDTH: " . $width);
-  my %zoomgifs = %{$wuc->get('_settings','zoom_zoom_gifs')||{}};
-  my $zoom_HTML;
-  for my $zoom (sort keys %zoomgifs){
-    my $zoombp = $zoomgifs{$zoom};
-    if( ($wid <= ($zoombp+2) || $zoom eq 'zoom6' )&& !$selected ){
-      $zoom .= "on";
-      $selected = "1";
-    }
-    my $zoomurl =  this_link( $object, ";zoom_width=$zoombp$hidden_fields_URL" );
-    my $unit_str = $zoombp;
-    $zoom_HTML.=qq(<a href="$zoomurl"><img src="/img/buttons/$zoom.gif" 
-     title="show $unit_str in zoom" alt="show $unit_str in zoom" class="cv_zoomimg" /></a>);
-  }
-
-  my $output = qq(
-  <table style="border:0; margin:0; padding: 0; width: @{[$width-2]}px"><tr><td class="middle">
-  <a href="$pan_left_1_win" class="cv-button">&lt; Window</a>
-  </td><td class="middle center">
-  <a href="$zoom_h" class="cv_plusminus">+</a>
-  </td><td class="middle center">
-  ${zoom_HTML}
-  </td><td class="middle center">
-  <a href="$zoom_ii" class="cv_plusminus">&#8211;</a>
-  </td><td class="right middle">
-  <a href="$pan_right_1_win" class="cv-button">Window &gt;</a>
-  </td></tr></table>);
-  return nav_box_frame( $output, $width );
-}
-
 sub contigviewzoom_nav {
   my($panel, $object) = @_;
   my $wid = $panel->option('end') - $panel->option('start') + 1;
@@ -1060,48 +1018,6 @@ sub contigviewzoom_nav {
   return 0;
 }
 
-
-sub contigviewzoom_ajax {
-  my($self, $object, $start, $end) = @_;
-  my $slice = $object->database('core')->get_SliceAdaptor()->fetch_by_region(
-    $object->seq_region_type, $object->seq_region_name, $start, $end, 1
-  );
-  my $wuc = $object->user_config_hash( 'contigviewzoom', 'contigviewbottom' );
-     $wuc->container_width( ($end - $start) + 1 );
-     $wuc->set_width( $object->param('image_width') );
-     $wuc->set( '_settings', 'opt_empty_tracks', 'off' );
-     $wuc->set( 'sequence', 'on', 'on' );
-     $wuc->set( 'codonseq', 'on', 'on' );
-     $wuc->set( 'stranded_contig', 'navigation', 'off' );
-     $wuc->set( 'scalebar', 'navigation', 'zoom' );
-     $wuc->set( 'restrict', 'on', 'on' ) if $wuc->get( '_settings', 'opt_restrict_zoom' );
-     $wuc->set( 'missing', 'on', 'off' );
-     #$wuc->{'image_frame_colour'} = 'red' if $panel->option( 'red_edge' ) eq 'yes';
-     $wuc->set( '_settings', 'URL',   this_link($object).";bottom=%7Cbump_", 1);
-## Now we need to add the repeats...
-
-  add_repeat_tracks( $object, $wuc );
-  add_das_tracks( $object, $wuc );
-
-  $wuc->{_object} = $object;
-
-  my $image    = $object->new_image( $slice, $wuc, $object->highlights );
-  $image->imagemap = 'yes';
-  my $panel_no = ++ $object->__data->{'_cv_panel_no'};
-     $image->{'panel_number'} = $panel_no;
-     $image->set_button( 'drag', 'panel_number' => $panel_no, 'title' => 'Click or drag to centre display' );
-  
-  $object->__data->{'_cv_parameter_hash'}{ "p_${panel_no}_px_start" } = $wuc->get('_settings','label_width' ) + 3 * $wuc->get('_settings','margin') + $wuc->get('_settings','button_width');
-  $object->__data->{'_cv_parameter_hash'}{ "p_${panel_no}_px_end"   } = $wuc->get('_settings','width') - $wuc->get('_settings','margin');
-  $object->__data->{'_cv_parameter_hash'}{ "p_${panel_no}_bp_start" } = $start;
-  $object->__data->{'_cv_parameter_hash'}{ "p_${panel_no}_bp_end"   } = $end;
-  $object->__data->{'_cv_parameter_hash'}{ "p_${panel_no}_flag"     } = 'bp';
-  $object->__data->{'_cv_parameter_hash'}{ "p_${panel_no}_visible"  } = 1;
-  $object->__data->{'_cv_parameter_hash'}{ "p_${panel_no}_URL"      } = "/$ENV{ENSEMBL_SPECIES}/$ENV{ENSEMBL_SCRIPT}?c=[[s]]:[[c]];w=[[w]];zoom_width=[[zw]]";
-  $image->{'width'} = 200;
-  warn("Image width: " . $image->{'width'});
-  return $image->render;
-}
 
 sub save_config {
   my($panel, $object) = @_;

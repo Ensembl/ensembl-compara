@@ -57,7 +57,7 @@ function _change_panel_state( n ) {
 */
 
 function view_init(n) {
-  alert(n);
+  //alert(n);
   if( !ego( n+'_rl' ) ) {
     A = ego( n );
     if(A) {

@@ -39,8 +39,22 @@ sub html_header {
 sub placeholder {
   my $self = shift;
   my $html = "";
-  $html .= "<div style='display: none;' class='fragment' id='" . $self->code . "_update'>" . $self->json . "</div>\n";
+  my $class = "fragment";
+  if ($self->panel_is_closed) {
+    $class = "";
+  }
+  $html .= "<div style='display: none;' class='$class' id='" . $self->code . "_update'>" . $self->json . "</div>\n";
   return $html;
+}
+
+sub panel_is_closed {
+  my $self = shift;
+  my $status = $self->{'object'} ? $self->{'object'}->param($self->{'status'}) : undef;
+  my $open = $status ne 'off' ? 'off' : 'on';
+  if ($open eq 'on') {
+    return 1;
+  }
+  return 0;
 }
 
 sub json {
@@ -103,7 +117,9 @@ sub html_loading_status {
 sub loading_animation {
   my $self = shift;
   my $html = "";
-  $html .= " <img src='/img/ajax-loader.gif' width='16' height='16' alt='(" . $self->status . ")'/ >";
+  if (!$self->panel_is_closed) {
+    $html .= " <img src='/img/ajax-loader.gif' width='16' height='16' alt='(" . $self->status . ")'/ >";
+  }
   return $html;
 }
 
@@ -111,6 +127,9 @@ sub html_collapse_expand_control {
   my $self = shift;
   my $status = $self->{'object'} ? $self->{'object'}->param($self->{'status'}) : undef;
   my $URL = sprintf '/%s/%s?%s=%s', $self->{'object'}->species, $self->{'object'}->script, $self->{'status'}, $status ne 'off' ? 'off' : 'on';
+  foreach my $K (keys %{$self->{'params'}||{}} ) {
+    $URL .= sprintf ';%s=%s', CGI::escape( $K ), CGI::escape( $self->{'params'}{$K} );
+  }
 
   my $html = "";
   if ($status eq 'off') {
