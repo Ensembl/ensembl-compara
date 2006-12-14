@@ -13,8 +13,8 @@ sub new {
   $page->masthead->sp_bio    ||= 'BioMart';
   $page->masthead->sp_common ||= 'BioMart';
   $page->javascript->add_source( '/martview/js/martview.js'           );
-  $page->javascript->add_script( 'addLoadEvent( setVisibleStatus )' );
 #  $page->javascript->add_script( 'addLoadEvent( debug_window )' );
+  $page->javascript->add_script( 'addLoadEvent( setVisibleStatus )' );
   $page->stylesheet->add_sheet(  'all', '/martview/martview.css'      );
 
   my $self = { 'page' => $page, 'session' => $session };
