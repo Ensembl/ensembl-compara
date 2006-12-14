@@ -28,17 +28,6 @@ use EnsEMBL::Web::Document::ColourChanger;
 
 require "BioMart/Initializer.pm";
 
-warn ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>";
-warn ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>";
-warn ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>";
-warn ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>";
-warn ">>>>>>>>>>>>>>>>>>>>>>     >>>>>>>>>>>>>>>>>>>>>>>>";
-warn sprintf ">>>>>>>>>>>>>>>>>>>>>> %3s >>>>>>>>>>>>>>>>>>>>>>>>", Apache2::ServerUtil::restart_count();;
-warn ">>>>>>>>>>>>>>>>>>>>>>     >>>>>>>>>>>>>>>>>>>>>>>>";
-warn ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>";
-warn ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>";
-warn ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>";
-warn ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>";
 require "BioMart/Configuration/Attribute.pm";
 require "BioMart/Configuration/AttributeCollection.pm";
 require "BioMart/Configuration/AttributeGroup.pm";
@@ -115,7 +104,6 @@ use CGI qw(-compile :cgi);
 use EnsEMBL::Web::SpeciesDefs;
 
 if( Apache2::ServerUtil::restart_count == 1 ){ # Only parse the config on first pass
-warn ">>>>>>>>>>>>>>>>> APACHE START";
   warn( "\n" . ('=' x 78) . "\n" );
   my $conf = EnsEMBL::Web::SpeciesDefs->new();
   $conf->store;
@@ -123,11 +111,8 @@ warn ">>>>>>>>>>>>>>>>> APACHE START";
   EnsEMBL::Web::Document::ColourChanger::change_ddmenu_colours( $conf ); 
   EnsEMBL::Web::Document::ColourChanger::change_zoom_colours(   $conf ); 
   EnsEMBL::Web::Document::ColourChanger::change_CSS_colours(    $conf );
-warn $SiteDefs::ENSEMBL_NOMART;
-warn keys %{$conf->{'_multi'}{'marts'}};
   if( keys %{$conf->{'_multi'}{'marts'}} && !$SiteDefs::ENSEMBL_NOMART) { ### NOMARTS
-    my $MART_CONFFILE = "${SiteDefs::ENSEMBL_SERVERROOT}/conf/martRegistry.xml";
-warn "CHECKING FOR BIOMART REGISTRY\n";
+    my $MART_CONFFILE = "${SiteDefs::ENSEMBL_SERVERROOT}/biomart-perl/conf/martRegistry.xml";
     my $MR_file = $MART_CONFFILE;
     if(! -e $MR_file) {                                                   ####
       open FH, ">$MR_file";                                               ####
@@ -148,7 +133,6 @@ warn "CHECKING FOR BIOMART REGISTRY\n";
   warn "Name: ".$conf->ENSEMBL_PROTOCOL."://".$conf->ENSEMBL_SERVERNAME.":".$conf->ENSEMBL_PROXY_PORT,"\n";
   warn "Real: ".$conf->ENSEMBL_PROTOCOL."://".$conf->ENSEMBL_SERVER.":".$conf->ENSEMBL_PORT,"\n";
   require EnsEMBL::Web::BlastView::MetaDataBlast;
-warn "<<<<<<<<<<<<<<<<<<<<< APACHE START";
 } else{
 #  warn( "\n" . ('=' x 78) . "\n" );
 #  require EnsEMBL::Web::BlastView::MetaData; # Require at startup due to time taken to compile
