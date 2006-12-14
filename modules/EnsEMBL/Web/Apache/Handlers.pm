@@ -366,7 +366,7 @@ LONG PROCESS %10s IP:  %s  UA: %s
                  ##----------------------------------------------------------------------
 
 ## Now we check if the die file has been touched...
-  my $die_file = $ENSEMBL_SERVERROOT.'/conf/config.packed';
+  my $die_file = $ENSEMBL_SERVERROOT.'/logs/ensembl.die';
   if( -e $die_file ) {
     my @temp = stat $die_file;
     my $file_mod_time = $temp[9];
