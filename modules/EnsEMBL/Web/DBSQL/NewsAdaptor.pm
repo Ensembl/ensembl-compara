@@ -238,7 +238,6 @@ sub fetch_headlines {
     else {
       $string .= "s.name = '$sp'";
     }
-    $where_def{'species'} = $string;
   }
 
   ## add selected options to modifier strings
