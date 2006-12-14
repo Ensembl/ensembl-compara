@@ -1291,13 +1291,13 @@ sub ADD_GENE_TRACKS {
                              'database' => 'vega', 'available' => 'database_features ENSEMBL_VEGA.OTTER',
                              'gene_col'             => sub { return $_[0]->biotype.'_'.$_[0]->status; },
                              'gene_label'           => sub { $_[0]->external_name || $_[0]->stable_id; },
-                             'glyphset' => 'evega_gene',
+                             'glyphset' => 'evega_gene', 'label_threshold' => 500,
                                @_ );
   $self->add_new_track_gene( 'otter_external', 'Vega External Genes', 'vega_gene_external', $POS++,
                              'database' => 'vega', 'available' => 'database_features ENSEMBL_VEGA.OTTER_EXTERNAL',
                               'gene_col'            => sub { return $_[0]->biotype.'_'.$_[0]->status; },
                              'gene_label'           => sub { $_[0]->external_name || $_[0]->stable_id; },
-                             'glyphset' => 'evega_gene',
+                             'glyphset' => 'evega_gene', 'label_threshold' => 500,
                               @_ );
   $self->add_new_track_gene( 'flybase', 'Flybase Genes', 'flybase_gene', $POS++,
     'gene_label'           => sub { return $_[0]->biotype eq 'bacterial_contaminant' ? 'Bac. cont.' : ( $_[0]->biotype eq 'pseudogene' ? 'Pseudogene' : ( $_[0]->external_name || 'NOVEL' ) ) },
@@ -1387,7 +1387,7 @@ sub ADD_GENE_TRACKS {
 
   $self->add_new_track_gene( 'ncrna', 'ncRNA Genes', 'rna_gene', $POS++,
                              'logic_name' => 'miRNA tRNA ncRNA',
-                             'available' => 'features ncrna|miRNA',
+                             'available' => 'features ncrna|miRNA', 'label_threshold' => 100,
                              'gene_col' => sub { return ($_[0]->biotype =~ /pseudo/i ? 'rna-pseudo' : 'rna-real').($_[0]->status) }, @_ );
   $self->add_new_track_gene( 'ensembl_ncrna', 'e! ncRNA Genes', 'rna_gene', $POS++, 'legend_type' => 'gene_ncrna',
                              'gene_col' => sub { return $_[0]->biotype =~ /pseudo/i ? 'rna-pseudo' : 'rna-real' }, @_ );

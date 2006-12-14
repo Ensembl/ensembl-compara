@@ -2,6 +2,7 @@ package EnsEMBL::Web::Document::HTML::Menu;
 use strict;
 use CGI qw(escapeHTML);
 use EnsEMBL::Web::Document::HTML;
+use EnsEMBL::Web::RegObj;
 
 our @ISA = qw(EnsEMBL::Web::Document::HTML);
 
@@ -197,7 +198,7 @@ sub _atag {
       $_atag.= sprintf( qq( $_="%s"), CGI::escapeHTML( $entry->{$_}) ) if exists $entry->{$_};
     }
     if( $entry->{'href'} =~ m|^https?://([^/]+)| ) {
-      my $base_url = EnsEMBL::Web::SpeciesDefs->ENSEMBL_BASE_URL; 
+      my $base_url = $ENSEMBL_WEB_REGISTRY->species_defs->ENSEMBL_BASE_URL;
       if ($entry->{'href'} !~ m/$base_url/) {
         $_atag .= qq( target="$1");
       }

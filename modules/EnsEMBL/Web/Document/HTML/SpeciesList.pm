@@ -5,14 +5,14 @@ use warnings;
 
 use EnsEMBL::Web::Object::User;
 use EnsEMBL::Web::DBSQL::NewsAdaptor;
-use EnsEMBL::Web::SpeciesDefs;
+use EnsEMBL::Web::RegObj;
 
 {
 
 sub render {
   my ($class, $request) = @_;
 
-  my $species_defs = EnsEMBL::Web::SpeciesDefs->new();
+  my $species_defs = $ENSEMBL_WEB_REGISTRY->species_defs;
   my %species_id = ();
   my %id_to_species = ();
   my $count = 0;

@@ -2,10 +2,8 @@ package EnsEMBL::Web::Document::HTML::SearchBox;
 use strict;
 use CGI qw(escapeHTML);
 use EnsEMBL::Web::Document::HTML;
-use EnsEMBL::Web::SpeciesDefs;
+use EnsEMBL::Web::RegObj;
                                                                                 
-our $SD = EnsEMBL::Web::SpeciesDefs->new();
-
 our @ISA = qw(EnsEMBL::Web::Document::HTML);
 
 sub new    { return shift->SUPER::new( 'links' => [], 'indexes' => [] ); }
@@ -31,16 +29,17 @@ sub render {
   } else {
     $site_section = 'all Ensembl';
   }
-  my $script = $SD->ENSEMBL_SEARCH;
+  my $script = 'psychic';# $SD->ENSEMBL_SEARCH;
   $self->print( qq(
 <div id="search">
   <form action="/@{[$species||'perl']}/$script" method="get" style="font-size: 0.9em"><div>
     <input type="hidden" name="species" value="@{[$species||'all']}" />
     Search $site_section:
     <select name="idx" style="font-size: 0.9em">
+      <option value="">--</option>
       <option value="All">Anything</option>@{[ map {qq(\n      <option value="$_">$_</option>)} @{$self->{'indexes'}} ]}
     </select>
-    <input name="q" size="20" value="" />
+    <input name="query" size="20" value="" />
     <input type="submit" value="Go" class="red-button" /></div>
     </form>));
   if( @{$self->{'links'}} ) {

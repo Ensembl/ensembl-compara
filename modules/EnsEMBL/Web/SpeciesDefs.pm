@@ -1246,6 +1246,7 @@ sub create_martRegistry {
         default = "%s"
        martUser = ""
 includeDatasets = ""
+   includeMarts = ""
 />',
         $T->{DRIVER}, $T->{NAME},   $mart,  $T->{NAME}, $T->{HOST}, $T->{PORT},
         $T->{USER},   $T->{PASS},   "@name", $visible?1:'', $default?1:''

@@ -7,7 +7,7 @@ package EnsEMBL::Web::Document::HTML::WhatsNew;
 use strict;
 use warnings;
 
-use EnsEMBL::Web::SpeciesDefs;
+use EnsEMBL::Web::RegObj;
 use EnsEMBL::Web::Object::User;
 use EnsEMBL::Web::DBSQL::NewsAdaptor;
 
@@ -26,7 +26,8 @@ sub render {
 
 ## News headlines
 
-  my $species_defs = EnsEMBL::Web::SpeciesDefs->new();
+warn $ENSEMBL_WEB_REGISTRY;
+  my $species_defs = $ENSEMBL_WEB_REGISTRY->species_defs;
   my $release_id = $species_defs->ENSEMBL_VERSION;
 
   my $user_id = $ENV{'ENSEMBL_USER_ID'};
