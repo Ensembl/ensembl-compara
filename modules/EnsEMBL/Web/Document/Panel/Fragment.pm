@@ -103,7 +103,7 @@ sub json_params {
 sub json_components {
   my $self = shift;
   my $json = "";
-  foreach my $key (keys %{ $self->{components} }) {
+  foreach my $key (@{ $self->{component_order} }) {
     $json .= "{ $key: '" . $self->{components}{$key}->[0] . "' }, ";
   }
   return $json;

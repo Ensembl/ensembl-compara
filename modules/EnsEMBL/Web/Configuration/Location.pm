@@ -587,6 +587,7 @@ sub contigview {
                                 display => 'on',
                                            @common);
   $view_fragment->add_components(qw(
+      config EnsEMBL::Web::Component::Location::contigviewbottom_config
       menu  EnsEMBL::Web::Component::Location::contigviewbottom_menu
       nav   EnsEMBL::Web::Component::Location::contigviewbottom_nav
       image EnsEMBL::Web::Component::Location::contigviewbottom
