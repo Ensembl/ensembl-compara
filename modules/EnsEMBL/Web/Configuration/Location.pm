@@ -709,6 +709,10 @@ sub alignsliceview {
 	$wsc->save();
     }
 
+    ## Unset conservation_scores and constrained_elements
+    $wuc->set( 'alignslice',  'constrained_elements', "", 1);
+    $wuc->set( 'alignslice',  'conservation_scores', "", 1);
+
     foreach my $opt (@align_modes) {
 	if ($wsc->get($opt, "on") eq 'on') {
 	    my ($atype, $id);
@@ -716,16 +720,31 @@ sub alignsliceview {
 
 	    if ($opt =~ /^opt_align_(.*)/) {
 		$id = $1;
-		my @align_species = grep { /opt_${id}_/ } keys (%{$wsc->{_options}});
+ 		my @align_species = grep { /opt_${id}_/ } keys (%{$wsc->{_options}});
 
 	        foreach my $sp (@align_species) {
+
+	            if ($sp =~ /opt_${id}_constrained_elem/) {
+                      if ($wsc->get($sp, "on") eq 'on') {
+                        $wuc->set( 'alignslice',  'constrained_elements', "on", 1);
+                      }
+                      next;
+	            }
+	            if ($sp =~ /opt_${id}_conservation_score/) {
+                      if ($wsc->get($sp, "on") eq 'on') {
+                        $wuc->set( 'alignslice',  'conservation_scores', "on", 1);
+                      }
+                      next;
+	            }
 		    if ($wsc->get($sp, "on") eq 'on') {
 			$sp =~ s/opt_${id}_//;
 			push @selected_species, $sp if ($sp ne $species);
 		    }
 	        }
+
+
 	    }
-#	    warn("STEP1: ($opt : $id : @selected_species )");
+# 	    warn("STEP1: ($opt : $id : @selected_species )");
 	    $wuc->set( 'alignslice',  'id', $id, 1);
             $wuc->set( 'alignslice',  'species', \@selected_species, 1);
             $wuc->set( 'alignslice',  'align', $opt, 1);
