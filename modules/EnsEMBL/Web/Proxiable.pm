@@ -63,7 +63,7 @@ sub fix_session {
 ### calls store on... this will check whether (a) there are any saveable
 ### scriptconfigs AND (b) if any of the saveable scriptconfigs have been altered
   my( $self, $r ) = @_;
-warn "FIX SESSION...............................";
+  #warn "FIX SESSION...............................";
   my $session = $self->get_session;
   $session->store($self->apache_handle) if $session;
 }
@@ -164,7 +164,7 @@ sub new_menu_container {
   $N{'panel'}    = $params{'panel'}    || $params{'configname'} || $N{'script'};
   $N{'fields'}   = $params{'fields'}   || ( $self->can('generate_query_hash') ? $self->generate_query_hash : {} );
   if( $params{'configname'} ) {
-    warn ".. $params{'configname'}";
+   # warn ".. $params{'configname'}";
     $N{'config'}   = $self->user_config_hash( $params{'configname'} );
     $N{'config'}->set_species( $self->species );
   }

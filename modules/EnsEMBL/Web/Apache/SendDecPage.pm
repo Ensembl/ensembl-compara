@@ -20,8 +20,7 @@ use Apache2::Const qw(:common :methods :http);
 #############################################################
 sub handler {
   my $r = shift;
-warn "SEND DEC PAGE HANDLER..................";
-## First of all check that we should be doing something with the page...
+  ## First of all check that we should be doing something with the page...
   $r->err_headers_out->{'Ensembl-Error'=>"Problem in module EnsEMBL::Web::Apache::SendDecPage"};
   $r->custom_response(SERVER_ERROR, "/Crash");
     

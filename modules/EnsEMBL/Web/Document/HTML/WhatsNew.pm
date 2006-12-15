@@ -26,7 +26,6 @@ sub render {
 
 ## News headlines
 
-warn $ENSEMBL_WEB_REGISTRY;
   my $species_defs = $ENSEMBL_WEB_REGISTRY->species_defs;
   my $release_id = $species_defs->ENSEMBL_VERSION;
 
@@ -40,7 +39,7 @@ warn $ENSEMBL_WEB_REGISTRY;
 
   ## get news headlines
   my $criteria = {'release'=>$release_id};
-  if ($user_id > 0) {
+  if ($user_id && $user_id > 0) {
     $criteria->{'species'} = [];
     ## check for user filters
     my @filters = $user->news_records;
@@ -128,7 +127,7 @@ warn $ENSEMBL_WEB_REGISTRY;
   }
 
   if ($species_defs->ENSEMBL_LOGINS) {
-    if ($user_id > 0) {
+    if ($user_id && $user_id > 0) {
       if (!$filtered) {
         $html .= qq(Go to <a href="/common/accountview?tab=news">your account</a> to customise this news panel);
       }
