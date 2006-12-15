@@ -41,7 +41,7 @@ sub _initialize_HTML {
 #  --- First the search index drop down
   $self->_prof( "page decs configured" );
 
-  $self->javascript->add_source('/js/core.js');
+  $self->javascript->add_source('/js/core42.js');
   $self->javascript->add_source('/js/new_drag_imagemap.js');
   $self->javascript->add_source('/js/help.js');
   $self->javascript->add_source('/js/new_support.js');
