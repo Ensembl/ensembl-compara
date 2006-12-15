@@ -46,7 +46,7 @@ sub context_menu {
     $self->add_block( $flag, 'bulleted', "Your Ensembl" );
 
     $self->add_entry( $flag, 'text' => "Login",
-                                  'href' => "/common/user_login" );
+                                  'href' => "javascript:login_link();" );
     $self->add_entry( $flag, 'text' => "Register",
                                   'href' => "/common/register" );
     $self->add_entry( $flag, 'text' => "Lost Password",
@@ -80,34 +80,47 @@ sub groupview {
   $self->_add_javascript_libraries;
 
   my $cgi = new CGI;
-  my $group = EnsEMBL::Web::Object::Group->new(( id => $cgi->param('id') ));
 
-  if( my $details_panel = $self->new_panel( 'Image',
-    'code'    => "group_details#",
-    'caption' => "Overview for '" . $group->name . "'"
-  )) {
-    $details_panel->add_components(qw(
-      group_details EnsEMBL::Web::Component::User::group_details
-    ));
-    $self->add_panel( $details_panel);
+  if ($cgi->param('id')) {
+    my $group = EnsEMBL::Web::Object::Group->new(( id => $cgi->param('id') ));
+
+    if( my $details_panel = $self->new_panel( 'Image',
+      'code'    => "group_details#",
+      'caption' => "Overview for '" . $group->name . "'"
+    )) {
+      $details_panel->add_components(qw(
+        group_details EnsEMBL::Web::Component::User::group_details
+      ));
+      $self->add_panel( $details_panel);
+    }
+
+    if( my $members_panel = $self->new_panel( 'Image',
+      'code'    => "group_details#",
+    )) {
+      $members_panel->add_components(qw(
+        group_users EnsEMBL::Web::Component::User::group_users
+      ));
+      $self->add_panel($members_panel);
+    }
+
+    if( my $members_panel = $self->new_panel( 'Image',
+      'code'    => "group_details#",
+    )) {
+      $members_panel->add_components(qw(
+        delete_group EnsEMBL::Web::Component::User::delete_group
+      ));
+      $self->add_panel($members_panel);
+    }
   }
-
-  if( my $members_panel = $self->new_panel( 'Image',
-    'code'    => "group_details#",
-  )) {
-    $members_panel->add_components(qw(
-      group_users EnsEMBL::Web::Component::User::group_users
-    ));
-    $self->add_panel($members_panel);
-  }
-
-  if( my $members_panel = $self->new_panel( 'Image',
-    'code'    => "group_details#",
-  )) {
-    $members_panel->add_components(qw(
-      delete_group EnsEMBL::Web::Component::User::delete_group
-    ));
-    $self->add_panel($members_panel);
+  else {
+    if( my $members_panel = $self->new_panel( 'Image',
+      'code'    => "group_details#",
+    )) {
+      $members_panel->add_components(qw(
+        no_group EnsEMBL::Web::Component::User::no_group
+      ));
+      $self->add_panel($members_panel);
+    }
   }
 
   $self->{page}->set_title('Manage group');
