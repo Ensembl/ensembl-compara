@@ -200,8 +200,12 @@ sub command{
     else{ $param_str .= " $param" }
   }
 
+  my $BDP = '/data/blastdb/ensembl/release-41';
+  if( $database =~ /(Homo_sapiens|Mus_musculus|Danio_rerio|Rattus_norvegicus)/i ) {
+    $BDP =~ s/data/data_local/;
+  }
   return join( ' ', $SPECIES_DEFS->ENSEMBL_BLAST_BIN_PATH."/".$self->program_path,
-                    $SPECIES_DEFS->ENSEMBL_BLAST_DATA_PATH."/$database", '[[]]', $param_str);
+                    "$BDP/$database", '[[]]', $param_str);
 }
 
 #----------------------------------------------------------------------
@@ -245,9 +249,14 @@ sub dispatch_bsub {
     my $pid;
     local *BSUB;
    
-   my $repeatmask_command = '/data/bin/RepeatMasker';
+   my $repeatmask_command = '/data_local/bin/RepeatMasker';
+#   $queue = 'systest';
+   (my $db_name = $self->database) =~ s/([A-Z])[a-z]+_([a-z]{3})[a-z]*\..*\.(\w+)\.(\w+)\.fa/ENSEMBL.\1\2.\3.\4/;
+   my $project_name = join ':', $self->program_name, $db_name, $self->seq->length, $self->seq->alphabet;
 
-   if( open(BSUB, qq(|bsub -c 120 -q $queue -J $ticket -o /dev/null -f "$client_fasta_file > $server_fasta_file") )) {
+   my $command_line = qq(|bsub -c 120 -q $queue -P '$project_name' -J $ticket -o /dev/null -f "$client_fasta_file > $server_fasta_file");
+   warn $command_line;
+   if( open(BSUB, $command_line )) {
       if( open(FH,">$client_sent_file" ) ) {
         print FH "$state_file";
         close FH;
@@ -258,23 +267,28 @@ sub dispatch_bsub {
          ( $self->option("repeatmask") || defined( $self->option("-RepeatMasker") ) ) &&
          ( uc($self->seq->alphabet) eq 'DNA' )
        ) {
-        $self->_add_command( qq( $repeatmask_command $server_fasta_file ), ## Run repeat masker
-                             qq( rm $server_fasta_file.out ),              ## Remove all of the temporary files
-                             qq( rm $server_fasta_file.stderr ),
-                             qq( rm $server_fasta_file.cat ),
-                             qq( rm $server_fasta_file.RepMask ),
-                             qq( rm $server_fasta_file.RepMask.cat ),
-                             qq( rm $server_fasta_file.masked.log ),
-                             qq( mv $server_fasta_file.masked $server_fasta_file ) ); ## Copy back the repeat masked file!
+        $self->_add_command(
+          qq( $repeatmask_command $server_fasta_file ),           ## Run repeat masker
+          qq( rm $server_fasta_file.out ),                        ## Remove all of the temporary files
+          qq( rm $server_fasta_file.stderr ),
+          qq( rm $server_fasta_file.cat ),
+          qq( rm $server_fasta_file.RepMask ),
+          qq( rm $server_fasta_file.RepMask.cat ),
+          qq( rm $server_fasta_file.masked.log ),
+          qq( mv $server_fasta_file.masked $server_fasta_file )   ## Copy back the repeat masked file!
+        );
       }
-      $self->_add_command( "$command >$server_out_file 2>$server_fail_file" ); # Run the blast, sending output to local temp file
-      $self->_add_command( 'status=$?' );
-      $self->_add_command( "echo '$state_file' > $server_flag_file" );                        # Touch flag file so that can indicate blast has finished
-      $self->_add_command( qq(lsrcp "$server_out_file"  "$host:$client_out_file"),
-                           qq(lsrcp "$server_fail_file" "$host:$client_fail_file"),
-                           qq(lsrcp "$server_flag_file" "$host:$client_flag_file") ); # Copy all files back...
-      $self->_add_command( qq(rm -f /tmp/$ticket.*) );                         # Now tidy up the temporary files
-      $self->_add_command( 'exit $status' );
+      $self->_add_command(
+        qq($command >$server_out_file 2>$server_fail_file),       ## Run the blast, sending output to local temp file
+         q(status=$?),                                            ## Store status of BLAST command
+        qq(echo '$state_file' > $server_flag_file),               ## Touch flag file so that can indicate blast has finished
+        qq(lsrcp "$server_out_file"  "$host:$client_out_file"  ),
+        qq(lsrcp "$server_fail_file" "$host:$client_fail_file" ),
+        qq(lsrcp "$server_flag_file" "$host:$client_flag_file" ), # Copy all files back...
+        qq(rm -f /tmp/$ticket.*),                                 # Now tidy up the temporary files
+         q(exit $status)                                          # Return exit codo of $command!
+      );
+warn $self->_command_string();
       print BSUB $self->_command_string();
       close BSUB;
       if ($? != 0) {
