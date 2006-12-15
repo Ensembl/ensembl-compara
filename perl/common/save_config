@@ -44,13 +44,17 @@ $data->add_field({'Field' => 'modified_at', 'Type' => 'timestamp'});
 
 $page->action('create');
 $page->title('Save configuration');
-$page->add_text('Describe your configuration here, and then click "Submit" to save it. Once saved, you can share your configuration with groups you administer.');
+$page->add_form_element('name', "Configuration name");
 
 if ($cgi->param('id')) {
   $data->populate($cgi->param('id'));
   $page->action('edit');
   $page->title('Update configuration');
- $page->add_text('Your configuration settings have changed. Update the details below, and click "Submit" to save your changes.');
+  $page->add_text('<b>Your configuration settings have changed.</b> Click "Submit" to save your changes.');
+  $page->add_text('Alternatively, you can save this configuration under a different name by <a href="/common/save_config?url=' . $cgi->param('url') . '">clicking here</a>.');
+} else {
+  $page->add_text('Describe your configuration here, and then click "Submit" to save it. Once saved, you can share your configuration with groups you administer.');
+  $page->add_form_element('description', "A brief description of your configuration");
 }
 
 $page->data_definition($data);
@@ -66,8 +70,6 @@ $page->add_configuration_element('type', 'configuration');
 $page->add_configuration_element('url', $cgi->param('url'));
 $page->add_configuration_element('scriptconfig', $string);
 
-$page->add_form_element('name', "Configuration name");
-$page->add_form_element('description', "A brief description of your configuration");
 
 EnsEMBL::Web::Document::DataView::simple('User', $page);
 
