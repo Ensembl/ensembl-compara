@@ -466,7 +466,7 @@ code { font: 1em andale mono, sans-serif; font-weight: bold; color: #990000 }
 
 /* hide the rest of the file from Safari */
 .bogus { font-style:normal;# }
-.multicol { float: left; width: 12em; white-space: nowrap }
+.multicol { float: left; width: 16em; white-space: nowrap }
 
     table.newzmenu { font-size: 0.9em; width: 200px; border: 2px solid #cccccc; padding: 0px; margin: 0px; border-collapse: collapse }
     table.newzmenu th { background-color: #cccccc; text-align: left; padding: 1px 2px; vertical-align: top; border: 1px solid #cccccc }
