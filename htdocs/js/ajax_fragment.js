@@ -75,9 +75,7 @@ function panel_loaded(response) {
   $(json.fragment.id + "_title").innerHTML = json.fragment.title;
 
   if (update_menus == 1) {
-    alert('dropdown!');
     init_dropdown_menu();
-   
   }
 
   var F = document.forms['panel_form'];

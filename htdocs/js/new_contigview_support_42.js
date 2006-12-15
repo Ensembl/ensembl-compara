@@ -129,6 +129,7 @@ function draw_red_box(prefix, panel_id, previous_prefix, previous_id) {
   if( Z ) {
    Z.style.borderColor = 'black';
   }
+  if (F.elements[name+'_visible']) {
   if( F.elements[name+'_visible'].value == 1 ) {
     l2 = previous_id;
     fl  = 1 
@@ -153,6 +154,7 @@ function draw_red_box(prefix, panel_id, previous_prefix, previous_id) {
   } else {
     ego( name ).style.display = 'none'
     egi( name+'_box' ).src = 'box-0.gif';
+  }
   }
   A = ego( name+'_i_map' )
   if( A ) {

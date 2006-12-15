@@ -1,5 +1,3 @@
-/* A place to dump random javascript */
-
 /* This is a bit of hacky code to pop up a debug window */
 var _debug_window;
 function debug_window() {
@@ -177,3 +175,78 @@ function bookmark_link() {
   document.location = '/common/bookmark?node=name_bookmark;bm_name=' + page_title + ';bm_url=' + URL;
   return true;  
 }
+
+function ajaxCapability() {
+
+  var useActiveX = false;
+  var javaIsAvailable = false;
+  var httpobj;
+  var browserVersion = parseInt(window.navigator.appVersion);
+  var browserName = window.navigator.appName;
+  var ajaxCapability = "none";
+
+//  window.onerror = errorSuppression;
+
+  if (!(browserName.indexOf("Microsoft Internet Explorer"))) {
+    if (typeof ScriptEngine != "undefined") {
+      if (ScriptEngineMajorVersion() > 2) {
+        httpobj = new ActiveXObject('Msxml2.XMLHTTP');
+        if ((!httpobj) ||  (typeof httpobj == 'undefined')) httpobj = new ActiveXObject('Microsoft.XMLHTTP');
+        if ((httpobj) ||  (typeof httpobj != 'undefined')) useActiveX = true;
+      }
+    }
+  } else {
+    useActiveX = false;
+    if (window.navigator.javaEnabled() == true) javaIsAvailable = true;
+    httpobj = new XMLHttpRequest();
+  }
+
+  if ((!httpobj) || (typeof httpobj == 'undefined')) {
+    if (javaIsAvailable == true) {
+      ajaxCapability = "java";
+    } else {
+      if ((browserVersion >= 3)  && (browserName.indexOf("Netscape"))) {
+        ajaxCapability = "iframe";
+      } else {
+        ajaxCapability = "ilayer";
+      }
+      if (browserVersion < 3) {
+        ajaxCapability = "none";
+      }
+    }
+  } else {
+    if (useActiveX == true) {
+      ajaxCapability = "activex";
+    } else {
+      ajaxCapability = "builtin";
+    }
+  }
+
+  var cookieKey = 'ENSEMBL_AJAX';
+  if (!readCookie(cookieKey)) {
+    createCookie(cookieKey, ajaxCapability, 30);
+  }
+}
+
+function createCookie(name,value,days) {
+	if (days) {
+		var date = new Date();
+		date.setTime(date.getTime()+(days*24*60*60*1000));
+		var expires = "; expires="+date.toGMTString();
+	}
+	else var expires = "";
+	document.cookie = name+"="+value+expires+"; path=/";
+}
+
+function readCookie(name) {
+	var nameEQ = name + "=";
+	var ca = document.cookie.split(';');
+	for(var i=0;i < ca.length;i++) {
+		var c = ca[i];
+		while (c.charAt(0)==' ') c = c.substring(1,c.length);
+		if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length,c.length);
+	}
+	return null;
+}
+
+ajaxCapability();
