@@ -1217,6 +1217,7 @@ sub alignsliceviewbottom {
     my $t1 = $wuc->get('ensembl_transcript','compact');
     my $t2 = $wuc->get('evega_transcript','compact');
     my $t3 = $wuc->get('variation','on');
+    my $t4 = $wuc->get('alignslice','constrained_elements');
     my $id = 0;
     my $num = scalar(@selected_species);
 
@@ -1234,6 +1235,7 @@ sub alignsliceviewbottom {
     $CONF->set('ensembl_transcript', 'compact', $t1, 1);
     $CONF->set('evega_transcript', 'compact', $t2, 1);
     $CONF->set('variation', 'on', $t3, 1 );
+    $CONF->set('constrained_elements', 'on', $t4, 1 );
     $CONF->container_width( $as->length );
     $CONF->{'_managers'}{'sub_repeat'} = $wuc->{'_managers'}{'sub_repeat'};
     $CONF->{_object} = $object;

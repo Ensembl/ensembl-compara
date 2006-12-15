@@ -47,11 +47,13 @@ sub new {
 		  keys (%alignments)) {
 
       my $sp = $alignments{$id}->{'name'};
+      my $constr_elem = $alignments{$id}->{'constrained_element'};
+      my $conserv_score = $alignments{$id}->{'conservation_score'};
 
       my @species = grep {$_ ne $species} sort keys %{$alignments{$id}->{'species'}};
 
       if ( scalar(@species) > 1) {
-	  push @multiple_alignments, [ $id, $sp, @species ];
+	  push @multiple_alignments, [ $id, $sp, $constr_elem, $conserv_score, @species ];
       } else {
 	  push @pairwise_alignments, [ $id, $species[0] ];
       }
@@ -62,11 +64,19 @@ sub new {
   }
 
   foreach my $align (@multiple_alignments) {
-      my ($id, $label, @sspecies) = @$align;
+      my ($id, $label, $constr_elem, $conserv_score, @sspecies) = @$align;
       $self->add_radiobutton( "opt_align_$id", $label );
-
       foreach my $sp (sort @sspecies ) { 
 	  $self->add_checkbox( "opt_${id}_$sp", $sp );
+      }
+      if ($constr_elem or $conserv_score) {
+        $self->add_text(" ");
+        if ($conserv_score) {
+          $self->add_checkbox( "opt_${id}_conservation_score", "Display conservation scores" );
+        }
+        if ($constr_elem) {
+          $self->add_checkbox( "opt_${id}_constrained_elem", "Display constrained elements" );
+        }
       }
       $self->add_text(" ");
   }
