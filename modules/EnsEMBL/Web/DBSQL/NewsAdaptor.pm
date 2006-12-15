@@ -217,38 +217,20 @@ sub fetch_headlines {
   my ($self, $where, $generic, $limit) = @_;
   my $results = [];
   return [] unless $self->db;
-
-  my $string;
-  if (my $sp = $where->{'species'}) {
-    if (ref($sp) eq 'ARRAY') {
-      if (scalar(@$sp) > 0) {
-        $string .= '(';
-        my $count = 0;
-        foreach my $name (@$sp) {
-          $string .= ' OR ' if $count > 0;
-          $string .= "s.name = '$name'";
-          $count++;
-        }
-        $string .= ')';
-      }
-      else {
-        $string = undef; ## empty array, so delete the criterion
-      }
-    }
-    else {
-      $string .= "s.name = '$sp'";
-    }
+  my $species = 0;
+  if ($where->{'species'} && ref($where->{'species'}) eq 'ARRAY' && scalar(@{$where->{'species'}}) > 0) {
+    $species = $where->{'species'};
   }
 
   ## add selected options to modifier strings
   my $where_str = ' AND n.release_id = "'.$where->{'release'}.'"';
-  if ($where) {
-    if ($where->{'species'}) {
-      $where_str .= ' AND n.news_item_id = i.news_item_id ';
-    }
-    $where_str .= ' AND (';
-    if ($where->{'species'}) {
-      $where_str .= $string;
+  if ($species) {
+    $where_str .= ' AND n.news_item_id = i.news_item_id  AND (';
+    my $count = 0;
+    foreach my $name (@$species) {
+      $where_str .= ' OR ' if $count > 0;
+      $where_str .= "s.name = '$name'";
+      $count++;
     }
     $where_str .= ')';
   }
@@ -282,7 +264,7 @@ sub fetch_headlines {
             n.news_cat_id = c.news_cat_id
     );
   }
-  elsif ($where->{'species'} > 0) {
+  elsif ($species) {
     $sql .= ', item_species i, species s  WHERE n.news_cat_id = c.news_cat_id AND i.species_id = s.species_id ';
   }
   else {
