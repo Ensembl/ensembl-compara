@@ -17,12 +17,14 @@ my $cgi = new CGI;
 my $incoming = $cgi->Vars;
 my %params = ();
 my %components = ();
+my @ordered_componenents = ();
 
 warn "--------------------";
 warn("AJAX: Populating fragment"); 
 
 foreach my $key (keys %{ $incoming }) {
   if ($key =~ /^component_/) {
+    push @ordered_componenents, $key;
     $components{$key} = $incoming->{$key};
     warn "COMPONENT: $key:" . $components{$key}; 
   } else {
@@ -75,7 +77,7 @@ $fragment->add_option( 'end',   $top_end   );
 warn "----> AJAX PANEL NUMBER: " . $panel_number;
 $object->__data->{'_cv_panel_no'} = $panel_number;
 warn "----> AJAX PANEL NUMBER IN OBJECT: " . $object->__data->{'_cv_panel_no'};
-foreach my $key(keys %components) {
+foreach my $key(@ordered_componenents) {
   $components{$key} =~ /(.*)::(\w+)$/;
   my $complete = $components{$key};
   my $module = $1;
