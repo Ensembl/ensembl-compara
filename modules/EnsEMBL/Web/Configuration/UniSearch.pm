@@ -43,7 +43,7 @@ sub context_menu {
   }
   my $species = $obj->species =~ /^multi$/i ? $obj->species_defs->ENSEMBL_PRIMARY_SPECIES : $obj->species;
   $self->add_entry( 'help',  'href'=>"/$species/unisearch",  'text' => 'Full text search' );
-  $self->add_entry( 'help',  'href'=>"/Multi/martview",  'icon' => '/img/biomarticon.gif', 'text' => 'BioMart data mining' );
+  $self->add_entry( 'help',  'href'=>"/biomart/martview",  'icon' => '/img/biomarticon.gif', 'text' => 'BioMart data mining' );
   return 1;
 }
 1;

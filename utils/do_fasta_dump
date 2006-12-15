@@ -1375,7 +1375,7 @@ my $warning = "#### README ####
 
 IMPORTANT: Please note you can download correlation data tables, 
 supported by Ensembl, via the highly customisable BioMart and 
-EnsMart data mining tools. See http://www.ensembl.org/multi/martview or
+EnsMart data mining tools. See http://www.ensembl.org/biomart/martview or
 http://www.ebi.ac.uk/biomart/ for more information.
 
 ";

@@ -15,7 +15,7 @@ sub new {
   );
   my $location = $self->{'location'};
   my $exportURL = sprintf "/%s/exportview?l=%s:%s-%s", $self->{'species'}, $location->seq_region_name, $location->seq_region_start, $location->seq_region_end;
-  my $martURL   = sprintf "/Multi/martview?stage_initialised=start&stage_initialised=region&stage_initialised=filter&stage=output&species=%s&chromosome_lots=1&chromosome_name=%s&chromosome_lots_fromfilt=%s&chromosome_lots_tofilt=%s&chromosome_lots_fromval=%s&chromosome_lots_toval=%s", $self->{'species'}, $location->seq_region_name, 'chrom_start', 'chrom_end', int( $location->seq_region_start), int( $location->seq_region_end );
+  my $martURL   = sprintf "/biomart/martview?stage_initialised=start&stage_initialised=region&stage_initialised=filter&stage=output&species=%s&chromosome_lots=1&chromosome_name=%s&chromosome_lots_fromfilt=%s&chromosome_lots_tofilt=%s&chromosome_lots_fromval=%s&chromosome_lots_toval=%s", $self->{'species'}, $location->seq_region_name, 'chrom_start', 'chrom_end', int( $location->seq_region_start), int( $location->seq_region_end );
   my $martFlag = 0; #  $self->{'config'}->{'species_defs'}->ENSEMBL_NO_MART == 1 ? 0 : 1;
   my $exports = { embl   => { text  => 'Flat file',
                            url   => "$exportURL;format=embl;action=format",

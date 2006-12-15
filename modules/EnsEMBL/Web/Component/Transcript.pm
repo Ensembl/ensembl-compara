@@ -191,7 +191,7 @@ sub similarity_matches {
   my $db = $transcript->get_db();
   my $entry = $transcript->gene_type || 'Ensembl';
 
-    # add table call here
+  # add table call here
   my $html;
   if ($transcript->species_defs->ENSEMBL_SITETYPE eq 'Vega') {
     $html = qq(<p></p>);
@@ -267,6 +267,8 @@ sub _sort_similarity_links{
         $text = qq($word);
       }
     }
+    warn $externalDB;
+    warn $type->db_display_name;
     if( $type->isa('Bio::EnsEMBL::IdentityXref') ) {
       $text .=' <span class="small"> [Target %id: '.$type->target_identity().'; Query %id: '.$type->query_identity().']</span>';            
       $join_links = 1;    
@@ -292,6 +294,7 @@ sub _sort_similarity_links{
       $text = "\n".'  <div class="multicol"><a href="' .$urls->get_url('AFFY_FASTAVIEW', $display_id) .'">'. $display_id. '</a></div>';
     }
     push @links, [ $type->db_display_name || $externalDB, $text ] ;
+    warn $text;
   }
   $object->__data->{'similarity_links'} = \@links ;
   return $object->__data->{'similarity_links'};
@@ -1487,7 +1490,7 @@ sub get_page_data {
 
 sub dump {
   my ( $panel, $object ) = @_;
-  $panel->print("<p>Dump of SNP data per strain (SNPs in rows, strains in columns).  For more advanced data queries use <a href='/multi/martview'>BioMart</a>. </p>");
+  $panel->print("<p>Dump of SNP data per strain (SNPs in rows, strains in columns).  For more advanced data queries use <a href='/biomart/martview'>BioMart</a>. </p>");
   my $html = qq(
    <div>
      @{[ $panel->form( 'dump_form' )->render() ]}

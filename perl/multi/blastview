@@ -1203,7 +1203,7 @@ sub get_main_panel{
           }
           else{ $status_label = 'No Hits' }
 
-          my $exp_href = ('/Multi/martview?'. 
+          my $exp_href = ('/biomart/martview?'. 
                           join( '&',
                                 "_blast_ticket=$TICKET",
                                 "_blast_result=$res_id" ) );
