@@ -842,6 +842,7 @@ sub ADD_ALL_DNA_FEATURES {
   $self->add_new_track_cdna( 'dog_cdna',   'Dog cDNAs',     $POS++, @_ );
   $self->add_new_track_cdna( 'rat_cdna',   'Rat cDNAs',     $POS++, @_ );
   $self->add_new_track_cdna( 'platypus_cdnas', 'Platypus cDNAs',   $POS++, @_ );
+  $self->add_new_track_cdna( 'platypus_cdna', 'Platypus cDNAs',   $POS++, @_ );
 
   $self->add_new_track_cdna( 'zfish_cdna', 'D.rerio cDNAs', $POS++,
         'SUBTYPE'    => sub { return $_[0] =~ /WZ/ ? 'WZ' : ( $_[0] =~ /IMCB/ ? 'IMCB_HOME' : 'EMBL' ) },
@@ -918,6 +919,7 @@ sub ADD_ALL_EST_FEATURES {
   $self->add_new_track_est( 'cbriggsae_est', 'C. elegans ESTs', $POS++, @_ );
   $self->add_new_track_est( 'scerevisiae_est', 'S. cerevisiae ESTs', $POS++, @_ );
   $self->add_new_track_est( 'chicken_est',  'G.gallus ESTs',   $POS++, @_ );
+  $self->add_new_track_est( 'dog_est_part2',  'C.familiaris ESTs',   $POS++, @_ );
   $self->add_new_track_est( 'macaque_est',  'Macaque ESTs',   $POS++, @_ );
   $self->add_new_track_est( 'yeast_est',  'Yeast ESTs',   $POS++, @_ );
   $self->add_new_track_est( 'human_est',    'Human ESTs',      $POS++, @_ );
@@ -1179,7 +1181,7 @@ sub ADD_ALL_TRANSCRIPTS {
   $self->add_new_track_transcript( 'jamboree_cdnas',   'X.trop. jambo. genes',   'prot_gene',   $POS++, @_ );
   $self->add_new_track_transcript( 'oxford_genes', 'Oxford Genes', 'oxford_genes', $POS++, @_ );
   $self->add_new_track_transcript( 'oxford_fgu', 'Oxford FGU Genes', 'oxford_fgu', $POS++, @_ );
-  $self->add_new_track_transcript( 'platypus_protein', 'Platypus/Other Genes', 'platypus_protein', $POS++, @_ );
+#  $self->add_new_track_transcript( 'platypus_protein', 'Platypus/Other Genes', 'platypus_protein', $POS++, @_ );
 #  $self->add_new_track_transcript( 'medaka_protein',   'Medaka genes',   'medaka_gene',   $POS++, @_ );
   $self->add_new_track_transcript( 'gff_prediction',   'MGP genes',   'medaka_gene',   $POS++, @_ );
 
@@ -1232,9 +1234,9 @@ sub ADD_ALL_OLIGO_TRACKS {
   my $POS  = shift || 4000;
   my %T = map { %{ $self->{'species_defs'}{'_storage'}->{$_}{'OLIGO'}||{} } }
           keys %{$self->{'species_defs'}{'_storage'}};
-  foreach (keys %{$self->{'species_defs'}{'_storage'}}) {
-    warn "$_\n  ",join "\n  ", keys %{ $self->{'species_defs'}{'_storage'}->{$_}{'OLIGO'} };
-  }
+#  foreach (keys %{$self->{'species_defs'}{'_storage'}}) {
+#    warn "$_\n  ",join "\n  ", keys %{ $self->{'species_defs'}{'_storage'}->{$_}{'OLIGO'} };
+#  }
   my @OLIGO = sort keys %T;
   foreach my $chipset (@OLIGO) {
     ( my $T = lc($chipset) ) =~ s/\W/_/g;
@@ -1358,11 +1360,11 @@ sub ADD_GENE_TRACKS {
     'gene_col'             => 'oxford', @_
   );
 
-  $self->add_new_track_gene( 'platypus_protein', 'Platypus/Other Genes', 'platypus_protein', $POS++,
-    'logic_name'           => 'platypus_protein other_protein',
-    'gene_label'           => sub { return $_[0]->stable_id },
-    'gene_col'             => sub { return $_[0]->analysis->logic_name }, @_
-  );
+#  $self->add_new_track_gene( 'platypus_protein', 'Platypus/Other Genes', 'platypus_protein', $POS++,
+#    'logic_name'           => 'platypus_protein other_protein',
+#    'gene_label'           => sub { return $_[0]->stable_id },
+#    'gene_col'             => sub { return $_[0]->analysis->logic_name }, @_
+#  );
 
 
 #  $self->add_new_track_gene( 'VectorBase_0_5', 'VectorBase proteins', 'vectorbase_0_5', $POS++,
@@ -1404,6 +1406,18 @@ sub ADD_GENE_TRACKS {
     $POS++, 'database' => 'otherfeatures', 'gene_col' => 'genome_project',
     'available' => "database_features ENSEMBL_OTHERFEATURES.medaka_genome_project",
     'label_threshold' => 500,
+     @_ );
+  $self->add_new_track_gene( 'oxford_FGU_ext', 'Oxford FGU Genes', 'oxford_fgu', $POS++,
+    'gene_col'   => 'oxford_fgu', 'gene_label' => sub { return $_[0]->stable_id },
+    'database' => 'otherfeatures', 'logicname' => 'oxford_fgu',
+    'available' => "database_features ENSEMBL_OTHERFEATURES.oxford_fgu",
+    @_
+  );
+
+  $self->add_new_track_gene( 'oxford_fgu_ext', 'Singapore EST Genes', 'est_gene', $POS++,
+     'database' => 'otherfeatures', 'gene_col' => 'estgene', 
+     'available' => "database_features ENSEMBL_OTHERFEATURES.singapore_est",
+     'label_threshold' => 500,
      @_ );
   $self->add_new_track_gene( 'singapore_est', 'Singapore EST Genes', 'est_gene', $POS++,
      'database' => 'otherfeatures', 'gene_col' => 'estgene', 

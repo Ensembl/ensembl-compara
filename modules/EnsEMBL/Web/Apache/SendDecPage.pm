@@ -7,12 +7,12 @@ use SiteDefs qw(:ALL);
 use EnsEMBL::Web::Document::Renderer::Apache;
 use EnsEMBL::Web::Document::Panel;
 use EnsEMBL::Web::Document::Static;
-use EnsEMBL::Web::SpeciesDefs;
+use EnsEMBL::Web::RegObj;
 #use EnsEMBL::Web::User;
 use Data::Dumper;
 use EnsEMBL::Web::Root;
 
-our $SD = EnsEMBL::Web::SpeciesDefs->new();
+warn $ENSEMBL_WEB_REGISTRY;
 
 use Apache2::Const qw(:common :methods :http);
 #############################################################
@@ -98,13 +98,13 @@ warn "SEND DEC PAGE HANDLER..................";
   #  $pageContent =~ s/<!--#include\s+virtual\s*=\s*\"(.*)\"\s*-->/template_INCLUDE($r, $1)/eg;
 
   my $renderer = new EnsEMBL::Web::Document::Renderer::Apache( $r );
-  my $page     = new EnsEMBL::Web::Document::Static( $renderer, undef, $SD );
+  my $page     = new EnsEMBL::Web::Document::Static( $renderer, undef, $ENSEMBL_WEB_REGISTRY->species_defs );
 
   $page->_initialize();
 
   $page->title->set( $pageContent =~ /<title>(.*?)<\/title>/sm ? $1 : 'Untitled: '.$r->uri );
   # warn $ENV{'ENSEMBL_SPECIES'};
-  #$page->masthead->species = $SD->SPECIES_COMMON_NAME if $ENV{'ENSEMBL_SPECIES'};
+  #$page->masthead->ies = $ENSEMBL_WEB_REGISTRY->species_defs->SPECIES_COMMON_NAME if $ENV{'ENSEMBL_SPECIES'};
 
   my $head = $pageContent =~ /<head>(.*?)<\/head>/sm ? $1 : '';
   while($head=~s/<script(.*?)>(.*?)<\/script>//sm) {
@@ -145,8 +145,8 @@ sub breadcrumbs {
   foreach my $part ( @DATA ) {
     next if ($part eq 'info' && $level == 0); ## omit top-level info [OUGHT TO OMIT ALL DIRS WITH NO INDEX!]
     $DIR.=$part.'/';
-    if( $DIR ne '/' && $SD->ENSEMBL_BREADCRUMBS->{$DIR} ) {
-      $out .= sprintf qq(<a href="%s" title="%s" class="breadcrumb">%s</a> $pointer ), $DIR, $SD->ENSEMBL_BREADCRUMBS->{$DIR}[1], $SD->ENSEMBL_BREADCRUMBS->{$DIR}[0];
+    if( $DIR ne '/' && $ENSEMBL_WEB_REGISTRY->species_defs->ENSEMBL_BREADCRUMBS->{$DIR} ) {
+      $out .= sprintf qq(<a href="%s" title="%s" class="breadcrumb">%s</a> $pointer ), $DIR, $ENSEMBL_WEB_REGISTRY->species_defs->ENSEMBL_BREADCRUMBS->{$DIR}[1], $ENSEMBL_WEB_REGISTRY->species_defs->ENSEMBL_BREADCRUMBS->{$DIR}[0];
       $level++;
     }
   }
@@ -156,24 +156,24 @@ sub breadcrumbs {
 sub template_SPECIESINFO {
   my( $r, $code ) = @_;
   my($sp,$code) = split /:/, $code;
-  return $SD->other_species($sp,$code);
+  return $ENSEMBL_WEB_REGISTRY->species_defs->other_ies($sp,$code);
 }
 sub template_SPECIESDEFS {
   my( $r, $code ) = @_;
-  return $SD->$code;
+  return $ENSEMBL_WEB_REGISTRY->species_defs->$code;
 }
 
 sub template_SPECIES {
   my( $r, $code ) = @_;
   return $ENV{'ENSEMBL_SPECIES'} if $code eq 'code';
-  return $SD->SPECIES_COMMON_NAME if $code eq 'name';
-  return $SD->SPECIES_RELEASE_VERSION if $code eq 'version';
+  return $ENSEMBL_WEB_REGISTRY->species_defs->SPECIES_COMMON_NAME if $code eq 'name';
+  return $ENSEMBL_WEB_REGISTRY->species_defs->SPECIES_RELEASE_VERSION if $code eq 'version';
   return "**$code**";
 }
 
 sub template_RELEASE {
   my( $r, $code ) = @_;
-  return $SD->VERSION;
+  return $ENSEMBL_WEB_REGISTRY->species_defs->VERSION;
 }
 
 sub template_INCLUDE {
@@ -207,13 +207,13 @@ sub template_SCRIPT {
 
 sub template_PAGE {
   my( $r, $rel ) = @_;
-  my $root = $SD->ENSEMBL_BASE_URL;
+  my $root = $ENSEMBL_WEB_REGISTRY->species_defs->ENSEMBL_BASE_URL;
   return "$root/$rel"; 
 }
 
 sub template_LINK {
   my( $r, $rel ) = @_;
-  my $root = $SD->ENSEMBL_BASE_URL;
+  my $root = $ENSEMBL_WEB_REGISTRY->species_defs->ENSEMBL_BASE_URL;
   return qq(<a href="$root/$rel">$root/$rel</a>); 
 }
 

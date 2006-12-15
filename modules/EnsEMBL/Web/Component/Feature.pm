@@ -5,7 +5,7 @@ package EnsEMBL::Web::Component::Feature;
 # - karyotypes, spreadsheets of data, etc.
 #-------------------------------------------------------------------
 
-use EnsEMBL::Web::SpeciesDefs;
+use EnsEMBL::Web::RegObj;
 use EnsEMBL::Web::Component;
 use EnsEMBL::Web::Component::Chromosome;
 use Data::Dumper;
@@ -312,8 +312,7 @@ sub key_to_pointers {
 sub show_karyotype {
   my( $panel, $object ) = @_;
   # sanity check - does this species have chromosomes?
-  my $SD = EnsEMBL::Web::SpeciesDefs->new();
-  my @chr = @{ $SD->get_config($object->species, 'ENSEMBL_CHROMOSOMES') || [] };
+  my @chr = @{ $object->species_defs->get_config($object->species, 'ENSEMBL_CHROMOSOMES') || [] };
   if (@chr) { 
     my $karyotype = create_karyotype($panel, $object);
     $panel->print($karyotype->render);

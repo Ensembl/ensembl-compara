@@ -126,7 +126,6 @@ sub set {
   return unless $force || exists $self->{'_options'}{$key};
   return if $self->{'_options'}{$key}{'user'}  eq $value;
   $self->altered = 1;
-warn "SETTING ",ref($value)," $value, $key";
   $self->{'_options'}{$key}{'user'}  = $value;
 }
 
@@ -143,14 +142,11 @@ sub get {
   return undef unless exists $self->{'_options'}{$key};
   if( exists ($self->{'_options'}{$key}{'user'}) ) {
     if( ref($self->{'_options'}{$key}{'user'}) eq 'ARRAY' ) {
-warn "HERE....";
-warn @{$self->{'_options'}->{$key}->{'user'}};
       return @{$self->{'_options'}->{$key}->{'user'}};
     }
     return $self->{'_options'}{$key}{'user'};
   }
   if( ref($self->{'_options'}{$key}{'default'}) eq 'ARRAY' ) {
-warn "THERE....";
     return @{$self->{'_options'}{$key}{'default'}};
   }
   return $self->{'_options'}{$key}{'default'};

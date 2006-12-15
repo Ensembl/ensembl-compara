@@ -243,7 +243,6 @@ sub das {
   }
 
   foreach my $src ($object->param('das_sources')) {
-warn "................ $src ...............";
     $params .=";das_sources=$src";
   }
 
@@ -257,7 +256,6 @@ warn "................ $src ...............";
     }
   }
 
-  warn "DAS SOURCES ... ", $object->param('das_sources');
   my %selected_sources = map {$_ => 1} $object->param('das_sources');
 
   my @mvalues;

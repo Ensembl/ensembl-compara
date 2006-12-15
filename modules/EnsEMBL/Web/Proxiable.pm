@@ -5,7 +5,6 @@ use warnings;
 no warnings "uninitialized";
 
 use EnsEMBL::Web::RegObj;
-use EnsEMBL::Web::SpeciesDefs;
 use EnsEMBL::Web::User;
 use EnsEMBL::Web::ExtURL;
 use EnsEMBL::Web::UserConfigAdaptor;
@@ -96,7 +95,7 @@ sub problem {
 sub clear_problems { $_[0]{'data'}{'_problem'} = []; }
 
 sub user { $_[0]{'data'}{'_user'}         ||= EnsEMBL::Web::User->new(); }
-sub species_defs    { $_[0]{'data'}{'_species_defs'} ||= EnsEMBL::Web::SpeciesDefs->new(); }
+sub species_defs    { $_[0]{'data'}{'_species_defs'} ||= $ENSEMBL_WEB_REGISTRY->species_defs; }
 sub web_user_db { $_[0]{'data'}{'_web_user_db'}  ||= EnsEMBL::Web::DBSQL::UserDB->new( $_[0]->apache_handle ); }
 sub apache_handle { $_[0]{'data'}{'_apache_handle'}; }
 

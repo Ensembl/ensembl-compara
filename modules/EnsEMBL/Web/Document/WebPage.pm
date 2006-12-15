@@ -3,7 +3,6 @@ package EnsEMBL::Web::Document::WebPage;
 use EnsEMBL::Web::Root;
 use EnsEMBL::Web::Proxy::Factory;
 use EnsEMBL::Web::Timer;
-use EnsEMBL::Web::SpeciesDefs;
 use Exporter;
 use Apache2::Const qw(:common M_GET);
 use EnsEMBL::Web::DBSQL::UserDB;
@@ -372,9 +371,9 @@ sub logout {
 
   ## setting a (blank) expired cookie deletes the current one
   my $cookie = CGI::Cookie->new(
-      -name    => EnsEMBL::Web::SpeciesDefs->ENSEMBL_USER_COOKIE,
+      -name    => $ENSEMBL_WEB_REGISTRY->species_defs->ENSEMBL_USER_COOKIE,
       -value   => '',
-      -domain  => EnsEMBL::Web::SpeciesDefs->ENSEMBL_COOKIEHOST,
+      -domain  => $ENSEMBL_WEB_REGISTRY->species_defs->ENSEMBL_COOKIEHOST,
       -path    => "/",
       -expires => "Monday, 31-Dec-2000 23:59:59 GMT"
   );
@@ -391,9 +390,9 @@ sub login {
   warn "USER LOGIN: " . $user_id; 
   my $encrypted = EnsEMBL::Web::DBSQL::UserDB::encryptID($user_id);
   my $cookie = CGI::Cookie->new(
-      -name    => EnsEMBL::Web::SpeciesDefs->ENSEMBL_USER_COOKIE,
+      -name    => $ENSEMBL_WEB_REGISTRY->species_defs->ENSEMBL_USER_COOKIE,
       -value   => $encrypted,
-      -domain  => EnsEMBL::Web::SpeciesDefs->ENSEMBL_COOKIEHOST,
+      -domain  => $ENSEMBL_WEB_REGISTRY->species_defs->ENSEMBL_COOKIEHOST,
       -path    => "/",
       -expires => "Monday, 31-Dec-2010 23:59:59 GMT"
   );

@@ -818,7 +818,7 @@ sub alignments {
   my $status = 'status_gene_alignments';
   my $FLAG = 0;
   my $URL = _flip_URL( $gene, $status );
-
+  if( $gene->param( $status ) eq 'off' ) { $panel->add_row( $label, '', "$URL=on" ); return 0; }
   my $html = qq{<p><b>This gene can be viewed in genomic alignment with other species</b></p>} ;
 
   my %alignments = $gene->species_defs->multiX('ALIGNMENTS');
