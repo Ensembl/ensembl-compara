@@ -557,7 +557,7 @@ sub _render_configs {
   }
   else {
     $html .= qq(<p class="center"><img src="/img/config_example.gif" /></p>);
-    $html .= qq(<p class="center">You haven't saved any Ensembl view configurations. <a href='/info'>Learn more about configurations &rarr;</a>);
+    $html .= qq(<p class="center">You haven't saved any Ensembl view configurations. <a href='/info/help/custom.html#configurations'>Learn more about configurations &rarr;</a>);
   }
 
   return $html;
