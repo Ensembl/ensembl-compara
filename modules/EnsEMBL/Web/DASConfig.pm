@@ -107,7 +107,7 @@ sub is_altered {
 sub delete {
   my $self = shift;
   $self->mark_deleted;
-  $self->set_data({});
+#  $self->set_data();
 }
 
 sub load {

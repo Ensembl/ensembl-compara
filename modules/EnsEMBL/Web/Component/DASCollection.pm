@@ -458,10 +458,10 @@ sub added_sources {
     if( $das_adapt->conftype eq 'internal' ){ # internal DAS source : configured within INI file
       $das_action = '&nbsp;';
     } elsif( $das_adapt->conftype eq 'url' ){ # URL DAS source : no edit, only delete
-      my $das_action = sprintf("<a href=\"%s;_urldas_delete=%s\"><image src=\"/img/buttons/del_small.gif\" alt=\"Delete source \'%s\'\"/></a>", $object->param("selfURL"), $das_name, $das_name );
+      my $das_action = sprintf("<a href=\"%s;_urldas_delete=%s\"><img src=\"/img/buttons/del_small.gif\" alt=\"Delete source \'%s\'\"/></a>", $object->param("selfURL"), $das_name, $das_name );
     } else{ # Read-write source; Provide del/edit buttons
-      my $delete_link = sprintf("<a href=\"%s;_das_delete=%s\"><image src=\"/img/buttons/del_small.gif\" alt=\"Delete source \'%s\'\"/></a>", $object->param("selfURL"), $das_name, $das_name );
-      my $edit_link = sprintf("<a href=\"%s;_das_edit=%s\"><image src=\"/img/buttons/edit_small.gif\" alt=\"Edit source \'%s\'\"/></a>", $object->param("selfURL"), $das_name, $das_name );
+      my $delete_link = sprintf("<a href=\"%s;_das_delete=%s\"><img src=\"/img/buttons/del_small.gif\" alt=\"Delete source \'%s\'\"/></a>", $object->param("selfURL"), $das_name, $das_name );
+      my $edit_link = sprintf("<a href=\"%s;_das_edit=%s\"><img src=\"/img/buttons/edit_small.gif\" alt=\"Edit source \'%s\'\"/></a>", $object->param("selfURL"), $das_name, $das_name );
       $das_action = $edit_link.$delete_link;
     }
     my @cparams = qw ( conf_script db gene peptide transcript c w h l vc_start vc_end region);
@@ -513,7 +513,7 @@ sub added_sources {
 ');
       X.focus();
       void(0)];
-    my $das_send = qq{<a href="$js"><image src="/img/buttons/mail.png" alt="Send source to a friend"/></a>};
+    my $das_send = qq{<a href="$js"><img src="/img/buttons/mail.png" alt="Send source to a friend"/></a>};
     my $das_url = $das_adapt->domain;
     my $das_dsn = $das_adapt->dsn || '&nbsp;';
     my $das_type = $das_adapt->type ? $object->getCoordinateSystem($das_adapt->type) : '&nbsp';
