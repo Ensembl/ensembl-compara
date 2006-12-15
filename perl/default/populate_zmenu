@@ -6,6 +6,7 @@ no warnings "uninitialized";
 
 use EnsEMBL::Web::Tools::PluginLocator;
 use EnsEMBL::Web::Interface::ZMenuCollection;
+use EnsEMBL::Web::RegObj;
 
 warn("AJAX: Populating ZMENU"); 
 
@@ -13,7 +14,7 @@ my $T = new CGI;
 my $type = $T->param('type');
 my $ident = $T->param('ident');
 
-my $species_defs = EnsEMBL::Web::SpeciesDefs->new();
+my $species_defs = $ENSEMBL_WEB_REGISTRY->species_defs;
 
 my $locator = EnsEMBL::Web::Tools::PluginLocator->new((
                                locations => [ 

@@ -8,7 +8,7 @@ no warnings "uninitialized";
 
 use CGI;
 
-use EnsEMBL::Web::SpeciesDefs;
+use EnsEMBL::Web::RegObj;
 use EnsEMBL::Web::Document::WebPage;
 use EnsEMBL::Web::Document::Panel::Fragment;
 use EnsEMBL::Web::Root;
@@ -58,7 +58,7 @@ my $webpage= new EnsEMBL::Web::Document::WebPage(
 );
 
 my $object = $webpage->dataObjects->[0];
-my $species_defs = EnsEMBL::Web::SpeciesDefs->new();
+my $species_defs = $ENSEMBL_WEB_REGISTRY->species_defs;
 my $fragment = EnsEMBL::Web::Document::Panel::Fragment->new(
                                        object => $object,
                                        'code' => $code,

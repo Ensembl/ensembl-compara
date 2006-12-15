@@ -30,12 +30,11 @@ no warnings 'uninitialized';
 
 $| = 1;
 
-use SpeciesDefs;
+use EnsEMBL::Web::RegObj;
 
 my $HELPVIEW = "/perl/helpview";
 my $HELPGFX = "/gfx/helpview";
-my $species_defs = SpeciesDefs->new;
-my $TMPDIR = $species_defs->ENSEMBL_TMP_DIR;
+my $TMPDIR = $ENSEMBL_WEB_REGISTRY->species_defs->ENSEMBL_TMP_DIR;
 
 print qq(Content-type: text/html\n\n);
 print <<EOH;

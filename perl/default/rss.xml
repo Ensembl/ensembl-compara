@@ -1,7 +1,7 @@
-use EnsEMBL::Web::SpeciesDefs;
+use EnsEMBL::Web::RegObj;
 use EnsEMBL::Web::DBSQL::NewsAdaptor;
 
-my $SD = EnsEMBL::Web::SpeciesDefs->new;
+my $SD = $ENSEMBL_WEB_REGISTRY->species_defs;
 my $release_id = $SiteDefs::VERSION;
 
 # Connect to web database and get news adaptor

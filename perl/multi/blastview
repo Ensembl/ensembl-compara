@@ -22,7 +22,7 @@ use EnsEMBL::Web::UserConfigAdaptor;
 use EnsEMBL::Web::Container::HSPContainer;
 # use EnsEMBL::HTML::Page;
 
-use EnsEMBL::Web::SpeciesDefs;
+use EnsEMBL::Web::RegObj;
 use EnsEMBL::Web::DBSQL::DBConnection;
 use Bio::Tools::Run::EnsemblSearchMulti;
 use EnsEMBL::Web::BlastView::Meta;
@@ -45,7 +45,7 @@ use vars qw( %ERRORS ); # Errors per-stage
 
 BEGIN {
   $META_DATA = EnsEMBL::Web::BlastView::MetaDataBlast->config || die( "Can't configure MetaData" );
-  $SPECIES_DEFS = EnsEMBL::Web::SpeciesDefs->new;
+  $SPECIES_DEFS = $ENSEMBL_WEB_REGISTRY->species_defs;
   $DBCONNECTION = EnsEMBL::Web::DBSQL::DBConnection->new( undef, $SPECIES_DEFS );
 }
 
@@ -1810,14 +1810,8 @@ sub populate_karyotype{
   my $chr_maxln= $SPECIES_DEFS->get_config( $sp, 'MAX_CHR_LENGTH'      );
   my $site_type= $SPECIES_DEFS->get_config( $sp, 'ENSEMBL_SITETYPE'    );
 
-  my $uca          = EnsEMBL::Web::UserConfigAdaptor->new(
-    $site_type,
-    undef,
-    undef,
-    undef,
-    $SPECIES_DEFS
-  );
-  my $web_config   = $uca->getUserConfig('Vkaryotype');
+  my $session      = $ENSEMBL_WEB_REGISTRY->get_session;
+  my $web_config   = $session->get_userconfig('Vkaryotype');
 
   my $num_chrs = scalar( @$chrs_ref );
   $web_config->{'_rows'}                   = int( ($num_chrs-1)/12 ) + 1;
@@ -1878,10 +1872,8 @@ sub draw_hsp_vs_query{
   my $colour_row_spacer = qq(
 <td width="8"><small>&nbsp;</small></td>);
 
-  my $wuca = EnsEMBL::Web::UserConfigAdaptor->new(
-    undef, undef, undef, undef, $SPECIES_DEFS );
   my $bucket = EnsEMBL::Web::Container::HSPContainer->new($result, $aligns);
-  my $uconf  = $wuca->getUserConfig('hsp_query_plot');
+  my $uconf  = $ENSEMBL_WEB_REGISTRY->get_session->get_userconfig('hsp_query_plot');
   my $hsp_dc = Bio::EnsEMBL::DrawableContainer->new( $bucket, $uconf);
 
   my $fi = new EnsEMBL::Web::File::Image( $SPECIES_DEFS );

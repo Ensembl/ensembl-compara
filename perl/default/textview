@@ -9,8 +9,8 @@ use constant MAXDOCS_SINGLE  => 1000;
 
 use EnsEMBL::Web::Document::Dynamic;
 use EnsEMBL::Web::Document::Renderer::Apache;
-use EnsEMBL::Web::SpeciesDefs;
-our $SD = EnsEMBL::Web::SpeciesDefs->new();
+use EnsEMBL::Web::RegObj;
+our $SD = $ENSEMBL_WEB_REGISTRY->species_defs;
 use EnsEMBL::Web::Factory::Search::AVIndexUtils;
 use CGI;
 

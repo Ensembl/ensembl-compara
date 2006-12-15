@@ -1,10 +1,10 @@
-use EnsEMBL::Web::SpeciesDefs;
+use EnsEMBL::Web::RegObj;
 use EnsEMBL::Web::ExtIndex;
 use Data::Dumper;
 use CGI;
 
 my $T = new CGI;
-my $indexer = new EnsEMBL::Web::ExtIndex( new EnsEMBL::Web::SpeciesDefs );
+my $indexer = new EnsEMBL::Web::ExtIndex( $ENSEMBL_WEB_REGISTRY->species_defs );
 my $result_ref;
 my @RES;
 print "Content-type: text/plain\n\n";
