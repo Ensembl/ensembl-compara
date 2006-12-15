@@ -849,13 +849,37 @@ sub init {
 
       next if ( scalar(@species) == 1);
       my $label = $alignments{$id}->{'name'};
+      my $short = $label;
+      $short =~ s/^(\d+).* (\w+)$/$1-way \L$2/i;
+      my $color = "pink2";
+      my $available = "multialignment $id";
+      my $jump_to_alignslice = 1;
 
-      push @multimethods, [ $id, 'pink', $label, $label, $id ];
+      push @multimethods, [ $alignments{$id}->{'type'}, $color, $short, $label, $id, $available, $jump_to_alignslice ];
+  }
+
+  %alignments = $self->{'species_defs'}->multiX('CONSTRAINED_ELEMENTS');
+  foreach my $id (
+		  sort { 10 * ($alignments{$a}->{'type'} cmp $alignments{$b}->{'type'}) + ($a <=> $b) }
+		  grep { $alignments{$_}->{'species'}->{$species} } 
+		  keys (%alignments)) {
+
+
+      my @species = grep {$_ ne $species} sort keys %{$alignments{$id}->{'species'}};
+
+      next if ( scalar(@species) == 1);
+      my $label = $alignments{$id}->{'name'};
+      my $short = "constrain elem";
+      my $color = "pink4";
+      my $available = "constrained_element $id";
+      my $jump_to_alignslice = 0;
+
+      push @multimethods, [ $alignments{$id}->{'type'}, $color, $short, $label, $id, $available, $jump_to_alignslice ];
   }
 
   foreach my $METHOD (@multimethods) {
       $compara++;
-      my $KEY = lc($METHOD->[0]).'_match';
+      my $KEY = lc($METHOD->[4]).'_match';
       $self->{'general'}->{'contigviewbottom'}{$KEY} = {
         'glyphset' => 'multiple_alignment',
         'species'  => $species,
@@ -865,11 +889,12 @@ sub init {
         'pos'      => $compara+300,
         'col'      => $METHOD->[1],
         'str'      => 'f',
-        'available'=> "multialignment ".$METHOD->[0],
+        'available'=> $METHOD->[5],
         'method'   => $METHOD->[0],
 	'method_id' => $METHOD->[4],
         'label'    => $METHOD->[2],
         'title'    => $METHOD->[3],
+        'jump_to_alignslice'    => $METHOD->[6],
       };
       push @{ $self->{'general'}->{'contigviewbottom'}{ '_artefacts'} }, $KEY;
       push @{ $self->{'general'}->{'contigviewbottom'}{'_settings'}{'compara'} },  [ $KEY , $METHOD->[3] ];

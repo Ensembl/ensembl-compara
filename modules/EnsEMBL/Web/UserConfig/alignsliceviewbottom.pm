@@ -40,7 +40,7 @@ sub init {
 ## The following are the extra fugu bits... 
 ## Only features whose key is in this array gets displayed as a track....
        qw( repeat_lite ),
-       qw( alignment variation stranded_contig ruler alignscalebar),
+       qw( constrained_elements alignment variation stranded_contig ruler alignscalebar),
     ],
     '_options'  => [qw(on pos col hi low dep str src known unknown ext)],
     '_names'   => {
@@ -409,6 +409,41 @@ sub init {
       push @{ $self->{'general'}->{'alignsliceviewbottom'}{ '_artefacts'} }, $KEY;
       push @{ $self->{'general'}->{'alignsliceviewbottom'}{'_settings'}{'aligncompara'} },  [ $KEY , $label ];
 
+  }
+
+
+
+  %alignments = $self->{'species_defs'}->multiX('CONSTRAINED_ELEMENTS');
+  foreach my $id (
+		  sort { 10 * ($alignments{$a}->{'type'} cmp $alignments{$b}->{'type'}) + ($a <=> $b) }
+		  grep { $alignments{$_}->{'species'}->{$species} } 
+		  keys (%alignments)) {
+
+
+      my @species = grep {$_ ne $species} sort keys %{$alignments{$id}->{'species'}};
+
+      next if ( scalar(@species) == 1);
+      my $label = $alignments{$id}->{'name'};
+      my $short = "constrain elem";
+      my $color = "pink4";
+      my $available = "constrained_element $id";
+
+      $self->{'general'}->{'alignsliceviewbottom'}{'constrained_elements'} = {
+        'glyphset' => 'multiple_alignment',
+        'species'  => $species,
+        'compact'  => 1,
+        'dep'      => 6,
+        'pos'      => 3300,
+        'col'      => $color,
+        'str'      => 'f',
+        'available'=> $available,
+        'method'   => $alignments{$id}->{'type'},
+	'method_id' => $id,
+        'label'    => $short,
+        'title'    => $label,
+      };
+#       push @{ $self->{'general'}->{'contigviewbottom'}{ '_artefacts'} }, $KEY;
+#       push @{ $self->{'general'}->{'contigviewbottom'}{'_settings'}{'compara'} },  [ $KEY , $METHOD->[3] ];
   }
  
   my $POS = $self->ADD_ALL_AS_TRANSCRIPTS( 0 );
