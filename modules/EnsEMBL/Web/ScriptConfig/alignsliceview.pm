@@ -34,26 +34,27 @@ sub init {
     image_width    700
     context    100000
 
-    opt_align_216 off
-opt_216_Homo_sapiens on
-opt_216_Macaca_mulatta on
-opt_216_Pan_troglodytes on
+    opt_align_238 off
+opt_238_Homo_sapiens on
+opt_238_Pan_troglodytes
+opt_238_Macaca_mulatta
+opt_238_Bos_taurus on
+opt_238_Canis_familiaris on
+opt_238_Mus_musculus on
+opt_238_Rattus_norvegicus on
 
-    opt_align_192 off
-opt_192_Homo_sapiens on
-opt_192_Bos_taurus on
-opt_192_Canis_familiaris on
-opt_192_Mus_musculus on
-opt_192_Rattus_norvegicus on
-
-    opt_align_193 off
-opt_193_Homo_sapiens on
-opt_193_Bos_taurus on
-opt_193_Canis_familiaris on
-opt_193_Gallus_gallus on
-opt_193_Mus_musculus on
-opt_193_Monodelphis_domestica on
-opt_193_Rattus_norvegicus on
+    opt_align_240 off
+opt_240_Homo_sapiens on
+opt_240_Pan_troglodytes
+opt_240_Macaca_mulatta
+opt_240_Bos_taurus on
+opt_240_Canis_familiaris on
+opt_240_Gallus_gallus on
+opt_240_Mus_musculus on
+opt_240_Monodelphis_domestica on
+opt_240_Rattus_norvegicus on
+opt_240_constrained_elem on
+opt_240_conservation_score on
 
     opt_align_4 off
     opt_align_171 off
