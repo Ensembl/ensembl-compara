@@ -57,7 +57,7 @@ sub _initialize {
   }
 
   # add handy-dandy collapsing menu script
-  $self->javascript->add_source('/js/core.js');
+  $self->javascript->add_source('/js/core42.js');
   $self->javascript->add_source('/js/prototype.js');
   $self->javascript->add_source('/js/scriptaculous.js');
   $self->javascript->add_source('/js/hier_menu.js');
