@@ -591,7 +591,7 @@ sub location {
 
     # alternative (Vega) coordinates
     my $alt_assembly = $object->species_defs->ALTERNATIVE_ASSEMBLY;
-    if ( $alt_assembly and (lc($object->source) eq 'vega_external' || lc($object->source) eq 'vega_havana') ) {
+    if ( $alt_assembly and (lc($object->source) =~ /vega/)) {
       # set dnadb to 'vega' so that the assembly mapping is retrieved from there
       my $reg = "Bio::EnsEMBL::Registry";
       my $orig_group = $reg->get_DNAAdaptor($object->species, "vega")->group;
