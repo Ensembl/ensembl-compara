@@ -4,6 +4,7 @@ use strict;
 
 use EnsEMBL::Web::Configuration;
 use EnsEMBL::Web::Interface::FragmentCollection;
+use Apache2::RequestUtil;
 use CGI;
 
 our @ISA = qw( EnsEMBL::Web::Configuration );
@@ -494,9 +495,17 @@ sub contigview {
   my @rendered_panels = ();
   my @fragment_panels = ();
   my $ajax_ideogram = 'off';
-  my $ajax_overview = 'on';
-  my $ajax_detailed = 'on';
-  my $ajax_zoom     = 'on';
+  my $ajax_overview = 'off';
+  my $ajax_detailed = 'off';
+  my $ajax_zoom     = 'off';
+
+  my $r = Apache2::RequestUtil->request();
+  my %cookies = CGI::Cookie->parse($r->headers_in->{'Cookie'});
+  if ($cookies{'ENSEMBL_AJAX'} ne 'none') {
+    $ajax_overview = 'on';
+    $ajax_detailed = 'on';
+    $ajax_zoom = 'on';
+  }
 
   my $max_length = ($obj->species_defs->ENSEMBL_GENOME_SIZE||1) * 1.001e6;
 
