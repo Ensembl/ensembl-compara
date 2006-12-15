@@ -491,7 +491,7 @@ sub _render_bookmarks {
                       'sortable' => $bookmark->name,
                       'shareable' => 1,
                       'edit_url' => 'bookmark', 
-                      'delete_url' => 'remove_bookmark',
+                      'delete_url' => 'remove_record',
                       'data' => [
       '<a href="' . $bookmark->url . '" title="' . $bookmark->description . '">' . $bookmark->name . '</a>', '&nbsp;' 
     ]};

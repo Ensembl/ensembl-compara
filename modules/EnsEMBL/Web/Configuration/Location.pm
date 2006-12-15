@@ -496,6 +496,7 @@ sub contigview {
   my $ajax_ideogram = 'off';
   my $ajax_overview = 'on';
   my $ajax_detailed = 'on';
+  my $ajax_zoom     = 'on';
 
   my $max_length = ($obj->species_defs->ENSEMBL_GENOME_SIZE||1) * 1.001e6;
 
@@ -629,6 +630,18 @@ sub contigview {
 
 
     # base pair panel
+    my $base_fragment = $self->new_panel('Fragment',
+                                 'code' => "fragment_4",
+                                caption => "Basepair view",
+                                 status => 'panel_zoom',
+                                loading => 'yes',
+                                display => 'on',
+                                           @common);
+    $base_fragment->add_components(qw(
+      nav   EnsEMBL::Web::Component::Location::contigviewzoom_nav
+      image EnsEMBL::Web::Component::Location::contigviewzoom
+                  ));
+
     my $base = $self->new_panel( 'Image',
       'code'    => "basepair_#", 'caption' => 'Basepair view', 'status'  => 'panel_zoom', @common
     );
@@ -640,14 +653,22 @@ sub contigview {
                              ( $obj->centrepoint - ($zw-1)/2 , $obj->centrepoint + ($zw-1)/2 );
       $base->add_option( 'start', $start );
       $base->add_option( 'end',   $end );
-      push @rendered_panels, $base;
-      push @URL_configs, $obj->user_config_hash( 'contigviewzoom', 'contigviewbottom' ) if @H;
+      $base_fragment->add_option( 'start', $start );
+      $base_fragment->add_option( 'end',   $end );
     }
     $base->add_components(qw(
       nav   EnsEMBL::Web::Component::Location::contigviewzoom_nav
       image EnsEMBL::Web::Component::Location::contigviewzoom
     ));
-    $self->add_panel( $base );
+    if ($ajax_zoom eq 'off') {
+      push @rendered_panels, $base;
+      push @URL_configs, $obj->user_config_hash( 'contigviewzoom', 'contigviewbottom' ) if @H;
+      $self->add_panel( $base );
+    }
+
+    if ($ajax_zoom eq 'on') {
+      $self->add_panel($base_fragment);
+    }
   }
   if( @URL_configs ) { ## We have to draw on URL tracks...?
     foreach my $entry ( @H ) {

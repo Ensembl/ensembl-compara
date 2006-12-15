@@ -1061,6 +1061,7 @@ sub save_config {
 sub contigviewzoom {
   my($panel, $object) = @_;
 #$object->timer->push("Starting zoom...",4);
+  warn "CONTIGVIEWZOOM";
   my $slice = $object->database('core')->get_SliceAdaptor()->fetch_by_region(
     $object->seq_region_type, $object->seq_region_name, $panel->option('start'), $panel->option('end'), 1
   );
@@ -1093,6 +1094,24 @@ sub contigviewzoom {
      $image->set_button( 'drag', 'panel_number' => $panel_no, 'title' => 'Click or drag to centre display' );
   $panel->print( $image->render );
 #$object->timer->push("Rendered image...",4);
+
+  my $px_start = $wuc->get('_settings','label_width' ) + 3 * $wuc->get('_settings','margin') + $wuc->get('_settings','button_width');
+  my $px_end = $wuc->get('_settings','width') - $wuc->get('_settings','margin');
+ 
+  my $bp_start = $object->seq_region_start;
+  my $bp_end = $object->seq_region_end;
+  my $flag = 'bp';
+  my $visible = 1;
+  my $panel_URL = "/$ENV{ENSEMBL_SPECIES}/$ENV{ENSEMBL_SCRIPT}?c=[[s]]:[[c]];w=[[w]];zoom_width=[[zw]]"; 
+
+  $panel->add_option( 'px_start', $px_start);
+  $panel->add_option( 'px_end', $px_end);
+  $panel->add_option( 'bp_start', $bp_start);
+  $panel->add_option( 'bp_end', $bp_end);
+  $panel->add_option( 'flag', $flag);
+  $panel->add_option( 'visible', $visible);
+  $panel->add_option( 'URL', $panel_URL);
+
   $object->__data->{'_cv_parameter_hash'}{ "p_${panel_no}_px_start" } = $wuc->get('_settings','label_width' ) + 3 * $wuc->get('_settings','margin') + $wuc->get('_settings','button_width');
   $object->__data->{'_cv_parameter_hash'}{ "p_${panel_no}_px_end"   } = $wuc->get('_settings','width') - $wuc->get('_settings','margin');
   $object->__data->{'_cv_parameter_hash'}{ "p_${panel_no}_bp_start" } = $panel->option('start');
