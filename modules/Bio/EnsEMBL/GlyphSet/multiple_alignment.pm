@@ -25,6 +25,7 @@ use Bio::EnsEMBL::GlyphSet;
 use Sanger::Graphics::Glyph::Rect;
 use Sanger::Graphics::Glyph::Composite;
 use Sanger::Graphics::Bump;
+use Bio::EnsEMBL::DnaDnaAlignFeature;
 
 @ISA = qw(Bio::EnsEMBL::GlyphSet);
 
@@ -73,6 +74,7 @@ sub compact_init {
   my $short_other    = $Config->species_defs->ENSEMBL_SHORTEST_ALIAS->{ $other_species };
   my $self_species   = $container->{_config_file_name_};
   my $short_self     = $Config->species_defs->ENSEMBL_SHORTEST_ALIAS->{ $self_species };
+  my $jump_to_alignslice = $Config->get($type, 'jump_to_alignslice');
 
   my $METHOD         = $Config->get($type, 'method' );
   my $METHOD_ID         = $Config->get($type, 'method_id' );
@@ -104,10 +106,13 @@ sub compact_init {
     my $TO_PUSH;
     my $href  = "/$short_self/alignsliceview?l=$chr:$rs-$re;align=opt_align_$METHOD_ID";
 
-    my $zmenu = { 'caption'              => $caption,
-		  "45:" => '',
-                  "50:$ALIGNSLICEVIEW_TEXT_LINK"  => $href,
-	      };
+    my $zmenu = { 'caption'              => $caption};
+
+    # Don't link to AlignSliceView from constrained elements!
+    if ($jump_to_alignslice) {
+	$zmenu->{"45:"} = '';
+	$zmenu->{"50:$ALIGNSLICEVIEW_TEXT_LINK"} = $href;
+    }
 
     my $id = 10; 
     my $max_contig = 250000;
@@ -157,8 +162,11 @@ use Time::HiRes qw(time);
 sub features {
   my ($self, $species, $method, $method_id ) = @_;
 
-  if ($method_id) {
-    my $slice = $self->{'container'};
+  my $slice = $self->{'container'};
+  my $genomic_align_blocks;
+  if ($slice->isa("Bio::EnsEMBL::Compara::AlignSlice::Slice")) {
+    $genomic_align_blocks = $slice->get_all_constrained_elements();
+  } elsif ($method_id) {
     my $comparadb = $self->{'config'}->{_object}->database('compara');
     my $mlss_adaptor = $comparadb->get_adaptor("MethodLinkSpeciesSet");
     my $mlss = $mlss_adaptor->fetch_by_dbID($method_id);
@@ -166,7 +174,10 @@ sub features {
 
 ## Get the GenomicAlignBlocks
     my $gab_adaptor = $comparadb->get_adaptor("GenomicAlignBlock");
-    my $genomic_align_blocks = $gab_adaptor->fetch_all_by_MethodLinkSpeciesSet_Slice($mlss, $slice);
+    $genomic_align_blocks = $gab_adaptor->fetch_all_by_MethodLinkSpeciesSet_Slice($mlss, $slice);
+  } else {
+    return [];
+  }
 
     my $T = [];
     foreach (@$genomic_align_blocks) {
@@ -181,7 +192,7 @@ sub features {
 	}
 	my ($rtype, $gpath, $rname, $rstart, $rend, $rstrand) = split(':',$_->reference_slice->name);
  
-	push @$T, {
+	push @$T, bless ({
 	   'seqname' => $_->reference_slice->name,
 	   'start' => $_->reference_slice_start,
 	   'end' => $_->reference_slice_end,
@@ -191,11 +202,11 @@ sub features {
 	   'hstrand' => $rstrand,
 	   'hseqname' => $rname,
 	   'fragments' => $fragments
-		   };
+		   }, "Bio::EnsEMBL::DnaDnaAlignFeature");
     }
 
     return $T;
     
-  }
+
 }
 
