@@ -59,13 +59,24 @@ function dd_render_layer( i ) {
 }
 
 function dd_render_all_layers( ) {
-   output = '<div class="dddiv" style="width:'+dd_menuwidth+'" id="m_"">&nbsp;</div>';
+   output = '<div class="dddiv" style="width:'+dd_menuwidth+'" id="m_">&nbsp;</div>';
    for(i=0;i<dd_menus.length;i++) {
+      //alert(output);
       output += '<div class="dddiv" style="width:'+dd_menuwidth+'" id="m_'+i+'">\n'+
           dd_render_layer(i);
       output +='</div>\n';
    }
    return(output);
+}
+
+function init_dropdown_menu() {
+  var code = $('menu_code').innerHTML;
+  var setup = eval( code );
+}
+
+function dd_render_all_layers_to_element(element) {
+  var newHTML = dd_render_all_layers();
+  $(element).innerHTML = newHTML; 
 }
 
 function dd_flip( menu_id, menu_item) {

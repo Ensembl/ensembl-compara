@@ -1,7 +1,18 @@
+var ajax_call_count = 0;
+var ajax_complete_count = 0;
+
 function populate_fragments() {
   var fragments = getElementsByClass("fragment");
   for (i = 0; i < fragments.length; i++) {
     fragment(fragments[i].innerHTML);
+    ajax_call_count = ajax_call_count + 1;
+  }
+}
+
+function ajax_call_complete() {
+  ajax_complete_count = ajax_complete_count + 1;
+  if (ajax_call_count == ajax_complete_count) {
+    cv_draw_red_boxes( 1, ajax_complete_count + 1 )
   }
 }
 
@@ -36,23 +47,25 @@ function panel_loaded(response) {
   var json = eval( '(' + response.responseText + ')' );
   var html = "";
   var update = $(json.fragment.id + "_update");
-
+  var update_menus = 0;
+  var added = [];
+  update.innerHTML = html;
   for (var j = 0; j < json.fragment.components.length; j++) {
     for (var element in json.fragment.components[j]) {
-      html = html + unescape(json.fragment.components[j][element].html);
-      start_px = json.fragment.components[j][element].start_px;
-      end_px = json.fragment.components[j][element].end_px;
-      start_bp = json.fragment.components[j][element].start_bp;
-      end_bp = json.fragment.components[j][element].end_bp;
-      start_cv = json.fragment.components[j][element].start_cv;
-      end_cv = json.fragment.components[j][element].end_cv;
+      html = unescape(json.fragment.components[j][element].html);
+      update.innerHTML = update.innerHTML + html;
+    //  if (element == 'component_image_fragment') {
+        start_px = json.fragment.components[j][element].start_px;
+        end_px = json.fragment.components[j][element].end_px;
+        start_bp = json.fragment.components[j][element].start_bp;
+        end_bp = json.fragment.components[j][element].end_bp;
+        start_cv = json.fragment.components[j][element].start_cv;
+        end_cv = json.fragment.components[j][element].end_cv;
+    //  }
+      if (element == 'component_menu') {
+        update_menus = 1;
+      }
     }
-  }
-
-  if (json.error) {
-    update.innerHTML = json.error;
-  } else { 
-    update.innerHTML = html;
   }
 
   update.style.display = 'block';
@@ -60,6 +73,10 @@ function panel_loaded(response) {
   var prefix = "p_" + panel_number; 
 
   $(json.fragment.id + "_title").innerHTML = json.fragment.title;
+
+  if (update_menus == 1) {
+    init_dropdown_menu();
+  }
 
   var F = document.forms['panel_form'];
   F.appendChild(new_element(prefix + '_URL', '/Homo_sapiens/contigview?c=[[s]]:[[c]];w=[[w]]'));
@@ -72,47 +89,11 @@ function panel_loaded(response) {
 
   view_init(prefix);
 
+  ajax_call_complete();
+
   //draw_red_box('p', panel_number, 'p', (panel_number - 1));
-  cv_draw_red_boxes( 1, 3 )
+  //dd_render_all_layers_to_element('menu_container');
 
-  /**
-  html = "";
-  for (i = 0; i < json.fragment.components.length; i++) {
-    for (var element in json.fragment.components[i]) {
-      html = html + json.fragment.components[i][element].html;
-      start_px = json.fragment.components[i][element].start_px;
-      end_px = json.fragment.components[i][element].end_px;
-      start_bp = json.fragment.components[i][element].start_bp;
-      end_bp = json.fragment.components[i][element].end_bp;
-      start_cv = json.fragment.components[i][element].start_cv;
-      end_cv = json.fragment.components[i][element].end_cv;
-    }
-  }
-
-  update = ego(json.fragment.id + "_update");
-  if (json.error) {
-    update.innerHTML = json.error;
-  } else { 
-    update.innerHTML = html;
-  }
-  update.style.display = 'block';
-  title = ego(json.fragment.id + "_title");
-  //hide_spinner(json.fragment.id);
-  title.innerHTML = json.fragment.title;
-  //alert(response.responseText);
-  //alert(json.fragment.id);
-  //init_view('f_1');
-  //draw_single_red_box('f_1', start_cv, end_cv, start_bp, end_bp, start_px, end_px);
-  //update_red_boxes();
-  F = document.forms['panel_form'];
-  F.appendChild(new_element('f_1_URL', '/Homo_sapiens/contigview?c=[[s]]:[[c]];w=[[w]]'));
-  F.appendChild(new_element('f_1_bp_end', end_bp));
-  F.appendChild(new_element('f_1_bp_start', start_bp));
-  F.appendChild(new_element('f_1_flag', 'cv'));
-  F.appendChild(new_element('f_1_px_end', end_px));
-  F.appendChild(new_element('f_1_px_start', start_px));
-  F.appendChild(new_element('f_1_visible', '1'));
-  **/
 }
 
 function new_element(name, value) {
