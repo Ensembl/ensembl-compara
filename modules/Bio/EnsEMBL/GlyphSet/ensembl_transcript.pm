@@ -117,7 +117,6 @@ sub ajax_zmenu {
 
 sub static_zmenu { 
   my ($self, $gene, $transcript) = @_;
-  warn "MENU ON ENSEMBL GENE: $gene";
   my $translation = $transcript->translation;
   my $tid = $transcript->stable_id();
   my $pid = $translation ? $translation->stable_id() : '';
