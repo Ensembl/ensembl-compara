@@ -607,26 +607,57 @@ sub _parse {
         ## We've done the DB hash...
         ## So lets get on with the multiple alignment hash;
 	      my $q = qq{
-	        SELECT ml.type, gd.name, mlss.name, mlss.method_link_species_set_id
+	        SELECT ml.type, gd.name, mlss.name, mlss.method_link_species_set_id, ss.species_set_id
 	        FROM   method_link ml, method_link_species_set mlss, genome_db gd, species_set ss 
 	        WHERE  mlss.method_link_id = ml.method_link_id 
           AND    mlss.species_set_id=ss.species_set_id 
           AND    ss.genome_db_id = gd.genome_db_id 
-          AND    ml.type in ('MLAGAN','BLASTZ_NET','BLASTZ_RAW')};
+          AND    ml.type in ('GERP_CONSERVATION_SCORE','GERP_CONSTRAINED_ELEMENT','PECAN','MLAGAN','BLASTZ_NET','BLASTZ_RAW')};
 
           my $sth = $dbh->prepare( $q );
           my $rv  = $sth->execute || die( $sth->errstr );
           my $results = $sth->fetchall_arrayref();
-          my $thash;
 
-	        my $KEY = 'ALIGNMENTS';
+          my $constrained_elements;
           foreach my $row ( @$results ) {
-            my ($type, $species, $name, $id) = (uc($row->[0]), $row->[1], $row->[2], $row->[3]);
+            my ($type, $species, $name, $id, $species_set_id) =
+                (uc($row->[0]), $row->[1], $row->[2], $row->[3], $row->[4]);
+            my $KEY = 'ALIGNMENTS';
+            if ($type =~ /CONSERVATION_SCORE/) {
+              $KEY = "CONSERVATION_SCORES";
+              $name = "Conservation scores";
+            } elsif ($type =~ /CONSTRAINED_ELEMENT/) {
+              $KEY = "CONSTRAINED_ELEMENTS";
+              $constrained_elements->{$species_set_id} = $id;
+              $name = "Constrained elements";
+            }
             $species =~ tr/ /_/;
-	          $tree->{$KEY}->{$id}->{'id'} = $id;
-	          $tree->{$KEY}->{$id}->{'name'} = $name;
-	          $tree->{$KEY}->{$id}->{'type'} = $type;
+            $tree->{$KEY}->{$id}->{'id'} = $id;
+            $tree->{$KEY}->{$id}->{'name'} = $name;
+            $tree->{$KEY}->{$id}->{'type'} = $type;
+            $tree->{$KEY}->{$id}->{'species_set_id'} = $species_set_id;
             $tree->{$KEY}->{$id}->{'species'}->{$species} = 1;
+          }
+          $sth->finish();
+          while (my ($species_set_id, $constr_elem_id) = each %$constrained_elements) {
+            foreach my $id (keys %{$tree->{'ALIGNMENTS'}}) {
+              if ($tree->{'ALIGNMENTS'}->{$id}->{'species_set_id'} == $species_set_id) {
+                $tree->{'ALIGNMENTS'}->{$id}->{'constrained_element'} = $constr_elem_id;
+              }
+            }
+          }
+
+          $q = qq{SELECT meta_key, meta_value FROM meta where meta_key LIKE "gerp_%"};
+
+          $sth = $dbh->prepare( $q );
+          $rv  = $sth->execute || die( $sth->errstr );
+          $results = $sth->fetchall_arrayref();
+
+          foreach my $row ( @$results ) {
+            my ($meta_key, $meta_value) = ($row->[0], $row->[1]);
+            my ($conservation_score_id) = $meta_key =~ /gerp_(\d+)/;
+            next if (!$conservation_score_id);
+            $tree->{'ALIGNMENTS'}->{$meta_value}->{'conservation_score'} = $conservation_score_id;
           }
 
 #	warn("$KEY: ". Data::Dumper::Dumper($tree->{$KEY}));
@@ -1419,6 +1450,11 @@ sub _is_available_artefact{
   } elsif( $test[0] eq 'multialignment' ) { ## Is the traces database specified?
     my( $alignment_id ) = $test[1];
     my %alignment = $self->multi('ALIGNMENTS', $alignment_id);
+    return $success if (scalar(keys %alignment));
+    return $fail;
+  } elsif( $test[0] eq 'constrained_element' ) {
+    my( $alignment_id ) = $test[1];
+    my %alignment = $self->multi('CONSTRAINED_ELEMENTS', $alignment_id);
     return $success if (scalar(keys %alignment));
     return $fail;
   } elsif( $test[0] eq 'database_features' ){ ## Is the given database specified?
