@@ -926,8 +926,9 @@ sub bottom_menu {
     'leftmenus'  => [qw(Features Compara DAS Repeats Options Export ImageSize)],
     'rightmenus' => [qw(Help)]
   );
-  $panel->print( $mc->render_html );
-  $panel->print( $mc->render_js );
+  my $html = $mc->render_html;
+  $html .= $mc->render_js;
+  $panel->print( $html );
   return 0;
 }
 

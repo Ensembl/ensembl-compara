@@ -131,7 +131,7 @@ sub list_for_records {
           $style = "";
         }
       }
-      $html .= "<ul class='all $tag' $style><li>No saved " . $type . "s</li>\n<li><a href='/info'>Learn more about saving " . $type . "s &rarr;</a></li></ul>";
+      $html .= "<ul class='all $tag' $style><li>No saved " . $type . "s</li>\n<li><a href='/info/help/custom.html'>Learn more about saving " . $type . "s &rarr;</a></li></ul>";
     }
   }
   return $html;

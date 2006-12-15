@@ -77,16 +77,21 @@ sub hidden_values {
 sub render_js {
   my $self = shift;
   return qq(
-<script type="text/javascript"><!--
+  <div id='menu_container'></div>
+  <div id='menu_code' style='display: none;'>
   dd_menuheight  = $self->{'height'};
   dd_menuwidth   = $self->{'menuwidth'};
   dd_checkwidth  = $self->{'checkwidth'};
   dd_checkheight = $self->{'checkheight'};
   dd_imagepath   = '$self->{'imagepath'}';
   dd_menus = new Array( @{[join(',', map { $_->render_js() } @{$self->{'leftmenus'}}, @{$self->{'rightmenus'}} )]} );
-  document.writeln(dd_render_all_layers());
+  dd_render_all_layers_to_element('menu_container');
+  </div>
+<script type="text/javascript"><!--
+  init_dropdown_menu();
 //--></script>
   );
+  #document.writeln(dd_render_all_layers_to_element('menu_container'));
 }
 
 sub render_hidden { 

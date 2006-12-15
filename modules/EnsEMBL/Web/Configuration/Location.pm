@@ -588,7 +588,7 @@ sub contigview {
   $view_fragment->add_components(qw(
       menu  EnsEMBL::Web::Component::Location::contigviewbottom_menu
       nav   EnsEMBL::Web::Component::Location::contigviewbottom_nav
-      image  EnsEMBL::Web::Component::Location::contigviewbottom
+      image EnsEMBL::Web::Component::Location::contigviewbottom
                   ));
 
   my ($start,$end) = $self->top_start_end( $obj, $max_length );

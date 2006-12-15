@@ -72,6 +72,11 @@ sub html {
   return $self->{'html'}; 
 }
 
+sub add_html {
+  my ($self, $value) = @_;
+  $self->html($self->html . $value);
+}
+
 sub print {
   my ($self, $render) = @_;
   $render = $self->escape($render);
