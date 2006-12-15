@@ -393,7 +393,7 @@ sub _render_groups {
   my @group_rows = ();
   my %included = ();
   my @all_groups = @{ EnsEMBL::Web::Object::Group->all_groups_by_type('restricted') };
-  $html .= &info_box($user, qq(Subscribing to groups lets you access shared bookmarks, configurations and other settings. The groups you're subscribed to, and some other popular groups are listed below.<br /><a href="/info/help/groups.html">Learn more about sharing customisations with Ensembl groups &rarr;</a>) , 'user_group_info');
+  $html .= &info_box($user, qq(Groups enable you to organise your saved bookmarks, notes and view configurations, and also let you share them with other users. The groups you're subscribed to are listed below.<br /><a href="">Learn more about creating and managing groups &rarr;</a>) , 'user_group_info');
   if ($#groups > -1) {
     $html .= "<h5>Your subscribed groups</h5>\n";
     $html .= "<table width='100%' cellspacing='0' cellpadding='4'>\n";
@@ -419,6 +419,7 @@ sub _render_groups {
     $html .= "</table><br />\n";
   }
   else {
+    $html .= qq(<p class="center"><img src="/img/help/group_example.gif" alt="Sample screenshot" title="SAMPLE" /></p>);
     $html .= qq(<p class="center">You are not subscribed to any Ensembl groups. &middot; <a href='/info/help/groups.html'>Learn more &rarr;</a> </p>);
   }  
   $html .= "<br />";
@@ -514,7 +515,7 @@ sub _render_bookmarks {
     $html .= _render_settings_table(\@records, $user);
   }
   else {
-    $html .= qq(<p class="center"><img src="/img/bookmark_example.gif" /></p>);
+    $html .= qq(<p class="center"><img src="/img/help/bookmark_example.gif" alt="Sample screenshot" title="SAMPLE" /></p>);
   }  
   $html .= qq(<p><a href="/common/bookmark?forward=1"><b>Add a new bookmark </b>&rarr;</a></p>);
   return $html;
@@ -600,7 +601,8 @@ sub _render_notes {
     $html .= _render_settings_table(\@records, $user);
   }
   else {
-    $html .= qq(<p class="center">You haven't saved any Ensembl notes. <a href='/info/help/custom.html#notes'>Learn more about notes &rarr;</a>);
+    $html .= qq(<p class="center"><img src="/img/help/note_example.gif" alt="Sample screenshot" title="SAMPLE" /></p>);
+    $html .= qq(<p class="center">You haven't saved any Ensembl notes. <a href='/info'>Learn more about notes &rarr;</a>);
   }
   return $html;
 }
@@ -613,7 +615,11 @@ sub _render_news {
   foreach my $filter (@filters) {
     my $data;
     if ($filter->topic) {
-      $data .= 'Topic: '.$filter->topic.' ';
+      my $topic = $filter->topic;
+      if (ref($topic) eq 'ARRAY') {
+        $topic = join(', ', @$topic);
+      }
+      $data .= "Topic: $topic";
       $both = 1;
     }
     if ($filter->species) {
@@ -621,12 +627,12 @@ sub _render_news {
       if (ref($species) eq 'ARRAY') {
         $species = join(', ', @$species);
       }
-      $species =~ s/_/ /;
+      $species =~ s/_/ /g;
       $data .= '; ' if $both;
-      $data .= 'Species: '.$species;
+      $data .= "Species: $species";
     }
     push @records, {'id' => $filter->id, 
-               'edit_url' => 'filter_news', 'delete_url' => 'delete_record', 
+               'edit_url' => 'filter_news', 'delete_url' => 'remove_record', 
                'ident' => 'user',
                'data' => [$data] };
   }
@@ -637,6 +643,7 @@ sub _render_news {
     $html .= _render_settings_table(\@records, $user);
   }
   else {
+    $html .= qq(<p class="center"><img src="/img/help/filter_example.gif" alt="Sample screenshot" title="SAMPLE" /></p>);
     $html .= qq(<p class="center">You do not have any filters set, so you will see general headlines.</p>
 <p><a href="/common/filter_news">Add a news filter &rarr;</a></p>
 );
