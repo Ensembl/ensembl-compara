@@ -48,6 +48,7 @@ sub default_track_by_gene {
     )
     },
     'otherfeatures' => { qw(
+      oxford_fgu oxford_fgu_ext_transcript
       estgene est_transcript ), 
       map( {($_, $_.'_transcript')} qw(
         singapore_est singapore_protein chimp_cdna chimp_est human_est

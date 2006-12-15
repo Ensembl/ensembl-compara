@@ -1212,6 +1212,8 @@ sub ADD_ALL_TRANSCRIPTS {
   $self->add_new_track_transcript( 'est',       'EST genes',       'est_gene', $POS++,
     'available' => 'databases_features ENSEMBL_OTHERFEATURES.estgene', @_ );
 
+  $self->add_new_track_transcript( 'oxford_fgu_ext', 'Oxford FGU Genes', 'oxford_fgu', $POS++,
+    'available' => "database_features ENSEMBL_OTHERFEATURES.oxford_fgu", @_ );
   $self->add_new_track_transcript( 'medaka_transcriptcoalescer', 'EST Genes',     'medaka_genes',$POS++,
     'available' => "database_features ENSEMBL_OTHERFEATURES.medaka_transcriptcoalescer" , @_ );
   $self->add_new_track_transcript( 'medaka_genome_project', 'MGP Genes',     'medaka_genes',$POS++,
@@ -1407,18 +1409,12 @@ sub ADD_GENE_TRACKS {
     'available' => "database_features ENSEMBL_OTHERFEATURES.medaka_genome_project",
     'label_threshold' => 500,
      @_ );
-  $self->add_new_track_gene( 'oxford_FGU_ext', 'Oxford FGU Genes', 'oxford_fgu', $POS++,
+  $self->add_new_track_gene( 'oxford_fgu_ext', 'Oxford FGU Genes', 'oxford_fgu', $POS++,
     'gene_col'   => 'oxford_fgu', 'gene_label' => sub { return $_[0]->stable_id },
-    'database' => 'otherfeatures', 'logicname' => 'oxford_fgu',
+    'database' => 'otherfeatures', 'logic_name' => 'oxford_fgu',
     'available' => "database_features ENSEMBL_OTHERFEATURES.oxford_fgu",
     @_
   );
-
-  $self->add_new_track_gene( 'oxford_fgu_ext', 'Singapore EST Genes', 'est_gene', $POS++,
-     'database' => 'otherfeatures', 'gene_col' => 'estgene', 
-     'available' => "database_features ENSEMBL_OTHERFEATURES.singapore_est",
-     'label_threshold' => 500,
-     @_ );
   $self->add_new_track_gene( 'singapore_est', 'Singapore EST Genes', 'est_gene', $POS++,
      'database' => 'otherfeatures', 'gene_col' => 'estgene', 
      'available' => "database_features ENSEMBL_OTHERFEATURES.singapore_est",
