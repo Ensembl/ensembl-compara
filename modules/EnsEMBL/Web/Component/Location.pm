@@ -23,6 +23,7 @@ use Bio::EnsEMBL::AlignStrainSlice;
 use Bio::EnsEMBL::ExternalData::DAS::DASAdaptor;
 use Bio::EnsEMBL::ExternalData::DAS::DAS;
 use EnsEMBL::Web::RegObj;
+use EnsEMBL::Web::Form;
 
 use Data::Dumper;
 our @ISA = qw( EnsEMBL::Web::Component);
