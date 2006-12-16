@@ -277,7 +277,9 @@ MAIN:{
     }
     # Run
     foreach my $runnable( @run_list ){
+#warn "\nRUNNING  $runnable";
       eval{ $runnable->run };
+#warn "\nRUN      $runnable";
       if( $@ ){ 
         add_warning( $CGI->param('stage'), 'method', "System failure" );
         warn( $@ );
@@ -1811,7 +1813,7 @@ sub populate_karyotype{
   my $site_type= $SPECIES_DEFS->get_config( $sp, 'ENSEMBL_SITETYPE'    );
 
   my $session      = $ENSEMBL_WEB_REGISTRY->get_session;
-  my $web_config   = $session->get_userconfig('Vkaryotype');
+  my $web_config   = $session->getUserConfig('Vkaryotype');
 
   my $num_chrs = scalar( @$chrs_ref );
   $web_config->{'_rows'}                   = int( ($num_chrs-1)/12 ) + 1;
@@ -1873,7 +1875,7 @@ sub draw_hsp_vs_query{
 <td width="8"><small>&nbsp;</small></td>);
 
   my $bucket = EnsEMBL::Web::Container::HSPContainer->new($result, $aligns);
-  my $uconf  = $ENSEMBL_WEB_REGISTRY->get_session->get_userconfig('hsp_query_plot');
+  my $uconf  = $ENSEMBL_WEB_REGISTRY->get_session->getUserConfig('hsp_query_plot');
   my $hsp_dc = Bio::EnsEMBL::DrawableContainer->new( $bucket, $uconf);
 
   my $fi = new EnsEMBL::Web::File::Image( $SPECIES_DEFS );
