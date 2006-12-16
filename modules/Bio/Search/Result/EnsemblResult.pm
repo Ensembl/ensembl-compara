@@ -239,28 +239,39 @@ sub database_type {
 sub map_to_genome{
   my $self = shift;
 
+#warn "GETTING CORE ADAPTOR...";
   my $core_adpt = $self->core_adaptor ||
     ( $self->warn( "Core adaptor not set; can't propogate" ) && return );
 
   # This is to keep results, hits and HSPs  stored to tables with the
   # same date stamp
   my $use_date;
+#warn "GETTING ADAPTOR...";
   if( my $adpt = $self->adaptor ){
-    $use_date = $self->use_date( $adpt->use_date('Hit') );
+#warn "ADAPTOR GOT $adpt ",ref($adpt);
+    my $d = $adpt->use_date('Hit');
+#warn "DATE $d";
+    $use_date = $self->use_date( $d );
+#warn "DATE GOT";
   }
 
+#warn "GETTING TYPE...";
   my $database_type = $self->database_type;
+#warn "GETTING HITS...";
   foreach my $hit( $self->hits ){
+#warn "Hit.... $hit";
     $core_adpt     && $hit->core_adaptor( $core_adpt );
     $use_date      && $hit->use_date($use_date);
     $hit->_map($database_type);
 
     foreach my $hsp( $hit->hsps ){
+#warn "  HSP.... $hsp";
       $core_adpt     && $hsp->core_adaptor( $core_adpt );
       $use_date      && $hsp->use_date($use_date);
       $hsp->_map($database_type);
     }
   }
+#warn "MAPPED....";
   return 1;
 }
 

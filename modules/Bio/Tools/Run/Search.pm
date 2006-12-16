@@ -931,7 +931,9 @@ sub run{
   
   my $retval;
   $self->status( "RUNNING" );
+  #warn( "==================================== RUN" ); 
   eval{ $retval = $self->dispatch( $command ) };
+  #warn( "==================================== RUN" );
   if( $@ ){
     my $msg = "Command $command failed\n$@";
     $self->warn( $msg );
@@ -989,33 +991,44 @@ sub executable {
 sub dispatch {
   my $self = shift;
   my $command  = shift ||$self->throw( "Need a command" );
-
+#warn "$command";
   my $ret = system( "$command");
   my $reportfile  = $self->reportfile;
   my $errorfile    = $self->errorfile;
-  if( $ret == 0 ){
+  #warn "XXX $ret XXX";
+#  if( $ret == 0 ){
     # Command successful
+#warn "HERE  ",$self->reportfile;
     if( -r $self->reportfile ){
       # Reportfile generated
+#warn "PARSING report file $@";
       eval{ $self->parse };
+#warn "PARSED report file $@";
       if( ! $@ ){
+#warn "PARSING SUCCEEDED";
 	# Parsing successful
 	$self->status("COMPLETED");
+#warn "STATUS SET";
 	unlink( $errorfile );
+#warn "RETURNING SUCCESSFULLY";
 	return 1;
       }
       else{
+#warn "PARSING FAILED";
 	# Parsing failed 
 	$self->throw( "Parsing failed\n$@" );
       }
     }
     else{ # Strange - no result file!
+#warn "NO RESULTS";
       $self->throw( "Result set $reportfile does not exist" );
     }
-  }
-  else{ # Command itself failed
-    $self->throw( "system failed: $!\n    $command" );
-  }
+#  }
+#  else{ # Command itself failed
+#warn "FAILURE!! $ret";
+#    $self->throw( "system failed: $!\n    $command" );
+#  }
+#warn "RETURNING";
   return;
 }
 #----------------------------------------------------------------------
@@ -1044,22 +1057,33 @@ sub parse {
       -format  => $self->format,
       -file    => $self->reportfile, );
 
+#warn "HERE....";
   $searchio->attach_EventHandler( $self->_eventHandler );
   my $result = $searchio->next_result;
 
+#warn "HERE...2";
   if( $result ){
     if( $result->isa('Bio::Root::Storable') ){
+#warn "AT ADAPTOR";
       $result->adaptor( $self->adaptor );
     }
     if( $result->can("map_to_genome") ){ # EnsemblResult specific method
+#warn "MAP TO GENOME";
       # TODO Move Ensembl-specific code out of Search.pm
+#warn "ATTACHING CORE ADAPTOR";
       $result->core_adaptor    ( $dummy_result->core_adaptor );
+#warn "SETTING DB NAME...";
       $result->database_name   ( $dummy_result->database_name );
+#warn "INT";
       $result->database_species( $dummy_result->database_species );
+#warn "TYPE";
       $result->database_type   ( $dummy_result->database_type );
+#warn "MAP TO GENOME ...",ref($result);
       $result->map_to_genome;
     }
+#warn "STOrE";
     $self->result( $result );
+#warn "STOrEd";
   }
   else{
     $self->warn( "Search returned no result" );

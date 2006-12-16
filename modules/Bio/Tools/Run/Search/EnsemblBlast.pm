@@ -200,10 +200,7 @@ sub command{
     else{ $param_str .= " $param" }
   }
 
-  my $BDP = '/data/blastdb/ensembl/release-41';
-  if( $database =~ /(Homo_sapiens|Mus_musculus|Danio_rerio|Rattus_norvegicus)/i ) {
-    $BDP =~ s/data/data_local/;
-  }
+  my $BDP = $SPECIES_DEFS->ENSEMBL_BLAST_DATA_PATH;
   return join( ' ', $SPECIES_DEFS->ENSEMBL_BLAST_BIN_PATH."/".$self->program_path,
                     "$BDP/$database", '[[]]', $param_str);
 }
@@ -249,7 +246,7 @@ sub dispatch_bsub {
     my $pid;
     local *BSUB;
    
-   my $repeatmask_command = '/data_local/bin/RepeatMasker';
+   my $repeatmask_command = $SPECIES_DEFS->ENSEMBL_REPEATMASKER;
 #   $queue = 'systest';
    (my $db_name = $self->database) =~ s/([A-Z])[a-z]+_([a-z]{3})[a-z]*\..*\.(\w+)\.(\w+)\.fa/ENSEMBL.\1\2.\3.\4/;
    my $project_name = join ':', $self->program_name, $db_name, $self->seq->length, $self->seq->alphabet;
