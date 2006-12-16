@@ -554,8 +554,8 @@ sub contigview {
   $overview_fragment->add_component('image_fragment', 'EnsEMBL::Web::Component::Location::contigviewtop');
   if ($overview_fragment) {
     my($start,$end) = $self->top_start_end( $obj, $max_length );
-    $fragment->add_option( 'start', $start );
-    $fragment->add_option( 'end',   $end   );
+    $overview_fragment->add_option( 'start', $start );
+    $overview_fragment->add_option( 'end',   $end   );
   }
   if ($ajax_overview eq 'on') {
     $self->add_panel($overview_fragment);
@@ -588,26 +588,6 @@ sub contigview {
 
 ## Big switch time.... 
 
-  my $view_fragment = $self->new_panel('Fragment',
-                                 'code' => "fragment_3",
-                                caption => "Detailed view",
-                                 status => 'panel_bottom',
-                                loading => 'yes',
-                                display => 'on',
-                                           @common);
-  $view_fragment->add_components(qw(
-      config EnsEMBL::Web::Component::Location::contigviewbottom_config
-      menu  EnsEMBL::Web::Component::Location::contigviewbottom_menu
-      nav   EnsEMBL::Web::Component::Location::contigviewbottom_nav
-      image EnsEMBL::Web::Component::Location::contigviewbottom
-                  ));
-
-  my ($start,$end) = $self->top_start_end( $obj, $max_length );
-  $view_fragment->add_option( 'start', $start );
-  $view_fragment->add_option( 'end',   $end   );
-  if ($ajax_detailed eq 'on') {
-    $self->add_panel($view_fragment);
-  }
 
   my @URL_configs;
   my $URL    = $obj->param('data_URL');
@@ -616,12 +596,32 @@ sub contigview {
   if( $obj->length > $max_length ) {
     $bottom->add_components(qw(
       config EnsEMBL::Web::Component::Location::contigviewbottom_config
-      menu  EnsEMBL::Web::Component::Location::contigviewbottom_menu
-      nav   EnsEMBL::Web::Component::Location::contigviewbottom_nav
-      text  EnsEMBL::Web::Component::Location::contigviewbottom_text
+      menu   EnsEMBL::Web::Component::Location::contigviewbottom_menu
+      nav    EnsEMBL::Web::Component::Location::contigviewbottom_nav
+      text   EnsEMBL::Web::Component::Location::contigviewbottom_text
     ));
     $self->{page}->content->add_panel( $bottom );
   } else {
+    my $view_fragment = $self->new_panel('Fragment',
+                                 'code' => "fragment_3",
+                                caption => "Detailed view",
+                                 status => 'panel_bottom',
+                                loading => 'yes',
+                                display => 'on',
+                                           @common);
+    $view_fragment->add_components(qw(
+      config EnsEMBL::Web::Component::Location::contigviewbottom_config
+      menu   EnsEMBL::Web::Component::Location::contigviewbottom_menu
+      nav    EnsEMBL::Web::Component::Location::contigviewbottom_nav
+      image  EnsEMBL::Web::Component::Location::contigviewbottom
+    ));
+  
+    my ($start,$end) = $self->top_start_end( $obj, $max_length );
+    $view_fragment->add_option( 'start', $obj->seq_region_start );
+    $view_fragment->add_option( 'end',   $obj->seq_region_end   );
+    if ($ajax_detailed eq 'on') {
+      $self->add_panel($view_fragment);
+    }
     if( $obj->param('panel_bottom') ne 'off' ) {
       if ($ajax_detailed eq 'off') {
         push @rendered_panels, $bottom;
@@ -650,7 +650,7 @@ sub contigview {
     $base_fragment->add_components(qw(
       nav   EnsEMBL::Web::Component::Location::contigviewzoom_nav
       image EnsEMBL::Web::Component::Location::contigviewzoom
-                  ));
+    ));
 
     my $base = $self->new_panel( 'Image',
       'code'    => "basepair_#", 'caption' => 'Basepair view', 'status'  => 'panel_zoom', @common
@@ -663,6 +663,8 @@ sub contigview {
                              ( $obj->centrepoint - ($zw-1)/2 , $obj->centrepoint + ($zw-1)/2 );
       $base->add_option( 'start', $start );
       $base->add_option( 'end',   $end );
+warn "Adding option to zoom - stsart $start";
+warn "Adding option to zoom - end    $end";
       $base_fragment->add_option( 'start', $start );
       $base_fragment->add_option( 'end',   $end );
     }

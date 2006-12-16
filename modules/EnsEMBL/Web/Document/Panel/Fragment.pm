@@ -59,8 +59,12 @@ sub panel_is_closed {
 
 sub json {
   my $self = shift; 
-  my $json = "{ fragment: { code: '" . $self->code . "', species: '" . $ENV{ENSEMBL_SPECIES} . "', title: '" . $self->caption . "', id: '" . $self->code . "', params: [ " . $self->json_params . " ], components: [ " . $self->json_components . " ]";
-  $json .= "} }";
+  my $json = sprintf( "{ fragment: { code: '%s', species: '%s', title: '%s', id: '%s', params: [ %s ], components: [ %s ], options: [ %s ] }}",
+    $self->code, $ENV{'ENSEMBL_SPECIES'}, $self->caption, $self->code,
+    $self->json_params, $self->json_components, $self->json_options
+  );
+#  my $json = "{ fragment: { code: '" . $self->code . "', species: '" . $ENV{ENSEMBL_SPECIES} . "', title: '" . $self->caption . "', id: '" . $self->code . "', params: [ " . $self->json_params . " ], components: [ " . $self->json_components . " ]";
+# $json .= "} }";
   return $json;
 }
 
@@ -92,7 +96,7 @@ sub escape_quotes {
 sub json_params {
   my $self = shift;
   my $json = "";
-  foreach my $key (%{ $self->params }) {
+  foreach my $key ( %{ $self->params }) {
     if ($self->params->{$key}) {
       $json .= "{ $key: '" . $self->params->{$key} . "' }, ";
     }
@@ -105,6 +109,15 @@ sub json_components {
   my $json = "";
   foreach my $key (@{ $self->{component_order} }) {
     $json .= "{ $key: '" . $self->{components}{$key}->[0] . "' }, ";
+  }
+  return $json;
+}
+
+sub json_options {
+  my $self = shift;
+  my $json = "";
+  foreach my $key ( $self->options ) {
+    $json .= "{ $key: '" . $self->option( $key ) . "' }, ";
   }
   return $json;
 }
