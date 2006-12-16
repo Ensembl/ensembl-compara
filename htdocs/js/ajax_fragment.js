@@ -32,6 +32,12 @@ function fragment(caller) {
     }
   }
 
+  for (var j = 0; j < json.fragment.options.length; j++) {
+    for (var element in json.fragment.options[j]) {
+      data = data + element + "=" + json.fragment.options[j][element] + "&";
+    }
+  }
+
   data = data + "&url=" + URL;
 
   var url = "/" + json.fragment.species + "/populate_fragment";
@@ -50,17 +56,21 @@ function panel_loaded(response) {
   var update_menus = 0;
   var added = [];
   update.innerHTML = html;
+  var URL_temp = '/Homo_sapiens/contigview?c=[[s]]:[[c]];w=[[w]]';
+  var flag     = 'cv';
   for (var j = 0; j < json.fragment.components.length; j++) {
     for (var element in json.fragment.components[j]) {
       html = unescape(json.fragment.components[j][element].html);
       update.innerHTML = update.innerHTML + html;
     //  if (element == 'component_image_fragment') {
         start_px = json.fragment.components[j][element].start_px;
-        end_px = json.fragment.components[j][element].end_px;
+        end_px   = json.fragment.components[j][element].end_px;
         start_bp = json.fragment.components[j][element].start_bp;
-        end_bp = json.fragment.components[j][element].end_bp;
+        end_bp   = json.fragment.components[j][element].end_bp;
         start_cv = json.fragment.components[j][element].start_cv;
-        end_cv = json.fragment.components[j][element].end_cv;
+        end_cv   = json.fragment.components[j][element].end_cv;
+        URL_temp = json.fragment.components[j][element].URL_temp;
+        flag     = json.fragment.components[j][element].flag;
     //  }
       if (element == 'component_menu') {
         update_menus = 1;
@@ -79,13 +89,13 @@ function panel_loaded(response) {
   }
 
   var F = document.forms['panel_form'];
-  F.appendChild(new_element(prefix + '_URL', '/Homo_sapiens/contigview?c=[[s]]:[[c]];w=[[w]]'));
-  F.appendChild(new_element(prefix + '_bp_end', end_bp));
+  F.appendChild(new_element(prefix + '_URL',      URL_temp ));
+  F.appendChild(new_element(prefix + '_bp_end',   end_bp));
   F.appendChild(new_element(prefix + '_bp_start', start_bp));
-  F.appendChild(new_element(prefix + '_flag', 'cv'));
-  F.appendChild(new_element(prefix + '_px_end', end_px));
+  F.appendChild(new_element(prefix + '_flag',     flag ));
+  F.appendChild(new_element(prefix + '_px_end',   end_px));
   F.appendChild(new_element(prefix + '_px_start', start_px));
-  F.appendChild(new_element(prefix + '_visible', '1'));
+  F.appendChild(new_element(prefix + '_visible',  '1'));
 
   view_init(prefix);
 
