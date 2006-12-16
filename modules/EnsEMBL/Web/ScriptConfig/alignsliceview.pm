@@ -36,8 +36,8 @@ sub init {
 
     opt_align_238 off
 opt_238_Homo_sapiens on
-opt_238_Pan_troglodytes
-opt_238_Macaca_mulatta
+opt_238_Pan_troglodytes on
+opt_238_Macaca_mulatta on
 opt_238_Bos_taurus on
 opt_238_Canis_familiaris on
 opt_238_Mus_musculus on
@@ -45,8 +45,8 @@ opt_238_Rattus_norvegicus on
 
     opt_align_240 off
 opt_240_Homo_sapiens on
-opt_240_Pan_troglodytes
-opt_240_Macaca_mulatta
+opt_240_Pan_troglodytes on
+opt_240_Macaca_mulatta on
 opt_240_Bos_taurus on
 opt_240_Canis_familiaris on
 opt_240_Gallus_gallus on
@@ -76,8 +76,4 @@ opt_240_conservation_score on
   ));
 }
 
-  $script_config->add_image_configs({qw(
-    alignsliceviewbottom nodas
-  )});
-$self->storable = 1;
 1;
