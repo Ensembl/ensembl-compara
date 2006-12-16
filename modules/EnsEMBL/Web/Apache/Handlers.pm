@@ -239,7 +239,8 @@ sub transHandler {
           warn $LOG_INFO;
           $LOG_TIME = time();
           $r->push_handlers( PerlCleanupHandler => \&cleanupHandler_script      );
-          $r->push_handlers( PerlCleanupHandler => \&cleanupHandler_blast       ) if $ENSEMBL_BLASTSCRIPT;
+#warn "PUSHING BLASTSCRIPTXX.... $ENSEMBL_BLASTSCRIPT";
+#          $r->push_handlers( PerlCleanupHandler => \&cleanupHandler_blast       ) if $ENSEMBL_BLASTSCRIPT;
           $r->push_handlers( PerlCleanupHandler => \&Apache2::SizeLimit::handler );
         }
         return OK;
@@ -256,7 +257,8 @@ sub transHandler {
           warn $LOG_INFO;
           $LOG_TIME = time();
           $r->push_handlers( PerlCleanupHandler => \&cleanupHandler_script      );
-          $r->push_handlers( PerlCleanupHandler => \&cleanupHandler_blast       ) if $ENSEMBL_BLASTSCRIPT;
+#warn "PUSHING BLASTSCRIPTYY.... $ENSEMBL_BLASTSCRIPT";
+#          $r->push_handlers( PerlCleanupHandler => \&cleanupHandler_blast       ) if $ENSEMBL_BLASTSCRIPT;
           $r->push_handlers( PerlCleanupHandler => \&Apache2::SizeLimit::handler );
         }
         return OK;
@@ -297,7 +299,11 @@ sub transHandler {
           warn $LOG_INFO;
           $LOG_TIME = time();
           $r->push_handlers( PerlCleanupHandler => \&cleanupHandler_script      );
-          $r->push_handlers( PerlCleanupHandler => \&cleanupHandler_blast       ) if $ENSEMBL_BLASTSCRIPT;
+#warn "PUSHING BLASTSCRIPTZZ.... $$ - $ENSEMBL_BLASTSCRIPT";
+#if( $ENSEMBL_BLASTSCRIPT ) {
+#          $r->push_handlers( PerlCleanupHandler => \&cleanupHandler_blast       );
+#  warn "YARG $$ ....";
+#}
           $r->push_handlers( PerlCleanupHandler => \&Apache2::SizeLimit::handler );
         }
         return OK;
@@ -332,6 +338,7 @@ sub transHandler {
 sub cleanupHandler {
   my $r = shift;      # Get the connection handler
 
+#warn "STANDARD CLEAN UP HANDLER $$";
   ## hack for oracle/AV problem: remember that this child has used Oracle
   $oracle_home ||= $ENV{'ORACLE_HOME'};
 
@@ -385,9 +392,13 @@ LONG PROCESS %10s IP:  %s  UA: %s
 sub cleanupHandler_script {
   my $r = shift;
   my @X = localtime();
+#  warn "SCRIPT CLEANUP HANDLER $$";
   my ($A,$B) = $LOG_INFO =~ /SCRIPT:(.{8}:\d+) +\d{4}-\d\d-\d\d \d\d:\d\d:\d\d (.*)$/;
   warn sprintf( "ENDSCR:%-19s %04d-%02d-%02d %02d:%02d:%02d %10.3f %s\n",
     $A, $X[5]+1900, $X[4]+1, $X[3], $X[2],$X[1],$X[0], time()-$LOG_TIME, $B );
+  if( $ENSEMBL_BLASTSCRIPT ) {
+    cleanupHandler_blast( $r );
+  }
 }
 
 sub childExitHandler {
@@ -460,6 +471,7 @@ sub queue_pending_blast_jobs {
 
 sub cleanupHandler_blast {
   my $r = shift;
+# warn "BLAST CLEANUP HANDLER... $$";
   my $directory = $ENSEMBL_TMP_DIR_BLAST.'/pending';
   my $FLAG = 0;
   my $count=0;
@@ -512,7 +524,7 @@ sub cleanupHandler_blast {
         flock FH, LOCK_UN;
         my $COMMAND = "$ENSEMBL_BLASTSCRIPT $blast_file $FILE2";
       ## NOW WE PARSE THE BLAST FILE.....
-warn "EXECUTING BLAST $COMMAND";
+warn "BLAST: $COMMAND";
         `$COMMAND`;
         if( $ticket && ( $_process_blast_called_at + 30>time() )) {
           $loads = _get_loads();
