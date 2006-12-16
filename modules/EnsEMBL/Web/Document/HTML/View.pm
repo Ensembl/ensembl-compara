@@ -120,7 +120,7 @@ sub render_textfield {
   if ($page->value_for_form_element($field_name)) {
     $value = qq(value=") . $page->value_for_form_element($field_name) . qq(");
   }
-  my $widget = qq(<input type="$input_type" id = "$field_name" name="$field_name" $value maxlength="$field_size" />);
+  my $widget = qq(<input type="$input_type" id = "$field_name" name="$field_name" $value maxlength="$field_size" class="normal"/>);
   $self->print($self->render_form_widget($widget));
 }
 
