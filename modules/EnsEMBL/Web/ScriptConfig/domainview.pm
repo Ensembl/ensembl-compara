@@ -8,5 +8,6 @@ sub init {
   $script_config->_set_defaults(qw(
     panel_table      on
   ));
+  $script_config->storable = 1;
 }
 1;

@@ -13,5 +13,6 @@ sub init {
     snp_display             off
     line_numbering          off
   ));
+  $script_config->storable = 1;
 }
 1;

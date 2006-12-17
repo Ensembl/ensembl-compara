@@ -13,5 +13,6 @@ sub init {
     fullseq          no
     oexon            no
   ));
+  $script_config->storable = 1;
 }
 1;

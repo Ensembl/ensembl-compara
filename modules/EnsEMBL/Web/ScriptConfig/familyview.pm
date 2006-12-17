@@ -10,5 +10,6 @@ sub init {
     panel_other      on
     panel_ensembl    on
   ));
+  $script_config->storable = 1;
 }
 1;

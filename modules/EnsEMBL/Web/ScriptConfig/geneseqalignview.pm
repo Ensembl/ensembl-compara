@@ -1,24 +1,5 @@
 package EnsEMBL::Web::ScriptConfig::geneseqalignview;
 
-=head1 NAME
-
-EnsEMBL::Web::ScriptConfig::geneseqalignview;
-
-=head1 SYNOPSIS
-
-The object handles the config of geneseqalignview script
-
-=head1 LICENCE
-
-This code is distributed under an Apache style licence:
-Please see http://www.ensembl.org/code_licence.html for details
-
-=head1 CONTACT
-
-Eugene Kulesha - ek3@sanger.ac.uk
-
-=cut
-
 use strict;
 
 sub init {
@@ -42,5 +23,6 @@ sub init {
     ms_193 off
     ms_213 off
   ));
+  $script_config->storable = 1;
 }
 1;

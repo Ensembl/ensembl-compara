@@ -11,5 +11,6 @@ sub init {
     g    1
     h   -1
   ));
+  $script_config->storable = 1;
 }
 1;

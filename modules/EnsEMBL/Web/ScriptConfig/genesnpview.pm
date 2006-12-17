@@ -48,7 +48,5 @@ sub init {
     genesnpview_context    nodas
   )});
   $script_config->storable = 1;
-
-  $script_config->storable = 1;
 }
 1;

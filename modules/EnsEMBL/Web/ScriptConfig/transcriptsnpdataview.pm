@@ -42,5 +42,6 @@ sub init {
     opt_stop_lost              on
     opt_sara                   on
   ));
+  $script_config->storable = 1;
 }
 1;

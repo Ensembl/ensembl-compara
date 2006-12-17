@@ -7,9 +7,9 @@ use EnsEMBL::Web::ScriptConfig;
 our @ISA = qw(EnsEMBL::Web::ScriptConfig);
 
 sub init {
-  my ($self ) = @_;
+  my ($script_config ) = @_;
 
-  $self->_set_defaults(qw(
+  $script_config->_set_defaults(qw(
     panel_options    on
     panel_image      on
     image_width      700
