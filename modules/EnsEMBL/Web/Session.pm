@@ -100,6 +100,9 @@ sub create_session_id {
 sub _temp_store {
   my( $self, $name, $code ) = @_;
 ### At any point can copy back value from image_config into the temporary storage space for the config!!
+warn "$name .... ", $Configs_of{ ident $self }{$name}," ... ",
+   $Configs_of{ ident $self }{$name}{'image_config_data'}{$code}," ... ",
+   $ImageConfigs_of{ident $self}{$code}{'user'};
   $Configs_of{ ident $self }{$name}{'image_config_data'}{$code} =
   $Configs_of{ ident $self }{$name}{'user'}{'image_configs'}{$code} =
     $self->deepcopy( $ImageConfigs_of{ident $self}{$code}{'user'} );
@@ -119,10 +122,12 @@ sub store {
 ### image configs have been altered!
   my($self,$r) = @_;
   my @storables = @{ $self->storable_data($r) };
+warn "STORING CONFIGURATION.................. @storables";
   if ($#storables > -1) {
     foreach my $storable (@storables) {
       my $config_key = $storable->{config_key};
       my $d = $storable->{data};
+warn "STORING $storable $config_key";
       $self->get_adaptor->setConfigByName( $self->create_session_id($r), 'script', $config_key, $d->Dump );
     }
   }
@@ -134,8 +139,8 @@ sub storable_data {
   my($self,$r) = @_;
   my $return_data = [];
   foreach my $config_key ( keys %{$Configs_of{ ident $self }||{}} ) {
-#warn "STORABLE DATA $config_key";
     my $sc_hash_ref = $Configs_of{ ident $self }{$config_key}||{};
+warn "STORABLE DATA $config_key ",$sc_hash_ref->{'config'}->storable," ",$sc_hash_ref->{'config'}->altered;
 ## Cannot store unless told to do so by script config
     next unless $sc_hash_ref->{'config'}->storable;
 ## Start by setting the to store flag to 1 if the script config has been updated!
@@ -434,6 +439,7 @@ sub getScriptConfig {
       'image_configs'     => {},                   ## List of attached image configs
       'image_config_data' => $image_config_data    ## Data retrieved from database to define image config settings.
     };
+warn "CONFIGURED $script -------- ", $Configs_of{ ident $self }{$script} ;
   }
   return $Configs_of{ ident  $self }{$script}{'config'};
 }

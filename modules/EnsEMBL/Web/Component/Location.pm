@@ -397,8 +397,8 @@ sub contigviewtop {
   my $click_left  = int( $wuc->transform->{'translatex'} );
   my $click_right = int( $wuc->transform->{'scalex'} * ($panel->option('end')-$panel->option('start')+1) + int( $wuc->transform->{'translatex'} ) );
   my $panel_no = ++ $object->__data->{'_cv_panel_no'};
-  warn "--------------> DISPLAYING PANEL NUMBER: " . $panel_no;
-  warn "--------------> DISPLAYING PANEL NUMBER IN OBJECT: " . $object->__data->{'_cv_panel_no'};
+  #warn "--------------> DISPLAYING PANEL NUMBER: " . $panel_no;
+  #warn "--------------> DISPLAYING PANEL NUMBER IN OBJECT: " . $object->__data->{'_cv_panel_no'};
      $image->{'panel_number'} = $panel_no;
      $image->set_button( 'drag', 'panel_number' => $panel_no, 'title' => 'Click or drag to centre display' );
   $panel->print( $image->render );
@@ -448,8 +448,8 @@ sub cytoview {
   my $click_left  = int( $wuc->transform->{'translatex'} );
   my $click_right = int( $wuc->transform->{'scalex'} * ($panel->option('end')-$panel->option('start')+1) + int( $wuc->transform->{'translatex'} ) );
   my $panel_no = ++ $object->__data->{'_cv_panel_no'};
-  warn "--------------> DISPLAYING PANEL NUMBER: " . $panel_no;
-  warn "--------------> DISPLAYING PANEL NUMBER IN OBJECT: " . $object->__data->{'_cv_panel_no'};
+  #warn "--------------> DISPLAYING PANEL NUMBER: " . $panel_no;
+  #warn "--------------> DISPLAYING PANEL NUMBER IN OBJECT: " . $object->__data->{'_cv_panel_no'};
      $image->{'panel_number'} = $panel_no;
      $image->set_button( 'drag', 'panel_number' => $panel_no, 'title' => 'Click or drag to centre display' );
   $panel->print( $image->render );
@@ -634,8 +634,8 @@ sub contigviewbottom {
   my $image = $object->new_image( $slice, $wuc, $object->highlights );
   $image->imagemap = 'yes';
   my $panel_no = ++ $object->__data->{'_cv_panel_no'};
-  warn "--------------> DISPLAYING PANEL NUMBER: " . $panel_no;
-  warn "--------------> DISPLAYING PANEL NUMBER IN OBJECT: " . $object->__data->{'_cv_panel_no'};
+  #warn "--------------> DISPLAYING PANEL NUMBER: " . $panel_no;
+  #warn "--------------> DISPLAYING PANEL NUMBER IN OBJECT: " . $object->__data->{'_cv_panel_no'};
      $image->{'panel_number'} = $panel_no;
      $image->set_button( 'drag', 'panel_number' => $panel_no, 'title' => 'Click or drag to centre display' );
   $panel->print( $image->render );
@@ -773,7 +773,7 @@ sub bottom_nav {
   my( $panel, $object, $configname, $additional_hidden_values ) = @_;
   my $wuc   = $object->user_config_hash( $configname );
   my $width = $object->param('image_width');
-
+warn "BOTTOM NAV: $configname - $width";
   my $bands = $wuc->get('_settings','show_bands_nav') ne 'yes' ? 0 :
               $object->species_defs->get_table_size( { -db => 'ENSEMBL_DB', -table => 'karyotype' }, $object->species );
   
@@ -1213,13 +1213,13 @@ sub alignsliceviewbottom {
     my %alignments = $object->species_defs->multiX('ALIGNMENTS');
 
     foreach my $a (sort keys %alignments) {
-        if ($alignments{$a}->{'species'}->{$species}) {
+      if ($alignments{$a}->{'species'}->{$species}) {
         $aID = $a;
         $wuc->get("alignslice", "id", $aID, 1);
-        $wuc->save;
+#        $wuc->save;
         $method_link_species_set = $mlss_adaptor->fetch_by_dbID($aID); 
         last;
-        }
+      }
     }
     }
 

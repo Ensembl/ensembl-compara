@@ -89,6 +89,7 @@ sub new {
                                                                      $self->_prof("Object creation failed");
   } else {
                                                                      $self->_prof("Objects created");
+warn "GETTING SCRIPT CONFIG";
     my $sc = $self->factory->get_scriptconfig( );
 #       $sc->update_from_input( $input, $rend->{'r'} ) if $sc;        $self->_prof("Script config updated from input");
   }
@@ -505,6 +506,7 @@ sub simple_webpage {
     foreach my $object( @{$self->dataObjects} ) {
       $self->configure( $object, $object->script, 'context_menu', 'context_location' );
     }
+warn "FIXING SESSION.............";
     $self->factory->fix_session;
 =pod
     my $object = $self->dataObjects->[0];

@@ -58,7 +58,7 @@ sub init {
     '_settings' => {
 ## Image size configuration...
       'spritelib' => { 'default' => $self->{'species_defs'}->ENSEMBL_SERVERROOT.'/htdocs/img/sprites' },
-      'width'         => 900,
+      'width'         => 700,
       'spacing'       => 1,
       'margin'        => 2,
       'intercontainer' => 1,

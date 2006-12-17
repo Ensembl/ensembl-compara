@@ -36,7 +36,7 @@ sub load_configuration {
     warn "ADDING CONFIG SETTINGS FOR: " . $key;
     my $wuc = $obj->user_config_hash($key);
     $wuc->{'user'} = $config_data; 
-    $wuc->save;
+#    $wuc->save;
   }
 }
 
@@ -108,23 +108,20 @@ unless( $obj->species_defs->NO_SEQUENCE ) {
   my %alignments = $obj->species_defs->multiX('ALIGNMENTS');
 
   foreach my $id (
-		  sort { 10 * ($alignments{$b}->{'type'} cmp $alignments{$a}->{'type'}) + ($a <=> $b) }
-		  grep { $alignments{$_}->{'species'}->{$species} } 
-		  keys (%alignments)) {
-
-      my $label = $alignments{$id}->{'name'};
-      my $KEY = "opt_align_${id}";
-
-      my @species = grep {$_ ne $species} sort keys %{$alignments{$id}->{'species'}};
-      if ( scalar(@species) == 1) {
-	  ($label = $species[0]) =~ s/_/ /g;
-      }
-
-      push @options_as, {
-        'text' => "... <em>$label</em>", 'raw' => 1,
-        'href' =>  sprintf( "/%s/alignsliceview?c=%s:%s;w=%s;align=%s", $species,  $obj->seq_region_name, $obj->centrepoint, $obj->length, $KEY )
-      };
-    
+    sort { 10 * ($alignments{$b}->{'type'} cmp $alignments{$a}->{'type'}) + ($a <=> $b) }
+    grep { $alignments{$_}->{'species'}->{$species} } 
+    keys (%alignments)
+  ) {
+    my $label = $alignments{$id}->{'name'};
+    my $KEY = "opt_align_${id}";
+    my @species = grep {$_ ne $species} sort keys %{$alignments{$id}->{'species'}};
+    if( scalar(@species) == 1) {
+      ($label = $species[0]) =~ s/_/ /g;
+    }
+    push @options_as, {
+      'text' => "... <em>$label</em>", 'raw' => 1,
+      'href' =>  sprintf( "/%s/alignsliceview?c=%s:%s;w=%s;align=%s", $species,  $obj->seq_region_name, $obj->centrepoint, $obj->length, $KEY )
+    };
   }
 
   if( @options_as ) {
@@ -344,7 +341,7 @@ sub add_das_sources {
     foreach my $source (@T) {
       $wuc->set("managed_extdas_$source", 'on', 'on', 1);
     }
-    $wuc->save;
+#    $wuc->save;
   }
 }
 
@@ -354,9 +351,7 @@ sub cytoview {
   $self->update_configs_from_parameter( 'bottom', 'cytoview' );
   $self->add_das_sources( 'cytoview' );
   my $q_string = sprintf( '%s:%s-%s', $obj->seq_region_name, $obj->seq_region_start, $obj->seq_region_end );
-  my @common = (
-    
-  );
+  my @common = ( );
   my @rendered_panels;
   my $ideo = $self->new_panel( 'Image',
     'code'    => "ideogram_#", 'caption' => $obj->seq_region_type_and_name,
@@ -721,73 +716,71 @@ warn "Adding option to zoom - end    $end";
 }
 
 sub alignsliceview {
-    my $self   = shift;
-    my $obj    = $self->{object};
-    my $species    = $obj->species;
-    my $q_string = sprintf( '%s:%s-%s', $obj->seq_region_name, $obj->seq_region_start, $obj->seq_region_end );
+  my $self   = shift;
+  my $obj    = $self->{object};
+  my $species    = $obj->species;
+  my $q_string = sprintf( '%s:%s-%s', $obj->seq_region_name, $obj->seq_region_start, $obj->seq_region_end );
 
-    my $config_name = 'alignsliceviewbottom';
-    $self->update_configs_from_parameter( 'bottom', $config_name );
+  my $config_name = 'alignsliceviewbottom';
+  $self->update_configs_from_parameter( 'bottom', $config_name );
 
-    my $wsc = $self->{object}->get_scriptconfig();
-    my $wuc = $obj->user_config_hash( $config_name );
+  my $wsc = $self->{object}->get_scriptconfig();
+  my $wuc = $obj->user_config_hash( $config_name );
 
-    my @align_modes = grep { /opt_align/ }keys (%{$wsc->{_options}});
-    if (my $set_align = $obj->param('align')) {
-	foreach my $opt (@align_modes) {
-	    $wsc->set($opt, "off", 1);
-	}
-	$wsc->set($set_align, "on", 1);
-	$wuc->set('alignslice', 'align', $set_align, 1);
-	$wsc->save();
+  my @align_modes = grep { /opt_align/ }keys (%{$wsc->{_options}});
+  if (my $set_align = $obj->param('align')) {
+    foreach my $opt (@align_modes) {
+      $wsc->set($opt, "off", 1);
     }
+warn "SETTING.... $set_align on";
+    $wsc->set($set_align, "on", 1);
+warn "$set_align....";
+    $wuc->set('alignslice', 'align', $set_align, 1);
+#   $wsc->save();
+  }
 
     ## Unset conservation_scores and constrained_elements
-    $wuc->set( 'alignslice',  'constrained_elements', "", 1);
-    $wuc->set( 'alignslice',  'conservation_scores', "", 1);
+  $wuc->set( 'alignslice',  'constrained_elements', "", 1);
+  $wuc->set( 'alignslice',  'conservation_scores', "", 1);
 
-    foreach my $opt (@align_modes) {
-	if ($wsc->get($opt, "on") eq 'on') {
-	    my ($atype, $id);
-	    my @selected_species;
-
-	    if ($opt =~ /^opt_align_(.*)/) {
-		$id = $1;
- 		my @align_species = grep { /opt_${id}_/ } keys (%{$wsc->{_options}});
-
-	        foreach my $sp (@align_species) {
-
-	            if ($sp =~ /opt_${id}_constrained_elem/) {
-                      if ($wsc->get($sp, "on") eq 'on') {
-                        $wuc->set( 'alignslice',  'constrained_elements', "on", 1);
-                      }
-                      next;
-	            }
-	            if ($sp =~ /opt_${id}_conservation_score/) {
-                      if ($wsc->get($sp, "on") eq 'on') {
-                        $wuc->set( 'alignslice',  'conservation_scores', "on", 1);
-                      }
-                      next;
-	            }
-		    if ($wsc->get($sp, "on") eq 'on') {
-			$sp =~ s/opt_${id}_//;
-			push @selected_species, $sp if ($sp ne $species);
-		    }
-	        }
-
-
-	    }
+  foreach my $opt (@align_modes) {
+    warn "$opt - ",$wsc->get($opt,"on");
+    if( $wsc->get($opt, "on") eq 'on' ) {
+      my ($atype, $id);
+      my @selected_species;
+      if ($opt =~ /^opt_align_(.*)/) {
+        $id = $1;
+        my @align_species = grep { /opt_${id}_/ } keys (%{$wsc->{_options}});
+        foreach my $sp (@align_species) {
+          if ($sp =~ /opt_${id}_constrained_elem/) {
+            if ($wsc->get($sp, "on") eq 'on') {
+              $wuc->set( 'alignslice',  'constrained_elements', "on", 1);
+            }
+            next;
+          }
+          if ($sp =~ /opt_${id}_conservation_score/) {
+            if ($wsc->get($sp, "on") eq 'on') {
+              $wuc->set( 'alignslice',  'conservation_scores', "on", 1);
+            }
+            next;
+          }
+          if ($wsc->get($sp, "on") eq 'on') {
+            $sp =~ s/opt_${id}_//;
+            push @selected_species, $sp if ($sp ne $species);
+          }
+        }
+      }
 # 	    warn("STEP1: ($opt : $id : @selected_species )");
-	    $wuc->set( 'alignslice',  'id', $id, 1);
-            $wuc->set( 'alignslice',  'species', \@selected_species, 1);
-            $wuc->set( 'alignslice',  'align', $opt, 1);
-	    last;
-	}
+      $wuc->set( 'alignslice',  'id', $id, 1);
+      $wuc->set( 'alignslice',  'species', \@selected_species, 1);
+      $wuc->set( 'alignslice',  'align', $opt, 1);
+      last;
     }
-    $wuc->save();
-
-    my $last_rendered_panel = undef;
-    my @common = ( 'params' => { 'l'=>$q_string, 'h' => $obj->highlights_string } );
+  }
+#    $wuc->save();
+  $obj->get_session->_temp_store( 'alignsliceview' , 'alignsliceviewbottom' );
+  my $last_rendered_panel = undef;
+  my @common = ( 'params' => { 'l'=>$q_string, 'h' => $obj->highlights_string } );
 
     ## Initialize the ideogram image...
     my $ideo = $self->new_panel( 'Image',
@@ -903,7 +896,7 @@ if( $restore_default && !$obj->param('bottom') ) { # if no spp sources are on
   my ($pops_on, $pops_off) = $obj->current_pop_name;
   map { $script_config->set("opt_pop_$_", 'off', 1); } @$pops_off;
   map { $script_config->set("opt_pop_$_", 'on', 1); } @$pops_on;
-  $script_config->save;
+#  $script_config->save;
 
 
  ## This should be moved to the Location::Object module I think....
