@@ -70,8 +70,10 @@ my $json_error = "";
 my $prefix = "p";
 my $json_components = "";
 
-my $max_length = ($object->species_defs->ENSEMBL_GENOME_SIZE||1) * 1.001e6;
-my($top_start, $top_end) = &top_start_end( $object, $max_length );
+# my $max_length = ($object->species_defs->ENSEMBL_GENOME_SIZE||1) * 1.001e6;
+# my($top_start, $top_end) = &top_start_end( $object, $max_length );
+my $top_start = $cgi->param('start');
+my $top_end   = $cgi->param('end');
 $fragment->add_option( 'start', $top_start );
 $fragment->add_option( 'end',   $top_end   );
 warn "----> AJAX PANEL NUMBER: " . $panel_number;
@@ -93,13 +95,13 @@ foreach my $key(@ordered_componenents) {
     $result = &$complete( $fragment, $object );
 
     my $start_px = $fragment->option('px_start'); 
-    my $end_px = $fragment->option('px_end');
-    my $start_bp = $fragment->option('bp_start'); 
-    my $end_bp = $fragment->option('bp_end');
+    my $end_px   = $fragment->option('px_end');
+    my $start_bp = $fragment->option('start'); 
+    my $end_bp   = $fragment->option('end');
     my $start_cv = $fragment->option('cv_start');
-    my $end_cv = $fragment->option('cv_end');
+    my $end_cv   = $fragment->option('cv_end');
     
-    $json_components .= "{ $key: { html: '" . $fragment->html . "', start_bp: '$start_bp', end_bp: '$end_bp', start_cv: '$start_cv', end_cv: '$end_cv', start_px: '$start_px', end_px: '$end_px' } }, ";
+    $json_components .= "{ $key: { flag: '".$fragment->option('flag')."', URL: '".$fragment->option('URL')."', html: '" . $fragment->html . "', start_bp: '$start_bp', end_bp: '$end_bp', start_cv: '$start_cv', end_cv: '$end_cv', start_px: '$start_px', end_px: '$end_px' } }, ";
     #warn $json_components;
   }
 }
