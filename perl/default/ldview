@@ -27,6 +27,7 @@ else {
 	$webpage->configure( $object->__data->{$_}->[0], 'context_menu' );
       }
     }
+    $webpage->factory->fix_session;
   }
   $webpage->{factory}->clear_problems();
   $webpage->render;

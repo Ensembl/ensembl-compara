@@ -21,6 +21,7 @@ if( $webpage->has_a_problem() ) {
   foreach my $object( @{$webpage->dataObjects} ) {
     $webpage->configure( $object, 'alignsliceview', 'context_menu' );
   }
+  $webpage->factory->fix_session;
   $webpage->render();
 }
 

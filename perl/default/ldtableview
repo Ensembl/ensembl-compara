@@ -28,6 +28,7 @@ else {
       }
     }
   }
+  $self->factory->fix_session;
   $webpage->{factory}->clear_problems();
   $webpage->render;
 }

@@ -19,17 +19,17 @@ my %params = ();
 my %components = ();
 my @ordered_componenents = ();
 
-warn "--------------------";
-warn("AJAX: Populating fragment"); 
+#warn "--------------------";
+#warn("AJAX: Populating fragment"); 
 
 foreach my $key (keys %{ $incoming }) {
   if ($key =~ /^component_/) {
     push @ordered_componenents, $key;
     $components{$key} = $incoming->{$key};
-    warn "COMPONENT: $key:" . $components{$key}; 
+    #warn "COMPONENT: $key:" . $components{$key}; 
   } else {
     $params{$key} = $incoming->{$key};
-    warn "PARAM: $key: " . $params{$key};
+    #warn "PARAM: $key: " . $params{$key};
   }
 }
 
@@ -76,9 +76,9 @@ my $top_start = $cgi->param('start');
 my $top_end   = $cgi->param('end');
 $fragment->add_option( 'start', $top_start );
 $fragment->add_option( 'end',   $top_end   );
-warn "----> AJAX PANEL NUMBER: " . $panel_number;
+#warn "----> AJAX PANEL NUMBER: " . $panel_number;
 $object->__data->{'_cv_panel_no'} = $panel_number;
-warn "----> AJAX PANEL NUMBER IN OBJECT: " . $object->__data->{'_cv_panel_no'};
+#warn "----> AJAX PANEL NUMBER IN OBJECT: " . $object->__data->{'_cv_panel_no'};
 foreach my $key(@ordered_componenents) {
   $components{$key} =~ /(.*)::(\w+)$/;
   my $complete = $components{$key};
@@ -86,7 +86,7 @@ foreach my $key(@ordered_componenents) {
   my $function = $2;
   my $result = undef;
   if (EnsEMBL::Web::Root::dynamic_use($module, $module)) {
-    warn "Creating fragment: $complete";
+    #warn "Creating fragment: $complete";
     no strict 'refs';
     $object->script('contigview');
     $object->get_scriptconfig('contigview');
@@ -106,7 +106,7 @@ foreach my $key(@ordered_componenents) {
   }
 }
 
-warn "--------------------";
+#warn "--------------------";
 $json_components =~ s/, $//;
 print "Content-type: text/plain\n\n";
 print "{ fragment: { panel_number: '" . $panel_number . "', id: '" . $cgi->param('id') . "', title: '" . $cgi->param('title') . "', components: [ $json_components ], location: { chromosome: '$chromosome', start: '$start', end: '$end' } } }";
