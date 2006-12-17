@@ -26,15 +26,13 @@ sub start {
   my $self = shift;
   $self->{'page'}->render_start;
 #  print '<script type="text/javascript">debug_window()</script>';
-  print qq(
-<div id="page"><div id="i1"><div id="i2"><div class="sptop">&nbsp;</div>
-<div id="main_body_content" class="panel">);
+  $self->{'page'}->content->_start;
+  $self->{'page'}->content->render_settings_list;
 }
 
 sub end {
   my $self = shift;
-  print qq(</div>
-</div></div></div>);
+  $self->{'page'}->content->_end;
   if($self->{'session'}->param('__validatorError')) {
   ( my $inc = $self->{'session'}->param("__validationError") ) =~ s/\n/\\n/;
   $inc =~s/\'/\\\'/;
