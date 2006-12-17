@@ -50,9 +50,9 @@ use CGI::Cookie;
     }
     $self->get_db_adaptor->do("unlock tables");
 #-- Create cookie and set the subprocess environment variable ENSEMBL_FIRSTSESSION;
-warn "  ## Creating new user session $session_id";
+#warn "  ## Creating new user session $session_id";
     if( $r ) { # We have an apache request object yeah!
-warn "  `-- storing cookie...";
+#warn "  `-- storing cookie...";
       $cookie->create( $r, $session_id );
     }
     return $session_id;
@@ -77,7 +77,7 @@ sub setConfigByName {
     $self->get_db_adaptor->do( "insert ignore into type set code = ?", {}, $type );
     ( $type_id ) = $self->get_db_adaptor->selectrow_array( "select type_id from type where code = ?", {}, $type );
   }
-  warn "========> SETTING CONFIG";
+  #warn "========> SETTING CONFIG";
   return $self->setConfig( $session_id, $type_id, $key, $value );
 }
 
@@ -110,7 +110,7 @@ sub getConfigByName {
 sub setConfig {
 ### Set the session configuration to the specified value with session_id and type_id as passed
   my( $self, $session_id, $type_id, $key , $value ) = @_;
-  warn "=======> setConfig: SETTING CONFIG WITH: " . $value;
+  #warn "=======> setConfig: SETTING CONFIG WITH: " . $value;
   return unless( $session_id && $type_id && $self->get_db_adaptor );
   my $rows = $self->get_db_adaptor->do(
     "insert ignore into session_record
@@ -118,7 +118,7 @@ sub setConfig {
     $value, $session_id, $type_id, $key
   );
   if( $rows && $rows < 1 ) {
-    warn "=======> setConfig: UPDATING ID: " . $session_id;
+    #warn "=======> setConfig: UPDATING ID: " . $session_id;
     $self->get_db_adaptor->do(
       "update session_record set data = ?, modified_at = now()
         where session_id = ? and type_id = ? and code = ?", {}, 

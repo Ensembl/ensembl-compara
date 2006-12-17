@@ -125,7 +125,7 @@ sub set {
   my( $self, $key, $value, $force ) = @_;
   return unless $force || exists $self->{'_options'}{$key};
   return if $self->{'_options'}{$key}{'user'}  eq $value;
-warn "setting $key to $value";
+#warn "setting $key to $value";
   $self->altered = 1;
   $self->{'_options'}{$key}{'user'}  = $value;
 }

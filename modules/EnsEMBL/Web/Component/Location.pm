@@ -773,7 +773,7 @@ sub bottom_nav {
   my( $panel, $object, $configname, $additional_hidden_values ) = @_;
   my $wuc   = $object->user_config_hash( $configname );
   my $width = $object->param('image_width');
-warn "BOTTOM NAV: $configname - $width";
+#warn "BOTTOM NAV: $configname - $width";
   my $bands = $wuc->get('_settings','show_bands_nav') ne 'yes' ? 0 :
               $object->species_defs->get_table_size( { -db => 'ENSEMBL_DB', -table => 'karyotype' }, $object->species );
   

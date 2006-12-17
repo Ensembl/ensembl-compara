@@ -30,10 +30,10 @@ sub load_configuration {
   my $obj  = $self->{object};
   my $config_string = $config->config;
   $config_string =~ s/&quote;/'/g;
-  warn $config_string;
+#  warn $config_string;
   my $config_data = eval($config_string);
   foreach my $key (keys %{ $config_data }) {
-    warn "ADDING CONFIG SETTINGS FOR: " . $key;
+    #warn "ADDING CONFIG SETTINGS FOR: " . $key;
     my $wuc = $obj->user_config_hash($key);
     $wuc->{'user'} = $config_data; 
 #    $wuc->save;
@@ -658,8 +658,6 @@ sub contigview {
                              ( $obj->centrepoint - ($zw-1)/2 , $obj->centrepoint + ($zw-1)/2 );
       $base->add_option( 'start', $start );
       $base->add_option( 'end',   $end );
-warn "Adding option to zoom - stsart $start";
-warn "Adding option to zoom - end    $end";
       $base_fragment->add_option( 'start', $start );
       $base_fragment->add_option( 'end',   $end );
     }
@@ -732,9 +730,9 @@ sub alignsliceview {
     foreach my $opt (@align_modes) {
       $wsc->set($opt, "off", 1);
     }
-warn "SETTING.... $set_align on";
+#warn "SETTING.... $set_align on";
     $wsc->set($set_align, "on", 1);
-warn "$set_align....";
+#warn "$set_align....";
     $wuc->set('alignslice', 'align', $set_align, 1);
 #   $wsc->save();
   }
@@ -744,7 +742,7 @@ warn "$set_align....";
   $wuc->set( 'alignslice',  'conservation_scores', "", 1);
 
   foreach my $opt (@align_modes) {
-    warn "$opt - ",$wsc->get($opt,"on");
+    #warn "$opt - ",$wsc->get($opt,"on");
     if( $wsc->get($opt, "on") eq 'on' ) {
       my ($atype, $id);
       my @selected_species;

@@ -117,7 +117,7 @@ sub createObjects {
 # Add external sources (ones added by user)
 ### THIS NOW NEEDS TO COME OUT OF THE session object.....
 #    $extdas->getConfigs($conf_script, $conf_script);
-  my $daslist = $self->get_session->get_das;
+  $daslist = $self->get_session->get_das;
    
   for my $source ( keys %$daslist ) {
     my $source_config = $daslist->{$source}->get_data;
