@@ -74,6 +74,13 @@ opt_240_conservation_score on
     opt_align_221 off
     opt_align_222 off
   ));
+
+  $script_config->add_image_configs({qw(
+    alignsliceviewbottom nodas
+  )});
+
+  $script_config->storable = 1;
+
 }
 
 1;
