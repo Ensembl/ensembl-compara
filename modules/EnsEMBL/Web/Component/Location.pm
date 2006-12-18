@@ -551,7 +551,7 @@ sub add_das_tracks {
     my $adaptor = undef;
     my $source_config = $source->get_data;
     eval {
-      my $URL = $source_config->{'URL'};
+      my $URL = $source_config->{'url'};
       $URL = "http://$URL" unless $URL =~ /https?:\/\//i;
       if( my $dsn = $source_config->{'dsn'} ) {
         if ($URL !~ m!/das/$dsn!) {
@@ -562,6 +562,7 @@ sub add_das_tracks {
         $URL .= "$URL/das" unless $URL =~ m!/das!;
       }
       my $stype = $source_config->{'type'} || 'ensembl_location';
+
       $adaptor = Bio::EnsEMBL::ExternalData::DAS::DASAdaptor->new(
         -url       => $URL,
         -dsn       => $source_config->{'dsn'},

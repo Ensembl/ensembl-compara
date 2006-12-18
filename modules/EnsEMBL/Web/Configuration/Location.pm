@@ -348,8 +348,8 @@ sub add_das_sources {
 sub cytoview {
   my $self = shift;
   my $obj    = $self->{object};
-  $self->update_configs_from_parameter( 'bottom', 'cytoview' );
   $self->add_das_sources( 'cytoview' );
+  $self->update_configs_from_parameter( 'bottom', 'cytoview' );
   my $q_string = sprintf( '%s:%s-%s', $obj->seq_region_name, $obj->seq_region_start, $obj->seq_region_end );
   my @common = ( );
   my @rendered_panels;
@@ -409,7 +409,7 @@ sub cytoview {
       }
     }
   }
-  if( @rendered_panels ) {
+#  if( @rendered_panels ) {
     my $hidden = $self->new_panel( undef, 'code' => 'contigview_form' );
     $hidden->add_components(qw(form EnsEMBL::Web::Component::Location::contigview_form));
     $obj->__data->{_cv_panel_no} = 0;
@@ -425,7 +425,7 @@ sub cytoview {
     };
     $self->add_panel( $hidden );
     $self->{page}->add_body_attr( 'onload' => sprintf 'contigview_init(1,%d);', 0+@rendered_panels );
-  }
+#  }
 
   $self->{page}->set_title( "Features on ".$obj->seq_region_type_and_name.' '.$self->{object}->seq_region_start.'-'.$self->{object}->seq_region_end );
 
@@ -477,8 +477,8 @@ sub contigview {
   my $self   = shift;
   my $obj    = $self->{object};
   my $q_string = sprintf( '%s:%s-%s', $obj->seq_region_name, $obj->seq_region_start, $obj->seq_region_end );
+#  $self->add_das_sources('contigviewbottom');
   $self->update_configs_from_parameter( 'bottom', 'contigviewbottom' );
-  $self->add_das_sources('contigviewbottom');
 
   $self->{page}->add_body_attr( 'onload' => 'populate_fragments(); ');
   $self->{page}->javascript->add_source("/js/ajax_fragment.js");
@@ -691,7 +691,7 @@ sub contigview {
       }
     }
   }
-  if( @rendered_panels ) {
+#  if( @rendered_panels ) {
     my $hidden = $self->new_panel( undef, 'code' => 'contigview_form' );
     $hidden->add_components(qw(form EnsEMBL::Web::Component::Location::contigview_form));
     my $zw = int(abs($obj->param('zoom_width')));
@@ -708,7 +708,8 @@ sub contigview {
     };
     $self->add_panel( $hidden );
     $self->{page}->add_body_attr( 'onload' => sprintf 'contigview_init(1,%d);', 0+@rendered_panels );
-  }
+#  }
+
 
   $self->{page}->set_title( "Features on ".$obj->seq_region_type_and_name.' '.$self->{object}->seq_region_start.'-'.$self->{object}->seq_region_end );
 }

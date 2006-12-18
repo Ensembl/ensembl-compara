@@ -481,6 +481,8 @@ sub _set {
 
 sub load {
   my ($self) = @_;
+warn "UserConfig->load - Deprecated call now handled by session";
+  return;
   if($self->{'_db'}) {
     my $TEMP = $self->{'_db'}->getConfigByName( $ENV{'ENSEMBL_FIRSTSESSION'}, $self->{'type'} );
     eval {
@@ -492,6 +494,8 @@ sub load {
 
 sub save {
     my ($self) = @_;
+warn "UserConfig->save - Deprecated call now handled by session";
+  return;
     $self->{'_db'}->setConfigByName(
     	$self->{'_r'}, $ENV{'ENSEMBL_FIRSTSESSION'}, $self->{'type'},
     	&Storable::nfreeze($self->{'user'})
@@ -665,6 +669,7 @@ sub set {
     return unless(defined $self->{'general'}->{$script}->{$subsection});
     return unless(defined $self->{'general'}->{$script}->{$subsection}->{$key});
   }
+  my($package, $filename, $line) = caller;
   return if $self->{'user'}->{$script}->{$subsection}->{$key} eq $value;
   $self->altered = 1;
   $self->{'user'}->{$script}->{$subsection}->{$key} = $value;
