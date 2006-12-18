@@ -42,22 +42,14 @@ if (my $id = $cgi->param('id')) {
 else {
   $page->action('create');
 }
-$topic_types = 'set(data,code,schema,feature)';
 $sp_types = "set($sp_values)";
 
 $page->on_complete('/common/accountview');
 $page->on_error('/common/accountview');
 
-$data->add_field({'Field' => 'topic', 'Type' => $topic_types});
 $data->add_field({'Field' => 'species', 'Type' => $sp_types});
 $data->add_field({'Field' => 'created_at', 'Type' => 'timestamp'});
 $data->add_field({'Field' => 'modified_at', 'Type' => 'timestamp'});
-
-## Add standard options
-$topic_options->add_label({'data'    => 'Data updates'});
-$topic_options->add_label({'code'    => 'API changes'});
-$topic_options->add_label({'schema'  => 'Schema changes'});
-$topic_options->add_label({'feature' => 'Web features'});
 
 foreach my $species (@species) {
   (my $pretty_sp = $species) =~ s/_/ /;
@@ -67,7 +59,6 @@ foreach my $species (@species) {
 ## User id is added automatically if a user is logged in.
 $page->add_configuration_element('record', 'yes');
 $page->add_configuration_element('type', 'news'); 
-$page->add_form_element('topic', "Topic to filter on", $topic_options);
 $page->add_form_element('species', "Species to filter on", $sp_options);
 
 EnsEMBL::Web::Document::DataView::simple('User', $page, {
