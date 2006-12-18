@@ -71,11 +71,10 @@ sub setup_species_descriptions {
     $short = $html;
     if (!$species->{'prev_assembly'}) {
       $html .= ' '.$new;
-      $short = $html.'</span>';
-    }
-    elsif ($species->{'prev_assembly'} && $species->{'prev_assembly'} ne $species->{'assembly'}) {
+      $short = $html;
+    } elsif ($species->{'prev_assembly'} && $species->{'prev_assembly'} ne $species->{'assembly'}) {
       $html .= ' '.$updated;
-      $short = $html.'</span>';
+      $short = $html;
     }
     if ($species->{'vega'} && $species->{'vega'} eq 'Y') {
       $html .= qq( | <a href="http://vega.sanger.ac.uk/$sp/">Vega</a>);
@@ -87,7 +86,8 @@ sub setup_species_descriptions {
       }
       $html .= qq(<a href="http://pre.ensembl.org/$sp/"><i><span class="red">pr<span class="blue">e</span>!</span></i></a>);
     }
-    $html .= qq(</span>);
+    $short .= qq(</span>);
+    $html  .= qq(</span>);
     if ($sp) {
       (my $name = $sp) =~ s/_/ /;
       $description{$name} = [$html, $short];
