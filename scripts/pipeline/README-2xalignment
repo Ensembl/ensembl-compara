@@ -90,6 +90,18 @@
 
     beekeeper.pl -url mysql://ensadmin:xxxx@ia64g:3306/klh_compara_human_pangolin_blastz -loop
 
+9 - Check that everything has finished
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    If the single job for the analysis "UpdateMaxAlignLengthAfterNet" is
+    registered as "DONE" (run the beekeeper without the -loop option to 
+    get the current status of the system), then because this is the last
+    job to be run, it's a good sign. You should also check the  
+    genomic_align_block table to make sure that there are aligments for
+    the three expected method_links in the system (raw, chains and nets). 
+
+    If something is wrong, you will need to find out what it is. See next
+    section. 
 
 =====================
 Debugging strategies
