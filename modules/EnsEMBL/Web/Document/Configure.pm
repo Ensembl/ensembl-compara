@@ -78,15 +78,15 @@ sub common_menu_items {
         #                              'href' => "javascript:bookmark_link()" );
       }
 
-      #$doc->menu->add_entry( $flag, 'text' => "Your account",
-      #                            'href' => "/common/accountview" );
-
       $doc->menu->add_entry( $flag, 'text' => "<a href='javascript:void(0);' onclick='javascript:toggle_settings_drawer();' id='settings_link'>Show account</a> &middot; <a href='javascript:void(0);' onclick='logout_link()'>Log out</a>",
                                     'raw' => "yes" );
 
       $doc->menu->add_entry( $flag, 'text' => "Save bookmark",
                                     'href' => "javascript:bookmark_link()" );
     
+      #$doc->menu->add_entry( $flag, 'text' => "Your account",
+      #                            'href' => "/common/accountview" );
+
     }
     else {
       $doc->menu->add_entry( $flag, 'text' => "<a href='javascript:login_link();'>Login</a> or <a href='/common/register'>Register</a>", 'raw' => 'yes');
@@ -137,6 +137,7 @@ sub static_menu_items {
 
   $doc->menu->add_entry('docs', 'href'=>'/info/',         'text'=>'Table of Contents');
   $doc->menu->add_entry('docs', 'href'=>'/info/helpdesk', 'text'=>'Helpdesk');
+  $doc->menu->add_entry('docs', 'href'=>'/Multi/newsview?rel=current', 'text'=>"What's New");
   $doc->menu->add_entry('docs', 'href'=>'/info/about/',   'text'=>'About Ensembl');
   $doc->menu->add_entry('docs', 'href'=>'/info/data/download.html', 'text'=>'Downloading data');
   $doc->menu->add_entry('docs', 'href'=>'/info/data/index.html#import', 'text'=>'Displaying your own data');
