@@ -7,7 +7,7 @@ use EnsEMBL::Web::Object::DAS;
 our @ISA = qw(EnsEMBL::Web::Object::DAS);
 
 use Bio::EnsEMBL::Map::DBSQL::DitagFeatureAdaptor;
-my @ditag_analysis = qw(FANTOM_GSC_PET FANTOM_GIS_PET GIS_PET_Encode);
+my @ditag_analysis = qw(FANTOM_GSC_PET FANTOM_GIS_PET GIS_PET_Encode GIS_PET CHIP_PET);
 
 sub Types {
     my $self = shift;
@@ -69,11 +69,12 @@ sub Features {
 
 	    my $id = join('.', $ft->ditag_id, $ft->ditag_pair_id);
 	    my $g_location = "Location: ".join(' - ', ($ft->get_ditag_location)[0,1]);
+	    my $ftype = $ft->analysis->logic_name;
 
 	    my $group = {
 		'ID' => $id,
-		'LINK' => [ {text => 'More info', href => "http://www.ensembl.org/$species/Ditags.html"} ],
-		'TYPE' =>  $ft->analysis->logic_name,
+		'LINK' => [ {text => 'More info', href => "http://www.ensembl.org/$species/ditags/$ftype.html"} ],
+		'TYPE' =>  $ftype,
 		'NOTE'        => ["tag_count: $tag_count", $g_location],
 	    };
 	    $id = join('.', $id, $ft->ditag_side);
@@ -82,7 +83,7 @@ sub Features {
 		'ID'          => $id,
 		'LABEL'       => $ft->ditag_id,
 		'TYPE'        => $ft->ditag_side || '', 
-		'METHOD'      => $ft->analysis->logic_name,
+		'METHOD'      => $ftype,
 		'START'       => $ft->start + $offset,
 		'END'         => $ft->end   + $offset,
 		'ORIENTATION' => $ft->strand+0,
@@ -143,6 +144,58 @@ sub Stylesheet {
 	   <HEIGHT>10</HEIGHT>
            <BGCOLOR>royalblue1</BGCOLOR>
            <FGCOLOR>royalblue1</FGCOLOR>
+	   <BAR_STYLE>line</BAR_STYLE>
+	   <NO_ANCHOR>1</NO_ANCHOR>
+           <BUMP>1</BUMP>
+           <FONT>sanserif</FONT>
+         </ANCHORED_ARROW>
+      </GLYPH>
+    </TYPE>
+    <TYPE id="CHIP_PET">
+      <GLYPH>
+         <ANCHORED_ARROW>
+	   <HEIGHT>10</HEIGHT>
+           <BGCOLOR>lightcyan1</BGCOLOR>
+           <FGCOLOR>lightcyan1</FGCOLOR>
+	   <BAR_STYLE>line</BAR_STYLE>
+	   <NO_ANCHOR>1</NO_ANCHOR>
+           <BUMP>1</BUMP>
+           <FONT>sanserif</FONT>
+         </ANCHORED_ARROW>
+      </GLYPH>
+    </TYPE>
+    <TYPE id="GIS_PET">
+      <GLYPH>
+         <ANCHORED_ARROW>
+	   <HEIGHT>10</HEIGHT>
+           <BGCOLOR>lightblue4</BGCOLOR>
+           <FGCOLOR>lightblue4</FGCOLOR>
+	   <BAR_STYLE>line</BAR_STYLE>
+	   <NO_ANCHOR>1</NO_ANCHOR>
+           <BUMP>1</BUMP>
+           <FONT>sanserif</FONT>
+         </ANCHORED_ARROW>
+      </GLYPH>
+    </TYPE>
+    <TYPE id="GIS_PET_Encode">
+      <GLYPH>
+         <ANCHORED_ARROW>
+	   <HEIGHT>10</HEIGHT>
+           <BGCOLOR>lightblue3</BGCOLOR>
+           <FGCOLOR>lightblue3</FGCOLOR>
+	   <BAR_STYLE>line</BAR_STYLE>
+	   <NO_ANCHOR>1</NO_ANCHOR>
+           <BUMP>1</BUMP>
+           <FONT>sanserif</FONT>
+         </ANCHORED_ARROW>
+      </GLYPH>
+    </TYPE>
+    <TYPE id="FANTOM_GIS_PET">
+      <GLYPH>
+         <ANCHORED_ARROW>
+	   <HEIGHT>10</HEIGHT>
+           <BGCOLOR>lightblue2</BGCOLOR>
+           <FGCOLOR>lightblue2</FGCOLOR>
 	   <BAR_STYLE>line</BAR_STYLE>
 	   <NO_ANCHOR>1</NO_ANCHOR>
            <BUMP>1</BUMP>
