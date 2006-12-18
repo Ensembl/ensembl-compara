@@ -1,7 +1,7 @@
 package EnsEMBL::Web::Document::HTML::SpeciesList;
 
 use strict;
-use warnings;
+#use warnings;
 
 use EnsEMBL::Web::Object::User;
 use EnsEMBL::Web::DBSQL::NewsAdaptor;
