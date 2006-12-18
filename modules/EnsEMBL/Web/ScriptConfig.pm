@@ -180,6 +180,8 @@ sub get_user_settings {
 sub load {
   my ($self) = @_;
   #warn "Loading from ScriptConfig";
+warn "ScriptConfig load - Deprecated call - now written by session";
+  return;
   return unless $self->{'_db'};
 #warn "LOAD SC";
   my $TEMP = $self->{'_db'}->getConfigByName( $ENV{'ENSEMBL_FIRSTSESSION'}, 'script::'.$self->{'type'} );
@@ -193,6 +195,8 @@ sub load {
 sub save {
   my ($self) = @_;
   #warn "Saving from ScriptConfig";
+warn "ScriptConfig load - Deprecated call - now written by session";
+  return;
   return unless $self->{'_db'};
   my $diffs = {};
   foreach my $key ( $self->options ) {
