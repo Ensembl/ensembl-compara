@@ -130,10 +130,8 @@ sub das {
           }
         }
       }
-      foreach my $id ( sort {
-        $uhash{$a}->{type_label} cmp $uhash{$b}->{type_label} ||
-        $uhash{$a}->{feature_label} cmp $uhash{$b}->{feature_label}
-      } keys(%uhash )) {
+      foreach my $feature (grep { $_->das_type_id() !~ /^(contig|component|karyotype)$/i && $_->das_type_id() !~ /^(contig|component|karyotype):/i } @features) {
+        my $id = $feature->das_feature_id;
 # Build up the type of feature location    : see FLabels hash few lines above for location types
         my $ftype = 0;
         if( $uhash{$id}->{start} == $slice->start ) {
@@ -168,9 +166,7 @@ sub das {
       }
     } else {
       my @features = $object->get_das_features_by_name($source_nm);
-      foreach my $feature( sort{ $a->das_type_id    cmp $b->das_type_id ||
-                                 $a->das_feature_id cmp $b->das_feature_id ||
-                                 $a->das_note cmp $b->das_note } @features ) {
+      foreach my $feature (@features) {
         next if ($feature->das_type_id() =~ /^(contig|component|karyotype|INIT_MET)$/i ||
                  $feature->das_type_id() =~ /^(contig|component|karyotype|INIT_MET):/i);
         if ($feature->start && $feature->end) {
