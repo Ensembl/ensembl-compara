@@ -52,8 +52,9 @@ set WinCnt 0
 #2 arguments 
 if {$argc > 0} {
     set db_name [lindex $argv 0]
-    if {$argc == 2} {
+    if {$argc >= 2} {
 	set fofn [lindex $argv 1]
+	set template_display [lindex $argv 2]
     }
 } else {
     puts "ERROR: No database or file of filenames found"
@@ -84,5 +85,10 @@ set WinCnt [llength $allcontigs]
 for {set j 0} {$j < [llength $allcontigs]} {incr j} {
     set winList($j) [edit_contig -io $io -contig [lindex $allcontigs $j]]
     bind $winList($j) <Destroy> {+close_database $io}
+}
+
+if {$template_display} {
+    set contig_list [CreateAllContigList $io]
+    CreateTemplateDisplay $io $contig_list
 }
 
