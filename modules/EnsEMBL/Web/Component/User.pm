@@ -821,6 +821,16 @@ sub name_config     { _wrap_form($_[0], $_[1], 'name_config'); }
 
 sub show_groups     { _wrap_form($_[0], $_[1], 'show_groups'); }
 
+sub no_group {
+  my( $panel, $user) = @_;
+
+  my $html = qq(<p>No group was specified. Please go back to your <a href="/common/accountview">account home page</a> and click a "Manage group"
+link for a group you created.</p>);
+
+  $panel->print($html);
+  return 1;
+}
+
 sub groupview {
   my( $panel, $user) = @_;
   my $webgroup_id = $user->param('webgroup_id');
