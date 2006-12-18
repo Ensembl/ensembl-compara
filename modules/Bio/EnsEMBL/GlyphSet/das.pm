@@ -732,7 +732,6 @@ sub _init {
   my $Extra  = $self->{'extras'};
   my $strand = $Config->get($das_config_key, 'str') || $Extra->{'strand'};
 
-  my $strand = $Config->get($das_config_key, 'str') || $Extra->{'strand'};
 
 # If strand is 'r' or 'f' then we display everything on one strand (either
 # at the top or at the bottom!
@@ -754,7 +753,7 @@ sub _init {
   };
 
   my $dsn = $Extra->{'dsn'};
-  my $url = defined($Extra->{'url'}) ? $Extra->{'url'}."/$dsn" :  $Extra->{'protocol'}.'://'. $Extra->{'domain'} ."/$dsn";
+  my $url = defined($Extra->{'extra_url'}) ? $Extra->{'extra_url'}."/$dsn" :  $Extra->{'protocol'}.'://'. $Extra->{'domain'} ."/$dsn";
 
   my $srcname = $Extra->{'label'} || $das_name;
   $srcname =~ s/^(managed_|mananged_extdas)//;
@@ -873,7 +872,6 @@ sub _init {
   } else {
     $configuration->{'use_style'} = 0;
   }
-
   $self->{'link_text'}    = $Extra->{'linktext'} || 'Additional info';
 
 

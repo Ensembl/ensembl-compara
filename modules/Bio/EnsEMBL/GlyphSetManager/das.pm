@@ -32,9 +32,9 @@ sub init {
     my $source_config = $source->get_data;
     my $das_species   = $source_config->{'species'};
     next if  $das_species && $das_species ne '' && $das_species ne $ENV{'ENSEMBL_SPECIES'};
-    my $extra_config = $source->get_data;
-    $extra_config->{'name'}  = "managed_extdas_${source}";
-    $extra_config->{'url'} ||= "http://$extra_config->{'URL'}/das";
+    my $extra_config = \%{$source->get_data};
+    $extra_config->{'extra_name'}  = "managed_extdas_${source}";
+    $extra_config->{'extra_url'} ||= "http://$extra_config->{'URL'}/das";
 #        warn( "ADDING GLYPHSET $das_species $source" );
     $self->add_glyphset( $extra_config );        
   }
