@@ -225,7 +225,7 @@ sub get_das {
 
 sub get_das_filtered_and_sorted {
   my( $self, $species ) = @_;
-  my $T = $self->get_das; "GET DAS...", warn $T;
+  my $T = $self->get_das;# "GET DAS...", warn $T;
   my @T =  
     map  { $_->[1] }
     sort { $a->[0] cmp $b->[0] }
