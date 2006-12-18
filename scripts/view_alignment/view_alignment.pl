@@ -28,11 +28,11 @@ The location of gap4 and view_alignment must be in your path. e.g.
 
 in bash:
 
-export PATH=/usr/local/badger/gap4_test/alpha-bin:$HOME/src/ensembl_main/ensembl_compara/scripts/view_alignment:$PATH
+export PATH=/nfs/sids/badger/OSF/STADEN_PKGS/unix-rel-1-7-0/linux-x86_64-bin:$HOME/src/ensembl_main/ensembl_compara/scripts/view_alignment:$PATH
 
 in csh:
 
-setenv PATH /usr/local/badger/gap4_test/alpha-bin:$HOME/src/ensembl_main/ensembl_compara/scripts/view_alignment:$PATH
+setenv PATH /nfs/sids/badger/OSF/STADEN_PKGS/unix-rel-1-7-0/linux-x86_64-bin:$HOME/src/ensembl_main/ensembl_compara/scripts/view_alignment:$PATH
 
 
 =head1 SYNPOSIS
@@ -41,7 +41,7 @@ view_alignment --help
 
 view_alignment 
     [--reg_conf registry_configuration_file]
-    --compara compara_database
+    [--compara compara_database]
     [--set_of_species species1:species2:species3...]
     [--alignment_type alignment_type]
     [--method_link_species_set_id method_link_species_set_id]
@@ -54,6 +54,9 @@ view_alignment
     [--display_scores]
     [--display_constrained_element_tags]
     [--display_conservation_tags]
+    [--display_start_end_tags]
+    [--template_display]
+    [--repeat_feature]
     
 =head1 OPTIONS
 
@@ -141,6 +144,23 @@ expected and observed scores. This can produce a lot of tags which can take a
 long time to be read in. Only valid if conservation scores have been calculated
 for the alignment. 
 
+=item B<[--display_start_end_tags]>
+
+This options tags the first and last base of each species in the alignment
+with a tag type of "STOP" (default colour pale blue).
+
+=item B<[--template_display]>
+
+Automatically bring up a template display.
+
+=item B<[--repeat_feature]>
+
+Valid repeat feature name eg "MIR".
+Tags (shown as coloured blocks in the contig editor) are created for each 
+repeat found. Repeats on the forward strand assigned a tag type of "COMM" 
+(default colour is blue) and repeats on the reverse strand have tag type
+"OLIGO" (default colour is yellow).
+
 =item B<[--gap4]>
 
 A gap4 database name. This is of the format database_name.version_number e.g.
@@ -221,10 +241,14 @@ my $disp_scores = undef;
 my $disp_scores_old = undef;
 my $disp_conservation_tags = undef;
 my $disp_constrained_tags = undef;
+my $disp_repeat_feature = undef;
+my $disp_start_end_tags = undef;
+my $template_display = 0;
 my $_fofn_name = "ensembl_fofn";
 my $_array_files;
 my $_file_list;
 my $exp_line_len = 67;
+
 
 GetOptions(
     "help" => \$help,
@@ -242,6 +266,9 @@ GetOptions(
      "display_scores" => \$disp_scores,
      "display_conservation_tags" => \$disp_conservation_tags,
      "display_constrained_element_tags" => \$disp_constrained_tags,
+     "display_start_end_tags" => \$disp_start_end_tags,
+     "template_display" => \$template_display,
+     "repeat_feature=s" => \$disp_repeat_feature,
   );
 
 if ($help) {
@@ -260,7 +287,7 @@ if ($help) {
 if (defined $gap4_db) {
     if (-e $gap4_db) {
 	print "Database $gap4_db already exists. Bringing up contig editor\n";
-	system "view_alignment.tcl $gap4_db";
+	system "view_alignment.tcl $gap4_db [] $template_display";
 	exit;
     }
 }
@@ -284,6 +311,7 @@ if ($disp_scores || $disp_conservation_tags) {
     $cs_adaptor = Bio::EnsEMBL::Registry->get_adaptor($dbname, 'compara', 'ConservationScore');
     throw ("No conservation scores available\n") if (!$cs_adaptor);
 }
+my $repeat_feature_adaptor;
 
 #unique identifier for each sequence
 my $_seq_num = 1;
@@ -305,7 +333,7 @@ if (defined $align_gab_id) {
     if ($disp_constrained_tags) {
 	#need to find gerp method link specices set. Here assume only going to
 	#be one gerp analysis
-	my $cons_mlss = $method_link_species_set_adaptor->fetch_all_by_method_link_type("GERP");
+	my $cons_mlss = $method_link_species_set_adaptor->fetch_all_by_method_link_type("GERP_CONSTRAINED_ELEMENT");
 	throw ("No Gerp analysis for this data\n") if (!$cons_mlss);
 
 	#set reference genomic_align to be the first none complemented sequence
@@ -344,7 +372,7 @@ if (defined $align_gab_id) {
 	$gap4_db = "gap4_compara_" . $genomic_align_block->dbID . ".0";
     }
 
-    system "view_alignment.tcl $gap4_db $_fofn_name";
+    system "view_alignment.tcl $gap4_db $_fofn_name $template_display";
 
     #remove experiment files
     unlink @$_array_files;
@@ -408,6 +436,11 @@ if ($seq_region) {
     throw ("Either a genomic_align_block_id or a seq_region must be defined");
 }
 
+if (scalar(@$genomic_align_blocks) == 0) {
+    throw ("No genomic align blocks found\n");
+    
+}
+
 #write experiment files for each alignment found
 foreach my $genomic_align_block (@$genomic_align_blocks) { 
     my $contig_num = $_seq_num; 
@@ -431,7 +464,7 @@ foreach my $genomic_align_block (@$genomic_align_blocks) {
     }
     my $constrained_blocks;
     if ($disp_constrained_tags) {
-	my $cons_mlss = $method_link_species_set_adaptor->fetch_by_method_link_type_GenomeDBs("GERP", $genome_dbs);
+	my $cons_mlss = $method_link_species_set_adaptor->fetch_by_method_link_type_GenomeDBs("GERP_CONSTRAINED_ELEMENT", $genome_dbs);
 	throw ("No Gerp analysis for this data\n") if (!$cons_mlss);
 
 	my $gab_slice = $slice_adaptor->fetch_by_region('toplevel', $seq_region, $chr_start, $chr_end);
@@ -443,11 +476,22 @@ foreach my $genomic_align_block (@$genomic_align_blocks) {
     }
 
     #Convert chromosome position into alignment position
-    my $start = findAlignPos($chr_start, $genomic_align->dnafrag_start, 
-			     $genomic_align->cigar_line);
-    my $end = findAlignPos($chr_end, $genomic_align->dnafrag_start, 
-			     $genomic_align->cigar_line);
+    my $start;
+    my $end;
+    #need this to add deletions at the beginning
 
+    if ($chr_start == $genomic_align->dnafrag_start) {
+	$start = 1;
+    } else {
+	$start = findAlignPos($chr_start, $genomic_align->dnafrag_start, 
+				 $genomic_align->cigar_line);
+    } 
+    if ($chr_end == $genomic_align->dnafrag_end) {
+	$end = $genomic_align_block->length;
+    } else {
+	$end = findAlignPos($chr_end, $genomic_align->dnafrag_start, 
+			       $genomic_align->cigar_line);
+    }
     writeExperimentFiles($genomic_align_block, $start-1, ($end-$start+1), 
 			 $chr_start, $chr_end, $contig_num, 1, 
 			 $conservation_scores, $constrained_blocks);
@@ -463,12 +507,40 @@ if (!defined $gap4_db) {
 
 #call tcl interface to gap4 to create a gap4 database and bring up a contig
 #editor for each genomic_align_block
-system "view_alignment.tcl $gap4_db $_fofn_name";
+system "view_alignment.tcl $gap4_db $_fofn_name $template_display";
 
 #remove experiment files
 unlink @$_array_files;
 #remove file of filenames
 unlink $_fofn_name;
+
+
+sub getRepeatFeatures {
+    my ($disp_repeat_feature, $slice, $species, $dnafrag_start, $cigar_line, $FILE) = @_;
+
+    $repeat_feature_adaptor = Bio::EnsEMBL::Registry->get_adaptor($species, 'core', 'RepeatFeature');
+    throw("Registry configuration file has no data for connecting to <$species>")
+	if (!$repeat_feature_adaptor);
+
+    my $repeat_features = $repeat_feature_adaptor->fetch_all_by_Slice($slice);
+    my $cnt = 0;
+    foreach my $repeat_feature (@$repeat_features) {
+	my $name = $repeat_feature->repeat_consensus->name;
+	if ($name =~ /^$disp_repeat_feature$/) {		
+	    my $start = findAlignPos($repeat_feature->start, 1, $cigar_line);
+	    my $end = findAlignPos($repeat_feature->end, 1, $cigar_line);
+
+	    #print "$species start $start " . $repeat_feature->start . " end $end " . $repeat_feature->end . " strand " . $repeat_feature->strand . " score " . $repeat_feature->score . " seq " . $repeat_feature->seq . "\n";
+	    $name .= " length=" .  $repeat_feature->length . " strand=" .$repeat_feature->strand; 
+	    if ($repeat_feature->strand == 1) {
+		print $FILE "TG   COMM + $start..$end $name \n"; 
+	    } else {
+		print $FILE "TG   OLIG + $start..$end $name \n"; 
+	    }
+	    $cnt++;
+	}
+    }
+}
 
 #convert from chromosome coords to alignment coords
 #returns $chr_pos in alignment coords
@@ -489,6 +561,7 @@ sub findAlignPos {
 	$cigType = substr( $cigElem, -1, 1 );
 	$cigLength = substr( $cigElem, 0 ,-1 );
 	$cigLength = 1 unless ($cigLength =~ /^\d+$/);
+
 	$total_pos += $cigLength;
 	if( $cigType eq "M" ) {
 	    $total_chr_pos += $cigLength;
@@ -513,6 +586,7 @@ sub writeExperimentFiles {
     #create mfa file of multiple alignment from genomic align block
     foreach my $genomic_align (@{$gab->get_all_GenomicAligns}) {
 	my $filename = "ensembl_$_seq_num" . ".exp";
+	
 	my $aligned_sequence = substr $genomic_align->aligned_sequence, $align_start, $length;
 
 	$aligned_sequence =~ tr/-/*/;
@@ -594,98 +668,12 @@ sub writeExperimentFiles {
 	    }
 	}
 
-	#doesn't work because gap4 will only read in unsigned ints and I have
-	#signed floats. Left in here in case James ever gets round to 
-	#reimplementing str2conf
-	if ($disp_scores_old) {
-	    my $offset = 0;
-	    my $current_pos;
-	    my $last_pos = 1;
-	    my $str = "";
-	    my $first = 1;
-	    my $sum = 0;
-	    my $sum1 = 0;
-	    foreach my $cons_score (@$conservation_scores) {
-		#print "start $start end " . ($start + $length) . " offset $offset " . $cons_score->position . " last_pos $last_pos \n";
-		$current_pos = $cons_score->position;
-		my $cons_str = "";
-		$str = "AV        ";
+	if (defined $disp_repeat_feature) {
+	    getRepeatFeatures($disp_repeat_feature, $genomic_align->get_Slice, $genomic_align->dnafrag->genome_db->name, $genomic_align->dnafrag_start, $genomic_align->cigar_line, \*EXP);
+	}
 
-		while ($last_pos < $current_pos) {
-		    
-		    if ((length($str) + 2) < $exp_line_len) {
-			$str .= "0 ";
-			print "" . ($last_pos+1) . " 0\n";
-			$sum++;
-		    } else{
-			$cons_str .= "$str\n";
-			$str = "AV        " . "0 ";
-			$sum++;
-		    }
-		    $last_pos++;
-		} 
-		if (length($str) > 10) {
-		    $cons_str .=  "$str\n";
-		}
-		
-		if (length $cons_str > 0) {
-		    print EXP "$cons_str";
-		}
-		#$str = "";
-		my @split_scores = split ' ', $cons_score->diff_score;
-		my $num_scores = scalar(@split_scores);
-		my $scores = $cons_score->diff_score; 
-		#$scores =~ s/(-?\d.\d{3})\d* ?/$1 /g;
-		#$last_pos = $current_pos + $num_scores;
-
-		#print "num_scores $num_scores\n";
-
-		$str = "AV   ";
-		my $i = 0;
-		if ($first) {
-		    $sum1=0;
-		    while (length($str) < $exp_line_len && $i < $num_scores) {
-			my $num .= sprintf "%.3f ", $split_scores[$i];
-			if (length($str) + length($num) < $exp_line_len) {
-			    $str .= $num;
-			    print "$num\n";
-			    $i++;
-			    $sum++;
-			    $sum1++;
-			} else {
-			    last;
-			}
-		    }
-		    $first = 0;
-		    $cons_str .= "$str\n";
-		    #print "sum1 $sum1\n";
-		}
-		$str = "AV        ";
-		$sum1=0;
-		while ($i < $num_scores) {
-		    #print "i $i num_scores $num_scores $sum1\n";
-		    my $num = sprintf "%.3f ", $split_scores[$i++];
-		    if (length($str) + length($num) < $exp_line_len) {
-			$str .= $num;
-			print "" . ($i+1) . " $num\n";
-			$sum++;
-			$sum1++;
-		    } else{
-			$cons_str .= "$str\n";
-			$str = "AV        " . $num;
-			$sum++;
-			$sum1++;
-		    }
-		} 
-		#print "sum2 $sum1\n";
-		if (length($str) > 10) {
-		    $cons_str .=  "$str\n";
-		}
-		print EXP "$cons_str";
-		$first = 0;
-		#$sum += $num_scores;
-	    }
-	    print "SUM $sum \n";
+	if ($disp_start_end_tags) {
+	    writeStartEndTags($genomic_align,\*EXP); 
 	}
 
 	#write out sequence
@@ -699,4 +687,18 @@ sub writeExperimentFiles {
 	$new_contig = 0;
 
     }
+}
+
+sub writeStartEndTags {
+    my ($genomic_align, $FILE) = @_;
+
+    my $start = findAlignPos($genomic_align->dnafrag_start, 
+			     $genomic_align->dnafrag_start, 
+			     $genomic_align->cigar_line);
+    my $end = findAlignPos($genomic_align->dnafrag_end, 
+			   $genomic_align->dnafrag_start, 
+			   $genomic_align->cigar_line);
+
+    print $FILE "TG   STOP + $start..$start \n"; 
+    print $FILE "TG   STOP + $end..$end \n"; 
 }
