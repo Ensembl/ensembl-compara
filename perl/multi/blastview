@@ -91,6 +91,7 @@ MAIN:{
   my $renderer = new EnsEMBL::Web::Document::Renderer::Apache( );
   my $page     = new EnsEMBL::Web::Document::Dynamic( $renderer, undef, $SPECIES_DEFS );
   $page->_initialize_HTML;
+  $page->menu->delete_block('archive');
   $page->masthead->sp_bio    ||= 'Multi';
   $page->masthead->sp_common ||= 'Multi';
 
