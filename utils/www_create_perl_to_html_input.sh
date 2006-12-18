@@ -33,7 +33,7 @@
 
 . /etc/profile
 
-PERLMOD_LOC="/ensemblweb/www/www_41"   # current server root
+PERLMOD_LOC="/ensemblweb/www/www_42"   # current server root
 #PERLMOD_LOC="/ensemblweb/www/server"   # current server root
 
 PDOC_LOC="$PERLMOD_LOC/htdocs/info/software/Pdoc"    # where you want Pdocs created
@@ -46,16 +46,13 @@ F1=bioperl-live
 F2=ensembl
 F3=ensembl-analysis
 F4=ensembl-compara
-#F5=ensembl-draw
-F6=ensembl-external
-F7=ensembl-pipeline
-F9=perl
+F5=ensembl-external
+F6=ensembl-pipeline
+F7=perl
 F8=ensembl-variation
-F10=biomart-web
-F11=biomart-plib
-F12=public-plugins
-F13=ensembl-functgenomics
-#F14=conf
+F9=biomart-perl
+F10=public-plugins
+F11=ensembl-functgenomics
 
 rm -f $P2WDOC_LOC/make_html_docs.*
 
@@ -69,7 +66,7 @@ cd $PERLMOD_LOC
 echo "Check out ensembl-pipeline and ensembl analysis"
 cvs co ensembl-pipeline ensembl-analysis
 
-for i in bioperl-live ensembl ensembl-analysis ensembl-compara ensembl-functgenomics ensembl-external ensembl-variation perl biomart-web biomart-plib public-plugins ensembl-pipeline
+for i in bioperl-live ensembl ensembl-analysis ensembl-compara ensembl-functgenomics ensembl-external ensembl-variation perl biomart-perl public-plugins ensembl-pipeline
 do
         mkdir $PDOC_LOC/$i
   	echo "CURRENT MODULE: $i"
@@ -87,9 +84,6 @@ $PERLMOD_LOC/$F8 $HTTP/$F8
 $PERLMOD_LOC/$F9 $HTTP/$F9
 $PERLMOD_LOC/$F10 $HTTP/$F10
 $PERLMOD_LOC/$F11 $HTTP/$F11
-$PERLMOD_LOC/$F12 $HTTP/$F12
-$PERLMOD_LOC/$F13 $HTTP/$F13
-$PERLMOD_LOC/$F14 $HTTP/$F14
 " > $P2WDOC_LOC/xlinks.pre
 	perl -n -e "print unless m#$PERLMOD_LOC/$i $HTTP/$i#;" < $P2WDOC_LOC/xlinks.pre >$P2WDOC_LOC/$i.xlinks
 
