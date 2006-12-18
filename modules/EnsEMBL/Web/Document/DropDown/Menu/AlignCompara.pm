@@ -71,9 +71,9 @@ sub new {
       }
       if ($constr_elem or $conserv_score) {
         $self->add_text(" ");
-        if ($conserv_score) {
-          $self->add_checkbox( "opt_${id}_conservation_score", "Display conservation scores" );
-        }
+#         if ($conserv_score) {
+#           $self->add_checkbox( "opt_${id}_conservation_score", "Display conservation scores" );
+#         }
         if ($constr_elem) {
           $self->add_checkbox( "opt_${id}_constrained_elem", "Display constrained elements" );
         }
