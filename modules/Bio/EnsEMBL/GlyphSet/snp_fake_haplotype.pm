@@ -22,8 +22,9 @@ sub _init {
   # Get reference strain name for start of track:
   my $individual_adaptor = $self->{'container'}->adaptor->db->get_db_adaptor('variation')->get_IndividualAdaptor;
   my $golden_path =  $individual_adaptor->get_reference_strain_name();
-  my $reference_name = $Config->{'reference'} || $golden_path;
-
+  my $reference_name = $Config->{'reference'};
+  my ($individual) = @{$individual_adaptor->fetch_all_by_name($golden_path)};
+  my $fully_inbred = $individual->type_individual eq 'Fully_inbred' ? 1 : 0 if $individual;
 
   # Put allele and coverage data from config into hashes -----------------------
   my %strain_alleles;   # $strain_alleles{strain}{id::start} = allele
@@ -78,20 +79,17 @@ sub _init {
   $self->push( $textglyph );
 
 
-
   # Reference track ----------------------------------------------------
   my $offset = $th_c + 4;
   my @colours       = qw(chartreuse4 darkorchid4);# orange4 deeppink3 dodgerblue4);
-
-
-    my @ref_name_size = $self->get_text_width( 80, $reference_name, '', 'font'=>$fontname, 'ptsize' => $fontsize );
+  my @ref_name_size = $self->get_text_width( 80, $reference_name, '', 'font'=>$fontname, 'ptsize' => $fontsize );
   if ($ref_name_size[0] eq '') {
-    $self->strain_name_text($th, $fontname, $fontsize, $offset, "Compare to", $Config);
+    $self->strain_name_text($th, $fontname, $fontsize, $offset, "Compare to", $Config, $fully_inbred);
     $offset += $track_height;
-    $self->strain_name_text($th, $fontname, $fontsize, $offset, "    $reference_name", $Config);
+    $self->strain_name_text($th, $fontname, $fontsize, $offset, "    $reference_name", $Config, $fully_inbred);
   }
   else {
-    $self->strain_name_text($th, $fontname, $fontsize, $offset, "Compare to $reference_name", $Config);
+    $self->strain_name_text($th, $fontname, $fontsize, $offset, "Compare to $reference_name", $Config, $fully_inbred);
   }
 
 
@@ -168,7 +166,7 @@ sub _init {
   my $c = 0;
   if ( $reference_name ne $golden_path && !$strain_alleles{$golden_path} ) {
     $offset += $track_height;
-    $self->strain_name_text( $th, $fontname, $fontsize, $offset, $golden_path, $Config);
+    $self->strain_name_text( $th, $fontname, $fontsize, $offset, $golden_path, $Config, $fully_inbred);
     foreach my $hash (@golden_path) {
       my $snp_ref = $hash->{snp_ref};
       my $text_colour = $hash->{colour} ? "white" : "black";
@@ -182,7 +180,7 @@ sub _init {
     next if $strain eq $reference_name;
 
     $offset += $track_height;
-    $self->strain_name_text($th,$fontname, $fontsize, $offset, $strain, $Config);
+    $self->strain_name_text($th,$fontname, $fontsize, $offset, $strain, $Config, $fully_inbred);
 
     my $c = 0;
     foreach my $snp_ref ( @snps ) {
@@ -228,10 +226,10 @@ sub _init {
 # Glyphs ###################################################################
 
 sub strain_name_text {
-  my ($self, $th, $fontname, $fontsize, $offset, $name, $Config) = @_;
+  my ($self, $th, $fontname, $fontsize, $offset, $name, $Config, $fully_inbred) = @_;
   (my $url_name = $name) =~ s/Compare to |^\s+//;
   my $URL = $Config->{'URL'}."reference=$url_name;";
-
+  my @link = $fully_inbred ? ( 'title' => "Click to compare to $url_name", 'href' => $URL ) : "";
   my $textglyph = new Sanger::Graphics::Glyph::Text({
       'x'          => -115,
       'y'          => $offset+1,
@@ -240,13 +238,12 @@ sub strain_name_text {
       'ptsize'     => $fontsize,
       'colour'     => 'black',
       'text'       => $name,
-      'title'      => "Click to compare to $url_name",
-      'href'       => $URL,
       'halign'     => 'left',
       'width'      => 205,
       'absolutex'  => 1,
       'absolutey'  => 1,
       'absolutewidth'  => 1,
+      @link,
   });
   $self->push( $textglyph );
   return 1;

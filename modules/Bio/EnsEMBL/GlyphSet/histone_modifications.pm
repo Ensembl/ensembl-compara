@@ -74,6 +74,7 @@ sub _init {
 
   return if $drawn_pf_flag{1} && $drawn_wiggle_flag{1};
 
+  # If both wiggle and predicted features tracks aren't drawn in expanded mode..
   my $error;
   if (!$drawn_pf_flag{1}  && !$drawn_wiggle_flag{1}) {
     $error = "predicted features or tiling array data";
@@ -368,8 +369,8 @@ sub predicted_features_zmenu {
   ### Arg1: arrayref of Feature objects
 
   my ($self, $f ) = @_;
-  my $slice_start   = $self->{'container'}->start -1;
-  my $pos =  ($slice_start + $f->start )."-".($f->end+$slice_start);
+  my $offset = $self->{'container'}->strand > 0 ? $self->{'container'}->start - 1 :  $self->{'container'}->end + 1;
+  my $pos =  ($offset + $f->start )."-".($f->end+$offset);
   my $score = sprintf("%.3f", $f->score());
   my %zmenu = ( 
     'caption'               => ($f->display_label || ''),
