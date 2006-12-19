@@ -611,7 +611,6 @@ sub das_wizard_2 {
 
     use EnsEMBL::Web::DASUpload;
     my $du  = EnsEMBL::Web::DASUpload->new($object);
-    warn ("UA : $user_action");
     
     if (length($user_pastedata) > 0) {
       $du->data($user_pastedata);
