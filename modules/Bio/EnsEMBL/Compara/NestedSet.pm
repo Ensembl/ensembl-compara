@@ -481,7 +481,20 @@ sub print_node {
   my $self  = shift;
 
   print("(");
-  if(defined $self->get_tagvalue("Duplication") && $self->get_tagvalue("Duplication") ne '' && $self->get_tagvalue("Duplication") > 0) { print("DUP "); }
+  if(defined $self->get_tagvalue("Duplication") 
+     && $self->get_tagvalue("Duplication") ne '' 
+     && $self->get_tagvalue("Duplication") > 0 
+     && $self->get_tagvalue("dubious_duplication") ne '1') 
+    {
+      print("DUP ");
+    } elsif (defined $self->get_tagvalue("Duplication") 
+     && $self->get_tagvalue("Duplication") ne '' 
+     && $self->get_tagvalue("Duplication") > 0 
+     && $self->get_tagvalue("dubious_duplication") eq '1'
+            ) 
+    {
+      print("DD  ");
+    }
   if(defined $self->get_tagvalue("Bootstrap") && $self->get_tagvalue("Bootstrap") ne '') { my $bootstrap_value = $self->get_tagvalue("Bootstrap"); print("B=$bootstrap_value "); }
   printf("%s %d,%d)", $self->node_id, $self->left_index, $self->right_index);
   printf("%s\n", $self->name);
