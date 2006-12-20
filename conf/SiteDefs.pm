@@ -93,7 +93,7 @@ use Exporter();
 @ISA=qw(Exporter);
 
 $VERSION=42;
-$ENSEMBL_RELEASE_DATE = 'Dec 2006';
+$ENSEMBL_RELEASE_DATE = 'Feb 2007';
 
 #### START OF VARIABLE DEFINITION #### DO NOT REMOVE OR CHANGE THIS COMMENT ####
 
@@ -138,7 +138,7 @@ $ENSEMBL_PROXY_PORT     = undef; # Port used for self-referential URLs:
                                  # Set to undef if not using proxy-forwarding
 
 $ENSEMBL_SITETYPE       = "EnsEMBL";
-$ARCHIVE_VERSION        = "Dec2006";    # Change this to the archive site for this version
+$ARCHIVE_VERSION        = "Feb2007";    # Change this to the archive site for this version
 $EARLIEST_ARCHIVE       = 25;
 $ENSEMBL_USER           = getpwuid($>); # Auto-set web serveruser
 $ENSEMBL_GROUP          = getgrgid($)); # Auto-set web server group
