@@ -518,11 +518,11 @@ sub fetch_all_by_MethodLinkSpeciesSet_Slice {
 
   Arg  1     : Bio::EnsEMBL::Compara::MethodLinkSpeciesSet $method_link_species_set
   Arg  2     : Bio::EnsEMBL::Compara::DnaFrag $dnafrag
-  Arg  3     : integer $start [optional]
-  Arg  4     : integer $end [optional]
-  Arg  5     : integer $limit_number [optional]
-  Arg  6     : integer $limit_index_start [optional]
-  Arg  7     : boolean $restrict_resulting_blocks [optional]
+  Arg  3     : integer $start [optional, default = 1]
+  Arg  4     : integer $end [optional, default = dnafrag_length]
+  Arg  5     : integer $limit_number [optional, default = no limit]
+  Arg  6     : integer $limit_index_start [optional, default = 0]
+  Arg  7     : boolean $restrict_resulting_blocks [optional, default = no restriction]
   Example    : my $genomic_align_blocks =
                   $genomic_align_block_adaptor->fetch_all_by_MethodLinkSpeciesSet_DnaFrag(
                       $mlss, $dnafrag, 50000000, 50250000);
@@ -553,6 +553,11 @@ sub fetch_all_by_MethodLinkSpeciesSet_DnaFrag {
   my $method_link_species_set_id = $method_link_species_set->dbID;
   throw("[$method_link_species_set_id] has no dbID") if (!$method_link_species_set_id);
 
+  if ($limit_number) {
+    return $self->_fetch_all_by_MethodLinkSpeciesSet_DnaFrag_with_limit($method_link_species_set,
+        $dnafrag, $start, $end, $limit_number, $limit_index_start, $restrict);
+  }
+
   my $sql = qq{
           SELECT
               ga1.genomic_align_id,
@@ -580,11 +585,6 @@ sub fetch_all_by_MethodLinkSpeciesSet_DnaFrag {
             AND ga2.dnafrag_start >= $lower_bound
             AND ga2.dnafrag_end >= $start
         };
-  }
-  if ($limit_number && $limit_index_start) {
-    $sql .= qq{ LIMIT $limit_index_start , $limit_number };
-  } elsif ($limit_number) {
-    $sql .= qq{ LIMIT $limit_number };
   }
 
   my $sth = $self->prepare($sql);
@@ -623,6 +623,90 @@ sub fetch_all_by_MethodLinkSpeciesSet_DnaFrag {
         );
     ## ... attach it to the corresponding Bio::EnsEMBL::Compara::GenomicAlignBlock
     $all_genomic_align_blocks->{$query_genomic_align_id}->add_GenomicAlign($this_genomic_align);
+  }
+  if (defined($start) and defined($end) and $restrict) {
+    my $restricted_genomic_align_blocks = [];
+    foreach my $this_genomic_align_block (@$genomic_align_blocks) {
+      $this_genomic_align_block = $this_genomic_align_block->restrict_between_reference_positions(
+          $start, $end, undef, "skip_empty_genomic_aligns");
+      if (@{$this_genomic_align_block->get_all_GenomicAligns()} > 1) {
+        push(@$restricted_genomic_align_blocks, $this_genomic_align_block);
+      }
+    }
+    $genomic_align_blocks = $restricted_genomic_align_blocks;
+  }
+  
+  return $genomic_align_blocks;
+}
+
+
+=head2 _fetch_all_by_MethodLinkSpeciesSet_DnaFrag_with_limit
+
+  This is an internal method. Please, use the fetch_all_by_MethodLinkSpeciesSet_DnaFrag() method instead.
+
+  Arg  1     : Bio::EnsEMBL::Compara::MethodLinkSpeciesSet $method_link_species_set
+  Arg  2     : Bio::EnsEMBL::Compara::DnaFrag $dnafrag
+  Arg  3     : integer $start [optional]
+  Arg  4     : integer $end [optional]
+  Arg  5     : integer $limit_number
+  Arg  6     : integer $limit_index_start [optional, default = 0]
+  Arg  7     : boolean $restrict_resulting_blocks [optional, default = no restriction]
+  Example    : my $genomic_align_blocks =
+                  $genomic_align_block_adaptor->_fetch_all_by_MethodLinkSpeciesSet_DnaFrag_with_limit(
+                      $mlss, $dnafrag, 50000000, 50250000);
+  Description: Retrieve the corresponding
+               Bio::EnsEMBL::Compara::GenomicAlignBlock objects. Objects 
+  Returntype : ref. to an array of Bio::EnsEMBL::Compara::GenomicAlignBlock objects. Only dbID,
+               adaptor and method_link_species_set are actually stored in the objects. The remaining
+               attributes are only retrieved when requiered.
+  Exceptions : Returns ref. to an empty array if no matching
+               Bio::EnsEMBL::Compara::GenomicAlignBlock object can be retrieved
+  Caller     : fetch_all_by_MethodLinkSpeciesSet_DnaFrag
+
+=cut
+
+sub _fetch_all_by_MethodLinkSpeciesSet_DnaFrag_with_limit {
+  my ($self, $method_link_species_set, $dnafrag, $start, $end, $limit_number, $limit_index_start, $restrict) = @_;
+
+  my $genomic_align_blocks = []; # returned object
+
+  my $dnafrag_id = $dnafrag->dbID;
+  my $method_link_species_set_id = $method_link_species_set->dbID;
+
+  my $sql = qq{
+          SELECT
+              ga2.genomic_align_block_id,
+              ga2.genomic_align_id
+          FROM
+              genomic_align ga2
+          WHERE 
+              ga2.method_link_species_set_id = $method_link_species_set_id
+              AND ga2.dnafrag_id = $dnafrag_id
+      };
+  if (defined($start) and defined($end)) {
+    my $max_alignment_length = $method_link_species_set->max_alignment_length;
+    my $lower_bound = $start - $max_alignment_length;
+    $sql .= qq{
+            AND ga2.dnafrag_start <= $end
+            AND ga2.dnafrag_start >= $lower_bound
+            AND ga2.dnafrag_end >= $start
+        };
+  }
+  $limit_index_start = 0 if (!$limit_index_start);
+  $sql .= qq{ LIMIT $limit_index_start , $limit_number };
+
+  my $sth = $self->prepare($sql);
+  $sth->execute();
+  
+  while (my ($genomic_align_block_id, $query_genomic_align_id) = $sth->fetchrow_array) {
+    # Lazy loading of genomic_align_blocks. All remaining attributes are loaded on demand.
+    my $this_genomic_align_block = new Bio::EnsEMBL::Compara::GenomicAlignBlock(
+            -adaptor => $self,
+            -dbID => $genomic_align_block_id,
+            -method_link_species_set_id => $method_link_species_set_id,
+            -reference_genomic_align_id => $query_genomic_align_id,
+        );
+    push(@$genomic_align_blocks, $this_genomic_align_block);
   }
   if (defined($start) and defined($end) and $restrict) {
     my $restricted_genomic_align_blocks = [];
