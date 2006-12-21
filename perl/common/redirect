@@ -4,7 +4,7 @@ use strict;
 use warnings;
 no warnings "uninitialized";
 
-use EnsEMBL::Web::User::Record;
+use EnsEMBL::Web::Record::User;
 use EnsEMBL::Web::DBSQL::UserDB;
 
 my $T = new CGI;
@@ -18,7 +18,7 @@ $url =~ s/!with!/;/g;
 warn "REDIRECT URL: ". $url;
 
 my $adaptor = EnsEMBL::Web::DBSQL::UserDB->new();
-my @records = EnsEMBL::Web::User::Record->find_bookmark_by_id($id);
+my @records = EnsEMBL::Web::Record::User->find_bookmark_by_id($id);
 my $record = $records[0];
 
 my $click = $record->click;

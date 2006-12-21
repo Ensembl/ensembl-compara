@@ -8,11 +8,11 @@ use strict;
 use warnings;
 no warnings "uninitialized";
 
-use EnsEMBL::Web::User::Record;
+use EnsEMBL::Web::Record::User;
 
 my $cgi = new CGI;
 
-my $record = EnsEMBL::Web::User::Record->new(( type => 'info' ));
+my $record = EnsEMBL::Web::Record::User->new(( type => 'info' ));
 
 $record->user($ENV{ENSEMBL_USER_ID});
 $record->name($cgi->param('id'));

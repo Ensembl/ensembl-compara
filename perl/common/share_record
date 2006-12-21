@@ -11,8 +11,8 @@ use EnsEMBL::Web::Document::DataView;
 use EnsEMBL::Web::Interface::PageDefinition;
 use EnsEMBL::Web::Interface::FormDefinition;
 use EnsEMBL::Web::DBSQL::DataDefinition;
-use EnsEMBL::Web::User::Record;
-use EnsEMBL::Web::Group::Record;
+use EnsEMBL::Web::Record::User;
+use EnsEMBL::Web::Record::Group;
 use EnsEMBL::Web::DBSQL::ViewAdaptor;
 use EnsEMBL::Web::RegObj;
 

@@ -2,7 +2,10 @@
 
 package invite;
 
+use EnsEMBL::Web::Record::Group;
+use EnsEMBL::Web::SpeciesDefs;
 use EnsEMBL::Web::Group::Record;
+
 use CGI;
 my $cgi = new CGI;
 
@@ -14,7 +17,7 @@ if ($ENV{'ENSEMBL_USER_ID'}) {
   if ($cgi->param('user_id') eq $user->id) {
     if ($user->is_administrator($group)) {
 
-      $record = EnsEMBL::Web::Group::Record->new((  user => $group->id, 
+      $record = EnsEMBL::Web::Record::Group->new((  user => $group->id, 
                                                     type => "invite" ));
       $record->email($cgi->param('invite_email'));
       $record->status("pending");

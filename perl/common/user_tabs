@@ -1,11 +1,11 @@
-#/usr/bin/perl
+#! /usr/bin/perl
 
 package sortable;
 
 use strict;
 use warnings;
 
-use EnsEMBL::Web::User::Record;
+use EnsEMBL::Web::Record::User;
 use EnsEMBL::Web::Object::User;
 use CGI;
 
@@ -24,7 +24,7 @@ if ($ENV{'ENSEMBL_USER_ID'}) {
   }
 
   if (!$record) {
-    $record = EnsEMBL::Web::User::Record->new(( type => 'opentab', user => $user->id));
+    $record = EnsEMBL::Web::Record::User->new(( type => 'opentab', user => $user->id));
   }
 
   $record->tab($cgi->param('tab'));

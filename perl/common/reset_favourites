@@ -4,7 +4,7 @@ use strict;
 use warnings;
 no warnings "uninitialized";
 
-use EnsEMBL::Web::User::Record;
+use EnsEMBL::Web::Record::User;
 use EnsEMBL::Web::Document::HTML::SpeciesList;
 
 my $T = new CGI;

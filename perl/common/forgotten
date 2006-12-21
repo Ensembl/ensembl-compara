@@ -8,6 +8,7 @@ use warnings;
 use CGI;
 use EnsEMBL::Web::Object::User;
 use EnsEMBL::Web::SpeciesDefs;
+use EnsEMBL::Web::Mailer::User;
 
 my $cgi = new CGI;
 my $url = "/login.html?url=/index.html";
@@ -18,7 +19,9 @@ if ($cgi->param('email')) {
     $url = "/updated_password.html?url=/index.html";
     $user->salt($user->random_string(8));
     $user->save;
-    $user->send_reactivation_email;
+    my $mailer = EnsEMBL::Web::Mailer::User->new();
+    $mailer->email($user->email);
+    $mailer->send_reactivation_email($user->name, $user->activation_link);
   } else {
     $url = "/forgotten_no_user.html?url=/index.html";
   }

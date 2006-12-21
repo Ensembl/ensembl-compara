@@ -5,7 +5,7 @@ package sortable;
 use strict;
 use warnings;
 
-use EnsEMBL::Web::User::Record;
+use EnsEMBL::Web::Record::User;
 use EnsEMBL::Web::Object::User;
 use CGI;
 
@@ -23,7 +23,7 @@ if ($ENV{'ENSEMBL_USER_ID'}) {
   }
 
   if (!$record) {
-    $record = EnsEMBL::Web::User::Record->new(( type => 'sortable', user => $user->id));
+    $record = EnsEMBL::Web::Record::User->new(( type => 'sortable', user => $user->id));
   }
   if ($cgi->param('type') =~ /alpha|group/) {
     $record->kind($cgi->param('type'));

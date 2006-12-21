@@ -6,7 +6,7 @@ use strict;
 use warnings;
 
 use CGI;
-use EnsEMBL::Web::Group::Record;
+use EnsEMBL::Web::Record::Group;
 use EnsEMBL::Web::Object::User;
 use EnsEMBL::Web::Object::Group;
 
@@ -21,7 +21,7 @@ my $cgi = new CGI;
 
 my $record_id = $cgi->param('record_id');
 warn "RECORD ID: " . $record_id;
-my @records = EnsEMBL::Web::Group::Record->find_invite_by_group_record_id($record_id);
+my @records = EnsEMBL::Web::Record::Group->find_invite_by_group_record_id($record_id);
 my $record = $records[0];
 my $email = $record->email;
 my $group_id = $record->group;

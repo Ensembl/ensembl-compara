@@ -10,8 +10,8 @@ use EnsEMBL::Web::Interface::PageDefinition;
 use EnsEMBL::Web::Interface::FormDefinition;
 use EnsEMBL::Web::DBSQL::DataDefinition;
 use EnsEMBL::Web::DBSQL::ViewAdaptor;
-use EnsEMBL::Web::SpeciesDefs;
 use EnsEMBL::Web::RegObj;
+use EnsEMBL::Web::Mailer::User;
 
 my $page = EnsEMBL::Web::Interface::PageDefinition->new();
 my $data = EnsEMBL::Web::DBSQL::DataDefinition->new();
@@ -21,12 +21,15 @@ $data->adaptor(EnsEMBL::Web::DBSQL::ViewAdaptor->new((
                                                        table  => 'user'
                                                     )) );
 
+my $mailer = EnsEMBL::Web::Mailer::User->new();
 if (!$cgi->param('welcome_email')) {
   my $user = EnsEMBL::Web::Object::User->new({ id => $cgi->param('id') });
-  $user->send_activation_email($cgi->param('group_id') );
+  $mailer->email($user->email);
+  $mailer->send_activation_email(( link => $user->activation_link, group_id => $cgi->param('group_id') ));
 } elsif ($cgi->param('welcome_email') eq 'yes') {
   my $user = EnsEMBL::Web::Object::User->new({ id => $cgi->param('id') });
-  $user->send_welcome_email;
+  $mailer->email($user->email);
+  $mailer->send_welcome_email($user->email);
   if ($cgi->param('group_id')) {
     my $group = EnsEMBL::Web::Object::Group->new(( id => $cgi->param('group_id') ));
     $user->add_group($group);

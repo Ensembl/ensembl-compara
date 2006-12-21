@@ -10,7 +10,7 @@ if ($ENV{'ENSEMBL_USER_ID'}) {
   my $user = EnsEMBL::Web::Object::User->new({ id => $ENV{'ENSEMBL_USER_ID'} });
   my $group = EnsEMBL::Web::Object::Group->new(( id => $cgi->param('group_id') )); 
   if ($user->is_administrator_of($group)) {
-    my $record = EnsEMBL::Web::Group::Record->new(( id => $cgi->param('id') )); 
+    my $record = EnsEMBL::Web::Record::Group->new(( id => $cgi->param('id') )); 
     $record->delete;
   }
 }

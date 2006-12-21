@@ -4,7 +4,7 @@ use strict;
 use warnings;
 no warnings "uninitialized";
 
-use EnsEMBL::Web::User::Record;
+use EnsEMBL::Web::Record::User;
 use EnsEMBL::Web::Document::HTML::SpeciesList;
 
 my $T = new CGI;
@@ -15,7 +15,7 @@ my $user = EnsEMBL::Web::Object::User->new({ id => $ENV{'ENSEMBL_USER_ID'}});
 
 my ($record) = $user->species_records;
 if (!$record) {
-  $record = EnsEMBL::Web::User::Record->new(( type => 'species', user => $user->id ));
+  $record = EnsEMBL::Web::Record::User->new(( type => 'species', user => $user->id ));
 }
 
 
