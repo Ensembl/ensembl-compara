@@ -3,7 +3,7 @@ package EnsEMBL::Web::Component::User;
 use EnsEMBL::Web::Component;
 use EnsEMBL::Web::Proxy::Object;
 use EnsEMBL::Web::DBSQL::NewsAdaptor;
-use EnsEMBL::Web::Group::Record;
+use EnsEMBL::Web::Record::Group;
 use Data::Dumper;
 use EnsEMBL::Web::Interface::TabView;
 use EnsEMBL::Web::Interface::Tab;

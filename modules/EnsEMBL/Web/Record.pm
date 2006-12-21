@@ -12,8 +12,11 @@ package EnsEMBL::Web::Record;
 use strict;
 use warnings;
 use EnsEMBL::Web::DBSQL::UserDB;
-use EnsEMBL::Web::Group::Record;
+use EnsEMBL::Web::Record::User;
+use EnsEMBL::Web::Record::Group;
 use Data::Dumper;
+
+#our @ISA = qw(EnsEMBL::Web::Root);
 
 our $AUTOLOAD;
 
@@ -27,6 +30,8 @@ my %Tainted_of;
 my %Id_of;
 my %CreatedAt_of;
 my %ModifiedAt_of;
+my %Type_of;
+my %Owner_of;
 
 sub AUTOLOAD {
   ### AUTOLOAD method for getting and setting record attributes, and processing
@@ -78,6 +83,7 @@ sub new {
   $Id_of{$self} = defined $params{'id'} ? $params{'id'} : undef;
   $CreatedAt_of{$self} = defined $params{'created_at'} ? $params{'created_at'} : undef;
   $ModifiedAt_of{$self} = defined $params{'modified_at'} ? $params{'modified_at'} : undef;
+  $Type_of{$self} = defined $params{'type'} ? $params{'type'} : "record";
   $Fields_of{$self} = {};
   $Tainted_of{$self} = {};
   if ($params{'data'}) {
@@ -135,6 +141,13 @@ sub records {
   return $Records_of{$self};
 }
 
+sub type {
+  ### a
+  my $self = shift;
+  $Type_of{$self} = shift if @_;
+  return $Type_of{$self};
+}
+
 sub tainted {
   ### a
   my $self = shift;
@@ -183,8 +196,11 @@ sub records_of_type {
   ### Argument 2: Options - hash ref ('order_by' => sort expression, e.g.) 
   my ($self, $type, $options) = @_;
   my @return = ();
+  warn "===> FINDING RECORDS OF TYPE: $type";
   if ($self->records) {
+    warn "RECORDS!";
     foreach my $record (@{ $self->records }) {
+      warn "--> RECORD: " . $record->type;
       if ($record->type eq $type) {
         push @return, $record;
       }
@@ -204,12 +220,15 @@ sub find_records {
     $record_type = $params{record_type};
     delete $params{record_type};
   }
-  $record_type = "EnsEMBL::Web::" . $record_type . "::Record";
+  $record_type = "EnsEMBL::Web::Record::" . $record_type;
+  warn "FINDING RECORDS FOR: " . $record_type;
   my $user_adaptor = EnsEMBL::Web::DBSQL::UserDB->new();
   my $results = $user_adaptor->find_records(%params);
   my @records = ();
   foreach my $result (@{ $results }) {
-    my $record = $record_type->new((
+    #if (&dynamic_use($record_type)) {
+      warn "FOUND: " . $result;
+      my $record = $record_type->new((
                                          id => $result->{id},
                                        type => $result->{type},
                                        user => $result->{user},
@@ -217,7 +236,8 @@ sub find_records {
                                  created_at => $result->{created_at},
                                 modified_at => $result->{modified_at}
                                                 ));
-    push @records, $record;
+      push @records, $record;
+    #}
   }
   if ($params{options}) {
     my %options = %{ $params{options} };
@@ -226,6 +246,13 @@ sub find_records {
     }
   }
   return @records;
+}
+
+sub owner {
+  ### a
+  my $self = shift;
+  $Owner_of{$self} = shift if @_;
+  return $Owner_of{$self};
 }
 
 sub DESTROY {
@@ -239,6 +266,8 @@ sub DESTROY {
   delete $Records_of{$self};
   delete $ParameterSet_of{$self};
   delete $Tainted_of{$self};
+  delete $Type_of{$self};
+  delete $Owner_of{$self};
 }
 
 }

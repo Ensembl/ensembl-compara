@@ -7,7 +7,7 @@ no warnings "uninitialized";
 use EnsEMBL::Web::Object::Group;
 use EnsEMBL::Web::Wizard;
 use EnsEMBL::Web::Form;
-use EnsEMBL::Web::User::Record;
+use EnsEMBL::Web::Record::User;
 use Mail::Mailer;
 use CGI;
 
@@ -754,7 +754,7 @@ sub save_bookmark {
   #my $result = $object->save_bookmark($record);
   my $result = 0;
   if ($ENV{'ENSEMBL_USER_ID'}) {
-    my $bookmark = EnsEMBL::Web::User::Record->new(( 
+    my $bookmark = EnsEMBL::Web::Record::User->new(( 
                                                      type => 'bookmark',
                                                      user => $ENV{'ENSEMBL_USER_ID'}
                                                   )); 
