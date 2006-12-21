@@ -320,8 +320,10 @@ sub save {
 }
 
 sub send_activation_email {
-  my ($user, $site_info, $group_id) = @_;
+  my ($user, $group_id) = @_;
+  my $site_info = get_site_info;
   my $sitename = $site_info->{'name'};
+
   my $message = qq(
   Welcome to $sitename,
 
@@ -342,9 +344,12 @@ sub send_activation_email {
 }
 
 sub send_welcome_email {
-  my ($user, $site_info) = @_;
+  my $user = shift;
+  my $site_info = get_site_info;
   my $sitename = $site_info->{'name'};
+
   my $message = qq(Welcome to $sitename.
+
 
   Your account has been activated! In future, you can log in to $sitename using your email address and the password you chose during registration:
 
@@ -362,12 +367,14 @@ sub send_welcome_email {
 
 
 sub send_reactivation_email {
-  my ($user, $site_info) = @_;
+  my $user = shift;
+  my $site_info = get_site_info;
   my $sitename = $site_info->{'name'};
+
   my $message = qq(
 Hello ) . $user->name . qq(,
 
-We have received a request to change your Ensembl account password. If you
+We have received a request to change your $sitename account password. If you
 submitted this request, click on the link below to update your password. If
 not, please disregard this email.
 
@@ -378,6 +385,54 @@ not, please disregard this email.
   $message .= _email_footer($site_info);
 
   send_email($site_info, $user, "Your $sitename account", $message);
+}
+
+sub send_invite_email {
+  my ($user, $group, $record, $invite_email) = @_;
+  my $site_info = get_site_info;
+  my $sitename = $site_info->{'name'};
+
+  my $message = qq(
+  Hello,
+
+  You have been invited by ) . $user->name . qq( to join a group
+  on the $sitename Genome Browser.
+
+  To accept this invitation, go to your account summary page in $sitename, or
+  click on the following link:
+
+  ) . $group->name . qq(
+  ) . $site_info->{'base_url'} . qq(/common/accept?id=) . $record->id . qq(&invite=) . $record->code . qq(
+
+  If you do not wish to accept, or have already accepted, please disregard this email.
+
+  If you have any problems please don't hesitate to contact ) . $user->name .
+  qq(
+  or the $sitename help desk, at ) .$site_info->{'help_email'}. qq(.
+
+  );
+  $message .= _email_footer($site_info);
+
+  send_email($invite_email, "Invitation to join $sitename group", $message);
+}
+
+sub get_site_info {
+  my $sd = EnsEMBL::Web::SpeciesDefs->new();
+  my $site_info = {};
+  my $sitetype = $sd->ENSEMBL_SITETYPE;
+  my $sitename = $sitetype eq 'EnsEMBL' ? 'Ensembl' : $sitetype;
+  $site_info->{'name'} = $sitename;
+  if (substr($sitename, 0, 1) =~ /[aeiou]/i) {
+    $site_info->{'article'} = 'an';
+  }
+  else {
+    $site_info->{'article'} = 'a';
+  }
+  $site_info->{'base_url'}    = $sd->ENSEMBL_BASE_URL;
+  $site_info->{'mail_server'} = $sd->ENSEMBL_MAIL_SERVER;
+  $site_info->{'help_email'}  = $sd->ENSEMBL_HELPDESK_EMAIL;
+
+  return $site_info;
 }
 
 sub _activation_link {
@@ -424,6 +479,19 @@ sub web_user_db {
   my $self = shift;
   return $self->adaptor;
 }
+
+sub random_string {
+  my $length = shift || 8;
+
+  my @chars = ('a'..'z','A'..'Z','0'..'9','_');
+  my $random_string;
+  foreach (1..$length)
+  {
+    $random_string .= $chars[rand @chars];
+  }
+  return $random_string;
+}
+
 
 sub encrypt {
   my ($self, $data) = @_;
