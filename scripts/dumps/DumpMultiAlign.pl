@@ -51,6 +51,7 @@ perl DumpMultiAlign.pl
     --seq_region region_name
     --seq_region_start start
     --seq_region_end end
+    [--split_size 1000]
     [--alignment_type method_link_name]
     [--set_of_species species1:species2:species3:...]
     [--output_format clustalw|fasta|...]
@@ -159,6 +160,15 @@ each alignment. "Fasta" is the default format.
 The name of the output file. By default the output is the
 standard output
 
+=item B<[--split_size split_size]>
+
+Only available when dumping all the alignments in one go
+(without using the coordinate_system nor the seq_region_name
+options) to split the output in several files. Each file
+will contain up to split-size alignments. Obviously, you
+need to specify a output file name, which will be use as base
+for the name of all the files.
+
 =back
 
 =head1 EXAMPLES
@@ -234,6 +244,13 @@ perl DumpMultiAlign.pl
     [--output_file filename]
         The name of the output file. By default the output is the
         standard output
+    [--split-size split-size]
+        Only available when dumping all the alignments in one go
+        (without using the coordinate_system nor the seq_region_name
+        options) to split the output in several files. Each file
+        will contain up to split-size alignments. Obviously, you
+        need to specify a output file name, which will be use as base
+        for the name of all the files.
 };
 
 use strict;
@@ -258,6 +275,7 @@ my $original_seq = undef;
 my $masked_seq = 0;
 my $output_file = undef;
 my $output_format = "fasta";
+my $split_size;
 my $help;
 
 GetOptions(
@@ -276,16 +294,13 @@ GetOptions(
     "masked_seq=i" => \$masked_seq,
     "output_format=s" => \$output_format,
     "output_file=s" => \$output_file,
+    "split_size=s" => \$split_size,
   );
 
 # Print Help and exit
 if ($help) {
   print $description, $usage;
   exit(0);
-}
-
-if ($output_file) {
-  open(STDOUT, ">$output_file") or die("Cannot open $output_file");
 }
 
 # Configure the Bio::EnsEMBL::Registry
@@ -335,7 +350,7 @@ if ($coord_system and !$seq_region) {
   throw("No Slice can be created with coordinates $seq_region:$seq_region_start-$seq_region_end")
       if (!$query_slice);
   @query_slices = ($query_slice);
-} else {
+} elsif ($seq_region) {
   my $query_slice = $slice_adaptor->fetch_by_region(
       'toplevel', $seq_region, $seq_region_start, $seq_region_end);
   throw("No Slice can be created with coordinates $seq_region:$seq_region_start-$seq_region_end")
@@ -347,21 +362,58 @@ if ($coord_system and !$seq_region) {
 my $genomic_align_block_adaptor = Bio::EnsEMBL::Registry->get_adaptor(
     $dbname, 'compara', 'GenomicAlignBlock');
 
-my $alignIO = Bio::AlignIO->newFh(
-        -interleaved => 0,
-        -fh => \*STDOUT,
-        -format => $output_format,
-        -idlength => 10
-    );
+if (!@query_slices) {
+  my $start = 0;
+  my $num = 1;
+  do {
+    my $genomic_align_blocks =
+        $genomic_align_block_adaptor->fetch_all_by_MethodLinkSpeciesSet(
+            $method_link_species_set, $split_size, $start);
+    last if (!@$genomic_align_blocks);
+    if ($output_file and $split_size) {
+      my $this_output_file = $output_file;
+      if ($this_output_file =~ /\.[^\.]+$/) {
+        $this_output_file =~ s/(\.[^\.]+)$/_$num$1/;
+      } else {
+        $this_output_file .= ".$num";
+      }
+      open(STDOUT, ">$this_output_file") or die("Cannot open $this_output_file");
+    }
+    my $alignIO = Bio::AlignIO->newFh(
+            -interleaved => 0,
+            -fh => \*STDOUT,
+            -format => $output_format,
+            -idlength => 10
+        );
+  
+    foreach my $this_genomic_align_block (@$genomic_align_blocks) {
+      write_genomic_align_block($alignIO, $this_genomic_align_block);
+      $this_genomic_align_block = undef;
+    }
+    $num++;
+    $start += $split_size;
+  } while($split_size);
+} else {
+  if ($output_file) {
+    open(STDOUT, ">$output_file") or die("Cannot open $output_file");
+  }
 
-foreach my $this_slice (@query_slices) {
-  my $genomic_align_blocks =
-      $genomic_align_block_adaptor->fetch_all_by_MethodLinkSpeciesSet_Slice(
-          $method_link_species_set, $this_slice);
-
-  foreach my $this_genomic_align_block (@$genomic_align_blocks) {
-    write_genomic_align_block($alignIO, $this_genomic_align_block);
-    $this_genomic_align_block = undef;
+  my $alignIO = Bio::AlignIO->newFh(
+          -interleaved => 0,
+          -fh => \*STDOUT,
+          -format => $output_format,
+          -idlength => 10
+      );
+  
+  foreach my $this_slice (@query_slices) {
+    my $genomic_align_blocks =
+        $genomic_align_block_adaptor->fetch_all_by_MethodLinkSpeciesSet_Slice(
+            $method_link_species_set, $this_slice);
+  
+    foreach my $this_genomic_align_block (@$genomic_align_blocks) {
+      write_genomic_align_block($alignIO, $this_genomic_align_block);
+      $this_genomic_align_block = undef;
+    }
   }
 }
 
