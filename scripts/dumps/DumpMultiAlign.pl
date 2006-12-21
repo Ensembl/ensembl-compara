@@ -72,11 +72,17 @@ perl DumpMultiAlign.pl
 
 =over
 
+=item B<[--db mysql://user[:passwd]@host[:port]]>
+
+The script will auto-configure the Registry using the
+databases in this MySQL instance. Default:
+mysql://anonymous@ensembldb.ensembl.org
+
 =item B<[--reg_conf registry_configuration_file]>
 
-the Bio::EnsEMBL::Registry configuration file. If none given,
-the one set in ENSEMBL_REGISTRY will be used if defined, if not
-~/.ensembl_init will be used.
+If you are using a non-standard setting, you can specify a
+Bio::EnsEMBL::Registry configuration file to create the
+appropriate connections to the databases.
 
 =item B<[--dbname compara_db_name]>
   
@@ -95,7 +101,9 @@ Query species. Default is "human"
 
 =item B<[--coord_system coordinates_name]>
   
-Query coordinate system. Default is "chromosome"
+By default this script dumps for one particular top-level seq_region.
+This option allows to dump, for instance, all the alignments on all
+the top-level supercontig in one go.
 
 =item B<--seq_region region_name>
   
@@ -142,7 +150,9 @@ like clustalw
 
 =item B<[--output_format clustalw|fasta|...]>
 
-The type of output you want. "clustalw" is the default.
+The type of output you want. Both fasta and clustalw have been tested.
+In fasta format, a line containg a hash ("#") is added at the end of
+each alignment. "Fasta" is the default format.
 
 =item B<[--output_file filename]>
 
@@ -150,6 +160,29 @@ The name of the output file. By default the output is the
 standard output
 
 =back
+
+=head1 EXAMPLES
+
+=over
+
+=item Dump all the human-mouse alignment on human chromosome X [1Mb-2Mb] in a multi fasta format:
+
+perl DumpMultiAlign.pl --species "Homo sapiens" \
+  --set_of_alignments "Homo sapiens:Mus musculus" \
+  --seq_region X --seq_region_start 1000000 \
+  --seq_region_end 2000000 --output_format fasta
+
+=item Dump all the human-mouse alignment on human supercontigs in a clustalw format:
+
+perl DumpMultiAlign.pl --species "Homo sapiens" \
+  --set_of_alignments "Homo sapiens:Mus musculus" \
+  --coord_system supercontig --output_format clustalw
+
+=item Dump all the human-chicken alignment on human chromosome 1, returning soft-masked sequences:
+
+perl DumpMultiAlign.pl --species "Homo sapiens" \
+  --set_of_alignments "Homo sapiens:Mus musculus" \
+  --seq_region 1 --masked_seq 1
 
 =cut
 
@@ -170,12 +203,14 @@ perl DumpMultiAlign.pl
   For the query slice:
     [--species species]
         Query species. Default is "human"
-    [--coord_system coordinates_name]
-        Query coordinate system. Default is "chromosome"
     --seq_region region_name
         Query region name, i.e. the chromosome name
     --seq_region_start start
     --seq_region_end end
+    [--coord_system coordinates_name]
+        By default this script dumps for one particular top-level seq_region.
+        This option allows to dump, for instance, all the alignments on all
+        the top-level supercontig in one go.
 
   For the alignments:
     [--alignment_type method_link_name]
@@ -210,10 +245,11 @@ use Bio::LocatableSeq;
 use Getopt::Long;
 
 my $reg_conf;
-my $dbname = "compara";
+my $db = 'mysql://anonymous@ensembldb.ensembl.org';
+my $dbname = "Multi";
 my $species = "human";
-my $coord_system = "chromosome";
-my $seq_region = "14";
+my $coord_system;
+my $seq_region;
 my $seq_region_start;
 my $seq_region_end;
 my $alignment_type = "BLASTZ_NET";
@@ -227,6 +263,7 @@ my $help;
 GetOptions(
     "help" => \$help,
     "reg_conf=s" => \$reg_conf,
+    "db=s" => \$db,
     "dbname=s" => \$dbname,
     "species=s" => \$species,
     "coord_system=s" => \$coord_system,
@@ -254,7 +291,11 @@ if ($output_file) {
 # Configure the Bio::EnsEMBL::Registry
 # Uses $reg_conf if supllied. Uses ENV{ENSMEBL_REGISTRY} instead if defined. Uses ~/.ensembl_init
 # if all the previous fail.
-Bio::EnsEMBL::Registry->load_all($reg_conf);
+if ($reg_conf) {
+  Bio::EnsEMBL::Registry->load_all($reg_conf);
+} else {
+  Bio::EnsEMBL::Registry->load_registry_from_url($db);
+}
 
 # Getting all the Bio::EnsEMBL::Compara::GenomeDB objects
 my $genome_dbs;
@@ -285,16 +326,26 @@ throw("The database do not contain any $alignment_type data for $set_of_species!
 my $slice_adaptor = Bio::EnsEMBL::Registry->get_adaptor($species, 'core', 'Slice');
 throw("Registry configuration file has no data for connecting to <$species>")
     if (!$slice_adaptor);
-my $query_slice = $slice_adaptor->fetch_by_region('toplevel', $seq_region, $seq_region_start, $seq_region_end);
-throw("No Slice can be created with coordinates $seq_region:$seq_region_start-$seq_region_end")
-    if (!$query_slice);
+my @query_slices;
+if ($coord_system and !$seq_region) {
+  @query_slices = grep {$_->coord_system_name eq $coord_system} @{$slice_adaptor->fetch_all('toplevel')};
+} elsif ($coord_system) {
+  my $query_slice = $slice_adaptor->fetch_by_region(
+      $coord_system, $seq_region, $seq_region_start, $seq_region_end);
+  throw("No Slice can be created with coordinates $seq_region:$seq_region_start-$seq_region_end")
+      if (!$query_slice);
+  @query_slices = ($query_slice);
+} else {
+  my $query_slice = $slice_adaptor->fetch_by_region(
+      'toplevel', $seq_region, $seq_region_start, $seq_region_end);
+  throw("No Slice can be created with coordinates $seq_region:$seq_region_start-$seq_region_end")
+      if (!$query_slice);
+  @query_slices = ($query_slice);
+}
 
 # Fetching all the GenomicAlignBlock corresponding to this Slice:
 my $genomic_align_block_adaptor = Bio::EnsEMBL::Registry->get_adaptor(
     $dbname, 'compara', 'GenomicAlignBlock');
-my $genomic_align_blocks =
-    $genomic_align_block_adaptor->fetch_all_by_MethodLinkSpeciesSet_Slice(
-        $method_link_species_set, $query_slice);
 
 my $alignIO = Bio::AlignIO->newFh(
         -interleaved => 0,
@@ -302,8 +353,21 @@ my $alignIO = Bio::AlignIO->newFh(
         -format => $output_format,
         -idlength => 10
     );
-  
-foreach my $this_genomic_align_block (@$genomic_align_blocks) {
+
+foreach my $this_slice (@query_slices) {
+  my $genomic_align_blocks =
+      $genomic_align_block_adaptor->fetch_all_by_MethodLinkSpeciesSet_Slice(
+          $method_link_species_set, $this_slice);
+
+  foreach my $this_genomic_align_block (@$genomic_align_blocks) {
+    write_genomic_align_block($alignIO, $this_genomic_align_block);
+    $this_genomic_align_block = undef;
+  }
+}
+
+sub write_genomic_align_block {
+  my ($alignIO, $this_genomic_align_block) = @_;
+
   my $simple_align = Bio::SimpleAlign->new();
   $simple_align->id("GAB#".$this_genomic_align_block->dbID);
   $simple_align->score($this_genomic_align_block->score);
@@ -311,8 +375,8 @@ foreach my $this_genomic_align_block (@$genomic_align_blocks) {
   foreach my $this_genomic_align (@{$this_genomic_align_block->get_all_GenomicAligns}) {
     my $seq_name = $this_genomic_align->dnafrag->genome_db->name;
     $seq_name =~ s/(.)\w* (...)\w*/$1$2/;
-    $seq_name .= $this_genomic_align->dnafrag->name;
-    $seq_name = $simple_align->id().":".$seq_name if ($output_format eq "fasta");
+    $seq_name .= ".".$this_genomic_align->dnafrag->name;
+#     $seq_name = $simple_align->id().":".$seq_name if ($output_format eq "fasta");
     my $aligned_sequence;
     if ($masked_seq == 1) {
       $this_genomic_align->original_sequence($this_genomic_align->get_Slice->get_repeatmasked_seq(undef,1)->seq);
@@ -345,7 +409,7 @@ foreach my $this_genomic_align_block (@$genomic_align_blocks) {
     $simple_align->add_seq($seq);
   }
   print $alignIO $simple_align;
-  $this_genomic_align_block = undef;
+  print "#\n" if ($output_format eq "fasta");
 }
 
 exit;
