@@ -21,21 +21,12 @@ $data->adaptor(EnsEMBL::Web::DBSQL::ViewAdaptor->new((
                                                        table  => 'user'
                                                     )) );
 
-my $sd = EnsEMBL::Web::SpeciesDefs->new();
-my $site_info = {};
-my $sitetype = $sd->ENSEMBL_SITETYPE;
-my $sitename = $sitetype eq 'EnsEMBL' ? 'Ensembl' : $sitetype;
-$site_info->{'name'} = $sitename;
-$site_info->{'base_url'}    = $sd->ENSEMBL_BASE_URL;
-$site_info->{'mail_server'} = $sd->ENSEMBL_MAIL_SERVER;
-$site_info->{'help_email'}  = $sd->ENSEMBL_HELPDESK_EMAIL;
-
 if (!$cgi->param('welcome_email')) {
   my $user = EnsEMBL::Web::Object::User->new({ id => $cgi->param('id') });
-  $user->send_activation_email($site_info, $cgi->param('group_id') );
+  $user->send_activation_email($cgi->param('group_id') );
 } elsif ($cgi->param('welcome_email') eq 'yes') {
   my $user = EnsEMBL::Web::Object::User->new({ id => $cgi->param('id') });
-  $user->send_welcome_email($site_info);
+  $user->send_welcome_email;
   if ($cgi->param('group_id')) {
     my $group = EnsEMBL::Web::Object::Group->new(( id => $cgi->param('group_id') ));
     $user->add_group($group);
@@ -47,7 +38,7 @@ if (!$cgi->param('welcome_email')) {
 $data->discover;
 $data->populate($cgi->param('id'));
 $page->data_definition($data);
-$page->title("Activate your $sitename account");
+$page->title("Activate your account");
 $page->action('edit');
 $page->send_params({ id => 'yes', salt => 'yes', password => 'yes' });
 $page->on_complete('/common/set_cookie');

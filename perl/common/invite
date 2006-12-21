@@ -3,7 +3,6 @@
 package invite;
 
 use EnsEMBL::Web::Group::Record;
-use EnsEMBL::Web::SpeciesDefs;
 use CGI;
 my $cgi = new CGI;
 
@@ -22,7 +21,7 @@ if ($ENV{'ENSEMBL_USER_ID'}) {
       $record->code(random_string());
       $record->save;
 
-      send_invite_email($group, $user, $record, $cgi->param('invite_email'));
+      $user->send_invite_email($group, $record, $cgi->param('invite_email'));
       my $feedback = "Invitation email send to: " . $cgi->param('invite_email');
       $url .= "&feedback=" . CGI::escape($feedback); 
     } else {
@@ -32,49 +31,6 @@ if ($ENV{'ENSEMBL_USER_ID'}) {
 }
 
 CGI::redirect($url);
-
-sub send_invite_email {
-  my ($group, $user, $record, $invite_email) = @_;
-  my $species_defs = EnsEMBL::Web::SpeciesDefs->new();
-  my $message = qq(
-  Hello,
-  
-  You have been invited by ) . $user->name . qq( to join a group
-  on the Ensembl Genome Browser. 
-
-  To accept this invitation, go to your account summary page in Ensembl, or 
-  click on the following link:
-
-  ) . $group->name . qq(
-  ) . $species_defs->ENSEMBL_BASE_URL . qq(/common/accept?id=) . $record->id . qq(&invite=) . $record->code . qq(
-  
-  If you do not wish to accept, or have already accepted, please disregard this email. 
-  
-  If you have any problems please don't hesitate to contact ) . $user->name . 
-  qq( 
-  or the Ensembl help desk, on helpdesk\@ensembl.org.
-
-  Many thanks,
-
-  The Ensembl team
-  );
-  send_email($invite_email, "Invitation to join an Ensembl group", $message);
-}
-
-sub send_email {
-  my ($email, $subject, $message) = @_;
-  warn "Sending email to: " . $email;
-  my $mailer = new Mail::Mailer 'smtp', Server => "mail.sanger.ac.uk";
-  $mailer->open({
-                'To'      => $email,
-                'From'    => "Ensembl",
-                'Reply-To'=> "helpdesk\@ensembl.org",
-                'Subject' => $subject
-                });
-  print $mailer $message;
-  $mailer->close();
-
-}
 
 sub random_string {
   my $length = shift || 8;

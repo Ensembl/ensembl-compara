@@ -27,6 +27,9 @@ my $email = $record->email;
 my $group_id = $record->group;
 
 my $user = EnsEMBL::Web::Object::User->new({ email => $email });
+my $site_info = $user->get_site_info;
+my $sitename = $site_info->{'name'};
+my $article = $site_info->{'article'}; ## a or an?
 
 if (!$user->id) {
 
@@ -41,7 +44,7 @@ $data->adaptor(EnsEMBL::Web::DBSQL::ViewAdaptor->new((
 
 $data->discover;
 $page->data_definition($data);
-$page->title('Register for Ensembl');
+$page->title('Register for '.$sitename);
 $page->action('create');
 $page->send_params({ id => 'yes', group_id => 'yes' });
 $page->on_complete('/common/activate');
@@ -49,12 +52,12 @@ $page->on_error('/register/error.html');
 
 $form->add_value({'email' => $email });
 
-$page->add_text('You have been invited to join an Ensembl group. In order to do so, you first need to create a new Ensembl account.');
+$page->add_text("You have been invited to join $article $sitename group. In order to do so, you first need to create a new $sitename account.");
 $page->add_configuration_element('salt', random_string(8));
 $page->add_configuration_element('group_id', $group_id);
 $page->add_configuration_element('record_id', $record_id);
 $page->add_form_element('name', "Your name");
-$page->add_form_element('email', "Your email address. You'll use this to log in to Ensembl", $form);
+$page->add_form_element('email', "Your email address. You'll use this to log in to $sitename", $form);
 $page->add_form_element('organisation', "Organisation");
 
 EnsEMBL::Web::Document::DataView::simple('User', $page);
