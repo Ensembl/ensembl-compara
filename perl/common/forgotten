@@ -27,49 +27,13 @@ if ($cgi->param('email')) {
     $url = "/updated_password.html?url=/index.html";
     $user->salt(&random_string(8));
     $user->save;
-    send_activation_email($user, $site_info);
+    $user->send_reactivation_email($site_info);
   } else {
     $url = "/forgotten_no_user.html?url=/index.html";
   }
 }
 
 CGI::redirect($url);
-
-sub send_activation_email {
-  my ($user, $site_info) = @_;
-  my $sitename = $site_info->{'name'};
-  my $message = qq(
-Hello ) . $user->name . qq(,
-
-We have received a request to change your Ensembl account password. If you
-submitted this request, click on the link below to update your password. If
-not, please disregard this email.
-
-Your activation code is: ) . $user->salt . qq(
-
-Many thanks,
-
-The Ensembl web team
-
-);
-  send_email($site_info, $user, "Your $sitename account", $message);
-}
-
-sub send_email {
-  my ($site_info, $user, $subject, $message) = @_;
-  warn "Sending email to: " . $user->email . " on " . $site_info->{'mail_server'};
-  my $mailer = new Mail::Mailer 'smtp', Server => $site_info->{'mail_server'};
-  $mailer->open({
-                'To'      => $user->email,
-                'From'    => $site_info->{'name'},
-                'Reply-To'=> $site_info->{'help_email'},
-                'Subject' => $subject
-                });
-  print $mailer $message;
-  $mailer->close();
-
-}
-
 
 sub random_string {
   my $length = shift || 8;
