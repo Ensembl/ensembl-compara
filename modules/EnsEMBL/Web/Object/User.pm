@@ -319,6 +319,107 @@ sub save {
 
 }
 
+sub send_activation_email {
+  my ($user, $site_info, $group_id) = @_;
+  my $sitename = $site_info->{'name'};
+  my $message = qq(
+  Welcome to $sitename,
+
+  Thanks for registering with $sitename.
+
+  You just need to activate your account, using the link below:
+);
+
+  $message .= _activation_link($user, $site_info); 
+
+  if ($group_id) {
+    $message .= "&group_id=" . $group_id;
+  }
+
+  $message .= _email_footer($site_info);
+
+  send_email($site_info, $user, "Your new $sitename account", $message);
+}
+
+sub send_welcome_email {
+  my ($user, $site_info) = @_;
+  my $sitename = $site_info->{'name'};
+  my $message = qq(Welcome to $sitename.
+
+  Your account has been activated! In future, you can log in to $sitename using your email address and the password you chose during registration:
+
+  Email: ) . $user->email . qq(
+
+  More information on how to make the most of your account can be found here:
+
+  ) . $site_info->{'base_url'} . qq(/info/about/accounts.html
+
+);
+  $message .= _email_footer($site_info);
+
+  send_email($site_info, $user, "Welcome to $sitename", $message);
+}
+
+
+sub send_reactivation_email {
+  my ($user, $site_info) = @_;
+  my $sitename = $site_info->{'name'};
+  my $message = qq(
+Hello ) . $user->name . qq(,
+
+We have received a request to change your Ensembl account password. If you
+submitted this request, click on the link below to update your password. If
+not, please disregard this email.
+
+);
+
+  $message .= _activation_link($user, $site_info); 
+
+  $message .= _email_footer($site_info);
+
+  send_email($site_info, $user, "Your $sitename account", $message);
+}
+
+sub _activation_link {
+  my ($user, $site_info) = @_;
+
+  my $link = $site_info->{'base_url'}.'/common/activate?id='.$user->id.'&code='.$user->salt;
+
+  return $link;
+}
+
+sub _email_footer {
+  my $site_info = shift;
+  my $sitename = $site_info->{'name'};
+
+  my $footer = qq(
+
+
+  Many thanks,
+
+  The $sitename web team
+
+  $sitename Privacy Statement: ) . $site_info->{'base_url'} . qq(/info/about/privacy.html
+);
+  return $footer;
+}
+
+sub send_email {
+  my ($site_info, $user, $subject, $message) = @_;
+  warn "Sending email to: " . $user->email . " on " . $site_info->{'mail_server'};
+  my $mailer = new Mail::Mailer 'smtp', Server => $site_info->{'mail_server'};
+  $mailer->open({
+                'To'      => $user->email,
+                'From'    => $site_info->{'name'},
+                'Reply-To'=> $site_info->{'help_email'},
+                'Subject' => $subject
+                });
+  print $mailer $message;
+  $mailer->close();
+
+}
+
+
 sub web_user_db {
   my $self = shift;
   return $self->adaptor;
