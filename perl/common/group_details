@@ -1,7 +1,0 @@
-#!/usr/local/bin/perl
-
-package group_details;
-
-use EnsEMBL::Web::Document::WebPage;
-EnsEMBL::Web::Document::WebPage::simple( 'User' );
-1;
