@@ -445,7 +445,7 @@ sub createObjects {
     }
   } else {
     ## Gene (completed)
-    if($temp_id = $self->param('geneid') || $self->param('gene')) {
+    if(!defined($start) && ($temp_id = $self->param('geneid') || $self->param('gene'))) {
       $location = $self->_location_from_Gene( $temp_id );
     ## Transcript (completed)
     } elsif( $temp_id = $self->param('transid') || $self->param('trans') || $self->param('transcript') ) {
