@@ -652,8 +652,8 @@ usr/local/ensembl with your chosen server-root.</p>
 <li>
 <p>Log into the Sanger CVS server (using a password of "CVSUSER"):</p>
 <pre class="code">
-$ cvs -d :pserver:cvsuser@cvsro.sanger.ac.uk:/cvsroot/CVSmaster  login
-Logging in to :pserver:cvsuser@cvsro.sanger.ac.uk:2401/cvsroot/CVSmaster
+$ cvs -d :pserver:cvsuser@cvs.sanger.ac.uk:/cvsroot/CVSmaster  login
+Logging in to :pserver:cvsuser@cvs.sanger.ac.uk:2401/cvsroot/CVSmaster
 CVS password: CVSUSER 
 </pre>
 <!--<kbd>cvs -d :pserver:cvsuser@cvs.sanger.ac.uk:/cvsroot/ensembl login</kbd>-->
@@ -661,10 +661,10 @@ CVS password: CVSUSER
 <li>
 <p>To check out the most recent stable version of the ensembl API and web code from CVS (i.e. to download the code from the Sanger CVS server onto your local machine) you need to use the latest branch of the code.  Please note the code on the CVS HEAD is under development and unstable.  Use the following command making sure you use the code that matches your databases:</p>
 <pre class="code">
-$ cvs -d :pserver:cvsuser@cvsro.sanger.ac.uk:/cvsroot/CVSmaster co -r branch-ensembl-[[SPECIESDEFS::ENSEMBL_VERSION]] ensembl-api ensembl-website 
+$ cvs -d :pserver:cvsuser@cvs.sanger.ac.uk:/cvsroot/CVSmaster co -r branch-ensembl-[[SPECIESDEFS::ENSEMBL_VERSION]] ensembl-api ensembl-website 
 </pre>
 
-<!--<kbd>cvs -d :pserver:cvsuser@cvsro.sanger.ac.uk:/cvsroot/ensembl \<br />
+<!--<kbd>cvs -d :pserver:cvsuser@cvs.sanger.ac.uk:/cvsroot/ensembl \<br />
 &nbsp; co -r branch-ensembl-[[SPECIESDEFS::ENSEMBL_VERSION]] ensembl-api ensembl-website</kbd>-->
 <p>A listing of your server-root should now look something like:</p>
 <table>
@@ -698,7 +698,7 @@ $ cvs -d :pserver:cvsuser@cvsro.sanger.ac.uk:/cvsroot/CVSmaster co -r branch-ens
 <p>Check the BioMart code out of CVS (downloads the code from the Sanger CVS server onto your local
 machine):</p>
 <pre class="code">
-$ cvs -d :pserver:cvsuser@cvsro.sanger.ac.uk:/cvsroot/CVSmaster co -r release-0_5 biomart-perl</pre>
+$ cvs -d :pserver:cvsuser@cvs.sanger.ac.uk:/cvsroot/CVSmaster co -r release-0_5 biomart-perl</pre>
 </li>
 </ol>
 
