@@ -196,11 +196,8 @@ sub records_of_type {
   ### Argument 2: Options - hash ref ('order_by' => sort expression, e.g.) 
   my ($self, $type, $options) = @_;
   my @return = ();
-  warn "===> FINDING RECORDS OF TYPE: $type";
   if ($self->records) {
-    warn "RECORDS!";
     foreach my $record (@{ $self->records }) {
-      warn "--> RECORD: " . $record->type;
       if ($record->type eq $type) {
         push @return, $record;
       }
@@ -221,13 +218,11 @@ sub find_records {
     delete $params{record_type};
   }
   $record_type = "EnsEMBL::Web::Record::" . $record_type;
-  warn "FINDING RECORDS FOR: " . $record_type;
   my $user_adaptor = EnsEMBL::Web::DBSQL::UserDB->new();
   my $results = $user_adaptor->find_records(%params);
   my @records = ();
   foreach my $result (@{ $results }) {
     #if (&dynamic_use($record_type)) {
-      warn "FOUND: " . $result;
       my $record = $record_type->new((
                                          id => $result->{id},
                                        type => $result->{type},
