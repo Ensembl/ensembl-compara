@@ -58,14 +58,16 @@ sub ld_values {
   # Check there is data to display
   my $zoom = $object->param('w')|| 50000;
   my %return;
+  my $display_zoom = $object->round_bp($zoom);
 
-  foreach my $pop_name ( keys %pops ) {
+  foreach my $pop_name (sort keys %pops ) {
     my $pop_obj = $object->pop_obj_from_name($pop_name);
+    next unless $pop_obj;
     my $pop_id = $pop_obj->{$pop_name}{dbID};
-    my $data = $object->ld_for_slice($pop_id);
+    my $data = $object->ld_for_slice($pop_obj->{$pop_name}{'PopObject'}, $zoom);
     foreach my $ldtype ( "r2", "d_prime" ) {
       my $display = $ldtype eq 'r2' ? "r2" : "D'";
-      my $nodata = "No $display linkage data in $zoom kb window for population $pop_name";
+      my $nodata = "No $display linkage data in $display_zoom window for population $pop_name";
       unless (%$data && keys %$data) {
 	$return{$ldtype}{$pop_name}{"text"} = $nodata;
 	next;
@@ -75,6 +77,7 @@ sub ld_values {
 	sort { $a->[1]->start <=> $b->[1]->start }
 	  map  { [ $_ => $data->{'variationFeatures'}{$_} ] }
 	    keys %{ $data->{'variationFeatures'} };
+
       unless (scalar @snp_list) {
 	$return{$ldtype}{$pop_name}{"text"} = $nodata;
 	next;
@@ -126,6 +129,7 @@ sub ld_values {
       }
 	push (@starts_list, $pos);
       }
+
       my $location = $object->seq_region_name .":".$object->seq_region_start.
 	"-".$object->seq_region_end;
       $return{$ldtype}{$pop_name}{"text"} = "Pairwise $display values for $location.  Population: $pop_name";
@@ -140,6 +144,7 @@ sub ld_values {
 
 
 sub html_lddata {
+
   ###  Args      : panel, object
   ###  Description : Calls ld_values function which returns the data in text format
   ###              This function formats the data into HTML
