@@ -76,16 +76,13 @@ sub addContext {
 
 ######## LDVIEW CALLS ################################################
 
-=head2 get_default_pop_name
-
-   Arg[1]      : 
-   Example     : my $pop_id = $self->DataObj->get_default_pop_name
-   Description : returns population id for default population for this species
-   Return type : population dbID
-
-=cut
 
 sub get_default_pop_name {
+
+  ### Example : my $pop_id = $self->DataObj->get_default_pop_name
+  ### Description : returns population id for default population for this species
+  ### Returns population dbID
+
   my $self = shift;
   my $variation_db = $self->database('variation')->get_db_adaptor('variation');
   my $pop_adaptor = $variation_db->get_PopulationAdaptor;
@@ -94,16 +91,13 @@ sub get_default_pop_name {
   return $pop->name;
 }
 
-=head2 pop_obj_from_name
-
-  Arg[1]      : Population name
-  Example     : my $pop_name = $self->DataObj->pop_obj_from_name($pop_id);
-  Description : returns population info for the given population name
-  Return type : population object
-
-=cut
-
 sub pop_obj_from_name {
+
+  ### Arg1    : Population name
+  ### Example : my $pop_name = $self->DataObj->pop_obj_from_name($pop_id);
+  ### Description : returns population info for the given population name
+  ### Returns population object
+
   my $self = shift;
   my $pop_name = shift;
   my $variation_db = $self->database('variation')->get_db_adaptor('variation');
@@ -114,16 +108,14 @@ sub pop_obj_from_name {
   return $data;
 }
 
-=head2 pop_name_from_id
-
-  Arg[1]      : Population id
-  Example     : my $pop_name = $self->DataObj->pop_name_from_id($pop_id);
-  Description : returns population name as string
-  Return type : string
-
-=cut
 
 sub pop_name_from_id {
+
+  ### Arg1 : Population id
+  ### Example : my $pop_name = $self->DataObj->pop_name_from_id($pop_id);
+  ### Description : returns population name as string
+  ### Returns string
+
   my $self = shift;
   my $pop_id = shift;
   my $variation_db = $self->database('variation')->get_db_adaptor('variation');
@@ -133,17 +125,15 @@ sub pop_name_from_id {
   return $self->pop_name( $pop );
 }
 
-=head2 extra_pop
-
-  Arg[1]      : Bio::EnsEMBL::Variation::Population object
-  Arg[2]      : string "super", "sub"
-  Example     : $genotype_freq = $self->DataObj->extra_pop($pop, "super");
-  Description : gets any super/sub populations
-  Return type : String
-
-=cut
 
 sub extra_pop {  ### ALSO IN SNP DATA OBJ
+
+  ### Arg1 : Bio::EnsEMBL::Variation::Population object
+  ### Arg[2]      : string "super", "sub"
+  ### Example : $genotype_freq = $self->DataObj->extra_pop($pop, "super");
+  ### Description : gets any super/sub populations
+  ### Returns String
+
   my ($self, $pop_obj, $type)  = @_;
   return {} unless $pop_obj;
   my $call = "get_all_$type" . "_Populations";
@@ -151,16 +141,14 @@ sub extra_pop {  ### ALSO IN SNP DATA OBJ
   return  $self->format_pop(\@populations);
 }
 
-=head2 format_pop
-
-  Arg[1]      : population object
-  Example     : my $data = $self->format_pop
-  Description : returns population info for the given population obj
-  Return type : hashref
-
-=cut
 
 sub format_pop {
+
+  ### Arg1 : population object
+  ### Example : my $data = $self->format_pop
+  ### Description : returns population info for the given population obj
+  ### Returns hashref
+
   my $self = shift;
   my $pops = shift;
   my %data;
@@ -177,103 +165,88 @@ sub format_pop {
 }
 
 
-=head2 pop_name
-
-  Arg[1]      : Bio::EnsEMBL::Variation::Population object
-  Example     : $self->DataObj->pop_name($pop);
-  Description : gets the Population name
-  Return type : String
-
-=cut
 
 sub pop_name {
+
+  ### Arg1 : Bio::EnsEMBL::Variation::Population object
+  ### Example : $self->DataObj->pop_name($pop);
+  ### Description : gets the Population name
+  ###  Returns String
+
   my ($self, $pop_obj)  = @_;
   return unless $pop_obj;
   return $pop_obj->name;
 }
 
-=head2 ld_for_slice
-
-   Arg[1]      :
-   Example     : my $container = $self->ld_for_slice;
-   Description : returns all LD values on this slice as a
-                 Bio::EnsEMBL::Variation::LDFeatureContainer
-   ReturnType  :  Bio::EnsEMBL::Variation::LDFeatureContainer
-
-=cut
-
 
 sub ld_for_slice {
-  my $self = shift; 
-  my $pop_id = shift;
-  my $width = $self->param('w') || "50000";
+
+  ### Arg1 : population object (optional)
+  ### Arg2 : width for the slice (optional)
+  ### Example : my $container = $self->ld_for_slice;
+  ### Description : returns all LD values on this slice as a
+  ###               Bio::EnsEMBL::Variation::LDFeatureContainer
+  ### Returns    :  Bio::EnsEMBL::Variation::LDFeatureContainer
+
+  my ($self, $pop_obj, $width) = @_;
+  $width = $self->param('w') || "50000" unless $width;
   my ($seq_region, $start, $seq_type ) = ($self->seq_region_name, $self->seq_region_start, $self->seq_region_type);
   return [] unless $seq_region;
 
-  my $end   = $start + ($width/2);
-  $start -= ($width/2);
+  my $end   = $start + $width;
   my $slice = $self->slice_cache($seq_type, $seq_region, $start, $end, 1);
   return {} unless $slice;
-  return  $slice->get_all_LD_values() || {};
+
+  return  $slice->get_all_LD_values($pop_obj) || {};
 }
 
 
-
-=head2 pop_links
-
-  Arg[1]      : Bio::EnsEMBL::Variation::Population object
-  Example     : $genotype_freq = $self->DataObj->pop_links($pop);
-  Description : gets the Population description
-  Return type : String
-
-=cut
-
 sub pop_links {
+
+  ### Arg1 : Bio::EnsEMBL::Variation::Population object
+  ### Example : $genotype_freq = $self->DataObj->pop_links($pop);
+  ### Description : gets the Population description
+  ### Returns String
+
   my ($self, $pop_obj)  = @_;
   return $pop_obj->get_all_synonyms("dbSNP");
 }
 
 
-=head2 pop_size
-
-  Arg[1]      : Bio::EnsEMBL::Variation::Population object
-  Example     : $genotype_freq = $self->DataObj->pop_size($pop);
-  Description : gets the Population size
-  Return type : String
-
-=cut
-
 sub pop_size {
+
+  ### Arg1 : Bio::EnsEMBL::Variation::Population object
+  ### Example : $genotype_freq = $self->DataObj->pop_size($pop);
+  ### Description : gets the Population size
+  ### Returns String
+
   my ($self, $pop_obj)  = @_;
   return $pop_obj->size;
 }
 
 
-=head2 pop_description
-
-  Arg[1]      : Bio::EnsEMBL::Variation::Population object
-  Example     : $genotype_freq = $self->DataObj->pop_description($pop);
-  Description : gets the Population description
-  Return type : String
-
-=cut
-
 sub pop_description {
+
+  ### Arg1 : Bio::EnsEMBL::Variation::Population object
+  ### Example : $genotype_freq = $self->DataObj->pop_description($pop);
+  ### Description : gets the Population description
+  ### Returns String
+
   my ($self, $pop_obj)  = @_;
   return $pop_obj->description;
 }
 
-=head2 location
 
-    Arg[1]      : (optional) String
-                  Name of slice
-    Example     : my $location = $self->DataObj->name;
-    Description : getter/setter for slice name
-    Return type : String for slice name
 
-=cut
+sub location { 
 
-sub location { return $_[0]; }
+  ### Arg1 : (optional) String  Name of slice
+  ### Example : my $location = $self->DataObj->name;
+  ### Description : getter/setter for slice name
+  ### Returns String for slice name
+
+    return $_[0]; 
+}
 
 sub generate_query_hash {
   my $self = shift;
@@ -285,16 +258,14 @@ sub generate_query_hash {
  };
 }
 
-=head2 get_variation_features
 
-  Arg[1]      : none
-  Example     : my @vari_features = $self->get_variation_features;
-  Description : gets the Variation features found  on a slice
-  Return type : Arrayref of Bio::EnsEMBL::Variation::VariationFeatures
-
-=cut
 
 sub get_variation_features {
+
+  ### Example : my @vari_features = $self->get_variation_features;
+  ### Description : gets the Variation features found  on a slice
+  ### Returns Arrayref of Bio::EnsEMBL::Variation::VariationFeatures
+
    my $self = shift;
    my $slice = $self->slice_cache;
    return unless $slice;
@@ -367,20 +338,16 @@ sub current_pop_name {
 }
 
 
-=head2 pops_for_slice
-
-   Arg[1]      :
-   Example     : my $data = $self->DataObj->ld_for_slice;
-   Description : returns all population IDs with LD data for this slice
-   ReturnType  : hashref of population dbIDs
-=cut
-
-
 sub pops_for_slice {
+
+   ### Example : my $data = $self->DataObj->ld_for_slice;
+   ### Description : returns all population IDs with LD data for this slice
+   ### Returns hashref of population dbIDs
+
   my $self = shift;
   my $width  = shift || 100000;
 
-  my $ld_container = $self->ld_for_slice($width);
+  my $ld_container = $self->ld_for_slice(undef, $width);
   return [] unless $ld_container;
 
   my $pop_ids = $ld_container->get_all_populations();
@@ -484,4 +451,5 @@ sub get_individuals {
   }
   return ();
 }
+
 1;
