@@ -3,6 +3,10 @@ package EnsEMBL::Web::Commander::Node;
 use strict;
 use warnings;
 
+use EnsEMBL::Web::Form::Element::Header;
+use EnsEMBL::Web::Form::Element::String;
+use EnsEMBL::Web::Form::Element::RadioButton;
+
 {
 
 my %Title_of;
@@ -27,45 +31,46 @@ sub render {
   my $html = "";
   $html .= "<h2>" . $self->title . "</h2>\n";
   foreach my $element (@{ $self->elements }) {
-    $html .= $element->{'content'} . "<br/><br />\n";
+    if ($parameters{$element->name}) {
+      $element->value = $parameters{$element->name};
+    }
+    $html .= $element->render . "<br/><br />\n";
   }
   return $html;
 }
 
 sub add_option {
   my ($self, %params) = @_;
-  my $name = $params{name};
-  my $value = $params{value};
-  my $label = $params{label};
-  my $selected = $params{selected};
-  my $html = "";
-  $html .= "<input type='radio' value='$value' name='$name' id='$name" . "_" . "$value'";
-  if ($selected) {
-    $html .= " checked";
+  my $element = EnsEMBL::Web::Form::Element::RadioButton->new();
+  $element->value = $params{value};
+  $element->name = $params{name};
+  $element->id = $params{name} . "_" . $params{value};
+  $element->introduction = $params{label};
+  if ($params{selected}) {
+    $element->checked = 1;
   }
-  $html .= "> $label";
-  $self->add_element(( name => $name, content => $html )); 
+  $self->add_element($element); 
 }
 
 sub add_text_field {
   my ($self, %params) = @_;
-  my $name = $params{name};
-  my $value = $params{value};
-  my $label = $params{label};
-  my $html = "";
-  $html .= "$label<br />\n";
-  $html .= "<input type='text' value='$value' name='$name' id='$name'>";
-  $self->add_element(( name => $name, content => $html )); 
+  my $element = EnsEMBL::Web::Form::Element::String->new();
+  $element->name = $params{name};
+  $element->value = $params{value};
+  $element->introduction = $params{label} . "<br />";
+  $self->add_element($element); 
 }
 
 sub add_text {
   my ($self, %params) = @_;
-  $self->add_element(( name => $params{name}, content => $params{content} )); 
+  my $element = EnsEMBL::Web::Form::Element::Header->new();
+  $element->value = $params{content};
+  $self->add_element($element); 
 }
 
 sub add_element {
-  my ($self, %params) = @_;
-  push @{ $self->elements }, { name => $params{name}, content => $params{content} };
+  my ($self, $element) = @_;
+  push @{ $self->elements }, $element;
 }
 
 ## accessors
