@@ -39,15 +39,7 @@ sub ld_values {
   ###       Arrayref 2 dimensional array of LD values
 
   my $object = shift;
-  my %pops;
-  my @bottom = $object->param('bottom');
-
-  foreach my $tmp ( @bottom  ) {
-    foreach (split /\|/, $tmp) {
-      next unless $_ =~ /opt_pop_(.*):(\w*)/;
-      $pops{$1} = 1 if $2 eq 'on';
-    }
-  }
+  my %pops = %{ _get_pops_from_param($object) };
 
   unless (keys %pops) {
     warn "****** ERROR: No population defined";
@@ -168,22 +160,20 @@ sub html_lddata {
       }
       my $start      = shift @$starts;
       my $first_snp  = shift @$snps;
-      my $footer_row = qq(
-    <th>SNPs: bp position</th>
-    <td>$first_snp: $start</td>);
+      my $url =  qq(<a href="snpview?snp=%s">%s</a>);
+      my $first_snp_link = sprintf($url, $first_snp, $first_snp).": $start";
+      my $footer_row = qq(<th>SNPs: bp position</th><td>$first_snp_link</td>);
       my $header_row = qq(<th>SNPs: bp position</th>
-                         <td class="bg2">$first_snp: $start</td>);
+                         <td class="bg2">$first_snp_link</td>);
 
       # Fill rest of table ----------------------------------------------------
-      my $user_config = $object->user_config_hash( 'ldview' );
-      my @colour_gradient = ('ffffff', $user_config->colourmap->build_linear_gradient( 41,'mistyrose', 'pink', 'indianred2', 'red' ));
-      
+      my @colour_gradient = @{ _get_colour_gradient($object) };
       my $table_rows;
       foreach my $row (@$table_data) {
 	next unless ref $row eq 'ARRAY';
 	my $snp = shift @$snps;
 	my $pos = shift @$starts;
-	my $snp_string = $snp =~/^\*/ ? qq(<strong>$snp: $pos</strong>) : "$snp: $pos";
+	my $snp_string = $snp =~/^\*/ ? "<strong>". sprintf($url, $snp, $snp).": $pos</strong>" : sprintf($url, $snp, $snp).": $pos";
 	$table_rows .= qq(
   <tr style="vertical-align: middle"  class="small">
     <td class="bg2">$snp_string</td>).
@@ -262,8 +252,120 @@ sub text_lddata {
 
 sub excel_lddata {
 
+  ### The arguments are either a string with "No data" message or Arrayref
+  ### Each value in the array is an arrayrefs with  arrayref of 
+  ### SNP start positions in basepair (start order), 
+  ### arrayref of SNP names in start order,
+  ### Arrayref 2 dimensional array of LD values,
+  ### Example : $self->excel_ldtable({$title, \@starts, \@snps, \@table});
+  ### Description : prints excel formatted table for LD data
+
+  my ($panel, $object) = @_;
+  my $return = ld_values($object);
+  return 1 unless %$return;
+
+  # Formatting
+  my $bold_center = $panel->new_format;
+  $panel->bold($bold_center, 1);
+  $panel->align($bold_center, "center" );
+
+  my $italic_bold = $panel->new_format;
+  $panel->italic($italic_bold, 1);
+  $panel->bold($italic_bold, 1);
+
+  my @colour_gradient = @{ _get_colour_gradient($object) };
+  my $excel_row = 0;
+  foreach my $ldtype (keys %$return) {
+    foreach my $pop_name ( sort {$a cmp $b } keys %{ $return->{$ldtype} } ) {
+      $panel->print($return->{$ldtype}{$pop_name}{"text"});
+      unless ( $return->{$ldtype}{$pop_name}{"data"} ) {
+ 	next;
+      }
+
+      my ( $starts, $snps, $table_data ) = (@ {$return->{$ldtype}{$pop_name}{"data"} });
+
+      $panel->write_cell( "bp position", $bold_center);
+      $panel->write_cell( "SNP", $bold_center);
+      $panel->write_cell( $snps, $bold_center);
+      $panel->next_row();
+      unshift (@$table_data, [""]);
+      
+      foreach my $table_row (@$table_data) {
+	next unless ref $table_row eq 'ARRAY';
+	my $snp = shift @$snps;
+	my $pos = shift @$starts;
+	$panel->write_cell( $pos, $bold_center);
+	$panel->write_cell( $snp, $bold_center);
+
+	my $col =2;
+	my @ld_values = ( map {  $_ ? sprintf("%.3f", $_ ): '-' } @$table_row );
+
+	foreach my $value (@ld_values) {
+	  my $center = $panel->new_format;
+	  $panel->align($center, "center");
+
+	  if ( $value eq '-' ) {
+	    $panel->bg_color($center, 9);
+	  }
+	  else {
+	    my $index = $panel->custom_color( "#".$colour_gradient[floor($value*40)] );
+	    $panel->bg_color($center, $index);
+         }
+	  $panel->write_cell( $value, $center);
+	}
+	$panel->next_row;
+      }
+      $panel->next_row;
+      $panel->next_row;
+    }
+ #   $panel->close_sheet;
+  }
+}
+
+
+sub text_haploview {
+
+  ### Format: olumns of family, individual, father, mother, gender, affected status and genotypes
+
+  my ($panel, $object) = @_;
+  my %pops = _get_pops_from_param($object);
+  return unless keys %pops;
+  my $snps = $object->get_variation_features;
+  my %ind_data = %{ $object->individual_table };
+  unless (%ind_data) {
+    $panel->print("No individual genotypes for this SNP");
+    return 1;
+  }
+}
+
+
+sub _get_pops_from_param {
+  
+  ### Arg1 : Proxy object
+  ### Gets population names from 'bottom' CGI parameter and puts them
+  ### into a hash with population names as keys
+  ### Returns hashref
+
+  my ($object) = @_;
+  my %pops = ();
+  my @bottom = $object->param('bottom');
+
+  foreach my $tmp ( @bottom  ) {
+    foreach (split /\|/, $tmp) {
+      next unless $_ =~ /opt_pop_(.*):(\w*)/;
+      $pops{$1} = 1 if $2 eq 'on';
+    }
+  }
+  return \%pops;
+}
+
+
+sub _get_colour_gradient {
+  my ($object) = @_;
+  my $user_config = $object->user_config_hash( 'ldview' );
+  my @colour_gradient = ('ffffff', $user_config->colourmap->build_linear_gradient( 41,'mistyrose', 'pink', 'indianred2', 'red' ));
+  return \@colour_gradient || [];
 }
 
 1;
-
 

@@ -303,7 +303,7 @@ sub options_form {
   my $form = EnsEMBL::Web::Form->new('ldview_form', "/@{[$object->species]}/ldtableview", 'get' );
 
   my  @formats = ( {"value" => "astext",  "name" => "As text"},
-	#	   {"value" => "asexcel", "name" => "In Excel format"},
+		   {"value" => "asexcel", "name" => "In Excel format"},
 		   {"value" => "ashtml",  "name" => "HTML format "}
 		 );
 
@@ -356,6 +356,7 @@ sub options_form {
 		      'value'     => $populations,
 		     );
 
+
  $form->add_element(
     'type'      => 'Submit',
     'name'      => 'submit',
@@ -363,7 +364,7 @@ sub options_form {
 		    );
 
   $form->add_attribute( 'onSubmit',
-  qq(this.elements['_format'].value='HTML';this.target='_self';flag='';for(var i=0;i<this.elements['dump'].length;i++){if(this.elements['dump'][i].checked){flag=this.elements['dump'][i].value;}}if(flag=='astext'){this.elements['_format'].value='Text';this.target='_blank'}if(flag=='gz'){this.elements['_format'].value='Text';})
+  qq(this.elements['_format'].value='HTML';this.target='_self';flag='';for(var i=0;i<this.elements['dump'].length;i++){if(this.elements['dump'][i].checked){flag=this.elements['dump'][i].value;}}if(flag=='astext'){this.elements['_format'].value='Text';this.target='_blank'}if(flag=='gz'){this.elements['_format'].value='Text';}if(flag=='asexcel'){this.elements['_format'].value='Excel';this.target='_blank'})
     );
 
   return $form;

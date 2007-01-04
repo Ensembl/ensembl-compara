@@ -3,6 +3,7 @@ use strict;
 use EnsEMBL::Web::Root;
 use CGI qw(escape escapeHTML);
 use EnsEMBL::Web::Document::Renderer::GzCacheFile;
+use EnsEMBL::Web::Document::Renderer::Excel;
 use EnsEMBL::Web::Document::Renderer::String;
 
 our @ISA = qw(EnsEMBL::Web::Root);
@@ -289,6 +290,20 @@ sub render_XML {
   my $self = shift;
   $self->content();
 }
+
+sub render_Excel {
+  my $self = shift;
+  $self->content_Excel();
+}
+
+
+sub content_Excel() { 
+  my $self = shift;
+  $self->renderer = new EnsEMBL::Web::Document::Renderer::Excel();
+  $self->content();
+  $self->renderer->print( qq(<$self->{'caption'}>))
+}
+
 
 sub content_Text() { 
   my $self = shift;

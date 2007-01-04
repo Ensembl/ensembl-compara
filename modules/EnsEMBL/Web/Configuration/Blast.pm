@@ -105,6 +105,7 @@ sub context_menu {
     } # end of wizard check
    
    }
+    $self->delete_block( 'archive' );
 }
 
 sub context_location {
