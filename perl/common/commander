@@ -1,0 +1,49 @@
+#!/usr/local/bin/perl
+
+package commander;
+
+use CGI;
+use EnsEMBL::Web::RegObj;
+use EnsEMBL::Web::Document::CommanderView;
+use EnsEMBL::Web::Commander;
+use EnsEMBL::Web::Commander::Node;
+use EnsEMBL::Web::Commander::Node::Final;
+
+my $cgi = CGI->new;
+
+my $commander = EnsEMBL::Web::Commander->new();
+
+my $start_node = EnsEMBL::Web::Commander::Node->new(( title => 'Commander example', name => 'start' ));
+$start_node->add_text(( name => 'welcome', content => 'This is an example of the Commander style wizard engine.'));
+$commander->add_node(( node => $start_node ));
+
+my $second_node = EnsEMBL::Web::Commander::Node->new(( title => 'Second node', name => 'second' ));
+$second_node->add_text(( name => 'welcome', content => 'The second node of the wizard. We\'ll enter some text here. The Commander class will maintain all the wizard data for us, so we can access it again later.'));
+$second_node->add_text_field(( name => 'name', label => 'Your name:', value => 'Dennis Hopper'));
+$commander->add_node(( node => $second_node));
+
+my $third_node = EnsEMBL::Web::Commander::Node->new(( title => 'Third node', name => 'third' ));
+$third_node->add_text(( name => 'welcome', content => 'Next, we\'ll branch the wizard based on the following options. What would you like to do next?'));
+$third_node->add_option(( name => 'option', label => 'Enter more information', value => 'more'));
+$third_node->add_option(( name => 'option', label => 'Finish now', value => 'finish', selected => 'yes'));
+$commander->add_node(( node => $third_node));
+
+my $fourth_node = EnsEMBL::Web::Commander::Node->new(( title => 'Fourth node (option)', name => 'fourth' ));
+$fourth_node->add_text(( name => 'welcome', content => 'This is an optional node. Enter some more information, and then finish.' ));
+$fourth_node->add_text_field(( name => 'postcode', label => 'Your postcode:', value => 'WTSI'));
+$commander->add_node(( node => $fourth_node));
+
+my $finish_node = EnsEMBL::Web::Commander::Node::Final->new(( title => 'Final node', name => 'final' ));
+$finish_node->destination('/common/commander_final');
+$finish_node->add_text(( name => 'welcome', content => 'And we\'re done. All your wizards are belong to us.' ));
+$commander->add_node(( node => $finish_node));
+
+$commander->add_connection(( type => 'link', from => $start_node, to => $second_node ));
+$commander->add_connection(( type => 'link', from => $second_node, to => $third_node ));
+$commander->add_connection(( type => 'option', conditional => 'option', predicate => 'more', from => $third_node, to => $fourth_node));
+$commander->add_connection(( type => 'option', conditional => 'option', predicate => 'finish', from => $third_node, to => $finish_node));
+$commander->add_connection(( type => 'link', from => $fourth_node, to => $finish_node));
+
+EnsEMBL::Web::Document::CommanderView::simple('User', $commander);
+
+1;

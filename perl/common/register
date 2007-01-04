@@ -11,6 +11,7 @@ use EnsEMBL::Web::Document::DataView;
 use EnsEMBL::Web::Interface::PageDefinition;
 use EnsEMBL::Web::DBSQL::DataDefinition;
 use EnsEMBL::Web::DBSQL::ViewAdaptor;
+use EnsEMBL::Web::SpeciesDefs;
 use EnsEMBL::Web::Object::User;
 use EnsEMBL::Web::RegObj;
 
@@ -19,10 +20,10 @@ my $page = EnsEMBL::Web::Interface::PageDefinition->new();
 my $data = EnsEMBL::Web::DBSQL::DataDefinition->new();
 my $db = $ENSEMBL_WEB_REGISTRY->dbAdaptor;
 
-my $site_info = EnsEMBL::Web::Object::User::get_site_info();
-my $sitename = $site_info{'name'};
-my $help_email = $site_info{'help_email'};
-
+my $sd = EnsEMBL::Web::SpeciesDefs->new();
+my $help_email = $sd->ENSEMBL_HELPDESK_EMAIL;
+my $sitetype = $sd->ENSEMBL_SITETYPE;
+my $sitename = $sitetype eq 'EnsEMBL' ? 'Ensembl' : $sitetype;
 
 $data->adaptor(EnsEMBL::Web::DBSQL::ViewAdaptor->new((
                                                        handle => $db,
@@ -32,7 +33,7 @@ $data->adaptor(EnsEMBL::Web::DBSQL::ViewAdaptor->new((
 $data->discover;
 $page->data_definition($data);
 $page->title('Register for '.$sitename);
-$page->footer(qq(Need help? <a href="mailto:$help_email">Contact the helpdesk</a> &middot; <a href="/info/about/privacy.html">Privacy policy</a>');
+$page->footer(qq(Need help? <a href="mailto:$help_email">Contact the helpdesk</a> &middot; <a href="/info/about/privacy.html">Privacy policy</a>'));
 $page->action('create');
 $page->send_params({ id => 'yes'});
 $page->on_complete('/common/activate');
