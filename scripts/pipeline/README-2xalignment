@@ -5,7 +5,7 @@
 
     Perl code:
 
-    bioperl
+    bioperl (1.2 or above)
     ensembl (use a stable branch)
     ensembl-compara
     ensembl-hive
@@ -61,7 +61,7 @@
 
    Now change the relevant details of the sections. The comments in the 
    file should help you to do this. Take particular care that after editing, the
-   resulting file is still valid perl. You can check this with
+   resulting file is still valid perl.
 
 5 - Run the configure scripts for raw alignment
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
