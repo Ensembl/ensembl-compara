@@ -992,6 +992,19 @@ sub find_records {
   return $results;
 }
 
+sub delete_user {
+  my ($self, $id) = @_;
+  my $table = "user"; 
+  my $sql = qq(
+    DELETE FROM user
+    WHERE user_id = $id;
+  );
+  my $sth = $self->{'_handle'}->prepare($sql);
+  my $result = $sth->execute();
+
+  return $result;
+}
+
 sub delete_record {
   my ($self, %params) = @_;
   my $id = $params{id};

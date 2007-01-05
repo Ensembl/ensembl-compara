@@ -306,6 +306,14 @@ sub prefix {
 }
 
 
+sub delete {
+  my $self = shift;
+  if ($self->id) { 
+    warn "DELETING USER: " . $self->id . ", " . $self->name;
+    $self->adaptor->delete_user($self->id);
+  }
+}
+
 sub save {
   my $self = shift;
   my $data = "";
