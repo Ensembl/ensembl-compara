@@ -1,5 +1,3 @@
-
-
 #!/bin/sh
 #
 # When run under LSF $LSB_HOSTS contains a list of hosts
@@ -25,12 +23,6 @@ if [ ! -e $peptide_file ]; then
  exit 2;
 fi
 
-echo "priting out LD_LIBRARY_PATH 1"
-echo $LD_LIBRARY_PATH
-LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/ensembl/lib
-echo "priting out LD_LIBRARY_PATH 2"
-echo $LD_LIBRARY_PATH
-
 ##for HOST in $LSB_HOSTS; do
 ## echo $HOST >> /tmp/hostfile.$LSB_JOBID
 ##done
@@ -50,7 +42,7 @@ echo $LSB_MCPU_HOSTS | awk '{for(i=1;i <=NF;i=i+2) print $i " slots=" $(i+1); }'
 CPUS=`echo $LSB_MCPU_HOSTS | awk '{for(i=2;i <=NF;i=i+2) { tot+=$i; } print tot }'`
 
 # Now run our executable # Do not mess with the options without reading the openMPI FAQ!
-mpirun  --mca mpi_paffinity_alone 1 --mca btl tcp,self  --hostfile /tmp/hostfile.$LSB_JOBID  --np $CPUS /usr/local/ensembl/bin/clustalw-mpi -infile=$peptide_file -outfile=$peptide_file.clw
+mpirun --mca mpi_paffinity_alone 1 --mca btl tcp,self --mca pls_rsh_agent rsh --hostfile /tmp/hostfile.$LSB_JOBID  --np $CPUS /usr/local/ensembl/bin/clustalw-mpi -infile=$peptide_file -outfile=$peptide_file.clw
 
 ##mpirun C -ssi rpi usysv /usr/local/ensembl/bin/clustalw-mpi -infile=$peptide_file -outfile=$peptide_file.clw
 
