@@ -164,7 +164,7 @@ sub _load_tagvalues {
   my $sth = $self->prepare("SELECT name_class, name from ncbi_taxa_name where taxon_id=?");
   $sth->execute($node->node_id);  
   while (my ($tag, $value) = $sth->fetchrow_array()) {
-    $node->add_tag($tag,$value);
+    $node->add_tag($tag,$value,1);
   }
   $sth->finish;
 }
