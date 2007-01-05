@@ -22,6 +22,7 @@ my %Email_of;
 my %Password_of;
 my %Organisation_of;
 my %Salt_of;
+my %Status_of;
 my %Groups_of;
 
 sub new {
@@ -52,6 +53,7 @@ sub new {
   $Organisation_of{$self} = defined $params{'organisation'} ? $params{'organisation'} : "";
   $Groups_of{$self} = defined $params{'groups'} ? $params{'groups'} : [];
   $Salt_of{$self} = defined $params{'salt'} ? $params{'salt'} : [];
+  $Status_of{$self} = defined $params{'status'} ? $params{'status'} : "";
   
   if (!$self->adaptor) {
     $self->adaptor(EnsEMBL::Web::DBSQL::UserDB->new);
@@ -218,7 +220,20 @@ sub name {
   ### a
   my $self = shift;
   $Name_of{$self} = shift if @_;
+  if (@_) {
+    $self->taint('user');
+  }
   return $Name_of{$self};
+}
+
+sub status {
+  ### a
+  my $self = shift;
+  $Status_of{$self} = shift if @_;
+  if (@_) {
+    $self->taint('user');
+  }
+  return $Status_of{$self};
 }
 
 sub id {
@@ -242,6 +257,9 @@ sub email {
   ### a
   my $self = shift;
   $Email_of{$self} = shift if @_;
+  if (@_) {
+    $self->taint('user');
+  }
   return $Email_of{$self};
 }
 
@@ -259,6 +277,9 @@ sub organisation {
   ### a
   my $self = shift;
   $Organisation_of{$self} = shift if @_;
+  if (@_) {
+    $self->taint('user');
+  }
   return $Organisation_of{$self};
 }
 
@@ -292,20 +313,20 @@ sub save {
                    name => $self->name,
                    email => $self->email,
                    password => $self->password,
+                   status => $self->status,
                    salt => $self->salt,
                    organisation => $self->organisation,
                    data => $data
                );
-
+  #warn "ATTEMPTING SAVE for USER " . $self->name;
   if (!$id) {
     my $result = $self->adaptor->add_user(%params);
   } else {
-    warn "UPDATING USER: " . $self->id . ", " . $self->name;
-    if ($self->tainted->{'user'}) {
+    #if ($self->tainted->{'user'}) {
       $params{id} = $id;
       #warn "===================== PERFORMING UPDATE";
       my $result = $self->adaptor->update_user((%params));
-    }
+    #}
   }
 
   if ($self->tainted->{'groups'}) {
@@ -480,6 +501,7 @@ sub DESTROY {
   delete $Password_of{$self};
   delete $Salt_of{$self};
   delete $Organisation_of{$self};
+  delete $Status_of{$self};
   delete $Groups_of{$self};
 }
 

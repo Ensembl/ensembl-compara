@@ -795,17 +795,20 @@ sub update_user {
   my $email = $params{email};
   my $password = $params{password};
   my $organisation = $params{organisation};
-  #warn "UPDATING: " . $name;
+  my $status = $params{status};
+  warn "UPDATING: " . $name;
+  warn "STATUS: " . $status;
   my $sql = qq(
     UPDATE user 
     SET name         = "$name",
         email        = "$email",
         password     = "$password",
         organisation = "$organisation",
+        status       = "$status",
         modified_at  = CURRENT_TIMESTAMP
     WHERE user_id = ') . $id . qq(';
   );
-  #warn "SQL\n$sql";
+  warn "SQL\n$sql";
   my $sth = $self->{'_handle'}->prepare($sql);
   my $result = $sth->execute();
   return $self->last_inserted_id;
