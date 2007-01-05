@@ -269,7 +269,7 @@ sub find_user_by_email {
   my $details = {};
   return $details unless $self->{'_handle'};
   my $sql = qq(
-    SELECT ) . $self->user_table . qq(_id, name, organisation, email, data, salt, password 
+    SELECT ) . $self->user_table . qq(_id, name, organisation, email, data, salt, password, status 
     FROM ) . $self->user_table . qq(
     WHERE email = "$email"; 
   );
@@ -288,6 +288,7 @@ sub find_user_by_email {
     'data'   => $record[4],
     'salt'   => $record[5],
     'password'   => $record[6],
+    'status'   => $record[7],
   };
   return $details;
 }
@@ -299,7 +300,7 @@ sub find_user_by_email_and_password {
   my $details = {};
   return $details unless $self->{'_handle'};
   my $sql = qq(
-    SELECT ) . $self->user_table . qq(_id, name, organisation, email, data, salt, password 
+    SELECT ) . $self->user_table . qq(_id, name, organisation, email, data, salt, password, status 
     FROM ) . $self->user_table . qq(
     WHERE email = "$email" and password = "$password"; 
   );
@@ -318,6 +319,7 @@ sub find_user_by_email_and_password {
     'data'   => $record[4],
     'salt'   => $record[5],
     'password'   => $record[6],
+    'status'   => $record[7],
   };
   return $details;
 }
@@ -329,7 +331,7 @@ sub find_user_by_user_id {
   return $details unless $self->{'_handle'};
 
   my $sql = qq(
-    SELECT ) . $self->user_table . qq(_id, name, organisation, email, data, salt, password 
+    SELECT ) . $self->user_table . qq(_id, name, organisation, email, data, salt, password, status 
     FROM ) . $self->user_table . qq(
     WHERE ) . $self->user_table . qq(_id = "$id" 
   );
@@ -349,6 +351,7 @@ sub find_user_by_user_id {
     'data'   => $record[4],
     'salt'   => $record[5],
     'password'   => $record[6],
+    'status'   => $record[7],
   };
   return $details;
 }

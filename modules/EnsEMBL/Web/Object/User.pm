@@ -95,6 +95,7 @@ sub assign_fields {
   $Email_of{$self} = $details->{'email'};
   $Organisation_of{$self} = $details->{'organisation'};
   $Salt_of{$self} = $details->{'salt'};
+  $Status_of{$self} = $details->{'status'};
   $Password_of{$self} = $details->{'password'};
 }
 
