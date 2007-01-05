@@ -194,10 +194,15 @@ sub store {
 
 =head2 add_tag
 
-  Description: adds metadata tags to a node.  Both tag and value are added as metdata with the
-               added ability to retreive the value given the tag (like a perl hash)
+  Description: adds metadata tags to a node.  Both tag and value are added
+               as metdata with the added ability to retreive the value given
+               the tag (like a perl hash). In case of one to many relation i.e.
+               one tag and different values associated with it, the values are
+               returned in a array reference.
   Arg [1]    : <string> tag
   Arg [2]    : (optional)<string> value
+  Arg [3]    : (optional) <int> allows overloading the tag with different values
+               default is 0 (no overloading allowed, one tag points to one value)
   Example    : $ns_node->add_tag('scientific name', 'Mammalia');
                $ns_node->add_tag('mammals_rosette');
   Returntype : none
@@ -210,15 +215,24 @@ sub add_tag {
   my $self = shift;
   my $tag = shift;
   my $value = shift;
+  my $allow_overloading = shift;
   
+  unless (defined $allow_overloading) {
+    $allow_overloading = 0;
+  }
   unless(defined($self->{'_tags'})) { $self->{'_tags'} = {}; }
   return unless(defined($tag));
   
 #  if(defined($value)) { $self->{'_tags'}->{$value} = '';}
 #  else {$value='';}
   $value='' unless (defined $value);
-  
-  $self->{'_tags'}->{$tag} = $value;
+  if ( ! defined $self->{'_tags'}->{$tag} || ! $allow_overloading ) {
+    $self->{'_tags'}->{$tag} = $value;
+  } elsif ( ref($self->{'_tags'}->{$tag}) eq 'ARRAY' ) {
+    push @{$self->{'_tags'}->{$tag}}, $value;
+  } else {
+    $self->{'_tags'}->{$tag} = [ $self->{'_tags'}->{$tag}, $value ];
+  }
 }
 
 sub store_tag {
