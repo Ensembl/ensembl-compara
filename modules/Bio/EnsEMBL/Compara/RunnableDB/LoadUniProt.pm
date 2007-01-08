@@ -126,19 +126,30 @@ sub run
   my $subset_name = $self->{'source'};
   
   my $uniprot_ids = [];
+  my %allowed_taxon_ids = {};
   if($self->{'taxon_id'}) {
     $subset_name .= " ncbi_taxid:" . $self->{'taxon_id'};
     $uniprot_ids = $self->fetch_all_uniprot_ids_for_taxid($self->{'source'}, $self->{'taxon_id'});
+    $allowed_taxon_ids{$self->{'taxon_id'}} = 1;
   } else {
     $subset_name .= " metazoa";
     $uniprot_ids = $self->get_metazoa_uniprot_ids($self->{'source'});
+
+    # Fungi/Metazoa group
+    my $taxon_id = 33154;
+    my $node = $self->{'comparaDBA'}->get_NCBITaxonAdaptor->fetch_node_by_taxon_id($taxon_id);
+    
+    foreach my $leaf ( @{$node->get_all_leaves} ) {
+      $allowed_taxon_ids{$leaf->node_id} = 1;
+    }
   }
-  
+
   $self->{'subset'}  = Bio::EnsEMBL::Compara::Subset->new(-name=>$subset_name);
   $self->{'comparaDBA'}->get_SubsetAdaptor->store($self->{'subset'});
-  
+  $self->{'allowed_taxon_ids'} = \%allowed_taxon_ids;
+
   $self->loadMembersFromUniprotIdList($self->{'source'}, $uniprot_ids);
-                                            
+  
   return 1;
 }
 
@@ -213,8 +224,7 @@ sub get_metazoa_uniprot_ids
   my $self   = shift;
   my $source = shift;  #'swissprot' or 'sptrembl'
 
-#  my @taxonomy_division = qw(FUN HUM MAM ROD VRT INV);
-  my @taxonomy_division = qw(INV);
+  my @taxonomy_division = qw(FUN HUM MAM ROD VRT INV);
   my $division = "STD";
   $division = "PRE" if ($source eq "SPTREMBL");
   my @all_ids;
@@ -302,6 +312,9 @@ sub store_bioseq
   }
    
   my $taxon = $self->{'comparaDBA'}->get_NCBITaxonAdaptor->fetch_node_by_taxon_id($species->ncbi_taxid);
+  unless ($self->{'allowed_taxon_ids'}{$taxon->dbID}) {
+    return;
+  }
   unless($taxon) {
     #taxon not in compara, do not store the member and warn
     warning("Taxon id " . $species->ncbi_taxid . " from $source " . $bioseq->accession_number ." not in the database.
