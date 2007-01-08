@@ -1,52 +1,97 @@
 package EnsEMBL::Web::Document::Renderer::Excel;
 
 use strict;
-use IO::File;
 use Spreadsheet::WriteExcel;
+use EnsEMBL::Web::RegObj;
+use base qw(EnsEMBL::Web::Root);
 
 sub new{
   my $class = shift;
-  my $filename = shift;
 
- my $fh = new IO::File;
-  my $self;
-  if( $fh->open( ">$filename") ) {
-    tie *XLS => 'Apache';
-    binmod (*XLS);
-    my $fh   = Spreadsheet::WriteExcel->new($filename);
-    die "Problems creating new Excel file: $!" unless defined $fh;
-    $self = { 'file' => $fh, 'row' => 0, 'col' => 0 };
-  } else {
-    $self = { 'file' => undef };
-  }
+# my $fh = new IO::File;
+  my $self ={ 'row' => 0, 'sheet' => -1, 'col' => 0 };
   bless($self, $class);
+  my $filename = $self->species_defs->ENSEMBL_TMP_DIR.'/'.$self->temp_file_create( 'xls-temp' ); 
+  $self->{'filename'} = $filename;
+  my $workbook   = Spreadsheet::WriteExcel->new( $filename );
+  $self->{'workbook'} = $workbook;
   return $self;
 }
 
+sub species_defs {
+  my $self = shift;
+  $self->{'species_defs'} ||= $ENSEMBL_WEB_REGISTRY->species_defs;
+  return $self->{'species_defs'};
+}
 
-sub valid  { return $_[0]->{'file'}; }
-sub printf { my $self = shift; my $FH = $self->{'file'}; printf $FH @_ if $FH; }
-sub print  { my $self = shift; my $FH = $self->{'file'}; print  $FH @_ if $FH;}
+sub raw_content {
+  my $self = shift;
+warn "RETURNING CONTENT";
+  open FH, $self->{'filename'};
+  local $/ = undef;
+  my $content = <FH>;
+  close FH;
+#  unlink $self->{'filename'};
+  warn $self->{'filename'};
+  return $content;
+}
 
-sub close  { my $FH = $_[0]->{'file'}; close $FH; $_[0]->{'file'} = undef; }
-sub DESTROY { my $FH = $_[0]->{'file'}; close $FH; }
+sub valid  { return $_[0]->{'workbook'}; }
+#sub printf { my $self = shift; my $FH = $self->{'workbook'}; printf $FH @_ if $FH; }
+#sub print  { my $self = shift; my $FH = $self->{'workbook'}; print  $FH @_ if $FH;}
+
+sub printf {
+  my $self = shift;
+  my $cols = shift;
+  my $format = shift;
+  $self->next_row if $self->{'col'};
+  my $worksheet = $self->workbook->sheets($self->{'sheet'});
+  $worksheet->merge_range( $self->{'row'},0,$self->{'row'},$cols-1,sprintf(@_),$format);
+  $self->next_row;
+}
+ 
+sub print {
+  my $self = shift;
+  my $cols = shift;
+  my $format = shift;
+  $self->next_row if $self->{'col'};
+  my $worksheet = $self->workbook->sheets($self->{'sheet'});
+  $worksheet->merge_range( $self->{'row'}, 0, $self->{'row'}, $cols-1, join( '',@_) , $format);
+  $self->next_row;
+}
+ 
+sub close  { 
+  my $self = shift;
+  return unless $self->{'workbook'};
+warn "CLOSING WORKBOOK..";
+  $self->{'workbook'}->close;
+  $self->{'workbook'} = undef;
+}
+sub DESTROY {
+  my $self = shift;
+  $self->close;
+}
 
 sub write_cell {
   my $self = shift;;
   $self->write_sheet( $self->{'row'}, $self->{'col'}, @_ );
+  $self->{'col'}++;
 }
 
-sub print {
-  my $self = shift;
-  $self->write_cell(@_);
-  $self->next_row;
-}
 sub next_row {
   my $self = shift;
   $self->{'row'}++;
   $self->{'col'}=0;
 }
 
+sub next_sheet {
+  my $self = shift;
+  my $name = shift;
+  $self->{'sheet'}++;
+  $self->workbook->add_worksheet( $name );
+  $self->{'row'}=0;
+  $self->{'col'}=0;
+}
 sub write_sheet {
 
   ### Arg[1]      : row to print to
@@ -62,15 +107,14 @@ sub write_sheet {
   my $col    = shift || 0;
   my $info   = shift;
   my $format = shift;
-  my $worksheet = $self->worksheet;
+  my $worksheet = $self->workbook->sheets($self->{'sheet'});
   return unless $worksheet;
-  $worksheet->write($row, $col, $info, $format) ==0 || die "ERROR: Couldn't write to
-page";
+  warn $worksheet->write($row, $col, $info, $format);
 }
 
 sub workbook {
   my $self = shift;
-  return $self->{'file'};
+  return $self->{'workbook'};
 }
 
 
@@ -98,7 +142,8 @@ sub new_format {
   ### Returns $format
 
   my $self = shift;
-  my $workbook = $self->filehandle;
+  my $workbook = $self->workbook;
+warn "NF $workbook";
   return unless $workbook;
   return $workbook->add_format();
 }
@@ -172,7 +217,7 @@ sub custom_color {
 
   my $self   = shift;
   my $color = shift;
-  my $workbook = $self->filehandle;
+  my $workbook = $self->workbook;
   return unless $workbook;
 
   my $number = $self->get_color_number($color);

@@ -10,9 +10,6 @@ use strict;
 use warnings;
 no warnings "uninitialized";
 
-use Spreadsheet::WriteExcel;
-
-
 sub ld_values {
 
   ### Arg1      :  The data object
@@ -124,7 +121,7 @@ sub ld_values {
 
       my $location = $object->seq_region_name .":".$object->seq_region_start.
 	"-".$object->seq_region_end;
-      $return{$ldtype}{$pop_name}{"text"} = "Pairwise $display values for $location.  Population: $pop_name";
+      $return{$ldtype}{$pop_name}{"text"}     = "Pairwise $display values for $location.  Population: $pop_name";
       $return{$ldtype}{$pop_name}{"data"} = [\@starts_list, \@snp_names, \@table];
     } # end foreach
   }
@@ -262,61 +259,74 @@ sub excel_lddata {
 
   my ($panel, $object) = @_;
   my $return = ld_values($object);
+
   return 1 unless %$return;
 
   # Formatting
-  my $bold_center = $panel->new_format;
-  $panel->bold($bold_center, 1);
-  $panel->align($bold_center, "center" );
+  my $renderer = $panel->renderer;
+  my $bold_center = $renderer->new_format;
+  my $heading     = $renderer->new_format;
+  my $italic_bold = $renderer->new_format;
+  $renderer->bold($heading, 1);
+  $renderer->align($heading, "left" );
 
-  my $italic_bold = $panel->new_format;
-  $panel->italic($italic_bold, 1);
-  $panel->bold($italic_bold, 1);
+  $renderer->bold($bold_center, 1);
+  $renderer->align($bold_center, "center" );
+
+  $renderer->italic($italic_bold, 1);
+  $renderer->bold($italic_bold, 1);
 
   my @colour_gradient = @{ _get_colour_gradient($object) };
   my $excel_row = 0;
   foreach my $ldtype (keys %$return) {
+    my $C = 0;
     foreach my $pop_name ( sort {$a cmp $b } keys %{ $return->{$ldtype} } ) {
-      $panel->print($return->{$ldtype}{$pop_name}{"text"});
       unless ( $return->{$ldtype}{$pop_name}{"data"} ) {
  	next;
       }
-
+      $C++;
       my ( $starts, $snps, $table_data ) = (@ {$return->{$ldtype}{$pop_name}{"data"} });
+      (my $T = $pop_name ) =~ s/[^\w\s]/_/g;
+      warn "SHEET NAME: $ldtype $T";
+      $renderer->next_sheet( "$ldtype $T" );
+      $renderer->print( 2+@$snps, $heading, $return->{$ldtype}{$pop_name}{"text"} );
+      $renderer->next_row();
 
-      $panel->write_cell( "bp position", $bold_center);
-      $panel->write_cell( "SNP", $bold_center);
-      $panel->write_cell( $snps, $bold_center);
-      $panel->next_row();
+      $renderer->write_cell( "bp position", $bold_center);
+      $renderer->write_cell( "SNP", $bold_center);
+      foreach( @$snps ) {
+        $renderer->write_cell( $_, $bold_center);
+      }
+      $renderer->next_row();
       unshift (@$table_data, [""]);
       
       foreach my $table_row (@$table_data) {
 	next unless ref $table_row eq 'ARRAY';
 	my $snp = shift @$snps;
 	my $pos = shift @$starts;
-	$panel->write_cell( $pos, $bold_center);
-	$panel->write_cell( $snp, $bold_center);
+	$renderer->write_cell( $pos, $bold_center);
+	$renderer->write_cell( $snp, $bold_center);
 
 	my $col =2;
 	my @ld_values = ( map {  $_ ? sprintf("%.3f", $_ ): '-' } @$table_row );
 
 	foreach my $value (@ld_values) {
-	  my $center = $panel->new_format;
-	  $panel->align($center, "center");
+	  my $center = $renderer->new_format;
+	  $renderer->align($center, "center");
 
 	  if ( $value eq '-' ) {
-	    $panel->bg_color($center, 9);
+	    $renderer->bg_color($center, 9);
 	  }
 	  else {
-	    my $index = $panel->custom_color( "#".$colour_gradient[floor($value*40)] );
-	    $panel->bg_color($center, $index);
+	    my $index = $renderer->custom_color( "#".$colour_gradient[floor($value*40)] );
+	    $renderer->bg_color($center, $index);
          }
-	  $panel->write_cell( $value, $center);
+	  $renderer->write_cell( $value, $center);
 	}
-	$panel->next_row;
+	$renderer->next_row;
       }
-      $panel->next_row;
-      $panel->next_row;
+      $renderer->next_row;
+      $renderer->next_row;
     }
  #   $panel->close_sheet;
   }

@@ -299,9 +299,9 @@ sub render_Excel {
 
 sub content_Excel() { 
   my $self = shift;
-  $self->renderer = new EnsEMBL::Web::Document::Renderer::Excel();
+#  $self->renderer = new EnsEMBL::Web::Document::Renderer::Excel();
   $self->content();
-  $self->renderer->print( qq(<$self->{'caption'}>))
+#  $self->renderer->print( qq(<$self->{'caption'}>))
 }
 
 

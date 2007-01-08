@@ -348,10 +348,16 @@ sub render_XML {
 
 sub render_Excel {
   my $self = shift;
+  my $renderer =  new EnsEMBL::Web::Document::Renderer::Excel( );
+  warn "RENDER...";
   foreach my $R ( @{$self->{'body_order'}} ) {
     my $attr = $R->[0];
+ warn "render Excel @$R\n",ref( $self->$attr ),"\\n\n ";
+    $self->$attr->{_renderer} = $renderer;
     $self->$attr->render;
   }
+  $renderer->close;
+  $self->renderer->print( $renderer->raw_content );
 }
 
 sub render_Text {

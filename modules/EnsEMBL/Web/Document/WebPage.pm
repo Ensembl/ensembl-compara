@@ -416,16 +416,11 @@ sub render {
   } elsif( $self->{'format'} eq 'XML' ) { 
     CGI::header("text/xml"); $self->page->render_XML;
   } elsif( $self->{'format'} eq 'Excel' ) { 
-    CGI::header(
-      -type => "application/x-msexcel",
-      -attachment => "ensembl.xls"
-    );
+    CGI::header( -type => "application/x-msexcel", -attachment => "ensembl.xls" );
+warn "Now we render Excel....";
     $self->page->render_Excel;
   } elsif( $self->{'format'} eq 'TextGz' ) { 
-    CGI::header(
-      -type => "application/octet-stream",
-      -attachment => "ensembl.txt.gz"
-    );
+    CGI::header( -type => "application/octet-stream", -attachment => "ensembl.txt.gz" );
     $self->page->render_TextGz;
   } else {
     CGI::header; $self->static_links; $self->page->render;
