@@ -38,7 +38,7 @@ sub features {
 <FEATURE id="%s" %s>
   <START>%d</START>
   <END>%d</END>
-  <TYPE id="%s">%s</TYPE>
+  <TYPE id="%s"%s>%s</TYPE>
   <METHOD id="%s">%s</METHOD>
   <ORIENTATION>%s</ORIENTATION>
   %s
@@ -55,7 +55,6 @@ sub features {
     $url .= "://$ENV{SERVER_NAME}";
 #    $url .= "\:$ENV{SERVER_PORT}" unless $ENV{SERVER_PORT} == 80;
     $url .="$ENV{REQUEST_URI}";
-
     $panel->print(qq{<GFF version="1.01" href="$url">\n});
     foreach my $segment (@{$features || []}) {
 	if ($segment->{'TYPE'} && $segment->{'TYPE'} eq 'ERROR') {
@@ -117,6 +116,7 @@ sub features {
 				    $feature->{'START'} || '',
 				    $feature->{'END'} || '',
 				    $feature->{'TYPE'}|| '',
+				    $feature->{'CATEGORY'} ? qq{ category="$feature->{'CATEGORY'}"} : '',
 				    $feature->{'TYPE'} || '',
 				    $feature->{'METHOD'} || '',
 				    $feature->{'METHOD'} || '',
