@@ -196,7 +196,7 @@ sub fetch_all_by_MethodLinkSpeciesSet_Slice {
 	#get genomic_align for this slice
 	my $genomic_align = $genomic_align_block->reference_genomic_align;
 
-	my $conservation_scores = $self->_fetch_all_by_GenomicAlignBlockId_WindowSize($genomic_align_block->dbID, $window_size, $PACKED);
+	my $conservation_scores = $self->_fetch_all_by_GenomicAlignBlockId_WindowSize($genomic_align_block->dbID - 2400000000000, $window_size, $PACKED);
 	
 	if (scalar(@$conservation_scores) == 0) {
 	    next;
@@ -209,7 +209,7 @@ sub fetch_all_by_MethodLinkSpeciesSet_Slice {
 	#reset _score_index for new conservation_scores
 	$_score_index = 0;
 
-	$scores = _get_aligned_scores_from_cigar_line($self, $genomic_align->cigar_line, $genomic_align->dnafrag_start, $genomic_align->dnafrag_end, $slice->start, $slice->end, $conservation_scores, $genomic_align_block->dbID, $genomic_align_block->length, $display_type, $window_size, $scores);
+	$scores = _get_aligned_scores_from_cigar_line($self, $genomic_align->cigar_line, $genomic_align->dnafrag_start, $genomic_align->dnafrag_end, $slice->start, $slice->end, $conservation_scores, $genomic_align_block->dbID - 2400000000000, $genomic_align_block->length, $display_type, $window_size, $scores);
     }
 
     if (scalar(@$scores) == 0) {
@@ -340,7 +340,7 @@ sub fetch_all_by_GenomicAlignBlock {
 		cnt => 0,
 		size => $bucket_size};
     
-    my $conservation_scores = $self->_fetch_all_by_GenomicAlignBlockId_WindowSize($genomic_align_block->dbID, $window_size, $PACKED);
+    my $conservation_scores = $self->_fetch_all_by_GenomicAlignBlockId_WindowSize($genomic_align_block->dbID - 2400000000000, $window_size, $PACKED);
 
     if (scalar(@$conservation_scores) == 0) {
 	return $scores;
@@ -946,7 +946,7 @@ sub _get_alignment_scores {
 	$end_offset = int(($align_end - $conservation_scores->[$end]->position)/$window_size);
     }
 
-    my $genomic_align_block_id = $genomic_align_block->dbID;
+    my $genomic_align_block_id = $genomic_align_block->dbID - 2400000000000;
 
     #go through rows $start to $end
     for (my $i = $start; $i <= $end; $i++) {
