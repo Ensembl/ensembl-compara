@@ -296,7 +296,7 @@ sub pip_form {
   my $seq_file  = $object->species_defs->ENSEMBL_TMP_DIR_IMG."/$FN.fa";
   my ($PATH,$FILE) = $object->make_directory( $object->species_defs->ENSEMBL_TMP_DIR_IMG."/$FN" );
   my $anno_file = $object->species_defs->ENSEMBL_TMP_DIR_IMG."/$FN.txt";
-  my $arc_file  = $object->species_defs->ENSEMBL_TMP_DIR_IMG."/$FN.tar.gz";
+  #my $arc_file  = $object->species_defs->ENSEMBL_TMP_DIR_IMG."/$FN.tar.gz";
   my $seq_url   = $object->species_defs->ENSEMBL_TMP_URL_IMG."/$FN.fa";
   my $anno_url  = $object->species_defs->ENSEMBL_TMP_URL_IMG."/$FN.txt";
   my $arc_url   = $object->species_defs->ENSEMBL_TMP_URL_IMG."/$FN.tar.gz";

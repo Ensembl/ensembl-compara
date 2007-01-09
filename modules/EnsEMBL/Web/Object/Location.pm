@@ -7,6 +7,7 @@ use Data::Dumper;
 
 use EnsEMBL::Web::Object;
 use EnsEMBL::Web::Proxy::Factory;
+use Data::Dumper;
 our @ISA = qw(EnsEMBL::Web::Object);
 use POSIX qw(floor ceil);
 
@@ -411,6 +412,79 @@ sub get_all_misc_sets {
   }
   return $result;
 }
+
+#------ Individual stuff ------------------------------------------------
+
+sub individual_genotypes {
+
+  ### individual_table_calls
+  ### Arg1: variation feature object
+  ### Example    : my $ind_genotypes = $object->individual_table;
+  ### Description: gets Individual Genotype data for this variation
+  ### Returns hashref with all the data
+
+  my ($self, $vf) = @_;
+
+  my $individual_genotypes = $self->individual_genotypes_obj($vf);
+  return {} unless @$individual_genotypes; 
+  my %data = ();
+  my %genotypes = ();
+
+  my %gender = qw (Unknown 0 Male 1 Female 2 );
+  foreach my $ind_gt_obj ( @$individual_genotypes ) { 
+    my $ind_obj   = $ind_gt_obj->individual;
+    next unless $ind_obj;
+
+    # data{name}{AA}
+    foreach ($ind_gt_obj->allele1, $ind_gt_obj->allele2) {
+      my $allele = $_ =~ /A|C|G|G|N/ ? $_ : "N";
+      $genotypes{ $ind_obj->name }.= $allele;
+    }
+
+    $data{ $ind_obj->name }{gender}   = $gender{$ind_obj->gender} || 0;
+    $data{ $ind_obj->name }{mother}   = 0;#$self->parent($ind_obj, "mother");
+    $data{ $ind_obj->name }{father}   = 0;#$self->parent($ind_obj, "father");
+  }
+  return \%genotypes, \%data;
+}
+
+
+sub parent {
+
+  ### Individual_genotype_table_calls
+  ### Args1      : Bio::EnsEMBL::Variation::Individual object
+  ### Arg2      : string  "mother" "father"
+  ### Example    : $mother = $object->parent($individual, "mother");
+  ### Description: gets name of parent if known
+  ### Returns string (name of parent if known, else 0)
+
+  my ($self, $ind_obj, $type)  = @_;
+  my $call =  $type. "_Individual";
+  my $parent = $ind_obj->$call;
+  return 0 unless $parent;
+  return $parent->name || 0;
+}
+
+
+sub individual_genotypes_obj {
+
+  ### Individual_genotype_table_calls
+  ### Arg1: variation feature object
+  ### Example    : my $ind_genotypes = $object->individual_genotypes;
+  ### Description: gets IndividualGenotypes for this Variation
+  ### Returns listref of IndividualGenotypes
+
+  my ($self, $vf) = @_;
+  my $individuals = [];
+  eval {
+    $individuals = $vf->variation->get_all_IndividualGenotypes;
+  };
+  if ($@) {
+    print STDERR "\n\n************ERROR************:  Bio::EnsEMBL::Variation::Variation::get_all_IndividualGenotypes fails.\n\n $@";
+  }
+  return $individuals;
+}
+
 
 # Sequence Align View ---------------------------------------------------
 

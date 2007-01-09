@@ -332,56 +332,6 @@ sub excel_lddata {
 }
 
 
-sub text_haploview_hapmap_format {
-
-  ### Format: columns of family, individual, father, mother, gender, affected status and genotypes
-
-  my ($panel, $object) = @_;
-  #my %pops = _get_pops_from_param($object);
-  #return unless keys %pops;
-
-  my %columns;
-  my %rows;
-
-  # HapMap data is for each SNP.  Pedigree is a row for each individual
-  foreach my $vf ( @{ $object->get_variation_features } ) {
-    my ($genotypes, $ind_data) =  $object->individual_genotypes($vf) ;
-    next unless %$genotypes;
-
-    # HapMap format: http://www.hapmap.org/genotypes/2005-10/00README.txt
-    my $name = $vf->variation_name;
-    my $strand = $vf->strand ==1 ? '+' : '-';
-    my @snp_data = ($name, $vf->allele_string, "Chr".$vf->seq_region_name, $vf->start, $strand);
-    push @snp_data, "ncbi_b35";#$vf->assembly; Col6: version of reference sequence assembly (currently NCBI build34)
-    $rows{$name}{'snpdata'}  =  (join " ", @snp_data) ;
-
-    #Col12 and on: observed genotypes of samples, one per column, sample identifiers in column headers (Coriell catalog numbers, example:NA10847). Duplicate samples have .dup suffix.
-    $rows{$name}{'genotypes'} = $genotypes;
-    map { $columns{$_} = $ind_data->{$_} } (keys %$ind_data);  # keep track of individuals -> add to columns
-  }
-
-  # Print data with genotypes in correct order
-  my @columns = (sort keys %columns);
-  my @data_columns = qw(rs# SNPalleles chrom pos strand genome_build);
-
-  my $family;
- foreach (@columns) {
-    my $output = join " ", ("#@ ", "FAM".$family++, $_, $columns{$_}{father}, $columns{$_}{mother}, 0);#$columns{$_}{gender});
-    $panel->print("$output 0\n");
-    #@ FAM01 JA18987 0 0 1 0
-  }
-  $panel->print(join " ", @data_columns, @columns);
-  $panel->print("\n");
-  foreach my $snp (keys %rows) {
-    $panel->print($rows{$snp}{'snpdata'}." ");   # name, allele, seq region etc
-    my %tmp_genotypes = %{ $rows{$snp}{'genotypes'} || {} };  # individual genotypes
-    my @tmp;
-    map { push @tmp, $tmp_genotypes{$_} || "NN"  } @columns;
-    $panel->print(join " ", @tmp, "\n");
-  }
-}
-
-
 sub _get_pops_from_param {
   
   ### Arg1 : Proxy object

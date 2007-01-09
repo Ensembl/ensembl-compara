@@ -1053,6 +1053,11 @@ sub ldtableview {
     excel_lddata        EnsEMBL::Web::Component::LDtable::excel_lddata
 				  ));
     }
+    elsif ($self->{object}->param('dump') eq 'ashaploview') {
+      $ld_panel->add_components(qw(
+    text_haploview        EnsEMBL::Web::Component::LDtable::haploview_dump
+				  ));
+    }
     $self->{page}->content->add_panel( $ld_panel );
   }
 }
