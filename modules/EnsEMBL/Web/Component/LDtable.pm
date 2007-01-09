@@ -287,7 +287,7 @@ sub excel_lddata {
       $C++;
       my ( $starts, $snps, $table_data ) = (@ {$return->{$ldtype}{$pop_name}{"data"} });
       (my $T = $pop_name ) =~ s/[^\w\s]/_/g;
-      warn "SHEET NAME: $ldtype $T";
+      #warn "SHEET NAME: $ldtype $T";
       $renderer->next_sheet( "$ldtype $T" );
       $renderer->print( 2+@$snps, $heading, $return->{$ldtype}{$pop_name}{"text"} );
       $renderer->next_row();
@@ -328,23 +328,56 @@ sub excel_lddata {
       $renderer->next_row;
       $renderer->next_row;
     }
- #   $panel->close_sheet;
   }
 }
 
 
-sub text_haploview {
+sub text_haploview_hapmap_format {
 
-  ### Format: olumns of family, individual, father, mother, gender, affected status and genotypes
+  ### Format: columns of family, individual, father, mother, gender, affected status and genotypes
 
   my ($panel, $object) = @_;
-  my %pops = _get_pops_from_param($object);
-  return unless keys %pops;
-  my $snps = $object->get_variation_features;
-  my %ind_data = %{ $object->individual_table };
-  unless (%ind_data) {
-    $panel->print("No individual genotypes for this SNP");
-    return 1;
+  #my %pops = _get_pops_from_param($object);
+  #return unless keys %pops;
+
+  my %columns;
+  my %rows;
+
+  # HapMap data is for each SNP.  Pedigree is a row for each individual
+  foreach my $vf ( @{ $object->get_variation_features } ) {
+    my ($genotypes, $ind_data) =  $object->individual_genotypes($vf) ;
+    next unless %$genotypes;
+
+    # HapMap format: http://www.hapmap.org/genotypes/2005-10/00README.txt
+    my $name = $vf->variation_name;
+    my $strand = $vf->strand ==1 ? '+' : '-';
+    my @snp_data = ($name, $vf->allele_string, "Chr".$vf->seq_region_name, $vf->start, $strand);
+    push @snp_data, "ncbi_b35";#$vf->assembly; Col6: version of reference sequence assembly (currently NCBI build34)
+    $rows{$name}{'snpdata'}  =  (join " ", @snp_data) ;
+
+    #Col12 and on: observed genotypes of samples, one per column, sample identifiers in column headers (Coriell catalog numbers, example:NA10847). Duplicate samples have .dup suffix.
+    $rows{$name}{'genotypes'} = $genotypes;
+    map { $columns{$_} = $ind_data->{$_} } (keys %$ind_data);  # keep track of individuals -> add to columns
+  }
+
+  # Print data with genotypes in correct order
+  my @columns = (sort keys %columns);
+  my @data_columns = qw(rs# SNPalleles chrom pos strand genome_build);
+
+  my $family;
+ foreach (@columns) {
+    my $output = join " ", ("#@ ", "FAM".$family++, $_, $columns{$_}{father}, $columns{$_}{mother}, 0);#$columns{$_}{gender});
+    $panel->print("$output 0\n");
+    #@ FAM01 JA18987 0 0 1 0
+  }
+  $panel->print(join " ", @data_columns, @columns);
+  $panel->print("\n");
+  foreach my $snp (keys %rows) {
+    $panel->print($rows{$snp}{'snpdata'}." ");   # name, allele, seq region etc
+    my %tmp_genotypes = %{ $rows{$snp}{'genotypes'} || {} };  # individual genotypes
+    my @tmp;
+    map { push @tmp, $tmp_genotypes{$_} || "NN"  } @columns;
+    $panel->print(join " ", @tmp, "\n");
   }
 }
 
@@ -375,6 +408,85 @@ sub _get_colour_gradient {
   my $user_config = $object->user_config_hash( 'ldview' );
   my @colour_gradient = ('ffffff', $user_config->colourmap->build_linear_gradient( 41,'mistyrose', 'pink', 'indianred2', 'red' ));
   return \@colour_gradient || [];
+}
+
+#--------------------------------------------------------------------
+
+sub haploview_dump {
+  my( $panel, $object ) = @_;
+  my $FN        = $object->temp_file_name( undef, 'XXX/X/X/XXXXXXXXXXXXXXX' );
+  my ($PATH,$FILE) = $object->make_directory( $object->species_defs->ENSEMBL_TMP_DIR_IMG."/$FN" );
+  my $ped_file  = $object->species_defs->ENSEMBL_TMP_DIR_IMG."/$FN.ped";
+  my $info_file = $object->species_defs->ENSEMBL_TMP_DIR_IMG."/$FN.txt";
+  my $ped_url   = $object->species_defs->ENSEMBL_TMP_URL_IMG."/$FN.ped";
+  my $info_url  = $object->species_defs->ENSEMBL_TMP_URL_IMG."/$FN.txt";
+  my $both_url  = $object->species_defs->ENSEMBL_TMP_URL_IMG."/$FN.tar.gz";
+
+  haploview_files( $ped_file, $info_file,  $object );
+
+  system( "cd $PATH; tar cf - $FILE.ped $FILE.txt | gzip -9 > $FILE.tar.gz" );
+  $panel->print(qq (<p>
+    Your export has been processed successfully. You can download
+    the exported data by following the links below.
+  </p>
+  <ul>
+    <li><strong>Genotype file:</strong> <a target="_blank" href="$ped_url">genotypes.ped</a> [Genotypes in linkage format]</li>
+    <li><strong>Locus information:</strong> <a target="_blank" href="$info_url">marker_info.txt</a> [Locus information file]</li>
+  </ul>
+  <p><strong>OR</strong>
+  <ul>
+    <li><strong>Combined file:</strong> <a href="$both_url">haploview_files.tar.gz</a></li>
+  </ul>
+
+  <p>These files can be uploaded into the  <a href="http://www.broad.mit.edu/mpg/haploview/index.php">Haploview</a> software for further haplotype analysis.  The linkage file name must end in ".ped" and 
+the marker one in ".txt".</p>
+  )
+  );
+  return 1;
+}
+
+
+sub haploview_files {
+  my( $PED, $INFO, $object ) = @_;
+  open PED,  ">$PED"; 
+  open INFO, ">$INFO"; 
+
+  my %ind_genotypes;
+  my %individuals;
+  my @snps;
+  foreach my $vf ( @{ $object->get_variation_features } ) {
+    my ($genotypes, $ind_data) =  $object->individual_genotypes($vf) ;
+    next unless %$genotypes;
+
+    my $name = $vf->variation_name;
+    print INFO join " ", $name, $vf->start."\n";
+    push @snps, $name;
+
+    #ind_genotypes{individual}{snp} = genotype
+    map { $ind_genotypes{$_}{$name} = $genotypes->{$_} } (keys %$genotypes);
+    map { $individuals{$_} = $ind_data->{$_} } (keys %$ind_data);
+  }
+
+  my $family;
+
+  foreach my $individual (keys %ind_genotypes) {
+    my $output = join "\t", ("FAM".$family++, 
+			    $individual, 
+			    $individuals{$individual}{father}, 
+			    $individuals{$individual}{mother}, 
+			    $individuals{$individual}{gender}, 
+			    "0\t");
+
+    foreach my $snp (@snps) {
+      my $genotype = $ind_genotypes{$individual}{$snp} || "00";
+      $genotype =~ tr/ACGTN/12340/;
+      $output .= join " ", (split //, $genotype);
+      $output .= "\t";
+    }
+    print PED "$output\n";
+  }
+  close PED;
+  close INFO;
 }
 
 1;

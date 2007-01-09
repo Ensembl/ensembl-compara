@@ -296,15 +296,16 @@ sub options_form {
 
   ### Dumping_form
   ### Description :  Creates a new form to dump LD data in different formats
-  ### (html, text, in the future excel and haploview)
+  ### (html, text, excel and haploview)
   ### Returns        $form
 
   my ($panel, $object ) = @_;
   my $form = EnsEMBL::Web::Form->new('ldview_form', "/@{[$object->species]}/ldtableview", 'get' );
 
-  my  @formats = ( {"value" => "astext",  "name" => "As text"},
-		   {"value" => "asexcel", "name" => "In Excel format"},
-		   {"value" => "ashtml",  "name" => "HTML format "}
+  my  @formats = ( {"value" => "astext",       "name" => "As text"},
+		   {"value" => "asexcel",      "name" => "In Excel format"},
+		   {"value" => "ashtml",       "name" => "HTML format "},
+		   {"value" => "ashaploview",  "name" => 'For upload into Haploview software (takes a while to download)'}
 		 );
 
   return $form unless @formats;
@@ -364,11 +365,25 @@ sub options_form {
 		    );
 
   $form->add_attribute( 'onSubmit',
-  qq(this.elements['_format'].value='HTML';this.target='_self';flag='';for(var i=0;i<this.elements['dump'].length;i++){if(this.elements['dump'][i].checked){flag=this.elements['dump'][i].value;}}if(flag=='astext'){this.elements['_format'].value='Text';this.target='_blank'}if(flag=='gz'){this.elements['_format'].value='Text';}if(flag=='asexcel'){this.elements['_format'].value='Excel';this.target='_blank'})
+  qq(this.elements['_format'].value='HTML';this.target='_self';
+      flag='';
+    for(var i=0;i<this.elements['dump'].length;i++){
+     if(this.elements['dump'][i].checked){
+       flag=this.elements['dump'][i].value;
+    }
+    }
+if(flag=='astext'){this.elements['_format'].value='Text';this.target='_blank';}
+if(flag=='asexcel'){this.elements['_format'].value='Excel';this.target='_blank';}
+if(flag=='gz'){this.elements['_format'].value='Text';}
+)
     );
 
   return $form;
 }
+
+#if(flag=='ashaploview'){this.elements['_format'].value='HTML';}
+
+
 
 
 
