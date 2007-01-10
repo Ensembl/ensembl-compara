@@ -11,11 +11,12 @@ use EnsEMBL::Web::Object::Group;
 use CGI;
 my $cgi = new CGI;
 my $url = "/common/accountview";
-if ($ENV{'ENSEMBL_USER_ID'}) {
+my $user = $ENSEMBL_WEB_REGISTRY->get_user;
+if ($user) {
   
-  my $user = EnsEMBL::Web::Object::User->new({ id => $ENV{'ENSEMBL_USER_ID'} });
-  my $remove_user = EnsEMBL::Web::Object::User->new({ id => $cgi->param('user_id') });
-  my $group = EnsEMBL::Web::Object::Group->new(( id => $cgi->param('group_id') )); 
+  my $remove_user = EnsEMBL::Web::Object::User->new({ adaptor => $ENSEMBL_WEB_REGISTRY->userAdaptor, id => $cgi->param('user_id') });
+  my $group = EnsEMBL::Web::Object::Group->new(( adaptor => $ENSEMBL_WEB_REGISTRY->userAdaptor, id => $cgi->param('group_id') )); 
+
   if ($user->is_administrator_of($group)) {
     $group->remove_user($remove_user);
     $group->save;

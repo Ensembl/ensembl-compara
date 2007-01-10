@@ -6,16 +6,19 @@ no warnings "uninitialized";
 
 use EnsEMBL::Web::Record::User;
 use EnsEMBL::Web::Document::HTML::SpeciesList;
+use EnsEMBL::Web::RegObj;
 
 my $T = new CGI;
 my $favourites= $T->param('favourites');
 my $list = $T->param('list');
 
-my $user = EnsEMBL::Web::Object::User->new({ id => $ENV{'ENSEMBL_USER_ID'}});
+my $user = $ENSEMBL_WEB_REHISTRY->get_user;
 
-my ($record) = $user->species_records;
-if ($record) {
-  $record->delete
+if ($user) {
+  my ($record) = $user->species_records;
+  if ($record) {
+    $record->delete
+  }
 }
 
 my $url = "/index.html";

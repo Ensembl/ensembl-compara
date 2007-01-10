@@ -3,12 +3,15 @@
 package remove_group;
 
 use CGI;
+use EnsEMBL::Web::RegObj;
+
 my $cgi = new CGI;
 
 my $url = "/common/accountview";
-if ($ENV{'ENSEMBL_USER_ID'}) {
-  my $user = EnsEMBL::Web::Object::User->new({ id => $ENV{'ENSEMBL_USER_ID'} });
-  my $group = EnsEMBL::Web::Object::Group->new(( id => $cgi->param('group_id') )); 
+my $user = $ENSEMBL_WEB_REGISTRY->get_user;
+
+if ($user) {
+  my $group = EnsEMBL::Web::Object::Group->new(( adaptor => $ENSEMBL_WEB_REGISTRY->userAdaptor, id => $cgi->param('group_id') )); 
   if ($user->is_administrator($group)) {
     $group->status('inactive');
     $group->save;

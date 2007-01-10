@@ -5,7 +5,7 @@ use warnings;
 no warnings "uninitialized";
 
 use EnsEMBL::Web::Record::User;
-use EnsEMBL::Web::DBSQL::UserDB;
+use EnsEMBL::Web::RegObj;
 
 my $T = new CGI;
 my $id = $T->param('id');
@@ -15,10 +15,8 @@ $url =~ s/\\\?/\?/g;
 $url =~ s/!and!/&/g;
 $url =~ s/!with!/;/g;
 
-warn "REDIRECT URL: ". $url;
-
-my $adaptor = EnsEMBL::Web::DBSQL::UserDB->new();
-my @records = EnsEMBL::Web::Record::User->find_bookmark_by_id($id);
+my $adaptor = $ENSEMBL_WEB_REGISTRY->userAdaptor;
+my @records = EnsEMBL::Web::Record::User->find_bookmark_by_id($id, { adaptor => $adaptor });
 my $record = $records[0];
 
 my $click = $record->click;
@@ -29,8 +27,6 @@ if ($click) {
 }
 $record->adaptor($adaptor);
 $record->save;
-
-warn "REDIRECT: " . $url;
 
 CGI::redirect($url);
 

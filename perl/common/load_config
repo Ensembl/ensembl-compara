@@ -28,9 +28,9 @@ $url = $host . $new_params;
 
 my $session = $ENSEMBL_WEB_REGISTRY->get_session;
 $session->set_input($cgi);
-if ($ENV{'ENSEMBL_USER_ID'}) {
-  my $user = EnsEMBL::Web::Object::User->new({ id => $ENV{'ENSEMBL_USER_ID'} });
-  if ($user) {
+my $user = $ENSEMBL_WEB_REGISTRY->get_user;
+
+if ($user) {
     foreach my $configuration ($user->configuration_records) {
       if ($configuration->id eq $cgi->param('id')) {
         my $string = $configuration->scriptconfig;
@@ -40,15 +40,10 @@ if ($ENV{'ENSEMBL_USER_ID'}) {
         $session->set_script_config_from_string($script_name, $string);
       } 
     }
-  }
 } else {
   $url = '/error/config_failed.html';
 }
 
 CGI::redirect($url);
-
-sub prepare_url {
-  my ($url) = @_;
-}
 
 1;

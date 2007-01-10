@@ -6,16 +6,17 @@ use strict;
 use warnings;
 
 use EnsEMBL::Web::Record::User;
-use EnsEMBL::Web::Object::User;
+use EnsEMBL::Web::RegObj;
 use CGI;
 
 
 my $cgi = new CGI;
 my $url = "/common/accountview";
  
-if ($ENV{'ENSEMBL_USER_ID'}) {
+my $user = $ENSEMBL_WEB_REGISTRY->get_user; 
 
-  my $user = EnsEMBL::Web::Object::User->new({ id => $ENV{'ENSEMBL_USER_ID'} });
+if ($user) {
+
   my $found = 0;
   my $record = undef;
   foreach my $this ($user->sortable_records) {
@@ -23,7 +24,7 @@ if ($ENV{'ENSEMBL_USER_ID'}) {
   }
 
   if (!$record) {
-    $record = EnsEMBL::Web::Record::User->new(( type => 'sortable', user => $user->id));
+    $record = EnsEMBL::Web::Record::User->new(( adaptor => $ENSEMBL_WEB_REGISTRY->userAdaptor, type => 'sortable', user => $user->id));
   }
   if ($cgi->param('type') =~ /alpha|group/) {
     $record->kind($cgi->param('type'));

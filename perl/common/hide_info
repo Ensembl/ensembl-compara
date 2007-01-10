@@ -12,7 +12,7 @@ use EnsEMBL::Web::Record::User;
 
 my $cgi = new CGI;
 
-my $record = EnsEMBL::Web::Record::User->new(( type => 'info' ));
+my $record = EnsEMBL::Web::Record::User->new(( adaptor => $ENSEMBL_WEB_REGISTRY->userAdapator, type => 'info' ));
 
 $record->user($ENV{ENSEMBL_USER_ID});
 $record->name($cgi->param('id'));

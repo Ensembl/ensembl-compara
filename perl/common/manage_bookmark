@@ -5,8 +5,8 @@ use warnings;
 no warnings "uninitialized";
 
 use EnsEMBL::Web::SpeciesDefs;
-use EnsEMBL::Web::DBSQL::UserDB;
 use EnsEMBL::Web::User::Record;
+use EnsEMBL::Web::RegObj;
 
 warn("AJAX: Updating bookmark"); 
 
@@ -20,18 +20,17 @@ my $user_id = $ENV{'ENSEMBL_USER_ID'};
 print "Content-type: text/plain\n\n";
 
 if ($user eq $user_id) {
-  my $user_adaptor = EnsEMBL::Web::DBSQL::UserDB->new();
   if ($action eq 'update') {
-    my @records = EnsEMBL::Web::User::Record->find_bookmark_by_id($bookmark);
+    my @records = EnsEMBL::Web::User::Record->find_bookmark_by_id($bookmark, { adaptor => $ENSEMBL_WEB_REGISTRY->userAdaptor });
     my $record = $records[0];
-    $record->adaptor($user_adaptor);
+    $record->adaptor($ENSEMBL_WEB_REGISTRY->userAdaptor);
     $record->name($name);
     $record->save;
     print $name;
   } elsif ($action eq 'delete') {
-    my @records = EnsEMBL::Web::User::Record->find_bookmark_by_id($bookmark);
+    my @records = EnsEMBL::Web::User::Record->find_bookmark_by_id($bookmark, { adaptor => $ENSEMBL_WEB_REGISTRY>userAdaptor});
     my $record = $records[0];
-    $record->adaptor($user_adaptor);
+    $record->adaptor($ENSEMBL_WEB_REGISTRY->userAdaptor);
     $record->delete;
   }
 } else {

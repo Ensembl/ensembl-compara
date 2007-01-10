@@ -9,9 +9,9 @@ use EnsEMBL::Web::Record::Group;
 use CGI;
 my $cgi = new CGI;
 my $url = "/common/groupview";
-if ($ENV{'ENSEMBL_USER_ID'}) {
-  my $user = EnsEMBL::Web::Object::User->new({ id => $ENV{'ENSEMBL_USER_ID'} });
-  my $group = EnsEMBL::Web::Object::Group->new(( id => $cgi->param('group_id') )); 
+my $user = $ENSEMBL_WEB_REGISTRY->get_user;
+if ($user) {
+  my $group = EnsEMBL::Web::Object::Group->new(( adaptor => $ENSEMBL_WEB_REGISTRY->userAdapator,  id => $cgi->param('group_id') )); 
   $url = "/common/groupview?id=" . $group->id;
   if ($cgi->param('user_id') eq $user->id) {
     if ($user->is_administrator($group)) {

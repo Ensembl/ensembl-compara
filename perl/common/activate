@@ -23,11 +23,11 @@ $data->adaptor(EnsEMBL::Web::DBSQL::ViewAdaptor->new((
 
 my $mailer = EnsEMBL::Web::Mailer::User->new();
 if (!$cgi->param('welcome_email')) {
-  my $user = EnsEMBL::Web::Object::User->new({ id => $cgi->param('id') });
+  my $user = EnsEMBL::Web::Object::User->new({ adaptor => $ENSEMBL_WEB_REGISTRY->userAdaptor, id => $cgi->param('id') });
   $mailer->email($user->email);
-  $mailer->send_activation_email(( link => $user->activation_link, group_id => $cgi->param('group_id') ));
+  $mailer->send_activation_email(( code => $user->salt, link => $user->activation_link, group_id => $cgi->param('group_id') ));
 } elsif ($cgi->param('welcome_email') eq 'yes') {
-  my $user = EnsEMBL::Web::Object::User->new({ id => $cgi->param('id') });
+  my $user = EnsEMBL::Web::Object::User->new({ adaptor => $ENSEMBL_WEB_REGISTRY->userAdaptor, id => $cgi->param('id') });
   $mailer->email($user->email);
   $mailer->send_welcome_email($user->email);
   if ($cgi->param('group_id')) {

@@ -14,7 +14,7 @@ my $cgi = new CGI;
 my $url = "/login.html?url=/index.html";
 
 if ($cgi->param('email')) {
-  my $user = EnsEMBL::Web::Object::User->new({ email => $cgi->param('email') });
+  my $user = EnsEMBL::Web::Object::User->new({ adaptor => $ENSEMBL_WEB_REGISTRY->userAdapator, email => $cgi->param('email') });
   if ($user->id) {
     $url = "/updated_password.html?url=/index.html";
     $user->salt($user->random_string(8));

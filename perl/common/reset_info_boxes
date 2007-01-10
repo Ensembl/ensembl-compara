@@ -9,16 +9,18 @@ use warnings;
 no warnings "uninitialized";
 
 use EnsEMBL::Web::User::Record;
-use EnsEMBL::Web::Object::User;
+use EnsEMBL::Web::RegObj;
 
 my $cgi = new CGI;
 
-if ($ENV{ENSEMBL_USER_ID}) {
-  my $user = EnsEMBL::Web::Object::User->new({ id => $ENV{ENSEMBL_USER_ID} });
+my $user = $ENSEMBL_WEB_REGISTRY->get_user;
+
+if ($user) {
   foreach my $info_box ($user->info_records) {
     $info_box->delete;
   }  
 }
+
 my $url = "/common/accountview";
 
 CGI::redirect($url);

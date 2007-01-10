@@ -14,6 +14,7 @@ use EnsEMBL::Web::DBSQL::ViewAdaptor;
 use EnsEMBL::Web::SpeciesDefs;
 use EnsEMBL::Web::Object::User;
 use EnsEMBL::Web::RegObj;
+use EnsEMBL::Web::Tools::RandomString;
 
 my $cgi = new CGI;
 my $page = EnsEMBL::Web::Interface::PageDefinition->new();
@@ -39,13 +40,13 @@ $page->send_params({ id => 'yes'});
 $page->on_complete('/common/activate');
 $page->on_error('/register/error.html');
 
-$page->add_configuration_element('salt', EnsEMBL::Web::Object::User::random_string(8));
+$page->add_configuration_element('salt', EnsEMBL::Web::Tools::RandomString::random_string(8));
 $page->add_form_element('name', "Your name");
 $page->add_form_element('email', "Your email address.<br />You'll use this to log in to $sitename");
 $page->add_form_element('organisation', "Organisation");
 
 if ($cgi->param('email')) {
-  my $user = EnsEMBL::Web::Object::User->new({ email => $cgi->param('email') });
+  my $user = EnsEMBL::Web::Object::User->new({ adaptor => $ENSEMBL_WEB_REGISTRY->userAdaptor, email => $cgi->param('email') });
   if ($user->id) {
     my $url = "/error/email.html";
     CGI::redirect($url);

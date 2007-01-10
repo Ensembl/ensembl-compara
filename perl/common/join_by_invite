@@ -21,12 +21,12 @@ my $cgi = new CGI;
 
 my $record_id = $cgi->param('record_id');
 warn "RECORD ID: " . $record_id;
-my @records = EnsEMBL::Web::Record::Group->find_invite_by_group_record_id($record_id);
+my @records = EnsEMBL::Web::Record::Group->find_invite_by_group_record_id($record_id, { adaptor => $ENSEMBL_WEB_REGISTRY->userAdaptor });
 my $record = $records[0];
 my $email = $record->email;
 my $group_id = $record->group;
 
-my $user = EnsEMBL::Web::Object::User->new({ email => $email });
+my $user = EnsEMBL::Web::Object::User->new({ adaptor => $ENSEMBL_WEB_REGISTRY->userAdapator,  email => $email });
 my $site_info = $user->get_site_info;
 my $sitename = $site_info->{'name'};
 my $article = $site_info->{'article'}; ## a or an?
@@ -63,7 +63,7 @@ $page->add_form_element('organisation', "Organisation");
 EnsEMBL::Web::Document::DataView::simple('User', $page);
 
 } else {
-  my $group = EnsEMBL::Web::Object::Group->new(( id => $group_id ));
+  my $group = EnsEMBL::Web::Object::Group->new(( adaptor => $ENSEMBL_WEB_REGISTRY->userAdaptor, id => $group_id ));
   warn "WORKING WITH USER: " . $user->id . ": " . $user->email;
   $user->add_group($group);
   $user->save;

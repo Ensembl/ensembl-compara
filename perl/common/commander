@@ -19,7 +19,7 @@ $commander->add_node(( node => $start_node ));
 
 my $second_node = EnsEMBL::Web::Commander::Node->new(( title => 'Second node', name => 'second' ));
 $second_node->add_text(( name => 'welcome', content => 'The second node of the wizard. We\'ll enter some text here. The Commander class will maintain all the wizard data for us, so we can access it again later.'));
-$second_node->add_text_field(( name => 'name', label => 'Your name:', value => 'Dennis Hopper'));
+$second_node->add_text_field(( name => 'name', label => 'Your name:', value => ''));
 $commander->add_node(( node => $second_node));
 
 my $third_node = EnsEMBL::Web::Commander::Node->new(( title => 'Third node', name => 'third' ));
@@ -30,7 +30,7 @@ $commander->add_node(( node => $third_node));
 
 my $fourth_node = EnsEMBL::Web::Commander::Node->new(( title => 'Fourth node (option)', name => 'fourth' ));
 $fourth_node->add_text(( name => 'welcome', content => 'This is an optional node. Enter some more information, and then finish.' ));
-$fourth_node->add_text_field(( name => 'postcode', label => 'Your postcode:', value => 'WTSI'));
+$fourth_node->add_text_field(( name => 'postcode', label => 'Your postcode:', value => ''));
 $commander->add_node(( node => $fourth_node));
 
 my $finish_node = EnsEMBL::Web::Commander::Node::Final->new(( title => 'Final node', name => 'final' ));

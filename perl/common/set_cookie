@@ -3,19 +3,20 @@
 package set_cookie;
 
 use EnsEMBL::Web::Object::User;
+use EnsEMBL::Web::Tools::Encryption;
 use EnsEMBL::Web::RegObj;
 use Apache2::RequestUtil;
 
 use CGI;
 my $cgi = new CGI;
-my $user = EnsEMBL::Web::Object::User->new({ id => $cgi->param('id') });
+my $user = EnsEMBL::Web::Object::User->new({ adaptor => $ENSEMBL_WEB_REGISTRY->userAdaptor, id => $cgi->param('id') });
 
 my $url = "/index.html";
 
 if (!$ENV{'ENSEMBL_USER_ID'}) {
   if ($user) {
     if ($user->password eq $cgi->param('key')) {
-      my $encrypted = EnsEMBL::Web::DBSQL::UserDB::encryptID($user->id);
+      my $encrypted = EnsEMBL::Web::Tools::Encryption::encryptID($user->id);
 #      my $cookie = CGI::Cookie->new(
 #         -name    => EnsEMBL::Web::SpeciesDefs->ENSEMBL_USER_COOKIE,
 #         -value   => $encrypted,

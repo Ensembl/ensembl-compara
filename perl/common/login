@@ -3,12 +3,14 @@
 package login;
 
 use EnsEMBL::Web::Object::User;
+use EnsEMBL::Web::Tools::Encryption;
 use EnsEMBL::Web::RegObj; 
 use Apache2::RequestUtil;
 
 use CGI;
 my $cgi = new CGI;
 my $user = EnsEMBL::Web::Object::User->new({ 
+                                      adaptor  => $ENSEMBL_WEB_REGISTRY->userAdaptor,
                                       username => $cgi->param('username'),
                                       password => $cgi->param('password')
                                            });
@@ -28,12 +30,12 @@ my $user_cookie = EnsEMBL::Web::Cookie->new({
      'refresh' => $SD->ENSEMBL_ENCRYPT_REFRESH
    }
 });
-      my $r = Apache2::RequestUtil->request();
-#my $r = Apache->request();
+
+my $r = Apache2::RequestUtil->request();
 my $url = "/error/login_failed.html?url=" . $cgi->param('url');
+
 if ($user->name) {
-  warn "OK: Logging in as " . $user->name;
-  my $encrypted = EnsEMBL::Web::DBSQL::UserDB::encryptID($user->id);
+  my $encrypted = EnsEMBL::Web::Tools::Encryption::encryptID($user->id);
   $user_cookie->create( $r , $user->id );
 
   ## TODO: This method of passing in a URL is problematic. Someone clicking on the 'login'
