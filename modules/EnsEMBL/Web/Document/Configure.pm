@@ -5,7 +5,7 @@ use strict;
 use warnings;
 
 use EnsEMBL::Web::Root;
-use EnsEMBL::Web::Object::User;
+use EnsEMBL::Web::RegObj;
 
 our @ISA  = qw(EnsEMBL::Web::Root);
 
@@ -17,7 +17,7 @@ sub common_menu_items {
     ## Is the user logged in?
     my $user_id = $ENV{'ENSEMBL_USER_ID'};
 
-    my $user_adaptor = EnsEMBL::Web::DBSQL::UserDB->new();
+    my $user_adaptor = $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->userAdaptor;
 
     my $flag = 'ac_mini';
     $doc->menu->add_block( $flag, 'bulleted', "Your Ensembl", 'priority' => 0 );
@@ -29,7 +29,7 @@ sub common_menu_items {
       #                              'code' => 'bookmark',
       #                            'href' => "javascript:bookmark_link()" );
 
-      my $user = EnsEMBL::Web::Object::User->new({'adaptor'=>$user_adaptor, 'id'=>$user_id});
+      my $user = $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->get_user;
 
       ## Link to existing bookmarks
       my %included = ();

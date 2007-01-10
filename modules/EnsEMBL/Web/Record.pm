@@ -9,11 +9,38 @@ package EnsEMBL::Web::Record;
 ### (user bookmarks, etc) in a single database field, and uses autoloading
 ### to enable new data to be stored at will without the need for additional code
 
+=head1 NAME
+
+EnsEMBL::Web::Record - A family of modules used for representing and storing a user's
+persistant data.
+
+=head1 VERSION
+
+Version 1.00
+
+=cut
+
+our $VERSION = '1.00';
+
+=head1 SYNOPSIS
+
+This family of modules provides a fast, flexible representation of persitant user data. It allows
+the storage and retrieval of arbitrary key-value pairs, in a single database field.
+
+It was initially developed for use with the Ensembl Genome Browser (http://www.ensembl.org).
+
+    use EnsEMBL::Web::Record;
+
+    my $bookmark = EnsEMBL::Web::Record->new();
+    $bookmark->url('http://www.ensembl.org');
+    $bookmark->name('Ensembl');
+    $bookmark->save;
+    ...
+
+=cut 
+
 use strict;
 use warnings;
-use EnsEMBL::Web::DBSQL::UserDB;
-use EnsEMBL::Web::Record::User;
-use EnsEMBL::Web::Record::Group;
 use Data::Dumper;
 
 #our @ISA = qw(EnsEMBL::Web::Root);
@@ -32,6 +59,9 @@ my %CreatedAt_of;
 my %ModifiedAt_of;
 my %Type_of;
 my %Owner_of;
+
+=head1 FUNCTIONS
+=cut
 
 sub AUTOLOAD {
   ### AUTOLOAD method for getting and setting record attributes, and processing
@@ -73,6 +103,15 @@ sub AUTOLOAD {
   return $self->fields($key);
 }
 
+
+=head2 new 
+
+Creates a new Record object. This module follows the Active Record pattern: it contains both the domain
+logic required to create and manipulate a piece of persistent data, and
+the information necessary to maintain this data in a database.
+
+=cut
+
 sub new {
   ### c
   my ($class, %params) = @_;
@@ -97,6 +136,14 @@ sub new {
 }
 
 
+=head2 taint 
+
+Marks a particular collection of records for an update. Tainted 
+records are updated in the database when the Record's save method
+is called.
+
+=cut
+
 sub taint {
   ### Marks a particular collection of records for an update. Tainted 
   ### records are updated in the database when the Record's save method
@@ -104,6 +151,11 @@ sub taint {
   my ($self, $type) = @_;
   $self->tainted->{$type} = 1;
 }
+
+=head2 dump_data 
+Uses Data::Dumper to format a record's data for storage, 
+and also handles escaping of quotes to avoid SQL errors
+=cut 
 
 sub dump_data {
   ### Uses Data::Dumper to format a record's data for storage, 
@@ -120,6 +172,10 @@ sub dump_data {
   return $dump;
 }
 
+=head2 fields 
+Accessor for the fields property.
+=cut 
+
 sub fields {
   ### a
   my ($self, $key, $value) = @_;
@@ -134,12 +190,20 @@ sub fields {
   }
 }
 
+=head2 records 
+Accessor for the records property.
+=cut 
+
 sub records {
   ### a
   my $self = shift;
   $Records_of{$self} = shift if @_;
   return $Records_of{$self};
 }
+
+=head2 type 
+Accessor for the type property.
+=cut 
 
 sub type {
   ### a
@@ -148,12 +212,20 @@ sub type {
   return $Type_of{$self};
 }
 
+=head2 tainted 
+Accessor for the tainted property.
+=cut 
+
 sub tainted {
   ### a
   my $self = shift;
   $Tainted_of{$self} = shift if @_;
   return $Tainted_of{$self};
 }
+
+=head2 adaptor 
+Accessor for the tainted property.
+=cut 
 
 sub adaptor {
   ### a
@@ -162,12 +234,20 @@ sub adaptor {
   return $Adaptor_of{$self};
 }
 
+=head2 parameter_set 
+Accessor for the parameter_set property.
+=cut 
+
 sub parameter_set {
   ### a
   my $self = shift;
   $ParameterSet_of{$self} = shift if @_;
   return $ParameterSet_of{$self};
 }
+
+=head2 id 
+Accessor for the id property.
+=cut 
 
 sub id {
   ### a
@@ -176,6 +256,10 @@ sub id {
   return $Id_of{$self};
 }
 
+=head2 created_at 
+Accessor for the created_at property.
+=cut
+
 sub created_at {
   ### a
   my $self = shift;
@@ -183,12 +267,20 @@ sub created_at {
   return $CreatedAt_of{$self};
 }
 
+=head2 modified_at 
+Accessor for the modified_at property.
+=cut
+
 sub modified_at {
   ### a
   my $self = shift;
   $ModifiedAt_of{$self} = shift if @_;
   return $ModifiedAt_of{$self};
 }
+
+=head2 records_of_type 
+Returns an array of records, that match a particular type.
+=cut
 
 sub records_of_type {
   ### Returns an array of records
@@ -210,6 +302,11 @@ sub records_of_type {
   return @return;
 }
 
+=head2 find_records 
+Returns an array of records. This method is called by the autoloading mechanism, and is not intended for 
+public use.
+=cut
+
 sub find_records {
   my (%params) = @_;
   my $record_type = "User";
@@ -218,7 +315,11 @@ sub find_records {
     delete $params{record_type};
   }
   $record_type = "EnsEMBL::Web::Record::" . $record_type;
-  my $user_adaptor = EnsEMBL::Web::DBSQL::UserDB->new();
+  my $user_adaptor = undef;
+  if ($params{options}->{adaptor}) {
+    $user_adaptor = $params{options}->{adaptor};  
+    warn "ADAPTOR for FIND: " . $user_adaptor;
+  }
   my $results = $user_adaptor->find_records(%params);
   my @records = ();
   foreach my $result (@{ $results }) {
@@ -243,12 +344,21 @@ sub find_records {
   return @records;
 }
 
+=head2 owner 
+Accessor for the owner property.
+=cut
+
+
 sub owner {
   ### a
   my $self = shift;
   $Owner_of{$self} = shift if @_;
   return $Owner_of{$self};
 }
+
+=head2 DESTROY 
+Called automatically by Perl when object reference count reaches zero.
+=cut
 
 sub DESTROY {
   ### d
@@ -266,5 +376,63 @@ sub DESTROY {
 }
 
 }
+
+=head1 AUTHOR
+
+Matt Wood, C<< <mjw at cpan.org> >>
+
+=head1 BUGS
+
+Please report any bugs or feature requests to
+C<bug-ensembl-web-record at rt.cpan.org>, or through the web interface at
+L<http://rt.cpan.org/NoAuth/ReportBug.html?Queue=EnsEMBL-Web-Record>.
+
+=head1 SUPPORT
+
+You can find documentation for this module with the perldoc command.
+
+    perldoc EnsEMBL::Web::Record
+
+You can also look for information at: http://www.ensembl.org
+
+=over 4
+
+=item * AnnoCPAN: Annotated CPAN documentation
+
+L<http://annocpan.org/dist/EnsEMBL-Web-Record>
+
+=item * CPAN Ratings
+
+L<http://cpanratings.perl.org/d/EnsEMBL-Web-Record>
+
+=item * RT: CPAN's request tracker
+
+L<http://rt.cpan.org/NoAuth/Bugs.html?Dist=EnsEMBL-Web-Record>
+
+=item * Search CPAN
+
+L<http://search.cpan.org/dist/EnsEMBL-Web-Record>
+
+=back
+
+=head1 ACKNOWLEDGEMENTS
+
+Many thanks to everyone on the Ensembl team, in particular James Smith, Anne Parker, Fiona Cunningham and Beth Prichard.
+
+=head1 COPYRIGHT & LICENSE
+
+Copyright (c) 1999-2006 The European Bioinformatics Institute and Genome Research Limited, and others. All rights reserved.
+
+Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
+
+   1. Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
+   2. Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
+   3. The name Ensembl must not be used to endorse or promote products derived from this software without prior written permission. For written permission, please contact ensembl-dev@ebi.ac.uk
+   4. Products derived from this software may not be called "Ensembl" nor may "Ensembl" appear in their names without prior written permission of the Ensembl developers.
+   5. Redistributions of any form whatsoever must retain the following acknowledgment: "This product includes software developed by Ensembl (http://www.ensembl.org/).
+
+THIS SOFTWARE IS PROVIDED BY THE ENSEMBL GROUP "AS IS" AND ANY EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE ENSEMBL GROUP OR ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
+
+=cut
 
 1;

@@ -2,15 +2,11 @@ package EnsEMBL::Web::Object::User;
 
 use strict;
 use warnings;
-no warnings "uninitialized";
-use CGI qw(escape);
-use CGI::Cookie;
-use Mail::Mailer;
+
 use Digest::MD5 qw(md5_hex);
 
 use EnsEMBL::Web::Record::User;
-use EnsEMBL::Web::Object::Group;
-use EnsEMBL::Web::DBSQL::UserDB;
+#use EnsEMBL::Web::Object::Group;
 
 our @ISA = qw(EnsEMBL::Web::Record);
 
@@ -24,14 +20,12 @@ my %Organisation_of;
 my %Salt_of;
 my %Status_of;
 my %Groups_of;
+my %Deferred_of;
+my %Parameters_of;
+my %Is_Populated_of;
 
 sub new {
   ### c
-  ### TODO: For security Users and Groups should not be pluggable (ie:
-  ### they should not inherit from {{EnsEMBL::Web::Proxiable}}).
-  ### Need a new class which masks proxability, but still works with
-  ### the existing site architecture.
-  #warn "NEW OBJECT::USER";
   my ($class, $param_hashref) = @_;
 
   ## Get the params from the hashref sent by the Proxy.
@@ -46,6 +40,7 @@ sub new {
   my $self = $class->SUPER::new(%params);
 
   ## Initialise fields
+  $Parameters_of{$self} = \%params;
   $Id_of{$self} = defined $params{'id'} ? $params{'id'} : "";
   $Name_of{$self} = defined $params{'name'} ? $params{'name'} : "";
   $Email_of{$self} = defined $params{'email'} ? $params{'email'} : "";
@@ -54,37 +49,49 @@ sub new {
   $Groups_of{$self} = defined $params{'groups'} ? $params{'groups'} : [];
   $Salt_of{$self} = defined $params{'salt'} ? $params{'salt'} : [];
   $Status_of{$self} = defined $params{'status'} ? $params{'status'} : "";
+  $Deferred_of{$self} = defined $params{'defer'} ? $params{'defer'} : undef;
+  $Is_Populated_of{$self} = 0;
   
   if (!$self->adaptor) {
-    $self->adaptor(EnsEMBL::Web::DBSQL::UserDB->new);
+    warn "ADAPTOR not specified";
   }
 
   ## Flesh out the object from the database 
-  if ($params{'id'}) {
-    warn "New user with ID: " . $params{'id'};
-    my $details = $self->adaptor->find_user_by_user_id($params{'id'});
-    $self->assign_fields($details);
-    my @records = $self->find_records_by_user_id($params{'id'});
-    $self->records(\@records);
-    $self->groups($self->find_groups_by_user_id($params{'id'}));
-  } elsif ($params{'username'} && $params{'password'}) {
-     my $encrypted = $self->encrypt($params{'password'});
-     my $details = $self->adaptor->find_user_by_email_and_password(( email => $params{'username'}, 
-                                             password => $encrypted ));
-     $self->assign_fields($details);
-  } elsif ($params{'email'} ) {
-     my $details = $self->adaptor->find_user_by_email($params{'email'});
-     $self->assign_fields($details);
+  if (!$params{'defer'}) {
+    $self->populate();
   }
-
 
   return $self;
 }
 
+sub populate {
+  ## Populates the object with data from the database.
+  my ($self) = @_;
+  if (!$self->is_populated) {
+    $self->is_populated(1);
+    my %params = %{ $self->parameters };
+    if ($params{'id'}) {
+      warn "Populating user with ID: " . $params{'id'};
+      my $details = $self->adaptor->find_user_by_user_id($params{'id'}, { adaptor => $self->adaptor });
+      $self->assign_fields($details);
+      my @records = $self->find_records_by_user_id($params{'id'}, { adaptor => $self->adaptor });
+      $self->records(\@records);
+      $self->groups($self->find_groups_by_user_id($params{'id'}, { adaptor => $self->adaptor }));
+    } elsif ($params{'username'} && $params{'password'}) {
+      my $encrypted = $self->encrypt($params{'password'});
+      my $details = $self->adaptor->find_user_by_email_and_password(( email => $params{'username'}, 
+                                              password => $encrypted, { adaptor => $self->adaptor } ));
+     $self->assign_fields($details);
+    } elsif ($params{'email'} ) {
+       my $details = $self->adaptor->find_user_by_email($params{'email'}, { adaptor => $self->adaptor });
+       $self->assign_fields($details);
+    }
+  }
+}
 
 sub load {
   my $self = shift;
-  my @records = $self->find_records_by_user_id($self->id);
+  my @records = $self->find_records_by_user_id($self->id, { adaptor => $self->adaptor });
   $self->records(\@records);
 }
 
@@ -161,6 +168,7 @@ sub find_group_by_group_id {
 sub groups {
   ### a
   my $self = shift;
+  if (!$self->is_populated) { $self->populate; }
   $Groups_of{$self} = shift if @_;
   return $Groups_of{$self};
 }
@@ -220,6 +228,7 @@ sub remove_group {
 sub name {
   ### a
   my $self = shift;
+  if (!$self->is_populated) { $self->populate; }
   $Name_of{$self} = shift if @_;
   if (@_) {
     $self->taint('user');
@@ -230,6 +239,7 @@ sub name {
 sub status {
   ### a
   my $self = shift;
+  if (!$self->is_populated) { $self->populate; }
   $Status_of{$self} = shift if @_;
   if (@_) {
     $self->taint('user');
@@ -247,6 +257,7 @@ sub id {
 sub salt {
   ### a
   my $self = shift;
+  if (!$self->is_populated) { $self->populate; }
   $Salt_of{$self} = shift if @_;
   if (@_) {
     $self->taint('user');
@@ -254,9 +265,17 @@ sub salt {
   return $Salt_of{$self};
 }
 
+sub defer {
+  ### a
+  my $self = shift;
+  $Deferred_of{$self} = shift if @_;
+  return $Deferred_of{$self};
+}
+
 sub email {
   ### a
   my $self = shift;
+  if (!$self->is_populated) { $self->populate; }
   $Email_of{$self} = shift if @_;
   if (@_) {
     $self->taint('user');
@@ -267,6 +286,7 @@ sub email {
 sub password {
   ### a
   my $self = shift;
+  if (!$self->is_populated) { $self->populate; }
   $Password_of{$self} = shift if @_;
   if (@_) {
     $self->taint('user');
@@ -277,6 +297,7 @@ sub password {
 sub organisation {
   ### a
   my $self = shift;
+  if (!$self->is_populated) { $self->populate; }
   $Organisation_of{$self} = shift if @_;
   if (@_) {
     $self->taint('user');
@@ -349,122 +370,6 @@ sub save {
 
 }
 
-sub send_activation_email {
-  my ($user, $group_id) = @_;
-  my $site_info = get_site_info();
-  my $sitename = $site_info->{'name'};
-
-  my $message = qq(
-  Welcome to $sitename,
-
-  Thanks for registering with $sitename.
-
-  You just need to activate your account, using the link below:
-);
-
-  $message .= _activation_link($user, $site_info); 
-
-  if ($group_id) {
-    $message .= "&group_id=" . $group_id;
-  }
-
-  $message .= _email_footer($site_info);
-
-  send_email($site_info, $user, "Your new $sitename account", $message);
-}
-
-sub send_welcome_email {
-  my $user = shift;
-  my $site_info = get_site_info();
-  my $sitename = $site_info->{'name'};
-
-  my $message = qq(Welcome to $sitename.
-
-
-  Your account has been activated! In future, you can log in to $sitename using your email address and the password you chose during registration:
-
-  Email: ) . $user->email . qq(
-
-  More information on how to make the most of your account can be found here:
-
-  ) . $site_info->{'base_url'} . qq(/info/about/accounts.html
-
-);
-  $message .= _email_footer($site_info);
-
-  send_email($site_info, $user, "Welcome to $sitename", $message);
-}
-
-
-sub send_reactivation_email {
-  my $user = shift;
-  my $site_info = get_site_info();
-  my $sitename = $site_info->{'name'};
-
-  my $message = qq(
-Hello ) . $user->name . qq(,
-
-We have received a request to change your $sitename account password. If you
-submitted this request, click on the link below to update your password. If
-not, please disregard this email.
-
-);
-
-  $message .= _activation_link($user, $site_info); 
-
-  $message .= _email_footer($site_info);
-
-  send_email($site_info, $user, "Your $sitename account", $message);
-}
-
-sub send_invite_email {
-  my ($user, $group, $record, $invite_email) = @_;
-  my $site_info = get_site_info();
-  my $sitename = $site_info->{'name'};
-
-  my $message = qq(
-  Hello,
-
-  You have been invited by ) . $user->name . qq( to join a group
-  on the $sitename Genome Browser.
-
-  To accept this invitation, go to your account summary page in $sitename, or
-  click on the following link:
-
-  ) . $group->name . qq(
-  ) . $site_info->{'base_url'} . qq(/common/accept?id=) . $record->id . qq(&invite=) . $record->code . qq(
-
-  If you do not wish to accept, or have already accepted, please disregard this email.
-
-  If you have any problems please don't hesitate to contact ) . $user->name .
-  qq(
-  or the $sitename help desk, at ) .$site_info->{'help_email'}. qq(.
-
-  );
-  $message .= _email_footer($site_info);
-
-  send_email($invite_email, "Invitation to join $sitename group", $message);
-}
-
-sub get_site_info {
-  my $sd = EnsEMBL::Web::SpeciesDefs->new();
-  my $site_info = {};
-  my $sitetype = $sd->ENSEMBL_SITETYPE;
-  my $sitename = $sitetype eq 'EnsEMBL' ? 'Ensembl' : $sitetype;
-  $site_info->{'name'} = $sitename;
-  if (substr($sitename, 0, 1) =~ /[aeiou]/i) {
-    $site_info->{'article'} = 'an';
-  }
-  else {
-    $site_info->{'article'} = 'a';
-  }
-  $site_info->{'base_url'}    = $sd->ENSEMBL_BASE_URL;
-  $site_info->{'mail_server'} = $sd->ENSEMBL_MAIL_SERVER;
-  $site_info->{'help_email'}  = $sd->ENSEMBL_HELPDESK_EMAIL;
-
-  return $site_info;
-}
-
 sub _activation_link {
   my ($user, $site_info) = @_;
 
@@ -483,23 +388,36 @@ sub web_user_db {
   return $self->adaptor;
 }
 
-sub random_string {
-  my $length = shift || 8;
-
-  my @chars = ('a'..'z','A'..'Z','0'..'9','_');
-  my $random_string;
-  foreach (1..$length)
-  {
-    $random_string .= $chars[rand @chars];
-  }
-  return $random_string;
+sub encrypt {
+  ### x
+  my ($self, $data) = @_;
+  warn "xxxxxxxxxxxx DEPRECATED FUNCTION xxxxxxxxxxxxxxx";
+  return md5_hex($data);
 }
 
+sub can {
+  ### x
+  my ($self, $method) = @_;
+  #warn "xxxxxxxxxxxx DEPRECATED FUNCTION xxxxxxxxxxxxxxx";
+  my $can = $self->SUPER::can($method);
+  if ($method =~ /.*_records/ || $method =~ /find_.*_by/) {
+    $can = 1;
+  }
+  return $can;
+}
 
-sub encrypt {
-  my ($self, $data) = @_;
-  #warn "Encrypting: " . $data;
-  return md5_hex($data);
+sub parameters {
+  ### a
+  my $self = shift;
+  $Parameters_of{$self} = shift if @_;
+  return $Parameters_of{$self};
+}
+
+sub is_populated {
+  ### a
+  my $self = shift;
+  $Is_Populated_of{$self} = shift if @_;
+  return $Is_Populated_of{$self};
 }
 
 sub DESTROY {
@@ -512,141 +430,13 @@ sub DESTROY {
   delete $Organisation_of{$self};
   delete $Status_of{$self};
   delete $Groups_of{$self};
-}
-
-}
-
-
-#------------------- ACCESSOR FUNCTIONS -----------------------------
-
-sub get_user_id {
-  my $self = shift;
-  my $user_id = $ENV{'ENSEMBL_USER_ID'};
-
-  return $user_id;
-}
-
-sub get_user_by_id    { return $_[0]->web_user_db->getUserByID($_[1]); }
-sub get_user_by_email { return $_[0]->web_user_db->getUserByEmail($_[1]); }
-sub get_user_by_code  { return $_[0]->web_user_db->getUserByCode($_[1]); }
-
-sub validate_user { 
-  my ($self, $email, $password) = @_;
-  return $self->web_user_db->validateUser($email, $password);
-}
-
-sub set_cookie {
-  my $self = shift;
-  return $self->web_user_db->setUserCookie;
+  delete $Deferred_of{$self};
+  delete $Parameters_of{$self};
+  delete $Is_Populated_of{$self};
 }
 
 
-sub save_user {
-  my ($self, $record) = @_;
-  my $result;
-  if ($record->{'user_id'}) { # saving updates to an existing item
-    $result = $self->web_user_db->updateUserAccount($record);
-  }
-  else { # inserting a new item into database
-    $result = $self->web_user_db->createUserAccount($record);
-  }
-  return $result;
 }
 
-sub set_password { return $_[0]->web_user_db->setPassword($_[1]); }
-
-sub save_bookmark {
-  ### Saves a bookmark. Accepts a hashref with the following key-value pairs:
-  ### ---
-  ### bm_url: The URL to be bookmarked
-  ### bm_name: The name of the page to be saved
-  ### user_id: The id of the user 
-  ### --- 
-  my ($self, $params) = @_;
-  my $url = $params->{bm_url};
-  my $name = $params->{bm_name};
-  my $user_id = $params->{user_id};
-  my $record = EnsEMBL::Web::Record::User->new(( adaptor => $self->web_user_db ));
-  $record->type('bookmark');
-  $record->user($user_id); 
-  $record->url($url);
-  $record->name($name);
-  $record->save;
-}
-
-sub can {
-  my ($self, $method) = @_;
-  my $can = $self->SUPER::can($method);
-  if ($method =~ /.*_records/ || $method =~ /find_.*_by/) {
-    $can = 1;
-  }
-  return $can;
-}
-
-
-sub get_groups_by_user { return $_[0]->web_user_db->getGroupsByUser($_[1]); }
-sub get_groups_by_type { return $_[0]->web_user_db->getGroupsByType($_[1]); }
-sub get_group_by_id    { return $_[0]->web_user_db->getGroupByID($_[1]); }
-sub get_membership     { return $_[0]->web_user_db->getMembership($_[1]); }
-sub save_membership     { return $_[0]->web_user_db->saveMembership($_[1]); }
-
-sub save_group {
-  ### Saves a group
-  ### The record has contains the following keys from the wizard:
-  ### group_name 
-  ### user_id
-  ### group_blurb 
-
-  my ($self, $record) = @_;
-  my $result;
-  if ($record->{'webgroup_id'}) { # saving updates to an existing item
-    $result = $self->web_user_db->updateGroup($record);
-  }
-  else { # inserting a new item into database
-    $result = $self->web_user_db->createGroup($record);
-  }
-  return $result;
-}
-
-sub notify_admin {
-  my ($self, $record) = @_;
-
-  my $member = $record->{'user_id'};
-  my $group  = $record->{'group_id'};
-
-  ## get the admin details for this group
-  my $admins = $self->web_user_db->getGroupAdmins($group);
-  my $member_name   = $self->user_name;
-  my $member_email  = $self->email;
-  my $member_org    = $self->organisation;
-
-  my @mail_attributes = ();
-  my @T = localtime();
-  my $date = sprintf "%04d-%02d-%02d %02d:%02d:%02d", $T[5]+1900, $T[4]+1, $T[3], $T[2], $T[1], $T[0];
-  push @mail_attributes,
-    [ 'Date',         $date ],
-    [ 'Name',         $member_name ],
-    [ 'Email',        $member_email ],
-  my $message = '';
-  $message .= join "\n", map {sprintf("%-16.16s %s","$_->[0]:",$_->[1])} @mail_attributes;
-  $message .= "\n\nComments:\n\n@{[$self->param('comments')]}\n\n";
-  my $mailer = new Mail::Mailer 'smtp', Server => "localhost";
-  my $sitetype = ucfirst(lc($self->species_defs->ENSEMBL_SITETYPE))||'Ensembl';
-
-  my ($recipient, $count);
-  foreach my $adm (@$admins) {
-    my $admin_name  = $adm->{'name'};
-    my $admin_email = $adm->{'email'};
-    $recipient .= "$admin_name <$admin_email>";
-    $recipient .= ", " if $count > 0;
-    $count++;
-  }
-
-  $mailer->open({ 'To' => $recipient, 'Subject' => "$sitetype website Helpdesk", });
-  print $mailer $message;
-  $mailer->close();
-  return 1;
-
-}
 
 1;

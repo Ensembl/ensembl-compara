@@ -265,7 +265,8 @@ sub geneview {
 
 ## Bonus Panel - user annotations 
 
-  my $user = EnsEMBL::Web::Object::User->new({ id => $ENV{'ENSEMBL_USER_ID'} });
+  my $user = $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->get_user;
+
   if ($user->id) {
     if( my $annotation_panel = $self->new_panel( 
                                      'Information',

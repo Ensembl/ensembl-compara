@@ -23,15 +23,15 @@ sub send_activation_email {
 
   my $group_id = $params{'group_id'};
   my $link = $params{'link'};
-
+  my $code = $params{'code'};
   my $sitename = $self->site_name;
 
   my $message = qq(
-  Welcome to $sitename,
+Welcome to $sitename,
 
-  Thanks for registering with $sitename.
+Thanks for registering with $sitename.
 
-  You just need to activate your account, using the link below:
+You just need to activate your account, using the link below:
 );
 
   $message .= $self->activation_link($link);
@@ -39,6 +39,11 @@ sub send_activation_email {
   if ($group_id) {
     $message .= "&group_id=" . $group_id;
   }
+  $message .= qq(
+
+You activation code is: $code
+
+);
   $message .= $self->email_footer;
 
   $self->subject("Your new $sitename account");

@@ -5,8 +5,7 @@ use EnsEMBL::Web::Proxy::Factory;
 use EnsEMBL::Web::Timer;
 use Exporter;
 use Apache2::Const qw(:common M_GET);
-use EnsEMBL::Web::DBSQL::UserDB;
-use EnsEMBL::Web::User;
+use EnsEMBL::Web::Tools::Encryption;
 
 use EnsEMBL::Web::RegObj;
 
@@ -343,6 +342,7 @@ sub check_access {
       $user = $object;
     } 
     else {
+      warn "=============> New user object needed";
       #$user = EnsEMBL::Web::Object::User->new();
     }
     if ($access->{'group'}) {
@@ -388,7 +388,7 @@ sub logout {
 sub login {
   my ($self, $user_id) = @_;
   warn "USER LOGIN: " . $user_id; 
-  my $encrypted = EnsEMBL::Web::DBSQL::UserDB::encryptID($user_id);
+  my $encrypted = EnsEMBL::Web::Tools::Encryption::encryptID($user_id);
   my $cookie = CGI::Cookie->new(
       -name    => $ENSEMBL_WEB_REGISTRY->species_defs->ENSEMBL_USER_COOKIE,
       -value   => $encrypted,

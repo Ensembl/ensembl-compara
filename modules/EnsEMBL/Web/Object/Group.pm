@@ -8,7 +8,7 @@ use CGI::Cookie;
 
 use EnsEMBL::Web::Record;
 use EnsEMBL::Web::Object::User;
-use EnsEMBL::Web::DBSQL::UserDB;
+use EnsEMBL::Web::RegObj;
 
 our @ISA = qw(EnsEMBL::Web::Record);
 
@@ -48,7 +48,7 @@ sub new {
   $LevelCollection_of{$self} = defined $params{'level_collection'} ? $params{'level_collection'} : {};
 
   if (!$self->adaptor) {
-    $self->adaptor(EnsEMBL::Web::DBSQL::UserDB->new);
+    $self->adaptor($EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->userAdaptor);
   }
 
   if ($params{id} and !$params{defer}) {
@@ -94,7 +94,7 @@ sub all_groups_by_type {
   my ($self, $type) = @_;
 
   if (!$self->adaptor) {
-    $self->adaptor(EnsEMBL::Web::DBSQL::UserDB->new);
+    $self->adaptor($EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->userAdaptor);
   }
 
   my $results = $self->adaptor->groups_for_type($type);
@@ -235,7 +235,7 @@ sub save {
 sub add_relationship {
   my ($self, %relationship) = @_;
   if (!$self->adaptor) {
-    $self->adaptor(EnsEMBL::Web::DBSQL::UserDB->new);
+    $self->adaptor($EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->userAdaptor);
   }
   $self->adaptor->add_relationship(%relationship);
 }

@@ -3,7 +3,7 @@ package EnsEMBL::Web::Document::HTML::SettingsList;
 use strict;
 use warnings;
 
-use EnsEMBL::Web::Object::User;
+use EnsEMBL::Web::RegObj;
 
 our @ISA = qw(EnsEMBL::Web::Document::HTML);
 
@@ -16,7 +16,8 @@ sub render {
   my ($class, $request) = @_;
   my $html = "";
   if ($ENV{'ENSEMBL_USER_ID'}) {
-  my $user = EnsEMBL::Web::Object::User->new({ id => $ENV{'ENSEMBL_USER_ID'} });
+  my $user = $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->get_user;
+
   my $group_id = undef;
   foreach my $this ($user->drawer_records) {
     $group_id = $this->group;

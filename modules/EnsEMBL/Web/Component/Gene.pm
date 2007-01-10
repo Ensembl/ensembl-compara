@@ -6,8 +6,10 @@ our @ISA = qw( EnsEMBL::Web::Component);
 use strict;
 use warnings;
 no warnings "uninitialized";
+
 use EnsEMBL::Web::Component::Slice;
 use EnsEMBL::Web::Component::Transcript qw(_sort_similarity_links);
+use EnsEMBL::Web::RegObj;
 
 use Data::Dumper;
 use Bio::AlignIO;
@@ -313,7 +315,7 @@ sub align_markup_options_form {
 
 sub user_notes {
   my( $panel, $object ) = @_;
-  my $user = EnsEMBL::Web::Object::User->new({ id => $ENV{'ENSEMBL_USER_ID'} });
+  my $user = $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->get_user;
   my $uri = CGI::escape($ENV{'REQUEST_URI'});
   my $html = "";
   my $stable_id = $object->stable_id;
@@ -342,7 +344,7 @@ sub user_notes {
 
 sub group_notes {
   my( $panel, $object ) = @_;
-  my $user = EnsEMBL::Web::Object::User->new({ id => $ENV{'ENSEMBL_USER_ID'} });
+  my $user = $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->get_user;
   my @groups = @{ $user->groups };
   my $uri = CGI::escape($ENV{'REQUEST_URI'});
   my $stable_id = $object->stable_id;

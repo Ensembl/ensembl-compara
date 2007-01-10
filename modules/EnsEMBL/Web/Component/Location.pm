@@ -489,7 +489,7 @@ sub contigviewbottom_config {
   my $string = $session->get_script_config_as_string($script_name);
   my $html = "";
   if ($ENV{'ENSEMBL_USER_ID'}) {
-    my $user = EnsEMBL::Web::Object::User->new({ id => $ENV{'ENSEMBL_USER_ID'} });
+    my $user = $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->get_user;
     my @current_configs = $user->current_config_records;
     my $current_config = $current_configs[0];
     if ($current_config) {

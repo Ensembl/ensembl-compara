@@ -3,7 +3,6 @@ package EnsEMBL::Web::Document::HTML::SpeciesList;
 use strict;
 #use warnings;
 
-use EnsEMBL::Web::Object::User;
 use EnsEMBL::Web::DBSQL::NewsAdaptor;
 use EnsEMBL::Web::RegObj;
 
@@ -26,7 +25,8 @@ sub render {
   
   my %species_description = setup_species_descriptions($species_defs);
 
-  my $user = EnsEMBL::Web::Object::User->new({ id => $ENV{'ENSEMBL_USER_ID'} });
+  my $user = $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->get_user;
+
   my $html = "";
 
   if ($request && $request eq 'fragment') {

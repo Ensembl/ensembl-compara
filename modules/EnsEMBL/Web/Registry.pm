@@ -65,14 +65,12 @@ sub userAdaptor {
 }
 
 sub userDB {
-### a
+### x 
 ### Lazy loaded User DB....
+### Deprecated. Use {{userAdaptor}} instead.
   my $self = shift;
-  return $UserDB_of{ ident $self } ||=
-    EnsEMBL::Web::DBSQL::UserAdaptor->new({
-      'db_adaptor'   => $self->dbAdaptor,   ## Web user db adaptor
-      'species_defs' => $self->species_defs ## Species defs..
-    });
+  warn "xxxxxxxxxxxxx DEPRECATED xxxxxxxxxxxxxxxx";
+  return $UserDB_of{ ident $self } ||= $self->userAdaptor;
 }
 
 sub initialize_user {

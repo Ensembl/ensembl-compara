@@ -8,7 +8,6 @@ use EnsEMBL::Web::Document::Renderer::Apache;
 use EnsEMBL::Web::Document::Panel;
 use EnsEMBL::Web::Document::Static;
 use EnsEMBL::Web::RegObj;
-#use EnsEMBL::Web::User;
 use Data::Dumper;
 use EnsEMBL::Web::Root;
 
@@ -61,7 +60,10 @@ sub handler {
   }
 
   if (@groups) {
-    my $user;# = EnsEMBL::Web::User->new();
+    ## TODO: Not sure what this block does, as $user is not defined - mw4
+    ## Probably best to get the user from the registry.
+
+    my $user;
     my @user_groups = $user->groups;
 
     ## cross-reference user's groups against permitted groups

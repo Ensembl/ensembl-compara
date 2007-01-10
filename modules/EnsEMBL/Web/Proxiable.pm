@@ -5,14 +5,12 @@ use warnings;
 no warnings "uninitialized";
 
 use EnsEMBL::Web::RegObj;
-use EnsEMBL::Web::User;
 use EnsEMBL::Web::ExtURL;
 use EnsEMBL::Web::UserConfigAdaptor;
 use EnsEMBL::Web::ScriptConfigAdaptor;
 use EnsEMBL::Web::Document::DropDown::MenuContainer;
 use EnsEMBL::Web::Root;
 use EnsEMBL::Web::DBSQL::DBConnection;
-use EnsEMBL::Web::DBSQL::UserDB;
 
 our @ISA = qw( EnsEMBL::Web::Root );
 
@@ -94,9 +92,20 @@ sub problem {
 }
 sub clear_problems { $_[0]{'data'}{'_problem'} = []; }
 
-sub user { $_[0]{'data'}{'_user'}         ||= EnsEMBL::Web::User->new(); }
+sub user { 
+ ### x
+ warn "xxxxxxxxxxxxxxx DEPRECATED xxxxxxxxxxxxxxxx";
+ return undef;
+}
+
 sub species_defs    { $_[0]{'data'}{'_species_defs'} ||= $ENSEMBL_WEB_REGISTRY->species_defs; }
-sub web_user_db { $_[0]{'data'}{'_web_user_db'}  ||= EnsEMBL::Web::DBSQL::UserDB->new( $_[0]->apache_handle ); }
+
+sub web_user_db { 
+  ### x
+  ### Deprecated. Use UserAdaptor from the Registry instead.
+  return undef;
+}
+
 sub apache_handle { $_[0]{'data'}{'_apache_handle'}; }
 
 sub get_userconfig  {

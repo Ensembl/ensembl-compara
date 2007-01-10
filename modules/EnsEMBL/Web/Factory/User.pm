@@ -3,15 +3,16 @@ package EnsEMBL::Web::Factory::User;
 use strict;
 
 use EnsEMBL::Web::Factory;
-use EnsEMBL::Web::DBSQL::UserDB;
 use EnsEMBL::Web::ParameterSet;
 use EnsEMBL::Web::Proxy::Object;
+use EnsEMBL::Web::RegObj;
+
 our @ISA = qw(EnsEMBL::Web::Factory);
 
 sub createObjects { 
   my $self          = shift;
   warn "FACTORY new USER: " . $ENV{'ENSEMBL_USER_ID'};
-  my $adaptor = EnsEMBL::Web::DBSQL::UserDB->new();
+  my $adaptor = $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->userAdaptor;
   my $parameter_set = EnsEMBL::Web::ParameterSet->new((
                                       cgi => $self->__data->{'_input'},
                                                 )); 

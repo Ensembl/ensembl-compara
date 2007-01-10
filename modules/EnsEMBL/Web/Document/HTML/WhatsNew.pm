@@ -8,7 +8,6 @@ use strict;
 use warnings;
 
 use EnsEMBL::Web::RegObj;
-use EnsEMBL::Web::Object::User;
 use EnsEMBL::Web::DBSQL::NewsAdaptor;
 
 {
@@ -30,7 +29,7 @@ sub render {
   my $release_id = $species_defs->ENSEMBL_VERSION;
 
   my $user_id = $ENV{'ENSEMBL_USER_ID'};
-  my $user = EnsEMBL::Web::Object::User->new({ id => $user_id });
+  my $user = $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->get_user;
 
   my $DB = $species_defs->databases->{'ENSEMBL_WEBSITE'};
   my $adaptor = EnsEMBL::Web::DBSQL::NewsAdaptor->new( $DB );
@@ -102,7 +101,7 @@ sub render {
  
       ## generate HTML
       $html .= '<p>';
-      if ($sp_count == 1) {
+      if (defined $sp_count && $sp_count == 1) {
         $html .= qq(<a href="/$sp_dir/"><img src="/img/species/thumb_$sp_dir.png" alt="" title="Go to the $sp_name home page" class="sp-thumb" style="height:30px;width:30px;border:1px solid #999" /></a>);
       }
       else {

@@ -4,7 +4,6 @@ package EnsEMBL::Web::Apache::Handlers;
 use SiteDefs qw( :APACHE);
 use strict;
 use Apache2::Const qw(:common :http :methods);
-use EnsEMBL::Web::DBSQL::UserDB;
 use EnsEMBL::Web::DBSQL::BlastAdaptor;
 use EnsEMBL::Web::Object::BlastJobMaster;
 use EnsEMBL::Web::Cookie;
