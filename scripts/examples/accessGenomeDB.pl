@@ -5,15 +5,20 @@ use Getopt::Long;
 use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 
-my $reg_conf = shift;
-die("must specify registry conf file on commandline\n") unless($reg_conf);
-Bio::EnsEMBL::Registry->load_all($reg_conf);
+# my $reg_conf = shift;
+# die("must specify registry conf file on commandline\n") unless($reg_conf);
+# Bio::EnsEMBL::Registry->load_all($reg_conf);
+
+Bio::EnsEMBL::Registry->load_registry_from_db
+  ( -host => 'ensembldb.ensembl.org',
+    -user => 'anonymous',
+    -verbose => "1" );
 
 # get compara DBAdaptor
-my $comparaDBA = Bio::EnsEMBL::Registry-> get_DBAdaptor('compara', 'compara');
+my $comparaDBA = Bio::EnsEMBL::Registry->get_DBAdaptor('compara', 'compara');
 
 # get GenomeDB for human
-my $humanGDB = $comparaDBA->get_GenomeDBAdaptor-> fetch_by_registry_name("human");
+my $humanGDB = $comparaDBA->get_GenomeDBAdaptor->fetch_by_registry_name("human");
 
 # get DBAdaptor for Human ensembl core database
 my $human_core_DBA = $humanGDB->db_adaptor;

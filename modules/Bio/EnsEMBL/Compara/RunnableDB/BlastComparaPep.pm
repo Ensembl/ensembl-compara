@@ -14,14 +14,15 @@ Bio::EnsEMBL::Compara::RunnableDB::BlastComparaPep
 =head1 SYNOPSIS
 
 my $db      = Bio::EnsEMBL::Compara::DBAdaptor->new($locator);
-my $repmask = Bio::EnsEMBL::Compara::RunnableDB::BlastComparaPep->new ( 
-                                                    -db      => $db,
-                                                    -input_id   => $input_id
-                                                    -analysis   => $analysis );
-$repmask->fetch_input(); #reads from DB
-$repmask->run();
-$repmask->output();
-$repmask->write_output(); #writes to DB
+my $blast = Bio::EnsEMBL::Compara::RunnableDB::BlastComparaPep->new
+ (
+  -db      => $db,
+  -input_id   => $input_id
+  -analysis   => $analysis );
+$blast->fetch_input(); #reads from DB
+$blast->run();
+$blast->output();
+$blast->write_output(); #writes to DB
 
 =cut
 
@@ -52,15 +53,6 @@ Internal methods are usually preceded with a _
 
 package Bio::EnsEMBL::Compara::RunnableDB::BlastComparaPep;
 
-# use strict;
-# 
-# use Bio::EnsEMBL::Analysis::Runnable;
-# use Bio::EnsEMBL::Analysis::RunnableDB;
-# use Bio::EnsEMBL::Analysis::Runnable::Blast;
-# use Bio::EnsEMBL::Analysis::RunnableDB::Blast;
-# use Bio::EnsEMBL::Compara::DBSQL::PeptideAlignFeatureAdaptor;
-# use Bio::EnsEMBL::Compara::Member;
-# use Bio::EnsEMBL::Utils::Exception;
 use strict;
 use warnings;
 
