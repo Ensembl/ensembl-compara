@@ -62,7 +62,7 @@ mysql -hens-livemirror -uensadmin -pensembl ncbi_taxonomy < merged_nodes.sql
 
 mysql -hens-livemirror -uensadmin -pensembl -N -e "insert into ncbi_taxa_name (taxon_id, name, name_class) select distinct taxon_id, CURRENT_TIMESTAMP, 'import date' from ncbi_taxa_node where parent_id=0" ncbi_taxonomy
 
-# Build the left/right indexes and store them in the database. This indexing help speeding up subtree retrivial if needed.
+# Build the left/right indexes and store them in the database. This indexing help speeding up subtree retrieval if needed.
 
 ensembl-compara/scripts/taxonomy/taxonTreeTool.pl -url mysql://ensadmin:ensembl@ens-livemirror:3306/ncbi_taxonomy -index > leftright_indexing.err 2>&1 &
 

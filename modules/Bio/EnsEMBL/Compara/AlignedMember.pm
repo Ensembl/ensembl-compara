@@ -33,7 +33,7 @@ use Bio::EnsEMBL::Compara::Member;
 our @ISA = qw(Bio::EnsEMBL::Compara::Member);
 
 ##################################
-# overrided superclass methods
+# overriden superclass methods
 ##################################
 
 sub copy {

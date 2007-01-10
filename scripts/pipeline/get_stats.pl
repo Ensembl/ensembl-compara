@@ -175,7 +175,7 @@ $| = 0;
 
 ##
 ## Configure the Bio::EnsEMBL::Registry
-## Uses $reg_conf if supllied. Uses ENV{ENSMEBL_REGISTRY} instead if defined. Uses
+## Uses $reg_conf if supplied. Uses ENV{ENSMEBL_REGISTRY} instead if defined. Uses
 ## ~/.ensembl_init if all the previous fail.
 ##
 Bio::EnsEMBL::Registry->load_all($reg_conf);

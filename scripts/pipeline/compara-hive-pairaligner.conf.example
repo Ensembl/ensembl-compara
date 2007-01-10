@@ -54,7 +54,7 @@
     'group_set_size'        => 4000000, #optional, default: undef i.e. not sequence grouping
     'masking_options'       => "{default_soft_masking => 1}", # 0 for hard masking, comment the line for no masking
 # or  'masking_options'       => "{default_soft_masking => 1, logic_names => ["RepeatMask", "Dust", "TRF"]}",
-# if you want to mask only certains type of repeat logic_name analysis.
+# if you want to mask only certain type of repeat logic_name analysis.
 #
 #    'masking_options_file'       => '/path/to/masking/options/file/for/mouse',
 # if both masking_options_file and masking_options are specific masking_options_file has priority over masking_options

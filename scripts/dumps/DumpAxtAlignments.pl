@@ -78,7 +78,7 @@ if ($seq_region eq $seq_r->seq_region_name) {
 
 
 my $slice = $sliceadaptor->fetch_by_region($seq_r->coord_system->name,$seq_region);
-# futher checks on arguments
+# further checks on arguments
 
 #print STDERR "$seq_region = ".$seq_r->seq_region_name." is a ".$seq_r->coord_system->name."\n";
 

@@ -90,7 +90,7 @@ my @redundancies;
 my %stored_at_index;
 
 # The whole process that results are sorted by $qid and $tid which is basically what pmatch
-# output does. If the result appears in a randon way (no reason for that though) the process may break
+# output does. If the result appears in a random way (no reason for that though) the process may break
 # with exit code 1
 
 while (my $line = <PM>) {

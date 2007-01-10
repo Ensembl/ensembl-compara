@@ -261,8 +261,8 @@ my $method_link_species_set = new Bio::EnsEMBL::Compara::MethodLinkSpeciesSet(
         -species_set => $species_set
     );
 
-# This method stores the new method_link_species_set and return the obejct with a new dbID. IF
-# the object already exists on the DB, it returns the obejct with the existing dbID
+# This method stores the new method_link_species_set and return the object with a new dbID. IF
+# the object already exists on the DB, it returns the object with the existing dbID
 $method_link_species_set = $method_link_species_set_adaptor->store($method_link_species_set);
 
 foreach my $multiz_file (@multiz_files) {

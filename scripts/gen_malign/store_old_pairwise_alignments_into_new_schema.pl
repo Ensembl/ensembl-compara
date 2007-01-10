@@ -9,7 +9,7 @@ my $description = q{
 ##
 ##    This software is part of the EnsEMBL project.
 ##
-##  DESCRIPTION This program connects to an old database to fetch pariwise
+##  DESCRIPTION This program connects to an old database to fetch pairwise
 ##     alignments and store them into a new database.
 ##
 ##  DATE 28-June-2004

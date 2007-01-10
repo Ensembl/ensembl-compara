@@ -18,7 +18,7 @@ my $humanGDB = $comparaDBA->get_GenomeDBAdaptor-> fetch_by_registry_name("human"
 # simple example of getting members, back referencing to core,
 # and then back reference again to compara
 # not efficient since gene members are stored in compara, but demonstrates
-# the contections
+# the connections
 
 my $ma = $comparaDBA->get_MemberAdaptor;
 my $m1 = $ma->fetch_by_source_stable_id("ENSEMBLGENE", "ENSG00000060069");

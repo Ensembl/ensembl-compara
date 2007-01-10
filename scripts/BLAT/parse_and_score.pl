@@ -15,7 +15,7 @@ use Bio::EnsEMBL::Utils::Exception;
 
 
 
-######rewrite so that it dosn't link to compara just core as dosn't actually use compara
+######rewrite so that it doesn't link to compara just core as doesn't actually use compara
 
 my $usage="
 $0 [-help]

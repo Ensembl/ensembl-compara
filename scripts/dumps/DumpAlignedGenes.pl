@@ -327,7 +327,7 @@ if ($output_file) {
 ##############################################################################################
 ##
 ## Configure the Bio::EnsEMBL::Registry
-## Uses $reg_conf if supllied. Uses ENV{ENSMEBL_REGISTRY} instead if defined. Uses
+## Uses $reg_conf if supplied. Uses ENV{ENSMEBL_REGISTRY} instead if defined. Uses
 ## ~/.ensembl_init if all the previous fail.
 ##
 
@@ -377,7 +377,7 @@ foreach my $this_species (split(":", $set_of_species)) {
 my $method_link_species_set_adaptor = Bio::EnsEMBL::Registry->get_adaptor(
     $dbname, 'compara', 'MethodLinkSpeciesSet');
 
-# Fetch the obejct
+# Fetch the object
 my $method_link_species_set = $method_link_species_set_adaptor->fetch_by_method_link_type_GenomeDBs(
         $alignment_type, $genome_dbs);
 
@@ -444,7 +444,7 @@ my $source_genome_db = $genome_db_adaptor->fetch_by_name_assembly($source_binomi
 my $align_slice_adaptor = Bio::EnsEMBL::Registry->get_adaptor($dbname, 'compara', 'AlignSlice');
 
 # Fetch the Bio::EnsEMBL::Compara::AlignSlice object using the query Slice and the 
-# MethodLinkSpeciesSet obejct corresponding to the set of species
+# MethodLinkSpeciesSet object corresponding to the set of species
 my $align_slice = $align_slice_adaptor->fetch_by_Slice_MethodLinkSpeciesSet(
         $query_slice,
         $method_link_species_set,

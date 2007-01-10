@@ -109,7 +109,7 @@ $matrix = $mp->next_matrix;
 		
 ################################################################################################
 ## Need some sort of general reg expression here to cope with the weird honey bee groupings
-##But Havn't managed to work one out therefore at present here is a hard coded hackaround
+##But Haven't managed to work one out therefore at present here is a hard coded hackaround
 ##
 ################################################################################################		
 		
@@ -194,7 +194,7 @@ my $Hst=$atrib[10]; if ($Hst eq '+'){$Hst= 1;}else {$Hst='-1';}
 my $sliceQ = $sliceadaptor1->fetch_by_region('toplevel', $chr1, $Qstart, $Qend, $Qst);
 my $sliceT = $sliceadaptor2->fetch_by_region('toplevel', $chr2, $Hstart, $Hend, $Hst);
 # now get genes and exons NB don't care what they are just that they are coding.
-# need to do a check for numbers -- eg inclide number of genes and exons in the slice
+# need to do a check for numbers -- eg include number of genes and exons in the slice
 
 my $qy_genes=$sliceQ->get_all_Genes(); 
 my $cs_genes=$sliceT->get_all_Genes();

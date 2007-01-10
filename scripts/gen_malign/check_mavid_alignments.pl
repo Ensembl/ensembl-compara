@@ -58,7 +58,7 @@ use Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
 
 ###############################################################################
 ##  CONFIGURATION VARIABLES:
-##   (*) $berkeley_2_ensembl:  maps the Berkeley species names into the EnseEMBL
+##   (*) $berkeley_2_ensembl:  maps the Berkeley species names into the EnsEMBL
 ##           species naming system.
 ###############################################################################
 my $berkeley_2_ensembl = {

@@ -141,7 +141,7 @@ if (!defined($fastaqy) and !(defined($idqy) and defined($indexqy))) {
 	 
 	 
 ######
-#check for the Nocc file and if it dosn't exist make it	
+#check for the Nocc file and if it doesn't exist make it	
 #
 #usage:
 #   blat database query [-ooc=11.ooc] output.psl
@@ -179,7 +179,7 @@ print "making make file\n";
 								-options      => "-ooc=$Nooc_file -tileSize=5 -makeOoc=$Nooc_file -mask=lower -qMask=lower ");
 	$runnable->run;
 	
-#Run with querys
+#Run with queries
   $runnable = new Bio::EnsEMBL::Pipeline::Runnable::Blat(
                 -blat         => "blat-32",
                 -query_file   => $fastaqy,

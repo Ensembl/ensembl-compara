@@ -1,6 +1,6 @@
 #!/usr/local/ensembl/bin/perl 
 
-# Script to assembl the consensus annotations from different files into
+# Script to assemble the consensus annotations from different files into
 # final ones. It basically takes the SWISS-PROT description consensus if
 # there is one, otherwise the SPTREMBL one, and then cleans things up
 # (even applies some edits). The reason not to do this straight away in

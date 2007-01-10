@@ -516,7 +516,7 @@ sub _parse_rates_file {
 				       start_pos => 1}; #alignment position of this block
     }
 
-#length of uncalled region to allow neighbouring called regions to be joined
+#length of uncalled region to allow neighboring called regions to be joined
 #doesn't want to be too big because I need to store these uncalled values.
     my $merge_dist = 10;
 
@@ -671,7 +671,7 @@ sub _parse_rates_file {
 
 #  Arg [1]    : array reference of genomic_aligns
 #  Example    : $self->_build_tree_string();
-#  Description: This method sets the tree_string using the orginal
+#  Description: This method sets the tree_string using the original
 #               species tree and the set of GenomicAligns. The
 #               tree is edited by the _update_tree method  
 #               (see _update_tree elsewhere in this document)
@@ -723,7 +723,7 @@ sub _build_tree_string {
 #  Arg [1]    : Bio::EnsEMBL::Compara::NestedSet $tree_root
 #  Example    : $self->_update_nodes_names($tree);
 #  Description: This method updates the tree by removing or
-#               duplicating the leaves according to the orginal
+#               duplicating the leaves according to the original
 #               tree and the set of GenomicAligns. The tree nodes
 #               will be renamed ..... 
 #  Returntype : Bio::EnsEMBL::Compara::NestedSet (a tree)

@@ -1,5 +1,5 @@
 # This is an adapted  version of Algorithm::Diff. 
-# The original is commited at Algorithm::DiffOld.
+# The original is committed at Algorithm::DiffOld.
 # Adaptations by Anton Enright, @ ebi.ac.uk
 # $Id$
 #

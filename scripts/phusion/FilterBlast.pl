@@ -1,7 +1,7 @@
 #!/usr/local/ensembl/bin/perl -w
 
-# This script, originally written by Jim Mullikin, then called cigar.pl was remaned to FilterBlast.pl
-# and addpated to also filter wutblastx outputs
+# This script, originally written by Jim Mullikin, then called cigar.pl was renamed to FilterBlast.pl
+# and adapted to also filter wutblastx outputs
 
 use strict;
 use Getopt::Long;

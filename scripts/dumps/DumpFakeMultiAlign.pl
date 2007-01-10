@@ -250,7 +250,7 @@ if ($output_file) {
 }
 
 # Configure the Bio::EnsEMBL::Registry
-# Uses $reg_conf if supllied. Uses ENV{ENSMEBL_REGISTRY} instead if defined. Uses ~/.ensembl_init
+# Uses $reg_conf if supplied. Uses ENV{ENSMEBL_REGISTRY} instead if defined. Uses ~/.ensembl_init
 # if all the previous fail.
 Bio::EnsEMBL::Registry->load_all($reg_conf);
 
@@ -574,8 +574,8 @@ sub compile_fake_genomic_align2 {
 # #   ############################################################################################
 # #   ##
 # #   ## Get the coordinates of all the gaps in all the reference genomic align. Every
-# #   ## gap_insertion is a hash of $gap_insetion->{GAB_ID} = genomic_align_block_id and
-# #   ## $gap_insetion->{COORDINATES} = [$start_of_gap, $gap_length]. Gaps are on
+# #   ## gap_insertion is a hash of $gap_insertion->{GAB_ID} = genomic_align_block_id and
+# #   ## $gap_insertion->{COORDINATES} = [$start_of_gap, $gap_length]. Gaps are on
 # #   ## original_sequence coordinates
 # #   ##
 # #   my $all_gap_insertions = get_all_gap_insertions_from_genomic_align_blocks(
@@ -656,7 +656,7 @@ sub compile_fake_genomic_align2 {
 # #     fix_all_non_reference_sequences($this_genomic_align_block, $start_pos, $end_pos);
 # #   }
 # # 
-# #   ## Create the genomic_align_array (the list of genomic_aling for this fake gab
+# #   ## Create the genomic_align_array (the list of genomic_align for this fake gab
 # #   my $genomic_align_array = [$reference_genomic_align];
 # #   foreach my $this_genomic_align_block (@$all_genomic_align_blocks) {
 # #     my $this_start_pos = $this_genomic_align_block->reference_genomic_align->dnafrag_start;

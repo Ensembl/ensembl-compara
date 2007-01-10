@@ -193,7 +193,7 @@ my $mlssa = $compara_dba->get_MethodLinkSpeciesSetAdaptor();
 #################################################
 
 #################################################
-## Set values interactivelly if needed
+## Set values interactively if needed
 if (!$method_link_type) {
   $method_link_type = ask_for_method_link_type($compara_dba);
   print "METHOD_LINK_TYPE = $method_link_type\n";

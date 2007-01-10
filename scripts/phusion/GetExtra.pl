@@ -1,6 +1,6 @@
 #!/usr/local/ensembl/bin/perl -w
 
-# This script, originally written by Jim Mullikin, then called PhusionBlastExtra.pl was remaned to GetExtra.pl
+# This script, originally written by Jim Mullikin, then called PhusionBlastExtra.pl was renamed to GetExtra.pl
 # with no code modification
 
 use strict;

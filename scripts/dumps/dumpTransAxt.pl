@@ -90,7 +90,7 @@ my ($coordinate_system_name, $seq_region_name) = split ":", $seq_region;
 my $sliceadaptor = $db->get_db_adaptor($species1,$assembly1)->get_SliceAdaptor;
 my $slice = $sliceadaptor->fetch_by_region($coordinate_system_name,$seq_region_name);
 
-# futher checks on arguments
+# further checks on arguments
 
 unless (defined $seq_region_start) {
   warn "WARNING : setting seq_region_start=1\n";

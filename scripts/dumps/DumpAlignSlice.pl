@@ -14,8 +14,8 @@ my $description = q{
 ## DESCRIPTION
 ##    This script dumps genomic alignments from an EnsEMBL Compara
 ##    database using the AlignSlice framework. It can work in both
-##    colapsed (preserving the original sequence) and expanded mode
-##    (expanding the original sequence in order to accomodate the
+##    collapsed (preserving the original sequence) and expanded mode
+##    (expanding the original sequence in order to accommodate the
 ##    gaps defined by the genomic alignment).
 ##
 ###########################################################################
@@ -310,7 +310,7 @@ if ($output_file) {
 }
 
 # Configure the Bio::EnsEMBL::Registry
-# Uses $reg_conf if supllied. Uses ENV{ENSMEBL_REGISTRY} instead if defined. Uses ~/.ensembl_init
+# Uses $reg_conf if supplied. Uses ENV{ENSMEBL_REGISTRY} instead if defined. Uses ~/.ensembl_init
 # if all the previous fail.
 Bio::EnsEMBL::Registry->load_all($reg_conf);
 
