@@ -167,7 +167,7 @@ if ($output_file) {
 }
 
 # Configure the Bio::EnsEMBL::Registry
-# Uses $reg_conf if supllied. Uses ENV{ENSMEBL_REGISTRY} instead if defined. Uses ~/.ensembl_init
+# Uses $reg_conf if supplied. Uses ENV{ENSMEBL_REGISTRY} instead if defined. Uses ~/.ensembl_init
 # if all the previous fail.
 if ($reg_conf) {
   eval{ require Bio::EnsEMBL::Registry };
