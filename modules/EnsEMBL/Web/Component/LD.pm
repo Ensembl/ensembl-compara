@@ -305,7 +305,7 @@ sub options_form {
   my  @formats = ( {"value" => "astext",       "name" => "As text"},
 		   {"value" => "asexcel",      "name" => "In Excel format"},
 		   {"value" => "ashtml",       "name" => "HTML format "},
-		   {"value" => "ashaploview",  "name" => 'For upload into Haploview software (takes a while to download)'}
+		   {"value" => "ashaploview",  "name" => 'For upload into Haploview software (may take a while)'}
 		 );
 
   return $form unless @formats;

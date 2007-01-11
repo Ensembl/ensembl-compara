@@ -53,7 +53,7 @@ sub snpview {
     'caption' => "SNP ". $obj->name.$caption,
      @params,
     'status'  => 'panel_locations',
-    'null_data' => '<p>There are no transcripts that contain this SNP either because there is no mapping or because it was removed from Ensembl because its alleles did not match the reference sequence.</p>'
+    'null_data' => '<p>No mapping for this SNP. (SNP mappings are removed from Ensembl if none of their alleles match the reference sequence).</p>'
 				    )) {
     $mapping_panel->add_components( qw(mappings EnsEMBL::Web::Component::SNP::mappings) );
     $self->{page}->content->add_panel( $mapping_panel );

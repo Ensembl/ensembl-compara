@@ -440,10 +440,9 @@ sub individual_genotypes {
       my $allele = $_ =~ /A|C|G|G|N/ ? $_ : "N";
       $genotypes{ $ind_obj->name }.= $allele;
     }
-
     $data{ $ind_obj->name }{gender}   = $gender{$ind_obj->gender} || 0;
-    $data{ $ind_obj->name }{mother}   = 0;#$self->parent($ind_obj, "mother");
-    $data{ $ind_obj->name }{father}   = 0;#$self->parent($ind_obj, "father");
+    $data{ $ind_obj->name }{mother}   = $self->parent($ind_obj, "mother");
+    $data{ $ind_obj->name }{father}   = $self->parent($ind_obj, "father");
   }
   return \%genotypes, \%data;
 }
