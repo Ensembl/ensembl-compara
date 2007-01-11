@@ -246,8 +246,8 @@ sub run_njtree_phyml
   unless (-e $njtree_phyml_executable) {
     if (-e "/proc/version") {
       # it is a linux machine
-      # md5sum af1dd2092781aa704fefbecc36256619
-      $njtree_phyml_executable = "/lustre/work1/ensembl/avilella/bin/i386/njtree";
+      # md5sum b8bbae4f5e29858e8ab4d8dd451885e4
+      $njtree_phyml_executable = "/lustre/work1/ensembl/avilella/bin/i386_icc/njtree_quiet";
     }
   }
   # FIXME - ask systems to add it to ensembl bin
