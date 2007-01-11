@@ -7,12 +7,18 @@ use EnsEMBL::Web::Object::DAS;
 our @ISA = qw(EnsEMBL::Web::Object::DAS);
 
 use Bio::EnsEMBL::Map::DBSQL::DitagFeatureAdaptor;
-my @ditag_analysis = qw(FANTOM_GSC_PET FANTOM_GIS_PET GIS_PET_Encode GIS_PET CHIP_PET);
+my %ditag_analysis = (
+	FANTOM_GSC_PET => 1,
+	FANTOM_GIS_PET => 1,
+	GIS_PET_Encode => 1,
+	GIS_PET => 1,
+	CHIP_PET => 1,
+	FANTOM_CAGE => 1
+	);
 
 sub Types {
     my $self = shift;
 
-    my @segments = $self->Locations;
     my @features;
     my $dba = $self->database('core', $self->real_species);
 
@@ -20,14 +26,29 @@ sub Types {
     my $da = $dba->get_DitagAdaptor;
 
     my $tHash;
+    if (my @segments = $self->Locations) {
+      foreach my $s (@segments) {
+        if (ref($s) eq 'HASH' && $s->{'TYPE'} eq 'ERROR') {
+            push @features, $s;
+            next;
+        }
+        my $slice = $s->slice;
 
-    foreach my $ft (@{$dfa->fetch_all || [] }) {
-        next unless grep {$_ eq $ft->analysis->logic_name} @ditag_analysis;
-	$tHash->{ $ft->ditag_side } ++;
+        foreach my $ft (@{$dfa->fetch_all_by_Slice($slice) || [] }) {
+	  next unless $ditag_analysis{ $ft->analysis->logic_name };
+	  $tHash->{ $ft->analysis->logic_name } ++;
+        }
+      }
+    } else {
+        foreach my $ft (@{$dfa->fetch_all || [] }) {
+	  next unless $ditag_analysis{ $ft->analysis->logic_name };
+	  $tHash->{ $ft->analysis->logic_name } ++;
+        }
     }
     foreach my $t (sort keys %$tHash) {
-	push @features, [$t, '', '', $tHash->{$t} ];
+      push @features, [$t, '', '', $tHash->{$t} ];
     }
+
     return \@features;
 }
 
@@ -42,8 +63,8 @@ sub Features {
     my @segments = $self->Locations;
     my @features;
 
-    my @fts = grep { $_ } @{$self->FeatureTypes || []};
-
+    my %fts = map {$_ => 1} grep {$_}  @{$self->FeatureTypes || []};
+    my $filter = %fts;
 
     my $dfa = $dba->get_DitagFeatureAdaptor; 
     my $da = $dba->get_DitagAdaptor;
@@ -54,27 +75,22 @@ sub Features {
 	    next;
 	}
 	my $slice = $s->slice;
-        my $offset = $s->seq_region_start - 1;
 	my @segment_features;
 
 	foreach my $ft (sort {$a->start <=> $b->start} @{$dfa->fetch_all_by_Slice($slice) || [] }) {
-
-	    next unless grep {$_ eq $ft->analysis->logic_name} @ditag_analysis;
-
-	    if (@fts > 0) {
-		next unless grep {$_ eq $ft->ditag_side} @fts;
-	    }
+	    next unless ($ditag_analysis{$ft->analysis->logic_name});
+	    my $ftype = $ft->analysis->logic_name;
+	    next unless (! $filter || $fts{$ftype});
 
 	    my $tag_count = $da->fetch_by_dbID($ft->ditag_id)->tag_count();
 
 	    my $id = join('.', $ft->ditag_id, $ft->ditag_pair_id);
 	    my $g_location = "Location: ".join(' - ', ($ft->get_ditag_location)[0,1]);
-	    my $ftype = $ft->analysis->logic_name;
 
 	    my $group = {
 		'ID' => $id,
 		'LINK' => [ {text => 'More info', href => "http://www.ensembl.org/$species/ditags/$ftype.html"} ],
-		'TYPE' =>  $ftype,
+		'TYPE' =>  join('-', $ftype,$ft->ditag_side),
 		'NOTE'        => ["tag_count: $tag_count", $g_location],
 	    };
 	    $id = join('.', $id, $ft->ditag_side);
@@ -82,10 +98,12 @@ sub Features {
 	    my $f = {
 		'ID'          => $id,
 		'LABEL'       => $ft->ditag_id,
-		'TYPE'        => $ft->ditag_side || '', 
+		'TYPE' =>  join('-', $ftype,$ft->ditag_side),
+#		'TYPE'        => $ftype,
+	#	'CATEGORY'        => $ft->ditag_side || '', 
 		'METHOD'      => $ftype,
-		'START'       => $ft->start + $offset,
-		'END'         => $ft->end   + $offset,
+		'START'       => $ft->start ,
+		'END'         => $ft->end ,
 		'ORIENTATION' => $ft->strand+0,
 		'NOTE'        => ["tag_count: $tag_count"],
 		'GROUP' => [$group], 
@@ -107,110 +125,241 @@ sub Stylesheet {
     my $self = shift;
     return qq{
 <STYLESHEET version="1.0">
-  
-  <CATEGORY id="group">
+ <CATEGORY id="default">
+    <TYPE id="FANTOM_GSC_PET-R">
+      <GLYPH>
+         <ANCHORED_ARROW>
+           <HEIGHT>10</HEIGHT>
+           <BGCOLOR>darkolivegreen1</BGCOLOR>
+           <FGCOLOR>darkolivegreen1</FGCOLOR>
+           <BAR_STYLE>line</BAR_STYLE>
+           <NO_ANCHOR>1</NO_ANCHOR>
+           <BUMP>1</BUMP>
+           <FONT>sanserif</FONT>
+         </ANCHORED_ARROW>
+      </GLYPH>
+    </TYPE>
+    <TYPE id="FANTOM_GSC_PET-L">
+      <GLYPH>
+         <ANCHORED_ARROW>
+           <HEIGHT>10</HEIGHT>
+           <BGCOLOR>darkolivegreen1</BGCOLOR>
+           <FGCOLOR>darkolivegreen1</FGCOLOR>
+           <BAR_STYLE>line</BAR_STYLE>
+           <NO_ANCHOR>1</NO_ANCHOR>
+           <BUMP>1</BUMP>
+           <FONT>sanserif</FONT>
+         </ANCHORED_ARROW>
+      </GLYPH>
+    </TYPE>
+    <TYPE id="FANTOM_GIS_PET-R">
+      <GLYPH>
+         <ANCHORED_ARROW>
+           <HEIGHT>10</HEIGHT>
+           <BGCOLOR>lightblue1</BGCOLOR>
+           <FGCOLOR>lightblue1</FGCOLOR>
+           <BAR_STYLE>line</BAR_STYLE>
+           <NO_ANCHOR>1</NO_ANCHOR>
+           <BUMP>1</BUMP>
+           <FONT>sanserif</FONT>
+         </ANCHORED_ARROW>
+      </GLYPH>
+    </TYPE>
+    <TYPE id="FANTOM_GIS_PET-L">
+      <GLYPH>
+         <ANCHORED_ARROW>
+           <HEIGHT>10</HEIGHT>
+           <BGCOLOR>lightblue1</BGCOLOR>
+           <FGCOLOR>lightblue1</FGCOLOR>
+           <BAR_STYLE>line</BAR_STYLE>
+           <NO_ANCHOR>1</NO_ANCHOR>
+           <BUMP>1</BUMP>
+           <FONT>sanserif</FONT>
+         </ANCHORED_ARROW>
+      </GLYPH>
+    </TYPE>
+    <TYPE id="GIS_PET-R">
+      <GLYPH>
+         <ANCHORED_ARROW>
+           <HEIGHT>10</HEIGHT>
+           <BGCOLOR>lightblue1</BGCOLOR>
+           <FGCOLOR>lightblue1</FGCOLOR>
+           <BAR_STYLE>line</BAR_STYLE>
+           <NO_ANCHOR>1</NO_ANCHOR>
+           <BUMP>1</BUMP>
+           <FONT>sanserif</FONT>
+         </ANCHORED_ARROW>
+      </GLYPH>
+    </TYPE>
+    <TYPE id="GIS_PET-L">
+      <GLYPH>
+         <ANCHORED_ARROW>
+           <HEIGHT>10</HEIGHT>
+           <BGCOLOR>lightblue1</BGCOLOR>
+           <FGCOLOR>lightblue1</FGCOLOR>
+           <BAR_STYLE>line</BAR_STYLE>
+           <NO_ANCHOR>1</NO_ANCHOR>
+           <BUMP>1</BUMP>
+           <FONT>sanserif</FONT>
+         </ANCHORED_ARROW>
+      </GLYPH>
+    </TYPE>
+    <TYPE id="CHIP_PET-R">
+      <GLYPH>
+         <ANCHORED_ARROW>
+           <HEIGHT>10</HEIGHT>
+           <BGCOLOR>darkolivegreen1</BGCOLOR>
+           <FGCOLOR>darkolivegreen1</FGCOLOR>
+           <BAR_STYLE>line</BAR_STYLE>
+           <NO_ANCHOR>1</NO_ANCHOR>
+           <BUMP>1</BUMP>
+           <FONT>sanserif</FONT>
+         </ANCHORED_ARROW>
+      </GLYPH>
+    </TYPE>
+    <TYPE id="CHIP_PET-L">
+      <GLYPH>
+         <ANCHORED_ARROW>
+           <HEIGHT>10</HEIGHT>
+           <BGCOLOR>darkolivegreen1</BGCOLOR>
+           <FGCOLOR>darkolivegreen1</FGCOLOR>
+           <BAR_STYLE>line</BAR_STYLE>
+           <NO_ANCHOR>1</NO_ANCHOR>
+           <BUMP>1</BUMP>
+           <FONT>sanserif</FONT>
+         </ANCHORED_ARROW>
+      </GLYPH>
+    </TYPE>
     <TYPE id="default">
       <GLYPH>
          <ANCHORED_ARROW>
-	   <HEIGHT>10</HEIGHT>
+           <HEIGHT>10</HEIGHT>
            <BGCOLOR>royalblue1</BGCOLOR>
            <FGCOLOR>royalblue1</FGCOLOR>
-	   <BAR_STYLE>line</BAR_STYLE>
-	   <NO_ANCHOR>1</NO_ANCHOR>
+           <BAR_STYLE>line</BAR_STYLE>
+           <NO_ANCHOR>1</NO_ANCHOR>
            <BUMP>1</BUMP>
            <FONT>sanserif</FONT>
          </ANCHORED_ARROW>
       </GLYPH>
     </TYPE>
-    <TYPE id="FANTOM_GSC_PET">
-      <GLYPH>
-         <ANCHORED_ARROW>
-	   <HEIGHT>10</HEIGHT>
-           <BGCOLOR>lightblue1</BGCOLOR>
-           <FGCOLOR>lightblue1</FGCOLOR>
-	   <BAR_STYLE>line</BAR_STYLE>
-	   <NO_ANCHOR>1</NO_ANCHOR>
-           <BUMP>1</BUMP>
-           <FONT>sanserif</FONT>
-         </ANCHORED_ARROW>
-      </GLYPH>
-    </TYPE>
-  </CATEGORY>
+   </CATEGORY>
 
-  <CATEGORY id="default">
+
+ 
+  <CATEGORY id="group">
+    <TYPE id="FANTOM_GSC_PET-R">
+      <GLYPH>
+         <ANCHORED_ARROW>
+           <HEIGHT>10</HEIGHT>
+           <BGCOLOR>darkolivegreen1</BGCOLOR>
+           <FGCOLOR>darkolivegreen1</FGCOLOR>
+           <BAR_STYLE>line</BAR_STYLE>
+           <NO_ANCHOR>1</NO_ANCHOR>
+           <BUMP>1</BUMP>
+           <FONT>sanserif</FONT>
+         </ANCHORED_ARROW>
+      </GLYPH>
+    </TYPE>
+    <TYPE id="FANTOM_GSC_PET-L">
+      <GLYPH>
+         <ANCHORED_ARROW>
+           <HEIGHT>10</HEIGHT>
+           <BGCOLOR>darkolivegreen1</BGCOLOR>
+           <FGCOLOR>darkolivegreen1</FGCOLOR>
+           <BAR_STYLE>line</BAR_STYLE>
+           <NO_ANCHOR>1</NO_ANCHOR>
+           <BUMP>1</BUMP>
+           <FONT>sanserif</FONT>
+         </ANCHORED_ARROW>
+      </GLYPH>
+    </TYPE>
+    <TYPE id="FANTOM_GIS_PET-R">
+      <GLYPH>
+         <ANCHORED_ARROW>
+           <HEIGHT>10</HEIGHT>
+           <BGCOLOR>lightblue1</BGCOLOR>
+           <FGCOLOR>lightblue1</FGCOLOR>
+           <BAR_STYLE>line</BAR_STYLE>
+           <NO_ANCHOR>1</NO_ANCHOR>
+           <BUMP>1</BUMP>
+           <FONT>sanserif</FONT>
+         </ANCHORED_ARROW>
+      </GLYPH>
+    </TYPE>
+    <TYPE id="FANTOM_GIS_PET-L">
+      <GLYPH>
+         <ANCHORED_ARROW>
+           <HEIGHT>10</HEIGHT>
+           <BGCOLOR>lightblue1</BGCOLOR>
+           <FGCOLOR>lightblue1</FGCOLOR>
+           <BAR_STYLE>line</BAR_STYLE>
+           <NO_ANCHOR>1</NO_ANCHOR>
+           <BUMP>1</BUMP>
+           <FONT>sanserif</FONT>
+         </ANCHORED_ARROW>
+      </GLYPH>
+    </TYPE>
+    <TYPE id="GIS_PET-R">
+      <GLYPH>
+         <ANCHORED_ARROW>
+           <HEIGHT>10</HEIGHT>
+           <BGCOLOR>lightblue1</BGCOLOR>
+           <FGCOLOR>lightblue1</FGCOLOR>
+           <BAR_STYLE>line</BAR_STYLE>
+           <NO_ANCHOR>1</NO_ANCHOR>
+           <BUMP>1</BUMP>
+           <FONT>sanserif</FONT>
+         </ANCHORED_ARROW>
+      </GLYPH>
+    </TYPE>
+    <TYPE id="GIS_PET-L">
+      <GLYPH>
+         <ANCHORED_ARROW>
+           <HEIGHT>10</HEIGHT>
+           <BGCOLOR>lightblue1</BGCOLOR>
+           <FGCOLOR>lightblue1</FGCOLOR>
+           <BAR_STYLE>line</BAR_STYLE>
+           <NO_ANCHOR>1</NO_ANCHOR>
+           <BUMP>1</BUMP>
+           <FONT>sanserif</FONT>
+         </ANCHORED_ARROW>
+      </GLYPH>
+    </TYPE>
+    <TYPE id="CHIP_PET-R">
+      <GLYPH>
+         <ANCHORED_ARROW>
+           <HEIGHT>10</HEIGHT>
+           <BGCOLOR>darkolivegreen1</BGCOLOR>
+           <FGCOLOR>darkolivegreen1</FGCOLOR>
+           <BAR_STYLE>line</BAR_STYLE>
+           <NO_ANCHOR>1</NO_ANCHOR>
+           <BUMP>1</BUMP>
+           <FONT>sanserif</FONT>
+         </ANCHORED_ARROW>
+      </GLYPH>
+    </TYPE>
+    <TYPE id="CHIP_PET-L">
+      <GLYPH>
+         <ANCHORED_ARROW>
+           <HEIGHT>10</HEIGHT>
+           <BGCOLOR>darkolivegreen1</BGCOLOR>
+           <FGCOLOR>darkolivegreen1</FGCOLOR>
+           <BAR_STYLE>line</BAR_STYLE>
+           <NO_ANCHOR>1</NO_ANCHOR>
+           <BUMP>1</BUMP>
+           <FONT>sanserif</FONT>
+         </ANCHORED_ARROW>
+      </GLYPH>
+    </TYPE>
     <TYPE id="default">
       <GLYPH>
          <ANCHORED_ARROW>
-	   <HEIGHT>10</HEIGHT>
+           <HEIGHT>10</HEIGHT>
            <BGCOLOR>royalblue1</BGCOLOR>
            <FGCOLOR>royalblue1</FGCOLOR>
-	   <BAR_STYLE>line</BAR_STYLE>
-	   <NO_ANCHOR>1</NO_ANCHOR>
-           <BUMP>1</BUMP>
-           <FONT>sanserif</FONT>
-         </ANCHORED_ARROW>
-      </GLYPH>
-    </TYPE>
-    <TYPE id="CHIP_PET">
-      <GLYPH>
-         <ANCHORED_ARROW>
-	   <HEIGHT>10</HEIGHT>
-           <BGCOLOR>lightcyan1</BGCOLOR>
-           <FGCOLOR>lightcyan1</FGCOLOR>
-	   <BAR_STYLE>line</BAR_STYLE>
-	   <NO_ANCHOR>1</NO_ANCHOR>
-           <BUMP>1</BUMP>
-           <FONT>sanserif</FONT>
-         </ANCHORED_ARROW>
-      </GLYPH>
-    </TYPE>
-    <TYPE id="GIS_PET">
-      <GLYPH>
-         <ANCHORED_ARROW>
-	   <HEIGHT>10</HEIGHT>
-           <BGCOLOR>lightblue4</BGCOLOR>
-           <FGCOLOR>lightblue4</FGCOLOR>
-	   <BAR_STYLE>line</BAR_STYLE>
-	   <NO_ANCHOR>1</NO_ANCHOR>
-           <BUMP>1</BUMP>
-           <FONT>sanserif</FONT>
-         </ANCHORED_ARROW>
-      </GLYPH>
-    </TYPE>
-    <TYPE id="GIS_PET_Encode">
-      <GLYPH>
-         <ANCHORED_ARROW>
-	   <HEIGHT>10</HEIGHT>
-           <BGCOLOR>lightblue3</BGCOLOR>
-           <FGCOLOR>lightblue3</FGCOLOR>
-	   <BAR_STYLE>line</BAR_STYLE>
-	   <NO_ANCHOR>1</NO_ANCHOR>
-           <BUMP>1</BUMP>
-           <FONT>sanserif</FONT>
-         </ANCHORED_ARROW>
-      </GLYPH>
-    </TYPE>
-    <TYPE id="FANTOM_GIS_PET">
-      <GLYPH>
-         <ANCHORED_ARROW>
-	   <HEIGHT>10</HEIGHT>
-           <BGCOLOR>lightblue2</BGCOLOR>
-           <FGCOLOR>lightblue2</FGCOLOR>
-	   <BAR_STYLE>line</BAR_STYLE>
-	   <NO_ANCHOR>1</NO_ANCHOR>
-           <BUMP>1</BUMP>
-           <FONT>sanserif</FONT>
-         </ANCHORED_ARROW>
-      </GLYPH>
-    </TYPE>
-    <TYPE id="FANTOM_GSC_PET">
-      <GLYPH>
-         <ANCHORED_ARROW>
-	   <HEIGHT>10</HEIGHT>
-           <BGCOLOR>lightblue1</BGCOLOR>
-           <FGCOLOR>lightblue1</FGCOLOR>
-	   <BAR_STYLE>line</BAR_STYLE>
-	   <NO_ANCHOR>1</NO_ANCHOR>
+           <BAR_STYLE>line</BAR_STYLE>
+           <NO_ANCHOR>1</NO_ANCHOR>
            <BUMP>1</BUMP>
            <FONT>sanserif</FONT>
          </ANCHORED_ARROW>
