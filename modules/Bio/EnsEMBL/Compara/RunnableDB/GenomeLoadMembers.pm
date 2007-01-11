@@ -180,7 +180,11 @@ sub loadMembersFromCoreSlices
     #print("slice " . $slice->name . "\n");
     foreach my $gene (@{$slice->get_all_Genes}) {
       $self->{'geneCount'}++;
-      if (lc($gene->biotype) eq 'protein_coding') {
+
+      # LV and C are for the Ig/TcR family, which rearranges
+      # somatically so is considered as a different biotype in EnsEMBL
+      # D and J are very short or have no translation at all
+      if (lc($gene->biotype) eq 'protein_coding' || lc($gene->biotype) eq 'LV_segment' || lc($gene->biotype) eq 'C_segment') {
         $self->{'realGeneCount'}++;
         $self->store_gene_and_all_transcripts($gene);
       }
