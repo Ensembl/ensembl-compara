@@ -81,7 +81,7 @@ sub common_menu_items {
       $doc->menu->add_entry( $flag, 'text' => "<a href='javascript:void(0);' onclick='javascript:toggle_settings_drawer();' id='settings_link'>Show account</a> &middot; <a href='javascript:void(0);' onclick='logout_link()'>Log out</a>",
                                     'raw' => "yes" );
 
-      $doc->menu->add_entry( $flag, 'text' => "Save bookmark",
+      $doc->menu->add_entry( $flag, 'text' => "Bookmark this page",
                                     'href' => "javascript:bookmark_link()" );
     
       #$doc->menu->add_entry( $flag, 'text' => "Your account",

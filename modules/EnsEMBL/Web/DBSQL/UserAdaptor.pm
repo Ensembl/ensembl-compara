@@ -32,6 +32,7 @@ use EnsEMBL::Web::RegObj;
 sub new {
   my $caller = shift;
   my $r = shift;
+  my $handle = shift;
   my $class = ref($caller) || $caller;
   my $self = { '_request' => $r };
   if ($EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY) {
@@ -44,8 +45,12 @@ sub new {
        $self->{'_handle'} = undef;
     }
   } else {
-    warn( "NO DB USER DATABASE DEFINED" );
-    $self->{'_handle'} = undef;
+    if ($handle) {
+      $self->{'_handle'} = $handle;
+    } else {
+      warn( "NO DB USER DATABASE DEFINED" );
+      $self->{'_handle'} = undef;
+    }
   }
   bless $self, $class;
   return $self;

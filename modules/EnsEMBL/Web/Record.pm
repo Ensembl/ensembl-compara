@@ -43,8 +43,6 @@ use strict;
 use warnings;
 use Data::Dumper;
 
-#our @ISA = qw(EnsEMBL::Web::Root);
-
 our $AUTOLOAD;
 
 {

@@ -28,11 +28,12 @@ sub render {
   $html .= "<tr><td width='49%'>\n";
   $html .= "<b><a href='/common/accountview'>Your Ensembl account</a> &gt; " . $user->name . "</b> &middot; <a href='javascript:void(0);' onclick='toggle_settings_drawer()'>Hide</a>\n";
   $html .= "</td>\n";
-  $html .= "<td style='text-align: right;' width='49%'>Show from: ";
-  $html .= "<select name='group_select' id='group_select' onChange='settings_drawer_change()'>\n";
-  $html .= "<option value='user'>Your account</option>\n";
+  $html .= "<td style='text-align: right;' width='49%'>";
   my @groups = @{ $user->groups };
   if ($#groups > -1) {
+    $html .= "Show from: ";
+    $html .= "<select name='group_select' id='group_select' onChange='settings_drawer_change()'>\n";
+    $html .= "<option value='user'>Your account</option>\n";
     $html .= "<optgroup label='Groups'>\n";
   }
   foreach my $group (@{ $user->groups }) {
@@ -44,8 +45,8 @@ sub render {
   }
   if ($#groups > -1) {
     $html .= "</optgroup>\n";
+    $html .= "</select>";
   }
-  $html .= "</select>";
   $html .= "</td>\n";
   $html .= "</tr>\n";
   $html .= "<tr>\n";
