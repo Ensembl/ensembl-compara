@@ -108,7 +108,7 @@ sub render {
         $html .= qq(<img src="/img/ebang-30x30.png" alt="" class="sp-thumb" style="height:30px;width:30px;border:1px solid #999" />);
       }
 
-      $html .= sprintf(qq(<strong><a href="/%s/newsview?rel=%s#cat%s" style="text-decoration:none">%s</a></strong> (<i>%s</i>)</p>),
+      $html .= sprintf(qq(<strong><a href="/%s/newsview?rel=%s#cat%s" style="text-decoration:none">%s</a></strong> (%s)</p>),
               $sp_dir, $release_id, $item->{'news_cat_id'}, $item->{'title'}, $sp_name);
 
     }
