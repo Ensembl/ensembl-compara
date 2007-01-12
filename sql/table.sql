@@ -458,7 +458,7 @@ CREATE TABLE homology_member (
   homology_id                 int(10) unsigned NOT NULL, # FK homology.homology_id
   member_id                   int(10) unsigned NOT NULL, # FK member.member_id
   peptide_member_id           int(10) unsigned, # FK member.member_id
-#  peptide_align_feature_id    int(10) unsigned, # FK peptide_align_feature.peptide_align_feature_id
+  peptide_align_feature_id    int(10) unsigned, # FK peptide_align_feature.peptide_align_feature_id
   cigar_line                  mediumtext,
   cigar_start                 int(10),
   cigar_end                   int(10),
@@ -474,8 +474,8 @@ CREATE TABLE homology_member (
   UNIQUE homology_member_id (homology_id,member_id),
   KEY (homology_id),
   KEY (member_id),
-  KEY (peptide_member_id) #,
-#  KEY (peptide_align_feature_id)
+  KEY (peptide_member_id),
+  KEY (peptide_align_feature_id)
 ) COLLATE=latin1_swedish_ci;
 
 
