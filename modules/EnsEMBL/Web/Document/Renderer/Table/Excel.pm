@@ -59,7 +59,9 @@ use Class::Std;
       $format = $self->new_format({
         'colspan' => 2,
         'bold'    => 1,
-        'align'   => 'center'
+        'bgcolor' => 'ffffcc',
+        'fgcolor' => '993333',
+        'align'   => 'center',
       });
     }
     $self->get_renderer->print( $content, $format );
@@ -71,7 +73,8 @@ use Class::Std;
     unless( defined( $format ) ) {
       $format = $self->new_format({
         'bold'  => 1,
-        'align' => 'center'
+        'align' => 'center',
+        'bgcolor' => 'ffffdd',
       });
     }
     $self->write_cell( $content, $format);

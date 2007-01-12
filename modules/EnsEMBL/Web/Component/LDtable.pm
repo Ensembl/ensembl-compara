@@ -133,6 +133,7 @@ sub ld_values {
 
 
 sub html_lddata {
+  return output_lddata( @_ );
 
   ###  Args      : panel, object
   ### It first calls ld_values function which returns the data in 
@@ -140,7 +141,7 @@ sub html_lddata {
   ### prints a title and the LD values in an HTML table to the panel.
   ### Returns 1
 
-  my ($panel, $object) = @_;
+=pod
   my $return = ld_values($object);
   return 1 unless defined $return && %$return;
 
@@ -198,6 +199,7 @@ sub html_lddata {
     }
   }
   return 1;
+=cut
 }
 
 
@@ -205,6 +207,7 @@ sub html_lddata {
 
 
 sub text_lddata {
+  return output_lddata( @_ );
 
   ### Args:  Either a string with "No data" message or Arrayref 
   ### Each value in the array is an arrayrefs with arrayref of 
@@ -214,8 +217,7 @@ sub text_lddata {
   ### Example : $self->text_ldtable({$title, \@starts, \@snps, \@table});
   ### Description : prints text formatted table for LD data
   ### Returns text (string)
-
-  my ($panel, $object) = @_;
+=pod 
   my $return = ld_values($object);
   return 1 unless %$return;
 
@@ -243,11 +245,16 @@ sub text_lddata {
    }
  }
   return 1;
+=cut
 }
 
 ################################################################################
 
 sub excel_lddata {
+  return output_lddata( @_ );
+}
+
+sub output_lddata {
 
   ### The arguments are either a string with "No data" message or Arrayref
   ### Each value in the array is an arrayrefs with  arrayref of 
@@ -257,77 +264,92 @@ sub excel_lddata {
   ### Example : $self->excel_ldtable({$title, \@starts, \@snps, \@table});
   ### Description : prints excel formatted table for LD data
 
-  my ($panel, $object) = @_;
+  my ($panel, $object ) = @_;
   my $return = ld_values($object);
 
   return 1 unless %$return;
 
   # Formatting
   my $renderer = $panel->renderer;
-  my $bold_center = $renderer->new_format;
-  my $heading     = $renderer->new_format;
-  my $italic_bold = $renderer->new_format;
-  $renderer->bold($heading, 1);
-  $renderer->align($heading, "left" );
-
-  $renderer->bold($bold_center, 1);
-  $renderer->align($bold_center, "center" );
-
-  $renderer->italic($italic_bold, 1);
-  $renderer->bold($italic_bold, 1);
+  my $table_renderer = $renderer->new_table_renderer();
 
   my @colour_gradient = @{ _get_colour_gradient($object) };
-  my $excel_row = 0;
+
+  my %populations = ();
   foreach my $ldtype (keys %$return) {
-    my $C = 0;
-    foreach my $pop_name ( sort {$a cmp $b } keys %{ $return->{$ldtype} } ) {
+    foreach my $pop_name (keys %{$return->{$ldtype}}) {
+      $populations{$pop_name}=1;
+    }
+  }
+   
+  foreach my $pop_name ( sort {$a cmp $b } keys %populations ) {
+    my $flag = 1;
+    foreach my $ldtype (keys %$return) {
+      my $C = 0;
       unless ( $return->{$ldtype}{$pop_name}{"data"} ) {
- 	next;
+  	next;
       }
       $C++;
       my ( $starts, $snps, $table_data ) = (@ {$return->{$ldtype}{$pop_name}{"data"} });
       (my $T = $pop_name ) =~ s/[^\w\s]/_/g;
-      #warn "SHEET NAME: $ldtype $T";
-      $renderer->next_sheet( "$ldtype $T" );
-      $renderer->print( 2+@$snps, $heading, $return->{$ldtype}{$pop_name}{"text"} );
-      $renderer->next_row();
-
-      $renderer->write_cell( "bp position", $bold_center);
-      $renderer->write_cell( "SNP", $bold_center);
-      foreach( @$snps ) {
-        $renderer->write_cell( $_, $bold_center);
+      warn "SHEET NAME: $ldtype $T";
+      if( $flag ) {
+        $table_renderer->new_sheet( "$T" );  # Start a new sheet (and new table)
+        $flag = 0;
+      } else {
+        $table_renderer->new_table();        # Start a new table!
       }
-      $renderer->next_row();
-      unshift (@$table_data, [""]);
+warn "SETTING WIDTH TO ", 2+@$snps;
+      $table_renderer->set_width( 2 + @$snps );
+      $table_renderer->heading( $return->{$ldtype}{$pop_name}{"text"} );
+      $table_renderer->new_row();
+
+      $table_renderer->write_header_cell( "bp position" );
+      $table_renderer->write_header_cell( "SNP"         );
+      foreach( @$snps ) {
+        $table_renderer->write_header_cell( $_ );
+      }
+      $table_renderer->new_row();
+      unshift (@$table_data, []);
       
       foreach my $table_row (@$table_data) {
 	next unless ref $table_row eq 'ARRAY';
 	my $snp = shift @$snps;
 	my $pos = shift @$starts;
-	$renderer->write_cell( $pos, $bold_center);
-	$renderer->write_cell( $snp, $bold_center);
+	$table_renderer->write_header_cell( $pos );
+	$table_renderer->write_header_cell( $snp );
 
 	my $col =2;
 	my @ld_values = ( map {  $_ ? sprintf("%.3f", $_ ): '-' } @$table_row );
 
 	foreach my $value (@ld_values) {
-	  my $center = $renderer->new_format;
-	  $renderer->align($center, "center");
-
-	  if ( $value eq '-' ) {
-	    $renderer->bg_color($center, 9);
-	  }
-	  else {
-	    my $index = $renderer->custom_color( "#".$colour_gradient[floor($value*40)] );
-	    $renderer->bg_color($center, $index);
-         }
-	  $renderer->write_cell( $value, $center);
+          my $format = $table_renderer->new_format({
+            'align'   => 'center',
+            'bgcolor' => $value eq '-' ? 'ffffff' : $colour_gradient[floor($value*40)]
+          });
+	  $table_renderer->write_cell( $value, $format );
 	}
-	$renderer->next_row;
+        $table_renderer->write_header_cell( $snp );
+	$table_renderer->new_row;
       }
-      $renderer->next_row;
-      $renderer->next_row;
     }
+  }
+  $table_renderer->clean_up;
+}
+
+
+sub text_haploview {
+
+  ### Format: olumns of family, individual, father, mother, gender, affected status and genotypes
+
+  my ($panel, $object) = @_;
+  my %pops = _get_pops_from_param($object);
+  return unless keys %pops;
+  my $snps = $object->get_variation_features;
+  my %ind_data = %{ $object->individual_table };
+  unless (%ind_data) {
+    $panel->print("No individual genotypes for this SNP");
+    return 1;
   }
 }
 

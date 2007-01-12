@@ -100,7 +100,11 @@ use Class::Std;
   sub write_header_cell {
 ### Equivalent of "TH"
     my( $self, $content, $format ) = @_;
-    $format = $self->new_format({'bold'=>1,'align'=>'center'}) unless $format;
+    $format = $self->new_format({
+      'bold'    =>1,
+      'align'   => 'center',
+      'bgcolor' => 'ffffdd'
+    }) unless $format;
     $self->add_row_html( sprintf( "    <th%s>%s</th>\n", $format->evaluate, $content ) );
   }
 
