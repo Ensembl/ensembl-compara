@@ -8,6 +8,10 @@ sub new {
   return $self;
 }
 
+sub fh {
+  binmode(STDOUT);
+  return \*STDOUT; 
+}
 sub valid  { 1; }
 sub printf { my $self = shift; printf( @_ ); }
 sub print  { my $self = shift; print(  @_ ); }

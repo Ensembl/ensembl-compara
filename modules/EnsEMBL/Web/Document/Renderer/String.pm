@@ -1,4 +1,5 @@
 package EnsEMBL::Web::Document::Renderer::String;
+use EnsEMBL::Web::Document::Renderer::Table::Text;
 use strict;
 
 # use overload '""' => \&value;
@@ -8,6 +9,14 @@ sub new {
   my $self  = { 'string' => '' };
   bless $self, $class;
   return $self;
+}
+
+sub fh { return undef; }
+
+sub new_table_renderer {
+### Create a new table renderer.
+  my $self = shift;
+  return EnsEMBL::Web::Document::Renderer::Table::Text->new( { 'renderer' => $self } );
 }
 
 sub valid  { return 1; }

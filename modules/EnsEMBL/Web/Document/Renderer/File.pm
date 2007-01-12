@@ -16,6 +16,11 @@ sub new {
   return $self;
 }
 
+sub fh {
+  my $self = shift;
+  return $self->'file';
+}
+
 sub valid  { return $_[0]->{'file'}; }
 sub printf { my $self = shift; my $FH = $self->{'file'}; printf $FH @_ if $FH; }
 sub print  { my $self = shift; my $FH = $self->{'file'}; print  $FH @_ if $FH; }
