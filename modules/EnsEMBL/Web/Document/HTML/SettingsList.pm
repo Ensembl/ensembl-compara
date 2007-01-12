@@ -100,7 +100,11 @@ sub list_for_records {
           $style = "";
         }
       }
-      my $link = "<a href='" . $record->url . "' title='" . $record->description . "'>";
+      my $description = "Load bookmark";
+      if ($record->url && $record->description) {
+        $description = $record->description;
+      }
+      my $link = "<a href='" . $record->url . "' title='" . $description . "'>";
       my $bold_start = "";
       my $bold_end = "";
       if ($record->type eq 'configuration') {
