@@ -6,6 +6,20 @@ Generating synteny blocks from whole genome alignments
 
 Needs whole genome alignments stored in an ensembl compara database or a set of gff files, one per chromosome
 
+BuildSynteny program
+--------------------
+
+This program uses two parameters to define the syntenic regions. The first one, the maxDist, is used
+to define the maximum gap allowed between alignments within a syntenic block. The second one, the minDist,
+is the minimum length a syntenic block must have, shorter blocks are discarded.
+
+The syntenic blocks are defined in two steps. In the first one, links (alignments) are grouped if they are in
+synteny, there is no other link breaking the synteny and the distance between the links is smaller than
+twice the maxDist parameter. In the second step, groups are grouped in syntenic block but this time, up to
+two other groups breaking the synteny are allowed (these are the internum lines found in the output which can
+be safely discarded) and the maximum distance between groups is 30 times
+the the maxDist parameter.
+
 
 Configuration
 -------------
@@ -40,13 +54,28 @@ Use the script ensembl-compara/scripts/synteny/DumpGFFAlignmentsForSynteny.pl
 
 It dumps whole genome alignments in gff format for a given chromosome.
 
-cd /ecs2/work4/compara_abel_cara/ensembl_release_26/compara/synteny/Hs35Mm33
+cd /lustre/scratch1/ensembl/jh7/blastz/HsapNCBI36.vs.CfamBROADD2
 
-echo "select distinct(name) from dnafrag where genome_db_id=1 and coord_system_name=\"Chromosome\";"|mysql -h ecs2 -u ensro -P3362 -N abel_ensembl_compara_26_1 |grep -v NT | grep -v DR | sort > Hs35_chr_names
+mkdir synteny
 
-cat Hs35_chr_names |while read i;do bsub -o $i.err ~/src/ensembl_main/ensembl-compara/scripts/synteny/DumpGFFAlignmentsForSynteny.pl --dbname compara25 --qy "Homo sapiens" --tg "Mus musculus" --seq_region $i;done
+cd synteny
 
-In this command line, "human", "mouse" and "abelcompara26" are aliases to the respective core and compara databases, 
+echo "SELECT DISTINCT(dnafrag.name) FROM dnafrag LEFT JOIN genome_db USING (genome_db_id) \
+ WHERE genome_db.name = \"Homo sapiens\" AND coord_system_name=\"chromosome\";" | \
+mysql -h compara1 -u ensro -N jh7_ensembl_Hsap_Cfam_42 |grep -v NT | grep -v DR | sort > Hsap_chr_names
+
+
+Run the dump in sequential order, one at a time to avoid overloading the DB:
+
+cat Hsap_chr_names | while read i; do \
+echo "~/src/ensembl_main/ensembl-compara/scripts/synteny/DumpGFFAlignmentsForSynteny.pl \
+ --reg_conf ../reg.conf --dbname ensemblHsapCfam --qy 'Homo sapiens' \
+ --tg 'Canis familiaris' --seq_region $i"; \
+done > run.me
+chmod +x run.me
+bsub -o $i.err -J DumpGFF.Hs-Cf ./run.me
+
+In this command line, "ensemblHsapCfam" is the name of the compara databases,
 as defined in the registry configuration file.
 
 This will write out all the dna-dna matches for mouse chromosomes against rat into files called
@@ -65,22 +94,37 @@ export JAVA_HOME
 
 or that the java executable is in your PATH
 
-PATH=/usr/opt/java141/bin/:$PATH
+PATH=/usr/opt/java/bin/:$PATH
 
 Now build the synteny regions for each chromosome.
 
-ls *.syten.gff|sed "s/\.syten\.gff//"|while read i;do java -classpath ~/src/ensembl_main/ensembl-compara/scripts/synteny/BuildSynteny.jar BuildSynteny $i.syten.gff 100000 100000 false > $i.100000.100000.BuildSynteny.out 2> $i.100000.100000.BuildSynteny.err;done
+ls *.syten.gff | sed "s/\.syten\.gff//" | \
+ while read i; do echo "java -Xmx2000M -classpath \
+ ~/src/ensembl_main/ensembl-compara/scripts/synteny/BuildSynteny.jar \
+ BuildSynteny $i.syten.gff 100000 100000 false \
+ > $i.100000.100000.BuildSynteny.out 2> $i.100000.100000.BuildSynteny.err"; done > run
+
+chmod +x run
+
+bsub -R "select[mem>=2000] rusage[mem=2000]" -q bigmem -J HsapCfamSyn -o run.out -e run.err ./run
 
 NOTE: the last parameter "false" is only needed for human/mouse, human/rat and mouse/rat NOT for 
 elegans/briggsae (it can be ommitted). Don't ask me (Abel) what that does, Steve Searle included this 
 argument to make it work over mammals and worms.
 
-cat *.BuildSynteny.out|grep cluster > Hs35Mm33.100000.100000.BuildSynteny
+Check for error messages:
+
+more *BuildSynteny.err
+
+Concatenate all the results into one single file:
+
+cat *.BuildSynteny.out|grep cluster > all.100000.100000.BuildSynteny
 
 Loading the data in compara db
 ------------------------------
 
-ensembl-compara/scripts/synteny/LoadSyntenyData.pl --dbname abelcompara26 --qy human --tg mouse Hs35Mm33.100000.100000.BuildSynteny
+ensembl-compara/scripts/synteny/LoadSyntenyData.pl --dbname jh7_ensembl_compara_42 \
+ --qy "Homo sapiens" --tg "Canis familiaris" all.100000.100000.BuildSynteny
 
 
 Compiling BuildSynteny.java
