@@ -116,11 +116,11 @@ div.selected a, div.selected a:link, div.selected a:visited {
 
 #pre_tab, #pre {
   color:#339966;
-  background-color:#eefff8;
+  background-color:#CCFFCC;
 }
 
 #pre_tab selected {
-  border-bottom: 1px solid #eefff8; 
+  border-bottom: 1px solid #CCFFCC; 
 }
 
 div.tab {
@@ -150,7 +150,7 @@ div.tab_content {
 }
 
 div.pre_content {
-  background-color:#eefff8
+  background-color:#CCFFCC;
 }
 
 
