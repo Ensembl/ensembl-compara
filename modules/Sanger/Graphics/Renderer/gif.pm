@@ -93,6 +93,14 @@ sub tile {
       #
       $tile->line(0,3,3,0,$fg);
 
+    } elsif($pattern eq 'hatch_thick') {
+      #########
+      # stroke thick south-west:north-east
+      #
+      $tile->line(0,0,0,0,$fg);
+      $tile->line(1,3,3,1,$fg);
+      $tile->line(0,3,3,0,$fg);
+
     } elsif($pattern eq 'hatch_nw') {
       #########
       # stroke south-east:north-west
