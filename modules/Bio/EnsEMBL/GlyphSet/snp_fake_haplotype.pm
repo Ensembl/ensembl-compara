@@ -23,15 +23,20 @@ sub _init {
   my $individual_adaptor = $self->{'container'}->adaptor->db->get_db_adaptor('variation')->get_IndividualAdaptor;
   my $golden_path =  $individual_adaptor->get_reference_strain_name();
   my $reference_name = $Config->{'reference'};
-  my ($individual) = @{$individual_adaptor->fetch_all_by_name($golden_path)};
-  my $fully_inbred = $individual->type_individual eq 'Fully_inbred' ? 1 : 0 if $individual;
 
   # Put allele and coverage data from config into hashes -----------------------
   my %strain_alleles;   # $strain_alleles{strain}{id::start} = allele
   my %coverage;         # $coverage{strain} = [ [start, end, level], [start, end, level]   ];
 
+  my $fully_inbred;
   foreach my $data ( @{$Config->{'snp_fake_haplotype'}} ) {
     my( $strain, $allele_ref, $coverage_ref ) = @$data;
+    unless (defined $fully_inbred) {
+      my ($individual) = @{$individual_adaptor->fetch_all_by_name($strain)};
+      if ($individual) {
+	$fully_inbred = $individual->type_individual eq 'Fully_inbred' ? 1 : 0;
+      }
+    }
     $strain_alleles{$strain} = {};  # every strain should be in here
     foreach my $a_ref ( @$allele_ref ) {
       next unless $a_ref->[2];
@@ -81,7 +86,7 @@ sub _init {
 
   # Reference track ----------------------------------------------------
   my $offset = $th_c + 4;
-  my @colours       = qw(chartreuse4 darkorchid4);# orange4 deeppink3 dodgerblue4);
+  my @colours       = qw(chartreuse4 darkorchid4);# grey);# orange4 deeppink3 dodgerblue4);
   my @ref_name_size = $self->get_text_width( 80, $reference_name, '', 'font'=>$fontname, 'ptsize' => $fontsize );
   if ($ref_name_size[0] eq '') {
     $self->strain_name_text($th, $fontname, $fontsize, $offset, "Compare to", $Config, $fully_inbred);
