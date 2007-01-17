@@ -253,10 +253,10 @@ sub _sort_similarity_links{
     }
    my $text = $display_id;
     (my $A = $externalDB ) =~ s/_predicted//;
-#warn ".... $externalDB -- $A ...";
     if( $urls and $urls->is_linked( $A ) ) {
       my $link;
       $link = $urls->get_url( $A, $primary_id );
+
       my $word = $display_id;
       if( $A eq 'MARKERSYMBOL' ) {
         $word = "$display_id ($primary_id)";
@@ -1071,8 +1071,8 @@ sub transcriptsnpview {
   # Get three slice - context (5x) gene (4/3x) transcripts (+-EXTENT)
   my $extent = tsv_extent($object);
   foreach my $slice_type (
-    [ 'context',           'normal', '500%'  ],
-    [ 'transcript',        'normal', '133%'  ],
+    [ 'context',           'normal', '105%'  ],
+    [ 'transcript',        'normal', '105%'  ],
     [ 'TSV_transcript',    'munged', $extent ],
   ) {
     $object->__data->{'slices'}{ $slice_type->[0] } =  $object->get_transcript_slices( $slice_type ) || warn "Couldn't get slice";
@@ -1166,7 +1166,7 @@ sub transcriptsnpview {
   }
   $Configs->{'snps'}->container_width(   $snp_fake_length   );
   $Configs->{'snps'}->{'snps'}        = \@fake_snps;
-  $Configs->{'snps'}->{'reference'}   = $object->param('reference');
+  $Configs->{'snps'}->{'reference'}   = $object->param('reference')|| "";
   $Configs->{'snps'}->{'fakeslice'}   = 1;
   $Configs->{'snps'}->{'URL'} =  $base_URL;
   return if $do_not_render;
@@ -1205,7 +1205,6 @@ sub _sample_configs {
   # THIS IS A HACK. IT ASSUMES ALL COVERAGE DATA IN DB IS FROM SANGER fc1
   # Only display coverage data if source Sanger is on
   my $display_coverage = $object->get_scriptconfig->get( "opt_sanger" ) eq 'off' ? 0 : 1;
-  my $individual_adaptor = $object->Obj->adaptor->db->get_db_adaptor('variation')->get_IndividualAdaptor;
 
   foreach my $sample ( $object->get_samples ) {
     my $sample_slice = $transcript_slice->get_by_strain( $sample );
@@ -1257,10 +1256,7 @@ sub _sample_configs {
       'coverage_level'  => $coverage_level,
       'coverage_obj'    => $munged_coverage,
     };
-    my ($individual) = @{$individual_adaptor->fetch_all_by_name($sample)};
-    if ($individual->type_individual eq 'Fully_inbred') {
-      unshift @haplotype, [ $sample, $allele_info, $munged_coverage ];
-    }
+    unshift @haplotype, [ $sample, $allele_info, $munged_coverage ];
 
     $sample_config->container_width( $fake_length );
   
@@ -1377,6 +1373,7 @@ sub get_page_data {
     next unless @$consequences && @$allele_info;
 
     my ($coverage_level, $raw_coverage_obj) = $object->read_coverage($sample, $sample_slice);
+
     my @coverage_obj;
     if ( @$raw_coverage_obj ){
       @coverage_obj = sort {$a->start <=> $b->start} @$raw_coverage_obj;
