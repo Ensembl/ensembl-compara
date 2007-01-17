@@ -120,8 +120,6 @@ sub transcriptsnpview {
   $panel1->add_form( $self->{page}, 'markup_up_seq', 'EnsEMBL::Web::Component::Transcript::marked_up_seq_form' );
   $panel1->add_components(qw(
     name        EnsEMBL::Web::Component::Gene::name
-    stable_id   EnsEMBL::Web::Component::Gene::stable_id
-    location    EnsEMBL::Web::Component::Gene::location
     description EnsEMBL::Web::Component::Gene::description
   ));
   $self->add_panel( $panel1 );
