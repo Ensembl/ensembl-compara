@@ -54,7 +54,7 @@ sub new {
   if ($params{id} and !$params{defer}) {
     my $details = $self->adaptor->group_by_id($params{'id'})->[0];
     $self->populate_details($details);
-    my @records = $self->find_group_records_by_group_id($params{'id'});
+    my @records = $self->find_group_records_by_group_id($params{'id'}, { adaptor => $self->adaptor });
     $self->records(\@records);
     $self->update_users;
   }
@@ -63,7 +63,7 @@ sub new {
 
 sub load {
   my $self = shift;
-  my @records = $self->find_group_records_by_group_id($self->id);
+  my @records = $self->find_group_records_by_group_id($self->id, { adaptor => $self->adaptor });
   $self->records(\@records);
 }
 
@@ -112,7 +112,7 @@ sub all_groups_by_type {
 
 sub update_users {
   my $self = shift;
-  my $results = $self->adaptor->find_users_by_group_id($self->id);
+  my $results = $self->adaptor->find_users_by_group_id($self->id, { adaptor => $self->adaptor });
   if ($results) {
     $self->users([]);
     foreach my $result (@{ $results }) {

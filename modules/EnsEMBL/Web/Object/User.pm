@@ -6,7 +6,7 @@ use warnings;
 use Digest::MD5 qw(md5_hex);
 
 use EnsEMBL::Web::Record::User;
-#use EnsEMBL::Web::Object::Group;
+use EnsEMBL::Web::Object::Group;
 
 our @ISA = qw(EnsEMBL::Web::Record);
 
