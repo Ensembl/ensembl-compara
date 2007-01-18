@@ -73,9 +73,10 @@ sub _init {
 
   $self->push(new Sanger::Graphics::Glyph::Space({ 'y' => 0, 'height' => $track_height, 'x' => 1, 'w' => 1, 'absolutey' => 1, }));
 
+  my $offset = $track_height;
   my $textglyph = new Sanger::Graphics::Glyph::Text({
     'x'          => - 115,
-    'y'          => 2,
+    'y'          => 2+$offset,
     'width'      => 0,
     'height'     => $th_c,
     'font'       => $fontname_c,
@@ -87,10 +88,9 @@ sub _init {
     'halign'     => 'left'
    });
   $self->push( $textglyph );
-
+  $offset += $th_c + 6;
 
   # Reference track ----------------------------------------------------
-  my $offset = $th_c + 4;
   my @ref_name_size = $self->get_text_width( 80, $reference_name, '', 'font'=>$fontname, 'ptsize' => $fontsize );
   if ($ref_name_size[0] eq '') {
     $self->strain_name_text($th, $fontname, $fontsize, $offset, "Compare to", $Config, $fully_inbred);
@@ -169,8 +169,6 @@ sub _init {
 	$snp_ref->[3]{ $2.$1} = $colours[1];
       }
       else {
-	#my $half_genotype = $1;
-	#warn "[ERROR] This is a heterozygous allele $1 $2" if $1 ne $2;
 	$snp_ref->[3]{ $reference_base } = $colours[0];
       }
     }
@@ -225,7 +223,6 @@ sub _init {
         $colour = $snp_ref->[3]{ $allele_string };
 	
         unless($colour) {                           # allele not the same as reference
-	  warn $allele_string;
 	  if (length $allele_string ==1 ) {
 	    $colour =  $snp_ref->[3]{ $allele_string } = $colours[2];
 	  }
@@ -244,7 +241,7 @@ sub _init {
       $c++;
     }
   }
-  $self->push(new Sanger::Graphics::Glyph::Space({ 'y' => $offset + $track_height, 'height' => $th+2, 'x' => 1, 'width' => 1, 'absolutey' => 1, }));
+  #$self->push(new Sanger::Graphics::Glyph::Space({ 'y' => $offset + $track_height, 'height' => $th+2, 'x' => 1, 'width' => 1, 'absolutey' => 1, }));
   return 1;
 }
 
@@ -349,4 +346,3 @@ sub bases_match {
 }
 1;
 
-# add gap 8-10
