@@ -399,6 +399,7 @@ sub mappings {
 
   my @table_header;
   my $flag_multi_hits = keys %mappings >1 ? 1: 0;
+  my $tsv_species =  ($object->species_defs->VARIATION_STRAIN &&  $object->get_db eq 'core') ? 1 : 0; 
   foreach my $varif_id (keys %mappings) {
     my %chr_info;
     my $region = $mappings{$varif_id}{Chr};
@@ -441,14 +442,21 @@ sub mappings {
 			"conseq"     => $transcript_data->{conseq},
 			"transcript" => "$transcript_link:$transcript_coords",
 		       );
-      unless ($source eq 'Glovar') {
-	$trans_info{'genesnpview'} = "$genesnpview";
-      }
+      $trans_info{'genesnpview'} = "$genesnpview";
 
       if ($transcript_data->{'proteinname'}) {
 	$trans_info{'translation'} = "$protein_link:$translation_coords";
 	$trans_info{'pepallele'} = "$transcript_data->{pepallele}";
       }
+
+
+      my $tsv_link;  # TSV link -----------------------------------
+      if ($tsv_species) {
+	my $strain = $object->species_defs->translate( "strain" )."s";
+	$tsv_link = qq(<a href='transcriptsnpview?transcript=$transcript_data->{transcriptname}'>Comapre SNP across $strain</a>);
+	$trans_info{'transcriptsnpview'} = "$tsv_link";
+      }
+
       $panel->add_row({ %chr_info, %trans_info});
 
       unless (@table_header) {
@@ -457,6 +465,7 @@ sub mappings {
 	push @table_header, {key => 'pepallele',   title =>'Amino Acid&nbsp;'} if $transcript_data->{'pepallele'} ;
 	push (@table_header, {key => 'conseq', title =>'Type'});
         push (@table_header, {key => 'genesnpview', title => 'GeneSNPView link&nbsp;'},) ;
+        push (@table_header, {key => 'transcriptsnpview', title => 'TranscriptSNPView link&nbsp;'},)  if $tsv_species;
       }
       %chr_info = ();
     }
