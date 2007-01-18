@@ -155,6 +155,10 @@ The type of output you want. Both fasta and clustalw have been tested.
 In fasta format, a line containg a hash ("#") is added at the end of
 each alignment. "Fasta" is the default format.
 
+NB: This script uses the Bio::AlignIO::xxx modules to format the output
+except for the maf format as writting is not support by the module.
+Instead, this script does the formatting itself for maf.
+
 =item B<[--output_file filename]>
 
 The name of the output file. By default the output is the
@@ -398,12 +402,19 @@ if (!@query_slices) {
     open(STDOUT, ">$output_file") or die("Cannot open $output_file");
   }
 
-  my $alignIO = Bio::AlignIO->newFh(
-          -interleaved => 0,
-          -fh => \*STDOUT,
-          -format => $output_format,
-          -idlength => 10
-      );
+  my $alignIO;
+  if ($output_format eq "maf") {
+    print "##maf version=1 program=", $method_link_species_set->method_link_type, "\n";
+    print "#\n";
+  } else {
+    $alignIO = Bio::AlignIO->newFh(
+            -interleaved => 0,
+            -fh => \*STDOUT,
+            -format => $output_format,
+            -idlength => 10
+        );
+  }
+
   
   foreach my $this_slice (@query_slices) {
     my $genomic_align_blocks =
@@ -420,6 +431,10 @@ if (!@query_slices) {
 sub write_genomic_align_block {
   my ($alignIO, $this_genomic_align_block) = @_;
 
+  if ($output_format eq "maf") {
+    print_my_maf($this_genomic_align_block);
+    return;
+  }
   my $simple_align = Bio::SimpleAlign->new();
   $simple_align->id("GAB#".$this_genomic_align_block->dbID);
   $simple_align->score($this_genomic_align_block->score);
@@ -462,6 +477,48 @@ sub write_genomic_align_block {
   }
   print $alignIO $simple_align;
   print "#\n" if ($output_format eq "fasta");
+}
+
+sub print_my_maf {
+  my ($genomic_align_block) = @_;
+
+  print "\n";
+  print "a";
+  if (defined $genomic_align_block->score) {
+    print " score=", $genomic_align_block->score;
+  }
+  print "\n";
+  foreach my $this_genomic_align (@{$genomic_align_block->get_all_GenomicAligns()}) {
+    my $seq_name = $this_genomic_align->dnafrag->genome_db->name;
+    $seq_name =~ s/(.)\w* (...)\w*/$1$2/;
+    $seq_name .= ".".$this_genomic_align->dnafrag->name;
+    my $aligned_sequence;
+    if ($masked_seq == 1) {
+      $this_genomic_align->original_sequence($this_genomic_align->get_Slice->get_repeatmasked_seq(undef,1)->seq);
+    } elsif ($masked_seq == 2) {
+      $this_genomic_align->original_sequence($this_genomic_align->get_Slice->get_repeatmasked_seq()->seq);
+    }
+    if ($original_seq) {
+      $aligned_sequence = $this_genomic_align->original_sequence;
+    } else {
+      $aligned_sequence = $this_genomic_align->aligned_sequence;
+    }
+    if ($this_genomic_align->dnafrag_strand == 1) {
+      printf("s %-20s %10d %10d + %10d %s\n",
+          $seq_name,
+          $this_genomic_align->dnafrag_start-1,
+          ($this_genomic_align->dnafrag_end - $this_genomic_align->dnafrag_start + 1),
+          $this_genomic_align->dnafrag->length,
+          $aligned_sequence);
+    } else {
+      printf("s %-20s %10d %10d - %10d %s\n",
+          $seq_name,
+          ($this_genomic_align->dnafrag_length - $this_genomic_align->dnafrag_end),
+          ($this_genomic_align->dnafrag_end - $this_genomic_align->dnafrag_start + 1),
+          $this_genomic_align->dnafrag->length,
+          $aligned_sequence);
+    }
+  }
 }
 
 exit;
