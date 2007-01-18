@@ -1162,6 +1162,7 @@ sub transcriptsnpview {
 
   if (scalar @$haplotype) {
     $Configs->{'snps'}->set( 'snp_fake_haplotype', 'on', 'on' );
+    $Configs->{'snps'}->set( 'TSV_haplotype_legend', 'on', 'on' );
     $Configs->{'snps'}->{'snp_fake_haplotype'}  =  $haplotype;
   }
   $Configs->{'snps'}->container_width(   $snp_fake_length   );
