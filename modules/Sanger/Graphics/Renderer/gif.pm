@@ -78,36 +78,31 @@ sub colour {
 #
 sub tile {
   my ($self, $id, $pattern) = @_;
+  my $bg_color = 'white';
   $id      ||= 'darkgrey';
   $pattern ||= 'hatch_ne';
 
-my $patterns = {
-# south-west - north-east thin line
-  'hatch_ne'    => { 'size' => [ 4, 4 ], 'lines' => [[ 0,3,3,0 ]] },
-# south-east - north-west thin line
-  'hatch_nw'    => { 'size' => [ 4, 4 ], 'lines' => [[ 0,0,3,3 ]] },
-# vertical 1px lines
-  'hatch_vert'  => { 'size' => [ 4, 4 ], 'lines' => [[ 0,0,0,3 ], [2,0,2,3] ] },
-# hotizontal 1px lines
-  'hatch_hori'  => { 'size' => [ 4, 4 ], 'lines' => [[ 0,0,3,0 ], [0,2,3,2] ] },
-# sw-ne (school tie!) v-thick lines
-  'hatch_thick' => { 'size' => [ 8, 8 ], 'lines' => [[ 0,7,7,0 ], [1,7,7,1], [2,7,7,2], [3,7,7,3],[0,0,0,0],[0,1,1,0],[0,2,2,0] ] },
-};
-  unless( exists $self->{'_GDTileCache'}->{"$id:$pattern"}) {
+  my $key = join ':', $bg_color, $id, $pattern;
+  unless($self->{'_GDTileCache'}->{$key}) {
     my $tile;
-    my $pattern_def = $patterns->{$pattern};
+    my $pattern_def = $Sanger::Graphics::Renderer::patterns->{$pattern};
     if( $pattern_def ) {
       $tile = GD::Image->new(@{ $pattern_def->{'size'}} );
-      my $bg   = $tile->colorAllocate(255,255,255);
+      my $bg   = $tile->colorAllocate($self->{'colourmap'}->rgb_by_name($bg_color));
       my $fg   = $tile->colorAllocate($self->{'colourmap'}->rgb_by_name($id));
       $tile->transparent($bg);
-      foreach( @{$pattern_def->{'lines'}} )   {
-	$tile->line(@$_,$fg);
+      $tile->line(@$_, $fg ) foreach( @{$pattern_def->{'lines'}||[]});
+      foreach my $poly_def ( @{$pattern_def->{'polys'}||[]} ) {
+        my $poly = new GD::Polygon;
+        foreach( @$poly_def ) {
+          $poly->addPt( @$_ );
+        } 
+        $tile->filledPolygon($poly,$fg);
       }
     }
-    $self->{'_GDTileCache'}->{"$id:$pattern"} = $tile;
+    $self->{'_GDTileCache'}->{$key} = $tile;
   }
-  return $self->{'_GDTileCache'}->{"$id:$pattern"};
+  return $self->{'_GDTileCache'}->{$key};
 }
 
 sub render_Rect {

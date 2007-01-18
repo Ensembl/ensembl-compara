@@ -8,6 +8,47 @@ use Sanger::Graphics::Glyph::Poly;
 use strict;
 use Time::HiRes qw(time);
 
+our $patterns = {
+# south-west - north-east thin line
+  'hatch_ne'    => {
+    'size' => [ 4, 4 ],
+    'lines' => [
+      [ 0,3,3,0 ]
+    ]
+  },
+# south-east - north-west thin line
+  'hatch_nw'    => {
+    'size' => [ 4, 4 ],
+    'lines' => [
+      [ 0,0,3,3 ]
+    ]
+  },
+# vertical 1px lines
+  'hatch_vert'  => {
+    'size' => [ 4, 4 ],
+    'lines' => [
+      [ 0,0,0,3 ],
+      [ 2,0,2,3 ]
+    ]
+  },
+# hotizontal 1px lines
+  'hatch_hori'  => {
+    'size' => [ 4, 4 ],
+    'lines' => [
+      [ 0,0,3,0 ],
+      [ 0,2,3,2 ]
+     ]
+  },
+# sw-ne (school tie!) v-thick lines
+  'hatch_thick' => {
+    'size' => [ 12, 12 ],
+    'polys' => [
+      [ [ 0,11 ],[5,11],[11,5],[11,0 ] ],
+      [ [ 0,0 ],[0,4],[4,0]          ],
+    ],
+  },
+};
+
 sub new {
   my ($class, $config, $extra_spacing, $glyphsets_ref) = @_;
   
