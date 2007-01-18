@@ -15,7 +15,7 @@ sub _init {
   my ($self) = @_;
 
   my $Config        = $self->{'config'};
-  my $conf_colours  = $Config->get('TSV_fake_haplotype_legend','colours' );
+  my $conf_colours  = $Config->get('TSV_haplotype_legend','colours' );
 
   my @snps = @{$Config->{'snps'}};
   return unless scalar @snps;
@@ -58,7 +58,7 @@ sub _init {
 
 
   # Info text 
-  my $info_text = "Comparison to $reference_name alleles (green = same allele; purple = different allele; white = data missing)";
+  my $info_text = "Comparison to $reference_name alleles";
 
   my( $fontname_c, $fontsize_c ) = $self->get_font_details( 'caption' );
   my @res_c = $self->get_text_width( 0, 'X|X', '', 'font'=>$fontname_c, 'ptsize' => $fontsize_c );
@@ -245,12 +245,10 @@ sub _init {
   $self->push(new Sanger::Graphics::Glyph::Space({ 'y' => $offset + $track_height, 'height' => $th+2, 'x' => 1, 'width' => 1, 'absolutey' => 1, }));
 
 
-
   # Colour legend stuff
-  #unless($Config->{'variation_types'}{$type}) {
-  #  push @{ $Config->{'variation_legend_features'}->{'variations'}->{'legend'}}, $colours->{$type}->[1],   $colours->{$type}->[0];
-  #  $Config->{'variation_types'}{$type} = 1;
-  #}
+  foreach (keys %$conf_colours) {
+    push @{ $Config->{'TSV_haplotype_legend_features'}->{'variations'}->{'legend'}}, $conf_colours->{$_}->[1],   $conf_colours->{$_}->[0];
+  }
   return 1;
 }
 
@@ -298,7 +296,7 @@ sub do_glyphs {
   my @stripes;
   if ($colour eq 'stripes') {
     my $Config        = $self->{'config'};
-    my $conf_colours  = $Config->get('TSV_fake_haplotype_legend','colours' );
+    my $conf_colours  = $Config->get('TSV_haplotype_legend','colours' );
     $colour = $conf_colours->{'SAME'}[0];
     @stripes = ( 'pattern'       => 'hatch_thick',
 		 'patterncolour' => $conf_colours->{'DIFFERENT'}[0],
