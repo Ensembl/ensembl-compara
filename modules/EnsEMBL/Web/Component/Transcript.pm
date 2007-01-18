@@ -1071,8 +1071,8 @@ sub transcriptsnpview {
   # Get three slice - context (5x) gene (4/3x) transcripts (+-EXTENT)
   my $extent = tsv_extent($object);
   foreach my $slice_type (
-    [ 'context',           'normal', '105%'  ],
-    [ 'transcript',        'normal', '105%'  ],
+    [ 'context',           'normal', '100%'  ],
+    [ 'transcript',        'normal', '20%'  ],
     [ 'TSV_transcript',    'munged', $extent ],
   ) {
     $object->__data->{'slices'}{ $slice_type->[0] } =  $object->get_transcript_slices( $slice_type ) || warn "Couldn't get slice";
