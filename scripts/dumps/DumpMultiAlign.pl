@@ -512,7 +512,7 @@ sub print_my_maf {
     } else {
       printf("s %-20s %10d %10d - %10d %s\n",
           $seq_name,
-          ($this_genomic_align->dnafrag_length - $this_genomic_align->dnafrag_end),
+          ($this_genomic_align->dnafrag->length - $this_genomic_align->dnafrag_end),
           ($this_genomic_align->dnafrag_end - $this_genomic_align->dnafrag_start + 1),
           $this_genomic_align->dnafrag->length,
           $aligned_sequence);
