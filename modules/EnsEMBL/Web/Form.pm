@@ -44,6 +44,9 @@ sub add_element {
   if( $self->dynamic_use( $module ) ) {
     $self->_add_element( $module->new( 'form' => $self->{'_attributes'}{'name'}, %options ) );
   }
+  else {
+    warn "Unable to dynamically use module $module. Have you spelt the element type correctly?";
+  }
 }
 
 sub _add_element {
