@@ -91,17 +91,19 @@ my $patterns = {
 # hotizontal 1px lines
   'hatch_hori'  => { 'size' => [ 4, 4 ], 'lines' => [[ 0,0,3,0 ], [0,2,3,2] ] },
 # sw-ne (school tie!) v-thick lines
-  'hatch_thick' => { 'size' => [ 8, 8 ], 'lines' => [[ 0,7,7,0 ], [1,7,7,1], [2,7,7,2], [3,7,7,3],[0,0,0,0],[0,1,1,0],[0,2,2,0],[0,3,3,0] ] },
+  'hatch_thick' => { 'size' => [ 8, 8 ], 'lines' => [[ 0,7,7,0 ], [1,7,7,1], [2,7,7,2], [3,7,7,3],[0,0,0,0],[0,1,1,0],[0,2,2,0] ] },
 };
-  unless($self->{'_GDTileCache'}->{"$id:$pattern"}) {
+  unless( exists $self->{'_GDTileCache'}->{"$id:$pattern"}) {
+    my $tile;
     my $pattern_def = $patterns->{$pattern};
     if( $pattern_def ) {
-    my $tile = GD::Image->new(@{ $pattern_def->{'size'}} );
-    my $bg   = $tile->colorAllocate(255,255,255);
-    my $fg   = $tile->colorAllocate($self->{'colourmap'}->rgb_by_name($id));
-    $tile->transparent($bg);
-    foreach( @{$pattern_def->{'lines'}})
-      $tile->line(@$_,$fg);
+      $tile = GD::Image->new(@{ $pattern_def->{'size'}} );
+      my $bg   = $tile->colorAllocate(255,255,255);
+      my $fg   = $tile->colorAllocate($self->{'colourmap'}->rgb_by_name($id));
+      $tile->transparent($bg);
+      foreach( @{$pattern_def->{'lines'}} )   {
+	$tile->line(@$_,$fg);
+      }
     }
     $self->{'_GDTileCache'}->{"$id:$pattern"} = $tile;
   }

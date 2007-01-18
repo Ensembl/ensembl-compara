@@ -10,6 +10,7 @@ use Sanger::Graphics::Glyph::Rect;
 use Bio::EnsEMBL::GlyphSet;
 use Data::Dumper;  
 our @ISA = qw(Bio::EnsEMBL::GlyphSet);
+our @colours       = qw(chartreuse4 stripes darkorchid4 grey);# orange4 deeppink3 dodgerblue4);
 
 sub _init {
   my ($self) = @_;
@@ -31,6 +32,8 @@ sub _init {
   my $fully_inbred;
   foreach my $data ( @{$Config->{'snp_fake_haplotype'}} ) {
     my( $strain, $allele_ref, $coverage_ref ) = @$data;
+
+    # find out once if this species is inbred or not. Then apply to all
     unless (defined $fully_inbred) {
       my ($individual) = @{$individual_adaptor->fetch_all_by_name($strain)};
       if ($individual) {
@@ -40,6 +43,8 @@ sub _init {
     $strain_alleles{$strain} = {};  # every strain should be in here
     foreach my $a_ref ( @$allele_ref ) {
       next unless $a_ref->[2];
+
+      # strain_alleles{strain_name}{snp_id::start} = allele
       $strain_alleles{$strain}{ join "::", $a_ref->[2]->{'_variation_id'}, $a_ref->[2]->{'start'} } = $a_ref->[2]->allele_string ;
     }
     foreach my $c_ref ( @$coverage_ref ) {
@@ -51,7 +56,7 @@ sub _init {
   $reference_name = $golden_path unless $strain_alleles{$reference_name};
 
 
-  # Info text ---------------------------------------------------------
+  # Info text 
   my $info_text = "Comparison to $reference_name alleles (green = same allele; purple = different allele; white = data missing)";
 
   my( $fontname_c, $fontsize_c ) = $self->get_font_details( 'caption' );
@@ -86,7 +91,6 @@ sub _init {
 
   # Reference track ----------------------------------------------------
   my $offset = $th_c + 4;
-  my @colours       = qw(chartreuse4 darkorchid4);# grey);# orange4 deeppink3 dodgerblue4);
   my @ref_name_size = $self->get_text_width( 80, $reference_name, '', 'font'=>$fontname, 'ptsize' => $fontsize );
   if ($ref_name_size[0] eq '') {
     $self->strain_name_text($th, $fontname, $fontsize, $offset, "Compare to", $Config, $fully_inbred);
@@ -139,7 +143,8 @@ sub _init {
       my $golden_colour = undef;
 
       if ($reference_base) { # determine colours for golden path row dp on reference colours
-	$golden_colour = $self->bases_match($golden_path_base, $reference_base) ? $colours[0] : $colours[1],
+	$golden_colour = $colours[$self->bases_match($golden_path_base, $reference_base)];
+	warn "\n\n\n$golden_colour $golden_path_base";
       }
       push @golden_path, {
 			  label   => $label,
@@ -151,17 +156,25 @@ sub _init {
 
     # Set ref base colour and draw glyphs ----------------------------------
     $colour = $colours[0] if $reference_base;
-    $snp_ref->[3] = { $reference_base => $colours[0] };
+    $snp_ref->[3] = {};
 
     # If ref base is like "G", have to define "G|G" as also having ref base colour
     if (length $reference_base ==1) {
       $snp_ref->[3]{ "$reference_base|$reference_base"} = $colours[0];
+      $snp_ref->[3]{ $reference_base} = $colours[0];
     }
     elsif ($reference_base =~/(\w)\|(\w)/) {
-      my $half_genotype = $1;
-      warn "[ERROR] This is a heterozygous allele $1 $2" if $1 ne $2;
-      $snp_ref->[3]{ "$half_genotype"} = $colours[0];
+      if ($1 ne $2) { # heterozygous it should be stripy
+	$snp_ref->[3]{ $reference_base} = $colours[1];
+	$snp_ref->[3]{ $2.$1} = $colours[1];
+      }
+      else {
+	#my $half_genotype = $1;
+	#warn "[ERROR] This is a heterozygous allele $1 $2" if $1 ne $2;
+	$snp_ref->[3]{ $reference_base } = $colours[0];
+      }
     }
+
     $snp_ref->[4] = $reference_base ;
     $self->do_glyphs($offset, $th, $tmp_width, $pix_per_bp, $fontname, $fontsize, $Config, $label, $snp_ref->[0],  $snp_ref->[1], $colour, $reference_base);
 
@@ -210,9 +223,18 @@ sub _init {
       my $text = $snp_ref->[4] ? "white" : "black"; # text colour white if ref base defined
       if( $allele_string && $snp_ref->[4] ) {      # only fill in colour if ref base is defined
         $colour = $snp_ref->[3]{ $allele_string };
-        unless($colour) {
-          $colour = $snp_ref->[3]{ $allele_string } = 
-	    $colours[ scalar(values %{ $snp_ref->[3] } )] || $colours[-1];
+	
+        unless($colour) {                           # allele not the same as reference
+	  warn $allele_string;
+	  if (length $allele_string ==1 ) {
+	    $colour =  $snp_ref->[3]{ $allele_string } = $colours[2];
+	  }
+	  else{
+	    $colour = $snp_ref->[3]{ $allele_string } = 
+	      $self->bases_match(split/\|/, $allele_string) ?  $colours[1] : $colours[2];
+	    #$colours[ scalar(values %{ $snp_ref->[3] } )] || $colours[-1];
+	  }
+
         }
       }
 
@@ -266,6 +288,15 @@ sub do_glyphs {
 
   my @res = $self->get_text_width( 0, length($allele_string)==1 ? "A" : $allele_string, '', 'font'=>$fontname, 'ptsize' => $fontsize );
 
+  # Heterozygotes should be stripey
+  my @stripes;
+  if ($colour eq 'stripes') {
+    $colour = $colours[0];
+    @stripes = ( 'pattern'       => 'hatch_thick',
+		 'patterncolour' => $colours[2],
+	       );
+  }
+
   my $back_glyph = new Sanger::Graphics::Glyph::Rect({
     'x'         => ($end+$start-1-$tmp_width)/2,
     'y'         => $offset,
@@ -275,6 +306,7 @@ sub do_glyphs {
     'height'    => $th+2,
     'width'     => $tmp_width,
     'absolutey' => 1,
+    @stripes,
   });
   $self->push( $back_glyph );
 
@@ -306,7 +338,15 @@ sub bases_match {
   my ($self, $one, $two) = @_;
   $one .= "|$one" if length $one == 1;
   $two .= "|$two" if length $two == 1;
-  my $return = $one eq $two ? 1 : 0;
-  return $return;
+
+  return 0 if ($one eq $two);
+
+  foreach (split /\|/, $one) {
+    return 1 if $_ eq substr $two, 0, 1;
+    return 1 if $_ eq substr $two, 2, 1;
+  }
+  return 2;
 }
 1;
+
+# add gap 8-10
