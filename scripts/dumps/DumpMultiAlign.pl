@@ -482,7 +482,6 @@ sub write_genomic_align_block {
 sub print_my_maf {
   my ($genomic_align_block) = @_;
 
-  print "\n";
   print "a";
   if (defined $genomic_align_block->score) {
     print " score=", $genomic_align_block->score;
@@ -519,6 +518,7 @@ sub print_my_maf {
           $aligned_sequence);
     }
   }
+  print "\n";
 }
 
 exit;
