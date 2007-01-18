@@ -1080,7 +1080,7 @@ sub sequencealignview {
 				   )) {
 
     $info_panel->add_components(qw(
-    sequencealignview            EnsEMBL::Web::Component::Location::sequencealignview
+    sequencealignview            EnsEMBL::Web::Component::Slice::sequencealignview
 				  ));
     $self->{page}->content->add_panel( $info_panel );
   }

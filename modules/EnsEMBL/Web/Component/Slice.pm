@@ -7,15 +7,16 @@ our @ISA = qw( EnsEMBL::Web::Component);
 use strict;
 use warnings;
 use Data::Dumper;
+use Bio::EnsEMBL::AlignStrainSlice;
 no warnings "uninitialized";
 
 my ($exon_On, $cs_On, $snp_On, $snp_Del, $ins_On, $codon_On) = (1, 16, 32, 64, 128, 256);
 my $BR = '###';
 
 sub generateHTML {
-  my ($object, $hRef, $max_position, $max_label) = @_;
+  my ($object, $hRef, $max_position, $max_label, $linenumber_ref) = @_;
 
-  my @linenumbers = $object->get_slice_object->line_numbering;
+  my  @linenumbers = $linenumber_ref ? @$linenumber_ref:  $object->get_slice_object->line_numbering;
   my $lineformat  =  length($max_position); #sort{$b<=>$a} map{length($_)} @linenumbers;
 
   if (@linenumbers) {
@@ -924,6 +925,154 @@ sub sequence_display {
     $KEY
     <pre>&gt;@{[ $slice->name ]}\n$markedup_seq</pre>
   ) );
+}
+
+###### SEQUENCE ALIGN SLICE ########################################################
+
+sub sequencealignview {
+
+  ### SequenceAlignView
+  ### Returns 1
+
+  my( $panel, $object ) = @_;
+  my $width = $object->param("display_width") || 60;
+
+  #Get reference slice
+  my $refslice = $object->slice;
+  my @strain_slices;
+  my @individuals = ($object->get_individuals('display'));
+
+  # Get slice for each display strain
+  foreach my $individual ( @individuals ) {
+    my $individual_slice = $refslice->get_by_strain( $individual );
+    next unless $individual_slice;
+    push @strain_slices, $individual_slice;
+  }
+
+
+  # Markup
+  my ($sliceHash, $max_position, $max_label, $consArray) =  markupInit_fc1($object, \@strain_slices);
+  my  @linenumbers =  $object->line_numbering;
+  my $html = generateHTML($object, $sliceHash, $max_position, $max_label, \@linenumbers);
+
+  my $name = $refslice->name;
+#  $panel->add_row("Slice", "<p>$name Length: $length</p>");
+
+# # Add a section holding the names of the displayed slices
+#   my $Chrs;
+#   foreach my $sp ( $object->species, grep {$_ ne $object->species } keys %$sliceHash) {
+#     $Chrs .= qq{<p><br/><b>$sp&gt;<br/></b>};
+#     foreach my $loc (@{$sliceHash->{$sp}{slices}}) {
+#       my ($stype, $assembly, $region, $start, $end, $strand) = split (/:/ , $loc);
+#       $Chrs .= qq{<p><a href="/$sp/contigview?l=$region:$start-$end">$loc</a></p>};
+#     }
+#   }
+
+#     $KEY
+#     $Chrs
+
+ #  $panel->add_row( 'Marked_up_sequence', qq(
+ #    <pre>\n$html\n</pre>
+ #  ) );
+
+
+  # Make an align slice
+  my $align_slice = Bio::EnsEMBL::AlignStrainSlice->new(-SLICE => $refslice,
+                                                     -STRAINS => \@strain_slices);
+
+  my $length =  $align_slice->length;
+  my $info;
+  foreach my $strain_slice (@strain_slices) {
+
+    #get coordinates of variation in alignSlice
+    my @allele_features = @{$strain_slice->get_all_AlleleFeatures_Slice() || []};
+    print Dumper($align_slice->{'mapper'});
+    foreach my $af ( @allele_features ){
+      my $new_feature = $align_slice->alignFeature($af, $strain_slice);
+      $info .= "Coordinates of the feature in AlignSlice are: ". $new_feature->start. "-". $af->start. "<br />";
+    }
+  }
+  $panel->add_row( "Alignment", "<p>$info</p>" );
+  return 1;
+}
+
+
+sub markupInit_fc1 {
+  my ($object, $slices) = @_;
+
+  my (@conservation);
+  my $max_position = 0;
+  my $max_label = -1;
+  my $ins_On = 128;
+  my $hRef;
+
+  my $slice_length = length($slices->[0]->seq) + 1 ;
+  my $width = $object->param("display_width") || 60;
+
+  foreach my $slice (@$slices) {
+    my $sequence = $slice->seq;
+    my $strain_name = $slice->strain_name;
+#     if ($slice->isa('Bio::EnsEMBL::AlignStrainSlice')) {
+#       foreach my $uSlice (@{$slice->get_all_underlying_Slices}) {
+#         next if ($uSlice->seq_region_name eq 'GAP');
+#         push @{$hRef->{$strain_name}->{slices}}, $uSlice->name;
+#         if ( (my $label_length = length($uSlice->seq_region_name)) > $max_label) {
+#           $max_label = $label_length;
+#         }
+#         $max_position = $uSlice->start if ($uSlice->start > $max_position);
+#         $max_position = $uSlice->end if ($uSlice->end > $max_position);
+#       }
+#     } 
+#     else {
+      $max_position = $slice->start if ($slice->start > $max_position);
+      $max_position = $slice->end if ($slice->end > $max_position);
+      if ( (my $label_length = length($slice->seq_region_name)) > $max_label) {
+        $max_label= $label_length;
+      }
+      push @{$hRef->{$strain_name}->{slices}}, $slice->name;
+#    }
+    $hRef->{$strain_name}->{slice} = $slice;
+    $hRef->{$strain_name}->{sequence} = $sequence . ' ';
+    $hRef->{$strain_name}->{slice_length} = $slice_length;
+
+    # Now put some initial sequence marking
+    # Mark final bp
+    my @markup_bins = ({ 'pos' => $slice_length, 'mark' => 1 });
+
+    # Split the sequence into lines of $width bp length.
+    # Mark start and end of each line
+    my $bin = 0;
+    my $binE = int(($slice_length-1) / $width);
+
+    while ($bin < $binE) {
+      my $pp = $bin * $width + 1;
+      push @markup_bins, { 'pos' => $pp };
+
+      $pp += ($width - 1);
+      push @markup_bins, { 'pos' => $pp, 'mark' => 1 };
+      $bin ++;
+    }
+    push @markup_bins, { 'pos' => $bin * $width + 1 };
+
+    while ($sequence =~ m/(\-+[\w\s])/gc) {
+      my $txt = sprintf("%d bp", pos($sequence) - $-[0] - 1);
+      push @markup_bins, { 'pos' => $-[0]+1, 'mask' => $ins_On, 'text' => $txt };
+      push @markup_bins, { 'pos' => pos($sequence), 'mask' => -$ins_On, 'text' => $txt };
+    }
+
+    $hRef->{$strain_name}->{markup} = \@markup_bins;
+
+    # And in case the conservation markup is switched on - get conservation scores for each basepair in the alignment.
+    # In future the conservation scores will come out of a database and this will be removed
+    if ( $object->param("conservation") ne 'off') {
+      my $idx = 0;
+      foreach my $s (split(//, $sequence)) {
+        $conservation[$idx++]->{uc($s)} ++;
+      }
+    }
+  }  # end of foreach slice
+
+  return ($hRef, $max_position, $max_label, \@conservation);
 }
 
 

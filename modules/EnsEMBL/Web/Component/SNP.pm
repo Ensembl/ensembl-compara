@@ -540,7 +540,7 @@ sub snpview_image {
  ### Returns  0
 
   my($panel, $object) = @_;
-  my $width = $object->param('w') || "100000";
+  my $width = $object->param('w') || "30000";
   my ($seq_region, $start, $seq_type ) = $object->seq_region_data;
   return [] unless $seq_region;
 

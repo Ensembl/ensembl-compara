@@ -106,13 +106,6 @@ sub markup_options_form {
 }
 
 
-sub align_sequence {
-  my( $panel, $object ) = @_;
-  return EnsEMBL::Web::Component::Slice::align_sequence_display(
-    $panel, $object
-  );
-}
-
 sub align_markup_options {
   my( $panel, $object ) =@_;
   $panel->add_row( 'Markup options', "<div>@{[ $panel->form( 'align_markup_options' )->render ]}</div>" );
@@ -1351,8 +1344,8 @@ sub genesnpview {
   }
    $object->get_gene_slices( ## Written...
     $master_config,
-    [ 'context',     'normal', '500%'  ],
-    [ 'gene',        'normal', '133%'  ],
+    [ 'context',     'normal', '100%'  ],
+    [ 'gene',        'normal', '33%'  ],
     [ 'transcripts', 'munged', $extent ]
   );
 

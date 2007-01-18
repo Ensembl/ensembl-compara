@@ -525,4 +525,15 @@ sub get_individuals {
   return ();
 }
 
+
+sub line_numbering {
+  my $self  = shift;
+  my $linenums = $self->param('line_numbering');
+  if( $linenums eq 'sequence' ){ #Relative to sequence
+    return( 1, $self->Obj->length );
+  } elsif( $linenums eq 'slice' ){ #Relative to slice. May need to invert
+    return $self->Obj->strand > 0 ? ( $self->Obj->start, $self->Obj->end ) : ( $self->Obj->end, $self->Obj->start );
+  }
+  return();
+}
 1;

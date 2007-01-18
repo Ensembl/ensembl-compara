@@ -364,7 +364,7 @@ sub geneseqalignview {
       stable_id      EnsEMBL::Web::Component::Gene::stable_id
       location       EnsEMBL::Web::Component::Gene::location
       align_markup_options EnsEMBL::Web::Component::Gene::align_markup_options
-      sequence       EnsEMBL::Web::Component::Gene::align_sequence
+      sequence       EnsEMBL::Web::Component::Slice::align_sequence_display
     ));
     $self->add_panel( $panel1 );
   }
