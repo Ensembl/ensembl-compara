@@ -361,6 +361,14 @@ sub new {
   );
 
 
+  # TSV_haplotype display
+  $self->colourSet( 'haplotype',
+		    'SAME'          => ['chartreuse4', 'Same allele',          'white',],
+		    'DIFFERENT'     => ['darkorchid4', 'Different allele',     'white',],
+		    'HET'           => ['stripes',     'Heterozygous',         'white',],
+		    'MISSING'       => ['white',       'Missing data',         'black',],
+		  );
+
   $self->colourSet('regulatory_search_regions',
     'cisred_search'   => [ "plum4" ],
 		  );

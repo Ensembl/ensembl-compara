@@ -10,12 +10,13 @@ use Sanger::Graphics::Glyph::Rect;
 use Bio::EnsEMBL::GlyphSet;
 use Data::Dumper;  
 our @ISA = qw(Bio::EnsEMBL::GlyphSet);
-our @colours       = qw(chartreuse4 stripes darkorchid4 grey);# orange4 deeppink3 dodgerblue4);
 
 sub _init {
   my ($self) = @_;
 
   my $Config        = $self->{'config'};
+  my $conf_colours  = $Config->get('TSV_fake_haplotype_legend','colours' );
+
   my @snps = @{$Config->{'snps'}};
   return unless scalar @snps;
   return unless $Config->{'snp_fake_haplotype'};
@@ -143,8 +144,7 @@ sub _init {
       my $golden_colour = undef;
 
       if ($reference_base) { # determine colours for golden path row dp on reference colours
-	$golden_colour = $colours[$self->bases_match($golden_path_base, $reference_base)];
-	warn "\n\n\n$golden_colour $golden_path_base";
+	$conf_colours->{$self->bases_match($golden_path_base, $reference_base) }[0];
       }
       push @golden_path, {
 			  label   => $label,
@@ -155,21 +155,22 @@ sub _init {
     }
 
     # Set ref base colour and draw glyphs ----------------------------------
-    $colour = $colours[0] if $reference_base;
+    #$colour = $conf_colours->{'SAME'}[0] if $reference_base;
+    $colour = $conf_colours->{'SAME'}[0] if $reference_base;
     $snp_ref->[3] = {};
 
     # If ref base is like "G", have to define "G|G" as also having ref base colour
     if (length $reference_base ==1) {
-      $snp_ref->[3]{ "$reference_base|$reference_base"} = $colours[0];
-      $snp_ref->[3]{ $reference_base} = $colours[0];
+      $snp_ref->[3]{ "$reference_base|$reference_base"} = $conf_colours->{'SAME'}[0];
+      $snp_ref->[3]{ $reference_base} = $conf_colours->{'SAME'}[0];
     }
     elsif ($reference_base =~/(\w)\|(\w)/) {
       if ($1 ne $2) { # heterozygous it should be stripy
-	$snp_ref->[3]{ $reference_base} = $colours[1];
-	$snp_ref->[3]{ $2.$1} = $colours[1];
+	$snp_ref->[3]{ $reference_base} = $conf_colours->{'HET'}[0];
+	$snp_ref->[3]{ $2.$1} = $conf_colours->{'HET'}[0];
       }
       else {
-	$snp_ref->[3]{ $reference_base } = $colours[0];
+	$snp_ref->[3]{ $reference_base } = $conf_colours->{'SAME'}[0];
       }
     }
 
@@ -224,11 +225,11 @@ sub _init {
 	
         unless($colour) {                           # allele not the same as reference
 	  if (length $allele_string ==1 ) {
-	    $colour =  $snp_ref->[3]{ $allele_string } = $colours[2];
+	    $colour =  $snp_ref->[3]{ $allele_string } = $conf_colours->{'DIFFERENT'}[0];
 	  }
-	  else{
-	    $colour = $snp_ref->[3]{ $allele_string } = 
-	      $self->bases_match(split/\|/, $allele_string) ?  $colours[1] : $colours[2];
+	  else{ # must be a het or must be different
+	    my $type = $self->bases_match((split /\|/, $allele_string), "one_allele");
+	    $colour = $snp_ref->[3]{ $allele_string } = $conf_colours->{$type}[0];
 	    #$colours[ scalar(values %{ $snp_ref->[3] } )] || $colours[-1];
 	  }
 
@@ -241,7 +242,15 @@ sub _init {
       $c++;
     }
   }
-  #$self->push(new Sanger::Graphics::Glyph::Space({ 'y' => $offset + $track_height, 'height' => $th+2, 'x' => 1, 'width' => 1, 'absolutey' => 1, }));
+  $self->push(new Sanger::Graphics::Glyph::Space({ 'y' => $offset + $track_height, 'height' => $th+2, 'x' => 1, 'width' => 1, 'absolutey' => 1, }));
+
+
+
+  # Colour legend stuff
+  #unless($Config->{'variation_types'}{$type}) {
+  #  push @{ $Config->{'variation_legend_features'}->{'variations'}->{'legend'}}, $colours->{$type}->[1],   $colours->{$type}->[0];
+  #  $Config->{'variation_types'}{$type} = 1;
+  #}
   return 1;
 }
 
@@ -288,9 +297,11 @@ sub do_glyphs {
   # Heterozygotes should be stripey
   my @stripes;
   if ($colour eq 'stripes') {
-    $colour = $colours[0];
+    my $Config        = $self->{'config'};
+    my $conf_colours  = $Config->get('TSV_fake_haplotype_legend','colours' );
+    $colour = $conf_colours->{'SAME'}[0];
     @stripes = ( 'pattern'       => 'hatch_thick',
-		 'patterncolour' => $colours[2],
+		 'patterncolour' => $conf_colours->{'DIFFERENT'}[0],
 	       );
   }
 
@@ -332,17 +343,19 @@ sub do_glyphs {
 }
 
 sub bases_match {
-  my ($self, $one, $two) = @_;
+  my ($self, $one, $two, $one_allele) = @_;
   $one .= "|$one" if length $one == 1;
   $two .= "|$two" if length $two == 1;
 
-  return 0 if ($one eq $two);
+  my $same = $one_allele ? "DIFFERENT" : "SAME";
+  my $different = $one_allele ? "HET"  : "DIFFERENT";
+  return $same if ($one eq $two);
 
   foreach (split /\|/, $one) {
-    return 1 if $_ eq substr $two, 0, 1;
-    return 1 if $_ eq substr $two, 2, 1;
+    return "HET" if $_ eq substr $two, 0, 1;
+    return "HET" if $_ eq substr $two, 2, 1;
   }
-  return 2;
+  return $different;
 }
 1;
 
