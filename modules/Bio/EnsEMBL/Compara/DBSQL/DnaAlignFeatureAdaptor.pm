@@ -167,138 +167,16 @@ sub fetch_all_by_species_region {
       );
 
   #convert genomic align blocks to dna align features
-  foreach my $this_genomic_align_block (@$genomic_align_blocks) {
-
-    ## KNOWN BUG: This will ignore third and following parts of a multiple alignment...
-    ## This adaptor cannot deal with multiple alignments. Use the new
-    ## Bio::EnsEMBL::Compara::DBSQL::GenomicAlignBlockAdaptor instead.
-    my $consensus_genomic_align = $this_genomic_align_block->reference_genomic_align;
-    my $query_genomic_align = $this_genomic_align_block->get_all_non_reference_genomic_aligns->[0];
-
-    my $top_slice;
-    if ($query_slice_adaptor) {
-      $top_slice = $query_slice_adaptor->fetch_by_region(
-              $query_genomic_align->dnafrag->coord_system_name,
-              $query_genomic_align->dnafrag->name
-          );
-    } else {
-      $top_slice = undef;
-    }
-
-    ## The code for transforming GenomicAlignBlocks into DnaDnaAlignFeatures assumes that
-    ## reference_genomic_align is on the forward strand!
-    if ($consensus_genomic_align->dnafrag_strand == -1) {
-      $this_genomic_align_block->reverse_complement;
-    }
-    my $cstart = $consensus_genomic_align->dnafrag_start;
-    my $cend   = $consensus_genomic_align->dnafrag_end;
-
-    #skip features which do not overlap the requested region
-    #next if ($cstart > $end || $cend < $start); 
-
-    my $ga_cigar_line;
-    do {
-      my @consensus_cigar_pieces = split(/(\d*[DIMG])/, $consensus_genomic_align->cigar_line);
-      my @query_cigar_pieces = split(/(\d*[DIMG])/, $query_genomic_align->cigar_line);
-
-      my @consensus_gapped_pieces;
-      foreach my $piece (@consensus_cigar_pieces) {
-        next if ($piece !~ /^(\d*)([MDIG])$/);
-        my $num = $1;
-        my $type = $2;
-        $num = 1 if ($num !~ /^\d+$/);
-        if( $type eq "M" ) {
-          for (my $i=0; $i<$num; $i++) {push(@consensus_gapped_pieces, "N")}
-        } else {
-          for (my $i=0; $i<$num; $i++) {push(@consensus_gapped_pieces, '-')}
-        }
-      }
-      my @query_gapped_pieces;
-      foreach my $piece (@query_cigar_pieces) {
-        next if ($piece !~ /^(\d*)([MDIG])$/);
-        my $num = $1;
-        my $type = $2;
-        $num = 1 if ($num !~ /^\d+$/);
-        if( $type eq "M" ) {
-          for (my $i=0; $i<$num; $i++) {push(@query_gapped_pieces, "N")}
-        } else {
-          for (my $i=0; $i<$num; $i++) {push(@query_gapped_pieces, '-')}
-        }
-      }
-      throw if (scalar(@consensus_gapped_pieces) != scalar(@query_gapped_pieces));
-      my $type = "";
-      my $num = 0;
-      for (my $i=0; $i<@consensus_gapped_pieces; $i++) {
-        if ($consensus_gapped_pieces[$i] eq "N" and $query_gapped_pieces[$i] eq "N") {
-          if ($type ne "M") {
-            $ga_cigar_line .= (($num==1)?"":$num).$type if ($num);
-            $num = 0;
-            $type = "M";
-          }
-        } elsif ($consensus_gapped_pieces[$i] eq "N" and $query_gapped_pieces[$i] eq "-") {
-          if ($type ne "I") {
-            $ga_cigar_line .= (($num==1)?"":$num).$type if ($num);
-            $num = 0;
-            $type = "I";
-          }
-        } elsif ($consensus_gapped_pieces[$i] eq "-" and $query_gapped_pieces[$i] eq "N") {
-          if ($type ne "D") {
-            $ga_cigar_line .= (($num==1)?"":$num).$type if ($num);
-            $num = 0;
-            $type = "D";
-          }
-        } else {
-          throw "no double gaps can occur in a pairwise alignment!";
-        }
-        $num++;
-      }
-      $ga_cigar_line .= (($num==1)?"":$num).$type;
-    };
-    my $df_name = $this_dnafrag->name;
-    my $score = $this_genomic_align_block->score;
-    my $perc_id = $this_genomic_align_block->perc_id;
-    my $qdf_start = 1;
-    my $ga_query_start = $query_genomic_align->dnafrag_start;
-    my $ga_query_end = $query_genomic_align->dnafrag_end;
-    my $ga_query_strand = $query_genomic_align->dnafrag_strand;
-    my $qdf_name = $query_genomic_align->dnafrag->name;
-    my $ga_level_id = $consensus_genomic_align->level_id;
-    my $ga_strands_reversed = 0;
-    if ($consensus_genomic_align->dnafrag_strand == -1) {
-      $ga_strands_reversed = 1;
-      $ga_query_strand = -$ga_query_strand;
-    }
-    my $ga_group_id = $consensus_genomic_align->genomic_align_group_id_by_type("default");
-    my $f = Bio::EnsEMBL::DnaDnaAlignFeature->new_fast
-      ({'cigar_string' => $ga_cigar_line,
-        'seqname'      => $df_name,
-        'start'        => $cstart,
-        'end'          => $cend,
-        'strand'       => 1,
-        'species'      => $consensus_species,
-        'score'        => $score,
-        'percent_id'   => $perc_id,
-        'hstart'       => $qdf_start + $ga_query_start - 1,
-        'hend'         => $qdf_start + $ga_query_end -1,
-        'hstrand'      => $ga_query_strand,
-        'hseqname'     => $qdf_name,
-        'hspecies'     => $query_species,
-        'hslice'       => $top_slice,
-        'alignment_type' => $alignment_type,
-        'group_id'     => $ga_group_id,
-        'level_id'     => $ga_level_id,
-        'strands_reversed' => $ga_strands_reversed});
-
-    push @out, $f;
-  }
+  my $dafs = _convert_GenomicAlignBlocks_into_DnaDnaAlignFeatures($genomic_align_blocks);
 
   # We need to attach slices of the entire seq region to the features.
   # The features come without any slices at all, but their coords are
   # relative to the beginning of the seq region.
-  
   my $top_slice = $consensus_slice_adaptor->fetch_by_region($dnafrag_type, $chromosome_name);
-  map {$_->slice($top_slice)} @out;
-  return \@out;
+
+  map {$_->slice($top_slice)} @$dafs;
+
+  return $dafs;
 }
 
 
@@ -337,70 +215,53 @@ sub fetch_all_by_Slice {
 
   $limit = 0 unless (defined $limit);
 
-  unless (defined $qy_assembly) {
-    my $qy_gdb = 
-      $self->db->get_GenomeDBAdaptor->fetch_by_name_assembly($qy_species);
-    $qy_assembly = $qy_gdb->assembly;
-#    warning("qy_assembly was undef. Queried the default " .
-#            "one for $qy_species = $qy_assembly\n");
-  }
+  my $genome_db_adaptor = $self->db->get_GenomeDBAdaptor();
+  my $cs_genome_db = $genome_db_adaptor->fetch_by_name_assembly(
+      $orig_slice->adaptor->db->get_MetaContainer->get_Species->binomial);
+  my $qy_genome_db = $genome_db_adaptor->fetch_by_name_assembly(
+      $qy_species, $qy_assembly);
+  return [] if (!$cs_genome_db or !$qy_genome_db);
 
-  my $slice_adaptor = $orig_slice->adaptor();
-
-  if(!$slice_adaptor) {
-    warning("Slice has no attached adaptor. Cannot get Compara features.");
+  my $method_link_species_set_adaptor = $self->db->get_MethodLinkSpeciesSetAdaptor();
+  my $method_link_species_set;
+  if ($cs_genome_db->dbID == $qy_genome_db->dbID) {
+    $method_link_species_set = $method_link_species_set_adaptor->
+        fetch_by_method_link_type_GenomeDBs($alignment_type, [$cs_genome_db]);
+  } else {
+    $method_link_species_set = $method_link_species_set_adaptor->
+        fetch_by_method_link_type_GenomeDBs($alignment_type,
+            [$cs_genome_db, $qy_genome_db]);
   }
-  
-  my $cs_species = 
-    $slice_adaptor->db->get_MetaContainer->get_Species->binomial();
 
   my $key = uc(join(':', $orig_slice->name,
-                    $cs_species, $qy_species, $qy_assembly, $alignment_type));
+                    $cs_genome_db->name, $qy_genome_db->name, $qy_genome_db->assembly, $alignment_type));
 
   if(exists $self->{'_cache'}->{$key}) {
     return $self->{'_cache'}->{$key};
   }
 
-  my @projection = @{$orig_slice->project('toplevel')};  
-  return [] if(!@projection);
+  my $genomic_align_block_adaptor = $self->db->get_GenomicAlignBlockAdaptor();
+  my $genomic_align_blocks = $genomic_align_block_adaptor->fetch_all_by_MethodLinkSpeciesSet_Slice(
+      $method_link_species_set, $orig_slice, $limit);
+
+  my $dafs = _convert_GenomicAlignBlocks_into_DnaDnaAlignFeatures($genomic_align_blocks);
+
+  # We need to attach slices of the entire seq region to the features.
+  # The features come without any slices at all, but their coords are
+  # relative to the beginning of the seq region.
+  my $top_slice = $orig_slice->seq_region_Slice;
+  map {$_->slice($top_slice)} @$dafs;
+
+  # need to convert features to requested coord system
+  # if it was different then the one we used for fetching
 
   my @results;
-
-  foreach my $segment (@projection) {
-    my $slice = $segment->to_Slice;
-    my $slice_start = $slice->start;
-    my $slice_end   = $slice->end;
-    my $slice_strand = $slice->strand;
-
-    my $cs_assembly = $slice->coord_system->version();
-    my $dnafrag_type = $slice->coord_system->name;
-
-    my $features = $self->fetch_all_by_species_region($cs_species,$cs_assembly,
-                                                      $qy_species,$qy_assembly,
-                                                      $slice->seq_region_name,
-                                                      $slice_start, $slice_end,
-                                                      $alignment_type,
-                                                      $limit,$dnafrag_type);
-
-    # We need to attach slices of the entire seq region to the features.
-    # The features come without any slices at all, but their coords are
-    # relative to the beginning of the seq region.
-    
-    # the above is now done in the fetch_all_by_species_region call
-    
-    my $top_slice = $slice_adaptor->fetch_by_region($dnafrag_type, 
-                                                    $slice->seq_region_name);
-
-    # need to convert features to requested coord system
-    # if it was different then the one we used for fetching
-
-    if($top_slice->name() ne $orig_slice->name()) {
-      foreach my $f (@$features) {
-        push @results, $f->transfer($orig_slice);
-      }
-    } else {
-      push @results, @$features;
+  if($top_slice->name() ne $orig_slice->name()) {
+    foreach my $f (@$dafs) {
+      push @results, $f->transfer($orig_slice);
     }
+  } else {
+    push @results, @$dafs;
   }
 
   #update the cache
@@ -537,6 +398,155 @@ sub deleteObj {
 
   #clear the cache, removing references
   %{$self->{'_cache'}} = ();
+}
+
+
+=head2 deleteObj
+
+  Arg [1]    : none
+  Example    : none
+  Description: Called automatically by DBConnection during object destruction
+               phase. Clears the cache to avoid memory leaks.
+  Returntype : none
+  Exceptions : none
+  Caller     : none
+
+=cut
+
+sub _convert_GenomicAlignBlocks_into_DnaDnaAlignFeatures {
+  my ($genomic_align_blocks) = @_;
+  my $dna_dna_align_features = [];
+
+  my $query_slice_adaptor;
+  foreach my $this_genomic_align_block (@$genomic_align_blocks) {
+
+    ## KNOWN BUG: This will ignore third and following parts of a multiple alignment...
+    ## This adaptor cannot deal with multiple alignments. Use the new
+    ## Bio::EnsEMBL::Compara::DBSQL::GenomicAlignBlockAdaptor instead.
+    my $consensus_genomic_align = $this_genomic_align_block->reference_genomic_align;
+    my $query_genomic_align = $this_genomic_align_block->get_all_non_reference_genomic_aligns->[0];
+
+    my $top_slice;
+    if (!defined($query_slice_adaptor)) {
+      $query_slice_adaptor = $consensus_genomic_align->get_Slice->adaptor;
+    }
+    if ($query_slice_adaptor) {
+      $top_slice = $query_slice_adaptor->fetch_by_region(
+              $query_genomic_align->dnafrag->coord_system_name,
+              $query_genomic_align->dnafrag->name
+          );
+    } else {
+      $top_slice = undef;
+    }
+
+    ## The code for transforming GenomicAlignBlocks into DnaDnaAlignFeatures assumes that
+    ## reference_genomic_align is on the forward strand!
+    if ($consensus_genomic_align->dnafrag_strand == -1) {
+      $this_genomic_align_block->reverse_complement;
+    }
+    my $cstart = $consensus_genomic_align->dnafrag_start;
+    my $cend   = $consensus_genomic_align->dnafrag_end;
+
+    #skip features which do not overlap the requested region
+    #next if ($cstart > $end || $cend < $start); 
+
+    my $ga_cigar_line;
+    do {
+      my @consensus_cigar_pieces = split(/(\d*[DIMG])/, $consensus_genomic_align->cigar_line);
+      my @query_cigar_pieces = split(/(\d*[DIMG])/, $query_genomic_align->cigar_line);
+
+      my @consensus_gapped_pieces;
+      foreach my $piece (@consensus_cigar_pieces) {
+        next if ($piece !~ /^(\d*)([MDIG])$/);
+        my $num = $1;
+        my $type = $2;
+        $num = 1 if ($num !~ /^\d+$/);
+        if( $type eq "M" ) {
+          for (my $i=0; $i<$num; $i++) {push(@consensus_gapped_pieces, "N")}
+        } else {
+          for (my $i=0; $i<$num; $i++) {push(@consensus_gapped_pieces, '-')}
+        }
+      }
+      my @query_gapped_pieces;
+      foreach my $piece (@query_cigar_pieces) {
+        next if ($piece !~ /^(\d*)([MDIG])$/);
+        my $num = $1;
+        my $type = $2;
+        $num = 1 if ($num !~ /^\d+$/);
+        if( $type eq "M" ) {
+          for (my $i=0; $i<$num; $i++) {push(@query_gapped_pieces, "N")}
+        } else {
+          for (my $i=0; $i<$num; $i++) {push(@query_gapped_pieces, '-')}
+        }
+      }
+      throw if (scalar(@consensus_gapped_pieces) != scalar(@query_gapped_pieces));
+      my $type = "";
+      my $num = 0;
+      for (my $i=0; $i<@consensus_gapped_pieces; $i++) {
+        if ($consensus_gapped_pieces[$i] eq "N" and $query_gapped_pieces[$i] eq "N") {
+          if ($type ne "M") {
+            $ga_cigar_line .= (($num==1)?"":$num).$type if ($num);
+            $num = 0;
+            $type = "M";
+          }
+        } elsif ($consensus_gapped_pieces[$i] eq "N" and $query_gapped_pieces[$i] eq "-") {
+          if ($type ne "I") {
+            $ga_cigar_line .= (($num==1)?"":$num).$type if ($num);
+            $num = 0;
+            $type = "I";
+          }
+        } elsif ($consensus_gapped_pieces[$i] eq "-" and $query_gapped_pieces[$i] eq "N") {
+          if ($type ne "D") {
+            $ga_cigar_line .= (($num==1)?"":$num).$type if ($num);
+            $num = 0;
+            $type = "D";
+          }
+        } else {
+          throw "no double gaps can occur in a pairwise alignment!";
+        }
+        $num++;
+      }
+      $ga_cigar_line .= (($num==1)?"":$num).$type;
+    };
+    my $df_name = $consensus_genomic_align->dnafrag->name;
+    my $score = $this_genomic_align_block->score;
+    my $perc_id = $this_genomic_align_block->perc_id;
+    my $qdf_start = 1;
+    my $ga_query_start = $query_genomic_align->dnafrag_start;
+    my $ga_query_end = $query_genomic_align->dnafrag_end;
+    my $ga_query_strand = $query_genomic_align->dnafrag_strand;
+    my $qdf_name = $query_genomic_align->dnafrag->name;
+    my $ga_level_id = $consensus_genomic_align->level_id;
+    my $ga_strands_reversed = 0;
+    if ($consensus_genomic_align->dnafrag_strand == -1) {
+      $ga_strands_reversed = 1;
+      $ga_query_strand = -$ga_query_strand;
+    }
+    my $ga_group_id = $consensus_genomic_align->genomic_align_group_id_by_type("default");
+    my $f = Bio::EnsEMBL::DnaDnaAlignFeature->new_fast
+      ({'cigar_string' => $ga_cigar_line,
+        'seqname'      => $df_name,
+        'start'        => $cstart,
+        'end'          => $cend,
+        'strand'       => 1,
+        'species'      => $consensus_genomic_align->genome_db->name,
+        'score'        => $score,
+        'percent_id'   => $perc_id,
+        'hstart'       => $qdf_start + $ga_query_start - 1,
+        'hend'         => $qdf_start + $ga_query_end -1,
+        'hstrand'      => $ga_query_strand,
+        'hseqname'     => $qdf_name,
+        'hspecies'     => $query_genomic_align->genome_db->name,
+        'hslice'       => $top_slice,
+        'alignment_type' => $this_genomic_align_block->method_link_species_set->method_link_type,
+        'group_id'     => $ga_group_id,
+        'level_id'     => $ga_level_id,
+        'strands_reversed' => $ga_strands_reversed});
+
+    push @$dna_dna_align_features, $f;
+  }
+
+  return $dna_dna_align_features;
 }
 
 
