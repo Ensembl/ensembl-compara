@@ -246,27 +246,9 @@ sub fetch_all_by_Slice {
 
   my $dafs = _convert_GenomicAlignBlocks_into_DnaDnaAlignFeatures($genomic_align_blocks);
 
-  # We need to attach slices of the entire seq region to the features.
-  # The features come without any slices at all, but their coords are
-  # relative to the beginning of the seq region.
-  my $top_slice = $orig_slice->seq_region_Slice;
-  map {$_->slice($top_slice)} @$dafs;
-
-  # need to convert features to requested coord system
-  # if it was different then the one we used for fetching
-
-  my @results;
-  if($top_slice->name() ne $orig_slice->name()) {
-    foreach my $f (@$dafs) {
-      push @results, $f->transfer($orig_slice);
-    }
-  } else {
-    push @results, @$dafs;
-  }
-
   #update the cache
-  $self->{'_cache'}->{$key} = \@results;
-  return \@results;
+  $self->{'_cache'}->{$key} = $dafs;
+  return $dafs;
 }
 
 
@@ -525,10 +507,11 @@ sub _convert_GenomicAlignBlocks_into_DnaDnaAlignFeatures {
     my $ga_group_id = $consensus_genomic_align->genomic_align_group_id_by_type("default");
     my $f = Bio::EnsEMBL::DnaDnaAlignFeature->new_fast
       ({'cigar_string' => $ga_cigar_line,
-        'seqname'      => $df_name,
-        'start'        => $cstart,
-        'end'          => $cend,
-        'strand'       => 1,
+        'slice'        => $this_genomic_align_block->reference_slice,
+        'seqname'      => $this_genomic_align_block->reference_slice->name,
+        'start'        => $this_genomic_align_block->reference_slice_start,
+        'end'          => $this_genomic_align_block->reference_slice_end,
+        'strand'       => $this_genomic_align_block->reference_slice_strand,
         'species'      => $consensus_genomic_align->genome_db->name,
         'score'        => $score,
         'percent_id'   => $perc_id,
