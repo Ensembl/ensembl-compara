@@ -1,6 +1,6 @@
 our $key = shift @ARGV || die;
 our %source = (
-   'h' => {qw(1 dbSNP 2 HGVbase 3 TSC),4,'AFFY GeneChip Mapping Array' },
+   'h' => {qw(1 dbSNP 2 HGVbase 3 TSC),4,'Affy GeneChip 500K Mapping Array',5,'Affy GeneChip 100K Mapping Array' },
    'm' => {qw(1 dbSNP 2 Sanger)}
 );
 my $current_snp_id = 0;

@@ -50,7 +50,7 @@ foreach my $species ( @species ) {
   $conf->{'species'}   = $species;
   my %dbs = %{$SD->get_config($species,'databases')||{}};
   $conf->{'dbs'}       = { map { ($_,$dbs{$_}{NAME}) } keys %dbs };
-  $conf->{'dbs'}{'ENSEMBL_COMPARA'} = 'ensembl_compara_40';
+  $conf->{'dbs'}{'ENSEMBL_COMPARA'} = 'ensembl_compara_42';
   my $core = $dbs{'ENSEMBL_DB'};
   $conf->{'dbh'}       = DBI->connect( "dbi:mysql:$core->{'NAME'};host=$core->{'HOST'};port=$core->{'PORT'}",
         $core->{'USER'}, $core->{'PASS'} );
@@ -491,10 +491,19 @@ warn "START...";
         }
         warn "XREF $type query...";
       }
+      my %exons = ();
+      my $T = $conf->{'dbh'}->selectall_arrayref(
+	"select distinct t.gene_id, esi.stable_id
+           from transcript as t, exon_transcript as et, exon_stable_id as esi
+          where t.transcript_id = et.transcript_id and et.exon_id = esi.exon_id"
+      );
+      foreach( @$T ) {
+        $exons{$_->[0]}{$_->[1]}=1;
+      }
       my $gene_info = $conf->{'dbh'}->selectall_arrayref(qq(
 select gsi.gene_id, tsi.transcript_id, trsi.translation_id,
        gsi.stable_id as gsid, tsi.stable_id as tsid, trsi.stable_id as trsid,
-       g.description, ed.db_display_name, x.display_label, ad.display_label, ad.description, g.source, g.status, g.biotype
+       g.description, ed.db_display_name, x.dbprimary_acc,x.display_label, ad.display_label, ad.description, g.source, g.status, g.biotype
   from $DBNAME.gene_stable_id as gsi, $DBNAME.gene as g,
        $DBNAME.transcript_stable_id as tsi,
        $DBNAME.analysis_description as ad,
@@ -509,19 +518,20 @@ select gsi.gene_id, tsi.transcript_id, trsi.translation_id,
 warn "Gene query...";
       my %old;
       foreach my $row (@$gene_info) {
-        my($g,$t,$tr,$gs,$ts,$trs,$d,$ddb,$dn,$a,$ad,$s,$st,$bt) = @$row;
+        my($g,$t,$tr,$gs,$ts,$trs,$d,$ddb,$dpa,$dn,$a,$ad,$s,$st,$bt) = @$row;
         if( $old{'g'} != $g ) {
           if( $old{'g'} ) {
-            print O &geneLine( $conf->{'species'}, $old{'s'}.' '.$old{'bt'}, $old{'gs'}, $old{'alt'}, $extra, join( ' ', grep{$_}keys %{$old{'i'}}), $old{'t'},$old{'tr'},$old{'e'},$old{'d'} );
+            print O &geneLine( $conf->{'species'}, $old{'ex'}, $old{'s'}.' '.$old{'bt'}, $old{'gs'}, $old{'alt'}, $extra, join( ' ', grep{$_}keys %{$old{'i'}}), $old{'t'},$old{'tr'},$old{'e'},$old{'d'} );
           }
           %old = (
             'g' => $g,
             'gs' => $gs,
             'd'  => $d,
-            'tr' => {$trs=>1},
-            't'  => {$ts=>1},
+            'tr' => {$trs?($trs=>1):()},
+            't'  => {$ts ?($ts=>1) :()},
+            'ex' => {},
             'e'  => {},
-            'i'  => {$gs=>1,$d=>1,$dn=>1}, 
+            'i'  => {$gs=>1,$d=>1,$dpa=>1,$dn=>1,$ts=>1,$trs=>1}, 
             'alt' => $dn ? "($ddb: $dn)" : "(novel gene)",
             'a'   => $a,
             'ad'  => $ad,
@@ -529,7 +539,9 @@ warn "Gene query...";
             'st'  => $st,
             'bt'  => $bt
           );
-         $old{'s'}=~s/base/Base/;
+          $old{'s'}=~s/base/Base/;
+          $old{'ex'} = $exons{$g};
+          foreach my $K (keys %{$exons{$g}}) { $old{'i'}{$K} = 1; }
           foreach my $db( keys %{$xrefs{'Gene'}{$g}||{}} ) {
             foreach my $K( keys %{$xrefs{'Gene'}{$g}{$db}} ) { $old{'e'}{$db}{$K}=1; $old{'i'}{$K}=1; }
           }
@@ -550,7 +562,7 @@ warn "Gene query...";
           }
         }
       }
-      print O &geneLine( $conf->{'species'}, $old{'s'}.' '.$old{'bt'}, $old{'gs'}, $old{'alt'}, $extra, join( ' ', grep{$_}keys %{$old{'i'}}), $old{'t'},$old{'tr'},$old{'e'},$old{'d'} );
+      print O &geneLine( $conf->{'species'}, $old{'ex'}, $old{'s'}.' '.$old{'bt'}, $old{'gs'}, $old{'alt'}, $extra, join( ' ', grep{$_}keys %{$old{'i'}}), $old{'t'},$old{'tr'},$old{'e'},$old{'d'} );
       warn "FINISHED...... genes...";
     }
 my %current_stable_ids =();
@@ -589,7 +601,7 @@ select sie.type, sie.old_stable_id, if(isnull(sie.new_stable_id),'NULL',sie.new_
           }
         }
         if( @current_sis ) {
-          print join( "\t",
+          print O join( "\t",
       (INC_SPECIES?"$species\t":"").qq(EnsEMBL $type),
       qq($osi),
       qq(/$species/idhistoryview?).lc($type).qq(=$osi),
@@ -599,7 +611,7 @@ select sie.type, sie.old_stable_id, if(isnull(sie.new_stable_id),'NULL',sie.new_
       ".\n"
           );
         } elsif( @deprecated_sis ) {
-          print join( "\t",
+          print O join( "\t",
       (INC_SPECIES?"$species\t":"").qq(EnsEMBL $type),
       qq($osi),
       qq(/$species/idhistoryview?).lc($type).qq(=$osi),
@@ -607,7 +619,7 @@ select sie.type, sie.old_stable_id, if(isnull(sie.new_stable_id),'NULL',sie.new_
       qq($type $osi is no longer in the Ensembl database but it has been mapped to the following deprecated identifiers: @deprecated_sis\n)
           );
         } else {
-          print join( "\t",
+          print O join( "\t",
       (INC_SPECIES?"$species\t":"").qq(EnsEMBL $type),
       qq($osi),
       qq(/$species/idhistoryview?).lc($type).qq(=$osi),
@@ -696,10 +708,11 @@ sub geneLineOld {
 }
 
 sub geneLine {
-  my ($species, $X, $gid, $altid, $extra, $IDX, $transcripts, $peptides, $external_identifiers, $description )=@_;
+  my ($species, $exons, $X, $gid, $altid, $extra, $IDX, $transcripts, $peptides, $external_identifiers, $description )=@_;
   return if $gid eq '';
   my $T = scalar (keys %$transcripts);
   my $P = scalar (keys %$peptides);
+  my $E = scalar (keys %$exons);
   my $EX = scalar (keys %$external_identifiers);
   return join( "\t",
     (INC_SPECIES?"$species\t":"").qq($X Gene),
@@ -708,7 +721,8 @@ sub geneLine {
     qq($IDX),
     qq($X gene $gid has $T transcript).($T==1?'':'s').qq(: ).join(', ',sort keys(%$transcripts)).
     ( $P > 0 ? 
-      qq( and associated peptide).($P==1?'':'s').qq(: ).join(', ',sort keys(%$peptides)) : '').
+      qq(, associated peptide).($P==1?'':'s').qq(: ).join(', ',sort keys(%$peptides)) : '').
+    qq( and $E exon).($E==1?'':'s').qq(: ).join(', ',sort keys(%$exons)). 
     qq(<br />$description).( $EX>0 ?
       (
         qq(<br />The gene has the following external identifiers mapped to it:<br />).
@@ -729,12 +743,12 @@ sub dumpSequence {
     my $sanger = sanger_project_names( $conf );
     my %config = (
       "Homo_sapiens" => [
-        [ 'Clone',      'tilepath,cloneset_1mb,cloneset_30k,cloneset_32k', 'name,well_name,clone_name,synonym,embl_acc,sanger_project' ],
+        [ 'Clone',      'tilepath,cloneset_1mb,cloneset_30k,cloneset_32k', 'name,well_name,clone_name,synonym,embl_acc,sanger_project,alt_well_name,bacend_well_name' ],
         [ 'NT Contig',  'ntctgs',                  'name' ],
         [ 'Encode region', 'encode', 'name,synonym,description' ],
       ],
       "Mus_musculus" => [
-        [ 'BAC',        'cloneset_0_5mb,cloneset_1mb,bac_map,tilingpath_cloneset', 'embl_acc,name,clone_name,well_name,synonym' ],
+        [ 'BAC',        'cloneset_0_5mb,cloneset_1mb,bac_map,tilingpath_cloneset', 'embl_acc,name,clone_name,well_name,synonym,alt_embl_acc' ],
         [ 'Fosmid',     'fosmid_map', 'name,clone_name' ],
         [ 'Supercontig','superctgs', 'name' ],
       ],
@@ -883,4 +897,3 @@ sub sanger_project_names {
   }
   return $clones;
 }
-
