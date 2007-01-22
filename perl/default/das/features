@@ -4,11 +4,23 @@ package das::features;
 
 use EnsEMBL::Web::Document::WebPage;
 
-print "X-Das-Status: 200\n";
-print "X-Das-Version: DAS/1.5\n";
+wrapper_webpage( "DAS", 'outputtype' => 'DAS' );
 
-EnsEMBL::Web::Document::WebPage::wrapper( "DAS", 
-					  'outputtype' => 'XML',
-					  );
+### Writing a new features DAS server
+###
+### EnsEMBL::Web::Component::DAS
+### EnsEMBL::Web::Component::DAS::Annotation
+### EnsEMBL::Web::Component::DAS::Reference
+###
+### EnsEMBL::Web::Configuration::DAS
+###
+### EnsEMBL::Web::Factory::DAS
+###
+### EnsEMBL::Web::Object::DAS::cagetags
+### EnsEMBL::Web::Object::DAS::ditags
+### EnsEMBL::Web::Object::DAS::karyotype
+### EnsEMBL::Web::Object::DAS::reference
+### EnsEMBL::Web::Object::DAS::transcripts
+### EnsEMBL::Web::Object::DAS::prediction_transcripts
 
 1;

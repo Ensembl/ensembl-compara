@@ -153,7 +153,7 @@ unless( $flag ) {
   $URL = $query =~ /^BLA_\w+$/            ? URL( '/Multi/blastview/%s', $query  )        ## Blast ticket
        : $query =~ /[ACGT]{20,}/i         ? URL( '/Multi/blastview?species=%s;_query_sequence=%s;query=dna;database=dna', $species, $query )         ## BLAST seq search
        : $query =~ /[A-Z]{20,}/i          ? URL( '/Multi/blastview?species=%s;_query_sequence=%s;query=peptide;database=peptide', $species, $query )         ## BLAST seq search
-       :                                    URL( '/default/%s?species=%s;idx=%s;q=%s',$webpage->{'species_defs'}->ENSEMBL_SEARCH, $species, $index, $query )
+       :                                    URL( '/%s/%s?species=%s;idx=%s;q=%s', ( $species eq 'ALL'|| !$species ? 'default' : $species ), $webpage->{'species_defs'}->ENSEMBL_SEARCH, $species, $index, $query )
        ;
 }
 warn $URL;
