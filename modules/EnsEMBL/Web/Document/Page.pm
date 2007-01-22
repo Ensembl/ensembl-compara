@@ -331,6 +331,15 @@ sub render {
   $self->_render_close_body_tag;
 }
 
+sub render_DAS {
+  my( $self ) = shift;
+  my $r = $self->renderer->{'r'};
+  if( $r ) {
+    $r->headers_out->add('X-Das-Status'  => '200'     );
+    $r->headers_out->add('X-Das-Version' => 'DAS/1.5' );
+  }
+  $self->render_XML();
+}
 sub render_XML {
   my( $self ) = shift;
 
@@ -348,16 +357,16 @@ sub render_XML {
 
 sub render_Excel {
   my $self = shift;
-  my $renderer =  new EnsEMBL::Web::Document::Renderer::Excel( );
-  warn "RENDER...";
+
+## Switch in the Excel file renderer
+## requires the filehandle from the current renderer (works with Renderer::Apache and Renderer::File)
+  my $renderer =  new EnsEMBL::Web::Document::Renderer::Excel({ 'fh' => $self->renderer->fh });
   foreach my $R ( @{$self->{'body_order'}} ) {
     my $attr = $R->[0];
- warn "render Excel @$R\n",ref( $self->$attr ),"\\n\n ";
     $self->$attr->{_renderer} = $renderer;
     $self->$attr->render;
   }
   $renderer->close;
-  $self->renderer->print( $renderer->raw_content );
 }
 
 sub render_Text {
