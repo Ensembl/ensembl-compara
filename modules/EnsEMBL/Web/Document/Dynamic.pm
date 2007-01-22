@@ -37,12 +37,15 @@ sub _initialize_Excel {
   $self->_init();
 }
 
+sub _initialize_DAS {
+  my $self = shift;
+  $self->_initialize_XML;
+}
 sub _initialize_XML {
   my $self = shift; 
-
   $self->add_body_elements qw(
-			      content     EnsEMBL::Web::Document::XML::Content
-			      );
+    content     EnsEMBL::Web::Document::XML::Content
+  );
   $self->_init();
 }
 
