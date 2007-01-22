@@ -44,7 +44,7 @@ use CGI::Cookie;
     if($session_id) {
       $self->get_db_adaptor->do("update session set last_session_no = ?",{}, ++$session_id );
     } else {
-      $self->get_db_adaptor->do("truncate session");
+#      $self->get_db_adaptor->do("truncate session");
       $session_id = 1;
       $self->get_db_adaptor->do("insert into session set last_session_no = ?",{}, $session_id);
     }
@@ -63,7 +63,7 @@ sub clearCookie {
 ### We need to delete all entries in the session_record table!!
   my(  $self, $r, $session ) = @_;
   return unless $session->get_session_id;
-  $self->get_db_adaptor->do("delete from session_record where session_id ?", {}, $session->get_session_id);
+  $self->get_db_adaptor->do("delete from session_record where session_id = ?", {}, $session->get_session_id);
   if( $r ) {
     $session->get_cookie->clear( $r );
   }
