@@ -18,6 +18,7 @@ Contact the EnsEMBL development mailing list for info <ensembl-dev@ebi.ac.uk>
 
 package EnsEMBL::Web::Component::Server;
 
+use EnsEMBL::Web::Form;
 use EnsEMBL::Web::Component;
 use CGI qw(escapeHTML);
 use Bio::EnsEMBL::ColourMap;
