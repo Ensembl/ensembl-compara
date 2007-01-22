@@ -40,8 +40,8 @@ sub Features {
                   'TYPE' => 'gene',
                   'LABEL' => $gene->display_xref ? $gene->display_xref->display_id : undef, 
                   'LINK' => [{
-                     href => sprintf("http://www.ensembl.org/%s/geneview?gene=%s", $self->real_species, $gene->display_id),
-                     text => 'GeneView'
+                    href => sprintf("http://www.ensembl.org/%s/geneview?gene=%s", $self->real_species, $gene->display_id),
+                    text => 'GeneView'
                   }]
                 };
               }

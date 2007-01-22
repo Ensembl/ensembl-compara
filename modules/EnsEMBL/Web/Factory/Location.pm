@@ -405,6 +405,7 @@ sub createObjects {
     if $self->param('anchor2') && $self->param('type2');
   if( @anchorview ) {
     foreach my $O ( @anchorview ) {
+      $location = undef;
       my( $ftype, $temp_id ) = @$O;
       if( $ftype eq 'gene' || $ftype eq 'all' ) {
         $location = $self->_location_from_Gene( $temp_id );

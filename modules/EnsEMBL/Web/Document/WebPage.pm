@@ -20,7 +20,7 @@ use constant 'DEFAULT_DOCUMENT'   => 'Dynamic';
 
 use Bio::EnsEMBL::Registry; # Required so we can do the disconnect all call!!
 our @ISA = qw(EnsEMBL::Web::Root Exporter);
-our @EXPORT_OK = qw(simple_webpage simple_with_redirect);
+our @EXPORT_OK = qw(simple_webpage simple_with_redirect wrapper_webpage);
 our @EXPORT    = @EXPORT_OK;
 
 sub _prof { my $self = shift; $self->timer->push( @_ ); }
@@ -413,6 +413,8 @@ sub render {
   my $self = shift;
   if( $self->{'format'} eq 'Text' ) { 
     CGI::header("text/plain"); $self->page->render_Text;
+  } elsif( $self->{'format'} eq 'DAS' ) { 
+    CGI::header("text/xml"); $self->page->render_DAS;
   } elsif( $self->{'format'} eq 'XML' ) { 
     CGI::header("text/xml"); $self->page->render_XML;
   } elsif( $self->{'format'} eq 'Excel' ) { 
@@ -519,6 +521,8 @@ sub simple_webpage {
   }
   #warn $self->timer->render();
 }
+
+sub wrapper_webpage { wrapper( @_ ); }
 
 sub wrapper {
   my $objecttype = shift;
