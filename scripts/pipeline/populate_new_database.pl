@@ -239,7 +239,11 @@ sub copy_table {
     print TEMP join("\t", @$this_row), "\n";
   }
   close(TEMP);
-  system("mysqlimport", "-u$user", "-p$pass", "-h$host", "-P$port", "-L", "-l", "-i", $dbname, $filename);
+  if ($pass) {
+    system("mysqlimport", "-u$user", "-p$pass", "-h$host", "-P$port", "-L", "-l", "-i", $dbname, $filename);
+  } else {
+    system("mysqlimport", "-u$user", "-h$host", "-P$port", "-L", "-l", "-i", $dbname, $filename);
+  }
   unlink("$filename");
 }
 
@@ -428,7 +432,11 @@ sub copy_all_dnafrags {
     }
     close(TEMP);
     print "Copying dnafrag for ", $this_genome_db->name, ":\n . ";
-    system("mysqlimport", "-u$user", "-p$pass", "-h$host", "-P$port", "-L", "-l", "-i", $dbname, $filename);
+    if ($pass) {
+      system("mysqlimport", "-u$user", "-p$pass", "-h$host", "-P$port", "-L", "-l", "-i", $dbname, $filename);
+    } else {
+      system("mysqlimport", "-u$user", "-h$host", "-P$port", "-L", "-l", "-i", $dbname, $filename);
+    }
     unlink("$filename");
   }
 }
@@ -539,7 +547,11 @@ sub copy_synteny_data {
     }
     close(TEMP);
     print "Copying dna-dna alignments for ", $this_method_link_species_set->name, ":\n . ";
-    system("mysqlimport", "-u$user", "-p$pass", "-h$host", "-P$port", "-L", "-l", "-i", $dbname, $filename);
+    if ($pass) {
+      system("mysqlimport", "-u$user", "-p$pass", "-h$host", "-P$port", "-L", "-l", "-i", $dbname, $filename);
+    } else {
+      system("mysqlimport", "-u$user", "-h$host", "-P$port", "-L", "-l", "-i", $dbname, $filename);
+    }
     unlink("$filename");
 
     $dnafrag_region_fetch_sth->execute($this_method_link_species_set->dbID);
@@ -554,7 +566,11 @@ sub copy_synteny_data {
     }
     close(TEMP);
     print " . ";
-    system("mysqlimport", "-u$user", "-p$pass", "-h$host", "-P$port", "-L", "-l", "-i", $dbname, $filename);
+    if ($pass) {
+      system("mysqlimport", "-u$user", "-p$pass", "-h$host", "-P$port", "-L", "-l", "-i", $dbname, $filename);
+    } else {
+      system("mysqlimport", "-u$user", "-h$host", "-P$port", "-L", "-l", "-i", $dbname, $filename);
+    }
     unlink("$filename");
   }
 }
