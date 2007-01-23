@@ -12,6 +12,7 @@ our @ISA = qw(EnsEMBL::Web::Object);
 
 #------------------- ACCESSOR FUNCTIONS -----------------------------
 
+sub adaptor     { return $_[0]->Obj->{'adaptor'};   }
 sub release_id  { return $_[0]->Obj->{'release_id'};   }
 sub releases    { return $_[0]->Obj->{'releases'};   }
 sub all_cats    { return $_[0]->Obj->{'categories'};   }
@@ -42,35 +43,31 @@ sub sp_array {
 
 sub valid_spp   { 
   my $self = shift;
-  my $adaptor = $self->EnsEMBL::Web::Factory::News::news_adaptor;
-  my $species = $adaptor->fetch_species($self->release_id); 
+  my $species = $self->adaptor->fetch_species($self->release_id); 
   return $species;  
 }
 
 sub current_spp   { 
   my $self = shift;
-  my $adaptor = $self->EnsEMBL::Web::Factory::News::news_adaptor;
-  my $species = $adaptor->fetch_species($self->species_defs->ENSEMBL_VERSION); 
+  my $species = $self->adaptor->fetch_species($self->species_defs->ENSEMBL_VERSION); 
   return $species;  
 }
 
 sub valid_rels   { 
   my $self = shift;
-  my $adaptor = $self->EnsEMBL::Web::Factory::News::news_adaptor;
   my $releases = [];
   my @sp_array = @{$self->sp_array};
   if (scalar(@sp_array) == 1 && $sp_array[0]) { ## single species
-    $releases = $self->news_adaptor->fetch_releases({'species'=>$sp_array[0]});
+    $releases = $self->adaptor->fetch_releases({'species'=>$sp_array[0]});
   }
   else { ## in multi-species mode, all releases are valid
-    $releases = $adaptor->fetch_releases;
+    $releases = $self->adaptor->fetch_releases;
   }
   return $releases;  
 }
 
 sub generic_items { 
   my $self = shift;
-  my $adaptor = $self->EnsEMBL::Web::Factory::News::news_adaptor;
   my $release_id = $self->release_id;
   my %where = ();
 
@@ -82,13 +79,12 @@ sub generic_items {
     $where{'release'} = $release_id;
   }
 
-  my $items = $adaptor->fetch_news_items(\%where, 1);
+  my $items = $self->adaptor->fetch_news_items(\%where, 1);
   return $items;
 }
 
 sub species_items { 
   my $self = shift;
-  my $adaptor = $self->EnsEMBL::Web::Factory::News::news_adaptor;
   my $release_id = $self->release_id;
   my %where = ();
 
@@ -104,7 +100,7 @@ sub species_items {
     $where{'species'} = $sp_array[0];
   }
 
-  my $items = $adaptor->fetch_news_items(\%where);
+  my $items = $self->adaptor->fetch_news_items(\%where);
   return $items;
 }
 
