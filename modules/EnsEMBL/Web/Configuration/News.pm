@@ -47,42 +47,45 @@ sub newsview {
 
 sub context_menu {
 ### Context menu for newsview - provides links forwards and backwards by release
-    my $self = shift;
-    my $species  = $self->{object}->species;
-    my $flag     = "";
-    $self->{page}->menu->add_block( $flag, 'bulleted', "News Archive" );
+  my $self = shift;
+  my $species  = $self->{object}->species;
+  my $flag     = "";
+  $self->{page}->menu->add_block( $flag, 'bulleted', "News Archive" );
 
-    $self->{page}->menu->add_entry( $flag, 'text' => "Select news to view",
+  $self->{page}->menu->add_entry( $flag, 'text' => "Select news to view",
                                   'href' => "/$species/newsview" );
-    ## link back to previous release
-    my $release = $self->{object}->param('rel') || $self->{object}->param('release_id');
-    unless ($release == 0 || $release eq 'all') {
-      my $present = $SiteDefs::VERSION;
-      my $current = $present;
-      my $past = 0;
-      if ($release < $present) { 
-        $current = $release;
-        $past = 1;
-      }
-      my $previous = $current - 1;
-	  if ($previous) {
-		$self->{page}->menu->add_entry( $flag, 
+  ## link back to previous release
+  my $release = $self->{object}->param('rel') || $self->{object}->param('release_id');
+  if ($release eq 'current') {
+    $release = $SiteDefs::VERSION;
+  }
+  unless ($release == 0 || $release eq 'all') {
+    my $present = $SiteDefs::VERSION; 
+    my $current = $present; 
+    my $past = 0;
+    if ($release < $present) { 
+      $current = $release;
+      $past = 1;
+    }
+    my $previous = $current - 1;
+    if ($previous) {
+      $self->{page}->menu->add_entry( $flag, 
                           'text' => "<< Release $previous",
                           'href' => "/$species/newsview?rel=$previous" );
 	  }
-      ## extra link forward if user has gone back to earlier news
-      if ($past) {
-        my $next = $current + 1;
-        $self->{page}->menu->add_entry( $flag, 
+    ## extra link forward if user has gone back to earlier news
+    if ($past) {
+      my $next = $current + 1;
+      $self->{page}->menu->add_entry( $flag, 
                           'text' => ">> Release $next",
                           'href' => "/$species/newsview?rel=$next" );
-        if ($current < ($present - 1)) {
-        $self->{page}->menu->add_entry( $flag, 
+      if ($current < ($present - 1)) {
+      $self->{page}->menu->add_entry( $flag, 
                           'text' => "Current Release News",
                           'href' => "/$species/newsview?rel=$present" );
-        }
       }
     }
+  }
 }
 
 
