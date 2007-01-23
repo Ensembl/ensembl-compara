@@ -3,6 +3,9 @@ package EnsEMBL::Web::Registry;
 use EnsEMBL::Web::DBSQL::UserDBAdaptor;
 use EnsEMBL::Web::DBSQL::UserAdaptor;
 use EnsEMBL::Web::DBSQL::SessionAdaptor;
+use EnsEMBL::Web::DBSQL::WebDBAdaptor;
+use EnsEMBL::Web::DBSQL::NewsAdaptor;
+use EnsEMBL::Web::DBSQL::HelpAdaptor;
 use EnsEMBL::Web::Timer;
 use EnsEMBL::Web::SpeciesDefs;
 
@@ -13,6 +16,7 @@ use Class::Std;
 my %Timer_of     :ATTR( :set<timer>    :get<timer>    );
 #-- Lazy loaded objects - these will have appropriate lazy loaders attached!
 my %DBAdaptor_of      :ATTR;
+my %WebAdaptor_of      :ATTR;
 my %SpeciesDefs_of    :ATTR;
 my %User_of      :ATTR( :set<user>     :get<user>     );
 my %Session_of   :ATTR( :set<session>  :get<session>  );
@@ -20,7 +24,10 @@ my %Script_of    :ATTR( :set<script>   :get<script>   );
 my %Species_of   :ATTR( :set<species>  :get<species>  );
 my %SessionAdaptor_of :ATTR( :get<sessionadaptor> );                    # To allow it to be reset
 my %UserAdaptor_of    :ATTR( :get<useradaptor>    );                    # To allow it to be reset
+my %NewsAdaptor_of    :ATTR( :get<newsadaptor>    );                    # To allow it to be reset
+my %HelpAdaptor_of    :ATTR( :get<helpadaptor>    );                    # To allow it to be reset
 my %UserDB_of :ATTR( :get<userdb>    );                    # To allow it to be reset
+my %WebDB_of :ATTR( :get<webdb>    );                    # To allow it to be reset
 
 sub timer {
   my $self = shift;
@@ -41,6 +48,14 @@ sub dbAdaptor {
   my $self = shift;
   return $DBAdaptor_of{ ident $self } ||=
     EnsEMBL::Web::DBSQL::UserDBAdaptor->new({ 'species_defs' => $self->species_defs });
+}
+
+sub websiteAdaptor {
+### a
+### Lazy loaded DB adaptor....
+  my $self = shift;
+  return $WebAdaptor_of{ ident $self } ||=
+    EnsEMBL::Web::DBSQL::WebDBAdaptor->new({ 'species_defs' => $self->species_defs });
 }
 
 sub sessionAdaptor {
@@ -64,6 +79,28 @@ sub userAdaptor {
     });
 }
 
+sub newsAdaptor {
+### a
+### Lazy loaded News adaptor....
+  my $self = shift;
+  return $NewsAdaptor_of{ ident $self } ||=
+    EnsEMBL::Web::DBSQL::NewsAdaptor->new({
+      'db_adaptor'   => $self->dbAdaptor,   ## Website db adaptor
+      'species_defs' => $self->species_defs ## Species defs..
+    });
+}
+
+sub helpAdaptor {
+### a
+### Lazy loaded Help adaptor....
+  my $self = shift;
+  return $HelpAdaptor_of{ ident $self } ||=
+    EnsEMBL::Web::DBSQL::HelpAdaptor->new({
+      'db_adaptor'   => $self->dbAdaptor,   ## Website db adaptor
+      'species_defs' => $self->species_defs ## Species defs..
+    });
+}
+
 sub userDB {
 ### x 
 ### Lazy loaded User DB....
@@ -71,6 +108,17 @@ sub userDB {
   my $self = shift;
   warn "xxxxxxxxxxxxx DEPRECATED xxxxxxxxxxxxxxxx";
   return $UserDB_of{ ident $self } ||= $self->userAdaptor;
+}
+
+sub webDB {
+### a
+### Lazy loaded Website DB....
+  my $self = shift;
+  return $WebDB_of{ ident $self } ||=
+    EnsEMBL::Web::DBSQL::WebsiteAdaptor->new({
+      'db_adaptor'   => $self->dbAdaptor,   ## Website db adaptor
+      'species_defs' => $self->species_defs ## Species defs..
+    });
 }
 
 sub initialize_user {
