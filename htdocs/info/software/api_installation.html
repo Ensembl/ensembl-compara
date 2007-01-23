@@ -24,10 +24,14 @@ installation of the Bioperl package is part of this description.
 <p>
 Ensembl uses the
 <a href="http://directory.fsf.org/cvs.html" target="external">Concurrent Versions System</a> (CVS) for storing the source codes.
-You will need CVS installed if you want to download Ensembl code through anonymous cvs access.
-There is also a
-<a href="http://cvs.sanger.ac.uk/" target="external">web-based CVS</a> repository.
 This system will help you keeping up to date with developments and bug fixes.
+You will need CVS installed if you want to download Ensembl code through
+anonymous cvs access and a firewall needs to allow outgoing connections to
+TCP port 2401.
+There is also a
+<a href="http://cvs.sanger.ac.uk/" target="external">web-based CVS</a>
+repository, which also allowed download of 'tar' archives in case access
+through a firewall was not possible.
 </p>
 
 
@@ -41,24 +45,22 @@ Create an installation directory
 </p>
 
 <pre>
-cd
-mkdir src
-cd src
+$ cd
+$ mkdir src
+$ cd src
 </pre>
 </li>
 
 <li>
 <p>
-Connect to the Bioperl CVS server
+Log into the Bioperl CVS server (using a password of "cvs"):
 </p>
 
 <pre>
-cvs -d :pserver:cvs@cvs.bioperl.org:/home/repository/bioperl login
+$ cvs -d :pserver:cvs@cvs.bioperl.org:/home/repository/bioperl login
+Logging in to :pserver:cvs@cvs.bioperl.org:2401/home/repository/bioperl
+CVS password: cvs
 </pre>
-
-<p>
-When prompted the password is 'cvs'.
-</p>
 </li>
 
 <li>
@@ -67,24 +69,17 @@ Install <a href="http://www.bioperl.org/" target="external">Bioperl</a> (version
 </p>
 
 <pre>
-cvs -d :pserver:cvs@cvs.bioperl.org:/home/repository/bioperl checkout -r bioperl-release-1-2-3 bioperl-live
+$ cvs -d :pserver:cvs@cvs.bioperl.org:/home/repository/bioperl checkout -r bioperl-release-1-2-3 bioperl-live
 </pre>
 </li>
 
 <li>
-<p>
-Connect to the Ensembl CVS server
-</p>
-<p>Log into the Sanger CVS server (using a password of "CVSUSER"):</p>
-<pre class="code">
-$ cvs -d :pserver:cvsuser@cvs.sanger.ac.uk:/cvsroot/CVSmaster  login
-Logging in to :pserver:cvsuser@cvs.sanger.ac.uk:2401/cvsroot/CVSmaster
+<p>Log into the Ensembl CVS server at Sanger (using a password of "CVSUSER"):</p>
+<pre>
+$ cvs -d :pserver:cvsuser@cvs.sanger.ac.uk:/cvsroot/ensembl login
+Logging in to :pserver:cvsuser@cvs.sanger.ac.uk:2401/cvsroot/ensembl
 CVS password: CVSUSER
 </pre>
-
-<!--<pre>
-cvs -d :pserver:cvsuser@cvs.sanger.ac.uk:/cvsroot/ensembl login
-</pre>-->
 </li>
 
 <li>
@@ -93,7 +88,7 @@ Install the <a href="./core/index.html">Ensembl Core</a> Perl API for version [[
 </p>
 
 <pre>
-cvs -d :pserver:cvsuser@cvs.sanger.ac.uk:/cvsroot/ensembl checkout -r branch-ensembl-[[SPECIESDEFS::ENSEMBL_VERSION]] ensembl
+$ cvs -d :pserver:cvsuser@cvs.sanger.ac.uk:/cvsroot/ensembl checkout -r branch-ensembl-[[SPECIESDEFS::ENSEMBL_VERSION]] ensembl
 </pre>
 </li>
 
@@ -103,7 +98,7 @@ Install the <a href="./variation/index.html">Ensembl Variation</a> Perl API for 
 </p>
 
 <pre>
-cvs -d :pserver:cvsuser@cvs.sanger.ac.uk:/cvsroot/ensembl checkout -r branch-ensembl-[[SPECIESDEFS::ENSEMBL_VERSION]] ensembl-variation
+$ cvs -d :pserver:cvsuser@cvs.sanger.ac.uk:/cvsroot/ensembl checkout -r branch-ensembl-[[SPECIESDEFS::ENSEMBL_VERSION]] ensembl-variation
 </pre>
 </li>
 
@@ -113,7 +108,7 @@ Install the <a href="./compara/index.html">Ensembl Compara</a> Perl API for veri
 </p>
 
 <pre>
-cvs -d :pserver:cvsuser@cvs.sanger.ac.uk:/cvsroot/ensembl checkout -r branch-ensembl-[[SPECIESDEFS::ENSEMBL_VERSION]] ensembl-compara
+$ cvs -d :pserver:cvsuser@cvs.sanger.ac.uk:/cvsroot/ensembl checkout -r branch-ensembl-[[SPECIESDEFS::ENSEMBL_VERSION]] ensembl-compara
 </pre>
 
 <p>
@@ -161,6 +156,56 @@ setenv PERL5LIB ${PERL5LIB}:${HOME}/src/ensembl-compara/modules
 
 <p>
 NB: If you installed extra Ensembl APIs, don't forget to add their path to the PERL5LIB environment variable.
+</p>
+</li>
+
+</ol>
+
+
+<h3 class="boxed">Update Procedure</h3>
+
+<p>
+In case you wanted to update the Perl APIs to a more recent version - remember
+API and database version must be identical - you can use a simple cvs command
+to achieve this.
+</p>
+
+<ol>
+
+<li>
+<p>
+Change the working directory to the one, in which you originally installed
+the APIs.
+</p>
+
+<pre>
+$ cd
+$ cd src
+</pre>
+</li>
+
+<li>
+<p>
+For each of the APIs change into the top-directory before issuing the cvs
+update command. So for the Ensembl Core API, which has been automatically
+installed into the 'ensembl' directory use the following commands:
+</p>
+
+<pre>
+$ cd ensembl
+$ cvs -q update -d -P -r branch-ensembl-[[SPECIESDEFS::ENSEMBL_VERSION]]
+$ cd ..
+</pre>
+
+<p>
+CVS will automatically add, modify or delete files so that your working
+directory will resemble the ensembl-branch you selected.
+</p>
+
+<p>
+In case you are asked for a password, repeat the login steps in the
+installation procedure above. (The password is normally stored in encrypted
+form in a file in your home directory and remembered between CVS operations.)
 </p>
 </li>
 
