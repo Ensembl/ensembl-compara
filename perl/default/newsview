@@ -49,7 +49,6 @@ if( $webpage->has_a_problem() ) {
     }
     $webpage->render();
   }
-  $webpage->factory->__data->{'news_db'}->disconnect;
 }
 
 
