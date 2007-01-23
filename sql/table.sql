@@ -86,6 +86,7 @@ CREATE TABLE genome_db (
 CREATE TABLE method_link (
   method_link_id              int(10) unsigned NOT NULL auto_increment, # unique internal id
   type                        varchar(50) DEFAULT '' NOT NULL,
+  class                       varchar(50) DEFAULT '' NOT NULL,
   
   PRIMARY KEY (method_link_id),
   KEY type (type)
