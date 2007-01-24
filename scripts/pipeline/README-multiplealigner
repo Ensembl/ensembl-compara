@@ -94,7 +94,11 @@ paths to the 'hive_output_dir' to
 /acari/work7a/abel/hive/abel_compara_mlagan/workers
 'fasta_dir' and 'tree_file' will need to be updated as well.
 The species names should correspond to the genome_db_id of the species used (and defined in the 
-hive configuration file).
+hive configuration file). You can get a newick species tree using the geneTreeTool.pl script:
+
+perl ~/src/ensembl_main/ensembl-compara/scripts/tree/geneTreeTool.pl --file \
+  ~/src/ensembl_main/ensembl-compara/scripts/pipeline/species_tree_rap.nh --newick \
+  --keep_leaves "Homo sapiens,Mus musculus,Rattus norvegicus"
 
 You can have several multiple alignment pipelines working in the same HIVE. To do this, add an extra
 MULTIPLE_ALIGNER block in the configuration file and change the corresponding list of species and the
@@ -186,3 +190,13 @@ $> beekeeper.pl --url mysql://ensadmin:xxxx@ia64g:3306/abel_compara_mlagan --res
 
 And finally rerun them using the hugemem queue:
 $> beekeeper.pl --lsf_options '-R "select[mem>=4000] rusage[mem=4000]" -q hugemem' --url mysql://ensadmin:xxxx@ia64g:3306/abel_compara_mlagan --loop
+
+For big PECAN jobs: update the analysis_job table in order to overwritte the -Xmx option:
+
+update analysis_job set input_id = concat("{java_options=>'-server -Xmx2000M',", substr(input_id,2))
+  status = "READY", job_claim = "" where status = "FAILED" and analysis_id = 8;
+
+Run the job on the bigmem queue (requesting quite a lot of memory):
+
+beekeeper.pl --lsf_options '-R "select[mem>=5000] rusage[mem=5000]" -q bigmem' \
+  --url mysql://ensadmin:ensembl@compara1/jh7_pecan_42 --loop
