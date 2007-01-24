@@ -93,7 +93,8 @@ my $_pack_type = "f";
 
 my $_bucket; 
 my $_score_index = 0;
-my $_no_score_value = 0.0; #value if no score
+#my $_no_score_value = 0.0; #value if no score
+my $_no_score_value = undef; #value if no score
 
 my $PACKED = 1;
 my $PAD_ZEROS = 0;
@@ -153,6 +154,7 @@ sub fetch_all_by_MethodLinkSpeciesSet_Slice {
     my $genomic_align_blocks = $genomic_align_block_adaptor->fetch_all_by_MethodLinkSpeciesSet_Slice($ma_mlss, $slice);
 
     if (scalar(@$genomic_align_blocks == 0)) {
+	#print "no genomic_align_blocks found for this slice\n";
 	return $scores;
     }
 
@@ -172,6 +174,7 @@ sub fetch_all_by_MethodLinkSpeciesSet_Slice {
     #default window size is the largest bucket that gives at least 
     #display_size values ie get speed but reasonable resolution
     my @window_sizes = (1, 10, 100, 500);
+
     if (!defined $window_size) {
 	#set window_size to be the largest for when for loop fails
 	$window_size = $window_sizes[scalar(@window_sizes)-1];
@@ -539,18 +542,26 @@ sub _fetch_all_by_GenomicAlignBlockId_WindowSize {
 #find the min and max scores for y axis scaling
 sub _find_min_max_score {
     my ($scores) = @_;
-    my $min = $_no_score_value;
-    my $max = $_no_score_value;
+    my $min; 
+    my $max;
 
     foreach my $score (@$scores) {
 	#find min and max of obs and exp scores
-	if ($min > $score->diff_score) {
-	    $min = $score->diff_score;
-	}
-	if ($max < $score->diff_score) {
-	    $max = $score->diff_score;
+	if (defined $score->diff_score) {
+	    #if min hasn't been defined yet, then define min and max
+	    unless (defined $min) {
+		$min = $score->diff_score;
+		$max = $score->diff_score;
+	    }
+	    if ($min > $score->diff_score) {
+		$min = $score->diff_score;
+	    }
+	    if ($max < $score->diff_score) {
+		$max = $score->diff_score;
+	    }
 	}
     }
+
     return ($min, $max);
 }
 
@@ -1059,6 +1070,7 @@ sub _get_alignment_scores {
     for (my $i = 0; $i < scalar(@$aligned_scores); $i++) {
 	$aligned_scores->[$i]->position($aligned_scores->[$i]->position-$align_start+1);  
     }  
+
     return $aligned_scores;
 }
 
@@ -1094,6 +1106,12 @@ sub _add_to_bucket {
     my $final_obs_score;
     my $final_exp_score;
     my $final_diff_score;
+    my $filled_bucket = 0;
+
+    #bit of a hack to turn 0's stored in the database to undefs
+    if (defined($diff_score) && $diff_score == 0) {
+	$diff_score = $_no_score_value;
+    }
 
     #store start of bucket position
     if ($_bucket->{cnt} == 0) {
@@ -1121,11 +1139,20 @@ sub _add_to_bucket {
     if ($display_type eq "AVERAGE") {
 
 	#store the scores
-	if ($diff_score != $_no_score_value) {
-	    $_bucket->{obs_score} += $obs_score;
-	    $_bucket->{exp_score} += $exp_score;
-	    $_bucket->{diff_score} += $diff_score;
-	    $_bucket->{called}++;
+	if (defined $_no_score_value) {
+	    if ($diff_score != $_no_score_value) {
+		$_bucket->{obs_score} += $obs_score;
+		$_bucket->{exp_score} += $exp_score;
+		$_bucket->{diff_score} += $diff_score;
+		$_bucket->{called}++;
+	    }
+	} else {
+	    if (defined $diff_score) {
+		$_bucket->{obs_score} += $obs_score;
+		$_bucket->{exp_score} += $exp_score;
+		$_bucket->{diff_score} += $diff_score;
+		$_bucket->{called}++;
+	    }
 	}
 
 	$_bucket->{cnt}++;
@@ -1150,12 +1177,21 @@ sub _add_to_bucket {
 		$final_obs_score = $_bucket->{obs_score}/$_bucket->{cnt};
 		$final_exp_score = $_bucket->{exp_score}/$_bucket->{cnt};
 		$final_diff_score = $_bucket->{diff_score}/$_bucket->{cnt};
-	    }
+	    } 
+	    $filled_bucket = 1;
 	}
     } else {
 	#find the max score of the difference, and store the obs and exp scores
 	#for this too.
-	if ($_bucket->{diff_score} < $diff_score) {
+
+	#bucket->{diff_score} will be undefined if the first score in the
+	#bucket is undefined.
+	if (!defined $_bucket->{diff_score} && defined($diff_score)) {
+	    $_bucket->{diff_score} = $diff_score;
+	    $_bucket->{obs_score} = $obs_score;
+	    $_bucket->{exp_score} = $exp_score;
+	}
+	if (defined($diff_score) && $_bucket->{diff_score} < $diff_score) {
 	    $_bucket->{diff_score} = $diff_score;
 	    $_bucket->{obs_score} = $obs_score;
 	    $_bucket->{exp_score} = $exp_score;
@@ -1171,11 +1207,13 @@ sub _add_to_bucket {
 	    $final_obs_score = $_bucket->{obs_score};
 	    $final_exp_score = $_bucket->{exp_score};
 	    $final_diff_score = $_bucket->{diff_score};
+	    $filled_bucket = 1;
 	}
     }
 
     #if bucket is full, create a new conservation score
-    if (defined $final_diff_score) {
+    #if (defined $final_diff_score) {
+    if ($filled_bucket) {
 
 	my $aligned_score = new Bio::EnsEMBL::Compara::ConservationScore(
 		      -adaptor => $self,
@@ -1192,6 +1230,7 @@ sub _add_to_bucket {
 	$_bucket->{diff_score} = 0;
 	$_bucket->{cnt} = 0;
 	$_bucket->{called} = 0;
+	$filled_bucket = 0;
 	return $aligned_score;
     }
     #return 0 if not filled bucket
