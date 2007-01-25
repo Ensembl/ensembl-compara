@@ -54,6 +54,12 @@ perl populate_new_database.pl
     --old new_database_name
     --new new_database_name
 
+=head1 REQUIREMENTS
+
+This script uses mysql, mysqldump and mysqlimport programs.
+It requires at least version 4.1.12 of mysqldump as it uses
+the --insert-ignore option.
+
 =head1 ARGUMENTS
 
 =head2 GETTING HELP
