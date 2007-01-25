@@ -178,14 +178,18 @@ function bookmark_link() {
 
 function ajaxCapability() {
 
+//  window.onerror = errorSuppression;
+
+  var cookieKey = 'ENSEMBL_AJAX';
+
+  if (!readCookie(cookieKey)) {
+
   var useActiveX = false;
   var javaIsAvailable = false;
   var httpobj;
   var browserVersion = parseInt(window.navigator.appVersion);
   var browserName = window.navigator.appName;
   var ajaxCapability = "none";
-
-//  window.onerror = errorSuppression;
 
   if (!(browserName.indexOf("Microsoft Internet Explorer"))) {
     if (typeof ScriptEngine != "undefined") {
@@ -222,9 +226,7 @@ function ajaxCapability() {
     }
   }
 
-  var cookieKey = 'ENSEMBL_AJAX';
-  if (!readCookie(cookieKey)) {
-    createCookie(cookieKey, ajaxCapability, 30);
+  createCookie(cookieKey, ajaxCapability, 30);
   }
 }
 
