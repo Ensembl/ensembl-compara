@@ -19,6 +19,7 @@ sub init_label {
   my $confkey  = $self->{'extras'}->{'confkey'};
   my $text     = $self->{'extras'}->{'name'};
   my $authority= $self->{'extras'}->{'authority'} || '';
+  my $zmenu = $self->{'extras'}->{'zmenu'} || {};
   my $colour   = $Config->get($confkey,'col') || 'black';
   my $longtext = $text;
 
@@ -31,7 +32,7 @@ sub init_label {
   my @res = $self->get_text_width(0,$text,'','font'=>$fontname, 'ptsize' => $fontsize );
   $self->{'extras'}->{'x_offset'} =  $res[2] - 100;
 
-  my $zmenu = { caption=>$longtext };
+  $zmenu -> { caption } = $longtext;
   $authority and $zmenu->{"01:Details"} = $authority;
 
 
