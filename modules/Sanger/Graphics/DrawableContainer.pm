@@ -160,7 +160,6 @@ sub new {
 	    next if     $Config->get($row, 'on')     eq "off";
 	    next if     $Config->get($manager, 'on') eq 'off';
 	    my $str_tmp = $Config->get($row, 'str');
-warn "skipping ? $str_tmp $strand";
 	    next if (defined $str_tmp && $str_tmp eq "r" && $strand != -1);
 	    next if (defined $str_tmp && $str_tmp eq "f" && $strand != 1);
 	    $tmp_gs_store->{ $Config->get($row, 'pos') || $managed_offset++ } = $glyphset;
