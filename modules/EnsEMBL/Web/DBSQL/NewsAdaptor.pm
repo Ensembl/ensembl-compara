@@ -8,6 +8,7 @@ use warnings;
 no warnings 'uninitialized';
 
 use Class::Std;
+
 use EnsEMBL::Web::SpeciesDefs;
 
 {                              
@@ -27,6 +28,8 @@ sub new {
        warn( "Unable to connect to authentication database: $DBI::errstr" );
        $self->{'_handle'} = undef;
     }
+    my $user = $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->get_user();
+    $self->{'_user'} = $user->id;
   } else {
     if ($handle) {
       $self->{'_handle'} = $handle;
@@ -43,6 +46,12 @@ sub handle {
   my $self = shift;
   return $self->{'_handle'};
 }
+
+sub editor {
+  my $self = shift;
+  return $self->{'_user'};
+}
+
 
 #---------------------- QUERIES FOR NEWS_ITEM TABLE --------------------------
 
@@ -647,10 +656,10 @@ sub add_news_item {
     my $title             = $item{'title'};
     my $content           = $item{'content'};
     my $news_category_id  = $item{'news_category_id'};
-    my $species           = $item{'species'};
+    my $species           = $item{'species_id'};
     my $priority          = $item{'priority'};
     my $status            = $item{'status'};
-    my $user_id           = $item{'user_id'};
+    my $user_id           = $self->editor;
 
     # escape double quotes in text items
     $title =~ s/"/\\"/g;
@@ -701,10 +710,10 @@ sub update_news_item {
     my $title             = $item{'title'};
     my $content           = $item{'content'};
     my $news_category_id  = $item{'news_cat_id'};
-    my $species           = $item{'species'};
+    my $species           = $item{'species_id'};
     my $priority          = $item{'priority'};
     my $status            = $item{'status'};
-    my $user_id           = $item{'user_id'};
+    my $user_id           = $self->editor;
     $content =~ s/"/\\"/g;
     $content =~ s/'/\\'/g;
 

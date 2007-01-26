@@ -1,44 +1,51 @@
 package EnsEMBL::Web::DBSQL::HelpAdaptor;
 
-use DBI;
+use Class::Std;
+use strict;
+
+{
+  my %DBAdaptor_of   :ATTR( :name<db_adaptor>   );
+  my %SpeciesDefs_of :ATTR( :name<species_defs> );
 
 sub new {
-  my( $class, $DB ) = @_;
-  my $dbh;
-  my $self = $DB;
+  my $caller = shift;
+  my $r = shift;
+  my $handle = shift;
+  my $class = ref($caller) || $caller;
+  my $self = { '_request' => $r };
+  if ($EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY) {
+    eval {
+      ## Get the WebsiteDBAdaptor from the registry
+      $self->{'_handle'} =  $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->websiteAdaptor();
+    };
+    unless($self->{'_handle'}) {
+       warn( "Unable to connect to authentication database: $DBI::errstr" );
+       $self->{'_handle'} = undef;
+    }
+    my $user = $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->get_user();
+    $self->{'_user'} = $user->id;
+  } else {
+    if ($handle) {
+      $self->{'_handle'} = $handle;
+    } else {
+      warn( "NO DB USER DATABASE DEFINED" );
+      $self->{'_handle'} = undef;
+    }
+  }
   bless $self, $class;
   return $self;
 }
 
-sub db {
+sub handle {
   my $self = shift;
-  $self->{'dbh'} ||= DBI->connect(
-    "DBI:mysql:database=$self->{'NAME'};host=$self->{'HOST'};port=$self->{'PORT'}",
-    $self->{'USER'}, "$self->{'PASS'}", { RaiseError => 1}
-  );
-  return $self->{'dbh'};
+  return $self->{'_handle'};
 }
 
-sub disconnect {
+sub editor {
   my $self = shift;
-  $self->{'dbh'}->disconnect       if $self->{'dbh'};
-  $self->{'dbh_write'}->disconnect if $self->{'dbh_write'};
+  return $self->{'_user'};
 }
-sub DESTROY {
-  my $self = shift;
-  $self->disconnect;
-}
-sub db_write {
-  my $self = shift;
-  my $SD = EnsEMBL::Web::SpeciesDefs->new;
-  my $user = $SD->ENSEMBL_WRITE_USER;
-  my $pass = $SD->ENSEMBL_WRITE_PASS;
-  $self->{'dbh_write'} ||= DBI->connect(
-    "DBI:mysql:database=$self->{'NAME'};host=$self->{'HOST'};port=$self->{'PORT'}",
-    "$user", "$pass", { RaiseError => 1}
-  );
-  return $self->{'dbh_write'};
-}
+
 
 ############ HELPVIEW QUERIES ###############
 
@@ -48,9 +55,9 @@ sub db_write {
 
 sub fetch_all_by_keyword {
   my( $self, $keyword ) = @_;
-  return [] unless $self->db;
+  return [] unless $self->handle;
 
-  my $T = $self->db->selectrow_arrayref(
+  my $T = $self->handle->selectrow_arrayref(
     "SELECT title, content FROM article WHERE keyword=?", {}, $keyword
   );
   return [] unless $T;
@@ -64,12 +71,12 @@ sub fetch_all_by_keyword {
 
 sub fetch_all_by_string {
   my( $self, $string ) = @_;
-  return [] unless $self->db;
+  return [] unless $self->handle;
 
   my $results = [];
   my (%matches, $id, $score, $rounded);
 
-  my $T = $self->db->selectall_arrayref(
+  my $T = $self->handle->selectall_arrayref(
     "select article_id, match (title, content) against (?) as score
        from article
      having score > 0
@@ -89,14 +96,14 @@ sub fetch_all_by_string {
 
 sub fetch_all_by_scores {
   my( $self, $scores ) = @_;
-  return [] unless $self->db;
+  return [] unless $self->handle;
 
   my $results = [];
 
   ## get the article info
   foreach my $article (@{$scores}) {
     my $id = $$article{'id'};
-    my $T = $self->db->selectrow_arrayref(
+    my $T = $self->handle->selectrow_arrayref(
       "SELECT title, keyword FROM article WHERE article_id=?", {}, $id
     );
     push(@$results, {
@@ -111,8 +118,8 @@ sub fetch_all_by_scores {
 
 sub fetch_index_list {
   my( $self ) = @_;
-  return [] unless $self->db;
-  my $T = $self->db->selectall_arrayref(
+  return [] unless $self->handle;
+  my $T = $self->handle->selectall_arrayref(
     "SELECT a.title, a.keyword, c.name, c.priority
        FROM article a, category c where a.category_id = c.category_id
       ORDER by priority, name, title"
@@ -130,9 +137,9 @@ sub fetch_article_by_keyword {
   my( $self, $keyword ) = @_;
   my $results = [];
 
-  return [] unless $self->db;
+  return [] unless $self->handle;
 
-  my $T = $self->db->selectrow_arrayref(
+  my $T = $self->handle->selectrow_arrayref(
     "SELECT help_article_id, title, intro FROM help_article WHERE keyword=?", {}, $keyword
   );
   return [] unless $T;
@@ -143,7 +150,7 @@ sub fetch_article_by_keyword {
 
   ## get additional modular content
   my $items = [];
-  my $A = $self->db->selectall_arrayref(
+  my $A = $self->handle->selectall_arrayref(
        "SELECT header, content 
         FROM help_item as i, article_item as x 
         WHERE i.help_item_id = x.help_item_id
@@ -169,13 +176,13 @@ sub fetch_article_by_keyword {
 
 sub fetch_scores_by_string {
   my( $self, $string ) = @_;
-  return [] unless $self->db;
+  return [] unless $self->handle;
 
   my $results = [];
   my (%matches, $id, $score, $rounded);
 
   ## search the individual items for the search term
-  my $I = $self->db->selectall_arrayref(
+  my $I = $self->handle->selectall_arrayref(
     "SELECT x.help_article_id, match (i.header, i.content) against (?) as score
        FROM help_item i, article_item x
        WHERE i.help_item_id = x.help_item_id
@@ -190,7 +197,7 @@ sub fetch_scores_by_string {
   }
 
   ## Also search article titles and intros
-  my $A = $self->db->selectall_arrayref(
+  my $A = $self->handle->selectall_arrayref(
     "SELECT help_article_id, match (title, intro) against (?) as score
        FROM help_article
      HAVING score > 0",
@@ -228,14 +235,14 @@ sub _sort_scores {
 
 sub fetch_summaries_by_scores {
   my( $self, $scores ) = @_;
-  return [] unless $self->db;
+  return [] unless $self->handle;
 
   my $results = [];
 
   ## get the article info
   foreach my $article (@{$scores}) {
     my $id = $$article{'id'};
-    my $T = $self->db->selectrow_arrayref(
+    my $T = $self->handle->selectrow_arrayref(
       "SELECT title, keyword, summary FROM help_article WHERE help_article_id=?", {}, $id
     );
     push(@$results, {
@@ -251,19 +258,19 @@ sub fetch_summaries_by_scores {
 
 sub fetch_article_index {
   my( $self, $status ) = @_;
-  return [] unless $self->db;
+  return [] unless $self->handle;
 
   my $sql = qq(
       SELECT a.title, a.keyword, c.name
-       FROM help_article a, help_cat c 
-       WHERE a.help_cat_id = c.help_cat_id
+       FROM help_article a, help_category c 
+       WHERE a.help_category_id = c.help_category_id
   );
   if ($status) {
     $sql .= qq( AND status = "$status" );
   }
   $sql .= qq( ORDER BY order_by, name, title);
 
-  my $T = $self->db->selectall_arrayref($sql);
+  my $T = $self->handle->selectall_arrayref($sql);
   return [ map {{
     'title'    => $_->[0],
     'keyword'  => $_->[1],
@@ -273,13 +280,13 @@ sub fetch_article_index {
 
 sub fetch_glossary {
   my ($self, $status) = @_;
-  return [] unless $self->db;
+  return [] unless $self->handle;
   my $results = [];
 
   my $sql = 'SELECT word_id, word, acronym, meaning FROM glossary ';
   $sql .= qq( WHERE status = "$status" ) if $status;
   $sql .= 'ORDER BY word ASC';
-  my $T = $self->db->selectall_arrayref($sql);
+  my $T = $self->handle->selectall_arrayref($sql);
   return [ map {{
     'word_id'  => $_->[0],
     'word'     => $_->[1],
@@ -290,13 +297,13 @@ sub fetch_glossary {
 
 sub fetch_movies {
   my ($self, $status) = @_;
-  return [] unless $self->db;
+  return [] unless $self->handle;
   my $results = [];
 
   my $sql = 'SELECT movie_id, title, filename, filesize, frame_count, frame_rate FROM help_movie ';
   $sql .= qq( WHERE status = "$status" ) if $status;
   $sql .= 'ORDER BY title ASC';
-  my $T = $self->db->selectall_arrayref($sql);
+  my $T = $self->handle->selectall_arrayref($sql);
   return [ map {{
     'movie_id'    => $_->[0],
     'title'       => $_->[1],
@@ -309,11 +316,11 @@ sub fetch_movies {
 
 sub fetch_movie_by_id {
   my ($self, $id) = @_;
-  return [] unless $self->db;
+  return [] unless $self->handle;
   my $results = [];
 
   my $sql = qq(SELECT title, filename, filesize, width, height, frame_count, frame_rate FROM help_movie where movie_id = "$id");
-  my $T = $self->db->selectrow_arrayref($sql);
+  my $T = $self->handle->selectrow_arrayref($sql);
   return {
     'movie_id'    => $id,
     'title'       => $T->[0],
@@ -326,69 +333,82 @@ sub fetch_movie_by_id {
   };
 }
 
-############ HELPDB INTERFACE QUERIES ###############
+#----------------------------------------------------------------------------------------
 
-## Web interface methods are provided for the new schema only, since 
-## the old schema is no longer used on www.ensembl.org
-
-sub add_help_item {
+sub add_word {
   my ($self, $item_ref) = @_;
-  return [] unless $self->db;
+  return [] unless $self->handle;
 
   my %item = %{$item_ref};
 
-  my $header    = $item{'header'};
-  my $content   = $item{'content'};
-  my $status    = $item{'status'};
-  my $user_id   = $item{'user_id'};
+  my $word    = $item{'word'};
+  my $acronym = $item{'acronym'};
+  my $meaning = $item{'meaning'};
+  my $status  = $item{'status'};
+  my $editor  = $self->editor;
 
-  my $sql = qq(INSERT INTO 
-                  help_item 
-                SET
-                  header        = "$header",
-                  content       = "$content",
-                  status        = "$status",
-                  creation_date = NOW(),
-                  created_by    = "$user_id"
-            );
+  # escape double quotes in text fields
+  $word     =~ s/"/\\"/g;
+  $meaning  =~ s/"/\\"/g;
 
-  my $sth = $self->db_write->prepare($sql);
+  my $sql = qq(
+      INSERT INTO
+        glossary
+      SET
+        word        = "$word",
+        acronym     = "$acronym",
+        meaning     = "$meaning",
+        status      = "$status",
+        created_by  = "$editor",
+        created_at  = NOW()
+  );
+
+  my $sth = $self->handle->prepare($sql);
   my $result = $sth->execute();
 
   return $result;
 }
 
-sub update_help_item {
+sub update_word {
   my ($self, $item_ref) = @_;
-  return [] unless $self->db;
+  return [] unless $self->handle;
 
   my %item = %{$item_ref};
 
-  my $item_id   = $item{'help_item_id'};
-  my $header    = $item{'header'};
-  my $content   = $item{'content'};
-  my $status    = $item{'status'};
-  my $user_id   = $item{'user_id'};
+  my $word_id = $item{'word_id'};
+  my $word    = $item{'word'};
+  my $acronym = $item{'acronym'};
+  my $meaning = $item{'meaning'};
+  my $status  = $item{'status'};
+  my $editor  = $self->editor;
 
-  my $sql = qq(UPDATE 
-                  help_item 
-                SET
-                  header        = "$header",
-                  content       = "$content",
-                  status        = "$status",
-                  last_updated  = NOW(),
-                  updated_by    = "$user_id"
-                WHERE
-                  help_item_id  = $item_id
-            );
+  # escape double quotes in text fields
+  $word     =~ s/"/\\"/g;
+  $meaning  =~ s/"/\\"/g;
 
-  my $sth = $self->db_write->prepare($sql);
+  my $sql = qq(
+      UPDATE
+        glossary
+      SET
+        word        = "$word",
+        acronym     = "$acronym",
+        meaning     = "$meaning",
+        status      = "$status",
+        modified_by = "$editor",
+        modified_at = NOW()
+      WHERE
+        word_id = "$word_id"
+  );
+
+  my $sth = $self->handle->prepare($sql);
   my $result = $sth->execute();
 
   return $result;
 }
 
 
+
+}
 
 
 1;
