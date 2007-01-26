@@ -337,4 +337,66 @@ sub errorTrack {
     return $res[3];
 }
 
+
+sub get_featurestyle {
+  my ($self, $f, $configuration) = @_;
+  my $style;
+  if($configuration->{'use_style'}) {
+    $style = $configuration->{'styles'}{$f->das_type_category}{$f->das_type_id};
+    $style ||= $configuration->{'styles'}{'default'}{$f->das_type_id};
+    $style ||= $configuration->{'styles'}{$f->das_type_category}{'default'};
+    $style ||= $configuration->{'styles'}{'default'}{'default'};
+  }
+  $style ||= {};
+  $style->{'attrs'} ||= {};
+
+  # Set some defaults
+  my $colour = $style->{'attrs'}{'fgcolor'} || $configuration->{'colour'} || $configuration->{'color'} || 'blue';
+  $style->{'attrs'}{'height'} ||= $configuration->{'h'};
+  $style->{'attrs'}{'colour'} ||= $colour;
+  return $style;
+}
+
+
+sub get_featuredata {
+  my ($self, $f, $configuration, $y_offset) = @_;
+
+  # keep within the window we're drawing
+  my $START = $f->das_start() < 1 ? 1 : $f->das_start();
+  my $END   = $f->das_end()   > $configuration->{'length'}  ? $configuration->{'length'} : $f->das_end();
+  my $row_height = $configuration->{'h'};
+
+  # truncation flags
+  my $trunc_start = ($START ne $f->das_start()) ? 1 : 0;
+  my $trunc_end   = ($END ne $f->das_end())        ? 1 : 0;
+  my $orientation = $f->das_orientation;
+
+  my $featuredata = {
+    'row_height'    => $row_height,
+    'start'         => $START,
+    'end'           => $END ,
+    'pix_per_bp'    => $self->{'pix_per_bp'},
+    'y_offset'      => $y_offset,
+    'trunc_start'   => $trunc_start,
+    'trunc_end'     => $trunc_end,
+    'orientation'   => $orientation,
+  };
+  return $featuredata;
+}
+
+
+sub get_symbol {
+  my ($self, $style, $featuredata, $y_offset) = @_;
+  my $styleattrs = $style->{'attrs'};
+  my $glyph_symbol = $style->{'glyph'} || 'box';
+
+  # Load the glyph symbol module that we need to draw this style
+  $glyph_symbol = 'Bio::EnsEMBL::Glyph::Symbol::'.$glyph_symbol;
+  unless ($self->dynamic_use($glyph_symbol)){
+    $glyph_symbol = 'Bio::EnsEMBL::Glyph::Symbol::box';
+  }
+  return $glyph_symbol->new($featuredata, $styleattrs);
+}
+
+
 1;
