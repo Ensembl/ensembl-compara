@@ -103,7 +103,7 @@ unless ($no_log) {
 
 # For each species ----------------------------------------------------------
 for my $sp( sort @SPECIES ){  # users selected spp
-
+  utils::Tool::info(2, "$sp: gtf dump");
   # Connect to db
   my $db;
   if ($host, $port, $dbname) {
