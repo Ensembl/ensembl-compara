@@ -103,7 +103,7 @@ unless ($no_log) {
 
 # For each species ----------------------------------------------------------
 for my $sp( sort @SPECIES ){  # users selected spp
-  utils::Tool::info(2, "$sp: gtf dump");
+
   # Connect to db
   my $db;
   if ($host, $port, $dbname) {
@@ -121,22 +121,24 @@ for my $sp( sort @SPECIES ){  # users selected spp
   }
 
   # Get assembly and check against ini file -------------
+  my $assembly;
   unless ($path) {
     my $cs_adaptor   = $db->get_CoordSystemAdaptor;
     my ($highest_cs) = @{$cs_adaptor->fetch_all()};
-    my $assembly     = $highest_cs->version();
-    $path ||= $assembly;
+    $assembly     = $highest_cs->version();
   }
 
+  utils::Tool::info(2, "$sp: gtf dump $assembly");
 
   # Get slices ---------------------------------------------
   my $sa  = $db->get_SliceAdaptor();
+
   my @slices;
   if (scalar(@ARGV) == 0) {
     my @tmpslices = @{$sa->fetch_all('toplevel',undef,1)};
 
     foreach my $slice (@tmpslices) {
-      if ($slice->coord_system->version eq $path) {
+      if ($slice->coord_system->version eq $assembly) {
 	push @slices, $slice;
       }
     }
@@ -147,7 +149,7 @@ for my $sp( sort @SPECIES ){  # users selected spp
     @slices = ( $sa->fetch_by_name($region) );
   } 
   elsif (scalar(@ARGV) == 3) {
-    my $slice_name = "toplevel:$path:" . $ARGV[0] . ":" . $ARGV[1] . ":" . $ARGV[2] . ":1";
+    my $slice_name = "toplevel:$assembly:" . $ARGV[0] . ":" . $ARGV[1] . ":" . $ARGV[2] . ":1";
 
     @slices = ( $sa->fetch_by_name($slice_name) );
   } 
@@ -164,9 +166,9 @@ for my $sp( sort @SPECIES ){  # users selected spp
   my $sp_folder = "$dumpdir/".(join "_", lc($sp), $release, $sp_release)."/data/gtf";
   utils::Tool::check_dir($sp_folder);
 
-  $gtf_file ||= "$sp_folder/$sp.$path.$release.gtf";
+  my $outfile = $gtf_file || "$sp_folder/$sp.$assembly.$release.gtf";
   my $gtffp = new FileHandle;
-  $gtffp->open(">$gtf_file") or croak "Unable to open $gtf_file for write";
+  $gtffp->open(">$outfile") or croak "Unable to open $outfile for write";
   $gtffp->autoflush(1);
 
   foreach my $slice (@slices) {
@@ -180,7 +182,7 @@ for my $sp( sort @SPECIES ){  # users selected spp
   utils::Tool::info(1, "Dumped $sp");
 
   # Compress (gzip files)
-  compress( $gtf_file ) unless $no_compress;
+  compress( $outfile ) unless $no_compress;
 
 } # end foreach species
 
@@ -246,7 +248,6 @@ sub make_start_codon_features {
 
 sub write_transcript_gtf {
   my ($fh,$slice,$gene,$transcript,$include_codons,$seqname) = @_;
-
   my $sliceoffset = $slice->start-1;
 
   my @startcs =  make_start_codon_features($transcript,$transcript->stable_id);
