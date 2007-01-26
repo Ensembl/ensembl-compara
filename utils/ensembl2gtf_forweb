@@ -1,4 +1,4 @@
-#!/usr/local/ensembl/bin/perl -w
+#!/usr/local/bin/perl -w
 
 use strict;
 
@@ -7,16 +7,32 @@ use Bio::EnsEMBL::SeqFeature;
 use Getopt::Long;
 use Carp;
 use FileHandle;
+use FindBin qw($Bin);
+use File::Basename qw( dirname );
+use Time::localtime;
 
-my $host   = 'ens-livemirror';
-my $user   = 'ensro';
-my $pass   = '';
-my $port   = 3306;
-my $dbname = 'homo_sapiens_core_42_36d';
+# Load libraries needed for reading config -----------------------------------
+use vars qw( $SERVERROOT );
+BEGIN{
+  $SERVERROOT = dirname( $Bin );
+  unshift @INC, "$SERVERROOT/conf";
+  unshift @INC, "$SERVERROOT";
+  eval{ require SiteDefs };
+  if ($@){ die "Can't use SiteDefs.pm - $@\n"; }
+  map{ unshift @INC, $_ } @SiteDefs::ENSEMBL_LIB_DIRS;
+}
+
+use utils::Tool;
+
+my $host;#   = 'ens-livemirror';
+my $user;#   = 'ensro';
+my $pass;#   = '';
+my $port;#   = 3306;
+my $dbname;# = 'homo_sapiens_core_42_36d';
 
 my @chromosomes;
 my @genetypes;
-my $path = 'NCBI36';
+my $path;
 my $gtf_file = undef;
 my $include_codons = 1;
 
@@ -24,9 +40,9 @@ my $start = undef;
 my $end = undef;
 my $seqname = undef;
 my $coordsystem = 'toplevel';
-my $all = 0;
 
-
+my @SPECIES;
+my ($dumpdir, $no_log, $email, $no_compress);
 $| = 1;
 
 &GetOptions(
@@ -35,15 +51,18 @@ $| = 1;
   'dbname:s'      => \$dbname,
   'pass:s'        => \$pass,
   'port:n'        => \$port,
-
+  'species:s'     => \@SPECIES,
   'path:s'        => \$path,
 
-  'codons!'       => \$include_codons,
+  'codons'        => \$include_codons,
   'chromosomes:s' => \@chromosomes,
   'genetypes:s'   => \@genetypes,
   'gtffile:s'     => \$gtf_file,
   'coordsystem:s' => \$coordsystem,
-  'all'           => \$all,
+  'no_compress'   => \$no_compress,
+  'no_log'        => \$no_log,
+  'email:s'       => \$email,
+  'dumpdir:s'     => \$dumpdir,
 );
 
 if (scalar(@chromosomes)) {
@@ -54,53 +73,131 @@ if (scalar(@genetypes)) {
   @genetypes = split (/,/, join (',', @genetypes));
 }
 
-my $db = new Bio::EnsEMBL::DBSQL::DBAdaptor(
-  -host   => $host,
-  -user   => $user,
-  -port   => $port,
-  -pass   => $pass,
-  -dbname => $dbname
-);
+# Load modules needed for reading config -------------------------------------
+require EnsEMBL::Web::SpeciesDefs;      # Loaded at run time
+require EnsEMBL::Web::DBSQL::DBConnection;
 
-my $sa  = $db->get_SliceAdaptor();
+my $SPECIES_DEFS = EnsEMBL::Web::SpeciesDefs->new();
+$SPECIES_DEFS || die "\n\n[DIE] $0: SpeciesDefs config not found";
+my $release = $SPECIES_DEFS->ENSEMBL_VERSION;
+utils::Tool::info(2, "SiteDefs configured for release $release");
 
-my @slices;
-
-if (scalar(@ARGV) == 0 && $all) {
-  my @tmpslices = @{$sa->fetch_all('toplevel',undef,1)};
-
-  foreach my $slice (@tmpslices) {
-    if ($slice->coord_system->version eq $path) {
-      push @slices, $slice;
-    }
-  }
-
-} elsif (scalar(@ARGV) == 1) {
-  my $region   = $ARGV[0];
-
-  @slices = ( $sa->fetch_by_name($region) );
-} elsif (scalar(@ARGV) == 3) {
-  my $slice_name = "toplevel:$path:" . $ARGV[0] . ":" . $ARGV[1] . ":" . $ARGV[2] . ":1";
-
-  @slices = ( $sa->fetch_by_name($slice_name) );
-} else {
-  croak "ERROR: Need either -all or slicename or chr start end\n";
+# Check species if user defined.  Else use all species
+if (@SPECIES) {
+  @SPECIES = @{ utils::Tool::check_species(\@SPECIES) };
+}
+else {
+  @SPECIES = @{ utils::Tool::all_species()};
 }
 
-my $gtffp = new FileHandle;
-$gtffp->open(">$gtf_file") or croak "Unable to open $gtf_file for write";
-$gtffp->autoflush(1);
-
-foreach my $slice (@slices) {
-  my $genes = $slice->get_all_Genes(undef,undef,1);
-
-  foreach my $gene (@$genes) {
-    foreach my $trans (@{$gene->get_all_Transcripts}) {
-      write_transcript_gtf($gtffp,$slice,$gene,$trans,$include_codons,$seqname);
-    }
-  }
+# Times and log file
+my $script_start_time = time();
+my $logfile;
+unless ($no_log) {
+  (my $time = gmtime(time)) =~ s/\s+/\./g;
+  $logfile ||= "logs/gtf$release"."_$time.log";
+  print STDERR "Using logfile $logfile\n";
+  open(STDERR, "> $logfile") || die "Can't create file:$!\n";
 }
 
+
+# For each species ----------------------------------------------------------
+for my $sp( sort @SPECIES ){  # users selected spp
+
+  # Connect to db
+  my $db;
+  if ($host, $port, $dbname) {
+    $db = new Bio::EnsEMBL::DBSQL::DBAdaptor(
+					     -host   => $host,
+					     -user   => $user,
+					     -port   => $port,
+					     -pass   => $pass,
+					     -dbname => $dbname
+					    );
+  }
+  else {
+    my $dbConnection = EnsEMBL::Web::DBSQL::DBConnection->new($sp, $SPECIES_DEFS);
+    $db = $dbConnection->get_DBAdaptor('core') || ( utils::Tool::warning( 1, "DB $db is not valid for $sp" ));
+  }
+
+  # Get assembly and check against ini file -------------
+  unless ($path) {
+    my $cs_adaptor   = $db->get_CoordSystemAdaptor;
+    my ($highest_cs) = @{$cs_adaptor->fetch_all()};
+    my $assembly     = $highest_cs->version();
+    $path ||= $assembly;
+  }
+
+
+  # Get slices ---------------------------------------------
+  my $sa  = $db->get_SliceAdaptor();
+  my @slices;
+  if (scalar(@ARGV) == 0) {
+    my @tmpslices = @{$sa->fetch_all('toplevel',undef,1)};
+
+    foreach my $slice (@tmpslices) {
+      if ($slice->coord_system->version eq $path) {
+	push @slices, $slice;
+      }
+    }
+  } 
+  elsif (scalar(@ARGV) == 1) {
+    my $region   = $ARGV[0];
+
+    @slices = ( $sa->fetch_by_name($region) );
+  } 
+  elsif (scalar(@ARGV) == 3) {
+    my $slice_name = "toplevel:$path:" . $ARGV[0] . ":" . $ARGV[1] . ":" . $ARGV[2] . ":1";
+
+    @slices = ( $sa->fetch_by_name($slice_name) );
+  } 
+  else {
+    croak "ERROR: Will dump all toplevel unless command line has slicename or chr start end\n";
+  }
+
+  # Output file-----------------------------------------------
+  # Work out species folder name
+  my $sp_release = $SPECIES_DEFS->get_config($sp,"SPECIES_RELEASE_VERSION");
+  $sp_release =~ s/\.//g;
+  $dumpdir   ||= "/mysql/dumps/release-$release";
+
+  my $sp_folder = "$dumpdir/".(join "_", lc($sp), $release, $sp_release)."/data/gtf";
+  utils::Tool::check_dir($sp_folder);
+
+  $gtf_file ||= "$sp_folder/$sp.$path.$release.gtf";
+  my $gtffp = new FileHandle;
+  $gtffp->open(">$gtf_file") or croak "Unable to open $gtf_file for write";
+  $gtffp->autoflush(1);
+
+  foreach my $slice (@slices) {
+    my $genes = $slice->get_all_Genes(undef,undef,1);
+    foreach my $gene (@$genes) {
+      foreach my $trans (@{$gene->get_all_Transcripts}) {
+	write_transcript_gtf($gtffp,$slice,$gene,$trans,$include_codons,$seqname);
+      }
+    }
+  }
+  utils::Tool::info(1, "Dumped $sp");
+
+  # Compress (gzip files)
+  compress( $gtf_file ) unless $no_compress;
+
+} # end foreach species
+
+
+# Work out timings -----------------------------------------------------------
+my $time_taken = time - $script_start_time;
+my $hours      = localtime($time_taken)->hour -1;
+utils::Tool::info (2, "Used $logfile.") if $logfile;
+utils::Tool::info (2, " Time taken: $hours:". localtime($time_taken)->min."mins");
+close STDERR;
+
+$email ||= 'ensembl-webteam@sanger.ac.uk';
+utils::Tool::mail_log( $logfile, $email ) if $logfile;
+exit;
+
+
+###########################################################################
 sub make_start_codon_features {
   my ($trans,$id) = @_;
 
@@ -403,3 +500,23 @@ sub check_start_and_stop {
 
   return ($has_start, $has_end);
 }
+
+
+#----------------------------------------------------------------------
+sub compress {
+  my $file = shift;
+  return  unless (-e "$file");
+
+  utils::Tool::info( 1, "Gzipping files");
+  #my $size = -s $file;
+  if (my $size = -s $file > 3500000000 ){
+    #split_data($file);
+    utils::Tool::warning(1, "Large file generated $file $size");
+  }
+  else {
+    system("gzip -9 $file") ==0 or utils::Tool::warning(1, "Can't gzip file $! $file");
+  }
+  return 1;
+}
+
+
