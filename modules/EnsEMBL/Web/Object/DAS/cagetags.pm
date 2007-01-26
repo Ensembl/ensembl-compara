@@ -25,7 +25,7 @@ sub Types {
         $tHash->{ $ft->ditag_side } ++;
     }
     foreach my $t (sort keys %$tHash) {
-        push @features, [$t, 'FANTOM_CAGE', '', $tHash->{$t} ];
+        push @features, { 'id' => $t, 'method' => 'FANTOM_CAGE', 'text' => $tHash->{$t} };
     }
     return \@features;
 }

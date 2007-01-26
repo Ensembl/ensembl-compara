@@ -44,6 +44,7 @@ sub features {
   %s
   %s
   %s
+  %s
 </FEATURE>
 };
 
@@ -109,7 +110,10 @@ sub features {
 		}
 	    }
 
-
+            my $score_tag;
+            if( $feature->{'SCORE'} ) {
+              $score_tag = sprintf '<SCORE>%f</SCORE>', $feature->{'SCORE'};
+            }
 	    $panel->print( sprintf ($feature_template, 
 				    $feature->{'ID'} || '', 
 				    $feature->{'LABEL'} ? qq{ label="$feature->{'LABEL'}"} : '',
@@ -124,7 +128,7 @@ sub features {
 				    $group_tag,
 				    $link_tag,
 				    $note_tag,
-
+                                    $score_tag
 				    ));
 	    
 	}

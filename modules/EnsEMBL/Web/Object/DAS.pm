@@ -39,12 +39,33 @@ sub GroupIDs {
   return $self->{'data'}{'_group_ids'};
 }
 
-sub Stylesheet {
+sub Stylesheet { 
   my $self = shift;
-  return qq{
-<STYLESHEET version="1.0">
-</STYLESHEET>
-};
+  $self->_Stylesheet({});
+}
+sub _Stylesheet {
+  my( $self, $category_hashref ) = @_;
+  $category_hashref ||= {};
+  my $stylesheet = qq(<STYLESHEET version="1.0">\n);
+  foreach my $category_id ( keys %$category_hashref ) {
+    $stylesheet .= sprintf qq(  <CATEGORY id="%s">\n), $category_id;
+    my $type_hashref = $category_hashref->{$category_id};
+    foreach my $type_id ( keys %$type_hashref ) {
+      $stylesheet .= sprintf qq(    <TYPE id="%s">\n), $type_id;
+      my $glyph_arrayref = $type_hashref->{$type_id};
+      foreach my $glyph_hashref (@$glyph_arrayref ) {
+        $stylesheet .= sprintf qq(      <GLYPH%s>\n        <%s>), $glyph_hashref->{'zoom'}? qq( zoom="$glyph_hashref->{'zoom'}") : '', uc($glyph_hashref->{'type'});
+        foreach my $key (keys %{$glyph_hashref->{'attrs'}||{}} ) {
+          $stylesheet .= sprintf qq(          <%s>%s</%s>\n),  uc($key), $glyph_hashref->{'attrs'}{$key}, uc($key);
+        }
+        $stylesheet .= sprintf qq(        </%s>\n      </GLYPH>),  uc($glyph_hashref->{'type'});
+      }
+      $stylesheet .= qq(    </TYPE>\n);
+    }
+    $stylesheet .= qq(  </CATEGORY>\n);
+  }
+  $stylesheet .= qq(</STYLESHEET>\n);
+  return $stylesheet;
 }
 
 sub EntryPoints {
@@ -58,5 +79,4 @@ sub Types {
   my $collection;
   return $collection;
 }
-
 1;

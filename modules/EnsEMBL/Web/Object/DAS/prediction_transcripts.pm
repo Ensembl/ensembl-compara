@@ -9,7 +9,14 @@ our @ISA = qw(EnsEMBL::Web::Object::DAS);
 sub Types {
   my $self = shift;
   my $features = [
-    ['exon', '', '', '']
+    { 'id' => 'exon', 'method' => 'Genscan',    'text' => "Ab initio prediction of protein coding genes by Genscan (C. Burge et. al., J. Mol. Biol. 1997 268:78-94). The splice site models used are described in more detail in C. Burge, Modelling dependencies in pre-mRNA splicing signals. 1998 In Salzberg, S., Searls, D. and Kasif, S., eds. Computational Methods in Molecular Biology, Elsevier Science, Amsterdam, 127-163." },
+    { 'id' => 'exon', 'method' => 'SNAP',       'text' => "Ab initio gene prediction by SNAP (I. Korf, BMC Bioinformatics 2004 5:59)" },
+    { 'id' => 'exon', 'method' => 'GeneFinder', 'text' => "Ab initio prediction of protein coding genes by Genefinder (C. Wilson, L. Hilyer, and P. Green, unpublished)." },
+    { 'id' => 'exon', 'method' => 'Fgenesh',    'text' => "Ab initio prediction of protein coding genes (AA Salamov et al., Genome Res. 2000 4:516-22)" },
+    { 'id' => 'exon', 'method' => 'GSC',        'text' => "Ab initio prediction of protein coding genes by Genscan (C. Burge et al., J. Mol. Biol. 1997 268:78-94), with parameters customised for accuracy in Tetraodon sequences" },
+    { 'id' => 'exon', 'method' => 'GID',        'text' => "Ab initio prediction of protein coding genes by geneid (http://www1.imim.es/software/geneid/), with parameters customised for accuracy in Tetraodon sequences." },
+    { 'id' => 'exon', 'method' => 'GWS_H',      'text' => "Alignment of a human protein to the genome by GeneWise (E. Birney et al., Genome Res. 2004 14:988-95)" },
+    { 'id' => 'exon', 'method' => 'GWS_S',      'text' => "Alignment of a mouse protein to the genome by GeneWise (E. Birney et al., Genome Res. 2004 14:988-95)" },
   ];
   return $features;
 }
@@ -24,24 +31,23 @@ sub Features {
   my @groups = grep { $_ } @{$self->GroupIDs      || []};
   my @ftids  = grep { $_ } @{$self->FeatureIDs    || []};
 
-  my $dba = $self->{data}->{_databases}->{_dbs}->{ $self->real_species }->{'core'};
-
+  my $dba_hashref = { map {
+    ( $_ => $self->{data}->{_databases}->{_dbs}->{ $self->real_species }->{$_} )
+  } qw(core) };
   my %transcripts_to_grab;
 
 ## First let us look at feature IDs - these prediction transcript exons...
 ## Prediction transcript exons have form 
 ##   {prediction_transcript.display_label}.{prediction_exon.exon_rank}
-  foreach my $id (@groups) {
-    $transcripts_to_grab{ $id }{ 'ID' } = 1;
-    $transcripts_to_grab{ $id }{ 'NO_FILTER' } = 1 ;
+  foreach my $id (@ftids) {
+    if( $id =~ /^(.*)\.(\d+)/) {
+      $transcripts_to_grab{ $1  }{ 'FILTER' }{ $2 } = 1;
+    }
   }
 
 ## Second let us look at groups IDs - these are prediction transcript ids'
-  foreach my $id (@ftids) {
-    if( $id =~ /^(.*)\.(\d+)/) {
-      $transcripts_to_grab{ $1  }{ 'ID' }           = 1;
-      $transcripts_to_grab{ $1  }{ 'FILTER' }{ $2 } = 1 
-    }
+  foreach my $id (@groups) {
+    $transcripts_to_grab{ $id }{ 'NO_FILTER' } = 1 ;
   }
 
 ## Finally let us loop through all the segments and retrieve all the
@@ -52,32 +58,37 @@ sub Features {
       next;
     }
     foreach my $prediction_transcript ( @{$segment->slice->get_all_PredictionTranscripts} ) {
-      $transcripts_to_grab{ $prediction_transcript->display_label }{ 'NO_FILTER' } = 1 ;
+      $transcripts_to_grab{ $prediction_transcript->display_label }{ 'NO_FILTER' } = 1;
       $transcripts_to_grab{ $prediction_transcript->display_label }{ 'TRANS' } = $prediction_transcript;
     }
   }
 
 ## Now we have grabbed all these features on segments we can go back and see if
 ## we need to grab any more of the group_id / filter_id features...
-  my $pta = undef;
+  my $pta_hashref = {};
   foreach my $display_label ( keys %transcripts_to_grab ) {
     next if exists $transcripts_to_grab{ $display_label }{'TRANS'};
-    $pta ||= $self->{data}->{_databases}->{_dbs}->{ $self->real_species }->{'core'}->get_PredictionTranscriptAdaptor;
-    $transcripts_to_grab{ $display_label }{'TRANS'} = $pta->fetch_by_stable_id( $display_label );
+    foreach my $db ( keys %$dba_hashref ) {
+      $pta_hashref->{$db} ||= $dba_hashref->{$db}->get_PredictionTranscriptAdaptor;
+      last if $transcripts_to_grab{ $display_label }{'TRANS'} = $pta_hashref->{$db}->fetch_by_stable_id( $display_label );
+    }
   }
 
 ## Transview template...
-  my $transview_url = sprintf( '%s/%s/transview?transcript=%%s', $self->species_defs->ENSEMBL_BASE_URL, $self->real_species );
+  my $transview_url = sprintf( '%s/%s/transview?transcript=%%s',
+    $self->species_defs->ENSEMBL_BASE_URL, $self->real_species
+  );
 
 ## Now we do all the nasty stuff of retrieving features and creating DAS objects for them...
   my %features = ();
+  my %slice_hack = ();
   foreach my $display_label ( keys %transcripts_to_grab ) {
     my $pt = $transcripts_to_grab{ $display_label }{ 'TRANS' };
     my $exons = $pt->get_all_Exons();
     my $rank = 0;
     foreach my $exon (@$exons) {
       $rank++;
-      my $slice_name = $exon->slice->seq_region_name.':'.$exon->slice->start.','.$exon->slice->end;
+      my $slice_name = $exon->slice->seq_region_name.':'.$exon->slice->start.','.$exon->slice->end.':'.$exon->slice->strand;
       unless( exists $features{$slice_name} ) {
         $features{$slice_name} = {
           'REGION' => $exon->slice->seq_region_name,
@@ -85,6 +96,13 @@ sub Features {
           'STOP'   => $exon->slice->end,
           'FEATURES' => [],
         };
+## Offset and orientation multiplier for features to map them back to slice
+## co-ordinates - based on the orientation of the slice.
+        if( $exon->slice->strand > 0 ) {
+          $slice_hack{$slice_name} = [  1, $features{$slice_name}{'START'}-1 ];
+        } else {
+          $slice_hack{$slice_name} = [ -1, $features{$slice_name}{'STOP'} +1 ];
+        }
       }
 ## If we have an exon filter for this transcript... check that the rank is in the
 ## list if not skip the rest of this loop
@@ -97,19 +115,19 @@ sub Features {
       }
 ## Push the features on to the slice specific array
       push @{$features{$slice_name}{'FEATURES'}}, {
-        'ID'     => $display_label.'.'.$rank,
-        'TYPE'   => 'exon',
-        'METHOD' => $pt->analysis->logic_name,
-        'START'  => $exon->start + $features{$slice_name}{'START'}-1,
-        'END'    => $exon->end   + $features{$slice_name}{'START'}-1,
-        'ORIENTATION' => $exon->strand > 0 ? '+' : '-',
-        'GROUP'  => [{
-          'ID'   => $display_label,
-          'TYPE' => 'prediction transcript',
-          'LABEL' => $display_label,
-          'LINK' => [{
-            'href' => sprintf($transview_url, $display_label ),
-            'text' => 'View feature in e! TransView'
+        'ID'          => $display_label.'.'.$rank, 
+        'TYPE'        => 'exon',
+        'METHOD'      => $pt->analysis->logic_name,
+        'START'       => $slice_hack{$slice_name}[0] * $exon->start + $slice_hack{$slice_name}[1],
+        'END'         => $slice_hack{$slice_name}[0] * $exon->end   + $slice_hack{$slice_name}[1],
+        'ORIENTATION' => $slice_hack{$slice_name}[0] * $exon->strand > 0 ? '+' : '-',
+        'GROUP'       => [{
+          'ID'        => $display_label,
+          'TYPE'      => 'prediction transcript',
+          'LABEL'     => $display_label,
+          'LINK'      => [{
+            'href'    => sprintf( $transview_url, $display_label ),
+            'text'    => 'View feature in e! TransView'
           }]
         }]
       };

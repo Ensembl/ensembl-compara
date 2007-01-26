@@ -49,10 +49,9 @@ sub types {
   $panel->print(sprintf("<GFF href=\"%s\" version=\"1.0\">\n", $url));
 
   foreach my $e (@{$features || []}) {
-    my ($id, $method, $category, $text) = @$e;
-    $method = qq{ method="$method"} if  ($method);
-    $category = qq{ category="$category"} if ($category);
-    $panel->print(sprintf($template, $id, $method, $category, $text));
+    $e->{'method'}   = qq( method="$e->{'method'}"    ) if exists $e->{'method'};
+    $e->{'category'} = qq( category="$e->{'category'}") if exists $e->{'category'};
+    $panel->print(sprintf($template, $e->{'id'}, $e->{'method'}, $e->{'category'}, $e->{'text'}));
   }
   $panel->print(qq{</GFF>\n});
 }

@@ -46,7 +46,7 @@ sub Types {
         }
     }
     foreach my $t (sort keys %$tHash) {
-      push @features, [$t, '', '', $tHash->{$t} ];
+      push @features, { 'id' => $t, 'text' => $tHash->{$t} };
     }
 
     return \@features;

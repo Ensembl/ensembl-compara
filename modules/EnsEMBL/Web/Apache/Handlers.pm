@@ -209,6 +209,8 @@ sub transHandler {
       my $das_species = shift @dsn_fields;
       my $type = pop @dsn_fields;
       my $assembly = join ('.', @dsn_fields);
+      my $subtype;
+      ( $type, $subtype ) = split /-/,$type,2;
 
       $command = $path_segments[1];
       my $FN = $SiteDefs::ENSEMBL_SERVERROOT."/perl/das/$command";
@@ -221,6 +223,7 @@ sub transHandler {
       $r->subprocess_env->{'ENSEMBL_SPECIES'     } = $das_species;
       $r->subprocess_env->{'ENSEMBL_DAS_ASSEMBLY'} = $assembly;
       $r->subprocess_env->{'ENSEMBL_DAS_TYPE'    } = $type;
+      $r->subprocess_env->{'ENSEMBL_DAS_SUBTYPE' } = $subtype;
       $r->subprocess_env->{'ENSEMBL_SCRIPT'      } = $command;
       my $error_filename = '';
       foreach my $dir ( @PERL_TRANS_DIRS ) {
