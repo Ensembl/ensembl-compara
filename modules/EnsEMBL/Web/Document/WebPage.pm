@@ -328,39 +328,11 @@ sub check_access {
   my ($self, $access) = @_;
   my $ok = 0;
   warn "CHECKING ACCESS";
-  foreach my $key (keys %{ $access }) {
-     warn "ACCESS KEY: " . $key;
-  }
-  if ($access->{'login'} && $self->get_user_id) {
+  if ($access eq 'login' && $self->get_user_id) {
     $ok = 1;
   }
   else {
     return unless $self->get_user_id;
-    my $object = ${$self->dataObjects}[0];
-    my $user;
-    if ($object->__objecttype eq 'User') {
-      $user = $object;
-    } 
-    else {
-      warn "=============> New user object needed";
-      #$user = EnsEMBL::Web::Object::User->new();
-    }
-    if ($access->{'group'}) {
-      my $membership = $user->get_membership($object->user_id, $access->{'group'});
-      my $member = $membership->[0];
-      if ($member->{'member_status'} eq 'active') {
-        if ($access->{'level'}) {
-          warn 'Access ', $access->{'level'}, ', User ', $member->{'member_level'};
-          $ok = 1 if $member->{'member_level'} eq $access->{'level'};
-        }
-        else {
-          $ok = 1;
-        }
-      }
-    }
-    else {
-      $ok = 1;
-    }
   }
 
   return $ok;
@@ -458,8 +430,8 @@ sub add_error_panels {
   foreach my $problem ( sort { $b->isFatal <=> $a->isFatal } @problems ) {
     next if !$problem->isFatal && $self->{'show_fatal_only'};
     my $desc = $problem->description;
+    warn "PROBLEM: $desc"; ## Just in case other bugs prevent error page rendering!
     $desc = "<p>$desc</p>" unless $desc =~ /<p/;
-
     # Find an example for the page
     my @eg;
     my $view = uc ($ENV{'ENSEMBL_SCRIPT'});
