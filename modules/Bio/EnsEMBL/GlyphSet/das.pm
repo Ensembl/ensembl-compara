@@ -558,12 +558,14 @@ sub gmenu{
       my $note_txt = '';
       if (ref $note eq 'ARRAY') {
         foreach my $n (@$note) {
-          $note_txt .= (decode_entities($n) . '<br/>');
+          $note_txt = decode_entities($n);
+          $zmenu->{"$ids:NOTE: $note_txt"} = '';
+          $ids++;
         }
       } else {
         $note_txt = decode_entities($note);
+        $zmenu->{"$ids:NOTE: $note_txt"} = '';
       }
-      $zmenu->{"$ids:NOTES: $note_txt"} = '';
     }
     $ids ++;
   }
@@ -633,12 +635,14 @@ sub zmenu {
     my $note_txt = '';
     if (ref $note eq 'ARRAY') {
       foreach my $n (@$note) {
-        $note_txt .= (decode_entities($n) . '<br/>');
+        $note_txt = decode_entities($n);
+        $zmenu->{"$ids:NOTE: $note_txt"} = '';
+        $ids++;
       }
     } else {
       $note_txt = decode_entities($note);
+      $zmenu->{"$ids:NOTE: $note_txt"} = '';
     }
-    $zmenu->{"70:NOTES: $note_txt"} = '';
   }
 
   my $href = undef;
