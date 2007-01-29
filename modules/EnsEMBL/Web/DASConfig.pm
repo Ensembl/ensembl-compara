@@ -133,11 +133,12 @@ sub dump {
 sub create_from_URL {
   my( $self, $URL ) = @_;
   $URL =~ s/[\(|\)]//g;                                # remove ( and |
+  return unless $URL;
   my @das_keys = split(/\s/, $URL);                    # break on spaces...
   my %das_data = map { split (/\=/, $_,2) } @das_keys; # split each entry on spaces
   my $das_name = $das_data{name} || $das_data{dsn} || 'NamelessSource';
   unless( exists $das_data{url} && exists $das_data{dsn} && exists $das_data{type}) {
-    warn("WARNING: DAS source $das_name has not been added: Missing parameters");
+    warn("WARNING: DAS source $das_name ($URL) has not been added: Missing parameters");
     next;
   }
   $das_data{name} = $das_name;
