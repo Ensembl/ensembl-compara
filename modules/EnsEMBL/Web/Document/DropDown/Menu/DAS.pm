@@ -31,7 +31,7 @@ sub new {
     $self->add_checkbox( "managed_$source", $source_config->{'label'} || $source );
   }
 
-warn $self->{'object'};
+#warn $self->{'object'};
   foreach my $source (@{ $self->{'object'}->get_session->get_das_filtered_and_sorted() }) { 
     my $source_config = $source->get_data;
     my @valid_views = defined ($source_config->{enable}) ? @{$source_config->{enable}} : (defined($source_config->{on}) ? @{$source_config->{on}} : []);

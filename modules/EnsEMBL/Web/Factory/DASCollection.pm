@@ -274,7 +274,6 @@ sub createObjects {
       }
     }
 ## Replace with session call...
-warn "DAS 1";
     $self->get_session->add_das_source_from_hashref( \%das_data );
 ##    $extdas->add_das_source(\%das_data);
     $DASsel{$das_name} = 1 if ($das_data{active});
@@ -350,7 +349,6 @@ warn "DAS 1";
           $sources_conf{$das_name}->{$key} = $das_data{$key};
         }
 ## replace with session call
-warn "DAS 2";
         $self->session->add_das_source_from_hashref(\%das_data);
         $DASsel{$das_name} = 1;
       }
@@ -380,7 +378,6 @@ warn "DAS 2";
 
 #      warn("EDIT: ".Dumper($das_data));
 ## Replace with session call...
-warn "DAS 3";
       $self->session->add_das_source_from_hashref($das_data);
       $DASsel{$das_name} = 1;
     } else {
@@ -432,9 +429,6 @@ warn "DAS 3";
           $sources_conf{$das_name}->{$key} = $das_data->{$key};
         }
 ## Replace with session calll
-warn "GO TO ADDING DAS DATA:...";
-warn Data::Dumper::Dumper( $das_data );
-warn "DAS 4";
         $self->session->add_das_source_from_hashref($das_data);
         $DASsel{$das_name} = 1;
       }
