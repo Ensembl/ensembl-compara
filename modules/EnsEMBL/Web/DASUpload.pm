@@ -53,6 +53,8 @@ use EnsEMBL::Web::DataUpload;
 @ISA = qw( EnsEMBL::Web::DataUpload );
 
 
+my ($chr, $gpos, $pos, $span, $step);
+
 # in case of DB problems we don't want users to see all the debug info. 
 my $DB_Error = "DAS Database is temporary unavailable. Please try again later. If the problem persists please contact helpdesk.";
 
@@ -98,7 +100,7 @@ sub dsn {
     return $self->{_dsn};
 }
 
-# Sets / returns  the mapping type of the uploaded data. So far only ensembl_location is supported
+# Sets / returns  the mapping type of the uploaded data. 
 sub mapping {
     my $self = shift;
     if (defined( my $value = shift)) {
@@ -142,11 +144,74 @@ sub parse {
   my @lines = split(/\r|\n/, $self->data);
 
   if ($lines[0] =~ /euf_version\s+(\d)/) {
-      return $self->parse_euf_2(\@lines);
+    return $self->parse_euf_2(\@lines);
   }
 
   return $self->parse_euf_1(\@lines);
 
+}
+
+sub parseWiggle {
+  my ($self) = @_;
+
+  my @lines = split(/\r|\n/, $self->data);
+  my $lnum = scalar(@lines);
+  no strict 'refs';
+  my $fcount = 0;
+  my $lcount = 0;
+  my ($fhash);
+  my @feature_keys = ('featureid', 'featuretype', 'method', 'segmentid', 'start', 'end', 'strand', 'phase', 'score', 'attributes');
+
+  $gpos = 0;
+  my $action;
+  sub fixedStep {
+    my $line = shift;
+    if ($line =~ /^([\d\.]+)$/) {
+      $pos += $step;
+      $gpos ++;
+      return $chr, $pos, $pos+$span-1, $1;
+    }
+    return undef;
+  }
+ 
+  while ($lcount < $lnum) {
+    my $line = shift @lines;
+    $lcount ++;
+
+# skip the empty lines
+    next unless $line;
+    next if ($line =~ /^\#|^\[/); 
+    next if ($line =~ /^track|^browser/);
+    if ($line =~ /^(fixedStep)\s+chrom=(.+)\s+start=(.+)\s+step=(\d+)/) {
+#	    warn "$line\n";
+      $action = $1;
+      $chr = $2;
+      $pos = $3;
+      $step = $4;
+      if ($line =~ /span=(\d+)/) {
+        $span = $1;
+      } else {
+        $span = 1;
+      }
+      next;
+    }
+
+    if (my ($segment, $start, $end, $score) = &{$action}($line)) {
+      $segment =~ s/^chr//;
+#      warn "$gpos  *  $segment:$start:$end => $score\n";
+      $fhash->{$fcount++} = {
+	'segmentid' => $segment,
+	'start' => $start,
+	'end'  => $end,
+	'score' => $score,
+	'featureid' => $fcount
+      };
+    } else {
+      warn "ERROR : __LINE__ : $line\n";
+    }
+  }
+  $self->features = $fhash;
+  return;
 }
 
 sub parse_euf_2 {
@@ -179,7 +244,16 @@ sub parse_euf_2 {
 	    $self->metadata($1, $2);
 	    next;
 	}
+     }
+    if ($self->metadata('datatype') eq 'wiggle') {
+      return $self->parseWiggle();
+    }
+    while ($lcount < $lnum) {
+	my $line = shift @$data;
+	$lcount ++;
 
+# skip the empty lines
+	next unless $line;
 # parse the section headers
 	if ($line =~ /\[annotation(s?)\]/) {
 	    $fa = 1;
