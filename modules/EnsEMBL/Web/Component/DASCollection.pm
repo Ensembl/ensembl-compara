@@ -409,7 +409,6 @@ sub das_wizard {
   
   no strict 'refs';
   my $fname = "das_wizard_".$step;
-
   if (defined (my $error = &{$fname}($form, \%source_conf, $object, \$step))) {
     $step --;
     $fname = "das_wizard_".$step;
@@ -686,8 +685,8 @@ sub das_wizard_2 {
     'geneview'    => 'ensembl_gene',
     'protview'    => 'ensembl_peptide',
     'transview'   => 'ensembl_gene', # Coz there is no ensembl_transcript source around at the moment
-    'contigview'  => 'ensembl_location',
-    'cytoview'    => 'ensembl_location'
+    'contigview'  => 'ensembl_location_chromosome',
+    'cytoview'    => 'ensembl_location_chromosome'
   );
   if ($source_type eq 'das_registry') {
     my $cs_html = qq{
@@ -941,7 +940,7 @@ sub das_wizard_3 {
       'value' => $option,
       'on_change' => 'submit'
     );
-    if ($option eq 'l') {
+    if ($option eq 'n') {
       $option = $das_conf->{fg_max} || 100;
       $form->add_element('type'=>'String', 'name'=>'DASfg_max', 'label'=>'Max score:', 'value'=> $option);
       $option = $das_conf->{fg_min} || 0;

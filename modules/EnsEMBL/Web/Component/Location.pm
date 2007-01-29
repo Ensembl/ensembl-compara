@@ -542,6 +542,7 @@ sub add_das_tracks {
 
 ## Replace this with the code which gets DAS sources from the Session... probably need some cute cacheing
 
+
   my @das_sources = ();
   foreach my $source ( @{$object->get_session->get_das_filtered_and_sorted( $object->species )} ) {
     my $config_key = 'managed_extdas_'.$source->get_key ;
@@ -560,7 +561,7 @@ sub add_das_tracks {
       } else {
         $URL .= "$URL/das" unless $URL =~ m!/das!;
       }
-      my $stype = $source_config->{'type'} || 'ensembl_location';
+      my $stype = $source_config->{'type'} || 'ensembl_location_chromosome';
 
       $adaptor = Bio::EnsEMBL::ExternalData::DAS::DASAdaptor->new(
         -url       => $URL,
@@ -586,15 +587,17 @@ sub add_das_tracks {
       push @das_sources, "managed_$source" ;
       my $adaptor = undef;
       my $dbname = $EXT->{$source};
+      #warn $source, Dumper($dbname);
       eval {
         my $URL = $dbname->{'url'};
         $URL = "http://$URL" unless $URL =~ /https?:\/\//i;
         $URL .= "/das" unless $URL =~ m!/das!;
         $URL .= "/$dbname->{'dsn'}" if ($dbname->{'dsn'});
-        my $stype = $dbname->{'type'} || 'ensembl_location';
+        my $stype = $dbname->{'type'} || 'ensembl_location_chromosome';
         $adaptor = Bio::EnsEMBL::ExternalData::DAS::DASAdaptor->new(
           -url   => $URL,
           -dsn   => $dbname->{'dsn'},
+	  -types => $dbname->{'types'},
           -type    => $stype,
           -mapping => $dbname->{'mapping'} || $stype,
           -name  => $dbname->{'name'},

@@ -262,7 +262,7 @@ sub getCoordinateSystem{
     my %DASMapping = 
         (
          'ensembl_gene'          => "Ensembl Gene ID",
-         'ensembl_location'      => "Ensembl Location",
+#         'ensembl_location'      => "Ensembl Location",
          'ensembl_peptide'       => "Ensembl Peptide ID",
          'ensembl_transcript'    => "Ensembl Transcript ID",
          'uniprot/swissprot'     => "UniProt/Swiss-Prot Name",
