@@ -851,11 +851,10 @@ sub get_das_features_by_name {
 # Construct a cache key : SOURCE_URL/TYPE
 # Need the type to handle sources that serve multiple types of features
 
-    my $key = $url || $dasfact->adaptor->protocol .'://'.$dasfact->adaptor->domain;
-    $key .= "/$dsn/$type";
+    my $key = $url || ($dasfact->adaptor->protocol .'://'.join('/', $dasfact->adaptor->domain, $dasfact->adaptor->dsn));
 
     unless( $cache->{_das_features}->{$key} ) { ## No cached values - so grab and store them!!
-      my $featref = ($dasfact->fetch_all_by_ID($data->{_object}, $data ))[1];
+      my ($featref, $styleref) = $dasfact->fetch_all_by_ID($data->{_object}, $data );
       $cache->{_das_features}->{$key} = $featref;
     }
     $das_features{$name} = $cache->{_das_features}->{$key};
