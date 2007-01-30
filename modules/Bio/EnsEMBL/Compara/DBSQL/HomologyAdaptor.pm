@@ -78,36 +78,27 @@ sub fetch_all_by_Member_paired_species {
 
   $species =~ tr/_/ /;
 
-  my $join = [[['homology_member', 'hm'], 'h.homology_id = hm.homology_id']];
-  my $constraint = "hm.member_id = " .$member->dbID;
+  my $gdb1 = $member->genome_db;
+  my $gdb2 = $self->db->get_GenomeDBAdaptor->fetch_by_name_assembly($species);
 
-  my $sth =  $self->generic_fetch_sth($constraint, $join);
-  
-  my ($homology_id, $stable_id, $method_link_species_set_id, $description, $dn, 
-      $ds, $n, $s, $lnl, $threshold_on_ds, $subtype, $node_id);
-  
-  $sth->bind_columns(\$homology_id, \$stable_id, \$method_link_species_set_id, \$description, \$subtype,
-                     \$dn, \$ds, \$n, \$s, \$lnl, \$threshold_on_ds, \$node_id);
+  my @method_link_types = qw(ENSEMBL_ORTHOLOGUES ENSEMBL_PARALOGUES);
+  my $mlssa = $self->db->get_MethodLinkSpeciesSetAdaptor;
 
-  my @homology_ids = ();
-  
-  while ($sth->fetch()) {
-    push @homology_ids, $homology_id; 
+  my $all_homologies = [];
+  foreach my $ml (@method_link_types) {
+    my $mlss;
+    if ($gdb1->dbID == $gdb2->dbID) {
+      next if ($ml eq 'ENSEMBL_ORTHOLOGUES');
+      $mlss = $mlssa->fetch_by_method_link_type_GenomeDBs($ml, [$gdb1]);
+    } else {
+      $mlss = $mlssa->fetch_by_method_link_type_GenomeDBs($ml, [$gdb1, $gdb2]);
+    }
+    if (defined $mlss) {
+      my $homologies = $self->fetch_all_by_Member_MethodLinkSpeciesSet($member, $mlss);
+      push @{$all_homologies}, @{$homologies} if (defined $homologies);
+    }
   }
-
-  return [] unless (scalar @homology_ids);
-  
-  $join = [[['homology_member', 'hm'], 'h.homology_id = hm.homology_id'],
-           [['member', 'm'], 'hm.member_id = m.member_id'],
-           [['genome_db', 'gdb'], 'm.genome_db_id = gdb.genome_db_id']];
-
-  my $comma_joined_homology_ids = join(',',@homology_ids);
-  $constraint = "gdb.name = '$species' AND hm.homology_id in ($comma_joined_homology_ids) AND hm.member_id != " . $member->dbID;
-  
-  # See in fetch_by_Member what is this internal variable for
-  $self->{'_this_one_first'} = $member->stable_id;
-
-  return $self->generic_fetch($constraint, $join);
+  return $all_homologies;
 }
 
 
