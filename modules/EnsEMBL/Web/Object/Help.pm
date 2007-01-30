@@ -9,11 +9,8 @@ use EnsEMBL::Web::Object;
 our @ISA = qw(EnsEMBL::Web::Object);
 use Mail::Mailer;
 
-sub results     { return $_[0]->Obj->{'results'}; }
-sub index       { return $_[0]->Obj->{'index'};   }
-sub glossary    { return $_[0]->Obj->{'glossary'};   }
-sub movie_list  { return $_[0]->Obj->{'movie_list'};   }
-sub movie       { return $_[0]->Obj->{'movie'};   }
+sub adaptor     { return $_[0]->Obj->{'adaptor'}; }
+sub modular     { return $_[0]->Obj->{'modular'};   }
 
 sub send_email {
   my $self = shift;
@@ -41,5 +38,69 @@ sub send_email {
   $mailer->close();
   return 1;
 }
+
+## Methods needed for backwards compatibility
+
+sub results {
+  ### a
+  ### Returns:
+  my $self = shift;
+
+  my $keywords    = $self->param( 'kw' );
+  my $ids         = $self->param( 'ids' );
+  my ($method_se, $method_kw, $method_id, $results);
+
+  if ($self->modular) {
+    $method_se = 'fetch_article_by_keyword';
+    $method_kw = 'fetch_scores_by_string';
+    $method_id = 'fetch_summaries_by_scores';
+  }
+  else {
+    $method_se = 'fetch_all_by_keyword';
+    $method_kw = 'fetch_all_by_string';
+    $method_id = 'fetch_all_by_scores';
+  }
+
+  ## get list of help articles by appropriate method
+  if( $self->param('se') ) {
+    $results = $self->adaptor->$method_se( $keywords );
+  }
+  elsif ($self->param('kw')) {
+    $results = $self->adaptor->$method_kw( $keywords );
+  }
+  elsif ( $self->param('results')) {
+    ## messy, but makes sure we get the results in order!
+    my $ids = [];
+    my @articles = split('_', $self->param('results'));
+    foreach my $article (@articles) {
+      my @bits = split('-', $article);
+      push(@$ids, {'id'=>$bits[0], 'score'=>$bits[1]});
+    }
+    $results = $self->adaptor->$method_id( $ids );
+  }
+  return $results;
+}
+
+sub index { 
+  my $self = shift;
+  my $index = $self->modular ? 'fetch_article_index' : 'fetch_index_list';
+  return $self->adaptor->$index('live');
+}
+
+sub glossary {
+  my $self = shift;
+  $self->adaptor->fetch_glossary('live');
+}
+
+sub movie_list {
+  my $self = shift;
+  return $self->adaptor->fetch_movies('live');
+}
+
+sub movie {
+  my $self = shift;
+  return $self->adaptor->fetch_movie_by_id($self->param('movie'));
+}
+
 
 1;

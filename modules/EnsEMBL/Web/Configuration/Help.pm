@@ -145,7 +145,7 @@ sub context_menu {
   my $focus = $object->param('kw'); # get the current entry
   $focus =~ s/(.*)\#/$1/;
 
-  my @result_array = @{ $object->Obj->{'index'} || [] };
+  my @result_array = @{ $object->index };
   foreach my $row ( @result_array ) {
     (my $name = $row->{'title'} ) =~ s/^(.{50})...+/\1.../;
     #if ($name =~ /^Ensembl/) {

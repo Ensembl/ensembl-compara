@@ -65,7 +65,8 @@ sub hv_multi {
 
 sub hv_single {
   my($panel,$object) = @_;
-  my $article = $object->results->[0];
+  my @results = @{$object->results};
+  my $article = $results[0];
   my $hilite = $object->param('hilite');
 
   my $title = $$article{'title'};
