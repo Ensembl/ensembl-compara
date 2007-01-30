@@ -42,7 +42,7 @@ my $seqname = undef;
 my $coordsystem = 'toplevel';
 
 my @SPECIES;
-my ($dumpdir, $no_log, $email, $no_compress);
+my ($dumpdir, $no_log, $email, $no_compress, $start_with, $end_with);
 $| = 1;
 
 &GetOptions(
@@ -53,7 +53,8 @@ $| = 1;
   'port:n'        => \$port,
   'species:s'     => \@SPECIES,
   'path:s'        => \$path,
-
+  'start_with:s'  => \$start_with,
+  'end_with:s'    => \$end_with,
   'codons'        => \$include_codons,
   'chromosomes:s' => \@chromosomes,
   'genetypes:s'   => \@genetypes,
@@ -82,13 +83,21 @@ $SPECIES_DEFS || die "\n\n[DIE] $0: SpeciesDefs config not found";
 my $release = $SPECIES_DEFS->ENSEMBL_VERSION;
 utils::Tool::info(2, "SiteDefs configured for release $release");
 
-# Check species if user defined.  Else use all species
+
 if (@SPECIES) {
   @SPECIES = @{ utils::Tool::check_species(\@SPECIES) };
 }
 else {
   @SPECIES = @{ utils::Tool::all_species()};
 }
+
+if ($start_with) {
+    @SPECIES  = @{ utils::Tool::start_with_species($start_with, \@SPECIES) } ;
+}
+elsif ($end_with) {
+  @SPECIES  = @{ utils::Tool::end_with_species($end_with, \@SPECIES) };
+}
+
 
 # Times and log file
 my $script_start_time = time();
@@ -212,7 +221,7 @@ sub make_start_codon_features {
 
   my @pepgencoords = $trans->pep2genomic(1,1);
 
-  if(scalar(@pepgencoords) > 2) {
+  if(scalar(@pepgencoords) > 3) {
     croak "pep start does not map cleanly\n";
   }
 
@@ -399,7 +408,7 @@ sub make_stop_codon_features {
 
   my @pepgencoords = $trans->cdna2genomic($cdna_endpos-2,$cdna_endpos);
 
-  if(scalar(@pepgencoords) > 2) {
+  if(scalar(@pepgencoords) > 3) {
     croak "pep end does not map cleanly\n";
   }
 
