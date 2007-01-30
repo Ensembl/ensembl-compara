@@ -332,14 +332,17 @@ sub RENDER_colourgradient {
 
   my $bp_per_pix = 1 / $self->{pix_per_bp};
   my @features = sort { $a->das_score <=> $b->das_score } @{$configuration->{'features'} || []};
-  my ($min_value, $max_value) = $configuration->{'fg_data'} eq 'o' ? ($features[0]->das_score || 0, $features[-1]->das_score || 0) : ($configuration->{'fg_min'}, $configuration->{fg_max});
-  my ($min_score, $max_score) = $configuration->{'fg_data'} eq 'o' ? ($min_value, $max_value): (0, 100);
+  my ($min_value, $max_value) = $configuration->{'fg_data'} eq 'n' ? ($configuration->{'fg_min'}, $configuration->{fg_max}): ($features[0]->das_score || 0, $features[-1]->das_score || 0);
+  my ($min_score, $max_score) = $configuration->{'fg_data'} eq 'n' ? (0, 100): ($min_value, $max_value);
+
+  $configuration->{'fg_grades'} ||= 20;
+
   my $score_range = $max_value - $min_value;
   my $score_per_grade =  ($max_score - $min_score)/ $configuration->{'fg_grades'};
   my $cm = new Sanger::Graphics::ColourMap;
   my @cg = $cm->build_linear_gradient($configuration->{'fg_grades'}, ['yellow', 'green', 'blue']);
   my $style;
-
+ 
 # To make sure that the features with lowest and highest scores get displayed
   push @features, $features[0];
   push @features, $features[-2];
@@ -353,7 +356,7 @@ sub RENDER_colourgradient {
     my $START = $f->das_start() < 1 ? 1 : $f->das_start();
     my $END   = $f->das_end()   > $configuration->{'length'} ? $configuration->{'length'} : $f->das_end();
     my $width = ($END - $START +1);
-    my $score = $configuration->{'fg_data'} eq 'o' ? ($f->das_score || 0) : ((($f->das_score || 0) - $min_value) * 100 / $score_range);
+    my $score = $configuration->{'fg_data'} eq 'n' ? ((($f->das_score || 0) - $min_value) * 100 / $score_range) : ($f->das_score || 0);
 
     if ($score < $min_value) {
       $score = $min_value;
