@@ -358,8 +358,8 @@ sub find_records {
                                        data => $result->{data},
                                  created_at => $result->{created_at},
                                  created_by => $result->{created_by},
-                                modified_at => $result->{modified_at}
-                                modified_by => $result->{modified_by}
+                                modified_at => $result->{modified_at},
+                                modified_by => $result->{modified_by},
                                                 ));
       push @records, $record;
     #}
@@ -406,8 +406,8 @@ sub flatten {
 
   ## data fields
   my $fields = $Fields_of{$self};
-  while (my ($k, $v) = each (%$fields) {
-    $hash{$k} = $v;
+  while (my ($k, $v) = each (%$fields)) {
+    $hash->{$k} = $v;
   }
 
   return $hash;
