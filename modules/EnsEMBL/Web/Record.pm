@@ -54,7 +54,9 @@ my %Records_of;
 my %Tainted_of;
 my %Id_of;
 my %CreatedAt_of;
+my %CreatedBy_of;
 my %ModifiedAt_of;
+my %ModifiedBy_of;
 my %Type_of;
 my %Owner_of;
 
@@ -119,7 +121,9 @@ sub new {
   $ParameterSet_of{$self} = defined $params{'parameter_set'} ? $params{'parameter_set'} : undef;
   $Id_of{$self} = defined $params{'id'} ? $params{'id'} : undef;
   $CreatedAt_of{$self} = defined $params{'created_at'} ? $params{'created_at'} : undef;
+  $CreatedBy_of{$self} = defined $params{'created_at'} ? $params{'created_at'} : undef;
   $ModifiedAt_of{$self} = defined $params{'modified_at'} ? $params{'modified_at'} : undef;
+  $ModifiedBy_of{$self} = defined $params{'modified_at'} ? $params{'modified_at'} : undef;
   $Type_of{$self} = defined $params{'type'} ? $params{'type'} : "record";
   $Fields_of{$self} = {};
   $Tainted_of{$self} = {};
@@ -178,11 +182,13 @@ sub fields {
   ### a
   my ($self, $key, $value) = @_;
   if ($key) {
+#warn "Getting field $key";
     if ($value) {
+warn "Setting field $key = $value";
       $value =~ s/'/\\'/g;
       $Fields_of{$self}->{$key} = $value;
     }
-    return $Fields_of{$self}->{$key}
+    return $Fields_of{$self}->{$key};
   } else {
     return $Fields_of{$self};
   }
@@ -265,6 +271,17 @@ sub created_at {
   return $CreatedAt_of{$self};
 }
 
+=head2 created_by 
+Accessor for the created_by property.
+=cut
+
+sub created_by {
+  ### a
+  my $self = shift;
+  $CreatedBy_of{$self} = shift if @_;
+  return $CreatedBy_of{$self};
+}
+
 =head2 modified_at 
 Accessor for the modified_at property.
 =cut
@@ -274,6 +291,18 @@ sub modified_at {
   my $self = shift;
   $ModifiedAt_of{$self} = shift if @_;
   return $ModifiedAt_of{$self};
+}
+
+
+=head2 modified_by 
+Accessor for the modified_by property.
+=cut
+
+sub modified_by {
+  ### a
+  my $self = shift;
+  $ModifiedBy_of{$self} = shift if @_;
+  return $ModifiedBy_of{$self};
 }
 
 =head2 records_of_type 
@@ -316,7 +345,7 @@ sub find_records {
   my $user_adaptor = undef;
   if ($params{options}->{adaptor}) {
     $user_adaptor = $params{options}->{adaptor};  
-    warn "ADAPTOR for FIND: " . $user_adaptor;
+    #warn "ADAPTOR for FIND: " . $user_adaptor;
   }
   my $results = $user_adaptor->find_records(%params);
   my @records = ();
@@ -328,7 +357,9 @@ sub find_records {
                                        user => $result->{user},
                                        data => $result->{data},
                                  created_at => $result->{created_at},
+                                 created_by => $result->{created_by},
                                 modified_at => $result->{modified_at}
+                                modified_by => $result->{modified_by}
                                                 ));
       push @records, $record;
     #}
@@ -354,6 +385,35 @@ sub owner {
   return $Owner_of{$self};
 }
 
+=head2 flatten 
+Combines standard fields with data fields in a single structure
+=cut
+
+
+sub flatten {
+  ### 
+  my $self = shift;
+
+  ## Standard fields
+  my $hash = (
+        'id'          => $Id_of{$self},
+        'type'        => $Type_of{$self},
+        'created_at'  => $CreatedAt_of{$self},
+        'created_by'  => $CreatedBy_of{$self},
+        'modified_at' => $ModifiedAt_of{$self},
+        'modified_by' => $ModifiedBy_of{$self},
+    );
+
+  ## data fields
+  my $fields = $Fields_of{$self};
+  while (my ($k, $v) = each (%$fields) {
+    $hash{$k} = $v;
+  }
+
+  return $hash;
+}
+
+
 =head2 DESTROY 
 Called automatically by Perl when object reference count reaches zero.
 =cut
@@ -365,7 +425,9 @@ sub DESTROY {
   delete $Fields_of{$self};
   delete $Id_of{$self};
   delete $CreatedAt_of{$self};
+  delete $CreatedBy_of{$self};
   delete $ModifiedAt_of{$self};
+  delete $ModifiedBy_of{$self};
   delete $Records_of{$self};
   delete $ParameterSet_of{$self};
   delete $Tainted_of{$self};
