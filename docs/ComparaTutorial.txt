@@ -1,25 +1,45 @@
 EnsEMBL Compara Perl API Tutorial
 By Cara Woodwark, Abel Ureta-Vidal and Javier Herrero
-Revisions: CW Jun 04, AUV Aug 04, Nov 04, JH Nov 04, Abr 05
-WARNING: this is a 'test' version. By now this tutorial is 'warranty' work with branch-ensembl-30, and with ensembl databases release 30. As it is a 'test' version, you may find errors. Please email ensembl-dev@ebi.ac.uk, so that we can correct them. We will be extending/completing this tutorial in the near future.
-Introduction
-This tutorial is an introduction to the ensembl compara API. A knowledge of the ensembl core API is presumed, it is assumed that concepts and conventions presented in the ensembl core API tutorial have been assimilated by the user. The ensembl core API tutorial can be found at http://www.ensembl.org/Docs/linked_docs/ensembl_tutorial.pdf (in cvs, in ensembl/docs/tutorial/ensembltutorial.pdf) and should be read first as it provides a comprehensive guide to the ensembl environment. 
-A documentation about the compara database schema is available at http://cvsweb.sanger.ac.uk/cgi-bin/cvsweb.cgi/ensembl-compara/docs/ (or in cvs ensembl-compara/docs/docs/schema_doc.html), and while not necessary for this tutorial, an understanding of the database tables may help, as many of the Adaptor modules are table specific.
-Obtaining the code
-To use the ensembl compara API, you have the same requirement that when using the ensembl core API i.e. perl 5.6 or later, bioperl 1.2 or later, DBI, DBD::mysql and ensembl core code. Please refer to the ensembl core API tutorial that will tell you everything about these modules, how and where to get them.
+Revisions: CW Jun 04, AUV Aug 04, Nov 04, JH Nov 04, Abr 05, BB Jan 07
+WARNING: this is a 'test' version. By now this tutorial is 'warranty' work with branch-ensembl-30, and 
+with ensembl databases release 30. As it is a 'test' version, you may find errors. Please email ensembl-
+dev@ebi.ac.uk, so that we can correct them. We will be extending/completing this tutorial in the near 
+future.
+	Introduction
+This tutorial is an introduction to the ensembl compara API. A knowledge of the ensembl core API is 
+presumed, it is assumed that concepts and conventions presented in the ensembl core API tutorial have 
+been assimilated by the user. The ensembl core API tutorial can be found at 
+http://www.ensembl.org/Docs/linked_docs/ensembl_tutorial.pdf (in cvs, in 
+ensembl/docs/tutorial/ensembltutorial.pdf) and should be read first as it provides a comprehensive guide 
+to the ensembl environment. 
+A documentation about the compara database schema is available at http://cvsweb.sanger.ac.uk/cgi-
+bin/cvsweb.cgi/ensembl-compara/docs/ (or in cvs ensembl-compara/docs/docs/schema_doc.html), and 
+while not necessary for this tutorial, an understanding of the database tables may help, as many of the 
+Adaptor modules are table specific.
+	Obtaining the code
+To use the ensembl compara API, you have the same requirement that when using the ensembl core 
+API i.e. perl 5.6 or later, bioperl 1.2 or later, DBI, DBD::mysql and ensembl core code. Please refer to 
+the ensembl core API tutorial that will tell you everything about these modules, how and where to get 
+them.
 You may start by creating a directory for storing the API in your home directory:
 cd
 mkdir src
 cd src
 
-In addition, you will need the ensembl compara code that is available by cvs from the ensembl cvs repository using the following cvs commands:
+In addition, you will need the ensembl compara code that is available by cvs from the ensembl cvs 
+repository using the following cvs commands:
 cvs -d :pserver:cvsuser@cvs.sanger.ac.uk:/cvsroot/ensembl login
 
 When prompted the password is 'CVSUSER'.
-cvs -d :pserver:cvsuser@cvs.sanger.ac.uk:/cvsroot/ensembl co -r branch-ensembl-30 ensembl-compara
+cvs -d :pserver:cvsuser@cvs.sanger.ac.uk:/cvsroot/ensembl co -r branch-ensembl-30 
+ensembl-compara
 
-This will check out ensembl-compara code for stable branch 30. Make sure the ensembl core code you have already checked out is on the same branch. Note that the branch that is checked out should correspond to the database version being used. Thus ensembl_compara_30 and e.g. homo_sapiens_core_30_35c and mus_musculus_core_30_33f should be used with the above ensembl branch 30 code.
-Environment Variables
+This will check out ensembl-compara code for stable branch 30. Make sure the ensembl core code you 
+have already checked out is on the same branch. Note that the branch that is checked out should 
+correspond to the database version being used. Thus ensembl_compara_30 and e.g. 
+homo_sapiens_core_30_35c and mus_musculus_core_30_33f should be used with the above ensembl 
+branch 30 code.
+	Environment Variables
 The following PERL5LIB environment variables should be set up:
 - under tcsh/csh shell with
 setenv PERL5LIB ${PERL5LIB}:{HOME}/src/bioperl-live: \
@@ -30,12 +50,17 @@ export PERL5LIB=${PERL5LIB}:{HOME}/src/bioperl-live: \
 ${HOME}/src/ensembl/modules:${HOME}/src/ensembl-compara/modules
 
 These presume that bioperl and ensembl are in a directory called src set up in your home directory.
-Code Conventions (and unconventions)
-Refer to the ensembl core tutorial for a good description of the coding conventions normally used in ensembl. Due to historical accidents, there may be exceptions to these rules in compara.
-Connecting a ensembl compara database
-There are two ways to connect to the EnsEMBL Compara database. The old way uses the Bio::EnsEMBL::Compara::DBSQL::DBAdaptor explicitely. The new one uses the  Bio::EnsEMBL::Registry module which can read either a global or a specific configuration file.
+	Code Conventions (and unconventions)
+Refer to the ensembl core tutorial for a good description of the coding conventions normally used in 
+ensembl. Due to historical accidents, there may be exceptions to these rules in compara.
+	Connecting a ensembl compara database
+There are two ways to connect to the EnsEMBL Compara database. The old way uses the 
+Bio::EnsEMBL::Compara::DBSQL::DBAdaptor explicitely. The new one uses the  
+Bio::EnsEMBL::Registry module which can read either a global or a specific configuration file.
 Explicitely, using the Bio::EnsEMBL::Compara::DBSQL::DBAdaptor
-Ensembl compara data as ensembl core data, is stored in a MySQL relational database. If you want to access a compara database, you will need to connect to it. This is done in exactly the same way as when connecting an ensembl core database, but using a Compara specific DBAdaptor.
+Ensembl compara data as ensembl core data, is stored in a MySQL relational database. If you want to 
+access a compara database, you will need to connect to it. This is done in exactly the same way as 
+when connecting an ensembl core database, but using a Compara specific DBAdaptor.
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor
 
 my $host = 'ensembldb.ensembl.org';
@@ -46,9 +71,19 @@ my $comparadb= new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor (-host	=> $host,
 								-user	=> $user,
 								-dbname => $dbname);
 
-As for a ensembl core connection, in addition to the parameters provided above, the optional port, driver and pass parameters can also be used to specify the TCP connection port, the type of database driver and the password respectively. These values have sensible defaults and can often be omitted.
-Implicitely, using the Bio::EnsEMBL::Registry configuration file (recommended)
-You will need to have a registry configuration file set up. By default,  it takes the file defined by the ENSEMBL_REGISTRY environment variable or the file named .ensembl_init in your home directory if the former is not found. Additionally, it is possible to use a specific file (see perldoc Bio::EnsEMBL::Registry or later in this document for some examples on how to use a different file). An example of such file can be found in ensembl/modules/Bio/EnsEMBL/Utils/ensembl_init.example, and below you have a slightly modified copy of it.
+As for a ensembl core connection, in addition to the parameters provided above, the optional port, 
+driver and pass parameters can also be used to specify the TCP connection port, the type of 
+database driver and the password respectively. These values have sensible defaults and can often be 
+omitted.
+Implicitely, using the Bio::EnsEMBL::Registry configuration file 
+(recommended)
+You will need to have a registry configuration file set up. By default,  it takes the file defined by the 
+ENSEMBL_REGISTRY environment variable or the file named .ensembl_init in your home directory if 
+the former is not found. Additionally, it is possible to use a specific file (see perldoc 
+Bio::EnsEMBL::Registry or later in this document for some examples on how to use a different 
+file). An example of such file can be found in 
+ensembl/modules/Bio/EnsEMBL/Utils/ensembl_init.example, and below you have a slightly 
+modified copy of it.
 
 # Example of configuration file used by Bio::EnsEMBL::Registry::load_all
 # method to store/register all kind of Adaptors.
@@ -67,7 +102,8 @@ new Bio::EnsEMBL::DBSQL::DBAdaptor(-host => 'ensembldb.ensembl.org',
                                    -group => 'core',
                                    -dbname => 'homo_sapiens_core_30_35c');
 
-@aliases = ('H_Sapiens', 'homo sapiens', 'Homo_Sapiens','Homo_sapiens', 'Homo', 'homo', 'human');
+@aliases = ('H_Sapiens', 'homo sapiens', 'Homo_Sapiens','Homo_sapiens', 'Homo', 
+'homo', 'human');
 
 Bio::EnsEMBL::Utils::ConfigRegistry->add_alias(-species => "Homo sapiens",
                                                -alias => \@aliases);
@@ -80,7 +116,8 @@ new Bio::EnsEMBL::DBSQL::DBAdaptor(-host => 'ensembldb.ensembl.org',
                                    -group => 'core',
                                    -dbname => 'mus_musculus_core_30_33f');
 
-@aliases = ('M_Musculus', 'mus musculus', 'Mus_Musculus','Mus_musculus', 'Mus', 'mus', 'mouse');
+@aliases = ('M_Musculus', 'mus musculus', 'Mus_Musculus','Mus_musculus', 'Mus', 'mus', 
+'mouse');
 
 Bio::EnsEMBL::Utils::ConfigRegistry->add_alias(-species => "Mus musculus",
                                                -alias => \@aliases);
@@ -92,7 +129,8 @@ new Bio::EnsEMBL::DBSQL::DBAdaptor(-host => 'ensembldb.ensembl.org',
                                    -group => 'core',
                                    -dbname => 'fugu_rubripes_core_30_2e');
 
-@aliases = ('F_Rubripes', 'fugu rubripes', 'Fugu_Rubripes','Fugu_rubripes', 'Fugu', 'fugu');
+@aliases = ('F_Rubripes', 'fugu rubripes', 'Fugu_Rubripes','Fugu_rubripes', 'Fugu', 
+'fugu');
 
 Bio::EnsEMBL::Utils::ConfigRegistry->add_alias(-species => "Fugu rubripes",
                                                -alias => \@aliases);
@@ -110,9 +148,21 @@ Bio::EnsEMBL::Utils::ConfigRegistry->add_alias(-species => "Compara30",
 
 1;
 
-In this configuration file, you can list all the parameters needed to connect a compara database. The compara database is a multi-species database that contains comparative genomic information on all ensembl species. One should then be able not only to connect to a compara database but also to every species ensembl core database. The use of the registry configuration file lets you the freedom to list connection parameters for all ensembl core databases you might need to access in relation to ensembl compara data (in our example, only 3 are mentioned, human, mouse and fugu). All this information is then in a single central place, easy to maintain (modify and update).
-The access to database adaptor is done using either the main species alias (specified by the -species parameter) or one of the aliases specified (in the @aliases array). No need to remember the complete database name, one of the aliases will be enough.
-WARNING: In previous version of this tutorial, an additional parameter disconnect_when_inactive => 1 was specified for all ensembl core databases. It is not needed anymore, as there is now a lazy connection in place i.e. connection will be established only at your first prepare statement and kept alive until you use a disconnect_if_idle (or a more drastic disconnect). If you want to use disconnect_when_inactive make sure you know what you are doing.
+In this configuration file, you can list all the parameters needed to connect a compara database. The 
+compara database is a multi-species database that contains comparative genomic information on all 
+ensembl species. One should then be able not only to connect to a compara database but also to every 
+species ensembl core database. The use of the registry configuration file lets you the freedom to list 
+connection parameters for all ensembl core databases you might need to access in relation to ensembl 
+compara data (in our example, only 3 are mentioned, human, mouse and fugu). All this information is 
+then in a single central place, easy to maintain (modify and update).
+The access to database adaptor is done using either the main species alias (specified by the -species 
+parameter) or one of the aliases specified (in the @aliases array). No need to remember the complete 
+database name, one of the aliases will be enough.
+WARNING: In previous version of this tutorial, an additional parameter disconnect_when_inactive 
+=> 1 was specified for all ensembl core databases. It is not needed anymore, as there is now a lazy 
+connection in place i.e. connection will be established only at your first prepare statement and kept 
+alive until you use a disconnect_if_idle (or a more drastic disconnect). If you want to use 
+disconnect_when_inactive make sure you know what you are doing.
 
 Below is a non exhaustive list of ensembl compara adaptors that are most often used
 GenomeDBAdaptor		to fetch Bio::EnsEMBL::Compara::GenomeDB objects
@@ -127,10 +177,16 @@ FamilyAdaptor			to fetch Bio::EnsEMBL::Compara::Family objects
 PeptideAlignFeatureAdaptor	to fetch Bio::EnsEMBL::Compara::PeptideAlignFeature
 objects
 
-Only some of these adaptors will be used for illustration as part of this tutorial through commented perl scripts code.
-Whole Genome Alignments
-The compara database contains a number of different types of whole genome alignments. A listing about what are these different types can be found in the ensembl-compara/docs/schema_doc.html document in method_link section.
-The whole genome comparisons can be accessed through the API by 2 different ways using of the 2 different adaptors. Specifically, the DnaAlignFeatureAdaptor, which returns DnaDnaAlignFeatures objects (only used for pairwise alignment) and the GenomicAlignBlockAdaptor, which returns GenomicAlignBlock objects (can be used for pairwise and also multiple alignments).
+Only some of these adaptors will be used for illustration as part of this tutorial through commented perl 
+scripts code.
+	Whole Genome Alignments
+The compara database contains a number of different types of whole genome alignments. A listing 
+about what are these different types can be found in the ensembl-compara/docs/schema_doc.html 
+document in method_link section.
+The whole genome comparisons can be accessed through the API by 2 different ways using of the 2 
+different adaptors. Specifically, the DnaAlignFeatureAdaptor, which returns DnaDnaAlignFeatures 
+objects (only used for pairwise alignment) and the GenomicAlignBlockAdaptor, which returns 
+GenomicAlignBlock objects (can be used for pairwise and also multiple alignments).
 DnaDnaAlignFeature objects (for pairwise alignments only)
 Below it is a simple commented perl script to illustrate the use of DnaDnaAlignFeature objects.
 
@@ -294,7 +350,9 @@ foreach my $ddaf (sort {$a->start <=> $b->start
 
 exit 0;
 
-So to pull out BLASTZ_NET_TIGHT alignments, let's say on part of ENCODE region ENm004 on human chromosome 22, between position 30184430 and position 30184485, against the mouse genome in clustalw format, we can use know the following command line,
+So to pull out BLASTZ_NET_TIGHT alignments, let's say on part of ENCODE region ENm004 on 
+human chromosome 22, between position 30184430 and position 30184485, against the mouse 
+genome in clustalw format, we can use know the following command line,
 % perl DumpAlignmentsLight.pl --dbname Compara30 --seq_region 22
 --seq_region_start 30184430 --seq_region_end 30184485 --qy human --tg mouse
 --alignment_type BLASTZ_NET_TIGHT
@@ -331,7 +389,8 @@ CLUSTAL W(1.81) multiple sequence alignment
 11/3114992-3115316     aaagagaaaggtaagcaaaccaaca
                        ***** **** *** **********
 
-Now on the same region, TRANSLATED_BLAT alignments against fugu in clustalw format, but at translation level now (-tsl) not nucleotide level, we can run the following command line,
+Now on the same region, TRANSLATED_BLAT alignments against fugu in clustalw format, but at 
+translation level now (-tsl) not nucleotide level, we can run the following command line,
 % perl DumpAlignments.pl --dbname Compara30 --seq_region 22 \
 --seq_region_start 30184430 --seq_region_end 30184485 --qy human --tg fugu \
 --alignment_type TRANSLATED_BLAT --tsl
@@ -343,7 +402,10 @@ CLUSTAL W(1.81) multiple sequence alignment
 scaffold_2267/1347-1400 tspskaaplwa*yyi*ii
                         ::****..* *   **:*
 
-By default, the alignments will dump with --qy species sequence on forward strand. To make sure that the alignment, you got is on the strand on which it was originally generated using the --oo option will check that and restore the right strandness. See below the difference in the translation level alignment obtained.
+By default, the alignments will dump with --qy species sequence on forward strand. To make sure that 
+the alignment, you got is on the strand on which it was originally generated using the --oo option will 
+check that and restore the right strandness. See below the difference in the translation level alignment 
+obtained.
 % perl DumpAlignments.pl --dbname Compara30 --seq_region 22 \
 --seq_region_start 30184430 --seq_region_end 30184485 --qy human --tg fugu \
 --alignment_type TRANSLATED_BLAT --tsl --oo
@@ -356,12 +418,21 @@ scaffold_2267/1347-1400 ddldvilspqrrsfgggc
                         *****:************
 
 GenomicAlignBlock objects (pairwise/multiple alignments)
-GenomicAlignBlocks are the new way to store and fetch genomic alignments. A GenomicAlignBlock contains several GenomicAlign objects. Every GenomicAlign object corresponds to a piece of genomic sequence aligned with the other GenomicAlign in the same GenomicAlignBlock. A GenomicAlign object is always related with other GenomicAlign objects and this relation is defined through the GenomicAlignBlock object. Therefore the usual way to fetch genomic alignments is by fetching GenomicAlignBlock objects. We have to start by getting the corresponding adaptor:
+GenomicAlignBlocks are the new way to store and fetch genomic alignments. A GenomicAlignBlock 
+contains several GenomicAlign objects. Every GenomicAlign object corresponds to a piece of genomic 
+sequence aligned with the other GenomicAlign in the same GenomicAlignBlock. A GenomicAlign object 
+is always related with other GenomicAlign objects and this relation is defined through the 
+GenomicAlignBlock object. Therefore the usual way to fetch genomic alignments is by fetching 
+GenomicAlignBlock objects. We have to start by getting the corresponding adaptor:
 # Getting the GenomicAlignBlock adaptor:
 my $genomic_align_block_adaptor = Bio::EnsEMBL::Registry->get_adaptor(
 	$dbname, 'compara', 'GenomicAlign');
 
-In order to fetch the right alignments we need to specify a couple of data: the type of alignment and the piece of genomic sequence in which we are looking for alignments. The type of alignment is a more tricky now: you need to specify both the alignment method and the set of genomes. In order to simply this task, you could use the new Bio::EnsEMBL::Compara::MethodLinkSpeciesSet object. The best way to use them is by fetching them from the database:
+In order to fetch the right alignments we need to specify a couple of data: the type of alignment and the 
+piece of genomic sequence in which we are looking for alignments. The type of alignment is a more 
+tricky now: you need to specify both the alignment method and the set of genomes. In order to simply 
+this task, you could use the new Bio::EnsEMBL::Compara::MethodLinkSpeciesSet object. The 
+best way to use them is by fetching them from the database:
 # Getting the GenomeDB adaptor:
 my $genome_db_adaptor = Bio::EnsEMBL::Registry->get_adaptor(
 	$dbname, 'compara', 'GenomeDB');
@@ -371,14 +442,17 @@ my $mouse_genome_db = $genome_db_adaptor->fetch_by_name_asembly('Homo sapiens');
 # Getting the MethodLinkSpeciesSet adaptor:
 my $method_link_species_set_adaptor = Bio::EnsEMBL::Registry->get_adaptor(
 	$dbname, 'compara', 'MethodLinkSpeciesSet');
-# Fetching the MethodLinkSpeciesSet object corresponding to BLASTZ_NET alignments between human and mouse genomic sequences:
+# Fetching the MethodLinkSpeciesSet object corresponding to BLASTZ_NET 
+alignments between human and mouse genomic sequences:
 my $human_mouse_blastz_net_mlss =
 	$method_link_species_set_adaptor->fetch_by_method_link_type_GenomeDBs(
 		"BLASTZ_NET",
 		[$human_genome_db, $mouse_genome_db]
 	);
 
-There are two ways to fetch GenomicAlignBlocks. One is uses Bio::EnsEMBL::Slice objects while the second one is based on Bio::EnsEMBL::Compara::DnaFrag objects for specifying  the piece of genomic sequence in which we are looking for alignments.
+There are two ways to fetch GenomicAlignBlocks. One is uses Bio::EnsEMBL::Slice objects while 
+the second one is based on Bio::EnsEMBL::Compara::DnaFrag objects for specifying  the piece of 
+genomic sequence in which we are looking for alignments.
 # Getting the Slice adaptor:
 my $slice_adaptor = Bio::EnsEMBL::Registry->get_adaptor(
 	$query_species, 'core', 'Slice');
@@ -515,7 +589,8 @@ throw("The database do not contain any $alignment_type data for $set_of_species!
 my $slice_adaptor = Bio::EnsEMBL::Registry->get_adaptor($species, 'core', 'Slice');
 throw("Registry configuration file has no data for connecting to <$species>")
 	if (!$slice_adaptor);
-my $query_slice = $slice_adaptor->fetch_by_region('toplevel', $seq_region, $seq_region_start, $seq_region_end);
+my $query_slice = $slice_adaptor->fetch_by_region('toplevel', $seq_region, 
+$seq_region_start, $seq_region_end);
 throw("No Slice can be created with coordinates $seq_region:$seq_region_start-".
 	"$seq_region_end") if (!$query_slice);
 
@@ -567,15 +642,17 @@ foreach my $this_align (@$all_aligns) {
 
 exit;
 
-Orthologues and Protein clusters
-NB : This following is very much a draft at this stage with some piece of code to give examples, but not much comments.
+	Orthologues and Protein clusters
+NB : This following is very much a draft at this stage with some piece of code to give examples, but not 
+much comments.
 Member objects
 # get the MemberAdaptor
 my $ma = Bio::EnsEMBL::Registry->get_adaptor($dbname,'compara','Member');
 # fetch a Member
 my $member = $ma->fetch_by_source_stable_id('ENSEMBLGENE','ENSG00000004059');
 # print out some information about the Member
-print join " ", map { $member->$_ } qw(chr_name chr_start chr_end description source_name taxon_id taxon),"\n";
+print join (" ", map { $member->$_ } qw(chr_name chr_start chr_end description 
+source_name taxon_id taxon)),"\n";
 
 chr_name, chr_start, chr_end and description are self-explanatory.
 source_name tells about the origin of the Member entry, and  can be either 
@@ -583,13 +660,17 @@ ENSEMBLPEP, derived from ensembl translation,
 or ENSEMBLGENE, derived from an ensembl gene,
 or SWISSPROT, derived from a Uniprot/Swissprot entry,
 or SPTREMBL, derived from a Uniprot/SP-TrEMBL entry.
-taxon_id e.g. 9606 correspond to the NCBI taxonomy identifier (see http://www.ncbi.nlm.nih.gov/Taxonomy/taxonomyhome.html/ for more details).
-taxon returns a Bio::EnsEMBL::Compara::Taxon object that inherits itself from Bio::Species, so from this object you can get additional information about the species.
+taxon_id e.g. 9606 correspond to the NCBI taxonomy identifier (see 
+http://www.ncbi.nlm.nih.gov/Taxonomy/taxonomyhome.html/ for more details).
+taxon returns a Bio::EnsEMBL::Compara::Taxon object that inherits itself from Bio::Species, so 
+from this object you can get additional information about the species.
 my $taxon = $member->taxon;
-print join "; ", map { $taxon->$_ } qw(common_name genus species binomial classification),"\n";
+print join ("; ", map { $taxon->$_ } qw(common_name genus species binomial 
+classification)),"\n";
 
 respectively for these method calls and in the case of human species, you will obtain
-human; Homo; sapiens; Homo sapiens; sapiens Homo Hominidae Catarrhini Primates Eutheria Mammalia Euteleostomi Vertebrata Craniata Chordata Metazoa Eukaryota
+human; Homo; sapiens; Homo sapiens; sapiens Homo Hominidae Catarrhini Primates 
+Eutheria Mammalia Euteleostomi Vertebrata Craniata Chordata Metazoa Eukaryota
 	 
 Homology objects
 # first you have to get a Member object. In case of homology is a gene, in 
@@ -615,10 +696,6 @@ foreach my $homology (@{$homologies}) {
 
 print $homology->description," ", $homology->subtype,"\n";
 
-# And if they are defined dN and dS related values
-
-print join " ", map { $homology->$_ } qw(dn ds n s lnl threshold_on_ds),"\n";
-
 # each homology relation have only 2 members, you should find there
 # the initial member used in the first fetching
 
@@ -628,8 +705,8 @@ for each my $member_attribute (@{$homology->get_all_Member_Attribute})
 # relation to the homology relation via Attribute object
 
     my ($member, $attribute) = @{$member_attribute};
-    print join " ", map { $member->$_ }  qw(stable_id taxon_id),"\n";
-    print join " ", map { $attribute->$_ } qw(perc_id perc_pos perc_cov),"\n";
+    print join (" ", map { $member->$_ }  qw(stable_id taxon_id)),"\n";
+    print join (" ", map { $attribute->$_ } qw(perc_id perc_pos perc_cov)),"\n";
 
   }
 
@@ -667,7 +744,7 @@ my $fa = Bio::EnsEMBL::Registry->get_adaptor($dbname,'compara','Family');
 my $families = $fa->fetch_by_Member($member);
 
 foreach my $family (@{$families}) {
-  print join " ", map { $family->$_ }  qw(description description_score),"\n";
+  print join (" ", map { $family->$_ }  qw(description description_score)),"\n";
 
   for each my $member_attribute (@{$family->get_all_Member_Attribute})
     my ($member, $attribute) = @{$member_attribute};
@@ -691,6 +768,7 @@ foreach my $family (@{$families}) {
   print $alignIO $sa;
 }
 
-Further help
-For additional information or help mail ensemb-dev@ebi.ac.uk. You will need to subscribe to this mailing list to use it (see how to subscribe in http://www.ensembl.org/Docs/Lists/).
+	Further help
+For additional information or help mail ensemb-dev@ebi.ac.uk. You will need to subscribe to this mailing 
+list to use it (see how to subscribe in http://www.ensembl.org/Docs/Lists/).
 
