@@ -72,6 +72,11 @@ sub populate {
   $self->data($self->adaptor->fetch_id($self->id)->{$self->id});
 }
 
+sub set_data {
+  my ($self, $key, $value) = @_;
+  $self->data->{$key} = $value;
+}
+
 sub adaptor {
   ### a
   my $self = shift;
