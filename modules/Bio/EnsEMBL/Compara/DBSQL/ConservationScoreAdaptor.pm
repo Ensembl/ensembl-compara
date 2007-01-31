@@ -126,7 +126,9 @@ my $PAD_ZEROS = 0;
                display_type is "AVERAGE" or the maximum taken if display_type
                is "MAXIMUM". If the window_size is not specified, the
                window_size is determined as the largest window_size 
-               which gives at least display_size number of scores. 
+               which gives at least display_size number of scores. Alignment
+               positions which have no gerp scores are returned as undef.
+               
   Returntype : ref. to an array of Bio::EnsEMBL::Compara::ConservationScore objects. 
   Caller     : object::methodname
   Status     : At risk
@@ -279,7 +281,8 @@ sub fetch_all_by_MethodLinkSpeciesSet_Slice {
                display_type is "AVERAGE" or the maximum taken if display_type
                is "MAXIMUM". If the window_size is not specified, the
                window_size is determined as the largest window_size 
-               which gives at least display_size number of scores. 
+               which gives at least display_size number of scores. Alignment
+               positions which have no gerp scores are returned as undef.
   Returntype : ref. to an array of Bio::EnsEMBL::Compara::ConservationScore 
                objects. 
   Caller     : object::methodname
@@ -342,7 +345,15 @@ sub fetch_all_by_GenomicAlignBlock {
 		called => 0,
 		cnt => 0,
 		size => $bucket_size};
-    
+
+
+    #make sure reference genomic align has been set. If not set, set to be
+    #first genomic_align
+    my $reference_genomic_align = $genomic_align_block->reference_genomic_align;
+    if (!$reference_genomic_align) {
+	$genomic_align_block->reference_genomic_align($genomic_align_block->get_all_GenomicAligns->[0]);
+    }
+
     my $conservation_scores = $self->_fetch_all_by_GenomicAlignBlockId_WindowSize($genomic_align_block->dbID, $window_size, $PACKED);
 
     if (scalar(@$conservation_scores) == 0) {
@@ -531,6 +542,7 @@ sub _fetch_all_by_GenomicAlignBlockId_WindowSize {
 					-expected_score => $exp_scores,
 					-diff_score => $diff_scores,
 					-packed => $packed);
+
 	push(@$conservation_scores, $conservation_score);
     }
     
@@ -973,13 +985,16 @@ sub _get_alignment_scores {
 
 	#last row. If align_end is within a called region, need to recalculate
         #num_scores
-	#print "end_offset $end_offset uncalled $end_uncalled_region\n";
 	if ($i == $end && !$end_uncalled_region) {
-	    $num_scores = $end_offset+1;
+	    #num_scores can never be greater than scalar(@diff_scores)
+	    if ($end_offset+1 < $num_scores) {
+		$num_scores = $end_offset+1;
+	    }
 	}
 	
 	$pos = $conservation_scores->[$i]->position;
 
+	
 	#first time round start at offset if align_start is within a called 
 	#region
 	for (my $j = int($start_offset); $j < $num_scores; $j++) {
@@ -1056,7 +1071,12 @@ sub _get_alignment_scores {
     if (!$PAD_ZEROS) {
 	my $i = 0;
 	while ($i < scalar(@$aligned_scores)) {
-	    if ($aligned_scores->[$i]->diff_score == $_no_score_value) {
+	    #if ($aligned_scores->[$i]->diff_score == $_no_score_value) {
+	    if (!defined($_no_score_value) && 
+		!defined($aligned_scores->[$i]->diff_score)) {
+		splice @$aligned_scores, $i, 1;
+	    } elsif (defined($_no_score_value) && 
+		     $aligned_scores->[$i]->diff_score == $_no_score_value) {
 		splice @$aligned_scores, $i, 1;
 	    } else {
 		$i++;
