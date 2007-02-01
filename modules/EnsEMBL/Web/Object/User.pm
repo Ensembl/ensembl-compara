@@ -71,7 +71,7 @@ sub populate {
     $self->is_populated(1);
     my %params = %{ $self->parameters };
     if ($params{'id'}) {
-      warn "Populating user with ID: " . $params{'id'};
+#      warn "Populating user with ID: " . $params{'id'};
       my $details = $self->adaptor->find_user_by_user_id($params{'id'}, { adaptor => $self->adaptor });
       $self->assign_fields($details);
       my @records = $self->find_records_by_user_id($params{'id'}, { adaptor => $self->adaptor });
@@ -391,7 +391,7 @@ sub web_user_db {
 sub encrypt {
   ### x
   my ($self, $data) = @_;
-  warn "xxxxxxxxxxxx DEPRECATED FUNCTION xxxxxxxxxxxxxxx";
+  warn "xxxxxxxxxxxx DEPRECATED FUNCTION: Object::User::encrypt xxxxxxxxxxxxxxx";
   return md5_hex($data);
 }
 
