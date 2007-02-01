@@ -72,6 +72,11 @@ sub populate {
   $self->data($self->adaptor->fetch_id($self->id)->{$self->id});
 }
 
+sub get_query {
+  my ($self, $sql, $key) = @_;
+  return $self->adaptor->query($sql, $key);
+}
+
 sub set_data {
   my ($self, $key, $value) = @_;
   $self->data->{$key} = $value;

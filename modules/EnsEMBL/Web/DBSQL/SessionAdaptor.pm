@@ -143,8 +143,6 @@ sub getConfig {
 sub resetConfig {
 ### Reset the session configuration with session_id and type_id as passed
   my( $self, $session_id, $type_id, $key ) = @_;
-  my $session_id      = shift;
-  my $type_id = shift;
   return unless( $type_id > 0 && $self->get_db_adaptor && $session_id > 0 );
   $self->get_db_adaptor->do(
     "delete from session_record

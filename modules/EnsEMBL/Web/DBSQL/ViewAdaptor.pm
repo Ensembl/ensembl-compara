@@ -131,7 +131,7 @@ sub edit {
   $sql .= $self->set_sql_with_parameters(\%set_parameters, \@definition, $user);
   $sql .= "WHERE " . $table . "_id IN (" . $in . ")";  
 
-  warn "SQL: " . $sql;
+  #warn "SQL: " . $sql;
 
   my $return = $self->execute($sql); 
   $result->result($return);
@@ -145,7 +145,7 @@ sub edit {
 
 sub execute {
   my ($self, $sql) = @_;
-  warn "=================== VIEW SQL: " . $sql; 
+  #warn "=================== VIEW SQL: " . $sql; 
   my $sth = $self->handle->prepare($sql);
   my $result = $sth->execute();
   return $result;
@@ -294,7 +294,7 @@ sub fetch_by {
   $sql .= "SELECT * FROM " . $table . " ";
   $sql .= "WHERE " . $sql_where . ";"; 
   $sql .= ";";
-  warn "SQL: " . $sql;
+  #warn "SQL: " . $sql;
   return $self->query($sql, $id_field);
 }
 
@@ -347,7 +347,7 @@ sub create_handle {
     warn ("Unable to connect to database");
     $dbh = undef;
   }
-  warn "DBH: " . $dbh;
+  #warn "DBH: " . $dbh;
   return $dbh;
 }
 
