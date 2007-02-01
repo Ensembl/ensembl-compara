@@ -444,12 +444,12 @@ sub get_source {
     return ();
   }
 
+  my $return;
   if ($default) {
-    return  $vari_adaptor->get_VariationAdaptor->get_default_source();
+    $return = $vari_adaptor->get_VariationAdaptor->get_default_source();
   }
-  else {
-    return $vari_adaptor->get_VariationAdaptor->get_all_sources();
-  }
+  return $return if $return;	
+  return $vari_adaptor->get_VariationAdaptor->get_all_sources();
 
 }
 
