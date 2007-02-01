@@ -510,7 +510,7 @@ sub create_multiple_aligner_analysis {
     $self->{'comparaDBA'}->get_AnalysisAdaptor()->store($multiple_aligner_analysis);
     my $stats = $self->{'analysisStatsDBA'}->fetch_by_analysis_id($multiple_aligner_analysis->dbID);
     $stats->batch_size(1);
-    $stats->hive_capacity(5);
+    $stats->hive_capacity(200);
     $stats->status('BLOCKED');
     $stats->update();
 
