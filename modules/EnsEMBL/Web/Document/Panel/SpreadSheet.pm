@@ -99,8 +99,15 @@ sub _end {
   my $T = $self->spreadsheet->render();
   if( $self->{_form_action} ) {
     $self->printf( '<form action="%s" method="get">', $self->{_form_action} );
-    foreach( keys %{$self->{_form_hidden}} ) {
-      $self->printf( '<input type="hidden" name="%s" value="%s" />', $_, $self->{_form_hidden}{$_} );
+    foreach my $param_key (  keys %{$self->{_form_hidden}} ) {
+      my @values = $self->{_form_hidden}{$param_key};
+      if (ref $values[0] eq 'ARRAY') {
+	@values = @{$values[0]};
+      }
+      foreach (@values) {
+	$self->printf( '<input type="hidden" name="%s" value="%s" />', $param_key, $_ );
+      }
+	
     }
   }
   $self->print( qq(
