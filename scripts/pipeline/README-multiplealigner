@@ -130,6 +130,11 @@ where alignment: alignment file used in multi-fasta format
       rej_sub_min: threshold score to define candidate constrained element as significant
       no_ABC_files: no ABC files produced
 
+You will also need to add the paths for gerp and semphy if you want to run Gerp. At the time of
+writting these can be found in:
+/lustre/work1/ensembl/kb3/semphy/semphy-1.0a5/
+/lustre/work1/ensembl/jh7/gerp/GERP_03292006/
+
 For the SYNTENY_MAP_BUILDER, the MULTIPLE_ALIGNER and the CONSERVATION_SCORE blocks you can specify
 the logic_name for the method. You can also specify the module name. If none is given, the hive will
 use the Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::$logic_name module.
@@ -200,3 +205,14 @@ Run the job on the bigmem queue (requesting quite a lot of memory):
 
 beekeeper.pl --lsf_options '-R "select[mem>=5000] rusage[mem=5000]" -q bigmem' \
   --url mysql://ensadmin:ensembl@compara1/jh7_pecan_42 --loop
+
+
+*TROUBLESHOOTING*
+
+* Gerp jobs are failing.
+
+  - Check you set up your environment so the main gerp script can find
+    the remaining gerp scripts and the semphy program.
+
+  - Check the source code for the Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::Gerp
+    module. The path to the main Gerp script is hard-coded there.
