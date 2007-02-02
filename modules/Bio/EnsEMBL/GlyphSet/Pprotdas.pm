@@ -120,7 +120,17 @@ sub gmenu {
     $zmenu->{$dlabel} = $dlink->{'href'};
     $href =  $dlink->{'href'} if (! $href);
   }
-  if( my $m = $f->das_note       ){ $zmenu->{"40:NOTE: $m"}   = undef }
+  if( my $m = $f->das_note       ) { 
+    if (ref $m eq 'ARRAY') {
+	foreach my $n (@$m) {
+	  $zmenu->{"$ids:NOTE: $n"}   = undef;
+	  $ids++;
+	}
+     } else {
+	$zmenu->{"40:NOTE: $m"}   = undef;
+     }
+  }
+	
   return $zmenu;
 }
 
@@ -145,7 +155,16 @@ sub zmenu {
     $zmenu->{$dlabel} = $dlink->{'href'};
     $href =  $dlink->{'href'} if (! $href);
   }
-  if( my $m = $f->das_note       ){ $zmenu->{"80:NOTE: $m"}   = undef }
+if( my $m = $f->das_note       ) {
+    if (ref $m eq 'ARRAY') {
+        foreach my $n (@$m) {
+          $zmenu->{"$ids:NOTE: $n"}   = undef;
+          $ids++;
+        }
+     } else {
+        $zmenu->{"40:NOTE: $m"}   = undef;
+     }
+  }
   return $zmenu;
 }
 
