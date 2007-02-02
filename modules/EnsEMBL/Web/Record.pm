@@ -121,9 +121,9 @@ sub new {
   $ParameterSet_of{$self} = defined $params{'parameter_set'} ? $params{'parameter_set'} : undef;
   $Id_of{$self} = defined $params{'id'} ? $params{'id'} : undef;
   $CreatedAt_of{$self} = defined $params{'created_at'} ? $params{'created_at'} : undef;
-  $CreatedBy_of{$self} = defined $params{'created_at'} ? $params{'created_at'} : undef;
+  $CreatedBy_of{$self} = defined $params{'created_by'} ? $params{'created_by'} : undef;
   $ModifiedAt_of{$self} = defined $params{'modified_at'} ? $params{'modified_at'} : undef;
-  $ModifiedBy_of{$self} = defined $params{'modified_at'} ? $params{'modified_at'} : undef;
+  $ModifiedBy_of{$self} = defined $params{'modified_by'} ? $params{'modified_by'} : undef;
   $Type_of{$self} = defined $params{'type'} ? $params{'type'} : "record";
   $Fields_of{$self} = {};
   $Tainted_of{$self} = {};
@@ -395,14 +395,14 @@ sub flatten {
   my $self = shift;
 
   ## Standard fields
-  my $hash = (
+  my $hash = {
         'id'          => $Id_of{$self},
         'type'        => $Type_of{$self},
         'created_at'  => $CreatedAt_of{$self},
         'created_by'  => $CreatedBy_of{$self},
         'modified_at' => $ModifiedAt_of{$self},
         'modified_by' => $ModifiedBy_of{$self},
-    );
+    };
 
   ## data fields
   my $fields = $Fields_of{$self};
