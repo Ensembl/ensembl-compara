@@ -73,7 +73,7 @@ echo "~/src/ensembl_main/ensembl-compara/scripts/synteny/DumpGFFAlignmentsForSyn
  --tg 'Canis familiaris' --seq_region $i"; \
 done > run.me
 chmod +x run.me
-bsub -o $i.err -J DumpGFF.Hs-Cf ./run.me
+bsub -q long -o dump.out -J DumpGFF.Hs-Cf ./run.me
 
 In this command line, "ensemblHsapCfam" is the name of the compara databases,
 as defined in the registry configuration file.
