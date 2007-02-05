@@ -642,22 +642,44 @@ sub align_sequence_display {
 sub sequence_display {
 
   ### GeneSeqView
+  ### Arg1 : panel
+  ### Arg2 : Proxy Obj of type Gene
 
   my( $panel, $object ) = @_;
 
   my $slice   = $object->get_slice_object(); # Object for this section is the slice
+
+  # Return all variation features on slice if param('snp display');
+  my $snps  = $slice->param( 'snp_display' )  eq 'snp' ? $slice->snp_display()  : [];
+
+  # Return specific exons as chosen in form by user
+  my $exons = $slice->param( 'exon_display' ) ne 'off' ? $slice->exon_display() : [];
+
+  # Return all exon features on gene
+  my $feats = $slice->highlight_display( $object->Obj->get_all_Exons );
+
   my $sstrand = $slice->Obj->strand; # SNP strand bug has been fixed in snp_display function
   my $sstart  = $slice->Obj->start;
   my $send    = $slice->Obj->end;
-  my $slength = $slice->Obj->length;
 
-  my $snps  = $slice->param( 'snp_display' )  eq 'snp' ? $slice->snp_display()  : [];
-  my $exons = $slice->param( 'exon_display' ) ne 'off' ? $slice->exon_display() : [];
-  my $feats = $slice->highlight_display();
+  # Create bins for sequence markup --------------------------------------
+  my @bin_locs = @{ bin_starts($slice, $sstrand, $sstart, $send, $feats, $exons, $snps) };
+  my %bin_idx; # A hash index of bin start locations vs pos in index
 
-  # Define a formatting styles. These correspond to name/value pairs
+  my @bin_markup;
+  for( my $i=0; $i<@bin_locs; $i++ ){
+    my $bin_start  = $bin_locs[$i];
+    my $bin_end    = $bin_locs[$i+1] || last;
+    my $bin_length = $bin_end - $bin_start;
+    $bin_idx{$bin_start} = $i;
+    $bin_markup[$i] = [ $bin_length, {} ]; # Init bin, and flag as empty
+  }
+
+
+  # Define a formatting styles. These correspond to name/value pairs ---------------
   # in HTML style attributes
   my $style_tmpl = qq(<span style="%s" title="%s">%s</span>);
+  my $key_tmpl = qq(<p><code>$style_tmpl</code> %s</p>);
   my %styles = (
     DEFAULT =>{},
     exon    => { 'color' => 'darkred',  'font-weight' =>'bold' },
@@ -667,13 +689,10 @@ sub sequence_display {
     snpexon => { 'background-color' => '#7fff00'        }
   );
 
-  my $key_tmpl = qq(<p><code>$style_tmpl</code> %s</p>);
-
   my $KEY = '';
 
   if( @$feats ){
-    my $type = "features";
-    if( $feats->[0]->isa('Bio::EnsEMBL::Exon') ){$type='exons'}
+    my $type = $feats->[0]->isa('Bio::EnsEMBL::Exon') ? 'exons' : 'features';
     my %istyles = %{$styles{high1}};
     my $style = join( ';',map{"$_:$istyles{$_}"} keys %istyles );
     $KEY .= sprintf( $key_tmpl, $style, "", "THIS STYLE:", "Location of other $type" )
@@ -691,84 +710,18 @@ sub sequence_display {
     $KEY .= sprintf( $key_tmpl, $style, "", "THIS STYLE:", "Location of SNPs" )
   }
 
-  # Sequence markup uses a 'variable-length bin' approach.
-  # Each bin has a format.
-  # Allows for feature overlaps - combined formats.
-  # Bins start at feature starts, and 1 + feature ends.
-  # Allow for cigar strings - these split alignments into 'mini-features'.
-  # A feature can span multiple bins
 
-  # Get a unique list of all possible bin starts
+  # Populate bins with exons -----------------------------------------------
+  my %estyles         = %{ $styles{exon} };
+  my %snpstyles      = %{ $styles{snp} };
+  my %snpexonstyles = %{ $styles{snpexon} };
 
-  my %all_locs = ( 1=>1, $slength+1=>1 );
-
-  foreach my $feat ( @$feats, @$exons ){
-    # skip the features that were cut off by applying flanking sequence parameters
-    next if $feat->seq_region_start < $sstart || $feat->seq_region_end > $send;
-    my $cigar;
-    $cigar = $feat->cigar_string if $feat->can('cigar_string');
-    $cigar ||= $feat->length . "M"; # Fake cigar; matches length of feat
- # If the feature is on reverse strand - then count from the end
-    my $fstrand = $feat->seq_region_strand;
-    my $fstart  = $fstrand < 0 ? $send - $feat->seq_region_end + 1 : $feat->seq_region_start - $sstart + 1;
-#    my $fstart  = $feat->seq_region_start - $sstart + 1;
-    $fstart = $slength+1   if $fstart > $slength+1;
-    $all_locs{$fstart} = 1 if $fstart > 0;
-    my @segs = ( $cigar =~ /(\d*\D)/g ); # Split cigar into segments
-    @segs = reverse @segs if $fstrand < 1; # if -ve ori, invert cigar
-    foreach my $seg( @segs ) {
-      my $type = chop( $seg ); # Remove seg type - length remains
-      next if( $type eq 'D' ); # Ignore deletes
-      $fstart += $seg;
-      $fstart = $slength+1 if $fstart > $slength+1;
-      $all_locs{$fstart} = 1 if $fstart > 0;
-    }
-  }
-
-  foreach my $snp( @$snps ){
-    my $fstart = $snp->start;
-    my $fend   = $snp->end;
-
-    if( $fstart <= $fend ) { # Deletion/replacement
-      $fend ++;
-    } else {                 # Insertion
-      $fend = $fstart + ( $sstrand < 0 ? -2 : 2 );
-    }
-    $all_locs{ $fstart } = 1;
-    $all_locs{ $fend   } = 1;
-  }
-
-  # Initialise bins; lengths and formats
-  my @bin_locs = sort{ $a<=>$b } ( keys %all_locs );
-  my %bin_idx; # A hash index of bin start locations vs pos in index
-
-  my @bin_markup;
-  for( my $i=0; $i<@bin_locs; $i++ ){
-    my $bin_start  = $bin_locs[$i];
-    my $bin_end    = $bin_locs[$i+1] || last;
-    my $bin_length = $bin_end - $bin_start;
-    $bin_idx{$bin_start} = $i;
-    $bin_markup[$i] = [ $bin_length, {} ]; # Init bin, and flag as empty
-  }
-
-  # Populate bins with exons
-  my %estyles       = %{$styles{exon}};
-  # Populate bins with snps
-  my %snpstyles     = %{$styles{snp}};
-  my %snpexonstyles = %{$styles{snpexon}};
-
-
-  # Populate bins with exons
-  foreach my $feat( @$exons ){
-    my $cigar;
-    if( $feat->can('cigar_string') ){ $cigar = $feat->cigar_string }
-    $cigar ||= $feat->length . "M"; # Fake cigar; matches length of feat
+  foreach my $feat( @$exons ){ # user chosen exons
     my $fstrand = $feat->seq_region_strand;
     my $title = $feat->stable_id;
     my $fstart  = $fstrand < 0 ? $send - $feat->seq_region_end + 1 : $feat->seq_region_start - $sstart + 1;
-    my @segs = ( $cigar =~ /(\d*\D)/g ); # Segment cigar
-    if( $fstrand < 1 ){ @segs = reverse( @segs ) } # if -ve ori, invert cigar
-    foreach my $seg( @segs ){
+
+    foreach my $seg(  @{ cigar_segments($feat) }  ){
       my $type = chop( $seg ); # Remove seg type - length remains
       next if( $type eq 'D' ); # Ignore deletes
       my $fend = $fstart + $seg;
@@ -787,19 +740,15 @@ sub sequence_display {
 
   # Populate bins with highlighted features
   foreach my $feat( @$feats ){
-      # skip the features that were cut off by applying flanking sequence parameters
+    # skip the features that were cut off by applying flanking sequence parameters
     next if ($feat->end < $sstart || $feat->start > $send);
-    my $cigar;
-    if( $feat->can('cigar_string') ){ $cigar = $feat->cigar_string }
-    $cigar ||= $feat->length . "M"; # Fake cigar; matches length of feat
+
     my $fstrand = $feat->seq_region_strand;
     my $title;
     if ($feat->can('stable_id')) { $title = $feat->stable_id; }
-
     my $fstart  = $fstrand < 0 ? $send - $feat->seq_region_end + 1 : $feat->seq_region_start - $sstart + 1;
-    my @segs = ( $cigar =~ /(\d*\D)/g ); # Segment cigar
-    if( $fstrand < 1 ){ @segs = reverse( @segs ) } # if -ve ori, invert cigar
-    foreach my $seg( @segs ){
+
+    foreach my $seg(  @{ cigar_segments($feat) } ){
     my $type = chop( $seg ); # Remove seg type - length remains
     next if( $type eq 'D' ); # Ignore deletes
     my $fend = $fstart + $seg;
@@ -931,6 +880,73 @@ sub sequence_display {
     <pre>&gt;@{[ $slice->Obj->name ]}\n$markedup_seq</pre>
   ) );
 }
+
+
+#----------------------------------------------------------------------------
+sub bin_starts {
+
+  ### Sequence markup uses a 'variable-length bin' approach.
+  ### Each bin has a format.
+  ### A feature can span multiple bins.
+  ### Allows for feature overlaps - combined formats.
+  ### Bins start at feature starts, and end at feature ends + 1
+  ### Allow for cigar strings - these split alignments into 'mini-features'.
+
+  my ($slice, $sstrand, $sstart, $send, $feats, $exons, $snps) = @_;
+  my $slength = $slice->Obj->length;
+
+  # Get a unique list of all possible bin starts
+  my %all_locs = ( 1=>1, $slength+1=>1 );
+  foreach my $feat ( @$feats, @$exons ){
+    # skip the features that were cut off by applying flanking sequence parameters
+    next if $feat->seq_region_start < $sstart || $feat->seq_region_end > $send;
+
+    # If the feature is on reverse strand - then count from the end
+    my $fstrand = $feat->seq_region_strand;
+    my $fstart  = $fstrand < 0 ? $send - $feat->seq_region_end + 1 : $feat->seq_region_start - $sstart + 1;
+    #    my $fstart  = $feat->seq_region_start - $sstart + 1;
+    $fstart = $slength+1   if $fstart > $slength+1;
+    $all_locs{$fstart} = 1 if $fstart > 0;
+
+    foreach my $seg(  @{ cigar_segments($feat) } ) {
+      my $type = chop( $seg ); # Remove seg type - length remains
+      next if( $type eq 'D' ); # Ignore deletes
+      $fstart += $seg;
+      $fstart = $slength+1 if $fstart > $slength+1;
+      $all_locs{$fstart} = 1 if $fstart > 0;
+    }
+  }
+
+  foreach my $snp( @$snps ){
+    my $fstart = $snp->start;
+    my $fend   = $snp->end;
+
+    if( $fstart <= $fend ) { # Deletion/replacement
+      $fend ++;
+    } else {                 # Insertion
+      $fend = $fstart + ( $sstrand < 0 ? -2 : 2 );
+    }
+    $all_locs{ $fstart } = 1;
+    $all_locs{ $fend   } = 1;
+  }
+
+  # Initialise bins; lengths and formats
+  my @bin_locs = sort{ $a<=>$b } ( keys %all_locs );
+  return \@bin_locs || [];
+}
+
+#-------------------------------------------------------
+sub cigar_segments {
+  my ($feat) = @_;
+  my $cigar;
+  $cigar = $feat->cigar_string if $feat->can('cigar_string');
+  $cigar ||= $feat->length . "M"; # Fake cigar; matches length of feat
+ 
+  my @segs = ( $cigar =~ /(\d*\D)/g ); # Segment cigar
+  if( $feat->seq_region_strand < 1 ){ @segs = reverse( @segs ) } # if -ve ori, invert cigar
+  return \@segs || [];
+}
+
 
 ###### SEQUENCE ALIGN SLICE ########################################################
 

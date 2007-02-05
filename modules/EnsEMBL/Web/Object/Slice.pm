@@ -11,17 +11,11 @@ our %ct = %Bio::EnsEMBL::Variation::VariationFeature::CONSEQUENCE_TYPES;
 
 sub snp_display {
   my $self = shift; 
-  my $value = $self->param('snp_display');
   my $SNPS = [];
-  if( $value eq 'snp' ){
+  if( $self->param('snp_display') eq 'snp' ){
     my $slice = $self->Obj();
     eval {
-      if( $self->species_defs->databases->{'ENSEMBL_GLOVAR'} ) {
-        $self->database('glovar');
-        $SNPS = $slice->get_all_ExternalFeatures('GlovarSNP');
-      } elsif( $self->species_defs->databases->{'ENSEMBL_VARIATION'} ) {
         $SNPS = $slice->get_all_VariationFeatures;
-      }
     };
   }
   return $SNPS;
@@ -31,14 +25,16 @@ sub exon_display {
   my $self = shift;
   my $exontype = $self->param('exon_display');
   my @exons;
-  $exontype = 'otherfeatures' if $exontype eq 'est';
-  my( $s, $e ) = ( $self->Obj->start, $self->Obj->end );
-  if( $exontype eq 'vega' or $exontype eq 'est' ){
-    @exons = ( grep { $_->seq_region_start <= $e && $_->seq_region_end   >= $s }
+
+  my( $slice_start, $slice_end ) = ( $self->Obj->start, $self->Obj->end );
+
+  # Get all exons within start and end for genes of $exontype
+  if( $exontype eq 'vega' or $exontype eq 'est' or $exontype eq 'otherfeatures'){
+    @exons = ( grep { $_->seq_region_start <= $slice_end && $_->seq_region_end   >= $slice_start }
                map  { @{$_->get_all_Exons } }
                @{ $self->Obj->get_all_Genes('',$exontype) } );
   } elsif( $exontype eq 'prediction' ){
-    @exons = ( grep{ $_->seq_region_start<=$e && $_->seq_region_end  >=$s }
+    @exons = ( grep{ $_->seq_region_start<=$slice_end && $_->seq_region_end  >=$slice_start }
                map { @{$_->get_all_Exons } }
                @{$self->Obj->get_all_PredictionTranscripts } );
   } else {
