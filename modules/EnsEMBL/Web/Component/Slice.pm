@@ -838,6 +838,7 @@ sub sequence_display {
 #----------------------------------------------------------------------------
 sub bin_starts {
 
+  ### GeneSeqView
   ### Sequence markup uses a 'variable-length bin' approach.
   ### Each bin has a format.
   ### A feature can span multiple bins.
@@ -893,11 +894,15 @@ sub bin_starts {
 
 #-------------------------------------------------------
 sub cigar_segments {
+
+  ### Arg: Bio::EnsEMBL::Feature
+  ### GeneSeqView
+
   my ($feat) = @_;
   my $cigar;
   $cigar = $feat->cigar_string if $feat->can('cigar_string');
   $cigar ||= $feat->length . "M"; # Fake cigar; matches length of feat
- 
+
   my @segs = ( $cigar =~ /(\d*\D)/g ); # Segment cigar
   if( $feat->seq_region_strand < 1 ){ @segs = reverse( @segs ) } # if -ve ori, invert cigar
   return \@segs || [];
@@ -905,6 +910,10 @@ sub cigar_segments {
 
 #----------------------------------------------------------
 sub populate_bins {
+
+  ### GeneSeqView
+  ### Code to mark up the exons in each bin
+
   my ($exons, $slice, $bin_idx, $bin_markup, $styles, $key) = @_;
   my %estyles  = %{ $styles->{$key} };
   my $sstart  = $slice->Obj->start;
