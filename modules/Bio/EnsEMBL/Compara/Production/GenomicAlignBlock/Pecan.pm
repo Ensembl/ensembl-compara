@@ -516,6 +516,10 @@ sub _dump_fasta {
     my $slice = $dfr->slice;
     throw("Cannot get slice for DnaFragRegion in DnaFrag #".$dfr->dnafrag_id) if (!$slice);
     my $seq = $slice->get_repeatmasked_seq(undef, 1)->seq;
+    if ($seq =~ /[^ACTGactgNnXx]/) {
+      print STDERR $slice->name, " contains at least one non-ACTGactgNnXx character. These have been replaced by N's\n";
+      $seq =~ s/[^ACTGactgNnXx]/N/g;
+    }
     $seq =~ s/(.{80})/$1\n/g;
     chomp $seq;
     print F $seq,"\n";
