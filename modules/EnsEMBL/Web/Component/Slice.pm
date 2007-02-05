@@ -749,27 +749,26 @@ sub sequence_display {
     my $fstart  = $fstrand < 0 ? $send - $feat->seq_region_end + 1 : $feat->seq_region_start - $sstart + 1;
 
     foreach my $seg(  @{ cigar_segments($feat) } ){
-    my $type = chop( $seg ); # Remove seg type - length remains
-    next if( $type eq 'D' ); # Ignore deletes
-    my $fend = $fstart + $seg;
-    my $idx_start = $fstart > 0 ? $bin_idx{$fstart} : $bin_idx{1};
-    my $idx_end   = ( $bin_idx{$fend} ? $bin_idx{$fend} : @bin_markup ) -1;
-    $fstart += $seg;
-    next if $type ne 'M'; # Only markup matches
-    # Add styles to affected bins
-    my %istyles = %{$styles{high1}};
-    foreach my $bin( @bin_markup[ $idx_start..$idx_end ] ){
-      map{ $bin->[1]->{$_} = $istyles{$_} } keys %istyles;
-        if ($title) {
-        if (defined (my $alt = $bin->[2])) {
-            if (! grep {$_ eq $title} split(/ : /, $alt) ) {
-            $bin->[2] = "$alt:$title";
-            }
-        } else {
-            $bin->[2] = $title;
-        }
-        }
-    }
+      my $type = chop( $seg ); # Remove seg type - length remains
+      next if( $type eq 'D' ); # Ignore deletes
+      my $fend = $fstart + $seg;
+      my $idx_start = $fstart > 0 ? $bin_idx{$fstart} : $bin_idx{1};
+      my $idx_end   = ( $bin_idx{$fend} ? $bin_idx{$fend} : @bin_markup ) -1;
+      $fstart += $seg;
+      next if $type ne 'M'; # Only markup matches
+      # Add styles to affected bins
+      my %istyles = %{$styles{high1}};
+      foreach my $bin( @bin_markup[ $idx_start..$idx_end ] ){
+	map{ $bin->[1]->{$_} = $istyles{$_} } keys %istyles;
+        next unless $title;
+	if (defined (my $alt = $bin->[2])) {
+	  if (! grep {$_ eq $title} split(/ : /, $alt) ) {
+	    $bin->[2] = "$alt:$title";
+	  }
+	} else {
+	  $bin->[2] = $title;
+	}
+      }
     }
   }
 
