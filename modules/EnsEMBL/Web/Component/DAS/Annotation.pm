@@ -45,6 +45,7 @@ sub features {
   %s
   %s
   %s
+  %s
 </FEATURE>
 };
 
@@ -110,25 +111,27 @@ sub features {
 		}
 	    }
 
-            my $score_tag;
-            if( $feature->{'SCORE'} ) {
-              $score_tag = sprintf '<SCORE>%f</SCORE>', $feature->{'SCORE'};
+            my $score_tag = '<SCORE>'. ( exists $feature->{'SCORE'} ? $feature->{'SCORE'} : '-' ). '</SCORE>';
+            my $target_tag = '';
+            if( $feature->{'TARGET'} ) {
+              $target_tag = sprintf '<TARGET id="%s" start="%s" stop="%s" />', $feature->{'TARGET'}{'ID'},$feature->{'TARGET'}{'START'},$feature->{'TARGET'}{'STOP'};
             }
 	    $panel->print( sprintf ($feature_template, 
-				    $feature->{'ID'} || '', 
-				    $feature->{'LABEL'} ? qq{ label="$feature->{'LABEL'}"} : '',
-				    $feature->{'START'} || '',
-				    $feature->{'END'} || '',
-				    $feature->{'TYPE'}|| '',
-				    $feature->{'CATEGORY'} ? qq{ category="$feature->{'CATEGORY'}"} : '',
-				    $feature->{'TYPE'} || '',
-				    $feature->{'METHOD'} || '',
-				    $feature->{'METHOD'} || '',
+				    $feature->{'ID'}          || '', 
+				    $feature->{'LABEL'}        ? qq{ label="$feature->{'LABEL'}"} : '',
+				    $feature->{'START'}       || '',
+				    $feature->{'END'}         || '',
+				    $feature->{'TYPE'}        || '',
+				    $feature->{'CATEGORY'}     ? qq{ category="$feature->{'CATEGORY'}"} : '',
+				    $feature->{'TYPE'}        || '',
+				    $feature->{'METHOD'}      || '',
+				    $feature->{'METHOD'}      || '',
 				    $feature->{'ORIENTATION'} || '',
 				    $group_tag,
 				    $link_tag,
 				    $note_tag,
-                                    $score_tag
+                                    $score_tag,
+                                    $target_tag
 				    ));
 	    
 	}

@@ -28,18 +28,19 @@ sub Features {
   my %exons;
 #  my @dbs = qw(core vega otherfeatures);
   my $dba_hashref;
-  my @dbs = qw(core vega otherfeatures);
+  my @logic_names;
+  my @dbs = ();
   if( $ENV{'ENSEMBL_DAS_SUBTYPE'} ) {
-    @dbs = split /-/, $ENV{'ENSEMBL_DAS_SUBTYPE'};
+    my( $db, @logic_names ) = split /-/, $ENV{'ENSEMBL_DAS_SUBTYPE'};
+    push @dbs, $db;
   } else {
     @dbs = ('core');
   }
   foreach (@dbs) {
     my $T = $self->{data}->{_databases}->get_DBAdaptor($_,$self->real_species);
-    warn "$_ $T";
     $dba_hashref->{$_}=$T if $T;
   }
- warn keys %$dba_hashref;
+  @logic_names = (undef) unless @logic_names;
   my %features_to_grab;
 
 ## First let us look at feature IDs - these prediction transcript exons...
@@ -61,24 +62,28 @@ sub Features {
       next;
     }
     foreach my $db_key ( keys %$dba_hashref ) {
-      foreach my $gene ( @{$segment->slice->get_all_Genes(undef,$db_key) } ) {
-        my $gsi = $gene->stable_id;
-        $genes{ $gsi } = { 'db' => $db_key, 'obj' => $gene, 'transcripts' => [] };
-        delete $filters->{$gsi};
-        $no_filters->{$gsi} = 1;
-        foreach my $transcript ( @{$gene->get_all_Transcripts} ) {
-          my $tsi = $transcript->stable_id;
-          my $transobj = { 'obj' => $transcript, 'exons' => [] };
-          delete $filters->{$tsi};
-          $no_filters->{$tsi} = 1;
-          foreach my $exon ( @{$transcript->get_all_Exons} ) {
-            my $esi = $exon->stable_id;
-            delete $filters->{$esi};
-            push @{ $transobj->{'exons'} }, $exon;
-            $no_filters->{$esi} = 1;
+      foreach my $logic_name (@logic_names) {
+warn "$db_key...................$logic_name.............................";
+        foreach my $gene ( @{$segment->slice->get_all_Genes($logic_name,$db_key) } ) {
+          my $gsi = $gene->stable_id;
+warn "$gsi.......................";
+          $genes{ $gsi } = { 'db' => $db_key, 'obj' => $gene, 'transcripts' => [] };
+          delete $filters->{$gsi};
+          $no_filters->{$gsi} = 1;
+          foreach my $transcript ( @{$gene->get_all_Transcripts} ) {
+            my $tsi = $transcript->stable_id;
+            my $transobj = { 'obj' => $transcript, 'exons' => [] };
+            delete $filters->{$tsi};
+            $no_filters->{$tsi} = 1;
+            foreach my $exon ( @{$transcript->get_all_Exons} ) {
+              my $esi = $exon->stable_id;
+              delete $filters->{$esi};
+              push @{ $transobj->{'exons'} }, $exon;
+              $no_filters->{$esi} = 1;
+            }
+            push @{ $genes{$gsi}->{'transcripts'} },$transobj;
+# warn "PUSHED transcript $tsi onto gene $gsi";
           }
-          push @{ $genes{$gsi}->{'transcripts'} },$transobj;
-warn "PUSHED transcript $tsi onto gene $gsi";
         }
       }
     }
@@ -93,18 +98,21 @@ warn "PUSHED transcript $tsi onto gene $gsi";
     my $filter;
     my $db_key;
     foreach my $db ( keys %$dba_hashref ) {
-      $db_key = $db;
-      $ga_hashref->{$db} ||= $dba_hashref->{$db}->get_GeneAdaptor;
-      if( $filters->{$id} eq 'exon' ) {
-        $gene = $ga_hashref->{$db}->fetch_by_exon_stable_id( $id );
-        $filter = 'exon';
-      } elsif( $gene = $ga_hashref->{$db}->fetch_by_stable_id( $id ) ) {
-        $filter = 'transcript';
-      } else {
-        $gene = $ga_hashref->{$db}->fetch_by_transcript_stable_id( $id );
-        $filter = 'gene';
-      }
-      last if $gene;
+#      foreach my $logic_name (@logic_names) {
+        $db_key = $db;
+        $ga_hashref->{$db} ||= $dba_hashref->{$db}->get_GeneAdaptor;
+        if( $filters->{$id} eq 'exon' ) {
+          $gene = $ga_hashref->{$db}->fetch_by_exon_stable_id( $id );
+          $filter = 'exon';
+        } elsif( $gene = $ga_hashref->{$db}->fetch_by_stable_id( $id ) ) {
+          $filter = 'transcript';
+        } else {
+          $gene = $ga_hashref->{$db}->fetch_by_transcript_stable_id( $id );
+          $filter = 'gene';
+        }
+        last if $gene;
+#      }
+#      last if $gene;
     }
     next unless $gene;
     my $gsi = $gene->stable_id;
@@ -118,7 +126,7 @@ warn "PUSHED transcript $tsi onto gene $gsi";
           push @{ $transobj->{'exons'} }, $exon;
         }
         push @{ $genes{$gsi}->{'transcripts'} },$transobj;
-warn "PU**ED transcript $tsi onto gene $gsi";
+# warn "PU**ED transcript $tsi onto gene $gsi";
       }
     }
     if( $filter eq 'gene' ) { ## Delete all filters on Gene and subsequent exons
@@ -182,9 +190,18 @@ warn "PU**ED transcript $tsi onto gene $gsi";
         push @{$transcript_group->{'LINK'}}, {
           'href' => sprintf( $protview_url, $transcript->translation->stable_id, $db ),
           'text' => "e! ProtView ".$transcript->translation->stable_id };
-      }
+      } 
       my $coding_region_start = $transcript->coding_region_start;
       my $coding_region_end   = $transcript->coding_region_end;
+      if( $transobj->{'exons'}[0]->slice->strand > 0 ) {
+        $coding_region_start += $transobj->{'exons'}[0]->slice->start - 1;
+        $coding_region_end   += $transobj->{'exons'}[0]->slice->start - 1;
+      } else {
+        $coding_region_start *= -1;
+        $coding_region_end   *= -1;
+        $coding_region_start += $transobj->{'exons'}[0]->slice->end + 1;
+        $coding_region_end   += $transobj->{'exons'}[0]->slice->end + 1;
+      }
       foreach my $exon ( @{$transobj->{'exons'}}) {
         my $exon_stable_id = $exon->stable_id;
         my $slice_name = $exon->slice->seq_region_name.':'.$exon->slice->start.','.$exon->slice->end.':'.$exon->slice->strand;
@@ -197,12 +214,13 @@ warn "PU**ED transcript $tsi onto gene $gsi";
           };
 ## Offset and orientation multiplier for features to map them back to slice
 ## co-ordinates - based on the orientation of the slice.
-          if( $exon->slice->strand > 0 ) {
-            $slice_hack{$slice_name} = [  1, $features{$slice_name}{'START'}-1 ];
-          } else {
-            $slice_hack{$slice_name} = [ -1, $features{$slice_name}{'STOP'} +1 ];
-          }
+#          if( $exon->slice->strand > 0 ) {
+#            $slice_hack{$slice_name} = [  1, $features{$slice_name}{'START'}-1 ];
+#          } else {
+#            $slice_hack{$slice_name} = [ -1, $features{$slice_name}{'STOP'} +1 ];
+#          }
         }
+        
         unless( exists $no_filters->{$gene_stable_id} || exists $no_filters->{$transcript_stable_id } || exists $no_filters->{$gene_stable_id} ) { ## WE WILL DRAW THIS!!
           unless( exists $filters->{$exon_stable_id} || exists $filters->{$transcript_stable_id} ) {
             next;
@@ -212,8 +230,8 @@ warn "PU**ED transcript $tsi onto gene $gsi";
 ## list if not skip the rest of this loop
 ## Push the features on to the slice specific array
 ## Now we have to work out the overlap with coding sequence...
-        my $exon_start = $exon->start;
-        my $exon_end   = $exon->end;
+        my $exon_start = $exon->seq_region_start;
+        my $exon_end   = $exon->seq_region_end;
         my @sub_exons  = ();
         if( defined $coding_region_start ) {
           my $exon_coding_start;
@@ -260,9 +278,9 @@ warn "PU**ED transcript $tsi onto gene $gsi";
             'TYPE'        => 'exon:'.$transcript->analysis->logic_name,
             'METHOD'      => $transcript->analysis->logic_name,
             'CATEGORY'    => $se->[0],
-            'START'       => $slice_hack{$slice_name}[0] * $se->[1] + $slice_hack{$slice_name}[1],
-            'END'         => $slice_hack{$slice_name}[0] * $se->[2] + $slice_hack{$slice_name}[1],
-            'ORIENTATION' => $slice_hack{$slice_name}[0] * $exon->strand > 0 ? '+' : '-',
+            'START'       => $se->[1], # $slice_hack{$slice_name}[0] * $se->[1] + $slice_hack{$slice_name}[1],
+            'END'         => $se->[2], # $slice_hack{$slice_name}[0] * $se->[2] + $slice_hack{$slice_name}[1],
+            'ORIENTATION' => $self->ori($exon->strand), # slice_hack{$slice_name}[0] * $exon->strand > 0 ? '+' : '-',
             'GROUP'       => [$transcript_group]
           };
         }

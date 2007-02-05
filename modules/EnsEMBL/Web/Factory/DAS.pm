@@ -89,6 +89,9 @@ sub createObjects {
   my $source = $ENV{ENSEMBL_DAS_TYPE};
   
   my $T = EnsEMBL::Web::Proxy::Object->new( "DAS::$source", \@locations, $self->__data );
+  $T->FeatureIDs(   @feature_ids   );
+  $T->FeatureTypes( @feature_types );
+  $T->GroupIDs(     @feature_ids );
   if( $self->has_a_problem ) {
     $self->clear_problems();
     return $self->problem( 'Fatal', 'Unknown Source', "Could not locate source <b>$source</b>." );
@@ -107,11 +110,12 @@ sub _location_from_SeqRegion {
     $start = 1 if $start < 1;     ## Truncate slice to start of seq region
     ($start,$end) = ($end, $start) if $start > $end;
     foreach my $system ( @{$self->__coord_systems} ) {
-      my $slice;
+      my $slice = undef;
       eval { $slice = $self->_slice_adaptor->fetch_by_region( $system->name, $chr, $start, $end, $strand ); };
       warn $@ if $@;
       next if $@;
       if( $slice ) {
+        warn "SLICE:   $chr $start $end $strand - ".$slice;
         next if( $start >  $slice->seq_region_length || $end >  $slice->seq_region_length );
         return $self->_create_from_slice( $system->name, "$chr\:$start,$end", $slice, undef, undef, $keep_slice );
       }
@@ -134,4 +138,27 @@ sub _location_from_SeqRegion {
   }
 }
 
+sub _create_from_slice {
+  my( $self, $type, $ID, $slice, $synonym, $real_chr, $keep_slice ) = @_;
+  return 
+  EnsEMBL::Web::Proxy::Object->new(
+    'Location',
+    { 
+      'slice'              => $slice,
+      'type'               => $type,
+      'real_species'       => $self->__species,
+      'name'               => $ID,
+      'seq_region_name'    => $slice->seq_region_name,
+      'seq_region_type'    => $slice->coord_system->name(),
+      'seq_region_start'   => $slice->start,
+      'seq_region_end'     => $slice->end,
+      'seq_region_strand'  => $slice->strand,
+      'raw_feature_strand' => $slice->{'_raw_feature_strand'},
+      'seq_region_length'  => $slice->seq_region_length,
+      'synonym'            => $synonym,
+    },
+    $self->__data
+  );
+
+}
 1;
