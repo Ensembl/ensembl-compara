@@ -391,7 +391,6 @@ sub web_user_db {
 sub encrypt {
   ### x
   my ($self, $data) = @_;
-  warn "xxxxxxxxxxxx DEPRECATED FUNCTION: Object::User::encrypt xxxxxxxxxxxxxxx";
   return md5_hex($data);
 }
 
