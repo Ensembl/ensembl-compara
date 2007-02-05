@@ -3,6 +3,7 @@ package EnsEMBL::Web::Component::Alignment;
 # outputs chunks of XHTML for protein domain-based displays
 
 use EnsEMBL::Web::Component;
+use EnsEMBL::Web::Form;
 our @ISA = qw(EnsEMBL::Web::Component);
 use Bio::AlignIO;
 use IO::String;

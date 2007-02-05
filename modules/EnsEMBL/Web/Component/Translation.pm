@@ -396,6 +396,7 @@ sub image {
   my $db        = $object->get_db ;
   my $wuc       = $object->get_userconfig( 'protview' );
   $wuc->container_width( $object->Obj->length );
+  $wuc->{_object} = $object;
 
   my $das_collection = $object->get_DASCollection();
   foreach my $das( @{$das_collection->Obj} ){

@@ -5,6 +5,7 @@ use strict;
 use EnsEMBL::Web::Configuration;
 use EnsEMBL::Web::Interface::FragmentCollection;
 use Apache2::RequestUtil;
+
 use CGI;
 
 our @ISA = qw( EnsEMBL::Web::Configuration );
@@ -1049,6 +1050,7 @@ sub ldtableview {
 				  ));
     }
     elsif ($self->{object}->param('dump') eq 'asexcel') {
+warn "ADDING... el_ldd";
       $ld_panel->add_components(qw(
     excel_lddata        EnsEMBL::Web::Component::LDtable::excel_lddata
 				  ));

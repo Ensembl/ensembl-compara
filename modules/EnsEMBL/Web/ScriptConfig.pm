@@ -123,6 +123,8 @@ sub reset {
 sub set {
 ### Set a key for user settings
   my( $self, $key, $value, $force ) = @_;
+warn caller(1);
+warn "SETTING: $self - $key $value $force";
   return unless $force || exists $self->{'_options'}{$key};
   return if $self->{'_options'}{$key}{'user'}  eq $value;
 #warn "setting $key to $value";

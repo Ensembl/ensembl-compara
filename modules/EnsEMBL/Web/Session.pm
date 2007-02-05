@@ -321,7 +321,7 @@ sub update_configs_for_das {
   my $N = $DAS->get_name;
   my %scripts  = map {($_=>1)} @{$DAS->get_data->{'enable'}||[]};
   foreach my $sc_name (@configs) {
-    my $sc = $self->getScriptConfig( $sc_name );
+    my $sc = $self->getScriptConfig( $sc_name, 1 );
     foreach my $ic_name ( keys %{$sc->{'_user_config_names'}} ) {
       next  unless $sc->{'_user_config_names'}{$ic_name} eq 'das';
       $self->attachImageConfig( $sc_name, $ic_name );
@@ -394,6 +394,7 @@ sub getScriptConfig {
 
   my $self   = shift;
   my $script = shift;
+  my $do_not_pop_from_params = shift;
 
   unless( $Configs_of{ ident $self }{$script} ) {
     my $script_config = EnsEMBL::Web::ScriptConfig->new( $script, $self );
@@ -434,7 +435,9 @@ sub getScriptConfig {
         $image_config_data = $TEMP->{'image_configs'};
       }
     }
-    $script_config->update_from_input( $self->input ); ## Needs access to the CGI.pm object...
+    unless( $do_not_pop_from_params ) {
+      $script_config->update_from_input( $self->input ); ## Needs access to the CGI.pm object...
+    }
     $Configs_of{ ident $self }{$script} = {
       'config'            => $script_config,       ## List of attached
       'image_configs'     => {},                   ## List of attached image configs

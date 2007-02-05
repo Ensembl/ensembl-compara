@@ -37,6 +37,7 @@ use CGI::Cookie;
 ### handled!
     my(  $self, $r, $cookie ) = @_;
 #-- No db connection so return - can't create session...
+warn "CREATING SESSION.... ";
     return 0 unless( $self->get_db_adaptor );
 #-- Increment last_session_no in db and return value!
     $self->get_db_adaptor->do("lock tables session write");
