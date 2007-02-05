@@ -132,127 +132,9 @@ sub ld_values {
 ###############################################################################
 
 
-sub html_lddata {
-  return output_lddata( @_ );
-
-  ###  Args      : panel, object
-  ### It first calls ld_values function which returns the data in 
-  ### text format.  It formats this data into HTML and 
-  ### prints a title and the LD values in an HTML table to the panel.
-  ### Returns 1
-
-=pod
-  my $return = ld_values($object);
-  return 1 unless defined $return && %$return;
-
-  foreach my $ldtype (keys %$return) {
-    foreach my $pop_name ( sort {$a cmp $b } keys %{ $return->{$ldtype} } ) {
-      $panel->print("<h4>", $return->{$ldtype}{$pop_name}{"text"}, "</h4>");
-      unless ( $return->{$ldtype}{$pop_name}{"data"} ) {
-        next;
-      }
-
-      my ( $starts, $snps, $table_data ) = (@ {$return->{$ldtype}{$pop_name}{"data"} });
-      if (!$starts) { # there is no data for this area
-	return 1;
-      }
-      my $start      = shift @$starts;
-      my $first_snp  = shift @$snps;
-      my $url =  qq(<a href="snpview?snp=%s">%s</a>);
-      my $first_snp_link = sprintf($url, $first_snp, $first_snp).": $start";
-      my $footer_row = qq(<th>SNPs: bp position</th><td>$first_snp_link</td>);
-      my $header_row = qq(<th>SNPs: bp position</th>
-                         <td class="bg2">$first_snp_link</td>);
-
-      # Fill rest of table ----------------------------------------------------
-      my @colour_gradient = @{ _get_colour_gradient($object) };
-      my $table_rows;
-      foreach my $row (@$table_data) {
-	next unless ref $row eq 'ARRAY';
-	my $snp = shift @$snps;
-	my $pos = shift @$starts;
-	my $snp_string = $snp =~/^\*/ ? "<strong>". sprintf($url, $snp, $snp).": $pos</strong>" : sprintf($url, $snp, $snp).": $pos";
-	$table_rows .= qq(
-  <tr style="vertical-align: middle"  class="small">
-    <td class="bg2">$snp_string</td>).
-      join( '', map { 
-	sprintf qq(\n    <td class="center" style="background-color:#%s">%s</td>),
-	  $colour_gradient[floor($_*40)],
-	    $_ ? sprintf("%.3f", $_ ): '-' } @$row );
-
-	$table_rows .= qq(
-    <td class="bg2">$snp_string</td>
-  </tr>) if scalar @$snps;
-	next if $row == $table_data->[-1];
-	$footer_row .= qq(
-    <td>$snp_string</td>);
-      }
-      $panel->print(qq(
-                     <table width="100%">  
-                        <tr class="bg2 small">
-                           $header_row
-                        </tr>$table_rows
-                        <tr class="bg2 small">
-                           $footer_row
-                      </tr>
-                      </table>));
-    }
-  }
-  return 1;
-=cut
-}
-
-
-###############################################################################
-
-
-sub text_lddata {
-  return output_lddata( @_ );
-
-  ### Args:  Either a string with "No data" message or Arrayref 
-  ### Each value in the array is an arrayrefs with arrayref of 
-  ### SNP start positions in basepair (start order)
-  ### Arrayref of SNP names in start order
-  ### Arrayref 2 dimensional array of LD values
-  ### Example : $self->text_ldtable({$title, \@starts, \@snps, \@table});
-  ### Description : prints text formatted table for LD data
-  ### Returns text (string)
-=pod 
-  my $return = ld_values($object);
-  return 1 unless %$return;
-
-  foreach my $ldtype (keys %$return) {
-   foreach my $pop_name ( sort {$a cmp $b } keys %{ $return->{$ldtype} } ) {
-     $panel->print($return->{$ldtype}{$pop_name}{"text"}."\n");
-     unless ( $return->{$ldtype}{$pop_name}{"data"} ) {
-       next;
-     }
-
-     my ( $starts, $snps, $table_data ) = (@ {$return->{$ldtype}{$pop_name}{"data"} });
-     my $output = "\nbp position\tSNP\t". (join "\t", @$snps);
-     unshift (@$table_data, [""]);
-
-     foreach my $row (@$table_data) {
-       next unless ref $row eq 'ARRAY';
-       my $snp = shift @$snps;
-       my $pos = shift @$starts;
-
-       $output .= "\n$pos\t$snp\t";
-       $output .= join "\t", (map {  $_ ? sprintf("%.3f", $_ ): '-' } @$row );
-     }
-     $output .="\n\n";
-     $panel->print("$output");
-   }
- }
-  return 1;
-=cut
-}
-
-################################################################################
-
-sub excel_lddata {
-  return output_lddata( @_ );
-}
+sub html_lddata { return output_lddata( @_ ); }
+sub text_lddata { return output_lddata( @_ ); }
+sub excel_lddata { return output_lddata( @_ ); }
 
 sub output_lddata {
 
@@ -299,7 +181,6 @@ sub output_lddata {
       } else {
         $table_renderer->new_table();        # Start a new table!
       }
-warn "SETTING WIDTH TO ", 2+@$snps;
       $table_renderer->set_width( 2 + @$snps );
       $table_renderer->heading( $return->{$ldtype}{$pop_name}{"text"} );
       $table_renderer->new_row();
