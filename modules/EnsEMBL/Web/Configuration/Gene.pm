@@ -333,17 +333,16 @@ sub geneseqview {
   $self->set_title( "Gene sequence for ".$self->{object}->stable_id );
   if( my $panel1 = $self->new_panel( 'Information',
     'code'    => "info#",
-    'caption' => 'Gene Sequence information',
+    'caption' => 'Gene Sequence information for '.$self->{object}->stable_id,
   ) ) {
     $self->add_form( $panel1,
       qw(markup_options EnsEMBL::Web::Component::Gene::markup_options_form)
     );
     $panel1->add_components(qw(
       name           EnsEMBL::Web::Component::Gene::name
-      stable_id      EnsEMBL::Web::Component::Gene::stable_id
       location       EnsEMBL::Web::Component::Gene::location
       markup_options EnsEMBL::Web::Component::Gene::markup_options
-      sequence       EnsEMBL::Web::Component::Gene::sequence
+      sequence       EnsEMBL::Web::Component::Slice::sequence_display
     ));
     $self->add_panel( $panel1 );
   }

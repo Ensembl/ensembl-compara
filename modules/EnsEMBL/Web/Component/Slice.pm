@@ -486,7 +486,9 @@ sub markupInit {
 
   foreach my $slice (@$slices) {
     my $sequence = $slice->seq;
-    if ($slice->isa('Bio::EnsEMBL::Compara::AlignSlice::Slice')) {
+    if ($slice->isa('Bio::EnsEMBL::Compara::AlignSlice::Slice') or 
+       $slice->isa('Bio::EnsEMBL::StrainSlice') ) {
+      warn $slice->seq_region_name;
       ($species = $slice->seq_region_name) =~ s/ /\_/g;
       foreach my $uSlice (@{$slice->get_all_underlying_Slices}) {
         next if ($uSlice->seq_region_name eq 'GAP');
@@ -551,6 +553,7 @@ sub markupInit {
 }
 
 
+# Gene Seq Align View -----------------------------------------------------------------------
 sub align_sequence_display {
   my( $panel, $object ) = @_;
   my $slice   = $object->get_slice_object->Obj;
@@ -568,7 +571,6 @@ sub align_sequence_display {
     my $compara_db = $object->database('compara');
     my $mlss_adaptor = $compara_db->get_adaptor("MethodLinkSpeciesSet");
     my $method_link_species_set = $mlss_adaptor->fetch_by_dbID($selectedAlignment); 
-
     my $as_adaptor = $compara_db->get_adaptor("AlignSlice" );
     my $align_slice = $as_adaptor->fetch_by_Slice_MethodLinkSpeciesSet($slice, $method_link_species_set);
 
@@ -638,17 +640,20 @@ sub align_sequence_display {
 
 #---------------------------------------------------------------------------------------
 sub sequence_display {
+
+  ### GeneSeqView
+
   my( $panel, $object ) = @_;
 
-  my $slice   = $object->Obj;
-  my $sstrand = $slice->strand; # SNP strand bug has been fixed in snp_display function
-  my $sstart  = $slice->start;
-  my $send    = $slice->end;
-  my $slength = $slice->length;
+  my $slice   = $object->get_slice_object(); # Object for this section is the slice
+  my $sstrand = $slice->Obj->strand; # SNP strand bug has been fixed in snp_display function
+  my $sstart  = $slice->Obj->start;
+  my $send    = $slice->Obj->end;
+  my $slength = $slice->Obj->length;
 
-  my $snps  = $object->param( 'snp_display' )  eq 'snp' ? $object->snp_display()  : [];
-  my $exons = $object->param( 'exon_display' ) ne 'off' ? $object->exon_display() : [];
-  my $feats = $object->highlight_display();
+  my $snps  = $slice->param( 'snp_display' )  eq 'snp' ? $slice->snp_display()  : [];
+  my $exons = $slice->param( 'exon_display' ) ne 'off' ? $slice->exon_display() : [];
+  my $feats = $slice->highlight_display();
 
   # Define a formatting styles. These correspond to name/value pairs
   # in HTML style attributes
@@ -866,10 +871,10 @@ sub sequence_display {
 
   # Let's do the markup!
   my $markedup_seq = '';
-  my $seq     = $slice->seq;
+  my $seq     = $slice->Obj->seq;
   my $linelength  = 60; # TODO: retrieve with method?
   my $length = length( $seq );
-  my @linenumbers = $object->line_numbering();
+  my @linenumbers = $slice->line_numbering();
   my $numdir = ($linenumbers[0]||0)<($linenumbers[1]||0)?1:-1;
   my( $numlength ) = sort{$b<=>$a} map{length($_)} @linenumbers;
   $numlength ||= '';
@@ -923,7 +928,7 @@ sub sequence_display {
   }
   $panel->add_row( 'Marked_up_sequence', qq(
     $KEY
-    <pre>&gt;@{[ $slice->name ]}\n$markedup_seq</pre>
+    <pre>&gt;@{[ $slice->Obj->name ]}\n$markedup_seq</pre>
   ) );
 }
 
@@ -939,21 +944,27 @@ sub sequencealignview {
 
   #Get reference slice
   my $refslice = $object->slice;
-  my @strain_slices;
   my @individuals = ($object->get_individuals('display'));
 
   # Get slice for each display strain
+  my @sliceArray;
   foreach my $individual ( @individuals ) {
     my $individual_slice = $refslice->get_by_strain( $individual );
     next unless $individual_slice;
-    push @strain_slices, $individual_slice;
+    push @sliceArray, $individual_slice;
   }
+
+  # Get align slice
+  my $align_slice = Bio::EnsEMBL::AlignStrainSlice->new(-SLICE => $refslice,
+                                                        -STRAINS => \@sliceArray);
 
 
   # Markup
-  my ($sliceHash, $max_position, $max_label, $consArray) =  markupInit_fc1($object, \@strain_slices);
+  my %sliceHash;
+  my $sliceHash;
+  my ($max_position, $max_label, $consArray) =  markupInit($object, \@sliceArray, \%sliceHash);
   my  @linenumbers =  $object->line_numbering;
-  my $html = generateHTML($object, $sliceHash, $max_position, $max_label, \@linenumbers);
+  my $html = generateHTML($object, \%sliceHash, $max_position, $max_label, \@linenumbers);
 
   my $name = $refslice->name;
 #  $panel->add_row("Slice", "<p>$name Length: $length</p>");
@@ -976,17 +987,12 @@ sub sequencealignview {
  #  ) );
 
 
-  # Make an align slice
-  my $align_slice = Bio::EnsEMBL::AlignStrainSlice->new(-SLICE => $refslice,
-                                                     -STRAINS => \@strain_slices);
-
   my $length =  $align_slice->length;
   my $info;
-  foreach my $strain_slice (@strain_slices) {
+  foreach my $strain_slice (@sliceArray) {
 
     #get coordinates of variation in alignSlice
     my @allele_features = @{$strain_slice->get_all_AlleleFeatures_Slice() || []};
-    print Dumper($align_slice->{'mapper'});
     foreach my $af ( @allele_features ){
       my $new_feature = $align_slice->alignFeature($af, $strain_slice);
       $info .= "Coordinates of the feature in AlignSlice are: ". $new_feature->start. "-". $af->start. "<br />";
@@ -998,13 +1004,12 @@ sub sequencealignview {
 
 
 sub markupInit_fc1 {
-  my ($object, $slices) = @_;
+  my ($object, $slices, $hRef) = @_;
 
   my (@conservation);
   my $max_position = 0;
   my $max_label = -1;
   my $ins_On = 128;
-  my $hRef;
 
   my $slice_length = length($slices->[0]->seq) + 1 ;
   my $width = $object->param("display_width") || 60;
@@ -1012,6 +1017,7 @@ sub markupInit_fc1 {
   foreach my $slice (@$slices) {
     my $sequence = $slice->seq;
     my $strain_name = $slice->strain_name;
+#    warn $slice;
 #     if ($slice->isa('Bio::EnsEMBL::AlignStrainSlice')) {
 #       foreach my $uSlice (@{$slice->get_all_underlying_Slices}) {
 #         next if ($uSlice->seq_region_name eq 'GAP');

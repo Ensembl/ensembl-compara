@@ -16,12 +16,6 @@ use Bio::AlignIO;
 use IO::String;
 
 
-sub sequence {
-  my( $panel, $object ) = @_;
-  return EnsEMBL::Web::Component::Slice::sequence_display(
-    $panel, $object->get_slice_object()
-  );
-}
 sub markup_options {
   my( $panel, $object ) =@_;
   $panel->add_row( 'Markup options', "<div>@{[ $panel->form( 'markup_options' )->render ]}</div>" );
