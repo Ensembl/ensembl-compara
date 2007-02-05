@@ -656,14 +656,10 @@ sub sequence_display {
   my $exons = $slice->param( 'exon_display' ) ne 'off' ? $slice->exon_display() : [];
 
   # Return all exon features on gene
-  my $feats = $slice->highlight_display( $object->Obj->get_all_Exons );
-
-  my $sstrand = $slice->Obj->strand; # SNP strand bug has been fixed in snp_display function
-  my $sstart  = $slice->Obj->start;
-  my $send    = $slice->Obj->end;
+  my $all_exons = $slice->highlight_display( $object->Obj->get_all_Exons );
 
   # Create bins for sequence markup --------------------------------------
-  my @bin_locs = @{ bin_starts($slice, $sstrand, $sstart, $send, $feats, $exons, $snps) };
+  my @bin_locs = @{ bin_starts($slice, $all_exons, $exons, $snps) };
   my %bin_idx; # A hash index of bin start locations vs pos in index
 
   my @bin_markup;
@@ -678,30 +674,39 @@ sub sequence_display {
 
   # Define a formatting styles. These correspond to name/value pairs ---------------
   # in HTML style attributes
-  my $style_tmpl = qq(<span style="%s" title="%s">%s</span>);
-  my $key_tmpl = qq(<p><code>$style_tmpl</code> %s</p>);
   my %styles = (
     DEFAULT =>{},
-    exon    => { 'color' => 'darkred',  'font-weight' =>'bold' },
-    high2   => { 'color' => 'darkblue', 'font-weight' =>'bold' },
-    high1   => { 'background-color' => 'blanchedalmond' },
-    snp     => { 'background-color' => '#caff70'        },
-    snpexon => { 'background-color' => '#7fff00'        }
+		## exon    => { 'color' => 'darkred',  'font-weight' =>'bold' },
+		## high2   => { 'color' => 'darkblue', 'font-weight' =>'bold' },
+		## high1   => { 'background-color' => 'blanchedalmond' },
+		allexon      => { 'background-color' => 'blanchedalmond' },
+		exon   => { 'color' => 'darkred',  'font-weight' =>'bold'},
+		bothexon   => {'background-color' => 'blanchedalmond',
+			       'color' => 'darkred',  'font-weight' =>'bold'},
+		snp       => { 'background-color' => '#caff70'        },
+		snpexon   => { 'background-color' => '#7fff00'        }
   );
 
   my $KEY = '';
-
-  if( @$feats ){
-    my $type = $feats->[0]->isa('Bio::EnsEMBL::Exon') ? 'exons' : 'features';
-    my %istyles = %{$styles{high1}};
-    my $style = join( ';',map{"$_:$istyles{$_}"} keys %istyles );
-    $KEY .= sprintf( $key_tmpl, $style, "", "THIS STYLE:", "Location of other $type" )
-  }
+  my $style_tmpl = qq(<span style="%s" title="%s">%s</span>);
+  my $key_tmpl = qq(<p><tt>$style_tmpl</tt> %s</p>);
 
   if( @$exons ){
     my %istyles = %{$styles{exon}};
     my $style = join( ';',map{"$_:$istyles{$_}"} keys %istyles );
-    $KEY .= sprintf( $key_tmpl, $style, "", "THIS STYLE:", "Location of selected exons ")
+    my $selected =  ucfirst($slice->param( 'exon_display' ));
+    $selected = "Ensembl" if $selected eq 'Core';
+    $KEY .= sprintf( $key_tmpl, $style, "", "THIS STYLE:", "Location of $selected exons ");
+
+    if( @$all_exons ){
+      my $type = $all_exons->[0]->isa('Bio::EnsEMBL::Exon') ? 'exons' : 'features';
+      my %istyles = %{$styles{allexon}};
+      
+      # color:'darkred';font-weight:'bold'
+      my $style = join( ';',map{"$_:$istyles{$_}"} keys %istyles );
+      my $other = @$exons ? "other" : "";
+      $KEY .= sprintf( $key_tmpl, $style, "", "THIS STYLE:", "Location of $other $type" )
+    }
   }
 
   if( @$snps ){
@@ -711,66 +716,17 @@ sub sequence_display {
   }
 
 
-  # Populate bins with exons -----------------------------------------------
-  my %estyles         = %{ $styles{exon} };
-  my %snpstyles      = %{ $styles{snp} };
-  my %snpexonstyles = %{ $styles{snpexon} };
-
-  foreach my $feat( @$exons ){ # user chosen exons
-    my $fstrand = $feat->seq_region_strand;
-    my $title = $feat->stable_id;
-    my $fstart  = $fstrand < 0 ? $send - $feat->seq_region_end + 1 : $feat->seq_region_start - $sstart + 1;
-
-    foreach my $seg(  @{ cigar_segments($feat) }  ){
-      my $type = chop( $seg ); # Remove seg type - length remains
-      next if( $type eq 'D' ); # Ignore deletes
-      my $fend = $fstart + $seg;
-      my $idx_start = $fstart > 0 ? $bin_idx{$fstart} : $bin_idx{1};
-      my $idx_end   = ( $bin_idx{$fend} ? $bin_idx{$fend} : @bin_markup ) -1;
-      $fstart += $seg;
-      next if $type ne 'M'; # Only markup matches
-      # Add styles to affected bins
-      my %istyles = %{$styles{high1}};
-      foreach my $bin( @bin_markup[ $idx_start .. $idx_end ] ){
-        map{ $bin->[1]->{$_} = $estyles{$_} } keys %estyles;
-        $bin->[2] = join( ' : ', $bin->[2]||(), $title||() );
-      }
-    }
+  # Populate bins with exons ----------------------------
+  if (@$exons) {
+    populate_bins($exons, $slice, \%bin_idx, \@bin_markup, \%styles, "exon");
+    populate_bins($all_exons, $slice, \%bin_idx, \@bin_markup, \%styles, "allexon") if @$all_exons;
   }
 
-  # Populate bins with highlighted features
-  foreach my $feat( @$feats ){
-    # skip the features that were cut off by applying flanking sequence parameters
-    next if ($feat->end < $sstart || $feat->start > $send);
 
-    my $fstrand = $feat->seq_region_strand;
-    my $title;
-    if ($feat->can('stable_id')) { $title = $feat->stable_id; }
-    my $fstart  = $fstrand < 0 ? $send - $feat->seq_region_end + 1 : $feat->seq_region_start - $sstart + 1;
-
-    foreach my $seg(  @{ cigar_segments($feat) } ){
-      my $type = chop( $seg ); # Remove seg type - length remains
-      next if( $type eq 'D' ); # Ignore deletes
-      my $fend = $fstart + $seg;
-      my $idx_start = $fstart > 0 ? $bin_idx{$fstart} : $bin_idx{1};
-      my $idx_end   = ( $bin_idx{$fend} ? $bin_idx{$fend} : @bin_markup ) -1;
-      $fstart += $seg;
-      next if $type ne 'M'; # Only markup matches
-      # Add styles to affected bins
-      my %istyles = %{$styles{high1}};
-      foreach my $bin( @bin_markup[ $idx_start..$idx_end ] ){
-	map{ $bin->[1]->{$_} = $istyles{$_} } keys %istyles;
-        next unless $title;
-	if (defined (my $alt = $bin->[2])) {
-	  if (! grep {$_ eq $title} split(/ : /, $alt) ) {
-	    $bin->[2] = "$alt:$title";
-	  }
-	} else {
-	  $bin->[2] = $title;
-	}
-      }
-    }
-  }
+  # Populate bins with SNPs -----------------------------
+  my %snpstyles = %{$styles{snp}};
+  my %snpexonstyles = %{$styles{snpexon}};
+  my $sstrand = $slice->Obj->strand; # SNP strand bug has been fixed in snp_display function
 
   foreach my $snp( @$snps ){
     my( $fstart, $fend ) = ( $snp->start, $snp->end );
@@ -785,21 +741,19 @@ sub sequence_display {
     my $allele = $snp->allele_string;
 
     if ($sstrand < 0) {
-# Ig gene is reverse strand we need to reverse parts of allele, i.e AGT/- should become TGA/-
-    my @av = split(/\//, $allele);
-    $allele = '';
+      # Ig gene is reverse strand we need to reverse parts of allele, i.e AGT/- should become TGA/-
+      my @av = split(/\//, $allele);
+      $allele = '';
 
-    foreach my $aq (@av) {
+      foreach my $aq (@av) {
         $allele .= reverse($aq).'/';
+      }
+      $allele =~ s/\/$//;
     }
 
-    $allele =~ s/\/$//;
-    }
+    # if snp is on reverse strand - flip the bases
+    $allele =~ tr/ACGTacgt/TGCAtgca/ if $snp->strand < 0;
 
-# if snp is on reverse strand - flip the bases
-    if( $snp->strand < 0 ){
-      $allele =~ tr/ACGTacgt/TGCAtgca/;
-    }
     $bin->[2] = $allele || '';
     $bin->[3] = ($snp->end > $snp->start) ? 'ins' : 'del';
     $bin->[4] = $snp->{variation_name};
@@ -874,7 +828,7 @@ sub sequence_display {
     }
     $markedup_seq .= "\n";
   }
-  $panel->add_row( 'Marked_up_sequence', qq(
+  $panel->add_row( 'Marked up sequence', qq(
     $KEY
     <pre>&gt;@{[ $slice->Obj->name ]}\n$markedup_seq</pre>
   ) );
@@ -891,12 +845,15 @@ sub bin_starts {
   ### Bins start at feature starts, and end at feature ends + 1
   ### Allow for cigar strings - these split alignments into 'mini-features'.
 
-  my ($slice, $sstrand, $sstart, $send, $feats, $exons, $snps) = @_;
+  my ($slice, $all_exons, $exons, $snps) = @_;
   my $slength = $slice->Obj->length;
+  my $sstart  = $slice->Obj->start;
+  my $send    = $slice->Obj->end;
+  my $sstrand = $slice->Obj->strand; # SNP strand bug has been fixed in snp_display function
 
   # Get a unique list of all possible bin starts
   my %all_locs = ( 1=>1, $slength+1=>1 );
-  foreach my $feat ( @$feats, @$exons ){
+  foreach my $feat ( @$all_exons, @$exons ){
     # skip the features that were cut off by applying flanking sequence parameters
     next if $feat->seq_region_start < $sstart || $feat->seq_region_end > $send;
 
@@ -944,6 +901,50 @@ sub cigar_segments {
   my @segs = ( $cigar =~ /(\d*\D)/g ); # Segment cigar
   if( $feat->seq_region_strand < 1 ){ @segs = reverse( @segs ) } # if -ve ori, invert cigar
   return \@segs || [];
+}
+
+#----------------------------------------------------------
+sub populate_bins {
+  my ($exons, $slice, $bin_idx, $bin_markup, $styles, $key) = @_;
+  my %estyles  = %{ $styles->{$key} };
+  my $sstart  = $slice->Obj->start;
+  my $send    = $slice->Obj->end;
+
+  foreach my $feat( @$exons ){ # user chosen exons
+    next if $key eq 'allexons' && ($feat->end < $sstart || $feat->start > $send);
+    my $fstrand = $feat->seq_region_strand;
+    my $fstart  = $fstrand < 0 ? $send - $feat->seq_region_end + 1 : $feat->seq_region_start - $sstart + 1;
+
+    my $title;
+    if ($feat->can('stable_id')) { $title = $feat->stable_id; }
+
+   foreach my $seg(  @{ cigar_segments($feat) }  ){
+     my $type = chop( $seg ); # Remove seg type - length remains
+     next if( $type eq 'D' ); # Ignore deletes
+     my $fend = $fstart + $seg;
+     my $idx_start = $fstart > 0 ? $bin_idx->{$fstart} : $bin_idx->{1};
+     my $idx_end   = ( $bin_idx->{$fend} ? $bin_idx->{$fend} : @$bin_markup ) -1;
+     $fstart += $seg;
+     next if $type ne 'M'; # Only markup matches
+
+     # Add styles to affected bins
+     my %istyles = %{$styles->{allexon}};
+
+     foreach my $bin( @$bin_markup[ $idx_start .. $idx_end ] ){
+       map{ $bin->[1]->{$_} = $estyles{$_} } keys %estyles;
+       next unless $title;
+
+       if ($key eq 'allexon' && defined (my $alt = $bin->[2]) ) {
+	 if (! grep {$_ eq $title} split(/ : /, $alt) ) {
+	   $bin->[2] = "$alt:$title";
+	   next;
+	 }
+       }
+       $bin->[2] = join( ' : ', $bin->[2]||(), $title||() );
+     } # end foreach $bin
+   }
+  }
+  return 1;
 }
 
 
