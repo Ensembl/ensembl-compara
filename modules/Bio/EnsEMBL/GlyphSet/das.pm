@@ -531,7 +531,7 @@ sub gmenu{
 #      warn(Data::Dumper::Dumper($f));
   foreach my $group ($f->das_groups) {
     my $txt = $group->{'group_label'} || $group->{'group_id'};
-    next if ($txt !~ $f->{'grouped_by'});
+    next if ($txt !~ quotemeta( $f->{'grouped_by'} ));
     $id = $txt if (! $id);
     my $dlabel = sprintf("%02d:GROUP : %s", $ids++, $txt);
     $zmenu->{$dlabel} = '';
@@ -570,7 +570,7 @@ sub gmenu{
     $ids ++;
   }
 
-  if ($id) {
+  if( $id ) {
     $zmenu->{'caption'} = $id;
   } else {
     $zmenu->{'caption'} = $f->das_feature_label || $f->das_feature_id;
