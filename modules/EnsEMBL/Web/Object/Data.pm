@@ -66,14 +66,6 @@ sub add_has_many {
   push @{ $self->has_many}, $arg;
 }
 
-sub add_has_many {
-  my ($self, $arg) = @_;
-  if (!$self->get_has_many) {
-    $self->set_has_many([]);
-  }
-  push @{ $self->has_many}, $arg;
-}
-
 sub add_belongs_to {
   my ($self, $arg) = @_;
   if (!$self->get_belongs_to ) {
