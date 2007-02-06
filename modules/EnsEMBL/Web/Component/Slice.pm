@@ -14,6 +14,93 @@ no warnings "uninitialized";
 my ($exon_On, $cs_On, $snp_On, $snp_Del, $ins_On, $codon_On) = (1, 16, 32, 64, 128, 256);
 my $BR = '###';
 
+# Gene Seq Align View -----------------------------------------------------------------------
+sub align_sequence_display {
+  my( $panel, $object ) = @_;
+  my $slice   = $object->get_slice_object->Obj;
+  my @sliceArray;
+
+# Get the alignment configuration 
+
+# First get the selected alignment
+  my $selectedAlignment = $object->param("RGselect") || 'NONE';
+
+# If 'No alignment' selected then we just display the original sequence as in geneseqview
+  if ($selectedAlignment eq 'NONE') {
+    push @sliceArray, $slice;
+  } else {
+    my $compara_db = $object->database('compara');
+    my $mlss_adaptor = $compara_db->get_adaptor("MethodLinkSpeciesSet");
+    my $method_link_species_set = $mlss_adaptor->fetch_by_dbID($selectedAlignment); 
+    my $as_adaptor = $compara_db->get_adaptor("AlignSlice" );
+    my $align_slice = $as_adaptor->fetch_by_Slice_MethodLinkSpeciesSet($slice, $method_link_species_set);
+
+    my @selected_species = grep {$_ } $object->param("ms_${selectedAlignment}");
+
+# I could not find a better way to distinguish between pairwise alignments
+# and multiple alignments. The difference is that in case of multiple alignments
+# there are checkboxes for all species from the alignment apart from the reference species: So we need to add the reference species to the list of selected species. In case of pairwise alignments the list remains empty - that will force the display of all available species in the alignment
+    if ( scalar (@{$method_link_species_set->species_set}) > 2) {
+      unshift @selected_species, $object->species;
+    }
+
+    push @sliceArray, @{$align_slice->get_all_Slices(@selected_species)};
+  }
+
+  my %sliceHash;
+  my ($max_position, $max_label, $consArray) = markupInit($object, \@sliceArray, \%sliceHash);
+
+  my $key_tmpl = qq(<p><code><span id="%s">%s</span></code> %s</p>\n);
+  my $KEY = '';
+
+  if( ($object->param( 'conservation' ) ne 'off')  &&  markupConservation($object, \%sliceHash, $consArray)){
+      $KEY .= sprintf( $key_tmpl, 'nc', "THIS STYLE:", "Location of conserved regions (where >50% of bases in alignments match) ");
+  }
+
+  if(  $object->param( 'codons_display' ) ne 'off' ){
+    markupCodons($object, \%sliceHash);
+    $KEY .= sprintf( $key_tmpl, 'eo', "THIS STYLE:", "Location of START/STOP codons ");
+  }
+
+  if(  $object->param( 'exon_display' ) ne 'off' ){
+    markupExons($object, \%sliceHash);
+    $KEY .= sprintf( $key_tmpl, 'e', "THIS STYLE:", "Location of selected exons ");
+  }
+
+
+  if( $object->param( 'snp_display' )  eq 'snp'){
+    markupSNPs($object, \%sliceHash);
+    $KEY .= sprintf( $key_tmpl, 'ns', "THIS STYLE:", "Location of SNPs" );
+    $KEY .= sprintf( $key_tmpl, 'nd', "THIS STYLE:", "Location of deletions" );
+  }
+
+  if ($object->param('line_numbering') eq 'slice') {
+    $KEY .= qq{ NOTE:     For secondary species we display the coordinates of the first and the last mapped (i.e A,T,G,C or N) basepairs of each line };
+  }
+
+  my $html = generateHTML($object, \%sliceHash, $max_position, $max_label);
+
+# Add a section holding the names of the displayed slices
+  my $Chrs;
+  foreach my $sp ( $object->species, grep {$_ ne $object->species } keys %sliceHash) {
+    $Chrs .= qq{<p><br/><b>$sp&gt;<br/></b>};
+    foreach my $loc (@{$sliceHash{$sp}->{slices}}) {
+      my ($stype, $assembly, $region, $start, $end, $strand) = split (/:/ , $loc);
+      $Chrs .= qq{<p><a href="/$sp/contigview?l=$region:$start-$end">$loc</a></p>};
+    }
+  }
+
+  $panel->add_row( 'Marked_up_sequence', qq(
+    $KEY
+    $Chrs
+    <pre>\n$html\n</pre>
+  ) );
+
+
+}
+
+
+#-----------------------------------------------------------------------------------------
 sub generateHTML {
   my ($object, $hRef, $max_position, $max_label, $linenumber_ref) = @_;
 
@@ -294,6 +381,7 @@ sub markupSNPs {
   }
 }
 
+#-----------------------------------------------------------------------------------------
 sub markupExons {
   my ($object, $hRef) = @_;
 
@@ -357,6 +445,7 @@ sub markupExons {
   }
 }
 
+#-----------------------------------------------------------------------------------------
 sub markupCodons {
   my ($object, $hRef) = @_;
 
@@ -423,6 +512,7 @@ sub markupCodons {
   }
 }
 
+#-----------------------------------------------------------------------------------------
 sub markupConservation {
   my ($object, $hRef, $consArray) = @_;
  
@@ -475,6 +565,7 @@ sub markupConservation {
   }
 }
 
+#-----------------------------------------------------------------------------------------
 sub markupInit {
   my ($object, $slices, $hRef) = @_;
 
@@ -553,92 +644,9 @@ sub markupInit {
 }
 
 
-# Gene Seq Align View -----------------------------------------------------------------------
-sub align_sequence_display {
-  my( $panel, $object ) = @_;
-  my $slice   = $object->get_slice_object->Obj;
-  my @sliceArray;
 
-# Get the alignment configuration 
+####### GENE SEQ VIEW #########################################################################
 
-# First get the selected alignment
-  my $selectedAlignment = $object->param("RGselect") || 'NONE';
-
-# If 'No alignment' selected then we just display the original sequence as in geneseqview
-  if ($selectedAlignment eq 'NONE') {
-    push @sliceArray, $slice;
-  } else {
-    my $compara_db = $object->database('compara');
-    my $mlss_adaptor = $compara_db->get_adaptor("MethodLinkSpeciesSet");
-    my $method_link_species_set = $mlss_adaptor->fetch_by_dbID($selectedAlignment); 
-    my $as_adaptor = $compara_db->get_adaptor("AlignSlice" );
-    my $align_slice = $as_adaptor->fetch_by_Slice_MethodLinkSpeciesSet($slice, $method_link_species_set);
-
-    my @selected_species = grep {$_ } $object->param("ms_${selectedAlignment}");
-
-# I could not find a better way to distinguish between pairwise alignments
-# and multiple alignments. The difference is that in case of multiple alignments
-# there are checkboxes for all species from the alignment apart from the reference species: So we need to add the reference species to the list of selected species. In case of pairwise alignments the list remains empty - that will force the display of all available species in the alignment
-    if ( scalar (@{$method_link_species_set->species_set}) > 2) {
-      unshift @selected_species, $object->species;
-    }
-
-    push @sliceArray, @{$align_slice->get_all_Slices(@selected_species)};
-  }
-
-  my %sliceHash;
-  my ($max_position, $max_label, $consArray) = markupInit($object, \@sliceArray, \%sliceHash);
-
-  my $key_tmpl = qq(<p><code><span id="%s">%s</span></code> %s</p>\n);
-  my $KEY = '';
-
-  if( ($object->param( 'conservation' ) ne 'off')  &&  markupConservation($object, \%sliceHash, $consArray)){
-      $KEY .= sprintf( $key_tmpl, 'nc', "THIS STYLE:", "Location of conserved regions (where >50% of bases in alignments match) ");
-  }
-
-  if(  $object->param( 'codons_display' ) ne 'off' ){
-    markupCodons($object, \%sliceHash);
-    $KEY .= sprintf( $key_tmpl, 'eo', "THIS STYLE:", "Location of START/STOP codons ");
-  }
-
-  if(  $object->param( 'exon_display' ) ne 'off' ){
-    markupExons($object, \%sliceHash);
-    $KEY .= sprintf( $key_tmpl, 'e', "THIS STYLE:", "Location of selected exons ");
-  }
-
-
-  if( $object->param( 'snp_display' )  eq 'snp'){
-    markupSNPs($object, \%sliceHash);
-    $KEY .= sprintf( $key_tmpl, 'ns', "THIS STYLE:", "Location of SNPs" );
-    $KEY .= sprintf( $key_tmpl, 'nd', "THIS STYLE:", "Location of deletions" );
-  }
-
-  if ($object->param('line_numbering') eq 'slice') {
-    $KEY .= qq{ NOTE:     For secondary species we display the coordinates of the first and the last mapped (i.e A,T,G,C or N) basepairs of each line };
-  }
-
-  my $html = generateHTML($object, \%sliceHash, $max_position, $max_label);
-
-# Add a section holding the names of the displayed slices
-  my $Chrs;
-  foreach my $sp ( $object->species, grep {$_ ne $object->species } keys %sliceHash) {
-    $Chrs .= qq{<p><br/><b>$sp&gt;<br/></b>};
-    foreach my $loc (@{$sliceHash{$sp}->{slices}}) {
-      my ($stype, $assembly, $region, $start, $end, $strand) = split (/:/ , $loc);
-      $Chrs .= qq{<p><a href="/$sp/contigview?l=$region:$start-$end">$loc</a></p>};
-    }
-  }
-
-  $panel->add_row( 'Marked_up_sequence', qq(
-    $KEY
-    $Chrs
-    <pre>\n$html\n</pre>
-  ) );
-
-
-}
-
-#---------------------------------------------------------------------------------------
 sub sequence_display {
 
   ### GeneSeqView
