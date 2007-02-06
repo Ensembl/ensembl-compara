@@ -478,7 +478,7 @@ sub markupConservation {
 sub markupInit {
   my ($object, $slices, $hRef) = @_;
 
-  my ($species, @conservation);
+  my @conservation;
   my $max_position = 0;
   my $max_label = -1;
 
@@ -487,11 +487,18 @@ sub markupInit {
 
   foreach my $slice (@$slices) {
     my $sequence = $slice->seq;
+    my $species;
+    my @subslices;
     if ($slice->isa('Bio::EnsEMBL::Compara::AlignSlice::Slice') or 
        $slice->isa('Bio::EnsEMBL::StrainSlice') ) {
-      warn $slice->seq_region_name;
       ($species = $slice->seq_region_name) =~ s/ /\_/g;
-      foreach my $uSlice (@{$slice->get_all_underlying_Slices}) {
+      @subslices = @{$slice->get_all_underlying_Slices};
+    }
+    else {
+      $species = $object->species;
+      @subslices = ($slice);
+    }
+      foreach my $uSlice ( @subslices ) {
         next if ($uSlice->seq_region_name eq 'GAP');
         push @{$hRef->{$species}->{slices}}, $uSlice->name;
         if ( (my $label_length = length($uSlice->seq_region_name)) > $max_label) {
@@ -500,15 +507,7 @@ sub markupInit {
         $max_position = $uSlice->start if ($uSlice->start > $max_position);
         $max_position = $uSlice->end if ($uSlice->end > $max_position);
       }
-    } else {
-      $species = $object->species;
-      $max_position = $slice->start if ($slice->start > $max_position);
-      $max_position = $slice->end if ($slice->end > $max_position);
-      if ( (my $label_length = length($slice->seq_region_name)) > $max_label) {
-        $max_label= $label_length;
-      }
-      push @{$hRef->{$species}->{slices}}, $slice->name;
-    }
+
     $hRef->{$species}->{slice} = $slice;
     $hRef->{$species}->{sequence} = $sequence . ' ';
     $hRef->{$species}->{slice_length} = $slice_length;
@@ -548,7 +547,7 @@ sub markupInit {
         $conservation[$idx++]->{uc($s)} ++;
       }
     }
-  }
+  } # end foreach slice
 
   return ($max_position, $max_label, \@conservation);
 }
@@ -1024,85 +1023,5 @@ sub sequencealignview {
   $panel->add_row( "Alignment", "<p>$info</p>" );
   return 1;
 }
-
-
-sub markupInit_fc1 {
-  my ($object, $slices, $hRef) = @_;
-
-  my (@conservation);
-  my $max_position = 0;
-  my $max_label = -1;
-  my $ins_On = 128;
-
-  my $slice_length = length($slices->[0]->seq) + 1 ;
-  my $width = $object->param("display_width") || 60;
-
-  foreach my $slice (@$slices) {
-    my $sequence = $slice->seq;
-    my $strain_name = $slice->strain_name;
-#    warn $slice;
-#     if ($slice->isa('Bio::EnsEMBL::AlignStrainSlice')) {
-#       foreach my $uSlice (@{$slice->get_all_underlying_Slices}) {
-#         next if ($uSlice->seq_region_name eq 'GAP');
-#         push @{$hRef->{$strain_name}->{slices}}, $uSlice->name;
-#         if ( (my $label_length = length($uSlice->seq_region_name)) > $max_label) {
-#           $max_label = $label_length;
-#         }
-#         $max_position = $uSlice->start if ($uSlice->start > $max_position);
-#         $max_position = $uSlice->end if ($uSlice->end > $max_position);
-#       }
-#     } 
-#     else {
-      $max_position = $slice->start if ($slice->start > $max_position);
-      $max_position = $slice->end if ($slice->end > $max_position);
-      if ( (my $label_length = length($slice->seq_region_name)) > $max_label) {
-        $max_label= $label_length;
-      }
-      push @{$hRef->{$strain_name}->{slices}}, $slice->name;
-#    }
-    $hRef->{$strain_name}->{slice} = $slice;
-    $hRef->{$strain_name}->{sequence} = $sequence . ' ';
-    $hRef->{$strain_name}->{slice_length} = $slice_length;
-
-    # Now put some initial sequence marking
-    # Mark final bp
-    my @markup_bins = ({ 'pos' => $slice_length, 'mark' => 1 });
-
-    # Split the sequence into lines of $width bp length.
-    # Mark start and end of each line
-    my $bin = 0;
-    my $binE = int(($slice_length-1) / $width);
-
-    while ($bin < $binE) {
-      my $pp = $bin * $width + 1;
-      push @markup_bins, { 'pos' => $pp };
-
-      $pp += ($width - 1);
-      push @markup_bins, { 'pos' => $pp, 'mark' => 1 };
-      $bin ++;
-    }
-    push @markup_bins, { 'pos' => $bin * $width + 1 };
-
-    while ($sequence =~ m/(\-+[\w\s])/gc) {
-      my $txt = sprintf("%d bp", pos($sequence) - $-[0] - 1);
-      push @markup_bins, { 'pos' => $-[0]+1, 'mask' => $ins_On, 'text' => $txt };
-      push @markup_bins, { 'pos' => pos($sequence), 'mask' => -$ins_On, 'text' => $txt };
-    }
-
-    $hRef->{$strain_name}->{markup} = \@markup_bins;
-
-    # And in case the conservation markup is switched on - get conservation scores for each basepair in the alignment.
-    # In future the conservation scores will come out of a database and this will be removed
-    if ( $object->param("conservation") ne 'off') {
-      my $idx = 0;
-      foreach my $s (split(//, $sequence)) {
-        $conservation[$idx++]->{uc($s)} ++;
-      }
-    }
-  }  # end of foreach slice
-
-  return ($hRef, $max_position, $max_label, \@conservation);
-}
-
 
 1;
