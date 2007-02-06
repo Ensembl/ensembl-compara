@@ -8,6 +8,7 @@ use strict;
 use warnings;
 use Data::Dumper;
 use Bio::EnsEMBL::AlignStrainSlice;
+use Bio::EnsEMBL::Variation::Utils::Sequence qw(ambiguity_code);
 no warnings "uninitialized";
 
 my ($exon_On, $cs_On, $snp_On, $snp_Del, $ins_On, $codon_On) = (1, 16, 32, 64, 128, 256);
@@ -752,6 +753,7 @@ sub sequence_display {
     $bin->[2] = $allele || '';
     $bin->[3] = ($snp->end > $snp->start) ? 'ins' : 'del';
     $bin->[4] = $snp->{variation_name};
+    $bin->[5] = ambiguity_code($allele);
   }
 
   # If strand is -ve ori, invert bins
@@ -792,7 +794,7 @@ sub sequence_display {
     my (@var_list) = (); # will contain the info about the alleles in the form |base 3456:A/G
     while( $j < $linelength ){
       my $markup = shift @bin_markup|| last;
-      my( $n, $tmpl, $title, $type, $snp_id ) = @$markup; # Length and template of markup
+      my( $n, $tmpl, $title, $type, $snp_id, $ambiguity ) = @$markup; # Length and template of markup
       if (defined($type)) {
     # atm, it can only be 'ins' or 'del' to indicate the type of a variation
     # in case of deletion we highlight flanked bases, and actual region where some bases are missing located at the right flank
@@ -804,7 +806,8 @@ sub sequence_display {
         unshift( @bin_markup, [ $n-($linelength-$j), $tmpl ] );
         $n = $linelength-$j;
       }
-      $markedup_seq .= sprintf( $tmpl, substr( $seq, $i+$j, $n) );
+      my $snp_base = $ambiguity ||  substr( $seq, $i+$j, $n);
+      $markedup_seq .= sprintf( $tmpl, $snp_base) ;
       $j += $n;
     }
     #$markedup_seq .= "\n".substr( $seq, $i+1, $linelength ); # DEBUG
