@@ -175,7 +175,7 @@ sub store {
 
   my $method_link_sql = qq{SELECT 1 FROM method_link WHERE method_link_id = ?};
   my $method_link_type_sql   = qq{SELECT method_link_id from method_link where type = ?};
-  my $method_link_insert_sql = qq{INSERT INTO method_link (type) VALUES(?)};
+  my $method_link_insert_sql = qq{INSERT INTO method_link (type, class) VALUES(?, ?)};
 
   my $method_link_species_set_sql = qq{
         INSERT IGNORE INTO method_link_species_set (
@@ -190,6 +190,7 @@ sub store {
 
   my $method_link_id   = $method_link_species_set->method_link_id;
   my $method_link_type = $method_link_species_set->method_link_type;
+  my $method_link_class = ($method_link_species_set->method_link_class or "");
   my $species_set = $method_link_species_set->species_set;
 
   ## If we have method_link_type but no method_link_id
@@ -203,7 +204,7 @@ sub store {
     } else {
       # Insert new
       my $sth = $self->prepare($method_link_insert_sql);
-      $sth->execute( $method_link_type );
+      $sth->execute( $method_link_type, $method_link_class );
       $method_link_id = $sth->{'mysql_insertid'};      
     }
     # Update the object
@@ -394,7 +395,8 @@ sub fetch_all {
             url,
             method_link_species_set.species_set_id,
             genome_db_id,
-            type
+            type,
+            class
           FROM
             method_link_species_set
             LEFT JOIN method_link USING (method_link_id),
@@ -408,14 +410,15 @@ sub fetch_all {
   my $all_method_link_species_sets;
   my $gdba = $self->db->get_GenomeDBAdaptor;
   
-  while (my ($method_link_species_set_id, $method_link_id, $name, $source, $url, $species_set_id, $genome_db_id, $type) =
-        $sth->fetchrow_array()) {
+  while (my ($method_link_species_set_id, $method_link_id, $name, $source, $url,
+      $species_set_id, $genome_db_id, $type, $class) = $sth->fetchrow_array()) {
     $all_method_link_species_sets->{$method_link_species_set_id}->{'METHOD_LINK_ID'} = $method_link_id;
     $all_method_link_species_sets->{$method_link_species_set_id}->{'NAME'} = $name;
     $all_method_link_species_sets->{$method_link_species_set_id}->{'SOURCE'} = $source;
     $all_method_link_species_sets->{$method_link_species_set_id}->{'URL'} = $url;
     $all_method_link_species_sets->{$method_link_species_set_id}->{'SPECIES_SET_ID'} = $species_set_id;
     $all_method_link_species_sets->{$method_link_species_set_id}->{'METHOD_LINK_TYPE'} = $type;
+    $all_method_link_species_sets->{$method_link_species_set_id}->{'METHOD_LINK_CLASS'} = $class;
     push(@{$all_method_link_species_sets->{$method_link_species_set_id}->{'SPECIES_SET'}},
         $gdba->fetch_by_dbID($genome_db_id));
   }
@@ -428,6 +431,8 @@ sub fetch_all {
                 $all_method_link_species_sets->{$method_link_species_set_id}->{'METHOD_LINK_ID'},
             -method_link_type =>
                 $all_method_link_species_sets->{$method_link_species_set_id}->{'METHOD_LINK_TYPE'},
+            -method_link_class =>
+                $all_method_link_species_sets->{$method_link_species_set_id}->{'METHOD_LINK_CLASS'},
             -name =>
                 $all_method_link_species_sets->{$method_link_species_set_id}->{'NAME'},
             -source =>
@@ -489,10 +494,11 @@ sub fetch_by_dbID {
   my $this_method_link_species_set;
   
   ## Get all rows corresponding to this method_link_species_set
-  while (my ($method_link_species_set_id, $method_link_id, $name, $source, $url, $species_set_id, $genome_db_id, $type) =
-        $sth->fetchrow_array()) {
+  while (my ($method_link_species_set_id, $method_link_id, $name, $source, $url,
+      $species_set_id, $genome_db_id, $type, $class) = $sth->fetchrow_array()) {
     $this_method_link_species_set->{'METHOD_LINK_ID'} = $method_link_id;
     $this_method_link_species_set->{'METHOD_LINK_TYPE'} = $type;
+    $this_method_link_species_set->{'METHOD_LINK_CLASS'} = $class;
     $this_method_link_species_set->{'NAME'} = $name;
     $this_method_link_species_set->{'SOURCE'} = $source;
     $this_method_link_species_set->{'URL'} = $url;
@@ -507,6 +513,7 @@ sub fetch_by_dbID {
           -dbID => $dbID,
           -method_link_id => $this_method_link_species_set->{'METHOD_LINK_ID'},
           -method_link_type => $this_method_link_species_set->{'METHOD_LINK_TYPE'},
+          -method_link_class => $this_method_link_species_set->{'METHOD_LINK_CLASS'},
           -name => $this_method_link_species_set->{'NAME'},
           -source => $this_method_link_species_set->{'SOURCE'},
           -url => $this_method_link_species_set->{'URL'},
@@ -1019,6 +1026,36 @@ sub _run_query_from_method_link_id_genome_db_ids {
   }
 
   return $method_link_species_set;
+}
+
+
+=head2 _get_method_link_class_from_id
+
+  Arg  1     : none
+  Example    : my $method_link_class = $mlssa->_get_method_link_class_from_id()
+  Description: Retrieve method_link_class corresponding to the method_link_id
+  Returntype : string $method_link_class
+  Exceptions : none
+  Caller     : 
+
+=cut
+
+sub _get_method_link_class_from_id {
+  my ($self, $method_link_id) = @_;
+  my $class; # returned string
+  
+  my $sql = qq{
+		SELECT class
+		FROM method_link
+		WHERE method_link_id = ?
+	};
+
+  my $sth = $self->prepare($sql);
+  $sth->execute($method_link_id);
+  
+  $class = $sth->fetchrow_array();
+
+  return $class;
 }
 
 

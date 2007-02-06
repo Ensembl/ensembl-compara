@@ -62,6 +62,10 @@ method_link.method_link_id)
 
 corresponds to method_link.type, accessed through method_link_id (external ref.)
 
+=item method_link_class
+
+corresponds to method_link.class, accessed through method_link_id (external ref.)
+
 =item species_set_id
 
 corresponds to method_link_species_set.species_set_id (external ref. to
@@ -118,6 +122,8 @@ use Bio::EnsEMBL::Utils::Argument qw(rearrange);
               : (opt.) int $method_link_id (the database internal ID for the method_link)
   Arg [-METHOD_LINK_TYPE]
               : (opt.) string $method_link_type (the name of the method_link)
+  Arg [-METHOD_LINK_CLASS]
+              : (opt.) string $method_link_class (the class of the method_link)
   Arg [-SPECIES_SET_ID]
               : (opt.) int $species_set_id (the database internal ID for the species_set)
   Arg [-SPECIES_SET]
@@ -153,15 +159,16 @@ sub new {
   bless $self,$class;
     
   my ($dbID, $adaptor, $method_link_id, $method_link_type, $species_set_id, $species_set,
-      $name, $source, $url, $max_alignment_length) =
+      $method_link_class, $name, $source, $url, $max_alignment_length) =
       rearrange([qw(
           DBID ADAPTOR METHOD_LINK_ID METHOD_LINK_TYPE SPECIES_SET_ID SPECIES_SET
-          NAME SOURCE URL MAX_ALIGNMENT_LENGTH)], @args);
+          METHOD_LINK_CLASS NAME SOURCE URL MAX_ALIGNMENT_LENGTH)], @args);
 
   $self->dbID($dbID) if (defined ($dbID));
   $self->adaptor($adaptor) if (defined ($adaptor));
   $self->method_link_id($method_link_id) if (defined ($method_link_id));
   $self->method_link_type($method_link_type) if (defined ($method_link_type));
+  $self->method_link_class($method_link_class) if (defined ($method_link_class));
   $self->species_set_id($species_set_id) if (defined ($species_set_id));
   $self->species_set($species_set) if (defined ($species_set));
   $self->name($name) if (defined ($name));
@@ -283,6 +290,35 @@ sub method_link_type {
   }
 
   return $self->{'method_link_type'};
+}
+
+
+=head2 method_link_class
+ 
+  Arg [1]    : (opt.) string method_link_class
+  Example    : my $meth_lnk_class = $method_link_species_set->method_link_class();
+  Example    : $method_link_species_set->method_link_class("GenomicAlignBlock.multiple_alignment");
+  Description: get/set for attribute method_link_class
+  Returntype : string
+  Exceptions : none
+  Caller     : general
+ 
+=cut
+
+sub method_link_class {
+  my ($self, $arg) = @_;
+
+  if (defined($arg)) {
+    $self->{'method_link_class'} = $arg;
+  }
+  
+  if (!defined($self->{'method_link_class'})
+      && defined($self->{'method_link_id'})
+      && defined($self->{'adaptor'})) {
+    $self->{'method_link_class'} = $self->adaptor->_get_method_link_class_from_id($self->{'method_link_id'});
+  }
+
+  return $self->{'method_link_class'};
 }
 
 
@@ -446,7 +482,7 @@ sub get_common_classification {
   my $species_set = $self->species_set();
 
   foreach my $this_genome_db (@$species_set) {
-    my @classification = reverse $this_genome_db->taxon->classification;
+    my @classification = split(" ", $this_genome_db->taxon->classification);
     if (!defined($common_classification)) {
       @$common_classification = @classification;
     } else {
@@ -463,7 +499,7 @@ sub get_common_classification {
     }
   }
 
-  return [reverse @$common_classification];
+  return $common_classification;
 }
 
 
