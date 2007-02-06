@@ -590,15 +590,16 @@ sub markupInit {
       $species = $object->species;
       @subslices = ($slice);
     }
-      foreach my $uSlice ( @subslices ) {
-        next if ($uSlice->seq_region_name eq 'GAP');
-        push @{$hRef->{$species}->{slices}}, $uSlice->name;
-        if ( (my $label_length = length($uSlice->seq_region_name)) > $max_label) {
-          $max_label = $label_length;
-        }
-        $max_position = $uSlice->start if ($uSlice->start > $max_position);
-        $max_position = $uSlice->end if ($uSlice->end > $max_position);
+
+    foreach my $uSlice ( @subslices ) {
+      next if ($uSlice->seq_region_name eq 'GAP');
+      push @{$hRef->{$species}->{slices}}, $uSlice->name;
+      if ( (my $label_length = length($uSlice->seq_region_name)) > $max_label) {
+	$max_label = $label_length;
       }
+      $max_position = $uSlice->start if ($uSlice->start > $max_position);
+      $max_position = $uSlice->end if ($uSlice->end > $max_position);
+    }
 
     $hRef->{$species}->{slice} = $slice;
     $hRef->{$species}->{sequence} = $sequence . ' ';
