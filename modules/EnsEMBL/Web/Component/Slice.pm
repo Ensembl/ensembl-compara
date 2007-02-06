@@ -736,7 +736,7 @@ sub sequence_display {
     my $allele = $snp->allele_string;
 
     if ($sstrand < 0) {
-      # Ig gene is reverse strand we need to reverse parts of allele, i.e AGT/- should become TGA/-
+      # If gene is reverse strand we need to reverse parts of allele, i.e AGT/- should become TGA/-
       my @av = split(/\//, $allele);
       $allele = '';
 
@@ -755,8 +755,8 @@ sub sequence_display {
   }
 
   # If strand is -ve ori, invert bins
-# SNP strand bug has been fixed in snp_display function : no need to check for the strand
-#  if( $sstrand < 1 ){ @bin_markup = reverse( @bin_markup ) }
+  # SNP strand bug has been fixed in snp_display function : no need to check for the strand
+  #  if( $sstrand < 1 ){ @bin_markup = reverse( @bin_markup ) }
 
   # Turn the 'bin markup' style hashes into style templates
   foreach my $bin( @bin_markup ){
@@ -909,12 +909,12 @@ sub populate_bins {
   ### GeneSeqView
   ### Code to mark up the exons in each bin
 
-  my ($other_exons, $slice, $bin_idx, $bin_markup, $styles, $key) = @_;
+  my ($exons, $slice, $bin_idx, $bin_markup, $styles, $key) = @_;
   my %estyles  = %{ $styles->{$key} };
   my $sstart  = $slice->Obj->start;
   my $send    = $slice->Obj->end;
 
-  foreach my $feat( @$other_exons ){ # user chosen exons
+  foreach my $feat( @$exons ){ 
     next if $key eq 'gene_exons' && ($feat->end < $sstart || $feat->start > $send);
     my $fstrand = $feat->seq_region_strand;
     my $fstart  = $fstrand < 0 ? $send - $feat->seq_region_end + 1 : $feat->seq_region_start - $sstart + 1;
