@@ -33,7 +33,7 @@ sub exon_display {
     @exons = ( grep { $_->seq_region_start <= $slice_end && $_->seq_region_end   >= $slice_start }
                map  { @{$_->get_all_Exons } }
                @{ $self->Obj->get_all_Genes('',$exontype) } );
-  } elsif( $exontype eq 'prediction' ){
+  } elsif( $exontype eq 'Ab-initio' ){
     @exons = ( grep{ $_->seq_region_start<=$slice_end && $_->seq_region_end  >=$slice_start }
                map { @{$_->get_all_Exons } }
                @{$self->Obj->get_all_PredictionTranscripts } );

@@ -46,32 +46,32 @@ sub markup_options_form {
     { 'value' => 'core'       , 'name' => "$sitetype exons" },
     $object->species_defs->databases->{'ENSEMBL_VEGA'} ? { 'value' => 'vega'           , 'name' => 'Vega exons' } : (),
     $object->species_defs->databases->{'ENSEMBL_OTHEFEATURES'}  ? { 'value' => 'otherfeatures'  , 'name' => 'EST-gene exons' } : (),
-    { 'value' => 'prediction' , 'name' => 'Ab-initio exons' },
+    { 'value' => 'Ab-initio' , 'name' => 'Ab-initio exons' },
     { 'value' => 'off'        , 'name' => 'No exon markup' }
   ];
   $form->add_element(
     'type'     => 'DropDown', 'select'   => 'select',
     'required' => 'yes',      'name'     => 'exon_display',
-    'label'    => 'Exons to display',
+    'label'    => 'Additional exons to display',
     'values'   => $exon_display,
     'value'    => $object->param('exon_display')
   );
   my $exon_ori = [
-    { 'value' =>'fwd' , 'name' => 'Forward only' },
-    { 'value' =>'rev' , 'name' => 'Reverse only' },
-    { 'value' =>'all' , 'name' => 'Both orientations' }
+    { 'value' =>'fwd' , 'name' => 'Display same orientation exons only' },
+    { 'value' =>'rev' , 'name' => 'Display reverse orientation exons only' },
+    { 'value' =>'all' , 'name' => 'Display exons in both orientations' }
   ];
   $form->add_element(
     'type'     => 'DropDown', 'select'   => 'select',
     'required' => 'yes',      'name'     => 'exon_ori',
-    'label'    => 'Exons on strand',
+    'label'    => 'Orientation of additional exons',
     'values'   => $exon_ori,
     'value'    => $object->param('exon_ori')
   );
-  if( $object->species_defs->databases->{'ENSEMBL_GLOVAR'} || $object->species_defs->databases->{'ENSEMBL_VARIATION'} ) {
+  if( $object->species_defs->databases->{'ENSEMBL_VARIATION'} ) {
     my $snp_display = [
-      { 'value' =>'snp' , 'name' => 'All Variations' },
-      { 'value' =>'off' , 'name' => 'Do not show Variations' },
+      { 'value' =>'snp' , 'name' => 'All variations' },
+      { 'value' =>'off' , 'name' => 'Do not show variation data' },
     ];
     $form->add_element(
       'type'     => 'DropDown', 'select'   => 'select',
@@ -82,7 +82,7 @@ sub markup_options_form {
     );
   }
   my $line_numbering = [
-    { 'value' =>'sequence' , 'name' => 'Relative to sequence' },
+    { 'value' =>'sequence' , 'name' => 'Relative to this sequence' },
     { 'value' =>'slice'    , 'name' => 'Relative to coordinate systems' },
     { 'value' =>'off'      , 'name' => 'None' },
   ];
@@ -1583,7 +1583,7 @@ sub external_links {
   }
 
   my $alignio = Bio::AlignIO->newFh(
-				    -fh     => IO::String->new(my $var),
+				    -fh     => IO::Strsing->new(my $var),
 				    -format => 'fasta'
 				    );
       

@@ -652,14 +652,14 @@ sub sequence_display {
   # Return all variation features on slice if param('snp display');
   my $snps  = $slice->param( 'snp_display' )  eq 'snp' ? $slice->snp_display()  : [];
 
-  # Return specific exons as chosen in form by user
-  my $exons = $slice->param( 'exon_display' ) ne 'off' ? $slice->exon_display() : [];
+  # Return additional specific exons as chosen in form by user
+  my $other_exons = $slice->param( 'exon_display' ) ne 'off' ? $slice->exon_display() : [];
 
   # Return all exon features on gene
-  my $all_exons = $slice->param( 'exon_display' ) ne 'off' ? $slice->highlight_display( $object->Obj->get_all_Exons ) : [];
+  my $gene_exons = $slice->param( 'exon_display' ) ne 'off' ? $slice->highlight_display( $object->Obj->get_all_Exons ) : [];
 
   # Create bins for sequence markup --------------------------------------
-  my @bin_locs = @{ bin_starts($slice, $all_exons, $exons, $snps) };
+  my @bin_locs = @{ bin_starts($slice, $gene_exons, $other_exons, $snps) };
   my %bin_idx; # A hash index of bin start locations vs pos in index
 
   my @bin_markup;
@@ -679,10 +679,8 @@ sub sequence_display {
 		## exon    => { 'color' => 'darkred',  'font-weight' =>'bold' },
 		## high2   => { 'color' => 'darkblue', 'font-weight' =>'bold' },
 		## high1   => { 'background-color' => 'blanchedalmond' },
-		allexon      => { 'background-color' => 'blanchedalmond' },
-		exon   => { 'color' => 'darkred',  'font-weight' =>'bold'},
-		bothexon   => {'background-color' => 'blanchedalmond',
-			       'color' => 'darkred',  'font-weight' =>'bold'},
+		other_exon  => { 'background-color' => 'blanchedalmond' },
+		gene_exon   => { 'color' => 'darkred',  'font-weight' =>'bold'},
 		snp       => { 'background-color' => '#caff70'        },
 		snpexon   => { 'background-color' => '#7fff00'        }
   );
@@ -691,22 +689,21 @@ sub sequence_display {
   my $style_tmpl = qq(<span style="%s" title="%s">%s</span>);
   my $key_tmpl = qq(<p><tt>$style_tmpl</tt> %s</p>);
 
-  if( @$exons ){
-    my %istyles = %{$styles{exon}};
+  if( @$gene_exons ){
+    my $type = $gene_exons->[0]->isa('Bio::EnsEMBL::Exon') ? 'exons' : 'features';
+    my %istyles = %{$styles{gene_exon}};
+    my $genename = $object->Obj->stable_id;
+    # color:'darkred';font-weight:'bold'
+    my $style = join( ';',map{"$_:$istyles{$_}"} keys %istyles );
+    $KEY .= sprintf( $key_tmpl, $style, "", "THIS STYLE:", "Location of $genename $type" )
+  }
+
+  if( @$other_exons ){
+    my %istyles = %{$styles{other_exon}};
     my $style = join( ';',map{"$_:$istyles{$_}"} keys %istyles );
     my $selected =  ucfirst($slice->param( 'exon_display' ));
     $selected = "Ensembl" if $selected eq 'Core';
     $KEY .= sprintf( $key_tmpl, $style, "", "THIS STYLE:", "Location of $selected exons ");
-  }
-
-  if( @$all_exons ){
-    my $type = $all_exons->[0]->isa('Bio::EnsEMBL::Exon') ? 'exons' : 'features';
-    my %istyles = %{$styles{allexon}};
-      
-    # color:'darkred';font-weight:'bold'
-    my $style = join( ';',map{"$_:$istyles{$_}"} keys %istyles );
-    my $other = @$exons ? "other" : "";
-    $KEY .= sprintf( $key_tmpl, $style, "", "THIS STYLE:", "Location of $other $type" )
   }
 
   if( @$snps ){
@@ -717,8 +714,8 @@ sub sequence_display {
 
 
   # Populate bins with exons ----------------------------
-  populate_bins($exons, $slice, \%bin_idx, \@bin_markup, \%styles, "exon");
-  populate_bins($all_exons, $slice, \%bin_idx, \@bin_markup, \%styles, "allexon");
+  populate_bins($other_exons, $slice, \%bin_idx, \@bin_markup, \%styles, "other_exon");
+  populate_bins($gene_exons, $slice, \%bin_idx, \@bin_markup, \%styles, "gene_exon");
 
 
   # Populate bins with SNPs -----------------------------
@@ -844,7 +841,7 @@ sub bin_starts {
   ### Bins start at feature starts, and end at feature ends + 1
   ### Allow for cigar strings - these split alignments into 'mini-features'.
 
-  my ($slice, $all_exons, $exons, $snps) = @_;
+  my ($slice, $gene_exons, $other_exons, $snps) = @_;
   my $slength = $slice->Obj->length;
   my $sstart  = $slice->Obj->start;
   my $send    = $slice->Obj->end;
@@ -852,7 +849,7 @@ sub bin_starts {
 
   # Get a unique list of all possible bin starts
   my %all_locs = ( 1=>1, $slength+1=>1 );
-  foreach my $feat ( @$all_exons, @$exons ){
+  foreach my $feat ( @$gene_exons, @$other_exons ){
     # skip the features that were cut off by applying flanking sequence parameters
     next if $feat->seq_region_start < $sstart || $feat->seq_region_end > $send;
 
@@ -912,13 +909,13 @@ sub populate_bins {
   ### GeneSeqView
   ### Code to mark up the exons in each bin
 
-  my ($exons, $slice, $bin_idx, $bin_markup, $styles, $key) = @_;
+  my ($other_exons, $slice, $bin_idx, $bin_markup, $styles, $key) = @_;
   my %estyles  = %{ $styles->{$key} };
   my $sstart  = $slice->Obj->start;
   my $send    = $slice->Obj->end;
 
-  foreach my $feat( @$exons ){ # user chosen exons
-    next if $key eq 'allexons' && ($feat->end < $sstart || $feat->start > $send);
+  foreach my $feat( @$other_exons ){ # user chosen exons
+    next if $key eq 'gene_exons' && ($feat->end < $sstart || $feat->start > $send);
     my $fstrand = $feat->seq_region_strand;
     my $fstart  = $fstrand < 0 ? $send - $feat->seq_region_end + 1 : $feat->seq_region_start - $sstart + 1;
 
@@ -935,13 +932,13 @@ sub populate_bins {
      next if $type ne 'M'; # Only markup matches
 
      # Add styles to affected bins
-     my %istyles = %{$styles->{allexon}};
+     my %istyles = %{$styles->{gene_exon}};
 
      foreach my $bin( @$bin_markup[ $idx_start .. $idx_end ] ){
        map{ $bin->[1]->{$_} = $estyles{$_} } keys %estyles;
        next unless $title;
 
-       if ($key eq 'allexon' && defined (my $alt = $bin->[2]) ) {
+       if ($key eq 'gene_exon' && defined (my $alt = $bin->[2]) ) {
 	 if (! grep {$_ eq $title} split(/ : /, $alt) ) {
 	   $bin->[2] = "$alt:$title";
 	   next;
