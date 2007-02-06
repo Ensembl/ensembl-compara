@@ -170,9 +170,15 @@ sub get_lazy_value {
   my ($self, $attribute) = @_;
   my $class = $self->relational_class($attribute);
   my $accessor = $self->object_name_from_package($class) . "_id";
+  my $object = $self->object_name_from_package($class);
+  if (defined $self->get_value($object)) {
+    return $self->get_value($object);
+  }
   warn "Creating new $attribute with class " . $class . " and " . $accessor;
   if (EnsEMBL::Web::Root::dynamic_use(undef, $class)) {
-    return $class->new({ id => $self->$accessor });
+    my $new = $class->new({ id => $self->$accessor });
+    $self->set_value($object, $new);
+    return $new;
   }
   return undef;
 }
