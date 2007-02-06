@@ -39,7 +39,7 @@ sub save {
   if ($data->has_id) {
     return $self->update($data);  
   } else {
-    return $self->created($data);
+    return $self->create($data);
   } 
 }
 
@@ -74,7 +74,7 @@ sub update {
   }
   $sql =~ s/, $/ /;
   $sql .= " WHERE id='" . $data->id . "'";
-  $sql . ";";
+  $sql .= ";";
   $self->get_handle->prepare($sql);
   return $self->get_handle->execute;
 }
