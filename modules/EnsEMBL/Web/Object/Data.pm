@@ -6,6 +6,7 @@ use warnings;
 use Class::Std;
 use EnsEMBL::Web::DBSQL::SQL::Result;
 use EnsEMBL::Web::Object::DataField;
+use EnsEMBL::Web::Root;
 
 {
 
@@ -16,6 +17,7 @@ my %Value :ATTR(:set<values>, :get<values>);
 my %Queriable_Fields :ATTR(:set<queriable_fields> :get<queriable_fields>);
 my %Adaptor :ATTR(:set<adaptor> :get<adaptor>);
 my %Belongs_to :ATTR(:set<belongs_to> :get<belongs_to>);
+my %Relational_attributes :ATTR(:set<relational_attributes> :get<relational_attributes>);
 my %Has_many:ATTR(:set<has_many> :get<has_many>);
 
 }
@@ -109,22 +111,10 @@ sub add_belongs_to {
   if (!$self->get_belongs_to ) {
     $self->set_belongs_to([]);
   }
+  $self->relational_class($self->object_name_from_package($arg), $arg);
   $self->add_relational_symbol_lookup($self->object_name_from_package($arg));
+  $self->add_queriable_field({ name => $self->object_name_from_package($arg) . "_id", type => 'int', queriable => 'yes' });
   push @{ $self->get_belongs_to }, $arg;
-}
-
-sub initialize_accessor {
-  no strict;
-  my ($self, $attribute) = @_;
-  warn "Adding accessor: " . $attribute;
-  return sub {
-    my $self = shift;
-    my $new_value = shift;
-    if (defined $new_value) {
-      $self->set_value($attribute,  $new_value);
-    }
-    return $self->get_value($attribute);
-  };
 }
 
 sub add_accessor_symbol_lookup {
@@ -136,6 +126,66 @@ sub add_accessor_symbol_lookup {
   unless (defined *{ "$class\::$name" }) {
     *{ "$class\::$name" } = $self->initialize_accessor($name);
   }
+}
+
+sub initialize_accessor {
+  no strict;
+  my ($self, $attribute) = @_;
+  return sub {
+    my $self = shift;
+    my $new_value = shift;
+    if (defined $new_value) {
+      $self->set_value($attribute,  $new_value);
+    }
+    return $self->get_value($attribute);
+  };
+}
+
+sub add_lazy_accessor_symbol_lookup {
+  my ($self, $name) = @_;
+  no strict;
+  my $class = ref($self);
+  $self->set_value({ $name => undef });
+   
+  unless (defined *{ "$class\::$name" }) {
+    *{ "$class\::$name" } = $self->initialize_relational_accessor($name);
+  }
+}
+
+sub initialize_relational_accessor {
+  no strict;
+  my ($self, $attribute) = @_;
+  warn "Adding relational accessor: " . $attribute;
+  return sub {
+    my $self = shift;
+    my $new_value = shift;
+    if (defined $new_value) {
+      $self->set_value($attribute,  $new_value);
+    }
+    return $self->get_lazy_value($attribute);
+  };
+}
+
+sub get_lazy_value {
+  my ($self, $attribute) = @_;
+  my $class = $self->relational_class($attribute);
+  my $accessor = $self->object_name_from_package($class) . "_id";
+  warn "Creating new $attribute with class " . $class . " and " . $accessor;
+  if (EnsEMBL::Web::Root::dynamic_use(undef, $class)) {
+    return $class->new({ id => $self->$accessor });
+  }
+  return undef;
+}
+
+sub relational_class {
+  my ($self, $attribute, $class) = @_;
+  unless (defined $self->get_relational_attributes) {
+    $self->set_relational_attributes({});
+  }
+  if (defined $class) {
+    $self->get_relational_attributes->{$attribute} = $class; 
+  }
+  return $self->get_relational_attributes->{$attribute};
 }
 
 sub add_relational_symbol_lookup {
@@ -151,7 +201,7 @@ sub add_relational_symbol_lookup {
 
   ## Add methods to get and set the relational data object.
   ## eg: $data->user($user)
-  #$self->add_accessor_symbol_lookup($name);
+  $self->add_lazy_accessor_symbol_lookup($name);
 }
 
 sub has_id {

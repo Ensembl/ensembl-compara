@@ -63,6 +63,8 @@ sub set_clause {
   if ($has_data) {
     $sql .= "data = '" . $self->dump_data($data_hash) . "'";
   }
+  if (defined $data->get_belongs_to) {
+  }
   $sql =~ s/, $/ /;
   return $sql;
 }
@@ -78,8 +80,10 @@ sub is_allowed_in_set_clause {
 sub create {
   my ($self, $data) = @_;
   my $result = EnsEMBL::Web::DBSQL::SQL::Result->new();
+  warn "CREATING data object";
   my $sql = 'INSERT INTO ' . $self->get_table . ' SET '; 
   $sql .= $self->set_clause($data);  
+  warn $sql;
   $self->get_handle->prepare($sql);
   $result->set_action('create');
   if ($self->get_handle->do($sql)) {
