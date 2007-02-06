@@ -271,18 +271,18 @@ sub markupSNPs {
     my $slice =  $hRef->{$species}->{slice};
 
     foreach my $s (@{$slice->get_all_VariationFeatures || []}) {
-      my ($st, $en, $allele, $id, $mask) = ($s->start, $s->end, $s->allele_string, $s->variation_name, $snp_On);
-      if ($en < $st) {
-        ($st, $en) = ($en, $st);
+      my ($start, $end, $allele, $id, $mask) = ($s->start, $s->end, $s->allele_string, $s->variation_name, $snp_On);
+      if ($end < $start) {
+        ($start, $end) = ($end, $start);
         $mask = $snp_Del;
       }
-      $en ++;
+      $end ++;
 
-      push @{$hRef->{$species}->{markup}}, { 'pos' => $st, 'mask' => $mask, 'textSNP' => $allele, 'mark' => 0, 'snpID' => $id };
-      push @{$hRef->{$species}->{markup}}, { 'pos' => $en, 'mask' => -$mask  };
+      push @{$hRef->{$species}->{markup}}, { 'pos' => $start, 'mask' => $mask, 'textSNP' => $allele, 'mark' => 0, 'snpID' => $id };
+      push @{$hRef->{$species}->{markup}}, { 'pos' => $end, 'mask' => -$mask  };
 
-      my $bin = int(($st-1) / $width);
-      my $binE = int(($en-2) / $width);
+      my $bin  = int(($start-1) / $width);
+      my $binE = int(($end-2) / $width);
 
       while ($bin < $binE) {
         $bin ++;
@@ -809,7 +809,6 @@ sub sequence_display {
       $markedup_seq .= sprintf( $tmpl, $snp_base) ;
       $j += $n;
     }
-    #$markedup_seq .= "\n".substr( $seq, $i+1, $linelength ); # DEBUG
     $i += $linelength;
 
     if( @linenumbers ){ # Deal with line numbering (end-of-line)
