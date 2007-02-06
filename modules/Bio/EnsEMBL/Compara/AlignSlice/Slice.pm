@@ -146,6 +146,8 @@ sub new {
   $self->{coord_system} = $coord_system;
   $self->genome_db($genome_db) if (defined($genome_db));
   $self->{seq_region_name} = (eval{$genome_db->name} or "FakeAlignSlice");
+  $self->{display_Slice_name} = $self->{seq_region_name};
+  $self->{display_Slice_name} =~ s/ /_/g;
   $self->{seq_region_length} = $length;
 #   $self->{located_slices} = [];
 
@@ -180,6 +182,27 @@ sub genome_db {
   }
 
   return $self->{genome_db};
+}
+
+
+=head2 display_Slice_name
+
+  Arg[1]     : string $name
+  Example    : $slice->display_Slice_name("Homo_sapiens");
+  Description: getter/setter for the attribute display_Slice_name
+  Returntype : string
+  Caller     : $object->methodname
+
+=cut
+
+sub display_Slice_name {
+  my ($self, $display_slice_name) = @_;
+
+  if (defined($display_slice_name)) {
+    $self->{display_Slice_name} = $display_slice_name;
+  }
+
+  return $self->{display_Slice_name};
 }
 
 
