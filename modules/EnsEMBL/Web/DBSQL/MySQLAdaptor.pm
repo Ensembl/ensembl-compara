@@ -6,6 +6,7 @@ use warnings;
 use Class::Std;
 use EnsEMBL::Web::RegObj;
 use EnsEMBL::Web::Object::Data;
+use EnsEMBL::Web::DBSQL::SQL::Result;
 use Data::Dumper;
 
 {
@@ -43,27 +44,15 @@ sub save {
   } 
 }
 
-sub create {
+sub set_clause {
   my ($self, $data) = @_;
-  warn "CREATING new data object";
-}
-
-sub populate {
-  my ($self, $select_hash);
-  return $self->get_handle->selectall_hashref(@_);
-}
-
-sub update {
-  my ($self, $data) = @_;
-  warn "UPDATING data object with ID " . $data->id;
   my $data_hash = {};
   my $has_data = 0;
+  my $sql = "";
   foreach my $data_field (@{ $data->get_fields }) {
     $has_data = 1;
     $data_hash->{ $data_field->get_name } = $data->get_value( $data_field->get_name );
   }
-  my $sql = 'UPDATE ' . $self->get_table . " ";
-  $sql .= "SET ";
   foreach my $data_field (@{ $data->get_queriable_fields }) {
     if (defined $data->get_value( $data_field->get_name)) {
       $sql .= $data_field->get_name . " = '" . $data->get_value( $data_field->get_name ) . "', ";
@@ -73,6 +62,28 @@ sub update {
     $sql .= "data = '" . $self->dump_data($data_hash) . "'";
   }
   $sql =~ s/, $/ /;
+  return $sql;
+}
+
+sub create {
+  my ($self, $data) = @_;
+  my $result = EnsEMBL::Web::DBSQL::SQL::Result->new();
+  my $sql = 'INSERT INTO ' . $self->get_table . ' SET '; 
+  $sql .= $self->set_clause($data);  
+  $self->get_handle->prepare($sql);
+  $result->set_action('create');
+  if ($self->get_handle->do($sql)) {
+    $result->set_last_inserted_id($self->last_inserted_id);
+    $result->set_success(1);
+  }
+  return $result;
+}
+
+sub update {
+  my ($self, $data) = @_;
+  warn "UPDATING data object with ID " . $data->id;
+  my $sql = 'UPDATE ' . $self->get_table . " ";
+  $sql .= "SET " . $self->set_clause($data);
   $sql .= " WHERE id='" . $data->id . "'";
   $sql .= ";";
   $self->get_handle->prepare($sql);
@@ -82,6 +93,17 @@ sub update {
 sub destroy {
   my ($self, $data) = @_;
   return 1;
+}
+
+sub find {
+  my ($self, $data) = @_;
+  my $result = EnsEMBL::Web::DBSQL::SQL::Result->new();
+  $result->set_action('find');
+  my $sql = "SELECT * FROM " . $self->get_table . " WHERE " . $data->get_primary_key . "='" . $data->id . "';";
+  warn $sql;
+  my $hashref = $self->get_handle->selectall_hashref($sql, $data->get_primary_key);
+  $result->set_result_hash($hashref->{$data->id});
+  return $result;
 }
 
 sub dump_data {
@@ -98,5 +120,16 @@ sub dump_data {
   $dump =~ s/^\$VAR1 = //;
   return $dump;
 }
+
+sub last_inserted_id {
+  my ($self) = @_;
+  my $sql = "SELECT LAST_INSERT_ID()";
+  my $T = $self->get_handle->selectall_arrayref($sql);
+  return '' unless $T;
+  my @A = @{$T->[0]}[0];
+  my $result = $A[0];
+  return $result;
+}
+
 
 1;

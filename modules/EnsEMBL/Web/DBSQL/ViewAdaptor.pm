@@ -134,10 +134,10 @@ sub edit {
   #warn "SQL: " . $sql;
 
   my $return = $self->execute($sql); 
-  $result->result($return);
-  $result->set_parameters(\%set_parameters);
+  $result->get_result($return);
+  $result->get_set_parameters(\%set_parameters);
   if ($return) { 
-    $result->success("yes");
+    $result->get_success("yes");
   }
 
   return $result;
@@ -218,8 +218,8 @@ sub create {
   $sql .= ";";
 
   if ($self->execute($sql)) {
-    $result->last_inserted_id($self->last_inserted_id);
-    $result->success('yes');
+    $result->get_last_inserted_id($self->last_inserted_id);
+    $result->get_success('yes');
   }
   return $result; 
 }

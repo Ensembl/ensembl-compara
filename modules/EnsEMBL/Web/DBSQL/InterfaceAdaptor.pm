@@ -274,10 +274,10 @@ sub edit {
   warn "SQL: " . $sql;
 
   my $return = $self->execute($sql); 
-  $result->result($return);
-  $result->set_parameters(\%set_parameters);
+  $result->set_result($return);
+  $result->set_set_parameters(\%set_parameters);
   if ($return) { 
-    $result->success("yes");
+    $result->set_success("yes");
   }
 
   return $result;

@@ -159,6 +159,7 @@ sub render_species_list {
     }
   }
   $html .= "</ul>\n";
+  $html .= "Other pre-build species are available in <a href='#top' onclick='show_pre();'>Ensembl Pre! &rarr;</a>";
   $html .= "</div>\n";
   return $html;
 }

@@ -1105,7 +1105,7 @@ sub group_details {
   my $html = "<div class='pale boxed'>";
   $html .= qq(This page allows administrators to manage their Ensembl group. From here you can invite new users to join your group, remove existing users, and decide which resources are shared between group members.<br />
                 <br />For more information about Ensembl groups, and how to use them,
-                read our <a href='/info/about/groups.html'>introductory guide</a>.);
+                read our <a href='/info/help/groups.html'>introductory guide</a>.);
   $html .= "</div>";
    
   $panel->print($html);
