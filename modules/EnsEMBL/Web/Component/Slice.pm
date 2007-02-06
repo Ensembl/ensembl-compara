@@ -581,8 +581,7 @@ sub markupInit {
     my $sequence = $slice->seq;
     my $species;
     my @subslices;
-    if ($slice->isa('Bio::EnsEMBL::Compara::AlignSlice::Slice') or 
-       $slice->isa('Bio::EnsEMBL::StrainSlice') ) {
+    if ( $slice->can('get_all_underlying_Slices') ) {
       ($species = $slice->seq_region_name) =~ s/ /\_/g;
       @subslices = @{$slice->get_all_underlying_Slices};
     }
