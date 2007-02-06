@@ -656,7 +656,7 @@ sub sequence_display {
   my $exons = $slice->param( 'exon_display' ) ne 'off' ? $slice->exon_display() : [];
 
   # Return all exon features on gene
-  my $all_exons = $slice->highlight_display( $object->Obj->get_all_Exons );
+  my $all_exons = $slice->param( 'exon_display' ) ne 'off' ? $slice->highlight_display( $object->Obj->get_all_Exons ) : [];
 
   # Create bins for sequence markup --------------------------------------
   my @bin_locs = @{ bin_starts($slice, $all_exons, $exons, $snps) };
@@ -697,16 +697,16 @@ sub sequence_display {
     my $selected =  ucfirst($slice->param( 'exon_display' ));
     $selected = "Ensembl" if $selected eq 'Core';
     $KEY .= sprintf( $key_tmpl, $style, "", "THIS STYLE:", "Location of $selected exons ");
+  }
 
-    if( @$all_exons ){
-      my $type = $all_exons->[0]->isa('Bio::EnsEMBL::Exon') ? 'exons' : 'features';
-      my %istyles = %{$styles{allexon}};
+  if( @$all_exons ){
+    my $type = $all_exons->[0]->isa('Bio::EnsEMBL::Exon') ? 'exons' : 'features';
+    my %istyles = %{$styles{allexon}};
       
-      # color:'darkred';font-weight:'bold'
-      my $style = join( ';',map{"$_:$istyles{$_}"} keys %istyles );
-      my $other = @$exons ? "other" : "";
-      $KEY .= sprintf( $key_tmpl, $style, "", "THIS STYLE:", "Location of $other $type" )
-    }
+    # color:'darkred';font-weight:'bold'
+    my $style = join( ';',map{"$_:$istyles{$_}"} keys %istyles );
+    my $other = @$exons ? "other" : "";
+    $KEY .= sprintf( $key_tmpl, $style, "", "THIS STYLE:", "Location of $other $type" )
   }
 
   if( @$snps ){
@@ -717,10 +717,8 @@ sub sequence_display {
 
 
   # Populate bins with exons ----------------------------
-  if (@$exons) {
-    populate_bins($exons, $slice, \%bin_idx, \@bin_markup, \%styles, "exon");
-    populate_bins($all_exons, $slice, \%bin_idx, \@bin_markup, \%styles, "allexon") if @$all_exons;
-  }
+  populate_bins($exons, $slice, \%bin_idx, \@bin_markup, \%styles, "exon");
+  populate_bins($all_exons, $slice, \%bin_idx, \@bin_markup, \%styles, "allexon");
 
 
   # Populate bins with SNPs -----------------------------
