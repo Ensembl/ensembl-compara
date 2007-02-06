@@ -172,6 +172,8 @@ cd PATH_TO/ensembl-compara/sql/
 mysql -h ens-staging -uensro -N -e "SELECT * FROM genome_db order by genome_db_id asc" ensembl_compara_XX > genome_db.txt
 mysql -h ens=staging -uensro -N -e "SELECT * FROM method_link order by method_link_id asc" ensembl_compara_XX > method_link.txt
 
+You will have to change the default schema_version in the table.sql file (last line of the file)
+
 17. Apply patches to the test databases and verify that they work fine.
 Recompile the test database.
 
