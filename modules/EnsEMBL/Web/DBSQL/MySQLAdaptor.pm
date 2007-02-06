@@ -55,7 +55,9 @@ sub set_clause {
   }
   foreach my $data_field (@{ $data->get_queriable_fields }) {
     if (defined $data->get_value( $data_field->get_name)) {
-      $sql .= $data_field->get_name . " = '" . $data->get_value( $data_field->get_name ) . "', ";
+      if ($self->is_allowed_in_set_clause($data_field->get_name)) {
+        $sql .= $data_field->get_name . " = '" . $data->get_value( $data_field->get_name ) . "', ";
+      }
     }
   }
   if ($has_data) {
@@ -63,6 +65,14 @@ sub set_clause {
   }
   $sql =~ s/, $/ /;
   return $sql;
+}
+
+sub is_allowed_in_set_clause {
+  my ($self, $field) = @_;
+  if ($field eq 'id') {
+    return 0;
+  }
+  return 1;
 }
 
 sub create {
@@ -81,13 +91,19 @@ sub create {
 
 sub update {
   my ($self, $data) = @_;
+  my $result = EnsEMBL::Web::DBSQL::SQL::Result->new();
   warn "UPDATING data object with ID " . $data->id;
+  $result->set_action('update');
   my $sql = 'UPDATE ' . $self->get_table . " ";
   $sql .= "SET " . $self->set_clause($data);
-  $sql .= " WHERE id='" . $data->id . "'";
+  $sql .= " WHERE " . $data->get_primary_key . "='" . $data->id . "'";
   $sql .= ";";
+  warn $sql;
   $self->get_handle->prepare($sql);
-  return $self->get_handle->execute;
+  if ($self->get_handle->do($sql)) {
+    $result->set_success(1);
+  }
+  return $result;
 }
 
 sub destroy {
