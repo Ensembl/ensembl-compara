@@ -9,6 +9,7 @@ use EnsEMBL::Web::Object::DataField;
 {
 
 my %Fields :ATTR(:set<fields> :get<fields>);
+my %Primary_Id :ATTR(:set<primary_id> :get<primary_id>);
 my %Value :ATTR(:set<values>, :get<values>);
 my %Queriable_Fields :ATTR(:set<queriable_fields> :get<queriable_fields>);
 my %Record_type :ATTR(:set<record_type> :get<record_type>);
@@ -45,7 +46,7 @@ sub add_field {
   if (!$self->get_fields) {
     $self->set_fields([]);
   }
-  $self->add_symbol_lookup($args->{name});
+  $self->add_accessor_symbol_lookup($args->{name});
   push @{ $self->get_fields }, EnsEMBL::Web::Object::DataField->new( { name => $args->{name}, type => $args->{type} } );
 }
 
@@ -54,7 +55,7 @@ sub add_queriable_field {
   if (!$self->get_queriable_fields) {
     $self->set_queriable_fields([]);
   }
-  $self->add_symbol_lookup($args->{name});
+  $self->add_accessor_symbol_lookup($args->{name});
   push @{ $self->get_queriable_fields }, EnsEMBL::Web::Object::DataField->new( { name => $args->{name}, type => $args->{type}, queriable => 'yes' } );
 }
 
@@ -71,8 +72,7 @@ sub add_belongs_to {
   if (!$self->get_belongs_to ) {
     $self->set_belongs_to([]);
   }
-  $self->add_symbol_lookup($self->object_name_from_package($arg));
-  $self->add_symbol_lookup($self->object_name_from_package($arg) . "_id");
+  $self->add_relational_symbol_lookup($self->object_name_from_package($arg));
   push @{ $self->get_belongs_to }, $arg;
 }
 
@@ -89,12 +89,41 @@ sub initialize_accessor {
   };
 }
 
-sub add_symbol_lookup {
+sub initialize_relational_accessor {
+  no strict;
+  my ($self, $attribute) = @_;
+  return sub {
+    my $self = shift;
+    my $new_value = shift;
+    if (defined $new_value) {
+      $self->set_value($attribute, $new_value);
+    }
+    return $self->get_value($attribute);
+  };
+}
+
+sub add_accessor_symbol_lookup {
   my ($self, $name) = @_;
   no strict;
   my $class = ref($self);
   $self->set_value({ $name => "" });
   *{ "$class\::$name" } = $self->initialize_accessor($name);
+}
+
+sub add_relational_symbol_lookup {
+  my ($self, $name) = @_;
+  no strict;
+  my $class = ref($self);
+  
+  ## Add method to populate the relational data object from the 
+  ## database if an ID is specified.
+  ## eg: $data->user_id('66');
+  ##     $user = $data->user();
+  *{ "$class\::$name" } = $self->initialize_relational_accessor($name + "_id");
+
+  ## Add methods to get and set the relational data object.
+  ## eg: $data->user($user)
+  $self->add_accessor_symbol_lookup($name);
 }
 
 sub has_id {
