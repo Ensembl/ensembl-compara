@@ -9,7 +9,7 @@ use EnsEMBL::Web::Object::DataField;
 {
 
 my %Fields :ATTR(:set<fields> :get<fields>);
-my %Primary_Id :ATTR(:set<primary_id> :get<primary_id>);
+my %Primary_key :ATTR(:set<primary_key> :get<primary_key>);
 my %Value :ATTR(:set<values>, :get<values>);
 my %Queriable_Fields :ATTR(:set<queriable_fields> :get<queriable_fields>);
 my %Record_type :ATTR(:set<record_type> :get<record_type>);
