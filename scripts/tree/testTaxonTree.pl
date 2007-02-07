@@ -32,6 +32,7 @@ $self->{'noSplitSeqLines'} = undef;
 $self->{'cdna'} = 0;
 $self->{'scale'} = 100;
 $self->{'drawtree'} = 0;
+$self->{'extrataxon'} = undef;
 my $state = 4;
 
 my $conf_file;
@@ -47,11 +48,17 @@ GetOptions('help'        => \$help,
            'align'       => \$self->{'print_align'},
            'cdna'        => \$self->{'cdna'},
            'draw'        => \$self->{'drawtree'},
+           'extra_taxon=s'=> \$self->{'extrataxon'},
            'scale=f'     => \$self->{'scale'},
            'mini'        => \$self->{'minimize_tree'},
            'count'       => \$self->{'stats'},
           );
 
+my @extrataxon;
+if($self->{'extrataxon'}) { 
+  my $temp = $self->{'extrataxon'};
+  @extrataxon = split ('_',$temp);
+}
 if($self->{'newick_file'}) { $state=6; }
 if($self->{'tree_id'}) { $state=1; }
 if($self->{'gene_stable_id'}) { $state=5; }
@@ -161,7 +168,13 @@ sub fetch_compara_ncbi_taxa {
     $root = $taxon->root unless($root);
     $root->merge_node_via_shared_ancestor($taxon);
   }
+  foreach my $extra_taxon (@extrataxon) {
+    my $taxon = $taxonDBA->fetch_node_by_taxon_id($extra_taxon);
+    $taxon->release_children;
 
+    $root = $taxon->root unless($root);
+    $root->merge_node_via_shared_ancestor($taxon);
+  }
 
   #$root = $root->find_node_by_name('Mammalia');
 
