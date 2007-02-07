@@ -11,7 +11,7 @@ use Bio::EnsEMBL::AlignStrainSlice;
 use Bio::EnsEMBL::Variation::Utils::Sequence qw(ambiguity_code);
 no warnings "uninitialized";
 
-my ($exon_On, $cs_On, $snp_On, $snp_Del, $ins_On, $codon_On) = (1, 16, 32, 64, 128, 256);
+our ($exon_On, $cs_On, $snp_On, $snp_Del, $ins_On, $codon_On) = (1, 16, 32, 64, 128, 256);
 my $BR = '###';
 
 # Gene Seq Align View -----------------------------------------------------------------------
@@ -115,12 +115,12 @@ sub generateHTML {
   my $t_set = $object->param('title_display') ne 'off' ? 1 : 0 ;
 
   foreach my $display_name (keys %$hRef) {
-    my $sequence = $hRef->{$display_name}->{sequence};
-    my $slice = $hRef->{$display_name}->{slice};
+    my $sequence     = $hRef->{$display_name}->{sequence};
+    my $slice        = $hRef->{$display_name}->{slice};
     my $slice_length = $hRef->{$display_name}->{slice_length};
     my @markup = sort {($a->{pos} <=> $b->{pos})*10 + 5*($a->{mark} <=> $b->{mark})  } @{$hRef->{$display_name}->{markup}};
 
-# Get abbreviated species name (first letters of genus, first 3 of species)
+    # Get abbreviated species name (first letters of genus, first 3 of species)
     my $abbr;
     if (my @tmp = $display_name =~ m/^(.)|_(...)/g) {
       $abbr = join("",@tmp, " ");
@@ -130,10 +130,10 @@ sub generateHTML {
     }
     my $html = $abbr;
 
-# If the line numbering is on - then add the index of the first position
+    # If the line numbering is on - then add the index of the first position
     if ($line_numbering eq 'slice') {
       if ($slice->isa('Bio::EnsEMBL::Compara::AlignSlice::Slice')) {
-# In case of AlignSlice we show the position of the first defined nucleotide
+	# In case of AlignSlice we show the position of the first defined nucleotide
         my $segment = substr($sequence, 0, $width);
         if ($segment =~ m/[ATGCN]/g) {
           my ($oslice, $pos) = $slice->get_original_seq_region_position(pos($segment) );
@@ -253,9 +253,14 @@ sub generateHTML {
         }
 
         if (($sclass ne $NBP) || $tag_title) {
+	  my $base = $sq;
+	  if ($sclass =~ /s/) { # if it is a SNP
+	    my $ambiguity = $p->{ambiguity};
+	    $base = $ambiguity if $ambiguity;
+	  }
           $html .= sprintf (qq{<span%s%s>%s</span>},
                                 $sclass ne 'mn' ? qq{ id="$sclass"} : '',
-                                $tag_title ? qq{ title="$tag_title"} : '', $sq);
+                                $tag_title ? qq{ title="$tag_title"} : '', $base);
         } else {
           $html .= $sq;
         }
@@ -362,21 +367,25 @@ sub markupSNPs {
   my $width = $object->param("display_width") || 60;
   foreach my $display_name (keys %$hRef) {
     my $slice =  $hRef->{$display_name}->{slice};
+    my $sstrand = $slice->strand; # SNP strand bug has been fixed in snp_display function
 
     foreach my $s (@{$slice->get_all_VariationFeatures || []}) {
-      my ($start, $end, $allele, $id, $mask) = ($s->start, $s->end, $s->allele_string, $s->variation_name, $snp_On);
+      my ( $end, $id, $mask) = ($s->end, $s->variation_name, $snp_On);
+      my ( $start, $allele ) = sort_out_snp_strand($s, $sstrand);
       if ($end < $start) {
         ($start, $end) = ($end, $start);
         $mask = $snp_Del;
       }
       $end ++;
+      my $ambiguity = ambiguity_code($allele);
+      push @{$hRef->{$display_name}->{markup}}, { 'pos'     => $start,  'mask'      => $mask, 
+						  'textSNP' => $allele, 'mark'      => 0, 
+						  'snpID'   => $id,     'ambiguity' => $ambiguity };
+      push @{$hRef->{$display_name}->{markup}}, { 'pos'     => $end,    'mask'      => -$mask  };
 
-      push @{$hRef->{$display_name}->{markup}}, { 'pos' => $start, 'mask' => $mask, 'textSNP' => $allele, 'mark' => 0, 'snpID' => $id };
-      push @{$hRef->{$display_name}->{markup}}, { 'pos' => $end, 'mask' => -$mask  };
-
+      # For variations that aren't SNPs
       my $bin  = int(($start-1) / $width);
       my $binE = int(($end-2) / $width);
-
       while ($bin < $binE) {
         $bin ++;
         my $pp = $bin * $width + 1;
@@ -739,30 +748,11 @@ sub sequence_display {
   my $sstrand = $slice->Obj->strand; # SNP strand bug has been fixed in snp_display function
 
   foreach my $snp( @$snps ){
-    my( $fstart, $fend ) = ( $snp->start, $snp->end );
-    if($fstart > $fend) { # Insertion
-      $fstart = $fstart - 2 if $sstrand < 0;
-    }
-
+    my ( $fstart, $allele ) = sort_out_snp_strand($snp, $sstrand);
     my $idx_start = $bin_idx{$fstart};
     my $bin = $bin_markup[$idx_start];
     my %usestyles = ( $bin->[1]->{'background-color'} ?  %snpexonstyles : %snpstyles );
     map{ $bin->[1]->{$_} = $usestyles{$_} } keys %usestyles;
-    my $allele = $snp->allele_string;
-
-    if ($sstrand < 0) {
-      # If gene is reverse strand we need to reverse parts of allele, i.e AGT/- should become TGA/-
-      my @av = split(/\//, $allele);
-      $allele = '';
-
-      foreach my $aq (@av) {
-        $allele .= reverse($aq).'/';
-      }
-      $allele =~ s/\/$//;
-    }
-
-    # if snp is on reverse strand - flip the bases
-    $allele =~ tr/ACGTacgt/TGCAtgca/ if $snp->strand < 0;
 
     $bin->[2] = $allele || '';
     $bin->[3] = ($snp->end > $snp->start) ? 'ins' : 'del';
@@ -967,6 +957,38 @@ sub populate_bins {
   return 1;
 }
 
+#----------------------------------------------------------------------
+
+sub sort_out_snp_strand {
+
+  ### GeneSeqView and GeneSeqAlignView
+  ### Arg: variation object
+  ### Arg: slice strand
+  ### Returns the start of the snp relative to the gene
+  ### Returns the snp alleles relative to the orientation of the gene
+
+  my ( $snp, $sstrand ) = @_;
+  my( $fstart, $fend ) = ( $snp->start, $snp->end );
+  if($fstart > $fend) { # Insertion
+    $fstart = $fstart - 2 if $sstrand < 0;
+  }
+  my $allele = $snp->allele_string;
+  
+  # If gene is reverse strand we need to reverse parts of allele, i.e AGT/- should become TGA/-
+  if ($sstrand < 0) {
+    my @av = split(/\//, $allele);
+    $allele = '';
+
+    foreach (@av) {
+      $allele .= reverse($_).'/';
+    }
+    $allele =~ s/\/$//;
+  }
+
+  # if snp is on reverse strand - flip the bases
+  $allele =~ tr/ACGTacgt/TGCAtgca/ if $snp->strand < 0;
+  return ($fstart, $allele);
+}
 
 ###### SEQUENCE ALIGN SLICE ########################################################
 
