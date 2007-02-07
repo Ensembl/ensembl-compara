@@ -316,7 +316,7 @@ sub run_analysis
   
   #display summary stats of analysis 
   my $runtime = time()*1000-$starttime;  
-  $self->{'protein_tree'}->store_tag("OrthoTree_runtime_msec", $runtime) 
+  $self->{'protein_tree'}->store_tag('OrthoTree_runtime_msec', $runtime) 
     unless ($self->{'_readonly'});
   if($self->debug) {
     printf("%d proteins in tree\n", scalar(@{$tree->get_all_leaves}));
@@ -402,15 +402,7 @@ sub display_link_analysis
   } else { printf("%5s ", ""); }
 
   print("ancestor:(");
-  my $dup_tag = $ancestor->get_tagvalue("Duplication");
-  my $dubdup_tag = $ancestor->get_tagvalue("dubious_duplication");
-  if($dup_tag eq '1' || $dup_tag eq '2'){
-    if ($dubdup_tag eq '1') {
-      print("DD  ");
-    } else {
-      print("DUP ");
-    }
-  }
+  if($ancestor->get_tagvalue("Duplication") eq '1'){print("DUP ");} 
   else{print"    ";}
   printf("%9s)", $ancestor->node_id);
 
@@ -467,7 +459,7 @@ sub get_ancestor_species_hash
 
   if($node->isa('Bio::EnsEMBL::Compara::AlignedMember')) {
     $species_hash->{$node->genome_db_id} = 1;
-    $node->add_tag("species_hash", $species_hash);
+    $node->add_tag('species_hash', $species_hash);
     return $species_hash;
   }
 
@@ -487,7 +479,10 @@ sub get_ancestor_species_hash
       }
     }
   }
-
+  
+  #printf("\ncalc_ancestor_species_hash : %s\n", $self->encode_hash($species_hash));
+  #$node->print_tree(20);
+  
   $node->add_tag("species_hash", $species_hash);
   if($is_dup && !($self->{'_treefam'})) {
     my $original_duplication_value = $node->get_tagvalue("Duplication");
@@ -553,31 +548,6 @@ sub get_ancestor_taxon_level
 }
 
 
-sub duplication_confidence_score {
-  my $self = shift;
-  my $ancestor = shift;
-
-  # This assumes bifurcation!!! No multifurcations allowed
-  my ($child_a, $child_b) = @{$ancestor->children};
-  my @child_a_gdbs = keys %{$self->get_ancestor_species_hash($child_a)};
-  my @child_b_gdbs = keys %{$self->get_ancestor_species_hash($child_b)};
-  my %seen = ();  my @gdb_a = grep { ! $seen{$_} ++ } @child_a_gdbs;
-     %seen = ();  my @gdb_b = grep { ! $seen{$_} ++ } @child_b_gdbs;
-  my @isect = my @diff = my @union = (); my %count;
-  foreach my $e (@gdb_a, @gdb_b) { $count{$e}++ }
-  foreach my $e (keys %count) {
-    push(@union, $e); push @{ $count{$e} == 2 ? \@isect : \@diff }, $e; 
-  }
-  $ancestor->store_tag
-    (
-     "duplication_confidence_score",
-     (scalar(@isect)/scalar(@union))
-    );
-  #FIXME - do we want this for release?
-  $ancestor->store_tag("species_union",scalar(@union));
-  $ancestor->store_tag("species_intersection",scalar(@isect));
-}
-
 sub genepairlink_fetch_homology
 {
   my $self = shift;
@@ -620,8 +590,7 @@ sub genepairlink_check_dups
   do {
     $tnode = $tnode->parent;
     my $dup_value = $tnode->get_tagvalue("Duplication");
-    my $dubdup_tag = $tnode->get_tagvalue("dubious_duplication");
-    unless ($dup_value eq '' || $dubdup_tag eq '1') {
+    unless ($dup_value eq '') {
       $has_dup = 1 if($dup_value > 0);
     }
     $nodes_between{$tnode->node_id} = $tnode;
@@ -631,8 +600,7 @@ sub genepairlink_check_dups
   do {
     $tnode = $tnode->parent;
     my $dup_value = $tnode->get_tagvalue("Duplication");
-    my $dubdup_tag = $tnode->get_tagvalue("dubious_duplication");
-    unless ($dup_value eq '' || $dubdup_tag eq '1') {
+    unless ($dup_value eq '') {
       $has_dup = 1 if($dup_value > 0);
     }
     $nodes_between{$tnode->node_id} = $tnode;
@@ -701,8 +669,6 @@ sub inspecies_paralog_test
   my $ancestor = $genepairlink->get_tagvalue('ancestor');
   my $taxon = $self->get_ancestor_taxon_level($ancestor);
 
-  #FIXME - check the duplication tag is not 0
-
   #my $species_hash = $self->get_ancestor_species_hash($ancestor);
   #foreach my $gdbID (keys(%$species_hash)) {
   #  return undef unless($gdbID == $pep1->genome_db_id);
@@ -712,10 +678,6 @@ sub inspecies_paralog_test
 #  $genepairlink->add_tag("orthotree_type", 'inspecies_paralog');
   $genepairlink->add_tag("orthotree_type", 'within_species_paralog');
   $genepairlink->add_tag("orthotree_subtype", $taxon->name);
-  # Duplication_confidence_score
-  #   if ('' eq $ancestor->get_tagvalue("duplication_confidence_score")) {
-  #     $self->duplication_confidence_score($ancestor);
-  #   }
   return 1;
 }
 
@@ -744,28 +706,22 @@ sub ancient_residual_test
   return undef if($count1>1);
   return undef if($count2>1);
 
-  # passed all the tests -> it's a simple ortholog
+  #passed all the tests -> it's a simple ortholog
   # print $ancestor->node_id, " ", $ancestor->name,"\n";
 
   # little hack to work around some weird treefam trees
   if ($self->{'_treefam'}) {
     my $dup_value = $ancestor->get_tagvalue("Duplication");
-    my $dubdup_tag = $ancestor->get_tagvalue("dubious_duplication");
-    if ($dup_value eq '' || $dubdup_tag eq '1') {
+    if ($dup_value eq '') {
       $dup_value = 0;
       $ancestor->add_tag("Duplication",0) ;
     }
   }
 
-  my $dubdup_tag = $ancestor->get_tagvalue("dubious_duplication");
-  if($ancestor->get_tagvalue("Duplication") > 0 && $dubdup_tag ne '1') {
+  if($ancestor->get_tagvalue("Duplication") > 0) {
     $genepairlink->add_tag("orthotree_type", 'apparent_ortholog_one2one');
     my $taxon = $self->get_ancestor_taxon_level($ancestor);
     $genepairlink->add_tag("orthotree_subtype", $taxon->name);
-    # Duplication_confidence_score
-    #     if ('' eq $ancestor->get_tagvalue("duplication_confidence_score")) {
-    #       $self->duplication_confidence_score($ancestor);
-    #     }
   } else {
     $genepairlink->add_tag("orthotree_type", 'ortholog_one2one');
     my $taxon = $self->get_ancestor_taxon_level($ancestor);
@@ -803,8 +759,7 @@ sub one2many_ortholog_test
     (
      ($count1==1 and $count2>1) or ($count1>1 and $count2==1)
     );
-  return undef if ($ancestor->get_tagvalue("Duplication") 
-                   && $ancestor->get_tagvalue("dubious_duplication" ne '1'));
+  return undef if ($ancestor->get_tagvalue('Duplication'));
 
   #passed all the tests -> it's a one2many ortholog
   $genepairlink->add_tag("orthotree_type", 'ortholog_one2many');
@@ -831,15 +786,11 @@ sub outspecies_test
 
   #ultra simple ortho/paralog classification
   my $dup_value = $ancestor->get_tagvalue("Duplication");
-  my $dubdup_value = $ancestor->get_tagvalue("dubious_duplication");
   unless ($dup_value eq '') {
-    if($dup_value > 0 && $dubdup_value ne '1') {
+    if($dup_value > 0) {
+#      $genepairlink->add_tag("orthotree_type", 'outspecies_paralog');
       $genepairlink->add_tag("orthotree_type", 'between_species_paralog');
       $genepairlink->add_tag("orthotree_subtype", $taxon->name);
-      # Duplication_confidence_score
-      #       if ('' eq $ancestor->get_tagvalue("duplication_confidence_score")) {
-      #         $self->duplication_confidence_score($ancestor);
-      #       }
     } else {
       $genepairlink->add_tag("orthotree_type", 'ortholog_many2many');
       $genepairlink->add_tag("orthotree_subtype", $taxon->name);
@@ -1059,9 +1010,9 @@ sub _treefam_genepairlink_stats
     my $tree_id = $self->{'protein_tree'}->node_id unless $self->{'_treefam'};
     $tree_id = $self->{'_treefam'} if $self->{'_treefam'};
     my $dup = 
-      $genepairlink->get_tagvalue('ancestor')->get_tagvalue("Duplication");
+      $genepairlink->get_tagvalue('ancestor')->get_tagvalue('Duplication');
     my $dup_alg = 
-      $genepairlink->get_tagvalue('ancestor')->get_tagvalue("Duplication_alg") || 0;
+      $genepairlink->get_tagvalue('ancestor')->get_tagvalue('Duplication_alg') || 0;
     $self->{_gpresults} .= "$tree_type,$tree_id,$stids[0]"."_"."$stids[1]".","."$type,$subtype,$dup,$dup_alg\n";
 
   }
@@ -1140,10 +1091,25 @@ sub generate_attribute_arguments {
   } else {
     $new_aln2_cigarline .= $aln2count.$aln2state;
   }
-  my $perc_id1 = $identical_matches*100.0/$protein1->seq_length;
-  my $perc_pos1 = $positive_matches*100.0/$protein1->seq_length;
-  my $perc_id2 = $identical_matches*100.0/$protein2->seq_length;
-  my $perc_pos2 = $positive_matches*100.0/$protein2->seq_length;
+  my $seq_length1 = $protein1->seq_length;
+  my $perc_id1 = 0;
+  my $perc_pos1 = 0;
+  unless (0 == $seq_length1) {
+    $perc_id1 = $identical_matches*100.0/$seq_length1;
+    $perc_pos1 = $positive_matches*100.0/$seq_length1;
+  }
+  my $seq_length2 = $protein2->seq_length;
+  my $perc_id2 = 0;
+  my $perc_pos2 = 0;
+  unless (0 == $seq_length2) {
+    $perc_id2 = $identical_matches*100.0/$seq_length2;
+    $perc_pos2 = $positive_matches*100.0/$seq_length2;
+  }
+
+#   my $perc_id1 = $identical_matches*100.0/$protein1->seq_length;
+#   my $perc_pos1 = $positive_matches*100.0/$protein1->seq_length;
+#   my $perc_id2 = $identical_matches*100.0/$protein2->seq_length;
+#   my $perc_pos2 = $positive_matches*100.0/$protein2->seq_length;
 
   return ($new_aln1_cigarline, $perc_id1, $perc_pos1, $new_aln2_cigarline, $perc_id2, $perc_pos2);
 }
