@@ -20,12 +20,12 @@ sub align_sequence_display {
   my $slice   = $object->get_slice_object->Obj;
   my @sliceArray;
 
-# Get the alignment configuration 
+  # Get the alignment configuration 
 
-# First get the selected alignment
+  # First get the selected alignment
   my $selectedAlignment = $object->param("RGselect") || 'NONE';
 
-# If 'No alignment' selected then we just display the original sequence as in geneseqview
+  # If 'No alignment' selected then we just display the original sequence as in geneseqview
   if ($selectedAlignment eq 'NONE') {
     push @sliceArray, $slice;
   } else {
@@ -37,9 +37,13 @@ sub align_sequence_display {
 
     my @selected_species = grep {$_ } $object->param("ms_${selectedAlignment}");
 
-# I could not find a better way to distinguish between pairwise alignments
-# and multiple alignments. The difference is that in case of multiple alignments
-# there are checkboxes for all species from the alignment apart from the reference species: So we need to add the reference species to the list of selected species. In case of pairwise alignments the list remains empty - that will force the display of all available species in the alignment
+    # I could not find a better way to distinguish between pairwise and multiple alignments. 
+    # The difference is that in case of multiple alignments
+    # there are checkboxes for all species from the alignment apart from the reference species: 
+    # So we need to add the reference species to the list of selected species. 
+    # In case of pairwise alignments the list remains empty - that will force the display 
+    # of all available species in the alignment
+
     if ( scalar (@{$method_link_species_set->species_set}) > 2) {
       unshift @selected_species, $object->species;
     }
@@ -80,7 +84,7 @@ sub align_sequence_display {
 
   my $html = generateHTML($object, \%sliceHash, $max_position, $max_label);
 
-# Add a section holding the names of the displayed slices
+  # Add a section holding the names of the displayed slices
   my $Chrs;
   foreach my $sp ( $object->species, grep {$_ ne $object->species } keys %sliceHash) {
     $Chrs .= qq{<p><br/><b>$sp&gt;<br/></b>};
@@ -97,6 +101,85 @@ sub align_sequence_display {
   ) );
 
 
+}
+
+#-----------------------------------------------------------------------------------------
+sub markupInit {
+  my ($object, $slices, $hRef) = @_;
+
+  my @conservation;
+  my $max_position = 0;
+  my $max_label = -1;
+
+  my $slice_length = length($slices->[0]->seq) + 1 ;
+  my $width = $object->param("display_width") || 60;
+
+  foreach my $slice (@$slices) {
+    my $sequence = $slice->seq;
+    my $display_name = $slice->can('display_Slice_name') ? $slice->display_Slice_name : $object->species;
+    my @subslices;
+    if ( $slice->can('get_all_underlying_Slices') ) {
+      #($species = $slice->seq_region_name) =~ s/ /\_/g;
+      @subslices = @{$slice->get_all_underlying_Slices};
+    }
+    else {
+      #$species = $object->species;
+      @subslices = ($slice);
+    }
+
+    foreach my $uSlice ( @subslices ) {
+      next if ($uSlice->seq_region_name eq 'GAP');
+      push @{$hRef->{$display_name}->{slices}}, $uSlice->name;
+      if ( (my $label_length = length($uSlice->seq_region_name)) > $max_label) {
+	$max_label = $label_length;
+      }
+      $max_position = $uSlice->start if ($uSlice->start > $max_position);
+      $max_position = $uSlice->end if ($uSlice->end > $max_position);
+    }
+
+    $hRef->{$display_name}->{slice} = $slice;
+    $hRef->{$display_name}->{sequence} = $sequence . ' ';
+    $hRef->{$display_name}->{slice_length} = $slice_length;
+
+    # Now put some initial sequence marking
+    # Mark final bp
+    my @markup_bins = ({ 'pos' => $slice_length, 'mark' => 1 });
+
+    # Split the sequence into lines of $width bp length.
+    # Mark start and end of each line
+    my $bin = 0;
+    my $binE = int(($slice_length-1) / $width);
+
+    while ($bin < $binE) {
+      my $pp = $bin * $width + 1;
+      push @markup_bins, { 'pos' => $pp };
+
+      $pp += ($width - 1);
+      push @markup_bins, { 'pos' => $pp, 'mark' => 1 };
+      $bin ++;
+    }
+    push @markup_bins, { 'pos' => $bin * $width + 1 };
+
+    while ($sequence =~ m/(\-+[\w\s])/gc) {
+      my $txt = sprintf("%d bp", pos($sequence) - $-[0] - 1);
+      push @markup_bins, { 'pos' => $-[0]+1, 'mask' => $ins_On, 'text' => $txt };
+      push @markup_bins, { 'pos' => pos($sequence), 'mask' => -$ins_On, 'text' => $txt };
+    }
+
+    $hRef->{$display_name}->{markup} = \@markup_bins;
+
+    # And in case the conservation markup is switched on - get conservation scores for each 
+    # basepair in the alignment.
+    # In future the conservation scores will come out of a database and this will be removed
+    if ( $object->param("conservation") ne 'off') {
+      my $idx = 0;
+      foreach my $s (split(//, $sequence)) {
+        $conservation[$idx++]->{uc($s)} ++;
+      }
+    }
+  } # end foreach slice
+
+  return ($max_position, $max_label, \@conservation);
 }
 
 
@@ -149,7 +232,7 @@ sub generateHTML {
     }
 
 
-# And now the hard bit 
+    # And now the hard bit 
     my $smask = 0; # Current span mask
     my @title; # Array of span notes
     my $sindex = 0;
@@ -580,86 +663,6 @@ sub markupConservation {
   }
   return 1;
 }
-
-#-----------------------------------------------------------------------------------------
-sub markupInit {
-  my ($object, $slices, $hRef) = @_;
-
-  my @conservation;
-  my $max_position = 0;
-  my $max_label = -1;
-
-  my $slice_length = length($slices->[0]->seq) + 1 ;
-  my $width = $object->param("display_width") || 60;
-
-  foreach my $slice (@$slices) {
-    my $sequence = $slice->seq;
-    my $display_name = $slice->can('display_Slice_name') ? $slice->display_Slice_name : $object->species;
-    my @subslices;
-    if ( $slice->can('get_all_underlying_Slices') ) {
-      #($species = $slice->seq_region_name) =~ s/ /\_/g;
-      @subslices = @{$slice->get_all_underlying_Slices};
-    }
-    else {
-      #$species = $object->species;
-      @subslices = ($slice);
-    }
-
-    foreach my $uSlice ( @subslices ) {
-      next if ($uSlice->seq_region_name eq 'GAP');
-      push @{$hRef->{$display_name}->{slices}}, $uSlice->name;
-      if ( (my $label_length = length($uSlice->seq_region_name)) > $max_label) {
-	$max_label = $label_length;
-      }
-      $max_position = $uSlice->start if ($uSlice->start > $max_position);
-      $max_position = $uSlice->end if ($uSlice->end > $max_position);
-    }
-
-    $hRef->{$display_name}->{slice} = $slice;
-    $hRef->{$display_name}->{sequence} = $sequence . ' ';
-    $hRef->{$display_name}->{slice_length} = $slice_length;
-
-    # Now put some initial sequence marking
-    # Mark final bp
-    my @markup_bins = ({ 'pos' => $slice_length, 'mark' => 1 });
-
-    # Split the sequence into lines of $width bp length.
-    # Mark start and end of each line
-    my $bin = 0;
-    my $binE = int(($slice_length-1) / $width);
-
-    while ($bin < $binE) {
-      my $pp = $bin * $width + 1;
-      push @markup_bins, { 'pos' => $pp };
-
-      $pp += ($width - 1);
-      push @markup_bins, { 'pos' => $pp, 'mark' => 1 };
-      $bin ++;
-    }
-    push @markup_bins, { 'pos' => $bin * $width + 1 };
-
-    while ($sequence =~ m/(\-+[\w\s])/gc) {
-      my $txt = sprintf("%d bp", pos($sequence) - $-[0] - 1);
-      push @markup_bins, { 'pos' => $-[0]+1, 'mask' => $ins_On, 'text' => $txt };
-      push @markup_bins, { 'pos' => pos($sequence), 'mask' => -$ins_On, 'text' => $txt };
-    }
-
-    $hRef->{$display_name}->{markup} = \@markup_bins;
-
-# And in case the conservation markup is switched on - get conservation scores for each basepair in the alignment.
-# In future the conservation scores will come out of a database and this will be removed
-    if ( $object->param("conservation") ne 'off') {
-      my $idx = 0;
-      foreach my $s (split(//, $sequence)) {
-        $conservation[$idx++]->{uc($s)} ++;
-      }
-    }
-  } # end foreach slice
-
-  return ($max_position, $max_label, \@conservation);
-}
-
-
 
 ####### GENE SEQ VIEW #########################################################################
 
