@@ -108,7 +108,7 @@ sub gene_markup_options_form {
 }
 
 
-sub align_markup_options {
+sub align_markup_options2 {
   my( $panel, $object ) =@_;
   $panel->add_row( 'Markup options', "<div>@{[ $panel->form( 'align_markup_options' )->render ]}</div>" );
   return 1;
@@ -116,7 +116,7 @@ sub align_markup_options {
 
 sub align_markup_options_form {
   my( $panel, $object ) = @_;
-  my $form = EnsEMBL::Web::Form->new( 'align_markup_options', "/@{[$object->species]}/geneseqalignview", 'post' );
+  my $form = EnsEMBL::Web::Form->new( 'markup_options', "/@{[$object->species]}/geneseqalignview", 'post' );
   $form = gene_markup_options_form($panel, $object, $form, "exons");
 
    $form->add_element(

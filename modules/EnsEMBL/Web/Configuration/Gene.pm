@@ -356,12 +356,12 @@ sub geneseqalignview {
     'caption' => 'Gene Sequence information for '.$self->{object}->stable_id,
   ) ) {
     $self->add_form( $panel1,
-      qw(align_markup_options EnsEMBL::Web::Component::Gene::align_markup_options_form)
+      qw(markup_options EnsEMBL::Web::Component::Gene::align_markup_options_form)
     );
     $panel1->add_components(qw(
       name           EnsEMBL::Web::Component::Gene::name
       location       EnsEMBL::Web::Component::Gene::location
-      align_markup_options EnsEMBL::Web::Component::Gene::align_markup_options
+      markup_options EnsEMBL::Web::Component::Gene::markup_options
       sequence       EnsEMBL::Web::Component::Slice::align_sequence_display
     ));
     $self->add_panel( $panel1 );
