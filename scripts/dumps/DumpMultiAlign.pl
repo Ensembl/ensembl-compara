@@ -173,6 +173,13 @@ will contain up to split-size alignments. Obviously, you
 need to specify a output file name, which will be used as base
 for the name of all the files.
 
+=item B<[--chunk_num chunk_num]>
+
+Only available when dumping all the alignments in one go
+(without using the coordinate_system nor the seq_region_name
+options) and spliting them in several files. This option is
+used to dump one of the files only (the first file is num. 1)
+
 =back
 
 =head1 EXAMPLES
@@ -255,6 +262,11 @@ perl DumpMultiAlign.pl
         will contain up to split-size alignments. Obviously, you
         need to specify a output file name, which will be used as base
         for the name of all the files.
+    [--chunk_num chunk_num]
+        Only available when dumping all the alignments in one go
+        (without using the coordinate_system nor the seq_region_name
+        options) and spliting them in several files. This option is
+        used to dump one of the files only (the first file is num. 1)
 };
 
 use strict;
@@ -280,6 +292,7 @@ my $masked_seq = 0;
 my $output_file = undef;
 my $output_format = "fasta";
 my $split_size;
+my $chunk_num;
 my $help;
 
 GetOptions(
@@ -299,6 +312,7 @@ GetOptions(
     "output_format=s" => \$output_format,
     "output_file=s" => \$output_file,
     "split_size=s" => \$split_size,
+    "chunk_num=s" => \$chunk_num,
   );
 
 # Print Help and exit
@@ -382,6 +396,10 @@ my $date = scalar(localtime());
 if (!@query_slices) {
   my $start = 0;
   my $num = 0;
+  if ($chunk_num) {
+    $num = $chunk_num - 1;
+    $start = $split_size * $num;
+  }
   do {
     my $genomic_align_blocks =
         $genomic_align_block_adaptor->fetch_all_by_MethodLinkSpeciesSet(
@@ -414,6 +432,8 @@ if (!@query_slices) {
       write_genomic_align_block($output_format, $this_genomic_align_block);
       $this_genomic_align_block = undef;
     }
+    exit if ($chunk_num);
+    exit if ($num >= 9);
     $start += $split_size;
   } while($split_size);
 } else {
