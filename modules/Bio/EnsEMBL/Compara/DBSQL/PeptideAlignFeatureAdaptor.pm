@@ -166,6 +166,17 @@ sub fetch_all_by_hmember_id_qgenome_db_id{
   return $self->_generic_fetch($constraint);
 }
 
+sub fetch_all_by_hgenome_db_id{
+  my $self = shift;
+  my $hgenome_db_id = shift;
+  my $qgenome_db_id = shift;
+
+  throw("must specify hit genome_db dbID") unless($hgenome_db_id);
+  my $constraint = "paf.hgenome_db_id=$hgenome_db_id";
+  return $self->_generic_fetch($constraint);
+}
+
+
 
 =head2 final_clause
 
@@ -228,14 +239,22 @@ sub _store_PAFS {
 
   return unless(@out and scalar(@out));
 
-  my $query = "INSERT INTO peptide_align_feature(".
+  # Query genome db id should always be the same
+  my $first_qgenome_db_id = $out[0]->query_member->genome_db_id;
+
+  my $gdb = $self->db->get_GenomeDBAdaptor->fetch_by_dbID($first_qgenome_db_id);
+  my $species_name = lc($gdb->name);
+  $species_name =~ s/\ /\_/g;
+  my $tbl_name = "peptide_align_feature"."_"."$species_name"."_"."$first_qgenome_db_id";
+
+  my $query = "INSERT INTO $tbl_name(".
                 "qmember_id,hmember_id,qgenome_db_id,hgenome_db_id,analysis_id," .
                 "qstart,qend,hstart,hend,".
                 "score,evalue,align_length," .
                 "identical_matches,perc_ident,".
                 "positive_matches,perc_pos,hit_rank,cigar_line) VALUES ";
 
-  my $addComma=0;                
+  my $addComma=0;
   foreach my $paf (@out) {
     if($paf->isa('Bio::EnsEMBL::Compara::PeptideAlignFeature')) {
 
@@ -249,7 +268,7 @@ sub _store_PAFS {
       $qgenome_db_id = 0 unless($qgenome_db_id);
       my $hgenome_db_id = $paf->hit_member->genome_db_id;
       $hgenome_db_id = 0 unless($hgenome_db_id);
-      
+
       $query .= ", " if($addComma);
       $query .= "(".$paf->query_member->dbID.
                 ",".$paf->hit_member->dbID.
@@ -288,7 +307,7 @@ sub _create_PAF_from_BaseAlignFeature {
   }
 
   my $paf = new Bio::EnsEMBL::Compara::PeptideAlignFeature;
-  
+
   my $memberDBA = $self->db->get_MemberAdaptor();
 
   if($feature->seqname =~ /member_id_(\d+)/) {
@@ -308,7 +327,7 @@ sub _create_PAF_from_BaseAlignFeature {
     #printf("hseq: %s %s\n", $source_name, $stable_id);
     $paf->hit_member($memberDBA->fetch_by_source_stable_id($source_name, $stable_id));
   }
-  
+
   $paf->analysis($feature->analysis);
 
   $paf->qstart($feature->start);
@@ -331,7 +350,6 @@ sub _create_PAF_from_BaseAlignFeature {
 }
 
 
-
 sub sort_by_score_evalue_and_pid {
   $b->score <=> $a->score ||
     $a->evalue <=> $b->evalue ||
@@ -347,7 +365,7 @@ sub pafs_equal {
               ($paf1->evalue == $paf2->evalue) and
               ($paf1->perc_ident == $paf2->perc_ident) and
               ($paf1->perc_pos == $paf2->perc_pos));
-  return 0;              
+  return 0;
 }
 
 
@@ -501,6 +519,9 @@ sub _objs_from_sth {
 ###############################################################################
 
 
+#sub fetch_by_dbID_qgenome_db_id {
+
+
 =head2 fetch_by_dbID
 
   Arg [1]    : int $id
@@ -532,6 +553,8 @@ sub fetch_by_dbID{
   my ($obj) = @{$self->_generic_fetch($constraint)};
   return $obj;
 }
+
+#sub fetch_by_dbIDs_qgenome_db_id {
 
 =head2 fetch_by_dbIDs
 
