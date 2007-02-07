@@ -94,11 +94,11 @@ sub markup_and_render {
 
   # Add a section holding the names of the displayed slices
   my $Chrs;
-  foreach my $sp ( $object->species, grep {$_ ne $object->species } keys %sliceHash) {
+  foreach my $sp (sort( $object->species, grep {$_ ne $object->species } keys %sliceHash ) ) {
     $Chrs .= qq{<p><br/><b>$sp&gt;<br/></b>};
     foreach my $loc (@{$sliceHash{$sp}{slices}}) {
       my ($stype, $assembly, $region, $start, $end, $strand) = split (/:/ , $loc);
-      $Chrs .= qq{<p><a href="/$sp/contigview?l=$region:$start-$end">$loc</a></p>};
+      $Chrs .= qq{<a href="/$sp/contigview?l=$region:$start-$end">$loc</a></p>};
     }
   }
 
@@ -126,11 +126,9 @@ sub markupInit {
     my $display_name = $slice->can('display_Slice_name') ? $slice->display_Slice_name : $object->species;
     my @subslices;
     if ( $slice->can('get_all_underlying_Slices') ) {
-      #($species = $slice->seq_region_name) =~ s/ /\_/g;
       @subslices = @{$slice->get_all_underlying_Slices};
     }
     else {
-      #$species = $object->species;
       @subslices = ($slice);
     }
 
@@ -1026,7 +1024,6 @@ sub sequencealignview {
   # Get align slice
   my $align_slice = Bio::EnsEMBL::AlignStrainSlice->new(-SLICE => $refslice->Obj,
                                                         -STRAINS => \@sliceArray);
-
 
   markup_and_render( $panel, $object, \@sliceArray);
 
