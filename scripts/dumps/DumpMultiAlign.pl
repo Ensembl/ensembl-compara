@@ -170,7 +170,7 @@ Only available when dumping all the alignments in one go
 (without using the coordinate_system nor the seq_region_name
 options) to split the output in several files. Each file
 will contain up to split-size alignments. Obviously, you
-need to specify a output file name, which will be use as base
+need to specify a output file name, which will be used as base
 for the name of all the files.
 
 =back
@@ -253,7 +253,7 @@ perl DumpMultiAlign.pl
         (without using the coordinate_system nor the seq_region_name
         options) to split the output in several files. Each file
         will contain up to split-size alignments. Obviously, you
-        need to specify a output file name, which will be use as base
+        need to specify a output file name, which will be used as base
         for the name of all the files.
 };
 
@@ -341,6 +341,15 @@ my $method_link_species_set = $method_link_species_set_adaptor->fetch_by_method_
 throw("The database do not contain any $alignment_type data for $set_of_species!")
     if (!$method_link_species_set);
 
+my $conservation_score_mlss;
+if ($method_link_species_set->method_link_type eq "GERP_CONSERVATION_SCORE") {
+  $conservation_score_mlss = $method_link_species_set;
+  my $meta_container = Bio::EnsEMBL::Registry->get_adaptor(
+    $dbname, 'compara', 'MetaContainer');
+  my $mlss_id = $meta_container->list_value_by_key('gerp_'.$conservation_score_mlss->dbID)->[0];
+  $method_link_species_set = $method_link_species_set_adaptor->fetch_by_dbID($mlss_id);
+}
+
 # Fetching the query Slice:
 my $slice_adaptor = Bio::EnsEMBL::Registry->get_adaptor($species, 'core', 'Slice');
 throw("Registry configuration file has no data for connecting to <$species>")
@@ -366,15 +375,20 @@ if ($coord_system and !$seq_region) {
 my $genomic_align_block_adaptor = Bio::EnsEMBL::Registry->get_adaptor(
     $dbname, 'compara', 'GenomicAlignBlock');
 
+my $release = Bio::EnsEMBL::Registry->get_adaptor(
+    $dbname, 'compara', 'MetaContainer')->list_value_by_key("schema_version")->[0];
+my $date = scalar(localtime());
+
 if (!@query_slices) {
   my $start = 0;
-  my $num = 1;
+  my $num = 0;
   do {
     my $genomic_align_blocks =
         $genomic_align_block_adaptor->fetch_all_by_MethodLinkSpeciesSet(
             $method_link_species_set, $split_size, $start);
     last if (!@$genomic_align_blocks);
     if ($output_file and $split_size) {
+      $num++;
       my $this_output_file = $output_file;
       if ($this_output_file =~ /\.[^\.]+$/) {
         $this_output_file =~ s/(\.[^\.]+)$/_$num$1/;
@@ -383,18 +397,23 @@ if (!@query_slices) {
       }
       open(STDOUT, ">$this_output_file") or die("Cannot open $this_output_file");
     }
-    my $alignIO = Bio::AlignIO->newFh(
-            -interleaved => 0,
-            -fh => \*STDOUT,
-            -format => $output_format,
-            -idlength => 10
-        );
-  
+    if ($output_format eq "maf") {
+      print "##maf version=1 program=", $method_link_species_set->method_link_type, "\n";
+      print "#\n";
+    } elsif ($output_format eq "emf") {
+      print
+        "##FORMAT (compara)\n",
+        "##DATE $date\n",
+        "##RELEASE ", $release, "\n",
+        "# Alignments: ", $method_link_species_set->name, "\n",
+        "# Region: ALL_ALIGNMENTS\n";
+      print "# File $num\n" if ($num);
+    }
+
     foreach my $this_genomic_align_block (@$genomic_align_blocks) {
-      write_genomic_align_block($alignIO, $this_genomic_align_block);
+      write_genomic_align_block($output_format, $this_genomic_align_block);
       $this_genomic_align_block = undef;
     }
-    $num++;
     $start += $split_size;
   } while($split_size);
 } else {
@@ -406,6 +425,21 @@ if (!@query_slices) {
   if ($output_format eq "maf") {
     print "##maf version=1 program=", $method_link_species_set->method_link_type, "\n";
     print "#\n";
+  } elsif ($output_format eq "emf") {
+    print
+      "##FORMAT (compara)\n",
+      "##DESCRIPTION ", , "\n",
+      "##DATE ", scalar(localtime), "\n",
+      "##RELEASE ", $release, "\n",
+      "# Alignments: ", $method_link_species_set->name, "\n";
+    if ($coord_system and !$seq_region) {
+      print "# Region: ALL ${coord_system}s\n";
+    } else {
+      my $slice = $query_slices[0];
+      print "# Region: ",
+          $slice->adaptor->db->get_MetaContainer->get_Species->binomial,
+          " ", $slice->name, "\n";
+    }
   } else {
     $alignIO = Bio::AlignIO->newFh(
             -interleaved => 0,
@@ -422,19 +456,26 @@ if (!@query_slices) {
             $method_link_species_set, $this_slice);
   
     foreach my $this_genomic_align_block (@$genomic_align_blocks) {
-      write_genomic_align_block($alignIO, $this_genomic_align_block);
+      write_genomic_align_block($output_format, $this_genomic_align_block);
       $this_genomic_align_block = undef;
     }
   }
 }
 
 sub write_genomic_align_block {
-  my ($alignIO, $this_genomic_align_block) = @_;
+  my ($output_format, $this_genomic_align_block) = @_;
 
   if ($output_format eq "maf") {
-    print_my_maf($this_genomic_align_block);
-    return;
+    return print_my_maf($this_genomic_align_block);
+  } elsif ($output_format eq "emf") {
+    return print_my_emf($this_genomic_align_block);
   }
+  my $alignIO = Bio::AlignIO->newFh(
+          -interleaved => 0,
+          -fh => \*STDOUT,
+          -format => $output_format,
+          -idlength => 10
+      );
   my $simple_align = Bio::SimpleAlign->new();
   $simple_align->id("GAB#".$this_genomic_align_block->dbID);
   $simple_align->score($this_genomic_align_block->score);
@@ -478,6 +519,53 @@ sub write_genomic_align_block {
   print $alignIO $simple_align;
   print "#\n" if ($output_format eq "fasta");
 }
+
+sub print_my_emf {
+  my ($genomic_align_block) = @_;
+
+  print "\n";
+  my $aligned_seqs;
+  foreach my $this_genomic_align (@{$genomic_align_block->get_all_GenomicAligns()}) {
+    my $species_name = $this_genomic_align->genome_db->name;
+    $species_name =~ s/ /_/g;
+    print join(" ", "SEQ", $species_name, $this_genomic_align->dnafrag->name,
+        $this_genomic_align->dnafrag_start, $this_genomic_align->dnafrag_end,
+        $this_genomic_align->dnafrag_strand), "\n";
+    my $aligned_sequence;
+    if ($masked_seq == 1) {
+      $this_genomic_align->original_sequence($this_genomic_align->get_Slice->get_repeatmasked_seq(undef,1)->seq);
+    } elsif ($masked_seq == 2) {
+      $this_genomic_align->original_sequence($this_genomic_align->get_Slice->get_repeatmasked_seq()->seq);
+    }
+    if ($original_seq) {
+      $aligned_sequence = $this_genomic_align->original_sequence;
+    } else {
+      $aligned_sequence = $this_genomic_align->aligned_sequence;
+    }
+    for (my $i = 0; $i<length($aligned_sequence); $i++) {
+      $aligned_seqs->[$i] .= substr($aligned_sequence, $i, 1);
+    }
+  }
+  if ($conservation_score_mlss) {
+    print "SCORE ", $conservation_score_mlss->name, "\n";
+    my $conservation_scores = $genomic_align_block->adaptor->db->get_ConservationScoreAdaptor->
+        fetch_all_by_GenomicAlignBlock($genomic_align_block, undef, undef, undef,
+            $genomic_align_block->length, undef, 1);
+    my $this_conservation_score = shift @$conservation_scores;
+    for (my $i = 0; $i<@$aligned_seqs; $i++) {
+      if ($this_conservation_score and $this_conservation_score->position == $i + 1) {
+        $aligned_seqs->[$i] .= sprintf(" %.2f", $this_conservation_score->diff_score);
+        $this_conservation_score = shift @$conservation_scores;
+      } else {
+        $aligned_seqs->[$i] .= " .";
+      }
+    }
+  }
+  print "DATA\n";
+  print join("\n", @$aligned_seqs);
+  print "\n//\n";
+}
+
 
 sub print_my_maf {
   my ($genomic_align_block) = @_;
