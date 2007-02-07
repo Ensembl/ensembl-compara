@@ -126,6 +126,17 @@ sub find {
   return $result;
 }
 
+sub find_many {
+  my ($self, $request) = @_;
+  my $result = EnsEMBL::Web::DBSQL::SQL::Result->new();
+  $result->set_action('find');
+  my $sql = $self->template($request->get_sql);
+  warn $sql;
+  my $hashref = $self->get_handle->selectall_hashref($sql, $request->get_index_by);
+  $result->set_result_hash($hashref);
+  return $result;
+}
+
 sub dump_data {
   my ($self, $data) = @_;
   my $temp_fields = {};
@@ -149,6 +160,17 @@ sub last_inserted_id {
   my @A = @{$T->[0]}[0];
   my $result = $A[0];
   return $result;
+}
+
+sub template {
+  my ($self, $template) = @_;
+  while ($template =~ m/<(.*)>/g) {
+    warn "TEMPLATE: " . $1;
+    my $get_accessor = "get_" . $1;
+    my $get = $self->$get_accessor;
+    $template =~ s/<$1>/$get/g;
+  }
+  return $template;
 }
 
 

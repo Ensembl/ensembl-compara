@@ -5,6 +5,7 @@ use warnings;
 
 use Class::Std;
 use EnsEMBL::Web::DBSQL::SQL::Result;
+use EnsEMBL::Web::DBSQL::SQL::Request;
 use EnsEMBL::Web::Object::DataField;
 use EnsEMBL::Web::Root;
 
@@ -18,6 +19,7 @@ my %Queriable_Fields :ATTR(:set<queriable_fields> :get<queriable_fields>);
 my %Adaptor :ATTR(:set<adaptor> :get<adaptor>);
 my %Belongs_to :ATTR(:set<belongs_to> :get<belongs_to>);
 my %Relational_attributes :ATTR(:set<relational_attributes> :get<relational_attributes>);
+my %Relational_table :ATTR(:set<relational_table> :get<relational_table>);
 my %Has_many:ATTR(:set<has_many> :get<has_many>);
 
 }
@@ -99,12 +101,16 @@ sub add_queriable_field {
 }
 
 sub add_has_many {
-  my ($self, $arg) = @_;
+  my ($self, $args) = @_;
   if (!$self->get_has_many) {
     $self->set_has_many([]);
   }
-  push @{ $self->has_many}, $arg;
+  $self->relational_class($self->plural($self->object_name_from_package($args->{class})), $args->{class});
+  $self->relational_table($self->plural($self->object_name_from_package($args->{class})), $args->{table});
+  $self->add_has_many_symbol_lookup($self->plural($self->object_name_from_package($args->{class})));
+  push @{ $self->get_has_many }, $args->{class};
 }
+
 
 sub add_belongs_to {
   my ($self, $arg) = @_;
@@ -166,6 +172,31 @@ sub initialize_relational_accessor {
   };
 }
 
+sub add_has_many_symbol_lookup {
+  my ($self, $name) = @_;
+  no strict;
+  my $class = ref($self);
+  $self->set_value({ $name => undef });
+   
+  unless (defined *{ "$class\::$name" }) {
+    *{ "$class\::$name" } = $self->initialize_has_many_accessor($name);
+  }
+}
+
+sub initialize_has_many_accessor {
+  no strict;
+  my ($self, $attribute) = @_;
+  warn "Adding HAS MANY accessor: " . $attribute;
+  return sub {
+    my $self = shift;
+    my $new_value = shift;
+    if (defined $new_value) {
+      $self->set_value($attribute,  $new_value);
+    }
+    return $self->get_lazy_values($attribute);
+  };
+}
+
 sub get_lazy_value {
   my ($self, $attribute) = @_;
   my $class = $self->relational_class($attribute);
@@ -183,6 +214,27 @@ sub get_lazy_value {
   return undef;
 }
 
+sub get_lazy_values {
+  my ($self, $attribute) = @_;
+  my $class = $self->relational_class($attribute);
+  my $accessor = $self->object_name_from_package($class) . "_id";
+  my $object = $self->object_name_from_package($class);
+  if (defined $self->get_value($object)) {
+    return $self->get_value($object);
+  }
+  warn "Creating MANY new $attribute with class " . $class;
+  my $result = $self->find_many($attribute);
+  my @objects = ();
+  if (EnsEMBL::Web::Root::dynamic_use(undef, $class)) {
+    foreach my $id (keys %{ $result->get_result_hash }) {  
+      my $new = $class->new({ id => $id });
+      push @objects, $new;
+    }
+    $self->set_value($object, \@objects);
+  }
+  return \@objects;
+}
+
 sub relational_class {
   my ($self, $attribute, $class) = @_;
   unless (defined $self->get_relational_attributes) {
@@ -192,6 +244,17 @@ sub relational_class {
     $self->get_relational_attributes->{$attribute} = $class; 
   }
   return $self->get_relational_attributes->{$attribute};
+}
+
+sub relational_table {
+  my ($self, $attribute, $table) = @_;
+  unless (defined $self->get_relational_table) {
+    $self->set_relational_table({});
+  }
+  if (defined $table) {
+    $self->get_relational_table->{$attribute} = $table; 
+  }
+  return $self->get_relational_table->{$attribute};
 }
 
 sub add_relational_symbol_lookup {
@@ -234,12 +297,67 @@ sub destroy {
   return $self->get_adaptor->destroy($self);
 }
 
+sub find_many {
+  my ($self, $attribute) = @_;
+  my $request = EnsEMBL::Web::DBSQL::SQL::Request->new();
+  $request->set_action('select');
+  $request->set_table($self->relational_table($attribute));
+  $request->add_where('type', $self->singular($attribute));
+  $request->add_where($self->get_primary_key, $self->id);
+  $request->set_index_by('user_record_id');
+  return $self->get_adaptor->find_many($request);
+}
+
 # Util methods
 
 sub object_name_from_package {
   my ($self, $name) = @_;
   my @components = split /::/, $name;
   return lc($components[$#components]);
+}
+
+sub plural {
+  ### Returns the plural form of a word. 
+  ### Note: this is not a definitive lexical modification!
+  ### Extended this method with more complex rules if it doesn't
+  ### return what you expected.
+
+  my ($self, $word) = @_;
+  my $plural = $word;
+  my $found = 0;
+
+  ## Words ending in s
+  if (!$found && $word =~ /s$/) {
+    $plural =~ s/s$/ses/;
+    $found = 1;
+  }
+  unless ($found) {
+    $plural .= "s";
+  }
+  return $plural;
+}
+
+sub singular {
+  ### Returns the single form of a word. 
+  ### Note: this is not a definitive lexical modification!
+  ### Extended this method with more complex rules if it doesn't
+  ### return what you expected.
+ 
+  my ($self, $word) = @_;
+  my $singular = $word;
+  my $found = 0;
+
+  ## Words ending in es
+  if (!$found && $word =~ /ses$/) {
+    $singular =~ s/ses$/s/;
+    $found = 1;
+  }
+
+  unless ($found) {
+    $singular =~ s/s$//;
+  }
+
+  return $singular;
 }
 
 1;
