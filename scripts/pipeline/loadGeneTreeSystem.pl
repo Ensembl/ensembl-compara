@@ -13,7 +13,7 @@ my $conf_file;
 my %analysis_template;
 my @speciesList = ();
 my %hive_params;
-#my %dnds_params;
+my %dnds_params;
 my %genetree_params;
 
 my %compara_conf = ();
@@ -21,7 +21,7 @@ my %compara_conf = ();
 $compara_conf{'-port'} = 3306;
 
 my ($help, $host, $user, $pass, $dbname, $port, $compara_conf, $adaptor);
-my ($subset_id, $genome_db_id, $prefix, $fastadir, $verbose);
+my ($subset_id, $genome_db_id, $prefix, $fastadir, $verbose, $update);
 
 GetOptions('help'     => \$help,
            'conf=s'   => \$conf_file,
@@ -31,6 +31,7 @@ GetOptions('help'     => \$help,
            'dbpass=s' => \$pass,
            'dbname=s' => \$dbname,
            'v' => \$verbose,
+           'update' => \$update,
           );
 
 if ($help) { usage(); }
@@ -107,6 +108,9 @@ sub parse_conf {
       }
       if($confPtr->{TYPE} eq 'HIVE') {
         %hive_params = %{$confPtr};
+      }
+      if($confPtr->{TYPE} eq 'dNdS') {
+        %dnds_params = %{$confPtr};
       }
       if($confPtr->{TYPE} eq 'GENE_TREE') {
         %genetree_params = %{$confPtr};
@@ -255,10 +259,10 @@ sub build_GeneTreeSystem
   #
   # NJTREE_PHYML
   #
-  $parameters = "{cdna=>1";
+  $parameters = "{cdna=>1,bootstrap=>1";
   if (defined $genetree_params{'max_gene_count'}) {
     $parameters .= ",max_gene_count=>".$genetree_params{'max_gene_count'};
-    $parameters .= ",species_tree_file=>'/lustre/work1/ensembl/avilella/spec.tf4.ens41.taxon_id.nh'";
+    $parameters .= ",species_tree_file=>'/lustre/work1/ensembl/avilella/src/ensembl_main/ensembl-compara/scripts/pipeline/species_tree_njtree.taxon_id.nh'";
   }
   if (defined $genetree_params{'honeycomb_dir'}) {
     $parameters .= ",'honeycomb_dir'=>'".$genetree_params{'honeycomb_dir'};
@@ -275,6 +279,31 @@ sub build_GeneTreeSystem
   $stats->batch_size(1);
   $stats->hive_capacity(400);
   $stats->update();
+
+  #
+  # NJTREE_noboot
+  #
+  $parameters = "{cdna=>1, bootstrap=>0";
+  if (defined $genetree_params{'max_gene_count'}) {
+    $parameters .= ",max_gene_count=>".$genetree_params{'max_gene_count'};
+    $parameters .= ",species_tree_file=>'/lustre/work1/ensembl/avilella/src/ensembl_main/ensembl-compara/scripts/pipeline/species_tree_njtree.taxon_id.nh'";
+  }
+  if (defined $genetree_params{'honeycomb_dir'}) {
+    $parameters .= ",'honeycomb_dir'=>'".$genetree_params{'honeycomb_dir'};
+  }
+  $parameters .= "'}";
+  my $njtree_phyml_noboot = Bio::EnsEMBL::Analysis->new(
+      -logic_name      => 'NJTREE_noboot',
+      -program_file    => '/lustre/work1/ensembl/avilella/bin/i386/njtree',
+      -module          => 'Bio::EnsEMBL::Compara::RunnableDB::NJTREE_PHYML',
+      -parameters      => $parameters
+    );
+  $self->{'hiveDBA'}->get_AnalysisAdaptor()->store($njtree_phyml_noboot);
+  $stats = $njtree_phyml_noboot->stats;
+  $stats->batch_size(1);
+  $stats->hive_capacity(400);
+  $stats->update();
+
 
   #
   # BreakPAFCluster
@@ -294,10 +323,17 @@ sub build_GeneTreeSystem
   #
   # OrthoTree
   #
+  my $with_options_orthotree = 0;
   if (defined $genetree_params{'honeycomb_dir'}) {
-    $parameters = "{'honeycomb_dir'=>'".$genetree_params{'honeycomb_dir'};
-    $parameters .= "'}";
+    $parameters = "'honeycomb_dir'=>'".$genetree_params{'honeycomb_dir'};
+    $with_options_orthotree = 1;
   }
+  if (defined $dnds_params{'species_sets'}) {
+    $parameters .= 'species_sets=>' . $dnds_params{'species_sets'} . ',method_link_type=>\''.$dnds_params{'method_link_type'}.'\'';
+    $with_options_orthotree = 1;
+  }
+  $parameters = '{' . $parameters .'}' if (1==$with_options_orthotree);
+
   my $orthotree = Bio::EnsEMBL::Analysis->new(
       -logic_name      => 'OrthoTree',
       -module          => 'Bio::EnsEMBL::Compara::RunnableDB::OrthoTree',
@@ -309,6 +345,7 @@ sub build_GeneTreeSystem
   $stats->hive_capacity(200);
   $stats->update();
 
+  # turn these two on if you need dnds from the old homology system
 #   #
 #   # CreateHomology_dNdSJob
 #   #
@@ -334,38 +371,34 @@ sub build_GeneTreeSystem
 #         );
 #   }
 
-#   #
-#   # Homology_dNdS
-#   #
-#   my $homology_dNdS = Bio::EnsEMBL::Analysis->new(
-#       -db_version      => '1',
-#       -logic_name      => 'Homology_dNdS',
-#       -module          => 'Bio::EnsEMBL::Compara::RunnableDB::Homology_dNdS'
-#   );
-#   $self->store_codeml_parameters(\%dnds_params);
-#   if (defined $dnds_params{'dNdS_analysis_data_id'}) {
-#     $homology_dNdS->parameters('{dNdS_analysis_data_id=>' . $dnds_params{'dNdS_analysis_data_id'} . '}');
-#   }
-# #   if (defined $genetree_params{'honeycomb_dir'}) {
-# #     $parameters = "{'honeycomb_dir'=>'".$genetree_params{'honeycomb_dir'};
-# #     $parameters .= "'}";
-# #   }
-#   $self->{'comparaDBA'}->get_AnalysisAdaptor->store($homology_dNdS);
-#   if(defined($self->{'hiveDBA'})) {
-#     my $stats = $analysisStatsDBA->fetch_by_analysis_id($homology_dNdS->dbID);
-#     $stats->batch_size(10);
-#     $stats->hive_capacity(200);
-#     $stats->status('BLOCKED');
-#     $stats->update();
-#     $ctrlRuleDBA->create_rule($CreateHomology_dNdSJob,$homology_dNdS);
-#   }
+  #
+  # Homology_dNdS
+  #
+  my $homology_dNdS = Bio::EnsEMBL::Analysis->new(
+      -db_version      => '1',
+      -logic_name      => 'Homology_dNdS',
+      -module          => 'Bio::EnsEMBL::Compara::RunnableDB::Homology_dNdS'
+  );
+  $self->store_codeml_parameters(\%dnds_params);
+  if (defined $dnds_params{'dNdS_analysis_data_id'}) {
+    $homology_dNdS->parameters('{dNdS_analysis_data_id=>' . $dnds_params{'dNdS_analysis_data_id'} . '}');
+  }
+  $self->{'comparaDBA'}->get_AnalysisAdaptor->store($homology_dNdS);
+  if(defined($self->{'hiveDBA'})) {
+    my $stats = $analysisStatsDBA->fetch_by_analysis_id($homology_dNdS->dbID);
+    $stats->batch_size(10);
+    $stats->hive_capacity(200);
+    $stats->status('BLOCKED');
+    $stats->update();
+    # $ctrlRuleDBA->create_rule($CreateHomology_dNdSJob,$homology_dNdS);
+  }
 
   #
   # build graph
   #
   $dataflowRuleDBA->create_rule($paf_cluster, $clusterset_staging, 1);
   $dataflowRuleDBA->create_rule($paf_cluster, $muscle, 2);
-  
+
   $dataflowRuleDBA->create_rule($muscle, $njtree_phyml, 1);
   $dataflowRuleDBA->create_rule($muscle, $muscle_huge, 2);
 
@@ -377,10 +410,12 @@ sub build_GeneTreeSystem
 #  $dataflowRuleDBA->create_rule($phyml_cdna, $rap, 1);
 #  $dataflowRuleDBA->create_rule($phyml_cdna, $BreakPAFCluster, 2);
   $dataflowRuleDBA->create_rule($njtree_phyml, $orthotree, 1);
-  $dataflowRuleDBA->create_rule($njtree_phyml, $BreakPAFCluster, 2);
+  $dataflowRuleDBA->create_rule($njtree_phyml, $njtree_phyml_noboot, 2);
+  $dataflowRuleDBA->create_rule($njtree_phyml_noboot, $orthotree, 1);
+  $dataflowRuleDBA->create_rule($njtree_phyml_noboot, $BreakPAFCluster, 2);
   $dataflowRuleDBA->create_rule($BreakPAFCluster, $muscle, 2);
-
-  #$ctrlRuleDBA->create_rule($load_genome, $blastrules_analysis);
+  # dnds bit
+#  $dataflowRuleDBA->create_rule($orthotree,$homology_dNdS);
 
   #
   # create initial job
@@ -395,25 +430,25 @@ sub build_GeneTreeSystem
   return 1;
 }
 
-# sub store_codeml_parameters
-# {
-#   my $self = shift;
-#   my $dNdS_Conf = shift;
+sub store_codeml_parameters
+{
+  my $self = shift;
+  my $dNdS_Conf = shift;
 
-#   my $options_hash_ref = $dNdS_Conf->{'codeml_parameters'};
-#   return unless($options_hash_ref);
+  my $options_hash_ref = $dNdS_Conf->{'codeml_parameters'};
+  return unless($options_hash_ref);
   
-#   my @keys = keys %{$options_hash_ref};
-#   my $options_string = "{\n";
-#   foreach my $key (@keys) {
-#     $options_string .= "'$key'=>'" . $options_hash_ref->{$key} . "',\n";
-#   }
-#   $options_string .= "}";
+  my @keys = keys %{$options_hash_ref};
+  my $options_string = "{\n";
+  foreach my $key (@keys) {
+    $options_string .= "'$key'=>'" . $options_hash_ref->{$key} . "',\n";
+  }
+  $options_string .= "}";
 
-#   $dNdS_Conf->{'dNdS_analysis_data_id'} =
-#          $self->{'hiveDBA'}->get_AnalysisDataAdaptor->store_if_needed($options_string);
+  $dNdS_Conf->{'dNdS_analysis_data_id'} =
+         $self->{'hiveDBA'}->get_AnalysisDataAdaptor->store_if_needed($options_string);
          
-#   $dNdS_Conf->{'codeml_parameters'} = undef;
-# }
+  $dNdS_Conf->{'codeml_parameters'} = undef;
+}
 
 
