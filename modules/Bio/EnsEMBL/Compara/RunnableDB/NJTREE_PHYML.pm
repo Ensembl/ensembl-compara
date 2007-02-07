@@ -91,6 +91,7 @@ sub fetch_input {
   my( $self) = @_;
 
   $self->{'cdna'}           = 1;
+  $self->{'bootstrap'}      = 1;
   $self->{'max_gene_count'} = 1000000;
 
   $self->check_job_fail_options;
@@ -246,8 +247,8 @@ sub run_njtree_phyml
   unless (-e $njtree_phyml_executable) {
     if (-e "/proc/version") {
       # it is a linux machine
-      # md5sum b8bbae4f5e29858e8ab4d8dd451885e4
-      $njtree_phyml_executable = "/lustre/work1/ensembl/avilella/bin/i386_icc/njtree_quiet";
+      # md5sum 91a9da7ad7d38ebedd5ce363a28d509b
+      $njtree_phyml_executable = "/lustre/work1/ensembl/avilella/bin/i386/njtree_gcc";
     }
   }
   # FIXME - ask systems to add it to ensembl bin
@@ -264,23 +265,66 @@ sub run_njtree_phyml
   # $BASENAME.nucl.mfa -b 100 2>&1/dev/null
 
   my $cmd = $njtree_phyml_executable;
-  $cmd .= " best ";
-  if (defined($self->{'species_tree_file'})) {
-    $cmd .= " -f ". $self->{'species_tree_file'};
-  }
-  $cmd .= " ". $self->{'input_aln'};
-  $cmd .= " -p tree ";
-  $cmd .= " -o " . $self->{'newick_file'};
-  $cmd .= " 2>&1 > /dev/null" unless($self->debug);
+  if (1 == $self->{'bootstrap'}) {
+    $cmd .= " best ";
+    if (defined($self->{'species_tree_file'})) {
+      $cmd .= " -f ". $self->{'species_tree_file'};
+    }
+    $cmd .= " ". $self->{'input_aln'};
+    $cmd .= " -p tree ";
+    $cmd .= " -o " . $self->{'newick_file'};
+    $cmd .= " 2>&1 > /dev/null" unless($self->debug);
 
-  $self->{'comparaDBA'}->dbc->disconnect_when_inactive(1);
-  print("$cmd\n") if($self->debug);
-  unless(system($cmd) == 0) {
-    print("$cmd\n");
-    $self->check_job_fail_options;
-    throw("error running njtree phyml, $!\n");
+    $self->{'comparaDBA'}->dbc->disconnect_when_inactive(1);
+    print("$cmd\n") if($self->debug);
+    unless(system($cmd) == 0) {
+      print("$cmd\n");
+      $self->check_job_fail_options;
+      throw("error running njtree phyml, $!\n");
+    }
+    $self->{'comparaDBA'}->dbc->disconnect_when_inactive(0);
+  } elsif (0 == $self->{'bootstrap'}) {
+    # first part
+    # ./njtree phyml -nS -f species_tree.nh -p 0.01 -o $BASENAME.cons.nh $BASENAME.nucl.mfa
+    $cmd = $njtree_phyml_executable;
+    $cmd .= " phyml -nS";
+    if (defined($self->{'species_tree_file'})) {
+      $cmd .= " -f ". $self->{'species_tree_file'};
+    }
+    $cmd .= " ". $self->{'input_aln'};
+    $cmd .= " -p 0.01 ";
+    $self->{'intermediate_newick_file'} = $self->{'input_aln'} . "_intermediate_njtree_phyml_tree.txt ";
+    $cmd .= " -o " . $self->{'intermediate_newick_file'};
+    $cmd .= " 2>&1 > /dev/null" unless($self->debug);
+
+    print("$cmd\n") if($self->debug);
+    unless(system($cmd) == 0) {
+      print("$cmd\n");
+      $self->check_job_fail_options;
+      throw("error running njtree phyml noboot (step 1 of 2), $!\n");
+    }
+    # second part
+    # nice -n 19 ./njtree sdi -s species_tree.nh $BASENAME.cons.nh > $BASENAME.cons.nhx
+    $cmd = $njtree_phyml_executable;
+    $cmd .= " sdi ";
+    if (defined($self->{'species_tree_file'})) {
+      $cmd .= " -s ". $self->{'species_tree_file'};
+    }
+    $cmd .= " ". $self->{'intermediate_newick_file'};
+    $cmd .= " 1> " . $self->{'newick_file'};
+    $cmd .= " 2> /dev/null" unless($self->debug);
+
+    $self->{'comparaDBA'}->dbc->disconnect_when_inactive(1);
+    print("$cmd\n") if($self->debug);
+    unless(system($cmd) == 0) {
+      print("$cmd\n");
+      $self->check_job_fail_options;
+      throw("error running njtree phyml noboot (step 2 of 2), $!\n");
+    }
+    $self->{'comparaDBA'}->dbc->disconnect_when_inactive(0);
+  } else {
+    throw("NJTREE PHYML -- wrong bootstrap option");
   }
-  $self->{'comparaDBA'}->dbc->disconnect_when_inactive(0);
 
   #parse the tree into the datastucture
   $self->parse_newick_into_proteintree;
