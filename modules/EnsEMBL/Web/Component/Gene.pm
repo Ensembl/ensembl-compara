@@ -26,14 +26,14 @@ sub markup_options {
 sub markup_options_form {
   my( $panel, $object ) = @_;
   my $form = EnsEMBL::Web::Form->new( 'markup_options', "/@{[$object->species]}/geneseqview", 'get' );
-  $form = gene_markup_options_form($panel, $object, $form, "additional exons");
+  $form = gene_options_form($panel, $object, $form, "additional exons");
   $form->add_element(
     'type'  => 'Submit', 'value' => 'Update'
   );
   return $form;
 }
 
-sub gene_markup_options_form {
+sub gene_options_form {
   my( $panel, $object, $form, $exon_type ) = @_;
 
   # make array of hashes for dropdown options
@@ -107,29 +107,16 @@ sub gene_markup_options_form {
   return $form;
 }
 
-sub sequence_markup_options_form {
-  my( $panel, $object ) = @_;
-  my $form = EnsEMBL::Web::Form->new( 'markup_options', "/@{[$object->species]}/geneseqview", 'get' );
-  $form = gene_markup_options_form($panel, $object, $form, "additional exons");
+sub alignment_options_form {
+  my( $panel, $object, $form ) = @_;
+
   $form->add_element(
-    'type'  => 'Submit', 'value' => 'Update'
-  );
-  return $form;
-}
-
-sub align_markup_options_form {
-  my( $panel, $object ) = @_;
-  my $form = EnsEMBL::Web::Form->new( 'markup_options', "/@{[$object->species]}/geneseqalignview", 'post' );
-  $form = gene_markup_options_form($panel, $object, $form, "exons");
-
-   $form->add_element(
     'type' => 'NonNegInt', 'required' => 'yes',
     'label' => "Alignment width",  'name' => 'display_width',
     'value' => $object->param('display_width'),
     'notes' => 'Number of bp per line in alignments'
   );
 
-#    { 'value' =>'exon', 'name' => 'Conserved regions within exons' },
   my $conservation = [
     { 'value' =>'all' , 'name' => 'All conserved regions' },
     { 'value' =>'off' , 'name' => 'None' },
@@ -166,6 +153,29 @@ sub align_markup_options_form {
     'value'    => $object->param('title_display'),
     'notes'    => "On mouse over displays exon IDs, length of insertions and SNP\'s allele"
   );
+
+  return $form;
+}
+
+sub sequence_markup_options_form {
+  my( $panel, $object ) = @_;
+  my $form = EnsEMBL::Web::Form->new( 'markup_options', "/@{[$object->species]}/sequencealignview", 'post' );
+  $form = gene_options_form($panel, $object, $form, "exons");
+  $form = alignment_options_form($panel, $object, $form);
+
+  $form->add_element(
+    'type'  => 'Submit', 'value' => 'Update'
+  );
+  return $form;
+}
+
+sub align_markup_options_form {
+  my( $panel, $object ) = @_;
+  my $form = EnsEMBL::Web::Form->new( 'markup_options', "/@{[$object->species]}/geneseqalignview", 'post' );
+  $form = gene_options_form($panel, $object, $form, "exons");
+  $form = alignment_options_form($panel, $object, $form);
+
+#    { 'value' =>'exon', 'name' => 'Conserved regions within exons' },
 
   my $aselect = $object->param("RGselect") || "NONE";
 

@@ -1028,14 +1028,14 @@ sub sequencealignview {
   my $key_tmpl = qq(<p><code><span id="%s">%s</span></code> %s</p>\n);
   my $KEY = '';
   
-#   if( ($object->param( 'conservation' ) ne 'off')  &&  markupConservation($object, \%sliceHash, $consArray)){
-#       $KEY .= sprintf( $key_tmpl, 'nc', "THIS STYLE:", "Location of conserved regions (where >50% of bases in alignments match) ");
-#   }
+   if( ($object->param( 'conservation' ) ne 'off')  &&  markupConservation($object, \%sliceHash, $consArray)){
+       $KEY .= sprintf( $key_tmpl, 'nc', "THIS STYLE:", "Location of conserved regions (where >50% of bases in alignments match) ");
+   }
 
-#   if(  $object->param( 'codons_display' ) ne 'off' ){
-#     markupCodons($object, \%sliceHash);
-#     $KEY .= sprintf( $key_tmpl, 'eo', "THIS STYLE:", "Location of START/STOP codons ");
-#   }
+   if(  $object->param( 'codons_display' ) ne 'off' ){
+     markupCodons($object, \%sliceHash);
+     $KEY .= sprintf( $key_tmpl, 'eo', "THIS STYLE:", "Location of START/STOP codons ");
+   }
 
 #   if(  $object->param( 'exon_display' ) ne 'off' ){
 #     markupExons($object, \%sliceHash);
