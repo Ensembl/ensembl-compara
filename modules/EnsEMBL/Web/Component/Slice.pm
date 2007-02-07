@@ -109,7 +109,7 @@ sub markupInit {
 
   my @conservation;
   my $max_position = 0;
-  my $max_label = -1;
+  my $max_label    = -1;
 
   my $slice_length = length($slices->[0]->seq) + 1 ;
   my $width = $object->param("display_width") || 60;
@@ -185,9 +185,9 @@ sub markupInit {
 
 #-----------------------------------------------------------------------------------------
 sub generateHTML {
-  my ($object, $hRef, $max_position, $max_label, $linenumber_ref) = @_;
+  my ($object, $hRef, $max_position, $max_label) = @_;
 
-  my  @linenumbers = $linenumber_ref ? @$linenumber_ref:  $object->get_slice_object->line_numbering;
+  my @linenumbers = $object->get_slice_object->line_numbering;
   my $lineformat  =  length($max_position); #sort{$b<=>$a} map{length($_)} @linenumbers;
 
   if (@linenumbers) {
@@ -1004,19 +1004,20 @@ sub sequencealignview {
   my $width = $object->param("display_width") || 60;
 
   #Get reference slice
-  my $refslice = $object->slice;
-  my @individuals = ($object->get_individuals('display'));
+  my $refslice = $object->get_slice_object;
+  my @individuals = ($refslice->get_individuals('display'));
 
   # Get slice for each display strain
   my @sliceArray;
   foreach my $individual ( @individuals ) {
-    my $individual_slice = $refslice->get_by_strain( $individual );
+    my $individual_slice = $refslice->Obj->get_by_strain( $individual );
     next unless $individual_slice;
     push @sliceArray, $individual_slice;
   }
+  return unless scalar @sliceArray;
 
   # Get align slice
-  my $align_slice = Bio::EnsEMBL::AlignStrainSlice->new(-SLICE => $refslice,
+  my $align_slice = Bio::EnsEMBL::AlignStrainSlice->new(-SLICE => $refslice->Obj,
                                                         -STRAINS => \@sliceArray);
 
 
@@ -1024,30 +1025,54 @@ sub sequencealignview {
   my %sliceHash;
   my $sliceHash;
   my ($max_position, $max_label, $consArray) =  markupInit($object, \@sliceArray, \%sliceHash);
-  my  @linenumbers =  $object->line_numbering;
-  my $html = generateHTML($object, \%sliceHash, $max_position, $max_label, \@linenumbers);
-
-  my $name = $refslice->name;
-#  $panel->add_row("Slice", "<p>$name Length: $length</p>");
-
-# # Add a section holding the names of the displayed slices
-#   my $Chrs;
-#   foreach my $sp ( $object->species, grep {$_ ne $object->species } keys %$sliceHash) {
-#     $Chrs .= qq{<p><br/><b>$sp&gt;<br/></b>};
-#     foreach my $loc (@{$sliceHash->{$sp}{slices}}) {
-#       my ($stype, $assembly, $region, $start, $end, $strand) = split (/:/ , $loc);
-#       $Chrs .= qq{<p><a href="/$sp/contigview?l=$region:$start-$end">$loc</a></p>};
-#     }
+  my $key_tmpl = qq(<p><code><span id="%s">%s</span></code> %s</p>\n);
+  my $KEY = '';
+  
+#   if( ($object->param( 'conservation' ) ne 'off')  &&  markupConservation($object, \%sliceHash, $consArray)){
+#       $KEY .= sprintf( $key_tmpl, 'nc', "THIS STYLE:", "Location of conserved regions (where >50% of bases in alignments match) ");
 #   }
 
-#     $KEY
-#     $Chrs
+#   if(  $object->param( 'codons_display' ) ne 'off' ){
+#     markupCodons($object, \%sliceHash);
+#     $KEY .= sprintf( $key_tmpl, 'eo', "THIS STYLE:", "Location of START/STOP codons ");
+#   }
 
- #  $panel->add_row( 'Marked_up_sequence', qq(
- #    <pre>\n$html\n</pre>
- #  ) );
+#   if(  $object->param( 'exon_display' ) ne 'off' ){
+#     markupExons($object, \%sliceHash);
+#     $KEY .= sprintf( $key_tmpl, 'e', "THIS STYLE:", "Location of selected exons ");
+#   }
 
 
+#   if( $object->param( 'snp_display' )  eq 'snp'){
+#     markupSNPs($object, \%sliceHash);
+#     $KEY .= sprintf( $key_tmpl, 'ns', "THIS STYLE:", "Location of SNPs" );
+#     $KEY .= sprintf( $key_tmpl, 'nd', "THIS STYLE:", "Location of deletions" );
+#   }
+
+#   if ($object->param('line_numbering') eq 'slice') {
+#     $KEY .= qq{ NOTE:     For secondary species we display the coordinates of the first and the last mapped (i.e A,T,G,C or N) basepairs of each line };
+#   }
+  my $html = generateHTML($object, \%sliceHash, $max_position, $max_label);
+
+  # Add a section holding the names of the displayed slices
+  my $Chrs;
+  foreach my $sp ( $object->species, grep {$_ ne $object->species } keys %$sliceHash) {
+    $Chrs .= qq{<p><br/><b>$sp&gt;<br/></b>};
+    foreach my $loc (@{$sliceHash->{$sp}{slices}}) {
+      my ($stype, $assembly, $region, $start, $end, $strand) = split (/:/ , $loc);
+      $Chrs .= qq{<p><a href="/$sp/contigview?l=$region:$start-$end">$loc</a></p>};
+    }
+  }
+
+  $panel->add_row( 'Marked up sequence', qq(
+    $KEY
+    $Chrs
+     <pre>\n$html\n</pre>
+   ) );
+
+  # extras --------------------------------------------
+  #  my $name = $refslice->Obj->name;
+  #  $panel->add_row("Slice", "<p>$name Length: $length</p>");
   my $length =  $align_slice->length;
   my $info;
   foreach my $strain_slice (@sliceArray) {

@@ -1064,29 +1064,6 @@ warn "ADDING... el_ldd";
   }
 }
 
-###############################################################################
-
-sub sequencealignview {
-
-  ### Calls methods in component to build the page
-  ### Returns nothing
-
-  my $self = shift;
-  my $obj = $self->{object};
-
-  # Description : prints a two col table with info abou the LD ---------------
-  if (
-  my $info_panel = $self->new_panel( 'Information',
-    'code'    => "info#",
-    'caption' => 'Sequence Align View: [[object->type]] [[object->name]]'
-				   )) {
-
-    $info_panel->add_components(qw(
-    sequencealignview            EnsEMBL::Web::Component::Slice::sequencealignview
-				  ));
-    $self->{page}->content->add_panel( $info_panel );
-  }
-}
 
 ##############################################################################
 sub anchorview {

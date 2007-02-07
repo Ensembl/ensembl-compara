@@ -368,6 +368,35 @@ sub geneseqalignview {
   }
 }
 
+
+sub sequencealignview {
+
+  ### Calls methods in component to build the page
+  ### Returns nothing
+
+  my $self   = shift;
+  my $strain =  $self->{object}->species_defs->translate( "strain" );
+  $self->set_title( "Gene sequence for ".$self->{object}->stable_id );
+  if( my $panel1 = $self->new_panel( 'Information',
+    'code'    => "info#",
+    #'null_data' => "<p>No $strain data for this gene.</p>",
+   'caption' => 'Gene Sequence information for '.$self->{object}->stable_id,
+  ) ) {
+    $self->add_form( $panel1,
+      qw(markup_options EnsEMBL::Web::Component::Gene::sequence_markup_options_form)
+    );
+    $panel1->add_components(qw(
+     name           EnsEMBL::Web::Component::Gene::name
+      location       EnsEMBL::Web::Component::Gene::location
+      markup_options EnsEMBL::Web::Component::Gene::markup_options
+      sequence       EnsEMBL::Web::Component::Slice::sequencealignview
+    ));
+   $self->add_panel( $panel1 );
+  }
+}
+
+
+###############################################################################
 sub context_menu {
   my $self = shift;
   my $obj      = $self->{object};

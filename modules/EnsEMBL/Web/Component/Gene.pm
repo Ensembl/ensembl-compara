@@ -107,6 +107,15 @@ sub gene_markup_options_form {
   return $form;
 }
 
+sub sequence_markup_options_form {
+  my( $panel, $object ) = @_;
+  my $form = EnsEMBL::Web::Form->new( 'markup_options', "/@{[$object->species]}/geneseqview", 'get' );
+  $form = gene_markup_options_form($panel, $object, $form, "additional exons");
+  $form->add_element(
+    'type'  => 'Submit', 'value' => 'Update'
+  );
+  return $form;
+}
 
 sub align_markup_options_form {
   my( $panel, $object ) = @_;

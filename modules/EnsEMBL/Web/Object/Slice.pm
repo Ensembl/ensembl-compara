@@ -9,7 +9,15 @@ use EnsEMBL::Web::Object;
 our @ISA = qw(EnsEMBL::Web::Object);
 our %ct = %Bio::EnsEMBL::Variation::VariationFeature::CONSEQUENCE_TYPES;
 
+### This object is called from a Component object
+### e.g.  my ($count_snps, $filtered_snps) = $sliceObj->getVariationFeatures();
+### This class consists of methods for calls on a slice object.
+
+
 sub snp_display {
+
+  ### GeneSeqAlignView
+
   my $self = shift; 
   my $SNPS = [];
   if( $self->param('snp_display') eq 'snp' ){
@@ -22,6 +30,9 @@ sub snp_display {
 }
 
 sub exon_display {
+
+  ### GeneSeqAlignView
+
   my $self = shift;
   my $exontype = $self->param('exon_display');
   my @exons;
@@ -50,6 +61,9 @@ sub exon_display {
 }
 
 sub highlight_display {
+
+  ### GeneSeqAlignView
+
   my $self = shift;
   if( @_ ){
     my @features = @{$_[0] || []}; # Validate arg list
@@ -60,6 +74,9 @@ sub highlight_display {
 }
 
 sub line_numbering {
+
+  ### GeneSeqAlignView
+
   my $self  = shift;
   my $linenums = $self->param('line_numbering');
   if( $linenums eq 'sequence' ){ #Relative to sequence
@@ -70,16 +87,18 @@ sub line_numbering {
   return();
 }
 
-=head2 valids
-
- Arg1        : Web slice obj
- Description : uses param to work out valid SNP options
- Return type : hashref with keys as valid options, value = 1
-
-=cut
-
 
 sub valids {
+
+  ### Arg1 : Web Proxy::Object (slice)
+  ### Gets all the user's selected parameters from $self->params()
+  ### Returns        Hashref of options with keys as valid options, value = 1 if they are on
+  ### Needed for:     Bio::EnsEMBL::GlyphSet::variation.pm,     
+  ###                Bio::EnsEMBL::GlyphSet::genotyped_variation.pm
+  ###                TranscriptSNPView
+  ###                GeneSNPView
+  ### Called from:   self
+
   my $self = shift;
   my %valids = ();    ## Now we have to create the snp filter....
   foreach( $self->param() ) {
@@ -89,15 +108,12 @@ sub valids {
 }
 
 
-=head2 sources
-
- Arg1        : Web slice obj
- Description : gets all variation sources
- Return type : hashref with keys as valid options, value = 1
-
-=cut
-
 sub sources {
+
+ ### Arg1        : Web slice obj
+ ### gets all variation sources
+ ### Returns hashref with keys as valid options, value = 1
+
   my $self = shift;
   my $vari_adaptor = $self->Obj->adaptor->db->get_db_adaptor('variation');
   unless ($vari_adaptor) {
@@ -111,17 +127,17 @@ sub sources {
   return \%sources;
 }
 
-=head2 getVariationFeatures 
-
- Arg1        : Web slice obj
- Description : fetches all variation features on Slice object 
-               and filters them based on type, class etc
- Return type : scalar- total number of SNPs before filtering
-               arrayref SNP objects
-
-=cut
 
 sub getVariationFeatures {
+
+  ### Arg1        : Web Proxy::Object (slice)
+  ### fetches all variation features on Slice object 
+  ### Calls $self->filter_snps to filter these by the user's selected parameters (e.g.type, class etc)
+  ### Returns scalar- total number of SNPs in the arry before filtering
+  ### Returns arrayref- of VariationFeature objects after filtering
+  ### Needed for:        Bio::EnsEMBL::GlyphSet::variation.pm
+  ### Called from:   SNP component
+
   my ( $self ) = @_;
   my @snps = @{ $self->Obj->get_all_VariationFeatures() || [] };
   return (0, []) unless scalar @snps;
@@ -131,17 +147,17 @@ sub getVariationFeatures {
 }
 
 
-=head2 get_genotyped_VariationFeatures 
-
- Arg1        : Web slice obj
- Description : fetches all genotyped variation features on Slice object 
-               and filters them based on type, class etc
- Return type : scalar- total number of SNPs before filtering
-               arrayref SNP objects
-
-=cut
 
 sub get_genotyped_VariationFeatures {
+
+  ### Arg1        : Web Proxy::Object (slice)
+  ### fetches all variation features on Slice object 
+  ### Calls $self->filter_snps to filter these by the user's selected parameters (e.g.type, class etc)
+  ### Returns scalar- total number of SNPs in the arry before filtering
+  ### Returns arrayref- of VariationFeature objects after filtering
+  ### Needed for: Bio::EnsEMBL::GlyphSet::genotyped_variation.pm
+  ### Called from:  SNP component
+
   my ( $self ) = @_;
   my @snps = @{ $self->Obj->get_all_genotyped_VariationFeatures() || [] };
   return (0, []) unless scalar @snps;
@@ -151,17 +167,16 @@ sub get_genotyped_VariationFeatures {
 }
 
 
-=head2 filter_snps
-
- Arg1        : Web slice obj
- Arg2        : arrayref snps objects
- Example     : Called from within
- Description : filters snps based on source, conseq type, validation etc
- Return type : arrayref SNP objects
-
-=cut
 
 sub filter_snps {
+
+  ### Arg1        : Web Proxy::Object (slice)
+  ### Arg2        : arrayref VariationFeature objects
+  ### Example     : Called from within
+  ### filters snps based on users' selected parameters (which are obtained from $self->valids)
+  ### e.g. on source, conseq type, validation etc
+  ### Returns An arrayref of VariationFeature objects
+
   my ( $self, $snps ) = @_;
   my $sources = $self->sources;
   my $valids  = $self->valids;
@@ -195,21 +210,17 @@ sub filter_snps {
 
 
 
-=head2 getFakeMungedVariationFeatures
-
- Arg1        : Web slice obj
- Arg2        : Subslices
- Arg3        : Optional: gene
- Example     : Called from E::W::Object::Transcript for TSV
- Description : Gets SNPs on slice for display + counts
- Return type : scalar - number of SNPs on slice post context filtering, prior to
-                        other filters
-               arrayref of munged 'fake snps' = [ fake_s, fake_e, SNP ]
-               scalar - number of SNPs filtered out by the context filter
-
-=cut
-
 sub getFakeMungedVariationFeatures {
+
+  ### Arg1        : Web slice obj
+  ### Arg2        : Subslices
+  ### Arg3        : Optional: gene
+  ### Example     : Called from {{EnsEMBL::Web::Object::Transcript.pm}} for TSV
+  ### Gets SNPs on slice for display + counts
+  ### Returns scalar - number of SNPs on slice post context filtering, prior to other filters
+  ### arrayref of munged 'fake snps' = [ fake_s, fake_e, SNP ]
+  ### scalar - number of SNPs filtered out by the context filter
+
   my ( $self, $subslices, $gene ) = @_;
   my $all_snps = $self->Obj->get_all_VariationFeatures();
 
@@ -230,19 +241,16 @@ sub getFakeMungedVariationFeatures {
 }
 
 
-=head2 munge_gaps
-
- Arg1        : Web slice obj
- Arg2        : Subslices
- Arg3        : position 1: start
- Arg4        : position 2: end
- Example     : Called from within
- Description : 
- Return type : 
-
-=cut
-
 sub munge_gaps {
+
+  ### Needed for  : TranscriptSNPView, GeneSNPView
+  ### Arg1        : Proxy::Object (slice)
+  ### Arg2        : Subslices
+  ### Arg3        : bp position 1: start
+  ### Arg4        : bp position 2: end
+  ### Example     : Called from within
+  ### Description:  Calculates new positions based on subslice
+
   my( $self, $subslices, $bp, $bp2  ) = @_;
 
   foreach( @$subslices ) {
@@ -255,19 +263,15 @@ sub munge_gaps {
 }
 
 
-
-=head2 filter_munged_snps
-
- Arg1        : Web slice obj
- Arg2        : arrayref of munged 'fake snps' = [ fake_s, fake_e, SNP ]
- Arg3        : gene (optional)
- Example     : Called from within
- Description : filters 'fake snps' based on source, conseq type, validation etc
- Return type : arrayref of munged 'fake snps' = [ fake_s, fake_e, SNP ]
-
-=cut
-
 sub filter_munged_snps {
+
+ ### Arg1        : Web slice obj
+ ### Arg2        : arrayref of munged 'fake snps' = [ fake_s, fake_e, SNP ]
+ ### Arg3        : gene (optional)
+ ### Example     : Called from within
+ ### filters 'fake snps' based on source, conseq type, validation etc
+ ### Returns arrayref of munged 'fake snps' = [ fake_s, fake_e, SNP ]
+
   my ( $self, $snps, $gene ) = @_;
   my $valids = $self->valids;
   my $sources = $self->sources;
@@ -297,119 +301,52 @@ sub filter_munged_snps {
   return \@filtered_snps;
 }
 
+# Sequence Align View ---------------------------------------------------
+
+sub get_individuals {
+
+  ### SequenceAlignView
+  ### Arg (optional) : type string
+  ###  -"default": returns samples checked by default
+  ###  -"display": returns all samples (for dropdown list) with default ones first
+  ### Description: returns selected samples (by default)
+  ### Returns list
+
+  my $self    = shift;
+  my $options = shift;
+
+  my $vari_adaptor = $self->database('variation')->get_db_adaptor('variation');
+  unless ($vari_adaptor) {
+    warn "ERROR: Can't get variation adaptor";
+    return ();
+  }
+
+  my $individual_adaptor = $vari_adaptor->get_IndividualAdaptor;
+
+  if ($options eq 'default') {
+    return sort  @{$individual_adaptor->get_default_strains};
+  }
+
+  my %default_pops;
+  map {$default_pops{$_} = 1 } @{$individual_adaptor->get_default_strains};
+  my %db_pops;
+  foreach ( sort  @{$individual_adaptor->get_display_strains} ) {
+    next if $default_pops{$_};
+    $db_pops{$_} = 1;
+  }
+
+  if ($options eq 'display') { # return list of pops with default first
+    return (sort keys %default_pops), (sort keys %db_pops);
+  }
+  return ();
+}
 
 
 1;
-__END__
-
-=head1 Object::Slice
-
-=head2 SYNOPSIS
-
-This object is called from a Component object
-
-
-e.g.
- my ($count_snps, $filtered_snps) = $sliceObj->getVariationFeatures();
 
 
 
-=head2 DESCRIPTION
-
-This class consists of methods for calls on a slice object.
-
-
-=head2 METHODS
 
 
 
-=head3 B<valids>
-
-Description:    Gets all the user's selected parameters from $self->params()
-
-Arguments:      Proxy::Object (slice)
-
-Returns:        Hashref of options if they are on
-
-Needed for:     Bio::EnsEMBL::GlyphSet::variation.pm,     
-                Bio::EnsEMBL::GlyphSet::genotyped_variation.pm
-                TranscriptSNPView
-                GeneSNPView
-
-Called from:    self
-
-
-=head3 B<getVariationFeatures>
-
-Description:    Gets all the variation features on this slice.  Calls $self->filter_snps to filter these based on the user's selected parameters
-
-Arguments:      Proxy::Object (slice)
-
-Returns:        The number of SNPs in the array before filtering
-                An arrayref of VariationFeature objects after filtering
-
-Needed for:        Bio::EnsEMBL::GlyphSet::variation.pm
-
-Called from:    SNP component
-
-
-=head3 B<get_genotyped_VariationFeatures>
-
-Description:    Gets all the genotyped variation features on this slice.  Calls $self->filter_snps to filter these based on the user's selected parameters
-
-Arguments:      Proxy::Object (slice)
-
-Returns:        The number of SNPs in the array before filtering
-                An arrayref of VariationFeature objects after filtering
-
-Needed for:        Bio::EnsEMBL::GlyphSet::genotyped_variation.pm
-
-Called from:    SNP component
-
-
-=head3 B<filter_snps>
-
-Description:    Filters SNPs based on the users' selected parameters (which are obtained from $self->valids)
-
-Arguments:      Proxy::Object (slice)
-                Array ref of VariationFeature objects
-
-Returns:        An arrayref of VariationFeature objects
-
-Called from:    self
-
-
-=head3 B<getFakeVariationFeatures>
-
-Description:    Gets all the genotyped variation features on this slice
-                From these calls munge_gaps to calculate the positions of the 
-                VariationFeatures on a subslice.  The VariationFeatures are 
-                also filtered based on the user's selected parameters.  Filters
-                consequence types based on a gene if a gene is provided.
-
-Arguments:      Proxy::Object (slice)
-                sub slice object
-                Gene (optional)
-
-Returns:        An arrayref of [fake_VF_start, fake_VF_end, VariationFeature] objects after filtering
-
-Needed for:     TranscriptSNPView, GeneSNPView
-
-Called from:    Transcript Object, Gene Object
-
-
-
-=head3 B<munge_gaps>
-
-Description:    Calculates new positions based on subslice
-
-Arguments:      Proxy::Object (slice)
-                sub slice object
-                bp1, bp2
-
-Returns:
-
-Needed for:     TranscriptSNPView, GeneSNPView
-
-Called from:    self
 
