@@ -477,7 +477,7 @@ CREATE TABLE homology_member (
   KEY (member_id),
   KEY (peptide_member_id),
   KEY (peptide_align_feature_id)
-) COLLATE=latin1_swedish_ci;
+) MAX_ROWS = 300000000 COLLATE=latin1_swedish_ci;
 
 
 #
@@ -653,5 +653,4 @@ CREATE TABLE protein_tree_tag (
 ) COLLATE=latin1_swedish_ci;
 
 # Auto add schema version to database
-INSERT INTO meta (meta_key, meta_value) VALUES ("schema_version", "40");
-
+INSERT INTO meta (meta_key, meta_value) VALUES ("schema_version", "43");
