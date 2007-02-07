@@ -404,7 +404,7 @@ if (!@query_slices) {
     my $genomic_align_blocks =
         $genomic_align_block_adaptor->fetch_all_by_MethodLinkSpeciesSet(
             $method_link_species_set, $split_size, $start);
-    last if (!@$genomic_align_blocks);
+    $split_size = 0 if (!@$genomic_align_blocks);
     if ($output_file and $split_size) {
       $num++;
       my $this_output_file = $output_file;
@@ -433,7 +433,6 @@ if (!@query_slices) {
       $this_genomic_align_block = undef;
     }
     exit if ($chunk_num);
-    exit if ($num >= 9);
     $start += $split_size;
   } while($split_size);
 } else {
