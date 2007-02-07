@@ -50,22 +50,31 @@ sub align_sequence_display {
 
     push @sliceArray, @{$align_slice->get_all_Slices(@selected_species)};
   }
+  markup_and_render( $panel, $object, \@sliceArray);
+  return 1;
+}
+
+#-----------------------------------------------------------------------------------------
+sub markup_and_render {
+
+  ### GeneSeqAlignView and SequenceAlignView
+
+  my ( $panel, $object, $sliceArray ) = @_;
 
   my %sliceHash;
-  my ($max_position, $max_label, $consArray) = markupInit($object, \@sliceArray, \%sliceHash);
-
+  my ($max_position, $max_label, $consArray) =  markupInit($object, $sliceArray, \%sliceHash);
   my $key_tmpl = qq(<p><code><span id="%s">%s</span></code> %s</p>\n);
   my $KEY = '';
   
-  if( ($object->param( 'conservation' ) ne 'off')  &&  markupConservation($object, \%sliceHash, $consArray)){
-      $KEY .= sprintf( $key_tmpl, 'nc', "THIS STYLE:", "Location of conserved regions (where >50% of bases in alignments match) ");
-  }
+   if( ($object->param( 'conservation' ) ne 'off')  &&  markupConservation($object, \%sliceHash, $consArray)){
+       $KEY .= sprintf( $key_tmpl, 'nc', "THIS STYLE:", "Location of conserved regions (where >50% of bases in alignments match) ");
+   }
 
   if(  $object->param( 'codons_display' ) ne 'off' ){
     markupCodons($object, \%sliceHash);
     $KEY .= sprintf( $key_tmpl, 'eo', "THIS STYLE:", "Location of START/STOP codons ");
   }
-
+  
   if(  $object->param( 'exon_display' ) ne 'off' ){
     markupExons($object, \%sliceHash);
     $KEY .= sprintf( $key_tmpl, 'e', "THIS STYLE:", "Location of selected exons ");
@@ -81,14 +90,13 @@ sub align_sequence_display {
   if ($object->param('line_numbering') eq 'slice') {
     $KEY .= qq{ NOTE:     For secondary species we display the coordinates of the first and the last mapped (i.e A,T,G,C or N) basepairs of each line };
   }
-
   my $html = generateHTML($object, \%sliceHash, $max_position, $max_label);
 
   # Add a section holding the names of the displayed slices
   my $Chrs;
   foreach my $sp ( $object->species, grep {$_ ne $object->species } keys %sliceHash) {
     $Chrs .= qq{<p><br/><b>$sp&gt;<br/></b>};
-    foreach my $loc (@{$sliceHash{$sp}->{slices}}) {
+    foreach my $loc (@{$sliceHash{$sp}{slices}}) {
       my ($stype, $assembly, $region, $start, $end, $strand) = split (/:/ , $loc);
       $Chrs .= qq{<p><a href="/$sp/contigview?l=$region:$start-$end">$loc</a></p>};
     }
@@ -97,13 +105,12 @@ sub align_sequence_display {
   $panel->add_row( 'Marked up sequence', qq(
     $KEY
     $Chrs
-    <pre>\n$html\n</pre>
-  ) );
-
-
+     <pre>\n$html\n</pre>
+   ) );
+    return 1;
 }
 
-#-----------------------------------------------------------------------------------------
+#------------------------------------------------------------------------------------------
 sub markupInit {
   my ($object, $slices, $hRef) = @_;
 
@@ -1021,54 +1028,7 @@ sub sequencealignview {
                                                         -STRAINS => \@sliceArray);
 
 
-  # Markup
-  my %sliceHash;
-  my $sliceHash;
-  my ($max_position, $max_label, $consArray) =  markupInit($object, \@sliceArray, \%sliceHash);
-  my $key_tmpl = qq(<p><code><span id="%s">%s</span></code> %s</p>\n);
-  my $KEY = '';
-  
-   if( ($object->param( 'conservation' ) ne 'off')  &&  markupConservation($object, \%sliceHash, $consArray)){
-       $KEY .= sprintf( $key_tmpl, 'nc', "THIS STYLE:", "Location of conserved regions (where >50% of bases in alignments match) ");
-   }
-
-   if(  $object->param( 'codons_display' ) ne 'off' ){
-     markupCodons($object, \%sliceHash);
-     $KEY .= sprintf( $key_tmpl, 'eo', "THIS STYLE:", "Location of START/STOP codons ");
-   }
-
-#   if(  $object->param( 'exon_display' ) ne 'off' ){
-#     markupExons($object, \%sliceHash);
-#     $KEY .= sprintf( $key_tmpl, 'e', "THIS STYLE:", "Location of selected exons ");
-#   }
-
-
-#   if( $object->param( 'snp_display' )  eq 'snp'){
-#     markupSNPs($object, \%sliceHash);
-#     $KEY .= sprintf( $key_tmpl, 'ns', "THIS STYLE:", "Location of SNPs" );
-#     $KEY .= sprintf( $key_tmpl, 'nd', "THIS STYLE:", "Location of deletions" );
-#   }
-
-#   if ($object->param('line_numbering') eq 'slice') {
-#     $KEY .= qq{ NOTE:     For secondary species we display the coordinates of the first and the last mapped (i.e A,T,G,C or N) basepairs of each line };
-#   }
-  my $html = generateHTML($object, \%sliceHash, $max_position, $max_label);
-
-  # Add a section holding the names of the displayed slices
-  my $Chrs;
-  foreach my $sp ( $object->species, grep {$_ ne $object->species } keys %$sliceHash) {
-    $Chrs .= qq{<p><br/><b>$sp&gt;<br/></b>};
-    foreach my $loc (@{$sliceHash->{$sp}{slices}}) {
-      my ($stype, $assembly, $region, $start, $end, $strand) = split (/:/ , $loc);
-      $Chrs .= qq{<p><a href="/$sp/contigview?l=$region:$start-$end">$loc</a></p>};
-    }
-  }
-
-  $panel->add_row( 'Marked up sequence', qq(
-    $KEY
-    $Chrs
-     <pre>\n$html\n</pre>
-   ) );
+  markup_and_render( $panel, $object, \@sliceArray);
 
   # extras --------------------------------------------
   #  my $name = $refslice->Obj->name;
@@ -1087,5 +1047,7 @@ sub sequencealignview {
   $panel->add_row( "Alignment", "<p>$info</p>" );
   return 1;
 }
+
+#------------------------------------------------------------------------------
 
 1;
