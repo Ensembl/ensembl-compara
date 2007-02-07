@@ -35,3 +35,5 @@ UPDATE method_link SET class = "ProteinTree.protein_tree_node"
 UPDATE method_link SET class = "ConservationScore.conservation_score"
   WHERE type in ("GERP_CONSERVATION_SCORE");
 
+# Increase max rows for homology_member
+ALTER TABLE homology_member MAX_ROWS = 300000000;
