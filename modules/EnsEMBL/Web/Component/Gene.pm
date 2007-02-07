@@ -22,9 +22,19 @@ sub markup_options {
   return 1;
 }
 
+
 sub markup_options_form {
   my( $panel, $object ) = @_;
   my $form = EnsEMBL::Web::Form->new( 'markup_options', "/@{[$object->species]}/geneseqview", 'get' );
+  $form = gene_markup_options_form($panel, $object, $form, "additional exons");
+  $form->add_element(
+    'type'  => 'Submit', 'value' => 'Update'
+  );
+  return $form;
+}
+
+sub gene_markup_options_form {
+  my( $panel, $object, $form, $exon_type ) = @_;
 
   # make array of hashes for dropdown options
   $form->add_element( 'type' => 'Hidden', 'name' => 'db',   'value' => $object->get_db    );
@@ -44,7 +54,7 @@ sub markup_options_form {
     'Ensembl';
   my $exon_display = [
     { 'value' => 'core'       , 'name' => "$sitetype exons" },
-    $object->species_defs->databases->{'ENSEMBL_VEGA'} ? { 'value' => 'vega'           , 'name' => 'Vega exons' } : (),
+    $object->species_defs->databases->{'ENSEMBL_VEGA'} ? { 'value' => 'vega', 'name' => 'Vega exons' } : (),
     $object->species_defs->databases->{'ENSEMBL_OTHEFEATURES'}  ? { 'value' => 'otherfeatures'  , 'name' => 'EST-gene exons' } : (),
     { 'value' => 'Ab-initio' , 'name' => 'Ab-initio exons' },
     { 'value' => 'off'        , 'name' => 'No exon markup' }
@@ -52,7 +62,7 @@ sub markup_options_form {
   $form->add_element(
     'type'     => 'DropDown', 'select'   => 'select',
     'required' => 'yes',      'name'     => 'exon_display',
-    'label'    => 'Additional exons to display',
+    'label'    => ucfirst($exon_type).' to display',
     'values'   => $exon_display,
     'value'    => $object->param('exon_display')
   );
@@ -64,7 +74,7 @@ sub markup_options_form {
   $form->add_element(
     'type'     => 'DropDown', 'select'   => 'select',
     'required' => 'yes',      'name'     => 'exon_ori',
-    'label'    => 'Orientation of additional exons',
+    'label'    => "Orientation of $exon_type",
     'values'   => $exon_ori,
     'value'    => $object->param('exon_ori')
   );
@@ -93,9 +103,7 @@ sub markup_options_form {
     'values'   => $line_numbering,
     'value'    => $object->param('line_numbering')
   );
-  $form->add_element(
-    'type'  => 'Submit', 'value' => 'Update'
-  );
+
   return $form;
 }
 
@@ -109,85 +117,18 @@ sub align_markup_options {
 sub align_markup_options_form {
   my( $panel, $object ) = @_;
   my $form = EnsEMBL::Web::Form->new( 'align_markup_options', "/@{[$object->species]}/geneseqalignview", 'post' );
+  $form = gene_markup_options_form($panel, $object, $form, "exons");
 
-  # make array of hashes for dropdown options
-  $form->add_element( 'type' => 'Hidden', 'name' => 'db',   'value' => $object->get_db    );
-  $form->add_element( 'type' => 'Hidden', 'name' => 'gene', 'value' => $object->stable_id );
-  $form->add_element(
-    'type' => 'NonNegInt', 'required' => 'yes',
-    'label' => "5' Flanking sequence",  'name' => 'flank5_display',
-    'value' => $object->param('flank5_display')
-  );
-  $form->add_element(
-    'type' => 'NonNegInt', 'required' => 'yes',
-    'label' => "3' Flanking sequence",  'name' => 'flank3_display',
-    'value' => $object->param('flank3_display')
-  );
-  $form->add_element(
+   $form->add_element(
     'type' => 'NonNegInt', 'required' => 'yes',
     'label' => "Alignment width",  'name' => 'display_width',
     'value' => $object->param('display_width'),
     'notes' => 'Number of bp per line in alignments'
   );
 
-  my $sitetype = ucfirst(lc($object->species_defs->ENSEMBL_SITETYPE)) ||
-    'Ensembl';
-  my $exon_display = [
-    { 'value' => 'core'       , 'name' => "$sitetype exons" },
-    $object->species_defs->databases->{'ENSEMBL_VEGA'} ? { 'value' => 'vega'       ,   'name' => 'Vega exons' } : (),
-    $object->species_defs->databases->{'ENSEMBL_OTHERFEATURES'}  ? { 'value' => 'otherfeatures', 'name' => 'EST-gene exons' } : (),
-    { 'value' => 'prediction' , 'name' => 'Ab-initio exons' },
-    { 'value' => 'off'        , 'name' => 'No exon markup' }
-  ];
-  $form->add_element(
-    'type'     => 'DropDown', 'select'   => 'select',
-    'required' => 'yes',      'name'     => 'exon_display',
-    'label'    => 'Exons to display',
-    'values'   => $exon_display,
-    'value'    => $object->param('exon_display')
-  );
-  my $exon_ori = [
-    { 'value' =>'fwd' , 'name' => 'Forward only' },
-    { 'value' =>'rev' , 'name' => 'Reverse only' },
-    { 'value' =>'all' , 'name' => 'Both orientations' }
-  ];
-  $form->add_element(
-    'type'     => 'DropDown', 'select'   => 'select',
-    'required' => 'yes',      'name'     => 'exon_ori',
-    'label'    => 'Exons on strand',
-    'values'   => $exon_ori,
-    'value'    => $object->param('exon_ori')
-  );
-  if( $object->species_defs->databases->{'ENSEMBL_GLOVAR'} || $object->species_defs->databases->{'ENSEMBL_VARIATION'} ) {
-    my $snp_display = [
-      { 'value' =>'snp' , 'name' => 'All Variations' },
-      { 'value' =>'off' , 'name' => 'Do not show Variations' },
-    ];
-    $form->add_element(
-      'type'     => 'DropDown', 'select'   => 'select',
-      'required' => 'yes',      'name'     => 'snp_display',
-      'label'    => 'Show variations',
-      'values'   => $snp_display,
-      'value'    => $object->param('snp_display')
-    );
-  }
-  my $line_numbering = [
-    { 'value' =>'sequence' , 'name' => 'Relative to sequence' },
-    { 'value' =>'slice'    , 'name' => 'Relative to coordinate systems' },
-    { 'value' =>'off'      , 'name' => 'None' },
-  ];
-  $form->add_element(
-    'type'     => 'DropDown', 'select'   => 'select',
-    'required' => 'yes',      'name'     => 'line_numbering',
-    'label'    => 'Line numbering',
-    'values'   => $line_numbering,
-    'value'    => $object->param('line_numbering')
-  );
-
 #    { 'value' =>'exon', 'name' => 'Conserved regions within exons' },
   my $conservation = [
     { 'value' =>'all' , 'name' => 'All conserved regions' },
-
     { 'value' =>'off' , 'name' => 'None' },
   ];
   $form->add_element(
@@ -200,7 +141,6 @@ sub align_markup_options_form {
 
   my $codons_display = [
     { 'value' =>'all' , 'name' => 'START/STOP codons' },
-
     { 'value' =>'off' , 'name' => "Do not show codons" },
   ];
   $form->add_element(
@@ -213,7 +153,6 @@ sub align_markup_options_form {
 
   my $title_display = [
     { 'value' =>'all' , 'name' => 'Include `title` tags' },
-
     { 'value' =>'off' , 'name' => 'None' },
   ];
   $form->add_element(
@@ -289,7 +228,6 @@ sub align_markup_options_form {
            'value' => $object->param("ms_$id")
            );
       }
-
 
   }
   

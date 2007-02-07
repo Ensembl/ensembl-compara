@@ -52,7 +52,7 @@ sub align_sequence_display {
 
   my $key_tmpl = qq(<p><code><span id="%s">%s</span></code> %s</p>\n);
   my $KEY = '';
-
+  
   if( ($object->param( 'conservation' ) ne 'off')  &&  markupConservation($object, \%sliceHash, $consArray)){
       $KEY .= sprintf( $key_tmpl, 'nc', "THIS STYLE:", "Location of conserved regions (where >50% of bases in alignments match) ");
   }
@@ -399,7 +399,7 @@ sub markupExons {
     my @exons;
 
     my $exontype = $object->param( 'exon_display' );
-    if( $exontype eq 'prediction' ){
+    if( $exontype eq 'Ab-initio' ){
       my( $s, $e ) = ( $slice->start, $slice->end );
       @exons = ( grep{ $_->seq_region_start<=$e && $_->seq_region_end  >=$s }
                    map { @{$_->get_all_Exons } }

@@ -353,14 +353,13 @@ sub geneseqalignview {
   $self->set_title( "Gene sequence for ".$self->{object}->stable_id );
   if( my $panel1 = $self->new_panel( 'Information',
     'code'    => "info#",
-    'caption' => 'Gene Sequence information',
+    'caption' => 'Gene Sequence information for '.$self->{object}->stable_id,
   ) ) {
     $self->add_form( $panel1,
       qw(align_markup_options EnsEMBL::Web::Component::Gene::align_markup_options_form)
     );
     $panel1->add_components(qw(
       name           EnsEMBL::Web::Component::Gene::name
-      stable_id      EnsEMBL::Web::Component::Gene::stable_id
       location       EnsEMBL::Web::Component::Gene::location
       align_markup_options EnsEMBL::Web::Component::Gene::align_markup_options
       sequence       EnsEMBL::Web::Component::Slice::align_sequence_display
