@@ -280,9 +280,11 @@ sub store_relation {
   }
   elsif ($relation->isa('Bio::EnsEMBL::Compara::Homology')) {
     $attribute->homology_id($relation->dbID);
-    $sql = "INSERT IGNORE INTO homology_member (homology_id, member_id, peptide_member_id, cigar_line, cigar_start, cigar_end, perc_cov, perc_id, perc_pos, peptide_align_feature_id) VALUES (?,?,?,?,?,?,?,?,?,?)";
+#     $sql = "INSERT IGNORE INTO homology_member (homology_id, member_id, peptide_member_id, cigar_line, cigar_start, cigar_end, perc_cov, perc_id, perc_pos, peptide_align_feature_id) VALUES (?,?,?,?,?,?,?,?,?,?)";
+    $sql = "INSERT IGNORE INTO homology_member (homology_id, member_id, peptide_member_id, cigar_line, cigar_start, cigar_end, perc_cov, perc_id, perc_pos) VALUES (?,?,?,?,?,?,?,?,?)";
     $sth = $self->prepare($sql);
-    $sth->execute($attribute->homology_id, $attribute->member_id, $attribute->peptide_member_id, $attribute->cigar_line, $attribute->cigar_start, $attribute->cigar_end, $attribute->perc_cov, $attribute->perc_id, $attribute->perc_pos, $attribute->peptide_align_feature_id);
+#     $sth->execute($attribute->homology_id, $attribute->member_id, $attribute->peptide_member_id, $attribute->cigar_line, $attribute->cigar_start, $attribute->cigar_end, $attribute->perc_cov, $attribute->perc_id, $attribute->perc_pos, $attribute->peptide_align_feature_id);
+    $sth->execute($attribute->homology_id, $attribute->member_id, $attribute->peptide_member_id, $attribute->cigar_line, $attribute->cigar_start, $attribute->cigar_end, $attribute->perc_cov, $attribute->perc_id, $attribute->perc_pos);
   }
 }
 
