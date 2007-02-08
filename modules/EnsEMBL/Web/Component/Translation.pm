@@ -2,6 +2,7 @@ package EnsEMBL::Web::Component::Translation;
 
 # Puts together chunks of XHTML for gene-based displays
                                                                                 
+use Data::Dumper;
 use EnsEMBL::Web::Component;
 our @ISA = qw( EnsEMBL::Web::Component);
 
@@ -23,14 +24,10 @@ sub _flip_URL_gene {
 }
 
 sub das {
-  my( $panel, $object ) = @_;
+ my( $panel, $object ) = @_;
   my $status   = 'status_das_sources';
   my $URL = $object->__objecttype eq 'Gene' ? _flip_URL_gene( $object, $status ) :_flip_URL( $object, $status );
 # Get parameters to be passed to dasconfview script
-
-  my $script  = $object->script;
-  my $species  = $object->species;
-
 
 # Now display the annotation from the selected sources
   my $link_tmpl = qq(<a href="%s" target="%s">%s</a>);
@@ -64,11 +61,17 @@ sub das {
   );
 
 
+  my $script  = $object->script;
+  my $species  = $object->species;
 # Get the DAS configuration
   my $das_collection     = $object->get_DASCollection;
   my @das_objs = @{$das_collection->Obj || []} ;
 
-  foreach my $das ( grep {$_->adaptor->active} @das_objs ){
+# Use Bio::EnsEMBL::Gene / Translation - so all the features are retrieved by the same function
+  my $obj = $object->[1]->{_object};
+  my ($featref, $styleref) = $obj->get_all_DAS_Features();
+
+ foreach my $das ( grep {$_->adaptor->active} @das_objs ){
     my $source = $das->adaptor;
     my $source_nm = $source->name;
 
@@ -82,17 +85,20 @@ sub das {
 
     my $location_features = 0;
     my @rhs_rows = ();
-# Check the source type, if it is 'ensembl_location' then we need to query the DAS source using the chromosome coordinates of the gene rather than its ID
-    if( $source->type =~ /^ensembl_location/ ) {
+# in protview we display features with location in the image, in geneview there is no image - so we put text
+# really need to rethink it !
+
+    if( $source->type =~ /^ensembl_location/ && $obj->isa('Bio::EnsEMBL::Gene') ) {
       my $slice = $object->get_Slice();
-      my @features = $object->get_das_features_by_slice($source_nm, $slice);
       my $slice_length = $slice->end - $slice->start;
+
+# Filter out features that we are not interested in
+      my @features = grep { $_->das_type_id() !~ /^(contig|component|karyotype)$/i && $_->das_type_id() !~ /^(contig|component|karyotype):/i } @{$featref->{$source_nm} || []};
 
       my (%uhash) = (); # to filter out duplicates
       my (@filtered_features) = ();
 
-# Filter out features that we are not interested in
-      foreach my $feature (grep { $_->das_type_id() !~ /^(contig|component|karyotype)$/i && $_->das_type_id() !~ /^(contig|component|karyotype):/i } @features) {
+      foreach my $feature (@features) {
         my $id = $feature->das_feature_id;
         if( defined($uhash{$id}) ) {
           $uhash{$id}->{start}  = $feature->das_start if ($uhash{$id}->{start} > $feature->das_start);
@@ -126,11 +132,14 @@ sub das {
           }
 
           if( my $note = $feature->das_note ){
+            if (ref $note eq 'ARRAY') {
+		$note = join('<br/>', @$note);
+	    }
             $uhash{$id}->{note} = parseHTML(decode_entities($note));
           }
         }
       }
-      foreach my $feature (grep { $_->das_type_id() !~ /^(contig|component|karyotype)$/i && $_->das_type_id() !~ /^(contig|component|karyotype):/i } @features) {
+      foreach my $feature (@features) {
         my $id = $feature->das_feature_id;
 # Build up the type of feature location    : see FLabels hash few lines above for location types
         my $ftype = 0;
@@ -165,7 +174,8 @@ sub das {
         ) );
       }
     } else {
-      my @features = $object->get_das_features_by_name($source_nm);
+      my @features = @{$featref->{$source_nm} || []};
+
       foreach my $feature (@features) {
         next if ($feature->das_type_id() =~ /^(contig|component|karyotype|INIT_MET)$/i ||
                  $feature->das_type_id() =~ /^(contig|component|karyotype|INIT_MET):/i);
@@ -182,13 +192,21 @@ sub das {
 
         my $score  = ($feature->das_score > 0) ? sprintf("%.02f",$feature->das_score) : '&nbsp;';
         my $note;
-        if( $note = $feature->das_note ) {
-          $note=~s|((\S+?):(http://\S+))      |<a href="$3" target="$segment">[$2]</a>|igx;
-          $note=~s|([^"])(http://\S+)([^"])   |$1<a href="$2" target="$segment">$2</a>$3|igx;
-          $note=~s|((\S+?):navigation://(\S+))|<a href="$script?gene=$3" >[$2]</a>|igx;
-          $note=~s|([^:])//\s+                |$1<br \/>|igx;
+
+        if( $note = $feature->das_note) {
+          if (ref $note eq 'ARRAY') {
+                $note = join('<br/>', @$note);
+          }
         }
-        push( @rhs_rows, sprintf( $row_tmpl,
+
+        if ($source->conftype eq 'internal') {
+          $note = decode_entities($note);
+        }
+# Special case : if the feature is of type NOTE than we display just a note - across all columns 
+        if ($feature->das_type_id eq 'NOTE') {
+  	  push @rhs_rows, qq{<tr><td colspan="10">$note</td></tr>};
+	} else {
+          push( @rhs_rows, sprintf( $row_tmpl,
           $feature->das_type                                       || '&nbsp;',
           ($feature->das_type_id eq $feature->das_type)             ? '&nbsp;'
                                                                     : "(".$feature->das_type_id.")",
@@ -202,10 +220,11 @@ sub das {
           $score,
           '&nbsp;'
         ) );
+}
       }
     }
 
-    if( scalar( @rhs_rows ) == 0 ){
+  if( scalar( @rhs_rows ) == 0 ){
       my $msg = "No annotation";
       if ($location_features > 0) {
         $msg = "There are $location_features location based features that are not displayed here. See Protein Features panel";
@@ -218,9 +237,10 @@ sub das {
 </table>)
       );
     }
-  }
 
-  ###### Collapse/expand switch for the DAS sources panel
+ }
+
+ ###### Collapse/expand switch for the DAS sources panel
   my $label = 'DAS Sources';
   if( ($object->param( $status ) || ' ' ) eq 'off' ) {
     $panel->add_row( $label, '', "$URL=on" );
@@ -290,6 +310,8 @@ sub das {
   $panel->add_row( $label, $form->render(), "$URL=off" );
 
   ###### End of the sources selector form
+
+
 }
 
 my @htext;
@@ -828,11 +850,7 @@ sub das_annotation {
     if( ! scalar( @features ) ){
       push( @rhs_rows, "No annotation" );
     }
-    foreach my $feature( sort{ 
-      $a->das_type_id    cmp $b->das_type_id ||
-      $a->das_feature_id cmp $b->das_feature_id ||
-      $a->das_note       cmp $b->das_note
-    } @features ){
+    foreach my $feature( @features ){
       my $segment = $feature->das_segment->ref;
       my $id = $feature->das_feature_id;
       if( my $href = $feature->das_link ){
@@ -840,6 +858,9 @@ sub das_annotation {
       }
       my $note;
       if( $note = $feature->das_note ){
+	if (ref $note eq 'ARRAY') {
+	  $note = join('<br/>',@$note);
+	}
         $note=~s|((\S+?):(http://\S+))      |<a href="$3" target="$segment">[$2]</a>|igx;
         $note=~s|([^"])(http://\S+)([^"])   |$1<a href="$2" target="$segment">$2</a>$3|igx;
         $note=~s|((\S+?):navigation://(\S+))|<a href="protview?gene=$3" >[$2]</a>|igx;
