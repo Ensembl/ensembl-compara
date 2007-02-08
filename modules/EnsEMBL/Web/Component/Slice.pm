@@ -209,13 +209,7 @@ sub generateHTML {
     my @markup = sort {($a->{pos} <=> $b->{pos})*10 + 5*($a->{mark} <=> $b->{mark})  } @{$hRef->{$display_name}->{markup}};
 
     # Get abbreviated species name (first letters of genus, first 3 of species)
-    my $abbr;
-    if (my @tmp = $display_name =~ m/^(.)|_(...)/g) {
-      $abbr = join("",@tmp, " ");
-    }
-    else {
-      $abbr = $display_name;
-    }
+    my $abbr = $object->species_defs->get_config($display_name, "SPECIES_ABBREVIATION") || $display_name;
     my $html = $abbr;
 
     # If the line numbering is on - then add the index of the first position
@@ -417,17 +411,14 @@ sub generateHTML {
       }
     }
 
-    if ($notes) {
-      $html .= join('|', " ", @$notes);
-    }
-
+    $html .= join('|', " ", @$notes) if $notes;;
     $html .= "\n";
 
 # Now $html holds ready html for the $species
 # To display multiple species aligned line by line here we split the species html on $BR symbol
 # so later we can pick the html line by line from each species in turn
     @{$hRef->{$display_name}->{html}} = split /$BR/, $html;
-  }
+  }  # end foreach display name
 
   my $html = '';
   if (scalar(keys %$hRef) > 1) {

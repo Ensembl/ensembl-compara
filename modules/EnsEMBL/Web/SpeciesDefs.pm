@@ -481,6 +481,10 @@ sub _parse {
       $sth->finish();
       $dbh->disconnect();
 
+      # SPECIES_ABBREVIATION
+      $filename =~ /^([A-Z])[a-z]+_([a-z]{3})[a-z]*$/;
+      $tree->{'general'}{'SPECIES_ABBREVIATION'} = $1.$2;
+
       ## Do species name and group
       (my $ininame = $filename) =~ s/_/ /g;
       my $bioname = $taxonomy[1].' '.$taxonomy[0];
