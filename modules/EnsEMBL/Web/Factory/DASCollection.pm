@@ -193,12 +193,7 @@ sub createObjects {
   my %das_del    = map{$_,1} ($self->param( "_das_delete" ) || ());
   my %urldas_del = map{$_,1} ($self->param( "_urldas_delete" ) || ());
   my %das_edit   = map{$_,1} ($self->param( "_das_edit" ) || ());
-  my %das_add    = map{$_,1} ($self->param( "add_das_source" ) || ());
 
-  if( %das_add ) {
-  # Clean up any add_das parameters
-    $self->delete_param('add_das_source');
-  }
   foreach (keys (%das_del)){
 ## Replace with session call
     $self->get_session->remove_das_source($_);
@@ -216,68 +211,6 @@ sub createObjects {
   my @confkeys = qw( name type);
   my @allkeys = ('strand', 'labelflag', 'label', 'url', 'conftype', 'group', 'stylesheet', 'score', 'fg_merge', 'fg_grades', 'fg_data', 'fg_min', 'fg_max', 'caption', 'active', 'color', 'depth', 'help', 'linktext', 'linkurl' );
   my @arr_keys = ('enable', 'mapping');
-
-# DAS sources can be added from URL 
-# URL will have to be of the following format:
-# /geneview?gene=BRCA2&add_das_source=(url=http://das1:9999/das+dsn=mouse_ko_allele+type=markersymbol+name=MySource+active=1)
-# other parameters also can be specified, but the those are optional .. 
-
-  foreach my $dconf (keys %das_add){
-    $dconf =~ s/[\(|\)]//g;
-    my @das_keys = split(/\s/, $dconf);
-    my %das_data = map { split (/\=/, $_,2) } @das_keys; 
-    my $das_name = $das_data{name} || $das_data{dsn} || 'NamelessSource';
-    
-    if( exists( $sources_conf{$das_name} ) and  (! defined($sources_conf{$das_name}->{conftype}) or $sources_conf{$das_name}->{conftype} ne 'external_editing' )){ 
-      my $das_name_ori = $das_name;
-      for( my $i = 1; 1; $i++ ){
-        $das_name = $das_name_ori ."_$i";
-        if( ! exists( $sources_conf{$das_name} ) ){
-          $das_data{name} =  $das_name;
-          last;
-        }
-      }
-    }
-#  warn("ADD DAS $das_name");
-#  warn(Dumper(\%das_data));
-
-    if ( ! exists $das_data{url} || ! exists $das_data{dsn} || ! exists $das_data{type}) {
-      warn("WARNING: DAS source $das_name has not been added: Missing parameters");
-      next;
-    }
-  
-  # Add to the conf list
-    $das_data{label} or $das_data{label} = $das_data{name};
-    $das_data{caption} or $das_data{caption} = $das_data{name};
-    $das_data{stylesheet} or $das_data{stylesheet} = 'n';
-    $das_data{score} or $das_data{score} = 'n';
-    $das_data{fg_merge} or $das_data{fg_merge} = 'a';
-    $das_data{fg_grades} or $das_data{fg_grades} = 20;
-    $das_data{fg_data} or $das_data{fg_data} = 'o';
-    $das_data{fg_min} or $das_data{fg_min} = 0;
-    $das_data{fg_max} or $das_data{fg_max} = 100;
-    if (exists $das_data{enable}) {
-      my @enable_on = split(/\,/, $das_data{enable});
-      delete $das_data{enable};
-      push @{$das_data{enable}}, @enable_on;
-    }
-    push @{$das_data{enable}}, $conf_script;
-    push @{$das_data{mapping}} , split(/\,/, $das_data{type});
-    $das_data{conftype} = 'external';
-    $das_data{type} = 'mixed' if (scalar(@{$das_data{mapping}} > 1));
-
-    $das_data{url} .= "/$das_data{dsn}";
-    $sources_conf{$das_name} ||= {};
-    foreach my $key( @confkeys, @allkeys) { 
-      if (defined $das_data{$key}) {
-        $sources_conf{$das_name}->{$key} = $das_data{$key};
-      }
-    }
-## Replace with session call...
-    $self->get_session->add_das_source_from_hashref( \%das_data );
-##    $extdas->add_das_source(\%das_data);
-    $DASsel{$das_name} = 1 if ($das_data{active});
-  }
 
     # Add '/das' suffix to _das_domain param
   if( my $domain = $self->param( "DASdomain" ) ){
