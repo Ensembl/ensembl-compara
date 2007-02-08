@@ -130,33 +130,28 @@ sub dump {
   print STDERR Dumper($self);
 }
 
+# DAS sources can be added from URL
+# URL will have to be of the following format:
+# /geneview?gene=BRCA2&add_das_source=(url=http://das1:9999/das+dsn=mouse_ko_allele+type=markersymbol+name=MySource+active=1)
+# other parameters also can be specified, but those are optional ..
+
 sub create_from_URL {
   my( $self, $URL ) = @_;
   $URL =~ s/[\(|\)]//g;                                # remove ( and |
   return unless $URL;
+
   my @das_keys = split(/\s/, $URL);                    # break on spaces...
   my %das_data = map { split (/\=/, $_,2) } @das_keys; # split each entry on spaces
   my $das_name = $das_data{name} || $das_data{dsn} || 'NamelessSource';
+
+#  !!! You have to make sure that the name is unique before calling this function !!! 
+
   unless( exists $das_data{url} && exists $das_data{dsn} && exists $das_data{type}) {
     warn("WARNING: DAS source $das_name ($URL) has not been added: Missing parameters");
     next;
   }
   $das_data{name} = $das_name;
-# this bit should be handled outside when das confs are merged...
-#  if( my $src = $ext_das->{'data'}->{$das_name}){
-#    if (join('*',$src->{url}, $src->{dsn}, $src->{type}) eq join('*', $das_data{url}, $das_data{dsn}, $das_data{type})) {
-#      warn("WARNING: DAS source $das_name has not been added: It is already attached");
-#      next;
-#    }
-#    my $das_name_ori = $das_name;
-#    for( my $i = 1; 1; $i++ ){
-#      $das_name = $das_name_ori ."_$i";
-#      if( ! exists($ext_das->{'data'}->{$das_name}  )){
-#        $das_data{name} =  $das_name;
-#        last;
-#      }
-#    }
-#  }
+
       # Add to the conf list
   $das_data{label}      ||= $das_name;
   $das_data{caption}    ||= $das_name;

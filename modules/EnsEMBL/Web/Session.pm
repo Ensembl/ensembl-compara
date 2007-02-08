@@ -267,10 +267,74 @@ sub save_das {
   }
 }
 
+
+# This function will make sure that a das source is attached with a unique name
+# So in case when you try to attach MySource it will return undef if exactly same source is already attached (
+# i.e the same name, url, dsn and type) If it's only the name that is the same then the function will provide a unique name
+# for the new source , e.g MySource_1
+# NOTE: THhe function would be much simpler if get_das_config worked for internal sources as well ;)
+
+sub get_unique_source_name {
+  my( $self, $hash_ref ) = @_;
+  my $URL = $hash_ref; 
+  $URL =~ s/[\(|\)]//g;
+  my @das_keys = split(/\s/, $URL);                    # break on spaces...
+  my %das_data = map { split (/\=/, $_,2) } @das_keys; # split each entry on spaces
+  my $key = $das_data{'name'};
+
+  my $isrc = $self->get_internal_das();
+  if (exists ($isrc->{$key})) {
+    if (join('*',$isrc->{url}, $isrc->{dsn}, $isrc->{type}) eq join('*', $das_data{url}, $das_data{dsn}, $das_data{type})) {
+      warn("WARNING: DAS source $key has not been added: It is already attached");
+      return;
+    }
+    my $das_name_ori = $key;
+
+    for( my $i = 1; 1; $i++ ){
+      $key = $das_name_ori ."_$i";
+       if (my $esrc = $self->get_das_config($key)) {
+         if (join('*',$esrc->{_data}->{url}, $esrc->{_data}->{dsn}, $esrc->{_data}->{type}) eq join('*', $das_data{url}, $das_data{dsn}, $das_data{type})) {
+           warn("WARNING: DAS source $key has not been added: It is already attached");
+           return;
+         }
+	 next;
+       }
+       return $key;
+    }
+  }
+
+  if (my $esrc = $self->get_das_config($key)) {
+    if (join('*',$esrc->{_data}->{url}, $esrc->{_data}->{dsn}, $esrc->{_data}->{type}) eq join('*', $das_data{url}, $das_data{dsn}, $das_data{type})) {
+      warn("WARNING: DAS source $key has not been added: It is already attached");
+      return;
+    }
+    my $das_name_ori = $key;
+
+    for( my $i = 1; 1; $i++ ){
+      $key = $das_name_ori ."_$i";
+       if (my $esrc = $self->get_das_config($key)) {
+         if (join('*',$esrc->{_data}->{url}, $esrc->{_data}->{dsn}, $esrc->{_data}->{type}) eq join('*', $das_data{url}, $das_data{dsn}, $das_data{type})) {
+           warn("WARNING: DAS source $key has not been added: It is already attached");
+           return;
+         }
+         next;
+       }
+       return $key;
+    }
+  }
+	
+  return $key;
+}
+
 sub add_das_source_from_URL {
 ### DAS
 ### Create a new DAS source from a configuration hashref
   my( $self, $hash_ref ) = @_;
+  
+  my $uname = $self->get_unique_source_name($hash_ref);
+  return unless $uname;
+  $hash_ref =~ s/name=(\w)+ /name=$uname /;
+
   my $DAS = EnsEMBL::Web::DASConfig->new( $self->get_adaptor );
   $DAS->create_from_URL( $hash_ref );
 ## We have a duplicate so need to do something clever!
