@@ -81,7 +81,7 @@ sub exists {
 sub edit {
   ### Updates an existing entry in the table
   my ($self, %params) = @_;
-  my $result = EnsEMBL::Web::DBSQL::SQL::Result->new(( action => 'edit' ));
+  my $result = EnsEMBL::Web::DBSQL::SQL::Result->new({ action => 'edit' });
   my %set_parameters = %{ $params{set} };
   my $id = $params{id};
   my @multiple_ids = undef;
@@ -178,7 +178,7 @@ sub set_sql_with_parameters {
 sub create {
   ### Creates a new entry in the table
   my ($self, %params) = @_;
-  my $result = EnsEMBL::Web::DBSQL::SQL::Result->new(( action => 'create' ));
+  my $result = EnsEMBL::Web::DBSQL::SQL::Result->new({ action => 'create' });
   my %set_parameters = %{ $params{set} };
   my @definition = undef;
   my $user = undef;

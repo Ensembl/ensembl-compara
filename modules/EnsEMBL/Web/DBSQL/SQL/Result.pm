@@ -16,6 +16,13 @@ my %LastInsertedId :ATTR(:set<last_inserted_id> :get<last_inserted_id>);
 my %Success :ATTR(:set<success> :get<success>);
 my %ResultHash:ATTR(:set<result_hash> :get<result_hash>);
 
+sub BUILD {
+  my ($self, $ident, $args) = @_;
+  if (defined $args->{action}) {
+    $self->set_action($args->{action});
+  }
+}
+
 sub get_value {
   my ($self, $field) = @_;
   return $self->get_result_hash->{$field};
