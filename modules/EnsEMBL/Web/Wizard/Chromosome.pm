@@ -126,11 +126,13 @@ sub add_karyotype_options {
 sub _init {
   my ($self, $object) = @_;
 
+  my $def_species = $object->species_defs->ENSEMBL_PRIMARY_SPECIES;
+
   ## define fields available to the forms in this wizard
   my %form_fields = (
     'blurb' => {
       'type'  => 'Information',
-      'value' => qq{<p>Karyoview now allows you to display multiple data sets as either density plots, location pointers or a mixture of the two. Your data will be saved in a temporary cache. Once you have added all your tracks, you can configure the rest of the image options.</p> <p><a href="javascript:void(window.open('/Homo_sapiens/helpview?kw=karyoview;se=2;#FileFormats','helpview','width=700,height=550,resizable,scrollbars'))">Information about valid file formats</a>: e.g. GFF, PSL, BED</p>},
+      'value' => qq{<p>Karyoview now allows you to display multiple data sets as either density plots, location pointers or a mixture of the two. Your data will be saved in a temporary cache. Once you have added all your tracks, you can configure the rest of the image options.</p> <p><a href="javascript:void(window.open('/$def_species/helpview?kw=karyoview;se=2;#FileFormats','helpview','width=700,height=550,resizable,scrollbars'))">Information about valid file formats</a>: e.g. GFF, PSL, BED</p>},
     },
     'track_name'  => {
       'type'=>'String',
