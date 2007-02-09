@@ -811,6 +811,8 @@ sub _parse {
 
         my $das_source_conf = $tree->{$das_source};
         ref( $das_source_conf ) eq 'HASH' or $das_source_conf = {};
+	$das_source_conf->{'type'} or $das_source_conf->{'type'} = 'ensembl_location_chromosome';
+
         if( ! exists($das_source_conf->{'assembly'}) || $das_source_conf->{'assembly'} eq $tree->{'ENSEMBL_GOLDEN_PATH'} ) {
           $das_source_conf->{'retrieve_features'} = 1;
           $das_source_conf->{'name'} = $das_source;
