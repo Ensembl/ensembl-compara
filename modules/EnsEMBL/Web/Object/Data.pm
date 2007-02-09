@@ -101,6 +101,20 @@ sub add_queriable_field {
   push @{ $self->get_queriable_fields }, EnsEMBL::Web::Object::DataField->new( { name => $args->{name}, type => $args->{type}, queriable => 'yes' } );
 }
 
+sub get_all_fields {
+  my $self = shift;
+  my @all_fields;
+
+  ## Check we actually have fields of each type before trying to dereference the arrayref!
+  if (ref($self->get_fields) eq 'ARRAY') {
+    push @all_fields, @{ $self->get_fields };
+  }
+  if (ref($self->get_queriable_fields) eq 'ARRAY') {
+    push @all_fields, @{ $self->get_queriable_fields };
+  }
+  return \@all_fields;
+}
+
 sub add_has_many {
   my ($self, $args) = @_;
   if (!$self->get_has_many) {
