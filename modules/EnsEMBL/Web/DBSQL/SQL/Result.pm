@@ -21,6 +21,7 @@ sub BUILD {
   if (defined $args->{action}) {
     $self->set_action($args->{action});
   }
+  $self->set_success(1);
 }
 
 sub get_value {
