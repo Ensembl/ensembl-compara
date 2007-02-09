@@ -54,6 +54,7 @@ sub populate {
 }
 
 sub populate_data {
+  ### Populates data.
   my ($self, $string) = @_;
   my $hash = eval ($string);
   foreach my $key (keys %{ $hash }) {
