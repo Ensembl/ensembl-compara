@@ -82,10 +82,12 @@ sub fetch_input {
   ## Store DnaFragRegions corresponding to the SyntenyRegion in $self->dnafrag_regions(). At this point the
   ## DnaFragRegions are in random order
   $self->_load_DnaFragRegions($self->synteny_region_id);
-  if ($self->get_species_tree and $self->dnafrag_regions) {
+  if ($self->dnafrag_regions) {
     ## Get the tree string by taking into account duplications and deletions. Resort dnafrag_regions
     ## in order to match the name of the sequences in the tree string (seq1, seq2...)
-    $self->_build_tree_string;
+    if ($self->get_species_tree and $self->dnafrag_regions) {
+      $self->_build_tree_string;
+    }
     ## Dumps fasta files for the DnaFragRegions. Fasta files order must match the entries in the
     ## newick tree. The order of the files will match the order of sequences in the tree_string.
     $self->_dump_fasta;
@@ -113,6 +115,12 @@ sub run
 
 sub write_output {
   my ($self) = @_;
+
+  if ($self->{'_runnable'}->{tree_to_save}) {
+    my $meta_container = $self->{'comparaDBA'}->get_MetaContainer;
+    $meta_container->store_key_value("synteny_region_tree_".$self->synteny_region_id,
+        $self->{'_runnable'}->{tree_to_save});
+  }
 
   my $mlssa = $self->{'comparaDBA'}->get_MethodLinkSpeciesSetAdaptor;
   my $mlss = $mlssa->fetch_by_dbID($self->method_link_species_set_id);
@@ -380,7 +388,7 @@ sub get_species_tree {
   }
 
   if (!defined($newick_species_tree)) {
-    throw("Cannot get the species tree");
+    return undef;
   }
 
   $newick_species_tree =~ s/^\s*//;
@@ -504,7 +512,12 @@ sub _dump_fasta {
   my $all_dnafrag_regions = $self->dnafrag_regions;
 
   ## Dump FASTA files in the order given by the tree string (needed by Pecan)
-  my @seqs = ($self->tree_string =~ /seq(\d+)/g);
+  my @seqs;
+  if ($self->tree_string) {
+    @seqs = ($self->tree_string =~ /seq(\d+)/g);
+  } else {
+    @seqs = (1..scalar(@$all_dnafrag_regions));
+  }
   foreach my $seq_id (@seqs) {
     my $dfr = $all_dnafrag_regions->[$seq_id-1];
     my $file = $self->worker_temp_directory . "/seq" . $seq_id . ".fa";
