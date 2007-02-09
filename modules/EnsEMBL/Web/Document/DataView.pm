@@ -49,7 +49,7 @@ sub simple {
                                      definition => $fields, 
                                      user =>       $user
                                   ));
-        if ($result->success) {
+        if ($result->get_success) {
           $self->map_relationships($definition, $incoming, $result, $user);
         }
       }
@@ -158,7 +158,7 @@ sub simple {
       }
     }
 
-    if ($result->success) {
+    if ($result->get_success) {
       if ($definition->on_complete =~ /\?/) {
         $send =~ s/^\?/&/;
       }
