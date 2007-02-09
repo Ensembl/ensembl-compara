@@ -2,7 +2,6 @@
 4	31033	Takifugu rubripes	FUGU4	1	2005-05-IMCB	
 5	7165	Anopheles gambiae	AgamP3	1	2005-10-VectorBase	
 13	99883	Tetraodon nigroviridis	TETRAODON7	1	2004-09-Genoscope	
-15	9913	Bos taurus	Btau_2.0	1	2005-12-Ensembl	
 16	8364	Xenopus tropicalis	JGI4.1	1	2005-11-Ensembl	
 18	7719	Ciona intestinalis	JGI2	1	2006-02-Ensembl	
 22	9606	Homo sapiens	NCBI36	1	2006-08-Ensembl	
@@ -24,4 +23,9 @@
 41	6239	Caenorhabditis elegans	CEL160	1	2006-05-Wormbase	
 42	9031	Gallus gallus	WASHUC2	1	2006-08-Ensembl	
 43	9258	Ornithorhynchus anatinus	OANA5	1	2006-05-Ensembl	
-44	4932	Saccharomyces cerevisiae	SGD1.01	1	2006-09-SGD	
+44	4932	Saccharomyces cerevisiae	SGD1.01	1	2006-12-SGD	
+45	9913	Bos taurus	Btau_3.1	1	2006-09-Ensembl	
+47	9685	Felis catus	CAT	1	2005-06-Ensembl	
+48	37347	Tupaia belangeri	TREESHREW	1	2006-10-Ensembl	
+49	9365	Erinaceus europaeus	HEDGEHOG	1	2010-06-Ensembl	
+50	10141	Cavia porcellus	GUINEAPIG	1	2006-10-Ensembl	
