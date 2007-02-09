@@ -47,9 +47,10 @@ our @ISA = qw(Bio::EnsEMBL::Analysis::Runnable);
 my $java_exe = "/nfs/acari/bpaten/bin/jre1.6.0/bin/java";
 my $uname = `uname`;
 $uname =~ s/[\r\n]+//;
-my $default_exonerate = "/acari/work2/gs2/gs2/local/archive/$uname/1.0.0/bin/exonerate";
+my $default_exonerate = "exonerate-1.0.0";
 my $default_jar_file = "pecan.0.6.jar";
 my $default_java_class = "bp.pecan.Pecan";
+my $estimate_tree = "~/pecan/EstimateTree.py";
 
 =head2 new
 
@@ -77,7 +78,34 @@ sub new {
 
   chdir $self->workdir;
   $self->fasta_files($fasta_files) if (defined $fasta_files);
-  $self->tree_string($tree_string) if (defined $tree_string);
+  if (defined $tree_string) {
+    $self->tree_string($tree_string)
+  } else {
+    # Use EstimateTree.py program to get a tree from the sequences
+    my $run_str = "python $estimate_tree " . join(" ", @$fasta_files);
+    print "RUN $run_str\n";
+    my @estimate = qx"$run_str";
+    if (($estimate[0] !~ /^FINAL_TREE: \(.+\);/) or ($estimate[2] !~ /^ORDERED_SEQUENCES: (.+)/)) {
+      throw "Error while running EstimateTree program for Pecan";
+    }
+    ($tree_string) = $estimate[0] =~ /^FINAL_TREE: (\(.+\);)/;
+    $self->tree_string($tree_string);
+    # print "THIS TREE $tree_string\n";
+    my ($files) = $estimate[2] =~ /^ORDERED_SEQUENCES: (.+)/;
+    @$fasta_files = split(" ", $files);
+    $self->fasta_files($fasta_files);
+    # print "THESE FILES ", join(" ", @$fasta_files), "\n";
+    ## Build newick tree which can be stored in the meta table
+    foreach my $this_file (@$fasta_files) {
+      my $header = qx"head -1 $this_file";
+      my ($dnafrag_id, $name, $start, $end, $strand) = $header =~ /^>DnaFrag(\d+)\|([^\.+])\.(\d+)\-(\d+)\:(\-?1)/;
+      # print "HEADER: $dnafrag_id, $name, $start, $end, $strand  $header";
+      $strand = 0 if ($strand != 1);
+      $tree_string =~ s/(\W)\d+(\W)/$1${dnafrag_id}_${start}_${end}_${strand}$2/;
+    }
+    $self->{tree_to_save} = $tree_string;
+    # print "TREE_TO_SAVE: $tree_string\n";
+  }
   $self->parameters($parameters) if (defined $parameters);
   $self->jar_file($jar_file) if (defined $jar_file);
   $self->java_class($java_class) if (defined $java_class);
