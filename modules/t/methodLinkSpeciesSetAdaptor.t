@@ -53,7 +53,7 @@ use strict;
 
 BEGIN { $| = 1;  
   use Test;
-  plan tests => 59;
+  plan tests => 65;
 }
 
 use Bio::EnsEMBL::Utils::Exception qw (warning verbose);
@@ -87,7 +87,7 @@ my ($human_genome_db_id) = $compara_db->dbc->db_handle->selectrow_array("
     WHERE name = 'Homo sapiens'");
 
 my $all_rows = $compara_db->dbc->db_handle->selectall_arrayref("
-    SELECT mlss.method_link_species_set_id, ml.method_link_id, ml.type,
+    SELECT mlss.method_link_species_set_id, ml.method_link_id, ml.type, ml.class,
         GROUP_CONCAT(gdb.name ORDER BY gdb.name),
         GROUP_CONCAT(gdb.genome_db_id ORDER BY gdb.genome_db_id)
     FROM method_link ml, method_link_species_set mlss, species_set ss, genome_db gdb
@@ -100,8 +100,9 @@ foreach my $row (@$all_rows) {
   $all_mlss->{$row->[0]} = {
           method_link_id => $row->[1],
           type => $row->[2],
-          species_set => $row->[3],
-          gdbid_set => $row->[4]
+          class => $row->[3],
+          species_set => $row->[4],
+          gdbid_set => $row->[5]
       }
 }
 
@@ -137,7 +138,9 @@ debug("Test Bio::EnsEMBL::Compara::DBSQL::MethodLinkSpeciesSetAdaptor::fetch_all
           $all_mlss->{$this_method_link_species_set->dbID}->{method_link_id});
       $is_test_ok = 3 if ($this_method_link_species_set->method_link_type ne 
           $all_mlss->{$this_method_link_species_set->dbID}->{type});
-      $is_test_ok = 4 if ($species ne 
+      $is_test_ok = 4 if ($this_method_link_species_set->method_link_class ne 
+          $all_mlss->{$this_method_link_species_set->dbID}->{class});
+      $is_test_ok = 5 if ($species ne 
           $all_mlss->{$this_method_link_species_set->dbID}->{species_set});
     } else {
       $is_test_ok = 0;
@@ -160,6 +163,8 @@ debug("Test Bio::EnsEMBL::Compara::DBSQL::MethodLinkSpeciesSetAdaptor::fetch_by_
       $all_mlss->{$this_method_link_species_set_id}->{method_link_id});
   $is_test_ok = 5 if ($method_link_species_set->method_link_type ne
       $all_mlss->{$this_method_link_species_set_id}->{type});
+  $is_test_ok = 6 if ($method_link_species_set->method_link_class ne
+      $all_mlss->{$this_method_link_species_set_id}->{class});
   $species = join(",", sort map {$_->name} @{$method_link_species_set->species_set});
   $is_test_ok = 0 if ($species ne $all_mlss->{$this_method_link_species_set_id}->{species_set});
   ok($is_test_ok, 1);
@@ -190,7 +195,9 @@ debug("Test Bio::EnsEMBL::Compara::DBSQL::MethodLinkSpeciesSetAdaptor::fetch_all
           $all_mlss->{$this_method_link_species_set->dbID}->{method_link_id});
       $is_test_ok = 3 if ($this_method_link_species_set->method_link_type ne 
           $all_mlss->{$this_method_link_species_set->dbID}->{type});
-      $is_test_ok = 4 if ($species ne 
+      $is_test_ok = 4 if ($this_method_link_species_set->method_link_class ne 
+          $all_mlss->{$this_method_link_species_set->dbID}->{class});
+      $is_test_ok = 5 if ($species ne 
           $all_mlss->{$this_method_link_species_set->dbID}->{species_set});
     } else {
       $is_test_ok = 0;
@@ -229,7 +236,9 @@ debug("Test Bio::EnsEMBL::Compara::DBSQL::MethodLinkSpeciesSetAdaptor::fetch_all
           $all_mlss->{$this_method_link_species_set->dbID}->{method_link_id});
       $is_test_ok = 3 if ($this_method_link_species_set->method_link_type ne 
           $all_mlss->{$this_method_link_species_set->dbID}->{type});
-      $is_test_ok = 4 if ($species ne 
+      $is_test_ok = 4 if ($this_method_link_species_set->method_link_class ne 
+          $all_mlss->{$this_method_link_species_set->dbID}->{class});
+      $is_test_ok = 5 if ($species ne 
           $all_mlss->{$this_method_link_species_set->dbID}->{species_set});
     } else {
       $is_test_ok = 0;
@@ -267,7 +276,9 @@ debug("Test Bio::EnsEMBL::Compara::DBSQL::MethodLinkSpeciesSetAdaptor::fetch_all
           $all_mlss->{$this_method_link_species_set->dbID}->{method_link_id});
       $is_test_ok = 3 if ($this_method_link_species_set->method_link_type ne 
           $all_mlss->{$this_method_link_species_set->dbID}->{type});
-      $is_test_ok = 4 if ($species ne 
+      $is_test_ok = 4 if ($this_method_link_species_set->method_link_class ne 
+          $all_mlss->{$this_method_link_species_set->dbID}->{class});
+      $is_test_ok = 5 if ($species ne 
           $all_mlss->{$this_method_link_species_set->dbID}->{species_set});
     } else {
       $is_test_ok = 0;
@@ -351,6 +362,8 @@ debug("Test Bio::EnsEMBL::Compara::DBSQL::MethodLinkSpeciesSetAdaptor::fetch_by_
       $all_mlss->{$this_method_link_species_set_id}->{method_link_id});
   ok($method_link_species_set->method_link_type,
       $all_mlss->{$this_method_link_species_set_id}->{type});
+  ok($method_link_species_set->method_link_class,
+      $all_mlss->{$this_method_link_species_set_id}->{class});
   $species = join(",", sort map {$_->name} @{$method_link_species_set->species_set});
   ok($species, $all_mlss->{$this_method_link_species_set_id}->{species_set});
 
@@ -370,6 +383,8 @@ debug("Test Bio::EnsEMBL::Compara::DBSQL::MethodLinkSpeciesSetAdaptor::fetch_by_
       $all_mlss->{$this_method_link_species_set_id}->{method_link_id});
   ok($method_link_species_set->method_link_type,
       $all_mlss->{$this_method_link_species_set_id}->{type});
+  ok($method_link_species_set->method_link_class,
+      $all_mlss->{$this_method_link_species_set_id}->{class});
   $species = join(",", sort map {$_->name} @{$method_link_species_set->species_set});
   ok($species, $all_mlss->{$this_method_link_species_set_id}->{species_set});
 
@@ -386,6 +401,8 @@ debug("Test Bio::EnsEMBL::Compara::DBSQL::MethodLinkSpeciesSetAdaptor::fetch_by_
       $all_mlss->{$this_method_link_species_set_id}->{method_link_id});
   ok($method_link_species_set->method_link_type,
       $all_mlss->{$this_method_link_species_set_id}->{type});
+  ok($method_link_species_set->method_link_class,
+      $all_mlss->{$this_method_link_species_set_id}->{class});
   $species = join(",", sort map {$_->name} @{$method_link_species_set->species_set});
   ok($species, $all_mlss->{$this_method_link_species_set_id}->{species_set});
 
@@ -402,6 +419,8 @@ debug("Test Bio::EnsEMBL::Compara::DBSQL::MethodLinkSpeciesSetAdaptor::fetch_by_
       $all_mlss->{$this_method_link_species_set_id}->{method_link_id});
   ok($method_link_species_set->method_link_type,
       $all_mlss->{$this_method_link_species_set_id}->{type});
+  ok($method_link_species_set->method_link_class,
+      $all_mlss->{$this_method_link_species_set_id}->{class});
   $species = join(",", sort map {$_->name} @{$method_link_species_set->species_set});
   ok($species, $all_mlss->{$this_method_link_species_set_id}->{species_set});
 
@@ -415,6 +434,7 @@ debug( "Check Bio::EnsEMBL::Compara::MethodLinkSpeciesSet::new method [1]" );
         -adaptor => $method_link_species_set_adaptor,
         -method_link_id => $all_mlss->{$this_method_link_species_set_id}->{method_link_id},
         -method_link_type => $all_mlss->{$this_method_link_species_set_id}->{type},
+        -method_link_class => $all_mlss->{$this_method_link_species_set_id}->{class},
         -species_set => [map {$genome_db_adaptor->fetch_by_dbID($_)} split(",",
               $all_mlss->{$this_method_link_species_set_id}->{gdbid_set})],
     );
@@ -424,6 +444,8 @@ debug( "Check Bio::EnsEMBL::Compara::MethodLinkSpeciesSet::new method [1]" );
       $all_mlss->{$this_method_link_species_set_id}->{method_link_id});
   ok($method_link_species_set->method_link_type,
       $all_mlss->{$this_method_link_species_set_id}->{type});
+  ok($method_link_species_set->method_link_class,
+      $all_mlss->{$this_method_link_species_set_id}->{class});
   $species = join(",", sort map {$_->name} @{$method_link_species_set->species_set});
   ok($species, $all_mlss->{$this_method_link_species_set_id}->{species_set});
 
@@ -444,6 +466,7 @@ debug( "Check Bio::EnsEMBL::Compara::MethodLinkSpeciesSet::new method [2]" );
   $method_link_species_set = new Bio::EnsEMBL::Compara::MethodLinkSpeciesSet(
         -method_link_id => $blastz_net_method_link_id,
         -method_link_type => "BLASTZ_NET",
+        -method_link_class => "GenomicAlignBlock.pairwise_alignment",
         -species_set => [
             $genome_db_adaptor->fetch_by_name_assembly("Gallus gallus"),
             $genome_db_adaptor->fetch_by_name_assembly("Mus musculus")],
@@ -452,7 +475,8 @@ debug( "Check Bio::EnsEMBL::Compara::MethodLinkSpeciesSet::new method [2]" );
   $is_test_ok = 1;
   ok($method_link_species_set->isa("Bio::EnsEMBL::Compara::MethodLinkSpeciesSet"));
   ok($method_link_species_set->method_link_id, $blastz_net_method_link_id);
-  ok($method_link_species_set->method_link_type,"BLASTZ_NET");
+  ok($method_link_species_set->method_link_type, "BLASTZ_NET");
+  ok($method_link_species_set->method_link_class, "GenomicAlignBlock.pairwise_alignment");
   $species = join(" - ", sort map {$_->name} @{$method_link_species_set->species_set});
   ok($species, "Gallus gallus - Mus musculus");
 

@@ -103,20 +103,22 @@ ok(defined($method_link_species_set_adaptor)
 debug( "Test Bio::EnsEMBL::Compara::MethodLinkSpeciesSet::new method" );
   $method_link_species_set = new Bio::EnsEMBL::Compara::MethodLinkSpeciesSet(
         -dbID => 1,
-        -adaptor => $method_link_species_set_adaptor,
+#         -adaptor => $method_link_species_set_adaptor,
         -method_link_id => 1,
         -method_link_type => "BLASTZ_NET",
+        -method_link_class => "GenomicAlignBlock.pairwise_alignment",
         -species_set => [
             $genome_db_adaptor->fetch_by_name_assembly("Homo sapiens"),
             $genome_db_adaptor->fetch_by_name_assembly("Rattus norvegicus")],
     );
   $is_test_ok = 1;
-  $is_test_ok = 0 if (!$method_link_species_set->isa("Bio::EnsEMBL::Compara::MethodLinkSpeciesSet"));
-  $is_test_ok = 0 if ($method_link_species_set->dbID != 1);
-  $is_test_ok = 0 if ($method_link_species_set->method_link_id != 1);
-  $is_test_ok = 0 if ($method_link_species_set->method_link_type ne "BLASTZ_NET");
+  $is_test_ok = 2 if (!$method_link_species_set->isa("Bio::EnsEMBL::Compara::MethodLinkSpeciesSet"));
+  $is_test_ok = 3 if ($method_link_species_set->dbID != 1);
+  $is_test_ok = 4 if ($method_link_species_set->method_link_id != 1);
+  $is_test_ok = 5 if ($method_link_species_set->method_link_type ne "BLASTZ_NET");
+  $is_test_ok = 6 if ($method_link_species_set->method_link_class ne "GenomicAlignBlock.pairwise_alignment");
   $species = join(" - ", map {$_->name} @{$method_link_species_set->species_set});
-  $is_test_ok = 0 if ($species ne "Homo sapiens - Rattus norvegicus");
+  $is_test_ok = 7 if ($species ne "Homo sapiens - Rattus norvegicus");
   ok($is_test_ok);
 
 
