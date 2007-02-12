@@ -41,7 +41,7 @@ sub get_where {
   my $sql = "";
   foreach my $where (@{ $self->get_where_attributes }) {
     my $operator = $where->{operator} ? $where->{operator} : '=';
-    $sql .= $where->{field} . ' '.$where->{operator}." '" . $where->{value} . "' and ";
+    $sql .= $where->{field} . " $operator '" . $where->{value} . "' and ";
   }
   $sql =~ s/ and $/ /;
   return $sql;
