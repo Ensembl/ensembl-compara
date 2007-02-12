@@ -92,7 +92,7 @@ use Sys::Hostname;
 use Exporter();
 @ISA=qw(Exporter);
 
-$VERSION=42;
+$VERSION=43;
 $ENSEMBL_RELEASE_DATE = 'Feb 2007';
 
 #### START OF VARIABLE DEFINITION #### DO NOT REMOVE OR CHANGE THIS COMMENT ####
