@@ -288,7 +288,7 @@ sub fetch_glossary {
   $sql .= 'ORDER BY word ASC';
   my $T = $self->handle->selectall_arrayref($sql);
   return [ map {{
-    'word_id'  => $_->[0],
+    'id'       => $_->[0],
     'word'     => $_->[1],
     'acronym'  => $_->[2],
     'meaning'  => $_->[3],
@@ -317,7 +317,6 @@ sub fetch_movies {
 sub fetch_movie_by_id {
   my ($self, $id) = @_;
   return [] unless $self->handle;
-  my $results = [];
 
   my $sql = qq(SELECT title, filename, filesize, width, height, frame_count, frame_rate FROM help_movie where movie_id = "$id");
   my $T = $self->handle->selectrow_arrayref($sql);
@@ -330,6 +329,46 @@ sub fetch_movie_by_id {
     'height'      => $T->[4],
     'frame_count' => $T->[5],
     'frame_rate'  => $T->[6],
+  };
+}
+
+sub fetch_records {
+  my ($self, $type) = @_;
+  return [] unless $self->handle;
+
+  my $sql = qq(SELECT 
+                  help_record_id, type, data, created_by, created_at, modified_by, modified_at 
+                  FROM help_record 
+                  WHERE type = "$type");
+  my $T = $self->handle->selectall_arrayref($sql);
+  return [ map {{
+    'help_record_id'  => $_->[0],
+    'type'            => $_->[1],
+    'data'            => $_->[2],
+    'created_by'      => $_->[3],
+    'created_at'      => $_->[4],
+    'modified_by'     => $_->[5],
+    'modified_at'     => $_->[6],
+  }} @$T ];
+}
+
+sub fetch_record_by_id {
+  my ($self, $id) = @_;
+  return [] unless $self->handle;
+
+  my $sql = qq(SELECT 
+                help_record_id, type, data, created_by, created_at, modified_by, modified_at 
+                FROM help_record 
+                WHERE help_record_id = "$id");
+  my $T = $self->handle->selectrow_arrayref($sql);
+  return {
+    'help_record_id'  => $T->[0],
+    'type'            => $T->[1],
+    'data'            => $T->[2],
+    'created_by'      => $T->[3],
+    'created_at'      => $T->[4],
+    'modified_by'     => $T->[5],
+    'modified_at'     => $T->[6],
   };
 }
 

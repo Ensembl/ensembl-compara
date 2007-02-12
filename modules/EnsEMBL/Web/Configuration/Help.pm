@@ -174,5 +174,25 @@ sub helpdesk_menu {
   $self->add_entry( 'movies', 'text'=>'Animated Tutorials', 'href'=>'/common/Workshops_Online' );
 }
 
+sub interface_menu {
+  my $self = shift;
+  my $object = $self->{object};
+
+  my $flag     = "helpdb";
+  $self->{page}->menu->add_block( $flag, 'bulleted', "HelpDesk Database" );
+
+  $self->{page}->menu->add_entry( $flag, 'text' => "Add a Help Article",
+                                  'href' => "/common/help_db?dataview=add" );
+  $self->{page}->menu->add_entry( $flag, 'text' => "Edit a Help Article",
+                                  'href' => "/common/help_db?dataview=select_to_edit" );
+
+  $self->{page}->menu->add_entry( $flag, 'text' => "Add a Glossary Entry",
+                                  'href' => "/common/glossary_db?dataview=add" );
+  $self->{page}->menu->add_entry( $flag, 'text' => "Edit a Glossary Entry",
+                                  'href' => "/common/glossary_db?dataview=select_to_edit" );
+
+
+
+}
 
 1;

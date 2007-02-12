@@ -21,7 +21,7 @@ sub createObjects {
     'Help', {
       'adaptor'       => $adaptor,
       'modular'       => $modular,
-      'records'       => [],
+      'records'       => undef,
     }, $self->__data
   ) ); 
 }
