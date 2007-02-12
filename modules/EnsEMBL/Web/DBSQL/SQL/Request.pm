@@ -29,18 +29,19 @@ sub get_sql {
 }
 
 sub add_where {
-  my ($self, $key, $value) = @_;
+  my ($self, $key, $value, $operator) = @_;
   unless (defined $self->get_where_attributes) { 
     $self->set_where_attributes([]);
   }
-  push @{ $self->get_where_attributes }, { field => $key, value => $value };
+  push @{ $self->get_where_attributes }, { field => $key, value => $value, operator => $operator };
 }
 
 sub get_where {
   my ($self) = @_;
   my $sql = "";
   foreach my $where (@{ $self->get_where_attributes }) {
-    $sql .= $where->{field} . " = '" . $where->{value} . "' and ";
+    my $operator = $where->{operator} ? $where->{operator} : '=';
+    $sql .= $where->{field} . ' '.$where->{operator}." '" . $where->{value} . "' and ";
   }
   $sql =~ s/ and $/ /;
   return $sql;
