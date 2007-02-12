@@ -157,12 +157,10 @@ sub cdna_alignment_string {
       $cdna = substr($cdna, $offset, $length);
     }
 
-    my $cdna_len = length($cdna);
     my $start = 0;
     my $cdna_align_string = '';
 
     foreach my $pep (split(//,$self->alignment_string($member))) {
-      last if($start >= $cdna_len);
       
       if($pep eq '-') {
         $cdna_align_string .= '--- ';
