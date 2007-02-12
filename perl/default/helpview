@@ -26,6 +26,5 @@ if( $webpage->has_a_problem ) {
     $webpage->action;
   }
 }
-  $webpage->factory->__data->{'help_db'}->disconnect;
 
 1;
