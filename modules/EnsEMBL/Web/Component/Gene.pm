@@ -1534,7 +1534,7 @@ sub external_links {
   }
 
   my $alignio = Bio::AlignIO->newFh(
-				    -fh     => IO::Strsing->new(my $var),
+				    -fh     => IO::String->new(my $var),
 				    -format => 'fasta'
 				    );
       
