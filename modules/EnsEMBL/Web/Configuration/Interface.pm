@@ -11,8 +11,7 @@ our @ISA = qw( EnsEMBL::Web::Configuration );
 sub select_to_edit {
   ### Creates a panel containing a record selection form
   my ($self, $object, $interface) = @_;
-  my $caption = $interface->caption('edit') || 'Select a Record';
-  if (my $panel = $self->interface_panel($interface, $caption)) {
+  if (my $panel = $self->interface_panel($interface, 'select_to_edit', 'Select a Record')) {
     $panel->add_components(qw(select    EnsEMBL::Web::Component::Interface::select_to_edit));
     $self->add_form($panel, qw(select   EnsEMBL::Web::Component::Interface::select_to_edit_form));
     $self->{page}->content->add_panel($panel);
@@ -25,8 +24,7 @@ sub select_to_edit {
 sub add {
   ### Creates a panel containing an empty record form
   my ($self, $object, $interface) = @_;
-  my $caption = $interface->caption('add') || 'Add a New Record';
-  if (my $panel = $self->interface_panel($interface, $caption)) {
+  if (my $panel = $self->interface_panel($interface, 'add', 'Add a New Record')) {
     $panel->add_components(qw(add     EnsEMBL::Web::Component::Interface::add));
     $self->add_form($panel, qw(add    EnsEMBL::Web::Component::Interface::add_form));
     $self->{page}->content->add_panel($panel);
@@ -39,8 +37,7 @@ sub add {
 sub edit {
   ### Creates a panel containing a record form populated with data
   my ($self, $object, $interface) = @_;
-  my $caption = $interface->caption('edit') || 'Edit this Record';
-  if (my $panel = $self->interface_panel($interface, $caption)) {
+  if (my $panel = $self->interface_panel($interface, 'edit', 'Edit this Record')) {
     $panel->add_components(qw(edit    EnsEMBL::Web::Component::Interface::edit));
     $self->add_form($panel, qw(edit   EnsEMBL::Web::Component::Interface::edit_form));
     $self->{page}->content->add_panel($panel);
@@ -53,8 +50,7 @@ sub edit {
 sub select_to_delete {
   ### Creates a panel containing a record selection form
   my ($self, $object, $interface) = @_;
-  my $caption = $interface->caption('delete');
-  if (my $panel = $self->interface_panel($interface, $caption)) {
+  if (my $panel = $self->interface_panel($interface, 'select_to_delete', 'Select a Record to Delete')) {
     $panel->add_components(qw(select   EnsEMBL::Web::Component::Interface::select_to_delete));
     $self->add_form($panel, qw(select   EnsEMBL::Web::Component::Interface::select_to_delete_form));
     $self->{page}->content->add_panel($panel);
@@ -67,7 +63,7 @@ sub select_to_delete {
 sub preview {
   ### Creates a panel showing a non-editable record
   my ($self, $object, $interface) = @_;
-  if (my $panel = $self->interface_panel($interface, 'Preview')) {
+  if (my $panel = $self->interface_panel($interface, 'preview', 'Preview')) {
     $panel->add_components(qw(preview     EnsEMBL::Web::Component::Interface::preview));
     $self->add_form($panel, qw(preview    EnsEMBL::Web::Component::Interface::preview_form));
     $self->{page}->content->add_panel($panel);
@@ -80,49 +76,14 @@ sub preview {
 sub save {
   ### Saves changes to the record(s) and redirects to a feedback page
   my ($self, $object, $interface) = @_;
-  my $script = $object->script;
-  my ($url, $id, @ids);
-  ## Convert CGI parameters into normal Perl datastructure
-  my $primary_key = $interface->structure->primary_key;
-  if ($interface->multi) {
-    @ids = $object->param($primary_key);
-    foreach $id (@ids) {
-      $interface->cgi_populate($id, $object) if $id ne '';
-    }
-  }
-  else {
-    $id = $object->param($primary_key);
-    $interface->cgi_populate($id, $object);
-    @ids = ($id);
-  }
+  
+  my $primary_key = $interface->data->get_primary_key;
+  my $id = $object->param($primary_key);
+  $interface->cgi_populate($object, $id);
 
-  my $save_method = $interface->structure->save_method;
-  my $success = 0;
-  my $result;
-  ## Only insert/update changed records
-  foreach $id (@ids) {
-    my %record;
-    my $parameters = $interface->data_row($id);
-    while (my ($k, $v) = each(%$parameters)) {
-      $record{$k} = $v;
-    }
-    if ($id =~ '^NEW') { ## reset ID for new records
-      $record{$primary_key} = '';
-    }
-    if ($interface->repeat) {
-      my $repeat = $interface->repeat;
-      my @repeat_ids = $record{$repeat};
-      foreach my $r (@repeat_ids) {
-        $record{$repeat} = $r;
-        $result = $object->$save_method(\%record);
-        $success++ if $result;
-      }
-    }
-    else {
-      $result = $object->$save_method(\%record);
-      $success++ if $result;
-    }
-  }
+  my $success = $interface->data->save;
+  my $script = $object->script;
+  my $url;
   if ($success) {
     $url = "/common/$script?dataview=success";
   }
@@ -154,29 +115,53 @@ sub success {
   ### Wrapper for on_success method set in interface script
   ### Defaults to local on_success method if not set
   my ($self, $object, $interface) = @_;
-  my $method = $interface->on_success;
-  if (!$method) {
-    $method = 'EnsEMBL::Web::Configuration::Interface::on_success';
+  my $option = $interface->on_success;
+  my $method;
+  if (!$option) {
+    $method = 'on_success';
   }
-  $self->$method($object, $interface);
+  else {
+    if ($option->{'type'} eq 'url') {
+      return $option->{'action'};
+    }
+    else {
+      $method = $option->{'action'};
+      my $module = $method;
+      $module =~ s/::[\w]+$//;
+      $method = undef unless $self->dynamic_use($module);
+    }
+  }
+  $self->on_success($object, $interface, $method);
 }
 
 sub failure {
   ### Wrapper for on_failure method set in interface script
   ### Defaults to local on_failure method if not set
   my ($self, $object, $interface) = @_;
-  my $method = $interface->on_failure;
-  if (!$method) {
-    $method = 'EnsEMBL::Web::Configuration::Interface::on_failure';
+  my $option = $interface->on_failure;
+  my $method;
+  if ($option) {
+    if ($option->{'type'} eq 'url') {
+      return $option->{'action'};
+    }
+    else {
+      $method = $option->{'action'};
+      my $module = $method;
+      $module =~ s/::[\w]+$//;
+      $method = undef unless $self->dynamic_use($module);
+    }
   }
-  $self->$method($object, $interface);
+  $self->on_failure($object, $interface, $method);
 }
 
 sub on_success {
   ### Creates a panel showing feedback on database success 
-  my ($self, $object, $interface) = @_;
-  if (my $panel = $self->interface_panel($interface, 'Database Update Succeeded')) {
-    $panel->add_components(qw(success  EnsEMBL::Web::Component::Interface::on_success));
+  my ($self, $object, $interface, $component) = @_;
+  if (my $panel = $self->interface_panel($interface, 'on_success', 'Database Update Succeeded')) {
+    unless ($component) {
+      $component = 'EnsEMBL::Web::Component::Interface::on_success';
+    }
+    $panel->add_components('success', $component);
     $self->{page}->content->add_panel($panel);
     my $type = $object->__objecttype;
     $self->{page}->set_title("Ensembl $type Database: Update Successful");
@@ -186,9 +171,12 @@ sub on_success {
 
 sub on_failure {
   ### Creates a panel showing feedback on database failure
-  my ($self, $object, $interface) = @_;
-  if (my $panel = $self->interface_panel($interface, 'Database Update Failed')) {
-    $panel->add_components(qw(failure  EnsEMBL::Web::Component::Interface::on_failure));
+  my ($self, $object, $interface, $component) = @_;
+  if (my $panel = $self->interface_panel($interface, 'on_failure', 'Database Update Failed')) {
+    unless ($component) {
+      $component = 'EnsEMBL::Web::Component::Interface::on_success';
+    }
+    $panel->add_components('failure', $component);
     $self->{page}->content->add_panel($panel);
     my $type = $object->__objecttype;
     $self->{page}->set_title("Ensembl $type Database: Update Failed");
@@ -198,7 +186,10 @@ sub on_failure {
 
 sub interface_panel {
   ### Utility to instantiate an interface panel
-  my ($self, $interface, $caption) = @_;
+  my ($self, $interface, $action, $caption) = @_;
+  if ($interface->caption($action)) {
+    $caption = $interface->caption($action);
+  }
   my $panel = $self->new_panel('Image',
         'code'      => 'interface_panel',
         'caption'   => $caption,

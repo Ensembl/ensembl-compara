@@ -14,22 +14,9 @@ sub add_form {
   ### Builds an empty HTML form for a new record
   my($panel, $object) = @_;
 
-  ## Make sure we use any passed values
-  if ($panel->interface->multi > 1) {
-    my $repeat = $panel->interface->multi;
-    for (my $i = 0; $i < $repeat; $i++) {
-      $panel->interface->cgi_populate('NEW_'.$i, $object);
-    }
-  }
-  else {
-    $panel->interface->cgi_populate('NEW', $object);
-  }
-  
   my $form = _data_form($panel, $object, 'add');
 
   ## navigation elements
-  my $primary_key = $panel->interface->structure->primary_key;
-  $form->add_element( 'type' => 'Hidden', 'name' => $primary_key, 'value' => 'NEW');
   $form->add_element( 'type' => 'Hidden', 'name' => 'prev_action', 'value' => 'Save Record');
   $form->add_element( 'type' => 'Hidden', 'name' => 'db_action', 'value' => 'save');
   $form->add_element( 'type' => 'Hidden', 'name' => 'dataview', 'value' => 'preview');
@@ -55,39 +42,21 @@ sub edit_form {
   ### Builds an HTML form populated with a database record
   my($panel, $object) = @_;
 
-  my $primary_key = $panel->interface->structure->primary_key;
-  my ($id, @ok_ids);
-  if ($panel->interface->multi) {
-    my @ids = $object->param($primary_key);
-    foreach $id (@ids) {
-      if ($id ne '') {
-        $panel->interface->db_populate($id);
-        push @ok_ids, $id;
-      }
-    }
-  }
-  else {
-    $id = $object->param($primary_key);
-    if ($id ne '') {
-      $panel->interface->db_populate($id);
-      @ok_ids = ($id);
-    }
-  }
+  my $primary_key = $panel->interface->data->get_primary_key;
+  my $id = $object->param($primary_key);
   
   my $form = _data_form($panel, $object, 'edit');
-  foreach $id (@ok_ids) {
-    $form->add_element(
-            'type'  => 'Hidden',
-            'name'  => $primary_key,
-            'value' => $id,  
+  $form->add_element(
+          'type'  => 'Hidden',
+          'name'  => $primary_key,
+          'value' => $id,  
         );
 
-    ## Show creation/modification details?
-    if ($panel->interface->show_history) {
-      my $history = $panel->interface->history_fields($id);
-      foreach my $field (@$history) {
-        $form->add_element(%$field);
-      }
+  ## Show creation/modification details?
+  if ($panel->interface->show_history) {
+    my $history = $panel->interface->history_fields($id);
+    foreach my $field (@$history) {
+      $form->add_element(%$field);
     }
   }
 
@@ -122,60 +91,31 @@ sub preview_form {
   my $form = EnsEMBL::Web::Form->new('preview', "/common/$script", 'post');
 
   ## get data and assemble form
-  my $primary_key = $panel->interface->structure->primary_key;
+  my $primary_key = $panel->interface->data->get_primary_key;
+  my $id = $object->param($primary_key);
   my $db_action = $object->param('db_action');
-  my ($id, @ids);
-  if ($panel->interface->multi) {
-    @ids = $object->param($primary_key);
-    foreach $id (@ids) {
-      ## get data
-      if ($db_action eq 'delete') { ## get record from database
-        $panel->interface->db_populate($id) if $id ne '';
-      }
-      else { ## populate with form contents
-        $panel->interface->cgi_populate($id, $object) if $id ne '';
-      }
-      ## add form elements
-      $form->add_element(
-            'type'  => 'Hidden',
-            'name'  => $primary_key,
-            'value' => $id,  
-        );
-      my $preview_fields = $panel->interface->preview_fields($id);
-      my $element;
-      foreach $element (@$preview_fields) {
-        $form->add_element(%$element);
-      }
-      my $pass_fields = $panel->interface->pass_fields($id);
-      foreach $element (@$pass_fields) {
-        $form->add_element(%$element);
-      }
-    }
+
+  if ($db_action eq 'delete') {
+    $panel->interface->data->populate($id);
   }
   else {
-    $id = $object->param($primary_key);
-    ## get data
-    if ($db_action eq 'delete') { ## get record from database
-      $panel->interface->db_populate($id);
-    }
-    else { ## populate with form contents
-      $panel->interface->cgi_populate($id, $object);
-    }
-    ## add form elements
-    $form->add_element(
+    $panel->interface->cgi_populate($object, $id);
+  }
+
+  ## add form elements
+  $form->add_element(
             'type'  => 'Hidden',
             'name'  => $primary_key,
             'value' => $id,  
         );
-    my $preview_fields = $panel->interface->preview_fields($id);
-    my $element;
-    foreach $element (@$preview_fields) {
-      $form->add_element(%$element);
-    }
-    my $pass_fields = $panel->interface->pass_fields($id);
-    foreach $element (@$pass_fields) {
-      $form->add_element(%$element);
-    }
+  my $preview_fields = $panel->interface->preview_fields($id);
+  my $element;
+  foreach $element (@$preview_fields) {
+    $form->add_element(%$element);
+  }
+  my $pass_fields = $panel->interface->pass_fields($id);
+  foreach $element (@$pass_fields) {
+    $form->add_element(%$element);
   }
 
   ## navigation elements
@@ -189,38 +129,15 @@ sub _data_form {
   my($panel, $object, $name) = @_;
   
   my $script = $object->script;
-  my $form = EnsEMBL::Web::Form->new('add', "/common/$script", 'post');
+  my $form = EnsEMBL::Web::Form->new($name, "/common/$script", 'post');
 
   ## form widgets
-  my $key = $panel->interface->structure->primary_key;
-  my (@widgets, $id);
-  if ($name eq 'edit') {
-    if ($panel->interface->multi) {
-      my @ids = $object->param($key);
-      foreach $id (@ids) {
-        if ($id ne '') {
-          push @widgets, @{$panel->interface->edit_fields($id)};
-        }
-      }
-    }
-    else {
-      $id = $object->param($key);
-      @widgets = @{$panel->interface->edit_fields($id)};
-    }
+  my $key = $panel->interface->data->get_primary_key;
+  my $id = $object->param($key);
+  if ($id) {
+    $panel->interface->data->populate($id);
   }
-  elsif ($name eq 'add') {
-    if ($panel->interface->multi > 1) {
-      my $repeat = $panel->interface->multi;
-      for (my $i = 0; $i < $repeat; $i++) {
-        $id = 'NEW_'.$i;
-        push @widgets, @{$panel->interface->edit_fields($id)};
-      }
-    } 
-    else {
-      $id = 'NEW';
-      @widgets = @{$panel->interface->edit_fields($id)};
-    }
-  }
+  my @widgets = @{$panel->interface->edit_fields};
 
   foreach my $element (@widgets) {
     $form->add_element(%$element);
@@ -235,36 +152,58 @@ sub _record_select {
   my $script = $object->script;
   my $form = EnsEMBL::Web::Form->new($name, "/common/$script", 'post');
 
-  ## Format record selection
-  my $multi   = $panel->interface->multi;
-  my ($type, $title);
-  if ($multi) {
-    $type  = 'MultiSelect';
-    $title = 'Select Records';
-  }
-  else {
-    $type  = 'DropDown';
-    $title = 'Select a Record';
-  }
   my $select  = $panel->interface->dropdown ? 'select' : '';
-
-  ## Get record index
-  my @list = @{$panel->interface->record_list()};
   my @options;
   if ($select) {
     push @options, {'name'=>'--- Choose ---', 'value'=>''};
   }
+
+  ## Get record index
+  my @unsorted_list = @{$panel->interface->record_list};
+  my @columns = @{$panel->interface->option_columns};
+
+  ## Create field type lookup, for sorting purposes
+  my %lookup;
+  my @all_fields = @{$panel->interface->data->get_all_fields};
+  foreach my $field (@all_fields) {
+    $lookup{$field->get_name} = $field->get_type;
+  }
+
+  ## Do custom sort
+  my ($sort_code, $repeat);
+  foreach my $sort_col (@{$panel->interface->option_order}) {
+    if ($repeat > 0) {
+      $sort_code .= ' || ';
+    }
+    ## build sort function
+    ## try to guess appropriate sort type
+    if ($lookup{$sort_col} =~ /^int/ || $lookup{$sort_col} =~ /^float/) {
+      $sort_code .= '$a->'.$sort_col.' <=> $b->'.$sort_col.' ';
+    }
+    else {
+      $sort_code .= 'lc $a->'.$sort_col.' cmp lc $b->'.$sort_col.' ';
+    }
+    $repeat++;
+  }
+  my $subref = eval "sub { $sort_code }";
+  my @list = sort $subref @unsorted_list;
+
+  ## Output sorted list
   foreach my $entry (@list) {
-    my $value = shift(@$entry);
-    my $text = join(' - ', @$entry);
+    my $value = $entry->id;
+    my $text;
+    foreach my $col (@columns) {
+      $text .= $entry->$col.' - ';
+    }
+    $text =~ s/ - $//;
     push @options, {'name'=>$text, 'value'=>$value};
   }
   
   $form->add_element( 
-            'type'    => $type, 
+            'type'    => 'DropDown', 
             'select'  => $select,
-            'title'   => $title, 
-            'name'    => $panel->interface->structure->primary_key, 
+            'title'   => 'Select a Record', 
+            'name'    => $panel->interface->data->get_primary_key, 
             'values'  => \@options,
           
           );
@@ -275,42 +214,81 @@ sub _record_select {
 sub select_to_edit {
   ### Panel rendering for select_form
   my($panel, $object) = @_;
-  my $html = _wrap_form($panel, 'select');
+  my $html;
+  if ($panel->interface->panel_header('select_to_edit')) {
+    $html .= $panel->interface->panel_header('select_to_edit');
+  }
+  $html .= _render_form($panel, 'select', $panel->interface->panel_style);
+  if ($panel->interface->panel_footer('select_to_edit')) {
+    $html .= $panel->interface->panel_footer('select_to_edit');
+  }
   $panel->print($html);
 }
 
 sub select_to_delete {
   ### Panel rendering for select_form
   my($panel, $object) = @_;
-  my $html = _wrap_form($panel, 'select');
+  my $html;
+  if ($panel->interface->panel_header('select_to_delete')) {
+    $html .= $panel->interface->panel_header('select_to_delete');
+  }
+  $html .= _render_form($panel, 'select', $panel->interface->panel_style);
+  if ($panel->interface->panel_footer('select_to_delete')) {
+    $html .= $panel->interface->panel_footer('select_to_delete');
+  }
   $panel->print($html);
 }
 
 sub add {
   ### Panel rendering for add_form
   my($panel, $object) = @_;
-  my $html = _wrap_form($panel, 'add');
+  my $html;
+  if ($panel->interface->panel_header('add')) {
+    $html .= $panel->interface->panel_header('add');
+  }
+  $html .= _render_form($panel, 'add', $panel->interface->panel_style);
+  if ($panel->interface->panel_footer('add')) {
+    $html .= $panel->interface->panel_footer('add');
+  }
   $panel->print($html);
 }
 
 sub edit {
   ### Panel rendering for edit_form
   my($panel, $object) = @_;
-  my $html = _wrap_form($panel, 'edit');
+  my $html;
+  if ($panel->interface->panel_header('edit')) {
+    $html .= $panel->interface->panel_header('edit');
+  }
+  $html .= _render_form($panel, 'edit');
+  if ($panel->interface->panel_footer('edit')) {
+    $html .= $panel->interface->panel_footer('edit');
+  }
   $panel->print($html);
 }
 
 sub preview {
   ### Panel rendering for preview_form
   my($panel, $object) = @_;
-  my $html = _wrap_form($panel, 'preview');
+  my $html;
+  if ($panel->interface->panel_header('preview')) {
+    $html .= $panel->interface->panel_header('preview');
+  }
+  $html .= _render_form($panel, 'preview');
+  if ($panel->interface->panel_footer('preview')) {
+    $html .= $panel->interface->panel_footer('preview');
+  }
   $panel->print($html);
 }
 
-sub _wrap_form {
-  ### Wrapper for form rendering - adds a bordered DIV
-  my ( $panel, $form ) = @_;
-  my $html = qq(<div class="formpanel" style="width:80%">);
+sub _render_form {
+  ### Wrapper for form rendering - optionally adds a bordered DIV
+  my ( $panel, $form, $style ) = @_;
+  my $html = qq(<div style="width:80%"); 
+  if ($style && $style eq 'border') {
+    $html .= ' class="formpanel"';
+  }
+  $html .= '>';
   $html .= $panel->form($form)->render();
   $html .= '</div>';
   return $html;
