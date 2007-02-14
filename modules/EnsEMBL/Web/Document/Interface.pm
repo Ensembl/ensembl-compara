@@ -12,7 +12,6 @@ package EnsEMBL::Web::Document::Interface;
 ###    to be manipulated, including setting user and timestamp fields where appropriate
 
 use EnsEMBL::Web::Document::WebPage;
-use EnsEMBL::Web::Configuration::Interface;
 use EnsEMBL::Web::DBSQL::InterfaceAdaptor;
 use EnsEMBL::Web::RegObj;
 
@@ -39,7 +38,11 @@ sub simple {
     my $permitted = $self->{'access'} ? $self->check_access($self->{'access'}) : 1;
     if ($permitted) {
       foreach my $object( @{$self->dataObjects} ) {
-        $self->configure( $object, 'interface_menu');
+        my @args = ($object);
+        if ($parameter->{'menu'}) {
+          push @args, $parameter->{'menu'};
+        }
+        $self->configure(@args);
       }
       $self->factory->fix_session;
     }
@@ -53,58 +56,60 @@ sub simple {
 
 sub process {
   ### Performs a built-in action if available, or displays an error page.
-  my ($self, $interface) = @_;
+  my ($self, $interface, $conf) = @_;
   my $object = $self->dataObjects->[0];
-  my $action = $object->param('dataview');
+  my $action = $object->param('dataview') ? $object->param('dataview') : $interface->default_view;
 
-  my $config_module_name = 'EnsEMBL::Web::Configuration::Interface';
-  my $CONF = $config_module_name->new($self->page, $object);
+  my $config_module_name = $conf ? $conf : 'EnsEMBL::Web::Configuration::Interface';
+  if( $self->dynamic_use( $config_module_name ) ) {
+    my $CONF = $config_module_name->new($self->page, $object);
 
-  ## is this action defined in the Interface Configuration module?
-  if ($CONF->can($action)) {
-    if ($action =~ /delete/ && !$interface->permit_delete) {
-      ## For safety reasons, default is to disallow records to be deleted
-      $self->page->content->add_panel(
-        new EnsEMBL::Web::Document::Panel(
-          'caption' => 'Permission Denied',
-          'content' => qq(
-          <p>Users are not permitted to delete records of this type. To "mothball" a record, choose an Edit option from the sidebar and alter the record status.</p> )
-          )
-      );
-      $self->render;
-    }
-    else {
-      my $url;
-      eval { $url = $CONF->$action($object, $interface) }; 
-      if( $@ ) { # Catch any errors and display as an "interface runtime error"
+    ## is this action defined in the Interface Configuration module?
+    if ($CONF->can($action)) {
+      if ($action =~ /delete/ && !$interface->permit_delete) {
+        ## For safety reasons, default is to disallow records to be deleted
         $self->page->content->add_panel(
           new EnsEMBL::Web::Document::Panel(
-            'caption' => 'Interface runtime error',
-            'content' => sprintf( qq(
-          <p>Unable to execute action $action owing to the following error:</p>
-          <pre>%s</pre>), $self->_format_error($@) )
-          )
+            'caption' => 'Permission Denied',
+            'content' => qq(
+          <p>Users are not permitted to delete records of this type. To "mothball" a record, choose an Edit option from the sidebar and alter the record status.</p> )
+            )
         );
-      }
-      if ($url) {
-        $self->redirect($url);
-      }
-      else {
         $self->render;
       }
+      else {
+        my $url;
+        eval { $url = $CONF->$action($object, $interface) }; 
+        if( $@ ) { # Catch any errors and display as an "interface runtime error"
+          $self->page->content->add_panel(
+            new EnsEMBL::Web::Document::Panel(
+              'caption' => 'Interface runtime error',
+              'content' => sprintf( qq(
+          <p>Unable to execute action $action owing to the following error:</p>
+          <pre>%s</pre>), $self->_format_error($@) )
+            )
+          );
+        }
+        if ($url) {
+          $self->redirect($url);
+        }
+        else {
+          $self->render;
+        }
+      }
     }
-  }
-  else {
-    ## Error for non-standard or unspecified actions
-    $self->page->content->add_panel(
-      new EnsEMBL::Web::Document::Panel(
-        'caption' => 'Invalid action request',
-        'content' => qq(
-        <p>Action <b>$action</b> is not specified. Please request a valid action.</p>)
-      )
-    );
-  $self->render;
-  }  
+    else {
+      ## Error for non-standard or unspecified actions
+      $self->page->content->add_panel(
+        new EnsEMBL::Web::Document::Panel(
+          'caption' => 'Invalid action request',
+          'content' => qq(
+          <p>Action <b>$action</b> is not specified. Please request a valid action.</p>)
+        )
+      );
+    $self->render;
+    } 
+  } 
 }
 
 sub adaptors {
