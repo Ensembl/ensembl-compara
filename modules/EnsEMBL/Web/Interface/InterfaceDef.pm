@@ -12,12 +12,8 @@ use EnsEMBL::Web::DBSQL::StructureDef;
 
 {
 
-my %Structure_of;
-
 my %Data_of;
-my %Multi_of;
 my %Repeat_of;
-my %Tainted_of;
 my %PermitDelete_of;
 
 my %Elements_of;
@@ -25,25 +21,25 @@ my %ElementOrder_of;
 my %OptionColumns_of;
 my %OptionOrder_of;
 my %Dropdown_of;
-my %RecordList_of;
 my %RecordFilter_of;
 my %ShowHistory_of;
+
+my %PanelStyle_of;
 my %Caption_of;
+my %PanelHeader_of;
+my %PanelFooter_of;
 
 my %OnSuccess_of;
 my %OnFailure_of;
+my %DefaultView_of;
 
 
 sub new {
   ### c
   my ($class, %params) = @_;
   my $self = bless \my($scalar), $class;
-  $Structure_of{$self}    = defined $params{structure} ? $params{structure} : {};
-
   $Data_of{$self}         = defined $params{data} ? $params{data} : {};
-  $Multi_of{$self}        = defined $params{multi} ? $params{multi} : undef;
   $Repeat_of{$self}       = defined $params{repeat} ? $params{repeat} : undef;
-  $Tainted_of{$self}      = defined $params{tainted} ? $params{tainted} : {};
   $PermitDelete_of{$self} = defined $params{permit_delete} ? $params{permit_delete} : undef;
 
   $Elements_of{$self}     = defined $params{elements} ? $params{elements} : {};
@@ -51,42 +47,28 @@ sub new {
   $OptionColumns_of{$self} = defined $params{option_columns} ? $params{option_columns} : [];
   $OptionOrder_of{$self}  = defined $params{option_order} ? $params{option_order} : undef;
   $Dropdown_of{$self}     = defined $params{dropdown} ? $params{dropdown} : undef;
-  $RecordList_of{$self}   = defined $params{record_list} ? $params{record_list} : undef;
   $RecordFilter_of{$self} = defined $params{record_filter} ? $params{record_filter} : undef;
   $ShowHistory_of{$self}  = defined $params{show_history} ? $params{show_history} : undef;
+
+  $PanelStyle_of{$self}   = defined $params{panel_style} ? $params{panel_style} : '';
   $Caption_of{$self}      = defined $params{caption} ? $params{caption} : {};
+  $PanelHeader_of{$self}  = defined $params{panel_header} ? $params{panel_header} : {};
+  $PanelFooter_of{$self}  = defined $params{panel_footer} ? $params{panel_footer} : {};
 
   $OnSuccess_of{$self}    = defined $params{on_success} ? $params{on_success} : '';
   $OnFailure_of{$self}    = defined $params{on_failure} ? $params{on_failure} : '';
+  $DefaultView_of{$self}  = defined $params{default_view} ? $params{default_view} : '';
 
   return $self;
 }
 
 
-sub structure {
-  ### a
-  ### Returns: E::W::DBSQL::StructureDef object
-  my $self = shift;
-  $Structure_of{$self} = shift if @_;
-  return $Structure_of{$self};
-}
-
 sub data {
   ### a
-  ### Returns: hashref (hash of hashes), consisting of one or more data records
+  ### Returns: An Object::Data::[record or table name] object
   my $self = shift;
   $Data_of{$self} = shift if @_;
   return $Data_of{$self};
-}
-
-sub multi {
-  ### a
-  ### Flag to set whether the interface allows multiple record manipulation. If set to
-  ### more than 1, that number of records may be added at once
-  ### Returns: integer
-  my $self = shift;
-  $Multi_of{$self} = shift if @_;
-  return $Multi_of{$self};
 }
 
 sub repeat {
@@ -97,14 +79,6 @@ sub repeat {
   my $self = shift;
   $Repeat_of{$self} = shift if @_;
   return $Repeat_of{$self};
-}
-
-sub tainted {
-  ### a
-  ### Returns: reference to an array of ids of records that have been changed
-  my $self = shift;
-  $Tainted_of{$self} = shift if @_;
-  return $Tainted_of{$self};
 }
 
 sub permit_delete {
@@ -135,7 +109,7 @@ sub element_order {
   ### Determines the order in which elements are displayed on the form
   ### Returns: arrayref
   my $self = shift;
-  $ElementOrder_of{$self} = shift if @_;
+  $ElementOrder_of{$self} = \@_ if @_;
   return $ElementOrder_of{$self};
 }
 
@@ -145,7 +119,7 @@ sub option_columns {
   ### on the 'Select a Record' page
   ### Returns: arrayref
   my $self = shift;
-  $OptionColumns_of{$self} = shift if @_;
+  $OptionColumns_of{$self} = \@_ if @_;
   return $OptionColumns_of{$self};
 }
 
@@ -154,7 +128,7 @@ sub option_order {
   ### Determines the order in which records are displayed on the dropdown list
   ### Returns: string
   my $self = shift;
-  $OptionOrder_of{$self} = shift if @_;
+  $OptionOrder_of{$self} = \@_ if @_;
   return $OptionOrder_of{$self};
 }
 
@@ -169,39 +143,12 @@ sub dropdown {
   return $Dropdown_of{$self};
 }
 
-
-sub record_list {
-  ### a
-  ### Returns: array of all records, containing only the columns needed for record selection
-  my ($self, $parameters) = @_;
-  
-  if (!$RecordList_of{$self}) {
-
-    my $primary_key = $self->structure->primary_key;
-    if (!$primary_key) {
-      $self->structure->discover;
-      $primary_key = $self->structure->primary_key;
-    }
-    my $table = $self->structure->data_adaptor->table;
-    my @columns = @{$self->option_columns};
-    my $order = $self->option_order;
-
-    ## Check for record filters
-    if (!$parameters && $self->record_filter) {
-      $parameters = $self->record_filter;
-    }
-
-    $RecordList_of{$self} = $self->structure->data_adaptor->fetch_list($table, $primary_key, \@columns, $parameters, $order);
-  }
-  return $RecordList_of{$self};
-}
-
 sub record_filter {
   ### a
   ### Field(s) and value(s) on which to filter editable records
   ### Returns: hashref
   my $self = shift;
-  $RecordFilter_of{$self} = shift if @_;
+  $RecordFilter_of{$self} = \@_ if @_;
   return $RecordFilter_of{$self};
 }
 
@@ -218,6 +165,14 @@ sub show_history {
   else {
     return 0;
   }
+}
+
+sub panel_style {
+  ### a
+  ### Returns: string
+  my $self = shift;
+  $PanelStyle_of{$self} = shift if @_;
+  return $PanelStyle_of{$self};
 }
 
 sub caption {
@@ -237,12 +192,46 @@ sub caption {
   }
 }
 
+sub panel_header {
+  ### a
+  ### Optional configuration of panel headers
+  ### Returns: hash - keys should correspond to available interface methods, e.g. 'add', 'edit'
+  my ($self, $input) = @_;
+  if ($input) {
+    if (ref($input) eq 'HASH') {
+      while (my ($view, $header) = each (%$input)) {
+        $PanelHeader_of{$self}{$view} = $header;
+      }
+    }
+    else {
+      return $PanelHeader_of{$self}{$input};
+    }
+  }
+}
+
+sub panel_footer {
+  ### a
+  ### Optional configuration of panel footers
+  ### Returns: hash - keys should correspond to available interface methods, e.g. 'add', 'edit'
+  my ($self, $input) = @_;
+  if ($input) {
+    if (ref($input) eq 'HASH') {
+      while (my ($view, $footer) = each (%$input)) {
+        $PanelFooter_of{$self}{$view} = $footer;
+      }
+    }
+    else {
+      return $PanelFooter_of{$self}{$input};
+    }
+  }
+}
+
 sub on_success{
   ### a
   ### Optional - action to be taken on database save success.
   ### Parameter - either a Configuration::[ObjectType]::method name or a URL
   ### Returns - hash reference
-  my ($self, $action) = shift;
+  my ($self, $action) = @_;
   if ($action) {
     if ($action =~ /::/) {
       $OnSuccess_of{$self} = {'action' => $action, 'type' => 'module'};
@@ -259,7 +248,7 @@ sub on_failure {
   ### Optional - action to be taken on database save failure.
   ### Parameter - either a Configuration::[ObjectType]::method name or a URL
   ### Returns - hash reference
-  my ($self, $action) = shift;
+  my ($self, $action) = @_;
   if ($action) {
     if ($action =~ /::/) {
       $OnFailure_of{$self} = {'action' => $action, 'type' => 'module'};
@@ -271,54 +260,15 @@ sub on_failure {
   return $OnFailure_of{$self};
 }
 
+sub default_view {
+  ### a
+  ### Returns: string
+  my $self = shift;
+  $DefaultView_of{$self} = shift if @_;
+  return $DefaultView_of{$self};
+}
+
 ##--------------------------------------------------------------------------------------
-
-## Additional accessors
-
-sub data_row {
-  ### a
-  ### Sets or gets a row in the $Data_of{$self} hash
-  ### Parameters: record ID, record hash (optional)
-  my ($self, $id, $record) = @_;
-  if ($id) {
-    if ($record) {
-      $Data_of{$self}{$id} = $record;
-    }
-    return $Data_of{$self}{$id};
-  }
-}
-
-sub data_value {
-  ### a
-  ### Sets or gets the value of a parameter in a row in the $Data_of{$self} hash
-  ### Parameters: record ID, parameter name, parameter value (optional)
-  ### Returns: value of parameter
-  my ($self, $param) = @_;
-  my $name = $param->{'name'};
-  if ($name) {
-    my $data = $self->data;
-    my $id = $param->{'id'}; 
-    my $value = $param->{'value'}; 
-    my $record;
-    if (!$id) {
-      my @keys = keys %$data;
-      $id = $keys[0];
-    }
-    $record = $data->{$id};
-    if ($value) {
-      $record->{$name} = $value;
-      $Data_of{$self}{$id} = $record;
-      ## Make sure record is saved
-      $self->taint($id);
-    }
-    else {
-      $value = $record->{$name};
-    }
-    return $value;
-  }
-  return undef;
-}
-
 
 sub element {
   ### a 
@@ -350,127 +300,64 @@ sub element {
 sub discover {
   ### Autogenerate elements based on data structure
   my $self = shift;
-  my %columns = %{$self->structure->columns};
-  my $relationships = $self->structure->relationships; 
-  if (%columns) {
+  my @fields = @{$self->data->get_all_fields};
 
-    ## first check for lookups
-    my (%lookups, %crossrefs);
-    foreach my $r (@$relationships) {
-      if ($r->type eq 'lookup') {
-        $lookups{$r->foreign_key} = $r;
-      }
-      elsif ($r->type eq 'has many') {
-        $crossrefs{$r->linked_key} = $r;
-      }
+  my (%elements, @element_order);
+  foreach my $field (@fields) {
+    my ($element_type, $options);
+    my $name = $field->get_name;
+    ## set label
+    my $label = ucfirst($name);
+    $label =~ s/_/ /g;
+    my $data_type = $field->get_type;
+
+    if ($data_type =~ /int/) {
+      $element_type = 'Int';
     }
-
-    my (%elements, @element_order);
-    foreach my $key (keys %columns) {
-      my ($element_type, $label, $options);
-      my $name = $key;
-      my $column = $columns{$key}; ## ColumnDef object
-      ## set label
-      $label = ucfirst($name);
-      $label =~ s/_/ /g;
-      my $column_type = $column->type;
-
-      ## is it a lookup or crossref key?
-      my $linked;
-      foreach my $k (keys %lookups) {
-        if ($k eq $name) {
-          $linked = $lookups{$name};
-          last;
-        }
-      }
-      foreach my $k (keys %crossrefs) {
-        if ($k eq $name) {
-          ## get data from the cross table
-          $linked = $crossrefs{$name};
-          last;
-        }
-      }
-
-      ## set widget type and options
-      if ($linked ) {
-        if ($linked->type eq 'lookup') {
-          $element_type = 'DropDown';
-          $options->{'select'} = 'select';
-        }
-        else {
-          $element_type = 'MultiSelect';
-        }
-        my $table = $linked->to;
-        my $columns = $linked->option_columns;
-        my $order = $linked->option_order;
-        my @values;
-        my $results = $self->structure->data_adaptor->fetch_list($table, $name, $columns, undef, $order);
-        foreach my $row (@$results) {
-          my $value = shift(@$row);
-          my $text = join(' - ', @$row);
-          push @values, {'value'=>$value, 'name'=>$text};
-        }
-        $options->{'values'} = \@values;
-        ## Reset label to table name
-        $label = ucfirst($table);
-        $label =~ s/_/ /g;
-      }
-      elsif ($column_type =~ /int/) {
-        $element_type = 'Int';
-      }
-      elsif ($column_type =~ /^varchar/ || $column_type eq 'tinytext') {
-        $element_type = 'String';
-        if ($column_type =~ /^varchar/) {
-          my $size = $column_type;
-          $size =~ s/varchar\(//;  
-          $size =~ s/\)//;
-          $options->{'maxlength'} = $size;
-        }
-      }
-      elsif ($column_type =~ /text/) {
-        $element_type= 'Text';
-      }
-      elsif ($column_type =~ /^enum/ || $column_type =~ /^set/) {
-
-        my @values;
-        my $type_text = $column_type;
-        if ($type_text  =~ /^enum/) {
-          $element_type = 'DropDown';
-          $type_text =~ s/enum\(//;
-        }
-        else {
-          $element_type = 'MultiSelect';
-          $type_text =~ s/set\(//;
-        }
-        $type_text =~ s/\)//;
-        my @types = split(',', $type_text);
-        foreach my $value (@types) {
-          $value =~ s/^'//;
-          $value =~ s/'$//;
-          push @values, {'name'=>$value, 'value'=>$value};
-        }
-        $options->{'select'} = 'select';
-        $options->{'values'} = \@values;
-      }
-
-      ## Record management fields should be non-editable, regardless of type
-      ## and omitted from the standard widget list
-      if ($name =~ /^created_|^modified_/) {
-        $element_type = 'NoEdit';
+    elsif ($data_type eq 'text' || $data_type eq 'mediumtext') {
+      $element_type= 'Text';
+    }
+    elsif ($data_type =~ /^enum/ || $data_type =~ /^set/) {
+      if ($data_type =~ /^enum/) {
+        $element_type = 'DropDown';
       }
       else {
-        push @element_order, $name;
+        $element_type = 'MultiSelect';
       }
-      $elements{$name} = EnsEMBL::Web::Interface::ElementDef->new({
-          'name'        => $name,
-          'label'       => $label,
-          'type'        => $element_type,
-          'options'     => $options
-        });
+      my @values = @{$field->get_values};
+      my @option_values;
+      foreach my $value (@values) {
+        push @option_values, {'name'=>$value, 'value'=>$value};
+      }
+      $options->{'select'} = 'select';
+      $options->{'values'} = \@option_values;
     }
-    $Elements_of{$self} = \%elements;
-    $ElementOrder_of{$self} = \@element_order;
+    else {
+      $element_type = 'String';
+      if ($data_type =~ /^varchar/) {
+        my $size = $data_type;
+        $size =~ s/varchar\(//;
+        $size =~ s/\)//;
+        $options->{'maxlength'} = $size;
+      }
+    }
+    ## Record management fields should be non-editable, regardless of type,
+    ## and omitted from the standard widget list
+    if ($name =~ /^created_|^modified_/) {
+      $element_type = 'NoEdit';
+    }
+    else {
+      push @element_order, $name;
+    }
+    $elements{$name} = EnsEMBL::Web::Interface::ElementDef->new({
+      'name'        => $name,
+      'label'       => $label,
+      'type'        => $element_type,
+      'options'     => $options
+      });
   }
+  $Elements_of{$self} = \%elements;
+  $ElementOrder_of{$self} = \@element_order;
 }
 
 sub customize_element {
@@ -491,113 +378,90 @@ sub customize_element {
   }
 }
 
+sub record_list {
+  ### a
+  ### Returns: array of data objects of the same type as the parent
+  my $self = shift;
+  my $records = [];
 
-sub db_populate {
-  ### Populate the data hash from the database, using the ID
-  ### Also gets user names from the user db, if record includes user IDs
-  my ($self, $id) = @_;
-  if ($id) {
-    my $primary_key = $self->structure->primary_key;
-    my $data = $self->structure->data_adaptor->fetch_by($primary_key, {$primary_key => $id});
-    my $record = $data->{$id};
-
-    ## Also get user names, where appropriate
-    my ($user_id, $user);
-    if ($self->structure->column('created_name')) {
-      $user_id = $record->{'created_by'};
-      $user = $self->structure->user_adaptor->find_user_by_user_id($user_id);
-      if (keys %$user) {
-        $record->{'created_name'} = $user->{'name'};
-      } 
-      else {
-        $record->{'created_name'} = 'not logged';
-      }
-    }
-    if ($self->structure->column('modified_name')) {
-      $user_id = $record->{'modified_by'};
-      $user = $self->structure->user_adaptor->find_user_by_user_id($user_id);
-      if (keys %$user) {
-        $record->{'modified_name'} = $user->{'name'};
-      } 
-      else {
-        $record->{'modified_name'} = 'not logged';
-      }
-    }
-    $self->data_row($id, $record);
+  ## Get data
+  my $request = EnsEMBL::Web::DBSQL::SQL::Request->new();
+  $request->set_action('select');
+  $request->set_table($self->data->get_adaptor->get_table);
+  if ($self->record_filter) {
+    $request->add_where(@{$self->record_filter});
   }
+  if ($self->data->get_data_field_name) {
+    $request->add_where('type', $self->data->type);
+  }
+  $request->set_index_by($self->data->get_primary_key);
+  my $result = $self->data->get_adaptor->find_many($request);
+
+  foreach my $id (keys %{$result->get_result_hash}) {
+    my $class = ref($self->data);
+    my $record = $class->new({id=>$id});
+    push @$records, $record;
+  }
+
+  return $records;
 }
 
 sub cgi_populate {
-  ### Populate the data hash from the CGI parameters
-  my ($self, $id, $object) = @_;
-  return unless $id;
-  my $record = $self->data_row($id) || {};
+  ### Utility function to populate a data object from CGI parameters
+  ### instead of from the database
+  my ($self, $object, $id) = @_;
 
-=pod
-  if ($id eq 'NEW') {
-    $self->taint($id);
-  } 
-=cut
+  my $data = $self->data;
+  $data->id($id);
+
+  ## restrict ourselves to defined fields
+  my $fields = $data->get_all_fields;
+  my %ok_field;
+  foreach my $data_field (@$fields) {
+    my $name = $data_field->get_name;
+    $ok_field{$name}++;
+  }
 
   my @parameters = $object->param();
-  foreach my $param (@parameters) {
-    my $param_name = $param;
-    if ($self->multi) {
-      ## only include parameters for this record!
-      if ($param =~ /_$id$/) {
-        $param_name =~ s/_$id//;
-      }
-      else {
-        next;
-      } 
-    }
-=pod
-    ## taint the record if it exists and is being updated
-    if ($record->{$param_name} && 
-            ($record->{$param_name} ne $object->param($param))) {
-      $self->taint($id);
-    }
-=cut
+  foreach my $key (@parameters) {
+    next unless $ok_field{$key};
+    my $field = $data->mapped_field($key);
+
     ## deal with multiple-value parameters!
-    my @param_check = $object->param($param);
+    my @param_check = $object->param($key);
+    my $value;
     if (scalar(@param_check) > 1) {
-      $record->{$param_name} = [$object->param($param)];
+      $value = [$object->param($key)];
     }
     else {
-      $record->{$param_name} = $object->param($param);
+      $value = $object->param($key);
     }
+    $data->$field($value);
   }
-  $self->data_row($id, $record);
+
 }
+
 
 sub edit_fields {
   ### Returns editable fields as form element parameters
   my ($self, $id) = @_;
   my $parameters = [];
-  my $record;
+  my $data = $self->data;
   my $elements = $self->elements;
   my $element_order = $self->element_order;
-  if ($id) { ## populate widgets from Data_of{$self}
-    $record = $self->data_row($id);
-  }
+  ## populate widgets from Data_of{$self}
   foreach my $field (@$element_order) {
     my $name = $field;
     my $element = $elements->{$name};
-    ## rename if editing multiple elements
-    if ($id && $self->multi) {
-      $name = $name.'_'.$id;
-      $element->name($name);
-    }
-
     my %param = %{$element->widget};
-    if ($record && !$param{'value'}) {
-      $param{'value'} = $record->{$field};
+    if ($data && !$param{'value'}) {
+      $param{'value'} = $data->$field;
     }
     push @$parameters, \%param;
     ## pass non-editable elements as additional hidden fields
     if ($element->type eq 'NoEdit') {
       my %hidden = %{$element->hide};
-      if ($record) {
+      if ($data) {
         $hidden{'value'} = $param{'value'};
       }
       push @$parameters, \%hidden;
@@ -608,25 +472,18 @@ sub edit_fields {
 
 sub preview_fields {
   ### Returns fields as non-editable text
-  my ($self, $id) = @_;
+  my ($self, $id, $object) = @_;
   my $parameters = [];
-  my $record;
+  my $data = $self->data;
   my $elements = $self->elements;
   my $element_order = $self->element_order;
-  if ($id) { ## populate widgets from Data_of{$self}
-    $record = $self->data_row($id);
-  }
   foreach my $field (@$element_order) {
     my $name = $field;
     my $element = $elements->{$name};
     next if $element->type eq 'Information';
-    ## rename if editing multiple elements
-    if ($id && $self->multi) {
-      $element->name($name.'_'.$id);
-    }
     my %param = %{$element->preview};
-    if ($record) {
-      my $var = $record->{$field};
+    if ($data) {
+      my $var = $data->$field;
       if ($element->type eq 'DropDown' || $element->type eq 'MultiSelect') {
         my @values = @{$param{'values'}};
         my %lookup;
@@ -659,25 +516,18 @@ sub pass_fields {
   ### Returns editable fields as hidden element parameters
   my ($self, $id) = @_;
   my $parameters = [];
-  my $record;
+  my $data = $self->data;
   my $elements = $self->elements;
   my $element_order = $self->element_order;
-  if ($id) { ## populate widgets from Data_of{$self}
-    $record = $self->data_row($id);
-  }
   foreach my $field (@$element_order) {
     my $name = $field;
     my $element = $elements->{$name};
     next if $element->type eq 'Information';
     next if $element->type eq 'SubHeader';
     next if $element->type eq 'Information';
-    ## rename if editing multiple elements
-    if ($id && $self->multi) {
-      $element->name($name.'_'.$id);
-    }
     my %param = %{$element->hide};
-    if ($record) {
-      my $var = $record->{$field};
+    if ($data) {
+      my $var = $data->$field;
       if (ref($var) eq 'ARRAY') {
         foreach my $v (@$var) {
           if ($v ne '') {
@@ -701,53 +551,68 @@ sub history_fields {
   ### Returns a set of standard non-editable fields used to track record modification
   my ($self, $id) = @_;
   my $parameters = [];
-  my $record;
+  my $data = $self->data;
   my $elements = $self->elements;
-  my @history = ('created_name', 'created_at', 'modified_name', 'modified_at');
-  if ($id) { ## populate widgets from Data_of{$self}
-    $record = $self->data_row($id);
-  }
-  foreach my $field (@history) {
-    my $name = $field;
-    my $element = $elements->{$name};
-    ## rename if editing multiple elements
-    if ($id && $self->multi) {
-      $element->name($name.'_'.$id);
-    }
+  my $belongs_to = $self->data->get_belongs_to;
+
+  my @actions = ('created', 'modified');
+  my ($name, $element);
+  foreach my $action (@actions) {
+    ## do user
+    $name = $action.'_by';
+    $element = $elements->{$name};
     if ($element) {
-      my %param = %{$element->preview};
-      if ($record) {
-        $param{'value'} = $record->{$field};
-      }
-      if ($name eq 'created_name') {
-        $param{'label'} = 'Created by';
-      }
-      elsif ($name eq 'modified_name') {
-        $param{'label'} = 'Modified by';
+      my %param;
+      %param = %{$element->preview};
+      $param{'label'} = ucfirst($action).' by';
+      push @$parameters, \%param;
+    }
+
+    ## do date
+    $name = $action.'_at';
+    my $element = $elements->{$name};
+    if ($element) {
+      my %param;
+      %param = %{$element->preview};
+      if ($data) {
+        $param{'value'} = $data->$name;
       }
       push @$parameters, \%param;
     }
   } 
+
   return $parameters;
 }
 
-sub taint {
-  ### Marks a record for an update. Tainted
-  ### records are updated in the database when the Record's save method
-  ### is called.
-  my ($self, $id) = @_;
-  $self->tainted->{$id} = 1;
-}
+sub format_date {
+  ## Utility function to return dates in various formats
+  my ($self, $date, $style) = @_;
+  my ($formatted, $year, $month, $day, $hour, $min, $sec);
 
+  if ($date eq 'now') {
+    my @time = localtime();
+    $year = $time[5] + 1900;
+    $month = sprintf('%02d', $time[4] + 1);
+    $day = sprintf('%02d', $time[3]);
+  }
+  else {
+  }
+
+  if ($style && $style eq 'calendar') {
+    $formatted = "$day/$month/$year";
+  }
+  else {
+    $formatted = "$year-$month-$day";
+  }
+
+  return $formatted;
+}
 
 sub DESTROY {
   ### d
   my $self = shift;
-  delete $Structure_of{$self};
-
   delete $Data_of{$self};
-  delete $Multi_of{$self};
-  delete $Tainted_of{$self};
+  delete $Repeat_of{$self};
   delete $PermitDelete_of{$self};
 
   delete $Elements_of{$self};
@@ -755,9 +620,12 @@ sub DESTROY {
   delete $OptionColumns_of{$self};
   delete $OptionOrder_of{$self};
   delete $Dropdown_of{$self};
-  delete $RecordList_of{$self};
   delete $ShowHistory_of{$self};
+
+  delete $PanelStyle_of{$self};
   delete $Caption_of{$self};
+  delete $PanelHeader_of{$self};
+  delete $PanelFooter_of{$self};
 
   delete $OnSuccess_of{$self};
   delete $OnFailure_of{$self};
