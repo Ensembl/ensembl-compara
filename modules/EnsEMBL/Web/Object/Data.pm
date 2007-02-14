@@ -45,7 +45,7 @@ sub populate {
   my $result = $self->get_adaptor->find($self);
   foreach my $key (@{ $result->fields }) {
     my $field = $self->mapped_field($key);
-    if ($field eq $self->get_data_field_name) {
+    if ($self->get_data_field_name && ($field eq $self->get_data_field_name)) {
       $self->populate_data($result->get_value($key));
     } else {
       $self->$field($result->get_value($key));
