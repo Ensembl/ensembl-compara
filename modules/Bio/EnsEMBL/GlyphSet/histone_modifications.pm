@@ -307,8 +307,9 @@ sub predicted_features_zmenu {
   my %zmenu = ( 
     'caption'               => ($f->display_label || ''),
     "03:bp:   $pos"       => '',
- #   "04:type:        ".($f->name() || '-') => '',
- #   "05:description: ".($f->description() || '-') => '',
+    "04:type:        ".($f->display_label() || '-') => '',
+    "05:description: ".($f->feature_type->description() || '-') => '',
+    "06:analysis:    ".($f->analysis->display_label() || '-')  => '',
     "09:score: ".$score => '',
   );
   return \%zmenu || {};
