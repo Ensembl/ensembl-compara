@@ -23,8 +23,12 @@ sub get_sql {
   my ($self) = @_;
   my $sql = "";
   if ($self->get_action eq 'select') {
-    $sql = "SELECT * FROM " . $self->get_table . " WHERE " . $self->get_where . ";";
+    $sql = "SELECT * FROM " . $self->get_table;
   }
+  if ($self->get_where) {
+    $sql .= " WHERE " . $self->get_where;
+  }
+  $sql .= ';';
   return $sql; 
 }
 
@@ -39,9 +43,11 @@ sub add_where {
 sub get_where {
   my ($self) = @_;
   my $sql = "";
-  foreach my $where (@{ $self->get_where_attributes }) {
-    my $operator = $where->{operator} ? $where->{operator} : '=';
-    $sql .= $where->{field} . " $operator '" . $where->{value} . "' and ";
+  if ($self->get_where_attributes) {
+    foreach my $where (@{ $self->get_where_attributes }) {
+      my $operator = $where->{operator} ? $where->{operator} : '=';
+      $sql .= $where->{field} . " $operator '" . $where->{value} . "' and ";
+    }
   }
   $sql =~ s/ and $/ /;
   return $sql;
