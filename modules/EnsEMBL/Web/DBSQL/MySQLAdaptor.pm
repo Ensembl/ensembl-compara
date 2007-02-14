@@ -18,19 +18,35 @@ my %Table :ATTR(:set<table> :get<table>);
 
 sub BUILD {
   my ($self, $ident, $args) = @_;
-  if ($EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY) {
-    eval {
-      $self->set_handle($EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->dbAdaptor());
-    };
-    unless($self->get_handle) {
-       warn( "Unable to connect to database: $DBI::errstr" );
-       $self->set_handle(undef);
-    } else {
-       warn( "New MySQLAdaptor with DB handle: " . $self->get_handle );
-       $self->set_table($args->{table});
+
+  my $adaptor = $args->{adaptor} ? $args->{adaptor} : 'dbAdaptor';
+  my $handle;
+
+  if ($adaptor eq 'dbAdaptor' || $adaptor eq 'websiteAdaptor') {
+  
+    if ($EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY) {
+      eval {
+        $self->set_handle($EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->$adaptor());
+      };
+    } 
+    else {
+      warn( "NO CACHED DATABASE HANDLE DEFINED" );
+      $self->set_handle(undef);
     }
-  } else {
-    warn( "NO DB USER DATABASE DEFINED" );
+  }
+  else {
+    ## Allow non-cached db handles, eg Healthchecks
+    eval {
+      $self->set_handle($adaptor);
+    };
+  }
+
+  if($self->get_handle) {
+    #warn( "New MySQLAdaptor with DB handle: " . $self->get_handle );
+    $self->set_table($args->{table});
+  } 
+  else {
+    warn( "Unable to connect to database: $DBI::errstr" );
     $self->set_handle(undef);
   }
 }
@@ -49,11 +65,15 @@ sub set_clause {
   my $data_hash = {};
   my $has_data = 0;
   my $sql = "";
-  foreach my $data_field (@{ $data->get_fields }) {
-    $has_data = 1;
-    $data_hash->{ $data_field->get_name } = $data->get_value( $data_field->get_name );
+  my $data_field;
+
+  if ($data->get_fields) {
+    foreach $data_field (@{ $data->get_fields }) {
+      $has_data = 1;
+      $data_hash->{ $data_field->get_name } = $data->get_value( $data_field->get_name );
+    }
   }
-  foreach my $data_field (@{ $data->get_queriable_fields }) {
+  foreach $data_field (@{ $data->get_queriable_fields }) {
     if (defined $data->get_value( $data_field->get_name)) {
       if ($self->is_allowed_in_set_clause($data_field->get_name)) {
         $sql .= $data_field->get_name . " = '" . $data->get_value( $data_field->get_name ) . "', ";
@@ -120,7 +140,7 @@ sub find {
   my $result = EnsEMBL::Web::DBSQL::SQL::Result->new();
   $result->set_action('find');
   my $sql = "SELECT * FROM " . $self->get_table . " WHERE " . $data->get_primary_key . "='" . $data->id . "';";
-  warn $sql;
+  #warn $sql;
   my $hashref = $self->get_handle->selectall_hashref($sql, $data->get_primary_key);
   $result->set_result_hash($hashref->{$data->id});
   return $result;
