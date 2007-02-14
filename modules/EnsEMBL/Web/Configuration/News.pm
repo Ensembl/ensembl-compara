@@ -88,6 +88,31 @@ sub context_menu {
   }
 }
 
+sub interface_menu {
+  my $self = shift;
+
+  ## remove normal menu items
+  $self->{page}->menu->delete_block('whattodo');
+  $self->{page}->menu->delete_block('docs');
+  $self->{page}->menu->delete_block('links');
+  $self->{page}->menu->delete_block('archive');
+  $self->{page}->menu->delete_miniad;
+
+  ## replace with dba links
+
+  my $flag     = "news_db";
+  $self->{page}->menu->add_block( $flag, 'bulleted', "News Database" );
+  $self->{page}->menu->add_entry( $flag, 'text' => "Add a News Item",
+                                  'href' => "/common/news_db?dataview=add" );
+  $self->{page}->menu->add_entry( $flag, 'text' => "Edit a News Item",
+                                  'href' => "/common/news_db?dataview=select_to_edit" );
+
+  $self->{page}->menu->add_entry( $flag, 'text' => "Add a Mini-ad",
+                                  'href' => "/common/miniad_db?dataview=add" );
+  $self->{page}->menu->add_entry( $flag, 'text' => "Update a Mini-ad",
+                                  'href' => "/common/miniad_db?dataview=select_to_edit" );
+}
+
 
 1;
 
