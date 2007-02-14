@@ -46,44 +46,40 @@ sub _init {
     return [];
   }
 
-  my %drawn_pf_flag;
-  my %drawn_wiggle_flag;
-
-  my @datasets = @{  $dataset_adaptor->fetch_all_displayable()  };
-  foreach my $dataset  ( @datasets ){
+  my %drawn_flag;
+  foreach my $dataset  (@{  $dataset_adaptor->fetch_all_displayable() || [] } ){
 
     if ($self->my_config('compact')) {
-      $drawn_wiggle_flag{1} = 1;
-      $drawn_pf_flag{ $self->pred_features($dataset)} = 1;    # do just blue track    
-      next if $drawn_pf_flag{1};
+      $drawn_flag{ 'wiggle' } = 1;
+      $drawn_flag{ 'predicted_features' } = 1 if $self->pred_features($dataset);    # do just blue track    
+      next if $drawn_flag{ 'predicted_features' };
 
-      $drawn_wiggle_flag{ $self->wiggle_plot($dataset) } = 1;
-      $self->errorTrack( "No predicted features in this region", 0, $self->_offset ) if $self->{'config'}->get('_settings','opt_empty_tracks')==1;
+      $drawn_flag{ 'wiggle' } = 1 if  $self->wiggle_plot($dataset);
       $self->render_space_glyph();
       next;
     }
 
-    $drawn_wiggle_flag{$self->wiggle_plot($dataset)} = 1; # do both tracks
-    $drawn_pf_flag {$self->pred_features($dataset)} = 1; # do both tracks
-  }
+    $drawn_flag{ 'predicted_features' } = 1 if $self->pred_features($dataset);    # do just blue track    
+    $drawn_flag{ 'wiggle' } = 1 if $self->wiggle_plot($dataset) ;
+  } # end foreach dataset
 
-  return if $drawn_pf_flag{1} && $drawn_wiggle_flag{1};
+
+  return if $drawn_flag{'wiggle'} && $drawn_flag{'predicted_features'};
 
   # If both wiggle and predicted features tracks aren't drawn in expanded mode..
   my $error;
-  if (!$drawn_pf_flag{1}  && !$drawn_wiggle_flag{1}) {
+  if (!$drawn_flag{'predicted_features'}  && !$drawn_flag{'wiggle'}) {
     $error = "predicted features or tiling array data";
   }
-  elsif (!$drawn_pf_flag{1}) {
+  elsif (!$drawn_flag{'predicted_features'}) {
     $error = "predicted features";
   }
-  elsif (!$drawn_wiggle_flag{1}) {
+  elsif (!$drawn_flag{'wiggle'}) {
     $error = "tiling array data";
   }
-  
+
   my $height = $self->errorTrack( "No $error in this region", 0, $self->_offset ) if $self->{'config'}->get('_settings','opt_empty_tracks')==1;
   $self->_offset($height + 4);
-
   return 1;
 }
 
