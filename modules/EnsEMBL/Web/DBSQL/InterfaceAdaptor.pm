@@ -171,11 +171,8 @@ sub fetch_list {
     $sql .= ", $col_list";
   }
   $sql .= " FROM $table";
-  if ($parameters && ref($parameters) eq 'HASH' && keys %$parameters) {
-    $sql .= ' WHERE';
-    while (my ($k, $v) = each (%$parameters)) {
-      $sql .= " $k = '$v'";
-    }
+  if ($parameters) {
+    $sql .= qq( WHERE $parameters);
   }
   if ($order) {
     $sql .= " ORDER BY $order;";
