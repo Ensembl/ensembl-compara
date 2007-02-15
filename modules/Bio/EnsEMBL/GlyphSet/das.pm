@@ -853,6 +853,11 @@ sub _init {
     } @{ $features || [] };
   }
 
+  if (! @das_features) {
+    $self->errorTrack( 'No '.$self->{'extras'}->{'caption'}.' features in this region' );
+    return;
+  }
+
   $configuration->{'features'} = \@das_features;
   # hash styles by type
   my %styles;
@@ -886,6 +891,11 @@ sub _init {
 
   if ($score eq 'H') {
     $renderer = "RENDER_histogram_simple";
+    $configuration->{use_score} = $score;
+    my $fg_merge = uc($Config->get($das_config_key, 'fg_merge') || $Extra->{'fg_merge'} || 'A');
+    $configuration->{'fg_merge'} = $fg_merge;
+  } elsif ($score eq 'P') {
+    $renderer = "RENDER_plot";
     $configuration->{use_score} = $score;
     my $fg_merge = uc($Config->get($das_config_key, 'fg_merge') || $Extra->{'fg_merge'} || 'A');
     $configuration->{'fg_merge'} = $fg_merge;
@@ -1388,7 +1398,7 @@ sub RENDER_colourgradient{
       'absolutey' => 1,
     });
 
-    my $grade = int(($score - $min_score) / $score_per_grade);
+    my $grade = ($score == $max_score) ? $configuration->{'fg_grades'} - 1 : int(($score - $min_score) / $score_per_grade);
     #warn("S:$score: $grade\n");
     my $y_offset =     0;
     my ($href, $zmenu ) = $self->zmenu( $f );
