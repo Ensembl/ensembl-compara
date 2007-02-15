@@ -7,6 +7,8 @@ use EnsEMBL::Web::Object::DAS;
 our @ISA = qw(EnsEMBL::Web::Object::DAS);
 
 sub Types {
+### Returns a list of types served by this das source....
+## Incomplete at present....
   my $self = shift;
   return [
     { 'id' => 'exon'  }
@@ -15,34 +17,64 @@ sub Types {
 
 sub Features {
 ### Return das features...
+### structure returned is an arrayref of hashrefs, each array element refers to
+### a different segment, the hashrefs contain segment info (seg type, seg name,
+### seg start, seg end) and an array of feature hashes
+
   my $self = shift;
 
-  my @segments = $self->Locations;
-  my @features;
-  my %fts    = map { $_=>1 } grep { $_ } @{$self->FeatureTypes  || []};
-  my @groups =               grep { $_ } @{$self->GroupIDs      || []};
-  my @ftids  =               grep { $_ } @{$self->FeatureIDs    || []};
-  my %features;
+###_ Part 1: initialize data structures...
+  my @features;          ## Final array whose reference is returned - simplest way to handle errors/unknowns...
+  my %features;          ## Temporary hash to store segments and features there on...
+  my %genes;             ## Temporary hash to store ensembl gene objects...
+  my $dba_hashref;       ## Hash ref of database handles...
 
-  my %genes;
-  my %transcripts;
-  my %exons;
-#  my @dbs = qw(core vega otherfeatures);
-  my $dba_hashref;
-  my @logic_names;
+## (although not implemented at the moment may allow multiple dbs to be connected to..)
+  my @logic_names;       ## List of logic names of transcripts to return...
+  my $filters    = {
+    map( { ( $_, 'exon'       ) } @ftids  ),  ## Filter for exon features...
+    map( { ( $_, 'transcript' ) } @groups )   ## Filter for transcript features...
+  };
+  my $no_filters = {};
+
+###_ Part 2: parse the DSN to work out what we want to display
+### Relevant part of DSN is stored in $ENV{'ENSEMBL_DAS_SUBTYPE'}
+###
+### For transcripts -the format is:
+###
+###> {species}.ASSEMBLY[-{coordinate_system}]/[enhanced_]transcript[-{database}[-{logicname}]*]
+###
+### If database is missing assumes core, if logicname is missing assumes all
+### transcript features
+###
+### e.g.
+###
+###* /das/Homo_sapiens.NCBI36-toplevel.transcript-core-ensembl
+###
+###* /das/Homo_sapiens.NCBI36-toplevel.transcript-vega
+###
+
   my @dbs = ();
   if( $ENV{'ENSEMBL_DAS_SUBTYPE'} ) {
     my( $db, @logic_names ) = split /-/, $ENV{'ENSEMBL_DAS_SUBTYPE'};
     push @dbs, $db;
   } else {
-    @dbs = ('core');
+    @dbs = ('core');  ## default = core...;
   }
   foreach (@dbs) {
     my $T = $self->{data}->{_databases}->get_DBAdaptor($_,$self->real_species);
     $dba_hashref->{$_}=$T if $T;
   }
-  @logic_names = (undef) unless @logic_names;
-  my %features_to_grab;
+  @logic_names = (undef) unless @logic_names;  ## default is all features of this type
+
+###_ Part 3: parse CGI parameters to get out feature types, group ids and feature ids
+###* FeatureTypes - Currently ignored...
+###* Group IDs    - filter in this case transcripts
+###* Feature IDs  - filter in ths case exons
+  my @segments = $self->Locations;
+  my %fts      = map { $_=>1 } grep { $_ } @{$self->FeatureTypes  || []};
+  my @groups   =               grep { $_ } @{$self->GroupIDs      || []};
+  my @ftids    =               grep { $_ } @{$self->FeatureIDs    || []};
 
 ## First let us look at feature IDs - these prediction transcript exons...
 ## Prediction transcript exons have form 
@@ -50,19 +82,17 @@ sub Features {
 ## Second let us look at groups IDs - these are either transcript ids' / gene ids'
 
 ## The following are exons ids'
-  my $filters    = {};
-  my $no_filters = {};
-  foreach my $id (@ftids)  { $filters->{$id} = 'exon'; }
-  foreach my $id (@groups) { $filters->{$id} = 'transcript'; }
 
-## Finally let us loop through all the segments and retrieve all the
-## Prediction transcripts...
+###_ Part 4: Fetch features on the segments requested...
+
   foreach my $segment (@segments) {
     if( ref($segment) eq 'HASH' && ($segment->{'TYPE'} eq 'ERROR' || $segment->{'TYPE'} eq 'UNKNOWN') ) {
       push @features, $segment;
       next;
     }
     my $slice_name = $segment->slice->seq_region_name.':'.$segment->slice->start.','.$segment->slice->end.':'.$segment->slice->strand;
+## Each slice is added irrespective of whether there is any data, so we "push"
+## on an empty slice entry...
     $features{$slice_name}= {
       'REGION'   => $segment->slice->seq_region_name,
       'START'    => $segment->slice->start,
@@ -72,58 +102,59 @@ sub Features {
 
     foreach my $db_key ( keys %$dba_hashref ) {
       foreach my $logic_name (@logic_names) {
-#X# warn "$db_key...................$logic_name.............................";
         foreach my $gene ( @{$segment->slice->get_all_Genes($logic_name,$db_key) } ) {
           my $gsi = $gene->stable_id;
-#X# warn "$gsi.......................";
           $genes{ $gsi } = { 'db' => $db_key, 'obj' => $gene, 'transcripts' => [] };
-          delete $filters->{$gsi};
+          delete $filters->{$gsi}; # This comes off a segment so make sure it isn't filtered!
           $no_filters->{$gsi} = 1;
           foreach my $transcript ( @{$gene->get_all_Transcripts} ) {
             my $tsi = $transcript->stable_id;
             my $transobj = { 'obj' => $transcript, 'exons' => [] };
-            delete $filters->{$tsi};
+            delete $filters->{$tsi}; # This comes off a segment so make sure it isn't filtered!
             $no_filters->{$tsi} = 1;
             my $start = 1;
             foreach my $exon ( @{$transcript->get_all_Exons} ) {
               my $esi = $exon->stable_id;
-              delete $filters->{$esi};
+              delete $filters->{$esi}; # This comes off a segment so make sure it isn't filtered!
               push @{ $transobj->{'exons'} }, [ $exon , $start, $start+$exon->length-1 ];
               $start += $exon->length;
               $no_filters->{$esi} = 1;
             }
             push @{ $genes{$gsi}->{'transcripts'} },$transobj;
-# warn "PUSHED transcript $tsi onto gene $gsi";
           }
         }
       }
     }
-  }
-## Now we have grabbed all these features on segments we can go back and see if
-## we need to grab any more of the group_id / filter_id features...
+  } ## end of segment loop....
+
+###_ Part 5: Fetch features based on group_id and filter_id
+
   my $ga_hashref = {};
 
+  my %logic_name_filter = map { ($_,1) } @logic_names;
   foreach my $id ( keys %$filters ) {
     next unless $filters->{$id};
     my $gene;
     my $filter;
     my $db_key;
     foreach my $db ( keys %$dba_hashref ) {
-#      foreach my $logic_name (@logic_names) {
-        $db_key = $db;
-        $ga_hashref->{$db} ||= $dba_hashref->{$db}->get_GeneAdaptor;
-        if( $filters->{$id} eq 'exon' ) {
-          $gene = $ga_hashref->{$db}->fetch_by_exon_stable_id( $id );
-          $filter = 'exon';
-        } elsif( $gene = $ga_hashref->{$db}->fetch_by_stable_id( $id ) ) {
-          $filter = 'gene';
-        } else {
-          $gene = $ga_hashref->{$db}->fetch_by_transcript_stable_id( $id );
-          $filter = 'transcript';
-        }
-        last if $gene;
-#      }
-#      last if $gene;
+#      foreach my $logic_name (@logic_names) { // should probably filter here - but have to do it post fetch!?!
+      $db_key = $db;
+      $ga_hashref->{$db} ||= $dba_hashref->{$db}->get_GeneAdaptor;
+      if( $filters->{$id} eq 'exon' ) {
+        $gene = $ga_hashref->{$db}->fetch_by_exon_stable_id( $id );
+        $filter = 'exon';
+      } elsif( $gene = $ga_hashref->{$db}->fetch_by_stable_id( $id ) ) {
+        $filter = 'gene';
+      } else {
+        $gene = $ga_hashref->{$db}->fetch_by_transcript_stable_id( $id );
+        $filter = 'transcript';
+      }
+      $gene = undef if $gene
+                    && defined $logic_names[0]
+                    && ! $logic_name_filter{$gene->analysis->logic_name};
+      }
+      last if $gene;
     }
     next unless $gene;
     my $gsi = $gene->stable_id;
@@ -142,9 +173,7 @@ sub Features {
 # warn "PU**ED transcript $tsi onto gene $gsi";
       }
     }
-warn ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>";
     if( $filter eq 'gene' ) { ## Delete all filters on Gene and subsequent exons
-warn ".... .$filter GENE .......$gsi..............";
       delete $filters->{$gsi};
       $no_filters->{$gsi} = 1;
       foreach my $transobj ( @{ $genes{$gsi}{'transcripts'} } ) {
@@ -157,7 +186,6 @@ warn ".... .$filter GENE .......$gsi..............";
         }
       }
     } elsif( $filter eq 'transcript' ) { ## Delete filter on Transcript...
-warn "......$filter TRANS .......$gsi..............";
       foreach my $transobj ( @{ $genes{$gsi}{'transcripts'} } ) {
         my $transcript = $transobj->{'obj'}; 
         next unless $transcript->stable_id eq $id;
@@ -167,20 +195,19 @@ warn "......$filter TRANS .......$gsi..............";
         }
       }
     }
-
-  }
+  } ## end of segment loop....
 
 
 ## Transview template...
+  $self->{'templates'} ||= {};
   $self->{'templates'}{'transview_URL'} = sprintf( '%s/%s/transview?transcript=%%s;db=%%s', $self->species_defs->ENSEMBL_BASE_URL, $self->real_species );
   $self->{'templates'}{'geneview_URL'}  = sprintf( '%s/%s/geneview?gene=%%s;db=%%s',        $self->species_defs->ENSEMBL_BASE_URL, $self->real_species );
   $self->{'templates'}{'protview_URL'}  = sprintf( '%s/%s/protview?peptide=%%s;db=%%s',     $self->species_defs->ENSEMBL_BASE_URL, $self->real_species );
   $self->{'templates'}{'r_URL'}         = sprintf( '%s/%s/r?d=%%s;ID=%%s',                  $self->species_defs->ENSEMBL_BASE_URL, $self->real_species );
 
-## Now we do all the nasty stuff of retrieving features and creating DAS objects for them...
+### Part 6: Grab and return features
+### Now we do all the nasty stuff of retrieving features and creating DAS objects for them...
   my %slice_hack;
-warn join "\n", "FILTERING...","===========",keys(%$filters),"                 ";
-warn join "\n", "FILTERING...","===========",keys(%$no_filters),"                 ";
   foreach my $gene_stable_id ( keys %genes ) {
     my $gene = $genes{$gene_stable_id}{'obj'};
     my $db   = $genes{$gene_stable_id}{'db'};
@@ -191,11 +218,10 @@ warn join "\n", "FILTERING...","===========",keys(%$no_filters),"               
         'ID'    => $transcript_stable_id, 
         'TYPE'  => 'transcript:'.$transcript->analysis->logic_name,
         'LABEL' =>  sprintf( '%s (%s)', $transcript_stable_id, $transcript->external_name || 'Novel' ),
-        $self->_group_info( $transcript, $gene, $db )
+        $self->_group_info( $transcript, $gene, $db ) ## Over-riden in enhnced transcripts...
       };
-
-      my $coding_region_start = $transcript->coding_region_start;
-      my $coding_region_end   = $transcript->coding_region_end;
+      my $coding_region_start = $transcript->coding_region_start; ## Need this in "chr" coords
+      my $coding_region_end   = $transcript->coding_region_end;   ## Need this in "chr" coords
       if( $transobj->{'exons'}[0][0]->slice->strand > 0 ) {
         $coding_region_start += $transobj->{'exons'}[0][0]->slice->start - 1;
         $coding_region_end   += $transobj->{'exons'}[0][0]->slice->start - 1;
@@ -216,13 +242,6 @@ warn join "\n", "FILTERING...","===========",keys(%$no_filters),"               
             'STOP'   => $exon->slice->end,
             'FEATURES' => [],
           };
-## Offset and orientation multiplier for features to map them back to slice
-## co-ordinates - based on the orientation of the slice.
-#          if( $exon->slice->strand > 0 ) {
-#            $slice_hack{$slice_name} = [  1, $features{$slice_name}{'START'}-1 ];
-#          } else {
-#            $slice_hack{$slice_name} = [ -1, $features{$slice_name}{'STOP'} +1 ];
-#          }
         }
         
         unless( exists $no_filters->{$gene_stable_id} || exists $no_filters->{$transcript_stable_id } || exists $no_filters->{$gene_stable_id} ) { ## WE WILL DRAW THIS!!
@@ -230,19 +249,17 @@ warn join "\n", "FILTERING...","===========",keys(%$no_filters),"               
             next;
           }
         }
-## If we have an exon filter for this transcript... check that the rank is in the
-## list if not skip the rest of this loop
 ## Push the features on to the slice specific array
 ## Now we have to work out the overlap with coding sequence...
         my $exon_start = $exon->seq_region_start;
         my $exon_end   = $exon->seq_region_end;
         my @sub_exons  = ();
-        if( defined $coding_region_start ) {
+        if( defined $coding_region_start ) { ## Translatable genes...
           my $exon_coding_start;
           my $exon_coding_end;
           my $target_start;
           my $target_end;
-          if( $exon->strand > 0 ) {
+          if( $exon->strand > 0 ) { ## Forward strand...
             if( $exon_start < $coding_region_end && $exon_end > $coding_region_start ) {
               $exon_coding_start = $exon_start < $coding_region_start ? $coding_region_start : $exon_start;
               $exon_coding_end   = $exon_end   > $coding_region_end   ? $coding_region_end   : $exon_end;
@@ -260,7 +277,7 @@ warn join "\n", "FILTERING...","===========",keys(%$no_filters),"               
             } else {
               push @sub_exons, [ "3'UTR", $exon_start, $exon_end,                $exon_ref->[1], $exon_ref->[2] ];
             }
-          } else {
+          } else {  ## Reverse strand...
             if( $exon_start < $coding_region_end && $exon_end > $coding_region_start ) {
               $exon_coding_start = $exon_start < $coding_region_start ? $coding_region_start : $exon_start;
               $exon_coding_end   = $exon_end   > $coding_region_end   ? $coding_region_end   : $exon_end;
@@ -279,7 +296,7 @@ warn join "\n", "FILTERING...","===========",keys(%$no_filters),"               
               push @sub_exons, [ "3'UTR", $exon_start, $exon_end,                $exon_ref->[1], $exon_ref->[2] ];
             }
           }
-        } else { 
+        } else {  ## Easier one... non-translatable genes...
           @sub_exons = ( [ 'non_coding', $exon_start, $exon_end ] );
         }
         foreach my $se (@sub_exons ) {
@@ -288,9 +305,9 @@ warn join "\n", "FILTERING...","===========",keys(%$no_filters),"               
             'TYPE'        => 'exon:'.$transcript->analysis->logic_name,
             'METHOD'      => $transcript->analysis->logic_name,
             'CATEGORY'    => $se->[0],
-            'START'       => $se->[1], # $slice_hack{$slice_name}[0] * $se->[1] + $slice_hack{$slice_name}[1],
-            'END'         => $se->[2], # $slice_hack{$slice_name}[0] * $se->[2] + $slice_hack{$slice_name}[1],
-            'ORIENTATION' => $self->ori($exon->strand), # slice_hack{$slice_name}[0] * $exon->strand > 0 ? '+' : '-',
+            'START'       => $se->[1],
+            'END'         => $se->[2],
+            'ORIENTATION' => $self->ori($exon->strand),
             'GROUP'       => [$transcript_group],
             'TARGET'      => {
               'ID'    => $transcript_stable_id,
@@ -302,21 +319,17 @@ warn join "\n", "FILTERING...","===========",keys(%$no_filters),"               
       }
     }
   }
-## Return the reference to an array of the slice specific hashes.
+### Part 7: Return the reference to an array of the slice specific hashes.
   push @features, values %features;
   return \@features;
 }
 
 sub _group_info {
+## Return the links... note main difference between two tracks is the "enhanced transcript" returns more links (GV/PV) and external entries...
   my( $self, $transcript, $gene, $db ) = @_;
   return
     'LINK' => [ { 'text' => 'e! TransView '.$transcript->stable_id ,
-                  'href' => sprintf( $self->{'templates'}{'transview_URL'}, $transcript->stable_id, $db ) },
-                { 'text' => 'e! GeneView '. $gene->stable_id, 
-                  'href' => sprintf( $self->{'templates'}{'geneview_URL'},  $gene->stable_id,       $db ) },
-  $transcript->translation ?
-                { 'text' => 'e! ProtView '.$transcript->translation->stable_id,
-                  'href' => sprintf( $self->{'templates'}{'protview_URL'}, $transcript->translation->stable_id, $db ) } : ()
+                  'href' => sprintf( $self->{'templates'}{'transview_URL'}, $transcript->stable_id, $db ) }
     ];
 }
 
