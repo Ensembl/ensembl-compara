@@ -31,11 +31,6 @@ sub Features {
 
 ## (although not implemented at the moment may allow multiple dbs to be connected to..)
   my @logic_names;       ## List of logic names of transcripts to return...
-  my $filters    = {
-    map( { ( $_, 'exon'       ) } @ftids  ),  ## Filter for exon features...
-    map( { ( $_, 'transcript' ) } @groups )   ## Filter for transcript features...
-  };
-  my $no_filters = {};
 
 ###_ Part 2: parse the DSN to work out what we want to display
 ### Relevant part of DSN is stored in $ENV{'ENSEMBL_DAS_SUBTYPE'}
@@ -75,6 +70,12 @@ sub Features {
   my %fts      = map { $_=>1 } grep { $_ } @{$self->FeatureTypes  || []};
   my @groups   =               grep { $_ } @{$self->GroupIDs      || []};
   my @ftids    =               grep { $_ } @{$self->FeatureIDs    || []};
+
+  my $filters    = {
+    map( { ( $_, 'exon'       ) } @ftids  ),  ## Filter for exon features...
+    map( { ( $_, 'transcript' ) } @groups )   ## Filter for transcript features...
+  };
+  my $no_filters = {};
 
 ## First let us look at feature IDs - these prediction transcript exons...
 ## Prediction transcript exons have form 
@@ -153,7 +154,6 @@ sub Features {
       $gene = undef if $gene
                     && defined $logic_names[0]
                     && ! $logic_name_filter{$gene->analysis->logic_name};
-      }
       last if $gene;
     }
     next unless $gene;
@@ -302,9 +302,9 @@ sub Features {
         foreach my $se (@sub_exons ) {
           push @{$features{$slice_name}{'FEATURES'}}, {
            'ID'          => $exon_stable_id,
-            'TYPE'        => 'exon:'.$transcript->analysis->logic_name,
+            'TYPE'        => 'exon:'.$se->[0].':'.$transcript->analysis->logic_name,
             'METHOD'      => $transcript->analysis->logic_name,
-            'CATEGORY'    => $se->[0],
+            'CATEGORY'    => 'transcription',
             'START'       => $se->[1],
             'END'         => $se->[2],
             'ORIENTATION' => $self->ori($exon->strand),
@@ -345,18 +345,15 @@ sub Stylesheet {
     'otter'   => 'darkblue',
   };
   foreach my $key ( keys %$colour_hash ) {
-    my $exon_key  = $key eq 'default' ? $key : "exon:$key";
-    my $trans_key = $key eq 'default' ? $key : "transcript:$key";
     my $colour = $colour_hash->{$key};
-    $stylesheet_structure->{"3'UTR"}{$exon_key}=
-    $stylesheet_structure->{"5'UTR"}{$exon_key}=
-    $stylesheet_structure->{"non_coding"}{$exon_key}=
+    $stylesheet_structure->{"transcription"}{$key ne 'default' ? "exon:3'UTR:$key" : 'default'}=
+    $stylesheet_structure->{"transcription"}{$key ne 'default' ? "exon:5'UTR:$key" : 'default'}=
+    $stylesheet_structure->{"transcription"}{$key ne 'default' ? "exon:non_coding:$key" : 'default'}=
       [{ 'type' => 'box', 'attrs' => { 'FGCOLOR' => $colour, 'BGCOLOR' => 'white', 'HEIGHT' => 6  } },
-       { 'type' => 'box', 'attrs' => { 'FGCOLOR' => $colour, 'BGCOLOR' => 'white', 'HEIGHT' => 3  } },
       ];
-    $stylesheet_structure->{"coding"}{$exon_key}=
+    $stylesheet_structure->{'transcription'}{$key ne 'default' ? "exon:coding:$key" : 'default'} =
       [{ 'type' => 'box', 'attrs' => { 'BGCOLOR' => $colour, 'FGCOLOR' => $colour, 'HEIGHT' => 10  } }];
-    $stylesheet_structure->{"group"}{$trans_key}=
+    $stylesheet_structure->{"group"}{$key ne 'default' ? "transcript:$key" : 'default'} =
       [{ 'type' => 'line', 'attrs' => { 'STYLE' => 'intron', 'HEIGHT' => 10, 'FGCOLOR' => $colour, 'POINT' => 1 } }];
   }
   return $self->_Stylesheet( $stylesheet_structure );
