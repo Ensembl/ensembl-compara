@@ -1,4 +1,4 @@
-package EnsEMBL::Web::Object::DAS::prediction_transcripts;
+package EnsEMBL::Web::Object::DAS::prediction_transcript;
 
 use strict;
 use warnings;

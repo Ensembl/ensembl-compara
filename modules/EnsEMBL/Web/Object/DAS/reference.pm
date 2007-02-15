@@ -24,7 +24,7 @@ sub Features {
         ($region_name,$region_start,$region_end) = ($1,$2,$3);
     }
 
-    my $slice = $self->database('core', $self->real_species)->get_SliceAdaptor->fetch_by_region('', $region_name, $region_start, $region_end, $s->seq_region_strand);
+    my $slice = $self->database('core', $self->real_species)->get_SliceAdaptor->fetch_by_region('', $region_name, $region_start, $region_end, $s->seq_region_strand); 
     my $subparts = 'yes';
     my $superparts = 'no';
 
@@ -122,10 +122,13 @@ sub Features {
         'ID' => $slice->seq_region_name, 
         'START' => $slice->start, 
         'END' => $slice->end,
-        'ORIENTATION' => $slice->strand,
-        'TARGET_ID' => $slice->seq_region_name, 
-        'TARGET_START' => $slice->start, 
-        'TARGET_END' => $slice->end,
+        'ORIENTATION' => $self->ori( $slice->strand ),  
+        'TARGET' => {
+          'ID'    => $slice->seq_region_name, 
+          'START' => $slice->start, 
+          'STOP'   => $slice->end
+        },
+        'REFERENCE' => 'yes',
         'TYPE' => $current_cs->name, 
         'SUPERPARTS' => $superparts, 
         'SUBPARTS' => %$ids ? 'yes' : 'no', 
@@ -137,10 +140,13 @@ sub Features {
         'ID' =>  "$id", 
         'START' => $ids->{$id}->[1], 
         'END' => $ids->{$id}->[2],
-        'ORIENTATION' => $ids->{$id}->[5],
-        'TARGET_ID' => $id, 
-        'TARGET_START' => $ids->{$id}->[3], 
-        'TARGET_END' => $ids->{$id}->[4],
+        'ORIENTATION' => $self->ori($ids->{$id}->[5]),
+        'TARGET' => {
+          'ID'    => $id,
+          'START' => $ids->{$id}->[3],
+          'STOP'   => $ids->{$id}->[4]
+        },
+        'REFERENCE' => 'yes',
         'TYPE' => $ids->{$id}->[0], 
         'SUBPARTS' => $subparts,
         'SUPERPARTS' => 'yes',
@@ -153,10 +159,13 @@ sub Features {
         'ID' =>  "$id", 
         'START' => $sids->{$id}->[1], 
         'END' => $sids->{$id}->[2],
-        'ORIENTATION' => $ids->{$id}->[5],
-        'TARGET_ID' => $id, 
-        'TARGET_START' => $sids->{$id}->[3], 
-        'TARGET_END' => $sids->{$id}->[4],
+        'ORIENTATION' =>  $self->ori($ids->{$id}->[5]),
+        'TARGET' => {
+          'ID'    => $id,
+          'START' => $sids->{$id}->[3],
+          'STOP'   => $sids->{$id}->[4]
+        },
+        'REFERENCE' => 'yes',
         'TYPE' => $sids->{$id}->[0], 
         'SUPERPARTS' => $sids->{$id}->[6], 
         'SUBPARTS' => 'yes',
@@ -176,7 +185,7 @@ sub Features {
     }
 
     push @features, {
-            'REGION' => $region_name, 
+        'REGION' => $region_name, 
         'START'  => $region_start, 
         'STOP'   => $region_end,
         'FEATURES' => \@rfeatures
@@ -239,8 +248,12 @@ sub DNA {
     if($s->name =~ /^([-\w\.]+):([\.\w]+),([\.\w]+)$/ ) {
       ($region_name,$region_start,$region_end) = ($1,$2,$3);
     }
+    unless(defined $region_start ) {
+      my $slice = $self->database('core', $self->real_species)->get_SliceAdaptor->fetch_by_region('', $region_name, $region_start, $region_end, 1 );
+      $region_start = $slice->start;
+      $region_end   = $slice->end;
+    }
 
- #   my $slice = $self->database('core', $self->real_species)->get_SliceAdaptor->fetch_by_region('', $region_name, $region_start, $region_end, 1 );
 
     push @features, {
       'REGION' => $region_name, 

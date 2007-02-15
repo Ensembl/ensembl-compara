@@ -25,18 +25,21 @@ sub _feature {
   my $feature_id    = $feature->hseqname;
   my $type          = $feature->analysis->logic_name;
   my $display_label = $feature->analysis->display_label;
+  my $links =  [
+    { 'href' => sprintf( $self->{'featureview_url'}, $feature_id ), 'text' => "e! FeatureView $feature_id" },
+    { 'href' => sprintf( $self->{'r_url'}, $type, $feature_id ),    'text' => "$display_label $feature_id" }
+  ];
+
   my $group = {
     'ID'    => $feature_id, 
     'TYPE'  => "$self->{_feature_label}:$type",
     'LABEL' =>  sprintf( '%s (%s)', $display_label, $feature_id ),
-    'LINK'  => [
-      { 'href' => sprintf( $self->{'featureview_url'}, $feature_id ), 'text' => "e! FeatureView $feature_id" },
-      { 'href' => sprintf( $self->{'r_url'}, $type, $feature_id ),    'text' => "$display_label $feature_id" }
-    ]
+    'LINK'  => $links,
   };
   my $slice_name = $self->slice_cache( $feature->slice );
   push @{$self->{_features}{$slice_name}{'FEATURES'}}, {
-   'ID'          => $feature_id.' ('.$feature->hstart.'-'.$feature->hend.':'.$feature->hstrand.')',
+   'ID'       => $feature_id,
+   'LABEL'       => $feature_id.' ('.$feature->hstart.'-'.$feature->hend.':'.$self->ori($feature->hstrand).')',
    'TYPE'        => $self->{_feature_label}.':'.$type,
    'SCORE'       => $feature->score,
    'TARGET'      => {
@@ -44,9 +47,12 @@ sub _feature {
      'START'     => $feature->hstart,
      'STOP'      => $feature->hend,
    },
+   'NOTE'        => [ 'CIGAR: '.$feature->cigar_string ],
    'METHOD'      => $type,
    'CATEGORY'    => $type,
-   $self->loc( $slice_name, $feature->start, $feature->end, $feature->strand ),
+   'ORIENTATION' => $self->ori( $feature->seq_region_strand ),
+   'START'       => $feature->seq_region_start,
+   'END'         => $feature->seq_region_end,
    'GROUP'       => [$group]
   };
 ## Return the reference to an array of the slice specific hashes.

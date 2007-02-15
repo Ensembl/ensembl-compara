@@ -1,4 +1,4 @@
-package EnsEMBL::Web::Object::DAS::transcripts;
+package EnsEMBL::Web::Object::DAS::transcript;
 
 use strict;
 use warnings;
@@ -22,6 +22,7 @@ sub Features {
   my %fts    = map { $_=>1 } grep { $_ } @{$self->FeatureTypes  || []};
   my @groups =               grep { $_ } @{$self->GroupIDs      || []};
   my @ftids  =               grep { $_ } @{$self->FeatureIDs    || []};
+  my %features;
 
   my %genes;
   my %transcripts;
@@ -57,16 +58,24 @@ sub Features {
 ## Finally let us loop through all the segments and retrieve all the
 ## Prediction transcripts...
   foreach my $segment (@segments) {
-    if( ref($segment) eq 'HASH' && $segment->{'TYPE'} eq 'ERROR' ) {
+    if( ref($segment) eq 'HASH' && ($segment->{'TYPE'} eq 'ERROR' || $segment->{'TYPE'} eq 'UNKNOWN') ) {
       push @features, $segment;
       next;
     }
+    my $slice_name = $segment->slice->seq_region_name.':'.$segment->slice->start.','.$segment->slice->end.':'.$segment->slice->strand;
+    $features{$slice_name}= {
+      'REGION'   => $segment->slice->seq_region_name,
+      'START'    => $segment->slice->start,
+      'STOP'     => $segment->slice->end,
+      'FEATURES' => [],
+    };
+
     foreach my $db_key ( keys %$dba_hashref ) {
       foreach my $logic_name (@logic_names) {
-warn "$db_key...................$logic_name.............................";
+#X# warn "$db_key...................$logic_name.............................";
         foreach my $gene ( @{$segment->slice->get_all_Genes($logic_name,$db_key) } ) {
           my $gsi = $gene->stable_id;
-warn "$gsi.......................";
+#X# warn "$gsi.......................";
           $genes{ $gsi } = { 'db' => $db_key, 'obj' => $gene, 'transcripts' => [] };
           delete $filters->{$gsi};
           $no_filters->{$gsi} = 1;
@@ -75,10 +84,12 @@ warn "$gsi.......................";
             my $transobj = { 'obj' => $transcript, 'exons' => [] };
             delete $filters->{$tsi};
             $no_filters->{$tsi} = 1;
+            my $start = 1;
             foreach my $exon ( @{$transcript->get_all_Exons} ) {
               my $esi = $exon->stable_id;
               delete $filters->{$esi};
-              push @{ $transobj->{'exons'} }, $exon;
+              push @{ $transobj->{'exons'} }, [ $exon , $start, $start+$exon->length-1 ];
+              $start += $exon->length;
               $no_filters->{$esi} = 1;
             }
             push @{ $genes{$gsi}->{'transcripts'} },$transobj;
@@ -105,10 +116,10 @@ warn "$gsi.......................";
           $gene = $ga_hashref->{$db}->fetch_by_exon_stable_id( $id );
           $filter = 'exon';
         } elsif( $gene = $ga_hashref->{$db}->fetch_by_stable_id( $id ) ) {
-          $filter = 'transcript';
+          $filter = 'gene';
         } else {
           $gene = $ga_hashref->{$db}->fetch_by_transcript_stable_id( $id );
-          $filter = 'gene';
+          $filter = 'transcript';
         }
         last if $gene;
 #      }
@@ -121,15 +132,19 @@ warn "$gsi.......................";
       foreach my $transcript ( @{$gene->get_all_Transcripts} ) {
         my $tsi = $transcript->stable_id;
         my $transobj = { 'obj' => $transcript, 'exons' => [] };
+        my $start = 1;
         foreach my $exon ( @{$transcript->get_all_Exons} ) {
           my $esi = $exon->stable_id;
-          push @{ $transobj->{'exons'} }, $exon;
+          push @{ $transobj->{'exons'} }, [ $exon , $start, $start+$exon->length-1 ];
+          $start += $exon->length;
         }
         push @{ $genes{$gsi}->{'transcripts'} },$transobj;
 # warn "PU**ED transcript $tsi onto gene $gsi";
       }
     }
+warn ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>";
     if( $filter eq 'gene' ) { ## Delete all filters on Gene and subsequent exons
+warn ".... .$filter GENE .......$gsi..............";
       delete $filters->{$gsi};
       $no_filters->{$gsi} = 1;
       foreach my $transobj ( @{ $genes{$gsi}{'transcripts'} } ) {
@@ -137,17 +152,18 @@ warn "$gsi.......................";
         delete $filters->{$transcript->stable_id};
         $no_filters->{$transcript->stable_id} = 1;
         foreach my $exon ( @{$transobj->{'exons'}} ) {
-          $no_filters->{$exon->stable_id} = 1;
-          delete $filters->{$exon->stable_id};
+          $no_filters->{$exon->[0]->stable_id} = 1;
+          delete $filters->{$exon->[0]->stable_id};
         }
       }
     } elsif( $filter eq 'transcript' ) { ## Delete filter on Transcript...
+warn "......$filter TRANS .......$gsi..............";
       foreach my $transobj ( @{ $genes{$gsi}{'transcripts'} } ) {
         my $transcript = $transobj->{'obj'}; 
         next unless $transcript->stable_id eq $id;
         foreach my $exon ( @{$transobj->{'exons'}} ) {
-          $no_filters->{$exon->stable_id} = 1;
-          delete $filters->{$exon->stable_id};
+          $no_filters->{$exon->[0]->stable_id} = 1;
+          delete $filters->{$exon->[0]->stable_id};
         }
       }
     }
@@ -156,26 +172,18 @@ warn "$gsi.......................";
 
 
 ## Transview template...
-  my $transview_url = sprintf( '%s/%s/transview?transcript=%%s;db=%%s',
-    $self->species_defs->ENSEMBL_BASE_URL, $self->real_species
-  );
-  my $geneview_url  = sprintf( '%s/%s/geneview?gene=%%s;db=%%s',
-    $self->species_defs->ENSEMBL_BASE_URL, $self->real_species
-  );
-  my $protview_url  = sprintf( '%s/%s/protview?peptide=%%s;db=%%s',
-    $self->species_defs->ENSEMBL_BASE_URL, $self->real_species
-  );
+  $self->{'templates'}{'transview_URL'} = sprintf( '%s/%s/transview?transcript=%%s;db=%%s', $self->species_defs->ENSEMBL_BASE_URL, $self->real_species );
+  $self->{'templates'}{'geneview_URL'}  = sprintf( '%s/%s/geneview?gene=%%s;db=%%s',        $self->species_defs->ENSEMBL_BASE_URL, $self->real_species );
+  $self->{'templates'}{'protview_URL'}  = sprintf( '%s/%s/protview?peptide=%%s;db=%%s',     $self->species_defs->ENSEMBL_BASE_URL, $self->real_species );
+  $self->{'templates'}{'r_URL'}         = sprintf( '%s/%s/r?d=%%s;ID=%%s',                  $self->species_defs->ENSEMBL_BASE_URL, $self->real_species );
 
 ## Now we do all the nasty stuff of retrieving features and creating DAS objects for them...
-  my %features;
   my %slice_hack;
+warn join "\n", "FILTERING...","===========",keys(%$filters),"                 ";
+warn join "\n", "FILTERING...","===========",keys(%$no_filters),"                 ";
   foreach my $gene_stable_id ( keys %genes ) {
     my $gene = $genes{$gene_stable_id}{'obj'};
     my $db   = $genes{$gene_stable_id}{'db'};
-    my $gene_href = { 
-      'href' => sprintf( $geneview_url, $gene_stable_id, $db ),
-      'text' => sprintf( 'e! GeneView %s (%s)', $gene_stable_id, $gene->external_name || 'Novel' )
-    };
     foreach my $transobj ( @{ $genes{$gene_stable_id}{'transcripts'} } ) {
       my $transcript = $transobj->{'obj'};
       my $transcript_stable_id = $transcript->stable_id;
@@ -183,26 +191,22 @@ warn "$gsi.......................";
         'ID'    => $transcript_stable_id, 
         'TYPE'  => 'transcript:'.$transcript->analysis->logic_name,
         'LABEL' =>  sprintf( '%s (%s)', $transcript_stable_id, $transcript->external_name || 'Novel' ),
-        'LINK'  => [{ 'href' => sprintf( $transview_url, $transcript_stable_id, $db ),
-                      'text' => "e! TransView $transcript_stable_id" }, $gene_href  ]
+        $self->_group_info( $transcript, $gene, $db )
       };
-      if( $transcript->translation ) {
-        push @{$transcript_group->{'LINK'}}, {
-          'href' => sprintf( $protview_url, $transcript->translation->stable_id, $db ),
-          'text' => "e! ProtView ".$transcript->translation->stable_id };
-      } 
+
       my $coding_region_start = $transcript->coding_region_start;
       my $coding_region_end   = $transcript->coding_region_end;
-      if( $transobj->{'exons'}[0]->slice->strand > 0 ) {
-        $coding_region_start += $transobj->{'exons'}[0]->slice->start - 1;
-        $coding_region_end   += $transobj->{'exons'}[0]->slice->start - 1;
+      if( $transobj->{'exons'}[0][0]->slice->strand > 0 ) {
+        $coding_region_start += $transobj->{'exons'}[0][0]->slice->start - 1;
+        $coding_region_end   += $transobj->{'exons'}[0][0]->slice->start - 1;
       } else {
         $coding_region_start *= -1;
         $coding_region_end   *= -1;
-        $coding_region_start += $transobj->{'exons'}[0]->slice->end + 1;
-        $coding_region_end   += $transobj->{'exons'}[0]->slice->end + 1;
+        $coding_region_start += $transobj->{'exons'}[0][0]->slice->end + 1;
+        $coding_region_end   += $transobj->{'exons'}[0][0]->slice->end + 1;
       }
-      foreach my $exon ( @{$transobj->{'exons'}}) {
+      foreach my $exon_ref ( @{$transobj->{'exons'}}) {
+        my $exon = $exon_ref->[0];
         my $exon_stable_id = $exon->stable_id;
         my $slice_name = $exon->slice->seq_region_name.':'.$exon->slice->start.','.$exon->slice->end.':'.$exon->slice->strand;
         unless( exists $features{$slice_name} ) {
@@ -236,37 +240,43 @@ warn "$gsi.......................";
         if( defined $coding_region_start ) {
           my $exon_coding_start;
           my $exon_coding_end;
+          my $target_start;
+          my $target_end;
           if( $exon->strand > 0 ) {
             if( $exon_start < $coding_region_end && $exon_end > $coding_region_start ) {
               $exon_coding_start = $exon_start < $coding_region_start ? $coding_region_start : $exon_start;
               $exon_coding_end   = $exon_end   > $coding_region_end   ? $coding_region_end   : $exon_end;
-              if( $exon_start < $exon_coding_start ) {
-                push @sub_exons, [ "5'UTR", $exon_start, $exon_coding_start - 1 ];
-              }
+              $target_start      = $exon_start < $coding_region_start ? $coding_region_start - $exon_start + $exon_ref->[1] : $exon_ref->[1];
+              $target_end        = $exon_end   > $coding_region_end   ? $coding_region_end   - $exon_start + $exon_ref->[1] : $exon_ref->[2];
               if( $exon_end > $exon_coding_end ) {
-                push @sub_exons, [ "3'UTR", $exon_coding_end+1, $exon_end       ];
+                push @sub_exons, [ "3'UTR", $exon_coding_end+1, $exon_end      , $target_end +1, $exon_ref->[2]  ];
               }
-              push @sub_exons, [ "coding", $exon_coding_start, $exon_coding_end ];
+              push @sub_exons, [ "coding", $exon_coding_start, $exon_coding_end, $target_start, $target_end ];
+              if( $exon_start < $exon_coding_start ) {
+                push @sub_exons, [ "5'UTR", $exon_start, $exon_coding_start - 1, $exon_ref->[1], $target_start - 1 ];
+              }
             } elsif( $exon_end < $coding_region_start ) {
-              push @sub_exons, [ "5'UTR", $exon_start, $exon_end ];
+              push @sub_exons, [ "5'UTR", $exon_start, $exon_end,                $exon_ref->[1], $exon_ref->[2] ];
             } else {
-              push @sub_exons, [ "3'UTR", $exon_start, $exon_end ];
+              push @sub_exons, [ "3'UTR", $exon_start, $exon_end,                $exon_ref->[1], $exon_ref->[2] ];
             }
           } else {
             if( $exon_start < $coding_region_end && $exon_end > $coding_region_start ) {
               $exon_coding_start = $exon_start < $coding_region_start ? $coding_region_start : $exon_start;
               $exon_coding_end   = $exon_end   > $coding_region_end   ? $coding_region_end   : $exon_end;
-              if( $exon_start < $exon_coding_start ) {
-                push @sub_exons, [ "5'UTR", $exon_start, $exon_coding_start - 1 ];
-              }
+              $target_start      = $exon_start < $coding_region_start ? $coding_region_start - $exon_start + $exon_ref->[1] : $exon_ref->[1];
+              $target_end        = $exon_end   > $coding_region_end   ? $coding_region_end   - $exon_start + $exon_ref->[1] : $exon_ref->[2];
               if( $exon_end > $exon_coding_end ) {
-                push @sub_exons, [ "3'UTR", $exon_coding_end+1, $exon_end       ];
+                push @sub_exons, [ "3'UTR", $exon_coding_end+1, $exon_end      , $exon_ref->[1], $target_start - 1  ];
               }
-              push @sub_exons, [ "coding", $exon_coding_start, $exon_coding_end ];
+              push @sub_exons, [ "coding", $exon_coding_start, $exon_coding_end, $target_start, $target_end ];
+              if( $exon_start < $exon_coding_start ) {
+                push @sub_exons, [ "5'UTR", $exon_start, $exon_coding_start - 1, $target_end+1, $exon_ref->[2] ];
+              }
             } elsif( $exon_end < $coding_region_start ) {
-              push @sub_exons, [ "5'UTR", $exon_start, $exon_end ];
+              push @sub_exons, [ "5'UTR", $exon_start, $exon_end,                $exon_ref->[1], $exon_ref->[2] ];
             } else {
-              push @sub_exons, [ "3'UTR", $exon_start, $exon_end ];
+              push @sub_exons, [ "3'UTR", $exon_start, $exon_end,                $exon_ref->[1], $exon_ref->[2] ];
             }
           }
         } else { 
@@ -281,7 +291,12 @@ warn "$gsi.......................";
             'START'       => $se->[1], # $slice_hack{$slice_name}[0] * $se->[1] + $slice_hack{$slice_name}[1],
             'END'         => $se->[2], # $slice_hack{$slice_name}[0] * $se->[2] + $slice_hack{$slice_name}[1],
             'ORIENTATION' => $self->ori($exon->strand), # slice_hack{$slice_name}[0] * $exon->strand > 0 ? '+' : '-',
-            'GROUP'       => [$transcript_group]
+            'GROUP'       => [$transcript_group],
+            'TARGET'      => {
+              'ID'    => $transcript_stable_id,
+              'START' => $se->[3], 
+              'STOP'  => $se->[4]
+            }
           };
         }
       }
@@ -290,6 +305,19 @@ warn "$gsi.......................";
 ## Return the reference to an array of the slice specific hashes.
   push @features, values %features;
   return \@features;
+}
+
+sub _group_info {
+  my( $self, $transcript, $gene, $db ) = @_;
+  return
+    'LINK' => [ { 'text' => 'e! TransView '.$transcript->stable_id ,
+                  'href' => sprintf( $self->{'templates'}{'transview_URL'}, $transcript->stable_id, $db ) },
+                { 'text' => 'e! GeneView '. $gene->stable_id, 
+                  'href' => sprintf( $self->{'templates'}{'geneview_URL'},  $gene->stable_id,       $db ) },
+  $transcript->translation ?
+                { 'text' => 'e! ProtView '.$transcript->translation->stable_id,
+                  'href' => sprintf( $self->{'templates'}{'protview_URL'}, $transcript->translation->stable_id, $db ) } : ()
+    ];
 }
 
 sub Stylesheet {
@@ -310,7 +338,9 @@ sub Stylesheet {
     $stylesheet_structure->{"3'UTR"}{$exon_key}=
     $stylesheet_structure->{"5'UTR"}{$exon_key}=
     $stylesheet_structure->{"non_coding"}{$exon_key}=
-      [{ 'type' => 'box', 'attrs' => { 'FGCOLOR' => $colour, 'BGCOLOR' => 'white', 'HEIGHT' => 6  } }];
+      [{ 'type' => 'box', 'attrs' => { 'FGCOLOR' => $colour, 'BGCOLOR' => 'white', 'HEIGHT' => 6  } },
+       { 'type' => 'box', 'attrs' => { 'FGCOLOR' => $colour, 'BGCOLOR' => 'white', 'HEIGHT' => 3  } },
+      ];
     $stylesheet_structure->{"coding"}{$exon_key}=
       [{ 'type' => 'box', 'attrs' => { 'BGCOLOR' => $colour, 'FGCOLOR' => $colour, 'HEIGHT' => 10  } }];
     $stylesheet_structure->{"group"}{$trans_key}=
