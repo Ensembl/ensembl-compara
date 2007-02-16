@@ -68,6 +68,8 @@ cd ~/src/ensembl_main/ensembl-compara/sql
 mysql -h ia64g -P3306 -uensadmin -pxxxx abel_compara_human_cow_blastz_27 < table.sql
 mysql -h ia64g -P3306 -uensadmin -pxxxx abel_compara_human_cow_blastz_27 < pipeline-tables.sql
 
+
+
 3- Choose a working directory with some disk space
    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 The pair aligner pipeline tries to minize the amount of output data for workers. But if 
@@ -98,7 +100,14 @@ you may need to change the database names, port, dbnames, and the
 paths to the 'hive_output_dir' to
 /acari/work7a/abel/hive/abel_compara_human_cow_blastz_27/workers
 
-5- Run the configure scripts
+5- Copy data from the master and an old database (eg. previous release) into the new database
+   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+cd ~/src/ensembl_main/ensembl-compara/scripts/pipeline  
+
+populate_new_database.pl --master compara_master --old compara_XX --new abel_compara_human_cow_blastz_27 
+
+6- Run the configure scripts
    ~~~~~~~~~~~~~~~~~~~~~~~~~
 The following scripts are in ensembl-compara/scripts/pipeline (should be in your PATH)
 The order of execution is important
@@ -125,7 +134,7 @@ it's unable to connect to core databases.
 At this point the system is ready to run
 
 
-6- Run the beekeeper
+7- Run the beekeeper
    ~~~~~~~~~~~~~~~~~
 The following scripts are in ensembl-hive/scripts (should be in your PATH)
 beekeeper.pl -url mysql://ensadmin:xxxx@ia64g:3306/abel_compara_human_cow_blastz_27 -loop
