@@ -903,7 +903,7 @@ sub das_wizard_3 {
 
   $option = lc($das_conf->{score} || 'n');
   my @scvalues;
-  my @ctypes = ( 'n' => 'No chart', 'h' => 'Histogram', 's' => 'Tiling Array','c' => 'Colour gradient' );
+  my @ctypes = ( 'n' => 'No chart', 'h' => 'Histogram', 's' => 'Tiling Array', 'c' => 'Colour gradient', 'p' => 'Plot' );
 
   do {
     my $id = shift @ctypes;
