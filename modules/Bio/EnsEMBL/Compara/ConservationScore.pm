@@ -181,6 +181,24 @@ sub new {
     return $self;
 }
 
+=head2 new_fast
+
+  Arg [1]    : hash reference $hashref
+  Example    : none
+  Description: This is an ultra fast constructor which requires knowledge of
+               the objects internals to be used.
+  Returntype :
+  Exceptions : none
+  Caller     :
+
+=cut
+
+sub new_fast {
+  my ($class, $hashref) = @_;
+
+  return bless $hashref, $class;
+}
+
 =head2 adaptor
 
   Arg [1]    : Bio::EnsEMBL::DBSQL::ConservationScoreAdaptor $adaptor

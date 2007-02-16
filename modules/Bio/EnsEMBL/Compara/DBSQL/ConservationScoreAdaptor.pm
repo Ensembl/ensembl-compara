@@ -1235,15 +1235,15 @@ sub _add_to_bucket {
     #if (defined $final_diff_score) {
     if ($filled_bucket) {
 
-	my $aligned_score = new Bio::EnsEMBL::Compara::ConservationScore(
-		      -adaptor => $self,
-		      -genomic_align_block_id => $genomic_align_block_id,
-		      -window_size => $win_size,
-		      -position => $p,
-		      -seq_region_pos => $s,
-		      -diff_score => $final_diff_score,
-		      -observed_score => $final_obs_score,
-		      -expected_score => $final_exp_score,
+	my $aligned_score = Bio::EnsEMBL::Compara::ConservationScore->new_fast(
+		      {'adaptor' => $self,
+		      'genomic_align_block_id' => $genomic_align_block_id,
+		      'window_size' => $win_size,
+		      'position' => ($p or 1),
+		      'seq_region_pos' => $s,
+		      'diff_score' => $final_diff_score,
+		      'observed_score' => $final_obs_score,
+		      'expected_score' => $final_exp_score}
 		      );
 	$_bucket->{obs_score} = 0;
 	$_bucket->{exp_score} = 0;
