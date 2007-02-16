@@ -253,11 +253,13 @@ sub seq_region {
  ### Returns  1
   my ( $panel, $object ) = @_;
   my $label = 'Sequence region';
-  my $alleles = $object->alleles;
-  my $ambig_code = $object->vari->ambig_code;
+  my $status   = 'status_ambig_sequence';
+  my $URL = _flip_URL( $object, $status );
+  if( $object->param( $status ) eq 'off' ) { $panel->add_row( $label, '', "$URL=on" ); return 0; }
 
+  my $ambig_code = $object->vari->ambig_code;
   unless ($ambig_code) {
-    $ambig_code = "[".$alleles."]";
+    $ambig_code = "[".$object->alleles."]";
   }
   my $downstream = $object->flanking_seq("down");
 
@@ -270,6 +272,7 @@ sub seq_region {
   $panel->add_row($label, "<pre>$html</pre>");
   return 1;
 }
+
 
 
 # Population genotype table and Allele Frequency Table ######################
@@ -394,12 +397,16 @@ sub mappings {
   my ( $panel, $object, $view ) = @_;
   $view ||= "snpview";
   my %mappings = %{ $object->variation_feature_mapping };
+
   return [] unless keys %mappings;
+
   my $source = $object->source;
 
   my @table_header;
   my $flag_multi_hits = keys %mappings >1 ? 1: 0;
-  my $tsv_species =  ($object->species_defs->VARIATION_STRAIN &&  $object->get_db eq 'core') ? 1 : 0; 
+  my $tsv_species =  ($object->species_defs->VARIATION_STRAIN &&  $object->species_defs->get_db eq 'core') ? 1 : 0;
+
+  my $gene_adaptor = $object->database('core')->get_GeneAdaptor();
   foreach my $varif_id (keys %mappings) {
     my %chr_info;
     my $region = $mappings{$varif_id}{Chr};
@@ -429,8 +436,12 @@ sub mappings {
       next;
     }
     foreach my $transcript_data (@transcript_variation_data ) {
+      my $gene = $gene_adaptor->fetch_by_transcript_stable_id($transcript_data->{transcriptname});
+      my $gene_name = $gene->stable_id if $gene;
+
+      my $gene_link = qq(<a href='geneview?gene=$gene_name'>$gene_name</a>);
       my $transcript_link = qq(<a href='transview?transcript=$transcript_data->{transcriptname}'>$transcript_data->{transcriptname}</a>);
-      my $genesnpview = qq(<a href="genesnpview?transcript=$transcript_data->{transcriptname}">View in gene context</a>);
+      my $genesnpview = qq(<a href="genesnpview?transcript=$transcript_data->{transcriptname}">SNPs in gene context</a>);
       my $protein_link = qq(<a href='protview?transcript=$transcript_data->{transcriptname}'>$transcript_data->{proteinname}</a>);
 
       my $transcript_coords = _sort_start_end(
@@ -442,7 +453,8 @@ sub mappings {
 			"conseq"     => $transcript_data->{conseq},
 			"transcript" => "$transcript_link:$transcript_coords",
 		       );
-      $trans_info{'genesnpview'} = "$genesnpview";
+      $trans_info{'genesnpview'} = $genesnpview;
+      $trans_info{'geneview'} = $gene_link if $gene_link;
 
       if ($transcript_data->{'proteinname'}) {
 	$trans_info{'translation'} = "$protein_link:$translation_coords";
@@ -460,11 +472,12 @@ sub mappings {
       $panel->add_row({ %chr_info, %trans_info});
 
       unless (@table_header) {
-	push (@table_header, {key => 'transcript', title => 'Transcript: relative SNP position&nbsp;'}, );
-	push @table_header, {key => 'translation', title => 'Translation: relative SNP position&nbsp;'} if $transcript_data->{'proteinname'} ;
-	push @table_header, {key => 'pepallele',   title =>'Amino Acid&nbsp;'} if $transcript_data->{'pepallele'} ;
+	push (@table_header, {key => 'geneview', title => 'Gene'}, ) if $gene_link;
+	push (@table_header, {key => 'transcript', title => 'Transcript<br />relative SNP position'}, );
+	push @table_header, {key => 'translation', title => 'Translation<br />relative SNP position'} if $transcript_data->{'proteinname'} ;
+	push @table_header, {key => 'pepallele',   title =>'AA'} if $transcript_data->{'pepallele'} ;
 	push (@table_header, {key => 'conseq', title =>'Type'});
-        push (@table_header, {key => 'genesnpview', title => 'GeneSNPView link&nbsp;'},) ;
+        push (@table_header, {key => 'genesnpview', title => 'GeneSNPView'},) ;
         push (@table_header, {key => 'transcriptsnpview', title => 'TranscriptSNPView link&nbsp;'},)  if $tsv_species;
       }
       %chr_info = ();
@@ -792,6 +805,11 @@ sub _ld_populations {
   return \%pops;
 }
 
+
+sub _flip_URL {
+  my( $object, $code ) = @_;
+  return sprintf '/%s/%s?snp=%s;db=%s;%s', $object->species, $object->script, $object->name, $object->param('source'), $code;
+}
 
 1;
 
