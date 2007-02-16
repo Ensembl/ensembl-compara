@@ -4,6 +4,7 @@ use Exporter;
 use Sanger::Graphics::GlyphSet;
 use Sanger::Graphics::Glyph::Rect;
 use Sanger::Graphics::Glyph::Text;
+use Bio::EnsEMBL::Glyph::Symbol::line;
 use Bio::EnsEMBL::Utils::Eprof qw(eprof_start eprof_end eprof_dump);
 use GD;
 use GD::Text;
@@ -398,5 +399,125 @@ sub get_symbol {
   return $glyph_symbol->new($featuredata, $styleattrs);
 }
 
+# Function will display DAS features with variable y-offset depending on SCORE attribute
+# Similar to tiling array but allows for multiple types to be drawn side-by side 
+# when 2 or more features are merged due to resolution the highest score will be used to determine the feature height
+
+sub RENDER_plot{
+  my( $self, $configuration ) = @_;
+
+  my @features = sort { $a->das_score <=> $b->das_score  } @{$configuration->{'features'}};
+  return unless @features;
+
+  my ($min_score, $max_score) = ($features[0]->das_score || 0, $features[-1]->das_score || 0);
+  my $style;
+
+  my $row_height = $configuration->{'h'} || 30;
+  my $pix_per_score = (abs($max_score) >  abs($min_score) ? abs($max_score) : abs($min_score)) / $row_height;
+  my $bp_per_pix = 1 / $self->{pix_per_bp};
+  $configuration->{h} = $row_height;
+
+  my ($gScore, $gWidth, $fCount, $gStart, $mScore) = (0, 0, 0, 0, $min_score);
+
+# Draw the axis
+  $self->push( new Sanger::Graphics::Glyph::Line({
+    'x'         => 0,
+    'y'         => $row_height + 1,
+    'width'     => $configuration->{'length'},
+    'height'    => 0,
+    'absolutey' => 1,
+    'colour'    => 'black',
+    'dotted'    => 1,
+  }));
+
+  $self->push( new Sanger::Graphics::Glyph::Line({
+    'x'         => 0,
+    'y'         => 0,
+    'width'     => 0,
+    'height'    => $row_height * 2 + 1,
+    'absolutey' => 1,
+    'absolutex' => 1,
+    'colour'    => 'black',
+    'dotted'    => 1,
+  }));
+
+  $self->push( new Sanger::Graphics::Glyph::Text({
+    'text'      => $max_score,
+    'height'    => $self->{'textheight_i'},
+    'font'      => $self->{'fontname_i'},
+    'ptsize'    => $self->{'fontsize_i'},
+    'halign'    => 'left',
+    'colour'    => 'black',
+    'y'         => 1,
+    'x'         => 3,
+    'absolutey' => 1,
+    'absolutex' => 1,
+  }) );
+
+
+  my $pX = -1;
+  my $pY = -1;
+
+  foreach my $f (sort { ($a->das_type cmp $b->das_type) * 10 + ($a->das_start <=> $b->das_start)} @features) {
+    my $START = $f->das_start() < 1 ? 1 : $f->das_start();
+    my $END   = $f->das_end()   > $configuration->{'length'}  ? $configuration->{'length'} : $f->das_end();
+    my $width = ($END - $START +1);
+    my $score = $f->das_score || 0;
+
+    my $Composite = new Sanger::Graphics::Glyph::Composite({
+      'y'         => 0,
+      'x'         => $START-1,
+      'absolutey' => 1,
+    });
+    my $height = abs($score) / $pix_per_score;
+    my $y_offset =     ($score > 0) ?  $row_height - $height : $row_height+2;
+    $y_offset-- if (! $score);
+#warn  join (' * ', $START, $score, $y_offset, "\n");
+    my $zmenu = $self->zmenu( $f );
+    $Composite->{'zmenu'} = $zmenu;
+
+    # make clickable box to anchor zmenu
+    $Composite->push( new Sanger::Graphics::Glyph::Space({
+      'x'         => $START - 1,
+      'y'         => ($score ? (($score > 0) ? 0 : ($row_height + 2)) : ($row_height + 1)),
+      'width'     => $width,
+      'height'    => 2, #$score ? $row_height : 1,
+      'absolutey' => 1
+    }) );
+
+    my $style = $self->get_featurestyle($f, $configuration);
+    my $fdata = $self->get_featuredata($f, $configuration, $y_offset);
+
+$fdata->{'height'} = 1;
+#    my $symbol2 = Bio::EnsEMBL::Glyph::Symbol::box->new($fdata, $style->{'attrs'});
+    my $symbol = Bio::EnsEMBL::Glyph::Symbol::line->new($fdata, $style->{'attrs'});
+#    my $symbol = $self->get_symbol($style, $fdata, $y_offset);
+#    $height = 0;
+#    $symbol->{'style'}->{'height'} = $row_height;
+#    $symbol->{'style'}->{'absolutey'} = 1;
+#warn Data::Dumper::Dumper($symbol);
+
+    $Composite->push($symbol->draw);
+   my $hh = int(abs($y_offset - $pY));
+    if (($START  == $pX) && ($hh > 1) ) { 
+# warn ( join (' * ', 'S', $START, $score, $pY, $y_offset, $hh));
+      $Composite->push( new Sanger::Graphics::Glyph::Line({
+        'x'         => $START - 1,
+      	'y'         =>  $y_offset > $pY ? $pY : $y_offset, #($score ? (($score > 0) ? 1 : ($row_height + 2)) : ($row_height + 1)),
+        'width'     => 2,
+        'height'    => $hh ,#20, #$score ? $row_height : 1,
+'colour' => $symbol->{'style'}->{'colour'},
+        'absolutey' => 1,
+      }) );
+    }
+    $pX = $END;
+    $pY = $y_offset;
+
+    $self->push( $Composite );
+  } # END loop over features
+
+ return 1;
+}   # END RENDER_plot
 
 1;
+
