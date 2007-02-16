@@ -32,7 +32,7 @@ sub new {
     $exportURL .= ";method=$aID;s=".join(',', @species);
 
     my $exports = { 
-		    fasta  => { text  => 'FASTA',
+		    fasta  => { text  => 'Alignment',
 				url   => "$exportURL&format=fasta",
 				avail => 1 },
 
