@@ -1243,6 +1243,23 @@ TABLE METHOD_LINK
     </tr>
 
 
+    <tr>
+
+
+      <td>class</td>
+
+
+      <td>varchar(50)</td>
+
+
+      <td></td>
+
+
+      <td></td>
+
+
+      <td>Description of data associated with the \"type\" field</td>
+
   
   </tbody>
 </table>
@@ -1251,7 +1268,7 @@ TABLE METHOD_LINK
 <p>Current values are:</p>
 
 
-<pre>mysql&gt; SELECT * FROM method_link;<br>+----------------+----------------------+<br>| method_link_id | type |<br>+----------------+----------------------+<br>| 1 | BLASTZ_NET |<br>| 2 | BLASTZ_NET_TIGHT |<br>| 3 | BLASTZ_RECIP_NET |<br>| 4 | PHUSION_BLASTN |<br>| 5 | PHUSION_BLASTN_TIGHT |<br>| 6 | TRANSLATED_BLAT |<br>| 7 | BLASTZ_GROUP |<br>| 8 | BLASTZ_GROUP_TIGHT |<br>| 9 | MLAGAN |<br>| 101 | SYNTENY |<br>| 201 | ENSEMBL_ORTHOLOGUES |<br>| 202 | ENSEMBL_PARALOGUES |<br>| 204 | ENSEMBL_HOMOLOGUES |<br>| 301 | FAMILY |<br>| 401 | PROTEIN_TREES |<br>+----------------+----------------------+<br></pre>
+<pre>mysql&gt; SELECT * FROM method_link;<br>+----------------+--------------------------+---------------------------------------+<br>| method_link_id | type                     | class                                 |<br>+----------------+--------------------------+---------------------------------------+<br>|              1 | BLASTZ_NET               | GenomicAlignBlock.pairwise_alignment  |<br>|              2 | BLASTZ_NET_TIGHT         | GenomicAlignBlock.pairwise_alignment  |<br>|              3 | BLASTZ_RECIP_NET         | GenomicAlignBlock.pairwise_alignment  |<br>|              4 | PHUSION_BLASTN           | GenomicAlignBlock.pairwise_alignment  |<br>|              5 | PHUSION_BLASTN_TIGHT     | GenomicAlignBlock.pairwise_alignment  |<br>|              6 | TRANSLATED_BLAT          | GenomicAlignBlock.pairwise_alignment  |<br>|              7 | BLASTZ_GROUP             | GenomicAlignBlock.pairwise_alignment  |<br>|              8 | BLASTZ_GROUP_TIGHT       | GenomicAlignBlock.pairwise_alignment  |<br>|            101 | SYNTENY                  | SyntenyRegion.synteny                 |<br>|            201 | ENSEMBL_ORTHOLOGUES      | Homology.homology                     |<br>|            202 | ENSEMBL_PARALOGUES       | Homology.homology                     |<br>|            301 | FAMILY                   | Family.family                         |<br>|              9 | MLAGAN                   | GenomicAlignBlock.multiple_alignment  |<br>|            401 | PROTEIN_TREES            | ProteinTree.protein_tree_node         |<br>|            204 | ENSEMBL_HOMOLOGUES       | Homology.homology                     |<br>|             10 | PECAN                    | GenomicAlignBlock.multiple_alignment  |<br>|             11 | GERP_CONSTRAINED_ELEMENT | GenomicAlignBlock.constrained_element |<br>|            501 | GERP_CONSERVATION_SCORE  | ConservationScore.conservation_score  |<br>+----------------+--------------------------+---------------------------------------+</pre>
 
 
 <p>We use method_link_ids between 1 and 100 for DNA-DNA
