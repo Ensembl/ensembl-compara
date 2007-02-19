@@ -115,6 +115,9 @@ perl create_mlss_table.pl
         the Bio::EnsEMBL::Registry configuration file. If none given,
         the one set in ENSEMBL_REGISTRY will be used if
         defined, if not ~/.ensembl_init will be used.
+    [--reg_url database_url]
+        the url for the database. Registry will be loaded automatically
+        from this database
     [--dbname compara_db_name]
         the name of compara DB in the registry_configuration_file or
         any of its aliases. Uses "compara" by default.
@@ -135,6 +138,7 @@ perl create_mlss_table.pl
 use strict;
 use Getopt::Long;
 my $reg_conf;
+my $reg_url;
 my $dbname = "compara";
 my $method_link_type = undef;
 my $list = undef;
@@ -147,6 +151,7 @@ my $help;
 GetOptions(
     "help" => \$help,
     "reg_conf=s" => \$reg_conf,
+    "reg_url=s" => \$reg_url,
     "dbname=s" => \$dbname,
     "method_link_type=s@" => \$method_link_type,
     "list" => \$list,
@@ -167,9 +172,12 @@ if ($output_file) {
 }
 
 # Configure the Bio::EnsEMBL::Registry
-# Uses $reg_conf if supplied. Uses ENV{ENSMEBL_REGISTRY} instead if defined. Uses ~/.ensembl_init
-# if all the previous fail.
-if ($reg_conf) {
+if ($reg_url) {
+  eval{ require Bio::EnsEMBL::Registry };
+  Bio::EnsEMBL::Registry->load_registry_from_url($reg_url);
+} elsif ($reg_conf) {
+  # Uses $reg_conf if supplied. Uses ENV{ENSMEBL_REGISTRY} instead if defined. Uses ~/.ensembl_init
+  # if all the previous fail.
   eval{ require Bio::EnsEMBL::Registry };
   Bio::EnsEMBL::Registry->load_all($reg_conf);
 }
@@ -220,6 +228,21 @@ if ($method_link_type) {
   }
 } else {
   $all_method_link_species_sets = $method_link_species_set_adaptor->fetch_all();
+}
+
+foreach my $this_method_link_species_set (@$all_method_link_species_sets) {
+  foreach my $this_species (@{$this_method_link_species_set->species_set}) {
+    next if ($this_species->{_found});
+    foreach my $this_known_species (@$species) {
+      if ($this_known_species->{long_name} eq $this_species->name) {
+        $this_species->{_found} = 1;
+        last;
+      }
+    }
+    if (!defined($this_species->{_found})) {
+      die $this_species->name." has not been configured!";
+    }
+  }
 }
 
 
