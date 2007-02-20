@@ -55,7 +55,6 @@ sub _init {
       next if $drawn_flag{ 'block_features' };
 
       if ( $self->wiggle_plot($dataset) ) {
-	warn "in here";
 	$drawn_flag{ 'wiggle' } = 1;
 	$self->render_space_glyph();
       }
