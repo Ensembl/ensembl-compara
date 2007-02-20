@@ -8,17 +8,48 @@ use Bio::EnsEMBL::Utils::Eprof qw(eprof_start eprof_end eprof_dump);
 @ISA = qw(Bio::EnsEMBL::GlyphSet);
 use Data::Dumper;
 
+# Vars
+my $block_name  = "predicted features";
+my $wiggle_name = "tiling array data";
+my $db_type     = "funcgen";
+my $track_name  = "Histone mod.";
+
+
+sub get_block_features {
+  my ($self, $db, $slice) = @_;
+  unless ( $self->{'block_features'} ) {
+    my $feature_adaptor = $db->get_DataSetAdaptor();
+    if (!$feature_adaptor) {
+      warn ("Cannot get get adaptors: $feature_adaptor");
+      return [];
+    }
+    my $features = $feature_adaptor->fetch_all_displayable() || [] ;
+    $self->{'block_features'} = $features;
+  }
+
+  my $colour = "blue";
+  return ( $self->{'block_features'}, $colour);
+}
+
+sub get_wiggle_features {
+  my ($self, $db, $slice) = @_;
+  my ($features) = $self->get_block_features($db, $slice);
+  my $colour     = "contigblue1";
+  return ($features, $colour);
+}
+
+
+#-------------------------------------------------------------------------
 sub init_label {
 
   ### Returns (string) the label for the track
 
   my $self = shift;
   my $HELP_LINK = $self->check();
-  $self->init_label_text( "Histone mod.",$HELP_LINK );
+  $self->init_label_text( $track_name, $HELP_LINK );
   $self->bumped( $self->{'config'}->get($HELP_LINK, 'compact') ? 'no' : 'yes' );
   return;
 }
-
 
 sub _init {
   my ($self) = @_;
@@ -28,56 +59,49 @@ sub _init {
   my $max_length     = $self->{'config'}->get( $self->check(), 'threshold' )  || 500;
   my $slice_length  = $slice->length;
   if($slice_length > $max_length*1010) {
-    my $height = $self->errorTrack('Tiling array data only displayed for less than '.$max_length.'Kb');
+    my $height = $self->errorTrack("$wiggle_name only displayed for less than $max_length Kb");
     $self->_offset($height+4);
     return;
   }
 
-  my $db = $slice->adaptor->db->get_db_adaptor('funcgen');
+  my $db = $slice->adaptor->db->get_db_adaptor($db_type);
   if(!$db) {
-    warn('Cannot connect to funcgen db');
+    warn("Cannot connect to $db_type db");
     return [];
   }
 
-
-  my $dataset_adaptor            = $db->get_DataSetAdaptor();
-  if (!$dataset_adaptor) {
-    warn ("Cannot get get adaptors: $dataset_adaptor");
-    return [];
-  }
+  my ($block_features, $block_colour) = $self->get_block_features($db, $slice);
 
   my %drawn_flag;
-  foreach my $dataset  (@{  $dataset_adaptor->fetch_all_displayable() || [] } ){
+  $drawn_flag{ 'wiggle' } = 1 if $self->my_config('compact');
 
-    if ($self->my_config('compact')) {
+  foreach my $feature  (@$block_features ){
+    $drawn_flag{ 'block_features' } = 1 if $self->block_features($feature, $block_colour);
+  }
+
+  # If no blocks are drawn or on expand mode: draw wiggles
+  if ( !$drawn_flag{ 'block_features' } or ! $self->my_config('compact') ) {
+    my ($wiggle_features, $wiggle_colour) = $self->get_wiggle_features($db, $slice);
+
+    foreach my $feature  (@$wiggle_features ){
+      next unless $self->wiggle_plot($feature, $wiggle_colour);
       $drawn_flag{ 'wiggle' } = 1;
-      $drawn_flag{ 'block_features' } = 1 if $self->block_features($dataset);    # do just blue track    
-      next if $drawn_flag{ 'block_features' };
-
-      if ( $self->wiggle_plot($dataset) ) {
-	$drawn_flag{ 'wiggle' } = 1;
-	$self->render_space_glyph();
-      }
-      next;
+      $self->render_space_glyph();
     }
-
-    $drawn_flag{ 'block_features' } = 1 if $self->block_features($dataset);    # do just blue track    
-    $drawn_flag{ 'wiggle' } = 1 if $self->wiggle_plot($dataset) ;
-  } # end foreach dataset
-
+  }
 
   return if $drawn_flag{'wiggle'} && $drawn_flag{'block_features'};
 
   # If both wiggle and predicted features tracks aren't drawn in expanded mode..
   my $error;
   if (!$drawn_flag{'block_features'}  && !$drawn_flag{'wiggle'}) {
-    $error = "predicted features or tiling array data";
+    $error = "$block_name or $wiggle_name";
   }
   elsif (!$drawn_flag{'block_features'}) {
-    $error = "predicted features";
+    $error = $block_name;
   }
   elsif (!$drawn_flag{'wiggle'}) {
-    $error = "tiling array data";
+    $error = $wiggle_name;
   }
 
   my $height = $self->errorTrack( "No $error in this region", 0, $self->_offset ) if $self->{'config'}->get('_settings','opt_empty_tracks')==1;
@@ -93,12 +117,12 @@ sub wiggle_plot {
   ### Description: draws wiggle plot using the score of the features
   ### Returns 1 if draws wiggles. Returns 0 if no wiggles drawn
 
-  my( $self, $dataset ) = @_;
+  my( $self, $feature, $colour ) = @_;
 
   my $drawn_wiggle_flag = 0;
   my $slice = $self->{'container'};
 
-  foreach my $result_set  (  @{ $dataset->get_displayable_ResultSets() } ){   
+  foreach my $result_set  (  @{ $feature->get_displayable_ResultSets() } ){   
 
     #get features for slice and experimtenal chip set
     my @features = @{ $result_set->get_displayable_ResultFeatures_by_Slice($slice) };
@@ -109,7 +133,6 @@ sub wiggle_plot {
     my ($min_score, $max_score) = ($features[0]->score || 0, $features[-1]->score|| 0);
 
     my $row_height = 60;
-    my $colour     = "contigblue1";
     my $offset     = $self->_offset();
     my $P_MAX = $max_score > 0 ? $max_score : 0;
     my $N_MIN = $min_score < 0 ? $min_score : 0;
@@ -243,10 +266,9 @@ sub wiggle_plot {
 
 
 sub block_features {
-  my ($self, $dataset) = @_;
-  my $colour = "blue";
+  my ($self, $feature, $colour) = @_;
   my $drawn_flag = 0;
-  foreach my $fset ( @{ $dataset->get_displayable_FeatureSets() }){
+  foreach my $fset ( @{ $feature->get_displayable_FeatureSets() }){
     my $display_label = $fset->display_label();
     my $features = $fset->get_PredictedFeatures_by_Slice($self->{'container'} ) ;
     next unless @$features;
