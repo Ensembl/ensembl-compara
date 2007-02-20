@@ -51,27 +51,30 @@ sub _init {
 
     if ($self->my_config('compact')) {
       $drawn_flag{ 'wiggle' } = 1;
-      $drawn_flag{ 'predicted_features' } = 1 if $self->pred_features($dataset);    # do just blue track    
-      next if $drawn_flag{ 'predicted_features' };
+      $drawn_flag{ 'block_features' } = 1 if $self->block_features($dataset);    # do just blue track    
+      next if $drawn_flag{ 'block_features' };
 
-      $drawn_flag{ 'wiggle' } = 1 if  $self->wiggle_plot($dataset);
-      $self->render_space_glyph();
+      if ( $self->wiggle_plot($dataset) ) {
+	warn "in here";
+	$drawn_flag{ 'wiggle' } = 1;
+	$self->render_space_glyph();
+      }
       next;
     }
 
-    $drawn_flag{ 'predicted_features' } = 1 if $self->pred_features($dataset);    # do just blue track    
+    $drawn_flag{ 'block_features' } = 1 if $self->block_features($dataset);    # do just blue track    
     $drawn_flag{ 'wiggle' } = 1 if $self->wiggle_plot($dataset) ;
   } # end foreach dataset
 
 
-  return if $drawn_flag{'wiggle'} && $drawn_flag{'predicted_features'};
+  return if $drawn_flag{'wiggle'} && $drawn_flag{'block_features'};
 
   # If both wiggle and predicted features tracks aren't drawn in expanded mode..
   my $error;
-  if (!$drawn_flag{'predicted_features'}  && !$drawn_flag{'wiggle'}) {
+  if (!$drawn_flag{'block_features'}  && !$drawn_flag{'wiggle'}) {
     $error = "predicted features or tiling array data";
   }
-  elsif (!$drawn_flag{'predicted_features'}) {
+  elsif (!$drawn_flag{'block_features'}) {
     $error = "predicted features";
   }
   elsif (!$drawn_flag{'wiggle'}) {
@@ -240,7 +243,7 @@ sub wiggle_plot {
 }
 
 
-sub pred_features {
+sub block_features {
   my ($self, $dataset) = @_;
   my $colour = "blue";
   my $drawn_flag = 0;
@@ -249,17 +252,17 @@ sub pred_features {
     my $features = $fset->get_PredictedFeatures_by_Slice($self->{'container'} ) ;
     next unless @$features;
     $drawn_flag = 1;
-    $self->render_predicted_features( $features, $colour );
+    $self->render_block_features( $features, $colour );
     $self->render_track_name($display_label, $colour);
   }
 
-  $self->render_space_glyph();
+  $self->render_space_glyph() if $drawn_flag;
   return $drawn_flag;
 }
 
 
 
-sub render_predicted_features {
+sub render_block_features {
 
   ### Predicted features
   ### Draws the predicted features track
@@ -281,7 +284,7 @@ sub render_predicted_features {
       'width'     => $end - $start,
       'absolutey' => 1,          # in pix rather than bp
       'colour'    => $colour,
-      'zmenu'     => $self->predicted_features_zmenu($f),
+      'zmenu'     => $self->block_features_zmenu($f),
     });
     $self->push( $Glyph );
   }
@@ -290,7 +293,7 @@ sub render_predicted_features {
 }
 
 
-sub predicted_features_zmenu {
+sub block_features_zmenu {
 
   ### Predicted features
   ### Creates zmenu for predicted features track
@@ -351,6 +354,7 @@ sub render_space_glyph {
 
   my ($self, $space) = @_;
   $space ||= 9;
+
   $self->push( new Sanger::Graphics::Glyph::Space({
     'height'    => $space,
     'width'     => 1,
