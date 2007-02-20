@@ -533,15 +533,15 @@ sub _fetch_all_by_GenomicAlignBlockId_WindowSize {
 	    $diff_scores = $values[5];
 	}
 
-	$conservation_score = new Bio::EnsEMBL::Compara::ConservationScore(
-				        -adaptor => $self,
-					-genomic_align_block_id => $values[0],
-					-window_size => $values[1],
-					-position => $values[2],
-					-observed_score => $obs_scores,
-					-expected_score => $exp_scores,
-					-diff_score => $diff_scores,
-					-packed => $packed);
+	$conservation_score = Bio::EnsEMBL::Compara::ConservationScore->new_fast(
+				        {'adaptor' => $self,
+					'genomic_align_block_id' => $values[0],
+					'window_size' => $values[1],
+					'position' => ($values[2] or 1),
+					'observed_score' => $obs_scores,
+					'expected_score' => $exp_scores,
+					'diff_score' => $diff_scores,
+					'packed' => $packed});
 
 	push(@$conservation_scores, $conservation_score);
     }
@@ -973,14 +973,16 @@ sub _get_alignment_scores {
 
     #go through rows $start to $end
     for (my $i = $start; $i <= $end; $i++) {
-	my $num_scores;
-	if ($PACKED) {
-	    $num_scores = length($conservation_scores->[$i]->diff_score)/$_pack_size;
-	} else {
-	    @obs_scores = split ' ', $conservation_scores->[$i]->obs_score;
-	    @exp_scores = split ' ', $conservation_scores->[$i]->exp_score;
-	    @diff_scores = split ' ', $conservation_scores->[$i]->diff_score;
-	    $num_scores = scalar(@diff_scores);
+	my $num_scores = 0;
+	if (defined($conservation_scores->[$i]->diff_score)) {
+            if ($PACKED) {
+                $num_scores = length($conservation_scores->[$i]->diff_score)/$_pack_size;
+            } else {
+                @obs_scores = split ' ', $conservation_scores->[$i]->obs_score;
+                @exp_scores = split ' ', $conservation_scores->[$i]->exp_score;
+                @diff_scores = split ' ', $conservation_scores->[$i]->diff_score;
+                $num_scores = scalar(@diff_scores);
+            }
 	}
 
 	#last row. If align_end is within a called region, need to recalculate
