@@ -25,6 +25,11 @@ sub decryptID {
     $ID = substr($MD5d,0,16).$rand1.$rand2.substr($MD5d,16,16) eq $encrypted ? $ID : 0;
 }
 
+sub encryptPassword {
+  my ($password, $salt) = @_;
+  return Digest::MD5->new->add($password.$salt)->hexdigest();
+}
+
 }
 
 1;
