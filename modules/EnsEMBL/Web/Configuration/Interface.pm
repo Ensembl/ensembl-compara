@@ -23,6 +23,7 @@ sub select_to_edit {
 
 sub add {
   ### Creates a panel containing an empty record form
+warn "Creating an 'add' panel";
   my ($self, $object, $interface) = @_;
   if (my $panel = $self->interface_panel($interface, 'add', 'Add a New Record')) {
     $panel->add_components(qw(add     EnsEMBL::Web::Component::Interface::add));
@@ -122,7 +123,30 @@ sub success {
   }
   else {
     if ($option->{'type'} eq 'url') {
-      return $option->{'action'};
+      my $url = $option->{'action'};
+
+      ## pass any additional CGI parameters
+      my @parameters = $object->param();
+      if (scalar(@parameters) > 0) {
+        $url .= '?';
+        my @params;
+        foreach my $key (@parameters) {
+          next if $key eq 'dataview'; ## skip this, or it will break the destination script!
+          ## deal with multiple-value parameters!
+          my @param_check = $object->param($key);
+          my $value;
+          if (scalar(@param_check) > 1) {
+            foreach my $p (@param_check) {
+              push(@params, $key.'='.$p.';');
+            }
+          }
+          else {
+            push(@params, $key.'='.$object->param($key).';');
+          }
+        }
+        $url .= join(';', @params);
+      }
+      return $url;
     }
     else {
       $method = $option->{'action'};
