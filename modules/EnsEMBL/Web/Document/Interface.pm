@@ -109,6 +109,9 @@ sub process {
       );
     $self->render;
     } 
+  }
+  else {
+warn "Can't use module $config_module_name!";
   } 
 }
 
