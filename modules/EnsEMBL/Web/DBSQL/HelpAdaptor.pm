@@ -302,7 +302,7 @@ sub fetch_movies {
 
   my $sql = 'SELECT movie_id, title, filename, filesize, frame_count, frame_rate FROM help_movie ';
   $sql .= qq( WHERE status = "$status" ) if $status;
-  $sql .= 'ORDER BY title ASC';
+  $sql .= 'ORDER BY list_position ASC, title ASC';
   my $T = $self->handle->selectall_arrayref($sql);
   return [ map {{
     'movie_id'    => $_->[0],
