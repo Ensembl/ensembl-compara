@@ -43,11 +43,11 @@ sub save {
           ## Send activation email here!
           my $mailer = EnsEMBL::Web::Mailer::User->new();
           $mailer->email($user->email);
-          $mailer->send_activation_email({
+          $mailer->send_activation_email((
                               'code' => $user->salt || '', 
                               'link' => $user->activation_link || '', 
                               group_id => $object->param('group_id') 
-                  });
+                  ));
           $url = "/common/$script?dataview=success;user_id=".$interface->data->id;
         }
         else {
