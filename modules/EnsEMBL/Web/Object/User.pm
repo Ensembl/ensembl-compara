@@ -47,7 +47,7 @@ sub new {
   $Password_of{$self} = defined $params{'password'} ? $params{'password'} : "";
   $Organisation_of{$self} = defined $params{'organisation'} ? $params{'organisation'} : "";
   $Groups_of{$self} = defined $params{'groups'} ? $params{'groups'} : [];
-  $Salt_of{$self} = defined $params{'salt'} ? $params{'salt'} : [];
+  $Salt_of{$self} = defined $params{'salt'} ? $params{'salt'} : '';
   $Status_of{$self} = defined $params{'status'} ? $params{'status'} : "";
   $Deferred_of{$self} = defined $params{'defer'} ? $params{'defer'} : undef;
   $Is_Populated_of{$self} = 0;
