@@ -134,7 +134,13 @@ sub status {
   foreach my $status (@status) {
     if ($status eq 'hapmap') {
       $hapmap_html = "<b>HapMap SNP</b>", $object->get_ExtURL_link($snp_name, 'HAPMAP', $snp_name);
-    } else {
+    } 
+    elsif ($status eq 'failed') {
+      my $description = $object->vari->failed_description;
+      $panel->add_row($label, "<font color='red'>Failed: $description</font>");
+      return $status;
+    }
+    else {
       $status = "frequency" if $status eq 'freq';
       push @status_list, $status;
     }
@@ -252,7 +258,7 @@ sub seq_region {
  ###              the variations sequence region in two_col_table format
  ### Returns  1
   my ( $panel, $object ) = @_;
-  my $label = 'Sequence region';
+  my $label = 'Flanking sequence';
   my $status   = 'status_ambig_sequence';
   my $URL = _flip_URL( $object, $status );
   if( $object->param( $status ) eq 'off' ) { $panel->add_row( $label, '', "$URL=on" ); return 0; }
@@ -262,6 +268,9 @@ sub seq_region {
     $ambig_code = "[".$object->alleles."]";
   }
   my $downstream = $object->flanking_seq("down");
+
+#  my $ambiguity_seq = $object->ambiguity_flank;
+  # genomic context with ambiguities
 
   # Make the flanking sequence and wrap it
   my $html = uc( $object->flanking_seq("up") ) .lc( $ambig_code ).uc( $downstream );
@@ -282,7 +291,7 @@ sub all_freqs {
   ### Population_genotype_alleles
   ### Arg1        : panel
   ### Arg2        : data object
-  ### Example     : $allele_panel->add_components( qw(all_freqs EnsEMBL::Web::Component::SNP::all_freqs) );
+  ### Example     : $allele_panel->add_components( qw(all_freqs EnsEMBL::Web::Component::SNP::lal_freqs) );
   ### Description : prints a table of allele and genotype frequencies for the variation per population
   ### Returns  1
 
