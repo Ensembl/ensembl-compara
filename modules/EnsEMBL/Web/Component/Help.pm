@@ -200,7 +200,7 @@ sub movie_index {
       my $title = $$entry{'title'};
       my $time  = $$entry{'frame_count'} / ($$entry{'frame_rate'} * 60);
       my $mins  = int($time);
-      my $secs  = int(($time - $mins) * 60);
+      my $secs  = sprintf('%02d', int(($time - $mins) * 60));
       $panel->add_row({
         'title' => qq(<a href="/common/Workshops_Online?movie=$id">$title</a>),
         'mins'  => "$mins:$secs",
