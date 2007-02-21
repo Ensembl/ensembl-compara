@@ -459,6 +459,25 @@ sub diff_score {
     return $self->{'diff_score'};
 }
 
+=head2 score
+
+  Arg [1]    : (opt) string of difference scores (expected - observed)
+               (can be either packed or space delimited)
+  Example    : $conservation_score->diff_score("1.85 -2.54 1.56");
+  Example    : my $diff_score = $conservation_score->diff_score();
+  Description: alias for diff score 
+  Returntype : string (either packed or space delimited)
+  Exceptions : none
+  Caller     : general
+  Status     : At risk
+
+=cut
+
+sub score {
+    my ($self, $diff_score) = @_;
+    return $self->diff_score($diff_score);
+}
+
 =head2 y_axis_min
 
   Arg [1]    : (opt) float
