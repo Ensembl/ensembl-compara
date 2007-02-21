@@ -2,75 +2,32 @@
 
 package activate;
 
-use CGI;
+use EnsEMBL::Web::Document::Interface;
+use EnsEMBL::Web::Interface::InterfaceDef;
+use EnsEMBL::Web::Object::Data::User;
 
-my $cgi = new CGI;
-use EnsEMBL::Web::Document::DataView;
-use EnsEMBL::Web::Interface::PageDefinition;
-use EnsEMBL::Web::Interface::FormDefinition;
-use EnsEMBL::Web::DBSQL::DataDefinition;
-use EnsEMBL::Web::DBSQL::ViewAdaptor;
-use EnsEMBL::Web::RegObj;
-use EnsEMBL::Web::Mailer::User;
+## Create basic page object, so we can access CGI parameters
+my $webpage = EnsEMBL::Web::Document::Interface::simple('User');
 
-my $page = EnsEMBL::Web::Interface::PageDefinition->new();
-my $data = EnsEMBL::Web::DBSQL::DataDefinition->new();
-my $db = $ENSEMBL_WEB_REGISTRY->dbAdaptor;
-$data->adaptor(EnsEMBL::Web::DBSQL::ViewAdaptor->new((
-                                                       handle => $db,
-                                                       table  => 'user'
-                                                    )) );
+## Create interface object, which controls the forms
+my $interface = EnsEMBL::Web::Interface::InterfaceDef->new();
+my $data =EnsEMBL::Web::Object::Data::User->new();;
+$interface->data($data);
+$interface->discover;
 
-my $mailer = EnsEMBL::Web::Mailer::User->new();
-if (!$cgi->param('welcome_email')) {
-  my $user = EnsEMBL::Web::Object::User->new({ adaptor => $ENSEMBL_WEB_REGISTRY->userAdaptor, id => $cgi->param('id') });
-  $mailer->email($user->email);
-  $mailer->send_activation_email(( code => $user->salt, link => $user->activation_link, group_id => $cgi->param('group_id') ));
-} elsif ($cgi->param('welcome_email') eq 'yes') {
-  my $user = EnsEMBL::Web::Object::User->new({ adaptor => $ENSEMBL_WEB_REGISTRY->userAdaptor, id => $cgi->param('id') });
-  $mailer->email($user->email);
-  $mailer->send_welcome_email($user->email);
-  if ($cgi->param('group_id')) {
-    my $group = EnsEMBL::Web::Object::Group->new(( id => $cgi->param('group_id') ));
-    $user->add_group($group);
-    $user->save;
-  }
+## Customization
+## Page components
+$interface->default_view('confirm');
+$interface->panel_header({'confirm'=>qq(<p><strong>Thanks for confirming your email address.</strong></p><p>To start using your new Ensembl user account, just choose a password below. You'll need to use this password each time you log in to Ensembl.</p>)});
+$interface->on_success('/common/set_cookie');
+$interface->on_failure('EnsEMBL::Web::Component::Interface::User::failed_activation');
+$interface->caption({'on_failure'=>'Activation Failed'});
 
-}
+## N.B. Form elements are configured in the components, because they are a bit weird!
 
-$data->discover;
-$data->populate($cgi->param('id'));
-$page->data_definition($data);
-$page->title("Activate your account");
-$page->action('edit');
-$page->send_params({ id => 'yes', salt => 'yes', password => 'yes' });
-$page->on_complete('/common/set_cookie');
-$page->on_error('/error/activate.html');
+## Render page or munge data, as appropriate
+## N.B. Force use of Configuration subclass
+$webpage->process($interface, 'EnsEMBL::Web::Configuration::Interface::User');
 
-$page->add_configuration_element('conditional', 'salt');
-$page->add_configuration_element('welcome_email', 'yes');
-
-$page->add_display_element('name', "Name");
-$page->add_display_element('email', "Email address");
-$page->add_display_element('organisation', "Organisation");
-
-$conditional = EnsEMBL::Web::Interface::FormDefinition->new();
-$conditional->add_option({ 'conditional' => 1 });
-if ($cgi->param('code')) {
-  $page->add_text("<b>Thanks for confirming your email address.</b><br /><br /> To start using your new Ensembl user account, just choose a password below. You'll need to use this password each time you log in to Ensembl.");
-  $conditional->add_value({ 'salt' => $cgi->param('code') });
-  $page->add_configuration_element('salt', $cgi->param('code'), $conditional);
-} else {
-  $page->add_text("Before you can start using your Ensembl user account, you need to validate your email address. We've just send you an email containing an activation code. Enter this code below, and choose a password. You'll need to use this password each time you log in to Ensembl.");
-  $page->add_form_element('salt', "Your activation code", $conditional);
-}
-
-if ($cgi->param('group_id')) {
-  $page->add_configuration_element('group_id', $cgi->param('group_id'));
-}
-
-$page->add_form_element('password', "Your password");
-
-EnsEMBL::Web::Document::DataView::simple('User', $page);
 
 1;

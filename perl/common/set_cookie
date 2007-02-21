@@ -9,23 +9,15 @@ use Apache2::RequestUtil;
 
 use CGI;
 my $cgi = new CGI;
-my $user = EnsEMBL::Web::Object::User->new({ adaptor => $ENSEMBL_WEB_REGISTRY->userAdaptor, id => $cgi->param('id') });
+my $id = $cgi->param('user_id') || $cgi->param('id');
+my $user = EnsEMBL::Web::Object::User->new({ adaptor => $ENSEMBL_WEB_REGISTRY->userAdaptor, id => $id });
 
-my $url = "/index.html";
+my $url = "/common/activate?dataview=failure;error=cookie_not_set";
 
 if (!$ENV{'ENSEMBL_USER_ID'}) {
   if ($user) {
     if ($user->password eq $cgi->param('key')) {
       my $encrypted = EnsEMBL::Web::Tools::Encryption::encryptID($user->id);
-#      my $cookie = CGI::Cookie->new(
-#         -name    => EnsEMBL::Web::SpeciesDefs->ENSEMBL_USER_COOKIE,
-#         -value   => $encrypted,
-#         -domain  => EnsEMBL::Web::SpeciesDefs->ENSEMBL_COOKIEHOST,
-#         -path    => "/",
-#         -expires => "Monday, 31-Dec-2010 23:59:59 GMT"
-#      );
-#      print "Set-cookie: $cookie";
-
       my $SD = $ENSEMBL_WEB_REGISTRY->species_defs;
       my $user_cookie = EnsEMBL::Web::Cookie->new({
           'host'    => $SD->ENSEMBL_COOKIEHOST,
@@ -33,23 +25,21 @@ if (!$ENV{'ENSEMBL_USER_ID'}) {
           'value'   => '',
           'env'     => 'ENSEMBL_USER_ID',
           'hash'    => {
-          'offset'  => $SD->ENSEMBL_ENCRYPT_0,
-          'key1'    => $SD->ENSEMBL_ENCRYPT_1,
-          'key2'    => $SD->ENSEMBL_ENCRYPT_2,
-          'key3'    => $SD->ENSEMBL_ENCRYPT_3,
-          'expiry'  => $SD->ENSEMBL_ENCRYPT_EXPIRY,
-          'refresh' => $SD->ENSEMBL_ENCRYPT_REFRESH
-        }
+            'offset'  => $SD->ENSEMBL_ENCRYPT_0,
+            'key1'    => $SD->ENSEMBL_ENCRYPT_1,
+            'key2'    => $SD->ENSEMBL_ENCRYPT_2,
+            'key3'    => $SD->ENSEMBL_ENCRYPT_3,
+            'expiry'  => $SD->ENSEMBL_ENCRYPT_EXPIRY,
+            'refresh' => $SD->ENSEMBL_ENCRYPT_REFRESH
+          }
       });
       my $r = Apache2::RequestUtil->request();
       $user_cookie->create( $r , $user->id );
-      CGI::redirect( $url );
-
-    } else {
-      $url = "/failed.html";
+      $url = "/index.html";
     }
   }
 }
+CGI::redirect( $url );
 
 1;
 
