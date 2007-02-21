@@ -18,7 +18,7 @@ sub BUILD {
   $self->set_data_field_name('data');
   $self->add_queriable_field({ name => 'name', type => 'tinytext' });
   $self->add_queriable_field({ name => 'email', type => 'tinytext' });
-  $self->add_queriable_field({ name => 'salt', type => 'text' });
+  $self->add_queriable_field({ name => 'salt', type => 'tinytext' });
   $self->add_queriable_field({ name => 'password', type => 'tinytext' });
   $self->add_queriable_field({ name => 'organisation', type => 'text' });
   $self->add_queriable_field({ name => 'status', type => 'tinytext' });
