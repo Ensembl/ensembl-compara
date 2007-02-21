@@ -22,19 +22,19 @@ sub new {
   if ($EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY) {
     eval {
       ## Get the WebsiteDBAdaptor from the registry
-      $self->{'_handle'} =  $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->websiteAdaptor();
+      $self->{'_handle'} = $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->websiteAdaptor();
     };
     unless($self->{'_handle'}) {
        warn( "Unable to connect to authentication database: $DBI::errstr" );
        $self->{'_handle'} = undef;
     }
     my $user = $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->get_user();
-    $self->{'_user'} = $user->id;
+    $self->{'_user'} = $user->id if $user;
   } else {
     if ($handle) {
       $self->{'_handle'} = $handle;
     } else {
-      warn( "NO DB USER DATABASE DEFINED" );
+      warn( "NO WEBSITE DATABASE DEFINED" );
       $self->{'_handle'} = undef;
     }
   }
