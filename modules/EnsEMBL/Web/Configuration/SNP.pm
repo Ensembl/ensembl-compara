@@ -53,7 +53,7 @@ sub snpview {
     'caption' => "SNP ". $obj->name.$caption,
      @params,
     'status'  => 'panel_locations',
-    'null_data' => '<p>No mapping for this SNP. (SNP mappings are removed from Ensembl if none of their alleles match the reference sequence).</p>'
+    'null_data' => '<p>There is no transcript mapping for this SNP.</p>'
 				    )) {
     $mapping_panel->add_components( qw(mappings EnsEMBL::Web::Component::SNP::mappings) );
     $self->{page}->content->add_panel( $mapping_panel );
@@ -94,7 +94,7 @@ if (
   if (my $image_panel = $self->new_panel('Image',
      'code'    => "image_$self->{flag}",
      'caption' => "SNP Context - $context[-1] $context[0] $context[1]",
-     'status'  => 'panel_bottom',  @params,
+     'status'  => 'panel_image',  @params,
 					)) {
 
  # Set default sources--------------
