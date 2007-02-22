@@ -55,7 +55,6 @@ sub _init {
   map { $drawn_flag{$_} = 1 } @flags;
   return if $drawn_flag{'wiggle'} && $drawn_flag{'block_features'};
 
-
   # Error messages ---------------------
   my $block_name =  $self->my_config('block_name');
   # If both wiggle and predicted features tracks aren't drawn in expanded mode..
@@ -116,7 +115,6 @@ sub render_wiggle_plot {
 
   my( $self, $features, $colour, $min_score, $max_score, $display_label ) = @_;
   my $slice = $self->{'container'};
-
   my $row_height = 60;
   my $offset     = $self->_offset();
   my $P_MAX = $max_score > 0 ? $max_score : 0;
