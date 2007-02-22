@@ -137,7 +137,7 @@ sub status {
     } 
     elsif ($status eq 'failed') {
       my $description = $object->vari->failed_description;
-      $panel->add_row($label, "<font color='red'>Failed: $description.  <br />This SNP will be removed from Ensembl from release 44.</font>");
+      $panel->add_row($label, "<font color='red'>$description.  <br />This SNP will be removed from Ensembl from release 44.</font>");
       return $status;
     }
     else {
