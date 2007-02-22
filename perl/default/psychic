@@ -16,6 +16,7 @@ use CGI qw(escape);
 my $webpage = new EnsEMBL::Web::Document::WebPage;
 my $q = $ENSEMBL_WEB_REGISTRY->get_session->get_input;
 my $species = $q->param('species') || undef;
+my $site = $q->param('site') || undef;
 my $index   = $q->param('idx')     || undef;
 warn "SPECIES: $species";
 my $query   = $q->param('query');
@@ -24,6 +25,14 @@ my $URL;
 $query=~ s/^\s+//g;
 $query=~ s/\s+$//g;
 $query=~ s/\s+/ /g;
+
+if ($site eq 'ebi') {
+
+  $URL = 'http://www.ebi.ac.uk/ebisearch/search.ebi?db=allebi&query='.$query;
+
+}
+
+else {
 
 ## Let us parse the first string to see if it is the name of a species or one
 ## of its aliases... (should we do this if we specify a species in the drop
@@ -156,6 +165,9 @@ unless( $flag ) {
        :                                    URL( '/%s/%s?species=%s;idx=%s;q=%s', ( $species eq 'ALL'|| !$species ? 'default' : $species ), $webpage->{'species_defs'}->ENSEMBL_SEARCH, $species, $index, $query )
        ;
 }
+
+}
+
 warn $URL;
 $webpage->redirect($URL);
 
