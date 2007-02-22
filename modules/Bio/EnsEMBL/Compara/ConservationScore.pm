@@ -367,6 +367,37 @@ sub position {
   return $self->{'position'};
 }
 
+=head2 start
+
+  Example    : $conservation_score->start();
+  Description: Wrapper round position call 
+  Returntype : integer. Return 1 if value not defined
+  Exceptions : none
+  Caller     : general
+  Status     : At risk
+
+=cut
+
+sub start {
+    my $self = shift;
+   return $self->position; 
+}
+
+=head2 end
+
+  Example    : $conservation_score->end();
+  Description: wrapper around position
+  Returntype : integer. Return 1 if value not defined
+  Exceptions : none
+  Caller     : general
+  Status     : At risk
+
+=cut
+
+sub end {
+    my $self = shift;
+   return $self->position; 
+}
 =head2 seq_region_pos
 
   Arg [1]    : (opt) integer
