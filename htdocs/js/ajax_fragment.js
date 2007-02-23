@@ -55,7 +55,11 @@ function panel_loaded(response) {
   var update = $(json.fragment.id + "_update");
   var update_menus = 0;
   var added = [];
-  update.innerHTML = html;
+
+  // Insert new HTML
+  prepare_for_html(update, "");
+  
+  // Update page data for red boxes
   var URL_temp = '/Homo_sapiens/contigview?c=[[s]]:[[c]];w=[[w]]';
   var flag     = 'cv';
   for (var j = 0; j < json.fragment.components.length; j++) {
@@ -79,6 +83,7 @@ function panel_loaded(response) {
   }
 
   update.style.display = 'block';
+  display_html(update);
   var panel_number = parseInt(json.fragment.panel_number) + 1;
   var prefix = "p_" + panel_number; 
 
@@ -101,9 +106,15 @@ function panel_loaded(response) {
 
   ajax_call_complete();
 
-  //draw_red_box('p', panel_number, 'p', (panel_number - 1));
-  //dd_render_all_layers_to_element('menu_container');
+}
 
+function prepare_for_html(update, html) {
+  //Effect.BlindUp(update);
+  update.innerHTML = html;
+}
+
+function display_html(update) {
+  //Effect.BlindDown(update); 
 }
 
 function new_element(name, value) {
