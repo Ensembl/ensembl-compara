@@ -5,32 +5,35 @@ package sortable;
 use strict;
 use warnings;
 
-use EnsEMBL::Web::Record::User;
+use EnsEMBL::Web::Object::Data::Opentab;
+use EnsEMBL::Web::Object::Data::User;
 use EnsEMBL::Web::RegObj;
 use CGI;
 
 
 my $cgi = new CGI;
  
-my $user = $ENSEMBL_WEB_REGISTRY->get_user;
+my $registry_user = $ENSEMBL_WEB_REGISTRY->get_user;
+my $user = EnsEMBL::Web::Object::Data::User->new({ id => $registry_user->id });
 
 if ($user) {
 
   my $found = 0;
-  my $record = undef;
-  foreach my $this ($user->opentab_records) {
-    if ($this->name eq $cgi->param('name')) {
-      $record = $this;
+  my $tab = undef;
+  foreach my $open_tab (@{ $user->opentabs }) {
+    if ($open_tab->name eq $cgi->param('name')) {
+      $tab = $open_tab;
     }
   }
 
-  if (!$record) {
-    $record = EnsEMBL::Web::Record::User->new(( adaptor => $ENSEMBL_WEB_REGISTRY->userAdaptor, type => 'opentab', user => $user->id));
+  if (!$tab) {
+    $tab = EnsEMBL::Web::Object::Data::Opentab->new();
   }
 
-  $record->tab($cgi->param('tab'));
-  $record->name($cgi->param('name'));
-  $record->save;
+  $tab->user($user);
+  $tab->tab($cgi->param('tab'));
+  $tab->name($cgi->param('name'));
+  $tab->save;
 
 }
 

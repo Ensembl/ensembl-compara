@@ -8,16 +8,18 @@ use strict;
 use warnings;
 no warnings "uninitialized";
 
-use EnsEMBL::Web::User::Record;
+use EnsEMBL::Web::Object::Data::User;
+use EnsEMBL::Web::Object::Data::Infobox;
 use EnsEMBL::Web::RegObj;
 
 my $cgi = new CGI;
 
-my $user = $ENSEMBL_WEB_REGISTRY->get_user;
+my $registry_user = $ENSEMBL_WEB_REGISTRY->get_user;
+my $user = EnsEMBL::Web::Object::Data::User->new({ id => $registry_user->id });
 
 if ($user) {
-  foreach my $info_box ($user->info_records) {
-    $info_box->delete;
+  foreach my $info_box (@{ $user->infoboxes }) {
+    $info_box->destroy;
   }  
 }
 

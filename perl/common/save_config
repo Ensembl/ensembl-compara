@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 
-package remove_group;
+package save_config;
 
 use strict;
 use warnings;

@@ -15,6 +15,7 @@ use EnsEMBL::Web::Interface::PageDefinition;
 use EnsEMBL::Web::Interface::FormDefinition;
 use EnsEMBL::Web::DBSQL::DataDefinition;
 use EnsEMBL::Web::DBSQL::ViewAdaptor;
+use EnsEMBL::Web::Tools::RandomString;
 use EnsEMBL::Web::RegObj;
 
 my $cgi = new CGI;
@@ -27,9 +28,6 @@ my $email = $record->email;
 my $group_id = $record->group;
 
 my $user = EnsEMBL::Web::Object::User->new({ adaptor => $ENSEMBL_WEB_REGISTRY->userAdapator,  email => $email });
-my $site_info = $user->get_site_info;
-my $sitename = $site_info->{'name'};
-my $article = $site_info->{'article'}; ## a or an?
 
 if (!$user->id) {
 
@@ -53,7 +51,7 @@ $page->on_error('/register/error.html');
 $form->add_value({'email' => $email });
 
 $page->add_text("You have been invited to join $article $sitename group. In order to do so, you first need to create a new $sitename account.");
-$page->add_configuration_element('salt', random_string(8));
+$page->add_configuration_element('salt', EnsEMBL::Web::Tools::RandomString::random_string(8));
 $page->add_configuration_element('group_id', $group_id);
 $page->add_configuration_element('record_id', $record_id);
 $page->add_form_element('name', "Your name");
@@ -72,18 +70,6 @@ EnsEMBL::Web::Document::DataView::simple('User', $page);
 
   my $url = "/common/accountview";
   CGI::redirect($url);
-}
-
-sub random_string {
-  my $length = shift || 8;
-
-  my @chars = ('a'..'z','A'..'Z','0'..'9','_');
-  my $random_string;
-  foreach (1..$length)
-  {
-    $random_string .= $chars[rand @chars];
-  }
-  return $random_string;
 }
 
 

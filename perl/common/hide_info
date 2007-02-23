@@ -8,16 +8,20 @@ use strict;
 use warnings;
 no warnings "uninitialized";
 
-use EnsEMBL::Web::Record::User;
+use EnsEMBL::Web::Object::Data::User;
+use EnsEMBL::Web::Object::Data::Infobox;
+use EnsEMBL::Web::RegObj;
 
 my $cgi = new CGI;
 
-my $record = EnsEMBL::Web::Record::User->new(( adaptor => $ENSEMBL_WEB_REGISTRY->userAdapator, type => 'info' ));
+my $registry_user = $ENSEMBL_WEB_REGISTRY->get_user;
+my $user = EnsEMBL::Web::Object::Data::User->new({ id => $registry_user->id });
 
-$record->user($ENV{ENSEMBL_USER_ID});
-$record->name($cgi->param('id'));
-warn "AJAX: " . $record;
-$record->save;
+my $box = EnsEMBL::Web::Object::Data::Infobox->new();
+
+$box->user_id($user->id);
+$box->name($cgi->param('id'));
+$box->save;
 
 print "Content-type: text/plain\n\n";
 print "Done:";
