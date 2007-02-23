@@ -27,7 +27,7 @@ sub add_connection {
 
 sub get_connection {
   my ($self, $key) = @_;
-  warn "Getting: " . $key . ": " . $self->get_connections->{$key};
+  #warn "Getting: " . $key . ": " . $self->get_connections->{$key};
   return $self->get_connections->{$key};
 }
 
@@ -52,7 +52,7 @@ sub process {
   my $action = $self->get_action;
   my $found = 0;
   foreach my $key (keys %{ $self->get_connections }) {
-    warn "ROUTE: " . $key . "(" . $action->get_action . ")";
+    #warn "ROUTE: " . $key . "(" . $action->get_action . ")";
     if ($key eq $action->get_action) {
       $self->command($action);
       $found = 1;

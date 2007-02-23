@@ -493,7 +493,7 @@ sub _render_bookmarks {
                       'edit_url' => 'bookmark', 
                       'delete_url' => 'remove_record',
                       'data' => [
-      '<a href="' . $bookmark->url . '" title="' . $bookmark->description . '">' . $bookmark->name . '</a>', '&nbsp;' 
+      '<a href="' . $bookmark->url . '" title="' . $bookmark->description . '">' . $bookmark->name . '</a><br /><span style="font-size: 10px;">' . $bookmark->description . '</span>', '&nbsp;' 
     ]};
   }
 
