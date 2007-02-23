@@ -77,13 +77,15 @@ sub preview {
 sub save {
   ### Saves changes to the record(s) and redirects to a feedback page
   my ($self, $object, $interface) = @_;
-  
+  warn "INTERFACE: " . $interface; 
+  warn "INTERFACE: " . $interface->script_name; 
   my $primary_key = $interface->data->get_primary_key;
   my $id = $object->param($primary_key);
   $interface->cgi_populate($object, $id);
 
   my $success = $interface->data->save;
-  my $script = $object->script;
+  my $script = $interface->script_name || $object->script;
+  warn "SAVE SCRIPT: " . $script;
   my $url;
   if ($success) {
     $url = "/common/$script?dataview=success";
@@ -97,7 +99,7 @@ sub save {
 sub delete {
   ### Deletes record(s) and redirects to a feedback page
   my ($self, $object, $interface) = @_;
-  my $script = $object->script;
+  my $script = $interface->script_name || $object->script;
   my $url;
 
   my $delete_method = $interface->structure->delete_method;

@@ -16,7 +16,8 @@ our @ISA = qw( EnsEMBL::Web::Configuration::Interface );
 sub save {
   ### Saves changes to the user record and redirects to a feedback page
   my ($self, $object, $interface) = @_;
-  my $script = $object->script;
+
+  my $script = $interface->script_name || $object->script;
   my $url;
   
   my $primary_key = $interface->data->get_primary_key;
@@ -78,7 +79,7 @@ sub confirm {
 sub activate {
   ## Checks that passwords match, are more than 6 characters long and have at least 1 digit
   my ($self, $object, $interface) = @_;
-  my $script = $object->script;
+  my $script = $interface->script_name || $object->script;
   my ($url, $error);
   
   my $pass_1 = $object->param('password'); 

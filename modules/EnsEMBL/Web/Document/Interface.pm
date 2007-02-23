@@ -63,7 +63,6 @@ sub process {
   my $config_module_name = $conf ? $conf : 'EnsEMBL::Web::Configuration::Interface';
   if( $self->dynamic_use( $config_module_name ) ) {
     my $CONF = $config_module_name->new($self->page, $object);
-
     ## is this action defined in the Interface Configuration module?
     if ($CONF->can($action)) {
       if ($action =~ /delete/ && !$interface->permit_delete) {

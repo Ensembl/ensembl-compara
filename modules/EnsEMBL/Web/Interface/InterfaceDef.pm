@@ -8,13 +8,14 @@ use strict;
 use warnings;
 
 use EnsEMBL::Web::Interface::ElementDef;
-use EnsEMBL::Web::DBSQL::StructureDef;
+#use EnsEMBL::Web::DBSQL::StructureDef;
 
 {
 
 my %Data_of;
 my %Repeat_of;
 my %PermitDelete_of;
+my %ScriptName_of;
 
 my %Elements_of;
 my %ElementOrder_of;
@@ -59,9 +60,17 @@ sub new {
   $OnFailure_of{$self}    = defined $params{on_failure} ? $params{on_failure} : '';
   $DefaultView_of{$self}  = defined $params{default_view} ? $params{default_view} : '';
 
+  $ScriptName_of{$self}  = defined $params{script_name} ? $params{script_name} : '';
+
   return $self;
 }
 
+sub script_name {
+  ### a
+  my $self = shift;
+  $ScriptName_of{$self} = shift if @_;
+  return $ScriptName_of{$self};
+}
 
 sub data {
   ### a
@@ -410,7 +419,6 @@ sub cgi_populate {
   ### Utility function to populate a data object from CGI parameters
   ### instead of from the database
   my ($self, $object, $id) = @_;
-
   my $data = $self->data;
   $data->id($id);
 
@@ -629,6 +637,7 @@ sub DESTROY {
 
   delete $OnSuccess_of{$self};
   delete $OnFailure_of{$self};
+  delete $ScriptName_of{$self};
 
 }
 

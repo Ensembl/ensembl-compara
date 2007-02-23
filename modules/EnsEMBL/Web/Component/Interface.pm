@@ -13,7 +13,6 @@ no warnings "uninitialized";
 sub add_form {
   ### Builds an empty HTML form for a new record
   my($panel, $object) = @_;
-
   my $form = _data_form($panel, $object, 'add');
 
   ## navigation elements
@@ -81,13 +80,21 @@ sub select_to_delete_form {
   return $form ;
 }
 
+sub script_name {
+  my ($panel, $object) = @_;
+  if ($panel->interface->script_name) {
+    return $panel->interface->script_name;
+  }
+  return $object->script;
+}
+
 sub preview_form {
   ### Displays a record or form input as non-editable text, 
   ### and also passes the data as hidden form elements
   my($panel, $object) = @_;
   
   ## Create form  
-  my $script = $object->script;
+  my $script = script_name($panel, $object);
   my $form = EnsEMBL::Web::Form->new('preview', "/common/$script", 'post');
 
   ## get data and assemble form
@@ -127,8 +134,8 @@ sub preview_form {
 sub _data_form {
   ### Function to build a record editing form
   my($panel, $object, $name) = @_;
-  
-  my $script = $object->script;
+  warn "PANEL: " . $panel; 
+  my $script = script_name($panel, $object);
   my $form = EnsEMBL::Web::Form->new($name, "/common/$script", 'post');
 
   ## form widgets
@@ -149,7 +156,7 @@ sub _record_select {
   ### Function to build a record selection form
   my($panel, $object, $name) = @_;
   
-  my $script = $object->script;
+  my $script = script_name($panel, $object);
   my $form = EnsEMBL::Web::Form->new($name, "/common/$script", 'post');
 
   my $select  = $panel->interface->dropdown ? 'select' : '';
@@ -297,7 +304,7 @@ sub _render_form {
 sub on_success {
   ### Static panel displaying database feedback on success
   my($panel, $object) = @_;
-  my $script = $object->script;
+  my $script = script_name($panel, $object);
   my $html = qq(<p>Your changes were saved to the database. 
 <ul>
 <li><a href="/common/$script?dataview=add">Add another record</a></li>

@@ -513,6 +513,7 @@ sub contigview {
                                 display => 'on',
                                            @common);
   $fragment->add_component('image_fragment', 'EnsEMBL::Web::Component::Location::ideogram');
+  $fragment->asynchronously_load(qw(image_fragment));
   if ($fragment) {
     my($start,$end) = $self->top_start_end( $obj, $max_length );
     $fragment->add_option( 'start', $start );
@@ -548,6 +549,9 @@ sub contigview {
                                            @common);
 
   $overview_fragment->add_component('image_fragment', 'EnsEMBL::Web::Component::Location::contigviewtop');
+
+  $overview_fragment->asynchronously_load(qw(image_fragment));
+
   if ($overview_fragment) {
     my($start,$end) = $self->top_start_end( $obj, $max_length );
     $overview_fragment->add_option( 'start', $start );
@@ -605,12 +609,15 @@ sub contigview {
                                 loading => 'yes',
                                 display => 'on',
                                            @common);
+    warn "ADDING AJAX FRAGMENT: " . $view_fragment;
     $view_fragment->add_components(qw(
       config EnsEMBL::Web::Component::Location::contigviewbottom_config
       menu   EnsEMBL::Web::Component::Location::contigviewbottom_menu
       nav    EnsEMBL::Web::Component::Location::contigviewbottom_nav
       image  EnsEMBL::Web::Component::Location::contigviewbottom
     ));
+
+    $view_fragment->asynchronously_load(qw(image));
   
     my ($start,$end) = $self->top_start_end( $obj, $max_length );
     $view_fragment->add_option( 'start', $obj->seq_region_start );
@@ -648,6 +655,7 @@ sub contigview {
       image EnsEMBL::Web::Component::Location::contigviewzoom
     ));
 
+    $base_fragment->asynchronously_load(qw(image));
     my $base = $self->new_panel( 'Image',
       'code'    => "basepair_#", 'caption' => 'Basepair view', 'status'  => 'panel_zoom', @common
     );

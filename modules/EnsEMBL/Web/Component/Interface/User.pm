@@ -20,7 +20,8 @@ sub confirm_form {
     $panel->interface->data->populate($id);
   }
 
-  my $script = $object->script;
+  my $script = EnsEMBL::Web::Component::Interface::script_name($panel, $object);
+
   my $form = EnsEMBL::Web::Form->new('confirm', "/common/$script", 'post');
 
   $form->add_element(
