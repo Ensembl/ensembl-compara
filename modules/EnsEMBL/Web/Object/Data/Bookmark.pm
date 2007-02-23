@@ -18,6 +18,7 @@ sub BUILD {
   $self->set_data_field_name('data');
   $self->add_field({ name => 'url', type => 'text' });
   $self->add_field({ name => 'name', type => 'text' });
+  $self->add_field({ name => 'description', type => 'text' });
   $self->add_field({ name => 'click', type => 'int' });
   $self->add_queriable_field({ name => 'type', type => 'text' });
   $self->type('bookmark');

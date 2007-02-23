@@ -122,7 +122,11 @@ sub add_has_many {
   }
   $self->relational_class($self->plural($self->object_name_from_package($args->{class})), $args->{class});
   $self->relational_table($self->plural($self->object_name_from_package($args->{class})), $args->{table});
-  $self->add_has_many_symbol_lookup($self->plural($self->object_name_from_package($args->{class})));
+  if ($args->{link_table}) {
+    $self->add_linked_has_many_symbol_lookup($self->plural($self->object_name_from_package($args->{class})));
+  } else {
+    $self->add_has_many_symbol_lookup($self->plural($self->object_name_from_package($args->{class})));
+  }
   push @{ $self->get_has_many }, $args->{class};
 }
 
@@ -210,6 +214,39 @@ sub initialize_has_many_accessor {
     }
     return $self->get_lazy_values($attribute);
   };
+}
+
+sub add_linked_has_many_symbol_lookup {
+  my ($self, $name) = @_;
+  no strict;
+  my $class = ref($self);
+  $self->set_value({ $name => undef });
+   
+  unless (defined *{ "$class\::$name" }) {
+    *{ "$class\::$name" } = $self->initialize_linked_has_many_accessor($name);
+  }
+}
+
+sub initialize_linked_has_many_accessor {
+  no strict;
+  my ($self, $attribute) = @_;
+  warn "Adding HAS MANY accessor: " . $attribute;
+  return sub {
+    my $self = shift;
+    my $new_value = shift;
+    if (defined $new_value) {
+      $self->set_value($attribute,  $new_value);
+    }
+    return $self->get_linked_values($attribute);
+  };
+}
+
+sub get_linked_values {
+  my ($self, $attribute) = @_;
+  my $class = $self->relational_class($attribute);
+  my $accessor = $self->object_name_from_package($class) . "_id";
+  warn "Finding MANY $class via link table";
+  return [];
 }
 
 sub get_lazy_value {
@@ -309,7 +346,12 @@ sub save {
 
 sub destroy {
   my $self = shift;
-  return $self->get_adaptor->destroy($self);
+  my $request = EnsEMBL::Web::DBSQL::SQL::Request->new();
+  $request->set_action('destroy');
+  $request->add_where($self->get_primary_key, $self->id);
+  $request->set_index_by('user_record_id');
+  my $result = $self->get_adaptor->destroy($request);
+  return $result->get_success;
 }
 
 sub find_many {
@@ -341,11 +383,23 @@ sub plural {
   my $plural = $word;
   my $found = 0;
 
+  ## Words ending in ws - skip
+  if (!$found && $word =~ /ws$/) {
+    $found = 1;
+  }
+
   ## Words ending in s
   if (!$found && $word =~ /s$/) {
     $plural =~ s/s$/ses/;
     $found = 1;
   }
+
+  ## Words ending in x 
+  if (!$found && $word =~ /x$/) {
+    $plural =~ s/x$/xes/;
+    $found = 1;
+  }
+  
   unless ($found) {
     $plural .= "s";
   }
@@ -362,9 +416,20 @@ sub singular {
   my $singular = $word;
   my $found = 0;
 
-  ## Words ending in es
+  ## Words ending in ws - skip
+  if (!$found && $word =~ /ws$/) {
+    $found = 1;
+  }
+
+  ## Words ending in ses
   if (!$found && $word =~ /ses$/) {
     $singular =~ s/ses$/s/;
+    $found = 1;
+  }
+
+  ## Words ending in xes
+  if (!$found && $word =~ /xes$/) {
+    $singular =~ s/xes$/x/;
     $found = 1;
   }
 
