@@ -23,13 +23,26 @@ sub get_sql {
   my ($self) = @_;
   my $sql = "";
   if ($self->get_action eq 'select') {
-    $sql = "SELECT * FROM " . $self->get_table;
-  }
+    $sql = "SELECT * FROM " . $self->get_sql_table;
+  } elsif ($self->get_action eq 'destroy') {
+    $sql = "DELETE FROM " . $self->get_sql_table;
+  } 
   if ($self->get_where) {
     $sql .= " WHERE " . $self->get_where;
   }
   $sql .= ';';
   return $sql; 
+}
+
+sub get_sql_table {
+  my $self = shift;
+  my $sql = "";
+  if ($self->get_table) {
+    $sql = $self->get_table;
+  } else {
+    $sql = "<table>";
+  }
+  return $sql;
 }
 
 sub add_where {

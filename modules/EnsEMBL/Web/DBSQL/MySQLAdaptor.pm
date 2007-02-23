@@ -7,6 +7,7 @@ use Class::Std;
 use EnsEMBL::Web::RegObj;
 use EnsEMBL::Web::Object::Data;
 use EnsEMBL::Web::DBSQL::SQL::Result;
+use EnsEMBL::Web::DBSQL::SQL::Request;
 use Data::Dumper;
 
 {
@@ -100,10 +101,8 @@ sub is_allowed_in_set_clause {
 sub create {
   my ($self, $data) = @_;
   my $result = EnsEMBL::Web::DBSQL::SQL::Result->new();
-  warn "CREATING data object";
   my $sql = 'INSERT INTO ' . $self->get_table . ' SET '; 
   $sql .= $self->set_clause($data);  
-  warn $sql;
   $self->get_handle->prepare($sql);
   $result->set_action('create');
   if ($self->get_handle->do($sql)) {
@@ -116,13 +115,11 @@ sub create {
 sub update {
   my ($self, $data) = @_;
   my $result = EnsEMBL::Web::DBSQL::SQL::Result->new();
-  warn "UPDATING data object with ID " . $data->id;
   $result->set_action('update');
   my $sql = 'UPDATE ' . $self->get_table . " ";
   $sql .= "SET " . $self->set_clause($data);
   $sql .= " WHERE " . $data->get_primary_key . "='" . $data->id . "'";
   $sql .= ";";
-  warn $sql;
   $self->get_handle->prepare($sql);
   if ($self->get_handle->do($sql)) {
     $result->set_success(1);
@@ -131,8 +128,15 @@ sub update {
 }
 
 sub destroy {
-  my ($self, $data) = @_;
-  return 1;
+  my ($self, $request) = @_;
+  my $result = EnsEMBL::Web::DBSQL::SQL::Result->new();
+  $result->set_action('destroy');
+  my $sql = $self->template($request->get_sql);
+  $self->get_handle->prepare($sql);
+  if ($self->get_handle->do($sql)) {
+    $result->set_success(1);
+  }
+  return $result;
 }
 
 sub find {
@@ -151,7 +155,6 @@ sub find_many {
   my $result = EnsEMBL::Web::DBSQL::SQL::Result->new();
   $result->set_action('find');
   my $sql = $self->template($request->get_sql);
-  warn $sql;
   my $hashref = $self->get_handle->selectall_hashref($sql, $request->get_index_by);
   $result->set_result_hash($hashref);
   return $result;
@@ -185,7 +188,6 @@ sub last_inserted_id {
 sub template {
   my ($self, $template) = @_;
   while ($template =~ m/<(.*)>/g) {
-    warn "TEMPLATE: " . $1;
     my $get_accessor = "get_" . $1;
     my $get = $self->$get_accessor;
     $template =~ s/<$1>/$get/g;
