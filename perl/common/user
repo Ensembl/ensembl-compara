@@ -1,0 +1,23 @@
+#! /usr/local/bin/perl
+
+package user;
+
+use strict;
+use warnings;
+
+use EnsEMBL::Web::Controller;
+
+{
+
+my $controller = EnsEMBL::Web::Controller->new;
+
+$controller->add_connection({ 'register' => 'EnsEMBL::Web::Controller::Command::User::Register' }); 
+$controller->add_connection({ 'activate' => 'EnsEMBL::Web::Controller::Command::User::Activate' }); 
+$controller->add_connection({ 'account' => 'EnsEMBL::Web::Controller::Command::User::Account' }); 
+$controller->add_connection({ 'add_bookmark' => 'EnsEMBL::Web::Controller::Command::User::AddBookmark' }); 
+
+$controller->dispatch($ENV{REQUEST_URI});
+
+}
+
+1;
