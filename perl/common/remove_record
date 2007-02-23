@@ -3,23 +3,24 @@
 package remove_record;
 
 use CGI;
+use EnsEMBL::Web::Object::Data::User;
 use EnsEMBL::Web::RegObj;
 
 my $cgi = new CGI;
 
 my $url = "/index.html";
-my $user = $ENSEMBL_WEB_REGISTRY->get_user;
+my $registry_user = $ENSEMBL_WEB_REGISTRY->get_user;
+my $user = EnsEMBL::Web::Object::Data::User->new({ id => $registry_user->id });
 
 if ($user) {
-  $url = "/common/accountview";
+  $url = "/common/user/account";
   if ($cgi->param('url')) {
     $url = $cgi->param('url');
   }
 
-  $user->load;
   foreach my $record (@ { $user->records }) {
     if ($record->id eq $cgi->param('id')) {
-     $record->delete;
+     $record->destroy;
     }
   }
 }
