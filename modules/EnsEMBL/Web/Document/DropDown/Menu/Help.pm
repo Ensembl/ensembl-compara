@@ -24,9 +24,6 @@ sub new {
   $self->add_link( 'DAS sources', $self->help_link('dassources',1),           '' );
   $self->add_link( 'General',     $self->help_link($self->{'script'},1),      '' );
   $self->add_link( 'Helpdesk',    "javascript:void(window.open('/$self->{'species'}/helpview?kw=contigview;se=1','helpview','width=700,height=550,resizable,scrollbars'))", '' );
-  if ($ENV{'ENSEMBL_USER_ID'}) {
-    $self->add_link(' <b>Save config</b>', "/common/save_config");
-  }
   return $self;
 }
 

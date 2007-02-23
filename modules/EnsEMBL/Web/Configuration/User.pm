@@ -6,6 +6,8 @@ package EnsEMBL::Web::Configuration::User;
 use strict;
 use EnsEMBL::Web::Configuration;
 use EnsEMBL::Web::Wizard::User;
+use EnsEMBL::Web::Object::Data::User;
+use EnsEMBL::Web::RegObj;
 
 our @ISA = qw( EnsEMBL::Web::Configuration );
 
@@ -129,12 +131,16 @@ sub groupview {
 sub accountview {
   ### Dynamic view displaying information about a user account
   my $self   = shift;
-  my $user = $self->{'object'};
-  
+  #my $user = $self->{object};
+  #my $user = $ENSEMBL_WEB_REGISTRY->get_user;
+  my $registry_user = $ENSEMBL_WEB_REGISTRY->get_user;
+  my $user = EnsEMBL::Web::Object::Data::User->new({ id => $registry_user->id });
+
   $self->_add_javascript_libraries;
 
   if( my $details_panel = $self->new_panel( 'Image',
     'code'    => "details#",
+    'user'    => $user,
     'caption' => 'Account home page for '. $user->name . " (" . $user->email . ")",
   )) {
     $details_panel->add_components(qw(
@@ -145,6 +151,7 @@ sub accountview {
 
   if( my $mixer_panel = $self->new_panel( 'Image',
     'code'    => "mixer#",
+    'user'    => $user,
   )) {
     $mixer_panel->add_components(qw(
       settings_mixer EnsEMBL::Web::Component::User::settings_mixer
@@ -154,6 +161,7 @@ sub accountview {
 
   if( my $tabs_panel = $self->new_panel( 'Image',
     'code'    => "user_tabs#",
+    'user'    => $user,
   )) {
     $tabs_panel->add_components(qw(
       user_tabs  EnsEMBL::Web::Component::User::user_tabs
@@ -163,6 +171,7 @@ sub accountview {
 
   if( my $prefs_panel = $self->new_panel( 'Image',
     'code'    => "user_prefs#",
+    'user'    => $user,
   )) {
     $prefs_panel->add_components(qw(
       user_prefs  EnsEMBL::Web::Component::User::user_prefs

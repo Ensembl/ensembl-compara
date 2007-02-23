@@ -10,7 +10,6 @@ my %Data_of;
 
 sub new {
   ### c
-  warn "NEW PARAMETER SET";
   my ($class, %params) = @_;
   my $self = bless \my($scalar), $class;
   $CGI_of{$self} = defined $params{'cgi'} ? $params{'cgi'} : undef;

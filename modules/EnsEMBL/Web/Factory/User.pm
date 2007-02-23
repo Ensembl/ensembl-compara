@@ -11,7 +11,6 @@ our @ISA = qw(EnsEMBL::Web::Factory);
 
 sub createObjects { 
   my $self          = shift;
-  warn "FACTORY new USER: " . $ENV{'ENSEMBL_USER_ID'};
   my $adaptor = $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->userAdaptor;
   my $parameter_set = EnsEMBL::Web::ParameterSet->new((
                                       cgi => $self->__data->{'_input'},

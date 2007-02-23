@@ -171,7 +171,7 @@ sub configure {
       if( $objecttype eq 'DAS' ) {
         $self->problem('Fatal', 'Bad request', 'Unimplemented');
       } else {
-        warn "Can't do configuration function $FN on $objecttype objects";
+        warn "Can't do configuration function $FN on $objecttype objects, or an error occurred when excuting that function.";
       }
     }
   }
@@ -208,7 +208,6 @@ sub groups  {
 
 sub get_user_id {
   my $self = shift;
-
   ## do we have one in the current session?
   my $user_id = $ENV{'ENSEMBL_USER_ID'};
 
@@ -327,8 +326,7 @@ sub _node_hop {
 sub check_access {
   my ($self, $access) = @_;
   my $ok = 0;
-  warn "CHECKING ACCESS";
-  if ($access eq 'login' && $self->get_user_id) {
+  if ($access->{login} && $self->get_user_id) {
     $ok = 1;
   }
   else {

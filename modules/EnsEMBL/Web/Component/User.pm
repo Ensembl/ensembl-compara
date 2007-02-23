@@ -31,8 +31,8 @@ sub _wrap_form {
 sub info_box {
   my($user, $message, $name) = @_;
   my $found = 0;
-  foreach my $record ($user->info_records) {
-    if ($record->name eq $name) {
+  foreach my $info (@{ $user->infoboxes }) {
+    if ($info->name eq $name) {
       $found = 1;
     }
   }
@@ -61,7 +61,8 @@ sub toggle_class {
 ##---------- ACCOUNTVIEW ----------------------------------------
 
 sub settings_mixer {
-  my ($panel, $user) = @_;
+  my ($panel) = @_;
+  my $user = $panel->{user};
   my $html = "<div>";
   my @groups = @{ $user->groups };
   if ($#groups > -1) {
@@ -75,14 +76,14 @@ sub settings_mixer {
 }
 
 sub user_tabs {
-  my( $panel, $user) = @_;
+  my ($panel) = @_;
+  my $user = $panel->{user};
 
   my $bookmarkTab= EnsEMBL::Web::Interface::Tab->new(( 
                                      name => 'bookmarks', 
                                      label => 'Bookmarks', 
                                      content => _render_bookmarks($user), 
                                                 ));
-
   my $configTab= EnsEMBL::Web::Interface::Tab->new(( 
                                      name => 'configs', 
                                      label => 'Configurations', 
@@ -107,21 +108,26 @@ sub user_tabs {
                                      content => _render_groups($user), 
                                                 ));
 
+  my $dasTab = EnsEMBL::Web::Interface::Tab->new(( 
+                                     name => 'das', 
+                                     label => 'DAS sources', 
+                                     content => _render_das($user), 
+                                                ));
 
   my $tabview = EnsEMBL::Web::Interface::TabView->new(( 
                                       name => "settings",
                                       tabs => [
                                                 $bookmarkTab,
                                                 $configTab,
+                                                $dasTab,
                                                 $noteTab,
                                                 $newsTab,
                                                 $groupTab,
                                               ]
                                                      ));
-
-
+  
   my $cgi = new CGI;
-  my @opentabs = $user->opentab_records;
+  my @opentabs = @{ $user->opentabs };
   if ($#opentabs > -1) {
     foreach my $opentab (@opentabs) {
       if ($opentab->name eq $tabview->name) { 
@@ -170,7 +176,7 @@ sub render_settings_mixer {
 
 sub mixer_presets_for_user {
   my ($user) = @_;
-  my @mixers = $user->mixer_records;
+  my @mixers = @{ $user->mixers };
   my @presets = ();
   if ($#mixers > -1) {
     my $mixer = $mixers[0];
@@ -253,21 +259,22 @@ sub options_for_user {
 }
 
 sub user_details {
-  my( $panel, $user) = @_;
+  my ($panel) = @_;
+  my $user = $panel->{user};
   my $html = "<div class='pale boxed'>";
   $html .= qq(This is your Ensembl account home page. From here you can manage
                 your saved settings, update your details and join or create new 
-                Ensembl groups.<br /><br />To learn more about how to get the most
+                Ensembl groups. To learn more about how to get the most
                 from your Ensembl account, read our <a href='/info/about/accounts.html'>introductory guide</a>.);
   $html .= "</div>";
-   
   $panel->print($html);
 }
 
 sub user_prefs {
-  my( $panel, $user) = @_;
-  my @invites = $user->info_records;
-  my @sortables = $user->sortable_records;
+  my ($panel) = @_;
+  my $user = $panel->{user};
+  my @invites = @{ $user->infoboxes };
+  my @sortables = @{ $user->sortables };
   my $sortable = $sortables[0];
   my $html = "";
   $html = qq(<div class="white boxed" style="width:770px;">
@@ -299,7 +306,7 @@ sub _render_settings_table {
   my @sortables = undef;
   my @presets = ();
   if ($user) {
-    @sortables = $user->sortable_records;
+    @sortables = @{ $user->sortables };
     $sortable = $sortables[0];
     @presets = &mixer_presets_for_user($user);
   }
@@ -386,6 +393,12 @@ sub _render_settings_table {
   return $html;
 }
 
+sub _render_das {
+  my $user = shift;
+  my $html .= &info_box($user, qq(DAS sources allow you to share annotation and other information.), 'user_das_info');
+  return $html;
+}
+
 sub _render_groups {
   my $user = shift;
   my $html;
@@ -435,7 +448,7 @@ sub _render_invites_for_group {
   my $class = "";
   if ($group->type eq 'restricted') {
     $group->load;
-    my @invites = $group->invite_records;
+    my @invites = $group->invites;
     foreach my $invite (@invites) {
       if ($invite->email eq $user->email && $invite->status eq 'pending') {
         $class = "invite";
@@ -482,9 +495,11 @@ sub _render_all_groups {
 
 sub _render_bookmarks {
   my $user = shift;
-  my @bookmarks = $user->bookmark_records;
+  warn "RENDERING BOOKMARKS for " . $user->name;
+  my @bookmarks = @{ $user->bookmarks };
   my @records;
   foreach my $bookmark (@bookmarks) {
+    warn "BOOKMARK: " . $bookmark->name;
     my $description = $bookmark->description || '&nbsp;';
     push @records, {  'id' => $bookmark->id, 
                       'ident' => 'user',
@@ -498,7 +513,7 @@ sub _render_bookmarks {
   }
 
   foreach my $group (@{ $user->groups }) {
-    foreach my $bookmark ($group->bookmark_records) {
+    foreach my $bookmark (@{ $group->bookmarks }) {
       my $description = $bookmark->description || '&nbsp;';
       push @records, {'id' => $bookmark->id, 
                       'ident' => $group->id, 
@@ -524,7 +539,7 @@ sub _render_bookmarks {
 
 sub _render_configs {
   my $user = shift;
-  my @configurations = $user->configuration_records;
+  my @configurations = @{ $user->configurations };
   my @records;
 
   foreach my $configuration (@configurations) {
@@ -541,7 +556,7 @@ sub _render_configs {
   }
 
   foreach my $group (@{ $user->groups }) {
-    foreach my $configuration ($group->configuration_records) {
+    foreach my $configuration (@{ $group->configurations }) {
       my $description = $configuration->description || '&nbsp;';
       push @records, {'id' => $configuration->id, 
                       'ident' => $group->id, 
@@ -567,7 +582,7 @@ sub _render_configs {
 
 sub _render_notes {
   my $user = shift;
-  my @notes = $user->annotation_records;
+  my @notes = @{ $user->annotations };
   my @records;
 
   foreach my $note (@notes) {
@@ -585,7 +600,7 @@ sub _render_notes {
   }
 
   foreach my $group (@{ $user->groups }) {
-    foreach my $note ($group->annotation_records) {
+    foreach my $note (@{ $group->annotations }) {
       my $description = $note->annotation || '&nbsp;';
       push @records, {'id' => $note->id, 
                       'ident' => $note->id, 
@@ -610,7 +625,7 @@ sub _render_notes {
 
 sub _render_news {
   my $user = shift;
-  my @filters = $user->news_records;
+  my @filters = @{ $user->news };
   my @records;
   my $both = 0;
   foreach my $filter (@filters) {
@@ -940,7 +955,7 @@ sub group_users_tabview {
                                      content => _render_group_invite($group, $user)
                                                      ));
 
-  my @invites = $group->invite_records;
+  my @invites = @{ $group->invites };
   my $pendingTab = undef;
   if ($#invites > -1) {
     my $label = "Invited members (" . ($#invites + 1) . ")";
@@ -957,7 +972,7 @@ sub group_users_tabview {
                                                      ));
 
   my $cgi = new CGI;
-  my @opentabs = $user->opentab_records;
+  my @opentabs = @{ $user->opentabs };
   if ($#opentabs > -1) {
     foreach my $opentab (@opentabs) {
       if ($opentab->name eq $tabview->name) { 
@@ -976,9 +991,9 @@ sub group_users_tabview {
 
 sub _render_group_settings {
   my ($group) = @_;
-  my @bookmarks = $group->bookmark_records;
-  my @configurations = $group->configuration_records;
-  my @notes = $group->note_records;
+  my @bookmarks = @{ $group->bookmarks };
+  my @configurations = @{ $group->configurations };
+  my @notes = @{ $group->annotations };
   my $html = "";
   if ($#bookmarks > -1) {
     $html .= "<h5>Bookmarks</h5>\n";

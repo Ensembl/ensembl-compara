@@ -24,7 +24,7 @@ our @ISA = qw(EnsEMBL::Web::Root);
 ## Modified parameters built in BUILD fnuction...
   my %Configs_of       :ATTR;
   my %Internal_das_of  :ATTR;
-  my %Das_sources_of   :ATTR;
+  my %Das_sources_of   :ATTR( :get<das_sources>  );
   my %ImageConfigs_of  :ATTR;
   my %Path_of          :ATTR( :get<path> );
 ## Lazy loaded objects....
