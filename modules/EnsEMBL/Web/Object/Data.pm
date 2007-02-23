@@ -39,6 +39,7 @@ sub populate_with_arguments {
     $self->populate($args->{id});
   }
 }
+
 sub populate {
   my ($self, $id) = @_;
   $self->id($id);
@@ -68,6 +69,15 @@ sub mapped_field {
     $field = 'id';
   }
   return $field;
+}
+
+sub records {
+  my ($self) = @_;
+  my @records = ();
+  foreach my $key (keys %{ $self->get_relational_attributes }) {
+    push @records, @{ $self->$key }; 
+  }
+  return \@records;
 }
 
 sub get_value {
@@ -327,7 +337,7 @@ sub add_relational_symbol_lookup {
 
 sub has_id {
   my ($self) = @_;
-  if ($self->get_value('id')) {
+  if (defined $self->get_value('id')) {
     return 1;
   }
   return 0;

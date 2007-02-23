@@ -30,7 +30,8 @@ sub BUILD {
   $self->add_has_many({ class => 'EnsEMBL::Web::Object::Data::Opentab', table => 'user_record'});
   $self->add_has_many({ class => 'EnsEMBL::Web::Object::Data::Sortable', table => 'user_record'});
   $self->add_has_many({ class => 'EnsEMBL::Web::Object::Data::Mixer', table => 'user_record'});
-  $self->add_has_many({ class => 'EnsEMBL::Web::Object::Data::Group', table => 'webgroup', link_table => 'group_members'});
+#  $self->add_has_many({ class => 'EnsEMBL::Web::Object::Data::Group', table => 'webgroup', link_table => 'group_members'});
+
   $self->populate_with_arguments($args);
 }
 
