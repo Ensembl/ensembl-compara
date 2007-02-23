@@ -419,10 +419,12 @@ sub image {
   my $wuc       = $object->get_userconfig( 'protview' );
   $wuc->container_width( $object->Obj->length );
   $wuc->{_object} = $object;
+  my $image_width = $wuc->get('_settings', 'width');
 
   my $das_collection = $object->get_DASCollection();
   foreach my $das( @{$das_collection->Obj} ){
     next unless $das->adaptor->active;
+   $das->adaptor->maxbins($image_width) if ($image_width);
     my $source = $das->adaptor->name();
     my $color  = $das->adaptor->color() || 'black';
     my $src_label  = $das->adaptor->label() || $source;

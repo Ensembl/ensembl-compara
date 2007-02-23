@@ -544,6 +544,9 @@ sub add_das_tracks {
 
 
   my @das_sources = ();
+
+  my $image_width = $config->get('_settings', 'width') || 900;
+
   foreach my $source ( @{$object->get_session->get_das_filtered_and_sorted( $object->species )} ) {
     my $config_key = 'managed_extdas_'.$source->get_key ;
     next unless $config->get( $config_key ,'on' ) eq 'on';
@@ -570,7 +573,8 @@ sub add_das_tracks {
         -mapping   => $source_config->{'mapping'} || $stype,
         -name      => $source_config->{'name'},
         -ens       => $object->database('core'),
-        -proxy_url => $object->species_defs->ENSEMBL_WWW_PROXY 
+        -proxy_url => $object->species_defs->ENSEMBL_WWW_PROXY,
+	-maxbins   => $image_width
       );
     };
     if($@) {
@@ -602,7 +606,8 @@ sub add_das_tracks {
           -mapping => $dbname->{'mapping'} || $stype,
           -name  => $dbname->{'name'},
           -ens   => $object->database('core'),
-          -proxy_url => $object->species_defs->ENSEMBL_WWW_PROXY 
+          -proxy_url => $object->species_defs->ENSEMBL_WWW_PROXY, 
+	  -maxbins   => $image_width
         );
       };
       if($@) {
