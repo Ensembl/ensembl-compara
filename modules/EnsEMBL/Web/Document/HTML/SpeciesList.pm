@@ -12,17 +12,10 @@ sub render {
   my ($class, $request) = @_;
 
   my $species_defs = $ENSEMBL_WEB_REGISTRY->species_defs;
-  my %species_id = ();
-  my %id_to_species = ();
-  my $count = 0;
 
-  foreach my $species (sort $species_defs->valid_species) {
-    $count++; 
-    $species =~ s/_/ /g;
-    $species_id{$species} = $count;
-    $id_to_species{$count} = $species;
-  }
-  
+  my $adaptor = $ENSEMBL_WEB_REGISTRY->newsAdaptor();
+  my %id_to_species = %{$adaptor->fetch_species($SiteDefs::ENSEMBL_VERSION)};
+
   my %species_description = setup_species_descriptions($species_defs);
 
   my $user = $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->get_user;
@@ -30,19 +23,19 @@ sub render {
   my $html = "";
 
   if ($request && $request eq 'fragment') {
-    $html .= render_species_list($user, $species_defs, \%id_to_species, \%species_id, \%species_description); 
+    $html .= render_species_list($user, $species_defs, \%id_to_species, \%species_description); 
   } else {
     
     $html .= "<div id='reorder_species' style='display: none;'>\n";
-    $html .= render_ajax_reorder_list($user, $species_defs, \%id_to_species, \%species_id); 
+    $html .= render_ajax_reorder_list($user, $species_defs, \%id_to_species); 
     $html .= "</div>\n";
 
     $html .= "<div id='full_species'>\n";
-    $html .= render_species_list($user, $species_defs, \%id_to_species, \%species_id, \%species_description); 
+    $html .= render_species_list($user, $species_defs, \%id_to_species, \%species_description); 
     $html .= "</div>\n";
     if ($species_defs->ENSEMBL_LOGINS && !$user->name) {
       $html .= "<div id='login_message'>";
-      $html .= "<a href='javascript:login_link()'>Log in</a> to customise this list &middot; <a href='/common/user/register'>Register</a>";
+      $html .= "<a href='javascript:login_link()'>Log in</a> to customise this list &middot; <a href='/common/register'>Register</a>";
       $html .= "</div>\n";
     }
   }
@@ -58,8 +51,7 @@ sub setup_species_descriptions {
   my $updated = '<strong class="alert">UPDATED!</strong>';
   my $new     = '<strong class="alert">NEW!</strong>';
 
-  my $DB = $species_defs->databases->{'ENSEMBL_WEBSITE'};
-  my $adaptor = EnsEMBL::Web::DBSQL::NewsAdaptor->new( $DB );
+  my $adaptor = $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->newsAdaptor;
 
   my @current_species = @{$adaptor->fetch_species_data($species_defs->ENSEMBL_VERSION)};
 
@@ -97,11 +89,43 @@ sub setup_species_descriptions {
   return %description;
 }
 
+sub check_lists {
+  my ($favourite_species, $species_list, $id_to_species) = @_;
+  my ($favourites, $list);
+  
+  ## check lists for new or deleted species
+  my ($sp_id, %fav_lookup, %list_lookup);
+  foreach $sp_id (@$favourite_species) {
+    $fav_lookup{$sp_id}++;
+    if ($id_to_species->{$sp_id}) {
+      push @$favourites, $sp_id;
+    }
+  }
+
+  foreach $sp_id (@$species_list) {
+    $list_lookup{$sp_id}++;
+    if ($id_to_species->{$sp_id}) {
+      push @$list, $sp_id;
+    }
+  }
+  my @temp = ();
+  foreach $sp_id (keys %$id_to_species) {
+    if (!$fav_lookup{$sp_id} && !$list_lookup{$sp_id}) {
+      push @temp, $sp_id;
+    }
+  }
+  if (scalar(@temp) > 0) {
+    unshift(@$list, @temp);
+  }
+
+  return [$favourites, $list];
+}
+
 sub render_species_list {
-  my ($user, $species_defs, $id_to_species, $species_id, $species_description) = @_;
+  my ($user, $species_defs, $id_to_species, $species_description) = @_;
   my %description = %{ $species_description };
   my %id_to_species = %{ $id_to_species };
-  my %species_id = %{ $species_id };
+  my %species_id = reverse %id_to_species;
   my ($species) = $user->species_records;
   my %favourites = ();
   my @favourite_species = ();
@@ -118,6 +142,12 @@ sub render_species_list {
     @species_list = split(/,/, $species->list); 
   }
 
+  ## check lists for new or deleted species
+  my $checked = check_lists(\@favourite_species, \@species_list, \%id_to_species);
+  @favourite_species = @{$checked->[0]};
+  @species_list = @{$checked->[1]};
+
+  ## output list
   if (!$user->name) {
     $html .= "<b>Popular genomes</b><br />\n";
   } else {
@@ -150,9 +180,9 @@ sub render_species_list {
   $html .= "<ul class='species-list spaced'>\n";
 
   foreach my $id (@species_list) {
-    my $species_name = $id_to_species{$id};
-    my $species_filename = $species_name;
-    $species_filename =~ s/ /_/g;
+    my $species_filename = $id_to_species{$id};
+    my $species_name = $species_filename;
+    $species_name =~ s/_/ /g;
     if (!$favourites{$id}) {
       $html .= "<li><span class='sp'><a href='/$species_filename/'>$species_name</a></span>".$description{$species_name}[1]."</li>\n";
       $favourites{$id} = 1;
@@ -165,9 +195,9 @@ sub render_species_list {
 }
 
 sub render_ajax_reorder_list {
-  my ($user, $species_defs, $id_to_species, $species_id) = @_;
+  my ($user, $species_defs, $id_to_species) = @_;
   my %id_to_species = %{ $id_to_species };
-  my %species_id = %{ $species_id };
+  my %species_id = reverse %id_to_species;
   my $html = "";
 
 
@@ -191,14 +221,19 @@ sub render_ajax_reorder_list {
     @species_list = split(/,/, $species->list); 
   }
 
+  ## check lists for new or deleted species
+  my $checked = check_lists(\@favourite_species, \@species_list, \%id_to_species);
+  @favourite_species = @{$checked->[0]};
+  @species_list = @{$checked->[1]};
 
   $html .= "<ul id='favourites_list'>\n";
-  foreach my $species (@favourite_species) {
-    $species = $id_to_species{$species};
-    $favourites{$species} = 1;
-    (my $sp_dir = $species) =~ s/ /_/;
+  foreach my $id (@favourite_species) {
+    my $species_name = $id_to_species{$id};
+    $favourites{$id} = 1;
+    my $sp_dir = $species_name;
+    $species_name =~ s/_/ /;
     my $common = $species_defs->get_config($sp_dir, 'SPECIES_DESCRIPTION');
-    $html .= '<li id="favourite_' . $species_id{$species} . '"><em>' .$species.'</em>';
+    $html .= "<li id='favourite_$id'><em>" .$species_name.'</em>';
     if ($common) {
       $html .= " ($common)";
     }
@@ -208,25 +243,27 @@ sub render_ajax_reorder_list {
   $html .= "</ul></div>\n";
   $html .= "<div id='all_species'>\n";
   $html .= "<ul id='species_list'>\n";
-  foreach my $species (@species_list) {
-    $species = $id_to_species{$species};
-    if (!$favourites{$species}) {
-      (my $sp_dir = $species) =~ s/ /_/;
+  foreach my $id (@species_list) {
+    my $species_name = $id_to_species{$id};
+    if (!$favourites{$id}) {
+      my $sp_dir = $species_name;
+      $species_name =~ s/_/ /;
       my $common = $species_defs->get_config($sp_dir, 'SPECIES_DESCRIPTION');
-      $html .= "<li id='species_" . $species_id{$species} . "'><em>" . $species . '</em>'; 
+      $html .= "<li id='species_$id'><em>" . $species_name . '</em>'; 
       if ($common) {
         $html .= " ($common)";
       }
       $html .= "</li>\n";
-      $favourites{$species} = 1;
+      $favourites{$id} = 1;
     }
   }
 
   ## Catch any species not yet displayed
-  foreach my $species ($species_defs->valid_species) {
-    $species =~ s/_/ /;
-    if (!$favourites{$species}) {
-      $html .= "<li id='species_" . $species_id{$species} . "'>" . $species . "</li>\n"; 
+  foreach my $id (keys %id_to_species) {
+    my $species_name = $id_to_species{$id};
+    if (!$favourites{$id}) {
+      $species_name =~ s/_/ /;
+      $html .= "<li id='species_$id'>" . $species_name . "</li>\n"; 
     }
   }
 
