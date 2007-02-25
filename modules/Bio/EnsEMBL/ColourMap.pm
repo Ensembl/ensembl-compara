@@ -25,6 +25,19 @@ sub new {
   }
 
   $self->{'colour_sets'} = {};
+  $self->colourSet( 'ensembl_projection',
+    'ensembl_projection_protein_coding_KNOWN',    => [ 'chartreuse4', 'Known projection' ],
+    'ensembl_projection_protein_coding_NOVEL',    => [ 'olivedrab4', 'Novel projection' ],
+    'ensembl_projection_pseudogene_NOVEL',        => [ 'darkolivegreen3', 'Pseudogene projection' ],
+  );
+  $self->colourSet( 'ensembl_segment',
+    'ensembl_segment_C_segment_KNOWN',         => [ 'red3',       'Known C segment' ],
+    'ensembl_segment_V_segment_KNOWN',         => [ 'indianred3', 'Known V segment' ],
+    'ensembl_segment_V_segment_NOVEL',         => [ 'red4',       'Known V segment' ],
+    'ensembl_segment_D_segment_KNOWN',         => [ 'indianred2', 'Known D segment' ],
+    'ensembl_segment_J_segment_KNOWN',         => [ 'salmon',     'Known J segment' ],
+  );
+
   my %core = (
     '_protein_coding'           => [ 'rust', 'Known Protein Coding' ],
     '_protein_coding_KNOWN'     => [ 'rust', 'Known Protein Coding' ],
@@ -49,6 +62,19 @@ sub new {
     '_NOVEL'     => [ 'black',  'novel' ],
     '_PSEUDO'    => [ 'grey50', 'pseudogene' ],
   );
+  $self->colourSet( 'ideogram', qw(
+    gpos100 black
+    tip     slategrey
+    gpos75  grey40
+    gpos50  grey60
+    gpos25  grey85
+    gpos    black
+    gvar    grey88
+    gneg    white
+    acen    slategrey
+    stalk   slategrey
+    mark    blue
+  ));
   $self->colourSet( 'protein_features', qw(
     prints             rust
     prositepatterns    orange
