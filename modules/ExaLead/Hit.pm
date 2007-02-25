@@ -17,7 +17,10 @@ sub URL       :lvalue { $_[0]->{'URL'};    } # get/set string
 sub score     :lvalue { $_[0]->{'score'};  } # get/set int
 
 sub field      { return $_[0]{'fields'}{$_[1]}; }
-sub addField   { $_[0]{'fields'}{$_[1]} =  $_[2]; }
+sub addField   {
+  my($self,$key,$value) = @_;
+  $self->{'fields'}{$key} = $value;
+}
 sub fields     { return @{ $_[0]{'fields'} }; }
 
 sub addGroup   { push @{$_[0]{'groups'}},  $_[1]; }

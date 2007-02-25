@@ -16,7 +16,14 @@ sub new {
 sub context :lvalue { $_[0]->{'context'}; } # get/set string
 sub string  :lvalue { $_[0]->{'string'};  } # get/set string
 
-sub addTerm      { push @{$_[0]{'terms'}},      $_[1]; }
+sub addTerm      { 
+  my( $self, $term ) = @_;
+  $term->{'regexp'} =~ s/\./\\S/g;
+  foreach my $oldTerm (@{$self->{'terms'}}) {
+    return if $term->{'regexp'} =~ /^$oldTerm->{'regexp'}$/; 
+  }
+  push @{$self->{'terms'}},      $term;
+}
 sub addParameter { push @{$_[0]{'parameters'}}, $_[1]; }
 
 sub terms      { return @{$_[0]{'terms'}};      }

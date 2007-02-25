@@ -162,8 +162,16 @@ sub parse {
 ### Main function in the Exalead module, constructs the approprate request URL,
 ### and retrieves the XML, which then calls the inner function _parse, which
 ### actually parses the XML created the Exalead::* objects
-  my( $self, $q ) = @_;
+  my( $self, $q, $flag ) = @_;
   my $search_URL = $self->engineURL;
+#  my $host = `hostname`; chomp $host;
+#  $host.=':'.gmtime();
+  if( $flag > 20 ) {
+#warn "[EXALEAD:$host:$$] $search_URL :FAIL: Exalead search engine failure\n";
+    $self->__status = 'failure';
+    $self->__error  = 'Exalead search engine failure';
+    return;
+  }
 # $search_URL =~ s/1/2/;
   my $join = '?';
   foreach my $VAR ( $q->param() ) {
@@ -174,8 +182,16 @@ sub parse {
      $ua->timeout( $self->__timeout ); ## Allow 30 seconds for a response!!
   my $res = $ua->get( $search_URL );
   if( $res->is_success ) {
+#warn "[EXALEAD:$host:$$] $search_URL ".length($res->content)." bytes\n";
+    if( length( $res->content ) < 100 ) {
+      $flag++;
+#warn "[EXALEAD:$host:$$] rerunning $flag due to null response\n";
+      sleep 1;
+      return $self->parse( $q, $flag );
+    }
     $self->_parse( $res->content );
   } else {
+#warn "[EXALEAD:$host:$$] $search_URL :FAIL: ",$res->message,"\n";
     $self->__status = 'failure';
     $self->__error  = $res->message eq 'read timeout' ? 'Exalead search engine timed out after '.$self->__timeout.' seconds' : $res->message;
   }
@@ -194,6 +210,7 @@ sub _parse {
     $self->__error  = $error;
     return;
   } 
+  $self->{'raw_XML'} = $XML;
   $self->{'XML'} = $xml;
   $self->__status = 'search';
 ## Parse Query....
