@@ -1,12 +1,7 @@
 #!/usr/local/bin/perl
 
 package das::sequence;
-
 use EnsEMBL::Web::Document::WebPage;
-
-
-EnsEMBL::Web::Document::WebPage::wrapper( "DAS", 
-					  'outputtype' => 'XML',
-					  );
+wrapper_webpage( "DAS", 'outputtype' => 'DAS', 'subtype' => 'das' );
 
 1;

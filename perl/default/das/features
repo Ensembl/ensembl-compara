@@ -4,23 +4,6 @@ package das::features;
 
 use EnsEMBL::Web::Document::WebPage;
 
-wrapper_webpage( "DAS", 'outputtype' => 'DAS' );
-
-### Writing a new features DAS server
-###
-### EnsEMBL::Web::Component::DAS
-### EnsEMBL::Web::Component::DAS::Annotation
-### EnsEMBL::Web::Component::DAS::Reference
-###
-### EnsEMBL::Web::Configuration::DAS
-###
-### EnsEMBL::Web::Factory::DAS
-###
-### EnsEMBL::Web::Object::DAS::cagetags
-### EnsEMBL::Web::Object::DAS::ditags
-### EnsEMBL::Web::Object::DAS::karyotype
-### EnsEMBL::Web::Object::DAS::reference
-### EnsEMBL::Web::Object::DAS::transcripts
-### EnsEMBL::Web::Object::DAS::prediction_transcripts
+wrapper_webpage( "DAS", 'outputtype' => 'DAS', 'subtype' => 'das' );
 
 1;

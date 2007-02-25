@@ -1,12 +1,4 @@
-#!/usr/local/bin/perl
-
 package das::entry_points;
-
 use EnsEMBL::Web::Document::WebPage;
-
-
-EnsEMBL::Web::Document::WebPage::wrapper( "DAS", 
-					  'outputtype' => 'XML',
-					  );
-
+wrapper_webpage( "DAS", 'outputtype' => 'DAS', 'subtype' => 'dasep' );
 1;
