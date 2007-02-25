@@ -8,6 +8,27 @@ sub my_label {
   return $self->my_config('TEXT_LABEL') || 'Missing label';
 }
 
+sub das_link {
+  my($self) = shift;
+  my $type     = $self->my_config( 'CALL' ) =~ /Protein/ ? 'protein_align' : 'dna_align';
+  my $database = $self->my_config( 'DATABASE' ) || 'core' ;
+  my @logic_names;
+  if( $self->my_config( 'FEATURES' ) eq 'UNDEF' ) {
+    @logic_names = () ;
+  } else {
+    @logic_names = split( /\s+/,
+                          ( $self->my_config( 'FEATURES' ) ||
+                            $self->check() ) );
+  }
+  my $slice   = $self->{container}; 
+  my $species = $slice->{_config_file_name_};
+  my $assembly = $self->{'config'}->species_defs->other_species($species, 'ENSEMBL_GOLDEN_PATH' );
+
+  my $dsn = "$species.$assembly.".join('-',$type, $database, @logic_names);
+  my $das_link = "/das/$dsn/features?segment=".$slice->seq_region_name.':'.$slice->start.','.$slice->end;
+  return $das_link;
+}
+
 sub colour {
   my( $self, $id ) = @_;
   my $colours =  $self->{'colours'}->{ $self->object_type($id) } || 

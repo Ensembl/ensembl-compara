@@ -15,7 +15,10 @@ sub features {
   return $self->{'container'}->$method( $_[0]->my_config( 'key' ), $_[0]->my_config( 'threshold' ) );
 }
 
-sub href { my ($self, $f ) = @_; return undef; }
+sub href {
+  my ($self, $f ) = @_;
+  return undef;
+}
 
 sub zmenu {
   my ($self, $f ) = @_;
