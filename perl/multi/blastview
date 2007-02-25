@@ -23,6 +23,7 @@ use EnsEMBL::Web::Container::HSPContainer;
 # use EnsEMBL::HTML::Page;
 
 use EnsEMBL::Web::RegObj;
+use EnsEMBL::Web::SpeciesDefs;
 use EnsEMBL::Web::DBSQL::DBConnection;
 use Bio::Tools::Run::EnsemblSearchMulti;
 use EnsEMBL::Web::BlastView::Meta;
@@ -45,7 +46,7 @@ use vars qw( %ERRORS ); # Errors per-stage
 
 BEGIN {
   $META_DATA = EnsEMBL::Web::BlastView::MetaDataBlast->config || die( "Can't configure MetaData" );
-  $SPECIES_DEFS = $ENSEMBL_WEB_REGISTRY->species_defs;
+  $SPECIES_DEFS = EnsEMBL::Web::SpeciesDefs->new();
   $DBCONNECTION = EnsEMBL::Web::DBSQL::DBConnection->new( undef, $SPECIES_DEFS );
 }
 
@@ -182,7 +183,7 @@ MAIN:{
   $page->add_body_attr( 'onload', "LOADED = 1;"  );
   $page->stylesheet->add_sheet( 'all', '/css/blastview.css' );
   $page->javascript->add_script( 'var LOADED = 0;' );
-  $page->javascript->add_source( '/js/zmenu_32.js' );
+  $page->javascript->add_source( '/js/zmenu_42.js' );
   $page->javascript_div->add_div( 'jstooldiv', { 'style' => 'z-index: 200; position: absolute; visibility: hidden' } , '' );
 
 
@@ -204,7 +205,7 @@ MAIN:{
 
     if( my $hsp_id = $CGI->param('hsp_id') ){
       my $sp = $ENV{'ENSEMBL_SPECIES'} eq 'Multi' ? $SPECIES_DEFS->ENSEMBL_PRIMARY_SPECIES : $ENV{'ENSEMBL_SPECIES'};
-      my $blast_adpt = $DBCONNECTION->get_databases_species($sp, 'blast')->{'blast'};
+#      my $blast_adpt = $DBCONNECTION->get_databases_species($sp, 'blast')->{'blast'};
       my @args = ( $hsp_id, $blast_adpt );
       eval{ $hsp = Bio::Search::HSP::EnsemblHSP->retrieve( @args ) };
       $@ and warn( $@ );
@@ -213,7 +214,7 @@ MAIN:{
     
     if( my $hit_id = $CGI->param('hit_id') ){
       my $sp = $ENV{'ENSEMBL_SPECIES'} eq 'Multi' ? $SPECIES_DEFS->ENSEMBL_PRIMARY_SPECIES : $ENV{'ENSEMBL_SPECIES'};
-      my $blast_adpt = $DBCONNECTION->get_databases_species($sp, 'blast')->{'blast'};
+#      my $blast_adpt = $DBCONNECTION->get_databases_species($sp, 'blast')->{'blast'};
       my @args = ( $hit_id, $blast_adpt );
       eval{ $hit = Bio::Search::Hit::EnsemblHit->retrieve( @args ) };
       $@ and warn( $@ );
@@ -238,6 +239,7 @@ MAIN:{
     $page->content->add_panel( EnsEMBL::Web::Document::Panel->new( 'raw' => $content ) );
     $page->content->render();
     $page->render_end();
+    $blast_adpt->dbc->disconnect_if_idle;
     exit;
   }
 
@@ -278,14 +280,17 @@ MAIN:{
     }
     # Run
     foreach my $runnable( @run_list ){
-#warn "\nRUNNING  $runnable";
+warn "\nRUNNING  $runnable";
       eval{ $runnable->run };
-#warn "\nRUN      $runnable";
+warn "\nRUN      $runnable $@";
       if( $@ ){ 
         add_warning( $CGI->param('stage'), 'method', "System failure" );
         warn( $@ );
       }
+warn "HERE.... ",$runnable->status;
+warn ref($runnable);
       $runnable->status eq 'COMPLETED' and $runnable->store;
+warn "STORED....";
     }
 
     # See whether we skip RESULTS stage - only when the 'RUN' button pressed
