@@ -12,7 +12,6 @@ eval {
   if( $T->param('res') eq 'seq' ) {
     $result_ref = $indexer->get_seq_by_id({ DB => 'EMBL', ID => $T->param('ID'), OPTIONS => 'seq'});
     my $seq = join '', map { s/\W//g;$_ } grep { !/^>/ } @{$result_ref||[]};
-    print "$seq\n";
     if( $T->param('start') && $T->param('end') ) {
       $seq = substr($seq,$T->param('start')-1,$T->param('end')); 
     }
