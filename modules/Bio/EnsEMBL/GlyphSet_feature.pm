@@ -14,6 +14,10 @@ sub init_label {
   return if( defined $self->{'config'}->{'_no_label'} );
   my $HELP_LINK = $self->check();
   $self->init_label_text( $self->my_label, $HELP_LINK, $self->{'extras'} ? $self->{'extras'}{'description'} : undef );
+  if( $self->can('das_link') ) {
+    my $T = $self->das_link;
+    $self->label->{'zmenu'}{'99:DAS Table View'} = $T if $T;
+  }
   unless ($self->{'config'}->get($HELP_LINK, 'bump') eq 'always') {
     $self->bumped( $self->{'config'}->get($HELP_LINK, 'compact') ? 'no' : 'yes' );
   }
