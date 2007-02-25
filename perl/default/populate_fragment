@@ -26,12 +26,12 @@ foreach my $key (keys %{ $incoming }) {
   if ($key =~ /^component_/) {
     push @ordered_componenents, $key;
     $components{$key} = $incoming->{$key};
-    #warn "COMPONENT: $key:" . $components{$key}; 
   } else {
     $params{$key} = $incoming->{$key};
-    #warn "PARAM: $key: " . $params{$key};
   }
 }
+
+my $new_query = new CGI( $params{'url'} );
 
 my $chromosome = undef;
 my $location = undef;
@@ -74,6 +74,8 @@ my $json_components = "";
 # my($top_start, $top_end) = &top_start_end( $object, $max_length );
 my $top_start = $cgi->param('start');
 my $top_end   = $cgi->param('end');
+$ENV{'ENSEMBL_SCRIPT'} = 'contigview';
+
 $fragment->add_option( 'start', $top_start );
 $fragment->add_option( 'end',   $top_end   );
 #warn "----> AJAX PANEL NUMBER: " . $panel_number;
@@ -91,6 +93,29 @@ foreach my $key(@ordered_componenents) {
     $object->script('contigview');
     $object->get_scriptconfig('contigview');
     $object->prefix($prefix);
+    my $uc = $object->user_config_hash('contigviewbottom');
+## URL based tracks....
+use EnsEMBL::Web::URLfeatureParser;
+  my $URL =  $new_query->param('data_URL');
+  $object->param( 'h', $new_query->param('h') );
+  $object->param( 'highlights', $new_query->param('highlights') );
+  my @H = map { /^URL:(.*)/ ? $1 : () } @{ $object->highlights( $URL ? "URL:$URL" : () ) };
+#warn @{$object->highlights()};
+    if( @H ) {
+      foreach my $entry ( @H ) {
+        my $P = new EnsEMBL::Web::URLfeatureParser( $object->species_defs, $entry );
+        $P->parse_URL;
+        foreach my $K ( keys %{$P->{'tracks'}} ) {
+          push @{$uc->{'_managers'}->{'urlfeature'}} , $K;
+          if( exists( $uc->{'__url_source_data__'}{$K}) ) {
+            push @{ $uc->{'__url_source_data__'}{$K}{'features'} }, @{ $P->{'tracks'}{$K}{'features'} };
+          } else {
+            $uc->{'__url_source_data__'}{$K} = $P->{'tracks'}{$K};
+          }
+        }
+      }
+    }
+## This returns to $fragment...
 
     $result = &$complete( $fragment, $object );
 
