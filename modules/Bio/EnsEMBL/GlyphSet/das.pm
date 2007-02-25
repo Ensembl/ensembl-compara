@@ -37,20 +37,42 @@ sub init_label {
   my $species = $ENV{ENSEMBL_SPECIES};
   my $helplink = (defined($self->{'extras'}->{'helplink'})) ?  $self->{'extras'}->{'helplink'} :  "/$species/helpview?se=1;kw=$ENV{'ENSEMBL_SCRIPT'}#das";
     
+## Compute the label for the track...
+  my $track_label = $self->{'extras'}->{'label'} || $self->{'extras'}->{'caption'} || $self->{'extras'}->{'name'};
+  $track_label =~ s/^(managed_|managed_extdas)//;
+
+## Now the zmenu and the URL...
   my $URL = "";
-  if ($self->das_name =~ /^managed_extdas_(.*)$/){
+  my $das_url = $self->{'extras'}{'url'};
+  my $zmenu = {};
+  if ($self->managed_name =~ /^managed_extdas_(.*)$/){
     $URL = qq(javascript:X=window.open(\'/$species/dasconfview?_das_edit=$1;conf_script=$script$params\',\'dassources\',\'left=10,top=10,resizable,scrollbars=yes\');X.focus();void(0));
+    $zmenu->{'caption'} =  'Configure';
+    $zmenu->{'01:Advanced configuration...'} = $URL;
   } else {
     if ($self->{'extras'}{'homepage'}){
       $URL = $self->{'extras'}{'homepage'};
     } else {
       $URL = qq(javascript:X=window.open(\'$helplink\',\'helpview\',\'left=20,top=20,resizable,scrollbars=yes\');X.focus();void(0)) ;
     }
+    $zmenu->{'caption'} = 'Help';
+    $zmenu->{'01:Track information...'}      = $URL;
   }
+  $das_url  .= "/".$self->{'extras'}{'dsn'} if $das_url =~  /\/das$/;
+  
+## Add a link to the zmenu which allows people to look at the raw DAS response (or 
+## the pretty one if that is styled with CSS.. Need the URL and the segments list.
 
-  my $track_label = $self->{'extras'}->{'label'} || $self->{'extras'}->{'caption'} || $self->{'extras'}->{'name'};
-  $track_label =~ s/^(managed_|managed_extdas)//;
+$Data::Dumper::Indent = 1;
+warn Data::Dumper::Dumper( $self->{'extras'} );
+  my( $features, $das_styles, $segments ) = @{
+    $self->{'container'}->get_all_DASFeatures(
+      $self->{'extras'}{'type'}
+    )->{$self->{'extras'}{'dsn'}} || []
+  };
+  $zmenu->{'99:View DAS response'} = join '/', $das_url, 'features?'.  join ';', map { "segment=$_" } @$segments;
 
+## Now we render the actual link...
   my( $fontname, $fontsize ) = $self->get_font_details( 'label' );
   my @res = $self->get_text_width( 0, $track_label, '', 'font'=>$fontname, 'ptsize' => $fontsize );
   $self->label( new Sanger::Graphics::Glyph::Text({
@@ -61,9 +83,7 @@ sub init_label {
     'font'      => $fontname,
     'ptsize'    => $fontsize,
     'href'      => $URL,
-    'zmenu'     => $self->das_name  =~/^managed_extdas/ ?
-      { 'caption' => 'Configure', '01:Advanced configuration...' => $URL } :
-      { 'caption' => 'HELP',      '01:Track information...'      => $URL }
+    'zmenu'     => $zmenu
   }) );
 }
 
@@ -724,8 +744,10 @@ sub feature_label {
   }
 }
 
-sub das_name     { return $_[0]->{'extras'}->{'name'}; }
-sub managed_name { return $_[0]->{'extras'}->{'name'}; }
+sub das_name     {
+  return $_[0]->{'extras'}->{'name'};
+}
+sub managed_name { return $_[0]->{'extras'}->{'extra_name'}; }
 
 sub _init {
   my ($self) = @_;
