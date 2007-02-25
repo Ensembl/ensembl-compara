@@ -204,7 +204,7 @@ sub features {
 	   'hstrand' => $rstrand,
 	   'hseqname' => $rname,
 	   'fragments' => $fragments
-							      });
+       });
     }
 
     return $T;

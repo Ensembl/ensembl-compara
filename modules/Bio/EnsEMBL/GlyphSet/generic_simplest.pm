@@ -10,6 +10,24 @@ sub my_label       { return $_[0]->my_config( 'label' ); }
 sub my_description { return $_[0]->my_config( 'description' ); }
 sub my_helplink    { return $_[0]->my_config('helplink') || "markers"; }
 
+sub das_link {
+  my($self) = shift;
+  my $type     = 'simple';
+  my $database = $self->my_config( 'DATABASE' ) || 'core' ;
+  my @logic_names = $self->my_config( 'code' );
+  
+  my $slice   = $self->{container};
+  my $species = $slice->{_config_file_name_};
+  my $assembly = $self->{'config'}->species_defs->other_species($species, 'ENSEMBL_GOLDEN_PATH' );
+
+  my $dsn = "$species.$assembly.".join('-',$type, $database, @logic_names);
+  my $das_link = "/das/$dsn/features?segment=".$slice->seq_region_name.':'.$slice->start.','.$slice->end;
+warn $dsn;
+warn $das_link;
+  return $das_link;
+}
+
+
 sub features       { 
   my $self = shift;
   my $call = 'get_all_'.( $self->my_config( 'type' ) || 'SimpleFeatures' ); 

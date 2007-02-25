@@ -35,7 +35,7 @@ sub init_label_text {
   if( $help_link ) {
     push @extra,
       'href'      => qq[javascript:X=hw('@{[$self->{container}{_config_file_name_}]}','$ENV{'ENSEMBL_SCRIPT'}','$help_link')],
-      'zmenu'     => { 'caption' => 'HELP', '02:Track information...' => qq[javascript:X=hw(\'@{[$self->{container}{_config_file_name_}]}\',\'$ENV{'ENSEMBL_SCRIPT'}\',\'$help_link\')] };
+      'zmenu'     => { 'caption' => 'HELP', '02:Track information...' => qq(javascript:X=hw('@{[$self->{container}{_config_file_name_}]}','$ENV{'ENSEMBL_SCRIPT'}','$help_link')) };
   }
   if( $description ) {
     push @extra, '01:'.CGI::escapeHTML( $description ) => '';

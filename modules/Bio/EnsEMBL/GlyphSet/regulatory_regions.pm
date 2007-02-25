@@ -26,8 +26,8 @@ sub features {
     return $data;
   } else {
     my $f = $slice->adaptor->db->get_RegulatoryFeatureAdaptor->fetch_all_by_Slice_constraint( $slice );
-    warn "in reg features";
-    warn @$f;
+#    warn "in reg features";
+#    warn @$f;
     return $slice->adaptor->db->get_RegulatoryFeatureAdaptor->fetch_all_by_Slice_constraint( $slice );  # $logic name is second param
   }
 }
