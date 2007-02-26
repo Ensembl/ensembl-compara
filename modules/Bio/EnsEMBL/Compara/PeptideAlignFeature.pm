@@ -70,7 +70,7 @@ sub create_homology
   # create an Homology object
   my $homology = new Bio::EnsEMBL::Compara::Homology;
 
-  my $stable_id;  
+  my $stable_id;
   if($self->query_member->taxon_id < $self->hit_member->taxon_id) {
     $stable_id = $self->query_member->taxon_id() . "_" . $self->hit_member->taxon_id . "_";
   } else {
@@ -406,7 +406,7 @@ sub get_description {
         $self->perc_pos,
         $self->hit_rank);
 
-  return $desc_string;       
+  return $desc_string;
 }
 
 
