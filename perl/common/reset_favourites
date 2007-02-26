@@ -12,7 +12,7 @@ my $T = new CGI;
 my $favourites= $T->param('favourites');
 my $list = $T->param('list');
 
-my $user = $ENSEMBL_WEB_REHISTRY->get_user;
+my $user = $ENSEMBL_WEB_REGISTRY->get_user;
 
 if ($user) {
   my ($record) = $user->species_records;
