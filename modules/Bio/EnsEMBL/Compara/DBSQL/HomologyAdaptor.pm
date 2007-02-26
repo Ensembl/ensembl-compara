@@ -181,6 +181,64 @@ sub fetch_all_by_Member_MethodLinkSpeciesSet {
 }
 
 
+=head2 fetch_by_Member_Member_method_link_type
+
+  Arg [1]    : Bio::EnsEMBL::Compara::Member $member
+  Arg [2]    : Bio::EnsEMBL::Compara::Member $member
+  Arg [3]    : string $method_link_type
+  Example    : $homologies = $HomologyAdaptor->fetch_by_Member_Member_method_link_type(
+                   $member1->gene_member, $member2->gene_member, "ENSEMBL_ORTHOLOGUES");
+  Description: fetch the homology relationships where the given member pair is implicated
+               in a relationship of the type defined by $method_link_type.
+  Returntype : an array reference of Bio::EnsEMBL::Compara::Homology objects
+  Exceptions : none
+  Caller     : 
+
+=cut
+
+sub fetch_by_Member_Member_method_link_type {
+  my ($self, $member1, $member2, $method_link_type) = @_;
+
+  unless ($member1->stable_id ne $member2->stable_id) {
+    throw("The members should be different");
+  }
+  unless ($member1->isa('Bio::EnsEMBL::Compara::Member')) {
+    throw("The argument must be a Bio::EnsEMBL::Compara::Member object, not $member1");
+  }
+  unless ($member2->isa('Bio::EnsEMBL::Compara::Member')) {
+    throw("The argument must be a Bio::EnsEMBL::Compara::Member object, not $member2");
+  }
+
+  $method_link_type = 'ENSEMBL_ORTHOLOGUES' unless (defined($method_link_type));
+  my $genome_dbs = [$member1->genome_db, $member2->genome_db];
+  if ($member1->genome_db_id == $member2->genome_db_id) {
+    $method_link_type = 'ENSEMBL_PARALOGUES';
+    $genome_dbs = [$member1->genome_db];
+  }
+  my $mlssa = $self->db->get_MethodLinkSpeciesSetAdaptor;
+  my $mlss = $mlssa->fetch_by_method_link_type_GenomeDBs($method_link_type,$genome_dbs);
+
+  unless (defined($mlss)) {
+    warning("There is no $method_link_type data stored in the database for " . $member1->genome_db->name . " and " . $member2->genome_db->name . "\n");
+    return [];
+  }
+
+  #  my $join = [[['homology_member', 'hm'], 'h.homology_id = hm.homology_id']];
+  my $join = [[['homology_member', 'hm1'], 'h.homology_id = hm1.homology_id'],[['homology_member', 'hm2'], 'h.homology_id = hm2.homology_id']];
+  my $constraint =  " h.method_link_species_set_id =" . $mlss->dbID;
+
+  $constraint .= " AND hm1.member_id = " . $member1->dbID;
+  $constraint .= " AND hm2.member_id = " . $member2->dbID;
+  $constraint .= " AND hm1.member_id<hm2.member_id ";
+
+  # See in fetch_by_Member what is this internal variable for
+  $self->{'_this_one_first'} = $member1->stable_id;
+
+  return $self->generic_fetch($constraint, $join);
+}
+
+
+
 =head2 fetch_all_by_MethodLinkSpeciesSet
 
   Arg [1]    : Bio::EnsEMBL::Compara::MethodLinkSpeciesSet $mlss
