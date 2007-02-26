@@ -122,10 +122,15 @@ sub render_species_list {
   my $html = "";
 
   if (!$species) {
-    foreach my $name (("Homo sapiens", "Mus musculus", "Danio rerio")) {
+    foreach my $name (("Homo_sapiens", "Mus_musculus", "Danio_rerio")) {
       push @favourite_species, $species_id{$name};
     }
-    @species_list = sort {$a <=> $b} keys %id_to_species;
+    my @name_order = sort {$a cmp $b} values %id_to_species;
+    foreach my $name (@name_order) {
+      unless ($name =~ /Homo_sapiens|Mus_musculus|Danio_rerio/) {
+        push (@species_list, $species_id{$name});
+      }
+    }
   } else {
     @favourite_species = split(/,/, $species->favourites); 
     @species_list = split(/,/, $species->list); 
@@ -147,9 +152,9 @@ sub render_species_list {
   $html .= "<dl class='species-list'>\n";
   foreach my $id (@favourite_species) {
     $favourites{$id} = 1;
-    my $species_name = $id_to_species{$id};
-    my $species_filename = $species_name;
-    $species_filename =~ s/ /_/g;
+    my $species_filename = $id_to_species{$id};
+    my $species_name = $species_filename;
+    $species_name =~ s/_/ /g;
     $html .= "<dt class='species-list'><a href='/$species_filename/'><img src='/img/species/thumb_$species_filename.png' alt='$species_name' title='Browse $species_name' class='sp-thumb' height='40' width='40' /></a><a href='/$species_filename/'>$species_name</a></dt>\n";
     $html .= "<dd>" . $description{$species_name}[0] . "</dd>\n";
   }
@@ -199,10 +204,15 @@ sub render_ajax_reorder_list {
   my @species_list = ();
 
   if (!$species) {
-    foreach my $name (("Homo sapiens", "Mus musculus", "Danio rerio")) {
+    foreach my $name (("Homo_sapiens", "Mus_musculus", "Danio_rerio")) {
       push @favourite_species, $species_id{$name};
     }
-    @species_list = sort {$a <=> $b} keys %id_to_species;
+    my @name_order = sort {$a cmp $b} values %id_to_species;
+    foreach my $name (@name_order) {
+      unless ($name =~ /Homo_sapiens|Mus_musculus|Danio_rerio/) {
+        push (@species_list, $species_id{$name});
+      }
+    }
   } else {
     @favourite_species = split(/,/, $species->favourites); 
     @species_list = split(/,/, $species->list); 
