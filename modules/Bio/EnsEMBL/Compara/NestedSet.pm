@@ -645,6 +645,16 @@ sub _internal_newick_format {
       $newick .= sprintf(":%1.4f", $self->distance_to_parent);
     }
   }
+  if($format_mode eq 'species') { 
+    #simplified: name only on leaves, dist only if has parent
+    if($self->parent) {
+      if($self->is_leaf) {
+        my $species_name = $self->genome_db->name;
+        $species_name =~ s/\ /\_/g;
+        $newick .= sprintf("%s", $species_name);
+      }
+    }
+  }
   if($format_mode eq 'phylip') { 
     #phylip: restrict names to 21 characters
     if($self->parent) {
