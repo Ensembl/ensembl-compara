@@ -172,7 +172,7 @@ function bookmark_link() {
     }
   }
   
-  document.location = '/common/user/add_bookmark;name=' + page_title + ';url=' + URL;
+  document.location = '/common/bookmark?name=' + page_title + ';url=' + URL;
   return true;  
 }
 

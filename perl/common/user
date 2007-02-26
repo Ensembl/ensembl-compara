@@ -14,7 +14,7 @@ my $controller = EnsEMBL::Web::Controller->new;
 $controller->add_connection({ 'register' => 'EnsEMBL::Web::Controller::Command::User::Register' }); 
 $controller->add_connection({ 'activate' => 'EnsEMBL::Web::Controller::Command::User::Activate' }); 
 $controller->add_connection({ 'account' => 'EnsEMBL::Web::Controller::Command::User::Account' }); 
-$controller->add_connection({ 'add_bookmark' => 'EnsEMBL::Web::Controller::Command::User::AddBookmark' }); 
+#$controller->add_connection({ 'add_bookmark' => 'EnsEMBL::Web::Controller::Command::User::AddBookmark' }); 
 $controller->add_connection({ 'save_favourites' => 'EnsEMBL::Web::Controller::Command::User::SaveFavourites' }); 
 $controller->add_connection({ 'reset_favourites' => 'EnsEMBL::Web::Controller::Command::User::ResetFavourites' }); 
 
