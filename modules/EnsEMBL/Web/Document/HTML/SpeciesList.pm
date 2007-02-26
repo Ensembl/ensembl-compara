@@ -91,34 +91,23 @@ sub setup_species_descriptions {
 
 sub check_lists {
   my ($favourite_species, $species_list, $id_to_species) = @_;
-  my ($favourites, $list);
-  
-  ## check lists for new or deleted species
-  my ($sp_id, %fav_lookup, %list_lookup);
-  foreach $sp_id (@$favourite_species) {
-    $fav_lookup{$sp_id}++;
-    if ($id_to_species->{$sp_id}) {
-      push @$favourites, $sp_id;
+ 
+  my @temp; 
+  my $ok = 0;
+  foreach my $sp_id (keys %$id_to_species) {
+    foreach my $id ((@$favourite_species, @$species_list)) {
+      if ($id == $sp_id) {
+        $ok = 1;
+        last;
+      }
     }
-  }
-
-  foreach $sp_id (@$species_list) {
-    $list_lookup{$sp_id}++;
-    if ($id_to_species->{$sp_id}) {
-      push @$list, $sp_id;
-    }
-  }
-  my @temp = ();
-  foreach $sp_id (keys %$id_to_species) {
-    if (!$fav_lookup{$sp_id} && !$list_lookup{$sp_id}) {
-      push @temp, $sp_id;
-    }
+    push @temp, $sp_id if !$ok;
   }
   if (scalar(@temp) > 0) {
-    unshift(@$list, @temp);
+    unshift(@$species_list, @temp);
   }
 
-  return [$favourites, $list];
+  return $species_list;
 }
 
 sub render_species_list {
@@ -143,9 +132,7 @@ sub render_species_list {
   }
 
   ## check lists for new or deleted species
-  my $checked = check_lists(\@favourite_species, \@species_list, \%id_to_species);
-  @favourite_species = @{$checked->[0]};
-  @species_list = @{$checked->[1]};
+  @species_list = @{check_lists(\@favourite_species, \@species_list, \%id_to_species)};
 
   ## output list
   if (!$user->name) {
@@ -222,9 +209,7 @@ sub render_ajax_reorder_list {
   }
 
   ## check lists for new or deleted species
-  my $checked = check_lists(\@favourite_species, \@species_list, \%id_to_species);
-  @favourite_species = @{$checked->[0]};
-  @species_list = @{$checked->[1]};
+  @species_list = @{check_lists(\@favourite_species, \@species_list, \%id_to_species)};
 
   $html .= "<ul id='favourites_list'>\n";
   foreach my $id (@favourite_species) {
