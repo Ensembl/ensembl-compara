@@ -197,6 +197,15 @@ use Bio::EnsEMBL::Compara::GenomicAlign;
 use Bio::SimpleAlign;
 
 
+## Creates a new coordinate system for creating empty Slices.
+my $aligngap_coord_system = new Bio::EnsEMBL::CoordSystem(
+        -NAME => 'alignment',
+        -VERSION => "none",
+        -TOP_LEVEL => 0,
+        -SEQUENCE_LEVEL => 1,
+        -RANK => 1,
+    );
+
 =head2 new (CONSTRUCTOR)
 
   Arg[1]     : a reference to a hash where keys can be:
@@ -845,10 +854,20 @@ sub _create_underlying_Slices {
       throw ("This species [$species] is not included in the Bio::EnsEMBL::Compara::MethodLinkSpeciesSet")
           if (!defined($self->{slices}->{$species}));
 
-      my $this_core_slice = $this_genomic_align->get_Slice();
-      next if (!$this_core_slice); ## The restriction of the GenomicAlignBlock may return a void GenomicAlign
       my $this_block_start = $this_genomic_align->genomic_align_block->reference_slice_start;
       my $this_block_end = $this_genomic_align->genomic_align_block->reference_slice_end;
+      my $this_core_slice = $this_genomic_align->get_Slice();
+      if (!$this_core_slice) {
+        $this_core_slice = new Bio::EnsEMBL::Slice(
+              -coord_system => $aligngap_coord_system,
+              -seq_region_name => "GAP",
+              -start => $this_block_start,
+              -end => $this_block_end,
+              -strand => 0
+            );
+        $this_core_slice->{seq} = "." x ($this_block_end - $this_block_start + 1);
+      }
+      next if (!$this_core_slice); ## The restriction of the GenomicAlignBlock may return a void GenomicAlign
 
       ## Try to add this alignment to an existing underlying Bio::EnsEMBL::Compara::AlignSlice::Slice
       SLICE: foreach my $this_underlying_slice (@{$self->{slices}->{$species}}) {
@@ -864,8 +883,8 @@ sub _create_underlying_Slices {
         $this_underlying_slice->add_Slice_Mapper_pair(
                 $this_core_slice,
                 $this_genomic_align->get_Mapper(0, !$expanded),
-                $this_genomic_align->genomic_align_block->reference_slice_start,
-                $this_genomic_align->genomic_align_block->reference_slice_end,
+                $this_block_start,
+                $this_block_end,
                 $this_genomic_align->dnafrag_strand
             );
         ## Once this block has been added, go to the next block
