@@ -270,8 +270,11 @@ sub add_Slice_Mapper_pair {
 =cut
 
 sub get_all_Slice_Mapper_pairs {
-  my ($self) = @_;
+  my ($self, $get_gap_slices) = @_;
   my $slice_mapper_pairs = ($self->{slice_mapper_pairs} or []);
+  if (!$get_gap_slices) {
+    $slice_mapper_pairs = [grep {$_->{slice}->coord_system_name ne "alignment"} @$slice_mapper_pairs];
+  }
 
   return $slice_mapper_pairs;
 }
@@ -1315,7 +1318,7 @@ sub subseq {
 
   my $length = ($end - $start + 1);
   my $seq = "." x $length;
-  foreach my $pair (@{$self->get_all_Slice_Mapper_pairs}) {
+  foreach my $pair (@{$self->get_all_Slice_Mapper_pairs("get_gap_slices")}) {
     my $this_slice = $pair->{slice};
     my $mapper = $pair->{mapper};
     my $slice_start = $pair->{start};
