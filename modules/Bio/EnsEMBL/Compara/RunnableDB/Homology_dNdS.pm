@@ -150,6 +150,9 @@ sub calc_genetic_distance
     }
   }
   $codeml->alignment($aln);
+  if (0 != $aln->{_special_codeml_icode}) {
+    $codeml->set_parameter("icode",$aln->{_special_codeml_icode})
+  }
   my ($rc,$parser) = $codeml->run();
   if($rc == 0) {
     print_simple_align($aln, 80);
