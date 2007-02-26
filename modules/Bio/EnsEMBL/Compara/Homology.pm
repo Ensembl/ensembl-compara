@@ -124,11 +124,24 @@ sub get_SimpleAlign {
 
   foreach my $member_attribute (@{$self->get_all_Member_Attribute}) {
     my ($member, $attribute) = @{$member_attribute};
+    if ($member->chr_name =~ /mt/i) {
+      # codeml icodes
+      #      0:universal code (default)
+      if ($member->taxon->classification =~ /vertebrata/i) {
+        #      1:mamalian mt
+        $sa->{_special_codeml_icode} = 1;
+      } else {
+        #      4:invertebrate mt
+        $sa->{_special_codeml_icode} = 4;
+      }
+    }
     my $peptide_member = $ma->fetch_by_dbID($attribute->peptide_member_id);
     my $seqstr;
+    my $alphabet = 'protein';
     if (defined $alignment && $alignment =~ /^cdna$/i) {
       $seqstr = $attribute->cdna_alignment_string($peptide_member,$changeSelenos);
       $seqstr =~ s/\s+//g;
+      $alphabet = 'dna';
     } else {
       $seqstr = $attribute->alignment_string($peptide_member);
     }
@@ -136,9 +149,13 @@ sub get_SimpleAlign {
     my $cigar_start = $attribute->cigar_start;
     my $cigar_end = $attribute->cigar_end;
     $cigar_start = 1 unless (defined $cigar_start);
-    $cigar_end = $peptide_member->seq_length unless (defined $cigar_end);
+    unless (defined $cigar_end) {
+      $cigar_end = $peptide_member->seq_length;
+      $cigar_end = $cigar_end*3 if ($alignment =~ /^cdna$/i);
+    }
     #print STDERR "cigar_start $cigar_start cigar_end $cigar_end\n";
     my $seq = Bio::LocatableSeq->new(-SEQ    => $seqstr,
+                                     -ALPHABET  => $alphabet,
                                      -START  => $cigar_start,
                                      -END    => $cigar_end,
                                      -ID     => $peptide_member->stable_id,
