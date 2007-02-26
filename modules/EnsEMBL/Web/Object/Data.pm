@@ -337,7 +337,7 @@ sub add_relational_symbol_lookup {
 
 sub has_id {
   my ($self) = @_;
-  if (defined $self->get_value('id')) {
+  if ($self->get_value('id')) {
     return 1;
   }
   return 0;
@@ -351,6 +351,7 @@ sub save {
   if ($result->get_action eq 'create') {
     $self->id($result->get_last_inserted_id);
   }
+  warn "SAVING DATA OBJECT: " . $self->id;
   return $result->get_success;
 }
 

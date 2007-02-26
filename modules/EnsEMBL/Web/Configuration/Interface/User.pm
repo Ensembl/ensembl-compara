@@ -19,7 +19,6 @@ sub save {
 
   my $script = $interface->script_name || $object->script;
   my $url;
-  
   my $primary_key = $interface->data->get_primary_key;
   my $id = $object->param($primary_key);
 

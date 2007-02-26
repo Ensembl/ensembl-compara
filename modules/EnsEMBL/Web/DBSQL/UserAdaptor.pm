@@ -117,15 +117,15 @@ sub find_user_by_email_and_password {
 
   my @record = @{$R->[0]};
   $details = {
-    'id' => $record[0],
-    'user_id' => $record[0],
-    'name'    => $record[1],
+    'id'           => $record[0],
+    'user_id'      => $record[0],
+    'name'         => $record[1],
     'organisation' => $record[2],
-    'email'   => $record[3],
-    'data'   => $record[4],
-    'salt'   => $record[5],
-    'password'   => $record[6],
-    'status'   => $record[7],
+    'email'        => $record[3],
+    'data'         => $record[4],
+    'salt'         => $record[5],
+    'password'     => $record[6],
+    'status'       => $record[7],
   };
   return $details;
 }

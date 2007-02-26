@@ -31,7 +31,10 @@ sub get_value {
 
 sub fields {
   my ($self) = @_;
-  my @field_array = keys %{ $self->get_result_hash };
+  my @field_array = ();
+  if ($self->get_result_hash) {
+    @field_array = keys %{ $self->get_result_hash };
+  }
   return \@field_array;
 }
 

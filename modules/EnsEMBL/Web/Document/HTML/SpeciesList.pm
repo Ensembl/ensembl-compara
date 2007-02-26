@@ -4,6 +4,7 @@ use strict;
 #use warnings;
 
 use EnsEMBL::Web::DBSQL::NewsAdaptor;
+use EnsEMBL::Web::Object::Data::User;
 use EnsEMBL::Web::RegObj;
 
 {
@@ -18,7 +19,8 @@ sub render {
 
   my %species_description = setup_species_descriptions($species_defs);
 
-  my $user = $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->get_user;
+  my $reg_user = $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->get_user;
+  my $user = EnsEMBL::Web::Object::Data::User->new({ id => $reg_user->id });
 
   my $html = "";
 
@@ -91,8 +93,7 @@ sub setup_species_descriptions {
 
 sub check_lists {
   my ($favourite_species, $species_list, $id_to_species) = @_;
- 
-  my @temp; 
+  my @temp;
   my $ok = 0;
   foreach my $sp_id (keys %$id_to_species) {
     foreach my $id ((@$favourite_species, @$species_list)) {
@@ -115,13 +116,13 @@ sub render_species_list {
   my %description = %{ $species_description };
   my %id_to_species = %{ $id_to_species };
   my %species_id = reverse %id_to_species;
-  my ($species) = $user->species_records;
+  my @specieslists = @{ $user->specieslists };
   my %favourites = ();
   my @favourite_species = ();
   my @species_list = ();
   my $html = "";
 
-  if (!$species) {
+  if ($#specieslists < 0) {
     foreach my $name (("Homo_sapiens", "Mus_musculus", "Danio_rerio")) {
       push @favourite_species, $species_id{$name};
     }
@@ -132,8 +133,9 @@ sub render_species_list {
       }
     }
   } else {
-    @favourite_species = split(/,/, $species->favourites); 
-    @species_list = split(/,/, $species->list); 
+    my $list = $specieslists[0];
+    @favourite_species = split(/,/, $list->favourites); 
+    @species_list = split(/,/, $list->list); 
   }
 
   ## check lists for new or deleted species
@@ -198,12 +200,12 @@ sub render_ajax_reorder_list {
 
   $html .= "<div id='favourite_species'>\n";
 
-  my ($species) = $user->species_records;
+  my @specieslists = @{ $user->specieslists };
   my %favourites = ();
   my @favourite_species = ();
   my @species_list = ();
 
-  if (!$species) {
+  if ($#specieslists < 0) {
     foreach my $name (("Homo_sapiens", "Mus_musculus", "Danio_rerio")) {
       push @favourite_species, $species_id{$name};
     }
@@ -214,8 +216,9 @@ sub render_ajax_reorder_list {
       }
     }
   } else {
-    @favourite_species = split(/,/, $species->favourites); 
-    @species_list = split(/,/, $species->list); 
+    my $list = $specieslists[0];
+    @favourite_species = split(/,/, $list->favourites); 
+    @species_list = split(/,/, $list->list); 
   }
 
   ## check lists for new or deleted species
@@ -263,7 +266,7 @@ sub render_ajax_reorder_list {
   }
 
   $html .= "</ul></div>\n";
-  $html .= "<a href='javascript:void(0);' onClick='toggle_reorder();'>Finished reordering</a> &middot; <a href='/common/reset_favourites'>Restore default list</a>";
+  $html .= "<a href='javascript:void(0);' onClick='toggle_reorder();'>Finished reordering</a> &middot; <a href='/common/user/reset_favourites'>Restore default list</a>";
 
   return $html;
 }
