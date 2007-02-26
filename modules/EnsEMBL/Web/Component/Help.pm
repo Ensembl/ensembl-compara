@@ -20,7 +20,25 @@ sub _wrap_form {
   return 1;
 }
 
-sub hv_intro      { _wrap_form($_[0], $_[1], 'hv_intro'); }
+sub hv_intro      { 
+  my ( $panel, $object) = @_;
+  my $html = qq(
+  <h3>Search Tips</h3>
+<p>Ensembl Help now uses MySQL full text searching. This performs a case-insensitive natural language search 
+on the content of the help database. This gives better results than a simple string search, with some caveats:</p>
+<ul>
+<li>Words shorter than 4 characters in length (eg SNP) are ignored.</li>
+<li>Words that occur in more than 50% of the records are ignored.</li>
+<li>Wildcards such as '%' (zero or one occurences of any character) and '_' (exactly one character) are no longer available.</li>
+</ul>
+<p>For more about the Ensembl Help Search, please go to the <a href="/default/helpview?se=1;kw=helpview">HelpView help page</a>.</p>
+<h3>Search Ensembl Help</h3>
+);
+  $html .= $panel->form('hv_intro')->render();
+  $panel->print($html);
+  return 1;
+
+ }
 sub hv_contact    { _wrap_form($_[0], $_[1], 'hv_contact'); }
 
 sub hv_multi {
