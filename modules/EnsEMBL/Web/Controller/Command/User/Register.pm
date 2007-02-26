@@ -11,7 +11,6 @@ use base 'EnsEMBL::Web::Controller::Command::User';
 
 sub BUILD {
   my ($self, $ident, $args) = @_; 
-  $self->add_filter(EnsEMBL::Web::Controller::Command::Filter::Authentication->new);
   $self->add_filter(EnsEMBL::Web::Controller::Command::Filter::Logging->new);
 }
 
@@ -39,7 +38,7 @@ sub render_page {
 
   ## Create interface object, which controls the forms
   my $interface = EnsEMBL::Web::Interface::InterfaceDef->new();
-  my $data =EnsEMBL::Web::Object::Data::User->new();
+  my $data = EnsEMBL::Web::Object::Data::User->new();
   $interface->data($data);
   $interface->discover;
 

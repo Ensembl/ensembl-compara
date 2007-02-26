@@ -12,6 +12,9 @@ use EnsEMBL::Web::Controller::Command::Filter;
 use EnsEMBL::Web::Controller::Command::Filter::Logging;
 use EnsEMBL::Web::Controller::Command::Filter::LoggedIn;
 use EnsEMBL::Web::Controller::Command::Filter::Authentication;
+use EnsEMBL::Web::Controller::Command::Filter::Ajax;
+use EnsEMBL::Web::Controller::Command::Filter::DataUser;
+use EnsEMBL::Web::Controller::Command::Filter::Redirect;
 
 use Class::Std;
 

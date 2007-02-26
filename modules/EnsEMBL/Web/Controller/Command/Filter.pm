@@ -7,6 +7,18 @@ use Class::Std;
 
 {
 
+sub redirect {
+  return undef;
+}
+
+sub user {
+  return undef;
+}
+
+sub header {
+  return "";
+}
+
 sub allow {
   return 1;
 }
