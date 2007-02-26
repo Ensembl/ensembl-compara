@@ -163,7 +163,6 @@ sub write_output {
   my $self = shift;
 
   $self->store_homologies;
-
 }
 
 
@@ -236,18 +235,18 @@ sub run_analysis
   # homology filtering
   #   foreach my $subnode ($tree->get_all_subnodes) {
   #     next if ($subnode->is_leaf);
-  #     my $dup_tag = $subnode->get_tagvalue("Duplication");
+  #     my $dup_value = $subnode->get_tagvalue("Duplication");
   #     my $sis_tag = $subnode->get_tagvalue('species_intersection_score');
-  #     my $dubdup_tag = $subnode->get_tagvalue('DD');
-  #     if ($dup_tag ne '' && $dup_tag > 0) {
+  #     my $sis_value = $subnode->get_tagvalue('DD');
+  #     if ($dup_value ne '' && $dup_value > 0) {
   #       if ($sis_tag ne '' && 0 == $sis_tag) {
   #         # We retag the node as speciation in memory -- webteam
-  #         # will code as orange using [$dup_tag and $sis_tag]
+  #         # will code as orange using [$dup_value and $sis_tag]
   #         # $subnode->add_tag("Duplication",0);
   #         # FIXME - get rid of orange_node tag after debugging is done
   #         # $subnode->store_tag("orange_node",1);
   #         if ($self->debug) {
-  #           print "DD $dubdup_tag -- SIS $sis_tag transforms Duplication $dup_tag to 0\n";
+  #           print "DD $sis_value -- SIS $sis_tag transforms Duplication $dup_value to 0\n";
   #         }
   #       }
   #     }
@@ -402,7 +401,16 @@ sub display_link_analysis
   } else { printf("%5s ", ""); }
 
   print("ancestor:(");
-  if($ancestor->get_tagvalue("Duplication") eq '1'){print("DUP ");} 
+  my $dup_value = $ancestor->get_tagvalue("Duplication");
+#  my $sis_value = $ancestor->get_tagvalue("species_intersection_score");
+  my $sis_value = $ancestor->get_tagvalue("duplication_confidence_score");
+  if($dup_value eq '1' || $dup_value eq '2'){
+    if ($sis_value eq '0') {
+      print("DD  ");
+    } else {
+      print("DUP ");
+    }
+  }
   else{print"    ";}
   printf("%9s)", $ancestor->node_id);
 
@@ -458,7 +466,8 @@ sub get_ancestor_species_hash
   my $is_dup=0;
 
   if($node->isa('Bio::EnsEMBL::Compara::AlignedMember')) {
-    $species_hash->{$node->genome_db_id} = 1;
+    my $node_genome_db_id = $node->genome_db_id;
+    $species_hash->{$node_genome_db_id} = 1;
     $node->add_tag('species_hash', $species_hash);
     return $species_hash;
   }
@@ -548,6 +557,42 @@ sub get_ancestor_taxon_level
 }
 
 
+sub duplication_confidence_score {
+  my $self = shift;
+  my $ancestor = shift;
+
+  # This assumes bifurcation!!! No multifurcations allowed
+  my ($child_a, $child_b) = @{$ancestor->children};
+  my @child_a_gdbs = keys %{$self->get_ancestor_species_hash($child_a)};
+  my @child_b_gdbs = keys %{$self->get_ancestor_species_hash($child_b)};
+  my %seen = ();  my @gdb_a = grep { ! $seen{$_} ++ } @child_a_gdbs;
+     %seen = ();  my @gdb_b = grep { ! $seen{$_} ++ } @child_b_gdbs;
+  my @isect = my @diff = my @union = (); my %count;
+  foreach my $e (@gdb_a, @gdb_b) { $count{$e}++ }
+  foreach my $e (keys %count) {
+    push(@union, $e); push @{ $count{$e} == 2 ? \@isect : \@diff }, $e; 
+  }
+
+  my $duplication_confidence_score = 0;
+  my $scalar_isect = scalar(@isect);
+  my $scalar_union = scalar(@union);
+  $duplication_confidence_score = 
+    (($scalar_isect)/$scalar_union) unless (0 == $scalar_isect);
+
+  $ancestor->store_tag
+    (
+     "duplication_confidence_score",
+     $duplication_confidence_score
+    );
+
+  my $rounded_duplication_confidence_score = (int((100.0 * $scalar_isect / $scalar_union + 0.5)));
+  my $species_intersection_score = $ancestor->get_tagvalue("species_intersection_score");
+  if ($species_intersection_score != $rounded_duplication_confidence_score) {
+    $self->throw("Inconsistency in the ProteinTree: duplication_confidence_score $duplication_confidence_score != species_intersection_score $species_intersection_score\n");
+  }
+}
+
+
 sub genepairlink_fetch_homology
 {
   my $self = shift;
@@ -575,6 +620,35 @@ sub genepairlink_fetch_homology
   return $homology;
 }
 
+sub delete_old_homologies
+{
+  my $self = shift;
+  my $genepairlink = shift;
+
+  return undef unless ($self->input_job->retry_count > 0);
+
+  my ($member1, $member2) = $genepairlink->get_nodes;
+
+  my @homologies = @{$self->{'comparaDBA'}->get_HomologyAdaptor->fetch_by_Member_Member_method_link_type
+                       ($member1->gene_member, $member2->gene_member, 'ENSEMBL_ORTHOLOGUES')};
+  push @homologies, @{$self->{'comparaDBA'}->get_HomologyAdaptor->fetch_by_Member_Member_method_link_type
+                        ($member1->gene_member, $member2->gene_member, 'ENSEMBL_PARALOGUES')};
+
+  my $sth1;
+  my $sth2;
+  foreach my $homology (@homologies) {
+    my $sql1 = "DELETE FROM homology WHERE homology_id=?";
+    $sth1 = $self->dbc->prepare($sql1);
+    $sth1->execute($homology->dbID);
+    my $sql2 = "DELETE FROM homology_member WHERE homology_id=?";
+    $sth2 = $self->dbc->prepare($sql2);
+    $sth2->execute($homology->dbID);
+    $sth1->finish;
+    $sth2->finish;
+  }
+
+  return undef;
+}
 
 sub genepairlink_check_dups
 {
@@ -590,8 +664,12 @@ sub genepairlink_check_dups
   do {
     $tnode = $tnode->parent;
     my $dup_value = $tnode->get_tagvalue("Duplication");
-    unless ($dup_value eq '') {
-      $has_dup = 1 if($dup_value > 0);
+#    my $sis_value = $tnode->get_tagvalue("species_intersection_score");
+    my $sis_value = $tnode->get_tagvalue("duplication_confidence_score");
+    unless ($sis_value eq '0') {
+      if($dup_value > 0) {
+        $has_dup = 1;
+      }
     }
     $nodes_between{$tnode->node_id} = $tnode;
   } while(!($tnode->equals($ancestor)));
@@ -600,8 +678,12 @@ sub genepairlink_check_dups
   do {
     $tnode = $tnode->parent;
     my $dup_value = $tnode->get_tagvalue("Duplication");
-    unless ($dup_value eq '') {
-      $has_dup = 1 if($dup_value > 0);
+#    my $sis_value = $tnode->get_tagvalue("species_intersection_score");
+    my $sis_value = $tnode->get_tagvalue("duplication_confidence_score");
+    unless ($sis_value eq '0') {
+      if($dup_value > 0) {
+        $has_dup = 1;
+      }
     }
     $nodes_between{$tnode->node_id} = $tnode;
   } while(!($tnode->equals($ancestor)));
@@ -647,6 +729,7 @@ sub direct_ortholog_test
   return undef if($count2>1);
 
   #passed all the tests -> it's a simple ortholog
+  $self->delete_old_homologies($genepairlink);
   $genepairlink->add_tag("orthotree_type", 'ortholog_one2one');
   my $taxon = $self->get_ancestor_taxon_level($ancestor);
   $genepairlink->add_tag("orthotree_subtype", $taxon->name);
@@ -676,8 +759,13 @@ sub inspecies_paralog_test
 
   #passed all the tests -> it's an inspecies_paralog
 #  $genepairlink->add_tag("orthotree_type", 'inspecies_paralog');
+  $self->delete_old_homologies($genepairlink);
   $genepairlink->add_tag("orthotree_type", 'within_species_paralog');
   $genepairlink->add_tag("orthotree_subtype", $taxon->name);
+  # Duplication_confidence_score
+  if ('' eq $ancestor->get_tagvalue("duplication_confidence_score")) {
+    $self->duplication_confidence_score($ancestor);
+  }
   return 1;
 }
 
@@ -718,11 +806,19 @@ sub ancient_residual_test
     }
   }
 
-  if($ancestor->get_tagvalue("Duplication") > 0) {
+#  my $sis_value = $ancestor->get_tagvalue("species_intersection_score");
+  my $sis_value = $ancestor->get_tagvalue("duplication_confidence_score");
+  if($ancestor->get_tagvalue("Duplication") > 0 && $sis_value ne '0') {
+    $self->delete_old_homologies($genepairlink);
     $genepairlink->add_tag("orthotree_type", 'apparent_ortholog_one2one');
     my $taxon = $self->get_ancestor_taxon_level($ancestor);
     $genepairlink->add_tag("orthotree_subtype", $taxon->name);
+    # Duplication_confidence_score
+    if ('' eq $ancestor->get_tagvalue("duplication_confidence_score")) {
+      $self->duplication_confidence_score($ancestor);
+    }
   } else {
+    $self->delete_old_homologies($genepairlink);
     $genepairlink->add_tag("orthotree_type", 'ortholog_one2one');
     my $taxon = $self->get_ancestor_taxon_level($ancestor);
     $genepairlink->add_tag("orthotree_subtype", $taxon->name);
@@ -759,9 +855,16 @@ sub one2many_ortholog_test
     (
      ($count1==1 and $count2>1) or ($count1>1 and $count2==1)
     );
-  return undef if ($ancestor->get_tagvalue('Duplication'));
+
+  my $dup_value = $ancestor->get_tagvalue("Duplication");
+#  my $sis_value = $ancestor->get_tagvalue("species_intersection_score");
+  my $sis_value = $ancestor->get_tagvalue("duplication_confidence_score");
+  if($dup_value > 0 && $sis_value ne '0') {
+    return undef;
+  }
 
   #passed all the tests -> it's a one2many ortholog
+  $self->delete_old_homologies($genepairlink);
   $genepairlink->add_tag("orthotree_type", 'ortholog_one2many');
   my $taxon = $self->get_ancestor_taxon_level($ancestor);
   $genepairlink->add_tag("orthotree_subtype", $taxon->name);
@@ -786,12 +889,19 @@ sub outspecies_test
 
   #ultra simple ortho/paralog classification
   my $dup_value = $ancestor->get_tagvalue("Duplication");
+#  my $sis_value = $ancestor->get_tagvalue("species_intersection_score");
+  my $sis_value = $ancestor->get_tagvalue("duplication_confidence_score");
   unless ($dup_value eq '') {
-    if($dup_value > 0) {
-#      $genepairlink->add_tag("orthotree_type", 'outspecies_paralog');
+    if($dup_value > 0 && $sis_value ne '0') {
+      $self->delete_old_homologies($genepairlink);
       $genepairlink->add_tag("orthotree_type", 'between_species_paralog');
       $genepairlink->add_tag("orthotree_subtype", $taxon->name);
+      # Duplication_confidence_score
+      if ('' eq $ancestor->get_tagvalue("duplication_confidence_score")) {
+        $self->duplication_confidence_score($ancestor);
+      }
     } else {
+      $self->delete_old_homologies($genepairlink);
       $genepairlink->add_tag("orthotree_type", 'ortholog_many2many');
       $genepairlink->add_tag("orthotree_subtype", $taxon->name);
     }
@@ -817,6 +927,8 @@ sub store_homologies
 
   my $counts_str = $self->encode_hash($self->{'orthotree_homology_counts'});
   printf("$counts_str\n");
+
+  $self->check_homology_consistency;
 
   $self->{'protein_tree'}->store_tag(
       'OrthoTree_types_hashstr', 
@@ -859,6 +971,9 @@ sub store_gene_link_as_homology
   $homology->node_id($ancestor->node_id);
   $homology->method_link_type($mlss->method_link_type);
   $homology->method_link_species_set($mlss);
+
+  my $key = $mlss->dbID . "_" . $protein1->dbID;
+  $self->{_homology_consistency}{$key}{$type} = 1;
   #$homology->dbID(-1);
 
   # NEED TO BUILD THE Attributes (ie homology_members)
@@ -895,7 +1010,7 @@ sub store_gene_link_as_homology
 
   my $stable_id;
   if($protein1->taxon_id < $protein2->taxon_id) {
-    $stable_id = $protein1->taxon_id() . "_" . $protein2->taxon_id . "_";
+    $stable_id = $protein1->taxon_id . "_" . $protein2->taxon_id . "_";
   } else {
     $stable_id = $protein2->taxon_id . "_" . $protein1->taxon_id . "_";
   }
@@ -910,6 +1025,20 @@ sub store_gene_link_as_homology
 
   return undef;
 }
+
+
+sub check_homology_consistency {
+  my $self = shift;
+
+  foreach my $mlss_member_id ( keys %{$self->{_homology_consistency}} ) {
+    my $count = scalar(keys %{$self->{_homology_consistency}{$mlss_member_id}});
+    if ($count > 1) {
+      my ($mlss, $member_id) = split("_",$mlss_member_id);
+      $self->throw("Inconsistent homologies in mlss $mlss and member_id $member_id");
+    }
+  }
+}
+
 
 sub _treefam_genepairlink_stats
 {
