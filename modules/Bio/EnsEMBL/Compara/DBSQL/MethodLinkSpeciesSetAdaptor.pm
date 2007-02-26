@@ -409,7 +409,7 @@ sub fetch_all {
   $sth->execute();
   my $all_method_link_species_sets;
   my $gdba = $self->db->get_GenomeDBAdaptor;
-  
+
   while (my ($method_link_species_set_id, $method_link_id, $name, $source, $url,
       $species_set_id, $genome_db_id, $type, $class) = $sth->fetchrow_array()) {
     $all_method_link_species_sets->{$method_link_species_set_id}->{'METHOD_LINK_ID'} = $method_link_id;
@@ -422,9 +422,10 @@ sub fetch_all {
     push(@{$all_method_link_species_sets->{$method_link_species_set_id}->{'SPECIES_SET'}},
         $gdba->fetch_by_dbID($genome_db_id));
   }
-  
+
   foreach my $method_link_species_set_id (keys %$all_method_link_species_sets) {
-    my $this_method_link_species_set = new Bio::EnsEMBL::Compara::MethodLinkSpeciesSet(
+    my $this_method_link_species_set;
+    eval { $this_method_link_species_set = new Bio::EnsEMBL::Compara::MethodLinkSpeciesSet(
             -adaptor => $self,
             -dbID => $method_link_species_set_id,
             -method_link_id =>
@@ -444,7 +445,8 @@ sub fetch_all {
             -species_set =>
                 $all_method_link_species_sets->{$method_link_species_set_id}->{'SPECIES_SET'},
         );
-    push(@$method_link_species_sets, $this_method_link_species_set);
+    };
+    push(@$method_link_species_sets, $this_method_link_species_set) if (defined($this_method_link_species_set));
   }
 
   return $method_link_species_sets;
