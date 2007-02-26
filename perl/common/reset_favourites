@@ -13,11 +13,12 @@ my $favourites= $T->param('favourites');
 my $list = $T->param('list');
 
 my $user = $ENSEMBL_WEB_REGISTRY->get_user;
+warn "REORDER USER: " . $user;
 
 if ($user) {
-  my ($record) = $user->species_records;
-  if ($record) {
-    $record->delete
+  foreach my $record ($user->species_records) {
+  warn "RECORD: " . $record;
+  $record->delete
   }
 }
 

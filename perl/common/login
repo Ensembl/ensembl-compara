@@ -33,8 +33,9 @@ my $user_cookie = EnsEMBL::Web::Cookie->new({
 
 my $r = Apache2::RequestUtil->request();
 my $url = "/error/login_failed.html?url=" . $cgi->param('url');
-
+warn "LOGGING IN with: " . $cgi->param('username');
 if ($user->name) {
+  warn "FOUND USER WITH ID: " . $user->id;
   my $encrypted = EnsEMBL::Web::Tools::Encryption::encryptID($user->id);
   $user_cookie->create( $r , $user->id );
 

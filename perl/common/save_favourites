@@ -14,16 +14,23 @@ my $list = $T->param('list');
 
 my $user = $ENSEMBL_WEB_REGISTRY->get_user;
 
-my ($record) = $user->species_records;
-if (!$record) {
-  $record = EnsEMBL::Web::Record::User->new(( adaptor => $ENSEMBL_WEB_REGISTRY->userAdaptor, type => 'species', user => $user->id ));
+if ($user) {
+
+  my ($record) = $user->species_records;
+
+  warn "SAVING FAVOURITES for " . $user->id;
+
+  if (!$record) {
+    $record = EnsEMBL::Web::Record::User->new(( adaptor => $ENSEMBL_WEB_REGISTRY->userAdaptor, type => 'species', user => $user->id ));
+    warn "CREATING RECORD: " . $record;
+  }
+
+  $record->favourites($favourites);
+  $record->list($list);
+
+  $record->save;
+
 }
-
-
-$record->favourites($favourites);
-$record->list($list);
-
-$record->save;
 
 my $html = EnsEMBL::Web::Document::HTML::SpeciesList->render("fragment");
 print "Content-type: text/plain\n\n";
