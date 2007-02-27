@@ -55,25 +55,9 @@ opt_240_Monodelphis_domestica on
 opt_240_Rattus_norvegicus on
 opt_240_constrained_elem on
 opt_240_conservation_score on
-
-    opt_align_4 off
-    opt_align_171 off
-    opt_align_172 off
-    opt_align_173 off
-    opt_align_174 off
-    opt_align_191 off
-    opt_align_194 off
-    opt_align_195 off
-    opt_align_196 off
-    opt_align_212 off
-    opt_align_215 off
-    opt_align_217 off
-    opt_align_218 off
-    opt_align_219 off
-    opt_align_220 off
-    opt_align_221 off
-    opt_align_222 off
-  ));
+ ),
+  map {( "opt_align_$_" => "off")} (3,93,154..400)
+  );
   $script_config->storable = 1;
   $script_config->add_image_configs({qw(
     alignsliceviewbottom nodas
