@@ -22,7 +22,6 @@ sub BUILD {
   $self->type('specieslist');
   $self->add_belongs_to("EnsEMBL::Web::Object::Data::User");
   $self->populate_with_arguments($args);
-  warn "DONE";
 }
 
 }
