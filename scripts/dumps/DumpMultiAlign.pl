@@ -86,9 +86,9 @@ Bio::EnsEMBL::Registry configuration file to create the
 appropriate connections to the databases.
 
 =item B<[--dbname compara_db_name]>
-  
+
 the name of compara DB in the registry_configuration_file or any
-of its aliases. Uses "compara" by default.
+of its aliases. Uses "Multi" by default.
 
 =back
 
@@ -97,17 +97,17 @@ of its aliases. Uses "compara" by default.
 =over
 
 =item B<[--species species]>
-  
-Query species. Default is "human"
+
+Query species.
 
 =item B<[--coord_system coordinates_name]>
-  
+
 By default this script dumps for one particular top-level seq_region.
 This option allows to dump, for instance, all the alignments on all
 the top-level supercontig in one go.
 
 =item B<--seq_region region_name>
-  
+
 Query region name, i.e. the chromosome name
 
 =item B<--seq_region_start start>
@@ -121,15 +121,18 @@ Query region name, i.e. the chromosome name
 =over
 
 =item B<[--alignment_type method_link_name]>
-  
-The type of alignment. Default is "BLASTZ_NET"
+
+The type of alignment. This can be BLASTZ_NET, TRANSLATED_BLAT,
+MLAGAN, PECAN, GERP_CONSERVATION_SCORES, etc.
+
+GERP_CONSERVATION_SCORES are only supported when dumping in emf
+format. The scores are dumped together with the orginal alignment.
 
 =item B<[--set_of_species species1:species2:species3:...]>
-  
-The list of species used to get those alignments. Default is
-"human:mouse". The names should correspond to the name of the
-core database in the registry_configuration_file or any of its
-aliases
+
+The list of species used to get those alignments. The names should
+correspond to the name of the core database in the
+registry_configuration_file or any of its aliases
 
 =back
 
@@ -155,9 +158,9 @@ The type of output you want. Both fasta and clustalw have been tested.
 In fasta format, a line containg a hash ("#") is added at the end of
 each alignment. "Fasta" is the default format.
 
-NB: This script uses the Bio::AlignIO::xxx modules to format the output
-except for the maf format as writting is not support by the module.
-Instead, this script does the formatting itself for maf.
+This script uses the Bio::AlignIO::xxx modules to format the output
+except for the maf and emf formats because the Bio::AlignIO::maf module
+does not support writting and there is no module for emf.
 
 =item B<[--output_file filename]>
 
@@ -166,18 +169,12 @@ standard output
 
 =item B<[--split_size split_size]>
 
-Only available when dumping all the alignments in one go
-(without using the coordinate_system nor the seq_region_name
-options) to split the output in several files. Each file
-will contain up to split-size alignments. Obviously, you
-need to specify a output file name, which will be used as base
-for the name of all the files.
+Only available when dumping to a file. This will split the output
+in several files. Each file will contain up to split-size alignments.
 
 =item B<[--chunk_num chunk_num]>
 
-Only available when dumping all the alignments in one go
-(without using the coordinate_system nor the seq_region_name
-options) and spliting them in several files. This option is
+Only available in conjunction with previous option. This option is
 used to dump one of the files only (the first file is num. 1)
 
 =back
@@ -189,21 +186,45 @@ used to dump one of the files only (the first file is num. 1)
 =item Dump all the human-mouse alignment on human chromosome X [1Mb-2Mb] in a multi fasta format:
 
 perl DumpMultiAlign.pl --species "Homo sapiens" \
-  --set_of_alignments "Homo sapiens:Mus musculus" \
-  --seq_region X --seq_region_start 1000000 \
-  --seq_region_end 2000000 --output_format fasta
+  --set_of_species "Homo sapiens:Mus musculus" \
+  --alignment_type BLASTZ_NET --seq_region X \
+  --seq_region_start 1000000 --seq_region_end 2000000 \
+  --output_format fasta
 
 =item Dump all the human-mouse alignment on human supercontigs in a clustalw format:
 
 perl DumpMultiAlign.pl --species "Homo sapiens" \
-  --set_of_alignments "Homo sapiens:Mus musculus" \
-  --coord_system supercontig --output_format clustalw
+  --set_of_species "Homo sapiens:Mus musculus" \
+  --alignment_type BLASTZ_NET --coord_system supercontig \
+  --output_format clustalw
 
 =item Dump all the human-chicken alignment on human chromosome 1, returning soft-masked sequences:
 
 perl DumpMultiAlign.pl --species "Homo sapiens" \
-  --set_of_alignments "Homo sapiens:Mus musculus" \
-  --seq_region 1 --masked_seq 1
+  --set_of_species "Homo sapiens:Mus musculus" \
+  --alignment_type BLASTZ_NET --seq_region 1 --masked_seq 1
+
+=item Dump all the 10 way multiple alignment on human chromosome Y in emf format:
+
+perl DumpMultiAlign.pl --species "human" \
+  --set_of_species "human:chimp:rhesus:mouse:rat:dog:cow:opossum:chicken:platypus" \
+  --alignment_type PECAN --seq_region Y --masked_seq 1 \
+  --output_format emf --output_file 10way_pecan_chrY.out
+
+=item Same for chromosome 19 plus GERP conservation scores. Dump in chunks of 200 alignms:
+
+perl DumpMultiAlign.pl --species "human" \
+  --set_of_species "human:chimp:rhesus:mouse:rat:dog:cow:opossum:chicken:platypus" \
+  --alignment_type GERP_CONSERVATION_SCORE --seq_region 19 --masked_seq 1 \
+  --split_size 200 --output_format emf --output_file 10way_pecan_chr19.out
+
+=item Same for chromosome 19 plus GERP conservation scores. Using chunks of 200 alignms, dump 2nd one:
+
+perl DumpMultiAlign.pl --species "human" \
+  --set_of_species "human:chimp:rhesus:mouse:rat:dog:cow:opossum:chicken:platypus" \
+  --alignment_type GERP_CONSERVATION_SCORE --seq_region 19 --masked_seq 1 \
+  --split_size 200 --output_format emf --output_file 10way_pecan_chr19.out \
+  --chunk_num 2
 
 =cut
 
@@ -211,36 +232,52 @@ my $usage = qq{
 perl DumpMultiAlign.pl
   Getting help:
     [--help]
-  
+
   General configuration:
+    [--db mysql://user[:passwd]\@host[:port]]>
+        The script will auto-configure the Registry using the
+        databases in this MySQL instance. Default:
+        mysql://anonymous\@ensembldb.ensembl.org
+
     [--reg_conf registry_configuration_file]
         the Bio::EnsEMBL::Registry configuration file. If none given,
         the one set in ENSEMBL_REGISTRY will be used if defined, if not
         ~/.ensembl_init will be used.
     [--dbname compara_db_name]
         the name of compara DB in the registry_configuration_file or any
-        of its aliases. Uses "compara" by default.
+        of its aliases. Uses "Multi" by default.
 
   For the query slice:
     [--species species]
-        Query species. Default is "human"
-    --seq_region region_name
-        Query region name, i.e. the chromosome name
-    --seq_region_start start
-    --seq_region_end end
+        Query species. This can be used to define a query slice and dump
+        alignments for this slice only
+    [--seq_region region_name]
+        Sequence region name of the query slice, i.e. the chromosome name
+    [--seq_region_start start]
+        Query slice start (default = 1)
+    [--seq_region_end end]
+        Query slice end (default = end)
     [--coord_system coordinates_name]
-        By default this script dumps for one particular top-level seq_region.
-        This option allows to dump, for instance, all the alignments on all
-        the top-level supercontig in one go.
+        This option allows to dump all the alignments on all the top-level
+        sequence region of a given coordinate system. It can also be used
+        in conjunction with the --seq_region option to specify the right
+        coordinate system.
+    [--skip_species species]
+        Usefull for multiple alignments only. This will dump all the
+        multiple alignments with no "species" part, i.e. you can get
+        all the alignments with no mouse. This option overwrites the
+        previous ones.
 
   For the alignments:
     [--alignment_type method_link_name]
-        The type of alignment. Default is "BLASTZ_NET"
+        The type of alignment. This can be BLASTZ_NET, TRANSLATED_BLAT,
+        MLAGAN, PECAN, GERP_CONSERVATION_SCORES, etc.
+        NB: GERP_CONSERVATION_SCORES are only supported when dumping in emf
+        format. The scores are dumped together with the orginal alignment.
     [--set_of_species species1:species2:species3:...]
-        The list of species used to get those alignments. Default is
-        "human:mouse". The names should correspond to the name of the
-        core database in the registry_configuration_file or any of its
-        aliases
+        The list of species used to get those alignments. The names
+        should correspond to the name of the core database in the
+        registry_configuration_file or any of its aliases
 
   Ouput:
     [--original_seq]
@@ -256,17 +293,13 @@ perl DumpMultiAlign.pl
         The name of the output file. By default the output is the
         standard output
     [--split-size split-size]
-        Only available when dumping all the alignments in one go
-        (without using the coordinate_system nor the seq_region_name
-        options) to split the output in several files. Each file
-        will contain up to split-size alignments. Obviously, you
-        need to specify a output file name, which will be used as base
-        for the name of all the files.
+        Only available when dumping to a file. This will split the output
+        in several files. Each file will contain up to split-size alignments.
     [--chunk_num chunk_num]
-        Only available when dumping all the alignments in one go
-        (without using the coordinate_system nor the seq_region_name
-        options) and spliting them in several files. This option is
+        Only available in conjunction with previous option. This option is
         used to dump one of the files only (the first file is num. 1)
+
+  SEE THE PERLDOC FOR MORE HELP!
 };
 
 use strict;
@@ -280,18 +313,19 @@ use Getopt::Long;
 my $reg_conf;
 my $db = 'mysql://anonymous@ensembldb.ensembl.org';
 my $dbname = "Multi";
-my $species = "human";
+my $species;
+my $skip_species;
 my $coord_system;
 my $seq_region;
 my $seq_region_start;
 my $seq_region_end;
-my $alignment_type = "BLASTZ_NET";
-my $set_of_species = "human:mouse";
+my $alignment_type;
+my $set_of_species;
 my $original_seq = undef;
 my $masked_seq = 0;
 my $output_file = undef;
 my $output_format = "fasta";
-my $split_size;
+my $split_size = 0;
 my $chunk_num;
 my $help;
 
@@ -301,6 +335,7 @@ GetOptions(
     "db=s" => \$db,
     "dbname=s" => \$dbname,
     "species=s" => \$species,
+    "skip_species=s" => \$skip_species,
     "coord_system=s" => \$coord_system,
     "seq_region=s" => \$seq_region,
     "seq_region_start=i" => \$seq_region_start,
@@ -356,36 +391,41 @@ throw("The database do not contain any $alignment_type data for $set_of_species!
     if (!$method_link_species_set);
 
 my $conservation_score_mlss;
-if ($method_link_species_set->method_link_type eq "GERP_CONSERVATION_SCORE") {
+if ($method_link_species_set->method_link_class eq "ConservationScore.conservation_score") {
   $conservation_score_mlss = $method_link_species_set;
   my $meta_container = Bio::EnsEMBL::Registry->get_adaptor(
     $dbname, 'compara', 'MetaContainer');
   my $mlss_id = $meta_container->list_value_by_key('gerp_'.$conservation_score_mlss->dbID)->[0];
   $method_link_species_set = $method_link_species_set_adaptor->fetch_by_dbID($mlss_id);
+  throw("I cannot find the link from the conservation scores to the original alignments!")
+      if (!$method_link_species_set);
 }
 
-# Fetching the query Slice:
-my $slice_adaptor = Bio::EnsEMBL::Registry->get_adaptor($species, 'core', 'Slice');
-throw("Registry configuration file has no data for connecting to <$species>")
-    if (!$slice_adaptor);
+# Fetching the query Slices:
 my @query_slices;
-if ($coord_system and !$seq_region) {
-  @query_slices = grep {$_->coord_system_name eq $coord_system} @{$slice_adaptor->fetch_all('toplevel')};
-} elsif ($coord_system) {
-  my $query_slice = $slice_adaptor->fetch_by_region(
-      $coord_system, $seq_region, $seq_region_start, $seq_region_end);
-  throw("No Slice can be created with coordinates $seq_region:$seq_region_start-$seq_region_end")
-      if (!$query_slice);
-  @query_slices = ($query_slice);
-} elsif ($seq_region) {
-  my $query_slice = $slice_adaptor->fetch_by_region(
-      'toplevel', $seq_region, $seq_region_start, $seq_region_end);
-  throw("No Slice can be created with coordinates $seq_region:$seq_region_start-$seq_region_end")
-      if (!$query_slice);
-  @query_slices = ($query_slice);
+if ($species and !$skip_species and ($coord_system or $seq_region)) {
+  my $slice_adaptor;
+  $slice_adaptor = Bio::EnsEMBL::Registry->get_adaptor($species, 'core', 'Slice');
+  throw("Registry configuration file has no data for connecting to <$species>")
+      if (!$slice_adaptor);
+  if ($coord_system and !$seq_region) {
+    @query_slices = grep {$_->coord_system_name eq $coord_system} @{$slice_adaptor->fetch_all('toplevel')};
+  } elsif ($coord_system) {
+    my $query_slice = $slice_adaptor->fetch_by_region(
+        $coord_system, $seq_region, $seq_region_start, $seq_region_end);
+    throw("No Slice can be created with coordinates $seq_region:$seq_region_start-$seq_region_end")
+        if (!$query_slice);
+    @query_slices = ($query_slice);
+  } elsif ($seq_region) {
+    my $query_slice = $slice_adaptor->fetch_by_region(
+        'toplevel', $seq_region, $seq_region_start, $seq_region_end);
+    throw("No Slice can be created with coordinates $seq_region:$seq_region_start-$seq_region_end")
+        if (!$query_slice);
+    @query_slices = ($query_slice);
+  }
 }
 
-# Fetching all the GenomicAlignBlock corresponding to this Slice:
+# Get the GenomicAlignBlockAdaptor:
 my $genomic_align_block_adaptor = Bio::EnsEMBL::Registry->get_adaptor(
     $dbname, 'compara', 'GenomicAlignBlock');
 
@@ -393,19 +433,85 @@ my $release = Bio::EnsEMBL::Registry->get_adaptor(
     $dbname, 'compara', 'MetaContainer')->list_value_by_key("schema_version")->[0];
 my $date = scalar(localtime());
 
-if (!@query_slices) {
-  my $start = 0;
-  my $num = 0;
-  if ($chunk_num) {
-    $num = $chunk_num - 1;
-    $start = $split_size * $num;
+my $use_several_files = 0;
+if ($output_file and $split_size) {
+  $use_several_files = 1;
+}
+
+my $slice_counter = 0;
+my $start = 0;
+my $num = 0;
+if ($chunk_num and $split_size) {
+  $num = $chunk_num - 1;
+  $start = $split_size * $num;
+}
+if (!$use_several_files) {
+  ## Open file now and create the header if needed
+  if ($output_file) {
+    open(STDOUT, ">$output_file") or die("Cannot open $output_file");
   }
-  do {
-    my $genomic_align_blocks =
-        $genomic_align_block_adaptor->fetch_all_by_MethodLinkSpeciesSet(
-            $method_link_species_set, $split_size, $start);
-    $split_size = 0 if (!@$genomic_align_blocks);
-    if ($output_file and $split_size) {
+  print_header($output_format, $method_link_species_set, $date, $release, 0);
+}
+
+## Get the full list of alignments with no $skip_species in $skip_species mode
+my $skip_genomic_align_blocks;
+if ($skip_species) {
+  my $this_meta_container_adaptor = Bio::EnsEMBL::Registry->get_adaptor(
+      $skip_species, 'core', 'MetaContainer');
+  throw("Registry configuration file has no data for connecting to <$skip_species>")
+      if (!$this_meta_container_adaptor);
+  $skip_species = $this_meta_container_adaptor->get_Species->binomial;
+
+  $skip_genomic_align_blocks = $genomic_align_block_adaptor->
+      fetch_all_by_MethodLinkSpeciesSet($method_link_species_set);
+  for (my $i=0; $i<@$skip_genomic_align_blocks; $i++) {
+    my $has_skip = 0;
+    foreach my $this_genomic_align (@{$skip_genomic_align_blocks->[$i]->get_all_GenomicAligns()}) {
+      if ($this_genomic_align->genome_db->name eq $skip_species) {
+        $has_skip = 1;
+        last;
+      }
+    }
+    if ($has_skip) {
+      my $this_genomic_align_block = splice(@$skip_genomic_align_blocks, $i, 1);
+      $i--;
+      $this_genomic_align_block = undef;
+    }
+  }
+}
+
+## MAIN DUMPING LOOP
+do {
+  my $genomic_align_blocks;
+  if (!@query_slices) {
+    ## We are fetching all the alignments
+    if ($skip_species) {
+      # skip_species mode: Use previoulsy obtained list of alignments
+      $genomic_align_blocks = [splice(@$skip_genomic_align_blocks, $start, $split_size)];
+      $start = 0;
+    } else {
+      # Get the alignments using the GABadaptor
+      $genomic_align_blocks = $genomic_align_block_adaptor->
+          fetch_all_by_MethodLinkSpeciesSet($method_link_species_set,
+          $split_size, $start);
+    }
+  } else {
+    do {
+      my $this_slice = $query_slices[$slice_counter];
+      $genomic_align_blocks =
+          $genomic_align_block_adaptor->fetch_all_by_MethodLinkSpeciesSet_Slice(
+              $method_link_species_set, $this_slice, $split_size, $start);
+      if (!@$genomic_align_blocks) {
+        $slice_counter++;
+        $start = 0;
+      }
+    } while (!@$genomic_align_blocks and $slice_counter < @query_slices);
+  }
+
+  if (@$genomic_align_blocks) {
+    ## We've got something to dump
+    if ($use_several_files) {
+      ## In multi-files mode, need to open the new file and add the header if needed
       $num++;
       my $this_output_file = $output_file;
       if ($this_output_file =~ /\.[^\.]+$/) {
@@ -414,44 +520,70 @@ if (!@query_slices) {
         $this_output_file .= ".$num";
       }
       open(STDOUT, ">$this_output_file") or die("Cannot open $this_output_file");
-    }
-    if ($output_format eq "maf") {
-      print "##maf version=1 program=", $method_link_species_set->method_link_type, "\n";
-      print "#\n";
-    } elsif ($output_format eq "emf") {
-      print
-        "##FORMAT (compara)\n",
-        "##DATE $date\n",
-        "##RELEASE ", $release, "\n",
-        "# Alignments: ", $method_link_species_set->name, "\n",
-        "# Region: ALL_ALIGNMENTS\n";
-      print "# File $num\n" if ($num);
+      print_header($output_format, $method_link_species_set, $date, $release, $num);
     }
 
+    ## Dump these alignments
     foreach my $this_genomic_align_block (@$genomic_align_blocks) {
       write_genomic_align_block($output_format, $this_genomic_align_block);
       $this_genomic_align_block = undef;
     }
-    exit if ($chunk_num);
-    $start += $split_size;
-  } while($split_size);
-} else {
-  if ($output_file) {
-    open(STDOUT, ">$output_file") or die("Cannot open $output_file");
-  }
 
-  my $alignIO;
+    ## chunk_num means that only this chunk has to be dumped:
+    ## set the split_size to 0 in orer to exit the main loop
+    if ($chunk_num) {
+      $split_size = 0;
+    }
+
+    if ($split_size and !$skip_species) {
+      ## update start if dumping in chunks. This is not required in skip-species
+      ## mode as the array is truncated in each loop (with the splice method).
+      $start += $split_size;
+    } else {
+      ## increment slice counter otherwise: this will allow to dump data
+      ## for the next slice if any or exit the main loop otherwise
+      $slice_counter++;
+    }
+  } else {
+    ## No more genomic_align_blocks to dump: set split_size to 0 in orer to exit the main loop
+    $split_size = 0;
+  }
+} while ($split_size or $slice_counter < @query_slices);
+
+exit(0);
+
+
+=head2 print_header
+
+  Arg[1]     : string $output_format
+  Arg[2]     : B::E::Compara::MethodLinkSpeciesSet $mlss
+  Arg[3]     : [optional] string $date
+  Arg[4]     : [optional] string $release_version
+  Arg[5]     : [optional] int file_number
+  Example    : print_header("emf", $mlss, 
+  Description: 
+  Returntype : 
+  Exceptions : 
+
+=cut
+
+sub print_header {
+  my ($output_format, $method_link_species_set, $date, $release, $num) = @_;
+
   if ($output_format eq "maf") {
     print "##maf version=1 program=", $method_link_species_set->method_link_type, "\n";
     print "#\n";
   } elsif ($output_format eq "emf") {
     print
       "##FORMAT (compara)\n",
-      "##DESCRIPTION ", , "\n",
-      "##DATE ", scalar(localtime), "\n",
+      "##DATE $date\n",
       "##RELEASE ", $release, "\n",
       "# Alignments: ", $method_link_species_set->name, "\n";
-    if ($coord_system and !$seq_region) {
+    if ($skip_species) {
+      print "# Region: ALL_ALIGNMENTS with no $skip_species regions\n";
+    } elsif (!@query_slices) {
+      print "# Region: ALL_ALIGNMENTS\n";
+    } elsif ($coord_system and !$seq_region) {
       print "# Region: ALL ${coord_system}s\n";
     } else {
       my $slice = $query_slices[0];
@@ -459,27 +591,22 @@ if (!@query_slices) {
           $slice->adaptor->db->get_MetaContainer->get_Species->binomial,
           " ", $slice->name, "\n";
     }
-  } else {
-    $alignIO = Bio::AlignIO->newFh(
-            -interleaved => 0,
-            -fh => \*STDOUT,
-            -format => $output_format,
-            -idlength => 10
-        );
-  }
-
-  
-  foreach my $this_slice (@query_slices) {
-    my $genomic_align_blocks =
-        $genomic_align_block_adaptor->fetch_all_by_MethodLinkSpeciesSet_Slice(
-            $method_link_species_set, $this_slice);
-  
-    foreach my $this_genomic_align_block (@$genomic_align_blocks) {
-      write_genomic_align_block($output_format, $this_genomic_align_block);
-      $this_genomic_align_block = undef;
-    }
+    print "# File $num\n" if ($num);
   }
 }
+
+
+=head2 write_genomic_align_block
+
+  Arg[1]     : string $output_format (maf, emf or any BioPerl-supported format)
+  Arg[2]     : B::E::Compara::GenomicAlignBlock $gab
+  Example    : write_genomic_align_block("emf", $gab);
+  Description: writes this $gab in the selected format to the
+               standard output.
+  Returntype : 
+  Exceptions : 
+
+=cut
 
 sub write_genomic_align_block {
   my ($output_format, $this_genomic_align_block) = @_;
@@ -539,6 +666,18 @@ sub write_genomic_align_block {
   print "#\n" if ($output_format eq "fasta");
 }
 
+
+=head2 print_my_emf
+
+  Arg[1]     : B::E::Compara::GenomicAlignBlock $gab
+  Example    : print_my_emf($gab);
+  Description: writes this $gab in the EMF format to the
+               standard output.
+  Returntype : 
+  Exceptions : 
+
+=cut
+
 sub print_my_emf {
   my ($genomic_align_block) = @_;
 
@@ -585,6 +724,17 @@ sub print_my_emf {
   print "\n//\n";
 }
 
+
+=head2 print_my_maf
+
+  Arg[1]     : B::E::Compara::GenomicAlignBlock $gab
+  Example    : print_my_maf($gab);
+  Description: writes this $gab in the MAF format to the
+               standard output.
+  Returntype : 
+  Exceptions : 
+
+=cut
 
 sub print_my_maf {
   my ($genomic_align_block) = @_;
