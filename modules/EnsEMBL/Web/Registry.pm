@@ -85,7 +85,7 @@ sub newsAdaptor {
   my $self = shift;
   return $NewsAdaptor_of{ ident $self } ||=
     EnsEMBL::Web::DBSQL::NewsAdaptor->new({
-      'db_adaptor'   => $self->dbAdaptor,   ## Website db adaptor
+      'db_adaptor'   => $self->websiteAdaptor,   ## Website db adaptor
       'species_defs' => $self->species_defs ## Species defs..
     });
 }
@@ -96,7 +96,7 @@ sub helpAdaptor {
   my $self = shift;
   return $HelpAdaptor_of{ ident $self } ||=
     EnsEMBL::Web::DBSQL::HelpAdaptor->new({
-      'db_adaptor'   => $self->dbAdaptor,   ## Website db adaptor
+      'db_adaptor'   => $self->websiteAdaptor,   ## Website db adaptor
       'species_defs' => $self->species_defs ## Species defs..
     });
 }

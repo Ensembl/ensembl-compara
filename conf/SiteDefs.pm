@@ -135,6 +135,8 @@ $ENSEMBL_SERVERROOT = '.' unless $ENSEMBL_SERVERROOT;
 eval qq(require '$ENSEMBL_SERVERROOT/$CONF_DIR/Plugins.pm');
 error( "Error requiring plugin file:\n$@" ) if $@;
 
+$ENSEMBL_MART_ENABLED   = 0;
+
 $ENSEMBL_SERVER         = Sys::Hostname::hostname();  # Local machine name
 
 $ENSEMBL_PORT           = 80;
@@ -466,7 +468,6 @@ $ENSEMBL_TEMPLATE_ROOT = $ENSEMBL_SERVERROOT.'/biomart-web/conf';
   $ENSEMBL_MAIL_SERVER
   $ENSEMBL_SHORTEST_ALIAS
   $MART_ENSEMBL_LINKS
-  $ENSEMBL_MART_ENABLED
 );
 
 ############################
@@ -625,6 +626,7 @@ $ENSEMBL_TEMPLATE_ROOT = $ENSEMBL_SERVERROOT.'/biomart-web/conf';
   @ENSEMBL_HTDOCS_DIRS
   @ENSEMBL_LIB_DIRS
   $MART_ENSEMBL_LINKS
+  $ENSEMBL_MART_ENABLED
   )],
   WEB => [qw(
   $ENSEMBL_PLUGIN_ROOTS
