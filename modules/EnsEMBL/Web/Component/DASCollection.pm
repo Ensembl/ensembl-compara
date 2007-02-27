@@ -96,7 +96,7 @@ sub get_das_domains {
   my @urls;
   foreach my $url (sort @domains) {
     $url = "http://$url" if ($url !~ m!^\w+://!);
-    $url .= "/das" if ($url !~ m!/das$!);
+    $url .= "/das" if ($url !~ /\/das$/);
     push @urls, $url;
   }
   my %known_domains = map { $_ => 1} grep{$_} @urls ;
@@ -165,7 +165,7 @@ sub add_das_server {
     my $rurl = $object->species_defs->DAS_REGISTRY_URL || $NO_REG;
     if (defined (my $url = $object->param("DASdomain"))) {
       $url = "http://$url" if ($url !~ m!^\w+://!);
-      $url .= '/das' if ($url !~ m!/das$! && $url ne $rurl);
+      $url .= '/das' if ($url !~ m/\/das$/ && $url ne $rurl);
       $object->param('DASdomain', $url);
     }
     my @das_servers = &get_das_domains($object);
@@ -218,6 +218,7 @@ sub add_das_server {
       my $dwidth = 120;
       my $html = qq{<table>};
       foreach my $id (sort {$dsns->{$a}->{name} cmp $dsns->{$b}->{name} } keys (%{$dsns})) {
+warn Data::Dumper::Dumper( $dsns->{$id} );
         my $dassource = $dsns->{$id};
         my ($id, $name, $url, $desc) = ($dassource->{id}, $dassource->{name}, $dassource->{url}, substr($dassource->{description}, 0, $dwidth));
         my $cs = qq{<a href="javascript:X=window.open(\'$url\', \'DAS source details\', \'left=50,top=50,resizable,scrollbars=yes\');X.focus();void(0);">details about \`$name\`</a>};
@@ -685,8 +686,8 @@ sub das_wizard_2 {
     'geneview'    => 'ensembl_gene',
     'protview'    => 'ensembl_peptide',
     'transview'   => 'ensembl_gene', # Coz there is no ensembl_transcript source around at the moment
-    'contigview'  => 'ensembl_location_chromosome',
-    'cytoview'    => 'ensembl_location_chromosome'
+    'contigview'  => 'ensembl_location_toplevel',
+    'cytoview'    => 'ensembl_location_toplevel'
   );
   if ($source_type eq 'das_registry') {
     my $cs_html = qq{
@@ -711,7 +712,7 @@ sub das_wizard_2 {
   </div>};
       $form->add_element('type'=>'Information', 'value'=> $cs_html);
     } else {
-      my @mvalues;
+      my $mvalues_seq = []; my $mvalues_other = [];
 # grep is to filter out undef elements
       my @seltypes = grep {$_} @{$source_conf->{mapping}};
       if (scalar(@seltypes) < 1) {
@@ -720,17 +721,24 @@ sub das_wizard_2 {
       my %DASMapping = %{$object->getCoordinateSystem};
       my $ptest = join('*', @seltypes).'*';
       foreach my $p (sort keys (%DASMapping)) {
+        my $ref = $p =~/ensembl_location/ ? $mvalues_seq : $mvalues_other;
         if ($ptest =~ /$p\*/){
-          push @mvalues, {"value"=>$p, "name"=>$DASMapping{$p}, "checked"=>"yes"};
+          push @$ref, {"value"=>$p, "name"=>$DASMapping{$p}, "checked"=>"yes"};
         } else {
-          push @mvalues, {"value"=>$p, "name"=>$DASMapping{$p}};
+          push @$ref, {"value"=>$p, "name"=>$DASMapping{$p}};
         }
       }
       $form->add_element('type' => 'MultiSelect',
         'class'   => 'radiocheck1col',
         'name'    =>'DAStype',
-        'label'   =>'Coordinate System',
-        'values'  => \@mvalues
+        'label'   =>'Sequence Coordinate System',
+        'values'  => $mvalues_seq
+      );
+      $form->add_element('type' => 'MultiSelect',
+        'class'   => 'radiocheck1col',
+        'name'    =>'DAStype',
+        'label'   =>'Other Coordinate System',
+        'values'  => $mvalues_other
       );
     }
   }
