@@ -583,11 +583,11 @@ sub duplication_confidence_score {
     (
      "duplication_confidence_score",
      $duplication_confidence_score
-    );
+    ) unless ($self->{'_readonly'});
 
   my $rounded_duplication_confidence_score = (int((100.0 * $scalar_isect / $scalar_union + 0.5)));
   my $species_intersection_score = $ancestor->get_tagvalue("species_intersection_score");
-  if ($species_intersection_score != $rounded_duplication_confidence_score) {
+  if ($species_intersection_score ne $rounded_duplication_confidence_score && !defined($self->{_readonly})) {
     $self->throw("Inconsistency in the ProteinTree: duplication_confidence_score $duplication_confidence_score != species_intersection_score $species_intersection_score\n");
   }
 }
@@ -729,7 +729,7 @@ sub direct_ortholog_test
   return undef if($count2>1);
 
   #passed all the tests -> it's a simple ortholog
-  $self->delete_old_homologies($genepairlink);
+  $self->delete_old_homologies($genepairlink) unless ($self->{'_readonly'});
   $genepairlink->add_tag("orthotree_type", 'ortholog_one2one');
   my $taxon = $self->get_ancestor_taxon_level($ancestor);
   $genepairlink->add_tag("orthotree_subtype", $taxon->name);
@@ -759,7 +759,7 @@ sub inspecies_paralog_test
 
   #passed all the tests -> it's an inspecies_paralog
 #  $genepairlink->add_tag("orthotree_type", 'inspecies_paralog');
-  $self->delete_old_homologies($genepairlink);
+  $self->delete_old_homologies($genepairlink) unless ($self->{'_readonly'});
   $genepairlink->add_tag("orthotree_type", 'within_species_paralog');
   $genepairlink->add_tag("orthotree_subtype", $taxon->name);
   # Duplication_confidence_score
@@ -809,7 +809,7 @@ sub ancient_residual_test
 #  my $sis_value = $ancestor->get_tagvalue("species_intersection_score");
   my $sis_value = $ancestor->get_tagvalue("duplication_confidence_score");
   if($ancestor->get_tagvalue("Duplication") > 0 && $sis_value ne '0') {
-    $self->delete_old_homologies($genepairlink);
+    $self->delete_old_homologies($genepairlink) unless ($self->{'_readonly'});
     $genepairlink->add_tag("orthotree_type", 'apparent_ortholog_one2one');
     my $taxon = $self->get_ancestor_taxon_level($ancestor);
     $genepairlink->add_tag("orthotree_subtype", $taxon->name);
@@ -818,7 +818,7 @@ sub ancient_residual_test
       $self->duplication_confidence_score($ancestor);
     }
   } else {
-    $self->delete_old_homologies($genepairlink);
+    $self->delete_old_homologies($genepairlink) unless ($self->{'_readonly'});
     $genepairlink->add_tag("orthotree_type", 'ortholog_one2one');
     my $taxon = $self->get_ancestor_taxon_level($ancestor);
     $genepairlink->add_tag("orthotree_subtype", $taxon->name);
@@ -864,7 +864,7 @@ sub one2many_ortholog_test
   }
 
   #passed all the tests -> it's a one2many ortholog
-  $self->delete_old_homologies($genepairlink);
+  $self->delete_old_homologies($genepairlink) unless ($self->{'_readonly'});
   $genepairlink->add_tag("orthotree_type", 'ortholog_one2many');
   my $taxon = $self->get_ancestor_taxon_level($ancestor);
   $genepairlink->add_tag("orthotree_subtype", $taxon->name);
@@ -893,7 +893,7 @@ sub outspecies_test
   my $sis_value = $ancestor->get_tagvalue("duplication_confidence_score");
   unless ($dup_value eq '') {
     if($dup_value > 0 && $sis_value ne '0') {
-      $self->delete_old_homologies($genepairlink);
+      $self->delete_old_homologies($genepairlink) unless ($self->{'_readonly'});
       $genepairlink->add_tag("orthotree_type", 'between_species_paralog');
       $genepairlink->add_tag("orthotree_subtype", $taxon->name);
       # Duplication_confidence_score
@@ -901,7 +901,7 @@ sub outspecies_test
         $self->duplication_confidence_score($ancestor);
       }
     } else {
-      $self->delete_old_homologies($genepairlink);
+      $self->delete_old_homologies($genepairlink) unless ($self->{'_readonly'});
       $genepairlink->add_tag("orthotree_type", 'ortholog_many2many');
       $genepairlink->add_tag("orthotree_subtype", $taxon->name);
     }
