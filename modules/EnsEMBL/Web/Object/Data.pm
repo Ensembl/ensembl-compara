@@ -20,7 +20,9 @@ my %Adaptor :ATTR(:set<adaptor> :get<adaptor>);
 my %Belongs_to :ATTR(:set<belongs_to> :get<belongs_to>);
 my %Relational_attributes :ATTR(:set<relational_attributes> :get<relational_attributes>);
 my %Relational_table :ATTR(:set<relational_table> :get<relational_table>);
+my %Relational_fields :ATTR(:set<relational_fields> :get<relational_fields>);
 my %Relational_link_table :ATTR(:set<relational_link_table> :get<relational_link_table>);
+my %Relational_contribution :ATTR(:set<relational_contribution> :get<relational_contribution>);
 my %Has_many:ATTR(:set<has_many> :get<has_many>);
 
 }
@@ -113,6 +115,15 @@ sub add_queriable_field {
   push @{ $self->get_queriable_fields }, EnsEMBL::Web::Object::DataField->new( { name => $args->{name}, type => $args->{type}, queriable => 'yes' } );
 }
 
+sub add_relational_field {
+  my ($self, $args) = @_;
+  if (!$self->get_relational_fields) {
+    $self->set_relational_fields([]);
+  }
+  $self->add_accessor_symbol_lookup($args->{name});
+  push @{ $self->get_relational_fields }, EnsEMBL::Web::Object::DataField->new( { name => $args->{name}, type => $args->{type} } );
+}
+
 sub get_all_fields {
   my $self = shift;
   my @all_fields;
@@ -137,6 +148,12 @@ sub add_has_many {
   if ($args->{link_table}) {
     $self->add_linked_has_many_symbol_lookup($self->plural($self->object_name_from_package($args->{class})));
     $self->relational_link_table($self->plural($self->object_name_from_package($args->{class})), $args->{link_table});
+    ## relational contributions allow the parent class to bestoy additional attributes on child classes. This
+    ## data is usually stored in a link table. For example, this mechanism is used to add an authorisation 'level'
+    ## to users retrived from a group, via the group_member table.
+    if ($args->{contribute}) {
+      $self->relational_contribution($args->{link_table}, $args->{contribute});
+    }
   } else {
     $self->add_has_many_symbol_lookup($self->plural($self->object_name_from_package($args->{class})));
   }
@@ -264,6 +281,11 @@ sub get_linked_values {
   if (EnsEMBL::Web::Root::dynamic_use(undef, $class)) {
     foreach my $id (keys %{ $result->get_result_hash }) {
       my $new = $class->new({ id => $id });
+      if ($self->relational_contribution($self->relational_link_table($attribute))) {
+        foreach my $contrib (@{ $self->relational_contribution($self->relational_link_table($attribute)) }) {
+          $new->$contrib($result->get_result_hash->{$id}->{$contrib});
+        }
+      }
       push @objects, $new;
     }
   }
@@ -307,6 +329,17 @@ sub get_lazy_values {
     $self->set_value($object, \@objects);
   }
   return \@objects;
+}
+
+sub relational_contribution {
+  my ($self, $attribute, $contribution) = @_;
+  unless (defined $self->get_relational_contribution) {
+    $self->set_relational_contribution({});
+  }
+  if (defined $contribution) {
+    $self->get_relational_contribution->{$attribute} = $contribution; 
+  }
+  return $self->get_relational_contribution->{$attribute};
 }
 
 sub relational_class {
@@ -404,13 +437,17 @@ sub find_linked_many {
   my ($self, $attribute) = @_;
   my $request = EnsEMBL::Web::DBSQL::SQL::Request->new();
   $request->set_action('select');
-  #warn "FINDING MANY FROM " . $self->relational_table($attribute);
   $request->set_table($self->relational_link_table($attribute));
+  if ($self->relational_contribution($self->relational_link_table($attribute))) {
+    foreach my $contribution (@{ $self->relational_contribution($self->relational_link_table($attribute)) }) {
+      $request->add_select($self->relational_link_table($attribute) . "." . $contribution);
+    }
+  }
   $request->add_select($self->relational_table($attribute) . '.*');
   $request->add_join($self->relational_table($attribute), $self->relational_link_table($attribute) . "." . $self->relational_table($attribute) . "_id", $self->relational_table($attribute) . "." . $self->relational_table($attribute) . "_id");
   $request->add_where($self->relational_link_table($attribute) . "." . $self->get_primary_key, $self->id);
   $request->set_index_by($self->relational_table($attribute) . "_id");
-  #warn $request->get_sql;
+  #warn "LINKED SQL: " . $request->get_sql;
   return $self->get_adaptor->find_many($request);
 }
 

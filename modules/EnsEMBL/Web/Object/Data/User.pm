@@ -16,12 +16,16 @@ sub BUILD {
   $self->set_primary_key('user_id');
   $self->set_adaptor(EnsEMBL::Web::DBSQL::MySQLAdaptor->new({table => 'user' }));
   $self->set_data_field_name('data');
+
   $self->add_queriable_field({ name => 'name', type => 'tinytext' });
   $self->add_queriable_field({ name => 'email', type => 'tinytext' });
   $self->add_queriable_field({ name => 'salt', type => 'tinytext' });
   $self->add_queriable_field({ name => 'password', type => 'tinytext' });
   $self->add_queriable_field({ name => 'organisation', type => 'text' });
   $self->add_queriable_field({ name => 'status', type => 'tinytext' });
+
+  $self->add_relational_field({ name => 'level', type => 'text' });
+
   $self->add_has_many({ class => 'EnsEMBL::Web::Object::Data::User::Bookmark', table => 'user_record'});
   $self->add_has_many({ class => 'EnsEMBL::Web::Object::Data::User::Configuration', table => 'user_record'});
   $self->add_has_many({ class => 'EnsEMBL::Web::Object::Data::User::Annotation', table => 'user_record'});
@@ -31,7 +35,7 @@ sub BUILD {
   $self->add_has_many({ class => 'EnsEMBL::Web::Object::Data::Sortable', table => 'user_record'});
   $self->add_has_many({ class => 'EnsEMBL::Web::Object::Data::Mixer', table => 'user_record'});
   $self->add_has_many({ class => 'EnsEMBL::Web::Object::Data::SpeciesList', table => 'user_record'});
-  $self->add_has_many({ class => 'EnsEMBL::Web::Object::Data::Group', table => 'webgroup', link_table => 'group_member'});
+  $self->add_has_many({ class => 'EnsEMBL::Web::Object::Data::Group', table => 'webgroup', link_table => 'group_member', });
 
   $self->populate_with_arguments($args);
 }
@@ -43,6 +47,7 @@ sub find_administratable_groups {
     warn "GROUP: " . $group->name . " (" . $group->id . ")";
     foreach my $user (@{ $group->users }) {
       warn "  USER: " . $user->name;
+      warn "  LEVEL: " . $user->level;
     }
   }
   return [];
