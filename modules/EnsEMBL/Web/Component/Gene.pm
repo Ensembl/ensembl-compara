@@ -126,7 +126,7 @@ sub alignment_options_form {
     'required' => 'yes',      'name'     => 'conservation',
     'label'    => 'Conservation regions',
     'values'   => $conservation,
-    'value'    => $object->param('conservation')
+    'value'    => $object->param('conservation'),
   );
 
   my $codons_display = [
@@ -138,7 +138,7 @@ sub alignment_options_form {
     'required' => 'yes',      'name'     => 'codons_display',
     'label'    => 'Codons',
     'values'   => $codons_display,
-    'value'    => $object->param('codons_display')
+    'value'    => $object->param('codons_display'),
   );
 
   my $title_display = [
@@ -151,7 +151,7 @@ sub alignment_options_form {
     'label'    => 'Title display',
     'values'   => $title_display,
     'value'    => $object->param('title_display'),
-    'notes'    => "On mouse over displays exon IDs, length of insertions and SNP\'s allele"
+    'notes'    => "On mouse over displays exon IDs, length of insertions and SNP\'s allele",
   );
 
   return $form;
@@ -162,7 +162,58 @@ sub sequence_markup_options_form {
   my $form = EnsEMBL::Web::Form->new( 'markup_options', "/@{[$object->species]}/sequencealignview", 'post' );
   $form = gene_options_form($panel, $object, $form, "exons");
   $form = alignment_options_form($panel, $object, $form);
+  my $strains =  $object->species_defs->translate( "strain" )."s";
+  my $species =  $object->species_defs->SPECIES_COMMON_NAME || $object->species;
 
+  my $refslice = $object->get_slice_object;
+  my %selected_species = map { $_ => 1} $object->param("individuals");
+
+  my %reseq_strains;
+  map { $reseq_strains{$_->name} = 1; } (  $refslice->get_individuals('reseq') );
+  my $golden_path = $refslice->get_individuals('reference');
+  my $individuals = {};
+  foreach ( $refslice->get_individuals('display') ) {
+    my $key = $_ eq $golden_path   ? 'ref' :
+               $reseq_strains{$_} ? 'reseq' : 'other';
+    if ( $selected_species{'all'} or $selected_species{$_} ) {
+      push @{$individuals->{$key}}, {"value" => $_, "name"=> $_, "checked"=>"yes"};
+    } else {
+      push @{$individuals->{$key}}, {"value" => $_, "name"=> $_};
+    }
+  }
+
+ $form->add_element(
+    'type'     => 'MultiSelect',
+    'name'     => 'individuals',
+    'label'    => "Show reference $strains",
+    'values'   => $individuals->{'ref'},
+    'value'    => $object->param('individuals'),
+  ) if $individuals->{'ref'};
+
+  $form->add_element(
+    'type'     => 'MultiSelect',
+    'name'     => 'individuals',
+    'label'    => "Show all $strains",
+    'values'   => [{ 'value' =>'all' ,  'name' => "All $strains" }],
+    'value'    => $object->param('individuals'),
+  ) unless $selected_species{'all'};
+
+ $form->add_element(
+    'type'     => 'MultiSelect',
+    'name'     => 'individuals',
+    'label'    => "Resequenced $species $strains",
+    'values'   => $individuals->{'reseq'},
+    'value'    => $object->param('individuals'),
+  ) if $individuals->{'reseq'};
+
+
+  $form->add_element(
+		       'type'     => 'MultiSelect',
+		       'name'     => 'individuals',
+		       'label'    => "Other $species $strains",
+		       'values'   => $individuals->{'other'},
+		       'value'    => $object->param('individuals'),
+		      ) if $individuals->{'other'};
   $form->add_element(
     'type'  => 'Submit', 'value' => 'Update'
   );

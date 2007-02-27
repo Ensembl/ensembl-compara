@@ -107,6 +107,20 @@ sub valids {
   return \%valids;
 }
 
+sub variation_adaptor {
+
+  ### Fetches the variation adaptor and puts it on the object hash
+  my $self = shift;
+  unless ( exists $self->{'variation_adaptor'} ) {
+    my $vari_adaptor = $self->Obj->adaptor->db->get_db_adaptor('variation');
+    unless ($vari_adaptor) {
+      warn "ERROR: Can't get variation adaptor"; 
+    }
+    $self->{'variation_adaptor'} = $vari_adaptor;
+  }
+
+  return $self->{'variation_adaptor'};
+}
 
 sub sources {
 
@@ -115,13 +129,11 @@ sub sources {
  ### Returns hashref with keys as valid options, value = 1
 
   my $self = shift;
-  my $vari_adaptor = $self->Obj->adaptor->db->get_db_adaptor('variation');
-  unless ($vari_adaptor) {
-    warn "ERROR: Can't get variation adaptor";
-    return ();
-  }
   my $valids = $self->valids;
-  my @sources = @{ $vari_adaptor->get_VariationAdaptor->get_all_sources() || []};
+  my @sources;
+  eval {
+    @sources = @{ $self->variation_adaptor->get_VariationAdaptor->get_all_sources() || []};
+  };
   my %sources = map { $valids->{'opt_'.lc($_)} ? ( $_ => 1 ):()  } @sources;
   %sources = map{( $_ => 1 ) } @sources unless keys %sources;
   return \%sources;
@@ -308,23 +320,31 @@ sub get_individuals {
   ### SequenceAlignView
   ### Arg (optional) : type string
   ###  -"default": returns samples checked by default
+  ###  -"reseq": returns all resequencing sames
+  ###  -"reference": returns the reference (golden path name)
   ###  -"display": returns all samples (for dropdown list) with default ones first
   ### Description: returns selected samples (by default)
   ### Returns list
 
   my $self    = shift;
   my $options = shift;
-
-  my $vari_adaptor = $self->database('variation')->get_db_adaptor('variation');
-  unless ($vari_adaptor) {
-    warn "ERROR: Can't get variation adaptor";
+  my $individual_adaptor;
+  eval {
+     $individual_adaptor = $self->variation_adaptor->get_IndividualAdaptor;
+   };
+  if ($@) {
+    warn "Error getting individual adaptor off variation adaptor ", $self->variation_adaptor;
     return ();
   }
 
-  my $individual_adaptor = $vari_adaptor->get_IndividualAdaptor;
-
   if ($options eq 'default') {
     return sort  @{$individual_adaptor->get_default_strains};
+  }
+  elsif ($options eq 'reseq') {
+    return @{$individual_adaptor->fetch_all_strains_with_coverage};
+  }
+  elsif ($options eq 'reference') {
+    return $individual_adaptor->get_reference_strain_name();
   }
 
   my %default_pops;
@@ -340,6 +360,7 @@ sub get_individuals {
   }
   return ();
 }
+
 
 
 1;

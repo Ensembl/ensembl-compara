@@ -86,8 +86,12 @@ sub markup_and_render {
     $KEY .= sprintf( $key_tmpl, 'nd', "THIS STYLE:", "Location of deletions" );
   }
 
-  if ($object->param('line_numbering') eq 'slice') {
+  if ($object->param('line_numbering') eq 'slice' &&  $object->param("RGselect") ) {
     $KEY .= qq{ NOTE:     For secondary species we display the coordinates of the first and the last mapped (i.e A,T,G,C or N) basepairs of each line };
+  }
+
+  if ($object->param('individuals')) {
+    $KEY .= qq{ ~&nbsp;&nbsp; No resequencing coverage at this position };
   }
   my $html = generateHTML($object, \%sliceHash, $max_values);
 
@@ -102,8 +106,8 @@ sub markup_and_render {
 
     # If page is based on strains, use the URL species
     unless ($slices ) {
-      my $slice_name;
-      eval {
+      my $slice_name; 
+       eval {
         $slice_name = $object->get_slice_object->Obj->name;
        };
       $slices = [$slice_name];
@@ -141,8 +145,11 @@ sub markupInit {
   my $slice_length = length($slices->[0]->seq) + 1 ;
   my $width = $object->param("display_width") || 60;
 
+  # An AlignSlice is made up of at least one AlignSlice::Slice for each 
+  # species.  The reference species will only have one AlignSlice::Slice
   foreach my $slice (@$slices) {
     my $sequence = $slice->seq;
+    my $display_name = $slice->can('display_Slice_name') ? $slice->display_Slice_name : $object->species;
 
     my @subslices;
     if ( $slice->can('get_all_underlying_Slices') ) {
@@ -152,7 +159,6 @@ sub markupInit {
       @subslices = ($slice);
     }
 
-    my $display_name = $slice->can('display_Slice_name') ? $slice->display_Slice_name : $object->species;
     foreach my $uSlice ( @subslices ) {
       next if ($uSlice->seq_region_name eq 'GAP');
       push @{$hRef->{$display_name}->{slices}}, $uSlice->name;
@@ -160,7 +166,7 @@ sub markupInit {
 	$max_label = $label_length;
       }
       $max_position = $uSlice->start if ($uSlice->start > $max_position);
-      $max_position = $uSlice->end if ($uSlice->end > $max_position);
+      $max_position = $uSlice->end   if ($uSlice->end   > $max_position);
     }
 
     # Get abbreviated species name (first letters of genus, first 3 of species)
@@ -235,7 +241,14 @@ sub generateHTML {
   my $max_label = $max_values->{'max_label'};
   my $max_position_length = $max_values->{'max_position_length'};
 
-  foreach my $display_name (keys %$hRef) {
+  my $reference_name = $object->get_slice_object->get_individuals('reference');
+  my $flag_done_reference = 0;
+  foreach my $display_name ($reference_name, (sort keys %$hRef)) {
+    next unless $hRef->{$display_name};
+    if ($display_name eq $reference_name) {
+      next if $flag_done_reference;
+      $flag_done_reference = 1 ;
+    }
     my $sequence     = $hRef->{$display_name}->{sequence};
     my $slice        = $hRef->{$display_name}->{slice};
     my $slice_length = $hRef->{$display_name}->{slice_length};
@@ -270,7 +283,18 @@ sub generateHTML {
 
 # If the bin has snpID then we need to display SNP's info at the end of the line
       if ($p->{snpID}) {
-        push @$notes, sprintf("{<a href=\"/%s/snpview?snp=%s\">base %u:%s</a>}", $display_name, $p->{snpID}, $p->{pos}, $p->{textSNP});
+	my $pos = $p->{pos};
+	if ($line_numbering eq 'slice') {
+	  if ($slice->strand > 0 ) {
+	    $pos += $slice->start -1;
+	  }
+	  else {
+	    $pos = $slice->end +1 - $pos;
+	  }
+	}
+	# If $display name is a strain, need to replace with the species instead for SNPview URL
+	my $link_species = $object->species_defs->get_config($display_name, "SPECIES_ABBREVIATION") ? $display_name : $object->species();
+        push @$notes, sprintf("{<a href=\"/%s/snpview?snp=%s\">base %u:%s</a>}", $link_species, $p->{snpID}, $pos, $p->{textSNP});
       }
 
 # And now onto the current bin
@@ -374,9 +398,10 @@ sub generateHTML {
           $notes = undef;
         }
 	$species_html .= "\n";
-      }
-    }
+      } # end if ($sindex % $width == 0 && length($sq) != 0) 
+    } # end for my $i
 
+    $sindex--; # correction factor for last line
 # All the markup bins have been processed now display any leftovers
     if (($sindex % $width)  != 0) {
       if ($line_numbering eq 'slice') {
@@ -396,7 +421,8 @@ sub generateHTML {
           }
         } else {
           my $w = $width - ($sindex % $width);
-          $species_html .= sprintf("%*s %*s:%*u", $w, " ", $max_label, $slice->seq_region_name, $max_position_length, $sindex + $linenumbers[0]);
+	  my $last_position = $slice->strand > 0 ? $linenumbers[0] + $sindex : $linenumbers[0] - $sindex +2;
+          $species_html .= sprintf("%*s %*s:%*u", $w, " ", $max_label, $slice->seq_region_name, $max_position_length, $last_position);
         }
       } elsif($line_numbering eq 'sequence') {
         my $w = $width - ($sindex % $width) + $max_position_length;
@@ -404,7 +430,7 @@ sub generateHTML {
       }
     }
 
-    $species_html .= join('|', " ", @$notes) if $notes;;
+    $species_html .= join('|', " ", @$notes) if $notes;
     $species_html .= "\n";
 
 # Now $species_html holds ready html for the $species
@@ -417,7 +443,11 @@ sub generateHTML {
   if (scalar(keys %$hRef) > 1) {
     while (1) {
       my $line_html = '';
+      if ($hRef->{$reference_name}) {
+	$line_html .= shift @{$hRef->{$reference_name}->{html} || [] };
+      }
       foreach my $display_name (sort keys %{$hRef}) {
+	next if $display_name eq $reference_name;
         $line_html .= shift @{$hRef->{$display_name}->{html}};
       }
       $html .= "$line_html\n";
@@ -691,9 +721,6 @@ sub add_display_name {
     }
   }
 
-  else {
-    # add space
-  }
   return $html;
 }
 
@@ -1038,41 +1065,34 @@ sub sequencealignview {
 
   #Get reference slice
   my $refslice = $object->get_slice_object;
-  my @individuals = ($refslice->get_individuals('display'));
+  my @individuals =  $refslice->param('individuals');
+
 
   # Get slice for each display strain
-  my @sliceArray;
+  my @individual_slices;
   foreach my $individual ( @individuals ) {
-    my $individual_slice = $refslice->Obj->get_by_strain( $individual );
-    next unless $individual_slice;
-    push @sliceArray, $individual_slice;
+    next unless $individual;
+    if ($individual eq 'all') {
+      @individuals = ($refslice->get_individuals('display'));
+      @individual_slices = ();
+      next;
+    }
+    my $slice =  $refslice->Obj->get_by_strain( $individual );
+    next unless $slice;
+    push @individual_slices,  $slice;
   }
-  return unless scalar @sliceArray;
+  return 1 unless scalar @individual_slices;
 
   # Get align slice
   my $align_slice = Bio::EnsEMBL::AlignStrainSlice->new(-SLICE => $refslice->Obj,
-                                                        -STRAINS => \@sliceArray);
+                                                        -STRAINS => \@individual_slices);
+  
+  # Get aligned strain slice objects
+  my $sliceArray = $align_slice->get_all_Slices();
+  markup_and_render( $panel, $object, $sliceArray);
 
-  markup_and_render( $panel, $object, \@sliceArray);
-
-  # extras --------------------------------------------
-  #  my $name = $refslice->Obj->name;
-  #  $panel->add_row("Slice", "<p>$name Length: $length</p>");
-  my $length =  $align_slice->length;
-  my $info;
-  foreach my $strain_slice (@sliceArray) {
-
-    #get coordinates of variation in alignSlice
-    my @allele_features = @{$strain_slice->get_all_AlleleFeatures_Slice() || []};
-    foreach my $af ( @allele_features ){
-      my $new_feature = $align_slice->alignFeature($af, $strain_slice);
-      $info .= "Coordinates of the feature in AlignSlice are: ". $new_feature->start. "-". $af->start. "<br />";
-    }
-  }
-  $panel->add_row( "Alignment", "<p>$info</p>" );
   return 1;
 }
 
-#------------------------------------------------------------------------------
 
 1;
