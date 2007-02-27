@@ -138,11 +138,11 @@ my %db_names = ( 'ENSEMBL_DB'      => 'core',
                'ENSEMBL_VEGA'    => 'vega', );
 
 
-# Create directory for ssaha and blast
-info (1, "Creating dir for ssaha and/or blast") unless $no_indexes && $no_ssaha;
 our $ssaha_machine = $release % 2 ? "ensarc-1-11" : "ensarc-1-12";
 
 unless ($no_remotedirs) {
+   # Create directory for ssaha and blast
+   info (1, "Creating dir for ssaha and/or blast") unless $no_indexes && $no_ssaha;
   eval{
     system("ssh -i /nfs/WWW/.ssh/blastsrv $MACHINE mkdir -p /data/blastdb/ensembl/release-$release") unless $no_indexes;
     system("ssh -i /nfs/WWW/.ssh/blastsrv $ssaha_machine mkdir -p /ensemblweb/ssaha2/HashTables/release-$release") unless $no_ssaha;
@@ -777,27 +777,34 @@ sub blast_indexes {
 
 
     # Make blast indexes
-    info (2, "Creating blast indexes for $types");
-     my $command;
-     my @names;
-     if ($types=~/^pep/) {
-       $command =  $pep_command;
-       @names = (".atb", ".ahd", ".bsq", "" );
-     }
-     else {
-       $command =  $dna_command;
-       @names = (".ntb", ".nhd", ".csq", "" );
-     }
+#     info (2, "Creating blast indexes for $types");
+#     my $command;
+#     my $names;
+#     if ($types=~/^pep/) {
+#       $command =  $pep_command;
+#       foreach (".atb", ".ahd", ".bsq", "" ) {
+#         my $file = "$fh$_";
+#         (my $file_name = $file) =~ s#.*/##;
+# 	  $names->{$file} = $file_name;
+#       }
+#      }
+#      else {
+#        $command =  $dna_command;
+#        foreach (".ntb", ".nhd", ".csq", "" ) {
+# 	 my $file = "$fh$_";
+# 	 (my $file_name = $file) =~ s#.*/##;
+# 	   $names->{$file} = $file_name;
+#        }
+#      }
 
-     system("$command $fh");
+#     system("$command $fh");
 
     # Do blast xdformat indexes
-    xdformat_blast_indexes($types, $fh, $release_dir);
+    my $names = xdformat_blast_indexes($types, $fh, $release_dir);
 
      # Copy blast indexes across------------------------------
-     foreach my $index (@names ) {
-        my $file = "$fh$index";
-        (my $file_name = $file) =~ s#.*/##;
+    foreach my $file (keys %$names ) {
+        my $file_name = $names->{$file};
         utils::Tool::warning(1, "Error producing file $file") && next unless -s "$file";
         system("scp -i /nfs/WWW/.ssh/blastsrv $file $MACHINE:/data/blastdb/ensembl/$release_dir/$file_name");
         unlink($file) || warn "Can't delete $file: $!" unless $file eq $fh;
@@ -828,7 +835,7 @@ sub xdformat_blast_indexes {
   my ($types, $fh, $release_dir) = @_;
 
   info (1, "xdformat indexes");
-  my $xdformat_command = "/ensweb/wwwdev/headfc1/src/xdformat";
+  my $xdformat_command = "/ensweb/wwwdev/headfc1/src/xdformat ";
   my @names;
   if ($types =~/^pep/) {
     @names = qw( .xpd .xps .xpt);
@@ -839,13 +846,18 @@ sub xdformat_blast_indexes {
     system ("$xdformat_command -n $fh");
   }
 
+  my $xdformat_dir = "/mysqlg/dumps/$release_dir/xdformat";
+  utils::Tool::check_dir($xdformat_dir);
+
+  my $xdformat_files = {};
   foreach my $index (@names ) {
     my $file = "$fh$index";
     (my $file_name = $file) =~ s#.*/##;
       utils::Tool::warning(1, "Error producing file $file") && next unless -s "$file";
-    system ("mv $file /mysqlg/dumps/$release_dir/xdformat/$file_name");
+    #system ("mv $file $xdformat_dir/$file_name");
+    $xdformat_files->{$file} = $file_name;
   }
-  return 1;
+  return $xdformat_files;
 }
 
 #-----------------------------------------------------------------------------
