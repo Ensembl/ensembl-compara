@@ -22,3 +22,15 @@ body { background-image: url(/img/nav-bg.gif); background-repeat: repeat-y; back
 .print_hide_tr { display: table-row }
 
 #page div.sptop { height: 7em }
+
+.mart_main_menubar { border-bottom: 1px solid black; }
+.mart_summarypanel_datasets { border-width: 1px 1px 1px 1px; border-color: #999 }
+#mart_mainpanel { border-width: 1px 1px 1px 1px; border-color: #999 }
+.mart_databasemenu, .mart_interfacemenu, .mart_datasetmenu { border-bottom-width: 1px; border-bottom-color: #999; }
+.dummyLine { border-bottom: 1px solid #999 }
+div#mart_mainpanel { border: 1px solid #999 }
+div#mart_bottom_bar { border: 0px; border-top: 1px solid black }
+
+.mart_btn {    background-color: #993333; color: #fff; border: 2px outset #933 }
+.mart_btnhov { background-color: #993333; color: #fff; border: 2px outset #933 }
+

@@ -14,5 +14,5 @@ body { background-position:top right; background: none }
 
 .print_hide_tr, .print_hide_table, .print_hide_block, .print_hide { display: none }
 
-#page div.sptop { height: 3em }
+#page div.sptop { height: 5em }
 
