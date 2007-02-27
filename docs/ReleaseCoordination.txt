@@ -6,12 +6,16 @@ intention, ask the other members of compara group (or related) what
 they intend to produce.  Sometimes, you have to wait a bit that gene
 builders do their declaration first to know what compara will need to
 produce and also potential schema changes.
+Compara has one extra days to send the DOI, because we have to know which new 
+species are added. 
 
 For homologues and family, ask Albert (avilella@ebi.ac.uk) or Abel
 (abel@ebi.ac.uk). For whole genome alignments and synteny ask Javier
-(jherrero@ebi.ac.uk) or Abel (abel@ebi.ac.uk)
+(jherrero@ebi.ac.uk) or Abel (abel@ebi.ac.uk). For ComparaMart ask
+Benoit (benoit@ebi.ac.uk)
 
 2. Mail the compara declaration of intentions to ensembl-admin@ebi.ac.uk
+send the DOI at after the Genebuilders
 
 3. Define priorities and assign jobs to the team members.
 
