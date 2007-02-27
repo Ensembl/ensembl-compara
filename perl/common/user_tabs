@@ -20,6 +20,7 @@ if ($user) {
 
   my $found = 0;
   my $tab = undef;
+  warn "UPDATING TABS";
   foreach my $open_tab (@{ $user->opentabs }) {
     if ($open_tab->name eq $cgi->param('name')) {
       $tab = $open_tab;
@@ -30,7 +31,7 @@ if ($user) {
     $tab = EnsEMBL::Web::Object::Data::Opentab->new();
   }
 
-  $tab->user($user);
+  $tab->user_id($user->id);
   $tab->tab($cgi->param('tab'));
   $tab->name($cgi->param('name'));
   $tab->save;
