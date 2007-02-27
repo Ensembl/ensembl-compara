@@ -37,6 +37,14 @@ sub BUILD {
 }
 
 sub find_administratable_groups {
+  warn "FINDING ADMIN GROUPS";
+  my $self = shift;
+  foreach my $group (@{ $self->groups }) {
+    warn "GROUP: " . $group->name . " (" . $group->id . ")";
+    foreach my $user (@{ $group->users }) {
+      warn "  USER: " . $user->name;
+    }
+  }
   return [];
 }
 

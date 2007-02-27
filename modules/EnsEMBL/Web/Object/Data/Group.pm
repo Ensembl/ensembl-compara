@@ -24,6 +24,7 @@ sub BUILD {
   $self->add_has_many({ class => 'EnsEMBL::Web::Object::Data::Group::Configuration', table => 'group_record'});
   $self->add_has_many({ class => 'EnsEMBL::Web::Object::Data::Group::Annotation', table => 'group_record'});
   $self->add_has_many({ class => 'EnsEMBL::Web::Object::Data::Group::Invite', table => 'group_record'});
+  $self->add_has_many({ class => 'EnsEMBL::Web::Object::Data::User', table => 'user', link_table => 'group_member' });
   $self->populate_with_arguments($args);
 }
 

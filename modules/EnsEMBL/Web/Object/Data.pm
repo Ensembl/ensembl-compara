@@ -58,7 +58,7 @@ sub populate {
 sub populate_data {
   ### Populates data.
   my ($self, $string) = @_;
-  warn "Populating data for: " . ref($self);
+  #warn "Populating data for: " . ref($self);
   my $hash = eval ($string);
   foreach my $key (keys %{ $hash }) {
     $self->$key($hash->{$key});
@@ -272,7 +272,7 @@ sub get_linked_values {
 
 sub get_lazy_value {
   my ($self, $attribute) = @_;
-  warn "GETTING LAZY VALUE: " . $attribute;
+  #warn "GETTING LAZY VALUE: " . $attribute;
   my $class = $self->relational_class($attribute);
   my $accessor = $self->object_name_from_package($class) . "_id";
   my $object = $self->object_name_from_package($class);
@@ -395,8 +395,8 @@ sub find_many {
   $request->add_where('type', $self->singular($attribute));
   $request->add_where($self->get_primary_key, $self->id);
   $request->set_index_by($self->relational_table($attribute) . "_id");
-  warn "INDEX BY: " . $request->get_index_by;
-  warn $request->get_sql;
+  #warn "INDEX BY: " . $request->get_index_by;
+  #warn $request->get_sql;
   return $self->get_adaptor->find_many($request);
 }
 

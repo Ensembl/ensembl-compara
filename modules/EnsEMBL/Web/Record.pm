@@ -121,13 +121,13 @@ sub AUTOLOAD {
       if ($find eq "group_records") {
         $find = "";
         $table = "group";
-        warn "FINDING GROUP RECORDS";
+        #warn "FINDING GROUP RECORDS";
       }
       if ($by =~ /group_record/) {
         $table = "group";  
         $record_type = "Group";
       }
-      warn "RECORD TYPE: " . $record_type;
+      #warn "RECORD TYPE: " . $record_type;
       return find_records(( record_type => $record_type, type => $find, $by => $value, table => $table, options => $options));
     } else {
       if (my ($type) = ($key =~ /(.*)_records/)) {
@@ -232,7 +232,7 @@ sub fields {
   if ($key) {
 #warn "Getting field $key";
     if ($value) {
-warn "Setting field $key = $value";
+#warn "Setting field $key = $value";
       $value =~ s/'/\\'/g;
       $Fields_of{$self}->{$key} = $value;
     }
@@ -413,9 +413,9 @@ sub find_records {
   my $user_adaptor = undef;
   if ($params{options}->{adaptor}) {
     $user_adaptor = $params{options}->{adaptor};  
-    warn "ADAPTOR for FIND: " . $user_adaptor;
+    #warn "ADAPTOR for FIND: " . $user_adaptor;
   }
-  warn "PERFORMING FIND RECORDS";
+  #warn "PERFORMING FIND RECORDS";
   my $results = $user_adaptor->find_records(%params);
   my @records = ();
   foreach my $result (@{ $results }) {

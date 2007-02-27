@@ -406,7 +406,7 @@ sub _render_groups {
   my @group_rows = ();
   my %included = ();
   my @all_groups = @{ EnsEMBL::Web::Object::Group->all_groups_by_type('restricted') };
-  $html .= &info_box($user, qq(Groups enable you to organise your saved bookmarks, notes and view configurations, and also let you share them with other users. The groups you're subscribed to are listed below.<br /><a href="/info/help/groups.html">Learn more about creating and managing groups &rarr;</a>) , 'user_group_info');
+  $html .= &info_box($user, qq(Groups enable you to organise your saved bookmarks, notes and view configurations, and also let you share them with other users. The groups you're subscribed to are listed below. <a href="/info/help/groups.html">Learn more about creating and managing groups &rarr;</a>) , 'user_group_info');
   if ($#groups > -1) {
     $html .= "<h5>Your subscribed groups</h5>\n";
     $html .= "<table width='100%' cellspacing='0' cellpadding='4'>\n";
@@ -494,11 +494,9 @@ sub _render_all_groups {
 
 sub _render_bookmarks {
   my $user = shift;
-  warn "RENDERING BOOKMARKS for " . $user->name;
   my @bookmarks = @{ $user->bookmarks };
   my @records;
   foreach my $bookmark (@bookmarks) {
-    warn "BOOKMARK: " . $bookmark->name;
     my $description = $bookmark->description || '&nbsp;';
     push @records, {  'id' => $bookmark->id, 
                       'ident' => 'user',
@@ -510,9 +508,7 @@ sub _render_bookmarks {
       '<a href="' . $bookmark->url . '" title="' . $bookmark->description . '">' . $bookmark->name . '</a><br /><span style="font-size: 10px;">' . $bookmark->description . '</span>', '&nbsp;' 
     ]};
   }
-  warn "GROUP BOOKMARKS";
   foreach my $group (@{ $user->groups }) {
-    warn "GROUP:" . $group->name;
     foreach my $bookmark (@{ $group->bookmarks }) {
       my $description = $bookmark->description || '&nbsp;';
       push @records, {'id' => $bookmark->id, 
@@ -525,7 +521,7 @@ sub _render_bookmarks {
   }
   warn "Rendering to HTML";
   my $html;
-  $html .= &info_box($user, qq(Bookmarks allow you to save frequently used pages from Ensembl and elsewhere. When browsing Ensembl, you can add new bookmarks by clicking the 'Add bookmark' link in the sidebar.<br /><a href="/info/help/custom.html#bookmarks">Learn more about saving frequently used pages &rarr;</a>) , 'user_bookmark_info');
+  $html .= &info_box($user, qq(Bookmarks allow you to save frequently used pages from Ensembl and elsewhere. When browsing Ensembl, you can add new bookmarks by clicking the 'Add bookmark' link in the sidebar. <a href="/info/help/custom.html#bookmarks">Learn more about saving frequently used pages &rarr;</a>) , 'user_bookmark_info');
   if ($#records > -1) {
     $html .= _render_settings_table(\@records, $user);
   }
@@ -568,7 +564,7 @@ sub _render_configs {
   }
 
   my $html;
-  $html .= &info_box($user, qq(You can save custom view configurations (DAS sources, decorations, additional drawing tracks, etc), and return to them later or share them with fellow group members. Look for the 'Save configuration link' in the sidebar when browsing Ensembl.<br /><a href="/info/help/custom.html#configurations">Learn more about view configurations &rarr;</a>), 'user_configuration_info');
+  $html .= &info_box($user, qq(You can save custom view configurations (DAS sources, decorations, additional drawing tracks, etc), and return to them later or share them with fellow group members. Look for the 'Save configuration link' in the sidebar when browsing Ensembl. <a href="/info/help/custom.html#configurations">Learn more about view configurations &rarr;</a>), 'user_configuration_info');
   if ($#records > -1) {
     $html .= _render_settings_table(\@records, $user);
   }

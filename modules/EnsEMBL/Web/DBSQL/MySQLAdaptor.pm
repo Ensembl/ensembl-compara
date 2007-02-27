@@ -155,10 +155,10 @@ sub find_many {
   my $result = EnsEMBL::Web::DBSQL::SQL::Result->new();
   $result->set_action('find');
   my $sql = $self->template($request->get_sql);
-  warn "MANY: " . $sql;
+  #warn "MANY: " . $sql;
   my $hashref = $self->get_handle->selectall_hashref($sql, $request->get_index_by);
-  warn "OK";
-  warn "\n";
+  #warn "OK";
+  #warn "\n";
   $result->set_result_hash($hashref);
   return $result;
 }

@@ -237,8 +237,8 @@ sub update_user {
   my $password = $params{password};
   my $organisation = $params{organisation};
   my $status = $params{status};
-  warn "UPDATING: " . $name;
-  warn "STATUS: " . $status;
+  #warn "UPDATING: " . $name;
+  #warn "STATUS: " . $status;
   my $sql = qq(
     UPDATE user 
     SET name         = "$name",
@@ -249,7 +249,7 @@ sub update_user {
         modified_at  = CURRENT_TIMESTAMP
     WHERE user_id = ') . $id . qq(';
   );
-  warn "SQL\n$sql";
+  #warn "SQL\n$sql";
   my $sth = $self->{'_handle'}->prepare($sql);
   my $result = $sth->execute();
   return $self->last_inserted_id;
@@ -268,7 +268,7 @@ sub find_records {
     $table = $params{table};
     delete $params{table};
   }
-  warn "TABLE: " . $table;
+  #warn "TABLE: " . $table;
   my %options;
   if ($params{options}) {
     %options = %{ $params{options} }; 
@@ -278,7 +278,7 @@ sub find_records {
     if ($key ne "type" && $key ne "options") {
       $find_key = $key;
       $find_value = $params{$key};
-      warn "FIND KEY: " . $find_key . ": " . $find_value;
+      #warn "FIND KEY: " . $find_key . ": " . $find_value;
     }
   }
   my $results = [];
