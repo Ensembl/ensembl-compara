@@ -121,7 +121,7 @@ sub render_wiggle_plot {
   my $N_MIN = $min_score < 0 ? $min_score : 0;
   my $pix_per_score   = ($P_MAX-$N_MIN) ? $row_height / ( $P_MAX-$N_MIN ) : 0;
   my $red_line_offset = $P_MAX * $pix_per_score;
-
+  my $axis_colour = $self->my_config('axis_colour')|| 'red';
 
   # Draw the axis ------------------------------------------------
   $self->push( new Sanger::Graphics::Glyph::Line({ # horzi line
@@ -130,7 +130,7 @@ sub render_wiggle_plot {
     'width'     => $slice->length,
     'height'    => 0,
     'absolutey' => 1,
-    'colour'    => 'red',
+    'colour'    => $axis_colour,
     'dotted'    => 1,
 						   }));
 
@@ -141,7 +141,7 @@ sub render_wiggle_plot {
     'height'    => $row_height,
     'absolutey' => 1,
     'absolutex' => 1,
-    'colour'    => 'red',
+    'colour'    => $axis_colour,
     'dotted'    => 1,
 						   }));
 
@@ -163,7 +163,7 @@ sub render_wiggle_plot {
     'ptsize'        => $fontsize_i,
     'halign'        => 'right',
     'valign'        => 'top',
-    'colour'        => 'red',
+    'colour'        => $axis_colour,
     'height'        => $textheight_i,
     'y'             => $offset,
     'x'             => -4 - $res_i[2],
@@ -187,7 +187,7 @@ sub render_wiggle_plot {
       'ptsize'        => $fontsize_i,
       'halign'        => 'right',
       'valign'        => 'bottom',
-      'colour'        => 'red',
+      'colour'        => $axis_colour,
       'y'             => $offset + $row_height - $textheight_i,
       'x'             => -4 - $res_min[2],
       'absolutey'     => 1,
