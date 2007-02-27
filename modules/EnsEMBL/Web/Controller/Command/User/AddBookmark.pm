@@ -12,6 +12,7 @@ use base 'EnsEMBL::Web::Controller::Command::User';
 sub BUILD {
   my ($self, $ident, $args) = @_; 
   $self->add_filter(EnsEMBL::Web::Controller::Command::Filter::LoggedIn->new);
+  $self->add_filter(EnsEMBL::Web::Controller::Command::Filter::DataUser->new);
 }
 
 sub render {

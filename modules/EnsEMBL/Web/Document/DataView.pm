@@ -44,7 +44,7 @@ sub simple {
         my $fields = $definition->data_definition->discover;
         my $create_parameters = $self->parameters_for_fields($fields, $incoming);
         my $user = $self->verify_user_id($incoming); 
-
+           
         $result = $adaptor->create(( set =>        $create_parameters, 
                                      definition => $fields, 
                                      user =>       $user
@@ -145,7 +145,7 @@ sub simple {
       foreach my $key (keys %{ $definition->send_params }) {
         if ($definition->send_params->{$key} eq "yes") {
           if ($key eq "id" and $action eq "create") {
-            $send .= "&id=" . $result->last_inserted_id; 
+            $send .= "&id=" . $result->get_last_inserted_id; 
           } elsif ($key eq 'password' && $result->set_parameters->{'password'}) {
             $send .= "&key=" . $result->set_parameters->{'password'};
           } else { 
@@ -183,7 +183,7 @@ sub map_relationships {
     my $fields = $definition->data_definition->discover($relationship->link_table);
     my $relationship_parameters = $self->parameters_for_fields($fields, $incoming);
     my $from_id = $relationship->from . "_id";
-    $relationship_parameters->{$from_id} = $result->last_inserted_id;
+    $relationship_parameters->{$from_id} = $result->get_last_inserted_id;
     $result = $adaptor->create(( 
                               set   => $relationship_parameters, 
                               table => $relationship->link_table,

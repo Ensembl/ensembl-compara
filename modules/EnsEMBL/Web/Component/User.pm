@@ -416,7 +416,7 @@ sub _render_groups {
       $included{$group->id} = 'yes';
       $html .= "<tr class='$class'>\n";
       $html .= "<td width='25%'>" . $group->name . "</td>";
-      $html .= "<td>" . $group->description . "</td>";
+      $html .= "<td>" . $group->blurb. "</td>";
       if ($user->is_administrator_of($group)) {
         $html .= "<td style='text-align: right;'><a href='/common/groupview?id=" . $group->id . "'>Manage group</a></td>";
       } else {
@@ -432,7 +432,6 @@ sub _render_groups {
     $html .= "</table><br />\n";
   }
   else {
-    $html .= qq(<p class="center"><img src="/img/help/group_example.gif" alt="Sample screenshot" title="SAMPLE" /></p>);
     $html .= qq(<p class="center">You are not subscribed to any Ensembl groups. &middot; <a href='/info/help/groups.html'>Learn more &rarr;</a> </p>);
   }  
   $html .= "<br />";
@@ -450,15 +449,15 @@ sub _render_invites_for_group {
     $group->load;
     my @invites = $group->invites;
     foreach my $invite (@invites) {
-      if ($invite->email eq $user->email && $invite->status eq 'pending') {
-        $class = "invite";
-        $html .= "<tr>\n";
-        $html .= "<td class='$class'>" . $group->name . "</td>";
-        $html .= "<td class='$class'>" . $group->description. "</td>";
-        $html .= "<td class='$class' style='text-align:right'><a href='/common/join_by_invite?record_id=" . $invite->id . "&invite=" . $invite->code . "'>Accept invite</a></td>";
-        $html .= "</tr>\n";
-        $class = "very_dark";
-      }
+    #  if ($invite->email eq $user->email && $invite->status eq 'pending') {
+    #    $class = "invite";
+    #    $html .= "<tr>\n";
+    #    $html .= "<td class='$class'>" . $group->name . "</td>";
+    #    $html .= "<td class='$class'>" . $group->description. "</td>";
+    #    $html .= "<td class='$class' style='text-align:right'><a href='/common/join_by_invite?record_id=" . $invite->id . "&invite=" . $invite->code . "'>Accept invite</a></td>";
+    #    $html .= "</tr>\n";
+    #    $class = "very_dark";
+    #  }
     }
   }
   return $html;
@@ -511,8 +510,9 @@ sub _render_bookmarks {
       '<a href="' . $bookmark->url . '" title="' . $bookmark->description . '">' . $bookmark->name . '</a><br /><span style="font-size: 10px;">' . $bookmark->description . '</span>', '&nbsp;' 
     ]};
   }
-
+  warn "GROUP BOOKMARKS";
   foreach my $group (@{ $user->groups }) {
+    warn "GROUP:" . $group->name;
     foreach my $bookmark (@{ $group->bookmarks }) {
       my $description = $bookmark->description || '&nbsp;';
       push @records, {'id' => $bookmark->id, 
@@ -523,7 +523,7 @@ sub _render_bookmarks {
       ]};
     }
   }
-
+  warn "Rendering to HTML";
   my $html;
   $html .= &info_box($user, qq(Bookmarks allow you to save frequently used pages from Ensembl and elsewhere. When browsing Ensembl, you can add new bookmarks by clicking the 'Add bookmark' link in the sidebar.<br /><a href="/info/help/custom.html#bookmarks">Learn more about saving frequently used pages &rarr;</a>) , 'user_bookmark_info');
   if ($#records > -1) {

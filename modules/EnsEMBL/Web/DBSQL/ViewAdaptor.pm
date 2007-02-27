@@ -218,7 +218,7 @@ sub create {
   $sql .= ";";
 
   if ($self->execute($sql)) {
-    $result->get_last_inserted_id($self->last_inserted_id);
+    $result->set_last_inserted_id($self->last_inserted_id);
     $result->get_success('yes');
   }
   return $result; 

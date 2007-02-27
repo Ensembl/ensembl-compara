@@ -20,6 +20,7 @@ my %Adaptor :ATTR(:set<adaptor> :get<adaptor>);
 my %Belongs_to :ATTR(:set<belongs_to> :get<belongs_to>);
 my %Relational_attributes :ATTR(:set<relational_attributes> :get<relational_attributes>);
 my %Relational_table :ATTR(:set<relational_table> :get<relational_table>);
+my %Relational_link_table :ATTR(:set<relational_link_table> :get<relational_link_table>);
 my %Has_many:ATTR(:set<has_many> :get<has_many>);
 
 }
@@ -134,6 +135,7 @@ sub add_has_many {
   $self->relational_table($self->plural($self->object_name_from_package($args->{class})), $args->{table});
   if ($args->{link_table}) {
     $self->add_linked_has_many_symbol_lookup($self->plural($self->object_name_from_package($args->{class})));
+    $self->relational_link_table($self->plural($self->object_name_from_package($args->{class})), $args->{link_table});
   } else {
     $self->add_has_many_symbol_lookup($self->plural($self->object_name_from_package($args->{class})));
   }
@@ -190,7 +192,7 @@ sub add_lazy_accessor_symbol_lookup {
 sub initialize_relational_accessor {
   no strict;
   my ($self, $attribute) = @_;
-  warn "Adding relational accessor: " . $attribute;
+  #warn "Adding relational accessor: " . $attribute;
   return sub {
     my $self = shift;
     my $new_value = shift;
@@ -215,7 +217,7 @@ sub add_has_many_symbol_lookup {
 sub initialize_has_many_accessor {
   no strict;
   my ($self, $attribute) = @_;
-  warn "Adding HAS MANY accessor: " . $attribute;
+  #warn "Adding HAS MANY accessor: " . $attribute;
   return sub {
     my $self = shift;
     my $new_value = shift;
@@ -240,7 +242,7 @@ sub add_linked_has_many_symbol_lookup {
 sub initialize_linked_has_many_accessor {
   no strict;
   my ($self, $attribute) = @_;
-  warn "Adding HAS MANY accessor: " . $attribute;
+  #warn "Adding MANY TO MANY accessor: " . $attribute;
   return sub {
     my $self = shift;
     my $new_value = shift;
@@ -255,19 +257,28 @@ sub get_linked_values {
   my ($self, $attribute) = @_;
   my $class = $self->relational_class($attribute);
   my $accessor = $self->object_name_from_package($class) . "_id";
-  warn "Finding MANY $class via link table";
-  return [];
+  #warn "Finding MANY $attribute via link table: " . $class;
+  my $result = $self->find_linked_many($attribute);
+  my @objects = ();
+  if (EnsEMBL::Web::Root::dynamic_use(undef, $class)) {
+    foreach my $id (keys %{ $result->get_result_hash }) {
+      my $new = $class->new({ id => $id });
+      push @objects, $new;
+    }
+  }
+  return \@objects;
 }
 
 sub get_lazy_value {
   my ($self, $attribute) = @_;
+  warn "GETTING LAZY VALUE: " . $attribute;
   my $class = $self->relational_class($attribute);
   my $accessor = $self->object_name_from_package($class) . "_id";
   my $object = $self->object_name_from_package($class);
   if (defined $self->get_value($object)) {
     return $self->get_value($object);
   }
-  warn "Creating new $attribute with class " . $class . " and " . $accessor;
+  #warn "Creating new $attribute with class " . $class . " and " . $accessor;
   if (EnsEMBL::Web::Root::dynamic_use(undef, $class)) {
     my $new = $class->new({ id => $self->$accessor });
     $self->set_value($object, $new);
@@ -278,14 +289,17 @@ sub get_lazy_value {
 
 sub get_lazy_values {
   my ($self, $attribute) = @_;
+  warn "GETTING VALUES FOR " . $attribute;
+  warn "FOR: " . ref($self);
   my $class = $self->relational_class($attribute);
   my $accessor = $self->object_name_from_package($class) . "_id";
   my $object = $self->object_name_from_package($class);
   if (defined $self->get_value($object)) {
     return $self->get_value($object);
   }
-  warn "Creating MANY new $attribute with class " . $class;
+  #warn "Creating MANY new $attribute with class " . $class;
   my $result = $self->find_many($attribute);
+  warn "ONWARDS";
   my @objects = ();
   if (EnsEMBL::Web::Root::dynamic_use(undef, $class)) {
     foreach my $id (keys %{ $result->get_result_hash }) {  
@@ -317,6 +331,17 @@ sub relational_table {
     $self->get_relational_table->{$attribute} = $table; 
   }
   return $self->get_relational_table->{$attribute};
+}
+
+sub relational_link_table {
+  my ($self, $attribute, $table) = @_;
+  unless (defined $self->get_relational_link_table) {
+    $self->set_relational_link_table({});
+  }
+  if (defined $table) {
+    $self->get_relational_link_table->{$attribute} = $table; 
+  }
+  return $self->get_relational_link_table->{$attribute};
 }
 
 sub add_relational_symbol_lookup {
@@ -351,7 +376,6 @@ sub save {
   if ($result->get_action eq 'create') {
     $self->id($result->get_last_inserted_id);
   }
-  warn "SAVING DATA OBJECT: " . $self->id;
   return $result->get_success;
 }
 
@@ -372,7 +396,23 @@ sub find_many {
   $request->set_table($self->relational_table($attribute));
   $request->add_where('type', $self->singular($attribute));
   $request->add_where($self->get_primary_key, $self->id);
-  $request->set_index_by('user_record_id');
+  $request->set_index_by($self->get_primary_key);
+  warn "FINDING MANY " . $attribute;
+  warn $request->get_sql;
+  return $self->get_adaptor->find_many($request);
+}
+
+sub find_linked_many {
+  my ($self, $attribute) = @_;
+  my $request = EnsEMBL::Web::DBSQL::SQL::Request->new();
+  $request->set_action('select');
+  #warn "FINDING MANY FROM " . $self->relational_table($attribute);
+  $request->set_table($self->relational_link_table($attribute));
+  $request->add_select($self->relational_table($attribute) . '.*');
+  $request->add_join($self->relational_table($attribute), $self->relational_link_table($attribute) . "." . $self->relational_table($attribute) . "_id", $self->relational_table($attribute) . "." . $self->relational_table($attribute) . "_id");
+  $request->add_where($self->relational_link_table($attribute) . "." . $self->get_primary_key, $self->id);
+  $request->set_index_by($self->relational_table($attribute) . "_id");
+  #warn $request->get_sql;
   return $self->get_adaptor->find_many($request);
 }
 

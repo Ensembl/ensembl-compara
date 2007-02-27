@@ -942,6 +942,7 @@ sub find_records {
   my $find_value;
   my $type = undef;
   my $table = "user";
+  warn "FINDING RECORDS IN USERDB: " . $table; 
   if ($params{type}) {
     $type = $params{type};
   }
@@ -961,7 +962,6 @@ sub find_records {
     }
   }
   my $results = [];
-  
   ## maintain compatibility between schema versions
   if ($find_key eq 'id') {
     $find_key = "user_record_id";

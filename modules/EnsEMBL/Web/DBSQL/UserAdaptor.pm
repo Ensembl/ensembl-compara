@@ -268,6 +268,7 @@ sub find_records {
     $table = $params{table};
     delete $params{table};
   }
+  warn "TABLE: " . $table;
   my %options;
   if ($params{options}) {
     %options = %{ $params{options} }; 
@@ -277,6 +278,7 @@ sub find_records {
     if ($key ne "type" && $key ne "options") {
       $find_key = $key;
       $find_value = $params{$key};
+      warn "FIND KEY: " . $find_key . ": " . $find_value;
     }
   }
   my $results = [];
@@ -284,6 +286,9 @@ sub find_records {
   ## maintain compatibility between schema versions
   if ($find_key eq 'id') {
     $find_key = "user_record_id";
+  }
+  if ($find_key eq 'group_id') {
+    $find_key = 'webgroup_id';
   }
 
   my $sql = qq(
