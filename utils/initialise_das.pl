@@ -28,26 +28,57 @@ my ($sources_page);
   's'  => \$sources_page
 );
 
-my %featuresMasterTable = (
-  'karyotype' => 'karyotype',
-  'transcripts' => 'gene',
-  'ditags' => 'ditag_feature',
-  'cagetags' => 'ditag_feature',
-);
-my %featuresQuery = (
-  'karyotype' => qq{ select s.name, t.seq_region_start, t.seq_region_end from karyotype t, seq_region s where t.seq_region_id = s.seq_region_id limit 1},
-  'transcripts' => qq{ select s.name, t.seq_region_start, t.seq_region_end from gene t, seq_region s where t.seq_region_id = s.seq_region_id limit 1},
-  'ditags' => qq{ select s.name, t.seq_region_start, t.seq_region_end from seq_region s, ditag_feature t, analysis a where a.logic_name = 'GIS_PET_Encode' and t.analysis_id = a.analysis_id and t.seq_region_id = s.seq_region_id limit 1},
-  'cagetags' => qq{ select s.name, t.seq_region_start, t.seq_region_end from seq_region s, ditag_feature t, analysis a where a.logic_name = 'FANTOM_CAGE' and t.analysis_id = a.analysis_id and t.seq_region_id = s.seq_region_id limit 1},
-);
-
-my %sourcesIds = (
-  'reference'   => 1,
-  'karyotype'   => 2,
-  'transcripts' => 3,
-  'ditags'      => 4,
-  'cagetags'    => 5, 
-);
+my $sources = {
+  'karyotype' => {
+    'master_table' => 'karyotype',
+    'name'         => 'Karyotype Bands',
+    'query'        => '
+  select s.name, t.seq_region_start, t.seq_region_end
+    from karyotype t, seq_region s
+   where t.seq_region_id = s.seq_region_id',
+    'source_id'    => 2,
+  },
+  'transcripts' => {
+    'master_table' => 'gene',
+    'name'         => 'Transcripts',
+    'query'        => '
+  select s.name, t.seq_region_start, t.seq_region_end
+    from gene t, seq_region s
+   where t.seq_region_id = s.seq_region_id',
+    'source_id'    => 3,
+  },
+  'cagetags' => {
+    'master_table' => 'ditag_feature',
+    'name'         => 'CAGETags',
+    'query'        => '
+  select s.name, t.seq_region_start, t.seq_region_end
+    from seq_region s, ditag_feature t, analysis a
+   where a.logic_name like "%CAGE%" and t.analysis_id = a.analysis_id and t.seq_region_id = s.seq_region_id',
+    'source_id'    => 5,
+  },
+  'ditags' => {
+    'master_table' => 'ditag_feature',
+    'name'         => 'DITags',
+    'query'        => '
+  select s.name, t.seq_region_start, t.seq_region_end
+    from seq_region s, ditag_feature t, analysis a
+   where a.logic_name not like "%CAGE%" and t.analysis_id = a.analysis_id and t.seq_region_id = s.seq_region_id',
+    'source_id'    => 4,
+  },
+  'prediction_transcripts' => {
+    'master_table' => 'prediction_transcript',
+    'name'         => 'Ab initio predictions',
+    'query'        => '
+  select s.name, t.seq_region_start, t.seq_region_end
+    from prediction_transcript t, seq_region s
+   where t.seq_region_id = s.seq_region_id',
+    'source_id'    => 6,
+  },
+};
+my @feature_types       = keys %$sources;
+my %featuresMasterTable = map { ( $_ => $sources->{$_}{'master_table'} ) } keys %$sources;
+my %featuresQuery       = map { ( $_ => $sources->{$_}{'query'}        ) } keys %$sources;
+my %sourcesIds          = ('reference'=>1, map { ( $_ => $sources->{$_}{'source_id'} ) } keys %$sources );
 
 # Load modules needed for reading config -------------------------------------
 require EnsEMBL::Web::SpeciesDefs; 
@@ -65,15 +96,14 @@ my $cdb = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
 my $ta = $cdb->get_NCBITaxonAdaptor();
 my $hash = $species_defs;
 
-my $species =  $SiteDefs::ENSEMBL_SPECIES || [];
-
+my $species = $SiteDefs::ENSEMBL_SPECIES || [];
 my $shash;
 $| = 1;
 foreach my $sp (@$species) {
 warn "Parsing species $sp ".gmtime();
   my $search_info = $species_defs->get_config($sp, 'SEARCH_LINKS');
   (my $vsp = $sp) =~ s/\_/ /g;
-  $species_info->{$sp}->{'species'} = $vsp;
+  $species_info->{$sp}->{'species'}  = $vsp;
   $species_info->{$sp}->{'taxon_id'} = $ta->fetch_node_by_name($vsp)->taxon_id;
 
   my $db_info = $species_defs->get_config($sp, 'databases')->{'ENSEMBL_DB'};
@@ -87,25 +117,31 @@ warn "Parsing species $sp ".gmtime();
   );
   my $dbh = $db->dbc->db_handle;
   my $toplevel_slices   = $dbh->selectall_arrayref( q(
-  select sr.name, sr.length,min(a.asm_start) as a, max(a.asm_end) as b
+  select sr.name   , 
+         sr.length ,
+         min(a.asm_start) as start,
+         max(a.asm_end)   as stop,
+         if(isnull(a.asm_seq_region_id),'no','yes') as subparts
     from (seq_region as sr, seq_region_attrib as sra, attrib_type as at) left join
          assembly as a on a.asm_seq_region_id = sr.seq_region_id 
-   where sr.seq_region_id = sra.seq_region_id and sra.attrib_type_id = at.attrib_type_id and at.code = "toplevel"
+   where sr.seq_region_id = sra.seq_region_id and
+         sra.attrib_type_id = at.attrib_type_id and at.code = "toplevel"
    group by sr.seq_region_id
   ));
   my $toplevel_example  = $toplevel_slices->[0];
 
   my $mapmaster = sprintf("%s.%s.reference", $sp, $species_defs->get_config($sp,'ENSEMBL_GOLDEN_PATH'));
-  $shash->{$mapmaster}->{mapmaster} = "http://$SiteDefs::ENSEMBL_SERVERNAME/das/$mapmaster";
+  $shash->{$mapmaster}->{mapmaster} = "$SiteDefs::ENSEMBL_BASE_URL/das/$mapmaster";
   $shash->{$mapmaster}->{description} = sprintf("%s Reference server based on %s assembly. Contains %d top level entries.", $sp, $species_defs->get_config($sp,'ENSEMBL_GOLDEN_PATH'), @$toplevel_slices );
 # my $sl = $thash{$search_info->{'MAPVIEW1_TEXT'} || $search_info->{'DEFAULT1_TEXT'}} || $toplevel_slices[0];
     #warn Data::Dumper::Dumper(\%thash);
 
-  my $start = $toplevel_example->['2'] || 1;
-  $shash->{$mapmaster}->{'test_range'} = sprintf("%s:%d,%d", $toplevel_example->[0], $start, $start);
+  my $start = $toplevel_example->[2] || 1;
+  my $end   = $toplevel_example->[3] || $toplevel_example->[1];
+  $shash->{$mapmaster}->{'test_range'} = sprintf("%s:%d,%d", $toplevel_example->[0], $start, $start+99999>$end?$end:$start+99999);
 
-  entry_points( $toplevel_slices, $mapmaster, "$SERVERROOT/htdocs/das/$mapmaster" );
-  foreach my $feature ( qw(karyotype transcripts ditags cagetags)) {
+  entry_points( $toplevel_slices, "$SiteDefs::ENSEMBL_BASE_URL/das/$mapmaster/entry_points", "$SERVERROOT/htdocs/das/$mapmaster" );
+  foreach my $feature (@feature_types) {
     my $dbn = 'ENSEMBL_DB';
     my $table = $featuresMasterTable{$feature};
     my $rv = $species_defs->get_table_size( { -db => $dbn, -table=> $table }, $sp);
@@ -120,7 +156,7 @@ warn "Parsing species $sp ".gmtime();
     next unless @r;
     my $dsn = sprintf("%s.%s.%s", $sp, $species_defs->get_config($sp,'ENSEMBL_GOLDEN_PATH'), $feature);
     $shash->{$dsn}->{'test_range'} = sprintf("%s:%s,%s",@r); 
-    $shash->{$dsn}->{mapmaster} = "http://$SiteDefs::ENSEMBL_SERVERNAME/das/$mapmaster";
+    $shash->{$dsn}->{mapmaster} = "$SiteDefs::ENSEMBL_BASE_URL/das/$mapmaster";
     $shash->{$dsn}->{description} = sprintf("Annotation source for %s %s", $sp, $feature);
   }
 }
@@ -136,28 +172,41 @@ sub entry_points {
 
   mkdir $file, 0775 unless -e $file;
   open FH, ">$file/entry_points";
-  print FH qq(<?xml version="1.0" standalone="no"?>\n<!DOCTYPE DASEP SYSTEM "http://www.biodas.org/dtd/dascep.dtd">\n<DASEP>\n  <ENTRY_POINTS href="$href" version="1.0">);
+  print FH qq(<?xml version="1.0" standalone="no"?>
+<?xml-stylesheet type="text/xsl" href="/das/das.xsl"?>
+<!DOCTYPE DASEP SYSTEM "http://www.biodas.org/dtd/dasep.dtd">
+<DASEP>
+  <ENTRY_POINTS href="$href" version="1.0">);
   foreach my $seg (@$entry_points) {
     printf FH qq(
-    <SEGMENT id="%s" start="%d" stop="%d" orientation="+">%s</SEGMENT>), $seg->[0], 1, $seg->[1], $seg->[0];
+    <SEGMENT id="%s" start="%d" stop="%d" orientation="+" subparts="%s">%s</SEGMENT>), $seg->[0], 1, $seg->[1], $seg->[0],$seg->[4];
   }
-  print FH qq(\n  </ENTRY_POINTS>\n</DASEP>\n);
+  print FH qq(
+  </ENTRY_POINTS>
+</DASEP>);
   close FH;
 }
 
 sub dsn {
   my( $sources, $file ) = @_;
   open FH, ">$file";
-  print FH qq(<?xml version="1.0" standalone="no"?>\n<!DOCTYPE DASDSN SYSTEM "http://www.biodas.org/dtd/dasdsn.dtd">\n<DASDSN>);
+  print FH qq(
+<?xml version="1.0" standalone="no"?>
+<?xml-stylesheet type="text/xsl" href="/das/das.xsl"?>
+<!DOCTYPE DASDSN SYSTEM "http://www.biodas.org/dtd/dasdsn.dtd">
+<DASDSN>);
   for my $dsn (sort keys %$sources) {
+    my $source = $sources->{$dsn};
     print FH qq(
-  <DSN>
-    <SOURCE id="$dsn">$dsn</SOURCE>
-    <MAPMASTER>$sources->{$dsn}{mapmaster}</MAPMASTER>
-    <DESCRIPTION>$sources->{$dsn}{description}</DESCRIPTION>
+  <DSN href="$SiteDefs::ENSEMBL_BASE_URL/das/dsn">
+    <SOURCE id="$dsn"
+                >$source->{'name'}</SOURCE>
+    <MAPMASTER  >$source->{'mapmaster'}</MAPMASTER>
+    <DESCRIPTION>$source->{'description'}</DESCRIPTION>
   </DSN>);
   }
-  print FH qq(\n</DASDSN>\n);
+  print FH qq(
+</DASDSN>);
   close FH;
 }
 
@@ -166,7 +215,10 @@ sub sources {
   open FH, ">$file";
   my ($day, $month, $year) = (localtime)[3,4,5];
   my $today = sprintf("%04d-%02d-%02d", $year + 1900, $month + 1, $day);
-  print FH qq(<?xml version="1.0" encoding="UTF-8" ?>\n<SOURCES xmlns="http://biodas.org/documents/das2">);
+  my %taxon_ids = ();
+  print FH qq(<?xml version="1.0" encoding="UTF-8" ?>
+<?xml-stylesheet type="text/xsl" href="/das/das.xsl"?>
+<SOURCES>);
   for my $dsn (sort keys %$sources) {
     my @n = split /\./, $dsn;
     my $species = shift @n;
@@ -175,24 +227,36 @@ sub sources {
     my $assembly = join('.', @n);
     my $id = sprintf("ENSEMBL_%s_%s", $sourcesIds{$source} || $source, $assembly);
     my $capability = $source eq 'reference' ?  qq(
-    <CAPABILITY type="das1:entry_points" query_uri="http://$SiteDefs::ENSEMBL_SERVERNAME/das/%s/entry_points"/>
-    <CAPABILITY type="das1:sequence" query_uri="http://$SiteDefs::ENSEMBL_SERVERNAME/das/%s/sequence"/>) : qq(
-    <CAPABILITY type="das1:stylesheet" query_uri="http://$SiteDefs::ENSEMBL_SERVERNAME/das/%s/stylesheet"/> );
-    printf FH qq( 
-  <SOURCE uri="%s" title="%s" description="%s">
-    <MAINTAINER email="helpdesk\@ensembl.org" />
-    <VERSION uri="latest" created="%s">
-      <COORDINATES uri="ensembl_location_chromosome" taxid="%d" source="Chromosome" authority="%s" version="%s" test_range="%s"/>
-      <CAPABILITY type="das1:features" query_uri="http://$SiteDefs::ENSEMBL_SERVERNAME/das/%s/features" />$capability
-      <PROPERTY name="label" value="ENSEMBL" />
+      <CAPABILITY  type="das1:entry_points"
+                   query_uri="$SiteDefs::ENSEMBL_BASE_URL/das/$dsn/entry_points" />
+      <CAPABILITY  type="das1:sequence"
+                   query_uri="$SiteDefs::ENSEMBL_BASE_URL/das/$dsn/sequence"     />) : qq(
+      <CAPABILITY  type="das1:stylesheet"  
+                   query_uri="$SiteDefs::ENSEMBL_BASE_URL/das/$dsn/stylesheet"   />);
+    $capability .= qq(
+      <CAPABILITY  type="das1:features"
+                   query_uri="$SiteDefs::ENSEMBL_BASE_URL/das/$dsn/features"     />);
+    my $description = $sources->{$dsn}{'description'};
+    my $test_range  = $sources->{$dsn}{'test_range' };
+    $taxon_ids{$vsp} ||= $ta->fetch_node_by_name($vsp)->taxon_id;
+    print FH qq( 
+  <SOURCE uri="$id" title="$dsn" description="$description">
+    <MAINTAINER    email="helpdesk\@ensembl.org" />
+    <VERSION       uri="latest"
+                   created="$today">
+      <PROPERTY    name="label"
+                   value="ENSEMBL" />
+      <COORDINATES uri="ensembl_location" 
+                   taxid="$taxon_ids{$vsp}"
+                   source="Chromosome"
+                   authority="$assembly"
+                   version="$assembly"
+                   test_range="$test_range"/>$capability
     </VERSION>
-  </SOURCE>),
-      $id, $dsn, $sources->{$dsn}{description},
-      $today,
-      $ta->fetch_node_by_name($vsp)->taxon_id, $assembly, $assembly, $sources->{$dsn}->{'test_range'},
-      $dsn, $dsn, $dsn;
+  </SOURCE>);
   }
-  print FH "\n</SOURCES>\n";
+  print FH qq(
+</SOURCES>);
   close FH;
 }
 

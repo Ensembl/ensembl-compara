@@ -94,7 +94,7 @@ my %queries = (
                   )  as name,
             count(*) as n
        from gene
-      group by analysis_id
+      group by analysis_id,name
       order by analysis_id),
   'Prediction transcripts' => qq(
      select analysis_id, '', count(*) as n
@@ -121,6 +121,8 @@ my %queries = (
       group by rf.analysis_id, rc.repeat_type
       order by analysis_id,repeat_type)
 );
+
+%queries = map { ($_=>$queries{$_}) } ('Gene features');
 
 my @species = @ARGV ? @ARGV : @{$SD->ENSEMBL_SPECIES};
 
