@@ -243,62 +243,43 @@ sub _help_link {
 }
 
 sub getCoordinateSystem{
-    my ($self, $cs) = @_;
+  my ($self, $cs) = @_;
 
-    my $species = $self->species || $ENV{'ENSEMBL_SPECIES'};
+  my $species = $self->species || $ENV{'ENSEMBL_SPECIES'};
 
-    my %SpeciesID = 
-        (
-         'Homo_sapiens' => ['hugo'],
-         'Mus_musculus' => ['markersymbol', 'mgi']
-         );
+  my %SpeciesMappings = (
+    'Homo_sapiens' => { 'hugo'         => 'HGNC ID' },
+    'Mus_musculus' => { 'markersymbol' => 'MGI Symbol',
+                        'mgi'          => 'MGI Accession ID' }
+  );
 
-    my %ExternalIDs = (
-                       'hugo'                  => "HUGO ID",
-                       'markersymbol'          => "MGI Symbol",
-                       'mgi'                => 'MGI Accession ID'
-                       );
+  my %DASMapping = (
+## Gene based entries...
+    'ensembl_gene'                 => 'Ensembl Gene ID',
+## Peptide based entries
+    'ensembl_peptide'              => 'Ensembl Peptide ID',
+    'ensembl_transcript'           => 'Ensembl Transcript ID',
+    'uniprot/swissprot'            => 'UniProt/Swiss-Prot Name',
+    'uniprot/swissprot_acc'        => 'UniProt/Swiss-Prot Acc',
+    'uniprot/sptrembl'             => 'UniProt/TrEMBL',
+    'entrezgene'                   => 'Entrez Gene ID',
+    'ipi_acc'                      => 'IPI Accession',
+    'ipi_id'                       => 'IPI ID',
+## Additional species specific peptide based entries...
+    %{ $SpeciesMappings{ $species } || {} },
+## Sequence based entries
+    'ensembl_location_chromosome'  => 'Ensembl Chromosome',
+    'ensembl_location_supercontig' => 'Ensembl NT/Super Contig',
+    'ensembl_location_clone'       => 'Ensembl Clone',
+    'ensembl_location_group'       => 'Ensembl Group',
+    'ensembl_location_contig'      => 'Ensembl Contig',
+    'ensembl_location_scaffold'    => 'Ensembl Scaffold',
+    'ensembl_location_toplevel'    => 'Ensembl Top Level',
+#   'ensembl_location'             => 'Ensembl Location', ##Deprecated - use toplevel instead...
+  );
 
-    my %DASMapping = 
-        (
-         'ensembl_gene'          => "Ensembl Gene ID",
-         'ensembl_location'      => "Ensembl Location",
-         'ensembl_peptide'       => "Ensembl Peptide ID",
-         'ensembl_transcript'    => "Ensembl Transcript ID",
-         'uniprot/swissprot'     => "UniProt/Swiss-Prot Name",
-         'uniprot/swissprot_acc' => "UniProt/Swiss-Prot Acc",
-	 'uniprot/sptrembl'      => "UniProt/TrEMBL",
-         'entrezgene'            => 'Entrez Gene ID',
-	 'ipi_acc'               => 'IPI Accession',
-	 'ipi_id'                => 'IPI ID',
-	 'ensembl_location_chromosome'  => 'Ensembl Chromosome',
-	 'ensembl_location_supercontig' => 'Ensembl NT Contig',
-	 'ensembl_location_clone'       => 'Ensembl Clone',
-	 'ensembl_location_contig'      => 'Ensembl Contig',
-	 'ensembl_location_scaffold'    => 'Ensembl Scaffold',
-         );
-
-
-    my %DefaultMapping =  (
-                           'geneview' => 'ensembl_gene',
-                           'protview' => 'ensembl_peptide',
-                           'transview' => 'ensembl_gene', # Coz there is no ensembl_transcript source around at the moment
-                           'contigview' => 'ensembl_location',
-                           'cytoview' => 'ensembl_location'
-                           );
-
-       
-    if (defined($SpeciesID{$species})) {
-        foreach my $tid (@{$SpeciesID{$species}}) {
-            $DASMapping{$tid} = $ExternalIDs{$tid};
-        }
-    }
-    if ($cs) {
-	return ($DASMapping{$cs} || $cs);
-    }
-
-    return \%DASMapping;
-
+  return  $cs ? ($DASMapping{$cs} || $cs) : # Either a single entry from the list if there is a param
+                \%DASMapping;               # Or a hash reference if not....
 }
 
 =head2 get_DASCollection
@@ -320,16 +301,16 @@ sub get_DASCollection{
     my $dasfact = EnsEMBL::Web::Proxy::Factory->new( 'DASCollection', $self->__data );
     $dasfact->createObjects;
     if( $dasfact->has_a_problem ){
-	my $prob = $dasfact->problem->[0];
-	return;
+      my $prob = $dasfact->problem->[0];
+      return;
     }
 
     $data->{_das_collection} = $dasfact->DataObjects->[0];
 
     foreach my $das( @{$data->{_das_collection}->Obj} ){
-	if ($das->adaptor->active) {
-	    $self->DBConnection->add_DASFeatureFactory($das);
-	}
+      if ($das->adaptor->active) {
+        $self->DBConnection->add_DASFeatureFactory($das);
+      }
     } 
   }
   return $data->{_das_collection};

@@ -7,6 +7,7 @@ use Carp;
 {
   sub connection_details {
     my( $self, $arg_ref ) = @_;
+
     return {
       'name' => $arg_ref->{'species_defs'}->ENSEMBL_USERDB_NAME,
       'host' => $arg_ref->{'species_defs'}->ENSEMBL_USERDB_HOST,

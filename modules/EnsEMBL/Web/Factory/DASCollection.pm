@@ -125,7 +125,7 @@ sub createObjects {
     $valid_scripts{$conf_script} || next;
     my $das_species = $source_config->{'species'};
     next if( $das_species && $das_species ne '' && $das_species ne $ENV{'ENSEMBL_SPECIES'} );
-    if ($source_config->{url} =~ /\/das$/) {
+    if( $source_config->{url} =~ /\/das$/ ) {
       $source_config->{url} .= "/$source_config->{dsn}";
     }
 #  warn("ADD EXTERNAL: $source");
@@ -327,6 +327,7 @@ sub createObjects {
           push @das_sources, {
             'id'  => $id,
             'url' => join ('/', $self->param('DASdomain'), $id),
+            'url' => $self->param('DASdomain'),
             'dsn' => $id
           };
         }

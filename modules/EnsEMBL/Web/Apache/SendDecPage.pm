@@ -201,8 +201,11 @@ sub template_INCLUDE {
 
 sub template_SCRIPT {
   my( $r, $include ) = @_;
-  EnsEMBL::Web::Root->dynamic_use($include);
-  my $content = $include->render();
+  my $content;
+  eval {
+    EnsEMBL::Web::Root->dynamic_use($include);
+    $content = $include->render();
+  };
   return "$content";
 }
 
