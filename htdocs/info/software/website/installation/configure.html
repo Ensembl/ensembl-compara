@@ -269,6 +269,24 @@ PORT=4444
 <p>The Mart configuration automatically creates a simplified BioMart configuration file martRegistry.xml in the conf directory at server start up. Read the BioMart install document how to edit this to create a more functional BioMart registry
 which leverages BioMart's advanced features such as federated searches.</p>
 
+<h3 class="boxed">Fonts</h3>
+<p>
+  For the past few releases Ensembl uses TrueType fonts in some of the images,
+  These need to be configured in the '[ENSEMBL_STYLE]' section of the DEFAULTS.ini
+  file.
+</p>
+<pre>
+[ENSEMBL_STYLE]
+GRAPHIC_FONT         = arial                           ; Arial file is arial.ttf
+GRAPHIC_FONT_FIXED   = cour                            ; Courier file is cour.ttf
+GRAPHIC_TTF_PATH     = /usr/local/share/fonts/ttfonts/ ; remember the trailing slash
+GRAPHIC_FONTSIZE     = 8                               ; Default font-size for graphic text...
+</pre>
+<p>
+  You will likely need to change the path to where your local copy
+  of these files is stored. Please note that Mac TTF files
+  are a slightly different format and do not reliably work.
+</p>
 
 <h3 class="boxed">BLAST</h3>
 <p>BLAST is not installed by default.  You have to configure blast for a local installation. See documentation describing how to <a href="blast.html">configure BLAST</a>.
