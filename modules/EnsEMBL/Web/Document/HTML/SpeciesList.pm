@@ -23,7 +23,7 @@ sub render {
   my $user = EnsEMBL::Web::Object::Data::User->new({ id => $reg_user->id });
 
   my $html = "";
-
+  warn "RENDERING SPECIES LIST WITH USER: " . $user->id;
   if ($request && $request eq 'fragment') {
     $html .= render_species_list($user, $species_defs, \%id_to_species, \%species_description); 
   } else {

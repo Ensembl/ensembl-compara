@@ -58,6 +58,7 @@ sub populate {
 sub populate_data {
   ### Populates data.
   my ($self, $string) = @_;
+  warn "Populating data for: " . ref($self);
   my $hash = eval ($string);
   foreach my $key (keys %{ $hash }) {
     $self->$key($hash->{$key});
@@ -289,8 +290,6 @@ sub get_lazy_value {
 
 sub get_lazy_values {
   my ($self, $attribute) = @_;
-  warn "GETTING VALUES FOR " . $attribute;
-  warn "FOR: " . ref($self);
   my $class = $self->relational_class($attribute);
   my $accessor = $self->object_name_from_package($class) . "_id";
   my $object = $self->object_name_from_package($class);
@@ -299,7 +298,6 @@ sub get_lazy_values {
   }
   #warn "Creating MANY new $attribute with class " . $class;
   my $result = $self->find_many($attribute);
-  warn "ONWARDS";
   my @objects = ();
   if (EnsEMBL::Web::Root::dynamic_use(undef, $class)) {
     foreach my $id (keys %{ $result->get_result_hash }) {  
@@ -396,8 +394,8 @@ sub find_many {
   $request->set_table($self->relational_table($attribute));
   $request->add_where('type', $self->singular($attribute));
   $request->add_where($self->get_primary_key, $self->id);
-  $request->set_index_by($self->get_primary_key);
-  warn "FINDING MANY " . $attribute;
+  $request->set_index_by($self->relational_table($attribute) . "_id");
+  warn "INDEX BY: " . $request->get_index_by;
   warn $request->get_sql;
   return $self->get_adaptor->find_many($request);
 }

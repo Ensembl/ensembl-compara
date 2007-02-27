@@ -34,7 +34,9 @@ sub render {
 sub render_page {
   my $self = shift;
   my $user = $self->filters->user;
+  warn "RENDERING PAGE for RESET";
   foreach my $list (@{ $user->specieslists }) {
+    warn "LIST: " . $list->id;
     $list->destroy;
   }
   $self->filters->redirect('/index.html');
