@@ -205,11 +205,13 @@ function zmenu() {
 }
 
 function hw( species, page, part ) {
+  if(page=='populate_fragment') page = 'contigview';
   X=window.open( '/'+species+'/helpview?se=1&kw='+page+'#'+part,'helpview','height=400,width=500,left=100,screenX=100,top=100,screenY=100,resizable,scrollbars=yes');
   X.focus()
 }
 
-  function zz( script, chr, centre, size, zoom, extra, ori, config_number,exsp ) {
+function zz( script, chr, centre, size, zoom, extra, ori, config_number,exsp ) {
+  if(script=='populate_fragment') script = 'contigview';
   EX1 = ( config_number && config_number > 0 ) ?
            ('?s'+config_number+'='+exsp+'&w'+config_number+'='+size+'&c'+config_number) :
            ('?w='+size+'&c=') ;
@@ -222,6 +224,7 @@ function hw( species, page, part ) {
 }
 
 function zn( script, chr, centre, size, extra, ori, config_number, exsp ) {
+  if(script=='populate_fragment') script = 'contigview';
   EX1 = ( config_number && config_number > 0 ) ?
         ('?s'+config_number+'='+exsp+'&c'+config_number+'=') :
         ('?c=') ;

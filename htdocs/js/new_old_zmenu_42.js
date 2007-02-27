@@ -1,5 +1,6 @@
 
 function hw( species, page, part ) {
+  if(page=='populate_fragment') page = 'contigview';
   X=window.open( '/'+species+'/helpview?se=1&kw='+page+'#'+part,'helpview','height=400,width=500,left=100,screenX=100,top=100,screenY=100,resizable,scrollbars=yes');
   X.focus()
 }
