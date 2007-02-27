@@ -4,6 +4,7 @@ use strict;
 use warnings;
 
 use Class::Std;
+use EnsEMBL::Web::RegObj;
 use EnsEMBL::Web::Object::Data;
 use EnsEMBL::Web::DBSQL::MySQLAdaptor;
 
@@ -41,20 +42,30 @@ sub BUILD {
 }
 
 sub find_administratable_groups {
-  warn "FINDING ADMIN GROUPS";
   my $self = shift;
+  my @admin = ();
   foreach my $group (@{ $self->groups }) {
-    warn "GROUP: " . $group->name . " (" . $group->id . ")";
     foreach my $user (@{ $group->users }) {
-      warn "  USER: " . $user->name;
-      warn "  LEVEL: " . $user->level;
+      if ($user->id eq $ENSEMBL_WEB_REGISTRY->get_user->id) {
+        if ($user->level eq 'administrator') {
+          push @admin, $group;
+        }
+      }
     }
   }
-  return [];
+  return \@admin;
 }
 
 sub is_administrator_of {
-  return 1;
+  my ($self, $group) = @_; 
+  my @admins = @{ $self->find_administratable_groups };
+  my $found = 0;
+  foreach my $admin_group (@admins) {
+    if ($admin_group->id eq $group->id) {
+      $found = 1;
+    }
+  }
+  return $found;
 }
 
 }
