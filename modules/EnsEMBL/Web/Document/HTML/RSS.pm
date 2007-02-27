@@ -16,6 +16,7 @@ sub add      {
 
 sub render   {
   my $self = shift;
+  $self->printf(qq(<link rel="search" href="http://dev.ensembl.org/opensearchdescription.xml" type="application/opensearchdescription+xml" title="Ensembl" />\n));
   foreach (keys %{$self->{'feeds'}}) {
     $self->printf(
       qq(<link rel="alternate" type="application/%s+xml" title="%s" href="%s" />),
