@@ -44,6 +44,7 @@ sub html_header {
   return $html;
 }
 
+use EnsEMBL::Web::Component::Location;
 sub placeholder {
   my $self = shift;
   my $html = "";
