@@ -42,7 +42,10 @@ use Sys::Hostname;
 use Getopt::Long;
 
 my ($help, $rmconfig, $single);
+
+my $confdir = 'conf';
 &GetOptions(
+    "confdir=s"       => \$confdir,
     "rmconfig"      => \$rmconfig,
     "r"             => \$rmconfig,
     "X"             => \$single,
@@ -50,6 +53,8 @@ my ($help, $rmconfig, $single);
     "help"          => \$help,
     "h"             => \$help,
 );
+
+warn "USING $confdir";
 if ($help) {
     print qq(Usage:
     ctrl_scripts/start_server
@@ -71,11 +76,11 @@ my $hostname = hostname();
 # start the server
 if ($rmconfig) {
     warn "Removing config.packed...\n";
-    my $ok = unlink "$serverroot/conf/config.packed";
+    my $ok = unlink "$serverroot/$confdir/config.packed";
     if ($ok) {
         warn "Done.\n";
     } else {
-        warn "Could not delete $serverroot/conf/config.packed: $!\n" .
+        warn "Could not delete $serverroot/$confdir/config.packed: $!\n" .
             "[WARN] Starting with old config.packed!\n";
     }
 }
@@ -83,7 +88,7 @@ if ($rmconfig) {
 # LOAD LSF ENVIRONMENT - REQUIRED FOR BLAST
 my $cmd = ". /usr/local/lsf/conf/profile.lsf;" if -e '/usr/local/lsf/conf/profile.lsf';
 
-$cmd .= "$serverroot/apache2/bin/httpd -d $serverroot" . ($single ? " -X &" : "");
+$cmd .= "$serverroot/apache2/bin/httpd -d $serverroot -f $serverroot/$confdir/httpd.conf" . ($single ? " -X &" : "");
 
 exec($cmd) or die
     "Could not start server: $!.\n" .
