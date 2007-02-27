@@ -17,6 +17,7 @@ sub BUILD {
   $self->set_adaptor(EnsEMBL::Web::DBSQL::MySQLAdaptor->new({table => 'user_record' }));
   $self->set_data_field_name('data');
   $self->add_field({ name => 'species', type => 'text' });
+  $self->add_field({ name => 'topic', type => 'text' });
   $self->add_queriable_field({ name => 'type', type => 'text' });
   $self->type('news');
   $self->add_belongs_to("EnsEMBL::Web::Object::Data::User");

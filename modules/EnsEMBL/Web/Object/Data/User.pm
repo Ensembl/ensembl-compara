@@ -22,22 +22,26 @@ sub BUILD {
   $self->add_queriable_field({ name => 'password', type => 'tinytext' });
   $self->add_queriable_field({ name => 'organisation', type => 'text' });
   $self->add_queriable_field({ name => 'status', type => 'tinytext' });
-  $self->add_has_many({ class => 'EnsEMBL::Web::Object::Data::Bookmark', table => 'user_record'});
-  $self->add_has_many({ class => 'EnsEMBL::Web::Object::Data::Configuration', table => 'user_record'});
-  $self->add_has_many({ class => 'EnsEMBL::Web::Object::Data::Annotation', table => 'user_record'});
+  $self->add_has_many({ class => 'EnsEMBL::Web::Object::Data::User::Bookmark', table => 'user_record'});
+  $self->add_has_many({ class => 'EnsEMBL::Web::Object::Data::User::Configuration', table => 'user_record'});
+  $self->add_has_many({ class => 'EnsEMBL::Web::Object::Data::User::Annotation', table => 'user_record'});
   $self->add_has_many({ class => 'EnsEMBL::Web::Object::Data::News', table => 'user_record'});
   $self->add_has_many({ class => 'EnsEMBL::Web::Object::Data::Infobox', table => 'user_record'});
   $self->add_has_many({ class => 'EnsEMBL::Web::Object::Data::Opentab', table => 'user_record'});
   $self->add_has_many({ class => 'EnsEMBL::Web::Object::Data::Sortable', table => 'user_record'});
   $self->add_has_many({ class => 'EnsEMBL::Web::Object::Data::Mixer', table => 'user_record'});
   $self->add_has_many({ class => 'EnsEMBL::Web::Object::Data::SpeciesList', table => 'user_record'});
-  $self->add_has_many({ class => 'EnsEMBL::Web::Object::Data::Group', table => 'webgroup', link_table => 'group_members'});
+  $self->add_has_many({ class => 'EnsEMBL::Web::Object::Data::Group', table => 'webgroup', link_table => 'group_member'});
 
   $self->populate_with_arguments($args);
 }
 
 sub find_administratable_groups {
   return [];
+}
+
+sub is_administrator_of {
+  return 1;
 }
 
 }
