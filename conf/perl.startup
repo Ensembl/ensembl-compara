@@ -14,6 +14,7 @@ use ModPerl::Registry;
 use Apache2::Status;
 use Apache2::SizeLimit;
 use Apache2::ServerUtil;
+use EnsEMBL::Web::SpeciesDefs;
 $Apache2::SizeLimit::MAX_PROCESS_SIZE = 400000;  # Kill httpd over 500Mb
 
 use DBI ();
@@ -26,8 +27,9 @@ use EnsEMBL::Web::Apache::ServerError;
 use EnsEMBL::Web::Apache::Handlers;
 use EnsEMBL::Web::Document::ColourChanger;
 
+if( $EnsEMBL::Web::SpeciesDefs->ENSEMBL_MART_ENABLED ) {
 require "BioMart/Initializer.pm";
-
+BioMart::Initialize->import();
 require "BioMart/Configuration/Attribute.pm";
 require "BioMart/Configuration/AttributeCollection.pm";
 require "BioMart/Configuration/AttributeGroup.pm";
@@ -91,7 +93,7 @@ require "BioMart/Formatter/XLS.pm";
 require "BioMart/Web/CGIXSLT.pm";
 require "BioMart/Web/SiteDefs.pm";
 require "BioMart/Web/TemplateBuilder.pm";
-
+}
 #=cut
 # below are needed for renewing from the saved martconf.packed file
 
@@ -101,7 +103,6 @@ use GD ();
 # Load CGI.pm and call it's compile method to precompile it's autoloaded routines
 use CGI qw(-compile :cgi);
 
-use EnsEMBL::Web::SpeciesDefs;
 
 if( Apache2::ServerUtil::restart_count == 1 ){ # Only parse the config on first pass
   warn( "\n" . ('=' x 78) . "\n" );

@@ -87,6 +87,7 @@ use vars qw ( @ISA @EXPORT @EXPORT_OK %EXPORT_TAGS $VERSION
   @ENSEMBL_LIB_DIRS
   $ENSEMBL_SHORTEST_ALIAS
   $MART_ENSEMBL_LINKS
+  $ENSEMBL_MART_ENABLED
 );
 use Sys::Hostname;
 use Exporter();
@@ -121,13 +122,16 @@ foreach( @dir ) {
     push @clean_directory, $_;      ## Otherwise add it!
   }
 }
-while( pop @clean_directory ne 'conf') { 1; }     ## Remove up to the last "conf" directory...
+
+warn ".......... @clean_directory ..............";
+my $CONF_DIR = 'conf';
+while( ($CONF_DIR = pop @clean_directory) !~ /^conf/) { 1; }     ## Remove up to the last "conf" directory...
 
 $ENSEMBL_SERVERROOT = File::Spec->catpath( $volume, File::Spec->catdir( @clean_directory ) );
 $ENSEMBL_SERVERROOT = '.' unless $ENSEMBL_SERVERROOT;
 #warn "$ENSEMBL_SERVERROOT";
 ## Define Plugin directories....
-eval qq(require '$ENSEMBL_SERVERROOT/conf/Plugins.pm');
+eval qq(require '$ENSEMBL_SERVERROOT/$CONF_DIR/Plugins.pm');
 error( "Error requiring plugin file:\n$@" ) if $@;
 
 $ENSEMBL_SERVER         = Sys::Hostname::hostname();  # Local machine name
@@ -213,7 +217,6 @@ $ENSEMBL_REGISTRY       = undef;
 my $perl_version = sprintf( '%d.%d.%d', $] =~ /(\d)\.(\d{3})(\d{3})/ );
 @ENSEMBL_LIB_DIRS     = (
   $ENSEMBL_SERVERROOT."/apache2/lib/perl5/site_perl/$perl_version/i686-linux/",
-  $ENSEMBL_SERVERROOT.'/modules',
   $ENSEMBL_SERVERROOT.'/ensembl/modules',
   $ENSEMBL_SERVERROOT.'/ensembl-compara/modules',
   $ENSEMBL_SERVERROOT.'/ensembl-draw/modules',
@@ -224,6 +227,7 @@ my $perl_version = sprintf( '%d.%d.%d', $] =~ /(\d)\.(\d{3})(\d{3})/ );
   $ENSEMBL_SERVERROOT.'/ensembl-genename/modules',
   $ENSEMBL_SERVERROOT.'/biomart-perl/lib',
   $ENSEMBL_SERVERROOT.'/bioperl-live',
+  $ENSEMBL_SERVERROOT.'/modules',
 );
 
 # Add perl-version specific lib from /ensemblweb/shared/lib for e.g. Storable.pm
@@ -290,6 +294,7 @@ $ENSEMBL_APACHE_RELOAD          = 0; # Debug setting - set to 0 for release
 
 $ENSEMBL_HAS_C_EXTENSIONS       = 1;
 $ENSEMBL_LONGPROCESS_MINTIME    = 10;
+$ENSEMBL_MART_ENABLED           = 0;
 
 ###############################################################################
 ##
@@ -341,7 +346,7 @@ while( my( $dir, $name ) = splice(@T,0,2)  ) {
   unshift @ENSEMBL_HTDOCS_DIRS, $dir.'/htdocs'; 
   unshift @$ENSEMBL_PLUGIN_ROOTS,   $name;
   push    @ENSEMBL_CONF_DIRS,   $dir.'/conf'; 
-  unshift @ENSEMBL_LIB_DIRS,    $dir.'/modules';
+  unshift    @ENSEMBL_LIB_DIRS,    $dir.'/modules';
 }
 
 @T = @{$ENSEMBL_PLUGINS||[]};         ## But these have to go on in normal order...
@@ -349,7 +354,7 @@ while( my( $name, $dir ) = splice(@T,0,2)  ) {
 }
 
 @ENSEMBL_LIB_DIRS = reverse @ENSEMBL_LIB_DIRS; # Helps getting @inc into 
-                                               # right order
+                                              # right order
 
 my $DATESTAMP = '';
 if( $ENSEMBL_DEBUG_FLAGS & 64 ) { ##  Set to 0 - disables time stamped logs
@@ -460,6 +465,7 @@ $ENSEMBL_TEMPLATE_ROOT = $ENSEMBL_SERVERROOT.'/biomart-web/conf';
   $ENSEMBL_MAIL_SERVER
   $ENSEMBL_SHORTEST_ALIAS
   $MART_ENSEMBL_LINKS
+  $ENSEMBL_MART_ENABLED
 );
 
 ############################
@@ -539,6 +545,7 @@ $ENSEMBL_TEMPLATE_ROOT = $ENSEMBL_SERVERROOT.'/biomart-web/conf';
   $ARCHIVE_VERSION
   $EARLIEST_ARCHIVE
   $MART_ENSEMBL_LINKS
+  $ENSEMBL_MART_ENABLED
 );
 
 ###################################
@@ -662,7 +669,9 @@ $ENSEMBL_TEMPLATE_ROOT = $ENSEMBL_SERVERROOT.'/biomart-web/conf';
     @ENSEMBL_HTDOCS_DIRS
   $ENSEMBL_SHORTEST_ALIAS
     @ENSEMBL_LIB_DIRS
+    @ENSEMBL_PERL_DIRS
     $MART_ENSEMBL_LINKS
+  $ENSEMBL_MART_ENABLED
   )],
   APACHE => [qw(
     $ENSEMBL_PLUGIN_ROOTS
@@ -709,6 +718,7 @@ $ENSEMBL_TEMPLATE_ROOT = $ENSEMBL_SERVERROOT.'/biomart-web/conf';
     $ARCHIVE_VERSION
     $EARLIEST_ARCHIVE
     $MART_ENSEMBL_LINKS
+  $ENSEMBL_MART_ENABLED
   )],
 );
 
