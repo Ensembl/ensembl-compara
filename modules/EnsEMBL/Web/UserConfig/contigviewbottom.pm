@@ -123,7 +123,8 @@ sub init {
          [ 'all_affy'                => 'All-Probe-Sets' ],
 ## Matches ##
       ],
-      'compara' => [ ],
+      'compara' => [
+      ],
       'options' => [
          # 'name'            => 'caption'
          # [ 'assemblyexception' => 'Assembly exceptions' ],
@@ -429,9 +430,13 @@ sub init {
       'col' => 'blue',
       'compact'  => 0,
       'threshold' => '500',
-      'track_label' => 'Histone modifications',
+      'label' => 'Histone modifications',
       'glyphset'    => 'histone_modifications',
+      'db_type'    => "funcgen",
+      'wiggle_name' => 'tiling array data',
+      'block_name' => 'predicted features',
       'available'=> 'databases ENSEMBL_FUNCGEN',  
+
     }, 
 
 
@@ -869,7 +874,7 @@ sub init {
 
       next if ( scalar(@species) == 1);
       my $label = $alignments{$id}->{'name'};
-      my $short = "constrain elem";
+      my $short = "Conservation";
       my $color = "pink4";
       my $available = "constrained_element $id";
       my $jump_to_alignslice = 0;
@@ -883,18 +888,23 @@ sub init {
       $self->{'general'}->{'contigviewbottom'}{$KEY} = {
         'glyphset' => 'multiple_alignment',
         'species'  => $species,
-        'on'       => 'off',
+        'on'       => 'on',
         'compact'  => 1,
         'dep'      => 6,
         'pos'      => $compara+300,
         'col'      => $METHOD->[1],
         'str'      => 'f',
         'available'=> $METHOD->[5],
-        'method'   => $METHOD->[0],
+   #     'method'   => $METHOD->[0],
 	'method_id' => $METHOD->[4],
         'label'    => $METHOD->[2],
         'title'    => $METHOD->[3],
-        'jump_to_alignslice'    => $METHOD->[6],
+        'threshold' => '1000',
+        'db_type'    => "compara",
+        'wiggle_name' => 'conservation scores',
+        'block_name' => 'constrained elements',
+       'bumped'     => 'no',
+       'jump_to_alignslice'    => $METHOD->[6],
       };
       push @{ $self->{'general'}->{'contigviewbottom'}{ '_artefacts'} }, $KEY;
       push @{ $self->{'general'}->{'contigviewbottom'}{'_settings'}{'compara'} },  [ $KEY , $METHOD->[3] ];
