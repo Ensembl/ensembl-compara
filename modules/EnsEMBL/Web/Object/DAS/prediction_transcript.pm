@@ -21,6 +21,11 @@ sub Types {
   return $features;
 }
 
+sub Stylesheet {
+  my $self = shift;
+  my $hash_ref = {};
+#  my $self->species_defs->
+}
 sub Features {
 ### Return das features...
   my $self = shift;
@@ -86,8 +91,10 @@ sub Features {
     my $pt = $transcripts_to_grab{ $display_label }{ 'TRANS' };
     my $exons = $pt->get_all_Exons();
     my $rank = 0;
+    my $end = 1;
     foreach my $exon (@$exons) {
       $rank++;
+      my $start = $end;
       my $slice_name = $exon->slice->seq_region_name.':'.$exon->slice->start.','.$exon->slice->end.':'.$exon->slice->strand;
       unless( exists $features{$slice_name} ) {
         $features{$slice_name} = {
@@ -98,12 +105,8 @@ sub Features {
         };
 ## Offset and orientation multiplier for features to map them back to slice
 ## co-ordinates - based on the orientation of the slice.
-        if( $exon->slice->strand > 0 ) {
-          $slice_hack{$slice_name} = [  1, $features{$slice_name}{'START'}-1 ];
-        } else {
-          $slice_hack{$slice_name} = [ -1, $features{$slice_name}{'STOP'} +1 ];
-        }
       }
+      $end += $exon->length;
 ## If we have an exon filter for this transcript... check that the rank is in the
 ## list if not skip the rest of this loop
       if( !exists( $transcripts_to_grab{$display_label}{'NO_FILTER'} ) ) {
@@ -118,9 +121,15 @@ sub Features {
         'ID'          => $display_label.'.'.$rank, 
         'TYPE'        => 'exon',
         'METHOD'      => $pt->analysis->logic_name,
-        'START'       => $slice_hack{$slice_name}[0] * $exon->start + $slice_hack{$slice_name}[1],
-        'END'         => $slice_hack{$slice_name}[0] * $exon->end   + $slice_hack{$slice_name}[1],
-        'ORIENTATION' => $slice_hack{$slice_name}[0] * $exon->strand > 0 ? '+' : '-',
+        'START'       => $exon->seq_region_start,
+        'END'         => $exon->seq_region_end,
+        'ORIENTATION' => $self->ori($exon->seq_region_strand),
+        'TARGET'      => {
+          'ID'          => $display_label,
+          'START'       => $start,
+          'STOP'        => $end-1,
+          'ORIENTATION' => '+',
+        },
         'GROUP'       => [{
           'ID'        => $display_label,
           'TYPE'      => 'prediction transcript',

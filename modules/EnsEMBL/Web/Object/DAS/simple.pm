@@ -18,19 +18,22 @@ sub Features {
 }
 
 sub _feature {
-  my( $self, $f ) = @_;
+  my( $self, $feature ) = @_;
 
 ## Now we do all the nasty stuff of retrieving features and creating DAS objects for them...
-  my $type          = $f->analysis->logic_name;
-  my $display_label = $f->display_label;
-  my $slice_name = $self->slice_cache( f->slice );
+  my $type          = $feature->analysis->logic_name;
+  my $display_label = $feature->display_label;
+  warn $feature;
+  my $slice_name = $self->slice_cache( $feature->slice );
   push @{$self->{_features}{$slice_name}{'FEATURES'}}, {
-   'ID'          => $type,
-   'TYPE'        => "simple feature:$type",
-   'SCORE'       => $f->score,
-   'METHOD'      => $type,
-   'CATEGORY'    => $type,
-   $self->loc( $slice_name, $f->start, $f->end, $f->strand ),
+    'ID'          => $type,
+    'TYPE'        => "simple feature:$type",
+    'SCORE'       => $feature->score,
+    'METHOD'      => $type,
+    'CATEGORY'    => $type,
+    'ORIENTATION' => $self->ori( $feature->seq_region_strand ),
+    'START'       => $feature->seq_region_start,
+    'END'         => $feature->seq_region_end,
   };
 ## Return the reference to an array of the slice specific hashes.
 }

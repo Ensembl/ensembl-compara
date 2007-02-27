@@ -60,16 +60,17 @@ sub createObjects {
         my($sr,$start,$end) = ($1,$2,$3);
         $start = $self->evaluate_bp($start);
         $end   = $self->evaluate_bp($end);
-        if (my $loc = $self->_location_from_SeqRegion( $sr,$start,$end,1,undef)) {
+        if( my $loc = $self->_location_from_SeqRegion( $sr,$start,$end,1,undef) ) {
           push @locations, $loc;
         } else {
-          push @locations, { 'REGION' => $sr, 'START' => $start, 'STOP' => $end, 'TYPE' => 'ERROR' };
+          my $type = $self->_location_from_SeqRegion( $sr,undef,undef,1,undef) ? 'ERROR' : 'UNKNOWN';
+          push @locations, { 'REGION' => $sr, 'START' => $start, 'STOP' => $end, 'TYPE' => $type };
         }
       } else {
         if (my $loc = $self->_location_from_SeqRegion( $segment,undef,undef,1,undef)) {
           push @locations, $loc;
         } else {
-          push @locations, { 'REGION' => $segment, 'START' => '', 'STOP' => '', 'TYPE' => 'ERROR' };
+          push @locations, { 'REGION' => $segment, 'START' => '', 'STOP' => '', 'TYPE' => 'UNKNOWN' };
         }
       }
     }
@@ -91,7 +92,7 @@ sub createObjects {
   my $T = EnsEMBL::Web::Proxy::Object->new( "DAS::$source", \@locations, $self->__data );
   $T->FeatureIDs(   @feature_ids   );
   $T->FeatureTypes( @feature_types );
-  $T->GroupIDs(     @feature_ids );
+  $T->GroupIDs(     @group_ids     );
   if( $self->has_a_problem ) {
     $self->clear_problems();
     return $self->problem( 'Fatal', 'Unknown Source', "Could not locate source <b>$source</b>." );
@@ -112,10 +113,10 @@ sub _location_from_SeqRegion {
     foreach my $system ( @{$self->__coord_systems} ) {
       my $slice = undef;
       eval { $slice = $self->_slice_adaptor->fetch_by_region( $system->name, $chr, $start, $end, $strand ); };
-      warn $@ if $@;
+      warn "DAS... ", $system->name," $chr $start $end\nDAS... $@";
       next if $@;
       if( $slice ) {
-        warn "SLICE:   $chr $start $end $strand - ".$slice;
+        warn "SLICE:   $chr $start $end $strand - $slice";
         next if( $start >  $slice->seq_region_length || $end >  $slice->seq_region_length );
         return $self->_create_from_slice( $system->name, "$chr\:$start,$end", $slice, undef, undef, $keep_slice );
       }
@@ -126,6 +127,7 @@ sub _location_from_SeqRegion {
     foreach my $system ( @{$self->__coord_systems} ) {
       my $TS;
       eval { $TS = $self->_slice_adaptor->fetch_by_region( $system->name, $chr ); };
+      warn "DAS... ",$system->name," $chr\nDAS... $@";
       next if $@;
       return $self->_create_from_slice( $system->name , $chr, $self->expand($TS), '', $chr, $keep_slice ) if $TS;
     }

@@ -33,70 +33,6 @@ my $strand = {
   '-1' => '-'
 };
 
-
-sub features {
-    my( $panel, $object ) = @_;
-    
-    my $segment_tmp = qq{<SEGMENT id="%s" start="%s" stop="%s">\n};
-    my $error_tmp = qq{<ERRORSEGMENT id="%s" start="%s" stop="%s" />\n};
-
-    my $feature_template = qq{
-<FEATURE id="%s">
-  <START>%d</START>
-  <END>%d</END>
-  <ORIENTATION>%s</ORIENTATION>
-  <TYPE id="%s" category="%s" reference="yes" superparts="%s" subparts="%s">%s</TYPE>
-  <TARGET id="%s" start="%s" stop="%s">%s</TARGET>
-</FEATURE>
-};
-
-
-    my $features = $object->Features();
-    (my $url = lc($ENV{SERVER_PROTOCOL})) =~ s/\/.+//;
-    $url .= "://$ENV{SERVER_NAME}";
-#    $url .= "\:$ENV{SERVER_PORT}" unless $ENV{SERVER_PORT} == 80;
-    $url .="$ENV{REQUEST_URI}";
-
-    $panel->print(qq{<GFF version="1.01" href="$url">\n});
-    foreach my $segment (@{$features || []}) {
-    if ($segment->{'TYPE'} && $segment->{'TYPE'} eq 'ERROR') {
-        $panel->print( sprintf ($error_tmp, 
-                $segment->{'REGION'},
-                $segment->{'START'} || '',
-                $segment->{'STOP'} || ''));
-        next;
-    }
-
-    $panel->print( sprintf ($segment_tmp, 
-                $segment->{'REGION'},
-                $segment->{'START'} || '',
-                $segment->{'STOP'} || ''));
-
-    foreach my $feature (@{$segment->{'FEATURES'} || []}) {
-
-        $panel->print( sprintf ($feature_template, 
-                    $feature->{'ID'} || '',
-                    $feature->{'START'} || '',
-                    $feature->{'END'} || '',
-                    $strand->{$feature->{'ORIENTATION'}} || '',
-                    $feature->{'TYPE'} || '',
-                    $feature->{'CATEGORY'} || '',
-                    $feature->{'SUPERPARTS'} || '',
-                    $feature->{'SUBPARTS'} || '',
-                    $feature->{'TYPE'} || '',
-                    $feature->{'TARGET_ID'} || '',
-                    $feature->{'TARGET_START'} || '',
-                    $feature->{'TARGET_END'} || '',
-                    $feature->{'TARGET_ID'} || '',
-                    ));
-        
-    }
-    $panel->print ( qq{</SEGMENT>\n});
-    }
-    $panel->print(qq{</GFF>\n});
-}
-
-
 sub entry_points {
     my( $panel, $object ) = @_;
 
@@ -142,7 +78,7 @@ sub dna {
       my $slice = $object->subslice( $segment->{'REGION'}, $block_start, $block_end );
       my $seq = $slice->seq;
       $seq =~ s/(.{60})/$1\n/g;
-      $panel->print( $seq );
+      $panel->print( lc($seq) );
       $panel->print( "\n" ) unless $seq =~ /\n$/;
       $block_start = $block_end + 1;
     }
@@ -176,12 +112,8 @@ sub sequence {
       my $pattern = '.{60}';
       my $seq = $slice->seq;
       $seq =~ s/(.{60})/$1\n/g;
- #     while ($seq =~ /($pattern)/g) {
- #       $panel->print ("$1\n");
- #     }
- #     my $tail = length($seq) % 60;
- #     $panel->print( substr($seq, -$tail)."\n" );
-      $panel->print( $seq. ($seq =~ /\n$/ ? '' : "\n" ) );
+      $panel->print( lc($seq) );
+      $panel->print( "\n" ) unless $seq =~ /\n$/;
       $block_start = $block_end + 1;
     }
     $panel->print( qq{</DNA>\n</SEQUENCE>\n} );

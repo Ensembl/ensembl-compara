@@ -50,12 +50,14 @@ sub Features {
 ###
 
   my @dbs = ();
+  my $db;
   if( $ENV{'ENSEMBL_DAS_SUBTYPE'} ) {
-    my( $db, @logic_names ) = split /-/, $ENV{'ENSEMBL_DAS_SUBTYPE'};
+    ( $db, @logic_names ) = split /-/, $ENV{'ENSEMBL_DAS_SUBTYPE'};
     push @dbs, $db;
   } else {
     @dbs = ('core');  ## default = core...;
   }
+warn @logic_names;
   foreach (@dbs) {
     my $T = $self->{data}->{_databases}->get_DBAdaptor($_,$self->real_species);
     $dba_hashref->{$_}=$T if $T;
@@ -86,6 +88,7 @@ sub Features {
 
 ###_ Part 4: Fetch features on the segments requested...
 
+  my %logic_name_filter = map { $_ ? ($_,1) : () } @logic_names;
   foreach my $segment (@segments) {
     if( ref($segment) eq 'HASH' && ($segment->{'TYPE'} eq 'ERROR' || $segment->{'TYPE'} eq 'UNKNOWN') ) {
       push @features, $segment;
@@ -102,28 +105,31 @@ sub Features {
     };
 
     foreach my $db_key ( keys %$dba_hashref ) {
-      foreach my $logic_name (@logic_names) {
-        foreach my $gene ( @{$segment->slice->get_all_Genes($logic_name,$db_key) } ) {
-          my $gsi = $gene->stable_id;
-          $genes{ $gsi } = { 'db' => $db_key, 'obj' => $gene, 'transcripts' => [] };
-          delete $filters->{$gsi}; # This comes off a segment so make sure it isn't filtered!
-          $no_filters->{$gsi} = 1;
-          foreach my $transcript ( @{$gene->get_all_Transcripts} ) {
-            my $tsi = $transcript->stable_id;
-            my $transobj = { 'obj' => $transcript, 'exons' => [] };
-            delete $filters->{$tsi}; # This comes off a segment so make sure it isn't filtered!
-            $no_filters->{$tsi} = 1;
-            my $start = 1;
-            foreach my $exon ( @{$transcript->get_all_Exons} ) {
-              my $esi = $exon->stable_id;
-              delete $filters->{$esi}; # This comes off a segment so make sure it isn't filtered!
-              push @{ $transobj->{'exons'} }, [ $exon , $start, $start+$exon->length-1 ];
-              $start += $exon->length;
-              $no_filters->{$esi} = 1;
-            }
-            push @{ $genes{$gsi}->{'transcripts'} },$transobj;
+      foreach my $gene ( @{$segment->slice->get_all_Genes(undef,$db_key) } ) {
+        my $gsi = $gene->stable_id;
+        delete $filters->{$gsi}; # This comes off a segment so make sure it isn't filtered!
+        $no_filters->{$gsi} = 1;
+warn $gsi;
+        my $trans_arrayref = [];
+        foreach my $transcript ( @{$gene->get_all_Transcripts} ) {
+          warn $transcript->analysis->logic_name," (",join(',',@logic_names),")";
+          next if  defined $logic_names[0] && 
+               !$logic_name_filter{ $transcript->analysis->logic_name };
+          my $tsi = $transcript->stable_id;
+          my $transobj = { 'obj' => $transcript, 'exons' => [] };
+          delete $filters->{$tsi}; # This comes off a segment so make sure it isn't filtered!
+          $no_filters->{$tsi} = 1;
+          my $start = 1;
+          foreach my $exon ( @{$transcript->get_all_Exons} ) {
+            my $esi = $exon->stable_id;
+            delete $filters->{$esi}; # This comes off a segment so make sure it isn't filtered!
+            push @{ $transobj->{'exons'} }, [ $exon , $start, $start+$exon->length-1 ];
+            $start += $exon->length;
+             $no_filters->{$esi} = 1;
           }
+          push @$trans_arrayref,$transobj;
         }
+        $genes{ $gsi } = { 'db' => $db_key, 'obj' => $gene, 'transcripts' => $trans_arrayref  } if @$trans_arrayref;
       }
     }
   } ## end of segment loop....
@@ -132,7 +138,6 @@ sub Features {
 
   my $ga_hashref = {};
 
-  my %logic_name_filter = map { ($_,1) } @logic_names;
   foreach my $id ( keys %$filters ) {
     next unless $filters->{$id};
     my $gene;
@@ -151,16 +156,18 @@ sub Features {
         $gene = $ga_hashref->{$db}->fetch_by_transcript_stable_id( $id );
         $filter = 'transcript';
       }
-      $gene = undef if $gene
-                    && defined $logic_names[0]
-                    && ! $logic_name_filter{$gene->analysis->logic_name};
+#      $gene = undef if $gene
+#                    && defined $logic_names[0]
+#                    && ! $logic_name_filter{$gene->analysis->logic_name};
       last if $gene;
     }
     next unless $gene;
     my $gsi = $gene->stable_id;
     unless( exists $genes{$gsi} ) { ## Gene doesn't exist so we have to store it and grab transcripts and exons...
-      $genes{ $gsi } = { 'obj' => $gene, 'transcripts' => [] };
+      my $trans_arrayref = [];
       foreach my $transcript ( @{$gene->get_all_Transcripts} ) {
+        next if  defined $logic_names[0] &&
+             !$logic_name_filter{ $transcript->analysis->logic_name };
         my $tsi = $transcript->stable_id;
         my $transobj = { 'obj' => $transcript, 'exons' => [] };
         my $start = 1;
@@ -172,6 +179,7 @@ sub Features {
         push @{ $genes{$gsi}->{'transcripts'} },$transobj;
 # warn "PU**ED transcript $tsi onto gene $gsi";
       }
+      $genes{ $gsi } = { 'obj' => $gene, 'transcripts' => $trans_arrayref  } if @$trans_arrayref;
     }
     if( $filter eq 'gene' ) { ## Delete all filters on Gene and subsequent exons
       delete $filters->{$gsi};

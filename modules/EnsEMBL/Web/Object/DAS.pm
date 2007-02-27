@@ -23,7 +23,7 @@ sub ori {
   my($self,$strand) =@_;
   return $strand>0 ? '+' :
          $strand<0 ? '-' :
-                     '.' ;
+                     '0' ;
 }
 sub slice_cache {
   my( $self, $slice ) = @_;
@@ -52,6 +52,7 @@ sub base_features {
   my %feature_types = map { $_ ? ($_=>1) : () } @{$self->FeatureTypes  || []};
   my @group_ids     = grep { $_ }               @{$self->GroupIDs      || []};
   my @feature_ids   = grep { $_ }               @{$self->FeatureIDs    || []};
+warn "@group_ids - @feature_ids";
 
   my $dba_hashref;
   my( $db, @logic_names ) = split /-/, $ENV{'ENSEMBL_DAS_SUBTYPE'};
@@ -73,10 +74,18 @@ sub base_features {
   my $adapter_call = "get_$feature_type".'Adaptor';
 
   foreach my $segment (@segments) {
-    if( ref($segment) eq 'HASH' && $segment->{'TYPE'} eq 'ERROR' ) {
+    if( ref($segment) eq 'HASH' && ($segment->{'TYPE'} eq 'ERROR'||$segment->{'TYPE'} eq 'UNKNOWN') ) {
       push @features, $segment;
       next;
     }
+    my $slice_name = $segment->slice->seq_region_name.':'.$segment->slice->start.','.$segment->slice->end.':'.$segment->slice->strand;
+    $self->{_features}{$slice_name}= {
+      'REGION'   => $segment->slice->seq_region_name,
+      'START'    => $segment->slice->start,
+      'STOP'     => $segment->slice->end,
+      'FEATURES' => [],
+    };
+
     foreach my $db_key ( keys %$dba_hashref ) {
       foreach my $logic_name (@logic_names) {
         foreach my $feature ( @{$segment->slice->$call($logic_name,undef,$db_key) } ) {
@@ -149,7 +158,7 @@ sub _Stylesheet {
       $stylesheet .= qq(    <TYPE id="$type_id">\n);
       my $glyph_arrayref = $type_hashref->{$type_id};
       foreach my $glyph_hashref (@$glyph_arrayref ) {
-        $stylesheet .= sprintf qq(      <GLYPH%s>\n        <%s>),
+        $stylesheet .= sprintf qq(      <GLYPH%s>\n        <%s>\n),
           $glyph_hashref->{'zoom'} ? qq( zoom="$glyph_hashref->{'zoom'}") : '',
           uc($glyph_hashref->{'type'});
         foreach my $key (keys %{$glyph_hashref->{'attrs'}||{}} ) {
@@ -158,7 +167,7 @@ sub _Stylesheet {
             $glyph_hashref->{'attrs'}{$key},
             uc($key);
         }
-        $stylesheet .= sprintf qq(        </%s>\n      </GLYPH>),  uc($glyph_hashref->{'type'});
+        $stylesheet .= sprintf qq(        </%s>\n      </GLYPH>\n),  uc($glyph_hashref->{'type'});
       }
       $stylesheet .= qq(    </TYPE>\n);
     }
