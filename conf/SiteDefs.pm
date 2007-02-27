@@ -7,6 +7,7 @@
 #
 ###############################################################################
 
+warn "USING MAIN SITE DEFS - THE WRONG ONE!!!!";
 package SiteDefs;
 use strict;
 use Text::Wrap;
@@ -203,7 +204,7 @@ $ENSEMBL_REGISTRY       = undef;
 # @ENSEMBL_HTDOCS_DIRS locates static content
 # @ENSEMBL_LIB_DIRS    locates perl library modules. 
 #                      Array order is maintained in @INC
-@ENSEMBL_CONF_DIRS    = ($ENSEMBL_SERVERROOT.'/conf');
+@ENSEMBL_CONF_DIRS    = ($ENSEMBL_SERVERROOT.'/'.$CONF_DIR);
 @ENSEMBL_PERL_DIRS    = (
   $ENSEMBL_SERVERROOT.'/perl',
 );

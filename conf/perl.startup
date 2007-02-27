@@ -27,7 +27,8 @@ use EnsEMBL::Web::Apache::ServerError;
 use EnsEMBL::Web::Apache::Handlers;
 use EnsEMBL::Web::Document::ColourChanger;
 
-if( $EnsEMBL::Web::SpeciesDefs->ENSEMBL_MART_ENABLED ) {
+my $conf = EnsEMBL::Web::SpeciesDefs->new();
+if( $conf->ENSEMBL_MART_ENABLED ) {
 require "BioMart/Initializer.pm";
 BioMart::Initialize->import();
 require "BioMart/Configuration/Attribute.pm";
@@ -106,7 +107,6 @@ use CGI qw(-compile :cgi);
 
 if( Apache2::ServerUtil::restart_count == 1 ){ # Only parse the config on first pass
   warn( "\n" . ('=' x 78) . "\n" );
-  my $conf = EnsEMBL::Web::SpeciesDefs->new();
   $conf->store;
 #--- dynamically build mart registry file...
   EnsEMBL::Web::Document::ColourChanger::change_ddmenu_colours( $conf ); 
