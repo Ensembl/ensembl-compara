@@ -194,7 +194,7 @@ sub movie_index_intro {
   my($panel,$object) = @_;
 
   my $html = qq(
-<h2>Animated Tutorials</h2>
+<h3>Animated Tutorials</h3>
 
 <p>The tutorials listed below are Flash animations of some of our training presentations, with added popup notes in place of a soundtrack. We are gradually adding to the list, so please check back regularly (the list will also be included in the bimonthly Release Email, which is sent to the <a href="/info/about/contact.html">ensembl-announce mailing list</a>).</p>
 <p>Please note that files are around 3MB per minute, so if you are on a dialup connection, playback may be jerky.</p>
@@ -353,6 +353,21 @@ sub control_movie_form {
     'spanning' => 'inline',
   );
   return $form;
+}
+
+sub static {
+  my ( $panel, $object ) = @_;
+  my $label = '';
+  my $html = qq(<h3>Non-animated PowerPoint Presentations</h3>
+  <p>The following presentations are available as PDF downloads:</p>
+   <ul>
+  <li><a href="/info/helpdesk/Ensembl_Intro.pdf">Browsing Genomes with Ensembl</a> [1.6 MB]</li>
+  <li><a href="/info/helpdesk/variations_Feb2007.pdf">Sequence Variation in Ensembl</a> [2.3 MB]</li>
+  <li><a href="/info/helpdesk/DAS_ENSEMBL.pdf">DAS - Integration of external annotation data</a> [0.6 MB]</li>
+  </ul>);
+
+  $panel->print($html);
+  return 1;
 }
 
 

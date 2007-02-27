@@ -118,7 +118,7 @@ sub Workshops_Online {
   else {
       
     if ($panel_1) {
-      $panel_1->caption('Animated Tutorials - Table of Contents');
+      $panel_1->caption('Ensembl Workshops Online');
       $panel_1->add_components(qw(
         intro          EnsEMBL::Web::Component::Help::movie_index_intro
       ));
@@ -133,6 +133,16 @@ sub Workshops_Online {
         movie_index          EnsEMBL::Web::Component::Help::movie_index
       ));
       $self->add_panel( $panel_2 );
+    }
+
+    if( my $panel_3 = $self->new_panel( 'Image',
+      'code'    => "info$self->{flag}",
+      'object'  => $self->{object},
+    )) {
+      $panel_3->add_components(qw(
+        static         EnsEMBL::Web::Component::Help::static
+      ));
+      $self->add_panel( $panel_3 );
     }
   }
 }
