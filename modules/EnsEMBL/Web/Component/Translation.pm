@@ -80,7 +80,8 @@ sub das {
     if (defined (my $error = $source->verify)) {
       my $msg = qq{Error retrieving features : $error};
       $panel->add_row( $label, qq(<p>$msg</p>) );
-      next;
+#     next; Temp thing to test ArrayExpress images from their dummy source
+      next unless ($source_label =~ /aewTest/);
     }
 
     my $location_features = 0;

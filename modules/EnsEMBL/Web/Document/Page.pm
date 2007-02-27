@@ -338,12 +338,16 @@ sub render_DAS {
     $r->headers_out->add('X-Das-Status'  => '200'     );
     $r->headers_out->add('X-Das-Version' => 'DAS/1.5' );
   }
+  $self->{'xsl'} = "/das/$self->{'subtype'}.xsl" if exists $self->{'subtype'}; #'/das/dasgff.xsl';
   $self->render_XML();
 }
 sub render_XML {
   my( $self ) = shift;
 
   $self->print(qq{<?xml version="1.0" standalone="no"?>\n});
+  if( $self->{'xsl'} ){
+    $self->print(qq(<?xml-stylesheet type="text/xsl" href="$self->{'xsl'}"?>\n));
+  }
   $self->print( $self->doc_type);
   $self->print( "\<$self->{'doc_type_version'}\>\n" );
 

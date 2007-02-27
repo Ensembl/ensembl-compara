@@ -935,7 +935,7 @@ sub add_external_das_sources {
     eval {
       my $URL = $dbname->{'URL'};
          $URL = "http://$URL" unless $URL =~ /https?:\/\//i;
-      my $stype = $dbname->{'type'} || 'ensembl_location_chromosome';
+      my $stype = $dbname->{'type'} || 'ensembl_location_toplevel';
       $adaptor = Bio::EnsEMBL::ExternalData::DAS::DASAdaptor->new(
         -url   => "$URL/das",
         -name       => $dbname->{'name'},

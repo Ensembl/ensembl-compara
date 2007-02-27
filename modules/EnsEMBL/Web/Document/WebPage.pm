@@ -384,6 +384,7 @@ sub render {
   if( $self->{'format'} eq 'Text' ) { 
     CGI::header("text/plain"); $self->page->render_Text;
   } elsif( $self->{'format'} eq 'DAS' ) { 
+    $self->page->{'subtype'} = $self->{'subtype'};
     CGI::header("text/xml"); $self->page->render_DAS;
   } elsif( $self->{'format'} eq 'XML' ) { 
     CGI::header("text/xml"); $self->page->render_XML;
@@ -503,6 +504,8 @@ sub wrapper {
   }
 
   my $self = __PACKAGE__->new( %new_params );
+  $self->{'subtype'} = $params{'subtype'} if exists $params{'subtype'};
+warn $self->{'subtype'};
   if( $self->has_a_problem ) {
       
     $self->render_error_page;
