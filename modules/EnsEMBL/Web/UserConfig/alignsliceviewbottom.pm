@@ -446,7 +446,8 @@ sub init {
 #       push @{ $self->{'general'}->{'contigviewbottom'}{'_settings'}{'compara'} },  [ $KEY , $METHOD->[3] ];
   }
  
-  my $POS = $self->ADD_ALL_AS_TRANSCRIPTS( 0 );
+  $self->ADD_ALL_TRANSCRIPTS( 0 );
+#  my $POS = $self->ADD_ALL_AS_TRANSCRIPTS( 0 );
 }
 
 
