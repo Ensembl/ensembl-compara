@@ -410,7 +410,7 @@ sub _convert_GenomicAlignBlocks_into_DnaDnaAlignFeatures {
 
     my $top_slice;
     if (!defined($query_slice_adaptor)) {
-      $query_slice_adaptor = $consensus_genomic_align->get_Slice->adaptor;
+      $query_slice_adaptor = $query_genomic_align->get_Slice->adaptor;
     }
     if ($query_slice_adaptor) {
       $top_slice = $query_slice_adaptor->fetch_by_region(
