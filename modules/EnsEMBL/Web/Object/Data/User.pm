@@ -30,7 +30,7 @@ sub BUILD {
   $self->add_has_many({ class => 'EnsEMBL::Web::Object::Data::User::Bookmark', table => 'user_record'});
   $self->add_has_many({ class => 'EnsEMBL::Web::Object::Data::User::Configuration', table => 'user_record'});
   $self->add_has_many({ class => 'EnsEMBL::Web::Object::Data::User::Annotation', table => 'user_record'});
-  $self->add_has_many({ class => 'EnsEMBL::Web::Object::Data::DAS', table => 'user_record'});
+  $self->add_has_many({ class => 'EnsEMBL::Web::Object::Data::User::DAS', table => 'user_record'});
   $self->add_has_many({ class => 'EnsEMBL::Web::Object::Data::News', table => 'user_record'});
   $self->add_has_many({ class => 'EnsEMBL::Web::Object::Data::Infobox', table => 'user_record'});
   $self->add_has_many({ class => 'EnsEMBL::Web::Object::Data::Opentab', table => 'user_record'});
