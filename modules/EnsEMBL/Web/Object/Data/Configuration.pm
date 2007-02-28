@@ -31,6 +31,11 @@ sub key {
   return 'user_record_id';
 }
 
+sub table {
+  return 'user_record';
+}
+
+
 }
 
 1;

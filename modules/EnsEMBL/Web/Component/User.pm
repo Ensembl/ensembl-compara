@@ -397,11 +397,6 @@ sub _render_settings_table {
   return $html;
 }
 
-sub _render_das {
-  my $user = shift;
-  my $html .= &info_box($user, qq(DAS sources allow you to share annotation and other information.), 'user_das_info');
-  return $html;
-}
 
 sub _render_groups {
   my $user = shift;
@@ -495,6 +490,33 @@ sub _render_all_groups {
   return $html;
 }
 
+sub _render_das {
+  my $user = shift;
+  my $html .= &info_box($user, qq(DAS sources allow you to share annotation and other information.), 'user_das_info');
+  my @dases= @{ $user->dases};
+  my @records = ();
+  warn "RENDERING DAS";
+  foreach my $das (@dases) {
+    my $description = $das->name || '&nbsp;';
+    push @records, {  'id' => $das->id, 
+                      'ident' => 'user',
+                      'sortable' => $das->name,
+                      'shareable' => 1,
+                      'edit_url' => 'das', 
+                      'delete_url' => 'remove_record',
+                      'data' => [
+      $das->name . '<br /><span style="font-size: 10px;">' . $das->url . '</span>', '&nbsp;' 
+    ]};
+  }
+  if ($#records > -1) {
+    warn "RENDERING DAS TABLE";
+    $html .=  _render_settings_table(\@records, $user);
+  } else {
+    $html .= "You have not saved any DAS sources";
+  }
+  return $html;
+}
+
 sub _render_bookmarks {
   my $user = shift;
   my @bookmarks = @{ $user->bookmarks };
@@ -522,7 +544,6 @@ sub _render_bookmarks {
       ]};
     }
   }
-  warn "Rendering to HTML";
   my $html;
   $html .= &info_box($user, qq(Bookmarks allow you to save frequently used pages from Ensembl and elsewhere. When browsing Ensembl, you can add new bookmarks by clicking the 'Add bookmark' link in the sidebar. <a href="/info/help/custom.html#bookmarks">Learn more about saving frequently used pages &rarr;</a>) , 'user_bookmark_info');
   if ($#records > -1) {
@@ -591,7 +612,7 @@ sub _render_notes {
                       'sortable' => $note->name,
                       'shareable' => 1,
                       'absolute_url' => 'yes',
-                      'edit_url' => '/common/gene_annotation?url=/common/accountview&stable_id=' . $note->stable_id . "&id=" . $note->id, 
+                      'edit_url' => '/common/gene_annotation?url=/common/user/account&stable_id=' . $note->stable_id . "&id=" . $note->id, 
                       'delete_url' => 'remove_record',
                       'data' => [
       '<a href="/default/geneview?gene=' . $note->stable_id. '" title="' . $note->title . '">' . $note->stable_id . ': ' . $note->title . '</a>', '&nbsp;' 
@@ -838,7 +859,7 @@ sub show_groups     { _wrap_form($_[0], $_[1], 'show_groups'); }
 sub no_group {
   my( $panel, $user) = @_;
 
-  my $html = qq(<p>No group was specified. Please go back to your <a href="/common/accountview">account home page</a> and click a "Manage group"
+  my $html = qq(<p>No group was specified. Please go back to your <a href="/common/user/account">account home page</a> and click a "Manage group"
 link for a group you created.</p>);
 
   $panel->print($html);
@@ -931,7 +952,7 @@ sub group_users {
   my $html = "";
   $html .= &group_users_tabview($user, $group);
   $html .= "<br />";
-  $html .= "&larr; <a href='accountview'>Back to your account</a>";
+  $html .= "&larr; <a href='/common/user/account'>Back to your account</a>";
   $html .= "<br /><br />";
   $panel->print($html);
 }
