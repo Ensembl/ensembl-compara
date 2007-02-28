@@ -36,6 +36,7 @@ sub BUILD {
   $self->add_has_many({ class => 'EnsEMBL::Web::Object::Data::Opentab', table => 'user_record'});
   $self->add_has_many({ class => 'EnsEMBL::Web::Object::Data::Sortable', table => 'user_record'});
   $self->add_has_many({ class => 'EnsEMBL::Web::Object::Data::Mixer', table => 'user_record'});
+  $self->add_has_many({ class => 'EnsEMBL::Web::Object::Data::CurrentConfig', table => 'user_record'});
   $self->add_has_many({ class => 'EnsEMBL::Web::Object::Data::SpeciesList', table => 'user_record'});
   $self->add_has_many({ class => 'EnsEMBL::Web::Object::Data::Group', table => 'webgroup', link_table => 'group_member', });
 
