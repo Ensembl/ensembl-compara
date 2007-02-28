@@ -7,21 +7,24 @@ use warnings;
 
 use CGI;
 use EnsEMBL::Web::Object::User;
-use EnsEMBL::Web::SpeciesDefs;
 use EnsEMBL::Web::Mailer::User;
+use EnsEMBL::Web::RegObj;
+use EnsEMBL::Web::Tools::RandomString;
+use EnsEMBL::Web::Object::Data::User;
 
 my $cgi = new CGI;
 my $url = "/login.html?url=/index.html";
 
 if ($cgi->param('email')) {
-  my $user = EnsEMBL::Web::Object::User->new({ adaptor => $ENSEMBL_WEB_REGISTRY->userAdapator, email => $cgi->param('email') });
-  if ($user->id) {
+  my $reg_user = EnsEMBL::Web::Object::User->new({ adaptor => $ENSEMBL_WEB_REGISTRY->userAdaptor, email => $cgi->param('email') });
+  if ($reg_user->id) {
+    my $user = EnsEMBL::Web::Object::Data::User->new({ id => $reg_user->id }); 
     $url = "/updated_password.html?url=/index.html";
-    $user->salt($user->random_string(8));
+    $user->salt(EnsEMBL::Web::Tools::RandomString::random_string());
     $user->save;
     my $mailer = EnsEMBL::Web::Mailer::User->new();
     $mailer->email($user->email);
-    $mailer->send_reactivation_email($user->name, $user->activation_link);
+    $mailer->send_reactivation_email($user);
   } else {
     $url = "/forgotten_no_user.html?url=/index.html";
   }

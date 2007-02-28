@@ -25,22 +25,22 @@ $data->adaptor(EnsEMBL::Web::DBSQL::ViewAdaptor->new((
                                                        table  => 'group_record'
                                                     )) );
 
-my $user = EnsEMBL::Web::Object::User->new({ id => $ENV{'ENSEMBL_USER_ID'} });
-my @records = $user->find_records_by_user_record_id($cgi->param('id'));
+my $user = $ENSEMBL_WEB_REGISTRY->get_user;
+my @records = $user->find_records_by_user_record_id($cgi->param('id'), { adaptor => $ENSEMBL_WEB_REGISTRY->userAdaptor });
 my $user_record = $records[0];
 my $enumerator = "";
 foreach my $group (@{ $user->find_administratable_groups }) {
   $enumerator .= "" . $group->id . "', '";
 }
 $enumerator =~ s/, '$//;
-$data->add_field({'Field' => 'group_id', 'Type' => "enum('$enumerator')"});
+$data->add_field({'Field' => 'webgroup_id', 'Type' => "enum('$enumerator')"});
 
 $page->title('Share ' . $user_record->type);
 $page->add_text('Select a group to share your ' . $user_record->type . ' with.');
 $page->action('create');
 
 $page->data_definition($data);
-$page->on_complete("/common/accountview");
+$page->on_complete("/common/user/account");
 $page->on_error('/account/bookmark_error.html');
 $page->cancel('yes');
 
@@ -52,7 +52,7 @@ foreach my $group (@{ $user->find_administratable_groups }) {
 
 $page->add_configuration_element('type', $user_record->type);
 $page->add_configuration_element('data', $user_record->dump_data);
-$page->add_form_element('group_id', "Group", $form);
+$page->add_form_element('webgroup_id', "Group", $form);
 
 EnsEMBL::Web::Document::DataView::simple('User', $page);
 

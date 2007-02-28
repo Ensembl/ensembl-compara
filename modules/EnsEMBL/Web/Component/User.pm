@@ -373,7 +373,7 @@ sub _render_settings_table {
       }
       $html .= '<td style="text-align:right;">';
       if ($row->{'shareable'} && $is_admin) {
-        $html .= qq(<a href="/common/user/share_record?id=$id">Share</a>);
+        $html .= qq(<a href="/common/share_record?id=$id">Share</a>);
       }
       else {
         $html .= '&nbsp;';
@@ -406,7 +406,7 @@ sub _render_groups {
   my @groups = @{ $user->groups };
   my @group_rows = ();
   my %included = ();
-  my @all_groups = @{ EnsEMBL::Web::Object::Group->all_groups_by_type('restricted') };
+  my @all_groups = @{ EnsEMBL::Web::Object::Data::Group->find_all };
   $html .= &info_box($user, qq(Groups enable you to organise your saved bookmarks, notes and view configurations, and also let you share them with other users. The groups you're subscribed to are listed below. <a href="/info/help/groups.html">Learn more about creating and managing groups &rarr;</a>) , 'user_group_info');
   if ($#groups > -1) {
     $html .= "<h5>Your subscribed groups</h5>\n";
@@ -447,18 +447,17 @@ sub _render_invites_for_group {
   my $html = "";
   my $class = "";
   if ($group->type eq 'restricted') {
-    $group->load;
-    my @invites = $group->invites;
+    my @invites = @{ $group->invites };
     foreach my $invite (@invites) {
-    #  if ($invite->email eq $user->email && $invite->status eq 'pending') {
-    #    $class = "invite";
-    #    $html .= "<tr>\n";
-    #    $html .= "<td class='$class'>" . $group->name . "</td>";
-    #    $html .= "<td class='$class'>" . $group->description. "</td>";
-    #    $html .= "<td class='$class' style='text-align:right'><a href='/common/join_by_invite?record_id=" . $invite->id . "&invite=" . $invite->code . "'>Accept invite</a></td>";
-    #    $html .= "</tr>\n";
-    #    $class = "very_dark";
-    #  }
+      if ($invite->email eq $user->email && $invite->status eq 'pending') {
+        $class = "invite";
+        $html .= "<tr>\n";
+        $html .= "<td class='$class'>" . $group->name . "</td>";
+        $html .= "<td class='$class'>" . $group->blurb . "</td>";
+        $html .= "<td class='$class' style='text-align:right'><a href='/common/join_by_invite?record_id=" . $invite->id . "&invite=" . $invite->code . "'>Accept invite</a> or <a href='/common/user/remove_invite?id=" . $invite->id . "'>decline</a></td>";
+        $html .= "</tr>\n";
+        $class = "very_dark";
+      }
     }
   }
   return $html;
@@ -516,7 +515,7 @@ sub _render_bookmarks {
                       'ident' => $group->id, 
                       'sortable' => $bookmark->name,
                       'data' => [
-        '<a href="' . $bookmark->url . '" title="' . $bookmark->description . '">' . $bookmark->name . '</a>', $group->name
+      '<a href="' . $bookmark->url . '" title="' . $bookmark->description . '">' . $bookmark->name . '</a><br /><span style="font-size: 10px;">' . $bookmark->description . '</span>', $group->name 
       ]};
     }
   }

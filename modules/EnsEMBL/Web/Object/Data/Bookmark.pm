@@ -23,6 +23,7 @@ sub BUILD {
   $self->add_queriable_field({ name => 'type', type => 'text' });
   $self->type('bookmark');
   $self->add_belongs_to("EnsEMBL::Web::Object::Data::User");
+  $self->add_belongs_to("EnsEMBL::Web::Object::Data::Group");
   $self->populate_with_arguments($args);
 }
 

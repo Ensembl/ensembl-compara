@@ -77,7 +77,7 @@ sub set_clause {
   foreach $data_field (@{ $data->get_queriable_fields }) {
     if (defined $data->get_value( $data_field->get_name)) {
       if ($self->is_allowed_in_set_clause($data_field->get_name)) {
-        $sql .= $data_field->get_name . " = '" . $data->get_value( $data_field->get_name ) . "', ";
+        $sql .= $self->map_back($data_field->get_name) . " = '" . $data->get_value( $data_field->get_name ) . "', ";
       }
     }
   }
@@ -88,6 +88,14 @@ sub set_clause {
   }
   $sql =~ s/, $/ /;
   return $sql;
+}
+
+sub map_back {
+  my ($self, $field) = @_;
+  if ($field eq 'group_id') {
+    $field = 'webgroup_id';
+  }
+  return $field;
 }
 
 sub is_allowed_in_set_clause {
@@ -103,6 +111,7 @@ sub create {
   my $result = EnsEMBL::Web::DBSQL::SQL::Result->new();
   my $sql = 'INSERT INTO ' . $self->get_table . ' SET '; 
   $sql .= $self->set_clause($data);  
+  #warn "CREATE: " . $sql;
   $self->get_handle->prepare($sql);
   $result->set_action('create');
   if ($self->get_handle->do($sql)) {

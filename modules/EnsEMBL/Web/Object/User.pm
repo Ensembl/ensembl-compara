@@ -107,7 +107,6 @@ sub assign_fields {
   $Salt_of{$self} = $details->{'salt'};
   $Status_of{$self} = $details->{'status'};
   $Password_of{$self} = $details->{'password'};
-  warn "SALT FROM ASSIGN:" . $self->salt;
 }
 
 sub find_groups_by_user_id {
@@ -266,8 +265,6 @@ sub salt {
   if (@_) {
     $self->taint('user');
   }
-  warn "SALT: " . $Salt_of{$self} . ": " . caller();
-
   return $Salt_of{$self};
 }
 

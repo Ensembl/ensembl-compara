@@ -20,7 +20,7 @@ sub BUILD {
   $self->add_field({ name => 'status', type => 'text' });
   $self->add_field({ name => 'code', type => 'text' });
   $self->add_queriable_field({ name => 'type', type => 'text' });
-  $self->type('info');
+  $self->type('invite');
   $self->add_belongs_to("EnsEMBL::Web::Object::Data::Group");
   $self->populate_with_arguments($args);
 }

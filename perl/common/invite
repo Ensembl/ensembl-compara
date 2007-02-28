@@ -7,27 +7,32 @@ use EnsEMBL::Web::SpeciesDefs;
 use EnsEMBL::Web::Tools::RandomString;
 use EnsEMBL::Web::Group::Record;
 use EnsEMBL::Web::RegObj;
+use EnsEMBL::Web::Object::Data::User;
+use EnsEMBL::Web::Object::Data::Group;
+use EnsEMBL::Web::Object::Data::Invite;
+use EnsEMBL::Web::Mailer::User;
 
 use CGI;
 my $cgi = new CGI;
 
 my $url = "/common/accountview";
-my $user = $ENSEMBL_WEB_REGISTRY->get_user;
+my $reg_user = $ENSEMBL_WEB_REGISTRY->get_user;
+my $user = EnsEMBL::Web::Object::Data::User->new({ id => $reg_user->id });
 if ($user) {
-  my $group = EnsEMBL::Web::Object::Group->new(( adaptor => $ENSEMBL_WEB_REGISTRY->userAdapator, id => $cgi->param('group_id') )); 
+  my $group = EnsEMBL::Web::Object::Data::Group->new({ id => $cgi->param('group_id') });
   $url = "/common/groupview?id=" . $group->id;
   if ($cgi->param('user_id') eq $user->id) {
-    if ($user->is_administrator($group)) {
+    if ($user->is_administrator_of($group)) {
 
-      $record = EnsEMBL::Web::Record::Group->new((  adaptor => $ENSEMBL_WEB_REGISTRY->userAdapator, 
-                                                    user => $group->id, 
-                                                    type => "invite" ));
-      $record->email($cgi->param('invite_email'));
-      $record->status("pending");
-      $record->code(EnsEMBL::Web::Tools::RandomString::random_string());
-      $record->save;
-
-      $user->send_invite_email($group, $record, $cgi->param('invite_email'));
+      $invite = EnsEMBL::Web::Object::Data::Invite->new;
+   
+      $invite->group_id($group->id);
+      $invite->email($cgi->param('invite_email'));
+      $invite->status("pending");
+      $invite->code(EnsEMBL::Web::Tools::RandomString::random_string());
+      $invite->save;
+      my $mailer = EnsEMBL::Web::Mailer::User->new;
+      $mailer->send_invite_email($user, $group, $invite, $cgi->param('invite_email'));
       my $feedback = "Invitation email send to: " . $cgi->param('invite_email');
       $url .= "&feedback=" . CGI::escape($feedback); 
     } else {

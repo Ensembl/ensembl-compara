@@ -79,7 +79,7 @@ sub find_user_by_email {
     FROM ) . $self->user_table . qq(
     WHERE email = "$email"; 
   );
-  warn "SQL: " . $sql;
+  #warn "SQL: " . $sql;
 
   my $R = $self->{'_handle'}->selectall_arrayref($sql); 
   return {} unless $R->[0];
@@ -110,7 +110,7 @@ sub find_user_by_email_and_password {
     FROM ) . $self->user_table . qq(
     WHERE email = "$email" and password = "$password"; 
   );
-  warn "SQL: " . $sql;
+  #warn "SQL: " . $sql;
 
   my $R = $self->{'_handle'}->selectall_arrayref($sql); 
   return {} unless $R->[0];
@@ -389,6 +389,7 @@ sub insert_record {
         data    = "$data",
         created_at=CURRENT_TIMESTAMP
   );
+  warn "SQL: " . $sql;
   my $sth = $self->{'_handle'}->prepare($sql);
   my $result = $sth->execute();
 

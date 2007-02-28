@@ -72,6 +72,35 @@ sub send_welcome_email {
   $self->send();
 }
 
+sub send_invite_email {
+  my ($self, $user, $group, $invite, $email) = @_;
+  my $sitename = $self->site_name;
+  my $message = qq(Hello,
+
+ You have been invited by ) . $user->name . qq( to join a group
+ on the Ensembl Genome Browser.
+
+ To accept this invitation, click on the following link:
+
+ ) . $group->name . qq( 
+ ) . $self->base_url . qq(/common/accept?id=) . $invite->id . qq(
+
+ If you do not wish to accept, please just disregard this email.
+
+ If you have any problems please don't hesitate to contact ) . $user->name . qq( 
+ or the Ensembl help desk, on helpdesk\@ensembl.org.
+
+ Many thanks,
+
+ The Ensembl team
+);
+  $message .= $self->email_footer;
+  $self->email($email);
+  $self->subject("Invite to join an Ensembl group");
+  $self->message($message);
+  $self->send();
+}
+
 sub send_reactivation_email {
   my ($self, $user) = @_;
   my $sitename = $self->site_name;

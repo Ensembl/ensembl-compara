@@ -72,6 +72,9 @@ sub mapped_field {
   if ($field eq $self->get_primary_key) {
     $field = 'id';
   }
+  if ($field eq 'webgroup_id') {
+    $field = 'group_id';
+  }
   return $field;
 }
 
@@ -168,7 +171,8 @@ sub add_belongs_to {
   }
   $self->relational_class($self->object_name_from_package($arg), $arg);
   $self->add_relational_symbol_lookup($self->object_name_from_package($arg));
-  $self->add_queriable_field({ name => $self->object_name_from_package($arg) . "_id", type => 'int', queriable => 'yes' });
+  my $field = $self->object_name_from_package($arg);
+  $self->add_queriable_field({ name => $field . "_id", type => 'int', queriable => 'yes' });
   push @{ $self->get_belongs_to }, $arg;
 }
 
@@ -318,7 +322,6 @@ sub get_lazy_values {
   if (defined $self->get_value($object)) {
     return $self->get_value($object);
   }
-  #warn "Creating MANY new $attribute with class " . $class;
   my $result = $self->find_many($attribute);
   my @objects = ();
   if (EnsEMBL::Web::Root::dynamic_use(undef, $class)) {
@@ -429,7 +432,6 @@ sub find_many {
   $request->add_where($self->get_primary_key, $self->id);
   $request->set_index_by($self->relational_table($attribute) . "_id");
   #warn "INDEX BY: " . $request->get_index_by;
-  #warn $request->get_sql;
   return $self->get_adaptor->find_many($request);
 }
 
@@ -449,6 +451,22 @@ sub find_linked_many {
   $request->set_index_by($self->relational_table($attribute) . "_id");
   #warn "LINKED SQL: " . $request->get_sql;
   return $self->get_adaptor->find_many($request);
+}
+
+sub find_all {
+  my ($class, $params) = @_;
+  my $object = $class->new;
+  my $request = EnsEMBL::Web::DBSQL::SQL::Request->new();
+  $request->set_action('select');
+  $request->set_index_by($object->get_primary_key);
+  warn $request->get_sql;
+  my $result = $object->get_adaptor->find_many($request);
+  my @objects = ();
+  foreach my $id (keys %{ $result->get_result_hash }) {
+    my $new = $class->new({ id => $id });
+    push @objects, $new;
+  }
+  return \@objects;
 }
 
 # Util methods
