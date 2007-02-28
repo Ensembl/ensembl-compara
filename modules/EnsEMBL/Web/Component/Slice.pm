@@ -62,10 +62,10 @@ sub markup_and_render {
 
   my %sliceHash;
   my ($max_values, $consArray) =  markupInit($object, $sliceArray, \%sliceHash);
-  my $key_tmpl = qq(<p><code><span id="%s">%s</span></code> %s</p>\n);
+  my $key_tmpl = qq(<p><code><span class="%s">%s</span></code> %s</p>\n);
   my $KEY = '';
   
-   if( ($object->param( 'conservation' ) ne 'off')  &&  markupConservation($object, \%sliceHash, $consArray)){
+   if( ($object->param( 'conservation' ) ne 'off') && markupConservation($object, \%sliceHash, $consArray)){
        $KEY .= sprintf( $key_tmpl, 'nc', "THIS STYLE:", "Location of conserved regions (where >50% of bases in alignments match) ");
    }
 
@@ -96,7 +96,7 @@ sub markup_and_render {
   my $html = generateHTML($object, \%sliceHash, $max_values);
 
   # Add a section holding the names of the displayed slices
-  my $Chrs = "<p><table>";
+  my $Chrs = "<table>";
   foreach my $display_name (sort( $object->species, grep {$_ ne $object->species } keys %sliceHash ) ) {
     next unless  $object->species_defs->get_config($display_name, "SPECIES_ABBREVIATION");
 
@@ -119,7 +119,7 @@ sub markup_and_render {
     }
     $Chrs .= "</tr>";
   }
- $Chrs .= "</table></p>";
+ $Chrs .= "</table>";
   $panel->add_row( 'Marked up sequence', qq(
     $KEY
     $Chrs
@@ -294,7 +294,7 @@ sub generateHTML {
 	}
 	# If $display name is a strain, need to replace with the species instead for SNPview URL
 	my $link_species = $object->species_defs->get_config($display_name, "SPECIES_ABBREVIATION") ? $display_name : $object->species();
-        push @$notes, sprintf("{<a href=\"/%s/snpview?panel_individual=onsnp=%s\">base %u:%s</a>}", $link_species, $p->{snpID}, $pos, $p->{textSNP});
+        push @$notes, sprintf("{<a href=\"/%s/snpview?panel_individual=on;snp=%s\">base %u:%s</a>}", $link_species, $p->{snpID}, $pos, $p->{textSNP});
       }
 
 # And now onto the current bin
@@ -358,7 +358,7 @@ sub generateHTML {
 	    $base = $ambiguity if $ambiguity;
 	  }
           $species_html .= sprintf (qq{<span%s%s>%s</span>},
-                                $sclass ne 'mn' ? qq{ id="$sclass"} : '',
+                                $sclass ne 'mn' ? qq{ class="$sclass"} : '',
                                 $tag_title ? qq{ title="$tag_title"} : '', $base);
         } else {
           $species_html .= $sq;
@@ -632,17 +632,17 @@ sub markupCodons {
 #-----------------------------------------------------------------------------------------
 sub markupConservation {
   my ($object, $hRef, $consArray) = @_;
- 
   return unless (scalar(keys %$hRef) > 1);
-# Regions where more than 50% of bps match considered `conserved`
-  my $consThreshold = int((scalar(keys %$hRef) + 1) / 2);
 
+  # Regions where more than 50% of bps match considered `conserved`
+  my $consThreshold = int((scalar(keys %$hRef) + 1) / 2);
   my $width = $object->param("display_width") || 60;
  
-# Now for each bp in the alignment identify the nucleotides with scores above the threshold.
-# In theory the data should come from a database. 
+  # Now for each bp in the alignment identify the nucleotides with scores above the threshold.
+  # In theory the data should come from a database. 
   foreach my $nt (@$consArray) {
-    $nt->{S} = join('', grep {$nt->{$_} > $consThreshold} keys(%{$nt}));
+    #$nt->{S} = join('', grep {$nt->{$_} > $consThreshold} keys(%{$nt}));
+    $nt->{S} = join('', grep {$_ ne '~' && $nt->{$_} > $consThreshold} keys(%{$nt}));
     $nt->{S} =~ s/[-.N]//; # here we remove different representations of nucleotides from  gaps and undefined regions : 
   }
 
