@@ -5,6 +5,7 @@ use warnings;
 
 use Class::Std;
 
+use EnsEMBL::Web::RegObj;
 use base 'EnsEMBL::Web::Controller::Command::User';
 
 {

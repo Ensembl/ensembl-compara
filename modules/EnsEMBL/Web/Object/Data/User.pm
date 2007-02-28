@@ -30,6 +30,7 @@ sub BUILD {
   $self->add_has_many({ class => 'EnsEMBL::Web::Object::Data::User::Bookmark', table => 'user_record'});
   $self->add_has_many({ class => 'EnsEMBL::Web::Object::Data::User::Configuration', table => 'user_record'});
   $self->add_has_many({ class => 'EnsEMBL::Web::Object::Data::User::Annotation', table => 'user_record'});
+  $self->add_has_many({ class => 'EnsEMBL::Web::Object::Data::DAS', table => 'user_record'});
   $self->add_has_many({ class => 'EnsEMBL::Web::Object::Data::News', table => 'user_record'});
   $self->add_has_many({ class => 'EnsEMBL::Web::Object::Data::Infobox', table => 'user_record'});
   $self->add_has_many({ class => 'EnsEMBL::Web::Object::Data::Opentab', table => 'user_record'});
@@ -46,7 +47,7 @@ sub find_administratable_groups {
   my @admin = ();
   foreach my $group (@{ $self->groups }) {
     foreach my $user (@{ $group->users }) {
-      if ($user->id eq $ENSEMBL_WEB_REGISTRY->get_user->id) {
+      if ($user->id eq $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->get_user->id) {
         if ($user->level eq 'administrator') {
           push @admin, $group;
         }

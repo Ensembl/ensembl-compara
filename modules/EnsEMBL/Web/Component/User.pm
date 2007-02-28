@@ -10,6 +10,7 @@ use EnsEMBL::Web::Interface::Tab;
 use EnsEMBL::Web::Interface::Table;
 use EnsEMBL::Web::Interface::Table::Row;
 use EnsEMBL::Web::Object::Data::Group;
+use EnsEMBL::Web::RegObj;
 
 use CGI;
 
@@ -262,11 +263,13 @@ sub options_for_user {
 sub user_details {
   my ($panel) = @_;
   my $user = $panel->{user};
+
   my $html = "<div class='pale boxed'>";
   $html .= qq(This is your Ensembl account home page. From here you can manage
                 your saved settings, update your details and join or create new 
                 Ensembl groups. To learn more about how to get the most
-                from your Ensembl account, read our <a href='/info/about/accounts.html'>introductory guide</a>.);
+                from your Ensembl account, read our <a href='/info/about/accounts.html'>introductory guide</a>.<br />);
+  $html .= "&larr; <a href='javascript:void(0);' onclick='account_return();'>Return to Ensembl</a>";
   $html .= "</div>";
   $panel->print($html);
 }

@@ -604,13 +604,11 @@ sub last_inserted_id {
 sub get_user_from_cookie {
   my( $self, $arg_ref ) = @_;
   $arg_ref->{'cookie'}->retrieve($arg_ref->{'r'});
-
   my $user = EnsEMBL::Web::Object::User->new({
                adaptor => $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->userAdaptor,
                     id => $arg_ref->{'cookie'}->get_value,
                  defer => 'yes'
              });
-
   return $user;
 }
 

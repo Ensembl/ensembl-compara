@@ -110,7 +110,6 @@ sub is_asynchronous {
   my $found = 0;
   foreach my $component (@{ $self->{'asynchronous_components'} }) {
     if ($name eq $component) {
-      warn "ASYNCHRONOUS COMPONENT: " . $component;
       $found = 1;
     } 
   }

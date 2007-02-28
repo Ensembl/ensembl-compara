@@ -8,6 +8,7 @@ use EnsEMBL::Web::DBSQL::NewsAdaptor;
 use EnsEMBL::Web::DBSQL::HelpAdaptor;
 use EnsEMBL::Web::Timer;
 use EnsEMBL::Web::SpeciesDefs;
+use EnsEMBL::Web::Object::Data::User;
 
 use strict;
 use Class::Std;
@@ -48,9 +49,17 @@ sub get_das {
 ## No session so cannot have anything configured!
   my $session_das = $self->get_session->get_das;
 
+  my $user = EnsEMBL::Web::Object::Data::User->new({ id => $self->get_user->id });
+ 
+  foreach my $das (@{ $user->dases }) {
+    $Das_sources_of{ ident $self }{$das->name} = $das->get_das_config;
+    warn $Das_sources_of{ ident $self }{$das->name};
+  }
+
   foreach (keys %$session_das) {
     $Das_sources_of{ ident $self }{$_} = $session_das->{$_};
   }
+  
   return $Das_sources_of{ ident $self };
 }
 
@@ -64,6 +73,9 @@ sub get_das_filtered_and_sorted {
     map  { [ $_->get_data->{'label'}, $_ ] }
     grep { !( exists $_->get_data->{'species'} && $_->get_data->{'species'} ne $species )}
     values %{ $T||{} };
+  foreach my $thing (@T) {
+   warn "THING: " . $thing->get_data->{name};
+  }
   return \@T;
 }
 

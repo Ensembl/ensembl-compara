@@ -18,7 +18,6 @@ my %Parameters :ATTR(:set<params> :get<params>);
 sub BUILD {
   my ($self, $ident, $args) = @_;
   $self->set_url($args->{url});
-  warn "New action with URL: " . $self->get_url;
   my ($url, $params) = split(/\?/, $self->get_url);
   $self->set_params($self->parse_params($params));
   my ($trash, $base, $controller, $action, $id) = split('/', $url);
@@ -44,7 +43,6 @@ sub get_named_parameter {
 sub parse_params { 
   my ($self, $string) = @_;
   my $params = {};
-  warn "PARSING CGI PARAMS: " . $string;
   if ($string) {
     foreach my $p (split(/&|;/, $string)) {
       my ($key, $value) = split(/\=/, $p);

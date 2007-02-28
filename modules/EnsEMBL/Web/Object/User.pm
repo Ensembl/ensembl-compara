@@ -80,7 +80,7 @@ sub populate {
       $self->records(\@records);
       $self->groups($self->find_groups_by_user_id($params{'id'}, { adaptor => $self->adaptor }));
     } elsif ($params{'username'} && $params{'password'}) {
-      warn "FIND BY USERNAME AND PASSWORD: " . $self->adaptor;
+      #warn "FIND BY USERNAME AND PASSWORD: " . $self->adaptor;
       my $encrypted = $self->encrypt($params{'password'});
       my $details = $self->adaptor->find_user_by_email_and_password(( email => $params{'username'}, password => $encrypted ));
 
@@ -333,7 +333,7 @@ sub prefix {
 sub delete {
   my $self = shift;
   if ($self->id) { 
-    warn "DELETING USER: " . $self->id . ", " . $self->name;
+    #warn "DELETING USER: " . $self->id . ", " . $self->name;
     $self->adaptor->delete_user($self->id);
   }
 }
@@ -383,7 +383,7 @@ sub _activation_link {
 sub activation_link {
   my ($self) = @_;
   my $link = 'id=' . $self->id . '&code=' . $self->salt;
-  warn "LINK: " . $link;
+  #warn "LINK: " . $link;
   return $link;
 }
 
