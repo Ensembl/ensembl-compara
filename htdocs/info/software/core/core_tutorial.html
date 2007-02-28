@@ -35,9 +35,9 @@ This tutorial assumes at least some familiarity with Perl.
 <p>
 The Perl API provides a level of abstraction over the Ensembl Core
 databases and is used by the Ensembl web interface, pipeline, and
-genebuild systems.
+gene-build systems.
 To external users the API may be useful to automate the extraction of
-particular data, to customize Ensembl to fulfill a particular purpose,
+particular data, to customize Ensembl to fulfil a particular purpose,
 or to store additional data in Ensembl.
 As a brief introduction this tutorial focuses primarily on the retrieval
 of data from the Ensembl Core databases.
@@ -95,7 +95,7 @@ Learning these conventions will aid in your understanding of the code.
 </p>
 
 <p>
-Variable names are underscore separated all-lowercase words.
+Variable names are underscore-separated all lower-case words.
 </p>
 
 <pre>
@@ -111,11 +111,11 @@ Bio::EnsEMBL::Gene, Bio::EnsEMBL::Exon, Bio::EnsEMBL::Slice, Bio::EnsEMBL::DBSQL
 </pre>
 
 <p>
-Method names are entirely lowercase, underscore separated words.
+Method names are entirely lower-case, underscore separated words.
 Class names in the method are an exception to this convention; these
-words begin with an uppercase letter and are not underscore separated.
-The word dbID is another exception which denotes the unique database
-identifier of an object.
+words begin with an upper-case letter and are not underscore separated.
+The word <tt>dbID</tt> is another exception which denotes the unique
+database identifier of an object.
 No method names begin with a capital letter, even if they refer to a
 class.
 </p>
@@ -355,7 +355,7 @@ ways the Ensembl objects can be used to derive the information you want.
 
 <p>
 A Slice object represents a single continuous region of a genome.
-slices can be used to obtain sequence, features or other information
+Slices can be used to obtain sequence, features or other information
 from a particular region of interest.
 To retrieve a slice it is first necessary to get a slice adaptor.
 Here we get such an adaptor for the latest version of the Human
@@ -443,7 +443,7 @@ use Bio::EnsEMBL::Utils::Slice qw(split_Slices);
 
 my $slices = $slice_adaptor->fetch_all('chromosome');
 
-# Basepair overlap between returned slices
+# Base pair overlap between returned slices
 my $overlap = 0;
 
 # Maximum size of returned slices
@@ -508,10 +508,10 @@ slice.
 
 <p>
 In addition to locational attributes all features have internal database
-identifiers accessed via the method dbID.
+identifiers accessed via the method <code>dbID()</code>.
 All feature objects can be retrieved from their associated object
-adaptors using a slice object or the feature's internal identifer
-(dbID).
+adaptors using a slice object or the feature's internal identifier
+(<tt>dbID</tt>).
 The following example illustrates how Transcript features and
 DnaDnaAlignFeature features can be obtained from the database.
 All features in the database can be retrieved in similar ways from their
@@ -523,10 +523,10 @@ my $slice_adaptor = $registry->get_adaptor( 'Human', 'Core', 'Slice' );
 my $tr_adaptor    = $registry->get_adaptor( 'Human', 'Core', 'Transcript' );
 my $daf_adaptor = $registry->get_adaptor( 'Human', 'Core', 'DnaAlignFeature' );
 
-# Get a slice of chr20 10MB-11MB
+# Get a slice of chromosome 20, 10MB-11MB
 my $slice = $slice_adaptor->fetch_by_region( 'chromosome', '20', 10e6, 11e6 );
 
-# Fetch all of the transcripts overlapping chr20 10MB-11MB
+# Fetch all of the transcripts overlapping chromosome 20, 10MB-11MB
 my @transcripts = @{ $tr_adaptor->fetch_all_by_Slice($slice) };
 while ( my $tr = shift @transcripts ) {
     my $dbID      = $tr->dbID();
@@ -538,7 +538,7 @@ while ( my $tr = shift @transcripts ) {
     print "Transcript $stable_id [$dbID] $start-$end ($strand)\n";
 }
 
-# Fetch all of the dna-dna alignments overlapping chr20 10MB-11MB
+# Fetch all of the DNA-DNA alignments overlapping chromosome 20, 10MB-11MB
 my @dafs = @{ $daf_adaptor->fetch_all_by_Slice($slice) };
 while ( my $daf = shift @dafs ) {
     my $dbID     = $daf->dbID();
@@ -573,7 +573,7 @@ A transcript in Ensembl is a grouping of exons.
 A gene in Ensembl is a grouping of transcripts which share any
 overlapping (or partially overlapping) exons.
 Transcripts also have an associated Translation object which defines the
-UTR and and CDS composition of the transcript.
+UTR  and CDS composition of the transcript.
 Introns are not defined explicitly in the database but can be obtained
 by the Transcript method <code>get_all_Introns()</code>.
 </p>
@@ -678,7 +678,7 @@ print "Translation: ", ( defined $peptide ? $peptide->seq() : "None" ), "\n";
 Translation objects and peptide sequence can be extracted from a
 Transcript object.
 It is important to remember that some Ensembl transcripts are non-coding
-(pseudogenes, ncRNAs, etc.) and have no translation.
+(pseudo-genes, ncRNAs, etc.) and have no translation.
 The primary purpose of a Translation object is to define the CDS and
 UTRs of its associated Transcript object.
 Peptide sequence is obtained directly from a Transcript object not a
@@ -764,7 +764,7 @@ while ( my $ptranscript = shift @ptranscripts ) {
 
 <p>
 Two types of alignments are stored in the core Ensembl database:
-alignments of DNA sequence to the genome and aligments of peptide
+alignments of DNA sequence to the genome and alignments of peptide
 sequence to the genome.
 These can be retrieved as DnaDnaAlignFeatures and DnaPepAlignFeatures
 respectively.
@@ -1076,7 +1076,7 @@ The <em>length</em> of a sequence is defined as <em>end - start +
 In some rare cases inserts are specified with a start which is one
 greater than the end.
 For example a feature with a start of 10 and an end of 9 would be a zero
-length feature between basepairs 9 and 10.
+length feature between base pairs 9 and 10.
 </p>
 
 <p>
@@ -1213,7 +1213,7 @@ species using the CoordSystemAdaptor and there is also a special
 pseudo-coordinate system named <em>toplevel</em>.
 The toplevel coordinate system is not a real coordinate system, but is
 used to refer to the highest level coordinate system in a given region.
-The toplevel coordinate system is particulary useful in genomes that are
+The toplevel coordinate system is particularly useful in genomes that are
 incompletely assembled.
 For example, the latest zebrafish genome consists of a set of assembled
 chromosomes, and a set of supercontigs that are not part of any
@@ -1317,14 +1317,14 @@ printf(
 <p>
 Another method that is available on all Ensembl features is the
 <code>transfer()</code> method.
-The <code>transfer()</code> method is similar to the perviously
+The <code>transfer()</code> method is similar to the previously
 described <code>transform()</code> method, but rather than taking a
 coordinate system argument it takes a slice argument.
 This is useful when you want a feature's coordinates to be relative to a
 certain region.
 Calling <code>transform()</code> on the feature will return a copy of
 the which is shifted onto the provided slice.
-If the feature would be placed on a gap or across a cooridinate system
+If the feature would be placed on a gap or across a coordinate system
 boundary, then undef is returned instead.
 It is illegal to transfer a feature to a slice on a sequence region
 which is cannot be placed on.
