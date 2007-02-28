@@ -34,29 +34,30 @@ sub init {
     image_width    700
     context    100000
 
-    opt_align_238 off
-opt_238_Homo_sapiens on
-opt_238_Pan_troglodytes on
-opt_238_Macaca_mulatta on
-opt_238_Bos_taurus on
-opt_238_Canis_familiaris on
-opt_238_Mus_musculus on
-opt_238_Rattus_norvegicus on
+    opt_align_259 off
+opt_259_Homo_sapiens on
+opt_259_Pan_troglodytes on
+opt_259_Macaca_mulatta on
+opt_259_Bos_taurus on
+opt_259_Canis_familiaris on
+opt_259_Mus_musculus on
+opt_259_Rattus_norvegicus on
 
-    opt_align_240 off
-opt_240_Homo_sapiens on
-opt_240_Pan_troglodytes on
-opt_240_Macaca_mulatta on
-opt_240_Bos_taurus on
-opt_240_Canis_familiaris on
-opt_240_Gallus_gallus on
-opt_240_Mus_musculus on
-opt_240_Monodelphis_domestica on
-opt_240_Rattus_norvegicus on
-opt_240_constrained_elem on
-opt_240_conservation_score on
+    opt_align_261 off
+opt_261_Homo_sapiens on
+opt_261_Pan_troglodytes on
+opt_261_Macaca_mulatta on
+opt_261_Bos_taurus on
+opt_261_Canis_familiaris on
+opt_261_Gallus_gallus on
+opt_261_Mus_musculus on
+opt_261_Monodelphis_domestica on
+opt_261_Ornithorhynchus_anatinus on
+opt_261_Rattus_norvegicus on
+opt_261_constrained_elem on
+opt_261_conservation_score on
  ),
-  map {( "opt_align_$_" => "off")} (3,93,154..400)
+  map {( "opt_align_$_" => "off")} (4,93,154..400)
   );
   $script_config->storable = 1;
   $script_config->add_image_configs({qw(
