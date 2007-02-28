@@ -1302,7 +1302,8 @@ sub transcriptsnpview_menu    {
   my $individual_adaptor = $object->Obj->adaptor->db->get_db_adaptor('variation')->get_IndividualAdaptor;
   $user_config->{'snp_haplotype_reference'}    =  $individual_adaptor->get_reference_strain_name();
 
-  my $left =  [qw( Features Source SNPClasses SNPTypes Strains SNPContext THExport ImageSize )]; # removed SNPValid
+  my $strains = ucfirst($object->species_defs->translate("strain"))."s";
+  my $left =  [( 'Features', 'Source', 'SNPClasses', 'SNPTypes', "$strains", 'SNPContext', 'THExport', 'ImageSize' )]; # removed SNPValid
 
   my $mc = $object->new_menu_container(
      'configname'  => 'TSV_sampletranscript', #primary config for display
@@ -1488,7 +1489,8 @@ sub get_page_data {
 
 sub dump {
   my ( $panel, $object ) = @_;
-  $panel->print("<p>Dump of SNP data per strain (SNPs in rows, strains in columns).  For more advanced data queries use <a href='/biomart/martview'>BioMart</a>. </p>");
+  my $strain = $object->species_defs->translate("strain");
+  $panel->print("<p>Dump of SNP data per $strain (SNPs in rows, $strain","s in columns).  For more advanced data queries use <a href='/biomart/martview'>BioMart</a>. </p>");
   my $html = qq(
    <div>
      @{[ $panel->form( 'dump_form' )->render() ]}
