@@ -16,8 +16,9 @@ use Class::Std;
 my %Timer_of     :ATTR( :set<timer>    :get<timer>    );
 #-- Lazy loaded objects - these will have appropriate lazy loaders attached!
 my %DBAdaptor_of      :ATTR;
-my %WebAdaptor_of      :ATTR;
+my %WebAdaptor_of     :ATTR;
 my %SpeciesDefs_of    :ATTR;
+my %Das_sources_of    :ATTR;
 my %User_of      :ATTR( :set<user>     :get<user>     );
 my %Session_of   :ATTR( :set<session>  :get<session>  );
 my %Script_of    :ATTR( :set<script>   :get<script>   );
@@ -28,6 +29,43 @@ my %NewsAdaptor_of    :ATTR( :get<newsadaptor>    );                    # To all
 my %HelpAdaptor_of    :ATTR( :get<helpadaptor>    );                    # To allow it to be reset
 my %UserDB_of :ATTR( :get<userdb>    );                    # To allow it to be reset
 my %WebDB_of :ATTR( :get<webdb>    );                    # To allow it to be reset
+
+## DAS functionality - most of this is moved from EnsEMBL::Web::ExternalDAS which
+## will be deprecated - and now stores each source in the database separately
+## currently only works with External DAS sources - not Internally configured DAS
+## sources, making these changes should make the re-work to use registry more
+## useful - as we can add an "add_das_source_from_registry" call as well as
+## the add_das_source_from_URL and add_das_source_from_hashref
+
+sub get_das {
+### DAS
+### Retrieve all externally configured DAS sources
+### An optional "true" value forces the re-retrival of das sources, otherwise
+### retrieved from the session hash...
+  my( $self, $force ) = @_;
+## This is cached so return it unless "Force" is set to load in other stuff
+  return $Das_sources_of{ ident $self } if keys %{ $Das_sources_of{ ident $self } } && ! $force;
+## No session so cannot have anything configured!
+  my $session_das = $self->get_session->get_das;
+
+  foreach (keys %$session_das) {
+    $Das_sources_of{ ident $self }{$_} = $session_das->{$_};
+  }
+  return $Das_sources_of{ ident $self };
+}
+
+sub get_das_filtered_and_sorted {
+  my( $self, $species ) = @_;
+  my $T = $self->get_das;# "GET DAS...", warn $T;
+  warn join "\n","KEYS", keys %{$T||{}},"VALUES",values %{$T||{}};
+  my @T =
+    map  { $_->[1] }
+    sort { $a->[0] cmp $b->[0] }
+    map  { [ $_->get_data->{'label'}, $_ ] }
+    grep { !( exists $_->get_data->{'species'} && $_->get_data->{'species'} ne $species )}
+    values %{ $T||{} };
+  return \@T;
+}
 
 sub timer {
   my $self = shift;

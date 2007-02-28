@@ -547,7 +547,7 @@ sub add_das_tracks {
 
   my $image_width = $config->get('_settings', 'width') || 900;
 
-  foreach my $source ( @{$object->get_session->get_das_filtered_and_sorted( $object->species )} ) {
+  foreach my $source ( @{$EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->get_das_filtered_and_sorted( $object->species )} ) {
     my $config_key = 'managed_extdas_'.$source->get_key ;
     next unless $config->get( $config_key ,'on' ) eq 'on';
     push @das_sources, $config_key;

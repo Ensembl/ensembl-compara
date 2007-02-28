@@ -2,6 +2,7 @@ package EnsEMBL::Web::Document::DropDown::Menu::DAS;
 
 use strict;
 
+use EnsEMBL::Web::RegObj;
 use base qw( EnsEMBL::Web::Document::DropDown::Menu );
 
 sub new {
@@ -32,7 +33,7 @@ sub new {
   }
 
 #warn $self->{'object'};
-  foreach my $source (@{ $self->{'object'}->get_session->get_das_filtered_and_sorted() }) { 
+  foreach my $source (@{ $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->get_session->get_das_filtered_and_sorted( $self->{'species'} ) }) { 
     my $source_config = $source->get_data;
     my @valid_views = defined ($source_config->{enable}) ? @{$source_config->{enable}} : (defined($source_config->{on}) ? @{$source_config->{on}} : []);
     next unless grep { $_ eq $script } @valid_views ;  # skip those that not configured for this view
