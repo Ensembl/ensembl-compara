@@ -107,6 +107,9 @@ sub draw_features {
 	$zmenu->{"45:"} = '';
 	$zmenu->{"50:$ALIGNSLICEVIEW_TEXT_LINK"} = $href;
     }
+    if (defined($f->{score})) {
+        $zmenu->{"1:Score = ".$f->{score}} = '';
+    }
 
     my $id = 10; 
     my $max_contig = 250000;
@@ -203,6 +206,7 @@ sub features {
 	   'hend' => $rend,
 	   'hstrand' => $rstrand,
 	   'hseqname' => $rname,
+	   'score' => $_->score,
 	   'fragments' => $fragments
        });
     }
