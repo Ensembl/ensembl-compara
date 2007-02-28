@@ -42,6 +42,23 @@ sub draw_features {
   my $slice = $self->{'container'};
   my $wiggle_colour = "contigblue1";
   foreach my $feature ( @$block_features ) {
+
+    # render wiggle if wiggle
+    if ($wiggle) {
+      foreach my $result_set  (  @{ $feature->get_displayable_ResultSets() } ){   
+	#get features for slice and experimtenal chip set
+	my @features = @{ $result_set->get_displayable_ResultFeatures_by_Slice($slice) };
+	next unless @features;
+	
+	$drawn_wiggle_flag = "wiggle";
+	@features   = sort { $a->score <=> $b->score  } @features;
+	my ($min_score, $max_score) = ($features[0]->score || 0, $features[-1]->score|| 0);
+	$self->render_wiggle_plot(\@features, $wiggle_colour, $min_score, $max_score, $result_set->display_label);
+      }
+      $self->render_space_glyph() if $drawn_wiggle_flag;
+    }
+
+    # Block features
     foreach my $fset ( @{ $feature->get_displayable_FeatureSets() }){
       my $display_label = $fset->display_label();
       my $features = $fset->get_PredictedFeatures_by_Slice($slice ) ;
@@ -50,20 +67,6 @@ sub draw_features {
       $self->render_block_features( $features, $colour );
       $self->render_track_name($display_label, $colour);
     }
-
-    # render wiggle if wiggle
-    next unless $wiggle;
-    foreach my $result_set  (  @{ $feature->get_displayable_ResultSets() } ){   
-      #get features for slice and experimtenal chip set
-      my @features = @{ $result_set->get_displayable_ResultFeatures_by_Slice($slice) };
-      next unless @features;
-
-      $drawn_wiggle_flag = "wiggle";
-      @features   = sort { $a->score <=> $b->score  } @features;
-      my ($min_score, $max_score) = ($features[0]->score || 0, $features[-1]->score|| 0);
-      $self->render_wiggle_plot(\@features, $wiggle_colour, $min_score, $max_score, $result_set->display_label);
-    }
-    $self->render_space_glyph() if $drawn_wiggle_flag;
   }
 
   $self->render_space_glyph() if $drawn_flag;
