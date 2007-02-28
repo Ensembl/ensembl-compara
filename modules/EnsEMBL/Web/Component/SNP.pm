@@ -644,7 +644,7 @@ sub individual {
   my %columns;
   my $flag_children = 0;
 
-  foreach my $ind_id (keys %ind_data ) { 
+  foreach my $ind_id (sort { $ind_data{$a}{Name} cmp $ind_data{$b}{Name}} keys %ind_data) {
     my %ind_row;
     my $genotype = $ind_data{$ind_id}{Genotypes}; 
     next if $genotype eq '(indeterminate)';

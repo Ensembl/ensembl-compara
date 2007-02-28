@@ -294,7 +294,7 @@ sub generateHTML {
 	}
 	# If $display name is a strain, need to replace with the species instead for SNPview URL
 	my $link_species = $object->species_defs->get_config($display_name, "SPECIES_ABBREVIATION") ? $display_name : $object->species();
-        push @$notes, sprintf("{<a href=\"/%s/snpview?snp=%s\">base %u:%s</a>}", $link_species, $p->{snpID}, $pos, $p->{textSNP});
+        push @$notes, sprintf("{<a href=\"/%s/snpview?panel_individual=onsnp=%s\">base %u:%s</a>}", $link_species, $p->{snpID}, $pos, $p->{textSNP});
       }
 
 # And now onto the current bin
@@ -866,7 +866,7 @@ sub sequence_display {
     # atm, it can only be 'ins' or 'del' to indicate the type of a variation
     # in case of deletion we highlight flanked bases, and actual region where some bases are missing located at the right flank
       my $ind = ($type eq 'ins') ? $i+$j : $i+$j+1;
-      push @var_list, qq({<a href="/@{[$object->species]}/snpview?snp=$snp_id">base $ind:$title</a>});
+      push @var_list, qq({<a href="/@{[$object->species]}/snpview?panel_individual=on;snp=$snp_id">base $ind:$title</a>});
     }
       if( ! $n ){ next }
       if( $n > $linelength-$j ){ # Markup extends over line end. Trim for next
