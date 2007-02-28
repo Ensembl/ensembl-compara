@@ -69,7 +69,18 @@
 	    
 <tr>
 <td>
-<a target="ftp" href="ftp://ftp.ensembl.org/pub/current_ciona_intestinalis/"><i>Ciona intestinalis</i></a> (Sea squirt Ciona intestinalis)</td>
+<a target="ftp" href="ftp://ftp.ensembl.org/pub/current_cavia_porcellus/"><i>Cavia porcellus</i></a> (domestic guinea pig)</td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_cavia_porcellus/data/fasta/dna/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_cavia_porcellus/data/fasta/cdna/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_cavia_porcellus/data/fasta/pep/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_cavia_porcellus/data/flatfiles/embl/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_cavia_porcellus/data/flatfiles/genbank/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_cavia_porcellus/data/mysql/">FTP</a></td>
+</tr>
+	    
+<tr>
+<td>
+<a target="ftp" href="ftp://ftp.ensembl.org/pub/current_ciona_intestinalis/"><i>Ciona intestinalis</i></a> (transparent sea squirt)</td>
 <td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_ciona_intestinalis/data/fasta/dna/">FTP</a></td>
 <td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_ciona_intestinalis/data/fasta/cdna/">FTP</a></td>
 <td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_ciona_intestinalis/data/fasta/pep/">FTP</a></td>
@@ -80,7 +91,7 @@
 	    
 <tr>
 <td>
-<a target="ftp" href="ftp://ftp.ensembl.org/pub/current_ciona_savignyi/"><i>Ciona savignyi</i></a> (Sea squirt Ciona savignyi)</td>
+<a target="ftp" href="ftp://ftp.ensembl.org/pub/current_ciona_savignyi/"><i>Ciona savignyi</i></a> (Pacific sea squirt)</td>
 <td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_ciona_savignyi/data/fasta/dna/">FTP</a></td>
 <td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_ciona_savignyi/data/fasta/cdna/">FTP</a></td>
 <td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_ciona_savignyi/data/fasta/pep/">FTP</a></td>
@@ -131,6 +142,28 @@
 <td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_echinops_telfairi/data/flatfiles/embl/">FTP</a></td>
 <td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_echinops_telfairi/data/flatfiles/genbank/">FTP</a></td>
 <td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_echinops_telfairi/data/mysql/">FTP</a></td>
+</tr>
+	    
+<tr>
+<td>
+<a target="ftp" href="ftp://ftp.ensembl.org/pub/current_erinaceus_europaeus/"><i>Erinaceus europaeus</i></a> (western European hedgehog)</td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_erinaceus_europaeus/data/fasta/dna/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_erinaceus_europaeus/data/fasta/cdna/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_erinaceus_europaeus/data/fasta/pep/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_erinaceus_europaeus/data/flatfiles/embl/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_erinaceus_europaeus/data/flatfiles/genbank/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_erinaceus_europaeus/data/mysql/">FTP</a></td>
+</tr>
+	    
+<tr>
+<td>
+<a target="ftp" href="ftp://ftp.ensembl.org/pub/current_felis_catus/"><i>Felis catus</i></a> (cat)</td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_felis_catus/data/fasta/dna/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_felis_catus/data/fasta/cdna/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_felis_catus/data/fasta/pep/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_felis_catus/data/flatfiles/embl/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_felis_catus/data/flatfiles/genbank/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_felis_catus/data/mysql/">FTP</a></td>
 </tr>
 	    
 <tr>
@@ -289,13 +322,24 @@
 	    
 <tr>
 <td>
-<a target="ftp" href="ftp://ftp.ensembl.org/pub/current_tetraodon_nigroviridis/"><i>Tetraodon nigroviridis</i></a> (Fresh water pufferfish)</td>
+<a target="ftp" href="ftp://ftp.ensembl.org/pub/current_tetraodon_nigroviridis/"><i>Tetraodon nigroviridis</i></a> (freshwater pufferfish)</td>
 <td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_tetraodon_nigroviridis/data/fasta/dna/">FTP</a></td>
 <td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_tetraodon_nigroviridis/data/fasta/cdna/">FTP</a></td>
 <td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_tetraodon_nigroviridis/data/fasta/pep/">FTP</a></td>
 <td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_tetraodon_nigroviridis/data/flatfiles/embl/">FTP</a></td>
 <td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_tetraodon_nigroviridis/data/flatfiles/genbank/">FTP</a></td>
 <td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_tetraodon_nigroviridis/data/mysql/">FTP</a></td>
+</tr>
+	    
+<tr>
+<td>
+<a target="ftp" href="ftp://ftp.ensembl.org/pub/current_tupaia_belangeri/"><i>Tupaia belangeri</i></a> (northern tree shrew)</td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_tupaia_belangeri/data/fasta/dna/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_tupaia_belangeri/data/fasta/cdna/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_tupaia_belangeri/data/fasta/pep/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_tupaia_belangeri/data/flatfiles/embl/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_tupaia_belangeri/data/flatfiles/genbank/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_tupaia_belangeri/data/mysql/">FTP</a></td>
 </tr>
 	    
 <tr>
