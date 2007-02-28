@@ -105,7 +105,7 @@ sub context_menu {
   my $self = shift;
   $self->SUPER::context_menu();
   my( $p, @sec ) = $self->{object}->Locations;
-  next unless @sec;
+  return unless @sec;
   my @options;
   my $flag = "contig$self->{'flag'}";
 
@@ -133,4 +133,5 @@ sub context_menu {
 					'title' => 'ContigView - genome browser view of primary and secondary slices', 
 					'href' => $options[0]{'href'}, 'options'=> \@options );
 }
+
 1;
