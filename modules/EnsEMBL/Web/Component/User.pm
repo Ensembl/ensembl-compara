@@ -9,6 +9,7 @@ use EnsEMBL::Web::Interface::TabView;
 use EnsEMBL::Web::Interface::Tab;
 use EnsEMBL::Web::Interface::Table;
 use EnsEMBL::Web::Interface::Table::Row;
+use EnsEMBL::Web::Object::Data::Group;
 
 use CGI;
 
@@ -372,7 +373,7 @@ sub _render_settings_table {
       }
       $html .= '<td style="text-align:right;">';
       if ($row->{'shareable'} && $is_admin) {
-        $html .= qq(<a href="/common/share_record?id=$id">Share</a>);
+        $html .= qq(<a href="/common/user/share_record?id=$id">Share</a>);
       }
       else {
         $html .= '&nbsp;';
@@ -844,8 +845,9 @@ link for a group you created.</p>);
 
 sub groupview {
   my( $panel, $user) = @_;
+  warn "GROUPVIEW for: " . $user->id;
   my $webgroup_id = $user->param('webgroup_id');
-  my $group = $user->find_group_by_group_id($webgroup_id);
+  my $group = EnsEMBL::Web::Object::Data::Group->new({ id => $webgroup_id });
 
   my $group_name    = $group->name;
   my $group_blurb   = $group->blurb;
@@ -919,9 +921,11 @@ sub delete_group {
 }
 
 sub group_users {
-  my( $panel, $user) = @_;
+  my( $panel, $reg_user) = @_;
   my $cgi = new CGI;
-  my $group = EnsEMBL::Web::Object::Group->new(( id => $cgi->param('id') ));
+  my $user = EnsEMBL::Web::Object::Data::User->new({ id => $reg_user->id });
+  warn "GROUP USERS: " . $user->id;
+  my $group = EnsEMBL::Web::Object::Data::Group->new({ id => $cgi->param('id') });
   my $html = "";
   $html .= &group_users_tabview($user, $group);
   $html .= "<br />";

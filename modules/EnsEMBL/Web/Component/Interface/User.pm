@@ -70,6 +70,54 @@ sub confirm_form {
   return $form ;
 }
 
+sub password {
+  ### Panel rendering for edit_form
+  my($panel, $user) = @_;
+
+  my $html = EnsEMBL::Web::Component::Interface::_render_form($panel, 'password');
+
+  $panel->print($html);
+}
+
+sub password_form {
+  my($panel, $object) = @_;
+  my $script = EnsEMBL::Web::Component::Interface::script_name($panel, $object);
+  my $form = EnsEMBL::Web::Form->new('password', "/common/$script", 'post');
+  my $user = $panel->interface->data;
+
+  $form->add_element(
+          'type'  => 'Password',
+          'name'  => 'password',
+          'label' => 'Password',
+        );
+  $form->add_element(
+          'type'  => 'Password',
+          'name'  => 'confirm_password',
+          'label' => 'Confirm Password',
+        );
+  $form->add_element(
+          'type'  => 'Hidden',
+          'name'  => 'user_id',
+          'value' => $user->id,
+        );
+
+  $form->add_element(
+          'type'  => 'Hidden',
+          'name'  => 'id',
+          'value' => $user->id,
+        );
+
+  $form->add_element(
+          'type'  => 'Hidden',
+          'name'  => 'code',
+          'value' => $user->salt,
+        );
+  ## navigation elements
+  $form->add_element( 'type' => 'Hidden', 'name' => 'dataview', 'value' => 'save_password');
+  $form->add_element( 'type' => 'Submit', 'value' => 'Change');
+  return $form;
+}
+
 sub confirm {
   ### Panel rendering for edit_form
   my($panel, $object) = @_;
@@ -154,6 +202,15 @@ later, as it may simply be that our servers are very busy right now.</p>
 
 );
   }
+  $panel->print($html);
+}
+
+sub saved_password {
+  my( $panel, $user) = @_;
+  my $html = qq(
+<h3 class="plain">Password updated</h3>
+<p>Your Ensembl password has been updated. You can now <a href='javascript:login_link();'>login</a>.</p>
+);
   $panel->print($html);
 }
 

@@ -75,6 +75,19 @@ sub confirm {
   return undef;
 }
 
+sub password {
+  ### Creates a panel containing a record form populated with data
+  my ($self, $object, $interface) = @_;
+  if (my $panel = $self->interface_panel($interface, 'password', 'Reset your password')) {
+    $panel->add_components(qw(password  EnsEMBL::Web::Component::Interface::User::password));
+    $self->add_form($panel, qw(password EnsEMBL::Web::Component::Interface::User::password_form));
+    $self->{page}->content->add_panel($panel);
+    my $type = $object->__objecttype;
+    $self->{page}->set_title("Activate your account");
+  }
+  return undef;
+}
+
 sub activate {
   ## Checks that passwords match, are more than 6 characters long and have at least 1 digit
   my ($self, $object, $interface) = @_;
@@ -91,21 +104,15 @@ sub activate {
   }
   else {
     if ($object->param('user_id') && $object->param('salt') && $object->param('password')) {
-
-      $interface->data->populate($object->param('user_id'));
-      my $password = $object->param('password');
-      my $salt = $interface->data->salt;
-      my $encrypted = EnsEMBL::Web::Tools::Encryption::encryptPassword($password, $salt); 
-      $interface->data->password($encrypted);
-      my $success = $interface->data->save;
-
+      my %save = %{ $self->update_password($object, $interface) };
+      my $success = $save{success};
       if ($success) {
         $interface->data->status('active');
         $success = $interface->data->save;
       }
 
       if ($success) {
-        $url = "/common/$script?dataview=success;user_id=".$interface->data->id.';key='.$encrypted;
+        $url = "/common/$script?dataview=success;user_id=".$interface->data->id.';key='.$save{encrypted_password};
       }
       else {
         $url = "/common/$script?dataview=failure";
@@ -116,6 +123,34 @@ sub activate {
     }
   }
   return $url; 
+}
+
+sub save_password {
+  my ($self, $object, $interface) = @_;
+  my $script = $interface->script_name || $object->script;
+  my %save = %{ $self->update_password($object, $interface) };
+  my $success = $save{success};
+  my $url = undef;
+  if ($success) {
+    $url = "/common/$script?dataview=success;id=".$interface->data->id.';code='.$interface->data->salt;
+  }
+  else {
+    $url = "/common/$script?dataview=failure";
+  }
+  return $url;
+}
+
+sub update_password {
+  my ($self, $object, $interface) = @_;
+  $interface->data->populate($object->param('user_id'));
+  my $password = $object->param('password');
+  my $salt = $interface->data->salt;
+  my $encrypted = EnsEMBL::Web::Tools::Encryption::encryptPassword($password); 
+  $interface->data->password($encrypted);
+  my $success = $interface->data->save;
+  warn "ENC: " . $encrypted;
+  warn "SUCCESS: " . $success;
+  return { success => $success, encrypted_password => $encrypted };
 }
 
 sub password_error {

@@ -44,17 +44,17 @@ sub get_named_parameter {
 sub parse_params { 
   my ($self, $string) = @_;
   my $params = {};
+  warn "PARSING CGI PARAMS: " . $string;
   if ($string) {
-    if ($string =~ /&/) {
-      foreach my $p (split(/&/, $string)) {
-        my ($key, $value) = split(/\=/, $p);
-        $params->{$key} = $value;
-      }
-    } else {
-      my $cgi = new CGI;
-      foreach my $key (keys %{ $cgi->Vars }) {
-        $params->{$key} = $cgi->param($key);
-      }
+    foreach my $p (split(/&|;/, $string)) {
+      my ($key, $value) = split(/\=/, $p);
+      $params->{$key} = $value;
+    }
+  } else {
+    my $cgi = new CGI;
+    foreach my $key (keys %{ $cgi->Vars }) {
+      warn "CHECKING: " . $key;
+      $params->{$key} = $cgi->param($key);
     }
   }
   return $params;

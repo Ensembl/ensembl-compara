@@ -11,9 +11,12 @@ our @ISA = qw(EnsEMBL::Web::Controller::Command::Filter);
 {
 
 sub user {
-  my $self = shift;
-  my $reg_user = $ENSEMBL_WEB_REGISTRY->get_user;
-  return EnsEMBL::Web::Object::Data::User->new({ id => $reg_user->id });
+  my ($self, $id) = @_;
+  my $get_id = $id;
+  if (!$id) {
+    my $get_id = $ENSEMBL_WEB_REGISTRY->get_user->id;
+  }
+  return EnsEMBL::Web::Object::Data::User->new({ id => $get_id });
 }
 
 sub inherit {

@@ -15,6 +15,7 @@ use EnsEMBL::Web::Controller::Command::Filter::Authentication;
 use EnsEMBL::Web::Controller::Command::Filter::Ajax;
 use EnsEMBL::Web::Controller::Command::Filter::DataUser;
 use EnsEMBL::Web::Controller::Command::Filter::Redirect;
+use EnsEMBL::Web::Controller::Command::Filter::ActivationCode;
 
 use Class::Std;
 

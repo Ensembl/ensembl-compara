@@ -7,6 +7,8 @@ use Class::Std;
 
 {
 
+my %Action :ATTR(:get<action> :set<action>);
+
 sub redirect {
   return undef;
 }
@@ -21,6 +23,10 @@ sub header {
 
 sub allow {
   return 1;
+}
+
+sub message {
+  return "";
 }
 
 }

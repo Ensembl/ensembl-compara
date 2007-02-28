@@ -2,6 +2,7 @@ package EnsEMBL::Web::Tools::Encryption;
 
 use strict;
 use warnings;
+use Digest::MD5 qw(md5 md5_hex md5_base64);
 
 {
 
@@ -27,7 +28,7 @@ sub decryptID {
 
 sub encryptPassword {
   my ($password, $salt) = @_;
-  return Digest::MD5->new->add($password.$salt)->hexdigest();
+  return md5_hex($password);
 }
 
 }

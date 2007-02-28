@@ -6,6 +6,7 @@ use warnings;
 use Digest::MD5 qw(md5_hex);
 
 use EnsEMBL::Web::Record::User;
+use EnsEMBL::Web::Tools::Encryption;
 use EnsEMBL::Web::Object::Group;
 
 our @ISA = qw(EnsEMBL::Web::Record);
@@ -79,6 +80,7 @@ sub populate {
       $self->records(\@records);
       $self->groups($self->find_groups_by_user_id($params{'id'}, { adaptor => $self->adaptor }));
     } elsif ($params{'username'} && $params{'password'}) {
+      warn "FIND BY USERNAME AND PASSWORD: " . $self->adaptor;
       my $encrypted = $self->encrypt($params{'password'});
       my $details = $self->adaptor->find_user_by_email_and_password(( email => $params{'username'}, password => $encrypted ));
 
@@ -105,6 +107,7 @@ sub assign_fields {
   $Salt_of{$self} = $details->{'salt'};
   $Status_of{$self} = $details->{'status'};
   $Password_of{$self} = $details->{'password'};
+  warn "SALT FROM ASSIGN:" . $self->salt;
 }
 
 sub find_groups_by_user_id {
@@ -263,6 +266,8 @@ sub salt {
   if (@_) {
     $self->taint('user');
   }
+  warn "SALT: " . $Salt_of{$self} . ": " . caller();
+
   return $Salt_of{$self};
 }
 
@@ -381,6 +386,7 @@ sub _activation_link {
 sub activation_link {
   my ($self) = @_;
   my $link = 'id=' . $self->id . '&code=' . $self->salt;
+  warn "LINK: " . $link;
   return $link;
 }
 
@@ -392,7 +398,8 @@ sub web_user_db {
 sub encrypt {
   ### x
   my ($self, $data) = @_;
-  return md5_hex($data);
+  my $encrypted = EnsEMBL::Web::Tools::Encryption::encryptPassword($data);
+  return $encrypted; 
 }
 
 sub can {

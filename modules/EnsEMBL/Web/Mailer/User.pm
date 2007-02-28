@@ -73,10 +73,10 @@ sub send_welcome_email {
 }
 
 sub send_reactivation_email {
-  my ($self, $name, $link) = @_;
+  my ($self, $user) = @_;
   my $sitename = $self->site_name;
   my $message = qq(
-Hello ) . $name . qq(,
+Hello ) . $user->name . qq(,
 
 We have received a request to change your Ensembl account password. If you
 submitted this request, click on the link below to update your password. If
@@ -84,7 +84,7 @@ not, please disregard this email.
 
 );
 
-  $message .= $self->activation_link($link);
+  $message .= $self->activation_link('id=' . $user->id . "&code=" . $user->salt);
 
   $message .= $self->email_footer;
   $self->subject("Your $sitename account");
@@ -94,7 +94,7 @@ not, please disregard this email.
 
 sub activation_link {
   my ($self, $link) = @_;
-  my $return_link = $self->base_url . '/common/activate?' . $link;
+  my $return_link = $self->base_url . '/common/user/reset_password?' . $link;
   return $return_link;
 }
 
