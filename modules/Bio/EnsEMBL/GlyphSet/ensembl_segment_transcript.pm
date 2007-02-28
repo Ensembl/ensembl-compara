@@ -123,7 +123,7 @@ sub static_zmenu {
   my $gid = $gene->stable_id();
   my $id   = $transcript->external_name() eq '' ? $tid : ( $transcript->external_db.": ".$transcript->external_name() );
   my $zmenu = {
-    'caption'                       => "Ensembl Gene",
+    'caption'                       => "Ig segment: ".$transcript->biotype,
     "00:$id"			=> "",
     "01:Gene:$gid"                  => "/@{[$self->{container}{_config_file_name_}]}/geneview?gene=$gid;db=core",
     "02:Transcr:$tid"    	        => "/@{[$self->{container}{_config_file_name_}]}/transview?transcript=$tid;db=core",                	
@@ -147,7 +147,7 @@ sub gene_zmenu {
   my $gid = $gene->stable_id();
   my $id   = $gene->external_name() eq '' ? $gid : ( $gene->external_db.": ".$gene->external_name() );
   my $zmenu = {
-    'caption'                       => "Ensembl Gene",
+    'caption'                       => "IG segment: ".$gene->biotype,
     "01:Gene:$gid"                  => "/@{[$self->{container}{_config_file_name_}]}/geneview?gene=$gid;db=core",
   };
   $zmenu->{'05:Gene SNP view'}= "/@{[$self->{container}{_config_file_name_}]}/genesnpview?gene=$gid;db=core" if $ENV{'ENSEMBL_SCRIPT'} =~ /snpview/;

@@ -31,11 +31,14 @@ sub _init {
     return;
   }
 
-  my $db_type = $self->my_config('db_type');
-  my $db = $slice->adaptor->db->get_db_adaptor($db_type);
-  if(!$db) {
-    warn("Cannot connect to $db_type db");
-    return [];
+  my $db = undef;
+  my $db_type = $self->my_config('db_type')||'compara';
+  unless($slice->isa("Bio::EnsEMBL::Compara::AlignSlice::Slice")) {
+    $db = $slice->adaptor->db->get_db_adaptor($db_type);
+    if(!$db) {
+      warn("Cannot connect to $db_type db");
+      return [];
+    }
   }
 
 
