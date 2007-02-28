@@ -5,7 +5,26 @@ package accountview;
 use strict;
 use warnings;
 
+use EnsEMBL::Web::RegObj;
 use CGI;
+
+warn "SETTING COOKIE: " . $ENV{HTTP_REFERER};
+
+my $SD = $ENSEMBL_WEB_REGISTRY->species_defs;
+
+my $cookie = CGI::Cookie->new(
+  -name    => 'ENSEMBL_USER_REFERER',
+  -value   => $ENV{HTTP_REFERER}, 
+  -domain  => $SD->ENSEMBL_COOKIEHOST,
+  -path    => "/",
+  -expires => "Monday, 31-Dec-2037 23:59:59 GMT"
+);
+
+my $r = Apache2::RequestUtil->request();
+
+$r->headers_out->add(     'Set-cookie' => $cookie );
+$r->err_headers_out->add( 'Set-cookie' => $cookie );
+
 CGI::redirect('/common/user/account');
 
 1;

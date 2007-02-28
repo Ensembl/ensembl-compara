@@ -68,7 +68,7 @@ EnsEMBL::Web::Document::DataView::simple('User', $page);
   $record->status('accepted');
   $record->save;
 
-  my $url = "/common/accountview";
+  my $url = "/common/user/account";
   CGI::redirect($url);
 }
 

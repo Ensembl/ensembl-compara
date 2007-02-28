@@ -38,7 +38,7 @@ if ($cgi->param('id')) {
   $data->populate($cgi->param('id'));
   $page->title('Edit bookmark');
   $page->action('edit');
-  $page->on_complete('/common/accountview');
+  $page->on_complete('/common/user/account');
 } else {
   $page->title('Add bookmark');
   $page->action('create');

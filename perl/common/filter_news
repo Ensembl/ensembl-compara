@@ -44,8 +44,8 @@ else {
 }
 $sp_types = "set($sp_values)";
 
-$page->on_complete('/common/accountview');
-$page->on_error('/common/accountview');
+$page->on_complete('/common/user/account');
+$page->on_error('/common/user/account');
 
 $data->add_field({'Field' => 'species', 'Type' => $sp_types});
 $data->add_field({'Field' => 'created_at', 'Type' => 'timestamp'});

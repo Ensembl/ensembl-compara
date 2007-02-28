@@ -37,7 +37,7 @@ $data->add_field({'Field' => 'modified_at', 'Type' => 'timestamp'});
 $data->populate($cgi->param('id'));
 $page->title('Edit configuration');
 $page->action('edit');
-$page->on_complete('/common/accountview');
+$page->on_complete('/common/user/account');
 
 $page->data_definition($data);
 $page->on_error('/account/bookmark_error.html');

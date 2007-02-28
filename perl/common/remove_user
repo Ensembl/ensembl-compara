@@ -10,7 +10,7 @@ use EnsEMBL::Web::Object::Group;
 
 use CGI;
 my $cgi = new CGI;
-my $url = "/common/accountview";
+my $url = "/common/user/account";
 my $user = $ENSEMBL_WEB_REGISTRY->get_user;
 if ($user) {
   

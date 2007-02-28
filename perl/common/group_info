@@ -39,7 +39,7 @@ $page->action('edit');
 $page->add_display_element('blurb', "Description");
 $page->add_display_element('type', "Type");
 
-$page->footer('<a href="/common/accountview">&larr; Back to account</a>');
+$page->footer('<a href="/common/user/account">&larr; Back to account</a>');
 
 EnsEMBL::Web::Document::DataView::simple('User', $page);
 

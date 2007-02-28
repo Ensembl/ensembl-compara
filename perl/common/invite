@@ -15,7 +15,7 @@ use EnsEMBL::Web::Mailer::User;
 use CGI;
 my $cgi = new CGI;
 
-my $url = "/common/accountview";
+my $url = "/common/user/account";
 my $reg_user = $ENSEMBL_WEB_REGISTRY->get_user;
 my $user = EnsEMBL::Web::Object::Data::User->new({ id => $reg_user->id });
 if ($user) {

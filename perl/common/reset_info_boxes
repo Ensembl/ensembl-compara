@@ -23,7 +23,7 @@ if ($user) {
   }  
 }
 
-my $url = "/common/accountview";
+my $url = "/common/user/account";
 
 CGI::redirect($url);
 
