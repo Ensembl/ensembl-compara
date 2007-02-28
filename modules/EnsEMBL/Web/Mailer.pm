@@ -97,11 +97,13 @@ sub base_url {
 sub send {
   my $self = shift;
   my $mailer = new Mail::Mailer 'smtp', Server => $self->mail_server;
+  my $time = localtime;
   $mailer->open({
                 'To'      => $self->email,
                 'From'    => $self->from,
                 'Reply-To'=> $self->reply_to,
-                'Subject' => $self->subject
+                'Subject' => $self->subject,
+                'Date'    => $time 
                 });
   print $mailer $self->message;
   $mailer->close();
