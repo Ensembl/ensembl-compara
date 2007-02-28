@@ -138,6 +138,9 @@ sub show_news {
   my $rel_selected = $object->param('release_id') || $object->param('rel');
 
   if ($rel_selected && $rel_selected ne 'all') {
+    if ($rel_selected eq 'current') {
+      $rel_selected = $object->species_defs->ENSEMBL_VERSION; 
+    }
     $html .= "<h2>Release $rel_selected</h2>";
   }
 
