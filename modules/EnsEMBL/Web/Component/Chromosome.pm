@@ -156,6 +156,14 @@ sub change_chr_form {
   my @chrs = chr_list($object);
   my $chr_name = $object->chr_name;
 
+  if ($script eq 'syntenyview') {
+    $form->add_element(
+      'type'  => 'Hidden',
+      'name'  => 'otherspecies',
+      'value' => $object->param('otherspecies'),
+    );
+  }
+
   $form->add_element(
     'type'     => 'DropDown',
     'select'   => 'select',
