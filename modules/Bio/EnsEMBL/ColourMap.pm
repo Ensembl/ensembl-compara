@@ -31,11 +31,11 @@ sub new {
     'ensembl_projection_pseudogene_NOVEL',        => [ 'darkolivegreen3', 'Pseudogene projection' ],
   );
   $self->colourSet( 'ensembl_segment',
-    'ensembl_segment_C_segment_KNOWN',         => [ 'red3',       'Known C segment' ],
-    'ensembl_segment_V_segment_KNOWN',         => [ 'indianred3', 'Known V segment' ],
-    'ensembl_segment_V_segment_NOVEL',         => [ 'red4',       'Known V segment' ],
-    'ensembl_segment_D_segment_KNOWN',         => [ 'indianred2', 'Known D segment' ],
-    'ensembl_segment_J_segment_KNOWN',         => [ 'salmon',     'Known J segment' ],
+    'ensembl_segment_C_segment_KNOWN',         => [ 'darkorange3', 'Known C segment' ], #Translate
+    'ensembl_segment_V_segment_KNOWN',         => [ 'darkorange4', 'Known V segment' ], #Translate
+    'ensembl_segment_V_segment_NOVEL',         => [ 'chocolate4',  'Novel V segment' ], #Translate
+    'ensembl_segment_D_segment_KNOWN',         => [ 'peru',        'Known D segment' ],
+    'ensembl_segment_J_segment_KNOWN',         => [ 'tan2',        'Known J segment' ],
   );
 
   my %core = (
