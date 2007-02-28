@@ -1022,7 +1022,7 @@ sub print_DBEntries
 
 my $gene_adaptor = $registry->get_adaptor( 'Human', 'Core', 'Gene' );
 
-# Get  the 'COG6' gene from human
+# Get the 'COG6' gene from human
 my $gene = $gene_adaptor->fetch_by_display_label('COG6');
 
 print "GENE ", $gene->stable_id(), "\n";
@@ -1385,7 +1385,7 @@ argument and returns a reference to a list of ProjectionSegment objects.
 A projection segment has three attributes, accessible by the
 methods <code>from_start()</code>, <code>from_end()</code>,
 <code>to_Slice()</code>.
-The <code>from_start()</code> and <code>from_end</code> methods return
+The <code>from_start()</code> and <code>from_end()</code> methods return
 integers representing the part of the feature or slice that is used to
 form that part of the projection.
 The <code>to_Slice()</code> method returns a slice object representing
