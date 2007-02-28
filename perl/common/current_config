@@ -12,22 +12,24 @@ use CGI;
 
 my $cgi = new CGI;
 my $url = $cgi->param('url');
-my $user = $ENSEMBL_WEB_REGISTRY->get_user; 
+my $reg_user = $ENSEMBL_WEB_REGISTRY->get_user; 
 
-if ($user) {
-
-  my $found = 0;
-  my $record = undef;
-  foreach my $this ($user->current_config_records) {
-    $record = $this;
+if ($reg_user) {
+  my $user = EnsEMBL::Web::Object::Data::User->new({ id => $reg_user->id });
+  warn "USER: " . $user->name;
+  my $current = undef;
+  foreach my $this (@{ $user->currentconfigs }) {
+    $current= $this;
   }
 
-  if (!$record) {
-    $record = EnsEMBL::Web::Record::User->new(( adaptor => $ENSEMBL_WEB_REGISTRY->userAdapator, type => 'current_config', user => $user->id));
+  if (!$current) {
+    $current= EnsEMBL::Web::Object::Data::CurrentConfig->new();
   }
+
   if ($cgi->param('id')) {
-    $record->config($cgi->param('id'));
-    $record->save;
+    $current->config($cgi->param('id'));
+    $current->user_id($user->id);
+    $current->save;
   }
 
 }
