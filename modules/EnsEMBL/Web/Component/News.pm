@@ -164,7 +164,7 @@ sub show_news {
   my $cats = $object->all_cats;
   my %cat_lookup;
   foreach my $cat_array (@$cats) {
-    $cat_lookup{$$cat_array{'news_cat_id'}} = $$cat_array{'news_cat_name'};
+    $cat_lookup{$$cat_array{'news_category_id'}} = $$cat_array{'news_category_name'};
   }
   my $spp = $object->all_spp;
   my %sp_lookup = %$spp;
@@ -205,7 +205,7 @@ sub show_news {
       my $rel_date = $rel_lookup{$release_id};
       $rel_date =~ s/.*\(//g;
       $rel_date =~ s/\)//g;
-      my $news_cat_id = $item{'news_cat_id'};
+      my $news_cat_id = $item{'news_category_id'};
       my $cat_name = $cat_lookup{$news_cat_id};
       my $species = $item{'species'};
       my $sp_count = $item{'sp_count'};
