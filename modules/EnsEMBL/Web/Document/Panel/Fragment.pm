@@ -66,14 +66,14 @@ sub placeholder {
         my $result = &$command($self, $self->{'object'});
         use strict 'refs';
         $html .= CGI::unescape($self->html);
+      }
+      $html .= "</div>";
+      $html .= "<div id='" . $self->code . "_update' style='width: " . $width . "px; text-align: center; margin: 0 auto;'>";
+      $html .= "<div style='background: #efefef; border-top: 1px solid #666; padding: 10px;'>";
+      $html .= "Loading...";
+      $html .= "</div>\n";
     }
-    $html .= "</div>";
-    $html .= "<div id='" . $self->code . "_update' style='width: " . $width . "px; text-align: center; margin: 0 auto;'>";
-    $html .= "<div style='background: #efefef; border-top: 1px solid #666; padding: 10px;'>";
-    $html .= "Loading...";
     $html .= "</div>\n";
-    $html .= "</div>\n";
-    }
   }
   $html .= "<div class='$class' style='display: none;' id='" . $self->code . "_json'>";
   $html .= $self->json;
@@ -206,7 +206,7 @@ sub loading_animation {
   my $self = shift;
   my $html = "";
   if (!$self->panel_is_closed) {
-    $html .= " <img src='/img/ajax-loader.gif' width='16' height='16' alt='(" . $self->status . ")'/ >";
+    $html .= sprintf ' <img src="/img/ajax-loader.gif" width="16" height="16" alt="(%s)" />', $self->status;
   }
   return $html;
 }

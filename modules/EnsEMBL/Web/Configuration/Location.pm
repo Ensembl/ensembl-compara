@@ -609,7 +609,7 @@ sub contigview {
                                 loading => 'yes',
                                 display => 'on',
                                            @common);
-    warn "ADDING AJAX FRAGMENT: " . $view_fragment;
+    #warn "ADDING AJAX FRAGMENT: " . $view_fragment;
     $view_fragment->add_components(qw(
       config EnsEMBL::Web::Component::Location::contigviewbottom_config
       menu   EnsEMBL::Web::Component::Location::contigviewbottom_menu

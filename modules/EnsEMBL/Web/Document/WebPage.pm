@@ -505,7 +505,6 @@ sub wrapper {
 
   my $self = __PACKAGE__->new( %new_params );
   $self->{'subtype'} = $params{'subtype'} if exists $params{'subtype'};
-warn $self->{'subtype'};
   if( $self->has_a_problem ) {
       
     $self->render_error_page;

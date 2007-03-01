@@ -91,6 +91,7 @@ sub render_js_old {
 
 sub render_js {
   my $self = shift;
+  return $self->render_js_old;
   return qq(
   <div id='menu_container'></div>
   <div id='menu_code' style='display: none;'>
@@ -119,7 +120,7 @@ sub render_LINK {
   my $self = shift;
   return $self->{'LINK'} if $self->{'LINK'};
   my $T = $self->_fields();
-  return $self->{'LINK'} = join '', map { qq($_=@{[CGI::escape($T->{$_})]}&) } keys %$T;
+  return $self->{'LINK'} = join '', map { qq($_=@{[CGI::escape($T->{$_})]};) } keys %$T;
 }
 
 sub _fields{

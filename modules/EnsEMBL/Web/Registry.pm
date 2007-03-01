@@ -73,9 +73,9 @@ sub get_das_filtered_and_sorted {
     map  { [ $_->get_data->{'label'}, $_ ] }
     grep { !( exists $_->get_data->{'species'} && $_->get_data->{'species'} ne $species )}
     values %{ $T||{} };
-  foreach my $thing (@T) {
-   warn "THING: " . $thing->get_data->{name};
-  }
+#  foreach my $thing (@T) {
+#   warn "THING: " . $thing->get_data->{name};
+#  }
   return \@T;
 }
 
