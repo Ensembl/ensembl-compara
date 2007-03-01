@@ -101,7 +101,7 @@ lot faster.</p>
 <ol>
 <li><p>
   Download the Apache2 source tarball from <a href="http://httpd.apache.org/dist/httpd/" target="_blank">http://httpd.apache.org/dist/httpd/</a>. Get the current stable
-version - at the time of writing, this is 2.2.3, and the file to download is httpd-2.2.3.tar.gz.
+version - at the time of writing, this is 2.2.4, and the file to download is httpd-2.2.4.tar.gz.
 </p></li>
 <li>
   <p>Download the mod_perl source from <a href="http://www.cpan.org/modules/by-module/Apache2/" target="_blank">http://www.cpan.org/modules/by-module/Apache2/</a> . Again, get
@@ -110,9 +110,9 @@ the latest version, currently this is 2.0.3 and the file to download is mod_perl
 </li>
 <li>
   <p>Unpack all the sources in a working directory with:</p>
-  <kbd>tar zxf httpd-2.2.3.tar.gz<br />
+  <kbd>tar zxf httpd-2.2.4.tar.gz<br />
   tar zxf mod_perl-2.0.3.tar.gz | tar xvf -<br />
-  cd httpd-2.2.3<br />
+  cd httpd-2.2.4<br />
   ./configure --enable-deflate --prefix=<em>Apache directory</em><br />
   cd ../mod_perl-2.0.3</kbd>
   <p>The httpd.conf files etc assume you install this in an apache2 subdirectory of your websites server root.</p>
@@ -150,7 +150,7 @@ current at the time of writing - you should install whatever is the latest versi
   <tr>
     <th>CGI</th>
     <td><p>Enables Perl scripts to easily parse cgi</p>
-    <p><a href="http://www.cpan.org/modules/by-module/CGI/CGI.pm-3.25.tar.gz">http://www.cpan.org/modules/by-module/CGI/CGI.pm-3.25.tar.gz</a><br />
+    <p><a href="http://www.cpan.org/modules/by-module/CGI/CGI.pm-3.27.tar.gz">http://www.cpan.org/modules/by-module/CGI/CGI.pm-3.27.tar.gz</a><br />
       NOTE: you need to install the latest version to make sure it is compatible with mod_perl2</p></td>
   </tr>
   <tr>
@@ -159,20 +159,25 @@ current at the time of writing - you should install whatever is the latest versi
       <p><a href="http://www.cpan.org/modules/by-module/Compress/Compress-Zlib-1.34.tar.gz">http://www.cpan.org/modules/by-module/Compress/Compress-Zlib-1.34.tar.gz</a></p></td>
   </tr>
   <tr>
+    <th>Compress::Raw::Zlib</th>
+    <td><p>A compression module for Mart.</p>
+      <p><a href="http://www.cpan.org/modules/by-module/Compress/Compress-Raw-Zlib-2.003.tar.gz">http://www.cpan.org/modules/by-module/Compress/Compress-Raw-Zlib-2.003.tar.gz</a></p></td>
+  </tr>
+  <tr>
     <th>DBI</th>
     <td><p>A common database interface for Perl</p>
-      <p><a href="http://www.cpan.org/modules/by-module/DBI/DBI-1.47.tar.gz">http://www.cpan.org/modules/by-module/DBI/DBI-1.47.tar.gz</a></p></td>
+      <p><a href="http://www.cpan.org/modules/by-module/DBI/DBI-1.54.tar.gz">http://www.cpan.org/modules/by-module/DBI/DBI-1.54.tar.gz</a></p></td>
   </tr>
   <tr>
     <th>DBD::Mysql</th>
     <td><p>The MySQL drivers for the DBI interface</p>
-      <p><a href="http://www.cpan.org/modules/by-module/DBD/Msql-Mysql-modules-1.2219.tar.gz">http://www.cpan.org/modules/by-module/DBD/Msql-Mysql-modules-1.2219.tar.gz</a></p></td>
+      <p><a href="http://www.cpan.org/modules/by-module/DBD/DBD-mysql-4.001.tar.gz">http://www.cpan.org/modules/by-module/DBD/DBD-mysql-4.001.tar.gz</a></p></td>
   </tr>
   <tr>
     <th>GD</th>
     <td><p>A Graphics library</p>
       <p>Note: may require additional modules. Please read install docs.</p>
-      <p><a href="http://www.cpan.org/modules/by-module/GD/GD-2.21.tar.gz">http://www.cpan.org/modules/by-module/GD/GD-2.21.tar.gz</a></p></td>
+      <p><a href="http://www.cpan.org/modules/by-module/GD/GD-2.35.tar.gz">http://www.cpan.org/modules/by-module/GD/GD-2.35.tar.gz</a></p></td>
   </tr>
   <tr>
     <th>ParallelUserAgent</th>
@@ -180,9 +185,9 @@ current at the time of writing - you should install whatever is the latest versi
       <p><a href="http://www.cpan.org/modules/by-module/LWP/ParallelUserAgent-2.57.tar.gz">http://www.cpan.org/modules/by-module/LWP/ParallelUserAgent-2.57.tar.gz</a></p></td>
   </tr>
   <tr>
-    <th>Bio::DasLite</th>
+    <th>Bio::Das::Lite</th>
     <td><p>Lightweight DAS fetcher</p>
-      <p><a href="http://www.cpan.org/modules/by-module/Bio/Bio-DasLite-0.10.tar.gz">http://www.cpan.org/modules/by-module/Bio/Bio-DasLite-0.10.tar.gz</a></p></td>
+      <p><a href="http://www.cpan.org/modules/by-module/Bio/Bio-Das-Lite-1.48.tar.gz">http://www.cpan.org/modules/by-module/Bio/Bio-Das-Lite-1.48.tar.gz</a></p></td>
   </tr>
   <tr>
     <th>Data::UUID</th>
@@ -203,7 +208,7 @@ current at the time of writing - you should install whatever is the latest versi
     <th>LWP</th>
     <td><p>used by DAS to communicate with DAS sources</p>
       <p>Note: may require additional modules. Please read install docs.</p>
-      <p><a href="http://www.cpan.org/modules/by-module/LWP/libwww-perl-5.803.tar.gz">http://www.cpan.org/modules/by-module/LWP/libwww-perl-5.803.tar.gz</a></p></td>
+      <p><a href="http://www.cpan.org/modules/by-module/LWP/libwww-perl-5.805.tar.gz">http://www.cpan.org/modules/by-module/LWP/libwww-perl-5.805.tar.gz</a></p></td>
   </tr>
   <tr>
     <th>SOAP::Lite</th>
@@ -219,7 +224,7 @@ first:</p>
 <p>Download the expat source from http://sourceforge.net/projects/expat/. Get the
 latest version (currently expat-1.95.8.tar.gz). Run the following commands:</p>
   <kbd>
-gunzip < expat-1.95.8.tar.gz | tar xvf -<br />
+gunzip &lt; expat-1.95.8.tar.gz | tar xvf -<br />
 cd expat-1.95.8<br />
 ./configure<br />
 make<br />
@@ -329,7 +334,7 @@ make install
   </tr>
   <tr>
     <th>Class::Std</th>
-    <td><p>Used by BioMart</p>
+    <td><p>Used by BioMart and new session code</p>
     <p><a href="http://www.cpan.org/modules/by-modules/Class/Class-Std-v0.0.8.tar.gz">http://www.cpan.org/modules/by-modules/Class/Class-Std-v0.0.8.tar.gz</a></p></td>
   </tr>
   <tr>
