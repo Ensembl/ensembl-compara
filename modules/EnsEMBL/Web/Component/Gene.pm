@@ -720,7 +720,7 @@ sub get_HGNC_synonyms {
      my ($key, $text)= @$link;
      if ($key =~/HGNC/){
        my $temp = $text;
-       $text =~s/\<div\s*class="multicol"\>|\<\/div\>//;
+       $text =~s/\<div\s*class="multicol"\>|\<\/div\>//g;
        my @t = split(/\<|\>/, $temp);
        my $id = $t[4];
        my $synonyms = get_synonyms($id, @$matches);
