@@ -84,9 +84,9 @@ sub draw_features {
               ($_->{start} > $length) ||
               ($_->{end} < 1)
 	      ) } @{$self->features( $other_species, $METHOD_ID, $db )};
-  return unless @T;
 
   foreach (@T) {
+    $drawn_block = 1;
     my $f       = $_->[1];
     my $START   = $_->[0];
     my $END     = $f->{end};
@@ -108,9 +108,7 @@ sub draw_features {
 	$zmenu->{"45:"} = '';
 	$zmenu->{"50:$ALIGNSLICEVIEW_TEXT_LINK"} = $href;
     }
-    if (defined($f->{score})) {
-        $zmenu->{"01:Score = ".$f->{score}} = '';
-    }
+    $zmenu->{"01:Score = ".$f->{score}} = '' if $f->{score};
 
     my $id = 10; 
     my $max_contig = 250000;
@@ -149,17 +147,26 @@ sub draw_features {
       });
     }
     $self->push( $TO_PUSH );
-    $drawn_block = "block_features";
   }
   $self->_offset($h);
   $self->render_track_name($caption, $feature_colour) if $drawn_block;
 
-## No features show "empty track line" if option set....
-  my $track = $self->{'config'}->get($type, 'label');
-  $self->errorTrack( "No $track features in this region" ) unless(( $C || $Config->get('_settings','opt_empty_tracks')==0 ) && $track eq 'Conservation');
+  my $drawn_wiggle = $wiggle ? $self->wiggle_plot($db): 1;
+  return 0 if $drawn_block && $drawn_wiggle;
 
-  my $drawn_wiggle = $wiggle ? $self->wiggle_plot($db): 0;
-  return ($drawn_block, $drawn_wiggle);
+  # Work out error message if some data is missing
+  my $error;
+  my $track = $self->{'config'}->get($type, 'label');
+
+  if (!$drawn_block) {
+    my $block_name =  $self->my_config('block_name') ||  $self->my_config('label');
+    $error .= $track eq 'Conservation' ? $block_name: $track;
+  }
+
+  if ($wiggle && !$drawn_wiggle) {
+    $error .= " and ". $self->my_config('wiggle_name');
+  }
+  return $error;
 }
 
 
@@ -212,8 +219,6 @@ sub features {
     }
 
     return $T;
-    
-
 }
 
 sub wiggle_plot {
@@ -245,6 +250,6 @@ sub wiggle_plot {
   my ($min_score, $max_score) = ($features->[0]->score || 0, $features->[-1]->score|| 0);#($features->[0]->y_axis_min || 0, $features->[0]->y_axis_min || 0);
   $self->render_wiggle_plot($features, $colour, $min_score, $max_score, $display_label);
 
-  return "wiggle";
+  return 1;
 }
 1;

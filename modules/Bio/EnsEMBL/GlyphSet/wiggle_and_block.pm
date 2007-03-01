@@ -24,7 +24,7 @@ sub _init {
   my $slice = $self->{'container'};
   my $max_length    = $self->{'config'}->get( $self->check(), 'threshold' )  || 500;
   my $slice_length  = $slice->length;
-  my $wiggle_name   =  $self->my_config('wiggle_name');
+  my $wiggle_name   =  $self->my_config('wiggle_name') || $self->my_config('label') ;
   if($slice_length > $max_length*1010) {
     my $height = $self->errorTrack("$wiggle_name only displayed for less than $max_length Kb");
     $self->_offset($height+4);
@@ -41,38 +41,20 @@ sub _init {
     }
   }
 
-
   my %drawn_flag;
-  my @flags;
-
+  my $error;
   if ( $self->my_config('compact') ) {
     $drawn_flag{ 'wiggle' } = 1;
-    @flags =  $self->draw_features( $db );
+    $error =  $self->draw_features( $db );
   }
 
   # If no blocks are drawn or on expand mode: draw wiggles
-  if ( $flags[0] ne 'block_features' or ! $self->my_config('compact') ) {
-    @flags =  $self->draw_features( $db, "wiggle" );
+  if ( $error or !$self->my_config('compact') ) {
+    $error =  $self->draw_features( $db, "wiggle" );
   }
-  return unless $self->{'config'}->get('_settings','opt_empty_tracks')==1;
-
-  map { $drawn_flag{$_} = 1 } @flags;
-  return if $drawn_flag{'wiggle'} && $drawn_flag{'block_features'};
+  return unless $error && $self->{'config'}->get('_settings','opt_empty_tracks')==1;
 
   # Error messages ---------------------
-  my $block_name =  $self->my_config('block_name')||  $self->my_config('label');
-  # If both wiggle and predicted features tracks aren't drawn in expanded mode..
-  my $error;
-  if (!$drawn_flag{'block_features'}  && !$drawn_flag{'wiggle'}) {
-    $error = "$block_name or $wiggle_name";
-  }
-  elsif (!$drawn_flag{'block_features'}) {
-    $error = $block_name;
-  }
-  elsif (!$drawn_flag{'wiggle'}) {
-    $error = $wiggle_name;
-  }
-
   my $height = $self->errorTrack( "No $error in this region", 0, $self->_offset );
   $self->_offset($height + 4);
   return 1;

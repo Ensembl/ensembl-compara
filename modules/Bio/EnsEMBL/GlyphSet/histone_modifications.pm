@@ -70,9 +70,30 @@ sub draw_features {
   }
 
   $self->render_space_glyph() if $drawn_flag;
-  return ($drawn_flag, $drawn_wiggle_flag);
+  my $error = $self->draw_error_tracks($drawn_flag, $drawn_wiggle_flag);
+  return $error;
 }
 
+sub draw_error_tracks {
+  my ($self, $drawn_blocks, $drawn_wiggle) = @_;
+  return 0 if $drawn_blocks && $drawn_wiggle;
+
+  # Error messages ---------------------
+  my $wiggle_name   =  $self->my_config('wiggle_name');
+  my $block_name =  $self->my_config('block_name') ||  $self->my_config('label');
+  # If both wiggle and predicted features tracks aren't drawn in expanded mode..
+  my $error;
+  if (!$drawn_blocks  && !$drawn_wiggle) {
+    $error = "$block_name or $wiggle_name";
+  }
+  elsif (!$drawn_blocks) {
+    $error = $block_name;
+  }
+  elsif (!$drawn_wiggle) {
+    $error = $wiggle_name;
+  }
+  return $error;
+}
 
 sub block_features_zmenu {
 
