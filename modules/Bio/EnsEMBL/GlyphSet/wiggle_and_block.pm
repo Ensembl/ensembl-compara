@@ -54,12 +54,13 @@ sub _init {
   if ( $flags[0] ne 'block_features' or ! $self->my_config('compact') ) {
     @flags =  $self->draw_features( $db, "wiggle" );
   }
+  return unless $self->{'config'}->get('_settings','opt_empty_tracks')==1;
 
   map { $drawn_flag{$_} = 1 } @flags;
   return if $drawn_flag{'wiggle'} && $drawn_flag{'block_features'};
 
   # Error messages ---------------------
-  my $block_name =  $self->my_config('block_name');
+  my $block_name =  $self->my_config('block_name')||  $self->my_config('label');
   # If both wiggle and predicted features tracks aren't drawn in expanded mode..
   my $error;
   if (!$drawn_flag{'block_features'}  && !$drawn_flag{'wiggle'}) {
@@ -72,7 +73,7 @@ sub _init {
     $error = $wiggle_name;
   }
 
-  my $height = $self->errorTrack( "No $error in this region", 0, $self->_offset ) if $self->{'config'}->get('_settings','opt_empty_tracks')==1;
+  my $height = $self->errorTrack( "No $error in this region", 0, $self->_offset );
   $self->_offset($height + 4);
   return 1;
 }

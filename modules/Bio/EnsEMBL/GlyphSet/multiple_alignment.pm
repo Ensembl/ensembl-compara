@@ -84,6 +84,7 @@ sub draw_features {
               ($_->{start} > $length) ||
               ($_->{end} < 1)
 	      ) } @{$self->features( $other_species, $METHOD_ID, $db )};
+  return unless @T;
 
   foreach (@T) {
     my $f       = $_->[1];
@@ -155,10 +156,9 @@ sub draw_features {
 
 ## No features show "empty track line" if option set....
   my $track = $self->{'config'}->get($type, 'label');
-  $self->errorTrack( "No $track features in this region" ) unless( $C || $Config->get('_settings','opt_empty_tracks')==0 ) && $track ne 'Conservation';
+  $self->errorTrack( "No $track features in this region" ) unless(( $C || $Config->get('_settings','opt_empty_tracks')==0 ) && $track eq 'Conservation');
 
-
-  my $drawn_wiggle = $self->wiggle_plot($db) if $wiggle;
+  my $drawn_wiggle = $wiggle ? $self->wiggle_plot($db): 0;
   return ($drawn_block, $drawn_wiggle);
 }
 
@@ -222,8 +222,8 @@ sub wiggle_plot {
   ### Description: gets features for wiggle plot and passes to render_wiggle_plot
   ### Returns 1 if draws wiggles. Returns 0 if no wiggles drawn
   my ( $self, $db ) = @_;
-  return  1 unless  $self->my_config('label') eq 'Conservation';
-  return unless $db;
+  return 0 unless  $self->my_config('label') eq 'Conservation';
+  return 0 unless $db;
 
   $self->render_space_glyph();
   my $display_size = $self->{'config'}->get('_settings','width') || 700;
