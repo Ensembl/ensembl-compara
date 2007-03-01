@@ -109,7 +109,7 @@ sub draw_features {
 	$zmenu->{"50:$ALIGNSLICEVIEW_TEXT_LINK"} = $href;
     }
     if (defined($f->{score})) {
-        $zmenu->{"1:Score = ".$f->{score}} = '';
+        $zmenu->{"01:Score = ".$f->{score}} = '';
     }
 
     my $id = 10; 
