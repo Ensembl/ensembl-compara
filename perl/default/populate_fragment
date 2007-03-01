@@ -88,7 +88,7 @@ foreach my $key(@ordered_componenents) {
   my $function = $2;
   my $result = undef;
   if (EnsEMBL::Web::Root::dynamic_use($module, $module)) {
-    warn "Creating fragment: $complete";
+#    warn "Creating fragment: $complete";
     no strict 'refs';
     $object->script('contigview');
     $object->get_scriptconfig('contigview');
