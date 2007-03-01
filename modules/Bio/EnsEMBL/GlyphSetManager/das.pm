@@ -2,6 +2,7 @@ package Bio::EnsEMBL::GlyphSetManager::das;
 
 use strict;
 use Bio::EnsEMBL::GlyphSet::das;
+use EnsEMBL::Web::RegObj;
 use base qw(Sanger::Graphics::GlyphSetManager);
 
 ##
@@ -27,7 +28,7 @@ sub init {
   my $object = $Config->{_object};
 ## Replace with session call to get DAS bits of the object...
   
-  foreach my $source (@{ $Config->{_object}->get_session->get_das_filtered_and_sorted($ENV{'ENSEMBL_SPECIES'}) }) {
+  foreach my $source (@{ $ENSEMBL_WEB_REGISTRY->get_das_filtered_and_sorted($ENV{'ENSEMBL_SPECIES'}) }) {
     next unless $Config->get("managed_extdas_".$source->get_key,'on') eq 'on';
     my $source_config = $source->get_data;
     my $das_species   = $source_config->{'species'};
