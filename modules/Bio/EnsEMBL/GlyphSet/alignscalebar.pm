@@ -266,7 +266,15 @@ sub align_interval {
     my $sl = abs($se - $ss)+1;
 
     my $cview = sprintf("/%s/contigview?l=%s:%ld-%ld", $species, $s2t, $s2s, $s2e);
-    my $zmenu = {
+    my $zmenu;
+    if ($s2t eq 'GAP') {
+      $zmenu = {
+		'caption' => "AlignSlice",
+		'01:Gap in the alignment' => "",
+	       };
+    }
+    else {
+      $zmenu = {
         'caption' => "AlignSlice",
         "01:Chromosome: $s2t" => "",
         "05:Strand: $s2st" => "",
@@ -278,8 +286,8 @@ sub align_interval {
         "30:Interval Start:$ss" => '', 
         "35:Interval End: $se" => '', 
         "40:Interval Length: $sl" => '', 
-    };
-    
+	       };
+    }
     $colour_map{$s2t} or $colour_map{$s2t} = shift (@colours) || 'grey';
     $colour_map2{$s2t} or $colour_map2{$s2t} =  'darksalmon' ;#shift (@colours2) || 'grey';
 
