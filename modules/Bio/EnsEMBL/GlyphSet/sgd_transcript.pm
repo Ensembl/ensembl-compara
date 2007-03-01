@@ -136,11 +136,7 @@ sub text_label {
   }
   unless( $short_labels ){
     $id .= "\n";
-    if( $gene->type eq 'bacterial_contaminant' ) {
-      $id.= 'Bacterial cont.';
-    } else {
-      $id .= $colours->{ $transcript->analysis->logic_name."_".$transcript->biotype."_".$transcript->status }[1];
-    }
+    $id .= $colours->{ $transcript->analysis->logic_name."_".$transcript->biotype."_".$transcript->status }[1];
   }
   return $id;
 }

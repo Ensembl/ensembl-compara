@@ -12,7 +12,7 @@ use EnsEMBL::Web::Interface::ZMenu;
 
 sub my_label {
   my $self = shift;
-  return $self->{'config'}->{'_draw_single_Transcript'} || $self->{'config'}->{'geneid'} || "Ensembl trans.";
+  return $self->{'config'}->{'_draw_single_Transcript'} || $self->{'config'}->{'geneid'} || "Ig segments.";
 }
 
 sub colours {

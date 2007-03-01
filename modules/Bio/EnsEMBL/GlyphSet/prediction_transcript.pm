@@ -17,6 +17,17 @@ sub my_label {
   return $self->my_config('track_label') || $self->analysis_logic_name;
 }
 
+sub das_link {
+  my $self = shift;
+  my $database    = $self->my_config( 'db' ) || 'core';
+  my $slice   = $self->{container};
+  my $species = $slice->{_config_file_name_};
+  my $assembly = $self->{'config'}->species_defs->other_species($species, 'ENSEMBL_GOLDEN_PATH' );
+
+  my $dsn = "$species.$assembly.".join('-','prediction_transcript', $database, $self->analysis_logic_name);
+  return "/das/$dsn/features?segment=".$slice->seq_region_name.':'.$slice->start.','.$slice->end;
+}
+
 sub colours {
     my $self = shift;
     my $confkey = lc( $self->analysis_logic_name );

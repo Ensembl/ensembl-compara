@@ -19,6 +19,20 @@ sub init_label {
   my $HELP_LINK = $self->check();
   $self->init_label_text( $self->my_label, $HELP_LINK );
   $self->bumped( $self->{'config'}->get($HELP_LINK, 'compact') ? 'no' : 'yes' );
+
+  my $das_link = $self->das_link();
+  $self->label->{'zmenu'}{'99:DAS Table View'} = $das_link if $das_link;
+}
+sub das_link {
+  my $self = shift;
+  my @logic_names = split / /, $self->my_config( 'logic_name' );
+  my $database    = $self->my_config( 'db' );
+  my $slice   = $self->{container};
+  my $species = $slice->{_config_file_name_};
+  my $assembly = $self->{'config'}->species_defs->other_species($species, 'ENSEMBL_GOLDEN_PATH' );
+
+  my $dsn = "$species.$assembly.".join('-','transcript', $database, @logic_names);
+  return "/das/$dsn/features?segment=".$slice->seq_region_name.':'.$slice->start.','.$slice->end;
 }
 #'
 sub my_label { return 'Missing label'; }
