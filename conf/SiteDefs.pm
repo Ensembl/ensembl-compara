@@ -7,7 +7,6 @@
 #
 ###############################################################################
 
-warn "USING MAIN SITE DEFS - THE WRONG ONE!!!!";
 package SiteDefs;
 use strict;
 use Text::Wrap;
