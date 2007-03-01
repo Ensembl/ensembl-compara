@@ -46,7 +46,7 @@ sub colour   { return $_[0]->{'feature_colour'}, $_[0]->{'label_colour'}, $_[0]-
 
 
 sub draw_features {
-  my ($self, $db, $wiggle) = @_;
+  my ($self, $db) = @_;
   my $type = $self->check();
   return unless defined $type;  ## No defined type arghhh!!
 
@@ -151,6 +151,7 @@ sub draw_features {
   $self->_offset($h);
   $self->render_track_name($caption, $feature_colour) if $drawn_block;
 
+  my $wiggle =  $self->my_config('compact') ? 0 : 1;
   my $drawn_wiggle = $wiggle ? $self->wiggle_plot($db): 1;
   return 0 if $drawn_block && $drawn_wiggle;
 
