@@ -170,10 +170,15 @@ sub password_error {
     $html = qq(<h3 class="plain">Password Mismatch</h3>
 <p>Sorry - you entered two different passwords!</p>);
   }
-  else {
+  elsif ($error eq 'insecure') {
     $html = qq(<h3 class="plain">Insecure Password</h3>
 <p>The password you entered was too short or too simple. For security, please ensure that your
 password is more than 6 characters long and contains both letters and numbers.</p>);
+  }
+  else {
+    $html = qq(<h3 class="plain">Password Error</h3>
+<p>Sorry - there was a problem validating your password.</p>);
+  }
   }
   $html .= qq(<p>Please click on the Back button and try again.</p>);
 
