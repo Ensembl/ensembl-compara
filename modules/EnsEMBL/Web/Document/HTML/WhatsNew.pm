@@ -31,8 +31,8 @@ sub render {
   my $user_id = $ENV{'ENSEMBL_USER_ID'};
   my $user = $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->get_user;
 
-  my $DB = $species_defs->databases->{'ENSEMBL_WEBSITE'};
-  my $adaptor = EnsEMBL::Web::DBSQL::NewsAdaptor->new( $DB );
+  my $adaptor = $ENSEMBL_WEB_REGISTRY->newsAdaptor;
+
   my @headlines;
   my $filtered = 0;
 
