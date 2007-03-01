@@ -281,6 +281,8 @@ sub createObjects {
         foreach my $key( @confkeys, @allkeys, @arr_keys, 'conftype', 'active') {
           $sources_conf{$das_name}->{$key} = $das_data{$key};
         }
+        $sources_conf{$das_name}->{'species'} = $self->species;
+        $das_data{'species'} = $self->species;
 ## replace with session call
         $self->session->add_das_source_from_hashref(\%das_data);
         $DASsel{$das_name} = 1;
@@ -358,6 +360,7 @@ sub createObjects {
         @{$das_data->{mapping}} = grep { $_ } $self->param('DAStype');
         $das_data->{type} = 'mixed' if (scalar(@{$das_data->{mapping}}>1));
         $das_data->{conftype} = 'external';
+        $das_data->{species} = $self->species;
         $sources_conf{$das_name} ||= {};
         foreach my $key( @confkeys, @allkeys, 'dsn', 'enable', 'mapping') {
           $sources_conf{$das_name}->{$key} = $das_data->{$key};

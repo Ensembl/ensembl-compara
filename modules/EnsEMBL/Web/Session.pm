@@ -223,17 +223,17 @@ sub get_das {
   return $Das_sources_of{ ident $self };
 }
 
-sub get_das_filtered_and_sorted {
-  my( $self, $species ) = @_;
-  my $T = $self->get_das;# "GET DAS...", warn $T;
-  my @T =  
-    map  { $_->[1] }
-    sort { $a->[0] cmp $b->[0] }
-    map  { [ $_->get_data->{'label'}, $_ ] }
-    grep { !( exists $_->get_data->{'species'} && $_->get_data->{'species'} ne $self->{'species'} )} 
-    values %{ $T||{} };
-  return \@T;
-}
+#sub get_das_filtered_and_sorted {
+#  my( $self, $species ) = @_;
+#  my $T = $self->get_das;# "GET DAS...", warn $T;
+#  my @T =  
+#    map  { $_->[1] }
+#    sort { $a->[0] cmp $b->[0] }
+#    map  { [ $_->get_data->{'label'}, $_ ] }
+#    grep { !( exists $_->get_data->{'species'} && $_->get_data->{'species'} ne $self->{'species'} )} 
+#    values %{ $T||{} };
+#  return \@T;
+#}
 
 sub get_das_config {
 ### DAS
