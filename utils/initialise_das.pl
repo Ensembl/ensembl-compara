@@ -38,7 +38,7 @@ my $sources = {
    where t.seq_region_id = s.seq_region_id',
     'source_id'    => 2,
   },
-  'transcripts' => {
+  'transcript' => {
     'master_table' => 'gene',
     'name'         => 'Transcripts',
     'query'        => '
@@ -65,7 +65,7 @@ my $sources = {
    where a.logic_name not like "%CAGE%" and t.analysis_id = a.analysis_id and t.seq_region_id = s.seq_region_id',
     'source_id'    => 4,
   },
-  'prediction_transcripts' => {
+  'prediction_transcript' => {
     'master_table' => 'prediction_transcript',
     'name'         => 'Ab initio predictions',
     'query'        => '
