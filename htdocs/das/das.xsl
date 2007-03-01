@@ -7,8 +7,10 @@
   <head>
 <xsl:call-template name="css_and_js" />
 <xsl:apply-templates select="*" mode="hack" />
+<xsl:if test="0">
 <xsl:if test="not(DASDNA) and not(DASSEQUENCE)">
   <xsl:call-template name="table_sort_js" />
+</xsl:if>
 </xsl:if>
   <title><xsl:apply-templates select="*" mode="title" /></title>
   </head>
