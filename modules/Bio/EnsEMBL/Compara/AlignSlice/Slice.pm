@@ -1460,7 +1460,7 @@ sub get_cigar_line {
 
   my $length = ($end - $start + 1);
   my $seq = "." x $length;
-  foreach my $pair (@{$self->get_all_Slice_Mapper_pairs}) {
+  foreach my $pair (@{$self->get_all_Slice_Mapper_pairs("get_gap_slices")}) {
     my $this_slice = $pair->{slice};
     my $mapper = $pair->{mapper};
     my $slice_start = $pair->{start};
