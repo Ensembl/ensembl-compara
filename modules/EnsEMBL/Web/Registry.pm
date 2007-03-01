@@ -66,7 +66,7 @@ sub get_das {
 sub get_das_filtered_and_sorted {
   my( $self, $species ) = @_;
   my $T = $self->get_das;# "GET DAS...", warn $T;
-  warn join "\n","KEYS", keys %{$T||{}},"VALUES",values %{$T||{}};
+#  warn join "\n","KEYS", keys %{$T||{}},"VALUES",map { join '; ',keys %{$_->get_data||{}} } values %{$T||{}};
   my @T =
     map  { $_->[1] }
     sort { $a->[0] cmp $b->[0] }
