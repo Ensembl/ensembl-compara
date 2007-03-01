@@ -12,9 +12,9 @@ sub base_align_features {
   $self->{'featureview_url'} = sprintf( '%s/%s/featureview?type=%s;id=%%s',
     $self->species_defs->ENSEMBL_BASE_URL, $self->real_species, $feature_type
   );
-  $self->{'r_url'} = sprintf( '%s/%s/r?d=%%s;id=%%s',
-    $self->species_defs->ENSEMBL_BASE_URL, $self->real_species
-  );
+#  $self->{'r_url'} = sprintf( '%s/%s/r?d=%%s;id=%%s',
+#    $self->species_defs->ENSEMBL_BASE_URL, $self->real_species
+#  );
   $self->base_features( $feature_type, $feature_label );
 }
 

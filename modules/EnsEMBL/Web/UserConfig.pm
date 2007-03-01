@@ -190,6 +190,8 @@ sub add_new_track_transcript {
     'colour_set'  => $colours,
     'pos'         => $pos,
     'str'         => 'b',
+    'db'          => 'core',
+    'logic_name'  => $code, 
     'compact'     => 0,
     'join'        => 0,
     'join_x'      => -10,
@@ -1156,20 +1158,20 @@ sub ADD_SYNTENY_TRACKS {
 sub ADD_ALL_TRANSCRIPTS {
   my $self = shift;
   my $POS  = shift || 2000;
-  $self->add_new_track_transcript( 'ensembl',   'Ensembl genes',   'ensembl_gene',   $POS++, @_ );
+  $self->add_new_track_transcript( 'ensembl',   'Ensembl genes',   'ensembl_gene',   $POS++, 'logic_name' => 'havana ensembl_havana_gene ensembl' );
   $self->add_new_track_transcript( 'ensembl_projection',   'Ensembl proj. genes',   'ensembl_projection',   $POS++, @_ );
   $self->add_new_track_transcript( 'ensembl_segment',      'Ig segments',           'ensembl_segment',   $POS++, @_ );
-  $self->add_new_track_transcript( 'evega',         'Vega Havana gene',      'vega_gene_havana',    $POS++, 'glyph' => 'evega_transcript', 'logic_name' => 'otter', 'available' => 'database_features ENSEMBL_VEGA.OTTER',    @_ );
-  $self->add_new_track_transcript( 'evega_external','Vega External gene',    'vega_gene_external',  $POS++, 'glyph' => 'evega_transcript', 'logic_name' => 'otter_external', 'available' => 'database_features ENSEMBL_VEGA.OTTER_EXTERNAL',    @_ );
+  $self->add_new_track_transcript( 'evega',         'Vega Havana gene',      'vega_gene_havana',    $POS++, 'glyph' => 'evega_transcript', 'db' => 'vega', 'logic_name' => 'otter', 'available' => 'database_features ENSEMBL_VEGA.OTTER',    @_ );
+  $self->add_new_track_transcript( 'evega_external','Vega External gene',    'vega_gene_external',  $POS++, 'glyph' => 'evega_transcript', 'db' => 'vega', 'logic_name' => 'otter_external', 'available' => 'database_features ENSEMBL_VEGA.OTTER_EXTERNAL',    @_ );
   $self->add_new_track_transcript( 'flybase',   'Flybase genes',   'flybase_gene',   $POS++, @_ );
   $self->add_new_track_transcript( 'vectorbase', 'Vectorbase genes', 'vectorbase_gene',   $POS++, @_ );
   $self->add_new_track_transcript( 'wormbase',  'Wormbase genes',  'wormbase_gene',  $POS++, @_ );
   $self->add_new_track_transcript( 'sgd',       'SGD genes',  'sgd_gene',  $POS++, @_ );
   $self->add_new_track_transcript( 'genebuilderbeeflymosandswall',
                                                 'Bee genes',       'bee_gene',       $POS++, @_ );
-  $self->add_new_track_transcript( 'gsten',     'Genoscope genes', 'genoscope_gene', $POS++, @_ );
-  $self->add_new_track_transcript( 'rna',       'ncRNA genes',     'rna_gene',       $POS++, 'available' => 'features NCRNA|MIRNA',      @_ );
-  $self->add_new_track_transcript( 'erna',       'e! ncRNA genes', 'rna_gene',   $POS++, 'available' => 'features ensembl_ncRNA', 'legend_type' => 'rna',        @_ );
+  $self->add_new_track_transcript( 'gsten',     'Genoscope genes', 'genoscope_gene', $POS++, 'logic_name' => 'gsten hox ctt', @_ );
+  $self->add_new_track_transcript( 'rna',       'ncRNA genes',     'rna_gene',       $POS++, 'available' => 'features NCRNA|MIRNA','logic_name' => 'ncrna mirna trna' ,     @_ );
+  $self->add_new_track_transcript( 'erna',       'e! ncRNA genes', 'rna_gene',   $POS++, 'available' => 'features ensembl_ncRNA', 'logic_name' => 'ensembl_ncrna',  'legend_type' => 'rna',        @_ );
 
   $self->add_new_track_transcript( 'ciona_dbest_ncbi', "3/5' EST genes (dbEST)", 'estgene', $POS++, @_) ;
   $self->add_new_track_transcript( 'ciona_est_seqc',   "3' EST genes (Kyoto)", 'estgene', $POS++, @_) ;
@@ -1179,7 +1181,7 @@ sub ADD_ALL_TRANSCRIPTS {
   $self->add_new_track_transcript( 'ciona_kyotograil_2004',  "Kyotograil '04 model", 'ciona_gene',  $POS++, @_) ;
   $self->add_new_track_transcript( 'ciona_kyotograil_2005',  "Kyotograil '05 model",  'ciona_gene', $POS++, @_) ;
 
-  $self->add_new_track_transcript( 'rprot',     'Rodent proteins', 'prot_gene', $POS++, 'available' => 'features rodent_protein', @_ );
+  $self->add_new_track_transcript( 'rprot',     'Rodent proteins', 'prot_gene', $POS++, 'available' => 'features rodent_protein','logic_name' => 'rodent_protein',  @_ );
   $self->add_new_track_transcript( 'mouse_protein',    'Refseq proteins', 'prot_gene',    $POS++, @_ );
   $self->add_new_track_transcript( 'targettedgenewise',    'Targetted genewise genes', 'prot_gene',    $POS++, @_ );
   $self->add_new_track_transcript( 'cdna_all',             'cNDA genes', 'prot_gene',    $POS++, @_ );
@@ -1216,24 +1218,24 @@ sub ADD_ALL_TRANSCRIPTS {
     $POS++, 'glyph' => 'vega_transcript', 'logic_name' => 'otter_external',
     'available'=>'features VEGA_GENES_OTTER_EXTERNAL', @_);
 ## OTHER FEATURES DATABASE TRANSCRIPTS....
-  $self->add_new_track_transcript( 'est',       'EST genes',       'est_gene', $POS++,
+  $self->add_new_track_transcript( 'est',       'EST genes',       'est_gene', $POS++,'db' => 'otherfeatures',
     'available' => 'databases_features ENSEMBL_OTHERFEATURES.estgene', @_ );
 
-  $self->add_new_track_transcript( 'oxford_fgu_ext', 'Oxford FGU Genes', 'oxford_fgu', $POS++,
+  $self->add_new_track_transcript( 'oxford_fgu_ext', 'Oxford FGU Genes', 'oxford_fgu', $POS++, 'db' => 'otherfeatures', 
     'available' => "database_features ENSEMBL_OTHERFEATURES.oxford_fgu", @_ );
-  $self->add_new_track_transcript( 'medaka_transcriptcoalescer', 'EST Genes',     'medaka_genes',$POS++,
+  $self->add_new_track_transcript( 'medaka_transcriptcoalescer', 'EST Genes',     'medaka_genes',$POS++, 'db' => 'otherfeatures',
     'available' => "database_features ENSEMBL_OTHERFEATURES.medaka_transcriptcoalescer" , @_ );
-  $self->add_new_track_transcript( 'medaka_genome_project', 'MGP Genes',     'medaka_genes',$POS++,
+  $self->add_new_track_transcript( 'medaka_genome_project', 'MGP Genes',     'medaka_genes',$POS++,'db' => 'otherfeatures',
     'available' => "database_features ENSEMBL_OTHERFEATURES.medaka_genome_project", @_ );
-  $self->add_new_track_transcript( 'singapore_est', 'Singapore EST Genes', 'est_gene', $POS++,
+  $self->add_new_track_transcript( 'singapore_est', 'Singapore EST Genes', 'est_gene', $POS++, 'db' => 'otherfeatures',
      'available' => "database_features ENSEMBL_OTHERFEATURES.singapore_est", @_ );
-  $self->add_new_track_transcript( 'singapore_protein', 'Singapore Protein Genes', 'prot_gene', $POS++,
+  $self->add_new_track_transcript( 'singapore_protein', 'Singapore Protein Genes', 'prot_gene', $POS++, 'db' => 'otherfeatures',
      'available' => "database_features ENSEMBL_OTHERFEATURES.singapore_protein", @_ );
-  $self->add_new_track_transcript( 'chimp_cdna', 'Chimp cDNA Genes', 'chimp_genes', $POS++,
+  $self->add_new_track_transcript( 'chimp_cdna', 'Chimp cDNA Genes', 'chimp_genes', $POS++, 'db' => 'otherfeatures',
      'available' => "database_features ENSEMBL_OTHERFEATURES.chimp_cdna", @_ );
-  $self->add_new_track_transcript( 'chimp_cdna', 'Human cDNA Genes', 'chimp_genes', $POS++,
+  $self->add_new_track_transcript( 'human_cdna', 'Human cDNA Genes', 'chimp_genes', $POS++, 'db' => 'otherfeatures',
      'available' => "database_features ENSEMBL_OTHERFEATURES.human_cdna", @_ );
-  $self->add_new_track_transcript( 'chimp_est', 'Chimp EST Genes', 'chimp_genes', $POS++,
+  $self->add_new_track_transcript( 'chimp_est', 'Chimp EST Genes', 'chimp_genes', $POS++,'db' => 'otherfeatures',
      'available' => "database_features ENSEMBL_OTHERFEATURES.chimp_est", @_ );
   return $POS;
 }

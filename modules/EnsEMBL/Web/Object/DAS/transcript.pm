@@ -346,11 +346,13 @@ sub Stylesheet {
   my $stylesheet_structure = {};
   my $colour_hash = { 
     'default' => 'grey50',
-    'havana'  => 'blue',
+    'havana'  => 'dodgerblue4',
     'ensembl' => 'rust',
-    'ensembl_havana_transcript' => 'gold1',
-    'estgene' => 'violet',
-    'otter'   => 'darkblue',
+    'flybase' => 'rust',
+    'wornbase' => 'rust',
+    'ensembl_havana_transcript' => 'goldendrod3',
+    'estgene' => 'purple1',
+    'otter'   => 'dodgerblue4',
   };
   foreach my $key ( keys %$colour_hash ) {
     my $colour = $colour_hash->{$key};
