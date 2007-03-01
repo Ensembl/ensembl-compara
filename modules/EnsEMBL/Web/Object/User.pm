@@ -376,14 +376,13 @@ sub save {
 sub _activation_link {
   my ($user, $site_info) = @_;
 
-  my $link = $site_info->{'base_url'}.'/common/activate?id='.$user->id.'&code='.$user->salt;
+  my $link = $site_info->{'base_url'}.'/common/activate?user_id='.$user->id.'&code='.$user->salt;
   return $link;
 }
 
 sub activation_link {
   my ($self) = @_;
-  my $link = 'id=' . $self->id . '&code=' . $self->salt;
-  #warn "LINK: " . $link;
+  my $link = 'user_id=' . $self->id . '&code=' . $self->salt;
   return $link;
 }
 
