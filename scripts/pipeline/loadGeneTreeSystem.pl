@@ -280,29 +280,29 @@ sub build_GeneTreeSystem
   $stats->hive_capacity(400);
   $stats->update();
 
-  #
-  # NJTREE_noboot
-  #
-  $parameters = "{cdna=>1, bootstrap=>0";
-  if (defined $genetree_params{'max_gene_count'}) {
-    $parameters .= ",max_gene_count=>".$genetree_params{'max_gene_count'};
-    $parameters .= ",species_tree_file=>'/lustre/work1/ensembl/avilella/src/ensembl_main/ensembl-compara/scripts/pipeline/species_tree_njtree.taxon_id.nh'";
-  }
-  if (defined $genetree_params{'honeycomb_dir'}) {
-    $parameters .= ",'honeycomb_dir'=>'".$genetree_params{'honeycomb_dir'};
-  }
-  $parameters .= "'}";
-  my $njtree_phyml_noboot = Bio::EnsEMBL::Analysis->new(
-      -logic_name      => 'NJTREE_noboot',
-      -program_file    => '/lustre/work1/ensembl/avilella/bin/i386/njtree',
-      -module          => 'Bio::EnsEMBL::Compara::RunnableDB::NJTREE_PHYML',
-      -parameters      => $parameters
-    );
-  $self->{'hiveDBA'}->get_AnalysisAdaptor()->store($njtree_phyml_noboot);
-  $stats = $njtree_phyml_noboot->stats;
-  $stats->batch_size(1);
-  $stats->hive_capacity(400);
-  $stats->update();
+#   #
+#   # NJTREE_noboot
+#   #
+#   $parameters = "{cdna=>1, bootstrap=>0";
+#   if (defined $genetree_params{'max_gene_count'}) {
+#     $parameters .= ",max_gene_count=>".$genetree_params{'max_gene_count'};
+#     $parameters .= ",species_tree_file=>'/lustre/work1/ensembl/avilella/src/ensembl_main/ensembl-compara/scripts/pipeline/species_tree_njtree.taxon_id.nh'";
+#   }
+#   if (defined $genetree_params{'honeycomb_dir'}) {
+#     $parameters .= ",'honeycomb_dir'=>'".$genetree_params{'honeycomb_dir'};
+#   }
+#   $parameters .= "'}";
+#   my $njtree_phyml_noboot = Bio::EnsEMBL::Analysis->new(
+#       -logic_name      => 'NJTREE_noboot',
+#       -program_file    => '/lustre/work1/ensembl/avilella/bin/i386/njtree',
+#       -module          => 'Bio::EnsEMBL::Compara::RunnableDB::NJTREE_PHYML',
+#       -parameters      => $parameters
+#     );
+#   $self->{'hiveDBA'}->get_AnalysisAdaptor()->store($njtree_phyml_noboot);
+#   $stats = $njtree_phyml_noboot->stats;
+#   $stats->batch_size(1);
+#   $stats->hive_capacity(400);
+#   $stats->update();
 
 
   #
@@ -346,30 +346,30 @@ sub build_GeneTreeSystem
   $stats->update();
 
   # turn these two on if you need dnds from the old homology system
-#   #
-#   # CreateHomology_dNdSJob
-#   #
-#   my $CreateHomology_dNdSJob = Bio::EnsEMBL::Analysis->new(
-#       -db_version      => '1',
-#       -logic_name      => 'CreateHomology_dNdSJob',
-#       -module          => 'Bio::EnsEMBL::Compara::RunnableDB::CreateHomology_dNdSJobs'
-#   );
-#   $self->{'comparaDBA'}->get_AnalysisAdaptor->store($CreateHomology_dNdSJob);
-#   if(defined($self->{'hiveDBA'})) {
-#     my $stats = $analysisStatsDBA->fetch_by_analysis_id($CreateHomology_dNdSJob->dbID);
-#     $stats->batch_size(1);
-#     $stats->hive_capacity(-1);
-#     $stats->status('BLOCKED');
-#     $stats->update();
-#     $ctrlRuleDBA->create_rule($orthotree,$CreateHomology_dNdSJob);
-#   }
-#   if (defined $dnds_params{'species_sets'}) {
-#     Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob
-#         (
-#          -input_id       => '{species_sets=>' . $dnds_params{'species_sets'} . ',method_link_type=>\''.$dnds_params{'method_link_type'}.'\'}',
-#          -analysis       => $CreateHomology_dNdSJob,
-#         );
-#   }
+  #
+  # CreateHomology_dNdSJob
+  #
+  my $CreateHomology_dNdSJob = Bio::EnsEMBL::Analysis->new(
+      -db_version      => '1',
+      -logic_name      => 'CreateHomology_dNdSJob',
+      -module          => 'Bio::EnsEMBL::Compara::RunnableDB::CreateHomology_dNdSJobs'
+  );
+  $self->{'comparaDBA'}->get_AnalysisAdaptor->store($CreateHomology_dNdSJob);
+  if(defined($self->{'hiveDBA'})) {
+    my $stats = $analysisStatsDBA->fetch_by_analysis_id($CreateHomology_dNdSJob->dbID);
+    $stats->batch_size(1);
+    $stats->hive_capacity(-1);
+    $stats->status('BLOCKED');
+    $stats->update();
+    $ctrlRuleDBA->create_rule($orthotree,$CreateHomology_dNdSJob);
+  }
+  if (defined $dnds_params{'species_sets'}) {
+    Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob
+        (
+         -input_id       => '{species_sets=>' . $dnds_params{'species_sets'} . ',method_link_type=>\''.$dnds_params{'method_link_type'}.'\'}',
+         -analysis       => $CreateHomology_dNdSJob,
+        );
+  }
 
   #
   # Homology_dNdS
@@ -390,7 +390,7 @@ sub build_GeneTreeSystem
     $stats->hive_capacity(200);
     $stats->status('BLOCKED');
     $stats->update();
-    # $ctrlRuleDBA->create_rule($CreateHomology_dNdSJob,$homology_dNdS);
+    $ctrlRuleDBA->create_rule($CreateHomology_dNdSJob,$homology_dNdS);
   }
 
   #
@@ -410,9 +410,10 @@ sub build_GeneTreeSystem
 #  $dataflowRuleDBA->create_rule($phyml_cdna, $rap, 1);
 #  $dataflowRuleDBA->create_rule($phyml_cdna, $BreakPAFCluster, 2);
   $dataflowRuleDBA->create_rule($njtree_phyml, $orthotree, 1);
-  $dataflowRuleDBA->create_rule($njtree_phyml, $njtree_phyml_noboot, 2);
-  $dataflowRuleDBA->create_rule($njtree_phyml_noboot, $orthotree, 1);
-  $dataflowRuleDBA->create_rule($njtree_phyml_noboot, $BreakPAFCluster, 2);
+#  $dataflowRuleDBA->create_rule($njtree_phyml, $njtree_phyml_noboot, 2);
+#  $dataflowRuleDBA->create_rule($njtree_phyml_noboot, $orthotree, 1);
+#  $dataflowRuleDBA->create_rule($njtree_phyml_noboot, $BreakPAFCluster, 2);
+  $dataflowRuleDBA->create_rule($njtree_phyml, $BreakPAFCluster, 2);
   $dataflowRuleDBA->create_rule($BreakPAFCluster, $muscle, 2);
   # dnds bit
 #  $dataflowRuleDBA->create_rule($orthotree,$homology_dNdS);
@@ -447,7 +448,7 @@ sub store_codeml_parameters
 
   $dNdS_Conf->{'dNdS_analysis_data_id'} =
          $self->{'hiveDBA'}->get_AnalysisDataAdaptor->store_if_needed($options_string);
-         
+
   $dNdS_Conf->{'codeml_parameters'} = undef;
 }
 
