@@ -33,7 +33,7 @@
 
 . /etc/profile
 
-PERLMOD_LOC="/ensemblweb/www/www_42"   # current server root
+PERLMOD_LOC="/ensemblweb/www/www_44"   # current server root
 #PERLMOD_LOC="/ensemblweb/www/server"   # current server root
 
 PDOC_LOC="$PERLMOD_LOC/htdocs/info/software/Pdoc"    # where you want Pdocs created
@@ -70,7 +70,8 @@ for i in bioperl-live ensembl ensembl-analysis ensembl-compara ensembl-functgeno
 do
         mkdir $PDOC_LOC/$i
   	echo "CURRENT MODULE: $i"
-  	echo "#CURRENT MODULE: $i" >> $P2WDOC_LOC/make_html_docs.sh 
+        cp $P2WDOC_LOC/Pdoc/Html/Data/perl.css $PDOC_LOC/$i 
+ 	echo "#CURRENT MODULE: $i" >> $P2WDOC_LOC/make_html_docs.sh 
  	echo "$P2WDOCER -source $PERLMOD_LOC/$i -target $PDOC_LOC/$i -raw -webcvs http://cvsweb.sanger.ac.uk/cgi-bin/cvsweb.cgi/$i/ -xltable $P2WDOC_LOC/$i.xlinks " >> $P2WDOC_LOC/make_html_docs.sh
 
   	echo "$PERLMOD_LOC/$F1 $HTTP/$F1
