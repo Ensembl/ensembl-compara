@@ -32,7 +32,9 @@ $self->{'noSplitSeqLines'} = undef;
 $self->{'cdna'} = 0;
 $self->{'scale'} = 100;
 $self->{'drawtree'} = 0;
-$self->{'extrataxon'} = undef;
+$self->{'extrataxon_sequenced'} = undef;
+$self->{'extrataxon_incomplete'} = undef;
+$self->{'multifurcation_deletes_node'} = undef;
 my $state = 4;
 
 my $conf_file;
@@ -48,16 +50,28 @@ GetOptions('help'        => \$help,
            'align'       => \$self->{'print_align'},
            'cdna'        => \$self->{'cdna'},
            'draw'        => \$self->{'drawtree'},
-           'extra_taxon=s'=> \$self->{'extrataxon'},
+           'extrataxon_sequenced=s'  => \$self->{'extrataxon_sequenced'},
+           'extrataxon_incomplete=s' => \$self->{'extrataxon_incomplete'},
+           'multifurcation_deletes_node=s' => \$self->{'multifurcation_deletes_node'},
            'scale=f'     => \$self->{'scale'},
            'mini'        => \$self->{'minimize_tree'},
            'count'       => \$self->{'stats'},
           );
 
-my @extrataxon;
-if($self->{'extrataxon'}) { 
-  my $temp = $self->{'extrataxon'};
-  @extrataxon = split ('_',$temp);
+my @extrataxon_sequenced;
+if($self->{'extrataxon_sequenced'}) { 
+  my $temp = $self->{'extrataxon_sequenced'};
+  @extrataxon_sequenced = split ('_',$temp);
+}
+my @extrataxon_incomplete;
+if($self->{'extrataxon_incomplete'}) { 
+  my $temp = $self->{'extrataxon_incomplete'};
+  @extrataxon_incomplete = split ('_',$temp);
+}
+my @multifurcation_deletes_node;
+if($self->{'multifurcation_deletes_node'}) { 
+  my $temp = $self->{'multifurcation_deletes_node'};
+  @multifurcation_deletes_node = split ('_',$temp);
 }
 if($self->{'newick_file'}) { $state=6; }
 if($self->{'tree_id'}) { $state=1; }
@@ -168,23 +182,53 @@ sub fetch_compara_ncbi_taxa {
     $root = $taxon->root unless($root);
     $root->merge_node_via_shared_ancestor($taxon);
   }
-  foreach my $extra_taxon (@extrataxon) {
+  foreach my $extra_taxon (@extrataxon_sequenced) {
     my $taxon = $taxonDBA->fetch_node_by_taxon_id($extra_taxon);
     $taxon->release_children;
 
     $root = $taxon->root unless($root);
     $root->merge_node_via_shared_ancestor($taxon);
   }
+  foreach my $extra_taxon (@extrataxon_incomplete) {
+    my $taxon = $taxonDBA->fetch_node_by_taxon_id($extra_taxon);
+    $taxon->release_children;
+
+    $root = $taxon->root unless($root);
+    $root->merge_node_via_shared_ancestor($taxon);
+    $taxon->add_tag("is_incomplete", '1');
+  }
 
   #$root = $root->find_node_by_name('Mammalia');
 
   $root = $root->minimize_tree if($self->{'minimize_tree'});
+
+  print "# Before multifuration_deletes_node\n\n";
+  $root->print_tree($self->{'scale'});
+
+  my @subnodes = $root->get_all_subnodes;
+  foreach my $extra_taxon (@multifurcation_deletes_node) {
+    foreach my $node (@subnodes) {
+      next unless ($node->node_id == $extra_taxon);
+      my $node_children = $node->children;
+      foreach my $child (@$node_children) {
+        $node->parent->add_child($child);
+      }
+      $node->disavow_parent;
+    }
+  }
+
+  print "#\n After multifuration_deletes_node\n\n";
   $root->print_tree($self->{'scale'});
 
   my $newick = $root->newick_format;
   print("$newick\n");
-  my $nhx = $root->nhx_format;
-  print("$nhx\n");
+  #   my $spec_ncbi_name_tree = $root->newick_format('ncbi_name');
+  #   print("$spec_ncbi_name_tree\n");
+  #   my $spec_ncbi_taxon_tree = $root->newick_format('ncbi_taxon');
+  #   print("$spec_ncbi_taxon_tree\n");
+  my $njtree_tree = $root->newick_format('njtree');
+  print("$njtree_tree\n");
+  1; #??
 
   $self->{'root'} = $root;
   drawPStree($self) if ($self->{'drawtree'});
