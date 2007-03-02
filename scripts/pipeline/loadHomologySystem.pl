@@ -24,7 +24,7 @@ my %compara_conf = ();
 $compara_conf{'-port'} = 3306;
 
 my ($help, $host, $user, $pass, $dbname, $port, $compara_conf, $adaptor);
-my ($subset_id, $genome_db_id, $prefix, $fastadir, $verbose);
+my ($subset_id, $genome_db_id, $prefix, $fastadir, $verbose, $update);
 
 GetOptions('help'     => \$help,
            'conf=s'   => \$conf_file,
@@ -34,6 +34,7 @@ GetOptions('help'     => \$help,
            'dbpass=s' => \$pass,
            'dbname=s' => \$dbname,
            'v' => \$verbose,
+           'update' => \$update,
           );
 
 if ($help) { usage(); }
@@ -63,6 +64,7 @@ if(%analysis_template and (not(-d $analysis_template{'fasta_dir'}))) {
 my $self = bless {};
 
 $self->{'comparaDBA'}   = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(%compara_conf);
+$self->{gdba}   = $self->{'comparaDBA'}->get_GenomeDBAdaptor();
 $self->{'hiveDBA'}      = new Bio::EnsEMBL::Hive::DBSQL::DBAdaptor(-DBCONN => $self->{'comparaDBA'}->dbc);
 
 if(%hive_params) {
@@ -76,6 +78,7 @@ if(%hive_params) {
 
 
 $self->prepareGenomeAnalysis();
+$self->create_peptide_align_feature_tables() unless ($update);
 
 exit(0);
 
@@ -119,6 +122,9 @@ sub parse_conf {
       }
       if($confPtr->{TYPE} eq 'HOMOLOGY') {
         %homology_params = %{$confPtr};
+      }
+      if($confPtr->{TYPE} eq 'SPECIES') {
+        push @speciesList, $confPtr;
       }
     }
   }
@@ -175,7 +181,6 @@ sub prepareGenomeAnalysis
   $stats->update();
 
   $dataflowRuleDBA->create_rule($submit_analysis, $load_genome);
-
 
   #
   # LoadUniProt
@@ -266,7 +271,8 @@ sub prepareGenomeAnalysis
   #
   # CreateBlastRules
   #
-  my $parameters = "{phylumBlast=>0, selfBlast=>1,cr_analysis_logic_name=>'BuildHomology'}";
+#  my $parameters = "{phylumBlast=>0, selfBlast=>1,cr_analysis_logic_name=>'BuildHomology'}";
+  my $parameters = "{phylumBlast=>0, selfBlast=>1,cr_analysis_logic_name=>'UpdatePAFIds'}";
   my $blastrules_analysis = Bio::EnsEMBL::Analysis->new(
       -db_version      => '1',
       -logic_name      => 'CreateBlastRules',
@@ -287,6 +293,29 @@ sub prepareGenomeAnalysis
   $ctrlRuleDBA->create_rule($dumpfasta_analysis, $blastrules_analysis);
 
   $dataflowRuleDBA->create_rule($dumpfasta_analysis, $blastrules_analysis);
+
+  #
+  # UpdatePAFIds
+  #
+  my $updatepafids_analysis = Bio::EnsEMBL::Analysis->new(
+      -db_version      => '1',
+      -logic_name      => 'UpdatePAFIds',
+      -module          => 'Bio::EnsEMBL::Compara::RunnableDB::UpdatePAFIds'
+    );
+  $self->{'comparaDBA'}->get_AnalysisAdaptor()->store($updatepafids_analysis);
+  $stats = $analysisStatsDBA->fetch_by_analysis_id($updatepafids_analysis->dbID);
+  $stats->batch_size(1);
+  $stats->hive_capacity(-1);
+  $stats->status('BLOCKED');
+  $stats->update();
+
+  $ctrlRuleDBA->create_rule($blastrules_analysis, $updatepafids_analysis);
+
+  Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob
+      (
+       -input_id       => 1,
+       -analysis       => $updatepafids_analysis,
+      );
 
   #
   # BuildHomology
@@ -319,7 +348,7 @@ sub prepareGenomeAnalysis
   $stats->status('BLOCKED');
   $stats->update();
 
-  $ctrlRuleDBA->create_rule($blastrules_analysis, $createBuildHomologyJobs);
+  $ctrlRuleDBA->create_rule($updatepafids_analysis, $createBuildHomologyJobs);
   #the jobs created by CreateBuildHomologyJobs are flowed on on branch=2
   $dataflowRuleDBA->create_rule($createBuildHomologyJobs, $buildHomology, 2);
 
@@ -329,7 +358,6 @@ sub prepareGenomeAnalysis
          -analysis       => $createBuildHomologyJobs,
         );
   }
-
 
   #
   # blast_template
@@ -346,7 +374,6 @@ sub prepareGenomeAnalysis
   #
   # CreateHomology_dNdSJob
   #
-
   my $CreateHomology_dNdSJob = Bio::EnsEMBL::Analysis->new(
       -db_version      => '1',
       -logic_name      => 'CreateHomology_dNdSJob',
@@ -372,7 +399,6 @@ sub prepareGenomeAnalysis
   #
   # Homology_dNdS
   #
-
   my $homology_dNdS = Bio::EnsEMBL::Analysis->new(
       -db_version      => '1',
       -logic_name      => 'Homology_dNdS',
@@ -395,7 +421,6 @@ sub prepareGenomeAnalysis
   #
   # Threshold_on_dS
   #
-
   my $threshold_on_dS = Bio::EnsEMBL::Analysis->new(
       -db_version      => '1',
       -logic_name      => 'Threshold_on_dS',
@@ -438,8 +463,24 @@ sub store_codeml_parameters
 
   $dNdS_Conf->{'dNdS_analysis_data_id'} =
          $self->{'hiveDBA'}->get_AnalysisDataAdaptor->store_if_needed($options_string);
-         
+
   $dNdS_Conf->{'codeml_parameters'} = undef;
+}
+
+sub create_peptide_align_feature_tables {
+  my $self = shift;
+  foreach my $speciesPtr (@speciesList) {
+    my $gdb_id = $speciesPtr->{'genome_db_id'};
+    my $gdb = $self->{gdba}->fetch_by_dbID($gdb_id);
+    my $species_name = lc($gdb->name);
+    $species_name =~ s/\ /\_/g;
+    my $tbl_name = "peptide_align_feature"."_"."$species_name"."_"."$gdb_id";
+    my $sql = "CREATE TABLE $tbl_name like peptide_align_feature";
+
+    #print("$sql\n");
+    my $sth = $self->{'comparaDBA'}->dbc->prepare($sql);
+    $sth->execute();
+  }
 }
 
 sub checkIfRuleExists
