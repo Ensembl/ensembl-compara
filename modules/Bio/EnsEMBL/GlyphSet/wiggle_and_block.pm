@@ -16,7 +16,7 @@ sub init_label {
   my $HELP_LINK = $self->check();
   $self->init_label_text( $self->my_config('label'), $HELP_LINK );
   $self->bumped( $self->{'config'}->get($HELP_LINK, 'compact') ? 'no' : 'yes' );
-  return;
+  return 1;
 }
 
 sub _init {
@@ -28,7 +28,7 @@ sub _init {
   if($slice_length > $max_length*1010) {
     my $height = $self->errorTrack("$wiggle_name only displayed for less than $max_length Kb");
     $self->_offset($height+4);
-    return;
+    return 1;
   }
 
   my $db = undef;
@@ -67,6 +67,7 @@ sub render_block_features {
   ### Draws the predicted features track
   ### Arg1: arrayref of Feature objects
   ### Arg2: colour of the track
+  ### Returns 1
 
   my ( $self, $features, $colour, $score ) = @_;
   my $length = $self->{'container'}->length;
@@ -237,6 +238,7 @@ sub render_track_name {
   ### Draws the name of the predicted features track
   ### Arg1: arrayref of Feature objects
   ### Arg2: colour of the track
+  ### Returns 1
 
   my ( $self, $name, $colour ) = @_;
   my( $fontname_i, $fontsize_i ) = $self->get_font_details( 'innertext' );
@@ -268,6 +270,7 @@ sub render_space_glyph {
 
   ### Draws a an empty glyph as a spacer
   ### Arg1 : (optional) integer for space height,
+  ### Returns 1
 
   my ($self, $space) = @_;
   $space ||= 9;

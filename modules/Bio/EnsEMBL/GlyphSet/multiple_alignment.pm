@@ -37,7 +37,7 @@ sub init_label {
   return if( defined $self->{'config'}->{'_no_label'} );
   my $HELP_LINK = $self->check();
   if ($self->my_config('label') eq 'Conservation') {
-    $self->bumped( $self->{'config'}->get($HELP_LINK, 'compact') ? 'no' : 'yes' );
+    $self->bumped( $self->{'config'}->get($HELP_LINK, 'compact') ? 'no' : 'yes' ); # makes track expandable
   }
   $self->init_label_text( $self->my_config('label')||'---', 'compara_alignment' );
 }
@@ -46,7 +46,13 @@ sub colour   { return $_[0]->{'feature_colour'}, $_[0]->{'label_colour'}, $_[0]-
 
 
 sub draw_features {
-  my ($self, $db) = @_;
+
+  ### Called from {{ensembl-draw/modules/Bio/EnsEMBL/GlyphSet/wiggle_and_block.pm}}
+  ### Arg 2 : draws wiggle plot if this is true
+  ### Returns 0 if all goes well.  
+  ### Returns error message to print if there are features missing (string)
+
+  my ($self, $db, $wiggle) = @_;
   my $type = $self->check();
   return unless defined $type;  ## No defined type arghhh!!
 
@@ -151,7 +157,6 @@ sub draw_features {
   $self->_offset($h);
   $self->render_track_name($caption, $feature_colour) if $drawn_block;
 
-  my $wiggle =  $self->my_config('compact') ? 0 : 1;
   my $drawn_wiggle = $wiggle ? $self->wiggle_plot($db): 1;
   return 0 if $drawn_block && $drawn_wiggle;
 
@@ -174,6 +179,10 @@ sub draw_features {
 
 
 sub features {
+
+  ### Retrieves block features for constrained elements
+  ### Returns arrayref of features
+
   my ($self, $species, $method_id, $db ) = @_;
 
   my $slice = $self->{'container'};
@@ -227,6 +236,7 @@ sub wiggle_plot {
   ### Wiggle_plot
   ### Description: gets features for wiggle plot and passes to render_wiggle_plot
   ### Returns 1 if draws wiggles. Returns 0 if no wiggles drawn
+
   my ( $self, $db ) = @_;
   return 0 unless  $self->my_config('label') eq 'Conservation';
   return 0 unless $db;
