@@ -161,7 +161,7 @@ sub render_js {
         (my $T_label = $element->label)=~s/'/\\'/g;
         push @entries, sprintf(
           " new form_obj( '%s', '%s', '%s', '%s', %d )", $self->{_attributes}{'name'},$T_name,
-          $element->name, $element->type, $T_label, $element->required eq 'yes'?1:0
+          $element->type, $T_label, $element->required eq 'yes'?1:0
         );
       }
     }
