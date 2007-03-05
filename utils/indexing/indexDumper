@@ -50,8 +50,10 @@ foreach my $species ( @species ) {
   $conf->{'species'}   = $species;
   my %dbs = %{$SD->get_config($species,'databases')||{}};
   $conf->{'dbs'}       = { map { ($_,$dbs{$_}{NAME}) } keys %dbs };
-  $conf->{'dbs'}{'ENSEMBL_COMPARA'} = 'ensembl_compara_42';
+  $conf->{'dbs'}{'ENSEMBL_COMPARA'} = 'ensembl_compara_43';
   my $core = $dbs{'ENSEMBL_DB'};
+  $conf->{'dbh_compara'}       = DBI->connect( "dbi:mysql:ensembl_compara_43;host=ensdb-1-03;port=3303",
+        $core->{'USER'}, $core->{'PASS'} );
   $conf->{'dbh'}       = DBI->connect( "dbi:mysql:$core->{'NAME'};host=$core->{'HOST'};port=$core->{'PORT'}",
         $core->{'USER'}, $core->{'PASS'} );
   warn join ' ', $species, Data::Dumper::Dumper $conf;
@@ -413,7 +415,7 @@ sub dumpFamily {
     my $taxon_id = ($t_sth->fetchrow);
     return unless $taxon_id;
 
-    my $sth = $conf->{'dbh'}->prepare(
+    my $sth = $conf->{'dbh_compara'}->prepare(
         "select f.stable_id, f.description, m.stable_id
            from $FAMDB.family as f, $FAMDB.family_member as fm, 
                 $FAMDB.member as m

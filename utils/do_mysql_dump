@@ -60,7 +60,7 @@ $species_defs || pod2usage("$0: SpeciesDefs config not found");
 
 # Sort out dumpdir ----------------------------------------------------------
 my $sitedefs_release =  $SiteDefs::ENSEMBL_VERSION;
-$dumpdir ||= "/mysql/dumps/release-$sitedefs_release";  #should be cluster CDSL "/mysqld/current/var"
+$dumpdir ||=  "/mysql/dumps/release-$sitedefs_release";  #should be cluster CDSL "/mysqld/current/var"
 if( $dumpdir !~/^\// ){
   pod2usage("[*DIE] Must provide the full path to dumpdir: $dumpdir" ) 
 }
@@ -112,6 +112,8 @@ foreach my $sp( @SPECIES ){
   # Work out dumpdir ---------------------------------------------------------
   my @sp_dumpdirs;
   if ($sp eq 'Multi') {
+    #$dumpdir =~ s#^/mysql/#/mysqlg/#;
+    utils::Tool::info(1, "Using dumpdir $dumpdir");
     @sp_dumpdirs  = "$dumpdir/multi_species_$sitedefs_release/data/mysql";
   }
   else {
@@ -214,12 +216,21 @@ sub dump_mysql {
   #warn $dump_command_T;
   system( $dump_command_T ) and die( "Cannot $dump_command_T: $!" );
 
-  system("rm -f ./[a-c]*.sql");
-  system("rm -f ./[d-g]*.sql");
-  system("rm -f ./[h]*.sql");
-  system("rm -f ./[i-p]*.sql");
-  system("rm -f ./[r-z]*.sql");
-  system("rm -f ./*.sql");
+  opendir (DIR, $dumpdir);
+  foreach  (grep /\.sql$/, readdir DIR) {
+    unlink;
+  }
+#   system("rm -f ./[a-b]*.sql");
+#   system("rm -f ./[c]*.sql");
+#   system("rm -f ./[d]*.sql");
+#   system("rm -f ./[e]*.sql");
+#   system("rm -f ./[f-g]*.sql");
+#   system("rm -f ./[h]*.sql");
+#   system("rm -f ./[i-n]*.sql");
+#   system("rm -f ./[o]*.sql");
+#   system("rm -f ./[p-q]*.sql");
+#   system("rm -f ./[r-z]*.sql");
+#   system("rm -f ./*.sql");
 
   # DON'T USE THE -T OPTION COS IT STOPS IT WORKING
 
