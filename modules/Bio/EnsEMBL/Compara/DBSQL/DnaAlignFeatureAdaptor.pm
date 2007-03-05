@@ -507,11 +507,11 @@ sub _convert_GenomicAlignBlocks_into_DnaDnaAlignFeatures {
     my $ga_group_id = $consensus_genomic_align->genomic_align_group_id_by_type("default");
     my $f = Bio::EnsEMBL::DnaDnaAlignFeature->new_fast
       ({'cigar_string' => $ga_cigar_line,
-        'slice'        => $this_genomic_align_block->reference_slice,
-        'seqname'      => $this_genomic_align_block->reference_slice->name,
-        'start'        => $this_genomic_align_block->reference_slice_start,
-        'end'          => $this_genomic_align_block->reference_slice_end,
-        'strand'       => $this_genomic_align_block->reference_slice_strand,
+        'slice'        => $consensus_genomic_align->get_Slice(),
+        'seqname'      => $consensus_genomic_align->dnafrag->name,
+        'start'        => $consensus_genomic_align->dnafrag_start,
+        'end'          => $consensus_genomic_align->dnafrag_end,
+        'strand'       => $consensus_genomic_align->dnafrag_strand,
         'species'      => $consensus_genomic_align->genome_db->name,
         'score'        => $score,
         'percent_id'   => $perc_id,
