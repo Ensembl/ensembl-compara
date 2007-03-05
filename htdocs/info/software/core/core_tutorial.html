@@ -521,7 +521,7 @@ own object adaptors.
 <pre>
 my $slice_adaptor = $registry->get_adaptor( 'Human', 'Core', 'Slice' );
 my $tr_adaptor    = $registry->get_adaptor( 'Human', 'Core', 'Transcript' );
-my $daf_adaptor = $registry->get_adaptor( 'Human', 'Core', 'DnaAlignFeature' );
+my $daf_adaptor   = $registry->get_adaptor( 'Human', 'Core', 'DnaAlignFeature' );
 
 # Get a slice of chromosome 20, 10MB-11MB
 my $slice = $slice_adaptor->fetch_by_region( 'chromosome', '20', 10e6, 11e6 );
