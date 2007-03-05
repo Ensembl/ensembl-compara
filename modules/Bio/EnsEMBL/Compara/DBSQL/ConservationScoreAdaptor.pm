@@ -108,7 +108,7 @@ my $PAD_ZEROS = 0;
   Arg  1     : Bio::EnsEMBL::Compara::MethodLinkSpeciesSet $method_link_species_set 
   Arg  2     : Bio::EnsEMBL::Slice $slice
   Arg  3     : (opt) integer $display_size (default 700)
-  Arg  4     : (opt) string $display_type (one of "AVERAGE" or "MAX") (default "MAX")
+  Arg  4     : (opt) string $display_type (one of "AVERAGE" or "MAX") (default "AVERAGE")
   Arg  5     : (opt) integer $window_size
   Example    : my $conservation_scores =
                     $conservation_score_adaptor->fetch_all_by_MethodLinkSpeciesSet_Slice($method_link_species_set, $slice, 1000, "MAX", 10);
@@ -165,9 +165,9 @@ sub fetch_all_by_MethodLinkSpeciesSet_Slice {
 	$display_size = 700;
     }
 
-    #default display_mode is MAX
+    #default display_mode is AVERAGE
     if (!defined $display_type) {
-	$display_type = "MAX";
+	$display_type = "AVERAGE";
     }
 
     #set up bucket object for storing bucket_size number of scores 
@@ -257,7 +257,7 @@ sub fetch_all_by_MethodLinkSpeciesSet_Slice {
   Arg  3     : (opt) integer $align_end (default $genomic_align_block->length)
   Arg  4     : (opt) integer $slice_length (default $genomic_align_block->length)
   Arg  3     : (opt) integer $display_size (default 700)
-  Arg  4     : (opt) string $display_type (one of "AVERAGE" or "MAX") (default "MAX")
+  Arg  4     : (opt) string $display_type (one of "AVERAGE" or "MAX") (default "AVERAGE")
   Arg  5     : (opt) integer $window_size
   Example    : my $conservation_scores =
                     $conservation_score_adaptor->fetch_all_by_GenomicAlignBlock($genomic_align_block, $align_start, $align_end, $slice_length, 1000, "MAX", 10);
@@ -300,9 +300,9 @@ sub fetch_all_by_GenomicAlignBlock {
 	$display_size = 700;
     }
 
-    #default display_mode is MAX
+    #default display_mode is AVERAGE
     if (!defined $display_type) {
-	$display_type = "MAX";
+	$display_type = "AVERAGE";
     }
 
     #default align_start is 1
