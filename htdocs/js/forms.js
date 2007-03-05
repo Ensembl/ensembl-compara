@@ -57,7 +57,7 @@ function os_check( type, element, req ) {
 }
 
 function on_load( list ) {
-  for( e in list ) {
+  for( e=0; e<list.length;e++) {
     el = list[e];
     if( document.forms[el.form] ) {
       os_check( el.type, document.forms[el.form].elements[el.element],el.req)
@@ -75,7 +75,7 @@ function form_obj( form, element, type, name, req ) {
 
 function on_submit( list, conf ) {
   warning ="";                             // Warning that will appear
-  for ( e in list ) {                 // Iterate through the fields
+  for( e=0; e<list.length;e++) { // iterate through all elements
     el = list[e];
     element = document.forms[el.form].elements[el.element];
     tmpl = '';
