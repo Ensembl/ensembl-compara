@@ -46,6 +46,9 @@ pipeline in order to get a unique method_link_species_set_id. Ideally
 they can be created before starting to build the new database although
 new method_link_species_sets can be added later on.
 
+eg.
+ perl create_mlss.pl --method_link_type  BLASTZ_NET --genome_db_id 22,51 --source "ensembl"  --reg_conf reg_conf_v44.pl --compara compara_master
+
 8. Create the new database for the new release and add it to your
 registry configuration file. Use the ~ensembl-compara/sql/table.sql
 file to create the tables and populate the database with the relevant
