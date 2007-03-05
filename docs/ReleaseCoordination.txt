@@ -25,9 +25,15 @@ genome_db and dnafrag tables. You can set up your registry and use the
 ~ensembl-compara/scripts/pipeline/update_genome.pl script. This script
 sets the new genome_dbs as the default assemblies.
 
+eg. 
+perl update_genome.pl --reg_conf reg_conf_v44.pl --compara compara_master --species bushbaby
+
+
 5. Wait for the handover before starting to build the new database in case
 any of the new species cannot make it. Don't forget to switch the
-assembly_default values in this case.
+assembly_default values of genome_db in this case.
+ [1] for species making it / used in the pipeline
+ [0] for species not making it / or old assemblies
 
 6. Update the ncbi_taxa_nodes and ncbi_taxa_names in the master DB using the
 ncbi_taxonomy database located in mysql::/ecs2:3365/ncbi_taxonomy
