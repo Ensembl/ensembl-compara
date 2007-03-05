@@ -195,7 +195,7 @@ $clone = $slice_adaptor->fetch_by_region( 'clone', 'AL031658.11' );
 print $clone->seq_region_name(), "\n";
 </pre>
 
-<h4>A note about lazy loading and memory usage</h4>
+<h4 class="boxed">A note about lazy loading and memory usage</h4>
 <p>
 Some of the data that makes up the objects returned from the Ensembl API
 is <em>lazy loaded</em>.
@@ -217,6 +217,11 @@ lazy loading of data is more likely to stay small.
 This is why the comment on the last loop above says that it is a "more
 memory efficient way", and this is also why we use this convention for
 most similar loop constructs in the reminder of this API tutorial.
+</p>
+
+<p>
+NB: This strategy obviously won't work if the contents of the list being
+iterated over is needed at some later point after the end of the loop.
 </p>
 
 <h3 class="boxed">Connecting to the Database &mdash; The Registry</h3>
