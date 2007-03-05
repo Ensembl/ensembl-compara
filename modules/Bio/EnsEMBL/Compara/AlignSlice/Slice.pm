@@ -253,10 +253,17 @@ sub add_Slice_Mapper_pair {
 
 =head2 get_all_Slice_Mapper_pair
 
-  Arg[1]     : - none -
+  Arg[1]     : [optional] bool $get_gap_slices
   Example    : $slice_mapper_pairs = $slice->get_all_Slice_Mapper_pairs();
   Description: Returns all pairs of Slices and Mappers attached to this
                Bio::EnsEMBL::Compara::AlignSlice::Slice
+               The $get_gap_slice flag is normally used internally to get the
+               the gap slices. These are created when the alignment(s)
+               underlying the AlignSlice correspond to gaps only in one or more
+               species. These are used to tell the difference between gap due to
+               lack of alignments and gaps due to the alignments. If you set this
+               this flag to true you will get these gap slices back but it is your
+               responsability to deal with these gap slices properly.
   Returntype : list ref of hashes which keys are "slice", "mapper", "start",
                "end" and "strand". Each hash corresponds to a pair of Slice
                and Mapper and the coordintes needed to locate the Slice in
@@ -277,6 +284,48 @@ sub get_all_Slice_Mapper_pairs {
   }
 
   return $slice_mapper_pairs;
+}
+
+
+=head2 get_all_Genes_by_type
+
+  Arg [1]    : string $type
+               The biotype of genes wanted.
+  Arg [2]    : (optional) string $logic_name
+  Arg [3]    : (optional) boolean $load_transcripts
+               If set to true, transcripts will be loaded immediately rather
+               than being lazy-loaded on request.  This will result in a
+               significant speed up if the Transcripts and Exons are going to
+               be used (but a slow down if they are not).
+  Example    : @genes = @{$slice->get_all_Genes_by_type('protein_coding',
+               'ensembl')};
+  Description: Retrieves genes that overlap this slice of biotype $type.
+               This is primarily used by the genebuilding code when several
+               biotypes of genes are used.
+
+               The logic name is the analysis of the genes that are retrieved.
+               If not provided all genes will be retrieved instead.
+
+               This methods overwrites the core one since it sends a warning
+               message and return an empty array because this AlignSlice::Slice
+               object has no adaptor. This implementation calls the
+               get_all_Genes methdo elsewhere in this module to fulfil the
+               query.
+
+  Returntype : listref of Bio::EnsEMBL::Genes
+  Exceptions : none
+  Caller     : genebuilder, general
+  Status     : Stable
+
+=cut
+
+sub get_all_Genes_by_type{
+  my ($self, $type, $logic_name, $load_transcripts) = @_;
+
+  my @out = grep { $_->biotype eq $type } 
+    @{ $self->get_all_Genes($logic_name, undef, $load_transcripts)};
+
+  return \@out;
 }
 
 
