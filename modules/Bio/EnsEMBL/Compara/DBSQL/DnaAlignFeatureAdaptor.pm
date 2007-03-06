@@ -505,13 +505,29 @@ sub _convert_GenomicAlignBlocks_into_DnaDnaAlignFeatures {
       $ga_query_strand = -$ga_query_strand;
     }
     my $ga_group_id = $consensus_genomic_align->genomic_align_group_id_by_type("default");
+
+    my ($slice, $seq_name, $start, $end, $strand);
+    if ($this_genomic_align_block->reference_slice) {
+      $slice = $this_genomic_align_block->reference_slice;
+      $seq_name = $this_genomic_align_block->reference_slice->name;
+      $start = $this_genomic_align_block->reference_slice_start;
+      $end = $this_genomic_align_block->reference_slice_end;
+      $strand = $this_genomic_align_block->reference_slice_strand;
+    } else {
+      $slice = $consensus_genomic_align->get_Slice();
+      $seq_name = $consensus_genomic_align->dnafrag->name;
+      $start = $consensus_genomic_align->dnafrag_start;
+      $end = $consensus_genomic_align->dnafrag_end;
+      $strand = $consensus_genomic_align->dnafrag_strand;
+    }
+
     my $f = Bio::EnsEMBL::DnaDnaAlignFeature->new_fast
       ({'cigar_string' => $ga_cigar_line,
-        'slice'        => $consensus_genomic_align->get_Slice(),
-        'seqname'      => $consensus_genomic_align->dnafrag->name,
-        'start'        => $consensus_genomic_align->dnafrag_start,
-        'end'          => $consensus_genomic_align->dnafrag_end,
-        'strand'       => $consensus_genomic_align->dnafrag_strand,
+        'slice'        => $slice,
+        'seqname'      => $seq_name,
+        'start'        => $start,
+        'end'          => $end,
+        'strand'       => $strand,
         'species'      => $consensus_genomic_align->genome_db->name,
         'score'        => $score,
         'percent_id'   => $perc_id,
