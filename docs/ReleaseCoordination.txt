@@ -24,6 +24,8 @@ send the DOI at after the Genebuilders
 genome_db and dnafrag tables. You can set up your registry and use the
 ~ensembl-compara/scripts/pipeline/update_genome.pl script. This script
 sets the new genome_dbs as the default assemblies.
+You have to create new genome_db_id (dnafrag) when it is a new assembly, or a new species. 
+Sometime it's done by the pairwise guys as they want to start building earlier. 
 
 eg. 
 perl update_genome.pl --reg_conf reg_conf_v44.pl --compara compara_master --species bushbaby
@@ -37,6 +39,8 @@ assembly_default values of genome_db in this case.
 
 6. Update the ncbi_taxa_nodes and ncbi_taxa_names in the master DB using the
 ncbi_taxonomy database located in mysql::/ecs2:3365/ncbi_taxonomy
+This is usually done by the person who runs the orthologs/paralogs.For more information, here is the doc ensembl-compara/scripts/taxonomy/README-taxonomy
+
 
 7. New method_link_species_set entries might be added using the
 ~ensembl-compara/scripts/pipeline/create_mlss.pl script. The release
@@ -45,9 +49,16 @@ method_link_species_set in the master database before starting a new
 pipeline in order to get a unique method_link_species_set_id. Ideally
 they can be created before starting to build the new database although
 new method_link_species_sets can be added later on.
+Sometimes the DNA alignment guys add the MLSS themselves. 
+For the homologies this is done by the homologues guys
 
-eg.
+eg. for the pairwise alignment
  perl create_mlss.pl --method_link_type  BLASTZ_NET --genome_db_id 22,51 --source "ensembl"  --reg_conf reg_conf_v44.pl --compara compara_master
+
+
+# for the orthologsperl create_mlss.pl --method_link_type ENSEMBL_ORTHOLOGUES --genome_db_id 3,4,5,13,16,18,22,25,26,27,29,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,50,47,48,49,46,51,+upcomming_species --source "ensembl" --url "" --pw --force--pw stands for all pairwised genome_db_ids in the list provided#for the paralogs (between_species)perl create_mlss.pl --method_link_type ENSEMBL_PARALOGUES --genome_db_id 3,4,5,13,16,18,22,25,26,27,29,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,50,47,48,49,46,51,+upcomming_species --source "ensembl" --url "" --pw --force#for the paralogs (within_species)perl create_mlss.pl --method_link_type ENSEMBL_PARALOGUES --genome_db_id 3,4,5,13,16,18,22,25,26,27,29,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,50,47,48,49,46,51,+upcomming_species --source "ensembl" --url "" --sg --force--sg stands for keep genome_db_id in the list alone (singleton) 
+
+
 
 8. Create the new database for the new release and add it to your
 registry configuration file. Use the ~ensembl-compara/sql/table.sql
