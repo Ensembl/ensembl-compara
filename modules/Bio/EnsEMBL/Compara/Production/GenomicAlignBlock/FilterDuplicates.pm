@@ -193,7 +193,6 @@ sub filter_duplicates {
   $self->{'not_truncate_count'} = 0;
 
   $self->{'delete_hash'} = {}; #all the genomic_align_blocks that need to be deleted
-  $self->{'overlap_hash'} = {};
 
   my $mlss = $self->{'comparaDBA'}->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($self->{'method_link_species_set_id'});
 #  my ($gdb1, $gdb2) = @{$mlss->species_set};
@@ -280,7 +279,6 @@ sub filter_duplicates {
 
   printf("%d gabs to delete\n", scalar(keys(%{$self->{'delete_hash'}})));
   printf("found %d equal GAB pairs\n", $self->{'identical_count'});
-  printf("found %d overlapping GAB pairs\n", scalar(keys(%{$self->{'overlap_hash'}})));
   printf("found %d overlapping GABs\n", $self->{'overlap_count'});
   printf("%d GABs loadled\n", $self->{'gab_count'});
   printf("%d TRUNCATE gabs\n", $self->{'truncate_count'});
@@ -418,13 +416,6 @@ sub remove_edge_artifacts_from_genomic_align_block_list {
     
       if(genomic_align_blocks_overlap($gab1, $gab2)) {
         $self->{'overlap_count'}++;
-        if($gab1->dbID < $gab2->dbID) {
-          my $key = $gab1->dbID . $gab2->dbID;
-          $self->{'overlap_hash'}->{$key} = $key;
-        } else {
-          my $key = $gab2->dbID. $gab1->dbID;
-          $self->{'overlap_hash'}->{$key} = $key;
-        }
 
         unless($self->process_overlap_for_chunk_edge_truncation($gab1, $gab2, $region_start, $region_end)) {
           if($self->debug) {
