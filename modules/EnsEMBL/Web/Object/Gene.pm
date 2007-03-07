@@ -14,8 +14,9 @@ use EnsEMBL::Web::Component::Transcript qw(_sort_similarity_links);
 sub get_slice_object {
   my $self = shift;
   my $slice = $self->Obj->feature_Slice->expand( $self->param('flank5_display'), $self->param('flank3_display') );
+  return 1 unless $slice;
   my $T = new EnsEMBL::Web::Proxy::Object( 'Slice', $slice, $self->__data );
-#  $T->highlight_display( $self->Obj->get_all_Exons );
+  #  $T->highlight_display( $self->Obj->get_all_Exons );
   return $T;
 }
 

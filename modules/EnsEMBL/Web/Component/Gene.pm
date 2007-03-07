@@ -159,14 +159,20 @@ sub alignment_options_form {
 
 sub sequence_markup_options_form {
   my( $panel, $object ) = @_;
-  my $form = EnsEMBL::Web::Form->new( 'markup_options', "/@{[$object->species]}/sequencealignview", 'post' );
-  $form = gene_options_form($panel, $object, $form, "exons");
+  my $form = EnsEMBL::Web::Form->new( 'markup_options', "/@{[$object->species]}/sequencealignview", 'get' );
+  $form = gene_options_form($panel, $object, $form, 'exons');
   $form = alignment_options_form($panel, $object, $form);
-  my $strains =  $object->species_defs->translate( "strain" )."s";
   my $species =  $object->species_defs->SPECIES_COMMON_NAME || $object->species;
 
-  my $refslice = $object->get_slice_object;
-  my %selected_species = map { $_ => 1} $object->param("individuals");
+  my $refslice;
+  eval {
+    $refslice = $object->get_slice_object;
+  };
+  if ($@) {
+    warn $@;
+    return $form;
+  }
+  my %selected_species = map { $_ => 1} $object->param('individuals');
 
   my %reseq_strains;
   map { $reseq_strains{$_->name} = 1; } (  $refslice->get_individuals('reseq') );
@@ -176,20 +182,22 @@ sub sequence_markup_options_form {
     my $key = $_ eq $golden_path   ? 'ref' :
                $reseq_strains{$_} ? 'reseq' : 'other';
     if ( $selected_species{'all'} or $selected_species{$_} ) {
-      push @{$individuals->{$key}}, {"value" => $_, "name"=> $_, "checked"=>"yes"};
+      push @{$individuals->{$key}}, {'value' => $_, 'name'=> $_, 'checked'=>'yes'};
     } else {
-      push @{$individuals->{$key}}, {"value" => $_, "name"=> $_};
+      push @{$individuals->{$key}}, {'value' => $_, 'name'=> $_};
     }
   }
 
- $form->add_element(
-    'type'     => 'MultiSelect',
-    'name'     => 'individuals',
-    'label'    => "Show reference $strains",
-    'values'   => $individuals->{'ref'},
-    'value'    => $object->param('individuals'),
-  ) if $individuals->{'ref'};
+  my $strains =  $object->species_defs->translate( 'strain' );
+  $form->add_element(
+     'type'     => 'NoEdit',#MultiSelect',
+     #'name'     => 'individuals',
+     'label'    => "Reference $strains:",
+     #'values'   =>  $individuals->{'ref'},
+     'value'    => "$golden_path",#$object->param('individuals'),
+   ) if $individuals->{'ref'};
 
+  $strains .= "s";
   $form->add_element(
     'type'     => 'MultiSelect',
     'name'     => 'individuals',
@@ -197,6 +205,7 @@ sub sequence_markup_options_form {
     'values'   => [{ 'value' =>'all' ,  'name' => "All $strains" }],
     'value'    => $object->param('individuals'),
   ) unless $selected_species{'all'};
+
 
  $form->add_element(
     'type'     => 'MultiSelect',
@@ -222,7 +231,7 @@ sub sequence_markup_options_form {
 
 sub align_markup_options_form {
   my( $panel, $object ) = @_;
-  my $form = EnsEMBL::Web::Form->new( 'markup_options', "/@{[$object->species]}/geneseqalignview", 'post' );
+  my $form = EnsEMBL::Web::Form->new( 'markup_options', "/@{[$object->species]}/geneseqalignview", 'get' );
   $form = gene_options_form($panel, $object, $form, "exons");
   $form = alignment_options_form($panel, $object, $form);
 
