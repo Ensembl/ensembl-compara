@@ -105,7 +105,7 @@ paths to the 'hive_output_dir' to
 
 cd ~/src/ensembl_main/ensembl-compara/scripts/pipeline  
 
-populate_new_database.pl --master compara_master --old compara_XX --new abel_compara_human_cow_blastz_27 
+populate_new_database.pl --master compara_master --species "Homo sapiens" --species "Bos taurus" --new abel_compara_human_cow_blastz_27 
 
 6- Run the configure scripts
    ~~~~~~~~~~~~~~~~~~~~~~~~~
