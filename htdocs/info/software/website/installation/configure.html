@@ -12,62 +12,16 @@
 </p>
 
 <h3 class="boxed">Background: configuration</h3>
-<h4 >File Configuration</h4>
+<h4 >Plugins</h4>
 
 <p>
-  The configuration for the website is split up into site-wide
-  configuration and species configuration. 
   The default configuration files can all be found in the "conf"
   subdirectory of your server-root.
-</p>
-
-
-<p>
      The site-wide configuration (Apache config, global settings) 
      is stored in <kbd>conf/SiteDefs.pm</kbd>.  
 </p>
 
 
-<p>  
-    The species configuration (database names, etc.) is 
-     kept in the conf/ini_files directory as a series of "ini" files.
-</p>
-<ul>
-  <li>
-     There is a generic file called DEFAULTS.ini which holds default 
-     values for all the species.   (This is simply to save having 
-     to make the same setting in multiple species ini files.)
-  </li>
-  <li>
-     There needs to be a species-specific .ini file for each 
-     species you want to display on your Ensembl website.
-     (&lt;Genus_species&gt;.ini files e.g. Homo_sapiens.ini).
-     You can override settings in DEFAULTS.ini by redefining the setting
-      in a particular species' ini file.
-  </li>
-  <li>  
-     In addition, MULTI.ini contains multi-species settings. It has
-     database connection information for the Compara and
-     Mart databases.
-  </li>
-</ul>
-
-<p>To create a new species-specific ini file, copy an existing one and use that as a template.  
-These lines will need to be edited by hand:</p>
-<ul>
-<li>SPECIES_DESCRIPTION (used for the species descriptions in the table at the end of the <a href="/info/data/download.html">FTP download page)</a>.</li>
-<li>ASSEMBLY_ID (used for display on the homepage)</li>
-<li>ENSEMBL_GOLDEN_PATH (used in the webcode)</li>
-<li>SPECIES_RELEASE_VERSION is the last number of the database name for the species. Used to work out database name, name of FTP site directory etc</li>
-<li>Are there gene predictions or not? If not you can comment-out/ ignore all the sections for genes</li>
-<li>Under [databases], list all the ones configured for this species.  <br />
-You can use "%" instead of the release number if it is idential to &lt;ENSEMBL_VERSION&gt; (configured in <kbd>conf/SiteDefs.pm</kbd>).  <br />
-Use "%" to replace the species release version if you have configured this above</li>
-<li>DAS sections are optional</li>
-</ul>
-
-
-<h4 class="boxed">Plugins</h4>
 
 <p>
   Elsewhere in the documentation you will read about how to <a href="/info/software/website/index.html#extending">extend</a>
@@ -81,6 +35,12 @@ Use "%" to replace the species release version if you have configured this above
    and SiteDefs.pm files which
   can be used to configure your copy of Ensembl.
 </p>
+
+<h4>Configuring the available species</h4>
+
+<p>If you wish to add to or remove from the full list of species on the main 
+<a href="http://www.ensembl.org">ensembl website</a>, please see the 
+<a href="species.html">species configuration</a> page.</p>
 
 
 <h3 class="boxed">Setting up the "Mirror Plugin"</h3>
@@ -155,14 +115,6 @@ be a six digit hex-number and $SiteDefs::ENSEMBL_ENCRYPT_1, _2 and _3 should eac
 characters. Unless you are particularly concerned about people changing cookies, the default values
 will probably do.</p>
 
-
-<h4>Configuring the available species</h4>
-
-<p>If you wish to use Ensembl 'as-is', with the full list of species found in the release you
-downloaded, you can skip to the next section.</p>
-
-<p>If you wish to add or remove species, please see the 
-<a href="species.html">species configuration</a> page.</p>
 
 <h4>Temporary Files</h4>
 

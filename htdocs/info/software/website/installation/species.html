@@ -5,6 +5,30 @@
   </head>
 <body>
   <h2>Configuring your Ensembl species</h2>
+<h3 class="boxed" id="ini-file">Species ini files</h3>
+<p>
+    The species configuration (database names, etc.) is
+     kept in the conf/ini_files directory as an "ini" file. 
+     There is a generic file called DEFAULTS.ini which holds default
+     values for all the species.   (This is simply to save having
+     to make the same setting in multiple species ini files.)
+     There needs to be a species-specific .ini file for each
+     species you want to display on your Ensembl website 
+     (e.g. Homo_sapiens.ini).
+     You can override settings in DEFAULTS.ini by redefining the setting
+      in a particular species' ini file.
+     The MULTI.ini contains multi-species settings. It has
+     database connection information for the Compara and
+     Mart databases.
+</p>
+<p>To create a new species-specific ini file, copy, rename and modify the template file in <code>public-plugins/mirror/conf/ini-files/Genus_species.ini</code>.</p>
+<ul>
+<li>Under [databases] list all the ones configured for this species.  <br />
+You can use "%" instead of the release number if it is idential to the &lt;ENSEMBL_VERSION&gt; (configured in <kbd>conf/SiteDefs.pm</kbd>). This is equivalent to the schema version for the main ensembl site. <br />
+<li> If you want to configure additional data you can use an existing ini file from the <code>public-plugins/ensembl/conf/ini-files/</code> directory as a guide.
+</li>
+</ul>
+<h3 id="customise" class="boxed">Customising your species list</h3>
 
 <p>The default species for Ensembl are listed in this file:</p>
 <p><kbd>public-plugins/ensembl/conf/SiteDefs.pm</kbd> 
@@ -32,7 +56,6 @@ sub update_conf {
 }
 </pre>
 
-<h3 id="customise" class="boxed">Customising your species list</h3>
 <p>To overwrite the default species and customise your own species list 
 add lines (described below) to the "update_conf" method in <strong>your mirror plugin</strong>: 
 <kbd>public-plugins/mirror/conf/SiteDefs.pm</kbd>.
@@ -49,7 +72,7 @@ add lines (described below) to the "update_conf" method in <strong>your mirror p
   </li>
 </ol>
 
-<p>Remember to <a href="configure.html#species_ini">create an ini file</a> for each of the species in 
+<p>Remember to <a href="#ini-file">create an ini file</a> for each of the species in 
 <kbd>public-plugins/mirror/conf/ini-files/&lt;Genus_species&gt;.ini</kbd>.  If you put your changes 
 into the public-plugins/mirror directory, they will not be overridden when you next do a cvs update.</p>
 
@@ -126,7 +149,7 @@ for the home page and new site maps (see below).</p>
 home page and main sitemap. The image <em>must</em> be 40x40px and called 
 <kbd>thumb_[Genus_species].png</kbd>. Save it in <kbd>public-plugins/mirror/htdocs/img/species/</kbd></p>
 
-<h4>Species lists</h4>
+<!--<h4>Species lists</h4>
 
 <p>These can be manually updated by copying <kbd>mammals.html</kbd> and <kbd>others.html</kbd>
 from <kbd>/public-plugins/ensembl/htdocs/ssi/</kbd> to <kbd>/public-plugins/mirror/htdocs/ssi/</kbd>
@@ -135,11 +158,11 @@ and then editing them to show your species.</p>
 <p>Alternatively you can run the utility script <kbd>utils/homepage.pl</kbd>, as long as you have run
 <kbd>utils/update_webdb.pl</kbd> first to put all your configured species into the database.</p>
 
-<blockquote><kbd>./homepage.pl --release=[[SPECIESDEFS::ENSEMBL_VERSION]] --sitetype=mirror</kbd> (substituting the relevant release number)</blockquote>
+<blockquote><kbd>./homepage.pl &#45;&#45;release=[[SPECIESDEFS::ENSEMBL_VERSION]] &#45;&#45;sitetype=mirror</kbd> (substituting the relevant release number)</blockquote>
+
 
 <p>If your static content is <strong>not</strong> in <kbd>public-plugins/mirror</kbd>, you need to append another flag:</p>
-
-<blockquote><kbd>--mirror=my-plugins/mysite</kbd> (no beginning or trailing slashes).</blockquote> 
+<blockquote><kbd>&#45;&#45;mirror=my-plugins/mysite</kbd> (no beginning or trailing slashes).</blockquote> -->
 
 <h4>Site maps</h4>
 
