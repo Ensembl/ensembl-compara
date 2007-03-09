@@ -339,7 +339,15 @@ sub fetch_all_by_GenomicAlignBlock {
 		called => 0,
 		cnt => 0,
 		size => $bucket_size};
-    
+
+
+    #make sure reference genomic align has been set. If not set, set to be
+    #first genomic_align
+    my $reference_genomic_align = $genomic_align_block->reference_genomic_align;
+    if (!$reference_genomic_align) {
+	$genomic_align_block->reference_genomic_align($genomic_align_block->get_all_GenomicAligns->[0]);
+    }
+
     my $conservation_scores = $self->_fetch_all_by_GenomicAlignBlockId_WindowSize($genomic_align_block->dbID - 2400000000000, $window_size, $PACKED);
 
     if (scalar(@$conservation_scores) == 0) {
@@ -521,7 +529,7 @@ sub _fetch_all_by_GenomicAlignBlockId_WindowSize {
 
 	$conservation_score = new Bio::EnsEMBL::Compara::ConservationScore(
 				        -adaptor => $self,
-					-genomic_align_block_id => $values[0],
+					-genomic_align_block_id => $values[0] + 2400000000000,
 					-window_size => $values[1],
 					-position => $values[2],
 					-observed_score => $obs_scores,
@@ -1179,7 +1187,7 @@ sub _add_to_bucket {
 
 	my $aligned_score = new Bio::EnsEMBL::Compara::ConservationScore(
 		      -adaptor => $self,
-		      -genomic_align_block_id => $genomic_align_block_id,
+		      -genomic_align_block_id => $genomic_align_block_id + 2400000000000,
 		      -window_size => $win_size,
 		      -position => $p,
 		      -seq_region_pos => $s,
