@@ -522,6 +522,7 @@ sub packed {
 sub reverse {
     my ($self) = @_;
     my $num_scores;
+    return if (!defined($self->observed_score));
     if ($self->packed) { 
 	$num_scores = length($self->observed_score)/$pack_size;
     } else {
