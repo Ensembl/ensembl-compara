@@ -5,26 +5,15 @@ use Bio::EnsEMBL::GlyphSet::evega_transcript;
 
 @ISA = qw(Bio::EnsEMBL::GlyphSet::evega_transcript);
 
-our %VEGA_TO_SHOW_ON_VEGA;
-
 sub features {
     my ($self) = @_;
-    
     my $genes = $self->{'container'}->get_all_Genes($self->my_config('logic_name'));
-    
-    # make a list of gene types for the legend
-    foreach my $g (@$genes) {
-        my $status = $g->status;
-        my $biotype = $g->biotype;
-        $VEGA_TO_SHOW_ON_VEGA{"$biotype".'_'."$status"}++;
-    }
- 
     return $genes;
 }
 
 sub my_label {
     my $self = shift;
-    return $self->my_config('label');
+    return $self->{'config'}->{'geneid'} || $self->my_config('label');
 }
 
 sub colours {
@@ -49,6 +38,132 @@ sub gene_href {
         "#$gid" :
         qq(/@{[$self->{container}{_config_file_name_}]}/geneview?db=core;gene=$gid);
 }
+
+
+sub zmenu {
+    my ($self, $gene, $transcript) = @_;
+	my $script_name =  $ENV{'ENSEMBL_SCRIPT'};
+	my $tid = $transcript->stable_id();
+	my $author;
+	if ( defined (@{$transcript->get_all_Attributes('author')}) ) {
+		$author =  shift( @{$transcript->get_all_Attributes('author')} )->value || 'unknown';
+	}
+	else {
+		$author =   'not defined';
+	}
+    my $translation = $transcript->translation;
+    my $pid = $translation->stable_id() if $translation;
+    my $gid = $gene->stable_id();
+    my $id   = $transcript->external_name() eq '' ? $tid : ( $transcript->external_db.": ".$transcript->external_name() );
+	my $gtype = $self->format_vega_name($gene);
+	my $ttype = $self->format_vega_name($gene,$transcript);
+    my $zmenu = {
+        'caption' 	               => $self->my_config('zmenu_caption'),
+        "00:$id"	               => "",
+		"01:Transcript class: ".$ttype => "",
+		'03:Author: '.$author      => "",
+    	"07:Gene:$gid"             => "/@{[$self->{container}{_config_file_name_}]}/geneview?gene=$gid;db=core",
+        "08:Transcr:$tid"          => "/@{[$self->{container}{_config_file_name_}]}/transview?transcript=$tid;db=core",
+        "10:Exon:$tid"	           => "/@{[$self->{container}{_config_file_name_}]}/exonview?transcript=$tid;db=core",
+        '11:Supporting evidence'   => "/@{[$self->{container}{_config_file_name_}]}/exonview?transcript=$tid;db=core#evidence",
+        '12:Export cDNA'           => "/@{[$self->{container}{_config_file_name_}]}/exportview?option=cdna;action=select;format=fasta;type1=transcript;anchor1=$tid",
+    };
+
+	#don't show type for an eucomm gene
+	$zmenu->{"02:Gene type:$gtype"} = "" unless ($gene->analysis->logic_name eq 'otter_eucomm');
+
+    if ($pid) {
+        $zmenu->{"09:Peptide:$pid"}   =  "/@{[$self->{container}{_config_file_name_}]}/protview?peptide=$pid";
+        $zmenu->{'13:Export Peptide'} = "/@{[$self->{container}{_config_file_name_}]}/exportview?option=peptide;action=select;format=fasta;type1=peptide;anchor1=$pid";
+    }
+
+	if (my $ccds_att = $transcript->get_all_Attributes('ccds')->[0]) {
+		my $id = $ccds_att->value;
+		$zmenu->{"04:CCDS:$id"} = $self->ID_URL( 'CCDS', $id );
+	}
+
+	if ($script_name eq 'multicontigview') {
+		if (my $href = $self->get_hap_alleles_and_orthologs_urls($gene)) {
+			$zmenu->{"05:Realign display around this gene"} =  "$href";
+		}
+	}
+	return $zmenu;
+}
+
+sub gene_zmenu {
+    my ($self, $gene) = @_;
+	my $script_name =  $ENV{'ENSEMBL_SCRIPT'};
+    my $gid = $gene->stable_id();
+    my $id   = $gene->external_name() eq '' ? $gid : $gene->external_name();
+	my $type = $self->format_vega_name($gene);
+	my $author;
+	if ( defined (@{$gene->get_all_Attributes('author')}) ) {
+		$author =  shift( @{$gene->get_all_Attributes('author')} )->value || 'unknown';
+	}
+	else {
+		$author =   'not defined';
+	}
+    my $zmenu = {
+        'caption' 	             => $self->my_config('zmenu_caption'),
+        "00:$id"	             => "",
+		'02:Author: '.$author    => "",
+        "04:Gene:$gid"           => qq(/@{[$self->{container}{_config_file_name_}]}/geneview?gene=$gid;db=core),
+    };
+
+	#don't show type for an eucomm gene
+	$zmenu->{"01:Gene Type:$type"} = "" unless ($gene->analysis->logic_name eq 'otter_eucomm');
+
+	if ($script_name eq 'multicontigview') {
+		if (my $href = $self->get_hap_alleles_and_orthologs_urls($gene)) {
+			$zmenu->{"03:Realign display around this gene"} =  "$href";
+		}
+	}
+    return $zmenu;
+}
+
+sub text_label {
+    my ($self, $gene, $transcript) = @_;
+    my $id = $transcript->external_name() || $transcript->stable_id();
+    my $Config = $self->{config};
+    my $short_labels = $Config->get('_settings','opt_shortlabels');
+    unless( $short_labels ){
+        my $type = $self->format_vega_name($gene,$transcript);
+        $id .= " \n$type ";
+    }
+    return $id;
+}
+
+sub gene_text_label {
+    my ($self, $gene) = @_;
+    my $id = $gene->external_name() || $gene->stable_id();
+    my $Config = $self->{config};
+    my $short_labels = $Config->get('_settings','opt_shortlabels');
+    unless( $short_labels ){
+        my $type = $self->format_vega_name($gene);
+        $id .= " \n$type ";
+    }
+    return $id;
+}
+
+sub label_type {
+	my ($self,$colour,$logic_name) = @_;
+	my %sourcenames = (
+					   'otter' => 'Havana ',
+					   'otter_external' => 'External ',
+					   'otter_corf'     => 'CORF ',
+					   'otter_igsf'     => 'IgSF ',
+                       'otter_eucomm'   => 'Knockout genes',
+					  );
+	my $prefix = $sourcenames{$logic_name};
+	return $prefix.$colour;
+}
+
+sub error_track_name { 
+    my $self = shift;
+    return $self->my_config('track_label');
+}
+
+
 
 =head2 get_hap_alleles_and_orthologs_urls
 
@@ -260,162 +375,6 @@ sub best_orthologue_url {
 	return $extra_href;;
 }
 
-sub zmenu {
-    my ($self, $gene, $transcript) = @_;
-	my $script_name =  $ENV{'ENSEMBL_SCRIPT'};
-	my $tid = $transcript->stable_id();
-	my $author;
-	if ( defined (@{$transcript->get_all_Attributes('author')}) ) {
-		$author =  shift( @{$transcript->get_all_Attributes('author')} )->value || 'unknown';
-	}
-	else {
-		$author =   'not defined';
-	}
-    my $translation = $transcript->translation;
-    my $pid = $translation->stable_id() if $translation;
-    my $gid = $gene->stable_id();
-    my $id   = $transcript->external_name() eq '' ? $tid : ( $transcript->external_db.": ".$transcript->external_name() );
-	my $gtype = $self->format_vega_name($gene);
-	my $ttype = $self->format_vega_name($gene,$transcript);
-    my $zmenu = {
-        'caption' 	               => $self->my_config('zmenu_caption'),
-        "00:$id"	               => "",
-		"01:Transcript class: ".$ttype => "",
-        '02:Gene type: '.$gtype     => "",
-		'03:Author: '.$author      => "",
-    	"07:Gene:$gid"             => "/@{[$self->{container}{_config_file_name_}]}/geneview?gene=$gid;db=core",
-        "08:Transcr:$tid"          => "/@{[$self->{container}{_config_file_name_}]}/transview?transcript=$tid;db=core",
-        "10:Exon:$tid"	           => "/@{[$self->{container}{_config_file_name_}]}/exonview?transcript=$tid;db=core",
-        '11:Supporting evidence'   => "/@{[$self->{container}{_config_file_name_}]}/exonview?transcript=$tid;db=core#evidence",
-        '12:Export cDNA'           => "/@{[$self->{container}{_config_file_name_}]}/exportview?option=cdna;action=select;format=fasta;type1=transcript;anchor1=$tid",
-    };
-
-    if ($pid) {
-        $zmenu->{"09:Peptide:$pid"}   =  "/@{[$self->{container}{_config_file_name_}]}/protview?peptide=$pid";
-        $zmenu->{'13:Export Peptide'} = "/@{[$self->{container}{_config_file_name_}]}/exportview?option=peptide;action=select;format=fasta;type1=peptide;anchor1=$pid";
-    }
-
-	if (my $ccds_att = $transcript->get_all_Attributes('ccds')->[0]) {
-		my $id = $ccds_att->value;
-		$zmenu->{"04:CCDS:$id"} = $self->ID_URL( 'CCDS', $id );
-	}
-
-	if ($script_name eq 'multicontigview') {
-		if (my $href = $self->get_hap_alleles_and_orthologs_urls($gene)) {
-			$zmenu->{"05:Realign display around this gene"} =  "$href";
-		}
-	}
-
-
-
-    return $zmenu;
-}
-
-sub gene_zmenu {
-    my ($self, $gene) = @_;
-	my $script_name =  $ENV{'ENSEMBL_SCRIPT'};
-    my $gid = $gene->stable_id();
-    my $id   = $gene->external_name() eq '' ? $gid : $gene->external_name();
-	my $type = $self->format_vega_name($gene);
-	my $author;
-	if ( defined (@{$gene->get_all_Attributes('author')}) ) {
-		$author =  shift( @{$gene->get_all_Attributes('author')} )->value || 'unknown';
-	}
-	else {
-		$author =   'not defined';
-	}
-    my $zmenu = {
-        'caption' 	             => $self->my_config('zmenu_caption'),
-        "00:$id"	             => "",
-        '01:Gene Type: ' . $type => "",
-		'02:Author: '.$author    => "",
-        "04:Gene:$gid"           => qq(/@{[$self->{container}{_config_file_name_}]}/geneview?gene=$gid;db=core),
-    };
-	if ($script_name eq 'multicontigview') {
-		if (my $href = $self->get_hap_alleles_and_orthologs_urls($gene)) {
-			$zmenu->{"03:Realign display around this gene"} =  "$href";
-		}
-	}
-    return $zmenu;
-}
-
-sub text_label {
-    my ($self, $gene, $transcript) = @_;
-    my $id = $transcript->external_name() || $transcript->stable_id();
-    my $Config = $self->{config};
-    my $short_labels = $Config->get('_settings','opt_shortlabels');
-    unless( $short_labels ){
-        my $type = $self->format_vega_name($gene,$transcript);
-        $id .= " \n$type ";
-    }
-    return $id;
-}
-
-sub gene_text_label {
-    my ($self, $gene) = @_;
-    my $id = $gene->external_name() || $gene->stable_id();
-    my $Config = $self->{config};
-    my $short_labels = $Config->get('_settings','opt_shortlabels');
-    unless( $short_labels ){
-        my $type = $self->format_vega_name($gene);
-        $id .= " \n$type ";
-    }
-    return $id;
-}
-
-sub legend {
-    my ($self, $colours) = @_;
-	my $labels;
-	if (%VEGA_TO_SHOW_ON_VEGA) {
-		foreach my $k (keys %VEGA_TO_SHOW_ON_VEGA) {
-			if (@{$colours->{$k}}) {
-				push @$labels,$colours->{$k}[1]; 
-				push @$labels,$colours->{$k}[0]; 
-			} else {
-				warn "WARNING - no colour map entry for $k";
-			}
-		}
-		return ('genes',1000,$labels);
-	} else {
-		warn "WARNING - using default colour map";
-		return ('genes',1000,
-				['Known Protein coding'           => $colours->{'protein_coding_KNOWN'}[0],
-				 'Novel Protein coding'           => $colours->{'protein_coding_NOVEL'}[0],
-				 'Novel Processed transcript'     => $colours->{'processed_transcript_NOVEL'}[0],
-				 'Putative Processed transcript'  => $colours->{'processed_transcript_PUTATIVE'}[0],
-				 'Novel Pseudogene'               => $colours->{'pseudogene_NOVEL'}[0],
-				 'Novel Processed pseudogenes'    => $colours->{'processed_pseudogene_NOVEL'}[0],
-				 'Novel Unprocessed pseudogenes'  => $colours->{'unprocessed_pseudogene_NOVEL'}[0],
-				 'Predicted Protein coding'       => $colours->{'protein_coding_PREDICTED'}[0],
-				 'Novel Ig segment'               => $colours->{'Ig_segment_NOVEL'}[0],
-				 'Novel Ig pseudogene'            => $colours->{'Ig_pseudogene_segment_NOVEL'}[0],
-				]
-			   );
-	}
-}
-
-sub colour {
-  my ($self, $gene, $transcript, $colours, %highlights) = @_;
-  my $highlight = undef;
-  my $type = $gene->biotype.'_'.$gene->status;
-  my @colour = @{$colours->{$type}||['black','transcript']};
-  if(exists $highlights{lc($transcript->stable_id)}) {
-    $highlight = $colours->{'superhi'};
-  } elsif(exists $highlights{lc($transcript->external_name)}) {
-    $highlight = $colours->{'superhi'};
-  } elsif(exists $highlights{lc($gene->stable_id)}) {
-    $highlight = $colours->{'hi'};
-  } elsif( my $ccds_att = $transcript->get_all_Attributes('ccds')->[0] ) {
-    $highlight = $colours->{'ccdshi'};
-  }
-
-  return (@colour, $highlight); 
-}
-
-sub error_track_name { 
-    my $self = shift;
-    return $self->my_config('track_label');
-}
 
 1;
 

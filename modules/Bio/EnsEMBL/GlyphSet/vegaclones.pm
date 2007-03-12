@@ -11,6 +11,8 @@ use Data::Dumper;
 
 @ISA = qw(Bio::EnsEMBL::GlyphSet_simple);
 
+#this source is not used (v42) - redundant ?
+
 sub my_label { return "Vega Clones"; }
 
 sub features {
