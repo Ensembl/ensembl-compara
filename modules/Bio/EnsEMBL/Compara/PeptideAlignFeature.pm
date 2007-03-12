@@ -192,7 +192,30 @@ sub query_member {
   return $self->{'_query_member'};
 }
 
-sub  hit_member {
+sub query_member_id {
+  my $self = shift;
+  $self->{'_query_member_id'} = shift if (@_);
+  if ($self->{'_query_member_id'}) {
+    return $self->{'_query_member_id'};
+  } elsif ($self->{'_query_member'} and $self->{'_query_member'}->dbID) {
+    return $self->{'_query_member'}->dbID;
+  }
+  return undef;
+}
+
+sub query_genome_db_id {
+  my $self = shift;
+  $self->{'_query_genome_db_id'} = shift if (@_);
+  if ($self->{'_query_genome_db_id'}) {
+    return $self->{'_query_genome_db_id'};
+  } elsif ($self->{'_query_member'} and $self->{'_query_member'}->genome_db
+      and $self->{'_query_member'}->genome_db->dbID) {
+    return $self->{'_query_member'}->genome_db->dbID;
+  }
+  return undef;
+}
+
+sub hit_member {
   my ($self,$arg) = @_;
 
   if (defined($arg)) {
@@ -201,6 +224,29 @@ sub  hit_member {
     $self->{'_hit_member'} = $arg;
   }
   return $self->{'_hit_member'};
+}
+
+sub hit_member_id {
+  my $self = shift;
+  $self->{'_hit_member_id'} = shift if (@_);
+  if ($self->{'_hit_member_id'}) {
+    return $self->{'_hit_member_id'};
+  } elsif ($self->{'_hit_member'} and $self->{'_hit_member'}->dbID) {
+    return $self->{'_hit_member'}->dbID;
+  }
+  return undef;
+}
+
+sub hit_genome_db_id {
+  my $self = shift;
+  $self->{'_hit_genome_db_id'} = shift if (@_);
+  if ($self->{'_hit_genome_db_id'}) {
+    return $self->{'_hit_genome_db_id'};
+  } elsif ($self->{'_hit_member'} and $self->{'_hit_member'}->genome_db
+      and $self->{'_hit_member'}->genome_db->dbID) {
+    return $self->{'_hit_member'}->genome_db->dbID;
+  }
+  return undef;
 }
 
 sub  qstart {
