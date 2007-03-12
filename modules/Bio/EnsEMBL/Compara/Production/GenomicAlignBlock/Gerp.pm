@@ -65,7 +65,7 @@ use Bio::EnsEMBL::Hive::Process;
 our @ISA = qw(Bio::EnsEMBL::Hive::Process);
 
 #FIXME must move this
-my $BIN_DIR = "/ecs4/work3/kb3/gerp/GERP_03292006/";
+my $BIN_DIR = "/software/ensembl/compara/gerp/GERP_03292006/";
 #my $BIN_DIR = "/usr/local/ensembl/gerp/GERP_03292006/";
 
 #temporary files written to worker_temp_directory
