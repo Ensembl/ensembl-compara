@@ -63,8 +63,11 @@ sub fetch_input {
   #with $self->db (Hive DBAdaptor)
   $self->{'comparaDBA'} = Bio::EnsEMBL::Compara::Production::DBSQL::DBAdaptor->new(-DBCONN=>$self->db->dbc);
 
+  #set defaults
   $self->strict_map(1);
+  $self->method_link_type("SYNTENY");
 
+  # read parameters and input options
   $self->get_params($self->parameters);
   $self->get_params($self->input_id);
 
@@ -137,7 +140,7 @@ sub store_synteny {
     push @genome_dbs, $gdb;
   }
   my $mlss = new Bio::EnsEMBL::Compara::MethodLinkSpeciesSet
-    (-method_link_type => "SYNTENY",
+    (-method_link_type => $self->method_link_type,
      -species_set => \@genome_dbs);
   $mlssa->store($mlss);
   $self->method_link_species_set($mlss);
@@ -291,6 +294,18 @@ sub tree_analysis_data_id {
   return $self->{'_tree_analysis_data_id'};
 }
 
+sub all_hits {
+  my $self = shift;
+  $self->{'_all_hits'} = shift if(@_);
+  return $self->{'_all_hits'};
+}
+
+sub method_link_type {
+  my $self = shift;
+  $self->{'_method_link_type'} = shift if(@_);
+  return $self->{'_method_link_type'};
+}
+
 ##########################################
 #
 # internal methods
@@ -335,6 +350,12 @@ sub get_params {
   }
   if(defined($params->{'tree_analysis_data_id'})) {
     $self->tree_analysis_data_id($params->{'tree_analysis_data_id'});
+  }
+  if(defined($params->{'all_hits'})) {
+    $self->all_hits($params->{'all_hits'});
+  }
+  if(defined($params->{'method_link_type'})) {
+    $self->method_link_type($params->{'method_link_type'});
   }
   return 1;
 }
@@ -385,12 +406,22 @@ sub dumpMercatorFiles {
     close F;
   }
 
-  ## Use best reciprocal hits only
-  my $sql = "SELECT paf1.qmember_id, paf1.hmember_id, paf1.score, paf1.evalue, paf2.score, paf2.evalue
-    FROM peptide_align_feature paf1, peptide_align_feature paf2
-    WHERE paf1.qgenome_db_id = ? AND paf1.hgenome_db_id = ?
-      AND paf1.qmember_id = paf2.hmember_id AND paf1.hmember_id = paf2.qmember_id
-      AND paf1.hit_rank = 1 AND paf2.hit_rank = 1";
+  my $sql;
+  if ($self->all_hits) {
+    ## Use all best hits
+    $sql = "SELECT paf1.qmember_id, paf1.hmember_id, paf1.score, paf1.evalue, paf2.score, paf2.evalue
+      FROM peptide_align_feature paf1, peptide_align_feature paf2
+      WHERE paf1.qgenome_db_id = ? AND paf1.hgenome_db_id = ?
+        AND paf1.qmember_id = paf2.hmember_id AND paf1.hmember_id = paf2.qmember_id
+        AND (paf1.hit_rank = 1 OR paf2.hit_rank = 1)";
+  } else {
+    ## Use best reciprocal hits only
+    $sql = "SELECT paf1.qmember_id, paf1.hmember_id, paf1.score, paf1.evalue, paf2.score, paf2.evalue
+      FROM peptide_align_feature paf1, peptide_align_feature paf2
+      WHERE paf1.qgenome_db_id = ? AND paf1.hgenome_db_id = ?
+        AND paf1.qmember_id = paf2.hmember_id AND paf1.hmember_id = paf2.qmember_id
+        AND paf1.hit_rank = 1 AND paf2.hit_rank = 1";
+  }
   my $sth = $self->{'comparaDBA'}->dbc->prepare($sql);
   my ($qmember_id,$hmember_id,$score1,$evalue1,$score2,$evalue2);
   my @genome_db_ids = @{$self->genome_db_ids};
