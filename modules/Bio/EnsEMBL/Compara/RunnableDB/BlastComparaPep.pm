@@ -122,8 +122,13 @@ sub fetch_input {
   ## turn wraps the Bio::EnsEMBL::Analysis::Tools::BPlite (a port of Ian
   ## Korf's BPlite from bioperl 0.7 into ensembl). This parser also filter
   ## the results according to threshold_type and threshold.
+  my $regex = '^(\S+)\s*';
+  if ($p->{'regex'}) {
+    $regex = $p->{'regex'};
+  }
+
   my $parser = Bio::EnsEMBL::Analysis::Tools::FilterBPlite->new(
-          -regex => '^(\S+)\s*',
+          -regex => $regex,
           -query_type => "pep",
           -input_type => "pep",
           -threshold_type => $thr_type,
