@@ -22,7 +22,7 @@ sub init {
 ## Only features whose key is in this array gets displayed as a track....
            qw( blast blast_new ssaha ),
            qw( mod preliminary info tp32k assemblyexception annotation_status
-             polyA_site polyA_signal pseudo_polyA
+             polyA_site polyA_signal pseudo_polyA eucomm rss
              
              repeat_lite snp_lite haplotype 
              refseq_mouse trna   cpg eponine marker operon rnai ex_profile qtl
@@ -115,6 +115,8 @@ sub init {
                  [ 'ex_profile'      => 'Exp. profile'    ],
                  [ 'polyA_site'          => 'PolyA sites'        ],
                  [ 'polyA_signal'        => 'PolyA signals'        ],
+                 [ 'eucomm'          => 'EUCOMM Critical exons'        ],
+				 [ 'rss'             => 'T-Cell RSS Motif.'],
                  [ 'pseudo_polyA'        => 'Pseudo PolyA'        ],
                  [ 'ensemblclones'       => 'Ensembl clones' ],
                  [ 'alternative_assembly'     => 'Ensembl assembly' ],
@@ -127,7 +129,7 @@ sub init {
           'options' => [
                 # 'name'            => 'caption'
     			[ 'encode'              => 'Encode regions' ],
-                [ 'assemblyexception' => 'Assembly exceptions' ],
+                [ 'assemblyexception'   => 'Assembly exceptions' ],
                 [ 'sequence'            => 'Sequence'           ],
                 [ 'codonseq'            => 'Codons'             ],
                 [ 'codons'              => 'Start/Stop Codons'  ],
@@ -216,6 +218,16 @@ sub init {
       'col'      => 'red',
       'available'=> 'features FirstEF', 
     },
+    'rss' => {
+        'on' => "on",
+        'pos' => '1030',
+        'str' => 'b',
+        'col' => 'darkolivegreen4',
+        'label' => 'T-cell RSS motif.',
+        'logic_name' => 'rss',
+        'glyphset' => 'rss',
+        'available' => 'features rss',
+    },
     'polyA_site' => {
         'on' => "on",
         'pos' => '1027',
@@ -246,7 +258,16 @@ sub init {
         'glyphset' => 'polyA',
         'available' => 'features polyA_site',
     },
-
+   'eucomm' => {
+        'on' => "on",
+        'pos' => '1031',
+        'str' => 'b',
+        'col' => 'gray33',
+        'label' => 'Critical exons',
+        'logic_name' => 'EUCOMM',
+        'glyphset' => 'eucomm',
+        'available' => 'features EUCOMM',
+    },
 ## Markers and other features...
     'codons' => {
       'on'  => "off",
@@ -313,68 +334,6 @@ sub init {
       'str' => 'r',
       'col' => 'purple4',
       'available'=> 'features CpG', 
-    },
-    'snp_lite' => {
-      'on'  => "off",
-      'bump_width' => 0,
-      'dep' => 0.1,
-      'pos' => '4520',
-      'str' => 'r',
-      'col' => 'blue',
-      'colours' => {$self->{'_colourmap'}->colourSet('snp')},
-      'available'=> 'database_tables ENSEMBL_LITE.snp', 
-    },
-
-    'glovar_snp' => {
-      'on'  => "off",
-      'bump_width' => 0,
-      'dep' => 0.1,
-      'pos' => '4521',
-      'str' => 'r',
-      'threshold'     => '200',
-      'col' => 'blue',
-      'colours' => {$self->{'_colourmap'}->colourSet('variation')},
-      'available'=> 'databases ENSEMBL_GLOVAR', 
-    },
-
-    'glovar_haplotype' => {
-      'on'  => "off",
-      'dep' => 6,
-      'pos' => '4523',
-      'str' => 'r',
-      'threshold'     => '200',
-      'available'=> 'databases ENSEMBL_GLOVAR', 
-    },
-
-    'glovar_sts' => {
-      'on'  => "off",
-      'dep' => 6,
-      'pos' => '4524',
-      'str' => 'r',
-      'threshold'     => '200',
-      'colours' => {$self->{'_colourmap'}->colourSet('glovar_sts')},
-      'available'=> 'databases ENSEMBL_GLOVAR', 
-    },
-
-    'glovar_trace' => {
-      'on'  => "off",
-      'bump_width' => 0,
-      'dep' => 50,
-      'pos' => '4522',
-      'str' => 'r',
-      'col' => 'blue',
-      'colours' => {$self->{'_colourmap'}->colourSet('snp')},
-      'available'=> 'databases ENSEMBL_GLOVAR', 
-    },
-
-    'haplotype' => {
-      'on'  => "off",
-      'pos' => '4525',
-      'str' => 'r',
-      'dep' => 6,
-      'col' => 'red',
-      'lab' => 'black',
-      'available'=> 'databases ENSEMBL_HAPLOTYPE', 
     },
 
 ## Repeats 
@@ -729,28 +688,6 @@ sub init {
     },
 
   };
-  
-  $self->add_track(
-           'variation_legend',
-           'on' => 'on',
-           'str' => 'r',
-           'pos' => 10000,
-           '_menu' => 'options',
-           'caption' => 'Variation legend'
-          );
-  
-  $self->add_new_track_cdna(
-    'refseq_mouse',
-    'RefSeqs',
-    2510,
-    'on'  => "off",
-    'pos' => '2510',
-    'str'     => 'b',
-    'caption'     => 'RefSeqs',
-    'TEXT_LABEL'  => 'RefSeqs',
-    'SUBTYPE'     => 'refseq',
-    'available'=> 'features refseq_mouse', 
-  );
 
   my $POS = $self->ADD_ALL_TRANSCRIPTS();
   ## Loop through registry for additional transcript tracks...
@@ -765,6 +702,7 @@ sub init {
   my $compara = 3000;
   my @methods = (
          [ 'BLASTZ_RAW'           ,'pink',  'cons bz' ],
+         [ 'BLASTZ_CHAIN'         ,'pink',  'cons bz chain' ],
         );
   foreach my $METHOD (@methods) {
     foreach my $SPECIES (@species) {

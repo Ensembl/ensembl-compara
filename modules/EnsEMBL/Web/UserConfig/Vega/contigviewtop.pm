@@ -46,10 +46,10 @@ sub init {
 					  'available' => 'features markers'),
 	$self->add_track( 'chr_band', 'on'=>'on', 'pos' => $POS++ );
 	$self->add_track( 'redbox', 'on'=>'off', 'col' => 'red', 'pos' => 1000100 );
-
 	$self->add_track( 'encode', 'on' => 'on', 'pos' => 9997, 'colour' => 'salmon', 'label'  => 'Encode regions',
                       'str' => 'r', 'available' => 'features mapset_encode');
-
+	$self->add_track( 'hap_clone_matches', 'on' => 'on', 'pos' => 9999, 'colour' => 'gold1', 'label'  => 'Haplotype clones',
+                      'height' => 5, 'depth' => 3, 'str' => 'r', 'available' => 'features mapset_hclone');
 	$POS = 100000;
 	$self->add_track( 'gene_legend', 'str' => 'r', 'on'=>'on', 'pos' => $POS++ );
 }

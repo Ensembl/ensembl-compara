@@ -37,7 +37,6 @@ sub init {
 #       redbox
         restrict),
     # qw( zfish_est ),
-     qw(glovar_snp)
     ],
     '_settings' => {
 ## Image size configuration...
@@ -101,8 +100,6 @@ sub init {
          [ 'variation_affy100'        => 'Affy 100k SNP'  ],
          [ 'variation_affy500'        => 'Affy 500k SNP'  ],
          [ 'histone_modifications'       => 'Histone modifications'  ],
-         [ 'glovar_snp'               => 'Glovar SNPs' ], ## not ready for prime time yet
-        #[ 'glovar_trace'   => 'Glovar traces'], ## not ready for prime time yet
          [ 'trna'                     => 'tRNA'        ],
          [ 'cpg'                      => 'CpG islands'     ],
          [ 'eponine'                  => 'Eponine regions'   ],
@@ -147,7 +144,6 @@ sub init {
 	 [ 'gap'             => 'Gaps' ],
          [ 'restrict'        => 'Rest.Enzymes' ],
          [ 'opt_restrict_zoom'   => 'Rest.Enzymes on zoom' ],
-      #   [ 'vegaclones'     => 'Vega clones' ],
          [ 'bacends'         => 'BAC ends' ],
       ],
       'menus' => [ qw( features DAS options repeats export jumpto resize )]
@@ -360,28 +356,6 @@ sub init {
       'str' => 'r',
       'col' => 'purple4',
       'available'=> 'features CpG', 
-    },
-
-    'glovar_snp' => {
-      'on'  => "off",
-      'bump_width' => 0,
-      'dep' => 0.1,
-      'pos' => '4521',
-      'str' => 'r',
-      'col' => 'blue',
-      'colours' => {$self->{'_colourmap'}->colourSet('snp')},
-      'available'=> 'databases ENSEMBL_GLOVAR', 
-    },
-
-    'glovar_trace' => {
-      'on'  => "off",
-      'bump_width' => 0,
-      'dep' => 50,
-      'pos' => '4522',
-      'str' => 'r',
-      'col' => 'blue',
-      'colours' => {$self->{'_colourmap'}->colourSet('snp')},
-      'available'=> 'databases ENSEMBL_GLOVAR', 
     },
 
     'variation' => {
@@ -737,21 +711,6 @@ sub init {
       'lab2'      => 'black',
       'str'       => 'r',
       'threshold'   => 2 
-    },
-## DAS-based data for manually annotated clones from Vega    
-    'vegaclones' => {
-      'on'      => "off",
-      'pos'       => '6000',
-      'colours'     => {
-        'col1'      => 'red3',
-        'col2'      => 'seagreen',
-        'col3'      => 'gray50',
-        'lab1'      => 'red3',
-        'lab2'      => 'seagreen',
-        'lab3'      => 'gray50',
-      },
-      'str'       => 'r',
-      'dep'       => '0',
     },
     'assembly_contig' => {
       'on'      => "on",

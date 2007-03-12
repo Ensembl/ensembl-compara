@@ -545,21 +545,6 @@ sub init {
       'str'       => 'r',
       'threshold'   => 2 
     },
-## DAS-based data for manually annotated clones from Vega    
-    'vegaclones' => {
-      'on'      => "off",
-      'pos'       => '6000',
-      'colours'     => {
-        'col1'      => 'red3',
-        'col2'      => 'seagreen',
-        'col3'      => 'gray50',
-        'lab1'      => 'red3',
-        'lab2'      => 'seagreen',
-        'lab3'      => 'gray50',
-      },
-      'str'       => 'r',
-      'dep'       => '0',
-    },
     'assembly_contig' => {
       'on'      => "on",
       'pos'       => '8030',

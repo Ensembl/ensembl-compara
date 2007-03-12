@@ -708,45 +708,37 @@ sub init {
 }
 
 sub mult {
-  my $self = shift;
-  my @species = @{$self->species_defs->ENSEMBL_SPECIES};
-  my $compara = 3000;
-  my @methods = (
-#    [ 'BLASTZ_NET'           ,'pink',  'cons',  'darkseagreen1', -20  ],
-#    [ 'BLASTZ_NET_TIGHT'     ,'pink3', 'high cons','darkolivegreen2', -19   ],
-#    [ 'BLASTZ_GROUP'         ,'pink',  'cons', 'darkseagreen1', -20  ],
-#    [ 'BLASTZ_GROUP_TIGHT'   ,'pink3', 'high cons','darkolivegreen2', -19   ],
-#    [ 'PHUSION_BLASTN'       ,'pink',  'cons', 'darkseagreen1', -20  ],
-#    [ 'PHUSION_BLASTN_TIGHT' ,'pink3', 'high cons','darkolivegreen2', -19   ],
-#    [ 'BLASTZ_RECIP_NET'     ,'pink',  'cons', 'darkseagreen1', -20  ],
-#    [ 'TRANSLATED_BLAT'      ,'orchid1', 'trans BLAT','chartreuse', -18 ],
-    [ 'BLASTZ_RAW'           ,'pink',  'cons',  'darkseagreen1', -20 ],
-  );
-
-  foreach my $METHOD (@methods) {
-    foreach my $SPECIES (@species) {
-      (my $species = $SPECIES ) =~ s/_\d+//;
-      (my $short = $species ) =~ s/^(\w)\w+_(\w)\w+$/\1\2/g;
-      $compara++;
-      my $KEY = lc($SPECIES).'_'.lc($METHOD->[0]).'_match';
-      $self->{'general'}->{'thjviewbottom'}{$KEY} = {
-        'glyphset' => 'generic_alignment',
-        'species'  => $species,
-        'on'       => 'off',
-        'compact'  => 'yes',
-        'dep'      => 6,
-        'pos'      => $compara+300,
-        'col'      => $METHOD->[1],
-        'join' => 0,
-        'join_col' => $METHOD->[3],
-        'join_z'   => $METHOD->[4],
-        'str'      => 'f',
-        'available'=> "multi ".$METHOD->[0]."|$species",
-        'method'   => $METHOD->[0],
-        'label'    => "$short $METHOD->[2]",
-      };
-      push @{ $self->{'general'}->{'thjviewbottom'}{ '_artefacts'} }, $KEY;
-    }
-  }
+	my $self = shift;
+	my @species = @{$self->species_defs->ENSEMBL_SPECIES};
+	my $compara = 3000;
+	my @methods = (
+       [ 'BLASTZ_RAW'           ,'pink',  'cons',  'darkseagreen1', -20 ],
+       [ 'BLASTZ_CHAIN'         ,'pink',  'cons bz chain', 'darkolivegreen2', -19  ],
+	  );
+	foreach my $METHOD (@methods) {
+		foreach my $SPECIES (@species) {
+			(my $species = $SPECIES ) =~ s/_\d+//;
+			(my $short = $species ) =~ s/^(\w)\w+_(\w)\w+$/\1\2/g;
+			$compara++;
+			my $KEY = lc($SPECIES).'_'.lc($METHOD->[0]).'_match';
+			$self->{'general'}->{'thjviewbottom'}{$KEY} = {
+														   'glyphset' => 'generic_alignment',
+														   'species'  => $species,
+														   'on'       => 'off',
+														   'compact'  => 'yes',
+														   'dep'      => 6,
+														   'pos'      => $compara+300,
+														   'col'      => $METHOD->[1],
+														   'join'     => 0,
+														   'join_col' => $METHOD->[3],
+														   'join_z'   => $METHOD->[4],
+														   'str'      => 'f',
+														   'available'=> "multi ".$METHOD->[0]."|$species",
+														   'method'   => $METHOD->[0],
+														   'label'    => "$short $METHOD->[2]",
+														  };
+			push @{ $self->{'general'}->{'thjviewbottom'}{ '_artefacts'} }, $KEY;
+		}
+	}
 }
 1;

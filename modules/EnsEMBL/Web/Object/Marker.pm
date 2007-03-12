@@ -87,7 +87,7 @@ sub _seq_region_ {
   my $self = shift;
   unless( $self->{'_region_array_'} ) { 
     my $ML = $self->markerFeatures;
-    if( @$ML ) {
+    if( $ML && @$ML ) {
       $self->{'_region_array_'} = [ $ML->[0]->slice->coord_system->name, $ML->[0]->seq_region_name, $ML->[0]->start, $ML->[0]->end, $ML->[0]->strand ];
     } else {
       $self->{'_region_array_'} = [];

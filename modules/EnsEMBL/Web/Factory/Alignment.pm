@@ -63,9 +63,10 @@ sub web_usage {
 sub createObjects {
   my $self                 = shift;
   my $class                = $self->param('class');
+
   unless( $class ) {
     $class = 'External' if $self->param('sequence');
-    $class = 'Supporting' if $self->param('sequence') && $self->param('exon') && $self->param('trans');
+    $class = 'Supporting' if $self->param('sequence') && ($self->param('exon') || $self->param('trans'));
     $class = 'Family'   if $self->param('family_stable_id');
   }
   if( $class ) {

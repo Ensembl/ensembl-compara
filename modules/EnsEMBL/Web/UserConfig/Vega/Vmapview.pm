@@ -56,7 +56,7 @@ sub init {
 	},
        
 	'_colours' => {
-	    $self->{'_colourmap'}->colourSet( 'vega_gene' ),
+	    $self->{'_colourmap'}->colourSet( 'vega_gene_havana' ),
         },
 
         'Vannotation_status_left' => {

@@ -10,7 +10,7 @@ sub init {
   $self->{'_userdatatype_ID'} = 6;
 
   $self->{'general'}->{'chromosome'} = {
-    '_artefacts' => [qw(ideogram assemblyexception annotation_status)],
+    '_artefacts' => [qw(ideogram assemblyexception annotation_status hap_clone_matches)],
     '_options'  => [],
     '_settings' => {
       'simplehap' => 1,
@@ -44,6 +44,17 @@ sub init {
       'navigation'  => 'on',
       'available' => 'features mapset_noannotation',
     },
+
+	'hap_clone_matches', => {
+	  'on' => "on", 
+      'pos' => '10000', 
+      'colour' => 'gold1', 
+      'label'  => '',
+      'height' => 1,
+      'navigation' => 'on',
+      'str' => 'r',
+      'available' => 'features mapset_hclone',
+	},
 
     };
 }

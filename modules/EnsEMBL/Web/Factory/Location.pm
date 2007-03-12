@@ -407,6 +407,7 @@ sub createObjects {
     foreach my $O ( @anchorview ) {
       $location = undef;
       my( $ftype, $temp_id ) = @$O;
+	  $location = undef;
       if( $ftype eq 'gene' || $ftype eq 'all' ) {
         $location = $self->_location_from_Gene( $temp_id );
       } 

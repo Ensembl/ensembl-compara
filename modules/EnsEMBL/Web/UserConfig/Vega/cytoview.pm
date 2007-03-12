@@ -35,6 +35,7 @@ sub init {
         missing 
         haplotype_links gap
         assemblyexception
+		hap_clone_matches
       ) ],
     '_options'  => [],
     '_settings' => {
@@ -87,6 +88,7 @@ sub init {
         [ 'opt_zmenus'    => 'Show popup menus'  ],
         [ 'opt_zclick'    => '... popup on click'  ],
         [ 'gap'        => 'Gaps' ],
+        [ 'haplotype_clone_matches' => 'Haplotype clones'],
       ],
       'menus' => [ qw(features DAS options repeats export jumpto resize) ]
     },
@@ -160,6 +162,16 @@ sub init {
         'other'     => 'Ensembl',
         'col'       => 'chartreuse3',
         'available' => 'features alternative_assembly',
+    },
+
+	'hap_clone_matches' => {
+	    'on' => 'on',
+        'pos' => 9999, 
+        'colour' => 'gold1', 
+        'height' => 5, 
+        'depth' => 3, 
+        'str' => 'r', 
+        'available' => 'features mapset_hclone'
     },
 
     'nod_bacs' => {

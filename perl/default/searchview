@@ -92,7 +92,9 @@ warn $exalead->{'raw_XML'};
     ));
   }
   foreach my $group ( $renderer->exalead->groups ) {
-    my $name = $group->name; $name =~ s/answergroup\.//;
+    my $name = $group->name; 
+	next if ($name eq 'Source');
+	$name =~ s/answergroup\.//;
     my $block_name = CGI::escapeHTML( $name );
     if( $group->link( 'reset' ) ) {
       $block_name =  sprintf qq(<a href="%s"><img align="top" src="/img/14-r.gif" height="14" width="14" alt="[R]" border="0" /></a> %s\n), $group->link( 'reset' )->URL, $block_name;
