@@ -870,6 +870,7 @@ sub ADD_ALL_DNA_FEATURES {
   $self->add_new_track_cdna( 'mouse_cdna', 'Mouse cDNAs',   $POS++, @_ );
   $self->add_new_track_cdna( 'other_cdna', 'Other cDNAs',   $POS++, @_ );
   $self->add_new_track_cdna( 'opossum_cdna', 'Opossum cDNAs',   $POS++, @_ );
+  $self->add_new_track_cdna( 'refseq_mouse', 'RefSeqs', $POS++, 'SUBTYPE' => 'refseq', @_);
 ## now the tetraodon tracks...
   $self->add_new_track_cdna( 'cdm', 'Tetraodon cDNAs',   $POS++, 'SUBTYPE'     => 'genoscope', 'on' => 'off', @_ );
   $self->add_new_track_cdna( 'xlaevis_cDNA', 'X.laevis cDNAs',   $POS++, @_ );
@@ -1205,6 +1206,9 @@ sub ADD_ALL_TRANSCRIPTS {
   $self->add_new_track_transcript( 'tigr_0_5',   'TIGR genes',   'tigr_0_5',   $POS++, @_ );
   $self->add_new_track_transcript( 'homology_low', 'Bee genes',    'bee_pre_gene',   $POS++, @_ );
   # trancripts for Vega
+  $self->add_new_track_transcript('vega_eucomm', 'Knockout genes', 'vega_gene_eucomm',
+    $POS++, 'glyph' => 'vega_transcript', 'logic_name' => 'otter_eucomm',
+    'available'=>'features VEGA_GENES_OTTER_EUCOMM', @_);
   $self->add_new_track_transcript('vega', 'Havana genes', 'vega_gene_havana',
     $POS++, 'glyph' => 'vega_transcript', 'logic_name' => 'otter',
     'available'=>'features VEGA_GENES_OTTER', @_);
@@ -1456,6 +1460,9 @@ sub ADD_GENE_TRACKS {
                              'gene_col' => 'estgene', @_ );
 
 #for genes in Vega
+  $self->add_new_track_gene('vega_eucomm_gene', 'Knockout genes', 'vega_gene_eucomm', $POS++,
+    'available' => 'features VEGA_GENES_OTTER_EUCOMM', 'glyphset' => 'vega_gene',
+    'logic_name' => 'otter_eucomm', 'gene_col' => 'vega_gene', @_);
   $self->add_new_track_gene( 'vega_gene', 'Havana Genes', 'vega_gene_havana', $POS++,
     'available' => 'features VEGA_GENES_OTTER', 'glyphset' => 'vega_gene',
     'logic_name' => 'otter', 'gene_col' => 'vega_gene', @_);
@@ -1468,7 +1475,7 @@ sub ADD_GENE_TRACKS {
   $self->add_new_track_gene( 'vega_external_gene', 'External Genes', 'vega_gene_external', $POS++,
     'available' => 'features VEGA_GENES_OTTER_EXTERNAL', 'glyphset' => 'vega_gene',
     'logic_name' => 'otter_external', 'gene_col' => 'vega_gene', @_);
-  $self->add_new_track_gene( 'ciona_dbest_ncbi', "3/5' EST genes (dbEST)", 'estgene', $POS++, 'on' => 'off', 
+   $self->add_new_track_gene( 'ciona_dbest_ncbi', "3/5' EST genes (dbEST)", 'estgene', $POS++, 'on' => 'off', 
                              'gene_label' => sub { return $_[0]->stable_id }, 'gene_col' => sub { return $_[0]->biotype }, @_ );
   $self->add_new_track_gene( 'targettedgenewise', "Targetted genewise", 'prot_gene', $POS++, 'available' => 'features TargettedGenewise', 'logic_name' => 'TargettedGenewise', 'gene_col' => '_col', @_ );
   $self->add_new_track_gene( 'cdna_all', "Aligned genes", 'prot_gene', $POS++, 'gene_col' => 'cdna_all', @_ );
@@ -1553,7 +1560,10 @@ sub ADD_AS_GENE_TRACKS {
                              'gene_label'           => sub { $_[0]->external_name || $_[0]->stable_id; },
                              'glyphset' => 'evega_gene',
                               @_ );    
-    #for genes in Vega website
+    #for genes in Vega
+    $self->add_new_track_gene('vega_eucomm_gene', 'Knockout genes', 'vega_gene_eucomm', $POS++,
+    'available' => 'features VEGA_GENES_OTTER_EUCOMM', 'glyphset' => 'vega_gene',
+    'logic_name' => 'otter_eucomm', 'gene_col' => 'vega_gene', @_);
     $self->add_new_track_gene( 'vega_gene', 'Vega Genes', 'vega_gene', $POS++,
 	'available' => 'features VEGA_GENES_OTTER', 'glyphset' => 'vega_gene',
 	'logic_name' => 'otter', 'gene_col' => 'vega_gene', @_);
