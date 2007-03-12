@@ -26,6 +26,7 @@ sub _init {
 
   my $strand = $self->strand;
   my $Config = $self->{'config'};
+  use Data::Dumper;
   my $strand_flag    = $Config->get($type, 'str');
   return if( $strand_flag eq 'r' && $strand != -1 || $strand_flag eq 'f' && $strand != 1 );
 
@@ -68,6 +69,8 @@ sub expanded_init {
   my $link = 0;
   my $TAG_PREFIX;
   my $METHOD         = $Config->get($type, 'method' );
+#  warn "expanded method is $METHOD";
+
   if( $compara) {
     $link = $Config->get($type,'join');
     $TAG_PREFIX  = uc( $compara eq 'primary' ? 
@@ -177,9 +180,6 @@ sub expanded_init {
     }
     $Composite->href(  "$HREF?$ZZ" );
 
-#	warn "HREF = $HREF";
-
-
 	#decide whether to jump within or between species;
 #	my $jump_type = $self_species eq $species_2 ? "chromosome $seqregion" : $species_2;
 
@@ -212,11 +212,14 @@ sub expanded_init {
 
 		#z menu links depend on whether jumping within or between species;
 		my $jump_type;
-		if( $self->species_defs->ENSEMBL_SITETYPE eq 'Vega' ) { #st3 - checked and OK
-			if( $self_species eq $species_2 ) {
-				$jump_type = "chromosome $chr_2";
-				if( $compara ) {			
-					$CONTIGVIEW_TEXT_LINK = "Go to chromosome $chr";
+		if( $self->species_defs->multiX('VEGA_COMPARA_CONF')) {
+			if( $self_species eq $species_2 ) {	
+				#hacks to link to 'chromosome' or 'clone' - should really use the haplotype_contig seq_region attribute
+				my $link_type = ( ($METHOD eq 'BLASTZ_CHAIN') && ($chr_2 =~ /\./) ) ? 'clone' : 'chromosome';
+				$jump_type = "$link_type $chr_2";
+				if( $compara ) {
+					my $link = ( ($METHOD eq 'BLASTZ_CHAIN') && ($chr =~ /\./) ) ? 'clone' : 'chromosome';			
+					$CONTIGVIEW_TEXT_LINK = "Go to $link $chr";
 				}
 			} else {	
 				$jump_type = "$other_species chr $chr_2";
@@ -260,6 +263,18 @@ sub expanded_init {
 			$MULTICONTIGVIEW_TEXT_LINK = 'Centre on this match';
 		}
 		$zmenu->{ "06:$MULTICONTIGVIEW_TEXT_LINK" } = sprintf( $MCV_TEMPLATE, $chr, ($rs+$re)/2, $WIDTH/2, $chr_2, ($s_2+$e_2)/2, $WIDTH/2 );
+	}
+	#more code for vega self compara links (zfish chained alignments)
+	elsif ( $self->species_defs->multiX('VEGA_COMPARA_CONF')) {
+		my $chr_2 = $F[0][1]->hseqname;
+		if( $self_species eq $species_2 ) {	
+			#hacks to link to 'chromosome' or 'clone' - should really use the haplotype_contig seq_region attribute
+			my $link_type = ( ($METHOD eq 'BLASTZ_CHAIN') && ($chr_2 =~ /\./) ) ? 'clone' : 'chromosome';
+			$zmenu->{"02:Jump to $link_type $chr_2"} = "$HREF?$ZZ";
+		}
+		else {
+			$zmenu->{"02:Jump to $species_2 chr $chr_2"} = "$HREF?$ZZ";
+		}
     } else {
 		$zmenu->{"02:Jump to $species_2"} = "$HREF?$ZZ";
 	}
@@ -303,6 +318,8 @@ sub compact_init {
   my $TAG_PREFIX;
 
   my $METHOD         = $Config->get($type, 'method' );
+#  warn "compact method is $METHOD";
+
   my $COMPARA_HTML_EXTRA = '';
   my $MULTICONTIGVIEW_TEXT_LINK = 'MultiContigView';
   if( $compara) {
@@ -334,6 +351,7 @@ sub compact_init {
               ($_->start > $length) ||
               ($_->end < 1)
          ) } @{$self->features( $other_species, $METHOD )};
+
   foreach (@T) {
     my $f       = $_->[1];
     my $START   = $_->[0];
@@ -360,18 +378,22 @@ sub compact_init {
     my $href  = '';
     #z menu links depend on whether jumping within or between species;
     my $jump_type;
-    if( $self->species_defs->ENSEMBL_SITETYPE eq 'Vega' ) { #st3 - checked and OK
-      if( $self_species eq $species_2 ) {
-        $jump_type = "chromosome $chr_2";
-        if( $compara ) {			
-          $CONTIGVIEW_TEXT_LINK = "Go to chromosome $chr";
-        }
-      } else {	
-        $jump_type = "$other_species chr $chr_2";
-        if( $compara) {			
-          $CONTIGVIEW_TEXT_LINK = "Go to $self_species chr $chr";
-        }
-      }
+	my %vega_config = $self->{'config'}->{'species_defs'}->multiX('VEGA_COMPARA_CONF');
+	if (defined %vega_config) {
+		if( $self_species eq $species_2 ) {
+			#hack to link to 'chromosome' or 'clone' - should really use the haplotype_contig seq_region attribute
+			my $link_type = ( ($METHOD eq 'BLASTZ_CHAIN') && ($chr_2 =~ /\./) ) ? 'clone' : 'chromosome';
+			$jump_type = "$link_type $chr_2";
+			if( $compara ) {
+				my $link = ( ($METHOD eq 'BLASTZ_CHAIN') && ($chr =~ /\./) ) ? 'clone' : 'chromosome';			
+				$CONTIGVIEW_TEXT_LINK = "Go to $link $chr";			
+			}
+		} else {	
+			$jump_type = "$other_species chr $chr_2";
+			if( $compara) {			
+				$CONTIGVIEW_TEXT_LINK = "Go to $self_species chr $chr";
+			}
+		}
     } else {
       $jump_type = $species_2;
     }
@@ -436,14 +458,22 @@ sub compact_init {
 1;
 
 use Time::HiRes qw(time);
+
 sub features {
-  my ($self, $species, $method ) = @_;
-  (my $species_2 = $species) =~ s/_/ /; 
-  my $assembly = $self->species_defs->other_species($species,'ENSEMBL_GOLDEN_PATH');
-  my $START = time();
-  my $compara_db = $self->{'container'}->adaptor->db->get_db_adaptor('compara');
-  my $T = $self->{'container'}->get_all_compara_DnaAlignFeatures( $species_2, $assembly, $method, $compara_db );
-#  warn "generic_alignment - $method $species ",time()-$START;
+	my ($self, $species, $method ) = @_;
+	(my $species_2 = $species) =~ s/_/ /; 
+	my $assembly = $self->species_defs->other_species($species,'ENSEMBL_GOLDEN_PATH');
+	my $START = time();
+	my $compara_db = $self->{'container'}->adaptor->db->get_db_adaptor('compara');
+	my $T = $self->{'container'}->get_all_compara_DnaAlignFeatures( $species_2, $assembly, $method, $compara_db );
+##partial code for retrieving from clones
+#	unless (defined(@$T)) {
+#		my $clone_projection = $self->{'container'}->project('clone');
+#		foreach my $seg (@$clone_projection) {
+#			my $clone = $seg->to_Slice();
+#			$T = $clone->get_all_compara_DnaAlignFeatures( $species_2, $assembly, $method, $compara_db );
+#		}
+#	}
   return $T;
 }
 
