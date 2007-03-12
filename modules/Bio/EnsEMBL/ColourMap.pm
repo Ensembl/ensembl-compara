@@ -253,7 +253,13 @@ sub new {
     'processed_transcript_KNOWN'       => [ 'olivedrab', 'Known Processed transcript'],
     'protein_coding_NOVEL'             => [ 'seagreen', 'Novel Protein coding' ],
     'processed_transcript_NOVEL'       => [ 'palegreen', 'Novel Processed transcript' ],
-    'Ig_segment_NOVEL'                 => [ 'springreen3', 'Ig segment' ],
+    'Ig_segment_NOVEL'                 => [ 'seagreen4', 'Ig segment' ],
+  );
+  $self->colourSet( 'vega_gene_eucomm',
+    'hi'                               => 'highlight1',
+    'superhi'                          => 'highlight2',
+    'ccdshi'                           => 'lightblue1',
+    'protein_coding_KNOWN'             => [ 'orangered2', ''],
   );
   $self->colourSet( 'rna_gene',
     'hi'         => 'highlight1',

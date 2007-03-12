@@ -73,19 +73,21 @@ sub _init {
     $box_end   = $exon->[1];
     $box_end = $length if$box_end > $length;
     # Calculate and draw the coding region of the exon
-    my $filled_start = $box_start < $coding_start ? $coding_start : $box_start;
-    my $filled_end   = $box_end > $coding_end  ? $coding_end   : $box_end;
-             # only draw the coding region if there is such a region
-    if( $filled_start <= $filled_end ) {
-    #Draw a filled rectangle in the coding region of the exon
-      $self->push( new Sanger::Graphics::Glyph::Rect({
-        'x' => $filled_start -1,
-        'y'         => $Y,
-        'width'     => $filled_end - $filled_start + 1,
-        'height'    => $h,
-        'colour'    => $colour,
-        'absolutey' => 1
-      }));
+	if ($coding_start && $coding_end) {
+      my $filled_start = $box_start < $coding_start ? $coding_start : $box_start;
+      my $filled_end   = $box_end > $coding_end  ? $coding_end   : $box_end;
+       # only draw the coding region if there is such a region
+       if( $filled_start <= $filled_end ) {
+         #Draw a filled rectangle in the coding region of the exon
+         $self->push( new Sanger::Graphics::Glyph::Rect({
+           'x' => $filled_start -1,
+           'y'         => $Y,
+           'width'     => $filled_end - $filled_start + 1,
+           'height'    => $h,
+           'colour'    => $colour,
+           'absolutey' => 1
+         }));
+      }
     }
     # if($box_start < $coding_start || $box_end > $coding_end ) {
       # The start of the transcript is before the start of the coding
@@ -143,13 +145,9 @@ sub colours {
 }
 
 sub colour {
-
-}
-
-sub colour {
   my ($self, $gene, $transcript, $colours, %highlights) = @_;
   my $genecol = $colours->{ $transcript->analysis->logic_name."_".$transcript->biotype."_".$transcript->status };
-  warn $transcript->stable_id,' ',$transcript->analysis->logic_name."_".$transcript->biotype."_".$transcript->status;
+#  warn $transcript->stable_id,' ',$transcript->analysis->logic_name."_".$transcript->biotype."_".$transcript->status;
   if(exists $highlights{lc($transcript->stable_id)}) {
     return (@$genecol, $colours->{'superhi'}[0]);
   } elsif(exists $highlights{lc($transcript->external_name)}) {

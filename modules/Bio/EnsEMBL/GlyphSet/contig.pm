@@ -82,41 +82,45 @@ sub _init {
       my $feature = { 'start' => $start, 'end' => $end, 'name' => $ctg_slice->seq_region_name };
 
       $feature->{'locations'}{ $ctg_slice->coord_system->name } = [ $ctg_slice->seq_region_name, $ctg_slice->start, $ctg_slice->end, $ctg_slice->strand  ];
- if( $show_navigation ) {
-      if ( ! $Container->isa("Bio::EnsEMBL::Compara::AlignSlice::Slice") && ($Container->{__type__} ne 'alignslice')) {
-	  foreach( @coord_systems ) {
-	      my $path;
-	      eval { $path = $ctg_slice->project($_->name); };
-              next unless $path;
-	      next unless(@$path == 1);
-	      $path = $path->[0]->to_Slice;
-# get clone id out of seq_region_attrib for link to webFPC 
-	      if ($_->{'name'} eq 'clone') {
-		  my ($clone_name) = @{$path->get_all_Attributes('fpc_clone_id')};
-		  $feature->{'internal_name'} = $clone_name->{'value'} if $clone_name;;
-	      }
-	      $feature->{'locations'}{$_->name} = [ $path->seq_region_name, $path->start, $path->end, $path->strand ];
+
+	  #is it a haplotype contig ?
+	  my ($hap_name) = @{$ctg_slice->get_all_Attributes('hap_contig')};
+	  $feature->{'haplotype_contig'} = $hap_name->{'value'} if $hap_name;
+
+	  if( $show_navigation ) {
+		  if ( ! $Container->isa("Bio::EnsEMBL::Compara::AlignSlice::Slice") && ($Container->{__type__} ne 'alignslice')) {
+			  foreach( @coord_systems ) {
+				  my $path;
+				  eval { $path = $ctg_slice->project($_->name); };
+				  next unless $path;
+				  next unless(@$path == 1);
+				  $path = $path->[0]->to_Slice;
+				  # get clone id out of seq_region_attrib for link to webFPC 
+				  if ($_->{'name'} eq 'clone') {
+					  my ($clone_name) = @{$path->get_all_Attributes('fpc_clone_id')};
+					  $feature->{'internal_name'} = $clone_name->{'value'} if $clone_name;;
+				  }
+
+				  $feature->{'locations'}{$_->name} = [ $path->seq_region_name, $path->start, $path->end, $path->strand ];
+			  }
+		  }
 	  }
-      }
-}
-    $feature->{'ori'} = $ORI;
-    push @features, $feature;
+	  $feature->{'ori'} = $ORI;
+	  push @features, $feature;
   }
   if( @features) {
-    $self->_init_non_assembled_contig($ystart, \@features);
+	  $self->_init_non_assembled_contig($ystart, \@features);
   } else {
       my $msg = "Golden path gap - no contigs to display!";
       if ($Container->isa("Bio::EnsEMBL::Compara::AlignSlice::Slice") && $Container->{compara} ne 'primary') {
-	  $msg = "Alignment gap - no contigs to display!";
+		  $msg = "Alignment gap - no contigs to display!";
       }
       $self->errorTrack($msg);
-
   }
 }
 
 sub _init_non_assembled_contig {
   my ($self, $ystart, $contig_tiling_path) = @_;
-
   my $Container = $self->{'vc'};
   my $length = $Container->length();
   my $ch = $Container->seq_region_name;
@@ -141,7 +145,7 @@ sub _init_non_assembled_contig {
   my $red      = 'red';
   my $highlights = join('|', $self->highlights());
      $highlights = $highlights ? ";highlight=$highlights" : '';
- if( $self->{'config'}->{'compara'} ) { ## this is where we have to add in the other species....
+  if( $self->{'config'}->{'compara'} ) { ## this is where we have to add in the other species....
     my $C = 0;
     foreach( @{ $self->{'config'}{'other_slices'}} ) {
       if( $C!= $self->{'config'}->{'slice_number'} ) {
@@ -174,34 +178,39 @@ sub _init_non_assembled_contig {
 # Draw the Contig Tiling Path
 #
   my $i = 1;
-  my @colours  = qw(contigblue1 contigblue2);
+  my @colours  = ( [qw(contigblue1 contigblue2)] , [qw(lightgoldenrod1 lightgoldenrod2)] ) ;
+  my @label_colours = qw(white black);
 
   foreach my $tile ( sort { $a->{'start'} <=> $b->{'start'} } @{$contig_tiling_path} ) {
       my $strand = $tile->{'ori'};
       my $rend   = $tile->{'end'};
-    my $rstart = $tile->{'start'};
+      my $rstart = $tile->{'start'};
 
 # AlignSlice segments can be on different strands - hence need to check if start & end need a swap
 
       if ($rstart > $rend ) {
-	  ($rstart, $rend) = ($rend, $rstart);
+		  ($rstart, $rend) = ($rend, $rstart);
       }
-    my $rid    = $tile->{'name'};
+	  my $rid    = $tile->{'name'};
     
-       $rstart = 1 if $rstart < 1;
-       $rend   = $length if $rend > $length;
+	  $rstart = 1 if $rstart < 1;
+	  $rend   = $length if $rend > $length;
 
-    
+	  #if this is a haplotype contig then need a different pair of colours for the contigs
+	  my $i = 0;
+	  if ( exists($tile->{'haplotype_contig'}) ) {
+		  $i = $tile->{'haplotype_contig'} ? 1 : 0;
+	  }
+
     my $glyph = new Sanger::Graphics::Glyph::Rect({
       'x'         => $rstart - 1,
       'y'         => $ystart+2,
       'width'     => $rend - $rstart+1,
       'height'    => $h+4,
-      'colour'    => $colours[0],
+      'colour'    => $colours[$i]->[0],
       'absolutey' => 1, 
     });
-    push @colours, shift @colours;
-    
+    push @{$colours[$i]}, shift @{@colours[$i]};
     my $script = $ENV{'ENSEMBL_SCRIPT'};
     my $caption = 'Centre on';
     if(  $script eq 'multicontigview' ) { 
@@ -275,7 +284,7 @@ sub _init_non_assembled_contig {
         'y'          => $ystart+($h-$res[3])/2+2,
         'font'       => $fontname,
         'ptsize'     => $fontsize,
-        'colour'     => 'white',
+        'colour'     => $label_colours[$i],
         'text'       => $res[0],
         'absolutey'  => 1,
       });
