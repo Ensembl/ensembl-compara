@@ -20,7 +20,6 @@ use EnsEMBL::Web::RegObj;
 
 use Exporter;
 
-our $oracle_home;
 our $THIS_HOST;
 our $LOG_INFO; 
 our $LOG_TIME; 
@@ -341,8 +340,6 @@ sub cleanupHandler {
   my $r = shift;      # Get the connection handler
 
 #warn "STANDARD CLEAN UP HANDLER $$";
-  ## hack for oracle/AV problem: remember that this child has used Oracle
-  $oracle_home ||= $ENV{'ORACLE_HOME'};
 
   return  if $r->subprocess_env->{'ENSEMBL_ENDTIME'};
   my $end_time    = time();
