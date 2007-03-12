@@ -240,7 +240,7 @@ sub _store_PAFS {
   return unless(@out and scalar(@out));
 
   # Query genome db id should always be the same
-  my $first_qgenome_db_id = $out[0]->query_member->genome_db_id;
+  my $first_qgenome_db_id = $out[0]->query_genome_db_id;
 
   my $gdb = $self->db->get_GenomeDBAdaptor->fetch_by_dbID($first_qgenome_db_id);
   my $species_name = lc($gdb->name);
@@ -264,14 +264,14 @@ sub _store_PAFS {
         $analysis_id=$paf->analysis()->dbID();
       }
 
-      my $qgenome_db_id = $paf->query_member->genome_db_id;
+      my $qgenome_db_id = $paf->query_genome_db_id;
       $qgenome_db_id = 0 unless($qgenome_db_id);
-      my $hgenome_db_id = $paf->hit_member->genome_db_id;
+      my $hgenome_db_id = $paf->hit_genome_db_id;
       $hgenome_db_id = 0 unless($hgenome_db_id);
 
       $query .= ", " if($addComma);
-      $query .= "(".$paf->query_member->dbID.
-                ",".$paf->hit_member->dbID.
+      $query .= "(".$paf->query_member_id.
+                ",".$paf->hit_member_id.
                 ",".$qgenome_db_id.
                 ",".$hgenome_db_id.
                 ",".$analysis_id.
@@ -310,7 +310,10 @@ sub _create_PAF_from_BaseAlignFeature {
 
   my $memberDBA = $self->db->get_MemberAdaptor();
 
-  if($feature->seqname =~ /member_id_(\d+)/) {
+  if ($feature->seqname =~ /IDs\:(\d+)\:(\d+)/) {
+    $paf->query_genome_db_id($1);
+    $paf->query_member_id($2);
+  } elsif($feature->seqname =~ /member_id_(\d+)/) {
     #printf("qseq: member_id = %d\n", $1);
     $paf->query_member($memberDBA->fetch_by_dbID($1));
   } else {
@@ -319,7 +322,10 @@ sub _create_PAF_from_BaseAlignFeature {
     $paf->query_member($memberDBA->fetch_by_source_stable_id($source_name, $stable_id));
   }
 
-  if($feature->hseqname =~ /member_id_(\d+)/) {
+  if ($feature->hseqname =~ /IDs\:(\d+)\:(\d+)/) {
+    $paf->hit_genome_db_id($1);
+    $paf->hit_member_id($2);
+  } elsif ($feature->hseqname =~ /member_id_(\d+)/) {
     #printf("hseq: member_id = %d\n", $1);
     $paf->hit_member($memberDBA->fetch_by_dbID($1));
   } else {
