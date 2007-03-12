@@ -11,6 +11,8 @@ use EnsEMBL::Web::Component::Slice;
 use EnsEMBL::Web::Component::Transcript qw(_sort_similarity_links);
 use EnsEMBL::Web::RegObj;
 
+use EnsEMBL::Web::Form;
+
 use Data::Dumper;
 use Bio::AlignIO;
 use IO::String;
@@ -313,6 +315,7 @@ sub align_markup_options_form {
 
 sub user_notes {
   my( $panel, $object ) = @_;
+<<<<<<< Gene.pm
   my $user = $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->get_user;
   my $uri = CGI::escape($ENV{'REQUEST_URI'});
   my $html = "";
@@ -386,6 +389,7 @@ sub group_notes {
     $panel->add_row('Group notes', $html); 
   }
 }
+
 
 sub name {
 	my( $panel, $object ) = @_;
@@ -468,7 +472,7 @@ sub name {
 			my $id= $$info[0];
 			my $href= $$info[1];
 			$html .= qq(<p>
-          This transcript is identical to $url_name transcript: <a href="$href">$id</a> 
+          This transcript is identical to Vega transcript: <a href="$href">$id</a>
        </p>
       );
 		}
@@ -591,7 +595,7 @@ sub location {
 
     # alternative (Vega) coordinates
     my $alt_assembly = $object->species_defs->ALTERNATIVE_ASSEMBLY;
-    if ( $alt_assembly and (lc($object->source) =~ /vega/)) {
+    if ( $alt_assembly and (lc($object->source) eq 'vega_external' || lc($object->source) eq 'vega_havana') ) {
       # set dnadb to 'vega' so that the assembly mapping is retrieved from there
       my $reg = "Bio::EnsEMBL::Registry";
       my $orig_group = $reg->get_DNAAdaptor($object->species, "vega")->group;
@@ -1274,7 +1278,7 @@ sub factor {
 
 
 sub genespliceview_menu {  return gene_menu( @_, 'genesnpview_transcript',
-   [qw( Features SNPContext THExport ImageSize )], ['GeneSpliceHelp'] ); }
+   [qw( Features SNPContext ImageSize THExport )] ); }
 
 sub genetreeview_menu {
     my($panel, $object, $configname, $left, $right ) =  
@@ -1397,6 +1401,7 @@ sub genesnpview {
     $CONFIG->{'extent'}     = $extent;
       ## Store transcript information on config....
     my $TS = $trans_obj->__data->{'transformed'};
+#	warn Data::Dumper::Dumper($TS);
     $CONFIG->{'transcript'} = {
       'exons'        => $TS->{'exons'},
       'coding_start' => $TS->{'coding_start'},
