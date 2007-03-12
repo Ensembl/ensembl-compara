@@ -178,12 +178,12 @@ sub multi_bottom {
        $config->{'next_species'}       = $next_species;
        $config->{'slice_id'}           = $i;
        $config->{'other_slices'}       = \@other_slices;
-       $config->{'primary_slice'}      = $primary_slice;
+       $config->{'primary_slice'}      = $primary_slice; 
     if( $previous_species && $next_species eq $previous_species ) {
       if( $flags{'match'} ) {
-        foreach(qw( BLASTZ_RAW PHUSION_BLASTN BLASTZ_NET BLASTZ_GROUP BLASTZ_RECIP_NET) ) {
+        foreach(qw( BLASTZ_RAW PHUSION_BLASTN BLASTZ_NET BLASTZ_GROUP BLASTZ_RECIP_NET BLASTZ_CHAIN) ) {
           my $K = lc($previous_species)."_".lc($_)."_match";
-          $config->set( $K, "on", "on" );
+		  $config->set( $K, "on", "on" );
           $config->set( $K, "str", "x" );
           $config->set( $K, "join", 1 ) if $flags{ 'join_match' };
           $config->set( $K, "compact", $flags{ 'group_match' } ? 0 : 1 );
@@ -210,7 +210,7 @@ sub multi_bottom {
     } else {
       if( $previous_species ) {
         if( $flags{'match'} ) {
-          foreach(qw( BLASTZ_RAW PHUSION_BLASTN BLASTZ_NET BLASTZ_GROUP BLASTZ_RECIP_NET) ) {
+          foreach(qw( BLASTZ_RAW PHUSION_BLASTN BLASTZ_NET BLASTZ_GROUP BLASTZ_RECIP_NET BLASTZ_CHAIN) ) {
             my $K = lc($previous_species)."_".lc($_)."_match";
             $config->set( $K, "on", "on" );
             $config->set( $K, "str", "f" );
@@ -239,7 +239,7 @@ sub multi_bottom {
       }
       if( $next_species ) {
         if( $flags{'match'} ) {
-          foreach(qw( BLASTZ_RAW PHUSION_BLASTN BLASTZ_NET BLASTZ_GROUP BLASTZ_RECIP_NET) ) {
+          foreach(qw( BLASTZ_RAW PHUSION_BLASTN BLASTZ_NET BLASTZ_GROUP BLASTZ_RECIP_NET BLASTZ_CHAIN) ) {
             my $K = lc($next_species)."_".lc($_)."_match";
             $config->set( $K, "on", "on" );
             $config->set( $K, "str", "r" );
@@ -248,7 +248,7 @@ sub multi_bottom {
           }
         }
         if( $flags{'hcr'} ) {
-          foreach(qw(PHUSION_BLASTN_TIGHT BLASTZ_NET_TIGHT BLASTZ_GROUP_TIGHT)) {
+          foreach(qw(PHUSION_BLASTN_TIGHT BLASTZ_NET_TIGHT BLASTZ_GROUP_TIGHT )) {
             my $K = lc($next_species)."_".lc($_)."_match";
             $config->set( $K, "on", "on" );
             $config->set( $K, "str", "r" );
@@ -706,55 +706,54 @@ sub this_link_scale {
 }
 
 sub multi_species_list { 
-    my( $object,$species ) = @_;
-    $species ||= $object->species;
-    my %species_hash;
-    my %dup_species;
-    foreach( $object->species_list() ) {
-        $dup_species{$_}++;
-    }
-    #if we have a self-compara or if we're in vega then get further details
-    if ( (grep {$dup_species{$_} > 1} keys %dup_species) || ($object->species_defs->ENSEMBL_SITE_NAME eq 'Vega') ) {
-        my @details = $object->species_and_seq_region_list;
-        my $C = 1;
-        my ($type,$srname) = split / / , $object->seq_region_type_and_name;
-        foreach my $assoc (@details) {
-            my ($sp,$sr) = split /:/, $assoc;
-            $species_hash{ 's'.$C } = $object->species_defs->ENSEMBL_SHORTEST_ALIAS->{$sp};
-            $species_hash{ 'sr'.$C++ } = $sr;
-        }
-    } else {
-        #otherwise just get species names
-        my %species_flag = ( $species => 1 );
-        my $C = 1;
-        foreach ($object->species_list()) {
-            next if $species_flag{$_};
-            $species_flag{ $_       } = 1;
-            $species_hash{ 's'.$C++ } = $object->species_defs->ENSEMBL_SHORTEST_ALIAS->{$_};
-        }
-    }
-    return %species_hash;
+	my( $object,$species ) = @_;
+	$species ||= $object->species;
+	my %species_hash;
+	my %self_config = $object->species_defs->multiX('VEGA_COMPARA_CONF');
+	#if we have a self-compara (ie Vega) then get further details
+	if ( %self_config ) {
+		my @details = $object->species_and_seq_region_list;
+		my $C = 1;
+		my ($type,$srname) = split / / , $object->seq_region_type_and_name;
+		foreach my $assoc (@details) {
+			my ($sp,$sr) = split /:/, $assoc;
+			$species_hash{ 's'.$C } = $object->species_defs->ENSEMBL_SHORTEST_ALIAS->{$sp};
+			$species_hash{ 'sr'.$C++ } = $sr;
+		}
+	} else {
+		#otherwise just get species names
+		my %species_flag = ( $species => 1 );
+		my $C = 1;
+		foreach ($object->species_list()) {
+			next if $species_flag{$_};
+			$species_flag{ $_       } = 1;
+			$species_hash{ 's'.$C++ } = $object->species_defs->ENSEMBL_SHORTEST_ALIAS->{$_};
+		}
+	}
+	return %species_hash;
 }
 
-sub vega_nav_url {
-    my ($object,$def_url,$slice_bp,$gene_length) = @_;
-    my $vega_url;
-    my $obj = $object->[1]{'_object'}[0];
-    if ($obj->[1]{'_object'}{'type'} eq 'Gene') {
-        my $primary_gene    = $obj->[1]{'_object'}{'name'};
-        my $primary_species = $object->species;
-        $vega_url .= sprintf '/%s/%s?gene=%s', $primary_species, $object->script, $primary_gene;
-        my $input_params = $obj->[1]{'_input'};
-        foreach my $k (sort keys %$input_params) {
-            $vega_url .= ';'.$k.'='.$input_params->{$k}[0]    if ($k =~ /^[a-z]\d$/) ;
-        }
-        my $dbadap = $obj->[1]{'_databases'}{'_dbs'}{$primary_species}{'core'};
-        my $gadap = $dbadap->get_adaptor("Gene");
-        my $gene = $gadap->fetch_by_stable_id($primary_gene);
-        my $context = ($slice_bp - $gene_length) / 2;
-        $vega_url .= ';context='.$context;
-    }
-    return $vega_url ? $vega_url : $def_url;
+
+#add gene params to URL (for navigation buttons)
+sub gene_nav_url { 
+	my ($object,$def_url,$slice_bp,$gene_length) = @_;
+	my $gene_url;
+	my $obj = $object->[1]{'_object'}[0];
+	if ($obj->[1]{'_object'}{'type'} eq 'Gene') {
+		my $primary_gene    = $obj->[1]{'_object'}{'name'};
+		my $primary_species = $object->species;
+		$gene_url .= sprintf '/%s/%s?gene=%s', $primary_species, $object->script, $primary_gene;
+		my $input_params = $obj->[1]{'_input'};
+		foreach my $k (sort keys %$input_params) {
+			$gene_url .= ';'.$k.'='.$input_params->{$k}[0]	if ($k =~ /^[a-z]\d$/) ;
+		}
+#		my $dbadap = $obj->[1]{'_databases'}{'_dbs'}{$primary_species}{'core'};
+#		my $gadap = $dbadap->get_adaptor("Gene");
+#		my $gene = $gadap->fetch_by_stable_id($primary_gene);
+		my $context = ($slice_bp - $gene_length) / 2;
+		$gene_url .= ';context='.$context;
+	}
+	return $gene_url ? $gene_url : $def_url;
 }
 
 sub contigviewbottom_nav { return bottom_nav( @_, 'contigviewbottom', {} ); }
@@ -839,8 +838,12 @@ sub bottom_nav {
   my $zoom_HTML_2 = '';
   my @zoomgif_keys = sort keys %zoomgifs;
 
-  #get length of gene just once before using within the zoomgif loop (for vega nav)
-  my $gene_length = $object->get_gene_length if ($object->can('get_gene_length'));
+  #do we have a self compara?
+  my %self_compara = ($object->species_defs->multiX('VEGA_COMPARA_CONF'));
+  #...and if so, is the entry point a gene ?
+  my $gene_length = $object->get_gene_length if ($object->can('get_gene_length') && %self_compara);
+  #...if both are true then we need to use the gene params rather than seq regions for the zooming etc buttons
+  my $gene_nav =  $gene_length ? 1 : 0;
 
   my $lastkey = $zoomgif_keys[-1]; 
   for my $zoom (@zoomgif_keys) {
@@ -851,9 +854,8 @@ sub bottom_nav {
     }
     my $zoomurl = this_link_scale( $object, $zoombp, $hidden_fields_URL );
 
-    if ( ($object->species_defs->ENSEMBL_SITE_NAME eq 'Vega') && $gene_length) {
-        $zoomurl = vega_nav_url($object,$zoomurl,$zoombp,$gene_length);
-    }
+	#use the gene params ?
+	$zoomurl = gene_nav_url($object,$zoomurl,$zoombp,$gene_length) if  $gene_nav;
 
     my $unit_str = $zoombp;
     if( $zoom lt 'zoom5' ) {
@@ -887,20 +889,20 @@ sub bottom_nav {
 ############ Zoom in.....Zoom out
   $output.= qq(</td>\n    <td class="center middle">);
   my $button_url;
-  if ( ($object->species_defs->ENSEMBL_SITE_NAME eq 'Vega') && $gene_length) {
-      $button_url = vega_nav_url($object,$hidden_fields_URL,int( $wid / 2),$gene_length);
+  if ($gene_nav) {
+	  $button_url = gene_nav_url($object,$hidden_fields_URL,int( $wid / 2),$gene_length);
   }
   else {
-      $button_url =  this_link_scale( $object, int( $wid / 2), $hidden_fields_URL );
+	  $button_url = this_link_scale( $object, int( $wid / 2), $hidden_fields_URL );
   }
   $output.= sprintf(qq(<a href="%s" class="cv_plusminus">+</a>), $button_url) if exists $nav_options{'half'};
   $output.= qq(${zoom_HTML}) if exists $nav_options{'zoom'};
-  if ( ($object->species_defs->ENSEMBL_SITE_NAME eq 'Vega') && $gene_length) {
-      $button_url = vega_nav_url($object,$hidden_fields_URL,int( $wid * 2),$gene_length);
+  if ($gene_nav) {
+	  $button_url = gene_nav_url($object,$hidden_fields_URL,int( $wid * 2),$gene_length);
   }
   else {
-      $button_url =  this_link_scale( $object, int( $wid * 2), $hidden_fields_URL );
-  }                  
+	  $button_url = this_link_scale( $object, int( $wid * 2), $hidden_fields_URL );
+  }				  
   $output.= sprintf(qq(<a href="%s" class="cv_plusminus">&#8211;</a>), $button_url ) if exists $nav_options{'half'};
 ############ Right 5mb/2mb/1mb/window
   $output.= qq(</td>\n    <td class="right middle">);

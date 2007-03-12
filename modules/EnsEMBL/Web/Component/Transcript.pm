@@ -1,6 +1,7 @@
 package EnsEMBL::Web::Component::Transcript;
 
 use EnsEMBL::Web::Component;
+use EnsEMBL::Web::Form;
 our @ISA = qw( EnsEMBL::Web::Component);
 
 use Data::Dumper;
@@ -1679,8 +1680,5 @@ sub version {
     $panel->add_row($label, qq(<p>$version</p>));
     return 1;
 }
-
-
-
 
 1;

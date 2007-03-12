@@ -38,7 +38,7 @@ no warnings "uninitialized";
 
 sub name {
   my($panel,$object) = @_;
-  (my $DATE = $object->species_defs->ARCHIVE_VERSION ) =~ s/(\d+)/ \1/;
+  (my $DATE = $object->species_defs->ARCHIVE_VERSION ) =~ s/(\d+)/ $1/;
   $panel->add_row( 'Site summary', qq(<p>@{[$object->species_defs->ENSEMBL_SITETYPE]} - $DATE</p>) );
   return 1;
 }
@@ -53,7 +53,6 @@ sub name {
 
 sub url {
   my($panel,$object) = @_;
-  warn $object;
   $panel->add_row( 'Web address', qq(<p>@{[ $object->full_URL( 'species' => '' ) ]}</p>) );
   return 1;
 }
@@ -179,8 +178,6 @@ sub spreadsheet_Colours {
   my $sort_by = $object->param('sort');
   $cm ||= new Bio::EnsEMBL::ColourMap( $object->species_defs );
   my @keys;
-  my %rgb;
-  my %hls;
 
   my @r_rgb = (255,0,0);
   if(defined($colour)) {

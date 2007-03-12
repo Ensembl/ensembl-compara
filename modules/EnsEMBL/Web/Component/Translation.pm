@@ -913,37 +913,32 @@ sub similarity_matches {
   my $db = $data->get_db();
   my $entry = $data->gene_type || 'Ensembl';
     # add table call here
-  my $html;
-  unless ($data->species_defs->ENSEMBL_SITETYPE eq 'Vega') {
-    $html = qq(
-      <p><strong>This $entry entry corresponds to the following database identifiers:</strong></p>);
-  }
-  $html .= qq(<table>);
-  foreach my $key (sort keys %links){
-    if( scalar (@{$links{$key}}) > 0 ){
-      my @sorted_links = sort @{$links{$key}};
-      $html .= qq(<tr><td class="nowrap"><strong>$key:</strong></td>\n<td>);
+    my $html = qq(
+                <p><strong>This $entry entry corresponds to the following database identifiers:</strong></p>);
+    $html .= qq(<table>);
+    foreach my $key (sort keys %links){
+        if (scalar (@{$links{$key}}) > 0){
+            my @sorted_links = sort @{$links{$key}};
+            $html .= qq(<tr><td class="nowrap"><strong>$key:</strong></td>\n<td>);
 
-      if( $sorted_links[0] =~ /<br/i ){
-        $html .= join(' ', @sorted_links );
-      } else { # Need a BR each 5 entries
-        $html .= qq(<table><tr>);
-        my @sorted_lines;
-        for( my $i=0; $i<@sorted_links; $i++ ){
-           my $line_num = int($i/4);
-           if( ref(  $sorted_lines[$line_num] ) ne 'ARRAY' ){
-             $sorted_lines[$line_num] = [];
-           }
-           push( @{$sorted_lines[$line_num]}, "<td>".$sorted_links[$i]."</td>" );
-         }
-         $html .= join( "</tr>\n<tr>", map{ join( ' ', @$_ ) } @sorted_lines );
-         $html .= qq(</tr></table>);
-       }
-       $html .= qq(</td></tr>);
-     }
-   }   
-   $html .= qq(</table>); 
-   return ($label , $html);
+            if( $sorted_links[0] =~ /<br/i ){
+                $html .= join(' ', @sorted_links );
+            } else { # Need a BR each 5 entries
+                $html .= qq(<table><tr>);
+                my @sorted_lines;
+                for( my $i=0; $i<@sorted_links; $i++ ){
+                    my $line_num = int($i/4);
+                    if( ref(  $sorted_lines[$line_num] ) ne 'ARRAY' ){$sorted_lines[$line_num] = [];}
+                    push( @{$sorted_lines[$line_num]}, "<td>".$sorted_links[$i]."</td>" );
+                }
+                $html .= join( "</tr>\n<tr>", map{ join( ' ', @$_ ) } @sorted_lines );
+                $html .= qq(</tr></table>);
+            }
+            $html .= qq(</td></tr>);
+        }
+    }   
+    $html .= qq(</table>); 
+    return ($label , $html);
 }
 
 =head2 _sort_similarity_links
