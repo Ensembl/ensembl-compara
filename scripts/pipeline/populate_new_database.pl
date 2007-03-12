@@ -156,15 +156,18 @@ if ($help or !$master or !$new) {
 Bio::EnsEMBL::Registry->load_all($reg_conf);
 
 my $master_dba = Bio::EnsEMBL::Registry->get_DBAdaptor($master, "compara");
+die "Cannot connect to master compara database: $master\n" if (!$master_dba);
 $master_dba->get_MetaContainer; # tests that the DB exists
 
 my $old_dba;
 if ($old) {
   $old_dba = Bio::EnsEMBL::Registry->get_DBAdaptor($old, "compara");
+  die "Cannot connect to old compara database: $old\n" if (!$old_dba);
   $old_dba->get_MetaContainer; # tests that the DB exists
 }
 
 my $new_dba = Bio::EnsEMBL::Registry->get_DBAdaptor($new, "compara");
+die "Cannot connect to new compara database: $new\n" if (!$new_dba);
 $new_dba->get_MetaContainer; # tests that the DB exists
 ##
 #################################################
@@ -172,13 +175,13 @@ $new_dba->get_MetaContainer; # tests that the DB exists
 ## Sets the schema version for the new database
 update_schema_version($master_dba, $new_dba);
 
+## Get all the genome_dbs with a default assembly
+my $all_default_genome_dbs = get_all_default_genome_dbs($master_dba, @species);
+
 ## Copy taxa and method_link tables
 copy_table($master_dba, $new_dba, "ncbi_taxa_name");
 copy_table($master_dba, $new_dba, "ncbi_taxa_node");
 copy_table($master_dba, $new_dba, "method_link");
-
-## Get all the genome_dbs with a default assembly
-my $all_default_genome_dbs = get_all_default_genome_dbs($master_dba, @species);
 
 ## Store them in the new DB
 store_objects($new_dba->get_GenomeDBAdaptor, $all_default_genome_dbs,
@@ -325,22 +328,38 @@ sub get_all_default_genome_dbs {
   throw("Error while getting Bio::EnsEMBL::Compara::DBSQL::GenomeDBAdaptor")
       unless ($genome_db_adaptor);
 
+  my $all_species;
+  foreach my $this_species (@species_names) {
+    if (defined($all_species->{$this_species})) {
+      warn (" ** WARNING ** Species <$this_species> defined twice!\n");
+    }
+    $all_species->{$this_species} = 0;
+  }
+
   my $all_genome_dbs = $genome_db_adaptor->fetch_all();
   $all_genome_dbs = [sort {$a->dbID <=> $b->dbID} grep {$_->assembly_default} @$all_genome_dbs];
   if (@species_names) {
-    GENOME_DB:
     for (my $i = 0; $i < @$all_genome_dbs; $i++) {
-      my $this_genome_db = $all_genome_dbs->[$i];
-      foreach my $this_species_name (@species_names) {
-        if ($this_genome_db->name eq $this_species_name) {
-          next GENOME_DB;
-        }
+      my $this_genome_db_name = $all_genome_dbs->[$i]->name;
+      if (grep {/$this_genome_db_name/} @species_names) {
+        $all_species->{$this_genome_db_name} = 1;
+        next;
       }
       ## this_genome_db is not in the list of species_names
       splice(@$all_genome_dbs, $i, 1);
       $i--;
     }
   }
+
+  my $fail = 0;
+  foreach my $this_species (@species_names) {
+    if (!$all_species->{$this_species}) {
+      print " ** ERROR ** No GenomeDB for species <$this_species>\n";
+      $fail = 1;
+    }
+  }
+  die " ** ERROR ** -> Not all the species can be found!\n" if ($fail);
+
   return $all_genome_dbs;
 }
 
