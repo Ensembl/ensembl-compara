@@ -315,7 +315,6 @@ sub align_markup_options_form {
 
 sub user_notes {
   my( $panel, $object ) = @_;
-<<<<<<< Gene.pm
   my $user = $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->get_user;
   my $uri = CGI::escape($ENV{'REQUEST_URI'});
   my $html = "";
