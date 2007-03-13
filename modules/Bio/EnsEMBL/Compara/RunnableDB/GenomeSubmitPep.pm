@@ -119,6 +119,7 @@ sub fetch_input {
 sub run
 {
   my $self = shift;
+  $self->create_peptide_align_feature_table($self->{'genome_db'});
   return 1;
 }
 
@@ -267,6 +268,26 @@ sub createSubmitPepAnalysis {
 
 
   return $logic_name;
+}
+
+#####################################################################
+##
+## create_peptide_align_feature_table
+##
+#####################################################################
+
+sub create_peptide_align_feature_table {
+  my ($self, $genome_db) = @_;
+
+  my $genome_db_id = $genome_db->dbID;
+  my $species_name = lc($genome_db->name);
+  $species_name =~ s/\ /\_/g;
+  my $table_name = "peptide_align_feature_${species_name}_${genome_db_id}";
+  my $sql = "CREATE TABLE IF NOT EXISTS $table_name like peptide_align_feature";
+
+  my $sth = $self->{'comparaDBA'}->dbc->prepare($sql);
+  $sth->execute();
+  $sth->finish();
 }
 
 1;
