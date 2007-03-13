@@ -589,11 +589,12 @@ sub packed {
 
 sub reverse {
     my ($self) = @_;
-    my $num_scores;
+    my $num_scores = 0;
+    return if (!defined($self->score));
     if ($self->packed) { 
-	$num_scores = length($self->observed_score)/$pack_size;
+	$num_scores = length($self->score)/$pack_size;
     } else {
-	my @scores = split ' ', $self->observed_score;
+	my @scores = split ' ', $self->score;
 	$num_scores = scalar(@scores);
 	#$num_scores = scalar($self->observed_score);
     } 
