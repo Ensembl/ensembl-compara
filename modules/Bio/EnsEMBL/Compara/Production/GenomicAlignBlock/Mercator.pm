@@ -406,30 +406,16 @@ sub dumpMercatorFiles {
     close F;
   }
 
-  my $sql;
-  if ($self->all_hits) {
-    ## Use all best hits
-    $sql = "SELECT paf1.qmember_id, paf1.hmember_id, paf1.score, paf1.evalue, paf2.score, paf2.evalue
-      FROM peptide_align_feature paf1, peptide_align_feature paf2
-      WHERE paf1.qgenome_db_id = ? AND paf1.hgenome_db_id = ?
-        AND paf1.qmember_id = paf2.hmember_id AND paf1.hmember_id = paf2.qmember_id
-        AND (paf1.hit_rank = 1 OR paf2.hit_rank = 1)";
-  } else {
-    ## Use best reciprocal hits only
-    $sql = "SELECT paf1.qmember_id, paf1.hmember_id, paf1.score, paf1.evalue, paf2.score, paf2.evalue
-      FROM peptide_align_feature paf1, peptide_align_feature paf2
-      WHERE paf1.qgenome_db_id = ? AND paf1.hgenome_db_id = ?
-        AND paf1.qmember_id = paf2.hmember_id AND paf1.hmember_id = paf2.qmember_id
-        AND paf1.hit_rank = 1 AND paf2.hit_rank = 1";
-  }
-  my $sth = $self->{'comparaDBA'}->dbc->prepare($sql);
-  my ($qmember_id,$hmember_id,$score1,$evalue1,$score2,$evalue2);
+
   my @genome_db_ids = @{$self->genome_db_ids};
 
   while (my $gdb_id1 = shift @genome_db_ids) {
     foreach my $gdb_id2 (@genome_db_ids) {
       my $file = $self->input_dir . "/$gdb_id1" . "-$gdb_id2.hits";
       open F, ">$file";
+      my $sql = $self->get_sql_for_peptide_hits($gdb_id1, $gdb_id2);
+      my $sth = $self->{'comparaDBA'}->dbc->prepare($sql);
+      my ($qmember_id,$hmember_id,$score1,$evalue1,$score2,$evalue2);
       $sth->execute($gdb_id1, $gdb_id2);
       $sth->bind_columns( \$qmember_id,\$hmember_id,\$score1,\$evalue1,\$score2,\$evalue2);
       my %pair_seen = ();
@@ -443,6 +429,7 @@ sub dumpMercatorFiles {
         $pair_seen{$qmember_id . "_" . $hmember_id} = 1;
       }
       close F;
+      $sth->finish();
     }
   }
 
@@ -454,7 +441,45 @@ sub dumpMercatorFiles {
 }
 
 
+sub get_sql_for_peptide_hits {
+  my ($self, $gdb_id1, $gdb_id2) = @_;
+  my $sql;
+
+  my $table_name1 = $self->get_table_name_from_dbID($gdb_id1);
+  my $table_name2 = $self->get_table_name_from_dbID($gdb_id2);
+
+  if ($self->all_hits) {
+    ## Use all best hits
+    $sql = "SELECT paf1.qmember_id, paf1.hmember_id, paf1.score, paf1.evalue, paf2.score, paf2.evalue
+      FROM $table_name1 paf1, $table_name2 paf2
+      WHERE paf1.qgenome_db_id = ? AND paf1.hgenome_db_id = ?
+        AND paf1.qmember_id = paf2.hmember_id AND paf1.hmember_id = paf2.qmember_id
+        AND (paf1.hit_rank = 1 OR paf2.hit_rank = 1)";
+  } else {
+    ## Use best reciprocal hits only
+    $sql = "SELECT paf1.qmember_id, paf1.hmember_id, paf1.score, paf1.evalue, paf2.score, paf2.evalue
+      FROM $table_name1 paf1, $table_name2 paf2
+      WHERE paf1.qgenome_db_id = ? AND paf1.hgenome_db_id = ?
+        AND paf1.qmember_id = paf2.hmember_id AND paf1.hmember_id = paf2.qmember_id
+        AND paf1.hit_rank = 1 AND paf2.hit_rank = 1";
+  }
+
+  return $sql;
+}
 
 
+sub get_table_name_from_dbID {
+  my ($self, $gdb_id) = @_;
+  my $table_name = "peptide_align_feature";
+
+  my $gdba = $self->{'comparaDBA'}->get_GenomeDBAdaptor;
+  my $gdb = $gdba->fetch_by_dbID($gdb_id);
+  return $table_name if (!$gdb);
+
+  $table_name .= "_" . lc($gdb->name) . "_" . $gdb_id;
+  $table_name =~ s/ /_/g;
+
+  return $table_name;
+}
 
 1;
