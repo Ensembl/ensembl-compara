@@ -191,6 +191,15 @@ sub get_params {
   my $params = eval($param_string);
   return unless($params);
 
+  if (defined $params->{'analysis_data_id'}) {
+    my $analysis_data_id = $params->{'analysis_data_id'};
+    my $ada = $self->db->get_AnalysisDataAdaptor;
+    my $new_params = eval($ada->fetch_by_dbID($analysis_data_id));
+    if (defined $new_params) {
+      $params = $new_params;
+    }
+  }
+  
   if($self->debug) {
     foreach my $key (keys %$params) {
       print("  $key : ", $params->{$key}, "\n");
