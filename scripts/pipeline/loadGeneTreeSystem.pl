@@ -10,7 +10,6 @@ use Bio::EnsEMBL::DBLoader;
 use Bio::EnsEMBL::Registry;
 
 my $conf_file;
-my %analysis_template;
 my @speciesList = ();
 my %hive_params;
 my %dnds_params;
@@ -69,11 +68,9 @@ if(%hive_params) {
   }
 }
 
-
 $self->build_GeneTreeSystem();
 
 exit(0);
-
 
 #######################
 #
@@ -86,10 +83,9 @@ sub usage {
   print "  -help                  : print this help\n";
   print "  -conf <path>           : config file describing compara, templates\n";
   print "loadGeneTreeSystem.pl v1.2\n";
-  
-  exit(1);  
-}
 
+  exit(1);
+}
 
 sub parse_conf {
   my($conf_file) = shift;
@@ -103,9 +99,6 @@ sub parse_conf {
       if($confPtr->{TYPE} eq 'COMPARA') {
         %compara_conf = %{$confPtr};
       }
-      if(($confPtr->{TYPE} eq 'BLAST_TEMPLATE') or ($confPtr->{TYPE} eq 'BLASTP_TEMPLATE')) {
-        %analysis_template = %{$confPtr};
-      }
       if($confPtr->{TYPE} eq 'HIVE') {
         %hive_params = %{$confPtr};
       }
@@ -118,8 +111,6 @@ sub parse_conf {
     }
   }
 }
-
-
 #
 # need to make sure analysis 'SubmitGenome' is in database
 # this is a generic analysis of type 'genome_db_id'
@@ -133,11 +124,18 @@ sub build_GeneTreeSystem
   #yes this should be done with a config file and a loop, but...
   my $self = shift;
 
+  my $updatepafids_analysis = $self->{'comparaDBA'}->get_AnalysisAdaptor->fetch_by_logic_name('UpdatePAFIds');
+  unless (defined $updatepafids_analysis) {
+    warn("Analysis logic_name=UpdatePAFIds does not exit in the database.
+No control rule could be apply on PAFCluster if it is not there.
+EXIT 2\n");
+    exit(2);
+  }
+
   my $dataflowRuleDBA = $self->{'hiveDBA'}->get_DataflowRuleAdaptor;
   my $ctrlRuleDBA = $self->{'hiveDBA'}->get_AnalysisCtrlRuleAdaptor;
   my $analysisStatsDBA = $self->{'hiveDBA'}->get_AnalysisStatsAdaptor;
   my $stats;
-
 
   #
   # PAFCluster
@@ -152,8 +150,8 @@ sub build_GeneTreeSystem
   $stats = $paf_cluster->stats;
   $stats->batch_size(1);
   $stats->hive_capacity(-1);
+  $stats->status('BLOCKED');
   $stats->update();
-
 
   #
   # Clusterset_staging
@@ -171,7 +169,7 @@ sub build_GeneTreeSystem
   #
   # Muscle
   #
-  $parameters = "{'options'=>'-maxiters 2'";
+  $parameters = "{'options'=>'-maxhours 5'";
   if (defined $genetree_params{'max_gene_count'}) {
     $parameters .= ",max_gene_count=>".$genetree_params{'max_gene_count'};
   }
@@ -191,83 +189,29 @@ sub build_GeneTreeSystem
   $stats->hive_capacity(-1);
   $stats->update();
 
-
-  #
-  # Muscle_huge
-  #
-  $parameters = "{'options'=>'-maxiters 1 -diags1 -sv'";
-  if (defined $genetree_params{'max_gene_count'}) {
-    $parameters .= ",max_gene_count=>".$genetree_params{'max_gene_count'};
-  }
-  if (defined $genetree_params{'honeycomb_dir'}) {
-    $parameters .= ",'honeycomb_dir'=>'".$genetree_params{'honeycomb_dir'};
-  }
-  $parameters .= "'}";
-  my $muscle_huge = Bio::EnsEMBL::Analysis->new(
-      -logic_name      => 'Muscle_huge',
-      -program_file    => '/usr/local/ensembl/bin/muscle',
-      -module          => 'Bio::EnsEMBL::Compara::RunnableDB::Muscle',
-      -parameters      => $parameters
-    );
-  $self->{'hiveDBA'}->get_AnalysisAdaptor()->store($muscle_huge);
-  $stats = $muscle_huge->stats;
-  $stats->batch_size(1);
-  $stats->hive_capacity(-1);
-  $stats->update();
-
-
-  #
-  # ClustalW_mpi
-  #
-#  my $db_file = $genetree_params{'clustalw_mpi_dir'};
-#  unless (defined $db_file && -d $db_file) {
-#    warn("db_file for ClustalW_mpi is either not defined or the directory does not exist.\n
-#Make sure to set up the 'clustalw_mpi_dir' parameter in the GENE_TREE section of your configuration file\n");
-#    exit(2);
-#  }
-#  my $clustalw_mpi = Bio::EnsEMBL::Analysis->new(
-#      -logic_name      => 'ClustalW_mpi',
-#      -program_file    => '/usr/local/ensembl/bin/clustalw',
-#      -module          => 'Bio::EnsEMBL::Compara::RunnableDB::ClustalW',
-#      -parameters      => "{'mpi'=>1}",
-#      -db_file         => $db_file,
-#    );
-#  $self->{'hiveDBA'}->get_AnalysisAdaptor()->store($clustalw_mpi);
-#  $stats = $clustalw_mpi->stats;
-#  $stats->batch_size(1);
-#  $stats->hive_capacity(-1);
-#  $stats->update();
-
-
-  #
-  # ClustalW_parse
-  #
-#  my $clustalw_parse = Bio::EnsEMBL::Analysis->new(
-#      -logic_name      => 'ClustalW_parse',
-#      -program_file    => '/usr/local/ensembl/bin/clustalw',
-#      -module          => 'Bio::EnsEMBL::Compara::RunnableDB::ClustalW',
-#      -parameters      => "{'parse'=>1, 'align'=>0}",
-#      -db_file         => $db_file,
-#    );
-#  $self->{'hiveDBA'}->get_AnalysisAdaptor()->store($clustalw_parse);
-#  $stats = $clustalw_parse->stats;
-#  $stats->batch_size(1);
-#  $stats->hive_capacity(-1);
-#  $stats->update();
-
-
   #
   # NJTREE_PHYML
   #
   $parameters = "{cdna=>1,bootstrap=>1";
   if (defined $genetree_params{'max_gene_count'}) {
     $parameters .= ",max_gene_count=>".$genetree_params{'max_gene_count'};
-    $parameters .= ",species_tree_file=>'/lustre/work1/ensembl/avilella/src/ensembl_main/ensembl-compara/scripts/pipeline/species_tree_njtree.taxon_id.nh'";
+  }
+  if ($genetree_params{'species_tree_file'})
+    $parameters .= ",species_tree_file=>". $genetree_params{'species_tree_file'};
+  } else {
+    warn("No species_tree_file => 'myfile' has been set in your config file
+This parameter can not be set for njtree.
+EXIT 3\n");
+    exit(3);
   }
   if (defined $genetree_params{'honeycomb_dir'}) {
     $parameters .= ",'honeycomb_dir'=>'".$genetree_params{'honeycomb_dir'};
   }
   $parameters .= "'}";
+  my $analysis_data_id = $self->{'hiveDBA'}->get_AnalysisDataAdaptor->store_if_needed($parameters);
+  if (defined $analysis_data_id) {
+    $parameters = "{'analysis_data_id'=>'$analysis_data_id'}";
+  }
   my $njtree_phyml = Bio::EnsEMBL::Analysis->new(
       -logic_name      => 'NJTREE_PHYML',
       -program_file    => '/lustre/work1/ensembl/avilella/bin/i386/njtree',
@@ -279,31 +223,6 @@ sub build_GeneTreeSystem
   $stats->batch_size(1);
   $stats->hive_capacity(400);
   $stats->update();
-
-#   #
-#   # NJTREE_noboot
-#   #
-#   $parameters = "{cdna=>1, bootstrap=>0";
-#   if (defined $genetree_params{'max_gene_count'}) {
-#     $parameters .= ",max_gene_count=>".$genetree_params{'max_gene_count'};
-#     $parameters .= ",species_tree_file=>'/lustre/work1/ensembl/avilella/src/ensembl_main/ensembl-compara/scripts/pipeline/species_tree_njtree.taxon_id.nh'";
-#   }
-#   if (defined $genetree_params{'honeycomb_dir'}) {
-#     $parameters .= ",'honeycomb_dir'=>'".$genetree_params{'honeycomb_dir'};
-#   }
-#   $parameters .= "'}";
-#   my $njtree_phyml_noboot = Bio::EnsEMBL::Analysis->new(
-#       -logic_name      => 'NJTREE_noboot',
-#       -program_file    => '/lustre/work1/ensembl/avilella/bin/i386/njtree',
-#       -module          => 'Bio::EnsEMBL::Compara::RunnableDB::NJTREE_PHYML',
-#       -parameters      => $parameters
-#     );
-#   $self->{'hiveDBA'}->get_AnalysisAdaptor()->store($njtree_phyml_noboot);
-#   $stats = $njtree_phyml_noboot->stats;
-#   $stats->batch_size(1);
-#   $stats->hive_capacity(400);
-#   $stats->update();
-
 
   #
   # BreakPAFCluster
@@ -325,11 +244,11 @@ sub build_GeneTreeSystem
   #
   my $with_options_orthotree = 0;
   if (defined $genetree_params{'honeycomb_dir'}) {
-    $parameters = "'honeycomb_dir'=>'".$genetree_params{'honeycomb_dir'};
+    $parameters = "'honeycomb_dir'=>'".$genetree_params{'honeycomb_dir'}."'";
     $with_options_orthotree = 1;
   }
   if (defined $dnds_params{'species_sets'}) {
-    $parameters .= 'species_sets=>' . $dnds_params{'species_sets'} . ',method_link_type=>\''.$dnds_params{'method_link_type'}.'\'';
+    $parameters .= ',species_sets=>' . $dnds_params{'species_sets'} . ',method_link_type=>\''.$dnds_params{'method_link_type'}.'\'';
     $with_options_orthotree = 1;
   }
   $parameters = '{' . $parameters .'}' if (1==$with_options_orthotree);
@@ -394,29 +313,23 @@ sub build_GeneTreeSystem
   }
 
   #
-  # build graph
+  # build graph of control and dataflow rules
   #
+
+  $ctrlRuleDBA->create_rule($updatepafids_analysis, $paf_cluster);
+
   $dataflowRuleDBA->create_rule($paf_cluster, $clusterset_staging, 1);
   $dataflowRuleDBA->create_rule($paf_cluster, $muscle, 2);
+  $dataflowRuleDBA->create_rule($paf_cluster, $BreakPAFCluster, 3);
 
   $dataflowRuleDBA->create_rule($muscle, $njtree_phyml, 1);
-  $dataflowRuleDBA->create_rule($muscle, $muscle_huge, 2);
+  $dataflowRuleDBA->create_rule($muscle, $BreakPAFCluster, 2);
 
-  $dataflowRuleDBA->create_rule($muscle_huge, $njtree_phyml, 1);
-  $dataflowRuleDBA->create_rule($muscle_huge, $BreakPAFCluster, 2);
-
-#  $dataflowRuleDBA->create_rule($phyml, $rap, 1);
-#  $dataflowRuleDBA->create_rule($phyml, $phyml_cdna, 2);
-#  $dataflowRuleDBA->create_rule($phyml_cdna, $rap, 1);
-#  $dataflowRuleDBA->create_rule($phyml_cdna, $BreakPAFCluster, 2);
   $dataflowRuleDBA->create_rule($njtree_phyml, $orthotree, 1);
-#  $dataflowRuleDBA->create_rule($njtree_phyml, $njtree_phyml_noboot, 2);
-#  $dataflowRuleDBA->create_rule($njtree_phyml_noboot, $orthotree, 1);
-#  $dataflowRuleDBA->create_rule($njtree_phyml_noboot, $BreakPAFCluster, 2);
   $dataflowRuleDBA->create_rule($njtree_phyml, $BreakPAFCluster, 2);
+
   $dataflowRuleDBA->create_rule($BreakPAFCluster, $muscle, 2);
-  # dnds bit
-#  $dataflowRuleDBA->create_rule($orthotree,$homology_dNdS);
+  $dataflowRuleDBA->create_rule($BreakPAFCluster, $BreakPAFCluster, 3);
 
   #
   # create initial job
