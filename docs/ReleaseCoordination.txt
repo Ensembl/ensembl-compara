@@ -231,7 +231,7 @@ mysql -hens-staging -uensro -N -e 'show databases like "%core\_42\_%"'|awk '{pri
 
 mysql -hens-staging -uensadmin -pxxxxx ensembl_compara_42 < update_display_label.sql
 
-mysql -hens-staging -uensro -N -e 'show databases like "%core\_42\_%"'|awk '{ print "UPDATE "$1".gene_stable_id gs, "$1".gene g, member m SET m.description=g.description WHERE g.gene_id=gs.gene_id and gs.stable_id=m.stable_id and m.source_name=\"ENSEMBLGENE\""}' > update_gene_description.sql
+mysql -hens-staging -uensro -N -e 'show databases like "%core\_42\_%"'|awk '{ print "UPDATE "$1".gene_stable_id gs, "$1".gene g, member m SET m.description=g.description WHERE g.gene_id=gs.gene_id and gs.stable_id=m.stable_id and m.source_name=\"ENSEMBLGENE\";"}' > update_gene_description.sql
 
 mysql -hens-staging -uensadmin -pxxxxx ensembl_compara_42 < update_gene_description.sql
 
