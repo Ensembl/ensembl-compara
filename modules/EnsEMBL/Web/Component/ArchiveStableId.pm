@@ -230,14 +230,21 @@ sub associated_ids {
   foreach (keys %ids) {
     my $html;
     $html .= "<p>".ucfirst($id_type). sprintf ($url, $id_type, $_, $_). "</p>";
-
     my %id2;  # need to uniquify these
-    foreach  ( @{ $object->$id_type2 || [] }) {
+    if ($id_type eq 'transcript'){ 
+	 my $transcript_obj = $ids{$_};
+	 foreach  ( @{ $transcript_obj->get_all_translation_archive_ids || [] }) {
       my $stable_id2 = $_->stable_id;
       next unless $stable_id2;
       $id2{$stable_id2} = $_;
-    }
-
+     } 
+	} else {
+     foreach  ( @{ $object->$id_type2 || [] }) {
+      my $stable_id2 = $_->stable_id;
+      next unless $stable_id2;
+      $id2{$stable_id2} = $_;
+     }
+    } 
     foreach my $stable_id2 (keys %id2) {
       $html .= "<p>".ucfirst($id_type2). sprintf ($url, $id_type2, $stable_id2, $stable_id2);
 
@@ -272,10 +279,47 @@ sub associated_ids {
 
 sub _get_history {
   my ($object) = @_;
-  my $history;
+  my ($history, %new, %seen );
+  my $temp_id = $object->stable_id .".". $object->version .".".$object->release;
+  $seen{$temp_id} = $object; 
+ 
   foreach my $arch_id ( @{ $object->history} ) {
     push @{ $history->{$arch_id->release} }, $arch_id;
+    my $name = $arch_id->stable_id .".".$arch_id->version.".".$arch_id->release; 
+    #warn $name;
+    unless (exists $seen{$name}){
+	  $new{$name}= $arch_id;
+    }    
   }
+
+  my $size = keys(%new);
+
+  until ($size <=0){
+	my @temp = keys %new;
+	my $k = shift @temp;  
+    my $arch_id2 = $new{$k};
+    delete $new{$k};
+    $size = @temp;
+    my $id = $arch_id2->stable_id .".". $arch_id2->version.".".$arch_id2->release;
+    $seen{$id} = $arch_id2;
+    my $adaptor = $arch_id2->adaptor;
+    #warn ("### ", $id);
+    foreach my $member ( @{$adaptor->fetch_archive_id_history($arch_id2)}){
+	   my $memberid = $member->stable_id.".".$member->version ."." . $member->release;
+	   #warn $memberid; 
+	   unless (exists $seen{$memberid}){
+	     $new{$memberid} = $member;	
+	   }
+	   my @temp = @{$history->{$member->release}};
+       my $exists =0;
+	   foreach my $m (@temp){
+		 my $temp_id =  $m->stable_id .".". $m->version .".".$m->release;
+		 if ($temp_id eq $memberid) {$exists = 1;}  
+	   }
+	   unless ($exists >= 1){push @{$history->{$member->release}}, $member;}
+    }       
+  }
+
   return unless keys %$history;
   my @releases = (sort { $b <=> $a } keys %$history);
   return ($history, \@releases);
@@ -360,8 +404,113 @@ sub history {
 }
 
 
-=head2 _archive_link
+sub tree{
+  my($panel, $object) = @_;
+  my $name = $object->stable_id .".". $object->version;
+=head2 comment
+my ($history, $release_ref) = _get_history($object);
+  return unless $history;
 
+  # Get focus id 
+  my $id_focus = $object->stable_id.".".$object->version;
+  my (%info, @links, @rel, %trees, $r);
+
+  my @releases = @$release_ref;
+
+  # Get array of releases
+  for (my $i =0; $i <= $#releases; $i++) {
+	 if ( $i==0 or $releases[$i-1]-$releases[$i] == 1){
+		$r = $releases[$i];
+     } else {
+	    my $end = $releases[$i-1] -1;
+        $r = "$releases[$i]-$end";
+	 }
+	push (@rel,$r);
+	
+	## Get array of crosslinks 
+	my @temp = @{ $history->{$releases[$i]} };
+    my $size = @temp;
+    if ($size >=2){
+	    my $id = shift @temp;
+    	foreach my $value (@temp){
+	     my @p = ($id, $value);
+         my $pair = \@p;
+         push (@links, $pair);
+	   }
+    }
+
+    ## Next build hash of trees
+    foreach my $a (sort {$a->stable_id cmp $b->stable_id} @{ $history->{$releases[$i]} }){
+	   my $temp_id = $a->stable_id;
+	   if (exists $trees{$temp_id}){
+		 my @genes = @{$trees{$temp_id}};
+		 push (@genes, $a);
+		 $trees{$temp_id} = \@genes;
+	   } else {
+		   my @genes = ($a);
+	       $trees{$temp_id} = \@genes
+	   }
+    }
+  }
+  
+
+  ## Add all the information to the info array to pass to draw tree method
+  $info{'f'} = $id_focus;
+  $info{'l'} = \@links;
+  $info{'r'} = \@rel;
+  $info{'t'} = \%trees;
+
+  my $info_ref = \%info;
+  my $historytree = _create_idhistory_tree ($object, $info_ref);
+=cut
+  my $archive_id; 
+  foreach my $arch_id ( @{ $object->history} ) {
+   my $temp = $arch_id->stable_id.".".$arch_id->version;
+   if ($temp eq $name){$archive_id = $arch_id;}	
+  }
+  my $historytree = $archive_id->get_history_tree;
+ ( $panel->print( qq(<p style="text-align:center"><b>There are too many stable IDs related to $name to draw a history tree.</b></p>) ) and return 1) unless (defined $historytree);
+  my $tree = _create_idhistory_tree ($object, $historytree);
+  my $T = $tree->render;
+  $panel->print ($T);
+
+  return 1;
+}
+
+
+
+sub _create_idhistory_tree {
+ my ($object, $tree ) = @_;
+ my $wuc        = $object->user_config_hash( 'idhistoryview' );
+ my $image_width  =  $object->param( 'image_width' ) || 1200; 
+ $wuc->container_width($image_width); 
+ $wuc->set_width($object->param('image_width'));
+ $wuc->{_object} = $object;
+ my $image  = $object->new_image( $tree, $wuc, [$object->stable_id] );
+ $image->image_type  = 'idhistorytree';
+ $image->image_name  = ($object->param('image_width')).'-'.$object->stable_id;
+ $image->imagemap           = 'yes';
+# $image->imagemap ='no'; 
+ return $image;
+}
+
+sub id_history_tree_menu {
+ my($panel, $object, $configname, $left, $right ) = (@_, 'idhistoryview', [qw( GTExport ImageSize )], ['GeneTreeHelp'] );
+ my $mc = $object->new_menu_container(
+                                         'configname'  => $configname,
+                                         'panel'       => 'image',
+                                         'object' => $object,
+                                         'configs'     => [ $object->user_config_hash('idhistoryview' ) ],
+                                         'leftmenus'  => $left,
+                                         'rightmenus' => $right
+                                         );
+    $panel->print( $mc->render_html );
+    $panel->print( $mc->render_js );
+    return 0;
+
+}
+
+=head2 _archive_link
  Arg 1       : data object
  Arg 2       : param to view for URL (within first <a> tag)
  Arg 3       : type of object  (e.g. "gene", "transcript" or "peptide")
@@ -433,5 +582,4 @@ sub _current_link {
 
 
 1;
-
 
