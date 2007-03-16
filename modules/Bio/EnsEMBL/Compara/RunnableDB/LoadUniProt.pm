@@ -99,7 +99,7 @@ sub fetch_input {
   $self->{'taxon_id'} = undef;  #no ncbi_taxid filter, get all metzoa
   $self->{'genome_db_id'} = undef;
   $self->{'accession_number'} = 1;
-  $self->debug(1);
+  $self->debug(0);
   if(defined($self->input_id)) {
     #print("input_id = ".$self->input_id."\n");
     my $input_hash = eval($self->input_id);
@@ -141,7 +141,11 @@ sub run
     
     foreach my $leaf ( @{$node->get_all_leaves} ) {
       $allowed_taxon_ids{$leaf->node_id} = 1;
+      if ($leaf->rank ne "species") {
+        $allowed_taxon_ids{$leaf->parent->node_id} = 1;
+      }
     }
+    $node->release_tree;
   }
 
   $self->{'subset'}  = Bio::EnsEMBL::Compara::Subset->new(-name=>$subset_name);
@@ -312,13 +316,13 @@ sub store_bioseq
   }
    
   my $taxon = $self->{'comparaDBA'}->get_NCBITaxonAdaptor->fetch_node_by_taxon_id($species->ncbi_taxid);
-  unless ($self->{'allowed_taxon_ids'}{$taxon->dbID}) {
-    return;
-  }
   unless($taxon) {
     #taxon not in compara, do not store the member and warn
     warning("Taxon id " . $species->ncbi_taxid . " from $source " . $bioseq->accession_number ." not in the database.
 Member not stored.");
+    return 1;
+  }
+  unless ($self->{'allowed_taxon_ids'}{$taxon->dbID}) {
     return 1;
   }
 
