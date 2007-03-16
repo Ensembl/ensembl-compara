@@ -57,6 +57,8 @@ sub fetch_AlignedMember_by_member_id_root_id {
     
   my $constraint = "WHERE tm.member_id = $member_id and m.member_id = $member_id";
   $constraint .= " AND t.root_id = $root_id" if($root_id and $root_id>0);
+  my $final_clause = "order by tm.node_id desc";
+  $self->final_clause($final_clause);
   my ($node) = @{$self->_generic_fetch($constraint)};
   return $node;
 }
@@ -172,9 +174,9 @@ sub update_node {
   if($node->isa('Bio::EnsEMBL::Compara::AlignedMember')) {
     my $sql = "UPDATE protein_tree_member SET ". 
               "cigar_line='". $node->cigar_line . "'";
-    $sql .= " cigar_start=" . $node->cigar_start if($node->cigar_start);              
-    $sql .= " cigar_end=" . $node->cigar_end if($node->cigar_end);              
-    $sql .= " method_link_species_set_id=" . $node->method_link_species_set_id if($node->method_link_species_set_id);              
+    $sql .= ", cigar_start=" . $node->cigar_start if($node->cigar_start);              
+    $sql .= ", cigar_end=" . $node->cigar_end if($node->cigar_end);              
+    $sql .= ", method_link_species_set_id=" . $node->method_link_species_set_id if($node->method_link_species_set_id);              
     $sql .= " WHERE node_id=". $node->node_id;
     $self->dbc->do($sql);
   }
