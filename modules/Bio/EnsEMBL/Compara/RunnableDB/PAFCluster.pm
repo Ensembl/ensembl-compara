@@ -132,6 +132,9 @@ sub get_params {
   if (defined $params->{'brh'}) {
     $self->{'include_brh'} = $params->{'brh'};
   }
+  if (defined $params->{'max_gene_count'}) {
+    $self->{'max_gene_count'} = $params->{'max_gene_count'};
+  }
 
   print("parameters...\n");
   printf("  species_set    : (%s)\n", join(',', @{$self->{'species_set'}}));
@@ -347,6 +350,7 @@ sub threshold_grow_for_species
       "FROM $tbl_name paf ".
         "WHERE paf.qmember_id != paf.hmember_id ".
           "AND paf.hgenome_db_id in $species_string ";
+    # !! why do we have that here? Surely adding this constraint we may loose within_species_paralogues...
     if(scalar(@species_set) > 1) {
       $sql .= "AND paf.qgenome_db_id != paf.hgenome_db_id ";
     }
@@ -499,8 +503,12 @@ sub dataflow_clusters {
   my $clusters = $clusterset->children;
   foreach my $cluster (@{$clusters}) {
     my $output_id = sprintf("{'protein_tree_id'=>%d, 'clusterset_id'=>%d}", 
-       $cluster->node_id, $clusterset->node_id);
-    $self->dataflow_output_id($output_id, 2);
+                            $cluster->node_id, $clusterset->node_id);
+    if ($cluster->get_tagvalue('gene_count') > $self->{'max_gene_count'}) {
+      $self->dataflow_output_id($output_id, 3);
+    } else {
+      $self->dataflow_output_id($output_id, 2);
+    }
   }
 }
 
