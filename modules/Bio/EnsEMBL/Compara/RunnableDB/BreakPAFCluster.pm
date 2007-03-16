@@ -77,7 +77,7 @@ sub fetch_input {
   $self->{'selfhit_score_hash'} = {};
   $self->{'no_filters'} = 0;
   $self->{'all_bests'} = 0;
-  $self->{'include_brh'} = 1;
+  $self->{'include_brh'} = 0;
   $self->{'bsr_threshold'} = 0.33;
   $self->{'clusterset_id'} = undef;
   $self->{'bsr_threshold_increase'} = 0.1;
@@ -88,9 +88,9 @@ sub fetch_input {
   my $cluster_include_brh = $self->{'original_cluster'}->get_tagvalue("include_brh");
   my $cluster_bsr_threshold = $self->{'original_cluster'}->get_tagvalue("bsr_threshold");
   $self->{'bsr_threshold'} = $cluster_bsr_threshold unless ($self->{'bsr_threshold_analysis_set'});
-#  if (defined $cluster_include_brh && $cluster_include_brh == 0) {
-  $self->{'bsr_threshold'} += $self->{'bsr_threshold_increase'} unless ($self->{'bsr_threshold_analysis_set'});
-#  }
+  if (defined $cluster_include_brh && $cluster_include_brh == 0) {
+    $self->{'bsr_threshold'} += $self->{'bsr_threshold_increase'} unless ($self->{'bsr_threshold_analysis_set'});
+  }
   return 1;
 }
 
@@ -134,7 +134,10 @@ sub get_params {
     $self->{'include_brh'} = $params->{'brh'};
     $self->{'include_brh_analysis_set'} = 1;
   }
-#  $self->{'include_brh'} = 1;
+  if (defined $params->{'max_gene_count'}) {
+    $self->{'max_gene_count'} = $params->{'max_gene_count'};
+  }
+
   if (defined $self->{'original_cluster'}) {
     print("parameters...\n");
     printf("  species_set     : (%s)\n", join(',', @{$self->{'species_set'}}));
@@ -355,13 +358,14 @@ sub threshold_grow_for_member
     my $species_name = lc($gdb->name);
     $species_name =~ s/\ /\_/g;
     my $tbl_name = "peptide_align_feature"."_"."$species_name"."_"."$gdb_id";
-    my $member_string = "(" . join(',', @{$gdbs_member_ids->{$gdb_id}}) . ")";
+    my $qmember_string = "(" . join(',', @{$gdbs_member_ids->{$gdb_id}}) . ")";
+    my $hmember_string = "(" . join(',', keys %{$member_ids}) . ")";
 
     my $sql = "SELECT paf.qmember_id, paf.hmember_id, paf.score, paf.hit_rank ".
       "FROM $tbl_name paf ".
-        "WHERE paf.hmember_id <> paf.qmember_id ".
-          "AND paf.qmember_id in $member_string ".
-            "AND paf.hmember_id in $member_string";
+        "WHERE paf.hmember_id != paf.qmember_id ".
+          "AND paf.qmember_id in $qmember_string ".
+            "AND paf.hmember_id in $hmember_string";
 
     #  print("$sql\n");
 
@@ -520,7 +524,12 @@ sub dataflow_clusters {
   foreach my $cluster (@{$clusters}) {
     my $output_id = sprintf("{'protein_tree_id'=>%d, 'clusterset_id'=>%d}", 
        $cluster->node_id, $clusterset->node_id);
-    $self->dataflow_output_id($output_id, 2);
+    #$self->dataflow_output_id($output_id, 2);
+    if ($cluster->get_tagvalue('gene_count') > $self->{'max_gene_count'}) {
+      $self->dataflow_output_id($output_id, 3);
+    } else {
+      $self->dataflow_output_id($output_id, 2);
+    }
   }
 }
 
