@@ -108,24 +108,22 @@ sub historyview {
 	    chomp $line; 
 	    my @temp = split(/\s+/, $line);
 	    foreach my $t (@temp){
-		   warn $t;
 		   push (@ids, $t); 
 	    }  
      }
      my $size = @ids;
-     warn "size: $size";
      if ($size >= 31) {$error = $e[1];}
      else {
 	    my $species = $object->param('species');
 	    my $reg = "Bio::EnsEMBL::Registry"; 
 	    my $aa = $reg->get_adaptor($species, 'Core', 'ArchiveStableId');
 	    my @trees;
-#	    foreach my $id (@ids){
-#	      my $archive_id = $aa->fetch_by_stable_id($id);
-#	      my $historytree = $archive_id->get_history_tree;
+	 #   foreach my $id (@ids){
+	  #    my $archive_id = $aa->fetch_by_stable_id($id);
+	   #   my $historytree = $archive_id->get_history_tree;
 #	      warn $historytree; 
 #	      push (@trees, $historytree);
-        }
+ #       }
      }
    }
    else {
