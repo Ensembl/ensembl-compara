@@ -117,13 +117,14 @@ sub historyview {
 	    my $species = $object->param('species');
 	    my $reg = "Bio::EnsEMBL::Registry"; 
 	    my $aa = $reg->get_adaptor($species, 'Core', 'ArchiveStableId');
+	    warn $aa;
 	    my @trees;
 	 #   foreach my $id (@ids){
 	  #    my $archive_id = $aa->fetch_by_stable_id($id);
 	   #   my $historytree = $archive_id->get_history_tree;
 #	      warn $historytree; 
 #	      push (@trees, $historytree);
- #       }
+   #     }
      }
    }
    else {
