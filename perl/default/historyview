@@ -1,0 +1,36 @@
+package historyview;
+
+use strict;
+use warnings;
+no warnings "uninitialized";
+
+use EnsEMBL::Web::Document::WebPage;
+use EnsEMBL::Web::Proxy::Object;
+
+my $webpage= new EnsEMBL::Web::Document::WebPage(
+  'scriptname' => 'historyview',
+  'objecttype' => 'ArchiveStableId',
+);
+
+$webpage->{'show_fatal_only'} = 1;
+if( @{$webpage->dataObjects} ) {
+  foreach my $object( @{$webpage->dataObjects} ) {
+    $webpage->configure( $object, 'historyview', 'context_menu' );
+    foreach (qw(transcript gene)) {
+      if( @{$object->__data->{$_}||[]} ) {
+        $webpage->configure( $object->__data->{$_}->[0], 'context_menu' );
+      }
+    }
+  }
+} else {
+	  $webpage->{factory}->clear_problems();
+	  my $object = EnsEMBL::Web::Proxy::Object->new(
+	    'ArchiveStableId',
+	    {},
+	    $webpage->{factory}->__data
+	  );
+	  $webpage->configure( $object, 'historyview', 'historyview_step1' );
+	}
+
+	$webpage->{factory}->clear_problems();
+	$webpage->render();
