@@ -75,6 +75,16 @@ sub confirm {
   return undef;
 }
 
+sub deny {
+  my ($self, $object, $interface) = @_;
+  if (my $panel = $self->interface_panel($interface, 'deny', 'Account Error')) {
+    $panel->add_components(qw(deny    EnsEMBL::Web::Component::Interface::User::deny));
+    $self->{page}->content->add_panel($panel);
+    $self->{page}->set_title("Account already activated");
+  }
+  return undef;
+}
+
 sub password {
   ### Creates a panel containing a record form populated with data
   my ($self, $object, $interface) = @_;
@@ -94,7 +104,7 @@ sub activate {
   my $script = $interface->script_name || $object->script;
   my ($url, $error);
   
-  my $pass_1 = $object->param('password'); 
+  my $pass_1 = $object->param('enter_password'); 
   my $pass_2 = $object->param('confirm_password');
   if ($pass_1 ne $pass_2) {
     $url = "/common/$script?dataview=password_error;error=mismatch";
@@ -103,7 +113,7 @@ sub activate {
 #    $url = "/common/$script?dataview=password_error;error=insecure";
 #  }
   else {
-    if ($object->param('user_id') && $object->param('salt') && $object->param('password')) {
+    if ($object->param('user_id') && $object->param('salt') && $object->param('enter_password')) {
       my %save = %{ $self->update_password($object, $interface) };
       my $success = $save{success};
       if ($success) {
@@ -143,7 +153,7 @@ sub save_password {
 sub update_password {
   my ($self, $object, $interface) = @_;
   $interface->data->populate($object->param('user_id'));
-  my $password = $object->param('password');
+  my $password = $object->param('enter_password');
   my $salt = $interface->data->salt;
   my $encrypted = EnsEMBL::Web::Tools::Encryption::encryptPassword($password); 
   $interface->data->password($encrypted);
