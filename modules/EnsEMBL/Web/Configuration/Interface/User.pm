@@ -99,9 +99,9 @@ sub activate {
   if ($pass_1 ne $pass_2) {
     $url = "/common/$script?dataview=password_error;error=mismatch";
   }
-  elsif (length($pass_1) < 7 || $pass_1 !~ /\d+/ || $pass_1 !~ /[:alpha:]+/) {
-    $url = "/common/$script?dataview=password_error;error=insecure";
-  }
+#  elsif (length($pass_1) < 7 || $pass_1 !~ /\d+/ || $pass_1 !~ /[:alpha:]+/) {
+#    $url = "/common/$script?dataview=password_error;error=insecure";
+#  }
   else {
     if ($object->param('user_id') && $object->param('salt') && $object->param('password')) {
       my %save = %{ $self->update_password($object, $interface) };
