@@ -473,8 +473,8 @@ sub dumpGene {
     $DBS{'otherfeatures'} = $ESTGENEDB if $ESTGENEDB;
 
     open O, ">$conf->{'directory'}/Gene.txt";
-warn "START...";
     foreach my $DB ( keys %DBS ) {
+warn "START... $DB";
       my $DBNAME = $DBS{$DB};
       my $extra = $DB ne 'core' ? ";db=$DB" : '';
       my %xrefs = ();
@@ -556,6 +556,8 @@ warn "Gene query...";
         } else {
           $old{'t'}{$ts}=1;
           $old{'tr'}{$trs}=1;
+          $old{'i'}{$ts}=1;
+          $old{'i'}{$trs}=1;
           foreach my $db( keys %{$xrefs{'Transcript'}{$t}||{}} ) {
             foreach my $K( keys %{$xrefs{'Transcript'}{$t}{$db}} ) { $old{'e'}{$db}{$K}=1; $old{'i'}{$K}=1; }
           }
@@ -565,7 +567,7 @@ warn "Gene query...";
         }
       }
       print O &geneLine( $conf->{'species'}, $old{'ex'}, $old{'s'}.' '.$old{'bt'}, $old{'gs'}, $old{'alt'}, $extra, join( ' ', grep{$_}keys %{$old{'i'}}), $old{'t'},$old{'tr'},$old{'e'},$old{'d'} );
-      warn "FINISHED...... genes...";
+      warn "FINISHED...... genes $DB ...";
     }
 my %current_stable_ids =();
 foreach my $type (qw(gene transcript translation)) {
