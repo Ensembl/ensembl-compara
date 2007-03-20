@@ -215,8 +215,7 @@ $ENSEMBL_REGISTRY       = undef;
   $ENSEMBL_SERVERROOT.'/biomart-perl/htdocs'
 );
 
-
-my $perl_version = sprintf( '%d.%d.%d', $] =~ /(\d)\.(\d{3})(\d{3})/ );
+my $perl_version = sprintf( '%d.%d.%d', $] =~ /(\d)\.(\d{3})(\d{3})/ ) || "5.8.0";
 @ENSEMBL_LIB_DIRS     = (
   $ENSEMBL_SERVERROOT."/apache2/lib/perl5/site_perl/$perl_version/i686-linux/",
   $ENSEMBL_SERVERROOT.'/ensembl/modules',
