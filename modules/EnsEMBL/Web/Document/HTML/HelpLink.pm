@@ -20,9 +20,10 @@ sub label  :lvalue { $_[0]{'label'};    }
 
 sub render {
   my $self = shift;
-  my $link;
+  
+  my $help_link;
   if( $self->URL =~ /^mailto:/ ) {
-    $link = sprintf( q(<a href="%s">%s</a>), $self->URL, $self->label ); 
+    $help_link = sprintf( q(<a href="%s" class="blue-button">%s</a>), $self->URL, $self->label ); 
   } else {
     my $extra_HTML = join ";",
       $self->kw     ? "kw=@{[$self->kw]}" : (),
@@ -30,15 +31,35 @@ sub render {
       $self->action ? "action=@{[$self->action]}" : ();
     my $URL = $self->URL.($extra_HTML?"?$extra_HTML":"");
     if( $self->action ) { ## ALREADY IN HELP FORM!!
-      $link = qq(<a href="$URL">@{[$self->label]}</a>);
+      $help_link = qq(<a href="$URL">@{[$self->label]}</a>);
     } else {
-      $link = sprintf( q(<a href="javascript:void(window.open('%s','helpview','%s'))" class="red-button">%s</a>),
-        $URL, HELPVIEW_WIN_ATTRIBS, $self->label
+      $help_link = sprintf( q(<a href="javascript:void(window.open('%s','helpview','%s'))" class="blue-button">%s</a>),
+        $URL, HELPVIEW_WIN_ATTRIBS, uc($self->label)
       );
     }
   }
+  
+  ## Set directories 
+  my ($map_link, $blast_dir);
+  my $sp_dir = $ENV{'ENSEMBL_SPECIES'};
+  if (!$sp_dir || $sp_dir eq 'Multi' || $sp_dir eq 'common') {
+    $map_link = 'sitemap.html';
+    $blast_dir = 'Multi';
+  }
+  else {
+    $map_link = $sp_dir . '/sitemap.html';
+    $blast_dir = $sp_dir;
+  }
+
+  ## Assemble links
+  my $html = qq(<a href="/">HOME</a> &middot; <a href="/$blast_dir/blastview">BLAST</a>);
+  if ($ENV{'ENSEMBL_MART_ENABLED'}) {
+    $html .= qq( &middot; <a href="/biomart/martview/">BIOMART</a>);
+  }
+  $html .= qq( &middot; <a href="/$map_link">SITEMAP</a> $help_link );
+
   $self->print( qq(
-<div id="help"><strong>$link</strong></div>));
+<div id="help"><strong>$html</strong></div>));
 }
 
 1;
