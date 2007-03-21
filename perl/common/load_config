@@ -6,8 +6,7 @@ use strict;
 use warnings;
 
 use EnsEMBL::Web::RegObj;
-#use Apache2::RequestUtil;
-use Apache;
+use Apache2::RequestUtil;
 
 use CGI;
 my $cgi = new CGI;
@@ -35,7 +34,7 @@ if ($user) {
       if ($configuration->id eq $cgi->param('id')) {
         my $string = $configuration->scriptconfig;
 
-        my $r = Apache->request();
+        my $r = Apache2::RequestUtil->request();
         $session->create_session_id($r);
         $session->set_script_config_from_string($script_name, $string);
       } 

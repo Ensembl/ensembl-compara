@@ -19,7 +19,6 @@ $interface->discover;
 ## Page components
 my $view = $data->status eq 'pending' ? 'confirm' : 'deny';
 $interface->default_view($view);
-
 $interface->panel_header({'confirm'=>qq(<p><strong>Thanks for confirming your email address.</strong></p><p>To start using your new Ensembl user account, just choose a password below. You'll need to use this password each time you log in to Ensembl.</p>)});
 $interface->on_success('/common/set_cookie');
 $interface->on_failure('EnsEMBL::Web::Component::Interface::User::failed_activation');
