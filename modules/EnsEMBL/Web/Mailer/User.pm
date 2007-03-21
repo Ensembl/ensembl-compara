@@ -123,7 +123,7 @@ not, please disregard this email.
 
 sub activation_link {
   my ($self, $link) = @_;
-  my $return_link = $self->base_url . '/common/user/reset_password?' . $link;
+  my $return_link = $self->base_url . '/common/user/activate?' . $link;
   return $return_link;
 }
 
