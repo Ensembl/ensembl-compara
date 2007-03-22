@@ -1,0 +1,29 @@
+BEGIN {
+  package vars;
+  my $sitedefs_dir = $0;
+  $sitedefs_dir =~ s/build//;
+  unshift @INC, $sitedefs_dir;
+  eval{ require SiteDefs };
+  if ($@){ die "Can't use SiteDefs.pm - $@\n"; }
+  SiteDefs->import(qw(:WEB));
+  $ServerRoot         = $vars::ENSEMBL_SERVERROOT;
+  warn $ServerRoot;
+  my %X = map { $_, 1 } @INC;
+  foreach my $dir( @vars::ENSEMBL_LIB_DIRS ){
+    next if $X{$dir};
+    if( -d $dir ){
+      if( -r $dir ){ 
+        unshift @INC, $dir
+      } else {
+        warn "ENSEMBL_LIB_DIR $dir is not readable\n";
+      }
+    } else {
+      warn "ENSEMBL_LIB_DIR $dir does not exist\n";
+    }
+  }
+  warn join "\n", @INC;
+};
+use EnsEMBL::Web::SpeciesDefs;
+
+my $conf = EnsEMBL::Web::SpeciesDefs->new();
+$conf->store;
