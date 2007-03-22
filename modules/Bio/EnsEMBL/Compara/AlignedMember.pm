@@ -125,7 +125,7 @@ sub method_link_species_set_id {
 sub alignment_string {
   my $self = shift;
 
-  unless (defined $self->cigar_line) {
+  unless (defined $self->cigar_line && $self->cigar_line ne "") {
     throw("To get an alignment_string, the cigar_line needs to be define\n");
   }
   unless (defined $self->{'alignment_string'}) {
