@@ -61,6 +61,7 @@ use IO::File;
 use File::Basename;
 
 use Bio::EnsEMBL::DBSQL::DBAdaptor;
+use Bio::EnsEMBL::BaseAlignFeature;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Compara::DBSQL::PeptideAlignFeatureAdaptor;
 use Bio::EnsEMBL::Compara::Member;
@@ -533,6 +534,14 @@ sub parse_and_store_alignment_into_proteintree
       throw("muscle did produce an empty cigar_line for ".$member->stable_id."\n");
     }
     $member->cigar_line($align_hash{$member->sequence_id});
+    ## Check that the cigar length (Ms) matches the sequence length
+    my @cigar_match_lengths = map { if ($_ eq '') {$_ = 1} else {$_ = $_;} } map { $_ =~ /^(\d*)/ } ( $member->cigar_line =~ /(\d*[M])/g );
+    my $seq_cigar_length; map { $seq_cigar_length += $_ } @cigar_match_lengths;
+    my $member_sequence = $member->sequence; $member_sequence =~ s/\*//g;
+    if ($seq_cigar_length != length($member_sequence)) {
+        throw("While storing the cigar line, the returned cigar length did not match the sequence length\n");
+    }
+    #
     printf("update protein_tree_member %s : %s\n",$member->stable_id, $member->cigar_line) if($self->debug);
     $self->{'comparaDBA'}->get_ProteinTreeAdaptor->store($member);
   }
