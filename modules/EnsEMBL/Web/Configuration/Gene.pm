@@ -3,6 +3,7 @@ package EnsEMBL::Web::Configuration::Gene;
 use strict;
 
 use EnsEMBL::Web::Configuration;
+use EnsEMBL::Web::Tools::Ajax;
 
 our @ISA = qw( EnsEMBL::Web::Configuration );
 
@@ -230,7 +231,12 @@ sub geneview {
      $self->update_configs_from_parameter( 'altsplice', 'altsplice' );
      $self->initialize_zmenu_javascript;
      $self->initialize_ddmenu_javascript;
+     $self->{page}->add_body_attr( 'onload' => 'populate_info_fragments(); ');
+     $self->{page}->javascript->add_source("/js/ajax_fragment.js");
+
   my $params = { 'gene' => $obj->stable_id, 'db' => $obj->get_db  };
+
+
 
 ## Panel 1 - the gene information table at the top of the page...
 
@@ -259,6 +265,9 @@ sub geneview {
 	   $panel1->add_component_after(qw(
 	     location version_and_date  EnsEMBL::Web::Component::Gene::version_and_date
        ));
+    }
+    if (EnsEMBL::Web::Tools::Ajax::is_enabled()) {
+      $panel1->load_asynchronously('transcripts');
     }
     $self->add_panel( $panel1 );
   }
