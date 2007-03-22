@@ -19,10 +19,11 @@ my %params = ();
 my %components = ();
 my @ordered_componenents = ();
 
-#warn "--------------------";
-#warn("AJAX: Populating fragment"); 
+warn "--------------------";
+warn("AJAX: Populating fragment"); 
 
 foreach my $key (keys %{ $incoming }) {
+  warn "KEY: " . $key . ": " . $incoming->{$key};
   if ($key =~ /^component_/) {
     push @ordered_componenents, $key;
     $components{$key} = $incoming->{$key};
@@ -58,6 +59,8 @@ my $webpage= new EnsEMBL::Web::Document::WebPage(
 );
 
 my $object = $webpage->dataObjects->[0];
+$object->param('image_width', $params{'image_width'});
+warn "INCOMING WIDTH: " . $params{'image_width'};
 my $species_defs = $ENSEMBL_WEB_REGISTRY->species_defs;
 my $fragment = EnsEMBL::Web::Document::Panel::Fragment->new(
                                        object => $object,
