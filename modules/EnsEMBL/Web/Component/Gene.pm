@@ -1145,35 +1145,44 @@ sub transcripts {
 ## ... and the second part is an image of the transcripts +-10k   ##
 ##----------------------------------------------------------------##
 
-## Get a slice of the gene +/- 10k either side...
-  my $gene_slice = $gene->Obj->feature_Slice->expand( 10e3, 10e3 );
-  $gene_slice = $gene_slice->invert if $gene->seq_region_strand < 0;
-## Get the web_user_config
-  my $wuc        = $gene->user_config_hash( 'altsplice' ); 
-## We now need to select the correct track to turn on....
-  ## We need to do the turn on turn off for the checkboxes here!!
-  foreach( $trans[0]->default_track_by_gene ) {
-    $wuc->set( $_,'on','on');
+  if ($panel->is_asynchronous('transcripts')) {
+    warn "Asynchronously load transcripts";
+    my $json = "{ components: [ 'EnsEMBL::Web::Component::Gene::transcripts'], fragment: {stable_id: '" . $gene->stable_id . "', species: '" . $gene->species . "'} }";
+    my $html = "<div id='component_0' class='info'>Loading transcripts...</div><div class='fragment'>$json</div>";
+    $panel->add_row($label . " <img src='/img/ajax-loader.gif' width='16' height='16' alt='(loading)' id='loading' />", $html, "$URL=odd");
+  } else {
+    ## Get a slice of the gene +/- 10k either side...
+
+    my $gene_slice = $gene->Obj->feature_Slice->expand( 10e3, 10e3 );
+    $gene_slice = $gene_slice->invert if $gene->seq_region_strand < 0;
+    ## Get the web_user_config
+    my $wuc        = $gene->user_config_hash( 'altsplice' ); 
+    ## We now need to select the correct track to turn on....
+    ## We need to do the turn on turn off for the checkboxes here!!
+    foreach( $trans[0]->default_track_by_gene ) {
+      $wuc->set( $_,'on','on');
+    }
+    # $wuc->{'_no_label'}   = 'true';
+    $wuc->{'_add_labels'} = 'true';
+    $wuc->set( '_settings', 'width',  $gene->param('image_width') );
+
+    ## Will need to add bit here to configure which tracks to turn on and off!!
+    ## Get the drawable_container
+    my $mc = $gene->new_menu_container(
+      'configname' => 'altsplice',
+      'panel'      => 'altsplice',
+      'leftmenus' => ['Features']
+    );
+    ## Now
+    my  $image  = $gene->new_image( $gene_slice, $wuc, [$gene->Obj->stable_id] );
+    $image->introduction       = qq($extra\n<table style="width:100%">$rows</table>\n);
+    $image->imagemap           = 'yes';
+    $image->menu_container     = $mc;
+    $image->set_extra( $gene );
+
+    $panel->add_row( $label, $image->render, "$URL=off" );
   }
-  # $wuc->{'_no_label'}   = 'true';
-  $wuc->{'_add_labels'} = 'true';
-  $wuc->set( '_settings', 'width',  $gene->param('image_width') );
 
-## Will need to add bit here to configure which tracks to turn on and off!!
-## Get the drawable_container
-  my $mc = $gene->new_menu_container(
-    'configname' => 'altsplice',
-    'panel'      => 'altsplice',
-    'leftmenus' => ['Features']
-  );
-## Now
-  my $image  = $gene->new_image( $gene_slice, $wuc, [$gene->Obj->stable_id] );
-  $image->introduction       = qq($extra\n<table style="width:100%">$rows</table>\n);
-  $image->imagemap           = 'yes';
-  $image->menu_container     = $mc;
-  $image->set_extra( $gene );
-
-  $panel->add_row( $label, $image->render, "$URL=off" );
 }
 
 
