@@ -1007,7 +1007,7 @@ sub _parse {
             $query->execute;
             while (my $row = $query->fetchrow_arrayref ){
               $tree->{'OLIGO'}{$row->[0]} = 1;
-              ( my $key = uc("OLIGO_$row->[0]") ) =~ s/\W/_/;
+              ( my $key = uc("OLIGO_$row->[0]") ) =~ s/\W/_/g;
               $tree->{'DB_FEATURES'}{$key} = 1;
             }
           };
