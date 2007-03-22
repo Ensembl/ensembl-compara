@@ -487,7 +487,7 @@ sub parse_and_store_alignment_into_proteintree
   <$FH>; #skip header
   while(<$FH>) {
     next if($_ =~ /^\s+/);  #skip lines that start with space
-    
+    chomp;
     my ($id, $align) = split;
     $align_hash{$id} ||= '';
     $align_hash{$id} .= $align;
@@ -497,8 +497,16 @@ sub parse_and_store_alignment_into_proteintree
   #
   # convert clustalw alignment string into a cigar_line
   #
+  my $alignment_length;
   foreach my $id (keys %align_hash) {
     my $alignment_string = $align_hash{$id};
+    unless (defined $alignment_length) {
+      $alignment_length = length($alignment_string);
+    } else {
+      if ($alignment_length != length($alignment_string)) {
+        throw("While parsing the alignment, some id did not return the expected alignment length\n");
+      }
+    }
     $alignment_string =~ s/\-([A-Z])/\- $1/g;
     $alignment_string =~ s/([A-Z])\-/$1 \-/g;
 
@@ -521,6 +529,9 @@ sub parse_and_store_alignment_into_proteintree
   # align cigar_line to member and store
   #
   foreach my $member (@{$tree->get_all_leaves}) {
+    if ($align_hash{$member->sequence_id} eq "") {
+      throw("muscle did produce an empty cigar_line for ".$member->stable_id."\n");
+    }
     $member->cigar_line($align_hash{$member->sequence_id});
     printf("update protein_tree_member %s : %s\n",$member->stable_id, $member->cigar_line) if($self->debug);
     $self->{'comparaDBA'}->get_ProteinTreeAdaptor->store($member);
