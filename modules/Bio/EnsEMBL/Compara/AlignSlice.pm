@@ -573,6 +573,8 @@ sub get_SimpleAlign {
 sub get_all_ConservationScores {
   my ($self, $display_size, $display_type, $window_size) = @_;
   my $all_conservation_scores = [];
+  my $y_axis_min;
+  my $y_axis_max;
 
   my $conservation_score_adaptor = $self->adaptor->db->get_ConservationScoreAdaptor();
   foreach my $this_genomic_align_block (@{$self->get_all_GenomicAlignBlocks()}) {
@@ -584,6 +586,20 @@ sub get_all_ConservationScores {
 #     print "PARAMETERS FOR fetch_all_by_GenomicAlignBlock(): ", join(", ", 
 #         $this_genomic_align_block->dbID, $this_genomic_align_block->{_alignslice_from},
 #         $this_genomic_align_block->{_alignslice_to}, $self->get_all_Slices()->[0]->length), "\n";
+
+    #initialise y axis min and max
+    if (!defined $y_axis_max) {
+	$y_axis_max = $all_these_conservation_scores->[0]->y_axis_max;
+	$y_axis_min = $all_these_conservation_scores->[0]->y_axis_min;
+    }
+    #find overall min and max 
+    if ($y_axis_min > $all_these_conservation_scores->[0]->y_axis_min) {
+	$y_axis_min = $all_these_conservation_scores->[0]->y_axis_min;
+    }
+    if ($y_axis_max < $all_these_conservation_scores->[0]->y_axis_max) {
+	$y_axis_max = $all_these_conservation_scores->[0]->y_axis_max;
+    }
+
     foreach my $this_conservation_score (@$all_these_conservation_scores) {
       $this_conservation_score->position($this_conservation_score->position +
           $this_genomic_align_block->{_alignslice_from} - 1 +
@@ -591,6 +607,11 @@ sub get_all_ConservationScores {
       push (@$all_conservation_scores, $this_conservation_score);
     }
   }
+
+  #set overall min and max
+  $all_conservation_scores->[0]->y_axis_min($y_axis_min);
+  $all_conservation_scores->[0]->y_axis_max($y_axis_max);
+
 #   ## Debug
 #   foreach my $this_conservation_score (@$all_conservation_scores) {
 #     print "CONS_SCORE: ", join(" -- ",
@@ -653,6 +674,7 @@ sub get_all_constrained_elements {
         my $reference_slice_start;
         my $reference_slice_end;
         my $reference_slice_strand;
+
         my @alignment_coords = $big_mapper->map_coordinates(
             "sequence", # $self->genomic_align->dbID,
             $this_genomic_align_block->reference_slice_start + $this_genomic_align_block->reference_slice->start - 1,
