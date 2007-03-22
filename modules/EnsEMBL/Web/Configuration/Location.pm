@@ -3,8 +3,7 @@ package EnsEMBL::Web::Configuration::Location;
 use strict;
 
 use EnsEMBL::Web::Configuration;
-use EnsEMBL::Web::Interface::FragmentCollection;
-use Apache2::RequestUtil;
+use EnsEMBL::Web::Tools::Ajax;
 
 use CGI;
 
@@ -495,9 +494,7 @@ sub contigview {
   my $ajax_detailed = 'off';
   my $ajax_zoom     = 'off';
 
-  my $r = Apache2::RequestUtil->request();
-  my %cookies = CGI::Cookie->parse($r->headers_in->{'Cookie'});
-  if ($cookies{'ENSEMBL_AJAX'} ne 'none') {
+  if (EnsEMBL::Web::Tools::Ajax::is_enabled()) {
     $ajax_overview = 'on';
     $ajax_detailed = 'on';
     $ajax_zoom = 'on';
@@ -588,7 +585,6 @@ sub contigview {
 
 ## Big switch time.... 
 
-
   my @URL_configs;
   my $URL    = $obj->param('data_URL');
   my @H = map { /^URL:(.*)/ ? $1 : () } @{ $obj->highlights( $URL ? "URL:$URL" : () ) };
@@ -609,7 +605,6 @@ sub contigview {
                                 loading => 'yes',
                                 display => 'on',
                                            @common);
-    #warn "ADDING AJAX FRAGMENT: " . $view_fragment;
     $view_fragment->add_components(qw(
       config EnsEMBL::Web::Component::Location::contigviewbottom_config
       menu   EnsEMBL::Web::Component::Location::contigviewbottom_menu
@@ -618,6 +613,9 @@ sub contigview {
     ));
 
     $view_fragment->asynchronously_load(qw(image));
+    my $width = $obj->param('image_width');
+    $view_fragment->add_option( 'image_width', $width);
+    warn "IMAGE WIDTH (Config): " . $width;
   
     my ($start,$end) = $self->top_start_end( $obj, $max_length );
     $view_fragment->add_option( 'start', $obj->seq_region_start );
