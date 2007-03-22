@@ -92,7 +92,6 @@ sub render_js_old {
 
 sub render_js {
   my $self = shift;
-  return $self->render_js_old;
   return qq(
   <div id='menu_container'></div>
   <div id='menu_code' style='display: none;'>
