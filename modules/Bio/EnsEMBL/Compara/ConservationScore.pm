@@ -108,9 +108,6 @@ my $pack_type = "f";
     Arg [-SEQ_REGION_POS] (opt)
         : int $seq_region_pos
         (position of the first score in species coordinates)
-    Arg [-OBSERVED_SCORE]
-        : string $observed_score
-        (packed or unpacked string of observed scores)
     Arg [-EXPECTED_SCORE]
         : string $expected_score
         (packed or unpacked string of expected scores)
@@ -132,7 +129,6 @@ my $pack_type = "f";
 				     -genomic_align_block => $gab, 
 				     -window_size => $win_size, 
                                      -position => $pos, 
-                                     -observed_score => $obs_scores, 
                                      -expected_score => $exp_scores, 
                                      -diff_score => $diff_scores);
        Description: Creates a new ConservationScore object
@@ -150,11 +146,11 @@ sub new {
     bless $self,$class;
     
     my ($adaptor, $genomic_align_block, $genomic_align_block_id,
-	$window_size, $position, $seq_region_pos, $observed_score, 
+	$window_size, $position, $seq_region_pos, 
 	$expected_score, $diff_score, $packed, $y_axis_min, $y_axis_max) = 
 	    rearrange([qw(
 			  ADAPTOR GENOMIC_ALIGN_BLOCK GENOMIC_ALIGN_BLOCK_ID
-			  WINDOW_SIZE POSITION SEQ_REGION_POS OBSERVED_SCORE 
+			  WINDOW_SIZE POSITION SEQ_REGION_POS 
 			  EXPECTED_SCORE DIFF_SCORE PACKED Y_AXIS_MIN 
 			  Y_AXIS_MAX)],
 		      @args);
@@ -166,7 +162,6 @@ sub new {
     $self->position($position) if (defined($position));
     $self->seq_region_pos($seq_region_pos) if (defined($seq_region_pos));
 
-    $self->observed_score($observed_score) if (defined($observed_score));
     $self->expected_score($expected_score) if (defined($expected_score));
     $self->diff_score($diff_score) if (defined($diff_score));
 
@@ -423,12 +418,9 @@ sub seq_region_pos {
 
 =head2 observed_score
 
-  Arg [1]    : (opt) string of observed scores (can be either packed or space 
-					        delimited)
-  Example    : $conservation_score->observed_score("3.85 2.54 1.56");
   Example    : my $obs_score = $conservation_score->observed_score();
-  Description: Getter/Setter for the observed score string
-  Returntype : string (either packed or space delimited)
+  Description: Getter for the observed score string (no setter functionality)
+  Returntype : double
   Exceptions : none
   Caller     : general
   Status     : At risk
@@ -436,11 +428,8 @@ sub seq_region_pos {
 =cut
 
 sub observed_score {
-    my ($self, $observed_score) = @_;
-    if (defined $observed_score) {
-	$self->{'observed_score'} = $observed_score;
-    }
-    return $self->{'observed_score'};
+    my ($self) = @_;
+    return ($self->expected_score - $self->diff_score);
 }
 
 
@@ -596,7 +585,6 @@ sub reverse {
     } else {
 	my @scores = split ' ', $self->score;
 	$num_scores = scalar(@scores);
-	#$num_scores = scalar($self->observed_score);
     } 
     
     #swap position orientation and reverse position in alignment
@@ -614,7 +602,6 @@ sub reverse {
     }
 
     #reverse score strings
-    $self->observed_score(_reverse_score($self->observed_score, $num_scores, $self->packed));
     $self->expected_score(_reverse_score($self->expected_score, $num_scores, $self->packed));
     $self->diff_score(_reverse_score($self->diff_score, $num_scores, $self->packed));
 }
@@ -649,11 +636,7 @@ sub _print {
 
 #  my $verbose = verbose;
 #  verbose(0);
-  my $obs_score = 0;
   my $exp_score = 0;
-  if ($self->observed_score) {
-      $obs_score = $self->observed_score;
-  }
   if ($self->expected_score) {
       $exp_score = $self->expected_score;
   }
@@ -669,7 +652,6 @@ sub _print {
   position = " . ($self->position) . "
   seq_region_pos = " . ($self->seq_region_pos) . "
   diff_score = " . ($self->diff_score) . "
-  observed_score = $obs_score 
   expected_score = $exp_score \n";
 
 }
