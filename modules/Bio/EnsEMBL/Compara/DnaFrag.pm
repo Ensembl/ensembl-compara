@@ -390,9 +390,10 @@ sub slice {
     }
     my $dba = $self->genome_db->db_adaptor;
     if (!defined($dba)) {
-      warn "Cannot get the Bio::EnsEMBL::DBSQL::DBAdaptor corresponding to [".$self->genome_db."]";
+      warn "Cannot get the Bio::EnsEMBL::DBSQL::DBAdaptor corresponding to [".$self->genome_db->name."]";
       return undef;
     }
+
     $self->{'_slice'} = $dba->get_SliceAdaptor->fetch_by_region($self->coord_system_name, $self->name);
   }
 
