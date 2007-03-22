@@ -11,7 +11,7 @@ sub  new {
   my %param = @_;
   my $width = ( $param{'scriptconfig'} ?
                 $param{'scriptconfig'}->get('image_width') : $param{'config'} ? $param{'config'}->get('_settings','width') : 0
-              ) || 700;
+              ) || 600;
   #warn $param{'object'};
   my $self = {
     'leftmenus'   => [],
@@ -28,6 +28,7 @@ sub  new {
     '_missing_tracks_' => 0,
     %param
   }; 
+  $self->{'width'} = $width;
   $self->{'_spacer_width_'} = $self->{'width'} - 2 * $self->{'endingwidth'};
   bless $self, $class;
   return $self;
@@ -131,8 +132,9 @@ sub _fields{
 sub render_html {
   my $self = shift;
   my $panel = $self->{'panel'};
-  return qq(
-<div class="autocenter" style="border: solid 1px black; border-width: 1px 1px 0px 1px; width: @{[$self->{'width'}-2]}px">
+  warn "RENDERING CONTAINER HTML WITH WIDTH: " . $self->{'width'};
+  my $html = qq(
+<div class="autocenter" style="border: solid 1px black; border-width: 1px 1px 0px 1px; width: @{[$self->{'width'}-2]}px;">
 <form action="/@{[$self->{'species'}]}/@{[$self->{'script'}]}" name="$panel" id="$panel" method="get" style="white-space: nowrap; width: @{[$self->{'width'}-2]}px; border: 0px; padding: 0px" class="autocenter print_hide_block">
   <input type="hidden" name="$panel" value="" />
   @{[$self->render_hidden]}
@@ -145,6 +147,9 @@ sub render_html {
 </form>
 </div>
   );
+  warn "MC HTML:";
+  warn $html;
+  return $html;
 }
 
 1;
