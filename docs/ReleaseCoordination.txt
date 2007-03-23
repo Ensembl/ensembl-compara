@@ -216,8 +216,8 @@ You might need to update the create_mlss_table.conf file with new species added.
     --trim > blastz_net.html
 
   perl ~/src/ensembl_main/ensembl-compara/docs/create_mlss_table.pl \
-    --reg_conf ~/.ensembl_init --dbname Compara39 --method_link MLAGAN \
-    --list > mlagan.html
+    --reg_conf ~/.ensembl_init --dbname Compara39 --method_link PECAN \
+    --list > pecan.html
 
   perl ~/src/ensembl_main/ensembl-compara/docs/create_mlss_table.pl \
     --reg_conf ~/.ensembl_init --dbname Compara39 --method_link TRANSLATED_BLAT \
