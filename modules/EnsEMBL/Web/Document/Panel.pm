@@ -16,6 +16,7 @@ sub new {
     'components'   => {},
     'component_order' => [],
     'prefix' => 'p',
+    'asychronous_components' => [],
     @_
   };
   bless $self, $class;
@@ -28,6 +29,26 @@ sub prefix {
     $self->{'prefix'} = $value;
   }
   return $self->{'prefix'};
+}
+
+sub load_asynchronously {
+  my ($self, @names) = @_;
+  foreach my $name (@names) {
+    push @{ $self->{'asynchronous_components'} }, $name;
+    warn "Loading asynchronously: " . $name;
+  }
+}
+
+sub is_asynchronous {
+  my ($self, $name) = @_;
+  my $found = 0;
+  foreach my $component (@{ $self->{'asynchronous_components'} }) {
+    if ($component eq $name) {  
+      $found = 1;
+    }
+  }
+  return $found;
+
 }
 
 sub clear_components { $_[0]{'components'} = {}; $_[0]->{'component_order'} = []; }
