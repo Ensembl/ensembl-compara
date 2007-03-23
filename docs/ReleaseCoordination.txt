@@ -38,7 +38,7 @@ assembly_default values of genome_db in this case.
  [0] for species not making it / or old assemblies
 
 6. Update the ncbi_taxa_nodes and ncbi_taxa_names in the master DB using the
-ncbi_taxonomy database located in mysql::/ecs2:3365/ncbi_taxonomy
+ncbi_taxonomy database located in mysql::/ens-livemirror:3306/ncbi_taxonomy
 This is usually done by the person who runs the orthologs/paralogs.For more information, here is the doc ensembl-compara/scripts/taxonomy/README-taxonomy
 
 
@@ -87,7 +87,7 @@ syntenies again.
 
 9. Check that primary data (species data, dnafrags...) in the new compara DB
 match the data in the corresponding core databases using the healthchecks. You
-may have to edit the enj-healthcheck/database.properties file. It should look
+may have to edit the ensj-healthcheck/database.properties file. It should look
 like this:
 
     host=compara1
@@ -131,11 +131,15 @@ BlastZ-Net alignments from database
 mysql://ensro@compara1:3306/kb3_compara_human_mouse_blastz_39, you will have to run
 the following commands:
 
-mysql -hcompara1 -uensro -N -e "select genomic_align_block_id+method_link_species_set_id*10000000000, method_link_species_set_id,score,perc_id,length from genomic_align_block where method_link_species_set_id=194" kb3_compara_human_mouse_blastz_39 > genomic_align_block.txt
+mysql -hcompara1 -uensro -N -e "select genomic_align_block_id+method_link_species_set_id*10000000000, method_link_species_set_id,score,perc_id,length from genomic_align_block where method_link_species_set_id=XX" kb3_compara_human_mouse_blastz_39 > genomic_align_block.txt
 
 mysql -hcompara1 -uensro -N -e "select genomic_align_id+method_link_species_set_id*10000000000, genomic_align_block_id+method_link_species_set_id*10000000000, method_link_species_set_id, dnafrag_id, dnafrag_start, dnafrag_end, dnafrag_strand, cigar_line, level_id from genomic_align where method_link_species_set_id=194"  kb3_compara_human_mouse_blastz_39 > genomic_align.txt
 
 mysql -hcompara1 -uensro -N -e "select gag.group_id+ga.method_link_species_set_id*10000000000,gag.type, gag.genomic_align_id+ga.method_link_species_set_id*10000000000 from genomic_align_group gag, genomic_align ga where ga.method_link_species_set_id=194 and ga.genomic_align_id=gag.genomic_align_id" kb3_compara_human_mouse_blastz_39 > genomic_align_group.txt
+
+Then you mysqlimport them like that :
+mysqlimport -hcompara1 -uensadmin -pensembl -L bb2_ensembl_compara_44  genomic_align.236.txt
+
 
 Hopefully, these databases should have the right method_link_species_sets,
 genome_dbs and dnafrags. In order to check for inconsistencies, you can run
@@ -219,6 +223,11 @@ You might need to update the create_mlss_table.conf file with new species added.
     --reg_conf ~/.ensembl_init --dbname Compara39 --method_link TRANSLATED_BLAT \
     --trim > tblat.html
 
+
+ ==> MAKE SURE NOT TO MISS THE Tblat TABLE for the documentation in 
+     ensembl-webcode/htdocs/info/software/compara
+
+
 19. Update files in ensembl-webcode/htdocs/info/software/compara
 
 for schema change and tutorial
@@ -236,3 +245,4 @@ mysql -hens-staging -uensro -N -e 'show databases like "%core\_42\_%"'|awk '{ pr
 mysql -hens-staging -uensadmin -pxxxxx ensembl_compara_42 < update_gene_description.sql
 
 
+21. Once the final compara db has been copied, and everyone is happy with the data, and the Compara Coordinator survived his task, well the Compara Coordinator could buy some drinks at the Red Lion after handover. Special clause for Mart related coordinator, the handover will be then the mart handover. 
