@@ -749,10 +749,25 @@ sub tint_by_hex {
     ]);
 }
 
-sub contrast {
+sub brightness {
     my ($self, $name) = @_;
     my ($r, $g, $b) = $self->rgb_by_name( $name );
-    return ($r + 3*$g * $b) <= 8*51 ? 'white' : 'black';
+#warn "$name = ", (($r * 299) + ($g * 587) + ($b * 114)) / 1000;
+    return (($r * 299) + ($g * 587) + ($b * 114)) / 1000;
+}
+
+sub contrast {
+    my ($self, $name) = @_;
+    my $brightness = $self->brightness( $name );
+    my $contrast;
+    if ($brightness > 140) {
+      $contrast = 'black';
+    }
+    else {
+      $contrast = 'white';
+    }
+    return $contrast;
+    #return ($r + 3*$g * $b) <= 8*51 ? 'white' : 'black';
 }
 
 sub tint_by_rgb {
