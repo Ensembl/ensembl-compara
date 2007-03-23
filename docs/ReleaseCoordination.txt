@@ -225,7 +225,7 @@ You might need to update the create_mlss_table.conf file with new species added.
 
 
  ==> MAKE SURE NOT TO MISS THE Tblat TABLE for the documentation in 
-     ensembl-webcode/htdocs/info/software/compara
+     ensembl-webcode/htdocs/info/data/compara
 
 
 19. Update files in ensembl-webcode/htdocs/info/software/compara
