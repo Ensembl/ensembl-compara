@@ -1,6 +1,14 @@
 var ajax_call_count = 0;
 var ajax_complete_count = 0;
 
+function populate_info_fragments() {
+  var fragments = getElementsByClass("fragment");
+  for (i = 0; i < fragments.length; i++) {
+    info_fragment(fragments[i].innerHTML);
+    ajax_call_count = ajax_call_count + 1;
+  }
+}
+
 function populate_fragments() {
   var fragments = getElementsByClass("fragment");
   for (i = 0; i < fragments.length; i++) {
@@ -14,6 +22,29 @@ function ajax_call_complete() {
   if (ajax_call_count == ajax_complete_count) {
     cv_draw_red_boxes( 1, ajax_complete_count + 1 )
   }
+}
+
+function info_fragment(caller) {
+  //alert(caller);
+  json = eval( '(' + caller + ')' );
+  var data = "gene=" + json.fragment.stable_id;
+  for (i = 0; i < json.components.length; i++) {
+    data = data + "&component_" + i + "=" + json.components[i];
+  }
+  var url = "/" + json.fragment.species + "/populate_info_fragment";
+  var ajax_panel = new Ajax.Request(url, {
+                           method: 'get',
+                           parameters: data,
+                           onComplete: info_panel_loaded
+                         });
+}
+
+function info_panel_loaded(r) {
+  var response = eval( '(' + r.responseText + ')' );
+  //alert(response.menu.width);
+  $(response.component).innerHTML = unescape(response.html);
+  $('loading').style.display = 'none';
+  init_dropdown_menu();
 }
 
 function fragment(caller) {
