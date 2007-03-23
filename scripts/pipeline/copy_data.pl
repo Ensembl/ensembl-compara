@@ -334,7 +334,7 @@ sub copy_genomic_align_blocks {
   exit(1) if !check_table("method_link_species_set", $from_dba, $to_dba, undef,
       "method_link_species_set_id = $mlss_id");
   exit(1) if !check_table("genome_db", $from_dba, $to_dba, "genome_db_id, name, assembly, genebuild, assembly_default");
-#   exit(1) if !check_table("dnafrag", $from_dba, $to_dba);
+  exit(1) if !check_table("dnafrag", $from_dba, $to_dba);
 
   ## Check min and max of the relevant internal IDs in the FROM database
   my $sth = $from_dba->dbc->prepare("SELECT
@@ -519,15 +519,52 @@ sub copy_conservation_scores {
 sub copy_data {
   my ($from_dba, $to_dba, $table_name, $query) = @_;
 
+  print "Copying data in table $table_name\n";
+
+  my $sth = $from_dba->dbc->db_handle->column_info($from_dba->dbc->dbname, undef, $table_name, '%');
+  $sth->execute;
+  my $all_rows = $sth->fetchall_arrayref;
+  my $binary_mode = 0;
+  foreach my $this_col (@$all_rows) {
+    if (($this_col->[5] eq "BINARY") or ($this_col->[5] eq "VARBINARY") or
+        ($this_col->[5] eq "BLOB") or ($this_col->[5] eq "BIT")) {
+      $binary_mode = 1;
+      last;
+    }
+  }
+  if ($binary_mode) {
+    copy_data_in_binary_mode($from_dba, $to_dba, $table_name, $query);
+  } else {
+    copy_data_in_text_mode($from_dba, $to_dba, $table_name, $query);
+  }
+}
+
+
+=head2 copy_data_in_text_mode
+
+  Arg[1]      : Bio::EnsEMBL::Compara::DBSQL::DBAdaptor $from_dba
+  Arg[2]      : Bio::EnsEMBL::Compara::DBSQL::DBAdaptor $to_dba
+  Arg[3]      : Bio::EnsEMBL::Compara::MethodLinkSpeciesSet $this_mlss
+  Arg[4]      : string $table
+  Arg[5]      : string $sql_query
+
+  Description : copy data in this table using this SQL query.
+  Returns     :
+  Exceptions  : throw if argument test fails
+
+=cut
+
+sub copy_data_in_text_mode {
+  my ($from_dba, $to_dba, $table_name, $query) = @_;
+
   my $user = $to_dba->dbc->username;
   my $pass = $to_dba->dbc->password;
   my $host = $to_dba->dbc->host;
   my $port = $to_dba->dbc->port;
   my $dbname = $to_dba->dbc->dbname;
 
-  print "Copying data in table $table_name\n";
   my $start = 0;
-  my $step = 10000;
+  my $step = 1000000;
 
   while (1) {
     my $sth = $from_dba->dbc->prepare($query." LIMIT $start, $step");
@@ -548,6 +585,86 @@ sub copy_data {
     } else {
       system("mysqlimport", "-u$user", "-h$host", "-P$port", "-L", "-l", "-i", $dbname, $filename);
     }
+    unlink("$filename");
+  }
+
+}
+
+=head2 copy_data_in_binary_mode
+
+  Arg[1]      : Bio::EnsEMBL::Compara::DBSQL::DBAdaptor $from_dba
+  Arg[2]      : Bio::EnsEMBL::Compara::DBSQL::DBAdaptor $to_dba
+  Arg[3]      : Bio::EnsEMBL::Compara::MethodLinkSpeciesSet $this_mlss
+  Arg[4]      : string $table
+  Arg[5]      : string $sql_query
+
+  Description : copy data in this table using this SQL query.
+  Returns     :
+  Exceptions  : throw if argument test fails
+
+=cut
+
+sub copy_data_in_binary_mode {
+  my ($from_dba, $to_dba, $table_name, $query) = @_;
+
+  my $from_user = $from_dba->dbc->username;
+  my $from_pass = $from_dba->dbc->password;
+  my $from_host = $from_dba->dbc->host;
+  my $from_port = $from_dba->dbc->port;
+  my $from_dbname = $from_dba->dbc->dbname;
+
+  my $to_user = $to_dba->dbc->username;
+  my $to_pass = $to_dba->dbc->password;
+  my $to_host = $to_dba->dbc->host;
+  my $to_port = $to_dba->dbc->port;
+  my $to_dbname = $to_dba->dbc->dbname;
+
+  print " ** WARNING ** Copying table $table_name in binary mode, this requires write access.\n";
+  print " ** WARNING ** The original table will be temporarily renamed as original_$table_name.\n";
+  print " ** WARNING ** An auxiliary table named temp_$table_name will also be created.\n";
+  print " ** WARNING ** You may have to undo this manually if the process crashed .\n\n";
+
+  my $start = 0;
+  my $step = 1000000;
+
+  while (1) {
+    ## Copy data into a aux. table
+    my $sth = $from_dba->dbc->prepare("CREATE TABLE temp_$table_name $query LIMIT $start, $step");
+    $sth->execute();
+    $start += $step;
+    my $count = $from_dba->dbc->db_handle->selectrow_array("SELECT count(*) FROM temp_$table_name");
+    ## EXIT CONDITION
+    if (!$count) {
+      $from_dba->dbc->db_handle->do("DROP TABLE $table_name");
+      return;
+    }
+
+    ## Change table names (mysqldump will keep the table name, hence we need to do this)
+    $from_dba->dbc->db_handle->do("ALTER TABLE $table_name RENAME original_$table_name");
+    $from_dba->dbc->db_handle->do("ALTER TABLE temp_$table_name RENAME $table_name");
+
+    ## mysqldump data
+    my $filename = "/tmp/$table_name.copy_data.$$.txt";
+    if ($from_pass) {
+      system("mysqldump -u$from_user -p$from_pass -h$from_host -P$from_port".
+          " --insert-ignore -t $from_dbname $table_name > $filename");
+    } else {
+      system("mysqldump -u$from_user -h$from_host -P$from_port".
+          " --insert-ignore -t $from_dbname $table_name > $filename");
+    }
+
+    ## import data
+    if ($to_pass) {
+      system("mysql -u$to_user -p$to_pass -h$to_host -P$to_port $to_dbname < $filename");
+    } else {
+      system("mysql -u$to_user -h$to_host -P$to_port $to_dbname < $filename");
+    }
+
+    ## Undo table names change
+    $from_dba->dbc->db_handle->do("DROP TABLE $table_name");
+    $from_dba->dbc->db_handle->do("ALTER TABLE original_$table_name RENAME $table_name");
+
+    ## Delete dump file
     unlink("$filename");
   }
 
