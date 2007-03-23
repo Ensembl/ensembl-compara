@@ -816,16 +816,28 @@ sub das_wizard_3 {
 
   use Bio::EnsEMBL::ColourMap;
   my $cm = new Bio::EnsEMBL::ColourMap($object->species_defs);
-  my @cvalues;
+  my $previous;
+  my (@cvalues, @cstyles);
   for $_ (sort keys %$cm) { ## OPTIONS IN DROP DOWN FOR COLOURS
-    my $id = $cm->{$_};
+    next if $_ eq 'colour_sets';
+    next if $cm->brightness($_) > 220; ## pale colours don't work for tracks!
+    ## cut out the endless greys!
+    my ($r, $g, $b) = $cm->rgb_by_name( $_ );
+    next if (($r == $g && $g == $b));
+    $previous = $_;
+    #colour values
     push @cvalues, {'name'=>$_, 'value'=>$_};
+    # styles for each row
+    my $hex = $cm->{$_};
+    my $textcolor = $cm->contrast($_);
+    push @cstyles, "background-color:#$hex;color:$textcolor";
   }
   $form->add_element(
     'select'  =>  'select',
     'type'    =>  'DropDown',
     'name'    =>  'DAScolor',
     'label'   =>  'Track colour',
+    'styles'  =>  \@cstyles,
     'values'  =>  \@cvalues,
     'value'   =>  $option
   );
