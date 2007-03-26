@@ -64,9 +64,7 @@ use Bio::EnsEMBL::Compara::Graph::NewickParser;
 use Bio::EnsEMBL::Hive::Process;
 our @ISA = qw(Bio::EnsEMBL::Hive::Process);
 
-#FIXME must move this
 my $BIN_DIR = "/software/ensembl/compara/gerp/GERP_03292006/";
-#my $BIN_DIR = "/usr/local/ensembl/gerp/GERP_03292006/";
 
 #temporary files written to worker_temp_directory
 my $ALIGN_FILE = "gerp_alignment.mfa";
@@ -105,7 +103,7 @@ sub fetch_input {
 
   my $gaba = $self->{'comparaDBA'}->get_GenomicAlignBlockAdaptor;
   my $gab = $gaba->fetch_by_dbID($self->genomic_align_block_id);
-  
+
   my $gas = $gab->get_all_GenomicAligns;
 
   #only run gerp if there are more than 2 genomic aligns. Gerp requires more
@@ -479,7 +477,7 @@ sub _parse_cons_file {
 }
 
 #This method parses the gerp rates file and stores the multiple alignment 
-#genomic align block id, window size, position, observed and expected scores 
+#genomic align block id, window size, position, expected scores 
 #and difference (expected-observed) scores in the conservation_score table
 #rates_file : full filename of rates file
 #example    : $self->_parse_rates_file(/tmp/worker.2580193/gerp_alignment.mfa.rates);
@@ -490,7 +488,6 @@ sub _parse_rates_file {
 
     my $j;
     
-    my $obs_no_score = -1.0; #uncalled observed score
     my $exp_no_score = 0.0;  #uncalled expected score
     my $diff_no_score = 0.0; 
 
@@ -505,8 +502,6 @@ sub _parse_rates_file {
 	$bucket->{$win_sizes->[$j]} = {called => 0,     #no. called bases in block
 				       win_called => 0, #no. called bases in window
 				       cnt => 0,        #no. bases in block
-				       obs => 0,        #current observed score
-				       obs_scores => "", #observed score string
 				       exp => 0,        #current expected score
 				       exp_scores => "",#expected score string
 				       diff => 0,       #current diff score
@@ -533,7 +528,7 @@ sub _parse_rates_file {
 		my ($obs, $exp) = split/\t/,$_;
 		my $diff;
 
-		if ($obs == $obs_no_score) {
+		if ($exp == $exp_no_score) {
 		    $diff = $diff_no_score;
 		} else {
 		    $diff = $exp - $obs;
@@ -542,7 +537,6 @@ sub _parse_rates_file {
 
 		    #store called obs, exp and diff in each win_size bucket and keep a count of these with win_called
 		    if ($diff != $diff_no_score) {
-			$bucket->{$win_sizes->[$j]}->{obs} += $obs;
 			$bucket->{$win_sizes->[$j]}->{exp} += $exp;
 			$bucket->{$win_sizes->[$j]}->{diff} += $diff;
 			$bucket->{$win_sizes->[$j]}->{win_called}++;
@@ -574,20 +568,18 @@ sub _parse_rates_file {
 				#add uncalled values to span merge_dist
 				for (my $i=0; $i < $bucket->{$win_sizes->[$j]}->{delete_cnt}; $i++) {
 				    $bucket->{$win_sizes->[$j]}->{cnt}++;
-				    $bucket->{$win_sizes->[$j]}->{obs_scores} .= "$obs_no_score ";
 				    $bucket->{$win_sizes->[$j]}->{exp_scores} .= "$exp_no_score ";
 				    $bucket->{$win_sizes->[$j]}->{diff_scores} .= "$diff_no_score ";
 				    
 				    #store in database
 				    if ($bucket->{$win_sizes->[$j]}->{cnt} == $max_called_dist) {
-					my $conservation_score =  new Bio::EnsEMBL::Compara::ConservationScore(											       -genomic_align_block => $gab, -window_size => $win_sizes->[$j], -position => $bucket->{$win_sizes->[$j]}->{start_pos}, -observed_score => $bucket->{$win_sizes->[$j]}->{obs_scores}, -expected_score => $bucket->{$win_sizes->[$j]}->{exp_scores}, -diff_score => $bucket->{$win_sizes->[$j]}->{diff_scores});
+					my $conservation_score =  new Bio::EnsEMBL::Compara::ConservationScore(											       -genomic_align_block => $gab, -window_size => $win_sizes->[$j], -position => $bucket->{$win_sizes->[$j]}->{start_pos}, -expected_score => $bucket->{$win_sizes->[$j]}->{exp_scores}, -diff_score => $bucket->{$win_sizes->[$j]}->{diff_scores});
 					
 					$cs_adaptor->store($conservation_score);  
 					
 					#reset bucket values
 					$bucket->{$win_sizes->[$j]}->{cnt} = 0;
 					$bucket->{$win_sizes->[$j]}->{called} = 0;
-					$bucket->{$win_sizes->[$j]}->{obs_scores} = "";
 					$bucket->{$win_sizes->[$j]}->{exp_scores} = "";
 					$bucket->{$win_sizes->[$j]}->{diff_scores} = "";
 					$bucket->{$win_sizes->[$j]}->{start_pos} += $max_called_dist;
@@ -602,10 +594,8 @@ sub _parse_rates_file {
 			   
 			    #average over the number of called scores in a 
 			    #window and append to score string
-			    #$bucket->{$win_sizes->[$j]}->{obs_scores} .= ($bucket->{$win_sizes->[$j]}->{obs}/$bucket->{$win_sizes->[$j]}->{win_called}) . " ";
 			    #$bucket->{$win_sizes->[$j]}->{exp_scores} .= ($bucket->{$win_sizes->[$j]}->{exp}/$bucket->{$win_sizes->[$j]}->{win_called}) . " ";
 			    #$bucket->{$win_sizes->[$j]}->{diff_scores} .= ($bucket->{$win_sizes->[$j]}->{diff}/$bucket->{$win_sizes->[$j]}->{win_called}) . " "; 
-			    $bucket->{$win_sizes->[$j]}->{obs_scores} .= ($bucket->{$win_sizes->[$j]}->{obs}/$win_sizes->[$j]) . " ";
 			    $bucket->{$win_sizes->[$j]}->{exp_scores} .= ($bucket->{$win_sizes->[$j]}->{exp}/$win_sizes->[$j]) . " ";
 			    $bucket->{$win_sizes->[$j]}->{diff_scores} .= ($bucket->{$win_sizes->[$j]}->{diff}/$win_sizes->[$j]) . " ";
 			    
@@ -617,14 +607,13 @@ sub _parse_rates_file {
 			    #string, then store them in the database
 			    if ($bucket->{$win_sizes->[$j]}->{cnt} == $max_called_dist) {
 
-				my $conservation_score =  new Bio::EnsEMBL::Compara::ConservationScore(											       -genomic_align_block => $gab, -window_size => $win_sizes->[$j], -position => $bucket->{$win_sizes->[$j]}->{start_pos}, -observed_score => $bucket->{$win_sizes->[$j]}->{obs_scores}, -expected_score => $bucket->{$win_sizes->[$j]}->{exp_scores}, -diff_score => $bucket->{$win_sizes->[$j]}->{diff_scores});
+				my $conservation_score =  new Bio::EnsEMBL::Compara::ConservationScore(											       -genomic_align_block => $gab, -window_size => $win_sizes->[$j], -position => $bucket->{$win_sizes->[$j]}->{start_pos}, -expected_score => $bucket->{$win_sizes->[$j]}->{exp_scores}, -diff_score => $bucket->{$win_sizes->[$j]}->{diff_scores});
 				
 				$cs_adaptor->store($conservation_score);  
 				
 				#reinitialise bucket values
 				$bucket->{$win_sizes->[$j]}->{cnt} = 0;
 				$bucket->{$win_sizes->[$j]}->{called} = 0;
-				$bucket->{$win_sizes->[$j]}->{obs_scores} = "";
 				$bucket->{$win_sizes->[$j]}->{exp_scores} = "";
 				$bucket->{$win_sizes->[$j]}->{diff_scores} = "";
 				$bucket->{$win_sizes->[$j]}->{start_pos} += $max_called_dist;
@@ -641,17 +630,15 @@ sub _parse_rates_file {
 			    #add previous called values to the database
 			    if ($bucket->{$win_sizes->[$j]}->{called} > 0 && $bucket->{$win_sizes->[$j]}->{delete_cnt} > $merge_dist) {
 
-				my $conservation_score =  new Bio::EnsEMBL::Compara::ConservationScore(											       -genomic_align_block => $gab, -window_size => $win_sizes->[$j], -position => $bucket->{$win_sizes->[$j]}->{start_pos}, -observed_score => $bucket->{$win_sizes->[$j]}->{obs_scores}, -expected_score => $bucket->{$win_sizes->[$j]}->{exp_scores}, -diff_score => $bucket->{$win_sizes->[$j]}->{diff_scores});				
+				my $conservation_score =  new Bio::EnsEMBL::Compara::ConservationScore(											       -genomic_align_block => $gab, -window_size => $win_sizes->[$j], -position => $bucket->{$win_sizes->[$j]}->{start_pos}, -expected_score => $bucket->{$win_sizes->[$j]}->{exp_scores}, -diff_score => $bucket->{$win_sizes->[$j]}->{diff_scores});				
 				$cs_adaptor->store($conservation_score);  
 				
 				$bucket->{$win_sizes->[$j]}->{cnt} = 0;
 				$bucket->{$win_sizes->[$j]}->{called} = 0;
 				$bucket->{$win_sizes->[$j]}->{exp_scores} = "";
-				$bucket->{$win_sizes->[$j]}->{obs_scores} = "";
 				$bucket->{$win_sizes->[$j]}->{diff_scores} = "";
 			    }
 			}
-			$bucket->{$win_sizes->[$j]}->{obs} = 0;
 			$bucket->{$win_sizes->[$j]}->{exp} = 0;
 			$bucket->{$win_sizes->[$j]}->{diff} = 0;
 			$bucket->{$win_sizes->[$j]}->{win_called} = 0;
@@ -663,7 +650,7 @@ sub _parse_rates_file {
     #store last lot
     for ($j = 0; $j < scalar(@$win_sizes); $j++) {
 
-	my $conservation_score =  new Bio::EnsEMBL::Compara::ConservationScore(											       -genomic_align_block => $gab, -window_size => $win_sizes->[$j], -position => $bucket->{$win_sizes->[$j]}->{start_pos}, -observed_score => $bucket->{$win_sizes->[$j]}->{obs_scores}, -expected_score => $bucket->{$win_sizes->[$j]}->{exp_scores}, -diff_score => $bucket->{$win_sizes->[$j]}->{diff_scores});				
+	my $conservation_score =  new Bio::EnsEMBL::Compara::ConservationScore(											       -genomic_align_block => $gab, -window_size => $win_sizes->[$j], -position => $bucket->{$win_sizes->[$j]}->{start_pos}, -expected_score => $bucket->{$win_sizes->[$j]}->{exp_scores}, -diff_score => $bucket->{$win_sizes->[$j]}->{diff_scores});				
 	$cs_adaptor->store($conservation_score);  
     }
 }
@@ -793,7 +780,6 @@ sub _update_tree {
       $new_root->add_child($new_child);
       $tree = $new_root;
     }
-
     return $tree;
 }
 
