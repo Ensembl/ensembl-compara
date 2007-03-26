@@ -122,7 +122,7 @@ sub fetch_input {
   unless($self->{'protein_tree'}) {
     throw("undefined ProteinTree as input\n");
   }
-
+  $self->delete_old_homologies;
   $self->load_species_tree();
 
   return 1;
@@ -161,7 +161,6 @@ sub run
 
 sub write_output {
   my $self = shift;
-
   $self->store_homologies;
 }
 
@@ -623,6 +622,54 @@ sub genepairlink_fetch_homology
 sub delete_old_homologies
 {
   my $self = shift;
+
+  return undef unless ($self->input_job->retry_count > 0);
+  my %homology_ids;
+  my $sql = "select homology_id from homology_member where member_id = ?";
+  my $sth = $self->dbc->prepare($sql);
+  
+  foreach my $leaf (@{$self->{'protein_tree'}->get_all_leaves}) {
+    $sth->execute($leaf->gene_member->member_id);
+    while (my $aref = $sth->fetchrow_arrayref) {
+      my ($homology_id) = @$aref;
+      $homology_ids{$homology_id} = 1;
+    }
+  }
+
+  my @list_ids;
+  foreach my $id (keys %homology_ids) {
+    push @list_ids, $id;
+    if (scalar @list_ids == 20000) {
+      my $sql1 = "delete from homology where homology_id in (".join(",",@list_ids).")";
+      my $sql2 = "delete from homology_member where homology_id in (".join(",",@list_ids).")";
+      my $sth1 = $self->dbc->prepare($sql1);
+      my $sth2 = $self->dbc->prepare($sql2);
+      $sth1->execute;
+      $sth2->execute;
+      $sth1->finish;
+      $sth2->finish;
+      @list_ids = ();
+    }
+  }
+  
+  if (scalar @list_ids) {
+    my $sql1 = "delete from homology where homology_id in (".join(",",@list_ids).")";
+    my $sql2 = "delete from homology_member where homology_id in (".join(",",@list_ids).")";
+    my $sth1 = $self->dbc->prepare($sql1);
+    my $sth2 = $self->dbc->prepare($sql2);
+    $sth1->execute;
+    $sth2->execute;
+    $sth1->finish;
+    $sth2->finish;
+    @list_ids = ();
+  }
+
+  return undef;
+}
+
+sub delete_old_homologies_old
+{
+  my $self = shift;
   my $genepairlink = shift;
 
   return undef unless ($self->input_job->retry_count > 0);
@@ -633,19 +680,19 @@ sub delete_old_homologies
                        ($member1->gene_member, $member2->gene_member, 'ENSEMBL_ORTHOLOGUES')};
   push @homologies, @{$self->{'comparaDBA'}->get_HomologyAdaptor->fetch_by_Member_Member_method_link_type
                         ($member1->gene_member, $member2->gene_member, 'ENSEMBL_PARALOGUES')};
+  
+  my $sql1 = "DELETE FROM homology WHERE homology_id=?";
+  my $sth1 = $self->dbc->prepare($sql1);
+  my $sql2 = "DELETE FROM homology_member WHERE homology_id=?";
+  my $sth2 = $self->dbc->prepare($sql2);
 
-  my $sth1;
-  my $sth2;
   foreach my $homology (@homologies) {
-    my $sql1 = "DELETE FROM homology WHERE homology_id=?";
-    $sth1 = $self->dbc->prepare($sql1);
     $sth1->execute($homology->dbID);
-    my $sql2 = "DELETE FROM homology_member WHERE homology_id=?";
-    $sth2 = $self->dbc->prepare($sql2);
     $sth2->execute($homology->dbID);
-    $sth1->finish;
-    $sth2->finish;
   }
+
+  $sth1->finish;
+  $sth2->finish;
 
   return undef;
 }
@@ -729,7 +776,7 @@ sub direct_ortholog_test
   return undef if($count2>1);
 
   #passed all the tests -> it's a simple ortholog
-  $self->delete_old_homologies($genepairlink) unless ($self->{'_readonly'});
+#  $self->delete_old_homologies_old($genepairlink) unless ($self->{'_readonly'});
   $genepairlink->add_tag("orthotree_type", 'ortholog_one2one');
   my $taxon = $self->get_ancestor_taxon_level($ancestor);
   $genepairlink->add_tag("orthotree_subtype", $taxon->name);
@@ -759,7 +806,7 @@ sub inspecies_paralog_test
 
   #passed all the tests -> it's an inspecies_paralog
 #  $genepairlink->add_tag("orthotree_type", 'inspecies_paralog');
-  $self->delete_old_homologies($genepairlink) unless ($self->{'_readonly'});
+#  $self->delete_old_homologies_old($genepairlink) unless ($self->{'_readonly'});
   $genepairlink->add_tag("orthotree_type", 'within_species_paralog');
   $genepairlink->add_tag("orthotree_subtype", $taxon->name);
   # Duplication_confidence_score
@@ -809,7 +856,7 @@ sub ancient_residual_test
 #  my $sis_value = $ancestor->get_tagvalue("species_intersection_score");
   my $sis_value = $ancestor->get_tagvalue("duplication_confidence_score");
   if($ancestor->get_tagvalue("Duplication") > 0 && $sis_value ne '0') {
-    $self->delete_old_homologies($genepairlink) unless ($self->{'_readonly'});
+#    $self->delete_old_homologies_old($genepairlink) unless ($self->{'_readonly'});
     $genepairlink->add_tag("orthotree_type", 'apparent_ortholog_one2one');
     my $taxon = $self->get_ancestor_taxon_level($ancestor);
     $genepairlink->add_tag("orthotree_subtype", $taxon->name);
@@ -818,7 +865,7 @@ sub ancient_residual_test
       $self->duplication_confidence_score($ancestor);
     }
   } else {
-    $self->delete_old_homologies($genepairlink) unless ($self->{'_readonly'});
+#    $self->delete_old_homologies_old($genepairlink) unless ($self->{'_readonly'});
     $genepairlink->add_tag("orthotree_type", 'ortholog_one2one');
     my $taxon = $self->get_ancestor_taxon_level($ancestor);
     $genepairlink->add_tag("orthotree_subtype", $taxon->name);
@@ -864,7 +911,7 @@ sub one2many_ortholog_test
   }
 
   #passed all the tests -> it's a one2many ortholog
-  $self->delete_old_homologies($genepairlink) unless ($self->{'_readonly'});
+#  $self->delete_old_homologies_old($genepairlink) unless ($self->{'_readonly'});
   $genepairlink->add_tag("orthotree_type", 'ortholog_one2many');
   my $taxon = $self->get_ancestor_taxon_level($ancestor);
   $genepairlink->add_tag("orthotree_subtype", $taxon->name);
@@ -893,7 +940,7 @@ sub outspecies_test
   my $sis_value = $ancestor->get_tagvalue("duplication_confidence_score");
   unless ($dup_value eq '') {
     if($dup_value > 0 && $sis_value ne '0') {
-      $self->delete_old_homologies($genepairlink) unless ($self->{'_readonly'});
+#      $self->delete_old_homologies_old($genepairlink) unless ($self->{'_readonly'});
       $genepairlink->add_tag("orthotree_type", 'between_species_paralog');
       $genepairlink->add_tag("orthotree_subtype", $taxon->name);
       # Duplication_confidence_score
@@ -901,7 +948,7 @@ sub outspecies_test
         $self->duplication_confidence_score($ancestor);
       }
     } else {
-      $self->delete_old_homologies($genepairlink) unless ($self->{'_readonly'});
+#      $self->delete_old_homologies_old($genepairlink) unless ($self->{'_readonly'});
       $genepairlink->add_tag("orthotree_type", 'ortholog_many2many');
       $genepairlink->add_tag("orthotree_subtype", $taxon->name);
     }
