@@ -11,7 +11,7 @@ use Getopt::Long;
 #########################
 ##this should become the default version so that when we have everything as scaffold:ctg1234 or chromosome:22 these can be utilised 
 ####
-#### NB not tested
+#### NB not tested
 ################
 
 
@@ -142,7 +142,7 @@ my $dnafrag_adaptor = $db->get_adaptor($dbname, 'compara', 'DnaFrag');
 ##my $sth_method_link = $comparadb->dbc->prepare("SELECT method_link_id FROM method_link WHERE type = ?");
 ##$sth_method_link->execute($alignment_type);
 ##my ($method_link_id) = $sth_method_link->fetchrow_array();
-my $method_link_id = $mlss_adaptor->_get_method_link_id_from_type($alignment_type);
+my $method_link_id = $mlss_adaptor->get_method_link_id_from_method_link_type($alignment_type);
 
 unless (defined $method_link_id) {
   warn "There is no type $alignment_type in the method_link table of compara db.

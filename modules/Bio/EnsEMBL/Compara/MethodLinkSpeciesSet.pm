@@ -257,7 +257,7 @@ sub method_link_id {
   if (!defined($self->{'method_link_id'})
       && defined($self->{'method_link_type'})
       && defined($self->{'adaptor'})) {
-    $self->{'method_link_id'} = $self->adaptor->_get_method_link_id_from_type($self->{'method_link_type'});
+    $self->{'method_link_id'} = $self->adaptor->get_method_link_id_from_method_link_type($self->{'method_link_type'});
   }
 
   return $self->{'method_link_id'};
@@ -286,7 +286,7 @@ sub method_link_type {
   if (!defined($self->{'method_link_type'})
       && defined($self->{'method_link_id'})
       && defined($self->{'adaptor'})) {
-    $self->{'method_link_type'} = $self->adaptor->_get_method_link_type_from_id($self->{'method_link_id'});
+    $self->{'method_link_type'} = $self->adaptor->get_method_link_type_from_method_link_id($self->{'method_link_id'});
   }
 
   return $self->{'method_link_type'};

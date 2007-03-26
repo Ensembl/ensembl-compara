@@ -576,7 +576,7 @@ sub fetch_all_by_method_link_type {
   my ($self, $method_link_type) = @_;
   my $method_link_species_sets = [];
 
-  my $method_link_id = $self->_get_method_link_id_from_type($method_link_type);
+  my $method_link_id = $self->get_method_link_id_from_method_link_type($method_link_type);
   return $self->fetch_all_by_method_link_id($method_link_id);
 }
 
@@ -745,7 +745,7 @@ sub fetch_all_by_method_link_type_genome_db_id {
   my ($self, $method_link_type, $genome_db_id) = @_;
   my $method_link_species_sets = [];
 
-  my $method_link_id = $self->_get_method_link_id_from_type($method_link_type);
+  my $method_link_id = $self->get_method_link_id_from_method_link_type($method_link_type);
   return $self->fetch_all_by_method_link_id_genome_db_id($method_link_id, $genome_db_id);
 }
 
@@ -862,7 +862,7 @@ sub fetch_by_method_link_type_GenomeDBs {
     throw "[$genome_db] must have a dbID" if (!$genome_db_id);
     push (@$genome_db_ids, $genome_db_id);
   }
-  my $method_link_id = ($self->_get_method_link_id_from_type($method_link_type) || 0);
+  my $method_link_id = ($self->get_method_link_id_from_method_link_type($method_link_type) || 0);
   
   $method_link_species_set = $self->_run_query_from_method_link_id_genome_db_ids($method_link_id, $genome_db_ids);
   if (!$method_link_species_set and !$no_warning) {
@@ -899,7 +899,7 @@ sub fetch_by_method_link_type_genome_db_ids {
   my ($self, $method_link_type, $genome_db_ids) = @_;
   my $method_link_species_set;
    
-  my $method_link_id = ($self->_get_method_link_id_from_type($method_link_type) || 0);
+  my $method_link_id = ($self->get_method_link_id_from_method_link_type($method_link_type) || 0);
   
   return $self->_run_query_from_method_link_id_genome_db_ids($method_link_id, $genome_db_ids)
 }
@@ -1061,10 +1061,10 @@ sub _get_method_link_class_from_id {
 }
 
 
-=head2 _get_method_link_type_from_id
+=head2 get_method_link_type_from_method_link_id
 
   Arg  1     : none
-  Example    : my $method_link_type = $mlssa->_get_method_link_type_from_id()
+  Example    : my $method_link_type = $mlssa->get_method_link_type_from_method_link_id()
   Description: Retrieve method_link_type corresponding to the method_link_id
   Returntype : string $method_link_type
   Exceptions : none
@@ -1072,7 +1072,7 @@ sub _get_method_link_class_from_id {
 
 =cut
 
-sub _get_method_link_type_from_id {
+sub get_method_link_type_from_method_link_id {
   my ($self, $method_link_id) = @_;
   my $type; # returned string
   
@@ -1091,10 +1091,10 @@ sub _get_method_link_type_from_id {
 }
 
 
-=head2 _get_method_link_id_from_type
+=head2 get_method_link_id_from_method_link_type
 
   Arg  1     : string $method_link_type
-  Example    : my $method_link_id = $mlssa->_get_method_link_id_from_type("BLASTZ_NET")
+  Example    : my $method_link_id = $mlssa->get_method_link_id_from_method_link_type("BLASTZ_NET")
   Description: Retrieve method_link_id corresponding to the method_link_type
   Returntype : integer $method_link_id
   Exceptions : warns when no method_link matches the $method_link_type
@@ -1102,7 +1102,7 @@ sub _get_method_link_type_from_id {
 
 =cut
 
-sub _get_method_link_id_from_type {
+sub get_method_link_id_from_method_link_type {
   my ($self, $method_link_type) = @_;
   my $dbID; # returned integer
   
