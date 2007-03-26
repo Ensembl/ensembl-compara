@@ -1,12 +1,19 @@
 #########
-# Author: rmp@sanger.ac.uk
-# Maintainer: webmaster@sanger.ac.uk
-# Created: 2001
+# Author:        rmp@sanger.ac.uk
+# Maintainer:    webmaster@sanger.ac.uk
+# Created:       2001
+# Last Modified: $Date$
+# Id:            $Id$
+# Source:        $Source$
+# $HeadURL$
 #
 package Sanger::Graphics::Glyph;
 use strict;
+use warnings;
 use Sanger::Graphics::ColourMap;
 use vars qw($AUTOLOAD);
+
+our $VERSION = do { my @r = (q$Revision$ =~ /\d+/mxg); sprintf '%d.'.'%03d' x $#r, @r };
 
 #########
 # constructor
@@ -17,10 +24,10 @@ sub new {
   my $self = {
 	      'background' => 'transparent',
 	      'composite'  => undef,          # arrayref for Glyph::Composite to store other glyphs in
-	      'points'     => [],		        # listref for Glyph::Poly to store x,y paired points
-	      ref($params_ref) eq 'HASH' ? %$params_ref : ()
+	      'points'     => [],             # listref for Glyph::Poly to store x,y paired points
+	      (ref $params_ref eq 'HASH')?%{$params_ref} : (),
 	     };
-  bless($self, $class);
+  bless $self, $class;
   return $self;
 }
 
@@ -30,9 +37,18 @@ sub new {
 sub AUTOLOAD {
   my ($self, $val) = @_;
   no strict 'refs';
-  (my $field      = $AUTOLOAD) =~ s/.*:://;
-  *{$AUTOLOAD}    = sub { $_[0]->{$field}=$_[1] if defined $_[1]; return $_[0]->{$field}; };
-  $self->{$field} = $val if(defined $val);
+  (my $field      = $AUTOLOAD) =~ s/.*:://mx;
+  *{$AUTOLOAD}    = sub {
+    if(defined $_[1]) {
+      $_[0]->{$field} = $_[1];
+    }
+    return $_[0]->{$field};
+  };
+  use strict;
+
+  if(defined $val) {
+    $self->{$field} = $val;
+  }
   return $self->{$field};
 }
 
@@ -61,10 +77,10 @@ sub transform {
   #########
   # override transformation if we've set x/y to be absolute (pixel) coords
   #
-  $scalex     = $transform_ref->{'absolutescalex'} if(defined $self->{'absolutex'});
-  $scalewidth = $transform_ref->{'absolutescalex'} if(defined $self->{'absolutewidth'});
-  $scaley     = $transform_ref->{'absolutescaley'} if(defined $self->{'absolutey'});
-  
+  if($self->{'absolutex'})     { $scalex     = $transform_ref->{'absolutescalex'}; }
+  if($self->{'absolutewidth'}) { $scalewidth = $transform_ref->{'absolutescalex'}; }
+  if($self->{'absoltey'})      { $scaley     = $transform_ref->{'absolutescaley'}; }
+
   #########
   # copy the real coords & sizes if we don't have them already
   #
@@ -72,35 +88,38 @@ sub transform {
   $self->{'pixely'}      ||= ($self->{'y'}      || 0);
   $self->{'pixelwidth'}  ||= ($self->{'width'}  || 0);
   $self->{'pixelheight'} ||= ($self->{'height'} || 0);
-  
+
   #########
   # apply scale
   #
   if(defined $scalex) {
     $self->{'pixelx'}      = $self->{'pixelx'} * $scalex;
   }
+
   if(defined $scalewidth) {
     $self->{'pixelwidth'}  = $self->{'pixelwidth'}  * $scalewidth;
   }
+
   if(defined $scaley) {
     $self->{'pixely'}      = $self->{'pixely'}      * $scaley;
     $self->{'pixelheight'} = $self->{'pixelheight'} * $scaley;
   }
-  
+
   #########
   # apply translation
   #
-  $self->pixelx($self->pixelx() + $translatex) if(defined $translatex);
-  $self->pixely($self->pixely() + $translatey) if(defined $translatey);
+  $translatex and $self->pixelx($self->pixelx() + $translatex);
+  $translatey and $self->pixely($self->pixely() + $translatey);
+  return;
 }
 
 sub centre {
   my ($self, $arg) = @_;
-  
-  my ($x, $y);
-  $arg ||= "";
 
-  if($arg eq "px") {
+  my ($x, $y);
+  $arg ||= q();
+
+  if($arg eq 'px') {
     #########
     # return calculated px coords
     # pixel coordinates are only available after a transformation has been applied
@@ -115,13 +134,13 @@ sub centre {
     $x = $self->{'x'} + $self->{'width'} / 2;
     $y = $self->{'y'} + $self->height() / 2;
   }
-  
+
   return ($x, $y);
 }
 
 sub pixelcentre {
   my ($self) = @_;
-  return ($self->centre("px"));
+  return ($self->centre('px'));
 }
 
 sub end {
