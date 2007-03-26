@@ -133,8 +133,8 @@ sub fetch_all_by_Member_method_link_type {
     unless ($method_link_type);
 
   my $mlssa = $self->db->get_MethodLinkSpeciesSetAdaptor;
-  my $mlss_arrayref = $mlssa->fetch_all_by_method_link_type_genome_db_id($method_link_type,$member->genome_db_id);
-  
+  my $mlss_arrayref = $mlssa->fetch_all_by_method_link_type_GenomeDB($method_link_type,$member->genome_db);
+
   unless (scalar @{$mlss_arrayref}) {
     warning("There is no $method_link_type data stored in the database for " . $member->genome_db->name . "\n");
     return [];
