@@ -494,7 +494,7 @@ sub store {
 
       #if the conservation score has not been stored before, store it now
       my $sql = "INSERT into conservation_score (genomic_align_block_id,window_size,position,expected_score, diff_score) ". 
-	  " VALUES ('$genomic_align_block_id','$window_size', '$position', ?, ?, ?)";
+	  " VALUES ('$genomic_align_block_id','$window_size', '$position', ?, ?)";
       my $sth = $self->prepare($sql);
       $sth->execute($exp_packed, $diff_packed);
   }
