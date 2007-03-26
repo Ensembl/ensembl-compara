@@ -563,7 +563,6 @@ CREATE TABLE conservation_score (
   genomic_align_block_id bigint unsigned not null,
   window_size            smallint unsigned not null,
   position	         int unsigned not null,
-  observed_score         blob,
   expected_score         blob,
   diff_score             blob,
 
