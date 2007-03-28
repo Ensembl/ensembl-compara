@@ -112,10 +112,10 @@ switch($state) {
 
 #cleanup memory
 if($self->{'root'}) {
-  print("ABOUT TO MANUALLY release tree\n");
+  print("ABOUT TO MANUALLY release tree\n") if ($self->{'debug'});
   $self->{'root'}->release_tree;
   $self->{'root'} = undef;
-  print("DONE\n");
+  print("DONE\n") if ($self->{'debug'});
 }
 
 exit(0);
@@ -202,7 +202,7 @@ sub fetch_compara_ncbi_taxa {
 
   $root = $root->minimize_tree if($self->{'minimize_tree'});
 
-  print "# Before multifuration_deletes_node\n\n";
+  print "# Before multifurcation_deletes_node\n\n";
   $root->print_tree($self->{'scale'});
 
   my @subnodes = $root->get_all_subnodes;
@@ -228,6 +228,8 @@ sub fetch_compara_ncbi_taxa {
   #   print("$spec_ncbi_taxon_tree\n");
   my $njtree_tree = $root->newick_format('njtree');
   print("$njtree_tree\n");
+  my $species = $root->newick_format('species');
+  print("$species\n");
   1; #??
 
   $self->{'root'} = $root;
