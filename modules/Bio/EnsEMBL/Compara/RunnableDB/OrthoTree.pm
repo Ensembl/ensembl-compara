@@ -123,6 +123,7 @@ sub fetch_input {
     throw("undefined ProteinTree as input\n");
   }
   $self->delete_old_homologies;
+  $self->delete_old_orthotree_tags;
   $self->load_species_tree();
 
   return 1;
@@ -561,7 +562,8 @@ sub duplication_confidence_score {
   my $ancestor = shift;
 
   # This assumes bifurcation!!! No multifurcations allowed
-  my ($child_a, $child_b) = @{$ancestor->children};
+  my ($child_a, $child_b, $dummy) = @{$ancestor->children};
+  throw("tree is multifurcated in duplication_confidence_score\n") if (defined($dummy));
   my @child_a_gdbs = keys %{$self->get_ancestor_species_hash($child_a)};
   my @child_b_gdbs = keys %{$self->get_ancestor_species_hash($child_b)};
   my %seen = ();  my @gdb_a = grep { ! $seen{$_} ++ } @child_a_gdbs;
@@ -619,11 +621,57 @@ sub genepairlink_fetch_homology
   return $homology;
 }
 
+sub delete_old_orthotree_tags
+{
+  my $self = shift;
+
+  return undef unless ($self->input_job->retry_count > 0);
+
+  print "deleting old orthotree tags\n" if ($self->debug);
+  my @node_ids;
+  my $left_index  = $self->{'protein_tree'}->left_index;
+  my $right_index = $self->{'protein_tree'}->right_index;
+  my $tree_root_node_id = $self->{'protein_tree'}->node_id;
+  # Include the root_id as well as the rest of the nodes within the tree
+  push @node_ids, $tree_root_node_id;
+  my $sql = "select ptn.node_id from protein_tree_node ptn where ptn.left_index>$left_index and ptn.right_index<$right_index";
+  my $sth = $self->dbc->prepare($sql);
+  $sth->execute;
+  while (my $aref = $sth->fetchrow_arrayref) {
+    my ($node_id) = @$aref;
+    push @node_ids, $node_id;
+  }
+
+  my @list_ids;
+  foreach my $id (@node_ids) {
+    push @list_ids, $id;
+    if (scalar @list_ids == 20000) {
+      my $sql = "delete from protein_tree_tag where node_id in (".join(",",@list_ids).") and tag in ('duplication_confidence_score','taxon_id','taxon_name','OrthoTree_runtime_msec','OrthoTree_types_hashstr')";
+      my $sth = $self->dbc->prepare($sql);
+      $sth->execute;
+      $sth->finish;
+      @list_ids = ();
+    }
+  }
+  
+  if (scalar @list_ids) {
+    my $sql = "delete from protein_tree_tag where node_id in (".join(",",@list_ids).") and tag in ('duplication_confidence_score','taxon_id','taxon_name','OrthoTree_runtime_msec','OrthoTree_types_hashstr')";
+    my $sth = $self->dbc->prepare($sql);
+    $sth->execute;
+    $sth->finish;
+    @list_ids = ();
+  }
+
+  return undef;
+}
+
 sub delete_old_homologies
 {
   my $self = shift;
 
   return undef unless ($self->input_job->retry_count > 0);
+
+  print "deleting old homologies\n" if ($self->debug);
   my %homology_ids;
   my $sql = "select homology_id from homology_member where member_id = ?";
   my $sth = $self->dbc->prepare($sql);
@@ -979,7 +1027,7 @@ sub store_homologies
 
   $self->{'protein_tree'}->store_tag(
       'OrthoTree_types_hashstr', 
-      $self->encode_hash($self->{'orthotree_homology_counts'}));
+      $self->encode_hash($self->{'orthotree_homology_counts'})) unless ($self->{'_readonly'});
 
   return undef;
 }
@@ -1009,7 +1057,7 @@ sub store_gene_link_as_homology
   } else {
     $mlss->species_set([$protein1->genome_db, $protein2->genome_db]);
   }
-  $self->{'comparaDBA'}->get_MethodLinkSpeciesSetAdaptor->store($mlss);
+  $self->{'comparaDBA'}->get_MethodLinkSpeciesSetAdaptor->store($mlss) unless ($self->{'_readonly'});
 
   # create an Homology object
   my $homology = new Bio::EnsEMBL::Compara::Homology;
@@ -1052,8 +1100,10 @@ sub store_gene_link_as_homology
 
   $homology->add_Member_Attribute([$protein2->gene_member, $attribute]);
 
-  $self->{'comparaDBA'}->get_HomologyAdaptor()->store($homology) 
-    if($self->{'store_homologies'});
+  unless ($self->{'_readonly'}) {
+    $self->{'comparaDBA'}->get_HomologyAdaptor()->store($homology) 
+      if($self->{'store_homologies'});
+  }
 
   my $stable_id;
   if($protein1->taxon_id < $protein2->taxon_id) {
@@ -1076,6 +1126,17 @@ sub store_gene_link_as_homology
 
 sub check_homology_consistency {
   my $self = shift;
+
+  if ($self->{debug}) {
+    print "checking homology consistency\n";
+    foreach my $mlss_member_id ( keys %{$self->{_homology_consistency}} ) {
+      my $count = scalar(keys %{$self->{_homology_consistency}{$mlss_member_id}});
+      if ($count > 1) {
+        my ($mlss, $member_id) = split("_",$mlss_member_id);
+        print "mlss member_id : $mlss $member_id\n";
+      }
+    }
+  }
 
   foreach my $mlss_member_id ( keys %{$self->{_homology_consistency}} ) {
     my $count = scalar(keys %{$self->{_homology_consistency}{$mlss_member_id}});
@@ -1194,6 +1255,7 @@ sub _treefam_genepairlink_stats
   }
   printf("%1.3f secs to analyze genepair links\n", time()-$tmp_time) 
     if($self->debug > 1);
+  $self->store_homologies if ($self->{debug});
 }
 
 sub generate_attribute_arguments {
