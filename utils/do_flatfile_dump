@@ -25,6 +25,7 @@ use utils::Tool;
 #$| = 1;
 
 my @user_formats ;
+our $basedir = "/dumps/";
 my @species;
 my $MAX_SIZE = 1000000;
 my $GENE_MAX = 3000000; # if gene > $GENE_MAX, skips gene and prints warning
@@ -85,7 +86,7 @@ unless ($no_log) {
   open(STDERR, "> $logfile") || die "Can't create file:$!\n";
 }
 
-$dumpdir ||= "/mysql/dumps/release-$sitedefs_release";
+$dumpdir ||= $basedir."release-$sitedefs_release";
 
 foreach my $spp (@species){
   utils::Tool::info(2, "Species: $spp");

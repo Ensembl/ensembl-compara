@@ -2,8 +2,6 @@
 
 use strict;
 
-use Bio::EnsEMBL::DBSQL::DBAdaptor;
-use Bio::EnsEMBL::SeqFeature;
 use Getopt::Long;
 use Carp;
 use FileHandle;
@@ -15,13 +13,16 @@ use Time::localtime;
 use vars qw( $SERVERROOT );
 BEGIN{
   $SERVERROOT = dirname( $Bin );
+  warn $SERVERROOT;
   unshift @INC, "$SERVERROOT/conf";
-  unshift @INC, "$SERVERROOT";
   eval{ require SiteDefs };
   if ($@){ die "Can't use SiteDefs.pm - $@\n"; }
+  warn  @SiteDefs::ENSEMBL_LIB_DIRS;
   map{ unshift @INC, $_ } @SiteDefs::ENSEMBL_LIB_DIRS;
 }
 
+use Bio::EnsEMBL::DBSQL::DBAdaptor;
+use Bio::EnsEMBL::SeqFeature;
 use utils::Tool;
 
 my $host;#   = 'ens-livemirror';
@@ -170,7 +171,7 @@ for my $sp( sort @SPECIES ){  # users selected spp
   # Work out species folder name
   my $sp_release = $SPECIES_DEFS->get_config($sp,"SPECIES_RELEASE_VERSION");
   $sp_release =~ s/\.//g;
-  $dumpdir   ||= "/mysql/dumps/release-$release";
+  $dumpdir   ||= "/dumps/release-$release";
 
   my $sp_folder = "$dumpdir/".(join "_", lc($sp), $release, $sp_release)."/data/gtf";
   utils::Tool::check_dir($sp_folder);

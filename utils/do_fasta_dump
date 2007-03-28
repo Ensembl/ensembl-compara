@@ -36,8 +36,14 @@ use utils::Tool;
 
 #$| = 1; # unbuffers STDOUT (issues print commands immediately)
 
-
-our $MACHINE = "blastsrv11";
+### This block defines our configuration variables
+### 
+our $blast_machine  = "blastsrv11";
+our $basedir      = "/dumps/";
+our $xdformat_command = '/dumps/shared/xdformat';
+our $ssaha_command  = '/dumps/shared/ssaha2Build';
+our $key_file     = '/nfs/WWW/.ssh/blastsrv';
+our $cdna_ssaha_server = sub { $_[0]%2 ? 'ensarc-1-11' : 'ensarc-1-12' };
 our $no_data;
 our $no_dumpdata;
 my ($no_compress, $no_log, $no_indexes, $no_ssaha, $no_remotedirs);
@@ -52,28 +58,28 @@ my ($help, $info);
 
 
 &GetOptions(
-	    'type:s'     => \@TYPES,          # obligatory
-	    'release:s'  => \$release,
+  'type:s'          => \@TYPES,        # obligatory
+  'release:s'       => \$release,
 
-	    'species:s'  => \@SPECIES,        # optional
-	    'database:s' => \@DATABASES,
-	    'dumpdir:s'  => \$DUMPDIR,
-	    'logfile:s'  => \$logfile,
-	    'email:s'    => \$email,
-	    'minimise_memory'   => \$minimise_memory,
+  'species:s'       => \@SPECIES,      # optional
+  'database:s'      => \@DATABASES,
+  'dumpdir:s'       => \$DUMPDIR,
+  'logfile:s'       => \$logfile,
+  'email:s'         => \$email,
+  'minimise_memory' => \$minimise_memory,
 
-	    'no_compress'       => \$no_compress,
-	    'no_log'            => \$no_log,
-	    'no_remotedirs'     => \$no_remotedirs,
-            'no_ssaha'          => \$no_ssaha,
-	    'no_data'           => \$no_data,
-            'no_indexes'        => \$no_indexes,
-	    'no_dumpdata'       => \$no_dumpdata,  # optional
-	    'start_with:s'      => \$start_with,   # optional
-	    'end_with:s'        => \$end_with,     # optional
-	    'help'              => \$help,           # info
-	    'info'              => \$info,
-	   ) || pod2usage(2);
+  'no_compress'     => \$no_compress,
+  'no_log'          => \$no_log,
+  'no_remotedirs'   => \$no_remotedirs,
+  'no_ssaha'        => \$no_ssaha,
+  'no_data'         => \$no_data,
+  'no_indexes'      => \$no_indexes,
+  'no_dumpdata'     => \$no_dumpdata,  # optional
+  'start_with:s'    => \$start_with,   # optional
+  'end_with:s'      => \$end_with,     # optional
+  'help'            => \$help,         # info
+  'info'            => \$info,
+) || pod2usage(2);
 
 pod2usage(-verbose => 2) if $info;
 pod2usage(-verbose => 1) if $help;
@@ -82,40 +88,38 @@ my $types = check_types(\@TYPES);
 die "\n\n[DIE] You must provide an ensembl release number e.g. --release 30" unless $release;
 
 # Load modules needed for reading config -------------------------------------
-require EnsEMBL::Web::SpeciesDefs;      # Loaded at run time
+require EnsEMBL::Web::SpeciesDefs;    # Loaded at run time
 require EnsEMBL::Web::DBSQL::DBConnection;
 
 my $SPECIES_DEFS = EnsEMBL::Web::SpeciesDefs->new(); 
 $SPECIES_DEFS || die "\n\n[DIE] $0: SpeciesDefs config not found";
 
-
 # Check species if user defined.  Else use all species
-if (@SPECIES) {
+if( @SPECIES ) {
   @SPECIES = @{ utils::Tool::check_species(\@SPECIES) };
-}
-else {
+} else {
   @SPECIES = @{ utils::Tool::all_species()};
 }
 
+$email ||= 'ensembl-webteam@sanger.ac.uk';
 
 # Check the ENSEMBL_VERSION is up to date and matches user's request
-if ( my $sitedefs_release =  $SiteDefs::ENSEMBL_VERSION ne $release) {
- die "[*DIE] Ensembl release version requested is $release but site defs is configured to use $sitedefs_release";
+if( my $sitedefs_release =  $SiteDefs::ENSEMBL_VERSION ne $release) {
+  die "[*DIE] Ensembl release version requested is $release but site defs is configured to use $sitedefs_release";
 }
 
 my $blast_dir = $SPECIES_DEFS->get_config($SPECIES[0],"ENSEMBL_BLAST_DATA_PATH");
 
-if ( $blast_dir !~ /$release/ ) {
-  if ($TYPES[0] eq 'all') {
+if( $blast_dir !~ /$release/ ) {
+  if( $TYPES[0] eq 'all') {
     die "[*DIE] Ensembl release version requested is $release but blast dir is configured to be $blast_dir";
   }
   utils::Tool::warning (1, "WILL PUSH BLAST FILES TO $blast_dir.  Kill job if not correct.");
 }
 
-
 # Times and log file
 our $script_start_time = time();
-unless ($no_log) {
+unless( $no_log) {
   (my $time = gmtime(time)) =~ s/\s+/\./g;
   $logfile ||= "logs/fasta$release"."_$time.log";
   print STDERR "Using logfile $logfile\n";
@@ -126,26 +130,26 @@ info(2, "Will push blast files to $blast_dir") unless $no_indexes;
 
 # Start with a species further down in the alphabet
 @SPECIES  = @{ utils::Tool::start_with_species($start_with, \@SPECIES) } if $start_with;
-@SPECIES  = @{ utils::Tool::end_with_species($end_with, \@SPECIES) } if $end_with;
+@SPECIES  = @{ utils::Tool::end_with_species($end_with, \@SPECIES) }     if $end_with;
 
 # Validate DUMPDIR
-our $basedir = "/mysql/dumps/";
 $DUMPDIR   ||= $basedir."release-$release/";
 utils::Tool::check_dir($DUMPDIR);
 
-my %db_names = ( 'ENSEMBL_DB'      => 'core',
-               'ENSEMBL_ESTGENE' => 'estgene',
-               'ENSEMBL_VEGA'    => 'vega', );
+my %db_names = qw(
+  ENSEMBL_DB      core
+  ENSEMBL_ESTGENE estgene
+  ENSEMBL_VEGA    vega
+);
 
+our $ssaha_machine = $cdna_ssaha_server->($release);
 
-our $ssaha_machine = $release % 2 ? "ensarc-1-11" : "ensarc-1-12";
-
-unless ($no_remotedirs) {
+unless( $no_remotedirs ) {
    # Create directory for ssaha and blast
-   info (1, "Creating dir for ssaha and/or blast") unless $no_indexes && $no_ssaha;
+  info (1, "Creating dir for ssaha and/or blast") unless $no_indexes && $no_ssaha;
   eval{
-    system("ssh -i /nfs/WWW/.ssh/blastsrv $MACHINE mkdir -p /data/blastdb/ensembl/release-$release") unless $no_indexes;
-    system("ssh -i /nfs/WWW/.ssh/blastsrv $ssaha_machine mkdir -p /ensemblweb/ssaha2/HashTables/release-$release") unless $no_ssaha;
+    system("ssh -i $key_file $blast_machine mkdir -p /data/blastdb/ensembl/release-$release"        ) unless $no_indexes;
+    system("ssh -i $key_file $ssaha_machine mkdir -p /ensemblweb/ssaha2/HashTables/release-$release") unless $no_ssaha;
   };
   if ($@) {
     utils::Tool::warning(1, "$@") unless $@ =~ /File exists/;
@@ -158,7 +162,7 @@ for my $sp( sort @SPECIES ){  # users selected spp
 
   # Work out species folder name and empty if you are dumping --type all
   my $sp_release = $SPECIES_DEFS->get_config($sp,"SPECIES_RELEASE_VERSION");
-  $sp_release =~ s/\.//g;
+     $sp_release =~ s/\.//g;
   my $sp_folder = "$DUMPDIR/".(join "_", lc($sp), $release, $sp_release)."/data/fasta";
 
   if ( -e $sp_folder && $TYPES[0] eq 'all' && !$no_dumpdata) {
@@ -172,14 +176,13 @@ for my $sp( sort @SPECIES ){  # users selected spp
     my $db_adaptor = $dbConnection->get_DBAdaptor( $db_names{$db} ) ||
       ( utils::Tool::warning( 1, "DB $db is not valid for $sp" ) && next );
     info( 2, "Dumping @TYPES from \n$db $sp - $DUMPDIR" );
-
+  
     # Create directories and filehandles for dumps
-    my ($chr_toplevel, $created_files) = create_dirs_for_dumps($sp, $SPECIES_DEFS, 
-						     $sp_folder,
-						     $types,  $db_adaptor);
+    my ($chr_toplevel, $created_files) =
+      create_dirs_for_dumps( $sp, $SPECIES_DEFS, $sp_folder, $types,  $db_adaptor);
     # Do dumps
     $created_files = get_data($db_adaptor, $sp, $created_files, $chr_toplevel) unless $no_dumpdata;
-
+  
     # Make blast indexes and copy to blastsrv machine $BLASTSRV
     $created_files = blast_indexes( $created_files, $sp ) unless $no_indexes;
 
@@ -193,7 +196,7 @@ for my $sp( sort @SPECIES ){  # users selected spp
     $created_files = undef;
   }
   my $sp_time_taken = time - $species_time;
-  my $hours = localtime(time -$species_time)->hour -1;
+  my $hours         = localtime(time -$species_time)->hour - 1;
   info(2, "Species time $sp $hours hours". localtime($sp_time_taken)->min."mins");
 }
 
@@ -205,7 +208,6 @@ info (2, "Used $logfile.") if $logfile;
 info (2, " Time taken: $hours:". localtime($time_taken)->min."mins");
 close STDERR;
 
-$email ||= 'ensembl-webteam@sanger.ac.uk';
 utils::Tool::mail_log( $logfile, $email ) if $logfile;
 exit;
 
@@ -222,29 +224,26 @@ sub check_types {
 
   my $types = shift;
   my %valid_types = map{ $_ => 1 }
-    qw(
-       pre blast
-       ncrna  cdna_known-ccds
-       cdna_all cdna_known cdna_novel cdna_pseudo cdna_abinitio
-       pep_all  pep_known  pep_novel  pep_abinitio pep_known-ccds
-       dna_seqlevel    dna_seqlevel_masked
-       dna_toplevel    dna_toplevel_masked
-      );
+  qw(
+     pre
+     blast 
+     ncrna
+     cdna_all      cdna_known cdna_novel cdna_pseudo cdna_abinitio cdna_known-ccds
+     pep_all       pep_known  pep_novel              pep_abinitio  pep_known-ccds
+     dna_seqlevel  dna_seqlevel_masked
+     dna_toplevel  dna_toplevel_masked
+  );
 
 
-  my %compound_types = 
-    (
-     dna   => [ qw( dna_seqlevel dna_seqlevel_masked 
-			dna_toplevel dna_toplevel_masked) ],
-     cdna  => [ qw( cdna_all cdna_known cdna_novel cdna_pseudo cdna_abinitio
-                        cdna_known-ccds)],
-     pep   => [ qw( pep_all pep_known pep_novel pep_abinitio pep_known-ccds) ],
-     rna   => [ qw( ncrna ) ],
-     blast => [ qw( rna cdna pep dna_seqlevel dna_seqlevel_masked ) ],
-     pre       => [ qw( dna_toplevel rna cdna pep dna_seqlevel dna_seqlevel_masked ) ],
-     all       => [ qw( cdna pep dna rna) ],
-    );
-
+  my %compound_types = (
+    dna   => [ qw( dna_seqlevel dna_seqlevel_masked dna_toplevel dna_toplevel_masked        )],
+    cdna  => [ qw( cdna_all cdna_known cdna_novel cdna_pseudo cdna_abinitio cdna_known-ccds )],
+    pep   => [ qw( pep_all pep_known pep_novel pep_abinitio pep_known-ccds                  )],
+    rna   => [ qw( ncrna                                                                    )],
+    blast => [ qw( rna cdna pep dna_seqlevel dna_seqlevel_masked                            )],
+    pre   => [ qw( dna_toplevel rna cdna pep dna_seqlevel dna_seqlevel_masked               )],
+    all   => [ qw( cdna pep dna rna                                                         )],
+  );
 
   return utils::Tool::validate_types(\%valid_types, \%compound_types, $types);
 }
@@ -263,7 +262,7 @@ sub create_dirs_for_dumps {
   # Get assembly and check against ini file -------------
   my $cs_adaptor   = $db_adaptor->get_CoordSystemAdaptor;
   my ($highest_cs) = @{$cs_adaptor->fetch_all()};
-  my $assembly     = $highest_cs->version();
+  my $assembly   = $highest_cs->version();
   my $ini_assembly = $SPECIES_DEFS->get_config($sp,"ENSEMBL_GOLDEN_PATH");
   utils::Tool::warning(1, "Error: INI file GOLDEN_PATH is $ini_assembly. Database assembly is $assembly") unless $ini_assembly eq $assembly;
   my $file_details = "$sp.$assembly.$release";
@@ -286,15 +285,13 @@ sub create_dirs_for_dumps {
     my ($seqtype, $idtype);
     if ($type =~ /toplevel/) {
       $seqtype = "dna";
-      $idtype = "nonchromosomal";
+      $idtype  = "nonchromosomal";
       # chromosome directories are added later on per species basis
-    }
-    elsif ($type =~ /seqlevel/) {  # contig, chunk, chromosome for Scerevisiae
+    } elsif ($type =~ /seqlevel/) {  # contig, chunk, chromosome for Scerevisiae
       $seqtype = "dna";
-      $idtype = "seqlevel";
+      $idtype  = "seqlevel";
       #$idtype = $cs_adaptor->fetch_sequence_level->name if $release < 40;
-    }
-    else {
+    } else {
       ($seqtype, $idtype) = split (/_/, $type);
     }
     if ($type =~ /masked/) {
@@ -303,10 +300,11 @@ sub create_dirs_for_dumps {
 
     # file name like dna.contig.fa cdna.abinitio.fa
     my $tmp_file = join (".", "$thisdir/$file_details", $seqtype, $idtype || (), "fa");
-    $filehandles->{$type} = Bio::SeqIO->new('-format' => 'Fasta', 
-					    '-file'   => '>'.$tmp_file);
+    $filehandles->{$type} = Bio::SeqIO->new(
+      '-format' => 'Fasta', 
+      '-file'   => '>'.$tmp_file
+    );
   }
-
   my $chr_toplevel = "$sp_folder/dna/$file_details";
   return ( $chr_toplevel, $filehandles );
 }
@@ -320,9 +318,9 @@ sub get_data {
   ### Returns hashref for filehandles where key is the type of dump
   ### and value is the Bio::SeqIO
 
-  my $dbAdaptor    = shift || die( 'Need a DBAdaptor' );
-  my $species      = shift || die( 'Need a species' );
-  my $fhs          = shift || die( 'Need a hashref of types to dump' );
+  my $dbAdaptor  = shift || die( 'Need a DBAdaptor' );
+  my $species    = shift || die( 'Need a species' );
+  my $fhs      = shift || die( 'Need a hashref of types to dump' );
   my $chr_toplevel = shift;  # for toplevel seq directories
   my $load_exons   = 1;
 
@@ -337,8 +335,7 @@ sub get_data {
 
   if(!defined($minimise_memory)){
     $sliceAdaptor->cache_toplevel_seq_mappings();
-  }
-  else{
+  } else{
     info( 1, "Using minimise memory option. Will use less memory but will be slower" );
     my @gene_ids = @{$gene_adaptor->list_dbIDs()};
     info( 1, "dumping the data for ".scalar(@gene_ids)." genes" );
@@ -360,91 +357,85 @@ sub get_data {
       #info (1, "M1: $seq_name");
       # If not chr based toplevel, use predefined filehandle
       if ( ($coord_system !~ /^chromosome$/i) or  ( $seq_name =~/random
-						 |E\d\d\w*$
-						 |_NT_
-                                                 |scaffold_
-						 /x)  ) {
-	if ( my $seqio = $fhs->{'dna_toplevel'} ){
-	  dump_dna( $seqio, $slice, 'dna' );
-	}
-	if ( my $seqio_masked = $fhs->{'dna_toplevel_masked'} ){
-	  dump_dna( $seqio_masked, $slice->get_repeatmasked_seq(\@analyses), 'dna_rm' );
-	}
-      }
-
+                           |E\d\d\w*$
+                           |_NT_
+                           |scaffold_
+                           /x)  ) {
+        if ( my $seqio = $fhs->{'dna_toplevel'} ){
+          dump_dna( $seqio, $slice, 'dna' );
+        }
+        if ( my $seqio_masked = $fhs->{'dna_toplevel_masked'} ){
+          dump_dna( $seqio_masked, $slice->get_repeatmasked_seq(\@analyses), 'dna_rm' );
+        }
       # chromosome based system, need to make new files for each chr
-      else  {
-	my $file = ">$chr_toplevel.%s.chromosome.$seq_name.fa";
-	#info( 1, "M2: Dump into $file");
-	
-	if($fhs->{'dna_toplevel'} ){
-	  #info(1, "M3: DNA");
-	  my $seqio = Bio::SeqIO->new('-format' => 'Fasta', 
-				   '-file'   =>  sprintf ($file, "dna"));
-	  dump_dna( $seqio, $slice, 'dna' );
-
-	  # Need to add these so they are closed and gzipped
-	  $fhs->{"$chr_toplevel.dna.chromosome.$seq_name.fa"} = $seqio;
-	}
-
-	if($fhs->{'dna_toplevel_masked'} ){
-	  #info (1, "M4: DNA");
-	  my $seqio_masked = Bio::SeqIO->new('-format' => 'Fasta', 
-					  '-file' => sprintf ($file,"dna_rm"));
-	  #dump_dna( $seqio_masked, $slice->get_repeatmasked_seq(\@analyses), 'dna_rm' );
-	  #dump_dna( $seqio_masked, $slice->get_repeatmasked_seq([('RepeatMask','Dust','TRF','Mono_sup_RepeatMask')]), 'dna_rm' );
-	  dump_dna_masked( $seqio_masked, $slice, mask_sequence($slice, \@analyses), 'dna_rm' );
-
-	  # Need to add these so they are closed and gzipped
-	  $fhs->{"$chr_toplevel.dna_rm.chromosome.$seq_name.fa"} = $seqio_masked;
-	}
+      } else  {
+        my $file = ">$chr_toplevel.%s.chromosome.$seq_name.fa";
+        #info( 1, "M2: Dump into $file");
+      
+        if($fhs->{'dna_toplevel'} ){
+          #info(1, "M3: DNA");
+          my $seqio = Bio::SeqIO->new('-format' => 'Fasta', 
+                       '-file'   =>  sprintf ($file, "dna"));
+          dump_dna( $seqio, $slice, 'dna' );
+  
+          # Need to add these so they are closed and gzipped
+          $fhs->{"$chr_toplevel.dna.chromosome.$seq_name.fa"} = $seqio;
+        }
+  
+        if($fhs->{'dna_toplevel_masked'} ){
+          #info (1, "M4: DNA");
+          my $seqio_masked = Bio::SeqIO->new('-format' => 'Fasta', 
+                          '-file' => sprintf ($file,"dna_rm"));
+          #dump_dna( $seqio_masked, $slice->get_repeatmasked_seq(\@analyses), 'dna_rm' );
+          #dump_dna( $seqio_masked, $slice->get_repeatmasked_seq([('RepeatMask','Dust','TRF','Mono_sup_RepeatMask')]), 'dna_rm' );
+          dump_dna_masked( $seqio_masked, $slice, mask_sequence($slice, \@analyses), 'dna_rm' );
+  
+          # Need to add these so they are closed and gzipped
+          $fhs->{"$chr_toplevel.dna_rm.chromosome.$seq_name.fa"} = $seqio_masked;
+        }
       }
     }
     # End dna_toplevel (masked and not masked) ------------------------------
     if(scalar( grep{$_ !~ /^dna|abinitio|\/dna\// } keys %$fhs ))  {
       unless ($minimise_memory) {
-	foreach my $gene( @{$slice->get_all_Genes(undef,undef,$load_exons)} ){
-	  dump_data_for_gene($gene, $fhs);
-	}
+        foreach my $gene( @{$slice->get_all_Genes(undef,undef,$load_exons)} ){
+          dump_data_for_gene($gene, $fhs);
+        }
       }
     }
-
+  
     # Abinitio dumps ----------------------------------------------------------
     #info (1, "Abinitio section");
     if ( scalar (grep {$_ =~ /_abinitio/ } keys %$fhs ))  {
       foreach my $transcript( @{$slice->get_all_PredictionTranscripts(undef,$load_exons)} ){
-	my $subtype = $transcript->analysis->logic_name;
-	if( my $seqio = $fhs->{'cdna_abinitio'} ){
-	  dump_cdna_rna( $seqio, $transcript, "cdna:$subtype" );
-	}
-	if( my $seqio = $fhs->{'pep_abinitio'} ){
-	  utils::Tool::warning(1, "No translation for transcript:". $transcript->stable_id )
-	    && next unless $transcript->translation;
-	  dump_pep( $seqio, $transcript, "pep:$subtype" );
-	}
+        my $subtype = $transcript->analysis->logic_name;
+        if( my $seqio = $fhs->{'cdna_abinitio'} ){
+          dump_cdna_rna( $seqio, $transcript, "cdna:$subtype" );
+        }
+        if( my $seqio = $fhs->{'pep_abinitio'} ){
+          utils::Tool::warning(1, "No translation for transcript:". $transcript->stable_id )
+          && next unless $transcript->translation;
+          dump_pep( $seqio, $transcript, "pep:$subtype" );
+        }
       }
     }
-
+  
     # DNA seqlevel dumps -----------------------------------------------------
     #info (1, "DNA seq level section");
     if ( scalar( grep {$_ =~ /^dna_seqlevel/ } keys %$fhs ) ) {
       foreach my $segment( @{$slice->project('seqlevel')} ){
-	my $coord_system = $slice->coord_system;
-	my $location = join( ':', 
-			     $coord_system->name,
-			     $coord_system->version,
-			     $slice->seq_region_name,
-			     $segment->from_start,
-			     $segment->from_end,
-			     $segment->to_Slice->strand );
-	
-	if( my $seqio = $fhs->{'dna_seqlevel'} ){
-	  dump_dna( $seqio, $segment->to_Slice, 'dna:seqlevel', $location );
-	}
-	if( my $seqio = $fhs->{'dna_seqlevel_masked'} ){
-	  dump_dna( $seqio, $segment->to_Slice->get_repeatmasked_seq(\@analyses),
-		     'dna_rm:seqlevel', $location );
-	}
+        my $coord_system = $slice->coord_system;
+        my $location = join( ':', 
+          $coord_system->name, $coord_system->version, $slice->seq_region_name,
+  	$segment->from_start, $segment->from_end, $segment->to_Slice->strand
+        ); 
+        if( my $seqio = $fhs->{'dna_seqlevel'} ){
+          dump_dna( $seqio, $segment->to_Slice, 'dna:seqlevel', $location );
+        }
+        if( my $seqio = $fhs->{'dna_seqlevel_masked'} ){
+          dump_dna( $seqio, $segment->to_Slice->get_repeatmasked_seq(\@analyses),
+            'dna_rm:seqlevel', $location );
+        }
       }
     }
     #info( 1, "End toplevel ". $slice->name );
@@ -455,7 +446,7 @@ sub get_data {
     my $seqio = $fhs->{$type};
     my $file = $seqio->file;
     $file =~ s/^>//;
-    $file    || ( utils::Tool::warning( 1, "Dump type $type has no filename" ) && next );
+    $file  || ( utils::Tool::warning( 1, "Dump type $type has no filename" ) && next );
     -e $file || ( info( 1, "File $file ($type) does not exist" ) && next );
     if( -z $file ){ #Empty file
       unlink $file || warn "Can't delete $file: $!";
@@ -482,27 +473,27 @@ sub dump_data_for_gene {
     my $logic_name = lc($gene->analysis->logic_name);
     my $subtype;
     my $ccds = "";
-    if   ( $logic_name =~/ncrna/)     { $subtype = 'ncrna';}
-    elsif( ! $transcript->translation ){ $subtype = 'pseudogene' }
-    elsif( $transcript->is_known   ){ $subtype = 'known'      }
-    else                            { $subtype = 'novel'      }
-    
+    if   ( $logic_name =~/ncrna/)       { $subtype = 'ncrna';      }
+    elsif( ! $transcript->translation ) { $subtype = 'pseudogene'; }
+    elsif( $transcript->is_known   )    { $subtype = 'known';      }
+    else                                { $subtype = 'novel';      }
+  
     if ($logic_name eq 'pseudogene' && $subtype ne 'pseudogene') {
       utils::Tool::warning(1, "Logic name is set to pseudogene, but transcript has translation:".$transcript->translation);
     }
     # If it is a ccds, $subtype = ccds instead
     if( $transcript->translation ) {
       foreach my $xref ( @{$transcript->translation->get_all_DBEntries} ) {
-	if ($xref->database eq 'CCDS') {
-	  $subtype = "known-ccds";
-	  $ccds =   $xref->primary_id . '.' . $xref->version;
-	  if( my $seqio = $fhs->{'cdna_known-ccds'} ){
-	    dump_cdna_rna($seqio, $transcript, "cdna:$subtype", $gene, $ccds);
-	  }
-	  if( my $seqio = $fhs->{'pep_known-ccds'} and $subtype eq 'known-ccds' ){
-	    dump_pep( $seqio, $transcript, "pep:$subtype", $gene, $ccds);
-	  }
-	}
+        if ($xref->database eq 'CCDS') {
+          $subtype = "known-ccds";
+          $ccds =   $xref->primary_id . '.' . $xref->version;
+          if( my $seqio = $fhs->{'cdna_known-ccds'} ){
+            dump_cdna_rna($seqio, $transcript, "cdna:$subtype", $gene, $ccds);
+          }
+          if( my $seqio = $fhs->{'pep_known-ccds'} and $subtype eq 'known-ccds' ){
+            dump_pep( $seqio, $transcript, "pep:$subtype", $gene, $ccds);
+          }
+        }
       }
     }
     if( ( my $seqio = $fhs->{'cdna_all'} and $subtype ne 'ncrna') ) {
@@ -517,9 +508,9 @@ sub dump_data_for_gene {
     if( my $seqio = $fhs->{'cdna_novel'} and $subtype eq 'novel' ){
       dump_cdna_rna( $seqio, $transcript, 'cdna:novel', $gene);
     }
-    
+  
     if( my $seqio = $fhs->{'pep_all'} and $subtype ne 'pseudogene'
-	and $subtype ne 'ncrna'){
+      and $subtype ne 'ncrna'){
       dump_pep( $seqio, $transcript, "pep:$subtype", $gene, $ccds);
     }
     if( my $seqio = $fhs->{'pep_known'} and $subtype eq 'known' ){
@@ -528,7 +519,7 @@ sub dump_data_for_gene {
     if( my $seqio = $fhs->{'pep_novel'} and $subtype eq 'novel' ){
       dump_pep( $seqio, $transcript, 'pep:novel', $gene);
     }
-    
+  
     if( ( my $seqio = $fhs->{'ncrna'} and $subtype eq 'ncrna' ) ) {
       $subtype = $gene->biotype;
       dump_cdna_rna( $seqio, $transcript, "$logic_name:$subtype",$gene);
@@ -551,12 +542,12 @@ sub dump_cdna_rna {
   $ccds_id ||= " ";
   my $coord_system = $transcript->slice->coord_system;
   my $location = join( ':', 
-                       $coord_system->name,
-                       $coord_system->version,
-                       $transcript->seq_region_name,
-                       $transcript->seq_region_start,
-                       $transcript->seq_region_end,
-                       $transcript->seq_region_strand );
+             $coord_system->name,
+             $coord_system->version,
+             $transcript->seq_region_name,
+             $transcript->seq_region_start,
+             $transcript->seq_region_end,
+             $transcript->seq_region_strand );
 
   my $label = $gene ? "gene:".$gene->stable_id : " ";
   my $seq = $transcript->seq();
@@ -579,19 +570,18 @@ sub dump_pep {
   $ccds_id ||= " ";
   my $translation = $transcript->translation;
   if( ! $translation ){
-
     # Print if this is pseudogene -> logic of script must be faulty cos shouldnt get here if pseudo
     utils::Tool::warning( 1, "Transcript ".$transcript->stable_id." does not translate" );
     return;
   }
   my $coord_system = $transcript->slice->coord_system;
   my $location = join( ':', 
-                       $coord_system->name,
-                       $coord_system->version,
-                       $transcript->seq_region_name,
-                       $transcript->seq_region_start,
-                       $transcript->seq_region_end,
-                       $transcript->seq_region_strand );
+             $coord_system->name,
+             $coord_system->version,
+             $transcript->seq_region_name,
+             $transcript->seq_region_start,
+             $transcript->seq_region_end,
+             $transcript->seq_region_strand );
 
   my $display_id = $translation->stable_id || $transcript->stable_id;
   my $label;
@@ -627,9 +617,10 @@ sub dump_dna{
   my $pad_start = 'N' x ( $slice->start - 1 );
   my $pad_end   = 'N' x ( $slice->seq_region_length - $slice->end );
 
-  my $seq = new Bio::Seq
-    ( -seq         => $pad_start . $slice->seq() . $pad_end,
-      -display_id  => $slice->seq_region_name );
+  my $seq = new Bio::Seq(
+    -seq     => $pad_start . $slice->seq() . $pad_end,
+    -display_id  => $slice->seq_region_name 
+  );
   $seq->description( "$type:". $slice->coord_system->name(). " $location" );
   #info( 1, "DNA>".$seq->display_id );
 
@@ -654,9 +645,10 @@ sub dump_dna_masked{
   my $pad_start = 'N' x ( $slice->start - 1 );
   my $pad_end   = 'N' x ( $slice->seq_region_length - $slice->end );
 
-  my $seq = new Bio::Seq
-    ( -seq         => $pad_start . $seqstr . $pad_end,
-      -display_id  => $slice->seq_region_name );
+  my $seq = new Bio::Seq(
+    -seq     => $pad_start . $seqstr . $pad_end,
+    -display_id  => $slice->seq_region_name
+  );
   $seq->description( "$type:". $slice->coord_system->name(). " $location" );
   #info( 1, "DNA>".$seq->display_id );
 
@@ -666,7 +658,7 @@ sub dump_dna_masked{
 
 #------------------------------------------------------------------------
 sub process_size {
-  my $size = `ps $$ -o vsz |tail -1`;
+  my $size = `ps -o vsz $$ | tail -1`;
   chomp $size;
   my $unit = chop $size;
   #if ($unit eq "K") do nothing, we want size in Kb
@@ -703,21 +695,19 @@ sub mask_sequence {
     #print STDERR " Chunk slice name = $chunk_slice_name\n";
 
     my $chunk_slice = $slice->adaptor->fetch_by_name($chunk_slice_name);
-    
+  
 #    foreach my $lname (@$logic_names) {
 #      my $rfs = $chunk_slice->get_all_RepeatFeatures($lname);
 #      foreach my $old_f (@$rfs) {
 #        my $f = $old_f->transfer( $slice );
 #        $padstr = 'N' x $length;
-#        
 #      }
-#
 #    }
 
     my $chunk_seq =  $chunk_slice->get_repeatmasked_seq($logic_names)->seq;
 
     $slice_seq .= $chunk_seq;
-
+  
     $chunk_start += $chunk_size;
     $chunk_end   += $chunk_size;
     if ($chunk_end > $slice->end) {
@@ -725,9 +715,9 @@ sub mask_sequence {
     }
   }
 
- # if (CORE::length($slice_seq) != $slice->length) {
- #   print STDERR "Length difference for slice sequence\n";
- # }
+#  if (CORE::length($slice_seq) != $slice->length) {
+#    print STDERR "Length difference for slice sequence\n";
+#  }
 
   return $slice_seq;
 }
@@ -759,73 +749,70 @@ sub blast_indexes {
     next unless $seqio;
     my $fh = $seqio->file;
     $fh =~ s/^>//;
-    unlink $fh || warn "Can't delete $fh: $!" if -z $fh;    # delete empty file
+    unlink $fh || warn "Can't delete $fh: $!" if -z $fh;  # delete empty file
 
     next unless $types =~ /^dna_seqlevel|^cdna|^pep|^ncrna/;
     if ($no_dumpdata) {
       if (-e "$fh.gz") {
-	info(1, "Gunziping $fh.gz");
-	warning(1, "unzip $fh already exists in file system") if -e $fh;
-	system("gunzip $fh.gz");
-      }
-      else {
-	undef( $created_files->{$types} );
-	warn "Skipping $types";
-	next;
+        info(1, "Gunziping $fh.gz");
+        warning(1, "unzip $fh already exists in file system") if -e $fh;
+        system("gunzip $fh.gz");
+      } else {
+        undef( $created_files->{$types} );
+        warn "Skipping $types";
+        next;
       }
     }
 
 
-    # Make blast indexes
-#     info (2, "Creating blast indexes for $types");
-#     my $command;
-#     my $names;
-#     if ($types=~/^pep/) {
-#       $command =  $pep_command;
-#       foreach (".atb", ".ahd", ".bsq", "" ) {
-#         my $file = "$fh$_";
-#         (my $file_name = $file) =~ s#.*/##;
-# 	  $names->{$file} = $file_name;
-#       }
-#      }
-#      else {
-#        $command =  $dna_command;
-#        foreach (".ntb", ".nhd", ".csq", "" ) {
-# 	 my $file = "$fh$_";
-# 	 (my $file_name = $file) =~ s#.*/##;
-# 	   $names->{$file} = $file_name;
-#        }
-#      }
+  # Make blast indexes
+#   info (2, "Creating blast indexes for $types");
+#   my $command;
+#   my $names;
+#   if ($types=~/^pep/) {
+#     $command =  $pep_command;
+#     foreach (".atb", ".ahd", ".bsq", "" ) {
+#     my $file = "$fh$_";
+#     (my $file_name = $file) =~ s#.*/##;
+#       $names->{$file} = $file_name;
+#     }
+#    }
+#    else {
+#    $command =  $dna_command;
+#    foreach (".ntb", ".nhd", ".csq", "" ) {
+#      my $file = "$fh$_";
+#      (my $file_name = $file) =~ s#.*/##;
+#        $names->{$file} = $file_name;
+#    }
+#    }
 
-#     system("$command $fh");
+#   system("$command $fh");
 
-    # Do blast xdformat indexes
+  # Do blast xdformat indexes
     my $names = xdformat_blast_indexes($types, $fh, $release_dir);
 
-     # Copy blast indexes across------------------------------
+   # Copy blast indexes across------------------------------
     foreach my $file (keys %$names ) {
-        my $file_name = $names->{$file};
-        utils::Tool::warning(1, "Error producing file $file") && next unless -s "$file";
-        system("scp -i /nfs/WWW/.ssh/blastsrv $file $MACHINE:/data/blastdb/ensembl/$release_dir/$file_name");
-        unlink($file) || warn "Can't delete $file: $!" unless $file eq $fh;
-     }
+      my $file_name = $names->{$file};
+      utils::Tool::warning(1, "Error producing file $file") && next unless -s "$file";
+      system("scp -i $key_file $file $blast_machine:/data/blastdb/ensembl/$release_dir/$file_name");
+      unlink($file) || warn "Can't delete $file: $!" unless $file eq $fh;
+    }
 
-     # Check ini file configuration--------------------------
-     $types =~ s/dna_seqlevel/latestgp/;
-     $types =~ s/ncrna/rna_nc/;
-     if ($configured{$types}) {
-       delete $configured{$types};
-     }
-     else {
-       utils::Tool::warning(1, uc($types)." needs to be added to $sp ini file BLAST DATASOURCES");
-     }
-   }
+   # Check ini file configuration--------------------------
+    $types =~ s/dna_seqlevel/latestgp/;
+    $types =~ s/ncrna/rna_nc/;
+    if ($configured{$types}) {
+      delete $configured{$types};
+    } else {
+      utils::Tool::warning(1, uc($types)." needs to be added to $sp ini file BLAST DATASOURCES");
+    }
+  }
 
   # Check all configured are accounted for
   utils::Tool::warning(1, "These types are in the $sp ini file but not produced during this dump: ". join ", ",(sort keys %configured) ) if keys %configured;
 
   return ($created_files);
-
 }
 
 
@@ -835,26 +822,24 @@ sub xdformat_blast_indexes {
   my ($types, $fh, $release_dir) = @_;
 
   info (1, "xdformat indexes");
-  my $xdformat_command = "/ensweb/wwwdev/headfc1/src/xdformat ";
   my @names;
   if ($types =~/^pep/) {
     @names = qw( .xpd .xps .xpt);
     system ("$xdformat_command -p $fh");
-  }
-  else {
+  } else {
     @names = qw( .xnd .xns .xnt);
     system ("$xdformat_command -n $fh");
   }
 
-  my $xdformat_dir = "/mysqlg/dumps/$release_dir/xdformat";
+  my $xdformat_dir = "$basedir$release_dir/xdformat";
   utils::Tool::check_dir($xdformat_dir);
 
   my $xdformat_files = {};
   foreach my $index (@names ) {
     my $file = "$fh$index";
     (my $file_name = $file) =~ s#.*/##;
-      utils::Tool::warning(1, "Error producing file $file") && next unless -s "$file";
-    #system ("mv $file $xdformat_dir/$file_name");
+    utils::Tool::warning(1, "Error producing file $file") && next unless -s "$file";
+    system ("mv $file $xdformat_dir/$file_name");
     $xdformat_files->{$file} = $file_name;
   }
   return $xdformat_files;
@@ -865,21 +850,19 @@ sub ssaha_servers {
   my ($created_files, $species, $sp_folder, $db_adaptor) = @_;
 
   my $dna_dir;
-  if ($DUMPDIR eq $basedir."release-$release/") {
-    $dna_dir  = "/mysqlg/dumps/ssaha2/dna/";  #$basedir."ssaha2/dna/";
-  } 
-  elsif ( $DUMPDIR =~ /^$basedir/ ) {
-    $dna_dir  = "/mysqlg/dumps/ssaha2/dna/"; #$basedir."ssaha2/dna/";
-  }
-  else {
+  if( $DUMPDIR eq $basedir."release-$release/" ) {
+    $dna_dir  = $basedir."ssaha2/dna/";
+  } elsif ( $DUMPDIR =~ /^$basedir/ ) {
+    $dna_dir  = $basedir."ssaha2/dna/";
+  } else {
     $dna_dir = $DUMPDIR."/ssaha2/dna/"; 
   }
 
   my $cs_adaptor   = $db_adaptor->get_CoordSystemAdaptor;
   my ($highest_cs) = @{$cs_adaptor->fetch_all()};
-  my $assembly     = $highest_cs->version();
+  my $assembly   = $highest_cs->version();
   my $ini_datasources = $SPECIES_DEFS->get_config($species, "SSAHA2_DATASOURCES");
-  my $command = "ssaha2Build -save ";
+  my $command = "$ssaha_command -save ";
 
   my @toplevel;
   foreach my $types (keys %$created_files) {
@@ -888,19 +871,19 @@ sub ssaha_servers {
     my $fh = $seqio->file;
     $fh =~ s/^>//;
 
-    unlink $fh || warn "Can't delete $fh: $!" if -z $fh;    # delete empty file
+    unlink $fh || warn "Can't delete $fh: $!" if -z $fh;  # delete empty file
     next unless $types =~ /toplevel$|dna\.chromosome|cdna_all/; #toplevel dna matches chr or toplevel
 
     if ($no_dumpdata) {
       if (-e "$fh.gz") {
-	info(1, "Gunziping $fh.gz");
-	warning(1, "unzip $fh already exists in file system") if -e $fh;
-	system("gunzip $fh.gz");
+        info(1, "Gunziping $fh.gz");
+        warning(1, "unzip $fh already exists in file system") if -e $fh;
+        system("gunzip $fh.gz");
       }
     }
     next unless -e $fh;
 
-    if ($types eq 'cdna_all' && $TYPES[0] ne 'pre') {  # no cDNA ssaha for pre site
+    if( $types eq 'cdna_all' && $TYPES[0] ne 'pre' ) {  # no cDNA ssaha for pre site
       create_cdna_ssaha($ini_datasources, $species, $assembly, $release, $command, $fh);
       next;
     }
@@ -918,7 +901,7 @@ sub ssaha_servers {
       system("gunzip $dnadir/$file");
       $file =~ s/\.gz$//;
       my $seqio = Bio::SeqIO->new('-format' => 'Fasta', 
-			      '-file'   =>  "$dnadir/$file");
+                  '-file'   =>  "$dnadir/$file");
       $created_files->{$file} = $seqio;
       push (@toplevel, "$dnadir/$file");
     }
@@ -934,9 +917,8 @@ sub create_dna_ssaha {
 
   my $port_dna;
   if ( $ini_datasources->{"LATESTGP"} ) {
-     ($port_dna = $ini_datasources->{"LATESTGP"}) =~ s/\w.+:(\d+)/$1/;
-  }
-  else {
+   ($port_dna = $ini_datasources->{"LATESTGP"}) =~ s/\w.+:(\d+)/$1/;
+  } else {
     utils::Tool::warning(1, "Add LATESTGP SSAHA2_DATASOURCES to $species ini file and correct file name in $dna_dir.");
   }
   my $dna_server = "$dna_dir$port_dna.$species.$assembly.dna";  # only toplevel but not rm
@@ -958,18 +940,18 @@ sub create_cdna_ssaha {
   my $port_cdna;
   if ($ini_datasources->{"CDNA_ALL"}) {
     ($port_cdna = $ini_datasources->{"CDNA_ALL"}) =~ s/\w.+:(\d+)/$1/;
-  }
-  else {
+  } else {
     utils::Tool::warning(1, "Add CDNA_ALL SSAHA2_DATASOURCES to $species ini file and correct file name on $ssaha_machine.");
   }
 
-  my $cdna_server = "$DUMPDIR/$port_cdna.$species.$assembly.$release.cdna_all";
-
+  my $cdna_server = "$DUMPDIR/ssaha2/$port_cdna.$species.$assembly.$release.cdna_all";
+  `mkdir $DUMPDIR/ssaha2` unless -e "$DUMPDIR/ssaha2";
+  warn("SSAHA CDNA: $command $cdna_server $fh");
   system("$command $cdna_server $fh");
   foreach  (qw(base body head name size) ) {
     my $file = "$cdna_server.$_";
-    system("scp -i /nfs/WWW/.ssh/blastsrv $file $ssaha_machine:/ensemblweb/ssaha2/HashTables/release-$release/");
-    unlink($file) || warn "Can't delete $file: $!";
+    system("scp -i $key_file $file $ssaha_machine:/ensemblweb/ssaha2/HashTables/release-$release/");
+#    unlink($file) || warn "Can't delete $file: $!";
   }
   return 1;
 }
@@ -990,8 +972,7 @@ sub compress {
     my $size = -s $fh;
     if ($size > 3500000000 ){
       split_data($fh);
-    }
-    else {
+    } else {
       system("gzip -9 $fh") ==0 or utils::Tool::warning(1, "Can't gzip file $! $fh");
     }
   }
@@ -1005,11 +986,10 @@ sub info{
   $msg || ( carp("Need a warning message" ) && return );
 
   if ($v > 1) {
-  warn( sprintf "[INFO_2] %s [%0.3fs]\n", $msg, time()- $script_start_time );
-  }
-  else {
+    warn( sprintf "[INFO_2] %s [%0.3fs]\n", $msg, time()- $script_start_time );
+  } else {
     warn( sprintf "[INFO] %s [%0.3fs]\n", $msg, time()- $script_start_time );
-    # warn( sprintf "[INFO] %s [%0.3fs %d]\n", $msg, time()- $script_start_time, &process_size );
+  # warn( sprintf "[INFO] %s [%0.3fs %d]\n", $msg, time()- $script_start_time, &process_size );
   }
   return 1;
 }
@@ -1026,7 +1006,7 @@ sub split_data {
 
   open (IN, "$file") or die "Can't open infile $file: $!\n";
   open (OUT, ">$name.$chunk.$ext") 
-    or die "Can't create ${name}.${chunk}.$ext: $!\n";
+  or die "Can't create ${name}.${chunk}.$ext: $!\n";
 
   # Core dna file compression ~66%, RefSNP table = 75%
   # Feature dna compression = 88 %
@@ -1037,15 +1017,14 @@ sub split_data {
       print OUT $_;
       close (OUT);
       system ("gzip -9 $name.$chunk.$ext"); # gzip file
-
+  
       # Prepare and open next file
       $chunk++;
       open (OUT, ">$name.$chunk.$ext") or die "Can't create ${name}.${chunk}.txt.table: $!\n";
-
+  
       info (1, "Creating  ${name}.${chunk}.$ext"); 
       $bytes = 0;
-    }
-    else{
+    } else{
       print OUT $_;
     }
   }
@@ -1073,35 +1052,35 @@ FILE NAMES
 The files are consistently named following this pattern:
    <species>.<assembly>.<release>.<sequence type>.<id type>.<id>.fa.gz
 
-<species>: The systematic name of the species. 
-<assembly>: The assembly build name.
-<release>: The release number. 
-<sequence type>
-    * 'dna' - unmasked genomic DNA sequences.
-    * 'dna_rm' - masked genomic DNA.  Interspersed repeats and low 
-       complexity regions are detected with the RepeatMasker tool and masked
-       by replacing repeats with 'N's.
+<species>:   The systematic name of the species. 
+<assembly>:  The assembly build name.
+<release>:   The release number. 
+<sequence type>:
+  * 'dna' - unmasked genomic DNA sequences.
+  * 'dna_rm' - masked genomic DNA.  Interspersed repeats and low 
+     complexity regions are detected with the RepeatMasker tool and masked
+     by replacing repeats with 'N's.
 <id type> One of the following:
-    * 'chromosome' - The top-level coordinate system in most species in Ensembl
-    * 'nonchromosomal' - Contains DNA that has not been assigned a chromosome
-    * 'seqlevel' - This is usually sequence scaffolds, chunks or clones. 
+  * 'chromosome'a    - The top-level coordinate system in most species in Ensembl
+  * 'nonchromosomal' - Contains DNA that has not been assigned a chromosome
+  * 'seqlevel'       - This is usually sequence scaffolds, chunks or clones. 
      -- 'scaffold'  - Larger sequence contigs from the assembly of shorter
-      sequencing reads (often from whole genome shotgun, WGS) which could 
-      not yet be assembled into chromosomes. Often more genome sequencing 
-      is needed to narrow gaps and establish a tiling path.
+        sequencing reads (often from whole genome shotgun, WGS) which could 
+        not yet be assembled into chromosomes. Often more genome sequencing 
+        is needed to narrow gaps and establish a tiling path.
      -- 'chunk' -  While contig sequences can be assembled into large entities, 
-      they sometimes have to be artificially broken down into smaller entities 
-      called 'chunks'. This is due to limitations in the annotation
-      pipeline and the finite record size imposed by MySQL which stores the
-      sequence and annotation information.
-    -- 'clone' - In general this is the smallest sequence entity.  It is often
-       identical to the sequence of one BAC clone, or sequence region 
-       of one BAC clone which forms the tiling path. 
-<id>: The actual sequence identifier. Depending on the <id type> the <id>
-    could represent the name of a chromosome, a scaffold, a contig, a clone ..
-     Field is empty for seqlevel files
-fa : All files in these directories represent FASTA database files
-gz : All files are compacted with GNU Zip for storage efficiency.
+        they sometimes have to be artificially broken down into smaller entities 
+        called 'chunks'. This is due to limitations in the annotation
+        pipeline and the finite record size imposed by MySQL which stores the
+        sequence and annotation information.
+     -- 'clone' - In general this is the smallest sequence entity.  It is often
+        identical to the sequence of one BAC clone, or sequence region 
+        of one BAC clone which forms the tiling path. 
+<id>:     The actual sequence identifier. Depending on the <id type> the <id>
+          could represent the name of a chromosome, a scaffold, a contig, a clone ..
+          Field is empty for seqlevel files
+fa: All files in these directories represent FASTA database files
+gz: All files are compacted with GNU Zip for storage efficiency.
 
 -----------
 TOPLEVEL
@@ -1110,17 +1089,17 @@ These files contain the full sequence of the assembly in fasta format.
 They contain one chromosome per file. 
 
 EXAMPLES
-     The genomic sequence of human chromosome 1:
-       Homo_sapiens.NCBI36.40.dna.chromosome.1.fa.gz
+   The genomic sequence of human chromosome 1:
+     Homo_sapiens.NCBI36.40.dna.chromosome.1.fa.gz
 
-     The masked version of the genome sequence on human chromosome 1 
-     (contains '_rm' in the name):
-        Homo_sapiens.NCBI36.40.dna_rm.chromosome.1.fa.gz
+   The masked version of the genome sequence on human chromosome 1 
+   (contains '_rm' in the name):
+     Homo_sapiens.NCBI36.40.dna_rm.chromosome.1.fa.gz
 
-     Non-chromosomal assembly sequences:
-     e.g. mitochondrial genome, sequence contigs not yet mapped on chromosomes
-       Homo_sapiens.NCBI36.40.dna.nonchromosomal.fa.gz
-       Homo_sapiens.NCBI36.40.dna_rm.nonchromosomal.fa.gz
+   Non-chromosomal assembly sequences:
+   e.g. mitochondrial genome, sequence contigs not yet mapped on chromosomes
+     Homo_sapiens.NCBI36.40.dna.nonchromosomal.fa.gz
+     Homo_sapiens.NCBI36.40.dna_rm.nonchromosomal.fa.gz
 
 
 -----------------
@@ -1129,30 +1108,28 @@ SEQUENCE LEVEL
 These files are fasta file dumps of the assembly at the sequence level.
 
 EXAMPLES
-   Format:   <species>.<assembly>.<release>.<sequence type>.seqlevel.fa.gz
+  Format:   <species>.<assembly>.<release>.<sequence type>.seqlevel.fa.gz
 
 Unmasked sequence file name example (until release 39):
-       Homo_sapiens.NCBI34.dna.contig.fa.gz
-       Anopheles_gambiae.MOZ2a.dna.chunk.fa.gz
-       Fugu_rubripes.FUGU2.dna.scaffold.fa.gz
-       Saccharomyces_cerevisiae.SGD1.oct.dna.chromosome.fa.gz
+    Homo_sapiens.NCBI34.dna.contig.fa.gz
+    Anopheles_gambiae.MOZ2a.dna.chunk.fa.gz
+    Fugu_rubripes.FUGU2.dna.scaffold.fa.gz
+    Saccharomyces_cerevisiae.SGD1.oct.dna.chromosome.fa.gz
 
 Repeat masked file example (contain '_rm' in the file name) (until release 39);
-      Homo_sapiens.NCBI34.dna_rm.contig.fa.gz
-      Anopheles_gambiae.MOZ2a.dna_rm.chunk.fa.gz
-      Fugu_rubripes.FUGU2.dna_rm.scaffold.fa.gz
-      Saccharomyces_cerevisiae.SGD1.oct.dna_rm.chromosome.fa.gz
+    Homo_sapiens.NCBI34.dna_rm.contig.fa.gz
+    Anopheles_gambiae.MOZ2a.dna_rm.chunk.fa.gz
+    Fugu_rubripes.FUGU2.dna_rm.scaffold.fa.gz
+    Saccharomyces_cerevisiae.SGD1.oct.dna_rm.chromosome.fa.gz
 
 Now all of these contain 'seqlevel' in the file names e.g. 
-       Homo_sapiens.NCBI36.40.dna.seqlevel.fa.gz
-       Anopheles_gambiae.MOZ2a.40.dna_rm.seqlevel.fa.gz
-       Fugu_rubripes.FUGU2.40.dna.seqlevel.fa.gz
-       Saccharomyces_cerevisiae.SGD1.40.dna_rm.seqlevel.fa.gz
+    Homo_sapiens.NCBI36.40.dna.seqlevel.fa.gz
+    Anopheles_gambiae.MOZ2a.40.dna_rm.seqlevel.fa.gz
+    Fugu_rubripes.FUGU2.40.dna.seqlevel.fa.gz
+    Saccharomyces_cerevisiae.SGD1.40.dna_rm.seqlevel.fa.gz
 
 Note that the type of sequence container varies in different species: 
 contigs in human, chunks in Anopheles, scaffolds in Fugu.\n\n",
-
-
 
 pep => "
 ####################
@@ -1167,38 +1144,38 @@ FILE NAMES
 The files are consistently named following this pattern:
    <species>.<assembly>.<release>.<sequence type>.<status>.fa.gz
 
-<species>: The systematic name of the species. 
-<assembly>: The assembly build name.
-<release>: The release number. 
+<species>:       The systematic name of the species. 
+<assembly>:      The assembly build name.
+<release>:       The release number. 
 <sequence type>: pep for peptide sequences
 <status>
-    * 'pep.all' - the super-set of all translations resulting from Ensembl known
-       or novel gene predictions.
-    * 'pep.known' - translations of Ensembl known gene predictions 
-       (see more below).  Any ccds_known peptides are in 'pep.known-ccds'.
-    * 'pep.novel' - translations of Ensembl novel gene predictions 
-       (see more below)
-    * 'pep.abinitio' translations resulting from 'ab initio' gene 
-       prediction algorithms such as SNAP and GENSCAN. In general, all
-      'ab initio' predictions are based solely on the genomic sequence and 
-       not any other experimental evidence. Therefore, not all GENSCAN
-       or SNAP predictions represent biologically real proteins. 
-    * 'pep.known-ccds' -  not present in all species (see more below)
+  * 'pep.all' - the super-set of all translations resulting from Ensembl known
+     or novel gene predictions.
+  * 'pep.known' - translations of Ensembl known gene predictions 
+     (see more below).  Any ccds_known peptides are in 'pep.known-ccds'.
+  * 'pep.novel' - translations of Ensembl novel gene predictions 
+     (see more below)
+  * 'pep.abinitio' translations resulting from 'ab initio' gene 
+     prediction algorithms such as SNAP and GENSCAN. In general, all
+     'ab initio' predictions are based solely on the genomic sequence and 
+     not any other experimental evidence. Therefore, not all GENSCAN
+     or SNAP predictions represent biologically real proteins. 
+  * 'pep.known-ccds' -  not present in all species (see more below)
 fa : All files in these directories represent FASTA database files
 gz : All files are compacted with GNU Zip for storage efficiency.
 
 EXAMPLES (Note: Most species do not sequences for each different <status>)
  for Human:
-      Homo_sapiens.NCBI36.40.pep.all.fa.gz
-            contains all known, ccds and novel peptides
-      Homo_sapiens.NCBI36.40.pep.known-ccds.fa.gz
-            contains all 'ccds' peptide sequences (see below).
-      Homo_sapiens.NCBI36.40.pep.known.fa.gz
-            contains all known peptides (excluding the ccds peptides)
-      Homo_sapiens.NCBI36.40.pep.novel.fa.gz
-            contains all novel peptides
-      Homo_sapiens.NCBI36.40.pep.abinitio.fa.gz
-            contains all abinitio predicted peptide
+    Homo_sapiens.NCBI36.40.pep.all.fa.gz
+      contains all known, ccds and novel peptides
+    Homo_sapiens.NCBI36.40.pep.known-ccds.fa.gz
+      contains all 'ccds' peptide sequences (see below).
+    Homo_sapiens.NCBI36.40.pep.known.fa.gz
+      contains all known peptides (excluding the ccds peptides)
+    Homo_sapiens.NCBI36.40.pep.novel.fa.gz
+      contains all novel peptides
+    Homo_sapiens.NCBI36.40.pep.abinitio.fa.gz
+      contains all abinitio predicted peptide
 
 
 CCDS sequences
@@ -1235,10 +1212,10 @@ General format:
 Example of Ensembl Peptide header:
 
 >ENSP00000328693 pep:novel chromosome:NCBI35:1:904515:910768:1 gene:ENSG00000158815:transcript:ENST00000328693
-   ^               ^    ^      ^                                 ^                    ^
-   ID              |    |      LOCATION                          GENE:stable gene ID  |
-                   |    STATUS                                                        TRANSCRIPT: stable transcript ID
-                   SEQTYPE
+ ^               ^   ^     ^                                   ^                    ^
+ ID              |   |  LOCATION                          GENE:stable gene ID       |
+                 | STATUS                                           TRANSCRIPT: stable transcript ID
+               SEQTYPE
 \n",
 
 
@@ -1261,36 +1238,36 @@ The files are consistently named following this pattern:
 <release>: The release number. 
 <sequence type>: cdna for cDNA sequences
 <status>
-    * 'cdna.all' - the super-set of all transcripts resulting from 
-       Ensembl known, novel and pseudo gene predictions (see more below).
-    * 'cdna.known'    - transcripts from Ensembl known gene predictions only 
-      (see more below).  This set does not include ccds cDNAs.
-    * 'cdna.novel'    - transcripts from Ensembl novel gene predictions only 
-      (see more below).
-    * 'cdna.pseudo'   - transcripts from Ensembl pseudogene predictions.
-    * 'cdna.abinitio' - transcripts resulting from 'ab initio' gene prediction 
-       algorithms such as SNAP and GENSCAN. In general all 'ab initio' 
-       predictions are solely based on the genomic sequence and do not 
-       use other experimental evidence. Therefore, not all GENSCAN or SNAP 
-       cDNA predictions represent biologically real cDNAs. 
-       Consequently, these predictions should be used with care.
-    * 'cdna.known-ccds' -  not present in all species (see more below)
+  * 'cdna.all' - the super-set of all transcripts resulting from 
+     Ensembl known, novel and pseudo gene predictions (see more below).
+  * 'cdna.known'  - transcripts from Ensembl known gene predictions only 
+    (see more below).  This set does not include ccds cDNAs.
+  * 'cdna.novel'  - transcripts from Ensembl novel gene predictions only 
+    (see more below).
+  * 'cdna.pseudo'   - transcripts from Ensembl pseudogene predictions.
+  * 'cdna.abinitio' - transcripts resulting from 'ab initio' gene prediction 
+     algorithms such as SNAP and GENSCAN. In general all 'ab initio' 
+     predictions are solely based on the genomic sequence and do not 
+     use other experimental evidence. Therefore, not all GENSCAN or SNAP 
+     cDNA predictions represent biologically real cDNAs. 
+     Consequently, these predictions should be used with care.
+  * 'cdna.known-ccds' -  not present in all species (see more below)
 
 
 EXAMPLES  (Note: Most species do not sequences for each different <status>)
   for Human:
-      Homo_sapiens.NCBI36.40.cdna.all.fa.gz
-            cDNA sequences for all transcripts: known, ccds, novel and pseudo
-      Homo_sapiens.NCBI36.40.cdna.known-ccds.fa.gz
-            cDNA sequences for 'ccds' sequences (see below).
-      Homo_sapiens.NCBI36.40.cdna.known.fa.gz
-            cDNA sequences for transcripts flagged as 'known' (excluding ccds transcripts).
-      Homo_sapiens.NCBI36.40.cdna.novel.fa.gz
-            cDNA sequences for transcripts flagged as 'novel'.
-      Homo_sapiens.NCBI36.40.cdna.pseudo.fa.gz
-            cDNA sequences for transcripts flagged as 'pseudogene'.
-      Homo_sapiens.NCBI36.40.cdna.abinitio.fa.gz
-            cDNA sequences for 'ab-initio' prediction transcripts.
+    Homo_sapiens.NCBI36.40.cdna.all.fa.gz
+      cDNA sequences for all transcripts: known, ccds, novel and pseudo
+    Homo_sapiens.NCBI36.40.cdna.known-ccds.fa.gz
+      cDNA sequences for 'ccds' sequences (see below).
+    Homo_sapiens.NCBI36.40.cdna.known.fa.gz
+      cDNA sequences for transcripts flagged as 'known' (excluding ccds transcripts).
+    Homo_sapiens.NCBI36.40.cdna.novel.fa.gz
+      cDNA sequences for transcripts flagged as 'novel'.
+    Homo_sapiens.NCBI36.40.cdna.pseudo.fa.gz
+      cDNA sequences for transcripts flagged as 'pseudogene'.
+    Homo_sapiens.NCBI36.40.cdna.abinitio.fa.gz
+      cDNA sequences for 'ab-initio' prediction transcripts.
 
 
 
@@ -1326,15 +1303,12 @@ General format:
 Example of an Ensembl cDNA header:
 
 >ENST00000289823 cdna:known chromosome:NCBI35:8:21922367:21927699:1 gene:ENSG00000158815
- ^               ^    ^      ^                                        ^
- ID              |    |      LOCATION                                 GENE: gene stable ID
-                 |    STATUS
-                 SEQTYPE
+ ^               ^    ^     ^                                       ^
+ ID              |    |  LOCATION                         GENE: gene stable ID
+                 |  STATUS
+              SEQTYPE
 
 \n", 
-
-
-
 
 ncrna => "
 ##################
@@ -1354,12 +1328,12 @@ The files are consistently named following this pattern:
 <release>: The release number. 
 <sequence type>: ncrna for non-coding RNA sequences
 <status>
-    * 'ncrna' - all non-coding RNA genes
+  * 'ncrna' - all non-coding RNA genes
 
 EXAMPLES
   for Human:
-      Homo_sapiens.NCBI36.40.rna.nc.fa.gz
-          Transcript sequences for all ncRNA gene types.
+    Homo_sapiens.NCBI36.40.rna.nc.fa.gz
+      Transcript sequences for all ncRNA gene types.
 
 
 -------------------------------
@@ -1376,10 +1350,10 @@ General format:
 Example of an Ensembl RNA header:
 
 >ENST00000347977 ncrna:miRNA chromosome:NCBI35:1:217347790:217347874:-1 gene:ENSG00000195671
-   ^               ^    ^      ^                                        ^
-   ID              |    |      LOCATION                                 GENE: gene stable ID
-                 |    STATUS
-                 SEQTYPE
+   ^             ^     ^     ^                                          ^
+   ID            |     |  LOCATION                            GENE: gene stable ID
+                 |   STATUS
+              SEQTYPE
 
 \n",  );
 
@@ -1391,7 +1365,7 @@ EnsMart data mining tools. See http://www.ensembl.org/biomart/martview or
 http://www.ebi.ac.uk/biomart/ for more information.
 
 ";
-return ($warning .$text{$key});
+  return ($warning .$text{$key});
 }
 
 
@@ -1498,7 +1472,7 @@ Output may include the following:
 B<  [DIE*]:> Program critical error, dumps have halted.
 
 B<  [WARN]:> Program has encountered an error but is still running, 
-          dumps may have been affected.
+      dumps may have been affected.
 
 B<  [INFO]>: Non-critical message, dumping should continue as normal.
 

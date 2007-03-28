@@ -118,7 +118,7 @@ sub mail_log {
   open(SENDMAIL, "|$sendmail") or die "Cannot open $sendmail: $!";
   print SENDMAIL $subject;
   print SENDMAIL "To: $email_address\n";
-  print SENDMAIL "From: team105-ensembl@sanger.ac.uk\n";
+  print SENDMAIL 'From: team105-ensembl@sanger.ac.uk\n';
   print SENDMAIL "Content-type: text/plain\n\n";
   print SENDMAIL $content . $additional_text;
   close(SENDMAIL);
@@ -164,7 +164,7 @@ sub get_config {
 
 #----------------------------------------------------------------------
 sub sz {
-  my $size = `ps $$ -o vsz |tail -1`;
+  my $size = `ps -o vsz $$ | tail -1`;
   chomp $size;
   my $unit = chop $size;
   if($unit eq "M"){
@@ -172,7 +172,7 @@ sub sz {
   } elsif ($unit eq "G"){
     $size *= 1048576;   # 1024*1024
   }
-  my $rss = `ps $$ -o rss |tail -1`;
+  my $rss = `ps -o rss $$ | tail -1`;
   chomp $rss;
   $unit = chop $rss;
   if($unit eq "M"){

@@ -26,7 +26,8 @@ BEGIN{
 
 use utils::Tool;
 
-our $MYSQL_BIN = "/mysqld/current/bin";   # this should be a cluster-wide CDSL
+our $MYSQL_BIN = "/usr/local/ensembl/mysql/bin";   # this should be a cluster-wide CDSL
+our $basedir = "/dumps/";
 my ($dumpdir, $help, $info, $logfile, $email, $start_with, $end_with);
 my ($no_data, $no_zip, $no_log);
 my @SPECIES ;
@@ -60,7 +61,7 @@ $species_defs || pod2usage("$0: SpeciesDefs config not found");
 
 # Sort out dumpdir ----------------------------------------------------------
 my $sitedefs_release =  $SiteDefs::ENSEMBL_VERSION;
-$dumpdir ||=  "/mysql/dumps/release-$sitedefs_release";  #should be cluster CDSL "/mysqld/current/var"
+$dumpdir ||=  $basedir."release-$sitedefs_release";  #should be cluster CDSL "/mysqld/current/var"
 if( $dumpdir !~/^\// ){
   pod2usage("[*DIE] Must provide the full path to dumpdir: $dumpdir" ) 
 }
