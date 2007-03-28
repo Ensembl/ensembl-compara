@@ -12,7 +12,7 @@ BEGIN {
   foreach my $dir( @vars::ENSEMBL_LIB_DIRS ){
     next if $X{$dir};
     if( -d $dir ){
-      if( -r $dir ){ 
+      if( -r $dir ){
         unshift @INC, $dir
       } else {
         warn "ENSEMBL_LIB_DIR $dir is not readable\n";
