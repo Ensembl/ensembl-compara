@@ -50,12 +50,10 @@ foreach my $species ( @species ) {
   $conf->{'species'}   = $species;
   my %dbs = %{$SD->get_config($species,'databases')||{}};
   $conf->{'dbs'}       = { map { ($_,$dbs{$_}{NAME}) } keys %dbs };
-  $conf->{'dbs'}{'ENSEMBL_COMPARA'} = 'ensembl_compara_43';
+  $conf->{'dbs'}{'ENSEMBL_COMPARA'} = 'ensembl_compara_44';
   my $core = $dbs{'ENSEMBL_DB'};
-  $conf->{'dbh_compara'}       = DBI->connect( "dbi:mysql:ensembl_compara_43;host=ensdb-1-03;port=3303",
-        $core->{'USER'}, $core->{'PASS'} );
-  $conf->{'dbh'}       = DBI->connect( "dbi:mysql:$core->{'NAME'};host=$core->{'HOST'};port=$core->{'PORT'}",
-        $core->{'USER'}, $core->{'PASS'} );
+  $conf->{'dbh_compara'} = DBI->connect( "dbi:mysql:ensembl_compara_44;host=ensdb-1-10;port=3307", $core->{'USER'}, $core->{'PASS'} );
+  $conf->{'dbh'}         = DBI->connect( "dbi:mysql:$core->{'NAME'};host=$core->{'HOST'};port=$core->{'PORT'}", $core->{'USER'}, $core->{'PASS'} );
   warn join ' ', $species, Data::Dumper::Dumper $conf;
   foreach my $index (@indexes) {
     warn "  Index: $species $index";
@@ -134,39 +132,83 @@ sub QTLLine {
 
 ########################################################################## SNPs
 
-
 sub dumpSNP {
   my $conf = shift;
-  next if $conf->{'species'} eq 'Homo_sapiens'; ## SKIP HUMAN SNPS....
-  next if $conf->{'species'} eq 'Mus_musculus'; ## SKIP HUMAN SNPS....
+#  next if $conf->{'species'} eq 'Homo_sapiens'; ## SKIP HUMAN SNPS....
+#  next if $conf->{'species'} eq 'Mus_musculus'; ## SKIP HUMAN SNPS....
   my $SNPDB = $conf->{'dbs'}->{'ENSEMBL_VARIATION'};
   return unless $SNPDB;
-  my %SOURCES = map { @$_ } @{$conf->{'dbh'}->selectall_arrayref( "select source_id, name from $SNPDB.source" )};
-  my $sth = $conf->{'dbh'}->prepare(
-    "select v.source_id as o1, v.name as o2, vs.source_id as o3, vs.name as o4
-       from $SNPDB.variation as v left join $SNPDB.variation_synonym as vs on vs.variation_id = v.variation_id
-      order by o1,o2,o3,o4"
-  );
-  $sth->execute();
-  my $old = {}; my $desc; my $IDS;
-  open O, ">$conf->{'directory'}/SNP.txt";
-  while( my $T= $sth->fetchrow_hashref()) {
-    if($T->{o1} eq $old->{o1} && $T->{o2} eq $old->{o2}) {
-      $desc.= ", ".$SOURCES{$T->{o3}}.":$T->{o4}";
-      $IDS .= " $T->{o4}";
-    } else {
-      print O &snpLine( $conf->{'species'}, $SOURCES{$old->{o1}}, $old->{o2}, $IDS, $desc);
-      $IDS = $T->{o2};
-      $desc = '';
-      if( $T->{o3} ) {
-        $desc .= ", ".$SOURCES{$T->{o3}}.":$T->{o4}";
-        $IDS  .= " $T->{o4}";
+
+  `/usr/local/ensembl/mysql/bin/mysql -h ensdb-1-10 -P3307 -uensro $SNPDB -e 'select variation_id,source_id,name from variation order by variation_id' > v.txt`;
+  `/usr/local/ensembl/mysql/bin/mysql -h ensdb-1-10 -P3307 -uensro $SNPDB -e 'select variation_id,source_id,name from variation_synonym order by variation_id' > vs.txt`;
+
+  return unless $SNPDB;
+  my $SOURCES = { map { @$_ } @{$conf->{'dbh'}->selectall_arrayref( "select source_id, name from $SNPDB.source" )} };
+
+  open( my $fh1, 'v.txt' );
+  open( my $fh2, 'vs.txt' );
+  open( my $fh3, '>snps.txt' );
+  my $shift = <$fh1>; # remove first line
+  $shift = <$fh2>;
+  my $F=1;
+  my $snp1 = n($fh1,$SOURCES);
+  my $snp2 = n($fh2,$SOURCES) || [0,0,''];
+  while( $snp1 && $snp2 ) {
+#   warn "$snp1->[0]-$snp2->[0]";
+    if( $snp2->[0] ) {
+      if( $snp1->[0] ) {
+        if($snp2->[0]<$snp1->[0]) {
+          warn "ARGH!! snp2_ID < snp1_ID panic!! @{$snp2}";
+          $snp2 = n($fh2,$SOURCES)||[0,0,'']; # get next synonym
+        } elsif($snp2->[0]>$snp1->[0]) {
+          print $fh3 "@$snp1\n";
+          $snp1 = n($fh1,$SOURCES); # get next snp...
+        } else {
+          push @{$snp1}, "$snp2->[1]:$snp2->[2]";
+          $snp2 = n($fh2,$SOURCES)||[0,0,'']; # get next snp2
+        }
+      } else {
+        warn "ARGH!!!! run out of snps";
       }
-      $old = {%$T};
+    } elsif( $snp1->[0] ) {
+      print $fh3 "@$snp1\n";
+      $snp1 = n($fh1,$SOURCES);
+    } else {
+      $F = 0;
     }
   }
-  print O &snpLine( $conf->{'species'}, $SOURCES{$old->{o1}}, $old->{o2}, $IDS, $desc);
+  if($snp1) {
+    print $fh3 "@$snp1\n";
+  }
+
+  unlink 'v.txt';
+  unlink 'vs.txt';
+  close $fh1;
+  close $fh2;
+  close $fh3;
+  open I, 'snps.txt' ;
+  open O, ">$conf->{'directory'}/SNP.txt";
+  while(<I>) {
+    my($ID,$source,$name,@keywords) = split;
+    my @K = map { (my $t=$_)=~ s/^\w+://;$t } @keywords;
+    print O "$source SNP\t$name\t/$conf->{'species'}/snpview?source=$source;snp=$name\t$name @K\tA $source SNP with ".
+      (@keywords?@keywords.(" synonym".(@keywords>1?'s':'')." (@keywords)"):'no synonyms')."\n";
+  }
   close O;
+  close I;
+  unlink 'snps.txt';
+}
+
+sub n {
+  my( $fh, $sources ) = @_;
+  my $L = <$fh>;
+  my $snp;
+  if( $L ) {
+    chomp $L;
+    my @L = split /\t/, $L;
+    $snp = [ $L[0], $sources->{$L[1]}, $L[2]];
+  }
+  return $snp;
 }
 
 sub snpLine {
@@ -180,8 +222,6 @@ sub snpLine {
     "$IDS",
     "SNP $snpid. Alternative IDs: $desc.\n";
 }
-
-
 
 ########################################################################## Markers
 
@@ -464,229 +504,230 @@ sub familyLine {
 ########################################################################## Genes
 
 sub dumpGene {
-    my $conf = shift;
-    my $COREDB = $conf->{'dbs'}->{'ENSEMBL_DB'};
-    my $SANGDB = $conf->{'dbs'}->{'ENSEMBL_VEGA'};
-    my $ESTGENEDB = $conf->{'dbs'}->{'ENSEMBL_OTHERFEATURES'};
-    my %DBS = ( 'core' => $COREDB );
-    $DBS{'vega'}          = $SANGDB    if $SANGDB;
-    $DBS{'otherfeatures'} = $ESTGENEDB if $ESTGENEDB;
+  my $conf = shift;
+  my $COREDB = $conf->{'dbs'}->{'ENSEMBL_DB'};
+  my $SANGDB = $conf->{'dbs'}->{'ENSEMBL_VEGA'};
+  my $ESTGENEDB = $conf->{'dbs'}->{'ENSEMBL_OTHERFEATURES'};
+  my %DBS = ( 'core' => $COREDB );
+  $DBS{'vega'}          = $SANGDB    if $SANGDB;
+  $DBS{'otherfeatures'} = $ESTGENEDB if $ESTGENEDB;
 
-    open O, ">$conf->{'directory'}/Gene.txt";
-    foreach my $DB ( keys %DBS ) {
+  open O, ">$conf->{'directory'}/Gene.txt";
+  foreach my $DB ( keys %DBS ) {
 warn "START... $DB";
-      my $DBNAME = $DBS{$DB};
-      my $extra = $DB ne 'core' ? ";db=$DB" : '';
-      my %xrefs = ();
-      my %disp_xrefs = ();
-      foreach my $type( qw(Gene Transcript Translation) ) {
-        my $T = $conf->{'dbh'}->selectall_arrayref(
-     "select ox.ensembl_id,
-             x.display_label, x.dbprimary_acc, ed.db_display_name, es.synonym
-        from $DBNAME.object_xref as ox, $DBNAME.xref as x, $DBNAME.external_db as ed left join $DBNAME.external_synonym as es on es.xref_id = x.xref_id
-       where ox.ensembl_object_type = '$type' and ox.xref_id = x.xref_id and x.external_db_id = ed.external_db_id"
-        );
-        foreach ( @$T ) {
-          $xrefs{$type}{$_->[0]}{$_->[3]}{$_->[1]}=1 if $_->[1];
-          $xrefs{$type}{$_->[0]}{$_->[3]}{$_->[2]}=1 if $_->[2];
-          $xrefs{$type}{$_->[0]}{$_->[3]}{$_->[4]}=1 if $_->[4];
-        }
-        warn "XREF $type query...";
-      }
-      my %exons = ();
+    my $DBNAME = $DBS{$DB};
+    my $extra = $DB ne 'core' ? ";db=$DB" : '';
+    my %xrefs = ();
+    my %disp_xrefs = ();
+    foreach my $type( qw(Gene Transcript Translation) ) {
       my $T = $conf->{'dbh'}->selectall_arrayref(
-	"select distinct t.gene_id, esi.stable_id
-           from transcript as t, exon_transcript as et, exon_stable_id as esi
-          where t.transcript_id = et.transcript_id and et.exon_id = esi.exon_id"
+        "select ox.ensembl_id,
+                x.display_label, x.dbprimary_acc, ed.db_display_name, es.synonym
+           from $DBNAME.object_xref as ox, $DBNAME.xref as x, $DBNAME.external_db as ed left join $DBNAME.external_synonym as es on es.xref_id = x.xref_id
+          where ox.ensembl_object_type = '$type' and ox.xref_id = x.xref_id and x.external_db_id = ed.external_db_id"
       );
-      foreach( @$T ) {
-        $exons{$_->[0]}{$_->[1]}=1;
+      foreach ( @$T ) {
+        $xrefs{$type}{$_->[0]}{$_->[3]}{$_->[1]}=1 if $_->[1];
+        $xrefs{$type}{$_->[0]}{$_->[3]}{$_->[2]}=1 if $_->[2];
+        $xrefs{$type}{$_->[0]}{$_->[3]}{$_->[4]}=1 if $_->[4];
       }
-      my $gene_info = $conf->{'dbh'}->selectall_arrayref(qq(
-select gsi.gene_id, tsi.transcript_id, trsi.translation_id,
-       gsi.stable_id as gsid, tsi.stable_id as tsid, trsi.stable_id as trsid,
-       g.description, ed.db_display_name, x.dbprimary_acc,x.display_label, ad.display_label, ad.description, g.source, g.status, g.biotype
-  from $DBNAME.gene_stable_id as gsi, $DBNAME.gene as g,
-       $DBNAME.transcript_stable_id as tsi,
-       $DBNAME.analysis_description as ad,
-       $DBNAME.transcript as t left join
-       $DBNAME.translation as tr on t.transcript_id = tr.transcript_id left join
-       $DBNAME.translation_stable_id as trsi on tr.translation_id = trsi.translation_id left join
-       $DBNAME.xref as x on g.display_xref_id = x.xref_id left join
-       $DBNAME.external_db as ed on ed.external_db_id = x.external_db_id
- where t.gene_id = gsi.gene_id and t.transcript_id = tsi.transcript_id and t.gene_id = g.gene_id and g.analysis_id = ad.analysis_id
- order by gsi.stable_id, tsi.stable_id
-      ));
+      warn "XREF $type query...";
+    }
+    my %exons = ();
+    my $T = $conf->{'dbh'}->selectall_arrayref(
+      "select distinct t.gene_id, esi.stable_id
+         from transcript as t, exon_transcript as et, exon_stable_id as esi
+        where t.transcript_id = et.transcript_id and et.exon_id = esi.exon_id"
+    );
+    foreach( @$T ) {
+      $exons{$_->[0]}{$_->[1]}=1;
+    }
+    my $gene_info = $conf->{'dbh'}->selectall_arrayref(qq(
+      select gsi.gene_id, tsi.transcript_id, trsi.translation_id,
+             gsi.stable_id as gsid, tsi.stable_id as tsid, trsi.stable_id as trsid,
+             g.description, ed.db_display_name, x.dbprimary_acc,x.display_label, ad.display_label, ad.description, g.source, g.status, g.biotype
+        from $DBNAME.gene_stable_id as gsi, $DBNAME.gene as g,
+             $DBNAME.transcript_stable_id as tsi,
+             $DBNAME.analysis_description as ad,
+             $DBNAME.transcript as t left join
+             $DBNAME.translation as tr on t.transcript_id = tr.transcript_id left join
+             $DBNAME.translation_stable_id as trsi on tr.translation_id = trsi.translation_id left join
+             $DBNAME.xref as x on g.display_xref_id = x.xref_id left join
+             $DBNAME.external_db as ed on ed.external_db_id = x.external_db_id
+       where t.gene_id = gsi.gene_id and t.transcript_id = tsi.transcript_id and t.gene_id = g.gene_id and g.analysis_id = ad.analysis_id
+       order by gsi.stable_id, tsi.stable_id
+    ));
 warn "Gene query...";
-      my %old;
-      foreach my $row (@$gene_info) {
-        my($g,$t,$tr,$gs,$ts,$trs,$d,$ddb,$dpa,$dn,$a,$ad,$s,$st,$bt) = @$row;
-        if( $old{'g'} != $g ) {
-          if( $old{'g'} ) {
-            print O &geneLine( $conf->{'species'}, $old{'ex'}, $old{'s'}.' '.$old{'bt'}, $old{'gs'}, $old{'alt'}, $extra, join( ' ', grep{$_}keys %{$old{'i'}}), $old{'t'},$old{'tr'},$old{'e'},$old{'d'} );
-          }
-          %old = (
-            'g' => $g,
-            'gs' => $gs,
-            'd'  => $d,
-            'tr' => {$trs?($trs=>1):()},
-            't'  => {$ts ?($ts=>1) :()},
-            'ex' => {},
-            'e'  => {},
-            'i'  => {$gs=>1,$d=>1,$dpa=>1,$dn=>1,$ts=>1,$trs=>1}, 
-            'alt' => $dn ? "($ddb: $dn)" : "(novel gene)",
-            'a'   => $a,
-            'ad'  => $ad,
-            's'   => ucfirst($s),
-            'st'  => $st,
-            'bt'  => $bt
-          );
-          $old{'s'}=~s/base/Base/;
-          $old{'ex'} = $exons{$g};
-          foreach my $K (keys %{$exons{$g}}) { $old{'i'}{$K} = 1; }
-          foreach my $db( keys %{$xrefs{'Gene'}{$g}||{}} ) {
-            foreach my $K( keys %{$xrefs{'Gene'}{$g}{$db}} ) { $old{'e'}{$db}{$K}=1; $old{'i'}{$K}=1; }
-          }
-          foreach my $db( keys %{$xrefs{'Transcript'}{$t}||{}} ) {
-            foreach my $K( keys %{$xrefs{'Transcript'}{$t}{$db}} ) { $old{'e'}{$db}{$K}=1; $old{'i'}{$K}=1; }
-          }
-          foreach my $db( keys %{$xrefs{'Translation'}{$tr}||{}} ) {
-            foreach my $K( keys %{$xrefs{'Translation'}{$tr}{$db}} ) { $old{'e'}{$db}{$K}=1;  $old{'i'}{$K}=1; }
-          }
-        } else {
-          $old{'t'}{$ts}=1;
-          $old{'tr'}{$trs}=1;
-          $old{'i'}{$ts}=1;
-          $old{'i'}{$trs}=1;
-          foreach my $db( keys %{$xrefs{'Transcript'}{$t}||{}} ) {
-            foreach my $K( keys %{$xrefs{'Transcript'}{$t}{$db}} ) { $old{'e'}{$db}{$K}=1; $old{'i'}{$K}=1; }
-          }
-          foreach my $db( keys %{$xrefs{'Translation'}{$tr}||{}} ) {
-            foreach my $K( keys %{$xrefs{'Translation'}{$tr}{$db}} ) { $old{'e'}{$db}{$K}=1; $old{'i'}{$K}=1; }
-          }
+    my %old;
+    foreach my $row (@$gene_info) {
+      my($g,$t,$tr,$gs,$ts,$trs,$d,$ddb,$dpa,$dn,$a,$ad,$s,$st,$bt) = @$row;
+      if( $old{'g'} != $g ) {
+        if( $old{'g'} ) {
+          print O &geneLine( $conf->{'species'}, $old{'ex'}, $old{'s'}.' '.$old{'bt'}, $old{'gs'}, $old{'alt'}, $extra, join( ' ', grep{$_}keys %{$old{'i'}}), $old{'t'},$old{'tr'},$old{'e'},$old{'d'} );
         }
-      }
-      print O &geneLine( $conf->{'species'}, $old{'ex'}, $old{'s'}.' '.$old{'bt'}, $old{'gs'}, $old{'alt'}, $extra, join( ' ', grep{$_}keys %{$old{'i'}}), $old{'t'},$old{'tr'},$old{'e'},$old{'d'} );
-      warn "FINISHED...... genes $DB ...";
-    }
-my %current_stable_ids =();
-foreach my $type (qw(gene transcript translation)) {
-  $current_stable_ids{$type}  = {map {@$_} @{$conf->{'dbh'}->selectall_arrayref( "select stable_id,1 from $COREDB.".$type."_stable_id" )}};
-}
-
-   my $species = $conf->{'species'};
-
-    my $sth = $conf->{'dbh'}->prepare( qq(
-select sie.type, sie.old_stable_id, if(isnull(sie.new_stable_id),'NULL',sie.new_stable_id), ms.old_release*1.0 as X, ms.new_release*1.0 as Y
-  from $COREDB.mapping_session as ms, $COREDB.stable_id_event as sie
- where ms.mapping_session_id = sie.mapping_session_id and ( old_stable_id != new_stable_id or isnull(new_stable_id) )
- order by Y desc, X desc));
-   
-    $sth->execute();
-    my %mapping = ();
-    while( my($type,$osi,$nsi) = $sth->fetchrow_array() ) {
-      next if $current_stable_ids{$type}{$osi}; ## Don't need to cope with current IDS already searchable...
-      $mapping{$type}{$osi}{$nsi}=1;
-      if($mapping{$type}{$nsi}) {
-        foreach( keys %{$mapping{$type}{$nsi}} ) {
-          $mapping{$type}{$osi}{$_}=1;
+        %old = (
+          'g' => $g,
+          'gs' => $gs,
+          'd'  => $d,
+          'tr' => {$trs?($trs=>1):()},
+          't'  => {$ts ?($ts=>1) :()},
+          'ex' => {},
+          'e'  => {},
+          'i'  => {$gs=>1,$d=>1,$dpa=>1,$dn=>1,$ts=>1,$trs=>1}, 
+          'alt' => $dn ? "($ddb: $dn)" : "(novel gene)",
+          'a'   => $a,
+          'ad'  => $ad,
+          's'   => ucfirst($s),
+          'st'  => $st,
+          'bt'  => $bt
+        );
+        $old{'s'}=~s/base/Base/;
+        $old{'ex'} = $exons{$g};
+        foreach my $K (keys %{$exons{$g}}) { $old{'i'}{$K} = 1; }
+        foreach my $db( keys %{$xrefs{'Gene'}{$g}||{}} ) {
+          foreach my $K( keys %{$xrefs{'Gene'}{$g}{$db}} ) { $old{'e'}{$db}{$K}=1; $old{'i'}{$K}=1; }
+        }
+        foreach my $db( keys %{$xrefs{'Transcript'}{$t}||{}} ) {
+          foreach my $K( keys %{$xrefs{'Transcript'}{$t}{$db}} ) { $old{'e'}{$db}{$K}=1; $old{'i'}{$K}=1; }
+        }
+        foreach my $db( keys %{$xrefs{'Translation'}{$tr}||{}} ) {
+          foreach my $K( keys %{$xrefs{'Translation'}{$tr}{$db}} ) { $old{'e'}{$db}{$K}=1;  $old{'i'}{$K}=1; }
+        }
+      } else {
+        $old{'t'}{$ts}=1;
+        $old{'tr'}{$trs}=1;
+        $old{'i'}{$ts}=1;
+        $old{'i'}{$trs}=1;
+        foreach my $db( keys %{$xrefs{'Transcript'}{$t}||{}} ) {
+          foreach my $K( keys %{$xrefs{'Transcript'}{$t}{$db}} ) { $old{'e'}{$db}{$K}=1; $old{'i'}{$K}=1; }
+        }
+        foreach my $db( keys %{$xrefs{'Translation'}{$tr}||{}} ) {
+          foreach my $K( keys %{$xrefs{'Translation'}{$tr}{$db}} ) { $old{'e'}{$db}{$K}=1; $old{'i'}{$K}=1; }
         }
       }
     }
-    foreach my $type ( keys %mapping ) {
-      foreach my $osi ( keys %{$mapping{$type}} ) {
-        my @current_sis = ();
-        my @deprecated_sis = ();
-        foreach ( keys %{$mapping{$type}{$osi}} ) {
-          if( $current_stable_ids{$_} ) {
-            push @current_sis,$_;
-          } elsif( $_ ne 'NULL' ) {
-            push @deprecated_sis,$_;
-          }
-        }
-        if( @current_sis ) {
-          print O join( "\t",
-      (INC_SPECIES?"$species\t":"").qq(EnsEMBL $type),
-      qq($osi),
-      qq(/$species/idhistoryview?).lc($type).qq(=$osi),
-      join( ' ', $osi, @current_sis, @deprecated_sis ),
-      qq($type $osi is no longer in the Ensembl database but it has been mapped to the following current identifiers: @current_sis).
-      ( @deprecated_sis ? "; and the following deprecated identifiers: @deprecated_sis" : '').
-      ".\n"
-          );
-        } elsif( @deprecated_sis ) {
-          print O join( "\t",
-      (INC_SPECIES?"$species\t":"").qq(EnsEMBL $type),
-      qq($osi),
-      qq(/$species/idhistoryview?).lc($type).qq(=$osi),
-      join( ' ', $osi, @deprecated_sis ),
-      qq($type $osi is no longer in the Ensembl database but it has been mapped to the following deprecated identifiers: @deprecated_sis\n)
-          );
-        } else {
-          print O join( "\t",
-      (INC_SPECIES?"$species\t":"").qq(EnsEMBL $type),
-      qq($osi),
-      qq(/$species/idhistoryview?).lc($type).qq(=$osi),
-      qq($osi),
-      qq($type $osi is no longer in the Ensembl database and it has not been mapped to any newer identifiers\n)
-          );
-        }
-      }
-    }
-  my %unmapped_queries = ( 'None' => qq(
-select a.logic_name, e.db_display_name,
-       uo.identifier, ur.summary_description,
-       'Not mapped'
-  from $COREDB.analysis as a, $COREDB.external_db as e, $COREDB.unmapped_object as uo,
-       $COREDB.unmapped_reason as ur
- where a.analysis_id = uo.analysis_id and 
-       uo.external_db_id = e.external_db_id and
-       uo.unmapped_reason_id = ur.unmapped_reason_id and
-       uo.ensembl_id = 0
-), 'Transcript' => qq(
-select a.logic_name, e.db_display_name,
-       uo.identifier, ur.summary_description,
-       concat( 'Transcript: ',
-                tsi.stable_id, '; Gene: ',gsi.stable_id )
-  from $COREDB.analysis as a, $COREDB.external_db as e, $COREDB.unmapped_object as uo,
-       $COREDB.unmapped_reason as ur, $COREDB.transcript_stable_id as tsi,
-       $COREDB.transcript as t, $COREDB.gene_stable_id as gsi
- where a.analysis_id = uo.analysis_id and 
-       uo.external_db_id = e.external_db_id and
-       uo.unmapped_reason_id = ur.unmapped_reason_id and
-       uo.ensembl_id = t.transcript_id and
-       uo.ensembl_object_type = 'Transcript' and
-       t.transcript_id = tsi.transcript_id and
-       t.gene_id       = gsi.gene_id
-), 'Translation' => qq(
-select a.logic_name, e.db_display_name, uo.identifier, ur.summary_description,
-       concat( 'Translation: ',trsi.stable_id,'; Transcript: ',
-                tsi.stable_id, '; Gene: ',gsi.stable_id )
-  from $COREDB.analysis as a, $COREDB.external_db as e, $COREDB.unmapped_object as uo,
-       $COREDB.unmapped_reason as ur, $COREDB.transcript_stable_id as tsi,
-       $COREDB.translation as tr, $COREDB.translation_stable_id as trsi,
-       $COREDB.transcript as t, $COREDB.gene_stable_id as gsi
- where a.analysis_id = uo.analysis_id and 
-       uo.external_db_id = e.external_db_id and
-       uo.unmapped_reason_id = ur.unmapped_reason_id and
-       uo.ensembl_id = tr.translation_id and 
-       tr.transcript_id = t.transcript_id and
-       trsi.translation_id = tr.translation_id and
-       uo.ensembl_object_type = 'Translation' and
-       t.transcript_id = tsi.transcript_id and
-       t.gene_id       = gsi.gene_id
+    print O &geneLine( $conf->{'species'}, $old{'ex'}, $old{'s'}.' '.$old{'bt'}, $old{'gs'}, $old{'alt'}, $extra, join( ' ', grep{$_}keys %{$old{'i'}}), $old{'t'},$old{'tr'},$old{'e'},$old{'d'} );
+    warn "FINISHED...... genes $DB ...";
+  }
+  my %current_stable_ids =();
+  foreach my $type (qw(gene transcript translation)) {
+    $current_stable_ids{$type}  = {map {@$_} @{$conf->{'dbh'}->selectall_arrayref( "select stable_id,1 from $COREDB.".$type."_stable_id" )}};
+  }
+  my $species = $conf->{'species'};
+  my $sth = $conf->{'dbh'}->prepare( qq(
+    select sie.type, sie.old_stable_id, if(isnull(sie.new_stable_id),'NULL',sie.new_stable_id), ms.old_release*1.0 as X, ms.new_release*1.0 as Y
+      from $COREDB.mapping_session as ms, $COREDB.stable_id_event as sie
+     where ms.mapping_session_id = sie.mapping_session_id and ( old_stable_id != new_stable_id or isnull(new_stable_id) )
+     order by Y desc, X desc
   ));
+   
+  $sth->execute();
+  my %mapping = ();
+  while( my($type,$osi,$nsi) = $sth->fetchrow_array() ) {
+    next if $current_stable_ids{$type}{$osi}; ## Don't need to cope with current IDS already searchable...
+    $mapping{$type}{$osi}{$nsi}=1;
+    if($mapping{$type}{$nsi}) {
+      foreach( keys %{$mapping{$type}{$nsi}} ) {
+        $mapping{$type}{$osi}{$_}=1;
+      }
+    }
+  }
+  foreach my $type ( keys %mapping ) {
+    foreach my $osi ( keys %{$mapping{$type}} ) {
+      my @current_sis = ();
+      my @deprecated_sis = ();
+      foreach ( keys %{$mapping{$type}{$osi}} ) {
+        if( $current_stable_ids{$_} ) {
+          push @current_sis,$_;
+        } elsif( $_ ne 'NULL' ) {
+          push @deprecated_sis,$_;
+        }
+      }
+      if( @current_sis ) {
+        print O join( "\t",
+          (INC_SPECIES?"$species\t":"").qq(EnsEMBL $type),
+          qq($osi),
+          qq(/$species/idhistoryview?).lc($type).qq(=$osi),
+          join( ' ', $osi, @current_sis, @deprecated_sis ),
+          qq($type $osi is no longer in the Ensembl database but it has been mapped to the following current identifiers: @current_sis).
+          ( @deprecated_sis ? "; and the following deprecated identifiers: @deprecated_sis" : '').
+          ".\n"
+        );
+      } elsif( @deprecated_sis ) {
+        print O join( "\t",
+          (INC_SPECIES?"$species\t":"").qq(EnsEMBL $type),
+          qq($osi),
+          qq(/$species/idhistoryview?).lc($type).qq(=$osi),
+          join( ' ', $osi, @deprecated_sis ),
+          qq($type $osi is no longer in the Ensembl database but it has been mapped to the following deprecated identifiers: @deprecated_sis\n)
+        );
+      } else {
+        print O join( "\t",
+          (INC_SPECIES?"$species\t":"").qq(EnsEMBL $type),
+          qq($osi),
+          qq(/$species/idhistoryview?).lc($type).qq(=$osi),
+          qq($osi),
+          qq($type $osi is no longer in the Ensembl database and it has not been mapped to any newer identifiers\n)
+        );
+      }
+    }
+  }
+  my %unmapped_queries = (
+    'None' => qq(
+      select a.logic_name, e.db_display_name,
+             uo.identifier, ur.summary_description,
+             'Not mapped'
+        from $COREDB.analysis as a, $COREDB.external_db as e, $COREDB.unmapped_object as uo,
+             $COREDB.unmapped_reason as ur
+       where a.analysis_id = uo.analysis_id and 
+             uo.external_db_id = e.external_db_id and
+             uo.unmapped_reason_id = ur.unmapped_reason_id and
+               uo.ensembl_id = 0
+    ),
+    'Transcript' => qq(
+      select a.logic_name, e.db_display_name,
+             uo.identifier, ur.summary_description,
+             concat( 'Transcript: ', tsi.stable_id, '; Gene: ',gsi.stable_id )
+        from $COREDB.analysis as a, $COREDB.external_db as e, $COREDB.unmapped_object as uo,
+             $COREDB.unmapped_reason as ur, $COREDB.transcript_stable_id as tsi,
+             $COREDB.transcript as t, $COREDB.gene_stable_id as gsi
+       where a.analysis_id = uo.analysis_id and 
+             uo.external_db_id = e.external_db_id and
+             uo.unmapped_reason_id = ur.unmapped_reason_id and
+             uo.ensembl_id = t.transcript_id and
+             uo.ensembl_object_type = 'Transcript' and
+             t.transcript_id = tsi.transcript_id and
+             t.gene_id       = gsi.gene_id
+    ),
+    'Translation' => qq(
+      select a.logic_name, e.db_display_name, uo.identifier, ur.summary_description,
+             concat( 'Translation: ',trsi.stable_id,'; Transcript: ', tsi.stable_id, '; Gene: ',gsi.stable_id )
+        from $COREDB.analysis as a, $COREDB.external_db as e, $COREDB.unmapped_object as uo,
+             $COREDB.unmapped_reason as ur, $COREDB.transcript_stable_id as tsi,
+             $COREDB.translation as tr, $COREDB.translation_stable_id as trsi,
+             $COREDB.transcript as t, $COREDB.gene_stable_id as gsi
+       where a.analysis_id = uo.analysis_id and 
+             uo.external_db_id = e.external_db_id and
+             uo.unmapped_reason_id = ur.unmapped_reason_id and
+             uo.ensembl_id = tr.translation_id and 
+             tr.transcript_id = t.transcript_id and
+             trsi.translation_id = tr.translation_id and
+             uo.ensembl_object_type = 'Translation' and
+             t.transcript_id = tsi.transcript_id and
+             t.gene_id       = gsi.gene_id
+    )
+  );
   foreach my $FLAG (keys %unmapped_queries) {
     my $SQL = $unmapped_queries{$FLAG};
     my $sth = $conf->{'dbh'}->prepare($SQL);
     $sth->execute;
     while( my $T = $sth->fetchrow_arrayref() ) {
       print O join "\t", (INC_SPECIES?"$conf->{'species'}\t":"").qq(Unmapped feature),
-    "$T->[1] $T->[2]",
-    "/$conf->{'species'}/featureview?type=Gene;id=$T->[2]", "$T->[2] $T->[4]", "$T->[3]; $T->[4]\n";
+        "$T->[1] $T->[2]",
+        "/$conf->{'species'}/featureview?type=Gene;id=$T->[2]", "$T->[2] $T->[4]", "$T->[3]; $T->[4]\n";
     }
   }
-    close O;
+  close O;
 }
 
 sub geneLineOld {
