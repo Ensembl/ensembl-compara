@@ -14,7 +14,8 @@ Designed to be used as the Root class for all Compara 'proxy' classes
 
 =head1 CONTACT
 
-  Contact Jessica Severin on implemetation/design detail: jessica@ebi.ac.uk
+  Contact Albert Vilella on implementation detail: avilella@ebi.ac.uk
+  Contact Jessica Severin on implementation/design detail: jessica@ebi.ac.uk
   Contact Ewan Birney on EnsEMBL in general: birney@sanger.ac.uk
 
 =head1 APPENDIX
@@ -649,7 +650,7 @@ sub _internal_newick_format {
     #simplified: name only on leaves, dist only if has parent
     if($self->parent) {
       if($self->is_leaf) {
-        my $species_name = $self->genome_db->name;
+        my $species_name = $self->name;
         $species_name =~ s/\ /\_/g;
         $newick .= sprintf("%s", $species_name);
       }
