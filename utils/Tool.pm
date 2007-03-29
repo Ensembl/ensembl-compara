@@ -118,7 +118,7 @@ sub mail_log {
   open(SENDMAIL, "|$sendmail") or die "Cannot open $sendmail: $!";
   print SENDMAIL $subject;
   print SENDMAIL "To: $email_address\n";
-  print SENDMAIL 'From: team105-ensembl@sanger.ac.uk\n';
+  print SENDMAIL 'From: ssg-ensembl@sanger.ac.uk\n';
   print SENDMAIL "Content-type: text/plain\n\n";
   print SENDMAIL $content . $additional_text;
   close(SENDMAIL);
