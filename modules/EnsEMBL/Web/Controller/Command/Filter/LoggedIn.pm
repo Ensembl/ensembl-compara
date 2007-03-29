@@ -4,6 +4,7 @@ use strict;
 use warnings;
 
 use EnsEMBL::Web::RegObj;
+use EnsEMBL::Web::Registry;
 
 our @ISA = qw(EnsEMBL::Web::Controller::Command::Filter);
 
@@ -11,7 +12,9 @@ our @ISA = qw(EnsEMBL::Web::Controller::Command::Filter);
 
 sub allow {
   my $self = shift;
-  if ($ENSEMBL_WEB_REGISTRY->get_user->id) {
+  my $reg = $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY;
+  my $user = $reg->get_user;
+  if ($user->id) {
     return 1;
   }
   #my $previous = $self->SUPER::allow(); 
