@@ -61,9 +61,11 @@ sub get_table {
   my $self = shift;
   my $name = $self->get_table_name;
   if ($name =~ /%%(.*)%%/) {
+    my $species_defs = $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->species_defs;
     if ($1 eq 'user_record') {
-      my $species_defs = $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->species_defs;
       $name = $species_defs->ENSEMBL_USER_DATA_TABLE;
+    } elsif ($1 eq 'group_record') {
+      $name = $species_defs->ENSEMBL_GROUP_DATA_TABLE;
     } else {
       $name = $1;
     }
