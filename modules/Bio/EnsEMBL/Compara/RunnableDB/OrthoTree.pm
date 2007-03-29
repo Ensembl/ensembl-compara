@@ -588,8 +588,14 @@ sub duplication_confidence_score {
 
   my $rounded_duplication_confidence_score = (int((100.0 * $scalar_isect / $scalar_union + 0.5)));
   my $species_intersection_score = $ancestor->get_tagvalue("species_intersection_score");
+  unless (defined($species_intersection_score) && $species_intersection_score ne '') {
+    my $ancestor_node_id = $ancestor->node_id;
+    warn("Difference in the ProteinTree: duplication_confidence_score [$duplication_confidence_score] whereas species_intersection_score [$species_intersection_score] is undefined in njtree - ancestor $ancestor_node_id\n");
+    return;
+  }
   if ($species_intersection_score ne $rounded_duplication_confidence_score && !defined($self->{_readonly})) {
-    $self->throw("Inconsistency in the ProteinTree: duplication_confidence_score $duplication_confidence_score != species_intersection_score $species_intersection_score\n");
+    my $ancestor_node_id = $ancestor->node_id;
+    $self->throw("Inconsistency in the ProteinTree: duplication_confidence_score [$duplication_confidence_score] != species_intersection_score [$species_intersection_score] -  $ancestor_node_id\n");
   }
 }
 
