@@ -26,16 +26,17 @@
   { TYPE => dNdS,
     'codeml_parameters' => do('/acari/work7a/abel/hive/abel_compara_homology_37/codeml.ctl.hash'),
     'species_sets' => '[[1,2,3,10,14,15,21],[4,13]]',
-    'method_link_type' => 'TREE_HOMOLOGIES'
+    'method_link_type' => 'ENSEMBL_ORTHOLOGUES'
   },
 
   { TYPE => HOMOLOGY,
     'species_sets' => '[[1,2,3,4,5,6,7,9,10,11,12,13,14,15,16,17,18,19,21]]'
   },
   { TYPE => GENE_TREE,
-    'cluster_params' => '{species_set=>[1,2,3,4,5,6,7,9,10,11,12,13,14,15,16,17,18,19,21], brh=>1, all_best=>0, bsr_threshold=>0.33}',
-    'breakcluster_params' => "{species_set=>[1,2,3,4,5,6,7,9,10,11,12,13,14,15,16,17,18,19], brh=>0, all_best=>0, bsr_threshold=>0.33}",
-    'species_tree_file' => '{species_tree_file=>'/acari/work7a/abel/hive/abel_compara_tree_37/encode_species_tree2.nh'}',,
+    'cluster_params' => '{species_set=>[1,2,3,4,5,6,7,9,10,11,12,13,14,15,16,17,18,19,21], brh=>1, all_best=>0, bsr_threshold=>0.33,max_gene_count=>750}',
+    'breakcluster_params' => "{species_set=>[1,2,3,4,5,6,7,9,10,11,12,13,14,15,16,17,18,19],bsr_threshold_increase=>0.1 ,max_gene_count=> 750}",
+    'max_gene_count' => 750,
+    'species_tree_file' => '{species_tree_file=>/acari/work7a/abel/hive/abel_compara_tree_37/encode_species_tree2.nh}',
     'rap_jar_file' => '/nfs/acari/abel/bin/rap.jar'
   },
   { TYPE => UNIPROT,
