@@ -650,7 +650,12 @@ sub _internal_newick_format {
     #simplified: name only on leaves, dist only if has parent
     if($self->parent) {
       if($self->is_leaf) {
-        my $species_name = $self->name;
+        my $species_name;
+        if ($self->isa('Bio::EnsEMBL::Compara::AlignedMember')) {
+          $species_name = $self->genome_db->name;
+        } else {
+          $species_name = $self->name;
+        }
         $species_name =~ s/\ /\_/g;
         $newick .= sprintf("%s", $species_name);
       }
