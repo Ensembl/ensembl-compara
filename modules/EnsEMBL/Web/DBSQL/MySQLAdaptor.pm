@@ -13,7 +13,7 @@ use Data::Dumper;
 {
 
 my %Handle :ATTR(:set<handle> :get<handle>);
-my %Table :ATTR(:set<table> :get<table>);
+my %Table :ATTR(:set<table_name> :get<table_name>);
 
 }
 
@@ -50,6 +50,25 @@ sub BUILD {
     warn( "Unable to connect to database: $DBI::errstr" );
     $self->set_handle(undef);
   }
+}
+
+sub set_table {
+  my ($self, $name) = @_;
+  return $self->set_table_name($name);
+}
+
+sub get_table {
+  my $self = shift;
+  my $name = $self->get_table_name;
+  if ($name =~ /%%(.*)%%/) {
+    if ($1 eq 'user_record') {
+      my $species_defs = $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->species_defs;
+      $name = $species_defs->ENSEMBL_USER_DATA_TABLE;
+    } else {
+      $name = $1;
+    }
+  }
+  return $name;
 }
 
 sub save {
@@ -138,12 +157,15 @@ sub update {
 
 sub destroy {
   my ($self, $request) = @_;
+  warn "DESTROYING with $request";
   my $result = EnsEMBL::Web::DBSQL::SQL::Result->new();
   $result->set_action('destroy');
   my $sql = $self->template($request->get_sql);
+  warn "SQL: " . $sql;
   $self->get_handle->prepare($sql);
   if ($self->get_handle->do($sql)) {
     $result->set_success(1);
+    warn "SUCCESS";
   }
   return $result;
 }
