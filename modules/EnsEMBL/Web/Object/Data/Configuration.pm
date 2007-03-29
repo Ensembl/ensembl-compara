@@ -32,7 +32,7 @@ sub key {
 }
 
 sub table {
-  return 'user_record';
+  return '%%user_record%%';
 }
 
 
