@@ -435,6 +435,44 @@ sub fetch_species {
     return $results;
 }
 
+sub fetch_dump_info {
+### Fetches dump notes and names of Ensembl species  
+### Arguments (1) release id (integer)
+### Returns arrayref of hashes containing species details
+
+    my ($self, $release_id) = @_;
+    my $results = [];
+
+    return [] unless $release_id;
+    return [] unless $self->{'_handle'};
+
+    my $sql = qq(
+            SELECT
+                s.species_id,
+                s.name,
+                s.dump_notes
+            FROM
+                species s,
+                release_species x
+            WHERE   s.species_id = x.species_id
+            AND     x.release_id = $release_id
+            AND     x.assembly_code != ''
+            ORDER BY name ASC
+        );
+
+    my $T = $self->{'_handle'}->selectall_arrayref($sql);
+    return {} unless $T;
+    for (my $i=0; $i<scalar(@$T);$i++) {
+      my @array = @{$T->[$i]};
+      push @$results, {
+          'species_id'  => $array[0],
+          'name'        => $array[1],
+          'notes'       => $array[2],
+      };
+    }
+    return $results;
+}
+
 sub fetch_species_id {
 ### Fetches ID of a named Ensembl species  
 ### Arguments: species name (string)
