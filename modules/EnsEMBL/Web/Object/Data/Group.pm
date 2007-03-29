@@ -20,11 +20,11 @@ sub BUILD {
   $self->add_queriable_field({ name => 'blurb', type => 'text' });
   $self->add_queriable_field({ name => 'type', type => "enum('open','restricted','private')" });
   $self->add_queriable_field({ name => 'status', type => "enum('active','inactive')" });
-  $self->add_has_many({ class => 'EnsEMBL::Web::Object::Data::Group::Bookmark', table => 'group_record'});
-  $self->add_has_many({ class => 'EnsEMBL::Web::Object::Data::Group::Configuration', table => 'group_record'});
-  $self->add_has_many({ class => 'EnsEMBL::Web::Object::Data::Group::Annotation', table => 'group_record'});
-  $self->add_has_many({ class => 'EnsEMBL::Web::Object::Data::Group::DAS', table => 'group_record'});
-  $self->add_has_many({ class => 'EnsEMBL::Web::Object::Data::Invite', table => 'group_record'});
+  $self->add_has_many({ class => 'EnsEMBL::Web::Object::Data::Group::Bookmark', table => '%%group_record%%'});
+  $self->add_has_many({ class => 'EnsEMBL::Web::Object::Data::Group::Configuration', table => '%%group_record%%'});
+  $self->add_has_many({ class => 'EnsEMBL::Web::Object::Data::Group::Annotation', table => '%%group_record%%'});
+  $self->add_has_many({ class => 'EnsEMBL::Web::Object::Data::Group::DAS', table => '%%group_record%%'});
+  $self->add_has_many({ class => 'EnsEMBL::Web::Object::Data::Invite', table => '%%group_record%%'});
   $self->add_has_many({ class => 'EnsEMBL::Web::Object::Data::User', table => 'user', link_table => 'group_member', contribute => [ 'level' ] });
   $self->populate_with_arguments($args);
 }

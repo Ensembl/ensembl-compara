@@ -12,7 +12,7 @@ sub key {
 }
 
 sub table {
-  return "group_record";
+  return '%%group_record%%';
 }
 
 }
