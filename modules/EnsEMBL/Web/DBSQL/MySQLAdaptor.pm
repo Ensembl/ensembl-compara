@@ -60,7 +60,15 @@ sub set_table {
 sub get_table {
   my $self = shift;
   my $name = $self->get_table_name;
-  if ($name =~ /%%(.*)%%/) {
+  return $self->parse_table_name($name);
+}
+
+sub parse_table_name {
+  my ($self, $string) = @_;
+  if ($string=~ /%%(.*)%%/) {
+    warn "TEMPLATING: " . $string;
+    warn "CHECKING:" . $1;
+    my $name;
     my $species_defs = $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->species_defs;
     if ($1 eq 'user_record') {
       $name = $species_defs->ENSEMBL_USER_DATA_TABLE;
@@ -69,8 +77,10 @@ sub get_table {
     } else {
       $name = $1;
     }
+    $string =~ s/%%(.*)%%/$name/;
   }
-  return $name;
+  warn "USING: " . $string;
+  return $string;
 }
 
 sub save {
@@ -174,6 +184,7 @@ sub destroy {
 
 sub find {
   my ($self, $data) = @_;
+  warn "FIND";
   my $result = EnsEMBL::Web::DBSQL::SQL::Result->new();
   $result->set_action('find');
   my $sql = "SELECT * FROM " . $self->get_table . " WHERE " . $data->get_primary_key . "='" . $data->id . "';";
@@ -185,13 +196,16 @@ sub find {
 
 sub find_many {
   my ($self, $request) = @_;
+  warn "FIND MANY";
   my $result = EnsEMBL::Web::DBSQL::SQL::Result->new();
   $result->set_action('find');
   my $sql = $self->template($request->get_sql);
-  #warn "MANY: " . $sql;
-  my $hashref = $self->get_handle->selectall_hashref($sql, $request->get_index_by);
-  #warn "OK";
-  #warn "\n";
+  warn "MANY: " . $sql;
+  my $index_by = $self->parse_table_name($request->get_index_by); 
+  warn "INDEX: " . $index_by;
+  my $hashref = $self->get_handle->selectall_hashref($sql, $index_by);
+  warn "OK";
+  warn "\n";
   $result->set_result_hash($hashref);
   return $result;
 }
@@ -228,7 +242,7 @@ sub template {
     my $get = $self->$get_accessor;
     $template =~ s/<$1>/$get/g;
   }
-  return $template;
+  return $self->parse_table_name($template);
 }
 
 

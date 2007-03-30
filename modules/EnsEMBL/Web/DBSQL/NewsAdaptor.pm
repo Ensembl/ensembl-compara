@@ -403,6 +403,7 @@ sub fetch_species {
 
     my $sql;
     if ($release_id && $release_id ne 'all') {
+        warn "FETCHING SPECIES for RELEASE: " . $release_id;
         $sql = qq(
             SELECT
                 s.species_id    as species_id,
@@ -416,6 +417,7 @@ sub fetch_species {
             ORDER BY species_name ASC
         );
     } else {
+        warn "FETCHING ALL SPECIES";
         $sql = qq(
             SELECT
                 s.species_id    as species_id,
