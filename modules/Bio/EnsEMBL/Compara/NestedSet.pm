@@ -661,6 +661,20 @@ sub _internal_newick_format {
       }
     }
   }
+  if($format_mode eq 'species_short_name') { 
+    #simplified: name only on leaves, dist only if has parent
+    if($self->parent) {
+      if($self->is_leaf) {
+        my $species_name;
+        if ($self->isa('Bio::EnsEMBL::Compara::AlignedMember')) {
+          $species_name = $self->genome_db->short_name;
+        } else {
+          $species_name = $self->short_name;
+        }
+        $newick .= sprintf("%s", $species_name);
+      }
+    }
+  }
   if($format_mode eq 'ncbi_taxon') { 
     #name leaves an internal nodes by ncbi taxon_id
     if($self->parent) {
