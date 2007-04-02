@@ -228,6 +228,29 @@ sub binomial {
   }
 }
 
+=head2 short_name
+
+  Example    : $ncbi->short_name;
+  Description: The name of this genome in the Gspe ('G'enera
+               'spe'cies) format.
+  Returntype : string
+  Exceptions : none
+  Caller     : general
+
+=cut
+
+sub short_name {
+  my $self = shift;
+  my $name = $self->name;
+  $name =~  s/(\S)\S+\s(\S{3})\S+/$1$2/;
+  return $name;
+}
+
+sub get_short_name {
+  my $self = shift;
+  return $self->short_name;
+}
+
 
 sub RAP_species_format {
   my $self = shift;
