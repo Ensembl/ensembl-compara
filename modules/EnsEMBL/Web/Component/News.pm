@@ -81,14 +81,14 @@ sub select_news_form {
   my @cats = @{$object->all_cats};
   my @cat_values = ({'name'=>'All', 'value'=>'0'});
   foreach my $cat (@cats) {
-    my $name = $$cat{'news_cat_name'};
-    my $id = $$cat{'news_cat_id'};
+    my $name = $$cat{'news_category_name'};
+    my $id = $$cat{'news_category_id'};
     push(@cat_values, {'name'=>$name, 'value'=>$id});
   }
   $form->add_element(
     'type'     => 'DropDown',
     'required' => 'yes',
-    'name'     => 'news_cat_id',
+    'name'     => 'news_category_id',
     'label'    => 'Category',
     'values'   => \@cat_values,
     'value'    => '0',
