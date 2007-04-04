@@ -117,6 +117,17 @@ sub handler {
       $page->javascript->add_script( $cont );
     }   
   }
+  while($head=~s/<style(.*?)>(.*?)<\/style>//sm) {
+    my($attr,$cont) = ($1,$2);
+    next unless $attr =~/text\/css/;
+    my $media = $attr =~/media="(.*?)"/ ? $1 : 'all';
+    if($attr =~ /src="(.*?)"/ ) {
+      $page->stylesheet->add_sheet( $media, $1 );
+    } else {
+      $page->stylesheet->add( $media, $cont );
+    }
+  }
+
   $page->content->add_panel(
     new EnsEMBL::Web::Document::Panel( 
       'raw' => $pageContent =~ /<body.*?>(.*?)<\/body>/sm ? $1 : $pageContent
@@ -157,7 +168,7 @@ sub breadcrumbs {
 sub template_SPECIESINFO {
   my( $r, $code ) = @_;
   my($sp,$code) = split /:/, $code;
-  return $ENSEMBL_WEB_REGISTRY->species_defs->other_ies($sp,$code);
+  return $ENSEMBL_WEB_REGISTRY->species_defs->other_species($sp,$code);
 }
 sub template_SPECIESDEFS {
   my( $r, $code ) = @_;
