@@ -60,6 +60,16 @@ sub add_wizard {
   $self->{wizard} = $wizard; 
 }
 
+sub commander {
+### a
+  my ($self, $commander) = @_;
+  if ($commander) {
+    $self->{'commander'} = $commander;
+  }
+  return $self->{'commander'};
+}
+
+
 sub add_block { 
   my $self = shift;
   return unless $self->{page}->can('menu');
