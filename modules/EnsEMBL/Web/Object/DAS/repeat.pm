@@ -69,7 +69,7 @@ warn "FEATURE .....";
    'ID'          => $feature_id,
    'LABEL'       => "$feature_class: $feature_id",
    'TYPE'        => "repeat:$type:$feature_type",
-   'ORIENTATION' => $feature->seq_region_strand, 
+   'ORIENTATION' => $self->ori($feature->seq_region_strand), 
    'TARGET'      => {
      'ID'        => $feature_id,
      'START'     => $feature->hstart,

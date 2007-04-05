@@ -28,7 +28,7 @@ sub default_track_by_gene {
       cdna_all targettedgenewise human_ensembl_proteins
       medaka_protein gff_prediction oxford_fgu
       genebuilderbeeflymosandswall gsten flybase wormbase
-      ensembl sgd homology_low cow_proteins refseq mouse_protein dog_protein
+      ensembl sgd homology_low cow_proteins refseq mouse_protein dog_protein horse_protein
       jamboree_cdnas ciona_dbest_ncbi ciona_est_seqc ciona_est_seqn
       ciona_est_seqs ciona_jgi_v1 ciona_kyotograil_2004
  ensembl_projection ensembl_segment

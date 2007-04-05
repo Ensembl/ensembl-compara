@@ -79,9 +79,9 @@ sub Features {
 		'LABEL'       => $ft->ditag_id,
 		'TYPE'        => $ft->ditag_side || '', 
 		'METHOD'      => $ft->analysis->logic_name,
-		'START'       => $ft->start, # + $offset,
-		'END'         => $ft->end,#   + $offset,
-		'ORIENTATION' => $ft->strand+0,
+		'START'       => $ft->seq_region_start,
+		'END'         => $ft->seq_region_end
+		'ORIENTATION' => $self->ori($ft->seq_region_strand),
 		'NOTE'        => ["tag_count: $tag_count"],
 		'GROUP' => [$group], 
 	    };
