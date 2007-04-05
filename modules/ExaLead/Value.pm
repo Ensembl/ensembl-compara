@@ -29,7 +29,7 @@ sub getHighlighted {
   foreach my $qt ( sort { length($b->regexp) <=> length($a->regexp) }  $_[0]->{'query'}->terms ) {
     my @new_values;
     my $R = '('.$qt->regexp.')';
-    warn $R. ".... @values ...";
+#    warn $R. ".... @values ...";
     
     for(my $i=0;$i<@values;$i+=2){ 
       (my $T = $values[$i]) =~ s/$R/<span class="hi">$1<\/span>/ismg;
