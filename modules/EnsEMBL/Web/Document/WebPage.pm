@@ -127,6 +127,7 @@ sub configure {
       # the functions named in the script "configure" line
       # of the script.
       my $CONF = $config_module_name->new( $self->page, $object, $flag );
+      $CONF->{commander} = $self->{commander};
       foreach my $FN ( @functions ) { 
         if( $CONF->can($FN) ) {
 	  # If this configuration module can perform this function do so...
@@ -144,7 +145,7 @@ sub configure {
     <pre>%s</pre>), $self->_format_error($@) )
 									     )
 					   );
-	  } else {
+	        } else {
             $FUNCTIONS_CALLED->{$FN} = 1;
           }
         }
