@@ -25,6 +25,6 @@ my $r = Apache2::RequestUtil->request();
 $r->headers_out->add(     'Set-cookie' => $cookie );
 $r->err_headers_out->add( 'Set-cookie' => $cookie );
 
-CGI::redirect('/common/user/account');
+CGI::redirect( $SD->ENSEMBL_BASE_URL.'/common/user/account');
 
 1;

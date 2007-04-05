@@ -250,7 +250,7 @@ MAIN:{
 
   if( $stage eq 'setup' or $stage eq 'configure' ){
     if( $BLAST->modified ){
-#      warn( "STORING BLAST: $TICKET [PID=$$ TIME=".(time()-1060600000)."]" );
+      warn( "STORING BLAST: $TICKET [PID=$$ TIME=".(time()-1060600000)."]" );
       $BLAST->store;
     }
   }
@@ -275,11 +275,14 @@ MAIN:{
       }
     }
     # Store
-    if( $BLAST->modified or @run_list ){
+warn $BLAST->token;
+    if( $BLAST->modified || @run_list ){
+      warn( "STORING BLAST: $TICKET [PID=$$ TIME=".(time()-1060600000)."]" );
       $BLAST->store;
     }
     # Run
     foreach my $runnable( @run_list ){
+warn $runnable->token;
 warn "\nRUNNING  $runnable";
       eval{ $runnable->run };
 warn "\nRUN      $runnable $@";
