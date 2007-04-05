@@ -175,7 +175,8 @@ sub das {
         ) );
       }
     } else {
-      my @features = @{$featref->{$source_nm} || []};
+      my @features = ();
+      @features = @{$featref->{$source_nm}} if ref($featref->{$source_nm})=~/ARRAY/;
 
       foreach my $feature (@features) {
         next if ($feature->das_type_id() =~ /^(contig|component|karyotype|INIT_MET)$/i ||

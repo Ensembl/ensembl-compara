@@ -62,7 +62,7 @@ sub edit_form {
   ## navigation elements
   $form->add_element( 'type' => 'Hidden', 'name' => 'db_action', 'value' => 'save');
   $form->add_element( 'type' => 'Hidden', 'name' => 'dataview', 'value' => 'preview');
-  $form->add_element( 'type' => 'Submit', 'value' => 'Preview');
+  $form->add_element( 'type' => 'Submit', 'value' => 'Next');
   return $form ;
 }
 
@@ -127,7 +127,7 @@ sub preview_form {
 
   ## navigation elements
   $form->add_element( 'type' => 'Hidden', 'name' => 'dataview', 'value' => $db_action);
-  $form->add_element( 'type' => 'Submit', 'value' => 'OK');
+  $form->add_element( 'type' => 'Submit', 'value' => 'OK' );
   return $form ;
 }
 

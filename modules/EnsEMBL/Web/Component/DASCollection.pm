@@ -218,7 +218,7 @@ sub add_das_server {
       my $dwidth = 120;
       my $html = qq{<table>};
       foreach my $id (sort {$dsns->{$a}->{name} cmp $dsns->{$b}->{name} } keys (%{$dsns})) {
-warn Data::Dumper::Dumper( $dsns->{$id} );
+#warn Data::Dumper::Dumper( $dsns->{$id} );
         my $dassource = $dsns->{$id};
         my ($id, $name, $url, $desc) = ($dassource->{id}, $dassource->{name}, $dassource->{url}, substr($dassource->{description}, 0, $dwidth));
         my $cs = qq{<a href="javascript:X=window.open(\'$url\', \'DAS source details\', \'left=50,top=50,resizable,scrollbars=yes\');X.focus();void(0);">details about \`$name\`</a>};

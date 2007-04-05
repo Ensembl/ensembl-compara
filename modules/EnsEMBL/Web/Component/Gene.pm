@@ -891,15 +891,21 @@ sub orthologues {
 
     my %SPECIES;
     my $STABLE_ID = $gene->stable_id; my $C = 1;
-    my $FULL_URL  = qq(/@{[$gene->species]}/multicontigview?gene=$STABLE_ID);
     my $ALIGNVIEW = 0;
     my $matching_orthologues = 0;
     my %SP = ();
+    my $multicv_link = sprintf "/%s/multicontigview?gene=%s;context=10000", $gene->species, $gene->stable_id;
+    my $FULL_URL     = $multicv_link;
+
     foreach my $species (sort keys %orthologue_list) {
+      my $C_species = 1;
+      my $rowspan = scalar(keys %{$orthologue_list{$species}});
+      $rowspan++ if $rowspan > 1;
       $html .= sprintf( qq(
         <tr>
-          <th rowspan="@{[scalar(keys %{$orthologue_list{$species}})]}"><em>%s</em></th>), $species );
+          <th rowspan="$rowspan"><em>%s</em></th>), $species );
       my $start = '';
+      my $mcv_species = $multicv_link;
       foreach my $stable_id (sort keys %{$orthologue_list{$species}}) {
         my $OBJ = $orthologue_list{$species}{$stable_id};
         $html .= $start;
@@ -914,13 +920,16 @@ sub orthologues {
         my ($last_col, $EXTRA2);
         if(exists( $OBJ->{'display_id'} )) {
           (my $spp = $OBJ->{'spp'}) =~ tr/ /_/ ;
-          my $EXTRA = qq(<span class="small">[<a href="/@{[$gene->species]}/multicontigview?gene=$STABLE_ID;s1=$spp;g1=$stable_id;context=1000">MultiContigView</a>]</span>);
+          my $EXTRA = qq(<span class="small">[<a href="$multicv_link;s1=$spp;g1=$stable_id">MultiContigView</a>]</span>);
           if( $orthologue_desc ne 'DWGA' ) {
             $EXTRA .= qq(&nbsp;<span class="small">[<a href="/@{[$gene->species]}/alignview?class=Homology;gene=$STABLE_ID;g1=$stable_id">Align</a>]</span> );
             $EXTRA2 = qq(<br /><span class="small">[Target &#37id: $OBJ->{'target_perc_id'}; Query &#37id: $OBJ->{'query_perc_id'}]</span>);
             $ALIGNVIEW = 1;
           }
-          $FULL_URL .= ";s$C=$spp;g$C=$stable_id";$C++;
+          $mcv_species .= ";s$C_species=$spp;g$C_species=$stable_id";
+          $FULL_URL    .= ";s$C=$spp;g$C=$stable_id";
+          $C_species++;
+          $C++;
           my $link = qq(/$spp/geneview?gene=$stable_id;db=$db);
           if( $description =~ s/\[\w+:(\w+)\;\w+:(\w+)\]//g ) {
             my ($edb, $acc) = ($1, $2);
@@ -937,6 +946,9 @@ sub orthologues {
               <td>$orthologue_desc</td>
               <td>$last_col</td>
             </tr>));
+      }
+      if( $rowspan > 1) {
+        $html .= qq(<tr><td>&nbsp;</td><td><a href="$mcv_species">MultiContigView showing all $species orthologues</a></td></tr>); 
       }
     }
     $html .= qq(\n      </table>);
