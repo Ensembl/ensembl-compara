@@ -4,12 +4,18 @@ use strict;
 use warnings;
 
 use CGI;
+use EnsEMBL::Web::Root;
+use EnsEMBL::Web::Form;
 use EnsEMBL::Web::Commander::Connection;
-use EnsEMBL::Web::Commander::Connection::Option;
+#use EnsEMBL::Web::Commander::Connection::Option;
+use EnsEMBL::Web::Commander::Node;
+use EnsEMBL::Web::Commander::Node::Final;
+
 
 {
 
 my %Data_of;
+my %Form_of;
 my %Nodes_of;
 my %Connections_of;
 my %CGI_of;
@@ -29,10 +35,11 @@ sub new {
   my ($class, %params) = @_;
   my $self = bless \my($scalar), $class;
   $Data_of{$self} = {}; 
+  $Form_of{$self} = undef; 
   $Connections_of{$self} = []; 
   $Nodes_of{$self} = defined $params{nodes} ? $params{nodes} : [];
   $Destination_of{$self} = defined $params{destination} ? $params{destination} : "";
-  $CGI_of{$self} = new CGI;
+  $CGI_of{$self} = defined $params{cgi} ? $params{cgi} : new CGI;
   return $self;
 }
 
@@ -64,6 +71,23 @@ sub connections {
   my $self = shift;
   $Connections_of{$self} = shift if @_;
   return $Connections_of{$self};
+}
+
+sub create_node {
+  my ($self, %params) = @_;
+  my $module = $params{module};
+  my $name = $params{name};
+  if ($module && $name) {
+    if (EnsEMBL::Web::Root::dynamic_use(undef, $module)) {
+      my $node = $module->new(( name => $name, object => $params{object}));
+      $self->add_node(( node => $node ));
+      return $node;
+    }
+    else {
+      warn "Can't use module $module";
+    }
+  }
+  return undef;
 }
 
 sub add_node {
@@ -149,20 +173,20 @@ sub add_connection {
   my ($self, %params) = @_;
   my $connection = undef;
   if ($params{type} eq 'option') {
-    $connection = EnsEMBL::Web::Commander::Connection::Option->new();
+    #$connection = EnsEMBL::Web::Commander::Connection::Option->new();
   } else {
     $connection = EnsEMBL::Web::Commander::Connection->new();
   }
-  if ($params{from} && $params{to}) {
-    $connection->from($params{from});
-    $connection->to($params{to});
-    $connection->type($params{type});
-  }
-  if ($params{conditional} && $params{predicate}) {
-    $connection->conditional($params{conditional});
-    $connection->predicate($params{predicate});
-  }
   if ($connection) {
+    if ($params{from} && $params{to}) {
+      $connection->from($params{from});
+      $connection->to($params{to});
+      $connection->type($params{type});
+    }
+    if ($params{conditional} && $params{predicate}) {
+      $connection->conditional($params{conditional});
+      $connection->predicate($params{predicate});
+    }
     push @{ $self->connections }, $connection;
   }
 }
@@ -172,6 +196,9 @@ sub render_current_node {
   my $current_node = $self->current_node;
   my $render = "";
   if ($current_node) {
+    my $name = $current_node->name;
+    $current_node->$name;
+    $render .= "<h2>".$current_node->title."</h2>\n";
     $render .= $self->render_connection_form_header($current_node);
     $render .= $current_node->render($self->incoming_parameters);
     $render .= $self->render_connection_form($current_node);
@@ -211,14 +238,16 @@ sub render_connection_form_header {
     $html .= "}\n";
   }
   $html .= "</script>\n";
-  $html .= "<div id='connetion_form_content'>\n";
-  my $action = "";
+  my $action;
   if ($node->is_final) {
     ## redirect to the final destination
-    $action = "action='" . $node->destination . "'"; 
+    $action = $node->destination; 
   }
-  $html .= "<form id='connection_form' name='connetion_form' $action method='get'>\n";
-  #$html .= "<input type='hidden' name='node_$incoming_count' value='1'>";
+  $html .= $node->text_above."\n";
+
+  $self->form(EnsEMBL::Web::Form->new('connection_form', $action));
+   
+  #$self->form->add_element(type => 'Hidden', name => 'node_'.$incoming_count, value => '1');
   return $html;
 }
 
@@ -226,21 +255,23 @@ sub render_connection_form {
   my ($self, $node) = @_;
   my $html = "";
   if ($self->node_is_connected($node)) {
-    $html = "<br /><br />\n";
-    $html .= $self->render_incoming_parameters;
+    $self->add_incoming_parameters;
     my $forward_connection = $self->forward_connection($node);
     my $backward_connection = $self->backward_connection($node);
     if ($node->is_final) {
-      $html .= "<input type='submit' value='Finish'>";
+      $self->form->add_element(type => 'Submit', name => 'finish', value => 'Finish');
     } else {
       if ($backward_connection) {
-        $html .= "<input type='button' onclick='previous_node();' value='Previous'>";
+        $self->form->add_element(type => 'Submit', name => 'go_previous', value => 'Previous', 
+                                onclick => 'previous_node();', 'spanning' => 'inline');
       }
       if ($forward_connection) {
-        $html .= "<input type='hidden' id='node_name' name='node_name' value='" . $forward_connection->to->name . "'>\n";
-        $html .= "<input type='button' onclick='next_node();' value='Next'>";
+        $self->form->add_element(type => 'Hidden', name => 'node_name', value => $forward_connection->to->name, onclick => 'next_node();');
+        $self->form->add_element(type => 'Submit', name => 'go_next', value => 'Next', 'spanning' => 'inline');
       }
     }
+    $html .= $self->form->render;
+    $html .= "\n".$node->text_below."\n";
   } else {
     ## Node is not connected
   }
@@ -250,25 +281,35 @@ sub render_connection_form {
 sub incoming_parameters {
   my $self = shift;
   my %parameters = ();
-  my %incoming = $self->cgi->Vars;
-  foreach my $key (keys %incoming) {
-    if ($key ne 'node_name') { 
-      $parameters{$key} = $incoming{$key};
-    }
+
+  my @cgi_params = $self->cgi->param();
+  foreach my $name (@cgi_params) {
+    next if $name eq 'node_name';
+    my @value = $self->cgi->param($name);
+    if (@value) {
+      $parameters{$name} = wantarray ? \@value : $value[0];
+    } 
   }
+
   return %parameters;
 }
 
-sub render_incoming_parameters {
+sub add_incoming_parameters {
   my ($self) = @_;
-  my $html = "";
   my %parameters = $self->incoming_parameters;
   foreach my $key (keys %parameters) {
     if ($key ne 'node_name') { 
-      $html .= "<input type='hidden' name='$key' value='" . $parameters{$key} . "'>\n";
+      my $value = $parameters{$key};
+      if (ref($value) eq 'ARRAY') {
+        foreach my $v (@$value) {
+          $self->form->add_element(type => 'Hidden', name => $key, value => $v);
+        }
+      }
+      else {
+        $self->form->add_element(type => 'Hidden', name => $key, value => $value);
+      }
     }
   }
-  return $html;
 }
 
 sub render_error_message {
@@ -283,10 +324,18 @@ sub data {
   return $Data_of{$self};
 }
 
+sub form {
+  ### a
+  my $self = shift;
+  $Form_of{$self} = shift if @_;
+  return $Form_of{$self};
+}
+
 sub DESTROY {
   ### d
   my $self = shift;
   delete $Data_of{$self};
+  delete $Form_of{$self};
   delete $Nodes_of{$self};
   delete $Connections_of{$self};
   delete $CGI_of{$self};
