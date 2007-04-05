@@ -41,6 +41,8 @@ sub render {
     if( $self->firstline ) {
       $options .= sprintf qq(<option value="">%s</option>\n), CGI::escapeHTML( $self->firstline );
     }
+    my $optcount = 0;
+    my @styles = @{$self->styles};
     foreach my $V ( @{$self->values} ) {
       if( $V->{'group'} ne $current_group ) {
         if( $current_group ) {
@@ -51,9 +53,14 @@ sub render {
         }
         $current_group = $V->{'group'};
       }
+      my $extra = $self->value eq $V->{'value'} ? ' selected="selected"' : '';
+      if ($styles[$optcount]) {
+        $extra .= ' style="'.$styles[$optcount].'"';
+      }
       $options .= sprintf( qq(<option value="%s"%s>%s</option>\n),
-        $V->{'value'}, $self->value eq $V->{'value'} ? ' selected="selected"' : '', $V->{'name'}
+        $V->{'value'}, $extra, $V->{'name'}
       );
+      $optcount++;
     }
     if( $current_group ) { $options.="</optgroup>\n"; }
     my $ON_CHANGE = $self->{'on_change'} eq 'submit' ? 
