@@ -230,13 +230,26 @@ sub search_SEQUENCE {
     [ 'core', 'Sequence',
       "select count(*) from seq_region where name [[COMP]] '[[KEY]]'",
       "select sr.name, cs.name, sr.length, 'region' from seq_region as sr, coord_system as cs where cs.coord_system_id = sr.coord_system_id and sr.name [[COMP]] '[[KEY]]'" ],
-#    [ 'core', 'Sequence',
-#      "select count(distinct misc_feature_id) from misc_attrib where value [[COMP]] '[[KEY]]'",
-#      "select ma1.value, ms.name, seq_region_end-seq_region_start, 'miscfeature'
-#         from misc_attrib as ma1, misc_set as ms, misc_attrib as ma2, misc_feature as mf, misc_feature_misc_set as mfms, attrib_type as at
-#        where ma1.misc_feature_id = mf.misc_feature_id and ma2.misc_feature_id and mfms.misc_feature_id = mf.misc_feature_id and mfms.misc_set_id = ms.misc_set_id and
-#              ma1.attrib_type_id = at.attrib_type_id and at.code in ('name','clone_name','embl_acc','synonym','sanger_project') and ma2.value [[COMP]] '[[KEY]]'
-#        group by mf.misc_feature_id" ]
+    [ 'core', 'Sequence',
+      "select count(distinct misc_feature_id) from misc_attrib where value [[COMP]] '[[KEY]]'",
+      "select ma.value, group_concat( distinct ms.name ), seq_region_end-seq_region_start, 'miscfeature'
+         from misc_set as ms, misc_feature_misc_set as mfms,
+              misc_feature as mf, misc_attrib as ma, 
+              attrib_type as at,
+              (
+                select distinct ma2.misc_feature_id
+                  from misc_attrib as ma2, attrib_type as at2
+                 where ma2.attrib_type_id = at2.attrib_type_id and
+                       at2.code in ('name','clone_name','embl_acc','synonym','sanger_project') and
+                       ma2.value [[COMP]] '[[KEY]]'
+              ) as tt
+        where ma.misc_feature_id   = mf.misc_feature_id and 
+              mfms.misc_feature_id = mf.misc_feature_id and
+              mfms.misc_set_id     = ms.misc_set_id     and
+              ma.misc_feature_id   = tt.misc_feature_id and
+              ma.attrib_type_id    = at.attrib_type_id  and
+              at.code in ('name','clone_name','embl_acc','synonym','sanger_project')
+        group by mf.misc_feature_id" ]
   );
   foreach ( @{$self->{_results}} ) {
     $_ = {
