@@ -20,7 +20,7 @@ function _isint(   s ) { return /^[-+]?\d+$/.test(s)               }
 function _isfloat( s ) { return /^[-+]?(\d+\.\d+|\d+\.?|\.\d+)?([Ee][+-]?\d+)?$/.test(s) }
 function _isemail( s ) { return /^[^@]+@[^@.:]+[:.][^@]+$/.test(s) }
 function _isurl(   s ) { return /^https?:\/\/\w.*$/.test(s)        }
-function _ispass(  s ) { return /^\S{4,10}$/.test(s)               }
+function _ispass(  s ) { return /^\S{6,32}$/.test(s)               }
 
 function _valid( type, s ) {
   switch(type) {

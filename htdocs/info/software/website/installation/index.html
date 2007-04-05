@@ -16,6 +16,18 @@
   If you find any omissions, errors, or just confusing bits in the instructions, please send an email to
   <a href="mailto:ensembl-webteam@sanger.ac.uk">ensembl-webteam@sanger.ac.uk</a>, and we'll try to fix things.
 </p>
+<h3 class="boxed">Hardware and software requirements</h3>
+<p>
+  The Ensembl website system is built on open source software: Apache, mod_perl and MySQL. To install a
+  local mirror of Ensembl you will need:
+</p>
+<ul>
+  <li>Apache 2 and mod_perl 2 - installation instructions below</li>
+  <li>A local MySQL (or SQLite) database to store session configurations</li>
+  <li>up to 500 Mbytes to install source code required by the web server (Apache, mod_perl, ensembl code etc)</li>
+  <li>Depending on usage - temporary storage space for images/session information</li>
+  <li>approx 5-600 Gbytes to install the Ensembl MySQL databases</li>
+</ul>
   <h3 class="boxed">Summary of Instructions</h3>
   <p>There are four main sections to these instructions:</p>
   <dl>
@@ -28,6 +40,24 @@
   <dt><a href="running.html">Running the site</a></dt>
   <dd>How to start up, shut down, and generally maintain the site.</dd>
   </dl>
+<h3 class="boxed">Troubleshooting an Ensembl install</h3>
+<p>
+  There are a number of common issues with an Ensembl installation, below are listed so
+  frequently asked questions. For more details click on the question.
+</p>
+<dl>
+  <dt><a href="problems.html#truetype">Why does text shows up on MapView but not ContigView?</a></dt>
+  <dd>Truetype fonts have not been correctly installed on configured.</dd>
+  <dt><a href="problems.html#whichfile">Which configuration files do I edit?</a></dt>
+  <dd>Ensembl uses a plugin system which makes life easier to configure mirrors, by merging configuration files.</dd>
+  <dt><a href="problems.html#nolocaldb">Configurations are not stored if I don't have a local MySQL server?</a></dt>
+  <dd>Ensembl can now store (limited) configuration settings against in SQLite database</dd>
+  <dt><a href="problems.html#mart">Mart isn't currently installed in the Ensembl mirror. How can I enable it?</a></dt>
+  <dd>Mart requires some post CVS checkout changes and so we don't configure it by default, but it requires a plugin to enable it</dd>
+  <dt><a href="problems.html#web">The main Ensembl website has user accounts can we enable them on our mirror.</a></dt>
+  <dd>Yes, there are minor configuration changes required.</dd>
+</dl>
+
   <h3 class="boxed">Before you start</h3>
   <p>Running the Ensembl web site can be rather taxing on hardware. At a minimum you will need:</p>
   <ul>

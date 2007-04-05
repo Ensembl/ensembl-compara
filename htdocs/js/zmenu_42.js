@@ -356,7 +356,7 @@ function pfetch( ID ) {
   // Don't be confused by the ActiveXObject indicator. Use of this code will not trigger
   // a security alert since the ActiveXObject is baked into IE and you aren't downloading it
   // into the IE runtime engine
-  URL = "/Homo_sapiens/ajax-pfetch";
+  URL = "/default/ajax-pfetch";
   fastaAJAX = new AJAXRequest( 'GET', URL+'?ID='+encode(ID), '', changePFETCH );
 }
 
