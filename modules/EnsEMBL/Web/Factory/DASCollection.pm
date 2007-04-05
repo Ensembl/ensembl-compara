@@ -128,10 +128,11 @@ sub createObjects {
     if( $source_config->{url} =~ /\/das$/ ) {
       $source_config->{url} .= "/$source_config->{dsn}";
     }
-#  warn("ADD EXTERNAL: $source");
-#  warn(Dumper($source_confdata)) if ($source =~ /colour/i);
+    $source_config->{type} = $source_config->{mapping}->[0] unless $source_config->{type};
     $source_config->{conftype} ||= 'external';
     $sources_conf{$source}    = $source_config;
+  warn("ADD EXTERNAL: $source");
+  warn(Dumper($source_config)) if ($source =~ /demo/i);
   }
 
 # Get parameters of the view that has called upon dasconfview
