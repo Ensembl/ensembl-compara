@@ -67,6 +67,7 @@ print "##RELEASE $release\n";
 
 foreach my $child (@{$root->children}) {
   dumpTreeMultipleAlignment($child);
+  $child->release_tree;
 #  last;
 }
 
