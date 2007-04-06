@@ -244,5 +244,6 @@ mysql -hens-staging -uensro -N -e 'show databases like "%core\_42\_%"'|awk '{ pr
 
 mysql -hens-staging -uensadmin -pxxxxx ensembl_compara_42 < update_gene_description.sql
 
+21. Don't forget to dump the EMF files to go on the FTP sites, for multiple alignment, and protein trees.
 
-21. Once the final compara db has been copied, and everyone is happy with the data, and the Compara Coordinator survived his task, well the Compara Coordinator could buy some drinks at the Red Lion after handover. Special clause for Mart related coordinator, the handover will be then the mart handover. 
+22. Once the final compara db has been copied, and everyone is happy with the data, and the Compara Coordinator survived his task, well the Compara Coordinator could buy some drinks at the Red Lion after handover. Special clause for Mart related coordinator, the drinks will be after the mart release. 
