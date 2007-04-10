@@ -7,7 +7,7 @@ use CGI;
 use EnsEMBL::Web::Root;
 use EnsEMBL::Web::Form;
 use EnsEMBL::Web::Commander::Connection;
-#use EnsEMBL::Web::Commander::Connection::Option;
+use EnsEMBL::Web::Commander::Connection::Option;
 use EnsEMBL::Web::Commander::Node;
 use EnsEMBL::Web::Commander::Node::Final;
 
@@ -173,7 +173,7 @@ sub add_connection {
   my ($self, %params) = @_;
   my $connection = undef;
   if ($params{type} eq 'option') {
-    #$connection = EnsEMBL::Web::Commander::Connection::Option->new();
+    $connection = EnsEMBL::Web::Commander::Connection::Option->new();
   } else {
     $connection = EnsEMBL::Web::Commander::Connection->new();
   }
@@ -184,8 +184,8 @@ sub add_connection {
       $connection->type($params{type});
     }
     if ($params{conditional} && $params{predicate}) {
-      $connection->conditional($params{conditional});
-      $connection->predicate($params{predicate});
+      $connection->set_conditional($params{conditional});
+      $connection->set_predicate($params{predicate});
     }
     push @{ $self->connections }, $connection;
   }
@@ -211,22 +211,27 @@ sub render_current_node {
 sub render_connection_form_header {
   my ($self, $node) = @_;
   my $html = "";
-  my $incoming_count = 0;
   my @forward_connections = $self->forward_connections($node);
   my $backward_connection = $self->backward_connection($node);
   $html .= "<script language='javascript'>\n";
   $html .= "function next_node() {\n";
+  #$html .= "alert('next node');\n";
   if (@forward_connections) {
+    my $added = 0;
     foreach my $forward_connection (@forward_connections) {
       if ($forward_connection->type eq 'option') {
-        $html .= "  if (\$('" . $forward_connection->conditional . "_" . $forward_connection->predicate . "').checked) {\n";
+        #$html .= "alert('checking conditions: ' + \$('" . $forward_connection->get_conditional . "').value);\n";
+        $html .= "  if (\$('" . $forward_connection->get_conditional . "').value == '" . $forward_connection->get_predicate . "') {\n";
+        #$html .= "alert('OK - submit');\n";
         $html .= "  \$('node_name').value = '" . $forward_connection->to->name . "';\n";
         #$html .= "  alert('conditional link to: " . $forward_connection->to->name . "');\n";
         $html .= "  \$('connection_form').submit();\n";
         $html .= "  }\n";
-      } else {
-        $html .= "  \$('connection_form').submit();\n";
+        $added = 1;
       }
+    }
+    if (!$added) {
+      $html .= "  \$('connection_form').submit();\n";
     }
   }
   $html .= "}\n";
@@ -247,7 +252,6 @@ sub render_connection_form_header {
 
   $self->form(EnsEMBL::Web::Form->new('connection_form', $action));
    
-  #$self->form->add_element(type => 'Hidden', name => 'node_'.$incoming_count, value => '1');
   return $html;
 }
 
@@ -266,8 +270,8 @@ sub render_connection_form {
                                 onclick => 'previous_node();', 'spanning' => 'inline');
       }
       if ($forward_connection) {
-        $self->form->add_element(type => 'Hidden', name => 'node_name', value => $forward_connection->to->name, onclick => 'next_node();');
-        $self->form->add_element(type => 'Submit', name => 'go_next', value => 'Next', 'spanning' => 'inline');
+        $self->form->add_element(type => 'Hidden', name => 'node_name', id => 'node_name', value => $forward_connection->to->name);
+        $self->form->add_element(type => 'Button', name => 'go_next', value => 'Next', 'spanning' => 'inline', on_click => 'next_node();');
       }
     }
     $html .= $self->form->render;

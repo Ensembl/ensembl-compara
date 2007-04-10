@@ -39,7 +39,7 @@ sub das_servers {
 
   $self->add_element(( type => 'DropDown', name => 'server', label => 'Select an existing server',
                             'select' => 'select', value => $default, values => $server_list ));
-  $self->add_element(( type => 'String', name => 'filter', label => 'Filter sources by name/URL/description (optional)' ));
+  $self->add_element(( type => 'String', name => 'filter', id => 'filter', label => 'Filter sources by name/URL/description (optional)' ));
   $self->add_element(( type => 'Information', value => 'OR'));
   $self->add_element(( type => 'String', name => 'new_server', label => 'Add another DAS server' ));
 }
