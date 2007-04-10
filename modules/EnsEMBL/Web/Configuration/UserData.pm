@@ -35,6 +35,8 @@ sub user_data_wizard {
   $commander->add_connection(( type => 'link', from => $das_servers,    to => $das_servers));
   $commander->add_connection(( type => 'link', from => $das_sources,    to => $conf_tracks));
   $commander->add_connection(( type => 'link', from => $das_sources,    to => $finish));
+  $commander->add_connection(( type => 'option', conditional => 'filter', predicate => 'das', 
+                              from => $das_servers, to => $das_servers));
 
   ## File upload
   $commander->add_connection(( type => 'option', conditional => 'option', predicate => '', 
