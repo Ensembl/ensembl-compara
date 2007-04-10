@@ -87,6 +87,8 @@ sub dumpTreeMultipleAlignment
       $aligned_seqs[$i] .= substr($alignment_string, $i, 1);
     }
   }
+  $tree->release_tree;
+  undef $tree;
 # will need to update the script when we will produce omega score for each column
 # of the alignment.
 # print "SCORE NULL\n";
