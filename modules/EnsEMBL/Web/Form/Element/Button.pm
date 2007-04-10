@@ -15,6 +15,7 @@ sub new {
 sub on_click        :lvalue { $_[0]{'on_click'};   }
 
 sub render { 
+    warn "RENDER BUTTON: " . $_[0]->on_click;
     return sprintf( '<input type="button" name="%s" id="%s" value="%s" class="red-button" %s />', 
 		    CGI::escapeHTML($_[0]->name) || 'submit', 
         CGI::escapeHTML($_[0]->id) || 'button_'.CGI::escapeHTML($_[0]->name),

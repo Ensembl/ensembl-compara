@@ -7,6 +7,7 @@ sub new {
   my( $class, %array ) = @_;
   my $self = {
     'form'         => $array{ 'form'  },
+    'id'           => $array{ 'id'  },
     'type'         => $array{ 'type'  },
     'value'        => $array{ 'value' },
     'values'       => $array{ 'values' } || {},
