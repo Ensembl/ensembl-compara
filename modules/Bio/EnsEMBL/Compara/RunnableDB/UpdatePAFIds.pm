@@ -124,7 +124,7 @@ sub updatepafids {
     my $second_offset_hash = $sth->fetchrow_hashref;
     my $second_offset = $second_offset_hash->{max};
     my $sql2 = "UPDATE $tbl_name".
-               " SET peptide_align_feature_id=peptide_align_feature_id+$first_offset";
+               " SET peptide_align_feature_id=peptide_align_feature_id+$first_offset ORDER BY peptide_align_feature_id DESC";
     my $sth2 = $self->dbc->prepare($sql2);
     $sth2->execute();
     $first_offset += $second_offset;
