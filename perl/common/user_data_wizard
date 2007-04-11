@@ -5,5 +5,4 @@ package user_data_wizard;
 use EnsEMBL::Web::Document::Wizard;
 EnsEMBL::Web::Document::Wizard::simple_wizard('UserData', 'wizard_menu');
 
-
 1;

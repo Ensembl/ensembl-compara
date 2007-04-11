@@ -196,7 +196,8 @@ sub create {
   }
 
   if ($params{record}) {
-    warn "CREATING FOR USER: " . $user;
+    warn "CREATING RECORD FOR USER: " . $user;
+    warn "ADDING: ". $params{record};
     %set_parameters = %{ $self->record_parameters(\%set_parameters, $params{record}, $user) };
     $set_parameters{user_id} = $user;
     warn "USER: " . $set_parameters{user_id};
@@ -216,7 +217,8 @@ sub create {
   my $sql = "INSERT INTO " . $table . " ";
   $sql .= $self->set_sql_with_parameters(\%set_parameters, \@definition, $user);
   $sql .= ";";
-
+  warn "SELF TABLE: " . $self->table;
+  warn "TABLE: " . $table;
   if ($self->execute($sql)) {
     $result->set_last_inserted_id($self->last_inserted_id);
     $result->get_success('yes');

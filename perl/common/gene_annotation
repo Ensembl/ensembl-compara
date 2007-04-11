@@ -11,6 +11,7 @@ use EnsEMBL::Web::DBSQL::DataDefinition;
 use EnsEMBL::Web::RegObj;
 use EnsEMBL::Web::DBSQL::ViewAdaptor;
 use EnsEMBL::Web::Tools::URL;
+use EnsEMBL::Web::Tools::DBSQL::TableName;
 
 my $cgi = CGI->new;
 my $page = EnsEMBL::Web::Interface::PageDefinition->new();
@@ -19,12 +20,12 @@ my $db = $ENSEMBL_WEB_REGISTRY->dbAdaptor;
 
 my $url = EnsEMBL::Web::Tools::URL->new(( url => $cgi->param('url') )); 
 
-my $class = "user";
+my $class = "%%user";
 if ($cgi->param('class')) {
   $class = $cgi->param('class');
 }
 
-my $table = $class . "_record";
+my $table = EnsEMBL::Web::Tools::DBSQL::TableName::parse_table_name($class . "_record%%");
 
 $data->adaptor(EnsEMBL::Web::DBSQL::ViewAdaptor->new(( 
                                                        handle => $db,

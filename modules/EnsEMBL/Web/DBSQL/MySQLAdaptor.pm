@@ -8,6 +8,7 @@ use EnsEMBL::Web::RegObj;
 use EnsEMBL::Web::Object::Data;
 use EnsEMBL::Web::DBSQL::SQL::Result;
 use EnsEMBL::Web::DBSQL::SQL::Request;
+use EnsEMBL::Web::Tools::DBSQL::TableName;
 use Data::Dumper;
 
 {
@@ -65,22 +66,7 @@ sub get_table {
 
 sub parse_table_name {
   my ($self, $string) = @_;
-  if ($string=~ /%%(.*)%%/) {
-    warn "TEMPLATING: " . $string;
-    warn "CHECKING:" . $1;
-    my $name;
-    my $species_defs = $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->species_defs;
-    if ($1 eq 'user_record') {
-      $name = $species_defs->ENSEMBL_USER_DATA_TABLE;
-    } elsif ($1 eq 'group_record') {
-      $name = $species_defs->ENSEMBL_GROUP_DATA_TABLE;
-    } else {
-      $name = $1;
-    }
-    $string =~ s/%%(.*)%%/$name/;
-  }
-  warn "USING: " . $string;
-  return $string;
+  return EnsEMBL::Web::Tools::DBSQL::TableName::parse_table_name($string);
 }
 
 sub save {

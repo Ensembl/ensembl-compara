@@ -10,6 +10,7 @@ use EnsEMBL::Web::Interface::PageDefinition;
 use EnsEMBL::Web::Interface::FormDefinition;
 use EnsEMBL::Web::DBSQL::DataDefinition;
 use EnsEMBL::Web::DBSQL::ViewAdaptor;
+use EnsEMBL::Web::Tools::DBSQL::TableName;
 
 use EnsEMBL::Web::RegObj;
 use Data::Dumper;
@@ -31,7 +32,7 @@ my $db = $ENSEMBL_WEB_REGISTRY->dbAdaptor;
 
 $data->adaptor(EnsEMBL::Web::DBSQL::ViewAdaptor->new((
                                                        handle => $db,
-                                                       table  => 'user_record'
+                                                       table  => EnsEMBL::Web::Tools::DBSQL::TableName::parse_table_name('%%user_record%%')
                                                     )) );
 
 $data->add_field({'Field' => 'name', 'Type' => 'varchar(255)'});

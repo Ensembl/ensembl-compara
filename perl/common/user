@@ -20,6 +20,7 @@ $controller->add_connection({ 'reset_favourites' => 'EnsEMBL::Web::Controller::C
 $controller->add_connection({ 'reset_password' => 'EnsEMBL::Web::Controller::Command::User::ResetPassword' }); 
 $controller->add_connection({ 'remove_invite' => 'EnsEMBL::Web::Controller::Command::User::RemoveInvite' }); 
 $controller->add_connection({ 'save_das' => 'EnsEMBL::Web::Controller::Command::User::SaveDas' }); 
+$controller->add_connection({ 'annotation' => 'EnsEMBL::Web::Controller::Command::User::SaveAnnotation' }); 
 
 $controller->dispatch($ENV{REQUEST_URI});
 
