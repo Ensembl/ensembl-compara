@@ -38,10 +38,11 @@ sub add_attribute {
 sub add_element {
   my( $self, %options ) = @_;
   my $module = "EnsEMBL::Web::Form::Element::$options{'type'}";
-  #warn $module;
+  warn $module;
   #warn $self->dynamic_use( $module );
 
   if( $self->dynamic_use( $module ) ) {
+    warn "ID: " . $options{'id'};
     $self->_add_element( $module->new( 'form' => $self->{'_attributes'}{'name'}, %options ) );
   }
   else {
@@ -55,7 +56,9 @@ sub _add_element {
     $self->add_attribute( 'method',  'post' );
     $self->add_attribute( 'enctype', 'multipart/form-data' );
   }
-  $element->id =  $self->_next_id();
+  if (!$element->id) {
+    $element->id =  $self->_next_id();
+  }
   $element->{form} = $self->{_form_id};
   $element->{formname} = $self->{_attributes}{name};
   push @{$self->{'_elements'}}, $element;
