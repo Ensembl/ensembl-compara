@@ -284,14 +284,14 @@ sub control_movie_form {
 
   $form->add_element(
     'type'     => 'Button',
-    'on_click' => "hiliteButton('control_movie_1', $controls);PlayMovie($frame_count);",
+    'onclick' => "hiliteButton('control_movie_1', $controls);PlayMovie($frame_count);",
     'name'     => 'Play',
     'value'    => 'Play',
     'spanning' => 'inline',
   );
   $form->add_element(
     'type'     => 'Button',
-    'on_click' => "hiliteButton('control_movie_2', $controls);StopMovie();",
+    'onclick' => "hiliteButton('control_movie_2', $controls);StopMovie();",
     'name'     => 'Stop',
     'value'    => 'Stop',
     'spanning' => 'inline',
@@ -307,7 +307,7 @@ sub control_movie_form {
     );
   $form->add_element(
     'type'     => 'Button',
-    'on_click' => "hiliteButton('control_movie_4', $progress);RewindMovie();",
+    'onclick' => "hiliteButton('control_movie_4', $progress);RewindMovie();",
     'name'     => 'Rewind',
     'value'    => '|<<',
     'spanning' => 'inline',
@@ -316,7 +316,7 @@ sub control_movie_form {
     my $tenth = int(($frame_count / 10) * $i);
     $form->add_element(
       'type'     => 'Button',
-      'on_click' => "SkipToFrame($tenth);",
+      'onclick' => "SkipToFrame($tenth);",
       'name'     => "Skip$i",
       'value'    => '  ',
       'spanning' => 'inline',
@@ -324,7 +324,7 @@ sub control_movie_form {
   }
   $form->add_element(
     'type'     => 'Button',
-    'on_click' => "hiliteButton('control_movie_14', $progress);EndOfMovie();",
+    'onclick' => "hiliteButton('control_movie_14', $progress);EndOfMovie();",
     'name'     => 'End',
     'value'    => '>>|',
     'spanning' => 'inline',
@@ -340,14 +340,14 @@ sub control_movie_form {
     );
   $form->add_element(
     'type'     => 'Button',
-    'on_click' => 'ZoominMovie()',
+    'onclick' => 'ZoominMovie()',
     'name'     => 'Zoomin',
     'value'    => 'Zoom In',
     'spanning' => 'inline',
   );
   $form->add_element(
     'type'     => 'Button',
-    'on_click' => 'ZoomoutMovie()',
+    'onclick' => 'ZoomoutMovie()',
     'name'     => 'Zoomout',
     'value'    => 'Zoom Out',
     'spanning' => 'inline',

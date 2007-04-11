@@ -306,7 +306,7 @@ sub das {
     'value'    => 'Manage Sources',
     'name'     => 'Manage',
     'spanning' => 'yes',
-    'on_click' => "X=window.open('/@{[$species]}/dasconfview?conf_script=$script;$params','das_sources','left=10,top=10,resizable,scrollbars=yes');X.focus()"
+    'onclick' => "X=window.open('/@{[$species]}/dasconfview?conf_script=$script;$params','das_sources','left=10,top=10,resizable,scrollbars=yes');X.focus()"
   );
 
   $panel->add_row( $label, $form->render(), "$URL=off" );
