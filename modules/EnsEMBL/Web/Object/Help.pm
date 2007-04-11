@@ -34,7 +34,8 @@ sub send_email {
   my $recipient = $self->species_defs->ENSEMBL_HELPDESK_EMAIL;
   my $sitetype = $self->species_defs->ENSEMBL_SITETYPE;
   my $sitename = $sitetype eq 'EnsEMBL' ? 'Ensembl' : $sitetype;
-  $mailer->open({ 'To' => $recipient, 'Subject' => "$sitetype website Helpdesk", 'From' => $self->param('email') });
+  my $subject = $self->param('category') || "$sitename website Helpdesk";
+  $mailer->open({ 'To' => $recipient, 'Subject' => $subject, 'From' => $self->param('email') });
   print $mailer $message;
   $mailer->close();
   return 1;
