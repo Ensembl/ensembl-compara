@@ -322,7 +322,6 @@ sub _writeMultiFastaAlignment {
 				      -format => $output_format,
 				      -idlength => 10
 				      );
-  
     my $gaba = $self->{'comparaDBA'}->get_GenomicAlignBlockAdaptor;
     my $gab = $gaba->fetch_by_dbID($self->genomic_align_block_id);
     
@@ -337,7 +336,6 @@ sub _writeMultiFastaAlignment {
 
 	#add _ to either side of genome_db id to make GERP like it
 	my $seq_name = _get_name_from_GenomicAlign($genomic_align);
-	
 	my $aligned_sequence = $genomic_align->aligned_sequence;
 	my $seq = Bio::LocatableSeq->new(
 					 -SEQ    => $aligned_sequence,
@@ -488,6 +486,7 @@ sub _parse_rates_file {
 
     my $j;
     
+    my $obs_no_score = -1.0; #uncalled observed score
     my $exp_no_score = 0.0;  #uncalled expected score
     my $diff_no_score = 0.0; 
 
@@ -528,7 +527,7 @@ sub _parse_rates_file {
 		my ($obs, $exp) = split/\t/,$_;
 		my $diff;
 
-		if ($exp == $exp_no_score) {
+		if ($obs == $obs_no_score) {
 		    $diff = $diff_no_score;
 		} else {
 		    $diff = $exp - $obs;
@@ -589,7 +588,15 @@ sub _parse_rates_file {
 			    #first time found called score so save current pos 
 			    #as start_pos for this block
 			    if ($bucket->{$win_sizes->[$j]}->{called} == 1) {
-				$bucket->{$win_sizes->[$j]}->{start_pos} = $bucket->{$win_sizes->[$j]}->{pos};
+
+				#12.04.07 kfb fixed bug which occurs when the 
+				#1000th score is in a region of 10 or less 
+				#uncalled bases because the next start_pos was
+				#set to be the next called position instead of 
+				#the next (uncalled) position. 
+				#$bucket->{$win_sizes->[$j]}->{start_pos} = $bucket->{$win_sizes->[$j]}->{pos};
+
+				$bucket->{$win_sizes->[$j]}->{start_pos} = $bucket->{$win_sizes->[$j]}->{pos} - $bucket->{$win_sizes->[$j]}->{cnt};
 			    }
 			   
 			    #average over the number of called scores in a 
@@ -606,7 +613,6 @@ sub _parse_rates_file {
 			    #if have max_called_dist scores in the score 
 			    #string, then store them in the database
 			    if ($bucket->{$win_sizes->[$j]}->{cnt} == $max_called_dist) {
-
 				my $conservation_score =  new Bio::EnsEMBL::Compara::ConservationScore(											       -genomic_align_block => $gab, -window_size => $win_sizes->[$j], -position => $bucket->{$win_sizes->[$j]}->{start_pos}, -expected_score => $bucket->{$win_sizes->[$j]}->{exp_scores}, -diff_score => $bucket->{$win_sizes->[$j]}->{diff_scores});
 				
 				$cs_adaptor->store($conservation_score);  
