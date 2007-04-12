@@ -4,6 +4,8 @@ use strict;
 use Sanger::Graphics::GlyphSetManager;
 use Bio::EnsEMBL::GlyphSet::Pprotdas;
 use Bio::EnsEMBL::GlyphSet::Pseparator;
+use EnsEMBL::Web::RegObj;
+
 use vars qw(@ISA);
 @ISA = qw(Sanger::Graphics::GlyphSetManager);
 
@@ -30,7 +32,8 @@ sub init {
   }
 
   my $object = $Config->{_object};
-  foreach my $source (@{ $Config->{_object}->get_session->get_das_filtered_and_sorted($ENV{'ENSEMBL_SPECIES'}) }) {
+# foreach my $source (@{ $Config->{_object}->get_session->get_das_filtered_and_sorted($ENV{'ENSEMBL_SPECIES'}) }) {
+  foreach my $source (@{ $ENSEMBL_WEB_REGISTRY->get_das_filtered_and_sorted($ENV{'ENSEMBL_SPECIES'}) }) {
     my $confkey = "genedas_".$source->get_key;
     next unless $Config->get($confkey,'on') eq 'on';
     $source_container->{ $source->get_key } = $source->get_data;
