@@ -18,7 +18,7 @@ Bethan Pritchard - bp1@sanger.ac.uk
 
 =cut
 use strict;
-use vars qw(@ISA);
+use vars qw(@ISA $SCORE_COLOURS);
 use Bio::EnsEMBL::GlyphSet_simple;
 use Bio::EnsEMBL::Feature;
 use EnsEMBL::Web::Component;
@@ -34,19 +34,42 @@ sub _init {
   return unless ($self->strand() == -1);
   my $Config = $self->{'config'};   
   my $history_tree = $self->{'container'}; 
- 
+  my $a_id = $self->{'config'}->{_object}->stable_id;
 
   ## Define basic set up variables ##
   my $panel_width = $Config->image_width();
   my ($fontname, $fontsize) = $self->get_font_details('medium');
+  my( $fontname_o, $fontsize_o ) = $self->get_font_details( 'label' );
+  my @res_o = $self->get_text_width( 0, 'X', '', 'font'=>$fontname_o, 'ptsize' => $fontsize_o );
+  my $th_o = $res_o[3];
+
   my $fontheight = 5;
-  
+  my $bg = $Config->get('_settings', 'bgcolor2');
+
   ## Variable declaration ##
 
   my $x = 140;
-  my $y = 70;  
+  my $y = 100;  
   my $working_length = $panel_width -160;
-  my (%xc, %yc);    
+  my (%xc, %yc);
+
+  ## Define Score colours ##
+ 
+  my $cmap = $Config->colourmap();
+  $SCORE_COLOURS  ={
+	   0  => '808080',
+	  49  => '899e7c',
+	  50  => '738e63',   
+	  75  => '608749',
+	  90  => '497c2b',  
+	  97  => '316d0e',
+	  99  => '006400',
+	  100 => '003000',
+  };
+  for my $k (keys %$SCORE_COLOURS) {
+    $cmap->add_hex($SCORE_COLOURS->{$k});
+  }
+  my $branch_col;   
   ## Set X coordinates ##
 
   my @temp = @{$history_tree->get_release_display_names};
@@ -57,8 +80,8 @@ sub _init {
   my $temp_x = 140; 
 
   my @unique_ids =@{$history_tree->get_unique_stable_ids};
-  
-  ## Set Y coordinates ##
+ 
+   ## Set Y coordinates ##
   foreach my $id( @unique_ids){
     my $y_coord = $y;
     $yc{$id} = $y_coord;
@@ -77,19 +100,75 @@ sub _init {
     });
 
    $self->push($id_label);
+   ## Highlight the focus id ## 
+   if ($id eq $a_id){
+	   $self->unshift( new Sanger::Graphics::Glyph::Rect({
+	        'x'         => -5,
+	        'y'         => $y_coord - 15,
+	        'width'     => $panel_width + 20,
+	        'height'    => 30,
+	        'colour'    => $bg,
+	    }));
+   }
   }
 
  foreach my $r (@releases){
      $xc{$r} = $temp_x;
      $temp_x += $interval;
-    }
+ }
 
   my $last_rel = $releases[$count];
 
   my @events = @{ $history_tree->get_all_StableIdEvents };
   
+   ## Draw Score boxes ##
+
+   my $boxxcoord = $x -50;
+  
+   foreach my $sc (sort {$b<=>$a} keys %$SCORE_COLOURS){
+	my $colour = $SCORE_COLOURS->{$sc}; 
+	my $scorebox = new Sanger::Graphics::Glyph::Rect({
+        'x'         => $boxxcoord,
+        'y'         => 50,
+        'width'     => 20,
+        'height'    => 10,
+        'colour'    => $colour,
+    });
+    $self->push($scorebox);
+    my $sc_label; 
+    if ($sc == 0){$sc_label = "No evidence"; }
+    elsif ($sc <=49 ){$sc_label ="<=49" ;}
+    elsif ($sc ==100){$sc_label = "=" .$sc;}
+    else {$sc_label = ">=". $sc; }
+
+    my $score_text = new Sanger::Graphics::Glyph::Text({
+     'x'         => $boxxcoord + 25,
+     'y'         => 55,
+     'height'    => $fontheight,
+     'font'      => $fontname,
+     'ptsize'    => $fontsize,
+     'halign'    => 'left',
+     'colour'    => 'black',
+     'text'      => $sc_label,
+     });
+    $self->push($score_text);
+
+    my $score_label = new Sanger::Graphics::Glyph::Text({
+     'x'         => 1,
+     'y'         => 55,
+     'height'    => $fontheight,
+     'font'      => $fontname,
+     'ptsize'    => $fontsize,
+     'halign'    => 'left',
+     'colour'    => 'black',
+     'text'      => 'Score',
+    });
+    $self->push($score_label);
+    $boxxcoord += 60;
+   }
 
    ## Draw Nodes ##
+
    my @x_c = values (%xc);
    my @sortedx = sort ({$a <=> $b} @x_c);
    foreach my $a_id (@{ $history_tree->get_all_ArchiveStableIds }) {
@@ -125,25 +204,18 @@ sub _init {
       if ($id eq $old->stable_id && $version == $old->version){
          unless ($old->stable_id eq $new->stable_id) {$true =1;}
       }
-
-
     }     
    
-    if ($arelease eq $final_rel || $arelease eq $first_rel){$true =1;}  
- #   next unless ($true==1);
-    $true = 0;
     my ($zmenu, $href ) = $self->zmenu_node($a_id);
     my $xcoord = $sortedx[$x];
     my $ycoord = $yc{$a_id->stable_id};
-
-    
-
+    my $node_col = $SCORE_COLOURS->{'100'};
     my $node = new Sanger::Graphics::Glyph::Rect({
         'x'         => $xcoord,
         'y'         => $ycoord -1.5,
         'width'     => 3,
         'height'    => 3,
-        'colour'    => 'navyblue',
+        'colour'    => $node_col,
         'zmenu'     => $zmenu,
     });
     $self->push($node);
@@ -173,7 +245,19 @@ sub _init {
 
     my $old_id = $old->stable_id .".".$old->version;
     my $new_id = $new->stable_id."." .$new->version;
-    
+    my $escore = $event->score;
+    $escore = $escore * 100;
+    my $score_group; 
+    if ($escore >=100 ){$score_group = '100' ;}
+    elsif ($escore >=99 ){$score_group = '99' ;}
+    elsif ($escore >=97 ){$score_group = '97' ;}
+    elsif ($escore >=90 ){$score_group = '90' ;}
+    elsif ($escore >=75 ){$score_group = '75' ;}
+    elsif ($escore >=50 ){$score_group = '50' ;}
+    elsif ($escore >=1 ){$score_group = '49' ;}
+    elsif ($escore >=0 ){$score_group = '0' ;}
+    $branch_col = $SCORE_COLOURS->{$score_group};
+
     my $zmenu_s = $self->zmenu_score($event);
     my ($oldx, $oldy) = @{$history_tree->coords_by_ArchiveStableId($old)};
     my ($newx, $newy) = @{$history_tree->coords_by_ArchiveStableId($new)};
@@ -181,13 +265,13 @@ sub _init {
       my $y_coord = $yc{$old->stable_id};
       my $x_coord = $sortedx[$oldx];
       my $length = $sortedx[$newx] - $sortedx[$oldx];
-
+      
       my $hbr = new Sanger::Graphics::Glyph::Line({
          'x'         => $x_coord,
          'y'         => $y_coord,
          'width'     => $length,
          'height'    => 0.25,
-         'colour'    => 'navyblue',
+         'colour'    => $branch_col,
          'zindex' => 0,
       });
       $self->push($hbr);   
@@ -199,8 +283,7 @@ sub _init {
            'colour'   => 'red',
            'filled'   => 1,
            'zmenu'    => $zmenu_s,
-       });
-       $self->push($score);  
+       }); 
       }
     } elsif($oldx == $newx) {
       my $y_coord = $yc{$old->stable_id};
@@ -212,7 +295,7 @@ sub _init {
          'y'         => $y_coord,
          'width'     => 0.25,
          'height'    => $height,
-         'colour'    => 'navyblue',
+         'colour'    => $branch_col,
          'zindex'    => 0,
       });
       $self->push($vbr);
@@ -226,7 +309,7 @@ sub _init {
          'y'         => $y_coord,
          'width'     => $length,
          'height'    => $height,
-         'colour'    => 'mediumblue',
+         'colour'    => $branch_col,
          'zindex'    => 0,
       });
       $self->push($dbr);
@@ -239,7 +322,6 @@ sub _init {
           'filled'   => 1,
           'zmenu'    => $zmenu_s,
       });
-      $self->push($score);
 
     }
     
@@ -247,10 +329,11 @@ sub _init {
 
 
   ## Draw scalebar ##
-
+ 
+  my $mid_point = ($working_length /2 )+ 140;
   my $label = new Sanger::Graphics::Glyph::Text({
-     'x'         => 35,
-     'y'         => $y,
+     'x'         => $mid_point,
+     'y'         => $y + 40,
      'height'    => $fontheight,
      'font'      => $fontname,
      'ptsize'    => $fontsize,
@@ -281,14 +364,14 @@ sub _init {
         'x'         => $x_coord,
         'y'         => $y,
         'width'     => 0.25,
-        'height'    => 4,
+        'height'    => -4,
         'colour'    => 'black',
         'zindex' => 1,
     });
     $self->push($tick);
   
    my $rel_text = new Sanger::Graphics::Glyph::Text({
-     'x'         => $x_coord,
+     'x'         => $x_coord -3,
      'y'         => $ty,
      'height'    => $fontheight,
      'font'      => $fontname,
@@ -302,8 +385,6 @@ sub _init {
       
   }
  #warn ("B-0:".localtime());      
-
-
 
 
  return 1;
@@ -331,7 +412,6 @@ sub init_label {
   }
   $self->init_label_text( $text );
 }
-
 
 
 sub image_label { 
