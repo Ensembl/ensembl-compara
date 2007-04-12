@@ -66,6 +66,7 @@ sub fetch_input {
   #set defaults
   $self->strict_map(1);
   $self->method_link_type("SYNTENY");
+  $self->maximum_gap(50000);
 
   # read parameters and input options
   $self->get_params($self->parameters);
@@ -119,12 +120,23 @@ sub write_output {
     $self->dataflow_output_id("{$dataflow_output_id}");
   }
 
-#  if ($self->mavid_constraints) {
-#    $self->store_mavid_constraints(\%run_ids2synteny_and_constraints);
-#  }
-
   return 1;
 }
+
+=head2 store_synteny
+
+  Arg[1]      : hashref $run_ids2synteny_and_constraints (unused)
+  Example     : $self->store_synteny();
+  Description : This method will store the syntenies defined by Mercator
+                into the compara DB. The MethodLinkSpecieSet for these
+                syntenies is created and stored if needed at this point.
+                The IDs for the new Bio::EnsEMBL::Compara::SyntenyRegion
+                objects are returned in an arrayref.
+  ReturnType  : arrayref of integer
+  Exceptions  :
+  Status      : stable
+
+=cut
 
 sub store_synteny {
   my ($self, $run_ids2synteny_and_constraints) = @_;
@@ -155,6 +167,7 @@ sub store_synteny {
       my ($gdb_id, $seq_region_name, $start, $end, $strand);
       ($run_id, $gdb_id, $seq_region_name, $start, $end, $strand) = @{$dfr};
       next if ($seq_region_name eq 'NA' && $start eq 'NA' && $end eq 'NA' && $strand eq 'NA');
+      $seq_region_name =~ s/\-\-\d+$//;
       my $dnafrag = $dnafrag_hash{$gdb_id."_".$seq_region_name};
       unless (defined $dnafrag) {
         $dnafrag = $dfa->fetch_by_GenomeDB_and_name($gdb_id, $seq_region_name);
@@ -177,44 +190,6 @@ sub store_synteny {
   return $synteny_region_ids;
 }
 
-sub store_mavid_contraints {
-  my ($self, $run_ids2synteny_and_constraints) = @_;
-  
-  my $mlssa = $self->{'comparaDBA'}->get_MethodLinkSpeciesSetAdaptor;
-  my $sra = $self->{'comparaDBA'}->get_SyntenyRegionAdaptor;
-  my $dfa = $self->{'comparaDBA'}->get_DnaFragAdaptor;
-  my $gdba = $self->{'comparaDBA'}->get_GenomeDBAdaptor;
-  my $pafa = $self->{'comparaDBA'}->get_PeptideAlignAdaptor;
-
-  my @genome_dbs;
-  foreach my $gdb_id (@{$self->genome_db_ids}) {
-    my $gdb = $gdba->fetch_by_dbID($gdb_id);
-    push @genome_dbs, $gdb;
-  }
-  my $mlss = new Bio::EnsEMBL::Compara::MethodLinkSpeciesSet
-    (-method_link_type => "MAVID_CONSTRAINTS",
-     -species_set => \@genome_dbs);
-  $mlssa->store($mlss);
-
-  my $pairwisehits_file = $self->output_dir . "/pairwisehits";
-
-  open F, $pairwisehits_file ||
-    throw("Can't open $pairwisehits_file\n");
-
-  my %hash;
-  while (<F>) {
-    my ($run_id, $gdb_id1, $member_id1, $gdb_id2, $member_id2) = split;
-    my ($paf) = sort {$b->score <=> $a->score} @{$pafa->fetch_all_by_qmember_id_hmember_id($member_id1,$member_id2)};
-    # here we need to recalculate peptide coordinates to genomic coordinates....
-    # and match with a hash to the corresponding synteny_region_id
-    # push @{$run_ids2synteny_and_constraints}, $synteny_region->dbID;
-  }
-  close F;
-#  my $output = [ values %hash ];
-#  print "scalar output", scalar @{$output},"\n";
-#  print "No synteny regions found" if (scalar @{$output} == 0);
-#  $self->output($output);
-}
 
 ##########################################
 #
@@ -306,6 +281,12 @@ sub method_link_type {
   return $self->{'_method_link_type'};
 }
 
+sub maximum_gap {
+  my $self = shift;
+  $self->{'_maximum_gap'} = shift if(@_);
+  return $self->{'_maximum_gap'};
+}
+
 ##########################################
 #
 # internal methods
@@ -357,6 +338,9 @@ sub get_params {
   if(defined($params->{'method_link_type'})) {
     $self->method_link_type($params->{'method_link_type'});
   }
+  if(defined($params->{'maximum_gap'})) {
+    $self->method_link_type($params->{'maximum_gap'});
+  }
   return 1;
 }
 
@@ -380,13 +364,39 @@ sub dumpMercatorFiles {
   my $ma = $self->{'comparaDBA'}->get_MemberAdaptor;
   my $ssa = $self->{'comparaDBA'}->get_SubsetAdaptor;
 
+  my $max_gap = $self->maximum_gap;
+
   foreach my $gdb_id (@{$self->genome_db_ids}) {
+
+    my $dnafrags;
+
     ## Create the Chromosome file for Mercator
     my $gdb = $gdba->fetch_by_dbID($gdb_id);
     my $file = $self->input_dir . "/$gdb_id.chroms";
     open F, ">$file";
     foreach my $df (@{$dfa->fetch_all_by_GenomeDB_region($gdb)}) {
       print F $df->name . "\t" . $df->length,"\n";
+      if ($max_gap and $df->coord_system_name eq "chromosome") {
+        my $core_dba = $gdb->db_adaptor;
+        my $coord_system_adaptor = $core_dba->get_CoordSystemAdaptor();
+        my $assembly_mapper_adaptor = $core_dba->get_AssemblyMapperAdaptor();
+        my $chromosome_coord_system = $coord_system_adaptor->fetch_by_name("chromosome");
+        my $seq_level_coord_system = $coord_system_adaptor->fetch_sequence_level;
+
+        my $assembly_mapper = $assembly_mapper_adaptor->fetch_by_CoordSystems(
+            $chromosome_coord_system, $seq_level_coord_system);
+        my @mappings = $assembly_mapper->map($df->name, 1, $df->length, 1, $chromosome_coord_system);
+
+        my $part = 1;
+        foreach my $this_mapping (@mappings) {
+          next if ($this_mapping->isa("Bio::EnsEMBL::Mapper::Coordinate"));
+          next if ($this_mapping->length < $max_gap);
+          print join(" :: ", $df->name, $this_mapping->length, $this_mapping->start, $this_mapping->end), "\n";
+          print F $df->name . "--$part\t" . $df->length,"\n";
+          $dnafrags->{$df->name}->{$this_mapping->start} = $df->name."--".$part;
+          $part++;
+        }
+      }
     }
     close F;
 
@@ -397,8 +407,18 @@ sub dumpMercatorFiles {
     foreach my $member (@{$ma->fetch_by_subset_id($ss->dbID)}) {
       my $strand = "+";
       $strand = "-" if ($member->chr_strand == -1);
+      my $chr_name = $member->chr_name;
+      if (defined($dnafrags->{$member->chr_name})) {
+        foreach my $this_start (sort {$a <=> $b} keys %{$dnafrags->{$member->chr_name}}) {
+          if ($this_start > $member->chr_start - 1) {
+            last;
+          } else {
+            $chr_name = ($dnafrags->{$member->chr_name}->{$this_start} or $member->chr_name);
+          }
+        }
+      }
       print F $member->dbID . "\t" .
-        $member->chr_name ."\t" .
+        $chr_name ."\t" .
           $strand . "\t" .
             ($member->chr_start - 1) ."\t" .
               $member->chr_end ."\n";
