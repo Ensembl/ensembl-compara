@@ -1,0 +1,87 @@
+#! /usr/local/bin/perl
+
+package populate_tree;
+
+use strict;
+use warnings;
+no warnings "uninitialized";
+
+use CGI;
+
+use EnsEMBL::Web::RegObj;
+use EnsEMBL::Web::Document::WebPage;
+use EnsEMBL::Web::Document::Panel::InformationFragment;
+use EnsEMBL::Web::Root;
+use EnsEMBL::Web::Document::DropDown::MenuContainer;
+
+my $cgi = new CGI;
+my $incoming = $cgi->Vars;
+my %params = ();
+my %components = ();
+my @ordered_components = ();
+
+#warn "--------------------";
+#warn("AJAX: Populating tree");
+
+foreach my $key (keys %{ $incoming }) {
+#  warn "KEY: " . $key . ": " . $incoming->{$key};
+  if ($key =~ /^component_/) {
+    push @ordered_components, $key;
+    $components{$key} = $incoming->{$key};
+  } else {
+    $params{$key} = $incoming->{$key};
+  }
+}  
+
+my $webpage= new EnsEMBL::Web::Document::WebPage(
+  'use_proxy'  => 1,
+  'renderer'   => 'Apache',
+  'outputtype' => 'HTML',
+  'scriptname' => 'idhistoryview',
+  'objecttype' => 'ArchiveStableId',
+);
+
+my $object = $webpage->dataObjects->[0];
+my $fragment = EnsEMBL::Web::Document::Panel::InformationFragment->new(
+                                       object => $object,
+                                       'code' => 'info',
+                                      caption => 'AJAX fragment',
+                                       status => 'loading',
+                                      display => 'on',
+                                     );
+
+
+my $type = $object->type eq 'Translation' ? 'peptide' : lc($object->type);
+#warn $type.": ". $object->stable_id .".". $object->version;
+$object->script('idhistoryview');
+
+my $mc = $object->new_menu_container(
+  'configname' => 'idhistoryview',
+  'panel'      => 'tree',
+  'leftmenus' => ['IdhImageSixe']     );
+
+
+my $json_components = "";
+
+foreach my $component (@ordered_components){
+  $components{$component} =~ m/(.*)::(.*)$/;
+  my $module = $1;
+  my $method = $2;
+    if (EnsEMBL::Web::Root::dynamic_use($module, $module)) {
+    no strict "refs";
+    my $execute = $components{$component};
+ #   warn "execute:$execute";
+    my $result = &$execute($fragment, $object);
+  #  warn "result $result";
+    $json_components = $component;
+    use strict "refs";
+  } else {
+    warn "NOT LOADED: " . $module;
+  }
+}
+
+print "Content-type: text/plain\n\n";
+my $json_string = "{ status:'Load complete for info', component:'$json_components', html:'" . $fragment->html . "', menu:{ width:'" . $mc->{'menuwidth'} . "'} }";
+print $json_string;
+
+1;
