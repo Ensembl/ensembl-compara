@@ -244,6 +244,7 @@ sub parse_euf_2 {
 	    $self->metadata($1, $2);
 	    next;
 	}
+        last if ( $line=~ /\[annotation(s?)\]/);
      }
     if ($self->metadata('datatype') eq 'wiggle') {
       return $self->parseWiggle();
