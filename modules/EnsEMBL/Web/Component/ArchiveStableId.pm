@@ -2,7 +2,7 @@ package EnsEMBL::Web::Component::ArchiveStableId;
 
 =head1 LICENCE
 
-This code is distributed under an Apache style licence:
+	This code is distributed under an Apache style licence:
 Please see http://www.ensembl.org/code_licence.html for details
 
 =head1 CONTACT
@@ -144,54 +144,81 @@ sub status {
 
 sub archive {
   my ($panel, $object) = @_;
-  my $id = $object->stable_id.".".$object->version;
+  my $id = $object->stable_id;
+  my $version = $object->version;
+  my $name = $id . "." . $version;
   my $param = $object->type eq 'Translation' ? 'peptide' : lc($object->type);
-
   my ($history, $releases) = _get_history($object);
-
+  my @release = @$releases;
+  my $firstr = $release[0];
+  
   my $current_obj = $object->get_current_object($object->type);
-  if ($current_obj && $current_obj->version eq $object->version) {
-    $panel->add_row("Archive", "This version is current");
-  }
-  else {
-    my @archive_releases;
-    if ($history) {
-      for  (my $i =0; $i < scalar @$releases; $i++) {
-	foreach my $a ( @{ $history->{ $releases->[$i] } }  ) {
-	  my $history_id = $a->stable_id.".".$a->version;
-	  next unless $history_id eq $id;
-	  push @archive_releases,  $releases->[$i-1]-1 unless $i==0;
-	  push @archive_releases, $releases->[$i];
-	  last;
-	}
-      }
+  if ($current_obj && $current_obj->version eq $object->version) { 
+	$panel->add_row("Archive", "This version is current");
+  } else {
+   my $text;
+   if ($history) {
+    my ($first, $last);
+    foreach my $e (@{$history->get_all_StableIdEvents}){
+      my $old = $e->old_ArchiveStableId;
+      my $new = $e->new_ArchiveStableId;
+      next unless ($old && $new);
+      if ($new->stable_id eq $id && $new->version == $version){
+        $first = $new->release;
+      } 
+      if ($old->stable_id eq $id && $old->version == $version && $new->release ne $old->release){
+        $last = $new->release;
+      }       
     }
-
-    my $text;
-    if (@archive_releases) {
-      my $archive_first = _archive_link($object, $id, $param, "Archive <img alt='link to archive version' src='/img/ensemblicon.gif'/>", $archive_releases[-1]) || " (no web archive)";
-      $text = "$id was in release $archive_releases[-1] $archive_first";
-
-      unless ( $archive_releases[0] eq $archive_releases[-1] ) {
-	my $archive_last = _archive_link($object, $id, $param, " Archive <img alt='link to archive version' src='/img/ensemblicon.gif'/>", $archive_releases[0]) || " (no web archive)";
-	$text .= " to $archive_releases[0] $archive_last"
-      }
+    unless ($first =~/^\d/){
+	  foreach my $e (@{$history->get_all_StableIdEvents}){
+	    my $old = $e->old_ArchiveStableId;
+	    my $new = $e->new_ArchiveStableId;
+        next unless ($old && $new);
+        my $prev = $version;
+        $prev -=1;
+        if ($new->stable_id eq $id && $new->version == $prev){
+          $first = $new->release;
+        }
+      }	
     }
-    else {
+    # need to compensate for cases where the same release number has different versions of the same gene  
+ 	unless ($last =~/^\d/){
+	  foreach my $e (@{$history->get_all_StableIdEvents}){
+	    my $old = $e->old_ArchiveStableId;
+	    my $new = $e->new_ArchiveStableId;
+        next unless ($old && $new);
+        my $next = $version;
+        $next +=1;
+        if ($old->stable_id eq $id && $old->version == $next){
+          $last = $new->release;
+        }
+      }	
+    }
+    my $first_link = _archive_link($object, $name, $param, "Archive <img alt='link to archive version' src='/img/ensemblicon.gif'/>", $first, $version  )|| "(no web archive)";
+    $text = "$name was in release $first $first_link";
+    my $last_link;
+    unless ($last == $first){
+     $last -= 1;
+     $last_link = _archive_link($object, $name, $param, "Archive <img alt='link to archive version' src='/img/ensemblicon.gif'/>", $last, $version )|| "(no web archive)";
+     $text .= " to $last $last_link"; 
+    }
+      if ($last  eq $firstr){ $text = "$name was in release $last $last_link"; } 
+   } else {
       $text = "No archive available for $id";
-    }
+   }
 
     # Add protein sequence if old version of peptide
 
     if ($object->type eq 'Translation') {
       my $seq = $object->peptide_seq;
-
       if ($seq) {
-	$seq =~ s#(.{1,60})#$1<br />#g;
-	$text .= "<br /><kbd>>$id<br />$seq</kbd>";
+	    $seq =~ s#(.{1,60})#$1<br />#g;
+	    $text .= "<br /><kbd>>$id<br />$seq</kbd>";
       }
     }
     $panel->add_row("Archive", $text);
+   
   }
   return 1;
 }
@@ -279,49 +306,12 @@ sub associated_ids {
 
 sub _get_history {
   my ($object) = @_;
-  my ($history, %new, %seen );
-  my $temp_id = $object->stable_id .".". $object->version .".".$object->release;
-  $seen{$temp_id} = $object; 
- 
-  foreach my $arch_id ( @{ $object->history} ) {
-    push @{ $history->{$arch_id->release} }, $arch_id;
-    my $name = $arch_id->stable_id .".".$arch_id->version.".".$arch_id->release; 
-    #warn $name;
-    unless (exists $seen{$name}){
-	  $new{$name}= $arch_id;
-    }    
-  }
 
-  my $size = keys(%new);
-
-  until ($size <=0){
-	my @temp = keys %new;
-	my $k = shift @temp;  
-    my $arch_id2 = $new{$k};
-    delete $new{$k};
-    $size = @temp;
-    my $id = $arch_id2->stable_id .".". $arch_id2->version.".".$arch_id2->release;
-    $seen{$id} = $arch_id2;
-    my $adaptor = $arch_id2->adaptor;
-    #warn ("### ", $id);
-    foreach my $member ( @{$adaptor->fetch_archive_id_history($arch_id2)}){
-	   my $memberid = $member->stable_id.".".$member->version ."." . $member->release;
-	   #warn $memberid; 
-	   unless (exists $seen{$memberid}){
-	     $new{$memberid} = $member;	
-	   }
-	   my @temp = @{$history->{$member->release}};
-       my $exists =0;
-	   foreach my $m (@temp){
-		 my $temp_id =  $m->stable_id .".". $m->version .".".$m->release;
-		 if ($temp_id eq $memberid) {$exists = 1;}  
-	   }
-	   unless ($exists >= 1){push @{$history->{$member->release}}, $member;}
-    }       
-  }
-
+  my $id = $object->stable_id;;
+  my  $history = $object->history;
+  my @temp = @{$history->get_release_display_names};
+  my @releases = sort ({$a <=> $b} @temp);
   return unless keys %$history;
-  my @releases = (sort { $b <=> $a } keys %$history);
   return ($history, \@releases);
 }
 
@@ -403,77 +393,37 @@ sub history {
   return 1;
 }
 
+sub _flip_URL {
+  my( $object) = @_;
+  my $temp = $object->type; 
+  my $type = $temp eq 'Translation' ? "peptide" : lc($temp);
+  return sprintf '%s=%s;%s', $type, $object->stable_id .".". $object->version;
+}
 
-sub tree{
+sub tree {
   my($panel, $object) = @_;
   my $name = $object->stable_id .".". $object->version;
-=head2 comment
-my ($history, $release_ref) = _get_history($object);
-  return unless $history;
-
-  # Get focus id 
-  my $id_focus = $object->stable_id.".".$object->version;
-  my (%info, @links, @rel, %trees, $r);
-
-  my @releases = @$release_ref;
-
-  # Get array of releases
-  for (my $i =0; $i <= $#releases; $i++) {
-	 if ( $i==0 or $releases[$i-1]-$releases[$i] == 1){
-		$r = $releases[$i];
-     } else {
-	    my $end = $releases[$i-1] -1;
-        $r = "$releases[$i]-$end";
-	 }
-	push (@rel,$r);
-	
-	## Get array of crosslinks 
-	my @temp = @{ $history->{$releases[$i]} };
-    my $size = @temp;
-    if ($size >=2){
-	    my $id = shift @temp;
-    	foreach my $value (@temp){
-	     my @p = ($id, $value);
-         my $pair = \@p;
-         push (@links, $pair);
-	   }
-    }
-
-    ## Next build hash of trees
-    foreach my $a (sort {$a->stable_id cmp $b->stable_id} @{ $history->{$releases[$i]} }){
-	   my $temp_id = $a->stable_id;
-	   if (exists $trees{$temp_id}){
-		 my @genes = @{$trees{$temp_id}};
-		 push (@genes, $a);
-		 $trees{$temp_id} = \@genes;
-	   } else {
-		   my @genes = ($a);
-	       $trees{$temp_id} = \@genes
-	   }
-    }
-  }
-  
-
-  ## Add all the information to the info array to pass to draw tree method
-  $info{'f'} = $id_focus;
-  $info{'l'} = \@links;
-  $info{'r'} = \@rel;
-  $info{'t'} = \%trees;
-
-  my $info_ref = \%info;
-  my $historytree = _create_idhistory_tree ($object, $info_ref);
-=cut
-  my $archive_id; 
-  foreach my $arch_id ( @{ $object->history} ) {
-   my $temp = $arch_id->stable_id.".".$arch_id->version;
-   if ($temp eq $name){$archive_id = $arch_id;}	
-  }
-  my $historytree = $archive_id->get_history_tree;
- ( $panel->print( qq(<p style="text-align:center"><b>There are too many stable IDs related to $name to draw a history tree.</b></p>) ) and return 1) unless (defined $historytree);
-  my $tree = _create_idhistory_tree ($object, $historytree);
-  my $T = $tree->render;
-  $panel->print ($T);
-
+  my $status   = 'status_idhistory_tree';
+  my $label = "ID History Map";
+  my $URL = _flip_URL($object);
+  if( $object->param( $status ) eq 'off' ) { $panel->add_row( '', "$URL=on" ); return 0; }
+   
+  if ($panel->is_asynchronous('tree')) {
+    warn "Asynchronously load history tree";
+    my $json = "{ components: [ 'EnsEMBL::Web::Component::ArchiveStableId::tree'], fragment: {stable_id: '" . $object->stable_id . "." . $object->version . "', species: '" . $object->species . "'} }";
+    my $html = "<div id='component_0' class='info'>Loading history tree...</div><div class='fragment'>$json</div>";
+    $panel->add_row($label ." <img src='/img/ajax-loader.gif' width='16' height='16' alt='(loading)' id='loading' />", $html, "$URL=odd") ;
+  } else{ 
+  #  foreach my $arch_id ( @{ $object->history} ) {
+   #   my $temp = $arch_id->stable_id.".".$arch_id->version;
+   #   if ($temp eq $name){$archive_id = $arch_id;}	
+   # }
+    my $historytree = $object->history;
+    ( $panel->print( qq(<p style="text-align:center"><b>There are too many stable IDs related to $name to draw a history tree.</b></p>) ) and return 1) unless (defined $historytree);
+    my $tree = _create_idhistory_tree ($object, $historytree);
+    my $T = $tree->render;
+    $panel->add_row($label, $tree->render, "$URL=off");
+   }
   return 1;
 }
 
@@ -481,32 +431,32 @@ my ($history, $release_ref) = _get_history($object);
 
 sub _create_idhistory_tree {
  my ($object, $tree ) = @_;
+ my $base_URL = _flip_URL($object);
  my $wuc        = $object->user_config_hash( 'idhistoryview' );
  my $image_width  =  $object->param( 'image_width' ) || 1200; 
  $wuc->container_width($image_width); 
- $wuc->set_width($object->param('image_width'));
+ $wuc->set_width( $object->param('image_width') );
+ $wuc->set( '_settings', 'LINK',  $base_URL );
  $wuc->{_object} = $object;
+ my $mc =  _id_history_tree_menu($object, 'idhistoryview', [qw(IdhImageSize )]);
  my $image  = $object->new_image( $tree, $wuc, [$object->stable_id] );
  $image->image_type  = 'idhistorytree';
  $image->image_name  = ($object->param('image_width')).'-'.$object->stable_id;
- $image->imagemap           = 'yes';
+ #$image->imagemap           = 'yes';
+ $image->menu_container = $mc;
 # $image->imagemap ='no'; 
  return $image;
 }
-
-sub id_history_tree_menu {
- my($panel, $object, $configname, $left, $right ) = (@_, 'idhistoryview', [qw( GTExport ImageSize )], ['GeneTreeHelp'] );
+ 
+sub _id_history_tree_menu {
+ my($object, $configname, $left ) = @_;
  my $mc = $object->new_menu_container(
                                          'configname'  => $configname,
                                          'panel'       => 'image',
                                          'object' => $object,
-                                         'configs'     => [ $object->user_config_hash('idhistoryview' ) ],
                                          'leftmenus'  => $left,
-                                         'rightmenus' => $right
                                          );
-    $panel->print( $mc->render_html );
-    $panel->print( $mc->render_js );
-    return 0;
+    return $mc;
 
 }
 

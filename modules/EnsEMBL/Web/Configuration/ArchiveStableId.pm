@@ -2,6 +2,7 @@ package EnsEMBL::Web::Configuration::ArchiveStableId;
 
 use strict;
 use EnsEMBL::Web::Configuration;
+use EnsEMBL::Web::Tools::Ajax;
 use EnsEMBL::Web::RegObj;
 use Bio::EnsEMBL::DBSQL::ArchiveStableIdAdaptor;
 
@@ -10,11 +11,21 @@ our @ISA = qw( EnsEMBL::Web::Configuration );
 sub idhistoryview {
   my $self   = shift;
   my $obj    = $self->{'object'}; 
-
+  $self->initialize_zmenu_javascript;
+  $self->initialize_ddmenu_javascript;
+  $self->{page}->add_body_attr( 'onload' => 'populate_trees(); ');
+  $self->{page}->javascript->add_source("/js/ajax_fragment.js");
+  $self->update_configs_from_parameter('idhistoryview');
+  
+  my $params = { $obj->type => $obj->stable_id, 'db' => 'core'  }; 
+  
+ 
   # Description : prints a two col table with info
   if (my $info_panel = $self->new_panel('Information',
     'code'    => "info$self->{flag}",
     'caption' => 'ID History Report',
+    'params'  => $params,
+    'status'  => 'panel_tree'
 				       )) {
 
     $info_panel->add_components(qw(
@@ -23,36 +34,49 @@ sub idhistoryview {
     remapped   EnsEMBL::Web::Component::ArchiveStableId::remapped
     archive    EnsEMBL::Web::Component::ArchiveStableId::archive
     associated_ids EnsEMBL::Web::Component::ArchiveStableId::associated_ids
-
-     ));
-    $self->{page}->content->add_panel( $info_panel );
-  }
-
-  if (my $panel1 = $self->new_panel('SpreadSheet',
-    'code'    => "info$self->{flag}",
-    'caption' => 'ID Mapping History',
-    'null_data' => "<p>".$obj->stable_id. " has no successors or predecessors.</p>",
-				   )) {
-    $panel1->add_components(qw(
-      history    EnsEMBL::Web::Component::ArchiveStableId::history
-			     ));
-   $self->{page}->content->add_panel( $panel1 );
+    tree       EnsEMBL::Web::Component::ArchiveStableId::tree
+    ));
+  #  if (EnsEMBL::Web::Tools::Ajax::is_enabled()) {
+   #   $info_panel->load_asynchronously('tree');
+    #}
+   $self->add_panel( $info_panel );
  }
 
-  if (my $panel1b = $self->new_panel('',
-    'code'    => "info$self->{flag}",
-    'caption' => 'ID Mapping History',
-    'null_data' => "<p>".$obj->stable_id. " has no successors or predecessors.</p>",
-         
-                               )) {
-    $self->initialize_zmenu_javascript;
-    $self->initialize_ddmenu_javascript;
-    $panel1b->add_components(qw(
-      menu  EnsEMBL::Web::Component::ArchiveStableId::id_history_tree_menu
-      tree    EnsEMBL::Web::Component::ArchiveStableId::tree
-                             ));
-   $self->{page}->content->add_panel( $panel1b );
- }
+#  if (my $panel1 = $self->new_panel('SpreadSheet',
+#    'code'    => "info$self->{flag}",
+#    'caption' => 'ID History Map',
+#    'null_data' => "<p>".$obj->stable_id. " has no successors or predecessors.</p>",
+#				   )) {
+#    $panel1->add_components(qw(
+#      history    EnsEMBL::Web::Component::ArchiveStableId::history
+#			     ));
+#   $self->{page}->content->add_panel( $panel1 );
+#}
+
+
+ # if (my $panel1b = $self->new_panel('Fragment',
+ #   'code'      => "component_0",
+ #   'caption'   => 'ID History Tree',
+ #   'null_data' => "<p>".$obj->stable_id. " has no successors or predecessors.</p>",
+ #   'status'    => 'panel_tree',
+ #   'display'   => 'on',
+ #   'loading'   => 'yes', 
+ #                 @common  )) {
+
+#    $panel1b->add_components(qw(
+#      menu  EnsEMBL::Web::Component::ArchiveStableId::id_history_tree_menu
+#      tree    EnsEMBL::Web::Component::ArchiveStableId::tree
+#    ));
+
+#    $panel1b->add_components(qw(
+#      tree    EnsEMBL::Web::Component::ArchiveStableId::tree
+#    ));
+ 
+#  if (EnsEMBL::Web::Tools::Ajax::is_enabled()) {
+#    $panel1b->asynchronously_load('tree');
+#  }
+#   $self->add_panel( $panel1b );
+# }
 
 if (my $panel2 = $self->new_panel('',
     'code'    => "info$self->{flag}",
@@ -74,20 +98,22 @@ if (my $panel2 = $self->new_panel('',
 sub historyview {
   my $self   = shift;
   my $object = $self->{'object'};
+  my $max_ids = 31;
   my @e = (qq(You did not upload any data, please try again.), 
-           qq(You may only upload a maximum of 30 stable IDs), 
+           qq(You may only upload a maximum of 30 stable ID's. If you require information for a large number of sequence please email the helpdek with your request.), 
            qq(You have selected two different types of data source. Please either paste your data into the box OR upload a file OR enter a URL.),
-           qq(There was a problem with uploading your file, please tey again.)
+           qq(There was a problem with uploading your file, please try again.)
   );
   my $error;
   ## Check If we have data added by user:
   if ($object->param('output')){	 
    if ($object ->param('paste_file') | $object->param('upload_file') | $object->param('url_file')){
-	 my $fh;
+	 my ($fh, $data);
 	 if ($object->param('paste_file')){
 		if ($object->param('upload_file') | $object->param('url_file')){ $error = $e[2]; }
 		else {
-			
+		  $data = $object->param('paste_file');
+                  	
 		}
 	 } 
 	elsif ($object->param('upload_file')) {
@@ -98,33 +124,49 @@ sub historyview {
 	}
 	else {
 		if ($object->param('paste_file') | $object->param('upload_file')){ $error = $e[2]; }
-        else {
-	      # my $fh = $object->param('url_file'); 
-        }
-	}  
-     my $infh = ('<', $fh);
+                else {
+	            $fh = $object->param('url_file');
+                    chomp $fh; 
+                }
+	} 
      my @ids;
-     while (my $line = <$infh>) {
+     if ( $fh ){ 
+        unless ( open (INFH, '>$fh') ) { $error = $e[3]; return; }
+        
+        while (my $line = <INFH>) {
+            warn $line; 
 	    chomp $line; 
 	    my @temp = split(/\s+/, $line);
 	    foreach my $t (@temp){
-		   push (@ids, $t); 
-	    }  
+		    push (@ids, $t);
+  	    }  
+        } close (INFH);
+     } elsif( $data) {
+        my @temp = split(/\s+/, $data);
+             foreach my $t (@temp){
+                    push (@ids, $t);
+            }
      }
      my $size = @ids;
-     if ($size >= 31) {$error = $e[1];}
+     if ($size >= $max_ids) {$error = $e[1];}
      else {
 	    my $species = $object->param('species');
 	    my $reg = "Bio::EnsEMBL::Registry"; 
 	    my $aa = $reg->get_adaptor($species, 'Core', 'ArchiveStableId');
-	    warn $aa;
 	    my @trees;
-	 #   foreach my $id (@ids){
-	  #    my $archive_id = $aa->fetch_by_stable_id($id);
-	   #   my $historytree = $archive_id->get_history_tree;
-#	      warn $historytree; 
-#	      push (@trees, $historytree);
-   #     }
+	    foreach my $id (@ids){
+		  if ($id=~/\.\d*/){ $id=~s/\.\d+//;}
+		  if ($id!~/ENS\w*\d*/){ $error = "There was a problem with your uploaded data: <B>" . $id . "</B> Is not a valid Ensembl Identifier. Please remove it and try again. ";}
+	 	  else {
+ 		    $id =~s/\W//;
+                    warn $id;  
+	            my $archive_id = $aa->fetch_by_stable_id($id);
+	            if ($archive_id){ 
+	             my  $historytree = $archive_id->get_history_tree;
+                     push (@trees, $historytree);
+                    }  
+                 }
+            }
      }
    }
    else {
