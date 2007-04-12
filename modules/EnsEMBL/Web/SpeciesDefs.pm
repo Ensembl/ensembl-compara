@@ -322,6 +322,9 @@ sub _parse {
   warn '-' x 78 , "\n[CONF]    [INFO] Parsing .ini files\n" ;
   $CONF->{'_storage'} = {};
   my $BC = $self->bread_crumb_creator();
+  my $info = [];
+  read_web_tree($info, 'info');
+  $BC->{'ENSEMBL_INFO'} = $info;
   my ($defaults, $common);
 
 ###### Loop for each species exported from SiteDefs
@@ -1535,6 +1538,137 @@ sub bread_crumb_creator {
     'ENSEMBL_CHILDREN'    => $ENSEMBL_CHILDREN
   } );
 }
+
+sub read_web_tree {
+### Recursive function which descends into a directory and creates 
+### a multi-dimensional array of:
+### * two scalars (directory URL and title)
+### * an optional hash of non-index pages within the directory
+### * zero or more arrays of the same structure as itself i.e. subdirectories
+### from any HTML files it finds
+  my ($node_array, $dir, $nlink) = @_;
+
+  my ($dev, $ino, $mode, $subcount);
+  my ($name, $title, $page_hash, $html_files, $sub_dirs);
+  my $doc_root = $ENSEMBL_SERVERROOT.'/htdocs/';
+  my $curr_depth = 0;
+  my $path = '/'.$dir;
+
+  ## At the top level, we need to find nlink ourselves.
+  if (!$nlink) {
+    chdir($doc_root.$dir);
+    ($dev,$ino,$mode,$nlink) = stat('.');
+  }
+
+  ## Get the list of files in the current directory.
+  opendir(DIR,'.') || die "Can't open $dir";
+  my @files = readdir(DIR);
+  closedir(DIR);
+
+  ## separate directories from other files
+  ($html_files, $sub_dirs) = sortnames(@files);
+
+  ## create references to anonymous data structures
+  if (!$page_hash) {
+    $page_hash = {};
+  }
+  if (!$node_array) {
+    $node_array = [];
+  }
+  $subcount = $nlink - 2;
+  foreach my $filename (@$html_files) {
+    $name = "$dir/$filename";
+    next if $name =~ m#software/java#;
+    if ($filename =~ /\.html$/) {
+      $title = get_title( $filename );
+      if (!$title) { ## sanity check - don't want an empty hash key!
+        $title = $filename;
+      }
+      if ($filename eq 'index.html') {
+        ## add the directory path and index title to array
+        $path .= '/';
+        push(@$node_array, $path, $title);
+      }
+      else {
+        $$page_hash{$title} = '/'.$name;
+      }
+    }
+  }
+  ## reached end of files, so add them to array
+  if ((keys %$page_hash) > 0) { # not an empty hash
+    push (@$node_array, $page_hash);
+  }
+  foreach my $dirname (@$sub_dirs) {
+    ## omit CVS directories and directories beginning with . or _
+    if ($dirname eq 'CVS' || $dirname =~ /^\./ || $dirname =~ /^_/) {
+      next;
+    }
+    $name = "$dir/$dirname";
+
+    next if $subcount == 0;   ## Seen all the subdirs?
+
+    unless ($name =~ m#java/# || $name =~ m#info/website#) {
+      ## Get link count and check for directoriness.
+      ($dev,$ino,$mode,$nlink) = lstat($dirname);
+
+      ## create a reference to an anonymous array that will be
+      ## the node for this next branch of the tree
+      my $sub_node = [];
+      push (@$node_array, $sub_node);
+
+      ## Recurse into directory
+      chdir $dirname || die "Can't cd to $name";
+      ++$curr_depth;
+      read_web_tree($sub_node, $name, $nlink);
+      chdir '..';
+      --$curr_depth;
+    }
+    --$subcount;
+  }
+}
+
+
+sub sortnames {
+### Does a case-insensitive sort of a list of file names
+### and separates them into two lists - directories and non-directories
+  my @namelist = @_;
+  my @sorted = sort {lc $a cmp lc $b} @namelist;
+
+  my (@file_list, @dir_list);
+
+  foreach my $item (@sorted) {
+    if (-d $item) {
+      push (@dir_list, $item);
+    }
+    else {
+      push (@file_list, $item);
+    }
+  }
+
+  return (\@file_list, \@dir_list);
+}
+
+
+sub get_title {
+### Parses an HTML file and returns the contents of the <title> tag
+  my $file = shift;
+  my $title;
+
+  open IN, "< $file" or die "Couldn't open input file $file :(\n";
+  while (<IN>) {
+    if (/<title/) {
+      $title = $_;
+      chomp($title);
+      $title =~ s/^(\s+)//;
+      $title =~ s/(\s+)$//;
+      $title =~ s/<title>//;
+      $title =~ s/<\/title>//;
+      last;
+    }
+  }
+  return $title;
+}
+
 
 sub _is_available_artefact{
   ### Checks to see if a given artefact is available (or not available)

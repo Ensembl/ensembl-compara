@@ -231,6 +231,23 @@ sub block_render_bulleted {
   $self->print( qq(\n  </ul>));
 }
 
+sub render_type_nested {
+  my( $self, $block ) = @_;
+  my $entries = $block->{'entries'};
+  $self->print( qq(\n  <ul>) );
+  foreach my $entry (@$entries) {
+    my $extra = $entry->{'icon'} ? qq( style="list-style: url($entry->{'icon'})") : "";
+    $self->printf( qq(\n     <li class="bullet"$extra>%s</li>), $self->_atag( $entry ));
+
+    if( exists( $entry->{'options'} ) ) {
+      foreach( @{$entry->{'options'}} ) {
+          $self->printf( qq(\n      <li class="info-nested">%s</li>), $self->_atag( $_ ) ); 
+      }
+    } 
+  }
+  $self->print( qq(\n  </ul>));
+}
+
 sub render_type_raw {
   my( $self, $block ) = @_;
   $self->print( $block->{'options'}{'html'} );

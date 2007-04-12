@@ -133,17 +133,37 @@ sub bookmark_menu_item {
 sub static_menu_items {
   my( $self, $doc ) = @_;
 
-  $doc->menu->add_block( 'docs', 'bulleted', 'Help & Documentation', 'priority' => 20 );
+  $doc->menu->add_block( 'docs', 'nested', 'Help & Documentation', 'priority' => 20 );
 
-  $doc->menu->add_entry('docs', 'href'=>'/info/',         'text'=>'Table of Contents');
-  $doc->menu->add_entry('docs', 'href'=>'/info/helpdesk', 'text'=>'Helpdesk');
-  $doc->menu->add_entry('docs', 'href'=>'/Multi/newsview?rel=current', 'text'=>"What's New");
-  $doc->menu->add_entry('docs', 'href'=>'/info/about/',   'text'=>'About Ensembl');
-  $doc->menu->add_entry('docs', 'href'=>'/info/data/download.html', 'text'=>'Downloading data');
-  $doc->menu->add_entry('docs', 'href'=>'/info/data/index.html#import', 'text'=>'Displaying your own data');
-  $doc->menu->add_entry('docs', 'href'=>'/info/software/','text'=>'Ensembl software');
+  my $URI = $doc->{_renderer}->{r}->uri;
 
-
+  my $tree = $doc->species_defs->ENSEMBL_INFO;
+  my ($info_dir, $info_title, @subdirs) = @$tree;
+  foreach my $dir (@subdirs) {
+    my $options = [];
+    my @elements = @$dir;
+    next if ref($elements[0]) eq 'HASH';
+    my $link = shift @elements;
+    my $text = shift @elements;
+    if ($URI =~ m#^/info# && index($URI, $link) > -1) {
+      my %links;
+      foreach my $subelement (@elements) {
+        if (ref($subelement) eq 'ARRAY') {
+          $links{$subelement->[1]} = $subelement->[0];
+        }
+        elsif (ref($subelement) eq 'HASH') {
+          while (my ($k, $v) = each (%$subelement)) {
+          $links{$k} = $v;
+          }
+        }
+      }
+      my @page_order = sort keys %links;
+      foreach my $page ( @page_order ) {
+        push @$options, {'href'=>$links{$page}, 'text'=>$page} if $page;
+      }
+    }
+    $doc->menu->add_entry('docs', 'href'=> $link, 'text'=> $text, 'options' => $options );
+  }
 }
 
 sub dynamic_menu_items {
