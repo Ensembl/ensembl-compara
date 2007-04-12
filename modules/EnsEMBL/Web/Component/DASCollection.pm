@@ -452,10 +452,10 @@ sub added_sources {
 ## Sources sorted by type and then by name
   foreach my $das_obj( sort{ ( 3 * ( $b->adaptor->conftype cmp $a->adaptor->conftype ) +  1 * ( lc( $a->adaptor->name ) cmp lc( $b->adaptor->name ))) } @das_objs ){
     my $das_adapt = $das_obj->adaptor;
-$Data::Dumper::Maxdepth = 2;
+#$Data::Dumper::Maxdepth = 2;
     my $das_name = $das_adapt->name();
 
-warn Data::Dumper::Dumper($das_adapt) if ($das_name =~ /demo/);
+#warn Data::Dumper::Dumper($das_adapt); #if ($das_name =~ /demo/);
     my $das_action = '';
     if( $das_adapt->conftype eq 'internal' ){ # internal DAS source : configured within INI file
       $das_action = '&nbsp;';
@@ -478,8 +478,12 @@ warn Data::Dumper::Dumper($das_adapt) if ($das_name =~ /demo/);
         $url .= "$param=$v;" if ($v);
       }
     }
+
+    my $das_type = $das_adapt->type || $das_adapt->mapping->[0];
+    $das_type = $das_adapt->mapping->[0] if ($das_type eq 'mixed');
+
     my $add_link = sprintf("%sadd_das_source=(name=%s+url=%s+dsn=%s+type=%s",
-      $url, $das_name, $das_adapt->domain, $das_adapt->dsn, $das_adapt->mapping->[0]
+      $url, $das_name, $das_adapt->domain, $das_adapt->dsn, $das_type
     );
     $add_link .= '+color='.     $das_adapt->color       if $das_adapt->color      ne 'blue';
     $add_link .= '+strand='.    $das_adapt->strand      if $das_adapt->strand     ne 'b';
