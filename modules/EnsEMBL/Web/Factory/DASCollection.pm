@@ -457,7 +457,7 @@ sub getEnsemblMapping {
           : $realm eq 'MGI'           ? 'mgi'
           : $realm eq 'MarkerSymbol'  ? 'markersymbol'
           : $realm eq 'MGISymbol'     ? 'markersymbol'
-          : $realm eq 'EntrezGene'    ? 'entrezgene'
+          : $realm eq 'EntrezGene'    ? 'entrezgene_acc'
           : $realm eq 'IPI_Accession' ? 'ipi_acc'
           : $realm eq 'IPI_ID'        ? 'ipi_id'
           :                             'unknown'

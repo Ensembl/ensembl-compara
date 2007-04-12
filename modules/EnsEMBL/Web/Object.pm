@@ -262,7 +262,7 @@ sub getCoordinateSystem{
     'uniprot/swissprot'            => 'UniProt/Swiss-Prot Name',
     'uniprot/swissprot_acc'        => 'UniProt/Swiss-Prot Acc',
     'uniprot/sptrembl'             => 'UniProt/TrEMBL',
-    'entrezgene'                   => 'Entrez Gene ID',
+    'entrezgene_acc'               => 'Entrez Gene ID',
     'ipi_acc'                      => 'IPI Accession',
     'ipi_id'                       => 'IPI ID',
 ## Additional species specific peptide based entries...
