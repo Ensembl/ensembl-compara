@@ -63,14 +63,28 @@ sub init_label {
 ## Add a link to the zmenu which allows people to look at the raw DAS response (or 
 ## the pretty one if that is styled with CSS.. Need the URL and the segments list.
 
-$Data::Dumper::Indent = 1;
-warn Data::Dumper::Dumper( $self->{'extras'} );
-  my( $features, $das_styles, $segments ) = @{
-    $self->{'container'}->get_all_DASFeatures(
-      $self->{'extras'}{'type'}
-    )->{$self->{'extras'}{'dsn'}} || []
-  };
-  $zmenu->{'99:View DAS response'} = join '/', $das_url, 'features?'.  join ';', map { "segment=$_" } @$segments;
+#$Data::Dumper::Indent = 1;
+#warn Data::Dumper::Dumper( $self->{'extras'} );
+
+  my @segments;
+
+  if ( (my $dastype = $self->{'extras'}{'type'} ) !~ /^ensembl_location/) {
+    my $ga =  $self->{'container'}->adaptor->db->get_GeneAdaptor();
+    my $genes = $ga->fetch_all_by_Slice( $self->{'container'});
+    (my $name = $self->{'extras'}{'name'}) =~ s/^managed(_das)?_//;
+
+    foreach my $gene (@$genes) {
+      next if ($gene->strand != $self->strand);
+      my ($fref, $cssref, $segref) = $gene->get_all_DAS_Features;
+      push @segments, @{$segref->{$name} || []};
+    }
+  } else {
+    (my $name = $self->{'extras'}{'name'}) =~ s/^managed(_das)?_//;
+    my ($fref, $cssref, $segref) = $self->{'container'}->get_all_DAS_Features;
+    push @segments, @{$segref->{$name} || []};
+  }
+
+  $zmenu->{'99:View DAS response'} = join '/', $das_url, 'features?'.  join ';', map { "segment=$_" } @segments;
 
 ## Now we render the actual link...
   my( $fontname, $fontsize ) = $self->get_font_details( 'label' );
@@ -817,11 +831,13 @@ sub _init {
 
     foreach my $gene (@$genes) {
       next if ($gene->strand != $self->strand);
-      my ($features, $style) = $gene->get_all_DAS_Features->{$name}; # First element is aref to features, second - style
+      my ($fref, $cssref, $segref) = $gene->get_all_DAS_Features;
+      my $features = $fref->{$name};
+      $styles = $cssref->{$name};
       my $fcount = 0;
       my %fhash = ();
 
-      foreach my $f (grep { $_->das_type_id() !~ /^(contig|component|karyotype)$/i &&  $_->das_type_id() !~ /^(contig|component|karyotype):/i } (@{$features || []})) {
+      foreach my $f (grep { $_ && ($_->das_type_id() !~ /^(contig|component|karyotype)$/i &&  $_->das_type_id() !~ /^(contig|component|karyotype):/i) } (@{$features || []})) {
         if ($f->das_end) {
            my @coords;
            foreach my $transcript (@{$gene->get_all_Transcripts()}) {
@@ -865,7 +881,10 @@ sub _init {
        }
     }
   } else {
-    my( $features, $das_styles ) = @{$self->{'container'}->get_all_DASFeatures($dastype)->{$dsn}||[]};
+#    my( $features, $das_styles, $das_segments ) = @{$self->{'container'}->get_all_DASFeatures($dastype)->{$dsn}||[]};
+    my( $f, $css, $s) = $self->{'container'}->get_all_DAS_Features;
+    my( $features, $das_styles, $das_segments ) = ($f->{$das_name}, $css->{$das_name}, $s->{$das_name});
+
     $styles = $das_styles;
     @das_features = grep {
       $_->das_type_id() !~ /^(contig|component|karyotype)$/i && 
