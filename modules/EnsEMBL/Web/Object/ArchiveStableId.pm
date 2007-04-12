@@ -119,8 +119,9 @@ sub get_current_object {
 sub history {
   my $self = shift;
   my $adaptor = $self->_adaptor;
+  my $id = $self->stable_id;
   return unless $adaptor;
-  my $history = $adaptor->fetch_archive_id_history($self->Obj);
+  my $history = $adaptor->fetch_history_tree_by_stable_id($id);
   return $history;
 }
 
@@ -247,8 +248,6 @@ sub transcript {
   my $self = shift;
   return $self->Obj->get_all_transcript_archive_ids;
 }
-
-
 
 
 1;
