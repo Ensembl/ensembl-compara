@@ -430,7 +430,7 @@ sub add_error_panels {
   foreach my $problem ( sort { $b->isFatal <=> $a->isFatal } @problems ) {
     next if !$problem->isFatal && $self->{'show_fatal_only'};
     my $desc = $problem->description;
-    warn "PROBLEM: $desc"; ## Just in case other bugs prevent error page rendering!
+    #warn "PROBLEM: $desc"; ## Just in case other bugs prevent error page rendering!
     $desc = "<p>$desc</p>" unless $desc =~ /<p/;
     # Find an example for the page
     my @eg;
