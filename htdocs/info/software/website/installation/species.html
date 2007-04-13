@@ -149,20 +149,14 @@ for the home page and new site maps (see below).</p>
 home page and main sitemap. The image <em>must</em> be 40x40px and called 
 <kbd>thumb_[Genus_species].png</kbd>. Save it in <kbd>public-plugins/mirror/htdocs/img/species/</kbd></p>
 
-<!--<h4>Species lists</h4>
+<h4>Species lists</h4>
 
-<p>These can be manually updated by copying <kbd>mammals.html</kbd> and <kbd>others.html</kbd>
-from <kbd>/public-plugins/ensembl/htdocs/ssi/</kbd> to <kbd>/public-plugins/mirror/htdocs/ssi/</kbd>
-and then editing them to show your species.</p>
+<p>As of Release 43, the main species list is generated automatically from the SpeciesDefs module. Only the pre
+species are manually edited - they are listed in /public-plugins/ensembl/htdocs/ssi/species_reorder_footer.html</p>
 
-<p>Alternatively you can run the utility script <kbd>utils/homepage.pl</kbd>, as long as you have run
-<kbd>utils/update_webdb.pl</kbd> first to put all your configured species into the database.</p>
+<p>If you do not wish to have the links to the pre species and the associated tabs, you can override them as follows (starting from your server root, and creating the destination directory if it doesn't already exist in your mirror plugin):</p>
 
-<blockquote><kbd>./homepage.pl &#45;&#45;release=[[SPECIESDEFS::ENSEMBL_VERSION]] &#45;&#45;sitetype=mirror</kbd> (substituting the relevant release number)</blockquote>
-
-
-<p>If your static content is <strong>not</strong> in <kbd>public-plugins/mirror</kbd>, you need to append another flag:</p>
-<blockquote><kbd>&#45;&#45;mirror=my-plugins/mysite</kbd> (no beginning or trailing slashes).</blockquote> -->
+<p><kbd>cp htdocs/ssi/species_reorder* public-plugins/mirror/htdocs/ssi/</kbd></p>
 
 <h4>Site maps</h4>
 
