@@ -196,9 +196,11 @@ sub createObjects_DnaDnaAlignFeature {
       $p_species, undef, $s_species, undef, $p_chr, $p_start, $p_end, $type
     );
   };
+warn $@;
   return $self->_prob( 'Unable to find Dna Dna alignment' ) if $@;
   my $objects                    = [];
   foreach my $f ( @$features ) {
+warn $f->seqname;
     if( $f->seqname eq $p_chr && $f->start == $p_start && $f->end == $p_end && $f->hseqname eq $s_chr && $f->hstart == $s_start && $f->hend == $s_end ) {
       push @$objects, $f; ## This IS the aligmnent of which we speak 
     }
@@ -451,6 +453,16 @@ sub get_alignment{
   my $int_seq  = shift || return undef();
   $int_seq =~ s/<br \/>//g;
   my $seq_type = shift || return undef();
+## To stop box running out of memory - put an upper limit on the size of sequence
+## that alignview can handle...
+  if( length($int_seq) > 1e6 )  {
+    $self->problem('fatal', "Cannot align if sequence > 1 Mbase");
+    return undef;
+  }
+  if( length($ext_seq) > 1e6 )  {
+    $self->problem('fatal', "Cannot align if sequence > 1 Mbase");
+    return undef;
+  }
   my $int_seq_file = $self->save_seq($int_seq);
   my $ext_seq_file = $self->save_seq($ext_seq);
   my $dnaAlignExe = "%s/bin/matcher -asequence %s -bsequence %s -outfile %s %s";
