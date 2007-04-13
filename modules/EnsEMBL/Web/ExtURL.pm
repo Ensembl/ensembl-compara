@@ -35,9 +35,7 @@ sub get_url {
   $data->{'DB'}      = $db;
 ## Sets URL to the the entry for the given name, OR the default value OTHERWISE returns....
   my $url= $self->{'URLS'}{$species}{ uc($db) } || $self->{'URLS'}{$species}{'DEFAULT'};
-warn $url;
   $url =~ s/###(\w+)###/CGI->escape( exists $data->{$1} ? $data->{$1} : "(($1))" )/ge;
-warn $url;
   return $url;
 }
 

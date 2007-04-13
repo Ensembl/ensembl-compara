@@ -846,6 +846,8 @@ sub ADD_ALL_DNA_FEATURES {
 
   $self->add_new_track_cdna( 'human_cdna', 'Human cDNAs',   $POS++, @_ );
   $self->add_new_track_cdna( 'chimp_cdna', 'Chimp cDNAs',     $POS++, @_ );
+  $self->add_new_track_cdna( 'horse_cdna',    'Horse cDNAs',      $POS++, @_ );
+  $self->add_new_track_cdna( 'pig_cdna',    'Pig cDNAs',      $POS++, @_ );
   $self->add_new_track_cdna( 'dog_cdna',   'Dog cDNAs',     $POS++, @_ );
   $self->add_new_track_cdna( 'rat_cdna',   'Rat cDNAs',     $POS++, @_ );
   $self->add_new_track_cdna( 'platypus_cdnas', 'Platypus cDNAs',   $POS++, @_ );
@@ -932,6 +934,8 @@ sub ADD_ALL_EST_FEATURES {
   $self->add_new_track_est( 'yeast_est',  'Yeast ESTs',   $POS++, @_ );
   $self->add_new_track_est( 'human_est',    'Human ESTs',      $POS++, @_ );
   $self->add_new_track_est( 'medaka_est',    'Medaka ESTs',    $POS++, @_ );
+  $self->add_new_track_est( 'horse_est',    'Horse ESTs',      $POS++, @_ );
+  $self->add_new_track_est( 'pig_est',    'Pig ESTs',      $POS++, @_ );
   $self->add_new_track_est( 'platypus_ests', 'Platypus ESTs',   $POS++, @_ );
 
   $self->add_new_track_est( 'species_est',  'Dog ESTs',      $POS++, @_ );
@@ -1030,8 +1034,13 @@ sub ADD_ALL_CLONE_TRACKS {
   $self->add_clone_track( 'cloneset_30k',   '30k TPA clones', $POS++, @_ );
   $self->add_clone_track( 'cloneset_32k',   '32k clones',     $POS++, @_ );
   $self->add_clone_track( 'acc_bac_map',    'Acc. BAC map',   $POS++, @_ );
+  $self->add_clone_track( 'pig_acc_bac_map',    'Acc. BAC map',  
+    $POS++, 'LINKS' => [[ 'Sequenced clone', 'pig_seq_clone', '/Sus_scrofa/cytoview?misc_feature=###ID###' ]], @_ );
   $self->add_clone_track( 'seq_bac_map',    'Sequenced BAC map',   $POS++, @_ );
   $self->add_clone_track( 'bac_map',        'BAC map',        $POS++, 'thresholds' => { 20000 => {'FEATURES'=>'acc_bac_map seq_bac_map'}}, @_ );
+  $self->add_clone_track( 'pig_bac_map',        'BAC map',        $POS++,      'LINKS' => [[ 'Sequenced clone', 'pig_seq_clone', '/Sus_scrofa/cytoview?misc_feature=###ID###' ]],
+        'thresholds' => { 20000 => {'FEATURES'=>'pig_acc_bac_map'}}, @_ );
+  $self->add_clone_track( 'BAC',            'BAC map',        $POS++, 'LINKS' => [[ 'Clone map', 'clone_name', '/Sus_scrofa_map/cytoview?misc_feature=###ID###' ]], @_ );
   $self->add_clone_track( 'bacs',           'BACs',           $POS++, @_ );
   $self->add_clone_track( 'bacs_bands',     'Band BACs',      $POS++, @_ );
   $self->add_clone_track( 'bacends',        'BAC ends',       $POS++, @_ );
@@ -1065,6 +1074,12 @@ sub ADD_ALL_PROTEIN_FEATURES {
   $self->add_new_track_protein( 'riken_prot',          'Riken proteins', $POS++, @_ );
   $self->add_new_track_protein( 'wormpep',             'Worm proteins',  $POS++, @_ );
   $self->add_new_track_protein( 'remaneipep',          'C.remanei proteins',  $POS++, @_ );
+  $self->add_new_track_protein( 'brigpep',             'C.briggsae proteins',  $POS++, @_ );
+  $self->add_new_track_protein( 'human-ipr',           'Human IPR',  $POS++, @_ );
+  $self->add_new_track_protein( 'Swissprot',           'UniProtKB/Swissprot',  $POS++, @_ );
+  $self->add_new_track_protein( 'TrEMBL',              'UniProtKB/TrEMBL',  $POS++, @_ );
+  $self->add_new_track_protein( 'flybase',             'FlyBase proteins',  $POS++, @_ );
+  $self->add_new_track_protein( 'sgd',                 'SGD proteins',  $POS++, @_ );
   $self->add_new_track_protein( 'human_protein',       'Human proteins', $POS++, @_ );
 
   $self->add_new_track_protein( 'human_refseq',        'Human RefSeqs', $POS++, @_ );
@@ -1074,6 +1089,7 @@ sub ADD_ALL_PROTEIN_FEATURES {
   $self->add_new_track_protein( 'Btaurus_Exonerate_Protein',         'Cow proteins', $POS++, @_ );
   $self->add_new_track_protein( 'cow_proteins',        'Cow proteins', $POS++, @_ );
   $self->add_new_track_protein( 'cow_protein',         'Cow proteins', $POS++, @_ );
+  $self->add_new_track_protein( 'horse_protein',    'Horse proteins',      $POS++, @_ );
   $self->add_new_track_protein( 'medaka_protein',      'Medaka proteins', $POS++, @_ );
   $self->add_new_track_protein( 'fugu_protein',        'Fugu proteins', $POS++, @_ );
   $self->add_new_track_protein( 'fish_protein',        'Fish proteins', $POS++, @_ );
@@ -1197,6 +1213,7 @@ sub ADD_ALL_TRANSCRIPTS {
 
   $self->add_new_track_transcript( 'dog_protein',   'Dog genes',   'dog_protein',   $POS++, @_ );
   $self->add_new_track_transcript( 'species_protein', 'Dog protein',       'prot_gene', $POS++,  @_ );
+  $self->add_new_track_transcript( 'horse_protein', 'Horse protein', 'horse_protein', $POS++,  @_ );
   $self->add_new_track_transcript( 'human_one2one_mus_orth', 'Hs/Mm orth', 'prot_gene', $POS++,  @_ );
   $self->add_new_track_transcript( 'human_ensembl_proteins',   'Human genes',   'human_ensembl_proteins_gene',   $POS++, @_ );
   $self->add_new_track_transcript( 'mus_one2one_human_orth', 'Ms/Hs orth', 'prot_gene', $POS++,  @_ );
@@ -1223,7 +1240,7 @@ sub ADD_ALL_TRANSCRIPTS {
     'available'=>'features VEGA_GENES_OTTER_EXTERNAL', @_);
 ## OTHER FEATURES DATABASE TRANSCRIPTS....
   $self->add_new_track_transcript( 'est',       'EST genes',       'est_gene', $POS++,'db' => 'otherfeatures',
-    'available' => 'databases_features ENSEMBL_OTHERFEATURES.estgene', @_ );
+    'available' => 'database_features ENSEMBL_OTHERFEATURES.estgene', @_ );
 
   $self->add_new_track_transcript( 'oxford_fgu_ext', 'Oxford FGU Genes', 'oxford_fgu', $POS++, 'db' => 'otherfeatures', 
     'available' => "database_features ENSEMBL_OTHERFEATURES.oxford_fgu", @_ );
@@ -1365,11 +1382,27 @@ sub ADD_GENE_TRACKS {
     'gene_label'           => sub { return $_[0]->stable_id },
     'gene_col'             => 'dog_protein' , @_
   );
+
+  $self->add_new_track_gene( 'ensembl_projection', 'Ensmebl projection', 'ensembl_projection', $POS++,
+    'gene_label'           => sub { return $_[0]->external_name || $_[0]->stable_id },
+    'gene_col'             => sub { return 'ensembl_projection_'.$_[0]->biotype.'_'.$_[0]->status; },
+    @_
+  );
+
+  $self->add_new_track_gene( 'ensembl_segment', 'Ensembl segment', 'ensembl_segment', $POS++,
+    'gene_label'           => sub { return $_[0]->external_name || $_[0]->stable_id },
+    'gene_col'             => sub { return 'ensembl_segment_'.$_[0]->biotype.'_'.$_[0]->status; },
+    @_
+  );
+
   $self->add_new_track_gene( 'Cow_proteins', 'Cow proteins', 'cow_protein', $POS++,
     'gene_label'           => sub { return $_[0]->stable_id },
     'gene_col'             => 'cow_protein', @_
   );
-
+  $self->add_new_track_gene( 'horse_protein', 'Horse proteins', 'horse_protein', $POS++,
+    'gene_label'           => sub { return $_[0]->stable_id },
+    'gene_col'             => 'horse_protein' , @_
+  );
   $self->add_new_track_gene( 'oxford_genes', 'Oxford Genes', 'oxford_genes', $POS++,
     'gene_label'           => sub { return $_[0]->stable_id },
     'gene_col'             => 'oxford', @_

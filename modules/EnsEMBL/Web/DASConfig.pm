@@ -121,7 +121,7 @@ sub amend {
   return if $self->is_deleted; ## Can't amend a deleted source!
   $self->mark_altered;
   $self->set_data( $hash_ref );
-  $self->dump();
+#  $self->dump();
 }
 
 sub dump {

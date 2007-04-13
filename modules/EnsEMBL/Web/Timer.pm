@@ -110,8 +110,8 @@ Cumulative     Section\n";
     $diagnostics .= ("  | " x $_->[2]).$_->[1];
   }
   my $benchmarks = '';
-  foreach (keys %{$self->{_benchmarks}} ) {
-    my $T = $self->{_benchmarks}{$_};
+  foreach (keys %{$Benchmarks_of{ ident $self}} ) {
+    my $T = $Benchmarks_of{ ident $self }{$_};
     next unless $T->{'count'};
     my $var = '**';
     if( $T->{'count'} > 1 ) {
