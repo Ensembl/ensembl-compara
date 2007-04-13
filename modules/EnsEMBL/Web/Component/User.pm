@@ -65,6 +65,7 @@ sub toggle_class {
 sub settings_mixer {
   my ($panel) = @_;
   my $user = $panel->{user};
+  warn "CHECKING FOR GROUPS: " . $user;
   my $html = "<div>";
   my @groups = @{ $user->groups };
   if ($#groups > -1) {
@@ -149,6 +150,7 @@ sub user_tabs {
 sub render_settings_mixer {
   my ($user) = @_;
   my @groups = @{ $user->groups };
+  warn "RENDER SETTINGS MIXER";
   my @presets = &mixer_presets_for_user($user);
   my $html = "<script type='text/javascript'>\n";
   my $count = 0;
@@ -178,8 +180,10 @@ sub render_settings_mixer {
 
 sub mixer_presets_for_user {
   my ($user) = @_;
+  warn "CHECKING FOR MIXERS: " . $user;
   my @mixers = @{ $user->mixers };
   my @presets = ();
+  warn "MIXER OK";
   if ($#mixers > -1) {
     my $mixer = $mixers[0];
     @presets = split(/,/, $mixer->settings);
@@ -607,9 +611,10 @@ sub _render_notes {
 
   foreach my $note (@notes) {
     my $description = $note->annotation || '&nbsp;';
+    warn "NOTE: " . $note;
     push @records, {  'id' => $note->id, 
                       'ident' => 'user',
-                      'sortable' => $note->name,
+                      'sortable' => $note->title,
                       'shareable' => 1,
                       'absolute_url' => 'yes',
                       'edit_url' => '/common/gene_annotation?url=/common/user/account&stable_id=' . $note->stable_id . "&id=" . $note->id, 
@@ -624,7 +629,7 @@ sub _render_notes {
       my $description = $note->annotation || '&nbsp;';
       push @records, {'id' => $note->id, 
                       'ident' => $note->id, 
-                      'sortable' => $note->name,
+                      'sortable' => $note->title,
                       'data' => [
         '<a href="/default/geneview?gene=' . $note->stable_id . '" title="' . $note->title. '">' . $note->stable_id . ': ' . $note->title . '</a>', $group->name
       ]};
