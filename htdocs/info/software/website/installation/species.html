@@ -151,10 +151,10 @@ home page and main sitemap. The image <em>must</em> be 40x40px and called
 
 <h4>Species lists</h4>
 
-<p>As of Release 42, the main species list is generated automatically from the SpeciesDefs module. Only the pre
-species are manually edited - they are listed in /public-plugins/ensembl/htdocs/ssi/species_reorder_footer.html</p>
+<p>As of Release 42, the main species list is generated automatically from config.packed when the site is started. 
+Only the pre species are manually edited - they are listed in <kbd>/public-plugins/ensembl/htdocs/ssi/species_reorder_footer.html</kbd></p>
 
-<p>If you do not wish to have the links to the pre species and the associated tabs, you can override them as follows (starting from your server root, and creating the destination directory if it doesn't already exist in your mirror plugin):</p>
+<p>If you do not wish to have the links to the pre species (and the associated tabs), you can override them as follows (starting from your server root, and creating the destination directory if it doesn't already exist in your mirror plugin):</p>
 
 <p><kbd>cp htdocs/ssi/species_reorder* public-plugins/mirror/htdocs/ssi/</kbd></p>
 
