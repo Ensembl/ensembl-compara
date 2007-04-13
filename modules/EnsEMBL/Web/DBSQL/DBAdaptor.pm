@@ -10,18 +10,26 @@ use strict;
 ### return connection details string 
     warn "YOU MUST DEFINE THE CONFIGURATION...";
     return {
-      'name' => undef, 'host' => undef, 'port' => undef, 'user' => undef, 'pass' => undef
+      'name' => undef, 'host' => undef, 'port' => undef, 'user' => undef, 'pass' => undef, 'type' => undef
     };
   }
   sub BUILD {
 ### connect to the database and store the database handle...
     my( $self, $ident, $arg_ref ) = @_;
     my $conf = $self->connection_details( $arg_ref );
-    $DBHandle_of{ $ident } = DBI->connect(
-      join( ':', 'dbi', 'mysql', $conf->{'name'}, $conf->{'host'}, $conf->{'port'} ),
-      $conf->{'user'}, $conf->{'pass'}, {RaiseError=>1,PrintError=>0}
-    );
-    $DBHandle_of{ $ident }{'mysql_auto_reconnect'} = 1;
+    if( exists( $conf->{'type'} ) && $conf->{'type'} eq 'sqlite' ) {
+      $DBHandle_of{ $ident } = DBI->connect(
+        join( ':', 'dbi', 'SQLite', $conf->{'name'} )
+      );
+      $DBHandle_of{ $ident }->func( 'now', 0, sub { return time }, 'create_function' );
+      $DBHandle_of{ $ident }->func( 'UNIX_TIMESTAMP', 1, sub { return $_[0] }, 'create_function' );
+    } else {
+      $DBHandle_of{ $ident } = DBI->connect(
+        join( ':', 'dbi', 'mysql', $conf->{'name'}, $conf->{'host'}, $conf->{'port'} ),
+        $conf->{'user'}, $conf->{'pass'}, {RaiseError=>1,PrintError=>0}
+      );
+      $DBHandle_of{ $ident }{'mysql_auto_reconnect'} = 1;
+   }
   }
 
   sub disconnect {
@@ -56,6 +64,7 @@ use strict;
   sub do {
 ### wrapper around DBI
     my $self = shift;
+warn "@_";
     $self->get_dbhandle->do( @_ );
   }
 
