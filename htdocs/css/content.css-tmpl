@@ -73,6 +73,8 @@ div.boxed h3 { margin-top:-0.2em; }
 
 div.panel h3.plain { border:none; background-color:transparent; }
 
+h4.alt { color:[[HEADING]]; }
+
 div.alt { color:[[RELEASE_EDGE]]; background-color:[[RELEASE_PALE]]; border:1px solid [[RELEASE_BG]]; }
 hr.alt { background-color:[[RELEASE_EDGE]]; }
 div.alt h2, div.alt h3 { color:[[RELEASE_EDGE]]; margin-top:1em; }
@@ -119,8 +121,14 @@ div.selected a, div.selected a:link, div.selected a:visited {
   background-color:#CCFFCC;
 }
 
-#pre_tab selected {
+#pre_tab.selected {
   border-bottom: 1px solid #CCFFCC; 
+}
+
+#current_tab.selected {
+  background:#fff;
+  border-bottom: 2px solid white;
+  font-weight:bold;
 }
 
 div.tab {
@@ -134,14 +142,7 @@ div.tab {
   border-top: 1px solid [[BACKGROUND1]];
   border-right: 1px solid [[BACKGROUND1]];
   border-left: 1px solid [[BACKGROUND1]];
-  border-bottom: 1px solid [[BACKGROUND1]];
   margin-right: 3px;
-}
-
-div.selected {
-  background: #fff;
-  border-bottom: 1px solid white;
-  font-weight: bold;
 }
 
 div.tab_content {
@@ -332,7 +333,7 @@ div.formpanel div, div.formpanel-left div { margin-top:5px; }
 .formblock .formcontent { float: left; font-size: 1em; padding: 2px; width: 65%; margin-bottom: 0.8em; vertical-align:middle; }
 .formcenter, .formcenter div { display:block; text-align:center; margin-bottom: 0.8em;}
 .formcontent p { margin-top:0.3em; }
-.forminline, .forminline div { display:inline; }
+.forminline, .forminline div, .formbuttons { display:inline; }
 .forminline h6 { display:inline; margin-right:1em; }
 .tight { padding:0px; margin: 0px; }
 .middle { vertical-align:middle; }
