@@ -9,6 +9,7 @@ use Carp;
     my( $self, $arg_ref ) = @_;
 
     return {
+      'type' => $arg_ref->{'species_defs'}->ENSEMBL_USERDB_TYPE,
       'name' => $arg_ref->{'species_defs'}->ENSEMBL_USERDB_NAME,
       'host' => $arg_ref->{'species_defs'}->ENSEMBL_USERDB_HOST,
       'port' => $arg_ref->{'species_defs'}->ENSEMBL_USERDB_PORT,
