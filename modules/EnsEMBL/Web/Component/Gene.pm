@@ -725,10 +725,12 @@ sub get_HGNC_synonyms {
   my $disp_syn = 0;
 
   my $matches = $self->get_database_matches;
-  my @links = _sort_similarity_links ($self, @$matches);
-  foreach my $l (@links){
-    return 1 unless @$l;
-    foreach my $link (@$l){
+  _sort_similarity_links( $self, @$matches );
+  my $links = $self->__data->{'links'}{'PRIMARY_DB_SYNONYM'}||[];
+  foreach my $link (@$links){
+#  warn "--- @$l ---";
+#    return 1 unless @$l;
+#    foreach my $link (@$l){
      my ($key, $text)= @$link;
      if ($key =~/HGNC/){
        my $temp = $text;
@@ -747,7 +749,7 @@ sub get_HGNC_synonyms {
         $syns{$id} = $synonyms;
        }
      }
-    }
+#    }
   }
  
  my @keys = keys %syns;

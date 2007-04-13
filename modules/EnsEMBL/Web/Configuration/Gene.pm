@@ -318,7 +318,10 @@ sub geneview {
       $panel->add_components(qw(
         name        EnsEMBL::Web::Component::Gene::name
         proteininfo EnsEMBL::Web::Component::Transcript::additional_info
+        alternative EnsEMBL::Web::Component::Transcript::alternative_transcripts
         similarity  EnsEMBL::Web::Component::Transcript::similarity_matches
+        arrays      EnsEMBL::Web::Component::Transcript::oligo_arrays
+        literature  EnsEMBL::Web::Component::Transcript::literature
         go          EnsEMBL::Web::Component::Transcript::go
         gkb         EnsEMBL::Web::Component::Transcript::gkb
         intepro     EnsEMBL::Web::Component::Transcript::interpro

@@ -82,13 +82,13 @@ sub additional_info {
 sub gkb {
   my( $panel, $transcript ) = @_;
   my $label = 'Genome KnowledgeBase';
-  unless ($transcript->__data->{'GKB_links'}){
+  unless ($transcript->__data->{'links'}){
     my @similarity_links = @{$transcript->get_similarity_hash($transcript->Obj)};
     return unless (@similarity_links);
     _sort_similarity_links($transcript, @similarity_links);
   }
-  return unless $transcript->__data->{'GKB_links'};
-  my $GKB_hash = $transcript->__data->{'GKB_links'};
+  return unless $transcript->__data->{'links'}{'gkb'};
+  my $GKB_hash = $transcript->__data->{'links'}{'gkb'};
 
   my $html =  qq( <strong>The following identifiers have been mapped to this entry via Genome KnowledgeBase:</strong><br />);
 
@@ -113,12 +113,12 @@ sub gkb {
 sub go {
   my( $panel, $object ) = @_;
   my $label = 'GO';
-  unless ($object->__data->{'go_links'}){
+  unless ($object->__data->{'links'}){
     my @similarity_links = @{$object->get_similarity_hash($object->Obj)};
     return unless (@similarity_links);
     _sort_similarity_links($object, @similarity_links);
   }
-  return unless $object->__data->{'go_links'};
+  return unless $object->__data->{'links'}{'go'};
   my $databases = $object->DBConnection;
   my $goview    = $object->database('go') ? 1 : 0;
 
@@ -143,11 +143,11 @@ sub go {
       $goidurl  = $object->get_ExtURL_link($go,'GO',$go);
       $queryurl = $object->get_ExtURL_link($description,'GOTERMNAME', $link_name);
     }
-		my $info_text_html;
-		my $info_text_url;
-		my $info_text_gene;
-		my $info_text_species;
-		my $info_text_common_name;
+    my $info_text_html;
+    my $info_text_url;
+    my $info_text_gene;
+    my $info_text_species;
+    my $info_text_common_name;
                 my $info_text_type;
     if($info_text){
   #create URL
@@ -169,24 +169,44 @@ sub go {
       $info_text_html= '';
     }
 
-	$html .= qq(<dd>$goidurl $info_text_html [$queryurl] <code>$evidence</code></dd>\n);
+  $html .= qq(<dd>$goidurl $info_text_html [$queryurl] <code>$evidence</code></dd>\n);
   }
   $html .= qq(</dl>);
   $panel->add_row( $label, $html );
 }
 
+sub alternative_transcripts {
+  my( $panel, $transcript ) = @_;
+  _matches( $panel, $transcript, 'Alternate transcripts', 'ALT_TRANS' );
+}
+
+sub oligo_arrays {
+  my( $panel, $transcript ) = @_;
+  _matches( $panel, $transcript, 'Oligo Matches', 'ARRAY' );
+}
+
+sub literature {
+  my( $panel, $transcript ) = @_;
+  _matches( $panel, $transcript, 'References', 'LIT' );
+}
+
 sub similarity_matches {
   my( $panel, $transcript ) = @_;
-  my $label = $transcript->species_defs->translate( 'Similarity Matches' );# shift || 'Similarity Matches';
+  _matches( $panel, $transcript, 'Similarity Matches', 'PRIMARY_DB_SYNONYM', 'MISC' );
+}
+
+sub _matches {
+  my( $panel, $transcript, $caption, @keys ) = @_;
+  my $label = $transcript->species_defs->translate( $caption );
   my $trans = $transcript->transcript;
   # Check cache
-  unless ($transcript->__data->{'similarity_links'}){
+  unless ($transcript->__data->{'links'}){
     my @similarity_links = @{$transcript->get_similarity_hash($trans)};
     return unless (@similarity_links);
     _sort_similarity_links($transcript, @similarity_links);
   }
 
-  my @links = @{$transcript->__data->{'similarity_links'}};
+  my @links = map { @{$transcript->__data->{'links'}{$_}||[]} } @keys; 
   return unless @links;
 
   my $db = $transcript->get_db();
@@ -213,7 +233,7 @@ sub similarity_matches {
       }
       $html .= qq(<tr><th style="white-space: nowrap; padding-right: 1em">$key:</th><td>);
       $old_key = $key;
-    }    
+    }
     $html .= $text;
   }
   $html .= qq(</td></tr></table>);
@@ -244,15 +264,15 @@ sub _sort_similarity_links{
     next if $externalDB eq "Vega_gene";                # remove internal links to self and transcripts
     next if $externalDB eq "Vega_transcript";
     next if $externalDB eq "Vega_translation";
-    if( $externalDB eq "GO" ){ #&& $object->database('go')){
-      push @{$object->__data->{'go_links'}} , $display_id;
+    if( $externalDB eq "GO" ){
+      push @{$object->__data->{'links'}{'go'}} , $display_id;
       next;   
     } elsif ($externalDB eq "GKB") {
       my ($key, $primary_id) = split ':', $display_id;
-      push @{$object->__data->{'GKB_links'}->{$key}} , $type ;
+      push @{$object->__data->{'links'}{'gkb'}->{$key}} , $type ;
       next;
     }
-   my $text = $display_id;
+    my $text = $display_id;
     (my $A = $externalDB ) =~ s/_predicted//;
     if( $urls and $urls->is_linked( $A ) ) {
       my $link;
@@ -294,11 +314,10 @@ sub _sort_similarity_links{
     if( $externalDB =~ /^AFFY_/i) {
       $text = "\n".'  <div class="multicol"><a href="' .$urls->get_url('AFFY_FASTAVIEW', $display_id) .'">'. $display_id. '</a></div>';
     }
-    push @links, [ $type->db_display_name || $externalDB, $text ] ;
+    push @{$object->__data->{'links'}{$type->type}}, [ $type->db_display_name || $externalDB, $text ] ;
 #    warn $text;
   }
-  $object->__data->{'similarity_links'} = \@links ;
-  return $object->__data->{'similarity_links'};
+#  return $object->__data->{'similarity_links'};
 }
 
 sub family {
@@ -879,7 +898,7 @@ sub do_markedup_pep_seq {
       $output .= $NUMBER.$fasta. ($previous eq '' ? '':'</span>')."\n";
       $output .="$CODINGNUM$coding_fasta".($coding_previous eq ''?'':'</span>')."\n" if $show =~ /coding/;
       $output .="$PEPNUM$peptide". ($pep_previous eq ''?'':'</span>')."\n\n" if $show =~/^snp/ || $show eq 'peptide' || $show =~ /coding/;
-	
+  
       $previous='';
       $pep_previous='';
       $coding_previous='';
@@ -909,7 +928,7 @@ sub do_markedup_pep_seq {
 
       # Add links to SNPs in markup
       if ( my $url_params = $_->{'url_params'} ){ 
-	$ambiguities .= qq(<a href="snpview?$url_params">).$_->{'ambigcode'}."</a>";
+  $ambiguities .= qq(<a href="snpview?$url_params">).$_->{'ambigcode'}."</a>";
       } else {
         $ambiguities.= $_->{'ambigcode'};
       }
@@ -923,7 +942,7 @@ sub do_markedup_pep_seq {
     }
     if ($coding_style ne $coding_previous) {
       if ( $where>=$cd_start && $where<=$cd_end ) {
-	$coding_fasta.=qq(<span $coding_style>) unless $coding_style eq '';
+  $coding_fasta.=qq(<span $coding_style>) unless $coding_style eq '';
       }
       $coding_fasta.=qq(</span>) unless $coding_previous eq '';
       $coding_previous = $coding_style;
@@ -1050,7 +1069,7 @@ sub spreadsheet_variationTable {
            'aachange' => $transcript_variation->pep_allele_string,
            'aacoord'   => $transcript_variation->translation_start.' ('.(($transcript_variation->cdna_start - $cdna_coding_start )%3+1).')'
         ) : ( 'aachange' => '-', 'aacoord' => '-' ),
-	  'Source'      => (join ", ", @{$gs->[2]->get_all_sources ||[] } )|| "-",	 
+    'Source'      => (join ", ", @{$gs->[2]->get_all_sources ||[] } )|| "-",   
       };
       $panel->add_row( $ROW );
     }
@@ -1088,9 +1107,9 @@ sub transcriptsnpview {
 
   my @transcript_snps;
   map { push @transcript_snps, 
-	  [ $_->[2]->start + $start_difference, 
-	    $_->[2]->end   + $start_difference, 
-	    $_->[2]] } @$sample_snps;
+    [ $_->[2]->start + $start_difference, 
+      $_->[2]->end   + $start_difference, 
+      $_->[2]] } @$sample_snps;
 
   # Taken out domains (prosite, pfam)
 
@@ -1153,11 +1172,11 @@ sub transcriptsnpview {
   my @fake_snps = map {
     $snp_fake_length +=$SNP_REL+1;
       [ $snp_fake_length - $SNP_REL+1, $snp_fake_length, $_->[2], $transcript_slice->seq_region_name,
-	$transcript_slice->strand > 0 ?
-	( $transcript_slice->start + $_->[2]->start - 1,
-	  $transcript_slice->start + $_->[2]->end   - 1 ) :
-	( $transcript_slice->end - $_->[2]->end     + 1,
-	  $transcript_slice->end - $_->[2]->start   + 1 )
+  $transcript_slice->strand > 0 ?
+  ( $transcript_slice->start + $_->[2]->start - 1,
+    $transcript_slice->start + $_->[2]->end   - 1 ) :
+  ( $transcript_slice->end - $_->[2]->end     + 1,
+    $transcript_slice->end - $_->[2]->start   + 1 )
       ]
     } sort { $a->[0] <=> $b->[0] } @$sample_snps;
 
@@ -1352,7 +1371,7 @@ sub spreadsheet_TSVtable {
     { 'key' => 'Class', },
     { 'key' => 'Source', },
     { 'key' => 'Status', 'title' => 'Validation',  },
-		     ) if %$snp_data;
+         ) if %$snp_data;
   foreach my $snp_row (sort keys %$snp_data) {
     foreach my $row ( @{$snp_data->{$snp_row}{$sample} || [] } ) {
       $panel->add_row( $row );
@@ -1397,7 +1416,7 @@ sub get_page_data {
       # Type
       my $type = join ", ", @{$conseq_type->type || []};
       if ($type eq 'SARA') {
-	$type .= " (Same As Ref. Assembly)";
+  $type .= " (Same As Ref. Assembly)";
       }
 
       
@@ -1407,44 +1426,44 @@ sub get_page_data {
       my $chr_end   = $allele->end() + $offset;
       my $pos =  $chr_start;
       if( $chr_end < $chr_start ) {
-	$pos = "between&nbsp;$chr_end&nbsp;&amp;&nbsp;$chr_start";
+  $pos = "between&nbsp;$chr_end&nbsp;&amp;&nbsp;$chr_start";
       } elsif($chr_end > $chr_start ) {
-	$pos = "$chr_start&nbsp;-&nbsp;$chr_end";
+  $pos = "$chr_start&nbsp;-&nbsp;$chr_end";
       }
 
       # Class
       my $class = $object->var_class($allele);
       if ($class eq 'in-del') {
-	$class = $chr_start > $chr_end ? 'Insertion' : 'Deletion';
+  $class = $chr_start > $chr_end ? 'Insertion' : 'Deletion';
       }
       $class =~ s/snp/SNP/;
       
       # Codon - make the letter for the SNP position in the codon bold
       my $codon = $conseq_type->codon;
       if ( $codon ) {
-	my $position = ($conseq_type->cds_start % 3 || 3) - 1;
-	$codon =~ s/(\w{$position})(\w)(.*)/$1<b>$2<\/b>$3/; 
+  my $position = ($conseq_type->cds_start % 3 || 3) - 1;
+  $codon =~ s/(\w{$position})(\w)(.*)/$1<b>$2<\/b>$3/; 
       }
 
       my $status;
       if ( grep { $_ eq "Sanger"} @{$allele->get_all_sources() || []} ) {
-	#if ($allele->source eq 'Sanger') {
-	# Read coverage
-	my $allele_start = $allele->start;
-	my $coverage;
-	foreach ( @coverage_obj ) {
-	  next if $allele_start >  $_->end;
-	  last if $allele_start < $_->start;
-	  $coverage = $_->level if $_->level > $coverage;
-	}
-	$coverage = ">".($coverage-1) if $coverage == $coverage_level->[-1];
-	$status = "resequencing coverage $coverage";
+  #if ($allele->source eq 'Sanger') {
+  # Read coverage
+  my $allele_start = $allele->start;
+  my $coverage;
+  foreach ( @coverage_obj ) {
+    next if $allele_start >  $_->end;
+    last if $allele_start < $_->start;
+    $coverage = $_->level if $_->level > $coverage;
+  }
+  $coverage = ">".($coverage-1) if $coverage == $coverage_level->[-1];
+  $status = "resequencing coverage $coverage";
       }
       else {
-	my $tmp =  $allele->variation;
-	my @validation = $tmp ? @{ $tmp->get_all_validation_states || [] } : ();
-	$status = join( ', ',  @validation ) || "-";
-	$status =~ s/freq/frequency/;
+  my $tmp =  $allele->variation;
+  my @validation = $tmp ? @{ $tmp->get_all_validation_states || [] } : ();
+  $status = join( ', ',  @validation ) || "-";
+  $status =~ s/freq/frequency/;
       }
 
       # Other
@@ -1457,27 +1476,27 @@ sub get_page_data {
       $cds_coord .= "-".$conseq_type->cds_end unless $conseq_type->cds_start == $conseq_type->cds_end;
       my $sources = join ", " , @{$allele->get_all_sources || [] };
       my $row = {
-		'ID'          =>  qq(<a href="/@{[$object->species]}/snpview?snp=@{[$allele->variation_name]};source=@{[$allele->source]};chr=$chr;vc_start=$chr_start">@{[$allele->variation_name]}</a>),
-		'Class'       => $class || "-",
-		'Source'      => $sources || "-",
-	 	'ref_alleles' => $allele->ref_allele_string || "-",
-		'Alleles'     => $allele->allele_string || "-",
-		'Ambiguity'   => $object->ambig_code($allele),
-		'Status'      => $status,
-		'chr'         => "$chr:$pos",
-		'Codon'       => $codon || "-",
-		'consequence' => $type,
-		'cdscoord'    => $cds_coord || "-",
-		#'coverage'    => $coverage || "0",
-		};
+    'ID'          =>  qq(<a href="/@{[$object->species]}/snpview?snp=@{[$allele->variation_name]};source=@{[$allele->source]};chr=$chr;vc_start=$chr_start">@{[$allele->variation_name]}</a>),
+    'Class'       => $class || "-",
+    'Source'      => $sources || "-",
+     'ref_alleles' => $allele->ref_allele_string || "-",
+    'Alleles'     => $allele->allele_string || "-",
+    'Ambiguity'   => $object->ambig_code($allele),
+    'Status'      => $status,
+    'chr'         => "$chr:$pos",
+    'Codon'       => $codon || "-",
+    'consequence' => $type,
+    'cdscoord'    => $cds_coord || "-",
+    #'coverage'    => $coverage || "0",
+    };
      
       if ($conseq_type->aa_alleles){
-	$row->{'aachange'} = ( join "/", @{$aa_alleles} ) || "";
-	$row->{'aacoord'}  = $aa_coord;
+  $row->{'aachange'} = ( join "/", @{$aa_alleles} ) || "";
+  $row->{'aacoord'}  = $aa_coord;
       }
       else {
-	$row->{'aachange'} = '-';
-	$row->{'aacoord'}  = '-';
+  $row->{'aachange'} = '-';
+  $row->{'aacoord'}  = '-';
       }
       push @{$snp_data{"$chr:$pos"}{$sample}}, $row;
     }
@@ -1530,7 +1549,7 @@ sub dump_form {
                            'type'      => 'Hidden',
                            'name'      => 'transcript',
                            'value'     => $object->param('transcript'),
-		     );
+         );
 
   my @cgi_params = @{$panel->get_params($object, {style =>"form"}) };
   foreach my $param ( @cgi_params) {
@@ -1593,17 +1612,17 @@ sub html_dump {
       my $style;
 
       foreach my $row ( @{$snp_data->{$snp_pos}{$sample} || [] } ) {
-	(my $type = $row->{consequence}) =~ s/\(Same As Ref. Assembly\)//;
-	if ($row->{ID}) {
-	  if ($row->{aachange} ne "-") {
-	    my $colour = $user_config->{'_colourmap'}->hex_by_name($colours{$type}[0]);
-	    $style = qq(style="background-color:#$colour");
-	  }
-	  push @info, "$row->{ID}; $type; $row->{aachange};";
-	}
-	else {
-	  push @info, "<td>.</td>";
-	}
+  (my $type = $row->{consequence}) =~ s/\(Same As Ref. Assembly\)//;
+  if ($row->{ID}) {
+    if ($row->{aachange} ne "-") {
+      my $colour = $user_config->{'_colourmap'}->hex_by_name($colours{$type}[0]);
+      $style = qq(style="background-color:#$colour");
+    }
+    push @info, "$row->{ID}; $type; $row->{aachange};";
+  }
+  else {
+    push @info, "<td>.</td>";
+  }
       }
       my $print = join "<br />", @info;
       $panel->print("<td $style>$print</td>");
@@ -1640,9 +1659,9 @@ sub text_dump {
     $panel->print(qq($snp_pos\t));
     foreach my $sample ( @samples ) {
       foreach my $row ( @{$snp_data->{$snp_pos}{$sample} || [] }) {
-	(my $type = $row->{consequence}) =~ s/\(Same As Ref. Assembly\)//;;
-	my $info = $row->{ID} ? "$row->{ID}; $type; $row->{aachange}; " : ".";
-	$panel->print(qq($info));
+  (my $type = $row->{consequence}) =~ s/\(Same As Ref. Assembly\)//;;
+  my $info = $row->{ID} ? "$row->{ID}; $type; $row->{aachange}; " : ".";
+  $panel->print(qq($info));
       }
       $panel->print("\t");
     }
@@ -1664,8 +1683,8 @@ sub class {
 
 =head2 version
 
- Arg[1]	     : information panel (EnsEMBL::Web::Document::Panel::Information)
- Arg[2]	     : object (EnsEMBL::Web::Proxy::Object)
+ Arg[1]       : information panel (EnsEMBL::Web::Document::Panel::Information)
+ Arg[2]       : object (EnsEMBL::Web::Proxy::Object)
  Example     : $panel1->add_component(qw(curated_locus EnsEMBL::Sanger_vega::Component::Gene::version));
  Description : adds version details to an information panel
  Return type : true
@@ -1676,7 +1695,7 @@ sub version {
     my ($panel, $obj) = @_; 
     my $label = 'Version';
     my $version = $obj->version;
-	return 1 unless $version;
+  return 1 unless $version;
     $panel->add_row($label, qq(<p>$version</p>));
     return 1;
 }

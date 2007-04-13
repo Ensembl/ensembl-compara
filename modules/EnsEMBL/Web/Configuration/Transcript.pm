@@ -85,7 +85,10 @@ sub transview {
     location    EnsEMBL::Web::Component::Gene::location
     description EnsEMBL::Web::Component::Gene::description
     method      EnsEMBL::Web::Component::Gene::method
+    alternative EnsEMBL::Web::Component::Transcript::alternative_transcripts
     similarity  EnsEMBL::Web::Component::Transcript::similarity_matches
+    arrays      EnsEMBL::Web::Component::Transcript::oligo_arrays
+    literature  EnsEMBL::Web::Component::Transcript::literature
     go          EnsEMBL::Web::Component::Transcript::go
     gkb         EnsEMBL::Web::Component::Transcript::gkb
     interpro    EnsEMBL::Web::Component::Transcript::interpro
