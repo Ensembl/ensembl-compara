@@ -59,10 +59,11 @@ our @ISA = qw(Bio::EnsEMBL::Analysis::Runnable);
 sub new {
   my ($class,@args) = @_;
   my $self = $class->SUPER::new(@args);
-  my ($input_dir, $output_dir, $genome_names, $strict_map) = rearrange(['INPUT_DIR', 'OUTPUT_DIR', 'GENOME_NAMES', 'STRICT_MAP'], @args);
+   my ($input_dir, $output_dir, $genome_names, $pre_map) = rearrange(['INPUT_DIR', 'OUTPUT_DIR', 'GENOME_NAMES', 'PRE_MAP'], @args);
+#  my ($input_dir, $output_dir, $genome_names, $strict_map) = rearrange(['INPUT_DIR', 'OUTPUT_DIR', 'GENOME_NAMES', 'STRICT_MAP'], @args);
 
   unless (defined $self->program) {
-    $self->program('/usr/local/ensembl/bin/mercator');
+    $self->program('/software/ensembl/compara/mercator');
   }
   $self->input_dir($input_dir) if (defined $input_dir);
   $self->output_dir($output_dir) if (defined $output_dir);
@@ -72,10 +73,10 @@ sub new {
   } else {
     print "GENOME_NAMES: $genome_names\n";
   }
-  if (defined $strict_map) {
-    $self->strict_map($strict_map)
+   if (defined $pre_map){
+     $self->pre_map($pre_map);
   } else {
-    $self->strict_map(1);
+     $self->pre_map(1);
   }
   
   return $self;
@@ -103,13 +104,12 @@ sub genome_names {
     return $self->{'_genome_names'};
 }
 
-sub strict_map {
+sub pre_map {
     my ($self, $arg) = @_;
 
-    $self->{'_strict_map'} = $arg if defined $arg;
-    return $self->{'_strict_map'};
+    $self->{'_pre_map'} = $arg if defined $arg;
+    return $self->{'_pre_map'};
 }
-
 =head2 run_analysis
 
   Arg [1]   : Bio::EnsEMBL::Analysis::Runnable::TRF
@@ -161,8 +161,8 @@ sub run_analysis{
 sub parse_results{
   my ($self) = @_;
 
-  my $map_file = $self->output_dir . "/strict.map";
-  unless ($self->strict_map) {
+  my $map_file = $self->output_dir . "/pre.map";
+  unless ($self->pre_map) {
     $map_file = $self->output_dir . "/map";
   }
   my $genomes_file = $self->output_dir . "/genomes";
