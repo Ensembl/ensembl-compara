@@ -64,7 +64,7 @@ sub fetch_input {
   $self->{'comparaDBA'} = Bio::EnsEMBL::Compara::Production::DBSQL::DBAdaptor->new(-DBCONN=>$self->db->dbc);
 
   #set defaults
-  $self->strict_map(1);
+  $self->pre_map(1);
   $self->method_link_type("SYNTENY");
   $self->maximum_gap(50000);
 
@@ -233,10 +233,10 @@ sub cutoff_evalue {
   return $self->{'_cutoff_evalue'};
 }
 
-sub strict_map {
+sub pre_map {
   my $self = shift;
-  $self->{'_strict_map'} = shift if(@_);
-  return $self->{'_strict_map'};
+  $self->{'_pre_map'} = shift if(@_);
+  return $self->{'_pre_map'};
 }
 
 sub mavid_constraints {
@@ -317,8 +317,8 @@ sub get_params {
   if(defined($params->{'cutoff_evalue'})) {
     $self->cutoff_evalue($params->{'cutoff_evalue'});
   }
-  if(defined($params->{'strict_map'})) {
-    $self->strict_map($params->{'strict_map'});
+   if(defined($params->{'pre_map'})) { 
+     $self->pre_map($params->{'pre_map'}); 
   }
   if(defined($params->{'mavid_constraints'})) {
     $self->mavid_constraints($params->{'mavid_constraints'});
@@ -421,7 +421,7 @@ sub dumpMercatorFiles {
         $chr_name ."\t" .
           $strand . "\t" .
             ($member->chr_start - 1) ."\t" .
-              $member->chr_end ."\n";
+              $member->chr_end ."\t1\n";
     }
     close F;
   }
