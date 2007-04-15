@@ -248,7 +248,7 @@ sub dispatch_bsub {
    
    my $repeatmask_command = $SPECIES_DEFS->ENSEMBL_REPEATMASKER;
 #   $queue = 'systest';
-   (my $db_name = $self->database) =~ s/([A-Z])[a-z]+_([a-z]{3})[a-z]*\..*\.(\w+)\.(\w+)\.fa/ENSEMBL.\1\2.\3.\4/;
+   (my $db_name = $self->database) =~ s/([A-Z])[a-z]+_([a-z]{3})[a-z]*\..*\.a([-\w+])\.(\w+)\.fa/ENSEMBL.\1\2.\3.\4/;
    my $project_name = join ':', $self->program_name, $db_name, $self->seq->length, $self->seq->alphabet;
 
    my $command_line = qq(|bsub -c 120 -q $queue -P '$project_name' -J $ticket -o /dev/null -f "$client_fasta_file > $server_fasta_file");

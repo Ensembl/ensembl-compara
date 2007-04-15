@@ -181,6 +181,7 @@ sub parse {
   my $ua = LWP::UserAgent->new();
      $ua->timeout( $self->__timeout ); ## Allow 30 seconds for a response!!
   my $res = $ua->get( $search_URL );
+  $self->{'search_URL'} = $search_URL;
   if( $res->is_success ) {
 #warn "[EXALEAD:$host:$$] $search_URL ".length($res->content)." bytes\n";
     if( length( $res->content ) < 100 ) {
