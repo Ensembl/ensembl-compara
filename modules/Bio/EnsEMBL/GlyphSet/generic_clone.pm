@@ -166,8 +166,20 @@ sub zmenu {
     $zmenu->{"50:Seq length: @{[$f->get_scalar_attribute('seq_len')]}"  } = '' if $f->get_scalar_attribute('seq_len');
     $zmenu->{"50:FP length:  @{[$f->get_scalar_attribute('fp_size')]}"  } = '' if $f->get_scalar_attribute('fp_size');
     $zmenu->{"60:Super contig:  @{[$f->get_scalar_attribute('supercontig')]}" } = '' if $f->get_scalar_attribute('supercontig');
-    $zmenu->{"90:BAC flags:  $bac_info"                          } = '' if $bac_info;
-    $zmenu->{"99:FISH:  @{[$f->get_scalar_attribute('fish')]}"       } = '' if $f->get_scalar_attribute('fish');
+    $zmenu->{"70:BAC flags:  $bac_info"                          } = '' if $bac_info;
+    $zmenu->{"75:FISH:  @{[$f->get_scalar_attribute('fish')]}"       } = '' if $f->get_scalar_attribute('fish');
+  
+    my $links = $self->my_config('LINKS');
+    if( $links ) {
+      my $Z = 80;
+      foreach ( @$links ) {
+        my $val = $f->get_scalar_attribute($_->[1]);
+        next unless $val;
+        (my $href = $_->[2]) =~ s/###ID###/$val/g;
+        $zmenu->{"$Z:$_->[0]: $val"} = $href;
+        $Z++;
+      }
+    }
     return $zmenu;
 }
 

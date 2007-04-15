@@ -56,14 +56,16 @@ sub _init {
     my $fid          = '';
     if( $ms ) {
       $fid = $ms->name;
-    } else {
-      my $mss = $f->marker->get_all_MarkerSynonyms;
-      if(@$mss) { $fid = $mss->[0]->name; }
+    }
+    if( $fid eq '-' || $fid eq '' ) {
+      $fid ='';
+      my @mss = grep { $_->name ne '-' } @{$f->marker->get_all_MarkerSynonyms||[]};
+      if(@mss) { $fid = $mss[0]->name; }
     }
     my ($feature_colour, $label_colour, $part_to_colour) = $self->colour($f);
     my $href         = "/@{[$self->{container}{_config_file_name_}]}/markerview?marker=$fid";
 
-    my $S = $f->start()-1; next if $S>$L; $S = 0 if $S<0;
+	    my $S = $f->start()-1; next if $S>$L; $S = 0 if $S<0;
     my $E = $f->end()    ; next if $E<0;  $E = $L if $E>$L;
     my %HREF = ();
     my %ZMENU = ();
