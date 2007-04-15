@@ -14,6 +14,7 @@ sub protview {
   my $self   = shift;
   my $obj    = $self->{object};
   my $params =  { 'db'     => $obj->get_db };
+  $self->update_configs_from_parameter( 'protview', 'protview' );
   if( $obj->stable_id ) {
     $params->{'peptide'} = $obj->stable_id;
   } else {
