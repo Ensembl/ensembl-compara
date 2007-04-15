@@ -121,11 +121,12 @@ warn "Parsing species $sp ".gmtime();
          sr.length ,
          min(a.asm_start) as start,
          max(a.asm_end)   as stop,
-         if(isnull(a.asm_seq_region_id),'no','yes') as subparts
-    from (seq_region as sr, seq_region_attrib as sra, attrib_type as at) left join
+         if(isnull(a.asm_seq_region_id),'no','yes') as subparts,
+         cs.name
+    from (coord_system as cs, seq_region as sr, seq_region_attrib as sra, attrib_type as at) left join
          assembly as a on a.asm_seq_region_id = sr.seq_region_id 
    where sr.seq_region_id = sra.seq_region_id and
-         sra.attrib_type_id = at.attrib_type_id and at.code = "toplevel"
+         sra.attrib_type_id = at.attrib_type_id and at.code = "toplevel" and cs.coord_system_id = sr.coord_system_id
    group by sr.seq_region_id
   ));
   my $toplevel_example  = $toplevel_slices->[0];
@@ -177,9 +178,10 @@ sub entry_points {
 <!DOCTYPE DASEP SYSTEM "http://www.biodas.org/dtd/dasep.dtd">
 <DASEP>
   <ENTRY_POINTS href="$href" version="1.0">);
-  foreach my $seg (@$entry_points) {
+  foreach my $s ( sort {  $a->[5] cmp $b->[5] || $a->[0] cmp $b->[0] } @$entry_points) {
     printf FH qq(
-    <SEGMENT id="%s" start="%d" stop="%d" orientation="+" subparts="%s">%s</SEGMENT>), $seg->[0], 1, $seg->[1], $seg->[0],$seg->[4];
+    <SEGMENT type="%s" id="%s" start="%d" stop="%d" orientation="+" subparts="%s">%s</SEGMENT>),
+             $s->[5],  $s->[0],1,         $s->[1],                  $s->[4],      $s->[0];
   }
   print FH qq(
   </ENTRY_POINTS>
