@@ -894,8 +894,8 @@ sub ADD_ALL_DNA_FEATURES {
     [ 'drosophila_gold_cdna',  'Fly cDNA (gold)', 'URL_KEY' => 'DROSOPHILA_EST', 'ZMENU' => [ '###ID###', "Fly cDNA: ###ID###" => '###HREF###' ] ],
     [ 'kyotograil_2004',  "Kyotograil '04" ],
     [ 'kyotograil_2005',  "Kyotograil '05" ],
-    [ 'sheep_bac_ends',   "Sheep BAC ends", "URL_KEY" => 'TRACE', 'ZMENU' => [ '###ID###', 'Sheep BAC trace: ###ID###' => '###HREF
-###']  ],
+    [ 'platypus_454_cdna', "Platypus 454 cDNAs" ],
+    [ 'sheep_bac_ends',   "Sheep BAC ends", "URL_KEY" => 'TRACE', 'ZMENU' => [ '###ID###', 'Sheep BAC trace: ###ID###' => '###HREF###']  ],
     [ 'stickleback_cdna',   "Stickleback cDNAs" ], # subset of these in core but don't draw those
 
     # Duplicated tracks (same logic name used core and otherfeatures). Not ideal!
