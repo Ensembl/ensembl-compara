@@ -32,7 +32,6 @@ sub init {
   }
 
   my $object = $Config->{_object};
-# foreach my $source (@{ $Config->{_object}->get_session->get_das_filtered_and_sorted($ENV{'ENSEMBL_SPECIES'}) }) {
   foreach my $source (@{ $ENSEMBL_WEB_REGISTRY->get_das_filtered_and_sorted($ENV{'ENSEMBL_SPECIES'}) }) {
     my $confkey = "genedas_".$source->get_key;
     next unless $Config->get($confkey,'on') eq 'on';
@@ -44,7 +43,9 @@ sub init {
     my $confkey = "genedas_$src";
 
     my %feats_by_glyphset;
-    foreach my $feat( @{$feat_container->{$src} || []}){
+    next unless ref( $feat_container->{$src} ) =~/ARRAY/;
+    foreach my $feat( @{$feat_container->{$src}} ) {
+      next unless $feat;
       my $type = $feat->das_type || $feat->das_type_id || ' ';
       next if ( ($feat->das_type_id =~ /^(contig|component|karyotype)$/i) || ($feat->das_type_id =~ /^(contig|component|karyotype):/i) || (! $feat->das_end ));
       $feats_by_glyphset{$type} ||= [];
@@ -52,7 +53,7 @@ sub init {
     }
     my $zmenu; 
     if ( my $chart = $source_config->{'score'}) {
-      if ($chart ne 'n') {
+      if ($chart ne 'n' && ref( $feat_container->{$src} ) =~ /ARRAY/ ) {
         my ($min_score, $max_score) = (sort {$a <=> $b} (map { $_->score } @{$feat_container->{$src} || []}))[0,-1] ;
         $zmenu = {
 	  "10: Min Score: $min_score" => '',
