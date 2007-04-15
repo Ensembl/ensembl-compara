@@ -40,7 +40,9 @@ sub features {
 sub colour {
   my ($self, $gene, $transcript, $colours, %highlights) = @_;
 
-  my $genecol = $colours->{ $transcript->analysis->logic_name."_".$transcript->biotype."_".$transcript->status };
+  my $KEY = $transcript->analysis->logic_name."_".$transcript->biotype."_".$transcript->status;
+  warn "GENECOL $KEY";
+  my $genecol = $colours->{ $KEY };
   
   if(exists $highlights{lc($transcript->stable_id)}) {
     return (@$genecol, $colours->{'superhi'});

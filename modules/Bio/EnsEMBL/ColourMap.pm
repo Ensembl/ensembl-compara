@@ -25,6 +25,11 @@ sub new {
   }
 
   $self->{'colour_sets'} = {};
+  $self->colourSet( 'horse_protein',
+    'hi'         => 'highlight1',
+    'superhi'    => 'highlight2',
+    'horse_protein' => [ 'blue', 'Horse protein' ]
+  );
   $self->colourSet( 'ensembl_projection',
     'ensembl_projection_protein_coding_KNOWN',    => [ 'chartreuse4', 'Known projection' ],
     'ensembl_projection_protein_coding_NOVEL',    => [ 'olivedrab4', 'Novel projection' ],
@@ -149,6 +154,7 @@ sub new {
   $self->colourSet( 'ensembl_gene',
     'hi'         => 'highlight1',
     'superhi'    => 'highlight2',
+    'ncRNA_protein_coding_KNOWN' => [ 'rust' , 'Known protein coding' ],
     'havana_protein_coding_KNOWN'  => [ 'dodgerblue4', 'Havana Known Protein coding'],
     'havana_protein_coding_NOVEL'  => [ 'blue',        'Havana Novel Protein coding' ],
     'ensembl_havana_gene_protein_coding_KNOWN'  => [ 'goldenrod3', 'Merged Known Protein coding'],
