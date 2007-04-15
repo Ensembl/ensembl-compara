@@ -34,6 +34,7 @@ my $SPECIES_DEFS = EnsEMBL::Web::SpeciesDefs->new();
 my $DBCONNECTION = EnsEMBL::Web::DBSQL::DBConnection->new( undef, $SPECIES_DEFS );
 
 my $blast_adaptor = $DBCONNECTION->get_databases_species( $SPECIES_DEFS->ENSEMBL_PRIMARY_SPECIES, 'blast')->{'blast'};
+$blast_adaptor->{'disconnect_flag'} = 0;
 $blast_adaptor->ticket( $ticket );
 
 my $runnable = eval { Bio::Tools::Run::Search->retrieve( $token, $blast_adaptor  ) };
