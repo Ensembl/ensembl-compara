@@ -83,7 +83,7 @@ if( $exalead->__status eq 'failure') {
   );
   $page->page->content->add_panel($panel);
 
-  if( 1 ) {
+  if( 0 ) {
 #warn $exalead->{'raw_XML'};
     use XML::Simple;
     $page->page->content->add_panel( new EnsEMBL::Web::Document::Panel(
