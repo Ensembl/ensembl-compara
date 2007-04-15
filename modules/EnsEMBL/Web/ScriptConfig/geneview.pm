@@ -16,6 +16,10 @@ sub init {
     status_gene_alignments  on
     status_gene_orthologues on
     status_gene_paralogues  on
+    status_similarity_matches  on
+    status_literature          on
+    status_oligo_arrays        on
+    status_alternative_transcripts on
     context                 0
     das_sources),           []
   );

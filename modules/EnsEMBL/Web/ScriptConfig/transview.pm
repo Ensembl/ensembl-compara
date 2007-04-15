@@ -7,7 +7,11 @@ sub init {
 
   $script_config->_set_defaults(qw(
     show                    plain
-    number                   off   
+    number                  off   
+    status_similarity_matches  on
+    status_literature          on
+    status_oligo_arrays        on
+    status_alternative_transcripts on
     das_sources             
   ));
   $script_config->storable = 1;

@@ -177,33 +177,45 @@ sub go {
 
 sub alternative_transcripts {
   my( $panel, $transcript ) = @_;
-  _matches( $panel, $transcript, 'Alternate transcripts', 'ALT_TRANS' );
+  _matches( $panel, $transcript, 'alternative_transcripts', 'Alternate transcripts', 'ALT_TRANS' );
 }
 
 sub oligo_arrays {
   my( $panel, $transcript ) = @_;
-  _matches( $panel, $transcript, 'Oligo Matches', 'ARRAY' );
+  _matches( $panel, $transcript, 'oligo_arrays', 'Oligo Matches', 'ARRAY' );
 }
 
 sub literature {
   my( $panel, $transcript ) = @_;
-  _matches( $panel, $transcript, 'References', 'LIT' );
+  _matches( $panel, $transcript, 'literature', 'References', 'LIT' );
 }
 
 sub similarity_matches {
   my( $panel, $transcript ) = @_;
-  _matches( $panel, $transcript, 'Similarity Matches', 'PRIMARY_DB_SYNONYM', 'MISC' );
+  _matches( $panel, $transcript, 'similarity_matches', 'Similarity Matches', 'PRIMARY_DB_SYNONYM', 'MISC' );
+}
+
+sub _flip_URL {
+  my( $transcript, $code ) = @_;
+  return sprintf '/%s/%s?transcript=%s;db=%s;%s', $transcript->species, $transcript->script, $transcript->stable_id, $transcript->get_db, $code;
 }
 
 sub _matches {
-  my( $panel, $transcript, $caption, @keys ) = @_;
+  my( $panel, $transcript, $key, $caption, @keys ) = @_;
   my $label = $transcript->species_defs->translate( $caption );
   my $trans = $transcript->transcript;
   # Check cache
+
   unless ($transcript->__data->{'links'}){
     my @similarity_links = @{$transcript->get_similarity_hash($trans)};
     return unless (@similarity_links);
     _sort_similarity_links($transcript, @similarity_links);
+  }
+
+  my $URL = _flip_URL( $transcript, "status_$key" );
+  if( $transcript->param( "status_$key" ) eq 'off' ) { 
+    $panel->add_row( $label, '', "$URL=on" );
+    return 0;
   }
 
   my @links = map { @{$transcript->__data->{'links'}{$_}||[]} } @keys; 
@@ -237,7 +249,7 @@ sub _matches {
     $html .= $text;
   }
   $html .= qq(</td></tr></table>);
-  $panel->add_row( $label, $html );
+  $panel->add_row( $label, $html, "$URL=off" );
 }
 
 sub _sort_similarity_links{
