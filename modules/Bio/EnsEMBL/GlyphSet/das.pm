@@ -684,7 +684,7 @@ sub zmenu {
   if($self->{'extras'}->{'fasta'}) {
     foreach my $string ( @{$self->{'extras'}->{'fasta'}}) {
     my ($type, $db ) = split /_/, $string, 2;
-      $zmenu->{ "80:$type sequence" } = $self->{'config'}{'exturl'}->get_url( 'FASTAVIEW', { 'FASTADB' => $string, 'ID' => $id } );
+      $zmenu->{ "80:$type sequence" } = $self->{'config'}{'exturl'}->get_url( 'FASTAVIEW', { 'SPECIES' => $ENV{ENSEMBL_SPECIES} , 'FASTADB' => $string, 'ID' => $id } );
       $href = $zmenu->{ "20:$type sequence" } unless defined($href);
     }
   }
