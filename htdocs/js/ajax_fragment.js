@@ -27,7 +27,7 @@ function ajax_call_complete() {
 function info_fragment(caller) {
   //alert(caller);
   json = eval( '(' + caller + ')' );
-  var data = "gene=" + json.fragment.stable_id;
+  var data = "gene=" + json.fragment.stable_id+"&db=" +json.fragment.db;
   for (i = 0; i < json.components.length; i++) {
     data = data + "&component_" + i + "=" + json.components[i];
   }
