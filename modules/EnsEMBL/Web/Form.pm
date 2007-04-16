@@ -38,14 +38,10 @@ sub add_attribute {
 sub add_element {
   my( $self, %options ) = @_;
   my $module = "EnsEMBL::Web::Form::Element::$options{'type'}";
-  warn $module;
-  #warn $self->dynamic_use( $module );
-
+  
   if( $self->dynamic_use( $module ) ) {
-    warn "ID: " . $options{'id'};
     $self->_add_element( $module->new( 'form' => $self->{'_attributes'}{'name'}, %options ) );
-  }
-  else {
+  } else {
     warn "Unable to dynamically use module $module. Have you spelt the element type correctly?";
   }
 }

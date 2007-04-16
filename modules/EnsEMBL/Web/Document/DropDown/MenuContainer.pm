@@ -131,7 +131,7 @@ sub _fields{
 sub render_html {
   my $self = shift;
   my $panel = $self->{'panel'};
-  warn "RENDERING CONTAINER HTML WITH WIDTH: " . $self->{'width'};
+  #warn "RENDERING CONTAINER HTML WITH WIDTH: " . $self->{'width'};
   my $html = qq(
 <div class="autocenter" style="border: solid 1px black; border-width: 1px 1px 0px 1px; width: @{[$self->{'width'}-2]}px;">
 <form action="/@{[$self->{'species'}]}/@{[$self->{'script'}]}" name="$panel" id="$panel" method="get" style="white-space: nowrap; width: @{[$self->{'width'}-2]}px; border: 0px; padding: 0px" class="autocenter print_hide_block">
@@ -146,8 +146,8 @@ sub render_html {
 </form>
 </div>
   );
-  warn "MC HTML:";
-  warn $html;
+  #warn "MC HTML:";
+  #warn $html;
   return $html;
 }
 

@@ -21,7 +21,7 @@ sub _link {
       sprintf( '%s.default.filters.%s."%s"',$dataset,$_, CGI::escapeHTML($filters->{$_} ) )
     } keys %$filters );
   }
-warn $URL;
+warn "MART LINK URL: ",$URL;
   return $self->problem( 'redirect', $URL );
 }
 

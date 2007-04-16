@@ -166,7 +166,6 @@ sub fetch_news_items {
     $sql .= ' WHERE n.news_category_id = c.news_category_id';
   }
   $sql .= " $where_str GROUP BY n.news_item_id ORDER BY n.priority DESC $limit_str";
-#warn $sql;
 
   my $T = $self->handle->selectall_arrayref($sql, {});
   return [] unless $T;
@@ -282,7 +281,6 @@ sub fetch_headlines {
     $sql .= ' WHERE n.news_category_id = c.news_category_id';
   }
   $sql .= " $where_str GROUP BY n.news_item_id ORDER BY n.priority DESC $limit_str";
-#warn $sql;
 
   my $T = $self->handle->selectall_arrayref($sql, {});
   return [] unless $T;
@@ -403,7 +401,7 @@ sub fetch_species {
 
     my $sql;
     if ($release_id && $release_id ne 'all') {
-        warn "FETCHING SPECIES for RELEASE: " . $release_id;
+        #warn "FETCHING SPECIES for RELEASE: " . $release_id;
         $sql = qq(
             SELECT
                 s.species_id    as species_id,
@@ -417,7 +415,7 @@ sub fetch_species {
             ORDER BY species_name ASC
         );
     } else {
-        warn "FETCHING ALL SPECIES";
+        #warn "FETCHING ALL SPECIES";
         $sql = qq(
             SELECT
                 s.species_id    as species_id,
@@ -718,7 +716,7 @@ sub add_news_item {
             created_by        = $user_id,
             created_at        = NOW()
         );
-warn $sql;
+#warn $sql;
     my $sth = $self->handle->prepare($sql);
     my $result = $sth->execute();
 

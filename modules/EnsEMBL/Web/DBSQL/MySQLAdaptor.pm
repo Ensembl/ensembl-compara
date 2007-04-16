@@ -155,22 +155,22 @@ sub update {
 
 sub destroy {
   my ($self, $request) = @_;
-  warn "DESTROYING with $request";
+  #warn "DESTROYING with $request";
   my $result = EnsEMBL::Web::DBSQL::SQL::Result->new();
   $result->set_action('destroy');
   my $sql = $self->template($request->get_sql);
-  warn "SQL: " . $sql;
+  #warn "SQL: " . $sql;
   $self->get_handle->prepare($sql);
   if ($self->get_handle->do($sql)) {
     $result->set_success(1);
-    warn "SUCCESS";
+    #warn "SUCCESS";
   }
   return $result;
 }
 
 sub find {
   my ($self, $data) = @_;
-  warn "FIND";
+  #warn "FIND";
   my $result = EnsEMBL::Web::DBSQL::SQL::Result->new();
   $result->set_action('find');
   my $sql = "SELECT * FROM " . $self->get_table . " WHERE " . $data->get_primary_key . "='" . $data->id . "';";
@@ -182,16 +182,16 @@ sub find {
 
 sub find_many {
   my ($self, $request) = @_;
-  warn "FIND MANY";
+  #warn "FIND MANY";
   my $result = EnsEMBL::Web::DBSQL::SQL::Result->new();
   $result->set_action('find');
   my $sql = $self->template($request->get_sql);
-  warn "MANY: " . $sql;
+  #warn "MANY: " . $sql;
   my $index_by = $self->parse_table_name($request->get_index_by); 
-  warn "INDEX: " . $index_by;
+  #warn "INDEX: " . $index_by;
   my $hashref = $self->get_handle->selectall_hashref($sql, $index_by);
-  warn "OK";
-  warn "\n";
+  #warn "OK";
+  #warn "\n";
   $result->set_result_hash($hashref);
   return $result;
 }
