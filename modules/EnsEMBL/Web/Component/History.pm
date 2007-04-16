@@ -67,12 +67,12 @@ sub stage1_form {
     'value' => '',
     'label' => 'or upload file'
  );
- $form->add_element(
-    'type'  => 'String',
-    'name'  => 'url_file',
-    'label' => 'or use file URL',
-    'value' => ''
- );
+# $form->add_element(
+#    'type'  => 'String',
+#    'name'  => 'url_file',
+#    'label' => 'or use file URL',
+#    'value' => ''
+# );
  my @optout =(
 	['html' => 'HTML'],
 	['text' => 'Text'] 
