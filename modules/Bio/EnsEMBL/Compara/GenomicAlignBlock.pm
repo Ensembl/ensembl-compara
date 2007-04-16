@@ -1064,7 +1064,14 @@ sub get_SimpleAlign {
     $bio07 = 1;
   }
 
-  foreach my $genomic_align ($self->reference_genomic_align,@{$self->get_all_non_reference_genomic_aligns}) {
+  my $all_genomic_aligns;
+  if ($self->reference_genomic_align) {
+    $all_genomic_aligns = [$self->reference_genomic_align,@{$self->get_all_non_reference_genomic_aligns}];
+  } else {
+    $all_genomic_aligns = $self->get_all_GenomicAligns();
+  }
+
+  foreach my $genomic_align (@$all_genomic_aligns) {
     my $alignSeq = $genomic_align->aligned_sequence;
     
     my $loc_seq = Bio::LocatableSeq->new(-SEQ    => $uc ? uc $alignSeq : lc $alignSeq,
@@ -1908,8 +1915,6 @@ sub restrict_between_reference_positions {
 sub _print {
   my ($self, $FILEH) = @_;
 
-  my $verbose = verbose;
-#   verbose(0);
   $FILEH ||= \*STDOUT;
   print $FILEH
 "Bio::EnsEMBL::Compara::GenomicAlignBlock object ($self)
@@ -1922,15 +1927,15 @@ sub _print {
   length = ", ($self->length or "-undef-"), "
   alignments: \n";
   foreach my $this_genomic_align (@{$self->genomic_align_array()}) {
+    my $slice = $this_genomic_align->get_Slice;
     if ($self->reference_genomic_align and $self->reference_genomic_align == $this_genomic_align) {
       print $FILEH "    * ", $this_genomic_align->genome_db->name, " ",
-          ($this_genomic_align->get_Slice?$this_genomic_align->get_Slice->name:"kk"), "\n";
+          ($slice?$slice->name:"--error--"), "\n";
     } else {
       print $FILEH "    - ", $this_genomic_align->genome_db->name, " ",
-          ($this_genomic_align->get_Slice?$this_genomic_align->get_Slice->name:"kk"), "\n";
+          ($slice?$slice->name:"--error--"), "\n";
     }
   }
-  verbose($verbose);
 
 }
 
