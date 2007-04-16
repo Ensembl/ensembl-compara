@@ -42,9 +42,7 @@ else {
   $query .= ' ';
   my %sp_hash = %{ $webpage->{'species_defs'}->ENSEMBL_SPECIES_ALIASES };
   foreach my $sp ( sort keys %sp_hash ) {
-warn ".... $sp ....";
     if( lc(substr($query,0,length($sp)+1)) eq lc($sp).' ') {
-warn ".... setting to human ....";
       $species = $sp_hash{$sp};
       $query = substr($query, length($sp)+1 );
     }

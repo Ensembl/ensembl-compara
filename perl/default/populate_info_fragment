@@ -20,11 +20,11 @@ my %params = ();
 my %components = ();
 my @ordered_componenents = ();
 
-warn "--------------------";
-warn("AJAX: Populating info fragment"); 
+#warn "--------------------";
+# warn("AJAX: Populating info fragment"); 
 
 foreach my $key (keys %{ $incoming }) {
-  warn "KEY: " . $key . ": " . $incoming->{$key};
+  #warn "KEY: " . $key . ": " . $incoming->{$key};
   if ($key =~ /^component_/) {
     push @ordered_componenents, $key;
     $components{$key} = $incoming->{$key};
@@ -50,14 +50,14 @@ my $fragment = EnsEMBL::Web::Document::Panel::InformationFragment->new(
   display => 'on',
 );
 
-warn "GENE:" . $gene->stable_id;
+#warn "GENE:" . $gene->stable_id;
 $gene->script('geneview');
 my $mc = $gene->new_menu_container(
   'configname' => 'altsplice',
   'panel'      => 'altsplice',
   'leftmenus' => ['Features']     );
 
-warn $mc->render_js_old;
+#warn $mc->render_js_old;
 my $json_components = "";
 foreach my $component (@ordered_componenents) {
   
@@ -71,7 +71,7 @@ foreach my $component (@ordered_componenents) {
     $json_components = $component; 
     use strict "refs";
   } else {
-    warn "NOT LOADED: " . $module;
+    #warn "NOT LOADED: " . $module;
   }
 }
 
