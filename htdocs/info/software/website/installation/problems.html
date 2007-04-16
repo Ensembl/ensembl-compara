@@ -1,0 +1,37 @@
+<html>
+  <head>
+    <meta name="navigation" content="Running" />
+    <title>Issues installing Ensembl Website</title>
+  </head>
+<body> 
+  <h2>Issues installing Ensembl Website</h2>
+
+<h3 class="boxed"><a name="whichfile">Which configuration files do I edit?</a></h3>
+<p>
+  Ensembl contains a number of ini-files with the same name - why?
+</p>
+<p>
+  This is to make configuration easier for subsequent releases, if you make your
+  changes to the mirror configuration for your local install (e.g. machine names
+  etc), then this should not change significantly between releases and you can
+  copy this file from one release to the next.
+</p>
+<p>
+  You should change these files only - do not make changes to the configuration
+  files in the main server directory - public-plugins/ensembl.
+</p>
+<h3 class="boxed"><a name="accounts">The main Ensembl website has user accounts can we enable them on our mirror.</a></h3>
+<p>
+  To enable accounts add the following to your SiteDefs.pm:
+</p>
+<pre>
+  $SiteDefs::ENSEMBL_LOGINS                 = 1;
+</pre>
+<h3 class="boxed"><a name="sqlite">Configurations are not stored if I don't have a local MySQL server?</h3>
+<p>
+  If you fo not need to install a local MySQL server (because you are pointing to the ensembldb.ensembl.org databases,
+  then you can use SQLite. Install SQLite as outlined in the non-Ensembl code page and then include the SQLite plugin in
+  in to your Plugins.pm file. <strong>NOTE:</strong> only session storage (not user/group) is supported in this case.
+</p>
+</body>
+</html>

@@ -17,6 +17,7 @@ modules and web site code.</p>
   <li><a href="#perl">Perl</a> - Open source scripting language</li>
   <li><a href="#apache">Apache and mod_perl</a> - Open source web server</li>
   <li><a href="#mysql">MySQL</a> - Open source database server</li>
+  <li><a href="#sqlite">SQLite</a> - alternative open source database server for session information (if not installing MySQL)</li>
   <li><a href="#dotter">Dotter</a> - Graphical alignment package</li>
   <li><a href="#cvs">CVS</a> - versioning system to allow you to download the Ensembl code</li>
 </ul> 
@@ -66,10 +67,15 @@ We run the site under Perl 5.8.7. To see if you have Perl installed, and/or to c
 type:</p>
 <kbd>perl -v</kbd>
 <p>
-  If you don't have Perl installed, or need to upgrade, go to <a href="http://www.cpan.org/" target="_blank">http://www.cpan.org/</a> and
+  If you don't have Perl installed, or need to upgrade, go to <a hrel="external" ref="http://www.cpan.org/">http://www.cpan.org/</a> and
   choose the 'source code' install. Follow the installation instructions on the web site.
 </p>
 
+<h3 class="boxed"><a name="sqlite">SQLite</a></h3>
+<ul>
+  <li>Install SQLite - can be downloaded from <a rel="external" href="http://www.sqlite.org/download.html">http://www.sqlite.org/download.html</a>.</li>
+  <li>Install the DBD::SQLite (can be found at <a hrel="external" ref="http://search.cpan.org/dist/DBD-SQLite/">http://search.cpan.org/dist/DBD-SQLite/</a>.</li>
+</ul>
 <h3 class="boxed"><a name="mysql">MySQL</a></h3>
 <p>MySQL is a very popular Open Source relational database system. The easiest way to install MySQL is
 to use the pre-compiled binaries from <a href="http://dev.mysql.com" target="_blank">http://dev.mysql.com</a>. You can also get source from

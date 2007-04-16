@@ -11,9 +11,9 @@ The build instructions are split into three sections:
 </p>
 <ul>
   <li><p><a href="non-ensembl-code.html">How to install other applications required by Ensembl</a><br />
-    CVS, Perl, MySQL, Apache 2, Dotter</li>
-  <li><a href="ensembl-code.html">How to install the Ensembl and BioMart software</a></li>
-  <li><a href="ensembl-data.html">How to install the Ensembl data</a></li>
+    CVS, Perl, MySQL, Apache 2, Dotter</p></li>
+  <li><p><a href="ensembl-code.html">How to install the Ensembl and BioMart software</a></p></li>
+  <li><p><a href="ensembl-data.html">How to install the Ensembl data</a></p></li>
 </ul>
 <p>
   The first of these involves the installation of applications/modules that are not part of the Ensembl
@@ -29,7 +29,7 @@ The build instructions are split into three sections:
 <ul>
   <li>a local database server to manage display settings and user accounts (if these are enabled).</li>
   <li>the mysql client software installed on your machine.</li>
-</p>
+</ul>
 <p>
   If you do not wish to run MySQL (or cannot run a MySQL server locally) <strong>AND</strong> you do not
   wish to enable user accounts then you can alternatively install SQLite as an alternative server.
@@ -80,9 +80,8 @@ has been released under, particularly if you are installing Ensembl in a commerc
 <p><a href="non-ensembl-code.html">Detailed installation instructions</a> are available for each of these
 packages</p>
 
-<h3 class="boxed"><a name="ensembl-code">Installing Ensembl/BioMart Code</a></h3>
+<h3 class="boxed"><a name="ensembl-code">Installing Ensembl/BioMart Code and Data</a></h3>
 
-<h3 class="boxed"><a name="ensembl-data">Installing Ensembl/BioMart Data</a></h3>
 <p>This section explains how to install the <a href="#ensembldata">Ensembl data</a>, <a href="#ensemblcode">Perl modules, and web code</a>. It also covers the installation of BioPerl.</p>
 
 <h3 class="boxed"><a name="ensembldata">Installing the Ensembl Data</a></h3>
@@ -304,6 +303,8 @@ machine):</p>
 $ cvs -d :pserver:cvsuser@cvs.sanger.ac.uk:/cvsroot/CVSmaster co -r release-0_5 biomart-perl</pre>
 </li>
 </ol>
+
+<p>More information on  <a href="biomart.html">tweaking and configuring BioMart to work within the Ensembl website</a> is available</p>
 
 <h3 class="boxed">To install the BioPerl modules (BioPerl 1.2.3)</h3>
 <ol start="5">
