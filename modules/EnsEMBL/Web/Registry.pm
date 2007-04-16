@@ -9,9 +9,9 @@ use EnsEMBL::Web::DBSQL::HelpAdaptor;
 use EnsEMBL::Web::Timer;
 use EnsEMBL::Web::SpeciesDefs;
 use EnsEMBL::Web::Object::Data::User;
-use Cache::Memcached;
-use EnsEMBL::Web::DBCache;
-use EnsEMBL::Web::FakeMemcached;
+#use Cache::Memcached;
+#use EnsEMBL::Web::DBCache;
+#use EnsEMBL::Web::FakeMemcached;
 
 use strict;
 use Class::Std;
