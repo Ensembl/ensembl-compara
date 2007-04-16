@@ -55,8 +55,8 @@ opt_267_Monodelphis_domestica on
 opt_267_Ornithorhynchus_anatinus on
 opt_267_Rattus_norvegicus on
 
-opt_268_constrained_elem on
-opt_268_conservation_score on
+opt_267_constrained_elem on
+opt_267_conservation_score on
  ),
   map {( "opt_align_$_" => "off")} (4,93,154..400)
   );

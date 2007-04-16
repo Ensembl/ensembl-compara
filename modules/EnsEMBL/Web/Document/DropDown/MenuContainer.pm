@@ -75,7 +75,7 @@ sub hidden_values {
   $self->{'_hidden_values'} = shift;
 }
 
-sub render_js_old {
+sub render_js {
   my $self = shift;
   return qq(
 <script type="text/javascript"><!--
@@ -90,7 +90,7 @@ sub render_js_old {
   );
 }
 
-sub render_js {
+sub render_js_ajax {
   my $self = shift;
   return qq(
   <div id='menu_container'></div>
