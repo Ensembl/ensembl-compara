@@ -1649,16 +1649,17 @@ sub external_links {
     </applet>
 };
 
+  my $html = $jalview;
+#  my $html = qq{
+#<script type="text/javascript" src="/js/atv.js"></script>
+#};
 
-  my $html = qq{
-<script type="text/javascript" src="/js/atv.js"></script>
-
-<form>
-    <input style="background-color:white;vertical-align:top; margin: 5px; border: 1; width:70px; height:23px" type=button value="ATV" onClick="openATV(\'}.
-    $object->species_defs->ENSEMBL_BASE_URL.qq{\',\'$URL\' )">
-    $jalview
-</form>
-};
+##<form>
+##    <input style="background-color:white;vertical-align:top; margin: 5px; border: 1; width:70px; height:23px" type=button value="ATV" onClick="openATV(\'}.
+##    $object->species_defs->ENSEMBL_BASE_URL.qq{\',\'$URL\' )">
+##    $jalview
+##</form>
+##};
 
   $panel->add_row( $label, $html );
   return 1;
