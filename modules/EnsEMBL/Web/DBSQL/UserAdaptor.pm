@@ -306,6 +306,7 @@ sub find_records {
       {
       'id'          => $array[0],
       'user'        => $array[1],
+      'group'       => $array[1],
       'type'        => $array[2],
       'data'        => $array[3],
       'created_at'  => $array[4],
@@ -351,21 +352,28 @@ sub update_record {
   my ($self, %params) = @_;
   my $id = $params{id};
   my $user_id = $params{user};
+  if (!$user_id ) {
+    $user_id = $params{group};
+  }
   my $type = $params{type};
   my $data = $params{data};
   my $table = "user"; 
   if ($params{table}) {
     $table = $params{table};
   }
+  my $ident = $table;
+  if ($table eq 'group') {
+    $ident = 'webgroup';
+  }
   #warn "UPDATING: " . $user_id . ": " . $type . ": " . $data;
   my $sql = qq(
     UPDATE ) . $table . qq(_record
-    SET ) . $table . qq(_id = $user_id,
+    SET ) . $ident . qq(_id = $user_id,
         type    = "$type",
         data    = "$data"
     WHERE ) . $table . qq(_record_id = $id
   );
-  #warn $sql;
+  warn $sql;
   my $sth = $self->{'_handle'}->prepare($sql);
   my $result = $sth->execute();
 
