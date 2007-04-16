@@ -595,8 +595,8 @@ sub _parse_rates_file {
 				#set to be the next called position instead of 
 				#the next (uncalled) position. 
 				#$bucket->{$win_sizes->[$j]}->{start_pos} = $bucket->{$win_sizes->[$j]}->{pos};
-
-				$bucket->{$win_sizes->[$j]}->{start_pos} = $bucket->{$win_sizes->[$j]}->{pos} - $bucket->{$win_sizes->[$j]}->{cnt};
+ 
+				$bucket->{$win_sizes->[$j]}->{start_pos} = $bucket->{$win_sizes->[$j]}->{pos} - ($bucket->{$win_sizes->[$j]}->{cnt} * $win_sizes->[$j]);
 			    }
 			   
 			    #average over the number of called scores in a 
@@ -609,7 +609,6 @@ sub _parse_rates_file {
 			    #increment counter of total called scores in this 
 			    #block
 			    $bucket->{$win_sizes->[$j]}->{cnt}++;
-
 			    #if have max_called_dist scores in the score 
 			    #string, then store them in the database
 			    if ($bucket->{$win_sizes->[$j]}->{cnt} == $max_called_dist) {
