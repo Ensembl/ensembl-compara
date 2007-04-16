@@ -442,7 +442,7 @@ sub _create_idhistory_tree {
  my $image  = $object->new_image( $tree, $wuc, [$object->stable_id] );
  $image->image_type  = 'idhistorytree';
  $image->image_name  = ($object->param('image_width')).'-'.$object->stable_id;
- #$image->imagemap           = 'yes';
+ $image->imagemap           = 'yes';
  $image->menu_container = $mc;
 # $image->imagemap ='no'; 
  return $image;
