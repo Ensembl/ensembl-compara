@@ -21,7 +21,7 @@ sub add_row {
 
 sub html {
   my $self = shift;
-  warn "RETURNING HTML: ";
+  #warn "RETURNING HTML: ";
   my $html = $self->{html};
   $html = CGI::escape($html);
   return $html;
