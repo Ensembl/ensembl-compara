@@ -20,7 +20,7 @@ my $db = $ENSEMBL_WEB_REGISTRY->dbAdaptor;
 
 my $url = EnsEMBL::Web::Tools::URL->new(( url => $cgi->param('url') )); 
 
-my $class = "%%user";
+my $class = '%%user';
 if ($cgi->param('class')) {
   $class = $cgi->param('class');
 }

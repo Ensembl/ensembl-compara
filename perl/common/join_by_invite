@@ -21,20 +21,23 @@ use EnsEMBL::Web::RegObj;
 my $cgi = new CGI;
 
 my $record_id = $cgi->param('record_id');
-warn "RECORD ID: " . $record_id;
-my @records = EnsEMBL::Web::Record::Group->find_invite_by_group_record_id($record_id, { adaptor => $ENSEMBL_WEB_REGISTRY->userAdaptor });
+#warn "RECORD ID: " . $record_id;
+my @records = EnsEMBL::Web::Record::Group->find_invite_by_group_record_id($record_id, { adaptor => $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->userAdaptor });
 my $record = $records[0];
+$record->adaptor($EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->userAdaptor);
 my $email = $record->email;
 my $group_id = $record->group;
 
-my $user = EnsEMBL::Web::Object::User->new({ adaptor => $ENSEMBL_WEB_REGISTRY->userAdapator,  email => $email });
+my $user = EnsEMBL::Web::Object::User->new({ adaptor => $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->userAdaptor,  email => $email });
+
+my $user = EnsEMBL::Web::Object::User->new({ adaptor => $ENSEMBL_WEB_REGISTRY->userAdaptor, email => $email });
 
 if (!$user->id) {
 
 my $page = EnsEMBL::Web::Interface::PageDefinition->new();
 my $data = EnsEMBL::Web::DBSQL::DataDefinition->new();
 my $form = EnsEMBL::Web::Interface::FormDefinition->new();
-my $db = $ENSEMBL_WEB_REGISTRY->dbAdaptor;
+my $db = $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->userAdaptor;
 $data->adaptor(EnsEMBL::Web::DBSQL::ViewAdaptor->new((
                                                        handle => $db,
                                                        table  => 'user'
@@ -42,7 +45,8 @@ $data->adaptor(EnsEMBL::Web::DBSQL::ViewAdaptor->new((
 
 $data->discover;
 $page->data_definition($data);
-$page->title('Register for '.$sitename);
+my $sitename = 'Ensembl';
+$page->title('Register for a new account');
 $page->action('create');
 $page->send_params({ id => 'yes', group_id => 'yes' });
 $page->on_complete('/common/activate');
@@ -50,22 +54,24 @@ $page->on_error('/register/error.html');
 
 $form->add_value({'email' => $email });
 
-$page->add_text("You have been invited to join $article $sitename group. In order to do so, you first need to create a new $sitename account.");
+$page->add_text("You have been invited to join a group. In order to do so, you first need to create a new $sitename account.");
 $page->add_configuration_element('salt', EnsEMBL::Web::Tools::RandomString::random_string(8));
 $page->add_configuration_element('group_id', $group_id);
 $page->add_configuration_element('record_id', $record_id);
 $page->add_form_element('name', "Your name");
-$page->add_form_element('email', "Your email address. You'll use this to log in to $sitename", $form);
+$page->add_form_element('email', "Your email address. You'll use this to log in", $form);
 $page->add_form_element('organisation', "Organisation");
 
 EnsEMBL::Web::Document::DataView::simple('User', $page);
 
 } else {
   my $group = EnsEMBL::Web::Object::Group->new(( adaptor => $ENSEMBL_WEB_REGISTRY->userAdaptor, id => $group_id ));
-  warn "WORKING WITH USER: " . $user->id . ": " . $user->email;
+ # warn "WORKING WITH USER: " . $user->id . ": " . $user->email;
   $user->add_group($group);
+ # warn "SAVING USER";
   $user->save;
   $record->status('accepted');
+ # warn "SAVING RECORD";
   $record->save;
 
   my $url = "/common/user/account";

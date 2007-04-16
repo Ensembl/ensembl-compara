@@ -17,14 +17,17 @@ use EnsEMBL::Web::Record::Group;
 use EnsEMBL::Web::Object::Group;
 use EnsEMBL::Web::RegObj;
 
-my @records = EnsEMBL::Web::Record::Group->find_invite_by_group_record_id($cgi->param('id'));
+warn "FINDING RECORDS";
+my @records = EnsEMBL::Web::Record::Group->find_invite_by_group_record_id($cgi->param('id'), { adaptor => $ENSEMBL_WEB_REGISTRY->userAdaptor });
+
+warn "FOUND: " . $records[0]->group;
 my $email = $records[0]->email;
 my $group_id = $records[0]->group;
 my $group = EnsEMBL::Web::Object::Group->new(( id => $group_id ));
 
 my $page = EnsEMBL::Web::Interface::PageDefinition->new();
 my $data = EnsEMBL::Web::DBSQL::DataDefinition->new();
-my $db = $ENSEMBL_WEB_REGISTRY->dbAdaptor;
+my $db = $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->dbAdaptor;
 
 $data->adaptor(EnsEMBL::Web::DBSQL::ViewAdaptor->new((
                                                        handle => $db,
