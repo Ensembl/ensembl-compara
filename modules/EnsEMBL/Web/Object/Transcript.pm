@@ -12,6 +12,13 @@ use POSIX qw(floor ceil);
 use Data::Dumper;
 our @ISA = qw(EnsEMBL::Web::Object);
 
+sub get_database_matches {
+  my $self = shift;
+  my @DBLINKS;
+  eval { @DBLINKS = @{$self->Obj->get_all_DBLinks};};
+  return \@DBLINKS  || [];
+}
+
 sub default_track_by_gene {
   my $self = shift;
   my $db    = $self->get_db;

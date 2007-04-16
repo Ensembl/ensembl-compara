@@ -8,6 +8,13 @@ use EnsEMBL::Web::Object;
 
 our @ISA = qw(EnsEMBL::Web::Object);
 
+sub get_database_matches {
+  my $self = shift;
+  my @DBLINKS;
+  eval { @DBLINKS = @{$self->Obj->get_all_DBLinks};};
+  return \@DBLINKS  || [];
+}
+
 sub type_name         { my $self = shift; return $self->species_defs->translate('Translation'); }
 sub source            { my $self = shift; return $self->gene ? $self->gene->source : undef;      }
 sub gene_description  { my $self = shift; return $self->gene ? $self->gene->description : undef; }
