@@ -20,75 +20,79 @@ use Apache2::Const qw(:common :methods :http);
 sub handler {
   my $r = shift;
   ## First of all check that we should be doing something with the page...
-  $r->err_headers_out->{'Ensembl-Error'=>"Problem in module EnsEMBL::Web::Apache::SendDecPage"};
-  $r->custom_response(SERVER_ERROR, "/Crash");
+  my $pageContent;# = $ENSEMBL_WEB_REGISTRY->get_memcache->get( "SDP:".$r->filename );
+  unless( $pageContent ) {
+    $r->err_headers_out->{'Ensembl-Error'=>"Problem in module EnsEMBL::Web::Apache::SendDecPage"};
+    $r->custom_response(SERVER_ERROR, "/Crash");
     
-  return DECLINED if $r->content_type ne 'text/html';
-  my $rc = $r->discard_request_body;
-  return $rc unless $rc == OK;
+    return DECLINED if $r->content_type ne 'text/html';
+    my $rc = $r->discard_request_body;
+    return $rc unless $rc == OK;
 
-  if ($r->method_number == M_INVALID) {
-    $r->log->error("Invalid method in request ", $r->the_request);
-    return HTTP_NOT_IMPLEMENTED;
-  }
-
-  return DECLINED                if $r->method_number == M_OPTIONS;
-  return HTTP_METHOD_NOT_ALLOWED if $r->method_number == M_PUT;
-  return DECLINED                if -d $r->filename;
-  unless (-e $r->filename) {
-    $r->log->error("File does not exist: ", $r->filename);
-    return NOT_FOUND;
-  }
-  return HTTP_METHOD_NOT_ALLOWED if $r->method_number != M_GET;
-
-  unless( -r $r->filename) {
-    $r->log->error("File permissions deny server access: ", $r->filename);
-    return FORBIDDEN;
-  }
-
-  ## Is this page under a 'private' folder?
-
-  ## parse path and get first 'private_n_nn' folder above current page
-  my @dirs = reverse(split('/', $r->filename));
-  my @groups;
-  foreach my $d (@dirs) {
-    if ($d =~ /^private(_[0-9]+)+/) {
-      (my $grouplist = $d) =~ s/private_//;
-      @groups = split('_', $grouplist); ## groups permitted to access files 
+    if ($r->method_number == M_INVALID) {
+      $r->log->error("Invalid method in request ", $r->the_request);
+      return HTTP_NOT_IMPLEMENTED;
     }
-    last if @groups;
-  }
 
-  if (@groups) {
-    ## TODO: Not sure what this block does, as $user is not defined - mw4
-    ## Probably best to get the user from the registry.
+    return DECLINED                if $r->method_number == M_OPTIONS;
+    return HTTP_METHOD_NOT_ALLOWED if $r->method_number == M_PUT;
+    return DECLINED                if -d $r->filename;
+    unless (-e $r->filename) {
+      $r->log->error("File does not exist: ", $r->filename);
+      return NOT_FOUND;
+    }
+    return HTTP_METHOD_NOT_ALLOWED if $r->method_number != M_GET;
+  
+    unless( -r $r->filename) {
+      $r->log->error("File permissions deny server access: ", $r->filename);
+      return FORBIDDEN;
+    }
 
-    my $user;
-    my @user_groups = $user->groups;
+    ## Is this page under a 'private' folder?
 
-    ## cross-reference user's groups against permitted groups
-    my $access = 0;
-    foreach my $g (@groups) {
-      foreach my $u (@user_groups) {
-        $access = 1 if $u == $g;
+    ## parse path and get first 'private_n_nn' folder above current page
+    my @dirs = reverse(split('/', $r->filename));
+    my @groups;
+    foreach my $d (@dirs) {
+      if ($d =~ /^private(_[0-9]+)+/) {
+        (my $grouplist = $d) =~ s/private_//;
+        @groups = split('_', $grouplist); ## groups permitted to access files 
       }
-      last if $access;
+      last if @groups;
     }
-    if (!$access) {
-      my $URL = '/common/access_denied';
-      $r->headers_out->add( "Location" => $URL );
-      $r->err_headers_out->add( "Location" => $URL );
-      $r->status( REDIRECT );
+  
+=pod
+    if (@groups) {
+      ## TODO: Not sure what this block does, as $user is not defined - mw4
+      ## Probably best to get the user from the registry.
+  
+      my $user;
+      my @user_groups = $user->groups;
+  
+      ## cross-reference user's groups against permitted groups
+      my $access = 0;
+      foreach my $g (@groups) {
+        foreach my $u (@user_groups) {
+          $access = 1 if $u == $g;
+        }
+        last if $access;
+      }
+      if (!$access) {
+        my $URL = '/common/access_denied';
+        $r->headers_out->add( "Location" => $URL );
+        $r->err_headers_out->add( "Location" => $URL );
+        $r->status( REDIRECT );
+      }
     }
-  }
-
+  
+=cut
 ## Read html file into memory to parse out SSI directives.
-  my $pageContent;
-  {
-    local($/) = undef;
-    $pageContent = ${ $r->slurp_filename() }; #<$fh>;
+    {
+      local($/) = undef;
+      $pageContent = ${ $r->slurp_filename() }; #<$fh>;
+    }
+#    $ENSEMBL_WEB_REGISTRY->get_memcache->set( "SDP:".$r->filename, $pageContent );
   }
-
   return DECLINED if $pageContent =~ /<!--#set var="decor" value="none"-->/;
 
   $pageContent =~ s/\[\[([A-Z]+)::([^\]]*)\]\]/my $m = "template_$1"; no strict 'refs'; &$m($r, $2);/ge;
