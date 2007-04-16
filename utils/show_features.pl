@@ -122,7 +122,7 @@ my %queries = (
       order by analysis_id,repeat_type)
 );
 
-%queries = map { ($_=>$queries{$_}) } ('Gene features');
+#%queries = map { ($_=>$queries{$_}) } ('Gene features');
 
 my @species = @ARGV ? @ARGV : @{$SD->ENSEMBL_SPECIES};
 
