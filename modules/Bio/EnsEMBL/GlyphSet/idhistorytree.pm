@@ -24,7 +24,6 @@ use Bio::EnsEMBL::Feature;
 use EnsEMBL::Web::Component;
 @ISA = qw(Bio::EnsEMBL::GlyphSet_simple);
 
-#sub fixed { return 1;}
 my $k;
 #warn ("A-0:".localtime());
 
@@ -51,20 +50,20 @@ sub _init {
   my $x = 140;
   my $y = 100;  
   my $working_length = $panel_width -160;
-  my (%xc, %yc);
+  my (%xc, %yc, @ns);
 
   ## Define Score colours ##
  
   my $cmap = $Config->colourmap();
   $SCORE_COLOURS  ={
-	   0  => '808080',
-	  49  => '899e7c',
-	  50  => '738e63',   
-	  75  => '608749',
-	  90  => '497c2b',  
-	  97  => '316d0e',
-	  99  => '006400',
-	  100 => '003000',
+	   0  => 'CCCCCC',
+	  49  => 'FFF400',
+	  50  => 'FFAA00',   
+	  75  => 'FF5600',
+	  90  => 'FF1900',  
+	  97  => 'BB0000',
+	  99  => '690000',
+	  100 => '000000',
   };
   for my $k (keys %$SCORE_COLOURS) {
     $cmap->add_hex($SCORE_COLOURS->{$k});
@@ -136,7 +135,7 @@ sub _init {
     });
     $self->push($scorebox);
     my $sc_label; 
-    if ($sc == 0){$sc_label = "No evidence"; }
+    if ($sc == 0){$sc_label = "Unknown"; }
     elsif ($sc <=49 ){$sc_label ="<=49" ;}
     elsif ($sc ==100){$sc_label = "=" .$sc;}
     else {$sc_label = ">=". $sc; }
@@ -167,8 +166,8 @@ sub _init {
     $boxxcoord += 60;
    }
 
-   ## Draw Nodes ##
-
+   ## Define nodes Nodes ##
+    
    my @x_c = values (%xc);
    my @sortedx = sort ({$a <=> $b} @x_c);
    foreach my $a_id (@{ $history_tree->get_all_ArchiveStableIds }) {
@@ -218,7 +217,8 @@ sub _init {
         'colour'    => $node_col,
         'zmenu'     => $zmenu,
     });
-    $self->push($node);
+    push (@ns, $node);
+
     my $nl = $a_id->version;
     my $node_label = new Sanger::Graphics::Glyph::Text({
       'x'         => $xcoord,
@@ -265,69 +265,54 @@ sub _init {
       my $y_coord = $yc{$old->stable_id};
       my $x_coord = $sortedx[$oldx];
       my $length = $sortedx[$newx] - $sortedx[$oldx];
-      
-      my $hbr = new Sanger::Graphics::Glyph::Line({
+      my $xend = $x_coord + $length;
+      my $y_end = $y_coord +1;
+      my $hbr = new Sanger::Graphics::Glyph::Poly({
          'x'         => $x_coord,
-         'y'         => $y_coord,
-         'width'     => $length,
-         'height'    => 0.25,
+         'points'    => [$x_coord, $y_coord, $xend, $y_coord, $xend, $y_end, $x_coord,$y_end],
+         'width'     => 0.25,
          'colour'    => $branch_col,
-         'zindex' => 0,
+		 'absolutey' => 1,
+		 'absolutewidth' => 1,
+         'zmenu'     => $zmenu_s,
       });
       $self->push($hbr);   
-      unless ($old_id eq $new_id){ 
-       my $score = new Sanger::Graphics::Glyph::Circle({
-           'x'        => $x_coord + ($length*0.55),
-           'y'        => $y_coord,
-           'diameter' => 5,
-           'colour'   => 'red',
-           'filled'   => 1,
-           'zmenu'    => $zmenu_s,
-       }); 
-      }
     } elsif($oldx == $newx) {
       my $y_coord = $yc{$old->stable_id};
       my $x_coord = $sortedx[$oldx] ;
       my $height = $yc{$new->stable_id} - $yc{$old->stable_id};
-      warn "old = $yc{$old->stable_id} new = $yc{$new->stable_id}";
-      my $vbr = new Sanger::Graphics::Glyph::Line({
+      my $xend = $x_coord + $height;
+      my $y_end = $y_coord +1;
+      my $vbr = new Sanger::Graphics::Glyph::Poly({
          'x'         => $x_coord,
-         'y'         => $y_coord,
+         'points'    => [$x_coord, $y_coord, $xend, $y_coord, $xend, $y_end, $x_coord,$y_end],
          'width'     => 0.25,
-         'height'    => $height,
          'colour'    => $branch_col,
-         'zindex'    => 0,
+         'zmenu'    => $zmenu_s,
       });
       $self->push($vbr);
     } else {
       my $x_coord = $sortedx[$oldx];
       my $y_coord = $yc{$old->stable_id};
-      my $height = $yc{$new->stable_id} - $yc{$old->stable_id};
-      my $length = $sortedx[$newx] - $sortedx[$oldx];
-      my $dbr = new Sanger::Graphics::Glyph::Line({
+      my $x_end = $sortedx[$newx];
+      my $y_end = $yc{$new->stable_id};
+      my $dbr = new Sanger::Graphics::Glyph::Poly({
          'x'         => $x_coord,
-         'y'         => $y_coord,
-         'width'     => $length,
-         'height'    => $height,
+         'points'    => [$x_coord, $y_coord, $x_end, $y_end, $x_end+1,$y_end+1, $x_coord+1, $y_coord+1 ],
+         'width'     => 1,
          'colour'    => $branch_col,
-         'zindex'    => 0,
+		 'absolutey' => 1,
+		 'absolutewidth' => 1,
+         'zmenu'    => $zmenu_s,
       });
       $self->push($dbr);
-
-      my $score = new Sanger::Graphics::Glyph::Circle({
-          'x'        => $x_coord + ($length*0.55),
-          'y'        => $y_coord +($height*0.55),
-          'diameter' => 5,
-          'colour'   => 'red',
-          'filled'   => 1,
-          'zmenu'    => $zmenu_s,
-      });
-
     }
     
   }	   
-
-
+  ## Draw the nodes ##
+  foreach my $n (@ns){
+	$self->push($n);
+} 
   ## Draw scalebar ##
  
   my $mid_point = ($working_length /2 )+ 140;
@@ -391,34 +376,6 @@ sub _init {
 }
 
 
-sub features {
-  my ($self) = @_;
-  my @temphistory = $self->{'container'};
-  my $th = shift(@temphistory);
-  my %history = %$th;
-  my (%feature, %nodes, %branches, %label,  %yc);
-
-  return \%feature;
-}
-
-sub init_label {
-  my ($self) = @_;
-
-#  return;
-  my $text =  'ID History Tree';
-  my $max_length = 18;
-  if (length($text) > $max_length) {
-      $text = substr($text, 0, 14). " ...";
-  }
-  $self->init_label_text( $text );
-}
-
-
-sub image_label { 
-    my ($self, $f ) = @_; 
-    #return $f->seqname(), $f->{type} || 'overlaid'; 
-}
-
 sub zmenu_node {
   my( $self, $archive_id ) = @_;
 
@@ -431,11 +388,11 @@ sub zmenu_node {
   my $link = qq(<a href="idhistoryview?$param=$id">$id</a>);
 
   my $zmenu = { 
-		caption         => $id,
+		        caption         => $id,
                 "10:$type: $link" =>'', 
                 "20:Release: $rel" =>'',
                 "30:Assembly: $assembly" =>'',
-                "40:Last Database: $db" =>, 
+                "40:Database: $db" =>, 
 	      };
 
 #  warn Data::Dumper::Dumper($zmenu);
@@ -462,7 +419,6 @@ sub zmenu_score {
                  "20:New Gene: $new_link"=>'',
                  "30:Score: $s" => '', 
                };
-
   return $zmenu;
 }
 
