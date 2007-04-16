@@ -116,6 +116,7 @@ sub childInitHandler {
   $ENSEMBL_WEB_REGISTRY = EnsEMBL::Web::Registry->new();
   $ENSEMBL_WEB_REGISTRY->timer->set_process_child_count( 0    );
   $ENSEMBL_WEB_REGISTRY->timer->set_process_start_time(  time );
+#  $ENSEMBL_WEB_REGISTRY->memcache;
   if( $ENSEMBL_DEBUG_FLAGS & 8 ){
     printf STDERR "Child %9d: - initialised at %30s\n", $$,''.gmtime();
   }
@@ -194,6 +195,11 @@ sub transHandler {
   my $script    = undef;
   my $path_info = undef;
 
+#  my $F = $ENSEMBL_WEB_REGISTRY->get_memcache->get( "STATIC:$file" );
+#  if( $F ) {
+#    $r->filename( $F );
+#    return OK;
+#  }
   if( $species eq 'das' ) { # we have a DAS request...
     my $DSN = $path_segments[0];
     my $command = '';
@@ -329,6 +335,7 @@ sub transHandler {
     }
     next unless -r $filename;
     $r->filename( $filename );
+#    $ENSEMBL_WEB_REGISTRY->get_memcache->set( "STATIC:$file", $filename ); 
     return OK;
   }
 
@@ -336,6 +343,11 @@ sub transHandler {
   return DECLINED;
 }
 
+sub logHandler {
+  my $r = shift;
+  $r->subprocess_env->{'ENSEMBL_SCRIPT_TIME'} = sprintf( "%0.6f", time() - $ENSEMBL_WEB_REGISTRY->timer->get_script_start_time );
+  return DECLINED;
+}
 sub cleanupHandler {
   my $r = shift;      # Get the connection handler
 
