@@ -93,7 +93,7 @@ sub spreadsheet_miscset_genes {
     $object->seq_region_name,
     $object->seq_region_start,
     $object->seq_region_end );
-  foreach ( sort { $a->seq_region_start <=> $b->seq_region_start } @{$slice->get_all_Genes( 'ensembl' )} ) {
+  foreach ( sort { $a->seq_region_start <=> $b->seq_region_start } map { @{$slice->get_all_Genes( $_ )||[]} } qw(ensembl havana ensembl_havana_gene)  ) {
     $panel->add_row( {
       'sr'    => $_->seq_region_name,
       'start' => $_->seq_region_start,
