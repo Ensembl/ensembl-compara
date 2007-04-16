@@ -16,7 +16,6 @@ sub init {
   $self->label("Repeats");
   my $Config = $self->{'config'};
   my $sub_repeats = $Config->{species_defs}->REPEAT_TYPES;
-
   return unless ref($sub_repeats) eq 'HASH';
   foreach my $name ( sort keys %$sub_repeats) {
     ( my $N = $name ) =~s/\W+/_/g;  
