@@ -1,5 +1,5 @@
 
-<table class="spreadsheet" cellpadding="4">
+<table class="ss" cellpadding="4">
 
 <tr>
 <th>Species</th>
@@ -245,6 +245,17 @@
 	    
 <tr>
 <td>
+<a target="ftp" href="ftp://ftp.ensembl.org/pub/current_myotis_lucifugus/"><i>Myotis lucifugus</i></a> (little brown bat)</td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_myotis_lucifugus/data/fasta/dna/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_myotis_lucifugus/data/fasta/cdna/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_myotis_lucifugus/data/fasta/pep/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_myotis_lucifugus/data/flatfiles/embl/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_myotis_lucifugus/data/flatfiles/genbank/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_myotis_lucifugus/data/mysql/">FTP</a></td>
+</tr>
+	    
+<tr>
+<td>
 <a target="ftp" href="ftp://ftp.ensembl.org/pub/current_ornithorhynchus_anatinus/"><i>Ornithorhynchus anatinus</i></a> (platypus)</td>
 <td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_ornithorhynchus_anatinus/data/fasta/dna/">FTP</a></td>
 <td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_ornithorhynchus_anatinus/data/fasta/cdna/">FTP</a></td>
@@ -278,6 +289,17 @@
 	    
 <tr>
 <td>
+<a target="ftp" href="ftp://ftp.ensembl.org/pub/current_otolemur_garnettii/"><i>Otolemur garnettii</i></a> (small-eared galago)</td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_otolemur_garnettii/data/fasta/dna/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_otolemur_garnettii/data/fasta/cdna/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_otolemur_garnettii/data/fasta/pep/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_otolemur_garnettii/data/flatfiles/embl/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_otolemur_garnettii/data/flatfiles/genbank/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_otolemur_garnettii/data/mysql/">FTP</a></td>
+</tr>
+	    
+<tr>
+<td>
 <a target="ftp" href="ftp://ftp.ensembl.org/pub/current_pan_troglodytes/"><i>Pan troglodytes</i></a> (chimpanzee)</td>
 <td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_pan_troglodytes/data/fasta/dna/">FTP</a></td>
 <td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_pan_troglodytes/data/fasta/cdna/">FTP</a></td>
@@ -307,6 +329,17 @@
 <td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_saccharomyces_cerevisiae/data/flatfiles/embl/">FTP</a></td>
 <td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_saccharomyces_cerevisiae/data/flatfiles/genbank/">FTP</a></td>
 <td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_saccharomyces_cerevisiae/data/mysql/">FTP</a></td>
+</tr>
+	    
+<tr>
+<td>
+<a target="ftp" href="ftp://ftp.ensembl.org/pub/current_spermophilus_tridecemlineatus/"><i>Spermophilus tridecemlineatus</i></a> (thirteen-lined ground squirrel)</td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_spermophilus_tridecemlineatus/data/fasta/dna/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_spermophilus_tridecemlineatus/data/fasta/cdna/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_spermophilus_tridecemlineatus/data/fasta/pep/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_spermophilus_tridecemlineatus/data/flatfiles/embl/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_spermophilus_tridecemlineatus/data/flatfiles/genbank/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_spermophilus_tridecemlineatus/data/mysql/">FTP</a></td>
 </tr>
 	    
 <tr>
