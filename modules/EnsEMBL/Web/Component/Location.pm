@@ -436,7 +436,7 @@ sub cytoview {
      $wuc->{'image_frame_colour'} = 'red' if $panel->option( 'red_edge' ) eq 'yes';
 ## Now we need to add the repeats...
 
-  add_repeat_tracks( $object, $wuc ) unless
+  add_repeat_tracks( $object, $wuc ) if
     $object->species_defs->get_table_size( { -db => 'ENSEMBL_DB', -table => 'repeat_feature' }, $object->species );
   add_das_tracks( $object, $wuc );
 
