@@ -13,6 +13,7 @@ sub init_label {
 sub _init {
   my ($self) = @_;
   return unless ($self->strand() == -1);
+  return unless exists( $self->{'config'}->{'missing_tracks'} );
   my $tracks   = $self->{'config'}->{'missing_tracks'};
   my $Config        = $self->{'config'};
   my( $FONT,$FONTSIZE)  = $self->get_font_details( 'text' );

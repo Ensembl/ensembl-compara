@@ -126,7 +126,7 @@ sub zmenu {
     $tname = $ext_db ? "$ext_db:$tname" : $tname;
     $zmenu->{"00:$tname"}       = '';
     $zmenu->{"02:Transcr:$tid"} = "/$sp/transview?transcript=$tid;db=$db";
-    $zmenu->{'05:Export cDNA'}  = "/$sp/exportview?action=select;format=fasta;type1=transcript;anchor1=$tid;option=cdna";
+    $zmenu->{'05:Export cDNA'}  = "/$sp/exportview?action=select;format=fasta;type1=transcript;anchor1=$tid;options=cdna";
 
    # Variation: TranscriptSNP view
   # if meta_key in variation meta table has default strain listed
@@ -137,7 +137,7 @@ sub zmenu {
     if( $translation ){
       my $pid = $translation->stable_id;
       $zmenu->{"03:Peptide:$pid"}   = "/$sp/protview?transcript=$tid;db=$db";
-      $zmenu->{'06:Export Peptide'} = "/$sp/exportview?action=select;format=fasta;type1=peptide;anchor1=$pid;option=peptide";
+      $zmenu->{'06:Export Peptide'} = "/$sp/exportview?action=select;format=fasta;type1=peptide;anchor1=$pid;options=peptide";
     }
   } else { # No transcript
     my $gname  = $gene->external_name || $gid;

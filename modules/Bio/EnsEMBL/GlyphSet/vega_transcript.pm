@@ -66,7 +66,7 @@ sub zmenu {
         "08:Transcr:$tid"          => "/@{[$self->{container}{_config_file_name_}]}/transview?transcript=$tid;db=core",
         "10:Exon:$tid"	           => "/@{[$self->{container}{_config_file_name_}]}/exonview?transcript=$tid;db=core",
         '11:Supporting evidence'   => "/@{[$self->{container}{_config_file_name_}]}/exonview?transcript=$tid;db=core#evidence",
-        '12:Export cDNA'           => "/@{[$self->{container}{_config_file_name_}]}/exportview?option=cdna;action=select;format=fasta;type1=transcript;anchor1=$tid",
+        '12:Export cDNA'           => "/@{[$self->{container}{_config_file_name_}]}/exportview?options=cdna;action=select;format=fasta;type1=transcript;anchor1=$tid",
     };
 
 	#don't show type for an eucomm gene
@@ -74,7 +74,7 @@ sub zmenu {
 
     if ($pid) {
         $zmenu->{"09:Peptide:$pid"}   =  "/@{[$self->{container}{_config_file_name_}]}/protview?peptide=$pid";
-        $zmenu->{'13:Export Peptide'} = "/@{[$self->{container}{_config_file_name_}]}/exportview?option=peptide;action=select;format=fasta;type1=peptide;anchor1=$pid";
+        $zmenu->{'13:Export Peptide'} = "/@{[$self->{container}{_config_file_name_}]}/exportview?options=peptide;action=select;format=fasta;type1=peptide;anchor1=$pid";
     }
 
 	if (my $ccds_att = $transcript->get_all_Attributes('ccds')->[0]) {

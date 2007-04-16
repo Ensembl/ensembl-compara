@@ -184,7 +184,7 @@ sub zmenu {
 	"01:Gene:$gid"                  => "/@{[$self->{container}{_config_file_name_}]}/geneview?gene=$gid;db=core",
         "02:Transcr:$tid"    	        => "/@{[$self->{container}{_config_file_name_}]}/transview?transcript=$tid;db=core",                	
         "04:Exon:$eid"    	        => "",
-        '11:Export cDNA'                => "/@{[$self->{container}{_config_file_name_}]}/exportview?option=cdna;action=select;format=fasta;type1=transcript;anchor1=$tid",
+        '11:Export cDNA'                => "/@{[$self->{container}{_config_file_name_}]}/exportview?options=cdna;action=select;format=fasta;type1=transcript;anchor1=$tid",
         
     };
     
@@ -192,7 +192,7 @@ sub zmenu {
     $zmenu->{"03:Peptide:$pid"}=
     	qq(/@{[$self->{container}{_config_file_name_}]}/protview?peptide=$pid;db=core);
     $zmenu->{'12:Export Peptide'}=
-    	qq(/@{[$self->{container}{_config_file_name_}]}/exportview?option=peptide;action=select;format=fasta;type1=peptide;anchor1=$pid);	
+    	qq(/@{[$self->{container}{_config_file_name_}]}/exportview?options=peptide;action=select;format=fasta;type1=peptide;anchor1=$pid);	
     }
     return $zmenu;
 }
