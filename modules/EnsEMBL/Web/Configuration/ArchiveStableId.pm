@@ -36,47 +36,12 @@ sub idhistoryview {
     associated_ids EnsEMBL::Web::Component::ArchiveStableId::associated_ids
     tree       EnsEMBL::Web::Component::ArchiveStableId::tree
     ));
-  #  if (EnsEMBL::Web::Tools::Ajax::is_enabled()) {
-   #   $info_panel->load_asynchronously('tree');
-    #}
+    if (EnsEMBL::Web::Tools::Ajax::is_enabled()) {
+      $info_panel->load_asynchronously('tree');
+    }
    $self->add_panel( $info_panel );
  }
 
-#  if (my $panel1 = $self->new_panel('SpreadSheet',
-#    'code'    => "info$self->{flag}",
-#    'caption' => 'ID History Map',
-#    'null_data' => "<p>".$obj->stable_id. " has no successors or predecessors.</p>",
-#				   )) {
-#    $panel1->add_components(qw(
-#      history    EnsEMBL::Web::Component::ArchiveStableId::history
-#			     ));
-#   $self->{page}->content->add_panel( $panel1 );
-#}
-
-
- # if (my $panel1b = $self->new_panel('Fragment',
- #   'code'      => "component_0",
- #   'caption'   => 'ID History Tree',
- #   'null_data' => "<p>".$obj->stable_id. " has no successors or predecessors.</p>",
- #   'status'    => 'panel_tree',
- #   'display'   => 'on',
- #   'loading'   => 'yes', 
- #                 @common  )) {
-
-#    $panel1b->add_components(qw(
-#      menu  EnsEMBL::Web::Component::ArchiveStableId::id_history_tree_menu
-#      tree    EnsEMBL::Web::Component::ArchiveStableId::tree
-#    ));
-
-#    $panel1b->add_components(qw(
-#      tree    EnsEMBL::Web::Component::ArchiveStableId::tree
-#    ));
- 
-#  if (EnsEMBL::Web::Tools::Ajax::is_enabled()) {
-#    $panel1b->asynchronously_load('tree');
-#  }
-#   $self->add_panel( $panel1b );
-# }
 
 if (my $panel2 = $self->new_panel('',
     'code'    => "info$self->{flag}",
