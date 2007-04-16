@@ -22,14 +22,7 @@ sub init {
       'show_buttons' => 'no',
       'bgcolor'           => 'background1',
       'bgcolor1'         => 'background2',
-      'bgcolor2'         => 'background3',
-      '50' => $self->{'_colourmap'}->add_hex('899e7c'),
-      '75' => $self->{'_colourmap'}->add_hex('738e63'),
-      '90' => $self->{'_colourmap'}->add_hex('608749'),
-      '97' => $self->{'_colourmap'}->add_hex('497c2b'),
-      '99' => $self->{'_colourmap'}->add_hex('316d0e'),
-      '100' => 'darkgreen',
-      'low_score'    => 'grey',
+      'bgcolor2'         => 'bisque',
     },
 
     'idhistorytree' => {
