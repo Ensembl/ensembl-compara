@@ -8,7 +8,7 @@ use CGI::Cookie;
 {
   my %DBAdaptor_of   :ATTR( :name<db_adaptor>   );
   my %SpeciesDefs_of :ATTR( :name<species_defs> );
-  my %Memcache_of    :ATTR( :name<memcache>     );
+#  my %Memcache_of    :ATTR( :name<memcache>     );
 
   sub get_session_from_cookie {
     my( $self, $arg_ref ) = @_;

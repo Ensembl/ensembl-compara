@@ -113,36 +113,36 @@ sub websiteAdaptor {
     EnsEMBL::Web::DBSQL::WebDBAdaptor->new({ 'species_defs' => $self->species_defs });
 }
 
-sub dbcache {
-  my $self = shift;
-  $DBcache_of{ ident $self } ||= EnsEMBL::Web::DBCache->new({
-    'db_adaptor'   => $self->dbAdaptor
-  });
-} 
-
-sub memcache {
-  my $self = shift;
-  unless( $Memcache_of{ ident $self } ) {
-    if( 1 ) { 
-      $Memcache_of{ ident $self } = Cache::Memcached->new({
-        'servers' => [ '172.17.67.20:11211', '172.17.67.20:11212' ],
-        'debug'   => 0,
-        'compress_threshold' => 10000,
-      });
-      $Memcache_of{ ident $self }->enable_compress(0);
-    } else {
-      $Memcache_of{ ident $self } = EnsEMBL::Web::FakeMemcached->new();
-    }
-  }
-  return $Memcache_of{ ident $self };
-}
+#sub dbcache {
+#  my $self = shift;
+#  $DBcache_of{ ident $self } ||= EnsEMBL::Web::DBCache->new({
+#    'db_adaptor'   => $self->dbAdaptor
+#  });
+#} 
+#
+#sub memcache {
+#  my $self = shift;
+#  unless( $Memcache_of{ ident $self } ) {
+#    if( 1 ) { 
+#      $Memcache_of{ ident $self } = Cache::Memcached->new({
+#        'servers' => [ '172.17.67.20:11211', '172.17.67.20:11212' ],
+#        'debug'   => 0,
+#        'compress_threshold' => 10000,
+#      });
+#      $Memcache_of{ ident $self }->enable_compress(0);
+#    } else {
+#      $Memcache_of{ ident $self } = EnsEMBL::Web::FakeMemcached->new();
+#    }
+#  }
+#  return $Memcache_of{ ident $self };
+#}
 
 sub sessionAdaptor {
 ### a
 ### Lazy loaded Session adaptor....
   my $self = shift;
   $SessionAdaptor_of{ ident $self } ||= EnsEMBL::Web::DBSQL::SessionAdaptor->new({
-    'memcache'     => $self->memcache,
+#    'memcache'     => $self->memcache,
     'db_adaptor'   => $self->dbAdaptor,
     'species_defs' => $self->species_defs
   });
