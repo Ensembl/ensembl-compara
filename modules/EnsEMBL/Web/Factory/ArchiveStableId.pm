@@ -48,6 +48,7 @@ sub createObjects {
   return $self->problem( 'Fatal', "$id not in Archive",  "$id is not in the ID Archive (or there was a problem retrieving it)." ) unless $archiveStableId;
 
   my $obj = EnsEMBL::Web::Proxy::Object->new( 'ArchiveStableId', $archiveStableId, $self->__data );
+   return unless $obj;
    $self->DataObjects($obj);
 }
 
