@@ -58,7 +58,7 @@ $object->script('idhistoryview');
 my $mc = $object->new_menu_container(
   'configname' => 'idhistoryview',
   'panel'      => 'tree',
-  'leftmenus' => ['IdhImageSixe']     );
+  'leftmenus' => ['IdhImageSize']     );
 
 
 my $json_components = "";
