@@ -17,6 +17,14 @@ function populate_fragments() {
   }
 }
 
+function populate_trees() {;
+  var fragments = getElementsByClass("fragment");
+  for (i = 0; i < fragments.length; i++) {
+    tree_fragment(fragments[i].innerHTML);
+    ajax_call_count = ajax_call_count + 1;
+  }
+}
+
 function ajax_call_complete() {
   ajax_complete_count = ajax_complete_count + 1;
   if (ajax_call_count == ajax_complete_count) {
@@ -40,6 +48,29 @@ function info_fragment(caller) {
 }
 
 function info_panel_loaded(r) {
+  var response = eval( '(' + r.responseText + ')' );
+  //alert(response.menu.width);
+  $(response.component).innerHTML = unescape(response.html);
+  $('loading').style.display = 'none';
+  init_dropdown_menu();
+}
+
+function tree_fragment(caller) {
+  //alert(caller);
+  json = eval( '(' + caller + ')' );
+  var data = "gene=" + json.fragment.stable_id;
+  for (i = 0; i < json.components.length; i++) {
+    data = data + "&component_" + i + "=" + json.components[i];
+  }
+  var url = "/" + json.fragment.species + "/populate_tree";
+  var ajax_panel = new Ajax.Request(url, {
+                           method: 'get',
+                           parameters: data,
+                           onComplete: tree_panel_loaded
+                         });
+}
+
+function tree_panel_loaded(r) {
   var response = eval( '(' + r.responseText + ')' );
   //alert(response.menu.width);
   $(response.component).innerHTML = unescape(response.html);
