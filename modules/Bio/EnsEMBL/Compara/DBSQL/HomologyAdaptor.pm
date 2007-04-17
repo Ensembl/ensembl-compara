@@ -265,6 +265,20 @@ sub fetch_all_by_MethodLinkSpeciesSet {
 }
 
 
+=head2 fetch_all_by_genome_pair
+
+  Arg [1]    : genome_db_id
+  Arg [2]    : genome_db_id
+  Example    : $homologies = $HomologyAdaptor->fetch_all_by_genome_pair(22,3);
+  Description: fetch all the homology relationships for the a pair of genome_db_ids
+               This method can be used to grab all the orthologues for a species pair.
+  Returntype : an array reference of Bio::EnsEMBL::Compara::Homology objects
+  Exceptions : none
+  Caller     : 
+
+=cut
+
+
 sub fetch_all_by_genome_pair {
   my ($self, $genome_db_id1, $genome_db_id2) = @_;
 
@@ -506,6 +520,39 @@ sub update_genetic_distance {
   $sth->finish();
 
   return $self;
+}
+
+
+=head2 fetch_all_orphans_by_GenomeDB
+
+ Arg [1]    : Bio::EnsEMBL::Compara::GenomeDB $genome_db
+ Example    : $HomologyAdaptor->fetch_all_orphans_by_GenomeDB($genome_db);
+ Description: fetch the members for a genome_db that have no homologs in the database
+ Returntype : an array reference of Bio::EnsEMBL::Compara::Member objects
+ Exceptions : when isa if Arg [1] is not Bio::EnsEMBL::Compara::GenomeDB
+ Caller     : general
+
+=cut
+
+
+sub fetch_all_orphans_by_GenomeDB {
+  my $self = shift;
+  my $gdb = shift;
+
+  throw("genome_db arg is required\n")
+    unless ($gdb);
+
+  my $gdb_id = $gdb->dbID;
+  my $sql = "SELECT m.member_id from member m LEFT JOIN homology_member hm ON m.member_id=hm.member_id WHERE m.source_name='ENSEMBLGENE' AND m.genome_db_id=$gdb_id AND hm.member_id IS NULL";
+  my $sth = $self->dbc->prepare($sql);
+  $sth->execute();
+  my $ma = $self->db->get_MemberAdaptor;
+  my @members;
+  while ( my $member_id  = $sth->fetchrow ) {
+    my $member = $ma->fetch_by_dbID($member_id);
+    push @members, $member;
+  }
+  return \@members;
 }
 
 # DEPRECATED METHODS
