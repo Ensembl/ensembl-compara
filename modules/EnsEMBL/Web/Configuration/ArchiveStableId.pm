@@ -4,7 +4,9 @@ use strict;
 use EnsEMBL::Web::Configuration;
 use EnsEMBL::Web::Tools::Ajax;
 use EnsEMBL::Web::RegObj;
+use EnsEMBL::Web::File::Text;
 use Bio::EnsEMBL::DBSQL::ArchiveStableIdAdaptor;
+use Data::Dumper;
 
 our @ISA = qw( EnsEMBL::Web::Configuration );
 
@@ -71,47 +73,31 @@ sub historyview {
   );
   my $error;
   ## Check If we have data added by user:
-  if ($object->param('output')){	 
+  if ($object->param('output')){
+   my ($fh, $data, $result, $param);		 
    if ($object ->param('paste_file') | $object->param('upload_file') | $object->param('url_file')){
-	 my ($fh, $data);
 	 if ($object->param('paste_file')){
 		if ($object->param('upload_file') | $object->param('url_file')){ $error = $e[2]; }
 		else {
-		  $data = $object->param('paste_file');
-                  	
+		  $fh = 'ids.txt';
+		  $param = 'paste_file';                  	
 		}
 	 } 
 	elsif ($object->param('upload_file')) {
 		if ($object->param('paste_file') | $object->param('url_file')){ $error = $e[2]; }
 		else {
 			$fh = $object->param('upload_file');
+			$param = 'upload_file';
 		}
-	}
-	else {
-		if ($object->param('paste_file') | $object->param('upload_file')){ $error = $e[2]; }
-                else {
-	            $fh = $object->param('url_file');
-                    chomp $fh; 
-                }
 	} 
      my @ids;
-     if ( $fh ){ 
-        unless ( open (INFH, '>$fh') ) { $error = $e[3]; return; }
-        
-        while (my $line = <INFH>) {
-            warn $line; 
-	    chomp $line; 
-	    my @temp = split(/\s+/, $line);
-	    foreach my $t (@temp){
-		    push (@ids, $t);
-  	    }  
-        } close (INFH);
-     } elsif( $data) {
-        my @temp = split(/\s+/, $data);
-             foreach my $t (@temp){
-                    push (@ids, $t);
-            }
+     if ( $param ){
+	    my $cache = new EnsEMBL::Web::File::Text($object->[1]->{'_species_defs'});
+	    $cache->set_cache_filename('hv', $fh);
+	    $result = $cache->save($object, $param);
+	    $data = $cache->retrieve;  
      }
+     my @ids = split(/\s+/, $data);
      my $size = @ids;
      if ($size >= $max_ids) {$error = $e[1];}
      else {
@@ -120,23 +106,40 @@ sub historyview {
 	    my $aa = $reg->get_adaptor($species, 'Core', 'ArchiveStableId');
 	    my @trees;
 	    foreach my $id (@ids){
+		  warn $id;
 		  if ($id=~/\.\d*/){ $id=~s/\.\d+//;}
-		  if ($id!~/ENS\w*\d*/){ $error = "There was a problem with your uploaded data: <B>" . $id . "</B> Is not a valid Ensembl Identifier. Please remove it and try again. ";}
+		   
+		  if ($id !~/ENS\w*\d*/){ $error = "There was a problem with your uploaded data: <B>" . $id . "</B> Is not a valid Ensembl Identifier. Please remove it and try again. ";}
 	 	  else {
- 		    $id =~s/\W//;
-                    warn $id;  
-	            my $archive_id = $aa->fetch_by_stable_id($id);
-	            if ($archive_id){ 
-	             my  $historytree = $archive_id->get_history_tree;
-                     push (@trees, $historytree);
-                    }  
-                 }
-            }
+ 		   $id =~s/\W//; 
+	       my $archive_id = $aa->fetch_by_stable_id($id);
+	       if ($archive_id){ 
+               push (@trees, $archive_id);
+           }  
+          }
+        }
+       unless ($error =~/^\w/){
+        if ($object->param('output') eq 'html' ){ 
+	     my $params = \@trees;
+         my $history_panel = $self->new_panel('SpreadSheet',
+		    'code'    => "info$self->{flag}",
+		    'caption' => 'ID History Report',
+		    'params'  => $params,
+		    );
+		
+						       
+		 $history_panel->add_components(qw(
+			history       EnsEMBL::Web::Component::ArchiveStableId::historypanel
+			));	
+		 $self->{page}->content->add_panel( $history_panel );
+		 return;					
+        }						 
+       }
      }
    }
    else {
 	 $error = $e[0]; 
-    }  
+   }  
   }
   ## Display the form...
   my $params;
