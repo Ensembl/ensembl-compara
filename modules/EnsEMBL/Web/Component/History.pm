@@ -4,6 +4,8 @@ use EnsEMBL::Web::Component;
 use EnsEMBL::Web::Form;
 use EnsEMBL::Web::Document::SpreadSheet;
 use EnsEMBL::Web::RegObj;
+use POSIX qw(floor ceil);
+use CGI qw(escapeHTML);
 
 use strict;
 use warnings;
@@ -24,7 +26,7 @@ sub stage1_form {
   my ($panel, $object) = @_;
   my $error;
   if ($panel->params('error')) { my $error = $panel->params->{'error'};}
-  my $form = EnsEMBL::Web::Form->new( 'stage1_form', "/@{[$object->species]}/historyview", 'get' );
+  my $form = EnsEMBL::Web::Form->new( 'stage1_form', "/@{[$object->species]}/historyview", 'post' );
   if ($panel->params('error')) {
     my $error_text = $panel->params->{'error'};
     $form->add_element('type' => 'Information',
@@ -95,8 +97,9 @@ sub stage1_form {
   return $form;
 }
 
-sub stage2 {
-  	
+sub history {
+  my($panel, $object) = @_;
+  return 1;	
 }
 
 1;
