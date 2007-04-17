@@ -27,6 +27,18 @@ use Bio::EnsEMBL::Compara::DBSQL::NestedSetAdaptor;
 our @ISA = qw(Bio::EnsEMBL::Compara::DBSQL::NestedSetAdaptor);
 
 
+=head2 fetch_node_by_taxon_id
+
+  Arg [1]    : int $taxon->dbID
+               the database id for a ncbi taxon
+  Example    : $taxon = $nbcitaxonDBA->fetch_node_by_taxon_id($taxon_id);
+  Description: Returns an NCBITaxon object for the given NCBI Taxon id.
+  Returntype : Bio::EnsEMBL::Compara::NCBITaxon
+  Exceptions : thrown if $taxon_id is not defined
+  Caller     : general
+
+=cut
+
 sub fetch_node_by_taxon_id {
   my ($self, $taxon_id) = @_;
   my $constraint = "WHERE t.taxon_id = $taxon_id";
@@ -57,12 +69,39 @@ sub fetch_node_id_by_merged_taxon_id {
   return $merged_taxon_id;
 }
 
+
+=head2 fetch_node_by_name
+
+  Arg [1]    : a taxonomy name
+               the database name for a ncbi taxon
+  Example    : $taxon = $nbcitaxonDBA->fetch_node_by_name($name);
+  Description: Returns an NCBITaxon object for the given NCBI Taxon name.
+  Returntype : Bio::EnsEMBL::Compara::NCBITaxon
+  Exceptions : thrown if $name is not defined
+  Caller     : general
+
+=cut
+
+
 sub fetch_node_by_name {
   my ($self, $name) = @_;
   my $constraint = "WHERE n.name = '$name'";
   my ($node) = @{$self->_generic_fetch($constraint)};
   return $node;
 }
+
+
+=head2 fetch_node_by_genome_db_id
+
+  Arg [1]    : a genome_db_id
+  Example    : $taxon = $nbcitaxonDBA->fetch_node_by_genome_db_id($gdbID);
+  Description: Returns an NCBITaxon object for the given genome_db_id.
+  Returntype : Bio::EnsEMBL::Compara::NCBITaxon
+  Exceptions : thrown if $gdbID is not defined
+  Caller     : general
+
+=cut
+
 
 sub fetch_node_by_genome_db_id {
   my ($self, $gdbID) = @_;
@@ -71,6 +110,17 @@ sub fetch_node_by_genome_db_id {
   my ($node) = @{$self->_generic_fetch($constraint)};
   return $node;
 }
+
+
+=head2 fetch_parent_for_node
+
+  Overview   : returns the parent NCBITaxon object for this node
+  Example    : my $my_parent = $object->parent();
+  Returntype : undef or Bio::EnsEMBL::Compara::NCBITaxon
+  Exceptions : none
+  Caller     : general
+
+=cut
 
 
 sub fetch_parent_for_node {
