@@ -104,9 +104,8 @@ sub historyview {
 	    my $species = $object->param('species');
 	    my $reg = "Bio::EnsEMBL::Registry"; 
 	    my $aa = $reg->get_adaptor($species, 'Core', 'ArchiveStableId');
-	    my @trees;
+	    my (@trees, @none);
 	    foreach my $id (@ids){
-		  warn $id;
 		  if ($id=~/\.\d*/){ $id=~s/\.\d+//;}
 		   
 		  if ($id !~/ENS\w*\d*/){ $error = "There was a problem with your uploaded data: <B>" . $id . "</B> Is not a valid Ensembl Identifier. Please remove it and try again. ";}
@@ -115,7 +114,8 @@ sub historyview {
 	       my $archive_id = $aa->fetch_by_stable_id($id);
 	       if ($archive_id){ 
                push (@trees, $archive_id);
-           }  
+           }
+           else { push (@none, $id);}  
           }
         }
        unless ($error =~/^\w/){
@@ -130,8 +130,22 @@ sub historyview {
 						       
 		 $history_panel->add_components(qw(
 			history       EnsEMBL::Web::Component::ArchiveStableId::historypanel
-			));	
-		 $self->{page}->content->add_panel( $history_panel );
+			));
+		 $self->{page}->content->add_panel( $history_panel );				
+	     my $sizen = @none;		 
+		 if ($sizen >=1){
+		     my $params = \@none;
+	         my $no_history_panel = $self->new_panel('',
+			    'code'    => "info$self->{flag}",
+			    'caption' => 'No ID history found:',
+			    'params'  => $params,
+			    );
+			
+		 $no_history_panel->add_components(qw(
+			none       EnsEMBL::Web::Component::ArchiveStableId::nohistory
+			));
+		 $self->{page}->content->add_panel( $no_history_panel );
+		}
 		 return;					
         }						 
        }
