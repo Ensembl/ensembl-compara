@@ -77,8 +77,9 @@ sub stage1_form {
 # );
  my @optout =(
 	['html' => 'HTML'],
-	['text' => 'Text'] 
- );
+);	
+#	['text' => 'Text'] 
+# );
  my %checked = ('html' => 'yes'); 
  $form->add_element(
    'type'   => 'RadioGroup',
@@ -90,7 +91,7 @@ sub stage1_form {
  );
  $form->add_element(
   'type'  => 'Submit',
-  'value' => 'Upload >>',
+  'value' => 'Submit >>',
   'name'  => 'submit',
   'class' => 'red-button'
  );
