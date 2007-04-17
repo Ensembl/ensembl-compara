@@ -330,15 +330,16 @@ sub _get_history {
 sub historypanel{
   my($panel, $object) = @_;
   my @temp = @{$panel->params};
-  my (%releases, %seen);
+  my %releases;
 
   foreach my $id (@temp){
-
     my $history = $id->get_history_tree;
     my @temp = @{$history->get_release_display_names};
     my @rel = sort ({$a <=> $b} @temp);
     foreach my $r (@rel){
-	   unless (exists $releases{$r}){$releases{$r} =$r;}
+	   unless ($r =~/18\./){
+	     unless (exists $releases{$r}){$releases{$r} =$r;}
+       }
     }
   }
   $panel->add_option('triangular',1); 	
@@ -354,6 +355,7 @@ sub historypanel{
   }
 
   foreach my $id (@temp){
+	my %seen; 
 	my $history = $id->get_history_tree;
 	my @events = @{ $history->get_all_StableIdEvents };
     my $stable_id = $id->stable_id .".". $id->version;
@@ -367,17 +369,46 @@ sub historypanel{
 	 foreach my $e (@events){
 	  my $old = $e->old_ArchiveStableId;
       my $new = $e->new_ArchiveStableId;
-      next unless ($old && $new);
+      if (defined $new){ 
        if ($new->stable_id eq $a_stable){
          my $new_release = $new->release;
          $rel_matches{$new_release} =$new->version; 	 
        }
-	   elsif ($old->stable_id eq $a_stable){
-         my $old_release = $old->release;
+      }
+	  if (defined $old){
+	   if ($old->stable_id eq $a_stable){
+          my $old_release = $old->release;
          $rel_matches{$old_release} =  $old->version; 	 
-       }	
+        }
+      }	
 	 }
 
+    ## Try and backfill any empty gaps ##
+      my %rel_pos;
+      my @rel = sort ({$a <=> $b} keys %rel_matches);
+      my $count = 0;
+      foreach my $r (@rel){
+	    $rel_pos{$r} = $count;
+	    $count++; 
+      }
+      my $size = @rel; 
+      foreach my $key (%rel_matches){
+        my $value = $rel_matches{$key};
+	    unless ($value =~/^\w/){
+		  my $previous_value; 
+          my $pos = $rel_pos{$key};
+          unless ($pos == 0){
+           my $previous = $pos -= 1; 
+           my $previous_rel = $rel[$previous];
+           $previous_value = $rel_matches{$previous_rel}; 
+          }
+          my $i = $pos +1;
+          for ( $i; $i<=$size; $i++){
+	         my $next = $rel[$i];
+	         if ($next=~/^\w/){ $rel_matches{$key} = $previous_value; next;}
+          }
+	    }
+      }       
       my $combination = $stable_id . $a_stable;
       unless (exists $seen{$combination}){
         $panel->add_row({
