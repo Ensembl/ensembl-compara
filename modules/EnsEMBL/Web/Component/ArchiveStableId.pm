@@ -405,7 +405,7 @@ sub historypanel{
           my $i = $pos +1;
           for ( $i; $i<=$size; $i++){
 	         my $next = $rel[$i];
-	         if ($next=~/^\w/){ $rel_matches{$key} = $previous_value; next;}
+	        # if ($next=~/^\w/){ $rel_matches{$key} = $previous_value; next;}
           }
 	    }
       }       
