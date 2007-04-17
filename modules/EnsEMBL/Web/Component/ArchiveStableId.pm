@@ -391,7 +391,8 @@ sub historypanel{
 	    $rel_pos{$r} = $count;
 	    $count++; 
       }
-      my $size = @rel; 
+      my $size = @rel;
+      $size -=1; 
       foreach my $key (%rel_matches){
         my $value = $rel_matches{$key};
 	    unless ($value =~/^\w/){
@@ -402,10 +403,11 @@ sub historypanel{
            my $previous_rel = $rel[$previous];
            $previous_value = $rel_matches{$previous_rel}; 
           }
-          my $i = $pos +1;
+          my $i = $pos + 1;
           for ( $i; $i<=$size; $i++){
 	         my $next = $rel[$i];
-	        # if ($next=~/^\w/){ $rel_matches{$key} = $previous_value; next;}
+	         my $next_value = $rel_matches{$next};
+	         if ($next_value=~/^\w/){ $rel_matches{$key} = $previous_value; next;}
           }
 	    }
       }       
