@@ -452,6 +452,17 @@ sub historypanel{
   return 1;
 }
 
+sub nohistory{
+  my($panel, $object) = @_;
+  my @temp = @{$panel->params};
+  $panel->print(qq(<p>No ID history was found for the following identifiers:</p><p>));
+  foreach my $id (@temp){
+    $panel->print(qq(<br>$id));	
+  }
+  $panel->print(qq(</p>));
+  return 1;
+}
+
 sub history {
   my($panel, $object) = @_;
   my ($history, $release_ref) = _get_history($object);
