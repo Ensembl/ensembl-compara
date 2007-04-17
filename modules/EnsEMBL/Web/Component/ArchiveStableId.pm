@@ -344,13 +344,13 @@ sub historypanel{
   }
   $panel->add_option('triangular',1); 	
   $panel->add_columns(
-    { 'key' => 'request', 'align'=>'left', 'title' => 'Uploaded ID'},
-    { 'key' => 'match', 'align'=>'left', 'title' => 'Matched ID' },
+    { 'key' => 'request', 'align'=>'left', 'title' => 'Requested ID'},
+    { 'key' => 'match', 'align'=>'left', 'title' => 'Matched ID(s)' },
     { 'key' => 'rel', 'align'=>'left', 'title' => 'Release:' },
   );
   foreach my $key (sort {$a <=> $b} keys %releases){
 	  $panel->add_columns(
-	    { 'key' => $key, 'align'=>'center', 'title' => $key   },
+	    { 'key' => $key, 'align'=>'left', 'title' => $key   },
 	  );	
   }
 
@@ -372,13 +372,37 @@ sub historypanel{
       if (defined $new){ 
        if ($new->stable_id eq $a_stable){
          my $new_release = $new->release;
-         $rel_matches{$new_release} =$new->version; 	 
+         if ($rel_matches{$new_release}=~/^\w/){
+	       if ($new->release eq '43') {next;}
+	       my @temp = split(/\//,$rel_matches{$new_release});
+	        my $s =0;
+	       foreach my $a (@temp){warn "$a ". $new->version;  if ($a eq $new->version){$s = 1;}} 
+	       unless ($s =~/1/){ push (@temp, $new->version); }
+	       @temp = sort @temp;
+	       my $new_value = join ('/', @temp);
+	       $rel_matches{$new_release} = $new_value;
+         }else {
+	      $rel_matches{$new_release} =$new->version; 	 
+         } 
        }
       }
 	  if (defined $old){
 	   if ($old->stable_id eq $a_stable){
           my $old_release = $old->release;
-         $rel_matches{$old_release} =  $old->version; 	 
+		  if ($rel_matches{$old_release}=~/^\w/){
+			if ($old_release =~/43/){$rel_matches{$old_release} = $old->version}
+			else{  
+	         my @temp = split(/\//,$rel_matches{$old_release});
+	         my $s =0;
+	         foreach my $a (@temp){warn "$a ". $old->version;  if ($a eq $old->version){$s = 1;}} 
+	         unless ($s =~/1/){ push (@temp, $old->version); }
+	         @temp = sort @temp;
+	         my $new_value = join ('/', @temp);
+	         $rel_matches{$old_release} = $new_value;
+            }
+          } else{
+           $rel_matches{$old_release} =  $old->version; 	 
+         }
         }
       }	
 	 }
