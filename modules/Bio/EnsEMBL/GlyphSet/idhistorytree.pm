@@ -79,9 +79,11 @@ sub _init {
   my $temp_x = 140; 
 
   my @unique_ids =@{$history_tree->get_unique_stable_ids};
- 
+  my $species = $ENV{'ENSEMBL_SPECIES'};
    ## Set Y coordinates ##
   foreach my $id( @unique_ids){
+	my $param2 =  $self->{'config'}->{_object}->type eq 'Translation' ? 'peptide' : lc($self->{'config'}->{_object}->type);
+	my $id_l =  qq(/$species/idhistoryview?$param2=$id); 
     my $y_coord = $y;
     $yc{$id} = $y_coord;
     $y +=50; 
@@ -89,13 +91,14 @@ sub _init {
     my $id_label = new Sanger::Graphics::Glyph::Text({
      'x'         => 5,
      'y'         => $y_coord,
+      'width'    => 140,
      'height'    => $fontheight,
      'font'      => $fontname,
      'ptsize'    => $fontsize,
      'halign'    => 'left',
-     'colour'    => 'black',
-     'text'      => $id,
-     'absolutey' => 1,
+     'colour'    => 'blue',
+     'text'      =>  $id,
+     'href'     =>   $id_l
     });
 
    $self->push($id_label);
@@ -122,7 +125,7 @@ sub _init {
   
    ## Draw Score boxes ##
 
-   my $boxxcoord = $x -50;
+   my $boxxcoord = $x -90;
   
    foreach my $sc (sort {$b<=>$a} keys %$SCORE_COLOURS){
 	my $colour = $SCORE_COLOURS->{$sc}; 
@@ -134,10 +137,12 @@ sub _init {
         'colour'    => $colour,
     });
     $self->push($scorebox);
-    my $sc_label; 
+    my $sc_label;
+    $sc = $sc/100; 
+    $sc = sprintf("%.2f", $sc);
     if ($sc == 0){$sc_label = "Unknown"; }
-    elsif ($sc <=49 ){$sc_label ="<=49" ;}
-    elsif ($sc ==100){$sc_label = "=" .$sc;}
+    elsif ($sc <=0.49 ){$sc_label ="<=0.49" ;}
+    elsif ($sc ==1){$sc_label = "=" .$sc;}
     else {$sc_label = ">=". $sc; }
 
     my $score_text = new Sanger::Graphics::Glyph::Text({
@@ -163,7 +168,7 @@ sub _init {
      'text'      => 'Score',
     });
     $self->push($score_label);
-    $boxxcoord += 60;
+    $boxxcoord += 65;
    }
 
    ## Define nodes Nodes ##
@@ -254,7 +259,7 @@ sub _init {
     elsif ($escore >=90 ){$score_group = '90' ;}
     elsif ($escore >=75 ){$score_group = '75' ;}
     elsif ($escore >=50 ){$score_group = '50' ;}
-    elsif ($escore >=1 ){$score_group = '49' ;}
+    elsif ($escore >=49 ){$score_group = '49' ;}
     elsif ($escore >=0 ){$score_group = '0' ;}
     $branch_col = $SCORE_COLOURS->{$score_group};
 
@@ -378,14 +383,14 @@ sub _init {
 
 sub zmenu_node {
   my( $self, $archive_id ) = @_;
-
+  my $Config = $self->{'config'};
   my $param =  $archive_id->type eq 'Translation' ? 'peptide' : lc($archive_id->type);
   my $type = ucfirst $param; 
   my $id = $archive_id->stable_id .".". $archive_id->version;
   my $rel = $archive_id->release;
   my $assembly = $archive_id->assembly;  
   my $db = $archive_id->db_name;
-  my $link = qq(<a href="idhistoryview?$param=$id">$id</a>);
+  my $link = _archive_link($archive_id, $Config);
 
   my $zmenu = { 
 		        caption         => $id,
@@ -395,29 +400,75 @@ sub zmenu_node {
                 "40:Database: $db" =>, 
 	      };
 
-#  warn Data::Dumper::Dumper($zmenu);
 
   return ($zmenu, $link) ;
 }
 
+sub _archive_link {
+  my ($object, $Config) = @_;
+  my $release = $object->release;
+  my $version = $object->version;
+  my $type =  $object->type eq 'Translation' ? 'peptide' : lc($object->type);	
+  my $name = $object->stable_id . "." . $object->version;
+  my ($url, $id);
+  my $current_obj = $Config->{_object}->get_current_object($object->type);
+  my $site_type;
+  if ($current_obj && $current_obj->version eq $version) {
+    $url = "http://www.ensembl.org/";
+    
+  }
+  else {
+    my %archive_sites;
+    map { $archive_sites{ $_->{release_id} } = $_->{short_date} }@{ $Config->species_defs->RELEASE_INFO }; 
+    if (exists $archive_sites{$release}){$url = "http://$archive_sites{$release}.archive.ensembl.org/"; }
+    $url =~ s/ //;
+    $site_type = "archived ";
+  }
+   $url .=  $ENV{'ENSEMBL_SPECIES'}."/";
+   my $view = $type."view";
+   if ($type eq 'peptide') {
+     $view = 'protview';
+   }
+   elsif ($type eq 'transcript') {
+    $view = 'transview';
+   }
+   
+   $id = qq(<a href="$url$view?$type=$name">$name</a>);
+  
+  unless ($id =~/http/){ $id = qq($name);}
+  return $id; 
+}
+
 sub zmenu_score {
   my( $self, $event) = @_;
+  my $Config = $self->{'config'};
   my $old = $event->old_ArchiveStableId;
   my $old_id = $old->stable_id .".".$old->version;
   my $new = $event->new_ArchiveStableId;
   my $s = $event->score;
   my $new_id = $new->stable_id ."." .$new->version;
-  my $param =  $old->type eq 'Translation' ? 'peptide' : lc($old->type);
-  my $old_link = qq(<a href="idhistoryview?$param=$old_id">$old_id</a>);
-  my $param2 =  $new->type eq 'Translation' ? 'peptide' : lc($new->type);
-  my $new_link = qq(<a href="idhistoryview?$param2=$new_id">$new_id</a>);
-  if ($s == 0){$s ="Unknown";} 
+  my $old_link = _archive_link($old, $Config);
+  my $new_link = _archive_link($new, $Config);
+  my $oldRel = $old->release;
+  my $oldAss = $old->assembly;
+  my $oldDb = $old->db_name;
+  my $newRel = $new->release;
+  my $newAss = $new->assembly;
+  my $newDb = $new->db_name;
+  if ($s == 0){$s ="Unknown";}
+  else {$s = sprintf("%.1f", $s);}  
 
    my $zmenu = {
                  caption  => 'Similarity Match',
-                 "10:Old Gene: $old_link" =>'',
-                 "20:New Gene: $new_link"=>'',
-                 "30:Score: $s" => '', 
+                 "10:Old Gene: $old_link"        =>'',
+                 "20: Old Gene Release: $oldRel" =>'',
+                 "30: Old Gene Assembly: $oldAss" =>'',
+                 "40: Old Gene Database: $oldDb"  =>'',
+                 "50: New Gene: $new_link"        =>'',
+                 "60: New Gene Release: $newRel"  =>'',
+                 "70: New Gene Assembly: $newAss" =>'',
+                 "80: New Gene Database: $newDb"  =>'',
+                 "90:Score: $s" => '', 
                };
   return $zmenu;
 }
