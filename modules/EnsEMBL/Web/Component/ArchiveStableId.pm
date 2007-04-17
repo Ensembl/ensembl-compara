@@ -327,6 +327,72 @@ sub _get_history {
 
 =cut
 
+sub historypanel{
+  my($panel, $object) = @_;
+  my @temp = @{$panel->params};
+  my (%releases, %seen);
+
+  foreach my $id (@temp){
+
+    my $history = $id->get_history_tree;
+    my @temp = @{$history->get_release_display_names};
+    my @rel = sort ({$a <=> $b} @temp);
+    foreach my $r (@rel){
+	   unless (exists $releases{$r}){$releases{$r} =$r;}
+    }
+  }
+  $panel->add_option('triangular',1); 	
+  $panel->add_columns(
+    { 'key' => 'request', 'align'=>'left', 'title' => 'Uploaded ID'},
+    { 'key' => 'match', 'align'=>'left', 'title' => 'Matched ID' },
+    { 'key' => 'rel', 'align'=>'left', 'title' => 'Release:' },
+  );
+  foreach my $key (sort {$a <=> $b} keys %releases){
+	  $panel->add_columns(
+	    { 'key' => $key, 'align'=>'center', 'title' => $key   },
+	  );	
+  }
+
+  foreach my $id (@temp){
+	my $history = $id->get_history_tree;
+	my @events = @{ $history->get_all_StableIdEvents };
+    my $stable_id = $id->stable_id .".". $id->version;
+    foreach my $a_id (@{ $history->get_all_ArchiveStableIds }) {
+	 my @info;
+	 my $a_stable = $a_id->stable_id;
+	 my %rel_matches;
+	 foreach my $key (keys %releases){
+	   $rel_matches{$key} = "";	
+	 }
+	 foreach my $e (@events){
+	  my $old = $e->old_ArchiveStableId;
+      my $new = $e->new_ArchiveStableId;
+      next unless ($old && $new);
+       if ($new->stable_id eq $a_stable){
+         my $new_release = $new->release;
+         $rel_matches{$new_release} =$new->version; 	 
+       }
+	   elsif ($old->stable_id eq $a_stable){
+         my $old_release = $old->release;
+         $rel_matches{$old_release} =  $old->version; 	 
+       }	
+	 }
+
+      my $combination = $stable_id . $a_stable;
+      unless (exists $seen{$combination}){
+        $panel->add_row({
+	     'request' => $stable_id,
+	     'match'   => $a_stable,
+	     'rel'     => '',
+	     %rel_matches
+	   });
+	   $seen{$combination} = "";
+	  }
+   } 
+  }
+
+  return 1;
+}
 
 sub history {
   my($panel, $object) = @_;
@@ -403,7 +469,7 @@ sub _flip_URL {
 sub tree {
   my($panel, $object) = @_;
   my $name = $object->stable_id .".". $object->version;
-  my $status   = 'status_idhistory_tree';
+  my $status   = 'status_tree';
   my $label = "ID History Map";
   my $URL = _flip_URL($object);
   if( $object->param( $status ) eq 'off' ) { $panel->add_row( '', "$URL=on" ); return 0; }
@@ -414,10 +480,6 @@ sub tree {
     my $html = "<div id='component_0' class='info'>Loading history tree...</div><div class='fragment'>$json</div>";
     $panel->add_row($label ." <img src='/img/ajax-loader.gif' width='16' height='16' alt='(loading)' id='loading' />", $html, "$URL=odd") ;
   } else{ 
-  #  foreach my $arch_id ( @{ $object->history} ) {
-   #   my $temp = $arch_id->stable_id.".".$arch_id->version;
-   #   if ($temp eq $name){$archive_id = $arch_id;}	
-   # }
     my $historytree = $object->history;
     ( $panel->print( qq(<p style="text-align:center"><b>There are too many stable IDs related to $name to draw a history tree.</b></p>) ) and return 1) unless (defined $historytree);
     my $tree = _create_idhistory_tree ($object, $historytree);
