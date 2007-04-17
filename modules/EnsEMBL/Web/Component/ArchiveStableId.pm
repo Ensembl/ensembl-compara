@@ -373,10 +373,11 @@ sub historypanel{
        if ($new->stable_id eq $a_stable){
          my $new_release = $new->release;
          if ($rel_matches{$new_release}=~/^\w/){
-	       if ($new->release eq '43') {next;}
+	       ## compensate for strange data from release 42   
+	       if ($new->release eq '43') {$rel_matches{$new_release} = $new->version}
 	       my @temp = split(/\//,$rel_matches{$new_release});
 	        my $s =0;
-	       foreach my $a (@temp){warn "$a ". $new->version;  if ($a eq $new->version){$s = 1;}} 
+	       foreach my $a (@temp){ if ($a eq $new->version){$s = 1;}} 
 	       unless ($s =~/1/){ push (@temp, $new->version); }
 	       @temp = sort @temp;
 	       my $new_value = join ('/', @temp);
@@ -394,7 +395,7 @@ sub historypanel{
 			else{  
 	         my @temp = split(/\//,$rel_matches{$old_release});
 	         my $s =0;
-	         foreach my $a (@temp){warn "$a ". $old->version;  if ($a eq $old->version){$s = 1;}} 
+	         foreach my $a (@temp){if ($a eq $old->version){$s = 1;}} 
 	         unless ($s =~/1/){ push (@temp, $old->version); }
 	         @temp = sort @temp;
 	         my $new_value = join ('/', @temp);
@@ -530,15 +531,17 @@ sub tree {
   my $label = "ID History Map";
   my $URL = _flip_URL($object);
   if( $object->param( $status ) eq 'off' ) { $panel->add_row( '', "$URL=on" ); return 0; }
-   
+  my $historytree = $object->history;
+  my @temp = @{$historytree->get_release_display_names};
+  my $size = @temp;
+  unless ($size >=2 ){$panel->add_row( $label, qq(<p style="text-align:center"><b>There is no history for $name stored in the database.</b></p>) ) and return 1;}
   if ($panel->is_asynchronous('tree')) {
     warn "Asynchronously load history tree";
     my $json = "{ components: [ 'EnsEMBL::Web::Component::ArchiveStableId::tree'], fragment: {stable_id: '" . $object->stable_id . "." . $object->version . "', species: '" . $object->species . "'} }";
     my $html = "<div id='component_0' class='info'>Loading history tree...</div><div class='fragment'>$json</div>";
     $panel->add_row($label ." <img src='/img/ajax-loader.gif' width='16' height='16' alt='(loading)' id='loading' />", $html, "$URL=odd") ;
   } else{ 
-    my $historytree = $object->history;
-    ( $panel->print( qq(<p style="text-align:center"><b>There are too many stable IDs related to $name to draw a history tree.</b></p>) ) and return 1) unless (defined $historytree);
+    ( $panel->add_row($label, qq(<p style="text-align:center"><b>There are too many stable IDs related to $name to draw a history tree.</b></p>) ) and return 1) unless (defined $historytree);
     my $tree = _create_idhistory_tree ($object, $historytree);
     my $T = $tree->render;
     $panel->add_row($label, $tree->render, "$URL=off");
