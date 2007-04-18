@@ -23,13 +23,6 @@ sub user_data_wizard {
   my $user_record   = $commander->create_node(( object => $object, module => $module, name => 'user_record'));
   my $finish        = $commander->create_node(( object => $object, module => $module, name => 'finish'));
 
-  ## Starting choices
-  $commander->add_connection(( type => 'option', conditional => 'option', predicate => 'das', 
-                              from => $start, to => $das_servers));
-  $commander->add_connection(( type => 'option', conditional => 'option', predicate => 'file', 
-                              from => $start, to => $file_info));
-  $commander->add_connection(( type => 'option', conditional => 'option', predicate => 'user', 
-                              from => $start, to => $user_record));
   ## DAS section
   $commander->add_connection(( type => 'link', from => $das_servers,    to => $das_sources));
   $commander->add_connection(( type => 'link', from => $das_servers,    to => $das_servers));
@@ -39,8 +32,9 @@ sub user_data_wizard {
                               from => $das_servers, to => $das_servers));
 
   ## File upload
-  $commander->add_connection(( type => 'option', conditional => 'option', predicate => '', 
-                              from => $file_info, to => $file_upload));
+  #$commander->add_connection(( type => 'option', conditional => 'option', predicate => '', 
+  #                            from => $file_info, to => $file_upload));
+  $commander->add_connection(( type => 'link', from => $file_info,      to => $file_upload));
   $commander->add_connection(( type => 'link', from => $file_upload,    to => $file_feedback));
   $commander->add_connection(( type => 'link', from => $file_feedback,  to => $conf_tracks));
   $commander->add_connection(( type => 'link', from => $file_feedback,  to => $finish));
