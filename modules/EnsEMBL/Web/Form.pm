@@ -17,6 +17,7 @@ sub new {
     },
     '_buttons'     => {},
     '_button_order'=> [],
+    '_multibutton' => [],
     '_elements'    => [],
     '_form_id'     => 1
   };
@@ -57,7 +58,12 @@ sub _add_element {
   }
   $element->{form} = $self->{_form_id};
   $element->{formname} = $self->{_attributes}{name};
-  push @{$self->{'_elements'}}, $element;
+  if ($element->multibutton) {
+    push @{$self->{'_multibutton'}}, $element;
+  }
+  else {
+    push @{$self->{'_elements'}}, $element;
+  }
 }
 
 sub _next_id {
@@ -95,7 +101,7 @@ sub _render_element {
     }
   } elsif( $style eq 'formblock' ) {
     $output = qq(
-  <div class=\"formpadding\"></div>);;
+  <div class=\"formpadding\"></div>);
   }
   return qq(
   <div class="$style">$output
@@ -103,6 +109,23 @@ sub _render_element {
     ).$element->render().qq(
     </div>
   </div>);
+}
+
+sub _render_multibuttons {
+  my( $self, $element ) = @_;
+
+  my @buttons = @{$self->{'_multibutton'}};
+  my $output = qq(<div class="formblock">
+  <div class=\"formpadding\"></div>
+  <div class="formcontent">); 
+
+  foreach my $button (@buttons) {
+    $output .= $button->render();
+  }
+  $output .= qq(</div>
+  </div>
+  );
+  return $output;
 }
 
 sub render {
@@ -133,6 +156,7 @@ sub render {
   foreach my $element ( @{$self->{'_elements'}} ) {
     $output .= $self->_render_element( $element );
   }
+  $output .= $self->_render_multibuttons;
   $output .= "\n</form>\n";
   return $output;
 }
