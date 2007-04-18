@@ -14,7 +14,8 @@
 
 =head1 CONTACT
 
-  Contact Jessica Severin on implemetation/design detail: jessica@ebi.ac.uk
+  Contact Jessica Severin on implementation/design detail: jessica@ebi.ac.uk
+  Contact Albert Vilella on implementation/design detail: avilella@ebi.ac.uk
   Contact Ewan Birney on EnsEMBL in general: birney@sanger.ac.uk
 
 =cut
@@ -343,6 +344,43 @@ sub fetch_all_by_hgenome_db_id{
 #   return $self->_generic_fetch($constraint);
 # }
 
+
+=head2 fetch_selfhit_by_qmember_id
+
+  Arg [1]    : int $member->dbID
+               the database id for a peptide member
+  Example    : $paf = $adaptor->fetch_selfhit_by_qmember_id($member->dbID);
+  Description: Returns the selfhit PeptideAlignFeature defined by the id $id.
+  Returntype : Bio::EnsEMBL::Compara::PeptideAlignFeature
+  Exceptions : thrown if $id is not defined
+  Caller     : general
+
+=cut
+
+
+sub fetch_selfhit_by_qmember_id {
+  my $self= shift;
+  my $qmember_id = shift;
+
+  throw("qmember_id undefined") unless($qmember_id);
+
+  my $member = $self->db->get_MemberAdaptor->fetch_by_dbID($qmember_id);
+
+  my $gdb = $member->genome_db;
+  my $species_name = lc($gdb->name);
+  my $gdb_id = lc($gdb->dbID);
+  $species_name =~ s/\ /\_/g;
+  my $tbl_name = "peptide_align_feature"."_"."$species_name"."_"."$gdb_id";
+
+  my $columns = join(', ', $self->_columns());
+  my $sql = "SELECT $columns FROM $tbl_name paf WHERE qmember_id=$qmember_id AND qmember_id=hmember_id";
+  my $sth = $self->dbc->prepare($sql);
+  $sth->execute();
+  $paf = $self->_objs_from_sth($sth)->[0];
+  $sth->finish;
+
+  return $paf;
+}
 
 
 =head2 final_clause
