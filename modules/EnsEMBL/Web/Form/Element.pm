@@ -14,6 +14,7 @@ sub new {
     'widget_type'  => $array{ 'widget_type'} || 'text',
     '_validate'    => 0,
     'spanning'     => $array{ 'spanning'}    || 'no',
+    'multibutton'  => $array{ 'multibutton' },
     'name'         => $array{ 'name' },
     'size'         => $array{ 'size' },
     'rows'         => $array{ 'rows' },
@@ -51,6 +52,7 @@ sub styles       :lvalue { $_[0]{'styles'}; }
 sub widget_type  :lvalue { $_[0]{'widget_type'}; }
 sub _validate    :lvalue { $_[0]{'_validate'}; }
 sub spanning     :lvalue { $_[0]{'spanning'}; }
+sub multibutton  :lvalue { $_[0]{'multibutton'}; }
 sub name         :lvalue { $_[0]{'name'}; }
 sub size         :lvalue { $_[0]{'size'}; }
 sub rows         :lvalue { $_[0]{'rows'}; }
