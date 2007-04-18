@@ -161,9 +161,26 @@ sub forward_connections {
 sub backward_connection {
   my ($self, $node) = @_;
   my $backward_connection = undef;
-  foreach my $connection (@{ $self->connections }) {
-    if ($connection->to->name eq $node->name) {
+  my $previous = $node->object->param('previous_node');
+  if ($previous) {
+    ## check existing connections first
+    foreach my $connection (@{ $self->connections }) {
+      if ($connection->from->name eq $previous) {
+        $backward_connection = $connection;
+      }
+    }
+    ## if none, create new (temporary) connection
+    if (!$backward_connection) {
+      my $connection = EnsEMBL::Web::Commander::Connection->new(( type => 'link', 
+                          from => $self->node_with_name($previous), to => $node ));
       $backward_connection = $connection;
+    }
+  }
+  else {
+    foreach my $connection (@{ $self->connections }) {
+      if ($connection->to->name eq $node->name) {
+        $backward_connection = $connection;
+      }
     }
   }
   return $backward_connection;
@@ -224,6 +241,7 @@ sub render_connection_form_header {
         $html .= "  if (\$('" . $forward_connection->get_conditional . "').value == '" . $forward_connection->get_predicate . "') {\n";
         #$html .= "alert('OK - submit');\n";
         $html .= "  \$('node_name').value = '" . $forward_connection->to->name . "';\n";
+        $html .= "  \$('previous_node').value = '" . $node->name . "';\n";
         #$html .= "  alert('conditional link to: " . $forward_connection->to->name . "');\n";
         $html .= "  \$('connection_form').submit();\n";
         $html .= "  }\n";
@@ -237,7 +255,7 @@ sub render_connection_form_header {
   $html .= "}\n";
   $html .= "\n";
   if ($backward_connection) {
-    $html .= "function previous_node() {\n";
+    $html .= "function prev_node() {\n";
     $html .= "  \$('node_name').value = '" . $backward_connection->from->name . "';\n";
     $html .= "  \$('connection_form').submit();\n";
     $html .= "}\n";
@@ -266,12 +284,13 @@ sub render_connection_form {
       $self->form->add_element(type => 'Submit', name => 'finish', value => 'Finish');
     } else {
       if ($backward_connection) {
-        $self->form->add_element(type => 'Submit', name => 'go_previous', value => 'Previous', 
-                                onclick => 'previous_node();', 'spanning' => 'inline');
+        $self->form->add_element(type => 'Button', name => 'go_previous', value => 'Previous', 
+                                onclick => 'prev_node();', 'multibutton' => 'yes');
       }
       if ($forward_connection) {
         $self->form->add_element(type => 'Hidden', name => 'node_name', id => 'node_name', value => $forward_connection->to->name);
-        $self->form->add_element(type => 'Button', name => 'go_next', value => 'Next', 'spanning' => 'inline', on_click => 'next_node();');
+        $self->form->add_element(type => 'Button', name => 'go_next', value => 'Next', 
+                                onclick => 'next_node();', 'multibutton' => 'yes' );
       }
     }
     $html .= $self->form->render;
@@ -302,16 +321,16 @@ sub add_incoming_parameters {
   my ($self) = @_;
   my %parameters = $self->incoming_parameters;
   foreach my $key (keys %parameters) {
-    if ($key ne 'node_name') { 
-      my $value = $parameters{$key};
-      if (ref($value) eq 'ARRAY') {
-        foreach my $v (@$value) {
-          $self->form->add_element(type => 'Hidden', name => $key, value => $v);
-        }
+    next if $key eq 'node_name';
+    next if $key eq 'previous_node';
+    my $value = $parameters{$key};
+    if (ref($value) eq 'ARRAY') {
+      foreach my $v (@$value) {
+        $self->form->add_element(type => 'Hidden', name => $key, value => $v);
       }
-      else {
-        $self->form->add_element(type => 'Hidden', name => $key, value => $value);
-      }
+    }
+    else {
+      $self->form->add_element(type => 'Hidden', name => $key, value => $value);
     }
   }
 }
