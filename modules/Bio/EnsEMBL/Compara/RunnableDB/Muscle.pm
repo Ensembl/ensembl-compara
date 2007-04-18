@@ -244,6 +244,7 @@ sub run_muscle
   throw("can't find a muscle executable to run\n") unless(-e $muscle_executable);
 
   my $cmd = $muscle_executable;
+  $cmd .= " ". "-maxiters 3 " if($self->input_job->retry_count >= 2);
   $cmd .= " ". $self->{'options'};
   $cmd .= " -clw -nocore -verbose -quiet ";
   $cmd .= " -in " . $input_fasta;
