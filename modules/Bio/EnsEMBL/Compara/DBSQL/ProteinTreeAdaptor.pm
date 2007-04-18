@@ -32,6 +32,37 @@ our @ISA = qw(Bio::EnsEMBL::Compara::DBSQL::NestedSetAdaptor);
 # FETCH methods
 ###########################
 
+=head2 fetch_by_Member_root_id
+
+  Arg[1]     : Bio::EnsEMBL::Compara::Member
+  Arg[2]     : [optional] int clusterset_id (def. 1)
+  Example    : $protein_tree = $proteintree_adaptor->fetch_by_Member_root_id($member);
+
+  Description: Fetches from the database the protein_tree that contains the member
+  Returntype : Bio::EnsEMBL::Compara::ProteinTree
+  Exceptions :
+  Caller     :
+
+=cut
+
+
+sub fetch_by_Member_root_id {
+  my ($self, $member, $root_id) = @_;
+  $root_id = $root_id || 1;
+
+  my $aligned_member = $self->fetch_AlignedMember_by_member_id_root_id
+    (
+     $member->get_longest_peptide_Member->member_id,
+     $root_id);
+  return undef unless (defined $aligned_member);
+  my $node = $aligned_member->subroot;
+  return undef unless (defined $node);
+  my $protein_tree = $self->fetch_node_by_node_id($node->node_id);
+
+  return $protein_tree;
+}
+
+
 =head2 fetch_AlignedMember_by_member_id_root_id
 
   Arg[1]     : int member_id of a peptide member (longest translation)
@@ -45,7 +76,7 @@ our @ISA = qw(Bio::EnsEMBL::Compara::DBSQL::NestedSetAdaptor);
                             );
 
   Description: Fetches from the database the protein_tree that contains the member_id
-  Returntype : Bio::EnsEMBL::Compara::ProteinTree
+  Returntype : Bio::EnsEMBL::Compara::AlignedMember
   Exceptions :
   Caller     :
 
@@ -62,6 +93,26 @@ sub fetch_AlignedMember_by_member_id_root_id {
   my ($node) = @{$self->_generic_fetch($constraint)};
   return $node;
 }
+
+=head2 fetch_AlignedMember_by_member_id_mlssID
+
+  Arg[1]     : int member_id of a peptide member (longest translation)
+  Arg[2]     : [optional] int clusterset_id (def. 0)
+  Example    :
+
+      my $aligned_member = $proteintree_adaptor->
+                            fetch_AlignedMember_by_member_id_mlssID
+                            (
+                             $member->get_longest_peptide_Member->member_id, $mlssID
+                            );
+
+  Description: Fetches from the database the protein_tree that contains the member_id
+  Returntype : Bio::EnsEMBL::Compara::AlignedMember
+  Exceptions :
+  Caller     :
+
+=cut
+
 
 sub fetch_AlignedMember_by_member_id_mlssID {
   my ($self, $member_id, $mlss_id) = @_;
