@@ -3,7 +3,7 @@ use strict;
 use CGI qw(escapeHTML escape);
 use EnsEMBL::Web::Document::HTML;
 
-use constant HELPVIEW_WIN_ATTRIBS => "width=700,height=550,resizable,scrollbars";
+use constant HELPVIEW_WIN_ATTRIBS => "width=700,height=550,resizable,scrollbars,toolbar";
 
 our @ISA = qw(EnsEMBL::Web::Document::HTML);
 
@@ -11,18 +11,21 @@ sub new           {
   return shift->SUPER::new(
     'kw'    => undef,
     'label' => 'Help',
-    'URL'   => "/@{[$ENV{'ENSEMBL_SPECIES'}||'perl']}/helpview" ); }
+    'URL'   => "/@{[$ENV{'ENSEMBL_SPECIES'}||'perl']}/helpview" 
+  ); 
+}
 sub URL    :lvalue { $_[0]{'URL'};   }
 sub kw     :lvalue { $_[0]{'kw'};    }
 sub ref    :lvalue { $_[0]{'ref'};   }
 sub action :lvalue { $_[0]{'action'};   }
 sub label  :lvalue { $_[0]{'label'};    }
+sub simple :lvalue { $_[0]{'simple'}; }
 
 sub render {
   my $self = shift;
   
   my $help_link;
-  if( $self->URL =~ /^mailto:/ ) {
+  if( $self->action eq 'form' ) {
     $help_link = sprintf( q(<a href="%s" class="blue-button">%s</a>), $self->URL, $self->label ); 
   } else {
     my $extra_HTML = join ";",
@@ -52,11 +55,15 @@ sub render {
   }
 
   ## Assemble links
-  my $html = qq(<a href="/">HOME</a> &middot; <a href="/$blast_dir/blastview">BLAST</a>);
-  if ($ENV{'ENSEMBL_MART_ENABLED'}) {
-    $html .= qq( &middot; <a href="/biomart/martview/">BIOMART</a>);
+  my $html;
+  unless ($self->simple) {
+    $html .= qq(<a href="/">HOME</a> &middot; <a href="/$blast_dir/blastview">BLAST</a>);
+    if ($ENV{'ENSEMBL_MART_ENABLED'}) {
+      $html .= qq( &middot; <a href="/biomart/martview/">BIOMART</a>);
+    }
+    $html .= qq( &middot; <a href="/$map_link">SITEMAP</a> );
   }
-  $html .= qq( &middot; <a href="/$map_link">SITEMAP</a> $help_link );
+  $html .= $help_link;
 
   $self->print( qq(
 <div id="help"><strong>$html</strong></div>));
