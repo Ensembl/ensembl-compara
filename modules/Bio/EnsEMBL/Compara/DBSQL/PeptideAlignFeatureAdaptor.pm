@@ -345,6 +345,97 @@ sub fetch_all_by_hgenome_db_id{
 # }
 
 
+sub fetch_all_by_qgenome_db_id{
+  my $self = shift;
+  my $qgenome_db_id = shift;
+
+  throw("must specify query genome_db dbID") unless($qgenome_db_id);
+
+  my $gdb = $$self->db->get_GenomeDBAdaptor->fetch_by_dbID($qgenome_db_id);
+  my $species_name = lc($gdb->name);
+  my $gdb_id = lc($gdb->dbID);
+  $species_name =~ s/\ /\_/g;
+  my $tbl_name = "peptide_align_feature"."_"."$species_name"."_"."$gdb_id";
+
+  my $columns = join(', ', $self->_columns());
+  # my $constraint = "paf.qmember_id = $member_id";
+  my $sql = "SELECT $columns FROM $tbl_name paf";
+  my $sth = $self->prepare($sql);
+  $sth->execute;
+
+  return $self->_objs_from_sth($sth);
+}
+
+sub fetch_all_by_qgenome_db_id_hgenome_db_id{
+  my $self = shift;
+  my $qgenome_db_id = shift;
+  my $hgenome_db_id = shift;
+
+  throw("must specify query genome_db dbID") unless($qgenome_db_id);
+  throw("must specify hit genome_db dbID") unless($hgenome_db_id);
+
+  my $gdb = $$self->db->get_GenomeDBAdaptor->fetch_by_dbID($qgenome_db_id);
+  my $species_name = lc($gdb->name);
+  my $gdb_id = lc($gdb->dbID);
+  $species_name =~ s/\ /\_/g;
+  my $tbl_name = "peptide_align_feature"."_"."$species_name"."_"."$gdb_id";
+
+  my $columns = join(', ', $self->_columns());
+  my $constraint = "paf.hgenome_db_id = $hgenome_db_id";
+  my $sql = "SELECT $columns FROM $tbl_name paf WHERE $constraint";
+  my $sth = $self->prepare($sql);
+  $sth->execute;
+
+  return $self->_objs_from_sth($sth);
+}
+
+
+sub fetch_all_besthit_by_qgenome_db_id{
+  my $self = shift;
+  my $qgenome_db_id = shift;
+
+  throw("must specify query genome_db dbID") unless($qgenome_db_id);
+
+  my $gdb = $self->db->get_GenomeDBAdaptor->fetch_by_dbID($qgenome_db_id);
+  my $species_name = lc($gdb->name);
+  my $gdb_id = lc($gdb->dbID);
+  $species_name =~ s/\ /\_/g;
+  my $tbl_name = "peptide_align_feature"."_"."$species_name"."_"."$gdb_id";
+
+  my $columns = join(', ', $self->_columns());
+  my $constraint = "paf.hit_rank=1";
+  my $sql = "SELECT $columns FROM $tbl_name paf WHERE $constraint";
+  my $sth = $self->prepare($sql);
+  $sth->execute;
+
+  return $self->_objs_from_sth($sth);
+}
+
+
+sub fetch_all_besthit_by_qgenome_db_id_hgenome_db_id{
+  my $self = shift;
+  my $qgenome_db_id = shift;
+  my $hgenome_db_id = shift;
+
+  throw("must specify query genome_db dbID") unless($qgenome_db_id);
+  throw("must specify hit genome_db dbID") unless($hgenome_db_id);
+
+  my $gdb = $self->db->get_GenomeDBAdaptor->fetch_by_dbID($qgenome_db_id);
+  my $species_name = lc($gdb->name);
+  my $gdb_id = lc($gdb->dbID);
+  $species_name =~ s/\ /\_/g;
+  my $tbl_name = "peptide_align_feature"."_"."$species_name"."_"."$gdb_id";
+
+  my $columns = join(', ', $self->_columns());
+  my $constraint = "paf.hgenome_db_id = $hgenome_db_id AND paf.hit_rank=1";
+  my $sql = "SELECT $columns FROM $tbl_name paf WHERE $constraint";
+  my $sth = $self->prepare($sql);
+  $sth->execute;
+
+  return $self->_objs_from_sth($sth);
+}
+
+
 =head2 fetch_selfhit_by_qmember_id
 
   Arg [1]    : int $member->dbID
