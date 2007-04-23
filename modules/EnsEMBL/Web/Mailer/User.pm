@@ -84,6 +84,8 @@ sub send_invite_email {
 
  ) . $group->name . qq( 
  ) . $self->base_url . qq(/common/accept?id=) . $invite->id . qq(
+ 
+ Your activation code is: ) . $invite->code . qq(
 
  If you do not wish to accept, please just disregard this email.
 
@@ -113,7 +115,7 @@ not, please disregard this email.
 
 );
 
-  $message .= $self->activation_link('id=' . $user->id . "&code=" . $user->salt);
+  $message .= $self->activation_link('user_id=' . $user->id . "&code=" . $user->salt);
 
   $message .= $self->email_footer;
   $self->subject("Your $sitename account");
