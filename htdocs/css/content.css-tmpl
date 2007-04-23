@@ -90,7 +90,7 @@ div.pale a { text-decoration:none; }
 div.white {  background-color:#fff; border:1px solid [[BACKGROUND1]]; }
 div.white a { text-decoration:none; }
 
-div.pre { color:#339966; background-color:#eefff8; border:1px solid #aaeecc; }
+div.pre { color:#669966; background-color:#eefff8; border:1px solid #aaeecc; }
 div.user_info { color:#111; background-color:#e7feff; border:1px solid #469fdd; }
 
 div.favourites-species-list {
@@ -117,7 +117,7 @@ div.selected a, div.selected a:link, div.selected a:visited {
 }
 
 #pre_tab, #pre {
-  color:#339966;
+  color:#006633;
   background-color:#CCFFCC;
 }
 
