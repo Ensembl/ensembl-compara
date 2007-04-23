@@ -39,7 +39,8 @@ assembly_default values of genome_db in this case.
 
 6. Update the ncbi_taxa_nodes and ncbi_taxa_names in the master DB using the
 ncbi_taxonomy database located in mysql::/ens-livemirror:3306/ncbi_taxonomy
-This is usually done by the person who runs the orthologs/paralogs.For more information, here is the doc ensembl-compara/scripts/taxonomy/README-taxonomy
+This is usually done by the person who runs the orthologs/paralogs.
+For more information, here is the doc ensembl-compara/scripts/taxonomy/README-taxonomy
 
 
 7. New method_link_species_set entries might be added using the
@@ -56,7 +57,18 @@ eg. for the pairwise alignment
  perl create_mlss.pl --method_link_type  BLASTZ_NET --genome_db_id 22,51 --source "ensembl"  --reg_conf reg_conf_v44.pl --compara compara_master
 
 
-# for the orthologsperl create_mlss.pl --method_link_type ENSEMBL_ORTHOLOGUES --genome_db_id 3,4,5,13,16,18,22,25,26,27,29,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,50,47,48,49,46,51,+upcomming_species --source "ensembl" --url "" --pw --force--pw stands for all pairwised genome_db_ids in the list provided#for the paralogs (between_species)perl create_mlss.pl --method_link_type ENSEMBL_PARALOGUES --genome_db_id 3,4,5,13,16,18,22,25,26,27,29,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,50,47,48,49,46,51,+upcomming_species --source "ensembl" --url "" --pw --force#for the paralogs (within_species)perl create_mlss.pl --method_link_type ENSEMBL_PARALOGUES --genome_db_id 3,4,5,13,16,18,22,25,26,27,29,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,50,47,48,49,46,51,+upcomming_species --source "ensembl" --url "" --sg --force--sg stands for keep genome_db_id in the list alone (singleton) 
+# for the orthologs
+perl create_mlss.pl --method_link_type ENSEMBL_ORTHOLOGUES --genome_db_id 3,4,5,13,16,18,22,25,26,27,29,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,50,47,48,49,46,51,+upcomming_species --source "ensembl" --url "" --pw --force
+
+--pw stands for all pairwised genome_db_ids in the list provided
+
+#for the paralogs (between_species)
+perl create_mlss.pl --method_link_type ENSEMBL_PARALOGUES --genome_db_id 3,4,5,13,16,18,22,25,26,27,29,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,50,47,48,49,46,51,+upcomming_species --source "ensembl" --url "" --pw --force
+
+#for the paralogs (within_species)
+perl create_mlss.pl --method_link_type ENSEMBL_PARALOGUES --genome_db_id 3,4,5,13,16,18,22,25,26,27,29,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,50,47,48,49,46,51,+upcomming_species --source "ensembl" --url "" --sg --force
+
+--sg stands for keep genome_db_id in the list alone (singleton) 
 
 
 
@@ -212,20 +224,21 @@ Don't forget to commit these changes into the repository!
 You might need to update the create_mlss_table.conf file with new species added.
 
   perl ~/src/ensembl_main/ensembl-compara/docs/create_mlss_table.pl \
-    --reg_conf ~/.ensembl_init --dbname Compara39 --method_link BLASTZ_NET \
-    --trim > blastz_net.html
-
-  perl ~/src/ensembl_main/ensembl-compara/docs/create_mlss_table.pl \
     --reg_conf ~/.ensembl_init --dbname Compara39 --method_link PECAN \
-    --list > pecan.html
+    --list > pecan.inc
 
   perl ~/src/ensembl_main/ensembl-compara/docs/create_mlss_table.pl \
     --reg_conf ~/.ensembl_init --dbname Compara39 --method_link TRANSLATED_BLAT \
-    --trim > tblat.html
+    --trim > tblat.inc
 
+  perl ~/src/ensembl_main/ensembl-compara/docs/create_mlss_table.pl \
+    --reg_conf ~/.ensembl_init --dbname Compara39 --method_link BLASTZ_NET \
+    --trim > blastz_net.inc
 
- ==> MAKE SURE NOT TO MISS THE Tblat TABLE for the documentation in 
-     ensembl-webcode/htdocs/info/data/compara
+ ==> The resulting blastz-net table is huge. In order to make it slightly smaller,
+   you can divide it into amniota vertebrates and other chordates (see latest
+   release for an example) but you'll have to do it manually as the current
+   script doesn't know how to do it.
 
 
 19. Update files in ensembl-webcode/htdocs/info/software/compara
