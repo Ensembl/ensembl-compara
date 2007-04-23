@@ -1,22 +1,26 @@
 #! /usr/bin/perl
 
-package remove_group;
+package delete_invite;
 
 use strict;
 use warnings;
 
 use EnsEMBL::Web::Record::Group;
+use EnsEMBL::Web::RegObj;
+
 use CGI;
+
 my $cgi = new CGI;
 my $url = "/common/groupview";
 my $user = $ENSEMBL_WEB_REGISTRY->get_user;
 if ($user) {
-  my $group = EnsEMBL::Web::Object::Group->new(( adaptor => $ENSEMBL_WEB_REGISTRY->userAdapator,  id => $cgi->param('group_id') )); 
+  my $group = EnsEMBL::Web::Object::Group->new(( adaptor => $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->userAdaptor,  id => $cgi->param('group_id') )); 
   $url = "/common/groupview?id=" . $group->id;
   if ($cgi->param('user_id') eq $user->id) {
     if ($user->is_administrator($group)) {
-      foreach my $record ($group->find_group_records_by_group_record_id($cgi->param('invite_id') )) {
+      foreach my $record ($group->find_group_records_by_group_record_id($cgi->param('invite_id'), { adaptor => $ENSEMBL_WEB_REGISTRY->userAdaptor } )) {
         if ($record->id eq $cgi->param('invite_id')) {
+          $record->adaptor($ENSEMBL_WEB_REGISTRY->userAdaptor);
           $record->delete;
         }
       }
