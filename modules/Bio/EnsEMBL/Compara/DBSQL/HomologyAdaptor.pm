@@ -229,7 +229,7 @@ sub fetch_by_Member_Member_method_link_type {
 
   $constraint .= " AND hm1.member_id = " . $member1->dbID;
   $constraint .= " AND hm2.member_id = " . $member2->dbID;
-  $constraint .= " AND hm1.member_id<hm2.member_id ";
+#  $constraint .= " AND hm1.member_id<hm2.member_id ";
 
   # See in fetch_by_Member what is this internal variable for
   $self->{'_this_one_first'} = $member1->stable_id;
