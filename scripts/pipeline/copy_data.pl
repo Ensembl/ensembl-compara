@@ -143,6 +143,11 @@ my $from_url = undef;
 my $to_url = undef;
 my $mlss_id = undef;
 
+#If true, then trust the TO database tables and update the FROM tables if 
+#necessary. Currently only applies to differences in the dnafrag table and 
+#will only update the genomic_align table.
+my $trust_to = 0; 
+
 GetOptions(
     "help" => \$help,
     "reg-conf|reg_conf|registry=s" => \$reg_conf,
@@ -151,6 +156,7 @@ GetOptions(
     "from_url=s" => \$from_url,
     "to_url=s" => \$to_url,
     "mlss_id=i" => \$mlss_id,
+    "trust_to!"  => \$trust_to,
   );
 
 # Print Help and exit if help is requested
@@ -158,7 +164,7 @@ if ($help or (!$from_name and !$from_url) or (!$to_name and !$to_url) or !$mlss_
   exec("/usr/bin/env perldoc $0");
 }
 
-Bio::EnsEMBL::Regsitry->load_all($reg_conf) if ($from_name or $to_name);
+Bio::EnsEMBL::Registry->load_all($reg_conf) if ($from_name or $to_name);
 my $from_dba = get_DBAdaptor($from_url, $from_name);
 my $to_dba = get_DBAdaptor($to_url, $to_name);
 
@@ -225,7 +231,7 @@ sub get_DBAdaptor {
       warn("Cannot undestand URL: $url\n");
     }
   } elsif ($name) {
-    $compara_db_adaptor = Bio::EnsEMBL::Regsitry->get_DBAdaptor($name, "compara");
+    $compara_db_adaptor = Bio::EnsEMBL::Registry->get_DBAdaptor($name, "compara");
   }
 
   if (!$compara_db_adaptor->get_MetaContainer) {
@@ -329,12 +335,19 @@ sub check_table {
 
 sub copy_genomic_align_blocks {
   my ($from_dba, $to_dba, $mlss_id) = @_;
+  my $fix_dnafrag = 0;
 
   exit(1) if !check_table("method_link", $from_dba, $to_dba);
   exit(1) if !check_table("method_link_species_set", $from_dba, $to_dba, undef,
       "method_link_species_set_id = $mlss_id");
   exit(1) if !check_table("genome_db", $from_dba, $to_dba, "genome_db_id, name, assembly, genebuild, assembly_default");
-  exit(1) if !check_table("dnafrag", $from_dba, $to_dba);
+  if (!check_table("dnafrag", $from_dba, $to_dba)) {
+      $fix_dnafrag = 1;
+      if ($fix_dnafrag && !$trust_to) {
+	  print " To fix the dnafrags in the genomic_align table, you can use the trust_to flag\n\n";
+	  exit(1);
+      }
+  }
 
   ## Check min and max of the relevant internal IDs in the FROM database
   my $sth = $from_dba->dbc->prepare("SELECT
@@ -354,11 +367,12 @@ sub copy_genomic_align_blocks {
   my $lower_limit = $mlss_id * 10**10;
   my $upper_limit = ($mlss_id + 1) * 10**10;
   my $fix;
-  if ($max_gab < 10**10 and $max_ga < 10**10 and $max_gag < 10**10) {
+
+  if ($max_gab < 10**10 and $max_ga < 10**10 and (!defined($max_gag) or $max_gag < 10**10)) {
     ## Need to add $method_link_species_set_id * 10^10 to the internal_ids
     $fix = $lower_limit;
-  } elsif ($max_gab < $upper_limit and $max_ga < $upper_limit and $max_gag < $upper_limit
-      and $min_gab >= $lower_limit and $min_ga >= $lower_limit and $min_gag >= $lower_limit) {
+  } elsif ($max_gab < $upper_limit and $max_ga < $upper_limit and (!defined($max_gag) or $max_gag < $upper_limit)
+      and $min_gab >= $lower_limit and $min_ga >= $lower_limit and (!defined($min_gag) or $min_gag >= $lower_limit)) {
     ## Internal IDs are OK.
     $fix = 0;
   } else {
@@ -366,7 +380,7 @@ sub copy_genomic_align_blocks {
   }
 
   ## Check availability of the internal IDs in the TO database
-  $sth = $from_dba->dbc->prepare("SELECT count(*)
+  $sth = $to_dba->dbc->prepare("SELECT count(*)
       FROM genomic_align_block
       WHERE genomic_align_block_id >= $lower_limit
           AND genomic_align_block_id < $upper_limit");
@@ -379,7 +393,7 @@ sub copy_genomic_align_blocks {
     exit(1);
   }
 
-  $sth = $from_dba->dbc->prepare("SELECT count(*)
+  $sth = $to_dba->dbc->prepare("SELECT count(*)
       FROM genomic_align
       WHERE genomic_align_id >= $lower_limit
           AND genomic_align_id < $upper_limit");
@@ -392,7 +406,7 @@ sub copy_genomic_align_blocks {
     exit(1);
   }
 
-  $sth = $from_dba->dbc->prepare("SELECT count(*)
+  $sth = $to_dba->dbc->prepare("SELECT count(*)
       FROM genomic_align_group
       WHERE group_id >= $lower_limit
           AND group_id < $upper_limit");
@@ -405,22 +419,46 @@ sub copy_genomic_align_blocks {
     exit(1);
   }
 
-  copy_data($from_dba, $to_dba,
-      "genomic_align_block",
-      "SELECT genomic_align_block_id+$fix, method_link_species_set_id, score, perc_id, length".
-        " FROM genomic_align_block WHERE method_link_species_set_id = $mlss_id");
-  copy_data($from_dba, $to_dba,
-      "genomic_align",
-      "SELECT ga.genomic_align_id+$fix, ga.genomic_align_block_id+$fix, ga.method_link_species_set_id,".
-        " dnafrag_id, dnafrag_start, dnafrag_end, dnafrag_strand, cigar_line, level_id".
-        " FROM genomic_align_block gab LEFT JOIN genomic_align ga USING (genomic_align_block_id)".
-        " WHERE gab.method_link_species_set_id = $mlss_id");
-  copy_data($from_dba, $to_dba,
-      "genomic_align_group",
-      "SELECT gag.group_id+$fix, type, gag.genomic_align_id+$fix".
-        " FROM genomic_align_block gab LEFT JOIN genomic_align ga USING (genomic_align_block_id)".
-        " LEFT JOIN genomic_align_group gag USING (genomic_align_id)".
-        " WHERE gag.group_id IS NOT NULL AND gab.method_link_species_set_id = $mlss_id");
+  #copy genomic_align table. Need to update dnafrag column
+  if ($trust_to && $fix_dnafrag) {
+
+      #create a temporary genomic_align table with TO dnafrag_ids
+      my $temp_genomic_align = "temp_genomic_align";
+      fix_genomic_align_table($from_dba, $to_dba, $mlss_id, $temp_genomic_align);
+      
+      #copy from the temporary genomic_align table
+      copy_data($from_dba, $to_dba,
+  	    "genomic_align",
+  	    "SELECT ga.genomic_align_id+$fix, ga.genomic_align_block_id+$fix, ga.method_link_species_set_id,".
+  	    " dnafrag_id, dnafrag_start, dnafrag_end, dnafrag_strand, cigar_line, level_id".
+  	    " FROM genomic_align_block gab LEFT JOIN $temp_genomic_align ga USING (genomic_align_block_id)".
+  	    " WHERE gab.method_link_species_set_id = $mlss_id");
+
+
+      #delete temporary genomic_align table
+      $from_dba->dbc->db_handle->do("DROP TABLE $temp_genomic_align");
+  } else {
+      copy_data($from_dba, $to_dba,
+		"genomic_align",
+		"SELECT ga.genomic_align_id+$fix, ga.genomic_align_block_id+$fix, ga.method_link_species_set_id,".
+		" dnafrag_id, dnafrag_start, dnafrag_end, dnafrag_strand, cigar_line, level_id".
+		" FROM genomic_align_block gab LEFT JOIN genomic_align ga USING (genomic_align_block_id)".
+		" WHERE gab.method_link_species_set_id = $mlss_id");
+}
+
+  #copy genomic_align_block table
+   copy_data($from_dba, $to_dba,
+       "genomic_align_block",
+       "SELECT genomic_align_block_id+$fix, method_link_species_set_id, score, perc_id, length".
+         " FROM genomic_align_block WHERE method_link_species_set_id = $mlss_id");
+
+  #copy genomic_align_group table
+   copy_data($from_dba, $to_dba,
+       "genomic_align_group",
+       "SELECT gag.group_id+$fix, type, gag.genomic_align_id+$fix".
+         " FROM genomic_align_block gab LEFT JOIN genomic_align ga USING (genomic_align_block_id)".
+         " LEFT JOIN genomic_align_group gag USING (genomic_align_id)".
+         " WHERE gag.group_id IS NOT NULL AND gab.method_link_species_set_id = $mlss_id");
 }
 
 
@@ -475,7 +513,7 @@ sub copy_conservation_scores {
   }
 
   ## Check availability of the internal IDs in the TO database
-  $sth = $from_dba->dbc->prepare("SELECT count(*)
+  $sth = $to_dba->dbc->prepare("SELECT count(*)
       FROM conservation_score
       WHERE genomic_align_block_id >= $lower_limit
           AND genomic_align_block_id < $upper_limit");
@@ -495,7 +533,7 @@ sub copy_conservation_scores {
         " WHERE meta_key = \"gerp_$mlss_id\"");
   copy_data($from_dba, $to_dba,
       "conservation_score",
-      "SELECT cs.genomic_align_block_id+$fix, window_size, position, observed_score, expected_score, diff_score".
+      "SELECT cs.genomic_align_block_id+$fix, window_size, position, expected_score, diff_score".
         " FROM genomic_align_block gab".
         " LEFT JOIN conservation_score cs using (genomic_align_block_id)".
         " WHERE cs.genomic_align_block_id IS NOT NULL AND gab.method_link_species_set_id = $gab_mlss_id");
@@ -633,9 +671,10 @@ sub copy_data_in_binary_mode {
     $sth->execute();
     $start += $step;
     my $count = $from_dba->dbc->db_handle->selectrow_array("SELECT count(*) FROM temp_$table_name");
+
     ## EXIT CONDITION
     if (!$count) {
-      $from_dba->dbc->db_handle->do("DROP TABLE $table_name");
+      $from_dba->dbc->db_handle->do("DROP TABLE temp_$table_name");
       return;
     }
 
@@ -669,4 +708,49 @@ sub copy_data_in_binary_mode {
   }
 
 }
+
+#fix the genomic_align table
+sub fix_genomic_align_table {
+    my ($from_dba, $to_dba, $mlss_id, $temp_genomic_align) = @_;
+
+    print "\n ** WARNING ** Fixing the dnafrag_ids in the genomic_align table requires write access.\n";
+    print " ** WARNING ** Two temporary tables are created, temp_dnafrag and temp_genomic_align. The original tables are not altered.\n\n";
+
+    #create new dnafrag table in FROM database
+    $from_dba->dbc->db_handle->do("CREATE TABLE temp_dnafrag LIKE dnafrag");
+
+    #copy over only those dnafrags for the genome_db_ids in the mlss.
+    my $query = "SELECT dnafrag.* FROM method_link_species_set LEFT JOIN species_set USING (species_set_id) LEFT JOIN dnafrag USING (genome_db_id) WHERE method_link_species_set_id=$mlss_id";
+    copy_data_in_text_mode($to_dba, $from_dba, "temp_dnafrag", $query);
+
+    #check that don't have dnafrags in the FROM database that aren't in the
+    #TO database - need to exit if there are and reassess the situation!
+    my $sth = $from_dba->dbc->prepare("SELECT dnafrag.* FROM method_link_species_set LEFT JOIN species_set USING (species_set_id) LEFT JOIN dnafrag USING (genome_db_id) LEFT JOIN temp_dnafrag USING (genome_db_id, name, length, coord_system_name) WHERE method_link_species_set_id=$mlss_id AND temp_dnafrag.genome_db_id IS NULL;");
+    $sth->execute();
+    my $rows = $sth->fetchall_arrayref();
+    if (@$rows) {
+	print "\n** ERROR ** The following dnafrags are present in the production (FROM) dnafrag table and are not present in the release (TO) dnafrag table\n"; 
+	foreach my $row (@$rows) {
+	    print "@$row\n";
+	}
+	$from_dba->dbc->db_handle->do("DROP TABLE temp_dnafrag");
+	exit(1);
+    }
+    
+    #copy genomic_align table into a temporary table
+    $from_dba->dbc->db_handle->do("CREATE TABLE $temp_genomic_align LIKE genomic_align");
+      
+    #fill the table
+    #doing this in 2 steps means we don't have to make assumptions as to the column names in the genomic_align table
+    $sth = $from_dba->dbc->prepare("INSERT INTO $temp_genomic_align SELECT * FROM genomic_align WHERE method_link_species_set_id=$mlss_id");
+    $sth->execute();
+    
+    #update the table 
+    $sth = $from_dba->dbc->prepare("UPDATE $temp_genomic_align ga, dnafrag df, temp_dnafrag df_temp SET ga.dnafrag_id=df_temp.dnafrag_id WHERE ga.dnafrag_id=df.dnafrag_id AND df.genome_db_id=df_temp.genome_db_id AND df.name=df_temp.name AND df.coord_system_name=df_temp.coord_system_name AND ga.method_link_species_set_id=$mlss_id");      
+    $sth->execute();
+
+    #delete the temporary dnafrag table
+    $from_dba->dbc->db_handle->do("DROP TABLE temp_dnafrag");
+}
+
 
