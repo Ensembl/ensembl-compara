@@ -525,9 +525,9 @@ sub singular {
     $found = 1;
   }
 
-  ## Words ending in ses
-  if (!$found && $word =~ /ses$/) {
-    $singular =~ s/ses$/s/;
+  ## Words ending in sses
+  if (!$found && $word =~ /sses$/) {
+    $singular =~ s/es$//;
     $found = 1;
   }
 
