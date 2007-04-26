@@ -285,7 +285,7 @@ sub user_prefs {
   my @sortables = @{ $user->sortables };
   my $sortable = $sortables[0];
   my $html = "";
-  $html = qq(<div class="white boxed" style="width:770px;">
+  $html = qq(<div class="white boxed">
 <h3 class="plain">Ensembl preferences</h3>
 <ul>);
 
@@ -438,7 +438,8 @@ sub _render_groups {
     $html .= qq(<p class="center">You are not subscribed to any Ensembl groups. &middot; <a href='/info/help/groups.html'>Learn more &rarr;</a> </p>);
   }  
   $html .= "<br />";
-  $html .= &_render_all_groups($user, \%included);
+  ## An unimplemented feature - we don't have any public groups yet.
+  #$html .= &_render_all_groups($user, \%included);
   $html .= "<br />";
   $html .= qq(<p><a href="/common/create_group">Create a new group &rarr;</a></p>);
   return $html;
@@ -1045,7 +1046,7 @@ sub _render_group_settings {
     $html .= "<h5>Configurations</h5>\n";
     my @records = ();
     foreach my $configuration (@configurations) {
-      my $description = $configuration->blurb || '&nbsp;';
+      my $description = $configuration->description || '&nbsp;';
       push @records, {  'id' => $configuration->id, 
                         'group_id' => $group->id,
                         'ident' => 'user',
@@ -1053,7 +1054,7 @@ sub _render_group_settings {
                         'edit_url' => 'edit_config', 
                         'delete_url' => 'remove_group_record', 
                         'data' => [
-        '<a href="' . $configuration->config_url . '" title="' . $configuration->blurb . '">' . $configuration->name . '</a>', '&nbsp;' 
+        '<a href="' . $configuration->url . '" title="' . $configuration->description . '">' . $configuration->name . '</a>', '&nbsp;' 
       ]};
     }
     $html .= _render_settings_table(\@records);
