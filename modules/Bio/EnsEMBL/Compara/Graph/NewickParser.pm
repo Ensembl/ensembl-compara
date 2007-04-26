@@ -28,6 +28,16 @@ use Switch;
 use Bio::EnsEMBL::Compara::NestedSet;
 use Bio::EnsEMBL::Utils::Exception qw(throw warning);
 
+=head2 parse_newick_into_tree
+
+  Arg 1      : string $newick_tree
+  Example    : $tree = Bio::EnsEMBL::Compara::NestedSet::parse_newick_into_tree($newick_tree);
+  Description: Read the newick string and returns (the root of) a tree
+  Returntype : Bio::EnsEMBL::Compara::NestedSet
+  Exceptions : none
+  Caller     : general
+
+=cut
 
 sub parse_newick_into_tree
 {
