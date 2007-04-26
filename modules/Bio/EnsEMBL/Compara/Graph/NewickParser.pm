@@ -53,7 +53,7 @@ sub parse_newick_into_tree
   my $state=1;
   my $bracket_level = 0;
 
-  while($token) {
+  while(defined($token)) {
     if($debug) { printf("state %d : '%s'\n", $state, $token); };
     
     switch ($state) {
