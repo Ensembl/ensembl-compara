@@ -1148,13 +1148,25 @@ sub _recursive_find_brh_pafs_for_member_genome_db
   my $tested_member_ids  = shift;  #ref to hash
   my $found_paf_ids      = shift;  #ref to hash
 
+  my $member = $self->db->get_MemberAdaptor->fetch_by_dbID($qmember_id);
+
+  my $gdb = $member->genome_db;
+  my $species_name1 = lc($gdb->name);
+  my $gdb_id = lc($gdb->dbID);
+  $species_name1 =~ s/\ /\_/g;
+  my $tbl_name1 = "peptide_align_feature"."_"."$species_name1"."_"."$gdb_id";
+
+  my $species_name2 = lc($self->db->get_GenomeDBAdaptor->fetch_by_dbID($hit_genome_db_id)->name);
+  $species_name2 =~ s/\ /\_/g;
+  my $tbl_name2 = "peptide_align_feature"."_"."$species_name2"."_"."$hit_genome_db_id";
+
   return unless($qmember_id and $hit_genome_db_id);
   return if($tested_member_ids->{$qmember_id}); #already tested this member
 
   $tested_member_ids->{$qmember_id} = 1;
   #printf(" recursive_web qm=%d  hg=%d\n", $qmember_id, $hit_genome_db_id);
   my $sql = "SELECT paf1.peptide_align_feature_id, paf1.hmember_id, paf1.qgenome_db_id ".
-            " FROM peptide_align_feature paf1, peptide_align_feature paf2".
+            " FROM $tbl_name1 paf1, $tbl_name2 paf2".
             " WHERE paf1.hmember_id=paf2.qmember_id".
             " AND paf1.qmember_id=? and paf1.hgenome_db_id=? and paf1.hit_rank=1".
             " AND paf2.hmember_id=? and paf2.qgenome_db_id=? and paf2.hit_rank=1";
@@ -1168,6 +1180,37 @@ sub _recursive_find_brh_pafs_for_member_genome_db
   }
   $sth->finish;
 }
+
+# sub _old_recursive_find_brh_pafs_for_member_genome_db
+# {
+#   # recursive search to find web of 'best' hits starting with a given
+#   # member_id and genome_db_ids
+#   my $self               = shift;
+#   my $qmember_id         = shift;
+#   my $hit_genome_db_id   = shift;
+#   my $tested_member_ids  = shift;  #ref to hash
+#   my $found_paf_ids      = shift;  #ref to hash
+
+#   return unless($qmember_id and $hit_genome_db_id);
+#   return if($tested_member_ids->{$qmember_id}); #already tested this member
+
+#   $tested_member_ids->{$qmember_id} = 1;
+#   #printf(" recursive_web qm=%d  hg=%d\n", $qmember_id, $hit_genome_db_id);
+#   my $sql = "SELECT paf1.peptide_align_feature_id, paf1.hmember_id, paf1.qgenome_db_id ".
+#             " FROM peptide_align_feature paf1, peptide_align_feature paf2".
+#             " WHERE paf1.hmember_id=paf2.qmember_id".
+#             " AND paf1.qmember_id=? and paf1.hgenome_db_id=? and paf1.hit_rank=1".
+#             " AND paf2.hmember_id=? and paf2.qgenome_db_id=? and paf2.hit_rank=1";
+#   my $sth = $self->prepare($sql);
+#   $sth->execute($qmember_id, $hit_genome_db_id, $qmember_id, $hit_genome_db_id);
+
+#   while (my ($pafID, $hmember_id, $qgenome_db_id) = $sth->fetchrow_array()) {
+#     #printf("  found pafID $pafID in recursive search\n");
+#     $found_paf_ids->{$pafID} = 1;
+#     $self->_recursive_find_brh_pafs_for_member_genome_db($hmember_id, $qgenome_db_id, $tested_member_ids, $found_paf_ids);
+#   }
+#   $sth->finish;
+# }
 
 
 sub _generic_fetch {
