@@ -18,10 +18,14 @@ sub send_email {
   my @mail_attributes = ();
   my @T = localtime();
   my $date = sprintf "%04d-%02d-%02d %02d:%02d:%02d", $T[5]+1900, $T[4]+1, $T[3], $T[2], $T[1], $T[0];
+  my $email = $self->param('email');
+  ## Do some email address sanitation!
+  $email =~ s/"//g;
+  $email =~ s/''/'/g;
   push @mail_attributes,
     [ 'Date',         $date ],
     [ 'Name',         $self->param('name') ],
-    [ 'Email',        $self->param('email') ],
+    [ 'Email',        $email ],
     [ 'Referrer',     $self->referer ],
     [ 'Last Keyword', $self->param('kw')||'-none-' ],
     [ 'Problem',      $self->param('category')],
