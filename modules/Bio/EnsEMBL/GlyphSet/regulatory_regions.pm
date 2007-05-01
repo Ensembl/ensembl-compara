@@ -54,7 +54,7 @@ sub zmenu {
     my $feature_link;
     if ($analysis =~ /cisred/i ) {
       $name =~/\D+(\d+)/;
-      $feature_link = "http://www.cisred.org/human8/siteseq?fid=$1";
+      $feature_link = "http://www.cisred.org/human8.2/siteseq?fid=$1";
       $name .= "  [CisRed]";
     }
     elsif ($analysis eq "tiffin") {

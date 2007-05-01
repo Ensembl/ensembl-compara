@@ -66,7 +66,7 @@ sub zmenu {
 #	$return->{"04: [CisRed]"} = "$cisred" if $analysis =~/cisred/i;
       }
       if ($analysis) {
-	my $cisred = $analysis =~/cisred/i ? "http://www.cisred.org/human8/gene_view?ensembl_id=$id" : "";
+	my $cisred = $analysis =~/cisred/i ? "http://www.cisred.org/human8.2/gene_view?ensembl_id=$id" : "";
 	$return->{"02:Analysis: $analysis"} = "$cisred";
       }
       $return->{"04:Associated $type: $id"} = "$link?$type=$id";
