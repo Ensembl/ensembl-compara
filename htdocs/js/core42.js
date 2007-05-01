@@ -48,6 +48,7 @@ function toggle_settings_drawer() {
   }
 }
 
+
 function settings_drawer_change() {
   var display_id = $('group_select').value;
   set_style_for_class('all', 'none');
@@ -122,6 +123,12 @@ function archive( release ) {
 function login_link() {
   URL = escape(document.location.href);
   document.location = '/login.html?url=' + URL;
+  return true;  
+}
+
+function das_link() {
+  URL = escape(document.location.href);
+  document.location = '/common/user/save_das?url=' + URL;
   return true;  
 }
 

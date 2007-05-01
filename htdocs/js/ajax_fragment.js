@@ -100,6 +100,12 @@ function fragment(caller) {
     }
   }
 
+  for (var j = 0; j < json.fragment.config_options.length; j++) {
+    for (var element in json.fragment.config_options[j]) {
+      data = data + element + "=" + json.fragment.config_options[j][element] + "&";
+    }
+  }
+
   data = data + "&url=" + URL;
 
   var url = "/" + json.fragment.species + "/populate_fragment";

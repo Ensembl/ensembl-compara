@@ -48,6 +48,7 @@ sub placeholder {
   my $self = shift;
   my $html = "";
   my $class = "fragment";
+  my $config_options = {};
   if ($self->panel_is_closed) {
     $class = "";
   }
@@ -61,9 +62,19 @@ sub placeholder {
     unless ($self->panel_is_closed) {
       foreach my $name (@{ $self->static_components }) {
         my $command = $self->{components}{$name}->[0];
+	warn "PLACEHOLDER FOR: " . $command;
         no strict 'refs';
         my $result = &$command($self, $self->{'object'});
         use strict 'refs';
+	if ($result) {
+	  warn "RESULT: " . $result;
+	  foreach my $key (keys %{ $result->{'config'} }) {
+	     if ($result->{'config'}->{$key}) {
+	       warn "CONFIG KEY: " . $key;
+	       $config_options->{$key} = $result->{'config'}->{$key};
+	     }
+	  }
+	}
         $html .= CGI::unescape($self->html);
       }
       $html .= "</div>";
@@ -75,7 +86,7 @@ sub placeholder {
     $html .= "</div>\n";
   }
   $html .= "<div class='$class' style='display: none;' id='" . $self->code . "_json'>";
-  $html .= $self->json;
+  $html .= $self->json($config_options);
   $html .= "</div>\n";
   return $html;
 }
@@ -127,11 +138,12 @@ sub panel_is_closed {
 }
 
 sub json {
-  my $self = shift; 
-  my $json = sprintf( "{ fragment: { code: '%s', species: '%s', title: '%s', id: '%s', params: [ %s ], components: [ %s ], options: [ %s ] }}",
+  my ($self, $config_options) = @_; 
+  my $json = sprintf( "{ fragment: { code: '%s', species: '%s', title: '%s', id: '%s', params: [ %s ], components: [ %s ], options: [ %s ], config_options: [ %s ] }}",
     $self->code, $ENV{'ENSEMBL_SPECIES'}, $self->caption, $self->code,
-    $self->json_params, $self->json_components, $self->json_options
+    $self->json_params, $self->json_components, $self->json_options($self->{'_options'}), $self->json_options($config_options)
   );
+  warn "JSON: " . $json;
   return $json;
 }
 
@@ -183,10 +195,12 @@ sub json_components {
 }
 
 sub json_options {
-  my $self = shift;
+  my ($self, $options) = @_;
   my $json = "";
-  foreach my $key ( $self->options ) {
-    $json .= "{ $key: '" . $self->option( $key ) . "' }, ";
+  foreach my $key ( keys %{ $options } ) {
+    if (!ref($options->{$key}) && $options->{$key}) {
+      $json .= "{ $key: '" . $options->{ $key } . "' }, ";
+    }
   }
   return $json;
 }

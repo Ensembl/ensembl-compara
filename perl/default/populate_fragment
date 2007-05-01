@@ -19,8 +19,8 @@ my %params = ();
 my %components = ();
 my @ordered_componenents = ();
 
-#warn "--------------------";
-#warn("AJAX: Populating fragment"); 
+warn "--------------------";
+warn("AJAX: Populating fragment"); 
 
 foreach my $key (keys %{ $incoming }) {
 #  warn "KEY: " . $key . ": " . $incoming->{$key};
@@ -97,6 +97,8 @@ foreach my $key(@ordered_componenents) {
     $object->get_scriptconfig('contigview');
     $object->prefix($prefix);
     my $uc = $object->user_config_hash('contigviewbottom');
+    $uc->{'missing_tracks'} = $cgi->param('missing_tracks');
+    warn "WORKING WITH UC: " . $uc;
 ## URL based tracks....
 use EnsEMBL::Web::URLfeatureParser;
   my $URL =  $new_query->param('data_URL');

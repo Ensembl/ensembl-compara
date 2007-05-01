@@ -17,21 +17,24 @@ sub render {
   my $adaptor = $ENSEMBL_WEB_REGISTRY->newsAdaptor();
   my %id_to_species = %{$adaptor->fetch_species($SiteDefs::ENSEMBL_VERSION)};
 
+  foreach my $key (keys %id_to_species) {
+    warn "KEY: " . $key;
+  }
   my %species_description = setup_species_descriptions($species_defs);
 
   my $reg_user = $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->get_user;
   my $user = EnsEMBL::Web::Object::Data::User->new({ id => $reg_user->id });
 
   my $html = "";
-  warn "RENDERING SPECIES LIST WITH USER: " . $user->id;
+  warn "RENDERING CUSTOM SPECIES LIST WITH USER: " . $user->id;
   if ($request && $request eq 'fragment') {
     $html .= render_species_list($user, $species_defs, \%id_to_species, \%species_description); 
   } else {
-    
+    warn "REORDER LIST"; 
     $html .= "<div id='reorder_species' style='display: none;'>\n";
     $html .= render_ajax_reorder_list($user, $species_defs, \%id_to_species); 
     $html .= "</div>\n";
-
+    warn "FULL LIST";
     $html .= "<div id='full_species'>\n";
     $html .= render_species_list($user, $species_defs, \%id_to_species, \%species_description); 
     $html .= "</div>\n";
@@ -41,7 +44,7 @@ sub render {
       $html .= "</div>\n";
     }
   }
-
+  warn "RETURNING HTML";
   return $html;
 
 }
@@ -116,7 +119,9 @@ sub render_species_list {
   my %description = %{ $species_description };
   my %id_to_species = %{ $id_to_species };
   my %species_id = reverse %id_to_species;
+  warn "RENDERING";
   my @specieslists = @{ $user->specieslists };
+  warn "FOUND: SPECIES: ". $#specieslists;
   my %favourites = ();
   my @favourite_species = ();
   my @species_list = ();
@@ -148,7 +153,6 @@ sub render_species_list {
     $html .= "<b>Popular genomes</b> &middot; \n";
     $html .= "<a href='javascript:void(0);' onClick='toggle_reorder();'>Reorder</a>";
   }
-
   $html .= "<div id='static_favourite_species'>\n";
   $html .= "<div class='favourites-species-list'>\n";
   $html .= "<dl class='species-list'>\n";
@@ -199,12 +203,12 @@ sub render_ajax_reorder_list {
   $html .= "Hint: For easy access to commonly used genomes, drag from the bottom list to the top one.";
 
   $html .= "<div id='favourite_species'>\n";
-
+  warn "CHECKING FOR SPECIES IN AJAX LIST";
   my @specieslists = @{ $user->specieslists };
   my %favourites = ();
   my @favourite_species = ();
   my @species_list = ();
-
+  warn "FOUND SPECIES LISTS:" . $#specieslists;
   if ($#specieslists < 0) {
     foreach my $name (("Homo_sapiens", "Mus_musculus", "Danio_rerio")) {
       push @favourite_species, $species_id{$name};
