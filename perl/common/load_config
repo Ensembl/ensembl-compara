@@ -6,11 +6,13 @@ use strict;
 use warnings;
 
 use EnsEMBL::Web::RegObj;
+use EnsEMBL::Web::Object::Data::User;
 use Apache2::RequestUtil;
 
 use CGI;
 my $cgi = new CGI;
 my $script_name = "contigview";
+
 
 my $url = $cgi->param('url');
 my ($host, $params) = split(/\?/, $url);
@@ -28,9 +30,12 @@ $url = $host . $new_params;
 my $session = $ENSEMBL_WEB_REGISTRY->get_session;
 $session->set_input($cgi);
 my $user = $ENSEMBL_WEB_REGISTRY->get_user;
+my $data_user = EnsEMBL::Web::Object::Data::User->new({ id => $user->id }); 
 
 if ($user) {
-    foreach my $configuration ($user->configuration_records) {
+    warn "PROCESSING CONFIG";
+    foreach my $configuration (@{ $data_user->configurations }) {
+      warn "CONFIG: " . $configuration->id;
       if ($configuration->id eq $cgi->param('id')) {
         my $string = $configuration->scriptconfig;
 
@@ -43,6 +48,6 @@ if ($user) {
   $url = '/error/config_failed.html';
 }
 
-CGI::redirect($url);
+CGI::redirect('/common/current_config?url=' . CGI::escape($url) . '&id=' . $cgi->param('id') );
 
 1;

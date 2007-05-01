@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 
-package sortable;
+package current_config;
 
 use strict;
 use warnings;
@@ -13,10 +13,10 @@ use CGI;
 my $cgi = new CGI;
 my $url = $cgi->param('url');
 my $reg_user = $ENSEMBL_WEB_REGISTRY->get_user; 
-
+#warn "SAVING CURRENT CONFIG TO USER: " . $reg_user->id;
 if ($reg_user) {
   my $user = EnsEMBL::Web::Object::Data::User->new({ id => $reg_user->id });
-  warn "USER: " . $user->name;
+#  warn "USER: " . $user->name;
   my $current = undef;
   foreach my $this (@{ $user->currentconfigs }) {
     $current= $this;
@@ -25,6 +25,9 @@ if ($reg_user) {
   if (!$current) {
     $current= EnsEMBL::Web::Object::Data::CurrentConfig->new();
   }
+
+#  warn "SAVING! " . $current; 
+#  warn "ID TO SAVE " . $cgi->param('id');
 
   if ($cgi->param('id')) {
     $current->config($cgi->param('id'));
