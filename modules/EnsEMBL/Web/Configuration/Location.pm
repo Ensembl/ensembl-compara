@@ -495,9 +495,9 @@ sub contigview {
   my $ajax_zoom     = 'off';
 
   if (EnsEMBL::Web::Tools::Ajax::is_enabled()) {
-    $ajax_overview = 'on';
-    $ajax_detailed = 'on';
-    $ajax_zoom = 'on';
+   $ajax_overview = 'on';
+   $ajax_detailed = 'on';
+   $ajax_zoom = 'on';
   }
 
   my $max_length = ($obj->species_defs->ENSEMBL_GENOME_SIZE||1) * 1.001e6;
@@ -611,7 +611,7 @@ sub contigview {
       nav    EnsEMBL::Web::Component::Location::contigviewbottom_nav
       image  EnsEMBL::Web::Component::Location::contigviewbottom
     ));
-
+    warn "SETTING UP VIEW FRAGMENT";
     $view_fragment->asynchronously_load(qw(image));
     my $width = $obj->param('image_width');
     $view_fragment->add_option( 'image_width', $width);
