@@ -1011,6 +1011,7 @@ sub fetch_BRH_by_member_genomedb
 }
 
 
+# Previous all-in-one-table paf
 # sub old_fetch_BRH_by_member_genomedb
 # {
 #   # using trick of specifying table twice so can join to self
@@ -1088,6 +1089,7 @@ sub fetch_all_RH_by_member_genomedb
   return $objs;
 }
 
+# Previous all-in-one-table paf
 # sub old_fetch_all_RH_by_member_genomedb
 # {
 #   # using trick of specifying table twice so can join to self
@@ -1161,6 +1163,7 @@ sub fetch_all_RH_by_member
 }
 
 
+# Previous all-in-one-table paf
 # sub old_fetch_all_RH_by_member
 # {
 #   # using trick of specifying table twice so can join to self
