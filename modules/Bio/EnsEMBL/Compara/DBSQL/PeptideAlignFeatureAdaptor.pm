@@ -1000,7 +1000,8 @@ sub fetch_BRH_by_member_genomedb
             " WHERE paf.hmember_id=paf2.qmember_id".
             " AND paf.hit_rank=1 AND paf2.hit_rank=1".
             " AND paf.qmember_id=$qmember_id and paf.hgenome_db_id=$hit_genome_db_id".
-            " AND paf2.hmember_id=$qmember_id and paf2.qgenome_db_id=$hit_genome_db_id";
+            " AND paf2.hmember_id=$qmember_id and paf2.qgenome_db_id=$hit_genome_db_id".
+            " AND paf2.peptide_align_feature_id AS pafid2";
 
   my $sth = $self->dbc->prepare($sql);
   $sth->execute;
@@ -1078,7 +1079,8 @@ sub fetch_all_RH_by_member_genomedb
             " FROM $tbl_name1 paf, $tbl_name2 paf2".
             " WHERE paf.hmember_id=paf2.qmember_id".
             " AND paf.qmember_id=$qmember_id and paf.hgenome_db_id=$hit_genome_db_id".
-            " AND paf2.hmember_id=$qmember_id and paf2.qgenome_db_id=$hit_genome_db_id";
+            " AND paf2.hmember_id=$qmember_id and paf2.qgenome_db_id=$hit_genome_db_id".
+            " AND paf2.peptide_align_feature_id AS pafid2";
 
   my $sth = $self->dbc->prepare($sql);
   $sth->execute;
@@ -1150,7 +1152,8 @@ sub fetch_all_RH_by_member
             " FROM $tbl_name paf, $tbl_name paf2".
             " WHERE paf.hmember_id=paf2.qmember_id".
             " AND paf.qmember_id=$qmember_id".
-            " AND paf2.hmember_id=$qmember_id";
+            " AND paf2.hmember_id=$qmember_id".
+            " AND paf2.peptide_align_feature_id AS pafid2";
 
   my $sth = $self->dbc->prepare($sql);
   $sth->execute;
@@ -1227,13 +1230,7 @@ sub fetch_BRH_web_for_member_genome_db
   my $tested_member_ids  = {};
   my $found_paf_ids      = {};
 
-#   $self->_recursive_find_brh_pafs_for_member_genome_db(
-#              $qmember_id,
-#              $hit_genome_db_id,
-#              $tested_member_ids,
-#              $found_paf_ids);
-
-  $self->_old_recursive_find_brh_pafs_for_member_genome_db(
+  $self->_recursive_find_brh_pafs_for_member_genome_db(
              $qmember_id,
              $hit_genome_db_id,
              $tested_member_ids,
