@@ -391,7 +391,7 @@ sub dumpMercatorFiles {
         foreach my $this_mapping (@mappings) {
           next if ($this_mapping->isa("Bio::EnsEMBL::Mapper::Coordinate"));
           next if ($this_mapping->length < $max_gap);
-          print join(" :: ", $df->name, $this_mapping->length, $this_mapping->start, $this_mapping->end), "\n";
+          # print join(" :: ", $df->name, $this_mapping->length, $this_mapping->start, $this_mapping->end), "\n";
           print F $df->name . "--$part\t" . $df->length,"\n";
           $dnafrags->{$df->name}->{$this_mapping->start} = $df->name."--".$part;
           $part++;
