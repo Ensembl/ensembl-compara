@@ -978,22 +978,62 @@ sub fetch_BRH_by_member_genomedb
   my $qmember_id       = shift;
   my $hit_genome_db_id = shift;
 
-  #print(STDERR "fetch_BRH_by_member_genomedb qmember_id=$qmember_id, genome_db_id=$hit_genome_db_id\n");
+  #print(STDERR "fetch_all_RH_by_member_genomedb qmember_id=$qmember_id, genome_db_id=$hit_genome_db_id\n");
   return unless($qmember_id and $hit_genome_db_id);
-  my $extrajoin = [
-                    [ ['peptide_align_feature', 'paf2'],
-                      'paf.qmember_id=paf2.hmember_id AND paf.hmember_id=paf2.qmember_id',
-                      ['paf2.peptide_align_feature_id AS pafid2']]
-                  ];
 
-  my $constraint = "paf.hit_rank=1 AND paf2.hit_rank=1".
-                   " AND paf.qmember_id='".$qmember_id."'".
-                   " AND paf2.hmember_id='".$qmember_id."'".
-                   " AND paf.hgenome_db_id='".$hit_genome_db_id."'".
-                   " AND paf2.qgenome_db_id='".$hit_genome_db_id."'";
+  my $member = $self->db->get_MemberAdaptor->fetch_by_dbID($qmember_id);
 
-  return $self->_generic_fetch($constraint, $extrajoin);
+  my $gdb = $member->genome_db;
+  my $species_name1 = lc($gdb->name);
+  my $gdb_id = lc($gdb->dbID);
+  $species_name1 =~ s/\ /\_/g;
+  my $tbl_name1 = "peptide_align_feature"."_"."$species_name1"."_"."$gdb_id";
+
+  my $species_name2 = lc($self->db->get_GenomeDBAdaptor->fetch_by_dbID($hit_genome_db_id)->name);
+  $species_name2 =~ s/\ /\_/g;
+  my $tbl_name2 = "peptide_align_feature"."_"."$species_name2"."_"."$hit_genome_db_id";
+
+  my $columns = join(', ', $self->_columns());
+
+  my $sql = "SELECT $columns".
+            " FROM $tbl_name1 paf, $tbl_name2 paf2".
+            " WHERE paf.hmember_id=paf2.qmember_id".
+            " AND paf.hit_rank=1 AND paf2.hit_rank=1".
+            " AND paf.qmember_id=$qmember_id and paf.hgenome_db_id=$hit_genome_db_id".
+            " AND paf2.hmember_id=$qmember_id and paf2.qgenome_db_id=$hit_genome_db_id";
+
+  my $sth = $self->dbc->prepare($sql);
+  $sth->execute;
+  my $obj = $self->_objs_from_sth($sth)->[0];
+  $sth->finish;
+
+  return $obj;
 }
+
+
+# sub old_fetch_BRH_by_member_genomedb
+# {
+#   # using trick of specifying table twice so can join to self
+#   my $self             = shift;
+#   my $qmember_id       = shift;
+#   my $hit_genome_db_id = shift;
+
+#   #print(STDERR "fetch_BRH_by_member_genomedb qmember_id=$qmember_id, genome_db_id=$hit_genome_db_id\n");
+#   return unless($qmember_id and $hit_genome_db_id);
+#   my $extrajoin = [
+#                     [ ['peptide_align_feature', 'paf2'],
+#                       'paf.qmember_id=paf2.hmember_id AND paf.hmember_id=paf2.qmember_id',
+#                       ['paf2.peptide_align_feature_id AS pafid2']]
+#                   ];
+
+#   my $constraint = "paf.hit_rank=1 AND paf2.hit_rank=1".
+#                    " AND paf.qmember_id='".$qmember_id."'".
+#                    " AND paf2.hmember_id='".$qmember_id."'".
+#                    " AND paf.hgenome_db_id='".$hit_genome_db_id."'".
+#                    " AND paf2.qgenome_db_id='".$hit_genome_db_id."'";
+
+#   return $self->_generic_fetch($constraint, $extrajoin);
+# }
 
 
 =head2 fetch_all_RH_by_member_genomedb
@@ -1019,22 +1059,60 @@ sub fetch_all_RH_by_member_genomedb
 
   #print(STDERR "fetch_all_RH_by_member_genomedb qmember_id=$qmember_id, genome_db_id=$hit_genome_db_id\n");
   return unless($qmember_id and $hit_genome_db_id);
-  my $extrajoin = [
-                    [ ['peptide_align_feature', 'paf2'],
-                      'paf.qmember_id=paf2.hmember_id AND paf.hmember_id=paf2.qmember_id',
-                      ['paf2.peptide_align_feature_id AS pafid2']]
-                  ];
 
-  my $constraint = " paf.qmember_id='".$qmember_id."'".
-                   " AND paf2.hmember_id='".$qmember_id."'".
-                   " AND paf.hgenome_db_id='".$hit_genome_db_id."'".
-                   " AND paf2.qgenome_db_id='".$hit_genome_db_id."'";
+  my $member = $self->db->get_MemberAdaptor->fetch_by_dbID($qmember_id);
 
-  #$self->final_clause("ORDER BY paf.hit_rank");
-  my $objs = $self->_generic_fetch($constraint, $extrajoin);
-  #$self->final_clause("");
+  my $gdb = $member->genome_db;
+  my $species_name1 = lc($gdb->name);
+  my $gdb_id = lc($gdb->dbID);
+  $species_name1 =~ s/\ /\_/g;
+  my $tbl_name1 = "peptide_align_feature"."_"."$species_name1"."_"."$gdb_id";
+
+  my $species_name2 = lc($self->db->get_GenomeDBAdaptor->fetch_by_dbID($hit_genome_db_id)->name);
+  $species_name2 =~ s/\ /\_/g;
+  my $tbl_name2 = "peptide_align_feature"."_"."$species_name2"."_"."$hit_genome_db_id";
+
+  my $columns = join(', ', $self->_columns());
+
+  my $sql = "SELECT $columns".
+            " FROM $tbl_name1 paf, $tbl_name2 paf2".
+            " WHERE paf.hmember_id=paf2.qmember_id".
+            " AND paf.qmember_id=$qmember_id and paf.hgenome_db_id=$hit_genome_db_id".
+            " AND paf2.hmember_id=$qmember_id and paf2.qgenome_db_id=$hit_genome_db_id";
+
+  my $sth = $self->dbc->prepare($sql);
+  $sth->execute;
+  my $objs = $self->_objs_from_sth($sth);
+  $sth->finish;
+
   return $objs;
 }
+
+# sub old_fetch_all_RH_by_member_genomedb
+# {
+#   # using trick of specifying table twice so can join to self
+#   my $self             = shift;
+#   my $qmember_id       = shift;
+#   my $hit_genome_db_id = shift;
+
+#   #print(STDERR "fetch_all_RH_by_member_genomedb qmember_id=$qmember_id, genome_db_id=$hit_genome_db_id\n");
+#   return unless($qmember_id and $hit_genome_db_id);
+#   my $extrajoin = [
+#                     [ ['peptide_align_feature', 'paf2'],
+#                       'paf.qmember_id=paf2.hmember_id AND paf.hmember_id=paf2.qmember_id',
+#                       ['paf2.peptide_align_feature_id AS pafid2']]
+#                   ];
+
+#   my $constraint = " paf.qmember_id='".$qmember_id."'".
+#                    " AND paf2.hmember_id='".$qmember_id."'".
+#                    " AND paf.hgenome_db_id='".$hit_genome_db_id."'".
+#                    " AND paf2.qgenome_db_id='".$hit_genome_db_id."'";
+
+#   #$self->final_clause("ORDER BY paf.hit_rank");
+#   my $objs = $self->_generic_fetch($constraint, $extrajoin);
+#   #$self->final_clause("");
+#   return $objs;
+# }
 
 
 =head2 fetch_all_RH_by_member
@@ -1055,19 +1133,53 @@ sub fetch_all_RH_by_member
   my $self             = shift;
   my $qmember_id       = shift;
 
-  #print(STDERR "fetch_all_RH_by_member qmember_id=$qmember_id\n");
+  #print(STDERR "fetch_all_RH_by_member_genomedb qmember_id=$qmember_id, genome_db_id=$hit_genome_db_id\n");
   return unless($qmember_id);
-  my $extrajoin = [
-                    [ ['peptide_align_feature', 'paf2'],
-                       'paf.qmember_id=paf2.hmember_id AND paf.hmember_id=paf2.qmember_id',
-                       ['paf2.peptide_align_feature_id AS pafid2']]
-                  ];
 
-  my $constraint = " paf.qmember_id='".$qmember_id."'".
-                   " AND paf2.hmember_id='".$qmember_id."'";
+  my $member = $self->db->get_MemberAdaptor->fetch_by_dbID($qmember_id);
 
-  return $self->_generic_fetch($constraint, $extrajoin);
+  my $gdb = $member->genome_db;
+  my $species_name = lc($gdb->name);
+  my $gdb_id = lc($gdb->dbID);
+  $species_name =~ s/\ /\_/g;
+  my $tbl_name = "peptide_align_feature"."_"."$species_name"."_"."$gdb_id";
+
+  my $columns = join(', ', $self->_columns());
+
+  my $sql = "SELECT $columns".
+            " FROM $tbl_name paf, $tbl_name paf2".
+            " WHERE paf.hmember_id=paf2.qmember_id".
+            " AND paf.qmember_id=$qmember_id".
+            " AND paf2.hmember_id=$qmember_id";
+
+  my $sth = $self->dbc->prepare($sql);
+  $sth->execute;
+  my $objs = $self->_objs_from_sth($sth);
+  $sth->finish;
+
+  return $objs;
 }
+
+
+# sub old_fetch_all_RH_by_member
+# {
+#   # using trick of specifying table twice so can join to self
+#   my $self             = shift;
+#   my $qmember_id       = shift;
+
+#   #print(STDERR "fetch_all_RH_by_member qmember_id=$qmember_id\n");
+#   return unless($qmember_id);
+#   my $extrajoin = [
+#                     [ ['peptide_align_feature', 'paf2'],
+#                        'paf.qmember_id=paf2.hmember_id AND paf.hmember_id=paf2.qmember_id',
+#                        ['paf2.peptide_align_feature_id AS pafid2']]
+#                   ];
+
+#   my $constraint = " paf.qmember_id='".$qmember_id."'".
+#                    " AND paf2.hmember_id='".$qmember_id."'";
+
+#   return $self->_generic_fetch($constraint, $extrajoin);
+# }
 
 
 =head2 fetch_all
@@ -1115,7 +1227,13 @@ sub fetch_BRH_web_for_member_genome_db
   my $tested_member_ids  = {};
   my $found_paf_ids      = {};
 
-  $self->_recursive_find_brh_pafs_for_member_genome_db(
+#   $self->_recursive_find_brh_pafs_for_member_genome_db(
+#              $qmember_id,
+#              $hit_genome_db_id,
+#              $tested_member_ids,
+#              $found_paf_ids);
+
+  $self->_old_recursive_find_brh_pafs_for_member_genome_db(
              $qmember_id,
              $hit_genome_db_id,
              $tested_member_ids,
