@@ -317,6 +317,53 @@ sub fetch_all_by_MethodLinkSpeciesSet_DnaFrag {
   return \@srs;
 }
 
+
+=head2 fetch_all_by_MethodLinkSpeciesSet
+
+  Arg 1      : Bio::EnsEMBL::Compara::MethodLinkSpeciesSet $mlss
+  Example    : my $these_synteny_regions = $synteny_region_adaptor->
+                  fetch_all_by_MethodLinkSpeciesSet($mlss);
+  Description: Fetches the Bio::EnsEMBL::Compara::SyntenyRegion
+               objects for the set of species defined by the $mlss.
+  Returntype : listref of Bio::EnsEMBL::Compara::SyntenyRegion objects
+  Exception  : Thrown if the argument is not defined
+  Caller     :
+  Status     : Stable
+
+=cut
+
+sub fetch_all_by_MethodLinkSpeciesSet {
+  my ($self, $mlss) = @_;
+
+  if (!UNIVERSAL::isa($mlss, "Bio::EnsEMBL::Compara::MethodLinkSpeciesSet")) {
+    throw("[$mlss] is not a Bio::EnsEMBL::Compara::MethodLinkSpeciesSet object");
+  }
+
+  my $sql = "select sr.synteny_region_id from synteny_region sr where sr.method_link_species_set_id = ?";
+
+  my $sth = $self->prepare($sql);
+  $sth->execute($mlss->dbID);
+
+  my $synteny_region_id;
+  $sth->bind_columns(\$synteny_region_id);
+  my @srs;
+  while ($sth->fetch) {
+    my $sr = new Bio::EnsEMBL::Compara::SyntenyRegion;
+    $sr->dbID($synteny_region_id);
+    $sr->method_link_species_set_id($mlss->dbID);
+
+    my $dfra = $self->db->get_DnaFragRegionAdaptor;
+    my $dfrs = $dfra->fetch_by_synteny_region_id($synteny_region_id);
+    while (my $dfr = shift @{$dfrs}) {
+      $sr->add_child($dfr);
+    }
+
+    push @srs, $sr;
+  }
+
+  return \@srs;
+}
+
 1;
 
 
