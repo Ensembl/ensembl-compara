@@ -63,6 +63,8 @@ sub fetch_by_Member_paired_species {
   Arg [1]    : Bio::EnsEMBL::Compara::Member $member
   Arg [2]    : string $species
                e.g. "Mus_musculus" or "Mus musculus"
+  Arg [3]    : (optional) an arrayref of method_link types
+               e.g. ['ENSEMBL_ORTHOLOGUES']. Default is ['ENSEMBL_ORTHOLOGUES','ENSEMBL_PARALOGUES']
   Example    : $homologies = $HomologyAdaptor->fetch_all_by_Member_paired_species($member, "Mus_musculus");
   Description: fetch the homology relationships where the given member is implicated
                in pair with another member from the paired species. Member species and
@@ -74,18 +76,20 @@ sub fetch_by_Member_paired_species {
 =cut
 
 sub fetch_all_by_Member_paired_species {
-  my ($self, $member, $species) = @_;
+  my ($self, $member, $species, $method_link_types) = @_;
 
   $species =~ tr/_/ /;
 
   my $gdb1 = $member->genome_db;
   my $gdb2 = $self->db->get_GenomeDBAdaptor->fetch_by_name_assembly($species);
 
-  my @method_link_types = qw(ENSEMBL_ORTHOLOGUES ENSEMBL_PARALOGUES);
+  unless (defined $method_link_types) {
+    $method_link_types = ['ENSEMBL_ORTHOLOGUES','ENSEMBL_PARALOGUES'];
+  }
   my $mlssa = $self->db->get_MethodLinkSpeciesSetAdaptor;
 
   my $all_homologies = [];
-  foreach my $ml (@method_link_types) {
+  foreach my $ml (@{$method_link_types}) {
     my $mlss;
     if ($gdb1->dbID == $gdb2->dbID) {
       next if ($ml eq 'ENSEMBL_ORTHOLOGUES');
