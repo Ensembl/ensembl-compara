@@ -193,7 +193,7 @@ sub fetch_homologues_of_gene_in_species {
 
     my $ha = $self->database('compara')->get_HomologyAdaptor;
     my @homologues;
-    foreach my $homology (@{$ha->fetch_by_Member_paired_species($qy_member, $paired_species)}){
+    foreach my $homology (@{$ha->fetch_all_by_Member_paired_species($qy_member, $paired_species, ['ENSEMBL_ORTHOLOGUES'])}){
       foreach my $member_attribute (@{$homology->get_all_Member_Attribute}) {
         my ($member, $attribute) = @{$member_attribute};
         next if ($member->stable_id eq $qy_member->stable_id);

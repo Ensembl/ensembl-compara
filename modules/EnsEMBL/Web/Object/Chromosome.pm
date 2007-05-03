@@ -145,14 +145,14 @@ sub get_synteny_local_genes {
    
     if( $num < 0 ) {
         $slice = $sliceAdaptor->fetch_by_region('chromosome', $chr, 1, $start );
-        @localgenes = @{$slice->get_all_Genes( undef, 'core' )};
+        @localgenes = _local_genes($slice);
         if(@localgenes>-$num) {
             @localgenes = @localgenes[$num..-1]; 
             $start = 1;
         } elsif(@localgenes==0) {
              $slice = $sliceAdaptor->fetch_by_region
            ('chromosome',$chr, $start ,$chr_length);
-            @localgenes = @{$slice->get_all_Genes( undef, 'core' )};
+            @localgenes = _local_genes($slice);
             @localgenes = @localgenes[0..(-$num-1)] if(@localgenes>-$num);
         } else { 
             $start = 1;
@@ -160,13 +160,13 @@ sub get_synteny_local_genes {
     } 
     else {
       $slice = $sliceAdaptor->fetch_by_region( 'chromosome', $chr, $start, $chr_length );
-      @localgenes = @{$slice->get_all_Genes(  undef, 'core' )};
+      @localgenes = _local_genes($slice);
       if(@localgenes>$num) {
         @localgenes = @localgenes[0..($num-1)]; 
       } 
       elsif(@localgenes==0) {
         $slice = $sliceAdaptor->fetch_by_region('chromosome', $chr, 1 , $start);
-        @localgenes = @{$slice->get_all_Genes( undef, 'core' )};
+        @localgenes = _local_genes($slice);
         @localgenes = @localgenes[(-$num)..-1] if(@localgenes>$num);
         $start = 1;
       }
@@ -179,6 +179,16 @@ sub get_synteny_local_genes {
     return \@localgenes, $start - 1;
 }
 
+sub _local_genes {
+## Ensures that only protein coding genes are included in syntenyview
+  my $slice = shift;
+  my @local_genes;
+  my @biotypes = ('protein_coding', 'V_segments', 'C_segments');
+  foreach my $type (@biotypes) {
+    push @local_genes, @{$slice->get_all_Genes_by_type($type)};
+  }
+  return @local_genes;
+}
 
 sub get_synteny_matches {
  
