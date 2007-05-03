@@ -17,9 +17,6 @@ sub render {
   my $adaptor = $ENSEMBL_WEB_REGISTRY->newsAdaptor();
   my %id_to_species = %{$adaptor->fetch_species($SiteDefs::ENSEMBL_VERSION)};
 
-  foreach my $key (keys %id_to_species) {
-    warn "KEY: " . $key;
-  }
   my %species_description = setup_species_descriptions($species_defs);
 
   my $reg_user = $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->get_user;
@@ -119,9 +116,10 @@ sub render_species_list {
   my %description = %{ $species_description };
   my %id_to_species = %{ $id_to_species };
   my %species_id = reverse %id_to_species;
-  warn "RENDERING";
-  my @specieslists = @{ $user->specieslists };
-  warn "FOUND: SPECIES: ". $#specieslists;
+  my @specieslists = ();
+  if ($user->id) {
+    @specieslists = @{ $user->specieslists };
+  }
   my %favourites = ();
   my @favourite_species = ();
   my @species_list = ();
