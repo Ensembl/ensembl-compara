@@ -129,6 +129,21 @@ sub fetch_all_roots {
 }
 
 
+sub fetch_subroot_by_left_right_index {
+  my ($self,$node) = @_;
+
+  unless ($node->left_index && $node->right_index) {
+    warning("fetch_subroot_by_left_right_index subroutine assumes that left and right index has been built and store in the database.\n This does not seem to be the case.\n");
+  }
+  my $left_index = $node->left_index;
+  my $right_index = $node->right_index;
+
+  my $constraint = "WHERE parent_id = root_id";
+  $constraint .= " AND left_index<=$left_index";
+  $constraint .= " AND right_index>=$right_index";
+  return $self->_generic_fetch($constraint)->[0];
+}
+
 
 ###########################
 # STORE methods
