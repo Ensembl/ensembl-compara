@@ -69,7 +69,7 @@ my $hostname = hostname();
 warn "Stopping httpd daemon...\n";
 
 open (P, "<$serverroot/logs/mart-$hostname.httpd.pid") or die
-    "Could not open PID file $serverroot/logs/$hostname.httpd.pid: $!\n" .
+    "Could not open PID file $serverroot/logs/mart-$hostname.httpd.pid: $!\n" .
     "[FATAL] Restart failed.\n";
 my $pid = <P>;
 close P;
