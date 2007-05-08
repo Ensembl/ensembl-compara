@@ -30,28 +30,23 @@ Bio::EnsEMBL::Compara::DBSQL::ConservationScoreAdaptor - Object adaptor to acces
 
      $conservation_score_adaptor->store($conservation_score);
 
-  Retrieve difference score data from the database
+  To retrieve score data from the database using the default display_size
      $conservation_scores = $conservation_score_adaptor->fetch_all_by_MethodLinkSpeciesSet_Slice($method_link_species_set, $slice);
-     $conservation_scores = $conservation_score_adaptor->fetch_all_by_MethodLinkSpeciesSet_Slice($method_link_species_set, $slice, 800, "AVERAGE", 10);
+
+  To retrieve one score per base in the slice
+     $conservation_scores = $conservation_score_adaptor->fetch_all_by_MethodLinkSpeciesSet_Slice($method_link_species_set, $slice, $slice->end-$slice->start+1);
+  Print the scores
+   foreach my $score (@$conservation_scores) {
+      printf("position %d observed %.4f expected %.4f difference %.4f\n",  $score->position, $score->observed_score, $score->expected_score, $score->diff_score);
+   }
+
+  A simple example script for extracting scores from a slice can be found in ensembl-compara/scripts/examples/getConservationScores.pl
 
 =head1 DESCRIPTION
 
-This module is used to access data in the conservation_score table
-
-Not all bases in an alignment have a conservation score (for example,
-if there is insufficient coverage), termed here as 'uncalled'. To keep storage
-space in the database to a minimum, only 'called' values are stored. Where 
-there is a region of 'uncalled' bases, a new row is started and the position of
-the first 'called' score is set in the conservation_score position field. 
-Small regions of uncalled scores (upto 10 scores) are allowed to prevent large 
-numbers of small conservation_score objects being created.
-For example, for an alignment which has 96 called bases, followed by 20 
-uncalled bases followed by 13 called bases would have a conservation_score
-table looking like:
-genomic_align_block_id   position   window_size  observed_score .....
-    32533                   1          1         "string of 96 scores"
-    32533                   117        1         "string of 13 scores"
-
+This module is used to access data in the conservation_score table.
+Each score is represented by a Bio::EnsEMBL::Compara::ConservationScore. The position and an observed, expected score and a difference score (expected-observed) is stored for each column in a multiple alignment. Not all bases in an alignment have a score (for example, if there is insufficient coverage) and termed here as 'uncalled'. 
+In order to speed up processing of the scores over large regions, the scores are stored in the database averaged over window_sizes of 1 (no averaging), 10, 100 and 500. When retrieving the scores, the most appropriate window_size is estimated from the length of the alignment or slice and the number of scores requested, given by the display_size. There is no need to specify the window_size directly. If the number of scores requested (display_size) is smaller than the alignment length or slice length, the scores will be either averaged if display_type = "AVERAGE" or the maximum value taken if display_type = "MAX". Scores in uncalled regions are not returned. If a score for each column in an alignment is required, the display_size should be set to be the same size as the alignment length or slice length. 
 
 =head1 AUTHOR - Kathryn Beal
 
@@ -112,24 +107,33 @@ my $PACKED = 1;
   Arg  5     : (opt) integer $window_size
   Exceptions : warning if window_size is not valid
   Example    : my $conservation_scores =
-                    $conservation_score_adaptor->fetch_all_by_MethodLinkSpeciesSet_Slice($method_link_species_set, $slice, 1000, "MAX", 10);
-  Description: Retrieve the corresponding
+                    $conservation_score_adaptor->fetch_all_by_MethodLinkSpeciesSet_Slice($method_link_species_set, $slice, $slice->end-$slice->start+1);
+  Description: Retrieve the corresponding 
                Bio::EnsEMBL::Compara::ConservationScore objects. 
-               Each conservation score object contains a single score in slice 
-               coordinates ie the position field contains the slice coordinate
-               and the diff score field contains a single float. 
+               Each conservation score object contains a position in slice 
+               coordinates, the observed_score, the expected_score and the 
+               diff_score (or conservation score) calculated as the 
+               (expected_score - observed_score).
+               The method_link_species_set is obtained
+               using the method_link type of "GERP_CONSERVATION_SCORE". 
+               For example, this could be obtained for the 10 way PECAN 
+               alignment, using:
+               my $mlss = $mlss_adaptor->fetch_by_method_link_type_registry_aliases("GERP_CONSERVATION_SCORE", ["human", "chimp", "rhesus", "cow", "dog", "mouse", "rat", "opossum", "platypus", "chicken"]);
+
+               Display_size defines the number of scores that will be returned.                If the slice length is larger than the display_size, the scores 
+               will either be averaged if the display_type is "AVERAGE" or the 
+               maximum taken if display_type is "MAXIMUM". 
+               Window_size defines which set of pre-averaged scores to use. 
+               Valid values are 1, 10, 100 or 500 although there is no need to 
+               define the window_size because the program will select the most 
+               appropriate window_size to use based on the slice length and the
+               display_size for example, a slice length of 1000000 and 
+               display_size of 1000 will automatically use a window_size of 500.
+               Slice positions which have no scores are not returned.
                The min and max y axis values for the array of 
                conservation score objects are set in the first conservation 
-               score object (index 0). Method_link_species_set is that for the
-               conservation score. Display_size is the number of scores
-               that will be returned. If the slice length is larger than the
-               display_size, the scores will either be averaged if the 
-               display_type is "AVERAGE" or the maximum taken if display_type
-               is "MAXIMUM". If the window_size is not specified, the
-               window_size is determined as the largest window_size 
-               which gives at least display_size number of scores. Alignment
-               positions which have no gerp scores are returned as undef.
-               
+               score object (index 0). 
+
   Returntype : ref. to an array of Bio::EnsEMBL::Compara::ConservationScore objects. 
   Caller     : object::methodname
   Status     : At risk
@@ -276,29 +280,32 @@ sub fetch_all_by_MethodLinkSpeciesSet_Slice {
   Arg  6     : (opt) string $display_type (one of "AVERAGE" or "MAX") (default "AVERAGE")
   Arg  7     : (opt) integer $window_size
   Example    : my $conservation_scores =
-                    $conservation_score_adaptor->fetch_all_by_GenomicAlignBlock($genomic_align_block, $align_start, $align_end, $slice_length, 1000, "MAX", 10);
+                    $conservation_score_adaptor->fetch_all_by_GenomicAlignBlock($genomic_align_block, $align_start, $align_end, $slice_length, $slice_length);
   Description: Retrieve the corresponding
                Bio::EnsEMBL::Compara::ConservationScore objects. 
-               Each conservation score object contains a single score in 
-               alignment coordinates ie the position field contains the
-               alignment coordinate and the diff score field contains a 
-               single float. The min and max y axis values for 
-               the array of conservation score objects are set in the first 
-               conservation score object (index 0). 
+	       Each conservation score object contains a position in alignment
+               coordinates, the observed_score, the expected_score and the 
+               diff_score (conservation score) calculated as 
+	       (expected_score - observed_score).
                The $align_start and $align_end parameters give the start and 
                end of a region within a genomic_align_block and should be in 
                alignment coordinates.
                The $slice_length is the total length of the region to be 
                displayed and may span several individual genomic align blocks.
                It is used to automatically calculate the window_size.
-               Display_size is the number 
-               of scores that will be returned. If the slice length is larger 
-               than the display_size, the scores will either be averaged if the
-               display_type is "AVERAGE" or the maximum taken if display_type
-               is "MAXIMUM". If the window_size is not specified, the
-               window_size is determined as the largest window_size 
-               which gives at least display_size number of scores. Alignment
-               positions which have no gerp scores are returned as undef.
+               Display_size is the number of scores that will be returned. If 
+               the $slice_length is larger than the $display_size, the scores 
+               will either be averaged if the display_type is "AVERAGE" or the 
+               maximum taken if display_type is "MAXIMUM". 
+	       Window_size defines which set of pre-averaged scores to use. 
+	       Valid values are 1, 10, 100 or 500. There is no need to define 
+               the window_size because the program will select the most 
+               appropriate window_size to use based on the slice_length and the
+               display_size. 
+               Alignment positions which have no scores are not returned.
+               The min and max y axis values for 
+               the array of conservation score objects are set in the first 
+               conservation score object (index 0). 
   Returntype : ref. to an array of Bio::EnsEMBL::Compara::ConservationScore 
                objects. 
   Caller     : object::methodname
@@ -1060,6 +1067,10 @@ sub _get_alignment_scores {
 	    }
    	}
     }
+    #foreach my $s (@$aligned_scores) {
+	#print STDERR "score " . $s->position . " " . $s->diff_score . "\n";
+    #}
+
     
     #hack to remove zeros after they've been added. Better to not add them
     #in the first place (but haven't got the code working yet)
@@ -1118,6 +1129,7 @@ sub _add_to_bucket {
     my $final_diff_score;
     my $filled_bucket = 0;
 
+    #print STDERR "add_to_bucket $chr_pos $diff_score\n";
     #bit of a hack to turn 0's stored in the database to undefs
     if (defined($diff_score) && $diff_score == 0) {
 	$diff_score = $_no_score_value;
