@@ -18,13 +18,20 @@ use CGI;
 
 my $cgi = new CGI;
 my $url = $cgi->param('url');
-my $script_name = "contigview";
+my $referer = $ENV{'HTTP_REFERER'};
+my $script_name = 'contigview';
+
+#warn "REFERING: " . $referer;
+my ($ref_url, $ref_args) = split(/\?/, $referer);
+my @items = split(/\//, $ref_url);
+if ($#items == 4) {
+  $script_name = pop @items;
+}
 
 my $session = $ENSEMBL_WEB_REGISTRY->get_session;
 $session->set_input($cgi);
 my $string = $session->get_script_config_as_string($script_name);
 
-my $cgi = CGI->new;
 my $page = EnsEMBL::Web::Interface::PageDefinition->new();
 my $data = EnsEMBL::Web::DBSQL::DataDefinition->new();
 
