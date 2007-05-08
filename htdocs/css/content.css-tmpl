@@ -372,10 +372,6 @@ p.error {
 
 .red { color:#933; }
 
-.blue-bullet {
-    background-image:url(blue_bullet.gif); background-repeat:no-repeat;
-    background-position:left center; padding-left:8px; }
-
 h2.breadcrumbs { color:[[TEXTCOLOR]]; }
 a.breadcrumb { text-decoration:none }
 
