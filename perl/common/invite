@@ -23,22 +23,29 @@ if ($user) {
   $url = "/common/groupview?id=" . $group->id;
   if ($cgi->param('user_id') eq $user->id) {
     if ($user->is_administrator_of($group)) {
-
-      $invite = EnsEMBL::Web::Object::Data::Invite->new;
-   
-      $invite->group_id($group->id);
-      $invite->email($cgi->param('invite_email'));
-      $invite->status("pending");
-      $invite->code(EnsEMBL::Web::Tools::RandomString::random_string());
-      $invite->save;
-      my $mailer = EnsEMBL::Web::Mailer::User->new;
-      $mailer->send_invite_email($user, $group, $invite, $cgi->param('invite_email'));
-      my $feedback = "Invitation email send to: " . $cgi->param('invite_email');
+      my @invites = split(/,/, $cgi->param('invite_email')); 
+      foreach my $email (@invites) {
+        $email =~ s/ //g;
+	&process_invite($user, $group, $email);
+      }
+      my $feedback = "Invitation email sent to: " . $cgi->param('invite_email');
       $url .= "&feedback=" . CGI::escape($feedback); 
     } else {
       $url = "/failed.html";
     }
   }
+}
+
+sub process_invite {
+  my ($user, $group, $email) = @_;
+  $invite = EnsEMBL::Web::Object::Data::Invite->new;
+  $invite->group_id($group->id);
+  $invite->email($email);
+  $invite->status("pending");
+  $invite->code(EnsEMBL::Web::Tools::RandomString::random_string());
+  $invite->save;
+  my $mailer = EnsEMBL::Web::Mailer::User->new;
+  $mailer->send_invite_email($user, $group, $invite, $email);
 }
 
 CGI::redirect($url);
