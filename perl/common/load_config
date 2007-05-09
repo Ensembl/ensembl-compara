@@ -11,8 +11,7 @@ use Apache2::RequestUtil;
 
 use CGI;
 my $cgi = new CGI;
-my $script_name = "contigview";
-
+my @scripts = qw(contigview cytoview);
 
 my $url = $cgi->param('url');
 my ($host, $params) = split(/\?/, $url);
@@ -38,10 +37,15 @@ if ($user) {
       warn "CONFIG: " . $configuration->id;
       if ($configuration->id eq $cgi->param('id')) {
         my $string = $configuration->scriptconfig;
-
+	if ($configuration->url) {
+          $url = $configuration->url;
+	}
         my $r = Apache2::RequestUtil->request();
         $session->create_session_id($r);
-        $session->set_script_config_from_string($script_name, $string);
+	foreach my $script_name (@scripts) {
+	  warn "SETTING CONFIG FOR SCRIPT: " . $script_name;
+          $session->set_script_config_from_string($script_name, $string);
+	}
       } 
     }
 } else {

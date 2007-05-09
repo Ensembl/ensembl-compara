@@ -19,7 +19,7 @@ my $db = $ENSEMBL_WEB_REGISTRY->dbAdaptor;
 
 my $class = '%%user';
 if ($cgi->param('class')) {
-  $class = $cgi->param('class');
+  $class = '%%' . $cgi->param('class');
 }
 
 my $table = EnsEMBL::Web::Tools::DBSQL::TableName::parse_table_name($class . "_record%%");
