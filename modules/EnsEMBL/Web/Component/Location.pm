@@ -23,6 +23,7 @@ use Bio::EnsEMBL::ExternalData::DAS::DASAdaptor;
 use Bio::EnsEMBL::ExternalData::DAS::DAS;
 use EnsEMBL::Web::RegObj;
 use EnsEMBL::Web::Form;
+use EnsEMBL::Web::Object::Data::User;
 
 use Data::Dumper;
 our @ISA = qw( EnsEMBL::Web::Component);
@@ -489,11 +490,13 @@ sub contigviewbottom_config {
   my $html = "";
   if ($ENV{'ENSEMBL_USER_ID'}) {
     my $user = $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->get_user;
-    my @current_configs = $user->current_config_records;
+    my $data_user = EnsEMBL::Web::Object::Data::User->new({ id => $user->id });
+    my @current_configs = @{ $data_user->currentconfigs };
     my $current_config = $current_configs[0];
+    warn "---------------> CONFIG CHECK: " . $current_config->config;
     if ($current_config) {
-      my @configurations = $user->configuration_records;
-      foreach my $configuration (@configurations) {
+      foreach my $configuration (@{ $data_user->configurations }) {
+        warn "SEACHING FOR CONFIG: " . $configuration->id; 
         if ($configuration->id eq $current_config->config) {
           my $saved_string = $configuration->scriptconfig . "\n";
           $string =~ s/\n|\r|\f//g; 
@@ -931,6 +934,7 @@ sub contigviewbottom_menu {  return bottom_menu( @_, 'contigviewbottom' ); }
 
 sub bottom_menu {
   my($panel, $object, $configname ) = @_;
+  warn "BOTTOM MENU SETUP";
   my $mc = $object->new_menu_container(
     'configname' => $configname,
     'panel'      => 'bottom',
@@ -940,7 +944,8 @@ sub bottom_menu {
   my $html = $mc->render_html;
   $html .= $mc->render_js;
   $panel->print( $html );
-  return 0;
+  warn "MISSING: " . $mc->{'config'}->{'missing_tracks'};
+  return $mc;
 }
 
 sub alignsliceviewbottom_menu {  
