@@ -5,6 +5,8 @@ package EnsEMBL::Web::Configuration::Interface::User;
 use strict;
 use EnsEMBL::Web::Configuration::Interface;
 use EnsEMBL::Web::Object::User;
+use EnsEMBL::Web::Record::Group;
+use EnsEMBL::Web::Object::Data::Invite;
 use EnsEMBL::Web::Tools::RandomString;
 use EnsEMBL::Web::Tools::Encryption;
 use EnsEMBL::Web::Mailer::User;
@@ -40,15 +42,17 @@ sub save {
         my $user = EnsEMBL::Web::Object::User->new(
                       { adaptor => $ENSEMBL_WEB_REGISTRY->userAdaptor, id => $interface->data->id });
         if (!$user->password) { ## New user
-          ## Send activation email here!
-          my $mailer = EnsEMBL::Web::Mailer::User->new();
-          $mailer->email($user->email);
-          $mailer->send_activation_email((
+          if ($user->status eq 'pending') {
+            ## Send activation email here!
+            my $mailer = EnsEMBL::Web::Mailer::User->new();
+            $mailer->email($user->email);
+            $mailer->send_activation_email((
                               'code' => $user->salt || '', 
                               'link' => $user->activation_link || '', 
                               group_id => $object->param('group_id') 
                   ));
-          $url = "/common/$script?dataview=success;user_id=".$interface->data->id;
+          }
+          $url = "/common/$script?dataview=success;user_id=".$interface->data->id.';record_id='.$object->param('record_id');
         }
         else {
           $url = "/common/accountview";
@@ -58,6 +62,70 @@ sub save {
         $url = "/common/$script?dataview=failure";
       }
     }
+  }
+  return $url;
+}
+
+sub join_by_invite {
+  my ($self, $object, $interface) = @_;
+
+  my $record_id = $object->param('record_id');
+  #warn "RECORD ID: " . $record_id;
+  my @records = EnsEMBL::Web::Record::Group->find_invite_by_group_record_id($record_id, { adaptor => $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->userAdaptor });
+  my $record = $records[0];
+  $record->adaptor($EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->userAdaptor);
+  my $email = $record->email;
+
+  my $user = EnsEMBL::Web::Object::User->new({ adaptor => $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->userAdaptor,  email => $email });
+
+  my $url;
+  if ($user->id) {
+    my $invite = EnsEMBL::Web::Object::Data::Invite->new({id => $object->param('record_id')});
+    my $group_id = $invite->group->id;
+
+    my $group = EnsEMBL::Web::Object::Group->new(( adaptor => $ENSEMBL_WEB_REGISTRY->userAdaptor, id => $group_id ));
+    # warn "WORKING WITH USER: " . $user->id . ": " . $user->email;
+    $user->add_group($group);
+    # warn "SAVING USER";
+    $user->save;
+    $invite->status('accepted');
+    # warn "SAVING RECORD";
+    $invite->save;
+    
+    if ($ENV{'ENSEMBL_USER_ID'}) {
+      $url = "/common/user/account";
+    }
+    else {
+      $url = '/login.html';
+    }
+  }
+  else {
+    $url = "/common/register?email=$email;status=active;record_id=$record_id";
+  }
+  return $url;
+}
+
+sub check_status {
+  my ($self, $object, $interface) = @_;
+
+  my $script = $interface->script_name || $object->script;
+  my $url;
+  my $primary_key = $interface->data->get_primary_key;
+  my $id = $object->param($primary_key);
+
+  if ($id) {
+    $interface->data->populate($id);
+    my $salt = $interface->data->salt;
+    ## has this user got pending invites?
+    if ($object->param('record_id')) {
+      $url = "/common/activate?dataview=confirm;user_id=$id;code=$salt;record_id=".$object->param('record_id');
+    }
+    else {
+      $url = '/common/activate?dataview=deny';
+    }
+  }
+  else {
+    $url = '/common/activate?dataview=confirm';
   }
   return $url;
 }
@@ -119,10 +187,28 @@ sub activate {
       if ($success) {
         $interface->data->status('active');
         $success = $interface->data->save;
+        ## If this registration was via an invite, add the group to the user
+        if ($object->param('record_id')) {
+          my $invite = EnsEMBL::Web::Object::Data::Invite->new({id => $object->param('record_id')});
+warn "Created object $invite";
+          my $group_id = $invite->group->id;
+      
+          my $user = EnsEMBL::Web::Object::User->new({ adaptor => $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->userAdaptor,  
+                    id => $object->param('user_id')});
+          my $group = EnsEMBL::Web::Object::Group->new(( adaptor => $ENSEMBL_WEB_REGISTRY->userAdaptor, id => $group_id ));
+          warn "Adding user ", $user->id, " to group ", $group_id;
+          # warn "WORKING WITH USER: " . $user->id . ": " . $user->email;
+          $user->add_group($group);
+          # warn "SAVING USER";
+          $user->save;
+          $invite->status('accepted');
+          # warn "SAVING RECORD";
+          $invite->save;
+        }
       }
 
       if ($success) {
-        $url = "/common/$script?dataview=success;user_id=".$interface->data->id.';key='.$save{encrypted_password};
+        $url = "/common/$script?dataview=success;user_id=".$object->param('user_id').';key='.$save{encrypted_password};
       }
       else {
         $url = "/common/$script?dataview=failure";
