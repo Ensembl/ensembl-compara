@@ -14,16 +14,10 @@ use EnsEMBL::Web::Interface::FormDefinition;
 use EnsEMBL::Web::DBSQL::DataDefinition;
 use EnsEMBL::Web::DBSQL::ViewAdaptor;
 use EnsEMBL::Web::Record::Group;
-use EnsEMBL::Web::Object::Group;
+use EnsEMBL::Web::Object::Data::Invite;
 use EnsEMBL::Web::RegObj;
 
-warn "FINDING RECORDS";
-my @records = EnsEMBL::Web::Record::Group->find_invite_by_group_record_id($cgi->param('id'), { adaptor => $ENSEMBL_WEB_REGISTRY->userAdaptor });
-
-warn "FOUND: " . $records[0]->group;
-my $email = $records[0]->email;
-my $group_id = $records[0]->group;
-my $group = EnsEMBL::Web::Object::Group->new(( id => $group_id ));
+my $invite = EnsEMBL::Web::Object::Data::Invite->new({id => $cgi->param('id')});
 
 my $page = EnsEMBL::Web::Interface::PageDefinition->new();
 my $data = EnsEMBL::Web::DBSQL::DataDefinition->new();
@@ -46,7 +40,7 @@ $page->send_params({ record_id => 'yes', code => 'yes' });
 $page->on_complete('/common/join_by_invite');
 $page->on_error('/account/bookmark_error.html');
 
-$page->add_text('Confirm your group membership to <b>"' . $group->name . '"</b> here.');
+$page->add_text('Confirm your group membership to <b>"' . $invite->group->name . '"</b> here.');
 
 my $conditional = EnsEMBL::Web::Interface::FormDefinition->new();
 $conditional->add_option({ 'conditional' => 1 });
@@ -56,7 +50,7 @@ $page->add_configuration_element('record', 'yes');
 $page->add_configuration_element('ident', 'group_id');
 $page->add_configuration_element('type', 'invite');
 $page->add_configuration_element('record_id', $cgi->param('id'));
-$page->add_configuration_element('status', 'accepted');
+$page->add_configuration_element('status', 'in_progress');
 $page->add_form_element('email', "Your email address");
 
 if ($cgi->param('invite')) {
