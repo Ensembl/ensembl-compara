@@ -144,6 +144,9 @@ sub _data_form {
   if ($id) {
     $panel->interface->data->populate($id);
   }
+  else {
+    $panel->interface->cgi_populate($object, '');
+  }
   my @widgets = @{$panel->interface->edit_fields};
 
   foreach my $element (@widgets) {
