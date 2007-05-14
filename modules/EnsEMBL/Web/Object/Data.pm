@@ -7,6 +7,7 @@ use Class::Std;
 use EnsEMBL::Web::DBSQL::SQL::Result;
 use EnsEMBL::Web::DBSQL::SQL::Request;
 use EnsEMBL::Web::Object::DataField;
+use EnsEMBL::Web::Tools::DBSQL::TableName;
 use EnsEMBL::Web::Root;
 
 {
@@ -48,6 +49,7 @@ sub populate {
   $self->id($id);
   my $result = $self->get_adaptor->find($self);
   foreach my $key (@{ $result->fields }) {
+    next if $key eq EnsEMBL::Web::Tools::DBSQL::TableName::parse_primary_key($self->get_primary_key);
     my $field = $self->mapped_field($key);
     if ($self->get_data_field_name && ($field eq $self->get_data_field_name)) {
       $self->populate_data($result->get_value($key));
