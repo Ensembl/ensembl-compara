@@ -128,7 +128,7 @@ sub create {
   my $result = EnsEMBL::Web::DBSQL::SQL::Result->new();
   my $sql = 'INSERT INTO ' . $self->get_table . ' SET '; 
   $sql .= $self->set_clause($data);  
-  #warn "CREATE: " . $sql;
+  warn "CREATE: " . $sql;
   $self->get_handle->prepare($sql);
   $result->set_action('create');
   if ($self->get_handle->do($sql)) {
@@ -142,10 +142,12 @@ sub update {
   my ($self, $data) = @_;
   my $result = EnsEMBL::Web::DBSQL::SQL::Result->new();
   $result->set_action('update');
+  my $key = EnsEMBL::Web::Tools::DBSQL::TableName::parse_primary_key($data->get_primary_key);
   my $sql = 'UPDATE ' . $self->get_table . " ";
   $sql .= "SET " . $self->set_clause($data);
-  $sql .= " WHERE " . $data->get_primary_key . "='" . $data->id . "'";
+  $sql .= " WHERE " . $key . "='" . $data->id . "'";
   $sql .= ";";
+  warn "UPDATE: " . $sql;
   $self->get_handle->prepare($sql);
   if ($self->get_handle->do($sql)) {
     $result->set_success(1);
@@ -173,9 +175,10 @@ sub find {
   #warn "FIND";
   my $result = EnsEMBL::Web::DBSQL::SQL::Result->new();
   $result->set_action('find');
-  my $sql = "SELECT * FROM " . $self->get_table . " WHERE " . $data->get_primary_key . "='" . $data->id . "';";
-  #warn $sql;
-  my $hashref = $self->get_handle->selectall_hashref($sql, $data->get_primary_key);
+  my $key = EnsEMBL::Web::Tools::DBSQL::TableName::parse_primary_key($data->get_primary_key);
+  my $sql = "SELECT * FROM " . $self->get_table . " WHERE " . $key . "='" . $data->id . "';";
+  warn $sql;
+  my $hashref = $self->get_handle->selectall_hashref($sql, $key);
   $result->set_result_hash($hashref->{$data->id});
   return $result;
 }

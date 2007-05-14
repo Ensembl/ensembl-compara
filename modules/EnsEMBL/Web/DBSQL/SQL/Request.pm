@@ -4,6 +4,7 @@ use strict;
 use warnings;
 
 use Class::Std;
+use EnsEMBL::Web::Tools::DBSQL::TableName;
 
 our @ISA = qq(EnsEMBL::Web::DBSQL::SQL);
 
@@ -43,7 +44,7 @@ sub get_sql_table {
   my $self = shift;
   my $sql = "";
   if ($self->get_table) {
-    $sql = $self->get_table;
+    $sql = EnsEMBL::Web::Tools::DBSQL::TableName::parse_table_name($self->get_table);
   } else {
     $sql = "<table>";
   }
