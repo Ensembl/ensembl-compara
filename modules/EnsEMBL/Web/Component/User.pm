@@ -569,6 +569,7 @@ sub _render_configs {
 
   foreach my $configuration (@configurations) {
     my $description = $configuration->description || '&nbsp;';
+    my $link = "<a href='javascript:void(0);' onclick='javascript:load_config_link(" . $configuration->id . ");'>";
     push @records, {  'id' => $configuration->id, 
                       'ident' => 'user',
                       'sortable' => $configuration->name,
@@ -576,19 +577,20 @@ sub _render_configs {
                       'edit_url' => 'edit_config', 
                       'delete_url' => 'remove_record',
                       'data' => [
-      '<a href="' . $configuration->url . '" title="' . $configuration->description . '">' . $configuration->name . '</a>', '&nbsp;' 
-    ]};
+                         $link . $configuration->name . '</a>', '&nbsp;' 
+                      ]};
   }
 
   foreach my $group (@{ $user->groups }) {
     foreach my $configuration (@{ $group->configurations }) {
       my $description = $configuration->description || '&nbsp;';
+      my $link = "<a href='javascript:void(0);' onclick='javascript:load_config_link(" . $configuration->id . ");'>";
       push @records, {'id' => $configuration->id, 
                       'ident' => $group->id, 
                       'sortable' => $configuration->name,
                       'data' => [
-        '<a href="' . $configuration->url . '" title="' . $configuration->description . '">' . $configuration->name . '</a>', $group->name
-      ]};
+                        $link . $configuration->name . '</a>', $group->name
+                      ]};
     }
   }
 
@@ -1047,6 +1049,7 @@ sub _render_group_settings {
     my @records = ();
     foreach my $configuration (@configurations) {
       my $description = $configuration->description || '&nbsp;';
+      my $link = "<a href='javascript:void(0);' onclick='javascript:load_config_link(" . $configuration->id . ");'>";
       push @records, {  'id' => $configuration->id, 
                         'group_id' => $group->id,
                         'ident' => 'user',
@@ -1054,8 +1057,8 @@ sub _render_group_settings {
                         'edit_url' => 'edit_config', 
                         'delete_url' => 'remove_group_record', 
                         'data' => [
-        '<a href="' . $configuration->url . '" title="' . $configuration->description . '">' . $configuration->name . '</a>', '&nbsp;' 
-      ]};
+                          $link . $configuration->name . '</a>', '&nbsp;' 
+                        ]};
     }
     $html .= _render_settings_table(\@records);
   }
