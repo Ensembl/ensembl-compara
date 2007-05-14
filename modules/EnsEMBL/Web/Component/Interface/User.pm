@@ -42,12 +42,26 @@ sub confirm_form {
           'label' => 'Organisation',
           'value' => $panel->interface->data->organisation,
         );
-  $form->add_element(
+  if ($object->param('code') ) {
+    $form->add_element(
+          'type'  => 'NoEdit',
+          'name'  => 'code',
+          'label' => 'Code',
+          'value' => $object->param('code'),
+        );
+    $form->add_element(
+          'type'  => 'Hidden',
+          'name'  => 'salt',
+          'value' => $object->param('code'),  
+        );
+  }
+  else {
+    $form->add_element(
           'type'  => 'String',
           'name'  => 'salt',
           'label' => 'Activation Code',
-          'value' => $object->param('code'),
         );
+  }
   $form->add_element(
           'type'  => 'Password',
           'name'  => 'enter_password',
@@ -62,6 +76,11 @@ sub confirm_form {
           'type'  => 'Hidden',
           'name'  => $primary_key,
           'value' => $id,  
+        );
+  $form->add_element(
+          'type'  => 'Hidden',
+          'name'  => 'record_id',
+          'value' => $object->param('record_id'),  
         );
 
   ## navigation elements
