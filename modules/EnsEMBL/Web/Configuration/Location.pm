@@ -376,9 +376,10 @@ sub cytoview {
   my @H = map { /^URL:(.*)/ ? $1 : () } @{ $obj->highlights( $URL ? "URL:$URL" : () ) };
 
   $bottom->add_components(qw(
-    menu  EnsEMBL::Web::Component::Location::cytoview_menu
-    nav   EnsEMBL::Web::Component::Location::cytoview_nav
-    image EnsEMBL::Web::Component::Location::cytoview
+    config EnsEMBL::Web::Component::Location::cytoview_config
+    menu   EnsEMBL::Web::Component::Location::cytoview_menu
+    nav    EnsEMBL::Web::Component::Location::cytoview_nav
+    image  EnsEMBL::Web::Component::Location::cytoview
   ));
   if( $obj->param('panel_bottom') ne 'off' ) {
     push @URL_configs, $obj->user_config_hash( 'cytoview' ) if @H;
