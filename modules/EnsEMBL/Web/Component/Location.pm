@@ -425,6 +425,39 @@ sub contigviewtop {
   return 1;
 }
 
+sub cytoview_config {
+  my ($panel, $object) = @_;
+  my $user = $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->get_user;
+  my $data_user = EnsEMBL::Web::Object::Data::User->new({ id => $user->id });
+  my @current_configs = @{ $data_user->currentconfigs };
+  my $current_config = $current_configs[0];
+  my $script_name = "cytoview";
+  my $session = $ENSEMBL_WEB_REGISTRY->get_session;
+  my $string = $session->get_script_config_as_string($script_name);
+  my $html = "";
+
+  warn "CHECKING FOR CURRENT CONFIG: " . $current_config->config;
+  if ($current_config) {
+    foreach my $configuration (@{ $data_user->configurations }) {
+      if ($configuration->id eq $current_config->config) {
+        warn "LOADED CONFIG " . $configuration->id;
+	my $saved_string = $configuration->scriptconfig . "\n";
+	$string =~ s/\n|\r|\f//g;
+	$saved_string =~ s/\n|\r|\f//g;
+
+        $html = "<div style='text-align: center; padding-bottom: 4px;'>";
+        if (length($saved_string) != length($string)) {
+	  $html .= "You have changed the '" . $configuration->name . "' view configuration &middot; <a href='javascript:void(0);' onclick='config_link(" . $configuration->id . ");'><b>Save changes</b></a>";
+        } else {
+          $html .= "You are using the " . $configuration->name . " configuration";
+	}
+        $html .= "</div>";
+      }
+    }
+  }
+  $panel->print($html); 
+}
+
 sub cytoview {
   my($panel, $object) = @_;
   my $slice = $object->database('core')->get_SliceAdaptor()->fetch_by_region(
