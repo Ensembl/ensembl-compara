@@ -13,7 +13,7 @@ our @ISA = qw(EnsEMBL::Web::Object::Data);
 
 sub BUILD {
   my ($self, $ident, $args) = @_;
-  $self->set_primary_key('group_record_id');
+  $self->set_primary_key('%%group_record%%_id');
   $self->set_adaptor(EnsEMBL::Web::DBSQL::MySQLAdaptor->new({table => '%%group_record%%' }));
   $self->set_data_field_name('data');
   $self->add_field({ name => 'email', type => 'text' });
