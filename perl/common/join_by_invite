@@ -33,35 +33,46 @@ my $user = EnsEMBL::Web::Object::User->new({ adaptor => $EnsEMBL::Web::RegObj::E
 
 if (!$user->id) {
 
-my $page = EnsEMBL::Web::Interface::PageDefinition->new();
-my $data = EnsEMBL::Web::DBSQL::DataDefinition->new();
-my $form = EnsEMBL::Web::Interface::FormDefinition->new();
-my $db = $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->dbAdaptor;
-$data->adaptor(EnsEMBL::Web::DBSQL::ViewAdaptor->new((
-                                                       handle => $db,
-                                                       table  => 'user'
-                                                    )) );
+use EnsEMBL::Web::Document::Interface;
+use EnsEMBL::Web::Interface::InterfaceDef;
+use EnsEMBL::Web::Object::Data::User;
+use EnsEMBL::Web::SpeciesDefs;
 
-$data->discover;
-$page->data_definition($data);
-my $sitename = 'Ensembl';
-$page->title('Register for a new account');
-$page->action('create');
-$page->send_params({ id => 'yes', group_id => 'yes' });
-$page->on_complete('/common/activate');
-$page->on_error('/register/error.html');
-
-$form->add_value({'email' => $email });
-
-$page->add_text("You have been invited to join a group. In order to do so, you first need to create a new $sitename account.");
-$page->add_configuration_element('salt', EnsEMBL::Web::Tools::RandomString::random_string(8));
-$page->add_configuration_element('group_id', $group_id);
-$page->add_configuration_element('record_id', $record_id);
-$page->add_form_element('name', "Your name");
-$page->add_form_element('email', "Your email address. You'll use this to log in", $form);
-$page->add_form_element('organisation', "Organisation");
-
-EnsEMBL::Web::Document::DataView::simple('User', $page);
+# Create basic page object, so we can access CGI parameters
+my $webpage = EnsEMBL::Web::Document::Interface::simple('User');
+#
+my $sd = EnsEMBL::Web::SpeciesDefs->new();
+my $help_email = $sd->ENSEMBL_HELPDESK_EMAIL;
+my $sitetype = $sd->ENSEMBL_SITETYPE;
+my $sitename = $sitetype eq 'EnsEMBL' ? 'Ensembl' : $sitetype;
+#
+### Create interface object, which controls the forms
+my $interface = EnsEMBL::Web::Interface::InterfaceDef->new();
+my $data =EnsEMBL::Web::Object::Data::User->new();
+$interface->data($data);
+$interface->discover;
+#
+### Customization
+### Page components
+$interface->default_view('add');
+$interface->panel_footer({'add'=>qq(<p>Need help? <a href="mailto:$help_email">Contact the helpdesk</a> &middot; <a href="/info/about/privacy.html">Privacy policy</a><p>)});
+$interface->panel_header({'preview'=>qq(<p>Please check that you have entered your details correctly, then click on the button to save them to our database and send your activation email.</p>)});
+$interface->caption({'on_failure'=>'Registration Failed'});
+$interface->on_success('/common/activate');
+$interface->on_failure('EnsEMBL::Web::Component::Interface::User::failed_registration');
+#
+### Form elements
+$interface->caption({'add'=>'Register for '.$sitename});
+$interface->element('record_id', {'type'=>'Hidden', options => {value => $record_id}});
+$interface->customize_element('name', 'label', 'Your name');
+$interface->customize_element('email', 'label', "Your email address. You'll use this to log in to Ensembl");
+$interface->customize_element('organisation', 'label', 'Organisation');
+$interface->element_order('name', 'email', 'organisation');
+#
+### Render page or munge data, as appropriate
+### N.B. Force use of Configuration subclass
+$webpage->process($interface, 'EnsEMBL::Web::Configuration::Interface::User');
+#
 
 } else {
   my $group = EnsEMBL::Web::Object::Group->new(( adaptor => $ENSEMBL_WEB_REGISTRY->userAdaptor, id => $group_id ));
