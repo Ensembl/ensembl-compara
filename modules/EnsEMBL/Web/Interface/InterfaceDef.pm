@@ -13,6 +13,7 @@ use EnsEMBL::Web::Interface::ElementDef;
 {
 
 my %Data_of;
+my %ExtraData_of;
 my %Repeat_of;
 my %PermitDelete_of;
 my %ScriptName_of;
@@ -40,6 +41,7 @@ sub new {
   my ($class, %params) = @_;
   my $self = bless \my($scalar), $class;
   $Data_of{$self}         = defined $params{data} ? $params{data} : {};
+  $ExtraData_of{$self}   = defined $params{extra_data} ? $params{extra_data} : {};
   $Repeat_of{$self}       = defined $params{repeat} ? $params{repeat} : undef;
   $PermitDelete_of{$self} = defined $params{permit_delete} ? $params{permit_delete} : undef;
 
@@ -304,6 +306,24 @@ sub element {
   }
 }
 
+sub extra_data {
+  ### a 
+  my ($self, $name, $value) = @_;
+  if ($name) {
+warn "Adding extra field $name";
+    my $extras = $ExtraData_of{$self};
+    if ($value) {
+      $extras->{$name} = $value;
+    }
+    else {
+      $extras->{$name} = '';
+    }
+    $ExtraData_of{$self} = $extras;
+    return $ExtraData_of{$self}{$name};
+  }
+  return $ExtraData_of{$self};
+}
+
 ## Other functions
 
 sub discover {
@@ -447,6 +467,14 @@ sub cgi_populate {
     $data->$field($value);
   }
 
+  ## Check for extra arbitrary data fields
+  my %extras = %{$self->extra_data};
+warn "Extras ", keys %extras;
+  if (keys %extras) {
+    foreach my $key (keys %extras) {
+      $self->extra_data($key, $object->param($key));
+    }
+  }
 }
 
 
@@ -475,6 +503,15 @@ sub edit_fields {
       push @$parameters, \%hidden;
     }
   } 
+  ## Add extra data
+  my %extras = %{$self->extra_data};
+  if (keys %extras) {
+    while (my($k, $v) = each (%extras)) {
+      my %ex = ('name'=>$k, 'type'=>'Hidden', 'value'=>$v);
+      push @$parameters, \%ex;  
+    }
+  }
+
   return $parameters;
 }
 
@@ -517,6 +554,14 @@ sub preview_fields {
     }
     push @$parameters, \%param;
   } 
+  ## Add extra data
+  my %extras = %{$self->extra_data};
+  if (keys %extras) {
+    while (my($k, $v) = each (%extras)) {
+      my %ex = ('name'=>$k, 'type'=>'Hidden', 'value'=>$v);
+      push @$parameters, \%ex;  
+    }
+  }
   return $parameters;
 }
 
@@ -620,6 +665,7 @@ sub DESTROY {
   ### d
   my $self = shift;
   delete $Data_of{$self};
+  delete $ExtraData_of{$self};
   delete $Repeat_of{$self};
   delete $PermitDelete_of{$self};
 
