@@ -948,9 +948,9 @@ sub _sort_GenomicAlignBlocks {
         $this_genomic_align_block->reference_genomic_align->dnafrag_start > $last_end) {
       push(@$sorted_genomic_align_blocks, $this_genomic_align_block);
     } else {
-      warning("Ignoring Bio::EnsEMBL::Compara::GenomicAlignBlock #".
-              ($this_genomic_align_block->dbID or "-unknown")." because it overlaps".
-              " previous Bio::EnsEMBL::Compara::GenomicAlignBlock");
+ #     warning("Ignoring Bio::EnsEMBL::Compara::GenomicAlignBlock #".
+ #             ($this_genomic_align_block->dbID or "-unknown")." because it overlaps".
+ #             " previous Bio::EnsEMBL::Compara::GenomicAlignBlock");
     }
     $last_end = $this_genomic_align_block->reference_genomic_align->dnafrag_end;
   }
