@@ -85,6 +85,10 @@ corresponds to genomic_align_block.perc_id
 
 corresponds to genomic_align_block.length
 
+=item group_id
+
+corresponds to the genomic_align_block.group_id
+
 =item reference_genomic_align_id
 
 When looking for genomic alignments in a given slice or dnafrag, the
@@ -173,6 +177,8 @@ use Bio::SimpleAlign;
   Arg [-LENGTH]
               : (opt.) int $length (the length of this alignment, taking into account
                 gaps and all)
+  Arg [-GROUP_ID]
+              : (opt.) int $group)id (the group ID for this alignment)
   Arg [-REFERENCE_GENOMIC_ALIGN]
               : (opt.) Bio::EnsEMBL::Compara::GenomicAlign $reference_genomic_align (the
                 Bio::EnsEMBL::Compara::GenomicAlign corresponding to the requesting
@@ -192,6 +198,7 @@ use Bio::SimpleAlign;
                        -method_link_species_set => $method_link_species_set,
                        -score => 56.2,
                        -length => 1203,
+                       -group_id => 1234,
                        -genomic_align_array => [$genomic_align1, $genomic_align2...]
                    );
   Description: Creates a new GenomicAlignBlock object
@@ -208,11 +215,11 @@ sub new {
   bless $self,$class;
     
   my ($adaptor, $dbID, $method_link_species_set, $method_link_species_set_id,
-          $score, $perc_id, $length, $reference_genomic_align, $reference_genomic_align_id,
+          $score, $perc_id, $length, $group_id, $reference_genomic_align, $reference_genomic_align_id,
           $genomic_align_array, $starting_genomic_align_id, $ungapped_genomic_align_blocks) = 
     rearrange([qw(
         ADAPTOR DBID METHOD_LINK_SPECIES_SET METHOD_LINK_SPECIES_SET_ID
-        SCORE PERC_ID LENGTH REFERENCE_GENOMIC_ALIGN REFERENCE_GENOMIC_ALIGN_ID
+        SCORE PERC_ID LENGTH GROUP_ID REFERENCE_GENOMIC_ALIGN REFERENCE_GENOMIC_ALIGN_ID
         GENOMIC_ALIGN_ARRAY STARTING_GENOMIC_ALIGN_ID UNGAPPED_GENOMIC_ALIGN_BLOCKS)],
             @args);
 
@@ -229,6 +236,7 @@ sub new {
   $self->score($score) if (defined ($score));
   $self->perc_id($perc_id) if (defined ($perc_id));
   $self->length($length) if (defined ($length));
+  $self->group_id($group_id) if (defined ($group_id));
   $self->reference_genomic_align($reference_genomic_align)
       if (defined($reference_genomic_align));
   $self->reference_genomic_align_id($reference_genomic_align_id)
@@ -393,7 +401,7 @@ sub method_link_species_set_id {
 
 
 =head2 reference_genomic_align_id
- 
+
   Arg [1]    : integer $reference_genomic_align_id
   Example    : $genomic_align_block->reference_genomic_align_id(4321);
   Description: get/set for attribute reference_genomic_align_id. A value of 0 will set the
@@ -410,7 +418,7 @@ sub method_link_species_set_id {
   Returntype : integer
   Exceptions : throw if $reference_genomic_align_id id not a postive number
   Caller     : $genomic_align_block->reference_genomic_align_id(int)
- 
+
 =cut
 
 sub reference_genomic_align_id {
@@ -460,7 +468,7 @@ sub reference_genomic_align_id {
   Returntype : none
   Exceptions : throw if $reference_genomic_align_id id not a postive number
   Caller     : $genomic_align_block->starting_genomic_align_id(int)
- 
+
 =cut
 
 sub starting_genomic_align_id {
@@ -490,7 +498,7 @@ sub starting_genomic_align_id {
   Exceptions : throw if reference_genomic_align_id does not match any of the
                Bio::EnsEMBL::Compara::GenomicAlign objects in the genomic_align_array
   Caller     : $genomic_align_block->reference_genomic_align()
- 
+
 =cut
 
 sub reference_genomic_align {
@@ -549,7 +557,7 @@ sub reference_genomic_align {
   Exceptions : throw if reference_genomic_align_id does not match any of the
                Bio::EnsEMBL::Compara::GenomicAlign objects in the genomic_align_array
   Caller     : $genomic_align_block->starting_genomic_align()
- 
+
 =cut
 
 sub starting_genomic_align {
@@ -580,7 +588,7 @@ sub starting_genomic_align {
   Exceptions : warns if no genomic_align_array has been set and returns a ref.
                to an empty array
   Caller     : $genomic_align_block->resulting_genomic_aligns()
- 
+
 =cut
 
 sub resulting_genomic_aligns {
@@ -653,7 +661,7 @@ sub get_all_non_reference_genomic_aligns {
   Returntype : array reference containing Bio::EnsEMBL::Compara::GenomicAlign objects
   Exceptions : none
   Caller     : general
- 
+
 =cut
 
 sub genomic_align_array {
@@ -699,7 +707,7 @@ sub genomic_align_array {
   Returntype : Bio::EnsEMBL::Compara::GenomicAlign object
   Exceptions : thrown if wrong argument
   Caller     : general
- 
+
 =cut
 
 sub add_GenomicAlign {
@@ -725,7 +733,7 @@ sub add_GenomicAlign {
   Returntype : array reference containing Bio::EnsEMBL::Compara::GenomicAlign objects
   Exceptions : none
   Caller     : general
- 
+
 =cut
 
 sub get_all_GenomicAligns {
@@ -747,7 +755,7 @@ sub get_all_GenomicAligns {
   Returntype : double
   Exceptions : none
   Caller     : general
- 
+
 =cut
 
 sub score {
@@ -830,6 +838,33 @@ sub length {
   }
   
   return $self->{'length'};
+}
+
+=head2 group_id
+
+  Arg [1]    : integer $group_id
+  Example    : my $group_id = $genomic_align_block->group_id;
+  Example    : $genomic_align_block(1234);
+  Description: get/set for attribute group_id. 
+  Returntype : integer
+  Exceptions : none
+  Caller     : general
+
+=cut
+
+sub group_id {
+    my ($self, $group_id) = @_;
+
+    if (defined($group_id)) {
+	$self->{'group_id'} = ($group_id);
+    } elsif (!defined($self->{'group_id'})) {
+	# Try to get the ID from other sources...
+	if (defined($self->{'adaptor'}) and defined($self->dbID)) {
+	    # ...from the database, using the dbID of the Bio::Ensembl::Compara::GenomicAlignBlock object
+	    $self->adaptor->retrieve_all_direct_attributes($self);
+	}
+    }
+    return $self->{'group_id'};
 }
 
 
