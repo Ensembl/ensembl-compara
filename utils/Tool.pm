@@ -164,6 +164,8 @@ sub get_config {
 
 #----------------------------------------------------------------------
 sub sz {
+  return(0,0);
+  ## ps parameters not compatible with Linux!
   my $size = `ps -o vsz $$ | tail -1`;
   chomp $size;
   my $unit = chop $size;
