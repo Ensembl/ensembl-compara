@@ -72,15 +72,15 @@ When prompted the password is &quot;CVSUSER&quot;.
 
 <div class="example">
 <pre>
-cvs -d :pserver:cvsuser@cvs.sanger.ac.uk:/cvsroot/ensembl co -r branch-ensembl-39 ensembl-compara
+cvs -d :pserver:cvsuser@cvs.sanger.ac.uk:/cvsroot/ensembl co -r branch-ensembl-45 ensembl-compara
 </pre>
 </div>
 
 <p>
-This will check out ensembl-compara code for stable branch 39.
+This will check out ensembl-compara code for stable branch 45.
 Make sure the ensembl core code you have already checked out is on the same branch.
 Note that the branch that is checked out should correspond to the database <a href="/info/software/versions.html">version</a> being used.
-Thus ensembl_compara_39 and e.g. homo_sapiens_core_39_36a and mus_musculus_core_39_36 should be used with the above ensembl branch 39 code.
+Thus ensembl_compara_45 and e.g. homo_sapiens_core_45_36g and mus_musculus_core_45_36f should be used with the above ensembl branch 45 code.
 </p>
 
 <h3 class="boxed">Environment Variables</h3>
@@ -133,6 +133,49 @@ The new one uses the Bio::EnsEMBL::Registry module, which can read either a glob
 auto-configure itself.
 </p>
 
+<h4>Implicitely, using the Bio::EnsEMBL::Registry auto-configuration feature (recommended)</h4>
+
+<p>
+For using the auto-configuration feature, you will only need to know about the host where the Ensembl databases are.
+For instance, if you want to use the public Ensembl databases you can use the following command in your scripts:
+</p>
+
+<div class="example">
+<pre>
+use Bio::EnsEMBL::Registry;
+Bio::EnsEMBL::Registry-&gt;load_registry_from_db(
+    -host =&gt; 'ensembldb.ensembl.org',
+    -user =&gt; 'anonymous',
+    -port =&gt; 3306);
+</pre>
+</div>
+
+<p>
+Alternativelly, you can use a shorter version based on a URL:</p>
+
+<div class="example">
+<pre>
+use Bio::EnsEMBL::Registry;
+Bio::EnsEMBL::Registry-&gt;load_registry_from_url('mysql://anonymous@ensembldb.ensembl.org:3306/');
+</pre>
+</div>
+
+<p>
+This will create the DBAdaptors for all the Ensembl databases on that host. A set of common aliases is also provided
+for convenience.
+</p>
+
+<h4>Implicitely, using the Bio::EnsEMBL::Registry configuration file</h4>
+
+<p>
+You will need to have a registry configuration file set up.
+By default, it takes the file defined by the ENSEMBL_REGISTRY environment variable or
+the file named .ensembl_init in your home directory if the former is not found.
+Additionally, it is possible to use a specific file
+(see perldoc Bio::EnsEMBL::Registry or later in this document for some examples on how to use a different file).
+Please, refer to the <a href="../registry/index.html">Ensembl registry documentation</a> for details about this option.
+</p>
+
 <h4>Explicitely, using the Bio::EnsEMBL::Compara::DBSQL::DBAdaptor</h4>
 
 <p>
@@ -161,39 +204,6 @@ As for a ensembl core connection, in addition to the parameters provided above,
 the optional port, driver and pass parameters can also be used to specify the TCP connection port, 
 the type of database driver and the password respectively. 
 These values have sensible defaults and can often be omitted.
-</p>
-
-<h4>Implicitely, using the Bio::EnsEMBL::Registry configuration file</h4>
-
-<p>
-You will need to have a registry configuration file set up.
-By default, it takes the file defined by the ENSEMBL_REGISTRY environment variable or
-the file named .ensembl_init in your home directory if the former is not found.
-Additionally, it is possible to use a specific file
-(see perldoc Bio::EnsEMBL::Registry or later in this document for some examples on how to use a different file).
-Please, refer to the <a href="../registry/index.html">Ensembl registry documentation</a> for details about this option.
-</p>
-
-<h4>Implicitely, using the Bio::EnsEMBL::Registry auto-configuration feature (recommended)</h4>
-
-<p>
-For using the auto-configuration feature, you will only need to know about the host where the Ensembl databases are.
-For instance, if you want to use the public Ensembl databases you can use the following command in your scripts:
-</p>
-
-<div class="example">
-<pre>
-use Bio::EnsEMBL::Registry;
-Bio::EnsEMBL::Registry-&gt;load_registry_from_db(
-    -host =&gt; 'ensembldb.ensembl.org',
-    -user =&gt; 'anonymous',
-    -port =&gt; 3306);
-</pre>
-</div>
-
-<p>
-This will create the DBAdaptors for all the Ensembl databases on that host. A set of common aliases is also provided
-for convenience.
 </p>
 
 <h3 class="boxed">Ensembl compara adaptors</h3>
@@ -248,7 +258,7 @@ Refer to the Ensembl core tutorial for a good description of the coding conventi
 </p>
 
 <p>
-We can divide the fetching method of the ObjectAdaptors in two categories: the <b>fetch_by</b> and <a>fetch_all_by</a>.
+We can divide the fetching method of the ObjectAdaptors in two categories: the <b>fetch_by</b> and <b>fetch_all_by</b>.
 The former return one single object while the latter return a reference to an array of objects.
 </p>
 
@@ -347,7 +357,7 @@ my $query_slice = $qy_sa-&gt;fetch_by_region(
 
 # Fetching all the GenomicAlignBlock corresponding to this Slice:
 my $genomic_align_blocks =
-    $genomic_align_block_adaptor-&gt;fetch_by_MethodLinkSpeciesSet_Slice(
+    $genomic_align_block_adaptor-&gt;fetch_all_by_MethodLinkSpeciesSet_Slice(
       $human_mouse_blastz_net_mlss,
       $query_slice);
 </pre>
@@ -492,31 +502,9 @@ my $genomic_align_blocks =
 
 my $all_aligns;
 
-# Create a Bio::SimpleAlign object from every GenomicAlignBlock
+# Get a Bio::SimpleAlign object from every GenomicAlignBlock
 foreach my $this_genomic_align_block (@$genomic_align_blocks) {
-    my $simple_align = Bio::SimpleAlign-&gt;new();
-    $simple_align-&gt;id(&quot;GAB#&quot;.$this_genomic_align_block-&gt;dbID);
-    $simple_align-&gt;score($this_genomic_align_block-&gt;score);
-
-    my $all_genomic_aligns = $this_genomic_align_block-&gt;get_all_GenomicAligns;
-
-    # Create a Bio::LocatableSeq object from every GenomicAlign
-    foreach my $this_genomic_align (@$all_genomic_aligns) {
-        my $seq_name = $this_genomic_align-&gt;dnafrag-&gt;genome_db-&gt;name;
-        $seq_name =~ s/(.)\w* (.)\w*/$1$2/;
-        $seq_name .= $this_genomic_align-&gt;dnafrag-&gt;name;
-        my $aligned_sequence = $this_genomic_align-&gt;aligned_sequence;
-        my $seq = Bio::LocatableSeq-&gt;new(
-            -SEQ    =&gt; $aligned_sequence,
-            -START  =&gt; $this_genomic_align-&gt;dnafrag_start,
-            -END    =&gt; $this_genomic_align-&gt;dnafrag_end,
-            -ID     =&gt; $seq_name,
-            -STRAND =&gt; $this_genomic_align-&gt;dnafrag_strand
-        );
-
-        # Add this Bio::LocatableSeq to the Bio::SimpleAlign
-        $simple_align-&gt;add_seq($seq);
-    }
+    my $simple_align = $this_genomic_align_block-&gt;get_SimpleAlign;
     push(@$all_aligns, $simple_align);
 }
 
@@ -636,7 +624,7 @@ my $member = $member_adaptor-&gt;fetch_by_source_stable_id('ENSEMBLGENE','ENSG00
 # then you get the homologies where the member is involved
 
 my $homology_adaptor = Bio::EnsEMBL::Registry-&gt;get_adaptor('Multi', 'compara', 'Homology');
-my $homologies = $homology_adaptor-&gt;fetch_by_Member($member);
+my $homologies = $homology_adaptor-&gt;fetch_all_by_Member($member);
 
 # That will return a reference to an array with all homologies (orthologues in
 # other species and paralogues in the same one)
@@ -710,7 +698,7 @@ my $member_adaptor = Bio::EnsEMBL::Registry-&gt;get_adaptor($dbname,'compara','M
 my $member = $member_adaptor-&gt;fetch_by_source_stable_id('ENSEMBLGENE','ENSG00000004059');
 
 my $family_adaptor = Bio::EnsEMBL::Registry-&gt;get_adaptor('Multi','compara','Family');
-my $families = $family_adaptor-&gt;fetch_by_Member($member);
+my $families = $family_adaptor-&gt;fetch_all_by_Member($member);
 
 foreach my $family (@{$families}) {
     print join &quot; &quot;, map { $family-&gt;$_ }  qw(description description_score),&quot;\n&quot;;
