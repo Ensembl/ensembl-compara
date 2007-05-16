@@ -99,14 +99,20 @@ sub send {
   my $mailer = new Mail::Mailer 'smtp', Server => $self->mail_server;
   my $time = localtime;
   $mailer->open({
-                'To'      => $self->email,
-                'From'    => $self->from,
-                'Reply-To'=> $self->reply_to,
+                'To'      => $self->escape($self->email),
+                'From'    => $self->escape($self->from),
+                'Reply-To'=> $self->escape($self->reply_to),
                 'Subject' => $self->subject,
                 'Date'    => $time 
                 });
   print $mailer $self->message;
   $mailer->close();
+}
+
+sub escape {
+  my ($self, $value) = @_;
+  $value =~ s/[\r\n].*$//sm;
+  return $value;
 }
 
 sub DESTROY {
