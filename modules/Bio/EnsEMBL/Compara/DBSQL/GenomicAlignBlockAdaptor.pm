@@ -118,7 +118,6 @@ use Bio::EnsEMBL::Compara::DnaFrag;
 use Bio::EnsEMBL::Feature;
 use Bio::EnsEMBL::Utils::Exception;
 
-
 @ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor);
 
 sub new {
@@ -461,6 +460,7 @@ sub fetch_all_by_MethodLinkSpeciesSet_Slice {
             $genome_db, $this_slice->seq_region_name
         );
     next if (!$this_dnafrag);
+
     my $these_genomic_align_blocks = $self->fetch_all_by_MethodLinkSpeciesSet_DnaFrag(
             $method_link_species_set,
             $this_dnafrag,
@@ -1000,7 +1000,8 @@ sub retrieve_all_direct_attributes {
             method_link_species_set_id,
             score,
             perc_id,
-            length
+            length,
+            group_id
           FROM
             genomic_align_block
           WHERE
@@ -1009,7 +1010,7 @@ sub retrieve_all_direct_attributes {
 
   my $sth = $self->prepare($sql);
   $sth->execute($genomic_align_block->dbID);
-  my ($method_link_species_set_id, $score, $perc_id, $length) = $sth->fetchrow_array();
+  my ($method_link_species_set_id, $score, $perc_id, $length, $group_id) = $sth->fetchrow_array();
   
   ## Populate the object
   $genomic_align_block->adaptor($self);
@@ -1018,10 +1019,10 @@ sub retrieve_all_direct_attributes {
   $genomic_align_block->score($score) if (defined($score));
   $genomic_align_block->perc_id($perc_id) if (defined($perc_id));
   $genomic_align_block->length($length) if (defined($length));
+  $genomic_align_block->group_id($group_id) if (defined($group_id));
 
   return $genomic_align_block;
 }
-
 
 =head2 lazy_loading
 
