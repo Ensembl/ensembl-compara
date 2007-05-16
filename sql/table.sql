@@ -163,6 +163,7 @@ CREATE TABLE genomic_align_block (
   score                       double,
   perc_id                     tinyint(3) unsigned DEFAULT NULL,
   length                      int(10),
+  group_id                    bigint unsigned DEFAULT NULL,
 
   # method_link_species_set(method_link_species_set_id) is not a unique key. Some RDBMS may complain
   # FOREIGN KEY (method_link_species_set_id) REFERENCES method_link_species_set(method_link_species_set_id),
