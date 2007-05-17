@@ -528,7 +528,7 @@ sub _internal_nhx_format {
     $nhx .= ")";
   }
   
-  if($format_mode eq "full" || $format_mode eq "transcript_id" || $format_mode eq "gene_id" || $format_mode eq "protein_id") { 
+  if($format_mode eq "full" || $format_mode eq "display_label_composite" || $format_mode eq "transcript_id" || $format_mode eq "gene_id" || $format_mode eq "protein_id") { 
       #full: name and distance on all nodes
       if($self->isa('Bio::EnsEMBL::Compara::AlignedMember')) {
 	  if ($format_mode eq "transcript_id") {
@@ -538,6 +538,13 @@ sub _internal_nhx_format {
 	  } elsif ($format_mode eq "gene_id") {
             my $gene_stable_id = $self->gene_member->stable_id;
             $nhx .= sprintf("%s", $gene_stable_id);
+	  } elsif ($format_mode eq "display_label_composite") {
+            my $display_label = $self->gene_member->display_label;
+            if (defined($display_label)) {
+              $nhx .= $display_label . "_";
+            }
+            $nhx .= $self->name;
+            $nhx .= "_" . $self->genome_db->short_name;
 	  } elsif ($format_mode eq "protein_id") {
             $nhx .= sprintf("%s", $self->name);
           }
@@ -635,6 +642,21 @@ sub _internal_newick_format {
   if($format_mode eq "full") { 
     #full: name and distance on all nodes
     $newick .= sprintf("%s", $self->name,);
+    $newick .= sprintf(":%1.4f", $self->distance_to_parent);
+  }
+  if($format_mode eq "display_label_composite") { 
+    #display_label: external name and distance on all nodes
+    my $display_label;
+    if($self->is_leaf) {
+      $display_label = $self->gene_member->display_label;
+    }
+    if (defined($display_label)) {
+      $newick .= $display_label . "_";
+    }
+    $newick .= $self->name;
+    if ($self->is_leaf) {
+      $newick .= "_" . $self->genome_db->short_name;
+    }
     $newick .= sprintf(":%1.4f", $self->distance_to_parent);
   }
   if($format_mode eq 'simple') { 
