@@ -154,7 +154,7 @@ sub get_params {
 sub run
 {
   my $self = shift;
-  if ($self->{'bsr_threshold'} >= 1) {
+  if ($self->{'bsr_threshold'} >= 1 || (2 >= $self->{original_cluster}->get_tagvalue("gene_count"))) {
     $self->delete_original_cluster;
     return 1;
   }
@@ -165,7 +165,7 @@ sub run
 sub write_output {
   my $self = shift;
 
-  if ($self->{'bsr_threshold'} >= 1) {
+  if ($self->{'bsr_threshold'} >= 1 || (2 >= $self->{original_cluster}->get_tagvalue("gene_count"))) {
     $self->delete_original_cluster;
     return 1;
   }
@@ -478,6 +478,8 @@ sub store_clusters {
   #
   my $mlss_id = $self->{'cluster_mlss'}->dbID;
   my $leaves = $clusterset->get_all_leaves;
+  printf("leaves %d\n", scalar @$leaves);
+
   foreach my $leaf (@$leaves) {
     #leaves are NestedSet objects, bless to make into AlignedMember objects
     bless $leaf, "Bio::EnsEMBL::Compara::AlignedMember";
