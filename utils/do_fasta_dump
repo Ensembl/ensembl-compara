@@ -658,6 +658,7 @@ sub dump_dna_masked{
 
 #------------------------------------------------------------------------
 sub process_size {
+  return 0; ## Alpha ps syntax not compatible with Linux
   my $size = `ps -o vsz $$ | tail -1`;
   chomp $size;
   my $unit = chop $size;
