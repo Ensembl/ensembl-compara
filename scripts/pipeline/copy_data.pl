@@ -663,7 +663,7 @@ sub copy_data_in_binary_mode {
   print " ** WARNING ** Copying table $table_name in binary mode, this requires write access.\n";
   print " ** WARNING ** The original table will be temporarily renamed as original_$table_name.\n";
   print " ** WARNING ** An auxiliary table named temp_$table_name will also be created.\n";
-  print " ** WARNING ** You may have to undo this manually if the process crashed .\n\n";
+  print " ** WARNING ** You may have to undo this manually if the process crashes.\n\n";
 
   my $start = 0;
   my $step = 1000000;
