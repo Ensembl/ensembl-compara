@@ -653,4 +653,4 @@ CREATE TABLE protein_tree_tag (
 ) COLLATE=latin1_swedish_ci;
 
 # Auto add schema version to database
-INSERT INTO meta (meta_key, meta_value) VALUES ("schema_version", "43");
+INSERT INTO meta (meta_key, meta_value) VALUES ("schema_version", "45");
