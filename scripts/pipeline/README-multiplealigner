@@ -108,16 +108,16 @@ multiple alignment pipeline. The resulting syntenies will be used to feed the mu
 You can also have a CONSERVATION_SCORE block if you want to run Gerp or any other similar software
 to get constrained elements and conservation scores from the resulting multiple alignments.
 
-To run Gerp you will also need to create a parameter file, for example:
+To run Gerp you will also need to create a parameter file (tab-delimited), for example:
 
 -----------------------------------
 alignment	gerp_alignment.mfa
 phylo_tree	gerp_tree.nw
 window_length	1
-repeats		NULL
+repeats	NULL
 no_rsmin_estimate
 merge_distance	6
-rej_sub_min     8.5
+rej_subs_min	8.5
 no_ABC_files
 -----------------------------------
 
