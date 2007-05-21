@@ -63,7 +63,7 @@ ensembl-analysis code (for Runnables)
 
   $ cvs -d :ext:cvs.sanger.ac.uk:/nfs/ensembl/cvsroot co ensembl-analysis
 
-ensembl-pipeline code (deprecated by ensembl-analysis, but some legacy...)
+ensembl-pipeline code (for Pipeline)
 
   $ cvs -d :ext:cvs.sanger.ac.uk:/nfs/ensembl/cvsroot co ensembl-pipeline
 
@@ -109,16 +109,15 @@ in bash
 
 Pick a mysql instance and create a database;
 
-  $ mysql -hecs2 -P3361 -uensadmin -pxxxx \
-    -e "create database my_ensembl_compara_40_1"
+  $ mysql -e "create database my_ensembl_compara_45"
 
 And load the schemas;
 
-  $ mysql -hecs2 -P3361 -uensadmin -pxxxx my_ensembl_compara_40_1 \
+  $ mysql my_ensembl_compara_45 \
     < $BASEDIR/ensembl-hive/sql/tables.sql
-  $ mysql -hecs2 -P3361 -uensadmin -pxxxx my_ensembl_compara_40_1 \
+  $ mysql my_ensembl_compara_45 \
     < $BASEDIR/ensembl-compara/sql/table.sql
-  $ mysql -hecs2 -P3361 -uensadmin -pxxxx my_ensembl_compara_40_1 \
+  $ mysql my_ensembl_compara_45 \
     < $BASEDIR/ensembl-compara/sql/pipeline-tables.sql
 
 You now need to load the NCBI taxonomy data into the ncbi_taxa_name
@@ -129,9 +128,9 @@ and ncbi_taxa_node tables. See the following file;
 You may alternatively be able to copy taxonomy tables from an existing
 compara db (this may take a few mins), e.g.
 
-  $ mysqldump -hecs2 -P3365 -uensro --no-create-info \
-    ncbi_taxonomy ncbi_taxa_node ncbi_taxa_name \
-    | mysql -hecs2 -P3361 -uensadmin -pxxxx my_ensembl_compara_40_1
+  $ mysqldump --no-create-info ensembl_compara_old \
+    ncbi_taxa_node ncbi_taxa_name \
+    | mysql my_ensembl_compara_45
 
 
 3- Choose a working directory with enough disk space
@@ -140,12 +139,12 @@ The homology pipeline takes several GB of space for fasta databases and
 error and output from the RunnableDBs
 
 fasta blast database directory =
-/nfs/ecs4/work2/ensembl/jessica/data/blastDB/my_ensembl_compara_40_1
+/path/to/scratch/data/blastdb/my_ensembl_compara_45
 
 You only need to create this dir if you want to capture the LSF out
 and err files, see the IMPORTANT note below;
 hive worker output directory =
-/nfs/ecs4/work2/ensembl/jessica/data/hive_output/my_ensembl_compara_40_1
+/path/to/scratch/data/hive_output/my_ensembl_compara_45
 
 
 4- Copy and modify the compara-hive config file
@@ -162,10 +161,6 @@ must exist.
 If you are just interested in building the orthologs/gene-trees, and
 are not going to run the family pipeline later, comment out the
 TYPE=>UNIPROT directives.
-
-If you are going to build gene-trees and are not interested in the
-old-style (pre-v39) ENSEMBL_ORTHOLOGS, comment out the TYPE=>dNdS and
-TYPE=>HOMOLOGY directives.
 
 IMPORTANT: The hive system can generate an awful lot of log outputs
 that are dumped in the hive_output_dir. When a pipeline runs fine,
@@ -216,11 +211,13 @@ assembly, gene_build, and names to create entries in the genome_db
 table.  It also sets the genome_db.locator column to allow the system
 to know where the respective core databases are located.  There is an
 additional table called genome_db_extn which will be deprecated
-shortly, but as of today (16 June, 2004) it is still used to hold a
+shortly, but as of today (11 April, 2007) it is still used to hold a
 'phylum' value for each genome to allow the option of building
 homologies only within phylums.  This script will also 'seed' the
 pipeline/hive system by creating the first jobs in the analysis_job
-table for the analysis 'SubmitGenome'.
+table for the analysis 'SubmitGenome'. Note that the
+coord_system.version fields in the source species databases must be
+set to a 'true' value for the script to work.
 
 These scripts may give you warnings if the output directories are not
 available or if it's unable to connect to core databases.
@@ -229,13 +226,78 @@ available or if it's unable to connect to core databases.
  $ ./comparaLoadGenomes.pl -conf my_compara.conf
  $ ./loadHomologySystem.pl -conf my_compara.conf
 
-If you are running this for the Ensembl production release, make sure
-you are in sycn with the method_link_species_set in the compara master db.
-If not create the synchronized method_link_species_set with the ensembl-compara/scripts/pipeline/create_mlss.pl
 
-Also load the ncbi taxonomy data, see ensembl-compara/scripts/taxonomy/README-taxonomy
+7- Create the method_link_species_sets
+   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+If you are running this for the Ensembl production release, make sure
+that the method_link, species_set and method_link_species_set tables
+in your compara DB are in sycn with the method_link_species_set in the
+compara master db.
+TODO: How to do this?
+
+If not, create the method_link_species_sets that you need with the
+create_mlss.pl script as follows;
+
+7.1. First you will need an ensembl registry file that configures the
+   database connection to the compara database. An example registry
+   file would be;
+
+  ---
+  use Bio::EnsEMBL::Utils::ConfigRegistry;
+  use Bio::EnsEMBL::DBSQL::DBAdaptor;
+  use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
+  new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(
+      -host    => 'localhost',
+      -user    => 'admin',
+      -pass    => 'secret',
+      -port    => 3306,
+      -species => 'compara-master',
+      -dbname  => 'my_ensembl_compara_45');
+  1;
+  ---
+
+7.2. You may need to create the following method_link entries;
+  
+  $ mysql my_ensembl_compara_45 -e \
+    'INSERT INTO method_link (type, class) \
+     VALUES ("ENSEMBL_ORTHOLOGUES","Homology.homology"), \
+            ("ENSEMBL_PARALOGUES", "Homology.homology"), \
+            ("PROTEIN_TREES",      "ProteinTree.protein_tree_node")'
+
+
+7.3. Run the create_mlss.pl script. If, for example, your genome_db_ids
+   were 1, 2, 3, 4 and 5, you would need the following;
+
+  $ cd $BASEDIR/ensembl-compara/scripts/pipeline
+
+  $ # For orthologues
+  $ ./create_mlss.pl --f --pw
+    --reg_conf /path/to/ensembl.registry \
+    --method_link_type ENSEMBL_ORTHOLOGUES \
+    --genome_db_id '1,2,3,4,5'
+
+  $ # For between-species paralogues
+  $ ./create_mlss.pl --f --pw
+    --reg_conf /path/to/ensembl.registry \
+    --method_link_type ENSEMBL_PARALOGUES \
+    --genome_db_id '1,2,3,4,5'
+
+  $ # For same-species paralogues
+  $ ./create_mlss.pl --f --sg
+    --reg_conf /path/to/ensembl.registry \
+    --method_link_type ENSEMBL_PARALOGUES \
+    --genome_db_id '1,2,3,4,5'
+
+  $ # For protein trees
+  $ ./create_mlss.pl --f
+    --reg_conf /path/to/ensembl.registry \
+    --method_link_type PROTEIN_TREES \
+    --genome_db_id '1,2,3,4,5'
+
 
 At this point the system is ready to run
+
 
 
 6- Run the hive
