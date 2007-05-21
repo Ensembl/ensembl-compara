@@ -534,12 +534,33 @@ sub copy_conservation_scores {
       "SELECT NULL, meta_key, meta_value".
         " FROM meta ".
         " WHERE meta_key = \"gerp_$mlss_id\"");
-  copy_data($from_dba, $to_dba,
-      "conservation_score",
-      "SELECT cs.genomic_align_block_id+$fix, window_size, position, expected_score, diff_score".
-        " FROM genomic_align_block gab".
-        " LEFT JOIN conservation_score cs using (genomic_align_block_id)".
-        " WHERE cs.genomic_align_block_id IS NOT NULL AND gab.method_link_species_set_id = $gab_mlss_id");
+
+  # Most of the times, you want to copy all the data. Check if this is the case as it will be much faster!
+  $sth = $to_dba->dbc->prepare("SELECT count(*)
+      FROM conservation_score LEFT JOIN genomic_align_block
+      USING (genomic_align_block_id)
+      WHERE method_link_species_set_id != $gab_mlss_id limit 1");
+  $sth->execute();
+  ($count) = $sth->fetchrow_array();
+  if ($count) {
+    ## Other scores are in the from database.
+    print " ** WARNING **\n";
+    print " ** WARNING ** Copying only part of the data in the conservation_score table\n";
+    print " ** WARNING ** This process might be very slow.\n";
+    print " ** WARNING **\n";
+    copy_data($from_dba, $to_dba,
+        "conservation_score",
+        "SELECT cs.genomic_align_block_id+$fix, window_size, position, expected_score, diff_score".
+          " FROM genomic_align_block gab".
+          " LEFT JOIN conservation_score cs using (genomic_align_block_id)".
+          " WHERE cs.genomic_align_block_id IS NOT NULL AND gab.method_link_species_set_id = $gab_mlss_id");
+  } else {
+    ## These are the only scores. Copy all of them
+    copy_data($from_dba, $to_dba,
+        "conservation_score",
+        "SELECT cs.genomic_align_block_id+$fix, window_size, position, expected_score, diff_score".
+          " FROM conservation_score cs");
+  }
 }
 
 
