@@ -13,5 +13,5 @@ UPDATE genomic_align_block gab, genomic_align ga, genomic_align_group gag SET ga
  WHERE gab.genomic_align_block_id = ga.genomic_align_block_id AND ga.genomic_align_id = gag.genomic_align_id
  AND gag.type IN ("default", "split");
 
-DELETE FROM genomic_algin_group WHERE type IN ("default", "split");
+DELETE FROM genomic_align_group WHERE type IN ("default", "split");
 
