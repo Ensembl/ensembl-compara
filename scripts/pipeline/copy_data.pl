@@ -179,6 +179,10 @@ if (!$method_link_species_set) {
 
 my $class = $method_link_species_set->method_link_class;
 
+exit(1) if !check_table("method_link", $from_dba, $to_dba, undef,
+    "method_link_id = ".$method_link_species_set->method_link_id);
+exit(1) if !check_table("method_link_species_set", $from_dba, $to_dba, undef,
+    "method_link_species_set_id = $mlss_id");
 if ($class =~ /^GenomicAlignBlock/) {
   copy_genomic_align_blocks($from_dba, $to_dba, $mlss_id);
 } elsif ($class =~ /^ConservationScore.conservation_score/) {
@@ -337,9 +341,6 @@ sub copy_genomic_align_blocks {
   my ($from_dba, $to_dba, $mlss_id) = @_;
   my $fix_dnafrag = 0;
 
-  exit(1) if !check_table("method_link", $from_dba, $to_dba);
-  exit(1) if !check_table("method_link_species_set", $from_dba, $to_dba, undef,
-      "method_link_species_set_id = $mlss_id");
   exit(1) if !check_table("genome_db", $from_dba, $to_dba, "genome_db_id, name, assembly, genebuild, assembly_default");
   if (!check_table("dnafrag", $from_dba, $to_dba)) {
       $fix_dnafrag = 1;
@@ -406,17 +407,19 @@ sub copy_genomic_align_blocks {
     exit(1);
   }
 
-  $sth = $to_dba->dbc->prepare("SELECT count(*)
-      FROM genomic_align_group
-      WHERE group_id >= $lower_limit
-          AND group_id < $upper_limit");
-  $sth->execute();
-  ($count) = $sth->fetchrow_array();
-  if ($count) {
-    print " ** ERROR **  There are $count entries in the release database (TO) in the \n",
-      " ** ERROR **  genomic_align_group table with IDs within the range defined by the\n",
-      " ** ERROR **  convention!\n";
-    exit(1);
+  if(defined($max_gag)) {
+    $sth = $to_dba->dbc->prepare("SELECT count(*)
+        FROM genomic_align_group
+        WHERE group_id >= $lower_limit
+            AND group_id < $upper_limit");
+    $sth->execute();
+    ($count) = $sth->fetchrow_array();
+    if ($count) {
+      print " ** ERROR **  There are $count entries in the release database (TO) in the \n",
+        " ** ERROR **  genomic_align_group table with IDs within the range defined by the\n",
+        " ** ERROR **  convention!\n";
+      exit(1);
+    }
   }
 
   #copy genomic_align table. Need to update dnafrag column
@@ -453,12 +456,14 @@ sub copy_genomic_align_blocks {
          " FROM genomic_align_block WHERE method_link_species_set_id = $mlss_id");
 
   #copy genomic_align_group table
-   copy_data($from_dba, $to_dba,
-       "genomic_align_group",
-       "SELECT gag.group_id+$fix, type, gag.genomic_align_id+$fix".
-         " FROM genomic_align_block gab LEFT JOIN genomic_align ga USING (genomic_align_block_id)".
-         " LEFT JOIN genomic_align_group gag USING (genomic_align_id)".
-         " WHERE gag.group_id IS NOT NULL AND gab.method_link_species_set_id = $mlss_id");
+  if(defined($max_gag)) {
+    copy_data($from_dba, $to_dba,
+        "genomic_align_group",
+        "SELECT gag.group_id+$fix, type, gag.genomic_align_id+$fix".
+          " FROM genomic_align_block gab LEFT JOIN genomic_align ga USING (genomic_align_block_id)".
+          " LEFT JOIN genomic_align_group gag USING (genomic_align_id)".
+          " WHERE gag.group_id IS NOT NULL AND gab.method_link_species_set_id = $mlss_id");
+  }
 }
 
 
@@ -477,8 +482,6 @@ sub copy_genomic_align_blocks {
 sub copy_conservation_scores {
   my ($from_dba, $to_dba, $mlss_id) = @_;
 
-  exit(1) if !check_table("method_link_species_set", $from_dba, $to_dba, undef,
-      "method_link_species_set_id = $mlss_id");
   my ($gab_mlss_id) = @{$from_dba->get_MetaContainer->list_value_by_key("gerp_$mlss_id")};
   if (!$gab_mlss_id) {
     print " ** ERRROR **  Needs a <gerp_$mlss_id> entry in the meta table!\n";
