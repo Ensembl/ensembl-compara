@@ -121,7 +121,7 @@ sub history {
   my $adaptor = $self->_adaptor;
   my $id = $self->stable_id;
   return unless $adaptor;
-  my $history = $adaptor->fetch_history_tree_by_stable_id($id);
+  my $history = $adaptor->fetch_history_tree_by_stable_id($id );
   return $history;
 }
 
@@ -163,6 +163,21 @@ sub peptide_seq {
 sub release {
   my $self = shift;
   return $self->Obj->release;
+}
+
+=head2 short_id_history
+
+ Arg1        : data object
+ Description : fetches history for stable_id off the core API object 
+ Return type : list ref of Archive ID objects
+
+=cut
+
+sub short_id_history {
+  my $self = shift;
+  my $adaptor = $self->_adaptor; 
+  my $history =  $adaptor->fetch_archive_id_history($self->Obj);
+  return $history;
 }
 
 =head2 stable_id
@@ -208,6 +223,34 @@ sub successor_history {
   return $adaptor->fetch_successor_history($self->Obj);
 }
 
+=head2 predecessors
+
+ Arg1        : data object
+ Description : fetches predecessors off the core API object 
+ Return type : list ref of Archive ID objects
+
+=cut
+
+sub predecessors {
+  my $self = shift;
+  return $self->Obj->get_all_predecessors;
+}
+
+
+=head2 predecessor_history
+
+ Arg1        : data object
+ Description : fetches predecessor history of core API object 
+ Return type : list ref of Archive ID objects
+
+=cut
+
+sub predecessor_history {
+  my $self = shift;
+  my $adaptor = $self->_adaptor;
+  return unless $adaptor;
+  return $adaptor->fetch_predecessor_history($self->Obj);
+}
 
 =head2 type
 
