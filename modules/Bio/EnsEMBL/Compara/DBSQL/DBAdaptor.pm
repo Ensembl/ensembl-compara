@@ -238,7 +238,6 @@ sub get_available_adaptors {
       "MethodLinkSpeciesSet" => "Bio::EnsEMBL::Compara::DBSQL::MethodLinkSpeciesSetAdaptor",
       "SyntenyRegion"   => "Bio::EnsEMBL::Compara::DBSQL::SyntenyRegionAdaptor",
       "DnaAlignFeature" => "Bio::EnsEMBL::Compara::DBSQL::DnaAlignFeatureAdaptor",
-      "Synteny"         => "Bio::EnsEMBL::Compara::DBSQL::SyntenyAdaptor",
       "GenomeDB"        => "Bio::EnsEMBL::Compara::DBSQL::GenomeDBAdaptor",
       "DnaFrag" => "Bio::EnsEMBL::Compara::DBSQL::DnaFragAdaptor",
       "DnaFragRegion" => "Bio::EnsEMBL::Compara::DBSQL::DnaFragRegionAdaptor",
