@@ -65,9 +65,10 @@ if (my $panel2 = $self->new_panel('',
 sub historyview {
   my $self   = shift;
   my $object = $self->{'object'};
-  my $max_ids = 31;
+  my $max = 30;
+  my $max_ids = $max + 1;
   my @e = (qq(You did not upload any data, please try again.), 
-           qq(You may only upload a maximum of 30 stable ID's. If you require information for a large number of sequence please email the helpdek with your request.), 
+           qq(You may only upload a maximum of $max stable ID's. If you require information for a large number of sequence please email the helpdek with your request.), 
            qq(You have selected two different types of data source. Please either paste your data into the box OR upload a file OR enter a URL.),
            qq(There was a problem with uploading your file, please try again.)
   );
