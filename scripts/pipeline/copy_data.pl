@@ -355,7 +355,7 @@ sub copy_genomic_align_blocks {
         MIN(gab.genomic_align_block_id), MAX(gab.genomic_align_block_id),
         MIN(gab.group_id), MAX(gab.group_id),
         MIN(ga.genomic_align_id), MAX(ga.genomic_align_id),
-        MIN(group_id), MAX(group_id)
+        MIN(gag.group_id), MAX(gag.group_id)
       FROM genomic_align_block gab
         LEFT JOIN genomic_align ga using (genomic_align_block_id)
         LEFT JOIN genomic_align_group gag using (genomic_align_id)
