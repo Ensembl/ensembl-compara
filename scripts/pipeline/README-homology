@@ -162,6 +162,21 @@ If you are just interested in building the orthologs/gene-trees, and
 are not going to run the family pipeline later, comment out the
 TYPE=>UNIPROT directives.
 
+Some 'gotchas' with the core databases should be checked;
+
+- The top-level coordinate system must include a version,
+  mysql> SELECT name, version FROM coord_system ORDER BY rank LIMIT 1;
+
+- There must be a genebuild.version set in the meta table,
+  mysql> SELECT * FROM meta WHERE meta_key="genebuild.version";
+
+- Only genes on slices marked as 'toplevel' will be included.
+  mysql> SELECT count(*) 
+         FROM seq_region cs, seq_region_attrib a, attrib_type at 
+         WHERE cs.seq_region_id=a.seq_region_id 
+         AND   a.attrib_type_id=at.attrib_type_id 
+`        AND   at.code="toplevel";
+
 IMPORTANT: The hive system can generate an awful lot of log outputs
 that are dumped in the hive_output_dir. When a pipeline runs fine,
 these are not needed and can take a lot of disk space as well as
@@ -272,25 +287,25 @@ create_mlss.pl script as follows;
   $ cd $BASEDIR/ensembl-compara/scripts/pipeline
 
   $ # For orthologues
-  $ ./create_mlss.pl --f --pw
+  $ ./create_mlss.pl --f --pw \
     --reg_conf /path/to/ensembl.registry \
     --method_link_type ENSEMBL_ORTHOLOGUES \
     --genome_db_id '1,2,3,4,5'
 
   $ # For between-species paralogues
-  $ ./create_mlss.pl --f --pw
+  $ ./create_mlss.pl --f --pw \
     --reg_conf /path/to/ensembl.registry \
     --method_link_type ENSEMBL_PARALOGUES \
     --genome_db_id '1,2,3,4,5'
 
   $ # For same-species paralogues
-  $ ./create_mlss.pl --f --sg
+  $ ./create_mlss.pl --f --sg \
     --reg_conf /path/to/ensembl.registry \
     --method_link_type ENSEMBL_PARALOGUES \
     --genome_db_id '1,2,3,4,5'
 
   $ # For protein trees
-  $ ./create_mlss.pl --f
+  $ ./create_mlss.pl --f \
     --reg_conf /path/to/ensembl.registry \
     --method_link_type PROTEIN_TREES \
     --genome_db_id '1,2,3,4,5'
@@ -322,7 +337,7 @@ add the -local flag to the command and the workers will run as
 background system commands rather than being submited to an LSF resource.
 
  $ beekeeper.pl \
-   -url mysql://user:password@ecs2:3361/my_ensembl_compara_40_1 -loop
+   -url mysql://user:password@ecs2:3306/my_ensembl_compara_45 -loop
 
 where 'user' and 'password' allow write access to the database
 
