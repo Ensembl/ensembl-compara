@@ -196,8 +196,8 @@ EXIT 2\n");
   if (defined $genetree_params{'max_gene_count'}) {
     $parameters .= ",max_gene_count=>".$genetree_params{'max_gene_count'};
   }
-  if ($genetree_params{'species_tree_file'})
-    $parameters .= ",species_tree_file=>". $genetree_params{'species_tree_file'};
+  if ($genetree_params{'species_tree_file'}){
+    $parameters .= ",'species_tree_file'=>'". $genetree_params{'species_tree_file'}."'";
   } else {
     warn("No species_tree_file => 'myfile' has been set in your config file
 This parameter can not be set for njtree.
