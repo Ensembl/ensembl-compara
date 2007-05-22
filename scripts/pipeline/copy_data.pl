@@ -353,6 +353,7 @@ sub copy_genomic_align_blocks {
   ## Check min and max of the relevant internal IDs in the FROM database
   my $sth = $from_dba->dbc->prepare("SELECT
         MIN(gab.genomic_align_block_id), MAX(gab.genomic_align_block_id),
+        MIN(gab.group_id), MAX(gab.group_id),
         MIN(ga.genomic_align_id), MAX(ga.genomic_align_id),
         MIN(group_id), MAX(group_id)
       FROM genomic_align_block gab
@@ -362,18 +363,22 @@ sub copy_genomic_align_blocks {
         gab.method_link_species_set_id = ?");
 
   $sth->execute($mlss_id);
-  my ($min_gab, $max_gab, $min_ga, $max_ga, $min_gag, $max_gag) = $sth->fetchrow_array();
+  my ($min_gab, $max_gab, $min_gab_gid, $max_gab_gid, $min_ga, $max_ga, $min_gag, $max_gag) =
+      $sth->fetchrow_array();
   $sth->finish();
 
   my $lower_limit = $mlss_id * 10**10;
   my $upper_limit = ($mlss_id + 1) * 10**10;
   my $fix;
 
-  if ($max_gab < 10**10 and $max_ga < 10**10 and (!defined($max_gag) or $max_gag < 10**10)) {
+  if ($max_gab < 10**10 and $max_ga < 10**10 and (!defined($max_gab_gid) or $max_gab_gid < 10**10) and
+      (!defined($max_gag) or $max_gag < 10**10)) {
     ## Need to add $method_link_species_set_id * 10^10 to the internal_ids
     $fix = $lower_limit;
   } elsif ($max_gab < $upper_limit and $max_ga < $upper_limit and (!defined($max_gag) or $max_gag < $upper_limit)
-      and $min_gab >= $lower_limit and $min_ga >= $lower_limit and (!defined($min_gag) or $min_gag >= $lower_limit)) {
+          and (!defined($max_gab_gid) or $max_gab_gid < $upper_limit)
+      and $min_gab >= $lower_limit and $min_ga >= $lower_limit and (!defined($min_gag) or $min_gag >= $lower_limit)
+          and (!defined($min_gab_gid) or $min_gab_gid >= $lower_limit)) {
     ## Internal IDs are OK.
     $fix = 0;
   } else {
@@ -447,12 +452,12 @@ sub copy_genomic_align_blocks {
 		" dnafrag_id, dnafrag_start, dnafrag_end, dnafrag_strand, cigar_line, level_id".
 		" FROM genomic_align_block gab LEFT JOIN genomic_align ga USING (genomic_align_block_id)".
 		" WHERE gab.method_link_species_set_id = $mlss_id");
-}
+  }
 
   #copy genomic_align_block table
    copy_data($from_dba, $to_dba,
        "genomic_align_block",
-       "SELECT genomic_align_block_id+$fix, method_link_species_set_id, score, perc_id, length".
+       "SELECT genomic_align_block_id+$fix, method_link_species_set_id, score, perc_id, length, group_id+$fix".
          " FROM genomic_align_block WHERE method_link_species_set_id = $mlss_id");
 
   #copy genomic_align_group table
