@@ -1395,6 +1395,7 @@ sub subseq {
             $strand,
             'alignment'
         );
+
     #####################
     # $this_pos refers to the starting position of the subseq if requesting the forward strand
     # or the ending position of the subseq if the reverse strand has been requested:
@@ -1793,7 +1794,7 @@ sub get_original_seq_region_position {
 
 =head2 get_all_constrained_elements
 
-  Arg  1     : (opt) string $method_link_type (default = GERP_CONSTRAINED_ELEMENT")
+  Arg  1     : (opt) string $method_link_type (default = GERP_CONSTRAINED_ELEMENT)
   Arg  2     : (opt) listref Bio::EnsEMBL::Compara::GenomeDB $species_set
                (default, the set of species from the MethodLinkSpeciesSet used
                to build this AlignSlice)
