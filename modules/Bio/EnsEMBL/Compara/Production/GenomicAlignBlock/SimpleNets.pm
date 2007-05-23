@@ -66,9 +66,6 @@ sub get_params {
   if (defined($params->{'tg_genomedb_id'})) {
     $self->TARGET_GENOMEDB_ID($params->{'tg_genomedb_id'});
   }
-  if (defined($params->{'input_group_type'})) {
-    $self->INPUT_GROUP_TYPE($params->{'input_group_type'});
-  }
   if (defined $params->{'net_method'}) {
     $self->NET_METHOD($params->{'net_method'});
   }
@@ -143,11 +140,8 @@ sub fetch_input {
                              $qy_dnafrag);
   }
 
-  my $gabs = $gaba->fetch_all_by_MethodLinkSpeciesSet_DnaFrag_GroupType($mlss,
-                                                                        $qy_dnafrag,
-                                                                        undef,
-                                                                        undef,
-                                                                        $self->INPUT_GROUP_TYPE);
+  my $gabs = $gaba->fetch_all_by_MethodLinkSpeciesSet_DnaFrag($mlss,
+                                                              $qy_dnafrag);
 
   ###################################################################
   # get the target slices and bin the GenomicAlignBlocks by group id
@@ -159,10 +153,7 @@ sub fetch_input {
     my ($qy_ga) = $gab->reference_genomic_align;
     my ($tg_ga) = @{$gab->get_all_non_reference_genomic_aligns};
 
-    my $group_id = $qy_ga->genomic_align_group_id_by_type($self->INPUT_GROUP_TYPE);
-    if ($group_id != $tg_ga->genomic_align_group_id_by_type($self->INPUT_GROUP_TYPE)) {
-      throw("GenomicAligns in a GenomicAlignBlock belong to different group");
-    }
+    my $group_id = $gab->group_id;
 
     if (not exists $chains{$group_id}) {
       $chains{$group_id} = {
