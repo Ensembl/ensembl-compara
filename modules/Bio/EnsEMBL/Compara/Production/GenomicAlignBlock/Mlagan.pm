@@ -115,29 +115,180 @@ sub write_output {
     my $group;
     # Split block if it is too long and store as groups
     if ($self->max_block_size() and $gab->length > $self->max_block_size()) {
-	my $splited_gabs = [];
-	
+	my $gab_array = undef;
+	my $find_next = 0;
+
 	for (my $start = 1; $start <= $gab->length; $start += $self->max_block_size()) {
-	    my $new_gab = $gab->restrict_between_alignment_positions(
+	    my $split_gab = $gab->restrict_between_alignment_positions(
 			   $start, $start + $self->max_block_size() - 1, 1);
 
-	    foreach my $genomic_align (@{$new_gab->genomic_align_array}) {
-		push @$group, $genomic_align;
+	    #less than 2 genomic_aligns
+	    if (@{$split_gab->get_all_GenomicAligns()} < 2) {
+		#set find_next flag to remember to trim the block to the right if it has more than 2 genomic_aligns
+		$find_next = 1;
+		
+		#trim the previous block
+		my $prev_gab = pop @$gab_array;
+		my $trim_gab = _trim_gab_right($prev_gab);
+		
+		#check it has at least 2 genomic_aligns, otherwise try again 
+		while (@{$trim_gab->get_all_GenomicAligns()} < 2) {
+		    $prev_gab = pop @$gab_array;
+		    $trim_gab = _trim_gab_right($prev_gab);
+		}
+		#add trimmed block to array
+		if ($trim_gab) {
+		    push @$gab_array, $trim_gab;
+		}
+	    } else {
+		#more than 2 genomic_aligns
+		push @$gab_array, $split_gab; 
+		#but may be to the right of a gab with only 1 ga and 
+		#therefore needs to be trimmed
+		if ($find_next) {
+		    my $next_gab = pop @$gab_array;
+		    my $trim_gab = _trim_gab_left($next_gab);
+		    if (@{$trim_gab->get_all_GenomicAligns()} >= 2) {
+			push @$gab_array, $trim_gab;
+			$find_next = 0;
+		    }
+		}
 	    }
-
-	    $gaba->store($new_gab);
-	    $self->_write_gerp_dataflow($new_gab, $mlss);
 	}
-	my $gag = Bio::EnsEMBL::Compara::GenomicAlignGroup->new
-	    (-type => "split",
-	     -genomic_align_array => $group);
-	$gaga->store($gag);
+	#store the first block to get the dbID which is used to create the
+	#group_id. 
+	my $first_block = shift @$gab_array;
+	$gaba->store($first_block);
+	my $group_id = $first_block->dbID;
+	$gaba->store_group_id($first_block, $group_id);
+	
+	#store the rest of the genomic_align_blocks
+	foreach my $this_gab (@$gab_array) {
+	    $this_gab->group_id($group_id);
+	    $gaba->store($this_gab);
+	    $self->_write_gerp_dataflow($this_gab, $mlss);
+	}
     } else {
 	$gaba->store($gab);
 	$self->_write_gerp_dataflow($gab, $mlss);
     }
   }
   return 1;
+}
+
+
+#trim genomic align block from the left hand edge to first position having at
+#least 2 genomic aligns which overlap
+sub _trim_gab_left {
+    my ($gab) = @_;
+    
+    if (!defined($gab)) {
+	return undef;
+    }
+    my $align_length = $gab->length;
+    
+    my $gas = $gab->get_all_GenomicAligns();
+    my $d_length;
+    my $m_length;
+    my $min_d_length = $align_length;
+    
+    my $found_min = 0;
+
+    #take first element in cigar string for each genomic_align and if it is a
+    #match, it must extend to the start of the block. Find the shortest delete.
+    #If the shortest delete and the match are the same length, there is no
+    #overlap between them so restrict to the end of the delete and try again.
+    #If the delete is shorter than the match, there must be an overlap.
+    foreach my $ga (@$gas) {
+	my ($cigLength, $cigType) = ( $ga->cigar_line =~ /^(\d*)([GMD])/ );
+	$cigLength = 1 unless ($cigLength =~ /^\d+$/);
+
+	if ($cigType eq "D" or $cigType eq "G") {
+	    $d_length = $cigLength; 
+	    if ($d_length < $min_d_length) {
+		$min_d_length = $d_length;
+	    }
+	} else {
+	    $m_length = $cigLength;
+	    $found_min++;
+	}
+    }
+    #if more than one alignment filled to the left edge, no need to restrict
+    if ($found_min > 1) {
+	return $gab;
+    }
+
+    my $new_gab = ($gab->restrict_between_alignment_positions(
+							      $min_d_length+1, $align_length, 1));
+
+    #no overlapping genomic_aligns
+    if ($new_gab->length == 0) {
+	return $new_gab;
+    }
+
+    #if delete length is less than match length then must have sequence overlap
+    if ($min_d_length < $m_length) {
+	return $new_gab;
+    }
+    #otherwise try again with restricted gab
+    return _trim_gab_left($new_gab);
+}
+
+#trim genomic align block from the right hand edge to first position having at
+#least 2 genomic aligns which overlap
+sub _trim_gab_right {
+    my ($gab) = @_;
+    
+    if (!defined($gab)) {
+	return undef;
+    }
+    my $align_length = $gab->length;
+
+    my $max_pos = 0;
+    my $gas = $gab->get_all_GenomicAligns();
+    
+    my $found_max = 0;
+    my $d_length;
+    my $m_length;
+    my $min_d_length = $align_length;
+
+    #take last element in cigar string for each genomic_align and if it is a
+    #match, it must extend to the end of the block. Find the shortest delete.
+    #If the shortest delete and the match are the same length, there is no
+    #overlap between them so restrict to the end of the delete and try again.
+    #If the delete is shorter than the match, there must be an overlap.
+    foreach my $ga (@$gas) {
+	my ($cigLength, $cigType) = ( $ga->cigar_line =~ /(\d*)([GMD])$/ );
+	$cigLength = 1 unless ($cigLength =~ /^\d+$/);
+
+	if ($cigType eq "D" or $cigType eq "G") {
+	    $d_length =$cigLength;
+	    if ($d_length < $min_d_length) {
+		$min_d_length = $d_length;
+	    }
+	} else {
+	    $m_length = $cigLength;
+	    $found_max++;
+	}
+    }
+    #if more than one alignment filled the right edge, no need to restrict
+    if ($found_max > 1) {
+	return $gab;
+    }
+
+    my $new_gab = $gab->restrict_between_alignment_positions(1, $align_length - $min_d_length, 1);
+
+    #no overlapping genomic_aligns
+    if ($new_gab->length == 0) {
+	return $new_gab;
+    }
+
+    #if delete length is less than match length then must have sequence overlap
+    if ($min_d_length < $m_length) {
+	return $new_gab;
+    }
+    #otherwise try again with restricted gab
+    return _trim_gab_right($new_gab);
 }
 
 sub _write_gerp_dataflow {
