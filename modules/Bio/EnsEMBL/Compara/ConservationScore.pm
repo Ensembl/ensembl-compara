@@ -136,6 +136,7 @@ my $pack_type = "f";
        Exceptions : none
        Caller     : general
        Status     : At risk
+
 =cut
 
 sub new {
@@ -247,6 +248,14 @@ sub genomic_align_block {
     if (defined($genomic_align_block)) {
 	throw("$genomic_align_block is not a Bio::EnsEMBL::Compara::GenomicAlignBlock object")
 	    unless ($genomic_align_block->isa("Bio::EnsEMBL::Compara::GenomicAlignBlock"));
+
+	if ($self->{'genomic_align_block_id'}) {
+	    throw("dbID of genomic_align_block object does not match previously defined".
+            " genomic_align_block_id. If you want to override a".
+            " Bio::EnsEMBL::Compara::ConservationScore object, you can reset the ".
+		  "genomic_align_block_id using \$conservation_score->genomic_align_block_id(0)")
+          if ($self->{'genomic_align_block'}->dbID != $self->{'genomic_align_block_id'});
+	}
 	$self->{'genomic_align_block'} = $genomic_align_block;
     } elsif (!defined($self->{'genomic_align_block'})) {
 	# Try to get the genomic_align_block from other sources...
