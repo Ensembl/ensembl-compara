@@ -130,11 +130,10 @@ sub fetch_input {
                              $self->REGION_END);
   }
   
-  my $gabs = $gaba->fetch_all_by_MethodLinkSpeciesSet_DnaFrag_GroupType($mlss,
-                                                                        $self->query_dnafrag,
-                                                                        $self->REGION_START,
-                                                                        $self->REGION_END, 
-                                                                        $self->INPUT_GROUP_TYPE);
+  my $gabs = $gaba->fetch_all_by_MethodLinkSpeciesSet_DnaFrag($mlss,
+							      $self->query_dnafrag,
+							      $self->REGION_START,
+							      $self->REGION_END);
   
   ###################################################################
   # get the target slices and bin the GenomicAlignBlocks by group id
@@ -156,10 +155,7 @@ sub fetch_input {
       $self->target_DnaFrag_hash->{$tg_ga->dnafrag->name} = $tg_ga->dnafrag;
     }
 
-    my $group_id = $qy_ga->genomic_align_group_id_by_type($self->INPUT_GROUP_TYPE);
-    if ($group_id != $tg_ga->genomic_align_group_id_by_type($self->INPUT_GROUP_TYPE)) {
-      throw("GenomicAligns in a GenomicAlignBlock belong to different group");
-    }
+    my $group_id = $gab->group_id();
 
     push @{$features_by_group{$group_id}}, $gab;
     if (! defined $group_score{$group_id} || $gab->score > $group_score{$group_id}) {
@@ -240,7 +236,6 @@ sub delete_alignments {
 
   my $sql_gab = "delete from genomic_align_block where genomic_align_block_id in ";
   my $sql_ga = "delete from genomic_align where genomic_align_id in ";
-  my $sql_gag = "delete from genomic_align_group where genomic_align_id in ";
 
   for (my $i=0; $i < scalar @gabs; $i=$i+20000) {
     my (@gab_ids, @ga1_ids, @ga2_ids);
@@ -253,10 +248,8 @@ sub delete_alignments {
     my $sql_gab_to_exec = $sql_gab . "(" . join(",", @gab_ids) . ")";
     my $sql_ga_to_exec1 = $sql_ga . "(" . join(",", @ga1_ids) . ")";
     my $sql_ga_to_exec2 = $sql_ga . "(" . join(",", @ga2_ids) . ")";
-    my $sql_gag_to_exec1 = $sql_gag . "(" . join(",", @ga1_ids) . ")";
-    my $sql_gag_to_exec2 = $sql_gag . "(" . join(",", @ga2_ids) . ")";
 
-    foreach my $sql ($sql_gab_to_exec,$sql_ga_to_exec1,$sql_ga_to_exec2,$sql_gag_to_exec1,$sql_gag_to_exec2) {
+    foreach my $sql ($sql_gab_to_exec,$sql_ga_to_exec1,$sql_ga_to_exec2) {
       my $sth = $dbc->prepare($sql);
       $sth->execute;
       $sth->finish;
