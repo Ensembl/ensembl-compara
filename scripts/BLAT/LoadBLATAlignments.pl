@@ -1,7 +1,6 @@
 #!/usr/local/ensembl/bin/perl -w
 
 use strict;
-use Bio::EnsEMBL::Compara::GenomicAlignGroup;
 use Bio::EnsEMBL::Compara::GenomicAlignBlock;
 use Bio::EnsEMBL::Compara::DnaFrag;
 use Bio::EnsEMBL::DnaDnaAlignFeature;
@@ -77,10 +76,8 @@ unless (defined $file &&
 
 if ($tab){
   $GAB="genomic_align_block.".$file;
-  $GAG="genomic_align_group.".$file;
   $GA="genomic_align.".$file;
   open (GAB, ">$GAB") or die "can't open $GAB:$!\n";
-  open (GAG, ">$GAG") or die "can't open $GAG:$!\n";
   open (GA, ">$GA") or die "can't open $GA:$!\n";
   }
 
@@ -104,16 +101,14 @@ my $qy_genome_db = $gdb_adaptor->fetch_by_dbID($qy_genome_db_id) or die "no dbId
 my @genomicaligns;
 
 
-####adapters needed: MethodLinkSpeciesSet, GenomicAlignBlock(for 2 GA, and one GenomicAlignBlock), GenomicAlignGroup for 2, DnaFrag, SliceX2(core)
+####adapters needed: MethodLinkSpeciesSet, GenomicAlignBlock(for 2 GA, and one GenomicAlignBlock), DnaFrag, SliceX2(core)
 
 my $mlss_adaptor = $db->get_adaptor($dbname, 'compara', 'MethodLinkSpeciesSet');
 my $galnb_adaptor = $db->get_adaptor($dbname, 'compara', 'GenomicAlignBlock');
-my $galn_group_adaptor = $db->get_adaptor($dbname, 'compara', 'GenomicAlignGroup');
 
 my $consensus_genomic_align = new Bio::EnsEMBL::Compara::GenomicAlign();
 my $query_genomic_align = new Bio::EnsEMBL::Compara::GenomicAlign();
 my $genomic_align_block = new Bio::EnsEMBL::Compara::GenomicAlignBlock();
-my $genomic_align_group = new Bio::EnsEMBL::Compara::GenomicAlignGroup ();
 
 my $dnafrag_adaptor = $db->get_adaptor($dbname, 'compara', 'DnaFrag');
 ##my $cs_sliceadaptor= $db->get_adaptor($cs_genome_db->name, 'core', 'Slice');
@@ -149,11 +144,6 @@ unless (defined $method_link_id) {
 EXIT 1";
   exit 1;
 }
-
-#Set the group type -- ie which organism based on eg TRANSLATED_BLAT_grouped_on_genome_db_id_1_with_2
-my $group_type="on_GDBid_".$cs_genome_db_id."_with_".$qy_genome_db_id;
-$group_type="default";
-
 
 my $sth_method_link_species = $comparadb->dbc->prepare("
   SELECT
@@ -203,7 +193,7 @@ LINE:while (my $line =<FILE>) {
   ($no, $qy_sps, $qy_chr, $prog, $typ, $qy_start, $qy_end, $qy_strand, $cs_sps, $cs_chr,
       $cs_start, $cs_end, $cs_strand, $score, $percid, $posit, $cigar) = split /\t/,$line;
 
-  ## Assign group_id accroding to the previous qy_chr, cs_chr and group_id
+  ## Assign group_id according to the previous qy_chr, cs_chr and group_id
   $no=~/\d+\((\d+)\)/;
   my $this_group = $1;
   if ($prev_qy_chr ne $qy_chr or $prev_cs_chr ne $cs_chr or $previous_group != $this_group) {
@@ -256,18 +246,14 @@ LINE:while (my $line =<FILE>) {
   ## GA   = genomic_align_id, genomic_align_block_id, method_link_species_set_id, dnafrag_id,
   ##       dnafrag_start, dnafrag_end, dnafrag_strand, cigar_line, level_id
   ##       X 2
-  ## GAG  = group_id, type, genomic_align_id
   ######################################################################################################################
   
   if ($tab>0){
-    print GAB "$GAB_id\t$method_link_species_set_id\t$score\t$percid\t$length\n";  
+    print GAB "$GAB_id\t$method_link_species_set_id\t$score\t$percid\t$length\t$group\n";  
     print GA  "$qy_GA_id\t$GAB_id\t$method_link_species_set_id\t$qy_dnafrag_id\t",
         "$qy_start\t$qy_end\t$qy_strand\t$qy_cigar\t$level\n";
     print GA  "$cs_GA_id\t$GAB_id\t$method_link_species_set_id\t$cs_dnafrag_id\t",
         "$cs_start\t$cs_end\t$cs_strand\t$cs_cigar\t$level\n";
-    # possibility of two different groupings for the two species
-    print GAG "$group\t$group_type\t$qy_GA_id\n";
-    print GAG "$group\t$group_type\t$cs_GA_id\n";
   } else {
     #clear everything first
     $query_genomic_align->dbID(0);
@@ -309,17 +295,10 @@ LINE:while (my $line =<FILE>) {
     $genomic_align_block->length($length);
     $genomic_align_block->perc_id($percid);
     $genomic_align_block->genomic_align_array([$consensus_genomic_align, $query_genomic_align]);
-
-    #4th genomic_align_group 
-    $genomic_align_group->dbID($group);
-    $genomic_align_group->type($group_type);
-    $genomic_align_group->genomic_align_array([$consensus_genomic_align, $query_genomic_align]);
+    $genomic_align_block->group_id($group);
 
     ## Store genomic_align_block (this stores genomic_aligns as well)
     $galnb_adaptor->store($genomic_align_block);
-
-    ## Store genomic_align_group
-    $galn_group_adaptor->store($genomic_align_group);
 
   }
   $prev_cs_chr=$cs_chr;
@@ -347,11 +326,11 @@ if ($tab) {
   close META;
   close GAB;
   close GA;
-  close GAG;
 } else {
   ## New max_alignment_length is method_link_species_set-specific!
-  if (@{$meta_con->store_key_value("max_align_".$method_link_species_set->dbID)}) {
+  if (@{$meta_con->list_value_by_key("max_align_".$method_link_species_set->dbID)}) {
     $meta_con->update_key_value("max_align_".$method_link_species_set->dbID, $max_alignment_length + 1);
+
   } else {
     $meta_con->store_key_value("max_align_".$method_link_species_set->dbID, $max_alignment_length + 1);
   }
