@@ -230,6 +230,11 @@ sub fetch_by_dbID {
     push(@{$group->{'genomic_align_array'}}, $this_genomic_align);
   }
 
+  #return undef if no genomic_align_groups have been found
+  if (!defined $group->{'group_id'}) {
+      return $genomic_align_group;
+  }
+
   $genomic_align_group = new Bio::EnsEMBL::Compara::GenomicAlignGroup(
           -dbID => $group->{'group_id'},
           -adaptor => $self,
