@@ -573,9 +573,8 @@ sub _parse_rates_file {
 				    #store in database
 				    if ($bucket->{$win_sizes->[$j]}->{cnt} == $max_called_dist) {
 					my $conservation_score =  new Bio::EnsEMBL::Compara::ConservationScore(											       -genomic_align_block => $gab, -window_size => $win_sizes->[$j], -position => $bucket->{$win_sizes->[$j]}->{start_pos}, -expected_score => $bucket->{$win_sizes->[$j]}->{exp_scores}, -diff_score => $bucket->{$win_sizes->[$j]}->{diff_scores});
-					
+
 					$cs_adaptor->store($conservation_score);  
-					
 					#reset bucket values
 					$bucket->{$win_sizes->[$j]}->{cnt} = 0;
 					$bucket->{$win_sizes->[$j]}->{called} = 0;
@@ -636,6 +635,7 @@ sub _parse_rates_file {
 			    if ($bucket->{$win_sizes->[$j]}->{called} > 0 && $bucket->{$win_sizes->[$j]}->{delete_cnt} > $merge_dist) {
 
 				my $conservation_score =  new Bio::EnsEMBL::Compara::ConservationScore(											       -genomic_align_block => $gab, -window_size => $win_sizes->[$j], -position => $bucket->{$win_sizes->[$j]}->{start_pos}, -expected_score => $bucket->{$win_sizes->[$j]}->{exp_scores}, -diff_score => $bucket->{$win_sizes->[$j]}->{diff_scores});				
+
 				$cs_adaptor->store($conservation_score);  
 				
 				$bucket->{$win_sizes->[$j]}->{cnt} = 0;
@@ -654,9 +654,11 @@ sub _parse_rates_file {
     }
     #store last lot
     for ($j = 0; $j < scalar(@$win_sizes); $j++) {
-
-	my $conservation_score =  new Bio::EnsEMBL::Compara::ConservationScore(											       -genomic_align_block => $gab, -window_size => $win_sizes->[$j], -position => $bucket->{$win_sizes->[$j]}->{start_pos}, -expected_score => $bucket->{$win_sizes->[$j]}->{exp_scores}, -diff_score => $bucket->{$win_sizes->[$j]}->{diff_scores});				
-	$cs_adaptor->store($conservation_score);  
+	if ($bucket->{$win_sizes->[$j]}->{delete_cnt} >= 0 && 
+	    $bucket->{$win_sizes->[$j]}->{delete_cnt} <= $merge_dist) {
+	    my $conservation_score =  new Bio::EnsEMBL::Compara::ConservationScore(											       -genomic_align_block => $gab, -window_size => $win_sizes->[$j], -position => $bucket->{$win_sizes->[$j]}->{start_pos}, -expected_score => $bucket->{$win_sizes->[$j]}->{exp_scores}, -diff_score => $bucket->{$win_sizes->[$j]}->{diff_scores});				
+	    $cs_adaptor->store($conservation_score);  
+	}
     }
 }
 
