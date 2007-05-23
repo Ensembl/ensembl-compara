@@ -159,8 +159,9 @@ sub store {
                 method_link_species_set_id,
                 score,
                 perc_id,
-                length
-        ) VALUES (?,?,?,?,?)};
+                length,
+                group_id
+        ) VALUES (?,?,?,?,?,?)};
   
   my @values;
   
@@ -215,7 +216,8 @@ sub store {
                 $genomic_align_block->method_link_species_set->dbID,
                 $genomic_align_block->score,
                 $genomic_align_block->perc_id,
-                $genomic_align_block->length
+                $genomic_align_block->length,
+                $genomic_align_block->group_id
         );
   if ($lock_tables) {
     ## Unlock tables
@@ -1022,6 +1024,58 @@ sub retrieve_all_direct_attributes {
   $genomic_align_block->group_id($group_id) if (defined($group_id));
 
   return $genomic_align_block;
+}
+
+sub retrieve_all_direct_attributes_old {
+  my ($self, $genomic_align_block) = @_;
+
+  my $sql = qq{
+          SELECT
+            method_link_species_set_id,
+            score,
+            perc_id,
+            length
+          FROM
+            genomic_align_block
+          WHERE
+            genomic_align_block_id = ?
+      };
+
+  my $sth = $self->prepare($sql);
+  $sth->execute($genomic_align_block->dbID);
+  my ($method_link_species_set_id, $score, $perc_id, $length) = $sth->fetchrow_array();
+  
+  ## Populate the object
+  $genomic_align_block->adaptor($self);
+  $genomic_align_block->method_link_species_set_id($method_link_species_set_id)
+      if (defined($method_link_species_set_id));
+  $genomic_align_block->score($score) if (defined($score));
+  $genomic_align_block->perc_id($perc_id) if (defined($perc_id));
+  $genomic_align_block->length($length) if (defined($length));
+
+  return $genomic_align_block;
+}
+
+
+=head2 store_group_id
+
+  Arg  1     : reference to Bio::EnsEMBL::Compara::GenomicAlignBlock
+  Arg  2     : group_id
+  Example    : $genomic_align_block_adaptor->store_group_id($genomic_align_block, $group_id);
+  Description: Method for storing the group_id for a genomic_align_block
+  Returntype : 
+  Exceptions : - cannot lock tables
+               - cannot update GenomicAlignBlock object
+  Caller     : none
+
+=cut
+
+sub store_group_id {
+    my ($self, $genomic_align_block, $group_id) = @_;
+    
+    my $sth = $self->prepare("UPDATE genomic_align_block SET group_id=? WHERE genomic_align_block_id=?;");
+    $sth->execute($group_id, $genomic_align_block->dbID);
+    $sth->finish();
 }
 
 =head2 lazy_loading
