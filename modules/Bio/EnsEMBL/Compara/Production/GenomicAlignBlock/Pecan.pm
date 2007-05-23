@@ -186,18 +186,20 @@ sub write_output {
 		      }
 		  }
 	      }
-	  }	      
+	  }
+	  #store the first block to get the dbID which is used to create the
+	  #group_id. 
+	  my $first_block = shift @$gab_array;
+	  $gaba->store($first_block);
+	  my $group_id = $first_block->dbID;
+	  $gaba->store_group_id($first_block, $group_id);
+
+	  #store the rest of the genomic_align_blocks
 	  foreach my $this_gab (@$gab_array) {
-	      foreach my $genomic_align (@{$this_gab->genomic_align_array}) {
-		  push @$group, $genomic_align;
-	      }
+	      $this_gab->group_id($group_id);
 	      $gaba->store($this_gab);
 	      $self->_write_gerp_dataflow($this_gab, $mlss);
 	  }
-	  my $gag = Bio::EnsEMBL::Compara::GenomicAlignGroup->new
-	      (-type => "split",
-	       -genomic_align_array => $group);
-	  $gaga->store($gag);
       } else {
 	  $gaba->store($gab);
 	  $self->_write_gerp_dataflow($gab, $mlss);
