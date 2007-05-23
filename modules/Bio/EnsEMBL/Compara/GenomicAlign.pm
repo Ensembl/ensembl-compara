@@ -922,7 +922,7 @@ sub aligned_sequence {
 
 
 =head2 cigar_line
- 
+
   Arg [1]    : string $cigar_line
   Example    : $cigar_line = $genomic_align->cigar_line;
   Example    : $genomic_align->cigar_line("35M2D233M7D23MD100M");
@@ -941,7 +941,7 @@ sub aligned_sequence {
   Exceptions : none
   Warning    : warns if getting data from other sources fails.
   Caller     : object->methodname
- 
+
 =cut
 
 sub cigar_line {
@@ -988,7 +988,7 @@ sub cigar_line {
   Exceptions : none
   Warning    : warns if getting data from other sources fails.
   Caller     : object->methodname
- 
+
 =cut
 
 sub level_id {
@@ -1025,7 +1025,7 @@ sub level_id {
   Exceptions : none
   Warning    : warns if getting data from other sources fails.
   Caller     : object->methodname
- 
+
 =cut
 
 sub genomic_align_groups {
@@ -1071,7 +1071,7 @@ sub genomic_align_groups {
   Exceptions : none
   Warning    : warns if getting data from other sources fails.
   Caller     : object->methodname
- 
+
 =cut
 
 sub genomic_align_group_by_type {
@@ -1081,7 +1081,6 @@ sub genomic_align_group_by_type {
 
   if (defined($genomic_align_group)) {
     $self->{'genomic_align_group'}->{$type} = $genomic_align_group;
-
   } elsif (!defined($self->{'genomic_align_group'}->{$type})) {
     if (defined($self->{'dbID'}) and defined($self->{'adaptor'})) {
       # Try to get the values from the database using the dbID of the Bio::EnsEMBL::Compara::GenomicAlign object
@@ -1090,6 +1089,7 @@ sub genomic_align_group_by_type {
       foreach my $this_genomic_align_group (@$genomic_align_groups) {
         $self->{'genomic_align_group'}->{$this_genomic_align_group->{'type'}} = $this_genomic_align_group;
         $self->{'genomic_align_group_id'}->{$this_genomic_align_group->{'type'}} = $this_genomic_align_group->dbID;
+
       }
     }
   }
@@ -1109,7 +1109,7 @@ sub genomic_align_group_by_type {
   Exceptions : none
   Warning    : warns if getting data from other sources fails.
   Caller     : object->methodname
- 
+
 =cut
 
 sub genomic_align_group_id_by_type {
@@ -1119,7 +1119,6 @@ sub genomic_align_group_id_by_type {
 
   if (defined($genomic_align_group_id)) {
     $self->{'genomic_align_group_id'}->{$type} = $genomic_align_group_id;
-
   } elsif (!defined($self->{'genomic_align_group_id'}->{$type})) {
     if (defined($self->{'dbID'}) and defined($self->{'adaptor'})) {
       # Try to get the values from the database using the dbID of the Bio::EnsEMBL::Compara::GenomicAlign object
@@ -1632,7 +1631,7 @@ alignments will throw an exception.
   Returntype : Bio::EnsEMBL::Compara::DnaFrag $dnafrag
   Exceptions : trying to get the consensus_dnafrag attribute for a multiple alignment throws
   Caller     : general
- 
+
 =cut
 
 sub consensus_dnafrag {
@@ -1653,7 +1652,7 @@ sub consensus_dnafrag {
   Returntype : int
   Exceptions : none
   Caller     : general
- 
+
 =cut
 
 sub consensus_start {
@@ -1674,7 +1673,7 @@ sub consensus_start {
   Returntype : int
   Exceptions : none
   Caller     : general
- 
+
 =cut
 
 sub consensus_end {
@@ -1695,7 +1694,7 @@ sub consensus_end {
   Returntype : Bio::EnsEMBL::Compara::DnaFrag $dnafrag
   Exceptions : none
   Caller     : general
- 
+
 =cut
 
 sub query_dnafrag {
@@ -1716,7 +1715,7 @@ sub query_dnafrag {
   Returntype : int
   Exceptions : none
   Caller     : general
- 
+
 =cut
 
 sub query_start {
@@ -1737,7 +1736,7 @@ sub query_start {
   Returntype : int
   Exceptions : none
   Caller     : general
- 
+
 =cut
 
 sub query_end {
@@ -1758,7 +1757,7 @@ sub query_end {
   Returntype : int
   Exceptions : none
   Caller     : general
- 
+
 =cut
 
 sub query_strand {
@@ -1789,7 +1788,7 @@ sub query_strand {
   Returntype : int
   Exceptions : none
   Caller     : general
- 
+
 =cut
 
 sub alignment_type {
@@ -1803,14 +1802,14 @@ sub alignment_type {
 
 
 =head2 score (DEPRECATED)
- 
+
   Arg [1]    : double $score
   Example    : none
   Description: get/set for attribute score  
   Returntype : double
   Exceptions : none
   Caller     : general
- 
+
 =cut
 
 sub score {
@@ -1831,7 +1830,7 @@ sub score {
   Returntype : int
   Exceptions : none
   Caller     : general
- 
+
 =cut
 
 sub perc_id {
@@ -1852,7 +1851,7 @@ sub perc_id {
   Returntype : int
   Exceptions : none
   Caller     : general
- 
+
 =cut
 
 sub group_id {
@@ -1878,7 +1877,7 @@ sub group_id {
   Returntype : int
   Exceptions : none
   Caller     : general
- 
+
 =cut
 
 sub strands_reversed {
