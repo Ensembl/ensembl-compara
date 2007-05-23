@@ -28,7 +28,6 @@ use Bio::EnsEMBL::Hive::Process;
 use Bio::EnsEMBL::Compara::Production::DBSQL::DBAdaptor;
 
 use Bio::EnsEMBL::Compara::GenomicAlignBlock;
-use Bio::EnsEMBL::Compara::GenomicAlignGroup;
 
 use Bio::EnsEMBL::Utils::Exception qw(throw warning);
 
@@ -68,14 +67,6 @@ sub get_params {
   if (defined($params->{'max_gap'})) {
     $self->MAX_GAP($params->{'max_gap'});
   }
-  if (defined($params->{'input_group_type'})) {
-    $self->INPUT_GROUP_TYPE($params->{'input_group_type'});
-  }
-
-  if (defined($params->{'output_group_type'})) {
-    $self->OUTPUT_GROUP_TYPE($params->{'output_group_type'});
-  }
-
 }
 
 sub fetch_input {
@@ -128,24 +119,25 @@ sub write_output {
 
   my @gen_al_groups;
   foreach my $chain (@{$self->output}) {
-    my (@chain_aligns);
+      my $group_id;
 
-    foreach my $block (@$chain) {
-      $compara_dba->get_GenomicAlignBlockAdaptor->store($block);
-      push @chain_aligns, @{$block->get_all_GenomicAligns};
-    }
+      #store first block
+      my $first_block = shift @$chain;
+      $compara_dba->get_GenomicAlignBlockAdaptor->store($first_block);
+    
+      #Set the group_id if one doesn't already exist ie for chains, to be the
+      #dbID of the first genomic_align_block. For nets,the group_id has already
+      #been set and is the same as it's chain.
+      unless (defined($first_block->group_id)) {
+	  $group_id = $first_block->dbID;
+	  $compara_dba->get_GenomicAlignBlockAdaptor->store_group_id($first_block, $group_id);
+      }
 
-    # we can only create the group after storing all GenomicAligns
-    # in all of the blocks in the chain
-    my $group = Bio::EnsEMBL::Compara::GenomicAlignGroup->new
-        (-type                => $self->OUTPUT_GROUP_TYPE,
-         -genomic_align_array => \@chain_aligns);
-
-    if (defined $chain_aligns[0]->genomic_align_group_by_type($self->INPUT_GROUP_TYPE) &&
-        defined $chain_aligns[0]->genomic_align_group_by_type($self->INPUT_GROUP_TYPE)->dbID) {
-      $group->dbID($chain_aligns[0]->genomic_align_group_by_type($self->INPUT_GROUP_TYPE)->dbID);
-    }
-    $compara_dba->get_GenomicAlignGroupAdaptor->store($group);
+      #store the rest of the genomic_align_blocks
+      foreach my $block (@$chain) {
+	  $block->group_id($group_id);
+	  $compara_dba->get_GenomicAlignBlockAdaptor->store($block);
+     }
   }
 }
 
@@ -430,12 +422,6 @@ sub convert_output {
         @split_dafs = ($raw_daf);
       }
 
-      my ($group, @gas);
-      if (defined $self->INPUT_GROUP_TYPE) {
-        $group = Bio::EnsEMBL::Compara::GenomicAlignGroup->new
-          (-type                => $self->INPUT_GROUP_TYPE);
-      }
-
       foreach my $daf (@split_dafs) {
         my ($q_cigar, $t_cigar, $al_len) = 
             $self->compara_cigars_from_daf_cigar($daf->cigar_string);
@@ -463,23 +449,14 @@ sub convert_output {
              -level_id       => $daf->level_id ? $daf->level_id : 1,
              -method_link_species_set => $out_mlss);
 
-        if (defined $group) {
-          unless (defined $group->dbID) {
-            $group->dbID($daf->group_id);
-          }
-          push @gas, ($q_genomic_align, $t_genomic_align);
-        }
-        
         my $gen_al_block = Bio::EnsEMBL::Compara::GenomicAlignBlock->new
-            (-genomic_align_array => [$q_genomic_align, $t_genomic_align],
-             -score               => $daf->score,
-             -length              => $al_len,
-             -method_link_species_set => $out_mlss);
+            (-genomic_align_array     => [$q_genomic_align, $t_genomic_align],
+             -score                   => $daf->score,
+             -length                  => $al_len,
+             -method_link_species_set => $out_mlss,
+	     -group_id                => $daf->group_id);
         
         push @chain_of_blocks, $gen_al_block;
-      }
-      if (defined $group) {
-        $group->genomic_align_array(\@gas);
       }
     }
 
@@ -496,9 +473,11 @@ sub cleanse_output {
   # that it is stored as a fresh blocks. This involves touching the
   # object's privates, but more efficent than creating brand-new
   # blocks from scratch
+  # NB don't undef group_id - I want to keep the chain group_id for the net.
 
   foreach my $chain (@{$chains}) {
     foreach my $gab (@{$chain}) {
+
       $gab->{'adaptor'} = undef;
       $gab->{'dbID'} = undef;
       $gab->{'method_link_species_set_id'} = undef;
@@ -507,7 +486,6 @@ sub cleanse_output {
         $ga->{'adaptor'} = undef;
         $ga->{'dbID'} = undef;
         $ga->{'method_link_species_set_id'} = undef;
-        $ga->genomic_align_group_by_type($self->INPUT_GROUP_TYPE);
         $ga->method_link_species_set($self->output_MethodLinkSpeciesSet);
       }
     }
@@ -551,7 +529,6 @@ sub delete_alignments {
 
   my $sql_gab = "delete from genomic_align_block where genomic_align_block_id in ";
   my $sql_ga = "delete from genomic_align where genomic_align_id in ";
-  my $sql_gag = "delete from genomic_align_group where genomic_align_id in ";
 
   for (my $i=0; $i < scalar @gabs; $i=$i+20000) {
     my (@gab_ids, @ga1_ids, @ga2_ids);
@@ -563,10 +540,8 @@ sub delete_alignments {
     my $sql_gab_to_exec = $sql_gab . "(" . join(",", @gab_ids) . ")";
     my $sql_ga_to_exec1 = $sql_ga . "(" . join(",", @ga1_ids) . ")";
     my $sql_ga_to_exec2 = $sql_ga . "(" . join(",", @ga2_ids) . ")";
-    my $sql_gag_to_exec1 = $sql_gag . "(" . join(",", @ga1_ids) . ")";
-    my $sql_gag_to_exec2 = $sql_gag . "(" . join(",", @ga2_ids) . ")";
 
-    foreach my $sql ($sql_gab_to_exec,$sql_ga_to_exec1,$sql_ga_to_exec2,$sql_gag_to_exec1,$sql_gag_to_exec2) {
+    foreach my $sql ($sql_gab_to_exec,$sql_ga_to_exec1,$sql_ga_to_exec2) {
       my $sth = $dbc->prepare($sql);
       $sth->execute;
       $sth->finish;
@@ -684,28 +659,5 @@ sub MIN_CHAIN_SCORE {
     return $self->{_min_chain_score};
   }
 }
-
-
-
-sub OUTPUT_GROUP_TYPE {
-  my ($self, $val) = @_;
-  
-  if (defined $val) {
-    $self->{_output_group_type} = $val;
-  }
-
-  return $self->{_output_group_type};
-}
-
-sub INPUT_GROUP_TYPE {
-  my ($self, $val) = @_;
-  
-  if (defined $val) {
-    $self->{_input_group_type} = $val;
-  }
-
-  return $self->{_input_group_type};
-}
-
 
 1;
