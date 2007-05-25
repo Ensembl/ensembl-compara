@@ -540,16 +540,22 @@ sub _internal_nhx_format {
             $nhx .= sprintf("%s", $gene_stable_id);
 	  } elsif ($format_mode eq "display_label_composite") {
             my $display_label = $self->gene_member->display_label;
+            if (!defined($display_label) || $display_label eq '') {
+              my $display_xref = $self->gene_member->gene->display_xref;
+              $display_label = $display_xref->display_id if (defined($display_xref));
+            }
             if (defined($display_label)) {
               $nhx .= $display_label . "_";
             }
-            $nhx .= $self->name;
+            $nhx .= $self->gene_member->stable_id;
             $nhx .= "_" . $self->genome_db->short_name;
 	  } elsif ($format_mode eq "protein_id") {
             $nhx .= sprintf("%s", $self->name);
           }
       } else {
-	  $nhx .= sprintf("%s", $self->name);
+        my $name = sprintf("%s", $self->name);
+        $name = sprintf("%s", $self->get_tagvalue("taxon_name")) if ($name eq '');
+        $nhx .= $name;
       }
     $nhx .= sprintf(":%1.4f", $self->distance_to_parent);
     $nhx .= "[&&NHX";
