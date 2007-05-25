@@ -17,10 +17,13 @@ Bio::EnsEMBL::Compara::DBSQL::DBAdaptor
 
     $db = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
         -user   => 'root',
-        -dbname => 'pog',
         -host   => 'caldy',
-        -driver => 'mysql',
+        -dbname => 'pog',
+        -species => 'Multi',
         );
+
+    $db = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
+        -url => 'mysql://user:pass@host:port/db_name');
 
 
 =head1 DESCRIPTION
@@ -50,7 +53,6 @@ use Bio::EnsEMBL::Utils::Argument;
 @ISA = qw( Bio::EnsEMBL::DBSQL::DBAdaptor );
 
 
-
 =head2 new
 
   Arg [..]   : list of named arguments.  See Bio::EnsEMBL::DBConnection.
@@ -59,13 +61,21 @@ use Bio::EnsEMBL::Utils::Argument;
                can be found in ensembl-compara/modules/Bio/EnsEMBL/Compara/Compara.conf.example
                *** WARNING *** -CONF_FILE is now deprecated. Compara now uses the more generic
                Bio::EnsEMBL::Registry configuration file.
-
+               [-URL mysql://user:pass@host:port/db_name] alternative way to specify the
+               connection parameters. Pass and port are optional. If none is speciefied,
+               the species name will be equal to the db_name.
+               [-GROUP] This option is *always* set to "compara". Use another DBAdaptor
+               for other groups.
   Example    :  $db = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(
-						    -user   => 'root',
-						    -dbname => 'pog',
-						    -host   => 'caldy',
-						    -driver => 'mysql',
-                                                    -conf_file => 'conf.pl');
+                    -user   => 'root',
+                    -pass => 'secret',
+                    -host   => 'caldy',
+                    -port   => 3306,
+                    -dbname => 'ensembl_compara',
+                    -species => 'Multi');
+  Example    :  $db = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(
+                    -url => 'mysql://root:secret@caldy:3306/ensembl_compara'
+                    -species => 'Multi');
   Description: Creates a new instance of a DBAdaptor for the compara database.
   Returntype : Bio::EnsEMBL::Compara::DBSQL::DBAdaptor
   Exceptions : none
@@ -76,9 +86,29 @@ use Bio::EnsEMBL::Utils::Argument;
 sub new {
   my ($class, @args) = @_;
 
-  my $self = $class->SUPER::new(@args);
+  my ($conf_file, $url, $species) = rearrange(['CONF_FILE', 'URL', 'SPECIES'], @args);
 
-  my ($conf_file) = rearrange(['CONF_FILE'], @args);
+  if ($url and $url =~ /mysql\:\/\/([^\@]+\@)?([^\:\/]+)(\:\d+)?\/(.+)/) {
+    my $user_pass = $1;
+    my $host = $2;
+    my $port = $3;
+    my $dbname = $4;
+
+    $user_pass =~ s/\@$//;
+    my ($user, $pass) = $user_pass =~ m/([^\:]+)(\:.+)?/;
+    $pass =~ s/^\:// if ($pass);
+    $port =~ s/^\:// if ($port);
+    push(@args, "-user" => $user) if ($user);
+    push(@args, "-pass" => $pass) if ($pass);
+    push(@args, "-port" => $port) if ($port);
+    push(@args, "-host" => $host);
+    push(@args, "-dbname" => $dbname);
+    if (!$species) {
+      push(@args, "-species" => $dbname);
+    }
+  }
+
+  my $self = $class->SUPER::new(@args);
 
   if(defined($conf_file) and $conf_file ne "") {
     deprecate("Compara.conf file is deprecated. Compara is now using the\n" .
@@ -133,7 +163,6 @@ sub new {
 }
 
 
-
 =head2 add_db_adaptor [DEPRECATED]
 
   Arg [1]    : Bio::EnsEMBL::DBSQL::DBConnection
@@ -184,7 +213,6 @@ sub add_db_adaptor {
   $gdb->db_adaptor($dba);
   return 1;
 }
-
 
 
 =head2 get_db_adaptor [DEPRECATED]
