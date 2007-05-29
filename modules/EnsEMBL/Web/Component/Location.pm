@@ -526,8 +526,8 @@ sub contigviewbottom_config {
     my $data_user = EnsEMBL::Web::Object::Data::User->new({ id => $user->id });
     my @current_configs = @{ $data_user->currentconfigs };
     my $current_config = $current_configs[0];
-    warn "---------------> CONFIG CHECK: " . $current_config->config;
     if ($current_config) {
+      warn "---------------> CONFIG CHECK: ".$current_config->config;
       foreach my $configuration (@{ $data_user->configurations }) {
         warn "SEACHING FOR CONFIG: " . $configuration->id; 
         if ($configuration->id eq $current_config->config) {
