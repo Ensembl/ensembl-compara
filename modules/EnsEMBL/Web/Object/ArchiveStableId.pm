@@ -41,33 +41,6 @@ sub _adaptor {
   return $self->database('core')->get_ArchiveStableIdAdaptor;
 }
 
-=head2 assembly
-
- Arg1        : data object
- Description : fetches assembly off the core API object 
- Return type : string
-
-=cut
-
-sub assembly {
-  my $self = shift;
-  return $self->Obj->assembly;
-}
-
-
-=head2 db_name
-
- Arg1        : data object
- Description : fetches db_name off the core API object 
- Return type : string
-
-=cut
-
-sub db_name {
-  my $self = shift;
-  return $self->Obj->db_name;
-}
-
 
 =head2 gene
 
@@ -82,48 +55,20 @@ sub gene {
   return $self->Obj->get_all_gene_archive_ids();
 }
 
-=head2 get_current_object
+
+=head2 transcript
 
  Arg1        : data object
- Arg2        : type e.g. 'Translation', 'Peptide', 'Gene' (string)
- Arg3        : stable id (string)
- Description : tries to fetch an object of type $type and with id $id and
-               version $version. Used to see if ID exists in the current db.
- Return type : object with this id if it still exists (even if the version number is different
-
-=cut
-
-sub get_current_object {
-  my ($self, $type, $id) = @_;
-  $id ||= $self->stable_id;
-  $id =~ s/(\S+)\.+\d+/$1/;
-  warn "Error: no id" && return unless $id;
-  $type = ucfirst(lc($type));
-  $type = 'Translation' if $type eq 'Peptide';
-  my $call = "get_$type"."Adaptor";
-  my $adaptor = $self->database('core')->$call;
-  return $adaptor->fetch_by_stable_id($id) || undef;
-}
-
-
-=head2 history
-
- Arg1        : data object
- Description : gets the archive id history tree based around this ID
+ Description : fetches transcript archive IDs off the core API object 
  Return type : listref of Bio::EnsEMBL::ArchiveStableId
-               As every ArchiveStableId knows about it's successors, this is
-                a linked tree.
 
 =cut
 
-sub history {
+sub transcript {
   my $self = shift;
-  my $adaptor = $self->_adaptor;
-  my $id = $self->stable_id;
-  return unless $adaptor;
-  my $history = $adaptor->fetch_history_tree_by_stable_id($id );
-  return $history;
+  return $self->Obj->get_all_transcript_archive_ids;
 }
+
 
 =head2 peptide
 
@@ -139,7 +84,7 @@ sub peptide {
 }
 
 
-=head2 peptide_seq
+=head2 get_peptide
 
  Arg1        : data object
  Description : fetches peptide seq  off the core API object 
@@ -147,23 +92,32 @@ sub peptide {
 
 =cut
 
-sub peptide_seq {
+sub get_peptide {
   my $self = shift;
   return $self->Obj->get_peptide;
 }
 
-=head2 release
+
+=head2 history
 
  Arg1        : data object
- Description : fetches release number off the core API object 
- Return type : string
+ Description : gets the archive id history tree based around this ID
+ Return type : listref of Bio::EnsEMBL::ArchiveStableId
+               As every ArchiveStableId knows about it's successors, this is
+                a linked tree.
 
 =cut
 
-sub release {
+sub history {
   my $self = shift;
-  return $self->Obj->release;
+
+  my $adaptor = $self->_adaptor;
+  return unless $adaptor;
+
+  my $history = $adaptor->fetch_history_tree_by_stable_id($self->stable_id);
+  return $history;
 }
+
 
 =head2 short_id_history
 
@@ -178,19 +132,6 @@ sub short_id_history {
   my $adaptor = $self->_adaptor; 
   my $history =  $adaptor->fetch_archive_id_history($self->Obj);
   return $history;
-}
-
-=head2 stable_id
-
- Arg1        : data object
- Description : fetches stable_id off the core API object 
- Return type : string
-
-=cut
-
-sub stable_id {
-  my $self = shift;
-  return $self->Obj->stable_id;
 }
 
 
@@ -223,6 +164,7 @@ sub successor_history {
   return $adaptor->fetch_successor_history($self->Obj);
 }
 
+
 =head2 predecessors
 
  Arg1        : data object
@@ -252,6 +194,7 @@ sub predecessor_history {
   return $adaptor->fetch_predecessor_history($self->Obj);
 }
 
+
 =head2 type
 
  Arg1        : data object
@@ -264,6 +207,21 @@ sub type {
   my $self = shift;
   return $self->Obj->type;
 }
+
+
+=head2 stable_id
+
+ Arg1        : data object
+ Description : fetches stable_id off the core API object 
+ Return type : string
+
+=cut
+
+sub stable_id {
+  my $self = shift;
+  return $self->Obj->stable_id;
+}
+
 
 =head2 version
 
@@ -279,17 +237,87 @@ sub version {
 }
 
 
-=head2 transcript
+=head2 release
 
  Arg1        : data object
- Description : fetches transcript archive IDs off the core API object 
- Return type : listref of Bio::EnsEMBL::ArchiveStableId
+ Description : fetches release number off the core API object 
+ Return type : string
 
 =cut
 
-sub transcript {
+sub release {
   my $self = shift;
-  return $self->Obj->get_all_transcript_archive_ids;
+  return $self->Obj->release;
+}
+
+
+=head2 assembly
+
+ Arg1        : data object
+ Description : fetches assembly off the core API object 
+ Return type : string
+
+=cut
+
+sub assembly {
+  my $self = shift;
+  return $self->Obj->assembly;
+}
+
+
+=head2 db_name
+
+ Arg1        : data object
+ Description : fetches db_name off the core API object 
+ Return type : string
+
+=cut
+
+sub db_name {
+  my $self = shift;
+  return $self->Obj->db_name;
+}
+
+
+=head2 current_version
+
+ Arg1        : data object
+ Description : fetches current version off the core API object 
+ Return type : string
+
+=cut
+
+sub current_version {
+  my $self = shift;
+  return $self->Obj->current_version;
+}
+
+
+=head2 is_current
+
+ Arg1        : data object
+ Description : determines whether object is in the current database 
+ Return type : Boolean
+
+=cut
+
+sub is_current {
+  my $self = shift;
+  return $self->Obj->is_current;
+}
+
+
+=head2 get_latest_incarnation
+
+ Arg1        : data object
+ Description : Fetch the latest incarnation of this object
+ Return type : Bio::EnsEMBL::ArchiveStableId
+
+=cut
+
+sub get_latest_incarnation {
+  my $self = shift;
+  return $self->Obj->get_latest_incarnation;
 }
 
 
