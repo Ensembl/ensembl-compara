@@ -89,13 +89,16 @@ sub update_config_from_parameter {
 sub add_track {
   my ($self, $code, %pars) = @_;
   ## Create drop down menu entry
+  my $type_config = $self->{'general'}->{$self->{'type'}};
   if( $pars{ '_menu'} ) {
-    push @{ $self->{'general'}->{$self->{'type'}}{'_settings'}{$pars{'_menu'}} ||[] }, [ $code, $pars{'_menu_caption'} || $pars{'caption'} ];
+    $type_config->{'_settings'}{$pars{'_menu'}} ||= [];
+    push( @{ $type_config->{'_settings'}{$pars{'_menu'}}},
+          [ $code, $pars{'_menu_caption'} || $pars{'caption'} ] );
     delete $pars{'_menu'};
     delete $pars{'_menu_caption'};
   }
-  push @{$self->{'general'}->{$self->{'type'}}->{'_artefacts'}}, $code;
-  $self->{'general'}->{$self->{'type'}}->{$code} = {%pars};
+  push @{$type_config->{'_artefacts'}}, $code;
+  $type_config->{$code} = {%pars};
   ## Create configuration entry....
 }
 
