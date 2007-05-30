@@ -17,10 +17,12 @@ sub new {
   my $class   = shift;
   my $adaptor = shift;
   my $type    = $class =~/([^:]+)$/ ? $1 : $class;
+  my $style   = $adaptor->get_species_defs->ENSEMBL_STYLE || {};
   my $self = {
     '_colourmap' 	=> $adaptor->colourmap,
-    '_font_face'        => $adaptor->get_species_defs->GRAPHIC_FONT       || 'Arial',
-    '_font_size'        => ( $adaptor->get_species_defs->GRAPHIC_FONTSIZE * $adaptor->get_species_defs->GRAPHIC_LABEL ) || 20,
+    '_font_face'        => $style->{GRAPHIC_FONT} || 'Arial',
+    '_font_size'        => ( $style->{GRAPHIC_FONTSIZE} *
+                             $style->{GRAPHIC_LABEL} ) || 20,
     '_texthelper' 	=> new Sanger::Graphics::TextHelper,
     '_db'         	=> $adaptor->get_adaptor,
     'type'              => $type,
