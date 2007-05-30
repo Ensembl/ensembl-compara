@@ -688,7 +688,7 @@ sub print_my_emf {
     $species_name =~ s/ /_/g;
     print join(" ", "SEQ", $species_name, $this_genomic_align->dnafrag->name,
         $this_genomic_align->dnafrag_start, $this_genomic_align->dnafrag_end,
-        $this_genomic_align->dnafrag_strand), "\n";
+        $this_genomic_align->dnafrag_strand, "(chr_length=".$this_genomic_align->dnafrag->length.")"), "\n";
     my $aligned_sequence;
     if ($masked_seq == 1) {
       $this_genomic_align->original_sequence($this_genomic_align->get_Slice->get_repeatmasked_seq(undef,1)->seq);
