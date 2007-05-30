@@ -31,12 +31,11 @@ sub idhistoryview {
 				       )) {
 
     $info_panel->add_components(qw(
-    name       EnsEMBL::Web::Component::ArchiveStableId::name
-    db_name    EnsEMBL::Web::Component::ArchiveStableId::status
-    remapped   EnsEMBL::Web::Component::ArchiveStableId::remapped
-    archive    EnsEMBL::Web::Component::ArchiveStableId::archive
-    associated_ids EnsEMBL::Web::Component::ArchiveStableId::associated_ids
-    tree       EnsEMBL::Web::Component::ArchiveStableId::tree
+    name            EnsEMBL::Web::Component::ArchiveStableId::name
+    id_status       EnsEMBL::Web::Component::ArchiveStableId::status
+    latest_version  EnsEMBL::Web::Component::ArchiveStableId::latest_version
+    associated_ids  EnsEMBL::Web::Component::ArchiveStableId::associated_ids
+    tree            EnsEMBL::Web::Component::ArchiveStableId::tree
     ));
     if (EnsEMBL::Web::Tools::Ajax::is_enabled()) {
       $info_panel->load_asynchronously('tree');
