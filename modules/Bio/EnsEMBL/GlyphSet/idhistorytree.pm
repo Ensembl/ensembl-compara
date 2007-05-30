@@ -411,11 +411,9 @@ sub _archive_link {
   my $type =  $object->type eq 'Translation' ? 'peptide' : lc($object->type);	
   my $name = $object->stable_id . "." . $object->version;
   my ($url, $id);
-  my $current_obj = $Config->{_object}->get_current_object($object->type);
   my $site_type;
-  if ($current_obj && $current_obj->version eq $version) {
+  if ($object->is_current) {
     $url = "http://www.ensembl.org/";
-    
   }
   else {
     my %archive_sites;
