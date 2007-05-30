@@ -2,7 +2,7 @@ package EnsEMBL::Web::Component::ArchiveStableId;
 
 =head1 LICENCE
 
-	This code is distributed under an Apache style licence:
+This code is distributed under an Apache style licence:
 Please see http://www.ensembl.org/code_licence.html for details
 
 =head1 CONTACT
@@ -11,17 +11,15 @@ Fiona Cunningham <webmaster@sanger.ac.uk>
 
 =cut
 
-use EnsEMBL::Web::Component;
-our @ISA = qw( EnsEMBL::Web::Component);
 use strict;
 use warnings;
 no warnings "uninitialized";
-use POSIX qw(floor ceil);
-use CGI qw(escapeHTML);
-use EnsEMBL::Web::RegObj;
+
+use EnsEMBL::Web::Component;
+our @ISA = qw( EnsEMBL::Web::Component);
+
 
 # General info table #########################################################
-
 
 =head2 version_info
 
@@ -34,9 +32,22 @@ use EnsEMBL::Web::RegObj;
 
 
 sub version_info {
-   my ($panel, $object) = @_;
-  $panel->print(qq(<p>Ensembl Gene, Transcript and Exon versions are distinct from 
-database versions.  The versions increment when there is a sequence change to a Gene, Transcript or Exon respectively (considering exons only for genes and transcripts). Genes or Transcripts may merge over time. When this happens one identifier is retired.  The retired IDs are shown in the table. </p>));
+  my ($panel, $object) = @_;
+
+  $panel->print(qq(
+    <p>Ensembl stable ID versions of Genes, Transcripts, Translations and Exons
+    are distinct from database versions. The rules for version increments are:
+    </p>
+    <ul>
+      <li>Exon: if exon sequence changed</li>
+      <li>Transcript: if spliced exon sequence changed</li>
+      <li>Translation: if transcript changed</li>
+      <li>Gene: if any of its transcript changed</li>
+    </ul>
+    <p>Ensembl predictions may merge over time. When this happens one
+    or more identifiers are retired. The retired IDs are shown on this
+    page.</p>
+  ));
 
  return 1;
 }
@@ -60,210 +71,66 @@ sub name {
 }
 
 
-=head2 remapped
-
- Arg1,2      : panel, data object
- Description : adds the assembly, database and release corresponding to the last mapping of the archive ID
- Output      : two col table
- Return type : 1
-
-=cut
-
-sub remapped {
-  my($panel, $object) = @_;
-  my $label  = 'Last remapped';
-
-  my $assembly = $object->assembly;
-  my $html .= "Assembly: $assembly<br />Database: ".$object->db_name;
-  $html .= "<br />Release: ".$object->release;
-
-  $panel->add_row( $label, $html );
-  return 1;
-}
-
 =head2 status
 
  Arg1,2      : panel, data object
- Description : whether the ID is current, removed, replaced,
-               if it is removed and there are successors, ID of these are shown
+ Description : whether the ID is current, old version, or retired
  Output      : two col table
  Return type : 1
 
 =cut
 
 sub status {
-  my($panel, $object) = @_;
-  my $id = $object->stable_id.".".$object->version;
-  my $param = $object->type eq 'Translation' ? 'peptide' : lc($object->type);
+  my ($panel, $object) = @_;
+  
   my $status;
-  my $current_obj = $object->get_current_object($object->type);
-  my $current_release = $object->species_defs->ENSEMBL_VERSION;
 
-
-  if (!$current_obj) {
-    $status = "<b>This ID has been removed from Ensembl</b>";
-    my @successors = reverse @{ $object->successor_history || []};
-
-    # Only display successors in current release
-    if (@successors) {
-      my $url = qq(<a href="idhistoryview?$param=%s">%s</a>);
-      my @successor_text;
-      my $most_recent = 0;
-
-      foreach my $id (@successors) {
-	last if $id->release < $most_recent;
-	$most_recent = $id->release;
-
-	my $succ_id = $id->stable_id.".".$id->version;
-	my $current = $id->release == $current_release ? " (current release)":"";
-	push @successor_text, sprintf ($url, $succ_id, $succ_id)." release ".$id->release.$current;
-      }
-
-      my $verb;
-      if ( $successors[0]->stable_id eq $object->stable_id ) {
-	$verb = "but exists as";
-      }
-      else {
-	$verb = "and replaced by ";
-      }
-      $status .= " <b>$verb</b><br />".	join " and <br />", @successor_text if @successors;
-    }
+  if ($object->is_current) {
+    # this *is* the current version of this stable ID
+    $status = "<b>Current</b>";
+  } elsif ($object->current_version) {
+    # there is a current version of this stable ID
+    $status = "<b>Old version</b>";
+  } else {
+    # this stable ID no longer exists
+    $status = "<b>Retired</b> (see below for possible successors)";
   }
-  elsif ($current_obj->version eq $object->version) {
-    $status = "Current release $current_release";
-    my $current_link = _archive_link($object, $id, $param, $id);
-    $status .= " $current_link";
-  }
-  else  {
-    my $current = $object->stable_id . ".". $current_obj->version;
-    my $name = _current_link($object->stable_id, $param, $current);
-    $status = "<b>Current version of $id is $name</b><br />";
-  }
-  $panel->add_row( "Status", $status );
+
+  $panel->add_row("Status", $status);
   return 1 if $status =~/^Current/;
 }
 
-sub archive {
+
+=head2 latest_version
+
+ Arg1,2      : panel, data object
+ Description : Prints information about the latest incarnation of this stable
+               ID (version, release, assembly, dbname) and links to current or
+               archive display (geneview, transview, protview).
+ Output      : two col table
+ Return type : 1
+
+=cut
+
+sub latest_version {
   my ($panel, $object) = @_;
-  my $id = $object->stable_id;
-  my $version = $object->version;
-  my $name = $id . "." . $version;
-  my $text;
-  my $param = $object->type eq 'Translation' ? 'peptide' : lc($object->type);
-  my ($history, $releases) = _get_history($object);
- if ($releases){
-  my @release = @$releases;
- 
-  my $firstr = $release[0];
   
-  my $current_obj = $object->get_current_object($object->type);
-  if ($current_obj && $current_obj->version eq $object->version) { 
-	$panel->add_row("Archive", "This version is current");
-  } else {
- 
-    my ($first, $last);
-    foreach my $e (@{$history->get_all_StableIdEvents}){
-      my $old = $e->old_ArchiveStableId;
-      my $new = $e->new_ArchiveStableId;
-      next unless ($old && $new);
-      if ($new->stable_id eq $id && $new->version == $version){
-        $first = $new->release;
-      } 
-      if ($old->stable_id eq $id && $old->version == $version && $new->release ne $old->release){
-        $last = $new->release;
-      }       
-    }
-    unless ($first =~/^\d/){
-	  foreach my $e (@{$history->get_all_StableIdEvents}){
-	    my $old = $e->old_ArchiveStableId;
-	    my $new = $e->new_ArchiveStableId;
-        next unless ($old && $new);
-        my $prev = $version;
-        $prev -=1;
-        if ($new->stable_id eq $id && $new->version == $prev){
-          $first = $new->release;
-        }
-      }	
-    }
-    # need to compensate for cases where the same release number has different versions of the same gene  
- 	unless ($last =~/^\d/){
-	  foreach my $e (@{$history->get_all_StableIdEvents}){
-	    my $old = $e->old_ArchiveStableId;
-	    my $new = $e->new_ArchiveStableId;
-        next unless ($old && $new);
-        my $next = $version;
-        $next +=1;
-        if ($old->stable_id eq $id && $old->version == $next){
-          $last = $new->release;
-        }
-      }	
-    }
-    my $first_link = _archive_link($object, $name, $param, "Archive <img alt='link to archive version' src='/img/ensemblicon.gif'/>", $first, $version  )|| "(no web archive)";
-    $text = "$name was in release $first $first_link";
-    my $last_link;
-    unless ($last == $first){
-     $last -= 1;
-     $last_link = _archive_link($object, $name, $param, "Archive <img alt='link to archive version' src='/img/ensemblicon.gif'/>", $last, $version )|| "(no web archive)";
-     unless ($last <= 0){$text .= " to $last $last_link";} 
-    }
-      if ($last  eq $firstr){ $text = "$name was in release $last $last_link"; } 
+  my $latest = $object->get_latest_incarnation;
+  my $param = $object->type eq 'Translation' ? 'peptide' : lc($object->type);
+  my $id = $latest->stable_id.".".$latest->version;
 
+  my $html = _archive_link($object, $latest, $latest->stable_id, $param, $id);
+  $html .= "<br />\n";
+  $html .= "Release: ".$latest->release;
+  $html .= " (current)" if ($object->is_current);
+  $html .= "<br />\n";
+  $html .= "Assembly: ".$latest->assembly."<br />\n";
+  $html .= "Database: ".$latest->db_name."<br />";
 
-    # Add protein sequence if old version of peptide
-
-    if ($object->type eq 'Translation') {
-      my $seq = $object->peptide_seq;
-      if ($seq) {
-	    $seq =~ s#(.{1,60})#$1<br />#g;
-	    $text .= "<br /><kbd>>$id<br />$seq</kbd>";
-      }
-    }
-    $panel->add_row("Archive", $text);
-   
-  }
- } 
- else {
-	my $current_obj = $object->get_current_object($object->type);
-	if ($current_obj && $current_obj->version eq $object->version) { 
-	$panel->add_row("Archive", "This version is current");
-    } else {
-	 my $his = _get_short_history($object);
-	 my @hist = @{$his};
-	 my $releases = _get_releases($object, $his);
-     my $v = $object->version; 
-     my ($first, $last, @archive_releases);
-
-
-     for (my $i=0; $i < scalar @$releases; $i++){	    
-       while ( my $a = shift @hist){
-	    my $history_id = $a->stable_id.".".$a->version;
-	    next unless $history_id eq $name;
-	    push @archive_releases, $releases->[$i-1]-1 unless $i==0;
-	    push @archive_releases, $releases->[$i];
-	    last;
-       }
-     }
-
-          
-     if (@archive_releases){
-	   $first = shift @archive_releases;
-       $last = pop @archive_releases;
-	   my $first_link = _archive_link($object, $name, $param, "Archive <img alt='link to archive version' src='/img/ensemblicon.gif'/>", $first, $v  )|| "(no web archive)";
-       $text = "$name was in release $first $first_link";
-	   my $last_link;
-       unless ($last == $first){
-        $last -= 1;
-        $last_link = _archive_link($object, $name, $param, "Archive <img alt='link to archive version' src='/img/ensemblicon.gif'/>", $last, $v )|| "(no web archive)";
-        unless ($last <= 0){$text .= " to $last $last_link";} 
-       }
-       if ($last  eq $first){ $text = "$name was in release $last $last_link"; } 
-
-      $panel->add_row("Archive", $text);
-     }
-    }
- }
+  $panel->add_row("Latest version", $html);
   return 1;
 }
+
 
 =head2 associated_ids
 
@@ -275,137 +142,116 @@ sub archive {
 =cut
 
 sub associated_ids {
-  my($panel, $object) = @_;
+  my ($panel, $object) = @_;
+  
   my $type = $object->type;
-  my ($id_type, $id_type2);
+  my $html;
+
   if ($type eq 'Gene') {
-    ($id_type, $id_type2) = ("transcript", "peptide");
-  }
-  elsif ($type eq 'Transcript') {
-    ($id_type, $id_type2) = ("gene", "peptide");
-  }
-  elsif ($type eq 'Translation') {
-    ($id_type, $id_type2) = ("gene", "transcript");
-  }
-  else {
-    warn "Error:  Unknown type $type in ID history view";
-  }
 
-  my $url = qq( <a href="idhistoryview?%s=%s">%s</a>);
+    # get associated transcripts
+    my %tr = map { $_->stable_id => $_; } @{ $object->transcript };
+    foreach my $tr_id (sort keys %tr) {
+      $html .= '<p>'._get_assoc_link('Transcript', 'transcript', $tr_id,
+        $tr_id).'</p>';
 
-  # e.g. Get all gene ids;  Do map to rm duplicate IDS
-  my %ids = map { $_->stable_id => $_; } @{ $object->$id_type || [] };
+      # get associated translations for this transcript
+      my $tr_obj = $tr{$tr_id};
+      my %trlt = map { $_->stable_id => $_; }
+        @{ $tr_obj->get_all_translation_archive_ids };
 
-  foreach (keys %ids) {
-    my $html;
-    $html .= "<p>".ucfirst($id_type). sprintf ($url, $id_type, $_, $_). "</p>";
-    my %id2;  # need to uniquify these
-    if ($id_type eq 'transcript'){ 
-	 my $transcript_obj = $ids{$_};
-	 foreach  ( @{ $transcript_obj->get_all_translation_archive_ids || [] }) {
-      my $stable_id2 = $_->stable_id;
-      next unless $stable_id2;
-      $id2{$stable_id2} = $_;
-     } 
-	} else {
-     foreach  ( @{ $object->$id_type2 || [] }) {
-      my $stable_id2 = $_->stable_id;
-      next unless $stable_id2;
-      $id2{$stable_id2} = $_;
-     }
-    } 
-    foreach my $stable_id2 (keys %id2) {
-      $html .= "<p>".ucfirst($id_type2). sprintf ($url, $id_type2, $stable_id2, $stable_id2);
-
-      if ($id_type2 eq 'peptide') {
-	my $peptide_obj = $id2{$stable_id2};
-	my $seq = $peptide_obj->get_peptide;
-
-	if ($seq) {
-	  $seq =~ s#(.{1,60})#$1<br />#g;
-	  $html .= "<br /><kbd>$seq</kbd>";
-	}
-	else  {
-	  $html .= qq( (sequence same as <a href="protview?peptide=$stable_id2">current release</a>));
-	}
+      foreach my $trlt_id (sort keys %trlt) {
+        $html .= '<p>'._get_assoc_link('Translation', 'peptide',
+          $trlt_id, $trlt_id);
+          
+        # peptide sequence
+        $html .= _get_formatted_pep_seq($trlt{$trlt_id});
+        
+        $html .= '</p>';
       }
-      $html .= "</p>";
     }
-    $panel->add_row( "Associated IDs in archive", $html);
+
+  } elsif ($type eq 'Transcript') {
+    
+    # get associated genes
+    my %genes = map { $_->stable_id => $_; } @{ $object->gene };
+    foreach my $gene_id (sort keys %genes) {
+      $html .= '<p>'._get_assoc_link('Gene', 'gene', $gene_id,
+        $gene_id).'</p>';
+    }
+
+    # get associated translations
+    my %trlt = map { $_->stable_id => $_; } @{ $object->peptide };
+    foreach my $trlt_id (sort keys %trlt) {
+      $html .= '<p>'._get_assoc_link('Translation', 'peptide',
+        $trlt_id, $trlt_id);
+        
+      # peptide sequence
+      $html .= _get_formatted_pep_seq($trlt{$trlt_id});
+      
+      $html .= '</p>';
+    }
+
+  } elsif ($type eq 'Translation') {
+
+    # peptide sequence of this object if found in archive
+    if ($object->peptide) {
+      $html .= '<p>'._get_assoc_link('Translation', 'peptide',
+        $object->stable_id, $object->stable_id);
+      $html .= _get_formatted_pep_seq($object).'</p>';
+    }
+    
+    # get associated genes
+    my %genes = map { $_->stable_id => $_; } @{ $object->gene };
+    foreach my $gene_id (sort keys %genes) {
+      $html .= '<p>'._get_assoc_link('Gene', 'gene', $gene_id,
+        $gene_id).'</p>';
+    }
+
+    # get associated transcripts
+    my %tr = map { $_->stable_id => $_; } @{ $object->transcript };
+    foreach my $tr_id (sort keys %tr) {
+      $html .= '<p>'._get_assoc_link('Transcript', 'transcript', $tr_id,
+        $tr_id).'</p>';
+    }
+
+  } else {
+    warn "Error: Unknown type $type in idhistoryview.";
   }
+
+  return 0 unless ($html);
+
+  $panel->add_row( "Associated IDs in archive", $html);
   return 1;
 }
 
 
-=head2 _get_history
-
- Arg1        : data object
- Description : gets history and order of releases for object
- Output      : hashref, arrayref
- Return type : hashref, arrayref
-
-=cut
-
-sub _get_history {
-  my ($object) = @_;
-
-  my $id = $object->stable_id;;
-  my  $history = $object->history;
-  return unless keys %$history;
-  my @temp = @{$history->get_release_display_names};
-  my @releases = sort ({$a <=> $b} @temp);
-
-  return ($history, \@releases);
+sub _get_assoc_link {
+  my $fmt = qq(%s <a href="idhistoryview?%s=%s">%s</a>);
+  return sprintf($fmt, @_);
 }
 
-=head2 _get_short_history
 
- Arg1        : data object
- Description : gets reduced history and order of releases for object
- Output      : hashref, arrayref
- Return type : hashref, arrayref
+sub _get_formatted_pep_seq {
+  my $object = shift;
 
-=cut
+  my $seq = $object->get_peptide;
+  my $html;
 
-sub _get_short_history {
-  my ($object) = @_;
-  my $id = $object->stable_id;;
-  my  $history = $object->short_id_history;  
-  return  $history;
-}
-
-sub _get_releases{
-   my ($object, $history) = @_;		
-  my ($r, @rel);
-  while (my $archive_id = shift @{$history}){
-    $r->{$archive_id->release}->{$archive_id->db_name} =1;
-    my $name = $archive_id->stable_id .".".$archive_id->version;
-    my $release = $archive_id->release;
-    warn "$release $name";	
+  if ($seq) {
+    $seq =~ s#(.{1,60})#$1<br />#g;
+    $html = "<br /><kbd>$seq</kbd>";
+  } else  {
+    $html = ' (sequence same as <a href="protview?peptide=';
+    $html .= $object->stable_id . '>current release</a>)';
   }
 
-  foreach my $release (keys %$r){
-    my @db_names = sort keys %{$r->{release}};
- 
-    if (scalar(@db_names)>1 ){
-	  my $i = 0;
-	  foreach my $db_name (@db_names){
-	    my $name = "$release." . ++$i;
-	    warn "$db_name $name";
-	    push @rel, [$db_name, $name];
-	  }
-    } else {
-	  push @rel, [$db_names[0], $release];
-    }	
-  }
-  @rel = sort {$a->[1] <=> $b->[1] || $a->[0] cmp $b->[0] } @rel; 
-  my @display_names = map {$_->[1]} @rel;
-  return   \@display_names;
+  return $html;
 }
 
 
-sub historypanel{
-  my($panel, $object) = @_;
+sub historypanel {
+  my ($panel, $object) = @_;
   my @temp = @{$panel->params};
   my %releases;
 
@@ -454,7 +300,7 @@ sub historypanel{
 	       if ($new->release eq '43') {$rel_matches{$new_release} = $new->version}
 	       my @temp = split(/\//,$rel_matches{$new_release});
 	        my $s =0;
-	       foreach my $a (@temp){ if ($a eq $new->version){$s = 1;}} 
+	       foreach my $aa (@temp){ if ($aa eq $new->version){$s = 1;}} 
 	       unless ($s =~/1/){ push (@temp, $new->version); }
 	       @temp = sort @temp;
 	       my $new_value = join ('/', @temp);
@@ -472,7 +318,7 @@ sub historypanel{
 			else{  
 	         my @temp = split(/\//,$rel_matches{$old_release});
 	         my $s =0;
-	         foreach my $a (@temp){if ($a eq $old->version){$s = 1;}} 
+	         foreach my $aa (@temp){if ($aa eq $old->version){$s = 1;}} 
 	         unless ($s =~/1/){ push (@temp, $old->version); }
 	         @temp = sort @temp;
 	         my $new_value = join ('/', @temp);
@@ -487,7 +333,7 @@ sub historypanel{
 
     ## Try and backfill any empty gaps ##
       my %rel_pos;
-      my @rel = sort ({$a <=> $b} keys %rel_matches);
+      my @rel = sort {$a <=> $b} keys %rel_matches;
       my $count = 0;
       foreach my $r (@rel){
 	    $rel_pos{$r} = $count;
@@ -529,8 +375,8 @@ sub historypanel{
   return 1;
 }
 
-sub nohistory{
-  my($panel, $object) = @_;
+sub nohistory {
+  my ($panel, $object) = @_;
   my @temp = @{$panel->params};
   $panel->print(qq(<p>No ID history was found for the following identifiers:</p><p>));
   foreach my $id (@temp){
@@ -548,8 +394,9 @@ sub _flip_URL {
   return sprintf '%s=%s;%s', $type, $object->stable_id .".". $object->version;
 }
 
+
 sub tree {
-  my($panel, $object) = @_;
+  my ($panel, $object) = @_;
   my $name = $object->stable_id .".". $object->version;
   my $status   = 'status_tree';
   my $label = "ID History Map";
@@ -594,6 +441,7 @@ sub _create_idhistory_tree {
 # $image->imagemap ='no'; 
  return $image;
 }
+
  
 sub _id_history_tree_menu {
  my($object, $configname, $left ) = @_;
@@ -607,6 +455,7 @@ sub _id_history_tree_menu {
 
 }
 
+
 =head2 _archive_link
  Arg 1       : data object
  Arg 2       : param to view for URL (within first <a> tag)
@@ -618,63 +467,45 @@ sub _id_history_tree_menu {
 
 =cut
 
-
 sub _archive_link {
-  my ($object, $name, $type, $id, $release, $version) = @_;
-  $release ||= $object->release;
-  $version ||= $object->version;
-  return unless $release >= $object->species_defs->EARLIEST_ARCHIVE;
+  my ($object, $latest, $name, $type, $display_label, $release, $version) = @_;
+
+  $release ||= $latest->release;
+  $version ||= $latest->version;
+  
+  # no archive for old release, return un-linked display_label
+  return $display_label if ($release < $object->species_defs->EARLIEST_ARCHIVE);
+  
   my $url;
-  my $current_obj = $object->get_current_object($type, $name);
   my $site_type;
-  if ($current_obj && $current_obj->version eq $version) {
+
+  if ($latest->is_current) {
+    
     $url = "/";
-    $site_type = "current ";
-  }
-  else {
-    my %archive_sites;
-    map { $archive_sites{ $_->{release_id} } = $_->{short_date} }@{ $object->species_defs->RELEASE_INFO };
+    $site_type = "current";
+
+  } else {
+    
+    my %archive_sites = map { $_->{release_id} => $_->{short_date} }
+      @{ $object->species_defs->RELEASE_INFO };
+
     $url = "http://$archive_sites{$release}.archive.ensembl.org/";
     $url =~ s/ //;
-    $site_type = "archived ";
+    $site_type = "archived";
+
   }
 
-  $url .=  $ENV{'ENSEMBL_SPECIES'}."/";
+  $url .=  $ENV{'ENSEMBL_SPECIES'};
+
   my $view = $type."view";
   if ($type eq 'peptide') {
     $view = 'protview';
-  }
-  elsif ($type eq 'transcript') {
+  } elsif ($type eq 'transcript') {
     $view = 'transview';
   }
 
-  $id = qq(<a title="View in $site_type$view" href="$url$view?$type=$name">$id</a>);
-  return $id;
-}
-
-
-=head2 _current_link
-
- Arg 1       : name within first <a> tag -for URL
- Arg 2       : type (e.g. "peptide", "gene", "transcript")
- Arg 3       : display text between <a> HERE </a> tags
- Description : adds the type and stable ID of the archive ID
- Return type : html
-
-=cut
-
-
-sub _current_link {
-  my ($name, $type, $display) = @_;
-  my $url =  "/".$ENV{'ENSEMBL_SPECIES'}."/";
-  my $view = $type."view";
-  if ($type eq 'peptide') {
-    $view = 'protview';
-  }
-  elsif ($type eq 'transcript') {
-    $view = 'transview';
-  }
-  return qq(<a title="Archive site" href="$url$view?$type=$name">$display</a>);
+  my $html = qq(<a title="View in $site_type $view" href="$url/$view?$type=$name">$display_label</a>);
+  return $html;
 }
 
 
