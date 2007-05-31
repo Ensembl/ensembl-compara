@@ -10,6 +10,7 @@
 =head1 NAME
 
 Bio::Das::ProServer::SourceAdaptor::compara - Extension of the ProServer for e! genomic alignments
+and synteny block.
 
 =head1 INHERITANCE
 
@@ -21,7 +22,7 @@ There are some specific parameters for this module you can use in the DAS server
 
 =head2 registry
 
-Your registryu configuration file to connect to the compara database
+Your registry configuration file to connect to the compara database
 
 =head2 database
 
@@ -42,12 +43,6 @@ separated by comas.
 The method_link_type. This defines the type of alignments. E.g. TRANSLATED_BLAT, BLASTZ_NET...
 See perldoc Bio::EnsEMBL::Compara::MethodLinkSpeciesSet for more details about the
 method_link_type
-
-=head2 group_type
-
-The type of grouping used. The alignments can be grouped in the database. The DB supports
-several grouping schema, each of them has a name. By default (in the e! API and in this
-module), the group_type is "default". You can choose another group_type using this parameter.
 
 =head2 Example
 
@@ -74,36 +69,48 @@ module), the group_type is "default". You can choose another group_type using th
   port        = 9013
 
   [Hsap-Mmus-blastznet]
+  transport       = ensembl
+  adaptor         = compara
   registry        = /home/foo/ProServer/eg/reg.pl
   state           = on
-  adaptor         = compara
   database        = ensembl-compara-41
   this_species    = Homo sapiens
   other_species   = Mus musculus
   analysis        = BLASTZ_NET
   description     = Human-mouse blastz-net alignments
-  group_type      = default
 
   [Mmus-Hsap-blastznet]
+  transport       = ensembl
+  adaptor         = compara
   registry        = /home/foo/ProServer/eg/reg.pl
   state           = on
-  adaptor         = compara
   database        = ensembl-compara-41
   this_species    = Mus musculus
   other_species   = Homo sapiens
   analysis        = BLASTZ_NET
   description     = Mouse-Human blastz-net alignments
-  group_type      = default
 
   [primates-mlagan-hs]
+  transport       = ensembl
+  adaptor         = compara
   registry        = /home/foo/ProServer/eg/reg.pl
   state           = on
-  adaptor         = compara
   database        = ensembl-compara-41
   this_species    = Homo sapiens
   other_species   = Pan troglodytes, Macaca mulatta
   analysis        = MLAGAN
   description     = Primates Mlagan alignments on human
+
+  [human-platypus-bz]
+  transport       = ensembl
+  adaptor         = compara
+  registry        = /home/foo/ProServer/eg/reg.pl
+  state           = on
+  database        = ensembl-compara-41
+  this_species    = Homo sapiens
+  other_species   = Ornithorhynchus anatinus
+  analysis        = BLASTZ_NET
+  description     = Human-platypus blastz alignments
 
 
 =cut
@@ -136,10 +143,6 @@ sub init
     $db->no_version_check(1);
     my $dbname  = $self->config()->{'database'};
 
-    $self->{'compara'}{'meta_con'} =
-        $db->get_adaptor($dbname, 'compara', 'MetaContainer') or
-            die "no metadbadaptor:$dbname, 'compara','MetaContainer' \n";
-
     $self->{'compara'}{'mlss_adaptor'} =
         $db->get_adaptor($dbname, 'compara', 'MethodLinkSpeciesSet') or
             die "can't get $dbname, 'compara', 'MethodLinkSpeciesSet'\n";
@@ -151,6 +154,10 @@ sub init
     $self->{'compara'}{'genomic_align_block_adaptor'} =
         $db->get_adaptor($dbname, 'compara', 'GenomicAlignBlock') or
             die "can't get $dbname, 'compara', 'GenomicAlignBlock'\n";
+
+    $self->{'compara'}{'synteny_region_adaptor'} =
+        $db->get_adaptor($dbname, 'compara', 'SyntenyRegion') or
+            die "can't get $dbname, 'compara', 'SyntenyRegion'\n";
 
     my $genome_db_adaptor =
         $db->get_adaptor($dbname, 'compara', 'GenomeDB') or
@@ -176,18 +183,10 @@ sub build_features
     my $method_link = $self->config()->{'analysis'};
 
     my $link_template = $self->config()->{'link_template'} || 'http://www.ensembl.org/';
-
     $link_template .= '%s/contigview?chr=%s;vc_start=%d;vc_end=%d';
-
-    my $meta_con    = $self->{'compara'}{'meta_con'};
+    $self->{'compara'}->{'link_template'} = $link_template;
 
     my $stored_max_alignment_length;
-
-    my $values = $meta_con->list_value_by_key("max_alignment_length");
-
-    if(@$values) {
-        $stored_max_alignment_length = $values->[0];
-    }
 
     my $mlss_adaptor                = $self->{'compara'}{'mlss_adaptor'};
     my $dnafrag_adaptor             = $self->{'compara'}{'dnafrag_adaptor'};
@@ -236,111 +235,191 @@ sub build_features
             $method_link, [$species1_genome_db, @other_species_genome_dbs]);
 
     ## Fetch the alginments on the query segment
-    my $genomic_align_blocks =
-        $genomic_align_block_adaptor->fetch_all_by_MethodLinkSpeciesSet_DnaFrag(
-            $method_link_species_set, $dnafrag1, $start1, $end1);
+    my $features;
+    if ($method_link_species_set->method_link_class =~ /SyntenyRegion/) {
+      $features = $self->get_features_from_SyntenyRegions(
+          $method_link_species_set, $dnafrag1, $start1, $end1);
+    } else {
+      $features = $self->get_features_from_GenomicAlingBlocks(
+          $method_link_species_set, $dnafrag1, $start1, $end1);
+    }
 
-    ## Get the start and end coordinates for each group. The coordinates are indexed
-    ## by species_name and chr_name to ensure the continuity in the coordinates.
-    my $group_type = $self->config()->{'group_type'};
-    my $group_coordinates;
-    foreach my $gab (@$genomic_align_blocks) {
-      my $genomic_align = $gab->reference_genomic_align;
-      next if(!$genomic_align->genomic_align_group_by_type($group_type));
-      my $group_id = $genomic_align->genomic_align_group_by_type($group_type)->dbID;
-      foreach my $genomic_align2 (@{$gab->get_all_non_reference_genomic_aligns()}) {
-        my $species_name = $genomic_align2->dnafrag->genome_db->name;
-        my $chr_name = $genomic_align2->dnafrag->name;
-        my $chr_start = $genomic_align2->dnafrag_start;
-        my $chr_end = $genomic_align2->dnafrag_end;
-        if (!defined($group_coordinates->{$group_id}->{$species_name}->{$chr_name})) {
+    return @$features;
+}
+
+sub get_features_from_SyntenyRegions {
+  my ($self, $method_link_species_set, $dnafrag1, $start1, $end1) = @_;
+  my $features = [];
+
+  my $synteny_region_adaptor = $self->{'compara'}{'synteny_region_adaptor'};
+  my $synteny_regions = $synteny_region_adaptor->fetch_all_by_MethodLinkSpeciesSet_DnaFrag(
+      $method_link_species_set, $dnafrag1, $start1, $end1);
+
+  my $data;
+  foreach my $this_synteny_region (@$synteny_regions) {
+    my $these_dnafrag_regions = $this_synteny_region->get_all_DnaFragRegions();
+    foreach my $this_dnafrag_region (@{$these_dnafrag_regions}) {
+      if ($this_dnafrag_region->genome_db->name == $dnafrag1->genome_db->name and
+          $this_dnafrag_region->dnafrag->name == $dnafrag1->name and
+          $this_dnafrag_region->dnafrag_start <= $end1 and
+          $this_dnafrag_region->dnafrag_end >= $start1) {
+        push(@$data, [$this_dnafrag_region, $these_dnafrag_regions]);
+        print STDERR join(" ++ ", $this_dnafrag_region->genome_db->name, $this_dnafrag_region->dnafrag->name,
+            $this_dnafrag_region->dnafrag_start, $this_dnafrag_region->dnafrag_end), "\n";
+      } else {
+        print STDERR join(" -- ", $this_dnafrag_region->genome_db->name, $this_dnafrag_region->dnafrag->name,
+            $this_dnafrag_region->dnafrag_start, $this_dnafrag_region->dnafrag_end), "\n";
+      }
+    }
+    print STDERR "\n";
+  }
+
+  foreach my $this_data (@$data) {
+    my ($reference_dnafrag_region, $all_dnafrag_regions) = @$this_data;
+
+    ## Set link, linktxt, grouplink, grouplinktxt
+    my @links;
+    my @link_txts;
+    foreach my $this_dnafrag_region (@{$all_dnafrag_regions}) {
+      next if ($this_dnafrag_region == $reference_dnafrag_region);
+      my ($species2, $name2, $start2, $end2) = (
+          $this_dnafrag_region->dnafrag->genome_db->name(),
+          $this_dnafrag_region->dnafrag->name(),
+          $this_dnafrag_region->dnafrag_start(),
+          $this_dnafrag_region->dnafrag_end(),
+        );
+      my $ens_species = $species2;
+      $ens_species =~ s/ /_/g;
+      my $short_species2 = $species2;
+      $short_species2 =~ /(.)\S+\s(.{3})/;
+      $short_species2 = "$1.$2";
+      push(@links, sprintf($self->{compara}->{link_template}, $ens_species, $name2, $start2, $end2, $short_species2));
+      push(@link_txts, sprintf("%s:%s:%d-%d", $short_species2, $name2, $start2, $end2));
+    }
+
+    my $synteny_region_id = $reference_dnafrag_region->synteny_region_id;
+    push @$features, {
+        'id'    => $synteny_region_id,
+        'label' => "Synteny Region #$synteny_region_id",
+        'method'=> $method_link_species_set->method_link_type,
+        'start' => $reference_dnafrag_region->dnafrag_start,
+        'end'   => $reference_dnafrag_region->dnafrag_end,
+        'ori'   => ($reference_dnafrag_region->dnafrag_strand() == 1 ? '+' : '-'),
+        'score' => '-',
+        'link'  => [@links],
+        'linktxt' => [@link_txts],
+        'typecategory' => $method_link_species_set->method_link_class,
+        'type'  => $method_link_species_set->name,
+      };
+  }
+
+  return $features;
+}
+
+sub get_features_from_GenomicAlingBlocks {
+  my ($self, $method_link_species_set, $dnafrag1, $start1, $end1) = @_;
+  my $features = [];
+
+  my $genomic_align_block_adaptor = $self->{'compara'}{'genomic_align_block_adaptor'};
+  my $genomic_align_blocks = $genomic_align_block_adaptor->fetch_all_by_MethodLinkSpeciesSet_DnaFrag(
+      $method_link_species_set, $dnafrag1, $start1, $end1);
+
+  ## Get the start and end coordinates for each group. The coordinates are indexed
+  ## by species_name and chr_name to ensure the continuity in the coordinates.
+  my $group_coordinates;
+  foreach my $gab (@$genomic_align_blocks) {
+    my $group_id = $gab->group_id;
+    foreach my $genomic_align2 (@{$gab->get_all_non_reference_genomic_aligns()}) {
+      my $species_name = $genomic_align2->dnafrag->genome_db->name;
+      my $chr_name = $genomic_align2->dnafrag->name;
+      my $chr_start = $genomic_align2->dnafrag_start;
+      my $chr_end = $genomic_align2->dnafrag_end;
+      if (!defined($group_coordinates->{$group_id}->{$species_name}->{$chr_name})) {
+        $group_coordinates->{$group_id}->{$species_name}->{$chr_name}->{start} = $chr_start;
+        $group_coordinates->{$group_id}->{$species_name}->{$chr_name}->{end} = $chr_end;
+      } else {
+        if ($chr_start < $group_coordinates->{$group_id}->{$species_name}->{$chr_name}->{start}) {
           $group_coordinates->{$group_id}->{$species_name}->{$chr_name}->{start} = $chr_start;
+        }
+        if ($chr_end > $group_coordinates->{$group_id}->{$species_name}->{$chr_name}->{end}) {
           $group_coordinates->{$group_id}->{$species_name}->{$chr_name}->{end} = $chr_end;
-        } else {
-          if ($chr_start < $group_coordinates->{$group_id}->{$species_name}->{$chr_name}->{start}) {
-            $chr_start = $group_coordinates->{$group_id}->{$species_name}->{$chr_name}->{start};
-          }
-          if ($chr_end > $group_coordinates->{$group_id}->{$species_name}->{$chr_name}->{end}) {
-            $chr_end = $group_coordinates->{$group_id}->{$species_name}->{$chr_name}->{end};
-          }
         }
       }
     }
+  }
 
-    ## Build the results array
-    my @results = ();
+  foreach my $gab (@$genomic_align_blocks) {
+    $genomic_align_block_adaptor->retrieve_all_direct_attributes($gab);
 
-    foreach my $gab (@$genomic_align_blocks) {
-      $genomic_align_block_adaptor->retrieve_all_direct_attributes($gab);
+    my $genomic_align1 = $gab->reference_genomic_align();
+    my $other_genomic_aligns = $gab->get_all_non_reference_genomic_aligns();
+    my $group_id = $gab->group_id;
 
-      my $genomic_align1 = $gab->reference_genomic_align();
-      my $other_genomic_aligns = $gab->get_all_non_reference_genomic_aligns();
-      my $group_id = $genomic_align1->genomic_align_group_by_type($group_type)?
-          $genomic_align1->genomic_align_group_by_type($group_type)->dbID:undef;
+    my $id = $gab->dbID;
+    my $label;
+    my $group_label;
+    # note will contain the perc_id if it exists
+    my $note = $gab->perc_id?$gab->perc_id.'% identity':undef;
 
-      my $id = $gab->dbID;
-      my $label;
-      my $group_label;
-      # note will contain the perc_id if it exists
-      my $note = $gab->perc_id?$gab->perc_id.'% identity':undef;
-
-      ## Set link, linktxt, grouplink, grouplinktxt
-      my @links;
-      my @link_txts;
-      my @group_links;
-      my @group_link_txts;
-      foreach my $this_genomic_align (@{$gab->get_all_non_reference_genomic_aligns()}) {
-        my ($species2, $name2, $start2, $end2, $group2) = (
-            $this_genomic_align->dnafrag->genome_db->name(),
-            $this_genomic_align->dnafrag->name(),
-            $this_genomic_align->dnafrag_start(),
-            $this_genomic_align->dnafrag_end(),
-            $this_genomic_align->genomic_align_group_by_type($group_type),
-          );
-        my $ens_species = $species2;
-        $ens_species =~ s/ /_/g;
-        push(@links, sprintf($link_template, $ens_species, $name2, $start2, $end2, $species2));
-        push(@link_txts, sprintf("%s:%d,%d in %s", $name2, $start2, $end2, $species2));
-        next if (!defined($group_id));
-        my $group_start2 = $group_coordinates->{$group_id}->{$species2}->{$name2}->{start};
-        my $group_end2 = $group_coordinates->{$group_id}->{$species2}->{$name2}->{end};
-        $group_label = "$name2: $group_start2-$group_end2";
-        push(@group_links, sprintf($link_template, $ens_species, $name2,
-            $group_start2, $group_end2));
-        push(@group_link_txts, sprintf("%s:%d,%d in %s", $name2,
-            $group_start2, $group_end2, $species2));
-      }
-
-      if (@other_species_genome_dbs < 2) {
-        ## for pairwise and self-alignments
-        my $ga = $gab->get_all_non_reference_genomic_aligns()->[0];
-        $label = $ga->dnafrag->name.": ".$ga->dnafrag_start."-".$ga->dnafrag_end;
-      } else {
-        ## for multiple alignments
-        $group_label = $group_id?"group $group_id":undef;
-      }
-
-      push @results, {
-          'id'    => $id,
-          'label' => $label,
-          'method'=> $method_link,
-          'start' => $genomic_align1->dnafrag_start,
-          'end'   => $genomic_align1->dnafrag_end,
-          'ori'   => ($genomic_align1->dnafrag_strand() == 1 ? '+' : '-'),
-          'score' => $gab->score(),
-          'note'  => $note,
-          'link'  => [@links],
-          'linktxt' => [@link_txts],
-          'group' => $group_id,
-          'grouplabel'=> $group_label,
-          'grouplink' => [@group_links],
-          'grouplinktxt' => [@group_link_txts],
-          'typecategory' => 'Whole genome alignment',
-          'type'  => 'Compara'
-        };
+    ## Set link, linktxt, grouplink, grouplinktxt
+    my @links;
+    my @link_txts;
+    my @group_links;
+    my @group_link_txts;
+    foreach my $this_genomic_align (@{$gab->get_all_non_reference_genomic_aligns()}) {
+      my ($species2, $name2, $start2, $end2) = (
+          $this_genomic_align->dnafrag->genome_db->name(),
+          $this_genomic_align->dnafrag->name(),
+          $this_genomic_align->dnafrag_start(),
+          $this_genomic_align->dnafrag_end(),
+        );
+      my $ens_species = $species2;
+      $ens_species =~ s/ /_/g;
+      my $short_species2 = $species2;
+      $short_species2 =~ /(.)\S+\s(.{3})/;
+      $short_species2 = "$1.$2";
+      push(@links, sprintf($self->{compara}->{link_template}, $ens_species, $name2, $start2, $end2, $short_species2));
+      push(@link_txts, sprintf("%s:%s:%d-%d", $short_species2, $name2, $start2, $end2));
+      next if (!defined($group_id));
+      my $group_start2 = $group_coordinates->{$group_id}->{$species2}->{$name2}->{start};
+      my $group_end2 = $group_coordinates->{$group_id}->{$species2}->{$name2}->{end};
+      $group_label = "$name2: $group_start2-$group_end2";
+      push(@group_links, sprintf($self->{compara}->{link_template}, $ens_species, $name2,
+          $group_start2, $group_end2));
+      push(@group_link_txts, sprintf("%s:%s:%d-%d", $short_species2, $name2,
+          $group_start2, $group_end2));
     }
 
-    return @results;
+    if (@{$method_link_species_set->species_set} <= 2) {
+      ## for pairwise and self-alignments
+      my $ga = $gab->get_all_non_reference_genomic_aligns()->[0];
+      $label = $ga->dnafrag->name.": ".$ga->dnafrag_start."-".$ga->dnafrag_end;
+    } else {
+      ## for multiple alignments
+      $group_label = $group_id?"group $group_id":undef;
+    }
+
+    push @$features, {
+        'id'    => $id,
+        'label' => $label,
+        'method'=> $method_link_species_set->method_link_type,
+        'start' => $genomic_align1->dnafrag_start,
+        'end'   => $genomic_align1->dnafrag_end,
+        'ori'   => ($genomic_align1->dnafrag_strand() == 1 ? '+' : '-'),
+        'score' => $gab->score(),
+        'note'  => $note,
+        'link'  => [@links],
+        'linktxt' => [@link_txts],
+        'group' => $group_id,
+        'grouplabel'=> $group_label,
+        'grouplink' => [@group_links],
+        'grouplinktxt' => [@group_link_txts],
+        'typecategory' => $method_link_species_set->method_link_class,
+        'type'  => $method_link_species_set->name,
+      };
+  }
+
+  return $features;
 }
 
 sub das_stylesheet
@@ -351,12 +430,42 @@ sub das_stylesheet
 <!DOCTYPE DASSTYLE SYSTEM "http://www.biodas.org/dtd/dasstyle.dtd">
 <DASSTYLE>
     <STYLESHEET version="1.0">
-        <CATEGORY id="Whole genome alignment">
-            <TYPE id="Compara">
+        <CATEGORY id="GenomicAlignBlock.pairwise_alignment">
+            <TYPE id="default">
                 <GLYPH>
                     <BOX>
                         <FGCOLOR>blue</FGCOLOR>
                         <BGCOLOR>aquamarine2</BGCOLOR>
+                    </BOX>
+                </GLYPH>
+            </TYPE>
+        </CATEGORY>
+        <CATEGORY id="GenomicAlignBlock.multiple_alignment">
+            <TYPE id="default">
+                <GLYPH>
+                    <BOX>
+                        <FGCOLOR>brown</FGCOLOR>
+                        <BGCOLOR>chocolate</BGCOLOR>
+                    </BOX>
+                </GLYPH>
+            </TYPE>
+        </CATEGORY>
+        <CATEGORY id="GenomicAlignBlock.constrained_element">
+            <TYPE id="default">
+                <GLYPH>
+                    <BOX>
+                        <FGCOLOR>firebrick3</FGCOLOR>
+                        <BGCOLOR>firebrick1</BGCOLOR>
+                    </BOX>
+                </GLYPH>
+            </TYPE>
+        </CATEGORY>
+        <CATEGORY id="SyntenyRegion.synteny">
+            <TYPE id="default">
+                <GLYPH>
+                    <BOX>
+                        <FGCOLOR>black</FGCOLOR>
+                        <BGCOLOR>DarkSeaGreen3</BGCOLOR>
                     </BOX>
                 </GLYPH>
             </TYPE>
