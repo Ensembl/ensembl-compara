@@ -264,14 +264,8 @@ sub get_features_from_SyntenyRegions {
           $this_dnafrag_region->dnafrag_start <= $end1 and
           $this_dnafrag_region->dnafrag_end >= $start1) {
         push(@$data, [$this_dnafrag_region, $these_dnafrag_regions]);
-        print STDERR join(" ++ ", $this_dnafrag_region->genome_db->name, $this_dnafrag_region->dnafrag->name,
-            $this_dnafrag_region->dnafrag_start, $this_dnafrag_region->dnafrag_end), "\n";
-      } else {
-        print STDERR join(" -- ", $this_dnafrag_region->genome_db->name, $this_dnafrag_region->dnafrag->name,
-            $this_dnafrag_region->dnafrag_start, $this_dnafrag_region->dnafrag_end), "\n";
       }
     }
-    print STDERR "\n";
   }
 
   foreach my $this_data (@$data) {
