@@ -20,28 +20,31 @@ sub render {
   my %species_description = setup_species_descriptions($species_defs);
 
   my $reg_user = $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->get_user;
-  my $user = EnsEMBL::Web::Object::Data::User->new({ id => $reg_user->id });
+  my $user_data = undef; 
+  if ($reg_user->id > 0) {
+    $user_data = EnsEMBL::Web::Object::Data::User->new({ id => $reg_user->id });
+  }
 
   my $html = "";
-  warn "RENDERING CUSTOM SPECIES LIST WITH USER: " . $user->id;
+  #warn "RENDERING CUSTOM SPECIES LIST WITH USER: " . $reg_user->id;
   if ($request && $request eq 'fragment') {
-    $html .= render_species_list($user, $species_defs, \%id_to_species, \%species_description); 
+    $html .= render_species_list($user_data, $species_defs, \%id_to_species, \%species_description); 
   } else {
-    warn "REORDER LIST"; 
+    #warn "REORDER LIST"; 
     $html .= "<div id='reorder_species' style='display: none;'>\n";
-    $html .= render_ajax_reorder_list($user, $species_defs, \%id_to_species); 
+    $html .= render_ajax_reorder_list($user_data, $species_defs, \%id_to_species); 
     $html .= "</div>\n";
-    warn "FULL LIST";
+    #warn "FULL LIST";
     $html .= "<div id='full_species'>\n";
-    $html .= render_species_list($user, $species_defs, \%id_to_species, \%species_description); 
+    $html .= render_species_list($user_data, $species_defs, \%id_to_species, \%species_description); 
     $html .= "</div>\n";
-    if ($species_defs->ENSEMBL_LOGINS && !$user->name) {
+    if ($species_defs->ENSEMBL_LOGINS && !$reg_user->id) {
       $html .= "<div id='login_message'>";
       $html .= "<a href='javascript:login_link()'>Log in</a> to customise this list &middot; <a href='/common/register'>Register</a>";
       $html .= "</div>\n";
     }
   }
-  warn "RETURNING HTML";
+  #warn "RETURNING HTML: $html";
   return $html;
 
 }
@@ -117,7 +120,7 @@ sub render_species_list {
   my %id_to_species = %{ $id_to_species };
   my %species_id = reverse %id_to_species;
   my @specieslists = ();
-  if ($user->id) {
+  if ($user && $user->id) {
     @specieslists = @{ $user->specieslists };
   }
   my %favourites = ();
@@ -145,7 +148,7 @@ sub render_species_list {
   @species_list = @{check_lists(\@favourite_species, \@species_list, \%id_to_species)};
 
   ## output list
-  if (!$user->name) {
+  if (!$user) {
     $html .= "<b>Popular genomes</b><br />\n";
   } else {
     $html .= "<b>Popular genomes</b> &middot; \n";
@@ -166,7 +169,7 @@ sub render_species_list {
   $html .= "</div>\n";
   $html .= "</div>\n";
 
-  if (!$user->name) {
+  if (!$user) {
     $html .= "<b>More genomes</b><br />\n";
   } else {
     $html .= "<b>More genomes</b> &middot; \n";
@@ -196,17 +199,19 @@ sub render_ajax_reorder_list {
   my %species_id = reverse %id_to_species;
   my $html = "";
 
-
   $html .= "<b>Drag and drop species names to reorder this list</b> &middot; <a href='javascript:void(0);' onClick='toggle_reorder();'>Done</a><br /><br />\n";
   $html .= "Hint: For easy access to commonly used genomes, drag from the bottom list to the top one.";
 
   $html .= "<div id='favourite_species'>\n";
-  warn "CHECKING FOR SPECIES IN AJAX LIST";
-  my @specieslists = @{ $user->specieslists };
+  #warn "CHECKING FOR SPECIES IN AJAX LIST";
+  my @specieslists;
+  if ($user) {
+    @specieslists = @{ $user->specieslists };
+  }
   my %favourites = ();
   my @favourite_species = ();
   my @species_list = ();
-  warn "FOUND SPECIES LISTS:" . $#specieslists;
+  #warn "FOUND SPECIES LISTS:" . $#specieslists;
   if ($#specieslists < 0) {
     foreach my $name (("Homo_sapiens", "Mus_musculus", "Danio_rerio")) {
       push @favourite_species, $species_id{$name};
@@ -269,6 +274,7 @@ sub render_ajax_reorder_list {
 
   $html .= "</ul></div>\n";
   $html .= "<a href='javascript:void(0);' onClick='toggle_reorder();'>Finished reordering</a> &middot; <a href='/common/user/reset_favourites'>Restore default list</a>";
+#warn "HTML: $html";
 
   return $html;
 }
