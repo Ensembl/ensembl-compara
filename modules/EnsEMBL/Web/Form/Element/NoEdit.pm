@@ -8,6 +8,9 @@ sub new {
   return $class->SUPER::new( @_ );
 }
 
-sub render { return '<p>'.$_[0]->value.'</p>'; }
+sub render { 
+  my $value = $_[0]->value || '&nbsp;';
+  return "<p>$value</p>"; 
+}
 
 1;
