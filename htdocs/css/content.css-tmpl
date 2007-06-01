@@ -323,7 +323,7 @@ div.formpanel div, div.formpanel-left div { margin-top:5px; }
 .formblock .formpadding { width: 29%; height: 1px; padding: 0px; margin:0px; float: left; left: 0px; top: 0px }
 .formblock h6 {
   float: left; width: 29%; top: 0px; left: 0px; padding: 0px; padding-right: 10px; margin: 0px; text-align: right;
-  color: [[HEADING]]; font-size: 1em; font-weight: bold; margin-top: 0.8em;
+  color: [[HEADING]]; font-size: 1em; font-weight: bold; margin-top: 0.4em;
 }
 .formwide { margin-bottom: 0.5em; }
 .formwide h6, .forminline h6 {
