@@ -11,8 +11,10 @@ use Data::Dumper;
 our @ISA = qw( EnsEMBL::Web::Configuration );
 
 sub idhistoryview {
-  my $self   = shift;
-  my $obj    = $self->{'object'}; 
+  my $self = shift;
+
+  my $obj = $self->{'object'}; 
+
   $self->initialize_zmenu_javascript;
   $self->initialize_ddmenu_javascript;
   $self->{page}->add_body_attr( 'onload' => 'populate_trees(); ');
@@ -20,32 +22,56 @@ sub idhistoryview {
   $self->update_configs_from_parameter('idhistoryview');
   
   my $params = { $obj->type => $obj->stable_id, 'db' => 'core'  }; 
-  
  
-  # Description : prints a two col table with info
+  # main information panel
   if (my $info_panel = $self->new_panel('Information',
-    'code'    => "info$self->{flag}",
-    'caption' => 'ID History Report',
-    'params'  => $params,
-    'status'  => 'panel_tree'
-				       )) {
+      'code'    => "info$self->{flag}",
+      'caption' => 'ID History Report',
+      'params'  => $params,
+    )) {
 
     $info_panel->add_components(qw(
-    name            EnsEMBL::Web::Component::ArchiveStableId::name
-    id_status       EnsEMBL::Web::Component::ArchiveStableId::status
-    latest_version  EnsEMBL::Web::Component::ArchiveStableId::latest_version
-    associated_ids  EnsEMBL::Web::Component::ArchiveStableId::associated_ids
-    tree            EnsEMBL::Web::Component::ArchiveStableId::tree
+      name            EnsEMBL::Web::Component::ArchiveStableId::name
+      id_status       EnsEMBL::Web::Component::ArchiveStableId::status
+      latest_version  EnsEMBL::Web::Component::ArchiveStableId::latest_version
+    ));
+    $self->add_panel($info_panel);
+  }
+
+  # associated IDs spreadsheet
+  if (my $assoc_panel = $self->new_panel('SpreadSheet',
+      'code'    => "info_assoc",
+      'caption' => 'Associated archived IDs for this stable ID version',
+      'status'  => 'panel_assoc',
+      'null_data' => '<p>No associated IDs found.</p>',
+    )) {
+
+    $assoc_panel->add_components(qw(
+      associated_ids  EnsEMBL::Web::Component::ArchiveStableId::associated_ids
+    ));
+    $self->add_panel($assoc_panel);
+  }
+
+  # history tree
+  if (my $tree_panel = $self->new_panel('Information',
+      'code'    => "image",
+      'caption' => 'ID History Map',
+      'params'  => $params,
+      'status'  => 'panel_image'
+    )) {
+
+    $tree_panel->add_components(qw(
+      tree            EnsEMBL::Web::Component::ArchiveStableId::tree
     ));
     if (EnsEMBL::Web::Tools::Ajax::is_enabled()) {
-      $info_panel->load_asynchronously('tree');
+      $tree_panel->load_asynchronously('tree');
     }
-   $self->add_panel( $info_panel );
- }
+    $self->add_panel($tree_panel);
+  }
 
-
-if (my $panel2 = $self->new_panel('',
-    'code'    => "info$self->{flag}",
+  # version information
+  if (my $panel2 = $self->new_panel('',
+    'code'    => "info_version",
     'caption' => 'Version information',
 				       )) {
 

@@ -136,114 +136,92 @@ sub latest_version {
 
  Arg1,2      : panel, data object
  Description : adds the associated gene/transcript/peptide (and seq)
- Output      : two col table
+ Output      : spreadsheet
  Return type : 1
 
 =cut
 
 sub associated_ids {
   my ($panel, $object) = @_;
+
+  my @associated = @{ $object->get_all_associated_archived };
+  return 0 unless (@associated);
   
-  my $type = $object->type;
-  my $html;
+  my @sorted = sort { $a->[0]->release <=> $b->[0]->release ||
+                      $a->[0]->stable_id cmp $b->[0]->stable_id } @associated;
 
-  if ($type eq 'Gene') {
+  my $last_release;
+  my $last_gsi;
 
-    # get associated transcripts
-    my %tr = map { $_->stable_id => $_; } @{ $object->transcript };
-    foreach my $tr_id (sort keys %tr) {
-      $html .= '<p>'._get_assoc_link('Transcript', 'transcript', $tr_id,
-        $tr_id).'</p>';
+  $panel->add_option('triangular', 1);
+  $panel->add_columns(
+    { 'key' => 'release', 'align' => 'left', 'title' => 'Release' },
+    { 'key' => 'gene', 'align' => 'left', 'title' => 'Gene' },
+    { 'key' => 'transcript', 'align' => 'left', 'title' => 'Transcript' },
+    { 'key' => 'translation', 'align' => 'left', 'title' => 'Translation' },
+  );
+  
+  while (my $r = shift(@sorted)) {
 
-      # get associated translations for this transcript
-      my $tr_obj = $tr{$tr_id};
-      my %trlt = map { $_->stable_id => $_; }
-        @{ $tr_obj->get_all_translation_archive_ids };
+    my ($release, $gsi, $tsi, $tlsi, $pep_seq);
 
-      foreach my $trlt_id (sort keys %trlt) {
-        $html .= '<p>'._get_assoc_link('Translation', 'peptide',
-          $trlt_id, $trlt_id);
-          
-        # peptide sequence
-        $html .= _get_formatted_pep_seq($trlt{$trlt_id});
-        
-        $html .= '</p>';
-      }
+    # release
+    if ($r->[0]->release == $last_release) {
+      $release = undef;
+    } else {
+      $release = $r->[0]->release;
     }
 
-  } elsif ($type eq 'Transcript') {
-    
-    # get associated genes
-    my %genes = map { $_->stable_id => $_; } @{ $object->gene };
-    foreach my $gene_id (sort keys %genes) {
-      $html .= '<p>'._get_assoc_link('Gene', 'gene', $gene_id,
-        $gene_id).'</p>';
+    # gene
+    if ($r->[0]->stable_id eq $last_gsi) {
+      $gsi = undef;
+    } else {
+      $gsi = _get_assoc_link('gene', $r->[0]->stable_id);
     }
 
-    # get associated translations
-    my %trlt = map { $_->stable_id => $_; } @{ $object->peptide };
-    foreach my $trlt_id (sort keys %trlt) {
-      $html .= '<p>'._get_assoc_link('Translation', 'peptide',
-        $trlt_id, $trlt_id);
-        
-      # peptide sequence
-      $html .= _get_formatted_pep_seq($trlt{$trlt_id});
-      
-      $html .= '</p>';
+    # transcript
+    $tsi = _get_assoc_link('transcript', $r->[1]->stable_id);
+
+    # translation
+    if ($r->[2]) {
+      $tlsi = _get_assoc_link('peptide', $r->[2]->stable_id);
+      $tlsi .= '<br />'._get_formatted_pep_seq($r->[3], $r->[2]->stable_id);
+    } else {
+      $tlsi = 'none';
     }
 
-  } elsif ($type eq 'Translation') {
+    $panel->add_row({
+      'release' => $release,
+      'gene' => $gsi,
+      'transcript' => $tsi,
+      'translation' => $tlsi,
+    });
 
-    # peptide sequence of this object if found in archive
-    if ($object->peptide) {
-      $html .= '<p>'._get_assoc_link('Translation', 'peptide',
-        $object->stable_id, $object->stable_id);
-      $html .= _get_formatted_pep_seq($object).'</p>';
-    }
-    
-    # get associated genes
-    my %genes = map { $_->stable_id => $_; } @{ $object->gene };
-    foreach my $gene_id (sort keys %genes) {
-      $html .= '<p>'._get_assoc_link('Gene', 'gene', $gene_id,
-        $gene_id).'</p>';
-    }
-
-    # get associated transcripts
-    my %tr = map { $_->stable_id => $_; } @{ $object->transcript };
-    foreach my $tr_id (sort keys %tr) {
-      $html .= '<p>'._get_assoc_link('Transcript', 'transcript', $tr_id,
-        $tr_id).'</p>';
-    }
-
-  } else {
-    warn "Error: Unknown type $type in idhistoryview.";
+    $last_release = $r->[0]->release;
+    $last_gsi = $r->[0]->stable_id;
   }
 
-  return 0 unless ($html);
-
-  $panel->add_row( "Associated IDs in archive", $html);
   return 1;
 }
 
 
 sub _get_assoc_link {
-  my $fmt = qq(%s <a href="idhistoryview?%s=%s">%s</a>);
-  return sprintf($fmt, @_);
+  my ($type, $stable_id) = @_;
+  return undef unless ($stable_id);
+  my $fmt = qq(<a href="idhistoryview?%s=%s">%s</a>);
+  return sprintf($fmt, $type, $stable_id, $stable_id);
 }
 
 
 sub _get_formatted_pep_seq {
-  my $object = shift;
+  my $seq = shift;
+  my $stable_id = shift;
 
-  my $seq = $object->get_peptide;
   my $html;
 
   if ($seq) {
     $seq =~ s#(.{1,60})#$1<br />#g;
-    $html = "<br /><kbd>$seq</kbd>";
-  } else  {
-    $html = ' (sequence same as <a href="protview?peptide=';
-    $html .= $object->stable_id . '>current release</a>)';
+    $html = "<kbd>$seq</kbd>";
   }
 
   return $html;
@@ -387,72 +365,88 @@ sub nohistory {
 }
 
 
-sub _flip_URL {
-  my( $object) = @_;
-  my $temp = $object->type; 
-  my $type = $temp eq 'Translation' ? "peptide" : lc($temp);
-  return sprintf '%s=%s;%s', $type, $object->stable_id .".". $object->version;
-}
-
-
 sub tree {
   my ($panel, $object) = @_;
+  
   my $name = $object->stable_id .".". $object->version;
-  my $status   = 'status_tree';
   my $label = "ID History Map";
-  my $URL = _flip_URL($object);
-  if( $object->param( $status ) eq 'off' ) { $panel->add_row( '', "$URL=on" ); return 0; }
+  
   my $historytree = $object->history;
-  unless (defined $historytree){$panel->add_row($label, qq(<p style="text-align:center"><b>There are too many stable IDs related to $name to draw a history tree.</b></p>) ) and return 1;}  
-  my @temp = @{$historytree->get_release_display_names};
-  my $size = @temp;
-  unless ($size >=2 ){$panel->add_row( $label, qq(<p style="text-align:center"><b>There is no history for $name stored in the database.</b></p>) ) and return 1;}
-    if ($panel->is_asynchronous('tree')) {
-    warn "Asynchronously load history tree";
+  unless (defined $historytree) {
+    $panel->add_row($label, qq(<p style="text-align:center"><b>There are too many stable IDs related to $name to draw a history tree.</b></p>));
+    return 1;
+  }  
+  
+  my $size = scalar(@{ $historytree->get_release_display_names });
+  if ($size < 2) {
+    $panel->add_row($label, qq(<p style="text-align:center"><b>There is no history for $name stored in the database.</b></p>));
+    return 1;
+  }
+
+  if ($panel->is_asynchronous('tree')) {
+    
     my $json = "{ components: [ 'EnsEMBL::Web::Component::ArchiveStableId::tree'], fragment: {stable_id: '" . $object->stable_id . "." . $object->version . "', species: '" . $object->species . "'} }";
     my $html = "<div id='component_0' class='info'>Loading history tree...</div><div class='fragment'>$json</div>";
-    $panel->add_row($label ." <img src='/img/ajax-loader.gif' width='16' height='16' alt='(loading)' id='loading' />", $html, "$URL=odd") ;
-  } else{ 
-    ( $panel->add_row($label, qq(<p style="text-align:center"><b>There are too many stable IDs related to $name to draw a history tree.</b></p>) ) and return 1) unless (defined $historytree); 
-    my $tree = _create_idhistory_tree ($object, $historytree);
+    $panel->add_row($label ." <img src='/img/ajax-loader.gif' width='16' height='16' alt='(loading)' id='loading' />", $html);
+  
+  } else { 
+    
+    my $tree = _create_idhistory_tree($object, $historytree);
     my $T = $tree->render;
-    $panel->add_row($label, $tree->render, "$URL=off");
-   }
+    if ($historytree->is_incomplete) {
+      $T = qq(<p>Too many related stable IDs found to draw complete tree - tree shown is only partial.</p>) . $T;
+    }
+  
+    $panel->add_row($label, $T);
+    
+  }
+  
   return 1;
 }
 
 
-
 sub _create_idhistory_tree {
- my ($object, $tree ) = @_;
- my $base_URL = _flip_URL($object);
- my $wuc        = $object->user_config_hash( 'idhistoryview' );
- my $image_width  =  $object->param( 'image_width' ) || 1200; 
- $wuc->container_width($image_width); 
- $wuc->set_width( $object->param('image_width') );
- $wuc->set( '_settings', 'LINK',  $base_URL );
- $wuc->{_object} = $object;
- my $mc =  _id_history_tree_menu($object, 'idhistoryview', [qw(IdhImageSize )]);
- my $image  = $object->new_image( $tree, $wuc, [$object->stable_id] );
- $image->image_type  = 'idhistorytree';
- $image->image_name  = ($object->param('image_width')).'-'.$object->stable_id;
- $image->imagemap           = 'yes';
- $image->menu_container = $mc;
-# $image->imagemap ='no'; 
- return $image;
+  my ($object, $tree) = @_;
+  
+  my $wuc = $object->user_config_hash('idhistoryview');
+  $wuc->container_width($object->param('image_width') || 900);
+  $wuc->set_width($object->param('image_width'));
+  $wuc->set('_settings', 'LINK', _flip_URL($object));
+  $wuc->{_object} = $object;
+  
+  my $mc = _id_history_tree_menu($object, 'idhistoryview', [qw(IdhImageSize)]);
+  
+  my $image = $object->new_image($tree, $wuc, [$object->stable_id]);
+  $image->image_type = 'idhistorytree';
+  $image->image_name = $object->param('image_width').'-'.$object->stable_id;
+  $image->imagemap = 'yes';
+  $image->menu_container = $mc;
+  
+  return $image;
 }
 
  
 sub _id_history_tree_menu {
- my($object, $configname, $left ) = @_;
- my $mc = $object->new_menu_container(
-                                         'configname'  => $configname,
-                                         'panel'       => 'image',
-                                         'object' => $object,
-                                         'leftmenus'  => $left,
-                                         );
-    return $mc;
+  my ($object, $configname, $left) = @_;
 
+  my $mc = $object->new_menu_container(
+      'configname'  => $configname,
+      'panel'       => 'image',
+      'object' => $object,
+      'leftmenus'  => $left,
+  );
+
+  return $mc;
+}
+
+
+sub _flip_URL {
+  my ($object) = @_;
+  
+  my $temp = $object->type;
+  my $type = $temp eq 'Translation' ? "peptide" : lc($temp);
+  
+  return sprintf('%s=%s', $type, $object->stable_id .".". $object->version);
 }
 
 

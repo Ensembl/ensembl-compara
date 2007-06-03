@@ -98,6 +98,24 @@ sub get_peptide {
 }
 
 
+=head2 get_all_associated_archived
+
+ Arg1        : data object
+ Description : fetches all associated archived IDs
+ Return type : Arrayref of
+                  Bio::EnsEMBL::ArchiveStableId archived gene
+                  Bio::EnsEMBL::ArchiveStableId archived transcript
+                  Bio::EnsEMBL::ArchiveStableId archived translation (optional)
+                  String peptide sequence (optional)
+
+=cut
+
+sub get_all_associated_archived {
+  my $self = shift;
+  return $self->Obj->get_all_associated_archived;
+}
+
+
 =head2 history
 
  Arg1        : data object
