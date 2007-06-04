@@ -269,11 +269,11 @@ sub user_details {
   my $user = $panel->{user};
 
   my $html = "<div class='pale boxed'>";
-  $html .= qq(This is your Ensembl account home page. From here you can manage
+  $html .= qq(This is your $SiteDefs::ENSEMBL_SITETYPE account home page. From here you can manage
                 your saved settings, update your details and join or create new 
-                Ensembl groups. To learn more about how to get the most
-                from your Ensembl account, read our <a href='/info/about/accounts.html'>introductory guide</a>.<br />);
-  $html .= "&larr; <a href='javascript:void(0);' onclick='account_return();'>Return to Ensembl</a>";
+                $SiteDefs::ENSEMBL_SITETYPE groups. To learn more about how to get the most
+                from your $SiteDefs::ENSEMBL_SITETYPE account, read our <a href='/info/about/accounts.html'>introductory guide</a>.<br />);
+  $html .= "&larr; <a href='javascript:void(0);' onclick='account_return();'>Return to $SiteDefs::ENSEMBL_SITETYPE</a>";
   $html .= "</div>";
   $panel->print($html);
 }
@@ -286,7 +286,7 @@ sub user_prefs {
   my $sortable = $sortables[0];
   my $html = "";
   $html = qq(<div class="white boxed">
-<h3 class="plain">Ensembl preferences</h3>
+<h3 class="plain">$SiteDefs::ENSEMBL_SITETYPE preferences</h3>
 <ul>);
 
   if (defined $sortable && $sortable->kind eq 'alpha' ) {
@@ -409,7 +409,7 @@ sub _render_groups {
   my @group_rows = ();
   my %included = ();
   my @all_groups = @{ EnsEMBL::Web::Object::Data::Group->find_all };
-  $html .= &info_box($user, qq(Groups enable you to organise your saved bookmarks, notes and view configurations, and also let you share them with other users. The groups you're subscribed to are listed below. <a href="/info/help/groups.html">Learn more about creating and managing groups &rarr;</a>) , 'user_group_info');
+  $html .= &info_box($user, qq(Groups enable you to organise your saved bookmarks, notes and view configurations, and also let you share them with other users. The groups you're subscribed to are listed below. <a href="http://www.ensembl.org/info/help/groups.html">Learn more about creating and managing groups (Ensembl documentation) &rarr;</a>) , 'user_group_info');
   if ($#groups > -1) {
     $html .= "<h5>Your subscribed groups</h5>\n";
     $html .= "<table width='100%' cellspacing='0' cellpadding='4'>\n";
@@ -435,7 +435,7 @@ sub _render_groups {
     $html .= "</table><br />\n";
   }
   else {
-    $html .= qq(<p class="center">You are not subscribed to any Ensembl groups. &middot; <a href='/info/help/groups.html'>Learn more &rarr;</a> </p>);
+    $html .= qq(<p class="center">You are not subscribed to any $SiteDefs::ENSEMBL_SITETYPE groups. &middot; <a href='/info/help/groups.html'>Learn more &rarr;</a> </p>);
   }  
   #$html .= "<br />";
   ## An unimplemented feature - we don't have any public groups yet.
@@ -550,7 +550,7 @@ sub _render_bookmarks {
     }
   }
   my $html;
-  $html .= &info_box($user, qq(Bookmarks allow you to save frequently used pages from Ensembl and elsewhere. When browsing Ensembl, you can add new bookmarks by clicking the 'Add bookmark' link in the sidebar. <a href="/info/help/custom.html#bookmarks">Learn more about saving frequently used pages &rarr;</a>) , 'user_bookmark_info');
+  $html .= &info_box($user, qq(Bookmarks allow you to save frequently used pages from $SiteDefs::ENSEMBL_SITETYPE and elsewhere. When browsing $SiteDefs::ENSEMBL_SITETYPE, you can add new bookmarks by clicking the 'Add bookmark' link in the sidebar. <a href="http://www.ensembl.org/info/help/custom.html#bookmarks">Learn more about saving frequently used pages (Ensembl documentation) &rarr;</a>) , 'user_bookmark_info');
   if ($#records > -1) {
     $html .= _render_settings_table(\@records, $user);
   }
@@ -595,13 +595,13 @@ sub _render_configs {
   }
 
   my $html;
-  $html .= &info_box($user, qq(You can save custom view configurations (DAS sources, decorations, additional drawing tracks, etc), and return to them later or share them with fellow group members. Look for the 'Save configuration link' in the sidebar when browsing Ensembl. <a href="/info/help/custom.html#configurations">Learn more about view configurations &rarr;</a>), 'user_configuration_info');
+  $html .= &info_box($user, qq(You can save custom view configurations (DAS sources, decorations, additional drawing tracks, etc), and return to them later or share them with fellow group members. Look for the 'Save configuration link' in the sidebar when browsing $SiteDefs::ENSEMBL_SITETYPE. <a href="http://www.ensembl.org/info/help/custom.html#configurations">Learn more about view configurations (Ensembl documentation) &rarr;</a>), 'user_configuration_info');
   if ($#records > -1) {
     $html .= _render_settings_table(\@records, $user);
   }
   else {
     $html .= qq(<p class="center"><img src="/img/help/config_example.gif" /></p>);
-    $html .= qq(<p class="center">You haven't saved any Ensembl view configurations. <a href='/info/help/custom.html#configurations'>Learn more about configurating views &rarr;</a>);
+    $html .= qq(<p class="center">You haven't saved any $SiteDefs::ENSEMBL_SITETYPE view configurations. <a href='/info/help/custom.html#configurations'>Learn more about configurating views &rarr;</a>);
   }
 
   return $html;
@@ -640,13 +640,13 @@ sub _render_notes {
   }
 
   my $html = "";
-  $html .= &info_box($user, qq(Annotation notes from genes are listed here. <a href='/info/help/custom.html#notes'>Learn more about notes &rarr;</a>), 'user_note_info');
+  $html .= &info_box($user, qq(Annotation notes from genes are listed here. <a href='http://www.ensembl.org/info/help/custom.html#notes'>Learn more about notes (Ensembl documentation) &rarr;</a>), 'user_note_info');
   if ($#records > -1) {
     $html .= _render_settings_table(\@records, $user);
   }
   else {
     $html .= qq(<p class="center"><img src="/img/help/note_example.gif" alt="Sample screenshot" title="SAMPLE" /></p>);
-    $html .= qq(<p class="center">You haven't saved any Ensembl notes. <a href='/info/help/custom.html#notes'>Learn more about notes &rarr;</a>);
+    $html .= qq(<p class="center">You haven't saved any $SiteDefs::ENSEMBL_SITETYPE notes. <a href='/info/help/custom.html#notes'>Learn more about notes &rarr;</a>);
   }
   return $html;
 }
@@ -682,7 +682,7 @@ sub _render_news {
   }
 
   my $html;
-  $html .= &info_box($user, qq(You can filter the news headlines on the home page and share these settings with fellow group members.<br /><a href="/info/help/custom.html#news">Learn more about news filters &rarr;</a>), 'news_filter_info');
+  $html .= &info_box($user, qq(You can filter the news headlines on the home page and share these settings with fellow group members.<br /><a href="http://www.ensembl.org/info/help/custom.html#news">Learn more about news filters (Ensembl documentation) &rarr;</a>), 'news_filter_info');
   if ($#records > -1) {
     $html .= _render_settings_table(\@records, $user);
   }
@@ -699,7 +699,7 @@ sub denied {
   my( $panel, $object ) = @_;
 
 ## return the message
-  my $html = qq(<p>Sorry - this page requires you to be logged into your Ensembl user account and to have the appropriate permissions. If you cannot log in or need your access privileges changed, please contact <a href="mailto:webmaster\@ensembl.org">webmaster\@ensembl.org</a>. Thank you.</p>);
+  my $html = qq(<p>Sorry - this page requires you to be logged into your $SiteDefs::ENSEMBL_SITETYPE user account and to have the appropriate permissions. If you cannot log in or need your access privileges changed, please contact <a href="mailto:webmaster\@ensembl.org">webmaster\@ensembl.org</a>. Thank you.</p>);
 
   $panel->print($html);
   return 1;
@@ -712,7 +712,7 @@ sub denied {
 sub add_group {
   my ($panel, $user) = @_;
   my $html = qq(<div class="formpanel" style="width:50%">);
-  $html .= "You can create a new Ensembl group from here. Ensembl groups";
+  $html .= "You can create a new $SiteDefs::ENSEMBL_SITETYPE group from here. $SiteDefs::ENSEMBL_SITETYPE groups";
   $html .= "allow you to share customisations and settings between collections";
   $html .= " of users.<br /><br />";
   $html .= "Setting up a new group takes about 2 minutes.";
@@ -750,7 +750,7 @@ sub enter_details   {
   my $html = qq(<div class="formpanel" style="width:80%">);
 
   if (!$object->id) { ## new registration
-    $html .= qq(<p><strong>Register with Ensembl to bookmark your favourite pages, manage your BLAST tickets and more!</strong></p>);
+    $html .= qq(<p><strong>Register with $SiteDefs::ENSEMBL_SITETYPE to bookmark your favourite pages, manage your BLAST tickets and more!</strong></p>);
   }
 
   $html .= $panel->form('enter_details')->render();
@@ -830,7 +830,7 @@ sub select_bookmarks {
     $html .= $panel->form('select_bookmarks')->render();
   }
   else {
-    $html .= qq(<p>You have no bookmarks set at the moment. To set a bookmark, go to any Ensembl content page whilst logged in (any 'view' page such as GeneView, or static content such as documentation), and click on the "Bookmark this page" link in the lefthand menu.</p>);
+    $html .= qq(<p>You have no bookmarks set at the moment. To set a bookmark, go to any $SiteDefs::ENSEMBL_SITETYPE content page whilst logged in (any 'view' page such as GeneView, or static content such as documentation), and click on the "Bookmark this page" link in the lefthand menu.</p>);
   }
   $html .= '</div>';
   
@@ -852,7 +852,7 @@ sub select_configs {
     $html .= $panel->form('select_configs')->render();
   }
   else {
-    $html .= qq(<p>You have no configurations saved in your account at the moment. To save a configuration, go to any configurable Ensembl 'view' (such as ContigView) whilst logged in, and click on the "Save this configuration" link in the lefthand menu.</p>);
+    $html .= qq(<p>You have no configurations saved in your account at the moment. To save a configuration, go to any configurable $SiteDefs::ENSEMBL_SITETYPE 'view' (such as ContigView) whilst logged in, and click on the "Save this configuration" link in the lefthand menu.</p>);
   }
   $html .= '</div>';
   
@@ -1135,7 +1135,7 @@ sub _render_group_invite {
   my ($group, $user) = @_;
   my $html = "<b>Invite a user to join this group</b><br /><br />\n";
   $html .= "<form action='/common/invite' action='post'>\n";
-  $html .= "To invite a new member into this group, enter their email address. Users not already registered with Ensembl will be asked to do so before accepting your invite.<br /><br />\n";
+  $html .= "To invite a new member into this group, enter their email address. Users not already registered with $SiteDefs::ENSEMBL_SITETYPE will be asked to do so before accepting your invite.<br /><br />\n";
   $html .= "<input type='hidden' value='" . $user->id . "' name='user_id' />"; 
   $html .= "<input type='hidden' value='" . $group->id . "' name='group_id' />"; 
   $html .= "<textarea name='invite_email' cols='35' rows='6'></textarea><br />Multiple email addresses can be separated by commas.<br /><br />";
@@ -1150,9 +1150,9 @@ sub group_details {
   my $cgi = new CGI;
   my $group = EnsEMBL::Web::Object::Group->new(( id => $cgi->param('id') ));
   my $html = "<div class='pale boxed'>";
-  $html .= qq(This page allows administrators to manage their Ensembl group. From here you can invite new users to join your group, remove existing users, and decide which resources are shared between group members.<br />
-                <br />For more information about Ensembl groups, and how to use them,
-                read our <a href='/info/help/groups.html'>introductory guide</a>.);
+  $html .= qq(This page allows administrators to manage their $SiteDefs::ENSEMBL_SITETYPE group. From here you can invite new users to join your group, remove existing users, and decide which resources are shared between group members.<br />
+                <br />For more information about $SiteDefs::ENSEMBL_SITETYPE groups, and how to use them,
+                read the Ensembl <a href='http://www.ensembl.org/info/help/groups.html'>introductory guide</a>.);
   $html .= "</div>";
    
   $panel->print($html);
