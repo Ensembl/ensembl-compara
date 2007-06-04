@@ -31,11 +31,11 @@ if( $webpage->has_a_problem() ) {
     if ($sp_dir) {
         # species is still configured in Ensembl
         if ($$curr_spp{$species_id}) {
-            $URL = "/$sp_dir/newsview?release_id=".$object->param('release_id').";species_id=$species_id;news_cat_id=".$object->param('news_cat_id').";submit=Go";
+            $URL = "/$sp_dir/newsview?release_id=".$object->param('release_id').";species_id=$species_id;news_category_id=".$object->param('news_category_id').";submit=Go";
         }
         # discontinued species
         else {
-            $URL = "/Multi/newsview?release_id=".$object->param('release_id').";species_id=$species_id;news_cat_id=".$object->param('news_cat_id').";submit=Go";
+            $URL = "/Multi/newsview?release_id=".$object->param('release_id').";species_id=$species_id;news_category_id=".$object->param('news_category_id').";submit=Go";
         }
     }
     else {
