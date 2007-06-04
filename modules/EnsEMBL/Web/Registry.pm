@@ -54,11 +54,13 @@ sub get_das {
 ## No session so cannot have anything configured!
   my $session_das = $self->get_session->get_das;
 
-  my $user = EnsEMBL::Web::Object::Data::User->new({ id => $self->get_user->id });
- 
-  foreach my $das (@{ $user->dases }) {
-    $Das_sources_of{ ident $self }{$das->name} = $das->get_das_config;
-    warn $Das_sources_of{ ident $self }{$das->name};
+  my $user_id = $self->get_user->id;
+  if ($user_id) {
+    my $user = EnsEMBL::Web::Object::Data::User->new({ id => $user_id });
+    foreach my $das (@{ $user->dases }) {
+      $Das_sources_of{ ident $self }{$das->name} = $das->get_das_config;
+      #warn $Das_sources_of{ ident $self }{$das->name};
+    }
   }
 
   foreach (keys %$session_das) {
