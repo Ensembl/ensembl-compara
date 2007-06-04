@@ -92,8 +92,8 @@ sub confirm_form {
 sub deny {
   my( $panel, $user) = @_;
   my $html = qq(
-<h3 class="plain">Account already activated</h3>
-<p>This account has already been activated. If you have forgotten your password, <a href="/forgotten.html">please click here to reset it</a>.</p>
+<h3 class="plain">Unable to activate account</h3>
+<p>Sorry, we are unable to activate the account corresponding to these details.</p>
 
 <p>If you continue to have problems, please <a href="/common/helpview?node=hv_contact">contact Helpdesk</a>.</p>
 
@@ -170,20 +170,20 @@ sub failed_registration {
   my( $panel, $user) = @_;
   my $error = $user->param('error');
   my $html;
-  if ($error eq 'duplicate') {
+  if ($error eq 'no_record') {
     $html = qq(
-<h3 class="plain">Account already exists</h3>
-<p>There is already an account using that email address. Please choose a different address, and try again. Alternatively, if you have already registered and have forgotten your password, you can <a href='/forgotten.html'>reset it</a>.</p>
-<p><a href="/common/register">&larr; Try again</a></p>
+<h3 class="plain">Invitation.</h3>
+<p>Sorry, we were unable to process the invitation corresponding to these details.</p>
+
 <p>If you continue to have problems, please <a href="/common/helpview?node=hv_contact">contact Helpdesk</a>.</p>
 
 );
+
   }
   else {
     $html = qq(
-<h3 class="plain">Database problem</h3>
-<p>Sorry, we were unable to register your user account. Please <a href="/common/register">try again</a>
-later, as it may simply be that our servers are very busy right now.</p>
+<h3 class="plain">Registration Failed.</h3>
+<p>Sorry, we were unable to register your user account.</p>
 
 <p>If you continue to have problems, please <a href="/common/helpview?node=hv_contact">contact Helpdesk</a>.</p>
 
@@ -230,8 +230,7 @@ click on the Back button to try again.</p>
   else {
     $html = qq(
 <h3 class="plain">Database problem</h3>
-<p>Sorry, we were unable to activate your user account. Please try again
-later, as it may simply be that our servers are very busy right now.</p>
+<p>Sorry, we were unable to activate your user account.</p>
 
 <p>If you continue to have problems, please <a href="/common/helpview?node=hv_contact">contact Helpdesk</a>.</p>
 
