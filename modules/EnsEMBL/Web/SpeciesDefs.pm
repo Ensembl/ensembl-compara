@@ -819,6 +819,9 @@ sub _parse {
 							  foreach my $comp ( keys %{$config{$method}{$p_species}{$s_species}} ) {
 								  my $revcomp = join ':', reverse(split ':',$comp);
 								  unless ( exists($config{$method}{$s_species}{$p_species}{$revcomp} ) ) {
+									  my $coords = $config{$method}{$p_species}{$s_species}{$comp}{'coord_systems'};
+									  my ($a,$b) = split ':',$coords;
+									  $coords = $b.':'.$a;
 									  my $record = {
 													'source_name'    => $config{$method}{$p_species}{$s_species}{$comp}{'target_name'},
 													'source_species' => $config{$method}{$p_species}{$s_species}{$comp}{'target_species'},
@@ -829,7 +832,7 @@ sub _parse {
 													'target_start'   => $config{$method}{$p_species}{$s_species}{$comp}{'source_start'},
 													'target_end'     => $config{$method}{$p_species}{$s_species}{$comp}{'source_end'},
 													'mlss_id'        => $config{$method}{$p_species}{$s_species}{$comp}{'mlss_id'},
-													'coord_systems' => 'chromosome:chromosome',
+													'coord_systems'  => $coords,
 												   };
 									  $config{$method}{$s_species}{$p_species}{$revcomp} = $record;
 								  }
@@ -1040,7 +1043,8 @@ sub _parse {
             $query->finish();
           };
 ## for annotated datasets (e.g. Vega)
-          if( $tree->{'TABLE_SIZE'}->{'ENSEMBL_DB'}->{'author'} ) {
+		if ($SiteDefs::ENSEMBL_SITETYPE eq 'Vega') {
+ #         if( $tree->{'TABLE_SIZE'}->{'ENSEMBL_DB'}->{'author'} ) {
 ## authors by chromosome
             $sql = qq(
                 SELECT distinct(a.logic_name)
@@ -1054,7 +1058,7 @@ sub _parse {
                 $tree->{'DB_FEATURES'}->{uc("VEGA_GENES_$row->[0]")} = 1;
               }
             };
-          }
+		}
 
           ## alternative assembly
           if ($tree->{'ALTERNATIVE_ASSEMBLY'}) {
@@ -1679,6 +1683,8 @@ sub _is_available_artefact{
   my $self     = shift;
   my $def_species  = shift || $ENV{'ENSEMBL_SPECIES'};
   my $available = shift;
+
+#warn "**$available**";
 
   my @test = split( ' ', $available );
   if( ! $test[0] ){ return 999; } # No test found - return pass.
