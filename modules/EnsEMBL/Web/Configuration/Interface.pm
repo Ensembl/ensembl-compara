@@ -23,7 +23,6 @@ sub select_to_edit {
 
 sub add {
   ### Creates a panel containing an empty record form
-warn "Creating an 'add' panel";
   my ($self, $object, $interface) = @_;
   if (my $panel = $self->interface_panel($interface, 'add', 'Add a New Record')) {
     $panel->add_components(qw(add     EnsEMBL::Web::Component::Interface::add));
@@ -77,15 +76,12 @@ sub preview {
 sub save {
   ### Saves changes to the record(s) and redirects to a feedback page
   my ($self, $object, $interface) = @_;
-  warn "INTERFACE: " . $interface; 
-  warn "INTERFACE: " . $interface->script_name; 
   my $primary_key = $interface->data->get_primary_key;
   my $id = $object->param($primary_key);
   $interface->cgi_populate($object, $id);
 
   my $success = $interface->data->save;
   my $script = $interface->script_name || $object->script;
-  warn "SAVE SCRIPT: " . $script;
   my $url;
   if ($success) {
     $url = "/common/$script?dataview=success";
@@ -120,10 +116,7 @@ sub success {
   my ($self, $object, $interface) = @_;
   my $option = $interface->on_success;
   my $method;
-  if (!$option) {
-    $method = 'on_success';
-  }
-  else {
+  if ($option) {
     if ($option->{'type'} eq 'url') {
       my $url = $option->{'action'};
 
