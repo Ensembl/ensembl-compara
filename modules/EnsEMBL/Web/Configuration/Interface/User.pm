@@ -29,7 +29,7 @@ sub save {
                 { adaptor => $ENSEMBL_WEB_REGISTRY->userAdaptor, 
                   email => $object->param('email') });
     if ($user->id) {
-      $url =  "/common/$script?dataview=failure;error=duplicate";
+      $url =  "/common/$script?dataview=failure";
     }
     else {
       $interface->cgi_populate($object, $id);
@@ -39,6 +39,7 @@ sub save {
       my $success = $interface->data->save;
 
       if ($success) {
+        warn "User account created";
         my $user = EnsEMBL::Web::Object::User->new(
                       { adaptor => $ENSEMBL_WEB_REGISTRY->userAdaptor, id => $interface->data->id });
         if (!$user->password) { ## New user
@@ -52,7 +53,10 @@ sub save {
                               group_id => $object->param('group_id') 
                   ));
           }
-          $url = "/common/$script?dataview=success;user_id=".$interface->data->id.';record_id='.$object->param('record_id');
+          $url = "/common/$script?dataview=success;user_id=".$interface->data->id;
+          if ($object->param('record_id') && $object->param('record_id') =~ /^\d+$/) {
+            $url .= ';record_id='.$object->param('record_id');
+          }
         }
         else {
           $url = "/common/accountview";
@@ -63,44 +67,50 @@ sub save {
       }
     }
   }
+  warn "Redirecting to $url";
   return $url;
 }
 
 sub join_by_invite {
   my ($self, $object, $interface) = @_;
+  my $url;
 
   my $record_id = $object->param('record_id');
   #warn "RECORD ID: " . $record_id;
-  my @records = EnsEMBL::Web::Record::Group->find_invite_by_group_record_id($record_id, { adaptor => $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->userAdaptor });
-  my $record = $records[0];
-  $record->adaptor($EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->userAdaptor);
-  my $email = $record->email;
+  if ($record_id && $record_id =~ /^\d+$/) {
+    my @records = EnsEMBL::Web::Record::Group->find_invite_by_group_record_id($record_id, { adaptor => $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->userAdaptor });
+    my $record = $records[0];
+    $record->adaptor($EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->userAdaptor);
+    my $email = $record->email;
 
-  my $user = EnsEMBL::Web::Object::User->new({ adaptor => $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->userAdaptor,  email => $email });
+    my $user = EnsEMBL::Web::Object::User->new({ adaptor => $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->userAdaptor,  email => $email });
 
-  my $url;
-  if ($user->id) {
-    my $invite = EnsEMBL::Web::Object::Data::Invite->new({id => $object->param('record_id')});
-    my $group_id = $invite->group->id;
+    if ($user->id) {
+      my $invite = EnsEMBL::Web::Object::Data::Invite->new({id => $object->param('record_id')});
+      my $group_id = $invite->group->id;
 
-    my $group = EnsEMBL::Web::Object::Group->new(( adaptor => $ENSEMBL_WEB_REGISTRY->userAdaptor, id => $group_id ));
-    # warn "WORKING WITH USER: " . $user->id . ": " . $user->email;
-    $user->add_group($group);
-    # warn "SAVING USER";
-    $user->save;
-    $invite->status('accepted');
-    # warn "SAVING RECORD";
-    $invite->save;
+      my $group = EnsEMBL::Web::Object::Group->new(( adaptor => $ENSEMBL_WEB_REGISTRY->userAdaptor, id => $group_id ));
+      # warn "WORKING WITH USER: " . $user->id . ": " . $user->email;
+      $user->add_group($group);
+      # warn "SAVING USER";
+      $user->save;
+      $invite->status('accepted');
+      # warn "SAVING RECORD";
+      $invite->save;
     
-    if ($ENV{'ENSEMBL_USER_ID'}) {
-      $url = "/common/user/account";
+      if ($ENV{'ENSEMBL_USER_ID'}) {
+        $url = "/common/user/account";
+      }
+      else {
+        $url = '/login.html';
+      }
     }
     else {
-      $url = '/login.html';
+      $url = "/common/register?email=$email;status=active;record_id=$record_id";
     }
   }
   else {
-    $url = "/common/register?email=$email;status=active;record_id=$record_id";
+      $url = "/common/register?dataview=failure;error=no_record";
   }
   return $url;
 }
@@ -113,19 +123,23 @@ sub check_status {
   my $primary_key = $interface->data->get_primary_key;
   my $id = $object->param($primary_key);
 
-  if ($id) {
+  if ($id && $id =~ /^\d+$/) { ## valid IDs consist of digits only
     $interface->data->populate($id);
     my $salt = $interface->data->salt;
-    ## has this user got pending invites?
-    if ($object->param('record_id')) {
-      $url = "/common/activate?dataview=confirm;user_id=$id;code=$salt;record_id=".$object->param('record_id');
+    my $code = $object->param('code');
+    if ($code && $salt eq $code) {
+      $url = "/common/activate?dataview=confirm;user_id=$id;code=$code";
+      ## has this user got pending invites?
+      if ($object->param('record_id') && $object->param('record_id') =~ /^\d+$/) {
+        $url .= ";record_id=".$object->param('record_id');
+      }
     }
     else {
       $url = '/common/activate?dataview=deny';
     }
   }
   else {
-    $url = '/common/activate?dataview=confirm';
+    $url = '/common/activate?dataview=deny';
   }
   return $url;
 }
@@ -133,14 +147,30 @@ sub check_status {
 sub confirm {
   ### Creates a panel containing a record form populated with data
   my ($self, $object, $interface) = @_;
-  if (my $panel = $self->interface_panel($interface, 'confirm', 'Activate your account')) {
-    $panel->add_components(qw(confirm    EnsEMBL::Web::Component::Interface::User::confirm));
-    $self->add_form($panel, qw(confirm   EnsEMBL::Web::Component::Interface::User::confirm_form));
-    $self->{page}->content->add_panel($panel);
-    my $type = $object->__objecttype;
-    $self->{page}->set_title("Activate your account");
+  my $url;
+  
+  my $primary_key = $interface->data->get_primary_key;
+  my $id = $object->param($primary_key);
+  if ($id && $id =~ /^\d+$/) { ## valid IDs consist of digits only
+    $interface->data->populate($id);
+    my $salt = $interface->data->salt;
+    my $code = $object->param('code');
+    if ($code && $salt eq $code) {
+      if (my $panel = $self->interface_panel($interface, 'confirm', 'Activate your account')) {
+        $panel->add_components(qw(confirm    EnsEMBL::Web::Component::Interface::User::confirm));
+        $self->add_form($panel, qw(confirm   EnsEMBL::Web::Component::Interface::User::confirm_form));
+        $self->{page}->content->add_panel($panel);
+        my $type = $object->__objecttype;
+        $self->{page}->set_title("Activate your account");
+        return undef;
+      }
+    }
+    $url = '/common/activate?dataview=deny';
   }
-  return undef;
+  else {
+    $url = '/common/activate?dataview=deny';
+  }
+  return $url;
 }
 
 sub deny {
@@ -188,9 +218,8 @@ sub activate {
         $interface->data->status('active');
         $success = $interface->data->save;
         ## If this registration was via an invite, add the group to the user
-        if ($object->param('record_id')) {
+        if ($object->param('record_id') && $object->param('record_id') =~ /^\d+$/) {
           my $invite = EnsEMBL::Web::Object::Data::Invite->new({id => $object->param('record_id')});
-warn "Created object $invite";
           my $group_id = $invite->group->id;
       
           my $user = EnsEMBL::Web::Object::User->new({ adaptor => $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->userAdaptor,  
