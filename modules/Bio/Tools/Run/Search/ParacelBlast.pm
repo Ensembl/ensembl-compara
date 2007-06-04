@@ -112,7 +112,7 @@ sub command{
     if( $val ){ $param_str .= " $param $val" }
     else{ $param_str .= " $param" }
   }
-
+  $param_str =~ s/[;`&|<>\s]+/ /g;
   my $blast_command = join( ' ',
 			    'cat', $self->fastafile , '|' ,
 			    $executable,

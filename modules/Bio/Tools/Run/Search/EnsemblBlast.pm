@@ -199,7 +199,7 @@ sub command{
     elsif( $val ){ $param_str .= " $param $val" }
     else{ $param_str .= " $param" }
   }
-
+  $param_str =~ s/[;`&|<>\s]+/ /g;
   my $BDP = $SPECIES_DEFS->ENSEMBL_BLAST_DATA_PATH;
   return join( ' ', $SPECIES_DEFS->ENSEMBL_BLAST_BIN_PATH."/".$self->program_path,
                     "$BDP/$database", '[[]]', $param_str);

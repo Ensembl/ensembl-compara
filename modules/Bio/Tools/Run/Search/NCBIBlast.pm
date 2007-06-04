@@ -194,7 +194,7 @@ sub command{
     elsif( $val ){ $param_str .= " $param $val" }
     else{ $param_str .= " $param" }
   }
-
+  $param_str =~ s/[;`&|<>\s]+/ /g;
   my $blast_command = join( ' ',
 			    $self->program_path,
 			    '-d', $database,
