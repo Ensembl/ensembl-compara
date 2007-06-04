@@ -72,8 +72,8 @@ sub generic_items {
   my %where = ();
 
   ## set up query criteria
-  if ($self->param('news_cat_id')) {
-    $where{'category'} = $self->param('news_cat_id');
+  if ($self->param('news_category_id')) {
+    $where{'category'} = $self->param('news_category_id');
   }
   if ($release_id) {
     $where{'release'} = $release_id;
@@ -89,8 +89,8 @@ sub species_items {
   my %where = ();
 
   ## set up query criteria
-  if ($self->param('news_cat_id')) {
-    $where{'category'} = $self->param('news_cat_id');
+  if ($self->param('news_category_id')) {
+    $where{'category'} = $self->param('news_category_id');
   }
   if ($release_id) {
     $where{'release'} = $release_id;

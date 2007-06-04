@@ -27,7 +27,7 @@ sub default_track_by_gene {
   my %mappings_db_ln = (
     'core' => {
     map( {( $_, $_ )} qw( 
-      genscan fgenesh genefinder snap ciona_snap
+      genscan fgenesh genefinder snap ciona_snap augustus
       gsc gid slam gws_h gws_s )
     ),
     map( {($_, $_.'_transcript')} qw(
