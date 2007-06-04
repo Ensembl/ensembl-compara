@@ -58,13 +58,14 @@ use strict;
   sub selectall_hashref {
 ### wrapper around DBI
     my $self = shift;
+    #use Carp qw(cluck);
+    #warn "SELECTALL HASHREF: " . cluck();
     $self->get_dbhandle->selectall_hashref( @_ );
   }
 
   sub do {
 ### wrapper around DBI
     my $self = shift;
-warn "@_";
     $self->get_dbhandle->do( @_ );
   }
 

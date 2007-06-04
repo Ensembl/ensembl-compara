@@ -747,7 +747,7 @@ sub update_news_item {
     my $release_id        = $item{'release_id'};
     my $title             = $item{'title'};
     my $content           = $item{'content'};
-    my $news_category_id  = $item{'news_cat_id'};
+    my $news_category_id  = $item{'news_category_id'};
     my $species           = $item{'species_id'};
     my $priority          = $item{'priority'};
     my $status            = $item{'status'};

@@ -109,7 +109,7 @@ sub render {
       }
 
       $html .= sprintf(qq(<strong><a href="/%s/newsview?rel=%s#cat%s" style="text-decoration:none">%s</a></strong> (<i>%s</i>)</p>),
-              $sp_dir, $release_id, $item->{'news_cat_id'}, $item->{'title'}, $sp_name);
+              $sp_dir, $release_id, $item->{'news_category_id'}, $item->{'title'}, $sp_name);
 
     }
 
