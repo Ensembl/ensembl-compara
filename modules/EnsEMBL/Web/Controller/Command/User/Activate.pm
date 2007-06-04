@@ -39,12 +39,13 @@ sub render_page {
 
   ## Customization
   ## Page components
-  $interface->default_view('confirm');
+  $interface->default_view('check_status');
   $interface->panel_header({'confirm'=>qq(<p><strong>Thanks for confirming your email address.</strong></p><p>To start using your new Ensembl user account, just choose a password below. You'll need to use this password each time you log in to Ensembl.</p>)});
   $interface->on_success('/common/set_cookie');
   $interface->on_failure('EnsEMBL::Web::Component::Interface::User::failed_activation');
   $interface->caption({'on_failure'=>'Activation Failed'});
   $interface->script_name($self->get_action->script_name);
+  $interface->extra_data('record_id');
 
   ## N.B. Form elements are configured in the components, because they are a bit weird!
 
