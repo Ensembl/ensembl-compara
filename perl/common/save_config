@@ -31,7 +31,6 @@ if ($#items == 4) {
 my $session = $ENSEMBL_WEB_REGISTRY->get_session;
 $session->set_input($cgi);
 my $string = $session->get_script_config_as_string($script_name);
-
 my $page = EnsEMBL::Web::Interface::PageDefinition->new();
 my $data = EnsEMBL::Web::DBSQL::DataDefinition->new();
 
