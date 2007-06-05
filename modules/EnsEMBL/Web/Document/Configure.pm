@@ -20,7 +20,7 @@ sub common_menu_items {
     my $user_adaptor = $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->userAdaptor;
 
     my $flag = 'ac_mini';
-    $doc->menu->add_block( $flag, 'bulleted', "Your Ensembl", 'priority' => 0 );
+    $doc->menu->add_block( $flag, 'bulleted', "Your $SiteDefs::ENSEMBL_SITETYPE", 'priority' => 0 );
     my @bookmark_sections = ();
 
     if ($user_id) {
@@ -177,9 +177,9 @@ sub dynamic_menu_items {
       ## to do - add a check for configurability
       my $configurable = 1;
       if ($configurable) {
-        $doc->menu->add_entry_after( $flag, 'bookmark', 
-                                    'text' => "Save DAS sources...",
-                                  'href' => "javascript:das_link()" );
+#        $doc->menu->add_entry_after( $flag, 'bookmark', 
+#                                    'text' => "Save DAS sources...",
+#                                  'href' => "javascript:das_link()" );
         $doc->menu->add_entry_after( $flag, 'bookmark', 
                                     'text' => "Save configuration as...",
                                   'href' => "javascript:config_link()" );
