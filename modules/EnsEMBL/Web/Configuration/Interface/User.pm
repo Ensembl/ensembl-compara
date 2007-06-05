@@ -144,6 +144,70 @@ sub check_status {
   return $url;
 }
 
+sub join_by_invite {
+  my ($self, $object, $interface) = @_;
+
+  my $record_id = $object->param('record_id');
+  #warn "RECORD ID: " . $record_id;
+  my @records = EnsEMBL::Web::Record::Group->find_invite_by_group_record_id($record_id, { adaptor => $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->userAdaptor });
+  my $record = $records[0];
+  $record->adaptor($EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->userAdaptor);
+  my $email = $record->email;
+
+  my $user = EnsEMBL::Web::Object::User->new({ adaptor => $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->userAdaptor,  email => $email });
+
+  my $url;
+  if ($user->id) {
+    my $invite = EnsEMBL::Web::Object::Data::Invite->new({id => $object->param('record_id')});
+    my $group_id = $invite->group->id;
+
+    my $group = EnsEMBL::Web::Object::Group->new(( adaptor => $ENSEMBL_WEB_REGISTRY->userAdaptor, id => $group_id ));
+    # warn "WORKING WITH USER: " . $user->id . ": " . $user->email;
+    $user->add_group($group);
+    # warn "SAVING USER";
+    $user->save;
+    $invite->status('accepted');
+    # warn "SAVING RECORD";
+    $invite->save;
+    
+    if ($ENV{'ENSEMBL_USER_ID'}) {
+      $url = "/common/user/account";
+    }
+    else {
+      $url = '/login.html';
+    }
+  }
+  else {
+    $url = "/common/register?email=$email;status=active;record_id=$record_id";
+  }
+  return $url;
+}
+
+sub check_status {
+  my ($self, $object, $interface) = @_;
+
+  my $script = $interface->script_name || $object->script;
+  my $url;
+  my $primary_key = $interface->data->get_primary_key;
+  my $id = $object->param($primary_key);
+
+  if ($id) {
+    $interface->data->populate($id);
+    my $salt = $interface->data->salt;
+    ## has this user got pending invites?
+    if ($object->param('record_id')) {
+      $url = "/common/activate?dataview=confirm;user_id=$id;code=$salt;record_id=".$object->param('record_id');
+    }
+    else {
+      $url = '/common/activate?dataview=deny';
+    }
+  }
+  else {
+    $url = '/common/activate?dataview=confirm';
+  }
+  return $url;
+}
+
 sub confirm {
   ### Creates a panel containing a record form populated with data
   my ($self, $object, $interface) = @_;
@@ -171,6 +235,16 @@ sub confirm {
     $url = '/common/activate?dataview=deny';
   }
   return $url;
+}
+
+sub deny {
+  my ($self, $object, $interface) = @_;
+  if (my $panel = $self->interface_panel($interface, 'deny', 'Account Error')) {
+    $panel->add_components(qw(deny    EnsEMBL::Web::Component::Interface::User::deny));
+    $self->{page}->content->add_panel($panel);
+    $self->{page}->set_title("Account already activated");
+  }
+  return undef;
 }
 
 sub deny {
@@ -217,6 +291,7 @@ sub activate {
       if ($success) {
         $interface->data->status('active');
         $success = $interface->data->save;
+<<<<<<< User.pm
         ## If this registration was via an invite, add the group to the user
         if ($object->param('record_id') && $object->param('record_id') =~ /^\d+$/) {
           my $invite = EnsEMBL::Web::Object::Data::Invite->new({id => $object->param('record_id')});
@@ -234,6 +309,26 @@ sub activate {
           # warn "SAVING RECORD";
           $invite->save;
         }
+=======
+        ## If this registration was via an invite, add the group to the user
+        if ($object->param('record_id')) {
+          my $invite = EnsEMBL::Web::Object::Data::Invite->new({id => $object->param('record_id')});
+warn "Created object $invite";
+          my $group_id = $invite->group->id;
+      
+          my $user = EnsEMBL::Web::Object::User->new({ adaptor => $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->userAdaptor,  
+                    id => $object->param('user_id')});
+          my $group = EnsEMBL::Web::Object::Group->new(( adaptor => $ENSEMBL_WEB_REGISTRY->userAdaptor, id => $group_id ));
+          warn "Adding user ", $user->id, " to group ", $group_id;
+          # warn "WORKING WITH USER: " . $user->id . ": " . $user->email;
+          $user->add_group($group);
+          # warn "SAVING USER";
+          $user->save;
+          $invite->status('accepted');
+          # warn "SAVING RECORD";
+          $invite->save;
+        }
+>>>>>>> 1.6.4.1
       }
 
       if ($success) {
