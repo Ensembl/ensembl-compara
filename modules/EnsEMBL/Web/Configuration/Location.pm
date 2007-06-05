@@ -484,6 +484,9 @@ sub contigview {
   $self->{page}->add_body_attr( 'onload' => 'populate_fragments(); ');
   $self->{page}->javascript->add_source("/js/ajax_fragment.js");
 
+
+  $self->{page}->javascript->add_source("/js/core42.js");
+
   my $last_rendered_panel = undef;
   my @common = ( 'params' => { 'l'=>$q_string, 'h' => $obj->highlights_string } );
 
