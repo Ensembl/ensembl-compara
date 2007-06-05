@@ -77,11 +77,11 @@ sub find_user_by_email {
   my $sql = qq(
     SELECT ) . $self->user_table . qq(_id, name, organisation, email, data, salt, password, status 
     FROM ) . $self->user_table . qq(
-    WHERE email = "$email"; 
+    WHERE email = ?
   );
   #warn "SQL: " . $sql;
 
-  my $R = $self->{'_handle'}->selectall_arrayref($sql); 
+  my $R = $self->{'_handle'}->selectall_arrayref($sql,{},$email); 
   return {} unless $R->[0];
 
   my @record = @{$R->[0]};
@@ -108,11 +108,11 @@ sub find_user_by_email_and_password {
   my $sql = qq(
     SELECT ) . $self->user_table . qq(_id, name, organisation, email, data, salt, password, status 
     FROM ) . $self->user_table . qq(
-    WHERE email = "$email" and password = "$password"; 
+    WHERE email = ? and password = ?
   );
   #warn "SQL: " . $sql;
 
-  my $R = $self->{'_handle'}->selectall_arrayref($sql); 
+  my $R = $self->{'_handle'}->selectall_arrayref($sql, {}, $email, $password );
   return {} unless $R->[0];
 
   my @record = @{$R->[0]};
@@ -139,12 +139,12 @@ sub find_user_by_user_id {
   my $sql = qq(
     SELECT ) . $self->user_table . qq(_id, name, organisation, email, data, salt, password, status 
     FROM ) . $self->user_table . qq(
-    WHERE ) . $self->user_table . qq(_id = "$id" 
+    WHERE ) . $self->user_table . qq(_id = ?
   );
 
   #warn "SQL: " . $sql;
 
-  my $R = $self->{'_handle'}->selectall_arrayref($sql); 
+  my $R = $self->{'_handle'}->selectall_arrayref($sql,{},$id); 
   return {} unless $R->[0];
 
   my @record = @{$R->[0]};
@@ -176,9 +176,9 @@ sub find_users_by_group_id {
     FROM ) . $table . qq( 
     LEFT JOIN group_member 
     ON \(group_member.user_id = user.) . $table . qq(_id\) 
-    WHERE group_member.webgroup_id = '$id';
+    WHERE group_member.webgroup_id = ?;
   );
-  my $R = $self->{'_handle'}->selectall_arrayref($sql);
+  my $R = $self->{'_handle'}->selectall_arrayref($sql,{},$id);
   my $results = [];
   if ($R->[0]) {
     my @records = @{$R};
@@ -214,18 +214,18 @@ sub update_group {
   #warn "UPDATING: " . $name;
   my $sql = qq(
     UPDATE webgroup
-    SET name        = "$name",
-        blurb       = "$description",
-        type        = "$type",
-        status      = "$status",
-        modified_by = "$modified_by",
-        created_by  = "$created_by",
+    SET name        = ?,
+        blurb       = ?,
+        type        = ?,
+        status      = ?,
+        modified_by = ?,
+        created_by  = ?,
         created_at  = CURRENT_TIMESTAMP
-    WHERE webgroup_id = ') . $id . qq(';
+    WHERE webgroup_id = ?
   );
   #warn "SQL\n$sql";
   my $sth = $self->{'_handle'}->prepare($sql);
-  my $result = $sth->execute();
+  my $result = $sth->execute($name,$description,$type,$status,$modified_by,$created_by,$id);
   return $self->last_inserted_id;
 }
 
@@ -241,17 +241,17 @@ sub update_user {
   #warn "STATUS: " . $status;
   my $sql = qq(
     UPDATE user 
-    SET name         = "$name",
-        email        = "$email",
-        password     = "$password",
-        organisation = "$organisation",
-        status       = "$status",
+    SET name         = ?,
+        email        = ?,
+        password     = ?,
+        organisation = ?,
+        status       = ?,
         modified_at  = CURRENT_TIMESTAMP
-    WHERE user_id = ') . $id . qq(';
+    WHERE user_id = ?
   );
   #warn "SQL\n$sql";
   my $sth = $self->{'_handle'}->prepare($sql);
-  my $result = $sth->execute();
+  my $result = $sth->execute($name,$email,$password,$organisation,$status,$id);
   return $self->last_inserted_id;
 }
 
@@ -293,12 +293,12 @@ sub find_records {
 
   my $sql = qq(
     SELECT * 
-    FROM ) . $table . qq(_record WHERE $find_key = "$find_value"); 
+    FROM ) . $table . qq(_record WHERE $find_key = ?); 
   if ($type) {
     $sql .= qq( AND type = "$type"); 
   }
 #warn "SQL:\n$sql"; 
-  my $T = $self->{'_handle'}->selectall_arrayref($sql);
+  my $T = $self->{'_handle'}->selectall_arrayref($sql,{},$find_value);
   return [] unless $T;
   for (my $i=0; $i<scalar(@$T);$i++) {
     my @array = @{$T->[$i]};
@@ -322,10 +322,10 @@ sub delete_user {
   my $table = "user"; 
   my $sql = qq(
     DELETE FROM user
-    WHERE user_id = $id;
+    WHERE user_id = ?
   );
   my $sth = $self->{'_handle'}->prepare($sql);
-  my $result = $sth->execute();
+  my $result = $sth->execute( $id );
 
   return $result;
 }
@@ -340,10 +340,10 @@ sub delete_record {
   #warn "DELETING: " . $id;
   my $sql = qq(
     DELETE FROM ) . $table . qq(_record 
-    WHERE ) . $table . qq(_record_id = $id
+    WHERE ) . $table . qq(_record_id = ?
   );
   my $sth = $self->{'_handle'}->prepare($sql);
-  my $result = $sth->execute();
+  my $result = $sth->execute($id);
 
   return $result;
 }
@@ -375,7 +375,7 @@ sub update_record {
   );
   warn $sql;
   my $sth = $self->{'_handle'}->prepare($sql);
-  my $result = $sth->execute();
+  my $result = $sth->execute($user_id,$type,$data,$id);
 
   return $result;
 }
@@ -392,14 +392,14 @@ sub insert_record {
   #warn "INSERTING: " . $user_id . ": " . $type . ": " . $data;
   my $sql = qq(
     INSERT INTO ) . $table . qq(_record 
-    SET ) . $table . qq(_id = $user_id,
-        type    = "$type",
-        data    = "$data",
+    SET ) . $table . qq(_id = ?,
+        type    = ?,
+        data    = ?,
         created_at=CURRENT_TIMESTAMP
   );
   warn "SQL: " . $sql;
   my $sth = $self->{'_handle'}->prepare($sql);
-  my $result = $sth->execute();
+  my $result = $sth->execute($user_id,$type,$data);
 
   return $self->last_inserted_id;
 }
@@ -412,13 +412,13 @@ sub insert_user {
   #warn "INSERTING: " . $name;
   my $sql = qq(
     INSERT INTO user 
-    SET name    = "$name",
-        email   = "$email",
-        data    = "$data",
+    SET name    = ?,
+        email   = ?,
+        data    = ?,
         created_at=CURRENT_TIMESTAMP
   );
   my $sth = $self->{'_handle'}->prepare($sql);
-  my $result = $sth->execute();
+  my $result = $sth->execute($name,$email,$data);
 
   return $result;
 }
@@ -434,17 +434,17 @@ sub insert_group {
   #warn "INSERTING: " . $name;
   my $sql = qq(
     INSERT INTO webgroup
-    SET name        = "$name",
-        blurb       = "$description",
-        type        = "$type",
-        status      = "$status",
-        modified_by = "$modified_by",
-        created_by  = "$created_by",
+    SET name        = ?,
+        blurb       = ?,
+        type        = ?,
+        status      = ?,
+        modified_by = ?,
+        created_by  = ?,
         created_at  = CURRENT_TIMESTAMP
   );
   #warn "SQL\n$sql";
   my $sth = $self->{'_handle'}->prepare($sql);
-  my $result = $sth->execute();
+  my $result = $sth->execute($name,$description,$type,$status,$modified_by,$created_by);
   return $self->last_inserted_id;
 }
 
@@ -456,15 +456,15 @@ sub add_relationship {
   my $status = $params{status};
   my $sql = qq(
     INSERT INTO group_member 
-    SET webgroup_id = "$from_id",
-        user_id     = "$to_id",
-        level       = "$level",
-        status      = "$status",
+    SET webgroup_id = ?,
+        user_id     = ?,
+        level       = ?,
+        status      = ?,
         created_at  = CURRENT_TIMESTAMP
   );
   #warn $sql;
   my $sth = $self->{'_handle'}->prepare($sql);
-  my $result = $sth->execute();
+  my $result = $sth->execute($from_id,$to_id,$level,$status);
 }
 
 sub remove_relationship {
@@ -473,11 +473,11 @@ sub remove_relationship {
   my $to_id = $params{to};
   my $sql = qq(
     DELETE FROM group_member 
-    WHERE webgroup_id = "$from_id" AND user_id = "$to_id";
+    WHERE webgroup_id = ? AND user_id = ?
   );
   #warn $sql;
   my $sth = $self->{'_handle'}->prepare($sql);
-  my $result = $sth->execute();
+  my $result = $sth->execute($from_id,$to_id);
 }
 
 sub group_by_id {
@@ -486,8 +486,8 @@ sub group_by_id {
     SELECT webgroup_id, name, blurb, type, status, created_by, modified_by,
            UNIX_TIMESTAMP(created_at), UNIX_TIMESTAMP(modified_at)
     FROM webgroup
-    WHERE webgroup_id = ') . $id . "';";
-  my $R = $self->{'_handle'}->selectall_arrayref($sql);
+    WHERE webgroup_id = ?);
+  my $R = $self->{'_handle'}->selectall_arrayref($sql,{},$id);
   my $results = [];
   if ($R->[0]) {
     my @records = @{$R};  
@@ -526,10 +526,10 @@ sub groups_for_type {
            UNIX_TIMESTAMP(webgroup.created_at),
            UNIX_TIMESTAMP(webgroup.modified_at)
     FROM webgroup 
-    WHERE webgroup.type = '$type' and webgroup.status = '$status';
+    WHERE webgroup.type = ? and webgroup.status = ?
   );
   #warn $sql;
-  my $R = $self->{'_handle'}->selectall_arrayref($sql);
+  my $R = $self->{'_handle'}->selectall_arrayref($sql,{},$type,$status);
   my $results = [];
   if ($R->[0]) {
     my @records = @{$R};  
@@ -572,10 +572,10 @@ sub groups_for_user_id {
     FROM group_member 
     LEFT JOIN webgroup
     ON (group_member.webgroup_id = webgroup.webgroup_id)
-     WHERE group_member.user_id = $user_id AND webgroup.status = '$status';
+     WHERE group_member.user_id = ? AND webgroup.status = ?
   );
 
-  my $R = $self->{'_handle'}->selectall_arrayref($sql);
+  my $R = $self->{'_handle'}->selectall_arrayref($sql,{},$user_id,$status);
   my $results = [];
   if ($R->[0]) {
     my @records = @{$R};  
