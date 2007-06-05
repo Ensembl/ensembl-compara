@@ -291,7 +291,6 @@ sub activate {
       if ($success) {
         $interface->data->status('active');
         $success = $interface->data->save;
-<<<<<<< User.pm
         ## If this registration was via an invite, add the group to the user
         if ($object->param('record_id') && $object->param('record_id') =~ /^\d+$/) {
           my $invite = EnsEMBL::Web::Object::Data::Invite->new({id => $object->param('record_id')});
@@ -309,26 +308,6 @@ sub activate {
           # warn "SAVING RECORD";
           $invite->save;
         }
-=======
-        ## If this registration was via an invite, add the group to the user
-        if ($object->param('record_id')) {
-          my $invite = EnsEMBL::Web::Object::Data::Invite->new({id => $object->param('record_id')});
-warn "Created object $invite";
-          my $group_id = $invite->group->id;
-      
-          my $user = EnsEMBL::Web::Object::User->new({ adaptor => $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->userAdaptor,  
-                    id => $object->param('user_id')});
-          my $group = EnsEMBL::Web::Object::Group->new(( adaptor => $ENSEMBL_WEB_REGISTRY->userAdaptor, id => $group_id ));
-          warn "Adding user ", $user->id, " to group ", $group_id;
-          # warn "WORKING WITH USER: " . $user->id . ": " . $user->email;
-          $user->add_group($group);
-          # warn "SAVING USER";
-          $user->save;
-          $invite->status('accepted');
-          # warn "SAVING RECORD";
-          $invite->save;
-        }
->>>>>>> 1.6.4.1
       }
 
       if ($success) {
