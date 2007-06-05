@@ -26,8 +26,12 @@ sub BUILD {
 }
 
 sub key {
-  return 'user_record_id';
+  return '%%user_record%%_id';
 }
+sub table {
+   return '%%user_record%%';
+}
+
 
 sub table {
   return '%%user_record%%';

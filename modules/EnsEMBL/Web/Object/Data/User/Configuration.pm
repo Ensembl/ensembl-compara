@@ -8,7 +8,7 @@ use base 'EnsEMBL::Web::Object::Data::Configuration';
 {
 
 sub key {
-  return "user_record_id";
+  return "%%user_record%%_id";
 }
 
 }
