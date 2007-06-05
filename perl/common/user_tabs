@@ -14,9 +14,9 @@ use CGI;
 my $cgi = new CGI;
  
 my $registry_user = $ENSEMBL_WEB_REGISTRY->get_user;
-my $user = EnsEMBL::Web::Object::Data::User->new({ id => $registry_user->id });
 
-if ($user) {
+if ($registry_user->id > 0) {
+  my $user = EnsEMBL::Web::Object::Data::User->new({ id => $registry_user->id });
 
   my $found = 0;
   my $tab = undef;
