@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 
-package sortable;
+package user_tabs;
 
 use strict;
 use warnings;
