@@ -1158,5 +1158,16 @@ sub group_details {
   $panel->print($html);
 }
 
+
+sub message {
+  my ($panel, $object) = @_;
+  my $command = $panel->{command};
+
+  my $html = '<p>'.$command->filters->message.'</p>';
+  $panel->print($html);
+}
+
+
+
 1;
 

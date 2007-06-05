@@ -19,6 +19,23 @@ sub _add_javascript_libraries {
   $self->{page}->javascript->add_source( "/js/scriptaculous.js" ); ## Animations, drag and drop etc. 
 }
 
+sub message {
+  my $self   = shift;
+
+  if (my $panel = $self->new_panel( 'Image',
+    'code'    => "info$self->{flag}",
+    'object'  => $self->{object},
+    'command' => $self->{command},
+    ) ) {
+    $panel->add_components(qw(
+        message        EnsEMBL::Web::Component::User::message
+    ));
+
+    ## add panel to page
+    $self->add_panel( $panel );
+  }
+}
+
 sub context_menu {
   ### General context menu for all user management pages
   my $self = shift;

@@ -32,6 +32,7 @@ sub new {
     'page'         => undef,
     'factory'      => undef,
     'access'       => undef,
+    'command'      => undef,
     'timer'        => $ENSEMBL_WEB_REGISTRY->timer,
     'species_defs' => $ENSEMBL_WEB_REGISTRY->species_defs
   };
@@ -45,6 +46,7 @@ sub new {
   $self->_prof("Parameters initialised from input");
 ## Access restriction parameters
   $self->{'access'} = $parameters{'access'};
+  $self->{'command'} = $parameters{'command'};
 
 ## Page module...
 
@@ -128,6 +130,7 @@ sub configure {
       # of the script.
       my $CONF = $config_module_name->new( $self->page, $object, $flag );
       $CONF->{commander} = $self->{commander};
+      $CONF->{command} = $self->{command};
       foreach my $FN ( @functions ) { 
         if( $CONF->can($FN) ) {
 	  # If this configuration module can perform this function do so...
