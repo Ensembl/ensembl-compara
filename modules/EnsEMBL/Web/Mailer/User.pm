@@ -45,7 +45,6 @@ You activation code is: $code
 
 );
   $message .= $self->email_footer;
-
   $self->subject("Your new $sitename account");
   $self->message($message);
   $self->send();
@@ -78,7 +77,7 @@ sub send_invite_email {
   my $message = qq(Hello,
 
  You have been invited by ) . $user->name . qq( to join a group
- on the Ensembl Genome Browser.
+ on the ). $SiteDefs::ENSEMBL_SITETYPE. qq( Genome Browser.
 
  To accept this invitation, click on the following link:
 
@@ -89,16 +88,15 @@ sub send_invite_email {
 
  If you do not wish to accept, please just disregard this email.
 
+ Note: When accepting, please leave the user-code box blank.
+
  If you have any problems please don't hesitate to contact ) . $user->name . qq( 
- or the Ensembl help desk, on helpdesk\@ensembl.org.
+ or the ) . $SiteDefs::ENSEMBL_SITETYPE . qq( help desk, on ) . 
+ $SiteDefs::ENSEMBL_HELPDESK_EMAIL;
 
- Many thanks,
-
- The Ensembl team
-);
   $message .= $self->email_footer;
   $self->email($email);
-  $self->subject("Invite to join an Ensembl group");
+  $self->subject("Invite to join a $SiteDefs::ENSEMBL_SITETYPE group");
   $self->message($message);
   $self->send();
 }
@@ -109,7 +107,7 @@ sub send_reactivation_email {
   my $message = qq(
 Hello ) . $user->name . qq(,
 
-We have received a request to change your Ensembl account password. If you
+We have received a request to change your $SiteDefs::ENSEMBL_SITETYPE account password. If you
 submitted this request, click on the link below to update your password. If
 not, please disregard this email.
 
