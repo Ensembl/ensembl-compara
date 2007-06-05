@@ -26,8 +26,7 @@ sub render {
   if ($self->filters->allow) {
     $self->render_page;
   } else {
-    print "Content-type:text/html\n\n";
-    print $self->filters->message; 
+    $self->render_message;
   }
 }
 
