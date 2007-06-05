@@ -2,6 +2,7 @@ package EnsEMBL::Web::Document::HTML::Javascript;
 use strict;
 use CGI qw(escapeHTML);
 use EnsEMBL::Web::Document::HTML;
+use warnings;
 
 @EnsEMBL::Web::Document::HTML::Javascript::ISA = qw(EnsEMBL::Web::Document::HTML);
 
@@ -12,7 +13,15 @@ sub add_source {
   return unless $src;
   return if $self->{'sources'}{$src};
   $self->{'sources'}{$src}=1;
+  
+  $self->{'scripts'}.=qq(  <script type="text/javascript" src="/js/core42.js"></script>\n);
+
+  $self->{'scripts'}.=qq(  <script type="text/javascript" src="/js/prototype.js"></script>\n);
+  $self->{'scripts'}.=qq(  <script type="text/javascript" src="/js/scriptaculous.js"></script>\n);
+  
   $self->{'scripts'}.=qq(  <script type="text/javascript" src="$src"></script>\n);
+#  warn "sr7: added $src\n";
+  
 }
 sub add_script {
   return unless $_[1];
