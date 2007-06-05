@@ -32,7 +32,7 @@ sub context_menu {
 
   if ($user_id) {
     my $flag = 'user';
-    $self->add_block( $flag, 'bulleted', "Your Ensembl" );
+    $self->add_block( $flag, 'bulleted', "Your $SiteDefs::ENSEMBL_SITETYPE" );
 
     $self->add_entry( $flag, 'text' => "Account summary",
                                     'href' => "/common/accountview" );
