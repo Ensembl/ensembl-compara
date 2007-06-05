@@ -17,6 +17,7 @@ sub render {
   my $html = "";
   if ($ENV{'ENSEMBL_USER_ID'}) {
   my $user = $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->get_user;
+  my $data_user = EnsEMBL::Web::Object::Data::User->new({ id => $user->id });
 
   my $group_id = undef;
   foreach my $this ($user->drawer_records) {
@@ -26,7 +27,7 @@ sub render {
   $html .= "<div id='settings_content'>\n";
   $html .= "<table width='100%' cellpadding='0' cellspacing='0'>\n";
   $html .= "<tr><td width='49%'>\n";
-  $html .= "<b><a href='/common/accountview'>Your Ensembl account</a> &gt; " . $user->name . "</b> &middot; <a href='javascript:void(0);' onclick='toggle_settings_drawer()'>Hide</a>\n";
+  $html .= "<b><a href='/common/accountview'>Your $SiteDefs::ENSEMBL_SITETYPE account</a> &gt; " . $user->name . "</b> &middot; <a href='javascript:void(0);' onclick='toggle_settings_drawer()'>Hide</a>\n";
   $html .= "</td>\n";
   $html .= "<td style='text-align: right;' width='49%'>";
   my @groups = @{ $user->groups };
@@ -52,7 +53,7 @@ sub render {
   $html .= "<tr>\n";
   $html .= "<td style='padding-top: 5px;'>\n";
   $html .= "Bookmarks";
-  my @user_bookmarks = $user->bookmark_records;
+  my @user_bookmarks = @{ $data_user->bookmarks };
   $html .= list_for_records({ records => \@user_bookmarks, tag => 'user', selected => $group_id, type => 'bookmark' });
   foreach my $group (@{ $user->groups }) {
     my @group_bookmarks = $group->bookmark_records;
@@ -60,7 +61,7 @@ sub render {
   }
   $html .= "</td>\n";
   $html .= "<td style='padding-top: 5px;'>\n";
-  my @configurations = $user->configuration_records;
+  my @configurations = @{ $data_user->configurations };
   $html .= "Configurations";
   my @current_configs = $user->current_config_records;
   my $current_config = $current_configs[0];
