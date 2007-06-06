@@ -176,15 +176,15 @@ sub associated_ids {
     if ($r->[0]->stable_id eq $last_gsi) {
       $gsi = undef;
     } else {
-      $gsi = _get_assoc_link('gene', $r->[0]->stable_id);
+      $gsi = _idhistoryview_link('gene', $r->[0]->stable_id);
     }
 
     # transcript
-    $tsi = _get_assoc_link('transcript', $r->[1]->stable_id);
+    $tsi = _idhistoryview_link('transcript', $r->[1]->stable_id);
 
     # translation
     if ($r->[2]) {
-      $tlsi = _get_assoc_link('peptide', $r->[2]->stable_id);
+      $tlsi = _idhistoryview_link('peptide', $r->[2]->stable_id);
       $tlsi .= '<br />'._get_formatted_pep_seq($r->[3], $r->[2]->stable_id);
     } else {
       $tlsi = 'none';
@@ -205,14 +205,6 @@ sub associated_ids {
 }
 
 
-sub _get_assoc_link {
-  my ($type, $stable_id) = @_;
-  return undef unless ($stable_id);
-  my $fmt = qq(<a href="idhistoryview?%s=%s">%s</a>);
-  return sprintf($fmt, $type, $stable_id, $stable_id);
-}
-
-
 sub _get_formatted_pep_seq {
   my $seq = shift;
   my $stable_id = shift;
@@ -225,143 +217,6 @@ sub _get_formatted_pep_seq {
   }
 
   return $html;
-}
-
-
-sub historypanel {
-  my ($panel, $object) = @_;
-  my @temp = @{$panel->params};
-  my %releases;
-
-  foreach my $id (@temp){
-    my $history = $id->get_history_tree;
-    my @temp = @{$history->get_release_display_names};
-    my @rel = sort ({$a <=> $b} @temp);
-    foreach my $r (@rel){
-	   unless ($r =~/18\./){
-	     unless (exists $releases{$r}){$releases{$r} =$r;}
-       }
-    }
-  }
-  $panel->add_option('triangular',1); 	
-  $panel->add_columns(
-    { 'key' => 'request', 'align'=>'left', 'title' => 'Requested ID'},
-    { 'key' => 'match', 'align'=>'left', 'title' => 'Matched ID(s)' },
-    { 'key' => 'rel', 'align'=>'left', 'title' => 'Release:' },
-  );
-  foreach my $key (sort {$a <=> $b} keys %releases){
-	  $panel->add_columns(
-	    { 'key' => $key, 'align'=>'left', 'title' => $key   },
-	  );	
-  }
-
-  foreach my $id (@temp){
-	my %seen; 
-	my $history = $id->get_history_tree;
-	my @events = @{ $history->get_all_StableIdEvents };
-    my $stable_id = $id->stable_id .".". $id->version;
-    foreach my $a_id (@{ $history->get_all_ArchiveStableIds }) {
-	 my @info;
-	 my $a_stable = $a_id->stable_id;
-	 my %rel_matches;
-	 foreach my $key (keys %releases){
-	   $rel_matches{$key} = "";	
-	 }
-	 foreach my $e (@events){
-	  my $old = $e->old_ArchiveStableId;
-      my $new = $e->new_ArchiveStableId;
-      if (defined $new){ 
-       if ($new->stable_id eq $a_stable){
-         my $new_release = $new->release;
-         if ($rel_matches{$new_release}=~/^\w/){
-	       ## compensate for strange data from release 42   
-	       if ($new->release eq '43') {$rel_matches{$new_release} = $new->version}
-	       my @temp = split(/\//,$rel_matches{$new_release});
-	        my $s =0;
-	       foreach my $aa (@temp){ if ($aa eq $new->version){$s = 1;}} 
-	       unless ($s =~/1/){ push (@temp, $new->version); }
-	       @temp = sort @temp;
-	       my $new_value = join ('/', @temp);
-	       $rel_matches{$new_release} = $new_value;
-         }else {
-	      $rel_matches{$new_release} =$new->version; 	 
-         } 
-       }
-      }
-	  if (defined $old){
-	   if ($old->stable_id eq $a_stable){
-          my $old_release = $old->release;
-		  if ($rel_matches{$old_release}=~/^\w/){
-			if ($old_release =~/43/){$rel_matches{$old_release} = $old->version}
-			else{  
-	         my @temp = split(/\//,$rel_matches{$old_release});
-	         my $s =0;
-	         foreach my $aa (@temp){if ($aa eq $old->version){$s = 1;}} 
-	         unless ($s =~/1/){ push (@temp, $old->version); }
-	         @temp = sort @temp;
-	         my $new_value = join ('/', @temp);
-	         $rel_matches{$old_release} = $new_value;
-            }
-          } else{
-           $rel_matches{$old_release} =  $old->version; 	 
-         }
-        }
-      }	
-	 }
-
-    ## Try and backfill any empty gaps ##
-      my %rel_pos;
-      my @rel = sort {$a <=> $b} keys %rel_matches;
-      my $count = 0;
-      foreach my $r (@rel){
-	    $rel_pos{$r} = $count;
-	    $count++; 
-      }
-      my $size = @rel;
-      $size -=1; 
-      foreach my $key (%rel_matches){
-        my $value = $rel_matches{$key};
-	    unless ($value =~/^\w/){
-		  my $previous_value; 
-          my $pos = $rel_pos{$key};
-          unless ($pos == 0){
-           my $previous = $pos -= 1; 
-           my $previous_rel = $rel[$previous];
-           $previous_value = $rel_matches{$previous_rel}; 
-          }
-          my $i = $pos + 1;
-          for ( $i; $i<=$size; $i++){
-	         my $next = $rel[$i];
-	         my $next_value = $rel_matches{$next};
-	         if ($next_value=~/^\w/){ $rel_matches{$key} = $previous_value; next;}
-          }
-	    }
-      }       
-      my $combination = $stable_id . $a_stable;
-      unless (exists $seen{$combination}){
-        $panel->add_row({
-	     'request' => $stable_id,
-	     'match'   => $a_stable,
-	     'rel'     => '',
-	     %rel_matches
-	   });
-	   $seen{$combination} = "";
-	  }
-   } 
-  }
-
-  return 1;
-}
-
-sub nohistory {
-  my ($panel, $object) = @_;
-  my @temp = @{$panel->params};
-  $panel->print(qq(<p>No ID history was found for the following identifiers:</p><p>));
-  foreach my $id (@temp){
-    $panel->print(qq(<br>$id));	
-  }
-  $panel->print(qq(</p>));
-  return 1;
 }
 
 
@@ -447,6 +302,14 @@ sub _flip_URL {
   my $type = $temp eq 'Translation' ? "peptide" : lc($temp);
   
   return sprintf('%s=%s', $type, $object->stable_id .".". $object->version);
+}
+
+
+sub _idhistoryview_link {
+  my ($type, $stable_id) = @_;
+  return undef unless ($stable_id);
+  my $fmt = qq(<a href="idhistoryview?%s=%s">%s</a>);
+  return sprintf($fmt, $type, $stable_id, $stable_id);
 }
 
 

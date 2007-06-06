@@ -89,110 +89,144 @@ sub idhistoryview {
 
 sub historyview {
   my $self   = shift;
+
   my $object = $self->{'object'};
   my $max = 30;
   my $max_ids = $max + 1;
+
+  my $error;
   my @e = (qq(You did not upload any data, please try again.), 
            qq(You may only upload a maximum of $max stable ID's. If you require information for a large number of sequence please email the helpdek with your request.), 
            qq(You have selected two different types of data source. Please either paste your data into the box OR upload a file OR enter a URL.),
            qq(There was a problem with uploading your file, please try again.)
   );
-  my $error;
-  ## Check If we have data added by user:
-  if ($object->param('output')){
-   my ($fh, $data, $result, $param);		 
-   if ($object ->param('paste_file') | $object->param('upload_file') | $object->param('url_file')){
-	 if ($object->param('paste_file')){
-		if ($object->param('upload_file') | $object->param('url_file')){ $error = $e[2]; }
-		else {
-		  $fh = 'ids.txt';
-		  $param = 'paste_file';                  	
-		}
-	 } 
-	elsif ($object->param('upload_file')) {
-		if ($object->param('paste_file') | $object->param('url_file')){ $error = $e[2]; }
-		else {
-			$fh = $object->param('upload_file');
-			$param = 'upload_file';
-		}
-	} 
-     my @ids;
-     if ( $param ){
-	    my $cache = new EnsEMBL::Web::File::Text($object->[1]->{'_species_defs'});
-	    $cache->set_cache_filename('hv', $fh);
-	    $result = $cache->save($object, $param);
-	    $data = $cache->retrieve;  
-     }
-     my @ids = split(/\s+/, $data);
-     my $size = @ids;
-     if ($size >= $max_ids) {$error = $e[1];}
-     else {
-	    my $species = $object->param('species');
-	    my $reg = "Bio::EnsEMBL::Registry"; 
-	    my $aa = $reg->get_adaptor($species, 'Core', 'ArchiveStableId');
-	    my (@trees, @none);
-	    foreach my $id (@ids){
-		  if ($id=~/\.\d*/){ $id=~s/\.\d+//;}
-		   
-		  if ($id !~/ENS\w*\d*/){ $error = "There was a problem with your uploaded data: <B>" . $id . "</B> Is not a valid Ensembl Identifier. Please remove it and try again. ";}
-	 	  else {
- 		   $id =~s/\W//; 
-	       my $archive_id = $aa->fetch_by_stable_id($id);
-	       if ($archive_id){ 
-               push (@trees, $archive_id);
-           }
-           else { push (@none, $id);}  
-          }
+  
+  ## Check If we have data added by user
+  if ($object->param('output')) {
+    my ($fh, $data, $result, $param);		 
+
+    if ($object->param('paste_file') or $object->param('upload_file') or $object->param('url_file')) {
+      if ($object->param('paste_file')) {
+        if ($object->param('upload_file') or $object->param('url_file')) {
+          $error = $e[2];
+        } else {
+          $fh = 'ids.txt';
+          $param = 'paste_file';                  	
         }
-       unless ($error =~/^\w/){
-        if ($object->param('output') eq 'html' ){ 
-	     my $params = \@trees;
-         my $history_panel = $self->new_panel('SpreadSheet',
-		    'code'    => "info$self->{flag}",
-		    'caption' => 'ID History Report',
-		    'params'  => $params,
-		    );
-		
-						       
-		 $history_panel->add_components(qw(
-			history       EnsEMBL::Web::Component::ArchiveStableId::historypanel
-			));
-		 $self->{page}->content->add_panel( $history_panel );				
-	     my $sizen = @none;		 
-		 if ($sizen >=1){
-		     my $params = \@none;
-	         my $no_history_panel = $self->new_panel('',
-			    'code'    => "info$self->{flag}",
-			    'caption' => 'No ID history found:',
-			    'params'  => $params,
-			    );
-			
-		 $no_history_panel->add_components(qw(
-			none       EnsEMBL::Web::Component::ArchiveStableId::nohistory
-			));
-		 $self->{page}->content->add_panel( $no_history_panel );
-		}
-		 return;					
-        }						 
-       }
-     }
-   }
-   else {
-	 $error = $e[0]; 
-   }  
+      } elsif ($object->param('upload_file')) {
+        if ($object->param('paste_file') or $object->param('url_file')) {
+          $error = $e[2];
+        } else {
+          $fh = $object->param('upload_file');
+          $param = 'upload_file';
+        }
+      } 
+      
+      my @ids;
+      if ($param) {
+        my $cache = EnsEMBL::Web::File::Text->new($object->[1]->{'_species_defs'});
+        $cache->set_cache_filename('hv', $fh);
+        $result = $cache->save($object, $param);
+        $data = $cache->retrieve;  
+      }
+      
+      my @ids = split(/\s+/, $data);
+      my $size = @ids;
+      
+      if ($size >= $max_ids) {
+        $error = $e[1];
+      } else {
+        
+        my $species = $object->param('species');
+        my $reg = "Bio::EnsEMBL::Registry"; 
+        my $aa = $reg->get_adaptor($species, 'core', 'ArchiveStableId');
+        my (@trees, @none);
+        
+        foreach my $id (@ids) {
+          $id =~ s/\.\d+//;
+          $id =~ s/\W//;
+
+          my $archive_id = $aa->fetch_by_stable_id($id);
+          
+          if ($archive_id) { 
+            push @trees, $archive_id;
+          } else {
+            push @none, $id;
+          }  
+        }
+
+        unless ($error) {
+          if ($object->param('output') eq 'html' ) { 
+            
+            my $params = \@trees;
+            
+            if (scalar(@trees)) {
+              my $history_panel = $self->new_panel('SpreadSheet',
+                  'code'    => "info$self->{flag}",
+                  'caption' => 'ID History Report',
+                  'params'  => $params,
+              );
+
+              $history_panel->add_components(qw(
+                  history   EnsEMBL::Web::Component::History::historypanel
+              ));
+              $self->{page}->content->add_panel( $history_panel );
+
+              my $info_panel = $self->new_panel('',
+                  'code'    => "info$self->{flag}",
+                  'caption' => 'Information',
+                  'params'  => $params,
+              );
+
+              $info_panel->add_components(qw(
+                  history_info   EnsEMBL::Web::Component::History::history_info
+              ));
+              $self->{page}->content->add_panel( $info_panel );
+            }
+
+            if (scalar(@none)) {
+              my $params = \@none;
+              my $no_history_panel = $self->new_panel('',
+                  'code'    => "info$self->{flag}",
+                  'caption' => 'No ID history found',
+                  'params'  => $params,
+              );
+
+              $no_history_panel->add_components(qw(
+                  none    EnsEMBL::Web::Component::History::nohistory
+              ));
+              $self->{page}->content->add_panel( $no_history_panel );
+            }
+            
+            return;
+          }						 
+        }
+      }
+    } else {
+      $error = $e[0]; 
+    }  
   }
+  
   ## Display the form...
   my $params;
-  if ($error=~/^\w/){$params = {'error' => $error}; }
-  my $panel1 = $self->new_panel( '',
-    'code'    => 'stage1_form',
-    'caption' => qq(Upload your list of stable IDs),
-    'params'  => $params
-  );
+  if ($error) {
+    $params = {'error' => $error};
+  }
   
-  $self->add_form( $panel1, qw(stage1_form EnsEMBL::Web::Component::History::stage1_form) );
-  $panel1->add_components( qw(stage1 EnsEMBL::Web::Component::History::stage1) );
-  $self->add_panel( $panel1 );
+  my $panel1 = $self->new_panel( '',
+      'code'    => 'stage1_form',
+      'caption' => qq(Upload your list of stable IDs),
+      'params'  => $params
+  );
+
+  $self->add_form($panel1, qw(
+    stage1_form   EnsEMBL::Web::Component::History::stage1_form
+  ));
+  $panel1->add_components(qw(
+    stage1  EnsEMBL::Web::Component::History::stage1
+  ));
+  
+  $self->add_panel($panel1);
 }
 
 #---------------------------------------------------------------------------
@@ -200,41 +234,33 @@ sub historyview {
 # Simple context menu specifically for HistoryView
 
 sub context_historyview {
-
   my $self = shift;
-  my $species  = $self->{object}->species;
   
-  my $flag     = "";
+  my $species = $self->{object}->species;
+  my $flag = "";
+  
   $self->{page}->menu->add_block( $flag, 'bulleted', "Display your data" );
-
-
   $self->{page}->menu->add_entry( $flag, 'text' => "Input new data",
                                   'href' => "/idhistory.html" );
-
-
 }
+
 
 sub context_menu {
   my $self = shift;
-  my $obj  = $self->{'object'};
+  
+  my $obj = $self->{'object'};
   my $species = $obj->species;
-  my $flag         = "feat";
+  my $flag = "feat";
+  
   $self->{page}->menu->add_block( $flag, 'bulleted', "Stable ID Mapping" );
-  $self->add_entry( $flag, 'text' => "Find Current Stable ID for older identifiers",
-                           'href' => "/$species/historyview");
-
-
-  my @genes ;#= @{ $obj->get_genes };
-  foreach my $gene (@genes) {
-    $self->add_entry(
-        "snp$self->{flag}", 
-        'code' => 'gene_snp_info',
-        'text' => "Gene SNP info",
-	"title" => "GeneSNPView - SNPs and their coding consequences",
-	'href' => "/$species/genesnpview?gene=".$gene->stable_id
-    );
-  }
+  
+  $self->add_entry(
+      $flag,
+      'text' => "Batch mapping for old identifiers",
+      'href' => "/$species/historyview"
+  );
 }
 
 
 1;
+
