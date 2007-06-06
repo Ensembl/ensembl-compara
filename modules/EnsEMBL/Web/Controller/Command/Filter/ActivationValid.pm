@@ -1,4 +1,4 @@
-package EnsEMBL::Web::Controller::Command::Filter::ActivationCode;
+package EnsEMBL::Web::Controller::Command::Filter::ActivationValid;
 
 use strict;
 use warnings;
@@ -25,7 +25,7 @@ sub allow {
 
 sub message {
   my $self = shift;
-  return 'Authorisation code does not match' . $self->SUPER::message;
+  return 'Sorry, these details could not be validated.';
 }
 
 sub inherit {
