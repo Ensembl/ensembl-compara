@@ -11,7 +11,7 @@ use Bio::EnsEMBL::Compara::GenomeDB;
 use Bio::EnsEMBL::DBLoader;
 use Bio::EnsEMBL::Hive::URLFactory; # only used for url
 # use Bio::SimpleAlign;
-# use Bio::AlignIO;
+use Bio::AlignIO;
 use Bio::EnsEMBL::Compara::NestedSet;
 use Bio::EnsEMBL::Compara::NCBITaxon;
 use Bio::EnsEMBL::Compara::Graph::Algorithms;
@@ -21,6 +21,7 @@ use Bio::EnsEMBL::Compara::RunnableDB::OrthoTree;
 use Bio::EnsEMBL::Compara::Homology;
 use File::Basename;
 use Digest::MD5 qw(md5_hex); # duploss_fraction
+use lib '/nfs/acari/avilella/bioperl/vanilla/bioperl-run/';
 
 use Time::HiRes qw(time gettimeofday tv_interval);
 
@@ -74,12 +75,14 @@ GetOptions('help'             => \$help,
            'nhx_gene_id'      => \$self->{'nhx_gene_id'},
            'nhx_protein_id'   => \$self->{'nhx_protein_id'},
            'nhx_transcript_id'=> \$self->{'nhx_transcript_id'},
+           'nhx_display_label_composite'=> \$self->{'nhx_display_label_composite'},
            'print'            => \$self->{'print_tree'},
            'list'             => \$self->{'print_leaves'},
            'draw'             => \$self->{'drawtree'},
            'balance'          => \$self->{'balance_tree'},
            'chop'             => \$self->{'chop_tree'},
            'keep_leaves=s'    => \$self->{'keep_leaves'},
+           'keep_leaves_species=s'    => \$self->{'keep_leaves_species'},
            'debug=s'          => \$self->{'debug'},
            'onlyrapdups'      => \$self->{'onlyrapdups'},
            'orthotree'        => \$self->{'orthotree'},
@@ -88,8 +91,10 @@ GetOptions('help'             => \$help,
            'sp1=s'            => \$self->{'_species1'},
            'sp2=s'            => \$self->{'_species2'},
            'v|verbose=s'      => \$self->{'verbose'},
+           'cutoff=s'         => \$self->{'cutoff'},
            'analyze|analyse'           => \$self->{'analyze'},
            'analyze_homologies'        => \$self->{'_analyze_homologies'},
+           'url2=s'           => \$self->{'_url2'},
            'append_taxon_id'           => \$self->{'append_taxon_id'},
            'test|_orthotree_treefam'   => \$self->{'_orthotree_treefam'},
            '_treefam_file=s'           => \$self->{'_treefam_file'},
@@ -100,6 +105,9 @@ GetOptions('help'             => \$help,
            '_topolmis|topolmis=s'      => \$self->{'_topolmis'},
            'duploss=s'                 => \$self->{'_duploss'},
            'gap_contribution=s'        => \$self->{'_gap_contribution'},
+           'gene_bootstrap_coef=s'     => \$self->{'_gene_bootstrap_coef'},
+           'loose_assoc=s'             => \$self->{'_loose_assoc'},
+           'paf_stats=s'             => \$self->{'_paf_stats'},
            'gap_proportion=s'          => \$self->{'_gap_proportion'},
            'per_residue_g_contribution=s'   => \$self->{'_per_residue_g_contribution'},
            'distances_taxon_level=s'   => \$self->{'_distances_taxon_level'},
@@ -110,10 +118,21 @@ GetOptions('help'             => \$help,
            'pafs=s'                    => \$self->{'_pafs'},
            'duprates=s'                => \$self->{'_duprates'},
            'duphop=s'                  => \$self->{'_duphop'},
+           'family_expansions=s'       => \$self->{'_family_expansions'},
            'dnds_pairs=s'              => \$self->{'_dnds_pairs'},
+           'dnds_doublepairs=s'        => \$self->{'_dnds_doublepairs'},
+           'summary_stats=s'        => \$self->{'_summary_stats'},
+           'dnds_msas=s'              => \$self->{'_dnds_msas'},
+           'viral_genes=s'              => \$self->{'_viral_genes'},
+           'hmm_build=s'              => \$self->{'_hmm_build'},
+           'transcript_pair_exonerate=s'              => \$self->{'_transcript_pair_exonerate'},
+           'synteny_metric=s'              => \$self->{'_synteny_metric'},
+           'species_set=s'   => \$self->{'_species_set'},
            'sisrates=s'                => \$self->{'_sisrates'},
            'print_as_species_ids=s'    => \$self->{'_print_as_species_ids'},
+           'size_clusters=s'        => \$self->{'_size_clusters'},
            'taxon_name_genes=s'        => \$self->{'_taxon_name_genes'},
+           'ncbi_tree_list_shortnames=s'        => \$self->{'_ncbi_tree_list_shortnames'},
            '_badgenes|badgenes'        => \$self->{'_badgenes'},
            '_farm|farm=s'              => \$self->{'_farm'},
            '_modula|modula=s'          => \$self->{'_modula'},
@@ -312,6 +331,32 @@ if ($self->{'clusterset_id'} && $self->{'_gap_contribution'}) {
 }
 
 # internal purposes
+if ($self->{'clusterset_id'} && $self->{'_gene_bootstrap_coef'}) {
+  my $treeDBA = $self->{'comparaDBA'}->get_ProteinTreeAdaptor;
+  $self->{'clusterset'} = $treeDBA->fetch_node_by_node_id($self->{'clusterset_id'});
+#  printf("loaded %d clusters\n", $self->{'clusterset'}->get_child_count);
+  _gene_bootstrap_coef($self) if(defined($self->{'_gene_bootstrap_coef'}));
+
+  exit(0);
+}
+
+# internal purposes
+if ($self->{'_loose_assoc'}) {
+  my $species = $self->{_species} || "Homo sapiens";
+  _loose_assoc($self,$species) if(defined($self->{'_loose_assoc'}));
+
+  exit(0);
+}
+
+# internal purposes
+if ($self->{'_paf_stats'}) {
+  my $species = $self->{_species} || "Homo sapiens";
+  _paf_stats($self,$species) if(defined($self->{'_paf_stats'}));
+
+  exit(0);
+}
+
+# internal purposes
 if ($self->{'clusterset_id'} && $self->{'_per_residue_g_contribution'}) {
   my $treeDBA = $self->{'comparaDBA'}->get_ProteinTreeAdaptor;
   $self->{'clusterset'} = $treeDBA->fetch_node_by_node_id($self->{'clusterset_id'});
@@ -347,6 +392,7 @@ if ($self->{'clusterset_id'} && $self->{'_duphop'}) {
   exit(0);
 }
 
+
 # internal purposes
 if ($self->{'clusterset_id'} && $self->{'_dnds_pairs'}) {
   my $treeDBA = $self->{'comparaDBA'}->get_ProteinTreeAdaptor;
@@ -359,6 +405,41 @@ if ($self->{'clusterset_id'} && $self->{'_dnds_pairs'}) {
 
   exit(0);
 }
+
+if ($self->{'clusterset_id'} && $self->{'_dnds_doublepairs'}) {
+  my $treeDBA = $self->{'comparaDBA'}->get_ProteinTreeAdaptor;
+  my $species_set = $self->{_species_set} || "Homo_sapiens:Pan_troglodytes:Macaca_mulatta:Otolemur_garnettii";
+  $self->{'clusterset'} = $treeDBA->fetch_node_by_node_id($self->{'clusterset_id'});
+  _dnds_doublepairs($self, $species_set) if(defined($self->{'_dnds_doublepairs'}));
+
+  exit(0);
+}
+
+if ($self->{'clusterset_id'} && $self->{'_summary_stats'}) {
+  my $treeDBA = $self->{'comparaDBA'}->get_ProteinTreeAdaptor;
+  $self->{'clusterset'} = $treeDBA->fetch_node_by_node_id($self->{'clusterset_id'});
+  _summary_stats($self) if(defined($self->{'_summary_stats'}));
+
+  exit(0);
+}
+
+# internal purposes
+if ($self->{'clusterset_id'} && $self->{'_dnds_msas'}) {
+  my $treeDBA = $self->{'comparaDBA'}->get_ProteinTreeAdaptor;
+  $self->{'clusterset'} = $treeDBA->fetch_node_by_node_id($self->{'clusterset_id'});
+  my $species_set = $self->{_species_set} || "Homo_sapiens:Pan_troglodytes:Macaca_mulatta:Otolemur_garnettii";
+  _dnds_msas($self, $species_set) if(defined($self->{'_dnds_msas'}));
+
+  exit(0);
+}
+
+# internal purposes
+if ($self->{'_ncbi_tree_list_shortnames'}) {
+  _ncbi_tree_list_shortnames($self);
+
+  exit(0);
+}
+
 
 # internal purposes
 if ($self->{'clusterset_id'} && $self->{'_homologs_and_paf_scores'}) {
@@ -420,6 +501,48 @@ if ($self->{'clusterset_id'} && $self->{'_duprates'}) {
 }
 
 # internal purposes
+if ($self->{'clusterset_id'} && $self->{'_family_expansions'}) {
+  my $treeDBA = $self->{'comparaDBA'}->get_ProteinTreeAdaptor;
+  $self->{'clusterset'} = $treeDBA->fetch_node_by_node_id($self->{'clusterset_id'});
+#  printf("loaded %d clusters\n", $self->{'clusterset'}->get_child_count);
+  _family_expansions($self,$self->{'_species'}) if(defined($self->{'_family_expansions'}));
+
+  exit(0);
+}
+
+# internal purposes
+if ($self->{'clusterset_id'} && $self->{'_viral_genes'}) {
+  my $treeDBA = $self->{'comparaDBA'}->get_ProteinTreeAdaptor;
+  $self->{'clusterset'} = $treeDBA->fetch_node_by_node_id($self->{'clusterset_id'});
+#  printf("loaded %d clusters\n", $self->{'clusterset'}->get_child_count);
+  _viral_genes($self,$self->{'_species'}) if(defined($self->{'_viral_genes'}));
+
+  exit(0);
+}
+
+# internal purposes
+if ($self->{'clusterset_id'} && $self->{'_hmm_build'}) {
+  my $treeDBA = $self->{'comparaDBA'}->get_ProteinTreeAdaptor;
+  $self->{'clusterset'} = $treeDBA->fetch_node_by_node_id($self->{'clusterset_id'});
+#  printf("loaded %d clusters\n", $self->{'clusterset'}->get_child_count);
+  _hmm_build($self) if(defined($self->{'_hmm_build'}));
+
+  exit(0);
+}
+
+# internal purposes
+if ($self->{'_transcript_pair_exonerate'}) {
+  _transcript_pair_exonerate($self) if(defined($self->{'_transcript_pair_exonerate'}));
+
+  exit(0);
+}
+
+# internal purposes
+if ($self->{'_synteny_metric'}) {
+  _synteny_metric($self) if(defined($self->{'_synteny_metric'}));
+}
+
+# internal purposes
 if ($self->{'clusterset_id'} && $self->{'_print_as_species_ids'}) {
   my $treeDBA = $self->{'comparaDBA'}->get_ProteinTreeAdaptor;
   $self->{'clusterset'} = $treeDBA->fetch_node_by_node_id($self->{'clusterset_id'});
@@ -446,6 +569,17 @@ if ($self->{'clusterset_id'} && $self->{'_taxon_name_genes'}) {
   exit(0);
 }
 
+
+# internal purposes
+if (defined($self->{'clusterset_id'}) && $self->{'_size_clusters'}) {
+  my $treeDBA = $self->{'comparaDBA'}->get_ProteinTreeAdaptor;
+  $self->{'clusterset'} = $treeDBA->fetch_node_by_node_id($self->{'clusterset_id'});
+#  printf("loaded %d clusters\n", $self->{'clusterset'}->get_child_count);
+  _size_clusters($self) if($self->{'_size_clusters'});
+
+  exit(0);
+}
+
 # internal purposes
 if (defined($self->{'clusterset_id'}) && $self->{'_check_mfurc'}) {
   my $treeDBA = $self->{'comparaDBA'}->get_ProteinTreeAdaptor;
@@ -466,7 +600,7 @@ if ($self->{'clusterset_id'} && $self->{'_analyze_homologies'}) {
   exit(0);
 }
 
-if(defined($self->{'clusterset_id'}) && !($self->{'_treefam_file'})) {
+if(defined($self->{'clusterset_id'}) && !($self->{'_treefam_file'}) && !($self->{'keep_leaves_species'})) {
   my $treeDBA = $self->{'comparaDBA'}->get_ProteinTreeAdaptor;
   $self->{'clusterset'} = $treeDBA->fetch_node_by_node_id($self->{'clusterset_id'});
 
@@ -601,6 +735,40 @@ sub keep_leaves {
   }
 }
 
+sub keep_leaves_species {
+  my $self = shift;
+  my $provided_tree = shift;
+
+  my %species_names;
+  foreach my $name (split(":",$self->{'keep_leaves_species'})) {
+    $name =~ s/\_/\ /g;
+    $species_names{$name} = 1;
+  }
+
+  print join(" ",keys %species_names),"\n" if $self->{'$debug'};
+  my $tree = $provided_tree || $self->{'tree'};
+
+  foreach my $leaf (@{$tree->get_all_leaves}) {
+    my $species = $leaf->genome_db->name;
+    unless (defined $species_names{$species}) {
+      print $leaf->name," leaf disavowing parent\n" if $self->{'$debug'};
+      $leaf->disavow_parent;
+      $tree = $tree->minimize_tree;
+    }
+  }
+  if ($tree->get_child_count == 1) {
+    my $child = $tree->children->[0];
+    $child->parent->merge_children($child);
+    $child->disavow_parent;
+  }
+  unless (defined($provided_tree)) {
+    $self->{'tree'} = $tree;
+  } else {
+    return $tree;
+  }
+}
+
+
 sub reroot {
   my $self = shift;
   my $node_id = $self->{'new_root_id'};
@@ -716,6 +884,10 @@ sub dumpTreeAsNHX
   my $self = shift;
   my $tree = shift;
   
+  if (defined($self->{keep_leaves_species})) {
+    $self->keep_leaves_species;
+    $tree = $self->{tree};
+  }
   warn("missing tree\n") unless($tree);
 
   # newick_simple_format is a synonymous of newick_format method
@@ -726,6 +898,8 @@ sub dumpTreeAsNHX
     $nhx = $tree->nhx_format("protein_id");
   } elsif ($self->{'nhx_transcript_id'}) {
     $nhx = $tree->nhx_format("transcript_id");
+  } elsif ($self->{'nhx_display_label_composite'}) {
+    $nhx = $tree->nhx_format("display_label_composite");
   } else {
     $nhx = $tree->nhx_format;
   }
@@ -747,7 +921,6 @@ sub dumpTreeAsNHX
   print OUTSEQ "$nhx\n\n";
   close OUTSEQ;
 }
-
 
 sub drawPStree
 {
@@ -1050,7 +1223,400 @@ sub _get_all_duprates_for_species_tree_sis {
   }
 }
 
-sub _get_all_duprates_for_species_tree
+sub _family_expansions {
+  my $self = shift;
+  my $species = shift || "Homo sapiens";
+  $species =~ s/\_/\ /g;
+  $self->{memberDBA} = $self->{'comparaDBA'}->get_MemberAdaptor;
+  $self->{gdba} = $self->{comparaDBA}->get_GenomeDBAdaptor;
+  my $genome_db = $self->{gdba}->fetch_by_name_assembly($species);
+  my $gene_adaptor = $genome_db->db_adaptor->get_GeneAdaptor;
+  print STDERR "fetching all genes...\n" if ($self->{verbose});
+  my $genes = $gene_adaptor->fetch_all;
+  foreach my $gene (@$genes) {
+    my $external_name = $gene->external_name;
+    next unless (defined($external_name));
+    my $chopped_name = $external_name;
+    if ($chopped_name =~ /\d+_HUMAN$/) {
+      $chopped_name =~ s/\d+_HUMAN$//;
+    } else {
+      $chopped_name =~ s/.$//;
+    }
+    $self->{_family_names}{$chopped_name}{$external_name}{_gene} = $gene->stable_id;
+  }
+  $self->{treeDBA} = $self->{'comparaDBA'}->get_ProteinTreeAdaptor;
+  $self->{_mydbname} = $self->{comparaDBA}->dbc->dbname;
+  my @prefixes = keys %{$self->{_family_names}};
+  my $prefix_count = 0;
+  my $totalnum_prefixes = scalar(@prefixes);
+  foreach my $prefix (@prefixes) {
+    my @names = keys %{$self->{_family_names}{$prefix}};
+    $prefix_count++;
+    my $verbose_string = sprintf "[%5d / %5d prefixes done]\n", 
+      $prefix_count, $totalnum_prefixes;
+    print STDERR $verbose_string 
+      if ($self->{'verbose'} &&  ($prefix_count % $self->{'verbose'} == 0));
+    next unless ($self->{_family_expansions} == scalar (@names));
+    #    next unless (3 < scalar (@names));
+    foreach my $name (@names) {
+      my $stable_id = $self->{_family_names}{$prefix}{$name}{_gene};
+      my $member = $self->{memberDBA}->fetch_by_source_stable_id('ENSEMBLGENE', $stable_id);
+      next unless (defined $member);
+      # $self->{tree} = $self->{treeDBA}->fetch_by_Member_root_id($member);
+      my $aligned_member = $self->{treeDBA}->fetch_AlignedMember_by_member_id_root_id
+        (
+         $member->get_longest_peptide_Member->member_id,
+         1);
+      next unless (defined $aligned_member);
+      my $node = $aligned_member->subroot;
+      next unless (defined $node);
+      $self->{_family_trees}{$node->node_id}{$stable_id}{$prefix}{$name} = 1;
+      $node->release_tree;
+      # my $newick = $self->{tree}->newick_format("display_label_composite");
+      # $self->{tree}->release_tree;
+    }
+  }
+  foreach my $node_id (keys %{$self->{_family_trees}}) {
+    my @stable_ids = keys %{$self->{_family_trees}{$node_id}};
+    next unless ($self->{_family_expansions} == scalar(@stable_ids));
+    # next unless (3 < scalar(@stable_ids));
+    my $member = $self->{memberDBA}->fetch_by_source_stable_id('ENSEMBLGENE', $stable_ids[0]);
+    $self->{tree} = $self->{treeDBA}->fetch_by_Member_root_id($member);
+    $self->{keep_leaves_species} = "Homo_sapiens:Pan_troglodytes:Mus_musculus:Canis_familiaris:Gallus_gallus:Drosophila_melanogaster:Caenorhabditis_elegans:Saccharomyces_cerevisiae";
+    $self->keep_leaves_species;
+    my $newick_display_label = $self->{tree}->newick_format("display_label_composite");
+    my $nhx = $self->{tree}->nhx_format("display_label_composite");
+    $self->{tree}->release_tree;
+    my @prefixes = keys %{$self->{_family_trees}{$node_id}{$stable_ids[0]}};
+    my $outfile = $prefixes[0] . ".nh";
+    print STDERR "$outfile\n" if ($self->{verbose});
+    open OUTFILE, ">$outfile" or die "error opening outfile: $!\n";
+    print OUTFILE $newick_display_label;
+    close OUTFILE;
+    $outfile = $prefixes[0] . ".nhx";
+    open OUTFILE, ">$outfile" or die "error opening outfile: $!\n";
+    print OUTFILE $nhx;
+    close OUTFILE;
+  }
+
+#   my $sql = 
+#   'select ptt1.node_id, ptt1.value, ptt2.value from protein_tree_tag ptt1, protein_tree_tag ptt2 where ptt1.tag="OrthoTree_types_hashstr" and ptt1.value like "%many2many%" and ptt2.tag="gene_count" and ptt2.value>20 and ptt1.node_id=ptt2.node_id and ptt2.value<60';
+
+#   my $sth = $self->{comparaDBA}->dbc->prepare($sql);
+#   $sth->execute();
+#   my ($node_id, $orthotree_types_hashstr, $gene_count);
+#   my $count;
+#   my %node_ids;
+#   while (($node_id, $orthotree_types_hashstr, $gene_count) = $sth->fetchrow_array()) {
+#     $orthotree_types_hashstr =~ s|\'||g;
+#     my $types = eval $orthotree_types_hashstr;
+#     my $num = $types->{ortholog_many2many} || 0;
+#     my $denom;
+#     foreach my $value (values %$types) {
+#       $denom += $value;
+#     }
+#     next unless ($num != 0 && $denom != 0);
+#     my $coef = sprintf("%.3f",$num/$denom);
+#     $node_ids{$coef} = $node_id;
+#   }
+#   foreach my $perc (sort {$b <=> $a} keys %node_ids) {
+#     $self->{tree} = $self->{treeDBA}->fetch_node_by_node_id($node_ids{$perc});
+#   }
+}
+
+sub _viral_genes {
+  my $self = shift;
+  my $species = shift;
+
+  my $starttime = time();
+  my $inputfile = $self->{_viral_genes};
+  open INFILE, "$inputfile" or die;
+  while (<INFILE>) {
+    chomp $_;
+    $_ =~ /Gene\:\s+(\S+)\s+/;
+    next unless (defined($1));
+    $self->{_viral_gene_ids}{$1} = 1;
+  }
+
+  foreach my $stable_id (keys %{$self->{_viral_gene_ids}}) {
+    $self->fetch_protein_tree_with_gene($stable_id);
+    $self->{_viral_gene_trees}{$self->{tree}->node_id}{_gene_count}{$self->{tree}->get_tagvalue("gene_count")}{_stable_ids}{$stable_id} = 1;
+    foreach my $leaf (@{$self->{tree}->get_all_leaves}) {
+      next unless (defined($leaf));
+      my $leaf_stable_id = $leaf->stable_id;
+      next if ($leaf_stable_id eq $stable_id);
+      $self->{_viral_gene_trees}{$self->{tree}->node_id}{_gene_list}{$leaf_stable_id} = 1;
+    }
+  }
+
+  $self->{'comparaDBA2'}  = Bio::EnsEMBL::Hive::URLFactory->fetch($self->{_url2}, 'compara');
+  $self->{'temp'}  = $self->{'comparaDBA'};
+  $self->{'comparaDBA'} = $self->{'comparaDBA2'};
+  $self->{'comparaDBA2'} = $self->{'temp'};
+  # look now where are the other
+  print STDERR (time()-$starttime), " secs... \n" if ($self->{verbose});
+  foreach my $node_id (keys %{$self->{_viral_gene_trees}}) {
+    foreach my $stable_id (keys %{$self->{_viral_gene_trees}{$node_id}{_gene_list}}) {
+      $self->fetch_protein_tree_with_gene($stable_id);
+      my $this_node_id = $self->{tree}->node_id;
+      next unless (defined($this_node_id));
+      $self->{_viral_gene_trees}{_A}{$node_id}{_intersects_B}{$this_node_id} = 1;
+      $self->{_viral_gene_trees}{_B}{$this_node_id}{_intersects_A}{$node_id} = 1;
+    }
+  }
+  print STDERR (time()-$starttime), " secs... \n" if ($self->{verbose});
+  foreach my $node_id (keys %{$self->{_viral_gene_trees}{_A}}) {
+    print "$node_id -- ";
+    if (1 < scalar (keys %{$self->{_viral_gene_trees}{_B}{$node_id}})) {
+      foreach my $this_node_id (keys %{$self->{_viral_gene_trees}{_B}{$node_id}{_intersects_A}}) {
+        print join (",",(keys %{$self->{_viral_gene_trees}{_A}{$this_node_id}{_intersects_B}}));
+      }
+    } else {
+      print join (",",(keys %{$self->{_viral_gene_trees}{_A}{$node_id}{_intersects_B}}));
+    }
+    print "\n";
+  }
+}
+
+sub _hmm_build {
+  my $self = shift;
+  #./tfscripts/treefam/build.pm:102:	eval { !system("$time_comm $hmmbuild --amino -g -F $file.hmm $file >/dev/null") || die $!; };
+  my @clusters = @{$self->{'clusterset'}->children};
+  my $totalnum_clusters = scalar(@clusters);
+  printf("totalnum_trees: %d\n", $totalnum_clusters);
+  print STDERR "tree_id,time\n";
+  foreach my $cluster (@clusters) {
+    next if ('1' eq $cluster->get_tagvalue('cluster_had_to_be_broken_down'));
+    my $aln = $cluster->get_SimpleAlign
+      (
+       -id_type => 'STABLE',
+       -cdna => 0,
+       -stop2x => 1
+      );
+    eval {require Bio::Tools::Run::Hmmer;};
+    if ($@) { print STDERR "hmmer not found"; die "$!\n"; }
+    my $tree_id = $cluster->node_id;
+    my $factory =  Bio::Tools::Run::Hmmer->new('program'=>'hmmbuild','hmm'=>"$tree_id.hmm",'g'=>1);
+    $factory->program_dir("/usr/local/ensembl/bin/");
+    my $starttime = time();
+    $factory->run($aln);
+    print STDERR "$tree_id,",(time()-$starttime),"\n";
+  }
+}
+
+sub _transcript_pair_exonerate {
+  my $self = shift;
+
+  $self->{gdba} = $self->{comparaDBA}->get_GenomeDBAdaptor;
+  my $sp1_gdb = $self->{gdba}->fetch_by_name_assembly("Homo sapiens");
+  my $sp2_gdb = $self->{gdba}->fetch_by_name_assembly("Pan troglodytes");
+
+  $self->{mlssa} = $self->{comparaDBA}->get_MethodLinkSpeciesSetAdaptor;
+  my $mlss = $self->{mlssa}->fetch_by_method_link_type_GenomeDBs('ENSEMBL_ORTHOLOGUES', [$sp1_gdb, $sp2_gdb]);
+  $self->{ha} = $self->{comparaDBA}->get_HomologyAdaptor;
+  my @homologies = @{$self->{ha}->fetch_all_by_MethodLinkSpeciesSet_orthology_type($mlss,'ortholog_one2one')};
+
+  eval {require Bio::Tools::Run::Alignment::Exonerate;};
+  if ($@) { print STDERR "Bio::Tools::Run::Alignment::Exonerate not found"; die "$!\n"; }
+  eval {require Bio::SeqIO;};
+  if ($@) { print STDERR "Bio::SeqIO not found"; die "$!\n"; }
+
+  foreach my $this_homology (@homologies) {
+    my ($member1,$member2) = map { $_->get_longest_peptide_Member } @{$this_homology->gene_list};
+    my $transcript1 = $member1->get_Transcript;
+    my $transcript2 = $member2->get_Transcript;
+    my $seq1 = Bio::Seq->new
+      (
+       -display_id => $transcript1->stable_id,
+       -seq => $transcript1->slice->subseq($transcript1->start(),$transcript1->end(),$transcript1->strand())
+      );
+    my $seq2 = Bio::Seq->new
+      (
+       -display_id => $transcript2->stable_id,
+       -seq => $transcript2->slice->subseq($transcript2->start(),$transcript2->end(),$transcript2->strand())
+      );
+    my $run = Bio::Tools::Run::Alignment::Exonerate->new(model=> 'coding2coding');
+    # my $run = Bio::Tools::Run::Alignment::Exonerate->new(arguments=>'--model coding2coding');
+    my $c2c_obj = $run->run($seq1,$seq2);
+  }
+
+#exonerate --model coding2coding query.fasta target.fasta
+#   #exonerate parameters can all be passed via arguments parameter.
+#   #parameters passed are not checked for validity
+
+
+#   while(my $result = $searchio->next_result){
+#     while( my $hit = $result->next_hit ) {
+#       while( my $hsp = $hit->next_hsp ) {
+#         print $hsp->start."\t".$hsp->end."\n";
+#       }
+#     }
+#   }
+
+}
+
+sub _synteny_metric {
+  my $self = shift;
+
+  $self->{gdba} = $self->{comparaDBA}->get_GenomeDBAdaptor;
+  my $species1 = $self->{_species1} || "Homo sapiens";
+  my $species2 = $self->{_species2} || "Pan troglodytes";
+  $species1 =~ s/\_/\ /g;
+  $species2 =~ s/\_/\ /g;
+  my $sp1_gdb = $self->{gdba}->fetch_by_name_assembly($species1);
+  my $sp2_gdb = $self->{gdba}->fetch_by_name_assembly($species2);
+  my $sp1_gdb_id = $sp1_gdb->dbID;
+  my $sp2_gdb_id = $sp2_gdb->dbID;
+
+  $self->{mlssa} = $self->{comparaDBA}->get_MethodLinkSpeciesSetAdaptor;
+  my $mlss = $self->{mlssa}->fetch_by_method_link_type_GenomeDBs('ENSEMBL_ORTHOLOGUES', [$sp1_gdb, $sp2_gdb]);
+  $self->{ha} = $self->{comparaDBA}->get_HomologyAdaptor;
+
+  my $starttime;
+  $starttime = time();
+
+  print STDERR "fetching all homologies\n";
+  my @homologies = @{$self->{ha}->fetch_all_by_MethodLinkSpeciesSet($mlss)};
+  print STDERR (time()-$starttime), " secs... \n" if ($self->{verbose});
+
+  my $homology_count;
+  my $totalnum_homologies = scalar(@homologies);
+  print STDERR "$totalnum_homologies homologies\n";
+
+  foreach my $homology (@homologies) {
+    # next unless ($homology->description =~ /one2/ || $homology->description =~ /UBRH/);
+    my ($member1, $member2) = @{$homology->gene_list};
+    $homology_count++;
+    if ($self->{'verbose'} &&  ($homology_count % $self->{'verbose'} == 0)) {
+      my $verbose_string = sprintf "[%5d / %5d homologies done]\n", 
+        $homology_count, $totalnum_homologies;
+      print STDERR $verbose_string;
+    }
+    if ($self->{debug}) {
+      next if ($member1->chr_name ne '22'); # to speed up loading when debugging
+    }
+    my $member1_stable_id = $member1->stable_id;
+    my $member1_genome_db = $member1->genome_db;
+    my $member1_genome_db_id = $member1->genome_db->dbID;
+    my $member2_stable_id = $member2->stable_id;
+    my $member2_genome_db = $member2->genome_db;
+    my $member2_genome_db_id = $member2->genome_db->dbID;
+    # A list of homology correspondencies
+    $self->{_synt_orthologs}{$member1_genome_db_id}{$member1_stable_id} = $member2_stable_id;
+    $self->{_synt_orthologs}{$member2_genome_db_id}{$member2_stable_id} = $member1_stable_id;
+    # Info about the chr location of $member1
+    $self->{_synt_chr_info}{$member1_stable_id}{chr_name} = $member1->chr_name;
+    $self->{_synt_chr_info}{$member1_stable_id}{chr_start} = $member1->chr_start;
+    $self->{_synt_chr_info}{$member1_stable_id}{chr_strand} = $member1->chr_strand;
+    $self->{_synt_chr_info}{$member2_stable_id}{chr_name} = $member2->chr_name;
+    $self->{_synt_chr_info}{$member2_stable_id}{chr_start} = $member2->chr_start;
+    $self->{_synt_chr_info}{$member2_stable_id}{chr_strand} = $member2->chr_strand;
+    
+    # From genome A to genome B
+    my $lower_limit1 = (($member1->chr_start)-($self->{_synteny_metric}));
+    $lower_limit1 = 1 if ($lower_limit1 <= 0);
+    my $upper_limit1 = (($member1->chr_start)+($self->{_synteny_metric}));
+    
+    my $slice_adaptor1 = $member1_genome_db->db_adaptor->get_SliceAdaptor;
+    # Fetch a slice with the start of the gene as a center, and a certain distance left and right to that
+    my $slice1 = $slice_adaptor1->fetch_by_region(undef, $member1->chr_name, $lower_limit1, $upper_limit1);
+    next unless (defined($slice1));
+    
+    foreach my $gene (@{$slice1->get_all_Genes}) {
+      my $distance1 =  $member1->chr_start - $gene->seq_region_start;
+      my $abs_distance1 = abs($distance1); $abs_distance1 = sprintf("%09d",$abs_distance1);
+      my $gene_stable_id = $gene->stable_id;
+      my $gene_strand = $gene->seq_region_strand;
+      $self->{_each_synteny}{$member1_genome_db_id}{$member1_stable_id}{left}{$abs_distance1}{$gene_stable_id}{$gene_strand} = 1 if ($distance1 > 0);
+      $self->{_each_synteny}{$member1_genome_db_id}{$member1_stable_id}{right}{$abs_distance1}{$gene_stable_id}{$gene_strand} = 1 if ($distance1 < 0);
+    }
+    
+    # From genome B to genome A
+    my $lower_limit2 = (($member2->chr_start)-($self->{_synteny_metric}));
+    $lower_limit2 = 1 if ($lower_limit2 <= 0);
+    my $upper_limit2 = (($member2->chr_start)+($self->{_synteny_metric}));
+    
+    my $slice_adaptor2 = $member2_genome_db->db_adaptor->get_SliceAdaptor;
+    # Fetch a slice with the start of the gene as a center, and a certain distance left and right to that
+    my $slice2 = $slice_adaptor2->fetch_by_region(undef, $member2->chr_name, $lower_limit2, $upper_limit2);
+    next unless (defined($slice2));
+    
+    foreach my $gene (@{$slice2->get_all_Genes}) {
+      my $distance2 =  $member2->chr_start - $gene->seq_region_start;
+      my $abs_distance2 = abs($distance2); $abs_distance2 = sprintf("%09d",$abs_distance2);
+      my $gene_stable_id = $gene->stable_id;
+      my $gene_strand = $gene->seq_region_strand;
+      $self->{_each_synteny}{$member2_genome_db_id}{$member2_stable_id}{left}{$abs_distance2}{$gene_stable_id}{$gene_strand} = 1 if ($distance2 > 0);
+      $self->{_each_synteny}{$member2_genome_db_id}{$member2_stable_id}{right}{$abs_distance2}{$gene_stable_id}{$gene_strand} = 1 if ($distance2 < 0);
+    }
+    
+    print "gene_stable_id,synt_type,left_distance,right_distance,chr_name,chr_start,chr_strand\n";
+    foreach my $stable_id1 (keys %{$self->{_each_synteny}{$sp1_gdb_id}}) {
+      my @left_distances = sort keys %{$self->{_each_synteny}{$sp1_gdb_id}{$stable_id1}{left}};
+      my @right_distances = sort keys %{$self->{_each_synteny}{$sp1_gdb_id}{$stable_id1}{right}};
+      if (0 == scalar(@left_distances) || 0 == scalar(@right_distances)) {
+        my $left = $left_distances[0] || "na";
+        my $right = $right_distances[0] || "na";
+        $left = sprintf("%d",$left); $right = sprintf("%d",$right);
+        $self->{_synt_types}{$stable_id1} = "too_dist";
+        print "$stable_id1,too_dist,", $left, ",", $right, ",",
+          $self->{_synt_chr_info}{$stable_id1}{chr_name},",",
+            $self->{_synt_chr_info}{$stable_id1}{chr_start},",",
+              $self->{_synt_chr_info}{$stable_id1}{chr_strand},"\n";
+        next;
+      }
+      my @left_stable_ids2 = keys %{$self->{_each_synteny}{$sp1_gdb_id}{$stable_id1}{left}{$left_distances[0]}};
+      my @right_stable_ids2 = keys %{$self->{_each_synteny}{$sp1_gdb_id}{$stable_id1}{right}{$right_distances[0]}};
+      # Check if the closest left and right are orthologs
+      my $left_stable_id2 = $left_stable_ids2[0];
+      my $right_stable_id2 = $right_stable_ids2[0];
+      my $stable_id2 = $self->{_synt_orthologs}{$sp1_gdb_id}{$stable_id1};
+      my $left_ortholog = $self->{_synt_orthologs}{$sp1_gdb_id}{$left_stable_id2};
+      my $right_ortholog = $self->{_synt_orthologs}{$sp1_gdb_id}{$right_stable_id2};
+      if (defined($left_ortholog) && defined($right_ortholog)) {
+        1;#??
+        my $subslice_adaptor1 = $sp1_gdb->db_adaptor->get_SliceAdaptor;
+        # Fetch a slice with the start of the gene as a center, and a certain distance left and right to that
+        my $subslice1 = $subslice_adaptor1->fetch_by_region(undef, $self->{_synt_chr_info}{$stable_id1}, $self->{_synt_chr_info}{$left_stable_id2}, $self->{_synt_chr_info}{$right_stable_id2});
+        next unless (defined($subslice1));
+
+        foreach my $gene (@{$slice2->get_all_Genes}) {
+        }
+        $self->{_synt_types}{$stable_id1} = "perfect_orth";
+        print "$stable_id1,perfect_orth,", $left_distances[0],",", $right_distances[0], ",",
+          $self->{_synt_chr_info}{$stable_id1}{chr_name},",",
+            $self->{_synt_chr_info}{$stable_id1}{chr_start},",",
+              $self->{_synt_chr_info}{$stable_id1}{chr_strand},"\n";
+      } elsif (defined($left_ortholog) || defined($right_ortholog)) {
+        $self->{_synt_types}{$stable_id1} = "onesided_orth";
+        print "$stable_id1,onesided_orth,", $left_distances[0],",", $right_distances[0], ",",
+          $self->{_synt_chr_info}{$stable_id1}{chr_name},",",
+            $self->{_synt_chr_info}{$stable_id1}{chr_start},",",
+              $self->{_synt_chr_info}{$stable_id1}{chr_strand},"\n";
+      } else {
+        $self->{_synt_types}{$stable_id1} = "noflank_orth";
+        print "$stable_id1,noflank_orth,", $left_distances[0],",", $right_distances[0], ",",
+          $self->{_synt_chr_info}{$stable_id1}{chr_name},",",
+            $self->{_synt_chr_info}{$stable_id1}{chr_start},",",
+              $self->{_synt_chr_info}{$stable_id1}{chr_strand},"\n";
+      }
+    }
+  }
+  my $sp1_genes = $self->{comparaDBA}->get_MemberAdaptor->fetch_all_by_source_taxon('ENSEMBLGENE', $sp1_gdb->taxon_id);
+  foreach my $gene (@$sp1_genes) {
+    next if (defined($self->{_synt_orthologs}{$sp1_gdb->dbID}{$gene->stable_id}));
+    my $gene_stable_id = $gene->stable_id;
+    my $chr_name = $gene->chr_name;
+    my $chr_start = $gene->chr_start;
+    my $chr_strand = $gene->chr_strand;
+    $self->{_synt_types}{$gene_stable_id} = "nohit_orth";
+    print $gene_stable_id, ",nohit_orth,na,na,", $chr_name,",", $chr_start,",", $chr_strand,"\n";
+  }
+  # And finally check that there are no genes not in member in between the triads...
+  # TODO: Label perfection like the number of perfect matches found at left and right.
+}
+  
+  sub _get_all_duprates_for_species_tree
 {
   my $self = shift;
   $self->{_mydbname} = $self->{comparaDBA}->dbc->dbname;
@@ -1687,7 +2253,617 @@ sub _duploss_fraction {
   _duploss_fraction($child_b) if (0 < $child_b_dups);
 }
 
+sub _dnds_msas {
+  my $self = shift;
+  my $species_set = shift;
+
+# mysql://anonymous@ensembldb.ensembl.org/ensembl_compara_44
+  $url =~ /mysql\:\/\/(\S+)\@(\S+)\/\S+/g;
+  my ($myuser,$myhost) = ($1,$2);
+  Bio::EnsEMBL::Registry->load_registry_from_db(-host=>$myhost, -user=>$myuser, -verbose=>'0');
+
+  $species_set =~ s/\_/\ /g;
+  my @species_set = split(":",$species_set);
+  my $species1 = $species_set[0];
+  my $species2 = $species_set[1];
+
+  $self->{gdba} = $self->{comparaDBA}->get_GenomeDBAdaptor;
+  my %gdb_ids;
+  foreach my $species (@species_set) {
+    $gdb_ids{$self->{gdba}->fetch_by_name_assembly($species)->dbID} = 1;
+  }
+
+  $self->{gdba} = $self->{comparaDBA}->get_GenomeDBAdaptor;
+  $self->{ha} = $self->{comparaDBA}->get_HomologyAdaptor;
+  $self->{mlssa} = $self->{comparaDBA}->get_MethodLinkSpeciesSetAdaptor;
+  $self->{treeDBA} = $self->{'comparaDBA'}->get_ProteinTreeAdaptor;
+  $self->{nsa} = $self->{'comparaDBA'}->get_NestedSetAdaptor;
+  my $sp1_gdb = $self->{gdba}->fetch_by_name_assembly($species1);
+  my $sp1_short_name = $sp1_gdb->get_short_name;
+  my $sp2_gdb = $self->{gdba}->fetch_by_name_assembly($species2);
+  my $sp2_short_name = $sp2_gdb->get_short_name;
+  $self->{taxonDBA} = $self->{comparaDBA}->get_NCBITaxonAdaptor;
+  my $taxonomy_leaf = $self->{taxonDBA}->fetch_node_by_name($sp1_gdb->name);
+  my $taxonomy_root = $taxonomy_leaf->subroot;
+  my $taxonomy_parent = $taxonomy_leaf;
+  my %taxonomy_hierarchy;
+  my $hierarchy_count = 0;
+  do {
+    $hierarchy_count++;
+    $taxonomy_hierarchy{$taxonomy_parent->name} = $hierarchy_count;
+    $taxonomy_parent = $taxonomy_parent->parent;
+  } while ($taxonomy_parent->dbID != $taxonomy_root->dbID);
+
+  my $mlss = $self->{mlssa}->fetch_by_method_link_type_GenomeDBs('ENSEMBL_ORTHOLOGUES', [$sp1_gdb, $sp2_gdb]);
+  my @homologies = @{$self->{ha}->fetch_all_by_MethodLinkSpeciesSet_orthology_type($mlss,'ortholog_one2one')};
+  my $homology_count=0;
+  my $totalnum_homologies = scalar(@homologies);
+  my $sth;
+  my $root_id;
+
+  my $sql = "SELECT node_id,left_index,right_index FROM protein_tree_node WHERE parent_id = root_id";
+  $sth = $self->{comparaDBA}->dbc->prepare($sql);
+  $sth->execute();
+  while (my ($root_id,$root_left_index,$root_right_index) = $sth->fetchrow) {
+    foreach my $index ($root_left_index .. $root_right_index) {
+      $self->{_hashed_indexes}{$index} = $root_id;
+    }
+  }
+  $sth->finish();
+
+  foreach my $homology (@homologies) {
+    my $homology_node_id = $homology->node_id;
+    $sql = "SELECT left_index, right_index FROM protein_tree_node WHERE node_id=$homology_node_id";
+    $sth = $self->{comparaDBA}->dbc->prepare($sql);
+    $sth->execute();
+    my ($left_index,$right_index) = $sth->fetchrow;
+
+    if (defined($self->{_hashed_indexes}{$left_index})) {
+      $root_id = $self->{_hashed_indexes}{$left_index};
+    }
+    $self->{_homologies_by_cluster}{$root_id}{$homology->dbID} = $homology;
+    $homology_count++;
+    if ($self->{'verbose'} &&  ($homology_count % $self->{'verbose'} == 0)) {
+      my $verbose_string = sprintf "[%5d / %5d homologies done]\n", 
+        $homology_count, $totalnum_homologies;
+      print STDERR $verbose_string;
+    }
+  }
+  $sth->finish;
+
+  print "root_id,avg_perc_ident\n";
+  foreach my $root_id (keys %{$self->{_homologies_by_cluster}}) {
+    my @this_tree_homology_ids = keys %{$self->{_homologies_by_cluster}{$root_id}};
+    my $num_homologies = scalar(@this_tree_homology_ids);
+    next unless ($num_homologies != 1);
+    $self->{tree} = $self->{treeDBA}->fetch_node_by_node_id($root_id);
+
+    foreach my $leaf (@{$self->{tree}->get_all_leaves}) {
+      my $leaf_gdb_id = $leaf->genome_db->dbID;
+      next unless (defined($gdb_ids{$leaf_gdb_id}));
+      my $leaf_name = $leaf->name;
+      $self->{'keep_leaves'} .= $leaf_name . ",";
+    }
+    $self->{keep_leaves} =~ s/\,$//;
+    keep_leaves($self);
+
+    my $simple_align = $self->{tree}->get_SimpleAlign
+      (
+       -id_type => 'STABLE',
+       -cdna => 1,
+       -stop2x => 1);
+    my $newick_tree = $self->{tree}->newick_simple_format;
+    my $collapsed_simple_align = $simple_align->remove_gaps(undef,1);
+    my $avg_perc_ident = $collapsed_simple_align->average_percentage_identity;
+    $simple_align = undef;
+    $self->{tree}->release_tree;
+    my $cutoff = $self->{cutoff} || 85;
+    print "$root_id,$avg_perc_ident\n";
+    next unless ($avg_perc_ident > $cutoff);
+    my $outfile = $sp1_short_name ."." . $sp2_short_name ."." . $root_id . ".fasta";
+    open OUTFILE, ">$outfile" or die "error opening outfile: $!\n";
+    my $alignIO = Bio::AlignIO->newFh(-fh => \*OUTFILE,
+                                      -format => 'fasta',
+                                     );
+    $collapsed_simple_align->set_displayname_flat(1);
+    print $alignIO $collapsed_simple_align;
+    close OUTFILE;
+    $outfile = $sp1_short_name ."." . $sp2_short_name ."." . $root_id . ".nex";
+    open OUTFILE, ">$outfile" or die "error opening outfile: $!\n";
+    print OUTFILE $newick_tree;
+    close OUTFILE;
+  }
+}
+
+sub _dnds_doublepairs {
+  my $self = shift;
+  my $species_set = shift;
+
+  $self->{gdba} = $self->{comparaDBA}->get_GenomeDBAdaptor;
+  $self->{ha} = $self->{comparaDBA}->get_HomologyAdaptor;
+  $self->{mlssa} = $self->{comparaDBA}->get_MethodLinkSpeciesSetAdaptor;
+  $self->{treeDBA} = $self->{'comparaDBA'}->get_ProteinTreeAdaptor;
+  $self->{nsa} = $self->{'comparaDBA'}->get_NestedSetAdaptor;
+  $self->{taxonDBA} = $self->{comparaDBA}->get_NCBITaxonAdaptor;
+
+  $species_set =~ s/\_/\ /g;
+  my @species_set = split(":",$species_set);
+
+  $self->{gdba} = $self->{comparaDBA}->get_GenomeDBAdaptor;
+  my %gdb_short_names;
+  my @homologies;
+  while (my $species1 = shift (@species_set)) {
+    foreach my $species2 (@species_set) {
+      my $sp1_gdb = $self->{gdba}->fetch_by_name_assembly($species1);
+      my $sp2_gdb = $self->{gdba}->fetch_by_name_assembly($species2);
+      $gdb_short_names{$sp1_gdb->short_name} = 1;
+      $gdb_short_names{$sp2_gdb->short_name} = 1;
+      my $mlss = $self->{mlssa}->fetch_by_method_link_type_GenomeDBs('ENSEMBL_ORTHOLOGUES', [$sp1_gdb, $sp2_gdb]);
+      print STDERR "Fetching homologies btw $species1 and $species2...\n" if ($self->{verbose});
+      my @homology_set = @{$self->{ha}->fetch_all_by_MethodLinkSpeciesSet_orthology_type($mlss,'ortholog_one2one')};
+      @homologies = (@homologies, @homology_set);
+    }
+  }
+
+  my $short_name_list = join ("_",keys %gdb_short_names);
+
+  $self->{_mydbname} = $self->{comparaDBA}->dbc->dbname;
+  my $outfile = "dnds_doublepairs.". $short_name_list ."." . 
+    $self->{_mydbname} . "." . $self->{'clusterset_id'};
+  $outfile .= ".csv";
+  open OUTFILE, ">$outfile" or die "error opening outfile: $!\n";
+  my $header = "tree_id1,ancestor_node_id,ancestor_is_duplication,ancestor_taxon_name,". 
+               "gene1_stable_id1,gene2_stable_id1,dn1,ds1,dups_to_ancestor1," . 
+               "gene1_stable_id2,gene2_stable_id2,dn2,ds2,dups_to_ancestor2\n";
+  print OUTFILE "$header"; 
+  print "$header" if ($self->{verbose});
+
+  my $homology_count=0;
+  my $totalnum_homologies = scalar(@homologies);
+  my $sth;
+  my $root_id;
+
+  my $sql = "SELECT node_id,left_index,right_index FROM protein_tree_node WHERE parent_id = root_id";
+  $sth = $self->{comparaDBA}->dbc->prepare($sql);
+  $sth->execute();
+  while (my ($root_id,$root_left_index,$root_right_index) = $sth->fetchrow) {
+    foreach my $index ($root_left_index .. $root_right_index) {
+      $self->{_hashed_indexes}{$index} = $root_id;
+    }
+  }
+  $sth->finish();
+
+  foreach my $homology (@homologies) {
+    my $homology_node_id = $homology->node_id;
+    $sql = "SELECT left_index, right_index FROM protein_tree_node WHERE node_id=$homology_node_id";
+    $sth = $self->{comparaDBA}->dbc->prepare($sql);
+    $sth->execute();
+    my ($left_index,$right_index) = $sth->fetchrow;
+
+    if (defined($self->{_hashed_indexes}{$left_index})) {
+      $root_id = $self->{_hashed_indexes}{$left_index};
+    }
+    $self->{_homologies_by_cluster}{$root_id}{$homology->dbID} = $homology;
+    $homology_count++;
+    if ($self->{'verbose'} &&  ($homology_count % $self->{'verbose'} == 0)) {
+      my $verbose_string = sprintf "[%5d / %5d homologies done]\n", 
+        $homology_count, $totalnum_homologies;
+      print STDERR $verbose_string;
+    }
+  }
+  $sth->finish;
+
+  foreach my $root_id (keys %{$self->{_homologies_by_cluster}}) {
+    my @this_tree_homology_ids = keys %{$self->{_homologies_by_cluster}{$root_id}};
+    my $num_homologies = scalar(@this_tree_homology_ids);
+    next unless ($num_homologies != 1);
+    while (my $homology_id1 = shift (@this_tree_homology_ids)) {
+      foreach my $homology_id2 (@this_tree_homology_ids) {
+        my $homology1 = $self->{_homologies_by_cluster}{$root_id}{$homology_id1};
+        my $homology2 = $self->{_homologies_by_cluster}{$root_id}{$homology_id2};
+        my @homology1_member_ids;
+        @homology1_member_ids = map { $_->get_longest_peptide_Member->member_id } @{$homology1->gene_list};
+        my @homology2_member_ids;
+        @homology2_member_ids = map { $_->get_longest_peptide_Member->member_id } @{$homology2->gene_list};
+        my %tetrad;
+        $tetrad{$homology1_member_ids[0]} = 1;
+        $tetrad{$homology1_member_ids[1]} = 1;
+        $tetrad{$homology2_member_ids[0]} = 1;
+        $tetrad{$homology2_member_ids[1]} = 1;
+        # We dont want double pairs that share one of the members
+        next if (4 != scalar(keys %tetrad));
+        my $node_a = $self->{treeDBA}->fetch_AlignedMember_by_member_id_root_id($homology1_member_ids[0],$self->{'clusterset_id'});
+        my $node_b = $self->{treeDBA}->fetch_AlignedMember_by_member_id_root_id($homology1_member_ids[1],$self->{'clusterset_id'});
+        my $node_c = $self->{treeDBA}->fetch_AlignedMember_by_member_id_root_id($homology2_member_ids[0],$self->{'clusterset_id'});
+        my $node_d = $self->{treeDBA}->fetch_AlignedMember_by_member_id_root_id($homology2_member_ids[1],$self->{'clusterset_id'});
+
+        my $root = $node_a->subroot;
+        $root->merge_node_via_shared_ancestor($node_b);
+        my $ancestor_ab = $node_a->find_first_shared_ancestor($node_b);
+        my $ancestor_ab_node_id = $ancestor_ab->node_id;
+
+        $root = $node_c->subroot;
+        $root->merge_node_via_shared_ancestor($node_d);
+        my $ancestor_cd = $node_c->find_first_shared_ancestor($node_d);
+        my $ancestor_cd_node_id = $ancestor_cd->node_id;
+
+        $root = $node_a->subroot;
+        $root->merge_node_via_shared_ancestor($node_c);
+        my $crossed_ancestor = $node_a->find_first_shared_ancestor($node_c);
+        my $crossed_ancestor_node_id = $crossed_ancestor->node_id;
+
+        # We dont want double pairs that share one of the ancestors
+        if ($ancestor_ab_node_id == $crossed_ancestor_node_id || $ancestor_cd_node_id == $crossed_ancestor_node_id) {
+          $root->release_tree;
+          next;
+        }
+        if ($ancestor_ab->parent->node_id == $ancestor_cd_node_id) {
+          $root->release_tree;
+          next;
+        }
+        if ($ancestor_cd->parent->node_id == $ancestor_ab_node_id) {
+          $root->release_tree;
+          next;
+        }
+        my $ancestor_taxon_name = $crossed_ancestor->get_tagvalue("taxon_name");
+        my $num_duplications_a=0;
+        my $num_duplications_c=0;
+        my $parent_a;
+        my $parent_c;
+        $parent_a = $node_a->parent;
+        do {
+          my $duptag = $parent_a->get_tagvalue("Duplication");
+          my $sistag = $parent_a->get_tagvalue("duplication_confidence_score");
+          if ($duptag ne "") {
+            if ($duptag > 0) {
+              if ($sistag > 0) {
+                $num_duplications_a++;
+              }
+            }
+          }
+          $parent_a = $parent_a->parent;
+        } while (defined($parent_a) && ($parent_a->node_id != $crossed_ancestor_node_id));
+
+        $parent_c = $node_c->parent;
+        do {
+          my $duptag = $parent_c->get_tagvalue("Duplication");
+          my $sistag = $parent_c->get_tagvalue("duplication_confidence_score");
+          if ($duptag ne "") {
+            if ($duptag > 0) {
+              if ($sistag > 0) {
+                $num_duplications_c++;
+              }
+            }
+          }
+          $parent_c = $parent_c->parent;
+        } while (defined($parent_c) && ($parent_c->node_id != $crossed_ancestor_node_id));
+
+        # Duplication at the crossed_ancestor
+        my $crossed_duptag = $crossed_ancestor->get_tagvalue("Duplication");
+        my $crossed_sistag = $crossed_ancestor->get_tagvalue("duplication_confidence_score");
+        my $crossed_ancestor_is_duplication = 0;
+        if ($crossed_duptag ne "") {
+          if ($crossed_duptag > 0) {
+            if ($crossed_sistag > 0) {
+              $crossed_ancestor_is_duplication = 1;
+            }
+          }
+        }
+
+        my $dn1 = $homology1->dn;
+        my $ds1 = $homology1->ds;
+        my $lnl1 = $homology1->lnl;
+        next unless (defined($dn1) && defined($ds1) && defined($lnl1));
+        my $gene1_stable_id1 = $node_a->gene_member->stable_id;
+        my $gene2_stable_id1 = $node_b->gene_member->stable_id;
+        my $taxonomy_level1 = $homology1->subtype;
+        my $dn2 = $homology2->dn;
+        my $ds2 = $homology2->ds;
+        my $lnl2 = $homology2->lnl;
+        next unless (defined($dn2) && defined($ds2) && defined($lnl2));
+        my $gene1_stable_id2 = $node_c->gene_member->stable_id;
+        my $gene2_stable_id2 = $node_d->gene_member->stable_id;
+        my $taxonomy_level2 = $homology2->subtype;
+        my $results = "$root_id,$crossed_ancestor_node_id,$crossed_ancestor_is_duplication,$ancestor_taxon_name," .
+          "$gene1_stable_id1," .
+            "$gene2_stable_id1," .
+              "$dn1,$ds1,$num_duplications_a,";
+        $results .= 
+          "$gene1_stable_id2," .
+            "$gene2_stable_id2," .
+              "$dn2,$ds2,$num_duplications_c\n";
+        print "$results" if ($self->{verbose});
+        print OUTFILE "$results";
+        $root->release_tree;
+      }
+    }
+  }
+}
+
+sub _summary_stats {
+  my $self = shift;
+
+  $self->{_mydbname} = $self->{comparaDBA}->dbc->dbname;
+  $self->{gdba} = $self->{comparaDBA}->get_GenomeDBAdaptor;
+  $self->{ha} = $self->{comparaDBA}->get_HomologyAdaptor;
+  $self->{mlssa} = $self->{comparaDBA}->get_MethodLinkSpeciesSetAdaptor;
+  $self->{treeDBA} = $self->{'comparaDBA'}->get_ProteinTreeAdaptor;
+  $self->{memberDBA} = $self->{'comparaDBA'}->get_MemberAdaptor;
+  $self->{nsa} = $self->{'comparaDBA'}->get_NestedSetAdaptor;
+
+  my @clusters = @{$self->{'clusterset'}->children};
+  my $totalnum_clusters = scalar(@clusters);
+  printf("totalnum_trees,%d\n", $totalnum_clusters);
+  my $outfile = "summary_stats.tree_size.". $self->{_mydbname} . "." . $self->{'clusterset_id'};
+  $outfile .= ".csv";
+  open OUTFILE, ">$outfile" or die "error opening outfile: $!\n";
+  print OUTFILE "node_id,num_leaves,num_species,species_list\n";
+  foreach my $cluster (@clusters) {
+    next if ('1' eq $cluster->get_tagvalue('cluster_had_to_be_broken_down'));
+    my @leaves = @{$cluster->get_all_leaves};
+    my %species_in_tree;
+    foreach my $leaf (@leaves) {
+      $species_in_tree{$leaf->genome_db->short_name} = 1;
+    }
+    my $species_list = join ("_", sort keys %species_in_tree);
+    my $num_species = scalar(keys %species_in_tree);
+    print OUTFILE $cluster->node_id, ",", scalar(@leaves),",", $num_species,",", $species_list,"\n";
+  }
+  close OUTFILE;
+
+  my @gdbs = @{$self->{gdba}->fetch_all};
+
+  $outfile = "summary_stats.genes.". $self->{_mydbname} . "." . $self->{'clusterset_id'};
+  $outfile .= ".csv";
+  open OUTFILE, ">$outfile" or die "error opening outfile: $!\n";
+
+  print OUTFILE "gdb_short_name,gene_count,num_orphans,coverage\n";
+  foreach my $gdb1 (@gdbs) {
+    my $gdb1_short_name = $gdb1->short_name;
+    my @orphans = @{$self->{ha}->fetch_all_orphans_by_GenomeDB($gdb1)};
+    my $num_orphans = scalar(@orphans);
+    my $gene_count = $self->{memberDBA}->get_source_taxon_count('ENSEMBLGENE',$gdb1->taxon_id);
+    my $perc_cov = sprintf("%.3f",100-($num_orphans/$gene_count*100));
+    print OUTFILE $gdb1_short_name, ",", $gene_count,",", scalar(@orphans),",",$perc_cov,"\n";
+    print STDERR $gdb1_short_name, ",", $gene_count,",", scalar(@orphans),",",$perc_cov,"\n";
+    @orphans = undef;
+  }
+  close OUTFILE;
+
+  $outfile = "summary_stats.pairs.". $self->{_mydbname} . "." . $self->{'clusterset_id'};
+  $outfile .= ".csv";
+  open OUTFILE, ">$outfile" or die "error opening outfile: $!\n";
+  print OUTFILE "gdb1_short_name,gdb2_short_name,num_one2one,num_app_one2one,num_one2many,num_many2many,num_btw_para\n";
+  while (my $gdb1 = shift (@gdbs)) {
+    my $gdb1_short_name = $gdb1->short_name;
+    foreach my $gdb2 (@gdbs) {
+      my $gdb2_short_name = $gdb2->short_name;
+      my $mlss_orth = $self->{mlssa}->fetch_by_method_link_type_GenomeDBs('ENSEMBL_ORTHOLOGUES', [$gdb1, $gdb2]);
+      my $mlss_para = $self->{mlssa}->fetch_by_method_link_type_GenomeDBs('ENSEMBL_PARALOGUES',  [$gdb1, $gdb2]);
+      my @orth_one2one = @{$self->{ha}->fetch_all_by_MethodLinkSpeciesSet_orthology_type($mlss_orth,"ortholog_one2one")};
+      my @orth_app_one2one = @{$self->{ha}->fetch_all_by_MethodLinkSpeciesSet_orthology_type($mlss_orth,"apparent_ortholog_one2one")};
+      my @orth_one2many = @{$self->{ha}->fetch_all_by_MethodLinkSpeciesSet_orthology_type($mlss_orth,"ortholog_one2many")};
+      my @orth_many2many = @{$self->{ha}->fetch_all_by_MethodLinkSpeciesSet_orthology_type($mlss_orth, "ortholog_many2many")};
+      my @para = @{$self->{ha}->fetch_all_by_MethodLinkSpeciesSet_orthology_type($mlss_para,"between_species_paralog")};
+      print OUTFILE $gdb1_short_name, ",",
+        $gdb2_short_name, ",",
+          scalar(@orth_one2one), ",",
+            scalar(@orth_app_one2one), ",",
+              scalar(@orth_one2many), ",",
+                scalar(@orth_many2many), ",",
+                  scalar(@para),"\n";
+      @orth_one2one = undef; @orth_app_one2one = undef; @orth_one2many = undef; @orth_many2many = undef; @para = undef;
+    }
+  }
+  close OUTFILE;
+}
+
+
 sub _dnds_pairs {
+  my $self = shift;
+  my $species1 = shift;
+  my $species2 = shift;
+
+  $species1 =~ s/\_/\ /g;
+  $species2 =~ s/\_/\ /g;
+  $self->{gdba} = $self->{comparaDBA}->get_GenomeDBAdaptor;
+  $self->{ha} = $self->{comparaDBA}->get_HomologyAdaptor;
+  $self->{mlssa} = $self->{comparaDBA}->get_MethodLinkSpeciesSetAdaptor;
+  $self->{treeDBA} = $self->{'comparaDBA'}->get_ProteinTreeAdaptor;
+  $self->{nsa} = $self->{'comparaDBA'}->get_NestedSetAdaptor;
+  my $sp1_gdb = $self->{gdba}->fetch_by_name_assembly($species1);
+  my $sp1_short_name = $sp1_gdb->get_short_name;
+  my $sp2_gdb = $self->{gdba}->fetch_by_name_assembly($species2);
+  my $sp2_short_name = $sp2_gdb->get_short_name;
+  $self->{taxonDBA} = $self->{comparaDBA}->get_NCBITaxonAdaptor;
+  my $taxonomy_leaf = $self->{taxonDBA}->fetch_node_by_name($sp1_gdb->name);
+  my $taxonomy_root = $taxonomy_leaf->subroot;
+  my $taxonomy_parent = $taxonomy_leaf;
+  my %taxonomy_hierarchy;
+  my $hierarchy_count = 0;
+  do {
+    $hierarchy_count++;
+    $taxonomy_hierarchy{$taxonomy_parent->name} = $hierarchy_count;
+    $taxonomy_parent = $taxonomy_parent->parent;
+  } while ($taxonomy_parent->dbID != $taxonomy_root->dbID);
+
+  $self->{_mydbname} = $self->{comparaDBA}->dbc->dbname;
+  my $outfile = "dnds_pairs.". $sp1_short_name ."." . $sp2_short_name ."." . 
+    $self->{_mydbname} . "." . $self->{'clusterset_id'};
+  $outfile .= ".csv";
+  open OUTFILE, ">$outfile" or die "error opening outfile: $!\n";
+  my $header = "tree_id1,ancestor_node_id,ancestor_taxon_name,ancestor_taxon_hierarchy,root_taxon1,peptide1_stable_id1,gene1_stable_id1,sp1_name1,peptide2_stable_id1,gene2_stable_id1,sp2_name1,dn1,ds1,lnl1,dups_to_ancestor1," . 
+    "root_taxon2,peptide1_stable_id2,gene1_stable_id2,sp1_name2,peptide2_stable_id2,gene2_stable_id2,sp2_name2,dn2,ds2,lnl2,dups_to_ancestor2\n";
+  print OUTFILE "$header"; 
+  print "$header" if ($self->{verbose});
+  my $mlss = $self->{mlssa}->fetch_by_method_link_type_GenomeDBs('ENSEMBL_ORTHOLOGUES', [$sp1_gdb, $sp2_gdb]);
+  my @homologies = @{$self->{ha}->fetch_all_by_MethodLinkSpeciesSet_orthology_type($mlss,'ortholog_one2one')};
+  my $homology_count=0;
+  my $totalnum_homologies = scalar(@homologies);
+  my $sth;
+  my $root_id;
+
+  my $sql = "SELECT node_id,left_index,right_index FROM protein_tree_node WHERE parent_id = root_id";
+  $sth = $self->{comparaDBA}->dbc->prepare($sql);
+  $sth->execute();
+  while (my ($root_id,$root_left_index,$root_right_index) = $sth->fetchrow) {
+    foreach my $index ($root_left_index .. $root_right_index) {
+      $self->{_hashed_indexes}{$index} = $root_id;
+    }
+  }
+  $sth->finish();
+
+  foreach my $homology (@homologies) {
+    my $homology_node_id = $homology->node_id;
+    $sql = "SELECT left_index, right_index FROM protein_tree_node WHERE node_id=$homology_node_id";
+    $sth = $self->{comparaDBA}->dbc->prepare($sql);
+    $sth->execute();
+    my ($left_index,$right_index) = $sth->fetchrow;
+
+    if (defined($self->{_hashed_indexes}{$left_index})) {
+      $root_id = $self->{_hashed_indexes}{$left_index};
+    }
+    $self->{_homologies_by_cluster}{$root_id}{$homology->dbID} = $homology;
+    $homology_count++;
+    if ($self->{'verbose'} &&  ($homology_count % $self->{'verbose'} == 0)) {
+      my $verbose_string = sprintf "[%5d / %5d homologies done]\n", 
+        $homology_count, $totalnum_homologies;
+      print STDERR $verbose_string;
+    }
+  }
+  $sth->finish;
+
+  foreach my $root_id (keys %{$self->{_homologies_by_cluster}}) {
+    my @this_tree_homology_ids = keys %{$self->{_homologies_by_cluster}{$root_id}};
+    my $num_homologies = scalar(@this_tree_homology_ids);
+    next unless ($num_homologies != 1);
+    while (my $homology_id1 = shift (@this_tree_homology_ids)) {
+      foreach my $homology_id2 (@this_tree_homology_ids) {
+        my $homology1 = $self->{_homologies_by_cluster}{$root_id}{$homology_id1};
+        my $homology2 = $self->{_homologies_by_cluster}{$root_id}{$homology_id2};
+        my @homology1_member_ids;
+        @homology1_member_ids = map { $_->get_longest_peptide_Member->member_id } @{$homology1->gene_list};
+        my @homology2_member_ids;
+        @homology2_member_ids = map { $_->get_longest_peptide_Member->member_id } @{$homology2->gene_list};
+        my $node_a = $self->{treeDBA}->fetch_AlignedMember_by_member_id_root_id($homology1_member_ids[0],$self->{'clusterset_id'});
+        my $node_b = $self->{treeDBA}->fetch_AlignedMember_by_member_id_root_id($homology1_member_ids[1],$self->{'clusterset_id'});
+        my $node_c = $self->{treeDBA}->fetch_AlignedMember_by_member_id_root_id($homology2_member_ids[0],$self->{'clusterset_id'});
+        my $node_d = $self->{treeDBA}->fetch_AlignedMember_by_member_id_root_id($homology2_member_ids[1],$self->{'clusterset_id'});
+        my $root = $node_a->subroot;
+        $root->merge_node_via_shared_ancestor($node_c);
+        my $ancestor = $node_a->find_first_shared_ancestor($node_c);
+        my $ancestor_node_id = $ancestor->node_id;
+        my $ancestor_taxon_name = $ancestor->get_tagvalue("taxon_name");
+        my $ancestor_taxon_hierarchy = $taxonomy_hierarchy{$ancestor_taxon_name};
+        my $num_duplications_a=0;
+        my $num_duplications_c=0;
+        my $parent_a;
+        my $parent_c;
+        $parent_a = $node_a->parent;
+        do {
+          my $duptag = $parent_a->get_tagvalue("Duplication");
+          my $sistag = $parent_a->get_tagvalue("duplication_confidence_score");
+          if ($duptag > 0) {
+            if ($sistag > 0) {
+              $num_duplications_a++;
+            }
+          }
+          $parent_a = $parent_a->parent;
+        } while ($parent_a->node_id != $ancestor_node_id);
+
+        $parent_c = $node_c->parent;
+        do {
+          my $duptag = $parent_c->get_tagvalue("Duplication");
+          my $sistag = $parent_c->get_tagvalue("duplication_confidence_score");
+          if ($duptag > 0) {
+            if ($sistag > 0) {
+              $num_duplications_c++;
+            }
+          }
+          $parent_c = $parent_c->parent;
+        } while ($parent_c->node_id != $ancestor_node_id);
+
+        my $dn1 = $homology1->dn;
+        my $ds1 = $homology1->ds;
+        my $lnl1 = $homology1->lnl;
+        next unless (defined($dn1) && defined($ds1) && defined($lnl1));
+        my $peptide1_stable_id1 = $node_a->stable_id;
+        my $peptide2_stable_id1 = $node_b->stable_id;
+        my $gene1_stable_id1 = $node_a->gene_member->stable_id;
+        my $gene2_stable_id1 = $node_b->gene_member->stable_id;
+        my $temp1;
+        # Always match species order with species1 and
+        # species2 parameters in the output
+        if ($node_a->gene_member->genome_db->name eq $species2) {
+          $temp1 = $peptide1_stable_id1;
+          $peptide1_stable_id1 = $peptide2_stable_id1;
+          $peptide2_stable_id1 = $temp1;
+            $temp1 = $gene1_stable_id1;
+          $gene1_stable_id1 = $gene2_stable_id1;
+          $gene2_stable_id1 = $temp1;
+        }
+        my $taxonomy_level1 = $homology1->subtype;
+        my $dn2 = $homology2->dn;
+        my $ds2 = $homology2->ds;
+        my $lnl2 = $homology2->lnl;
+        next unless (defined($dn2) && defined($ds2) && defined($lnl2));
+        my $peptide1_stable_id2 = $node_c->stable_id;
+        my $peptide2_stable_id2 = $node_d->stable_id;
+        my $gene1_stable_id2 = $node_c->gene_member->stable_id;
+        my $gene2_stable_id2 = $node_d->gene_member->stable_id;
+        my $temp2;
+        # Always match species order with species1 and
+          # species2 parameters in the output
+        if ($node_c->gene_member->genome_db->name eq $species2) {
+          $temp2 = $peptide1_stable_id2;
+          $peptide1_stable_id2 = $peptide2_stable_id2;
+            $peptide2_stable_id2 = $temp2;
+          $temp2 = $gene1_stable_id2;
+          $gene1_stable_id2 = $gene2_stable_id2;
+          $gene2_stable_id2 = $temp2;
+        }
+        my $taxonomy_level2 = $homology2->subtype;
+        my $results = "$root_id,$ancestor_node_id,$ancestor_taxon_name,$ancestor_taxon_hierarchy,$taxonomy_level1," .
+          "$peptide1_stable_id1,$gene1_stable_id1,$sp1_short_name," .
+            "$peptide2_stable_id1,$gene2_stable_id1,$sp2_short_name," .
+              "$dn1,$ds1,$lnl1,$num_duplications_a,";
+        $results .= "$taxonomy_level2," .
+          "$peptide1_stable_id2,$gene1_stable_id2,$sp1_short_name," .
+            "$peptide2_stable_id2,$gene2_stable_id2,$sp2_short_name," .
+              "$dn2,$ds2,$lnl2,$num_duplications_c\n";
+        print "$results" if ($self->{verbose});
+        print OUTFILE "$results";
+      }
+    }
+  }
+}
+
+sub _size_clusters {
+  my $self = shift;
+
+  my @clusters = @{$self->{'clusterset'}->children};
+  my $totalnum_clusters = scalar(@clusters);
+  printf("totalnum_trees: %d\n", $totalnum_clusters);
+  $self->{_mydbname} = $self->{comparaDBA}->dbc->dbname;
+  my $outfile = "size_clusters.". 
+    $self->{_mydbname} . "." . $self->{'clusterset_id'};
+  $outfile .= ".csv";
+  open OUTFILE, ">$outfile" or die "error opening outfile: $!\n";
+  print OUTFILE "tree_id,root_taxon_name,num_leaves\n";
+  foreach my $cluster (@clusters) {
+    next if ('1' eq $cluster->get_tagvalue('cluster_had_to_be_broken_down'));
+    my $tree_id = $cluster->node_id;
+    my $root_taxon_name = $cluster->get_tagvalue("taxon_name");
+    unless (defined($root_taxon_name) && 0 != length($root_taxon_name)) {
+      $root_taxon_name = $cluster->get_tagvalue("name");
+    }
+    my $size = scalar(@{$cluster->get_all_leaves});
+    print OUTFILE "$tree_id,$root_taxon_name,$size\n";
+  }
+}
+
+
+sub _old_dnds_pairs {
   my $self = shift;
   my $species1 = shift;
   my $species2 = shift;
@@ -1701,9 +2877,11 @@ sub _dnds_pairs {
   my $sp2_gdb = $self->{gdba}->fetch_by_name_assembly($species2);
   my $sp2_short_name = $sp2_gdb->get_short_name;
   my $sp1_pair_short_name_list = 
-    join ("_", sort ($sp2_short_name,$sp2_short_name));
+    join ("_", sort ($sp1_short_name,$sp1_short_name));
   my $sp2_pair_short_name_list = 
     join ("_", sort ($sp2_short_name,$sp2_short_name));
+  my $sp_pair = 
+    join ("_", sort ($sp1_short_name,$sp2_short_name));
 
   my @clusters = @{$self->{'clusterset'}->children};
   my $totalnum_clusters = scalar(@clusters);
@@ -1714,7 +2892,8 @@ sub _dnds_pairs {
   $outfile .= ".csv";
   open OUTFILE, ">$outfile" or die "error opening outfile: $!\n";
   print OUTFILE 
-    "tree_id,subtree_id,root_taxon,peptide1_stable_id,gene1_stable_id,sp1_name,peptide2_stable_id,gene2_stable_id,sp2_name,dn,ds,lnl\n";
+    "tree_id1,subtree_id1,root_taxon1,peptide1_stable_id1,gene1_stable_id1,sp1_name1,peptide2_stable_id1,gene2_stable_id1,sp2_name1,dn1,ds1,lnl1,",
+    "tree_id2,subtree_id2,root_taxon2,peptide1_stable_id2,gene1_stable_id2,sp1_name2,peptide2_stable_id2,gene2_stable_id2,sp2_name2,dn2,ds2,lnl2\n";
   foreach my $cluster (@clusters) {
     next if ('1' eq $cluster->get_tagvalue('cluster_had_to_be_broken_down'));
     # next if ((51 <= $cluster->get_tagvalue('gene_count')) && defined($self->{verbose}));
@@ -1753,19 +2932,23 @@ sub _dnds_pairs {
       if (1 == $found_pair1 && 1 == $found_pair2) {
         $self->{'keep_leaves'} = (join ",", (keys %species2_is_present, keys %species1_is_present));
         my $tetrad_minimized_tree = $self->keep_leaves($tetrad_node);
-        my @leaves = @{$tetrad_minimized_tree->get_all_leaves};
-        my $results = '';
-        my $tree_id = $cluster->node_id;
-        my $subtree_id = $tetrad_minimized_tree->node_id;
-        foreach my $leaf1 (shift @leaves) {
-          foreach my $leaf2 (@leaves) {
-            next if ($leaf1->genome_db_id == $leaf2->genome_db_id);
+        my ($child_a,$child_b) = @{$tetrad_minimized_tree->children};
+        my $child_a_short_name_sps_list = join ("_", sort map { $_->genome_db->get_short_name } @{$child_a->get_all_leaves});
+        my $child_b_short_name_sps_list = join ("_", sort map { $_->genome_db->get_short_name } @{$child_b->get_all_leaves});
+        if (($sp_pair eq $child_a_short_name_sps_list) && ($sp_pair eq $child_b_short_name_sps_list)) {
+          my $results = '';
+          my $tree_id = $cluster->node_id;
+          my $subtree_id = $tetrad_minimized_tree->node_id;
+          my $count = 0;
+          foreach my $sub_node (@{$tetrad_minimized_tree->children}) {
+            my ($leaf1,$leaf2) = @{$sub_node->children};
             my $leaf1_gene_member = $leaf1->gene_member;
             my $leaf2_gene_member = $leaf2->gene_member;
             my @homologies = @{$self->{ha}->fetch_by_Member_Member_method_link_type
                                  ($leaf1_gene_member, $leaf2_gene_member, 'ENSEMBL_ORTHOLOGUES')};
             push @homologies, @{$self->{ha}->fetch_by_Member_Member_method_link_type
                                   ($leaf1_gene_member, $leaf2_gene_member, 'ENSEMBL_PARALOGUES')};
+            throw("we shouldnt be getting more than 1 homology here") if (1 < scalar(@homologies));
             foreach my $homology (@homologies) {
               my $dn = $homology->dn;
               my $ds = $homology->ds;
@@ -1775,23 +2958,34 @@ sub _dnds_pairs {
                 my $peptide2_stable_id = $leaf2->stable_id;
                 my $gene1_stable_id = $leaf1_gene_member->stable_id;
                 my $gene2_stable_id = $leaf2_gene_member->stable_id;
+                my $temp;
+                # Always match species order with species1 and
+                # species2 parameters in the output
+                if ($leaf1_gene_member->genome_db->name eq $species2) {
+                  $temp = $peptide1_stable_id;
+                  $peptide1_stable_id = $peptide2_stable_id;
+                  $peptide2_stable_id = $temp;
+                  $temp = $gene1_stable_id;
+                  $gene1_stable_id = $gene2_stable_id;
+                  $gene2_stable_id = $temp;
+                }
                 my $taxonomy_level = $homology->subtype;
-                print OUTFILE "$tree_id,$subtree_id,$taxonomy_level,", 
-                  "$peptide1_stable_id,$gene1_stable_id,$sp1_short_name,",
-                    "$peptide2_stable_id,$gene2_stable_id,$sp2_short_name,",
-                      "$dn,$ds,$lnl\n";
-                print "$tree_id,$subtree_id,$taxonomy_level,", 
-                  "$peptide1_stable_id,$gene1_stable_id,$sp1_short_name,",
-                    "$peptide2_stable_id,$gene2_stable_id,$sp2_short_name,",
-                      "$dn,$ds,$lnl\n" if ($self->{verbose});
+                $results .= "$tree_id,$subtree_id,$taxonomy_level," .
+                  "$peptide1_stable_id,$gene1_stable_id,$sp1_short_name," .
+                    "$peptide2_stable_id,$gene2_stable_id,$sp2_short_name," .
+                      "$dn,$ds,$lnl";
+                (0 == $count) ? ($results .= ",") : ($results .= "\n");
+                print "$results" if ($self->{verbose} && (0 != $count));
               }
             }
+            $count++;
           }
         }
       }
     }
   }
 }
+
 
 sub _duphop {
   my $self = shift;
@@ -1811,8 +3005,8 @@ sub _duphop {
   $outfile .= ".csv";
   open OUTFILE, ">$outfile" or die "error opening outfile: $!\n";
   print OUTFILE 
-    "tree_id,root_taxon,peptide_stable_id,gene_stable_id,sp_name,duphop,totalhop,consecdup\n";
-  print "tree_id,peptide_stable_id,gene_stable_id,sp_name,duphop,totalhop\n" if ($self->{verbose});
+    "tree_id,root_taxon,peptide_stable_id,gene_stable_id,gene_chr_name,sp_name,duphop,totalhop,consecdup\n";
+  print "tree_id,peptide_stable_id,gene_stable_id,gene_chr_name,sp_name,duphop,totalhop\n" if ($self->{verbose});
   foreach my $cluster (@clusters) {
     next if ('1' eq $cluster->get_tagvalue('cluster_had_to_be_broken_down'));
     # next if ((51 <= $cluster->get_tagvalue('gene_count')) && defined($self->{verbose}));
@@ -1823,7 +3017,9 @@ sub _duphop {
       my $member_species_short_name = $member->genome_db->get_short_name;
       my $member_stable_id = $member->stable_id;
       $member{$member_stable_id}{gdb_short_name} = $member_species_short_name;
-      $member{$member_stable_id}{gene_stable_id} = $member->gene_member->stable_id;
+      my $gene_member = $member->gene_member;
+      $member{$member_stable_id}{gene_stable_id} = $gene_member->stable_id;
+      $member{$member_stable_id}{gene_chr_name} = $gene_member->chr_name;
       if($sp_short_name eq $member_species_short_name) {
         $species_is_present = 1;
         my $duphop = 0;
@@ -1855,6 +3051,8 @@ sub _duphop {
                   "," . 
                     $member{$member_stable_id}{gene_stable_id} . 
                       "," . 
+                    $member{$member_stable_id}{gene_chr_name} . 
+                      "," . 
                         $member{$member_stable_id}{gdb_short_name} . 
                           "," . 
                             $member{$member_stable_id}{duphop} . 
@@ -1870,6 +3068,7 @@ sub _duphop {
     }
   }
 }
+
 
 # internal purposes
 sub _gap_contribution {
@@ -2128,7 +3327,6 @@ sub _consistency_orthotree {
   keep_leaves($self);
   $self->{tree}->print_tree(20) if ($self->{debug});
   _run_orthotree($self);
-  1; #??
 }
 
 sub _homologs_and_dnaaln {
@@ -2199,6 +3397,252 @@ sub _homologs_and_dnaaln {
   }
 }
 
+sub _gene_bootstrap_coef
+{
+  my $self = shift;
+  require Statistics::Descriptive;
+  $self->{_mydbname} = $self->{comparaDBA}->dbc->dbname;
+  printf("dbname: %s\n", $self->{'_mydbname'});
+  printf("gene_bootstrap_coef: %d\n", $self->{'clusterset_id'});
+
+  my $treeDBA = $self->{'comparaDBA'}->get_ProteinTreeAdaptor;
+  $self->{taxonDBA} = $self->{comparaDBA}->get_NCBITaxonAdaptor;
+  my $clusterset = $treeDBA->fetch_node_by_node_id($self->{'clusterset_id'});
+
+  my $outfile = "gene_bootstrap_coef.". $self->{_mydbname} . "." . 
+    $self->{'clusterset_id'};
+  $outfile .= ".csv";
+  open OUTFILE, ">$outfile" or die "error opening outfile: $!\n";
+  print OUTFILE "root_id,gene_stable_id,protein_stable_id,species_short_name,chr_name,";
+  print OUTFILE "num_internal_sis,sis_mean,sis_mean_coef,";
+  print OUTFILE "num_internal_bootstraps,bootstrap_mean,bootstrap_std_dev,bootstrap_mean_coef\n";
+  my $cluster_count;
+
+  my @clusters = @{$clusterset->children};
+  my $totalnum_clusters = scalar(@clusters);
+  printf("totalnum_trees: %d\n", $totalnum_clusters);
+  foreach my $cluster (@clusters) {
+    my %member_totals;
+    $cluster_count++;
+    my $verbose_string = sprintf "[%5d / %5d trees done]\n", 
+      $cluster_count, $totalnum_clusters;
+    print STDERR $verbose_string 
+      if ($self->{'verbose'} &&  ($cluster_count % $self->{'verbose'} == 0));
+    next if ('1' eq $cluster->get_tagvalue('cluster_had_to_be_broken_down'));
+    $treeDBA->fetch_subtree_under_node($cluster);
+
+    my $member_list = $cluster->get_all_leaves;
+    next unless (4 < scalar(@$member_list));
+    my $root_id = $cluster->node_id;
+    my @all_bootstraps;
+    my @all_sis;
+   foreach my $subnode ($cluster->get_all_subnodes) {
+      my $bootstrap = $subnode->get_tagvalue("Bootstrap");
+      my $sis = $subnode->get_tagvalue("duplication_confidence_score");
+      if (defined($bootstrap) && $bootstrap ne '') {
+        push @all_bootstraps, $bootstrap;
+      }
+      if (defined($sis) && $sis ne '') {
+        push @all_sis, $sis;
+      }
+    }
+    next unless (2 <= scalar(@all_bootstraps));
+    my $all_bootstrap_mean;
+    my $all_sis_mean;
+    $all_bootstrap_mean = mean_pm(@all_bootstraps);
+    $all_sis_mean = mean_pm(@all_sis);
+    foreach my $member (@$member_list) {
+      my $parent = $member;
+      do {
+        eval { $parent = $parent->parent; };
+        my $bootstrap = $parent->get_tagvalue("Bootstrap");
+        my $sis = $parent->get_tagvalue("duplication_confidence_score");
+        if (defined($bootstrap) && $bootstrap ne '') {
+          $member->{_bootstrap}{$parent->node_id} = $bootstrap;
+        }
+        if (defined($sis) && $sis ne '') {
+          $member->{_sis}{$parent->node_id} = $sis;
+        }
+      } while ($parent->node_id != $root_id);
+      my $num_internal_bootstraps = scalar(values %{$member->{_bootstrap}});
+      my $num_internal_sis = scalar(values %{$member->{_sis}});
+      my $bootstrap_mean = 0;
+      my $bootstrap_std_dev = 0;
+      my $bootstrap_mean_coef = 0;
+      my $sis_mean = 0;
+      my $sis_std_dev = 0;
+      my $sis_mean_coef = 0;
+      if (0 != $num_internal_bootstraps) {
+        $bootstrap_mean = mean_pm(values %{$member->{_bootstrap}});
+        $bootstrap_std_dev = std_dev_pm(values %{$member->{_bootstrap}}) || 0;
+        eval {$bootstrap_mean_coef = $bootstrap_mean/$all_bootstrap_mean};
+      }
+      if (0 != $num_internal_sis) {
+        $sis_mean = mean_pm(values %{$member->{_sis}});
+        #$sis_std_dev = std_dev_pm(values %{$member->{_sis}}) || 0;
+        eval {$sis_mean_coef = $sis_mean/$all_sis_mean};
+      }
+      my $results = 
+        $root_id .
+          "," . 
+            $member->gene_member->stable_id . 
+              "," . 
+                $member->stable_id . 
+                  "," . 
+                    $member->genome_db->short_name . 
+                      "," . 
+                        $member->chr_name . 
+                              "," . 
+                            $num_internal_sis . 
+                              "," . 
+                                sprintf("%.2f",$sis_mean) . 
+                                  "," . 
+                                    sprintf("%.2f",$sis_mean_coef) . 
+                          "," . 
+                            $num_internal_bootstraps . 
+                              "," . 
+                                sprintf("%.2f",$bootstrap_mean) . 
+                                  "," . 
+                                    sprintf("%.2f",$bootstrap_std_dev) . 
+                                      "," . 
+                                        sprintf("%.2f",$bootstrap_mean_coef) . 
+                                          "\n";
+      print OUTFILE $results;
+      print $results if ($self->{verbose} || $self->{debug});
+    }
+    $cluster->release_tree;
+  }
+}
+
+sub _loose_assoc {
+  my $self = shift;
+  my $species = shift;
+  $species =~ s/\_/\ /g;
+
+  $self->{gdba} = $self->{comparaDBA}->get_GenomeDBAdaptor;
+  $self->{ppafa} = $self->{comparaDBA}->get_PeptideAlignFeatureAdaptor;
+  $self->{ha} = $self->{comparaDBA}->get_HomologyAdaptor;
+
+  my $gdb = $self->{gdba}->fetch_by_name_assembly($species);
+
+  print "query_member_stable_id,query_member_genome,hit_member_stable_id,hit_member_genome,evalue,exp_evalue,score,bs_ratio,hit_rank,perc_ident,perc_pos\n";
+
+  my $pafs;
+  my $members = $self->{ha}->fetch_all_orphans_by_GenomeDB($gdb);
+  my $gdb_name = $gdb->name;
+  print STDERR "# $gdb_name has ", scalar(@$members), " orphan members\n";
+  my $count = 0;
+  foreach my $member (@$members) {
+    $pafs = $self->{ppafa}->fetch_all_by_qmember_id($member->get_longest_peptide_Member->dbID);
+    unless (0 != scalar(@$pafs)) {
+      print STDERR $member->stable_id, ",null,null,null,null,null,null,null,null,null,null\n";
+      next;
+    }
+    $count += scalar(@$pafs);
+    foreach my $paf (@$pafs) {
+      my $paf_hit_rank = $paf->hit_rank;
+      next unless ($paf_hit_rank <= $self->{debug});
+      my $paf_score = $paf->score;
+      my $paf_evalue = $paf->evalue;
+      my $paf_exp_evalue = $paf_evalue;
+      $paf_exp_evalue =~ s/.+e\-(.+)$/$1/g;
+
+      my $bs_ratio;
+      my $ref_score = $self->{ppafa}->fetch_selfhit_by_qmember_id($paf->query_member->dbID)->score;
+      my $ref2_score = $self->{ppafa}->fetch_selfhit_by_qmember_id($paf->hit_member->dbID)->score;
+      if (!defined($ref_score) or 
+          (defined($ref2_score) and ($ref2_score > $ref_score))) {
+        $ref_score = $ref2_score;
+      }
+      if (defined($ref_score)) {
+        $bs_ratio = $paf_score / $ref_score;
+      }
+
+      print 
+        $paf->query_member->stable_id, ",", 
+          $paf->query_member->genome_db->short_name, ",", 
+            $paf->hit_member->stable_id,  ",", 
+              $paf->hit_member->genome_db->short_name,  ",", 
+                $paf_evalue, ",",
+                $paf_exp_evalue, ",",
+                  sprintf("%.1f",$paf_score), ",", 
+                  sprintf("%.2f",$bs_ratio), ",", 
+                    $paf_hit_rank, ",", 
+                      $paf->perc_ident, ",", 
+                        $paf->perc_pos, "\n" if ($paf_hit_rank <= $self->{debug});
+    }
+  }
+  print STDERR "# There are $count hits below the E-10 threshold\n";
+}
+
+
+sub _paf_stats {
+  my $self = shift;
+  my $species = shift;
+  $species =~ s/\_/\ /g;
+
+  $self->{gdba} = $self->{comparaDBA}->get_GenomeDBAdaptor;
+  $self->{ppafa} = $self->{comparaDBA}->get_PeptideAlignFeatureAdaptor;
+  $self->{ha} = $self->{comparaDBA}->get_HomologyAdaptor;
+
+  my $gdb = $self->{gdba}->fetch_by_name_assembly($species);
+  my %orphan_member_ids;
+  foreach my $orphan (@{$self->{ha}->fetch_all_orphans_by_GenomeDB($gdb)}) {
+    $orphan_member_ids{$orphan->member_id} = 1;
+  }
+
+  print "query_member_stable_id,query_member_genome,hit_member_stable_id,hit_member_genome,is_orphan,evalue,exp_evalue,score,bs_ratio,hit_rank,perc_ident,perc_pos\n";
+
+  my $all_dbs = $self->{gdba}->fetch_all;
+  foreach my $gdb_sps2 (@$all_dbs) {
+    next if ($gdb_sps2->dbID == $gdb->dbID);
+    my $pafs = $self->{ppafa}->fetch_all_besthit_by_qgenome_db_id_hgenome_db_id($gdb->dbID,$gdb_sps2->dbID);
+    foreach my $paf (@$pafs) {
+      my $paf_hit_rank = $paf->hit_rank;
+      next unless ($paf_hit_rank <= $self->{debug});
+      my $paf_score = $paf->score;
+      my $paf_evalue = $paf->evalue;
+      my $paf_exp_evalue = $paf_evalue;
+      $paf_exp_evalue =~ s/.+e\-(.+)$/$1/g;
+      my $paf_query_member_dbID = $paf->query_member->dbID;
+      my $paf_hit_member_dbID = $paf->hit_member->dbID;
+      my $is_orphan = 0;
+      $is_orphan = 1 if (defined($orphan_member_ids{$paf->query_member->gene_member->dbID}));
+      my $bs_ratio;
+      my $query_selfhit = $self->{ppafa}->fetch_selfhit_by_qmember_id($paf_query_member_dbID);
+      my $hit_selfhit = $self->{ppafa}->fetch_selfhit_by_qmember_id($paf_hit_member_dbID);
+      if (!defined($query_selfhit) && !defined($hit_selfhit)) {
+        $bs_ratio = 0;
+      } else {
+        my $ref_score = $query_selfhit->score if (defined($query_selfhit));
+        my $ref2_score = $hit_selfhit->score if (defined($hit_selfhit));
+        if (!defined($ref_score) or 
+            (defined($ref2_score) and ($ref2_score > $ref_score))) {
+          $ref_score = $ref2_score;
+        }
+        if (defined($ref_score)) {
+          $bs_ratio = $paf_score / $ref_score;
+        }
+      }
+
+      print 
+        $paf->query_member->stable_id, ",", 
+          $paf->query_member->genome_db->short_name, ",", 
+            $paf->hit_member->stable_id,  ",", 
+              $paf->hit_member->genome_db->short_name,  ",", 
+                $is_orphan, ",",
+                $paf_evalue, ",",
+                  $paf_exp_evalue, ",",
+                    sprintf("%.1f",$paf_score), ",", 
+                      sprintf("%.2f",$bs_ratio), ",", 
+                        $paf_hit_rank, ",", 
+                          $paf->perc_ident, ",", 
+                            $paf->perc_pos, "\n" if ($paf_hit_rank <= $self->{debug});
+    }
+  }
+}
+
+
 # internal purposes
 sub _homologs_and_paf_scores {
   my $self = shift;
@@ -2240,6 +3684,35 @@ sub print_homology_paf_scores {
       print "$query_peptide_stable_id\t$hit_peptide_stable_id\t$homology_description\t$subtype\t", $self_paf->score, "\n";
     }
   }
+}
+
+
+sub _ncbi_tree_list_shortnames {
+  my $self = shift;
+  my $taxonDBA = $self->{'comparaDBA'}->get_NCBITaxonAdaptor;
+  my $root = $self->{'root'};
+  my $gdb_list = $self->{'comparaDBA'}->get_GenomeDBAdaptor->fetch_all;
+
+  my %shortnames;
+  foreach my $shortname (split("_", $self->{_ncbi_tree_list_shortnames})) {
+    $shortnames{$shortname} = 1;
+  }
+
+  foreach my $gdb (@$gdb_list) {
+    next unless (defined($shortnames{$gdb->short_name}));
+    my $taxon = $taxonDBA->fetch_node_by_taxon_id($gdb->taxon_id);
+    $taxon->release_children;
+
+    $root = $taxon->root unless($root);
+    $root->merge_node_via_shared_ancestor($taxon);
+  }
+  $root = $root->minimize_tree;
+  my $newick = $root->newick_format;
+  my $newick_simple = $newick;
+  $newick_simple =~ s/\:\d\.\d+//g;
+  $newick_simple =~ s/\ /\_/g;
+  $newick_simple =~ s/\//\_/g;
+  print "$newick_simple\n" if ($self->{'print_newick'});
 }
 
 
@@ -2699,8 +4172,6 @@ sub _analyzeHomologies {
 sub _print_as_species_ids {
   my $self = shift;
   $self->{_mydbname} = $self->{comparaDBA}->dbc->dbname;
-#  printf("dbname: %s\n", $self->{'_mydbname'});
-#  printf("as_species_ids_: %d\n", $self->{'clusterset_id'});
   $self->{ha} = $self->{comparaDBA}->get_HomologyAdaptor;
 
   my $treeDBA = $self->{'comparaDBA'}->get_ProteinTreeAdaptor;
@@ -2708,13 +4179,13 @@ sub _print_as_species_ids {
   my $clusterset = $treeDBA->fetch_node_by_node_id($self->{'clusterset_id'});
   my @clusters = @{$clusterset->children};
   my $totalnum_clusters = scalar(@clusters);
-#  printf("totalnum_trees: %d\n", $totalnum_clusters);
+  print STDERR "totalnum_trees: ", $totalnum_clusters, "\n";
   foreach my $cluster (@clusters) {
     next if ('1' eq $cluster->get_tagvalue('cluster_had_to_be_broken_down'));
-    # my $string = $cluster->get_tagvalue("OrthoTree_types_hashstr");
     my $cluster_node_id = $cluster->node_id;
-    print "# $cluster_node_id\n";
-    my $newick = $cluster->newick_format('species');
+    print "# $cluster_node_id\n" if ($self->{debug});
+#    my $newick = $cluster->newick_format('species');
+    my $newick = $cluster->newick_format('species_short_name');
     $newick =~ s/\;//;
     print "$newick\n";
   }
@@ -3266,5 +4737,19 @@ sub _delete_input_from_tmp {
     warn ("error deleting tempfile, $!\n");
   }
 }
+
+sub mean_pm {
+  my $stat = new Statistics::Descriptive::Sparse();
+  $stat->add_data(@_);
+  return $stat->mean();
+}
+
+sub std_dev_pm {
+  my $stat = new Statistics::Descriptive::Sparse();
+  $stat->add_data(@_);
+  return $stat->standard_deviation();
+}
+
+
 
 1;
