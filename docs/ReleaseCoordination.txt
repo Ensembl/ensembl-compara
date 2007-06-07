@@ -177,7 +177,11 @@ standard output:
 
 - Syntenies:
 
-- Protein trees and homologues:
+- Protein trees/homologues/families
+
+The merge is done by the person in charge of the protein compara production
+side. The compara release coordinator needs to let him/her know where is the
+database to merge to.
 
 11. Drop method_link_species_set entries for alignments which did not make it.
 
@@ -234,6 +238,10 @@ You might need to update the create_mlss_table.conf file with new species added.
   perl ~/src/ensembl_main/ensembl-compara/docs/create_mlss_table.pl \
     --reg_conf ~/.ensembl_init --dbname Compara39 --method_link BLASTZ_NET \
     --trim > blastz_net.inc
+
+  perl ~/src/ensembl_main/ensembl-compara/docs/create_mlss_table.pl \
+    --reg_conf ~/.ensembl_init --dbname Compara39 --method_link SYNTENY \
+     --trim  > synteny.inc
 
  ==> The resulting blastz-net table is huge. In order to make it slightly smaller,
    you can divide it into amniota vertebrates and other chordates (see latest
