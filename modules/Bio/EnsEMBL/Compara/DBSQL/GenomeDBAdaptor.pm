@@ -151,7 +151,7 @@ sub fetch_by_name_assembly {
     throw("No GenomeDB with this name [$name] and assembly [".
         ($assembly or "--undef--")."]");
   }
-
+  $sth->finish;
   return $self->fetch_by_dbID($id);
 }
 
