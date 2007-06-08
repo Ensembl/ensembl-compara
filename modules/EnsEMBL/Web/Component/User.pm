@@ -9,6 +9,7 @@ use EnsEMBL::Web::Interface::TabView;
 use EnsEMBL::Web::Interface::Tab;
 use EnsEMBL::Web::Interface::Table;
 use EnsEMBL::Web::Interface::Table::Row;
+use EnsEMBL::Web::Object::Data::User;
 use EnsEMBL::Web::Object::Data::Group;
 use EnsEMBL::Web::RegObj;
 
@@ -734,17 +735,6 @@ sub group_settings {
   return 1;
 }
 
-sub login {
-  my ( $panel, $object ) = @_;
-  my $html = qq(<div class="formpanel" style="width:50%">);
-  $html .= $panel->form('login')->render();
-  $html .= qq(<p><a href="/common/user/register">Register</a> | <a href="/common/user/lost_password">Lost password</a></p>);
-  #$html .= $panel->form('enter_details')->render();
-  $html .= '</div>';
-  $panel->print($html);
-  return 1;
-}
-
 sub enter_details   { 
   my ( $panel, $object ) = @_;
   my $html = qq(<div class="formpanel" style="width:80%">);
@@ -1167,6 +1157,174 @@ sub message {
   $panel->print($html);
 }
 
+sub login_form {
+  my( $panel, $object ) = @_;
+
+  my $form = EnsEMBL::Web::Form->new( 'login', "/common/user/set_cookie", 'post' );
+
+  $form->add_element(
+    'type'  => 'String',
+    'name'  => 'email',
+    'label' => 'Email',
+    'required' => 'yes',
+  );
+  $form->add_element(
+    'type'  => 'Password',
+    'name'  => 'password',
+    'label' => 'Password',
+    'required' => 'yes',
+  );
+  $form->add_element(
+    'type'  => 'Hidden',
+    'name'  => 'url',
+    'value' => $object->param('url'),
+  );
+  $form->add_element(
+    'type'  => 'Submit',
+    'name'  => 'submit',
+    'value' => 'Log in',
+  );
+  $form->add_element(
+    'type'  => 'Information',
+    'value' => qq(<p><a href="/common/user/register">Register</a> | <a href="/common/user/lost_password">Lost password</a></p>),
+  );
+
+  return $form;
+}
+
+
+sub lost_password_form {
+  my( $panel, $object ) = @_;
+
+  my $form = EnsEMBL::Web::Form->new( 'lost_password', "/common/user/send_activation", 'post' );
+
+  $form->add_element(
+    'type'  => 'Information',
+    'value' => qq(<p>If you have lost your password or activation email, enter your email address and we will send you a new activation code.</p>),
+  );
+  $form->add_element(
+    'type'  => 'String',
+    'name'  => 'email',
+    'label' => 'Email',
+    'required' => 'yes',
+  );
+  $form->add_element(
+    'type'  => 'Hidden',
+    'name'  => 'lost',
+    'value' => 'yes',
+  );
+  $form->add_element(
+    'type'  => 'Submit',
+    'name'  => 'submit',
+    'value' => 'Send',
+  );
+
+  return $form;
+}
+
+sub login_check {
+  my( $panel, $object ) = @_;
+  my $url = $object->param('url') || '/index.html';
+
+  my $html;
+  if ($ENV{'ENSEMBL_USER_ID'}) {
+    if ($object->param('email')) {
+      $html .= qq(<p>Thank you. Your changes have been saved.</p>);
+    }
+    else {
+      $html .= qq(<p>Thank you for logging into Ensembl</p>);
+    }
+    $html .= qq(
+<script type="text/javascript">
+<!--
+window.setTimeout('backToEnsembl()', 5000);
+
+function backToEnsembl(){
+  window.location = "$url"
+}
+//-->
+</script>
+<p>Please <a href="$url">click here</a> if you are not returned to Ensembl within five seconds.</p>
+  );
+  }
+  else {
+    $html .= qq(<p>Sorry, we were unable to log you into Ensembl. Please check that your browser can
+accept cookies.</p>
+
+<p><a href="$url">Click here</a> to return to Ensembl.</p>
+);
+  }
+  $panel->print($html);  
+}
+
+sub email_sent {
+  my( $panel, $object ) = @_;
+
+  my $html = qq(<p>An email has been sent for each account associated with this address. If you do not receive a message from us within a few hours, please <a href="mailto:helpdesk\@ensembl.org">contact Helpdesk</a>.</p>);
+
+  $panel->print($html);  
+}
+
+sub enter_password_form {
+  my( $panel, $object ) = @_;
+  my $script = $object->script;
+
+  my $form = EnsEMBL::Web::Form->new( 'enter_password', "/common/user/save_password", 'post' );
+  
+  if ($ENV{'ENSEMBL_USER_ID'}) {
+    ## Logged-in user, changing own password
+    my $user = EnsEMBL::Web::Object::Data::User->new({'id' => $ENV{'ENSEMBL_USER_ID'}});
+    my $email = $user->email;
+    $form->add_element(
+      'type'  => 'Hidden',
+      'name'  => 'email',
+      'value' => $email,
+    );
+    $form->add_element(
+      'type'  => 'Password',
+      'name'  => 'password',
+      'label' => 'Old password',
+      'required' => 'yes',
+    );
+  }
+  else {
+    ## Setting new/forgotten password
+    $form->add_element(
+      'type'  => 'Hidden',
+      'name'  => 'user_id',
+      'value' => $object->param('user_id'),
+    );
+    $form->add_element(
+      'type'  => 'Hidden',
+      'name'  => 'email',
+      'value' => $object->param('email'),
+    );
+    $form->add_element(
+      'type'  => 'Hidden',
+      'name'  => 'code',
+      'value' => $object->param('code'),
+    );
+  }
+  $form->add_element(
+    'type'  => 'Password',
+    'name'  => 'new_password_1',
+    'label' => 'New password',
+    'required' => 'yes',
+  );
+  $form->add_element(
+    'type'  => 'Password',
+    'name'  => 'new_password_2',
+    'label' => 'Confirm new password',
+    'required' => 'yes',
+  );
+  $form->add_element(
+    'type'  => 'Submit',
+    'name'  => 'submit',
+    'value' => 'Save',
+  );
+
+  return $form;
+}
 
 
 1;
