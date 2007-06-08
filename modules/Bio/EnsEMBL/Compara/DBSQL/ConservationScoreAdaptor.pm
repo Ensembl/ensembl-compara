@@ -236,7 +236,14 @@ sub fetch_all_by_MethodLinkSpeciesSet_Slice {
 	#reset _score_index for new conservation_scores
 	$_score_index = 0;
 
-	$scores = _get_aligned_scores_from_cigar_line($self, $genomic_align->cigar_line, $genomic_align->dnafrag_start, $genomic_align->dnafrag_end, $slice->start, $slice->end, $conservation_scores, $genomic_align_block->dbID, $genomic_align_block->length, $display_type, $window_size, $scores);
+	#if want one score per base in the alignment, use faster method 
+	#doesn't bother with any binning
+	if ($display_size == ($slice->end - $slice->start + 1)) {
+	    $scores = _get_aligned_scores_from_cigar_line_fast($self, $genomic_align->cigar_line, $genomic_align->dnafrag_start, $genomic_align->dnafrag_end, $slice->start, $slice->end, $conservation_scores, $genomic_align_block->dbID, $genomic_align_block->length, $display_type, $window_size, $scores);
+	} else {
+	    $scores = _get_aligned_scores_from_cigar_line($self, $genomic_align->cigar_line, $genomic_align->dnafrag_start, $genomic_align->dnafrag_end, $slice->start, $slice->end, $conservation_scores, $genomic_align_block->dbID, $genomic_align_block->length, $display_type, $window_size, $scores);
+	    
+	}
     }
 
     if (scalar(@$scores) == 0) {
@@ -485,26 +492,11 @@ sub store {
       $diff_packed = $cs->diff_score;
   }
 
-  #check if already exists
-  my $sth = $self->prepare("
-      SELECT genomic_align_block_id 
-      FROM conservation_score
-      WHERE genomic_align_block_id='$genomic_align_block_id' AND window_size='$window_size' AND position = '$position'
-   ");
-
-  $sth->execute;
-
-  my $gab_id = $sth->fetchrow_array();
-
-  #only add conservation_score if one doesn't already exist
-  if (!$gab_id) {
-
-      #if the conservation score has not been stored before, store it now
-      my $sql = "INSERT into conservation_score (genomic_align_block_id,window_size,position,expected_score, diff_score) ". 
-	  " VALUES ('$genomic_align_block_id','$window_size', '$position', ?, ?)";
-      my $sth = $self->prepare($sql);
-      $sth->execute($exp_packed, $diff_packed);
-  }
+  #store the conservation score
+  my $sql = "INSERT into conservation_score (genomic_align_block_id,window_size,position,expected_score, diff_score) ". 
+    " VALUES ('$genomic_align_block_id','$window_size', '$position', ?, ?)";
+  my $sth = $self->prepare($sql);
+  $sth->execute($exp_packed, $diff_packed);
   
   #update the conservation_score object so that it's adaptor is set
   $cs->adaptor($self);
@@ -785,8 +777,16 @@ sub _get_aligned_scores_from_cigar_line {
     }
 
     #fill in region between previous alignment and this alignment with uncalled values
-    my $prev_chr_pos = $_bucket->{start_seq_region_pos}+$_bucket->{cnt};
-    for (my $i = $prev_chr_pos; $i < $chr_start; $i+=$win_size) {
+
+    #08.06.07 don't need to add bucket->{cnt} here
+    #my $prev_chr_pos = $_bucket->{start_seq_region_pos}+$_bucket->{cnt};
+    my $prev_chr_pos = $_bucket->{start_seq_region_pos};
+
+    #08.06.07 Fixed bug: need to add missing values only from
+    #the next position to chr_start otherwise you use prev_chr_pos twice.
+    #for (my $i = $prev_chr_pos; $i < $chr_start; $i+=$win_size) {
+
+    for (my $i = $prev_chr_pos+$win_size; $i < $chr_start; $i+=$win_size) {
 	$aligned_score = _add_to_bucket($self, $display_type, $_no_score_value, $_no_score_value, $i, $start_slice, scalar(@$aligned_scores), $genomic_align_block_id, $win_size);
 	if ($aligned_score) {
 	    #need this to ensure that the aligned_scores array is the 
@@ -902,6 +902,192 @@ sub _get_aligned_scores_from_cigar_line {
 		    if ($aligned_score) {
 			push(@$aligned_scores, $aligned_score);
 		    }
+		}
+	    }
+	}
+	$prev_position = $chr_pos;
+    }
+
+    return $aligned_scores;
+}
+
+sub _get_aligned_scores_from_cigar_line_fast {
+    my ($self, $cigar_line, $start_region, $end_region, $start_slice, $end_slice, $scores, $genomic_align_block_id, $genomic_align_block_length, $display_type, $win_size, $aligned_scores) = @_;
+
+    return undef if (!$cigar_line);
+    
+    my $num_aligned_scores = scalar(@$aligned_scores);
+    my @cig = ( $cigar_line =~ /(\d*[GMD])/g );
+
+    #start and end of region in alignment coords
+    my $align_start = 1;
+    my $align_end = $genomic_align_block_length;
+
+    my $aligned_score;
+
+    my $cs_index;    #conservation score row index
+    my $num_scores = scalar(@$scores); #number of conservation score rows
+
+    #position in alignment coords to the end of cigar block
+    my $total_pos;  
+    #position in chromosome coords to the end of cigar block
+    my $total_chr_pos = $start_region; 
+
+    my $current_pos; #current position in alignment coords
+    my $chr_pos = $start_region; #current position in chromosome coords
+    my $prev_position = 0; #remember previous chr position for dealing with deletions
+
+    my $cigType; #type of cigar element
+    my $cigLength; #length of cigar element
+
+    my $i;
+    my $csBlockCnt; #offset into conservation score string
+    my $diff_score; #store difference score
+    my @diff_scores;
+    my $exp_score; #store expected score
+    my @exp_scores;
+
+    #start and end of the alignment in chromosome coords
+    my $chr_start = $start_region; 
+    my $chr_end = $end_region;
+    
+    #set start and end to be the minimum of alignment or slice
+    if ($start_slice > $start_region) {
+	$chr_start = $start_slice;
+    }
+    if ($end_slice < $end_region) {
+	$chr_end = $end_slice;
+    }
+
+    #store the number of values in each row in the score array
+    my $score_lengths;
+    for (my $j = 0; $j < $num_scores; $j++) {
+	my $length = 0;
+	if (defined($scores->[$j]->diff_score)) {
+	    if ($PACKED) {
+		$length = length($scores->[$j]->diff_score)/$_pack_size;
+	    } else {
+		my @split_scores = split ' ', $scores->[$j]->diff_score;
+		$length = scalar(@split_scores);
+	    }
+	}
+	push (@$score_lengths, $length);
+    }
+
+    #convert start_region into alignment coords and initialise total_chr_pos
+    while ($total_chr_pos <= $chr_start) {
+
+	my $cigElem = $cig[$i++];
+
+	$cigType = substr( $cigElem, -1, 1 );
+	$cigLength = substr( $cigElem, 0 ,-1 );
+	$cigLength = 1 unless ($cigLength =~ /^\d+$/);
+
+	$current_pos += $cigLength;
+	$total_pos += $cigLength;
+	if( $cigType eq "M" ) {
+	    $total_chr_pos += $cigLength;
+	}
+    }
+    
+    #find start of region in alignment coords 
+    my $start_offset = $total_chr_pos - $chr_start;
+    if ($cigType eq "M") {
+	$align_start = (int(($total_pos - $start_offset + $win_size)/$win_size) * $win_size);
+    }
+
+    #initialise start of region in chromosome coords
+    $chr_pos = $chr_start;
+
+    #loop round in alignment coords, incrementing by win_size until either
+    #reached the end of the alignment or end of the slice
+    #12/03/2007 fixed bug in line below, where $chr_pos <= $chr_end. This gave
+    #one too many scores when the last bucket position equaled the slice length
+    #eg for slice of 1000, last bucket position = 1000, get 1001 scores but
+    #slice of 2000, last bucket position 1999, get 1000 scores.
+    for ($current_pos = $align_start; $current_pos <= $align_end && $chr_pos < $chr_end; $current_pos += $win_size) {
+
+	#find conservation score row index containing current_pos. Returns -1
+	#if no score found
+	$cs_index = _find_score_index($scores, $num_scores, $score_lengths, $current_pos, $win_size);
+
+	#if a score has been found, find the score in the score string and 
+	#unpack it.
+	unless ($cs_index == -1) {
+	    $csBlockCnt = int(($current_pos - $scores->[$cs_index]->position)/$win_size);
+
+	    my $value;
+	    if ($PACKED) {
+		$value = substr $scores->[$cs_index]->expected_score, $csBlockCnt*$_pack_size, $_pack_size;
+		$exp_score = unpack($_pack_type, $value);
+		$value = substr $scores->[$cs_index]->diff_score, $csBlockCnt*$_pack_size, $_pack_size;
+		$diff_score = unpack($_pack_type, $value);
+	    } else {
+		@exp_scores = split ' ', $scores->[$cs_index]->exp_score;
+		$exp_score = $exp_scores[$csBlockCnt];
+		@diff_scores = split ' ', $scores->[$cs_index]->diff_score;
+		$diff_score = $diff_scores[$csBlockCnt];
+	    } 
+	}
+
+	#find the next cigar block that is larger than current_pos
+	while ($total_pos < $current_pos && $chr_pos < $chr_end) {	
+	    my $cigElem = $cig[$i++];
+	    
+	    $cigType = substr( $cigElem, -1, 1 );
+	    $cigLength = substr( $cigElem, 0 ,-1 );
+	    $cigLength = 1 unless ($cigLength =~ /^\d+$/);
+	    
+	    $total_pos += $cigLength;
+	    if( $cigType eq "M" ) {
+		$total_chr_pos += $cigLength;
+	    }
+	}
+
+	#total_pos is > than current_pos, so if in match, must delete this
+	#excess 
+	if ($cigType eq "M") {
+	    $chr_pos = $total_chr_pos - ($total_pos - $current_pos + 1);
+	} else {
+	    $chr_pos = $total_chr_pos - 1;
+	}
+
+	#now add the scores to the bucket
+	if ($cigType eq "M") {
+	    if ($cs_index != -1) {
+		#in cigar match and have conservation score
+
+		#bit of a hack to turn 0's stored in the database to undefs
+		if (defined($diff_score) && $diff_score == 0) {
+		    $diff_score = $_no_score_value;
+		    $exp_score = $_no_score_value;
+		}
+		$aligned_score = Bio::EnsEMBL::Compara::ConservationScore->new_fast(
+		      {'adaptor' => $self,
+		      'genomic_align_block_id' => $genomic_align_block_id,
+		      'window_size' => $win_size,
+		      'position' => $chr_pos - $start_slice + 1,
+		      'seq_region_pos' => $chr_pos,
+		      'diff_score' => $diff_score,
+		      'expected_score' => $exp_score}
+		      );
+		 push(@$aligned_scores, $aligned_score);
+	    }
+	} else {
+	    #not in cigar match so only add the next conservation score or
+	    #_no_score_value if this isn't a score
+	    if ($prev_position != $chr_pos) {
+		if ($cs_index != -1) {
+		    $aligned_score = Bio::EnsEMBL::Compara::ConservationScore->new_fast(
+		      {'adaptor' => $self,
+		      'genomic_align_block_id' => $genomic_align_block_id,
+		      'window_size' => $win_size,
+		      'position' => $chr_pos - $start_slice + 1,
+		      'seq_region_pos' => $chr_pos,
+		      'diff_score' => $diff_score,
+		      'expected_score' => $exp_score}
+		      );
+		    push(@$aligned_scores, $aligned_score);
 		}
 	    }
 	}
@@ -1129,7 +1315,6 @@ sub _add_to_bucket {
     my $final_diff_score;
     my $filled_bucket = 0;
 
-    #print STDERR "add_to_bucket $chr_pos $diff_score\n";
     #bit of a hack to turn 0's stored in the database to undefs
     if (defined($diff_score) && $diff_score == 0) {
 	$diff_score = $_no_score_value;
