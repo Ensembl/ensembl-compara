@@ -51,7 +51,7 @@ location in both genomes. The netting process chooses for the reference
 species the best sub-chain in each region. The reference species in the
 BlastZ-net alignments is defined in this table:</p>
 
-[[INCLUDE::/info/data/compara/blastz_net.html]]
+[[INCLUDE::/info/data/compara/blastz_net.inc]]
 <h3>Translated Blat Analysis</h3>
 
 <p>Translated blat (<a href="http://www.genome.org/cgi/content/abstract/12/4/656">Kent
@@ -59,7 +59,7 @@ W, Genome Res., 2002;12(4):656-64</a>) is used to look for
 homologous regions between more distantly related pairs of species. We
 expect to find homologies mainly in coding regions.</p>
 
-[[INCLUDE::/info/data/compara/tblat.html]]
+[[INCLUDE::/info/data/compara/tblat.inc]]
 <h3>PECAN Analysis</h3>
 
 <p>Pecan is used to provide global multiple genomic alignments. First,
@@ -77,19 +77,21 @@ entirely in Java and also requires the installation of Exonerate.
 <p>Additionally we use Gerp
 (<a href="http://www.genome.org/cgi/content/abstract/15/7/901">Cooper
 GM et al., Genome Res., 2005; 15:901-913</a>) to calculate conservation
-scores and call constrained elements on the 9 way multiple alignments.
+scores and call constrained elements on the 10 way multiple alignments.
 Conservation scores are estimated on a column-by-column basis.
 Constrained elements are stretches of the multiple alignment where the
 sequences are highly conserved according to the previous score.</p>
 
-[[INCLUDE::/info/data/compara/pecan.html]]
+[[INCLUDE::/info/data/compara/pecan.inc]]
 <h3>Synteny Analysis</h3>
 
 <p>We calculate syntenic regions using blastz-net alignments. We look for
-stretches where the alignment blocks are in synteny. We do not allow gaps
-longer than 100 kbp betweeen consecutive alignment blocks and we keep only
-syntenic regions which are at least 100 kbp long.</p>
+stretches where the alignment blocks are in synteny. The search is run in
+two phases. In the first one, syntenic alignments that are closer than 200
+kbp are grouped. In the second phase, the groups that are in synteny are
+linked provided that no more than 2 non-syntenic groups are found between
+them and they are less than 3Mbp apart.</p>
 
-[[INCLUDE::/info/data/compara/synteny.html]]
+[[INCLUDE::/info/data/compara/synteny.inc]]
 </body>
 </html>
