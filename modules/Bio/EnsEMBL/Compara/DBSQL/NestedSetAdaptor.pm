@@ -152,7 +152,7 @@ sub fetch_subroot_by_left_right_index {
 sub update {
   my ($self, $node) = @_;
 
-  unless($node->isa('Bio::EnsEMBL::Compara::NestedSet')) {
+  unless(UNIVERSAL::isa($node, 'Bio::EnsEMBL::Compara::NestedSet')) {
     throw("set arg must be a [Bio::EnsEMBL::Compara::NestedSet] not a $node");
   }
 
@@ -181,7 +181,7 @@ sub update_subtree {
 
   $self->update($node);
 
-  foreach my $child ($node->children) {
+  foreach my $child (@{$node->children}) {
     $self->update_subtree($child);
   }
 }
