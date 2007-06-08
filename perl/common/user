@@ -11,13 +11,27 @@ use EnsEMBL::Web::Controller;
 
 my $controller = EnsEMBL::Web::Controller->new;
 
+## Login basics
+$controller->add_connection({ 'login' => 'EnsEMBL::Web::Controller::Command::User::LogIn' });
+$controller->add_connection({ 'set_cookie' => 'EnsEMBL::Web::Controller::Command::User::SetCookie' });
+$controller->add_connection({ 'logged_in' => 'EnsEMBL::Web::Controller::Command::User::LoggedIn' });
+$controller->add_connection({ 'logout' => 'EnsEMBL::Web::Controller::Command::User::LogOut' });
+
+## Account management 
 $controller->add_connection({ 'register' => 'EnsEMBL::Web::Controller::Command::User::Register' }); 
-$controller->add_connection({ 'activate' => 'EnsEMBL::Web::Controller::Command::User::Activate' }); 
+$controller->add_connection({ 'send_activation' => 'EnsEMBL::Web::Controller::Command::User::SendActivation' }); 
+$controller->add_connection({ 'email_sent' => 'EnsEMBL::Web::Controller::Command::User::EmailSent' }); 
+$controller->add_connection({ 'activate' => 'EnsEMBL::Web::Controller::Command::User::EnterPassword' }); 
 $controller->add_connection({ 'account' => 'EnsEMBL::Web::Controller::Command::User::Account' }); 
+$controller->add_connection({ 'lost_password' => 'EnsEMBL::Web::Controller::Command::User::LostPassword' }); 
+$controller->add_connection({ 'reset_password' => 'EnsEMBL::Web::Controller::Command::User::EnterPassword' }); 
+$controller->add_connection({ 'save_password' => 'EnsEMBL::Web::Controller::Command::User::SavePassword' }); 
+$controller->add_connection({ 'update' => 'EnsEMBL::Web::Controller::Command::User::UpdateAccount' }); 
+
+## User records
 $controller->add_connection({ 'share_record' => 'EnsEMBL::Web::Controller::Command::User::ShareRecord' }); 
 $controller->add_connection({ 'save_favourites' => 'EnsEMBL::Web::Controller::Command::User::SaveFavourites' }); 
 $controller->add_connection({ 'reset_favourites' => 'EnsEMBL::Web::Controller::Command::User::ResetFavourites' }); 
-$controller->add_connection({ 'reset_password' => 'EnsEMBL::Web::Controller::Command::User::ResetPassword' }); 
 $controller->add_connection({ 'remove_invite' => 'EnsEMBL::Web::Controller::Command::User::RemoveInvite' }); 
 $controller->add_connection({ 'save_das' => 'EnsEMBL::Web::Controller::Command::User::SaveDas' }); 
 $controller->add_connection({ 'annotation' => 'EnsEMBL::Web::Controller::Command::User::SaveAnnotation' }); 
