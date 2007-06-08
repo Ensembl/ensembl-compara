@@ -85,9 +85,15 @@ my $genome_db_adaptor = $compara_db_adaptor->get_GenomeDBAdaptor();
 
 my $species = [
         "homo_sapiens",
-#         "mus_musculus",
+        "mus_musculus",
         "rattus_norvegicus",
         "gallus_gallus",
+	"bos_taurus",
+	"canis_familiaris",
+	"macaca_mulatta",
+	"monodelphis_domestica",
+	"ornithorhynchus_anatinus",
+	"pan_troglodytes",
     ];
 
 my $species_db;
@@ -128,13 +134,17 @@ my $sth = $compara_db_adaptor->dbc->prepare("
     SELECT
       ga1.genomic_align_id, ga2.genomic_align_id, gab.genomic_align_block_id,
       gab.method_link_species_set_id, gab.score, gab.perc_id, gab.length
-    FROM genomic_align ga1, genomic_align ga2, genomic_align_block gab
+    FROM genomic_align ga1, genomic_align ga2, genomic_align_block gab,
+      dnafrag df, genome_db gdb
     WHERE ga1.genomic_align_block_id = ga2.genomic_align_block_id
       and ga1.genomic_align_id != ga2.genomic_align_id
       and ga1.genomic_align_block_id = gab.genomic_align_block_id
-      and ga1.cigar_line LIKE \"\%D\%\" and ga2.cigar_line LIKE \"\%D\%\" LIMIT 1");
+      and ga1.cigar_line LIKE \"\%D\%\" and ga2.cigar_line LIKE \"\%D\%\" 
+      and ga1.dnafrag_strand = 1 and ga2.dnafrag_strand = 1 and
+      ga1.dnafrag_id = df.dnafrag_id and df.genome_db_id = gdb.genome_db_id and
+      gdb.name = 'Homo sapiens' LIMIT 1");
 $sth->execute();
-my ($genomic_algin_1_dbID, $genomic_algin_2_dbID, $genomic_align_block_id,
+my ($genomic_align_1_dbID, $genomic_align_2_dbID, $genomic_align_block_id,
     $method_link_species_set_id, $score, $perc_id, $length) =
     $sth->fetchrow_array();
 $sth->finish();
@@ -143,15 +153,15 @@ my $genomic_align_blocks;
 my $genomic_align_block;
 my $method_link_species_set =
   $method_link_species_set_adaptor->fetch_by_dbID($method_link_species_set_id);
-my $genomic_align_1 = $genomic_align_adaptor->fetch_by_dbID($genomic_algin_1_dbID);
-my $genomic_align_2 = $genomic_align_adaptor->fetch_by_dbID($genomic_algin_2_dbID);
+my $genomic_align_1 = $genomic_align_adaptor->fetch_by_dbID($genomic_align_1_dbID);
+my $genomic_align_2 = $genomic_align_adaptor->fetch_by_dbID($genomic_align_2_dbID);
 my $genomic_align_array = [$genomic_align_1, $genomic_align_2];
 
 
 my $slice_coord_system_name = "chromosome";
-my $slice_seq_region_name = "14";
-my $slice_start = 50000000;
-my $slice_end = 50005000;
+my $slice_seq_region_name = "16";
+my $slice_start = 72888000;
+my $slice_end = 72893000;
 my $dnafrag_id = $compara_db_adaptor->dbc->db_handle->selectrow_array("
     SELECT dnafrag_id FROM dnafrag df, genome_db gdb
     WHERE df.genome_db_id = gdb.genome_db_id
@@ -213,6 +223,7 @@ debug("Test Bio::EnsEMBL::Compara::DBSQL::GenomicAlignBlockAdaptor->fetch_all_by
           $slice_start,
           $slice_end
       );
+
   $all_genomic_align_blocks = $genomic_align_block_adaptor->fetch_all_by_MethodLinkSpeciesSet_Slice(
       $method_link_species_set, $slice);
   do {
@@ -295,6 +306,7 @@ debug("Test restrict option of the fetching methods");
             $genomic_align_1->dnafrag_start + $nucl - 1,
             $genomic_align_1->dnafrag_start + $nucl + length($gap),
         );
+
     $all_genomic_align_blocks = $genomic_align_block_adaptor->fetch_all_by_MethodLinkSpeciesSet_Slice(
             $method_link_species_set,
             $slice,

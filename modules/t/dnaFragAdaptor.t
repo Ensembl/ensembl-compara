@@ -72,7 +72,7 @@ use Bio::EnsEMBL::Test::TestUtils;
 BEGIN {
   $| = 1;
   use Test;
-  plan tests => 41;
+  plan tests => 48;
 }
 
 #####################################################################
@@ -84,9 +84,15 @@ my $genome_db_adaptor = $compara_db_adaptor->get_GenomeDBAdaptor();
 
 my $species = [
         "homo_sapiens",
-#         "mus_musculus",
+        "mus_musculus",
         "rattus_norvegicus",
         "gallus_gallus",
+	"bos_taurus",
+	"canis_familiaris",
+	"macaca_mulatta",
+	"monodelphis_domestica",
+	"ornithorhynchus_anatinus",
+	"pan_troglodytes",	     
     ];
 
 ## Connect to core DB specified in the MultiTestDB.conf file
@@ -111,7 +117,7 @@ ok($dnafrag_adaptor, '/^Bio::EnsEMBL::Compara::DBSQL::DnaFragAdaptor/',
 #####################################################################
 ## Values matching entries in the test DB
 
-my @species_names = ("Homo sapiens", "Rattus norvegicus", "Gallus gallus");
+my @species_names = ("Homo sapiens", "Mus musculus", "Rattus norvegicus", "Gallus gallus", "Bos taurus", "Canis familiaris", "Macaca mulatta", "Monodelphis domestica", "Ornithorhynchus anatinus", "Pan troglodytes");
 
 ##
 #####################################################################
@@ -120,7 +126,7 @@ my $sth;
 $sth = $multi->get_DBAdaptor( "compara" )->dbc->prepare("SELECT
       dnafrag_id, length, df.name, df.genome_db_id, coord_system_name
     FROM dnafrag df left join genome_db gdb using (genome_db_id)
-    WHERE df.name = \"14\" and gdb.name = \"$species_names[0]\"");
+    WHERE df.name = \"16\" and gdb.name = \"$species_names[0]\"");
 $sth->execute();
 my ($dnafrag_id, $dnafrag_length, $dnafrag_name, $genome_db_id, $coord_system_name) =
     $sth->fetchrow_array();
@@ -210,7 +216,6 @@ foreach my $this_species_name (@species_names) {
 
 $dnafrags = $dnafrag_adaptor->fetch_all();
 ok(@$dnafrags, $num_of_dnafrags, "Fetching all");
-
 
 $dnafrag = $dnafrag_adaptor->fetch_by_dbID($dnafrag_id);
 $multi->hide("compara", "dnafrag");

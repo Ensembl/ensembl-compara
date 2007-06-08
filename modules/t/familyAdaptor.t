@@ -33,13 +33,14 @@ my $ma = $compara_dba->get_MemberAdaptor;
 my $fa = $compara_dba->get_FamilyAdaptor;
 my $mlssa = $compara_dba->get_MethodLinkSpeciesSetAdaptor;
 
-
-my $stable_id = "ENSG00000119787";
 my $source = "ENSEMBLGENE";
-my $family_id = 1209;
-my $family_stable_id = "ENSF00000001209";
-my $family_description = "ATLASTIN GTP BINDING 3 GUANINE NUCLEOTIDE BINDING 3";
-my $family_method_link_species_set_id = 30003;
+my ($family_id, $family_stable_id, $family_description, $family_method_link_species_set_id,
+    $stable_id) = $compara_dba->dbc->db_handle->selectrow_array("
+        SELECT family_id, family.stable_id, family.description,
+          method_link_species_set_id, member.stable_id
+        FROM family LEFT JOIN family_member USING (family_id)
+          LEFT JOIN member USING (member_id) LEFT JOIN genome_db USING (genome_db_id)
+        WHERE source_name = '$source' AND genome_db.name = 'Homo sapiens' LIMIT 1");
 
 #######
 #  1  #

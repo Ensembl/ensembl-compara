@@ -87,6 +87,13 @@ my $multi = Bio::EnsEMBL::Test::MultiTestDB->new( "multi" );
 my $homo_sapiens = Bio::EnsEMBL::Test::MultiTestDB->new("homo_sapiens");
 my $mus_musculus = Bio::EnsEMBL::Test::MultiTestDB->new("mus_musculus");
 my $rattus_norvegicus = Bio::EnsEMBL::Test::MultiTestDB->new("rattus_norvegicus");
+Bio::EnsEMBL::Test::MultiTestDB->new("gallus_gallus");
+Bio::EnsEMBL::Test::MultiTestDB->new("bos_taurus");
+Bio::EnsEMBL::Test::MultiTestDB->new("canis_familiaris");
+Bio::EnsEMBL::Test::MultiTestDB->new("macaca_mulatta");
+Bio::EnsEMBL::Test::MultiTestDB->new("monodelphis_domestica");
+Bio::EnsEMBL::Test::MultiTestDB->new("ornithorhynchus_anatinus");
+Bio::EnsEMBL::Test::MultiTestDB->new("pan_troglodytes");
 
 my $compara_db = $multi->get_DBAdaptor( "compara" );
 

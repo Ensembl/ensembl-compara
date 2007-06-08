@@ -38,9 +38,9 @@ my $ma = $compara_dba->get_MemberAdaptor;
 
 my ($member_id, $stable_id, $version, $source_name, $taxon_id, $genome_db_id, $sequence_id,
     $gene_member_id, $description, $chr_name, $chr_start, $chr_end, $chr_strand) =
-        $compara_dba->dbc->db_handle->selectrow_array("SELECT * FROM member WHERE stable_id = 'ENSG00000119787'");
+        $compara_dba->dbc->db_handle->selectrow_array("SELECT * FROM member WHERE source_name = 'ENSEMBLGENE' LIMIT 1");
 
-my $member = $ma->fetch_by_source_stable_id("ENSEMBLGENE","ENSG00000119787");
+my $member = $ma->fetch_by_source_stable_id("ENSEMBLGENE", $stable_id);
 
 ok($member);
 ok( $member->dbID,  $member_id);
@@ -59,9 +59,9 @@ ok( ! $member->sequence_id );
 
 ($member_id, $stable_id, $version, $source_name, $taxon_id, $genome_db_id, $sequence_id,
     $gene_member_id, $description, $chr_name, $chr_start, $chr_end, $chr_strand) =
-        $compara_dba->dbc->db_handle->selectrow_array("SELECT * FROM member WHERE stable_id = 'ENSP00000013125'");
+        $compara_dba->dbc->db_handle->selectrow_array("SELECT * FROM member WHERE source_name = 'ENSEMBLPEP' LIMIT 1");
 
-$member = $ma->fetch_by_source_stable_id("ENSEMBLPEP","ENSP00000013125");
+$member = $ma->fetch_by_source_stable_id("ENSEMBLPEP", $stable_id);
 
 ok($member);
 ok( $member->dbID,  $member_id);

@@ -70,7 +70,7 @@ BEGIN { $| = 1; plan tests => 8 }
 
 use Bio::EnsEMBL::Test::MultiTestDB;
 
-my $num_of_species = 19;
+my $num_of_species = 35;
 
 # Database will be dropped when this
 # object goes out of scope

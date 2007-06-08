@@ -125,7 +125,7 @@ sub print_matches {
 #  1  #
 #######
 
-my $slice = $hs_dba->get_SliceAdaptor->fetch_by_region('toplevel',14,50000010,50249000);
+my $slice = $hs_dba->get_SliceAdaptor->fetch_by_region('toplevel',16,72888001,73088000);
 my $chicken_matches =
 	$dafa->fetch_all_by_Slice($slice, $chicken_name, $chicken_assembly, "BLASTZ_NET");
 
@@ -155,9 +155,9 @@ $rat_matches = $dafa->fetch_all_by_species_region(
         $human_assembly,
         $rat_name,
         $rat_assembly,
-        "14",
-        50000010,
-        50000020,
+        "16",
+        72892156,
+        72892742,
         "BLASTZ_NET",
         0,
         "chromosome"
@@ -165,11 +165,11 @@ $rat_matches = $dafa->fetch_all_by_species_region(
 
 $num = scalar(@$rat_matches);
 ok($num, 1);
-ok($rat_matches->[0]->{'seqname'}, "14",
+ok($rat_matches->[0]->{'seqname'}, "16",
     "found an alignment outside of the searching region (unexpected name)!");
-ok($rat_matches->[0]->{'start'} < 50000020, 1,
+ok($rat_matches->[0]->{'start'} < 72892742, 1,
     "found an alignment outside of the searching region (unexpected start)!");
-ok($rat_matches->[0]->{'end'} > 50000010, 1,
+ok($rat_matches->[0]->{'end'} > 72892156, 1,
     "found an alignment outside of the searching region (unexpected end)!");
 ok($rat_matches->[0]->{'strand'}, 1, "Human should be in the +1 strand...");
 ok($rat_matches->[0]->{'species'}, "Homo sapiens",

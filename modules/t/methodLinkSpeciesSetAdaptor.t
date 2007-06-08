@@ -64,10 +64,20 @@ use Bio::EnsEMBL::Test::TestUtils;
 # switch off the debug prints
 our $verbose = 0;
 
+# switch off the deprecated warning messages
+verbose("WARNING");
+
 my $multi = Bio::EnsEMBL::Test::MultiTestDB->new( "multi" );
 my $homo_sapiens = Bio::EnsEMBL::Test::MultiTestDB->new("homo_sapiens");
 my $mus_musculus = Bio::EnsEMBL::Test::MultiTestDB->new("mus_musculus");
 my $rattus_norvegicus = Bio::EnsEMBL::Test::MultiTestDB->new("rattus_norvegicus");
+Bio::EnsEMBL::Test::MultiTestDB->new("gallus_gallus");
+Bio::EnsEMBL::Test::MultiTestDB->new("bos_taurus");
+Bio::EnsEMBL::Test::MultiTestDB->new("canis_familiaris");
+Bio::EnsEMBL::Test::MultiTestDB->new("macaca_mulatta");
+Bio::EnsEMBL::Test::MultiTestDB->new("monodelphis_domestica");
+Bio::EnsEMBL::Test::MultiTestDB->new("ornithorhynchus_anatinus");
+Bio::EnsEMBL::Test::MultiTestDB->new("pan_troglodytes");
 
 my $compara_db = $multi->get_DBAdaptor( "compara" );
   
@@ -320,13 +330,13 @@ debug("Test Bio::EnsEMBL::Compara::DBSQL::MethodLinkSpeciesSetAdaptor::fetch_all
           $blastz_net_method_link_id,
           $genome_db_adaptor->fetch_by_dbID($human_genome_db_id)
       );
-  ok(scalar(@{$method_link_species_sets}), 2);
+  ok(scalar(@{$method_link_species_sets}), 9);
 
 debug("Test Bio::EnsEMBL::Compara::DBSQL::MethodLinkSpeciesSetAdaptor::fetch_all_by_method_link_id_genome_db_id");
   $method_link_species_sets = $method_link_species_set_adaptor->fetch_all_by_method_link_id_genome_db_id(
           $blastz_net_method_link_id,
           $human_genome_db_id);
-  ok(scalar(@{$method_link_species_sets}), 2);
+  ok(scalar(@{$method_link_species_sets}), 9);
 
 # 
 # 29. Test fetch_all_by_genome_db_id [2]
@@ -336,7 +346,7 @@ debug("Test Bio::EnsEMBL::Compara::DBSQL::MethodLinkSpeciesSetAdaptor::fetch_all
           "BLASTZ_NET",
           $genome_db_adaptor->fetch_by_dbID($human_genome_db_id)
       );
-  ok(scalar(@{$method_link_species_sets}), 2);
+  ok(scalar(@{$method_link_species_sets}), 9);
 
 # 
 # 30. Test fetch_all_by_genome_db_id [2]
@@ -345,7 +355,7 @@ debug("Test Bio::EnsEMBL::Compara::DBSQL::MethodLinkSpeciesSetAdaptor::fetch_all
   $method_link_species_sets = $method_link_species_set_adaptor->fetch_all_by_method_link_type_genome_db_id(
           "BLASTZ_NET",
           $human_genome_db_id);
-  ok(scalar(@{$method_link_species_sets}), 2);
+  ok(scalar(@{$method_link_species_sets}), 9);
 
 # 
 # 31. Test fetch_by_method_link_type_GenomeDBs

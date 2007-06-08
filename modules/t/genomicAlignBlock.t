@@ -66,7 +66,7 @@ use strict;
 
 BEGIN { $| = 1;  
     use Test;
-    plan tests => 72;
+    plan tests => 78;
 }
 
 use Bio::EnsEMBL::Utils::Exception qw (warning verbose);
@@ -83,9 +83,15 @@ my $genome_db_adaptor = $compara_db_adaptor->get_GenomeDBAdaptor();
 
 my $species = [
         "homo_sapiens",
-#         "mus_musculus",
+        "mus_musculus",
         "rattus_norvegicus",
         "gallus_gallus",
+	"bos_taurus",
+	"canis_familiaris",
+	"macaca_mulatta",
+	"monodelphis_domestica",
+	"ornithorhynchus_anatinus",
+	"pan_troglodytes",	
     ];
 
 my $species_db;
@@ -139,9 +145,10 @@ my $sth = $compara_db_adaptor->dbc->prepare("
     WHERE ga1.genomic_align_block_id = ga2.genomic_align_block_id
       and ga1.genomic_align_id != ga2.genomic_align_id
       and ga1.genomic_align_block_id = gab.genomic_align_block_id
-      and ga1.cigar_line LIKE \"\%D\%\" and ga2.cigar_line LIKE \"\%D\%\" LIMIT 1");
+      and ga1.cigar_line LIKE \"\%D\%\" and ga2.cigar_line LIKE \"\%D\%\"
+      and ga1.dnafrag_strand = 1 and ga2.dnafrag_strand = 1 LIMIT 1");
 $sth->execute();
-my ($genomic_algin_1_dbID, $genomic_algin_2_dbID, $genomic_align_block_id,
+my ($genomic_align_1_dbID, $genomic_align_2_dbID, $genomic_align_block_id,
     $method_link_species_set_id, $score, $perc_id, $length) =
     $sth->fetchrow_array();
 $sth->finish();
@@ -150,16 +157,16 @@ my $genomic_align_blocks;
 my $genomic_align_block;
 my $method_link_species_set =
   $method_link_species_set_adaptor->fetch_by_dbID($method_link_species_set_id);
-my $genomic_align_1 = $genomic_align_adaptor->fetch_by_dbID($genomic_algin_1_dbID);
-my $genomic_align_2 = $genomic_align_adaptor->fetch_by_dbID($genomic_algin_2_dbID);
+my $genomic_align_1 = $genomic_align_adaptor->fetch_by_dbID($genomic_align_1_dbID);
+my $genomic_align_2 = $genomic_align_adaptor->fetch_by_dbID($genomic_align_2_dbID);
 my $genomic_align_array = [$genomic_align_1, $genomic_align_2];
 die if (!$species_db);
 print STDERR $species_db;
 my $slice_adaptor = $species_db->{"homo_sapiens"}->get_DBAdaptor("core")->get_SliceAdaptor();
 my $slice_coord_system_name = "chromosome";
-my $slice_seq_region_name = "14";
-my $slice_start = 50000000;
-my $slice_end = 50251000;
+my $slice_seq_region_name = "16";
+my $slice_start = 72888001;
+my $slice_end = 73088000;
 
 # 
 # 1
@@ -264,7 +271,6 @@ debug("Test Bio::EnsEMBL::Compara::GenomicAlignBlock->method_link_species_set_id
 # 17
 # 
 debug("Test Bio::EnsEMBL::Compara::GenomicAlignBlock->reference_genomic_align_id method");
-  verbose("EXCEPTION");
   $genomic_align_block = new Bio::EnsEMBL::Compara::GenomicAlignBlock(
           -adaptor => $genomic_align_block_adaptor,
           -dbID => $genomic_align_block_id,
@@ -301,8 +307,7 @@ debug("Test Bio::EnsEMBL::Compara::GenomicAlignBlock->get_all_non_reference_geno
   $genomic_align_blocks->[0]->{reference_genomic_align_id} = undef;
   ok(@{$genomic_align_blocks->[0]->get_all_non_reference_genomic_aligns}, 1,
       "Testing get_all_non_referenfe_genomic_aligns when reference_genomic_align has no dbID");
-  
-  verbose("DEPRECATE");
+
 
 # 
 # 20
@@ -586,7 +591,8 @@ $genomic_align_block = $genomic_align_block_adaptor->fetch_by_dbID($genomic_alig
 do {
   my $length = length($genomic_align_block->get_all_GenomicAligns->[0]->aligned_sequence);
   my $cigar_line = $genomic_align_block->get_all_GenomicAligns->[0]->cigar_line;
-  my ($match, $gap) = $cigar_line =~ /^(\d*)M(\d*)D/; ## This test asumes the alignment starts with a match...
+  my ($match, $gap) = $cigar_line =~ /^(\d*)M(\d*)D/; ## This test asumes the alignment starts with a match on the forward strand...
+
   $match = 1 if (!$match);
   $gap = 1 if (!$gap);
   $genomic_align_block = $genomic_align_block_adaptor->fetch_by_dbID($genomic_align_block_id);

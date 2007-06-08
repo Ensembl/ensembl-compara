@@ -86,9 +86,15 @@ my $genome_db_adaptor = $compara_db_adaptor->get_GenomeDBAdaptor();
 
 my $species = [
         "homo_sapiens",
-#         "mus_musculus",
+        "mus_musculus",
         "rattus_norvegicus",
         "gallus_gallus",
+	"bos_taurus",
+	"canis_familiaris",
+	"macaca_mulatta",
+	"monodelphis_domestica",
+	"ornithorhynchus_anatinus",
+	"pan_troglodytes",
     ];
 
 ## Connect to core DB specified in the MultiTestDB.conf file
@@ -112,10 +118,10 @@ ok(!$dnafrag_adaptor, "", "Checking Bio::EnsEMBL::Compara::DBSQL::DnaFragAdaptor
 ok(!$dummy_db, "", "Checking Bio::EnsEMBL::Compara::GenomeDB object");
 
 my $dnafrag;
-my $dbID = 905410;
+my $dbID = 905401;
 my $adaptor = $dnafrag_adaptor;
-my $length = 106368585;
-my $name = "14";
+my $length = 88827254;
+my $name = "16";
 my $genome_db_id = 22;
 my $genome_db = $genome_db_adaptor->fetch_by_dbID($genome_db_id);
 my $coord_system_name = "chromosome";
@@ -189,6 +195,7 @@ ok($dnafrag->slice, '/^Bio::EnsEMBL::Slice/', "Checking slice getter method");
 
 
 # Test deprecated methods...
+my $prev_verbose_level = verbose();
 verbose(0);
 ok( test_getter_setter( $dnafrag, "start", 1 ), 1,
     "Testing DEPRECATED Bio::EnsEMBL::Compara::DnaFrag::start method ");
@@ -198,4 +205,4 @@ ok( test_getter_setter( $dnafrag, "genomedb", $dummy_db ), 1,
     "Testing DEPRECATED Bio::EnsEMBL::Compara::DnaFrag::genomedb method ");
 ok( test_getter_setter( $dnafrag, "type", "dummy" ), 1,
     "Testing DEPRECATED Bio::EnsEMBL::Compara::DnaFrag::type method ");
-verbose('WARNING');
+verbose($prev_verbose_level);

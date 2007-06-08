@@ -96,8 +96,8 @@ my $genome_db;
 my $dbID = 1;
 my $taxon_id = 9606;
 my $name = "Homo sapiens";
-my $assembly = "NCBI34";
-my $genebuild = "0405Ensembl";
+my $assembly = "NCBI36";
+my $genebuild = "0510Ensembl";
 
 $genome_db = new Bio::EnsEMBL::Compara::GenomeDB();
 ok($genome_db, '/^Bio::EnsEMBL::Compara::GenomeDB/', "Testing new method");

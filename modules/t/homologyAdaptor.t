@@ -33,8 +33,16 @@ my $ma = $compara_dba->get_MemberAdaptor;
 my $ha = $compara_dba->get_HomologyAdaptor;
 my $mlssa = $compara_dba->get_MethodLinkSpeciesSetAdaptor;
 
-my $member_stable_id = "ENSG00000012983";
-my $method_link_type = "ENSEMBL_HOMOLOGUES";
+my $member_stable_id = $compara_dba->dbc->db_handle->selectrow_array("SELECT m1.stable_id
+        FROM genome_db gdb1
+          LEFT JOIN member m1 USING (genome_db_id)
+          LEFT JOIN homology_member hm1 USING (member_id)
+          LEFT JOIN homology using (homology_id)
+          LEFT JOIN homology_member hm2 using (homology_id)
+          LEFT JOIN member m2 on (hm2.member_id = m2.member_id)
+          LEFT JOIN genome_db gdb2 on (m2.genome_db_id = gdb2.genome_db_id)
+        WHERE gdb1.name = 'Homo sapiens' and gdb2.name = 'Rattus norvegicus' LIMIT 1");
+my $method_link_type = "ENSEMBL_ORTHOLOGUES";
 
 #######
 #  1  #

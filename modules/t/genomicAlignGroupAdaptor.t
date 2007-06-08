@@ -68,7 +68,7 @@ use strict;
 
 BEGIN { $| = 1;  
     use Test;
-    plan tests => 48;
+    plan tests => 35;
 }
 
 use Bio::EnsEMBL::Utils::Exception qw (warning verbose);
@@ -86,9 +86,15 @@ my $genome_db_adaptor = $compara_db_adaptor->get_GenomeDBAdaptor();
 
 my $species = [
         "homo_sapiens",
-#         "mus_musculus",
+        "mus_musculus",
         "rattus_norvegicus",
         "gallus_gallus",
+	 "bos_taurus",
+	"canis_familiaris",
+	"macaca_mulatta",
+	"monodelphis_domestica",
+	"ornithorhynchus_anatinus",
+	"pan_troglodytes",
     ];
 
 my $species_db;
@@ -287,67 +293,6 @@ debug("Test Bio::EnsEMBL::Compara::DBSQL::GenomicAlignGroupAdaptor::fetch_by_Gen
     ok($all_fails, undef);
   };
 
-
-verbose(0);
-
-# 
-# 29-35
-# 
-debug("Test Bio::EnsEMBL::Compara::DBSQL::GenomicAlignGroupAdaptor::fetch_by_GenomicAlign_and_type [2]");
-  $genomic_align_group = $genomic_align_group_adaptor->fetch_by_GenomicAlign_and_type($genomic_align_1_id,
-          $genomic_align_group_type);
-  ok($genomic_align_group->isa("Bio::EnsEMBL::Compara::GenomicAlignGroup"));
-  ok($genomic_align_group->adaptor, $genomic_align_group_adaptor);
-  ok($genomic_align_group->dbID, $genomic_align_group_id);
-  ok($genomic_align_group->type, $genomic_align_group_type);
-  ok(scalar(@{$genomic_align_group->genomic_align_array}), scalar(@{$genomic_align_array}));
-  do {
-    my $all_fails;
-    foreach my $this_genomic_align (@{$genomic_align_group->genomic_align_array}) {
-      my $fail = $this_genomic_align->dbID;
-      foreach my $that_genomic_align (@$genomic_align_array) {
-        if ($that_genomic_align->dbID == $this_genomic_align->dbID) {
-          $fail = undef;
-          last;
-        }
-      }
-      $all_fails .= " <$fail> " if ($fail);
-    }
-    ok($all_fails, undef);
-  };
-
-
-# 
-# 22-28
-# 
-debug("Test Bio::EnsEMBL::Compara::DBSQL::GenomicAlignGroupAdaptor::fetch_by_GenomicAlign_and_type [1]");
-  $genomic_align_group = $genomic_align_group_adaptor->fetch_by_GenomicAlign_and_type($genomic_align_1,
-          $genomic_align_group_type);
-  ok($genomic_align_group->isa("Bio::EnsEMBL::Compara::GenomicAlignGroup"));
-  ok($genomic_align_group->adaptor, $genomic_align_group_adaptor);
-  ok($genomic_align_group->dbID, $genomic_align_group_id);
-  ok($genomic_align_group->type, $genomic_align_group_type);
-  ok(scalar(@{$genomic_align_group->genomic_align_array}), scalar(@{$genomic_align_array}));
-  do {
-    my $all_fails;
-    my $has_original_GA_been_found = 0;
-    foreach my $this_genomic_align (@{$genomic_align_group->genomic_align_array}) {
-      my $fail = $this_genomic_align->dbID;
-      if ($this_genomic_align->dbID == $genomic_align_1->dbID) {
-        $has_original_GA_been_found = 1;
-        ok($genomic_align_group->dbID, $genomic_align_1->genomic_align_group_by_type($genomic_align_group->type)->dbID);
-      }
-      foreach my $that_genomic_align (@$genomic_align_array) {
-        if ($that_genomic_align->dbID == $this_genomic_align->dbID) {
-          $fail = undef;
-          last;
-        }
-      }
-      $all_fails .= " <$fail> " if ($fail);
-    }
-    $all_fails .= " Cannot retrieve original GenomicAlign object! " if (!$has_original_GA_been_found);
-    ok($all_fails, undef);
-  };
 
 debug("Test Bio::EnsEMBL::Compara::DBSQL::GenomicAlignGroupAdaptor::store");
   $genomic_align_group = $genomic_align_group_adaptor->fetch_by_dbID($genomic_align_group_id);

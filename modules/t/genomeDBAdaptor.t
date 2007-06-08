@@ -84,9 +84,15 @@ my $genome_db_adaptor = $compara_db_adaptor->get_GenomeDBAdaptor();
 
 my $species = [
         "homo_sapiens",
-#         "mus_musculus",
+        "mus_musculus",
         "rattus_norvegicus",
         "gallus_gallus",
+        "bos_taurus",
+	"canis_familiaris",
+	"macaca_mulatta",
+	"monodelphis_domestica",
+	"ornithorhynchus_anatinus",
+	"pan_troglodytes", 
     ];
 
 ## Connect to core DB specified in the MultiTestDB.conf file
@@ -105,10 +111,10 @@ foreach my $this_species (@$species) {
 
 my $genome_db;
 my $all_genome_dbs;
-my $num_of_genomes = 19;
+my $num_of_genomes = 35;
 my $genome_db_id = 22;
 my $method_link_id = 1;
-my $num_of_db_links = 2;
+my $num_of_db_links = 9;
 
 $genome_db = $genome_db_adaptor->fetch_by_dbID($genome_db_id);
 ok($genome_db, '/^Bio::EnsEMBL::Compara::GenomeDB/', "Fetching Bio::EnsEMBL::Compara::GenomeDB by dbID");

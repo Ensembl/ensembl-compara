@@ -84,15 +84,23 @@ our $verbose = 0;
 #####################################################################
 ## Connect to the test database using the MultiTestDB.conf file
 
+verbose("EXCEPTION");
+
 my $multi = Bio::EnsEMBL::Test::MultiTestDB->new( "multi" );
 my $compara_db_adaptor = $multi->get_DBAdaptor( "compara" );
 my $genome_db_adaptor = $compara_db_adaptor->get_GenomeDBAdaptor();
 
 my $species = [
         "homo_sapiens",
-#         "mus_musculus",
+        "mus_musculus",
         "rattus_norvegicus",
         "gallus_gallus",
+	"bos_taurus",
+	"canis_familiaris",
+	"macaca_mulatta",
+	"monodelphis_domestica",
+	"ornithorhynchus_anatinus",
+	"pan_troglodytes"
     ];
 
 ## Connect to core DB specified in the MultiTestDB.conf file
@@ -123,12 +131,13 @@ my $sth;
 $sth = $compara_db_adaptor->dbc->prepare("SELECT
       genomic_align_id, genomic_align_block_id, method_link_species_set_id, dnafrag_id,
       dnafrag_start, dnafrag_end, dnafrag_strand, cigar_line, level_id
-    FROM genomic_align WHERE level_id = 1 and dnafrag_strand = 1 LIMIT 1");
+    FROM genomic_align WHERE level_id = 1 and dnafrag_strand = 1 AND cigar_line like \"\%D\%\" LIMIT 1");
 $sth->execute();
 my ($dbID, $genomic_align_block_id, $method_link_species_set_id, $dnafrag_id,
     $dnafrag_start, $dnafrag_end, $dnafrag_strand, $cigar_line, $level_id) =
     $sth->fetchrow_array();
 $sth->finish();
+
 $sth = $compara_db_adaptor->dbc->prepare("SELECT
       group_id, type
     FROM genomic_align_group WHERE genomic_align_id = $dbID LIMIT 1");
@@ -137,16 +146,21 @@ my ($genomic_align_group_1_id, $genomic_align_group_1_type) =
     $sth->fetchrow_array();
 $sth->finish();
 
-
 my $genomic_align_block = $genomic_align_block_adaptor->fetch_by_dbID($genomic_align_block_id);
 my $method_link_species_set =
     $method_link_species_set_adaptor->fetch_by_dbID($method_link_species_set_id);
 my $dnafrag = $dnafrag_adaptor->fetch_by_dbID($dnafrag_id);
 my $genomic_align_group_1 =
     $genomic_align_group_adaptor->fetch_by_dbID($genomic_align_group_1_id);
-my $genomic_align_groups = [$genomic_align_group_1];
-my $aligned_sequence = "ATCCATAATTAC-----ACATTATATAAAACTGAAGAGCCTTTGTAGGGTAAATTTAGA---------AAGCAATTTCTTTTTGTGAAGTT-ATCTAATCCATATTAAGTTCTAAAATTAATATAGATTAGATATGGCTATACCAATGACATTCATTACTCATATCACTATACTGATGCAAATGAATACTGTGGTATGGTACATAATCACAATAAGA-AAAAAGCATGTATATCATATATCTGCATACATTTAATTCTGTAAAATTATGTTAATTTACAAAGACATATATAATTAAATATTGGCATGTCAGTAAAGCTTCTTAGGTTGTTGTAATCACTGACTA-TTTCTAACATAAAAGTGTTTTATACACACACATATGCAGAGTATTCTATAAATTTACATTAGAAGACAAGAAAAGCAATTTGTTTTAGCTGACAGCAACATTTT--AAAGTTTTCTCTAAGGCAGGGGTCAGCAAACTACAGCCCATGGGGAAAATCTAGTGCACTGCCTGCCTCTTTTTGTAAATA----TTTATTGAGTATTAAAACTATACCCACATATATACACTGTTTATGGCTGCTTCTGGGCTATAATGGCAGAACTCAGTAGTTGTGGCAGAGGCTGTATGGCCCACA";
-my $original_sequence = "ATCCATAATTACACATTATATAAAACTGAAGAGCCTTTGTAGGGTAAATTTAGAAAGCAATTTCTTTTTGTGAAGTTATCTAATCCATATTAAGTTCTAAAATTAATATAGATTAGATATGGCTATACCAATGACATTCATTACTCATATCACTATACTGATGCAAATGAATACTGTGGTATGGTACATAATCACAATAAGAAAAAAGCATGTATATCATATATCTGCATACATTTAATTCTGTAAAATTATGTTAATTTACAAAGACATATATAATTAAATATTGGCATGTCAGTAAAGCTTCTTAGGTTGTTGTAATCACTGACTATTTCTAACATAAAAGTGTTTTATACACACACATATGCAGAGTATTCTATAAATTTACATTAGAAGACAAGAAAAGCAATTTGTTTTAGCTGACAGCAACATTTTAAAGTTTTCTCTAAGGCAGGGGTCAGCAAACTACAGCCCATGGGGAAAATCTAGTGCACTGCCTGCCTCTTTTTGTAAATATTTATTGAGTATTAAAACTATACCCACATATATACACTGTTTATGGCTGCTTCTGGGCTATAATGGCAGAACTCAGTAGTTGTGGCAGAGGCTGTATGGCCCACA";
+my $genomic_align_groups =[];
+if (defined $genomic_align_group_1) {
+    $genomic_align_groups = [$genomic_align_group_1];
+}
+
+my $aligned_sequence = "AAGGTCCCTAGTCCTCTAAAAGTCCTTGAGTCCTACTCTGCTGAACCT-AACTGGTCAAGAACTAAGGACCTGATCAGCAAGGTTTGTGAGCATCAGTTGGCAAGTTCAAGGCCACTGCTTCCACTAGCAGAGAGGTGGTTGAGGTTCCTCCCAGTCACCACAGAGAAGATTTAACAAGTAAAAACCTGCAAACTCTTTATTAAATTCTCCCATTTCATCTGTACAGAAAAAAATGCACATTATGTTCAGAACATATCTCAGTAACATCTCAAAATTACACAGCATGAACATGTAAAAACAAGGGACCACCACGATTTTATACATAGAAAGGAAACCCATTTACAAAAGAGGCTTGTTAATTGTATTTTTTTCTTTCTTTCAAAAACAAAA---CAAAACAAAAA-AAGTGAAAAGCCTAAGATCTCACACAGCATTTGCTGTACAGACTGTTTTCCGGATGGACTGGTTTGGGAACACTGTGCTGGGGGAAGCTGCCCAGGAAGCGCTCCCGCTGC---CGGCTTTCCGGAGGTCTCTGCCCAGTGCACTGCAGGGGGACCTGGAGGGCCCATTTCTACCACCCTAGCATGTCTGACAGAAAGCCCTGCTGGGCTCTGGGGTCCAGATGTCAACTCTACATTGGAGGAGGCAAAACACAATCTAGAGGCA----CTGTCTGAACTTTCCCCTGGCCCAGGGAGATTTCTCCACTGCACACAGCACAGTGTCCTATACATGTGTCCTGGTGGAGCAGAGGGA-GCGGGAGAGGACC---ACGGGTCAGGATCCTGTCACCACCAGCCTGAGCAGACAGTCCCATCTTTGTGATCCAGGTGACAAATAATCAGTCCCTG-GTCCCCACAATGACCTCACCAGATGGCTTTGGGGAGCTCTTCACCCTAAAGATTCGGTCTGGTTTGCTAATGACTTATCTATTATCTGAAGTCTGTGGAGGAAG";
+
+my $original_sequence = "AAGGTCCCTAGTCCTCTAAAAGTCCTTGAGTCCTACTCTGCTGAACCTAACTGGTCAAGAACTAAGGACCTGATCAGCAAGGTTTGTGAGCATCAGTTGGCAAGTTCAAGGCCACTGCTTCCACTAGCAGAGAGGTGGTTGAGGTTCCTCCCAGTCACCACAGAGAAGATTTAACAAGTAAAAACCTGCAAACTCTTTATTAAATTCTCCCATTTCATCTGTACAGAAAAAAATGCACATTATGTTCAGAACATATCTCAGTAACATCTCAAAATTACACAGCATGAACATGTAAAAACAAGGGACCACCACGATTTTATACATAGAAAGGAAACCCATTTACAAAAGAGGCTTGTTAATTGTATTTTTTTCTTTCTTTCAAAAACAAAACAAAACAAAAAAAGTGAAAAGCCTAAGATCTCACACAGCATTTGCTGTACAGACTGTTTTCCGGATGGACTGGTTTGGGAACACTGTGCTGGGGGAAGCTGCCCAGGAAGCGCTCCCGCTGCCGGCTTTCCGGAGGTCTCTGCCCAGTGCACTGCAGGGGGACCTGGAGGGCCCATTTCTACCACCCTAGCATGTCTGACAGAAAGCCCTGCTGGGCTCTGGGGTCCAGATGTCAACTCTACATTGGAGGAGGCAAAACACAATCTAGAGGCACTGTCTGAACTTTCCCCTGGCCCAGGGAGATTTCTCCACTGCACACAGCACAGTGTCCTATACATGTGTCCTGGTGGAGCAGAGGGAGCGGGAGAGGACCACGGGTCAGGATCCTGTCACCACCAGCCTGAGCAGACAGTCCCATCTTTGTGATCCAGGTGACAAATAATCAGTCCCTGGTCCCCACAATGACCTCACCAGATGGCTTTGGGGAGCTCTTCACCCTAAAGATTCGGTCTGGTTTGCTAATGACTTATCTATTATCTGAAGTCTGTGGAGGAAG";
+
 
 # 
 # 1
@@ -467,6 +481,7 @@ debug("Test Bio::EnsEMBL::Compara::GenomicAlign::genomic_align_groups method");
       -adaptor => $genomic_align_adaptor,
       -dbID => $dbID,
       );
+
   ok(scalar(@{$genomic_align->genomic_align_groups}), scalar(@{$genomic_align_groups}),
           "Trying to get genomic_align_groups from the database");
   do {
@@ -498,30 +513,35 @@ debug("Test Bio::EnsEMBL::Compara::GenomicAlign::genomic_align_group_by_type met
       -adaptor => $genomic_align_adaptor,
       -dbID => $dbID,
       );
-  ok($genomic_align->genomic_align_group_by_type($genomic_align_group_1_type)->dbID,
-          $genomic_align_group_1_id, "Trying to get genomic_align_group_by_type from the database");
-  do {
-    my $all_fails;
-    my $this_genomic_align_group = $genomic_align->genomic_align_group_by_type($genomic_align_group_1_type);
-      foreach my $this_genomic_align (@{$this_genomic_align_group->genomic_align_array}) {
-      my $fail = $this_genomic_align_group->dbID;
-#       my $has_original_GA_been_found = 0;
-#       if ($this_genomic_align == $genomic_align_group_1) {
-#         $has_original_GA_been_found = 1;
-#         ok($this_genomic_align, $genomic_align_1->genomic_align_group_by_type($genomic_align_group->type));
-#       }
-      foreach my $that_genomic_align_group (@$genomic_align_groups) {
-        if ($that_genomic_align_group->dbID == $this_genomic_align_group->dbID) {
-          $fail = undef;
-          last;
-        }
-      }
-      $all_fails .= " <$fail> " if ($fail);
-#       $all_fails .= " Cannot retrieve original GenomicAlign object! " if (!$has_original_GA_been_found);
-    }
-    ok($all_fails, undef);
-  };
 
+#can only do these tests if the genomic_align_group table contains $genomic_align_group_1_type
+if (defined $genomic_align_group_1_type) {
+    ok($genomic_align->genomic_align_group_by_type($genomic_align_group_1_type)->dbID,
+       $genomic_align_group_1_id, "Trying to get genomic_align_group_by_type from the database");
+
+    do {
+	my $all_fails;
+	my $this_genomic_align_group = $genomic_align->genomic_align_group_by_type($genomic_align_group_1_type);
+	foreach my $this_genomic_align (@{$this_genomic_align_group->genomic_align_array}) {
+	    my $fail = $this_genomic_align_group->dbID;
+	    #       my $has_original_GA_been_found = 0;
+	    #       if ($this_genomic_align == $genomic_align_group_1) {
+#         $has_original_GA_been_found = 1;
+	    #         ok($this_genomic_align, $genomic_align_1->genomic_align_group_by_type($genomic_align_group->type));
+	    #       }
+	    foreach my $that_genomic_align_group (@$genomic_align_groups) {
+		if ($that_genomic_align_group->dbID == $this_genomic_align_group->dbID) {
+		    $fail = undef;
+		    last;
+		}
+	    }
+	    $all_fails .= " <$fail> " if ($fail);
+	    #       $all_fails .= " Cannot retrieve original GenomicAlign object! " if (!$has_original_GA_been_found);
+	}
+	ok($all_fails, undef);
+    }
+};
+    
 
 
 exit 0;

@@ -1,4 +1,7 @@
-#!/usr/local/ensembl/bin/perl -w
+#!/usr/bin/perl
+
+use warnings;
+
 
 #
 # Test script for Bio::EnsEMBL::Compara::DBSQL::AlignSliceAdaptor module
@@ -63,7 +66,7 @@ use strict;
 
 BEGIN { $| = 1;  
     use Test;
-    plan tests => 142;
+    plan tests => 196;
 }
 
 use Bio::EnsEMBL::Utils::Exception qw (warning verbose);
@@ -74,15 +77,23 @@ use Bio::EnsEMBL::Test::TestUtils;
 #####################################################################
 ## Connect to the test database using the MultiTestDB.conf file
 
+# verbose('WARNING'); ## Disable API warnings
+
 my $multi = Bio::EnsEMBL::Test::MultiTestDB->new( "multi" );
 my $compara_db_adaptor = $multi->get_DBAdaptor( "compara" );
 my $genome_db_adaptor = $compara_db_adaptor->get_GenomeDBAdaptor();
 
 my $species = [
         "homo_sapiens",
-#         "mus_musculus",
+        "mus_musculus",
         "rattus_norvegicus",
         "gallus_gallus",
+	"bos_taurus",
+	"canis_familiaris",
+	"macaca_mulatta",
+	"monodelphis_domestica",
+	"ornithorhynchus_anatinus",
+	"pan_troglodytes",
     ];
 
 my $species_db;
@@ -106,8 +117,9 @@ foreach my $this_species (reverse sort @$species) {
 ##
 #####################################################################
 
-verbose(0);
+our $verbose = 0; ## Set this to 1 to see all the debug(...) messages
 my $demo = 0;
+
 
 my $slice_adaptor = $species_db->{"homo_sapiens"}->get_DBAdaptor("core")->get_SliceAdaptor();
 my $align_slice_adaptor = $compara_db_adaptor->get_AlignSliceAdaptor();
@@ -122,18 +134,18 @@ exit if (!$method_link_species_set_adaptor);
 ##
 
 my $slice_coord_system_name = "chromosome";
-my $slice_seq_region_name = "14";
+my $slice_seq_region_name = "16";
 my $dnafrag_id = $compara_db_adaptor->dbc->db_handle->selectrow_array("
     SELECT dnafrag_id FROM dnafrag df, genome_db gdb
     WHERE df.genome_db_id = gdb.genome_db_id
       AND df.name = \"$slice_seq_region_name\"
       AND df.coord_system_name = \"$slice_coord_system_name\"
       AND gdb.name = \"Homo sapiens\"");
-my $slice_start = 50170000;
-my $slice_end =   51170000;
+my $slice_start = 72888001;
+my $slice_end =   73088000;
 
-$slice_start = 50000000;
-$slice_end =   51000000;
+$slice_start = 72888001;
+$slice_end =   73088000;
 
 
 #####################################################################
@@ -407,11 +419,25 @@ do {
       $align_slice->get_all_Slices('Rattus norvegicus')->[0]->subseq(undef, undef, -1));
 };
 
+my $species_name = "Gallus gallus";
+my ($excess_start, $excess_end, $exon_id);
+my $table_name = $species_db->{"gallus_gallus"}->get_DBAdaptor("core")->dbc->dbname();
+my $mlss = $human_chicken_blastznet_mlss;
 do {
-  debug("coordinates with an excess of 5 nucleotides surrounding a mapped rat exon");
+  debug("coordinates with an excess of X nucleotides surrounding a mapped chicken exon");
 
-  $slice_start = 50201642;
-  $slice_end =   50202092;
+  ($slice_start, $slice_end, $excess_start, $excess_end, $exon_id) =
+      $compara_db_adaptor->dbc->db_handle->selectrow_array("
+        SELECT ga2.dnafrag_start, ga2.dnafrag_end, (seq_region_start - ga1.dnafrag_start),
+          (ga1.dnafrag_end - seq_region_end), exon_id
+        FROM $table_name.exon LEFT JOIN $table_name.seq_region using (seq_region_id) LEFT JOIN dnafrag using (name)
+          LEFT JOIN genome_db using (genome_db_id) LEFT JOIN genomic_align ga1 using (dnafrag_id)
+          LEFT JOIN genomic_align ga2 using (genomic_align_block_id)
+        WHERE ga2.genomic_align_id != ga1.genomic_align_id
+          AND genome_db.name = \"$species_name\"
+          AND method_link_species_set_id = $mlss->{dbID}
+          AND exon.seq_region_start > ga1.dnafrag_start -5
+          AND exon.seq_region_end < ga1.dnafrag_end + 5");
 
   $slice = $slice_adaptor->fetch_by_region(
         $slice_coord_system_name,
@@ -423,46 +449,48 @@ do {
   ok($slice);
   
   $align_slice = $align_slice_adaptor->fetch_by_Slice_MethodLinkSpeciesSet(
-      $slice, $human_rat_blastznet_mlss, "expanded");
+      $slice, $mlss, "expanded");
 
   ok($align_slice);
   
   ok($align_slice->get_all_Slices('Homo sapiens')->[0]);
-  ok($align_slice->get_all_Slices('Rattus norvegicus')->[0]);
+  ok($align_slice->get_all_Slices($species_name)->[0]);
   ok(length($align_slice->get_all_Slices('Homo sapiens')->[0]->seq),
-      length($align_slice->get_all_Slices('Rattus norvegicus')->[0]->seq));
+      length($align_slice->get_all_Slices($species_name)->[0]->seq));
   my $seq = $align_slice->get_all_Slices('Homo sapiens')->[0]->seq;
   $seq =~ s/\-//g;
   ok($seq, $slice->seq);
   
-  my $rat_gene = $align_slice->get_all_Slices('Rattus norvegicus')->[0]->get_all_Genes->[0];
-  ok($rat_gene);
-  my $rat_transcript = ($rat_gene->get_all_Transcripts)->[0];
-  ok($rat_transcript);
-  my $rat_exon = (grep {$_->start} @{$rat_transcript->get_all_Exons})[0];
-  ok($rat_exon);
+  debug("DEBUG slice " . @{$align_slice->get_all_Slices($species_name)}. "  $excess_start  $excess_end");
+
+  my $other_gene = $align_slice->get_all_Slices($species_name)->[0]->get_all_Genes->[0];
+  ok($other_gene);
+  my $other_transcript = ($other_gene->get_all_Transcripts)->[0];
+  ok($other_transcript);
+  my $other_exon = (grep {$_->start} @{$other_transcript->get_all_Exons})[0];
+  ok($other_exon);
   my $seq1;
-  if ($rat_exon->strand == 1) {
-    $seq1 = $rat_exon->seq->seq;
+  if ($other_exon->strand == 1) {
+    $seq1 = $other_exon->seq->seq;
   } else {
-    $seq1 = $rat_exon->seq->revcom->seq;
+    $seq1 = $other_exon->seq->revcom->seq;
   }
-  my $seq2 = substr($align_slice->get_all_Slices('Rattus norvegicus')->[0]->seq, 5, -5);
+  my $seq2 = substr($align_slice->get_all_Slices($species_name)->[0]->seq, $excess_start, -$excess_end);
   ok($seq1, $seq2);
 
   my $condensed_align_slice = $align_slice_adaptor->fetch_by_Slice_MethodLinkSpeciesSet(
-      $slice, $human_rat_blastznet_mlss);
-  my $condensed_rat_exon = (grep {$_->start} @{$condensed_align_slice->get_all_Slices('Rattus norvegicus')->[0]->get_all_Genes->[0]->get_all_Transcripts->[0]->get_all_Exons})[0];
+      $slice, $mlss);
+  my $condensed_other_exon = (grep {$_->start} @{$condensed_align_slice->get_all_Slices($species_name)->[0]->get_all_Genes->[0]->get_all_Transcripts->[0]->get_all_Exons})[0];
   my $c_seq1;
-  if ($condensed_rat_exon->strand == 1) {
-    $c_seq1 = $condensed_rat_exon->seq->seq;
+  if ($condensed_other_exon->strand == 1) {
+    $c_seq1 = $condensed_other_exon->seq->seq;
   } else {
-    $c_seq1 = $condensed_rat_exon->seq->revcom->seq;
+    $c_seq1 = $condensed_other_exon->seq->revcom->seq;
   }
-  my $c_seq2 = substr($condensed_align_slice->get_all_Slices('Rattus norvegicus')->[0]->seq, 5, -5);
+  my $c_seq2 = substr($condensed_align_slice->get_all_Slices($species_name)->[0]->seq, $excess_start, -$excess_end);
   ok($c_seq1, $c_seq2);
   
-  $seq = $align_slice->get_all_Slices('Homo sapiens')->[0]->subseq($rat_exon->start, $rat_exon->end);
+  $seq = $align_slice->get_all_Slices('Homo sapiens')->[0]->subseq($other_exon->start, $other_exon->end);
   $seq2 = "";
   foreach my $subseq ($seq =~ /([ACTG]+|\-+)/g) {
     if ($subseq =~ /\-/) {
@@ -473,16 +501,16 @@ do {
   }
   ok($seq2, $c_seq2);
 
-  ok($align_slice->get_all_Slices('Rattus norvegicus')->[0]->subseq(),
-      join("", map {$_->seq} @{$align_slice->get_all_Slices('Rattus norvegicus')->[0]->get_all_underlying_Slices()}));
-  ok(join("", map {$_->seq} @{$align_slice->get_all_Slices('Rattus norvegicus')->[0]->get_all_underlying_Slices(undef, undef, -1)}),
-      $align_slice->get_all_Slices('Rattus norvegicus')->[0]->subseq(undef, undef, -1));
+  ok($align_slice->get_all_Slices($species_name)->[0]->subseq(),
+      join("", map {$_->seq} @{$align_slice->get_all_Slices($species_name)->[0]->get_all_underlying_Slices()}));
+  ok(join("", map {$_->seq} @{$align_slice->get_all_Slices($species_name)->[0]->get_all_underlying_Slices(undef, undef, -1)}),
+      $align_slice->get_all_Slices($species_name)->[0]->subseq(undef, undef, -1));
 };
 
 do {
-  debug("coordinates matching exactly a mapped rat exon");
-  $slice_start += 5;
-  $slice_end -= 5;
+  debug("coordinates matching exactly previous mapped exon");
+  $slice_start += $excess_start;
+  $slice_end -= $excess_end;
 
   $slice = $slice_adaptor->fetch_by_region(
         $slice_coord_system_name,
@@ -494,46 +522,47 @@ do {
   ok($slice);
   
   $align_slice = $align_slice_adaptor->fetch_by_Slice_MethodLinkSpeciesSet(
-      $slice, $human_rat_blastznet_mlss, "expanded");
+      $slice, $mlss, "expanded");
 
   ok($align_slice);
   
   ok($align_slice->get_all_Slices('Homo sapiens')->[0]);
-  ok($align_slice->get_all_Slices('Rattus norvegicus')->[0]);
+  ok($align_slice->get_all_Slices($species_name)->[0]);
   ok(length($align_slice->get_all_Slices('Homo sapiens')->[0]->seq),
-      length($align_slice->get_all_Slices('Rattus norvegicus')->[0]->seq));
+      length($align_slice->get_all_Slices($species_name)->[0]->seq));
   my $seq = $align_slice->get_all_Slices('Homo sapiens')->[0]->seq;
   $seq =~ s/\-//g;
   ok($seq, $slice->seq);
 
-  my $rat_gene = $align_slice->get_all_Slices('Rattus norvegicus')->[0]->get_all_Genes->[0];
-  ok($rat_gene);
-  my $rat_transcript = ($rat_gene->get_all_Transcripts)->[0];
-  ok($rat_transcript);
-  my $rat_exon = (grep {$_->start} @{$rat_transcript->get_all_Exons})[0];
-  ok($rat_exon);
+  my $other_gene = $align_slice->get_all_Slices($species_name)->[0]->get_all_Genes->[0];
+  ok($other_gene);
+  my $other_transcript = ($other_gene->get_all_Transcripts)->[0];
+  ok($other_transcript);
+  my $other_exon = (grep {$_->start} @{$other_transcript->get_all_Exons})[0];
+  ok($other_exon);
   my $seq1;
-  if ($rat_exon->strand == 1) {
-    $seq1 = $rat_exon->seq->seq;
+  if ($other_exon->strand == 1) {
+    $seq1 = $other_exon->seq->seq;
   } else {
-    $seq1 = $rat_exon->seq->revcom->seq;
+    $seq1 = $other_exon->seq->revcom->seq;
   }
-  my $seq2 = $align_slice->get_all_Slices('Rattus norvegicus')->[0]->seq;
+  my $seq2 = $align_slice->get_all_Slices($species_name)->[0]->seq;
   ok($seq1, $seq2);
 
   my $condensed_align_slice = $align_slice_adaptor->fetch_by_Slice_MethodLinkSpeciesSet(
-      $slice, $human_rat_blastznet_mlss);
-  my $condensed_rat_exon = (grep {$_->start} @{$condensed_align_slice->get_all_Slices('Rattus norvegicus')->[0]->get_all_Genes->[0]->get_all_Transcripts->[0]->get_all_Exons})[0];
+      $slice, $mlss);
+  my $condensed_other_exon = (grep {$_->start} @{$condensed_align_slice->get_all_Slices($species_name)->[0]->
+      get_all_Genes->[0]->get_all_Transcripts->[0]->get_all_Exons})[0];
   my $c_seq1;
-  if ($condensed_rat_exon->strand == 1) {
-    $c_seq1 = $condensed_rat_exon->seq->seq;
+  if ($condensed_other_exon->strand == 1) {
+    $c_seq1 = $condensed_other_exon->seq->seq;
   } else {
-    $c_seq1 = $condensed_rat_exon->seq->revcom->seq;
+    $c_seq1 = $condensed_other_exon->seq->revcom->seq;
   }
-  my $c_seq2 = $condensed_align_slice->get_all_Slices('Rattus norvegicus')->[0]->seq;
+  my $c_seq2 = $condensed_align_slice->get_all_Slices($species_name)->[0]->seq;
   ok($c_seq1, $c_seq2);
   
-  $seq = $align_slice->get_all_Slices('Homo sapiens')->[0]->subseq($rat_exon->start, $rat_exon->end);
+  $seq = $align_slice->get_all_Slices('Homo sapiens')->[0]->subseq($other_exon->start, $other_exon->end);
   $seq2 = "";
   foreach my $subseq ($seq =~ /([ACTG]+|\-+)/g) {
     if ($subseq =~ /\-/) {
@@ -543,13 +572,60 @@ do {
     }
   }
   ok($seq2, $c_seq2);
+};
+
+do {
+  debug("test unmapped exons");
+
+  my ($transcript_count) = $compara_db_adaptor->dbc->db_handle->selectrow_array("
+      SELECT count(*)
+      FROM $table_name.exon_transcript
+        LEFT JOIN $table_name.transcript t1 USING (transcript_id)
+        LEFT JOIN $table_name.gene using (gene_id)
+        LEFT JOIN $table_name.transcript t2 using (gene_id)
+      WHERE exon_id = $exon_id");
+
+
+  $align_slice = $align_slice_adaptor->fetch_by_Slice_MethodLinkSpeciesSet(
+      $slice, $mlss, "expanded");
+
+  ok($align_slice);
+
+  ok($align_slice->get_all_Slices('Homo sapiens')->[0]);
+  ok($align_slice->get_all_Slices($species_name)->[0]);
+
+  my $other_genes = $align_slice->get_all_Slices->[1]->get_all_Genes();
+  ok(@$other_genes, 1, "return 1 single gene");
+  ok(@{$other_genes->[0]->get_all_Transcripts}, $transcript_count, "gene contains $transcript_count transcripts");
+
+  my ($exon_count) = $compara_db_adaptor->dbc->db_handle->selectrow_array("
+      SELECT count(*)
+      FROM $table_name.exon_transcript
+      WHERE transcript_id = ".$other_genes->[0]->get_all_Transcripts->[0]->dbID);
+
+  ok(@{$other_genes->[0]->get_all_Transcripts->[0]->get_all_Exons}, $exon_count,
+      "transcript 1 contains $exon_count exons");
+  my @unmapped_exons = grep {!defined($_->start)}
+      @{$other_genes->[0]->get_all_Transcripts->[0]->get_all_Exons};
+  ok(@unmapped_exons, ($exon_count - 1), "transcript 1 contains ($exon_count - 1) unmapped exons");
+
+  debug("contains a rat gene with missing exons: skip missing exons");
+  my $unmapped_exons = grep {!defined($_->start)}
+      @{$other_genes->[0]->get_all_Transcripts->[0]->get_all_Exons};
+  my $simple_other_genes = $align_slice->get_all_Slices($species_name)->[0]->get_all_Genes(undef, undef, undef, -RETURN_UNMAPPED_EXONS => 0);
+  skip($unmapped_exons == 0,
+      @{$simple_other_genes->[0]->get_all_Transcripts->[0]->get_all_Exons} + $unmapped_exons,
+      @{$other_genes->[0]->get_all_Transcripts->[0]->get_all_Exons});
+
 };
 
 do {
   debug("slice 1 nucleotide long at the beginning of an non-consecutive alignment.");
-  ## select ga1.dnafrag_start from genomic_align ga1 left join genomic_align ga2 on (ga1.dnafrag_id = ga2.dnafrag_id and ga1.method_link_species_set_id=ga2.method_link_species_set_id and ga1.dnafrag_start = ga2.dnafrag_end + 1) where ga1.method_link_species_set_id = 171 and ga1.dnafrag_id = 905410 and ga2.genomic_align_block_id is null limit 10;
-  $slice_start = 50008668;
-  $slice_end =   50008668;
+  ($slice_start, $slice_end) = $compara_db_adaptor->dbc->db_handle->selectrow_array("
+    SELECT min(ga1.dnafrag_start), min(ga1.dnafrag_start)
+    FROM genomic_align ga1
+    WHERE ga1.method_link_species_set_id = $mlss->{dbID}
+      AND ga1.dnafrag_id = $dnafrag_id");
 
   $slice = $slice_adaptor->fetch_by_region(
         $slice_coord_system_name,
@@ -561,14 +637,14 @@ do {
   ok($slice);
   
   $align_slice = $align_slice_adaptor->fetch_by_Slice_MethodLinkSpeciesSet(
-      $slice, $human_rat_blastznet_mlss, "expanded");
+      $slice, $mlss, "expanded");
 
   ok($align_slice);
   
   ok($align_slice->get_all_Slices('Homo sapiens')->[0]);
-  ok($align_slice->get_all_Slices('Rattus norvegicus')->[0]);
+  ok($align_slice->get_all_Slices($species_name)->[0]);
   ok(length($align_slice->get_all_Slices('Homo sapiens')->[0]->seq),
-      length($align_slice->get_all_Slices('Rattus norvegicus')->[0]->seq));
+      length($align_slice->get_all_Slices($species_name)->[0]->seq));
   ok(length($align_slice->get_all_Slices('Homo sapiens')->[0]->seq), 1);
   my $seq = $align_slice->get_all_Slices('Homo sapiens')->[0]->seq;
   $seq =~ s/\-//g;
@@ -586,25 +662,27 @@ do {
   ok($slice);
   
   $align_slice = $align_slice_adaptor->fetch_by_Slice_MethodLinkSpeciesSet(
-      $slice, $human_rat_blastznet_mlss, "expanded");
+      $slice, $mlss, "expanded");
 
   ok($align_slice);
   
   ok($align_slice->get_all_Slices('Homo sapiens')->[0]);
-  ok($align_slice->get_all_Slices('Rattus norvegicus')->[0]);
+  ok($align_slice->get_all_Slices($species_name)->[0]);
   ok(length($align_slice->get_all_Slices('Homo sapiens')->[0]->seq),
-      length($align_slice->get_all_Slices('Rattus norvegicus')->[0]->seq));
+      length($align_slice->get_all_Slices($species_name)->[0]->seq));
   ok(length($align_slice->get_all_Slices('Homo sapiens')->[0]->seq), 2);
-  $seq = $align_slice->get_all_Slices('Rattus norvegicus')->[0]->seq;
+  $seq = $align_slice->get_all_Slices($species_name)->[0]->seq;
   ok($seq, "/^\\.[ACTG]\$/");
 };
 
 do {
   debug("slice 1 nucleotide long at the end of an non-consecutive alignment.");
-  ## select ga1.dnafrag_end from genomic_align ga1 left join genomic_align ga2 on (ga1.dnafrag_id = ga2.dnafrag_id and ga1.method_link_species_set_id=ga2.method_link_species_set_id and ga1.dnafrag_end + 1 = ga2.dnafrag_start) where ga1.method_link_species_set_id = 171 and ga1.dnafrag_id = 905410 and ga2.genomic_align_block_id is null limit 10;
 
-  $slice_start = 50003651;
-  $slice_end =   50003651;
+  ($slice_start, $slice_end) = $compara_db_adaptor->dbc->db_handle->selectrow_array("
+    SELECT max(ga1.dnafrag_end), max(ga1.dnafrag_end)
+    FROM genomic_align ga1
+    WHERE ga1.method_link_species_set_id = $mlss->{dbID}
+      AND ga1.dnafrag_id = $dnafrag_id");
 
   $slice = $slice_adaptor->fetch_by_region(
         $slice_coord_system_name,
@@ -616,14 +694,14 @@ do {
   ok($slice);
   
   $align_slice = $align_slice_adaptor->fetch_by_Slice_MethodLinkSpeciesSet(
-      $slice, $human_rat_blastznet_mlss, "expanded");
+      $slice, $mlss, "expanded");
 
   ok($align_slice);
   
   ok($align_slice->get_all_Slices('Homo sapiens')->[0]);
-  ok($align_slice->get_all_Slices('Rattus norvegicus')->[0]);
+  ok($align_slice->get_all_Slices($species_name)->[0]);
   ok(length($align_slice->get_all_Slices('Homo sapiens')->[0]->seq),
-      length($align_slice->get_all_Slices('Rattus norvegicus')->[0]->seq));
+      length($align_slice->get_all_Slices($species_name)->[0]->seq));
   ok(length($align_slice->get_all_Slices('Homo sapiens')->[0]->seq), 1);
   my $seq = $align_slice->get_all_Slices('Homo sapiens')->[0]->seq;
   $seq =~ s/\-//g;
@@ -641,16 +719,16 @@ do {
   ok($slice);
   
   $align_slice = $align_slice_adaptor->fetch_by_Slice_MethodLinkSpeciesSet(
-      $slice, $human_rat_blastznet_mlss, "expanded");
+      $slice, $mlss, "expanded");
 
   ok($align_slice);
   
   ok($align_slice->get_all_Slices('Homo sapiens')->[0]);
-  ok($align_slice->get_all_Slices('Rattus norvegicus')->[0]);
+  ok($align_slice->get_all_Slices($species_name)->[0]);
   ok(length($align_slice->get_all_Slices('Homo sapiens')->[0]->seq),
-      length($align_slice->get_all_Slices('Rattus norvegicus')->[0]->seq));
+      length($align_slice->get_all_Slices($species_name)->[0]->seq));
   ok(length($align_slice->get_all_Slices('Homo sapiens')->[0]->seq), 2);
-  $seq = $align_slice->get_all_Slices('Rattus norvegicus')->[0]->seq;
+  $seq = $align_slice->get_all_Slices($species_name)->[0]->seq;
   ok($seq, "/^[ACTG]\\.\$/");
 };
 
@@ -667,6 +745,7 @@ do {
       AND ga1.dnafrag_strand = 1
       AND ga1.cigar_line like \"\%D\%\"");
   my ($skip, $gap_length) = $cigar_line =~ /^(\d*)M(\d*)D/;
+  $gap_length ||= 1;
   $slice_start += $skip - 1;
   $slice_end = $slice_start + 1;
 
@@ -707,71 +786,6 @@ do {
 };
 
 do {
-  debug("contains a rat gene with unmapped exons");
-  $slice_start = 50000477;
-  $slice_end =   50068518;
-
-  $slice = $slice_adaptor->fetch_by_region(
-        $slice_coord_system_name,
-        $slice_seq_region_name,
-        $slice_start,
-        $slice_end,
-        1
-    );
-  ok($slice);
-  
-  $align_slice = $align_slice_adaptor->fetch_by_Slice_MethodLinkSpeciesSet(
-      $slice, $human_rat_blastznet_mlss, "expanded");
-
-  ok($align_slice);
-  
-  ok($align_slice->get_all_Slices('Homo sapiens')->[0]);
-  ok($align_slice->get_all_Slices('Rattus norvegicus')->[0]);
-
-  my $rat_genes = $align_slice->get_all_Slices->[1]->get_all_Genes();
-  ok(@$rat_genes, 1, "return 1 single gene");
-  ok(@{$rat_genes->[0]->get_all_Transcripts}, 2, "gene contains 2 transcripts");
-  ok(@{$rat_genes->[0]->get_all_Transcripts->[0]->get_all_Exons}, 44, "transcript 1 contains 12 exons");
-  my @unmapped_genes = grep {!defined($_->start)}
-      @{$rat_genes->[0]->get_all_Transcripts->[0]->get_all_Exons};
-  ok(@unmapped_genes, 36, "transcript 1 contains 7 unmapped exons");
-  ok(@{$rat_genes->[0]->get_all_Transcripts->[1]->get_all_Exons}, 31, "transcript 2 contains 11 exons");
-  @unmapped_genes = grep {!defined($_->start)} @{$rat_genes->[0]->get_all_Transcripts->[1]->get_all_Exons};
-  ok(@unmapped_genes, 20, "transcript 2 contains 7 unmapped exons");
-};
-
-do {
-  debug("contains a rat gene with missing exons: skip missing exons");
-  $slice_start = 50112000;
-  $slice_end =   50290000;
-
-  $slice = $slice_adaptor->fetch_by_region(
-        $slice_coord_system_name,
-        $slice_seq_region_name,
-        $slice_start,
-        $slice_end,
-        1
-    );
-  ok($slice);
-  
-  $align_slice = $align_slice_adaptor->fetch_by_Slice_MethodLinkSpeciesSet(
-      $slice, $human_rat_blastznet_mlss, "expanded");
-
-  ok($align_slice);
-  
-  ok($align_slice->get_all_Slices('Homo sapiens')->[0]);
-  ok($align_slice->get_all_Slices('Rattus norvegicus')->[0]);
-
-  my $rat_genes = $align_slice->get_all_Slices('Rattus norvegicus')->[0]->get_all_Genes();
-  my $unmapped_exons = grep {!defined($_->start)}
-      @{$rat_genes->[0]->get_all_Transcripts->[0]->get_all_Exons};
-  my $simple_rat_genes = $align_slice->get_all_Slices('Rattus norvegicus')->[0]->get_all_Genes(undef, undef, undef, -RETURN_UNMAPPED_EXONS => 0);
-  skip($unmapped_exons == 0,
-      @{$simple_rat_genes->[0]->get_all_Transcripts->[0]->get_all_Exons} + $unmapped_exons,
-      @{$rat_genes->[0]->get_all_Transcripts->[0]->get_all_Exons});
-};
-
-do {
   debug("contains an overlapping GenomicAlignBlock");
   $slice_start = 50150000;
   $slice_end =   50190000;
@@ -793,13 +807,17 @@ do {
         1
     );
   ok($slice);
-  
+
   my $genomic_align_blocks = $genomic_align_block_adaptor->fetch_all_by_MethodLinkSpeciesSet_Slice(
           $human_rat_blastznet_mlss, $slice
       );
-  # switch off the debug prints 
+
+  # switch off the known warning message
+  my $prev_verbose_level = verbose();
+  verbose(0);
   $align_slice = $align_slice_adaptor->fetch_by_Slice_MethodLinkSpeciesSet(
       $slice, $human_rat_blastznet_mlss, "expanded");
+  verbose($prev_verbose_level);
 
   ok($align_slice);
   ok($align_slice->get_all_Slices('Homo sapiens')->[0]);
@@ -807,7 +825,7 @@ do {
     @{$align_slice->get_all_Slices('Rattus norvegicus')->[0]->get_all_Slice_Mapper_pairs},
     @$genomic_align_blocks - 1);
 };
-exit();
+
 do {
   debug("coordinates without any alignment");
 
