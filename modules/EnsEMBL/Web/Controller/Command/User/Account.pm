@@ -12,7 +12,7 @@ use base 'EnsEMBL::Web::Controller::Command::User';
 
 sub BUILD {
   my ($self, $ident, $args) = @_; 
-  $self->add_filter(EnsEMBL::Web::Controller::Command::Filter::LoggedIn->new);
+  $self->add_filter('EnsEMBL::Web::Controller::Command::Filter::LoggedIn');
 }
 
 sub render {
@@ -31,7 +31,7 @@ sub render_page {
   my $webpage= new EnsEMBL::Web::Document::WebPage(
     'renderer'   => 'Apache',
     'outputtype' => 'HTML',
-    'scriptname' => 'accountview',
+    'scriptname' => 'user/account',
     'objecttype' => 'User',
   );
 
