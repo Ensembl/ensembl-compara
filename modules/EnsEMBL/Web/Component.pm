@@ -22,4 +22,16 @@ sub cache_print {
   $cache->print( $$string_ref ) if $string_ref;
 }
 
+sub AUTOLOAD {
+## Automagically creates simple form wrapper components
+  my ( $panel, $object ) = @_;
+  our $AUTOLOAD;
+  my ($method) = ($AUTOLOAD =~ /::([a-z].*)$/);
+  my $html = qq(<div class="formpanel" style="width:80%">);
+  $html .= $panel->form($method)->render();
+  $html .= '</div>';
+  $panel->print( $html );
+  return 1;
+}
+
 1;
