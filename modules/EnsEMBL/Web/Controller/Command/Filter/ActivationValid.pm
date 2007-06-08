@@ -3,20 +3,35 @@ package EnsEMBL::Web::Controller::Command::Filter::ActivationValid;
 use strict;
 use warnings;
 
-use EnsEMBL::Web::Object::Data::User;
+use EnsEMBL::Web::Object::User;
 use EnsEMBL::Web::RegObj;
 
 our @ISA = qw(EnsEMBL::Web::Controller::Command::Filter);
+
+### Checks if a given activation code matches the value stored in the database
 
 {
 
 sub allow {
   my ($self) = @_;
-  warn "Getting named: " . $self->get_action->get_named_parameter('code');
-  my $user = $self->SUPER::user($self->get_action->get_named_parameter('id'));
+  my $cgi = new CGI;
+  my $user;
+  if ($cgi->param('user_id')) {
+    $user = EnsEMBL::Web::Object::User->new({
+      adaptor => $ENSEMBL_WEB_REGISTRY->userAdaptor,
+      id      => $cgi->param('user_id'),
+    });
+  }
+  else {
+    $user = EnsEMBL::Web::Object::User->new({
+      adaptor => $ENSEMBL_WEB_REGISTRY->userAdaptor,
+      email   => $cgi->param('email'),
+    });
+  }
   warn "USER: " . $user->name;
   warn "SALT: " . $user->salt;
-  if ($user->salt eq $self->get_action->get_named_parameter('code')) {
+  ## TO DO: Add email address to validation, once new link is standard
+  if ($user->salt eq $cgi->param('code')) {
     return 1;
   } else {
     return 0;
