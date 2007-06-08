@@ -36,6 +36,99 @@ sub message {
   }
 }
 
+sub login {
+  my $self   = shift;
+
+  if (my $panel = $self->new_panel( 'Image',
+    'code'    => "info$self->{flag}",
+    'object'  => $self->{object},
+    'caption' => 'Log in',
+    ) ) {
+    $panel->add_components(qw(
+        login       EnsEMBL::Web::Component::User::login
+    ));
+    $self->add_form($panel, qw(login   EnsEMBL::Web::Component::User::login_form) );
+
+    ## add panel to page
+    $self->add_panel( $panel );
+  }
+}
+
+
+sub login_check {
+  my $self   = shift;
+
+  if (my $panel = $self->new_panel( 'Image',
+    'code'    => "info$self->{flag}",
+    'object'  => $self->{object},
+    'caption' => '',
+    ) ) {
+    $panel->add_components(qw(
+        login_check       EnsEMBL::Web::Component::User::login_check
+    ));
+
+    ## add panel to page
+    $self->add_panel( $panel );
+  }
+}
+
+sub email_sent {
+  my $self   = shift;
+
+  if (my $panel = $self->new_panel( 'Image',
+    'code'    => "info$self->{flag}",
+    'object'  => $self->{object},
+    'caption' => 'Email Sent',
+    ) ) {
+    $panel->add_components(qw(
+        email_sent       EnsEMBL::Web::Component::User::email_sent
+    ));
+
+    ## add panel to page
+    $self->add_panel( $panel );
+  }
+}
+
+
+
+sub lost_password {
+  my $self   = shift;
+
+  if (my $panel = $self->new_panel( 'Image',
+    'code'    => "info$self->{flag}",
+    'object'  => $self->{object},
+    'caption' => 'Lost password/activation code',
+    ) ) {
+    $panel->add_components(qw(
+        lost_password       EnsEMBL::Web::Component::User::lost_password
+    ));
+    $self->add_form($panel, qw(lost_password   EnsEMBL::Web::Component::User::lost_password_form) );
+
+    ## add panel to page
+    $self->add_panel( $panel );
+  }
+}
+
+
+
+sub enter_password {
+  my $self   = shift;
+
+  if (my $panel = $self->new_panel( 'Image',
+    'code'    => "info$self->{flag}",
+    'object'  => $self->{object},
+    'caption' => 'Set your password',
+    ) ) {
+    $panel->add_components(qw(
+        enter_password        EnsEMBL::Web::Component::User::enter_password
+    ));
+    $self->add_form($panel, qw(enter_password   EnsEMBL::Web::Component::User::enter_password_form) );
+
+    ## add panel to page
+    $self->add_panel( $panel );
+  }
+}
+
 sub context_menu {
   ### General context menu for all user management pages
   my $self = shift;
@@ -52,11 +145,11 @@ sub context_menu {
     $self->add_block( $flag, 'bulleted', "Your $SiteDefs::ENSEMBL_SITETYPE" );
 
     $self->add_entry( $flag, 'text' => "Account summary",
-                                    'href' => "/common/accountview" );
+                                    'href' => "/common/user/account" );
     $self->add_entry( $flag, 'text' => "Update details",
-                                    'href' => "/common/update?id=$user_id" );
+                                    'href' => "/common/user/update" );
     $self->add_entry( $flag, 'text' => "Change password",
-                                    'href' => "/common/set_password" );
+                                    'href' => "/common/user/reset_password" );
     $self->add_entry( $flag, 'text' => "Log out",
                                     'href' => "javascript:logout_link()" );
   }
@@ -67,30 +160,38 @@ sub context_menu {
     $self->add_entry( $flag, 'text' => "Login",
                                   'href' => "javascript:login_link();" );
     $self->add_entry( $flag, 'text' => "Register",
-                                  'href' => "/common/register" );
+                                  'href' => "/common/user/register" );
     $self->add_entry( $flag, 'text' => "Lost Password",
-                                  'href' => "/common/lost_password" );
+                                  'href' => "/common/user/lost_password" );
     $self->add_entry( $flag, 'text' => "About User Accounts",
                                     'href' => "/info/about/accounts.html" );
   }
 }
 
-sub access_denied {
+sub update_account {
   my $self   = shift;
 
-  if (my $panel1 = $self->new_panel( 'Image',
-    'code'    => "info$self->{flag}",
-    'object'  => $self->{object},
-    'caption' => 'Access Denied',
-    ) ) {
-    $panel1->add_components(qw(
-        denied        EnsEMBL::Web::Component::User::denied
-    ));
+  my $object = $self->{'object'};
 
-    ## add panel to page
-    $self->add_panel( $panel1 );
-  }
+  my $wizard = EnsEMBL::Web::Wizard::User->new($object);
+
+  ## the user registration wizard uses 3 nodes: enter data, preview data,
+  ## and save data
+  $wizard->add_nodes([qw(enter_details preview save_details)]);
+  $wizard->default_node('enter_details');
+
+  $self->_add_javascript_libraries;
+
+  ## chain the nodes together
+  $wizard->add_outgoing_edges([
+          ['enter_details'=>'preview'],
+          ['preview'=>'save_details'],
+  ]);
+
+  $self->add_wizard($wizard);
+  $self->wizard_panel('Update details');
 }
+
 
 sub groupview {
   my $self   = shift;
@@ -231,154 +332,6 @@ sub user_menu {
 ##-----------------------------------------------------------------------------
 ## Account management
 ##-----------------------------------------------------------------------------
-
-
-sub user_login {
-  my $self   = shift;
-  my $object = $self->{'object'};
-                                                                                
-  ## the "user login" wizard uses 4 nodes: enter login details, validate password,
-  ## set cookie and return to original page
-  my $wizard = EnsEMBL::Web::Wizard::User->new($object);
-  $wizard->add_nodes([qw(login validate set_cookie back_to_page)]);
-  $wizard->default_node('login');
-
-  $self->_add_javascript_libraries;
-                                                                                
-  ## chain the nodes together
-  $wizard->add_outgoing_edges([
-          ['login'=>'validate'],
-          ['validate'=>'set_cookie'],
-          ['set_cookie'=>'back_to_page'],
-  ]);
-
-  $self->add_wizard($wizard);
-  $self->wizard_panel('Ensembl User Login');
-}
-
-sub user_logout {
-  my $self   = shift;
-  my $object = $self->{'object'};
-  
-  ## the "user logout" wizard consists of a single node!                                                                              
-  my $wizard = EnsEMBL::Web::Wizard::User->new($object);
-  $wizard->add_nodes([qw(logout)]);
-  $wizard->default_node('logout');
-  $self->add_wizard($wizard);
-}
-
-sub register {
-  my $self = shift;
-  my $version = "old";
-  if ($version eq "old") {
-    $self->hash_register;
-  } else {
-    $self->command_register;
-  }
-}
-
-sub command_register {
-  my $self = shift;
-  my $user = EnsEMBL::Web::Wizard::Data::User(( object => $self->{'object'} ));
-  my $wizard = EnsEMBL::Web::Wizard->new(( delegate => $user ));
-  
-}
-
-sub hash_register {
-  my $self   = shift;
-  my $object = $self->{'object'};
-
-  ## the user registration wizard uses 6 nodes: enter user data, look up user, preview data,
-  ## save data, send account activation link and thanks
-  my $wizard = EnsEMBL::Web::Wizard::User->new($object);
-                                                    
-  $wizard->add_nodes([qw(enter_details lookup_reg preview save_details send_link thanks_reg)]);
-  $wizard->default_node('enter_details');
-
-  ## chain the nodes together
-  $wizard->add_outgoing_edges([
-          ['enter_details'=>'lookup_reg'],
-          ['lookup_reg'=>'preview'],
-          ['preview'=>'save_details'],
-          ['save_details'=>'send_link'],
-          ['send_link'=>'thanks_reg'],
-  ]);
-
-  $self->add_wizard($wizard);
-  $self->wizard_panel('Ensembl User Registration');
-}
-
-sub update_account {
-  my $self   = shift;
-
-  my $object = $self->{'object'};
-
-  my $wizard = EnsEMBL::Web::Wizard::User->new($object);
-                                                    
-  ## the user registration wizard uses 3 nodes: enter data, preview data,
-  ## and save data 
-  $wizard->add_nodes([qw(enter_details preview save_details)]);
-  $wizard->default_node('enter_details');
-
-  $self->_add_javascript_libraries;
-                                                                                
-  ## chain the nodes together
-  $wizard->add_outgoing_edges([
-          ['enter_details'=>'preview'],
-          ['preview'=>'save_details'],
-  ]);
-
-  $self->add_wizard($wizard);
-  $self->wizard_panel('Update details');
-}
-
-sub set_password {
-  my $self   = shift;
-  my $object = $self->{'object'};
-
-  ## the password wizard uses 5 nodes: validate, enter new password, compare passwords, 
-  ## and save password
-  my $wizard = EnsEMBL::Web::Wizard::User->new($object);
-    
-  $wizard->add_nodes([qw(validate set_cookie enter_password compare save_password)]);
-  $wizard->default_node('enter_password');
-
-  $self->_add_javascript_libraries;
-                                                                                
-  ## chain the nodes together
-  $wizard->add_outgoing_edges([
-          ['validate'=>'set_cookie'],
-          ['set_cookie'=>'enter_password'],
-          ['enter_password'=>'compare'],
-          ['compare'=>'save_password'],
-  ]);
-
-  $self->add_wizard($wizard);
-  $self->wizard_panel('Set Password');
-}
-
-sub lost_password {
-  my $self   = shift;
-  my $object = $self->{'object'};
-
-  ## the lost password wizard uses 5 nodes: enter email, look up user, set password, 
-  ## send email and acknowledge
-  my $wizard = EnsEMBL::Web::Wizard::User->new($object);
-    
-  $wizard->add_nodes([qw(enter_email lookup_lost save_password send_link thanks_lost)]);
-  $wizard->default_node('enter_email');
-
-  ## chain the nodes together
-  $wizard->add_outgoing_edges([
-          ['enter_email'=>'lookup_lost'],
-          ['lookup_lost'=>'save_password'],
-          ['save_password'=>'send_link'],
-          ['send_link'=>'thanks_lost'],
-  ]);
-
-  $self->add_wizard($wizard);
-  $self->wizard_panel('Lost Password');
-}
 
 sub group_details {
   my $self   = shift;
