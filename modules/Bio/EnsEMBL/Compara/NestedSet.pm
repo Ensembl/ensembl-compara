@@ -335,6 +335,52 @@ sub sorted_children {
 }
 
 
+=head2 get_all_nodes
+
+  Arg 1       : hashref $node_hash [used for recursivity, don't use it!]
+  Example     : my $all_nodes = $root->get_all_nodes();
+  Description : Returns this and all underlying sub nodes
+  ReturnType  : listref of Bio::EnsEMBL::Compara::NestedSet objects
+  Exceptions  : none
+  Caller      : general
+  Status      : Stable
+
+=cut
+
+sub get_all_nodes {
+  my $self = shift;
+  my $node_hash = shift;
+
+  my $toplevel = 0;
+  unless($node_hash) {
+   $node_hash = {};
+   $toplevel =1;
+  }
+
+  $node_hash->{$self->obj_id} = $self; 
+  foreach my $child (@{$self->children}) {
+    $child->get_all_nodes($node_hash);
+  }
+
+  if ($toplevel) {
+    return [values(%$node_hash)];
+  }
+  return undef;
+}
+
+
+=head2 get_all_nodes
+
+  Arg 1       : hashref $node_hash [used for recursivity, don't use it!]
+  Example     : my $all_nodes = $root->get_all_nodes();
+  Description : Returns all underlying sub nodes
+  ReturnType  : listref of Bio::EnsEMBL::Compara::NestedSet objects
+  Exceptions  : none
+  Caller      : general
+  Status      : Stable
+
+=cut
+
 sub get_all_subnodes {
   my $self = shift;
   my $node_hash = shift;
