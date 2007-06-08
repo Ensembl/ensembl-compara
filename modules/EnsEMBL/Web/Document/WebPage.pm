@@ -292,15 +292,6 @@ sub _node_hop {
       }
       foreach my $param_name (keys %parameter) {
         warn "CHECKING for USER keys: " . $param_name;
-        if ($param_name eq 'set_cookie') {
-          if ($parameter{'set_cookie'}) {
-            $self->login($parameter{'set_cookie'});
-          }
-          else {
-            $self->logout;
-          }
-          next;
-        }
 
         ## assemble rest of url for non-exit redirects
         if (!$parameter{'exit'}) {
@@ -338,43 +329,6 @@ sub check_access {
   }
 
   return $ok;
-}
-
-sub logout {
-  my $self = shift;
-
-  ## setting a (blank) expired cookie deletes the current one
-  my $cookie = CGI::Cookie->new(
-      -name    => $ENSEMBL_WEB_REGISTRY->species_defs->ENSEMBL_USER_COOKIE,
-      -value   => '',
-      -domain  => $ENSEMBL_WEB_REGISTRY->species_defs->ENSEMBL_COOKIEHOST,
-      -path    => "/",
-      -expires => "Monday, 31-Dec-2000 23:59:59 GMT"
-  );
-  
-  my $r = $self->page->renderer->{'r'};
-  $r->headers_out->add( 'Set-cookie' => $cookie );
-  $r->err_headers_out->add( 'Set-cookie' => $cookie );
-  $r->subprocess_env->{'ENSEMBL_USER_ID'} = '';
-  return 1;
-}
-
-sub login {
-  my ($self, $user_id) = @_;
-  warn "USER LOGIN: " . $user_id; 
-  my $encrypted = EnsEMBL::Web::Tools::Encryption::encryptID($user_id);
-  my $cookie = CGI::Cookie->new(
-      -name    => $ENSEMBL_WEB_REGISTRY->species_defs->ENSEMBL_USER_COOKIE,
-      -value   => $encrypted,
-      -domain  => $ENSEMBL_WEB_REGISTRY->species_defs->ENSEMBL_COOKIEHOST,
-      -path    => "/",
-      -expires => "Monday, 31-Dec-2010 23:59:59 GMT"
-  );
-  
-  my $r = $self->page->renderer->{'r'};
-  $r->headers_out->add( 'Set-cookie' => $cookie );
-  $r->err_headers_out->add( 'Set-cookie' => $cookie );
-  return 1;
 }
 
 sub redirect {
