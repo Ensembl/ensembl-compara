@@ -36,10 +36,14 @@ $data->add_field({'Field' => 'click', 'Type' => 'int'});
 $data->add_field({'Field' => 'created_at', 'Type' => 'timestamp'});
 $data->add_field({'Field' => 'modified_at', 'Type' => 'timestamp'});
 if ($cgi->param('id')) {
-  $data->populate($cgi->param('id'));
-  $page->title('Edit bookmark');
-  $page->action('edit');
-  $page->on_complete('/common/user/account');
+  $data->populate_for_this_user($cgi->param('id'));
+  if( $data->data ) {
+    $page->title('Edit bookmark');
+    $page->action('edit');
+    $page->on_complete('/common/user/account');
+  } else {
+    $cgi->redirect('/account/bookmark_error.html');
+  }
 } else {
   $page->title('Add bookmark');
   $page->action('create');

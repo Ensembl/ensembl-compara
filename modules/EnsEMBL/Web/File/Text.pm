@@ -32,6 +32,7 @@ sub new {
 sub set_cache_filename {
   my ($self, $prefix, $filename) = @_;
   
+  $filename ||= $self->ticket();
   $self->{'cache'}      = 1;
   my $MD5 = hex(substr( md5_hex($filename), 0, 6 )); ## Just the first 6 characters will do!
   my $c1  = $EnsEMBL::Web::Root::random_ticket_chars[($MD5>>5)&31];

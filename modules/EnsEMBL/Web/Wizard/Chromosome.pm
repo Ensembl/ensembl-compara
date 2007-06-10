@@ -339,7 +339,7 @@ sub kv_datacheck {
   my $error;
   if ($param) { 
     my $cache = new EnsEMBL::Web::File::Text($object->[1]->{'_species_defs'});
-    $cache->set_cache_filename('kv',$filename);
+    $cache->set_cache_filename('kv');
     $result = $cache->save($object, $param);
     $error = $$result{'error'};
   }
