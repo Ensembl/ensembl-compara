@@ -32,6 +32,12 @@ use strict;
    }
   }
 
+  sub quote {
+    my $self = shift;
+    my $value = shift;
+    return $self->get_dbhandle->quote($value);
+  }
+
   sub disconnect {
 ### wrapper around DBI;
     my $self = shift;
