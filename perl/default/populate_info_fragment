@@ -49,7 +49,7 @@ my $fragment = EnsEMBL::Web::Document::Panel::InformationFragment->new(
   status => 'loading',
   display => 'on',
 );
-
+$fragment->{'ajax'} = 1;
 #warn "GENE:" . $gene->stable_id;
 $gene->script('geneview');
 my $mc = $gene->new_menu_container(

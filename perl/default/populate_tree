@@ -63,6 +63,7 @@ my $mc = $object->new_menu_container(
 
 my $json_components = "";
 
+$fragment->{'ajax'} = 1;
 foreach my $component (@ordered_components){
   $components{$component} =~ m/(.*)::(.*)$/;
   my $module = $1;
