@@ -35,13 +35,13 @@ if( $not_fresh ) {
     $q->param('_q',$q->param('q'));
     my $CAT = '';
     my $CAT2 = '';
-    if( $q->param('species') && $q->param('species') ne 'all' ) {
+    if( $q->param('species') && lc($q->param('species')) ne 'all' ) {
       $CAT = "Top/Species/".$q->param('species');
-      if ( $q->param('idx') && $q->param('idx') ne 'All' ) {
+      if ( $q->param('idx') && lc($q->param('idx')) ne 'all' ) {
         $CAT .= '/'.$q->param('idx');
         $CAT2 = "Top/Feature type/".$q->param('idx').'/'.$q->param('species');
       }
-    } elsif( $q->param('idx') && $q->param('idx') ne 'All' ) {
+    } elsif( $q->param('idx') && lc($q->param('idx')) ne 'all' ) {
       $CAT = "Top/Feature type/".$q->param('idx');
     }
     if( $CAT ) {
