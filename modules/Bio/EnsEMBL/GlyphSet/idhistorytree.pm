@@ -282,15 +282,17 @@ sub _init {
       my $length = $sortedx[$newx] - $sortedx[$oldx];
       my $xend = $x_coord + $length;
       my $y_end = $y_coord +1;
-      my $hbr = new Sanger::Graphics::Glyph::Poly({
-          'x'         => $x_coord,
-          'points'    => [$x_coord, $y_coord, $xend, $y_coord, $xend, $y_end, $x_coord,$y_end],
-          'width'     => 0.25,
-          'colour'    => $branch_col,
-          'absolutey' => 1,
-          'absolutewidth' => 1,
-          'zmenu'     => $zmenu_s,
-          });
+      my $hbr = new Sanger::Graphics::Glyph::Line({
+         'x'         => $x_coord,
+         'y'         => $y_coord,
+         'height'    => 0,
+         'width'     => $length,
+         'colour'    => $branch_col,
+         'absolutey' => 1,
+	 'absolutewidth' => 1,
+         'clickwidth' => 2,
+         'zmenu'     => $zmenu_s,
+      });
       $self->push($hbr);   
     
     } elsif ($oldx == $newx) {
@@ -300,13 +302,16 @@ sub _init {
       my $height = $yc{$new->stable_id} - $yc{$old->stable_id};
       my $xend = $x_coord + $height;
       my $y_end = $y_coord +1;
-      my $vbr = new Sanger::Graphics::Glyph::Poly({
-          'x'         => $x_coord,
-          'points'    => [$x_coord, $y_coord, $xend, $y_coord, $xend, $y_end, $x_coord,$y_end],
-          'width'     => 0.25,
-          'colour'    => $branch_col,
-          'zmenu'    => $zmenu_s,
-          });
+      my $vbr = new Sanger::Graphics::Glyph::Line({
+         'x'         => $x_coord,
+         'y'         => $y_coord,
+         'height'    => $height,
+         'width'     => 0,
+         'width'     => 0.25,
+         'colour'    => $branch_col,
+         'clickwidth' => 2,
+         'zmenu'    => $zmenu_s,
+      });
       $self->push($vbr);
       
     } else {
@@ -315,14 +320,16 @@ sub _init {
       my $y_coord = $yc{$old->stable_id};
       my $x_end = $sortedx[$newx];
       my $y_end = $yc{$new->stable_id};
-      my $dbr = new Sanger::Graphics::Glyph::Poly({
-          'x'         => $x_coord,
-          'points'    => [$x_coord, $y_coord, $x_end, $y_end, $x_end+1,$y_end+1, $x_coord+1, $y_coord+1 ],
-          'width'     => 1,
-          'colour'    => $branch_col,
-          'absolutey' => 1,
-          'absolutewidth' => 1,
-          'zmenu'    => $zmenu_s,
+      my $dbr = new Sanger::Graphics::Glyph::Line({
+         'x'         => $x_coord,
+         'y'         => $y_coord,
+         'height'    => $y_end - $y_coord,
+         'width'     => $x_end - $x_coord,
+         'colour'    => $branch_col,
+	 'absolutey' => 1,
+	 'absolutewidth' => 1,
+         'clickwidth' => 2,
+         'zmenu'    => $zmenu_s,
       });
       $self->push($dbr);
       
