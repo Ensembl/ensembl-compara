@@ -84,7 +84,14 @@ sub new {
   $self->_prof("Factory compiled and objects created...");
 
   return $self if $self->factory->has_fatal_problem();
-  eval { $self->factory->createObjects(); };
+  eval {
+    if( $parameters{'fast'} ) {
+warn "FAST CREATE OBJECTS...";
+      $self->factory->fastCreateObjects();
+    } else {
+      $self->factory->createObjects();
+    }
+  };
   if( $@ ) {
     $self->problem( 'fatal', "Unable to execute createObject on Factory of type $parameters{'objecttype'}.", $@ );
                                                                      $self->_prof("Object creation failed");
