@@ -27,12 +27,10 @@ $query=~ s/\s+$//g;
 $query=~ s/\s+/ /g;
 
 if ($site eq 'ebi') {
-
   $URL = 'http://www.ebi.ac.uk/ebisearch/search.ebi?db=allebi&query='.$query;
-
-}
-
-else {
+} elsif ($site eq 'sanger') {
+  $URL = 'http://search.sanger.ac.uk/cgi-bin/exasearch?_q='.$query;
+} else {
 
 ## Let us parse the first string to see if it is the name of a species or one
 ## of its aliases... (should we do this if we specify a species in the drop
