@@ -113,6 +113,29 @@ sub render_Composite {
 }
 
 sub render_Line {
+  my ($self, $glyph) = @_;
+  my $href = $self->_getHref($glyph);
+  $href or return;
+
+  my $x1     = $glyph->{'pixelx'} + 0;
+  my $y1     = $glyph->{'pixely'} + 0;
+  my $x2     = $x1 + $glyph->{'pixelwidth'};
+  my $y2     = $y1 + $glyph->{'pixelheight'};
+  my $click_width = exists( $glyph->{'clickwidth'} ) ? $glyph->{'clickwidth'} : 1;
+  my $len    = sqrt( ($y2-$y1)*($y2-$y1) + ($x2-$x1)*($x2-$x1) );
+  my ($u_x, $u_y ) = $len > 0 ? ( ($x2-$x1) * $click_width / $len, ($y2-$y1) * $click_width /$len ) : ( $click_width , 0 ) ; 
+  my $pointslist = join ' ', map {int($_)} (
+    $x2+$u_x,$y2+$u_y,
+    $x2+$u_y,$y2-$u_x,
+    $x1+$u_y,$y1-$u_x,
+    $x1-$u_x,$y1-$u_y,
+    $x1-$u_y,$y1+$u_x,
+    $x2-$u_y,$y2+$u_x,
+    $x2+$u_x,$y2+$u_y );
+
+  $self->{'canvas'} = qq(<area shape="poly" coords="$pointslist"$href alt="" />\n).$self->{'canvas'} ;
+  return;
+
 }
 
 sub _getHref {
