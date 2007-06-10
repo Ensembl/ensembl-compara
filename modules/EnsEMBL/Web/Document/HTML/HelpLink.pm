@@ -25,9 +25,6 @@ sub render {
   my $self = shift;
   
   my $help_link;
-  if( $self->action eq 'form' ) {
-    $help_link = sprintf( q(<a href="%s" class="blue-button">%s</a>), $self->URL, $self->label ); 
-  } else {
     my $extra_HTML = join ";",
       $self->kw     ? "kw=@{[$self->kw]}" : (),
       $self->ref    ? "ref=@{[CGI::escape($self->ref)]}" : (),
@@ -40,7 +37,6 @@ sub render {
         $URL, HELPVIEW_WIN_ATTRIBS, uc($self->label)
       );
     }
-  }
   
   ## Set directories 
   my ($map_link, $blast_dir);

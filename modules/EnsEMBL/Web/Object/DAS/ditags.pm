@@ -103,7 +103,7 @@ sub Features {
 	#	'CATEGORY'        => $ft->ditag_side || '', 
 		'METHOD'      => $ftype,
                 'START'       => $ft->seq_region_start,
-                'END'         => $ft->seq_region_end
+                'END'         => $ft->seq_region_end,
                 'ORIENTATION' => $self->ori($ft->seq_region_strand),
 		'NOTE'        => ["tag_count: $tag_count"],
 		'GROUP' => [$group], 
