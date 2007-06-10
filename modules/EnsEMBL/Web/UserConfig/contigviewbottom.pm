@@ -76,8 +76,8 @@ sub init {
       'opt_zmenus'     => 1,
       'opt_zclick'     => 1,
       'opt_halfheight'     => 0,
-      'opt_shortlabels'     => 0,
-      'opt_restrict_zoom' => 1,
+      'opt_shortlabels'     => 1,
+      'opt_restrict_zoom' => 0,
       'bgcolor'     => 'background1',
       'bgcolour1'     => 'background2',
       'bgcolour2'     => 'background3',
@@ -307,7 +307,7 @@ sub init {
   },
 
     'marker' => {
-      'on'  => "on",
+      'on'  => "off",
       'pos' => '4100',
       'col' => 'magenta',
       'str' => 'r',
@@ -747,7 +747,7 @@ sub init {
   $self->ADD_ALL_DNA_FEATURES();
   $self->ADD_ALL_EST_FEATURES();
   $self->ADD_SIMPLE_TRACKS();
-  $self->ADD_ALL_CLONE_TRACKS();
+  $self->ADD_ALL_CLONE_TRACKS( 'on' => 'off' );
 ## Additional tracks... on the forward strand ( top );
   $self->add_track( 'preliminary', 'on' => 'on', 'pos' => 1, 'str' => 'f' );
   $self->add_track( 'mod',         'on' => 'off', 'pos' => 3000200, 'str' => 'f' );
@@ -819,7 +819,7 @@ sub init {
       my $available = "multialignment $id";
       my $jump_to_alignslice = 1;
 
-      push @multimethods, [ $alignments{$id}->{'type'}, $color, $short, $label, $id, $available, $jump_to_alignslice ];
+      push @multimethods, [ $alignments{$id}->{'type'}, $color, $short, $label, $id, $available, $jump_to_alignslice, 'off', 1 ];
   }
 
   %alignments = $self->{'species_defs'}->multiX('CONSTRAINED_ELEMENTS');
@@ -838,7 +838,7 @@ sub init {
       my $available = "constrained_element $id";
       my $jump_to_alignslice = 0;
 
-      push @multimethods, [ $alignments{$id}->{'type'}, $color, $short, $label, $id, $available, $jump_to_alignslice ];
+      push @multimethods, [ $alignments{$id}->{'type'}, $color, $short, $label, $id, $available, $jump_to_alignslice, 'on', 1 ];
   }
 
   foreach my $METHOD (@multimethods) {
@@ -847,8 +847,8 @@ sub init {
       $self->{'general'}->{'contigviewbottom'}{$KEY} = {
         'glyphset' => 'multiple_alignment',
         'species'  => $species,
-        'on'       => 'on',
-        'compact'  => 1,
+        'on'       => $METHOD->[7],
+        'compact'  => $METHOD->[8],
         'dep'      => 6,
         'pos'      => $compara,
         'col'      => $METHOD->[1],

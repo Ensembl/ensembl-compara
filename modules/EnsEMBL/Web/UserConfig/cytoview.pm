@@ -65,7 +65,7 @@ $self->{'general'}->{'cytoview'} = {
     'menus' => [ qw(features DAS options repeats export jumpto resize) ]
   },
   'stranded_contig' => {
-    'on'  => "on",
+    'on'  => "off",
     'pos' => '0',
     'col' => 'black',
     'threshold_navigation' => '10000'
@@ -322,7 +322,7 @@ $self->{'general'}->{'cytoview'} = {
   },
 
   'marker' => {
-    'on'  => "on",
+    'on'  => "off",
     'pos' => '1501',
     'str' => 'r',
     'colours' => {$self->{'_colourmap'}->colourSet( 'marker' )},
@@ -459,6 +459,6 @@ $self->{'general'}->{'cytoview'} = {
 };
 $self->ADD_GENE_TRACKS();
 $self->ADD_SYNTENY_TRACKS();
-$self->ADD_ALL_CLONE_TRACKS(0,'on'=>'on');
+$self->ADD_ALL_CLONE_TRACKS(0);
 }
 1;

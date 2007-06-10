@@ -239,7 +239,7 @@ sub add_new_track_predictiontranscript {
     'glyphset'    => 'prediction_transcript',
     'LOGIC_NAME'  => $code,
     '_menu'       => 'features',
-    'on'          => 'on',
+    'on'          => 'off',
     'col'         => $colour,
     'pos'         => $pos,
     'str'         => 'b',
@@ -831,8 +831,8 @@ sub ADD_ALL_DNA_FEATURES {
 
   ## BACends - configured elsewhere, not gene style features
   ## Full_dbSTS - in r40, leftover from Vega, don't display
-  $self->add_new_track_mrna( 'unigene', 'Unigene', $POS++, 'on' => 'on', 'URL_KEY' => 'UNIGENE', 'ZMENU'       => [ '###ID###' , 'Unigene cluster ###ID###', '###HREF###' ], @_ );
-  $self->add_new_track_mrna( 'vertrna', 'EMBL mRNAs', $POS++, 'on' => 'on', @_ );
+  $self->add_new_track_mrna( 'unigene', 'Unigene', $POS++, 'URL_KEY' => 'UNIGENE', 'ZMENU'       => [ '###ID###' , 'Unigene cluster ###ID###', '###HREF###' ], @_ );
+  $self->add_new_track_mrna( 'vertrna', 'EMBL mRNAs', $POS++, @_ );
   $self->add_new_track_mrna( 'celegans_mrna', 'C.elegans mRNAs', $POS++, @_ );
   $self->add_new_track_mrna( 'cbriggsae_mrna', 'C.briggsae mRNAs', $POS++, @_ );
 
@@ -879,14 +879,14 @@ sub ADD_ALL_DNA_FEATURES {
   $self->add_new_track_cdna( 'opossum_cdna', 'Opossum cDNAs',   $POS++, @_ );
   $self->add_new_track_cdna( 'refseq_mouse', 'RefSeqs', $POS++, 'SUBTYPE' => 'refseq', @_);
 ## now the tetraodon tracks...
-  $self->add_new_track_cdna( 'cdm', 'Tetraodon cDNAs',   $POS++, 'SUBTYPE'     => 'genoscope', 'on' => 'off', @_ );
+  $self->add_new_track_cdna( 'cdm', 'Tetraodon cDNAs',   $POS++, 'SUBTYPE'     => 'genoscope', @_ );
   $self->add_new_track_cdna( 'xlaevis_cDNA', 'X.laevis cDNAs',   $POS++, @_ );
   $self->add_new_track_cdna( 'xtrop_cDNA', 'X.trop cDNAs',   $POS++, @_ );
-  $self->add_new_track_cdna( 'ep3_h', 'Ecotig (Human prot)',   $POS++, 'SUBTYPE'     => 'genoscope_ecotig', 'on' => 'off', @_ );
-  $self->add_new_track_cdna( 'ep3_s', 'Ecotig (Mouse prot)',   $POS++, 'SUBTYPE'     => 'genoscope_ecotig', 'on' => 'off', @_ );
-  $self->add_new_track_cdna( 'eg3_h', 'Ecotig (Human DNA)',   $POS++, 'SUBTYPE'     => 'genoscope_ecotig', 'on' => 'off', @_ );
-  $self->add_new_track_cdna( 'eg3_s', 'Ecotig (Mouse DNA)',   $POS++, 'SUBTYPE'     => 'genoscope_ecotig', 'on' => 'off', @_ );
-  $self->add_new_track_cdna( 'eg3_f', 'Ecotig (Fugu DNA)',   $POS++,  'SUBTYPE'     => 'genoscope_ecotig', 'on' => 'off', @_ );
+  $self->add_new_track_cdna( 'ep3_h', 'Ecotig (Human prot)',   $POS++, 'SUBTYPE'     => 'genoscope_ecotig', @_ );
+  $self->add_new_track_cdna( 'ep3_s', 'Ecotig (Mouse prot)',   $POS++, 'SUBTYPE'     => 'genoscope_ecotig', @_ );
+  $self->add_new_track_cdna( 'eg3_h', 'Ecotig (Human DNA)',   $POS++, 'SUBTYPE'     => 'genoscope_ecotig', @_ );
+  $self->add_new_track_cdna( 'eg3_s', 'Ecotig (Mouse DNA)',   $POS++, 'SUBTYPE'     => 'genoscope_ecotig', @_ );
+  $self->add_new_track_cdna( 'eg3_f', 'Ecotig (Fugu DNA)',   $POS++,  'SUBTYPE'     => 'genoscope_ecotig', @_ );
   $self->add_new_track_cdna( 'cdna_update',     'CDNAs',         $POS++,
                             'FEATURES'  => 'UNDEF', 'available' => 'databases ENSEMBL_CDNA',
                             'THRESHOLD' => 0,       'DATABASE'  => 'cdna', @_ );
@@ -1051,8 +1051,8 @@ sub ADD_ALL_CLONE_TRACKS {
   $self->add_clone_track( 'bacends',        'BAC ends',       $POS++, @_ );
   $self->add_clone_track( 'extra_bacs',     'Extra BACs',     $POS++, 'thresholds' => { 20000 => { 'navigation' => 'off', 'height' => 4, 'threshold' => 50000 } }, @_ );
   $self->add_clone_track( 'ex_bac_map',        'BAC map',     $POS++, 'FEATURES' => 'bac_map', 'DATABASE' => 'otherfeatures', 'available' => 'database_tables ENSEMBL_OTHERFEATURES.misc_set',  @_ );
-  $self->add_clone_track( 'tilepath_cloneset', 'Mouse Tilepath', $POS++, @_ );
-  $self->add_clone_track( 'tilepath',       'Human tilepath clones', $POS++, @_ );
+  $self->add_clone_track( 'tilepath_cloneset', 'Mouse Tilepath', $POS++, 'on' => 'on', @_ );
+  $self->add_clone_track( 'tilepath',       'Human tilepath clones', $POS++, 'on' => 'on', @_ );
   $self->add_clone_track( 'fosmid_map',     'Fosmid map',     $POS++, 'colour_set' => 'fosmids', 'thresholds' => { 20000 => { 'navigation' => 'off', 'height' => 4, 'threshold' => 50000 }}, @_ );
 }
 
@@ -1158,17 +1158,17 @@ sub ADD_ALL_PROTEIN_FEATURES {
 sub ADD_ALL_PREDICTIONTRANSCRIPTS {
   my $self = shift;
   my $POS  = shift || 2100;
-  $self->add_new_track_predictiontranscript( 'fgenesh', 'Fgenesh', 'darkkhaki', $POS ++, {}, @_ );
-  $self->add_new_track_predictiontranscript( 'augustus','Augustus', 'darkseagreen4', $POS ++, {}, @_ );
-  $self->add_new_track_predictiontranscript( 'genscan',   'Genscan',    'lightseagreen',   $POS ++, {}, @_ );
-  $self->add_new_track_predictiontranscript( 'genefinder','Genefinder', 'darkolivegreen4', $POS ++, {}, @_ );
-  $self->add_new_track_predictiontranscript( 'snap',      'SNAP',       'darkseagreen4',   $POS ++, {}, @_ );
+  $self->add_new_track_predictiontranscript( 'fgenesh',   'Fgenesh',     'darkkhaki',       $POS ++, {}, @_ );
+  $self->add_new_track_predictiontranscript( 'augustus',  'Augustus',    'darkseagreen4',   $POS ++, {}, @_ );
+  $self->add_new_track_predictiontranscript( 'genscan',   'Genscan',     'lightseagreen',   $POS ++, {}, @_ );
+  $self->add_new_track_predictiontranscript( 'genefinder','Genefinder',  'darkolivegreen4', $POS ++, {}, @_ );
+  $self->add_new_track_predictiontranscript( 'snap',      'SNAP',        'darkseagreen4',   $POS ++, {}, @_ );
   $self->add_new_track_predictiontranscript( 'snap_ciona','SNAP (Ciona)','darkseagreen4',   $POS ++, {}, @_ );
-  $self->add_new_track_predictiontranscript( 'slam',      'SLAM',       'darkgreen',       $POS ++, {}, @_ );
-  $self->add_new_track_predictiontranscript( 'gsc',       'Genscan',    'lightseagreen',   $POS ++, { 'Genoscope' => 'TETRAODON_ABINITIO' }, @_ );
-  $self->add_new_track_predictiontranscript( 'gid',       'Gene id','red',$POS ++, { 'Genoscope' => 'TETRAODON_ABINITIO' }, @_ );
-  $self->add_new_track_predictiontranscript( 'gws_h','Genewise (Human)','orange',$POS ++, { 'Genoscope' => 'TETRAODON_GENEWISE' }, @_ );
-  $self->add_new_track_predictiontranscript( 'gws_s','Genewise (Mouse)','orange',$POS ++, { 'Genoscope' => 'TETRAODON_GENEWISE' }, @_ );
+  $self->add_new_track_predictiontranscript( 'slam',      'SLAM',        'darkgreen',       $POS ++, {}, @_ );
+  $self->add_new_track_predictiontranscript( 'gsc',       'Genscan',     'lightseagreen',   $POS ++, { 'Genoscope' => 'TETRAODON_ABINITIO' }, @_ );
+  $self->add_new_track_predictiontranscript( 'gid',       'Gene id',     'red',             $POS ++, { 'Genoscope' => 'TETRAODON_ABINITIO' }, @_ );
+  $self->add_new_track_predictiontranscript( 'gws_h',     'Genewise (Human)', 'orange',     $POS ++, { 'Genoscope' => 'TETRAODON_GENEWISE' }, @_ );
+  $self->add_new_track_predictiontranscript( 'gws_s',     'Genewise (Mouse)', 'orange',     $POS ++, { 'Genoscope' => 'TETRAODON_GENEWISE' }, @_ );
 
   return $POS;
 }
@@ -1187,8 +1187,8 @@ sub ADD_ALL_TRANSCRIPTS {
   $self->add_new_track_transcript( 'ensembl',   'Ensembl genes',   'ensembl_gene',   $POS++, 'logic_name' => 'havana ensembl_havana_gene ensembl' );
   $self->add_new_track_transcript( 'ensembl_projection',   'Ensembl proj. genes',   'ensembl_projection',   $POS++, @_ );
   $self->add_new_track_transcript( 'ensembl_segment',      'Ig segments',           'ensembl_segment',   $POS++, @_ );
-  $self->add_new_track_transcript( 'evega',         'Vega Havana gene',      'vega_gene_havana',    $POS++, 'glyph' => 'evega_transcript', 'db' => 'vega', 'logic_name' => 'otter', 'available' => 'database_features ENSEMBL_VEGA.OTTER',    @_ );
-  $self->add_new_track_transcript( 'evega_external','Vega External gene',    'vega_gene_external',  $POS++, 'glyph' => 'evega_transcript', 'db' => 'vega', 'logic_name' => 'otter_external', 'available' => 'database_features ENSEMBL_VEGA.OTTER_EXTERNAL',    @_ );
+  $self->add_new_track_transcript( 'evega',         'Vega Havana gene',      'vega_gene_havana',    $POS++, 'glyph' => 'evega_transcript', 'db' => 'vega', 'logic_name' => 'otter', 'available' => 'database_features ENSEMBL_VEGA.OTTER',  'on' => 'off',   @_ );
+  $self->add_new_track_transcript( 'evega_external','Vega External gene',    'vega_gene_external',  $POS++, 'glyph' => 'evega_transcript', 'db' => 'vega', 'logic_name' => 'otter_external', 'available' => 'database_features ENSEMBL_VEGA.OTTER_EXTERNAL', 'on' => 'off',    @_ );
   $self->add_new_track_transcript( 'flybase',   'Flybase genes',   'flybase_gene',   $POS++, @_ );
   $self->add_new_track_transcript( 'vectorbase', 'Vectorbase genes', 'vectorbase_gene',   $POS++, @_ );
   $self->add_new_track_transcript( 'wormbase',  'Wormbase genes',  'wormbase_gene',  $POS++, @_ );
@@ -1196,8 +1196,8 @@ sub ADD_ALL_TRANSCRIPTS {
   $self->add_new_track_transcript( 'genebuilderbeeflymosandswall',
                                                 'Bee genes',       'bee_gene',       $POS++, @_ );
   $self->add_new_track_transcript( 'gsten',     'Genoscope genes', 'genoscope_gene', $POS++, 'logic_name' => 'gsten hox ctt', @_ );
-  $self->add_new_track_transcript( 'rna',       'ncRNA genes',     'rna_gene',       $POS++, 'available' => 'features NCRNA|MIRNA','logic_name' => 'ncrna mirna trna' ,     @_ );
-  $self->add_new_track_transcript( 'erna',       'e! ncRNA genes', 'rna_gene',   $POS++, 'available' => 'features ensembl_ncRNA', 'logic_name' => 'ensembl_ncrna',  'legend_type' => 'rna',        @_ );
+  $self->add_new_track_transcript( 'rna',       'ncRNA genes',     'rna_gene',       $POS++, 'available' => 'features NCRNA|MIRNA','logic_name' => 'ncrna mirna trna' ,  'compact' => 1,   @_ );
+  $self->add_new_track_transcript( 'erna',       'e! ncRNA genes', 'rna_gene',   $POS++, 'available' => 'features ensembl_ncRNA', 'logic_name' => 'ensembl_ncrna',  'legend_type' => 'rna',  'compact' => 1,      @_ );
 
   $self->add_new_track_transcript( 'ciona_dbest_ncbi', "3/5' EST genes (dbEST)", 'estgene', $POS++, @_) ;
   $self->add_new_track_transcript( 'ciona_est_seqc',   "3' EST genes (Kyoto)", 'estgene', $POS++, @_) ;
@@ -1249,7 +1249,7 @@ sub ADD_ALL_TRANSCRIPTS {
     'available'=>'features VEGA_GENES_OTTER_EXTERNAL', @_);
 ## OTHER FEATURES DATABASE TRANSCRIPTS....
   $self->add_new_track_transcript( 'est',       'EST genes',       'est_gene', $POS++,'db' => 'otherfeatures',
-    'available' => 'database_features ENSEMBL_OTHERFEATURES.estgene', @_ );
+    'available' => 'database_features ENSEMBL_OTHERFEATURES.estgene',  'compact'     => 1,  @_ );
 
   $self->add_new_track_transcript( 'oxford_fgu_ext', 'Oxford FGU Genes', 'oxford_fgu', $POS++, 'db' => 'otherfeatures', 
     'available' => "database_features ENSEMBL_OTHERFEATURES.oxford_fgu", @_ );
@@ -1334,13 +1334,13 @@ sub ADD_GENE_TRACKS {
                              'database' => 'vega', 'available' => 'database_features ENSEMBL_VEGA.OTTER',
                              'gene_col'             => sub { return $_[0]->biotype.'_'.$_[0]->status; },
                              'gene_label'           => sub { $_[0]->external_name || $_[0]->stable_id; },
-                             'glyphset' => 'evega_gene', 'label_threshold' => 500,
+                             'glyphset' => 'evega_gene', 'label_threshold' => 500, 'on' => 'off', 
                                @_ );
   $self->add_new_track_gene( 'otter_external', 'Vega External Genes', 'vega_gene_external', $POS++,
                              'database' => 'vega', 'available' => 'database_features ENSEMBL_VEGA.OTTER_EXTERNAL',
                               'gene_col'            => sub { return $_[0]->biotype.'_'.$_[0]->status; },
                              'gene_label'           => sub { $_[0]->external_name || $_[0]->stable_id; },
-                             'glyphset' => 'evega_gene', 'label_threshold' => 500,
+                             'glyphset' => 'evega_gene', 'label_threshold' => 500, 'on' => 'off', 
                               @_ );
   $self->add_new_track_gene( 'flybase', 'Flybase Genes', 'flybase_gene', $POS++,
     'gene_label'           => sub { return $_[0]->biotype eq 'bacterial_contaminant' ? 'Bac. cont.' : ( $_[0]->biotype eq 'pseudogene' ? 'Pseudogene' : ( $_[0]->external_name || 'NOVEL' ) ) },
@@ -1499,7 +1499,7 @@ sub ADD_GENE_TRACKS {
                              'database' => 'otherfeatures',
                              'available' => 'database_features ENSEMBL_OTHERFEATURES.estgene',
                              'logic_name' => 'genomewise estgene', 'label_threshold' => 500, # 'on' => 'off',
-                             'gene_col' => 'estgene', @_ );
+                             'gene_col' => 'estgene', 'on'=>'off',@_ );
 
 #for genes in Vega
   $self->add_new_track_gene('vega_eucomm_gene', 'Knockout genes', 'vega_gene_eucomm', $POS++,
