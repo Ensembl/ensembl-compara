@@ -28,10 +28,17 @@ sub input {
   return $self->{'data'}{'_input'};
 }
 
+sub _sanitize {
+  my $T = shift;
+  $T =~ s/<script(.*?)>/[script\1]/igsm;
+  $T =~ s/\s*on(\w+)\s*=/ on_\1=/igsm;
+  return $T;
+}
+
 sub param {
   my $self = shift;
   if( @_ ){ 
-    my @T = $self->{'data'}{'_input'}->param(@_);
+    my @T =  map { _sanitize($_) } $self->{'data'}{'_input'}->param(@_);
     if( @T ) {
       return wantarray ? @T : $T[0];
     }
@@ -43,7 +50,7 @@ sub param {
     }
     return wantarray ? () : undef;
   } else {
-    my @params = $self->{'data'}{'_input'}->param();
+    my @params = map { _sanitize($_) } $self->{'data'}{'_input'}->param();
     my $wsc    = $self->get_scriptconfig( );
     push @params, $wsc->options() if $wsc;
     my %params = map { $_,1 } @params;
@@ -51,7 +58,11 @@ sub param {
   }
 }
 
-sub input_param  { my $self = shift; return $self->{'data'}{'_input'}->param(@_); }
+sub input_param  {
+  my $self = shift;
+  return _sanitize( $self->{'data'}{'_input'}->param(@_) );
+}
+
 sub delete_param { my $self = shift; $self->{'data'}{'_input'}->delete(@_); }
 sub script       { return $_[0]{'data'}{'_script'}; }
 sub species      { return $_[0]{'data'}{'_species'}; }
