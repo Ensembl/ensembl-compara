@@ -704,7 +704,7 @@ sub rgb_by_id {
 
 sub hex_by_name {
     my ($self, $name) = @_;
-    return $self->{$name};
+    return $self->{$name} || ( $name =~ /^#?([0-9a-fA-F]{6})$/ ? $1 : 'ff0000' ); 
 }
 
 sub rgb_by_name {
