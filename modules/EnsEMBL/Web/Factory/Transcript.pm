@@ -8,7 +8,7 @@ use EnsEMBL::Web::Factory;
 use EnsEMBL::Web::Proxy::Object;
 our @ISA = qw(  EnsEMBL::Web::Factory );
 
-sub createObjectsFast {
+sub fastCreateObjects {
   my $self = shift;
   my $adaptor_call = sprintf( "get_%sAdaptor", $self->param('type') || 'Transcript' );
   $self->DataObjects( EnsEMBL::Web::Proxy::Object->new(

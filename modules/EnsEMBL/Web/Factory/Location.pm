@@ -308,26 +308,30 @@ sub _location_from_URL {
 
 #----------------- Create objects ----------------------------------------------
 
-sub createObjectsFast {
+sub fastCreateObjects {
   my $self = shift;
 ## Only takes one set of parameters... and this has additional 
 ## useful information included...
 ## /Homo_sapiens/fragment/contigviewbottom?l=chr:st-end;strand=1;type=chromosome
-  $self->get_databases($self->__gene_databases, 'comara', 'blast');
+  $self->get_databases($self->__gene_databases, 'compara', 'blast');
+ warn "\n\n\n\nFCO: (", $self->param('l'),')';
   if( $self->param('l') =~ /^([-\w\.]+):(-?\d+)-(\d+)$/) {
+eval {
+ warn "HERE";
     my $seq_region         = $1;
     my $start              = $2;
     my $end                = $3;
     my $strand             = $self->param('strand') || 1;
     my $seq_region_type    = $self->param('type');
-    my $slice = $self->_slice_adaptor()->fetch_by_region( $seq_region_type, $seq_region, $start, $end, $strand );
+    my $slice = $self->_slice_adaptor()->fetch_by_region( undef, $seq_region, $start, $end, $strand );
     my $seq_region_length  = $self->param('srlen');
+ warn "HERE";
     my $data = EnsEMBL::Web::Proxy::Object->new( 'Location', {
       'type'               => "SeqRegion",
       'real_species'       => $self->__species,
       'name'               => $seq_region,
       'seq_region_name'    => $seq_region,
-      'seq_region_type'    => $seq_region_type,
+      'seq_region_type'    => $slice->coord_system->name,
       'seq_region_start'   => $start,
       'seq_region_end'     => $end,
       'seq_region_strand'  => $strand,
@@ -335,7 +339,9 @@ sub createObjectsFast {
       'seq_region_length'  => $slice->seq_region_length
     },$self->__data);
     $data->attach_slice( $slice );
+warn "ATTACHING DATA OBJECT........";
     $self->DataObjects( $data );
+}; warn "FCO eval $@";
   }
 }
 
