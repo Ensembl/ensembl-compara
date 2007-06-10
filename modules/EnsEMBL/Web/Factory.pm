@@ -15,7 +15,7 @@ sub DataObjects {
   return $self->{'data'}{'_dataObjects'};
 }
 
-sub createObjectsFast {
+sub fastCreateObjects {
   my $self = shift;
   $self->createObjects(@_);
 }
