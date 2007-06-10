@@ -167,12 +167,8 @@ sub headerParserHandler {
   my $r = shift;
 }
 
-sub transHandler {
-  my $r = shift;      # Get the connection handler
-  my $u           = $r->parsed_uri;
-  my $file        = $u->path;
-  my $querystring = $u->query;
-
+sub _init_session {
+  my( $r, $species, $script ) = @_;
   my $session_cookie = EnsEMBL::Web::Cookie->new({
     'host'    => $ENSEMBL_COOKIEHOST,
     'name'    => $ENSEMBL_FIRSTSESSION_COOKIE,
@@ -187,6 +183,19 @@ sub transHandler {
       'refresh' => $ENSEMBL_ENCRYPT_REFRESH
     }
   });
+  $r->subprocess_env->{'ENSEMBL_SPECIES'} = $species;
+  $r->subprocess_env->{'ENSEMBL_SCRIPT'}  = $script;
+  $ENSEMBL_WEB_REGISTRY->initialize_session({ 'r' => $r, 'cookie'  => $session_cookie, 'species' => $species, 'script'  => $script });
+  $r->push_handlers( PerlCleanupHandler => \&cleanupHandler_script       );
+  $r->push_handlers( PerlCleanupHandler => \&Apache2::SizeLimit::handler );
+}
+
+sub transHandler {
+  my $r = shift;      # Get the connection handler
+  my $u           = $r->parsed_uri;
+  my $file        = $u->path;
+  my $querystring = $u->query;
+
   my @path_segments = split( m|/|, $file );
   shift @path_segments; # Always empty
   my $species   = shift @path_segments;
@@ -224,7 +233,6 @@ sub transHandler {
         $command = 'das_error';
         $r->subprocess_env->{'ENSEMBL_DAS_ERROR'} = 'unknown-species';
       }
-      $ENSEMBL_WEB_REGISTRY->initialize_session({ 'r' => $r, 'cookie'  => $session_cookie, 'species' => $das_species, 'script'  => $command });
       $r->subprocess_env->{'ENSEMBL_SPECIES'     } = $das_species;
       $r->subprocess_env->{'ENSEMBL_DAS_ASSEMBLY'} = $assembly;
       $r->subprocess_env->{'ENSEMBL_DAS_TYPE'    } = $type;
@@ -245,11 +253,9 @@ sub transHandler {
             'das', "$DSN/$command", $querystring );
           warn $LOG_INFO;
           $LOG_TIME = time();
-          $r->push_handlers( PerlCleanupHandler => \&cleanupHandler_script      );
-#warn "PUSHING BLASTSCRIPTXX.... $ENSEMBL_BLASTSCRIPT";
-#          $r->push_handlers( PerlCleanupHandler => \&cleanupHandler_blast       ) if $ENSEMBL_BLASTSCRIPT;
-          $r->push_handlers( PerlCleanupHandler => \&Apache2::SizeLimit::handler );
         }
+        warn "1 $das_species $command";
+        _init_session( $r, $das_species, $command );
         return OK;
       }
       if( -r $error_filename ) {
@@ -263,11 +269,9 @@ sub transHandler {
             'das', "$DSN/$command", $querystring );
           warn $LOG_INFO;
           $LOG_TIME = time();
-          $r->push_handlers( PerlCleanupHandler => \&cleanupHandler_script      );
-#warn "PUSHING BLASTSCRIPTYY.... $ENSEMBL_BLASTSCRIPT";
-#          $r->push_handlers( PerlCleanupHandler => \&cleanupHandler_blast       ) if $ENSEMBL_BLASTSCRIPT;
-          $r->push_handlers( PerlCleanupHandler => \&Apache2::SizeLimit::handler );
         }
+        warn "2 $das_species $command";
+        _init_session( $r, $das_species, $command );
         return OK;
       }
       return DECLINED;
@@ -287,9 +291,6 @@ sub transHandler {
         return HTTP_TEMPORARY_REDIRECT;
       }
       # Mess with the environment
-      $r->subprocess_env->{'ENSEMBL_SPECIES'} = $species;
-      $r->subprocess_env->{'ENSEMBL_SCRIPT'}  = $script;
-      $ENSEMBL_WEB_REGISTRY->initialize_session({ 'r' => $r, 'cookie'  => $session_cookie, 'species' => $species, 'script'  => $script });
       # Search the mod-perl dirs for a script to run
       foreach my $dir( @PERL_TRANS_DIRS ){
         $script || last;
@@ -301,19 +302,14 @@ sub transHandler {
         if( $ENSEMBL_DEBUG_FLAGS & 8 && $script ne 'ladist' && $script ne 'la' ) {
           my @X = localtime();
           $LOG_INFO = sprintf( "SCRIPT:%8s:%-10d %04d-%02d-%02d %02d:%02d:%02d /%s/%s?%s\n",
-           substr($THIS_HOST,0,8), $$, $X[5]+1900, $X[4]+1, $X[3], $X[2],$X[1],$X[0],
-           $species, $script, $querystring ) if $ENSEMBL_DEBUG_FLAGS | 8 && ($script ne 'ladist' && $script ne 'la' );
+            substr($THIS_HOST,0,8), $$, $X[5]+1900, $X[4]+1, $X[3], $X[2],$X[1],$X[0],
+            $species, $script, $querystring ) if $ENSEMBL_DEBUG_FLAGS | 8 && ($script ne 'ladist' && $script ne 'la' );
           warn $LOG_INFO;
           $LOG_TIME = time();
-	  }
-		$r->push_handlers( PerlCleanupHandler => \&cleanupHandler_script      );
-#warn "PUSHING BLASTSCRIPTZZ.... $$ - $ENSEMBL_BLASTSCRIPT";
-#if( $ENSEMBL_BLASTSCRIPT ) {
-#          $r->push_handlers( PerlCleanupHandler => \&cleanupHandler_blast       );
-#  warn "YARG $$ ....";
-#}
-          $r->push_handlers( PerlCleanupHandler => \&Apache2::SizeLimit::handler );
- #       }
+        }
+        warn "3 $species $script";
+        _init_session( $r, $species, $script );
+        $r->push_handlers( PerlCleanupHandler => \&Apache2::SizeLimit::handler );
         return OK;
       }
     } else {
