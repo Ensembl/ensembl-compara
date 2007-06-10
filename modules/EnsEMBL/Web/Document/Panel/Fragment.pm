@@ -62,6 +62,8 @@ sub placeholder {
     unless ($self->panel_is_closed) {
       foreach my $name (@{ $self->static_components }) {
         my $command = $self->{components}{$name}->[0];
+        (my $class = $command ) =~s/::[^:]+$//;
+        $self->dynamic_use($class); 
 	warn "PLACEHOLDER FOR: " . $command;
         no strict 'refs';
         my $result = &$command($self, $self->{'object'});
