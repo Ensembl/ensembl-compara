@@ -368,10 +368,10 @@ sub update_record {
   #warn "UPDATING: " . $user_id . ": " . $type . ": " . $data;
   my $sql = qq(
     UPDATE ) . $table . qq(_record
-    SET ) . $ident . qq(_id = $user_id,
-        type    = "$type",
-        data    = "$data"
-    WHERE ) . $table . qq(_record_id = $id
+    SET ) . $ident . qq(_id = ?,
+        type    = ?,
+        data    = ?
+    WHERE ) . $table . qq(_record_id = ?
   );
   warn $sql;
   my $sth = $self->{'_handle'}->prepare($sql);

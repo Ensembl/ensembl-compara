@@ -63,6 +63,15 @@ sub discover {
   return $self->fields;
 }
 
+sub populate_for_this_user {
+  my ($self, $id) = @_;
+  warn "Populating with ID: " .$id;
+  if( $id ) {
+    $self->id($id);
+  }
+  $self->data($self->adaptor->fetch_id_for_this_user($self->id)->{$self->id});
+}
+
 sub populate {
   my ($self, $id) = @_;
   warn "Populating with ID: " .$id;

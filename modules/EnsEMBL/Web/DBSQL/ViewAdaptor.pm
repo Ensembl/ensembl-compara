@@ -276,6 +276,13 @@ sub dump_data {
 
 
 
+sub fetch_id_for_this_user {
+  my ($self, $id) = @_;
+  my $table = $self->table;
+  my $key = $table . "_id";
+  return $self->fetch_by({ $key => $id, 'user_id' => $ENV{'ENSEMBL_USER_ID'} });
+}
+
 sub fetch_id {
   my ($self, $id) = @_;
   my $table = $self->table;
@@ -287,9 +294,9 @@ sub fetch_by {
   my ($self, $where) = @_;
   my $sql_where = "";
   foreach my $key (keys %{ $where }) {
-    $sql_where .= $key . " = '" . $where->{$key} . "', ";
+    $sql_where .= $key . " = '" . $where->{$key} . "' and ";
   }
-  $sql_where =~ s/, $//;
+  $sql_where =~ s/ and $//;
   my $table = $self->table;
   my $id_field = $table . "_id";
   my $sql = "";
