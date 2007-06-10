@@ -802,7 +802,7 @@ sub get_synonyms {
   foreach my $m (@matches){
     my $dbname = $m->db_display_name;
     my $disp_id = $m->display_id();
-    if ( $dbname =~/HGNC/ && $disp_id=~/$match_id/){
+    if ( $dbname =~/(HGNC|ZFIN)/ && $disp_id=~/$match_id/){
       my $synonyms = $m->get_all_synonyms();
       foreach my $syn (@$synonyms){
       $ids = $ids .", " .$syn;
@@ -1163,7 +1163,7 @@ sub transcripts {
     warn "Asynchronously load transcripts";
     my $json = "{ components: [ 'EnsEMBL::Web::Component::Gene::transcripts'], fragment: {db: '".$db."', stable_id: '" . $gene->stable_id . "', species: '" . $gene->species . "'} }";
     my $html = "<div id='component_0' class='info'>Loading transcripts...</div><div class='fragment'>$json</div>";
-    $panel->add_row($label . " <img src='/img/ajax-loader.gif' width='16' height='16' alt='(loading)' id='loading' />", $html, "$URL=odd");
+    $panel->add_row($label . " <img src='/img/ajax-loader.gif' width='16' height='16' alt='(loading)' id='loading' />", $html, "$URL=off");
   } else {
     ## Get a slice of the gene +/- 10k either side...
 
@@ -1187,6 +1187,7 @@ sub transcripts {
       'panel'      => 'altsplice',
       'leftmenus' => ['Features']
     );
+    $mc->{'ajax'} = $panel->{'ajax'};
     ## Now
     my  $image  = $gene->new_image( $gene_slice, $wuc, [$gene->Obj->stable_id] );
     $image->introduction       = qq($extra\n<table style="width:100%">$rows</table>\n);
