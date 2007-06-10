@@ -166,6 +166,11 @@ unless( $obj->species_defs->NO_SEQUENCE ) {
     $menu->add_entry( $flag, 'text' => "View region at UCSC",
       'href' => $obj->get_ExtURL( 'EGB_UCSC', { 'UCSC_DB' => $UCSC_db, 'CHR' => $obj->seq_region_name, 'START' => $obj->seq_region_start, 'END' => $obj->seq_region_end} ) );
   }
+  my $NCBI_db = $obj->species_defs->other_species( $species, 'NCBI_GOLDEN_PATH' );
+  if( $NCBI_db ) {
+    $menu->add_entry( $flag, 'text' => "View region at NCBI",
+      'href' => $obj->get_ExtURL( 'EGB_NCBI', { 'NCBI_DB' => $NCBI_db, 'CHR' => $obj->seq_region_name, 'START' => $obj->seq_region_start, 'END' => $obj->seq_region_end} ) );
+  }
   my %browsers = %{$obj->species_defs->other_species( $species, 'EXTERNAL_GENOME_BROWSERS')||{}};
   foreach ( sort keys %browsers ) {
     $menu->add_entry( $flag, 'text' => "View region in $browsers{$_}",
