@@ -20,7 +20,7 @@ sub render   {
   $self->printf(
     '<link rel="search" href="'.
     $ENSEMBL_WEB_REGISTRY->species_defs->ENSEMBL_BASE_URL.
-    'opensearchdescription.xml" type="application/opensearchdescription+xml" title="Ensembl" />'.
+    '/opensearchdescription.xml" type="application/opensearchdescription+xml" title="Ensembl" />'.
     "\n"
   );
   foreach (keys %{$self->{'feeds'}}) {
