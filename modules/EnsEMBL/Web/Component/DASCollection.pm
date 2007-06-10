@@ -353,7 +353,7 @@ sub das_wizard {
       var warning = '';
       if (s == 1) {
         var e = f.DASuser_email.value;
-        var ff = /^[-\\w\\.]+@[-\\w\\.]+\\.[\\w]+/.test(e);
+        var ff = /^[-\\w\\.]+@[-\\w+\\.]+\\.[\\w]+/.test(e);
         if (ff == 0) { warning = 'You need to provide a valid email.'; rc = false; }
         var p = f.DASuser_password.value;
         var fa = /^.+/.test(p);
