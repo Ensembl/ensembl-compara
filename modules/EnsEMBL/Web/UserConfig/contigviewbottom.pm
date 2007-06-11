@@ -26,6 +26,7 @@ sub init {
         genotyped_variation_line 
         histone_modifications
         fg_regulatory_features
+        ctcf
         trna   cpg eponine marker operon rnai ex_profile qtl ep1_h ep1_s
         first_ef
         all_affy 
@@ -100,8 +101,9 @@ sub init {
          [ 'genotyped_variation_line' => 'Genotyped SNPs'  ],
          [ 'variation_affy100'        => 'Affy 100k SNP'  ],
          [ 'variation_affy500'        => 'Affy 500k SNP'  ],
-         [ 'histone_modifications'       => 'Histone modifications'  ],
-         [ 'fg_regulatory_features'      => ' FG Regulatory features' ],
+         [ 'histone_modifications'    => 'Histone modifications'  ],
+         [ 'fg_regulatory_features'   => 'Regulatory features' ],
+         [ 'ctcf'                     => 'Insulators'],
          [ 'trna'                     => 'tRNA'        ],
          [ 'cpg'                      => 'CpG islands'     ],
          [ 'eponine'                  => 'Eponine regions'   ],
@@ -111,8 +113,8 @@ sub init {
          [ 'marker'          => 'Markers'       ],
          [ 'qtl'             => 'QTLs'     ],
          [ 'operon'          => 'Operon'      ],
-         [ 'regulatory_regions'       => 'Regulatory features'  ],
-         [ 'regulatory_search_regions'=> 'Regulatory search regions'  ],
+         [ 'regulatory_regions'       => 'cisRED'  ],
+         [ 'regulatory_search_regions'=> 'cisRED search regions'  ],
          [ 'rnai'            => 'RNAi'        ],
          [ 'ex_profile'      => 'Exp. profile'    ],
          [ 'alternative_assembly'     => 'Vega assembly' ],
@@ -428,6 +430,23 @@ sub init {
       'db_type'    => "funcgen",
       'colours' => {$self->{'_colourmap'}->colourSet('fg_regulatory_features')},
       'available'=> 'species Homo_sapiens',  
+    },
+
+      'ctcf' => {
+      'on'  => "off",
+      'dep' => 0.1,
+      'pos' => '4530',
+      'str' => 'r',
+      'col' => 'blue',
+      'compact'  => 0,
+      'threshold' => '500',
+      'label' => 'Insulators',
+      'glyphset'    => 'ctcf',
+      'db_type'    => "funcgen",
+      'wiggle_name' => 'tiling array data',
+      'block_name' => 'predicted features',
+      'available'=> 'species Homo_sapiens',
+
     },
 
    'genotyped_variation_line' => {
@@ -772,7 +791,7 @@ sub init {
   $self->add_track( 'missing',     'on' => 'on', 'str' => 'r', 'pos' => 3000100 );
   $self->add_track( 'gene_legend', 'on' => 'on', 'str' => 'r', 'pos' => 2000000,  '_menu' => 'options', 'caption' => 'Gene legend' );
   $self->add_track( 'variation_legend',  'on' => 'on', 'str' => 'r', 'pos' => 2000100, '_menu' => 'options', 'caption' => 'SNP legend'  );
-  $self->add_track( 'fg_regulatory_features_legend',  'on' => 'on', 'str' => 'r', 'pos' => 2000200, '_menu' => 'options', 'caption' => 'FG Reg. feats legend'  );
+  $self->add_track( 'fg_regulatory_features_legend',  'on' => 'on', 'str' => 'r', 'pos' => 2000200, '_menu' => 'options', 'caption' => 'Reg. feats legend'  );
   $self->ADD_ALL_OLIGO_TRACKS();
 
 ## And finally the multispecies tracks....
