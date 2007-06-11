@@ -166,6 +166,7 @@ sub fetch_news_items {
     $sql .= ' WHERE n.news_category_id = c.news_category_id';
   }
   $sql .= " $where_str GROUP BY n.news_item_id ORDER BY n.priority DESC $limit_str";
+  warn $sql;
 
   my $T = $self->handle->selectall_arrayref($sql, {});
   return [] unless $T;
@@ -280,7 +281,7 @@ sub fetch_headlines {
   else {
     $sql .= ' WHERE n.news_category_id = c.news_category_id';
   }
-  $sql .= " $where_str GROUP BY n.news_item_id ORDER BY n.priority DESC $limit_str";
+  $sql .= " $where_str AND n.status = 'live' GROUP BY n.news_item_id ORDER BY n.priority DESC $limit_str";
 
   my $T = $self->handle->selectall_arrayref($sql, {});
   return [] unless $T;
