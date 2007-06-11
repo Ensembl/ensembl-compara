@@ -14,11 +14,11 @@ sub add_source {
   return if $self->{'sources'}{$src};
   $self->{'sources'}{$src}=1;
   
-  $self->{'scripts'}.=qq(  <script type="text/javascript" src="/js/core42.js"></script>\n);
+  foreach( qw(core42 prototype scriptaculous) ) {
+    $self->{'scripts'}.=qq(  <script type="text/javascript" src="/js/$_.js"></script>\n) unless $self->{'sources'}{"/js/$_.js"};
+    $self->{'sources'}{"/js/$_.js"} = 1;
 
-  $self->{'scripts'}.=qq(  <script type="text/javascript" src="/js/prototype.js"></script>\n);
-  $self->{'scripts'}.=qq(  <script type="text/javascript" src="/js/scriptaculous.js"></script>\n);
-  
+  }
   $self->{'scripts'}.=qq(  <script type="text/javascript" src="$src"></script>\n);
 #  warn "sr7: added $src\n";
   

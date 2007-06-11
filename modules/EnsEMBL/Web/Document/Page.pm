@@ -14,6 +14,7 @@ use EnsEMBL::Web::Tools::PluginLocator;
 our @ISA = qw(EnsEMBL::Web::Root);
 
 our %DOCUMENT_TYPES = (
+  'none' => { 'none' => '' },
   'HTML' => {
     '2.0'         => '"-//IETF//DTD HTML 2.0 Level 2//EN"',
     '3.0'         => '"-//IETF//DTD HTML 3.0//EN"',
@@ -269,6 +270,7 @@ sub doc_type {
     unless exists $DOCUMENT_TYPES{$self->{'doc_type'}}{$self->{'doc_type_version'}};
 #  return "<!DOCTYPE html PUBLIC @{[$DOCUMENT_TYPES{$self->{'doc_type'}}{$self->{'doc_type_version'}} ]}>\n";
 
+  return '' if $self->{'doc_type'} eq 'none';
   my $header = $self->{'doc_type'} eq 'XML' ? qq#<!DOCTYPE $self->{'doc_type_version'} SYSTEM @{[$DOCUMENT_TYPES{$self->{'doc_type'}}{$self->{'doc_type_version'}} ]}>\n# : "<!DOCTYPE html PUBLIC @{[$DOCUMENT_TYPES{$self->{'doc_type'}}{$self->{'doc_type_version'}} ]}>\n";
 
   return $header;
