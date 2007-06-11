@@ -44,7 +44,6 @@ sub _init {
     $y++ unless $x==0;
     $x=0;
     while( my ($legend, $colour) = splice @colours, 0, 2 ) {
-      warn $colour;
       $FLAG = 1;
       my $tocolour='';
       ($tocolour,$colour) = ($1,$2) if $colour =~ /(.*):(.*)/;
