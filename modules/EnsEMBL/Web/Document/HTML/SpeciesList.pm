@@ -161,8 +161,9 @@ sub render_species_list {
     $favourites{$id} = 1;
     my $species_filename = $id_to_species{$id};
     my $species_name = $species_filename;
+    my $common_name = $species_defs->other_species($species_filename, "SPECIES_COMMON_NAME");
     $species_name =~ s/_/ /g;
-    $html .= "<dt class='species-list'><a href='/$species_filename/'><img src='/img/species/thumb_$species_filename.png' alt='$species_name' title='Browse $species_name' class='sp-thumb' height='40' width='40' /></a><a href='/$species_filename/'>$species_name</a></dt>\n";
+    $html .= "<dt class='species-list'><a href='/$species_filename/'><img src='/img/species/thumb_$species_filename.png' alt='$species_name' title='Browse $species_name' class='sp-thumb' height='40' width='40' /></a><a href='/$species_filename/' title='$species_name'>$common_name</a></dt>\n";
     $html .= "<dd>" . $description{$species_name}[0] . "</dd>\n";
   }
   $html .= "</dl>\n";
@@ -178,12 +179,19 @@ sub render_species_list {
   $html .= "<div id='static_all_species'>\n";
   $html .= "<ul class='species-list spaced'>\n";
 
-  foreach my $id (@species_list) {
+  my @sorted_by_common = sort {
+                          $species_defs->other_species($id_to_species{$a}, "SPECIES_COMMON_NAME")
+                          cmp
+                          $species_defs->other_species($id_to_species{$b}, "SPECIES_COMMON_NAME")
+                          } @species_list;
+
+  foreach my $id (@sorted_by_common) {
     my $species_filename = $id_to_species{$id};
     my $species_name = $species_filename;
+    my $common_name = $species_defs->other_species($species_filename, "SPECIES_COMMON_NAME");
     $species_name =~ s/_/ /g;
     if (!$favourites{$id}) {
-      $html .= "<li><span class='sp'><a href='/$species_filename/'>$species_name</a></span>".$description{$species_name}[1]."</li>\n";
+      $html .= "<li><span class='sp'><a href='/$species_filename/' title='$species_name'>$common_name</a></span>".$description{$species_name}[1]."</li>\n";
       $favourites{$id} = 1;
     }
   }
@@ -237,28 +245,28 @@ sub render_ajax_reorder_list {
     $favourites{$id} = 1;
     my $sp_dir = $species_name;
     $species_name =~ s/_/ /;
-    my $common = $species_defs->get_config($sp_dir, 'SPECIES_DESCRIPTION');
-    $html .= "<li id='favourite_$id'><em>" .$species_name.'</em>';
-    if ($common) {
-      $html .= " ($common)";
-    }
-    $html .= "</li>\n";
+    my $common = $species_defs->get_config($sp_dir, 'SPECIES_COMMON_NAME');
+    $html .= "<li id='favourite_$id'>$common (<em>" .$species_name."</em>)</li>\n";
   }
 
   $html .= "</ul></div>\n";
   $html .= "<div id='all_species'>\n";
   $html .= "<ul id='species_list'>\n";
-  foreach my $id (@species_list) {
+
+
+  my @sorted_by_common = sort {
+                          $species_defs->other_species($id_to_species{$a}, "SPECIES_COMMON_NAME")
+                          cmp
+                          $species_defs->other_species($id_to_species{$b}, "SPECIES_COMMON_NAME")
+                          } @species_list;
+
+  foreach my $id (@sorted_by_common) {
     my $species_name = $id_to_species{$id};
     if (!$favourites{$id}) {
       my $sp_dir = $species_name;
       $species_name =~ s/_/ /;
-      my $common = $species_defs->get_config($sp_dir, 'SPECIES_DESCRIPTION');
-      $html .= "<li id='species_$id'><em>" . $species_name . '</em>'; 
-      if ($common) {
-        $html .= " ($common)";
-      }
-      $html .= "</li>\n";
+      my $common = $species_defs->get_config($sp_dir, 'SPECIES_COMMON_NAME');
+      $html .= "<li id='species_$id'>$common (<em>" . $species_name . "</em>)</li>\n";
       $favourites{$id} = 1;
     }
   }
