@@ -6,7 +6,7 @@ use Bio::EnsEMBL::Utils::Eprof qw(eprof_start eprof_end eprof_dump);
 @ISA = qw(Bio::EnsEMBL::GlyphSet_simple);
 use Data::Dumper;
 
-sub my_label { return "FG Reg. Features"; }
+sub my_label { return "Reg. Features"; }
 
 sub features {
   my ($self) = @_;
@@ -16,7 +16,7 @@ sub features {
   my $max_length     = $Config->get( $type, 'threshold' )  || 500;
   my $slice_length  = $self->{'container'}->length;
   if($slice_length > $max_length*1010) {
-    $self->errorTrack('FG Regulatory features not displayed for more than '.$max_length.'Kb');
+    $self->errorTrack('Regulatory features not displayed for more than '.$max_length.'Kb');
     return;
   }
 

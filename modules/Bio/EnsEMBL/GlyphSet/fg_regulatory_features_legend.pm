@@ -10,7 +10,7 @@ our @ISA = qw(Bio::EnsEMBL::GlyphSet);
 sub init_label {
   my ($self) = @_;
   return if( defined $self->{'config'}->{'_no_label'} );
-  $self->init_label_text( 'FG Reg. feats legend' );
+  $self->init_label_text( 'Reg. feats legend' );
 }
 
 sub _init {
