@@ -122,7 +122,13 @@ function archive( release ) {
 
 function login_link() {
   URL = escape(document.location.href);
-  document.location = '/login.html?url=' + URL;
+  document.location = '/common/user/login?url=' + URL;
+  return true;  
+}
+
+function logout_link() {
+  URL = escape(document.location.href);
+  document.location = '/common/user/logout?url=' + URL;
   return true;  
 }
 
@@ -151,16 +157,6 @@ function load_config_link(ident) {
 function load_config(config_id) {
   URL = escape(document.location.href);
   document.location = '/common/load_config?id=' + config_id + '&url=' + URL;
-  return true;  
-}
-
-function logout_link() {
-  URL = escape(document.location.href);
-  // return to home page if logging out from account management
-  if (URL.indexOf('logout') > -1 || URL.indexOf('account') > -1) {
-    URL = '/';
-  }
-  document.location = '/common/user_logout?url=' + URL;
   return true;  
 }
 
