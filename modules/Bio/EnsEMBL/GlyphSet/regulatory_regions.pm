@@ -5,9 +5,9 @@ use Bio::EnsEMBL::GlyphSet_simple;
 @ISA = qw(Bio::EnsEMBL::GlyphSet_simple);
 
 sub squish { return 1; }
-sub my_label { return "Reg. features"; }
+sub my_label { return "cisRED motifs"; }
 
-sub my_description { return "Reg. features"; }
+sub my_description { return "cisRED motifs"; }
 
 # This for 
 sub my_helplink { return "markers"; }
