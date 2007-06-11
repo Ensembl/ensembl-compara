@@ -25,6 +25,7 @@ sub init {
         variation variation_affy100 variation_affy500
         genotyped_variation_line 
         histone_modifications
+        fg_regulatory_features
         trna   cpg eponine marker operon rnai ex_profile qtl ep1_h ep1_s
         first_ef
         all_affy 
@@ -100,6 +101,7 @@ sub init {
          [ 'variation_affy100'        => 'Affy 100k SNP'  ],
          [ 'variation_affy500'        => 'Affy 500k SNP'  ],
          [ 'histone_modifications'       => 'Histone modifications'  ],
+         [ 'fg_regulatory_features'      => ' FG Regulatory features' ],
          [ 'trna'                     => 'tRNA'        ],
          [ 'cpg'                      => 'CpG islands'     ],
          [ 'eponine'                  => 'Eponine regions'   ],
@@ -409,10 +411,24 @@ sub init {
       'db_type'    => "funcgen",
       'wiggle_name' => 'tiling array data',
       'block_name' => 'predicted features',
-      'available'=> 'databases ENSEMBL_FUNCGEN',  
+      'available'=> 'species Mus_musculus',  
 
     }, 
 
+    'fg_regulatory_features' => {
+      'on'  => "on",
+      'bump_width' => 0,
+      'dep' => 0.1,
+      'pos' => '4529',
+      'str' => 'r',
+      'col' => 'blue',
+      'threshold' => '500',
+      'label' => 'FG Reg.features',
+      'glyphset'    => 'fg_regulatory_features',
+      'db_type'    => "funcgen",
+      'colours' => {$self->{'_colourmap'}->colourSet('fg_regulatory_features')},
+      'available'=> 'species Homo_sapiens',  
+    },
 
    'genotyped_variation_line' => {
       'on'  => "off",
@@ -756,7 +772,7 @@ sub init {
   $self->add_track( 'missing',     'on' => 'on', 'str' => 'r', 'pos' => 3000100 );
   $self->add_track( 'gene_legend', 'on' => 'on', 'str' => 'r', 'pos' => 2000000,  '_menu' => 'options', 'caption' => 'Gene legend' );
   $self->add_track( 'variation_legend',  'on' => 'on', 'str' => 'r', 'pos' => 2000100, '_menu' => 'options', 'caption' => 'SNP legend'  );
-
+  $self->add_track( 'fg_regulatory_features_legend',  'on' => 'on', 'str' => 'r', 'pos' => 2000200, '_menu' => 'options', 'caption' => 'FG Reg. feats legend'  );
   $self->ADD_ALL_OLIGO_TRACKS();
 
 ## And finally the multispecies tracks....
