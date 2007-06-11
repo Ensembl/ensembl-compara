@@ -505,6 +505,12 @@ sub new {
     'protein_coding' => [ 'darkblue', 'MGP gene' ],
   );
 
+  $self->colourSet ( 'fg_regulatory_features',
+    'Promoter_associated'   => [ 'darkgreen', 'Promoter associated' ],
+    'Genic'       => [ 'blue',  'Gene associated' ],
+    'Non-genic'   => [ 'black', 'Non-gene  associated' ],
+    'Unclassified'          => [ 'grey',  'Unclassified' ],
+  );    
   return $self;
 }
 
