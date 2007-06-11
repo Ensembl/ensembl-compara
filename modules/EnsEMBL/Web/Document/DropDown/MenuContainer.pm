@@ -77,7 +77,7 @@ sub hidden_values {
 
 sub render_js {
   my $self = shift;
-  return $self->render_js_ajx if $self->{'ajax'};
+  return $self->render_js_ajax if $self->{'ajax'};
   return qq(
 <script type="text/javascript"><!--
   dd_menuheight  = $self->{'height'};
