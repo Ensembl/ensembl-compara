@@ -1228,6 +1228,17 @@ sub lost_password_form {
   return $form;
 }
 
+sub denied {
+  my( $panel, $object ) = @_;
+
+## return the message
+  my $html = qq(<p>Sorry - this page requires you to be logged into your Ensembl user account and to have the appropriate permissions. If you cannot log in or need your access privileges changed, please contact <a href="mailto:webmaster\@ensembl.org">webmaster\@ensembl.org</a>. Thank you.</p>);
+
+  $panel->print($html);
+  return 1;
+}
+
+
 sub login_check {
   my( $panel, $object ) = @_;
   my $url = $object->param('url') || '/index.html';

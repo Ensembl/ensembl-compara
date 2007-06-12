@@ -19,6 +19,24 @@ sub _add_javascript_libraries {
   $self->{page}->javascript->add_source( "/js/scriptaculous.js" ); ## Animations, drag and drop etc. 
 }
 
+sub access_denied {
+  my $self   = shift;
+
+  if (my $panel1 = $self->new_panel( 'Image',
+    'code'    => "info$self->{flag}",
+    'object'  => $self->{object},
+    'caption' => 'Access Denied',
+    ) ) {
+    $panel1->add_components(qw(
+        denied        EnsEMBL::Web::Component::User::denied
+    ));
+
+    ## add panel to page
+    $self->add_panel( $panel1 );
+  }
+}
+
+
 sub message {
   my $self   = shift;
 
@@ -71,25 +89,6 @@ sub login_check {
     $self->add_panel( $panel );
   }
 }
-
-sub email_sent {
-  my $self   = shift;
-
-  if (my $panel = $self->new_panel( 'Image',
-    'code'    => "info$self->{flag}",
-    'object'  => $self->{object},
-    'caption' => 'Email Sent',
-    ) ) {
-    $panel->add_components(qw(
-        email_sent       EnsEMBL::Web::Component::User::email_sent
-    ));
-
-    ## add panel to page
-    $self->add_panel( $panel );
-  }
-}
-
-
 
 sub lost_password {
   my $self   = shift;
