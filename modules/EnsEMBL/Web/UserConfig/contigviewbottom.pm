@@ -9,6 +9,10 @@ my $reg = "Bio::EnsEMBL::Registry";
 
 sub init {
   my ($self ) = @_;
+  my $species = $self->{'species'};
+  my $reg_feat_label = "cisRED/miRANDA";
+  if ($species=~/Drosophila/){ $reg_feat_label = "FlyReg"; }
+
   $self->{'_das_offset'} = '5800';
 
   $self->{'no_image_frame'} = 1;
@@ -35,7 +39,7 @@ sub init {
         matepairs  bacends 
         ruler     scalebar  stranded_contig
         sequence  codonseq  codons gap gcplot encode
-	encode_region regulatory_search_regions regulatory_regions
+	encode_region regulatory_search_regions regulatory_regions 
 #       redbox
         restrict),
     # qw( zfish_est ),
@@ -113,7 +117,7 @@ sub init {
          [ 'marker'          => 'Markers'       ],
          [ 'qtl'             => 'QTLs'     ],
          [ 'operon'          => 'Operon'      ],
-         [ 'regulatory_regions'       => 'cisRED'  ],
+         [ 'regulatory_regions'       => $reg_feat_label  ],
          [ 'regulatory_search_regions'=> 'cisRED search regions'  ],
          [ 'rnai'            => 'RNAi'        ],
          [ 'ex_profile'      => 'Exp. profile'    ],
@@ -424,7 +428,6 @@ sub init {
       'pos' => '4529',
       'str' => 'r',
       'col' => 'blue',
-      'threshold' => '500',
       'label' => 'FG Reg.features',
       'glyphset'    => 'fg_regulatory_features',
       'db_type'    => "funcgen",
