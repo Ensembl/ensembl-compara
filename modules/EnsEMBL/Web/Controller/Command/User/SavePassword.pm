@@ -53,6 +53,7 @@ sub process {
   $cgi->redirect('/common/user/set_cookie?email='.$user->email
                   .';password='.$cgi->param('new_password_1')
                   .';url='.$cgi->param('url')
+                  ,';updated=yes'
                 );
 }
 

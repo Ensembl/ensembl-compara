@@ -64,9 +64,9 @@ sub process {
       $user_cookie->create( $r , $user->id );
     }
   }
-  my $redirect = '/common/user/logged_in?url=$url';
-  if ($cgi->param('password')) {
-    $redirect .= ';updated=yes';
+  my $redirect = "/common/user/logged_in?url=$url";
+  if ($cgi->param('updated')) {
+    $redirect .= ';updated='.$cgi->param('updated');
   }
   $cgi->redirect($redirect);
 }
