@@ -246,7 +246,7 @@ sub tree {
   
   } else { 
     
-    my $tree = _create_idhistory_tree($object, $historytree);
+    my $tree = _create_idhistory_tree($object, $historytree,$panel);
     my $T = $tree->render;
     if ($historytree->is_incomplete) {
       $T = qq(<p>Too many related stable IDs found to draw complete tree - tree shown is only partial.</p>) . $T;
@@ -261,7 +261,7 @@ sub tree {
 
 
 sub _create_idhistory_tree {
-  my ($object, $tree) = @_;
+  my ($object, $tree,$panel) = @_;
   
   my $wuc = $object->user_config_hash('idhistoryview');
   $wuc->container_width($object->param('image_width') || 900);
@@ -270,7 +270,7 @@ sub _create_idhistory_tree {
   $wuc->{_object} = $object;
   
   my $mc = _id_history_tree_menu($object, 'idhistoryview', [qw(IdhImageSize)]);
-  
+  $mc->{'ajax'}=$panel->{'ajax'};  
   my $image = $object->new_image($tree, $wuc, [$object->stable_id]);
   $image->image_type = 'idhistorytree';
   $image->image_name = $object->param('image_width').'-'.$object->stable_id;
