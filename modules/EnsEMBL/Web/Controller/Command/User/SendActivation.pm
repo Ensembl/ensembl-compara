@@ -39,7 +39,8 @@ sub process {
         adaptor => $ENSEMBL_WEB_REGISTRY->userAdaptor,
 	      email   => $cgi->param('email'),
   });
-  if ($user->id) {
+warn "User ", $user->email;
+  if ($user->email) {
     $success = 1;
     my $mailer = EnsEMBL::Web::Mailer::User->new();
     $mailer->email($user->email);
@@ -48,8 +49,14 @@ sub process {
           'lost'      => $cgi->param('lost') || '',
           'group_id'  => $cgi->param('group_id') || '',
         ));
+    if ($success) {
+      $self->set_message(qq(<p>An email has been sent for each account associated with this address. If you do not receive a message from us within a few hours, please <a href="mailto:helpdesk\@ensembl.org">contact Helpdesk</a>.</p>));
+    }
+    else {
+      $self->set_message(qq(<p>Sorry, we were unable to send an email to this address.</p><p>Please <a href="mailto:helpdesk\@ensembl.org">contact Helpdesk</a> for further assistance.</p>));
+    }
   }
-  $cgi->redirect("/common/user/email_sent");
+  $self->render_message;
 }
 
 }
