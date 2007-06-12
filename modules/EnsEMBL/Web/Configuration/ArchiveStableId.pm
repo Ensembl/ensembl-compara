@@ -21,7 +21,7 @@ sub idhistoryview {
   $self->{page}->javascript->add_source("/js/ajax_fragment.js");
   $self->update_configs_from_parameter('idhistoryview');
   
-  my $params = { $obj->type => $obj->stable_id, 'db' => 'core'  }; 
+  my $params = { lc($obj->type) => $obj->stable_id, 'db' => 'core'  }; 
  
   # main information panel
   if (my $info_panel = $self->new_panel('Information',
@@ -43,6 +43,7 @@ sub idhistoryview {
       'code'    => "info_assoc",
       'caption' => 'Associated archived IDs for this stable ID version',
       'status'  => 'panel_assoc',
+      'params'  => $params,
       'null_data' => '<p>No associated IDs found.</p>',
     )) {
 
