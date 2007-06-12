@@ -1153,7 +1153,13 @@ sub message {
   my ($panel, $object) = @_;
   my $command = $panel->{command};
 
-  my $html = '<p>'.$command->filters->message.'</p>';
+  my $html;
+  if ($command->get_message) {
+    $html = $command->get_message;
+  }
+  else {
+    $html = '<p>'.$command->filters->message.'</p>';
+  }
   $panel->print($html);
 }
 
@@ -1254,14 +1260,6 @@ accept cookies.</p>
 <p><a href="$url">Click here</a> to return to Ensembl.</p>
 );
   }
-  $panel->print($html);  
-}
-
-sub email_sent {
-  my( $panel, $object ) = @_;
-
-  my $html = qq(<p>An email has been sent for each account associated with this address. If you do not receive a message from us within a few hours, please <a href="mailto:helpdesk\@ensembl.org">contact Helpdesk</a>.</p>);
-
   $panel->print($html);  
 }
 
