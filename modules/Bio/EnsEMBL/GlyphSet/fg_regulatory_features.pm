@@ -13,12 +13,6 @@ sub features {
    my $slice = $self->{'container'};
   my $Config = $self->{'config'};
   my $type = $self->check();
-  my $max_length     = $Config->get( $type, 'threshold' )  || 500;
-  my $slice_length  = $self->{'container'}->length;
-  if($slice_length > $max_length*1010) {
-    $self->errorTrack('Regulatory features not displayed for more than '.$max_length.'Kb');
-    return;
-  }
 
   my $fg_db = undef;
   my $db_type  = $self->my_config('db_type')||'funcgen';
@@ -72,6 +66,8 @@ sub colour {
   my ($self, $f) = @_;
   my $type = $f->regulatory_type;
   if ($type =~/Promoter/){$type = 'Promoter_associated';}
+  elsif ($type =~/Gene/){$type = 'Genic';}
+  if ($type =~/Non/){$type = 'Non-genic';}
   unless ($self->{'config'}->{'reg_feat_type'}{$type}) {
    push @{$self->{'config'}->{'fg_regulatory_features_legend_features'}->{'fg_regulatory_features'}->{'legend'}},
     $self->{'colours'}{$type}[1], $self->{'colours'}{$type}[0];
