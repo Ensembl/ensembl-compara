@@ -5,9 +5,21 @@ use Bio::EnsEMBL::GlyphSet_simple;
 @ISA = qw(Bio::EnsEMBL::GlyphSet_simple);
 
 sub squish { return 1; }
-sub my_label { return "cisRED motifs"; }
 
-sub my_description { return "cisRED motifs"; }
+sub my_label {
+ my ($self) = @_;
+ my $species = $self->{'config'}->{'species'}; 
+ if ($species =~/Drosophila/ ){ return "FlyReg"; } 
+ return "cisRED/miRANDA";
+}
+
+
+sub my_description {
+ my ($self) = @_;
+ my $species = $self->{'config'}->{'species'};
+ if ($species =~/Drosophila/ ){ return "FlyReg"; }
+ return "cisRED/miRANDA"; 
+}
 
 # This for 
 sub my_helplink { return "markers"; }
@@ -116,7 +128,6 @@ sub colour {
   } 
   return $return, $return;
 }
-
 
 
 1;
