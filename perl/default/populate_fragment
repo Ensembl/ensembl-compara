@@ -56,7 +56,7 @@ my $webpage= new EnsEMBL::Web::Document::WebPage(
   'outputtype' => 'HTML',
   'scriptname' => 'contigview',
   'objecttype' => 'Location',
-  'fast'       => 1
+#  'fast'       => 1
 );
 
 warn ".... ", values %components, ' ... ', $webpage->factory->param('l');

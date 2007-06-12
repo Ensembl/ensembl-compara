@@ -804,8 +804,9 @@ sub get_synonyms {
     my $disp_id = $m->display_id();
     if ( $dbname =~/(HGNC|ZFIN)/ && $disp_id=~/$match_id/){
       my $synonyms = $m->get_all_synonyms();
+warn "SS: ", $synonyms;
       foreach my $syn (@$synonyms){
-      $ids = $ids .", " .$syn;
+      $ids = $ids .", " .( ref($syn) eq 'ARRAY' ? "@$syn" : $syn );
      }
     }
   }

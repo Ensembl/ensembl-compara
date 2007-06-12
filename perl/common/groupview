@@ -22,7 +22,7 @@ if( $webpage->has_a_problem() ) {
   foreach my $object( @{$webpage->dataObjects} ) {
     $webpage->configure( $object, 'groupview', 'context_menu', 'user_menu' );
   }
-  $webpage->action({'login' => 1}); ## page only accessible to logged-in users
+  $webpage->action(); 
 }
 
 1;

@@ -16,7 +16,7 @@ sub allow {
   my ($self) = @_;
   my $cgi = new CGI;
   my $email = $cgi->param('email');
-  if ($email =~ /^(\w|\-|\.)+\@(\w|\-|\.)+[a-zA-Z]{2,}$/) {
+  if ($email =~ /^(\w|\-|\.)+\@(\w|\-|\.)+[a-zA-Z]{2,}$/) { 
     return 1;
   } else {
     return 0;
