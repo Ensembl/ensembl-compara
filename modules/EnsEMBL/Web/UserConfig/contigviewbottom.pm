@@ -612,7 +612,7 @@ sub init {
     },
 
     'tilepath2' => {
-      'on'  => "on",
+      'on'  => "off",
       'pos' => '8015',
       'col' => 'green',
       'lab' => 'black',
@@ -643,7 +643,7 @@ sub init {
     },
 
     'tilepath' => {
-      'on'  => "on",
+      'on'  => "off",
       'pos' => '8016',
       'fish'      => 'no-fish',
       'col' => 'green',

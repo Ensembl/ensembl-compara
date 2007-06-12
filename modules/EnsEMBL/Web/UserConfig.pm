@@ -917,6 +917,8 @@ sub ADD_ALL_DNA_FEATURES {
                               'THRESHOLD' => 0, 'DATABASE' => 'otherfeatures', @T, @_ );
   }
 
+  $self->add_new_track_cdna( 'community_models', 'Community models',    $POS++, @_ );
+  $self->add_new_track_cdna( 'manual_models',    'Manual models',    $POS++, @_ );
 
   return $POS;
 }
@@ -959,6 +961,7 @@ sub ADD_ALL_EST_FEATURES {
                                                         'SUBTYPE' => 'default',
                                                         @_);
 
+  $self->add_new_track_est( 'anopheles_cdna_est',    'EST support',           $POS++, @_ );
   $self->add_new_track_est( 'ciona_dbest_align',     'dbEST align',           $POS++, @_ );
   $self->add_new_track_est( 'ciona_est_3prim_align', "3' EST-align. (Kyoto)", $POS++, @_ );
   $self->add_new_track_est( 'ciona_est_5prim_align', "5' EST-align. (Kyoto)", $POS++, @_ );
@@ -1095,6 +1098,7 @@ sub ADD_ALL_PROTEIN_FEATURES {
 
   $self->add_new_track_protein( 'Btaurus_Exonerate_Protein',         'Cow proteins', $POS++, @_ );
   $self->add_new_track_protein( 'cow_proteins',        'Cow proteins', $POS++, @_ );
+  $self->add_new_track_protein( 'aedes_protein',       'Aedes proteins', $POS++, @_ );
   $self->add_new_track_protein( 'cow_protein',         'Cow proteins', $POS++, @_ );
   $self->add_new_track_protein( 'horse_protein',    'Horse proteins',      $POS++, @_ );
   $self->add_new_track_protein( 'medaka_protein',      'Medaka proteins', $POS++, @_ );
@@ -1128,6 +1132,7 @@ sub ADD_ALL_PROTEIN_FEATURES {
   $self->add_new_track_protein( 'Similarity_Metazoa',   "Similarity Metazoa", $POS++, @_ );
   $self->add_new_track_protein( 'Similarity_Eukaryota', "Similarity Eukaryota", $POS++, @_ );
 
+  $self->add_new_track_protein( 'AedesBlast',      "BLAST Drosophila", $POS++, @_ );
   $self->add_new_track_protein( 'DrosophilaBlast',      "BLAST Drosophila", $POS++, 'URL_KEY' => 'DROSOPHILABLAST', @_ );
   $self->add_new_track_protein( 'UniprotBlast',         "BLAST UniProtKB", $POS++, @_ );
   $self->add_new_track_protein( 'anopheles_protein',    "Anopheles protein", $POS++, @_ );
