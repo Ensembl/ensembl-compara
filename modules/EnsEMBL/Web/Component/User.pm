@@ -1234,7 +1234,7 @@ sub login_check {
 
   my $html;
   if ($ENV{'ENSEMBL_USER_ID'}) {
-    if ($object->param('email')) {
+    if ($object->param('updated') eq 'yes') {
       $html .= qq(<p>Thank you. Your changes have been saved.</p>);
     }
     else {
