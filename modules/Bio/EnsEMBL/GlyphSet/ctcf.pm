@@ -9,6 +9,8 @@ use Bio::EnsEMBL::Utils::Eprof qw(eprof_start eprof_end eprof_dump);
 @ISA = qw(Bio::EnsEMBL::GlyphSet::wiggle_and_block);
 use Data::Dumper;
 
+sub my_helplink { return "ctcf"; }
+
 sub get_block_features {
 
   ### block_features
@@ -35,12 +37,12 @@ sub draw_features {
   ### Draws wiggles if wiggle flag is 1
   ### Returns 1 if draws blocks. Returns 0 if no blocks drawn
 
-  my ($self, $db, $wiggle)= @_;
+  my ($self, $db, $wiggle)= @_; 
   my ($block_features, $colour) = $self->get_block_features($db);
   my $drawn_flag = 0;
-  my $drawn_wiggle_flag = $wiggle ? 0: "wiggle";
+  my $drawn_wiggle_flag = $wiggle ? 0: "wiggle"; warn $wiggle;
   my $slice = $self->{'container'};
-  my $wiggle_colour = "contigblue1";
+  my $wiggle_colour = "steelblue";
   foreach my $feature ( @$block_features ) {
 
     # render wiggle if wiggle
