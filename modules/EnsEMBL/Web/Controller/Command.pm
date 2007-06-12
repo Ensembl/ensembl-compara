@@ -16,6 +16,7 @@ use Class::Std;
 
 my %Filter :ATTR(:get<filter> :set<filter>);
 my %Action :ATTR(:get<action> :set<action>);
+my %Message  :ATTR(:get<message> :set<message>);
 
 sub BUILD {
   my ($self, $ident, $args) = @_;
