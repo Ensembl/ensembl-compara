@@ -56,7 +56,9 @@ sub render_page {
   $interface->customize_element('name', 'label', 'Your name');
   $interface->customize_element('email', 'label', "Your email address. You'll use this to log in to Ensembl");
   $interface->customize_element('organisation', 'label', 'Organisation');
-  $interface->element_order('name', 'email', 'organisation');
+  $interface->element('status', {'type'=>'Hidden'});
+  $interface->extra_data('record_id');
+  $interface->element_order('name', 'email', 'organisation', 'status');
 
   ## Render page or munge data, as appropriate
   ## N.B. Force use of Configuration subclass

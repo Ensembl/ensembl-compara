@@ -39,24 +39,28 @@ sub process {
         adaptor => $ENSEMBL_WEB_REGISTRY->userAdaptor,
 	      email   => $cgi->param('email'),
   });
-warn "User ", $user->email;
-  if ($user->email) {
-    $success = 1;
-    my $mailer = EnsEMBL::Web::Mailer::User->new();
-    $mailer->email($user->email);
-    $mailer->send_activation_email((
+  if ($cgi->param('record_id')) {
+    $cgi->redirect('/common/user/activate?email='.$user->email.';code='.$user->salt.';url=/common/user/account;record_id='.$cgi->param('record_id'));
+  }
+  else {
+    if ($user->email) {
+      $success = 1;
+      my $mailer = EnsEMBL::Web::Mailer::User->new();
+      $mailer->email($user->email);
+      $mailer->send_activation_email((
           'user'      => $user,
           'lost'      => $cgi->param('lost') || '',
           'group_id'  => $cgi->param('group_id') || '',
         ));
-    if ($success) {
-      $self->set_message(qq(<p>An email has been sent for each account associated with this address. If you do not receive a message from us within a few hours, please <a href="mailto:helpdesk\@ensembl.org">contact Helpdesk</a>.</p>));
+      if ($success) {
+        $self->set_message(qq(<p>An email has been sent for each account associated with this address. If you do not receive a message from us within a few hours, please <a href="mailto:helpdesk\@ensembl.org">contact Helpdesk</a>.</p>));
+      }
+      else {
+        $self->set_message(qq(<p>Sorry, we were unable to send an email to this address.</p><p>Please <a href="mailto:helpdesk\@ensembl.org">contact Helpdesk</a> for further assistance.</p>));
+      }
     }
-    else {
-      $self->set_message(qq(<p>Sorry, we were unable to send an email to this address.</p><p>Please <a href="mailto:helpdesk\@ensembl.org">contact Helpdesk</a> for further assistance.</p>));
-    }
+    $self->render_message;
   }
-  $self->render_message;
 }
 
 }

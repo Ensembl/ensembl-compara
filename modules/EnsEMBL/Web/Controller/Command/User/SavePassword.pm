@@ -8,6 +8,8 @@ use CGI;
 
 use EnsEMBL::Web::RegObj;
 use EnsEMBL::Web::Object::User;
+use EnsEMBL::Web::Object::Group;
+use EnsEMBL::Web::Object::Data::Invite;
 
 use base 'EnsEMBL::Web::Controller::Command::User';
 
@@ -47,6 +49,14 @@ sub process {
   $user->password($encrypted);
   if ($user->status eq 'pending') {
     $user->status('active');
+  }
+  if ($cgi->param('record_id')) {
+    my $invite = EnsEMBL::Web::Object::Data::Invite->new({id => $cgi->param('record_id')});
+    my $group_id = $invite->group->id;
+
+    my $group = EnsEMBL::Web::Object::Group->new(( adaptor => $ENSEMBL_WEB_REGISTRY->userAdaptor, id => $group_id ));
+    # warn "WORKING WITH USER: " . $user->id . ": " . $user->email;
+    $user->add_group($group);
   }
   $user->save;
 
