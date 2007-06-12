@@ -20,7 +20,7 @@ sub get_block_features {
       warn ("Cannot get get adaptors: $feature_adaptor");
       return [];
     }
-    my $features = $feature_adaptor->fetch_all_displayable() || [] ;
+     my $features = $feature_adaptor->fetch_all_displayable_by_feature_type_class('HISTONE') || [] ;
     $self->{'block_features'} = $features;
   }
 
@@ -38,7 +38,7 @@ sub draw_features {
   my ($self, $db, $wiggle)= @_;
   my ($block_features, $colour) = $self->get_block_features($db);
   my $drawn_flag = 0;
-  my $drawn_wiggle_flag = 0;
+  my $drawn_wiggle_flag = $wiggle ? 0: "wiggle";
   my $slice = $self->{'container'};
   my $wiggle_colour = "contigblue1";
   foreach my $feature ( @$block_features ) {
