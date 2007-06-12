@@ -5,7 +5,7 @@ use Bio::EnsEMBL::GlyphSet_simple;
 @ISA = qw(Bio::EnsEMBL::GlyphSet_simple);
 
 sub squish { return 1; }
-sub my_label { return " cisRED search regions"; }
+sub my_label { return "cisRED search regions"; }
 
 sub my_description { return "cisRED search regions"; }
 
