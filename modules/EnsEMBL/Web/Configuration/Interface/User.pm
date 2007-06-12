@@ -27,6 +27,9 @@ sub save {
   $success = $interface->data->save;
   if ($success) {
     $url = "/common/$script?dataview=success;email=".$object->param('email');
+    if ($object->param('record_id')) {
+      $url .= ';record_id='.$object->param('record_id');
+    }
   }
   else {
     $url = "/common/$script?dataview=failure";
@@ -66,11 +69,11 @@ sub join_by_invite {
         $url = "/common/user/account";
       }
       else {
-        $url = '/login.html';
+        $url = '/common/user/login';
       }
     }
     else {
-      $url = "/common/register?email=$email;status=active;record_id=$record_id";
+      $url = "/common/user/register?email=$email;status=active;record_id=$record_id";
     }
   }
   else {
