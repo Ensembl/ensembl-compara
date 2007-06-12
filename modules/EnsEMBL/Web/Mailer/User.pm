@@ -10,44 +10,46 @@ our @ISA = qw(EnsEMBL::Web::Mailer);
 
 {
 
-#sub new {
-#  ### c
-#  my ($class, %params) = @_;
-#  my $self = $class->SUPER::new(%params);
-#  return $self;
-#}
-
 sub send_activation_email {
   ### Sends an activation email to newly registered users.
   my ($self, %params) = @_;
 
-  my $group_id = $params{'group_id'};
-  my $link = $params{'link'};
-  my $code = $params{'code'};
-  my $sitename = $self->site_name;
+  my $sitename  = $self->site_name;
+  my $user      = $params{'user'};
 
-  my $message = qq(
+  my $message;
+  if ($params{'lost'}) {
+    $self->subject("$sitename account reactivation");
+    $message = qq(
+Hello ) . $user->name . qq(,
+
+We have received a request to reactivate your Ensembl account. If you
+submitted this request, click on the link below to update your password. If
+not, please disregard this email.
+
+);
+  }
+  else {
+    $self->subject("Your new $sitename account");
+    $message = qq(
 Welcome to $sitename,
 
 Thanks for registering with $sitename.
 
 You just need to activate your account, using the link below:
 );
-
-  $message .= $self->activation_link($link);
-
-  if ($group_id) {
-    $message .= "&group_id=" . $group_id;
   }
-  $message .= qq(
 
-You activation code is: $code
+  $message .= $self->base_url.'/common/user/activate?user_id='.$user->id
+                .';email='.$user->email.';code='.$user->salt;
 
-);
+  if ($params{'group_id'}) {
+    $message .= ";group_id=" . $params{'group_id'};
+  }
+
   $message .= $self->email_footer;
-  $self->subject("Your new $sitename account");
   $self->message($message);
-  $self->send();
+  return eval{ $self->send(); };
 }
 
 sub send_welcome_email {
@@ -99,32 +101,6 @@ sub send_invite_email {
   $self->subject("Invite to join a $SiteDefs::ENSEMBL_SITETYPE group");
   $self->message($message);
   $self->send();
-}
-
-sub send_reactivation_email {
-  my ($self, $user) = @_;
-  my $sitename = $self->site_name;
-  my $message = qq(
-Hello ) . $user->name . qq(,
-
-We have received a request to change your $SiteDefs::ENSEMBL_SITETYPE account password. If you
-submitted this request, click on the link below to update your password. If
-not, please disregard this email.
-
-);
-
-  $message .= $self->activation_link('user_id=' . $user->id . "&code=" . $user->salt);
-
-  $message .= $self->email_footer;
-  $self->subject("Your $sitename account");
-  $self->message($message);
-  $self->send;
-}
-
-sub activation_link {
-  my ($self, $link) = @_;
-  my $return_link = $self->base_url . '/common/user/activate?' . $link;
-  return $return_link;
 }
 
 sub email_footer {
