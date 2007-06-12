@@ -331,6 +331,7 @@ sub transHandler {
       return HTTP_TEMPORARY_REDIRECT;
     }
     next unless -r $filename;
+    $r->subprocess_env->{'ENSEMBL_SPECIES'} = $species;
     $r->filename( $filename );
 #    $ENSEMBL_WEB_REGISTRY->get_memcache->set( "STATIC:$file", $filename ); 
     return OK;
