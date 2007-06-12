@@ -852,6 +852,7 @@ sub ADD_ALL_DNA_FEATURES {
   $self->add_new_track_cdna( 'human_cdna', 'Human cDNAs',   $POS++, @_ );
   $self->add_new_track_cdna( 'chimp_cdna', 'Chimp cDNAs',     $POS++, @_ );
   $self->add_new_track_cdna( 'horse_cdna',    'Horse cDNAs',      $POS++, @_ );
+  $self->add_new_track_cdna( 'lamprey_cdna', 'Lamprey cDNAs', $POS++, @_ );
   $self->add_new_track_cdna( 'pig_cdna',    'Pig cDNAs',      $POS++, @_ );
   $self->add_new_track_cdna( 'dog_cdna',   'Dog cDNAs',     $POS++, @_ );
   $self->add_new_track_cdna( 'rat_cdna',   'Rat cDNAs',     $POS++, @_ );
@@ -947,6 +948,8 @@ sub ADD_ALL_EST_FEATURES {
 
   $self->add_new_track_est( 'species_est',  'Dog ESTs',      $POS++, @_ );
   $self->add_new_track_est( 'mouse_est',    'Mouse ESTs',      $POS++, @_ );
+  $self->add_new_track_est( 'fugu_est',    'T.rubripes ESTs',      $POS++, @_ );
+  $self->add_new_track_est( 'lamprey_est',    'Lamprey ESTs',      $POS++, @_ );
   $self->add_new_track_est( 'zfish_est',    'D.rerio ESTs',    $POS++, @_ );
   $self->add_new_track_est( 'Btaurus_Exonerate_EST',    'B.taurus ESTs',    $POS++, @_ );
   $self->add_new_track_est( 'Cow_ESTs',    'B.taurus ESTs',    $POS++, @_ );
@@ -1111,6 +1114,7 @@ sub ADD_ALL_PROTEIN_FEATURES {
   $self->add_new_track_protein( 'opossum_protein',     'Opossum proteins',$POS++, @_ );
   $self->add_new_track_protein( 'rodent_protein',      'Rodent proteins',$POS++, @_ );
   $self->add_new_track_protein( 'stickleback_protein', 'Stickleback proteins', $POS++, @_);
+  $self->add_new_track_protein( 'lamprey_protein',        'Lamprey proteins', $POS++, @_ );
   $self->add_new_track_protein( 'mammal_protein',      'Mammal proteins', $POS++, @_ );
   $self->add_new_track_protein( 'other_protein',       'Other proteins', $POS++, @_ );
   $self->add_new_track_protein( 'other_proteins',      'Other proteins', $POS++, @_ );
@@ -1223,6 +1227,8 @@ sub ADD_ALL_TRANSCRIPTS {
   $self->add_new_track_transcript( 'oxford_fgu', 'Oxford FGU Genes', 'oxford_fgu', $POS++, @_ );
 #  $self->add_new_track_transcript( 'platypus_protein', 'Platypus/Other Genes', 'platypus_protein', $POS++, @_ );
 #  $self->add_new_track_transcript( 'medaka_protein',   'Medaka genes',   'medaka_gene',   $POS++, @_ );
+  $self->add_new_track_transcript( 'fugu_protein', 'T.rubripes protein', 'fugu_protein', $POS++,  @_ );
+  $self->add_new_track_transcript( 'lamprey_protein', 'Lamprey protein', 'lamprey_protein', $POS++,  @_ );
   $self->add_new_track_transcript( 'gff_prediction',   'MGP genes',   'medaka_gene',   $POS++, @_ );
 
   $self->add_new_track_transcript( 'dog_protein',   'Dog genes',   'dog_protein',   $POS++, @_ );
@@ -1421,6 +1427,19 @@ sub ADD_GENE_TRACKS {
     'gene_label'           => sub { return $_[0]->stable_id },
     'gene_col'             => 'oxford', @_
   );
+
+  $self->add_new_track_gene( 'horse_protein', 'Horse proteins', 'horse_protein', $POS++,
+     'gene_label'           => sub { return $_[0]->stable_id },
+     'gene_col'             => 'horse_protein' , @_
+   );
+   $self->add_new_track_gene( 'fugu_protein', 'T.rubripes proteins', 'fugu_protein', $POS++,
+     'gene_label'           => sub { return $_[0]->stable_id },
+     'gene_col'             => 'fugu_protein' , @_
+   );
+   $self->add_new_track_gene( 'lamprey_protein', 'Lamprey proteins', 'lamprey_protein', $POS++,
+     'gene_label'           => sub { return $_[0]->stable_id },
+     'gene_col'             => 'lamprey_protein' , @_
+   );
 
 #  $self->add_new_track_gene( 'platypus_protein', 'Platypus/Other Genes', 'platypus_protein', $POS++,
 #    'logic_name'           => 'platypus_protein other_protein',
