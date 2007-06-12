@@ -50,7 +50,7 @@ my $fragment = EnsEMBL::Web::Document::Panel::InformationFragment->new(
                                       display => 'on',
                                      );
 
-
+$fragment->{'ajax'}=1;
 my $type = $object->type eq 'Translation' ? 'peptide' : lc($object->type);
 #warn $type.": ". $object->stable_id .".". $object->version;
 $object->script('idhistoryview');
