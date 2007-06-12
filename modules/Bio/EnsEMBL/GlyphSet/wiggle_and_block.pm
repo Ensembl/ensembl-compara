@@ -227,7 +227,6 @@ sub render_wiggle_plot {
     'absolutex' => 1,
 						 }) ); 
   $self->_offset($textheight_i);  #update offset
-  $self->render_space_glyph(5);
   return 1;
 }
 
