@@ -328,13 +328,12 @@ sub _node_hop {
 sub check_access {
   my ($self, $access) = @_;
   my $ok = 0;
-  if ($access eq 'login' && $self->get_user_id) {
+  if ($access->{'login'} && $self->get_user_id) {
     $ok = 1;
   }
   else {
     return unless $self->get_user_id;
   }
-
   return $ok;
 }
 
