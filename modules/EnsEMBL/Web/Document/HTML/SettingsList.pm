@@ -27,7 +27,7 @@ sub render {
   $html .= "<div id='settings_content'>\n";
   $html .= "<table width='100%' cellpadding='0' cellspacing='0'>\n";
   $html .= "<tr><td width='49%'>\n";
-  $html .= "<b><a href='/common/accountview'>Your $SiteDefs::ENSEMBL_SITETYPE account</a> &gt; " . $user->name . "</b> &middot; <a href='javascript:void(0);' onclick='toggle_settings_drawer()'>Hide</a>\n";
+  $html .= "<b><a href='/common/user/account'>Your $SiteDefs::ENSEMBL_SITETYPE account</a> &gt; " . $user->name . "</b> &middot; <a href='javascript:void(0);' onclick='toggle_settings_drawer()'>Hide</a>\n";
   $html .= "</td>\n";
   $html .= "<td style='text-align: right;' width='49%'>";
   my @groups = @{ $user->groups };
