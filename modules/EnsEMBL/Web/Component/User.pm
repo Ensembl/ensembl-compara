@@ -755,7 +755,7 @@ sub enter_password      {
   my ( $panel, $object ) = @_;
   my $html = qq(<div class="formpanel" style="width:80%">);
 
-  if ($object->param('code')) { ## resetting lost password
+  if ($object->param('code') && !$object->param('record_id')) { ## resetting lost password
     $html .= qq(<p><strong>Please enter a new password to reactivate your account.</strong></p>);
   }
 
@@ -1312,6 +1312,13 @@ sub enter_password_form {
       'type'  => 'Hidden',
       'name'  => 'code',
       'value' => $object->param('code'),
+    );
+  }
+  if ($object->param('record_id')) {
+    $form->add_element(
+      'type'  => 'Hidden',
+      'name'  => 'record_id',
+      'value' => $object->param('record_id'),
     );
   }
   $form->add_element(
