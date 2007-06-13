@@ -30,7 +30,7 @@ $self->{'removeXedSeqs'} = undef;
 $self->{'outputFasta'} = undef;
 $self->{'noSplitSeqLines'} = undef;
 $self->{'cdna'} = 0;
-$self->{'scale'} = 100;
+$self->{'scale'} = 10;
 $self->{'drawtree'} = 0;
 $self->{'extrataxon_sequenced'} = undef;
 $self->{'extrataxon_incomplete'} = undef;
@@ -50,6 +50,9 @@ GetOptions('help'        => \$help,
            'align'       => \$self->{'print_align'},
            'cdna'        => \$self->{'cdna'},
            'draw'        => \$self->{'drawtree'},
+           'query_ncbi_name=s'     => \$self->{'query_ncbi_name'},
+           'no_previous'             => \$self->{'no_previous'},
+           'create_species_tree'     => \$self->{'create_species_tree'},
            'extrataxon_sequenced=s'  => \$self->{'extrataxon_sequenced'},
            'extrataxon_incomplete=s' => \$self->{'extrataxon_incomplete'},
            'multifurcation_deletes_node=s' => \$self->{'multifurcation_deletes_node'},
@@ -58,22 +61,9 @@ GetOptions('help'        => \$help,
            'count'       => \$self->{'stats'},
           );
 
-my @extrataxon_sequenced;
-if($self->{'extrataxon_sequenced'}) { 
-  my $temp = $self->{'extrataxon_sequenced'};
-  @extrataxon_sequenced = split ('_',$temp);
-}
-my @extrataxon_incomplete;
-if($self->{'extrataxon_incomplete'}) { 
-  my $temp = $self->{'extrataxon_incomplete'};
-  @extrataxon_incomplete = split ('_',$temp);
-}
-my @multifurcation_deletes_node;
-if($self->{'multifurcation_deletes_node'}) { 
-  my $temp = $self->{'multifurcation_deletes_node'};
-  @multifurcation_deletes_node = split ('_',$temp);
-}
 if($self->{'newick_file'}) { $state=6; }
+if($self->{'create_species_tree'}) { $state=9; }
+if($self->{'query_ncbi_name'}) { $state=10; }
 if($self->{'tree_id'}) { $state=1; }
 if($self->{'gene_stable_id'}) { $state=5; }
 if($self->{'new_root_id'}) { $state=7; }
@@ -107,6 +97,8 @@ switch($state) {
   case 6 { parse_newick($self); }
   case 7 { reroot($self); }
   case 8 { dumpTreeMultipleAlignment($self); }
+  case 9 { create_species_tree($self); }
+  case 10 { query_ncbi_name($self); }
 }
 
 
@@ -182,15 +174,68 @@ sub fetch_compara_ncbi_taxa {
     $root = $taxon->root unless($root);
     $root->merge_node_via_shared_ancestor($taxon);
   }
+  $root = $root->minimize_tree if($self->{'minimize_tree'});
+  $root->print_tree($self->{'scale'});
+
+  $self->{'root'} = $root;
+  drawPStree($self) if ($self->{'drawtree'});
+}
+
+sub create_species_tree {
+  my $self = shift;
+
+  printf("create_species_tree\n");
+
+  my @extrataxon_sequenced;
+  if($self->{'extrataxon_sequenced'}) { 
+    my $temp = $self->{'extrataxon_sequenced'};
+    @extrataxon_sequenced = split ('_',$temp);
+  }
+  my @extrataxon_incomplete;
+  if($self->{'extrataxon_incomplete'}) { 
+    my $temp = $self->{'extrataxon_incomplete'};
+    @extrataxon_incomplete = split ('_',$temp);
+  }
+  my @multifurcation_deletes_node;
+  if($self->{'multifurcation_deletes_node'}) { 
+    my $temp = $self->{'multifurcation_deletes_node'};
+    @multifurcation_deletes_node = split ('_',$temp);
+  }
+
+  my $taxonDBA = $self->{'comparaDBA'}->get_NCBITaxonAdaptor;
+  my $root = $self->{'root'};
+
+  my $gdb_list = $self->{'comparaDBA'}->get_GenomeDBAdaptor->fetch_all;
+  unless (defined($self->{no_previous})) {
+    print STDERR "Loading taxa from gdbs in $url...\n";
+    foreach my $gdb (@$gdb_list) {
+      my $taxon_name = $gdb->name;
+      my $taxon_id = $gdb->taxon_id;
+      my $taxon = $taxonDBA->fetch_node_by_taxon_id($taxon_id);
+      print STDERR "  $taxon_name [$taxon_id]\n";
+      $taxon->release_children;
+
+      $root = $taxon->root unless($root);
+      $root->merge_node_via_shared_ancestor($taxon);
+    }
+  }
+  print STDERR "Loading taxa from extrataxon_sequenced...\n" if (0 != scalar(@extrataxon_sequenced));
   foreach my $extra_taxon (@extrataxon_sequenced) {
     my $taxon = $taxonDBA->fetch_node_by_taxon_id($extra_taxon);
+    my $taxon_name = $taxon->name;
+    my $taxon_id = $taxon->taxon_id;
+    print STDERR "  $taxon_name [$taxon_id]\n";
     $taxon->release_children;
 
     $root = $taxon->root unless($root);
     $root->merge_node_via_shared_ancestor($taxon);
   }
+  print STDERR "Loading taxa from extrataxon_incomplete...\n" if (0 != scalar(@extrataxon_incomplete));
   foreach my $extra_taxon (@extrataxon_incomplete) {
     my $taxon = $taxonDBA->fetch_node_by_taxon_id($extra_taxon);
+    my $taxon_name = $taxon->name;
+    my $taxon_id = $taxon->taxon_id;
+    print STDERR "  $taxon_name [$taxon_id]\n";
     $taxon->release_children;
 
     $root = $taxon->root unless($root);
@@ -198,15 +243,20 @@ sub fetch_compara_ncbi_taxa {
     $taxon->add_tag("is_incomplete", '1');
   }
 
-  #$root = $root->find_node_by_name('Mammalia');
+  #$root = $root->minimize_tree if($self->{'minimize_tree'});
+  $root = $root->minimize_tree;
 
-  $root = $root->minimize_tree if($self->{'minimize_tree'});
+#   print STDERR "# Before multifurcation_deletes_node\n\n";
+#   $root->print_tree($self->{'scale'});
 
-  print "# Before multifurcation_deletes_node\n\n";
-  $root->print_tree($self->{'scale'});
-
+  # Deleting nodes to further multifurcate
   my @subnodes = $root->get_all_subnodes;
+  print STDERR "Multifurcating nodes...\n" if (0 != scalar(@multifurcation_deletes_node));
   foreach my $extra_taxon (@multifurcation_deletes_node) {
+    my $taxon = $taxonDBA->fetch_node_by_taxon_id($extra_taxon);
+    my $taxon_name = $taxon->name;
+    my $taxon_id = $taxon->taxon_id;
+    print STDERR "* $taxon_name [$taxon_id]\n";
     foreach my $node (@subnodes) {
       next unless ($node->node_id == $extra_taxon);
       my $node_children = $node->children;
@@ -217,24 +267,50 @@ sub fetch_compara_ncbi_taxa {
     }
   }
 
-  print "#\n After multifuration_deletes_node\n\n";
+#   print STDERR "#\n After multifurcation_deletes_node\n\n";
   $root->print_tree($self->{'scale'});
 
+  my $outname = $self->{'comparaDBA'}->dbc->dbname;
+  my $num_leaves = scalar(@{$root->get_all_leaves});
+  $outname = $num_leaves . "." . $outname;
+
   my $newick = $root->newick_format;
-  print("$newick\n");
-  #   my $spec_ncbi_name_tree = $root->newick_format('ncbi_name');
-  #   print("$spec_ncbi_name_tree\n");
-  #   my $spec_ncbi_taxon_tree = $root->newick_format('ncbi_taxon');
-  #   print("$spec_ncbi_taxon_tree\n");
+  print("\n\n$newick\n\n");
+
+  open T,">newick.$outname.nh" or die "$!";
+  print T $newick;
+  close T;
+
+  my $newick_simple = $newick;
+  $newick_simple =~ s/\:\d\.\d+//g;
+  $newick_simple =~ s/\ /\_/g;
+
+  print "$newick_simple\n\n";
+
+  open T,">newick_simple.$outname.nh" or die "$!";
+  print T $newick_simple;
+  close T;
+
+  my $species_short_name = $root->newick_format('species_short_name');
+  print("$species_short_name\n\n");
+
+  open T,">species_short_name.$outname.nh" or die "$!";
+  print T $species_short_name;
+  close T;
+
   my $njtree_tree = $root->newick_format('njtree');
-  print("$njtree_tree\n");
-  my $species = $root->newick_format('species');
-  print("$species\n");
-  1; #??
+  print STDERR "==== Your njtree file njtree.$outname.nh ====\n";
+  print("$njtree_tree\n\n");
+
+  open T,">njtree.$outname.nh" or die "$!";
+  print T $njtree_tree;
+  close T;
+
 
   $self->{'root'} = $root;
   drawPStree($self) if ($self->{'drawtree'});
 }
+
 
 sub fetch_protein_tree {
   my $self = shift;
@@ -278,6 +354,20 @@ sub fetch_protein_tree {
   $tree->release;
 }
 
+sub query_ncbi_name {
+  my $self = shift;
+  my $name = $self->{query_ncbi_name};
+  $name =~ s/\_/\ /g;
+
+  my $taxonDBA = $self->{'comparaDBA'}->get_NCBITaxonAdaptor;
+  my $taxon = $taxonDBA->fetch_node_by_name($name);
+  print "taxon_name -- ", $taxon->name, "\n";
+  print "taxon_id -- ", $taxon->taxon_id, "\n\n";
+  foreach my $tag ($taxon->get_all_tags) {
+    my $value = $taxon->get_tagvalue($tag);
+    print "$tag -- $value\n";
+  }
+}
 
 sub fetch_protein_tree_with_gene {
   my $self = shift;
@@ -526,6 +616,23 @@ sub drawPStree
   print("$cmd\n");
   system($cmd);
   system("open $ps_file");
+}
+
+
+sub min_taxon_id {
+  my $node = shift;
+
+  return $node->taxon_id if($node->is_leaf);
+  return $node->{'_leaves_min_taxon_id'} 
+    if (defined($node->{'_leaves_min_taxon_id'}));
+
+  my $minID = undef;
+  foreach my $child (@{$node->children}) {
+    my $taxon_id = min_taxon_id($child);
+    $minID = $taxon_id unless(defined($minID) and $taxon_id>$minID);
+  }
+  $node->{'_leaves_min_taxon_id'} = $minID;
+  return $minID;
 }
 
 
