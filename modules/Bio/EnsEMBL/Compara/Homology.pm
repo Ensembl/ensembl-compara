@@ -101,7 +101,15 @@ foreach my $codon (keys %FOURD_CODONS) {
   $CODONS{$codon} = $FOURD_CODONS{$codon};
 }
 
-#print STDERR "Number of codons: ", scalar keys %CODONS,"\n";
+=head2 get_SimpleAlign
+
+  Arg [1]    : string 'cdna' (optional)
+  Example    : $simple_align = $homology->get_SimpleAlign();
+               $cdna_s_align = $homology->get_SimpleAlign('cdna');
+  Description: get pairwise simple alignment
+  Returntype : Bio::SimpleAlign
+
+=cut
 
 sub get_SimpleAlign {
   my $self = shift;
