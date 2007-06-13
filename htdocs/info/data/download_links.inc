@@ -330,6 +330,17 @@
 <td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_saccharomyces_cerevisiae/data/flatfiles/genbank/">FTP</a></td>
 <td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_saccharomyces_cerevisiae/data/mysql/">FTP</a></td>
 </tr>
+		    
+<tr>
+<td>
+<a target="ftp" href="ftp://ftp.ensembl.org/pub/current_sorex_araneus/"><i>Sorex araneus</i></a> (common shrew)</td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_sorex_araneus/data/fasta/dna/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_sorex_araneus/data/fasta/cdna/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_sorex_araneus/data/fasta/pep/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_sorex_araneus/data/flatfiles/embl/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_sorex_araneus/data/flatfiles/genbank/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_sorex_araneus/data/mysql/">FTP</a></td>
+</tr>
 	    
 <tr>
 <td>
