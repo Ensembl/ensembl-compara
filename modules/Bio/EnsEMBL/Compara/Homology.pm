@@ -106,7 +106,7 @@ foreach my $codon (keys %FOURD_CODONS) {
   Arg [1]    : string 'cdna' (optional)
   Example    : $simple_align = $homology->get_SimpleAlign();
                $cdna_s_align = $homology->get_SimpleAlign('cdna');
-  Description: get pairwise simple alignment
+  Description: get pairwise simple alignment (from the multialignment)
   Returntype : Bio::SimpleAlign
 
 =cut
@@ -203,12 +203,13 @@ sub subtype {
 
 =head2 n
 
-  Arg [1]    : 
-  Example    : 
-  Description: 
-  Returntype : 
-  Exceptions : 
-  Caller     : 
+  Arg [1]    : float $n (optional)
+  Example    : $n = $homology->n();
+               $homology->n(3);
+  Description: getter/setter of number of nonsynonymous positions for the homology.
+  Returntype : float
+  Exceptions : none
+  Caller     : general
 
 =cut
 
@@ -221,12 +222,13 @@ sub n {
 
 =head2 s
 
-  Arg [1]    : 
-  Example    : 
-  Description: 
-  Returntype : 
-  Exceptions : 
-  Caller     : 
+  Arg [1]    : float $s (optional)
+  Example    : $s = $homology->s();
+               $homology->s(4);
+  Description: getter/setter of number of synonymous positions for the homology.
+  Returntype : float
+  Exceptions : none
+  Caller     : general
 
 =cut
 
@@ -239,12 +241,13 @@ sub s {
 
 =head2 lnl
 
-  Arg [1]    : 
-  Example    : 
-  Description: 
-  Returntype : 
-  Exceptions : 
-  Caller     : 
+  Arg [1]    : float $lnl (optional)
+  Example    : $lnl = $homology->lnl();
+               $homology->lnl(-1234.567);
+  Description: getter/setter of number of the negative log likelihood for the dnds homology calculation.
+  Returntype : float
+  Exceptions : none
+  Caller     : general
 
 =cut
 
@@ -256,12 +259,13 @@ sub lnl {
 
 =head2 threshold_on_ds
 
-  Arg [1]    : 
-  Example    : 
-  Description: 
-  Returntype : 
-  Exceptions : 
-  Caller     : 
+  Arg [1]    : float $threshold_ond_ds (optional)
+  Example    : $lnl = $homology->threshold_on_ds();
+               $homology->threshold_on_ds(1.01340);
+  Description: getter/setter of the threshold on ds for which the dnds ratio still makes sense.
+  Returntype : float
+  Exceptions : none
+  Caller     : general
 
 =cut
 
@@ -372,6 +376,15 @@ sub dnds_ratio {
 
   return $self->{'_dnds_ratio'};
 }
+
+
+=head2 get_4D_SimpleAlign
+
+  Example    : $4d_align = $homology->get_4D_SimpleAlign();
+  Description: get 4 times degenerate positions pairwise simple alignment
+  Returntype : Bio::SimpleAlign
+
+=cut
 
 sub get_4D_SimpleAlign {
   my $self = shift;
@@ -537,6 +550,18 @@ sub get_all_PeptideAlignFeature {
 }
 
 
+=head2 has_species_by_name
+
+  Arg [1]    : string $species_name
+  Example    : my $ret = $homology->has_species_by_name("Homo sapiens");
+  Description: return TRUE or FALSE whether one of the members in the homology is from the given species
+  Returntype : 1 or 0
+  Exceptions :
+  Caller     :
+
+=cut
+
+
 sub has_species_by_name {
   my $self = shift;
   my $species_name = shift;
@@ -549,6 +574,16 @@ sub has_species_by_name {
 }
 
 
+=head2 gene_list
+
+  Example    : my $pair = $homology->gene_list
+  Description: return the pair of members for the homology
+  Returntype : array ref of (2) Bio::EnsEMBL::Compara::Member objects
+  Caller     : general
+
+=cut
+
+
 sub gene_list {
   my $self = shift;
   my @genes;
@@ -558,6 +593,7 @@ sub gene_list {
   }
   return \@genes;
 }
+
 
 =head2 homology_key
 
