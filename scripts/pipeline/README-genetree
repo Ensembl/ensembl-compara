@@ -66,7 +66,75 @@ ensembl-compara/scripts/pipeline/species_tree.rap
 
 
 4- Create the species tree file 
-   ~~~~~~~~~~~~~~~~~~~~~~~~~~
+   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+A NCBI taxon_id phylogenetic tree file representing the species in the
+compara DB is required for the njtree stage. The file must be in Nexus
+(.nh) format. If you are running the pipeline for your own set of
+species, you can generate such a tree with the script
+ensembl-compara/scripts/tree/testTaxonTree.pl.
+
+To have your list of NCBI taxon_ids, you can use "-query_ncbi_name"
+like this:
+
+/usr/local/ensembl/bin/perl \
+~/src/ensembl_main/ensembl-compara/scripts/tree/testTaxonTree.pl \
+-url mysql://ensro@ens-staging/ensembl_compara_45 \
+-query_ncbi_name "Anopheles gambiae"
+
+NJTREE can distinguish between species that are supposed to have all
+the genes represented in the DB and "incomplete" species, that may
+have only a part of the genes represented. For the latter, NJTREE
+won't try to estimate gene losses given this info.
+
+If you have a DB with say 3 completely sequenced species, Anopheles
+gambiae, Aedes aegypti and Drosophila melanogaster, and 2 incomplete
+species, Pediculus humanus and Culex pipiens, you can create the
+species tree like this:
+
+(a) Look for the NCBI taxon_ids:
+
+testTaxonTree.pl -url mysql://ensro@ens-staging/ensembl_compara_45 -query_ncbi_name "Anopheles gambiae"
+testTaxonTree.pl -url mysql://ensro@ens-staging/ensembl_compara_45 -query_ncbi_name "Aedes aegypti"
+testTaxonTree.pl -url mysql://ensro@ens-staging/ensembl_compara_45 -query_ncbi_name "Drosophila melanogaster"
+testTaxonTree.pl -url mysql://ensro@ens-staging/ensembl_compara_45 -query_ncbi_name "Culex pipiens"
+testTaxonTree.pl -url mysql://ensro@ens-staging/ensembl_compara_45 -query_ncbi_name "Pediculus humanus"
+
+the first three then being "-extrataxon_sequenced 7165_7159_7227", 
+and the last two being: "-extrataxon_incomplete 7175_121225"
+
+(b) Then you call the script like this:
+
+testTaxonTree.pl -url mysql://ensro@ens-staging/ensembl_compara_45 \
+-create_species_tree -extrataxon_sequenced 7165_7159_7227 \
+-extrataxon_incomplete 7175_121225  -no_previous
+
+Which in this case will create your file with the name "njtree.5.ensembl_compara_45.nh":
+
+((((7175,7159*)53550,7165*)7157,7227*)7147,121225);
+
+Also, there is an option to ignore internal nodes present in the NCBI
+taxonomy. This will multifurcate the tree at the point when the given
+node would disappear. For example, if one wants to ignore the
+Coelomata (33316) internal node, and create a multifurcation at that
+point, the option would be "-multifurcation_deletes_node 33316".
+
+If you want to create a species_tree with all the species already
+present in a previous Compara DB plus a few new species, you can use
+the script connecting to that given DB and without the "-no_previous"
+option. For example:
+
+testTaxonTree.pl -url mysql://ensro@ens-staging/ensembl_compara_45 \
+-create_species_tree -extrataxon_sequenced 9823 \
+-multifurcation_deletes_node 33316
+
+will create a tree with the species in ensembl_compara_45, deleting
+the Coelomata internal node and adding the Sus scrofa species as
+completely sequenced.
+
+
+  Old RAP method (not needed anymore with NJTREE)
+  ==============================================
 
 An annotated phylogenetic tree file representing the species in the
 compara DB and their relative distances is required for the final rap
