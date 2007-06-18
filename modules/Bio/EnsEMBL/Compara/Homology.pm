@@ -616,7 +616,7 @@ sub homology_key {
     my ($member, $attribute) = @{$member_attribute};
     push @genes, $member;
   }
-  @genes = sort {$a->taxon_id <=> $b->taxon_id} @genes;
+  @genes = sort {$a->taxon_id <=> $b->taxon_id || $a->stable_id cmp $b->stable_id} @genes;
   @genes = map ($_->stable_id, @genes);
 
   my $homology_key = join('_', @genes);
