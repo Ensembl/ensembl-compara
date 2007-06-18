@@ -22,8 +22,8 @@ mcl (source can be obtained from http://micans.org/mcl/src/)
 
 The family pipeline takes several GB of space (5BG should be sufficient). (df -k)
 
-mkdir /acari/work7a/abel/family_32
-cd /acari/work7a/abel/family_32
+mkdir /lustre/work1/ensembl/abel/families/family_45
+cd /lustre/work1/ensembl/abel/families/family_45
 mkdir tmp fasta blast_in blast_out blast_raw mcl muscle clustalw_mpi
 
 3- Loading in and dumping from compara the peptides
@@ -47,36 +47,27 @@ so no redundancy is expected in the fasta file.
 
 cd fasta
 
-~/src/ensembl_main/ensembl-compara/scripts/pipeline/comparaDumpAllPeptides.pl -conf your-compara-hive.conf --noredundancy -fasta metazoa_32.pep > metazoa_32.pep.err 2>&1 &
+~/src/ensembl_main/ensembl-compara/scripts/pipeline/comparaDumpAllPeptides.pl -conf your-compara-hive.conf --noredundancy -fasta metazoa_45.pep > metazoa_45.pep.err 2>&1 &
 
 or if you don't have the hive conf file
 
-~/src/ensembl_main/ensembl-compara/scripts/pipeline/comparaDumpAllPeptides.pl --dbhost ia64e --dbport 3306 --dbuser ensro --dbname jessica_ensembl_compara_32 --noredundancy --fasta metazoa_32.pep > metazoa_32.pep.err 2>&1 &
+~/src/ensembl_main/ensembl-compara/scripts/pipeline/comparaDumpAllPeptides.pl --dbhost compara2 --dbport 3306 --dbuser ensro --dbname avilella_compara_homology_45 --noredundancy --fasta metazoa_45.pep > metazoa_45.pep.err 2>&1 &
 
-4- distribute the fasta file over the farm
-   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+4- Format file for blast
+   ~~~~~~~~~~~~~~~~~~~~~
 
-Do that on whatever ecs2 nodes only as they are the master copy used for distribution.
+fastaindex metazoa_45.pep metazoa_45.index
+formatdb -p T -l metazoa_45.pep.formatdb.log -i metazoa_45.pep
 
-mv metazoa_32.pep /data/blastdb/Ensembl/family/metazoa_32.pep
-cd /data/blastdb/Ensembl/family/
-fastaindex metazoa_32.pep metazoa_32.index
-formatdb -p T -l metazoa_32.pep.formatdb.log -i metazoa_32.pep
+check metazoa_45.pep.formatdb.log if it is ok delete it
 
-check metazoa_32.pep.formatdb.log if it is ok delete it
-
-rm -f metazoa_32.pep.formatdb.log
-cd -
-
-Now send to isg-help@sanger.ac.uk for farm distribution.
+rm -f metazoa_45.pep.formatdb.log
 
 Create the index file for future run of mcl
 
-awk 'BEGIN {idx=0} {print idx,$1;idx++}' /data/blastdb/Ensembl/family/metazoa_32.index > metazoa_32.tab
+awk 'BEGIN {idx=0} {print idx,$1;idx++}' metazoa_45.index > metazoa_45.tab
 
-
-
-7- Prepare files to run blastp
+5- Prepare files to run blastp
    ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 cd ../blast_in
@@ -84,13 +75,13 @@ cd ../blast_in
  Distribute peptide ids in several files. Each of them will contain 100 ids,
  and would correspond to one blastp job.
 
-~/src/ensembl_main/ensembl-compara/scripts/family/SplitPeptides.pl -maxids 500 /data/blastdb/Ensembl/family/metazoa_32.index
+~/src/ensembl_main/ensembl-compara/scripts/family/SplitPeptides.pl -maxids 250 ../fasta/metazoa_45.index
 
   The created files are named: PeptideSet.1, PeptideSet.2, ..., PeptideSet.n
   so that they are suitable for LSF job array creation. 
  
 
-8- Run blastp with in a LSF jobs array
+6- Run blastp with in a LSF jobs array
    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 For inof on jobs array, see
@@ -111,41 +102,15 @@ my $blast_parser_executable
 
 
 ls|wc -l
-      7286
+      5573
 
  will tell you how many jobs have to be run. Just have a try with one to make sure everything is ok.
 
  It is better to place the output files in a different directory to reduce the burden on the filesystem.
  (The fewer files per directory the better).
 
-echo '/nfs/acari/abel/src/ensembl_main/ensembl-compara/scripts/family/LaunchBlast.pl -idqy PeptideSet.${LSB_JOBINDEX} -fastadb /data/blastdb/Ensembl/family/metazoa_32.pep -fastaindex /data/blastdb/Ensembl/family/metazoa_32.index -tab /acari/work7a/abel/family_32/fasta/metazoa_32.tab -dir /acari/work7a/abel/family_32/blast_raw/' | bsub -q normal -E "/acari/work7a/abel/family_32/pre_exec.pl" -JFamilyBlastp"[1]" -o ../blast_out/PeptideSet.%I.out
+echo '/nfs/acari/abel/src/ensembl_main/ensembl-compara/scripts/family/LaunchBlast.pl -idqy PeptideSet.${LSB_JOBINDEX} -fastadb /lustre/work1/ensembl/abel/families/family_45/fasta/metazoa_45.pep -fastaindex /lustre/work1/ensembl/abel/families/family_45/fasta/metazoa_45.index -tab /lustre/work1/ensembl/abel/families/family_45/fasta/metazoa_45.tab -dir /lustre/work1/ensembl/abel/families/family_45/blast_raw/' | bsub -q normal -JFamilyBlastp"[1]" -o ../blast_out/PeptideSet.%I.out
 
-The /acari/work7a/abel/family_32/pre_exec has to be updated and look like. In %file, you have respectively the file path and byte size of each file you want to check for.
-
-#!/usr/local/ensembl/bin/perl -w
-
-use strict;
-
-my %files = qw(/data/blastdb/Ensembl/family/metazoa_32.pep 297753802
-               /data/blastdb/Ensembl/family/metazoa_32.index 13284401
-               /data/blastdb/Ensembl/family/metazoa_32.pep.psq 247443346
-               /data/blastdb/Ensembl/family/metazoa_32.pep.phr 84204272
-               /data/blastdb/Ensembl/family/metazoa_32.pep.pin 4704856);
-
-foreach my $file (keys %files) {
-  exit 1 unless (-e $file);
-
-  my ($dev,$ino,$mode,$nlink,$uid,$gid,$rdev,$size,$atime,$mtime,$ctime,$blksize,$blocks)
-    = stat($file);
-
-  exit 1 unless ($size == $files{$file});
-}
-
-exit 0;
-
-and is there to make sure the execution host has the right files to start the blastp.
-
- In this kind of construction the full path of each file/script is needed.
  Check that the BLASTMAT points to /usr/local/ensembl/data/blastmat
 
  When it is complete, you should get 2 new files
@@ -166,7 +131,7 @@ ls |while read i;do echo -n $i" ";awk '/^Subject/ {printf $NF" "} /^Job was exec
  Then run the whole lot of jobs
 
 cd ../blast_in
-echo '/nfs/acari/abel/src/ensembl_main/ensembl-compara/scripts/family/LaunchBlast.pl -idqy PeptideSet.${LSB_JOBINDEX} -fastadb /data/blastdb/Ensembl/family/metazoa_32.pep -fastaindex /data/blastdb/Ensembl/family/metazoa_32.index -tab /acari/work7a/abel/family_32/fasta/metazoa_32.tab -dir /acari/work7a/abel/family_32/blast_raw/' | bsub -q normal -E "/acari/work7a/abel/family_32/pre_exec" -JFamilyBlastp"[2-7286]" -o ../blast_out/PeptideSet.%I.out
+echo '/nfs/acari/abel/src/ensembl_main/ensembl-compara/scripts/family/LaunchBlast.pl -idqy PeptideSet.${LSB_JOBINDEX} -fastadb /lustre/work1/ensembl/abel/families/family_45/fasta/metazoa_45.pep -fastaindex /lustre/work1/ensembl/abel/families/family_45/fasta/metazoa_45.index -tab /lustre/work1/ensembl/abel/families/family_45/fasta/metazoa_45.tab -dir /lustre/work1/ensembl/abel/families/family_45/blast_raw/' | bsub -q normal -JFamilyBlastp"[2-5573]" -o ../blast_out/PeptideSet.%I.out
 
  Rerun the failed jobs in ../blast_out.
 
@@ -177,11 +142,10 @@ ls |while read i;do echo -n $i" ";awk '/^Subject/ {printf $NF" "} /^Job was exec
 grep Exited job_status|sed "s/\./ /g"|awk '{print $2}'|sort -n > job_status.ids
 
 awk 'BEGIN {s=0;e=0;i=0} i==15 {print;i=0} s==0 {s=$1;e=$1;next} $1==e+1 {e=$1;next} $1>e+1 && e==s {printf s",";s=$1;e=$1;i++;next} $1>e+1 && e!=s {printf s"-"e",";s=$1;e=$1;i++;next} END {print s"-"e}' job_status.ids > job_status.ids.collapse
-'4
 
 grep Exited job_status |awk '{print $1}'|while read i;do del blast_out/$i;done
 
-cat job_status.ids.collapse|while read i;do echo "echo '/nfs/acari/abel/src/ensembl_main/ensembl-compara/scripts/family/LaunchBlast.pl -idqy PeptideSet.\${LSB_JOBINDEX} -fastadb /data/blastdb/Ensembl/family/metazoa_32.pep -fastaindex /data/blastdb/Ensembl/family/metazoa_32.index -tab /acari/work7a/abel/family_32/fasta/metazoa_32.tab -dir /acari/work7a/abel/family_32/blast_raw/' | bsub -q normal -E \"/acari/work7a/abel/family_32/pre_exec\" -JFamilyBlastp\"["$i"]\" -o ../blast_out/PeptideSet.%I.out";echo;done > blast_in/rebsub
+cat job_status.ids.collapse|while read i;do echo "echo '/nfs/acari/abel/src/ensembl_main/ensembl-compara/scripts/family/LaunchBlast.pl -idqy PeptideSet.\${LSB_JOBINDEX} -fastadb /lustre/work1/ensembl/abel/families/family_45/fasta/metazoa_45.pep -fastaindex /lustre/work1/ensembl/abel/families/family_45/fasta/metazoa_45.index -tab /lustre/work1/ensembl/abel/families/family_45/fasta/metazoa_45.tab -dir /lustre/work1/ensembl/abel/families/family_45/blast_raw/' | bsub -q normal -JFamilyBlastp\"["$i"]\" -o ../blast_out/PeptideSet.%I.out";echo;done > blast_in/rebsub
 
 Then move to blast_in and resubmit the failed jobs
 
@@ -189,75 +153,61 @@ cd blast_in
 
 bash rebsub
 
-9- Build the matrix needed by mcl and check it for symmetry
+8- Build the matrix needed by mcl and check it for symmetry
    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 cd ../blast_raw
 
-ls|xargs gunzip -c > ../mcl/family_32.raw
+ls|xargs gunzip -c > ../mcl/family_45.raw
 
 cd ../mcl
 
- create asymlink to ../fasta/metazoa_32.tab
+ create asymlink to ../fasta/metazoa_45.tab
 
-ln -s ../fasta/metazoa_32.tab family_32.tab
+ln -s ../fasta/metazoa_45.tab family_45.tab
 
- create a family_32.hdr header file,
+ create a family_45.hdr header file,
  The dimensions should be the number of peptides. That can be obtained by
 
-wc -l family_32.tab
+wc -l family_45.tab
 
-cat > family_32.hdr
+cat > family_45.hdr
 (mclheader
 mcltype matrix
-dimensions 588097x588097
+dimensions 1392888x1392888
 )
 
-~/src/ensembl_main/ensembl-compara/scripts/family/mcxassemble.sh family_32
+~/src/ensembl_main/ensembl-compara/scripts/family/mcxassemble.sh family_45
 
- This takes about an hour and will generate a family_32.bin matrix file. Check the matrix for symmetry
-(this step can be skipped)
-
-~/src/ensembl_main/ensembl-compara/scripts/family/mcx.sh family_32
-
- The generated family_32.sym.check file should look something like that. Nothing should appear after the 'begin', except the closing parenthesis ')'. If not, That means the matrix is not symmetric, which is not good for mcl to run from
-
-(mclheader
-mcltype matrix
-dimensions 588097x588097
-)
-(mclmatrix
-begin
-)
+ This takes about 30 min and will generate a family_45.bin matrix file.
 
 We don't need the raw file anymore and as it takes quite a lot of space, delete it.
 
-rm family_32.raw
+rm family_45.raw
 
-10- Run mcl
+9- Run mcl
    ~~~~~~~
 
 This step uses turing which has 192Gb of memory :))) and 16 CPUs. As mcl can be multi-threaded, it is very useful.
 
-bsub -C0 -R 'select[ncpus>=8 && mem>10000 && type==LINUX64] rusage[mem=10000] span[hosts=1]' -q hugemem -n 8 -f "family_32.bin > /tmp/family_32.bin" -f "family_32.mcl < /tmp/family_32.mcl" -o mcl.out /nfs/acari/abel/bin/arch-ia64/mcl /tmp/family_32.bin -I 2.3 -t 8 -P 10000 -S 1000 -R 1260 -pct 90 -o /tmp/family_32.mcl
+bsub -C0 -R 'select[ncpus>=8 && mem>10000 && type==LINUX64] rusage[mem=10000] span[hosts=1]' -q hugemem -n 8 -f "family_45.bin > /tmp/family_45.bin" -f "family_45.mcl < /tmp/family_45.mcl" -o mcl.out /nfs/acari/abel/bin/arch-ia64/mcl /tmp/family_45.bin -I 2.1 -t 8 -P 10000 -S 1000 -R 1260 -pct 90 -o /tmp/family_45.mcl
 
 NB: when ever you have finished running mcl (maybe with different parameters), don't forget 
-to delete /tmp/family_32.* from aristotle /tmp (a shell script having the flavour of 
-mcxassemble.sh or mcx.sh could do it automatically...not very useful though if several mcl run 
-have to be tested)
+to delete /tmp/family_45.* from aristotle /tmp (a shell script having the flavour of 
+mcxassemble.sh or mcx.sh could do it automatically...not very useful though if several mcl run have to be tested)
 
 To save space,
 
-gzip family_32.mcl.gz
+gzip family_45.mcl.gz
 
-11- Load into compara database
+10- Load into compara database
     ~~~~~~~~~~~~~~~~~~~~~~~~~
 
 You'll need a compara database set up, with genome_db, taxon, and method_link tables prefilled.
 
 This takes around an hour, and you can not do anything else before the loading is completed.
 
-nohup ~/src/ensembl_main/ensembl-compara/scripts/family/parse_mcl.pl --dbname abelcompara32 --reg_conf reg_conf.pl family_32.tab family_32.mcl > family_32.description 2> family_32.description.err &
+nohup ~/src/ensembl_main/ensembl-compara/scripts/family/parse_mcl.pl --dbname compara45 --reg_conf reg_conf.pl family_45.tab family_45.mcl > family_45.description 2> family_45.description.err &
 
 Your reg_conf.pl should be something like
 
@@ -265,45 +215,45 @@ use strict;
 use Bio::EnsEMBL::Utils::ConfigRegistry;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 
-new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(-host => 'ia64e',
+new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(-host => 'compara2',
                                             -user => 'xxxxx',
                                             -pass => 'xxxxxx',
                                             -port => 3306,
-                                            -species => 'abelcompara32',
-                                            -dbname => 'abel_ensembl_compara_32');
+                                            -species => 'compara45',
+                                            -dbname => 'avilella_compara_homology_45');
 1;
 
 
 
-12- Run muscle or clustalw over all the families
+11- Run muscle or clustalw over all the families
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-!!!Step 14 should be run also at the same time. It is not dependant on multiple alignments.
+!!!Step 13 should be run also at the same time. It is not dependant on multiple alignments.
 
 cd ../muscle
  
  Just create the number of directory needed by 10000 families and only for those with 2 or more members.
-No need to run clustalw on 1 sequence. Let's say that we have 40000 families and only 27152 families
+No need to run clustalw on 1 sequence. Let's say that we have 112482 families and only 41136 families
 have 2 or more peptide members
 
-mkdir 10000 20000 27152
-cd 27152
+mkdir 41136 40000 35000 30000 25000 20000 15000 10000 5000 500
+cd 41136
  
-Submit jobs for family_id from 20001 to 27152
+Submit jobs for family_id from 40001 to 41136
 
-echo '/nfs/acari/abel/src/ensembl_main/ensembl-compara/scripts/family/LaunchMuscleOnFamilies.pl -host ecs2 -port 3362 -dbname abel_ensembl_compara_32 -dbuser ensadmin -dbpass ensembl -family_id ${LSB_JOBINDEX}  -store' | bsub -q small -JFamilyMucsle"[20001-27152]" -o %I.out
+echo '/nfs/acari/abel/src/ensembl_main/ensembl-compara/scripts/family/LaunchMuscleOnFamilies.pl -host compara2 -port 3306 -dbname avilella_compara_homology_45 -dbuser ensadmin -dbpass ensembl -family_id ${LSB_JOBINDEX}  -store' | bsub -q small -JFamilyMucsle"[40001-41136]" -o %I.out
 
 The same kind of script but running CLUSTALW also exists, ensembl-compara/scripts/family/LaunchMuscleOnFamilies.pl
 
-echo '/nfs/acari/abel/src/ensembl_main/ensembl-compara/scripts/family/LaunchClustalwOnFamilies.pl -host ecs2b -port 3306 -dbname ensembl_compara_32 -dbuser ensadmin -dbpass xxxx -family_id ${LSB_JOBINDEX} -store' | bsub -q small -JFamilyClustalw"[20001-27152]" -o %I.out
+echo '/nfs/acari/abel/src/ensembl_main/ensembl-compara/scripts/family/LaunchClustalwOnFamilies.pl -host compara2 -port 3306 -dbname avilella_compara_homology_45 -dbuser ensadmin -dbpass xxxx -family_id ${LSB_JOBINDEX} -store' | bsub -q small -JFamilyClustalw"[20001-27152]" -o %I.out
 
 Somtimes in muscle the memory needed is high so you can resubmit failed jobs with -R ressource requirement.
 
-echo '/nfs/acari/abel/src/ensembl_main/ensembl-compara/scripts/family/LaunchMuscleOnFamilies.pl -host ecs2 -port 3362 -dbname abel_ensembl_compara_32 -dbuser ensadmin -dbpass ensembl -family_id ${LSB_JOBINDEX}  -store' | bsub -q bigmem -R 'select[mem>8000] rusage[mem=9000]' -JFamilyMucsle"[20001-27152]" -o %I.out
+echo '/nfs/acari/abel/src/ensembl_main/ensembl-compara/scripts/family/LaunchMuscleOnFamilies.pl -host compara2 -port 3306 -dbname avilella_compara_homology_45 -dbuser ensadmin -dbpass ensembl -family_id ${LSB_JOBINDEX}  -store' | bsub -q bigmem -R 'select[mem>8000] rusage[mem=9000]' -JFamilyMucsle"[20001-27152]" -o %I.out
 
 If even like that muscle does not run properly, add the -fast option to LaunchMuscleOnFamilies.pl script.
 
-echo '/nfs/acari/abel/src/ensembl_main/ensembl-compara/scripts/family/LaunchMuscleOnFamilies.pl -host ecs2 -port 3362 -dbname abel_ensembl_compara_32 -dbuser ensadmin -dbpass ensembl -family_id ${LSB_JOBINDEX} -fast -store' | bsub -q bigmem -R 'select[mem>8000] rusage[mem=9000]' -JFamilyMucsle"[20001-27152]" -o %I.out
+echo '/nfs/acari/abel/src/ensembl_main/ensembl-compara/scripts/family/LaunchMuscleOnFamilies.pl -host compara2 -port 3306 -dbname avilella_compara_homology_45 -dbuser ensadmin -dbpass ensembl -family_id ${LSB_JOBINDEX} -fast -store' | bsub -q bigmem -R 'select[mem>8000] rusage[mem=9000]' -JFamilyMucsle"[20001-27152]" -o %I.out
 
 And if then again it does not work, run clustalw_mpi (see below).
 
@@ -331,9 +281,9 @@ So now what to do e.g. for family_id=1
 
 cd ../clustalw_mpi
 
-mysql -h ecs2 -P3362 -N -u ensro -e "select m.stable_id from member m, family_member fm where m.member_id=fm.member_id and fm.family_id=1" abel_ensembl_compara_32 > 1.ids
+mysql -h compara2 -P3306 -N -u ensro -e "select m.stable_id from member m, family_member fm where m.member_id=fm.member_id and fm.family_id=1" avilella_compara_homology_45 > 1.ids
 
-fastafetch /data/blastdb/Ensembl/family/metazoa_32.pep /data/blastdb/Ensembl/family/metazoa_32.index -F true 1.ids > 1.ids.pep
+fastafetch /lustre/work1/ensembl/abel/families/family_45/fasta/metazoa_45.pep /lustre/work1/ensembl/abel/families/family_45/fasta/metazoa_45.index -F true 1.ids > 1.ids.pep
 
 bsub  -o 1.out -n10 -R"linux span[ptile=2]" ~/src/ensembl_main/ensembl-compara/scripts/family/run_clustalw_mpi.sh 1.ids.pep
 
@@ -361,43 +311,49 @@ If everything worked fine, you should get 3 additional files, 1.out (the busb ou
 
 To Load the clustalw alignment, first check that the  muscle/single-cpu clustal job did not finish properly (if so
 you're done with this family), if not bkill it before loading.
-/nfs/acari/abel/src/ensembl_main/ensembl-compara/scripts/family/LaunchClustalwOnFamilies.pl -host ecs2b -port 3306 -dbname ensembl_compara_32 -dbuser ensadmin -dbpass xxxx -family_id 1 -clustal_file 1.ids.pep.clw -store > 1.ids.pep.clw.load 2>&1 &
+/nfs/acari/abel/src/ensembl_main/ensembl-compara/scripts/family/LaunchClustalwOnFamilies.pl -host compara2 -port 3306 -dbname avilella_compara_homology_45 -dbuser ensadmin -dbpass xxxx -family_id 1 -clustal_file 1.ids.pep.clw -store > 1.ids.pep.clw.load 2>&1 &
 
-13- Insert the redundant proteins in the compara db
+12- Insert the redundant proteins in the compara db
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 cd ../fasta
 
 First, set all singletons cigar_line to the length(m.sequence) + "M", because some singletons will disappear with the addition of redundant sequences.
 
-mysql -h ecs2 -u ensro -P3362 -N -e "select family_id,count(*) as count from family_member group by family_id having count=1" abel_ensembl_compara_32 | awk '{print "select family_id, length(s.sequence) from member m,family_member fm, sequence s where fm.member_id=m.member_id and fm.family_id="$1" and s.sequence_id = m.sequence_id;"}'|mysql -h ecs2 -u ensro -P3362 -N abel_ensembl_compara_32 |awk '{print "update family_member set cigar_line=\""$2"M\" where family_id="$1";"}'|sort -u > update_singletons_cigar_line.sql
+mysql -h compara2 -u ensro -P3306 -N -e "select family_id,count(*) as count from family_member group by family_id having count=1" avilella_compara_homology_45 | awk '{print "select family_id, length(s.sequence) from member m,family_member fm, sequence s where fm.member_id=m.member_id and fm.family_id="$1" and s.sequence_id = m.sequence_id;"}'|mysql -h compara2 -u ensro -P3306 -N avilella_compara_homology_45 |awk '{print "update family_member set cigar_line=\""$2"M\" where family_id="$1";"}'|sort -u > update_singletons_cigar_line.sql
 
-mysql -h ecs2 -u ensadmin -pxxxx -P3364 ensembl_compara_32 < update_singletons_cigar_line.sql
+mysql -h compara2 -u ensadmin -pxxxx -P3306 avilella_compara_homology_45 < update_singletons_cigar_line.sql
 
-~/src/ensembl_main/ensembl-compara/scripts/family/InsertRedundantPeptidesAndGenesInFamilies.pl --reg_conf reg_conf.pl --dbname abelcompara32 > Redundancy_and_Genes_load.err 2>&1 &
+~/src/ensembl_main/ensembl-compara/scripts/family/InsertRedundantPeptidesAndGenesInFamilies.pl --reg_conf reg_conf.pl --dbname compara45 > Redundancy_and_Genes_load.err 2>&1 &
 
 IMPORTANT: add healthcheck about NULL cigar_line
 select m.source_name,count(*) from family_member fm, member m where fm.member_id=m.member_id and fm.cigar_line="NULL" group by m.source_name;
 
-14- Generates the family descriptions
+This should return count 0;
+
+select fm.family_id,count(*) from family_member fm, member m where fm.member_id=m.member_id and fm.cigar_line is NULL and m.source_name!='ENSEMBLGENE' group by fm.family_id;
+
+This should only list the families for which multiple alignment could not be run.
+
+13- Generates the family descriptions
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     This part really sucks and need a profound rethinking to get the description more clean and consistant.
 
        ensembl-compara/scritps/family/consensifier.pl 
        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-       consensifier.pl -d "Uniprot/SWISSPROT" family_32.description > family_32.description.SWISSPROT-consensus 2> family_32.description.SWISSPROT-consensus.err
-       consensifier.pl -d "Uniprot/SPTREMBL" family_32.description > family_32.description.SPTREMBL-consensus 2> family_32.description.SPTREMBL-consensus.err
+       consensifier.pl -d "Uniprot/SWISSPROT" family_45.description > family_45.description.SWISSPROT-consensus 2> family_45.description.SWISSPROT-consensus.err
+       consensifier.pl -d "Uniprot/SPTREMBL" family_45.description > family_45.description.SPTREMBL-consensus 2> family_45.description.SPTREMBL-consensus.err
        This step takes approx 2 hours total
 
        ensembl-compara/scripts/family/assemble-consensus.pl
        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-       assemble-consensus.pl family_32.description family_32.description.SWISSPROT-consensus family_32.description.SPTREMBL-consensus  > family_32.description-consensus 2> family_32.description-consensus.err
+       assemble-consensus.pl family_45.description family_45.description.SWISSPROT-consensus family_45.description.SPTREMBL-consensus  > family_45.description-consensus 2> family_45.description-consensus.err
 
 
-update the family description in ensembl_family_32 with the data in family_32.description-consensus using ensembl-compara/scripts/family/LoadDescriptionInFamily.pl 
+update the family description in ensembl_family_45 with the data in family_45.description-consensus using ensembl-compara/scripts/family/LoadDescriptionInFamily.pl 
 Use the same reg_cong.pl as in step 11
 
-LoadDescriptionInFamily.pl --reg_conf reg_conf.pl --dbname abelcompara32 family_32.description-consensus
+LoadDescriptionInFamily.pl --reg_conf reg_conf.pl --dbname compara45 family_45.description-consensus
 
 
