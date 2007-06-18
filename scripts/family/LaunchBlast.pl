@@ -15,18 +15,6 @@ my $blast_executable = "/usr/local/ensembl/bin/blastall";
 # the potential bug
 
 my $fastafetch_executable = "/usr/local/ensembl/bin/fastafetch";
-#my $fastafetch_executable;
-
-unless (-e $fastafetch_executable) {
-#  $fastafetch_executable = "/nfs/acari/abel/bin/alpha-dec-osf4.0/fastafetch";
-  $fastafetch_executable = "/nfs/acari/abel/bin/alpha-dec-osf4.0/fastafetch.old";
-  if (-e "/proc/version") {
-    # it is a linux machine
-#    $fastafetch_executable = "/nfs/acari/abel/bin/i386/fastafetch";
-    $fastafetch_executable = "/nfs/acari/abel/bin/i386/fastafetch.old";
-  }
-}
-
 my $blast_parser_executable = "/nfs/acari/abel/bin/mcxdeblast";
 my $tab_file;
 
@@ -59,7 +47,7 @@ unless ($status == 0) {
   die "error in $blast_executable, $!\n";
 }
 
-unless (system("$blast_parser_executable --score=e --sort=a --ecut=0 --tab=$tab_file --stdhandler $blast_file > $raw_file") == 0) {
+unless (system("$blast_parser_executable --score=e --sort=a --ecut=0 --tab=$tab_file $blast_file > $raw_file") == 0) {
   unlink glob("/tmp/*$rand*");
   die "error in $blast_parser_executable, $!\n";
 }

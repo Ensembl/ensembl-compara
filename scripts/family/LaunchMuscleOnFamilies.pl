@@ -189,7 +189,7 @@ EXIT 2\n";
   if ($fast) {
     $status = system("$muscle_executable -in $sb_file -out $muscle_file.msc -maxiters 1 -diags1 -sv -clw -nocore -verbose -quiet -log $muscle_file.msc.log");
   } else {
-    $status = system("$muscle_executable -in $sb_file -out $muscle_file.msc -maxiters 2 -clw -nocore -verbose -quiet -log $muscle_file.msc.log");
+    $status = system("$muscle_executable -in $sb_file -out $muscle_file.msc -maxhours 5 -clw -nocore -verbose -quiet -log $muscle_file.msc.log");
   }
   
   unless ($status == 0) {
