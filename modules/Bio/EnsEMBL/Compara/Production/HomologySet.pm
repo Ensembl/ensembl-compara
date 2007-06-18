@@ -101,13 +101,19 @@ sub add {
   my @homology_list = @_; 
   
   foreach my $homology (@homology_list) {
+
     next if(defined($self->{'homology_hash'}->{$homology->homology_key}));
     #printf("HomologySet add: %s\n", $homology->homology_key);
     my ($gene1, $gene2) = @{$homology->gene_list};
     $self->{'homology_hash'}->{$homology->homology_key} = $homology;
     $self->{'gene_set'}->add($gene1);
     $self->{'gene_set'}->add($gene2);
-    $self->{'types'}->{$homology->description}++;
+    my $description = $homology->description;
+    if (scalar @{$homology->method_link_species_set->species_set} == 1) {
+      my ($gdb) = @{$homology->method_link_species_set->species_set};
+      $description .= "_".$gdb->dbID;
+    }
+    $self->{'types'}->{$description}++;
 
     $self->{'gene_to_homologies'}->{$gene1->stable_id} = []
       unless(defined($self->{'gene_to_homologies'}->{$gene1->stable_id}));
