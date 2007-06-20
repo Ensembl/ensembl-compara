@@ -325,77 +325,77 @@ sub prepareGenomeAnalysis
   eval { $self->{'comparaDBA'}->get_AnalysisAdaptor()->store($blast_template); };
 
 
-  #
-  # CreateHomology_dNdSJob
-  #
-  my $CreateHomology_dNdSJob = Bio::EnsEMBL::Analysis->new(
-      -db_version      => '1',
-      -logic_name      => 'CreateHomology_dNdSJob',
-      -module          => 'Bio::EnsEMBL::Compara::RunnableDB::CreateHomology_dNdSJobs'
-  );
-  $self->{'comparaDBA'}->get_AnalysisAdaptor->store($CreateHomology_dNdSJob);
-  if(defined($self->{'hiveDBA'})) {
-    my $stats = $analysisStatsDBA->fetch_by_analysis_id($CreateHomology_dNdSJob->dbID);
-    $stats->batch_size(1);
-    $stats->hive_capacity(-1);
-    $stats->status('BLOCKED');
-    $stats->update();
-    $ctrlRuleDBA->create_rule($orthotree,$CreateHomology_dNdSJob);
-  }
-  if (defined $dnds_params{'species_sets'}) {
-    Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob
-        (
-         -input_id       => '{species_sets=>' . $dnds_params{'species_sets'} . ',method_link_type=>\''.$dnds_params{'method_link_type'}.'\'}',
-         -analysis       => $CreateHomology_dNdSJob,
-        );
-  }
+#   #
+#   # CreateHomology_dNdSJob
+#   #
+#   my $CreateHomology_dNdSJob = Bio::EnsEMBL::Analysis->new(
+#       -db_version      => '1',
+#       -logic_name      => 'CreateHomology_dNdSJob',
+#       -module          => 'Bio::EnsEMBL::Compara::RunnableDB::CreateHomology_dNdSJobs'
+#   );
+#   $self->{'comparaDBA'}->get_AnalysisAdaptor->store($CreateHomology_dNdSJob);
+#   if(defined($self->{'hiveDBA'})) {
+#     my $stats = $analysisStatsDBA->fetch_by_analysis_id($CreateHomology_dNdSJob->dbID);
+#     $stats->batch_size(1);
+#     $stats->hive_capacity(-1);
+#     $stats->status('BLOCKED');
+#     $stats->update();
+#     $ctrlRuleDBA->create_rule($orthotree,$CreateHomology_dNdSJob);
+#   }
+#   if (defined $dnds_params{'species_sets'}) {
+#     Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob
+#         (
+#          -input_id       => '{species_sets=>' . $dnds_params{'species_sets'} . ',method_link_type=>\''.$dnds_params{'method_link_type'}.'\'}',
+#          -analysis       => $CreateHomology_dNdSJob,
+#         );
+#   }
 
-  #
-  # Homology_dNdS
-  #
-  my $homology_dNdS = Bio::EnsEMBL::Analysis->new(
-      -db_version      => '1',
-      -logic_name      => 'Homology_dNdS',
-      -module          => 'Bio::EnsEMBL::Compara::RunnableDB::Homology_dNdS'
-  );
-  $self->store_codeml_parameters(\%dnds_params);
-  if (defined $dnds_params{'dNdS_analysis_data_id'}) {
-    $homology_dNdS->parameters('{dNdS_analysis_data_id=>' . $dnds_params{'dNdS_analysis_data_id'} . '}');
-  }
-  $self->{'comparaDBA'}->get_AnalysisAdaptor->store($homology_dNdS);
-  if(defined($self->{'hiveDBA'})) {
-    my $stats = $analysisStatsDBA->fetch_by_analysis_id($homology_dNdS->dbID);
-    $stats->batch_size(10);
-    $stats->hive_capacity(200);
-    $stats->status('BLOCKED');
-    $stats->update();
-    $ctrlRuleDBA->create_rule($CreateHomology_dNdSJob,$homology_dNdS);
-  }
+#   #
+#   # Homology_dNdS
+#   #
+#   my $homology_dNdS = Bio::EnsEMBL::Analysis->new(
+#       -db_version      => '1',
+#       -logic_name      => 'Homology_dNdS',
+#       -module          => 'Bio::EnsEMBL::Compara::RunnableDB::Homology_dNdS'
+#   );
+#   $self->store_codeml_parameters(\%dnds_params);
+#   if (defined $dnds_params{'dNdS_analysis_data_id'}) {
+#     $homology_dNdS->parameters('{dNdS_analysis_data_id=>' . $dnds_params{'dNdS_analysis_data_id'} . '}');
+#   }
+#   $self->{'comparaDBA'}->get_AnalysisAdaptor->store($homology_dNdS);
+#   if(defined($self->{'hiveDBA'})) {
+#     my $stats = $analysisStatsDBA->fetch_by_analysis_id($homology_dNdS->dbID);
+#     $stats->batch_size(10);
+#     $stats->hive_capacity(200);
+#     $stats->status('BLOCKED');
+#     $stats->update();
+#     $ctrlRuleDBA->create_rule($CreateHomology_dNdSJob,$homology_dNdS);
+#   }
 
-  #
-  # Threshold_on_dS
-  #
-  my $threshold_on_dS = Bio::EnsEMBL::Analysis->new(
-      -db_version      => '1',
-      -logic_name      => 'Threshold_on_dS',
-      -module          => 'Bio::EnsEMBL::Compara::RunnableDB::Threshold_on_dS'
-  );
-  $self->{'comparaDBA'}->get_AnalysisAdaptor->store($threshold_on_dS);
-  if(defined($self->{'hiveDBA'})) {
-    my $stats = $analysisStatsDBA->fetch_by_analysis_id($threshold_on_dS->dbID);
-    $stats->batch_size(1);
-    $stats->hive_capacity(-1);
-    $stats->status('BLOCKED');
-    $stats->update();
-    $ctrlRuleDBA->create_rule($homology_dNdS,$threshold_on_dS);
-  }
-  if (defined $dnds_params{'species_sets'}) {
-    Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob
-        (
-         -input_id       => '{species_sets=>' . $dnds_params{'species_sets'} . ',method_link_type=>\''.$dnds_params{'method_link_type'}.'\'}',
-         -analysis       => $threshold_on_dS,
-        );
-  }
+#   #
+#   # Threshold_on_dS
+#   #
+#   my $threshold_on_dS = Bio::EnsEMBL::Analysis->new(
+#       -db_version      => '1',
+#       -logic_name      => 'Threshold_on_dS',
+#       -module          => 'Bio::EnsEMBL::Compara::RunnableDB::Threshold_on_dS'
+#   );
+#   $self->{'comparaDBA'}->get_AnalysisAdaptor->store($threshold_on_dS);
+#   if(defined($self->{'hiveDBA'})) {
+#     my $stats = $analysisStatsDBA->fetch_by_analysis_id($threshold_on_dS->dbID);
+#     $stats->batch_size(1);
+#     $stats->hive_capacity(-1);
+#     $stats->status('BLOCKED');
+#     $stats->update();
+#     $ctrlRuleDBA->create_rule($homology_dNdS,$threshold_on_dS);
+#   }
+#   if (defined $dnds_params{'species_sets'}) {
+#     Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob
+#         (
+#          -input_id       => '{species_sets=>' . $dnds_params{'species_sets'} . ',method_link_type=>\''.$dnds_params{'method_link_type'}.'\'}',
+#          -analysis       => $threshold_on_dS,
+#         );
+#   }
 
   return 1;
 }
@@ -609,6 +609,32 @@ EXIT 3\n");
     $stats->update();
     $ctrlRuleDBA->create_rule($CreateHomology_dNdSJob,$homology_dNdS);
   }
+
+  #
+  # Threshold_on_dS
+  #
+  my $threshold_on_dS = Bio::EnsEMBL::Analysis->new(
+      -db_version      => '1',
+      -logic_name      => 'Threshold_on_dS',
+      -module          => 'Bio::EnsEMBL::Compara::RunnableDB::Threshold_on_dS'
+  );
+  $self->{'comparaDBA'}->get_AnalysisAdaptor->store($threshold_on_dS);
+  if(defined($self->{'hiveDBA'})) {
+    my $stats = $analysisStatsDBA->fetch_by_analysis_id($threshold_on_dS->dbID);
+    $stats->batch_size(1);
+    $stats->hive_capacity(-1);
+    $stats->status('BLOCKED');
+    $stats->update();
+    $ctrlRuleDBA->create_rule($homology_dNdS,$threshold_on_dS);
+  }
+  if (defined $dnds_params{'species_sets'}) {
+    Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob
+        (
+         -input_id       => '{species_sets=>' . $dnds_params{'species_sets'} . ',method_link_type=>\''.$dnds_params{'method_link_type'}.'\'}',
+         -analysis       => $threshold_on_dS,
+        );
+  }
+
 
   #
   # build graph of control and dataflow rules
