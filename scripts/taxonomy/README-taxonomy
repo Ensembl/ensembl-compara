@@ -12,6 +12,8 @@ wget ftp://ftp.ncbi.nih.gov/pub/taxonomy/taxdump.tar.gz
 
 tar xvzf taxdump.tar.gz
 
+# It will generate several dmp files of which we want nodes and names
+
 rm -f taxdump.tar.gz
 
 perl -e 'while(<>) {chomp;s/\t\|$//;my @array = split(/\t\|\t/);my ($taxon_id, $parent_id, $rank, $genbank_hidden_flag) = ($array[0],$array[1],$array[2],$array[10]);print $taxon_id,"\t", $parent_id,"\t", $rank,"\t",$genbank_hidden_flag,"\n";}' nodes.dmp > ncbi_taxa_node.txt
@@ -20,6 +22,8 @@ perl -e 'while(<>) {chomp;s/\t\|$//;my ($taxon_id, $name, $unique_name, $name_cl
 
 mysql -hens-livemirror -uensadmin -pensembl -N -e "drop database ncbi_taxonomy"
 mysql -hens-livemirror -uensadmin -pensembl -N -e "create database ncbi_taxonomy"
+
+# This two tables also exist in ensembl-compara/sql/table.sql
 
 CREATE TABLE ncbi_taxa_node (
   taxon_id                        int(10) unsigned NOT NULL,
@@ -72,9 +76,14 @@ mysql -hens-livemirror -uensadmin -pensembl ncbi_taxonomy < ensembl-compara/scri
 
 ensembl-compara/scripts/taxonomy/ensembl_aliases.sql needs to be updated as new species
 are integarted into Ensembl.
-The basic rule for "ensembl common name" is to use "genbank common name" or any of "common name" available. If they don't exist you are free to invent one. This is used in the download
-page (http://www.ensembl.org/info/data/download.html)
-For "ensembl alias name", it is used at the top of the web page of each species, when it
-says e.g. "e!EnsemblHuman" or "e!EnsemblMouse". This should be agreed with the web team or
-just take the one they have chosen from the pre site.
+
+The basic rule for "ensembl common name" is to use "genbank common
+name" or any of "common name" available. If they don't exist you are
+free to invent one. This is used in the download page 
+http://www.ensembl.org/info/data/download.html
+
+For "ensembl alias name", it is used at the top of the web page of
+each species, when it says e.g. "e!EnsemblHuman" or
+"e!EnsemblMouse". This should be agreed with the web team or just take
+the one they have chosen from the pre site.
 
