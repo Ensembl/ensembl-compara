@@ -4,7 +4,7 @@ ABOUT
 This document describes how to run the ensembl-compara homology
 pipeline.
 
-- Loads the longest peptide for each gene locii in each configured
+- Loads the longest peptide for each gene loci in each configured
   species database into the compara DB's member table.
 
 - Loads each UniProt protein into the member table (metazoa only for
