@@ -1,34 +1,159 @@
+ABOUT
+~~~~~
 
-For now, the genetree process is an add-on to the homology pipeline.
-Please start reading README-homology first.
+This document describes how to run the ensembl-compara genetree
+pipeline.
 
-# 1- Load the NCBI taxonomy data 
-#    ~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# These instructions are in the README-homology file as of ensembl v40
-# 
-# Ideally this should be a job by itself in the pipeline but for now,
-# it's done by hand :)
-#
-# All instructions to do it are in
-# ensembl-compara/scripts/taxonomy/README-taxonomy
+- Loads the longest peptide for each gene loci in each configured
+  species database into the compara DB's member table.
+
+- Loads each UniProt protein into the member table (metazoa only for
+  now). Only needed if the family pipeline is to be run subsequently.
+
+- Performs all-against-all blastp searched of the member proteins in
+  the DB.
+
+- Run PAFCluster to create the clusters of proteins.
+
+- Run Muscle to obtain the protein multialignments for each cluster.
+
+- Run NJTREE_PHYML with a given species tree to create the protein trees.
+
+- Run OrthoTree to create the homology relationships per each genepair
+in the tree.
+
+- BreakPAFCluster will run with increased BSR (+0.1) in case Muscle or
+  NJTREE_PHYML fail on big trees or complicated alignments and create
+  new jobs for the subclusters that creates.
+
+The genetree process overlaps initially with the the homology
+pipeline, but once the clusters are created, it differs in the way
+things are done. Read README-homology for more information.
 
 
-# 2- Create the other gene tree-related tables in the database
-#   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# These tables are already in the main ensembl-compara/sql/table.sql
-# file as of ensembl v40.
-#
-# $ mysql -hcompara1 -uensadmin -pensembl abel_compara_tree_41 \
-#   < ensembl-compara/sql/protein_tree.sql
-#
-# This will create 3 tables
-# protein_tree_node
-# protein_tree_member
-# protein_tree_tag
+1- code API needed and executable
+   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+  bioperl-live (bioperl-1-2-3)
+  bioperl-run (1.4) for the CodeML runnable/parser
+  ensembl
+  ensembl-compara
+  ensembl-hive
+  ensembl-analysis
+  ensembl-pipeline
+
+  executables
+  ~~~~~~~~~~~
+  wublastp
+      using /usr/local/ensembl/bin/wublastp
+  setdb
+      using /usr/local/ensembl/bin/setdb
+  muscle
+      using /usr/local/ensembl/bin/muscle
+  njtree
+      using /lustre/work1/ensembl/avilella/bin/i386/njtree_gcc
+  codeml
+      using /usr/local/ensembl/bin/codeml
+
+1.2 Code checkout
+
+bioperl code;
+
+  $ cvs -d :ext:bio.perl.org:/home/repository/bioperl \
+    co -r branch-1-2-3 bioperl-live
+
+bioperl-run code (for the CodeML runnable/parser)
+  
+  $ cvs -d :ext:bio.perl.org:/home/repository/bioperl \
+    co -r bioperl-run-release-1-4-0 bioperl-run
+
+core ensembl code
+
+  $ cvs -d :ext:cvs.sanger.ac.uk:/nfs/ensembl/cvsroot co ensembl
+
+ensembl-compara code (for Compara API and schema)
+
+  $ cvs -d :ext:cvs.sanger.ac.uk:/nfs/ensembl/cvsroot co ensembl-compara
+
+ensembl-analysis code (for Runnables)
+
+  $ cvs -d :ext:cvs.sanger.ac.uk:/nfs/ensembl/cvsroot co ensembl-analysis
+
+ensembl-pipeline code (for Pipeline)
+
+  $ cvs -d :ext:cvs.sanger.ac.uk:/nfs/ensembl/cvsroot co ensembl-pipeline
+
+ensembl-hive code
+
+  $ cvs -d :ext:cvs.sanger.ac.uk:/nfs/ensembl/cvsroot co  ensembl-hive
 
 
-3- Copy and modify the compara-hive config file
-   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+1.3 Perl environment
+
+in tcsh
+  $ setenv BASEDIR   /some/path/to/modules
+  $ setenv PERL5LIB ${BASEDIR}/ensembl/modules:${PERL5LIB}
+  $ setenv PERL5LIB ${BASEDIR}/ensembl-compara/modules:${PERL5LIB}
+  $ setenv PERL5LIB ${BASEDIR}/ensembl-pipeline/modules:${PERL5LIB}
+  $ setenv PERL5LIB ${BASEDIR}/ensembl-analysis/modules:${PERL5LIB}
+  $ setenv PERL5LIB ${BASEDIR}/ensembl-hive/modules:${PERL5LIB}
+  $ setenv PERL5LIB ${BASEDIR}/bioperl-live:${PERL5LIB}
+  $ setenv PERL5LIB ${BASEDIR}/bioperl-run:${PERL5LIB}
+
+in bash
+  $ BASEDIR=/some/path/to/modules
+  $ export PERL5LIB=${BASEDIR}/ensembl/modules:${PERL5LIB}
+  $ export PERL5LIB=${BASEDIR}/ensembl-compara/modules:${PERL5LIB}
+  $ export PERL5LIB=${BASEDIR}/ensembl-pipeline/modules:${PERL5LIB}
+  $ export PERL5LIB=${BASEDIR}/ensembl-analysis/modules:${PERL5LIB}
+  $ export PERL5LIB=${BASEDIR}/ensembl-hive/modules:${PERL5LIB}
+  $ export PERL5LIB=${BASEDIR}/bioperl-live:${PERL5LIB}
+  $ export PERL5LIB=${BASEDIR}/bioperl-run:${PERL5LIB}
+
+
+1.4 CPAN Perl modules
+  www.cpan.org
+
+  DBI
+  DBD::mysql
+  Data::UUID
+  Statistics::Descriptive
+
+
+2- Create the tables in the database
+   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+These tables are already in the main ensembl-compara/sql/table.sql
+file as of ensembl v40.
+
+mysql -hcompara2 -uensadmin -pensembl avilella_compara_homology_small_45 \
+< /nfs/acari/avilella/src/ensembl_main/ensembl-hive/sql/tables.sql
+mysql -hcompara2 -uensadmin -pensembl avilella_compara_homology_small_45 \
+< /nfs/acari/avilella/src/ensembl_main/ensembl-compara/sql/table.sql
+mysql -hcompara2 -uensadmin -pensembl avilella_compara_homology_small_45 \
+< /nfs/acari/avilella/src/ensembl_main/ensembl-compara/sql/pipeline-tables.sql
+
+
+3- Load the NCBI taxonomy data 
+   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+These instructions are in the README-homology file as of ensembl v40
+
+Ideally this should be a job by itself in the pipeline but for now,
+it's done by hand :)
+
+All instructions to do it are in
+ensembl-compara/scripts/taxonomy/README-taxonomy
+
+If the tables are already loaded in ens-livemirror, then just copy
+them from there:
+
+mysqldump -u ensro -h ens-livemirror -P3306 \
+ --extended-insert --compress --delayed-insert
+ ncbi_taxonomy ncbi_taxa_node ncbi_taxa_name \
+ | mysql -u ensadmin -pensembl -h compara2 avilella_compara_homology_small_45
+
+
+4- Copy and modify the compara-hive config file
+   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 You may need to change the database names, port, dbnames, and the
 paths to the 'hive_output_dir' and 'fasta_dir'. Note that these dirs
@@ -38,35 +163,20 @@ must exist.
   $ cp compara-hive-homology.conf.example my_compara.conf
   <editor> my_compara.conf
 
- { TYPE => GENE_TREE,
-    'cluster_params' => 
-        '{'
-        .'species_set=>[3,4,5,7,10,11,13,14,15,16,17,18,22,24,25,26,27,28,29,31,32,33,34,35,36],'
-        .'brh=>1,'
-        .'all_best=>0,'
-        .'bsr_threshold=>0.33'
-        .'}',
-     'breakcluster_params' => 
-        '{'
-        .'species_set=>[3,4,5,7,10,11,13,14,15,16,17,18,22,24,25,26,27,28,29,31,32,33,34,35,36],'
-        .'bsr_threshold_increase=>0.1'
-        .'}',
-    'max_gene_count' => 2000,
-    'species_tree_file' => 
-        '{'
-        .'species_tree_file=>'
-                .'"/ecs2/work2/avilella/hive/avilella_compara_homology_40/'
-                .'compara_encode_species_tree_40_mfurc.nh"'
-        .'}',
-    'rap_jar_file' => '/ecs2/work2/avilella/bin/rap.jar'
+  { TYPE => GENE_TREE,
+    'cluster_params' => '{species_set=>[22,38,31,25,3,40,54,44],brh=>1,all_best=>0,bsr_threshold=>0.33,max_gene_count=>750}',
+    'breakcluster_params' => '{species_set=>[22,38,31,25,3,40,54,44],bsr_threshold_increase=>0.1,max_gene_count=>750}',
+    'max_gene_count' => 750,
+    'species_tree_file' => '/lustre/work1/ensembl/avilella/hive/avilella_compara_homology_45/spec_tax.nh',
+    'honeycomb_dir' => '/lustre/work1/ensembl/avilella/hive/avilella_compara_homology_45/honeycomb'
   },
 
 One example of the species_tree_file can be found in
-ensembl-compara/scripts/pipeline/species_tree.rap
+ensembl-compara/scripts/pipeline/species_tree_njtree.taxon_id.nh
 
 
-4- Create the species tree file 
-   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+5- Create the species tree file 
+   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 A NCBI taxon_id phylogenetic tree file representing the species in the
 compara DB is required for the njtree stage. The file must be in Nexus
@@ -133,31 +243,30 @@ the Coelomata internal node and adding the Sus scrofa species as
 completely sequenced.
 
 
-  Old RAP method (not needed anymore with NJTREE)
-  ==============================================
+  (Old RAP method (not needed anymore with NJTREE))
+  ================================================
 
-An annotated phylogenetic tree file representing the species in the
-compara DB and their relative distances is required for the final rap
-tree building stage. The file must be in Nexus (.nh) format, with all
-levels enclosed with a '()ROOT:0.0;' level. A curated nh file
-containing the ensembl species is available at
-ensembl_compara/scripts/pipeline/species_tree.rap
+# An annotated phylogenetic tree file representing the species in the
+# compara DB and their relative distances is required for the final rap
+# tree building stage. The file must be in Nexus (.nh) format, with all
+# levels enclosed with a '()ROOT:0.0;' level. A curated nh file
+# containing the ensembl species is available at
+# ensembl_compara/scripts/pipeline/species_tree.rap
+# 
+# An unweighted file based on the NCBI taxonomy can be generated using
+# compara's taxonTreeTool.pl as follows;
+# 
+#  $ $BASEDIR/ensembl-compara/scripts/taxonomy/taxonTreeTool.pl \
+#    -url mysql://ensro@compara1:3306/avilella_compara_homology_445 \
+#    -taxa_compara -mini \
+#    | tail n 1
+# 
+# The file that is to be used for rap should be configured in the
+# 'species_tree_file' setting of my_compara.GENE_TREE.
+ 
 
-An unweighted file based on the NCBI taxonomy can be generated using
-compara's taxonTreeTool.pl as follows;
-
- $ $BASEDIR/ensembl-compara/scripts/taxonomy/taxonTreeTool.pl \
-   -url mysql://ensro@compara1:3306/abel_compara_tree_41 \
-   -taxa_compara -mini \
-   | tail n 1
-
-The file that is to be used for rap should be configured in the
-'species_tree_file' setting of my_compara.GENE_TREE.
-
-
-
-5- Run the configure scripts
-   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+6- Run the configure scripts
+   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The loadGeneTreeSystem script creates the analysis entries for the
 processing system, and creates both the dataflow rule and the analysis
@@ -171,5 +280,56 @@ available or if it's unable to connect to core databases.
  $ cd $BASEDIR/ensembl-compara/scripts/pipeline
  $ ./loadGeneTreeSystem.pl -conf my_compara.conf
 
-At this point the system is ready to run using the beekeeper.pl script
-as explained in the README-homology
+At this point the system is ready to run using the beekeeper.pl script.
+
+
+7- Run the hive
+   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+One must first make sure that the available hive scripts are available
+in one's path.  This can be done by either extending PATH or linking the
+scripts to an existing directory in the PATH
+
+  tcsh$ setenv PATH ${PATH}:${BASEDIR}/ensembl-hive/scripts
+  bash$ export PATH=$PATH:$BASEDIR/ensembl-hive/scripts
+
+You may also need to set the LSB_DEFAULTPROJECT environment variable
+if you are using LSF across the sanger farm;
+
+  tcsh$ setenv LSB_DEFAULTPROJECT ensembl-compara
+  bash$ export LSB_DEFAULTPROJECT=ensembl-compara
+       
+There are two beekepers, one which uses LSF job submission system, and
+another that uses the local machine only. If using the local machine,
+add the -local flag to the command and the workers will run as 
+background system commands rather than being submited to an LSF resource.
+
+ $ beekeeper.pl \
+   -url mysql://user:password@compara2:3306/avilella_compara_homology_small_45 -loop
+
+where 'user' and 'password' allow write access to the database
+
+Running the complete build for ensembl45 with 35 species on the Sanger
+CPU cluster takes (depending on availability of resources):
+
+- from 1-3 days for the blasts
+- half a day for the clustering
+- 2-3 days for the multialignments, trees and homologies
+
+If you want to manually run one of the jobs in the pipeline in
+debugging mode to see if everything is working as expected, query the
+db for your analysis_job_id and use the runWorker.pl script like this:
+
+mysql -hcompara2 -uensro avilella_compara_homology_small_45 -e \
+ "select * from analysis_job aj, analysis a where \
+ a.analysis_id=aj.analysis_id and a.logic_name='Muscle' limit 10"
+
+# This will print the first 10 Muscle jobs, then get the
+analysis_job_id for one of them and run:
+
+perl ensembl-hive/scripts/runWorker.pl -bk LOCAL \
+ -url mysql://ensadmin:ensembl@compara2/avilella_compara_homology_small_45 \
+ -outdir '' -no_cleanup -debug 1 --job_id 1234567
+
+for more details on controling the hive system do
+  $ beekeeper.pl -help
