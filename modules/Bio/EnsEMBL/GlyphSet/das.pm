@@ -1087,8 +1087,8 @@ sub get_groupsymbol{
 sub RENDER_histogram_simple {
   my( $self, $configuration ) = @_;
 
-# Display histogram only on a reverse strand
-  return if ($configuration->{'STRAND'} == 1);
+# Display histogram only on a reverse strand if the track is configured to be shown on both strands
+  return if ($configuration->{'strand'} eq 'b' && $self->strand == 1);
 
   my $empty_flag = 1;
 
@@ -1106,6 +1106,7 @@ sub RENDER_histogram_simple {
   # flag to indicate if not all features have been displayed 
   my $more_features = 0;
   my ($gScore, $gWidth, $fCount, $gStart, $mScore) = (0, 0, 0, 0, $min_score);
+
   for (my $i = 0; $i< @features; $i++) { 
     my $f = $features[$i];
 
@@ -1235,8 +1236,8 @@ sub RENDER_histogram_simple {
 sub RENDER_signalmap {
   my( $self, $configuration ) = @_;
 
-# Display histogram only on a reverse strand
-  return if ($configuration->{'STRAND'} == 1);
+# Display histogram only on a reverse strand if the track is configured to be shown on both strands
+  return if ($configuration->{'strand'} eq 'b' && $self->strand == 1);
 
   my @features = sort { $a->das_score <=> $b->das_score  } @{$configuration->{'features'}};
     
@@ -1376,8 +1377,8 @@ sub RENDER_signalmap {
 sub RENDER_colourgradient{
   my( $self, $configuration ) = @_;
 
-# Display histogram only on a reverse strand
-  return if ($configuration->{'STRAND'} == 1);
+# Display histogram only on a reverse strand if the track is configured to be shown on both strands
+  return if ($configuration->{'strand'} eq 'b' && $self->strand == 1);
 #    my @features = sort { abs($a->das_score) <=> abs($b->das_score)  } @{$configuration->{'features'}};
   my @features = sort { ($a->das_score) <=> ($b->das_score)  } @{$configuration->{'features'}};
     
@@ -1401,7 +1402,6 @@ sub RENDER_colourgradient{
   my $cm = new Sanger::Graphics::ColourMap;
   my @cg = $cm->build_linear_gradient($configuration->{'fg_grades'}, ['yellow', 'green', 'blue']);
 
-#    warn (join('*','M', $min_value, $max_value, $score_per_grade));
   $configuration->{h} = $row_height;
   my ($gScore, $gWidth, $fCount, $gStart, $mScore) = (0, 0, 0, 0, $min_score);
 
@@ -1428,10 +1428,10 @@ sub RENDER_colourgradient{
     my $width = ($END - $START +1);
     my $score = $configuration->{'fg_data'} eq 'o' ? ($f->das_score || 0) : ((($f->das_score || 0) - $min_value) * 100 / $score_range);
 
-    if ($score < $min_value) {
-      $score = $min_value;
-    } elsif ($score > $max_value) {
-      $score = $max_value;
+    if ($score < $min_score) {
+      $score = $min_score;
+    } elsif ($score > $max_score) {
+      $score = $max_score;
     }
     my $Composite = new Sanger::Graphics::Glyph::Composite({
       'y'         => 0,
@@ -1441,12 +1441,11 @@ sub RENDER_colourgradient{
 
     my $grade = ($score >= $max_score) ? $configuration->{'fg_grades'} - 1 : int(($score - $min_score) / $score_per_grade);
     $grade = 0 if ($grade < 0);
-    #warn("S:$score: $grade\n");
     my $y_offset =     0;
     my ($href, $zmenu ) = $self->zmenu( $f );
 
     my $col = $cg[$grade];
-    $zmenu->{"90:Colour: \#$col ($score : $grade)"} = '';
+#    $zmenu->{"90:Colour: \#$col ($score : $grade)"} = '';
     $Composite->{'href'} = $href if $href;
     $Composite->{'zmenu'} = $zmenu;
 
