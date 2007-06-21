@@ -75,8 +75,6 @@ if(%hive_params) {
   }
 }
 
-$self->prepareGenomeAnalysis();
-$self->create_peptide_align_feature_tables() unless ($update);
 $self->build_GeneTreeSystem();
 
 exit(0);
@@ -134,7 +132,7 @@ sub parse_conf {
 # also creates 'GenomeLoadMembers' analysis and
 # 'GenomeDumpFasta' analysis in the 'genome_db_id' chain
 
-sub prepareGenomeAnalysis
+sub build_GeneTreeSystem
 {
   #yes this should be done with a config file and a loop, but...
   my $self = shift;
@@ -324,84 +322,9 @@ sub prepareGenomeAnalysis
   $blast_template->logic_name("blast_template");
   eval { $self->{'comparaDBA'}->get_AnalysisAdaptor()->store($blast_template); };
 
-
-#   #
-#   # CreateHomology_dNdSJob
-#   #
-#   my $CreateHomology_dNdSJob = Bio::EnsEMBL::Analysis->new(
-#       -db_version      => '1',
-#       -logic_name      => 'CreateHomology_dNdSJob',
-#       -module          => 'Bio::EnsEMBL::Compara::RunnableDB::CreateHomology_dNdSJobs'
-#   );
-#   $self->{'comparaDBA'}->get_AnalysisAdaptor->store($CreateHomology_dNdSJob);
-#   if(defined($self->{'hiveDBA'})) {
-#     my $stats = $analysisStatsDBA->fetch_by_analysis_id($CreateHomology_dNdSJob->dbID);
-#     $stats->batch_size(1);
-#     $stats->hive_capacity(-1);
-#     $stats->status('BLOCKED');
-#     $stats->update();
-#     $ctrlRuleDBA->create_rule($orthotree,$CreateHomology_dNdSJob);
-#   }
-#   if (defined $dnds_params{'species_sets'}) {
-#     Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob
-#         (
-#          -input_id       => '{species_sets=>' . $dnds_params{'species_sets'} . ',method_link_type=>\''.$dnds_params{'method_link_type'}.'\'}',
-#          -analysis       => $CreateHomology_dNdSJob,
-#         );
-#   }
-
-#   #
-#   # Homology_dNdS
-#   #
-#   my $homology_dNdS = Bio::EnsEMBL::Analysis->new(
-#       -db_version      => '1',
-#       -logic_name      => 'Homology_dNdS',
-#       -module          => 'Bio::EnsEMBL::Compara::RunnableDB::Homology_dNdS'
-#   );
-#   $self->store_codeml_parameters(\%dnds_params);
-#   if (defined $dnds_params{'dNdS_analysis_data_id'}) {
-#     $homology_dNdS->parameters('{dNdS_analysis_data_id=>' . $dnds_params{'dNdS_analysis_data_id'} . '}');
-#   }
-#   $self->{'comparaDBA'}->get_AnalysisAdaptor->store($homology_dNdS);
-#   if(defined($self->{'hiveDBA'})) {
-#     my $stats = $analysisStatsDBA->fetch_by_analysis_id($homology_dNdS->dbID);
-#     $stats->batch_size(10);
-#     $stats->hive_capacity(200);
-#     $stats->status('BLOCKED');
-#     $stats->update();
-#     $ctrlRuleDBA->create_rule($CreateHomology_dNdSJob,$homology_dNdS);
-#   }
-
-#   #
-#   # Threshold_on_dS
-#   #
-#   my $threshold_on_dS = Bio::EnsEMBL::Analysis->new(
-#       -db_version      => '1',
-#       -logic_name      => 'Threshold_on_dS',
-#       -module          => 'Bio::EnsEMBL::Compara::RunnableDB::Threshold_on_dS'
-#   );
-#   $self->{'comparaDBA'}->get_AnalysisAdaptor->store($threshold_on_dS);
-#   if(defined($self->{'hiveDBA'})) {
-#     my $stats = $analysisStatsDBA->fetch_by_analysis_id($threshold_on_dS->dbID);
-#     $stats->batch_size(1);
-#     $stats->hive_capacity(-1);
-#     $stats->status('BLOCKED');
-#     $stats->update();
-#     $ctrlRuleDBA->create_rule($homology_dNdS,$threshold_on_dS);
-#   }
-#   if (defined $dnds_params{'species_sets'}) {
-#     Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob
-#         (
-#          -input_id       => '{species_sets=>' . $dnds_params{'species_sets'} . ',method_link_type=>\''.$dnds_params{'method_link_type'}.'\'}',
-#          -analysis       => $threshold_on_dS,
-#         );
-#   }
-
-  return 1;
-}
-
-sub create_peptide_align_feature_tables {
-  my $self = shift;
+  #
+  # Create peptide_align_feature per-species tables
+  #
   foreach my $speciesPtr (@speciesList) {
     my $gdb_id = $speciesPtr->{'genome_db_id'};
     my $gdb = $self->{gdba}->fetch_by_dbID($gdb_id);
@@ -414,31 +337,11 @@ sub create_peptide_align_feature_tables {
     my $sth = $self->{'comparaDBA'}->dbc->prepare($sql);
     $sth->execute();
   }
-}
-
-
-sub build_GeneTreeSystem
-{
-  #yes this should be done with a config file and a loop, but...
-  my $self = shift;
-
-  my $updatepafids_analysis = $self->{'comparaDBA'}->get_AnalysisAdaptor->fetch_by_logic_name('UpdatePAFIds');
-  unless (defined $updatepafids_analysis) {
-    warn("Analysis logic_name=UpdatePAFIds does not exit in the database.
-No control rule could be apply on PAFCluster if it is not there.
-EXIT 2\n");
-    exit(2);
-  }
-
-  my $dataflowRuleDBA = $self->{'hiveDBA'}->get_DataflowRuleAdaptor;
-  my $ctrlRuleDBA = $self->{'hiveDBA'}->get_AnalysisCtrlRuleAdaptor;
-  my $analysisStatsDBA = $self->{'hiveDBA'}->get_AnalysisStatsAdaptor;
-  my $stats;
 
   #
   # PAFCluster
   #
-  my $parameters = $genetree_params{'cluster_params'};
+  $parameters = $genetree_params{'cluster_params'};
   my $paf_cluster = Bio::EnsEMBL::Analysis->new(
       -logic_name      => 'PAFCluster',
       -module          => 'Bio::EnsEMBL::Compara::RunnableDB::PAFCluster',
@@ -497,9 +400,7 @@ EXIT 2\n");
   if ($genetree_params{'species_tree_file'}){
     $parameters .= ",'species_tree_file'=>'". $genetree_params{'species_tree_file'}."'";
   } else {
-    warn("No species_tree_file => 'myfile' has been set in your config file
-This parameter can not be set for njtree.
-EXIT 3\n");
+    warn("No species_tree_file => 'myfile' has been set in your config file. This parameter can not be set for njtree. EXIT 3\n");
     exit(3);
   }
   if (defined $genetree_params{'honeycomb_dir'}) {
