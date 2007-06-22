@@ -269,6 +269,30 @@ sub fetch_all_by_MethodLinkSpeciesSet {
 }
 
 
+=head2 fetch_all_by_tree_node_id
+
+  Arg [1]    : int $tree_node_id
+  Example    : $homologies = $HomologyAdaptor->fetch_all_by_tree_node_id($tree->node_id);
+  Description: fetch all the homology relationships for the given tree
+  Returntype : an array reference of Bio::EnsEMBL::Compara::Homology objects
+  Exceptions : none
+  Caller     : 
+
+=cut
+
+sub fetch_all_by_tree_node_id {
+  my ($self, $tree_node_id) = @_;
+
+  throw("tree_node_id arg is required\n")
+    unless ($tree_node_id);
+
+  my $constraint =  " h.tree_node_id =" . $tree_node_id;
+
+  return $self->generic_fetch($constraint);
+}
+
+
+
 =head2 fetch_all_by_genome_pair
 
   Arg [1]    : genome_db_id
@@ -423,18 +447,19 @@ sub _columns {
              h.s
              h.lnl
              h.threshold_on_ds
-             h.node_id);
+             h.ancestor_node_id
+             h.tree_node_id);
 }
 
 sub _objs_from_sth {
   my ($self, $sth) = @_;
   
   my ($homology_id, $stable_id, $description, $dn, $ds, $n, $s, $lnl, $threshold_on_ds,
-      $method_link_species_set_id, $subtype, $node_id);
+      $method_link_species_set_id, $subtype, $ancestor_node_id, $tree_node_id);
 
   $sth->bind_columns(\$homology_id, \$stable_id, \$method_link_species_set_id,
                      \$description, \$subtype, \$dn, \$ds,
-                     \$n, \$s, \$lnl, \$threshold_on_ds, \$node_id);
+                     \$n, \$s, \$lnl, \$threshold_on_ds, \$ancestor_node_id, \$tree_node_id);
 
   my @homologies = ();
   
@@ -453,7 +478,8 @@ sub _objs_from_sth {
        '_threshold_on_ds' => $threshold_on_ds,
        '_adaptor' => $self,
        '_this_one_first' => $self->{'_this_one_first'},
-       '_node_id' => $node_id});
+       '_ancestor_node_id' => $ancestor_node_id,
+       '_tree_node_id' => $tree_node_id});
   }
   
   return \@homologies;  
@@ -500,9 +526,9 @@ sub store {
   }
   
   unless($hom->dbID) {
-    my $sql = "INSERT INTO homology (stable_id, method_link_species_set_id, description, subtype, node_id) VALUES (?,?,?,?,?)";
+    my $sql = "INSERT INTO homology (stable_id, method_link_species_set_id, description, subtype, ancestor_node_id, tree_node_id) VALUES (?,?,?,?,?,?)";
     my $sth = $self->prepare($sql);
-    $sth->execute($hom->stable_id,$hom->method_link_species_set_id,$hom->description, $hom->subtype, $hom->node_id);
+    $sth->execute($hom->stable_id,$hom->method_link_species_set_id,$hom->description, $hom->subtype, $hom->ancestor_node_id, $hom->tree_node_id);
     $hom->dbID($sth->{'mysql_insertid'});
   }
 

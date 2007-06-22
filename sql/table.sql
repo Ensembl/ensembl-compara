@@ -442,7 +442,8 @@ CREATE TABLE homology (
   s                           float(10,1),
   lnl                         float(10,3),
   threshold_on_ds             float(10,5),
-  node_id                     int(10) unsigned NOT NULL,
+  ancestor_node_id            int(10) unsigned NOT NULL,
+  tree_node_id                int(10) unsigned NOT NULL,
 
   # method_link_species_set(method_link_species_set_id) is not a unique key. Some RDBMS may complain
   # FOREIGN KEY (method_link_species_set_id) REFERENCES method_link_species_set(method_link_species_set_id),

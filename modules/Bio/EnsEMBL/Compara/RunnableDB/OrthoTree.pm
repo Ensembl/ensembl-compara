@@ -253,6 +253,7 @@ sub run_analysis
   #   }
 
   my @all_protein_leaves = @{$tree->get_all_leaves};
+  my $tree_node_id = $tree->node_id;
 
   #precalculate the ancestor species_hash (caches into the metadata of
   #nodes) also augments the Duplication tagging
@@ -285,6 +286,7 @@ sub run_analysis
       $genepairlink->add_tag("hops", 0);
       $genepairlink->add_tag("ancestor", $ancestor);
       $genepairlink->add_tag("taxon_name", $taxon_level->name);
+      $genepairlink->add_tag("tree_node_id", $tree_node_id);
       push @genepairlinks, $genepairlink;
     }
   }
@@ -1048,6 +1050,8 @@ sub store_gene_link_as_homology
   return unless($type);
   my $subtype = $genepairlink->get_tagvalue('taxon_name');
   my $ancestor = $genepairlink->get_tagvalue('ancestor');
+  my $tree_node_id = $genepairlink->get_tagvalue('tree_node_id');
+  warn("Tag tree_node_id undefined\n") unless(defined($tree_node_id) && $tree_node_id ne '');
 
   my ($protein1, $protein2) = $genepairlink->get_nodes;
 
@@ -1069,7 +1073,9 @@ sub store_gene_link_as_homology
   my $homology = new Bio::EnsEMBL::Compara::Homology;
   $homology->description($type);
   $homology->subtype($subtype);
-  $homology->node_id($ancestor->node_id);
+  # $homology->node_id($ancestor->node_id);
+  $homology->ancestor_node_id($ancestor->node_id);
+  $homology->tree_node_id($tree_node_id);
   $homology->method_link_type($mlss->method_link_type);
   $homology->method_link_species_set($mlss);
 

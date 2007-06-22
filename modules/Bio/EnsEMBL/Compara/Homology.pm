@@ -623,6 +623,7 @@ sub homology_key {
   return $homology_key;
 }
 
+
 =head2 node_id
 
   Arg [1]    : int $node_id (optional)
@@ -638,11 +639,55 @@ sub homology_key {
 sub node_id {
   my $self = shift;
 
-  $self->{'_node_id'} = shift if(@_);
-  $self->{'_node_id'} = '' unless($self->{'_node_id'});
-  return $self->{'_node_id'};
+  $self->{'_ancestor_node_id'} = shift if(@_);
+  $self->{'_ancestor_node_id'} = '' unless($self->{'_ancestor_node_id'});
+  return $self->{'_ancestor_node_id'};
   
 }
+
+=head2 ancestor_node_id
+
+  Arg [1]    : int $ancestor_node_id (optional)
+  Example    : $ancestor_node_id = $homology->ancestor_node_id();
+               $homology->subtype($ancestor_node_id);
+  Description: getter/setter of integer that refer to the ancestor_node_id in the protein_tree data.
+  Returntype : int
+  Exceptions : none
+  Caller     : general
+
+=cut
+
+sub ancestor_node_id {
+  my $self = shift;
+
+  $self->{'_ancestor_node_id'} = shift if(@_);
+  $self->{'_ancestor_node_id'} = '' unless($self->{'_ancestor_node_id'});
+  return $self->{'_ancestor_node_id'};
+  
+}
+
+
+=head2 tree_node_id
+
+  Arg [1]    : int $tree_node_id (optional)
+  Example    : $tree_node_id = $homology->tree_node_id();
+               $homology->subtype($tree_node_id);
+  Description: getter/setter of integer that refer to the tree node_id in the protein_tree data.
+  Returntype : int
+  Exceptions : none
+  Caller     : general
+
+=cut
+
+sub tree_node_id {
+  my $self = shift;
+
+  $self->{'_tree_node_id'} = shift if(@_);
+  $self->{'_tree_node_id'} = '' unless($self->{'_tree_node_id'});
+  return $self->{'_tree_node_id'};
+  
+}
+
 
 1;
 
