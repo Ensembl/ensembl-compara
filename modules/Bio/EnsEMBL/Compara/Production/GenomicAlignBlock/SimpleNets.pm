@@ -255,6 +255,7 @@ sub SUPPORTED_METHOD {
   return $allowed;
 }
 
+
 sub ContigAwareNet {
   my ($self) = @_;
   
@@ -289,6 +290,10 @@ sub ContigAwareNet {
     }
     if ($keep_chain) {
       my (%contigs_of_blocks, @split_blocks);
+
+      # the following chops the blocks into pieces such that each block
+      # lies completely within a sequence-level region (contig). It's rare
+      # that this is not the case anyway, but it's best to be sure...
 
       foreach my $block (@blocks) {
         my ($inside_seg, @overlap_segs);
@@ -331,63 +336,33 @@ sub ContigAwareNet {
       }
       @blocks = @split_blocks;
 
-      my %new_block;
-      map { $new_block{$_} = 1 } @blocks;
-
-      my @new_list = (@retained_blocks, @blocks);
-      @new_list = sort { 
-        $a->reference_genomic_align->dnafrag_start <=> $b->reference_genomic_align->dnafrag_start;
-      } @new_list;
-
-      NEWBLOCK: for(my $i = 0; $i < @new_list; $i++) {
-        my $block = $new_list[$i];
-
-        if (exists($new_block{$block})) {
-
-          my ($flank_left, $flank_right);
-
-          if ($i > 0 and
-              not exists($new_block{$new_list[$i-1]})) {
-            $flank_left = $new_list[$i-1];
-          }
-          if ($i < scalar(@new_list) - 1 and
-              not exists($new_block{$new_list[$i+1]})) {
-            $flank_right = $new_list[$i+1];
-          }
-
-          if (defined $flank_left and
-              #($flank_left->hseqname ne $bl->hseqname or
-              # $flank_left->hstrand != $bl->hstrand or
-              # ($bl->hstrand > 0 and $flank_left->hend >= $bl->hstart) or
-              # ($bl->hstrand < 0 and $flank_left->hstart <= $bl->hend)) and
-              $contigs_of_blocks{$block}->to_Slice->seq_region_name eq
-              $contigs_of_kept_blocks{$flank_left}->to_Slice->seq_region_name
-              ) {
-            $keep_chain = 0;
-            last NEWBLOCK;
-          }
-
-          if (defined $flank_right and
-              #($flank_right->hseqname ne $bl->hseqname or
-              # $flank_right->hstrand != $bl->hstrand or
-              # ($bl->hstrand > 0 and $flank_right->hstart <= $bl->hend) or
-              # ($bl->hstrand < 0 and $flank_right->hend >= $bl->hstart)) and
-              $contigs_of_blocks{$block}->to_Slice->seq_region_name eq
-              $contigs_of_kept_blocks{$flank_right}->to_Slice->seq_region_name
-              ) {
-
-            $keep_chain = 0;
-            last NEWBLOCK;
-          }
+      # only retain blocks that lie on different contigs from all retained 
+      # blocks so far
+      my @diff_contig_blocks;
+      my %kept_contigs = reverse %contigs_of_kept_blocks;
+      foreach my $block (@blocks) {
+        if (not exists $kept_contigs{$contigs_of_blocks{$block}}) {
+          push @diff_contig_blocks, $block;
         }
       }
 
-      if ($keep_chain) {
+      # calculate what proportion of the overall chain remains; reject if
+      # the proportion is less than 50%
+      my $kept_len = 0;
+      my $total_len = 0;
+      map { 
+        $kept_len += $_->reference_genomic_align->dnafrag_end - $_->reference_genomic_align->dnafrag_start + 1;
+      } @diff_contig_blocks;
+      map { 
+        $total_len += $_->reference_genomic_align->dnafrag_end - $_->reference_genomic_align->dnafrag_start + 1;
+      } @blocks;
+
+      if ($kept_len / $total_len > 0.5) {
         foreach my $bid (keys %contigs_of_blocks) {
           $contigs_of_kept_blocks{$bid} = $contigs_of_blocks{$bid};
         }
-        push @net_chains, \@blocks;
-        push @retained_blocks, @blocks;
+        push @net_chains, \@diff_contig_blocks;
+        push @retained_blocks, @diff_contig_blocks;
         @retained_blocks = sort { 
           $a->reference_genomic_align->dnafrag_start <=> $b->reference_genomic_align->dnafrag_start; 
         } @retained_blocks;
