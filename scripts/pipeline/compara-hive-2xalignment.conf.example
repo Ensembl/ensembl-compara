@@ -132,7 +132,6 @@
     query_collection_name => 'cat genome',
     target_collection_name => 'human genome',
 
-    output_group_type => 'chain',
     max_gap => 50,
 
     max_parallel_workers => 50,
@@ -152,8 +151,6 @@
     query_collection_name => 'cat genome',
     target_collection_name => 'human genome',
     
-    input_group_type => 'chain',
-    output_group_type => 'chain',
     max_gap => 50,
     
     max_parallel_workers => 50,
