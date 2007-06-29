@@ -291,10 +291,12 @@ sub build_GeneTreeSystem
   #
   # UpdatePAFIds
   #
+  $parameters = $genetree_params{'cluster_params'};
   my $updatepafids_analysis = Bio::EnsEMBL::Analysis->new(
       -db_version      => '1',
       -logic_name      => 'UpdatePAFIds',
-      -module          => 'Bio::EnsEMBL::Compara::RunnableDB::UpdatePAFIds'
+      -module          => 'Bio::EnsEMBL::Compara::RunnableDB::UpdatePAFIds',
+      -parameters      => $parameters
     );
   $self->{'comparaDBA'}->get_AnalysisAdaptor()->store($updatepafids_analysis);
   $stats = $analysisStatsDBA->fetch_by_analysis_id($updatepafids_analysis->dbID);
