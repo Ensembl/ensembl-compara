@@ -23,8 +23,8 @@ my %compara_conf = ();
 #$compara_conf{'-user'} = 'ensadmin';
 $compara_conf{'-port'} = 3306;
 
-my ($help, $host, $user, $pass, $dbname, $port, $compara_conf, $adaptor);
-my ($subset_id, $genome_db_id, $prefix, $fastadir, $verbose, $update);
+my ($help, $host, $user, $pass, $dbname, $port);
+my ($verbose, $update);
 
 GetOptions('help'     => \$help,
            'conf=s'   => \$conf_file,
