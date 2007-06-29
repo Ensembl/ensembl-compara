@@ -62,16 +62,59 @@ our @ISA = qw(Bio::EnsEMBL::Hive::Process);
 sub fetch_input {
   my( $self) = @_;
 
+  $self->{'species_set'} = undef;
   #create a Compara::DBAdaptor which shares the same DBI handle
   #with the Pipeline::DBAdaptor that is based into this runnable
   $self->{'comparaDBA'} = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(-DBCONN=>$self->db->dbc);
   $self->{gdba} = $self->{'comparaDBA'}->get_GenomeDBAdaptor;
 
-  $self->{'genomeDB_set'} = $self->{'comparaDBA'}->get_GenomeDBAdaptor->fetch_all;
+  $self->get_params($self->parameters);
+
+  my @species_set = @{$self->{'species_set'}};
+  my %seen;
+  foreach my $gdb_id (@species_set) {
+    next if (defined($seen{$gdb_id})); # Make sure we dont have repeated gdbs, specially for setS in Old Homology
+    my $gdb = $self->{gdba}->fetch_by_dbID($gdb_id);
+    push @{$self->{'genomeDB_set'}}, $gdb;
+    $seen{$gdb_id} = 1;
+  }
+
+  # Before we were using all the species in genome_db, which is ok for
+  # EnsEMBL Compara, but could cause problems for people running their
+  # stuff on subsets of genome_db
+  # $self->{'genomeDB_set'} = $self->{'comparaDBA'}->get_GenomeDBAdaptor->fetch_all;
 
   return 1;
 }
 
+sub get_params {
+  my $self         = shift;
+  my $param_string = shift;
+
+  return unless($param_string);
+  print("parsing parameter string : ",$param_string,"\n");
+
+  my $params = eval($param_string);
+  return unless($params);
+
+  foreach my $key (keys %$params) {
+    print("  $key : ", $params->{$key}, "\n");
+  }
+
+  # Species_set is usually for the new genetree pipeline
+  if (defined $params->{'species_set'}) {
+    $self->{'species_set'} = $params->{'species_set'};
+  }
+
+  # Species_sets is usually for the old homology pipeline
+  if (defined $params->{'species_sets'}) {
+    foreach my $species_set (@{$params->{'species_sets'}}) {
+      push @{$self->{'species_set'}}, @$species_set;
+    }
+  }
+
+  return;
+}
 
 sub run
 {
