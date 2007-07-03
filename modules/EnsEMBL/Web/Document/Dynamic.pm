@@ -39,10 +39,18 @@ sub _initialize_Excel {
 
 sub _initialize_DAS {
   my $self = shift;
-  $self->_initialize_XML;
+  $self->_initialize_XML(@_);
 }
 sub _initialize_XML {
-  my $self = shift; 
+  my $self = shift;
+  my $doctype_version = shift;
+  unless( $doctype_version ){
+    $doctype_version = 'xhtml';
+    warn( "[WARN] No DOCTYPE_VERSION (hence DTD) specified. ".
+          "Defaulting to xhtml, which is probably not what is required.");
+  }
+  $self->set_doc_type('XML',$doctype_version);
+  #$self->set_doc_type('XML','rss version="0.91"');
   $self->add_body_elements qw(
     content     EnsEMBL::Web::Document::XML::Content
   );
