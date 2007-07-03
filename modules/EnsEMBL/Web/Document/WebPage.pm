@@ -27,6 +27,24 @@ sub _prof { my $self = shift; $self->timer->push( @_ ); }
 sub timer { return $_[0]{'timer'}; }
 
 sub new {
+### Object Instantiation
+### Arg[1]: hash of parameters, keys include;
+###  scriptname : name of the calling script (def $ENV{'ENSEMBL_SCRIPT'})
+###  cgi        : CGI object (def CGI->new) 
+###  access     : Access restriction param
+###  command    : Access restriction param
+###  renderer   : E::W::Document::Renderer::<module> to use (def Apache)
+###  doctype    : E::W::Document::<doctype> to use (def Dynamic)
+###  outputtype : The output type, e.g. XML, DAS (def HTML). the doctype
+###               module needs an _initialise_<outputtype> method.
+###  outputtype_version : e.g. XML/HTML version for page headers, passed to 
+###               _initialise_<outputtype>, often refers to a DTD.
+###  objecttype : E::W::Object::<objecttype>
+###  fast       : Hint to the object factory to use fastCreateObjects method.
+### Certain CGI object pamams can also affect object instantiation;
+###  _format    : see <outputtype>
+###  _format_version : see <outputtype_version>
+
   my $class = shift;
   my $self = {
     'page'         => undef,
@@ -70,10 +88,15 @@ sub new {
   $self->page = new $doc_module( $rend, $self->{'timer'}, $self->{'species_defs'}, $self->{'access'} );          $self->_prof("Page object compiled and initialized");
 
 ## Initialize output type! [ HTML, XML, Excel, Txt ]
-  $self->{'format'} = $input->param('_format') || $parameters{'outputtype'} || DEFAULT_OUTPUTTYPE;
+  $self->{'format'} = $input->param('_format') 
+      || $parameters{'outputtype'} 
+      || DEFAULT_OUTPUTTYPE;
   my $method = "_initialize_".($self->{'format'});
+  $self->{'format_version'} = $input->param('_format_version')
+      || $parameters{'outputtype_version'}
+      || undef();
 
-  $self->page->$method();
+  $self->page->$method($self->{'format_version'});
   $self->_prof("Output method initialized" );
 
 ## Finally we get to the Factory module!
