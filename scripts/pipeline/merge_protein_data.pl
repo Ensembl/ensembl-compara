@@ -24,7 +24,7 @@ GetOptions('help' => \$help,
 my $usage = "
 This script needs to be run as mysqlens user on the MySQL server machine where
 both source and destination databases are. Furthermore the working directory must
-be /mysql/data_3306/tmp.
+be /mysql/data_3306/tmp. Merging can only work if all tables are MyISAM (NOT InnoDB).
 
 ./merge_protein_data.pl
 
