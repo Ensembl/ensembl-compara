@@ -132,6 +132,7 @@ sub get_params {
   if (defined $params->{'brh'}) {
     $self->{'include_brh'} = $params->{'brh'};
   }
+  $self->{'max_gene_count'} = 1000000;
   if (defined $params->{'max_gene_count'}) {
     $self->{'max_gene_count'} = $params->{'max_gene_count'};
   }
