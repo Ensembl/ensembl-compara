@@ -766,14 +766,12 @@ sub _internal_newick_format {
   if($format_mode eq 'njtree') { 
     #name leaves an internal nodes by ncbi taxon_id
     #add * for leaves
-    if($self->parent) {
       my $ncbi_taxon_id = $self->node_id;
       if($self->is_leaf) { 
         my $is_incomplete = $self->get_tagvalue("is_incomplete");
         $ncbi_taxon_id .= "*" unless ('1' eq $is_incomplete);
       }
       $newick .= sprintf("%s", $ncbi_taxon_id);
-    }
   }
   if($format_mode eq 'phylip') { 
     #phylip: restrict names to 21 characters
