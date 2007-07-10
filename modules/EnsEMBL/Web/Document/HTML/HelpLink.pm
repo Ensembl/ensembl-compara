@@ -23,7 +23,7 @@ sub simple :lvalue { $_[0]{'simple'}; }
 
 sub render {
   my $self = shift;
-  
+
   my $help_link;
     my $extra_HTML = join ";",
       $self->kw     ? "kw=@{[$self->kw]}" : (),
@@ -31,7 +31,7 @@ sub render {
       $self->action ? "action=@{[$self->action]}" : ();
     my $URL = $self->URL.($extra_HTML?"?$extra_HTML":"");
     if( $self->action ) { ## ALREADY IN HELP FORM!!
-      $help_link = qq(<a href="$URL">@{[$self->label]}</a>);
+      $help_link = qq(<a href="$URL" class="blue-button">@{[$self->label]}</a>);
     } else {
       $help_link = sprintf( q(<a href="javascript:void(window.open('%s','helpview','%s'))" class="blue-button">%s</a>),
         $URL, HELPVIEW_WIN_ATTRIBS, uc($self->label)
