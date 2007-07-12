@@ -27,7 +27,46 @@ duplications). The buid_tree_string methods numbers the sequences in order and c
 order of the dnafrag_regions array accordingly. Last, the dumpFasta() method dumps the sequences
 according to the tree_string order.
 
-=cut
+=head1 OPTIONS
+
+Both parameters and input_id are read as (string representing) hashes. Here is the list of keys:
+
+=head2 synteny_region_id (mandatory)
+
+The region to be aligned by Pecan, defined as a SyntenyRegion in the database
+
+=head2 method_link_species_set_id (mandatory)
+
+The MethodLinkSpeciesSet for the resulting Pecan alignment
+
+=head2 tree_file
+
+The path to the file containing the species tree in NEWICK format. Leaves names should be the genome_db_ids
+
+=head2 tree_analysis_data_id
+
+analysis_data entry containing the species tree in NEWICK format. Leaves names should be the genome_db_ids
+
+This way of specifying the tree is recommended.
+
+=head2 java_options
+
+options used to run Java, ie: '-server -Xmx1000M'
+
+=head2 exonerate
+
+path to exonerate
+
+=head2 max_block_size
+
+split blocks longer than this size
+
+=head2 trim (testing)
+
+option to use only part of the SyntenyRegion. For instance, trim=>{from_905394=>125100925,from_2046355=>126902742,to_1045566=>139208434}
+will use the region for DnaFrag 905394 from position 125100925 only,
+the region for DnaFrag 2046355 from position 126902742 only and 
+the region for DnaFrag 1045566 to position 139208434 only
 
 =head1 CONTACT
 
@@ -108,6 +147,7 @@ sub run
       -tree_string => $self->tree_string,
       -analysis => $self->analysis,
       -parameters => $self->{_java_options},
+      -exonerate => $self->exonerate,
       );
   $self->{'_runnable'} = $runnable;
   $runnable->run_analysis;
@@ -143,7 +183,14 @@ sub write_output {
       $gab->adaptor($gaba);
       $gab->method_link_species_set($mlss);
       my $group;
-      
+
+      ## Hard trim condition (testing, this is intended for one single GAB only)
+$gab->_print(\*STDERR);
+      if ($self->trim) {
+        $gab = $self->_hard_trim_gab($gab);
+      }
+$gab->_print(\*STDERR);
+
       # Split block if it is too long and store as groups
       # Remove any blocks which contain only 1 genomic align and trim the 2
       # neighbouring blocks 
@@ -322,6 +369,94 @@ sub _trim_gab_right {
     return _trim_gab_right($new_gab);
 }
 
+sub _hard_trim_gab {
+  my ($self, $gab) = @_;
+
+  my $trim = $self->trim;
+  die "Wrong trim argument" if (!%$trim);
+  die "Wrong number of keys in trim argument" if (keys %$trim != @{$gab->get_all_GenomicAligns()});
+
+  ## Check that trim hash matches current GAB
+  my $match;
+  while (my ($key, $value) = each %$trim) {
+    my ($opt, $dnafrag_id) = $key =~ m/(\w+)_(\d+)/;
+    $match = 0;
+    foreach my $this_ga (@{$gab->get_all_GenomicAligns()}) {
+      if ($this_ga->dnafrag_id == $dnafrag_id and $this_ga->dnafrag_start <= $value and
+          $this_ga->dnafrag_end >= $value) {
+        $match = 1;
+        last;
+      }
+    }
+    if (!$match) {
+      last;
+    }
+  }
+  die "Trim argument does not match current GAB" if (!$match);
+
+  ## Get the right trimming coordinates
+  print "Trying to trim this GAB... ", join("; ", map {$_." => ".$trim->{$_}} keys %$trim), "\n";
+  my $final_start = $gab->length;
+  my $final_end = 1;
+  while (my ($key, $value) = each %$trim) {
+    my ($opt, $dnafrag_id) = $key =~ m/(\w+)_(\d+)/;
+    my $ref_ga = undef;
+    foreach my $this_ga (@{$gab->get_all_GenomicAligns()}) {
+      if ($this_ga->dnafrag_id == $dnafrag_id and $this_ga->dnafrag_start <= $value and
+        $this_ga->dnafrag_end >= $value) {
+        $ref_ga = $this_ga;
+        last;
+      }
+    }
+    if ($ref_ga) {
+      my ($tmp_gab, $start, $end);
+      if ($opt eq "from") {
+        ($tmp_gab, $start, $end) = $gab->restrict_between_reference_positions($value, undef, $ref_ga);
+      } elsif ($opt eq "to") {
+        ($tmp_gab, $start, $end) = $gab->restrict_between_reference_positions(undef, $value, $ref_ga);
+        my $tmp_start = $gab->length - $end + 1;
+        my $tmp_end = $gab->length - $start + 1;
+        $start = $tmp_start;
+        $end = $tmp_end;
+      } else {
+        die;
+      }
+      ## Need to use the smallest start and largest end as the GAB may start with a gap for
+      ## some of the GAs
+      if ($start < $final_start) {
+        $final_start = $start;
+      }
+      if ($end > $final_end) {
+        $final_end = $end;
+      }
+      print " DNAFRAG $dnafrag_id : $start -- $end (alignment coordinates)\n";
+    }
+  }
+  print " RESTRICT: $final_start -- $final_end (1 -- ", $gab->length, ")\n";
+  $gab = $gab->restrict_between_alignment_positions($final_start, $final_end);
+
+  ## Check result
+  foreach my $this_ga (@{$gab->get_all_GenomicAligns()}) {
+    my $check = 0;
+    while (my ($key, $value) = each %$trim) {
+      my ($opt, $dnafrag_id) = $key =~ m/(\w+)_(\d+)/;
+      if ($dnafrag_id == $this_ga->dnafrag_id) {
+        if ($opt eq "from" and $this_ga->dnafrag_start == $value) {
+          $check = 1;
+        } elsif ($opt eq "to" and $this_ga->dnafrag_end == $value) {
+          $check = 1;
+        } else {
+          last;
+        }
+      }
+    }
+    die("Cannot trim this GAB as requested\n") if (!$check);
+  }
+  print "GAB trimmed as requested\n\n";
+
+  return $gab;
+}
+
 sub _write_gerp_dataflow {
     my ($self, $gab, $mlss) = @_;
     
@@ -421,6 +556,18 @@ sub max_block_size {
   return $self->{'_max_block_size'};
 }
 
+sub exonerate {
+  my $self = shift;
+  $self->{'_exonerate'} = shift if(@_);
+  return $self->{'_exonerate'};
+}
+
+sub trim {
+  my $self = shift;
+  $self->{'_trim'} = shift if(@_);
+  return $self->{'_trim'};
+}
+
 
 ##########################################
 #
@@ -447,6 +594,9 @@ sub get_params {
   if(defined($params->{'java_options'})) {
     $self->{_java_options} = $params->{'java_options'};
   }
+  if(defined($params->{'exonerate'})) {
+    $self->exonerate($params->{'exonerate'});
+  }
   if(defined($params->{'tree_file'})) {
     $self->{_tree_file} = $params->{'tree_file'};
   }
@@ -455,6 +605,9 @@ sub get_params {
   }
   if(defined($params->{'max_block_size'})) {
     $self->{_max_block_size} = $params->{'max_block_size'};
+  }
+  if(defined($params->{'trim'})) {
+    $self->trim($params->{'trim'});
   }
 
   return 1;
