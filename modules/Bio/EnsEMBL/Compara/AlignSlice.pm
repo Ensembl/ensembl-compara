@@ -969,12 +969,12 @@ sub _sort_GenomicAlignBlocks {
     if (!defined($last_end) or
         $this_genomic_align_block->reference_genomic_align->dnafrag_start > $last_end) {
       push(@$sorted_genomic_align_blocks, $this_genomic_align_block);
+      $last_end = $this_genomic_align_block->reference_genomic_align->dnafrag_end;
     } else {
       warning("Ignoring Bio::EnsEMBL::Compara::GenomicAlignBlock #".
               ($this_genomic_align_block->dbID or "-unknown")." because it overlaps".
               " previous Bio::EnsEMBL::Compara::GenomicAlignBlock");
     }
-    $last_end = $this_genomic_align_block->reference_genomic_align->dnafrag_end;
   }
 
   return $sorted_genomic_align_blocks;
@@ -1062,8 +1062,13 @@ sub _sort_and_compile_GenomicAlignBlocks {
   ##############################################################################################
 
   foreach my $this_set_of_genomic_align_blocks (@$sets_of_genomic_align_blocks) {
-    my $this_compiled_genomic_align_block =
-        _compile_GenomicAlignBlocks(@$this_set_of_genomic_align_blocks);
+    my $this_compiled_genomic_align_block;
+    if (@$this_set_of_genomic_align_blocks == 1) {
+      $this_compiled_genomic_align_block = $this_set_of_genomic_align_blocks->[0];
+    } else {
+      $this_compiled_genomic_align_block =
+          _compile_GenomicAlignBlocks(@$this_set_of_genomic_align_blocks);
+    }
     push(@{$sorted_genomic_align_blocks}, $this_compiled_genomic_align_block);
   }
 
@@ -1092,8 +1097,14 @@ sub _compile_GenomicAlignBlocks {
   ##
   ## Change strands in order to have all reference genomic aligns on the forward strand
   ##
+  my $strand;
   foreach my $this_genomic_align_block (@$all_genomic_align_blocks) {
     my $this_genomic_align = $this_genomic_align_block->reference_genomic_align;
+    if (!defined($strand)) {
+      $strand = $this_genomic_align->dnafrag_strand;
+    } elsif ($strand != $this_genomic_align->dnafrag_strand) {
+      $strand = 0;
+    }
     if ($this_genomic_align->dnafrag_strand == -1) {
       foreach my $genomic_align (@{$this_genomic_align_block->genomic_align_array}) {
         $genomic_align->reverse_complement;
@@ -1104,6 +1115,7 @@ sub _compile_GenomicAlignBlocks {
   ############################################################################################
 
   ## Nothing has to be compiled if there is one single GenomicAlignBlock!
+  $all_genomic_align_blocks->[0]->reverse_complement;
   return $all_genomic_align_blocks->[0] if (scalar(@$all_genomic_align_blocks) == 1);
 
   ############################################################################################
@@ -1233,7 +1245,11 @@ sub _compile_GenomicAlignBlocks {
           -genomic_align_array => $genomic_align_array,
           -reference_genomic_align => $reference_genomic_align,
       );
-  
+
+  if ($strand == -1) {
+    $fake_genomic_align_block->reverse_complement;
+  }
+
   return $fake_genomic_align_block;
 }
 
