@@ -107,8 +107,6 @@ sub new {
     # print "TREE_TO_SAVE: $tree_string\n";
   }
   $self->parameters($parameters) if (defined $parameters);
-  $self->jar_file($jar_file) if (defined $jar_file);
-  $self->java_class($java_class) if (defined $java_class);
   unless (defined $self->program) {
     if (defined($self->analysis) and defined($self->analysis->program)) {
       $self->program($self->analysis->program);
@@ -116,13 +114,19 @@ sub new {
       $self->program($java_exe);
     }
   }
-  unless (defined $self->jar_file) {
+  if (defined $jar_file) {
+    $self->jar_file($jar_file);
+  } else {
     $self->jar_file($default_jar_file);
   }
-  unless (defined $self->java_class) {
+  if (defined $java_class) {
+    $self->java_class($java_class);
+  } else {
     $self->java_class($default_java_class);
   }
-  unless (defined $self->exonerate) {
+  if (defined $exonerate) {
+    $self->exonerate($exonerate);
+  } else {
     $self->exonerate($default_exonerate);
   }
 
