@@ -55,8 +55,6 @@ use File::Basename;
 use Bio::EnsEMBL::Compara::DnaFragRegion;
 use Bio::EnsEMBL::Compara::Production::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Utils::Exception;
-use Bio::SimpleAlign;
-use Bio::AlignIO;
 use Bio::LocatableSeq;
 use Bio::EnsEMBL::Compara::ConservationScore;
 use Bio::EnsEMBL::Compara::Graph::NewickParser;
@@ -315,48 +313,21 @@ sub _calculateNeutralRate {
 sub _writeMultiFastaAlignment {
     my $self = shift;
 
-    my $output_format = "fasta";
-    my $alignIO = Bio::AlignIO->newFh(
-				      -interleaved => 0,
-				      -fh => \*ALIGN,                         
-				      -format => $output_format,
-				      -idlength => 10
-				      );
+    #write out the alignment file
+    my $align_file = $self->worker_temp_directory . $ALIGN_FILE;
+    open (ALIGN, ">$align_file") || throw "error writing alignment ($align_file) file\n";    
     my $gaba = $self->{'comparaDBA'}->get_GenomicAlignBlockAdaptor;
     my $gab = $gaba->fetch_by_dbID($self->genomic_align_block_id);
-    
-    my $simple_align = Bio::SimpleAlign->new();
-    $simple_align->id("GAB#".$gab->dbID);
-    $simple_align->score($gab->score);
-    
+
     #create mfa file of multiple alignment from genomic align block
     foreach my $genomic_align (@{$gab->get_all_GenomicAligns}) {
-	#my $seq_name = $genomic_align->dnafrag->genome_db->name;
-	#$seq_name =~ s/(\w*) (\w*)/$1_$2/;
-
 	#add _ to either side of genome_db id to make GERP like it
 	my $seq_name = _get_name_from_GenomicAlign($genomic_align);
 	my $aligned_sequence = $genomic_align->aligned_sequence;
-	my $seq = Bio::LocatableSeq->new(
-					 -SEQ    => $aligned_sequence,
-					 -START  => $genomic_align->dnafrag_start,
-					 -END    => $genomic_align->dnafrag_end,
-					 -ID     => $seq_name,
-					 -STRAND => $genomic_align->dnafrag_strand,
-					 );
-	$simple_align->add_seq($seq);
-	
-	#want the sequence name to be $seq_name not the default name/start-end
-	my $start = $genomic_align->dnafrag_start;
-	my $end = $genomic_align->dnafrag_end;
-	$simple_align->displayname("$seq_name/$start-$end", $seq_name);
-    } 
-    
-    #write out the alignment file
-    my $align_file = $self->worker_temp_directory . $ALIGN_FILE;
-
-    open (ALIGN, ">$align_file") || throw "error writing alignment ($align_file) file\n";    
-    print $alignIO $simple_align;
+	$aligned_sequence =~ s/(.{80})/$1\n/g;
+	chomp($aligned_sequence);
+	print ALIGN ">$seq_name\n$aligned_sequence\n";
+    }
     close ALIGN;
 }
 
