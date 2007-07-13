@@ -329,7 +329,9 @@ sub fetch_all_by_genome_pair {
 
   Arg [1]    : method_link_species_set
   Arg [2]    : orthology type
-  Example    : $homologies = $HomologyAdaptor->fetch_all_by_MethodLinkSpeciesSet_orthology_type('ortholog_one2one',$mlss);
+  Example    : $homologies = $HomologyAdaptor->
+                  fetch_all_by_MethodLinkSpeciesSet_orthology_type(
+                  $mlss, 'ortholog_one2one');
   Description: fetch all the homology relationships for the given
                orthology type and for a mlss (corresponding to one or
                a pair of genomes). This method can be used to grab all
@@ -337,17 +339,18 @@ sub fetch_all_by_genome_pair {
                pair and an orthology type.
   Returntype : an array reference of Bio::EnsEMBL::Compara::Homology objects
   Exceptions : none
-  Caller     : 
+  Caller     :
 
 =cut
 
-
 sub fetch_all_by_MethodLinkSpeciesSet_orthology_type {
-  my ($self,$method_link_species_set,$orthology_type) = @_;
+  my ($self, $method_link_species_set, $orthology_type) = @_;
 
-  throw("method_link_species_set arg is required\n")
+  throw ("method_link_species_set arg is required\n")
     unless ($method_link_species_set);
-  throw("orthology_type arg is required\n")
+  throw ("[$method_link_species_set] must be a Bio::EnsEMBL::Compara::MethodLinkSpeciesSet object\n")
+    unless (UNIVERSAL::isa($method_link_species_set, "Bio::EnsEMBL::Compara::MethodLinkSpeciesSet"));
+  throw ("orthology_type arg is required\n")
     unless ($orthology_type);
 
   my $constraint =  " h.method_link_species_set_id =" . $method_link_species_set->dbID;
@@ -357,6 +360,7 @@ sub fetch_all_by_MethodLinkSpeciesSet_orthology_type {
 
   return $self->generic_fetch($constraint);
 }
+
 
 =head2 fetch_orthocluster_with_Member
 
