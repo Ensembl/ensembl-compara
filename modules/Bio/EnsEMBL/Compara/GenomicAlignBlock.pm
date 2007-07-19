@@ -1559,6 +1559,7 @@ sub restrict_between_alignment_positions {
   $genomic_align_block = new Bio::EnsEMBL::Compara::GenomicAlignBlock(
           -method_link_species_set => $self->method_link_species_set,
           -genomic_align_array => $new_genomic_aligns,
+          -group_id => $self->group_id,
       );
   if ($new_reference_genomic_align) {
     $genomic_align_block->reference_genomic_align($new_reference_genomic_align);
@@ -1752,7 +1753,8 @@ sub restrict_between_reference_positions {
   $genomic_align_block = new Bio::EnsEMBL::Compara::GenomicAlignBlock(
           -method_link_species_set => $self->method_link_species_set,
           -genomic_align_array => $new_genomic_aligns,
-          -reference_genomic_align => $new_reference_genomic_align
+          -reference_genomic_align => $new_reference_genomic_align,
+          -group_id => $self->group_id,
       );
   $genomic_align_block->reference_slice($self->reference_slice);
   throw("Reference GenomicAlign not found!") if (!$genomic_align_block->reference_genomic_align);
