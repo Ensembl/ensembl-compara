@@ -123,7 +123,7 @@ public class BuildSynteny {
 		    double size2 = Math.abs(maxHStart  - minHStart);
 		    
 		    // Is the block big enough to keep?
-		    if (size1 > minSize1 && size2 > minSize2) {
+		    if (size1 > minSize1 && size2 > minSize2 && featHolder.size() > 1) {
 			
 			SeqFeature sf1 = new SeqFeature(minStart,maxStart,prev.getFeatureType());
 			SeqFeature sf2 = new SeqFeature(minHStart,maxHStart,prev.getFeatureType());
@@ -203,8 +203,7 @@ public class BuildSynteny {
 	double size1 = Math.abs(maxStart  - minStart);
 	double size2 = Math.abs(maxHStart  - minHStart);
 	
-	if (size1 > minSize1 && size2 > minSize2 && feat.length > 0) {
-	    featHolder.addElement(feat[feat.length-1]);
+	if (size1 > minSize1 && size2 > minSize2 && feat.length > 0 && featHolder.size() > 1) {
 	    
 	    SeqFeature sf1 = new SeqFeature(minStart,maxStart,feat[feat.length-1].getFeatureType());
 	    SeqFeature sf2 = new SeqFeature(minHStart,maxHStart,feat[feat.length-1].getFeatureType());
