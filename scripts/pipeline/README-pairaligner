@@ -100,6 +100,8 @@ you may need to change the database names, port, dbnames, and the
 paths to the 'hive_output_dir' to
 /acari/work7a/abel/hive/abel_compara_human_cow_blastz_27/workers
 
+Also, the genome with the best assembly should be used as the target.
+
 5- Copy data from the master and an old database (eg. previous release) into the new database
    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
