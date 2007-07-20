@@ -8,7 +8,7 @@ use strict;
 use warnings;
 
 use EnsEMBL::Web::Interface::ElementDef;
-#use EnsEMBL::Web::DBSQL::StructureDef;
+use EnsEMBL::Web::Tools::DBSQL::TableName;
 
 {
 
@@ -310,7 +310,6 @@ sub extra_data {
   ### a 
   my ($self, $name, $value) = @_;
   if ($name) {
-warn "Adding extra field $name";
     my $extras = $ExtraData_of{$self};
     if ($value) {
       $extras->{$name} = $value;
@@ -340,13 +339,13 @@ sub discover {
     $label =~ s/_/ /g;
     my $data_type = $field->get_type;
 
-    if ($data_type =~ /int/) {
+    if ($data_type =~ /^int/) {
       $element_type = 'Int';
     }
     elsif ($data_type eq 'text' || $data_type eq 'mediumtext') {
       $element_type= 'Text';
     }
-    elsif ($data_type =~ /^enum/ || $data_type =~ /^set/) {
+    elsif ($data_type =~ /^enum/ || $data_type =~ /set/) {
       if ($data_type =~ /^enum/) {
         $element_type = 'DropDown';
       }
@@ -469,7 +468,6 @@ sub cgi_populate {
 
   ## Check for extra arbitrary data fields
   my %extras = %{$self->extra_data};
-warn "Extras ", keys %extras;
   if (keys %extras) {
     foreach my $key (keys %extras) {
       $self->extra_data($key, $object->param($key));
@@ -526,6 +524,7 @@ sub preview_fields {
     my $name = $field;
     my $element = $elements->{$name};
     next if $element->type eq 'Information';
+    next if $element->type eq 'Hidden';
     my %param = %{$element->preview};
     if ($data) {
       my $var = $data->$field;
