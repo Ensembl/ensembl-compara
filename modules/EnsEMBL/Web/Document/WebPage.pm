@@ -31,7 +31,6 @@ sub new {
 ### Arg[1]: hash of parameters, keys include;
 ###  scriptname : name of the calling script (def $ENV{'ENSEMBL_SCRIPT'})
 ###  cgi        : CGI object (def CGI->new) 
-###  access     : Access restriction param
 ###  command    : Access restriction param
 ###  renderer   : E::W::Document::Renderer::<module> to use (def Apache)
 ###  doctype    : E::W::Document::<doctype> to use (def Dynamic)
@@ -49,7 +48,6 @@ sub new {
   my $self = {
     'page'         => undef,
     'factory'      => undef,
-    'access'       => undef,
     'command'      => undef,
     'timer'        => $ENSEMBL_WEB_REGISTRY->timer,
     'species_defs' => $ENSEMBL_WEB_REGISTRY->species_defs
@@ -62,8 +60,6 @@ sub new {
   my $input  = $parameters{'cgi'}        || new CGI;
   $ENSEMBL_WEB_REGISTRY->get_session->set_input( $input );
   $self->_prof("Parameters initialised from input");
-## Access restriction parameters
-  $self->{'access'} = $parameters{'access'};
   $self->{'command'} = $parameters{'command'};
 
 ## Page module...
@@ -85,7 +81,8 @@ sub new {
     $doc_module = "EnsEMBL::Web::Document::".DEFAULT_DOCUMENT;
     $self->dynamic_use( $doc_module ); 
   }
-  $self->page = new $doc_module( $rend, $self->{'timer'}, $self->{'species_defs'}, $self->{'access'} );          $self->_prof("Page object compiled and initialized");
+  $self->page = new $doc_module( $rend, $self->{'timer'}, $self->{'species_defs'} );          
+  $self->_prof("Page object compiled and initialized");
 
 ## Initialize output type! [ HTML, XML, Excel, Txt ]
   $self->{'format'} = $input->param('_format') 
@@ -253,37 +250,14 @@ sub get_user_id {
 sub action {
   my $self = shift;
   my $user_id = $self->get_user_id;
-  my $access = $self->{'access'};
-  my $permitted;
 
-  if ($access) {
-  ## check script-wide access rules
-    $permitted = $self->check_access($access);
+  if ($self->{wizard}) {
+    my $object = ${$self->dataObjects}[0];
+    my $node = $self->{wizard}->current_node($object);
+    $self->_node_hop($node);
   }
-  else {
-    $permitted = 1; ## default is to allow access, so ordinary pages don't break!
-  }
-
-  if ($permitted) {
-    if ($self->{wizard}) {
-      my $object = ${$self->dataObjects}[0];
-      my $node = $self->{wizard}->current_node($object);
-      $access = $self->{wizard}->node_access($node);
-      if ($access) {
-        $permitted = $self->check_access($access);
-      }
-      if ($permitted) {
-        $self->_node_hop($node);
-      }
-    }
-    else { ## not a wizard page after all!
-      $self->render;
-    }
-  }
-
-  if (!$permitted) {
-    my $URL = '/common/access_denied';
-    $self->redirect($URL);
+  else { ## not a wizard page after all!
+    $self->render;
   }
 }
 
@@ -346,18 +320,6 @@ sub _node_hop {
       $r->status( REDIRECT );
     }
   }
-}
-
-sub check_access {
-  my ($self, $access) = @_;
-  my $ok = 0;
-  if ($access->{'login'} && $self->get_user_id) {
-    $ok = 1;
-  }
-  else {
-    return unless $self->get_user_id;
-  }
-  return $ok;
 }
 
 sub redirect {
@@ -452,8 +414,8 @@ sub DESTROY {
 
 sub simple { simple_webpage( @_ ); }
 sub simple_webpage {
-  my ($type, $access) = @_;
-  my $self = __PACKAGE__->new( 'objecttype' => $type, {'access'=>$access} );
+  my ($type) = @_;
+  my $self = __PACKAGE__->new( 'objecttype' => $type );
   if( $self->has_a_problem ) {
      $self->render_error_page;
   } else {
@@ -462,20 +424,7 @@ sub simple_webpage {
     }
 #warn "FIXING SESSION.............";
     $self->factory->fix_session;
-=pod
-    my $object = $self->dataObjects->[0];
-    ## get access parameters
-    while (my ($k, $v) = each (%$access)) {
-      next if $v;
-      if ($k eq 'user_id') {
-        $access->{'user_id'} = $object->user_id;
-      }
-      else {
-        $access->{$k} = $object->param($k);
-      } 
-    }
-=cut
-    $self->action($access);
+    $self->action;
   }
   #warn $self->timer->render();
 }
