@@ -497,13 +497,21 @@ sub _parse {
       print STDERR "\t  [WARN] SPECIES NAME MISMATCH!\n" if $ininame ne $bioname;
       $tree->{'general'}{'SPECIES_GROUP'} = 'Eukaryotes';
       foreach my $taxon (@taxonomy) {
-        if ($taxon eq 'Mammalia') {
+        $taxon = lc($taxon);
+        if ($taxon eq 'mammalia') {
           $tree->{'general'}{'SPECIES_GROUP'} = 'Mammals';
           last;
         }
-        if ($taxon eq 'Chordata') {
+        if ($taxon eq 'chordata') {
           $tree->{'general'}{'SPECIES_GROUP'} = 'Chordates';
           last;
+        }
+        if ($taxon eq 'liliopsida'){
+          $tree->{'general'}{'SPECIES_GROUP'} = 'Monocotyledons';
+          last;
+        }
+        if ($taxon eq 'eudicotyledons'){
+          $tree->{'general'}{'SPECIES_GROUP'} = 'Eudicotyledons';
         }
       }
       
