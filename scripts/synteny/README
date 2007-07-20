@@ -1,17 +1,24 @@
 25th October 2004
------------------
+Update 20th July 2007
+---------------------
 
-Generating synteny blocks from whole genome alignments
-======================================================
+Generating synteny blocks:
+=========================
 
+	- from whole genome alignments
 Needs whole genome alignments stored in an ensembl compara database or a set of gff files, one per chromosome
+
+        - or from homologues
+Needs homologues (orthologues and/or paralogues) stored in an ensembl compara database or a set of gff files, one per chromosome
+
 
 BuildSynteny program
 --------------------
 
 This program uses two parameters to define the syntenic regions. The first one, the maxDist, is used
 to define the maximum gap allowed between alignments within a syntenic block. The second one, the minDist,
-is the minimum length a syntenic block must have, shorter blocks are discarded.
+is the minimum length a syntenic block must have, shorter blocks are discarded. Both parameters can be set 
+identically or individually for both genomes. 
 
 The syntenic blocks are defined in two steps. In the first one, links (alignments) are grouped if they are in
 synteny, there is no other link breaking the synteny and the distance between the links is smaller than
@@ -47,9 +54,11 @@ to connect the compara database. See an example in ensembl/modules/Bio/EnsEMBL/U
 and read the Bio::EnsEMBL::Registry perldoc
 
 
-Dumping whole genome alignments to build syntenies
---------------------------------------------------
+Dumping whole genome alignments / homologues to build syntenies
+---------------------------------------------------------------
 
+   * Dumping whole genome alignments 
+     -------------------------------
 Use the script ensembl-compara/scripts/synteny/DumpGFFAlignmentsForSynteny.pl
 
 It dumps whole genome alignments in gff format for a given chromosome.
@@ -84,6 +93,49 @@ This will write out all the dna-dna matches for mouse chromosomes against rat in
 	2.syten.gff
 	etc...
 
+
+   * Dumping homologues
+    -------------------
+Use the script ensembl-compara/scripts/synteny/DumpGFFHomologuesForSynteny.pl
+
+It dumps the homologues in gff format for all the genome.
+
+You can dump any types of homologues, just give the type(s) as parameters (comma separated, no space). 
+The usual types are: ortholog_one2one, ortholog_one2many, ortholog_many2many,
+		     between_species_paralog, within_species_paralog, apparent_ortholog_one2one                   
+It is recommended to use the orthologs ones only as the paralogs would probably mess up the result.		      
+
+Eg-1: 
+Dumping the orthologs_one2one from the compara database v.45 
+with Drosophila melanogaster as the reference genome and Anopheles gambiae as the secondary genome:
+
+perl ~/src_2/api_branch45/ensembl-compara/scripts/synteny/DumpGFFOrthologForSynteny.pl 
+--dbname Compara_45 --tg "Anopheles gambiae" --qy "Drosophila melanogaster" \
+--ortholog_type ortholog_one2one --reg_conf ~/.ensembl_init
+
+
+Eg-2:
+Dumping the orthologs_one2one, one2many and many2many from the compara database v.45 
+with Drosophila melanogaster as the reference genome and Anopheles gambiae as the secondary genome:
+
+perl ~/src_2/api_branch45/ensembl-compara/scripts/synteny/DumpGFFOrthologForSynteny.pl 
+--dbname Compara_45 --tg "Anopheles gambiae" --qy "Drosophila melanogaster" \
+--ortholog_type ortholog_one2one,ortholog_one2many,ortholog_many2many, --reg_conf ~/.ensembl_init
+
+
+
+In these command line, "Compara_45" is the name of the compara database as defined in the registry configuration file.
+
+
+This will write out all the homologues between Drosophila and Anopheles into files called:
+	2L_A.gam-D.mel_orthologues.syten.gff
+	2R_A.gam-D.mel_orthologues.syten.gff
+	2h_A.gam-D.mel_orthologues.syten.gff
+	3L_A.gam-D.mel_orthologues.syten.gff
+	etc.
+
+
+
 Building the synteny regions
 ----------------------------
 
@@ -108,9 +160,20 @@ chmod +x run
 
 bsub -R "select[mem>=2000] rusage[mem=2000]" -q bigmem -J HsapCfamSyn -o run.out -e run.err ./run
 
-NOTE: the last parameter "false" is only needed for human/mouse, human/rat and mouse/rat NOT for 
+NOTE-1: the last parameter "false" is only needed for human/mouse, human/rat and mouse/rat NOT for 
 elegans/briggsae (it can be ommitted). Don't ask me (Abel) what that does, Steve Searle included this 
 argument to make it work over mammals and worms.
+
+NOTE-2: if you are building syntenies from homologues and are expecting a lot of micro-synteny 
+(eg: between Drosophila and the mosquitoes), you should decrease the value of the minDist. 
+Ideally, you could estimate the average gene size and intergenic region size to have an idea of 
+the average minDist :	    minDist = (avg_gene_size)*2 + avg_intergenic_region
+In the case of genomes with very different gene size and intergenic region size, 
+it is better to set a minDist for each genome:
+.... BuildSynteny $i.syten.gff 100000 50000 100000 30000 false ...
+That's what was done for the drosophila and mosquitoes analysis.
+
+
 
 Check for error messages:
 
