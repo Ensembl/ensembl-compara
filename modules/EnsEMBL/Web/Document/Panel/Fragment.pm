@@ -64,15 +64,12 @@ sub placeholder {
         my $command = $self->{components}{$name}->[0];
         (my $class = $command ) =~s/::[^:]+$//;
         $self->dynamic_use($class); 
-	warn "PLACEHOLDER FOR: " . $command;
         no strict 'refs';
         my $result = &$command($self, $self->{'object'});
         use strict 'refs';
 	if ($result) {
-	  warn "RESULT: " . $result;
 	  foreach my $key (keys %{ $result->{'config'} }) {
 	     if ($result->{'config'}->{$key}) {
-	       warn "CONFIG KEY: " . $key;
 	       $config_options->{$key} = $result->{'config'}->{$key};
 	     }
 	  }
@@ -145,7 +142,6 @@ sub json {
     $self->code, $ENV{'ENSEMBL_SPECIES'}, $self->caption, $self->code,
     $self->json_params, $self->json_components, $self->json_options($self->{'_options'}), $self->json_options($config_options)
   );
-  warn "JSON: " . $json;
   return $json;
 }
 
