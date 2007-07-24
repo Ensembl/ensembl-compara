@@ -462,8 +462,10 @@ sub added_sources {
     } elsif( $das_adapt->conftype eq 'url' ){ # URL DAS source : no edit, only delete
       my $das_action = sprintf("<a href=\"%s;_urldas_delete=%s\"><img src=\"/img/buttons/del_small.gif\" alt=\"Delete source \'%s\'\"/></a>", $object->param("selfURL"), $das_name, $das_name );
     } else{ # Read-write source; Provide del/edit buttons
+    (my $sURL = $object->param("selfURL")) =~ s/;pop=;c.+_script/;pop=;conf_script/;
+    warn "$das_name : $sURL : ", $object->param("selfURL");
       my $delete_link = sprintf("<a href=\"%s;_das_delete=%s\"><img src=\"/img/buttons/del_small.gif\" alt=\"Delete source \'%s\'\"/></a>", $object->param("selfURL"), $das_name, $das_name );
-      my $edit_link = sprintf("<a href=\"%s;_das_edit=%s\"><img src=\"/img/buttons/edit_small.gif\" alt=\"Edit source \'%s\'\"/></a>", $object->param("selfURL"), $das_name, $das_name );
+      my $edit_link = sprintf(qq{<a href="%s;_das_edit=%s\"><img src="/img/buttons/edit_small.gif" alt="Edit source \'%s\'" /></a>}, $sURL, $das_name, $das_name );
       $das_action = $edit_link.$delete_link;
     }
     my @cparams = qw ( conf_script db gene peptide transcript c w h l vc_start vc_end region);
@@ -523,7 +525,7 @@ sub added_sources {
     my $das_url = $das_adapt->domain;
     my $das_dsn = $das_adapt->dsn || '&nbsp;';
 
-    my $das_type = $das_adapt->type ? $object->getCoordinateSystem($das_adapt->type) : join('+', map {$object->getCoordinateSystem($_)} @{$das_adapt->mapping});
+    $das_type = $das_adapt->type ? $object->getCoordinateSystem($das_adapt->type) : join('+', map {$object->getCoordinateSystem($_)} @{$das_adapt->mapping});
 # If type is 'mixed' then it is mixed mapping source
     if ($das_type eq 'mixed') {
      $das_type = join('+', map {$object->getCoordinateSystem($_)} @{$das_adapt->mapping});
@@ -947,9 +949,29 @@ sub das_wizard_3 {
     'on_change' => 'submit'
   );
     
-  if ($option eq 'c') {
+  if ($option eq 'c') { # colourgradient - specify number of grades
     $option = $das_conf->{fg_grades} || 20;
     $form->add_element('type'=>'String', 'name'=>'DASfg_grades', 'label'=>'Grades:', 'value'=> $option);
+  }
+    
+  if ($option ne 'n') {# display one of the charts
+    if ($option eq 'h') {
+      $option = lc($das_conf->{fg_merge} || 'm');
+      my @scvalues;
+      foreach( 'Average Score', 'Max Score') {
+        my $id          = lc(substr($_,0,1));
+        push @scvalues, {'name'=>$_, 'value'=>$id};
+      }
+      $form->add_element(
+       'select'=>'select',
+       'type'=>'DropDown',
+       'name'=>'DASfg_merge',
+       'label'=>'Merged features score:',
+       'values'=>\@scvalues,
+       'value' => $option
+      );
+    }
+
     my @dtypes = ('o' => 'Original', 'n' => 'Normalize');
     $option = lc($das_conf->{fg_data} || 'o');
     my @dvalues;
@@ -967,27 +989,13 @@ sub das_wizard_3 {
       'value' => $option,
       'on_change' => 'submit'
     );
+    
     if ($option eq 'n') {
       $option = $das_conf->{fg_max} || 100;
       $form->add_element('type'=>'String', 'name'=>'DASfg_max', 'label'=>'Max score:', 'value'=> $option);
       $option = $das_conf->{fg_min} || 0;
       $form->add_element('type'=>'String', 'name'=>'DASfg_min', 'label'=>'Min score:', 'value'=> $option);
     }
-  } elsif ($option eq 'h') {
-    $option = lc($das_conf->{fg_merge} || 'a');
-    my @scvalues;
-    foreach( 'Average Score', 'Max Score') {
-      my $id          = lc(substr($_,0,1));
-      push @scvalues, {'name'=>$_, 'value'=>$id};
-    }
-    $form->add_element(
-      'select'=>'select',
-      'type'=>'DropDown',
-      'name'=>'DASfg_merge',
-      'label'=>'Merged features score:',
-      'values'=>\@scvalues,
-      'value' => $option
-    );
   }
   return;
 }
