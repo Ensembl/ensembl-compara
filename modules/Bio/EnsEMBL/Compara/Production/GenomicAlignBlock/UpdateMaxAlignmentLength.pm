@@ -236,68 +236,6 @@ sub remove_alignment_data_inconsistencies {
       $sth->finish;
     }
   }
-  if (defined $self->{'mlss'}) {
-
-    #
-    # Delete genomic aligns that have no genomic align group. Assume not many of these
-    #
-
-    $sql = "SELECT DISTINCT ga.genomic_align_block_id FROM genomic_align ga LEFT JOIN genomic_align_group  gag ON ga.genomic_align_id=gag.genomic_align_id WHERE gag.genomic_align_id IS NULL and method_link_species_set_id=?;";
-
-    $sth = $dba->dbc->prepare($sql);
-    $sth->execute($self->{'mlss'}->dbID);
-    @gab_ids = ();
-    @ga_ids = ();
-    while (my $aref = $sth->fetchrow_arrayref) {
-      my ($gab_id) = @$aref;
-      push @gab_ids, $gab_id;
-    }
-    $sth->finish;
-    
-    for (my $i=0; $i < scalar @gab_ids; $i++) {
-      $sql = "select genomic_align_id from genomic_align where genomic_align_block_id = ?;";
-      
-      $sth = $dba->dbc->prepare($sql);
-      $sth->execute($gab_ids[$i]);
-      
-      while (my $aref = $sth->fetchrow_arrayref) {
-        my ($ga_id) = @$aref;
-        
-        #Need to leave this to print in case things go wrong and I need to recover.
-#        print STDOUT "$ga_id\n";
-        push @ga_ids, $ga_id;
-      }
-    }
-    
-    if (scalar @gab_ids) {
-      for (my $i=0; $i < scalar @gab_ids; $i=$i+20000) {
-        my (@gab_ids_to_delete);
-        for (my $j = $i; ($j < scalar @gab_ids && $j < $i+20000); $j++) {
-          push @gab_ids_to_delete, $gab_ids[$j];
-        }
-        my $sql_gab_to_exec = $sql_gab . "(" . join(",", @gab_ids_to_delete) . ");";
-        my $sth = $dba->dbc->prepare($sql_gab_to_exec);
-        $sth->execute;
-        $sth->finish;
-      }
-    }
-    if (scalar @ga_ids) {
-      for (my $i=0; $i < scalar @ga_ids; $i=$i+20000) {
-        my (@ga_ids_to_delete);
-        for (my $j = $i; ($j < scalar @ga_ids && $j < $i+20000); $j++) {
-          push @ga_ids_to_delete, $ga_ids[$j];
-        }
-        my $sql_ga_to_exec = $sql_ga . "(" . join(",", @ga_ids_to_delete) . ");";
-        my $sql_gag_to_exec = $sql_gag . "(" . join(",", @ga_ids_to_delete) . ");";
-        
-        foreach my $sql ($sql_ga_to_exec,$sql_gag_to_exec) {
-          my $sth = $dba->dbc->prepare($sql);
-          $sth->execute;
-          $sth->finish;
-        }
-      }
-    }
-  }
 }
 
 
