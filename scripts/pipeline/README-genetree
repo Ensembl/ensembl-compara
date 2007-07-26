@@ -26,6 +26,10 @@ in the tree.
   NJTREE_PHYML fail on big trees or complicated alignments and create
   new jobs for the subclusters that creates.
 
+- Provided that the species are close enough, the pipeline can also
+  run a dN/dS analysis for the orthologs of pairs of species, in the
+  Homology_dNdS analysis. This step is optional.
+
 The genetree process overlaps initially with the the homology
 pipeline, but once the clusters are created, it differs in the way
 things are done. Read README-homology for more information.
@@ -173,6 +177,26 @@ must exist.
 
 One example of the species_tree_file can be found in
 ensembl-compara/scripts/pipeline/species_tree_njtree.taxon_id.nh
+
+In case you want to run the dN/dS part, you will also need this:
+
+  { TYPE => dNdS,
+    'codeml_parameters' => do('/lustre/work1/ensembl/avilella/hive/avilella_compara_homology_46/codeml.ctl.hash'),
+    'species_sets' => '[[3,22,25,31,32,33,34,35,38,39,45,47,48,49,50,51,52,53,55],[4,13]]',
+    'method_link_type' => 'ENSEMBL_ORTHOLOGUES'
+  },
+
+Where the species sets define the pairs of species for which one wants
+to run the dNdS. For example:
+
+    'species_sets' => '[[a,b,c,d],[x,y]]',
+    'method_link_type' => 'ENSEMBL_ORTHOLOGUES'
+
+would do the dNdS for the species pairs: a+b, a+c, a+d, b+c, b+d and
+c+d and also between x+y.
+
+One example of the codeml parameters needed can be found in
+ensembl-compara/scripts/homology/codeml.ctl.hash
 
 
 5- Create the species tree file 
