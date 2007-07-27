@@ -156,8 +156,8 @@ sub get_SimpleAlign {
     next if(!$seqstr);
     my $cigar_start = $attribute->cigar_start;
     my $cigar_end = $attribute->cigar_end;
-    $cigar_start = 1 unless (defined $cigar_start);
-    unless (defined $cigar_end) {
+    $cigar_start = 1 unless (defined $cigar_start && $cigar_start != 0);
+    unless (defined $cigar_end && $cigar_end != 0) {
       $cigar_end = $peptide_member->seq_length;
       $cigar_end = $cigar_end*3 if ($alignment =~ /^cdna$/i);
     }
