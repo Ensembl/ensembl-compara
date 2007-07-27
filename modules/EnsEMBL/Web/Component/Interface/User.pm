@@ -10,243 +10,42 @@ use strict;
 use warnings;
 no warnings "uninitialized";
 
-sub confirm_form {
-  ### Builds an partially-populated HTML form
+sub add_form {
+  ### Builds an empty HTML form for a new record
   my($panel, $object) = @_;
+  my $script = script_name($panel, $object);
+  my $form = EnsEMBL::Web::Form->new($name, "/common/$script", 'post');
 
-  my $primary_key = $panel->interface->data->get_primary_key;
-  my $id = $object->param($primary_key);
+  ## form widgets
+  my $key = EnsEMBL::Web::Tools::DBSQL::TableName::parse_primary_key($panel->interface->data->get_primary_key);
+  my $id = $object->param($key) || $object->param('id');
   if ($id) {
     $panel->interface->data->populate($id);
   }
-
-  my $script = EnsEMBL::Web::Component::Interface::script_name($panel, $object);
-
-  my $form = EnsEMBL::Web::Form->new('confirm', "/common/$script", 'post');
-
-  $form->add_element(
-          'type'  => 'NoEdit',
-          'name'  => 'name',
-          'label' => 'Name',
-          'value' => $panel->interface->data->name,
-        );
-  $form->add_element(
-          'type'  => 'NoEdit',
-          'name'  => 'email',
-          'label' => 'Email',
-          'value' => $panel->interface->data->email,
-        );
-  $form->add_element(
-          'type'  => 'NoEdit',
-          'name'  => 'organisation',
-          'label' => 'Organisation',
-          'value' => $panel->interface->data->organisation,
-        );
-  if ($object->param('code') ) {
-    $form->add_element(
-          'type'  => 'NoEdit',
-          'name'  => 'code',
-          'label' => 'Code',
-          'value' => $object->param('code'),
-        );
-    $form->add_element(
-          'type'  => 'Hidden',
-          'name'  => 'salt',
-          'value' => $object->param('code'),  
-        );
-  }
   else {
-    $form->add_element(
-          'type'  => 'String',
-          'name'  => 'salt',
-          'label' => 'Activation Code',
-        );
+    $panel->interface->cgi_populate($object, '');
   }
-  $form->add_element(
-          'type'  => 'Password',
-          'name'  => 'enter_password',
-          'label' => 'Password',
-        );
-  $form->add_element(
-          'type'  => 'Password',
-          'name'  => 'confirm_password',
-          'label' => 'Confirm Password',
-        );
-  $form->add_element(
-          'type'  => 'Hidden',
-          'name'  => $primary_key,
-          'value' => $id,  
-        );
-  $form->add_element(
-          'type'  => 'Hidden',
-          'name'  => 'record_id',
-          'value' => $object->param('record_id'),  
-        );
+  my @widgets = @{$panel->interface->edit_fields};
 
+  foreach my $element (@widgets) {
+    $form->add_element(%$element);
+  }
   ## navigation elements
-  $form->add_element( 'type' => 'Hidden', 'name' => 'dataview', 'value' => 'activate');
-  $form->add_element( 'type' => 'Submit', 'value' => 'Activate');
+  $form->add_element( 'type' => 'Hidden', 'name' => 'prev_action', 'value' => 'Save Record');
+  $form->add_element( 'type' => 'Hidden', 'name' => 'mode', 'value' => 'add');
+  $form->add_element( 'type' => 'Hidden', 'name' => 'db_action', 'value' => 'save');
+  $form->add_element( 'type' => 'Hidden', 'name' => 'dataview', 'value' => 'check_input');
+  $form->add_element( 'type' => 'Submit', 'value' => 'Next');
+
   return $form ;
 }
 
-sub deny {
-  my( $panel, $user) = @_;
-  my $html = qq(
-<h3 class="plain">Unable to activate account</h3>
-<p>Sorry, we are unable to activate the account corresponding to these details.</p>
-
-<p>If you continue to have problems, please <a href="/common/helpview?node=hv_contact">contact Helpdesk</a>.</p>
-
-);
-  $panel->print($html);
-}
-
-sub password {
-  ### Panel rendering for edit_form
-  my($panel, $user) = @_;
-
-  my $html = EnsEMBL::Web::Component::Interface::_render_form($panel, 'password');
-
-  $panel->print($html);
-}
-
-sub password_form {
+sub duplicate {
   my($panel, $object) = @_;
-  my $script = EnsEMBL::Web::Component::Interface::script_name($panel, $object);
-  my $form = EnsEMBL::Web::Form->new('password', "/common/$script", 'post');
-  my $user = $panel->interface->data;
-
-  $form->add_element(
-          'type'  => 'Password',
-          'name'  => 'password',
-          'label' => 'Password',
-        );
-  $form->add_element(
-          'type'  => 'Password',
-          'name'  => 'confirm_password',
-          'label' => 'Confirm Password',
-        );
-  $form->add_element(
-          'type'  => 'Hidden',
-          'name'  => 'user_id',
-          'value' => $user->id,
-        );
-
-  $form->add_element(
-          'type'  => 'Hidden',
-          'name'  => 'id',
-          'value' => $user->id,
-        );
-
-  $form->add_element(
-          'type'  => 'Hidden',
-          'name'  => 'code',
-          'value' => $user->salt,
-        );
-  ## navigation elements
-  $form->add_element( 'type' => 'Hidden', 'name' => 'dataview', 'value' => 'save_password');
-  $form->add_element( 'type' => 'Submit', 'value' => 'Change');
-  return $form;
-}
-
-sub confirm {
-  ### Panel rendering for edit_form
-  my($panel, $object) = @_;
-  my $html;
-  if ($object->param('code')) {
-    $html .= qq(<p><strong>Thanks for confirming your email address.</strong></p><p>To start using your new Ensembl user account, just choose a password below. You'll need to use this password each time you log in to Ensembl.</p>);
-  }
-  else {
-    $html .= qq(<p>Before you can start using your Ensembl user account, you need to validate your email address. We've just send you an email containing an activation code. Enter this code below, and choose a password. You'll need to use this password each time you log in to Ensembl.</p>
-<p><strong>Important note:</strong> If you do not receive your activation email within the next few 
-hours, please check your spam filter or <a href="/common/helpview?node=hv_contact">contact Helpdesk</a></p>
-);
-  }
-  $html .= EnsEMBL::Web::Component::Interface::_render_form($panel, 'confirm');
-  $panel->print($html);
-}
-
-sub failed_registration {
-  my( $panel, $user) = @_;
-  my $error = $user->param('error');
-  my $html;
-  if ($error eq 'no_record') {
-    $html = qq(
-<h3 class="plain">Invitation.</h3>
-<p>Sorry, we were unable to process the invitation corresponding to these details.</p>
-
-<p>If you continue to have problems, please <a href="/common/helpview?node=hv_contact">contact Helpdesk</a>.</p>
-
-);
-
-  }
-  else {
-    $html = qq(
-<h3 class="plain">Registration Failed.</h3>
-<p>Sorry, we were unable to register your user account.</p>
-
-<p>If you continue to have problems, please <a href="/common/helpview?node=hv_contact">contact Helpdesk</a>.</p>
-
-);
-  }
-  $panel->print($html);
-}
-
-sub password_error {
-  my( $panel, $user) = @_;
-  my $error = $user->param('error');
-  my $html;
-
-  if ($error eq 'mismatch') {
-    $html = qq(<h3 class="plain">Password Mismatch</h3>
-<p>Sorry - you entered two different passwords!</p>);
-  }
-  elsif ($error eq 'insecure') {
-    $html = qq(<h3 class="plain">Insecure Password</h3>
-<p>The password you entered was too short or too simple. For security, please ensure that your
-password is more than 6 characters long and contains both letters and numbers.</p>);
-  }
-  else {
-    $html = qq(<h3 class="plain">Password Error</h3>
-<p>Sorry - there was a problem validating your password.</p>);
-  }
-  $html .= qq(<p>Please click on the Back button and try again.</p>);
+  my $html = qq(<p>Sorry, you appear to have registered already. If you have lost your password, you can <a href="/common/user/lost_password">have a new one sent to your registered email address</a>.</p>);
 
   $panel->print($html);
+  return 1;
 }
-
-sub failed_activation {
-  my( $panel, $user) = @_;
-  my $error = $user->param('error');
-  my $id = $user->id;
-  my $html;
-  if ($error eq 'cookie_not_set') {
-    $html = qq(
-<h3 class="plain">Could not set cookie</h3>
-<p>Sorry, we could not set a cookie to log you in. Please check your browser settings, then
-click on the Back button to try again.</p>
-);
-  }
-  else {
-    $html = qq(
-<h3 class="plain">Database problem</h3>
-<p>Sorry, we were unable to activate your user account.</p>
-
-<p>If you continue to have problems, please <a href="/common/helpview?node=hv_contact">contact Helpdesk</a>.</p>
-
-);
-  }
-  $panel->print($html);
-}
-
-sub saved_password {
-  my( $panel, $user) = @_;
-  my $html = qq(
-<h3 class="plain">Password updated</h3>
-<p>Your Ensembl password has been updated. You can now <a href='javascript:login_link();'>login</a>.</p>
-);
-  $panel->print($html);
-}
-
 
 1;

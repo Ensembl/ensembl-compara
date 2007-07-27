@@ -8,6 +8,39 @@ use EnsEMBL::Web::Tools::RandomString;
 
 our @ISA = qw( EnsEMBL::Web::Configuration::Interface );
 
+sub add {
+  ### Creates a panel containing an empty record form
+  my ($self, $object, $interface) = @_;
+  if (my $panel = $self->interface_panel($interface, 'add', 'Add a New Record')) {
+    $panel->add_components(qw(add     EnsEMBL::Web::Component::Interface::User::add));
+    $self->add_form($panel, qw(add    EnsEMBL::Web::Component::Interface::User::add_form));
+    $self->{page}->content->add_panel($panel);
+    my $type = $object->__objecttype;
+    $self->{page}->set_title("Register");
+  }
+  return undef;
+}
+
+sub check_input {
+  ## checks user input for duplicate emails
+  my ($self, $object, $interface) = @_;
+  if ($object->param('email')) {
+    my $existing_user = EnsEMBL::Web::Object::User->new({'email' => $object->param('email')});
+    if ($existing_user->id) {
+      if (my $panel = $self->interface_panel($interface, 'add', 'Register')) {
+        $panel->add_components(qw(duplicate   EnsEMBL::Web::Component::Interface::User::duplicate));
+        $self->{page}->content->add_panel($panel);
+        $self->{page}->set_title("Registration Error");
+      }
+      return undef;
+    }
+    else {
+      my $url = '/common/user/register?dataview=preview;name='.$object->param('name').';email='$object->param('email').';organisation=;'.$object->param('organisation');
+      return $url;
+    }
+  }
+}
+
 sub save {
   my ($self, $object, $interface) = @_;
 
