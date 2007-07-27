@@ -21,6 +21,7 @@ my %Organisation_of;
 my %Salt_of;
 my %Status_of;
 my %Groups_of;
+my %Invitees_of;
 my %Deferred_of;
 my %Parameters_of;
 my %Is_Populated_of;
@@ -48,6 +49,7 @@ sub new {
   $Password_of{$self} = defined $params{'password'} ? $params{'password'} : "";
   $Organisation_of{$self} = defined $params{'organisation'} ? $params{'organisation'} : "";
   $Groups_of{$self} = defined $params{'groups'} ? $params{'groups'} : [];
+  $Invitees_of{$self} = defined $params{'invitees'} ? $params{'invitees'} : {};
   $Salt_of{$self} = defined $params{'salt'} ? $params{'salt'} : '';
   $Status_of{$self} = defined $params{'status'} ? $params{'status'} : "";
   $Deferred_of{$self} = defined $params{'defer'} ? $params{'defer'} : undef;
@@ -72,8 +74,6 @@ sub populate {
     $self->is_populated(1);
     my %params = %{ $self->parameters };
     if ($params{'id'}) {
-      #warn "Populating user with ID: " . $params{'id'};
-      #warn "Using: " . $self->adaptor;
       my $details = $self->adaptor->find_user_by_user_id($params{'id'}, { adaptor => $self->adaptor });
       $self->assign_fields($details);
       my @records = $self->find_records_by_user_id($params{'id'}, { adaptor => $self->adaptor });
@@ -174,6 +174,13 @@ sub groups {
   if (!$self->is_populated) { $self->populate; }
   $Groups_of{$self} = shift if @_;
   return $Groups_of{$self};
+}
+
+sub invitees {
+  ### a
+  my $self = shift;
+  $Invitees_of{$self} = shift if @_;
+  return $Invitees_of{$self};
 }
 
 sub find_administratable_groups {
@@ -433,6 +440,7 @@ sub DESTROY {
   delete $Organisation_of{$self};
   delete $Status_of{$self};
   delete $Groups_of{$self};
+  delete $Invitees_of{$self};
   delete $Deferred_of{$self};
   delete $Parameters_of{$self};
   delete $Is_Populated_of{$self};
