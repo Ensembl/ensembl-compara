@@ -21,6 +21,7 @@ my %Adaptor :ATTR(:set<adaptor> :get<adaptor>);
 my %Belongs_to :ATTR(:set<belongs_to> :get<belongs_to>);
 my %Relational_attributes :ATTR(:set<relational_attributes> :get<relational_attributes>);
 my %Relational_table :ATTR(:set<relational_table> :get<relational_table>);
+my %Relational_owner :ATTR(:set<relational_owner> :get<relational_owner>);
 my %Relational_fields :ATTR(:set<relational_fields> :get<relational_fields>);
 my %Relational_link_table :ATTR(:set<relational_link_table> :get<relational_link_table>);
 my %Relational_contribution :ATTR(:set<relational_contribution> :get<relational_contribution>);
@@ -31,10 +32,6 @@ my %Has_many:ATTR(:set<has_many> :get<has_many>);
 sub BUILD {
   my ($self, $ident, $args) = @_;
   $self->add_queriable_field({ name => 'id', type => 'int' });
-  $self->add_queriable_field({ name => 'created_at', type => 'datetime' });
-  $self->add_queriable_field({ name => 'modified_at', type => 'datetime' });
-  $self->add_queriable_field({ name => 'modified_by', type => 'int' });
-  $self->add_queriable_field({ name => 'created_by', type => 'int' });
 }
 
 sub populate_with_arguments {
@@ -50,10 +47,14 @@ sub populate {
   my $result = $self->get_adaptor->find($self);
   foreach my $key (@{ $result->fields }) {
     next if $key eq EnsEMBL::Web::Tools::DBSQL::TableName::parse_primary_key($self->get_primary_key);
+    ## Ignore plain datetime fields in favour of UNIX_TIMESTAMP versions
+    next if $key eq 'created_at';
+    next if $key eq 'modified_at';
     my $field = $self->mapped_field($key);
     if ($self->get_data_field_name && ($field eq $self->get_data_field_name)) {
       $self->populate_data($result->get_value($key));
-    } else {
+    } 
+    else {
       $self->$field($result->get_value($key));
     }
   }
@@ -62,7 +63,6 @@ sub populate {
 sub populate_data {
   ### Populates data.
   my ($self, $string) = @_;
-  #warn "Populating data for: " . ref($self);
   my $hash = eval ($string);
   foreach my $key (keys %{ $hash }) {
     $self->$key($hash->{$key});
@@ -74,9 +74,10 @@ sub mapped_field {
   if ($field eq $self->get_primary_key) {
     $field = 'id';
   }
-  if ($field eq 'webgroup_id') {
-    $field = 'group_id';
-  }
+  elsif ($field =~ /^UNIX_TIMESTAMP/) {
+    $field =~ s/UNIX_TIMESTAMP\(//;
+    $field =~ s/\)//;
+  } 
   return $field;
 }
 
@@ -148,11 +149,12 @@ sub add_has_many {
   if (!$self->get_has_many) {
     $self->set_has_many([]);
   }
-  $self->relational_class($self->plural($self->object_name_from_package($args->{class})), $args->{class});
-  $self->relational_table($self->plural($self->object_name_from_package($args->{class})), $args->{table});
+  my $object = $self->object_name_from_package($args->{class});
+  $self->relational_class($self->plural($object), $args->{class});
+  $self->relational_table($self->plural($object), $args->{owner}, $args->{table});
   if ($args->{link_table}) {
-    $self->add_linked_has_many_symbol_lookup($self->plural($self->object_name_from_package($args->{class})));
-    $self->relational_link_table($self->plural($self->object_name_from_package($args->{class})), $args->{link_table});
+    $self->add_linked_has_many_symbol_lookup($self->plural($object));
+    $self->relational_link_table($self->plural($object), $args->{link_table});
     ## relational contributions allow the parent class to bestoy additional attributes on child classes. This
     ## data is usually stored in a link table. For example, this mechanism is used to add an authorisation 'level'
     ## to users retrived from a group, via the group_member table.
@@ -160,7 +162,7 @@ sub add_has_many {
       $self->relational_contribution($args->{link_table}, $args->{contribute});
     }
   } else {
-    $self->add_has_many_symbol_lookup($self->plural($self->object_name_from_package($args->{class})));
+    $self->add_has_many_symbol_lookup($self->plural($object));
   }
   push @{ $self->get_has_many }, $args->{class};
 }
@@ -171,10 +173,12 @@ sub add_belongs_to {
   if (!$self->get_belongs_to ) {
     $self->set_belongs_to([]);
   }
-  $self->relational_class($self->object_name_from_package($arg), $arg);
-  $self->add_relational_symbol_lookup($self->object_name_from_package($arg));
-  my $field = $self->object_name_from_package($arg);
-  $self->add_queriable_field({ name => $field . "_id", type => 'int', queriable => 'yes' });
+  my $name = $self->object_name_from_package($arg);
+  my $table = $self->fix_tablename($name);
+
+  $self->relational_class($name, $arg);
+  $self->add_relational_symbol_lookup($table);
+  $self->add_queriable_field({ name => $table.'_id', type => 'int', queriable => 'yes' });
   push @{ $self->get_belongs_to }, $arg;
 }
 
@@ -183,7 +187,7 @@ sub add_accessor_symbol_lookup {
   no strict;
   my $class = ref($self);
   $self->set_value({ $name => "" });
-   
+
   unless (defined *{ "$class\::$name" }) {
     *{ "$class\::$name" } = $self->initialize_accessor($name);
   }
@@ -216,7 +220,6 @@ sub add_lazy_accessor_symbol_lookup {
 sub initialize_relational_accessor {
   no strict;
   my ($self, $attribute) = @_;
-  #warn "Adding relational accessor: " . $attribute;
   return sub {
     my $self = shift;
     my $new_value = shift;
@@ -241,7 +244,6 @@ sub add_has_many_symbol_lookup {
 sub initialize_has_many_accessor {
   no strict;
   my ($self, $attribute) = @_;
-  #warn "Adding HAS MANY accessor: " . $attribute;
   return sub {
     my $self = shift;
     my $new_value = shift;
@@ -266,7 +268,6 @@ sub add_linked_has_many_symbol_lookup {
 sub initialize_linked_has_many_accessor {
   no strict;
   my ($self, $attribute) = @_;
-  #warn "Adding MANY TO MANY accessor: " . $attribute;
   return sub {
     my $self = shift;
     my $new_value = shift;
@@ -280,8 +281,6 @@ sub initialize_linked_has_many_accessor {
 sub get_linked_values {
   my ($self, $attribute) = @_;
   my $class = $self->relational_class($attribute);
-  my $accessor = $self->object_name_from_package($class) . "_id";
-  #warn "Finding MANY $attribute via link table: " . $class;
   my $result = $self->find_linked_many($attribute);
   my @objects = ();
   if (EnsEMBL::Web::Root::dynamic_use(undef, $class)) {
@@ -300,16 +299,22 @@ sub get_linked_values {
 
 sub get_lazy_value {
   my ($self, $attribute) = @_;
-  #warn "GETTING LAZY VALUE: " . $attribute;
   my $class = $self->relational_class($attribute);
-  my $accessor = $self->object_name_from_package($class) . "_id";
   my $object = $self->object_name_from_package($class);
+  my $accessor = $self->fix_tablename($object) . "_id";
   if (defined $self->get_value($object)) {
     return $self->get_value($object);
   }
-  #warn "Creating new $attribute with class " . $class . " and " . $accessor;
   if (EnsEMBL::Web::Root::dynamic_use(undef, $class)) {
-    my $new = $class->new({ id => $self->$accessor });
+    ## deal with record ownership
+    my $owner = undef;
+    if (ref($self) eq 'EnsEMBL::Web::Object::Data::Group') {
+      $owner = 'group';
+    }
+    elsif (ref($self) eq 'EnsEMBL::Web::Object::Data::User') {
+      $owner = 'user';
+    }
+    my $new = $class->new({ id => $self->$accessor, record_type => $owner });
     $self->set_value($object, $new);
     return $new;
   }
@@ -319,16 +324,24 @@ sub get_lazy_value {
 sub get_lazy_values {
   my ($self, $attribute) = @_;
   my $class = $self->relational_class($attribute);
-  my $accessor = $self->object_name_from_package($class) . "_id";
   my $object = $self->object_name_from_package($class);
+  my $accessor = $self->fix_tablename($object) . "_id";
   if (defined $self->get_value($object)) {
     return $self->get_value($object);
   }
   my $result = $self->find_many($attribute);
   my @objects = ();
   if (EnsEMBL::Web::Root::dynamic_use(undef, $class)) {
+    ## deal with record ownership
+    my $owner = undef;
+    if (ref($self) eq 'EnsEMBL::Web::Object::Data::Group') {
+      $owner = 'group';
+    }
+    elsif (ref($self) eq 'EnsEMBL::Web::Object::Data::User') {
+      $owner = 'user';
+    }
     foreach my $id (keys %{ $result->get_result_hash }) {  
-      my $new = $class->new({ id => $id });
+      my $new = $class->new({ id => $id, record_type => $owner });
       push @objects, $new;
     }
     $self->set_value($object, \@objects);
@@ -359,11 +372,20 @@ sub relational_class {
 }
 
 sub relational_table {
-  my ($self, $attribute, $table) = @_;
+  my ($self, $attribute, $owner, $table) = @_;
   unless (defined $self->get_relational_table) {
     $self->set_relational_table({});
   }
   if (defined $table) {
+    $self->get_relational_table->{$attribute} = $table; 
+  }
+  elsif (defined $owner) {
+    if ($owner eq 'group') {
+      $table = EnsEMBL::Web::Tools::DBSQL::TableName::parse_table_name('%%group_record%%');
+    }
+    else {
+      $table = EnsEMBL::Web::Tools::DBSQL::TableName::parse_table_name('%%user_record%%');
+    }
     $self->get_relational_table->{$attribute} = $table; 
   }
   return $self->get_relational_table->{$attribute};
@@ -408,6 +430,12 @@ sub has_id {
 
 sub save {
   my $self = shift;
+  if ($self->id) {
+    $self->modified_by($ENV{'ENSEMBL_USER_ID'});
+  }
+  else {
+    $self->created_by($ENV{'ENSEMBL_USER_ID'});
+  }
   my $result = $self->get_adaptor->save($self);
   if ($result->get_action eq 'create') {
     $self->id($result->get_last_inserted_id);
@@ -432,8 +460,8 @@ sub find_many {
   $request->set_table($self->relational_table($attribute));
   $request->add_where('type', $self->singular($attribute));
   $request->add_where($self->get_primary_key, $self->id);
+  #warn "SQL: ", $request->get_sql;
   $request->set_index_by($self->relational_table($attribute) . "_id");
-  #warn "INDEX BY: " . $request->get_index_by;
   return $self->get_adaptor->find_many($request);
 }
 
@@ -451,7 +479,6 @@ sub find_linked_many {
   $request->add_join($self->relational_table($attribute), $self->relational_link_table($attribute) . "." . $self->relational_table($attribute) . "_id", $self->relational_table($attribute) . "." . $self->relational_table($attribute) . "_id");
   $request->add_where($self->relational_link_table($attribute) . "." . $self->get_primary_key, $self->id);
   $request->set_index_by($self->relational_table($attribute) . "_id");
-  #warn "LINKED SQL: " . $request->get_sql;
   return $self->get_adaptor->find_many($request);
 }
 
@@ -460,8 +487,8 @@ sub find_all {
   my $object = $class->new;
   my $request = EnsEMBL::Web::DBSQL::SQL::Request->new();
   $request->set_action('select');
-  $request->set_index_by($object->get_primary_key);
-  warn $request->get_sql;
+  my $key = EnsEMBL::Web::Tools::DBSQL::TableName::parse_primary_key($object->get_primary_key);
+  $request->set_index_by($key);
   my $result = $object->get_adaptor->find_many($request);
   my @objects = ();
   foreach my $id (keys %{ $result->get_result_hash }) {
@@ -477,6 +504,15 @@ sub object_name_from_package {
   my ($self, $name) = @_;
   my @components = split /::/, $name;
   return lc($components[$#components]);
+}
+
+sub fix_tablename {
+  ### Fix for the fact that 'group' is a reserved word in MySQL! 
+  my ($self, $name) = @_;
+  if ($name && $name eq 'group') {
+    $name = 'webgroup';
+  }
+  return $name;
 }
 
 sub plural {
@@ -545,5 +581,14 @@ sub singular {
 
   return $singular;
 }
+
+sub pretty_date {
+  my ($self, $timestamp) = @_;
+  my @date = localtime($timestamp);
+  my @days = ('Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat');
+  my @months = ('Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec');
+  return $days[$date[6]].' '.$date[3].' '.$months[$date[4]].', '.($date[5] + 1900);
+}
+
 
 1;
