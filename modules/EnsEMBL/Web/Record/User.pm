@@ -101,13 +101,18 @@ sub save {
                                     id => $self->id,
                                   user => $self->user,
                                   type => $self->type,
-                                  data => $dump
+                                  data => $dump,
+                                   key => $self->parse_primary_key('%%user_record%%_id'),
+                                 table => $self->parse_table_name('%%user_record%%')
+
                                  ));
   } else {
     $self->adaptor->insert_record((
                                   user => $self->user,
                                   type => $self->type,
-                                  data => $dump
+                                  data => $dump,
+                                   key => $self->parse_primary_key('%%user_record%%_id'),
+                                 table => $self->parse_table_name('%%user_record%%')
                                  ));
   }
   return 1;

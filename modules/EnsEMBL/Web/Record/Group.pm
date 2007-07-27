@@ -84,17 +84,19 @@ sub save {
   if ($self->id) {
     $self->adaptor->update_record((
                                     id => $self->id,
-                                  user => $self->user,
+                                  owner => $self->owner,
                                   type => $self->type,
                                   data => $dump, 
-                                 table => 'group'
+                                   key => $self->parse_primary_key('%%group_record%%_id'),
+                                 table => $self->parse_table_name('%%group_record%%')
                                  ));
   } else {
     my $new_id = $self->adaptor->insert_record((
-                                  user => $self->user,
+                                  owner => $self->owner,
                                   type => $self->type,
                                   data => $dump,
-                                 table => 'group'
+                                   key => $self->parse_primary_key('%%group_record%%_id'),
+                                 table => $self->parse_table_name('%%group_record%%')
                                  ));
     $self->id($new_id);
   }
