@@ -63,12 +63,13 @@ sub process {
       $invitation->destroy;
     }
   }
-
-  $cgi->redirect('/common/user/set_cookie?email='.$user->email
+  my $url = '/common/user/set_cookie?email='.$user->email
                   .';password='.$cgi->param('new_password_1')
                   .';url='.$cgi->param('url')
-                  ,';updated=yes'
-                );
+                  .';updated=yes';
+  my $url .= ';record_id='.$cgi->param('new_password_1') if $cgi->param('record_id'); 
+
+  $cgi->redirect($url);
 }
 
 }

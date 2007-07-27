@@ -43,4 +43,17 @@ sub user_or_admin {
   }
 }
 
+sub add_member_from_invitation {
+  my ($self, $user, $invitation) = shift;
+
+  my $membership = EnsEMBL::Web::Object::Data::Membership->new({
+                          'webgroup_id' => $invitation->webgroup_id,
+                          'user_id'     => $user->id,
+                          'level'       => 'member',
+                          'status'      => 'active'
+                        });
+  return $membership->save;
+}
+
+
 1;

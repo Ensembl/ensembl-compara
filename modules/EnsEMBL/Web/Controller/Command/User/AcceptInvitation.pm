@@ -36,7 +36,7 @@ sub process {
   my $self = shift;
   my $cgi = new CGI;
   my $invitation = EnsEMBL::Web::Object::Data::Invitation->new({'id' => $cgi->param('id')});
-  my $url = '/common/user/view_group?id='.$invitation->webgroup_id;
+  my $url;
  
   if ($invitation->status eq 'pending') {
     ## Is this an existing user?
@@ -44,17 +44,18 @@ sub process {
     if ($existing_user) {
       warn "USER: ", $existing_user->id;
       ## Create membership link between user and group
-      my $membership = EnsEMBL::Web::Object::Data::Membership->new();
-      $membership->webgroup_id($invitation->webgroup_id);
-      $membership->user_id($existing_user->id);
-      $membership->level('member');
-      $membership->status('active');
-      my $success = $membership->save;
-      if ($success) {
-        $invitation->destroy;
+      my $success = $self->add_member_from_invitation($user, $invitation);
+      if ($ENV{'ENSEMBL_USER_ID'}) {
+        if ($success) {
+          $invitation->destroy;
+        }
+        $url = '/common/user/view_group?id='.$invitation->webgroup_id;
       }
-      if (!$ENV{'ENSEMBL_USER_ID'}) {
-        $url = '/common/user/login?url='.$cgi->escape($url);
+      else {
+        ## Set invitation status to 'accepted' (don't delete in case login fails!)
+        $invitation->status('accepted');
+        $invitation->save;
+        $url = '/common/user/login?url='.$cgi->escape($url).';record_id='.$invitation->id;
       }
     }
     else {

@@ -64,6 +64,16 @@ sub process {
       $user_cookie->create( $r , $user->id );
     }
   }
+
+  ## Add membership if coming from invitation acceptance
+  if ($cgi->param('record_id')) {
+    my $invitation = EnsEMBL::Web::Object::Data::Invitation->new({id => $cgi->param('record_id')});
+    my $success = $self->add_member_from_invitation($user, $invitation);
+    if ($success) {
+      $invitation->destroy;
+    }
+  }
+
   my $redirect = "/common/user/logged_in?url=$url";
   if ($cgi->param('updated')) {
     $redirect .= ';updated='.$cgi->param('updated');
