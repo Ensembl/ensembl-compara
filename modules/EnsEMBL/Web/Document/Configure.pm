@@ -182,7 +182,7 @@ sub dynamic_menu_items {
 #                                  'href' => "javascript:das_link()" );
         $doc->menu->add_entry_after( $flag, 'bookmark', 
                                     'text' => "Save configuration as...",
-                                  'href' => "javascript:config_link()" );
+                                  'href' => "javascript:add_config()" );
       }
   }
 }
