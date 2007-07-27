@@ -19,6 +19,9 @@ sub render {
   my $user = $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->get_user;
   my $data_user = EnsEMBL::Web::Object::Data::User->new({ id => $user->id });
 
+  my $sitename = $SiteDefs::ENSEMBL_SITETYPE;
+  $sitename = 'Ensembl' if $sitename eq 'EnsEMBL';
+
   my $group_id = undef;
   foreach my $this ($user->drawer_records) {
     $group_id = $this->group;
@@ -27,7 +30,7 @@ sub render {
   $html .= "<div id='settings_content'>\n";
   $html .= "<table width='100%' cellpadding='0' cellspacing='0'>\n";
   $html .= "<tr><td width='49%'>\n";
-  $html .= "<b><a href='/common/user/account'>Your $SiteDefs::ENSEMBL_SITETYPE account</a> &gt; " . $user->name . "</b> &middot; <a href='javascript:void(0);' onclick='toggle_settings_drawer()'>Hide</a>\n";
+  $html .= "<b><a href='/common/user/account'>Your $sitename account</a> &gt; " . $user->name . "</b> &middot; <a href='javascript:void(0);' onclick='toggle_settings_drawer()'>Hide</a>\n";
   $html .= "</td>\n";
   $html .= "<td style='text-align: right;' width='49%'>";
   my @groups = @{ $user->groups };
@@ -39,7 +42,7 @@ sub render {
   }
   foreach my $group (@{ $user->groups }) {
     my $selected = "";
-    if ($group_id eq $group->id) {
+    if ($group_id && $group_id eq $group->id) {
       $selected = "selected";
     }
     $html .= "<option $selected value='" . $group->id . "'>" . $group->name . "</option>\n";
@@ -63,7 +66,7 @@ sub render {
   $html .= "<td style='padding-top: 5px;'>\n";
   my @configurations = @{ $data_user->configurations };
   $html .= "Configurations";
-  my @current_configs = $user->current_config_records;
+  my @current_configs = $user->currentconfigs;
   my $current_config = $current_configs[0];
   $html .= list_for_records({ records => \@configurations, tag => 'user', selected => $group_id, type => 'configuration', current_config => $current_config });
   foreach my $group (@{ $user->groups }) {
@@ -101,23 +104,31 @@ sub list_for_records {
           $style = "";
         }
       }
+      my $text;
       my $description = "Load bookmark";
       if ($record->url && $record->description) {
         $description = $record->description;
       }
-      my $link = "<a href='" . $record->url . "' title='" . $description . "'>";
-      my $bold_start = "";
-      my $bold_end = "";
+      my $link = "<a href=/common/user/use_bookmark?id='" . $record->id . "' title='" . $description . "'>";
       if ($record->type eq 'configuration') {
+        my $bold_start = '';
+        my $bold_end = '';
 
         if (defined $current_config && $current_config->config eq $record->id) {
-          $bold_start = "<b>";
-          $bold_end = "</b>";
+          $bold_start = "<strong>";
+          $bold_end = "</strong>";
         }
 
-        $link = "<a href='javascript:void(0);' onclick='javascript:load_config_link(" . $record->id . ");'>";
+        $text = $record->name . ':';
+        if ($ENV{'ENSEMBL_SCRIPT'} eq 'contigview' || $ENV{'ENSEMBL_SCRIPT'} eq 'cytoview' ) {
+          $text .=  ' <a href="javascript:void(0);" onclick="javascript:load_config(' . $record->id . ');">Load settings in this page</a> |';
+        }
+        $text .= ' <a  href="javascript:void(0);" onclick="javascript:go_to_config(' . $record->id . ');">Go to saved page and load tracks</a>';
       }
-      $html .= "<li class='all $tag' $style>" . $bold_start . $link . $record->name . "</a>" . $bold_end . "</li>\n"; 
+      else {
+        $text = '<a href="' . $record->url . '" title="' . $description . '">' . $record->name . '</a>';
+      }
+      $html .= "<li class='all $tag' $style>" . $text . "</li>\n"; 
       if ($count > 10) {
         last;
       }
