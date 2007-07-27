@@ -44,6 +44,7 @@ sub render_page {
   ## Customization
   ## Page components
   $interface->default_view('add');
+  $interface->panel_footer({'add'=>qq(<p><strong>Register with $sitename to bookmark your favourite pages, manage your BLAST tickets and more!</strong></p>)});
   $interface->panel_footer({'add'=>qq(<p>Need help? <a href="mailto:$help_email">Contact the helpdesk</a> &middot; <a href="/info/about/privacy.html">Privacy policy</a><p>)});
   $interface->panel_header({'preview'=>qq(<p>Please check that you have entered your details correctly, then click on the button to save them to our database and send your activation email.</p>)});
   $interface->caption({'on_failure'=>'Registration Failed'});

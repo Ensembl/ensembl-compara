@@ -39,7 +39,7 @@ sub render_page {
     $webpage->render_error_page( $webpage->problem->[0] );
   } else {
     foreach my $object( @{$webpage->dataObjects} ) {
-      $webpage->configure( $object, 'accountview', 'context_menu', 'user_menu' );
+      $webpage->configure( $object, 'accountview', 'context_menu' );
     }
     $webpage->action();
   }
