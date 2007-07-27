@@ -34,22 +34,14 @@ sub simple {
   if( $self->has_a_problem ) {
      $self->render_error_page;
   } else {
-    ## check script access - default is to allow, so unrestricted pages don't break
-    my $permitted = $self->{'access'} ? $self->check_access($self->{'access'}) : 1;
-    if ($permitted) {
-      foreach my $object( @{$self->dataObjects} ) {
-        my @args = ($object);
-        if ($parameter->{'menu'}) {
-          push @args, $parameter->{'menu'};
-        }
-        $self->configure(@args);
+    foreach my $object( @{$self->dataObjects} ) {
+      my @args = ($object);
+      if ($parameter->{'menu'}) {
+        push @args, $parameter->{'menu'};
       }
-      $self->factory->fix_session;
+      $self->configure(@args);
     }
-    else {
-      my $URL = '/common/access_denied';
-      $self->redirect($URL);
-    }
+    $self->factory->fix_session;
   }
   return $self;
 }
