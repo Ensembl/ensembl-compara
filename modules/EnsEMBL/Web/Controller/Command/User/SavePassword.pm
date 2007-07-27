@@ -47,18 +47,22 @@ sub process {
   });
   my $encrypted = $user->encrypt($cgi->param('new_password_1'));
   $user->password($encrypted);
-  if ($user->status eq 'pending') {
-    $user->status('active');
-  }
-  if ($cgi->param('record_id')) {
-    my $invite = EnsEMBL::Web::Object::Data::Invite->new({id => $cgi->param('record_id')});
-    my $group_id = $invite->group->id;
-
-    my $group = EnsEMBL::Web::Object::Group->new(( adaptor => $ENSEMBL_WEB_REGISTRY->userAdaptor, id => $group_id ));
-    # warn "WORKING WITH USER: " . $user->id . ": " . $user->email;
-    $user->add_group($group);
-  }
   $user->save;
+
+  ## Add membership if coming from invitation acceptance
+  if ($cgi->param('record_id')) {
+    my $invitation = EnsEMBL::Web::Object::Data::Invitation->new({id => $cgi->param('record_id')});
+    my $membership = EnsEMBL::Web::Object::Data::Membership->new({
+                          'webgroup_id' => $invitation->webgroup_id,
+                          'user_id'     => $user->id,
+                          'level'       => 'member',
+                          'status'      => 'active'
+                        });
+    my $success = $membership->save;
+    if ($success) {
+      $invitation->destroy;
+    }
+  }
 
   $cgi->redirect('/common/user/set_cookie?email='.$user->email
                   .';password='.$cgi->param('new_password_1')
