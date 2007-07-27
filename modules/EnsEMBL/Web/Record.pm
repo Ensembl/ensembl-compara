@@ -70,6 +70,7 @@ our $VERSION = '1.01';
 use strict;
 use warnings;
 use Data::Dumper;
+use EnsEMBL::Web::Tools::DBSQL::TableName;
 
 our $AUTOLOAD;
 
@@ -113,30 +114,36 @@ sub AUTOLOAD {
   #warn "AUTOLOADING $key";
   if ($value) {
     if (my ($find, $by) = ($key =~ /find_(.*)_by_(.*)/)) {
-      my $table = "user";
+      my $table = $self->parse_table_name('%%user_record%%');
       my $record_type = "User";
       if ($find eq "records") {
          $find = "";
       }
       if ($find eq "group_records") {
         $find = "";
-        $table = "group";
+        $table = $self->parse_table_name('%%group_record%%');
         #warn "FINDING GROUP RECORDS";
       }
       if ($by =~ /group_record/) {
-        $table = "group";  
+        $table = $self->parse_table_name('%%group_record%%');  
         $record_type = "Group";
       }
-      #warn "RECORD TYPE: " . $record_type;
-      return find_records(( record_type => $record_type, type => $find, $by => $value, table => $table, options => $options));
+      elsif ($by eq 'group_id') {
+        $by = 'webgroup_id';
+      }
+      #warn "Finding $record_type by value $value";
+      return find_records(( record_type => $record_type, table => $table, type => $find, 
+                            by => $by, value => $value, options => $options));
     } else {
       if (my ($type) = ($key =~ /(.*)_records/)) {
+        #warn "Finding records of type $type with value $value";
         return $self->records_of_type($type, $value);
       }
       $self->fields($key, $value);
     }
   } else {
     if (my ($type) = ($key =~ /(.*)_records/)) {
+      #warn "Finding all records of type $type";
       return $self->records_of_type($type);
     }
   }
@@ -409,18 +416,16 @@ sub find_records {
     $record_type = $params{record_type};
     delete $params{record_type};
   }
-  $record_type = "EnsEMBL::Web::Record::" . $record_type;
+  my $record_class = "EnsEMBL::Web::Record::" . $record_type;
   my $user_adaptor = undef;
   if ($params{options}->{adaptor}) {
     $user_adaptor = $params{options}->{adaptor};  
-    #warn "ADAPTOR for FIND: " . $user_adaptor;
   }
-  #warn "PERFORMING FIND RECORDS";
   my $results = $user_adaptor->find_records(%params);
   my @records = ();
   foreach my $result (@{ $results }) {
     #if (&dynamic_use($record_type)) {
-      my $record = $record_type->new((
+      my $record = $record_class->new((
                                          id => $result->{id},
                                        type => $result->{type},
                                        user => $result->{user},
@@ -482,6 +487,25 @@ sub flatten {
 
   return $hash;
 }
+
+=head2 parse_table_name 
+Wrapper for the newly-added EnsEMBL::Web::Tools::DBSQL::TableName method
+=cut
+
+sub parse_table_name {
+  my ($self, $table_name) = @_;
+  return EnsEMBL::Web::Tools::DBSQL::TableName::parse_table_name($table_name);
+}
+
+=head2 parse_primary_key 
+Wrapper for the newly-added EnsEMBL::Web::Tools::DBSQL::TableName method
+=cut
+
+sub parse_primary_key {
+  my ($self, $primary_key) = @_;
+  return EnsEMBL::Web::Tools::DBSQL::TableName::parse_table_name($primary_key);
+}
+
 
 
 =head2 DESTROY 
