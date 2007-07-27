@@ -257,51 +257,17 @@ sub update_user {
 
 sub find_records {
   my ($self, %params) = @_; 
-  my $find_key;
-  my $find_value;
-  my $type = undef;
-  my $table = "user";
-  if ($params{type}) {
-    $type = $params{type};
-  }
-  if ($params{table}) {
-    $table = $params{table};
-    delete $params{table};
-  }
-  #warn "TABLE: " . $table;
-  my %options;
-  if ($params{options}) {
-    %options = %{ $params{options} }; 
-    delete $params{options};
-  }
-  foreach my $key (keys %params) {
-    if ($key ne "type" && $key ne "options") {
-      $find_key = $key;
-      $find_value = $params{$key};
-      #warn "FIND KEY: " . $find_key . ": " . $find_value;
-    }
-  }
   my $results = [];
   
-  ## maintain compatibility between schema versions
-  if ($find_key eq 'id') {
-    $find_key = "user_record_id";
+  my $sql = 'SELECT * FROM ' . $params{table} . ' WHERE ' .  $params{by} . ' = ?'; 
+  if ($params{type}) {
+    $sql .= ' AND type = "' . $params{type} . '"'; 
   }
-  if ($find_key eq 'group_id') {
-    $find_key = 'webgroup_id';
-  }
-
-  my $sql = qq(
-    SELECT * 
-    FROM ) . $table . qq(_record WHERE $find_key = ?); 
-  if ($type) {
-    $sql .= qq( AND type = "$type"); 
-  }
-#warn "SQL:\n$sql"; 
-  my $T = $self->{'_handle'}->selectall_arrayref($sql,{},$find_value);
+  my $T = $self->{'_handle'}->selectall_arrayref($sql,{},$params{value});
   return [] unless $T;
   for (my $i=0; $i<scalar(@$T);$i++) {
     my @array = @{$T->[$i]};
+    next unless $array[0];
     push (@$results,
       {
       'id'          => $array[0],
@@ -309,8 +275,10 @@ sub find_records {
       'group'       => $array[1],
       'type'        => $array[2],
       'data'        => $array[3],
-      'created_at'  => $array[4],
-      'modified_at' => $array[5],
+      'created_by'  => $array[4],
+      'modified_by' => $array[5],
+      'created_at'  => $array[6],
+      'modified_at' => $array[7],
       }
     );
   }
@@ -333,15 +301,16 @@ sub delete_user {
 sub delete_record {
   my ($self, %params) = @_;
   my $id = $params{id};
-  my $table = "user"; 
+  my ($table, $primary_key); 
   if ($params{table}) {
     $table = $params{table};
   }
+  if ($params{primary_key}) {
+    $primary_key = $params{primary_key};
+    delete $params{primary_key};
+  }
   #warn "DELETING: " . $id;
-  my $sql = qq(
-    DELETE FROM ) . $table . qq(_record 
-    WHERE ) . $table . qq(_record_id = ?
-  );
+  my $sql = qq(DELETE FROM $table WHERE $primary_key = ?);
   my $sth = $self->{'_handle'}->prepare($sql);
   my $result = $sth->execute($id);
 
@@ -357,49 +326,46 @@ sub update_record {
   }
   my $type = $params{type};
   my $data = $params{data};
-  my $table = "user"; 
+  my ($table, $primary_key); 
   if ($params{table}) {
     $table = $params{table};
   }
-  my $ident = $table;
-  if ($table eq 'group') {
-    $ident = 'webgroup';
+  my $owner_key = 'user_id';
+  if ($table =~ /group/) {
+    $owner_key = 'webgroup_id';
+  }
+  if ($params{primary_key}) {
+    $primary_key = $params{primary_key};
   }
   #warn "UPDATING: " . $user_id . ": " . $type . ": " . $data;
-  my $sql = qq(
-    UPDATE ) . $table . qq(_record
-    SET ) . $ident . qq(_id = ?,
-        type    = ?,
-        data    = ?
-    WHERE ) . $table . qq(_record_id = ?
-  );
+  my $sql = qq(UPDATE $table SET $owner_key = ?, type = ?, data = ? WHERE $primary_key = ?);
   warn $sql;
   my $sth = $self->{'_handle'}->prepare($sql);
-  my $result = $sth->execute($user_id,$type,$data,$id);
+  my $result = $sth->execute($user_id, $type, $data, $id);
 
   return $result;
 }
 
 sub insert_record {
   my ($self, %params) = @_;
-  my $user_id = $params{user};
   my $type = $params{type};
   my $data = $params{data};
-  my $table = "user"; 
+  my ($table, $primary_key); 
+  my $primary_key = 'user_id';
   if ($params{table}) {
     $table = $params{table};
   }
+  my $owner_key = 'user_id';
+  my $owner_value = $ENV{'ENSEMBL_USER_ID'};
+  if ($table =~ /group/) {
+    $owner_key = 'webgroup_id';
+    $owner_value = $params{owner};
+  }
   #warn "INSERTING: " . $user_id . ": " . $type . ": " . $data;
-  my $sql = qq(
-    INSERT INTO ) . $table . qq(_record 
-    SET ) . $table . qq(_id = ?,
-        type    = ?,
-        data    = ?,
-        created_at=CURRENT_TIMESTAMP
-  );
+  my $sql = qq(INSERT INTO $table SET $owner_key = ?, type = ?, data = ?, created_by = ?, created_at = NOW());
   warn "SQL: " . $sql;
   my $sth = $self->{'_handle'}->prepare($sql);
-  my $result = $sth->execute($user_id,$type,$data);
+  my $result = $sth->execute($owner_value, $type, $data, $ENV{'ENSEMBL_USER_ID'});
 
   return $self->last_inserted_id;
 }
@@ -415,10 +381,10 @@ sub insert_user {
     SET name    = ?,
         email   = ?,
         data    = ?,
-        created_at=CURRENT_TIMESTAMP
+        created_at = NOW()
   );
   my $sth = $self->{'_handle'}->prepare($sql);
-  my $result = $sth->execute($name,$email,$data);
+  my $result = $sth->execute( $name, $email, $data);
 
   return $result;
 }
@@ -429,8 +395,6 @@ sub insert_group {
   my $description = $params{description};
   my $type = $params{type};
   my $status = $params{status};
-  my $modified_by = $params{modified_by};
-  my $created_by = $params{created_by};
   #warn "INSERTING: " . $name;
   my $sql = qq(
     INSERT INTO webgroup
@@ -438,13 +402,12 @@ sub insert_group {
         blurb       = ?,
         type        = ?,
         status      = ?,
-        modified_by = ?,
         created_by  = ?,
-        created_at  = CURRENT_TIMESTAMP
+        created_at  = NOW()
   );
   #warn "SQL\n$sql";
   my $sth = $self->{'_handle'}->prepare($sql);
-  my $result = $sth->execute($name,$description,$type,$status,$modified_by,$created_by);
+  my $result = $sth->execute($name, $description, $type, $status, $ENV{'ENSEMBL_USER_ID'});
   return $self->last_inserted_id;
 }
 
@@ -460,11 +423,52 @@ sub add_relationship {
         user_id     = ?,
         level       = ?,
         status      = ?,
-        created_at  = CURRENT_TIMESTAMP
+        created_by  = ?,
+        created_at  = NOW()
   );
   #warn $sql;
   my $sth = $self->{'_handle'}->prepare($sql);
-  my $result = $sth->execute($from_id,$to_id,$level,$status);
+  my $result = $sth->execute($from_id, $to_id, $level, $status, $ENV{'ENSEMBL_USER_ID'});
+}
+
+sub update_level {
+  my ($self, %params) = @_;
+  my $from_id = $params{from};
+  my $to_id = $params{to};
+  my $level = $params{level};
+  my $sql = qq(
+    UPDATE group_member 
+    SET level       = ?,
+        modified_by = ?,
+        modified_at = NOW()
+    WHERE
+        webgroup_id = ?
+    AND
+        user_id     = ? 
+  );
+  #warn $sql;
+  my $sth = $self->{'_handle'}->prepare($sql);
+  my $result = $sth->execute($level, $ENV{'ENSEMBL_USER_ID'}, $from_id, $to_id);
+}
+
+sub update_status {
+  my ($self, %params) = @_;
+  my $from_id = $params{from};
+  my $to_id = $params{to};
+  my $status = $params{status};
+  my $sql = qq(
+    UPDATE group_member 
+    SET status      = ?,
+        modified_by = ?,
+        modified_at = NOW()
+    WHERE
+        webgroup_id = ?
+    AND
+        user_id     = ? 
+  );
+  #warn $sql;
+  my $sth = $self->{'_handle'}->prepare($sql);
+  my $result = $sth->execute($status, $ENV{'ENSEMBL_USER_ID'}, $from_id, $to_id);
 }
 
 sub remove_relationship {
