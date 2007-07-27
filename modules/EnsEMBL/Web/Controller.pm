@@ -13,16 +13,20 @@ use EnsEMBL::Web::Controller::Action;
 my %URL :ATTR(:set<url> :get<url>);
 my %Connection :ATTR(:set<connections> :get<connections>);
 
-sub add_connection {
-  my ($self, $connection) = @_;
-  unless ($self->get_connections) {
+sub add_connections {
+  my ($self, $connections) = @_;
+  unless( $self->get_connections ) {
     $self->set_connections({});
   }
-  my $action = undef;
-  foreach my $key (keys %{ $connection }) {
-    $action = $key;
+#  my $action = undef;
+  foreach my $action (keys %{ $connections }) {
+    $self->set_connection( $action, $connections->{$action});
   }
-  $self->set_connection($action, $connection->{$action});
+}
+
+sub add_connection {
+  my ($self, $connections) = @_;
+  $self->add_connections( $connections );
 }
 
 sub get_connection {
