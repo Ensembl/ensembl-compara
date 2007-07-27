@@ -151,6 +151,11 @@ sub new {
     'superhi'    => 'highlight2',
     'oxford_fgu' => [ 'blue', 'Oxford FGU Gene Pred.' ]
   );
+  $self->colourSet( 'olfactory',
+    'hi'         => 'highlight1',
+    'superhi'    => 'highlight2',
+    'olfactory'  => [ 'contigblue2', 'Olfactory Receptor' ]
+  );
   $self->colourSet( 'ensembl_gene',
     'hi'         => 'highlight1',
     'superhi'    => 'highlight2',
