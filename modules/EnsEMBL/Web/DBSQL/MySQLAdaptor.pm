@@ -79,48 +79,42 @@ sub save {
 }
 
 sub set_clause {
-  my ($self, $data) = @_;
+  my ($self, $data, $key) = @_;
   my $data_hash = {};
-  my $has_data = 0;
   my $sql = "";
   my $data_field;
 
-  if ($data->get_fields) {
-    foreach $data_field (@{ $data->get_fields }) {
-      $has_data = 1;
-      $data_hash->{ $data_field->get_name } = $data->get_value( $data_field->get_name );
-    }
-  }
+  ## Queriable fields
   foreach $data_field (@{ $data->get_queriable_fields }) {
-    if (defined $data->get_value( $data_field->get_name)) {
-      if ($self->is_allowed_in_set_clause($data_field->get_name)) {
-        $sql .= $self->map_back($data_field->get_name) . " = '" . $data->get_value( $data_field->get_name ) . "', ";
+    next if $data_field->get_name eq 'id';
+    ## do timestamps manually (not defined in data object)
+    if ($data_field->get_name eq 'created_at' && defined $data->get_value('created_by')) {
+      $sql .= 'created_at = NOW(), ';
+    }
+    elsif ($data_field->get_name eq 'modified_at' && defined $data->get_value('modified_by')) {
+      $sql .= 'modified_at = NOW(), ';
+    }
+    elsif (defined $data->get_value( $data_field->get_name)) {
+      if ($data_field->get_name eq 'group_id') {
+        $sql .= 'webgroup_id = "' . $data->get_value($data_field->get_name) . '", ';
+      }
+      else {
+        $sql .= $data_field->get_name . ' = "' . $data->get_value($data_field->get_name) . '", ';
       }
     }
   }
-  if ($has_data) {
-    $sql .= "data = '" . $self->dump_data($data_hash) . "'";
+  ## Data hash 
+  if ($data->get_fields) {
+    foreach $data_field (@{ $data->get_fields }) {
+      $data_hash->{ $data_field->get_name } = $data->get_value( $data_field->get_name );
+    }
+    $sql .= 'data = "' . $self->dump_data($data_hash) . '", ';
   }
+
   if (defined $data->get_belongs_to) {
   }
   $sql =~ s/, $/ /;
   return $sql;
-}
-
-sub map_back {
-  my ($self, $field) = @_;
-  if ($field eq 'group_id') {
-    $field = 'webgroup_id';
-  }
-  return $field;
-}
-
-sub is_allowed_in_set_clause {
-  my ($self, $field) = @_;
-  if ($field eq 'id') {
-    return 0;
-  }
-  return 1;
 }
 
 sub create {
@@ -147,7 +141,7 @@ sub update {
   $sql .= "SET " . $self->set_clause($data);
   $sql .= " WHERE " . $key . "='" . $data->id . "'";
   $sql .= ";";
-  warn "UPDATE: " . $sql;
+  #warn "UPDATE: " . $sql;
   $self->get_handle->prepare($sql);
   if ($self->get_handle->do($sql)) {
     $result->set_success(1);
@@ -176,8 +170,19 @@ sub find {
   my $result = EnsEMBL::Web::DBSQL::SQL::Result->new();
   $result->set_action('find');
   my $key = EnsEMBL::Web::Tools::DBSQL::TableName::parse_primary_key($data->get_primary_key);
-  my $sql = "SELECT * FROM " . $self->get_table . " WHERE " . $key . "='" . $data->id . "';";
-  warn $sql;
+  my $sql = 'SELECT *';
+  foreach my $column (@{$data->get_queriable_fields}) {
+    if ($column->get_name eq 'created_at' || $column->get_name eq 'modified_at') {
+      $sql .= ', UNIX_TIMESTAMP(created_at), UNIX_TIMESTAMP(modified_at), ';
+      last;
+    }
+  }
+  if ($data->get_data_field_name) {
+    $sql .= $data->get_data_field_name.', ';
+  }
+  $sql =~ s/, $/ /;
+  $sql .= ' FROM ' . $self->get_table . ' WHERE ' . $key . '="' . $data->id . '";';
+  #warn $sql;
   my $hashref = $self->get_handle->selectall_hashref($sql, $key);
   $result->set_result_hash($hashref->{$data->id});
   return $result;
@@ -190,6 +195,7 @@ sub find_many {
   $result->set_action('find');
   my $sql = $self->template($request->get_sql);
   #warn "MANY: " . $sql;
+  #warn "TABLE: ", $request->get_index_by;
   my $index_by = $self->parse_table_name($request->get_index_by); 
   #warn "INDEX: " . $index_by;
   my $hashref = $self->get_handle->selectall_hashref($sql, $index_by);
@@ -209,7 +215,7 @@ sub dump_data {
   my $dumper = Data::Dumper->new([$temp_fields]);
   $dumper->Indent(0);
   my $dump = $dumper->Dump();
-  $dump =~ s/'/\\'/g;
+  #$dump =~ s/'/\\'/g;
   $dump =~ s/^\$VAR1 = //;
   return $dump;
 }
