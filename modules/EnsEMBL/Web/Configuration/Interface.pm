@@ -4,6 +4,7 @@ package EnsEMBL::Web::Configuration::Interface;
 
 use strict;
 use EnsEMBL::Web::Configuration;
+use EnsEMBL::Web::Tools::DBSQL::TableName;
 
 our @ISA = qw( EnsEMBL::Web::Configuration );
 
@@ -76,7 +77,7 @@ sub preview {
 sub save {
   ### Saves changes to the record(s) and redirects to a feedback page
   my ($self, $object, $interface) = @_;
-  my $primary_key = $interface->data->get_primary_key;
+  my $primary_key = EnsEMBL::Web::Tools::DBSQL::TableName::parse_primary_key($interface->data->get_primary_key);
   my $id = $object->param($primary_key);
   $interface->cgi_populate($object, $id);
 
@@ -95,11 +96,12 @@ sub save {
 sub delete {
   ### Deletes record(s) and redirects to a feedback page
   my ($self, $object, $interface) = @_;
+  
+  $interface->data->populate($object->param('id'));
+
+  my $success = $interface->data->destroy;
   my $script = $interface->script_name || $object->script;
   my $url;
-
-  my $delete_method = $interface->structure->delete_method;
-  my $success = $object->$delete_method($interface->structure->primary_key);
   if ($success) {
     $url = "/common/$script?dataview=success";
   }
@@ -132,11 +134,15 @@ sub success {
           my $value;
           if (scalar(@param_check) > 1) {
             foreach my $p (@param_check) {
-              push(@params, $key.'='.$p.';');
+              push(@params, $key.'='.$p);
             }
           }
           else {
-            push(@params, $key.'='.$object->param($key).';');
+            my $param = $object->param($key);
+            if ($key eq 'url') {
+              $param = CGI::escape($param);
+            }
+            push(@params, "$key=$param");
           }
         }
         $url .= join(';', @params);
