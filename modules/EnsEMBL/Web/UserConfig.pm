@@ -1225,6 +1225,7 @@ sub ADD_ALL_TRANSCRIPTS {
   $self->add_new_track_transcript( 'jamboree_cdnas',   'X.trop. jambo. genes',   'prot_gene',   $POS++, @_ );
   $self->add_new_track_transcript( 'oxford_genes', 'Oxford Genes', 'oxford_genes', $POS++, @_ );
   $self->add_new_track_transcript( 'oxford_fgu', 'Oxford FGU Genes', 'oxford_fgu', $POS++, @_ );
+  $self->add_new_track_transcript( 'platypus_olfactory_receptors', 'Olfactory receptor Genes', 'olfactory', $POS++, @_ );
 #  $self->add_new_track_transcript( 'platypus_protein', 'Platypus/Other Genes', 'platypus_protein', $POS++, @_ );
 #  $self->add_new_track_transcript( 'medaka_protein',   'Medaka genes',   'medaka_gene',   $POS++, @_ );
   $self->add_new_track_transcript( 'fugu_protein', 'T.rubripes protein', 'fugu_protein', $POS++,  @_ );
@@ -1393,6 +1394,11 @@ sub ADD_GENE_TRACKS {
     'gene_col'   => 'oxford_fgu',
     'gene_label' => sub { return $_[0]->stable_id }, @_
   );
+  $self->add_new_track_gene( 'platypus_olfactory_receptors', 'Olfactory Recep Genes', 'olfactory', $POS++,
+    'gene_col'   => 'olfactory',
+    'gene_label' => sub { return $_[0]->stable_id }, @_
+  );
+
   $self->add_new_track_gene( 'gsten', 'Genoscope Genes', 'genoscope_gene', $POS++,
     'gene_label'           => sub { return $_[0]->stable_id },
     'gene_col'             => sub { return $_[0]->biotype eq 'Genoscope_predicted' ? '_GSTEN'    : '_HOX' },
