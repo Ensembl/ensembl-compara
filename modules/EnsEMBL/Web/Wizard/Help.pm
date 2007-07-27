@@ -59,16 +59,14 @@ sub _init {
       'required'=>'yes',
     },
     'category' => {
-      'type'=>'DropDown',
+      'type'=>'String',
       'select'   => 'select',
-      'label'=>'Problem / Query',
+      'label'=>'Subject:',
       'required'=>'yes',
-      'values' => 'problems',
-      'value' => $object->param('category'),
     },
     'comments' => {
       'type'=>'Text', 
-      'label'=>'Details/comments:',
+      'label'=>'Message:',
       'required'=>'yes',
     },
   );
