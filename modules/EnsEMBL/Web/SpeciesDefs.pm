@@ -1463,6 +1463,7 @@ sub create_robots_txt {
   ### Returns: none
   my $self = shift;
   my $root = $ENSEMBL_HTDOCS_DIRS[0];
+  my %allowed = map { ($_,1) } @{$SiteDefs::ENSEMBL_EXTERNAL_SEARCHABLE||[]};
   if( open FH, ">$root/robots.txt" ) { 
     print FH qq(
 User-agent: *
@@ -1471,7 +1472,7 @@ Disallow: /BioMart/
 );
     foreach( @$ENSEMBL_SPECIES ) { 
       print FH qq(Disallow: /$_/\n);
-      print FH qq(Allow: /$_/geneview\n);
+      print FH qq(Allow: /$_/geneview\n) if $allowed{'gene'};
       print FH qq(Allow: /$_/sitemap.xml.gz\n);
     }
 print FH qq(
