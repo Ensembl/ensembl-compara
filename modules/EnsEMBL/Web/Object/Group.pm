@@ -24,7 +24,6 @@ my %CreatedAt_of;
 my %ModifiedAt_of;
 my %Users_of;
 my %Administrators_of;
-my %RemovedUsers_of;
 my %AddedUsers_of;
 my %StatusCollection_of;
 my %LevelCollection_of;
@@ -43,7 +42,6 @@ sub new {
   $ModifiedAt_of{$self} = defined $params{'modified_at'} ? $params{'modified_at'} : 0;
   $Users_of{$self} = defined $params{'users'} ? $params{'users'} : [];
   $AddedUsers_of{$self} = defined $params{'added'} ? $params{'added'} : [];
-  $RemovedUsers_of{$self} = defined $params{'removed'} ? $params{'removed'} : [];
   $StatusCollection_of{$self} = defined $params{'status_collection'} ? $params{'status_collection'} : {};
   $LevelCollection_of{$self} = defined $params{'level_collection'} ? $params{'level_collection'} : {};
 
@@ -139,11 +137,13 @@ sub update_users {
 
 sub assign_level_to_user {
   my ($self, $level, $user) = @_;
+warn "Assigning $level to $user";
   if ($self->level_collection->{$level}) {
     push @{ $self->level_collection->{$level} }, $user;
   } else {
     $self->level_collection->{$level} = [ $user ];
   }
+  $self->taint('users');
 }
 
 sub assign_status_to_user {
@@ -153,6 +153,7 @@ sub assign_status_to_user {
   } else {
     $self->status_collection->{$status} = [ $user ];
   }
+  $self->taint('users');
 }
 
 sub find_users_by_status {
@@ -219,14 +220,28 @@ sub save {
       }
       $self->added_users([]);
     }
-    if ($self->removed_users) {
-      #warn "REMOVING RELATIONSHIP";
-      foreach my $user (@{ $self->removed_users }) {
-        my %relationship = (
+    if ($self->level_collection) {
+      while (my ($level, $user_array) = each(%{$self->level_collection})) {
+        foreach my $user (@$user_array) {
+          my %relationship = (
                            from    => $self->id,
                            to      => $user->id,
-                         );
-        $self->adaptor->remove_relationship(%relationship);
+                           level   => $level, 
+                            );
+          $self->adaptor->update_level(%relationship);
+        }
+      }
+    }
+    if ($self->status_collection) {
+      while (my ($status, $user_array) = each(%{$self->status_collection})) {
+        foreach my $user (@$user_array) {
+          my %relationship = (
+                           from    => $self->id,
+                           to      => $user->id,
+                           status  => $status, 
+                            );
+          $self->adaptor->update_status(%relationship);
+        }
       }
     }
   }
@@ -345,30 +360,11 @@ sub level_collection {
   return $LevelCollection_of{$self};
 }
 
-sub removed_users {
-  ### a
-  my $self = shift;
-  $RemovedUsers_of{$self} = shift if @_;
-  return $RemovedUsers_of{$self};
-}
-
 sub added_users {
   ### a
   my $self = shift;
   $AddedUsers_of{$self} = shift if @_;
   return $AddedUsers_of{$self};
-}
-
-sub remove_user {
-  ### Removes a user from the group
-  my ($self, $user) = @_;
-  if (!$self->removed_users) {
-    $self->removed_users([]);
-  }
-  #warn "REMOVING REMOVE_USER: " . $user->name;
-  push @{ $self->removed_users }, $user; 
-  $self->taint('users');
-  #warn "TAINT: " . $self->tainted->{'users'};
 }
 
 sub DESTROY {
@@ -384,7 +380,6 @@ sub DESTROY {
   delete $Administrators_of{$self};
   delete $StatusCollection_of{$self};
   delete $LevelCollection_of{$self};
-  delete $RemovedUsers_of{$self};
   delete $AddedUsers_of{$self};
 }
 
