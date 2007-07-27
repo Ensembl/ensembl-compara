@@ -329,15 +329,15 @@ sub user_notes {
         $html .= "<li>";
         $html .= "<b>" . $annotation->title . "</b><br />";
         $html .= $annotation->annotation;
-        $html .= "<br /><a href='/common/gene_annotation?url=$uri&id=" . $annotation->id . "&stable_id=$stable_id'>Edit</a>";
-        $html .= " &middot; <a href='/common/remove_record?url=$uri&id=" . $annotation->id . "'>Delete</a>";
+        $html .= "<br /><a href='/common/user/annotation?dataview=edit;url=$uri;id=" . $annotation->id . ";stable_id=$stable_id'>Edit</a>";
+        $html .= " &middot; <a href='/common/user/annotation?dataview=delete;url=$uri;id=" . $annotation->id . "'>Delete</a>";
         $html .= "</li>";
       }
     }
     $html .= "</ul>";
   }
 
-  $html .= "<a href='/common/gene_annotation?url=" . $uri . "&stable_id=" . $stable_id . "'>Add new note</a>";
+  $html .= "<a href='/common/user/annotation?url=" . $uri . ";stable_id=" . $stable_id . "'>Add new note</a>";
 
   $panel->add_row('Your notes', $html); 
   
