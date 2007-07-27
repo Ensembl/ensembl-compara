@@ -18,6 +18,15 @@ $self->{'general'}->{'cytoview'} = {
       blast_new redbox ) ],
   '_settings' => {
     'URL'       => '',
+## Image size configuration...
+      'width'         => 900,
+      'spacing'       => 2,
+      'margin'        => 5,
+      'label_width'   => 100,
+      'button_width'  => 8,
+      'show_buttons'  => 'yes',
+      'show_labels'   => 'yes',
+
     'width'      => 900,
     'default_vc_size'  => 5000000,
     'band_box'     => 'show',
