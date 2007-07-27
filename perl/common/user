@@ -27,14 +27,41 @@ $controller->add_connection({ 'lost_password' => 'EnsEMBL::Web::Controller::Comm
 $controller->add_connection({ 'reset_password' => 'EnsEMBL::Web::Controller::Command::User::EnterPassword' }); 
 $controller->add_connection({ 'save_password' => 'EnsEMBL::Web::Controller::Command::User::SavePassword' }); 
 $controller->add_connection({ 'update' => 'EnsEMBL::Web::Controller::Command::User::UpdateAccount' }); 
+$controller->add_connection({ 'update_failed' => 'EnsEMBL::Web::Controller::Command::User::UpdateFailed'}); 
 
 ## User records
-$controller->add_connection({ 'share_record' => 'EnsEMBL::Web::Controller::Command::User::ShareRecord' }); 
 $controller->add_connection({ 'save_favourites' => 'EnsEMBL::Web::Controller::Command::User::SaveFavourites' }); 
 $controller->add_connection({ 'reset_favourites' => 'EnsEMBL::Web::Controller::Command::User::ResetFavourites' }); 
-$controller->add_connection({ 'remove_invite' => 'EnsEMBL::Web::Controller::Command::User::RemoveInvite' }); 
-$controller->add_connection({ 'save_das' => 'EnsEMBL::Web::Controller::Command::User::SaveDas' }); 
-$controller->add_connection({ 'annotation' => 'EnsEMBL::Web::Controller::Command::User::SaveAnnotation' }); 
+$controller->add_connection({ 'sortable' => 'EnsEMBL::Web::Controller::Command::User::Sortable' }); 
+$controller->add_connection({ 'hide_info' => 'EnsEMBL::Web::Controller::Command::User::HideInfo' }); 
+$controller->add_connection({ 'reset_info_boxes' => 'EnsEMBL::Web::Controller::Command::User::ResetInfoBoxes' }); 
+
+$controller->add_connection({ 'bookmark' => 'EnsEMBL::Web::Controller::Command::User::Bookmark' }); 
+$controller->add_connection({ 'bookmark_landing' => 'EnsEMBL::Web::Controller::Command::User::BookmarkLanding'});
+$controller->add_connection({ 'use_bookmark' => 'EnsEMBL::Web::Controller::Command::User::UseBookmark'});
+
+$controller->add_connection({ 'configuration' => 'EnsEMBL::Web::Controller::Command::User::Configuration' }); 
+$controller->add_connection({ 'load_config' => 'EnsEMBL::Web::Controller::Command::User::LoadConfig' }); 
+$controller->add_connection({ 'set_config' => 'EnsEMBL::Web::Controller::Command::User::SetConfig' }); 
+$controller->add_connection({ 'config_landing' => 'EnsEMBL::Web::Controller::Command::User::ConfigLanding'});
+
+$controller->add_connection({ 'annotation' => 'EnsEMBL::Web::Controller::Command::User::Annotation' }); 
+$controller->add_connection({ 'filter_news' => 'EnsEMBL::Web::Controller::Command::User::FilterNews' }); 
+
+## Group records & group management
+$controller->add_connection({ 'group' => 'EnsEMBL::Web::Controller::Command::User::Group' }); 
+$controller->add_connection({ 'view_group' => 'EnsEMBL::Web::Controller::Command::User::ViewGroup' }); 
+$controller->add_connection({ 'remove_group' => 'EnsEMBL::Web::Controller::Command::User::RemoveGroup' }); 
+$controller->add_connection({ 'change_status' => 'EnsEMBL::Web::Controller::Command::User::ChangeStatus' }); 
+$controller->add_connection({ 'change_level' => 'EnsEMBL::Web::Controller::Command::User::ChangeLevel' }); 
+
+$controller->add_connection({ 'select_group' => 'EnsEMBL::Web::Controller::Command::User::SelectGroup' }); 
+$controller->add_connection({ 'share_record' => 'EnsEMBL::Web::Controller::Command::User::ShareRecord' }); 
+
+$controller->add_connection({ 'invite' => 'EnsEMBL::Web::Controller::Command::User::Invite' }); 
+$controller->add_connection({ 'remove_invitation' => 'EnsEMBL::Web::Controller::Command::User::RemoveInvitation' }); 
+$controller->add_connection({ 'accept' => 'EnsEMBL::Web::Controller::Command::User::AcceptInvitation' }); 
+$controller->add_connection({ 'unsubscribe' => 'EnsEMBL::Web::Controller::Command::User::Unsubscribe' }); 
 
 $controller->dispatch($ENV{REQUEST_URI});
 
