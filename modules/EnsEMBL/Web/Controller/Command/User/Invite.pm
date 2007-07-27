@@ -8,7 +8,7 @@ use CGI;
 
 use EnsEMBL::Web::Object::Data::Group;
 use EnsEMBL::Web::Object::Data::User;
-use EnsEMBL::Web::Object::Data::Invite;
+use EnsEMBL::Web::Object::Data::Invitation;
 use EnsEMBL::Web::Object::User;
 use EnsEMBL::Web::Mailer::User;
 use EnsEMBL::Web::Tools::RandomString;
@@ -100,7 +100,7 @@ sub send_invitation {
   my $user = EnsEMBL::Web::Object::Data::User->new({ id => $reg_user->id });
   my $group = EnsEMBL::Web::Object::Data::Group->new({ id => $group_id });
 
-  my $invite = EnsEMBL::Web::Object::Data::Invite->new;
+  my $invite = EnsEMBL::Web::Object::Data::Invitation->new;
   $invite->webgroup_id($group_id);
   $invite->email($email);
   $invite->status("pending");
