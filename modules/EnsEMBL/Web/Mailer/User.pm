@@ -76,29 +76,30 @@ sub send_welcome_email {
 sub send_invite_email {
   my ($self, $user, $group, $invite, $email) = @_;
   my $sitename = $self->site_name;
+  my $article = 'a';
+  if ($sitename =~ /^(a|e|i|o|u)/i) {
+    $article = 'an';
+  }
+
   my $message = qq(Hello,
 
  You have been invited by ) . $user->name . qq( to join a group
- on the ). $SiteDefs::ENSEMBL_SITETYPE. qq( Genome Browser.
+ on the $sitename Genome Browser.
 
  To accept this invitation, click on the following link:
 
  ) . $group->name . qq( 
- ) . $self->base_url . qq(/common/accept?id=) . $invite->id . qq(
- 
- Your activation code is: ) . $invite->code . qq(
+ ) . $self->base_url . qq(/common/user/accept?id=) . $invite->id . qq(;code=) . $invite->code . qq(
 
  If you do not wish to accept, please just disregard this email.
 
- Note: When accepting, please leave the user-code box blank.
-
  If you have any problems please don't hesitate to contact ) . $user->name . qq( 
- or the ) . $SiteDefs::ENSEMBL_SITETYPE . qq( help desk, on ) . 
+ or the $sitename help desk, on ) . 
  $SiteDefs::ENSEMBL_HELPDESK_EMAIL;
 
   $message .= $self->email_footer;
   $self->email($email);
-  $self->subject("Invite to join a $SiteDefs::ENSEMBL_SITETYPE group");
+  $self->subject("Invitation to join $article $sitename group");
   $self->message($message);
   $self->send();
 }
