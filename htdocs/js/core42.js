@@ -138,25 +138,35 @@ function das_link() {
   return true;  
 }
 
-function config_link(ident) {
+function add_config(ident) {
   URL = escape(document.location.href);
-  var location = '/common/save_config?url=' + URL;
+  var location = '/common/user/configuration?url=' + URL;
   if (ident) {
-    location = location + '&id=' + ident;
+    location = location + ';id=' + ident;
   }
   document.location = location;
   return true;  
 }
 
-function load_config_link(ident) {
+function change_config(ident) {
   URL = escape(document.location.href);
-  document.location = '/common/load_config?id=' + ident + '&url=' + URL;
+  var location = '/common/user/configuration?dataview=edit;url=' + URL;
+  if (ident) {
+    location = location + ';id=' + ident;
+  }
+  document.location = location;
   return true;  
 }
 
+
 function load_config(config_id) {
   URL = escape(document.location.href);
-  document.location = '/common/load_config?id=' + config_id + '&url=' + URL;
+  document.location = '/common/user/load_config?id=' + config_id + ';url=' + URL;
+  return true;  
+}
+
+function go_to_config(config_id) {
+  document.location = '/common/user/load_config?id=' + config_id;
   return true;  
 }
 
@@ -175,7 +185,7 @@ function bookmark_link() {
     }
   }
   
-  document.location = '/common/bookmark?name=' + page_title + ';url=' + URL;
+  document.location = '/common/user/bookmark?name=' + page_title + ';url=' + URL;
   return true;  
 }
 

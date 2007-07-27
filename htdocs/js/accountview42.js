@@ -89,7 +89,7 @@ function group_id_for_ident(ident) {
 
 function hide_info(id) {
   var data = "id=" + id;
-  var url = "/common/hide_info";
+  var url = "/common/user/hide_info";
   var ajax_info = new Ajax.Request(url, {
                            method: 'get',
                            parameters: data,
