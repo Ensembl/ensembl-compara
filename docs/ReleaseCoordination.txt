@@ -182,6 +182,9 @@ standard output:
 The merge is done by the person in charge of the protein compara production
 side. The compara release coordinator needs to let him/her know where is the
 database to merge to.
+It involves using the ensembl-compara/scripts/pipeline/merge_protein_data.pl 
+script for the merging.
+
 
 11. Drop method_link_species_set entries for alignments which did not make it.
 
@@ -266,5 +269,7 @@ mysql -hens-staging -uensro -N -e 'show databases like "%core\_42\_%"'|awk '{ pr
 mysql -hens-staging -uensadmin -pxxxxx ensembl_compara_42 < update_gene_description.sql
 
 21. Don't forget to dump the EMF files to go on the FTP sites, for multiple alignment, and protein trees.
+
+For protein tree (multiple alignments and newick trees), use ensembl-compara/scripts/tree/dumpTreeMSA.pl script. It can dump both files in emf gzip format at the same time.
 
 22. Once the final compara db has been copied, and everyone is happy with the data, and the Compara Coordinator survived his task, well the Compara Coordinator could buy some drinks at the Red Lion after handover. Special clause for Mart related coordinator, the drinks will be after the mart release. 
