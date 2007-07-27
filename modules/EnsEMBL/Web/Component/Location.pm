@@ -527,16 +527,16 @@ sub contigviewbottom_config {
     my @current_configs = @{ $data_user->currentconfigs };
     my $current_config = $current_configs[0];
     if ($current_config) {
-      warn "---------------> CONFIG CHECK: ".$current_config->config;
+      #warn "---------------> CONFIG CHECK: ".$current_config->config;
       foreach my $configuration (@{ $data_user->configurations }) {
-        warn "SEACHING FOR CONFIG: " . $configuration->id; 
+        #warn "SEACHING FOR CONFIG: " . $configuration->id; 
         if ($configuration->id eq $current_config->config) {
           my $saved_string = $configuration->scriptconfig . "\n";
           $string =~ s/\n|\r|\f//g; 
           $saved_string =~ s/\n|\r|\f//g; 
           $html = "<div style='text-align: center; padding-bottom: 4px;'>";
           if (length($saved_string) != length($string)) {
-            $html .= "You have changed the '" . $configuration->name . "' view configuration &middot; <a href='javascript:void(0);' onclick='config_link(" . $configuration->id . ");'><b>Save changes</b></a>";
+            $html .= "You have changed the '" . $configuration->name . "' view configuration: <a href='javascript:void(0);' onclick='change_config(" . $configuration->id . ");'><strong>Save</strong></a> &middot; <a href='javascript:void(0);' onclick='add_config(" . $configuration->id . ");'><strong>Save As</strong></a>";
           } else {
             $html .= "You are using the '" . $configuration->name . "' view configuration.";
           }
@@ -967,7 +967,7 @@ sub contigviewbottom_menu {  return bottom_menu( @_, 'contigviewbottom' ); }
 
 sub bottom_menu {
   my($panel, $object, $configname ) = @_;
-  warn "BOTTOM MENU SETUP";
+  #warn "BOTTOM MENU SETUP";
   my $mc = $object->new_menu_container(
     'configname' => $configname,
     'panel'      => 'bottom',
@@ -977,7 +977,7 @@ sub bottom_menu {
   my $html = $mc->render_html;
   $html .= $mc->render_js;
   $panel->print( $html );
-  warn "MISSING: " . $mc->{'config'}->{'missing_tracks'};
+  #warn "MISSING: " . $mc->{'config'}->{'missing_tracks'};
   return $mc;
 }
 
@@ -1071,11 +1071,11 @@ sub contigviewzoom_nav {
 
 sub save_config {
   my($panel, $object) = @_;
-  warn "Saving configuration: " . $object;
+  #warn "Saving configuration: " . $object;
   my $config = $object->user_config_hash( 'contigviewzoom', 'contigviewbottom' );
   $config->load(); 
   my $config_record = $config->{'user'};
-  warn "Config: " . $config_record;
+  #warn "Config: " . $config_record;
   my $user_id = $ENV{'ENSEMBL_USER_ID'};
   my $dump = Dumper($config_record);
   my $config_url = $ENV{'REQUEST_URI'};
@@ -1110,7 +1110,7 @@ sub save_config {
 sub contigviewzoom {
   my($panel, $object) = @_;
 #$object->timer->push("Starting zoom...",4);
-  warn "CONTIGVIEWZOOM";
+  #warn "CONTIGVIEWZOOM";
   my $slice = $object->database('core')->get_SliceAdaptor()->fetch_by_region(
     $object->seq_region_type, $object->seq_region_name, $panel->option('start'), $panel->option('end'), 1
   );
@@ -1195,7 +1195,7 @@ sub misc_set_form {
     push @$miscsets , { 'value' => $T, 'name' => $misc_sets->{$T}->name } if $misc_sets->{$T};
   }
   return undef unless @$miscsets;
-warn "GENERATING FORM";
+#warn "GENERATING FORM";
 
   my $output_types = [
    { 'value' => 'set',    'name' => "Features on this chromosome" },
