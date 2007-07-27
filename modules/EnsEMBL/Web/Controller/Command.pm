@@ -29,9 +29,10 @@ sub filters {
 }
 
 sub add_filter {
-  my ($self, $class) = @_;
+  my ($self, $class, $params) = @_;
   if (EnsEMBL::Web::Root::dynamic_use(undef, $class)) {
-    my $filter = $class->new();
+    my $parameters = $params || {};
+    my $filter = $class->new($parameters);
     if ($filter->isa('EnsEMBL::Web::Controller::Command::Filter')) {
       $filter->inherit($self->get_filter);
       $self->set_filter($filter);
