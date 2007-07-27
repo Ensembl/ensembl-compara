@@ -66,8 +66,12 @@ sub alignment_string {
   }
   unless (defined $self->{'alignment_string'}) {
     my $sequence = $member->sequence;
-    if (defined $self->cigar_start || defined $self->cigar_end) {
-      unless (defined $self->cigar_start && defined $self->cigar_end) {
+    if ((defined($self->cigar_start) && ($self->cigar_start != 0)) 
+        || (defined $self->cigar_end  && ($self->cigar_end != 0))) {
+      unless ((defined($self->cigar_start) && ($self->cigar_start != 0)) && 
+               (defined $self->cigar_end  && ($self->cigar_end != 0))) {
+#     if (defined $self->cigar_start || defined $self->cigar_end) {
+#       unless (defined $self->cigar_start && defined $self->cigar_end) {
         throw("both cigar_start and cigar_end should be defined");
       }
       my $offset = $self->cigar_start - 1;
