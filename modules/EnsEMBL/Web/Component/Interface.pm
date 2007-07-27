@@ -2,6 +2,7 @@ package EnsEMBL::Web::Component::Interface;
 
 ### Module to create generic forms for Document::Interface and its associated modules
 
+use EnsEMBL::Web::Tools::DBSQL::TableName;
 use EnsEMBL::Web::Component;
 use EnsEMBL::Web::Form;
 
@@ -17,6 +18,7 @@ sub add_form {
 
   ## navigation elements
   $form->add_element( 'type' => 'Hidden', 'name' => 'prev_action', 'value' => 'Save Record');
+  $form->add_element( 'type' => 'Hidden', 'name' => 'mode', 'value' => 'add');
   $form->add_element( 'type' => 'Hidden', 'name' => 'db_action', 'value' => 'save');
   $form->add_element( 'type' => 'Hidden', 'name' => 'dataview', 'value' => 'preview');
   $form->add_element( 'type' => 'Submit', 'value' => 'Next');
@@ -41,14 +43,19 @@ sub edit_form {
   ### Builds an HTML form populated with a database record
   my($panel, $object) = @_;
 
-  my $primary_key = $panel->interface->data->get_primary_key;
-  my $id = $object->param($primary_key);
+  my $primary_key = EnsEMBL::Web::Tools::DBSQL::TableName::parse_primary_key($panel->interface->data->get_primary_key);
+  my $id = $object->param($primary_key) || $object->param('id');
   
   my $form = _data_form($panel, $object, 'edit');
   $form->add_element(
           'type'  => 'Hidden',
           'name'  => $primary_key,
           'value' => $id,  
+        );
+  $form->add_element(
+          'type'  => 'Hidden',
+          'name'  => 'mode',
+          'value' => 'edit',  
         );
 
   ## Show creation/modification details?
@@ -98,8 +105,8 @@ sub preview_form {
   my $form = EnsEMBL::Web::Form->new('preview', "/common/$script", 'post');
 
   ## get data and assemble form
-  my $primary_key = $panel->interface->data->get_primary_key;
-  my $id = $object->param($primary_key);
+  my $primary_key = EnsEMBL::Web::Tools::DBSQL::TableName::parse_primary_key($panel->interface->data->get_primary_key);
+  my $id = $object->param($primary_key) || $object->param('id');
   my $db_action = $object->param('db_action');
 
   if ($db_action eq 'delete') {
@@ -114,6 +121,11 @@ sub preview_form {
             'type'  => 'Hidden',
             'name'  => $primary_key,
             'value' => $id,  
+        );
+  $form->add_element(
+          'type'  => 'Hidden',
+          'name'  => 'mode',
+          'value' => $object->param('mode'),  
         );
   my $preview_fields = $panel->interface->preview_fields($id);
   my $element;
@@ -134,13 +146,12 @@ sub preview_form {
 sub _data_form {
   ### Function to build a record editing form
   my($panel, $object, $name) = @_;
-  warn "PANEL: " . $panel; 
   my $script = script_name($panel, $object);
   my $form = EnsEMBL::Web::Form->new($name, "/common/$script", 'post');
 
   ## form widgets
-  my $key = $panel->interface->data->get_primary_key;
-  my $id = $object->param($key);
+  my $key = EnsEMBL::Web::Tools::DBSQL::TableName::parse_primary_key($panel->interface->data->get_primary_key);
+  my $id = $object->param($key) || $object->param('id');
   if ($id) {
     $panel->interface->data->populate($id);
   }
@@ -209,11 +220,12 @@ sub _record_select {
     push @options, {'name'=>$text, 'value'=>$value};
   }
   
+  my $primary_key = EnsEMBL::Web::Tools::DBSQL::TableName::parse_primary_key($panel->interface->data->get_primary_key);
   $form->add_element( 
             'type'    => 'DropDown', 
             'select'  => $select,
             'title'   => 'Select a Record', 
-            'name'    => $panel->interface->data->get_primary_key, 
+            'name'    => $primary_key, 
             'values'  => \@options,
           
           );
