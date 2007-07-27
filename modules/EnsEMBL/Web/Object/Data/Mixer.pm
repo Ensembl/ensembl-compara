@@ -4,22 +4,22 @@ use strict;
 use warnings;
 
 use Class::Std;
-use EnsEMBL::Web::Object::Data;
 use EnsEMBL::Web::DBSQL::MySQLAdaptor;
+use EnsEMBL::Web::Object::Data::Trackable;
+use EnsEMBL::Web::Object::Data::Record;
 
-our @ISA = qw(EnsEMBL::Web::Object::Data);
+our @ISA = qw(EnsEMBL::Web::Object::Data::Trackable  EnsEMBL::Web::Object::Data::Record);
+
 
 {
 
 sub BUILD {
   my ($self, $ident, $args) = @_;
-  $self->set_primary_key('%%user_record%%_id');
-  $self->set_adaptor(EnsEMBL::Web::DBSQL::MySQLAdaptor->new({table => '%%user_record%%' }));
-  $self->set_data_field_name('data');
-  $self->add_field({ name => 'settings', type => 'text' });
-  $self->add_queriable_field({ name => 'type', type => 'text' });
   $self->type('mixer');
-  $self->add_belongs_to("EnsEMBL::Web::Object::Data::User");
+  $self->attach_owner('user');
+  $self->set_primary_key($self->key);
+  $self->set_adaptor(EnsEMBL::Web::DBSQL::MySQLAdaptor->new({table => $self->table }));
+  $self->add_field({ name => 'settings', type => 'text' });
   $self->populate_with_arguments($args);
 }
 

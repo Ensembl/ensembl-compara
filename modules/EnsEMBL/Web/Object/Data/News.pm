@@ -1,13 +1,13 @@
-package EnsEMBL::Web::Object::Data::News;
+package EnsEMBL::Web::Object::Data::NewsFilter;
 
 use strict;
 use warnings;
 
 use Class::Std;
-use EnsEMBL::Web::Object::Data;
+use EnsEMBL::Web::Object::Trackable;
 use EnsEMBL::Web::DBSQL::MySQLAdaptor;
 
-our @ISA = qw(EnsEMBL::Web::Object::Data);
+our @ISA = qw(EnsEMBL::Web::Object::Trackable);
 
 {
 

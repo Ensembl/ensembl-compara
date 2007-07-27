@@ -4,10 +4,10 @@ use strict;
 use warnings;
 
 use Class::Std;
-use EnsEMBL::Web::Object::Data;
+use EnsEMBL::Web::Object::Data::Trackable;
 use EnsEMBL::Web::DBSQL::MySQLAdaptor;
 
-our @ISA = qw(EnsEMBL::Web::Object::Data);
+our @ISA = qw(EnsEMBL::Web::Object::Data::Trackable);
 
 {
 
@@ -20,14 +20,25 @@ sub BUILD {
   $self->add_queriable_field({ name => 'blurb', type => 'text' });
   $self->add_queriable_field({ name => 'type', type => "enum('open','restricted','private')" });
   $self->add_queriable_field({ name => 'status', type => "enum('active','inactive')" });
-  $self->add_has_many({ class => 'EnsEMBL::Web::Object::Data::Group::Bookmark', table => '%%group_record%%'});
-  $self->add_has_many({ class => 'EnsEMBL::Web::Object::Data::Group::Configuration', table => '%%group_record%%'});
-  $self->add_has_many({ class => 'EnsEMBL::Web::Object::Data::Group::Annotation', table => '%%group_record%%'});
-  $self->add_has_many({ class => 'EnsEMBL::Web::Object::Data::Group::DAS', table => '%%group_record%%'});
-  $self->add_has_many({ class => 'EnsEMBL::Web::Object::Data::Invite', table => '%%group_record%%'});
-  $self->add_has_many({ class => 'EnsEMBL::Web::Object::Data::User', table => 'user', link_table => 'group_member', contribute => [ 'level' ] });
+  $self->add_has_many({ class => 'EnsEMBL::Web::Object::Data::Bookmark', owner => 'group'});
+  $self->add_has_many({ class => 'EnsEMBL::Web::Object::Data::Configuration', owner => 'group'});
+  $self->add_has_many({ class => 'EnsEMBL::Web::Object::Data::Annotation', owner => 'group'});
+  $self->add_has_many({ class => 'EnsEMBL::Web::Object::Data::DAS', owner => 'group'});
+  $self->add_has_many({ class => 'EnsEMBL::Web::Object::Data::Invite', owner => 'group'});
+  $self->add_has_many({ class => 'EnsEMBL::Web::Object::Data::User', table => 'user', link_table => 'group_member', contribute => [ 'level', 'status' ] });
   $self->populate_with_arguments($args);
 }
+
+sub find_user_by_user_id {
+  my ($self, $user_id) = @_;
+  foreach my $user (@{ $self->users }) {
+    if ($user->id eq $user_id) {
+      return $user;
+    }
+  }
+  return 0;
+}
+
 
 }
 
