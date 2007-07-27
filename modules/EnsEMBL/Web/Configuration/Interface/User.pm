@@ -35,7 +35,7 @@ sub check_input {
       return undef;
     }
     else {
-      my $url = '/common/user/register?dataview=preview;name='.$object->param('name').';email='$object->param('email').';organisation=;'.$object->param('organisation');
+      my $url = '/common/user/register?dataview=preview;name='.$object->param('name').';email='.$object->param('email').';organisation='.$object->param('organisation');
       return $url;
     }
   }

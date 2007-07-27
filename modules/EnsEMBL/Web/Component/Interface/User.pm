@@ -13,8 +13,11 @@ no warnings "uninitialized";
 sub add_form {
   ### Builds an empty HTML form for a new record
   my($panel, $object) = @_;
-  my $script = script_name($panel, $object);
-  my $form = EnsEMBL::Web::Form->new($name, "/common/$script", 'post');
+  my $script = $object->script;
+  if ($panel->interface->script_name) {
+    $script = $panel->interface->script_name;
+  }
+  my $form = EnsEMBL::Web::Form->new('add', "/common/$script", 'post');
 
   ## form widgets
   my $key = EnsEMBL::Web::Tools::DBSQL::TableName::parse_primary_key($panel->interface->data->get_primary_key);
