@@ -107,9 +107,9 @@ foreach my $child (@{$root->children}) {
 #  last;
 }
 
-close $aln_out_fh;
-close $nh_out_fh;
-close $nhx_out_fh;
+close $aln_out_fh if (defined $aln_out_fh);
+close $nh_out_fh if (defined $nh_out_fh);
+close $nhx_out_fh if (defined $nhx_out_fh);
 
 sub dumpTreeMultipleAlignment
 {
