@@ -21,7 +21,6 @@ use Bio::EnsEMBL::Compara::RunnableDB::OrthoTree;
 use Bio::EnsEMBL::Compara::Homology;
 use File::Basename;
 use Digest::MD5 qw(md5_hex); # duploss_fraction
-use lib '/nfs/acari/avilella/bioperl/vanilla/bioperl-run/';
 
 use Time::HiRes qw(time gettimeofday tv_interval);
 
@@ -120,6 +119,7 @@ GetOptions('help'             => \$help,
            'duphop=s'                  => \$self->{'_duphop'},
            'family_expansions=s'       => \$self->{'_family_expansions'},
            'dnds_pairs=s'              => \$self->{'_dnds_pairs'},
+           'dnds_paralogs=s'              => \$self->{'_dnds_paralogs'},
            'dnds_doublepairs=s'        => \$self->{'_dnds_doublepairs'},
            'summary_stats=s'        => \$self->{'_summary_stats'},
            'dnds_msas=s'              => \$self->{'_dnds_msas'},
@@ -127,6 +127,8 @@ GetOptions('help'             => \$help,
            'hmm_build=s'              => \$self->{'_hmm_build'},
            'transcript_pair_exonerate=s'              => \$self->{'_transcript_pair_exonerate'},
            'synteny_metric=s'              => \$self->{'_synteny_metric'},
+           'compare_api_treefam=s'              => \$self->{'_compare_api_treefam'},
+           'treefam_aln_plot=s'              => \$self->{'_treefam_aln_plot'},
            'species_set=s'   => \$self->{'_species_set'},
            'sisrates=s'                => \$self->{'_sisrates'},
            'print_as_species_ids=s'    => \$self->{'_print_as_species_ids'},
@@ -406,6 +408,17 @@ if ($self->{'clusterset_id'} && $self->{'_dnds_pairs'}) {
   exit(0);
 }
 
+# internal purposes
+if ($self->{'clusterset_id'} && $self->{'_dnds_paralogs'}) {
+  my $treeDBA = $self->{'comparaDBA'}->get_ProteinTreeAdaptor;
+  $self->{'clusterset'} = $treeDBA->fetch_node_by_node_id($self->{'clusterset_id'});
+  my $species = $self->{_species} || "Homo_sapiens";
+  $species =~ s/\_/\ /g;
+  _dnds_paralogs($self, $species) if(defined($self->{'_dnds_paralogs'}));
+
+  exit(0);
+}
+
 if ($self->{'clusterset_id'} && $self->{'_dnds_doublepairs'}) {
   my $treeDBA = $self->{'comparaDBA'}->get_ProteinTreeAdaptor;
   my $species_set = $self->{_species_set} || "Homo_sapiens:Pan_troglodytes:Macaca_mulatta:Otolemur_garnettii";
@@ -439,7 +452,6 @@ if ($self->{'_ncbi_tree_list_shortnames'}) {
 
   exit(0);
 }
-
 
 # internal purposes
 if ($self->{'clusterset_id'} && $self->{'_homologs_and_paf_scores'}) {
@@ -540,6 +552,16 @@ if ($self->{'_transcript_pair_exonerate'}) {
 # internal purposes
 if ($self->{'_synteny_metric'}) {
   _synteny_metric($self) if(defined($self->{'_synteny_metric'}));
+}
+
+# internal purposes
+if ($self->{'_compare_api_treefam'}) {
+  _compare_api_treefam($self) if(defined($self->{'_compare_api_treefam'}));
+}
+
+# internal purposes
+if ($self->{'_treefam_aln_plot'}) {
+  _treefam_aln_plot($self) if(defined($self->{'_treefam_aln_plot'}));
 }
 
 # internal purposes
@@ -1179,6 +1201,11 @@ sub _get_all_duprates_for_species_tree_sis {
     } else {
       $self->{sisrates}{$taxon_name}{spccount06}++;
     }
+    if (0 != $duplication && 80 <= $sis) {
+      $self->{sisrates}{$taxon_name}{dupcount08}++;
+    } else {
+      $self->{sisrates}{$taxon_name}{spccount08}++;
+    }
     $count++;
     my $verbose_string = sprintf "[%5d nodes done]\n", 
       $count;
@@ -1190,7 +1217,7 @@ sub _get_all_duprates_for_species_tree_sis {
     $self->{'clusterset_id'};
   $outfile .= ".csv";
   open OUTFILE, ">$outfile" or die "error opening outfile: $!\n";
-  print OUTFILE "node_subtype,is_leaf,dupcount,passedcount,coef,dupcount04,passedcount04,coef04,dupcount06,passedcount06,coef06\n";
+  print OUTFILE "node_subtype,is_leaf,dupcount,passedcount,coef,dupcount04,passedcount04,coef04,dupcount06,passedcount06,coef06,dupcount08,passedcount08,coef08\n";
   $self->{memberDBA} = $self->{'comparaDBA'}->get_MemberAdaptor;
   $self->{taxonDBA} =    $self->{comparaDBA}->get_NCBITaxonAdaptor;
   my $is_leaf;
@@ -1207,19 +1234,22 @@ sub _get_all_duprates_for_species_tree_sis {
     my $spccount04 = $self->{sisrates}{$taxon_name}{spccount04} || 0;
     my $dupcount06 = $self->{sisrates}{$taxon_name}{dupcount06} || 0;
     my $spccount06 = $self->{sisrates}{$taxon_name}{spccount06} || 0;
-    my $coef = 1; my $coef04 = 1; my $coef06 = 1;
+    my $dupcount08 = $self->{sisrates}{$taxon_name}{dupcount08} || 0;
+    my $spccount08 = $self->{sisrates}{$taxon_name}{spccount08} || 0;
+    my $coef = 1; my $coef04 = 1; my $coef06 = 1;my $coef08 = 1;
     if (0 != $sp_pep_count) {
-      $coef = $coef04 = $coef06 = $dupcount/$sp_pep_count;
+      $coef = $coef04 = $coef06 = $coef08 = $dupcount/$sp_pep_count;
       $is_leaf = 1;
     } else {
       $coef = $dupcount/($dupcount+$spccount) if ($spccount!=0);
       $coef04 = $dupcount04/($dupcount+$spccount04) if ($spccount04!=0);
       $coef06 = $dupcount06/($dupcount+$spccount06) if ($spccount06!=0);
+      $coef08 = $dupcount08/($dupcount+$spccount08) if ($spccount08!=0);
       $is_leaf = 0;
     }
     $taxon_name =~ s/\//\_/g; $taxon_name =~ s/\ /\_/g;
-    print OUTFILE "$taxon_name,$is_leaf,$dupcount,$spccount,$coef,$dupcount04,$spccount04,$coef04,$dupcount06,$spccount06,$coef06\n" unless ($is_leaf);
-    print OUTFILE "$taxon_name,$is_leaf,$dupcount,$sp_pep_count,$coef,$dupcount,$sp_pep_count,$coef04,$dupcount,$sp_pep_count,$coef06\n" if ($is_leaf);
+    print OUTFILE "$taxon_name,$is_leaf,$dupcount,$spccount,$coef,$dupcount04,$spccount04,$coef04,$dupcount06,$spccount06,$coef06,$dupcount08,$spccount08,$coef08\n" unless ($is_leaf);
+    print OUTFILE "$taxon_name,$is_leaf,$dupcount,$sp_pep_count,$coef,$dupcount,$sp_pep_count,$coef04,$dupcount,$sp_pep_count,$coef06,$dupcount,$sp_pep_count,$coef08\n" if ($is_leaf);
   }
 }
 
@@ -1458,6 +1488,7 @@ sub _transcript_pair_exonerate {
 sub _synteny_metric {
   my $self = shift;
 
+  my @dummy;
   $self->{gdba} = $self->{comparaDBA}->get_GenomeDBAdaptor;
   my $species1 = $self->{_species1} || "Homo sapiens";
   my $species2 = $self->{_species2} || "Pan troglodytes";
@@ -1476,147 +1507,776 @@ sub _synteny_metric {
   $starttime = time();
 
   print STDERR "fetching all homologies\n";
-  my @homologies = @{$self->{ha}->fetch_all_by_MethodLinkSpeciesSet($mlss)};
-  print STDERR (time()-$starttime), " secs... \n" if ($self->{verbose});
+  my $homologies = $self->{ha}->fetch_all_by_MethodLinkSpeciesSet($mlss);
+#   if ($self->{debug} == 1) {
+#     my $mlss_2 = $self->{mlssa}->fetch_by_method_link_type_GenomeDBs('ENSEMBL_PARALOGUES', [$sp1_gdb, $sp2_gdb]);
+#     my $paralogies = $self->{ha}->fetch_all_by_MethodLinkSpeciesSet($mlss_2);
+#     push @{$homologies}, @{$paralogies} if (defined $paralogies);
+#   }
+#   print STDERR (time()-$starttime), " secs... \n" if ($self->{verbose});
 
   my $homology_count;
-  my $totalnum_homologies = scalar(@homologies);
+  my $totalnum_homologies = scalar(@$homologies);
   print STDERR "$totalnum_homologies homologies\n";
 
-  foreach my $homology (@homologies) {
-    # next unless ($homology->description =~ /one2/ || $homology->description =~ /UBRH/);
+  print "gene_stable_id,hit_stable_id,synt_type,left_distance,right_distance,chr_name,chr_start,chr_strand,left_hit_stable_id,right_hit_stable_id\n";
+  foreach my $homology (@$homologies) {
+    next if ((1 == $self->{debug}) && ($homology->description !~ /one2one/));
+    next if ((2 == $self->{debug}) && ($homology->description =~ /RHS/));
     my ($member1, $member2) = @{$homology->gene_list};
     $homology_count++;
-    if ($self->{'verbose'} &&  ($homology_count % $self->{'verbose'} == 0)) {
-      my $verbose_string = sprintf "[%5d / %5d homologies done]\n", 
-        $homology_count, $totalnum_homologies;
-      print STDERR $verbose_string;
-    }
-    if ($self->{debug}) {
-      next if ($member1->chr_name ne '22'); # to speed up loading when debugging
-    }
+#     if ($self->{'verbose'} &&  ($homology_count % $self->{'verbose'} == 0)) {
+#       my $verbose_string = sprintf "[%5d / %5d homologies done]\n", 
+#         $homology_count, $totalnum_homologies;
+#       print STDERR $verbose_string;
+#     }
     my $member1_stable_id = $member1->stable_id;
     my $member1_genome_db = $member1->genome_db;
-    my $member1_genome_db_id = $member1->genome_db->dbID;
+    my $member1_genome_db_id = $member1_genome_db->dbID;
     my $member2_stable_id = $member2->stable_id;
     my $member2_genome_db = $member2->genome_db;
-    my $member2_genome_db_id = $member2->genome_db->dbID;
+    my $member2_genome_db_id = $member2_genome_db->dbID;
     # A list of homology correspondencies
-    $self->{_synt_orthologs}{$member1_genome_db_id}{$member1_stable_id} = $member2_stable_id;
-    $self->{_synt_orthologs}{$member2_genome_db_id}{$member2_stable_id} = $member1_stable_id;
+    $self->{_synt_orthologs}{$member1_genome_db_id}{$member1_stable_id}{$member2_stable_id} = 1;
+    $self->{_synt_orthologs}{$member2_genome_db_id}{$member2_stable_id}{$member1_stable_id} = 1;
     # Info about the chr location of $member1
-    $self->{_synt_chr_info}{$member1_stable_id}{chr_name} = $member1->chr_name;
-    $self->{_synt_chr_info}{$member1_stable_id}{chr_start} = $member1->chr_start;
-    $self->{_synt_chr_info}{$member1_stable_id}{chr_strand} = $member1->chr_strand;
-    $self->{_synt_chr_info}{$member2_stable_id}{chr_name} = $member2->chr_name;
-    $self->{_synt_chr_info}{$member2_stable_id}{chr_start} = $member2->chr_start;
-    $self->{_synt_chr_info}{$member2_stable_id}{chr_strand} = $member2->chr_strand;
-    
+    $self->{_m_chr_info}{$member1_genome_db_id}{$member1_stable_id}{chr_name} = $member1->chr_name;
+    my $member1_start = sprintf("%10d",$member1->chr_start);
+    $self->{_m_chr_info}{$member1_genome_db_id}{$member1_stable_id}{chr_start} = $member1_start;
+    $self->{_m_chr_info}{$member1_genome_db_id}{$member1_stable_id}{chr_strand} = $member1->chr_strand;
+    $self->{_chr_map}{$member1_genome_db_id}{$member1->chr_name}{$member1_start} = $member1_stable_id;
+    # Info about the chr location of $member2
+    $self->{_m_chr_info}{$member2_genome_db_id}{$member2_stable_id}{chr_name} = $member2->chr_name;
+    my $member2_start = sprintf("%10d",$member2->chr_start);
+    $self->{_m_chr_info}{$member2_genome_db_id}{$member2_stable_id}{chr_start} = $member2_start;
+    $self->{_m_chr_info}{$member2_genome_db_id}{$member2_stable_id}{chr_strand} = $member2->chr_strand;
+    $self->{_chr_map}{$member2_genome_db_id}{$member2->chr_name}{$member2_start} = $member2_stable_id;
+  }
+  foreach my $member1 (keys %{$self->{_m_chr_info}{$sp1_gdb_id}}) {
     # From genome A to genome B
-    my $lower_limit1 = (($member1->chr_start)-($self->{_synteny_metric}));
+    my $chr_start = $self->{_m_chr_info}{$sp1_gdb_id}{$member1}{chr_start};
+    my $chr_name = $self->{_m_chr_info}{$sp1_gdb_id}{$member1}{chr_name};
+    my $chr_strand = $self->{_m_chr_info}{$sp1_gdb_id}{$member1}{chr_strand};
+    my $lower_limit1 = (($chr_start)-($self->{_synteny_metric}));
     $lower_limit1 = 1 if ($lower_limit1 <= 0);
-    my $upper_limit1 = (($member1->chr_start)+($self->{_synteny_metric}));
-    
-    my $slice_adaptor1 = $member1_genome_db->db_adaptor->get_SliceAdaptor;
-    # Fetch a slice with the start of the gene as a center, and a certain distance left and right to that
-    my $slice1 = $slice_adaptor1->fetch_by_region(undef, $member1->chr_name, $lower_limit1, $upper_limit1);
-    next unless (defined($slice1));
-    
-    foreach my $gene (@{$slice1->get_all_Genes}) {
-      my $distance1 =  $member1->chr_start - $gene->seq_region_start;
-      my $abs_distance1 = abs($distance1); $abs_distance1 = sprintf("%09d",$abs_distance1);
-      my $gene_stable_id = $gene->stable_id;
-      my $gene_strand = $gene->seq_region_strand;
-      $self->{_each_synteny}{$member1_genome_db_id}{$member1_stable_id}{left}{$abs_distance1}{$gene_stable_id}{$gene_strand} = 1 if ($distance1 > 0);
-      $self->{_each_synteny}{$member1_genome_db_id}{$member1_stable_id}{right}{$abs_distance1}{$gene_stable_id}{$gene_strand} = 1 if ($distance1 < 0);
-    }
-    
-    # From genome B to genome A
-    my $lower_limit2 = (($member2->chr_start)-($self->{_synteny_metric}));
-    $lower_limit2 = 1 if ($lower_limit2 <= 0);
-    my $upper_limit2 = (($member2->chr_start)+($self->{_synteny_metric}));
-    
-    my $slice_adaptor2 = $member2_genome_db->db_adaptor->get_SliceAdaptor;
-    # Fetch a slice with the start of the gene as a center, and a certain distance left and right to that
-    my $slice2 = $slice_adaptor2->fetch_by_region(undef, $member2->chr_name, $lower_limit2, $upper_limit2);
-    next unless (defined($slice2));
-    
-    foreach my $gene (@{$slice2->get_all_Genes}) {
-      my $distance2 =  $member2->chr_start - $gene->seq_region_start;
-      my $abs_distance2 = abs($distance2); $abs_distance2 = sprintf("%09d",$abs_distance2);
-      my $gene_stable_id = $gene->stable_id;
-      my $gene_strand = $gene->seq_region_strand;
-      $self->{_each_synteny}{$member2_genome_db_id}{$member2_stable_id}{left}{$abs_distance2}{$gene_stable_id}{$gene_strand} = 1 if ($distance2 > 0);
-      $self->{_each_synteny}{$member2_genome_db_id}{$member2_stable_id}{right}{$abs_distance2}{$gene_stable_id}{$gene_strand} = 1 if ($distance2 < 0);
-    }
-    
-    print "gene_stable_id,synt_type,left_distance,right_distance,chr_name,chr_start,chr_strand\n";
-    foreach my $stable_id1 (keys %{$self->{_each_synteny}{$sp1_gdb_id}}) {
-      my @left_distances = sort keys %{$self->{_each_synteny}{$sp1_gdb_id}{$stable_id1}{left}};
-      my @right_distances = sort keys %{$self->{_each_synteny}{$sp1_gdb_id}{$stable_id1}{right}};
-      if (0 == scalar(@left_distances) || 0 == scalar(@right_distances)) {
-        my $left = $left_distances[0] || "na";
-        my $right = $right_distances[0] || "na";
-        $left = sprintf("%d",$left); $right = sprintf("%d",$right);
-        $self->{_synt_types}{$stable_id1} = "too_dist";
-        print "$stable_id1,too_dist,", $left, ",", $right, ",",
-          $self->{_synt_chr_info}{$stable_id1}{chr_name},",",
-            $self->{_synt_chr_info}{$stable_id1}{chr_start},",",
-              $self->{_synt_chr_info}{$stable_id1}{chr_strand},"\n";
-        next;
-      }
-      my @left_stable_ids2 = keys %{$self->{_each_synteny}{$sp1_gdb_id}{$stable_id1}{left}{$left_distances[0]}};
-      my @right_stable_ids2 = keys %{$self->{_each_synteny}{$sp1_gdb_id}{$stable_id1}{right}{$right_distances[0]}};
-      # Check if the closest left and right are orthologs
-      my $left_stable_id2 = $left_stable_ids2[0];
-      my $right_stable_id2 = $right_stable_ids2[0];
-      my $stable_id2 = $self->{_synt_orthologs}{$sp1_gdb_id}{$stable_id1};
-      my $left_ortholog = $self->{_synt_orthologs}{$sp1_gdb_id}{$left_stable_id2};
-      my $right_ortholog = $self->{_synt_orthologs}{$sp1_gdb_id}{$right_stable_id2};
-      if (defined($left_ortholog) && defined($right_ortholog)) {
-        1;#??
-        my $subslice_adaptor1 = $sp1_gdb->db_adaptor->get_SliceAdaptor;
-        # Fetch a slice with the start of the gene as a center, and a certain distance left and right to that
-        my $subslice1 = $subslice_adaptor1->fetch_by_region(undef, $self->{_synt_chr_info}{$stable_id1}, $self->{_synt_chr_info}{$left_stable_id2}, $self->{_synt_chr_info}{$right_stable_id2});
-        next unless (defined($subslice1));
-
-        foreach my $gene (@{$slice2->get_all_Genes}) {
-        }
-        $self->{_synt_types}{$stable_id1} = "perfect_orth";
-        print "$stable_id1,perfect_orth,", $left_distances[0],",", $right_distances[0], ",",
-          $self->{_synt_chr_info}{$stable_id1}{chr_name},",",
-            $self->{_synt_chr_info}{$stable_id1}{chr_start},",",
-              $self->{_synt_chr_info}{$stable_id1}{chr_strand},"\n";
-      } elsif (defined($left_ortholog) || defined($right_ortholog)) {
-        $self->{_synt_types}{$stable_id1} = "onesided_orth";
-        print "$stable_id1,onesided_orth,", $left_distances[0],",", $right_distances[0], ",",
-          $self->{_synt_chr_info}{$stable_id1}{chr_name},",",
-            $self->{_synt_chr_info}{$stable_id1}{chr_start},",",
-              $self->{_synt_chr_info}{$stable_id1}{chr_strand},"\n";
-      } else {
-        $self->{_synt_types}{$stable_id1} = "noflank_orth";
-        print "$stable_id1,noflank_orth,", $left_distances[0],",", $right_distances[0], ",",
-          $self->{_synt_chr_info}{$stable_id1}{chr_name},",",
-            $self->{_synt_chr_info}{$stable_id1}{chr_start},",",
-              $self->{_synt_chr_info}{$stable_id1}{chr_strand},"\n";
-      }
+    my $upper_limit1 = (($chr_start)+($self->{_synteny_metric}));
+    foreach my $map_point (sort keys %{$self->{_chr_map}{$sp1_gdb_id}{$chr_name}}) {
+      next unless ($map_point > $lower_limit1 && $map_point < $upper_limit1);
+      my $distance1 =  $chr_start - $map_point;
+      my $abs_distance1 = abs($distance1); $abs_distance1 = sprintf("%10d",$abs_distance1);
+      my $nb_member1 = $self->{_chr_map}{$sp1_gdb_id}{$chr_name}{$map_point};
+      $self->{_each_synteny}{$sp1_gdb_id}{$member1}{left}{$abs_distance1}{$nb_member1}{$chr_strand} = 1 if ($distance1 > 0);
+      $self->{_each_synteny}{$sp1_gdb_id}{$member1}{right}{$abs_distance1}{$nb_member1}{$chr_strand} = 1 if ($distance1 < 0);
     }
   }
+
+  foreach my $reference_stable_id (keys %{$self->{_each_synteny}{$sp1_gdb_id}}) {
+    # We are trying to find the neighbor genes left and right of $reference_stable_id
+    
+    # For that we look at the closest on one side, and check if its
+    # orthologies are hitting the ortholog of $reference_stable_id. If so, we
+    # go to the next gene, until we find an unrelated one or run out
+    # of genes in the slice. We do the same for the other side, and
+    # then we check for the specific type of synteny
+    
+    @dummy = keys %{$self->{_synt_orthologs}{$sp1_gdb_id}{$reference_stable_id}};
+    my $hit_stable_id = $dummy[0];
+    next unless (defined($hit_stable_id));
+
+    my $resolved_unrelated_left = 0;
+    my $resolved_unrelated_right = 0;
+    my @left_distances = sort keys %{$self->{_each_synteny}{$sp1_gdb_id}{$reference_stable_id}{left}};
+    my @right_distances = sort keys %{$self->{_each_synteny}{$sp1_gdb_id}{$reference_stable_id}{right}};
+    
+    if (0 == scalar(@left_distances) || 0 == scalar(@right_distances)) {
+      my $left = $left_distances[0] || "na";
+      my $right = $right_distances[0] || "na";
+      $left = sprintf("%d",$left) unless ($left eq 'na'); $right = sprintf("%d",$right) unless ($right eq 'na');
+      $self->{_synt_types}{$reference_stable_id} = "too_dist";
+      my $chr_name = $self->{_m_chr_info}{$sp1_gdb_id}{$reference_stable_id}{chr_name};
+      my $chr_start = $self->{_m_chr_info}{$sp1_gdb_id}{$reference_stable_id}{chr_start};
+      my $chr_strand = $self->{_m_chr_info}{$sp1_gdb_id}{$reference_stable_id}{chr_strand};
+      my $result = "$reference_stable_id,$hit_stable_id,too_dist,$left,$right,$chr_name,$chr_start,$chr_strand,na,na\n";
+      $result =~ s/\ //g;
+      print $result;
+      next;
+    }
+
+    my $left_nb = 0;
+    my $right_nb = 0;
+    my $final_left_nb = 0;
+    my $final_right_nb = 0;
+    my $final_left_hit_ortholog_stable_id;
+    my $final_right_hit_ortholog_stable_id;
+
+    #print "\n",time()-$starttime,"\n" if ($self->{verbose} == 2);
+    while (0 == $resolved_unrelated_left || 0 == $resolved_unrelated_right) {
+      if ($left_nb >= scalar(@left_distances) || $right_nb >= scalar(@right_distances)) {
+        last;
+      }
+     my @left_to_reference_stable_ids1 = keys %{$self->{_each_synteny}{$sp1_gdb_id}{$reference_stable_id}{left}{$left_distances[$left_nb]}};
+      my @right_to_reference_stable_ids1 = keys %{$self->{_each_synteny}{$sp1_gdb_id}{$reference_stable_id}{right}{$right_distances[$right_nb]}};
+      my $left_to_reference_stable_id = $left_to_reference_stable_ids1[0];
+      my $right_to_reference_stable_id = $right_to_reference_stable_ids1[0];
+      # Check if the closest left and right are syntenic orthologs on both sides or only one, or in a triangle
+      @dummy = keys %{$self->{_synt_orthologs}{$sp1_gdb_id}{$left_to_reference_stable_id}};
+      my $left_hit_ortholog_stable_id = $dummy[0];
+      @dummy = keys %{$self->{_synt_orthologs}{$sp1_gdb_id}{$right_to_reference_stable_id}};;
+      my $right_hit_ortholog_stable_id = $dummy[0];
+      my $chr_hit = ''; $chr_hit = $self->{_m_chr_info}{$sp2_gdb_id}{$hit_stable_id}{chr_name};
+      my $chr_left_hit_ortholog = ''; $chr_left_hit_ortholog = $self->{_m_chr_info}{$sp2_gdb_id}{$left_hit_ortholog_stable_id}{chr_name} if defined($left_hit_ortholog_stable_id);
+      my $chr_right_hit_ortholog = ''; $chr_right_hit_ortholog = $self->{_m_chr_info}{$sp2_gdb_id}{$right_hit_ortholog_stable_id}{chr_name} if defined($right_hit_ortholog_stable_id);
+      
+      if (defined($left_hit_ortholog_stable_id) && defined($right_hit_ortholog_stable_id)) {
+        my $unrelated_left = 0; $unrelated_left = 1 if (!defined($self->{_synt_orthologs}{$sp1_gdb_id}{$left_to_reference_stable_id}{$hit_stable_id}));
+        my $unrelated_right = 0; $unrelated_right = 1 if (!defined($self->{_synt_orthologs}{$sp1_gdb_id}{$right_to_reference_stable_id}{$hit_stable_id}));
+        my $chr_left_to_hit_distance = 
+          abs(
+              $self->{_m_chr_info}{$sp2_gdb_id}{$hit_stable_id}{chr_start} - 
+              $self->{_m_chr_info}{$sp2_gdb_id}{$left_hit_ortholog_stable_id}{chr_start});
+        my $chr_right_to_hit_distance = 
+          abs(
+              $self->{_m_chr_info}{$sp2_gdb_id}{$hit_stable_id}{chr_start} - 
+              $self->{_m_chr_info}{$sp2_gdb_id}{$right_hit_ortholog_stable_id}{chr_start});
+        if ((1 == $unrelated_left) && 
+            ($chr_left_hit_ortholog eq $chr_hit) && 
+            ($chr_left_to_hit_distance <= ($self->{_synteny_metric})) &&
+           $left_hit_ortholog_stable_id ne $right_hit_ortholog_stable_id) {
+          $resolved_unrelated_left = 1;
+          $final_left_nb = $left_nb;
+          $final_left_hit_ortholog_stable_id = $left_hit_ortholog_stable_id;
+        } else {
+          $left_nb++;
+        }
+        if ((1 == $unrelated_right) && 
+            ($chr_right_hit_ortholog eq $chr_hit) && 
+            ($chr_right_to_hit_distance <= ($self->{_synteny_metric})) &&
+           $left_hit_ortholog_stable_id ne $right_hit_ortholog_stable_id) {
+          $resolved_unrelated_right = 1;
+          $final_right_nb = $right_nb;
+          $final_right_hit_ortholog_stable_id = $right_hit_ortholog_stable_id;
+        } else {
+          $right_nb++;
+        }
+      } elsif (defined($left_hit_ortholog_stable_id) && 
+               !defined($right_hit_ortholog_stable_id)) {
+        # we have a left but not a right
+        my $unrelated_left = 0; $unrelated_left = 1 if (!defined($self->{_synt_orthologs}{$sp1_gdb_id}{$left_to_reference_stable_id}{$hit_stable_id}));
+        my $chr_left_to_hit_distance = 
+          abs(
+              $self->{_m_chr_info}{$sp2_gdb_id}{$hit_stable_id}{chr_start} - 
+              $self->{_m_chr_info}{$sp2_gdb_id}{$left_hit_ortholog_stable_id}{chr_start});
+        if ((1 == $unrelated_left) && 
+            ($chr_left_hit_ortholog eq $chr_hit) && 
+            ($chr_left_to_hit_distance <= ($self->{_synteny_metric})) &&
+           $left_hit_ortholog_stable_id ne $right_hit_ortholog_stable_id) {
+          $resolved_unrelated_left = 1;
+          $final_left_nb = $left_nb;
+          $final_left_hit_ortholog_stable_id = $left_hit_ortholog_stable_id;
+          $right_nb++;
+        }
+      } elsif (!defined($left_hit_ortholog_stable_id) && 
+               defined($right_hit_ortholog_stable_id)) {
+        # we have a right but not a left
+        my $unrelated_right = 0; $unrelated_right = 1 if (!defined($self->{_synt_orthologs}{$sp1_gdb_id}{$right_to_reference_stable_id}{$hit_stable_id}));
+        my $chr_right_to_hit_distance = 
+          abs(
+              $self->{_m_chr_info}{$sp2_gdb_id}{$hit_stable_id}{chr_start} - 
+              $self->{_m_chr_info}{$sp2_gdb_id}{$right_hit_ortholog_stable_id}{chr_start});
+        if ((1 == $unrelated_right) && 
+            ($chr_right_hit_ortholog eq $chr_hit) && 
+            ($chr_right_to_hit_distance <= ($self->{_synteny_metric})) &&
+           $left_hit_ortholog_stable_id ne $right_hit_ortholog_stable_id) {
+          $resolved_unrelated_right = 1;
+          $final_right_nb = $right_nb;
+          $final_right_hit_ortholog_stable_id = $right_hit_ortholog_stable_id;
+          $left_nb++;
+        }
+      } else {
+        # Keep looking as we may have a synteny in the next neighbours
+        $resolved_unrelated_left = 0;
+        $resolved_unrelated_right = 0;
+        $left_nb++;
+        $right_nb++;
+      }
+    }
+
+    if (defined($final_left_hit_ortholog_stable_id) && defined($final_right_hit_ortholog_stable_id)) {
+      $self->{_synt_types}{$reference_stable_id} = "perfect_synt";
+      print "$reference_stable_id,$hit_stable_id,perfect_synt,", $left_distances[$final_left_nb],",", $right_distances[$final_right_nb], ",",
+        $self->{_m_chr_info}{$sp1_gdb_id}{$reference_stable_id}{chr_name},",",
+          int($self->{_m_chr_info}{$sp1_gdb_id}{$reference_stable_id}{chr_start}),",",
+            $self->{_m_chr_info}{$sp1_gdb_id}{$reference_stable_id}{chr_strand},",",
+              $final_left_hit_ortholog_stable_id,",",
+                $final_right_hit_ortholog_stable_id,
+                  "\n";
+      print STDERR "\nhttp://www.ensembl.org/Homo_sapiens/multicontigview?gene=$reference_stable_id;context=100000;s1=",$self->{_species2},";g1=$hit_stable_id\n" if ($self->{verbose});
+    } elsif (!defined($final_left_hit_ortholog_stable_id) && defined($final_right_hit_ortholog_stable_id)) {
+      $self->{_synt_types}{$reference_stable_id} = "good_synt";
+      print "$reference_stable_id,$hit_stable_id,good_synt,", "na",",", $right_distances[$final_right_nb], ",",
+        $self->{_m_chr_info}{$sp1_gdb_id}{$reference_stable_id}{chr_name},",",
+          int($self->{_m_chr_info}{$sp1_gdb_id}{$reference_stable_id}{chr_start}),",",
+            $self->{_m_chr_info}{$sp1_gdb_id}{$reference_stable_id}{chr_strand},",",
+              "na",",",
+                $final_right_hit_ortholog_stable_id,
+                  "\n";
+    } elsif (defined($final_left_hit_ortholog_stable_id) && !defined($final_right_hit_ortholog_stable_id)) {
+      $self->{_synt_types}{$reference_stable_id} = "good_synt";
+      print "$reference_stable_id,$hit_stable_id,good_synt,", $left_distances[$final_left_nb],",", "na", ",",
+        $self->{_m_chr_info}{$sp1_gdb_id}{$reference_stable_id}{chr_name},",",
+          int($self->{_m_chr_info}{$sp1_gdb_id}{$reference_stable_id}{chr_start}),",",
+            $self->{_m_chr_info}{$sp1_gdb_id}{$reference_stable_id}{chr_strand},",",
+              $final_left_hit_ortholog_stable_id,",",
+                "na",
+                  "\n";
+      print STDERR "\nhttp://www.ensembl.org/Homo_sapiens/multicontigview?gene=$reference_stable_id;context=100000;s1=",$self->{_species2},";g1=$hit_stable_id\n" if ($self->{verbose});
+    } else {
+      $self->{_synt_types}{$reference_stable_id} = "too_dist";
+      my $chr_name = $self->{_m_chr_info}{$sp1_gdb_id}{$reference_stable_id}{chr_name};
+      my $chr_start = $self->{_m_chr_info}{$sp1_gdb_id}{$reference_stable_id}{chr_start};
+      my $chr_strand = $self->{_m_chr_info}{$sp1_gdb_id}{$reference_stable_id}{chr_strand};
+      my $result = "$reference_stable_id,$hit_stable_id,too_dist,na,na,$chr_name,$chr_start,$chr_strand,na,na\n";
+      $result =~ s/\ //g;
+      print $result;
+    }
+  }
+  # this is the very last step for species2-singleton printouts
   my $sp1_genes = $self->{comparaDBA}->get_MemberAdaptor->fetch_all_by_source_taxon('ENSEMBLGENE', $sp1_gdb->taxon_id);
   foreach my $gene (@$sp1_genes) {
-    next if (defined($self->{_synt_orthologs}{$sp1_gdb->dbID}{$gene->stable_id}));
+    next if (defined($self->{_synt_types}{$gene->stable_id}));
     my $gene_stable_id = $gene->stable_id;
     my $chr_name = $gene->chr_name;
     my $chr_start = $gene->chr_start;
     my $chr_strand = $gene->chr_strand;
     $self->{_synt_types}{$gene_stable_id} = "nohit_orth";
-    print $gene_stable_id, ",nohit_orth,na,na,", $chr_name,",", $chr_start,",", $chr_strand,"\n";
+    print $gene_stable_id, ",na,nohit_orth,na,na,", $chr_name,",", $chr_start,",", $chr_strand,"\n";
   }
-  # And finally check that there are no genes not in member in between the triads...
-  # TODO: Label perfection like the number of perfect matches found at left and right.
 }
-  
-  sub _get_all_duprates_for_species_tree
+
+# sub _old_synteny_metric {
+#   my $self = shift;
+
+#   $url =~ /mysql\:\/\/(\S+)\@(\S+)\/\S+/g;
+#   my ($myuser,$myhost) = ($1,$2);
+#   Bio::EnsEMBL::Registry->load_registry_from_db(-host=>$myhost, -user=>$myuser, -verbose=>'0');
+#   $self->{gdba} = $self->{comparaDBA}->get_GenomeDBAdaptor;
+#   my $species1 = $self->{_species1} || "Homo sapiens";
+#   my $species2 = $self->{_species2} || "Pan troglodytes";
+#   $species1 =~ s/\_/\ /g;
+#   $species2 =~ s/\_/\ /g;
+#   my $sp1_gdb = $self->{gdba}->fetch_by_name_assembly($species1);
+#   my $sp2_gdb = $self->{gdba}->fetch_by_name_assembly($species2);
+#   my $sp1_gdb_id = $sp1_gdb->dbID;
+#   my $sp2_gdb_id = $sp2_gdb->dbID;
+
+#   $self->{mlssa} = $self->{comparaDBA}->get_MethodLinkSpeciesSetAdaptor;
+#   my $mlss = $self->{mlssa}->fetch_by_method_link_type_GenomeDBs('ENSEMBL_ORTHOLOGUES', [$sp1_gdb, $sp2_gdb]);
+#   $self->{ha} = $self->{comparaDBA}->get_HomologyAdaptor;
+
+#   my $starttime;
+#   $starttime = time();
+
+#   print STDERR "fetching all homologies\n";
+#   my $homologies = $self->{ha}->fetch_all_by_MethodLinkSpeciesSet($mlss);
+# #   if ($self->{debug} == 1) {
+# #     my $mlss_2 = $self->{mlssa}->fetch_by_method_link_type_GenomeDBs('ENSEMBL_PARALOGUES', [$sp1_gdb, $sp2_gdb]);
+# #     my $paralogies = $self->{ha}->fetch_all_by_MethodLinkSpeciesSet($mlss_2);
+# #     push @{$homologies}, @{$paralogies} if (defined $paralogies);
+# #   }
+#   print STDERR (time()-$starttime), " secs... \n" if ($self->{verbose});
+
+#   my $homology_count;
+#   my $totalnum_homologies = scalar(@$homologies);
+#   print STDERR "$totalnum_homologies homologies\n";
+
+#   print "gene_stable_id,synt_type,left_distance,right_distance,chr_name,chr_start,chr_strand,left_hit_stable_id,right_hit_stable_id\n";
+#   foreach my $homology (@$homologies) {
+#     next if (($self->{debug} == 2) && ($homology->description =~ /RHS/));
+#     my ($member1, $member2) = @{$homology->gene_list};
+#     $homology_count++;
+#     if ($self->{'verbose'} &&  ($homology_count % $self->{'verbose'} == 0)) {
+#       my $verbose_string = sprintf "[%5d / %5d homologies done]\n", 
+#         $homology_count, $totalnum_homologies;
+#       print STDERR $verbose_string;
+#     }
+# #     if (1 == $self->{debug}) {
+# #       next if ($member1->chr_name ne '22'); # to speed up loading when debugging
+# #     }
+#     my $member1_stable_id = $member1->stable_id;
+#     my $member1_genome_db = $member1->genome_db;
+#     my $member1_genome_db_id = $member1_genome_db->dbID;
+#     my $member2_stable_id = $member2->stable_id;
+#     my $member2_genome_db = $member2->genome_db;
+#     my $member2_genome_db_id = $member2_genome_db->dbID;
+#     # A list of homology correspondencies
+#     $self->{_synt_orthologs}{$member1_genome_db_id}{$member1_stable_id} = $member2_stable_id;
+#     $self->{_synt_orthologs}{$member2_genome_db_id}{$member2_stable_id} = $member1_stable_id;
+#     # Info about the chr location of $member1
+#     $self->{_m_chr_info}{$member1_stable_id}{chr_name} = $member1->chr_name;
+#     $self->{_m_chr_info}{$member1_stable_id}{chr_start} = $member1->chr_start;
+#     $self->{_m_chr_info}{$member1_stable_id}{chr_strand} = $member1->chr_strand;
+#     # Info about the chr location of $member2
+#     $self->{_m_chr_info}{$member2_stable_id}{chr_name} = $member2->chr_name;
+#     $self->{_m_chr_info}{$member2_stable_id}{chr_start} = $member2->chr_start;
+#     $self->{_m_chr_info}{$member2_stable_id}{chr_strand} = $member2->chr_strand;
+    
+#     # From genome A to genome B
+#     my $lower_limit1 = (($member1->chr_start)-($self->{_synteny_metric}));
+#     $lower_limit1 = 1 if ($lower_limit1 <= 0);
+#     my $upper_limit1 = (($member1->chr_start)+($self->{_synteny_metric}));
+    
+#     my $slice_adaptor1;
+#     $slice_adaptor1 = $member1_genome_db->db_adaptor->get_SliceAdaptor if (defined($member1_genome_db->db_adaptor));
+#     $slice_adaptor1 = Bio::EnsEMBL::Registry->get_adaptor($member1_genome_db->name, 'core', 'Slice') unless (defined($slice_adaptor1));
+#     # Fetch a slice with the start of the gene as a center, and a certain distance left and right to that
+#     my $slice1 = $slice_adaptor1->fetch_by_region(undef, $member1->chr_name, $lower_limit1, $upper_limit1);
+#     next unless (defined($slice1));
+    
+#     foreach my $gene (@{$slice1->get_all_Genes}) {
+#       next if ($gene->stable_id eq $member1->stable_id);
+#       my $distance1 =  $member1->chr_start - $gene->seq_region_start;
+#       my $abs_distance1 = abs($distance1); $abs_distance1 = sprintf("%09d",$abs_distance1);
+#       my $gene_stable_id = $gene->stable_id;
+#       my $gene_strand = $gene->seq_region_strand;
+#       $self->{_each_synteny}{$member1_genome_db_id}{$member1_stable_id}{left}{$abs_distance1}{$gene_stable_id}{$gene_strand} = 1 if ($distance1 > 0);
+#       $self->{_each_synteny}{$member1_genome_db_id}{$member1_stable_id}{right}{$abs_distance1}{$gene_stable_id}{$gene_strand} = 1 if ($distance1 < 0);
+#     }
+    
+#     # From genome B to genome A
+#     my $lower_limit2 = (($member2->chr_start)-($self->{_synteny_metric}));
+#     $lower_limit2 = 1 if ($lower_limit2 <= 0);
+#     my $upper_limit2 = (($member2->chr_start)+($self->{_synteny_metric}));
+    
+#     my $slice_adaptor2 = $member2_genome_db->db_adaptor->get_SliceAdaptor;
+#     # Fetch a slice with the start of the gene as a center, and a certain distance left and right to that
+#     my $slice2 = $slice_adaptor2->fetch_by_region(undef, $member2->chr_name, $lower_limit2, $upper_limit2);
+#     next unless (defined($slice2));
+    
+#     foreach my $gene (@{$slice2->get_all_Genes}) {
+#       next if ($gene->stable_id eq $member2->stable_id);
+#       my $distance2 =  $member2->chr_start - $gene->seq_region_start;
+#       my $abs_distance2 = abs($distance2); $abs_distance2 = sprintf("%09d",$abs_distance2);
+#       my $gene_stable_id = $gene->stable_id;
+#       my $gene_strand = $gene->seq_region_strand;
+#       $self->{_each_synteny}{$member2_genome_db_id}{$member2_stable_id}{left}{$abs_distance2}{$gene_stable_id}{$gene_strand} = 1 if ($distance2 > 0);
+#       $self->{_each_synteny}{$member2_genome_db_id}{$member2_stable_id}{right}{$abs_distance2}{$gene_stable_id}{$gene_strand} = 1 if ($distance2 < 0);
+#     }
+#   }
+
+#   foreach my $reference_stable_id (keys %{$self->{_each_synteny}{$sp1_gdb_id}}) {
+#     # We are trying to find the neighbor genes left and right of $reference_stable_id
+    
+#     # For that we look at the closest on one side, and check if its
+#     # orthologies are hitting the ortholog of $reference_stable_id. If so, we
+#     # go to the next gene, until we find an unrelated one or run out
+#     # of genes in the slice. We do the same for the other side, and
+#     # then we check for the specific type of synteny
+    
+#     my $hit_stable_id = $self->{_synt_orthologs}{$sp1_gdb_id}{$reference_stable_id};
+#     next unless (defined($hit_stable_id));
+
+#     my $resolved_unrelated_left = 0;
+#     my $resolved_unrelated_right = 0;
+#     my @left_distances = sort keys %{$self->{_each_synteny}{$sp1_gdb_id}{$reference_stable_id}{left}};
+#     my @right_distances = sort keys %{$self->{_each_synteny}{$sp1_gdb_id}{$reference_stable_id}{right}};
+    
+#     if (0 == scalar(@left_distances) || 0 == scalar(@right_distances)) {
+#       my $left = $left_distances[0] || "na";
+#       my $right = $right_distances[0] || "na";
+#       $left = sprintf("%d",$left) unless ($left eq 'na'); $right = sprintf("%d",$right) unless ($right eq 'na');
+#       $self->{_synt_types}{$reference_stable_id} = "too_dist";
+#       print "$reference_stable_id,too_dist,", $left, ",", $right, ",",
+#         $self->{_m_chr_info}{$reference_stable_id}{chr_name},",",
+#           $self->{_m_chr_info}{$reference_stable_id}{chr_start},",",
+#             $self->{_m_chr_info}{$reference_stable_id}{chr_strand},",",
+#               "na",",",
+#                 "na",",",
+#                   "\n";
+#       $resolved_unrelated_left = 1; $resolved_unrelated_right = 1;
+#     }
+
+#     my $left_nb = 0;
+#     my $right_nb = 0;
+#     my $final_left_nb = 0;
+#     my $final_right_nb = 0;
+#     my $final_left_hit_ortholog_stable_id;
+#     my $final_right_hit_ortholog_stable_id;
+
+#     while (0 == $resolved_unrelated_left || 0 == $resolved_unrelated_right) {
+#       my @left_to_reference_stable_ids1 = keys %{$self->{_each_synteny}{$sp1_gdb_id}{$reference_stable_id}{left}{$left_distances[$left_nb]}};
+#       my @right_to_reference_stable_ids1 = keys %{$self->{_each_synteny}{$sp1_gdb_id}{$reference_stable_id}{right}{$right_distances[$right_nb]}};
+#       my $left_to_reference_stable_id = $left_to_reference_stable_ids1[0];
+#       my $right_to_reference_stable_id = $right_to_reference_stable_ids1[0];
+#       # Check if the closest left and right are syntenic orthologs on both sides or only one, or in a triangle
+#       my $left_hit_ortholog_stable_id = $self->{_synt_orthologs}{$sp1_gdb_id}{$left_to_reference_stable_id};
+#       my $right_hit_ortholog_stable_id = $self->{_synt_orthologs}{$sp1_gdb_id}{$right_to_reference_stable_id};
+#       my $chr_hit = ''; $chr_hit = $self->{_m_chr_info}{$hit_stable_id}{chr_name};
+#       my $chr_left_hit_ortholog = ''; $chr_left_hit_ortholog = $self->{_m_chr_info}{$left_hit_ortholog_stable_id}{chr_name} if defined($left_hit_ortholog_stable_id);
+#       my $chr_right_hit_ortholog = ''; $chr_right_hit_ortholog = $self->{_m_chr_info}{$right_hit_ortholog_stable_id}{chr_name} if defined($right_hit_ortholog_stable_id);
+      
+#       if (defined($left_hit_ortholog_stable_id) && defined($right_hit_ortholog_stable_id)) {
+#         my $unrelated_left = 1 if (!defined($self->{_synt_orthologs}{$left_to_reference_stable_id}{$hit_stable_id}));
+#         my $unrelated_right = 1 if (!defined($self->{_synt_orthologs}{$right_to_reference_stable_id}{$hit_stable_id}));
+#         if ((1 == $unrelated_left) && ($chr_left_hit_ortholog eq $chr_hit)) {
+#           $resolved_unrelated_left = 1;
+#           $final_left_nb = $left_nb;
+#           $final_left_hit_ortholog_stable_id = $left_hit_ortholog_stable_id;
+#         }
+#         if ((1 == $unrelated_right) && ($chr_right_hit_ortholog eq $chr_hit)) {
+#           $resolved_unrelated_right = 1;
+#           $final_right_nb = $right_nb;
+#           $final_right_hit_ortholog_stable_id = $right_hit_ortholog_stable_id;
+#         }
+#       } elsif (defined($left_hit_ortholog_stable_id) && !defined($right_hit_ortholog_stable_id)) {
+#         # we have a left but not a right
+#         my $unrelated_left = 1 if (!defined($self->{_synt_orthologs}{$left_to_reference_stable_id}{$hit_stable_id}));
+#         if ((1 == $unrelated_left) && ($chr_left_hit_ortholog eq $chr_hit)) {
+#           $resolved_unrelated_left = 1;
+#           $final_left_nb = $left_nb;
+#           $final_left_hit_ortholog_stable_id = $left_hit_ortholog_stable_id;
+#           $right_nb++;
+#         }
+#       } elsif (!defined($left_hit_ortholog_stable_id) && defined($right_hit_ortholog_stable_id)) {
+#         # we have a right but not a left
+#         my $unrelated_right = 1 if (!defined($self->{_synt_orthologs}{$right_to_reference_stable_id}{$hit_stable_id}));
+#         if (1 == $unrelated_right) {
+#           $resolved_unrelated_right = 1;
+#           $final_right_nb = $right_nb;
+#           $final_right_hit_ortholog_stable_id = $right_hit_ortholog_stable_id;
+#           $left_nb++;
+#         }
+#       } else {
+#         # Keep looking as we may have a synteny in the next neighbours
+#         $resolved_unrelated_left = 0;
+#         $resolved_unrelated_right = 0;
+#         $left_nb++;
+#         $right_nb++;
+#       }
+#     }
+
+#     $self->{_synt_types}{$reference_stable_id} = "perfect_synt";
+#     print "$reference_stable_id,perfect_synt,", $left_distances[$final_left_nb],",", $right_distances[$final_right_nb], ",",
+#       $self->{_m_chr_info}{$reference_stable_id}{chr_name},",",
+#         $self->{_m_chr_info}{$reference_stable_id}{chr_start},",",
+#           $self->{_m_chr_info}{$reference_stable_id}{chr_strand},",",
+#             $final_left_hit_ortholog_stable_id,",",
+#             $final_right_hit_ortholog_stable_id,",",
+#             "\n";
+
+#   }
+#   # this is the very last step for species2-singleton printouts
+#   my $sp1_genes = $self->{comparaDBA}->get_MemberAdaptor->fetch_all_by_source_taxon('ENSEMBLGENE', $sp1_gdb->taxon_id);
+#   foreach my $gene (@$sp1_genes) {
+#     next if (defined($self->{_synt_orthologs}{$sp1_gdb->dbID}{$gene->stable_id}));
+#     my $gene_stable_id = $gene->stable_id;
+#     my $chr_name = $gene->chr_name;
+#     my $chr_start = $gene->chr_start;
+#     my $chr_strand = $gene->chr_strand;
+#     $self->{_synt_types}{$gene_stable_id} = "nohit_orth";
+#     print $gene_stable_id, ",nohit_orth,na,na,", $chr_name,",", $chr_start,",", $chr_strand,"\n";
+#   }
+#   # And finally check that there are no genes not in member in between the triads...
+#   # TODO: Label perfection like the number of perfect matches found at left and right.
+# }
+
+
+sub _compare_api_treefam {
+  my $self = shift;
+
+  my $starttime = time();
+  $self->{treeDBA} = $self->{'comparaDBA'}->get_ProteinTreeAdaptor;
+  $self->{memberDBA} = $self->{'comparaDBA'}->get_MemberAdaptor;
+  $self->{taxonDBA} = $self->{'comparaDBA'}->get_NCBITaxonAdaptor;
+  $self->{gdbDBA} = $self->{'comparaDBA'}->get_GenomeDBAdaptor;
+  my $species1 = $self->{_species1} || "Homo sapiens";
+  my $species2 = $self->{_species2} || "Mus musculus";
+
+  eval {require Treefam::DBConnection;};
+  if ($@) { print STDERR "treefam api not found"; die "$!\n"; }
+
+  my $dbc =  Treefam::DBConnection->new
+    (-database => 'treefam_4',
+     -host     => 'vegasrv.sanger.ac.uk',
+     -user     => 'anonymous',
+     -port     => 3308);
+
+  my $famh = $dbc->get_FamilyHandle();
+  my $trh = $dbc->get_TreeHandle();
+  my $gh = $dbc->get_GeneHandle;
+  # gets families with human genes
+  my @families = $famh->get_all_by_species($species1);
+  foreach my $family (@families) {
+    # next unless ($family->ID eq 'TF105641');
+    # We dont want familyB types, as these are old PHIGS clusters
+    next unless ($family->type eq 'familyA');
+    my @genes = $gh->get_all_by_species($species2,$family);
+    if (0 != scalar(@genes)) {
+      # my $famh = $dbc->get_FamilyHandle();
+      # my @famA = $famh->get_all_by_type('A');
+      my $tree = $trh->get_by_family($family,'SEED');
+      my $treefamid = $tree->ID;
+      my $treefam_nhx = $tree->nhx;
+      next unless ($treefam_nhx =~ /\;/);
+      $self->{tree} = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($treefam_nhx);
+      next unless (defined $self->{tree});
+
+      my %tf_map;
+      my @leaves = @{$self->{tree}->get_all_leaves};
+      foreach my $leaf (@leaves) {
+        my $leaf_name = $leaf->name;
+        # treefam uses G NHX tag for genename
+        my $genename = $leaf->get_tagvalue('G');
+        next if (0==length($genename)); # for weird pseudoleaf tags with no gene name
+        # Asking for a genetree given the genename of a treefam tree
+        my $gene = $self->{memberDBA}->fetch_by_source_stable_id('ENSEMBLGENE',$genename);
+        if (defined($gene)) {
+          $tf_map{$genename} = 1;
+          bless $leaf, "Bio::EnsEMBL::Compara::AlignedMember";
+          $leaf->name($genename);
+          $leaf->genome_db_id($gene->genome_db_id);
+        }
+      }
+
+      $self->{'keep_leaves'} = join(",",keys %tf_map);
+      keep_leaves($self);
+
+      my @intnodes = $self->{tree}->get_all_subnodes;
+      foreach my $node (@intnodes) {
+        next if ($node->is_leaf);
+        my $s = $node->get_tagvalue("S");
+        next unless (defined($s) && $s ne '');
+        my $taxon = $self->{taxonDBA}->fetch_node_by_name($s);
+        $node->add_tag("taxon_level", $taxon);
+        $node->add_tag("duplication_confidence_score", 1);
+        $node->add_tag("species_intersection_score", 1);
+      }
+      $treefam_nhx =~ /.+S\=(\w+).+\;/;
+      my $sroot = $1;
+      my $roottaxon = $self->{taxonDBA}->fetch_node_by_name($sroot);
+      $self->{tree}->root->add_tag("taxon_level", $roottaxon);
+      $treefam_nhx =~ /.+D\=(\w+).+\;/;
+      my $duproot = $1;
+      $duproot =~ s/Y/1/;
+      $duproot =~ s/N/0/;
+      $duproot = 0 unless (1 == $duproot);
+      $self->{tree}->root->add_tag("Duplication", $duproot);
+      $self->{tree}->root->add_tag("duplication_confidence_score", 1);
+      $self->{tree}->root->add_tag("species_intersection_score", 1);
+
+      print STDERR (time()-$starttime), " secs... \n" if ($self->{verbose});
+      print STDERR $family->ID,"\n" if ($self->{verbose});
+      print STDERR join (",",map {$_->stable_id} @{$self->{tree}->get_all_leaves}),"\n" if ($self->{verbose});
+      print STDERR $self->{tree}->newick_format;
+
+      # Make sure we have Duplication tag everywhere
+      map { if ('' eq $_->get_tagvalue("Duplication")) {$_->add_tag("Duplication",0)} } $self->{tree}->get_all_subnodes;
+      map { if ('' eq $_->get_tagvalue("species_intersection_score")) {$_->add_tag("species_intersection_score",1)} } $self->{tree}->get_all_subnodes;
+      1;#??
+
+      _run_orthotree($self);
+      print $self->{_homologytable}, "\n";
+      $self->{_homologytable} = '';
+      $self->{tree} = undef;
+    }
+  }
+}
+
+# sub _old_compare_api_treefam {
+#   my $self = shift;
+
+#   $self->{treeDBA} = $self->{'comparaDBA'}->get_ProteinTreeAdaptor;
+#   my $species1 = $self->{_species1} || "Homo sapiens";
+#   my $species2 = $self->{_species2} || "Mus musculus";
+
+#   eval {require Treefam::DBConnection;};
+#   if ($@) { print STDERR "treefam api not found"; die "$!\n"; }
+
+#   my $dbc =  Treefam::DBConnection->new
+#     (-database => 'treefam_4',
+#      -host     => 'vegasrv.sanger.ac.uk',
+#      -user     => 'anonymous',
+#      -port     => 3308);
+
+#   my $famh = $dbc->get_FamilyHandle();
+#   my $trh = $dbc->get_TreeHandle();
+#   my $gh = $dbc->get_GeneHandle;
+#   # gets families with human genes
+#   my @families = $famh->get_all_by_species($species1);
+#   foreach my $family (@families) {
+#     # next if ($family->ID ne 'TF106501');
+#     my @genes = $gh->get_all_by_species($species2,$family);
+#     if (0 != scalar(@genes)) {
+#       my $tree = $trh->get_by_family($family,'SEED');
+#       my $treefamid = $tree->ID;
+#       my $treefam_nhx = $tree->nhx;
+#       my $tf = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($treefam_nhx);
+#       next unless (defined $tf);
+
+#       my %gsid_names;
+#       my ($gt, $gt_node_id);
+#       my (%treeid_shared, %tf_gt_map, %tf_gt_keepleaves);
+#       my (@gt_genenames, @tf_genenames, @tf_genename_speciesname);
+
+#       my $starttime = time();
+
+#       # recalling a genetree for each leaf of treefam tree
+#       my @leaves = @{$tf->get_all_leaves};
+#       foreach my $leaf (@leaves) {
+#         my $genename = $leaf->get_tagvalue('G');
+#         push @tf_genenames, $genename unless (0 == length($genename));
+#         my $genename_speciesname = $genename . ", " . $leaf->get_tagvalue('S');
+#         push @tf_genename_speciesname, $genename_speciesname;
+#       }
+
+#       printf( STDERR "- end of loading foreach -- %10.3f\n", time()-$starttime) if ($self->{'debug'});
+#       $starttime = time();
+
+#       foreach my $leaf (@leaves) {
+#         my $leaf_name = $leaf->name;
+#         # treefam uses G NHX tag for genename
+#         my $genename = $leaf->get_tagvalue('G');
+#         next if (0==length($genename)); # for weird pseudoleaf tags with no gene name
+#         $leaf->name($genename);
+#         # Asking for a genetree given the genename of a treefam tree
+#         if (fetch_protein_tree_with_gene($self, $genename)) {
+#           next if ('1' eq $self->{'tree'}->get_tagvalue('cluster_had_to_be_broken_down'));
+#           $gt = $self->{'tree'};
+#           $gt_node_id = $self->{'tree'}->node_id;
+#           $tf_gt_map{$treefamid}{$gt_node_id} = 1;
+#         }
+#       }
+
+#       $tf->release_tree;
+
+#       printf( STDERR "- end of first foreach -- %10.3f\n", time()-$starttime) if ($self->{'debug'});
+#       $starttime = time();
+
+#       unless (defined($gt)) {
+#         # this treefam tree doesnt overlap any of the genetrees
+#         $self->{'_tf_nomatch'}{$treefamid} = 1;
+#         foreach my $id (@tf_genename_speciesname) {
+#           $self->{'_tf_nomatch_genes'}{$treefamid}{$id} = 1;
+#         }
+#       }
+#       next unless (1 < scalar(keys %{$tf_gt_map{$treefamid}}));
+#       my $dir = $treefamid;
+#       $dir =~ s/(.{2})/\/$1/g; $dir = "." . $dir;
+#       unless(system("mkdir -p $dir") == 0) {warn ("error creating dir, $!\n");}
+#       foreach my $treeid (keys %{$tf_gt_map{$treefamid}}) {
+#         $self->{'tree'} = $self->{treeDBA}->fetch_node_by_node_id($treeid);
+#         $gt = $self->{'tree'};
+#         my $aln = $gt->get_SimpleAlign
+#           (
+#            -id_type => 'STABLE',
+#            -cdna => 0,
+#            -stop2x => 1
+#           );
+#         my $tree_id = $gt->node_id;
+#         eval {require Bio::AlignIO;};
+#         my $file = "$treefamid.$tree_id";
+#         open(OUTSEQ, ">$file.fasta")
+#           or $self->throw("Error opening $file.fasta for write");
+#         my $alignIO = Bio::AlignIO->newFh
+#           (-fh => \*OUTSEQ,
+#            -format => 'fasta',
+#           );
+#         $aln->set_displayname_flat(1);
+#         print $alignIO $aln;
+#         close(OUTSEQ);
+#         #./tfscripts/treefam/build.pm:102:	eval { !system("$time_comm $hmmbuild --amino -g -F $file.hmm $file >/dev/null") || die $!; };
+#         my $cmd = "/usr/local/ensembl/bin/hmmbuild --amino -g -F $dir/$file.hmm $file.fasta >/dev/null";
+#         my $starttime = time();
+#         unless(system($cmd) == 0) {warn ("error hmmbuild, $!\n");}
+#         print STDERR "$file,",(time()-$starttime),"\n";
+#         $gt->release_tree;
+#         $self->{'tree'}->release_tree;
+#       }
+#       open(OUTSEQ, ">query.fa")
+#         or $self->throw("Error opening query.fa for write");
+#       print OUTSEQ $tree->get_alignment;
+#       close(OUTSEQ);
+
+#       # Create the query TF hmm
+#       my $cmd = "/usr/local/ensembl/bin/hmmbuild --amino -g -F $dir/query.hmm query.fa >/dev/null";
+#       my $querytime = time();
+#       unless(system($cmd) == 0) {warn ("error hmmbuild, $!\n");}
+#       print STDERR "$treefamid,",(time()-$querytime),"\n";
+
+#       # Create the lib file for prc
+#       unless(system("ls $dir/TF*.hmm > $dir/$treefamid.lib") == 0)   {warn "problems creating lib file, $!\n";}
+
+#       # Run prc
+#       my $prccmd = "/nfs/acari/avilella/src/prc/prc-1.5.4/prc -mode global-global $dir/query.hmm $dir/$treefamid.lib $dir/prc.$treefamid 1>/dev/null";
+#       my $prctime = time();
+#       unless(system($prccmd) == 0)   {warn "problems running prc, $!\n";}
+#       print STDERR "prc $treefamid,",(time()-$prctime),"\n";
+
+#       # unless(system("rm -f *.lib") == 0)   {warn "problems deleting files, $!\n";}
+#       unless(system("rm -f *.hmm") == 0)   {warn "problems deleting files, $!\n";}
+#       unless(system("rm -f *.fasta") == 0) {warn "problems deleting files, $!\n";}
+#       unless(system("rm -f *.fa") == 0)    {warn "problems deleting files, $!\n";}
+#       print STDERR "\n";
+#     }
+#   }
+# }
+
+
+sub _treefam_aln_plot {
+  my $self = shift;
+  my $gene_stable_id = $self->{_treefam_aln_plot};
+
+  my $member = $self->{'comparaDBA'}->
+               get_MemberAdaptor->
+               fetch_by_source_stable_id('ENSEMBLGENE', $gene_stable_id);
+
+  my $tree = $self->{comparaDBA}->get_ProteinTreeAdaptor->fetch_by_Member_root_id($member);
+
+  my @aln;
+  foreach my $leaf (@{$tree->get_all_leaves}) {
+    my $DISP_ID = $leaf->gene_member->stable_id . "_" . $leaf->genome_db->short_name;
+    # next if (($DISP_ID =~ /Olat/) || ($DISP_ID =~ /Cpor/) || ($DISP_ID =~ /Aaeg/) || ($DISP_ID =~ /Ogar/) || ($DISP_ID =~ /Mlug/));
+    my $CIGAR = $leaf->cigar_line;
+    my $hash;
+    $hash->{CIGAR} = $CIGAR;
+    $hash->{DISP_ID} = $DISP_ID;
+    $hash->{GID} = $leaf->gene_member->stable_id;
+    $hash->{ID} = $leaf->gene_member->stable_id;
+    my $transcript = $leaf->transcript;
+    # $DISP_ID = $transcript->stable_id . "." . $transcript->version;
+    my $transcript_strand = (1 == $transcript->strand) ? ("+") : ("-");
+    my $transcript_start = $transcript->start - 1;
+    my $transcript_end = $transcript->end;#    my $transcript_end = $transcript->end - 1;
+    my @transl_exons = @{$transcript->get_all_translateable_Exons};
+    my $c_start = $transl_exons[0]->start - 1;
+    my $c_end = $transl_exons[-1]->end;
+    my @exons = @{$transcript->get_all_Exons};
+    my $exon_num = scalar(@exons);
+    my $exon_start_string = join(",", map {$_->start - 1} @exons) . ",";
+    my $exon_end_string = join(",", map {$_->end} @exons) . ",";
+
+    $hash->{MAP} = join("\t",($DISP_ID,"chromosome1",$transcript_strand,$transcript_start,$transcript_end,$c_start,$c_end,$exon_num,$exon_start_string,$exon_end_string));
+    #    print $hash->{MAP}, "\n";
+    $hash->{SWCODE} = 'HUMAN';
+    my @a; @{$hash->{PFAM}} = @a;
+    push @aln, $hash;
+  }
+
+  eval {require treefam::db;};
+  if ($@) { print STDERR "treefam api not found"; die "$!\n"; }
+  eval {require treefam::align_plot;};
+  if ($@) { print STDERR "treefam api not found"; die "$!\n"; }
+
+  my $db = treefam::db->new(-host=>'vegasrv.sanger.ac.uk', -port=>3308, -name=>'treefam_4', user=>'anonymous');
+  my $aln_plot = treefam::align_plot->new;
+  $aln_plot->init(\@aln);
+  my $im = $aln_plot->plot_im(); # print into a PNG file.
+  open(ALNPLOT, ">$gene_stable_id.ENSEMBL.png")
+    or $self->throw("Error opening $gene_stable_id.png for write");
+  print ALNPLOT $im->png;
+  close(ALNPLOT);
+}
+
+sub _get_all_duprates_for_species_tree
 {
   my $self = shift;
   $self->{_mydbname} = $self->{comparaDBA}->dbc->dbname;
@@ -2162,6 +2822,7 @@ sub _duploss_fraction {
           $cluster->add_tag('child_b_human_dist', $human_dist);
         }
       }
+      
       my $results_human = 
         $cluster->subroot->node_id . 
           "," . 
@@ -2252,6 +2913,9 @@ sub _duploss_fraction {
   _duploss_fraction($child_a) if (0 < $child_a_dups);
   _duploss_fraction($child_b) if (0 < $child_b_dups);
 }
+
+
+
 
 sub _dnds_msas {
   my $self = shift;
@@ -2658,6 +3322,68 @@ sub _summary_stats {
   close OUTFILE;
 }
 
+sub _dnds_paralogs {
+  my $self = shift;
+  my $species = shift;
+
+  $species =~ s/\_/\ /g;
+  $self->{gdba} = $self->{comparaDBA}->get_GenomeDBAdaptor;
+  $self->{ha} = $self->{comparaDBA}->get_HomologyAdaptor;
+  $self->{mlssa} = $self->{comparaDBA}->get_MethodLinkSpeciesSetAdaptor;
+  $self->{treeDBA} = $self->{'comparaDBA'}->get_ProteinTreeAdaptor;
+  $self->{nsa} = $self->{'comparaDBA'}->get_NestedSetAdaptor;
+  my $sp_gdb = $self->{gdba}->fetch_by_name_assembly($species);
+  my $sp_short_name = $sp_gdb->get_short_name;
+  $self->{taxonDBA} = $self->{comparaDBA}->get_NCBITaxonAdaptor;
+  my $taxonomy_leaf = $self->{taxonDBA}->fetch_node_by_name($sp_gdb->name);
+  my $taxonomy_root = $taxonomy_leaf->subroot;
+  my $taxonomy_parent = $taxonomy_leaf;
+  my %taxonomy_hierarchy;
+  my $hierarchy_count = 0;
+  do {
+    $hierarchy_count++;
+    $taxonomy_hierarchy{$taxonomy_parent->name} = $hierarchy_count;
+    $taxonomy_parent = $taxonomy_parent->parent;
+  } while ($taxonomy_parent->dbID != $taxonomy_root->dbID);
+  
+  $self->{_mydbname} = $self->{comparaDBA}->dbc->dbname;
+  my $outfile = "dnds_paralogs.". $sp_short_name ."." . 
+    $self->{_mydbname} . "." . $self->{'clusterset_id'};
+  $outfile .= ".csv";
+  open OUTFILE, ">$outfile" or die "error opening outfile: $!\n";
+  my $header = "ancestor_taxon_name,ancestor_taxon_hierarchy,sp_name,gene_stable_id1,exon_num1,gene_stable_id2,exon_num2,dn,ds,lnl\n";
+  print OUTFILE "$header"; 
+  print "$header" if ($self->{verbose});
+  my $mlss;
+  my @homologies; 
+  $mlss = $self->{mlssa}->fetch_by_method_link_type_GenomeDBs('ENSEMBL_PARALOGUES', [$sp_gdb]);
+  @homologies = @{$self->{ha}->fetch_all_by_MethodLinkSpeciesSet($mlss)};
+  
+  foreach my $homology (@homologies) {
+    my $ancestor_taxon_name = $homology->subtype;
+    if ($self->{debug}) {
+      next unless ($ancestor_taxon_name eq $species);
+    }
+    my $ancestor_taxon_hierarchy = $taxonomy_hierarchy{$ancestor_taxon_name};
+    my $dn = $homology->dn;
+    my $ds = $homology->ds;
+    my $lnl = $homology->lnl;
+    next unless (defined($dn) && defined($ds) && defined($lnl));
+    my ($gene1,$gene2) = @{$homology->gene_list};
+    my $sp_name = $self->{_species};
+    my $gene1_stable_id = $gene1->stable_id;
+    my $gene2_stable_id = $gene2->stable_id;
+    my $core_gene1 = $gene1->get_Gene;
+    my $core_gene2 = $gene2->get_Gene;
+    my $exons_string1 = join (":",map {scalar @{$_->get_all_translateable_Exons}} @{$core_gene1->get_all_Transcripts});
+    my $exons_string2 = join (":",map {scalar @{$_->get_all_translateable_Exons}} @{$core_gene2->get_all_Transcripts});
+    my $exon_num_gene1 = scalar @{$core_gene1->get_all_Exons};
+    my $exon_num_gene2 = scalar @{$core_gene2->get_all_Exons};
+    print STDERR "$ancestor_taxon_name,$ancestor_taxon_hierarchy,$sp_name,$gene1_stable_id,$exons_string1,$gene2_stable_id,$exons_string2,$dn,$ds,$lnl\n";
+    print OUTFILE "$ancestor_taxon_name,$ancestor_taxon_hierarchy,$sp_name,$gene1_stable_id,$exon_num_gene1,$gene2_stable_id,$exon_num_gene2,$dn,$ds,$lnl\n";
+    print "$ancestor_taxon_name,$ancestor_taxon_hierarchy,$sp_name,$gene1_stable_id,$gene2_stable_id,$dn,$ds,$lnl\n" if ($self->{debug});
+  }
+}
 
 sub _dnds_pairs {
   my $self = shift;
@@ -2696,8 +3422,15 @@ sub _dnds_pairs {
     "root_taxon2,peptide1_stable_id2,gene1_stable_id2,sp1_name2,peptide2_stable_id2,gene2_stable_id2,sp2_name2,dn2,ds2,lnl2,dups_to_ancestor2\n";
   print OUTFILE "$header"; 
   print "$header" if ($self->{verbose});
-  my $mlss = $self->{mlssa}->fetch_by_method_link_type_GenomeDBs('ENSEMBL_ORTHOLOGUES', [$sp1_gdb, $sp2_gdb]);
-  my @homologies = @{$self->{ha}->fetch_all_by_MethodLinkSpeciesSet_orthology_type($mlss,'ortholog_one2one')};
+  my $mlss;
+  my @homologies; 
+  unless ($species1 eq $species2) {
+    $mlss = $self->{mlssa}->fetch_by_method_link_type_GenomeDBs('ENSEMBL_ORTHOLOGUES', [$sp1_gdb, $sp2_gdb]);
+    @homologies = @{$self->{ha}->fetch_all_by_MethodLinkSpeciesSet_orthology_type($mlss,'ortholog_one2one')};
+  } else {
+    $mlss = $self->{mlssa}->fetch_by_method_link_type_GenomeDBs('ENSEMBL_PARALOGUES', [$sp1_gdb]);
+    @homologies = @{$self->{ha}->fetch_all_by_MethodLinkSpeciesSet($mlss)};
+  }
   my $homology_count=0;
   my $totalnum_homologies = scalar(@homologies);
   my $sth;
@@ -2751,7 +3484,9 @@ sub _dnds_pairs {
         my $node_d = $self->{treeDBA}->fetch_AlignedMember_by_member_id_root_id($homology2_member_ids[1],$self->{'clusterset_id'});
         my $root = $node_a->subroot;
         $root->merge_node_via_shared_ancestor($node_c);
-        my $ancestor = $node_a->find_first_shared_ancestor($node_c);
+        my $ancestor;
+        eval { $ancestor = $node_a->find_first_shared_ancestor($node_c); };
+        next unless (defined($ancestor));
         my $ancestor_node_id = $ancestor->node_id;
         my $ancestor_taxon_name = $ancestor->get_tagvalue("taxon_name");
         my $ancestor_taxon_hierarchy = $taxonomy_hierarchy{$ancestor_taxon_name};
@@ -2760,8 +3495,10 @@ sub _dnds_pairs {
         my $parent_a;
         my $parent_c;
         $parent_a = $node_a->parent;
+        next unless (defined($parent_a));
         do {
           my $duptag = $parent_a->get_tagvalue("Duplication");
+          next if ($duptag eq '');
           my $sistag = $parent_a->get_tagvalue("duplication_confidence_score");
           if ($duptag > 0) {
             if ($sistag > 0) {
@@ -2772,8 +3509,10 @@ sub _dnds_pairs {
         } while ($parent_a->node_id != $ancestor_node_id);
 
         $parent_c = $node_c->parent;
+        next unless (defined($parent_c));
         do {
           my $duptag = $parent_c->get_tagvalue("Duplication");
+          next if ($duptag eq '');
           my $sistag = $parent_c->get_tagvalue("duplication_confidence_score");
           if ($duptag > 0) {
             if ($sistag > 0) {
@@ -3714,7 +4453,6 @@ sub _ncbi_tree_list_shortnames {
   $newick_simple =~ s/\//\_/g;
   print "$newick_simple\n" if ($self->{'print_newick'});
 }
-
 
 sub _pafs {
   my $self = shift;
