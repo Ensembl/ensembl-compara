@@ -468,17 +468,6 @@ sub fragment_contigview_ideogram {
   $self->add_panel( $ideo );
 }
 
-sub configview {
-  my $self = shift;
-  my $obj  = $self->{object};
-  my $panel = $self->new_panel( 'Image',
-                                'code' => "save_#",
-                                'caption' => "Save configuration" 
-  );
-  $panel->add_components(qw(image EnsEMBL::Web::Component::Location::save_config));
-  $self->add_panel( $panel);
-}
-
 sub contigview {
   my $self   = shift;
   my $obj    = $self->{object};
@@ -620,11 +609,11 @@ sub contigview {
       nav    EnsEMBL::Web::Component::Location::contigviewbottom_nav
       image  EnsEMBL::Web::Component::Location::contigviewbottom
     ));
-    warn "SETTING UP VIEW FRAGMENT";
+    #warn "SETTING UP VIEW FRAGMENT";
     $view_fragment->asynchronously_load(qw(image));
     my $width = $obj->param('image_width');
     $view_fragment->add_option( 'image_width', $width);
-    warn "IMAGE WIDTH (Config): " . $width;
+    #warn "IMAGE WIDTH (Config): " . $width;
   
     my ($start,$end) = $self->top_start_end( $obj, $max_length );
     $view_fragment->add_option( 'start', $obj->seq_region_start );
@@ -1065,7 +1054,7 @@ sub ldtableview {
 				  ));
     }
     elsif ($self->{object}->param('dump') eq 'asexcel') {
-warn "ADDING... el_ldd";
+#warn "ADDING... el_ldd";
       $ld_panel->add_components(qw(
     excel_lddata        EnsEMBL::Web::Component::LDtable::excel_lddata
 				  ));

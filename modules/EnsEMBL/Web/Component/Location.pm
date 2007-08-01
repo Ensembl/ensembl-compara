@@ -1068,45 +1068,6 @@ sub contigviewzoom_nav {
   return 0;
 }
 
-
-sub save_config {
-  my($panel, $object) = @_;
-  #warn "Saving configuration: " . $object;
-  my $config = $object->user_config_hash( 'contigviewzoom', 'contigviewbottom' );
-  $config->load(); 
-  my $config_record = $config->{'user'};
-  #warn "Config: " . $config_record;
-  my $user_id = $ENV{'ENSEMBL_USER_ID'};
-  my $dump = Dumper($config_record);
-  my $config_url = $ENV{'REQUEST_URI'};
-  $config_url =~ s/configview/contigview/;
-  $dump =~ s/^\$VAR1 = //;
-  $dump =~ s/'/&quote;/g;
-  my $html = "";
-  $html .= qq(
-<form id='view_form' action="/common/perform_save_config" method="post">
-<input type="hidden" name="dataview_action" value="create" />
-<input type="hidden" name="user_id" value="$user_id" />
-<input type="hidden" name="record" value="yes" />
-<input type="hidden" name="type" value="configuration" />
-<input type="hidden" name="url" value="/common/accountview" />
-<input type="hidden" name="config" value="$dump" />
-<input type="hidden" name="config_url" value="$config_url" />
-<div class="formblock">
-<h6><label for="name">Configuration name</h6><div class="formcontent">
-<input type="text" id = "name" name="name" value="" maxlength="255" />
-</div></div>
-<div class="formblock">
-<h6><label for="blurb">A brief description of your configuration</h6><div class="formcontent">
-<textarea name="blurb"></textarea>
-</div></div>
-<div class="formcontent">
-<input type="submit" value="Submit" class="red-button" />
-</div></div></form>
-  );
-  $panel->print($html);
-}
-
 sub contigviewzoom {
   my($panel, $object) = @_;
 #$object->timer->push("Starting zoom...",4);
