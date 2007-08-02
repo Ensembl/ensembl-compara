@@ -481,6 +481,9 @@ sub build_GeneTreeSystem
     $stats->status('BLOCKED');
     $stats->update();
     $ctrlRuleDBA->create_rule($orthotree,$CreateHomology_dNdSJob);
+    $ctrlRuleDBA->create_rule($njtree_phyml,$CreateHomology_dNdSJob);
+    $ctrlRuleDBA->create_rule($muscle,$CreateHomology_dNdSJob);
+    $ctrlRuleDBA->create_rule($BreakPAFCluster,$CreateHomology_dNdSJob);
   }
   if (defined $dnds_params{'species_sets'}) {
     Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob
