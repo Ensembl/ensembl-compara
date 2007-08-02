@@ -184,6 +184,8 @@ GetOptions(
 
 $| = 0;
 
+$species =~ s/\_/\ /;
+
 # Print Help and exit if help is requested
 if ($help or !$species or !$compara) {
   print $description, $usage;
