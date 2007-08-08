@@ -125,7 +125,7 @@ sub _location_from_SeqRegion {
     foreach my $system ( @{$self->__coord_systems} ) {
       my $TS;
       eval { $TS = $self->_slice_adaptor->fetch_by_region( $system->name, $chr ); };
-      warn "DAS... ",$system->name," $chr\nDAS... $@";
+ #     warn "DAS... ",$system->name," $chr\nDAS... $@";
       next if $@;
       return $self->_create_from_slice( $system->name , $chr, $self->expand($TS), '', $chr, $keep_slice ) if $TS;
     }
@@ -140,7 +140,13 @@ sub _location_from_SeqRegion {
 
 sub _create_from_slice {
   my( $self, $type, $ID, $slice, $synonym, $real_chr, $keep_slice ) = @_;
-  return 
+  #project non toplevel slices onto top level - needed to retrieve overlapping features
+  if (! $slice->coord_system->is_top_level) {
+#	  warn "projecting from ",$slice->coord_system->name," onto top level";
+	  my $proj = $slice->project('toplevel')->[0]->to_Slice();
+	  $slice = $proj;
+  }
+  return
   EnsEMBL::Web::Proxy::Object->new(
     'Location',
     { 
