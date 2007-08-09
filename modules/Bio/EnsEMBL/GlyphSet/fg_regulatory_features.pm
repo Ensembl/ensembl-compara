@@ -39,12 +39,12 @@ sub fetch_features {
  
   my $dset = $dsa-> fetch_all_displayable_by_feature_type_class('REGULATORY FEATURE') || [];
   foreach my $set (@$dset) {
-	foreach my $pf (@{$set->feature_set->get_PredictedFeatures_by_Slice($slice) }){
+	foreach my $pf (@{$set->feature_set->get_AnnotatedFeatures_by_Slice($slice) }){
       my $type = $pf->regulatory_type;
       my $id  = $pf->stable_id;
       my $label = $pf->display_label;	
     }
-    my @pf_ref = @{$set->feature_set->get_PredictedFeatures_by_Slice($slice)};
+    my @pf_ref = @{$set->feature_set->get_AnnotatedFeatures_by_Slice($slice)};
     if(@pf_ref && !$self->{'config'}->{'fg_regulatory_features_legend_features'} ) {
       #warn "...................".ref($self)."........................";
       $self->{'config'}->{'fg_regulatory_features_legend_features'}->{'fg_reglatory_features'} = { 'priority' => 1020, 'legend' => [] };
