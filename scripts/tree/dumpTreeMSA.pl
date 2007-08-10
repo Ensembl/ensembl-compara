@@ -12,6 +12,7 @@ my $help = 0;
 my $aln_out;
 my $nh_out;
 my $nhx_out;
+my $verbose = 0;
 my $aa = 0;
 
 $| = 1;
@@ -22,6 +23,7 @@ GetOptions('help'      => \$help,
            'aln_out=s' => \$aln_out,
            'nh_out=s'  => \$nh_out,
            'nhx_out=s' => \$nhx_out,
+           'verbose=s' => \$verbose,
            'aa'        => \$aa);
 
 if ($help) {
@@ -99,7 +101,11 @@ if (defined $nhx_out) {
   print $nhx_out_fh "##RELEASE $release\n";
 }
 
+my $cluster_count = 0;
 foreach my $child (@{$root->children}) {
+  $cluster_count++;
+  my $verbose_string = sprintf "[%5d trees done]\n", $cluster_count if ($verbose);
+  print STDERR $verbose_string if ($verbose &&  ($cluster_count % $verbose == 0));
   dumpTreeMultipleAlignment($child, $aln_out_fh) if ($aln_out);
   dumpNewickTree($child,$nh_out_fh,0) if (defined $nh_out);
   dumpNewickTree($child,$nhx_out_fh,1) if (defined $nhx_out);
