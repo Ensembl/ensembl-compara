@@ -1263,7 +1263,7 @@ sub _treefam_genepairlink_stats
     my $dup_alg = 
       $genepairlink->get_tagvalue('ancestor')->get_tagvalue('Duplication_alg') || 0;
     $self->{_gpresults} .= "$tree_type,$tree_id,$stids[0]"."_"."$stids[1]".","."$type,$subtype,$dup,$dup_alg\n";
-
+    $self->{_homologytable} .= "$stids[0]".","."$stids[1]".","."$type,$subtype\n";
   }
   printf("%1.3f secs to analyze genepair links\n", time()-$tmp_time) 
     if($self->debug > 1);
