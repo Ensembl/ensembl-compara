@@ -4,10 +4,10 @@ use strict;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 
 my $dba = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor
-  (-host => 'compara1',
+  (-host => 'compara2',
    -port => 3306,
    -user => 'ensro',
-   -dbname => 'abel_ensembl_compara_45');
+   -dbname => 'avilella_compara_homology_46');
 
 my $doit = 1;
 
@@ -83,7 +83,7 @@ if ($doit) {
 # check data consistency between pt_node and homology with node_id
 ##################################################################
 
-  $sql = "select count(*) from homology h left join protein_tree_node ptn on h.node_id=ptn.node_id where ptn.node_id is NULL";
+  $sql = "select count(*) from homology h left join protein_tree_node ptn on h.ancestor_node_id=ptn.node_id where ptn.node_id is NULL";
   
   $sth = $dba->dbc->prepare($sql);
   $sth->execute;
