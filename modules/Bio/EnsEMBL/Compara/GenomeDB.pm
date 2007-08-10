@@ -136,6 +136,7 @@ sub short_name {
   my $self = shift;
   my $name = $self->name;
   $name =~  s/(\S)\S+\s(\S{3})\S+/$1$2/;
+  $name =~ s/\ //g;
   return $name;
 }
 
