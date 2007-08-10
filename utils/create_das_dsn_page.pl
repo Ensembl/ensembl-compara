@@ -38,7 +38,7 @@ my %featuresQuery = (
 	'karyotype' => qq{ select s.name, t.seq_region_start, t.seq_region_end from karyotype t, seq_region s where t.seq_region_id = s.seq_region_id limit 1},
 	'prediction_transcripts' => qq{ select s.name, t.seq_region_start, t.seq_region_end from prediction_transcript t, seq_region s where t.seq_region_id = s.seq_region_id limit 1},
 	'transcripts' => qq{ select s.name, t.seq_region_start, t.seq_region_end from gene t, seq_region s where t.seq_region_id = s.seq_region_id limit 1},
-	'ditags' => qq{ select s.name, t.seq_region_start, t.seq_region_end from seq_region s, ditag_feature t, analysis a where a.logic_name = 'GIS_PET_Encode' and t.analysis_id = a.analysis_id and t.seq_region_id = s.seq_region_id limit 1},
+	'ditags' => qq{ select s.name, t.seq_region_start, t.seq_region_end from seq_region s, ditag_feature t, analysis a where a.logic_name in ('GIS_PET_Encode', 'medaka_5pSAGE') and t.analysis_id = a.analysis_id and t.seq_region_id = s.seq_region_id limit 1},
 	'cagetags' => qq{ select s.name, t.seq_region_start, t.seq_region_end from seq_region s, ditag_feature t, analysis a where a.logic_name = 'FANTOM_CAGE' and t.analysis_id = a.analysis_id and t.seq_region_id = s.seq_region_id limit 1},
 );
 
