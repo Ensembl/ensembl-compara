@@ -20,11 +20,19 @@ sub real_species       :lvalue {
 };
 
 sub ori {
-  my($self,$strand) =@_;
-  return $strand>0 ? '+' :
-         $strand<0 ? '-' :
-                     '0' ;
+  my($self,$strand,$tl_strand) = @_;
+  if (!$tl_strand || ($tl_strand > 0) ) {
+	  return $strand>0 ? '+' :
+		     $strand<0 ? '-' :
+			             '0' ;
+  }
+  else {
+	  return $strand>0 ? '-' :
+		     $strand<0 ? '+' :
+			             '0' ;
+  }
 }
+
 sub slice_cache {
   my( $self, $slice ) = @_;
   my $slice_name = $slice->seq_region_name.':'.$slice->start.','.$slice->end.':'.$slice->strand;
@@ -188,4 +196,47 @@ sub Types {
   my $collection;
   return $collection;
 }
+
+#projects a slice onto a particular coord system and returns arrayref containing details of those projections.
+sub get_projections {
+	my $self = shift;
+	my ($object_slice,$cs_wanted) = @_;
+	return [] unless $cs_wanted;
+	my $projections = $object_slice->project($cs_wanted);
+	my $last_end = 0;
+	my $all_mappings;
+	foreach my $proj (@$projections) {
+		my $mappings;
+		my $slice = $proj->to_Slice();				
+		my $proj_slice_name = $slice->seq_region_name.':'.$slice->start.','.$slice->end.':'.$slice->strand;
+
+		#get positions of start and end of each projection slice on the original slice
+		#need to subtract the previous slice coordinates since top level positions of all subsequent slices are relative
+		my $start_pos = ($slice->strand == 1 ) ? $proj->from_start - $last_end : $proj->from_end - $last_end;
+		my $end_pos   = ($slice->strand == 1 ) ? $proj->from_end   - $last_end : $proj->from_start - $last_end;
+		my $start_pos_slice = $slice->sub_Slice($start_pos,$start_pos,$slice->strand);
+		my $top_level_start = $start_pos_slice->project('toplevel')->[0]->to_Slice->start;
+		my $end_pos_slice   = $slice->sub_Slice($end_pos,$end_pos,$slice->strand);
+		my $top_level_end   = $end_pos_slice->project('toplevel')->[0]->to_Slice->start;
+
+		#calculate orientation of projection with respect to top level - needs to account for the fact
+		#that either the requested slice or the projected slice can be in the reverse orientation
+		my $top_level_strand = ($object_slice->strand == $slice->strand) ? 1 : -1;
+
+		$last_end = $proj->from_end;		
+		$mappings->{'slice_full_name'} = $proj_slice_name;
+		$mappings->{'slice_name'}      = $slice->seq_region_name;
+		$mappings->{'slice_start'}     = $slice->start;
+		$mappings->{'slice_end'}       = $slice->end;
+		$mappings->{'original_slice_strand'} = $object_slice->strand;
+		$mappings->{'projected_slice_strand'} = $slice->strand;
+		$mappings->{'top_level_strand'}= $top_level_strand;
+		#reverse start and stop if the strand is negative
+		$mappings->{'top_level_start'} = ($top_level_strand > 0) ? $top_level_start : $top_level_end;
+		$mappings->{'top_level_end'}   = ($top_level_strand > 0) ? $top_level_end : $top_level_start;		
+		push @{$all_mappings}, $mappings;
+	}
+	return $all_mappings;
+}
+
 1;
