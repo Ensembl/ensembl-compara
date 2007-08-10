@@ -12,6 +12,7 @@ my %ditag_analysis = (
 	FANTOM_GIS_PET => 1,
 	GIS_PET_Encode => 1,
 	GIS_PET => 1,
+	medaka_5pSAGE=> 1,
 #	CHIP_PET => 1, # got its own track
 #	FANTOM_CAGE => 1 # got its own track 
 	);
