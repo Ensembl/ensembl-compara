@@ -46,10 +46,10 @@ sub draw_features {
   foreach my $feature ( @$block_features ) {
 
     # render wiggle if wiggle
-    if ($wiggle) {
-      foreach my $result_set  (  @{ $feature->get_displayable_ResultSets() } ){   
+    if ($wiggle) { warn "FEAT $feature";my $feats = $feature->get_displayable_ResultSets(); warn "SET $feats"; my $size = @$feats; warn "SIZE $size";
+      foreach my $result_set  (  @{ $feature->get_displayable_ResultSets() } ){ 
 	#get features for slice and experimental chip set
-	my @features = @{ $result_set->get_displayable_ResultFeatures_by_Slice($slice) };
+	my @features = @{ $result_set->get_displayable_ResultFeatures_by_Slice($slice) }; 
 	next unless @features;
 	
 	$drawn_wiggle_flag = "wiggle";
@@ -63,7 +63,7 @@ sub draw_features {
     # Block features
     foreach my $fset ( @{ $feature->get_displayable_FeatureSets() }){
       my $display_label = $fset->display_label();
-      my $features = $fset->get_PredictedFeatures_by_Slice($slice ) ;
+      my $features = $fset->get_AnnotatedFeatures_by_Slice($slice ) ;
       next unless @$features;
       $drawn_flag = "block_features";
       $self->render_block_features( $features, $colour );
