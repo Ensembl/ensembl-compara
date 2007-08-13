@@ -47,6 +47,7 @@ sub process {
   });
   my $encrypted = $user->encrypt($cgi->param('new_password_1'));
   $user->password($encrypted);
+  $user->status('active');
   $user->save;
 
   ## Add membership if coming from invitation acceptance
