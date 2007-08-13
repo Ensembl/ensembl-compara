@@ -6,12 +6,13 @@ use EnsEMBL::Web::Component;
 our @ISA = qw( EnsEMBL::Web::Component);
 use strict;
 use warnings;
+use EnsEMBL::Web::Form;
 use Data::Dumper;
 use Bio::EnsEMBL::AlignStrainSlice;
 use Bio::EnsEMBL::Variation::Utils::Sequence qw(ambiguity_code);
 no warnings "uninitialized";
 
-our ($exon_On, $cs_On, $snp_On, $snp_Del, $ins_On, $codon_On) = (1, 16, 32, 64, 128, 256);
+our ($exon_On, $cs_On, $snp_On, $snp_Del, $ins_On, $codon_On, $reseq_On) = (1, 16, 32, 64, 128, 256, 512);
 
 # Gene Seq Align View -----------------------------------------------------------------------
 sub align_sequence_display {
@@ -85,7 +86,7 @@ sub markup_and_render {
   }
 
 
-  if( $object->param( 'snp_display' )  eq 'snp'){
+  if( $object->param( 'snp_display' )  ne 'off'){
     markupSNPs($object, \%sliceHash);
     $KEY .= sprintf( $key_tmpl, 'ns', "THIS STYLE:", "Location of SNPs" );
     $KEY .= sprintf( $key_tmpl, 'nd', "THIS STYLE:", "Location of deletions" );
@@ -290,7 +291,8 @@ sub add_text {
   my $max_label = $max_values->{'max_label'};
   my $max_position_length = $max_values->{'max_position_length'};
 
-  my $sequence     = $hRef->{$display_name}->{sequence};
+ my $sequence     = ($object->param('match_display') eq 'dot') ? $hRef->{$display_name}->{dotted_sequence} : $hRef->{$display_name}->{sequence};
+#  my $sequence     = $hRef->{$display_name}->{sequence};
   my $slice        = $hRef->{$display_name}->{slice};
   my $slice_length = $hRef->{$display_name}->{slice_length};
   my $abbr         = $hRef->{$display_name}->{abbreviation};
@@ -338,7 +340,7 @@ sub add_text {
 
       # If $display name is a strain, need to replace with the species instead for SNPview URL
       my $link_species = $object->species_defs->get_config($display_name, "SPECIES_ABBREVIATION") ? $display_name : $object->species();
-      push @$notes, sprintf("{<a href=\"/%s/snpview?panel_individual=on;snp=%s\">base %u:%s</a>}", $link_species, $previous->{snpID}, $pos, $previous->{textSNP});
+      push @$notes, sprintf("{<a href=\"/%s/snpview?panel_individual=on;snp=%s\">base %u:%s</a>}", $link_species, $previous->{snpID}, $pos, $previous->{textSNP})  if ($object->param('snp_display') eq 'snp_link');
     }
 
 
@@ -390,10 +392,12 @@ sub add_text {
 	$sclass .= 'd';
       } elsif ($smask & 0x20) {
 	$sclass .= 's';
-      } elsif ($smask & 0xF00) {
+      } elsif ($smask & 0x100) {
 	$sclass .= 'o';
       } elsif ($smask & 0x10) {
 	$sclass .= 'c';
+      } elsif ($smask & 0x200) {
+	$sclass .= 't';
       }
 
       if (($sclass ne $NBP) || $tag_title) {
@@ -443,25 +447,36 @@ sub add_text {
 	$pos = $sindex + $linenumbers->[0];
       }
 
-      if ($seq_name) {
+      if ($seq_name && $pos && (($pos - $linenumbers->[0]) < $slice_length)) {
 	$seq_name_space++;
 	$seq_name .= ":";
 	$species_html .= sprintf(" %*s", $seq_name_space, $seq_name);
       }
-      $species_html .= sprintf("%*u", $max_position_length, $pos) if $pos;
 
-      if ($notes) {
-	$species_html .= join('|', " ", @$notes);
-	$notes = undef;
+      if ($pos) {
+        if (($pos - $linenumbers->[0]) < $slice_length) {
+          $species_html .= sprintf("%*u", $max_position_length, $pos);
+          if ($notes) {
+	    $species_html .= join('|', " ", @$notes);
+	    $notes = undef;
+	  }
+	  $species_html .= "\n";
+        }
+      } else {
+        if ($notes) {
+	  $species_html .= join('|', " ", @$notes);
+	  $notes = undef;
+        }
+        $species_html .= "\n";
       }
-      $species_html .= "\n";
     } # end if ($sindex % $width == 0 && length($sq) != 0) 
   } # end for my $i
 
   $sindex--; # correction factor for last line
 
   # Last line, seq region name and position markup if there are leftovers
-  if (($sindex % $width)  != 0) {
+#  if (($sindex % $width)  != 0) {
+  if (($sindex % $width)  != 0 && (($sindex % $width)  != ($width -1))) {
     my $seq_name_space = 0;
     my $seq_name      = "";
     my $pos           = 0;
@@ -500,7 +515,7 @@ sub add_text {
   }
 
   $species_html .= join('|', " ", @$notes) if $notes;
-  $species_html .= "\n";
+  $species_html .= "\n" unless ($species_html =~ /\n$/);
   return $species_html;
 }
 #---------------------------------------------------------------------------------------
@@ -512,7 +527,7 @@ sub markupSNPs {
     my $slice =  $hRef->{$display_name}->{slice};
     my $sstrand = $slice->strand; # SNP strand bug has been fixed in snp_display function
 
-    foreach my $s (@{$slice->get_all_VariationFeatures || []}) {
+    foreach my $s (@{$slice->get_all_VariationFeatures(1) || []}) {
       my ( $end, $id, $mask) = ($s->end, $s->variation_name, $snp_On);
       my ( $start, $allele ) = sort_out_snp_strand($s, $sstrand);
       if ($end < $start) {
@@ -1117,6 +1132,212 @@ sub sort_out_snp_strand {
 }
 
 ###### SEQUENCE ALIGN SLICE ########################################################
+sub sequence_markup_options {
+  my( $panel, $object ) =@_;
+    $panel->add_row( 'Genomic Location and <br/>Markup options', "<div>@{[ $panel->form( 'markup_options' )->render ]}</div>" );
+  return 1;
+}
+      
+sub sequence_markup_options_form {
+  my( $panel, $object ) = @_;
+  my $form = EnsEMBL::Web::Form->new( 'markup_options', "/@{[$object->species]}/sequencealignview", 'get' );
+  $form = sequence_options_form($panel, $object, $form, "exons");
+  $form = alignment_options_form($panel, $object, $form );
+  $form = individuals_options_form($panel, $object, $form );
+  $form->add_element(
+	                'type'  => 'Submit', 'value' => 'Update'
+  );
+
+  return $form;
+}
+
+sub sequence_options_form {
+  my( $panel, $object, $form, $exon_type ) = @_;
+
+      # make array of hashes for dropdown options
+  my ($region_name, @rest) = split /:/, $object->slice->name;
+  $form->add_element(
+    'type' => 'String', 'required' => 'yes',
+    'label' => "\u$region_name Name",  'name' => 'region',
+    'value' => $object->param('region')
+  );
+
+  $form->add_element(
+    'type' => 'NonNegInt', 'required' => 'yes',
+    'label' => "Start",  'name' => 'vc_start',
+    'value' => $object->param('vc_start')
+  );
+  
+  $form->add_element(
+    'type' => 'NonNegInt', 'required' => 'yes',
+    'label' => "End",  'name' => 'vc_end',
+    'value' => $object->param('vc_end')
+  );
+  
+  my $strand = [
+   { 'value' =>'1' , 'name' => 'Forward' },
+   { 'value' =>'-1' , 'name' => 'Reverse' },
+  ];
+  
+  $form->add_element(
+    'type'     => 'DropDown', 'select'   => 'select',
+    'required' => 'yes',      'name'     => 'strand',
+    'label'    => 'Strand',
+    'values'   => $strand,
+    'value'    => $object->param('strand'),
+  );
+
+
+  my $exon_ori = [
+    { 'value' =>'off' , 'name' => 'None' },
+    { 'value' =>'same' , 'name' => 'Same orientation exons only' },
+    { 'value' =>'rev' , 'name' => 'Reverse orientation exons only' },
+    { 'value' =>'all' , 'name' => 'All exons' }
+  ];
+  $form->add_element(
+    'type'     => 'DropDown', 'select'   => 'select',
+    'required' => 'yes',      'name'     => 'exon_ori',
+    'label'    => "Exons to highlight",
+    'values'   => $exon_ori,
+    'value'    => $object->param('exon_ori')
+  );
+
+  if( $object->species_defs->databases->{'ENSEMBL_VARIATION'} ) {
+    my $snp_display = [
+      { 'value' =>'snp' , 'name' => 'Yes' },
+      { 'value' =>'snp_link' , 'name' => 'Yes and show links' },
+      { 'value' =>'off' , 'name' => 'No' },
+    ];
+
+    $form->add_element(
+      'type'     => 'DropDown', 'select'   => 'select',
+      'required' => 'yes',      'name'     => 'snp_display',
+      'label'    => 'Highlight variations',
+      'values'   => $snp_display,
+      'value'    => $object->param('snp_display')
+    );
+  }
+
+  my $line_numbering = [
+    { 'value' =>'sequence' , 'name' => 'Relative to this sequence' },
+    { 'value' =>'slice'    , 'name' => 'Relative to coordinate systems' },
+    { 'value' =>'off'      , 'name' => 'None' },
+  ];
+
+  $form->add_element(
+             'type'     => 'DropDown', 'select'   => 'select',
+	     'required' => 'yes',      'name'     => 'line_numbering',
+	     'label'    => 'Line numbering',
+	     'values'   => $line_numbering,
+	     'value'    => $object->param('line_numbering')
+	     );
+
+   return $form;
+}
+
+sub alignment_options_form {
+  my( $panel, $object, $form ) = @_;
+
+    $form->add_element(
+        'type' => 'NonNegInt', 'required' => 'yes',
+	'label' => "Alignment width",  'name' => 'display_width',
+	'value' => $object->param('display_width'),
+	'notes' => 'Number of bp per line in alignments'
+	);
+
+
+	my $match_display = [
+	{ 'value' =>'off' , 'name' => 'Show all' },
+	{ 'value' =>'dot' , 'name' => 'Replace matching bp with dots' },
+	];
+	$form->add_element(
+	'type'     => 'DropDown', 'select'   => 'select',
+	'required' => 'yes',      'name'     => 'match_display',
+	'label'    => 'Matching basepairs',
+	'values'   => $match_display,
+	'value'    => $object->param('match_display'),
+	);
+
+	my $codons_display = [
+	{ 'value' =>'all' , 'name' => 'START/STOP codons' },
+	{ 'value' =>'off' , 'name' => "Do not show codons" },
+	];
+	$form->add_element(
+	'type'     => 'DropDown', 'select'   => 'select',
+	'required' => 'yes',      'name'     => 'codons_display',
+	'label'    => 'Codons',
+	'values'   => $codons_display,
+	'value'    => $object->param('codons_display'),
+	);
+
+	my $title_display = [
+	{ 'value' =>'all' , 'name' => 'Include `title` tags' },
+	{ 'value' =>'off' , 'name' => 'None' },
+	];
+	$form->add_element(
+	'type'     => 'DropDown', 'select'   => 'select',
+	'required' => 'yes',      'name'     => 'title_display',
+	'label'    => 'Title display',
+	'values'   => $title_display,
+	'value'    => $object->param('title_display'),
+	'notes'    => "On mouse over displays exon IDs, length of insertions and SNP\'s allele",
+	);
+
+	return $form;
+}
+
+sub individuals_options_form {
+  my( $panel, $object, $form ) = @_;
+
+  my $species =  $object->species_defs->SPECIES_COMMON_NAME || $object->species;
+  my $refslice = new EnsEMBL::Web::Proxy::Object( 'Slice', $object->slice, $object->__data );
+  my %selected_species = map { $_ => 1} $object->param('individuals');
+
+  my %reseq_strains;
+  map { $reseq_strains{$_->name} = 1; } (  $refslice->get_individuals('reseq') );
+  my $golden_path = $refslice->get_individuals('reference');
+  my $individuals = {};
+
+  foreach ( $refslice->get_individuals('display') ) {
+    my $key = $_ eq $golden_path   ? 'ref' :
+    $reseq_strains{$_} ? 'reseq' : 'other';
+    if ( $selected_species{$_} ) {
+      push @{$individuals->{$key}}, {'value' => $_, 'name'=> $_, 'checked'=>'yes'};
+    } else {
+      push @{$individuals->{$key}}, {'value' => $_, 'name'=> $_};
+    }
+  }
+
+  my $strains =  $object->species_defs->translate( 'strain' );
+  $form->add_element(
+	'type'     => 'NoEdit',
+	'name'     => 'reference_individual',
+	'label'    => "Reference $strains:",
+	'value'    => "$golden_path"
+  ) if $individuals->{'ref'};
+
+  $strains .= "s";
+
+  $form->add_element(
+    'type'  => 'Button', 'value' => "Deselect all $strains", 'onclick' =>"deselectAll('individuals')"
+  );
+
+  $form->add_element(
+    'type'  => 'Button', 'value' => "Select all $strains", 'onclick' =>"selectAll('individuals')"
+  );
+
+  $form->add_element(
+    'type'     => 'MultiSelect',
+    'name'     => 'individuals',
+    'label'    => "Resequenced $species $strains",
+    'values'   => $individuals->{'reseq'},
+    'value'    => $object->param('individuals'),
+  ) if $individuals->{'reseq'};
+
+  return $form;
+}
+					      
+
 
 sub sequencealignview {
 
@@ -1125,21 +1346,14 @@ sub sequencealignview {
 
   my( $panel, $object ) = @_;
   my $width = $object->param("display_width") || 60;
-
   #Get reference slice
-  my $refslice = $object->get_slice_object;
+  my $refslice = new EnsEMBL::Web::Proxy::Object( 'Slice', $object->slice, $object->__data );
+
   my @individuals =  $refslice->param('individuals');
-
-
   # Get slice for each display strain
   my @individual_slices;
   foreach my $individual ( @individuals ) {
     next unless $individual;
-    if ($individual eq 'all') {
-      @individuals = ($refslice->get_individuals('display'));
-      @individual_slices = ();
-      next;
-    }
     my $slice =  $refslice->Obj->get_by_strain( $individual );
     next unless $slice;
     push @individual_slices,  $slice;
@@ -1157,10 +1371,336 @@ sub sequencealignview {
   
   # Get aligned strain slice objects
   my $sliceArray = $align_slice->get_all_Slices();
-  markup_and_render( $panel, $object, $sliceArray);
+  sequence_markup_and_render( $panel, $object, $sliceArray);
 
   return 1;
 }
 
+sub sequence_markup_and_render {
+  ### SequenceAlignView
+  my ( $panel, $object, $sliceArray ) = @_;
+
+  my %sliceHash;
+  # Initialize bins
+  my ($max_values, $consArray) =  sequence_markupInit($object, $sliceArray, \%sliceHash);
+ 
+  # Display the legend
+  my $key_tmpl = qq(<p><code><span class="%s">%s</span></code> %s</p>\n);
+  my $KEY = '';
+  
+  if ($sliceArray->[0]->isa("Bio::EnsEMBL::StrainSlice")) {
+    $KEY .= qq{ ~&nbsp;&nbsp; No resequencing coverage at this position };
+  }
+
+  if( ($object->param( 'match_display' ) ne 'off')) {
+    $KEY .= sprintf( $key_tmpl, 'nc', '', " * Basepairs in secondary strains matching the reference strain are replaced with dots");
+    $KEY .= sprintf( $key_tmpl, 'nt', "THIS STYLE:", "Resequencing coverage" );
+  }
+
+  if( ($object->param( 'conservation' ) ne 'off') && markupConservation($object, \%sliceHash, $consArray)){
+    $KEY .= sprintf( $key_tmpl, 'nc', "THIS STYLE:", "Location of conserved regions (where >50% of bases in alignments match) ");
+  }
+
+  if(  $object->param( 'exon_ori' ) ne 'off' ){
+    if( ($object->param( 'exon_mark' ) eq 'capital')) {
+      $KEY .= sprintf( $key_tmpl, 'nc', '', " * Exons are marked by capital letters.");
+    } else {
+      $KEY .= sprintf( $key_tmpl, 'e', "THIS STYLE:", "Location of selected exons ");
+    }
+    sequence_markupExons($object, \%sliceHash);
+  }
+
+  if(  $object->param( 'codons_display' ) ne 'off' ){
+    markupCodons($object, \%sliceHash);
+    $KEY .= sprintf( $key_tmpl, 'eo', "THIS STYLE:", "Location of START/STOP codons ");
+  }
+
+  if( $object->param( 'snp_display' )  ne 'off'){
+    markupSNPs($object, \%sliceHash);
+    $KEY .= sprintf( $key_tmpl, 'ns', "THIS STYLE:", "Location of SNPs" );
+    $KEY .= sprintf( $key_tmpl, 'nd', "THIS STYLE:", "Location of deletions" );
+  }
+
+
+  if ($object->param('line_numbering') eq 'slice' &&  $object->param("RGselect") ) {
+     $KEY .= qq{ NOTE:     For secondary species we display the coordinates of the first and the last mapped (i.e A,T,G,C or N) basepairs of each line };
+  }
+       
+  my $html = sequence_generateHTML($object, \%sliceHash, $max_values);
+
+  my $refslice = new EnsEMBL::Web::Proxy::Object( 'Slice', $object->slice, $object->__data );
+  my $gp = $refslice->get_individuals('reference');
+  
+ # Add a section holding the names of the displayed slices
+  my $Chrs = "<table>";
+  foreach my $display_name (sort( $object->species, grep {$_ ne $object->species } keys %sliceHash ) ) {
+    next unless  $object->species_defs->get_config($display_name, "SPECIES_ABBREVIATION");
+
+    # TO ADD : For the strains, work out the original species and add link for that instead
+    $Chrs .= qq{<tr><th>$display_name &gt;&nbsp;</th>};
+    my $slices = $sliceHash{$display_name}{slices};
+  
+    # If page is based on strains, use the URL species
+    unless ($slices ) {
+      $slices = $sliceHash{$gp}{slices};
+    }
+
+    foreach my $loc (@$slices) {
+      my ($stype, $assembly, $region, $start, $end, $strand) = split (/:/ , $loc);
+      $Chrs .= qq{<td><a href="/$display_name/contigview?l=$region:$start-$end">$loc</a></td>};
+    }
+    $Chrs .= "</tr>";
+  }
+
+  $Chrs .= "</table>";
+  $panel->add_row( 'Marked up sequence', qq(
+					     $KEY
+					         $Chrs
+						      <pre>\n$html\n</pre>
+  ) );
+
+  return 1;
+}
+
+sub sequence_generateHTML {
+  my ($object, $hRef, $max_values) = @_;
+
+  my $refslice = new EnsEMBL::Web::Proxy::Object( 'Slice', $object->slice, $object->__data );
+  my @linenumbers = $refslice->line_numbering;
+  $linenumbers[0] -- if @linenumbers;
+
+  my $BR = '###';
+  my $width = $object->param("display_width") || 60;
+  my $line_numbering = $object->param('line_numbering');
+  my $reference_name = $refslice->get_individuals('reference');
+  my $flag_done_reference = 0;
+  foreach my $display_name ($reference_name, (sort keys %$hRef)) {
+    next unless $hRef->{$display_name};
+    if ($display_name eq $reference_name) {
+      next if $flag_done_reference;
+      $flag_done_reference = 1 ;
+    }
+
+    my $species_html = add_text($object, $hRef, $line_numbering, $width, $max_values, \@linenumbers, $display_name, $BR);
+
+    # Now $species_html holds ready html for the $species
+    # To display multiple species aligned line by line here we split the species html on $BR symbol
+    # so later we can pick the html line by line from each species in turn
+    @{$hRef->{$display_name}->{html}} = split /$BR/, $species_html;
+  }  # end foreach display name
+
+  my $html = '';
+  if (scalar(keys %$hRef) > 1) {
+    while (1) {
+      my $line_html = '';
+      if ($hRef->{$reference_name}) {
+	$line_html .= shift @{$hRef->{$reference_name}->{html} || [] };
+      }
+      foreach my $display_name (sort keys %{$hRef}) {
+	next if $display_name eq $reference_name;
+        $line_html .= shift @{$hRef->{$display_name}->{html}};
+      }
+      $html .= "$line_html\n";
+      last if (!$line_html);
+    }
+  } else {
+    foreach  (keys %{$hRef}) {
+      $html .= join '', @{$hRef->{ $_ }->{html}};
+    }
+  }
+
+  return $html;
+}
+
+
+sub sequence_markupInit {
+
+  ### Returns hashref - key value pairs of the maximum length of sequence position, sequence_region_name
+  ### abbreviated name and display name
+  ### Returns arrayref of conservation
+
+  my ($object, $slices, $hRef) = @_;
+
+  my @conservation;
+  my $max_position     = 0;
+  my $max_label        = -1;
+  my $max_abbr         = 0;
+
+  my $slice_length = length($slices->[0]->seq) + 1 ;
+  my $width = $object->param("display_width") || 60;
+
+  my $refslice = new EnsEMBL::Web::Proxy::Object( 'Slice', $object->slice, $object->__data );
+  my $gp = $refslice->get_individuals('reference');
+  my @refseq = unpack("A1" x (length($refslice->Obj->seq)), $refslice->Obj->seq);
+       
+  # An AlignSlice is made up of at least one AlignSlice::Slice for each 
+  # species.  The reference species will only have one AlignSlice::Slice
+  foreach my $slice (@$slices) {
+    my $sequence = $slice->seq(1);
+    my $display_name = $slice->can('display_Slice_name') ? $slice->display_Slice_name : $object->species;
+
+    my @subslices;
+    if ( $slice->can('get_all_underlying_Slices') ) {
+      @subslices = @{$slice->get_all_underlying_Slices};
+    }
+    else {
+      @subslices = ($slice);
+    }
+
+    foreach my $uSlice ( @subslices ) {
+      next if ($uSlice->seq_region_name eq 'GAP');
+      push @{$hRef->{$display_name}->{slices}}, $uSlice->name;
+      if ( (my $label_length = length($uSlice->seq_region_name)) > $max_label) {
+	$max_label = $label_length;
+      }
+      $max_position = $uSlice->start if ($uSlice->start > $max_position);
+      $max_position = $uSlice->end   if ($uSlice->end   > $max_position);
+    }
+
+    # Get abbreviated species name (first letters of genus, first 3 of species)
+    my $abbr = $object->species_defs->get_config($display_name, "SPECIES_ABBREVIATION") || $display_name;
+    $hRef->{$display_name}->{abbreviation} = $abbr;
+    $hRef->{$display_name}->{slice} = $slice;
+    $hRef->{$display_name}->{sequence} = $sequence . ' ';
+    $hRef->{$display_name}->{slice_length} = $slice_length;
+
+
+    # Maximum lengths
+    $max_abbr         = length($abbr) if length($abbr) > $max_abbr;
+
+    # Now put some initial sequence marking
+    my @markup_bins = ({ 'pos' => $slice_length, 'mark' => 1 });     # End seq, end of final bin
+
+    # Split the sequence into lines of $width bp length.
+    # Mark start and end of each line
+    my $bin = 0;
+    my $num_of_bins = int(($slice_length-1) / $width);
+
+    while ($bin < $num_of_bins ) {
+      my $pp = $bin * $width + 1;
+      push @markup_bins, { 'pos' => $pp };
+      push @markup_bins, { 'pos' => $pp+$width-1, 'mark' => 1 }; # position for end of line
+      $bin ++;
+    }
+    push @markup_bins, { 'pos' => $bin * $width + 1 }; # start of last bin
+
+    # Markup inserts
+    while ($sequence =~ m/(\-+)[\w\s]/gc) {
+      my $txt = length($1)." bp";  # length of insertion ie. ----
+      push @markup_bins, { 'pos' => pos($sequence)-length($1),
+			   'mask' => $ins_On,  'text' => $txt };
+      push @markup_bins, { 'pos' => pos($sequence), 
+			   'mask' => -$ins_On, 'text' => $txt };
+    }
+
+    $hRef->{$display_name}->{markup} = \@markup_bins;
+
+    if (($object->param('match_display') ne 'off') && ($display_name ne $gp)) {
+      while ($sequence =~ m/([^~]+)/g) {
+        my $s = pos($sequence)+1;
+	push @markup_bins, { 'pos' => $s-length($1),
+	                     'mask' => $reseq_On};
+        push @markup_bins, { 'pos' => $s,
+			     'mask' => -$reseq_On };
+      }
+    }
+									      
+    # And in case the conservation markup is switched on - get conservation scores for each 
+    # basepair in the alignment.
+    # In future the conservation scores will come out of a database and this will be removed
+    if ( $object->param("conservation") ne 'off') {
+      my $idx = 0;
+      foreach my $s (split(//, $sequence)) {
+        $conservation[$idx++]->{uc($s)} ++;
+      }
+    }
+    if ( $object->param("match_display") ne 'off') {
+      if ($display_name eq $gp) {
+	 $hRef->{$display_name}->{dotted_sequence} = $hRef->{$display_name}->{sequence} ;
+	  next;
+      }
+      my @cmpseq = unpack("A1" x (length($sequence)), $sequence);
+      my $idx = 0;
+      foreach my $s (@refseq) {
+	if ($s eq $cmpseq[$idx]) {
+	  $cmpseq[$idx] = '.';
+        }
+        $idx++;
+      }
+      $hRef->{$display_name}->{dotted_sequence} = pack("A1" x scalar(@cmpseq), @cmpseq) . ' ';
+    }
+  } # end foreach slice
+
+  my $max_values = {
+		  max_position_length => length($max_position),
+		  max_label        => $max_label,
+		  max_abbr         => $max_abbr +2,
+		 };
+  return ($max_values, \@conservation);
+}
+
+sub sequence_markupExons {
+  my ($object, $hRef) = @_;
+
+  my $ori = $object->param('exon_ori') || 'off';
+  return unless $ori ne 'off';
+
+  my $width = $object->param("display_width") || 60;
+  foreach my $display_name (keys %$hRef) {
+    my $slice =  $hRef->{$display_name}->{slice};
+    my $slice_length =  $hRef->{$display_name}->{slice_length};
+    my $sequence =   ($object->param( 'exon_mark' ) eq 'capital') ? lc($hRef->{$display_name}->{sequence}) : $hRef->{$display_name}->{sequence};
+    my @exons;
+
+    my $exontype = ''; #$object->param( 'exon_display' );
+    @exons = ($display_name eq $object->species) ?
+      map  { @{$_->get_all_Exons } } grep { $_->stable_id eq $object->stable_id } @{$slice->get_all_Genes('', $exontype)} :
+      map  { @{$_->get_all_Exons } } @{$slice->get_all_Genes('', $exontype)} ;
+
+    if( $ori eq 'same' ) {
+      @exons = grep{$_->seq_region_strand == $object->param('strand')} @exons; # Only fwd exons
+    } elsif( $ori eq 'rev' ){
+      @exons = grep{$_->seq_region_strand != $object->param('strand')} @exons; # Only rev exons
+    }
+
+# Mark exons
+    foreach my $e (sort {$a->{start} <=> $b->{start} }@exons) {
+      next if $e->seq_region_end < $slice->start || $e->seq_region_start > $slice->end;
+      my ($start, $end) = ($e->start, $e->end);
+
+      if ($start < 1) {
+        $start = 1;
+      }
+      if ($end > $slice_length) {
+         $end = $slice_length-1;
+      }
+
+
+      if ($e->strand < 0) {
+        ($start, $end) = ($slice_length-$end, $slice_length - $start);
+      }
+
+      if( ($object->param( 'exon_mark' ) eq 'capital')) {
+        substr($sequence, $start -1, ($end - $start + 1)) = uc(substr($sequence, $start - 1, ($end - $start + 1)));
+      } else {
+        push @{$hRef->{$display_name}->{markup}}, { 'pos' => $start, 'mask' => $exon_On, 'text' => $e->stable_id };
+        push @{$hRef->{$display_name}->{markup}}, { 'pos' => $end+1, 'mask' => -$exon_On, 'text' => $e->stable_id  };
+														        my $bin = int($start / $width);
+															my $num_of_bins = int(($end-1) / $width);
+
+															# Mark again the start of each line that the exon covers with exon style
+															while ($bin < $num_of_bins) {
+          $bin ++;
+          my $pp = $bin * $width;
+          push @{$hRef->{$display_name}->{markup}}, { 'pos' => $pp, 'mask' => -$exon_On, 'mark' => 1, 'text' =>  $e->stable_id };
+          push @{$hRef->{$display_name}->{markup}}, { 'pos' => $pp+1, 'mask' => $exon_On, 'text' => $e->stable_id };
+        }
+      }
+    }
+
+    $hRef->{$display_name}->{sequence}= $sequence if ($object->param( 'exon_mark' ) eq 'capital');
+  }
+}
 
 1;
+

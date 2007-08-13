@@ -6,16 +6,16 @@ sub init {
   my ($script_config) = @_;
 
   $script_config->_set_defaults(qw(
-    flank5_display          600
-    flank3_display          600 
     exon_display            core
-    exon_ori                all
+    exon_ori                off 
     snp_display             on
-    line_numbering          slice 
+    line_numbering          off 
     display_width           60
-    conservation            all
+    conservation            off
     codons_display          off
+    match_display           off
     title_display           off
+    exon_mark		    colour
   ));
   $script_config->storable = 1;
 }

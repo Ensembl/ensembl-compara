@@ -82,8 +82,9 @@ sub gene_options_form {
   );
   if( $object->species_defs->databases->{'ENSEMBL_VARIATION'} ) {
     my $snp_display = [
-      { 'value' =>'snp' , 'name' => 'All variations' },
-      { 'value' =>'off' , 'name' => 'Do not show variation data' },
+     { 'value' =>'snp' , 'name' => 'Yes' },
+     { 'value' =>'snp_link' , 'name' => 'Yes and show links' },
+     { 'value' =>'off' , 'name' => 'No' },
     ];
     $form->add_element(
       'type'     => 'DropDown', 'select'   => 'select',

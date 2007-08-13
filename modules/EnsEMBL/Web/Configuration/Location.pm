@@ -178,6 +178,29 @@ unless( $obj->species_defs->NO_SEQUENCE ) {
   }
 }
 
+sub sequencealignview {
+  my $self = shift;
+
+  my $region_name = $self->{object}->slice->name;
+  
+  $self->set_title( "Sequence Alignment for $region_name");
+  if( my $panel1 = $self->new_panel( 'Information',
+	'code'    => "info#",
+	'caption' => "Sequence Alignment for $region_name",
+     ) ) {
+	$self->add_form( $panel1,
+		qw(markup_options EnsEMBL::Web::Component::Slice::sequence_markup_options_form)
+	);
+	
+	$panel1->add_components(qw(
+	        markup_options EnsEMBL::Web::Component::Slice::sequence_markup_options
+	        sequence       EnsEMBL::Web::Component::Slice::sequencealignview
+	));
+	
+	$self->add_panel( $panel1 );
+  }
+}
+
 sub export_step1 {
   ### Alternative context menu for step 1 of exportview
   my $self = shift;
