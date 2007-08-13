@@ -42,9 +42,8 @@ sub process {
     ## Is this an existing user?
     my $existing_user = EnsEMBL::Web::Object::User->new({'email' => $invitation->email, adaptor => $ENSEMBL_WEB_REGISTRY->userAdaptor});
     if ($existing_user) {
-      warn "USER: ", $existing_user->id;
       ## Create membership link between user and group
-      my $success = $self->add_member_from_invitation($user, $invitation);
+      my $success = $self->add_member_from_invitation($existing_user, $invitation);
       if ($ENV{'ENSEMBL_USER_ID'}) {
         if ($success) {
           $invitation->destroy;
