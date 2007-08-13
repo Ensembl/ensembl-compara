@@ -34,7 +34,6 @@ sub process {
   my $self = shift;
   my $cgi = new CGI;
 
-  my $success = 0;
   my $user = EnsEMBL::Web::Object::User->new({
         adaptor => $ENSEMBL_WEB_REGISTRY->userAdaptor,
 	      email   => $cgi->param('email'),
@@ -44,7 +43,6 @@ sub process {
   }
   else {
     if ($user->email) {
-      $success = 1;
       my $mailer = EnsEMBL::Web::Mailer::User->new();
       $mailer->email($user->email);
       $mailer->send_activation_email((
@@ -52,12 +50,7 @@ sub process {
           'lost'      => $cgi->param('lost') || '',
           'group_id'  => $cgi->param('group_id') || '',
         ));
-      if ($success) {
-        $self->set_message(qq(<p>An email has been sent for each account associated with this address. If you do not receive a message from us within a few hours, please <a href="mailto:helpdesk\@ensembl.org">contact Helpdesk</a>.</p>));
-      }
-      else {
-        $self->set_message(qq(<p>Sorry, we were unable to send an email to this address.</p><p>Please <a href="mailto:helpdesk\@ensembl.org">contact Helpdesk</a> for further assistance.</p>));
-      }
+      $self->set_message(qq(<p>An email has been sent for each account associated with this address. If you do not receive a message from us within a few hours, please <a href="mailto:helpdesk\@ensembl.org">contact Helpdesk</a>.</p>));
     }
     $self->render_message;
   }
