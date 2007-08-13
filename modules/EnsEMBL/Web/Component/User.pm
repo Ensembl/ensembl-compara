@@ -939,13 +939,17 @@ sub group_management_tabs {
                                                      ));
 
   my @invites = @{ $group->invites };
+  my @pending;
+  foreach my $invitation (@invites) {
+    push @pending, $invitation if $invitation->status eq 'pending';
+  }
   my $pendingTab = undef;
-  if ($#invites > -1) {
-    my $label = "Invitations pending (" . ($#invites + 1) . ")";
+  if ($#pending > -1) {
+    my $label = "Invitations pending (" . ($#pending + 1) . ")";
     $pendingTab = EnsEMBL::Web::Interface::Tab->new(( 
                                      name => 'pending', 
                                      label => $label, 
-                                     content => _render_group_pending(( group => $group, user => $user, invites => \@invites)
+                                     content => _render_group_pending(( group => $group, user => $user, invites => \@pending)
                                                      )));
   }
 
