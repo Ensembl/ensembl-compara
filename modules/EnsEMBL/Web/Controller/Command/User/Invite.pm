@@ -60,7 +60,7 @@ sub render_page {
 
     ## Is this user already a member?
     my $user = EnsEMBL::Web::Object::User->new({email => $email, adaptor => $ENSEMBL_WEB_REGISTRY->userAdaptor});
-    if ($user) {
+    if ($user && $user->id) {
       my $member = $group->find_user_by_user_id($user->id);
       if ($member) {
         $invite_check{$email} = $member->status;
