@@ -608,7 +608,7 @@ sub _render_groups {
       $html .= "<tr class='$class'>\n";
       $html .= "<td width='25%'>" . $group->name . "</td>";
       $html .= "<td>" . $group->blurb. "</td>";
-      if ($user->is_administrator_of($group)) {
+      if ($group->id && $user->is_administrator_of($group)) {
         $html .= '<td style="text-align: right;"><a href="/common/user/view_group?id=' . $group->id . '">Manage group</a></td>';
       } else {
         $html .= '<td style="text-align: right;"><a href="/common/user/view_group?id=' . $group->id . '">View membership details</a></td>';
@@ -616,11 +616,11 @@ sub _render_groups {
       }
       $html .= "</tr>\n";
     }
-    if ($#all_groups > -1) {
-      foreach my $group (@all_groups) {
-        $html .= &_render_invites_for_group($group, $user);
-      }
-    }
+    #if ($#all_groups > -1) {
+    #  foreach my $group (@all_groups) {
+    #    $html .= &_render_invites_for_group($group, $user);
+    #  }
+    #}
     $html .= "</table><br />\n";
   }
   else {
