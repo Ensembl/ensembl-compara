@@ -341,85 +341,23 @@
 <th class="bg1 center" style="width:5em"><i>G.gal</i></th>
 </tr>
 
+</table>
+
+<table class="spreadsheet" style="width:auto">
+
 <tr>
 <td class="bg3 left"><b><i>Takifugu rubripes</i></b></td>
-<td class="bg4 center">-</td><!-- H.sap -->
-<td class="bg3 center">-</td><!-- P.tro -->
-<td class="bg4 center">-</td><!-- M.mul -->
-<td class="bg3 center">-</td><!-- M.mus -->
-<td class="bg4 center">-</td><!-- R.nor -->
-<td class="bg3 center">-</td><!-- C.por -->
-<td class="bg4 center">-</td><!-- O.cun -->
-<td class="bg3 center">-</td><!-- F.cat -->
-<td class="bg4 center">-</td><!-- C.fam -->
-<td class="bg3 center">-</td><!-- B.tau -->
-<td class="bg4 center">-</td><!-- D.nov -->
-<td class="bg3 center">-</td><!-- E.tel -->
-<td class="bg4 center">-</td><!-- L.afr -->
-<td class="bg3 center">-</td><!-- S.ara -->
-<td class="bg4 center">-</td><!-- O.gar -->
-<td class="bg3 center">-</td><!-- S.tri -->
-<td class="bg4 center">-</td><!-- M.luc -->
-<td class="bg3 center">-</td><!-- E.eur -->
-<td class="bg4 center">-</td><!-- E.eur -->
-<td class="bg3 center">-</td><!-- M.dom -->
-<td class="bg4 center">-</td><!-- O.ana -->
-<td class="bg3 center">-</td><!-- G.gal -->
 <th class="bg4 center" style="width:5em"><i>T.rub</i></th>
 </tr>
 
 <tr>
 <td class="bg1 left"><b><i>Tetraodon nigroviridis</i></b></td>
-<td class="bg3 center">-</td><!-- H.sap -->
-<td class="bg1 center">-</td><!-- P.tro -->
-<td class="bg3 center">-</td><!-- M.mul -->
-<td class="bg1 center">-</td><!-- M.mus -->
-<td class="bg3 center">-</td><!-- R.nor -->
-<td class="bg1 center">-</td><!-- C.por -->
-<td class="bg3 center">-</td><!-- O.cun -->
-<td class="bg1 center">-</td><!-- F.cat -->
-<td class="bg3 center">-</td><!-- C.fam -->
-<td class="bg1 center">-</td><!-- B.tau -->
-<td class="bg3 center">-</td><!-- D.nov -->
-<td class="bg1 center">-</td><!-- E.tel -->
-<td class="bg3 center">-</td><!-- L.afr -->
-<td class="bg1 center">-</td><!-- S.ara -->
-<td class="bg3 center">-</td><!-- O.gar -->
-<td class="bg1 center">-</td><!-- S.tri -->
-<td class="bg3 center">-</td><!-- M.luc -->
-<td class="bg1 center">-</td><!-- E.eur -->
-<td class="bg3 center">-</td><!-- E.eur -->
-<td class="bg1 center">-</td><!-- M.dom -->
-<td class="bg3 center">-</td><!-- O.ana -->
-<td class="bg1 center">-</td><!-- G.gal -->
 <td class="bg3 center"><font color="blue">YES</font></td><!-- T.rub -->
 <th class="bg1 center" style="width:5em"><i>T.nig</i></th>
 </tr>
 
 <tr>
 <td class="bg3 left"><b><i>Gasterosteus aculeatus</i></b></td>
-<td class="bg4 center">-</td><!-- H.sap -->
-<td class="bg3 center">-</td><!-- P.tro -->
-<td class="bg4 center">-</td><!-- M.mul -->
-<td class="bg3 center">-</td><!-- M.mus -->
-<td class="bg4 center">-</td><!-- R.nor -->
-<td class="bg3 center">-</td><!-- C.por -->
-<td class="bg4 center">-</td><!-- O.cun -->
-<td class="bg3 center">-</td><!-- F.cat -->
-<td class="bg4 center">-</td><!-- C.fam -->
-<td class="bg3 center">-</td><!-- B.tau -->
-<td class="bg4 center">-</td><!-- D.nov -->
-<td class="bg3 center">-</td><!-- E.tel -->
-<td class="bg4 center">-</td><!-- L.afr -->
-<td class="bg3 center">-</td><!-- S.ara -->
-<td class="bg4 center">-</td><!-- O.gar -->
-<td class="bg3 center">-</td><!-- S.tri -->
-<td class="bg4 center">-</td><!-- M.luc -->
-<td class="bg3 center">-</td><!-- E.eur -->
-<td class="bg4 center">-</td><!-- E.eur -->
-<td class="bg3 center">-</td><!-- M.dom -->
-<td class="bg4 center">-</td><!-- O.ana -->
-<td class="bg3 center">-</td><!-- G.gal -->
 <td class="bg4 center">-</td><!-- T.rub -->
 <td class="bg3 center">-</td><!-- T.nig -->
 <th class="bg4 center" style="width:5em"><i>G.acu</i></th>
@@ -427,28 +365,6 @@
 
 <tr>
 <td class="bg1 left"><b><i>Oryzias latipes</i></b></td>
-<td class="bg3 center">-</td><!-- H.sap -->
-<td class="bg1 center">-</td><!-- P.tro -->
-<td class="bg3 center">-</td><!-- M.mul -->
-<td class="bg1 center">-</td><!-- M.mus -->
-<td class="bg3 center">-</td><!-- R.nor -->
-<td class="bg1 center">-</td><!-- C.por -->
-<td class="bg3 center">-</td><!-- O.cun -->
-<td class="bg1 center">-</td><!-- F.cat -->
-<td class="bg3 center">-</td><!-- C.fam -->
-<td class="bg1 center">-</td><!-- B.tau -->
-<td class="bg3 center">-</td><!-- D.nov -->
-<td class="bg1 center">-</td><!-- E.tel -->
-<td class="bg3 center">-</td><!-- L.afr -->
-<td class="bg1 center">-</td><!-- S.ara -->
-<td class="bg3 center">-</td><!-- O.gar -->
-<td class="bg1 center">-</td><!-- S.tri -->
-<td class="bg3 center">-</td><!-- M.luc -->
-<td class="bg1 center">-</td><!-- E.eur -->
-<td class="bg3 center">-</td><!-- E.eur -->
-<td class="bg1 center">-</td><!-- M.dom -->
-<td class="bg3 center">-</td><!-- O.ana -->
-<td class="bg1 center">-</td><!-- G.gal -->
 <td class="bg3 center">-</td><!-- T.rub -->
 <td class="bg1 center">-</td><!-- T.nig -->
 <td class="bg3 center"><font color="blue">YES (on O.lat)</font></td><!-- G.acu -->
@@ -457,28 +373,6 @@
 
 <tr>
 <td class="bg3 left"><b><i>Ciona intestinalis</i></b></td>
-<td class="bg4 center">-</td><!-- H.sap -->
-<td class="bg3 center">-</td><!-- P.tro -->
-<td class="bg4 center">-</td><!-- M.mul -->
-<td class="bg3 center">-</td><!-- M.mus -->
-<td class="bg4 center">-</td><!-- R.nor -->
-<td class="bg3 center">-</td><!-- C.por -->
-<td class="bg4 center">-</td><!-- O.cun -->
-<td class="bg3 center">-</td><!-- F.cat -->
-<td class="bg4 center">-</td><!-- C.fam -->
-<td class="bg3 center">-</td><!-- B.tau -->
-<td class="bg4 center">-</td><!-- D.nov -->
-<td class="bg3 center">-</td><!-- E.tel -->
-<td class="bg4 center">-</td><!-- L.afr -->
-<td class="bg3 center">-</td><!-- S.ara -->
-<td class="bg4 center">-</td><!-- O.gar -->
-<td class="bg3 center">-</td><!-- S.tri -->
-<td class="bg4 center">-</td><!-- M.luc -->
-<td class="bg3 center">-</td><!-- E.eur -->
-<td class="bg4 center">-</td><!-- E.eur -->
-<td class="bg3 center">-</td><!-- M.dom -->
-<td class="bg4 center">-</td><!-- O.ana -->
-<td class="bg3 center">-</td><!-- G.gal -->
 <td class="bg4 center">-</td><!-- T.rub -->
 <td class="bg3 center">-</td><!-- T.nig -->
 <td class="bg4 center">-</td><!-- G.acu -->
@@ -488,28 +382,6 @@
 
 <tr>
 <td class="bg1 left"><b><i>Ciona savignyi</i></b></td>
-<td class="bg3 center">-</td><!-- H.sap -->
-<td class="bg1 center">-</td><!-- P.tro -->
-<td class="bg3 center">-</td><!-- M.mul -->
-<td class="bg1 center">-</td><!-- M.mus -->
-<td class="bg3 center">-</td><!-- R.nor -->
-<td class="bg1 center">-</td><!-- C.por -->
-<td class="bg3 center">-</td><!-- O.cun -->
-<td class="bg1 center">-</td><!-- F.cat -->
-<td class="bg3 center">-</td><!-- C.fam -->
-<td class="bg1 center">-</td><!-- B.tau -->
-<td class="bg3 center">-</td><!-- D.nov -->
-<td class="bg1 center">-</td><!-- E.tel -->
-<td class="bg3 center">-</td><!-- L.afr -->
-<td class="bg1 center">-</td><!-- S.ara -->
-<td class="bg3 center">-</td><!-- O.gar -->
-<td class="bg1 center">-</td><!-- S.tri -->
-<td class="bg3 center">-</td><!-- M.luc -->
-<td class="bg1 center">-</td><!-- E.eur -->
-<td class="bg3 center">-</td><!-- E.eur -->
-<td class="bg1 center">-</td><!-- M.dom -->
-<td class="bg3 center">-</td><!-- O.ana -->
-<td class="bg1 center">-</td><!-- G.gal -->
 <td class="bg3 center">-</td><!-- T.rub -->
 <td class="bg1 center">-</td><!-- T.nig -->
 <td class="bg3 center">-</td><!-- G.acu -->
@@ -520,28 +392,6 @@
 
 <tr>
 <th></th>
-<th class="bg3 center" style="width:5em"><i>H.sap</i></th>
-<th class="bg1 center" style="width:5em"><i>P.tro</i></th>
-<th class="bg3 center" style="width:5em"><i>M.mul</i></th>
-<th class="bg1 center" style="width:5em"><i>M.mus</i></th>
-<th class="bg3 center" style="width:5em"><i>R.nor</i></th>
-<th class="bg1 center" style="width:5em"><i>C.por</i></th>
-<th class="bg3 center" style="width:5em"><i>O.cun</i></th>
-<th class="bg1 center" style="width:5em"><i>F.cat</i></th>
-<th class="bg3 center" style="width:5em"><i>C.fam</i></th>
-<th class="bg1 center" style="width:5em"><i>B.tau</i></th>
-<th class="bg3 center" style="width:5em"><i>D.nov</i></th>
-<th class="bg1 center" style="width:5em"><i>E.tel</i></th>
-<th class="bg3 center" style="width:5em"><i>L.afr</i></th>
-<th class="bg1 center" style="width:5em"><i>S.ara</i></th>
-<th class="bg3 center" style="width:5em"><i>O.gar</i></th>
-<th class="bg1 center" style="width:5em"><i>S.tri</i></th>
-<th class="bg3 center" style="width:5em"><i>M.luc</i></th>
-<th class="bg1 center" style="width:5em"><i>E.eur</i></th>
-<th class="bg3 center" style="width:5em"><i>E.eur</i></th>
-<th class="bg1 center" style="width:5em"><i>M.dom</i></th>
-<th class="bg3 center" style="width:5em"><i>O.ana</i></th>
-<th class="bg1 center" style="width:5em"><i>G.gal</i></th>
 <th class="bg3 center" style="width:5em"><i>T.rub</i></th>
 <th class="bg1 center" style="width:5em"><i>T.nig</i></th>
 <th class="bg3 center" style="width:5em"><i>G.acu</i></th>
