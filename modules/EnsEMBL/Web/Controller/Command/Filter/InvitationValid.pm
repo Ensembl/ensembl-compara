@@ -4,6 +4,7 @@ use strict;
 use warnings;
 
 use EnsEMBL::Web::Object::User;
+use EnsEMBL::Web::Object::Data::Invite;
 use EnsEMBL::Web::RegObj;
 
 our @ISA = qw(EnsEMBL::Web::Controller::Command::Filter);
@@ -15,7 +16,7 @@ our @ISA = qw(EnsEMBL::Web::Controller::Command::Filter);
 sub allow {
   my ($self) = @_;
   my $cgi = new CGI;
-  my $invitation = EnsEMBL::Web::Object::Data::Invitation->new({id => $cgi->param('id')});
+  my $invitation = EnsEMBL::Web::Object::Data::Invite->new({id => $cgi->param('id')});
   if ($invitation->code eq $cgi->param('code')) {
     return 1;
   } else {

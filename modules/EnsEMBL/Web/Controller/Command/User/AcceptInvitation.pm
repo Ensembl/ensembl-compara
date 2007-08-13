@@ -8,7 +8,7 @@ use CGI;
 
 use EnsEMBL::Web::Document::Interface;
 use EnsEMBL::Web::Interface::InterfaceDef;
-use EnsEMBL::Web::Object::Data::Invitation;
+use EnsEMBL::Web::Object::Data::Invite;
 use EnsEMBL::Web::Object::Data::Membership;
 use EnsEMBL::Web::RegObj;
 
@@ -35,7 +35,7 @@ sub render {
 sub process {
   my $self = shift;
   my $cgi = new CGI;
-  my $invitation = EnsEMBL::Web::Object::Data::Invitation->new({'id' => $cgi->param('id')});
+  my $invitation = EnsEMBL::Web::Object::Data::Invite->new({'id' => $cgi->param('id')});
   my $url;
  
   if ($invitation->status eq 'pending') {
