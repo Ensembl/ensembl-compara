@@ -4,6 +4,6 @@ package sequencealignview;
 
 use EnsEMBL::Web::Document::WebPage;
 
-EnsEMBL::Web::Document::WebPage::simple_with_redirect( 'Gene' );
+EnsEMBL::Web::Document::WebPage::simple_with_redirect( 'Location' );
 
 1;
