@@ -53,9 +53,20 @@ sub save {
   $interface->cgi_populate($object, $id);
   if (!$id) {
     $interface->data->salt(EnsEMBL::Web::Tools::RandomString::random_string(8));
+    $interface->data->status('pending');
   }
   $success = $interface->data->save;
   if ($success) {
+    ## set timestamp
+    if ($id) {
+      $interface->data->modified_by($id);
+    }
+    else {
+      $interface->data->created_by($interface->data->id);
+    }
+    $success = $interface->data->save;
+
+    ## redirect to confirmation page 
     $url = "/common/$script?dataview=success;email=".$object->param('email');
     if ($object->param('record_id')) {
       $url .= ';record_id='.$object->param('record_id');
