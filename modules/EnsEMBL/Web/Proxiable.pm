@@ -30,8 +30,8 @@ sub input {
 
 sub _sanitize {
   my $T = shift;
-  $T =~ s/<script(.*?)>/[script\1]/igsm;
-  $T =~ s/\s*on(\w+)\s*=/ on_\1=/igsm;
+  $T =~ s/<script(.*?)>/[script$1]/igsm;
+  $T =~ s/\s*on(\w+)\s*=/ on_$1=/igsm;
   return $T;
 }
 

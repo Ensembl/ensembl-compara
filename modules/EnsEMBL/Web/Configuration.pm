@@ -76,7 +76,8 @@ sub add_block {
   return unless $self->{page}->can('menu');
   return unless $self->{page}->menu;
   my $flag = shift;
-     $flag =~s/#/$self->{flag}/g;
+  $flag =~s/#/($self->{flag} || '')/ge;
+#     $flag =~s/#/$self->{flag}/g;
   $self->{page}->menu->add_block( $flag, @_ );
 }
 
@@ -94,7 +95,7 @@ sub add_entry {
   return unless $self->{page}->can('menu');
   return unless $self->{page}->menu;
   my $flag = shift;
-     $flag =~s/#/$self->{flag}/g;
+  $flag =~s/#/($self->{flag} || '')/ge;
   $self->{page}->menu->add_entry( $flag, @_ );
 }
 
@@ -183,11 +184,13 @@ sub context_location {
   if( floor($obj->seq_region_start) != ceil($obj->seq_region_end) ) {
     $header .= " - @{[$obj->thousandify(ceil($obj->seq_region_end))]}";
   }
-  my $flag = "location$self->{flag}";
+  my $flag = "location";
+  $flag .= $self->{flag} if ($self->{flag});
   return if $self->{page}->menu->block($flag);
   my $no_sequence = $obj->species_defs->NO_SEQUENCE;
   if( $q_string ) {
-    my $flag = "location$self->{flag}";
+    my $flag = "location";
+    $flag .= $self->{flag} if ($self->{flag});
     $self->add_block( $flag, 'bulletted', $header, 'raw'=>1 ); ##RAW HTML!
     $header =~ s/<br \/>/ /;
     if( $self->mapview_possible( $obj->seq_region_name ) ) {
