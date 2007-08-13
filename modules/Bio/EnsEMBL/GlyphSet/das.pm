@@ -785,7 +785,6 @@ sub _init {
     'strand'   => $strand,
     'tstrand'  => $self->strand,
     'STRAND'   => $self->strand(),
-    'cmap'     => $Config->colourmap(),
     'depth'    => $Config->get($das_config_key, 'dep') || $Extra->{'depth'} || 4,
     'use_style'=> uc( $Config->get($das_config_key, 'stylesheet') || $Extra->{'stylesheet'} ) eq 'Y',
     'labelling'=> ($Config->get($das_config_key, 'lflag') || $Extra->{'labelflag'}) =~ /^n$/i ? 0 : 1,
@@ -933,22 +932,31 @@ sub _init {
   if ($score eq 'H') {
     $renderer = "RENDER_histogram_simple";
     $configuration->{use_score} = $score;
-    my $fg_merge = uc($Config->get($das_config_key, 'fg_merge') || $Extra->{'fg_merge'} || 'A');
+    my $fg_merge = uc($Config->get($das_config_key, 'fg_merge') || $Extra->{'fg_merge'} || 'M');
     $configuration->{'fg_merge'} = $fg_merge;
+    $configuration->{'fg_data'} = $Config->get($das_config_key, 'fg_data') || $Extra->{'fg_data'} || 'o';
+    $configuration->{'fg_max'} = $Config->get($das_config_key, 'fg_max') || $Extra->{'fg_max'} || 100;
+    $configuration->{'fg_min'} = $Config->get($das_config_key, 'fg_min') || $Extra->{'fg_min'} || 0;
   } elsif ($score eq 'P') {
     $renderer = "RENDER_plot";
     $configuration->{use_score} = $score;
-    my $fg_merge = uc($Config->get($das_config_key, 'fg_merge') || $Extra->{'fg_merge'} || 'A');
+    my $fg_merge = uc($Config->get($das_config_key, 'fg_merge') || $Extra->{'fg_merge'} || 'M');
     $configuration->{'fg_merge'} = $fg_merge;
+    $configuration->{'fg_data'} = $Config->get($das_config_key, 'fg_data') || $Extra->{'fg_data'} || 'o';
+    $configuration->{'fg_max'} = $Config->get($das_config_key, 'fg_max') || $Extra->{'fg_max'} || 100;
+    $configuration->{'fg_min'} = $Config->get($das_config_key, 'fg_min') || $Extra->{'fg_min'} || 0;
   } elsif ($score eq 'S') {
     $renderer = "RENDER_signalmap";
     $configuration->{use_score} = $score;
-    my $fg_merge = uc($Config->get($das_config_key, 'fg_merge') || $Extra->{'fg_merge'} || 'A');
+    my $fg_merge = uc($Config->get($das_config_key, 'fg_merge') || $Extra->{'fg_merge'} || 'M');
     $configuration->{'fg_merge'} = $fg_merge;
+    $configuration->{'fg_data'} = $Config->get($das_config_key, 'fg_data') || $Extra->{'fg_data'} || 'o';
+    $configuration->{'fg_max'} = $Config->get($das_config_key, 'fg_max') || $Extra->{'fg_max'} || 100;
+    $configuration->{'fg_min'} = $Config->get($das_config_key, 'fg_min') || $Extra->{'fg_min'} || 0;
   } elsif ($score eq 'C') {
     $renderer = "RENDER_colourgradient";
     $configuration->{use_score} = $score;
-    my $fg_merge = uc($Config->get($das_config_key, 'fg_merge') || $Extra->{'fg_merge'} || 'A');
+    my $fg_merge = uc($Config->get($das_config_key, 'fg_merge') || $Extra->{'fg_merge'} || 'M');
     $configuration->{'fg_merge'} = $fg_merge;
     $configuration->{'fg_grades'} = $Config->get($das_config_key, 'fg_grades') || $Extra->{'fg_grades'} || 20;
     $configuration->{'fg_data'} = $Config->get($das_config_key, 'fg_data') || $Extra->{'fg_data'} || 'o';
@@ -1254,6 +1262,12 @@ sub RENDER_signalmap {
     
   my ($min_score, $max_score) = ($features[0]->das_score || 0, $features[-1]->das_score || 0);
 
+  ($min_score, $max_score) = $configuration->{'fg_data'} eq 'o' ? ($features[0]->das_score || 0, $features[-1]->das_score || 0) : ($configuration->{'fg_min'}, $configuration->{fg_max});
+  $min_score or $min_score = 0;
+  $max_score or $max_score = 100;
+
+  my $bp_per_pix = 1 / $self->{pix_per_bp};
+  
   my @positive_features = grep { $_->das_score >= 0 } @features;
   my @negative_features = grep { $_->das_score < 0 } reverse @features;
 
@@ -1292,12 +1306,15 @@ sub RENDER_signalmap {
 
 #    return 1;
   foreach my $f (@negative_features, @positive_features) {
-#    warn(join('*', 'F', $f->start, $f->end, $f->das_score, $f->das_type_category));
+#    warn(join('*', 'F', $f->start, $f->das_score)) if ($f->das_score > 0);
     my $START = $f->das_start() < 1 ? 1 : $f->das_start();
     my $END   = $f->das_end()   > $configuration->{'length'}  ? $configuration->{'length'} : $f->das_end();
 
     my $width = ($END - $START +1);
     my $score = $f->das_score || 0;
+
+    $score = $min_score if ($score < $min_score);
+    $score = $max_score if ($score > $max_score);
 
     my $Composite = new Sanger::Graphics::Glyph::Composite({
       'y'         => 0,
