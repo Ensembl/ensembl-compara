@@ -175,6 +175,8 @@ sub das {
         ) );
       }
     } else {
+      my $fhash = {} ;
+      
       my @features = ();
       @features = @{$featref->{$source_nm}} if ref($featref->{$source_nm})=~/ARRAY/;
 
@@ -185,6 +187,9 @@ sub das {
           $location_features ++;
           next;
         }
+my $fid = $feature->das_feature_id;
+next if (exists $fhash->{$fid});
+$fhash->{$fid} = 1;
         my $segment = $feature->das_segment->ref;
         my $label = $feature->das_feature_label;
         if (my $flink = $feature->das_link) {
@@ -200,10 +205,13 @@ sub das {
                 $note = join('<br/>', @$note);
           }
         }
-
         if ($source->conftype eq 'internal') {
           $note = decode_entities($note);
-        }
+        } else {
+          $note = decode_entities($note);
+	}
+
+
 # Special case : if the feature is of type NOTE than we display just a note - across all columns 
         if ($feature->das_type_id eq 'NOTE') {
   	  push @rhs_rows, qq{<tr><td colspan="10">$note</td></tr>};
