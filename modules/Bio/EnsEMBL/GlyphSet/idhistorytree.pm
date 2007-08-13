@@ -18,7 +18,7 @@ Bethan Pritchard - bp1@sanger.ac.uk
 
 =cut
 use strict;
-use vars qw(@ISA $SCORE_COLOURS);
+use vars qw(@ISA $SCORE_COLOURS $COLOURS);
 use Bio::EnsEMBL::GlyphSet_simple;
 use Bio::EnsEMBL::Feature;
 use EnsEMBL::Web::Component;
@@ -26,7 +26,7 @@ use EnsEMBL::Web::Component;
 
 my $k;
 #warn ("A-0:".localtime());
-
+my %asmbl;
 
 sub _init {
   my ($self) = @_;
@@ -192,6 +192,8 @@ sub _init {
     my $version = $a_id->version;
     my $arelease = $a_id->release;
 
+
+
     foreach my $e (@events){
       my $old = $e->old_ArchiveStableId;
       my $new = $e->new_ArchiveStableId;
@@ -289,7 +291,7 @@ sub _init {
          'width'     => $length,
          'colour'    => $branch_col,
          'absolutey' => 1,
-	 'absolutewidth' => 1,
+ 	 	 'absolutewidth' => 1,
          'clickwidth' => 2,
          'zmenu'     => $zmenu_s,
       });
@@ -326,8 +328,8 @@ sub _init {
          'height'    => $y_end - $y_coord,
          'width'     => $x_end - $x_coord,
          'colour'    => $branch_col,
-	 'absolutey' => 1,
-	 'absolutewidth' => 1,
+	 	 'absolutey' => 1,
+	 	 'absolutewidth' => 1,
          'clickwidth' => 2,
          'zmenu'    => $zmenu_s,
       });
@@ -341,8 +343,90 @@ sub _init {
   foreach my $n (@ns){
     $self->push($n);
   } 
+
+  ## Add assembly information ##
+
+  my $asmbl_label = new Sanger::Graphics::Glyph::Text({
+	    'x'         => 5,
+       'y'         => $y,
+       'height'    => $fontheight,
+       'font'      => $fontname,
+       'ptsize'    => $fontsize,
+       'halign'    => 'left',
+       'colour'    => 'black',
+       'text'      => "Assembly",
+       'absolutey' => 1,
+ });
+
+  $self->push($asmbl_label);
+
+  my %archive_info = %{$Config->species_defs->get_config($species, 'archive')};
+  my @a_colours = ('contigblue1', 'contigblue2');
+  my $i =0;
+  my $pix_per_bp = $self->{'config'}->transform()->{'scalex'};
+  my $strand = ">";
+
+  foreach my $r (@releases){
+	my $tempr = $r; 
+    if ($tempr =~/\./){ $tempr=~s/\.\d*//; }
+    my $current_r = $archive_info{$tempr};
+    push @{$asmbl{$current_r}} , $r;
+    warn "$current_r $r;"
+  }
+   
+  foreach my $a (sort keys %asmbl){
+   my $r = $asmbl{$a};	
+   my @sorted = sort @{$r};
+   my $size = @sorted;
+   my $start = ($xc{$sorted[0]}) + 2;
+   my $offset = $interval / 2;
+   $start -= $offset;
+   my $end = $start + ($interval * $size);
+   $end -= 4;
+   if ($sorted[0] == $releases[0]){ $start = ($xc{$sorted[0]}) -10; }
+   if ($sorted[-1] == $releases[-1]) {$end = $xc{$sorted[-1]} +10; }
+   my $length = $end - $start;
+   my $colour = $a_colours[$i]; 	
+   warn "$a $start $end";
+
+    my $asmblbox = new Sanger::Graphics::Glyph::Rect({
+       'x'         => $start,
+       'y'         => $y -3,
+       'width'     => $length,
+       'height'    => 15,
+       'colour'    => $colour,
+       'title'       => $a,
+    });
+   $self->push($asmblbox);
   
-  ## Draw scalebar ##
+   my @res = $self->get_text_width(
+     ($end-$start)*$pix_per_bp,
+     $strand > 0 ? "$a " : " $a",
+     $strand > 0 ? '1' : '0',
+     'font'=>$fontname, 'ptsize' => $fontsize
+   );
+
+   if( $res[0] ) {
+     my $tglyph = new Sanger::Graphics::Glyph::Text({
+       'x'          => $start +5,
+       'height'     => $res[3],
+       'width'      => $res[2]/$pix_per_bp,
+       'textwidth'  => $res[2],
+       'y'          => $y -3,
+       'font'       => $fontname,
+       'ptsize'     => $fontsize,
+       'colour'     => 'white',
+       'text'       => $a,
+       'absolutey'  => 1,
+     });
+     $self->push($tglyph);
+   }
+   if ($i == 1){$i = 0;} 
+   else {$i = 1;}
+  }
+ 
+ ## Draw scalebar ##
+  $y +=30;
   my $mid_point = ($working_length /2 )+ 140;
   my $label = new Sanger::Graphics::Glyph::Text({
       'x'         => $mid_point,
