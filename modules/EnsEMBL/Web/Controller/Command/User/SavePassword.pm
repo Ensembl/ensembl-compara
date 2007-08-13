@@ -9,7 +9,7 @@ use CGI;
 use EnsEMBL::Web::RegObj;
 use EnsEMBL::Web::Object::User;
 use EnsEMBL::Web::Object::Group;
-use EnsEMBL::Web::Object::Data::Invite;
+use EnsEMBL::Web::Object::Data::Invitation;
 
 use base 'EnsEMBL::Web::Controller::Command::User';
 
@@ -67,7 +67,7 @@ sub process {
                   .';password='.$cgi->param('new_password_1')
                   .';url='.$cgi->param('url')
                   .';updated=yes';
-  my $url .= ';record_id='.$cgi->param('new_password_1') if $cgi->param('record_id'); 
+  $url .= ';record_id='.$cgi->param('record_id') if $cgi->param('record_id'); 
 
   $cgi->redirect($url);
 }
