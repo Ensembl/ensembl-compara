@@ -9,7 +9,7 @@ use CGI;
 use EnsEMBL::Web::RegObj;
 use EnsEMBL::Web::Object::User;
 use EnsEMBL::Web::Object::Group;
-use EnsEMBL::Web::Object::Data::Invitation;
+use EnsEMBL::Web::Object::Data::Invite;
 
 use base 'EnsEMBL::Web::Controller::Command::User';
 
@@ -48,11 +48,12 @@ sub process {
   my $encrypted = $user->encrypt($cgi->param('new_password_1'));
   $user->password($encrypted);
   $user->status('active');
+  $user->modified_by($user->id);
   $user->save;
 
   ## Add membership if coming from invitation acceptance
   if ($cgi->param('record_id')) {
-    my $invitation = EnsEMBL::Web::Object::Data::Invitation->new({id => $cgi->param('record_id')});
+    my $invitation = EnsEMBL::Web::Object::Data::Invite->new({id => $cgi->param('record_id')});
     my $membership = EnsEMBL::Web::Object::Data::Membership->new({
                           'webgroup_id' => $invitation->webgroup_id,
                           'user_id'     => $user->id,

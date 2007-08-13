@@ -6,7 +6,6 @@ use warnings;
 use Class::Std;
 use CGI;
 
-use EnsEMBL::Web::Object::Data::Invitation;
 use EnsEMBL::Web::Object::User;
 use EnsEMBL::Web::Object::Group;
 use EnsEMBL::Web::RegObj;

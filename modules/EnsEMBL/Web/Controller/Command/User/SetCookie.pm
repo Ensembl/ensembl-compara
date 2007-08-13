@@ -5,6 +5,7 @@ use warnings;
 
 use Class::Std;
 use EnsEMBL::Web::Object::User;
+use EnsEMBL::Web::Object::Data::Invite;
 use EnsEMBL::Web::Tools::Encryption;
 use EnsEMBL::Web::RegObj;
 use Apache2::RequestUtil;
@@ -67,7 +68,7 @@ sub process {
 
   ## Add membership if coming from invitation acceptance
   if ($cgi->param('record_id')) {
-    my $invitation = EnsEMBL::Web::Object::Data::Invitation->new({id => $cgi->param('record_id')});
+    my $invitation = EnsEMBL::Web::Object::Data::Invite->new({id => $cgi->param('record_id')});
     my $success = $self->add_member_from_invitation($user, $invitation);
     if ($success) {
       $invitation->destroy;

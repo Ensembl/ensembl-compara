@@ -1,4 +1,4 @@
-package EnsEMBL::Web::Object::Data::Invitation;
+package EnsEMBL::Web::Object::Data::Invite;
 
 use strict;
 use warnings;
