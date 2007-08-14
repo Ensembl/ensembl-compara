@@ -22,11 +22,12 @@ use vars qw(@ISA $SCORE_COLOURS $COLOURS);
 use Bio::EnsEMBL::GlyphSet_simple;
 use Bio::EnsEMBL::Feature;
 use EnsEMBL::Web::Component;
+use Tie::IxHash;
 @ISA = qw(Bio::EnsEMBL::GlyphSet_simple);
 
 my $k;
 #warn ("A-0:".localtime());
-my %asmbl;
+tie my %asmbl, 'Tie::IxHash';
 
 sub _init {
   my ($self) = @_;
@@ -371,10 +372,9 @@ sub _init {
     if ($tempr =~/\./){ $tempr=~s/\.\d*//; }
     my $current_r = $archive_info{$tempr};
     push @{$asmbl{$current_r}} , $r;
-    warn "$current_r $r;"
   }
-   
-  foreach my $a (sort keys %asmbl){
+  
+  foreach my $a ( keys %asmbl){
    my $r = $asmbl{$a};	
    my @sorted = sort @{$r};
    my $size = @sorted;
@@ -387,7 +387,6 @@ sub _init {
    if ($sorted[-1] == $releases[-1]) {$end = $xc{$sorted[-1]} +10; }
    my $length = $end - $start;
    my $colour = $a_colours[$i]; 	
-   warn "$a $start $end";
 
     my $asmblbox = new Sanger::Graphics::Glyph::Rect({
        'x'         => $start,
