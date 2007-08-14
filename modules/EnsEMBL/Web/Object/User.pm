@@ -111,7 +111,7 @@ sub assign_fields {
 
 sub find_groups_by_user_id {
   my ($self, $user_id) = @_;
-  my $results = $self->adaptor->groups_for_user_id($user_id);
+  my $results = $self->adaptor->groups_for_user_id($user_id, 'active');
   my $return = [];
   if ($results) {
     foreach my $result (@{ $results }) {
@@ -171,7 +171,7 @@ sub find_group_by_group_id {
 sub groups {
   ### a
   my $self = shift;
-  if (!$self->is_populated) { $self->populate; }
+  if (!$self->is_populated) {$self->populate; }
   $Groups_of{$self} = shift if @_;
   return $Groups_of{$self};
 }

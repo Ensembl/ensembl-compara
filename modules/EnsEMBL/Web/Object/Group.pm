@@ -137,7 +137,6 @@ sub update_users {
 
 sub assign_level_to_user {
   my ($self, $level, $user) = @_;
-warn "Assigning $level to $user";
   if ($self->level_collection->{$level}) {
     push @{ $self->level_collection->{$level} }, $user;
   } else {
@@ -214,7 +213,7 @@ sub save {
                            from    => $self->id,
                            to      => $user->id,
                            level   => "member", 
-                           status  => 'active'
+                           member_status  => 'active'
                          );
         $self->adaptor->add_relationship(%relationship);
       }
@@ -238,7 +237,7 @@ sub save {
           my %relationship = (
                            from    => $self->id,
                            to      => $user->id,
-                           status  => $status, 
+                           member_status  => $status, 
                             );
           $self->adaptor->update_status(%relationship);
         }

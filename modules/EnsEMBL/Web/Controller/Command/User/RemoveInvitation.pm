@@ -6,7 +6,7 @@ use warnings;
 use Class::Std;
 use CGI;
 
-use EnsEMBL::Web::Object::Data::Invitation;
+use EnsEMBL::Web::Object::Data::Invite;
 
 use base 'EnsEMBL::Web::Controller::Command::User';
 
@@ -32,7 +32,7 @@ sub render {
 sub process {
   my $self = shift;
   my $cgi = new CGI;
-  my $invitation = EnsEMBL::Web::Object::Data::Invitation->new({'id' => $cgi->param('id')});
+  my $invitation = EnsEMBL::Web::Object::Data::Invite->new({'id' => $cgi->param('id')});
   $invitation->destroy;
   $cgi->redirect('/common/user/view_group?id='.$cgi->param('group_id'));
 }

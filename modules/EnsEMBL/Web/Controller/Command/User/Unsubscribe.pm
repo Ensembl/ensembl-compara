@@ -35,7 +35,7 @@ sub process {
 
   my $reg_user = $ENSEMBL_WEB_REGISTRY->get_user;
   my $group = EnsEMBL::Web::Object::Group->new(( id => $cgi->param('id') ));
-  $group->change_user_status($user, 'inactive');
+  $group->assign_status_to_user($user, 'inactive');
   $group->save;
 
   $cgi->redirect($url);

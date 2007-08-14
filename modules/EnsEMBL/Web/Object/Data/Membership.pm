@@ -18,7 +18,7 @@ sub BUILD {
   $self->add_queriable_field({ name => 'webgroup_id', type => "int" });
   $self->add_queriable_field({ name => 'user_id', type => "int" });
   $self->add_queriable_field({ name => 'level', type => "enum('member','administrator','superuser')" });
-  $self->add_queriable_field({ name => 'status', type => "enum('active','inactive','pending','barred')" });
+  $self->add_queriable_field({ name => 'member_status', type => "enum('active','inactive','pending','barred')" });
   $self->populate_with_arguments($args);
 }
 

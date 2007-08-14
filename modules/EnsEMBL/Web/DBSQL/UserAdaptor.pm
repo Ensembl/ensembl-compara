@@ -455,12 +455,12 @@ sub update_status {
   my ($self, %params) = @_;
   my $from_id = $params{from};
   my $to_id = $params{to};
-  my $status = $params{status};
+  my $status = $params{member_status};
   my $sql = qq(
     UPDATE group_member 
-    SET status      = ?,
-        modified_by = ?,
-        modified_at = NOW()
+    SET member_status   = ?,
+        modified_by     = ?,
+        modified_at     = NOW()
     WHERE
         webgroup_id = ?
     AND
