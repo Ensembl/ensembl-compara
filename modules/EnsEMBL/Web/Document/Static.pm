@@ -57,11 +57,12 @@ sub _initialize {
   }
 
   # add handy-dandy collapsing menu script
-  $self->javascript->add_source('/js/core42.js');
   $self->javascript->add_source('/js/prototype.js');
   $self->javascript->add_source('/js/scriptaculous.js');
+  $self->javascript->add_source('/js/core42.js');
   $self->javascript->add_source('/js/hier_menu.js');
   $self->javascript->add_script( 'addLoadEvent( coll_all )' );
+  $self->javascript->add_script( 'addLoadEvent( __init_ensembl_web_search )' );
 
   $self->call_child_functions( 'extra_configuration' );
   $self->call_child_functions( 'common_menu_items', 'static_menu_items' );

@@ -35,22 +35,19 @@ sub render {
   my $script = 'psychic';# $SD->ENSEMBL_SEARCH;
   $self->print( qq(
 <div id="search">
-  <form action="/@{[$species||'perl']}/$script" method="get" style="font-size: 0.9em"><div>
-    <input type="hidden" name="species" value="@{[$species||'all']}" />
-    <strong>Search:</strong>
-      $site_section <input type="radio" name="site" value="ensembl" checked="checked" />
-      EBI <input type="radio" name="site" value="ebi" />
-      Sanger <input type="radio" name="site" value="sanger" />
-    <select name="idx" style="font-size: 0.9em">
-      <option value="">--</option>
-      <option value="All">Anything</option>@{[ map {qq(\n      <option value="$_">$_</option>)} @{$self->{'indexes'}} ]}
-    </select>
-    <input name="query" size="20" value="" />
-    <input type="submit" value="Go" class="red-button" />
-  </div>
-  </form>));
+<form action="/@{[$species||'perl']}/psychic" method="get" id="seform">
+  <input type="hidden" id="se_si" name="site" value="ensembl" />
+  <table id="se">
+    <tr>
+      <td id="se_but"><img title="Ensembl search" id="se_im" src="/img/small-ensembl.gif" alt="Ensembl search" /><img src="/img/small-down.gif" style="width:7px" alt=":" /></td>
+      <td><input id="se_q" type="text" name="q" /></td>
+      <td style="cursor: hand; cursor: pointer;"><input type="submit"  style="cursor: hand; cursor: pointer;margin:0px; border:0px;background-color:#fff;padding:1px 0.5em;font-weight: bold;" value="Search&gt;&gt;" /></td>
+    </tr>
+  </table>
+  <dl style="display: none" id="se_mn"></dl>
+</form>));
   if( @{$self->{'links'}} ) {
-    $self->print( qq(\n  <p class="right" style="margin-right:1em">e.g. ), join( ", ", @{$self->{'links'}} ), '</p>' );
+    $self->print( qq(\n  <p class="right" style="clear:right; margin-right:1em">e.g. ), join( ", ", @{$self->{'links'}} ), '</p>' );
   }
   $self->print( qq(
 </div>));
