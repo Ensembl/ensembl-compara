@@ -472,3 +472,14 @@ code { font: 1em andale mono, sans-serif; font-weight: bold; color: #990000 }
     table.newzmenu td { border: 1px solid #cccccc; padding: 1px 2px }
     table.newzmenu td dl { margin: 0px }
 
+  /** search box... **/
+form#seform { margin: 2px; padding: 0; border: 0; font-size: 1em }
+table#se { float: right; margin: 2px; background-color: #fff; border: 1px solid #369; border-collapse: collapse; }
+table#se td { border: 1px solid #369; vertical-align: middle }
+table#se img { cursor: hand; cursor: pointer; padding: 2px; height: 16px; width: 16px; }
+#se_q { border:0px; width: 20em }
+  /** search menu selector **/
+dl#se_mn { z-index:100;width: 14em; margin: 2px; border-top: 1px solid #369; position: absolute; cursor: hand; cursor: pointer; font-weight: normal; color: #000 }
+dl#se_mn dt { height: 20px; border: 1px solid #369 ; border-top: 0px; font-size: 1em;  padding: 0px; background-color: #fff; text-align: left }
+dl#se_mn dt img { height: 16px; width: 16px; border: 2px solid white; vertical-align: top; padding-right: 0.5em }
+

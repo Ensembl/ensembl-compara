@@ -291,3 +291,40 @@ function readCookie(name) {
 }
 
 ajaxCapability();
+
+  function __init_ensembl_web_search() {
+    if($('se_but')){
+      search_entries = $H({
+        ensembl: 'Ensembl search',
+        ebi:     'EBI search',
+        sanger:  'Sanger search'
+      });
+      Event.observe($('se_but'),'click',function(event){
+        var box  = $('se');
+        var menu = $('se_mn'); 
+        Position.clone(box,menu,{setWidth:false,offsetTop:box.getHeight()-4});
+        menu.toggle();
+      });
+  /** create the search box... **/
+      search_entries.each(function(pair) {
+        $('se_mn').appendChild(
+          Builder.node( 'dt', { id: 'se_'+pair.key }, [
+            Builder.node( 'img', { title: pair.value, src: '/img/small-'+pair.key+'.gif', alt: '' } ),
+            pair.value
+          ])
+        );
+      });
+      $('se_mn').getElementsBySelector('dt').each(function(n){
+        Event.observe(n, 'click', function(event) {
+          var el = Event.element(event);
+          if(el.tagName!='DT') el = el.up('DT');
+          var name = el.id.substr(3);
+          $('se_im').src   = '/img/small-'+name+'.gif';
+          $('se_im').title = el.firstChild.title;
+          $('se_im').alt   = el.firstChild.alt;
+          $('se_mn').hide();
+          $('se_si').value = name;
+        })
+      });
+    }
+  }

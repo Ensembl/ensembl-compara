@@ -36,8 +36,10 @@ div#mart_bottom_bar { border: 0px; border-top: 1px solid black }
 .mart_tableSummaryPanel { background-color: #ffd }
 
 
-.mart_summarypanel_listheader, .mart_summarypanel_listheader_mouseover, .mart_summarypanel_listheader_highlighted, .mart_summarypanel_AttFiltHeader, .mart_summarypanel_AttFiltHeader_highlighted, .mart_summarypanel_AttFiltHeader_mouseover { color: #426fbf }
+.mart_summarypanel_listheader, .mart_summarypanel_listheader_mouseover, .mart_summarypanel_listheader_highlighted, .mart_summarypanel_AttFiltHeader, .mart_summarypanel_AttFiltHeader_highlighted, .mart_summarypanel_AttFiltHeader_mouseover { color: #426fbf; padding: 0 2px }
 
 .mart_summarypanel_listheader:hover, .mart_summarypanel_listheader_mouseover:hover, .mart_summarypanel_listheader_highlighted:hover, .mart_summarypanel_AttFiltHeader:hover, .mart_summarypanel_AttFiltHeader_highlighted:hover, .mart_summarypanel_AttFiltHeader_mouseover:hover { color: #cc0000 }
 
 .mart_btnhov_go:hover, .mart_btnhov:hover { background-color: #933 }
+
+.mart_summarypanel_listheader_highlighted, .mart_summarypanel_AttFiltHeader_highlighted { background-color: #fc9 }
