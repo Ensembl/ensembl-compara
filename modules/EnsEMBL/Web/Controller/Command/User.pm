@@ -51,7 +51,7 @@ sub add_member_from_invitation {
   $membership->user_id($user->id);
   $membership->created_by($user->id);
   $membership->level('member');
-  $membership->status('active');
+  $membership->member_status('active');
   return $membership->save;
 }
 
