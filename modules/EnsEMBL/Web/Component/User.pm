@@ -706,6 +706,7 @@ sub _render_settings_table {
   if ($sort) {
     @row_records = sort { $a->{sortable} cmp $b->{sortable} } @{ $records };
   } 
+
   my @admin_groups = ();
   if ($user) {
     @admin_groups = @{ $user->find_administratable_groups };
@@ -720,24 +721,26 @@ sub _render_settings_table {
  
   foreach my $row (@row_records) {
     $class = &toggle_class($class);
-    my $style = "style='display:none;'";
-    my $found = 0;
-    foreach my $preset (@presets) {
-      if ($preset eq 'all') {
-        $found = 1;
-        last;
-      }
-      if ($preset eq $row->{ident}) {
-        $found = 1;
-      }
-    }
-    if ($found) {
-      $style = "";
-    }
+    my $style = '';
+  
+    #my $style = "style='display:none;'";
+    #my $found = 0;
+    #foreach my $preset (@presets) {
+    #  if ($preset eq 'all') {
+    #    $found = 1;
+    #    last;
+    #  }
+    #  if ($preset eq $row->{ident}) {
+    #    $found = 1;
+    #  }
+    #}
+    #if ($found) {
+    #  $style = "";
+    #}
 
-    if ($#presets == -1 && $row->{ident} eq 'user') {
-      $style = "";
-    }
+    #if ($#presets == -1 && $row->{ident} eq 'user') {
+    #  $style = "";
+    #}
 
     $html .= qq(<tr class="$class all ) . $row->{ident} . qq(" $style>);
     my $id = $row->{'id'};
@@ -748,7 +751,7 @@ sub _render_settings_table {
       }
       $html .= qq(<td>$column</td>);
     }
-    if ($row->{ident} eq 'user') {
+    if ($row->{ident} eq 'user' ) {
       if ($row->{'edit_url'}) {
         if ($row->{'absolute_url'}) {
           $html .= '<td style="text-align:right;"><a href="' . $row->{'edit_url'};
@@ -843,12 +846,13 @@ sub groupview {
   if ($user->is_administrator_of($group)) {
     $html .= admin_intro();
     $html .= group_details($group, $user, 'Administrator');
-    $html .= group_management_tabs($panel, $object);
+    $html .= group_records($object, 1);
     $html .= delete_group($webgroup_id);
   }
   else {
     $html .= member_intro();
     $html .= group_details($group, $user, 'Member');
+    $html .= group_records($object);
   }
   $panel->print($html);
   return 1;
@@ -914,11 +918,27 @@ sub group_details {
   return $html;
 }
 
-sub group_management_tabs {
-  my( $panel, $object) = @_;
+sub group_records {
+  my($object, $is_owner) = @_;
   my $user = EnsEMBL::Web::Object::Data::User->new({ id => $object->id });
   my $group = EnsEMBL::Web::Object::Data::Group->new({ id => $object->param('id') });
-  my $html = qq(<h3 class="plain">Membership and Shared Resources</h3>\n);
+  my $html;
+  if ($is_owner) {
+    $html = qq(<h3 class="plain">Membership and Shared Resources</h3>\n);
+    $html .= group_management_tabs($object, $group, $user);
+  }
+  else {
+    $html = qq(<h3 class="plain">Shared Resources</h3>\n);
+    $html .= _render_group_settings($group, $user, 'group');
+  }
+  $html .= "<br />";
+  $html .= "&larr; <a href='/common/user/account'>Back to your account</a>";
+  $html .= "<br /><br />";
+  return $html;
+}
+
+sub group_management_tabs {
+  my( $object, $group, $user) = @_;
   
   my $manageTab= EnsEMBL::Web::Interface::Tab->new(( 
                                      name => 'manage', 
@@ -929,7 +949,7 @@ sub group_management_tabs {
   my $settingsTab = EnsEMBL::Web::Interface::Tab->new(( 
                                      name => 'sharedsettings', 
                                      label => 'Shared settings', 
-                                     content => _render_group_settings($group, $user) 
+                                     content => _render_group_settings($group, $user, 'user') 
                                                 ));
 
   my $inviteTab = EnsEMBL::Web::Interface::Tab->new(( 
@@ -973,16 +993,12 @@ sub group_management_tabs {
      $tabview->open($object->param('tab'));
   }
 
-  $html .= $tabview->render;
-  $html .= "<br />";
-  $html .= "&larr; <a href='/common/user/account'>Back to your account</a>";
-  $html .= "<br /><br />";
-  return $html;
+  return $tabview->render;
 }
 
 sub _render_group_settings {
   ### Renders shared settings tab content
-  my ($group, $user) = @_;
+  my ($group, $user, $ident) = @_;
   my @bookmarks = @{ $group->bookmarks };
   my @configurations = @{ $group->configurations };
   my @notes = @{ $group->annotations };
@@ -992,14 +1008,20 @@ sub _render_group_settings {
     my @records = ();
     foreach my $bookmark (@bookmarks) {
       my $description = $bookmark->description || '&nbsp;';
+      my $data =  ['<a href="' . $bookmark->url . '" title="' . $bookmark->description . '">' . $bookmark->name . '</a>'];
+      if ($ident eq 'group') {
+        push @$data, $description;
+      }
+      else {
+        push @$data, '';
+      }
       push @records, {  'id' => $bookmark->id, 
                         'group_id' => $group->id,
-                        'ident' => 'user',
                         'sortable' => $bookmark->name,
+                        'ident'    => $ident,
                         'edit_url' => 'bookmark', 
-                        'data' => [
-        '<a href="' . $bookmark->url . '" title="' . $bookmark->description . '">' . $bookmark->name . '</a>', '&nbsp;' 
-      ]};
+                        'data'     => $data,
+                      };
     }
     $html .= _render_settings_table(\@records);
   }
@@ -1012,8 +1034,8 @@ sub _render_group_settings {
       my $link = "<a href='javascript:void(0);' onclick='javascript:load_config_link(" . $configuration->id . ");'>";
       push @records, {  'id' => $configuration->id, 
                         'group_id' => $group->id,
-                        'ident' => 'user',
                         'sortable' => $configuration->name,
+                        'ident'    => $ident,
                         'edit_url' => 'configuration', 
                         'data' => [
                           $link . $configuration->name . '</a>', '&nbsp;' 
@@ -1027,44 +1049,47 @@ sub _render_group_settings {
 
 
 sub _render_group_users {
-  my ($group, $user, $show_all) = @_;
+  my ($group, $admin, $show_all) = @_;
   my $html = "";
-  $html .= &info_box($user, "This panel lists all members of this group. You can invite new users to join your group by entering their email address in the 'Invite' tab.", "group_members_info");
-  my @members = @{ $group->users };
+  $html .= &info_box($admin, "This panel lists all members of this group. You can invite new users to join your group by entering their email address in the 'Invite' tab.", "group_members_info");
+  my @users = @{ $group->users };
   my $table = EnsEMBL::Web::Interface::Table->new(( 
                                        class => "ss", 
                                        style => "border-collapse:collapse"
                                                   ));
-  foreach my $member (@members) {
-    next if ($show_all ne 'yes' && $member->status ne 'active');
+  foreach my $user (@users) {
+    next if ($show_all ne 'yes' && $user->member_status ne 'active');
     my $row = EnsEMBL::Web::Interface::Table::Row->new();
-    $row->add_column({ content => $member->name });
-    my $member_details = ucfirst($member->level);
-    if ($member->level ne 'active') {
-      $member_details .= ' ('.$member->status.')';
+    $row->add_column({ content => $user->name });
+    my $member_details = ucfirst($user->level);
+    if ($user->level ne 'active') {
+      $member_details .= ' ('.$user->member_status.')';
     }
     $row->add_column({ content => $member_details });
-    if ($member->id eq $ENV{'ENSEMBL_USER_ID'}) {
-      $row->add_column({ content => qq(<a href="/common/user/change_status?user_id=) . $member->id . qq(;group_id=) . $group->id . qq(;new_status=inactive">Unsubscribe</a> (N.B. You will no longer have any access to this group!)), align => 'right' });
+    if ($user->id eq $ENV{'ENSEMBL_USER_ID'}) {
+      $row->add_column({ content => qq(<a href="/common/user/change_status?user_id=) . $user->id . qq(;group_id=) . $group->id . qq(;new_status=inactive">Unsubscribe</a> (N.B. You will no longer have any access to this group!)), align => 'right' });
       ## Needed for table neatness!
       $row->add_column({ content => '&nbsp;'});
       $row->add_column({ content => '&nbsp;'});
     }
     else {
-      if ($member->level eq 'member') {
-        $row->add_column({ content => qq(<a href="/common/user/change_level?user_id=) . $member->id . qq(;group_id=) . $group->id . qq(;new_level=administrator">Promote to Admin</a>), align => 'right' });
-      } else {
-        $row->add_column({ content => qq(<a href="/common/user/change_level?user_id=) . $member->id . qq(;group_id=) . $group->id . qq(;new_level=member">Demote to Member</a>), align => 'right' });
+      if ($user->member_status eq 'active') { 
+        if ($user->level eq 'member') {
+          $row->add_column({ content => qq(<a href="/common/user/change_level?user_id=) . $user->id . qq(;group_id=) . $group->id . qq(;new_level=administrator">Promote to Admin</a>), align => 'right' });
+        } 
+        else {
+          $row->add_column({ content => qq(<a href="/common/user/change_level?user_id=) . $user->id . qq(;group_id=) . $group->id . qq(;new_level=member">Demote to Member</a>), align => 'right' });
+        }
+        $row->add_column({ content => qq(<a href="/common/user/change_status?user_id=) . $user->id . qq(;group_id=) . $group->id . qq(;new_status=inactive">Remove</a>), align => 'right' });
       }
-      $row->add_column({ content => qq(<a href="/common/user/change_status?user_id=) . $member->id . qq(;group_id=) . $group->id . qq(;new_status=inactive">Remove</a>), align => 'right' });
-      if ($member->status eq 'barred') {
-        $row->add_column({ content => qq(<a href="/common/user/change_status?user_id=) . $member->id . qq(;group_id=) . $group->id . qq(;new_status=active">Re-admit</a>), align => 'right' });
+      if ($user->member_status eq 'barred') {
+        $row->add_column({ content => qq(<a href="/common/user/change_status?user_id=) . $user->id . qq(;group_id=) . $group->id . qq(;new_status=active">Re-admit</a>), align => 'right' });
       }
-      elsif ($member->status eq 'inactive') {
-        $row->add_column({ content => qq(<a href="/common/user/invite?invite_email=) . $member->email . qq(;id=) . $group->id . qq(">Re-invite</a>), align => 'right' });
+      elsif ($user->member_status eq 'inactive') {
+        $row->add_column({ content => qq(<a href="/common/user/invite?invite_email=) . $user->email . qq(;id=) . $group->id . qq(">Re-invite</a>), align => 'right' });
       }
       else {
-        $row->add_column({ content => qq(<a href="/common/user/change_status?user_id=) . $member->id . qq(;group_id=) . $group->id . qq(;new_status=barred">Ban</a>), align => 'right' });
+        $row->add_column({ content => qq(<a href="/common/user/change_status?user_id=) . $user->id . qq(;group_id=) . $group->id . qq(;new_status=barred">Ban</a>), align => 'right' });
       }
     }
     $table->add_row($row);
