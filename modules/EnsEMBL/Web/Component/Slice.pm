@@ -1166,7 +1166,9 @@ sub sequence_options_form {
   $form->add_element(
     'type' => 'String', 'required' => 'yes',
     'label' => "\u$region_name Name",  'name' => 'region',
-    'value' => $object->param('region')
+    'value' => $object->param('region'),
+    'size' => 10,
+    'style' => 'width:30px',
   );
 
   $form->add_element(
@@ -1326,21 +1328,24 @@ sub individuals_options_form {
 
   $strains .= "s";
 
-  $form->add_element(
-    'type'  => 'Button', 'value' => "Deselect all $strains", 'onclick' =>"deselectAll('individuals')"
-  );
 
-  $form->add_element(
-    'type'  => 'Button', 'value' => "Select all $strains", 'onclick' =>"selectAll('individuals')"
-  );
+  if ($individuals->{'reseq'}) {  
+    $form->add_element(
+      'type'     => 'MultiSelect',
+      'name'     => 'individuals',
+      'label'    => "Resequenced $species $strains",
+      'values'   => $individuals->{'reseq'},
+      'value'    => $object->param('individuals'),
+    );
+  
+    $form->add_element(
+      'type'  => 'Button', 'value' => "Deselect all $strains", 'onclick' =>"deselectAll('individuals')"
+    );
 
-  $form->add_element(
-    'type'     => 'MultiSelect',
-    'name'     => 'individuals',
-    'label'    => "Resequenced $species $strains",
-    'values'   => $individuals->{'reseq'},
-    'value'    => $object->param('individuals'),
-  ) if $individuals->{'reseq'};
+    $form->add_element(
+      'type'  => 'Button', 'value' => "Select all $strains", 'onclick' =>"selectAll('individuals')"
+    );
+  }
 
   return $form;
 }
@@ -1357,6 +1362,7 @@ sub sequencealignview {
   #Get reference slice
   my $refslice = new EnsEMBL::Web::Proxy::Object( 'Slice', $object->slice, $object->__data );
 
+
   my @individuals =  $refslice->param('individuals');
   # Get slice for each display strain
   my @individual_slices;
@@ -1369,7 +1375,11 @@ sub sequencealignview {
 
   unless (scalar @individual_slices) {
     my $strains = ($object->species_defs->translate('strain') || 'strain') . "s";
-    $panel->add_row( 'Marked up sequence', qq(Please select $strains to display from the panel above));
+    if ( $refslice->get_individuals('reseq') ) {
+      $panel->add_row( 'Marked up sequence', qq(Please select $strains to display from the panel above));
+    } else {
+      $panel->add_row( 'Marked up sequence', qq(No resequenced $strains available for these species));
+    }
     return 1;
   }
 
