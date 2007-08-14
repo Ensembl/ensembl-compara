@@ -673,10 +673,6 @@ sub markupCodons {
            $end = $slice_length-1;
         }
 
-	if ($t->strand  < 0) { # transcript is on the opposite strand to the reference slice
-	   $start = $slice_length - $t->coding_region_end;
-	   $end = $slice_length - $t->coding_region_start;
-	}
         if ((my $x = $start) > -2) {
           $x = 1 if ($x < 1);
           my $txt = sprintf("START(%s)",$t->stable_id);
@@ -1277,6 +1273,7 @@ sub alignment_options_form {
 	'type'     => 'DropDown', 'select'   => 'select',
 	'required' => 'yes',      'name'     => 'codons_display',
 	'label'    => 'Codons',
+	'notes'    => 'Displayed only for the highlighted exons',
 	'values'   => $codons_display,
 	'value'    => $object->param('codons_display'),
 	);
@@ -1419,12 +1416,13 @@ sub sequence_markup_and_render {
       $KEY .= sprintf( $key_tmpl, 'e', "THIS STYLE:", "Location of selected exons ");
     }
     sequence_markupExons($object, \%sliceHash);
+    
+    if(  $object->param( 'codons_display' ) ne 'off' ){
+      sequence_markupCodons($object, \%sliceHash);
+      $KEY .= sprintf( $key_tmpl, 'eo', "THIS STYLE:", "Location of START/STOP codons ");
+    }
   }
 
-  if(  $object->param( 'codons_display' ) ne 'off' ){
-    markupCodons($object, \%sliceHash);
-    $KEY .= sprintf( $key_tmpl, 'eo', "THIS STYLE:", "Location of START/STOP codons ");
-  }
 
   if( $object->param( 'snp_display' )  ne 'off'){
     markupSNPs($object, \%sliceHash);
@@ -1649,6 +1647,13 @@ sub sequence_markupInit {
 		 };
   return ($max_values, \@conservation);
 }
+sub dump_hash {
+  my $h = shift;
+  my @keylist = sort keys (%$h);
+  foreach my $key (@keylist) {
+     warn "$key => $h->{$key} \n";
+  }
+}
 
 sub sequence_markupExons {
   my ($object, $hRef) = @_;
@@ -1669,9 +1674,9 @@ sub sequence_markupExons {
       map  { @{$_->get_all_Exons } } @{$slice->get_all_Genes('', $exontype)} ;
 
     if( $ori eq 'same' ) {
-      @exons = grep{$_->seq_region_strand == $object->param('strand')} @exons; # Only fwd exons
+      @exons = grep{$_->strand > 0} @exons; # Only exons which are on the same strand as the slice
     } elsif( $ori eq 'rev' ){
-      @exons = grep{$_->seq_region_strand != $object->param('strand')} @exons; # Only rev exons
+      @exons = grep{$_->strand < 0} @exons; # Only exons which are on the opposite strand to the slice
     }
 
 # Mark exons
@@ -1686,21 +1691,16 @@ sub sequence_markupExons {
          $end = $slice_length-1;
       }
 
-
-      if ($e->strand < 0) {
-        ($start, $end) = ($slice_length-$end, $slice_length - $start);
-      }
-
       if( ($object->param( 'exon_mark' ) eq 'capital')) {
         substr($sequence, $start -1, ($end - $start + 1)) = uc(substr($sequence, $start - 1, ($end - $start + 1)));
       } else {
         push @{$hRef->{$display_name}->{markup}}, { 'pos' => $start, 'mask' => $exon_On, 'text' => $e->stable_id };
         push @{$hRef->{$display_name}->{markup}}, { 'pos' => $end+1, 'mask' => -$exon_On, 'text' => $e->stable_id  };
-														        my $bin = int($start / $width);
-															my $num_of_bins = int(($end-1) / $width);
+        my $bin = int($start / $width);
+        my $num_of_bins = int(($end-1) / $width);
 
-															# Mark again the start of each line that the exon covers with exon style
-															while ($bin < $num_of_bins) {
+# Mark again the start of each line that the exon covers with exon style
+        while ($bin < $num_of_bins) {
           $bin ++;
           my $pp = $bin * $width;
           push @{$hRef->{$display_name}->{markup}}, { 'pos' => $pp, 'mask' => -$exon_On, 'mark' => 1, 'text' =>  $e->stable_id };
@@ -1710,6 +1710,89 @@ sub sequence_markupExons {
     }
 
     $hRef->{$display_name}->{sequence}= $sequence if ($object->param( 'exon_mark' ) eq 'capital');
+  }
+}
+
+sub sequence_markupCodons {
+  my ($object, $hRef) = @_;
+
+  my $ori = $object->param('exon_ori') || 'off';
+  return unless $ori ne 'off';
+
+  foreach my $display_name (keys %$hRef) {
+    my $sequence = $hRef->{$display_name}->{sequence};
+    my $slice =  $hRef->{$display_name}->{slice};
+    my $slice_length =  $hRef->{$display_name}->{slice_length};
+
+    my @transcripts =  map  { @{$_->get_all_Transcripts } } @{$slice->get_all_Genes()} ;
+
+    if( $ori eq 'same' ) {
+      @transcripts = grep{$_->strand > 0} @transcripts; # Only transcripts which are on the same strand as the slice
+    } elsif( $ori eq 'rev' ){
+      @transcripts = grep{$_->strand < 0} @transcripts; # Only transcripts which are on the opposite strand to the slice
+    }
+    
+    if ($slice->isa('Bio::EnsEMBL::Compara::AlignSlice::Slice')) {
+      foreach my $t (grep {$_->coding_region_start < $slice_length && $_->coding_region_end > 0 } @transcripts) {
+        next if (! defined($t->translation));
+
+	# Mark START codons
+        foreach my $c (@{$t->translation->all_start_codon_mappings || []}) {
+          my ($start, $end) = ($c->start, $c->end);
+          if ($t->strand < 0) {
+            ($start, $end) = ($slice_length - $end, $slice_length - $start);
+          }
+
+          next if ($end < 1 || $start > $slice_length);
+          $start = 1 unless $start > 0;
+          $end = $slice_length unless $end < $slice_length;
+
+          my $txt = sprintf("START(%s)",$t->stable_id);
+          push @{$hRef->{$display_name}->{markup}}, { 'pos' => $start, 'mask' => $codon_On, 'text' => $txt };
+          push @{$hRef->{$display_name}->{markup}}, { 'pos' => $end+1, 'mask' => - $codon_On, 'text' => $txt  };
+        }
+
+	# Mark STOP codons
+        foreach my $c (@{$t->translation->all_end_codon_mappings ||[]}) {
+          my ($start, $end) = ($c->start, $c->end);
+          if ($t->strand < 0) {
+            ($start, $end) = ($slice_length - $end, $slice_length - $start);
+          }
+          next if ($end < 1 || $start > $slice_length);
+          $start = 1 unless $start > 0;
+          $end = $slice_length unless $end < $slice_length;
+
+          my $txt = sprintf("STOP(%s)",$t->stable_id);
+          push @{$hRef->{$display_name}->{markup}}, { 'pos' => $start, 'mask' => $codon_On, 'text' => $txt };
+          push @{$hRef->{$display_name}->{markup}}, { 'pos' => $end+1, 'mask' => - $codon_On, 'text' => $txt  };
+        }
+      }  # end foreach $t
+    } else { # Normal Slice
+      foreach my $t (grep {$_->coding_region_start < $slice_length && $_->coding_region_end > 0 } @transcripts) {
+        my ($start, $end) = ($t->coding_region_start, $t->coding_region_end);
+	if ($start < 1) {
+	  $start = 1;
+        }
+        if ($end > $slice_length) {
+           $end = $slice_length-1;
+        }
+
+        if ((my $x = $start) > -2) {
+          $x = 1 if ($x < 1);
+          my $txt = sprintf("START(%s)",$t->stable_id);
+          push @{$hRef->{$display_name}->{markup}}, { 'pos' => $x, 'mask' => $codon_On, 'text' => $txt };
+          push @{$hRef->{$display_name}->{markup}}, { 'pos' => $start + 3, 'mask' => - $codon_On, 'text' => $txt  };
+        }
+
+        if ((my $x = $end) < $slice_length) {
+          $x -= 2;
+          $x = 1 if ($x < 1);
+          my $txt = sprintf("STOP(%s)",$t->stable_id);
+          push @{$hRef->{$display_name}->{markup}}, { 'pos' => $x, 'mask' => $codon_On, 'text' => $txt };
+          push @{$hRef->{$display_name}->{markup}}, { 'pos' => $end+1, 'mask' => - $codon_On, 'text' => $txt  };
+        }
+      }
+    }
   }
 }
 
