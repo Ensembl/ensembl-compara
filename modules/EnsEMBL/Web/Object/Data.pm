@@ -489,6 +489,11 @@ sub find_all {
   $request->set_action('select');
   my $key = EnsEMBL::Web::Tools::DBSQL::TableName::parse_primary_key($object->get_primary_key);
   $request->set_index_by($key);
+  if ($params && ref($params) eq 'HASH') {
+    while (my ($k, $v) = each (%$params)) {
+      $request->add_where($k, $v);
+    }
+  }
   my $result = $object->get_adaptor->find_many($request);
   my @objects = ();
   foreach my $id (keys %{ $result->get_result_hash }) {
