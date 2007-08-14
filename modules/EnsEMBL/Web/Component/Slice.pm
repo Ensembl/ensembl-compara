@@ -666,6 +666,17 @@ sub markupCodons {
     } else { # Normal Slice
       foreach my $t (grep {$_->coding_region_start < $slice_length && $_->coding_region_end > 0 } @transcripts) {
         my ($start, $end) = ($t->coding_region_start, $t->coding_region_end);
+	if ($start < 1) {
+	  $start = 1;
+        }
+        if ($end > $slice_length) {
+           $end = $slice_length-1;
+        }
+
+	if ($t->strand  < 0) { # transcript is on the opposite strand to the reference slice
+	   $start = $slice_length - $t->coding_region_end;
+	   $end = $slice_length - $t->coding_region_start;
+	}
         if ((my $x = $start) > -2) {
           $x = 1 if ($x < 1);
           my $txt = sprintf("START(%s)",$t->stable_id);
