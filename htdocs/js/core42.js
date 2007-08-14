@@ -1,4 +1,20 @@
+/* functions for sequencealignview : select / deselect all options in the group */
+function deselectAll( group) {
+  var clist = document.getElementsByName(group);
+  for (i = 0; i < clist.length; i++) {
+    clist[i].checked = false;
+  }
+}
+function selectAll( group) {
+  var clist = document.getElementsByName(group);
+  for (i = 0; i < clist.length; i++) {
+    clist[i].checked = true;
+  }
+}
+
 /* This is a bit of hacky code to pop up a debug window */
+
+
 var _debug_window;
 function debug_window() {
   if( _debug_window ) { return; }
