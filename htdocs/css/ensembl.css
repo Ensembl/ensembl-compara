@@ -70,7 +70,7 @@ kbd.line { display:block; margin-left:20px; }
                       color:#933; vertical-align:super; }
 #masthead a.section { font-size:1.5em; color:#36b; }
 
-#search, #closewindow { position: absolute; right: 0.4em; top: 0.4em; z-index: 30; left:auto; margin:0px; padding:0px; text-align: right; border: 0px; font-size: 1em }
+#search, #closewindow { width: 50%; position: absolute; right: 0.4em; top: 0.4em; z-index: 30; left:auto; margin:0px; padding:0px; text-align: right; border: 0px; font-size: 1em }
 #accountlinks a { font-weight:bold; text-decoration:none; }
           
 #release, #release-t { top: 5em; position: absolute; }
