@@ -36,6 +36,7 @@ sub process {
   my $self = shift;
   my $cgi = new CGI;
   my $invitation = EnsEMBL::Web::Object::Data::Invite->new({'id' => $cgi->param('id')});
+  my $url;
  
   if ($invitation->status eq 'pending') {
     ## Is this an existing user?
