@@ -132,7 +132,7 @@ sub render {
       }
     }
     else {
-      $html .= qq(<a href="javascript:login_link();">Log in</a> to see customised news &middot; <a href="/common/register">Register</a>);
+      $html .= qq(<a href="javascript:login_link();">Log in</a> to see customised news &middot; <a href="/common/user/register">Register</a>);
     }
   }
 
