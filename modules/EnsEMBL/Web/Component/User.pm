@@ -99,7 +99,10 @@ sub enter_password_form {
   my $script = $object->script;
 
   my $form = EnsEMBL::Web::Form->new( 'enter_password', "/common/user/save_password", 'post' );
-  
+ 
+  $form->add_element('type' => 'Information',
+    'value' => 'Passwords should be at least 6 characters long and include both letters and numbers.');
+ 
   if ($ENV{'ENSEMBL_USER_ID'}) {
     ## Logged-in user, changing own password
     my $user = EnsEMBL::Web::Object::Data::User->new({'id' => $ENV{'ENSEMBL_USER_ID'}});
