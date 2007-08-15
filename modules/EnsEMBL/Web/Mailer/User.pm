@@ -88,7 +88,7 @@ sub send_invite_email {
  To accept this invitation, click on the following link:
 
  ) . $group->name . qq( 
- ) . $self->base_url . qq(/common/user/accept?id=) . $invite->id . qq(;code=) . $invite->code . qq(
+ ) . $self->base_url . qq(/common/user/accept?id=) . $invite->id . qq(;code=) . $invite->code . qq(;email=$email
 
  If you do not wish to accept, please just disregard this email.
 
