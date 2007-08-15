@@ -50,7 +50,7 @@ sub process {
           'lost'      => $cgi->param('lost') || '',
           'group_id'  => $cgi->param('group_id') || '',
         ));
-      $self->set_message(qq(<p>An email has been sent for each account associated with this address. If you do not receive a message from us within a few hours, please <a href="mailto:helpdesk\@ensembl.org">contact Helpdesk</a>.</p>));
+      $self->set_message(qq(<p>An email has been sent for each account associated with this address and should arrive shortly.</p><p>If you do not receive a message from us within a few hours, please check any spam filters on your email account, and <a href="mailto:helpdesk\@ensembl.org">contact Helpdesk</a> if you still cannot find the message.</p>));
     }
     $self->render_message;
   }

@@ -33,7 +33,6 @@ sub new {
   $HelpEmail_of{$self}   = defined $params{help_email} ? $params{help_email} : $sd->ENSEMBL_HELPDESK_EMAIL;
   if (!$SiteName_of{$self}) {
     my $sitetype = $sd->ENSEMBL_SITETYPE;
-    $SiteName_of{$self} = $sitetype eq 'EnsEMBL' ? 'Ensembl' : $sitetype;
   }
   return $self;
 }

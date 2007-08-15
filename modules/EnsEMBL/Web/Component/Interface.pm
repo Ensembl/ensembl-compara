@@ -108,6 +108,7 @@ sub preview_form {
   my $primary_key = EnsEMBL::Web::Tools::DBSQL::TableName::parse_primary_key($panel->interface->data->get_primary_key);
   my $id = $object->param($primary_key) || $object->param('id');
   my $db_action = $object->param('db_action');
+  warn "Action: $db_action = ", $object->param('db_action');
 
   if ($db_action eq 'delete') {
     $panel->interface->data->populate($id);

@@ -20,7 +20,6 @@ sub render {
   my $data_user = EnsEMBL::Web::Object::Data::User->new({ id => $user->id });
 
   my $sitename = $SiteDefs::ENSEMBL_SITETYPE;
-  $sitename = 'Ensembl' if $sitename eq 'EnsEMBL';
 
   my $group_id = undef;
   foreach my $this ($user->drawer_records) {
@@ -120,7 +119,7 @@ sub list_for_records {
         }
 
         $text = $record->name . ':';
-        if ($ENV{'ENSEMBL_SCRIPT'} eq 'contigview' || $ENV{'ENSEMBL_SCRIPT'} eq 'cytoview' ) {
+        if ($ENV{'ENSEMBL_SCRIPT'} && ($ENV{'ENSEMBL_SCRIPT'} eq 'contigview' || $ENV{'ENSEMBL_SCRIPT'} eq 'cytoview') ) {
           $text .=  ' <a href="javascript:void(0);" onclick="javascript:load_config(' . $record->id . ');">Load settings in this page</a> |';
         }
         $text .= ' <a  href="javascript:void(0);" onclick="javascript:go_to_config(' . $record->id . ');">Go to saved page and load tracks</a>';

@@ -1204,7 +1204,6 @@ sub transcripts {
 
 
 # Gene Regulation View -------------------------------------
-# Example: http://ensarc-1-14.internal.sanger.ac.uk:7033/Homo_sapiens/contigview?c=14:104257974.4;w=1093
 
 sub regulation_factors {
  my($panel, $object) = @_;

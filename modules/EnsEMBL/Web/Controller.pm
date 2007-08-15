@@ -42,6 +42,7 @@ sub set_connection {
 
 sub dispatch {
   my ($self, $url) = @_;
+  warn "Dispatch: $url";
   $self->set_url($url);
   $self->process;
 }
@@ -56,7 +57,7 @@ sub process {
   my $action = $self->get_action;
   my $found = 0;
   foreach my $key (keys %{ $self->get_connections }) {
-    #warn "ROUTE: " . $key . "(" . $action->get_action . ")";
+    warn "ROUTE: " . $key . "(" . $action->get_action . ")";
     if ($key eq $action->get_action) {
       $self->command($action);
       $found = 1;
@@ -74,6 +75,9 @@ sub command {
     warn "Dispatching to: " . $class . " (" . $action->get_action . ")";
     my $command = $class->new();
     $command->render($action);
+  }
+  else {
+    warn "Cannot use $class";
   }
 
 }

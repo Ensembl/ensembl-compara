@@ -12,7 +12,7 @@ sub helpview {
   my $object = $self->{object};
 
   ## Configure masthead, left hand menu, etc.
-  my $sitetype = ucfirst(lc($object->species_defs->ENSEMBL_SITETYPE)) || 'Ensembl';
+  my $sitetype = $object->species_defs->ENSEMBL_SITETYPE;
   $self->set_title( "$sitetype HelpView" );
   $self->{'page'}->close->style = 'help';
   $self->{'page'}->close->URL   = "/$ENV{'ENSEMBL_SPECIES'}/$ENV{'ENSEMBL_SCRIPT'}";

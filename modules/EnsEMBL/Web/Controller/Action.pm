@@ -51,7 +51,7 @@ sub parse_params {
   } else {
     my $cgi = new CGI;
     foreach my $key (keys %{ $cgi->Vars }) {
-      warn "CHECKING: " . $key;
+      #warn "CHECKING: " . $key;
       my $value = $cgi->param($key);
       $value =~ s/<script(.*?)>/[script$1]/igsm; ## sanitize
       $params->{$key} = $value;

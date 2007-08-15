@@ -16,6 +16,7 @@ use base 'EnsEMBL::Web::Controller::Command::User';
 
 sub BUILD {
   my ($self, $ident, $args) = @_; 
+  warn "*** Building status change";
   $self->add_filter('EnsEMBL::Web::Controller::Command::Filter::LoggedIn');
   my $cgi = new CGI;
   $self->add_filter('EnsEMBL::Web::Controller::Command::Filter::Admin', {'group_id' => $cgi->param('group_id')});
@@ -23,6 +24,7 @@ sub BUILD {
 
 sub render {
   my ($self, $action) = @_;
+  warn "*** Rendering status change";
   $self->set_action($action);
   if ($self->filters->allow) {
     $self->process;
@@ -32,10 +34,12 @@ sub render {
 }
 
 sub process {
+  warn "*** Processing status change";
   my $self = shift;
   my $cgi = new CGI;
   my $user = EnsEMBL::Web::Object::User->new({ adaptor => $ENSEMBL_WEB_REGISTRY->userAdaptor, id => $cgi->param('user_id') });
   my $group = EnsEMBL::Web::Object::Group->new(( adaptor => $ENSEMBL_WEB_REGISTRY->userAdaptor, id => $cgi->param('group_id') ));
+  warn "NEW STATUS: ", $cgi->param('new_status');
   $group->assign_status_to_user($cgi->param('new_status'), $user);
   $group->save;
 
