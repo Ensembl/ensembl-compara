@@ -37,7 +37,7 @@ sub allow {
 sub message {
   my $self = shift;
   my $ref = $ENV{'HTTP_REFERER'};
-  return qq(Sorry, these details could not be validated.<br /><br /><a href="$ref" class="red-button">Back</a>.);
+  return qq(Sorry, your username or password was entered incorrectly and could not be validated.<br /><br /><a href="$ref" class="red-button">Back</a>.);
 }
 
 sub inherit {
