@@ -450,6 +450,12 @@ sub context_menu {
 		      'title' => 'GeneSeqAlignView - View marked up sequence of gene '.$obj->stable_id.' aligned to other species',
 		      'href'  => "/$species/geneseqalignview?$q_string" );
 
+    if( $species =~ /^(Homo_sapiens|Mus_musculus|Rattus_norvegicus)$/ ) {
+      $self->add_entry( $flag, 'text' => 'Resequencing alignment',
+         'title' => "SequenceAlignView",
+                                  'href' => "/$species/sequencealignview?$q_string" );
+    }
+
     $self->add_entry( $flag,
 		      'code'  => 'gene_splice_info',
 		      'text'  => "Gene splice site image",

@@ -40,7 +40,7 @@ sub render {
   <table id="se">
     <tr>
       <td id="se_but"><img title="Ensembl search" id="se_im" src="/img/small-ensembl.gif" alt="Ensembl search" /><img src="/img/small-down.gif" style="width:7px" alt=":" /></td>
-      <td><input id="se_q" type="text" name="q" /></td>
+      <td><input id="se_q" type="text" name="query" /></td>
       <td style="cursor: hand; cursor: pointer;"><input type="submit"  style="cursor: hand; cursor: pointer;margin:0px; border:0px;background-color:#fff;padding:1px 0.5em;font-weight: bold;" value="Search&gt;&gt;" /></td>
     </tr>
   </table>

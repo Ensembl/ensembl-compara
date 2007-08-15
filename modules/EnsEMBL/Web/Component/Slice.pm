@@ -1166,7 +1166,7 @@ sub sequence_options_form {
   $form->add_element(
     'type' => 'String', 'required' => 'yes',
     'label' => "\u$region_name Name",  'name' => 'region',
-    'value' => $object->param('region'),
+    'value' => $object->seq_region_name,# #param('region')
     'size' => 10,
     'style' => 'width:30px',
   );
@@ -1174,13 +1174,13 @@ sub sequence_options_form {
   $form->add_element(
     'type' => 'NonNegInt', 'required' => 'yes',
     'label' => "Start",  'name' => 'vc_start',
-    'value' => $object->param('vc_start')
+    'value' => $object->seq_region_start #$object->param('vc_start')
   );
   
   $form->add_element(
     'type' => 'NonNegInt', 'required' => 'yes',
     'label' => "End",  'name' => 'vc_end',
-    'value' => $object->param('vc_end')
+    'value' => $object->seq_region_end #$object->param('vc_end')
   );
   
   my $strand = [
@@ -1193,7 +1193,7 @@ sub sequence_options_form {
     'required' => 'yes',      'name'     => 'strand',
     'label'    => 'Strand',
     'values'   => $strand,
-    'value'    => $object->param('strand'),
+    'value'    => $object->seq_region_strand #$object->param('strand'),
   );
 
 
