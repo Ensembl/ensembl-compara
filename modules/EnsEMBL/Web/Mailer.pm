@@ -32,7 +32,7 @@ sub new {
   $MailServer_of{$self}   = defined $params{mail_server} ? $params{mail_server} : $sd->ENSEMBL_MAIL_SERVER;
   $HelpEmail_of{$self}   = defined $params{help_email} ? $params{help_email} : $sd->ENSEMBL_HELPDESK_EMAIL;
   if (!$SiteName_of{$self}) {
-    my $sitetype = $sd->ENSEMBL_SITETYPE;
+    $SiteName_of{$self} = $sd->ENSEMBL_SITETYPE;
   }
   return $self;
 }
