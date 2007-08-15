@@ -40,8 +40,7 @@ You just need to activate your account, using the link below:
 );
   }
 
-  $message .= $self->base_url.'/common/user/activate?user_id='.$user->id
-                .';email='.$user->email.';code='.$user->salt;
+  $message .= $self->base_url.'/common/user/activate?email='.$user->email.';code='.$user->salt;
 
   if ($params{'group_id'}) {
     $message .= ";group_id=" . $params{'group_id'};
