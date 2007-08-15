@@ -178,6 +178,23 @@ sub accept {
   }
 }
 
+sub invitation_nonpending {
+  my $self   = shift;
+
+  if (my $panel = $self->new_panel( 'Image',
+    'code'    => "info$self->{flag}",
+    'object'  => $self->{object},
+    'caption' => 'Invitation Error',
+    ) ) {
+    $panel->add_components(qw(
+        invitation_nonpending       EnsEMBL::Web::Component::User::invitation_nonpending
+    ));
+
+    ## add panel to page
+    $self->add_panel( $panel );
+  }
+}
+
 sub invitations {
   my $self   = shift;
 

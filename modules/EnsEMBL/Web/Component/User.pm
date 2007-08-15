@@ -1083,7 +1083,7 @@ sub _render_group_users {
         else {
           $row->add_column({ content => qq(<a href="/common/user/change_level?user_id=) . $user->id . qq(;group_id=) . $group->id . qq(;new_level=member">Demote to Member</a>), align => 'right' });
         }
-        $row->add_column({ content => qq(<a href="/common/user/change_status?user_id=) . $user->id . qq(;group_id=) . $group->id . qq(;new_status=inactive">Remove</a>), align => 'right' });
+        $row->add_column({ content => qq(<a href="/common/user/change_status?user_id=) . $user->id . qq(;group_id=) . $group->id . qq(;new_status=none">Remove</a>), align => 'right' });
       }
       if ($user->member_status eq 'barred') {
         $row->add_column({ content => qq(<a href="/common/user/change_status?user_id=) . $user->id . qq(;group_id=) . $group->id . qq(;new_status=active">Re-admit</a>), align => 'right' });
@@ -1158,6 +1158,20 @@ sub delete_group {
   $html .= "</div>\n";
 
   return $html;
+}
+
+sub invitation_nonpending {
+  my ($panel, $object) = @_;
+  my $status = $object->param('status');
+  my $html;
+  if ($status eq 'accepted') {
+    $html = qq(<p>This invitation seems to have been accepted already. Please <a href="/common/user/account">go to your account</a> or <a href="/common/user/login">log in</a> to check your group membership details.</p>);
+  }
+  else {
+    $html = qq(<p>Sorry, there was a problem with the invitation record in our database. Please contact the person who invited you to get a new invitation.</p>);
+  }
+
+  $panel->print($html);
 }
 
 sub invitations {

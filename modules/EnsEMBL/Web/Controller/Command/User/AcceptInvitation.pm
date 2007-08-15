@@ -18,7 +18,6 @@ use base 'EnsEMBL::Web::Controller::Command::User';
 
 sub BUILD {
   my ($self, $ident, $args) = @_;
-  $self->add_filter('EnsEMBL::Web::Controller::Command::Filter::InvitationExists');
   $self->add_filter('EnsEMBL::Web::Controller::Command::Filter::InvitationValid');
 }
 
@@ -37,7 +36,6 @@ sub process {
   my $self = shift;
   my $cgi = new CGI;
   my $invitation = EnsEMBL::Web::Object::Data::Invite->new({'id' => $cgi->param('id')});
-  my $url;
  
   if ($invitation->status eq 'pending') {
     ## Is this an existing user?
@@ -64,8 +62,27 @@ sub process {
       $invitation->save;
       $url = '/common/user/register?email='.$invitation->email.';status=active;record_id='.$invitation->id;
     }
+    $cgi->redirect($url);
   }
-  $cgi->redirect($url);
+  else {
+     my $webpage= new EnsEMBL::Web::Document::WebPage(
+    'renderer'   => 'Apache',
+    'outputtype' => 'HTML',
+    'scriptname' => 'user/accept',
+    'objecttype' => 'User',
+      );
+
+    if( $webpage->has_a_problem() ) {
+      $webpage->render_error_page( $webpage->problem->[0] );
+    } 
+    else {
+      foreach my $object( @{$webpage->dataObjects} ) {
+        $object->param('status', $invitation->status);
+        $webpage->configure( $object, 'invitation_nonpending' );
+      }
+      $webpage->action();
+    }
+  }
 }
 
 }
