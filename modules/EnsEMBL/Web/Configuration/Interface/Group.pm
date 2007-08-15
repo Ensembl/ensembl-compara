@@ -31,7 +31,7 @@ sub save {
     $member->user_id($ENV{'ENSEMBL_USER_ID'});
     $member->webgroup_id($interface->data->id);
     $member->level('administrator');
-    $member->status('active');
+    $member->member_status('active');
     $member->save;
   }
 
