@@ -40,7 +40,7 @@ sub render {
     $html .= "</div>\n";
     if ($species_defs->ENSEMBL_LOGINS && !$reg_user->id) {
       $html .= "<div id='login_message'>";
-      $html .= "<a href='javascript:login_link()'>Log in</a> to customise this list &middot; <a href='/common/register'>Register</a>";
+      $html .= "<a href='javascript:login_link()'>Log in</a> to customise this list &middot; <a href='/common/user/register'>Register</a>";
       $html .= "</div>\n";
     }
   }
