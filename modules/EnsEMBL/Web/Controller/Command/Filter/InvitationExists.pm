@@ -17,7 +17,7 @@ sub allow {
   my ($self) = @_;
   my $cgi = new CGI;
   my $invitation = EnsEMBL::Web::Object::Data::Invite->new({id => $cgi->param('id')});
-  if ($invitation)) {
+  if ($invitation) {
     return 1;
   } else {
     return 0;
