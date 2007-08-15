@@ -22,12 +22,11 @@ use vars qw(@ISA $SCORE_COLOURS $COLOURS);
 use Bio::EnsEMBL::GlyphSet_simple;
 use Bio::EnsEMBL::Feature;
 use EnsEMBL::Web::Component;
-use Tie::IxHash;
 @ISA = qw(Bio::EnsEMBL::GlyphSet_simple);
 
 my $k;
 #warn ("A-0:".localtime());
-tie my %asmbl, 'Tie::IxHash';
+my %asmbl;
 
 sub _init {
   my ($self) = @_;
@@ -373,55 +372,65 @@ sub _init {
     my $current_r = $archive_info{$tempr};
     push @{$asmbl{$current_r}} , $r;
   }
-  
-  foreach my $a ( keys %asmbl){
-   my $r = $asmbl{$a};	
-   my @sorted = sort @{$r};
-   my $size = @sorted;
-   my $start = ($xc{$sorted[0]}) + 2;
-   my $offset = $interval / 2;
-   $start -= $offset;
-   my $end = $start + ($interval * $size);
-   $end -= 4;
-   if ($sorted[0] == $releases[0]){ $start = ($xc{$sorted[0]}) -10; }
-   if ($sorted[-1] == $releases[-1]) {$end = $xc{$sorted[-1]} +10; }
-   my $length = $end - $start;
-   my $colour = $a_colours[$i]; 	
+  my %asmbl_seen;
 
-    my $asmblbox = new Sanger::Graphics::Glyph::Rect({
+  foreach my $key ( @releases){	
+   my $tempr = $key; 
+   if ($tempr =~/\./){ $tempr=~s/\.\d*//; }
+    my $a = $archive_info{$tempr};
+    if (exists $asmbl_seen{$a}){
+	  next;
+	}
+    else {
+      $asmbl_seen{$a} = $key;	
+      my $r = $asmbl{$a};	
+      my @sorted = sort @{$r};
+      my $size = @sorted;
+      my $start = ($xc{$sorted[0]}) + 2;
+      my $offset = $interval / 2;
+      $start -= $offset;
+      my $end = $start + ($interval * $size);
+      $end -= 4;
+      if ($sorted[0] == $releases[0]){ $start = ($xc{$sorted[0]}) -10; }
+      if ($sorted[-1] == $releases[-1]) {$end = $xc{$sorted[-1]} +10; }
+      my $length = $end - $start;
+      my $colour = $a_colours[$i]; 	
+
+      my $asmblbox = new Sanger::Graphics::Glyph::Rect({
        'x'         => $start,
        'y'         => $y -3,
        'width'     => $length,
        'height'    => 15,
        'colour'    => $colour,
        'title'       => $a,
-    });
-   $self->push($asmblbox);
+      });
+      $self->push($asmblbox);
   
-   my @res = $self->get_text_width(
-     ($end-$start)*$pix_per_bp,
-     $strand > 0 ? "$a " : " $a",
-     $strand > 0 ? '1' : '0',
-     'font'=>$fontname, 'ptsize' => $fontsize
-   );
+      my @res = $self->get_text_width(
+       ($end-$start)*$pix_per_bp,
+       $strand > 0 ? "$a " : " $a",
+       $strand > 0 ? '1' : '0',
+       'font'=>$fontname, 'ptsize' => $fontsize
+      );
 
-   if( $res[0] ) {
-     my $tglyph = new Sanger::Graphics::Glyph::Text({
-       'x'          => $start +5,
-       'height'     => $res[3],
-       'width'      => $res[2]/$pix_per_bp,
-       'textwidth'  => $res[2],
-       'y'          => $y -3,
-       'font'       => $fontname,
-       'ptsize'     => $fontsize,
-       'colour'     => 'white',
-       'text'       => $a,
-       'absolutey'  => 1,
-     });
-     $self->push($tglyph);
-   }
-   if ($i == 1){$i = 0;} 
-   else {$i = 1;}
+     if( $res[0] ) {
+       my $tglyph = new Sanger::Graphics::Glyph::Text({
+        'x'          => $start +5,
+        'height'     => $res[3],
+        'width'      => $res[2]/$pix_per_bp,
+        'textwidth'  => $res[2],
+        'y'          => $y -3,
+        'font'       => $fontname,
+        'ptsize'     => $fontsize,
+        'colour'     => 'white',
+        'text'       => $a,
+        'absolutey'  => 1,
+       });
+      $self->push($tglyph);
+     }
+     if ($i == 1){$i = 0;} 
+     else {$i = 1;}
+    }
   }
  
  ## Draw scalebar ##
