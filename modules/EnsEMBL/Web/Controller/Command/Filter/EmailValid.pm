@@ -25,7 +25,8 @@ sub allow {
 
 sub message {
   my $self = shift;
-  return 'Sorry, the email address you entered was not valid. Please try again.';
+  my $ref = $ENV{'HTTP_REFERER'};
+  return qq(Sorry, the email address you entered was not valid. Please try again.<br /><br /><a href="$ref" class="red-button">Back</a>);
 }
 
 sub inherit {
