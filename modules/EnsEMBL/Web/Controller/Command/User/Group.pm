@@ -40,7 +40,7 @@ sub render_page {
 
   my $sd = EnsEMBL::Web::SpeciesDefs->new();
   my $help_email = $sd->ENSEMBL_HELPDESK_EMAIL;
-  my $sitename = $sd->ENSEMBL_SITETYPE eq 'EnsEMBL' ? 'Ensembl' : $sd->ENSEMBL_SITETYPE;
+  my $sitename = $sd->ENSEMBL_SITETYPE;
 
   ## Create interface object, which controls the forms
   my $interface = EnsEMBL::Web::Interface::InterfaceDef->new();
