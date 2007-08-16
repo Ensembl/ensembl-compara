@@ -147,7 +147,6 @@ sub assign_level_to_user {
 
 sub assign_status_to_user {
   my ($self, $status, $user) = @_;
-  warn "Assigning status $status to user ", $user->id;
   if ($self->status_collection->{$status}) {
     push @{ $self->status_collection->{$status} }, $user;
   } else {
