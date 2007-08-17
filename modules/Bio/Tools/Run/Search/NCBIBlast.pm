@@ -30,7 +30,7 @@ information about how to use this.
 
 # Let the code begin...
 package Bio::Tools::Run::Search::NCBIBlast;
-use strict;
+use strict;g
 use File::Copy qw(mv);
 use Data::Dumper qw(Dumper);
 
@@ -166,9 +166,15 @@ sub command{
 
   my $res_file_local = '/tmp/ensblast_$$.out';
 
-  $ENV{'BLASTMAT'}    || $self->warn( "BLASTMAT variable not set" );
-  $ENV{'BLASTFILTER'} || $self->warn( "BLASTFILTER variable not set" );
-  $ENV{'BLASTDB'}     || $self->warn( "BLASTBD variable not set" );
+  # Build a list of blast-specific environment variables and set these
+  # explicitly in the command. Apache(2)-safe.
+  my $env_command = '';
+  foreach my $env qw( PATH BLASTMAT BLASTFILTER BLASTDB ){
+    my $val = $self->environment_variable( $env );
+    $val = $ENV{$env} unless defined( $val );
+    $val or  $self->warn( "$env variable not set" ) && next;
+    $env_command .= sprintf( 'export %s=%s; ', $env, $val );
+  }
 
   my $database = $self->database ||
     $self->throw("No database");
@@ -195,7 +201,7 @@ sub command{
     else{ $param_str .= " $param" }
   }
 
-  $param_str =~ s/[;`&|<>\s]+/ /g;
+  $param_str =~ s/[;`&|<>\s]+/ /g; #`
   my $blast_command = join( ' ',
 			    $self->program_path,
 			    '-d', $database,
@@ -205,14 +211,17 @@ sub command{
   
   my $report_file     = $self->reportfile;
   my $report_file_tmp = $report_file."_";
-  my $command_tmpl = "cat %s | %s > %s 2>&1 ; mv %s %s";
-  return sprintf
+  my $command_tmpl = "%s cat %s | %s > %s 2>&1 ; mv %s %s";
+  my $command = sprintf
     ( $command_tmpl,
+      $env_command,
       $self->fastafile,
       $blast_command,
       $report_file_tmp,
       $report_file_tmp,
       $report_file );
+		   warn( "==> $command" );
+  return $command;		   
 }
 
 #----------------------------------------------------------------------
