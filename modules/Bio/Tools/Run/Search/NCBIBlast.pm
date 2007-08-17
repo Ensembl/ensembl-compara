@@ -30,7 +30,7 @@ information about how to use this.
 
 # Let the code begin...
 package Bio::Tools::Run::Search::NCBIBlast;
-use strict;g
+use strict;
 use File::Copy qw(mv);
 use Data::Dumper qw(Dumper);
 
