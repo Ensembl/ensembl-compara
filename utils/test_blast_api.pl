@@ -21,6 +21,7 @@ BEGIN{
   my $serverroot = dirname( $Bin );
   unshift @INC, "$serverroot/conf";
   eval{ require SiteDefs };
+
   if ($@){ die "Can't use SiteDefs.pm - $@\n"; }
   map{ unshift @INC, $_ } @SiteDefs::ENSEMBL_LIB_DIRS;
 }
@@ -197,46 +198,51 @@ sub get_search{
 sub get_ensembl_search{
 
   # --- load modules needed for reading config ---
-  tie *STDERR, __PACKAGE__;
-  require SpeciesDefs;
-  require EnsMart::BlastDefs;
-  require EnsEMBL::DB::Core;
-  my $species_defs = SpeciesDefs->new;
-  my $blast_defs   = EnsMart::BlastDefs->new;
-  untie *STDERR;
-  $species_defs || pod2usage("$0: SpeciesDefs config not found");
-  $blast_defs   || pod2usage("$0: BlastDefs config not found");
+  #tie *STDERR, __PACKAGE__;
+  require EnsEMBL::Web::SpeciesDefs;
+  require EnsEMBL::Web::BlastView::BlastDefs;
+  require EnsEMBL::Web::DBSQL::DBConnection;
+  my $species_defs = EnsEMBL::Web::SpeciesDefs->new;
+  my $blast_defs   = EnsEMBL::Web::BlastView::BlastDefs->new;
+  #untie *STDERR;
+
+  $species_defs || die("[*DIE] SpeciesDefs config not found");
+  $blast_defs   || die("[*DIE] BlastDefs config not found");
   # --- got modules ---
 
   my $me = shift;
   my $db = shift;
   my $sp = shift || $species_defs->PERL_DEFAULT_SPECIES;
+
+  my $dbconnection = EnsEMBL::Web::DBSQL::DBConnection->new
+      ( $sp, $species_defs );
+
   my( %env, %args );
 
   my %all_species   = map{$_=>1} $blast_defs->dice( -out=>'species' );
   my %all_methods   = map{$_=>1} $blast_defs->dice( -out=>'method' );
   my %all_databases = map{$_=>1} $blast_defs->dice( -out=>'database' );
-  if( ! %all_species   ){ pod2usage("$0: No valid species in conf" ) };
-  if( ! %all_methods   ){ pod2usage("$0: No valid methods in conf" ) };
-  if( ! %all_databases ){ pod2usage("$0: No valid databases in conf" ) };
+  if( ! %all_species   ){ die("$0: No valid species in conf" ) };
+  if( ! %all_methods   ){ die("$0: No valid methods in conf" ) };
+  if( ! %all_databases ){ die("$0: No valid databases in conf" ) };
 
-  $sp || pod2usage("$0: species arg required; select from:\n".
+  $sp || die("[*DIE] species arg required; select from:\n".
 			 join( "\n", sort keys %all_species ) );
-  $me || pod2usage("$0: method arg required; select from:\n".
+  $me || die("[*DIE] method arg required; select from:\n".
 			 join( "\n", sort keys %all_methods ) );
-  $db || pod2usage("$0: database arg required; select from:\n".
+  $db || die("[*DIE] database arg required; select from:\n".
 			 join( "\n", sort keys %all_databases ) );
 
   $all_species{$sp} ||
-    pod2usage("$0: species $sp not valid; select from:\n".
+    die("[*DIE] species $sp not valid; select from:\n".
 	      join( "\n", sort keys %all_species ) );
 
   $all_methods{$me} ||
-    pod2usage("$0: method $me not valid; select from:\n".
+    die("[*DIE] Method $me not valid; select from:\n".
 	      join( "\n", sort keys %all_methods ) );
 
   $all_databases{$db} ||
-    pod2usage("$0: database $db not valid; select from:\n".
+    die("[*DIE] database $db not valid; select from:\n".
 	      join( "\n", sort keys %all_databases ) );
 
   my $bd = $species_defs->get_config($sp,'ENSEMBL_BLAST_DATA_PATH');
@@ -265,13 +271,13 @@ sub get_ensembl_search{
 
   $args{-method}   = $me_conf->{$me};
   $args{-database} = $db_name;
-  $args{-adaptor}  = &EnsEMBL::DB::Core::get_blast_database;
+  $args{-adaptor}  = $dbconnection->_get_blast_database;
   $args{-workdir}  = $species_defs->ENSEMBL_TMP_DIR_BLAST;
 
   my $search = Bio::Tools::Run::Search->new
     ( -method   => $me_conf->{$me},
       -database => $db_name,
-      -adaptor  => &EnsEMBL::DB::Core::get_blast_database,
+      -adaptor  => $dbconnection->_get_blast_database,
       -workdir  => $species_defs->ENSEMBL_TMP_DIR_BLAST,
       -result_factory => $resfact,
       -hit_factory    => $hitfact,
@@ -280,7 +286,8 @@ sub get_ensembl_search{
 
   map{ $search->environment_variable($_, $env{$_} ) } keys %env;
 
-  $search->result->core_adaptor(&EnsEMBL::DB::Core::get_core_database($sp));
+  $search->result->core_adaptor
+      ($dbconnection->_get_core_database($sp));
 
   return $search;
 }
