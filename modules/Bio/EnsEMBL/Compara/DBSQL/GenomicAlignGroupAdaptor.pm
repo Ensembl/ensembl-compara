@@ -67,23 +67,11 @@ use Bio::EnsEMBL::Compara::DnaFrag;
 
 @ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor);
 
-my $DEFAULT_MAX_ALIGNMENT = 20000;
-
 sub new {
   my $class = shift;
 
   my $self = $class->SUPER::new(@_);
 
-  my $vals =
-    $self->db->get_MetaContainer->list_value_by_key('max_alignment_length');
-
-  if(@$vals) {
-    $self->{'max_alignment_length'} = $vals->[0];
-  } else {
-    warning("Meta table key 'max_alignment_length' not defined\n" .
-        "using default value [$DEFAULT_MAX_ALIGNMENT]");
-    $self->{'max_alignment_length'} = $DEFAULT_MAX_ALIGNMENT;
-  }
   $self->{_use_autoincrement} = 1;
 
   return $self;
