@@ -251,9 +251,15 @@ sub command{
 
   my $res_file_local = '/tmp/blast_$$.out';
 
-  $ENV{'BLASTMAT'}    || $self->warn( "BLASTMAT variable not set" );
-  $ENV{'BLASTFILTER'} || $self->warn( "BLASTFILTER variable not set" );
-  $ENV{'BLASTDB'}     || $self->warn( "BLASTBD variable not set" );
+  # Build a list of blast-specific environment variables and set these 
+  # explicitly in the command. Apache(2)-safe.
+  my $env_command = '';
+  foreach my $env qw( PATH BLASTMAT BLASTFILTER BLASTDB ){
+    my $val = $self->environment_variable( $env );
+    $val = $ENV{$env} unless defined( $val );
+    $val or  $self->warn( "$env variable not set" ) && next;
+    $env_command .= sprintf( 'export %s=%s; ', $env, $val );
+  }
 
   my $database = $self->database ||
     $self->throw("No database");
@@ -267,17 +273,18 @@ sub command{
     elsif( $val ){ $param_str .= " $param $val" }
     else{ $param_str .= " $param" }
   }
-  $param_str =~ s/[;`&|<>\s]+/ /g;
+  $param_str =~ s/[;`&|<>\s]+/ /g; #`
   my $blast_command = join( ' ',
 			    $self->program_path,
 			    $database,
 			    $self->fastafile,
 			    $param_str, );
 
-  my $command_tmpl = "%s > %s 2>&1 ; cp %s %s; rm %s";
+  my $command_tmpl = "%s %s > %s 2>&1 ; cp %s %s; rm %s";
 
   my $command = sprintf
-    ( $command_tmpl, 
+    ( $env_command,
+      $command_tmpl, 
       $blast_command, 
       $res_file_local, 
       $res_file_local, 
