@@ -328,7 +328,8 @@ sub build_GeneTreeSystem
   #
   foreach my $speciesPtr (@speciesList) {
     my $gdb_id = $speciesPtr->{'genome_db_id'};
-    my $gdb = $self->{gdba}->fetch_by_dbID($gdb_id);
+    my $gdb = $self->{gdba}->fetch_by_dbID($gdb_id) 
+        || die( "Cannot fetch_by_dbID genome_db $gdb_id" );
     my $species_name = lc($gdb->name);
     $species_name =~ s/\ /\_/g;
     my $tbl_name = "peptide_align_feature"."_"."$species_name"."_"."$gdb_id";
