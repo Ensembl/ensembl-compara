@@ -1,5 +1,8 @@
 package EnsEMBL::Web::Object::Data::Trackable;
 
+## Parent class for data objects that can be tracked by user and timestamp
+## Can be multiply-inherited with Object::Data::Owned
+
 use strict;
 use warnings;
 

@@ -13,13 +13,15 @@ our @ISA = qw(EnsEMBL::Web::Object::Data);
 
 sub BUILD {
   my ($self, $ident, $args) = @_;
-  $self->set_adaptors({ db => 'website', table => 'ens_release' });
-  $self->set_primary_id({ name => 'release_id', type => 'int' });
+  $self->set_adaptor(EnsEMBL::Web::DBSQL::MySQLAdaptor->new({ 'table' => 'ens_release',
+                                                              'adaptor' => 'websiteAdaptor'}));
+  $self->set_primary_key('release_id');
   $self->add_queriable_field({ name => 'number', type => 'varchar(5)' });
   $self->add_queriable_field({ name => 'date', type => 'date' });
   $self->add_queriable_field({ name => 'archive', type => 'varchar(7)' });
-  $self->has_many("EnsEMBL::Web::Object::Data::NewsItem");
-  $self->has_many("EnsEMBL::Web::Object::Data::Species");
+  $self->add_has_many({ class => "EnsEMBL::Web::Object::Data::NewsItem"});
+  $self->add_has_many({ class => "EnsEMBL::Web::Object::Data::Species"});
+  $self->populate_with_arguments($args);
 }
 
 }

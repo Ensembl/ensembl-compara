@@ -22,7 +22,7 @@ sub BUILD {
   $self->add_queriable_field({ name => 'vega', type => "enum('N','Y')" });
   $self->add_queriable_field({ name => 'dump_notes', type => 'text' });
   $self->add_belongs_to("EnsEMBL::Web::Object::Data::Release");
-  $self->add_belongs_to("EnsEMBL::Web::Object::Data::NewsItem");
+  $self->add_has_many({class => "EnsEMBL::Web::Object::Data::NewsItem"});
   $self->populate_with_arguments($args);
 }
 

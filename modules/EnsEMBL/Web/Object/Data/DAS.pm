@@ -7,9 +7,9 @@ use Class::Std;
 use EnsEMBL::Web::DBSQL::MySQLAdaptor;
 use EnsEMBL::Web::DASConfig;
 use EnsEMBL::Web::Object::Data::Trackable;
-use EnsEMBL::Web::Object::Data::Record;
+use EnsEMBL::Web::Object::Data::Owned;
 
-our @ISA = qw(EnsEMBL::Web::Object::Data::Trackable  EnsEMBL::Web::Object::Data::Record);
+our @ISA = qw(EnsEMBL::Web::Object::Data::Trackable  EnsEMBL::Web::Object::Data::Owned);
 
 
 {

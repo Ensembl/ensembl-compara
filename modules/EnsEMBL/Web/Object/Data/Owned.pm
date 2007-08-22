@@ -1,4 +1,7 @@
-package EnsEMBL::Web::Object::Data::Record;
+package EnsEMBL::Web::Object::Data::Owned;
+
+### Parent class for records that belong to a user or group
+## Can be multiply-inherited with Object::Data::Trackable
 
 use strict;
 use warnings;

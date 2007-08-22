@@ -9,6 +9,8 @@ use EnsEMBL::Web::DBSQL::MySQLAdaptor;
 
 our @ISA = qw(EnsEMBL::Web::Object::Trackable);
 
+## NB - not an owned record, so doesn't need to inherit from Object::Data::Record
+
 {
 
 sub BUILD {
@@ -22,10 +24,9 @@ sub BUILD {
   $self->add_field({ name => 'word', type => 'tinytext' });
   $self->add_field({ name => 'acronym_for', type => 'tinytext' });
   $self->add_field({ name => 'meaning', type => 'text' });
-  $self->add_queriable_field({ name => 'type', type => 'varchar(255)' });
   $self->add_queriable_field({ name => 'status', type => "enum('draft','live','dead')" });
+  $self->add_queriable_field({ name => 'type', type => 'text' });
   $self->type('glossary');
-  #$self->add_belongs_to("EnsEMBL::Web::Object::Data::User");
   $self->populate_with_arguments($args);
 }
 

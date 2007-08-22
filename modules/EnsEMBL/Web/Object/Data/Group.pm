@@ -25,7 +25,7 @@ sub BUILD {
   $self->add_has_many({ class => 'EnsEMBL::Web::Object::Data::Annotation', owner => 'group'});
   $self->add_has_many({ class => 'EnsEMBL::Web::Object::Data::DAS', owner => 'group'});
   $self->add_has_many({ class => 'EnsEMBL::Web::Object::Data::Invite', owner => 'group'});
-  $self->add_has_many({ class => 'EnsEMBL::Web::Object::Data::User', table => 'user', link_table => 'group_member', contribute => [ 'level', 'member_status' ] });
+  $self->add_has_many({ class => 'EnsEMBL::Web::Object::Data::User', table => 'user', link_table => 'group_member', contribute => [ 'level', 'status' ] });
   $self->populate_with_arguments($args);
 }
 
