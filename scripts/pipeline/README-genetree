@@ -211,10 +211,9 @@ ensembl-compara/scripts/tree/testTaxonTree.pl.
 To have your list of NCBI taxon_ids, you can use "-query_ncbi_name"
 like this:
 
-/usr/local/ensembl/bin/perl \
-~/src/ensembl_main/ensembl-compara/scripts/tree/testTaxonTree.pl \
--url mysql://ensro@ens-staging/ensembl_compara_45 \
--query_ncbi_name "Anopheles gambiae"
+$ set COMPARA_URL='mysql://ensro@ens-staging/ensembl_compara_46'
+$ perl $BASEDIR/ensembl-compara/scripts/tree/testTaxonTree.pl \
+  -url $COMPARA_URL -query_ncbi_name "Anopheles gambiae"
 
 NJTREE can distinguish between species that are supposed to have all
 the genes represented in the DB and "incomplete" species, that may
@@ -228,20 +227,30 @@ species tree like this:
 
 (a) Look for the NCBI taxon_ids:
 
-testTaxonTree.pl -url mysql://ensro@ens-staging/ensembl_compara_45 -query_ncbi_name "Anopheles gambiae"
-testTaxonTree.pl -url mysql://ensro@ens-staging/ensembl_compara_45 -query_ncbi_name "Aedes aegypti"
-testTaxonTree.pl -url mysql://ensro@ens-staging/ensembl_compara_45 -query_ncbi_name "Drosophila melanogaster"
-testTaxonTree.pl -url mysql://ensro@ens-staging/ensembl_compara_45 -query_ncbi_name "Culex pipiens"
-testTaxonTree.pl -url mysql://ensro@ens-staging/ensembl_compara_45 -query_ncbi_name "Pediculus humanus"
+$ perl $BASEDIR/ensembl-compara/scripts/tree/testTaxonTree.pl \
+  -url $COMPARA_URL -query_ncbi_name "Anopheles gambiae"
+
+$ perl $BASEDIR/ensembl-compara/scripts/tree/testTaxonTree.pl \
+  -url $COMPARA_URL -query_ncbi_name "Aedes aegypti"
+
+$ perl $BASEDIR/ensembl-compara/scripts/tree/testTaxonTree.pl \
+  -url $COMPARA_URL -query_ncbi_name "Drosophila melanogaster"
+
+$ perl $BASEDIR/ensembl-compara/scripts/tree/testTaxonTree.pl \
+  -url $COMPARA_URL -query_ncbi_name "Culex pipiens"
+
+$ perl $BASEDIR/ensembl-compara/scripts/tree/testTaxonTree.pl \
+  -url $COMPARA_URL -query_ncbi_name "Pediculus humanus"
 
 the first three then being "-extrataxon_sequenced 7165_7159_7227", 
 and the last two being: "-extrataxon_incomplete 7175_121225"
 
 (b) Then you call the script like this:
 
-testTaxonTree.pl -url mysql://ensro@ens-staging/ensembl_compara_45 \
--create_species_tree -extrataxon_sequenced 7165_7159_7227 \
--extrataxon_incomplete 7175_121225  -no_previous
+$ perl $BASEDIR/ensembl-compara/scripts/tree/testTaxonTree.pl \
+  -url $COMPARA_URL \
+  -create_species_tree -extrataxon_sequenced 7165_7159_7227 \
+  -extrataxon_incomplete 7175_121225  -no_previous
 
 Which in this case will create your file with the name "njtree.5.ensembl_compara_45.nh":
 
@@ -258,9 +267,9 @@ present in a previous Compara DB plus a few new species, you can use
 the script connecting to that given DB and without the "-no_previous"
 option. For example:
 
-testTaxonTree.pl -url mysql://ensro@ens-staging/ensembl_compara_45 \
--create_species_tree -extrataxon_sequenced 9823 \
--multifurcation_deletes_node 33316
+$ testTaxonTree.pl -url $COMPARA_URL \
+  -create_species_tree -extrataxon_sequenced 9823 \
+  -multifurcation_deletes_node 33316
 
 will create a tree with the species in ensembl_compara_45, deleting
 the Coelomata internal node and adding the Sus scrofa species as
