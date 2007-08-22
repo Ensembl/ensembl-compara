@@ -228,6 +228,8 @@ foreach my $genome_db_ids (@new_input_genome_db_ids) {
       $name = scalar(@{$genome_db_ids})." species MLAGAN";
     } else {
       foreach my $this_genome_db_id (@{$genome_db_ids}) {
+        my $gdb = $gdba->fetch_by_dbID($this_genome_db_id)
+            || die( "Cannot fetch_by_dbID genome_db $this_genome_db_id" );
         my $species_name = $gdba->fetch_by_dbID($this_genome_db_id)->name;
         $species_name =~ s/(\S)\S+ /$1\./;
         $species_name = substr($species_name, 0, 5);
@@ -400,6 +402,6 @@ sub ask_for_genome_dbs {
     } else {
       print "\nERROR, try again\n";
     }
-  } while (1);
-}
+  } while (1);}
+
 
