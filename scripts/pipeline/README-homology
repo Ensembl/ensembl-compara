@@ -22,16 +22,8 @@ pipeline.
 1- code API needed and executable
    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-  bioperl-live (bioperl-1-2-0)
-  bioperl-run (1.4) for the CodeML runnable/parser
-  ensembl
-  ensembl-compara
-  ensembl-hive
-  ensembl-analysis
-  ensembl-pipeline
+1.1 Executables
 
-  executables
-  ~~~~~~~~~~~
   wublastp
       using /usr/local/ensembl/bin/wublastp
   setdb
@@ -41,174 +33,44 @@ pipeline.
 
 1.2 Code checkout
 
-bioperl code;
-
-  $ cvs -d :ext:bio.perl.org:/home/repository/bioperl \
-    co -r branch-1-2 bioperl-live
-
-bioperl-run code (for the CodeML runnable/parser)
-  
-  $ cvs -d :ext:bio.perl.org:/home/repository/bioperl \
-    co -r bioperl-run-release-1-4-0 bioperl-run
-
-core ensembl code
-
-  $ cvs -d :ext:cvs.sanger.ac.uk:/nfs/ensembl/cvsroot co ensembl
-
-ensembl-compara code (for Compara API and schema)
-
-  $ cvs -d :ext:cvs.sanger.ac.uk:/nfs/ensembl/cvsroot co ensembl-compara
-
-ensembl-analysis code (for Runnables)
-
-  $ cvs -d :ext:cvs.sanger.ac.uk:/nfs/ensembl/cvsroot co ensembl-analysis
-
-ensembl-pipeline code (for Pipeline)
-
-  $ cvs -d :ext:cvs.sanger.ac.uk:/nfs/ensembl/cvsroot co ensembl-pipeline
-
-ensembl-hive code
-
-  $ cvs -d :ext:cvs.sanger.ac.uk:/nfs/ensembl/cvsroot co  ensembl-hive
-
+See README.genetree
 
 1.3 Perl environment
 
-in tcsh
-  $ setenv BASEDIR   /some/path/to/modules
-  $ setenv PERL5LIB ${BASEDIR}/ensembl/modules:${PERL5LIB}
-  $ setenv PERL5LIB ${BASEDIR}/ensembl-compara/modules:${PERL5LIB}
-  $ setenv PERL5LIB ${BASEDIR}/ensembl-pipeline/modules:${PERL5LIB}
-  $ setenv PERL5LIB ${BASEDIR}/ensembl-analysis/modules:${PERL5LIB}
-  $ setenv PERL5LIB ${BASEDIR}/ensembl-hive/modules:${PERL5LIB}
-  $ setenv PERL5LIB ${BASEDIR}/bioperl-live:${PERL5LIB}
-  $ setenv PERL5LIB ${BASEDIR}/bioperl-run:${PERL5LIB}
-
-in bash
-  $ BASEDIR=/some/path/to/modules
-  $ export PERL5LIB=${BASEDIR}/ensembl/modules:${PERL5LIB}
-  $ export PERL5LIB=${BASEDIR}/ensembl-compara/modules:${PERL5LIB}
-  $ export PERL5LIB=${BASEDIR}/ensembl-pipeline/modules:${PERL5LIB}
-  $ export PERL5LIB=${BASEDIR}/ensembl-analysis/modules:${PERL5LIB}
-  $ export PERL5LIB=${BASEDIR}/ensembl-hive/modules:${PERL5LIB}
-  $ export PERL5LIB=${BASEDIR}/bioperl-live:${PERL5LIB}
-  $ export PERL5LIB=${BASEDIR}/bioperl-run:${PERL5LIB}
-
+See README.genetree
 
 1.4 CPAN Perl modules
-  www.cpan.org
 
-  DBI
-  DBD::mysql
-  Data::UUID
-  Statistics::Descriptive
+See README.genetree
 
 
 2- Configure database
+3- Load the NCBI taxonomy data
    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Pick a mysql instance and create a database;
-
-  $ mysql -e "create database my_ensembl_compara_45"
-
-And load the schemas;
-
-  $ mysql my_ensembl_compara_45 \
-    < $BASEDIR/ensembl-hive/sql/tables.sql
-  $ mysql my_ensembl_compara_45 \
-    < $BASEDIR/ensembl-compara/sql/table.sql
-  $ mysql my_ensembl_compara_45 \
-    < $BASEDIR/ensembl-compara/sql/pipeline-tables.sql
-
-You now need to load the NCBI taxonomy data into the ncbi_taxa_name
-and ncbi_taxa_node tables. See the following file;
-
-  $BASEDIR/ensembl-compara/scripts/taxonomy/README-taxonomy
-
-You may alternatively be able to copy taxonomy tables from an existing
-compara db (this may take a few mins), e.g.
-
-  $ mysqldump --no-create-info ensembl_compara_old \
-    ncbi_taxa_node ncbi_taxa_name \
-    | mysql my_ensembl_compara_45
+See README.genetree
 
 
-3- Choose a working directory with enough disk space
-   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-The homology pipeline takes several GB of space for fasta databases and
-error and output from the RunnableDBs
-
-fasta blast database directory =
-/path/to/scratch/data/blastdb/my_ensembl_compara_45
-
-You only need to create this dir if you want to capture the LSF out
-and err files, see the IMPORTANT note below;
-hive worker output directory =
-/path/to/scratch/data/hive_output/my_ensembl_compara_45
-
-
-4- Copy and modify the compara-hive config file
+4- compara-hive config file
    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-You may need to change the database names, port, dbnames, and the
-paths to the 'hive_output_dir' and 'fasta_dir'. Note that these dirs
-must exist.
+Copy and modify the compara-hive config file
 
   $ cd $BASEDIR/ensembl-compara/scripts/pipeline
   $ cp compara-hive-homology.conf.example my_compara.conf
   <editor> my_compara.conf
-
-If you are just interested in building the orthologs/gene-trees, and
-are not going to run the family pipeline later, comment out the
-TYPE=>UNIPROT directives.
-
-Some 'gotchas' with the core databases should be checked;
-
-- The top-level coordinate system must include a version,
-  mysql> SELECT name, version FROM coord_system ORDER BY rank LIMIT 1;
-
-- There must be a genebuild.version set in the meta table,
-  mysql> SELECT * FROM meta WHERE meta_key="genebuild.version";
-
-- Only genes on slices marked as 'toplevel' will be included.
-  mysql> SELECT count(*) 
-         FROM seq_region cs, seq_region_attrib a, attrib_type at 
-         WHERE cs.seq_region_id=a.seq_region_id 
-         AND   a.attrib_type_id=at.attrib_type_id 
-`        AND   at.code="toplevel";
-
-IMPORTANT: The hive system can generate an awful lot of log outputs
-that are dumped in the hive_output_dir. When a pipeline runs fine,
-these are not needed and can take a lot of disk space as well as
-generate a large number of files. If you don't want log outputs
-(recommended), then just don't specify any hive_output_dir.
+   
+You may need to change the database names, port, dbnames, and the
+paths to the 'hive_output_dir' and 'fasta_dir'. Note that these dirs
+must exist.
 
 
-4.1 Copy and modify the Bio::EnsEMBL::Analysis::Config::General.pm file
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-You may need to change the locations of BIN_DIR, DATA_DIR and LIB_DIR;
+4.1- Species Configuration
+4.2- dNdS Configuration
+4.3- Bio::EnsEMBL::Analysis::Config files 
+     ----------
 
-  $ cd $BASEDIR/ensembl-analysis/modules/Bio/EnsEMBL/Analysis/Config
-  $ cp General.pm.example General.pm
-  <editor> General.pm
-
-
-4.2 Copy and modify the Bio::EnsEMBL::Analysis::Config::Blast.pm file
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  $ cd $BASEDIR/ensembl-analysis/modules/Bio/EnsEMBL/Analysis/Config
-  $ cp Blast.pm.example Blast.pm
-  <editor> Blast.pm
-
-
-4.3 Set the blast envirnment
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-These environment variables cannot be set in either ::Config::Blast or
-::Config::General;
-
-in tcsh:
-  $ setenv PATH /usr/local/ensembl/bin:$PATH
-  $ setenv BLASTMAT /usr/local/ensembl/data/blastmat:$BLASTMAT
-  $ setenv BLASTFILTER /usr/local/ensembl/bin:$BLASTFILTER
+See README.genetree
 
 
 5- Run the configure scripts
@@ -223,7 +85,7 @@ and run-time stats that the Hive's Queen will update.
 The comparaLoadGenomes script use the information in the conf file to
 connect to the core databases, queries for things like taxon_id,
 assembly, gene_build, and names to create entries in the genome_db
-table.  It also sets the genome_db.locator column to allow the system
+gtable.  It also sets the genome_db.locator column to allow the system
 to know where the respective core databases are located.  There is an
 additional table called genome_db_extn which will be deprecated
 shortly, but as of today (11 April, 2007) it is still used to hold a
@@ -245,74 +107,7 @@ available or if it's unable to connect to core databases.
 7- Create the method_link_species_sets
    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-If you are running this for the Ensembl production release, make sure
-that the method_link, species_set and method_link_species_set tables
-in your compara DB are in sycn with the method_link_species_set in the
-compara master db.
-TODO: How to do this?
-
-If not, create the method_link_species_sets that you need with the
-create_mlss.pl script as follows;
-
-7.1. First you will need an ensembl registry file that configures the
-   database connection to the compara database. An example registry
-   file would be;
-
-  ---
-  use Bio::EnsEMBL::Utils::ConfigRegistry;
-  use Bio::EnsEMBL::DBSQL::DBAdaptor;
-  use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
-  new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(
-      -host    => 'localhost',
-      -user    => 'admin',
-      -pass    => 'secret',
-      -port    => 3306,
-      -species => 'compara-master',
-      -dbname  => 'my_ensembl_compara_45');
-  1;
-  ---
-
-7.2. You may need to create the following method_link entries;
-  
-  $ mysql my_ensembl_compara_45 -e \
-    'INSERT INTO method_link (type, class) \
-     VALUES ("ENSEMBL_ORTHOLOGUES","Homology.homology"), \
-            ("ENSEMBL_PARALOGUES", "Homology.homology"), \
-            ("PROTEIN_TREES",      "ProteinTree.protein_tree_node")'
-
-
-7.3. Run the create_mlss.pl script. If, for example, your genome_db_ids
-   were 1, 2, 3, 4 and 5, you would need the following;
-
-  $ cd $BASEDIR/ensembl-compara/scripts/pipeline
-
-  $ # For orthologues
-  $ ./create_mlss.pl --f --pw \
-    --reg_conf /path/to/ensembl.registry \
-    --method_link_type ENSEMBL_ORTHOLOGUES \
-    --genome_db_id '1,2,3,4,5'
-
-  $ # For between-species paralogues
-  $ ./create_mlss.pl --f --pw \
-    --reg_conf /path/to/ensembl.registry \
-    --method_link_type ENSEMBL_PARALOGUES \
-    --genome_db_id '1,2,3,4,5'
-
-  $ # For same-species paralogues
-  $ ./create_mlss.pl --f --sg \
-    --reg_conf /path/to/ensembl.registry \
-    --method_link_type ENSEMBL_PARALOGUES \
-    --genome_db_id '1,2,3,4,5'
-
-  $ # For protein trees
-  $ ./create_mlss.pl --f \
-    --reg_conf /path/to/ensembl.registry \
-    --method_link_type PROTEIN_TREES \
-    --genome_db_id '1,2,3,4,5'
-
-
-At this point the system is ready to run
-
+See REAME.genetree
 
 
 6- Run the hive

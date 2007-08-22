@@ -129,60 +129,98 @@ in bash
 These tables are already in the main ensembl-compara/sql/table.sql
 file as of ensembl v40.
 
-mysql -hcompara2 -uensadmin -pensembl avilella_compara_homology_small_45 \
-< /nfs/acari/avilella/src/ensembl_main/ensembl-hive/sql/tables.sql
-mysql -hcompara2 -uensadmin -pensembl avilella_compara_homology_small_45 \
-< /nfs/acari/avilella/src/ensembl_main/ensembl-compara/sql/table.sql
-mysql -hcompara2 -uensadmin -pensembl avilella_compara_homology_small_45 \
-< /nfs/acari/avilella/src/ensembl_main/ensembl-compara/sql/pipeline-tables.sql
+Pick a mysql instance and create a database;
 
+  $ set COMPARA_DBNAME=my_ensembl_compara_46
+  $ mysql -e "create database $COMPARA_DBNAME"
+
+And load the schemas;
+
+  $ mysql $COMPARA_DBNAME \
+    < $BASEDIR/ensembl-hive/sql/tables.sql
+  $ mysql $COMPARA_DBNAME \
+    < $BASEDIR/ensembl-compara/sql/table.sql
+  $ mysql $COMPARA_DBNAME \
+    < $BASEDIR/ensembl-compara/sql/pipeline-tables.sql
 
 3- Load the NCBI taxonomy data 
    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-These instructions are in the README-homology file as of ensembl v40
 
-Ideally this should be a job by itself in the pipeline but for now,
-it's done by hand :)
+You now need to load the NCBI taxonomy data into the ncbi_taxa_name
+and ncbi_taxa_node tables. See the following file;
 
-All instructions to do it are in
-ensembl-compara/scripts/taxonomy/README-taxonomy
+  $BASEDIR/ensembl-compara/scripts/taxonomy/README-taxonomy
 
-If the tables are already loaded in ens-livemirror, then just copy
-them from there:
+You may alternatively be able to copy taxonomy tables from an existing
+compara db (this may take a few mins), e.g.
 
-mysqldump -u ensro -h ens-livemirror -P3306 \
- --extended-insert --compress --delayed-insert
- ncbi_taxonomy ncbi_taxa_node ncbi_taxa_name \
- | mysql -u ensadmin -pensembl -h compara2 avilella_compara_homology_small_45
+  $ mysqldump --no-create-info ensembl_compara_old \
+    ncbi_taxa_node ncbi_taxa_name \
+    | mysql $COMPARA_DBNAME
+
+Or, (Ensembl-site-specific)
+
+  $ mysqldump -u ensro -h ens-livemirror \
+    --extended-insert --compress --delayed-insert \
+    ncbi_taxonomy ncbi_taxa_node ncbi_taxa_name \
+    | mysql $COMPARA_DBNAME
 
 
-4- Copy and modify the compara-hive config file
+4- compara-hive config file
    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Copy and modify the compara-hive config file
+   
+  $ cd $BASEDIR/ensembl-compara/scripts/pipeline
+  $ cp compara-hive-genetree.conf.example my_compara.conf
+  <editor> my_compara.conf
 
 You may need to change the database names, port, dbnames, and the
 paths to the 'hive_output_dir' and 'fasta_dir'. Note that these dirs
 must exist.
 
-  $ cd $BASEDIR/ensembl-compara/scripts/pipeline
-  $ cp compara-hive-homology.conf.example my_compara.conf
-  <editor> my_compara.conf
+You can enable/disable various components of the system
+(e.g. MCL-clustering, dNdS) where indicated depending on your
+preferences.
 
-  { TYPE => GENE_TREE,
-    'cluster_params' => '{species_set=>[22,38,31,25,3,40,54,44],brh=>1,all_best=>0,bsr_threshold=>0.33,max_gene_count=>750}',
-    'breakcluster_params' => '{species_set=>[22,38,31,25,3,40,54,44],bsr_threshold_increase=>0.1,max_gene_count=>750}',
-    'max_gene_count' => 750,
-    'species_tree_file' => '/lustre/work1/ensembl/avilella/hive/avilella_compara_homology_45/spec_tax.nh',
-    'honeycomb_dir' => '/lustre/work1/ensembl/avilella/hive/avilella_compara_homology_45/honeycomb'
-  },
+IMPORTANT: The hive system can generate an awful lot of log outputs
+that are dumped in the hive_output_dir. When a pipeline runs fine,
+these are not needed and can take a lot of disk space as well as
+generate a large number of files. If you don't want log outputs
+(recommended), then just don't specify any hive_output_dir.
 
-One example of the species_tree_file can be found in
-ensembl-compara/scripts/pipeline/species_tree_njtree.taxon_id.nh
+
+4.1- Species Configuration
+     ----------
+
+Connection parameters to the source ensembl core should be configured
+in this file.
+
+Some 'gotchas' with the core databases should be checked;
+
+- The top-level coordinate system must include a version,
+  mysql> SELECT name, version FROM coord_system ORDER BY rank LIMIT 1;
+
+- There must be a genebuild.version set in the meta table,
+  mysql> SELECT * FROM meta WHERE meta_key="genebuild.version";
+
+- Only genes on slices marked as 'toplevel' will be included.
+  mysql> SELECT count(*) 
+         FROM seq_region cs, seq_region_attrib a, attrib_type at 
+         WHERE cs.seq_region_id=a.seq_region_id 
+         AND   a.attrib_type_id=at.attrib_type_id 
+         AND   at.code="toplevel";
+
+
+4.2- dNdS Configuration
+     ----------
 
 In case you want to run the dN/dS part, you will also need this:
 
   { TYPE => dNdS,
-    'codeml_parameters' => do('/lustre/work1/ensembl/avilella/hive/avilella_compara_homology_46/codeml.ctl.hash'),
-    'species_sets' => '[[3,22,25,31,32,33,34,35,38,39,45,47,48,49,50,51,52,53,55],[4,13]]',
+    'codeml_parameters' 
+      => do($ENV{BASEDIR}.'/ensembl-compara/scripts/homology/codeml.ctl.hash'),
+    'species_sets' => '[[3,22,25,31,32,33,34,35,38],[4,13]]',
     'method_link_type' => 'ENSEMBL_ORTHOLOGUES'
   },
 
@@ -199,6 +237,32 @@ One example of the codeml parameters needed can be found in
 ensembl-compara/scripts/homology/codeml.ctl.hash
 
 
+4.3- Bio::EnsEMBL::Analysis::Config files 
+     ----------
+
+Copy and modify the Bio::EnsEMBL::Analysis::Config::General file
+You may need to change the locations of BIN_DIR, DATA_DIR and LIB_DIR;
+
+  $ cd $BASEDIR/ensembl-analysis/modules/Bio/EnsEMBL/Analysis/Config
+  $ cp General.pm.example General.pm
+  <editor> General.pm
+
+Copy and modify the Bio::EnsEMBL::Analysis::Config::Blast file
+
+  $ cd $BASEDIR/ensembl-analysis/modules/Bio/EnsEMBL/Analysis/Config
+  $ cp Blast.pm.example Blast.pm
+  <editor> Blast.pm
+
+
+Set the blast envirnment; these environment variables cannot be set in
+either ::Config::Blast or ::Config::General;
+
+in tcsh:
+  $ setenv PATH /usr/local/ensembl/bin:$PATH
+  $ setenv BLASTMAT /usr/local/ensembl/data/blastmat:$BLASTMAT
+  $ setenv BLASTFILTER /usr/local/ensembl/bin:$BLASTFILTER
+
+
 5- Create the species tree file 
    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -207,6 +271,9 @@ compara DB is required for the njtree stage. The file must be in Nexus
 (.nh) format. If you are running the pipeline for your own set of
 species, you can generate such a tree with the script
 ensembl-compara/scripts/tree/testTaxonTree.pl.
+
+One example of the species_tree_file can be found in
+ensembl-compara/scripts/pipeline/species_tree_njtree.taxon_id.nh
 
 To have your list of NCBI taxon_ids, you can use "-query_ncbi_name"
 like this:
@@ -276,30 +343,21 @@ the Coelomata internal node and adding the Sus scrofa species as
 completely sequenced.
 
 
-  (Old RAP method (not needed anymore with NJTREE))
-  ================================================
-
-# An annotated phylogenetic tree file representing the species in the
-# compara DB and their relative distances is required for the final rap
-# tree building stage. The file must be in Nexus (.nh) format, with all
-# levels enclosed with a '()ROOT:0.0;' level. A curated nh file
-# containing the ensembl species is available at
-# ensembl_compara/scripts/pipeline/species_tree.rap
-# 
-# An unweighted file based on the NCBI taxonomy can be generated using
-# compara's taxonTreeTool.pl as follows;
-# 
-#  $ $BASEDIR/ensembl-compara/scripts/taxonomy/taxonTreeTool.pl \
-#    -url mysql://ensro@compara1:3306/avilella_compara_homology_445 \
-#    -taxa_compara -mini \
-#    | tail n 1
-# 
-# The file that is to be used for rap should be configured in the
-# 'species_tree_file' setting of my_compara.GENE_TREE.
- 
-
 6- Run the configure scripts
    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The comparaLoadGenomes script use the information in the conf file to
+connect to the core databases, queries for things like taxon_id,
+assembly, gene_build, and names to create entries in the genome_db
+table.  It also sets the genome_db.locator column to allow the system
+to know where the respective core databases are located.  There is an
+additional table called genome_db_extn which will be deprecated
+shortly, but as of today (11 April, 2007) it is still used to hold a
+'phylum' value for each genome to allow the option of building
+homologies only within phylums.  This script will also 'seed' the
+pipeline/hive system by creating the first jobs in the analysis_job
+table for the analysis 'SubmitGenome'. Note that the
+coord_system.version fields in the source species databases must be
+set to a 'true' value for the script to work.
 
 The loadGeneTreeSystem script creates the analysis entries for the
 processing system, and creates both the dataflow rule and the analysis
@@ -311,12 +369,82 @@ These scripts may give you warnings if the output directories are not
 available or if it's unable to connect to core databases.
 
  $ cd $BASEDIR/ensembl-compara/scripts/pipeline
+ $ ./comparaLoadGenomes.pl -conf my_compara.conf
  $ ./loadGeneTreeSystem.pl -conf my_compara.conf
 
-At this point the system is ready to run using the beekeeper.pl script.
+
+7- Create the method_link_species_sets
+   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+If you are running this for the Ensembl production release, make sure
+that the method_link, species_set and method_link_species_set tables
+in your compara DB are in sycn with the method_link_species_set in the
+compara master db.
+TODO: How to do this?
+
+If not, create the method_link_species_sets that you need with the
+create_mlss.pl script as follows;
+
+7.1. First you will need an ensembl registry file that configures the
+   database connection to the compara database. An example registry
+   file would be;
+
+  ---
+  use Bio::EnsEMBL::Utils::ConfigRegistry;
+  use Bio::EnsEMBL::DBSQL::DBAdaptor;
+  use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
+  new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(
+      -host    => 'localhost',
+      -user    => 'admin',
+      -pass    => 'secret',
+      -port    => 3306,
+      -species => 'compara-master',
+      -dbname  => 'my_ensembl_compara_45');
+  1;
+  ---
+
+7.2. You may need to create the following method_link entries;
+  
+  $ mysql my_ensembl_compara_45 -e \
+    'INSERT INTO method_link (type, class) \
+     VALUES ("ENSEMBL_ORTHOLOGUES","Homology.homology"), \
+            ("ENSEMBL_PARALOGUES", "Homology.homology"), \
+            ("PROTEIN_TREES",      "ProteinTree.protein_tree_node")'
 
 
-7- Run the hive
+7.3. Run the create_mlss.pl script. If, for example, your genome_db_ids
+   were 1, 2, 3, 4 and 5, you would need the following;
+
+  $ cd $BASEDIR/ensembl-compara/scripts/pipeline
+
+  $ # For orthologues
+  $ ./create_mlss.pl --f --pw \
+    --reg_conf /path/to/ensembl.registry \
+    --method_link_type ENSEMBL_ORTHOLOGUES \
+    --genome_db_id '1,2,3,4,5'
+
+  $ # For between-species paralogues
+  $ ./create_mlss.pl --f --pw \
+    --reg_conf /path/to/ensembl.registry \
+    --method_link_type ENSEMBL_PARALOGUES \
+    --genome_db_id '1,2,3,4,5'
+
+  $ # For same-species paralogues
+  $ ./create_mlss.pl --f --sg \
+    --reg_conf /path/to/ensembl.registry \
+    --method_link_type ENSEMBL_PARALOGUES \
+    --genome_db_id '1,2,3,4,5'
+
+  $ # For protein trees
+  $ ./create_mlss.pl --f \
+    --reg_conf /path/to/ensembl.registry \
+    --method_link_type PROTEIN_TREES \
+    --genome_db_id '1,2,3,4,5'
+
+At this point the system is ready to run..
+
+
+8- Run the hive
    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 One must first make sure that the available hive scripts are available
