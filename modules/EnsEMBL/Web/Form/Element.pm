@@ -10,6 +10,7 @@ sub new {
     'id'           => $array{ 'id'  },
     'type'         => $array{ 'type'  },
     'value'        => $array{ 'value' },
+    'default'      => $array{ 'default' },
     'values'       => $array{ 'values' } || {},
     'widget_type'  => $array{ 'widget_type'} || 'text',
     '_validate'    => 0,
@@ -46,6 +47,7 @@ sub form         :lvalue { $_[0]{'form'};   }
 sub id           :lvalue { $_[0]{'id'};   }
 sub type         :lvalue { $_[0]{'type'}; }
 sub value        :lvalue { $_[0]{'value'}; }
+sub default      :lvalue { $_[0]{'default'}; }
 sub values       :lvalue { $_[0]{'values'}; }
 sub style        :lvalue { $_[0]{'style'}; }
 sub styles       :lvalue { $_[0]{'styles'}; }

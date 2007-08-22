@@ -7,6 +7,7 @@ package EnsEMBL::Web::Interface::InterfaceDef;
 use strict;
 use warnings;
 
+use EnsEMBL::Web::Object::Data;
 use EnsEMBL::Web::Interface::ElementDef;
 use EnsEMBL::Web::Tools::DBSQL::TableName;
 
@@ -384,8 +385,74 @@ sub discover {
       'options'     => $options
       });
   }
+  ## Also get possible 'belongs to' and 'has many' fields as well
+  ## 'Belongs to' are dropdown by default
+  my $belongs_to = $self->data->get_belongs_to;
+  if ($belongs_to) {
+    foreach my $class (@$belongs_to) {
+      my ($key, $element) = $self->_create_relational_element('DropDown', $class);
+      if ($element) {
+        $elements{$element->name} = $element;
+        push @element_order, $element->name;
+        $self->data->add_queriable_field({ name => $key, type => 'int'});
+      }
+    }
+  }
+  ## 'Has many' are multiple checkboxes by default
+  my $has_many = $self->data->get_has_many;
+  if ($has_many) {
+    foreach my $class (@$has_many) {
+      my ($key, $element) = $self->_create_relational_element('MultiSelect', $class);
+      if ($element) {
+        $elements{$element->name} = $element;
+        push @element_order, $element->name;
+        $self->data->add_queriable_field({ name => $key, type => 'int'});
+      }
+    }
+  }
   $Elements_of{$self} = \%elements;
   $ElementOrder_of{$self} = \@element_order;
+}
+
+sub _create_relational_element {
+  my ($self, $type, $class) = @_;
+  if (EnsEMBL::Web::Root::dynamic_use(undef, $class)) {
+    my $object = $class->new();
+    my $name = $object->get_primary_key;
+    my @namespace = split(/::/, $class);
+    my $label = $namespace[-1];
+    $label =~ s/([a-z])([A-Z])/$1 $2/g; ## insert spaces into camel-case names
+  
+    my ($options, @option_values);    
+    if ($type eq 'DropDown') {
+      $options->{'select'} = 'select';
+      @option_values = ({'name'=> '--- Select ---', 'value' => ''});
+    }
+    else {
+      @option_values = ();
+    }
+
+    ## Get default values
+    my $primary_key;
+    my $objects = EnsEMBL::Web::Object::Data::find_all($class);
+    foreach my $obj (@$objects) {
+      push @option_values, {'name'=> $obj->id, 'value' => $obj->id};
+      $primary_key = $obj->get_primary_key;
+    }
+    $options->{'values'} = \@option_values;
+
+    my $element = EnsEMBL::Web::Interface::ElementDef->new({
+    'name'        => $name,
+    'label'       => $label,
+    'type'        => $type,
+    'relational'  => 1,
+    'options'     => $options
+    });
+    return ($primary_key, $element);
+  }
+  else {
+    return undef;
+  }
 }
 
 sub customize_element {
@@ -478,7 +545,7 @@ sub cgi_populate {
 
 sub edit_fields {
   ### Returns editable fields as form element parameters
-  my ($self, $id) = @_;
+  my ($self, $dataview) = @_;
   my $parameters = [];
   my $data = $self->data;
   my $elements = $self->elements;
@@ -488,8 +555,18 @@ sub edit_fields {
     my $name = $field;
     my $element = $elements->{$name};
     my %param = %{$element->widget};
+    ## File widgets behave differently depending on user action
+    if ($element->type eq 'File' && $dataview ne 'add') {
+      $param{'type'} = 'NoEdit';
+    }
+    ## Set field values
     if ($data && !$param{'value'}) {
-      $param{'value'} = $data->$field;
+      unless ($element->relational) {
+        $param{'value'} = $data->$field;
+      }
+      if (!$param{'value'} && $param{'default'}) {
+        $param{'value'} = $param{'default'};
+      }
     }
     push @$parameters, \%param;
     ## pass non-editable elements as additional hidden fields
