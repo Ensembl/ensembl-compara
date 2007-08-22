@@ -1,4 +1,4 @@
-package EnsEMBL::Web::Object::Data::GlossaryTable;
+package EnsEMBL::Web::Object::Data::OldGlossary;
 
 ## Data object for old schema, using separate table
 
@@ -6,10 +6,10 @@ use strict;
 use warnings;
 
 use Class::Std;
-use EnsEMBL::Web::Object::Trackable;
+use EnsEMBL::Web::Object::Data::Trackable;
 use EnsEMBL::Web::DBSQL::MySQLAdaptor;
 
-our @ISA = qw(EnsEMBL::Web::Object::Trackable);
+our @ISA = qw(EnsEMBL::Web::Object::Data::Trackable);
 
 {
 
@@ -25,7 +25,6 @@ sub BUILD {
   $self->add_queriable_field({ name => 'meaning', type => 'text' });
   $self->add_queriable_field({ name => 'type', type => 'varchar(255)' });
   $self->add_queriable_field({ name => 'status', type => "enum('draft','live','dead')" });
-  $self->add_belongs_to("EnsEMBL::Web::Object::Data::User");
   $self->populate_with_arguments($args);
 }
 
