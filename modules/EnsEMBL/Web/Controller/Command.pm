@@ -9,6 +9,7 @@ use EnsEMBL::Web::Interface::InterfaceDef;
 use EnsEMBL::Web::Object::Data::User;
 use EnsEMBL::Web::SpeciesDefs;
 use EnsEMBL::Web::Root;
+use EnsEMBL::Web::RegObj;
 use Class::Std;
 
 
@@ -17,10 +18,35 @@ use Class::Std;
 my %Filter :ATTR(:get<filter> :set<filter>);
 my %Action :ATTR(:get<action> :set<action>);
 my %Message  :ATTR(:get<message> :set<message>);
+my %SpeciesDefs  :ATTR(:get<species_defs> :set<species_defs>);
 
 sub BUILD {
   my ($self, $ident, $args) = @_;
   $self->set_filter(EnsEMBL::Web::Controller::Command::Filter->new);
+  if ($EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY) {
+    $self->set_species_defs($ENSEMBL_WEB_REGISTRY->species_defs);
+  }
+}
+
+sub render_message {
+  my $self = shift;
+
+    my $webpage= new EnsEMBL::Web::Document::WebPage(
+    'renderer'   => 'Apache',
+    'outputtype' => 'HTML',
+    'scriptname' => '',
+    'objecttype' => 'User',
+    'command'    => $self,
+  );
+
+  if( $webpage->has_a_problem() ) {
+    $webpage->render_error_page( $webpage->problem->[0] );
+  } else {
+    foreach my $object( @{$webpage->dataObjects} ) {
+      $webpage->configure( $object, 'message' );
+    }
+    $webpage->render();
+  }
 }
 
 sub filters {
