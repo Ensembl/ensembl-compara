@@ -308,7 +308,7 @@ $ENSEMBL_ENCRYPT_EXPIRY         = 60;       # Cookies last 60 days
 $ENSEMBL_ENCRYPT_REFRESH        = 30;       # Refresh cookies with less than 30 days to go
 
 $ENSEMBL_MINIAD_DIR             = $ENSEMBL_SERVERROOT.'/htdocs/img/mini-ads/';
-$ENSEMBL_MODULAR_HELP           = 0; 
+$ENSEMBL_MODULAR_HELP           = 1; 
 
 ###############################################################################
 ## General systems bumf
