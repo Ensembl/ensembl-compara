@@ -7,8 +7,10 @@ use CGI qw(escape);
 
 use EnsEMBL::Web::Object;
 use EnsEMBL::Web::Record::Help;
-our @ISA = qw(EnsEMBL::Web::Object);
 use Mail::Mailer;
+use Data::Dumper;
+
+our @ISA = qw(EnsEMBL::Web::Object);
 
 our $SPAM_THRESHOLD_PARAMETER = 60;
 
@@ -59,16 +61,18 @@ sub send_email {
 }
 
 sub records {
-  my ($self, $type) = @_;
+  my ($self, $criteria) = @_;
 
   if (!$self->{'records'}) {
     my $records = [];
-    my $result = $self->adaptor->fetch_records($type);
+    my $result = $self->adaptor->fetch_records($criteria);
     foreach my $row (@$result) {
       my $r = EnsEMBL::Web::Record->new(
         'id'          => $row->{'help_record_id'},
         'type'        => $row->{'type'},
+        'keyword'     => $row->{'keyword'},
         'data'        => $row->{'data'},
+        'status'      => $row->{'status'},
         'created_by'  => $row->{'created_by'},
         'created_at'  => $row->{'created_at'},
         'modified_by' => $row->{'modified_by'},
@@ -79,25 +83,6 @@ sub records {
     $self->{'records'} = $records;
   }
   return $self->{'records'};
-}
-
-sub get_record_by_id {
-  my ($self, $id) = @_;
-  my $record;
-
-  if ($id) {
-    my $data = $self->adaptor->fetch_record_by_id($id);
-    $record = EnsEMBL::Web::Record->new(
-        'id'          => $data->{'help_record_id'},
-        'type'        => $data->{'type'},
-        'data'        => $data->{'data'},
-        'created_by'  => $data->{'created_by'},
-        'created_at'  => $data->{'created_at'},
-        'modified_by' => $data->{'modified_by'},
-        'modified_at' => $data->{'modified_at'},
-      );
-  }
-  return $record;
 }
 
 sub results {
@@ -154,27 +139,46 @@ sub index {
 sub glossary {
   my $self = shift;
   if ($self->modular) {
-    my $glossary = [];
-    my $records = $self->records('glossary');
-    foreach my $r (@$records) {
-      my $data = $r->data_hash('word', 'acronym_for', 'meaning');
-      push @$glossary, $data;
-    }
-    return $glossary;
+    return $self->records([['type','glossary'],['status','live']]);
   }
   else {
-    return $self->adaptor->fetch_glossary('live');
+    ## Fake records!
+    my $glossary = [];
+    my $results = $self->adaptor->fetch_glossary('live');
+    foreach my $row (@$results) {
+      my %fields = (
+          'word'    => $row->{'word'},
+          'expanded' => $row->{'acronym'},
+          'meaning' => $row->{'meaning'},
+        );
+      my $temp_fields = {};
+      foreach my $key (keys %fields ) {
+        $temp_fields->{$key} = $fields{$key};
+        $temp_fields->{$key} =~ s/'/\\'/g;
+      }
+      my $data = Dumper($temp_fields);
+      $data =~ s/^\$VAR1 = //;
+
+      my $r = EnsEMBL::Web::Record->new(
+        'id'          => $row->{'word_id'},
+        'type'        => 'glossary',
+        'data'        => $data,
+      );
+      push @$glossary, $r; 
+    }
+    return $glossary;
   }
 }
 
 sub movie_list {
   my $self = shift;
-  return $self->adaptor->fetch_movies('live');
+  return $self->records([['type','movie'],['status','live']]);
 }
 
 sub movie {
   my $self = shift;
-  return $self->adaptor->fetch_movie_by_id($self->param('movie'));
+  my $records = $self->records([['help_record_id',$self->param('movie')]]);
+  return $records->[0];
 }
 
 

@@ -175,11 +175,12 @@ sub glossary {
   my $glossary = $object->glossary;
 
   my $html = "<dl>";
-  foreach my $entry (@$glossary) {     
-    my $word    = $$entry{'word'};
+  my @sorted = sort { lc($a->word) cmp lc($b->word) } @$glossary;
+  foreach my $entry (@sorted) {
+    my $word    = $entry->word;
+    my $acronym = $entry->acronym;
+    my $meaning = $entry->meaning;
     (my $anchor = $word) =~ s/ /_/g;
-    my $acronym = $$entry{'acronym_for'};
-    my $meaning = $$entry{'meaning'};
     $html .= qq(<dt id="$anchor">$word</dt>\n<dd>);
     $html .= "<strong>$acronym</strong><br />" if $acronym;
     $html .= qq($meaning</dd>\n);
@@ -207,21 +208,18 @@ sub movie_index_intro {
 sub movie_index {
   my($panel,$object) = @_;
   my $movie_list = $object->movie_list;
-
   if (ref($movie_list) eq 'ARRAY' && @$movie_list) {
     $panel->add_columns( 
       {'key' => "title", 'title' => 'Title', 'width' => '60%', 'align' => 'left' },
       {'key' => "mins", 'title' => 'Running time (minutes)', 'width' => '20%', 'align' => 'left' },
     );
     foreach my $entry (@$movie_list) {     
-      my $id    = $$entry{'movie_id'};
-      my $title = $$entry{'title'};
-      my $time  = $$entry{'frame_count'} / ($$entry{'frame_rate'} * 60);
-      my $mins  = int($time);
-      my $secs  = sprintf('%02d', int(($time - $mins) * 60));
+      my $id    = $entry->id;
+      my $title = $entry->title;
+      my $length = $entry->length;
       $panel->add_row({
         'title' => qq(<a href="/common/Workshops_Online?movie=$id">$title</a>),
-        'mins'  => "$mins:$secs",
+        'mins'  => $length,
       });
     }
   }
@@ -245,9 +243,9 @@ sub embed_movie {
   ## we hard-code this so that mirror sites don't have to keep downloading
   ## dozens of megabytes of Flash movies :)
   my $path  = 'http://www.ensembl.org/flash/'; 
-  my $uri   = $path.$movie->{'filename'};
-  my $w     = $movie->{'width'};
-  my $h     = $movie->{'height'};
+  my $uri   = $path.$movie->filename;
+  my $w     = $movie->width;
+  my $h     = $movie->height;
 
   my $html = qq(<div class="flash"><object type="application/x-shockwave-flash" id="movie" data="$uri" width="$w" height="$h">
 <param name="movie" value="$uri" /> 
@@ -275,8 +273,8 @@ sub control_movie_form {
   my( $panel, $object ) = @_;
   my $script = $object->script;
   my $movie = $object->movie;
-  my $frame_count = $movie->{'frame_count'};
-  my $frame_rate  = $movie->{'frame_rate'};
+  my $frame_count = $movie->frame_count;
+  my $frame_rate  = $movie->frame_rate;
 
   my $form = EnsEMBL::Web::Form->new( 'control_movie', "/common/$script", 'get' );
   my $controls = "'control_movie_1', 'control_movie_2', 'control_movie_4', 'control_movie_14'";

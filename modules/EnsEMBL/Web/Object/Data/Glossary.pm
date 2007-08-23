@@ -4,12 +4,10 @@ use strict;
 use warnings;
 
 use Class::Std;
-use EnsEMBL::Web::Object::Trackable;
+use EnsEMBL::Web::Object::Data::Trackable;
 use EnsEMBL::Web::DBSQL::MySQLAdaptor;
 
-our @ISA = qw(EnsEMBL::Web::Object::Trackable);
-
-## NB - not an owned record, so doesn't need to inherit from Object::Data::Record
+our @ISA = qw(EnsEMBL::Web::Object::Data::Trackable);
 
 {
 
@@ -22,10 +20,11 @@ sub BUILD {
   ));
   $self->set_data_field_name('data');
   $self->add_field({ name => 'word', type => 'tinytext' });
-  $self->add_field({ name => 'acronym_for', type => 'tinytext' });
+  $self->add_field({ name => 'expanded', type => 'tinytext' });
   $self->add_field({ name => 'meaning', type => 'text' });
+  $self->add_queriable_field({ name => 'keyword', type => 'string' });
   $self->add_queriable_field({ name => 'status', type => "enum('draft','live','dead')" });
-  $self->add_queriable_field({ name => 'type', type => 'text' });
+  $self->add_queriable_field({ name => 'type', type => 'string' });
   $self->type('glossary');
   $self->populate_with_arguments($args);
 }
