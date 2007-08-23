@@ -49,7 +49,7 @@ use Bio::SeqFeature::Generic;
 
 use Bio::EnsEMBL::SeqFeature;        # Basic
 use Bio::EnsEMBL::FeaturePair;       # Comparison
-use Bio::EnsEMBL::BaseAlignFeature;  # Algnment
+use Bio::EnsEMBL::Bio::EnsEMBL::DnaDnaAlignFeature; # Algnment
 use Bio::EnsEMBL::Slice;             # For creating alignments
 use Bio::EnsEMBL::CoordSystem;       # For retrieving slices
 
@@ -435,7 +435,7 @@ sub _build_feature {
 
   my $qry = $self->query;
   my $hit = $self->hit;
-  my $align = Bio::EnsEMBL::BaseAlignFeature->new
+  my $align = Bio::EnsEMBL::DnaDnaAlignFeature->new
     (  -hseqname  => $qry->seq_id,
        -hstart    => $qry->start,
        -hend      => $qry->end,
