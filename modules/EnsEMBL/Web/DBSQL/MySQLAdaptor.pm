@@ -122,7 +122,7 @@ sub create {
   my $result = EnsEMBL::Web::DBSQL::SQL::Result->new();
   my $sql = 'INSERT INTO ' . $self->get_table . ' SET '; 
   $sql .= $self->set_clause($data);  
-  #warn "CREATE: " . $sql;
+  warn "CREATE: " . $sql;
   $self->get_handle->prepare($sql);
   $result->set_action('create');
   if ($self->get_handle->do($sql)) {

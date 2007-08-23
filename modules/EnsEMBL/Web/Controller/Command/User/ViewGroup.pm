@@ -12,11 +12,10 @@ use base 'EnsEMBL::Web::Controller::Command::User';
 
 sub BUILD {
   my ($self, $ident, $args) = @_; 
-  $self->add_filter('EnsEMBL::Web::Controller::Command::Filter::LoggedIn');
   ## Only members can view group details
   my $cgi = new CGI;
   $self->add_filter('EnsEMBL::Web::Controller::Command::Filter::Member', {'group_id' => $cgi->param('id')});
-
+  $self->add_filter('EnsEMBL::Web::Controller::Command::Filter::LoggedIn');
 }
 
 sub render {
