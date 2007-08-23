@@ -606,6 +606,7 @@ sub _render_groups {
     $html .= "<table width='100%' cellspacing='0' cellpadding='4'>\n";
     my $class = "bg1";
     foreach my $group (sort {$a->name cmp $b->name} @groups) {
+      next if $group->status ne 'active';
       $class = &toggle_class($class);
       $included{$group->id} = 'yes';
       $html .= "<tr class='$class'>\n";
@@ -900,7 +901,7 @@ sub group_details {
 
   my $html = qq(<h3 class="plain">$group_name</h3>\n<p>$group_blurb</p>\n);
   if ($level eq 'Administrator') {
-    $html .= qq(<p><a href="/common/user/group/dataview=edit;id=$group_id">Edit group description</a></p>);
+    $html .= qq(<p><a href="/common/user/group?dataview=edit;id=$group_id">Edit group description</a></p>);
   }
   if ($group->type ne 'open') {
     $html .= qq(<p><strong>Group created by</strong>: $creator_name ($creator_org));
