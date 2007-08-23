@@ -26,6 +26,7 @@ sub BUILD {
   $self->add_queriable_field({ name => 'status', type => 'tinytext' });
 
   $self->add_relational_field({ name => 'level', type => 'text' });
+  $self->add_relational_field({ name => 'member_status', type => 'text' });
 
   $self->add_has_many({ class => 'EnsEMBL::Web::Object::Data::Bookmark', owner => 'user'});
   $self->add_has_many({ class => 'EnsEMBL::Web::Object::Data::Configuration', owner => 'user'});
