@@ -9,6 +9,7 @@ use warnings;
 
 my %Name_of;
 my %Type_of;
+my %Relational_of;
 my %Label_of;
 my %Options_of;
 
@@ -17,6 +18,7 @@ sub new {
   my $self = bless \my($scalar), $class;
   $Name_of{$self}       = defined $params->{name} ? $params->{name} : '';
   $Type_of{$self}       = defined $params->{type} ? $params->{type} : '';
+  $Relational_of{$self} = defined $params->{relational} ? $params->{relational} : '';
   $Label_of{$self}      = defined $params->{label} ? $params->{label} : '';
   $Options_of{$self}    = defined $params->{options} ? $params->{options} : {};
   return $self;
@@ -34,6 +36,13 @@ sub type {
   my $self = shift;
   $Type_of{$self} = shift if @_;
   return $Type_of{$self};
+}
+
+sub relational {
+  ### a
+  my $self = shift;
+  $Relational_of{$self} = shift if @_;
+  return $Relational_of{$self};
 }
 
 sub label {
@@ -109,7 +118,9 @@ sub hide {
 
 sub DESTROY {
   my $self = shift;
+  delete $Name_of{$self};
   delete $Type_of{$self};
+  delete $Relational_of{$self};
   delete $Label_of{$self};
   delete $Options_of{$self};
 }

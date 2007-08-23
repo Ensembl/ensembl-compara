@@ -155,7 +155,7 @@ sub add_has_many {
   if ($args->{link_table}) {
     $self->add_linked_has_many_symbol_lookup($self->plural($object));
     $self->relational_link_table($self->plural($object), $args->{link_table});
-    ## relational contributions allow the parent class to bestoy additional attributes on child classes. This
+    ## relational contributions allow the parent class to bestow additional attributes on child classes. This
     ## data is usually stored in a link table. For example, this mechanism is used to add an authorisation 'level'
     ## to users retrived from a group, via the group_member table.
     if ($args->{contribute}) {
@@ -484,21 +484,23 @@ sub find_linked_many {
 
 sub find_all {
   my ($class, $params) = @_;
-  my $object = $class->new;
-  my $request = EnsEMBL::Web::DBSQL::SQL::Request->new();
-  $request->set_action('select');
-  my $key = EnsEMBL::Web::Tools::DBSQL::TableName::parse_primary_key($object->get_primary_key);
-  $request->set_index_by($key);
-  if ($params && ref($params) eq 'HASH') {
-    while (my ($k, $v) = each (%$params)) {
-      $request->add_where($k, $v);
-    }
-  }
-  my $result = $object->get_adaptor->find_many($request);
   my @objects = ();
-  foreach my $id (keys %{ $result->get_result_hash }) {
-    my $new = $class->new({ id => $id });
-    push @objects, $new;
+  if (EnsEMBL::Web::Root::dynamic_use(undef, $class)) {
+    my $object = $class->new;
+    my $request = EnsEMBL::Web::DBSQL::SQL::Request->new();
+    $request->set_action('select');
+    my $key = EnsEMBL::Web::Tools::DBSQL::TableName::parse_primary_key($object->get_primary_key);
+    $request->set_index_by($key);
+    if ($params && ref($params) eq 'ARRAY') {
+      foreach my $array_ref (@$params) {
+        $request->add_where(@$array_ref);
+      }
+    }
+    my $result = $object->get_adaptor->find_many($request);
+    foreach my $id (keys %{ $result->get_result_hash }) {
+      my $new = $class->new({ id => $id });
+      push @objects, $new;
+    }
   }
   return \@objects;
 }
