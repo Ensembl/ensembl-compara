@@ -159,9 +159,9 @@ sub _data_form {
   else {
     $panel->interface->cgi_populate($object, '');
   }
-  my @widgets = @{$panel->interface->edit_fields};
+  my $widgets = $panel->interface->edit_fields($object->param('dataview'));
 
-  foreach my $element (@widgets) {
+  foreach my $element (@$widgets) {
     $form->add_element(%$element);
   }
   return $form;
@@ -192,25 +192,39 @@ sub _record_select {
   }
 
   ## Do custom sort
-  my ($sort_code, $repeat);
-  foreach my $sort_col (@{$panel->interface->option_order}) {
-    if ($repeat > 0) {
-      $sort_code .= ' || ';
+  my ($sort_code, $repeat, @list);
+  if ($panel->interface->option_order && ref($panel->interface->option_order) eq 'ARRAY') {
+    foreach my $sort_col (@{$panel->interface->option_order}) {
+      my $col_name = $sort_col->{'column'};
+      my $col_order = $sort_col->{'order'} || 'ASC';
+      if ($repeat > 0) {
+        $sort_code .= ' || ';
+      }
+      ## build sort function
+      my $a = '$a';
+      my $b = '$b';
+      if ($col_order eq 'DESC') {
+        $a = '$b';
+        $b = '$a';
+      }
+      ## try to guess appropriate sort type
+      if ($lookup{$col_name} =~ /^int/ || $lookup{$col_name} =~ /^float/) {
+        $sort_code .= $a.'->'.$col_name.' <=> '.$b.'->'.$col_name.' ';
+      }
+      else {
+        $sort_code .= 'lc '.$a.'->'.$col_name.' cmp lc '.$b.'->'.$col_name.' ';
+      }
+      $repeat++;
     }
-    ## build sort function
-    ## try to guess appropriate sort type
-    if ($lookup{$sort_col} =~ /^int/ || $lookup{$sort_col} =~ /^float/) {
-      $sort_code .= '$a->'.$sort_col.' <=> $b->'.$sort_col.' ';
-    }
-    else {
-      $sort_code .= 'lc $a->'.$sort_col.' cmp lc $b->'.$sort_col.' ';
-    }
-    $repeat++;
+    my $subref = eval "sub { $sort_code }";
+    @list = sort $subref @unsorted_list;
   }
-  my $subref = eval "sub { $sort_code }";
-  my @list = sort $subref @unsorted_list;
+  else { 
+    warn "Not an arrayref";
+    @list = @unsorted_list;
+  }
 
-  ## Output sorted list
+  ## Output list
   foreach my $entry (@list) {
     my $value = $entry->id;
     my $text;
