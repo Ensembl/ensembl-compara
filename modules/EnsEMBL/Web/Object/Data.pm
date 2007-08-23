@@ -117,6 +117,10 @@ sub add_queriable_field {
   if (!$self->get_queriable_fields) {
     $self->set_queriable_fields([]);
   }
+  ## check this field doesn't already exist
+  foreach my $field (@{ $self->get_queriable_fields }) {
+    return if $field->get_name eq $args->{name};
+  }
   $self->add_accessor_symbol_lookup($args->{name});
   push @{ $self->get_queriable_fields }, EnsEMBL::Web::Object::DataField->new( { name => $args->{name}, type => $args->{type}, queriable => 'yes' } );
 }
