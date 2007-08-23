@@ -22,6 +22,28 @@ sub cache_print {
   $cache->print( $$string_ref ) if $string_ref;
 }
 
+sub message {
+  ### Displays a message (e.g. error) from the Controller::Command module
+  my ($panel, $object) = @_;
+  my $command = $panel->{command};
+
+  my $html;
+  if ($command) { 
+    if ( $command->get_message) {
+      $html = $command->get_message;
+    }
+    else {
+      $html = '<p>'.$command->filters->message.'</p>';
+    }
+  }
+  else {
+    $html = '<p>Unknown error</p>';
+  }
+  $panel->print($html);
+}
+
+
+
 sub AUTOLOAD {
 ## Automagically creates simple form wrapper components
   my ( $panel, $object ) = @_;
