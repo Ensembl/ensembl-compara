@@ -33,6 +33,15 @@ sub data_hash {
   return $hash;
 }
 
+sub helpful {
+  my ($self, $helpful) = @_;
+  $self->adaptor->helpful((
+                                  id          => $self->id,
+                                  helpful     => $helpful,
+                                 ));
+  return 1;
+}
+
 
 }
 

@@ -57,6 +57,24 @@ sub helpview {
   $self->wizard_panel('');
 }
 
+sub help_feedback {
+  my $self = shift;
+  my $object = $self->{object};
+
+  $self->set_title('Feedback');
+
+  if( my $panel = $self->new_panel( 'Image',
+    'code'    => "info$self->{flag}",
+    'object'  => $self->{object},
+
+  )) {
+    $panel->add_components(qw(
+      help_feedback          EnsEMBL::Web::Component::Help::help_feedback
+    ));
+    $self->add_panel( $panel );
+  }
+}
+
 sub glossaryview {
   my $self = shift;
   my $object = $self->{object};
@@ -85,9 +103,9 @@ sub Workshops_Online {
       'code'    => "info$self->{flag}",
       'object'  => $self->{object},
   );
-  my $panel_2;
+  my ($panel_2, $panel_3);
 
-  if ($object->param('movie')) {
+  if ($object->param('id')) {
       
     if ($panel_1) {
       $panel_1->add_components(qw(
@@ -109,8 +127,19 @@ sub Workshops_Online {
         embed_movie          EnsEMBL::Web::Component::Help::embed_movie
         control_movie        EnsEMBL::Web::Component::Help::control_movie
       ));
-      $self->add_form( $panel_2, qw(control_movie     EnsEMBL::Web::Component::Help::control_movie_form) );
+      $self->add_form( $panel_2, qw(control_movie     EnsEMBL::Web::Component::Help::control_movie_form));
       $self->add_panel( $panel_2 );
+    }
+
+    if( $panel_3 = $self->new_panel( 'Image',
+      'code'    => "info$self->{flag}",
+      'object'  => $self->{object},
+    )) {
+      $panel_3->add_components(qw(
+        helpful              EnsEMBL::Web::Component::Help::helpful
+      ));
+      $self->add_form( $panel_3, qw(helpful           EnsEMBL::Web::Component::Help::helpful_form));
+      $self->add_panel( $panel_3 );
     }
 
   }

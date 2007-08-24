@@ -67,7 +67,7 @@ sub records {
     my $records = [];
     my $result = $self->adaptor->fetch_records($criteria);
     foreach my $row (@$result) {
-      my $r = EnsEMBL::Web::Record->new(
+      my $r = EnsEMBL::Web::Record::Help->new(
         'id'          => $row->{'help_record_id'},
         'type'        => $row->{'type'},
         'keyword'     => $row->{'keyword'},
@@ -79,6 +79,7 @@ sub records {
         'created_at'  => $row->{'created_at'},
         'modified_by' => $row->{'modified_by'},
         'modified_at' => $row->{'modified_at'},
+        'adaptor'     => $self->adaptor,
       );
       push @$records, $r;
     }
@@ -161,10 +162,11 @@ sub glossary {
       my $data = Dumper($temp_fields);
       $data =~ s/^\$VAR1 = //;
 
-      my $r = EnsEMBL::Web::Record->new(
+      my $r = EnsEMBL::Web::Record::Help->new(
         'id'          => $row->{'word_id'},
         'type'        => 'glossary',
         'data'        => $data,
+        'adaptor'     => $self->adaptor,
       );
       push @$glossary, $r; 
     }
@@ -179,7 +181,7 @@ sub movie_list {
 
 sub movie {
   my $self = shift;
-  my $records = $self->records([['help_record_id',$self->param('movie')]]);
+  my $records = $self->records([['help_record_id',$self->param('id')]]);
   return $records->[0];
 }
 

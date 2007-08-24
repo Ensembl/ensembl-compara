@@ -218,7 +218,7 @@ sub movie_index {
       my $title = $entry->title;
       my $length = $entry->length;
       $panel->add_row({
-        'title' => qq(<a href="/common/Workshops_Online?movie=$id">$title</a>),
+        'title' => qq(<a href="/common/Workshops_Online?id=$id">$title</a>),
         'mins'  => $length,
       });
     }
@@ -269,7 +269,6 @@ sub control_movie {
 }
 
 sub control_movie_form {
-
   my( $panel, $object ) = @_;
   my $script = $object->script;
   my $movie = $object->movie;
@@ -351,6 +350,63 @@ sub control_movie_form {
     'spanning' => 'inline',
   );
   return $form;
+}
+
+sub helpful {
+  my ( $panel, $object ) = @_;
+  my $label = '';
+  my $html = qq(
+   <div class="formpanel" style="width:50%">
+     @{[ $panel->form( 'helpful' )->render() ]}
+  </div>);
+
+  $panel->print($html);
+  return 1;
+}
+
+sub helpful_form {
+  my( $panel, $object ) = @_;
+  my $form = EnsEMBL::Web::Form->new( 'helpful', "/common/help_feedback", 'post' );
+  $form->add_element(
+    'type'    => 'RadioGroup',
+    'name'    => 'helpful',
+    'label'   => 'Did you find this help item useful?',
+    'values'  => [{'value'=>'yes', 'name'=>'Yes', 'checked'=>'checked'}, {'value'=>'no', 'name'=>'No'}]
+  );
+  $form->add_element(
+    'type'    => 'Hidden',
+    'name'    => 'id',
+    'value'   => $object->param('id'),
+  );
+  $form->add_element(
+    'type'    => 'Submit',
+    'name'    => 'submit',
+    'value'   => 'Send feedback',
+  );
+  return $form;
+}
+
+sub help_feedback {
+  my ( $panel, $object ) = @_;
+  my $label = '';
+  my $url = $object->param('url') || $object->species_defs->SITE_LOGO_HREF;
+  my $html = qq(
+<script type="text/javascript">
+<!--
+window.setTimeout('backToEnsembl()', 5000);
+
+function backToEnsembl(){
+  window.location = "$url"
+}
+//-->
+</script>
+<p>Thank you for taking time to rate our online help.</p>
+
+<p>Please <a href="$url">click here</a> if you are not returned to your starting page within five seconds.</p>
+);
+
+  $panel->print($html);
+  return 1;
 }
 
 sub static {

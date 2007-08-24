@@ -328,6 +328,22 @@ sub fetch_records {
   }} @$T ];
 }
 
+sub helpful {
+  my ($self, %params) = @_;
+  my $sql = qq(UPDATE help_record SET );
+  if ($params{'helpful'}) {
+    $sql .= ' helpful = helpful + 1 ';
+  }
+  else {
+    $sql .= ' not_helpful = not_helpful + 1 ';
+  } 
+  $sql .= qq(WHERE help_record_id = ?);
+  #warn "SQL: " . $sql;
+  my $sth = $self->{'_handle'}->prepare($sql);
+  my $result = $sth->execute($params{'id'});
+  return $result;
+}
+
 
 }
 
