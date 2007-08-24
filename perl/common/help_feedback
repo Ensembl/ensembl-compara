@@ -1,0 +1,40 @@
+#!/usr/local/bin/perl
+
+package help_feedback;
+
+use strict;
+use warnings;
+no warnings "uninitialized";
+
+use EnsEMBL::Web::Document::WebPage;
+
+my $webpage= new EnsEMBL::Web::Document::WebPage(
+  'renderer'   => 'Apache',
+  'outputtype' => 'HTML',
+  'scriptname' => 'help_feedback',
+  'objecttype' => 'Help',
+);
+
+if( $webpage->has_a_problem() ) {
+  $webpage->render_error_page( $webpage->problem->[0] );
+} else {
+  foreach my $object( @{$webpage->dataObjects} ) {
+    ## save the feedback to the database
+    if ($object->param('id') && $object->param('helpful')) {
+      my $result = $object->records([['help_record_id',$object->param('id')]]);
+      my $help_record = $result->[0];
+      if ($object->param('helpful') eq 'yes') {
+        $help_record->helpful(1);
+      }
+      else {
+        $help_record->helpful(0);
+      }
+    }
+    $object->param('url', $ENV{'HTTP_REFERER'});
+    ## send to acknowledgement page
+    $webpage->configure( $object, 'help_feedback', 'helpdesk_menu' );
+  }
+  $webpage->action();
+}
+
+1;
