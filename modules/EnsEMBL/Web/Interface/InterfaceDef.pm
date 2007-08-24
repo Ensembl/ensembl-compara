@@ -561,9 +561,7 @@ sub edit_fields {
     }
     ## Set field values
     if ($data && !$param{'value'}) {
-      unless ($element->relational) {
-        $param{'value'} = $data->$field;
-      }
+      $param{'value'} = $data->$field;
       if (!$param{'value'} && $param{'default'}) {
         $param{'value'} = $param{'default'};
       }
