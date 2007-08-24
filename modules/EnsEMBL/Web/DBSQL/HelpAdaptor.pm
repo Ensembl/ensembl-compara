@@ -300,7 +300,7 @@ sub fetch_records {
   return [] unless $self->handle;
 
   my $sql = qq(SELECT 
-                  help_record_id, type, keyword, data, status, 
+                  help_record_id, type, keyword, data, status, helpful, not_helpful, 
                   created_by, created_at, modified_by, modified_at 
                   FROM help_record 
                   );
@@ -319,10 +319,12 @@ sub fetch_records {
     'keyword'         => $_->[2],
     'data'            => $_->[3],
     'status'          => $_->[4],
-    'created_by'      => $_->[5],
-    'created_at'      => $_->[6],
-    'modified_by'     => $_->[7],
-    'modified_at'     => $_->[8],
+    'helpful'         => $_->[5],
+    'not_helpful'     => $_->[6],
+    'created_by'      => $_->[7],
+    'created_at'      => $_->[8],
+    'modified_by'     => $_->[9],
+    'modified_at'     => $_->[10],
   }} @$T ];
 }
 

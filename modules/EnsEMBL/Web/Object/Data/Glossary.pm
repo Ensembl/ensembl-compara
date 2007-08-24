@@ -24,6 +24,8 @@ sub BUILD {
   $self->add_field({ name => 'meaning', type => 'text' });
   $self->add_queriable_field({ name => 'keyword', type => 'string' });
   $self->add_queriable_field({ name => 'status', type => "enum('draft','live','dead')" });
+  $self->add_queriable_field({ name => 'helpful', type => 'int' });
+  $self->add_queriable_field({ name => 'not_helpful', type => 'int' });
   $self->add_queriable_field({ name => 'type', type => 'string' });
   $self->type('glossary');
   $self->populate_with_arguments($args);

@@ -73,6 +73,8 @@ sub records {
         'keyword'     => $row->{'keyword'},
         'data'        => $row->{'data'},
         'status'      => $row->{'status'},
+        'helpful'     => $row->{'helpful'},
+        'not_helpful' => $row->{'not_helpful'},
         'created_by'  => $row->{'created_by'},
         'created_at'  => $row->{'created_at'},
         'modified_by' => $row->{'modified_by'},
