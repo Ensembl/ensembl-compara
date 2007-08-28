@@ -64,7 +64,7 @@ sub render {
     }
     return sprintf( 
       qq(%s%s<input type="submit" value="%s" />%s\n  %s),
-      $self->introdution, $output,
+      $self->introduction, $output,
       CGI::escapeHTML( $self->button_value ),
       $self->required eq 'yes' ? $self->required_string : '',
       $self->notes
