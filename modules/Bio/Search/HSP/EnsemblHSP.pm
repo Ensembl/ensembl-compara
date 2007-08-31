@@ -49,7 +49,7 @@ use Bio::SeqFeature::Generic;
 
 use Bio::EnsEMBL::SeqFeature;        # Basic
 use Bio::EnsEMBL::FeaturePair;       # Comparison
-use Bio::EnsEMBL::Bio::EnsEMBL::DnaDnaAlignFeature; # Algnment
+use Bio::EnsEMBL::DnaDnaAlignFeature; # Algnment
 use Bio::EnsEMBL::Slice;             # For creating alignments
 use Bio::EnsEMBL::CoordSystem;       # For retrieving slices
 
