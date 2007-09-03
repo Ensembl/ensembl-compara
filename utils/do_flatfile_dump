@@ -325,6 +325,17 @@ sub chunk_seq_region {
   my $seq_end   = $projection[-1]->from_end();
   undef @projection; # saves memory
 
+  # Make sure the end is not more than the seqeunce end.
+  # This can happen because the blocks are set at gene end +1000
+
+  my ($final_start, $final_end) = @{pop(@$blocklist)};
+  if($final_end > $seq_end){
+    $final_end = $seq_end;
+  }
+  push (@$blocklist, [$final_start, $final_end] );
+
+
+
   # We need a stop block at the end to ensure algorithm gets
   # to the very end of the sequence.
   # It starts on the last base and it ends one before it!
