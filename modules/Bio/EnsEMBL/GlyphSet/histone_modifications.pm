@@ -61,7 +61,7 @@ sub draw_features {
     # Block features
     foreach my $fset ( @{ $feature->get_displayable_FeatureSets() }){
       my $display_label = $fset->display_label();
-      my $features = $fset->get_PredictedFeatures_by_Slice($slice ) ;
+      my $features = $fset->get_AnnotatedFeatures_by_Slice($slice ) ;
       next unless @$features;
       $drawn_flag = "block_features";
       $self->render_block_features( $features, $colour );
