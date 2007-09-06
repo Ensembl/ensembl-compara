@@ -34,12 +34,15 @@ foreach my $species ( keys %configured_servers ) {
   $live_sites->{$T->[0]}{$T->[1]} = $species;
 }
 
-my @servers = map { sprintf "ssaha%02d", $_ } (1..10);
+my @servers = map { sprintf "ssaha%02d", $_ } (1..16);
+push @servers, map { sprintf "ensarc-1-%02d", $_ } (10..14);
 
-my $ssh_command = "ssh -i /nfs/WWW/.ssh/blastsrv ssaha@";
 
 my $ssaha = {};
 foreach my $server ( @servers ) {
+  my $ssh_command = $server =~ /ssaha/ 
+                  ? "ssh -i /nfs/WWW/.ssh/blastsrv ssaha@"
+                  : "ssh -i /nfs/WWW/.ssh/blastsrv ";
   my @lines = `$ssh_command$server 'ps --cols 200 -C ssaha2Server -o %a'`;
   foreach(@lines) {
 warn $_;
