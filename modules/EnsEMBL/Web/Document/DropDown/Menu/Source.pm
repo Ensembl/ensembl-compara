@@ -14,7 +14,7 @@ sub new {
   );
   my @menu_entries = keys %{ $self->{'config'}->species_defs->VARIATION_SOURCES || {} };
   return undef unless @menu_entries;
-  foreach ( @menu_entries ) {
+  foreach ( sort @menu_entries ) {
     $self->add_checkbox( lc("opt_$_"), $_ );
   }
   return $self;

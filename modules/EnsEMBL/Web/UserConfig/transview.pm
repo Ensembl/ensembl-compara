@@ -47,8 +47,8 @@ sub init {
       'abbrev' => 'on',
     },
   };
-  $self->ADD_ALL_TRANSCRIPTS( 0, 'on' => 'off' );
-  $self->ADD_ALL_PREDICTIONTRANSCRIPTS( 0, 'on' => 'off' );
+  $self->ADD_ALL_TRANSCRIPTS( 0, 'on' => 'off', 'compact'     => 0 );
+  $self->ADD_ALL_PREDICTIONTRANSCRIPTS( 0, 'on' => 'off', 'compact'     => 0 );
 
 }
 1;

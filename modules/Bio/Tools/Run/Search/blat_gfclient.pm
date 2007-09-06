@@ -95,7 +95,8 @@ sub command{
 
   if( ! -f $self->fastafile ){ $self->throw("Need a query sequence!") }
 
-  my $exe = $self->executable;
+#  my $exe = $self->executable;
+  my $exe = '/ensemblweb/shared/bin/gfClient';
   -e $exe || $self->throw( "$exe does not exist" );
   -X $exe || $self->throw( "$exe is not executable bu UID/GID" );
 
@@ -111,6 +112,7 @@ sub command{
 		      $self->reportfile, 
 		    );
 
+  warn "$command 2> ".$self->errorfile;
   return $command." 2>".$self->errorfile;
 
 }

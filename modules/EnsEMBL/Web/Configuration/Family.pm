@@ -80,9 +80,10 @@ sub context_menu {
   $self->add_entry( "family$self->{flag}", 'icon' => '/img/biomarticon.gif' ,
                     'text' => 'Gene List', 'title' => 'BioMart: Gene list',
         'href' => "/@{[$self->{object}->species]}/martlink?type=family;family_id=".$self->{object}->stable_id );
-  $self->add_entry( "family$self->{flag}", 'icon' => '/img/biomarticon.gif' ,
-                    'text' => 'Peptide sequences (FASTA)', 'title' => 'BioMart: Peptide sequences FASTA',
-        'href' => "/@{[$self->{object}->species]}/martlink?type=familyseq;family_id=".$self->{object}->stable_id );
+
+#  $self->add_entry( "family$self->{flag}", 'icon' => '/img/biomarticon.gif' ,
+#                    'text' => 'Peptide sequences (FASTA)', 'title' => 'BioMart: Peptide sequences FASTA',
+#        'href' => "/@{[$self->{object}->species]}/martlink?type=familyseq;family_id=".$self->{object}->stable_id );
   $self->{page}->menu->add_entry( "family$self->{flag}", 'text' => 'Export alignments',
     'href' => sprintf( '/%s/alignview?class=Family;family_stable_id=%s', $self->{object}->species, $self->{object}->stable_id ),
     'options' => [

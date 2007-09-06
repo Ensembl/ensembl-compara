@@ -55,6 +55,11 @@ our $configuration = {
     'attributes' => [qw(chromosome_name start_position end_position strand ensembl_gene_id ensembl_transcript_id)],
     'filters'    => {qw(family_id ensembl_family)}
   },
+  'familyseq' => {
+    'data_set'   => 'gene_ensembl',
+    'attributes' => [qw(str_chrom_name gene_stable_id struct_biotype peptide)],
+    'filters'    => {qw(family_id ensembl_family)}
+  },
   'domain' => {
     'data_set'   => 'gene_ensembl',
     'attributes' => [qw(chromosome_name start_position end_position strand ensembl_gene_id ensembl_transcript_id)],
