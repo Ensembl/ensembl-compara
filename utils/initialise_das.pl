@@ -47,6 +47,17 @@ my $sources = {
    where t.seq_region_id = s.seq_region_id',
     'source_id'    => 3,
   },
+  'translation' => {
+	'master_table' => 'gene',
+	'name'         => 'Translation',
+	'query'        => '
+  select sr.name, g.seq_region_start, g.seq_region_end
+    from seq_region sr, gene g, transcript t, translation tr
+   where sr.seq_region_id = g.seq_region_id
+     and g.gene_id = t.gene_id
+     and t.transcript_id = tr.translation_id',
+	'source_id'   => 4,
+  },
   'cagetags' => {
     'master_table' => 'ditag_feature',
     'name'         => 'CAGETags',
@@ -84,6 +95,7 @@ my %sourcesIds          = ('reference'=>1, map { ( $_ => $sources->{$_}{'source_
 require EnsEMBL::Web::SpeciesDefs; 
 my $species_info;
 my $species_defs = EnsEMBL::Web::SpeciesDefs->new();
+my $sitetype = ucfirst(lc($species_defs->ENSEMBL_SITETYPE)) || 'Ensembl';
 my $cdb_info = $species_defs->{_storage}->{Multi}->{databases}->{ENSEMBL_COMPARA};
 my $cdb = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
   -dbname => $cdb_info->{'NAME'},
@@ -155,14 +167,23 @@ warn "Parsing species $sp ".gmtime();
 #   print STDERR "\t $sp : $feature : $table => ", $rv || 'Off',  "\n";
 #   print STDERR "\t\t\tTEST REGION : ", join('*', @r), "\n";
     next unless @r;
-    my $dsn = sprintf("%s.%s.%s", $sp, $species_defs->get_config($sp,'ENSEMBL_GOLDEN_PATH'), $feature);
+	my $type = $species_defs->get_config($sp,'ENSEMBL_GOLDEN_PATH');
+    my $dsn = sprintf("%s.%s.%s", $sp, $type, $feature);
     $shash->{$dsn}->{'test_range'} = sprintf("%s:%s,%s",@r); 
     $shash->{$dsn}->{mapmaster} = "$SiteDefs::ENSEMBL_BASE_URL/das/$mapmaster";
     $shash->{$dsn}->{description} = sprintf("Annotation source for %s %s", $sp, $feature);
+	if (   ($sitetype eq 'Vega')
+	    && ($feature =~ /^trans/) ) {
+		$type .= '-clone';
+		$dsn = sprintf("%s.%s.%s", $sp, $type, $feature);
+		$shash->{$dsn}->{'test_range'} = sprintf("%s:%s,%s",@r); 
+		$shash->{$dsn}->{mapmaster} = "$SiteDefs::ENSEMBL_BASE_URL/das/$mapmaster";
+		$shash->{$dsn}->{description} = sprintf("Annotation source (returns clones) for %s %s", $sp, $feature);
+	}
   }
 }
 
-sources( $shash, "$SERVERROOT/htdocs/das/sources" );
+sources( $shash, "$SERVERROOT/htdocs/das/sources", $sitetype );
 dsn(     $shash, "$SERVERROOT/htdocs/das/dsn"     );
 
 print STDERR sprintf("%d sources are active\n", scalar(keys %$shash));
@@ -192,8 +213,7 @@ sub entry_points {
 sub dsn {
   my( $sources, $file ) = @_;
   open FH, ">$file";
-  print FH qq(
-<?xml version="1.0" standalone="no"?>
+  print FH qq(<?xml version="1.0" standalone="no"?>
 <?xml-stylesheet type="text/xsl" href="/das/das.xsl"?>
 <!DOCTYPE DASDSN SYSTEM "http://www.biodas.org/dtd/dasdsn.dtd">
 <DASDSN>);
@@ -213,10 +233,11 @@ sub dsn {
 }
 
 sub sources {
-  my( $sources, $file ) = @_;
+  my( $sources, $file,$sitetype ) = @_;
   open FH, ">$file";
   my ($day, $month, $year) = (localtime)[3,4,5];
   my $today = sprintf("%04d-%02d-%02d", $year + 1900, $month + 1, $day);
+  my $email = ($sitetype eq 'Vega') ? "vega-helpdesk\@sanger.ac.uk" : "helpdesk\@ensembl.org";
   my %taxon_ids = ();
   print FH qq(<?xml version="1.0" encoding="UTF-8" ?>
 <?xml-stylesheet type="text/xsl" href="/das/das.xsl"?>
@@ -227,7 +248,16 @@ sub sources {
     (my $vsp = $species) =~ s/\_/ /g;
     my $source = pop @n;
     my $assembly = join('.', @n);
-    my $id = sprintf("ENSEMBL_%s_%s", $sourcesIds{$source} || $source, $assembly);
+	my $seq_type = $assembly =~ /-clone/ ? 'Clone' : 'Chromosome';
+	my $id;
+	if ($sitetype eq 'Vega') {
+		my $sp = $species;
+		$sp =~ s/^(\w)[A-Za-z]*_(\w{3}).*/$1$2/;
+		$id = sprintf("VEGA_%s_%s_%s", $sourcesIds{$source} || $source, $sp, $assembly);
+	}
+	else {
+		$id = sprintf("ENSEMBL_%s_%s", $sourcesIds{$source} || $source, $assembly);
+	}
     my $capability = $source eq 'reference' ?  qq(
       <CAPABILITY  type="das1:entry_points"
                    query_uri="$SiteDefs::ENSEMBL_BASE_URL/das/$dsn/entry_points" />
@@ -241,16 +271,17 @@ sub sources {
     my $description = $sources->{$dsn}{'description'};
     my $test_range  = $sources->{$dsn}{'test_range' };
     $taxon_ids{$vsp} ||= $ta->fetch_node_by_name($vsp)->taxon_id;
+	$assembly =~ s/-clone//;
     print FH qq( 
   <SOURCE uri="$id" title="$dsn" description="$description">
-    <MAINTAINER    email="helpdesk\@ensembl.org" />
+    <MAINTAINER    email="$email" />
     <VERSION       uri="latest"
                    created="$today">
       <PROPERTY    name="label"
                    value="ENSEMBL" />
       <COORDINATES uri="ensembl_location" 
                    taxid="$taxon_ids{$vsp}"
-                   source="Chromosome"
+                   source="$seq_type"
                    authority="$assembly"
                    version="$assembly"
                    test_range="$test_range"/>$capability
