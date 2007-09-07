@@ -820,6 +820,7 @@ sub sequence_display {
 
   my( $panel, $object ) = @_;
   my $slice   = $object->get_slice_object(); # Object for this section is the slice
+  my $sitetype = ucfirst(lc($object->species_defs->ENSEMBL_SITETYPE)) || 'Ensembl';
 
   # Return all variation features on slice if param('snp display');
   my $snps  = $slice->param( 'snp_display' )  eq 'snp' ? $slice->snp_display()  : [];
@@ -874,7 +875,7 @@ sub sequence_display {
     my %istyles = %{$styles{other_exon}};
     my $style = join( ';',map{"$_:$istyles{$_}"} keys %istyles );
     my $selected =  ucfirst($slice->param( 'exon_display' ));
-    $selected = "Ensembl" if $selected eq 'Core';
+    $selected = $sitetype if $selected eq 'Core';
     $KEY .= sprintf( $key_tmpl, $style, "", "THIS STYLE:", "Location of $selected exons ");
   }
 

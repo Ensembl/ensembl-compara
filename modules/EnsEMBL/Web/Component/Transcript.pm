@@ -999,7 +999,7 @@ sub do_markedup_pep_seq {
 sub supporting_evidence_image {
   my( $panel, $object ) = @_;
   $panel->print( '
-    <p>
+    <p id="evidence">
       The supporting evidence below consists of the sequence matches
       on which the exon predictions were based and are sorted by alignment score.
     </p>' );
