@@ -17,6 +17,7 @@ sub features {
         @{ $self->{'container'}->get_all_MiscFeatures('NoAnnotation') },
         @{ $self->{'container'}->get_all_MiscFeatures('CORFAnnotation') };
 
+ 
     foreach my $f (@features) {
         my ($ms) = @{ $f->get_all_MiscSets('NoAnnotation') };
         ($ms) = @{ $f->get_all_MiscSets('CORFAnnotation') } unless $ms;
@@ -31,7 +32,7 @@ sub tag {
 
     my %defs = (
         'NoAnnotation'      => 'gray75',
-        'CORFAnnotation'    => 'gray90',
+        'CORFAnnotation'    => 'EEEEFF',
     );
     
     return {
@@ -58,12 +59,12 @@ sub zmenu {
 sub colour {
     my ($self, $f) = @_;
 
-    my ($ms) = @{ $f->get_all_MiscSets('NoAnnotation') ||
-                 $f->get_all_MiscSets('CORFAnnotation') };
+    my ($ms) = @{ $f->get_all_MiscSets('NoAnnotation')} ||
+               @{  $f->get_all_MiscSets('CORFAnnotation') };
 
     my %defs = (
         'NoAnnotation'      => 'gray50',
-        'CORFAnnotation'    => 'gray75',
+        'CORFAnnotation'    => 'EEEEFF',
     );
     
     return $defs{ $f->{'_miscset_code'} };

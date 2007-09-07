@@ -19,6 +19,7 @@ use Sanger::Graphics::Bump;
 use Carp;
 
 our $VERSION = do { my @r = (q$Revision$ =~ /\d+/mxg); sprintf '%d.'.'%03d' x $#r, @r };
+
 our $COL = {
 	    'gpos100' => 'black',
 	    'tip'     => 'slategrey',
@@ -30,7 +31,27 @@ our $COL = {
 	    'gneg'    => 'white',
 	    'acen'    => 'slategrey',
 	    'stalk'   => 'slategrey',
-	   };
+     };
+
+
+####################################################################
+### set true only while you're generating the vega karyotype image ##
+#####################################################################
+  if (0) {
+     $COL->{'gpos100'}        = 'darkslategray';
+     $COL->{'gpos75'}         = 'cadetblue2';
+     $COL->{'gpos50'}         = 'cadetblue3';
+     $COL->{'gpos25'}         = 'cadetblue4';
+     $COL->{'gpos'}           = 'darkslategray';
+     $COL->{'gvar'}           = 'darkslategray3';
+     $COL->{'gneg'}           = 'white';
+     $COL->{'acen'}           = 'darkslategray4';
+     $COL->{'stalk'}          = 'darkslategray4';
+     $COL->{'NoAnnotation'}   = 'gray75'; # marks start/end of unannotated sequence
+     $COL->{'CORFAnnotation'} = 'gray90'; # marks start/end of CORF project annotated sequence
+  }
+## end of vega karyotype static image colours ###                                                
+
 our $RECT = 'Sanger::Graphics::Glyph::Rect';
 our $LINE = 'Sanger::Graphics::Glyph::Line';
 our $TEXT = 'Sanger::Graphics::Glyph::Text';

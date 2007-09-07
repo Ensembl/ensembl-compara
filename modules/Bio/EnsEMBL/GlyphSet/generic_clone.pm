@@ -51,7 +51,7 @@ sub colour {
     my ($self, $f) = @_;
     (my $state = $f->get_scalar_attribute('state')) =~ s/^\d\d://;
     my $to_colour = $f->get_scalar_attribute('inner_start') ? 'border' : $self->{'part_to_colour'};
-    $to_colour = 'border' if $f->length > 350e3;
+    $to_colour = 'border' if ($f->length > $self->my_config('outline_threshold'));
     return $self->{'colours'}{"col_$state"}||$self->{'feature_colour'},
            $self->{'colours'}{"lab_$state"}||$self->{'label_colour'},
            $to_colour;
@@ -63,7 +63,8 @@ sub colour {
 
 sub image_label {
   my ($self, $f ) = @_;
-  return ($f->get_first_scalar_attribute(qw(name well_name clone_name sanger_project synonym embl_acc)),'overlaid');
+  return ( $self->my_config('no_label')) ? q{}
+	   : ($f->get_first_scalar_attribute(qw(name well_name clone_name sanger_project synonym embl_acc)),'overlaid');
 }
 
 ## Link back to this page centred on the map fragment
@@ -120,14 +121,28 @@ sub tag {
 ## Include each accession id separately
 
 sub zmenu {
-  my ($self, $f ) = @_;
-  return if $self->my_config('navigation') ne 'on';
-  my $name = $f->get_first_scalar_attribute(qw(name well_name clone_name sanger_project synonym embl_acc alt_well_name bacend_well_nam));
-  my $zmenu = { 
-    qq(caption)                                            => qq(Clone: $name),
-    qq(01:bp: @{[$f->seq_region_start]}-@{[$f->seq_region_end]}) => '',
-    qq(02:length: @{[$f->length]} bps)                     => '',
-    qq(03:Centre on clone:)                                => $self->href($f),
+	my ($self, $f ) = @_;
+	return if $self->my_config('navigation') ne 'on';
+	my $name = $f->get_first_scalar_attribute(qw(name well_name clone_name sanger_project synonym embl_acc alt_well_name bacend_well_nam));
+		my $feature_type = 'Clone';
+	my $position = 'bp';
+	my $link_text = 'Centre on clone:';
+	my $href =  $self->href($f);
+
+	#change stuff for vega zfish haplotype scaffolds
+	if ($self->my_config('FEATURES') eq 'hclone') {
+		$feature_type = 'Haplotype Scaffold';
+		$position = 'location',
+		$link_text = 'View this scaffold';
+		$href =~ s/misc_feature/l/;
+		$href =~ s/:(\d+)$/-$1/;
+	}
+	
+	my $zmenu = {
+        qq(caption)                                                         => qq($feature_type: $name),
+        qq(01:$position: @{[$f->seq_region_start]}-@{[$f->seq_region_end]}) => '',
+        qq(02:length: @{[$f->length]} bps)                                  => '',
+        qq(03:$link_text)                                                   => $href,
     };
     my @names = ( 
       [ 'name'           => '20:Name' ] ,

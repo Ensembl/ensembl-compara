@@ -87,7 +87,6 @@ sub _init {
     my $gene_col   = ($used_colours->{ $GT } = $colours->{ $GT });
     my $ens_ID     = $self->ens_ID( $g );
     my $high = exists $highlights{ lc($gene_label) } || exists $highlights{ lc($g->stable_id) };
-
     my $type = $g->source eq 'vega' ? $self->format_vega_name($g) : $g->biotype;
        $type =~ s/HUMACE-//;
     my $start = $g->start;
@@ -235,28 +234,5 @@ sub legend {
   my @legend = %X;
   return \@legend;
 }
-
-
-=head2 format_vega_name
-
-  Arg [1]    : $self
-  Arg [2]    : gene object
-  Example    : my $type = $self->format_vega_name($g);
-  Description: retrieves status and biotype of a gene. Then retrieves
-               the display name from the Colourmap
-  Returntype : string
-
-=cut
-
-sub format_vega_name {
-	my ($self,$gene) = @_;
-	my %gm = $self->{'config'}->colourmap->colourSet('vega_gene');
-	my $status = $gene->status;
-	my $biotype = $gene->biotype;
-	my $t = $biotype.'_'.$status;
-	my $label = $gm{$t}[1];
-	return $label;
-}
-
 
 1;
