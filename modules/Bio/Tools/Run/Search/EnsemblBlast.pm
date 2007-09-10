@@ -29,6 +29,8 @@ use vars qw( @ISA
 use Bio::Tools::Run::Search::WuBlast;
 use EnsEMBL::Web::SpeciesDefs;
 use Sys::Hostname qw(hostname);
+use warnings;
+
 
 @ISA = qw( Bio::Tools::Run::Search::WuBlast );
 
@@ -248,9 +250,26 @@ sub dispatch_bsub {
    
    my $repeatmask_command = $SPECIES_DEFS->ENSEMBL_REPEATMASKER;
 #   $queue = 'systest';
-   (my $db_name = $self->database) =~ s/([A-Z])[a-z]+_([a-z]{3})[a-z]*\..*\.a([-\w+])\.(\w+)\.fa/ENSEMBL.\1\2.\3.\4/;
-   my $project_name = join ':', $self->program_name, $db_name, $self->seq->length, $self->seq->alphabet;
+   
+   my $project_name;
+   
+   if($SiteDefs::ENSEMBL_SITETYPE eq 'Vega'){
+      my $db_name;
+      if(length($self->database) > 38){
+          $db_name= substr($self->database, 0, 38);
+      }
+      else{
+          $db_name= $self->database;
+      }
+      $project_name=  join ':', $self->program_name, $db_name, $self->seq->alphabet;   
+   }
+   else{
+      (my $db_name = $self->database) =~ s/([A-Z])[a-z]+_([a-z]{3})[a-z]*\..*\.a([-\w+])\.(\w+)\.fa/ENSEMBL.\1\2.\3.\4/;
+      $project_name = join ':', $self->program_name, $db_name, $self->seq->length, $self->seq->alphabet;
+   }
 
+    warn "PROJECT-NAME: $project_name\n";
+   
    my $command_line = qq(|bsub -c 120 -q $queue -P '$project_name' -J $ticket -o /dev/null -f "$client_fasta_file > $server_fasta_file");
    warn $command_line;
    if( open(BSUB, $command_line )) {
