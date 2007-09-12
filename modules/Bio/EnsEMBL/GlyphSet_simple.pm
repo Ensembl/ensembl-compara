@@ -177,8 +177,9 @@ sub _init {
   foreach my $f ( @{$features} ) {
     #print STDERR "Added feature ", $f->id(), " for drawing.\n";
     ## Check strand for display ##
-    next if( $strand_flag eq 'b' && $strand != $f->strand );
-    ## Check start are not outside VC.... ##
+    my $fstrand = $f->strand || -1;
+    next if( $strand_flag eq 'b' && $strand != $fstrand );
+    ## Check start are not outside VC.... #
     my $start = $f->start();
     next if $start>$vc_length; ## Skip if totally outside VC
     $start = 1 if $start < 1;
