@@ -70,7 +70,7 @@ sub Features {
 
 	    my $group = {
 		'ID' => $id,
-		'LINK' => [ {text => 'More info', href => "http://www.ensembl.org/$species/CHIP_PET.html"} ],
+		'LINK' => [ {text => 'More info', href => "http://www.ensembl.org/$species/ditags/CHIP_PET.html"} ],
 		'TYPE' =>  $ft->analysis->logic_name,
 		'NOTE'        => ["tag_count: $tag_count", $g_location],
 	    };

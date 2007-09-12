@@ -68,7 +68,7 @@ sub Features {
 
 	    my $group = {
 		'ID' => $id,
-		'LINK' => [ {text => 'More info', href => "http://www.ensembl.org/$species/FANTOM_CAGE.html"} ],
+		'LINK' => [ {text => 'More info', href => "http://www.ensembl.org/$species/ditags/FANTOM_CAGE.html"} ],
 		'TYPE' =>  $ft->analysis->logic_name,
 		'NOTE'        => ["tag_count: $tag_count", $g_location],
 	    };
