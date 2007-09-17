@@ -142,7 +142,6 @@ sub add_body_element_before{
       splice( @{$elements},$i,0,[$code, $function] );
       last;
     }
-    unshift( @{$elements}, [$code, $function] );
   }
   return 1;
 }
@@ -155,7 +154,6 @@ sub add_body_element_after{
       splice( @{$elements},$i+1,0,[$code, $function] );
       last;
     }
-    push( @{$elements}, [$code, $function] );
   }
   return 1;
 }
