@@ -57,6 +57,10 @@ information is neccessarily available for each species.
    |
    |-- data
        |
+       |-- emf            Alignment dumps in EMF format
+       |   |
+       |   |-- variation    * resequencing data
+       |
        |-- fasta          Gene predictions in FASTA database format
        |   |
        |   |-- cdna         * Transcript (cDNA) predictions
@@ -68,6 +72,8 @@ information is neccessarily available for each species.
        |   |
        |   |-- embl         * EMBL format
        |   |-- genbank      * GenBank format
+       |
+       |-- gtf            Gene annotation in GTF format
        |
        |-- mysql          MySQL database table text dumps
            |
@@ -104,6 +110,15 @@ species data or which contain link data between species.
    |
    |-- data
        |
+       |-- emf                      Alignment dumps in EMF format
+       |   |
+       |   |-- pecan                  * Pecan whole genome multiple alignments
+       |   |                            with conservation scores for selected sets
+       |   |
+       |   |-- protein_trees          * protein trees and protein multiple alignments
+       |   |                            underlying orthologue/paralogue predictions
+       |
+       |
        |-- mysql                    MySQL database table text dumps
            |
            |-- ensembl_compara      Cross-species comparative genomics data:
@@ -139,10 +154,14 @@ The 'mart' directory contains table dumps of the databases underlying the
        |
        |-- mysql              MySQL database table text dumps
            |
-           |-- ensembl_mart   Cross-species data mining tables
-           |-- sequence_mart  Genome sequences
-           |-- snp_mart       Genetic variation information
-           |-- vega_mart      Manually curated gene sets
+           |-- compara_mart_homology     Orthologue/paralogue predictions
+           |-- compara_mart_multiple_ga  Constrained elements predictions
+           |-- compara_mart_pairwise_ga  Whole genome pairwise alignments
+           |-- ensembl_mart              Cross-species data mining tables
+           |-- genomic_features_mart     Clone data sets
+           |-- sequence_mart             Genome sequences
+           |-- snp_mart                  Genetic variation information
+           |-- vega_mart                 Manually curated gene sets
 
 </pre>
 
