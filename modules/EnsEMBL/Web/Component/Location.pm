@@ -24,7 +24,7 @@ use Bio::EnsEMBL::ExternalData::DAS::DAS;
 use EnsEMBL::Web::RegObj;
 use EnsEMBL::Web::Form;
 use EnsEMBL::Web::Object::Data::User;
-
+use CGI qw(escape);
 use Data::Dumper;
 our @ISA = qw( EnsEMBL::Web::Component);
 use strict;
@@ -716,9 +716,9 @@ sub nav_box_frame {
   return sprintf
 qq(
 <div style="width: %dpx; border: solid 1px black; border-width: 1px 1px 0px 1px; padding: 0px;" class="navbox print_hide_block autocenter"><div style="padding: 2px; margin: 0px;">
-  $content
+  %s
 </div></div>
- ), $width-2;
+ ), $width-2, $content;
 }
 
 sub cp_link {
@@ -728,16 +728,25 @@ sub cp_link {
 
 sub this_link_offset {
   my( $object, $offset, $extra ) = @_;
+  if( $object->highlights_string ) {
+    $extra = ";h=".CGI::escape($object->highlights_string).$extra;
+  }
   return cp_link( $object, $object->centrepoint + $offset, $object->length, $extra );
 }
 
 sub this_link {
   my( $object, $extra ) = @_;
+  if( $object->highlights_string ) {
+    $extra = ";h=".CGI::escape($object->highlights_string).$extra;
+  }
   return cp_link( $object, $object->centrepoint, $object->length, $extra );
 }
 
 sub this_link_scale {
   my( $object, $scale, $extra ) = @_;
+  if( $object->highlights_string ) {
+    $extra = ";h=".CGI::escape($object->highlights_string).$extra;
+  }
   return cp_link( $object, $object->centrepoint, $scale, $extra );
 }
 
@@ -827,7 +836,7 @@ sub bottom_nav {
   foreach( keys %$additional_hidden_values ) {
     next if $additional_hidden_values->{$_} eq ''; 
     $hidden_fields_string .= qq(<input type="hidden" name="$_" value="$additional_hidden_values->{$_}" />);
-    $hidden_fields_URL    .= qq(;$_=$additional_hidden_values->{$_});
+    $hidden_fields_URL    .= qq(;$_=$additional_hidden_values->{$_}) unless $_ eq 'h';
   }
 
   my $SIZE  = $bands ? 8 : 10;

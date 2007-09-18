@@ -301,7 +301,7 @@ sub _location_from_URL {
   my $P = new EnsEMBL::Web::URLfeatureParser( $self->species_defs, $self->param( 'data_URL' ) );
   $P->parse_URL;
   ( my $T = $P->{'browser_switches'}->{'position'} ) =~ s/^chr//;
-  my($chr,$start,$end) = $T =~/^(.*?):(.*?)-(.*)/;
+  my($chr,$start,$sep,$end) = $T =~/^(.*?):(.*?)(-|\.\.|,)(.*)/;
   return unless $chr || $start || $end;
   $self->_location_from_SeqRegion( $chr, $start, $end );
 }

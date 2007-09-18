@@ -151,7 +151,7 @@ sub go {
                 my $info_text_type;
     if($info_text){
   #create URL
-     if($info_text=~/from ([a-z]+[ _][a-z]+) (gene|translation) (\w+)/){
+     if($info_text=~/from ([a-z]+[ _][a-z]+) (gene|translation) (\w+)/i){
         $info_text_gene= $3;
         $info_text_type= $2;
         $info_text_common_name= ucfirst($1);
