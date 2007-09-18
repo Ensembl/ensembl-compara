@@ -101,7 +101,7 @@ if( @SPECIES ) {
   @SPECIES = @{ utils::Tool::all_species()};
 }
 
-$email ||= 'ensembl-webteam@sanger.ac.uk';
+$email ||= 'ssg-ensembl@sanger.ac.uk';
 
 # Check the ENSEMBL_VERSION is up to date and matches user's request
 if( my $sitedefs_release =  $SiteDefs::ENSEMBL_VERSION ne $release) {

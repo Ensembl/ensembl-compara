@@ -180,7 +180,7 @@ my $hours      = localtime($time_taken)->hour -1;
 utils::Tool::info (2, "Used $logfile.") if $logfile;
 utils::Tool::info (2, " Time taken: $hours:". localtime($time_taken)->min."mins");
 
-$email ||= 'ensembl-webteam@sanger.ac.uk';
+$email ||= 'ssg-ensembl@sanger.ac.uk';
 utils::Tool::mail_log( $logfile, $email, "" ) if $logfile;
 close STDERR;
 exit;
