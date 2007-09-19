@@ -712,6 +712,21 @@ sub _internal_newick_format {
     }
     $newick .= sprintf(":%1.4f", $self->distance_to_parent);
   }
+  if($format_mode eq "otu_id") { 
+    #out_id: species name then "|" then external name
+    my $display_label;
+    if($self->is_leaf) {
+      $display_label = $self->gene_member->display_label;
+    }
+    if ($self->is_leaf) {
+      $newick .= $self->genome_db->short_name . "|";
+    }
+    if (defined($display_label)) {
+      $newick .= $display_label;
+    }
+    $newick .= $self->name;
+    $newick .= sprintf(":%1.4f", $self->distance_to_parent);
+  }
   if($format_mode eq 'simple') { 
     #simplified: name only on leaves, dist only if has parent
     if($self->parent) {
