@@ -16,12 +16,16 @@ tar xvzf taxdump.tar.gz
 
 rm -f taxdump.tar.gz
 
+# this should take about 10 seconds
 perl -e 'while(<>) {chomp;s/\t\|$//;my @array = split(/\t\|\t/);my ($taxon_id, $parent_id, $rank, $genbank_hidden_flag) = ($array[0],$array[1],$array[2],$array[10]);print $taxon_id,"\t", $parent_id,"\t", $rank,"\t",$genbank_hidden_flag,"\n";}' nodes.dmp > ncbi_taxa_node.txt
 
+# this should take about 10 seconds
 perl -e 'while(<>) {chomp;s/\t\|$//;my ($taxon_id, $name, $unique_name, $name_class) = split(/\t\|\t/);print $taxon_id,"\t", $name,"\t",$name_class,"\n";}' names.dmp > ncbi_taxa_name.txt
 
 mysql -hens-livemirror -uensadmin -pensembl -N -e "drop database ncbi_taxonomy"
 mysql -hens-livemirror -uensadmin -pensembl -N -e "create database ncbi_taxonomy"
+
+mysql -hens-livemirror -uensadmin -pensembl ncbi_taxonomy
 
 # This two tables also exist in ensembl-compara/sql/table.sql
 
@@ -52,27 +56,33 @@ CREATE TABLE ncbi_taxa_name (
   KEY (name_class)
 );
 
-mysqlimport -hens-livemirror -uensadmin -pensembl -L ncbi_taxonomy ncbi_taxa_node.txt
-ncbi_taxonomy.ncbi_taxa_node: Records: 296515  Deleted: 0  Skipped: 0  Warnings: 889545
+exit
 
+# This should take about 60 seconds
+mysqlimport -hens-livemirror -uensadmin -pensembl -L ncbi_taxonomy ncbi_taxa_node.txt
+# ncbi_taxonomy.ncbi_taxa_node: Records: 383990  Deleted: 0  Skipped: 0  Warnings: 1151970
+
+# This should take about 90-120 seconds
 mysqlimport -hens-livemirror -uensadmin -pensembl -L ncbi_taxonomy ncbi_taxa_name.txt
-ncbi_taxonomy.ncbi_taxa_name: Records: 385145  Deleted: 0  Skipped: 0  Warnings: 0
+# ncbi_taxonomy.ncbi_taxa_name: Records: 525516  Deleted: 0  Skipped: 0  Warnings: 0
 
 mysql -hens-livemirror -uensadmin -pensembl -N -e "update ncbi_taxa_node set parent_id=0 where parent_id=taxon_id" ncbi_taxonomy
 
 awk '{print $1,$3}' merged.dmp |awk '{print "insert into ncbi_taxa_name (taxon_id, name_class, name) values ("$2",\"merged_taxon_id\","$1");"}' > merged_nodes.sql
 
+# This should take about 10 seconds
 mysql -hens-livemirror -uensadmin -pensembl ncbi_taxonomy < merged_nodes.sql
 
 mysql -hens-livemirror -uensadmin -pensembl -N -e "insert into ncbi_taxa_name (taxon_id, name, name_class) select distinct taxon_id, CURRENT_TIMESTAMP, 'import date' from ncbi_taxa_node where parent_id=0" ncbi_taxonomy
 
 # Build the left/right indexes and store them in the database. This indexing help speeding up subtree retrieval if needed.
 
-ensembl-compara/scripts/taxonomy/taxonTreeTool.pl -url mysql://ensadmin:ensembl@ens-livemirror:3306/ncbi_taxonomy -index > leftright_indexing.err 2>&1 &
+# This takes about 40 minutes
+/usr/local/ensembl/bin/perl ~/src/ensembl_main/ensembl-compara/scripts/taxonomy/taxonTreeTool.pl -url mysql://ensadmin:ensembl@ens-livemirror:3306/ncbi_taxonomy -index > leftright_indexing.err 2>&1 &
 
 # Import 'ensembl common name' and 'ensembl alias name' for Ensembl web team use.
 
-mysql -hens-livemirror -uensadmin -pensembl ncbi_taxonomy < ensembl-compara/scripts/taxonomy/ensembl_aliases.sql
+mysql -hens-livemirror -uensadmin -pensembl ncbi_taxonomy < ~/src/ensembl_main/ensembl-compara/scripts/taxonomy/ensembl_aliases.sql
 
 ensembl-compara/scripts/taxonomy/ensembl_aliases.sql needs to be updated as new species
 are integarted into Ensembl.
@@ -87,3 +97,11 @@ each species, when it says e.g. "e!EnsemblHuman" or
 "e!EnsemblMouse". This should be agreed with the web team or just take
 the one they have chosen from the pre site.
 
+mysql -hens-livemirror -uensro ncbi_taxonomy -e "select * from ncbi_taxa_name where taxon_id=1"
++----------+---------------------+-----------------+
+| taxon_id | name                | name_class      |
++----------+---------------------+-----------------+
+|        1 | all                 | synonym         |
+|        1 | root                | scientific name |
+|        1 | 2007-09-19 15:58:11 | import date     |
++----------+---------------------+-----------------+
