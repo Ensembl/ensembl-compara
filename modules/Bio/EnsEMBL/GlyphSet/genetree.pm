@@ -321,6 +321,7 @@ sub features {
   } else {
       $f->{'_name'} = $tree->name;
       $f->{'_taxon_id'} = $tree->get_tagvalue('taxon_id');
+      $f->{'_dupconf'} = $tree->get_tagvalue('duplication_confidence_score');
   }
 
   push @features, $f;
@@ -363,6 +364,7 @@ sub zmenu {
 
   $zmenu->{"30:Taxonomy name: $f->{'_name'}"} = '' if ($f->{_name});
   $zmenu->{"40:Taxonomy ID: $f->{'_taxon_id'}"} = '' if ($f->{_taxon_id});
+  $zmenu->{"80:Dupl. Confidence: $f->{'_dupconf'}"} = '' if ($f->{_dupconf});
   $zmenu->{"50:Species: $f->{_species}"} = '' if ($f->{_species});
 
   (my $ensembl_species = $f->{_species}) =~ s/ /\_/g;
