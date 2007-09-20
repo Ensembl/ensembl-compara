@@ -109,6 +109,12 @@ ls|wc -l
  It is better to place the output files in a different directory to reduce the burden on the filesystem.
  (The fewer files per directory the better).
 
+ LaunchBlast will run like this: system("/usr/local/ensembl/bin/blastall -d $fastadb -i $qy_file -p blastp -e 0.00001 -v 250 -b 0 > $blast_file");
+ where:
+   -e  Expectation value (E) [Real]
+   -v  Number of database sequences to show one-line descriptions for (V) [Integer]
+   -b  Number of database sequence to show alignments for (B) [Integer]
+
 echo '/nfs/acari/avilella/src/ensembl_main/ensembl-compara/scripts/family/LaunchBlast.pl -idqy PeptideSet.${LSB_JOBINDEX} -fastadb /lustre/work1/ensembl/avilella/families/family_46/fasta/metazoa_46.pep -fastaindex /lustre/work1/ensembl/avilella/families/family_46/fasta/metazoa_46.index -tab /lustre/work1/ensembl/avilella/families/family_46/fasta/metazoa_46.tab -dir /lustre/work1/ensembl/avilella/families/family_46/blast_raw/' | bsub -q long -JFamilyBlastp"[1]" -o ../blast_out/PeptideSet.%I.out
 
  Check that the BLASTMAT points to /usr/local/ensembl/data/blastmat
