@@ -29,16 +29,16 @@ sub get_font_details {
 }
 
 sub init_label_text {
-  my( $self, $text, $help_link, $description) = @_;
+  my( $self, $text, $help_link, $zmenu) = @_;
   return if defined $self->{'config'}->{'_no_label'};
-  my @extra=();
+  my $href;
+  
   if( $help_link ) {
-    push @extra,
-      'href'      => qq[javascript:X=hw('@{[$self->{container}{_config_file_name_}]}','$ENV{'ENSEMBL_SCRIPT'}','$help_link')],
-      'zmenu'     => { 'caption' => 'HELP', '02:Track information...' => qq(javascript:X=hw('@{[$self->{container}{_config_file_name_}]}','$ENV{'ENSEMBL_SCRIPT'}','$help_link')) };
+      $zmenu ||= {}; 
+      $zmenu->{ '02:Track information...'} = qq(javascript:X=hw('@{[$self->{container}{_config_file_name_}]}','$ENV{'ENSEMBL_SCRIPT'}','$help_link'));
   }
-  if( $description ) {
-    push @extra, '01:'.CGI::escapeHTML( $description ) => '';
+  if ($zmenu) {
+    $zmenu->{'caption'} ||= 'HELP';
   }
   
   my $ST = $self->{'config'}->species_defs->ENSEMBL_STYLE;
@@ -50,7 +50,9 @@ sub init_label_text {
     'text'   => "$text",
     'font'   => $font,
     'ptsize' => $fsze,
-    @extra,
+    'href' => $help_link ? qq[javascript:X=hw('@{[$self->{container}{_config_file_name_}]}','$ENV{'ENSEMBL_SCRIPT'}','$help_link')] : '',
+    'zmenu' => $zmenu ? $zmenu : undef,
+    'colour' => $self->{'label_colour'},
     'absolutey'=>1,'height'=>$res[3]}
   ));
 }
@@ -413,7 +415,10 @@ sub RENDER_plot{
   my $style;
 
   my $row_height = $configuration->{'h'} || 30;
+
   my $pix_per_score = (abs($max_score) >  abs($min_score) ? abs($max_score) : abs($min_score)) / $row_height;
+  $pix_per_score ||= 1;
+
   my $bp_per_pix = 1 / $self->{pix_per_bp};
   $configuration->{h} = $row_height;
 

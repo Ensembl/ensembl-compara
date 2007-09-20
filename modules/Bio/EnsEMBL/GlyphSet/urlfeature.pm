@@ -22,6 +22,7 @@ sub managed_name {
 
 sub features {
   my ($self) = @_;
+#  warn Dumper($self->{'extras'});
   my @data =
     map { $_->[1] }
     sort { $a->[0] <=> $b->[0] }
@@ -42,10 +43,18 @@ sub href {
 }
 
 sub zmenu {
-  my ($self, $id ) = @_;
+  my ($self, $id, $f ) = @_;
   my $T = $self->href( $id );
-  return { 'caption' => $id, 'details...' => $T } if $T;
-  return { 'caption' => $id };
+  my $h = {
+  	'caption' => $id
+	};
+  $h->{ 'details...'} = $T  if ($T);
+  if ($f) {
+  	my $score = $f->score;
+	$h->{"SCORE:$score"} = '';
+  }
+
+  return $h;
 }
 
 1;

@@ -13,7 +13,30 @@ sub init_label {
   my ($self) = @_;
   return if( defined $self->{'config'}->{'_no_label'} );
   my $HELP_LINK = $self->check();
-  $self->init_label_text( $self->my_label, $HELP_LINK, $self->{'extras'} ? $self->{'extras'}{'description'} : undef );
+ 
+  my $zmenu;
+  if( my $econfig = $self->{'extras'}) {
+      $zmenu->{'01:'.CGI::escapeHTML( $econfig->{'description'} )} = '';
+      if ($econfig->{'useScore'}) {
+        if (defined($econfig->{'dataMin'})) {
+      	  $zmenu->{"05:Scores are normalized to the range $econfig->{dataMin} .. $econfig->{dataMax}"} = '';
+        } else {
+	  my @features = sort { $a->score <=> $b->score  } @{$econfig->{'data'} || []};
+	  if (@features) {
+	    my ($min_score, $max_score) = ($features[0]->score, $features[-1]->score);
+	    if ($min_score || $max_score) {
+	      $zmenu->{"05:Scores are in the range [$min_score .. $max_score]"} = '';
+	    }
+	  }
+	}
+      }
+  }
+	
+  if ($HELP_LINK || $zmenu) {
+  	$self->{'label_colour'} = 'contigblue1';
+ }
+ 
+  $self->init_label_text( $self->my_label, $HELP_LINK, $zmenu);
   if( $self->can('das_link') ) {
     my $T = $self->das_link;
     $self->label->{'zmenu'}{'99:DAS Table View'} = $T if $T;
@@ -36,15 +59,352 @@ sub feature_group{
   return $f->display_id;
 }
 
+sub RENDER_colourgradient{
+  my( $self, $configuration ) = @_;
+
+  my $rStart = $self->{'container'}->{'start'};
+  my $rEnd= $self->{'container'}->{'end'};
+  my @features = sort { $a->score <=> $b->score  } @{$configuration->{'data'} || []};
+  if (! @features) {
+    $self->errorTrack( "No ".$self->my_label." features in this region" ) unless( $self->{'config'}->get('_settings','opt_empty_tracks')==0 );
+    return 0;
+  }
+  my ($min_score, $max_score) = defined($configuration->{'dataMax'}) ? 
+  	($configuration->{'dataMin'}, $configuration->{'dataMax'}) : 
+	($features[0]->score || 0, $features[-1]->score || 0);
+  $min_score or $min_score = 0;
+  $max_score or $max_score = 100;
+  $min_score = 0 if ($max_score == $min_score);
+				 
+  my $row_height = $configuration->{'height'} || 20;
+  my $score_range = $max_score - $min_score;
+  my $cgGrades = $configuration->{cgGrades} || ($score_range < 20 ? $score_range : 20);
+  my $score_per_grade =  ($max_score - $min_score)/ $cgGrades ;
+  my @cgColours = map {$configuration->{$_}} grep { $_ =~ /^cgColour/ } sort keys %$configuration;
+  if (my $ccount = scalar(@cgColours)) {
+  	if ($ccount == 1) {
+		unshift @cgColours, 'white';
+	}
+  } else {
+    @cgColours = ('yellow', 'green', 'blue');
+  }
+
+  my $cm = new Sanger::Graphics::ColourMap;
+  my @cg = $cm->build_linear_gradient($cgGrades, \@cgColours);
+
+
+  $configuration->{h} = $row_height;
+  $self->push( new Sanger::Graphics::Glyph::Line({
+      'x'         => 0,
+      'y'         => $row_height + 1,
+      'width'     => $configuration->{'length'},
+      'height'    => 0,
+      'absolutey' => 1,
+	'colour'    => 'red',
+       'dotted'    => 1,
+   }));
+
+  foreach my $f (@features) {
+     my $s = $f->start() < $rStart ? 1 : $f->start()- $rStart;
+     my $e = $f->end()   > $rEnd  ? ($rEnd - $rStart) : ($f->end- $rStart);
+
+     my $width = ($e- $s +1);
+     my $score = $f->score || 0;
+     $score = $min_score if ($score < $min_score);
+     $score = $max_score if ($score > $max_score);
+     my $grade = ($score >= $max_score) ? ($cgGrades - 1) : int(($score - $min_score) / $score_per_grade);
+     my $col = $cg[$grade];	  
+
+     my $Composite = new Sanger::Graphics::Glyph::Composite({
+        'y'         => 0,
+	'x'         => $s-1,
+	'absolutey' => 1,
+	'zmenu'    => $self->zmenu( $f->id, $f)
+    });
+    
+    $Composite->push(new Sanger::Graphics::Glyph::Rect({
+      'x'          => $s-1,
+      'y'          => 0,
+      'width'      => $width,
+      'height'     => $row_height,
+      'colour'     => $col,
+      'absolutey'  => 1,
+    }));
+    $self->push( $Composite );
+  }
+  return 0;
+}
+sub RENDER_plot{
+  my( $self, $configuration ) = @_;
+
+  my $rStart = $self->{'container'}->{'start'};
+  my $rEnd= $self->{'container'}->{'end'};
+  my @features = sort { $a->score <=> $b->score  } @{$configuration->{'data'} || []};
+  if (! @features) {
+    $self->errorTrack( "No ".$self->my_label." features in this region" ) unless( $self->{'config'}->get('_settings','opt_empty_tracks')==0 );
+    return 0;
+  }
+  my ($min_score, $max_score) = defined($configuration->{'dataMax'}) ? 
+  	($configuration->{'dataMin'}, $configuration->{'dataMax'}) : 
+	($features[0]->score || 0, $features[-1]->score || 0);
+  $min_score or $min_score = 0;
+  $max_score or $max_score = 100;
+      
+  my $row_height = $configuration->{'height'} || 30;
+
+  $configuration->{h} = $row_height;
+
+  if ($min_score < 0) {
+     $self->push( new Sanger::Graphics::Glyph::Line({
+        'x'         => 0,
+        'y'         => $row_height + 1,
+        'width'     => $configuration->{'length'},
+        'height'    => 0,
+        'absolutey' => 1,
+	'colour'    => 'black',
+        'dotted'    => 1,
+     }));
+     my $peak_score = (abs($max_score) >  abs($min_score) ? abs($max_score) : abs($min_score));
+     $max_score = abs($peak_score);
+     $min_score = -$max_score;
+  }
+
+  my $pix_per_score = ($max_score - $min_score)  / $row_height;
+  if ($min_score < 0) {
+  	$pix_per_score /= 2;
+  }
+
+  $self->push( new Sanger::Graphics::Glyph::Line({
+	'x'         => 0,
+	'y'         => 0,
+	'width'     => 0,
+	'height'    => $row_height * 2 + 1,
+	'absolutey' => 1,
+	'absolutex' => 1,
+	'colour'    => 'black',
+	'dotted'    => 1,
+  }));
+  
+  my $pX = -1;
+  my $pY = -1;
+
+  foreach my $f (sort { $a->start <=> $b->start } @features) {
+     my $s = $f->start() < $rStart ? 1 : $f->start()- $rStart;
+     my $e = $f->end()   > $rEnd  ? ($rEnd - $rStart) : ($f->end- $rStart);
+
+     my $width = ($e- $s +1);
+     my $score = $f->score || 0;
+     $score = $min_score if ($score < $min_score);
+     $score = $max_score if ($score > $max_score);
+
+     my $height = ($score - $min_score ) / $pix_per_score;
+     my $y_offset =     ($row_height * 2 - $height);
+     $y_offset-- if (! $score);
+     my $Composite = new Sanger::Graphics::Glyph::Composite({
+        'y'         => 0,
+	'x'         => $s-1,
+	'absolutey' => 1,
+	'zmenu'    => $self->zmenu( $f->id, $f)
+    });
+    
+    $Composite->push(new Sanger::Graphics::Glyph::Line({
+      'x'          => $s-1,
+      'y'          => $y_offset,
+      'width'      => $width,
+      'height'     => 0, #$height,
+      'colour'     => $configuration->{'colour'},
+      'absolutey'  => 1,
+    }));
+
+
+
+    my $hh = int(abs($y_offset - $pY));
+    if (($s  == $pX) && ($hh > 1) ) {
+      $Composite->push( new Sanger::Graphics::Glyph::Line({
+        'x'         => $s - 1,
+        'y'         =>  $y_offset > $pY ? $pY : $y_offset, #($score ? (($score > 0) ? 1 : ($row_height + 2)) : ($row_height + 1)),
+        'width'     => 2,
+        'height'    => $hh ,#20, #$score ? $row_height : 1,
+        'colour' => $configuration->{'colour'},
+        'absolutey' => 1,
+       }) );
+     }
+     $pX = $e;
+     $pY = $y_offset;
+    
+    $self->push( $Composite );
+  }
+  return 0;
+}
+sub RENDER_histogram{
+  my( $self, $configuration ) = @_;
+
+  my $rStart = $self->{'container'}->{'start'};
+  my $rEnd= $self->{'container'}->{'end'};
+  my @features = sort { $a->score <=> $b->score  } @{$configuration->{'data'} || []};
+  if (! @features) {
+    $self->errorTrack( "No ".$self->my_label." features in this region" ) unless( $self->{'config'}->get('_settings','opt_empty_tracks')==0 );
+    return 0;
+  }
+  my ($min_score, $max_score) = defined($configuration->{'dataMax'}) ? 
+  	($configuration->{'dataMin'}, $configuration->{'dataMax'}) : 
+	($features[0]->score || 0, $features[-1]->score || 0);
+  $min_score or $min_score = 0;
+  $max_score or $max_score = 100;
+  my $row_height = $configuration->{'height'} || 30;
+  my $pix_per_score = ($max_score - $min_score) / $row_height;
+
+  $configuration->{h} = $row_height;
+  $self->push( new Sanger::Graphics::Glyph::Line({
+      'x'         => 0,
+      'y'         => $row_height + 1,
+      'width'     => $configuration->{'length'},
+      'height'    => 0,
+      'absolutey' => 1,
+	'colour'    => 'red',
+       'dotted'    => 1,
+   }));
+
+  $self->push( new Sanger::Graphics::Glyph::Line({
+	'x'         => 0,
+	'y'         => 0,
+	'width'     => 0,
+	'height'    => $row_height + 1,
+	'absolutey' => 1,
+	'absolutex' => 1,
+	'colour'    => 'red',
+	'dotted'    => 1,
+  }));
+  
+  foreach my $f (@features) {
+     my $s = $f->start() < $rStart ? 1 : $f->start()- $rStart;
+     my $e = $f->end()   > $rEnd  ? ($rEnd - $rStart) : ($f->end- $rStart);
+
+     my $width = ($e- $s +1);
+     my $score = $f->score || 0;
+     $score = $min_score if ($score < $min_score);
+     $score = $max_score if ($score > $max_score);
+     my $height = ($score - $min_score) / $pix_per_score;
+     my $y_offset =     $row_height - $height;
+     $y_offset-- if (! $score);
+     my $Composite = new Sanger::Graphics::Glyph::Composite({
+        'y'         => 0,
+	'x'         => $s-1,
+	'absolutey' => 1,
+	'zmenu'    => $self->zmenu( $f->id, $f)
+    });
+    
+    $Composite->push(new Sanger::Graphics::Glyph::Rect({
+      'x'          => $s-1,
+      'y'          => $y_offset,
+      'width'      => $width,
+      'height'     => $height,
+      'colour'     => $configuration->{'colour'},
+      'absolutey'  => 1,
+    }));
+    $self->push( $Composite );
+  }
+  return 0;
+}
+sub RENDER_signalmap {
+  my( $self, $configuration ) = @_;
+
+  my $rStart = $self->{'container'}->{'start'};
+  my $rEnd= $self->{'container'}->{'end'};
+  my @features = sort { $a->score <=> $b->score  } @{$configuration->{'data'} || []};
+  if (! @features) {
+    $self->errorTrack( "No ".$self->my_label." features in this region" ) unless( $self->{'config'}->get('_settings','opt_empty_tracks')==0 );
+    return 0;
+  }
+  my ($min_score, $max_score) = defined($configuration->{'dataMax'}) ? 
+  	($configuration->{'dataMin'}, $configuration->{'dataMax'}) : 
+	($features[0]->score || 0, $features[-1]->score || 0);
+  $min_score or $min_score = 0;
+  $max_score or $max_score = 100;
+      
+      
+  my @positive_features = grep { $_->score >= 0 } @features;
+  my @negative_features = grep { $_->score < 0 } reverse @features;
+				 
+  my $row_height = $configuration->{'height'} || 30;
+  my $pix_per_score = (abs($max_score) >  abs($min_score) ? abs($max_score) : abs($min_score)) / $row_height;
+
+  $configuration->{h} = $row_height;
+  $self->push( new Sanger::Graphics::Glyph::Line({
+      'x'         => 0,
+      'y'         => $row_height + 1,
+      'width'     => $configuration->{'length'},
+      'height'    => 0,
+      'absolutey' => 1,
+	'colour'    => 'red',
+       'dotted'    => 1,
+   }));
+
+  $self->push( new Sanger::Graphics::Glyph::Line({
+	'x'         => 0,
+	'y'         => 0,
+	'width'     => 0,
+	'height'    => $row_height * 2 + 1,
+	'absolutey' => 1,
+	'absolutex' => 1,
+	'colour'    => 'red',
+	'dotted'    => 1,
+  }));
+  
+  foreach my $f (@negative_features, @positive_features) {
+     my $s = $f->start() < $rStart ? 1 : $f->start()- $rStart;
+     my $e = $f->end()   > $rEnd  ? ($rEnd - $rStart) : ($f->end- $rStart);
+
+     my $width = ($e- $s +1);
+     my $score = $f->score || 0;
+     $score = $min_score if ($score < $min_score);
+     $score = $max_score if ($score > $max_score);
+     my $height = abs($score) / $pix_per_score;
+     my $y_offset =     ($score > 0) ?  $row_height - $height : $row_height+2;
+     $y_offset-- if (! $score);
+     my $Composite = new Sanger::Graphics::Glyph::Composite({
+        'y'         => 0,
+	'x'         => $s-1,
+	'absolutey' => 1,
+	'zmenu'    => $self->zmenu( $f->id, $f)
+    });
+    
+    $Composite->push(new Sanger::Graphics::Glyph::Rect({
+      'x'          => $s-1,
+      'y'          => $y_offset,
+      'width'      => $width,
+      'height'     => $height,
+      'colour'     => $configuration->{'colour'},
+      'absolutey'  => 1,
+    }));
+    $self->push( $Composite );
+  }
+  return 0;
+}
+
 sub _init {
   my ($self) = @_;
   my $type = $self->check();
   return unless defined $type;  ## No defined type arghhh!!
 
+#warn "CONFIG";
+#foreach my $key (sort keys %{$self->{'extras'}}) {
+#  warn "$key =>", $self->{'extras'}->{$key};
+#}
   my $strand = $self->strand;
   my $Config = $self->{'config'};
   my $strand_flag    = $Config->get($type, 'str');
   return if( $strand_flag eq 'r' && $strand != -1 || $strand_flag eq 'f' && $strand != 1 );
+  if (my $wdisplay = $self->{'extras'}->{'useScore'}) {
+    return if ($strand != -1);
+    $self->{'extras'}->{'length'} = $self->{'container'}->{'seq_region_length'};
+    $self->{'extras'}->{'colour'} ||= 'contigblue1';
+    return $self->RENDER_signalmap($self->{'extras'}) if ($wdisplay == 1);
+    return $self->RENDER_colourgradient($self->{'extras'}) if ($wdisplay == 2);
+    return $self->RENDER_histogram($self->{'extras'}) if ($wdisplay == 3);
+    return $self->RENDER_plot($self->{'extras'}) if ($wdisplay == 4);
+  }
+
   $self->{'colours'} = $Config->get( $type, 'colour_set' ) ? 
     { $Config->{'_colourmap'}->colourSet( $Config->get( $type, 'colour_set' ) ) } :
     $Config->get( $type, 'colours' );
