@@ -11,6 +11,7 @@ sub strand  { my $self = shift; return 1; }
 sub seqname { my $self = shift; (my $T = $self->_seqname) =~s/^chr//; return $T; }
 sub start   { my $self = shift; return $self->{'start'}; }
 sub end     { my $self = shift; return $self->{'end'}; }
+sub score   { return $_[0]->{'score'}; } 
 
 sub id { my $self = shift; return undef; }
 sub _strand { my($self,$str) = @_;
