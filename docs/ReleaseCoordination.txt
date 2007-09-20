@@ -132,59 +132,32 @@ Now you can run the compara-compara_external_foreign_keys healthchecks:
 
 10. Merge data. The fastest way to merge new data is to mysqlimport them.
 
-- Translated BLAT: the LoadBLATAlignment.pl script creates tab-delimited files
-which can be imported directly into the release database.
+- Translated BLAT
 
-- BlastZ-Net: you need to dump the tables manually. Check the
-method_link_species_set_id. You will probably need to update the
-genomic_align_block_id, genomic_align_id and genomic_align_group_id in order to
-match the 10^10 convention for the IDs. For instance, in order to dump
-BlastZ-Net alignments from database
-mysql://ensro@compara1:3306/kb3_compara_human_mouse_blastz_39, you will have to run
-the following commands:
+  The LoadBLATAlignment.pl script creates tab-delimited files which can be
+  imported directly into the release database.
 
-mysql -hcompara1 -uensro -N -e "select genomic_align_block_id+method_link_species_set_id*10000000000, method_link_species_set_id,score,perc_id,length from genomic_align_block where method_link_species_set_id=XX" kb3_compara_human_mouse_blastz_39 > genomic_align_block.txt
+- BlastZ-Net, Pecan, Gerp
 
-mysql -hcompara1 -uensro -N -e "select genomic_align_id+method_link_species_set_id*10000000000, genomic_align_block_id+method_link_species_set_id*10000000000, method_link_species_set_id, dnafrag_id, dnafrag_start, dnafrag_end, dnafrag_strand, cigar_line, level_id from genomic_align where method_link_species_set_id=194"  kb3_compara_human_mouse_blastz_39 > genomic_align.txt
+  These data should be in a production database. You can copy them using the
+  copy_data.pl script in ensmbl-compara/scripts/pipeline. This script requires
+  write access in the production database if the dnafrag_ids need fixing or the
+  data must be copyied in binary mode (this is required for conservation scores).
+  Example:
 
-mysql -hcompara1 -uensro -N -e "select gag.group_id+ga.method_link_species_set_id*10000000000,gag.type, gag.genomic_align_id+ga.method_link_species_set_id*10000000000 from genomic_align_group gag, genomic_align ga where ga.method_link_species_set_id=194 and ga.genomic_align_id=gag.genomic_align_id" kb3_compara_human_mouse_blastz_39 > genomic_align_group.txt
+  bub -I copy_data.pl --from_url mysql://ro_user@host/production_db \
+    --to_url mysql://rw_user:password@host/release_db --mlss 268
 
-Then you mysqlimport them like that :
-mysqlimport -hcompara1 -uensadmin -pensembl -L bb2_ensembl_compara_44  genomic_align.236.txt
+- Syntenies
 
-
-Hopefully, these databases should have the right method_link_species_sets,
-genome_dbs and dnafrags. In order to check for inconsistencies, you can run
-the following query (this should be implemented as healthcheck...):
-
-create table mlss_checks select mlss.method_link_species_set_id, mlss.name as mlss_name, gdb.name as species_name, count(*) from  method_link_species_set mlss left join genomic_align_block using (method_link_species_set_id) left join genomic_align using (genomic_align_block_id) left join dnafrag using (dnafrag_id) left  join genome_db gdb using (genome_db_id) where mlss.method_link_id < 100 group by mlss.name, gdb.name;
-
-and check that all the alignments correspond to the right species.
-
-If the database had wrong dnafrag_ids, you will have to update them as well.
-This process can be done after dumping the files. At the moment there is a
-script in /ecs4/work1/jh7/dumps/mlagan/update_dnafrags.pl which reads the right
-dnafrags from a file called "new_dnafrag.txt", the wrong ones from the file
-called "old_dnafrag.txt" and the genomic_align from the "genomic_align.txt"
-file. This scripts prints the genomic_aligns with the right dnafrag_ids to the
-standard output:
-
-    mysql -N -e "SELECT * FROM dnafrag" jh7_ensembl_compara_39 > new_dnafrag.txt
-    mysql -N -e "SELECT * FROM dnafrag" other database > old_dnafrag.txt
-    update_danfrags.pl > new_genomic_align.txt
-    mv genomic_align.txt old_genomic_align.txt
-    mv new_genomic_align.txt genomic_align.txt
-
-- Syntenies:
+  Please refer to the documentation in the ensembl-compara/script/syteny directory.
 
 - Protein trees/homologues/families
 
-The merge is done by the person in charge of the protein compara production
-side. The compara release coordinator needs to let him/her know where is the
-database to merge to.
-It involves using the ensembl-compara/scripts/pipeline/merge_protein_data.pl 
-script for the merging.
-
+  The merge is done by the person in charge of the protein compara production
+  side. The compara release coordinator needs to let him/her know where is the
+  database to merge to. It involves using the
+  ensembl-compara/scripts/pipeline/merge_protein_data.pl script for the merging.
 
 11. Drop method_link_species_set entries for alignments which did not make it.
 
