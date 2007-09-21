@@ -391,6 +391,7 @@ sub createObjects {
     $source_conf->{active} = defined ($DASsel{$source}) ? 1 : 0;
     my $das_adapt = Bio::EnsEMBL::ExternalData::DAS::DASAdaptor->new( 
       -name       => $source,
+      -timeout    => $self->species_defs->ENSEMBL_DAS_TIMEOUT,
       -url        => $source_conf->{url}       || '',
       -type       => $source_conf->{type}      || '',
       -authority  => $source_conf->{authority} || '',

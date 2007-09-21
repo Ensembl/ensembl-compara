@@ -610,7 +610,8 @@ sub add_das_tracks {
         -name      => $source_config->{'name'},
         -ens       => $object->database('core'),
         -proxy_url => $object->species_defs->ENSEMBL_WWW_PROXY,
-	-maxbins   => $image_width
+	-maxbins   => $image_width,
+	-timeout => $object->species_defs->ENSEMBL_DAS_TIMEOUT,
       );
     };
     if($@) {
@@ -643,7 +644,8 @@ sub add_das_tracks {
           -name  => $dbname->{'name'},
           -ens   => $object->database('core'),
           -proxy_url => $object->species_defs->ENSEMBL_WWW_PROXY, 
-	  -maxbins   => $image_width
+	  -maxbins   => $image_width,
+	  -timeout => $object->species_defs->ENSEMBL_DAS_TIMEOUT,
         );
       };
       if($@) {

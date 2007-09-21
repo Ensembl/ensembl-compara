@@ -865,6 +865,7 @@ sub _add_internal_das_sources {
         -dsn     => $dbname->{'dsn'},
         -ens     => $databases->{'core'},
         -types   => $dbname->{'types'} || [], 
+	-timeout => $self->species_defs->ENSEMBL_DAS_TIMEOUT,
         $self->proxy($url) ? ( '-proxy_url' => $self->{'species_defs'}->ENSEMBL_WWW_PROXY ) : ()
       );
       };

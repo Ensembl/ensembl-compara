@@ -132,7 +132,7 @@ sub get_server_dsns {
     }
     use Bio::EnsEMBL::ExternalData::DAS::DASAdaptor;
     my $adaptor = Bio::EnsEMBL::ExternalData::DAS::DASAdaptor->new( 
-      -url  => $url, -timeout   => 5,
+      -url  => $url, -timeout   => $object->species_def->ENSEMBL_DAS_TIMEOUT,
       -proxy_url => $object->species_defs->ENSEMBL_WWW_PROXY 
     );
     use Bio::EnsEMBL::ExternalData::DAS::DAS;
