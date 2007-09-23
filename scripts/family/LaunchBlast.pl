@@ -11,11 +11,11 @@ my $blast_executable = "/usr/local/ensembl/bin/blastall";
 # There is a new version of fastafetch on the farm, /usr/local/ensembl/bin/fastafetch
 # We had problem previously with it, as sometimes the fasta files we use have IUPAC letter
 # that fastafetch was not aware of. If any problem with fall back to the compiled version in
-# /nfs/acari/abel/bin/alpha-dec-osf4.0 or /nfs/acari/abel/bin/i386/ and inform Guy Slater to fix
+# /nfs/acari/avilella/bin/alpha-dec-osf4.0 or /nfs/acari/avilella/bin/i386/ and inform Guy Slater to fix
 # the potential bug
 
 my $fastafetch_executable = "/usr/local/ensembl/bin/fastafetch";
-my $blast_parser_executable = "/nfs/acari/abel/bin/mcxdeblast";
+my $blast_parser_executable = "/nfs/acari/avilella/bin/mcxdeblast";
 my $tab_file;
 
 GetOptions('idqy=s' => \$idqy,
