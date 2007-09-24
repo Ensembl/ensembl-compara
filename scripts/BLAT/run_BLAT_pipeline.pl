@@ -213,9 +213,10 @@ my $chr2;
 
 my $queue = "normal";
 
-my $overlap = 1000;
-my $chunk_size = 100000;
+my $overlap = 10000;
+my $chunk_size = 1000000;
 my $masked = 2;
+my $min_score = 30;
 
 GetOptions(
     "help" => \$help,
@@ -232,6 +233,7 @@ GetOptions(
   
     "overlap=i" => \$overlap,
     "chunk_size=i" => \$chunk_size,
+    "min_score=i" => \$min_score,
     "masked=i" => \$masked,
   );
 
@@ -314,9 +316,9 @@ if (@$lsf_jobs1 > @$lsf_jobs2) {
   my $aux = $species1;
   $species1 = $species2;
   $species2 = $aux;
-  $results_dir = launch_BLAT($species2_directory, $species1_directory);
+  $results_dir = launch_BLAT($species2_directory, $species1_directory, $min_score);
 } else {
-  $results_dir = launch_BLAT($species1_directory, $species2_directory);
+  $results_dir = launch_BLAT($species1_directory, $species2_directory, $min_score);
 }
 
 
@@ -558,9 +560,9 @@ sub dump_dna {
 =cut
 
 sub launch_BLAT {
-  my ($species1_dir, $species2_dir) = @_;
+  my ($species1_dir, $species2_dir, $min_score) = @_;
 
-  my $dir = "$RUN_DIR/${species1_dir}_vs_$species2_dir";
+  my $dir = "$RUN_DIR/${species1_dir}_vs_$species2_dir:s$min_score";
   make_directory("$dir", "BLAT results");
 
   my $prefix1 = $species1_dir;
@@ -592,6 +594,7 @@ sub launch_BLAT {
           "$BIN_DIR/LaunchBLAT.pl".
               " -fastadb $DNA_DIR/$species1_dir/$seq_region1.fa".
               " -target_type dnax".
+	      " -min_score $min_score".
               " -Nooc $ooc_file".
 #              " -idqy $DNA_DIR/$species2_dir/seq_regions.sets/\${LSB_JOBINDEX}".
 #              " -indexqy $DNA_DIR/$species2_dir/seq_regions.index".
