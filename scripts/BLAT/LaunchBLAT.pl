@@ -133,7 +133,7 @@ GetOptions( 'idqy=s'   => \$idqy,
 	    'target_type:s'=>\$target_type,
 	    'makefile:s'  => \$Nooc_file,
 	    'Nooc:s'  => \$Nooc_file,
-	    'min_score'  => \$min_score,
+	    'min_score=i'  => \$min_score,
 	    'fastafetch=s'  => \$fastafetch_executable);
 	    
 if (!defined($fastaqy) and !(defined($idqy) and defined($indexqy))) {
@@ -178,7 +178,7 @@ print "making make file\n";
 	 							-database     => $fastadb,
 								-query_type	  => $query_type,
 								-target_type	=> $target_type,
-								-options      => "-ooc=$Nooc_file -tileSize=5 -makeOoc=$Nooc_file -mask=lower -qMask=lower ");
+								-options      => "-ooc=$Nooc_file -tileSize=11 -makeOoc=$Nooc_file -mask=lower -qMask=lower ");
 	$runnable->run;
 	
 #Run with queries
@@ -189,7 +189,7 @@ print "making make file\n";
 								-query_type	  => $query_type,
 								-parse		    => 1,
 								-target_type	=> $target_type,
-								-options      => "-ooc=$Nooc_file -mask=lower -qMask=lower -minScore $min_score");
+								-options      => "-ooc=$Nooc_file -mask=lower -qMask=lower -minScore=$min_score");
   $runnable->run;
   unlink($Nooc_file) if ($Nooc_file =~ /^\/tmp/);
 	
@@ -216,7 +216,7 @@ else{ #run blat using the Nooc file
 								-query_type	  => $query_type,
 								-target_type	=> $target_type,
 								-parse		    => 1,
-								-options      => "-ooc=$Nooc_file -mask=lower -qMask=lower -minScore $min_score");
+								-options      => "-ooc=$Nooc_file -mask=lower -qMask=lower -minScore=$min_score");
 	$runnable->run;
 	
 	my @top_hsps = $runnable->output;
