@@ -447,6 +447,19 @@ sub save {
   return $result->get_success;
 }
 
+sub save_anon {
+  ## Saves record but doesn't set ID, thereby enabling multiple inserts of same data object
+  my $self = shift;
+  if ($self->id) {
+    $self->modified_by($ENV{'ENSEMBL_USER_ID'});
+  }
+  else {
+    $self->created_by($ENV{'ENSEMBL_USER_ID'});
+  }
+  my $result = $self->get_adaptor->save($self);
+  return $result->get_success;
+}
+
 sub destroy {
   my $self = shift;
   my $request = EnsEMBL::Web::DBSQL::SQL::Request->new();
