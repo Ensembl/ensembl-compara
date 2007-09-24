@@ -286,7 +286,8 @@ sub run_njtree_phyml
 
     $self->{'comparaDBA'}->dbc->disconnect_when_inactive(1);
     print("$cmd\n") if($self->debug);
-    unless(system($cmd) == 0) {
+    my $worker_temp_directory = $self->worker_temp_directory;
+    unless(system("cd $worker_temp_directory; $cmd") == 0) {
       print("$cmd\n");
       $self->check_job_fail_options;
       throw("error running njtree phyml, $!\n");
@@ -307,7 +308,8 @@ sub run_njtree_phyml
     $cmd .= " 2>&1 > /dev/null" unless($self->debug);
 
     print("$cmd\n") if($self->debug);
-    unless(system($cmd) == 0) {
+    my $worker_temp_directory = $self->worker_temp_directory;
+    unless(system("cd $worker_temp_directory; $cmd") == 0) {
       print("$cmd\n");
       $self->check_job_fail_options;
       throw("error running njtree phyml noboot (step 1 of 2), $!\n");
@@ -325,7 +327,8 @@ sub run_njtree_phyml
 
     $self->{'comparaDBA'}->dbc->disconnect_when_inactive(1);
     print("$cmd\n") if($self->debug);
-    unless(system($cmd) == 0) {
+    my $worker_temp_directory = $self->worker_temp_directory;
+    unless(system("cd $worker_temp_directory; $cmd") == 0) {
       print("$cmd\n");
       $self->check_job_fail_options;
       throw("error running njtree phyml noboot (step 2 of 2), $!\n");
