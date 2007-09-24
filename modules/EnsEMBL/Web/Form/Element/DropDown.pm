@@ -19,9 +19,11 @@ our @ISA = qw( EnsEMBL::Web::Form::Element );
 sub new {
   my $class  = shift;
   my %params = @_;
+  warn "SELECT: ", $params{'select'};
+
   my $self   = $class->SUPER::new(
     %params,
-    'render_as' => $params{'select'} ? 'select' : 'radiobutton'
+    'render_as' => $params{'select'} || '',
   );
   $self->{'on_change'} = $params{'on_change'};
   $self->{'firstline'} = $params{'firstline'};
