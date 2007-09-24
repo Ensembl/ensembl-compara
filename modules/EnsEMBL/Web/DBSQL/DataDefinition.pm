@@ -1,5 +1,7 @@
 package EnsEMBL::Web::DBSQL::DataDefinition;
 
+## DEPRECATED MODULE - USE Object::Data and associated modules instead
+
 use strict;
 use warnings;
 

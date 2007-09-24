@@ -1,5 +1,7 @@
 package EnsEMBL::Web::Interface::PageDefinition;
 
+## DEPRECATED MODULE - USE Document::Interface and associated modules instead
+
 use strict;
 use warnings;
 

@@ -1,5 +1,7 @@
 package EnsEMBL::Web::Interface::FormDefinition;
 
+## DEPRECATED MODULE - USE Document::Interface and associated modules instead
+
 use strict;
 use warnings;
 

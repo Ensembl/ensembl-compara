@@ -1,5 +1,8 @@
 package EnsEMBL::Web::Document::DataView;
 
+## DEPRECATED MODULE - USE Document::Interface and associated modules instead
+
+
 use EnsEMBL::Web::Document::WebPage;
 use EnsEMBL::Web::DBSQL::ViewAdaptor;
 use EnsEMBL::Web::DBSQL::SQL::Result;

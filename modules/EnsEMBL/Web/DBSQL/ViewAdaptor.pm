@@ -1,5 +1,7 @@
 package EnsEMBL::Web::DBSQL::ViewAdaptor;
 
+## DEPRECATED MODULE - USE Object::Data and associated modules instead
+
 use strict;
 use warnings;
 no warnings 'uninitialized';
@@ -360,11 +362,11 @@ sub create_handle {
   return $dbh;
 }
 
-sub disconnect {
+#sub disconnect {
   ### Simple wrapper for DBI disconnect
-  my $self = shift;
+#  my $self = shift;
   #$self->handle->disconnect;
-}
+#}
 
 sub hostname {
   ### a
