@@ -399,6 +399,7 @@ sub discover {
     }
   }
   ## 'Has many' are multiple checkboxes by default
+=pod
   my $has_many = $self->data->get_has_many;
   if ($has_many) {
     foreach my $class (@$has_many) {
@@ -410,6 +411,7 @@ sub discover {
       }
     }
   }
+=cut
   $Elements_of{$self} = \%elements;
   $ElementOrder_of{$self} = \@element_order;
 }
