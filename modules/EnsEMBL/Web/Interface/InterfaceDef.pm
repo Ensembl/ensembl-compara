@@ -456,19 +456,21 @@ sub _create_relational_element {
 }
 
 sub customize_element {
-  ### Sets an individual value of a form element in the $Elements_of{$self} hash
-  ### Parameters: element name, parameter, value (optional)
-  my ($self, $name, $param, $value) = @_;
+  ### Sets one or more parameters of a form element in the $Elements_of{$self} hash
+  ### Parameters: element name, hash of parameters to update
+  my ($self, $name, %params) = @_;
   if ($name) {
     my $element = $Elements_of{$self}{$name};
-    if ($param eq 'type') {
-      $element->type($value);
-    }
-    elsif ($param eq 'label') {
-      $element->label($value);
-    }
-    else {
-      $element->option($param, $value);
+    while (my ($param, $value) = each (%params)) {
+      if ($param eq 'type') {
+        $element->type($value);
+      }
+      elsif ($param eq 'label') {
+        $element->label($value);
+      }
+      else {
+        $element->option($param, $value);
+      }
     }
   }
 }
@@ -537,7 +539,13 @@ sub cgi_populate {
   my %extras = %{$self->extra_data};
   if (keys %extras) {
     foreach my $key (keys %extras) {
-      $self->extra_data($key, $object->param($key));
+      my @extra_check = $object->param($key);
+      if (scalar(@extra_check) > 1) {
+        $self->extra_data($key, [$object->param($key)]);
+      }
+      else {
+        $self->extra_data($key, $object->param($key));
+      }
     }
   }
 }
@@ -566,22 +574,50 @@ sub edit_fields {
         $param{'value'} = $param{'default'};
       }
     }
-    push @$parameters, \%param;
+    ## deal with multi-value fields
+    if ($param{'value'} && ref($param{'value'}) eq 'ARRAY') {
+      foreach my $v (@{$param{'value'}}) {
+        my %multi_param = %param;
+        $multi_param{'value'} = $v;
+        push @$parameters, \%multi_param;
+      }
+    }
+    else {
+      push @$parameters, \%param;
+    }
     ## pass non-editable elements as additional hidden fields
     if ($element->type eq 'NoEdit') {
       my %hidden = %{$element->hide};
       if ($data) {
         $hidden{'value'} = $param{'value'};
       }
-      push @$parameters, \%hidden;
+      ## deal with multi-value fields
+      if ($hidden{'value'} && ref($hidden{'value'}) eq 'ARRAY') {
+        foreach my $v (@{$param{'value'}}) {
+          my %multi_hidden = %hidden;
+          $multi_hidden{'value'} = $v;
+          push @$parameters, \%multi_hidden;
+        }
+      }
+      else {
+        push @$parameters, \%hidden;
+      }
     }
   } 
   ## Add extra data
   my %extras = %{$self->extra_data};
   if (keys %extras) {
     while (my($k, $v) = each (%extras)) {
-      my %ex = ('name'=>$k, 'type'=>'Hidden', 'value'=>$v);
-      push @$parameters, \%ex;  
+      if ($v && ref($v) eq 'ARRAY') {
+        foreach my $m (@$v) {
+          my %multi_ex = ('name'=>$k, 'type'=>'Hidden', 'value'=>$m);
+          push @$parameters, \%multi_ex;
+        }
+      }
+      else {
+        my %ex = ('name'=>$k, 'type'=>'Hidden', 'value'=>$v);
+        push @$parameters, \%ex;
+      }   
     }
   }
 
