@@ -15,6 +15,7 @@ our @ISA = qw(EnsEMBL::Web::Object::Data);
 
 sub BUILD {
   my ($self, $ident, $args) = @_;
+  $self->set_trackable(1);
   $self->add_queriable_field({ name => 'created_at', type => 'datetime' });
   $self->add_queriable_field({ name => 'modified_at', type => 'datetime' });
   $self->add_queriable_field({ name => 'modified_by', type => 'int' });

@@ -4,6 +4,7 @@ use strict;
 use warnings;
 
 use Class::Std;
+use Carp qw(:DEFAULT cluck);
 use EnsEMBL::Web::DBSQL::SQL::Result;
 use EnsEMBL::Web::DBSQL::SQL::Request;
 use EnsEMBL::Web::Object::DataField;
@@ -26,6 +27,7 @@ my %Relational_fields :ATTR(:set<relational_fields> :get<relational_fields>);
 my %Relational_link_table :ATTR(:set<relational_link_table> :get<relational_link_table>);
 my %Relational_contribution :ATTR(:set<relational_contribution> :get<relational_contribution>);
 my %Has_many:ATTR(:set<has_many> :get<has_many>);
+my %Trackable:ATTR(:set<trackable> :get<trackable>);
 
 }
 
@@ -434,11 +436,13 @@ sub has_id {
 
 sub save {
   my $self = shift;
-  if ($self->id) {
-    $self->modified_by($ENV{'ENSEMBL_USER_ID'});
-  }
-  else {
-    $self->created_by($ENV{'ENSEMBL_USER_ID'});
+  if ($self->get_trackable) {
+    if ($self->id) {
+      $self->modified_by($ENV{'ENSEMBL_USER_ID'});
+    }
+    else {
+      $self->created_by($ENV{'ENSEMBL_USER_ID'});
+    }
   }
   my $result = $self->get_adaptor->save($self);
   if ($result->get_action eq 'create') {
