@@ -234,7 +234,7 @@ sub store_all_coding_exons
         $exon_member->source_name("ENSEMBLEXON");
         
         my $seq_string = $exon->peptide($transcript)->seq;
-        ## a star or a U (selenocisteine) in the seq breaks the pipe to the cast filter for Blast
+        ## a star or a U (selenocysteine) in the seq breaks the pipe to the cast filter for Blast
         $seq_string =~ tr/\*U/XX/;
         if ($seq_string =~ /^X+$/) {
           warn("X+ in sequence from exon " . $exon->stable_id."\n");
