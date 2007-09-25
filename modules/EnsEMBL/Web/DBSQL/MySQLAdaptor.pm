@@ -82,6 +82,7 @@ sub set_clause {
   my ($self, $data, $key) = @_;
   my $data_hash = {};
   my $sql = "";
+  my $values = [];
   my $data_field;
 
   ## Queriable fields
@@ -96,10 +97,12 @@ sub set_clause {
     }
     elsif (defined $data->get_value( $data_field->get_name)) {
       if ($data_field->get_name eq 'group_id') {
-        $sql .= 'webgroup_id = "' . $data->get_value($data_field->get_name) . '", ';
+        $sql .= 'webgroup_id = ?, ';
+        push @$values, $data->get_value($data_field->get_name);
       }
       else {
-        $sql .= $data_field->get_name . ' = "' . $data->get_value($data_field->get_name) . '", ';
+        $sql .= $data_field->get_name . ' = ?, ';
+        push @$values, $data->get_value($data_field->get_name);
       }
     }
   }
@@ -108,24 +111,26 @@ sub set_clause {
     foreach $data_field (@{ $data->get_fields }) {
       $data_hash->{ $data_field->get_name } = $data->get_value( $data_field->get_name );
     }
-    $sql .= 'data = "' . $self->dump_data($data_hash) . '", ';
+    $sql .= 'data = ?, ';
+    push @$values, $self->dump_data($data_hash);
   }
 
   if (defined $data->get_belongs_to) {
   }
   $sql =~ s/, $/ /;
-  return $sql;
+  return ($sql, $values);
 }
 
 sub create {
   my ($self, $data) = @_;
   my $result = EnsEMBL::Web::DBSQL::SQL::Result->new();
+  my ($set_clause, $values) = $self->set_clause($data);
   my $sql = 'INSERT INTO ' . $self->get_table . ' SET '; 
-  $sql .= $self->set_clause($data);  
+  $sql .= $set_clause;  
   warn "CREATE: " . $sql;
   $self->get_handle->prepare($sql);
   $result->set_action('create');
-  if ($self->get_handle->do($sql)) {
+  if ($self->get_handle->do($sql, {}, @$values)) {
     $result->set_last_inserted_id($self->last_inserted_id);
     $result->set_success(1);
   }
@@ -136,14 +141,15 @@ sub update {
   my ($self, $data) = @_;
   my $result = EnsEMBL::Web::DBSQL::SQL::Result->new();
   $result->set_action('update');
+  my ($set_clause, $values) = $self->set_clause($data);
   my $key = EnsEMBL::Web::Tools::DBSQL::TableName::parse_primary_key($data->get_primary_key);
   my $sql = 'UPDATE ' . $self->get_table . " ";
-  $sql .= "SET " . $self->set_clause($data);
+  $sql .= "SET " . $set_clause;
   $sql .= " WHERE " . $key . "='" . $data->id . "'";
   $sql .= ";";
-  #warn "UPDATE: " . $sql;
+  warn "UPDATE: " . $sql;
   $self->get_handle->prepare($sql);
-  if ($self->get_handle->do($sql)) {
+  if ($self->get_handle->do($sql, {}, @$values)) {
     $result->set_success(1);
   }
   return $result;
