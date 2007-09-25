@@ -24,7 +24,8 @@ sub map {
   my $chr = $self->seqname();
      $chr=~s/^chr//;
   return () unless $chr eq $slice->seq_region_name;
-  return () unless $self->rawstart < $slice->end;
+#  return () unless $self->rawstart < $slice->end;
+  return () unless $self->start <= $slice->end;
   my $slice_start = $slice->start();
   return () unless $slice_start < $self->rawend;
   $self->slide( 1 - $slice_start );

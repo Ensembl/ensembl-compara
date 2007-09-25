@@ -97,10 +97,10 @@ sub parse {
 	
         my @ws_delimited = split /\s+/, $row;
 	if ($wigConfig->{format} eq 'v') {
-          push @{$self->{'tracks'}{ $current_key }{'features'}}, EnsEMBL::Web::URLfeature::WIG->new( [$wigConfig->{'region'}, $ws_delimited[0], $ws_delimited[0] + $wigConfig->{span}, $ws_delimited[1], $fcount++] );
+          push @{$self->{'tracks'}{ $current_key }{'features'}}, EnsEMBL::Web::URLfeature::WIG->new( [$wigConfig->{'region'}, $ws_delimited[0], $ws_delimited[0] + $wigConfig->{span} - 1, $ws_delimited[1], $fcount++] );
 	  
 	}elsif ($wigConfig->{format} eq 'f') {
-          push @{$self->{'tracks'}{ $current_key }{'features'}}, EnsEMBL::Web::URLfeature::WIG->new( [$wigConfig->{'region'}, $wigConfig->{start}, $wigConfig->{start} + $wigConfig->{span}, $ws_delimited[0], $fcount++] );
+          push @{$self->{'tracks'}{ $current_key }{'features'}}, EnsEMBL::Web::URLfeature::WIG->new( [$wigConfig->{'region'}, $wigConfig->{start}, $wigConfig->{start} + $wigConfig->{span} - 1, $ws_delimited[0], $fcount++] );
 	  $wigConfig->{start} += $wigConfig->{step};
 	} else {
 	  push @ws_delimited, $fcount++;
