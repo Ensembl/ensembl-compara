@@ -25,11 +25,19 @@ sub init {
           'data'        => $T->{'features'}||[],
       };
       
-      foreach my $key (qw(description url dataMin dataMax cgGrades cgColour1 cgColour2 cgColour3)) {
+      foreach my $key (qw(description url dataMin dataMax cgGrades cgColour1 cgColour2 cgColour3 type graphType)) {
          $ExtraConfig->{$key} = defined($T->{'config'}{$key}) ? $T->{'config'}{$key} : undef;
       }
       foreach my $key (qw(height useScore)) {
          $ExtraConfig->{$key} = $T->{'config'}{$key}||0;
+      }
+      foreach my $key (qw(autoScale)) {
+         $ExtraConfig->{$key} = $T->{'config'}{$key}||'on';
+      }
+      if (my $range = $T->{'config'}{'viewLimits'}) {
+      	my ($min, $max) = split /\:/, $range;
+	$ExtraConfig->{'dataMin'} = $min if (defined $min);	
+	$ExtraConfig->{'dataMax'} = $max if (defined $max);	
       }
 
       $url_glyphset = new Bio::EnsEMBL::GlyphSet::urlfeature(

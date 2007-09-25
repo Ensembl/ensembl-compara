@@ -17,18 +17,20 @@ sub init_label {
   my $zmenu;
   if( my $econfig = $self->{'extras'}) {
       $zmenu->{'01:'.CGI::escapeHTML( $econfig->{'description'} )} = '';
-      if ($econfig->{'useScore'}) {
-        if (defined($econfig->{'dataMin'})) {
-      	  $zmenu->{"05:Scores are normalized to the range $econfig->{dataMin} .. $econfig->{dataMax}"} = '';
+      if ($econfig->{'useScore'} || ($econfig->{'type'} && $econfig->{'type'} =~ /wiggle/)) {
+	my @features = sort {$b->score <=> $a->score} @{$self->features || []}; ### Sort by score in descending order - preparing for merge_features 
+	my $min_score = defined ($econfig->{dataMin}) ? $econfig->{dataMin} : (@features ? $features[-1]->score : 0); 
+	my $max_score = defined ($econfig->{dataMax}) ? $econfig->{dataMax} : (@features ? $features[0]->score : 100);
+        $min_score = 0 if ($max_score == $min_score);
+	$self->{_min_score} = $min_score;
+	$self->{_max_score} = $max_score;
+        if ($econfig->{'autoScale'} eq 'on') {
+      	  $zmenu->{"05:Scores are scaled to the range $min_score .. $max_score"} = '';
         } else {
-	  my @features = sort { $a->score <=> $b->score  } @{$econfig->{'data'} || []};
-	  if (@features) {
-	    my ($min_score, $max_score) = ($features[0]->score, $features[-1]->score);
-	    if ($min_score || $max_score) {
-	      $zmenu->{"05:Scores are in the range [$min_score .. $max_score]"} = '';
-	    }
-	  }
+      	  $zmenu->{"05:Displaying scores in the range $min_score .. $max_score"} = '';
+	  @features = grep { ($_->score >= $min_score) && ($_->score <= $max_score) } @features;
 	}
+	$self->{extras}->{_features} = \@features;
       }
   }
 	
@@ -62,25 +64,20 @@ sub feature_group{
 sub RENDER_colourgradient{
   my( $self, $configuration ) = @_;
 
-  my $rStart = $self->{'container'}->{'start'};
-  my $rEnd= $self->{'container'}->{'end'};
-  my @features = sort { $a->score <=> $b->score  } @{$configuration->{'data'} || []};
+  my @features = sort {$a->score <=> $b->score} @{$self->features ||[]};
   if (! @features) {
     $self->errorTrack( "No ".$self->my_label." features in this region" ) unless( $self->{'config'}->get('_settings','opt_empty_tracks')==0 );
     return 0;
   }
-  my ($min_score, $max_score) = defined($configuration->{'dataMax'}) ? 
-  	($configuration->{'dataMin'}, $configuration->{'dataMax'}) : 
-	($features[0]->score || 0, $features[-1]->score || 0);
-  $min_score or $min_score = 0;
-  $max_score or $max_score = 100;
-  $min_score = 0 if ($max_score == $min_score);
+  my $rStart = $self->{'container'}->{'start'};
+  my $rEnd= $self->{'container'}->{'end'};
+  my ($min_score, $max_score) = ($self->{_min_score}, $self->{_max_score});
+		   
 				 
   my $row_height = $configuration->{'height'} || 20;
-  my $score_range = $max_score - $min_score;
-  my $cgGrades = $configuration->{cgGrades} || ($score_range < 20 ? $score_range : 20);
+  my $cgGrades = $configuration->{cgGrades} || 20;
   my $score_per_grade =  ($max_score - $min_score)/ $cgGrades ;
-  my @cgColours = map {$configuration->{$_}} grep { $_ =~ /^cgColour/ } sort keys %$configuration;
+  my @cgColours = map { $configuration->{$_} } grep { (($_ =~ /^cgColour/) && $configuration->{$_}) } sort keys %$configuration;
   if (my $ccount = scalar(@cgColours)) {
   	if ($ccount == 1) {
 		unshift @cgColours, 'white';
@@ -88,10 +85,8 @@ sub RENDER_colourgradient{
   } else {
     @cgColours = ('yellow', 'green', 'blue');
   }
-
   my $cm = new Sanger::Graphics::ColourMap;
   my @cg = $cm->build_linear_gradient($cgGrades, \@cgColours);
-
 
   $configuration->{h} = $row_height;
   $self->push( new Sanger::Graphics::Glyph::Line({
@@ -103,7 +98,6 @@ sub RENDER_colourgradient{
 	'colour'    => 'red',
        'dotted'    => 1,
    }));
-
   foreach my $f (@features) {
      my $s = $f->start() < $rStart ? 1 : $f->start()- $rStart;
      my $e = $f->end()   > $rEnd  ? ($rEnd - $rStart) : ($f->end- $rStart);
@@ -137,33 +131,28 @@ sub RENDER_colourgradient{
 sub RENDER_plot{
   my( $self, $configuration ) = @_;
 
-  my $rStart = $self->{'container'}->{'start'};
-  my $rEnd= $self->{'container'}->{'end'};
-  my @features = sort { $a->score <=> $b->score  } @{$configuration->{'data'} || []};
+  my @features = @{$self->features ||[]};
   if (! @features) {
     $self->errorTrack( "No ".$self->my_label." features in this region" ) unless( $self->{'config'}->get('_settings','opt_empty_tracks')==0 );
     return 0;
   }
-  my ($min_score, $max_score) = defined($configuration->{'dataMax'}) ? 
-  	($configuration->{'dataMin'}, $configuration->{'dataMax'}) : 
-	($features[0]->score || 0, $features[-1]->score || 0);
-  $min_score or $min_score = 0;
-  $max_score or $max_score = 100;
+  my $rStart = $self->{'container'}->{'start'};
+  my $rEnd= $self->{'container'}->{'end'};
+  my ($min_score, $max_score) = ($self->{_min_score}, $self->{_max_score});
       
   my $row_height = $configuration->{'height'} || 30;
-
   $configuration->{h} = $row_height;
 
-  if ($min_score < 0) {
-     $self->push( new Sanger::Graphics::Glyph::Line({
+  $self->push( new Sanger::Graphics::Glyph::Line({
         'x'         => 0,
-        'y'         => $row_height + 1,
+        'y'         => ($min_score < 0) ? ($row_height + 1) : ($row_height * 2 + 1),
         'width'     => $configuration->{'length'},
         'height'    => 0,
         'absolutey' => 1,
 	'colour'    => 'black',
         'dotted'    => 1,
-     }));
+  }));
+  if ($min_score < 0) {
      my $peak_score = (abs($max_score) >  abs($min_score) ? abs($max_score) : abs($min_score));
      $max_score = abs($peak_score);
      $min_score = -$max_score;
@@ -193,7 +182,7 @@ sub RENDER_plot{
      my $e = $f->end()   > $rEnd  ? ($rEnd - $rStart) : ($f->end- $rStart);
 
      my $width = ($e- $s +1);
-     my $score = $f->score || 0;
+     my $score = $f->score;
      $score = $min_score if ($score < $min_score);
      $score = $max_score if ($score > $max_score);
 
@@ -239,18 +228,14 @@ sub RENDER_plot{
 sub RENDER_histogram{
   my( $self, $configuration ) = @_;
 
-  my $rStart = $self->{'container'}->{'start'};
-  my $rEnd= $self->{'container'}->{'end'};
-  my @features = sort { $a->score <=> $b->score  } @{$configuration->{'data'} || []};
+  my @features = sort {$a->score <=> $b->score} @{$self->features ||[]};
   if (! @features) {
     $self->errorTrack( "No ".$self->my_label." features in this region" ) unless( $self->{'config'}->get('_settings','opt_empty_tracks')==0 );
     return 0;
   }
-  my ($min_score, $max_score) = defined($configuration->{'dataMax'}) ? 
-  	($configuration->{'dataMin'}, $configuration->{'dataMax'}) : 
-	($features[0]->score || 0, $features[-1]->score || 0);
-  $min_score or $min_score = 0;
-  $max_score or $max_score = 100;
+  my $rStart = $self->{'container'}->{'start'};
+  my $rEnd= $self->{'container'}->{'end'};
+  my ($min_score, $max_score) = ($self->{_min_score}, $self->{_max_score});
   my $row_height = $configuration->{'height'} || 30;
   my $pix_per_score = ($max_score - $min_score) / $row_height;
 
@@ -258,7 +243,7 @@ sub RENDER_histogram{
   $self->push( new Sanger::Graphics::Glyph::Line({
       'x'         => 0,
       'y'         => $row_height + 1,
-      'width'     => $configuration->{'length'},
+      'width'     => $rEnd - $rStart + 1,
       'height'    => 0,
       'absolutey' => 1,
 	'colour'    => 'red',
@@ -275,18 +260,20 @@ sub RENDER_histogram{
 	'colour'    => 'red',
 	'dotted'    => 1,
   }));
-  
   foreach my $f (@features) {
-     my $s = $f->start() < $rStart ? 1 : $f->start()- $rStart;
-     my $e = $f->end()   > $rEnd  ? ($rEnd - $rStart) : ($f->end- $rStart);
+     my $s = $f->start() < $rStart ? 1 : ($f->start()- $rStart + 1);
+     my $e = $f->end()   > $rEnd  ? ($rEnd - $rStart) : ($f->end- $rStart + 1);
 
      my $width = ($e- $s +1);
-     my $score = $f->score || 0;
+     my $score = $f->score;
+
      $score = $min_score if ($score < $min_score);
      $score = $max_score if ($score > $max_score);
      my $height = ($score - $min_score) / $pix_per_score;
      my $y_offset =     $row_height - $height;
      $y_offset-- if (! $score);
+#     warn join ' * ', $f->id, $s, $e, $score, $height, $y_offset;
+
      my $Composite = new Sanger::Graphics::Glyph::Composite({
         'y'         => 0,
 	'x'         => $s-1,
@@ -309,19 +296,14 @@ sub RENDER_histogram{
 sub RENDER_signalmap {
   my( $self, $configuration ) = @_;
 
-  my $rStart = $self->{'container'}->{'start'};
-  my $rEnd= $self->{'container'}->{'end'};
-  my @features = sort { $a->score <=> $b->score  } @{$configuration->{'data'} || []};
+  my @features = sort { $a->score <=> $b->score } @{$self->features ||[]};
   if (! @features) {
     $self->errorTrack( "No ".$self->my_label." features in this region" ) unless( $self->{'config'}->get('_settings','opt_empty_tracks')==0 );
     return 0;
   }
-  my ($min_score, $max_score) = defined($configuration->{'dataMax'}) ? 
-  	($configuration->{'dataMin'}, $configuration->{'dataMax'}) : 
-	($features[0]->score || 0, $features[-1]->score || 0);
-  $min_score or $min_score = 0;
-  $max_score or $max_score = 100;
-      
+  my $rStart = $self->{'container'}->{'start'};
+  my $rEnd= $self->{'container'}->{'end'};
+  my ($min_score, $max_score) = ($self->{_min_score}, $self->{_max_score});
       
   my @positive_features = grep { $_->score >= 0 } @features;
   my @negative_features = grep { $_->score < 0 } reverse @features;
@@ -350,18 +332,19 @@ sub RENDER_signalmap {
 	'colour'    => 'red',
 	'dotted'    => 1,
   }));
-  
   foreach my $f (@negative_features, @positive_features) {
      my $s = $f->start() < $rStart ? 1 : $f->start()- $rStart;
      my $e = $f->end()   > $rEnd  ? ($rEnd - $rStart) : ($f->end- $rStart);
 
      my $width = ($e- $s +1);
-     my $score = $f->score || 0;
+     my $score = $f->score;
      $score = $min_score if ($score < $min_score);
      $score = $max_score if ($score > $max_score);
      my $height = abs($score) / $pix_per_score;
      my $y_offset =     ($score > 0) ?  $row_height - $height : $row_height+2;
      $y_offset-- if (! $score);
+#     warn join ' * ', $s, $e, $score, $y_offset, $height;
+
      my $Composite = new Sanger::Graphics::Glyph::Composite({
         'y'         => 0,
 	'x'         => $s-1,
@@ -387,18 +370,34 @@ sub _init {
   my $type = $self->check();
   return unless defined $type;  ## No defined type arghhh!!
 
-#warn "CONFIG";
-#foreach my $key (sort keys %{$self->{'extras'}}) {
-#  warn "$key =>", $self->{'extras'}->{$key};
-#}
   my $strand = $self->strand;
   my $Config = $self->{'config'};
   my $strand_flag    = $Config->get($type, 'str');
   return if( $strand_flag eq 'r' && $strand != -1 || $strand_flag eq 'f' && $strand != 1 );
+  if (my $wtype = $self->{'extras'}->{'type'} eq 'wiggle_0') {
+     my $gtype = $self->{'extras'}->{'graphType'};
+     if ($gtype eq 'points') {
+       $self->{'extras'}->{'useScore'} = 4;
+     } elsif ($gtype eq 'colour') {
+       $self->{'extras'}->{'useScore'} = 2;
+     } elsif ($gtype eq 'signal') {
+       $self->{'extras'}->{'useScore'} = 1;
+     } else {
+       $self->{'extras'}->{'useScore'} = 3;
+     }
+  }
+if (0) { 
+warn "CONFIG $type : ", ;
+foreach my $key (sort keys %{$self->{'extras'}}) {
+  warn "$key =>", $self->{'extras'}->{$key};
+}
+}
   if (my $wdisplay = $self->{'extras'}->{'useScore'}) {
     return if ($strand != -1);
     $self->{'extras'}->{'length'} = $self->{'container'}->{'seq_region_length'};
     $self->{'extras'}->{'colour'} ||= 'contigblue1';
+    $self->{'extras'}->{'maxbins'} =  $Config->get('_settings','width');
+    $self->merge_features($self->{'extras'});
     return $self->RENDER_signalmap($self->{'extras'}) if ($wdisplay == 1);
     return $self->RENDER_colourgradient($self->{'extras'}) if ($wdisplay == 2);
     return $self->RENDER_histogram($self->{'extras'}) if ($wdisplay == 3);
@@ -428,7 +427,7 @@ sub expanded_init {
 ## And now about the drawing configuration
   my $Config = $self->{'config'};
   my $strand_flag    = $Config->get($type, 'str');
-  my $pix_per_bp     = $Config->transform()->{'scalex'};
+  my $pix_per_bp     = $Config->transform()->{'scdataalex'};
   my $DRAW_CIGAR     = ( $Config->get($type,'force_cigar') eq 'yes' )|| ($pix_per_bp > 0.2) ;
 ## Highlights...
   my %highlights = map { $_,1 } $self->highlights;
@@ -602,6 +601,34 @@ sub compact_init {
   $self->errorTrack( "No ".$self->my_label." features in this region" ) unless( $C || $Config->get('_settings','opt_empty_tracks')==0 );
 
   0 && warn( ref($self), " $C out of a total of ($C1 unbumped) $T glyphs" );
+}
+
+sub merge_features {
+  my $self = shift;
+  my ($econfig) = @_;
+  my $maxbins    = $econfig->{'maxbins'} or return;
+  my $gStart = $self->{'container'}->start;
+  my $gEnd= $self->{'container'}->end;
+  my $resolution = (($gEnd - $gStart+1) / $maxbins);
+  my @fA = ();
+  my @fBitmap;
+  my $fHash;
+ # Features should sorted by score in descending order by now 
+  foreach my $f ( @{$self->features || []}) {
+    my ($s, $e, $score) = ($f->start, $f->end, $f->score); 
+    my $pS = int(($s - $gStart) / $resolution); # start of the region
+    my $pE = int(($e - $gStart) / $resolution); # end of the region
+    for (my $i = $pS; $i <= $pE; $i++) {
+      if ( ! $fBitmap[$i] || ($fBitmap[$i] < $score)) {
+	$fBitmap[$i] = $score;
+	if (! exists $fHash->{$f->id}) {
+	  push @fA, $f;
+	  $fHash->{ $f->id } = 1;
+	}
+      }
+    }
+  }
+  return $self->{extras}->{_features} = \@fA;
 }
 
 1;
