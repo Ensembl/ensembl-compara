@@ -22,13 +22,13 @@ sub managed_name {
 
 sub features {
   my ($self) = @_;
-#  warn Dumper($self->{'extras'});
+  return $self->{extras}->{_features} if (@{$self->{extras}->{_features} || []});
   my @data =
     map { $_->[1] }
     sort { $a->[0] <=> $b->[0] }
     map { [ $_->start, $_ ] }
     map { $_->map( $self->{'container'} ) } @{ $self->{'extras'}{'data'} };
-  return \@data;
+  return $self->{extras}->{_features} = \@data;
 }
 
 sub colour {
