@@ -12,7 +12,7 @@ sub help_link { return 'compara_synteny'; }
 sub features {
   my ($self) = @_;
   my $species = $self->my_config('species');
-  (my $species_2 = $species) =~ s/_/ /;
+  (my $species_2 = $species) =~ s/_/ /g;
   my $T = $self->{'container'}->get_all_compara_Syntenies( $species_2, "SYNTENY");
   my $offset = $self->{'container'}->start - 1;
   my @RET;
