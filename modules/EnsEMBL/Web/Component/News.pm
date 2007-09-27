@@ -137,11 +137,31 @@ sub show_news {
   my $prev_rel = 0;
   my $rel_selected = $object->param('release_id') || $object->param('rel');
 
+## Get lookup hashes
+  my $releases = $object->releases;
+  my %rel_lookup;
+  foreach my $rel_array (@$releases) {
+    $rel_lookup{$$rel_array{'release_id'}} = $rel_array->{'full_date'};
+  }
+  my $cats = $object->all_cats;
+  my %cat_lookup;
+  foreach my $cat_array (@$cats) {
+    $cat_lookup{$$cat_array{'news_category_id'}} = $cat_array->{'news_category_name'};
+  }
+  my $spp = $object->all_spp;
+  my %sp_lookup = %$spp;
+  if ($sp_dir eq 'Multi' && $object->param('species')) {
+    $sp_dir = $sp_lookup{$object->param('species')};
+  }
+
+  ## Do title
   if ($rel_selected && $rel_selected ne 'all') {
     if ($rel_selected eq 'current') {
       $rel_selected = $object->species_defs->ENSEMBL_VERSION; 
     }
-    $html .= "<h2>Release $rel_selected</h2>";
+    my $rel_date = $rel_lookup{$rel_selected};
+    $rel_date =~ s/^(-|\w)*\s//g;
+    $html .= "<h2>Release $rel_selected News $rel_date</h2>";
   }
 
   my @generic_items = @{$object->generic_items};
@@ -157,24 +177,6 @@ sub show_news {
     $gen_sorted = $object->sort_items(\@generic_items);
     $sp_sorted  = $object->sort_items(\@species_items);
   }
-
-## Get lookup hashes
-  my $releases = $object->releases;
-  my %rel_lookup;
-  foreach my $rel_array (@$releases) {
-    $rel_lookup{$$rel_array{'release_id'}} = $$rel_array{'full_date'};
-  }
-  my $cats = $object->all_cats;
-  my %cat_lookup;
-  foreach my $cat_array (@$cats) {
-    $cat_lookup{$$cat_array{'news_category_id'}} = $$cat_array{'news_category_name'};
-  }
-  my $spp = $object->all_spp;
-  my %sp_lookup = %$spp;
-  if ($sp_dir eq 'Multi' && $object->param('species')) {
-    $sp_dir = $sp_lookup{$object->param('species')};
-  }
-
 ## output sorted news
   my @sections;
   if ($sp_dir eq 'Multi') {
@@ -215,7 +217,7 @@ sub show_news {
 
       ## Release number (only needed for big multi-release pages)
       if (!$object->param('rel') && $prev_rel != $release_id) {
-        $html .= qq(<h2>Release $release_id ($rel_date)</h2>\n);
+        $html .= qq(<h2>Release $release_id News ($rel_date)</h2>\n);
         $prev_cat = 0;
       }
 
