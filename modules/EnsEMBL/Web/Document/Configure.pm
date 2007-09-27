@@ -145,6 +145,7 @@ sub static_menu_items {
     next if ref($elements[0]) eq 'HASH';
     my $link = shift @elements;
     my $text = shift @elements;
+    next unless ($link);
     if ($URI =~ m#^/info# && index($URI, $link) > -1) {
       my %links;
       foreach my $subelement (@elements) {
