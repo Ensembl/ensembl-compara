@@ -55,9 +55,6 @@ my ($dbname,$dbversion,$host,$user,$pass,$port,$seq_region);
 pod2usage(-verbose => 2) if $info;
 pod2usage(-verbose => 1) if $help;
 
-# perl  do_flatfile_dump_registry --email ianl@ebi.ac.uk --logfile human.log 
-#       --dumpdir /lustre/work1/ensembl/ianl/unchained_test/new 
-#       -species human -host ens-research -user ensro -seq_region 1
 
 use Bio::EnsEMBL::Registry;
 my $reg = "Bio::EnsEMBL::Registry";
