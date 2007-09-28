@@ -90,6 +90,30 @@ else{
   push @species, "dump";
 }
 
+my %chr_list;
+
+$chr_list{anopheles_gambiae} = qw(X 3R 3L 2R 2L);
+$chr_list{bos_taurus} = qw(MT X 29 28 27 26 25 24 23 22 21 20 19 18 17 
+                           16 15 14 13 12 11 10 9 8 7 6 5 4 3 2 1);
+$chr_list{caenorhabditis_elegans} =  qw(MtDNA X V IV III II I);
+$chr_list{canis_familiaris} = qw(MT X 38 37 36 35 34 33 32 31 30 29 28 27 26 25 24 23 22 21 
+                                 20 19 18 17 16 15 14 13 12 11 10 9 8 7 6 5 4 3 2 1);
+$chr_list{ciona_intestinalis} =  qw(14q 14p 13q 13p 12q 12p 10q 10p 9q 9p 8q 7q 6q 5q 4q 3q 3p 2q 1q 1p);
+$chr_list{danio_rerio} = qw(MT 25 24 23 22 21 20 19 18 17 16 15 14 13 12 11 10 9 8 7 6 5 4 3 2 1);
+$chr_list{drosophila_melanogaster} = qw(X 4 3R 3L 2R 2L) ;
+$chr_list{gallus_gallus} =  qw(MT Z W 32 28 27 26 25 24 23 22 21 20 19 18 17 16 15 14 13 12 11 10 9 8 7 6 5 4 3 2 1);
+$chr_list{gasterosteus_aculeatus} =  qw(MT groupXXI groupXX groupXIX groupXVIII groupXVII groupXVI groupXV 
+                                        groupXIV groupXIII groupXII groupXI groupX groupIX groupVIII groupVII 
+                                        groupVI groupV groupIV groupIII groupII groupI);
+$chr_list{homo_sapiens} =  qw(MT Y X 22 21 20 19 18 17 16 15 14 13 12 11 10 9 8 7 6 5 4 3 2 1);
+$chr_list{macaca_mulatta} = qw(MT X 20 19 18 17 16 15 14 13 12 11 10 9 8 7 6 5 4 3 2 1);
+$chr_list{monodelphis_domestica} = qw(MT X 8 7 6 5 4 3 2 1) ;
+$chr_list{mus_musculus} =  qw(MT Y X 19 18 17 16 15 14 13 12 11 10 9 8 7 6 5 4 3 2 1);
+$chr_list{oryzias_latipes} =  qw(24 23 22 21 20 19 18 17 16 15 14 13 12 11 10 9 8 7 6 5 4 3 2 1);
+$chr_list{pan_troglodytes} =  qw(Y X 22 21 20 19 18 17 16 15 14 13 12 11 10 9 8 7 6 5 4 3 2b 2a 1);
+$chr_list{rattus_norvegicus} = qw(MT X 20 19 18 17 16 15 14 13 12 11 10 9 8 7 6 5 4 3 2 1);
+$chr_list{saccharomyces_cerevisiae} =  qw(MT XVI XV XIV XIII XII XI X IX VIII VII VI V IV III II I 2-micron);
+$chr_list{tetraodon_nigroviridis} =  qw(21 20 19 18 17 16 15 14 13 12 11 10 9 8 7 6 5 4 3 2 1);
 
 my $sp_release;
 my $sitedefs_release;
@@ -144,14 +168,13 @@ foreach my $spp (@species){
 
   # Sort slices 
   my %chr_sorter;
-    my $i = 1;
+  my $i = 1;
 
-
-#  IANL: Will have to duplicate this i guess.
-
-#  foreach ( reverse @{ $SPECIES_DEFS->get_config($spp,"ENSEMBL_CHROMOSOMES") || [] } ) { 
-#    $chr_sorter{$_}= $i++;
-#  }
+  if(defined($chr_list{lc($spp)})){
+    foreach ( $chr_list{ lc($spp)} || [] ) { 
+      $chr_sorter{$_}= $i++;
+    }
+  }
 
   my @slices;
   if(defined($seq_region)){
@@ -223,46 +246,9 @@ mail_log( $logfile, $email,"" ) if $logfile;
 exit;
 
 
-#-----------------------------------------------------------------------------
-sub setup_directories {
-  my ($SPECIES_DEFS, $spp, $user_formats) = @_;
-  my $sp_release = $SPECIES_DEFS->get_config($spp,"SPECIES_RELEASE_VERSION");
-  $sp_release =~ s/\.//g;
-
-  my %formats_dir;
-
-  foreach my $format (@$user_formats){
-    unless (lc($format) eq "embl" || lc($format) eq "genbank"){
-      die "[*DIE] unrecognized dump format - use embl or genbank\n";
-    }
- #   utils::Tool::info(2, "species = $spp $format");
-
-    # Make dumpdir
-    my $spp_dir = join "_", (lc ($spp), $sitedefs_release, $sp_release);
-    my $spp_dumpdir = "$dumpdir/$spp_dir/data/flatfiles/$format";
-    unless (-d "$spp_dumpdir"){
-      system("mkdir -p $spp_dumpdir") ==0 or die "Can't create dir $!";
-    }
-#    utils::Tool::info (1,"Made dump directory: $spp_dumpdir");
-
-    # Do README file
-    my $text = readme($format, $spp);
-    open(README, '>'."$spp_dumpdir/README")
-      or die "Couldn't open file $spp_dumpdir/README: $!\n";
-    print README $text;
-    close README;
-
-    next if $readme_only;
-    $formats_dir{$format} = $spp_dumpdir;
-  }
-    return \%formats_dir;
-  }
 
 sub setup_directories_reg {
   my ($spp, $user_formats) = @_;
-#  my $sp_release = $SPECIES_DEFS->get_config($spp,"SPECIES_RELEASE_VERSION");
-#  $sp_release = ($reg->get_adaptor->($spp,"core","gene"))->dbc->dbname();
-#  $sp_release =~ s/\.//g;
 
   my $sa= $reg->get_adaptor($spp,"core","slice");
   my $dbname = $sa->dbc->dbname;
@@ -720,7 +706,7 @@ sub check_species{
       push @valid, $species;
     }
   }
-  die "Species unknown" if ($error);
+  die "Species unknown therefore ending" if ($error);
   return \@valid;
 }
 
