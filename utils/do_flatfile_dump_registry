@@ -1,0 +1,879 @@
+#!/usr/local/bin/perl 
+
+use strict;
+use Carp ();
+use Compress::Zlib;
+use File::Basename qw( dirname );
+use FindBin qw($Bin);
+use Getopt::Long;
+use Pod::Usage;
+use strict;
+use Time::localtime;
+use Data::Dumper;
+
+#$| = 1;
+
+my @user_formats ;
+our $basedir = "/dumps/";
+my @species;
+my $MAX_SIZE = 1000000;
+my $GENE_MAX = 3000000; # if gene > $GENE_MAX, skips gene and prints warning
+our $VERBOSITY;
+my $logfile;
+my ($no_log, $start_with, $end_with);
+my $dumpdir;
+my $nobundle;
+my $readme_only;
+my ($help, $info, $email);
+
+my ($dbname,$dbversion,$host,$user,$pass,$port,$seq_region);
+
+&GetOptions( 'maxsize:s'    => \$MAX_SIZE,
+             'format:s'	    => \@user_formats,
+             'species:s'    => \@species,
+             'logfile:s'    => \$logfile,
+	     'email:s'      => \$email,
+	     'no_log'       => \$no_log,
+             'dumpdir:s'    => \$dumpdir,
+             'nobundle'	    => \$nobundle,
+	     'start_with:s' => \$start_with,
+	     'end_with:s'   => \$end_with,
+             'readme_only'  => \$readme_only,
+             'verbose'	    => \$VERBOSITY,
+             'info'         => \$info,
+             'help|h'	    => \$help,
+
+             'dbname=s'     => \$dbname,
+             'dbversion=s'  => \$dbversion,
+             'host=s'       => \$host,
+             'user=s'       => \$user,
+             'pass=s'       => \$pass,
+             'port=s'       => \$port,
+             'seq_region=s' => \$seq_region,
+           ) || pod2usage(2);
+
+pod2usage(-verbose => 2) if $info;
+pod2usage(-verbose => 1) if $help;
+
+# perl  do_flatfile_dump_registry --email ianl@ebi.ac.uk --logfile human.log 
+#       --dumpdir /lustre/work1/ensembl/ianl/unchained_test/new 
+#       -species human -host ens-research -user ensro -seq_region 1
+
+use Bio::EnsEMBL::Registry;
+my $reg = "Bio::EnsEMBL::Registry";
+
+if(!defined($dbname)){
+  $reg->load_registry_from_db(
+			      -host => $host,
+			      -port => $port,
+			      -pass => $pass,
+			      -user => $user,
+			      -db_version => $dbversion,
+			      );
+
+  if (@species) {
+    @species = @{ check_species(\@species) };
+  } 
+  else {
+    @species = @{all_species()};
+  }
+  
+  #  @species  = @{ start_with_species($start_with, \@species) } if $start_with;
+  #  @species  = @{ end_with_species($end_with, \@species) } if $end_with;
+  
+}
+else{
+  Bio::EnsEMBL::DBSQL::DBAdaptor->new(-host => $host,
+				      -user => $user,
+				      -port => $port,
+				      -pass => $pass,
+				      -species => "dump",
+				      -dbname => $dbname);
+
+  push @species, "dump";
+}
+
+
+my $sp_release;
+my $sitedefs_release;
+
+
+my $time1 = time;
+@user_formats = qw(embl genbank) if (!$user_formats[0]);
+$VERBOSITY ||= 2;
+#require SiteDefs;
+#require EnsEMBL::Web::SpeciesDefs;
+require Bio::EnsEMBL::Utils::SeqDumper;
+#require EnsEMBL::Web::DBSQL::DBConnection;
+
+#my $SPECIES_DEFS = EnsEMBL::Web::SpeciesDefs->new();
+#my $dbconnection = EnsEMBL::Web::DBSQL::DBConnection->new(undef, $SPECIES_DEFS);
+#our $sitedefs_release =  $SiteDefs::ENSEMBL_VERSION;
+
+
+unless ($no_log) {
+  (my $time = gmtime(time)) =~ s/\s+/\./g;
+  $logfile ||= "logs/flat"."_$time.log";
+  print STDERR "Using logfile $logfile\n";
+  open(STDERR, "> $logfile") || die "Can't create file:$!\n";
+}
+
+$dumpdir ||= $basedir."release-$sitedefs_release";
+print "Species to be dumped are:-\n";
+foreach my $spp (@species){
+  print "\t$spp\n";
+}
+foreach my $spp (@species){
+  info(2, "Species: $spp");
+  my $sp_time = time;
+  my $formats_dir = setup_directories_reg($spp, \@user_formats);
+
+  my $batch = 0;
+  my $count = 0;
+  my $CHUNK = $spp eq "Mus_musculus" ? 100 : 1000;
+  my @too_long;
+
+  # loop through every non-redundant region in the DB
+  my $inc_dupes  = 1; # include duplicate regions like PARs?
+  my $inc_nonref = 1; # include non-reference regions like haplotypes?
+
+  # Get slices --------------------------------------------------
+
+
+  my $slice_adaptor = $reg->get_adaptor($spp,"core","slice");  
+
+  $slice_adaptor->cache_toplevel_seq_mappings();
+
+
+  # Sort slices 
+  my %chr_sorter;
+    my $i = 1;
+
+
+#  IANL: Will have to duplicate this i guess.
+
+#  foreach ( reverse @{ $SPECIES_DEFS->get_config($spp,"ENSEMBL_CHROMOSOMES") || [] } ) { 
+#    $chr_sorter{$_}= $i++;
+#  }
+
+  my @slices;
+  if(defined($seq_region)){
+    push @slices,$slice_adaptor->fetch_by_region(undef,$seq_region);
+  }
+  else{
+    if (keys %chr_sorter) {
+      info(1, "Using chr sorter");
+      @slices = sort {$chr_sorter{$b->seq_region_name} <=> $chr_sorter{$a->seq_region_name} || $a->seq_region_name cmp $b->seq_region_name  } @{ $slice_adaptor->fetch_all('toplevel', undef, $inc_dupes, $inc_nonref) || [] };
+    }
+    else {
+      info(1, "Unsorted results");
+      @slices =  @{ $slice_adaptor->fetch_all('toplevel', undef, $inc_dupes, $inc_nonref) || [] };
+    }
+  }
+  print "there are ".scalar(@slices)." slices to be processed\n";
+  foreach my $slice (@slices) {
+    print "processing ".$slice->seq_region_name."\n";;
+    # generate list of 'unbreakable' blocks around genes
+    my ($blocks, $too_long)= generate_blocklist($slice, $spp);
+    push (@too_long, @$too_long);
+
+    # split up slices into reasonable chunks, and avoid breaking genes
+    my $chunked_slices = chunk_seq_region( $slice, $blocks );
+    undef $blocks;
+
+    # dump flatfiles for the chunks
+    foreach my $chunked_slice (@$chunked_slices) {
+      my $seq = $chunked_slice->seq();
+      foreach my $format (sort keys %$formats_dir) {
+        dump_format($chunked_slice, $format, $formats_dir->{$format}, $seq);
+      }
+      $count++;
+      if($count >= $CHUNK){
+        foreach my $format (sort keys %$formats_dir) {
+          ftp_bundle($format, $formats_dir->{$format}, $batch, $spp, \%chr_sorter) unless $nobundle;
+        }
+        $batch++;
+        $count = 0;
+      }
+    }
+  } #end foreach slice
+
+  if($count > 0){
+    foreach my $format (sort keys %$formats_dir) {
+      ftp_bundle($format, $formats_dir->{$format}, $batch, $spp) unless $nobundle;
+    }
+  }
+
+  foreach (@too_long){
+    utils::Tool::warning (1, "Gene skipped cos greater than $GENE_MAX: $_");
+  }
+
+  my $sp_time_taken = time - $sp_time;
+  my $sp_hours      = localtime($sp_time_taken)->hour -1;
+  info (2, "Used $logfile. Time taken: $sp_hours:". localtime($sp_time_taken)->min."mins");
+} # end foreach spp
+
+
+
+# Work out timings -----------------------------------------------
+my $time_taken = time - $time1;
+my $hours      = localtime($time_taken)->hour -1;
+info (2, "Used $logfile. Time taken: $hours:". localtime($time_taken)->min."mins");
+
+$email ||= 'ssg-ensembl@sanger.ac.uk';
+mail_log( $logfile, $email,"" ) if $logfile;
+
+exit;
+
+
+#-----------------------------------------------------------------------------
+sub setup_directories {
+  my ($SPECIES_DEFS, $spp, $user_formats) = @_;
+  my $sp_release = $SPECIES_DEFS->get_config($spp,"SPECIES_RELEASE_VERSION");
+  $sp_release =~ s/\.//g;
+
+  my %formats_dir;
+
+  foreach my $format (@$user_formats){
+    unless (lc($format) eq "embl" || lc($format) eq "genbank"){
+      die "[*DIE] unrecognized dump format - use embl or genbank\n";
+    }
+ #   utils::Tool::info(2, "species = $spp $format");
+
+    # Make dumpdir
+    my $spp_dir = join "_", (lc ($spp), $sitedefs_release, $sp_release);
+    my $spp_dumpdir = "$dumpdir/$spp_dir/data/flatfiles/$format";
+    unless (-d "$spp_dumpdir"){
+      system("mkdir -p $spp_dumpdir") ==0 or die "Can't create dir $!";
+    }
+#    utils::Tool::info (1,"Made dump directory: $spp_dumpdir");
+
+    # Do README file
+    my $text = readme($format, $spp);
+    open(README, '>'."$spp_dumpdir/README")
+      or die "Couldn't open file $spp_dumpdir/README: $!\n";
+    print README $text;
+    close README;
+
+    next if $readme_only;
+    $formats_dir{$format} = $spp_dumpdir;
+  }
+    return \%formats_dir;
+  }
+
+sub setup_directories_reg {
+  my ($spp, $user_formats) = @_;
+#  my $sp_release = $SPECIES_DEFS->get_config($spp,"SPECIES_RELEASE_VERSION");
+#  $sp_release = ($reg->get_adaptor->($spp,"core","gene"))->dbc->dbname();
+#  $sp_release =~ s/\.//g;
+
+  my $sa= $reg->get_adaptor($spp,"core","slice");
+  my $dbname = $sa->dbc->dbname;
+
+  if($dbname =~ /core_(\w+)_(\w+)/){
+    $sp_release = $2;
+    $sitedefs_release = $1;
+  }
+
+  my %formats_dir;
+
+  foreach my $format (@$user_formats){
+    unless (lc($format) eq "embl" || lc($format) eq "genbank"){
+      die "[*DIE] unrecognized dump format - use embl or genbank\n";
+    }
+   info(2, "species = $spp $format");
+
+    # Make dumpdir
+    my $spp_dir = join "_", (lc ($spp), $sitedefs_release, $sp_release);
+    my $spp_dumpdir = "$dumpdir/$spp_dir/data/flatfiles/$format";
+    unless (-d "$spp_dumpdir"){
+      system("mkdir -p $spp_dumpdir") ==0 or die "Can't create dir $!";
+    }
+    info (1,"Made dump directory: $spp_dumpdir");
+
+    # Do README file
+    my $text = readme($format, $spp);
+    open(README, '>'."$spp_dumpdir/README")
+      or die "Couldn't open file $spp_dumpdir/README: $!\n";
+    print README $text;
+    close README;
+
+    next if $readme_only;
+    $formats_dir{$format} = $spp_dumpdir;
+  }
+  return \%formats_dir;
+}
+
+
+
+#-----------------------------------------------------------------------------
+# Aim: create blocks (start,end) from a slice with no gene spanning two blocks.
+# New blocks start where there is a gap between genes (i.e. no genes overlap)
+
+# Reads the gene positions from a slice and sorts them by start
+# Scan through the gene list @genes and start a new block each time there
+# is a gap in gene coverage
+# Returns an array of blocks (with start and end positions)
+
+
+sub generate_blocklist {
+  my $slice = shift;
+  my $species = shift;
+
+  ##### Is there a better way to do this??
+  my @genes = @{$slice->get_all_Genes};
+  # sort the genes by start
+  @genes = sort {$a->start() <=> $b->start()} @genes;
+
+  # merge the genes into blocks, filter genes with size > genemax
+  # report count blocks bigger maxsize*2
+  my $big_blocks  = 0;
+  my $block_start = 0;
+  my $block_end   = 0;   #  $block_end = end of current gene
+  my @block_list;
+  my @too_long;          # skipped
+
+  foreach my $gene( @genes ) {
+    # make the gene a bit bigger to put gene in context
+    my $gen_start = $gene->start() - 1000;
+    my $gen_end   = $gene->end()   + 1000;
+
+    if( $gen_end - $gen_start > $GENE_MAX ) {
+      utils::Tool::warning (1, "Gene too long -skipped ". $slice->seq_region_name().":".
+         $gene->start(). "-". $gene->end());
+      push (@too_long, "Species: $species, chr:".
+	    $slice->seq_region_name." coords:".
+	    $gene->start()."-".$gene->end());
+      next;
+    }
+
+    # If the current gene starts after the end of the previous one,
+    # take advantage of the gap, and start a new block
+    if( $gen_start > $block_end ) {
+      if( $block_end > 0 ) {
+        push( @block_list, [ $block_start, $block_end ] );
+	$big_blocks++ if ( $block_end - $block_start > 2 * $MAX_SIZE) ;
+      }
+      # Reset the block start and end to match current gene
+      ( $block_start, $block_end ) = ( $gen_start, $gen_end );
+    }
+    else {  # The current gene overlaps the last, so incr current block size
+      if($gen_end > $block_end){
+	$block_end = $gen_end;
+      }
+    }
+  } # end foreach gene
+
+  # remember to add the last block
+  if($block_end > 0) {
+    push( @block_list, [ $block_start, $block_end ]);
+    $big_blocks++ if ( $block_end - $block_start > 2 * $MAX_SIZE) ;
+  }
+
+  if($big_blocks) {
+    print STDERR "HEADS UP: chr", $slice->seq_region_name(), " has $big_blocks big blocks due to no gaps between genes\n";
+  }
+  return (\@block_list, \@too_long);
+}
+
+#-----------------------------------------------------------------------------
+# Algorithm for chunking: create sorted blocklist for each chromosome
+
+# Start at end of last chunk= start of next chunk (or at chr_start for 1st one)
+# distance to next block_start > maxsize ?       make a chunk
+# else distance to block_end   < maxsize         include next block
+# else distance to block_start > 0.5 maxsize ?   make a smaller chunk
+# else make chunk with next block and warn if bigger than 1.5 maxsize
+
+# blocklist - for each slice a list of lists on where not to break
+
+sub chunk_seq_region {
+  my $slice = shift;
+  my $blocklist = shift;
+
+  my $slice_adaptor = $slice->adaptor();
+  my $cs_name = $slice->coord_system->name();
+  my $cs_ver  = $slice->coord_system->version();
+  my $seq_region = $slice->seq_region_name();
+
+#  utils::Tool::info(1, "Chunking ". $slice->seq_region_name());
+
+  # Get the first and last base of this slice that has defined sequence.
+  # We do not want to dump megabases of gaps common at the ends of chromosomes
+
+  ########## CAN YOU ASSUME THESE COME BACK IN ORDER??  
+  my @projection = @{$slice->project('seqlevel')};
+  undef $slice;  # saves memory
+
+  if(!@projection) {
+    utils::Tool::warning (1,"Sequence region: $seq_region doesn't have any sequence");
+    return [];
+  }
+  my $seq_end   = $projection[-1]->from_end();
+  undef @projection; # saves memory
+
+  # Make sure the end is not more than the seqeunce end.
+  # This can happen because the blocks are set at gene end +1000
+
+  if(scalar(@$blocklist)){
+    my ($final_start, $final_end) = @{pop(@$blocklist)};
+    if($final_end > $seq_end){
+      $final_end = $seq_end;
+    }
+    push (@$blocklist, [$final_start, $final_end] );
+  }	
+
+
+  # We need a stop block at the end to ensure algorithm gets
+  # to the very end of the sequence.
+  # It starts on the last base and it ends one before it!
+  push( @$blocklist, [ $seq_end, $seq_end ] );
+
+  my @chunked;
+  my $current_block = 0;
+  my $cur_start     = 1;
+  my $cur_length    = 0;
+
+  while($cur_start + $cur_length < $seq_end) {
+    my($cb_start, $cb_end) = @{$blocklist->[$current_block]};
+
+    if( $cb_start - $cur_start > $MAX_SIZE ) {
+      $cur_length = $MAX_SIZE;
+    }
+    elsif( $cb_end - $cur_start < $MAX_SIZE ) {
+      $cur_length = $cb_end - $cur_start + 1;
+      $current_block++;
+      next;
+    }
+    elsif( 2*($cb_start - $cur_start) > $MAX_SIZE ) {
+      $cur_length = $cb_start - $cur_start;
+    }
+    else {
+      $cur_length = $cb_end - $cur_start;
+    }
+    #print "cb start: $cb_start: $cb_end - $cur_start $cur_length \n";
+    #cb start: 3223196: 3280731 - 1 1,000,000  1,000,000;
+
+    if( $cur_length > 2 * $MAX_SIZE ) {
+      printf STDERR "WARNING: Generated %.2f maxsize chunk\n",($cur_length/$MAX_SIZE);
+    }
+    my $chunked_slice =
+      $slice_adaptor->fetch_by_region($cs_name, $seq_region, $cur_start,
+                                      $cur_start+$cur_length-1, 1,$cs_ver);
+    push( @chunked, $chunked_slice);
+    $cur_start = $cur_start + $cur_length;
+    $cur_length = 0;
+  }  # end while
+
+  if( $cur_length > 0 ) {
+    my $chunked_slice = 
+      $slice_adaptor->fetch_by_region($cs_name, $seq_region, $cur_start,
+                                      $cur_start + $cur_length - 1, 1, $cs_ver);
+    push @chunked, $chunked_slice;
+  }
+  return \@chunked;
+}
+
+
+
+#-----------------------------------------------------------------------------
+# dumps given piece of genomic dna into given format
+# uses static golden path adaptor to get virtual contig.. 
+
+sub dump_format {
+  my ( $slice, $format, $spp_dumpdir, $seq ) = @_;
+
+  my $name = $slice->name();
+
+  eval {
+    my $seq_dumper = Bio::EnsEMBL::Utils::SeqDumper->new();
+    $seq_dumper->disable_feature_type('similarity');
+    $seq_dumper->disable_feature_type('genscan');
+    $seq_dumper->disable_feature_type('variation');
+    $seq_dumper->disable_feature_type('repeat');
+
+    my $outfile;
+    my $filename =  "$spp_dumpdir/$name.$format";
+    $seq_dumper->dump($slice, $format, $filename, $seq);
+  };
+  if( $@ ) {
+    utils::Tool::warning (1, "ERROR: Dumping Error! Cannot dump $name\n$@");
+  }
+}
+
+#------------------------------------------------------------------------------
+sub ftp_bundle{
+  my ($format, $spp_dumpdir, $batch, $spp, $chr_sorter) = @_;
+  my $count = 0;
+  my $gz;
+  my $CHUNK = $spp eq "Mus_musculus" ? 100 : 1000;
+
+#  utils::Tool::info(1, "Generating compressed data archives for FTP site (chunk=$CHUNK)..");
+  opendir DIR, "$spp_dumpdir" or warn "$spp_dumpdir: $!\n";
+
+  # Chromosome sorter
+  my @files;
+  while (defined( my $file = readdir(DIR) )) {
+    next if (-d "$file" || $file !~ /^\w/ || $file !~ /.*$format$/x) ;
+    push @files, $file;
+  }
+  closedir (DIR);
+
+  unless (-d "$spp_dumpdir/FTP"){
+    system("mkdir $spp_dumpdir/FTP");
+#    utils::Tool::info (1, "Made dir $spp_dumpdir/FTP");
+  }
+
+  $gz = gzopen("$spp_dumpdir/FTP/$spp.".($batch*$CHUNK).".dat.gz","wb") || die $!;
+
+
+  # If species has chr, use sorter
+  if (keys %$chr_sorter) {
+ #   utils::Tool::info(1, "Using chr sorter");
+    @files  =   sort {$chr_sorter->{$b} <=> $chr_sorter->{$a} || $a cmp $b  } @files ;
+  }
+
+  foreach my $filename ( @files ){
+ #   utils::Tool::info(1, "Processing $filename...");
+
+    if (!-f "$spp_dumpdir/$filename"){
+      utils::Tool::warning (1, "ERROR: Cannot find $filename!");
+      next;
+    }
+
+    open (FILE, "$spp_dumpdir/$filename") || die $!;
+    while(<FILE>){
+      $gz->gzwrite($_);
+    }	
+    close(FILE);
+  }
+
+  $gz->gzclose();
+
+  # Tidy up the directories
+  opendir(DIR, $spp_dumpdir) or die " can't open dir $spp_dumpdir:$!";
+#  print "In directory $spp_dumpdir\n";
+  while (defined(my $file = readdir(DIR))) {
+    next if $file =~/\.gz$|^FTP$|README/;
+    next if $file =~/^\.+$/;
+    unlink "$spp_dumpdir/$file" or warn "Can't delete $file : $!\n";
+  }
+  close DIR;
+
+#  utils::Tool::info(1, "Deleting the individual files and replacing with the zips");
+  system ("mv $spp_dumpdir/FTP/* $spp_dumpdir/");
+  system ("rm -r $spp_dumpdir/FTP");
+  return;
+}
+
+#------------------------------------------------------------------------
+sub info{
+
+  ### Arg1      : verbosity
+  ### Arg2      : message
+  ### Example     : utils::Tool::info(1, "Current release is $release");
+  ### Description : Prints message to STDERR
+  ### Returns none
+
+  my $v   = shift;
+  my $msg = shift;
+  if( ! defined($msg) ){ $msg = $v; $v = 0 }
+  $msg || ( carp("Need a warning message" ) && return );
+
+  #if( $v > $VERBOSITY ){ return 1 }
+  my @sz = () ;#sz();
+  if ($v > 1) {
+    warn( "[INFO_2] ".$msg." (@sz)\n" );
+  }
+  else {
+    warn( "[INFO] ".$msg." (@sz)\n" );
+  }
+
+  return 1;
+}
+
+#------------------------------------------------------------------------
+sub mail_log {
+
+ ### Arg1 (optional): log to check
+ ### Arg2 (optional): email address
+ ### Description: checks log and emails you the results
+
+  close LOG;
+  my ($file, $email_address, $additional_text) = @_;
+  if(  open IN, "< $file" ){
+    my $content;
+    while (<IN>) {
+      $content .= $_  unless $_=~ /^\[INFO\]/;
+    }
+    
+    my $sendmail = "/usr/sbin/sendmail -t";
+    my $subject  = "Subject: Dumping report\n";
+    
+    open(SENDMAIL, "|$sendmail") or die "Cannot open $sendmail: $!";
+    print SENDMAIL $subject;
+    print SENDMAIL "To: $email_address\n";
+    print SENDMAIL 'From: ssg-ensembl@sanger.ac.uk\n';
+    print SENDMAIL "Content-type: text/plain\n\n";
+    print SENDMAIL $content . $additional_text;
+    close(SENDMAIL);
+    print "[INFO] Sent report to $email_address\n";
+  }
+  else{
+    print STDERR "problems sending email\n";
+  }
+}
+
+
+#-----------------------------------------------------------------------
+sub readme {
+  my $format  = uc(shift);
+  my $species = shift;
+
+  my $bundle_group = $species eq 'Mus_musculus' ? 100 : 1000;
+  my $prediction_method = 
+#    utils::Tool::get_config({"species" => $species,
+#			    "values"   => "ENSEMBL_PREDICTION_TEXT_CORE"})
+#	||
+"Ensembl provides an automatic reannotation of $species genomic data.
+These data will be dumped in a number of forms - one of them being 
+$format flat files.  As the annotation of this form comes from Ensembl, 
+and not the original sequence entry, the two annotations are 
+likely to be different.";
+
+ return "#### README ####
+
+IMPORTANT: Please note you can download correlation data tables, 
+supported by Ensembl, via the highly customisable BioMart and 
+EnsMart data mining tools. See http://www.ensembl.org/biomart/martview or
+http://www.ebi.ac.uk/biomart/ for more information.
+
+
+-----------------------
+$format FLATFILE DUMPS
+-----------------------
+This directory contains $species $format flatfile dumps.  To ease 
+downloading of the files, the $format format entries are bundled 
+into groups of $bundle_group.  All files are then compacted with 
+GNU Zip for storage efficiency.
+
+$prediction_method
+
+$format flat file format dumping provides all the confirmed protein coding 
+genes known by Ensembl. Considerably more information is stored in Ensembl: 
+the flat file just gives a representation which is compatible with 
+existing tools.
+
+The main body of the entry gives the same information as is in the main 
+$format flat file entry.
+
+    * ID - the $format id
+    * AC - the EMBL/GenBank/DDBJ accession number (only the primary 
+           accession number used)
+    * SV - The accession.version pair which gives the exact reference to 
+           a particular sequence
+    * CC - comment lines to help you interpret the entry 
+
+Currently the following features are dumped into the feature table of 
+the Ensembl entry:
+
+    * Transcripts as CDS entries. Each transcript has the following 
+      attributes attached
+          o Transcript id - a stable id, which Ensembl will attempt to 
+            preserve as sensibly as possible during updates of the data
+          o Gene id - indication of the gene that this transcript belongs 
+            to. gene ids are stable and preserved as sensibly as possible 
+            during updates of the data
+          o Translation - the peptide translation of the transcript. 
+    * Exons as exon entries. Each exon has the following information
+          o Exon id. The exon id is stable and preserved as sensibly 
+            as possible during sequence updates
+          o start_phase. The phase of the splice site at the 5' end 
+            of the exon. Phase 0 means between two codons, phase 1 
+            means between the first and the second base of the codon 
+            (meaning that there are 2 bases until the reading frame of 
+            the exon) and phase 2 means between the second and the third 
+            base of the codon (one base until the reading frame starts).
+          o end_phase. The phase of the splice site at the 3' end of the 
+            exon: same definition as above (though of course, being end_phase, 
+            the position relative to the exon's reading frame is different 
+            for phase 1 and 2). 
+
+We are considering other information that should be made dumpable. In 
+general we would prefer people to use database access over flat file 
+access if you want to do something serious with the data. 
+
+";
+
+}
+#----------------------------------------------------------------------------
+
+sub check_species{
+  my $species_ref = shift;
+
+  my @valid;
+  my $error = 0;
+  foreach my $species (@$species_ref){
+    my $adap = $reg->get_adaptor($species,"core","slice");
+    if(!defined($adap)){
+      print STDERR "Unknown species $species\n";
+      $error++;
+    }
+    else{
+      push @valid, $species;
+    }
+  }
+  die "Species unknown" if ($error);
+  return \@valid;
+}
+
+
+sub all_species{
+  my @species;
+  my %hash;
+
+
+  foreach my $adap (@{$reg->get_all_DBAdaptors(-group => "core")}){
+    if(!defined($hash{$adap->species})){
+      print $adap->species."\n";
+      push @species, $adap->species;
+      $hash{$adap->species} = 1;
+    }
+    
+  }
+  return \@species;
+}
+
+1;
+
+__END__
+
+# this script should dump the sequence and features of the genome in chunks less than  $maxsize. It tries not to break genes.
+# It gets gene positions from lite database
+
+=head1 NAME
+
+do_flatfile_dump_registry - Dump Ensembl genes to embl or genbank flatfiles using registry (NOT SiteDefs)
+
+=head1 SYNOPSIS
+
+do_flatfile_dump_registry [options]
+
+Options:
+  --help, --info, --verbose, --species, --format, --maxsize,
+  --logfile, --dumpdir, --nobundle --readme_only --email 
+  --start_with --end_with 
+  --dbname --dbversion --host --user --pass --port --seq_region
+
+E.g.: time ./do_flatfile_dump --species Anopheles_gambiae
+
+Or:
+ perl  do_flatfile_dump_registry --email xxx@ebi.ac.uk --logfile human.log 
+       --dumpdir /data/new 
+       -species human -host ensembl_host -user ensembl_user -seq_region 1
+
+If no species are specified, all species are done.
+
+=head1 OPTIONS
+
+B<--email>
+  Emails all lines in the logfile except the 'INFO' lines to this address
+
+B<-h,--help>
+  Prints a brief help message and exits.
+
+B<-i,--info>
+  Prints man page and exits.
+
+B<-v,--verbose>
+  Prints verbose debug output to stdout or logfile.
+
+B<-s, --species>
+ Optional: Species to dump. 
+ DEFAULT: All configured species
+
+B<--format>
+  Optional: Specifies the format to dump the flatfiles.(EMBL or Genbank)
+  Default: Both
+
+B<--maxsize>
+  Optional: Specifies the max size of the FTP files and splits them 
+  if there are too large. 
+  Default is '1000000'
+
+B<--logfile>
+  Optional: Specifies a logfile to print output to.  
+  DEFAULT filename is logs/flat.<timestamp>.log
+
+B<--no_log>
+  Optional: The default is to use a log file with name logs/flat.<timestamp>.log
+
+B<--dumpdir>
+  Optional: Specifies the dump directory. 
+  DEFAULT /mysql/dumps/FTP/<species>.
+
+B<--nobundle>
+  Optional: Flag to _prevent_ bundling dumps into gzipped FTP site files.
+
+B<--readme_only>
+  Optional: Flag to generate the README files but not actually run the dumps
+
+B<--start_with>
+  Optional: give it a species name and it will skip all species before this in the alphabet.
+
+B<--end_with>
+  Optional: give it a species name and it will skip all species after this in the alphabet.
+
+B<--dbname>
+  Optional: database name to be dumped. 
+  (useful if none name is none standard ..i.e ianl_homo_sapiens_core_36_47)
+  Cannot be used with --dbversion.
+
+B<--dbversion>
+  Optional: use only this version of the databases. i.e 46
+            default is the API version you are using.
+            Cannot be used with --dbname
+
+B<--host>
+ Optional: name of the host to dump databases for.
+
+B<--user>
+ Optional: name of the user to dump databases for.
+
+B<--pass>
+ Optional: password for this user.
+
+B<--port>
+ Optional: name of the port to dump databases for.
+
+B<--seq_region>
+  Optional: seq region name to dump. (normally a chromosome name i.e. X)
+
+=head1 DESCRIPTION
+
+B<This program:>
+
+Dumps Ensembl genes to embl or genbank flatfiles.  
+
+ This program dumps the transcript to embl or genbank files and bundles them
+ into file(s) for the FTP directory.  Does not dump repeats.
+ 
+ Program logs contain 3 main error/waringings:
+
+Output may include the following:
+
+B<  [DIE*]:> Program critical error, dumps have halted.
+
+B<  [WARN]:> Program has encountered an error but is still running, 
+          dumps may have been affected.
+
+B<  [INFO]>: Non-critical message, dumping should continue as normal.
+
+ Any other messages with out the above prefixes is verbose information.
+ If a error log file is not requested these messages are output to stdout.
+
+Maintained by Ensembl web team <ianl@ebi.ac.uk>
+
+=cut
+
+
