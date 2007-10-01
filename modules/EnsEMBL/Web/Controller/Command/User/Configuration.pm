@@ -60,12 +60,13 @@ sub render_page {
   $interface->caption({'add'=>'Save configuration'});
   $interface->caption({'edit'=>'Edit configuration'});
   $interface->permit_delete('yes');
-  $interface->element('url', {'type'=>'Hidden'});
   $interface->element('name', {'type'=>'String', 'label'=>'Configuration name'});
   $interface->element('description', {'type'=>'Text', 'label'=>'A brief description of your configuration'});
+  $interface->element('url', {'type'=>'Hidden'});
+  $interface->element('scriptconfig', {'type'=>'Hidden'});
   $interface->element('record_type', {'type'=>'Hidden'});
   $interface->extra_data('rename');
-  $interface->element_order('name', 'description', 'url', 'record_type');
+  $interface->element_order('name', 'description', 'url', 'scriptconfig', 'record_type');
 
   ## Render page or munge data, as appropriate
   $webpage->process($interface, 'EnsEMBL::Web::Configuration::Interface::Record');

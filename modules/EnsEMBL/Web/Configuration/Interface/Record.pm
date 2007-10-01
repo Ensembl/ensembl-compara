@@ -16,6 +16,9 @@ sub save {
   my ($self, $object, $interface) = @_;
   my $primary_key = EnsEMBL::Web::Tools::DBSQL::TableName::parse_primary_key($interface->data->get_primary_key);
   my $id = $object->param($primary_key) || $object->param('id');
+  if ($object->param('record_type')) {
+    $interface->data->attach_owner($object->param('record_type'));
+  }
   $interface->cgi_populate($object, $id);
 
   warn "Saving record ", $interface->data;
@@ -64,6 +67,9 @@ sub delete {
 
   my $primary_key = EnsEMBL::Web::Tools::DBSQL::TableName::parse_primary_key($interface->data->get_primary_key);
   my $id = $object->param($primary_key) || $object->param('id');
+  if ($object->param('record_type')) {
+    $interface->data->attach_owner($object->param('record_type'));
+  }
   $interface->data->populate($id);
 
   my $success = $interface->data->destroy;

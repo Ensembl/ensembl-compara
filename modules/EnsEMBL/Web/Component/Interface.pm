@@ -108,7 +108,10 @@ sub preview_form {
   my $primary_key = EnsEMBL::Web::Tools::DBSQL::TableName::parse_primary_key($panel->interface->data->get_primary_key);
   my $id = $object->param($primary_key) || $object->param('id');
   my $db_action = $object->param('db_action');
-  warn "Action: $db_action = ", $object->param('db_action');
+  if ($object->param('record_type')) {
+    $panel->interface->data->attach_owner($object->param('record_type'));
+  }
+
 
   if ($db_action eq 'delete') {
     $panel->interface->data->populate($id);
@@ -152,6 +155,9 @@ sub _data_form {
 
   ## form widgets
   my $key = EnsEMBL::Web::Tools::DBSQL::TableName::parse_primary_key($panel->interface->data->get_primary_key);
+  if ($object->param('record_type')) {
+    $panel->interface->data->attach_owner($object->param('record_type'));
+  }
   my $id = $object->param($key) || $object->param('id');
   if ($id) {
     $panel->interface->data->populate($id);
