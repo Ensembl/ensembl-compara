@@ -161,6 +161,7 @@ sub write_output {
 	$gaba->store($first_block);
 	my $group_id = $first_block->dbID;
 	$gaba->store_group_id($first_block, $group_id);
+	$self->_write_gerp_dataflow($first_block, $mlss);
 	
 	#store the rest of the genomic_align_blocks
 	foreach my $this_gab (@$gab_array) {
