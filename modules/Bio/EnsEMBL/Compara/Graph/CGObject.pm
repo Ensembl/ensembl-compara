@@ -38,6 +38,8 @@ use Bio::EnsEMBL::Utils::Argument;
 
 sub new {
   my ($class, @args) = @_;
+  ## Allows to create a new object from an existing one with $object->new
+  $class = ref($class) if (ref($class));
   my $self = $class->alloc(@args);
   $self->init;  
   return $self;
