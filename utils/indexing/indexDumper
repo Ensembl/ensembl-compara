@@ -50,9 +50,9 @@ foreach my $species ( @species ) {
   $conf->{'species'}   = $species;
   my %dbs = %{$SD->get_config($species,'databases')||{}};
   $conf->{'dbs'}       = { map { ($_,$dbs{$_}{NAME}) } keys %dbs };
-  $conf->{'dbs'}{'ENSEMBL_COMPARA'} = 'ensembl_compara_44';
+  $conf->{'dbs'}{'ENSEMBL_COMPARA'} = 'ensembl_compara_'.$SD->ENSEMBL_VERSION;
   my $core = $dbs{'ENSEMBL_DB'};
-  $conf->{'dbh_compara'} = DBI->connect( "dbi:mysql:ensembl_compara_44;host=ensdb-1-10;port=3307", $core->{'USER'}, $core->{'PASS'} );
+  $conf->{'dbh_compara'} = DBI->connect( "dbi:mysql:ensembl_compara_".$SD->ENSEMBL_VERSION.";host=ensdb-1-10;port=3307", $core->{'USER'}, $core->{'PASS'} );
   $conf->{'dbh'}         = DBI->connect( "dbi:mysql:$core->{'NAME'};host=$core->{'HOST'};port=$core->{'PORT'}", $core->{'USER'}, $core->{'PASS'} );
   warn join ' ', $species, Data::Dumper::Dumper $conf;
   foreach my $index (@indexes) {
@@ -518,11 +518,12 @@ warn "START... $DB";
     my $DBNAME = $DBS{$DB};
     my $extra = $DB ne 'core' ? ";db=$DB" : '';
     my %xrefs = ();
+    my %xrefs_desc = ();
     my %disp_xrefs = ();
     foreach my $type( qw(Gene Transcript Translation) ) {
       my $T = $conf->{'dbh'}->selectall_arrayref(
         "select ox.ensembl_id,
-                x.display_label, x.dbprimary_acc, ed.db_display_name, es.synonym
+                x.display_label, x.dbprimary_acc, ed.db_display_name, es.synonym, x.description
            from $DBNAME.object_xref as ox, $DBNAME.xref as x, $DBNAME.external_db as ed left join $DBNAME.external_synonym as es on es.xref_id = x.xref_id
           where ox.ensembl_object_type = '$type' and ox.xref_id = x.xref_id and x.external_db_id = ed.external_db_id"
       );
@@ -530,6 +531,7 @@ warn "START... $DB";
         $xrefs{$type}{$_->[0]}{$_->[3]}{$_->[1]}=1 if $_->[1];
         $xrefs{$type}{$_->[0]}{$_->[3]}{$_->[2]}=1 if $_->[2];
         $xrefs{$type}{$_->[0]}{$_->[3]}{$_->[4]}=1 if $_->[4];
+        $xrefs_desc{$type}{$_->[0]}{$_->[5]}=1     if $_->[5];
       }
       warn "XREF $type query...";
     }
@@ -563,12 +565,13 @@ warn "Gene query...";
       my($g,$t,$tr,$gs,$ts,$trs,$d,$ddb,$dpa,$dn,$a,$ad,$s,$st,$bt) = @$row;
       if( $old{'g'} != $g ) {
         if( $old{'g'} ) {
-          print O &geneLine( $conf->{'species'}, $old{'ex'}, $old{'s'}.' '.$old{'bt'}, $old{'gs'}, $old{'alt'}, $extra, join( ' ', grep{$_}keys %{$old{'i'}}), $old{'t'},$old{'tr'},$old{'e'},$old{'d'} );
+          print O &geneLine( $conf->{'species'}, $old{'ex'}, $old{'s'}.' '.$old{'bt'}, $old{'gs'}, $old{'alt'}, $extra, join( ' ', grep{$_}keys %{$old{'i'}}), $old{'t'},$old{'tr'},$old{'e'},
+	    $old{'d'} );
         }
         %old = (
           'g' => $g,
           'gs' => $gs,
-          'd'  => $d,
+          'd' => $d,
           'tr' => {$trs?($trs=>1):()},
           't'  => {$ts ?($ts=>1) :()},
           'ex' => {},
@@ -593,6 +596,9 @@ warn "Gene query...";
         foreach my $db( keys %{$xrefs{'Translation'}{$tr}||{}} ) {
           foreach my $K( keys %{$xrefs{'Translation'}{$tr}{$db}} ) { $old{'e'}{$db}{$K}=1;  $old{'i'}{$K}=1; }
         }
+	foreach my $K( keys %{$xrefs_desc{'Translation'}{$tr}} ) { $old{'i'}{$K}=1; }
+	foreach my $K( keys %{$xrefs_desc{'Transcript' }{$t }} ) { $old{'i'}{$K}=1; }
+	foreach my $K( keys %{$xrefs_desc{'Gene'       }{$g }} ) { $old{'i'}{$K}=1; }
       } else {
         $old{'t'}{$ts}=1;
         $old{'tr'}{$trs}=1;
@@ -604,9 +610,14 @@ warn "Gene query...";
         foreach my $db( keys %{$xrefs{'Translation'}{$tr}||{}} ) {
           foreach my $K( keys %{$xrefs{'Translation'}{$tr}{$db}} ) { $old{'e'}{$db}{$K}=1; $old{'i'}{$K}=1; }
         }
+	foreach my $K( keys %{$xrefs_desc{'Translation'}{$tr}} ) { $old{'i'}{$K}=1; }
+	foreach my $K( keys %{$xrefs_desc{'Transcript' }{$t }} ) { $old{'i'}{$K}=1; }
       }
     }
-    print O &geneLine( $conf->{'species'}, $old{'ex'}, $old{'s'}.' '.$old{'bt'}, $old{'gs'}, $old{'alt'}, $extra, join( ' ', grep{$_}keys %{$old{'i'}}), $old{'t'},$old{'tr'},$old{'e'},$old{'d'} );
+    print O &geneLine( $conf->{'species'}, $old{'ex'}, $old{'s'}.' '.$old{'bt'}, $old{'gs'}, $old{'alt'},
+      $extra, join( ' ', grep{$_}keys %{$old{'i'}}), 
+      $old{'t'},$old{'tr'},$old{'e'},
+      $old{'d'} );
     warn "FINISHED...... genes $DB ...";
   }
   my %current_stable_ids =();
