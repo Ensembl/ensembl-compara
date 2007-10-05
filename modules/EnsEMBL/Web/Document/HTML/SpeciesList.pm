@@ -13,6 +13,7 @@ sub render {
   my ($class, $request) = @_;
 
   my $species_defs = $ENSEMBL_WEB_REGISTRY->species_defs;
+    warn "DEFAULTS ", $species_defs->DEFAULT_FAVOURITES;
 
   my $adaptor = $ENSEMBL_WEB_REGISTRY->newsAdaptor();
   my %id_to_species = %{$adaptor->fetch_species($SiteDefs::ENSEMBL_VERSION)};
@@ -94,26 +95,6 @@ sub setup_species_descriptions {
   return %description;
 }
 
-sub check_lists {
-  my ($favourite_species, $species_list, $id_to_species) = @_;
-  my @temp;
-  my $ok = 0;
-  foreach my $sp_id (keys %$id_to_species) {
-    foreach my $id ((@$favourite_species, @$species_list)) {
-      if ($id == $sp_id) {
-        $ok = 1;
-        last;
-      }
-    }
-    push @temp, $sp_id if !$ok;
-  }
-  if (scalar(@temp) > 0) {
-    unshift(@$species_list, @temp);
-  }
-
-  return $species_list;
-}
-
 sub render_species_list {
   my ($user, $species_defs, $id_to_species, $species_description) = @_;
   my %description = %{ $species_description };
@@ -123,42 +104,38 @@ sub render_species_list {
   if ($user && $user->id) {
     @specieslists = @{ $user->specieslists };
   }
-  my %favourites = ();
-  my @favourite_species = ();
-  my @species_list = ();
+  my @favourites = ();
   my $html = "";
 
   if ($#specieslists < 0) {
-    foreach my $name (("Homo_sapiens", "Mus_musculus", "Danio_rerio")) {
-      push @favourite_species, $species_id{$name};
+#    my @defaults = @{$species_defs->DEFAULT_FAVOURITES} 
+#      || ($ENV{'ENSEMBL_PRIMARY_SPECIES'}, $ENV{'ENSEMBL_SECONDARY_SPECIES'});
+#    warn "DEFAULTS @defaults";
+=pod
+    foreach my $name (@defaults) {
+      push @favourites, $species_id{$name};
     }
-    my @name_order = sort {$a cmp $b} values %id_to_species;
-    foreach my $name (@name_order) {
-      unless ($name =~ /Homo_sapiens|Mus_musculus|Danio_rerio/) {
-        push (@species_list, $species_id{$name});
-      }
-    }
-  } else {
-    my $list = $specieslists[0];
-    @favourite_species = split(/,/, $list->favourites); 
-    @species_list = split(/,/, $list->list); 
+=cut
   }
-
-  ## check lists for new or deleted species
-  @species_list = @{check_lists(\@favourite_species, \@species_list, \%id_to_species)};
+  else {
+    my $list = $specieslists[0];
+    @favourites = split(/,/, $list->favourites); 
+  }
 
   ## output list
   if (!$user) {
     $html .= "<b>Popular genomes</b><br />\n";
+    $html .= '<a href="javascript:login_link()">Log in to customize</a>';
   } else {
-    $html .= "<b>Popular genomes</b> &middot; \n";
-    $html .= "<a href='javascript:void(0);' onClick='toggle_reorder();'>Reorder</a>";
+    $html .= "<b>Favourite genomes</b> &middot; \n";
+    $html .= '<a href="javascript:void(0);" onClick="toggle_reorder();">Change favourites</a>';
   }
   $html .= "<div id='static_favourite_species'>\n";
   $html .= "<div class='favourites-species-list'>\n";
   $html .= "<dl class='species-list'>\n";
-  foreach my $id (@favourite_species) {
-    $favourites{$id} = 1;
+
+  ## Render favourites with images
+  foreach my $id (@favourites) {
     my $species_filename = $id_to_species{$id};
     my $species_name = $species_filename;
     my $common_name = $species_defs->other_species($species_filename, "SPECIES_COMMON_NAME");
@@ -170,34 +147,76 @@ sub render_species_list {
   $html .= "</div>\n";
   $html .= "</div>\n";
 
-  if (!$user) {
-    $html .= "<b>More genomes</b><br />\n";
-  } else {
-    $html .= "<b>More genomes</b> &middot; \n";
-    $html .= "<a href='javascript:void(0);' onClick='toggle_reorder();'>Reorder</a>";
-  }
-  $html .= "<div id='static_all_species'>\n";
-  $html .= "<ul class='species-list spaced'>\n";
-
-  my @sorted_by_common = sort {
-                          $species_defs->other_species($id_to_species{$a}, "SPECIES_COMMON_NAME")
-                          cmp
-                          $species_defs->other_species($id_to_species{$b}, "SPECIES_COMMON_NAME")
-                          } @species_list;
-
-  foreach my $id (@sorted_by_common) {
-    my $species_filename = $id_to_species{$id};
-    my $species_name = $species_filename;
-    my $common_name = $species_defs->other_species($species_filename, "SPECIES_COMMON_NAME");
-    $species_name =~ s/_/ /g;
-    if (!$favourites{$id}) {
-      $html .= "<li><span class='sp'><a href='/$species_filename/' title='$species_name'>$common_name</a></span>".$description{$species_name}[1]."</li>\n";
-      $favourites{$id} = 1;
-    }
-  }
-  $html .= "</ul>\n";
-  $html .= "Other pre-build species are available in <a href='#top' onclick='show_pre();'>Ensembl Pre! &rarr;</a>";
-  $html .= "</div>\n";
+  ## TO DO - generate automatically from species_defs
+  $html .= qq(<div id='static_all_species'>
+<form>
+<h3>All genomes</h3>
+<select name="species">
+  <option>-- Select a species --</option>
+  <optgroup label="Primates">
+    <option>Bushbaby</option>
+    <option>Chimpanzee</option>
+    <option>Human</option>
+    <option>Macaque</option>
+  </optgroup>
+    <optgroup label="Rodents, etc">
+    <option>Guinea Pig</option>
+    <option>Mouse</option>
+    <option>Rabbit</option>
+    <option>Rat</option>
+    <option>Squirrel</option>
+    <option>Tree Shrew</option>
+  </optgroup>
+    <optgroup label="Laurasiatheria">
+    <option>Cat</option>
+    <option>Cow</option>
+    <option>Dog</option>
+    <option>Hedgehog</option>
+    <option>Microbat</option>
+    <option>Shrew</option>
+  </optgroup>
+  <optgroup label="Afrotheria">
+    <option>Elephant</option>
+    <option>Tenrec</option>
+  </optgroup>
+  <optgroup label="Xenarthra">
+    <option>Armadillo</option>
+  </optgroup>
+  <optgroup label="Marsupials &amp; Monotremes">
+    <option>Opossum</option>
+    <option>Platypus</option>
+  </optgroup>
+  <optgroup label="Birds">
+    <option>Chicken</option>
+  </optgroup>
+  <optgroup label="Reptiles &amp; Amphibians">
+    <option>Xenopus</option>
+  </optgroup>
+  <optgroup label="Fish">
+    <option>Fugu</option>
+    <option>Medaka</option>
+    <option>Stickleback</option>
+    <option>Tetrodon</option>
+    <option>Zebrafish</option>
+  </optgroup>
+  <optgroup label="Other Chordates">
+    <option>Ciona intestinalis</option>  
+    <option>Ciona savignyi</option>
+  </optgroup>
+  <optgroup label="Other Eukaryotes">
+    <option>Aedes</option>
+    <option>Anopheles</option>
+    <option>C. elegans</option>
+    <option>Fruitfly</option>
+    <option>Yeast</option>
+  </optgroup>
+</select>&nbsp;<input type="submit" value="Go" class="red-button">
+</form>
+);
+  
+  $html .= qq(
+<p>Other pre-build species are available in <a href='#top' onclick='show_pre();'>Ensembl Pre! &rarr;</a></p>
+</div>\n);
   return $html;
 }
 
@@ -207,42 +226,32 @@ sub render_ajax_reorder_list {
   my %species_id = reverse %id_to_species;
   my $html = "";
 
-  $html .= "<b>Drag and drop species names to reorder this list</b> &middot; <a href='javascript:void(0);' onClick='toggle_reorder();'>Done</a><br /><br />\n";
-  $html .= "Hint: For easy access to commonly used genomes, drag from the bottom list to the top one.";
+  $html .= "For easy access to commonly used genomes, drag from the bottom list to the top one &middot; <a href='javascript:void(0);' onClick='toggle_reorder();'>Done</a><br /><br />\n";
 
-  $html .= "<div id='favourite_species'>\n";
+  $html .= "<div id='favourite_species'>\n<b>Favourites</b>";
   #warn "CHECKING FOR SPECIES IN AJAX LIST";
   my @specieslists;
   if ($user) {
     @specieslists = @{ $user->specieslists };
   }
-  my %favourites = ();
   my @favourite_species = ();
-  my @species_list = ();
+  my %favourites = ();
   #warn "FOUND SPECIES LISTS:" . $#specieslists;
   if ($#specieslists < 0) {
     foreach my $name (("Homo_sapiens", "Mus_musculus", "Danio_rerio")) {
       push @favourite_species, $species_id{$name};
     }
-    my @name_order = sort {$a cmp $b} values %id_to_species;
-    foreach my $name (@name_order) {
-      unless ($name =~ /Homo_sapiens|Mus_musculus|Danio_rerio/) {
-        push (@species_list, $species_id{$name});
-      }
-    }
   } else {
     my $list = $specieslists[0];
     @favourite_species = split(/,/, $list->favourites); 
-    @species_list = split(/,/, $list->list); 
   }
-
-  ## check lists for new or deleted species
-  @species_list = @{check_lists(\@favourite_species, \@species_list, \%id_to_species)};
+  foreach my $id (@favourite_species) {
+    $favourites{$id} = 1;
+  }
 
   $html .= "<ul id='favourites_list'>\n";
   foreach my $id (@favourite_species) {
     my $species_name = $id_to_species{$id};
-    $favourites{$id} = 1;
     my $sp_dir = $species_name;
     $species_name =~ s/_/ /;
     my $common = $species_defs->get_config($sp_dir, 'SPECIES_COMMON_NAME');
@@ -250,7 +259,7 @@ sub render_ajax_reorder_list {
   }
 
   $html .= "</ul></div>\n";
-  $html .= "<div id='all_species'>\n";
+  $html .= "<div id='all_species'>\n<b>Other available species</b>";
   $html .= "<ul id='species_list'>\n";
 
 
@@ -258,38 +267,21 @@ sub render_ajax_reorder_list {
                           $species_defs->other_species($id_to_species{$a}, "SPECIES_COMMON_NAME")
                           cmp
                           $species_defs->other_species($id_to_species{$b}, "SPECIES_COMMON_NAME")
-                          } @species_list;
+                          } keys %id_to_species;
 
   foreach my $id (@sorted_by_common) {
+    next if $favourites{$id};
     my $species_name = $id_to_species{$id};
-    if (!$favourites{$id}) {
-      my $sp_dir = $species_name;
-      $species_name =~ s/_/ /;
-      my $common = $species_defs->get_config($sp_dir, 'SPECIES_COMMON_NAME');
-      $html .= "<li id='species_$id'>$common (<em>" . $species_name . "</em>)</li>\n";
-      $favourites{$id} = 1;
-    }
-  }
-
-  ## Catch any species not yet displayed
-  foreach my $id (keys %id_to_species) {
-    my $species_name = $id_to_species{$id};
-    if (!$favourites{$id}) {
-      $species_name =~ s/_/ /;
-      $html .= "<li id='species_$id'>" . $species_name . "</li>\n"; 
-    }
+    my $sp_dir = $species_name;
+    $species_name =~ s/_/ /;
+    my $common = $species_defs->get_config($sp_dir, 'SPECIES_COMMON_NAME');
+    $html .= "<li id='species_$id'>$common (<em>" . $species_name . "</em>)</li>\n";
   }
 
   $html .= "</ul></div>\n";
   $html .= "<a href='javascript:void(0);' onClick='toggle_reorder();'>Finished reordering</a> &middot; <a href='/common/user/reset_favourites'>Restore default list</a>";
 #warn "HTML: $html";
 
-  return $html;
-}
-
-sub species_html {
-  my ($species, $prefix) = @_;
-  my $html = "";
   return $html;
 }
 

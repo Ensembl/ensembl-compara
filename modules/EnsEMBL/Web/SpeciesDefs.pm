@@ -493,25 +493,15 @@ sub _parse {
       ## Do species name and group
       (my $ininame = $filename) =~ s/_/ /g;
       my $bioname = $taxonomy[1].' '.$taxonomy[0];
+      my $group_hash = $tree->{'general'}{'SPECIES_GROUPS'};
       $tree->{'general'}{'SPECIES_BIO_NAME'} = $ininame;
       print STDERR "\t  [WARN] SPECIES NAME MISMATCH!\n" if $ininame ne $bioname;
-      $tree->{'general'}{'SPECIES_GROUP'} = 'Eukaryotes';
       foreach my $taxon (@taxonomy) {
-        $taxon = lc($taxon);
-        if ($taxon eq 'mammalia') {
-          $tree->{'general'}{'SPECIES_GROUP'} = 'Mammals';
-          last;
-        }
-        if ($taxon eq 'chordata') {
-          $tree->{'general'}{'SPECIES_GROUP'} = 'Chordates';
-          last;
-        }
-        if ($taxon eq 'liliopsida'){
-          $tree->{'general'}{'SPECIES_GROUP'} = 'Monocotyledons';
-          last;
-        }
-        if ($taxon eq 'eudicotyledons'){
-          $tree->{'general'}{'SPECIES_GROUP'} = 'Eudicotyledons';
+        while (my ($k,$v) = each %$group_hash) {
+          if ($taxon eq $k) {
+            $tree->{'general'}{'SPECIES_GROUP'} = $v;
+            last;
+          }
         }
       }
       
