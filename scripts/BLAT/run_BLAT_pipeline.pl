@@ -213,8 +213,8 @@ my $chr2;
 
 my $queue = "normal";
 
-my $overlap = 10000;
-my $chunk_size = 1000000;
+my $overlap = 1000;
+my $chunk_size = 100000;
 my $masked = 2;
 my $min_score = 30;
 
@@ -478,7 +478,7 @@ sub dump_dna {
     my $run_str = "bsub -q $queue -o $lsf_output_file".
       " -J\"$job_name\"".
       " $base_dir/bin/DumpChromosomeFragments.pl".
-      " -dbname $species".
+      " -dbname \"$species\"".
       " -chr_names \"". join(",", @seq_region_names)."\"".
       " -coord_system \"$coordinate_system_name\"".
       " -overlap $overlap".
@@ -880,7 +880,7 @@ sub create_ooc_file {
 sub compile_BLAT_results {
   my ($species1_dir, $species2_dir, $seq_region1) = @_;
 
-  my $dir = "$RUN_DIR/${species1_dir}_vs_$species2_dir";
+  my $dir = "$RUN_DIR/${species1_dir}_vs_$species2_dir:s$min_score";
   my $prefix1 = $species1_dir;
   my $prefix2 = $species2_dir;
   $prefix1 =~ s/\_[^\_]+$//;
@@ -948,7 +948,7 @@ sub parse_BLAT_results {
   my $result_file = "$dir/$prefix.$seq_region";
   my $job_name = "Parse.BLAT.$prefix.${seq_region}_vs_$species2";
   my $run_str = "$BIN_DIR/parse_and_score.pl -F $input_file".
-      " -O $result_file -D 15000 -S1 $species2 -S2 $species1";
+      " -O $result_file -D 15000 -S1 \"$species2\" -S2 \"$species1\"";
   $run_str .= " -CF $reg_conf" if ($reg_conf);
   $run_str .= " 2>&1";
 
