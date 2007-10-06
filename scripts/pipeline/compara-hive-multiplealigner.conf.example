@@ -11,7 +11,7 @@
 
  { TYPE => HIVE,
    'hive_output_dir' => "/ecs2/work3/abel/hive/abel_mlagan_final_test/workers",
-   'name'            => "mlagan",
+   'name'            => "pecan",
    # name is used to make this pipeline independent from other ones
  },
 
@@ -19,11 +19,24 @@
    'exon_min_length' => 20
  },
 
+ { TYPE => 'BLASTP_TEMPLATE',
+   '-program'         => 'wublastp',
+   '-program_version' => '1',
+   '-program_file'    => 'wublastp',
+   ## You can change the filter option to be the built-in xnu or seg if you don't have the cast program:
+   '-parameters'      => "{options=>'-filter \"cast -\" -span1 -postsw -V=20 -B=20 -sort_by_highscore -warnings -cpus 1'}",
+   '-module'          => 'Bio::EnsEMBL::Compara::RunnableDB::BlastComparaPep',
+   '-module_version'  => undef,
+   '-gff_source'      => undef,
+   '-gff_feature'     => undef,
+   'fasta_dir'        => "/ecs2/work3/abel/hive/abel_mlagan_final_test/blastDB",
+ },
+
  { TYPE => SYNTENY_MAP_BUILDER,
-   'strict_map' => 1,
    'logic_name' => "Mercator",
    # 'module' => "My::Own::Module", # module: By default, the module will be
           # "Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::$logic_name"
+   'strict_map' => 1,
    # 'cutoff_score' => 100,
    # 'cutoff_evalue' => 1e-5,
  },
@@ -31,24 +44,26 @@
   ## NB: You can have several MULTIPLEALIGNER blocks. Each of them will result
   ## in a different set of multiple alignments
  { TYPE => MULTIPLE_ALIGNER,
-   'species_set' => [1,2,3],
-   'tree_file' => '/ecs2/work3/abel/hive/abel_mlagan_final/hmr.tree',
-   'logic_name' => "Mlagan",
+   'logic_name' => "Pecan",
    # 'module' => "My::Own::Module", # module: By default, the module will be
           # "Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::$logic_name"
-   'method_link' => [9, 'MLAGAN'],
+   'species_set' => [1,2,3],
+   'tree_file' => '/ecs2/work3/abel/hive/abel_mlagan_final/hmr.tree',
+   'method_link' => [10, 'PECAN'],
  },
 
- { TYPE => 'BLASTP_TEMPLATE',
-   '-program'         => 'wublastp',
-   '-program_version' => '1',
-   '-program_file'    => 'wublastp',
-   '-parameters'      => "{options=>'-filter \"cast -\" -span1 -postsw -V=20 -B=20 -sort_by_highscore -warnings -cpus 1'}",
-   '-module'          => 'Bio::EnsEMBL::Compara::RunnableDB::BlastComparaPep',
-   '-module_version'  => undef,
-   '-gff_source'      => undef,
-   '-gff_feature'     => undef,
-   'fasta_dir'        => "/ecs2/work3/abel/hive/abel_mlagan_final_test/blastDB",
+  ## CONSERVATION_SCORE is run after the MULTIPLE_ALIGNER, one job per alignment.
+  ## You can skip this if you do not want conservation scores.
+ { TYPE => CONSERVATION_SCORE,
+   'logic_name' => 'Gerp',
+   # 'module' => "My::Own::Module", # module: By default, the module will be
+          # "Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::$logic_name"
+   'param_file' => '/ecs2/work3/abel/hive/abel_mlagan_final/gerp_param_file.txt',
+   'tree_file' => '/ecs2/work3/abel/hive/abel_mlagan_final/hmr.tree',
+   'method_links' => [[11, 'GERP_CONSTRAINED_ELEMENT'],
+                      [501, 'GERP_CONSERVATION_SCORE']],
+   'window_sizes' => '[1,10,100,500]',
+   '-program' => '/software/ensembl/compara/gerp/GERP_03292006/GERP.pl',
  },
 
  { TYPE => SPECIES,
