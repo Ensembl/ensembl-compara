@@ -94,7 +94,8 @@ sub run
     (-input_dir => $self->input_dir,
      -output_dir => $self->output_dir,
      -genome_names => $self->genome_db_ids,
-     -analysis => $self->analysis);
+     -analysis => $self->analysis,
+     -program => $self->analysis->program_file);
   $self->{'_runnable'} = $runnable;
   $runnable->run_analysis;
 #  $self->output($runnable->output);
