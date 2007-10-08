@@ -90,8 +90,10 @@ $array_ref = $dbh->selectcol_arrayref("select coord_system_id from coord_system 
 my $coord_system_id = $array_ref->[0];
 
 # populate assembly and assembly_exception tables
+my $all_seq_region_names = {};
 foreach my $seq_region (@seq_regions) {
   my ($seq_region_name, $seq_region_start, $seq_region_end) = @{$seq_region};
+  $all_seq_region_names->{$seq_region_name} = 1;
   $dbh->do("insert into assembly select a.* from $srcDB.seq_region s,$srcDB.assembly a where s.coord_system_id=$coord_system_id and s.name='$seq_region_name' and s.seq_region_id=a.asm_seq_region_id and a.asm_start<$seq_region_end and a.asm_end>$seq_region_start");
 }
 $dbh->do("insert ignore into assembly_exception select ax.* from $srcDB.assembly_exception ax,assembly a where ax.seq_region_id=a.asm_seq_region_id");
@@ -109,7 +111,11 @@ $dbh->do("insert into dna select d.* from $srcDB.dna d,seq_region s where s.seq_
 
 # populate repeat_feature and repeat_consensus tables
 # repeat_features are stored at sequence_level
-$dbh->do("insert into repeat_feature select rf.* from seq_region s, $srcDB.repeat_feature rf where s.seq_region_id=rf.seq_region_id");
+$dbh->do("insert into repeat_feature select rf.* from seq_region s, $srcDB.repeat_feature rf where s.seq_region_id=rf.seq_region_id and s.name not in (\"".join("\", \"", keys(%$all_seq_region_names))."\")");
+foreach my $seq_region (@seq_regions) {
+  my ($seq_region_name, $seq_region_start, $seq_region_end) = @{$seq_region};
+  $dbh->do("insert into repeat_feature select rf.* from seq_region s, $srcDB.repeat_feature rf where s.seq_region_id=rf.seq_region_id and s.name='$seq_region_name' and rf.seq_region_start<$seq_region_end and rf.seq_region_end>$seq_region_start");
+}
 $dbh->do("insert ignore into repeat_consensus select rc.* from repeat_feature rf, $srcDB.repeat_consensus rc where rf.repeat_consensus_id=rc.repeat_consensus_id");
 
 # populate transcript, transcript_attrib and transcript_stable_id tables
