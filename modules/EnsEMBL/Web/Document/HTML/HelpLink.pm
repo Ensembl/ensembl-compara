@@ -11,7 +11,7 @@ sub new           {
   return shift->SUPER::new(
     'kw'    => undef,
     'label' => 'Help',
-    'URL'   => "/@{[$ENV{'ENSEMBL_SPECIES'}||'perl']}/helpview" 
+    'URL'   => "/common/helpview" 
   ); 
 }
 sub URL    :lvalue { $_[0]{'URL'};   }

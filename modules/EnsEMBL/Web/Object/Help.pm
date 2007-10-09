@@ -26,17 +26,15 @@ sub send_email {
   ## Do some email address sanitation!
   $email =~ s/"//g;
   $email =~ s/''/'/g;
+  my $server = $self->species_defs->ENSEMBL_SERVERNAME;
   push @mail_attributes,
     [ 'Date',         $date ],
     [ 'Name',         $self->param('name') ],
     [ 'Email',        $email ],
     [ 'Referrer',     $self->referer ],
     [ 'Last Keyword', $self->param('kw')||'-none-' ],
-    [ 'Problem',      $self->param('category')],
     [ 'User agent',   $ENV{'HTTP_USER_AGENT'}],
-    [ 'Request URI',  $ENV{'REQUEST_URI'}];
   my $comments = $self->param('comments');
-  return if $comments =~ /777-777/;
 ## HACK OUT BLOG SPAM!
   my $recipient = $self->species_defs->ENSEMBL_HELPDESK_EMAIL;
 
@@ -47,18 +45,42 @@ sub send_email {
     warn "MAIL FILTERED DUE TO BLOG SPAM.....";
     return 1;
   } 
-  my $message = '';
+  my $message = "Support question from $server\n\n";
   $message .= join "\n", map {sprintf("%-16.16s %s","$_->[0]:",$_->[1])} @mail_attributes;
   $message .= "\n\nComments:\n\n@{[$self->param('comments')]}\n\n";
   my $mailer = new Mail::Mailer 'smtp', Server => "localhost";
   my $sitetype = $self->species_defs->ENSEMBL_SITETYPE;
   my $sitename = $sitetype eq 'EnsEMBL' ? 'Ensembl' : $sitetype;
-  my $subject = $self->param('category') || "$sitename website Helpdesk";
+  my $subject = $self->param('category') || "$sitename Helpdesk";
+  $subject .= " - $server";
   $mailer->open({ 'To' => $recipient, 'Subject' => $subject, 'From' => $self->param('email') });
   print $mailer $message;
   $mailer->close();
   return 1;
 }
+
+sub search {
+  ### a
+  ### Returns:
+  my $self = shift;
+
+  my $keywords    = $self->param( 'kw' );
+
+  ## Switch to this once modular articles are available
+  #my $modular     = $self->modular;
+  my $modular     = 0;
+
+  my $method = 'fetch_scores_by_string';
+  if (!$modular) {
+    $method = 'search_articles';
+  }
+
+  ## get list of help articles by appropriate method
+  $self->{'data'}{'_results'} = $self->adaptor->$method( $keywords );
+  return $self->results;
+}
+
+sub results :lvalue { $_[0]->{'data'}{'_results'}; }
 
 sub records {
   my ($self, $criteria) = @_;
@@ -88,28 +110,82 @@ sub records {
   return $self->{'records'};
 }
 
-sub results {
+sub views {
+  my $self = shift;
+  my $articles = [];
+
+  my $params = [['status','in_use']];
+  if ($self->param('kw')) {
+    push @$params, ['keyword',$self->param('kw')];
+  }
+
+  #my $modular = $self->modular;
+  my $modular = 0;
+  ## Check to see if there are any records of type 'view'
+  if ($modular) {
+    push @$params, ['type','view'];
+    if ($self->param('id')) {
+      push @$params, ['help_record_id',$self->param('id')];
+    }
+    $articles = $self->records($params);
+    pop @$params; ## remove type parameter since it doesn't exist in old table
+  }
+  else {
+    if ($self->param('id')) {
+      push @$params, ['article_id',$self->param('id')];
+    }
+  }
+    
+  ## Check old database and convert to records
+  ## NB - convert to else block once EnsEMBL is fully migrated?
+  my $results = $self->adaptor->fetch_articles($params);
+  foreach my $row (@$results) {
+    my %fields = (
+        'title'     => $row->{'title'},
+        'keyword'   => $row->{'keyword'},
+        'content'   => $row->{'content'},
+        'category'  => $row->{'category_name'},
+      );
+    my $temp_fields = {};
+    foreach my $key (keys %fields ) {
+      $temp_fields->{$key} = $fields{$key};
+      $temp_fields->{$key} =~ s/'/\\'/g;
+    }
+    my $data = Dumper($temp_fields);
+    $data =~ s/^\$VAR1 = //;
+
+    my $r = EnsEMBL::Web::Record::Help->new(
+        'id'          => $row->{'article_id'},
+        'type'        => 'view',
+        'keyword'     => $row->{'keyword'},
+        'data'        => $data,
+        'adaptor'     => $self->adaptor,
+    );
+    push @$articles, $r; 
+  }
+  return $articles;
+}
+
+
+sub articles {
   ### a
   ### Returns:
   my $self = shift;
 
-  my $modular     = 0;
-  ## Switch to this once modular articles are available
-  #my $modular     = $self->modular;
   my $keywords    = $self->param( 'kw' );
   my $ids         = $self->param( 'ids' );
   my ($method_se, $method_kw, $method_id, $results);
 
-  if ($self->modular) {
-    $method_se = 'fetch_article_by_keyword';
-    $method_kw = 'fetch_scores_by_string';
-    $method_id = 'fetch_summaries_by_scores';
-  }
-  else {
+  #if ($self->modular) {
+  #  $method_se = 'fetch_article_by_keyword';
+  #  $method_kw = 'fetch_scores_by_string';
+  #  $method_id = 'fetch_summaries_by_scores';
+  #}
+  #else {
     $method_se = 'fetch_all_by_keyword';
     $method_kw = 'fetch_all_by_string';
     $method_id = 'fetch_all_by_scores';
-  }
+  #}
 
   ## get list of help articles by appropriate method
   if( $self->param('se') ) {

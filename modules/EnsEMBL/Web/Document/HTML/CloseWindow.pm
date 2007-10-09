@@ -15,8 +15,7 @@ sub render {
   if( $self->style eq 'help' ) {
     $self->print( qq(
     <div id="closewindow">
-    <form action="@{[$self->URL]}" method="get">Search Help:
-      <input type="hidden" name="action" value="full_text_search" />
+    <form action="/common/help/results" method="get">Search Help:
       <input type="text" size="25" name="kw" value="@{[$self->kw]}" />
       <br />Highlight search term(s)
       <input type="checkbox" name="hilite" />

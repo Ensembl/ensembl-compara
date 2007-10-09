@@ -2,18 +2,113 @@ package EnsEMBL::Web::Configuration::Help;
 
 use strict;
 use EnsEMBL::Web::Configuration;
-use EnsEMBL::Web::Wizard::Help;
-#use Mail::Mailer;
 
 our @ISA = qw( EnsEMBL::Web::Configuration );
 
 sub helpview {
   my $self = shift;
   my $object = $self->{object};
+  $self->_configure_popup;
+  my $sitetype = $object->species_defs->ENSEMBL_SITETYPE;
+  $self->set_title( "$sitetype Help" );
+
+  if( my $panel = $self->new_panel( 'Image',
+    'code'    => "info$self->{flag}",
+    'object'  => $self->{object},
+
+  )) {
+    $panel->add_components(qw(
+      helpview          EnsEMBL::Web::Component::Help::helpview
+    ));
+    $self->add_panel( $panel );
+  }
+}
+
+sub search {
+  my $self = shift;
+  my $object = $self->{object};
+  $self->_configure_popup;
+  my $sitetype = $object->species_defs->ENSEMBL_SITETYPE;
+  $self->set_title( "Search $sitetype Help" );
+
+  if( my $panel = $self->new_panel( 'Image',
+    'code'    => "info$self->{flag}",
+    'object'  => $self->{object},
+
+  )) {
+    $panel->add_components(qw(
+      enter_search_terms          EnsEMBL::Web::Component::Help::enter_search_terms
+    ));
+    $self->add_form( $panel, qw(search     EnsEMBL::Web::Component::Help::search_form) );
+    $self->add_panel( $panel );
+  }
+}
+
+sub results {
+  my $self = shift;
+  my $object = $self->{object};
+  $self->_configure_popup;
+  my $sitetype = $object->species_defs->ENSEMBL_SITETYPE;
+  $self->set_title( "$sitetype Help" );
+
+  if( my $panel = $self->new_panel( 'Image',
+    'code'    => "info$self->{flag}",
+    'object'  => $self->{object},
+
+  )) {
+    $panel->add_components(qw(
+      results          EnsEMBL::Web::Component::Help::results
+    ));
+    $self->add_panel( $panel );
+  }
+}
+
+sub contact {
+  my $self = shift;
+  my $object = $self->{object};
+  $self->_configure_popup;
+  my $sitetype = $object->species_defs->ENSEMBL_SITETYPE;
+  $self->set_title( "Contact $sitetype HelpDesk" );
+
+  if( my $panel = $self->new_panel( 'Image',
+    'code'    => "info$self->{flag}",
+    'object'  => $self->{object},
+    'caption' => 'Contact HelpDesk',
+
+  )) {
+    $panel->add_components(qw(
+      contact          EnsEMBL::Web::Component::Help::contact
+    ));
+    $self->add_form( $panel, qw(contact     EnsEMBL::Web::Component::Help::contact_form) );
+    $self->add_panel( $panel );
+  }
+}
+
+sub thanks {
+  my $self = shift;
+  my $object = $self->{object};
+
+  $self->set_title('Thank You for Contacting HelpDesk');
+
+  if( my $panel = $self->new_panel( 'Image',
+    'code'    => "info$self->{flag}",
+    'object'  => $self->{object},
+
+  )) {
+    $panel->add_components(qw(
+      thanks          EnsEMBL::Web::Component::Help::thanks
+    ));
+    $self->add_panel( $panel );
+  }
+}
+
+
+
+sub _configure_popup {
+  my $self = shift;
+  my $object = $self->{object};
 
   ## Configure masthead, left hand menu, etc.
-  my $sitetype = $object->species_defs->ENSEMBL_SITETYPE;
-  $self->set_title( "$sitetype HelpView" );
   $self->{'page'}->close->style = 'help';
   $self->{'page'}->close->URL   = "/$ENV{'ENSEMBL_SPECIES'}/$ENV{'ENSEMBL_SCRIPT'}";
   $self->{'page'}->close->kw    = $object->param('kw');
@@ -21,40 +116,6 @@ sub helpview {
   $self->{'page'}->helplink->action = 'form';
   $self->{'page'}->helplink->kw     = $object->param('kw');
   $self->{'page'}->helplink->ref    = $object->referer;
-
-  $self->{'page'}->menu->add_block( '___', 'bulleted', 'Help with help!' );
-  $self->{'page'}->menu->add_entry( '___', 'href' => $object->_help_URL( {'kw'=>'helpview'} ), 'text' => 'General' ) ;
-  $self->{'page'}->menu->add_entry( '___', 'href' => $object->_help_URL( {'kw'=>'helpview#searching'} ), 'text' => 'Full text search' );
-
-  ## the "helpview" wizard uses 7 nodes: intro, do search, multiple results, single result, 
-  ## no result, send email and acknowledgement
-  my $wizard = EnsEMBL::Web::Wizard::Help->new($object);
-  $wizard->add_nodes([qw(hv_intro hv_search hv_multi hv_single hv_contact hv_email hv_thanks)]);
-  $wizard->default_node('hv_intro');
-
-  ## chain the nodes together
-  $wizard->chain_nodes([
-          ['hv_intro'=>'hv_search'],
-          ['hv_search'=>'hv_multi'],
-          ['hv_search'=>'hv_single'],
-          ['hv_search'=>'hv_contact'],
-          ['hv_contact'=>'hv_email'],
-          ['hv_email'=>'hv_thanks'],
-  ]);
-
-  ## make this wizard compatible with old URLs
-  if ($object->param('se')) {
-    $wizard->current_node($object, 'hv_single');
-  }
-  elsif ($object->param('ref')) {
-    $wizard->current_node($object, 'hv_contact');
-  }
-  elsif ($object->param('kw') && !$object->param('results') ) {
-    $wizard->current_node($object, 'hv_search');
-  }
-
-  $self->add_wizard($wizard);
-  $self->wizard_panel('');
 }
 
 sub help_feedback {
@@ -180,6 +241,16 @@ sub Workshops_Online {
 sub context_menu {
   my $self = shift;
   my $object = $self->{object};
+
+  $self->{page}->menu->delete_block( 'ac_mini');
+  $self->{page}->menu->delete_block( 'archive');
+
+
+  $self->{'page'}->menu->add_block( '___', 'bulleted', 'Help with help!' );
+  $self->{'page'}->menu->add_entry( '___', 'href' => $object->_help_URL( {'kw'=>'helpview'} ), 'text' => 'General' ) ;
+  $self->{'page'}->menu->add_entry( '___', 'href' => '/common/helpsearch/form', 'text' => 'Full text search' );
+=pod
+  my $object = $self->{object};
   my $display_length = 34; #no of characters of the title that are to be displayed
   my $focus = $object->param('kw'); # get the current entry
   $focus =~ s/(.*)\#/$1/;
@@ -201,6 +272,7 @@ sub context_menu {
     }
     $self->add_entry( lc($row->{'category'}), %hash );
   }
+=cut
 }
 
 sub helpdesk_menu {

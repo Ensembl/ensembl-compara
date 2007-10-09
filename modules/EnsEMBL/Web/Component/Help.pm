@@ -2,6 +2,8 @@ package EnsEMBL::Web::Component::Help;
 
 use EnsEMBL::Web::Component;
 use EnsEMBL::Web::Form;
+use EnsEMBL::Web::Object::Data::Article;
+use EnsEMBL::Web::Object::Data::View;
 use Image::Size;
 
 our @ISA = qw( EnsEMBL::Web::Component);
@@ -20,33 +22,82 @@ sub _wrap_form {
   return 1;
 }
 
-sub hv_intro      { 
-  my ( $panel, $object) = @_;
+sub helpview {
+  my($panel,$object) = @_;
+  my @articles = @{$object->views};
+  my $article = $articles[0];
+  my $hilite = $object->param('hilite');
+
+  my $title = $article->title;
+  if ($hilite) {
+    $title = _kw_hilite($object, $title);
+  }
+  my $html = "<h2>$title</h2>";
+
+  my ($text, $header, $group);
+  $text = $article->content;
+  $text =~ s/\\'/'/g;
+  if ($hilite) {
+    $text   = _kw_hilite($object, $text);
+  }
+  $text = _link_mapping($object, $text);
+  $html .= "\n$text\n\n";
+  $panel->print($html);
+  return 1;
+}
+
+sub search {
+    my ( $panel, $object) = @_;
   my $html = qq(
   <h3>Search Tips</h3>
-<p>Ensembl Help now uses MySQL full text searching. This performs a case-insensitive natural language search 
+<p>Ensembl Help now uses MySQL full text searching. This performs a case-insensitive natural language search
 on the content of the help database. This gives better results than a simple string search, with some caveats:</p>
 <ul>
 <li>Words shorter than 4 characters in length (eg SNP) are ignored.</li>
 <li>Words that occur in more than 50% of the records are ignored.</li>
 <li>Wildcards such as '%' (zero or one occurences of any character) and '_' (exactly one character) are no longer available.</li>
 </ul>
-<p>For more about the Ensembl Help Search, please go to the <a href="/default/helpview?se=1;kw=helpview">HelpView help page</a>.</p>
+<p>For more about the Ensembl Help Search, please go to the <a href="/common/helpview?kw=helpview">HelpView help page</a>.</p>
 <h3>Search Ensembl Help</h3>
 );
-  $html .= $panel->form('hv_intro')->render();
-  $panel->print($html);
-  return 1;
+  $html .= $panel->form('search')->render();
+  
+}
 
- }
-sub hv_contact    { _wrap_form($_[0], $_[1], 'hv_contact'); }
+sub search_form {
+  my( $panel, $object ) = @_;
 
-sub hv_multi {
+  my $form = EnsEMBL::Web::Form->new( 'search', "/common/help/results", 'get' );
+
+  $form->add_element(
+    'type'    => 'String',
+    'name'    => 'kw',
+    'label'   => 'Search for:',
+  );
+
+  $form->add_element(
+    'type'    => 'CheckBox',
+    'name'    => 'hilite',
+    'label'   => 'Highlight search term(s)',
+  );
+
+  $form->add_element(
+    'type'    => 'Submit',
+    'name'    => 'submit',
+    'value'   => 'Go',
+  );
+
+  return $form;
+}
+
+sub results {
   my($panel,$object) = @_;
-  my $kw = $object->param('search');
+  my $kw = $object->param('kw');
   my ($list_type, %scores);
+  #my $modular = $object->species_defs->ENSEMBL_MODULAR_HELP;
+  my $modular = 0;
 
-  if ($object->species_defs->ENSEMBL_MODULAR_HELP) {
+  if ($modular) {
     $list_type = 'dl';
     ## convert scores back into hash
     my @articles = split('_', $object->param('results'));
@@ -59,83 +110,77 @@ sub hv_multi {
     $list_type = 'ul';
   }
 
-  my %param = (
-    'hilite' => $object->param('hilite'),
-    'search' => $kw,
-  );
-
   $panel->print(qq(
   <p>Your search for "$kw" is found in the following entries:</p>
-  <$list_type>));
+  <$list_type class="spaced">));
 
   foreach( @{$object->results}) {
-    $param{'kw'} = $_->{'keyword'};
-    if ($object->species_defs->ENSEMBL_MODULAR_HELP) {
-      $panel->printf( qq(\n    <dt><a href="%s">%s</a></dt><dd>%s</dd>), $object->_help_URL(\%param), $_->{'title'}, $_->{'summary'});
+    my $url = '/common/helpview?id='.$_->{'id'}.';hilite='.$object->param('hilite');
+    if ($modular) {
+      my $help = EnsEMBL::Web::Object::Data::View->new({ 'id' => $_->{'id'} }); 
+      $panel->printf( qq(\n    <dt><a href="%s">%s</a></dt><dd>%s</dd>), $url, $help->title, $help->summary);
     }
     else {
-      $panel->printf( qq(\n    <li><a href="%s">%s</a></li>), $object->_help_URL(\%param), $_->{'title'});
+      my $help = EnsEMBL::Web::Object::Data::Article->new({ 'id' => $_->{'id'} }); 
+      $panel->printf( qq(\n    <li><a href="%s">%s</a></li>), $url, $help->title);
     }
   } 
   $panel->print(qq(\n</$list_type>));
   return 1;
 }
 
-sub hv_single {
+sub contact { _wrap_form($_[0], $_[1], 'contact'); }
+
+sub contact_form {
+  my( $panel, $object ) = @_;
+
+  my $form = EnsEMBL::Web::Form->new( 'contact', "/common/help/send_email", 'get' );
+
+  $form->add_element(
+    'type'    => 'String',
+    'name'    => 'name',
+    'label'   => 'Your name:',
+  );
+
+  $form->add_element(
+    'type'    => 'Email',
+    'name'    => 'email',
+    'label'   => 'Your email:',
+  );
+
+  $form->add_element(
+    'type'    => 'String',
+    'name'    => 'category',
+    'label'   => 'Subject:',
+  );
+
+  $form->add_element(
+    'type'    => 'Text',
+    'name'    => 'comments',
+    'label'   => 'Message:',
+  );
+
+  $form->add_element(
+    'type'    => 'Hidden',
+    'name'    => 'kw',
+    'value'   => $object->param('kw'),
+  );
+
+  $form->add_element(
+    'type'    => 'Submit',
+    'name'    => 'submit',
+    'value'   => 'Send Email',
+  );
+
+  return $form;
+}
+
+sub thanks {
   my($panel,$object) = @_;
-  my @results = @{$object->results};
-  my $article = $results[0];
-  my $hilite = $object->param('hilite');
-
-  my $title = $$article{'title'};
-  if ($hilite) {
-    $title = _kw_hilite($object, $title);
-  }
-  my $html = "<h2>$title</h2>";
-
-  my ($text, $header, $group);
-  if ($object->species_defs->ENSEMBL_MODULAR_HELP) {
-    if ($$article{'intro'}) {
-      $text = $$article{'intro'};
-      if ($hilite) {
-        $text   = _kw_hilite($object, $text);
-      }
-      $text = _link_mapping($object, $text);
-      $html .= qq(<h4>Introduction</h4>);
-      $html .= $text;
-    }
-    ## do individual chunks
-    if ($$article{'items'} && scalar(@{$$article{'items'}}) > 0) {
-      my @items = @{$$article{'items'}};
-      foreach my $item (@items) {
-        $header = $$item{'header'};
-        $group  = $$item{'group_intro'};
-        $text   = $$item{'content'};
-        if ($hilite) {
-          $header = _kw_hilite($object, $header);
-          $text   = _kw_hilite($object, $text);
-        }
-        (my $anchor = $header) =~ s/ /_/g;
-        if ($group eq 'Y') {
-          $html .= qq(<h3 class="boxed" id="$anchor">$header</h3>\n);
-        }
-        else {
-          $html .= qq(<h4>$header</h4>\n);
-        }
-        $text = _link_mapping($object, $text);
-        $html .= qq($text\n\n);
-      }
-    }
-  }
-  else {
-    $text = $$article{'content'};
-    if ($hilite) {
-      $text   = _kw_hilite($object, $text);
-    }
-    $text = _link_mapping($object, $text);
-    $html .= "\n$text\n\n";
-  }
-  $panel->print($html);
+  my $sitetype = $object->species_defs->ENSEMBL_SITETYPE;
+  $panel->print(qq(
+<p>Your message was sent to the $sitetype Helpdesk Team. They will get back to you in due course.</p>
+<p>Helpdesk</p>));
   return 1;
 }
 
@@ -153,21 +198,12 @@ sub _link_mapping {
 }
 
 sub _kw_hilite {
+  ### Highlights the search keyword(s) in the text
   my ($object, $content) = @_;
   my $kw = $object->param('search') || $object->param('kw');
 
   $content =~ s/($kw)(?!(\w|\s|[-\.\/;:#\?"])*>)/<span class="hilite">$1<\/span>/img;
   return $content;
-}
-
-
-sub hv_thanks {
-  my($panel,$object) = @_;
-  my $sitetype = ucfirst(lc($object->species_defs->ENSEMBL_SITETYPE)) || 'Ensembl';
-  $panel->print(qq(
-<p>Your message was successfully sent to the $sitetype Site Helpdesk Administration Team. They will get back to you in due course.</p>
-<p>Helpdesk</p>));
-  return 1;
 }
 
 sub glossary {
@@ -419,16 +455,5 @@ sub static {
   $panel->print($html);
   return 1;
 }
-
-
-#-----------------------------------------------------------------
-# DB EDITOR WIZARD COMPONENTS
-#-----------------------------------------------------------------
-
-sub select    { _wrap_form($_[0], $_[1], 'select'); }
-sub enter     { _wrap_form($_[0], $_[1], 'enter'); }
-sub preview   { _wrap_form($_[0], $_[1], 'preview'); }
-
-
 
 1;
