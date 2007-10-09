@@ -394,96 +394,126 @@ sub group_notes {
 
 
 sub name {
-        my( $panel, $object ) = @_;
-        my $page_type= $object->[0];
-        my $site_type = ucfirst(lc($SiteDefs::ENSEMBL_SITETYPE));
-        my $sp = $object->species_defs->SPECIES_COMMON_NAME;
+	my( $panel, $object ) = @_;
+	my $page_type= $object->[0];
+	my $site_type = ucfirst(lc($SiteDefs::ENSEMBL_SITETYPE));
+	my $sp = $object->species_defs->SPECIES_COMMON_NAME;
+	
+	#add links to Vega or Ensembl depending on the source of the transcript
+	my @vega_info=();
+	my $url_name   = ($object->get_db eq 'vega') ? 'Ensembl' : 'Vega';
+	if($page_type eq 'Transcript'){
+		my $trans= $object->transcript;
+		my @similarity_links= @{$object->get_similarity_hash($trans)};
+		
+		my @vega_links;
+		#add links to Ensembl from ensembl-vega
+		if ($object->get_db eq 'vega') {
+			foreach my $link (@similarity_links) {
+				if ($link->dbname =~ /ENST/ ) {
+					if ($link->dbname eq 'ENST_CDS') {
+						$link->db_display_name("Ensembl transcript sharing CDS with Havana");
+					}
+					else {
+						$link->db_display_name("Ensembl transcript having exact match with Havana");
+					}
+					push @vega_links, $link;
+				}
+			}			
+		}
+		#add links to Vega from Ensembl genes
+		else {
+			#get 'shares CDS' links out first
+			#if there aren't any then get OTTT (but only those with OTT name and NULL info_text
+			foreach my $link (@similarity_links) {
+				if ($link->display_id =~ /OTT/ && ! $link->info_text ) {
+					if ($link->dbname =~ /shares_CDS/ ) {
+						@vega_links = ();
+						push @vega_links, $link;
+						last;
+					}
+					elsif ($link->dbname eq 'OTTT' ) {
+						push @vega_links, $link;
+					}
+				}
+			}
+		}
 
-        #add links to Vega, or Ensembl depending on the source of the transcript
-        my @vega_info=();
-        my $match_type = ($object->get_db eq 'vega') ? 'Ensembl' : 'Havana';
-        my $url_name   = ($object->get_db eq 'vega') ? 'Ensembl' : 'Vega';
-        if($page_type eq 'Transcript'){
-                my $trans= $object->transcript;
-                my @similarity_links= @{$object->get_similarity_hash($trans)};
-                my @vega_links= grep {$_->{db_display_name} eq $match_type.' transcripts'} @similarity_links;
-                my $urls= $object->ExtURL;
-                foreach my $link(@vega_links){
-                        my $id= $link->{display_id};
-                        my $href= $urls->get_url($url_name.'_transcript', $id);
-                        push @vega_info, [$id, $href];
-                }
+		my $urls= $object->ExtURL;
+		foreach my $link(@vega_links){
+			my $id= $link->display_id;
+			my $href= $urls->get_url($url_name.'_transcript', $id);
+			my $db_display_name = $link->db_display_name;
+			push @vega_info, [$id, $href, $db_display_name];
+		}
+	}
+	my( $display_name, $dbname, $ext_id, $dbname_disp, $info_text ) = $object->display_xref();
+	$info_text = '';
+	return 1 unless defined $display_name;
+	my $label = $object->type_name();
+	my $lc_type = lc($label);
+	
+	#set display xref
+	my $linked_display_name = $display_name;
+	if( $ext_id ) {
+		$linked_display_name = $object->get_ExtURL_link( $display_name, $dbname, $ext_id );
         }
-        
-        my( $display_name, $dbname, $ext_id, $dbname_disp, $info_text ) = $object->display_xref();
-        $info_text = '';
-        return 1 unless defined $display_name;
-        my $label = $object->type_name();
-        my $lc_type = lc($label);
-
-        #set display xref
-        my $linked_display_name = $display_name;
-        if( $ext_id ) {
-                $linked_display_name = $object->get_ExtURL_link( $display_name, $dbname, $ext_id );
-        }
-
-        # If gene ID projected from other spp, put link on other spp geneID
-        if ($dbname_disp =~/^Projected/) {
-                $linked_display_name = $display_name; # i.e. don't link it
-                if ($info_text) {
-                        $info_text =~ /from (.+) gene (.+)/;
-                        my ($species, $gene) = ($1, $2);
-                        $info_text =~ s|$species|<i>$species</i>| if $species =~ /\w+ \w+/;
-                        $species =~ s/ /_/;
-                        $info_text =~s|($gene)|<a href="/$species/geneview?gene=$gene">$gene</a> |;
-                }
-        }
-        my $html;
-        my $FLAG = 1;
-        if ($dbname_disp =~/(HGNC|ZFIN)/){
-warn "GETTING HGNC/ZFIN synonyms...";
-          my ($disp_table, $HGNC_table) = @{get_HGNC_synonyms($object)};
-          if ($object->get_db eq 'vega') {
+	
+	# If gene ID projected from other spp, put link on other spp geneID
+	if ($dbname_disp =~/^Projected/) {
+		$linked_display_name = $display_name; # i.e. don't link it
+		if ($info_text) {
+			$info_text =~ /from (.+) gene (.+)/;
+			my ($species, $gene) = ($1, $2);
+			$info_text =~ s|$species|<i>$species</i>| if $species =~ /\w+ \w+/;
+			$species =~ s/ /_/;
+			$info_text =~s|($gene)|<a href="/$species/geneview?gene=$gene">$gene</a> |;
+		}
+	}
+	my $html;
+	my $FLAG = 1;
+	if ($dbname_disp =~/(HGNC|ZFIN)/){
+		warn "GETTING HGNC/ZFIN synonyms...";
+		my ($disp_table, $HGNC_table) = @{get_HGNC_synonyms($object)};
+		if ($object->get_db eq 'vega') {
             $html = $disp_table;
-          } else   {  
+		} else   {  
             if($HGNC_table=~/tr/){
-              $html = $HGNC_table;
-              $FLAG = 0;
+				$html = $HGNC_table;
+				$FLAG = 0;
             }
             if(my @CCDS = grep { $_->dbname eq 'CCDS' } @{$object->Obj->get_all_DBLinks} ) {
-              my %T = map { $_->primary_id,1 } @CCDS;
-              @CCDS = sort keys %T;
-              $html .= qq(<p>
+				my %T = map { $_->primary_id,1 } @CCDS;
+				@CCDS = sort keys %T;
+				$html .= qq(<p>
                 This $lc_type is a member of the $sp CCDS set: @{[join ', ', map {$object->get_ExtURL_link($_,'CCDS', $_)} @CCDS] } 
               </p>);
             }
-          }                
-        }
-        if( $FLAG ) {
-          $html = qq(<p>
+		}                
+	}
+	if( $FLAG ) {
+		$html = qq(<p>
            <strong>$linked_display_name</strong> $info_text ($dbname_disp)
            <span class="small">To view all $site_type genes linked to the name <a href="/@{[$object->species]}/featureview?type=Gene;id=$display_name">click here</a>.</span>
            </p>);
-          if(my @CCDS = grep { $_->dbname eq 'CCDS' } @{$object->Obj->get_all_DBLinks} ) {
+		if(my @CCDS = grep { $_->dbname eq 'CCDS' } @{$object->Obj->get_all_DBLinks} ) {
             my %T = map { $_->primary_id,1 } @CCDS;
             @CCDS = sort keys %T;
             $html .= qq(<p>
               This $lc_type is a member of the $sp CCDS set: @{[join ', ', map {$object->get_ExtURL_link($_,'CCDS', $_)} @CCDS] }
             </p>);
-          }
+		}
+	}
+	if(@vega_info){
+			foreach my $info(@vega_info){
+				my $id= $$info[0];
+				my $href= $$info[1];
+				my $db_display_name = $$info[2];
+				$html .= qq(<p>$db_display_name: <a href="$href">$id</a></p>);
+			}
         }
-        if(@vega_info){
-                foreach my $info(@vega_info){
-                        my $id= $$info[0];
-                        my $href= $$info[1];
-                        $html .= qq(<p>
-          This transcript is identical to Vega transcript: <a href="$href">$id</a>
-       </p>
-      );
-                }
-        }
-        $panel->add_row( $label, $html );
-        return 1;
+	$panel->add_row( $label, $html );
+	return 1;
 }
 
 sub stable_id {
