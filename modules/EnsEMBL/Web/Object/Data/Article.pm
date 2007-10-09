@@ -1,4 +1,6 @@
-package EnsEMBL::Web::Object::Data::OldHelpArticle;
+package EnsEMBL::Web::Object::Data::Article;
+
+## Old-style help article
 
 use strict;
 use warnings;
@@ -20,7 +22,7 @@ sub BUILD {
   $self->add_queriable_field({ name => 'title', type => 'string' });
   $self->add_queriable_field({ name => 'content', type => 'text' });
   $self->add_queriable_field({ name => 'status', type => "enum('in_use','obsolete','transferred')" });
-  $self->add_belongs_to('EnsEMBL::Web::Object::Data::OldHelpCategory');
+  $self->add_belongs_to('EnsEMBL::Web::Object::Data::Category');
   $self->populate_with_arguments($args);
 }
 

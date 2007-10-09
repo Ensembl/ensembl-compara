@@ -1,4 +1,4 @@
-package EnsEMBL::Web::Object::Data::OldHelpCategory;
+package EnsEMBL::Web::Object::Data::Category;
 
 use strict;
 use warnings;
@@ -18,7 +18,7 @@ sub BUILD {
   $self->set_primary_key('category_id');
   $self->add_queriable_field({ name => 'name', type => 'string' });
   $self->add_queriable_field({ name => 'priority', type => 'int' });
-  $self->add_has_many({ class => 'EnsEMBL::Web::Object::Data::OldHelpArticle'});
+  $self->add_has_many({ class => 'EnsEMBL::Web::Object::Data::Article'});
   $self->populate_with_arguments($args);
 }
 
