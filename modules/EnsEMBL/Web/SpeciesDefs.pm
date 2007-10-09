@@ -348,6 +348,7 @@ sub _parse {
 ###### Loop for each line of <species>.ini
         my $current_section = undef;
         my $line_number     = 0;
+        my %taxon_order;
         while(<FH>) {
           s/\s+[;].*$//;    # These two lines remove any comment strings
           s/^[#;].*$//;     # from the ini file - basically ; or #..
@@ -355,9 +356,15 @@ sub _parse {
             $current_section          = $1;
             $tree->{$current_section} ||= {}; # create new # element if required
             if(defined $defaults->{ $current_section }) { #add settings from default!!
-              foreach( keys %{$defaults->{ $current_section }} ) {
+              my %hash = %{$defaults->{ $current_section }};
+              foreach( keys %hash ) {
                 $tree->{$current_section}{$_} = $defaults->{$current_section}{$_};
+                if ($current_section eq 'ENSEMBL_PHYLOGENY') {
+                  $taxon_order{$hash{$_}}++;
+                }  
               }
+              my @A = keys %taxon_order;
+              $tree->{'TAXON_ORDER'} = \@A;
             }
           } elsif (/(\w\S*)\s*=\s*(.*)/ && defined $current_section) { # Config entry
             my ($key,$value) = ($1,$2); ## Add a config entry under the current 'top level'
@@ -493,16 +500,19 @@ sub _parse {
       ## Do species name and group
       (my $ininame = $filename) =~ s/_/ /g;
       my $bioname = $taxonomy[1].' '.$taxonomy[0];
-      my $group_hash = $tree->{'general'}{'SPECIES_GROUPS'};
+      my $phylo = $tree->{'ENSEMBL_PHYLOGENY'};
       $tree->{'general'}{'SPECIES_BIO_NAME'} = $ininame;
       print STDERR "\t  [WARN] SPECIES NAME MISMATCH!\n" if $ininame ne $bioname;
       foreach my $taxon (@taxonomy) {
-        while (my ($k,$v) = each %$group_hash) {
-          if ($taxon eq $k) {
-            $tree->{'general'}{'SPECIES_GROUP'} = $v;
-            last;
+        if ($phylo && ref($phylo) eq 'HASH' && keys %$phylo) {
+          while (my ($k,$v) = each %$phylo) {
+            if ($taxon eq $k) {
+              $tree->{'general'}{'SPECIES_GROUP'} = $v;
+              last;
+            }
           }
         }
+        last if $tree->{'general'}{'SPECIES_GROUP'};
       }
       
       ## Also get archive assembly info for each species

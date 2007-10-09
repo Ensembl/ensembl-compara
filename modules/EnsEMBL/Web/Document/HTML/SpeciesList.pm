@@ -13,7 +13,6 @@ sub render {
   my ($class, $request) = @_;
 
   my $species_defs = $ENSEMBL_WEB_REGISTRY->species_defs;
-    warn "DEFAULTS ", $species_defs->DEFAULT_FAVOURITES;
 
   my $adaptor = $ENSEMBL_WEB_REGISTRY->newsAdaptor();
   my %id_to_species = %{$adaptor->fetch_species($SiteDefs::ENSEMBL_VERSION)};
@@ -39,13 +38,9 @@ sub render {
     $html .= "<div id='full_species'>\n";
     $html .= render_species_list($user_data, $species_defs, \%id_to_species, \%species_description); 
     $html .= "</div>\n";
-    if ($species_defs->ENSEMBL_LOGINS && !$reg_user->id) {
-      $html .= "<div id='login_message'>";
-      $html .= "<a href='javascript:login_link()'>Log in</a> to customise this list &middot; <a href='/common/user/register'>Register</a>";
-      $html .= "</div>\n";
-    }
+    $html .= qq(
+<p>Other pre-build species are available in <a href='#top' onclick='show_pre();'>Ensembl Pre! &rarr;</a></p>);
   }
-  #warn "RETURNING HTML: $html";
   return $html;
 
 }
@@ -108,14 +103,12 @@ sub render_species_list {
   my $html = "";
 
   if ($#specieslists < 0) {
+    my @defaults = ($species_defs->ENSEMBL_PRIMARY_SPECIES, $species_defs->ENSEMBL_SECONDARY_SPECIES);
 #    my @defaults = @{$species_defs->DEFAULT_FAVOURITES} 
-#      || ($ENV{'ENSEMBL_PRIMARY_SPECIES'}, $ENV{'ENSEMBL_SECONDARY_SPECIES'});
-#    warn "DEFAULTS @defaults";
-=pod
+    warn "DEFAULTS @defaults";
     foreach my $name (@defaults) {
       push @favourites, $species_id{$name};
     }
-=cut
   }
   else {
     my $list = $specieslists[0];
@@ -124,7 +117,7 @@ sub render_species_list {
 
   ## output list
   if (!$user) {
-    $html .= "<b>Popular genomes</b><br />\n";
+    $html .= "<b>Popular genomes</b> &middot; \n";
     $html .= '<a href="javascript:login_link()">Log in to customize</a>';
   } else {
     $html .= "<b>Favourite genomes</b> &middot; \n";
@@ -147,76 +140,61 @@ sub render_species_list {
   $html .= "</div>\n";
   $html .= "</div>\n";
 
-  ## TO DO - generate automatically from species_defs
   $html .= qq(<div id='static_all_species'>
 <form>
 <h3>All genomes</h3>
 <select name="species">
   <option>-- Select a species --</option>
-  <optgroup label="Primates">
-    <option>Bushbaby</option>
-    <option>Chimpanzee</option>
-    <option>Human</option>
-    <option>Macaque</option>
-  </optgroup>
-    <optgroup label="Rodents, etc">
-    <option>Guinea Pig</option>
-    <option>Mouse</option>
-    <option>Rabbit</option>
-    <option>Rat</option>
-    <option>Squirrel</option>
-    <option>Tree Shrew</option>
-  </optgroup>
-    <optgroup label="Laurasiatheria">
-    <option>Cat</option>
-    <option>Cow</option>
-    <option>Dog</option>
-    <option>Hedgehog</option>
-    <option>Microbat</option>
-    <option>Shrew</option>
-  </optgroup>
-  <optgroup label="Afrotheria">
-    <option>Elephant</option>
-    <option>Tenrec</option>
-  </optgroup>
-  <optgroup label="Xenarthra">
-    <option>Armadillo</option>
-  </optgroup>
-  <optgroup label="Marsupials &amp; Monotremes">
-    <option>Opossum</option>
-    <option>Platypus</option>
-  </optgroup>
-  <optgroup label="Birds">
-    <option>Chicken</option>
-  </optgroup>
-  <optgroup label="Reptiles &amp; Amphibians">
-    <option>Xenopus</option>
-  </optgroup>
-  <optgroup label="Fish">
-    <option>Fugu</option>
-    <option>Medaka</option>
-    <option>Stickleback</option>
-    <option>Tetrodon</option>
-    <option>Zebrafish</option>
-  </optgroup>
-  <optgroup label="Other Chordates">
-    <option>Ciona intestinalis</option>  
-    <option>Ciona savignyi</option>
-  </optgroup>
-  <optgroup label="Other Eukaryotes">
-    <option>Aedes</option>
-    <option>Anopheles</option>
-    <option>C. elegans</option>
-    <option>Fruitfly</option>
-    <option>Yeast</option>
-  </optgroup>
-</select>&nbsp;<input type="submit" value="Go" class="red-button">
+);
+
+  my @all_species = keys %species_id;
+
+  ## Sort species into phylogenetic groups
+  my %phylo_tree;
+  foreach my $species (@all_species) {
+    my $group = $species_defs->other_species($species, "SPECIES_GROUP");
+    if (!$group) {
+      ## Allow for non-grouped species lists
+      $group = 'no_group';
+    }
+    if ($phylo_tree{$group}) {
+      push @{$phylo_tree{$group}}, $species;
+    }
+    else {
+      $phylo_tree{$group} = [$species];
+    }
+  }  
+
+  #my @taxon_order = @{$species_defs->TAXON_ORDER};
+  my @taxon_order = ('Primates', 'Rodents etc.', 'Laurasiatheria', 'Afrotheria', 'Xenarthra',
+                      'Marsupials &amp; Monotremes', 'Birds', 'Reptiles &amp; Amphibians',
+                      'Fish', 'Other chordates', 'Other eukaryotes');
+
+  ## Output in taxonomic groups, ordered by common name
+  foreach my $group (@taxon_order) {
+    $html .= '<optgroup label="'.$group.'">'."\n" unless $group eq 'no_group';
+    my $species_group = $phylo_tree{$group};
+    my @sorted_by_common; 
+    if ($species_group && ref($species_group) eq 'ARRAY') {
+      @sorted_by_common = sort {
+                          $species_defs->other_species($a, "SPECIES_COMMON_NAME")
+                          cmp
+                          $species_defs->other_species($b, "SPECIES_COMMON_NAME")
+                          } @$species_group;
+    }
+    foreach my $species (@sorted_by_common) {
+      $html .= '<option value="'.$species.'">'.$species_defs->other_species($species, "SPECIES_COMMON_NAME").'</option>'."\n";
+    }
+
+    $html .= '</optgroup>'."\n" unless $group eq 'no_group';
+  }
+
+  $html .= qq(
+</select>&nbsp;<input type="submit" value="Go" class="red-button" />
 </form>
 );
   
-  $html .= qq(
-<p>Other pre-build species are available in <a href='#top' onclick='show_pre();'>Ensembl Pre! &rarr;</a></p>
-</div>\n);
+  $html .= qq(</div>\n);
   return $html;
 }
 
