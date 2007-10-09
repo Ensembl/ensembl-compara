@@ -1,0 +1,30 @@
+#!/usr/local/bin/perl
+
+package helpview;
+
+use strict;
+use warnings;
+no warnings "uninitialized";
+
+use EnsEMBL::Web::Document::WebPage;
+
+my $webpage= new EnsEMBL::Web::Document::WebPage(
+  'doctype'    => 'Popup',
+  'scriptname' => 'helpview',
+  'objecttype' => 'Help',
+);
+
+if( $webpage->has_a_problem ) {
+  warn ">>>";
+  $webpage->render_error_page;
+} else {
+  my $object = $webpage->dataObjects->[0];
+  $webpage->configure( $object, 'helpview', 'context_menu' );
+  if( $object->has_problem_type( 'redirect' ) ) {
+    $webpage->redirect( $object->problem->[0]->name );
+  } else {
+    $webpage->action;
+  }
+}
+
+1;

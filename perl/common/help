@@ -1,0 +1,26 @@
+#!/usr/local/bin/perl
+
+package help;
+
+use strict;
+use warnings;
+
+use EnsEMBL::Web::Controller;
+
+{
+
+my $controller = EnsEMBL::Web::Controller->new;
+
+## Search
+$controller->add_connection({ 'search' => 'EnsEMBL::Web::Controller::Command::Help::Search' });
+$controller->add_connection({ 'results' => 'EnsEMBL::Web::Controller::Command::Help::Results' });
+
+## Contact
+$controller->add_connection({ 'contact' => 'EnsEMBL::Web::Controller::Command::Help::Contact' });
+$controller->add_connection({ 'send_email' => 'EnsEMBL::Web::Controller::Command::Help::SendEmail' });
+
+$controller->dispatch($ENV{REQUEST_URI});
+
+}
+
+1;
