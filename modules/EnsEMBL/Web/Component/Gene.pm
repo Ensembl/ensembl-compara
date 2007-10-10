@@ -259,6 +259,7 @@ sub align_markup_options_form {
          'noescape' => 'yes',
          );
   my @align_select;
+  my $pairwise_header = 0;
 
   foreach my $id (
       sort { 10 * ($alignments{$b}->{'type'} cmp $alignments{$a}->{'type'}) + ($a <=> $b) }
@@ -270,20 +271,28 @@ sub align_markup_options_form {
 
       my @multi_species;
       if ( scalar(@species) > 1) {
-    my %selected_species = map { $_ => 1} $object->param("ms_$id");
+        my %selected_species = map { $_ => 1} $object->param("ms_$id");
 
-    foreach my $v (@species) {
-        (my $name = $v) =~ s/_/ /g;
-        if ($selected_species{$v}) {
-      push @multi_species, {"value"=>$v, "name"=>$name, "checked"=>"yes"};
-        } else {
-      push @multi_species, {"value"=>$v, "name"=>$name};
+        foreach my $v (@species) {
+          (my $name = $v) =~ s/_/ /g;
+          if ($selected_species{$v}) {
+            push @multi_species, {"value"=>$v, "name"=>$name, "checked"=>"yes"};
+          } else {
+            push @multi_species, {"value"=>$v, "name"=>$name};
+          }
         }
-    }
-    $label = "<b>$label</b> (click on checkboxes to select species)";
+        $label = "<b>$label</b> (click on checkboxes to select species)";
 
       } else {
-    ($label = "<b>$species[0]</b>") =~ s/_/ /g;
+        ($label = "<b>$species[0]</b>") =~ s/_/ /g;
+      }
+
+      if (!$pairwise_header && scalar(@species) == 1) {
+        $form->add_element('type' => 'NoEdit',
+          'name' => 'pairwise_header',
+          'value' => '<span style="color:#933;font-weight:bold">Pairwise alignments:</span>',
+        );
+        $pairwise_header = 1;
       }
 
       $form->add_element('type' => 'RadioGroup',
