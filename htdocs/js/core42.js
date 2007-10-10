@@ -131,6 +131,28 @@ function dropdown_redirect( id ) {
   return true; 
 }
 
+function select_child_boxes(form_name, id, total) {
+  // first, clear all child boxes in this form
+  var widgets = document.getElementsByTagName('input');
+  for (var i=0; i < widgets.length; i++) {
+    if (widgets[i].id.match(form_name) && widgets[i].name.match(/ms_/)) {
+      widgets[i].checked = false;
+    }
+  }
+  // now set children of this one element (if they exist)
+  if (total) {
+    var reg = /_(\d+)_/;
+    var matches = reg.exec(id);
+    var element_number = matches[1];
+    element_number++;
+    for (var i=0; i < total; i++) {
+      var child_id = form_name + '_' + element_number + '_' + i;
+      var child_box = document.getElementById(child_id);
+      child_box.checked = true;
+    }
+  }
+}
+
 function cytoview_link() {
   URL = document.location.href;
   document.location = URL.replace(/(\w+view)/,'cytoview');
