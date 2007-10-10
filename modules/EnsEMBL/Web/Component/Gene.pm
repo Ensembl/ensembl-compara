@@ -257,6 +257,7 @@ sub align_markup_options_form {
          'values' =>[{name=> "<b>No alignments</b>", value => "NONE", checked => $aselect eq "NONE" ? "yes" : undef}],
          'label' => 'View in alignment with',
          'noescape' => 'yes',
+         'onclick' => "select_child_boxes('markup_options', this.id, 0)",
          );
   my @align_select;
   my $pairwise_header = 0;
@@ -295,17 +296,20 @@ sub align_markup_options_form {
         $pairwise_header = 1;
       }
 
+      my $count = scalar(@multi_species);
       $form->add_element('type' => 'RadioGroup',
        'name' => 'RGselect',
        'values' =>  [{name=> $label, 'value' => $id, checked=>$aselect eq "$id" ? "yes" : undef}],
        'label' => '     ',
        'class' => 'radiocheck1col',
-       'noescape' => 'yes'
-         );
-
+       'noescape' => 'yes',
+       'onclick' => "select_child_boxes('markup_options', this.id, $count)",
+      );
+      #warn "Element ".$element->id." ($element)";
+      #$element->onclick('select_child_boxes()');
 
       if (@multi_species) {
-    $form->add_element(
+        $form->add_element(
            'type' => 'MultiSelect',
            'name'=> "ms_$id",
 #           'label'=> ' ',
@@ -482,7 +486,7 @@ sub name {
 	my $html;
 	my $FLAG = 1;
 	if ($dbname_disp =~/(HGNC|ZFIN)/){
-		warn "GETTING HGNC/ZFIN synonyms...";
+		#warn "GETTING HGNC/ZFIN synonyms...";
 		my ($disp_table, $HGNC_table) = @{get_HGNC_synonyms($object)};
 		if ($object->get_db eq 'vega') {
             $html = $disp_table;
@@ -830,7 +834,7 @@ SYN: foreach my $k (keys (%text_info)){
  $HGNC_table .= qq(</table>);
 
  my @tables = ($disp_id_table, $HGNC_table);
-warn "-"x78,"\n",$disp_id_table,"\n","-"x78,"\n",$HGNC_table,"\n","-"x78,"\n\n ";
+#warn "-"x78,"\n",$disp_id_table,"\n","-"x78,"\n",$HGNC_table,"\n","-"x78,"\n\n ";
  return \@tables;
 }
 
