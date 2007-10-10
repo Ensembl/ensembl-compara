@@ -103,10 +103,11 @@ sub render_species_list {
   my $html = "";
 
   if ($#specieslists < 0) {
-    my @defaults = ($species_defs->ENSEMBL_PRIMARY_SPECIES, $species_defs->ENSEMBL_SECONDARY_SPECIES);
-#    my @defaults = @{$species_defs->DEFAULT_FAVOURITES} 
-    warn "DEFAULTS @defaults";
-    foreach my $name (@defaults) {
+    my $defaults = $species_defs->DEFAULT_FAVOURITES;
+    if (!$defaults || ref($defaults) ne 'ARRAY' || scalar(@$defaults < 1)) {
+      $defaults = [$species_defs->ENSEMBL_PRIMARY_SPECIES, $species_defs->ENSEMBL_SECONDARY_SPECIES];
+    } 
+    foreach my $name (@$defaults) {
       push @favourites, $species_id{$name};
     }
   }
