@@ -282,7 +282,7 @@ sub align_markup_options_form {
             push @multi_species, {"value"=>$v, "name"=>$name};
           }
         }
-        $label = "<b>$label</b> (click on checkboxes to select species)";
+        $label = "<b>$label</b>";
 
       } else {
         ($label = "<b>$species[0]</b>") =~ s/_/ /g;
