@@ -141,10 +141,10 @@ sub render_species_list {
   $html .= "</div>\n";
 
   $html .= qq(<div id='static_all_species'>
-<form>
+<form action="#">
 <h3>All genomes</h3>
-<select name="species">
-  <option>-- Select a species --</option>
+<select name="species"  id="species_dropdown" onchange="dropdown_redirect('species_dropdown');">
+  <option value="/">-- Select a species --</option>
 );
 
   my @all_species = keys %species_id;
@@ -183,14 +183,14 @@ sub render_species_list {
                           } @$species_group;
     }
     foreach my $species (@sorted_by_common) {
-      $html .= '<option value="'.$species.'">'.$species_defs->other_species($species, "SPECIES_COMMON_NAME").'</option>'."\n";
+      $html .= '<option value="/'.$species.'/">'.$species_defs->other_species($species, "SPECIES_COMMON_NAME").'</option>'."\n";
     }
 
     $html .= '</optgroup>'."\n" unless $group eq 'no_group';
   }
 
   $html .= qq(
-</select>&nbsp;<input type="submit" value="Go" class="red-button" />
+</select>
 </form>
 );
   
