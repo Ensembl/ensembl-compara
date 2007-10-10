@@ -124,6 +124,13 @@ function addLoadEvent(func) {
   }
 }
 
+function dropdown_redirect( id ) {
+  var element = document.getElementById(id);
+  var URL = element.options[element.options.selectedIndex].value;
+  document.location = URL;
+  return true; 
+}
+
 function cytoview_link() {
   URL = document.location.href;
   document.location = URL.replace(/(\w+view)/,'cytoview');
