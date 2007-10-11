@@ -230,10 +230,13 @@ sub referer { return $_[0]->param('ref')||$ENV{'HTTP_REFERER'}; }
 sub _help_URL {
   my( $self, $options ) = @_;
   my $ref = CGI::escape( $self->referer );
-  my $URL = "/@{[$self->species]}/helpview?se=1;ref=$ref";
+  my $URL = "/common/helpview?";
+  my @params;
   while (my ($k, $v) = each (%$options)) {
-    $URL .= ";$k=$v";
+    push @params, "$k=$v";
   } 
+  push @params, "ref=$ref";
+  $URL .= join(';', @params);
   return $URL;
 }
 
