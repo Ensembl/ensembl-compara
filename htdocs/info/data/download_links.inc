@@ -9,391 +9,451 @@
 <th>EMBL</th>
 <th>GenBank</th>
 <th>MySQL</th>
+<th>GTF</th>
+<th>EMF</th>
 </tr>
 
 
 <tr>
-<td>
-<a target="ftp" href="ftp://ftp.ensembl.org/pub/current_aedes_aegypti/"><i>Aedes aegypti</i></a> (yellow fever mosquito)</td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_aedes_aegypti/data/fasta/dna/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_aedes_aegypti/data/fasta/cdna/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_aedes_aegypti/data/fasta/pep/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_aedes_aegypti/data/flatfiles/embl/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_aedes_aegypti/data/flatfiles/genbank/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_aedes_aegypti/data/mysql/">FTP</a></td>
+<td><strong><i>Aedes aegypti</i></strong> (yellow fever mosquito)</td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_fasta/aedes_aegypti/dna/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_fasta/aedes_aegypti/cdna/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_fasta/aedes_aegypti/pep/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_embl/aedes_aegypti/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_genbank/aedes_aegypti/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_mysql/aedes_aegypti/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_gtf/aedes_aegypti/">FTP</a></td>
+<td>-</td>
 </tr>
 	    
 <tr>
-<td>
-<a target="ftp" href="ftp://ftp.ensembl.org/pub/current_anopheles_gambiae/"><i>Anopheles gambiae</i></a> (African malaria mosquito)</td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_anopheles_gambiae/data/fasta/dna/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_anopheles_gambiae/data/fasta/cdna/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_anopheles_gambiae/data/fasta/pep/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_anopheles_gambiae/data/flatfiles/embl/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_anopheles_gambiae/data/flatfiles/genbank/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_anopheles_gambiae/data/mysql/">FTP</a></td>
+<td><strong><i>Anopheles gambiae</i></strong> (African malaria mosquito)</td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_fasta/anopheles_gambiae/dna/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_fasta/anopheles_gambiae/cdna/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_fasta/anopheles_gambiae/pep/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_embl/anopheles_gambiae/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_genbank/anopheles_gambiae/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_mysql/anopheles_gambiae/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_gtf/anopheles_gambiae/">FTP</a></td>
+<td>-</td>
 </tr>
 	    
 <tr>
-<td>
-<a target="ftp" href="ftp://ftp.ensembl.org/pub/current_bos_taurus/"><i>Bos taurus</i></a> (cattle)</td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_bos_taurus/data/fasta/dna/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_bos_taurus/data/fasta/cdna/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_bos_taurus/data/fasta/pep/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_bos_taurus/data/flatfiles/embl/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_bos_taurus/data/flatfiles/genbank/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_bos_taurus/data/mysql/">FTP</a></td>
+<td><strong><i>Bos taurus</i></strong> (cattle)</td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_fasta/bos_taurus/dna/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_fasta/bos_taurus/cdna/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_fasta/bos_taurus/pep/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_embl/bos_taurus/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_genbank/bos_taurus/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_mysql/bos_taurus/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_gtf/bos_taurus/">FTP</a></td>
+<td>-</td>
 </tr>
 	    
 <tr>
-<td>
-<a target="ftp" href="ftp://ftp.ensembl.org/pub/current_caenorhabditis_elegans/"><i>Caenorhabditis elegans</i></a> (nematode)</td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_caenorhabditis_elegans/data/fasta/dna/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_caenorhabditis_elegans/data/fasta/cdna/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_caenorhabditis_elegans/data/fasta/pep/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_caenorhabditis_elegans/data/flatfiles/embl/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_caenorhabditis_elegans/data/flatfiles/genbank/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_caenorhabditis_elegans/data/mysql/">FTP</a></td>
+<td><strong><i>Caenorhabditis elegans</i></strong> (nematode)</td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_fasta/caenorhabditis_elegans/dna/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_fasta/caenorhabditis_elegans/cdna/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_fasta/caenorhabditis_elegans/pep/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_embl/caenorhabditis_elegans/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_genbank/caenorhabditis_elegans/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_mysql/caenorhabditis_elegans/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_gtf/caenorhabditis_elegans/">FTP</a></td>
+<td>-</td>
 </tr>
 	    
 <tr>
-<td>
-<a target="ftp" href="ftp://ftp.ensembl.org/pub/current_canis_familiaris/"><i>Canis familiaris</i></a> (dog)</td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_canis_familiaris/data/fasta/dna/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_canis_familiaris/data/fasta/cdna/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_canis_familiaris/data/fasta/pep/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_canis_familiaris/data/flatfiles/embl/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_canis_familiaris/data/flatfiles/genbank/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_canis_familiaris/data/mysql/">FTP</a></td>
+<td><strong><i>Canis familiaris</i></strong> (dog)</td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_fasta/canis_familiaris/dna/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_fasta/canis_familiaris/cdna/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_fasta/canis_familiaris/pep/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_embl/canis_familiaris/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_genbank/canis_familiaris/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_mysql/canis_familiaris/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_gtf/canis_familiaris/">FTP</a></td>
+<td>-</td>
 </tr>
 	    
 <tr>
-<td>
-<a target="ftp" href="ftp://ftp.ensembl.org/pub/current_cavia_porcellus/"><i>Cavia porcellus</i></a> (domestic guinea pig)</td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_cavia_porcellus/data/fasta/dna/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_cavia_porcellus/data/fasta/cdna/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_cavia_porcellus/data/fasta/pep/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_cavia_porcellus/data/flatfiles/embl/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_cavia_porcellus/data/flatfiles/genbank/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_cavia_porcellus/data/mysql/">FTP</a></td>
+<td><strong><i>Cavia porcellus</i></strong> (domestic guinea pig)</td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_fasta/cavia_porcellus/dna/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_fasta/cavia_porcellus/cdna/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_fasta/cavia_porcellus/pep/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_embl/cavia_porcellus/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_genbank/cavia_porcellus/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_mysql/cavia_porcellus/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_gtf/cavia_porcellus/">FTP</a></td>
+<td>-</td>
 </tr>
 	    
 <tr>
-<td>
-<a target="ftp" href="ftp://ftp.ensembl.org/pub/current_ciona_intestinalis/"><i>Ciona intestinalis</i></a> (transparent sea squirt)</td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_ciona_intestinalis/data/fasta/dna/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_ciona_intestinalis/data/fasta/cdna/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_ciona_intestinalis/data/fasta/pep/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_ciona_intestinalis/data/flatfiles/embl/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_ciona_intestinalis/data/flatfiles/genbank/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_ciona_intestinalis/data/mysql/">FTP</a></td>
+<td><strong><i>Ciona intestinalis</i></strong> (Sea squirt Ciona intestinalis)</td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_fasta/ciona_intestinalis/dna/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_fasta/ciona_intestinalis/cdna/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_fasta/ciona_intestinalis/pep/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_embl/ciona_intestinalis/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_genbank/ciona_intestinalis/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_mysql/ciona_intestinalis/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_gtf/ciona_intestinalis/">FTP</a></td>
+<td>-</td>
 </tr>
 	    
 <tr>
-<td>
-<a target="ftp" href="ftp://ftp.ensembl.org/pub/current_ciona_savignyi/"><i>Ciona savignyi</i></a> (Pacific sea squirt)</td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_ciona_savignyi/data/fasta/dna/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_ciona_savignyi/data/fasta/cdna/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_ciona_savignyi/data/fasta/pep/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_ciona_savignyi/data/flatfiles/embl/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_ciona_savignyi/data/flatfiles/genbank/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_ciona_savignyi/data/mysql/">FTP</a></td>
+<td><strong><i>Ciona savignyi</i></strong> (Sea squirt Ciona savignyi)</td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_fasta/ciona_savignyi/dna/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_fasta/ciona_savignyi/cdna/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_fasta/ciona_savignyi/pep/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_embl/ciona_savignyi/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_genbank/ciona_savignyi/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_mysql/ciona_savignyi/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_gtf/ciona_savignyi/">FTP</a></td>
+<td>-</td>
 </tr>
 	    
 <tr>
-<td>
-<a target="ftp" href="ftp://ftp.ensembl.org/pub/current_danio_rerio/"><i>Danio rerio</i></a> (zebrafish)</td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_danio_rerio/data/fasta/dna/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_danio_rerio/data/fasta/cdna/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_danio_rerio/data/fasta/pep/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_danio_rerio/data/flatfiles/embl/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_danio_rerio/data/flatfiles/genbank/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_danio_rerio/data/mysql/">FTP</a></td>
+<td><strong><i>Danio rerio</i></strong> (zebrafish)</td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_fasta/danio_rerio/dna/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_fasta/danio_rerio/cdna/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_fasta/danio_rerio/pep/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_embl/danio_rerio/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_genbank/danio_rerio/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_mysql/danio_rerio/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_gtf/danio_rerio/">FTP</a></td>
+<td>-</td>
 </tr>
 	    
 <tr>
-<td>
-<a target="ftp" href="ftp://ftp.ensembl.org/pub/current_dasypus_novemcinctus/"><i>Dasypus novemcinctus</i></a> (nine-banded armadillo)</td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_dasypus_novemcinctus/data/fasta/dna/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_dasypus_novemcinctus/data/fasta/cdna/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_dasypus_novemcinctus/data/fasta/pep/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_dasypus_novemcinctus/data/flatfiles/embl/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_dasypus_novemcinctus/data/flatfiles/genbank/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_dasypus_novemcinctus/data/mysql/">FTP</a></td>
+<td><strong><i>Dasypus novemcinctus</i></strong> (nine-banded armadillo)</td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_fasta/dasypus_novemcinctus/dna/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_fasta/dasypus_novemcinctus/cdna/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_fasta/dasypus_novemcinctus/pep/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_embl/dasypus_novemcinctus/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_genbank/dasypus_novemcinctus/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_mysql/dasypus_novemcinctus/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_gtf/dasypus_novemcinctus/">FTP</a></td>
+<td>-</td>
 </tr>
 	    
 <tr>
-<td>
-<a target="ftp" href="ftp://ftp.ensembl.org/pub/current_drosophila_melanogaster/"><i>Drosophila melanogaster</i></a> (fruit fly)</td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_drosophila_melanogaster/data/fasta/dna/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_drosophila_melanogaster/data/fasta/cdna/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_drosophila_melanogaster/data/fasta/pep/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_drosophila_melanogaster/data/flatfiles/embl/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_drosophila_melanogaster/data/flatfiles/genbank/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_drosophila_melanogaster/data/mysql/">FTP</a></td>
+<td><strong><i>Drosophila melanogaster</i></strong> (fruit fly)</td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_fasta/drosophila_melanogaster/dna/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_fasta/drosophila_melanogaster/cdna/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_fasta/drosophila_melanogaster/pep/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_embl/drosophila_melanogaster/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_genbank/drosophila_melanogaster/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_mysql/drosophila_melanogaster/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_gtf/drosophila_melanogaster/">FTP</a></td>
+<td>-</td>
 </tr>
 	    
 <tr>
-<td>
-<a target="ftp" href="ftp://ftp.ensembl.org/pub/current_echinops_telfairi/"><i>Echinops telfairi</i></a> (small Madagascar hedgehog)</td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_echinops_telfairi/data/fasta/dna/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_echinops_telfairi/data/fasta/cdna/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_echinops_telfairi/data/fasta/pep/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_echinops_telfairi/data/flatfiles/embl/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_echinops_telfairi/data/flatfiles/genbank/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_echinops_telfairi/data/mysql/">FTP</a></td>
+<td><strong><i>Echinops telfairi</i></strong> (small Madagascar hedgehog)</td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_fasta/echinops_telfairi/dna/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_fasta/echinops_telfairi/cdna/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_fasta/echinops_telfairi/pep/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_embl/echinops_telfairi/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_genbank/echinops_telfairi/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_mysql/echinops_telfairi/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_gtf/echinops_telfairi/">FTP</a></td>
+<td>-</td>
 </tr>
 	    
 <tr>
-<td>
-<a target="ftp" href="ftp://ftp.ensembl.org/pub/current_erinaceus_europaeus/"><i>Erinaceus europaeus</i></a> (western European hedgehog)</td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_erinaceus_europaeus/data/fasta/dna/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_erinaceus_europaeus/data/fasta/cdna/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_erinaceus_europaeus/data/fasta/pep/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_erinaceus_europaeus/data/flatfiles/embl/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_erinaceus_europaeus/data/flatfiles/genbank/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_erinaceus_europaeus/data/mysql/">FTP</a></td>
+<td><strong><i>Erinaceus europaeus</i></strong> (western European hedgehog)</td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_fasta/erinaceus_europaeus/dna/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_fasta/erinaceus_europaeus/cdna/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_fasta/erinaceus_europaeus/pep/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_embl/erinaceus_europaeus/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_genbank/erinaceus_europaeus/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_mysql/erinaceus_europaeus/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_gtf/erinaceus_europaeus/">FTP</a></td>
+<td>-</td>
 </tr>
 	    
 <tr>
-<td>
-<a target="ftp" href="ftp://ftp.ensembl.org/pub/current_felis_catus/"><i>Felis catus</i></a> (cat)</td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_felis_catus/data/fasta/dna/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_felis_catus/data/fasta/cdna/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_felis_catus/data/fasta/pep/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_felis_catus/data/flatfiles/embl/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_felis_catus/data/flatfiles/genbank/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_felis_catus/data/mysql/">FTP</a></td>
+<td><strong><i>Felis catus</i></strong> (cat)</td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_fasta/felis_catus/dna/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_fasta/felis_catus/cdna/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_fasta/felis_catus/pep/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_embl/felis_catus/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_genbank/felis_catus/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_mysql/felis_catus/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_gtf/felis_catus/">FTP</a></td>
+<td>-</td>
 </tr>
 	    
 <tr>
-<td>
-<a target="ftp" href="ftp://ftp.ensembl.org/pub/current_gallus_gallus/"><i>Gallus gallus</i></a> (chicken)</td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_gallus_gallus/data/fasta/dna/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_gallus_gallus/data/fasta/cdna/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_gallus_gallus/data/fasta/pep/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_gallus_gallus/data/flatfiles/embl/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_gallus_gallus/data/flatfiles/genbank/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_gallus_gallus/data/mysql/">FTP</a></td>
+<td><strong><i>Gallus gallus</i></strong> (chicken)</td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_fasta/gallus_gallus/dna/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_fasta/gallus_gallus/cdna/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_fasta/gallus_gallus/pep/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_embl/gallus_gallus/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_genbank/gallus_gallus/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_mysql/gallus_gallus/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_gtf/gallus_gallus/">FTP</a></td>
+<td>-</td>
 </tr>
 	    
 <tr>
-<td>
-<a target="ftp" href="ftp://ftp.ensembl.org/pub/current_gasterosteus_aculeatus/"><i>Gasterosteus aculeatus</i></a> (three spined stickleback)</td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_gasterosteus_aculeatus/data/fasta/dna/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_gasterosteus_aculeatus/data/fasta/cdna/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_gasterosteus_aculeatus/data/fasta/pep/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_gasterosteus_aculeatus/data/flatfiles/embl/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_gasterosteus_aculeatus/data/flatfiles/genbank/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_gasterosteus_aculeatus/data/mysql/">FTP</a></td>
+<td><strong><i>Gasterosteus aculeatus</i></strong> (three spined stickleback)</td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_fasta/gasterosteus_aculeatus/dna/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_fasta/gasterosteus_aculeatus/cdna/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_fasta/gasterosteus_aculeatus/pep/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_embl/gasterosteus_aculeatus/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_genbank/gasterosteus_aculeatus/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_mysql/gasterosteus_aculeatus/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_gtf/gasterosteus_aculeatus/">FTP</a></td>
+<td>-</td>
 </tr>
 	    
 <tr>
-<td>
-<a target="ftp" href="ftp://ftp.ensembl.org/pub/current_homo_sapiens/"><i>Homo sapiens</i></a> (human)</td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_homo_sapiens/data/fasta/dna/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_homo_sapiens/data/fasta/cdna/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_homo_sapiens/data/fasta/pep/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_homo_sapiens/data/flatfiles/embl/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_homo_sapiens/data/flatfiles/genbank/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_homo_sapiens/data/mysql/">FTP</a></td>
+<td><strong><i>Homo sapiens</i></strong> (human)</td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_fasta/homo_sapiens/dna/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_fasta/homo_sapiens/cdna/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_fasta/homo_sapiens/pep/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_embl/homo_sapiens/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_genbank/homo_sapiens/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_mysql/homo_sapiens/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_gtf/homo_sapiens/">FTP</a></td>
+<td>-</td>
 </tr>
 	    
 <tr>
-<td>
-<a target="ftp" href="ftp://ftp.ensembl.org/pub/current_loxodonta_africana/"><i>Loxodonta africana</i></a> (African savanna elephant)</td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_loxodonta_africana/data/fasta/dna/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_loxodonta_africana/data/fasta/cdna/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_loxodonta_africana/data/fasta/pep/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_loxodonta_africana/data/flatfiles/embl/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_loxodonta_africana/data/flatfiles/genbank/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_loxodonta_africana/data/mysql/">FTP</a></td>
+<td><strong><i>Loxodonta africana</i></strong> (African savanna elephant)</td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_fasta/loxodonta_africana/dna/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_fasta/loxodonta_africana/cdna/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_fasta/loxodonta_africana/pep/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_embl/loxodonta_africana/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_genbank/loxodonta_africana/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_mysql/loxodonta_africana/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_gtf/loxodonta_africana/">FTP</a></td>
+<td>-</td>
 </tr>
 	    
 <tr>
-<td>
-<a target="ftp" href="ftp://ftp.ensembl.org/pub/current_macaca_mulatta/"><i>Macaca mulatta</i></a> (rhesus monkey)</td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_macaca_mulatta/data/fasta/dna/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_macaca_mulatta/data/fasta/cdna/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_macaca_mulatta/data/fasta/pep/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_macaca_mulatta/data/flatfiles/embl/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_macaca_mulatta/data/flatfiles/genbank/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_macaca_mulatta/data/mysql/">FTP</a></td>
+<td><strong><i>Macaca mulatta</i></strong> (rhesus monkey)</td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_fasta/macaca_mulatta/dna/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_fasta/macaca_mulatta/cdna/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_fasta/macaca_mulatta/pep/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_embl/macaca_mulatta/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_genbank/macaca_mulatta/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_mysql/macaca_mulatta/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_gtf/macaca_mulatta/">FTP</a></td>
+<td>-</td>
 </tr>
 	    
 <tr>
-<td>
-<a target="ftp" href="ftp://ftp.ensembl.org/pub/current_monodelphis_domestica/"><i>Monodelphis domestica</i></a> (gray short-tailed opossum)</td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_monodelphis_domestica/data/fasta/dna/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_monodelphis_domestica/data/fasta/cdna/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_monodelphis_domestica/data/fasta/pep/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_monodelphis_domestica/data/flatfiles/embl/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_monodelphis_domestica/data/flatfiles/genbank/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_monodelphis_domestica/data/mysql/">FTP</a></td>
+<td><strong><i>Monodelphis domestica</i></strong> (gray short-tailed opossum)</td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_fasta/monodelphis_domestica/dna/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_fasta/monodelphis_domestica/cdna/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_fasta/monodelphis_domestica/pep/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_embl/monodelphis_domestica/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_genbank/monodelphis_domestica/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_mysql/monodelphis_domestica/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_gtf/monodelphis_domestica/">FTP</a></td>
+<td>-</td>
 </tr>
 	    
 <tr>
-<td>
-<a target="ftp" href="ftp://ftp.ensembl.org/pub/current_mus_musculus/"><i>Mus musculus</i></a> (house mouse)</td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_mus_musculus/data/fasta/dna/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_mus_musculus/data/fasta/cdna/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_mus_musculus/data/fasta/pep/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_mus_musculus/data/flatfiles/embl/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_mus_musculus/data/flatfiles/genbank/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_mus_musculus/data/mysql/">FTP</a></td>
+<td><strong><i>Mus musculus</i></strong> (house mouse)</td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_fasta/mus_musculus/dna/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_fasta/mus_musculus/cdna/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_fasta/mus_musculus/pep/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_embl/mus_musculus/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_genbank/mus_musculus/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_mysql/mus_musculus/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_gtf/mus_musculus/">FTP</a></td>
+<td>-</td>
 </tr>
 	    
 <tr>
-<td>
-<a target="ftp" href="ftp://ftp.ensembl.org/pub/current_myotis_lucifugus/"><i>Myotis lucifugus</i></a> (little brown bat)</td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_myotis_lucifugus/data/fasta/dna/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_myotis_lucifugus/data/fasta/cdna/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_myotis_lucifugus/data/fasta/pep/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_myotis_lucifugus/data/flatfiles/embl/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_myotis_lucifugus/data/flatfiles/genbank/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_myotis_lucifugus/data/mysql/">FTP</a></td>
+<td><strong><i>Myotis lucifugus</i></strong> (little brown bat)</td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_fasta/myotis_lucifugus/dna/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_fasta/myotis_lucifugus/cdna/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_fasta/myotis_lucifugus/pep/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_embl/myotis_lucifugus/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_genbank/myotis_lucifugus/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_mysql/myotis_lucifugus/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_gtf/myotis_lucifugus/">FTP</a></td>
+<td>-</td>
 </tr>
 	    
 <tr>
-<td>
-<a target="ftp" href="ftp://ftp.ensembl.org/pub/current_ornithorhynchus_anatinus/"><i>Ornithorhynchus anatinus</i></a> (platypus)</td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_ornithorhynchus_anatinus/data/fasta/dna/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_ornithorhynchus_anatinus/data/fasta/cdna/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_ornithorhynchus_anatinus/data/fasta/pep/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_ornithorhynchus_anatinus/data/flatfiles/embl/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_ornithorhynchus_anatinus/data/flatfiles/genbank/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_ornithorhynchus_anatinus/data/mysql/">FTP</a></td>
+<td><strong><i>Ornithorhynchus anatinus</i></strong> (platypus)</td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_fasta/ornithorhynchus_anatinus/dna/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_fasta/ornithorhynchus_anatinus/cdna/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_fasta/ornithorhynchus_anatinus/pep/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_embl/ornithorhynchus_anatinus/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_genbank/ornithorhynchus_anatinus/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_mysql/ornithorhynchus_anatinus/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_gtf/ornithorhynchus_anatinus/">FTP</a></td>
+<td>-</td>
 </tr>
 	    
 <tr>
-<td>
-<a target="ftp" href="ftp://ftp.ensembl.org/pub/current_oryctolagus_cuniculus/"><i>Oryctolagus cuniculus</i></a> (rabbit)</td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_oryctolagus_cuniculus/data/fasta/dna/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_oryctolagus_cuniculus/data/fasta/cdna/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_oryctolagus_cuniculus/data/fasta/pep/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_oryctolagus_cuniculus/data/flatfiles/embl/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_oryctolagus_cuniculus/data/flatfiles/genbank/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_oryctolagus_cuniculus/data/mysql/">FTP</a></td>
+<td><strong><i>Oryctolagus cuniculus</i></strong> (rabbit)</td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_fasta/oryctolagus_cuniculus/dna/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_fasta/oryctolagus_cuniculus/cdna/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_fasta/oryctolagus_cuniculus/pep/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_embl/oryctolagus_cuniculus/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_genbank/oryctolagus_cuniculus/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_mysql/oryctolagus_cuniculus/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_gtf/oryctolagus_cuniculus/">FTP</a></td>
+<td>-</td>
 </tr>
 	    
 <tr>
-<td>
-<a target="ftp" href="ftp://ftp.ensembl.org/pub/current_oryzias_latipes/"><i>Oryzias latipes</i></a> (Japanese medaka)</td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_oryzias_latipes/data/fasta/dna/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_oryzias_latipes/data/fasta/cdna/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_oryzias_latipes/data/fasta/pep/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_oryzias_latipes/data/flatfiles/embl/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_oryzias_latipes/data/flatfiles/genbank/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_oryzias_latipes/data/mysql/">FTP</a></td>
+<td><strong><i>Oryzias latipes</i></strong> (Japanese medaka)</td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_fasta/oryzias_latipes/dna/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_fasta/oryzias_latipes/cdna/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_fasta/oryzias_latipes/pep/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_embl/oryzias_latipes/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_genbank/oryzias_latipes/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_mysql/oryzias_latipes/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_gtf/oryzias_latipes/">FTP</a></td>
+<td>-</td>
 </tr>
 	    
 <tr>
-<td>
-<a target="ftp" href="ftp://ftp.ensembl.org/pub/current_otolemur_garnettii/"><i>Otolemur garnettii</i></a> (small-eared galago)</td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_otolemur_garnettii/data/fasta/dna/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_otolemur_garnettii/data/fasta/cdna/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_otolemur_garnettii/data/fasta/pep/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_otolemur_garnettii/data/flatfiles/embl/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_otolemur_garnettii/data/flatfiles/genbank/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_otolemur_garnettii/data/mysql/">FTP</a></td>
+<td><strong><i>Otolemur garnettii</i></strong> (small-eared galago)</td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_fasta/otolemur_garnettii/dna/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_fasta/otolemur_garnettii/cdna/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_fasta/otolemur_garnettii/pep/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_embl/otolemur_garnettii/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_genbank/otolemur_garnettii/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_mysql/otolemur_garnettii/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_gtf/otolemur_garnettii/">FTP</a></td>
+<td>-</td>
 </tr>
 	    
 <tr>
-<td>
-<a target="ftp" href="ftp://ftp.ensembl.org/pub/current_pan_troglodytes/"><i>Pan troglodytes</i></a> (chimpanzee)</td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_pan_troglodytes/data/fasta/dna/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_pan_troglodytes/data/fasta/cdna/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_pan_troglodytes/data/fasta/pep/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_pan_troglodytes/data/flatfiles/embl/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_pan_troglodytes/data/flatfiles/genbank/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_pan_troglodytes/data/mysql/">FTP</a></td>
+<td><strong><i>Pan troglodytes</i></strong> (chimpanzee)</td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_fasta/pan_troglodytes/dna/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_fasta/pan_troglodytes/cdna/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_fasta/pan_troglodytes/pep/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_embl/pan_troglodytes/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_genbank/pan_troglodytes/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_mysql/pan_troglodytes/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_gtf/pan_troglodytes/">FTP</a></td>
+<td>-</td>
 </tr>
 	    
 <tr>
-<td>
-<a target="ftp" href="ftp://ftp.ensembl.org/pub/current_rattus_norvegicus/"><i>Rattus norvegicus</i></a> (Norway rat)</td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_rattus_norvegicus/data/fasta/dna/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_rattus_norvegicus/data/fasta/cdna/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_rattus_norvegicus/data/fasta/pep/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_rattus_norvegicus/data/flatfiles/embl/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_rattus_norvegicus/data/flatfiles/genbank/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_rattus_norvegicus/data/mysql/">FTP</a></td>
+<td><strong><i>Rattus norvegicus</i></strong> (Norway rat)</td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_fasta/rattus_norvegicus/dna/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_fasta/rattus_norvegicus/cdna/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_fasta/rattus_norvegicus/pep/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_embl/rattus_norvegicus/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_genbank/rattus_norvegicus/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_mysql/rattus_norvegicus/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_gtf/rattus_norvegicus/">FTP</a></td>
+<td>-</td>
 </tr>
 	    
 <tr>
-<td>
-<a target="ftp" href="ftp://ftp.ensembl.org/pub/current_saccharomyces_cerevisiae/"><i>Saccharomyces cerevisiae</i></a> (baker's yeast)</td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_saccharomyces_cerevisiae/data/fasta/dna/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_saccharomyces_cerevisiae/data/fasta/cdna/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_saccharomyces_cerevisiae/data/fasta/pep/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_saccharomyces_cerevisiae/data/flatfiles/embl/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_saccharomyces_cerevisiae/data/flatfiles/genbank/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_saccharomyces_cerevisiae/data/mysql/">FTP</a></td>
-</tr>
-		    
-<tr>
-<td>
-<a target="ftp" href="ftp://ftp.ensembl.org/pub/current_sorex_araneus/"><i>Sorex araneus</i></a> (common shrew)</td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_sorex_araneus/data/fasta/dna/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_sorex_araneus/data/fasta/cdna/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_sorex_araneus/data/fasta/pep/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_sorex_araneus/data/flatfiles/embl/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_sorex_araneus/data/flatfiles/genbank/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_sorex_araneus/data/mysql/">FTP</a></td>
+<td><strong><i>Saccharomyces cerevisiae</i></strong> (baker's yeast)</td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_fasta/saccharomyces_cerevisiae/dna/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_fasta/saccharomyces_cerevisiae/cdna/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_fasta/saccharomyces_cerevisiae/pep/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_embl/saccharomyces_cerevisiae/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_genbank/saccharomyces_cerevisiae/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_mysql/saccharomyces_cerevisiae/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_gtf/saccharomyces_cerevisiae/">FTP</a></td>
+<td>-</td>
 </tr>
 	    
 <tr>
-<td>
-<a target="ftp" href="ftp://ftp.ensembl.org/pub/current_spermophilus_tridecemlineatus/"><i>Spermophilus tridecemlineatus</i></a> (thirteen-lined ground squirrel)</td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_spermophilus_tridecemlineatus/data/fasta/dna/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_spermophilus_tridecemlineatus/data/fasta/cdna/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_spermophilus_tridecemlineatus/data/fasta/pep/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_spermophilus_tridecemlineatus/data/flatfiles/embl/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_spermophilus_tridecemlineatus/data/flatfiles/genbank/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_spermophilus_tridecemlineatus/data/mysql/">FTP</a></td>
+<td><strong><i>Sorex araneus</i></strong> (European shrew)</td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_fasta/sorex_araneus/dna/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_fasta/sorex_araneus/cdna/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_fasta/sorex_araneus/pep/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_embl/sorex_araneus/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_genbank/sorex_araneus/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_mysql/sorex_araneus/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_gtf/sorex_araneus/">FTP</a></td>
+<td>-</td>
 </tr>
 	    
 <tr>
-<td>
-<a target="ftp" href="ftp://ftp.ensembl.org/pub/current_takifugu_rubripes/"><i>Takifugu rubripes</i></a> (torafugu)</td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_takifugu_rubripes/data/fasta/dna/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_takifugu_rubripes/data/fasta/cdna/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_takifugu_rubripes/data/fasta/pep/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_takifugu_rubripes/data/flatfiles/embl/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_takifugu_rubripes/data/flatfiles/genbank/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_takifugu_rubripes/data/mysql/">FTP</a></td>
+<td><strong><i>Spermophilus tridecemlineatus</i></strong> (thirteen-lined ground squirrel)</td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_fasta/spermophilus_tridecemlineatus/dna/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_fasta/spermophilus_tridecemlineatus/cdna/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_fasta/spermophilus_tridecemlineatus/pep/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_embl/spermophilus_tridecemlineatus/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_genbank/spermophilus_tridecemlineatus/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_mysql/spermophilus_tridecemlineatus/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_gtf/spermophilus_tridecemlineatus/">FTP</a></td>
+<td>-</td>
 </tr>
 	    
 <tr>
-<td>
-<a target="ftp" href="ftp://ftp.ensembl.org/pub/current_tetraodon_nigroviridis/"><i>Tetraodon nigroviridis</i></a> (freshwater pufferfish)</td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_tetraodon_nigroviridis/data/fasta/dna/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_tetraodon_nigroviridis/data/fasta/cdna/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_tetraodon_nigroviridis/data/fasta/pep/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_tetraodon_nigroviridis/data/flatfiles/embl/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_tetraodon_nigroviridis/data/flatfiles/genbank/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_tetraodon_nigroviridis/data/mysql/">FTP</a></td>
+<td><strong><i>Takifugu rubripes</i></strong> (torafugu)</td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_fasta/takifugu_rubripes/dna/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_fasta/takifugu_rubripes/cdna/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_fasta/takifugu_rubripes/pep/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_embl/takifugu_rubripes/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_genbank/takifugu_rubripes/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_mysql/takifugu_rubripes/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_gtf/takifugu_rubripes/">FTP</a></td>
+<td>-</td>
 </tr>
 	    
 <tr>
-<td>
-<a target="ftp" href="ftp://ftp.ensembl.org/pub/current_tupaia_belangeri/"><i>Tupaia belangeri</i></a> (northern tree shrew)</td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_tupaia_belangeri/data/fasta/dna/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_tupaia_belangeri/data/fasta/cdna/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_tupaia_belangeri/data/fasta/pep/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_tupaia_belangeri/data/flatfiles/embl/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_tupaia_belangeri/data/flatfiles/genbank/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_tupaia_belangeri/data/mysql/">FTP</a></td>
+<td><strong><i>Tetraodon nigroviridis</i></strong> (Fresh water pufferfish)</td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_fasta/tetraodon_nigroviridis/dna/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_fasta/tetraodon_nigroviridis/cdna/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_fasta/tetraodon_nigroviridis/pep/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_embl/tetraodon_nigroviridis/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_genbank/tetraodon_nigroviridis/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_mysql/tetraodon_nigroviridis/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_gtf/tetraodon_nigroviridis/">FTP</a></td>
+<td>-</td>
 </tr>
 	    
 <tr>
-<td>
-<a target="ftp" href="ftp://ftp.ensembl.org/pub/current_xenopus_tropicalis/"><i>Xenopus tropicalis</i></a> (western clawed frog)</td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_xenopus_tropicalis/data/fasta/dna/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_xenopus_tropicalis/data/fasta/cdna/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_xenopus_tropicalis/data/fasta/pep/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_xenopus_tropicalis/data/flatfiles/embl/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_xenopus_tropicalis/data/flatfiles/genbank/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_xenopus_tropicalis/data/mysql/">FTP</a></td>
+<td><strong><i>Tupaia belangeri</i></strong> (northern tree shrew)</td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_fasta/tupaia_belangeri/dna/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_fasta/tupaia_belangeri/cdna/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_fasta/tupaia_belangeri/pep/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_embl/tupaia_belangeri/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_genbank/tupaia_belangeri/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_mysql/tupaia_belangeri/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_gtf/tupaia_belangeri/">FTP</a></td>
+<td>-</td>
 </tr>
-	    </table>
+	    
+<tr>
+<td><strong><i>Xenopus tropicalis</i></strong> (western clawed frog)</td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_fasta/xenopus_tropicalis/dna/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_fasta/xenopus_tropicalis/cdna/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_fasta/xenopus_tropicalis/pep/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_embl/xenopus_tropicalis/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_genbank/xenopus_tropicalis/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_mysql/xenopus_tropicalis/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_gtf/xenopus_tropicalis/">FTP</a></td>
+<td>-</td>
+</tr>
+	    
+<tr>
+<td><strong>Multi-species</strong></td>
+<td>-</td>
+<td>-</td>
+<td>-</td>
+<td>-</td>
+<td>-</td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_mysql/multi_species/">FTP</a></td>
+<td>-</td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_emf/multi_species/variation/">FTP</a></td>
+</tr>
+<tr>
+<td><strong>Ensembl Mart</strong></td>
+<td>-</td>
+<td>-</td>
+<td>-</td>
+<td>-</td>
+<td>-</td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_mysql/mart/">FTP</a></td>
+<td>-</td>
+<td>-</td>
+</tr>
+      </table>
