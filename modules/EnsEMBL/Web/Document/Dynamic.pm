@@ -89,7 +89,7 @@ sub _initialize_HTML {
   $self->_prof( "common HTML called" );
   $self->_script_HTML();
   $self->_prof( "script HTML called" );
-  $self->helplink->kw = $ENV{'ENSEMBL_SCRIPT'}.';se=1';
+  $self->helplink->kw = $ENV{'ENSEMBL_SCRIPT'};
   $self->rss->add( '/common/rss.xml', 'Ensembl website news feed', 'rss' );
 ## Let us set up the search box...
   $self->searchbox->sp_common  = $self->species_defs->SPECIES_COMMON_NAME;
