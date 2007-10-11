@@ -163,7 +163,7 @@ for my $sp( sort @SPECIES ){  # users selected spp
   # Work out species folder name and empty if you are dumping --type all
   my $sp_release = $SPECIES_DEFS->get_config($sp,"SPECIES_RELEASE_VERSION");
      $sp_release =~ s/\.//g;
-  my $sp_folder = "$DUMPDIR/".(join "_", lc($sp), $release, $sp_release)."/data/fasta";
+  my $sp_folder = "$DUMPDIR"."fasta/".(join "_", lc($sp), $release, $sp_release);
 
   if ( -e $sp_folder && $TYPES[0] eq 'all' && !$no_dumpdata) {
     info( 1, "Removing existing copies of $sp_folder" );
@@ -178,10 +178,10 @@ for my $sp( sort @SPECIES ){  # users selected spp
     info( 2, "Dumping @TYPES from \n$db $sp - $DUMPDIR" );
   
     # Create directories and filehandles for dumps
-    my ($chr_toplevel, $created_files) =
+    my ( $chr_toplevel, $created_files) =
       create_dirs_for_dumps( $sp, $SPECIES_DEFS, $sp_folder, $types,  $db_adaptor);
     # Do dumps
-    $created_files = get_data($db_adaptor, $sp, $created_files, $chr_toplevel) unless $no_dumpdata;
+    $created_files = get_data($db_adaptor, $sp, $created_files, $chr_toplevel ) unless $no_dumpdata;
   
     # Make blast indexes and copy to blastsrv machine $BLASTSRV
     $created_files = blast_indexes( $created_files, $sp ) unless $no_indexes;
@@ -300,11 +300,20 @@ sub create_dirs_for_dumps {
 
     # file name like dna.contig.fa cdna.abinitio.fa
     my $tmp_file = join (".", "$thisdir/$file_details", $seqtype, $idtype || (), "fa");
-    $filehandles->{$type} = Bio::SeqIO->new(
+   $filehandles->{$type} = Bio::SeqIO->new(
       '-format' => 'Fasta', 
       '-file'   => '>'.$tmp_file
     );
   }
+  my $thisdir = $sp_folder."/dna/";
+  my $file_top = $thisdir . $file_details .".dna.toplevel.fa";
+  open(TOP, '>'."$file_top") or die "Couldn't open file $file_top: $!\n";
+  close TOP;
+		  
+  my $file_top_rm = $thisdir . $file_details .".dna_rm.toplevel.fa";
+  open(TOPRM, '>'."$file_top_rm") or die "Couldn't open file $file_top_rm: $!\n";
+  close TOPRM;
+
   my $chr_toplevel = "$sp_folder/dna/$file_details";
   return ( $chr_toplevel, $filehandles );
 }
@@ -377,9 +386,15 @@ sub get_data {
           my $seqio = Bio::SeqIO->new('-format' => 'Fasta', 
                        '-file'   =>  sprintf ($file, "dna"));
           dump_dna( $seqio, $slice, 'dna' );
-  
+       
+          system("cat $chr_toplevel.dna.chromosome.$seq_name.fa >> $chr_toplevel.dna.toplevel.fa") == 0 or   warn "Can't concat fasta files";
+	  my $top_file = $chr_toplevel . ".dna.toplevel.fa";
+	  my $seq_top =  Bio::SeqIO->new('-format' => 'Fasta',
+	                 '-file'   =>  $top_file);
+				 
           # Need to add these so they are closed and gzipped
           $fhs->{"$chr_toplevel.dna.chromosome.$seq_name.fa"} = $seqio;
+	  $fhs->{"dna_toplevel_top"} = $seq_top;
         }
   
         if($fhs->{'dna_toplevel_masked'} ){
@@ -389,9 +404,15 @@ sub get_data {
           #dump_dna( $seqio_masked, $slice->get_repeatmasked_seq(\@analyses), 'dna_rm' );
           #dump_dna( $seqio_masked, $slice->get_repeatmasked_seq([('RepeatMask','Dust','TRF','Mono_sup_RepeatMask')]), 'dna_rm' );
           dump_dna_masked( $seqio_masked, $slice, mask_sequence($slice, \@analyses), 'dna_rm' );
-  
+ 
+          system("cat $chr_toplevel.dna.chromosome.$seq_name.fa >> $chr_toplevel.dna_rm.toplevel.fa") == 0 or warn "Can't concat fasta files";
+	  my $top_file_rm = $chr_toplevel . ".dna_rm.toplevel.fa";
+	   my $seq_top_rm =  Bio::SeqIO->new('-format' => 'Fasta',
+        	                             '-file'   =>  $top_file_rm);
+						       
           # Need to add these so they are closed and gzipped
           $fhs->{"$chr_toplevel.dna_rm.chromosome.$seq_name.fa"} = $seqio_masked;
+          $fhs->{"dna_toplevel_rm"} = $seq_top_rm;	  
         }
       }
     }
@@ -440,12 +461,13 @@ sub get_data {
     }
     #info( 1, "End toplevel ". $slice->name );
   }
-
+  
+			    
   # Delete empty files ----------------------------------------------------
   foreach my $type (keys %$fhs) {
     my $seqio = $fhs->{$type};
     my $file = $seqio->file;
-    $file =~ s/^>//;
+    $file =~ s/^>//; 
     $file  || ( utils::Tool::warning( 1, "Dump type $type has no filename" ) && next );
     -e $file || ( info( 1, "File $file ($type) does not exist" ) && next );
     if( -z $file ){ #Empty file
@@ -751,8 +773,7 @@ sub blast_indexes {
     my $fh = $seqio->file;
     $fh =~ s/^>//;
     unlink $fh || warn "Can't delete $fh: $!" if -z $fh;  # delete empty file
-
-    next unless $types =~ /^dna_seqlevel|^cdna|^pep|^ncrna/;
+    next unless $types =~ /^dna_toplevel|^dna_seqlevel|^cdna|^pep|^ncrna/;
     if ($no_dumpdata) {
       if (-e "$fh.gz") {
         info(1, "Gunziping $fh.gz");
@@ -791,13 +812,14 @@ sub blast_indexes {
 
   # Do blast xdformat indexes
     my $names = xdformat_blast_indexes($types, $fh, $release_dir);
-
+    
    # Copy blast indexes across------------------------------
     foreach my $file (keys %$names ) {
       my $file_name = $names->{$file};
-      utils::Tool::warning(1, "Error producing file $file") && next unless -s "$file";
-      system("scp -i $key_file $file $blast_machine:/data/blastdb/ensembl/$release_dir/$file_name");
-      unlink($file) || warn "Can't delete $file: $!" unless $file eq $fh;
+      my $xd_file = "$basedir$release_dir/xdformat/" . $file_name;
+      utils::Tool::warning(1, "Error producing file $xd_file") && next unless -s "$xd_file";
+      system("scp -i $key_file $xd_file $blast_machine:/data/blastdb/ensembl/$release_dir/$file_name");
+      unlink($xd_file) || warn "Can't delete $xd_file: $!" unless $file eq $fh;
     }
 
    # Check ini file configuration--------------------------
@@ -825,16 +847,15 @@ sub xdformat_blast_indexes {
   info (1, "xdformat indexes");
   my @names;
   if ($types =~/^pep/) {
-    @names = qw( .xpd .xps .xpt);
+    @names = qw( .xpd .xps .xpt .xni);
     system ("$xdformat_command -p $fh");
   } else {
-    @names = qw( .xnd .xns .xnt);
-    system ("$xdformat_command -n $fh");
+    @names = qw( .xnd .xns .xnt .xni);
+    system ("$xdformat_command -n -I $fh");
   }
 
   my $xdformat_dir = "$basedir$release_dir/xdformat";
   utils::Tool::check_dir($xdformat_dir);
-
   my $xdformat_files = {};
   foreach my $index (@names ) {
     my $file = "$fh$index";
