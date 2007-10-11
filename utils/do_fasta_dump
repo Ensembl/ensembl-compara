@@ -405,7 +405,7 @@ sub get_data {
           #dump_dna( $seqio_masked, $slice->get_repeatmasked_seq([('RepeatMask','Dust','TRF','Mono_sup_RepeatMask')]), 'dna_rm' );
           dump_dna_masked( $seqio_masked, $slice, mask_sequence($slice, \@analyses), 'dna_rm' );
  
-          system("cat $chr_toplevel.dna.chromosome.$seq_name.fa >> $chr_toplevel.dna_rm.toplevel.fa") == 0 or warn "Can't concat fasta files";
+          system("cat $chr_toplevel.dna_rm.chromosome.$seq_name.fa >> $chr_toplevel.dna_rm.toplevel.fa") == 0 or warn "Can't concat fasta files";
 	  my $top_file_rm = $chr_toplevel . ".dna_rm.toplevel.fa";
 	   my $seq_top_rm =  Bio::SeqIO->new('-format' => 'Fasta',
         	                             '-file'   =>  $top_file_rm);
