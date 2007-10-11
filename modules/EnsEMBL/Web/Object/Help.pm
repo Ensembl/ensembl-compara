@@ -135,6 +135,10 @@ sub views {
       push @$params, ['article_id',$self->param('id')];
     }
   }
+  ## Default help
+  if (!$self->param('id') && !$self->param('kw')) {
+    push @$params, ['keyword','helpview'];
+  }
     
   ## Check old database and convert to records
   ## NB - convert to else block once EnsEMBL is fully migrated?
