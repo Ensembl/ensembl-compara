@@ -85,6 +85,20 @@ paralogy types.<br>
 
 <br>
 <span style="font-weight: bold;">
+*</span> There is an extra optional step which calculates the dN/dS values for the
+orthology relationships of closely related pairs of species. We use codeml in the 
+PAML<sup>5</sup> package (model=0, NSsites=0) for this. 
+
+We only calculate these dN/dS values for closely-related pairs of
+species. When the species evolutionary distance is too large, the
+saturation of the dS values biases the estimated dN/dS
+ratio. Additionally, we mask out the dN/dS ratio when the dS value is larger
+than (2*median(dS)). For each pair of species we calculate a threshold on dS 
+which is 2 * median(dS).  When the dS of a given ortholog gene pair is larger than
+this threshold, we mask out the dN/dS ratio.
+
+<br>
+<span style="font-weight: bold;">
 Orthologues</span> : any gene pairwise relation where the ancestor node is a
 speciation event.<br>
 We predict several descriptions of orthologues.<br>
@@ -156,14 +170,18 @@ sort of blastp &gt;score, <evalue ,="">%identity,
 <br>
 <br>
 <sup>2</sup> BSR: Blast Score Ratio. When 2 proteins P1 and P2 are compared,
-BSR=scoreP1P2/max(self-scoreP1 or self-scoreP2). The default threshold
-used in the initial clustering step is 0.33.
+BSR=scoreP1P2/max(self-scoreP1 or self-scoreP2). This is, the score between 
+P1 and P2 (numerator) is compared to the score of P1 against itself and the score of P2 
+against itself (denominator). The default threshold used in the initial clustering step 
+is 0.33. This effectively relates the length of the P1 vs P2 match against the length
+of P1 and P2 themselves, limiting the number of spurious short matches.
 <br>
 <br>
 <sup>3</sup>&nbsp;Edgar RC "MUSCLE: a multiple sequence alignment method with reduced time and space complexity" <a href="http://www.biomedcentral.com/1471-2105/5/113">BMC Bioinformatics 2004 Aug 19;5:113.</a><br>
 </evalue><evalue ,=""><br>
 <sup>4</sup>&nbsp;Li H et al. NJTREE: <a href="http://treesoft.sourceforge.net/njtree.shtml">http://treesoft.sourceforge.net/njtree.shtml</a>. Manuscript in preparation.<br> 
 </evalue><font size="+1"><b></b></font><br>
+<sup>5</sup>&nbsp;Yang Z "PAML: a program package for phylogenetic analysis by maximum likelihood" <a href="http://abacus.gene.ucl.ac.uk/software/paml.html">Comput Appl Biosci. 1997 Oct; 13(5):555-556.</a><br>
 <evalue ,="">
 
 </evalue>
