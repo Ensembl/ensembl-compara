@@ -363,6 +363,10 @@ sub get_data {
     if ($fhs->{'dna_toplevel_masked'} or $fhs->{'dna_toplevel'}) {
 
       my $seq_name = $slice->seq_region_name;
+      my $t_file = $fhs->{'dna_toplevel'}->file;
+      $t_file=~s/>//; 
+      my $t_file_rm = $fhs->{'dna_toplevel_masked'}->file;
+      $t_file_rm=~s/>//; 
       #info (1, "M1: $seq_name");
       # If not chr based toplevel, use predefined filehandle
       if ( ($coord_system !~ /^chromosome$/i) or  ( $seq_name =~/random
@@ -372,10 +376,23 @@ sub get_data {
                            /x)  ) {
         if ( my $seqio = $fhs->{'dna_toplevel'} ){
           dump_dna( $seqio, $slice, 'dna' );
-        }
+        
+          warn "Can't concat fasta files $t_file $chr_toplevel.dna.toplevel.fa";
+          system("cat $t_file >> $chr_toplevel.dna.toplevel.fa") == 0 or   warn "Can't concat fasta files $t_file $chr_toplevel.dna.toplevel.fa";
+	  my $top_file = $chr_toplevel . ".dna.toplevel.fa";
+	  my $seq_top =  Bio::SeqIO->new('-format' => 'Fasta',
+     	  		                  '-file'   =>  $top_file);
+        }        
+
         if ( my $seqio_masked = $fhs->{'dna_toplevel_masked'} ){
           dump_dna( $seqio_masked, $slice->get_repeatmasked_seq(\@analyses), 'dna_rm' );
+        
+          system("cat $t_file_rm >> $chr_toplevel.dna_rm.toplevel.fa") == 0 or warn "Can't concat fasta files";
+	  my $top_file_rm = $chr_toplevel . ".dna_rm.toplevel.fa";
+	  my $seq_top_rm =  Bio::SeqIO->new('-format' => 'Fasta',
+	                                   '-file'   =>  $top_file_rm);
         }
+
       # chromosome based system, need to make new files for each chr
       } else  {
         my $file = ">$chr_toplevel.%s.chromosome.$seq_name.fa";
