@@ -231,7 +231,7 @@ sub check_types {
      cdna_all      cdna_known cdna_novel cdna_pseudo cdna_abinitio cdna_known-ccds
      pep_all       pep_known  pep_novel              pep_abinitio  pep_known-ccds
      dna_seqlevel  dna_seqlevel_masked
-     dna_toplevel  dna_toplevel_masked
+     dna_toplevel  dna_toplevel_masked    
   );
 
 
@@ -307,13 +307,18 @@ sub create_dirs_for_dumps {
   }
   my $thisdir = $sp_folder."/dna/";
   my $file_top = $thisdir . $file_details .".dna.toplevel.fa";
-  open(TOP, '>'."$file_top") or die "Couldn't open file $file_top: $!\n";
-  close TOP;
+  $filehandles->{'dna_toplevel_top'} = Bio::SeqIO->new(
+           '-format' => 'Fasta',
+	   '-file'   => '>'.$file_top
+	    );
+		     
 		  
   my $file_top_rm = $thisdir . $file_details .".dna_rm.toplevel.fa";
-  open(TOPRM, '>'."$file_top_rm") or die "Couldn't open file $file_top_rm: $!\n";
-  close TOPRM;
-
+  $filehandles->{'dna_toplevel_top_rm'} = Bio::SeqIO->new(
+             '-format' => 'Fasta',
+	     '-file'   => '>'.$file_top_rm
+	     );
+				    
   my $chr_toplevel = "$sp_folder/dna/$file_details";
   return ( $chr_toplevel, $filehandles );
 }
@@ -363,10 +368,6 @@ sub get_data {
     if ($fhs->{'dna_toplevel_masked'} or $fhs->{'dna_toplevel'}) {
 
       my $seq_name = $slice->seq_region_name;
-      my $t_file = $fhs->{'dna_toplevel'}->file;
-      $t_file=~s/>//; 
-      my $t_file_rm = $fhs->{'dna_toplevel_masked'}->file;
-      $t_file_rm=~s/>//; 
       #info (1, "M1: $seq_name");
       # If not chr based toplevel, use predefined filehandle
       if ( ($coord_system !~ /^chromosome$/i) or  ( $seq_name =~/random
@@ -375,23 +376,22 @@ sub get_data {
                            |scaffold_
                            /x)  ) {
         if ( my $seqio = $fhs->{'dna_toplevel'} ){
-          dump_dna( $seqio, $slice, 'dna' );
-        
-          system("cat $t_file >> $chr_toplevel.dna.toplevel.fa") == 0 or   warn "Can't concat fasta files $t_file $chr_toplevel.dna.toplevel.fa";
-	  my $top_file = $chr_toplevel . ".dna.toplevel.fa";
-	  my $seq_top =  Bio::SeqIO->new('-format' => 'Fasta',
-     	  		                  '-file'   =>  $top_file);
-          $fhs->{"dna_toplevel_top"} = $seq_top;  
+									
+	  dump_dna( $seqio, $slice, 'dna',);
+          my $seqio_top = $fhs->{"dna_toplevel_top"}; 
+          dump_dna( $seqio_top, $slice, 'dna',);
+	  
+          
+         # $fhs->{"dna_toplevel_top"} = $seq_top;  
         }        
 
         if ( my $seqio_masked = $fhs->{'dna_toplevel_masked'} ){
+	                      
           dump_dna( $seqio_masked, $slice->get_repeatmasked_seq(\@analyses), 'dna_rm' );
-        
-          system("cat $t_file_rm >> $chr_toplevel.dna_rm.toplevel.fa") == 0 or warn "Can't concat fasta files";
-	  my $top_file_rm = $chr_toplevel . ".dna_rm.toplevel.fa";
-	  my $seq_top_rm =  Bio::SeqIO->new('-format' => 'Fasta',
-	                                   '-file'   =>  $top_file_rm);
-          $fhs->{"dna_toplevel_top_rm"} = $seq_top_rm;
+          my $seqio_top_rm = $fhs->{"dna_toplevel_top_rm"};
+	  dump_dna( $seqio_top_rm, $slice->get_repeatmasked_seq(\@analyses), 'dna_rm');
+			   
+          #$fhs->{"dna_toplevel_top_rm"} = $seq_top_rm;
    
        }
 
@@ -407,13 +407,13 @@ sub get_data {
           dump_dna( $seqio, $slice, 'dna' );
        
           system("cat $chr_toplevel.dna.chromosome.$seq_name.fa >> $chr_toplevel.dna.toplevel.fa") == 0 or   warn "Can't concat fasta files";
-	  my $top_file = $chr_toplevel . ".dna.toplevel.fa";
-	  my $seq_top =  Bio::SeqIO->new('-format' => 'Fasta',
-	                 '-file'   =>  $top_file);
+	  #my $top_file = $chr_toplevel . ".dna.toplevel.fa";
+	  #my $seq_top =  Bio::SeqIO->new('-format' => 'Fasta',
+          #	                          '-file'   =>  $top_file);
 				 
           # Need to add these so they are closed and gzipped
           $fhs->{"$chr_toplevel.dna.chromosome.$seq_name.fa"} = $seqio;
-	  $fhs->{"dna_toplevel_top"} = $seq_top;
+         # $fhs->{"dna_toplevel_top"} = $seq_top;
         }
   
         if($fhs->{'dna_toplevel_masked'} ){
@@ -425,13 +425,13 @@ sub get_data {
           dump_dna_masked( $seqio_masked, $slice, mask_sequence($slice, \@analyses), 'dna_rm' );
  
           system("cat $chr_toplevel.dna_rm.chromosome.$seq_name.fa >> $chr_toplevel.dna_rm.toplevel.fa") == 0 or warn "Can't concat fasta files";
-	  my $top_file_rm = $chr_toplevel . ".dna_rm.toplevel.fa";
-	   my $seq_top_rm =  Bio::SeqIO->new('-format' => 'Fasta',
-        	                             '-file'   =>  $top_file_rm);
+	  #my $top_file_rm = $chr_toplevel . ".dna_rm.toplevel.fa";
+	  # my $seq_top_rm =  Bio::SeqIO->new('-format' => 'Fasta',
+          #	                             '-file'   =>  $top_file_rm);
 						       
           # Need to add these so they are closed and gzipped
           $fhs->{"$chr_toplevel.dna_rm.chromosome.$seq_name.fa"} = $seqio_masked;
-          $fhs->{"dna_toplevel_rm"} = $seq_top_rm;	  
+          #$fhs->{"dna_toplevel_rm"} = $seq_top_rm;	  
         }
       }
     }
@@ -646,12 +646,11 @@ sub dump_dna{
 
   ### Returns 1
 
-  my ($seqio, $slice, $type_str, $location) = @_;
+  my ($seqio, $slice, $type_str, $location ) = @_;
   return if $no_data;
 
   # Force slice onto forward strand
   if( $slice->strand < 1 ){ $slice = $slice->invert }
-
   $location ||= $slice->name;
   my ($type, $subtype) = split(':', $type_str);
 
