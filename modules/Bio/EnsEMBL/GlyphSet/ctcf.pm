@@ -12,18 +12,17 @@ use Data::Dumper;
 sub my_helplink { return "ctcf"; }
 
 sub get_block_features {
-
   ### block_features
-
-  my ( $self, $db ) = @_;
+  my ( $self, $db ) = @_; 
   unless ( $self->{'block_features'} ) {
-    my $feature_adaptor = $db->get_DataSetAdaptor();
+    my $feature_adaptor = $db->get_DataSetAdaptor(); 
     if (!$feature_adaptor) {
       warn ("Cannot get get adaptors: $feature_adaptor");
       return [];
     }
-     my $features = $feature_adaptor->fetch_all_displayable_by_feature_type_class('INSULATOR') || [] ;
-    $self->{'block_features'} = $features;
+     #warn "Adapt $feature_adaptor"; 
+     my $features = $feature_adaptor->fetch_all_displayable_by_feature_type_class('Insulator') || [] ; 
+    $self->{'block_features'} = $features; 
   }
 
   my $colour = "dodgerblue4";
@@ -46,29 +45,28 @@ sub draw_features {
   foreach my $feature ( @$block_features ) {
 
     # render wiggle if wiggle
-    if ($wiggle) { 
-      foreach my $result_set  (  @{ $feature->get_displayable_ResultSets() } ){ 
-	#get features for slice and experimental chip set
-	my @features = @{ $result_set->get_displayable_ResultFeatures_by_Slice($slice) }; 
-	next unless @features;
-	
-	$drawn_wiggle_flag = "wiggle";
-	@features   = sort { $a->score <=> $b->score  } @features;
-	my ($min_score, $max_score) = ($features[0]->score || 0, $features[-1]->score|| 0);
-	$self->render_wiggle_plot(\@features, $wiggle_colour, $min_score, $max_score, $result_set->display_label);
-      }
+   if ($wiggle) { 
+	foreach my $result_set  (  @{ $feature->get_displayable_supporting_sets() } ){ 
+	 
+	 #get features for slice and experimental chip set
+	 my @features = @{ $result_set->get_displayable_ResultFeatures_by_Slice($slice) }; 
+	 next unless @features; 	
+	 $drawn_wiggle_flag = "wiggle";
+	 @features   = sort { $a->score <=> $b->score  } @features;
+	 my ($min_score, $max_score) = ($features[0]->score || 0, $features[-1]->score|| 0); 
+	 $self->render_wiggle_plot(\@features, $wiggle_colour, $min_score, $max_score, $result_set->display_label);
+   }
       $self->render_space_glyph() if $drawn_wiggle_flag;
-    }
+  }
 
-    # Block features
-    foreach my $fset ( @{ $feature->get_displayable_FeatureSets() }){
+    # Block feature 
+   my $fset = $feature->get_displayable_product_FeatureSet();   
       my $display_label = $fset->display_label();
-      my $features = $fset->get_AnnotatedFeatures_by_Slice($slice ) ;
+      my $features = $fset->get_Features_by_Slice($slice ) ;
       next unless @$features;
       $drawn_flag = "block_features";
       $self->render_block_features( $features, $colour );
-      $self->render_track_name($display_label, $colour);
-    }
+     $self->render_track_name($display_label, $colour);
   }
 
   $self->render_space_glyph() if $drawn_flag;
