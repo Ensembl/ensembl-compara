@@ -146,6 +146,18 @@ sub classification {
   }
 }
 
+
+=head2 subspecies
+
+  Example    : $ncbi->subspecies;
+  Description: Returns the subspeceis name for this species
+  Example    : "verus" for Pan troglodytes verus
+  Returntype : string
+  Exceptions :
+  Caller     : general
+
+=cut
+
 sub subspecies {
   my $self = shift;
 
@@ -159,6 +171,18 @@ sub subspecies {
   return $self->{'_species'};
 }
 
+
+=head2 species
+
+  Example    : $ncbi->species;
+  Description: Returns the speceis name for this species
+  Example    : "sapiens" for Homo sapiens
+  Returntype : string
+  Exceptions :
+  Caller     : general
+
+=cut
+
 sub species {
   my $self = shift;
 
@@ -171,6 +195,18 @@ sub species {
 
   return $self->{'_species'};
 }
+
+
+=head2 genus
+
+  Example    : $ncbi->genus;
+  Description: Returns the genus name for this species
+  Returntype : string
+  Example    : "Homo" for Homo sapiens
+  Exceptions :
+  Caller     : general
+
+=cut
 
 sub genus {
   my $self = shift;
@@ -209,6 +245,17 @@ sub _add_child_name_to_classification {
   }
 }
 
+
+=head2 common_name
+
+  Example    : $ncbi->common_name;
+  Description: The comon name as defined by Genbank
+  Returntype : string
+  Exceptions : returns undef if no genbank common name exists.
+  Caller     : general
+
+=cut
+
 sub common_name {
   my $self = shift;
   if ($self->has_tag('genbank common name') && $self->rank eq 'species') {
@@ -217,6 +264,17 @@ sub common_name {
     return undef;
   }
 }
+
+
+=head2 binomial
+
+  Example    : $ncbi->binomial;
+  Description: The binomial name (AKA the scientific name) of this genome
+  Returntype : string
+  Exceptions : warns when node is not a species or has no scientific name
+  Caller     : general
+
+=cut
 
 sub binomial {
   my $self = shift;
@@ -227,6 +285,7 @@ sub binomial {
     return undef;
   }
 }
+
 
 =head2 short_name
 
