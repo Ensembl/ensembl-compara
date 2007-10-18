@@ -109,7 +109,7 @@ sub block_features_zmenu {
     'caption'               => ($f->display_label || ''),
     "03:bp:   $pos"       => '',
     "05:description: ".($f->feature_type->description() || '-') => '',
-    "06:analysis:    ".($f->analysis->display_label() || '-')  => '',
+    "06:analysis:    ".($f->analysis->logic_name() || '-')  => '',
     "09:score: ".$score => '',
   );
   return \%zmenu || {};
