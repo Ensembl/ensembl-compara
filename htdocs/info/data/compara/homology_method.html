@@ -28,7 +28,7 @@ annotated to distinguish duplication or speciation events.<br>
 There is a clear concordance with reciprocal best approaches in the
 simple case of unique orthologous genes. However, the gene tree
 pipeline is able to find more complex one-to-many and many-to-many
-relations. This for instance significantly raises the number of Teleost
+relations. This, for instance, significantly raises the number of Teleost
 (bony fish) to Mammal orthologs and has even more dramatic effects on
 Fly/Mammal or Worm/Mammal orthologous gene predictions. Using this
 approach, we are also able to "time" duplication events which produce
@@ -73,9 +73,9 @@ protein sequences using MUSCLE<sup>3</sup><br>
 <br>
 <span style="font-weight: bold;">
 6.</span> For each aligned cluster, build a phylogenetic tree using
-NJTREE<sup>4</sup> using the CDS sequences of the multiple alignment.
-An rooted tree with internal duplication tags is obtained at this
-stage, reconciling it with the species tree in
+NJTREE<sup>4</sup> using the CDS back-translation of the protein multiple alignment 
+from the original DNA sequences. A rooted tree with internal duplication tags is 
+obtained at this stage, reconciling it with the species tree in
 'ensembl-compara/scripts/pipeline/species_tree_njtree.taxon_id.nh'.<br>
 
 <br>
@@ -92,11 +92,10 @@ PAML<sup>5</sup> package (model=0, NSsites=0) for this.
 We only calculate these dN/dS values for closely-related pairs of
 species. When the species evolutionary distance is too large, the
 saturation of the dS values biases the estimated dN/dS
-ratio. Additionally, we mask out the dN/dS ratio when the dS value is larger
-than (2*median(dS)). For each pair of species we calculate a threshold on dS 
+ratio. For each pair of species we calculate a threshold on dS 
 which is 2 * median(dS).  When the dS of a given ortholog gene pair is larger than
 this threshold, we mask out the dN/dS ratio.
-
+<br>
 <br>
 <span style="font-weight: bold;">
 Orthologues</span> : any gene pairwise relation where the ancestor node is a
