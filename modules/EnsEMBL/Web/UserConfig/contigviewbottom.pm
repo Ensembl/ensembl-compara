@@ -424,7 +424,7 @@ sub init {
     'fg_regulatory_features' => {
       'on'  => "on",
       'bump_width' => 0,
-      'dep' => 0.1,
+      'dep' => 6,
       'pos' => '4529',
       'str' => 'r',
       'col' => 'blue',
