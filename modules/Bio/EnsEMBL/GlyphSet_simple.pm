@@ -53,7 +53,7 @@ sub image_label {
 
 use Bio::EnsEMBL::Feature;
 sub aggregate_coverage {
-  my( $self, $features ) = @_;
+  my( $self, $features ) = @_; 
   my $Config     = $self->{'config'};
   my $LN         = $Config->length();
   my $pix_per_bp = $Config->transform()->{'scalex'};
@@ -165,7 +165,7 @@ sub _init {
     return; 
   }
   my $aggregate = '';
-
+  
   if( $aggregate ) {
     ## We need to set max depth to 0.1
     ## We need to remove labels (Zmenu becomes density score)
@@ -174,7 +174,7 @@ sub _init {
     $features = $self->$aggregate_function( $features ); 
   }
 
-  foreach my $f ( @{$features} ) {
+  foreach my $f ( @{$features} ) { 
     #print STDERR "Added feature ", $f->id(), " for drawing.\n";
     ## Check strand for display ##
     my $fstrand = $f->strand || -1;
@@ -182,9 +182,9 @@ sub _init {
     ## Check start are not outside VC.... #
     my $start = $f->start();
     next if $start>$vc_length; ## Skip if totally outside VC
-    $start = 1 if $start < 1;
+    $start = 1 if $start < 1;  
     ## Check end are not outside VC.... ##
-    my $end   = $f->end();
+    my $end   = $f->end();   
     next if $end<1;            ## Skip if totally outside VC
     $end   = $vc_length if $end>$vc_length;
     $T++;
@@ -210,10 +210,10 @@ sub _init {
     $img_start = $tag_start if $tag_start < $img_start; 
     $img_end   = $tag_end   if $tag_end   > $img_end; 
     my @tags = $self->tag($f);
-    foreach my $tag (@tags) {
+    foreach my $tag (@tags) { 
       next unless ref($tag) eq 'HASH';
-      $tag_start = $start;
-      $tag_end = $end;
+      $tag_start = $start; 
+      $tag_end = $end;    
       if($tag->{'style'} eq 'snp' ) {
         $tag_start = $start - 1/2 - 4/$pix_per_bp;
         $tag_end   = $start - 1/2 + 4/$pix_per_bp;
@@ -226,9 +226,12 @@ sub _init {
       } elsif($tag->{'style'} eq 'underline') {
         $tag_start = $tag->{'start'} if defined $tag->{'start'};
         $tag_end   = $tag->{'end'}   if defined $tag->{'end'};
+      } elsif($tag->{'style'} eq 'fg_ends') {
+        $tag_start = $tag->{'start'} if defined $tag->{'start'};
+        $tag_end   = $tag->{'end'}   if defined $tag->{'end'};
       }
       $img_start = $tag_start if $tag_start < $img_start; 
-      $img_end   = $tag_end   if $tag_end   > $img_end; 
+      $img_end   = $tag_end   if $tag_end   > $img_end;  
     } 
     ## This is the bit we compute the width.... 
         
@@ -502,6 +505,36 @@ sub _init {
           'absolutey'  => 1
         });
         $composite->push($line);
+      } elsif($tag->{'style'} eq 'fg_ends') {
+        my $f_start = $tag->{'start'} || $start ;
+        my $f_end   = $tag->{'end'}   || $end ;
+        $f_start = 1          if $f_start < 1;
+        $f_end   = $vc_length if $f_end   > $vc_length;
+        $composite->push( new Sanger::Graphics::Glyph::Rect({
+          'x'          => $f_start -1 ,
+          'y'          => ($h/2),
+          'width'      => $f_end - $f_start + 1,
+          'height'     => 0,
+          "colour"     => $tag->{'colour'},
+          'absolutey'  => 1,
+          'zindex'     => 0  
+        }) );
+        $composite->push( new Sanger::Graphics::Glyph::Rect({
+          'x'          => $f_start -1 ,
+          'y'          => 0,
+          'width'      => 0,
+          'height'     => $h,
+          "colour"     => $tag->{'colour'},
+          'zindex'  => 1
+        }) );
+        $composite->push( new Sanger::Graphics::Glyph::Rect({
+          'x'          => $f_end,
+          'y'          => 0,
+          'width'      => 0,
+          'height'     => $h,
+          "colour"     => $tag->{'colour'},
+          'zindex'  => 1
+        }) );
       } elsif($tag->{'style'} eq 'line') {
         my $underline_start = $tag->{'start'} || $start ;
         my $underline_end   = $tag->{'end'}   || $end ;
