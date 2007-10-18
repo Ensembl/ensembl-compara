@@ -2,7 +2,6 @@ package Bio::EnsEMBL::GlyphSet::fg_regulatory_features;
 use strict;
 use vars qw(@ISA);
 use Bio::EnsEMBL::GlyphSet_simple;
-use Bio::EnsEMBL::Utils::Eprof qw(eprof_start eprof_end eprof_dump);
 @ISA = qw(Bio::EnsEMBL::GlyphSet_simple);
 use Data::Dumper;
 
@@ -81,6 +80,27 @@ sub colour {
   $f->start > $f->end ? 'invisible' : '';
 }
 
+sub tag {
+  my ($self, $f) = @_;
+  my $type =$f->feature_type->name();
+  if ($type =~/Promoter/){$type = 'Promoter_associated';}
+  elsif ($type =~/Gene/){$type = 'Genic';}
+  elsif ($type =~/Unclassified/){$type = 'Unclassified';}
+  if ($type =~/Non/){$type = 'Non-genic';}
+  my $colour = $self->{'colours'}{$type}[0];
+  my ($b_start, $b_end) = $self->slice2sr($f->bound_start, $f->bound_end);
+  my @result = ();
+  push @result, { 
+  'style' => 'fg_ends',
+  'colour' => $colour,
+  'start' => $f->bound_start,
+  'end' => $f->bound_end
+  };
+
+  return @result;
+
+}
+
 sub zmenu {
   my ($self, $f) = @_; 
   my $stable_id = $f->stable_id;
@@ -93,8 +113,6 @@ sub zmenu {
   my $label = join(', ', @keys);
   my $type = $f->feature_type->name();
   my ($start, $end) = $self->slice2sr($f->start, $f->end);
-  my ($bstart, $bend) = $self->slice2sr($f->bound_start, $f->bound_end);
-  #warn "$start, $end $bstart, $bend";
   my $zmenu = {
          qq(caption)       		=> qq($display_label),
          qq(01:Stable ID: $stable_id) => '',
