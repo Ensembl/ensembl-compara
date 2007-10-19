@@ -500,6 +500,7 @@ sub added_sources {
     $add_link .= '+fg_max='.    $das_adapt->fg_max      if $das_adapt->fg_max;
     $add_link .= '+fg_min='.    $das_adapt->fg_min      if $das_adapt->fg_min;
     $add_link .= '+linktext='.  $das_adapt->linktext    if $das_adapt->linktext;
+    $add_link .= '+assembly='.  $das_adapt->assembly    if $das_adapt->assembly;
     if( my $link_url = $das_adapt->linkurl ) {
       $add_link .= '+linkurl=';
       $link_url =~ s/\?/\$3F/g;
@@ -955,7 +956,10 @@ sub das_wizard_3 {
   }
     
   if ($option ne 'n') {# display one of the charts
-    if ($option eq 'h') {
+ 
+# Removed the merge option as now it is a prerogative of the das source to merge features using maxbins parameter
+# Ensembl will always display all features order by score - the lowest first
+    if (0 &&($option eq 'h')) {
       $option = lc($das_conf->{fg_merge} || 'm');
       my @scvalues;
       foreach( 'Average Score', 'Max Score') {
