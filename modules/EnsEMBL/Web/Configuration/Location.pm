@@ -88,10 +88,10 @@ unless( $obj->species_defs->NO_SEQUENCE ) {
 #   'title' => "ExportView - export sequence of $header as FASTA",
 #  'href' => "/$species/exportview?l=$q_string;format=fasta;action=format"
 #  );
-  $menu->add_entry( $export_section, 'text' => 'Export EMBL file',
-    'title' => "ExportView - export sequence of $header as EMBL",
-    'href' => "/$species/exportview?l=$q_string;format=embl;action=format"
-  );
+#  $menu->add_entry( $export_section, 'text' => 'Export EMBL file',
+ #   'title' => "ExportView - export sequence of $header as EMBL",
+ #   'href' => "/$species/exportview?l=$q_string;format=embl;action=format"
+#  );
 }
   unless ( $obj->species_defs->ENSEMBL_NOMART) {
     unless ($export_section) {
