@@ -20,9 +20,10 @@ sub dasconfview {
   my $script = $obj->param('conf_script') || 'geneview';
   my $confparams = '';
   foreach my $param (grep { !/^DAS|^_das/ } $obj->param()) {
-    my @values = $obj->param($param);
-    foreach my $v (@values) {
-      $confparams .= ";$param=$v";
+    if (my @values = grep { $_ } $obj->param($param)) {
+      foreach my $v (@values) {
+        $confparams .= ";$param=$v";
+      }
     }
   }
 
