@@ -891,26 +891,26 @@ sub _parse {
           delete $das_conf->{$das_source};
           next;
         }
-
 # Check if the source is based on the current assembly
-	if (defined(my $assembly = $tree->{$das_source}->{assembly})) {
-	    if ($assembly ne $tree->{ENSEMBL_GOLDEN_PATH}) {
-		delete $das_conf->{$das_source};
-		next;
-	    }
-	}
+#	if (defined(my $assembly = $tree->{$das_source}->{assembly})) {
+#	    if ($assembly ne $tree->{ENSEMBL_GOLDEN_PATH}) {
+#		delete $das_conf->{$das_source};
+#		next;
+#	    }
+#	}
 
         my $das_source_conf = $tree->{$das_source};
         ref( $das_source_conf ) eq 'HASH' or $das_source_conf = {};
 	$das_source_conf->{'type'} or $das_source_conf->{'type'} = 'ensembl_location_chromosome';
-
-        if( ! exists($das_source_conf->{'assembly'}) || $das_source_conf->{'assembly'} eq $tree->{'ENSEMBL_GOLDEN_PATH'} ) {
+	
+        $das_source_conf->{'assembly'} ||= $tree->{'ENSEMBL_GOLDEN_PATH'};
+#        if( ! exists($das_source_conf->{'assembly'}) || $das_source_conf->{'assembly'} eq $tree->{'ENSEMBL_GOLDEN_PATH'} ) {
           $das_source_conf->{'retrieve_features'} = 1;
           $das_source_conf->{'name'} = $das_source;
           $das_conf->{$das_source} = $das_source_conf; # Substitute conf
-        } else {
-          delete( $das_conf->{$das_source} );
-        }
+#        } else {
+#          delete( $das_conf->{$das_source} );
+#        }
         delete $tree->{$das_source};
       }
     }
