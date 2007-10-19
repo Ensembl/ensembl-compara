@@ -561,7 +561,7 @@ sub ac_preview {
   my $data = $cache->retrieve($data_file);
   my ($output, $count);
   foreach my $line ( split '\n', $data ) {
-    last if $count > 8;
+    last if $count > 9;
     $output .= $line."\n";
     $count++;
   }

@@ -518,6 +518,7 @@ sub ac_convert {
  
     ## map to new assembly;
     warn $tabs[0].' '.$tabs[6].' '.$tabs[8].'  '._strand_parser($tabs[12]);
+    next unless $tabs[0] && $tabs[6] && $tabs[8];
     @new_coords = $mapper->map($tabs[0], $tabs[6], $tabs[8], _strand_parser($tabs[12]), $m36);
 
     foreach my $new (@new_coords) {
