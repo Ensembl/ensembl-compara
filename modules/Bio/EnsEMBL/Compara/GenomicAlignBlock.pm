@@ -1693,7 +1693,7 @@ sub restrict_between_reference_positions {
   my ($self, $start, $end, $reference_genomic_align, $skip_empty_GenomicAligns) = @_;
   my $genomic_align_block;
   my $new_reference_genomic_align;
-  my $new_genomic_aligns;
+  my $new_genomic_aligns = [];
   
   $reference_genomic_align ||= $self->reference_genomic_align;
   throw("A reference Bio::EnsEMBL::Compara::GenomicAlign must be given") if (!$reference_genomic_align);
