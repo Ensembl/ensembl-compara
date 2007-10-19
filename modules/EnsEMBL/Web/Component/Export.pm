@@ -34,8 +34,7 @@ sub stage1_form {
   my $sitetype = ucfirst(lc($object->species_defs->ENSEMBL_SITETYPE));
   $form->add_element(
         'type' => 'Information',
-        'value' => qq(<p>    choose at least one feature to export. Features must map to the current $sitetype golden
-      tiling.
+        'value' => qq(<p> Choose at least one feature to export. Features must map to the current $sitetype Golden tile.
       <em>Please note that there is an upper limit of 5Mb that we will
           export.</em>
     </p>));
