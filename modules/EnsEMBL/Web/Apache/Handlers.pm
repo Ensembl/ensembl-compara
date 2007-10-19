@@ -245,11 +245,11 @@ sub transHandler {
             'das', "$DSN/$command", $querystring );
           warn $LOG_INFO;
           $LOG_TIME = time();
-          $r->push_handlers( PerlCleanupHandler => \&cleanupHandler_script      );
+        }
+        $r->push_handlers( PerlCleanupHandler => \&cleanupHandler_script      );
 #warn "PUSHING BLASTSCRIPTXX.... $ENSEMBL_BLASTSCRIPT";
 #          $r->push_handlers( PerlCleanupHandler => \&cleanupHandler_blast       ) if $ENSEMBL_BLASTSCRIPT;
-          $r->push_handlers( PerlCleanupHandler => \&Apache2::SizeLimit::handler );
-        }
+        $r->push_handlers( PerlCleanupHandler => \&Apache2::SizeLimit::handler );
         return OK;
       }
       if( -r $error_filename ) {
@@ -263,11 +263,11 @@ sub transHandler {
             'das', "$DSN/$command", $querystring );
           warn $LOG_INFO;
           $LOG_TIME = time();
-          $r->push_handlers( PerlCleanupHandler => \&cleanupHandler_script      );
+        }
+        $r->push_handlers( PerlCleanupHandler => \&cleanupHandler_script      );
 #warn "PUSHING BLASTSCRIPTYY.... $ENSEMBL_BLASTSCRIPT";
 #          $r->push_handlers( PerlCleanupHandler => \&cleanupHandler_blast       ) if $ENSEMBL_BLASTSCRIPT;
-          $r->push_handlers( PerlCleanupHandler => \&Apache2::SizeLimit::handler );
-        }
+        $r->push_handlers( PerlCleanupHandler => \&Apache2::SizeLimit::handler );
         return OK;
       }
       return DECLINED;
@@ -305,14 +305,15 @@ sub transHandler {
            $species, $script, $querystring ) if $ENSEMBL_DEBUG_FLAGS | 8 && ($script ne 'ladist' && $script ne 'la' );
           warn $LOG_INFO;
           $LOG_TIME = time();
-          $r->push_handlers( PerlCleanupHandler => \&cleanupHandler_script      );
+        }
+        $r->push_handlers( PerlCleanupHandler => \&cleanupHandler_script      );
+       
 #warn "PUSHING BLASTSCRIPTZZ.... $$ - $ENSEMBL_BLASTSCRIPT";
 #if( $ENSEMBL_BLASTSCRIPT ) {
 #          $r->push_handlers( PerlCleanupHandler => \&cleanupHandler_blast       );
 #  warn "YARG $$ ....";
 #}
-          $r->push_handlers( PerlCleanupHandler => \&Apache2::SizeLimit::handler );
-        }
+        $r->push_handlers( PerlCleanupHandler => \&Apache2::SizeLimit::handler );
         return OK;
       }
     } else {
