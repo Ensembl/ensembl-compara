@@ -114,17 +114,18 @@ sub setConfig {
   my( $self, $session_id, $type_id, $key , $value ) = @_;
   #warn "=======> setConfig: SETTING CONFIG WITH: " . $value;
   return unless( $session_id && $type_id && $self->get_db_adaptor );
+  my($now) = $self->get_db_adaptor->selectrow_array( "select now()" );
   my $rows = $self->get_db_adaptor->do(
     "insert ignore into session_record
-        set created_at = now(), modified_at = now(), data = ?, session_id = ?, type_id = ?, code = ?",{},
-    $value, $session_id, $type_id, $key
+        set created_at = ?, modified_at = ?, data = ?, session_id = ?, type_id = ?, code = ?",{},
+    $now, $now, $value, $session_id, $type_id, $key
   );
   if( $rows && $rows < 1 ) {
     #warn "=======> setConfig: UPDATING ID: " . $session_id;
     $self->get_db_adaptor->do(
-      "update session_record set data = ?, modified_at = now()
+      "update session_record set data = ?, modified_at = ?
         where session_id = ? and type_id = ? and code = ?", {}, 
-      $value, $session_id, $type_id, $key 
+      $value, $now, $session_id, $type_id, $key 
     );
   }
   return $session_id;
