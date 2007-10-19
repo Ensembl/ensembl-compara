@@ -549,5 +549,28 @@ sub kv_display {
   return 1;
 }
 
+sub ac_preview {
+  my( $panel, $object, $node ) = @_;
+  my $html = "<h2>Your converted file</h2>";
+
+  ## Retrieve and display converted file
+  my $data_file = $object->param('converted');
+  warn "RETRIEVING: $data_file";
+  my $cache = new EnsEMBL::Web::File::Text($object->species_defs);
+  my $data = $cache->retrieve($data_file);
+  $html .= "<pre>$data</pre>";
+  
+  ## Blank form going back to first node (passing no parameters)
+  my $species = $object->species;
+  my $script  = $object->script;
+  $html .= qq(<form action="/$species/$script" method="get">
+<p><input type="submit" name="submit_kv_add" value="Start again with new data" class="red-button" /></p>
+</form>);
+
+  $panel->print($html);
+
+  return 1;
+}
+
 
 1;

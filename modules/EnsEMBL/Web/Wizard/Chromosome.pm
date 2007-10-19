@@ -134,6 +134,10 @@ sub _init {
       'type'  => 'Information',
       'value' => qq{<p>Karyoview now allows you to display multiple data sets as either density plots, location pointers or a mixture of the two. Your data will be saved in a temporary cache. Once you have added all your tracks, you can configure the rest of the image options.</p> <p><a href="javascript:void(window.open('/$def_species/helpview?kw=karyoview;se=2;#FileFormats','helpview','width=700,height=550,resizable,scrollbars'))">Information about valid file formats</a>: e.g. GFF, PSL, BED</p>},
     },
+    'ac_blurb' => {
+      'type'  => 'Information',
+      'value' => qq(<p>Assembly Converter enables you to convert your data from Mouse assembly m36 to m37. Please note that this facility is not currently compatible with any other species or assembly.</p><p>Supported formats: Only <strong>GFF</strong> files with chromosomal coordinates are currently supported.</p>),
+    },
     'track_name'  => {
       'type'=>'String',
       'label'=>'Track name (optional)',
@@ -239,6 +243,12 @@ sub _init {
       'button' => 'Finish',
       'form' => 1,
     },
+    'ac_convert' => {
+      'button' => 'Preview converted file',
+    },
+    'ac_preview' => {
+      'page' => 1,
+    } 
   );
 
   ## feedback messages
@@ -293,6 +303,12 @@ sub kv_add {
   ## rewrite node values if we are re-doing this page for an additional track
   if ($object->param('submit_kv_add') eq 'Add more data >') {
     $wizard->redefine_node('kv_add', 'back', 1);
+  }
+  
+  ## Change text if this node is being used by assemblyconverter
+  if ($script eq 'assemblyconverter') {
+    $wizard->redefine_node('kv_add', 'input_fields', [qw(ac_blurb paste_file upload_file url_file)], 1);
+    $wizard->redefine_node('kv_datacheck', 'button', 'Upload data');
   } 
                                                                
   my $form = EnsEMBL::Web::Form->new($node, "/$species/$script", 'post');
@@ -303,7 +319,6 @@ sub kv_add {
                                                                                 
   return $form;
 }
-
 
 sub kv_datacheck {
   my ($self, $object) = @_;
@@ -341,7 +356,7 @@ sub kv_datacheck {
     my $cache = new EnsEMBL::Web::File::Text($object->[1]->{'_species_defs'});
     $cache->set_cache_filename('kv');
     $result = $cache->save($object, $param);
-    $error = $$result{'error'};
+    $error = $result->{'error'};
   }
   else {
     $error = 'no_paste';
@@ -359,15 +374,25 @@ sub kv_datacheck {
         'type'   => 'Information',
         'value'  => $msg_output,
     );
-    $wizard->add_outgoing_edges([['kv_datacheck', 'kv_layout']]);
+    if ($script eq 'assemblyconverter') {
+      $wizard->add_outgoing_edges([['kv_datacheck', 'ac_convert']]);
+    }
+    else {
+      $wizard->add_outgoing_edges([['kv_datacheck', 'kv_layout']]);
+    }
   }
   else {
-    my $cache_file = $$result{'file'};
+    my $cache_file = $result->{'file'};
     $form->add_element(
         'type'   => 'Information',
         'value'  => 'Thank you - your data has been saved.',
     );
-    $wizard->add_outgoing_edges([['kv_datacheck','kv_tracks']]);
+    if ($script eq 'assemblyconverter') {
+      $wizard->add_outgoing_edges([['kv_datacheck', 'ac_convert']]);
+    }
+    else {
+      $wizard->add_outgoing_edges([['kv_datacheck','kv_tracks']]);
+    }
     $wizard->pass_fields($node, $form, $object);
     $form->add_element(
         'type'   => 'Hidden',
@@ -465,6 +490,102 @@ sub kv_display {
   }
   $wizard->pass_fields($node, $form, $object, \@caches);
   $wizard->add_buttons($node, $form, $object);
+                                                                                
+  return $form;
+}
+
+sub ac_convert {
+  my ($self, $object) = @_;
+  my %parameter;  
+
+  warn "Trying to convert file";
+
+  my $ama   = $object->get_adaptor('get_AssemblyMapperAdaptor', 'core', $object->species);
+  my $csa   = $object->get_adaptor('get_CoordSystemAdaptor', 'core', $object->species);
+
+  my $m36 = $csa->fetch_by_name('chromosome', 'NCBIM36');
+  my $m37 = $csa->fetch_by_name('chromosome', 'NCBIM37');
+  my $mapper = $ama->fetch_by_CoordSystems($m36, $m37);
+
+  my $cache = new EnsEMBL::Web::File::Text($self->{'_species_defs'});
+  my $data = $cache->retrieve($object->param('cache_file_1'));
+
+  my @lines;
+  my (@new_coords, $new_region, $new_start, $new_end, $new_strand);
+  foreach my $old_line ( split '\n', $data ) {
+    next if $old_line =~ /^#/;
+    my @tabs = split /(\t|  +)/, $old_line;
+  
+    ## map to new assembly;
+    @new_coords = $mapper->map($tabs[0], $tabs[6], $tabs[8], $tabs[12], $m36);
+
+    foreach my $new (@new_coords) {
+      my $line;
+      my $gap = ref($new) =~ /Gap/ ? 1 : 0;
+      my $count = 0;
+      foreach my $tab (@tabs) {
+        if ($count == 0) { ## seq region name
+          if ($gap) {
+            $line .= 'GAP';
+          }
+          else {
+            $line .= $new->id;
+          }
+        }
+        elsif ($count == 6) { ## start
+          $line .= $new->start;
+        }
+        elsif ($count == 8) { ## end
+          $line .= $new->end;
+        }
+        elsif ($count == 10) { ## score - not relevant to remapped version
+          $line .= '';
+        }
+        elsif ($count == 12) { ## strand
+          if ($gap) {
+            $line .= '';
+          }
+          else {
+            $line .= $new->strand;
+          }
+        }
+        else {
+          $line .= $tab;
+        }
+        $count++;
+      }
+      push @lines, $line;
+    }
+  }
+  ## cache revised file
+  my $new_cache = new EnsEMBL::Web::File::Text($object->[1]->{'_species_defs'});
+  $new_cache->set_cache_filename('converter');
+  my $out = $new_cache->filename;
+  my $fh = $new_cache->_prep_output($out);
+  if( $fh ) {
+    foreach my $line (@lines) {
+      $fh->gzwrite( $line );
+    }
+    $fh->gzclose;
+  }
+
+  $parameter{'node'} = 'ac_preview';
+  $parameter{'converted'} = $out;
+                                                                              
+  return \%parameter;
+}
+
+sub ac_preview {
+  my ($self, $object) = @_;
+                                                                                
+  my $wizard = $self->{wizard};
+  my $script = $object->script;
+  my $species = $object->species;
+  my $node = 'ac_preview';
+                                                                                
+  my $form = EnsEMBL::Web::Form->new($node, "/$species/$script", 'post');
+  #$wizard->pass_fields($node, $form, $object, \@caches);
+  #$wizard->add_buttons($node, $form, $object);
                                                                                 
   return $form;
 }
