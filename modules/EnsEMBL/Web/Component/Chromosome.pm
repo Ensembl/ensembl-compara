@@ -551,15 +551,29 @@ sub kv_display {
 
 sub ac_preview {
   my( $panel, $object, $node ) = @_;
-  my $html = "<h2>Your converted file</h2>";
+  my $html = "<h2>Your converted file</h2><h3>Preview</h3>";
 
   ## Retrieve and display converted file
-  my $data_file = $object->param('converted');
+  my $root = $object->species_defs->ENSEMBL_SERVERROOT;
+  my $data_file = $root.$object->param('converted');
   warn "RETRIEVING: $data_file";
   my $cache = new EnsEMBL::Web::File::Text($object->species_defs);
   my $data = $cache->retrieve($data_file);
-  $html .= "<pre>$data</pre>";
+  my ($output, $count);
+  foreach my $line ( split '\n', $data ) {
+    last if $count > 8;
+    $output .= $line."\n";
+    $count++;
+  }
+  warn "COUNT $count";
+  $html .= "<pre>$output</pre>";
   
+  ## link to actual file
+  my $url = $object->param('converted');
+  $url =~ s#img/cache#img-cache#;
+  $html .= qq#<h3>Download converted file</h3>
+<p><a href="$url">Click to download</a> (Gzipped text)#;
+
   ## Blank form going back to first node (passing no parameters)
   my $species = $object->species;
   my $script  = $object->script;

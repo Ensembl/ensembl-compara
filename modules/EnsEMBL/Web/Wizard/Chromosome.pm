@@ -355,6 +355,7 @@ sub kv_datacheck {
   if ($param) { 
     my $cache = new EnsEMBL::Web::File::Text($object->[1]->{'_species_defs'});
     $cache->set_cache_filename('kv');
+    warn "Saving input file as ", $cache->filename;
     $result = $cache->save($object, $param);
     $error = $result->{'error'};
   }
@@ -510,14 +511,14 @@ sub ac_convert {
   my $cache = new EnsEMBL::Web::File::Text($self->{'_species_defs'});
   my $data = $cache->retrieve($object->param('cache_file_1'));
 
-  my @lines;
-  my (@new_coords, $new_region, $new_start, $new_end, $new_strand);
+  my (@new_coords, @lines);
   foreach my $old_line ( split '\n', $data ) {
     next if $old_line =~ /^#/;
     my @tabs = split /(\t|  +)/, $old_line;
-  
+ 
     ## map to new assembly;
-    @new_coords = $mapper->map($tabs[0], $tabs[6], $tabs[8], $tabs[12], $m36);
+    warn $tabs[0].' '.$tabs[6].' '.$tabs[8].'  '._strand_parser($tabs[12]);
+    @new_coords = $mapper->map($tabs[0], $tabs[6], $tabs[8], _strand_parser($tabs[12]), $m36);
 
     foreach my $new (@new_coords) {
       my $line;
@@ -546,7 +547,7 @@ sub ac_convert {
             $line .= '';
           }
           else {
-            $line .= $new->strand;
+            $line .= _strand_parser($new->strand);
           }
         }
         else {
@@ -554,7 +555,7 @@ sub ac_convert {
         }
         $count++;
       }
-      push @lines, $line;
+      push @lines, $line."\n";
     }
   }
   ## cache revised file
@@ -569,10 +570,35 @@ sub ac_convert {
     $fh->gzclose;
   }
 
+  my $root = $object->species_defs->ENSEMBL_SERVERROOT;
+  $out =~ s/$root//;
   $parameter{'node'} = 'ac_preview';
   $parameter{'converted'} = $out;
                                                                               
   return \%parameter;
+}
+
+sub _strand_parser {
+  my $strand = shift;
+  if ($strand eq '+') {
+    $strand = 1;
+  }
+  elsif ($strand eq '-') {
+    $strand = -1;
+  }
+  elsif ($strand == 1) {
+    $strand = '+';
+  }
+  elsif ($strand == -1) {
+    $strand = '-';
+  }
+  elsif ($strand == 0) {
+    $strand = '';
+  }
+  else {
+    $strand = 0;
+  }
+  return $strand;
 }
 
 sub ac_preview {
