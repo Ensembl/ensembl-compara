@@ -582,7 +582,7 @@ sub add_das_tracks {
   my @das_sources = ();
 
   my $image_width = $config->get('_settings', 'width') || 900;
-
+ # warn "Adding das sources";
   foreach my $source ( @{$EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->get_das_filtered_and_sorted( $object->species )} ) {
     my $config_key = 'managed_extdas_'.$source->get_key ;
     next unless $config->get( $config_key ,'on' ) eq 'on';
@@ -601,6 +601,7 @@ sub add_das_tracks {
         $URL .= "$URL/das" unless $URL =~ m!/das!;
       }
       my $stype = $source_config->{'type'} || 'ensembl_location_chromosome';
+#      warn Dumper($source_config); 
 
       $adaptor = Bio::EnsEMBL::ExternalData::DAS::DASAdaptor->new(
         -url       => $URL,
@@ -612,6 +613,7 @@ sub add_das_tracks {
         -proxy_url => $object->species_defs->ENSEMBL_WWW_PROXY,
 	-maxbins   => $image_width,
 	-timeout => $object->species_defs->ENSEMBL_DAS_TIMEOUT,
+	-assembly_version => ($stype =~ /^ensembl_location/) ? $source_config->{'assembly'} : '',
       );
     };
     if($@) {
@@ -628,7 +630,6 @@ sub add_das_tracks {
       push @das_sources, "managed_$source" ;
       my $adaptor = undef;
       my $dbname = $EXT->{$source};
-      #warn $source, Dumper($dbname);
       eval {
         my $URL = $dbname->{'url'};
         $URL = "http://$URL" unless $URL =~ /https?:\/\//i;
@@ -646,6 +647,7 @@ sub add_das_tracks {
           -proxy_url => $object->species_defs->ENSEMBL_WWW_PROXY, 
 	  -maxbins   => $image_width,
 	  -timeout => $object->species_defs->ENSEMBL_DAS_TIMEOUT,
+	  -assembly_version => ($stype =~ /^ensembl_location/) ? $dbname->{'assembly'} : '',
         );
       };
       if($@) {
