@@ -25,23 +25,17 @@ sub stage2 {
 sub stage1_form {
   my( $panel, $object ) = @_;
 
-  my @errors = ('', 
+  my @errors = ('',
     qq(Sorry, there was a problem locating the requested DNA sequence. Please check your choices - including chromosome name - and try again.),
     qq(Sorry, your chosen anchor points appear to be on different sequence regions. Please check your choices and try again.)
     );
 
   my $form = EnsEMBL::Web::Form->new( 'stage1_form', "/@{[$object->species]}/exportview", 'get' );
-  my $sitetype = ucfirst(lc($object->species_defs->ENSEMBL_SITETYPE)); 
+  my $sitetype = ucfirst(lc($object->species_defs->ENSEMBL_SITETYPE));
   $form->add_element(
         'type' => 'Information',
-        'value' => qq(<p>
-      Choose one or two features from the same chromosome as anchor points
-      and display the region between them.
-      Both features must be mapped to the current $sitetype golden
-      tiling path.  If you select "None" for the second feature,
-      the display will be based around the first feature.
-    </p>
-    <p>
+        'value' => qq(<p>    choose at least one feature to export. Features must map to the current $sitetype golden
+      tiling.
       <em>Please note that there is an upper limit of 5Mb that we will
           export.</em>
     </p>));
@@ -59,7 +53,7 @@ sub stage1_form {
     my($sr,$s,$e) = ($1,$2,$3);
     $object->input_param( 'seq_region_name', $sr);
     $object->input_param( 'type1',           'bp');
-    $object->input_param( 'anchor1',         $s); 
+    $object->input_param( 'anchor1',         $s);
     $object->input_param( 'type2',           'bp');
     $object->input_param( 'anchor2',         $e);
   }
@@ -109,7 +103,7 @@ sub stage1_form {
     'type'     => 'String',
     'style'    => 'short',
     'required' => 'no',
-    'value'    => '', 
+    'value'    => '',
     'name'     => 'upstream',
     'label'    => 'Bp upstream (to the left)'
   );
@@ -122,7 +116,7 @@ sub stage1_form {
     'name'     => 'downstream',
     'label'    => 'Bp downstream (to the right)'
   );
-  $form->add_element( 'type' => 'SubHeader', 'value' => 'Output format' );
+  $form->add_element( 'type' => 'SubHeader', 'value' => 'Output' );
 
   my $formats = $object->__data->{'formats'};
   my @formats = ();
@@ -133,11 +127,11 @@ sub stage1_form {
                        'name'  => $formats->{$super}{'sub'}{$format} };
     }
   }
-  $form->add_element( 
+  $form->add_element(
     'type'   => 'DropDown',
     'select' => 'select',
     'name'   => 'format',
-    'label'  => 'Output Format',
+    'label'  => 'Output',
     'values' => \@formats,
     'value'  => $object->param('format')
   );
@@ -151,7 +145,7 @@ sub fasta_form {
   my $form = EnsEMBL::Web::Form->new( 'stage2_form', "/@{[$object->species]}/exportview", 'get' );
   add_hidden_fields( $form, $object );
   $form->add_element( 'type' => 'Hidden', 'name' => '_format', 'value' => 'HTML' );
-  $form->add_element( 'type' => 'SubHeader', 'value' => 'FASTA format options' );
+#  $form->add_element( 'type' => 'SubHeader', 'value' => 'FASTA format options' );
   if( ( $object->param('type1') eq 'transcript' || $object->param('type1') eq 'peptide' || $object->param('type1') eq 'gene') &&
       ( $object->param('type2') eq 'none' || $object->param('anchor2') eq '' ) ) {
     ## We have a transcript... lets give transcript options...
@@ -167,11 +161,8 @@ sub fasta_form {
     %checked = ( 'genomic' => 'yes' ) unless $object->param('options');
     $form->add_element( 'type' => 'MultiSelect',
       'name'  => 'options',
-      'label' => 'Sequence type to export',
+      'label' => 'Sequence to export',
       'values' => [ map {{ 'value' => $_->[0], 'name' => $_->[1], 'checked' => $checked{$_->[0]} }} @options ],
-      'introduction' => '<p>As you have requested export of a single Transcript or Translation, you can select if
-                  you want to select the whole Genomic region, or just the sequence of the Transcript,
-                  Translation or part thereof.</p>'
     );
   }
   add_HTML_select( $form, $object );
@@ -201,8 +192,8 @@ sub flat_form {
     'class'  => 'radiocheck1col',
     'name'   => 'options',
     'label'  => 'Features to export',
-    'values' => [ 
-      map {{ 'value' => $_->[0], 'name' => $_->[1], 'checked' => $checked{$_->[0]} }} @options 
+    'values' => [
+      map {{ 'value' => $_->[0], 'name' => $_->[1], 'checked' => $checked{$_->[0]} }} @options
     ]
   );
   add_HTML_select( $form, $object );
@@ -219,12 +210,12 @@ sub add_hidden_fields {
     $form->add_element( 'type' => 'Hidden', 'name' => $_, 'value' => $object->param($_) );
     next if $_ eq 'format';
     $flag = 0;
-  } 
+  }
   if( $flag ) {
     $form->add_element( 'type' => 'Hidden', 'name' => 'l', 'value' => $object->seq_region_name.':'.$object->seq_region_start.'-'.$object->seq_region_end );
   }
-  my $text = "<p>You are exporting @{[$object->seq_region_type_and_name]} 
-                @{[ $object->thousandify( $object->seq_region_start ) ]} - 
+  my $text = "<p>You are exporting @{[$object->seq_region_type_and_name]}
+                @{[ $object->thousandify( $object->seq_region_start ) ]} -
                 @{[ $object->thousandify( $object->seq_region_end ) ] }.</p>\n";
   my @O = ();
   if( $object->param('seq_region_name') && $object->seq_region_name eq $object->param('seq_region_name' ) ) {
@@ -324,7 +315,7 @@ sub pip_form {
 
 sub pip_seq_file {
   my( $FN, $object ) = @_;
-  open O, ">$FN"; 
+  open O, ">$FN";
   (my $seq = $object->slice->seq) =~ s/(.{60})/$1\n/g;
   print O ">@{[$object->slice->name]}\n$seq";
   close O;
@@ -332,7 +323,7 @@ sub pip_seq_file {
 
 sub pip_anno_file {
   my( $FN, $object ) = @_;
-  open O, ">$FN"; 
+  open O, ">$FN";
   my $format = $object->param('format'); # either pipmaker or zpicture!
   my $slice = $object->slice;
   my $slice_length = $slice->length;
@@ -454,7 +445,7 @@ sub fasta_trans {
   $out.= format_fasta( "$id cdna:$id_type $slice_name", $transcript->spliced_seq          ) if $options{'cdna'};
   $out.= format_fasta( "$id cds:$id_type $slice_name",  $transcript->translateable_seq    ) if $options{'coding'}  && $transcript->translation;
   if ($options{'peptide'} && $transcript->translation) {
-	my $pep_id = $transcript->translation->stable_id; 
+	my $pep_id = $transcript->translation->stable_id;
 	$out.= format_fasta( "$id peptide:$pep_id pep:$id_type $slice_name",  $transcript->translate->seq) ;
   }
   $out.= format_fasta( "$id utr3:$id_type $slice_name", $transcript->three_prime_utr->seq ) if $options{'utr3'}    && $transcript->three_prime_utr;
@@ -534,25 +525,25 @@ sub features {
     foreach my $t ( @{$object->slice->get_all_PredictionTranscripts} ) {
       foreach my $f ( @{$t->get_all_Exons} ) {
         $panel->print( _feature( 'pred.trans.',
-          $_opts, $f, {'genscan' => $t->stable_id} 
+          $_opts, $f, {'genscan' => $t->stable_id}
         ) );
-      } 
+      }
     }
   }
   if( $checked{'variation'} ) {
     foreach my $f ( @{$object->slice->get_all_VariationFeatures} ) {
-      $panel->print( _feature( 'variation', 
+      $panel->print( _feature( 'variation',
         $_opts, $f, {}
       ) );
     }
   }
-  
+
   if( $checked{'gene'} ) {
-    foreach my $DB ( __gene_databases( $object->species_defs ) ) { 
+    foreach my $DB ( __gene_databases( $object->species_defs ) ) {
     foreach my $g ( @{$object->slice->get_all_Genes(undef,$DB)} ) {
       foreach my $t ( @{$g->get_all_Transcripts} ) {
         foreach my $f ( @{$t->get_all_Exons} ) {
-          $panel->print( _feature( 'gene', 
+          $panel->print( _feature( 'gene',
             $_opts, $f, {
               'exon_id' => $f->stable_id,
               'transcript_id' => $t->stable_id,
@@ -562,7 +553,7 @@ sub features {
             $DB eq 'vega' ? 'Vega' : 'Ensembl'
           ) );
         }
-      }  
+      }
     }
     }
   }
