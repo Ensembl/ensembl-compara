@@ -124,8 +124,7 @@ sub _initialize_HTML {
     ## Note we have no example links here!!
   }
 
-  $self->javascript->add_source('/js/prototype.js');
-  $self->javascript->add_source('/js/scriptaculous.js');
+  $self->javascript->add_source('/js/protopacked.js');
   $self->javascript->add_source('/js/core42.js');
   $self->javascript->add_source('/js/new_drag_imagemap.js');
   $self->javascript->add_source('/js/help.js');

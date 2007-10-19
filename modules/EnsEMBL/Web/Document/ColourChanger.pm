@@ -127,6 +127,7 @@ sub change_CSS_colours {
       }
     }
   }
+  chdir $css_directory;
 }
 
 1;

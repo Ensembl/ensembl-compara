@@ -12,7 +12,7 @@ sub add_source {
   my( $self, $src ) = @_;
   return unless $src;
   
-  foreach( qw(prototype scriptaculous core42) ) {
+  foreach( qw(protopacked core42) ) {
     $self->{'scripts'}.=qq(  <script type="text/javascript" src="/js/$_.js"></script>\n) unless $self->{'sources'}{"/js/$_.js"};
     $self->{'sources'}{"/js/$_.js"} = 1;
 
