@@ -44,7 +44,10 @@ foreach my $gene (@$genes) {
 
   # Delete the part that is not one2one wrt the human gene
   foreach my $leaf (@{$proteintree->get_all_leaves}) {
-    unless (defined $leaves_names{$leaf->gene_member->stable_id}) {
+    my $leaf_description = $leaf->description;
+    $leaf_description =~ /Gene\:(\S+)/;
+    my $gene_name = $1;
+    unless (defined $leaves_names{$gene_name}) {
       $leaf->disavow_parent;
       $proteintree = $proteintree->minimize_tree;
     }
