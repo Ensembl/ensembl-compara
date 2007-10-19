@@ -4,10 +4,10 @@ use strict;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 
 my $dba = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor
-  (-host => 'compara2',
+  (-host => 'compara1',
    -port => 3306,
    -user => 'ensro',
-   -dbname => 'avilella_compara_homology_46');
+   -dbname => 'kb3_ensembl_compara_47');
 
 my $doit = 1;
 
@@ -31,8 +31,8 @@ if ($doit) {
     if ($count == 0) {
       print "PASSED: protein_tree_member versus protein_tree_node is consistent\n";
     } else {
-      print STDERR "ERRROR: protein_tree_member versus protein_tree_node is NOT consistent\n";
-      print STDERR "ERRROR: USED SQL : $sql\n";
+      print STDERR "ERROR: protein_tree_member versus protein_tree_node is NOT consistent\n";
+      print STDERR "ERROR: USED SQL : $sql\n";
     }
   }
   
@@ -49,8 +49,8 @@ if ($doit) {
     if ($count == 0) {
       print "PASSED: protein_tree_tag versus protein_tree_node is consistent\n";
     } else {
-      print STDERR "ERRROR: protein_tree_tag versus protein_tree_node is NOT consistent\n";
-      print STDERR "ERRROR: USED SQL : $sql\n";
+      print STDERR "ERROR: protein_tree_tag versus protein_tree_node is NOT consistent\n";
+      print STDERR "ERROR: USED SQL : $sql\n";
     }
   }
   
@@ -72,13 +72,37 @@ if ($doit) {
   my $ok = 1;
   while (my $aref = $sth->fetchrow_arrayref) {
     my ($member_id) = @$aref;
-    print STDERR "ERRROR: some member duplicates in protein_tree_member!\n";
-    print STDERR "ERRROR: USED SQL : $sql\n";
+    print STDERR "ERROR: some member duplicates in protein_tree_member! This can happen if there are remains of broken clusters in the db that you haven't deleted yet. Usually before merging to the compara production db\n";
+    print STDERR "ERROR: USED SQL : $sql\n";
     $ok = 0;
     last;
   }
   print "PASSED: no member duplicates in protein_tree_member\n" if ($ok);
   
+
+## # check for unique member presence in ptm but without considering singletons
+## ############################################################################
+## 
+##   $sql = 'select * from protein_tree_member ptm, protein_tree_node ptn where 0<abs(ptn.left_index-ptn.right_index) and ptn.node_id=ptm.node_id group by ptm.member_id having count(*)>1';
+##   
+##   #This should return 0 rows. 
+##   
+##   $sth = $dba->dbc->prepare($sql);
+##   
+##   # If no duplicate, each select should return an empty row;
+##   $sth->execute;
+##   
+##   $ok = 1;
+##   while (my $aref = $sth->fetchrow_arrayref) {
+##     my ($member_id) = @$aref;
+##     print STDERR "ERROR: some member duplicates (non-singletons) in protein_tree_member!\n";
+##     print STDERR "ERROR: USED SQL : $sql\n";
+##     $ok = 0;
+##     last;
+##   }
+##   print "PASSED: no member duplicates (non-singletons) in protein_tree_member\n" if ($ok);
+##   
+## 
 
 # check data consistency between pt_node and homology with node_id
 ##################################################################
@@ -94,8 +118,8 @@ if ($doit) {
     if ($count == 0) {
       print "PASSED: homology versus protein_tree_node is consistent\n";
     } else {
-      print STDERR "ERRROR: homology versus protein_tree_node is NOT consistent\n";
-      print STDERR "ERRROR: USED SQL : $sql\n";
+      print STDERR "ERROR: homology versus protein_tree_node is NOT consistent\n";
+      print STDERR "ERROR: USED SQL : $sql\n";
     }
   }
   
@@ -124,8 +148,8 @@ while (my $mlss = shift @$mlsses) {
   my $ok = 1;
   while (my $aref = $sth->fetchrow_arrayref) {
     my ($mlss_id, $member_id) = @$aref;
-    print STDERR "ERRROR: some [apparent_]one2one_ortholog also one2many or many2many in method_link_species_set_id=$mlss_id!\n";
-    print STDERR "ERRROR: USED SQL : $sql\n";
+    print STDERR "ERROR: some [apparent_]one2one_ortholog also one2many or many2many in method_link_species_set_id=$mlss_id!\n";
+    print STDERR "ERROR: USED SQL : $sql\n";
     $ok = 0;
     last;
   }
@@ -149,8 +173,8 @@ while (my $mlss = shift @$mlsses) {
   my $ok = 1;
   while (my $aref = $sth->fetchrow_arrayref) {
     my ($member_id1, $member_id2,$mlss_id) = @$aref;
-    print STDERR "ERRROR: some homology duplicates in method_link_species_set_id=$mlss_id!\n";
-    print STDERR "ERRROR: USED SQL : $sql\n";
+    print STDERR "ERROR: some homology duplicates in method_link_species_set_id=$mlss_id!\n";
+    print STDERR "ERROR: USED SQL : $sql\n";
     $ok = 0;
     last;
   }
