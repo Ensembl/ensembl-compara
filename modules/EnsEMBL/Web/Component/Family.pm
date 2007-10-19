@@ -141,8 +141,6 @@ sub jalview_link_for {
       <param name=format value="FASTA" />
       <param name="fontsize" value="10" />
       <param name="Consensus" value="*" />
-      <param name="srsServer" value="srs.sanger.ac.uk/srsbin/cgi-bin/" />
-      <param name="database" value="ensemblpep" />
       <strong>Java must be enabled to view alignments</strong>
     </applet>
     </td>
