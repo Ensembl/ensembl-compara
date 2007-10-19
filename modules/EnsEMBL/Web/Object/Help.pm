@@ -3,9 +3,11 @@ package EnsEMBL::Web::Object::Help;
 use strict;
 use warnings;
 no warnings "uninitialized";
-use CGI qw(escape);
+use CGI qw(unescape);
 
 use EnsEMBL::Web::Object;
+use EnsEMBL::Web::Object::Data::Article;
+use EnsEMBL::Web::Object::Data::Category;
 use EnsEMBL::Web::Record::Help;
 use Mail::Mailer;
 use Data::Dumper;
@@ -27,11 +29,12 @@ sub send_email {
   $email =~ s/"//g;
   $email =~ s/''/'/g;
   my $server = $self->species_defs->ENSEMBL_SERVERNAME;
+  my $url = CGI::unescape($self->param('ref'));
   push @mail_attributes,
     [ 'Date',         $date ],
     [ 'Name',         $self->param('name') ],
     [ 'Email',        $email ],
-    [ 'Referrer',     $self->referer ],
+    [ 'Referrer',     $url ],
     [ 'Last Keyword', $self->param('kw')||'-none-' ],
     [ 'User agent',   $ENV{'HTTP_USER_AGENT'}],
   my $comments = $self->param('comments');
@@ -213,10 +216,10 @@ sub articles {
 
 sub index { 
   my $self = shift;
-  my $method = 'fetch_index_list';
+  #my $method = 'fetch_index_list';
   ## Switch to this once modular articles are available
   #my $method = $self->modular ? 'fetch_article_index' : 'fetch_index_list';
-  return $self->adaptor->$method('live');
+  #return $self->adaptor->$method('live');
 }
 
 sub glossary {
