@@ -297,7 +297,7 @@ sub exportview {
         } else {
           my $panel2 = $self->new_panel( '',
             'code'    => 'stage2_form',
-            'caption' => qq(Configuring $format->{'supername'} output for $format->{'name'})
+            'caption' => qq(Configure $format->{'supername'} output for $format->{'name'})
           );
           $self->add_form( $panel2, 'stage2_form' => $format->{'superform'} );
           $panel2->add_components( qw(select EnsEMBL::Web::Component::Export::stage2) );
