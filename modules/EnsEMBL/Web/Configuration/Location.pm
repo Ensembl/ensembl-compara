@@ -17,7 +17,7 @@ use POSIX qw(floor ceil);
 ###    "code"    => "info#",
 ###     "caption"=> "Linkage disequilibrium report: [[object->type]] [[object->name]]"
 ### 				   )) {
-### 
+###
 ###     $info_panel->add_components(qw(
 ###     focus                EnsEMBL::Web::Component::LD::focus
 ###     prediction_method    EnsEMBL::Web::Component::LD::prediction_method
@@ -35,7 +35,7 @@ sub load_configuration {
   foreach my $key (keys %{ $config_data }) {
     #warn "ADDING CONFIG SETTINGS FOR: " . $key;
     my $wuc = $obj->user_config_hash($key);
-    $wuc->{'user'} = $config_data; 
+    $wuc->{'user'} = $config_data;
 #    $wuc->save;
   }
 }
@@ -75,22 +75,22 @@ unless( $obj->species_defs->NO_SEQUENCE ) {
     $menu->add_entry( $flag, 'text' => 'Resequencing alignment',
        'title' => "SequenceAlignView",
                                   'href' => "/$species/sequencealignview?l=$q_string" );
-  } 
+  }
   my $export_section;
 unless( $obj->species_defs->NO_SEQUENCE ) {
   $export_section = "Export data";
   $menu->add_block( $export_section, 'bulleted', "Export data", 'raw' => 1 );
-  $menu->add_entry( $export_section, 'text' => 'Export information about region',
+  $menu->add_entry( $export_section, 'text' => 'Export from region...',
     'title' => "ExportView - export information about $header",
     'href' => "/$species/exportview?l=$q_string"
   );
-  $menu->add_entry( $export_section, 'text' => 'Export sequence as FASTA',
-    'title' => "ExportView - export sequence of $header as FASTA",
-    'href' => "/$species/exportview?l=$q_string;format=fasta;action=format"
-  );
+#  $menu->add_entry( $export_section, 'text' => 'Export sequence as FASTA',
+#   'title' => "ExportView - export sequence of $header as FASTA",
+#  'href' => "/$species/exportview?l=$q_string;format=fasta;action=format"
+#  );
   $menu->add_entry( $export_section, 'text' => 'Export EMBL file',
     'title' => "ExportView - export sequence of $header as EMBL",
-    'href' => "/$species/exportview?l=$q_string;format=embl;action=format" 
+    'href' => "/$species/exportview?l=$q_string;format=embl;action=format"
   );
 }
   unless ( $obj->species_defs->ENSEMBL_NOMART) {
@@ -114,7 +114,7 @@ unless( $obj->species_defs->NO_SEQUENCE ) {
 
   foreach my $id (
     sort { 10 * ($alignments{$b}->{'type'} cmp $alignments{$a}->{'type'}) + ($a <=> $b) }
-    grep { $alignments{$_}->{'species'}->{$species} } 
+    grep { $alignments{$_}->{'species'}->{$species} }
     keys (%alignments)
   ) {
     my $label = $alignments{$id}->{'name'};
@@ -145,7 +145,7 @@ unless( $obj->species_defs->NO_SEQUENCE ) {
     };
   }
   if(@options) {
-    $menu->add_entry( $flag, 'code' => "mcv_link", 'text' => "View alongside ...", 'href' => $options[0]{'href'}, 
+    $menu->add_entry( $flag, 'code' => "mcv_link", 'text' => "View alongside ...", 'href' => $options[0]{'href'},
       'options' => \@options, 'title' => "MultiContigView - side by side view of genomic sequence"
     );
   }
@@ -187,7 +187,7 @@ sub sequencealignview {
   my $self = shift;
 
   my $region_name = $self->{object}->slice->name;
-  
+
   $self->set_title( "Sequence Alignment for $region_name");
   if( my $panel1 = $self->new_panel( 'Information',
 	'code'    => "info#",
@@ -196,12 +196,12 @@ sub sequencealignview {
 	$self->add_form( $panel1,
 		qw(markup_options EnsEMBL::Web::Component::Slice::sequence_markup_options_form)
 	);
-	
+
 	$panel1->add_components(qw(
 	        markup_options EnsEMBL::Web::Component::Slice::sequence_markup_options
 	        sequence       EnsEMBL::Web::Component::Slice::sequencealignview
 	));
-	
+
 	$self->add_panel( $panel1 );
   }
 }
@@ -296,7 +296,7 @@ sub exportview {
           return;
         } else {
           my $panel2 = $self->new_panel( '',
-            'code'    => 'stage2_form', 
+            'code'    => 'stage2_form',
             'caption' => qq(Configuring $format->{'supername'} output for $format->{'name'})
           );
           $self->add_form( $panel2, 'stage2_form' => $format->{'superform'} );
@@ -305,7 +305,7 @@ sub exportview {
           return;
         }
       }
-    }    
+    }
   } else {
     if( $obj->param('format') ) {
       ## We have an error here... so we will need to pass it through to the webform...
@@ -351,7 +351,7 @@ sub miscsetview {
   my $panel = $self->new_panel( 'SpreadSheet',
     'code'    => "miscset_$self->{flag}",
     'caption' => $output_name,
-  ); 
+  );
   $panel->add_components( 'features' => "EnsEMBL::Web::Component::MiscSet::spreadsheet_miscset_$output_type" );
   $self->{page}->content->add_panel( $panel );
   if( $output_type eq 'slice' ) {
@@ -448,7 +448,7 @@ sub cytoview {
     $hidden->add_components(qw(form EnsEMBL::Web::Component::Location::contigview_form));
     $obj->__data->{_cv_panel_no} = 0;
     my $zw = int(abs($obj->param('zoom_width')));
-       $zw = 1 if $zw <1; 
+       $zw = 1 if $zw <1;
     $obj->__data->{'_cv_parameter_hash'} = {
       'species' => $ENV{ENSEMBL_SPECIES},
       'chr'     => $obj->seq_region_name,
@@ -467,7 +467,7 @@ sub cytoview {
 }
 
 sub top_start_end {
-  my( $self, $obj, $max_length ) = @_;  
+  my( $self, $obj, $max_length ) = @_;
   my($start,$end) = ($obj->seq_region_start,$obj->seq_region_end);
   if( $obj->seq_region_length < $max_length || $obj->length >= $obj->seq_region_length ) {
     $start = 1;
@@ -609,7 +609,7 @@ sub contigview {
     'code'    => "bottom_#", 'caption' => 'Detailed view', 'status'  => 'panel_bottom', @common
   );
 
-## Big switch time.... 
+## Big switch time....
 
   my @URL_configs;
   my $URL    = $obj->param('data_URL');
@@ -642,7 +642,7 @@ sub contigview {
     my $width = $obj->param('image_width');
     $view_fragment->add_option( 'image_width', $width);
     #warn "IMAGE WIDTH (Config): " . $width;
-  
+
     my ($start,$end) = $self->top_start_end( $obj, $max_length );
     $view_fragment->add_option( 'start', $obj->seq_region_start );
     $view_fragment->add_option( 'end',   $obj->seq_region_end   );
@@ -837,10 +837,10 @@ sub alignsliceview {
     }
     $over->add_components(qw(image EnsEMBL::Web::Component::Location::alignsliceviewtop));
     $self->{page}->content->add_panel( $over );
-    
+
     $self->initialize_zmenu_javascript;
     $self->initialize_ddmenu_javascript;
-    
+
     my $bottom = $self->new_panel( 'Image',
 				   'code'    => "bottom_#", 'caption' => 'Detailed view', 'status'  => 'panel_bottom', @common
 				   );
@@ -942,7 +942,7 @@ if( $restore_default && !$obj->param('bottom') ) { # if no spp sources are on
     }
   }
   $obj->clear_problems();
-  my $params= { 
+  my $params= {
     'snp'    => $obj->param('snp'),
     'gene'   => $obj->param('gene'),
  #   'pop'    => $pops_on,
@@ -989,7 +989,7 @@ if( $restore_default && !$obj->param('bottom') ) { # if no spp sources are on
   }
 
   # Neighbourhood image -------------------------------------------------------
-  ## Now create the image panel   
+  ## Now create the image panel
   my $context = $obj->seq_region_type_and_name ." ".
     $obj->thousandify( $obj->seq_region_start );
 
@@ -1037,7 +1037,7 @@ if( $restore_default && !$obj->param('bottom') ) { # if no spp sources are on
     options  EnsEMBL::Web::Component::LD::options
 				  ));
 
-    $form_panel->add_form( $self->{page}, qw(options EnsEMBL::Web::Component::LD::options_form) ); 
+    $form_panel->add_form( $self->{page}, qw(options EnsEMBL::Web::Component::LD::options_form) );
 
     # finally, add the complete panel to the page object
     $self->{page}->content->add_panel( $form_panel );
@@ -1103,7 +1103,7 @@ sub anchorview {
 }
 
 ###############################################################################
-## Helper functions.... 
+## Helper functions....
 ###############################################################################
 ## add_format, get_format are helper functions for configuring ExportView #####
 ###############################################################################
@@ -1130,8 +1130,8 @@ sub get_format {
         'supername'    => $formats->{$super}{'name'},
         'superform'    => $formats->{$super}{'form'},
         'superdisplay' => $formats->{$super}{'display'},
-        'code'         => $_, 
-        'name'         => $formats->{$super}{'sub'}{$_} 
+        'code'         => $_,
+        'name'         => $formats->{$super}{'sub'}{$_}
       } if $code eq $_;
     }
   }
