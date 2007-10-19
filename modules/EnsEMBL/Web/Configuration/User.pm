@@ -13,9 +13,8 @@ our @ISA = qw( EnsEMBL::Web::Configuration );
 sub _add_javascript_libraries {
   ## 'private' method to load commonly-used JS libraries
   my $self = shift;
-  $self->{page}->javascript->add_source( "/js/prototype.js" );  ## Javascript library 
+  $self->{page}->javascript->add_source( "/js/protopacked.js" );  ## Javascript library 
   $self->{page}->javascript->add_source( "/js/accountview42.js" ); ## link magic
-  $self->{page}->javascript->add_source( "/js/scriptaculous.js" ); ## Animations, drag and drop etc. 
 }
 
 sub access_denied {
