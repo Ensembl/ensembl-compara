@@ -161,8 +161,8 @@ sub configure {
       foreach my $FN ( @functions ) { 
         if( $CONF->can($FN) ) {
 	  # If this configuration module can perform this function do so...
-          $self->{wizard} = $CONF->{wizard};
           eval { $CONF->$FN(); };
+          $self->{wizard} = $CONF->{wizard};
           if( $@ ) { # Catch any errors and display as a "configuration runtime error"
             $self->page->content->add_panel( 
 					    new EnsEMBL::Web::Document::Panel(
@@ -249,7 +249,6 @@ sub get_user_id {
 ## wrapper around redirect and render
 sub action {
   my $self = shift;
-  my $user_id = $self->get_user_id;
 
   if ($self->{wizard}) {
     my $object = ${$self->dataObjects}[0];
@@ -264,7 +263,6 @@ sub action {
 sub _node_hop {
   my ($self, $node, $loop) = @_;
   $loop++;
-  warn "WIZARD NODE: " . $node;
   if ($loop > 10 || !$self->{wizard}->isa_node($node) || $self->{wizard}->isa_page($node)) {
     ## render page if not a processing node or doesn't exist
     $self->render;
@@ -272,7 +270,6 @@ sub _node_hop {
   else {
     ## do whatever processing is required by this node
     my $object = ${$self->dataObjects}[0];
-    warn "OBJECT FOR WIZARD: " . $object->[0];
     my $return_value = $self->{wizard}->$node($object);
 
     my %parameter = %{$return_value} if (ref($return_value) =~ /HASH/);
@@ -295,7 +292,6 @@ sub _node_hop {
         $URL .= '?';
       }
       foreach my $param_name (keys %parameter) {
-        warn "CHECKING for USER keys: " . $param_name;
 
         ## assemble rest of url for non-exit redirects
         if (!$parameter{'exit'}) {
