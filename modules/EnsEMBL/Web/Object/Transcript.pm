@@ -48,6 +48,10 @@ sub default_track_by_gene {
       ncrna            rna_transcript
       mirna            rna_transcript
       trna             rna_transcript
+      rrna             rna_transcript
+      snrna            rna_transcript
+      snlrna           rna_transcript
+      snorna           rna_transcript
       ensembl_ncrna    erna_transcript
       homology_medium  homology_low_transcript
       homology_high    homology_low_transcript
