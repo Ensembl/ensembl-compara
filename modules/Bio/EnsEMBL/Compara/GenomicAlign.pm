@@ -317,6 +317,30 @@ sub new_fast {
 }
 
 
+=head2 copy (CONSTRUCTOR)
+
+  Arg         : -none-
+  Example     : my $new_genomic_align = $genomic_align->copy();
+  Description : Create a new object with the same attributes
+                as this one.
+  Returntype  : Bio::EnsEMBL::Compara::GenomicAlign (or subclassed) object
+  Exceptions  :
+  Status      : Stable
+
+=cut
+
+sub copy {
+  my ($self) = @_;
+  my $new_copy = {};
+  bless $new_copy, ref($self);
+
+  while (my ($key, $value) = each %$self) {
+    $new_copy->{$key} = $value;
+  }
+
+  return $new_copy;
+}
+
 =head2 adaptor
 
   Arg [1]    : Bio::EnsEMBL::Compara::DBSQL::GenomicAlignAdaptor
@@ -332,12 +356,12 @@ sub new_fast {
 =cut
 
 sub adaptor {
-  my ($self, $adaptor) = @_;
+  my $self = shift;
 
-  if (defined($adaptor)) {
-     throw("$adaptor is not a Bio::EnsEMBL::Compara::DBSQL::GenomicAlignAdaptor object")
-         if (!$adaptor->isa("Bio::EnsEMBL::Compara::DBSQL::GenomicAlignAdaptor"));
-     $self->{'adaptor'} = $adaptor;
+  if (@_) {
+    $self->{'adaptor'} = shift;
+    throw($self->{'adaptor'}." is not a Bio::EnsEMBL::Compara::DBSQL::GenomicAlignAdaptor object")
+        if ($self->{'adaptor'} and !UNIVERSAL::isa($self->{'adaptor'}, "Bio::EnsEMBL::Compara::DBSQL::GenomicAlignAdaptor"));
   }
 
   return $self->{'adaptor'};
