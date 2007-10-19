@@ -257,7 +257,7 @@ sub exportview {
     'embl' => 'EMBL', 'genbank' => 'GenBank'
   );
   $self->add_format( 'fasta', 'FASTA File', 'EnsEMBL::Web::Component::Export::fasta_form', 'EnsEMBL::Web::Component::Export::fasta',
-    'fasta' => 'FASTA format text file'
+    'fasta' => 'FASTA sequence',
   );
   $self->add_format( 'features', 'Feature List', 'EnsEMBL::Web::Component::Export::features_form', 'EnsEMBL::Web::Component::Export::features',
     'gff' => 'GFF format', 'tab' => 'Tab separated values', 'csv' => 'CSV (Comma Separated values)' );

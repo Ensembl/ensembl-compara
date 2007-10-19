@@ -25,7 +25,7 @@ sub update_configs_from_parameter {
   my $rst = $self->{object}->param( 'reset' );
   my $wsc = $self->{object}->get_scriptconfig();
   my @das = $self->{object}->param( 'add_das_source' );
-  
+
   foreach my $config_name ( @userconfigs ) {
     $self->{'object'}->attach_image_config( $self->{'object'}->script, $config_name );
     $self->{'object'}->user_config_hash( $config_name );
@@ -56,9 +56,9 @@ sub add_panel { $_[0]{page}->content->add_panel( $_[1] ); }
 sub set_title { $_[0]{page}->set_title( $_[1] ); }
 sub add_form  { my($self,$panel,@T)=@_; $panel->add_form( $self->{page}, @T ); }
 
-sub add_wizard { 
+sub add_wizard {
   my ($self, $wizard) = @_;
-  $self->{wizard} = $wizard; 
+  $self->{wizard} = $wizard;
 }
 
 sub commander {
@@ -71,7 +71,7 @@ sub commander {
 }
 
 
-sub add_block { 
+sub add_block {
   my $self = shift;
   return unless $self->{page}->can('menu');
   return unless $self->{page}->menu;
@@ -81,7 +81,7 @@ sub add_block {
   $self->{page}->menu->add_block( $flag, @_ );
 }
 
-sub delete_block { 
+sub delete_block {
   my $self = shift;
   return unless $self->{page}->can('menu');
   return unless $self->{page}->menu;
@@ -90,7 +90,7 @@ sub delete_block {
   $self->{page}->menu->delete_block( $flag, @_ );
 }
 
-sub add_entry { 
+sub add_entry {
   my $self = shift;
   return unless $self->{page}->can('menu');
   return unless $self->{page}->menu;
@@ -207,18 +207,18 @@ sub context_location {
       'href'=> "/$species/cytoview?l=$q_string",
       'title' => "CytoView - sequence overview of $header" );
     unless( $no_sequence ) {
-      $self->add_entry( $flag, 'text' => 'Export information about region',
+      $self->add_entry( $flag, 'text' => 'Export from region...',
         'title' => "ExportView - export information about $header",
         'href' => "/$species/exportview?l=$q_string"
       );
-      $self->add_entry( $flag, 'text' => 'Export sequence as FASTA',
-        'title' => "ExportView - export sequence of $header as FASTA",
-        'href' => "/$species/exportview?l=$q_string;format=fasta;action=format"
-      );
-      $self->add_entry( $flag, 'text' => 'Export EMBL file',
-        'title' => "ExportView - export sequence of $header as EMBL",
-        'href' => "/$species/exportview?l=$q_string;format=embl;action=format"
-      );
+    # $self->add_entry( $flag, 'text' => 'Export sequence as FASTA',
+    #   'title' => "ExportView - export sequence of $header as FASTA",
+    #    'href' => "/$species/exportview?l=$q_string;format=fasta;action=format"
+    # );
+    #  $self->add_entry( $flag, 'text' => 'Export EMBL file',
+    #   'title' => "ExportView - export sequence of $header as EMBL",
+    #   'href' => "/$species/exportview?l=$q_string;format=embl;action=format"
+    # );
     }
    unless ( $obj->species_defs->ENSEMBL_NOMART) {
       if( $obj->species_defs->multidb('ENSEMBL_MART_ENSEMBL') && !$obj->species_defs->ENSEMBL_NOMART ) {
@@ -305,4 +305,3 @@ sub wizard_feedback {
 }
 
 1;
-
