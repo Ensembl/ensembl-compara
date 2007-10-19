@@ -1185,7 +1185,7 @@ sub transcripts {
       $rows.= "<td>novel transcript</td>";
     }
 	my $trans_stable_id = $transcript->stable_id;
-	$rows .= qq(<td>$trans_stable_id</a></td>);
+	$rows .= qq(<td>$trans_stable_id</td>);
     if( $transcript->translation_object ) {
       my $pep_stable_id = $transcript->translation_object->stable_id;
       $rows .= "<td>$pep_stable_id</td>";
