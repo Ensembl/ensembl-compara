@@ -472,8 +472,7 @@ sub html_header {
     <html>
     <head>
       <title>e! doc</title>);
-   $html .= $self->include_javascript($package, 'prototype.js');
-   $html .= $self->include_javascript($package, 'scriptaculous.js');
+   $html .= $self->include_javascript($package, 'protopacked.js');
    $html .= $self->include_javascript($package, 'display.js');
    $html .= $self->include_stylesheet($package, 'styles.css');
    $html .= qq(
