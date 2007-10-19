@@ -8,6 +8,7 @@ sub new {
   my( $class, $session ) = @_;
   my $renderer = new EnsEMBL::Web::Document::Renderer::Apache;
   my $page     = new EnsEMBL::Web::Document::Dynamic( $renderer,undef,$ENSEMBL_WEB_REGISTRY->species_defs );
+warn "BWPS - ensembl";
   $page->_initialize_HTML;
   #$page->set_doc_type( 'HTML', '4.01 Trans' );
   $page->masthead->sp_bio    ||= 'BioMart';
@@ -24,6 +25,7 @@ sub new {
 
 sub start {
   my $self = shift;
+warn "RENDER PAGE START..";
   $self->{'page'}->render_start;
 #  print '<script type="text/javascript">debug_window()</script>';
   $self->{'page'}->content->_start;
@@ -32,6 +34,7 @@ sub start {
 
 sub end {
   my $self = shift;
+warn "RENDER PAGE END..";
   $self->{'page'}->content->_end;
   if($self->{'session'}->param('__validatorError')) {
   ( my $inc = $self->{'session'}->param("__validationError") ) =~ s/\n/\\n/;
