@@ -179,7 +179,8 @@ sub _init {
     ## Check strand for display ##
     my $fstrand = $f->strand || -1;
     next if( $strand_flag eq 'b' && $strand != $fstrand );
-    ## Check start are not outside VC.... #
+
+    ## Check start are not outside VC.... ##
     my $start = $f->start();
     next if $start>$vc_length; ## Skip if totally outside VC
     $start = 1 if $start < 1;  

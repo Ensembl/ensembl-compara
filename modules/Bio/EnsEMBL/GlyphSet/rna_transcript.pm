@@ -157,6 +157,10 @@ sub features {
   my @T =  @{$self->{'container'}->get_all_Genes('ncRNA')||[]};
   push @T, @{$self->{'container'}->get_all_Genes('miRNA')||[]};
   push @T, @{$self->{'container'}->get_all_Genes('tRNA')||[]};
+  push @T, @{$self->{'container'}->get_all_Genes('snRNA')||[]};
+  push @T, @{$self->{'container'}->get_all_Genes('snlRNA')||[]};
+  push @T, @{$self->{'container'}->get_all_Genes('snoRNA')||[]};
+  push @T, @{$self->{'container'}->get_all_Genes('rRNA')||[]};
   return \@T;
 }
 

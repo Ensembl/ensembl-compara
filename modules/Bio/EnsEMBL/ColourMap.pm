@@ -48,6 +48,10 @@ sub new {
     '_protein_coding_KNOWN'     => [ 'rust', 'Known Protein Coding' ],
     '_protein_coding_KNOWN_BY_PROJECTION'     => [ 'rust', 'Known Proj Protein Coding' ],
     '_protein_coding_PUTATIVE'     => [ 'black', 'Putative Protein Coding' ],
+    '_repeat_NOVEL'             => [ 'darkorange', 'Novel repeat' ],
+    '_repeat_KNOWN'             => [ 'darkorange3', 'Known repeat' ],
+    '_retrotransposed_NOVEL'    => [ 'darkseagreen3', 'Novel retrotransposed' ],
+    '_retrotransposed_KNOWN'    => [ 'darkseagreen4', 'Known retrotransposed' ],
     '_pseudogene_KNOWN'         => [ 'grey50','Known Pseudogene' ],
     '_protein_coding_NOVEL'     => [ 'black', 'Novel Protein Coding' ],
     '_pseudogene_NOVEL'         => [ 'grey30','Novel Pseudogene' ],
@@ -67,6 +71,7 @@ sub new {
     '_NOVEL'     => [ 'black',  'novel' ],
     '_PSEUDO'    => [ 'grey50', 'pseudogene' ],
   );
+
   $self->colourSet( 'ideogram', qw(
     gpos100 black
     tip     slategrey
@@ -327,6 +332,7 @@ sub new {
   $self->colourSet( 'protein',
     'default'    => 'gold',
     'refseq'     => 'orange',
+    'my_prot'    => 'purple'
   );
   $self->colourSet( 'cdna',
     'default'    => 'chartreuse3',

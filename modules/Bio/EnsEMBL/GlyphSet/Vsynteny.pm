@@ -477,7 +477,7 @@ sub draw_chromosome {
 		       'height'     => $wid,
 		       'colour'     => $params{'white'},
 		       'absolutey'  => 1,
-		       'absolutex'  => 0,'absolutewidth'=>1,
+		       'absolutex'  => 1,'absolutewidth'=>1,
 		      }));
       foreach my $Y ($h_offset, $h_offset+$wid){
 	$self->push(new Sanger::Graphics::Glyph::Line
@@ -488,7 +488,7 @@ sub draw_chromosome {
 		      'height'           => 0,
 		      'colour'           => $params{'black'},
 		      'absolutey'        => 1, 
-		      'absolutex'        => 0,'absolutewidth'=>1,
+		      'absolutex'        => 1,'absolutewidth'=>1,
 		     }));
       }
     } 

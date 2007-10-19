@@ -35,8 +35,8 @@ sub init_label {
   }
 	
   if ($HELP_LINK || $zmenu) {
-  	$self->{'label_colour'} = 'contigblue1';
- }
+    $self->{'label_colour'} = 'black';
+  }
  
   $self->init_label_text( $self->my_label, $HELP_LINK, $zmenu);
   if( $self->can('das_link') ) {
@@ -427,7 +427,7 @@ sub expanded_init {
 ## And now about the drawing configuration
   my $Config = $self->{'config'};
   my $strand_flag    = $Config->get($type, 'str');
-  my $pix_per_bp     = $Config->transform()->{'scdataalex'};
+  my $pix_per_bp     = $Config->transform()->{'scalex'};
   my $DRAW_CIGAR     = ( $Config->get($type,'force_cigar') eq 'yes' )|| ($pix_per_bp > 0.2) ;
 ## Highlights...
   my %highlights = map { $_,1 } $self->highlights;
@@ -472,6 +472,7 @@ sub expanded_init {
        $bump_start = 0 if $bump_start < 0;
     my $bump_end   = int($END * $pix_per_bp);
        $bump_end   = $bitmap_length if $bump_end > $bitmap_length;
+warn "$i::: $START, $END, $bump_start, $bump_end, $bitmap_length, $dep ";
     my $row = & Sanger::Graphics::Bump::bump_row( $bump_start, $bump_end, $bitmap_length, \@bitmap, $dep );
     if( $row > $dep ) {
       $n_bumped++;
