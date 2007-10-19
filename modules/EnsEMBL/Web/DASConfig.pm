@@ -157,11 +157,8 @@ sub create_from_URL {
 ## Set these to the dafault values....
   $das_data{stylesheet} ||= $DAS_DEFAULTS{STYLESHEET};
   $das_data{score}      ||= $DAS_DEFAULTS{SCORE};
-  $das_data{fg_merge}   ||= $DAS_DEFAULTS{FG_MERGE};
   $das_data{fg_grades}  ||= $DAS_DEFAULTS{FG_GRADES};
   $das_data{fg_data}    ||= $DAS_DEFAULTS{FG_DATA};
-  $das_data{fg_min}     ||= $DAS_DEFAULTS{FG_MIN};
-  $das_data{fg_max}     ||= $DAS_DEFAULTS{FG_MAX};
   $das_data{group}      ||= $DAS_DEFAULTS{GROUP};
   $das_data{strand}     ||= $DAS_DEFAULTS{STRAND};
   $das_data{enable}       = [split /,/, $das_data{enable}];
