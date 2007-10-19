@@ -30,9 +30,9 @@ in the tree.
   run a dN/dS analysis for the orthologs of pairs of species, in the
   Homology_dNdS analysis. This step is optional.
 
-The genetree process overlaps initially with the the homology
-pipeline, but once the clusters are created, it differs in the way
-things are done. Read README-homology for more information.
+The genetree process overlaps initially with the homology pipeline,
+but once the clusters are created, it differs in the way things are
+done. Read README-homology for more information.
 
 
 1- code API needed and executable
