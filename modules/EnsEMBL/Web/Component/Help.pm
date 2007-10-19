@@ -250,11 +250,23 @@ sub movie_index {
       {'key' => "mins", 'title' => 'Running time (minutes)', 'width' => '20%', 'align' => 'left' },
     );
     foreach my $entry (@$movie_list) {     
-      my $id    = $entry->id;
-      my $title = $entry->title;
-      my $length = $entry->length;
+      my $id      = $entry->id;
+      my $title   = $entry->title;
+      my $length  = $entry->length;
+      my $link   = qq(<a href="/common/Workshops_Online?id=$id" style="font-size:115%;font-weight:bold;text-decoration:none">$title</a>);
+      ## Do flagging of new and updated content 
+      my $new     = $entry->created_at;
+      my $updated = $entry->modified_at;
+      my $time    = time() - (86400 * 50); ## 60 days, ie approximate time between releases
+      if ($updated && $updated > $time) {
+        $link .= ' <span class="alert">UPDATED!</span>';
+      }
+      elsif ($new && $new > $time) { 
+        $link .= ' <span class="alert">NEW!</span>';
+      }
+
       $panel->add_row({
-        'title' => qq(<a href="/common/Workshops_Online?id=$id">$title</a>),
+        'title' => $link,
         'mins'  => $length,
       });
     }
