@@ -168,7 +168,7 @@ sub fetch_records {
 
   my $sql = qq(SELECT 
                   help_record_id, type, keyword, data, status, helpful, not_helpful, 
-                  created_by, created_at, modified_by, modified_at 
+                  created_by, UNIX_TIMESTAMP(created_at), modified_by, UNIX_TIMESTAMP(modified_at) 
                   FROM help_record 
                   );
   if ($criteria && ref($criteria) eq 'ARRAY') {
