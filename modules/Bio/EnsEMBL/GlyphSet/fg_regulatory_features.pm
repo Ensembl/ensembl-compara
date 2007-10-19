@@ -105,12 +105,25 @@ sub zmenu {
   my ($self, $f) = @_; 
   my $stable_id = $f->stable_id;
   my @atts = @{$f->regulatory_attributes()}; 
-  my $display_label = $f->display_label();
+  my $display_label = "Regulatory Feature"; 
   my @temp = map $_->feature_type->name(), @atts;
   my %att_label;
-  foreach my $k (@temp){ $att_label{$k} = "";}
+  my $c = 1;
+  foreach my $k (@temp){
+   if (exists  $att_label{$k}) { 
+    my $old = $att_label{$k};
+    $old++;
+    $att_label{$k} = $old;
+   }  else { $att_label{$k} = $c; }
+  }
   my @keys = keys %att_label;  
-  my $label = join(', ', @keys);
+  my $label = "";
+  foreach my $k (keys %att_label){
+    my $v = $att_label{$k};
+    $label = "$k($v), ";
+  }
+
+  $label =~s/\,\s$//;
   my $type = $f->feature_type->name();
   my ($start, $end) = $self->slice2sr($f->start, $f->end);
   my $zmenu = {
