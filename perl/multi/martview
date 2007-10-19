@@ -9,7 +9,7 @@ use CGI;
 my $cgi = new CGI;
 my %params = %{ $cgi->Vars };
 
-my $biomart_url = "http://www.biomart.org/biomart/martview?";
+my $biomart_url = "http://www.ensembl.org/biomart/martview?";
 
 foreach my $key (keys %params) {
   if ($params{$key}) {
