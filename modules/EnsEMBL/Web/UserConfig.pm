@@ -833,6 +833,7 @@ sub ADD_ALL_DNA_FEATURES {
   ## Full_dbSTS - in r40, leftover from Vega, don't display
   $self->add_new_track_mrna( 'unigene', 'Unigene', $POS++, 'URL_KEY' => 'UNIGENE', 'ZMENU'       => [ '###ID###' , 'Unigene cluster ###ID###', '###HREF###' ], @_ );
   $self->add_new_track_mrna( 'vertrna', 'EMBL mRNAs', $POS++, @_ );
+  $self->add_new_track_mrna( 'caenorhabditus_mrna', 'Worm mRNAs', $POS++, @_ );
   $self->add_new_track_mrna( 'celegans_mrna', 'C.elegans mRNAs', $POS++, @_ );
   $self->add_new_track_mrna( 'cbriggsae_mrna', 'C.briggsae mRNAs', $POS++, @_ );
 
@@ -892,7 +893,8 @@ sub ADD_ALL_DNA_FEATURES {
                             'FEATURES'  => 'UNDEF', 'available' => 'databases ENSEMBL_CDNA',
                             'THRESHOLD' => 0,       'DATABASE'  => 'cdna', @_ );
   $self->add_new_track_cdna( 'cdna_all',  'All CDNAs', $POS++, 'SUBTYPE' => 'cdna_all' , @_ );
-
+  $self->add_new_track_cdna( 'washu_contig', 'WashU contig', $POS++, 'SUBTYPE' => 'washuc_conitg', @_ );
+  $self->add_new_track_cdna( 'nembase_contig', 'NemBase contig', $POS++, 'SUBTYPE' => 'nembase_conitg', @_ );
 
   # Otherfeatures db
   my @EST_DB_CDNA = (
@@ -901,6 +903,7 @@ sub ADD_ALL_DNA_FEATURES {
     [ 'kyotograil_2004',  "Kyotograil '04" ],
     [ 'kyotograil_2005',  "Kyotograil '05" ],
     [ 'platypus_454_cdna', "Platypus 454 cDNAs" ],
+    [ 'platypus_cdna', "Platypus cDNAs (OF)" ],
     [ 'sheep_bac_ends',   "Sheep BAC ends", "URL_KEY" => 'TRACE', 'ZMENU' => [ '###ID###', 'Sheep BAC trace: ###ID###' => '###HREF###']  ],
     [ 'stickleback_cdna',   "Stickleback cDNAs" ], # subset of these in core but don't draw those
 
@@ -933,6 +936,8 @@ sub ADD_ALL_EST_FEATURES {
   $self->add_new_track_est( 'BeeESTAlignmentEvidence', 'Bee EST evid.', $POS++, @_ );
   $self->add_new_track_est( 'est_rna',      'ESTs (RNA)',      $POS++, 'available' => 'features RNA',      'FEATURES' => 'RNA', @_ );
   $self->add_new_track_est( 'est_rnabest',  'ESTs (RNA best)', $POS++, 'available' => 'features RNA_BEST', 'FEATURES' => 'RNA_BEST', @_ );
+  $self->add_new_track_est( 'ost', 'OSTs', $POS++, @_ );
+  $self->add_new_track_est( 'caenorhabditis_est', 'Worm ESTs', $POS++, @_ );
   $self->add_new_track_est( 'celegans_est', 'C. elegans ESTs', $POS++, @_ );
   $self->add_new_track_est( 'cbriggsae_est', 'C. elegans ESTs', $POS++, @_ );
   $self->add_new_track_est( 'scerevisiae_est', 'S. cerevisiae ESTs', $POS++, @_ );
@@ -1004,6 +1009,7 @@ sub ADD_ALL_EST_FEATURES {
     [ 'savignyi_est',          "C.savigyi EST"],      # subset of these in core but don't draw those
 
     # Duplicated tracks (same logic name used core and otherfeatures). Not ideal!
+    [ 'platypus_est',          'Platypus ESTs (OF)' ],
     [ 'macaque_est',           'Macaque ESTs' ],
   );
 
@@ -1065,6 +1071,7 @@ sub ADD_ALL_CLONE_TRACKS {
 sub ADD_ALL_PROTEIN_FEATURES {
   my $self = shift;
   my $POS  = shift || 2200;
+  $self->add_new_track_protein( 'my_prots',            'My protiens',    $POS++, 'SUBTYPE' => 'my_prot', @_ );
   $self->add_new_track_protein( 'swall',               'Proteins',       $POS++, @_ );
   $self->add_new_track_protein( 'swall_blastx',        'Proteins',       $POS++, @_ );
   $self->add_new_track_protein( 'uniprot',             'UniProtKB',      $POS++, @_ );
@@ -1136,7 +1143,7 @@ sub ADD_ALL_PROTEIN_FEATURES {
   $self->add_new_track_protein( 'Similarity_Metazoa',   "Similarity Metazoa", $POS++, @_ );
   $self->add_new_track_protein( 'Similarity_Eukaryota', "Similarity Eukaryota", $POS++, @_ );
 
-  $self->add_new_track_protein( 'AedesBlast',      "BLAST Drosophila", $POS++, @_ );
+  $self->add_new_track_protein( 'AedesBlast',      "BLAST Aedes",$POS++, 'URL_KEY' => 'AEDESBLAST',  @_ );
   $self->add_new_track_protein( 'DrosophilaBlast',      "BLAST Drosophila", $POS++, 'URL_KEY' => 'DROSOPHILABLAST', @_ );
   $self->add_new_track_protein( 'UniprotBlast',         "BLAST UniProtKB", $POS++, @_ );
   $self->add_new_track_protein( 'anopheles_protein',    "Anopheles protein", $POS++, @_ );
@@ -1205,7 +1212,7 @@ sub ADD_ALL_TRANSCRIPTS {
   $self->add_new_track_transcript( 'genebuilderbeeflymosandswall',
                                                 'Bee genes',       'bee_gene',       $POS++, @_ );
   $self->add_new_track_transcript( 'gsten',     'Genoscope genes', 'genoscope_gene', $POS++, 'logic_name' => 'gsten hox ctt', @_ );
-  $self->add_new_track_transcript( 'rna',       'ncRNA genes',     'rna_gene',       $POS++, 'available' => 'features NCRNA|MIRNA','logic_name' => 'ncrna mirna trna' ,  'compact' => 1,   @_ );
+  $self->add_new_track_transcript( 'rna',       'ncRNA genes',     'rna_gene',       $POS++, 'available' => 'features NCRNA|MIRNA|TRNA|SNLRNA|SNORNA|SNRNA|RRNA','logic_name' => 'ncrna mirna trna snlrna snorna snrna rrna' ,  'compact' => 1,   @_ );
   $self->add_new_track_transcript( 'erna',       'e! ncRNA genes', 'rna_gene',   $POS++, 'available' => 'features ensembl_ncRNA', 'logic_name' => 'ensembl_ncrna',  'legend_type' => 'rna',  'compact' => 1,      @_ );
 
   $self->add_new_track_transcript( 'ciona_dbest_ncbi', "3/5' EST genes (dbEST)", 'estgene', $POS++, @_) ;
@@ -1357,17 +1364,17 @@ sub ADD_GENE_TRACKS {
   $self->add_new_track_gene( 'flybase', 'Flybase Genes', 'flybase_gene', $POS++,
     'gene_label'           => sub { return $_[0]->biotype eq 'bacterial_contaminant' ? 'Bac. cont.' : ( $_[0]->biotype eq 'pseudogene' ? 'Pseudogene' : ( $_[0]->external_name || 'NOVEL' ) ) },
     'gene_col'             => sub { return $_[0]->biotype eq 'bacterial_contaminant' ? '_BACCOM'    : $_[0]->analysis->logic_name.'_'.$_[0]->biotype.'_'.$_[0]->status          },
-    'logic_name'           => 'flybase psuedogene', @_
+    'logic_name'           => 'flybase pseudogene', @_
   );
   $self->add_new_track_gene( 'vectorbase', 'Vectorbase Genes', 'vectorbase_gene', $POS++,
     'gene_label'           => sub { return $_[0]->biotype eq 'bacterial_contaminant' ? 'Bac. cont.' : ( $_[0]->biotype eq 'pseudogene' ? 'Pseudogene' : ( $_[0]->external_name || 'NOVEL' ) ) },
     'gene_col'             => sub { return $_[0]->biotype eq 'bacterial_contaminant' ? '_BACCOM'    : $_[0]->analysis->logic_name.'_'.$_[0]->biotype.'_'.$_[0]->status          },
-    'logic_name'           => 'vectorbase psuedogene', @_
+    'logic_name'           => 'vectorbase pseudogene', @_
   );
   $self->add_new_track_gene( 'wormbase', 'Wormbase Genes', 'wormbase_gene', $POS++,
     'gene_label'           => sub { return $_[0]->biotype eq 'bacterial_contaminant' ? 'Bac. cont.' : ( $_[0]->biotype eq 'pseudogene' ? 'Pseudogene' : ( $_[0]->external_name || 'NOVEL' ) ) },
     'gene_col'             => sub { return $_[0]->biotype eq 'bacterial_contaminant' ? '_BACCOM'    : $_[0]->analysis->logic_name.'_'.$_[0]->biotype.'_'.$_[0]->status          },
-    'logic_name'           => 'wormbase psuedogene', @_
+    'logic_name'           => 'wormbase pseudogene', @_
   );
   $self->add_new_track_gene( 'genebuilderbeeflymosandswall', 'Bee Genes', 'bee_gene', $POS++,
     'gene_label'           => sub { return $_[0]->biotype eq 'bacterial_contaminant' ? 'Bac. cont.' : ( $_[0]->biotype eq 'pseudogene' ? 'Pseudogene' : ( $_[0]->external_name || 'NOVEL' ) ) },
@@ -1475,7 +1482,7 @@ sub ADD_GENE_TRACKS {
                              'gene_label' => sub { return $_[0]->stable_id }, 'gene_col' => sub { return $_[0]->biotype }, @_ );
 
   $self->add_new_track_gene( 'ncrna', 'ncRNA Genes', 'rna_gene', $POS++,
-                             'logic_name' => 'miRNA tRNA ncRNA',
+                             'logic_name' => 'miRNA tRNA ncRNA snRNA snlRNA snoRNA rRNA',
                              'available' => 'features ncrna|miRNA', 'label_threshold' => 100,
                              'gene_col' => sub { return ($_[0]->biotype =~ /pseudo/i ? 'rna-pseudo' : 'rna-real').($_[0]->status) }, @_ );
   $self->add_new_track_gene( 'ensembl_ncrna', 'e! ncRNA Genes', 'rna_gene', $POS++, 'legend_type' => 'gene_ncrna',
