@@ -47,8 +47,8 @@ sub field {
 }
 
 sub redefine_node {
-  my ($self, $node, $attrib, $value) = @_;
-  if (ref($self->{'_node_defs'}{$node}{$attrib}) eq 'ARRAY') {
+  my ($self, $node, $attrib, $value, $replace) = @_;
+  if (ref($self->{'_node_defs'}{$node}{$attrib}) eq 'ARRAY' && !$replace) {
     push(@{$self->{'_node_defs'}{$node}{$attrib}}, @$value) 
       unless grep {$_ eq $value} @{$self->{'_node_defs'}{$node}{$attrib}};
   }
