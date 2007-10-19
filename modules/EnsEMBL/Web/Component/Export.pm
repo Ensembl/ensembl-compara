@@ -35,8 +35,7 @@ sub stage1_form {
   $form->add_element(
         'type' => 'Information',
         'value' => qq(<p> Choose at least one feature to export. Features must map to the current $sitetype Golden tile.
-      <em>Please note that there is an upper limit of 5Mb that we will
-          export.</em>
+      <em>Please note we will not export more than 5Mb.</em>
     </p>));
 
   if ($object->param('error')) {
@@ -174,7 +173,7 @@ sub flat_form {
   my $form = EnsEMBL::Web::Form->new( 'stage2_form', "/@{[$object->species]}/exportview", 'get' );
   add_hidden_fields( $form, $object );
   $form->add_element( 'type' => 'Hidden', 'name' => '_format', 'value' => 'HTML' );
-  $form->add_element( 'type' => 'SubHeader', 'value' => 'Flat file format options' );
+  $form->add_element( 'type' => 'SubHeader', 'value' => 'Flat file options' );
   my @options = (
     [ 'similarity' => 'Similarity features' ],
     [ 'repeat'     => 'Repeat features' ],
@@ -257,7 +256,7 @@ sub features_form {
   my $form = EnsEMBL::Web::Form->new( 'stage2_form', "/@{[$object->species]}/exportview", 'get' );
   $form->add_element( 'type' => 'Hidden', 'name' => '_format', 'value' => 'HTML' );
   add_hidden_fields( $form, $object );
-  $form->add_element( 'type' => 'SubHeader', 'value' => 'Feature format options' );
+  $form->add_element( 'type' => 'SubHeader', 'value' => 'Feature types' );
   my @options = (
     [ 'similarity' => 'Similarity features' ],
     [ 'repeat'     => 'Repeat features' ],
