@@ -7,6 +7,56 @@ use Bio::SimpleAlign;
 
 our @ISA = qw(Bio::EnsEMBL::Compara::BaseRelation);
 
+=head1 NAME
+
+Bio::EnsEMBL::Compara::Homology - Homology between two proteins
+
+=head1 SYNOPSIS
+
+  use Bio::EnsEMBL::Registry;
+
+  my $homology_adaptor = $reg->get_adaptor("Multi", "compara", "Homology");
+
+  ## Please, refer to Bio::EnsEMBL::Compara::DBSQL::MemberAdaptor
+  ## to see how to get a Member from the database. Also, you can
+  ## find alternative ways to fetch homologies in the POD for the
+  ## Bio::EnsEMBL::Compara::DBSQL::HomologyAdaptor module.
+
+  my $homologies = $homology_adaptor->fetch_all_by_Member($member);
+
+  foreach my $this_homology (@$homologies) {
+    my $homologue_genes = $this_homology->gene_list();
+    print join(" and ", @$homologue_genes), " are ",
+        $this_homology->description, "\n";
+  }
+
+=head1 AUTHOR
+
+Ensembl Team
+
+=head1 COPYRIGHT
+
+Copyright (c) 2004. Ensembl Team
+
+You may distribute this module under the same terms as perl itself
+
+=head1 CONTACT
+
+This modules is part of the EnsEMBL project (http://www.ensembl.org)
+
+Questions can be posted to the ensembl-dev mailing list:
+ensembl-dev@ebi.ac.uk
+
+=head1 INHERITANCE
+
+This class inherits all the methods and attributes from Bio::EnsEMBL::DBSQL::BaseAdaptor
+
+=head1 APPENDIX
+
+The rest of the documentation details each of the object methods. Internal methods are usually preceded with a _
+
+=cut
+
 my %TWOD_CODONS = ("TTT" => "Phe",#Phe
                    "TTC" => "Phe",
                    
