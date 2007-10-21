@@ -233,10 +233,11 @@ sub _matches {
     $html = qq(<p><strong>This $entry entry corresponds to the following database identifiers:</strong></p>);
   }
   $html .= qq(<table cellpadding="4">);
-  my $old_key = '';
-  if ($keys[0] eq 'ALT_TRANS') {
- 	  @links = @{&remove_redundant_vega_xrefs(\@links)};
+  if( $keys[0] eq 'ALT_TRANS' ) {
+    @links = @{&remove_redundant_vega_xrefs(\@links)};
   }
+
+  my $old_key = '';
   foreach my $link (@links) {
     my ( $key, $text ) = @$link;
     if( $key ne $old_key ) {
@@ -256,24 +257,24 @@ sub _matches {
 }
 
 #this is temporarily needed to delete duplicated and redundant database entries
-sub	remove_redundant_vega_xrefs {
-	my ($links) = @_;
-	my %priorities;
-	foreach my $link (@$links) {
-		my ( $key, $text ) = @$link;
-		if ($text =~ />OTT/) {
-			$priorities{$key} = $text;
-		}
-	}
-	foreach my $type ('Transcript having exact match between ENSEMBL and HAVANA',
-					  'Havana transcript having same CDS',
-					  'Havana transcripts') {
-		if ($priorities{$type}) {
-			my $munged_links;
-			$munged_links->[0] = [ $type, $priorities{$type} ];
-			return $munged_links;
-		}
-	}
+sub remove_redundant_vega_xrefs {
+  my ($links) = @_;
+  my %priorities;
+  foreach my $link (@$links) {
+    my ( $key, $text ) = @$link;
+    if ($text =~ />OTT/) {
+      $priorities{$key} = $text;
+    }
+  }
+  foreach my $type ('Transcript having exact match between ENSEMBL and HAVANA',
+    'Havana transcript having same CDS',
+    'Havana transcripts') {
+    if ($priorities{$type}) {
+      my $munged_links;
+      $munged_links->[0] = [ $type, $priorities{$type} ];
+      return $munged_links;
+    }
+  }
 }
 
 sub _sort_similarity_links{
@@ -327,6 +328,7 @@ sub _sort_similarity_links{
     }
 #    warn $externalDB;
 #    warn $type->db_display_name;
+    if( $type->description ) { $text .= "<br />".CGI::escapeHTML($type->description); }
     if( $type->isa('Bio::EnsEMBL::IdentityXref') ) {
       $text .=' <span class="small"> [Target %id: '.$type->target_identity().'; Query %id: '.$type->query_identity().']</span>';            
       $join_links = 1;    

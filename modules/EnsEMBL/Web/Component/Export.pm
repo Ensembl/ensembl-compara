@@ -564,22 +564,30 @@ sub _feature {
      $score  ||= '.';
   my $frame  = $feature->can('frame') ? $feature->frame : undef;
      $frame  ||= '.';
-  my $strand = $feature->can('strand') ? $feature->strand : undef;
-     $strand ||= '.';
-     $strand = '+' if $strand eq 1;
-     $strand = '-' if $strand eq -1;
-  my $name   = $feature->can('entire_seq') && $feature->entire_seq ? $feature->entire_seq->name : undef;
-     $name   = $feature->seqname if !$name && $feature->can('seqname');
-     $name   ||= 'SEQ';
-     $name   =~ s/\s/_/g;
+  my($name,$strand,$start,$end);
+  if( $feature->can('seq_region_name') ) {
+    $strand = $feature->seq_region_strand;
+    $name   = $feature->seq_region_name;
+    $start  = $feature->seq_region_start;
+    $end    = $feature->seq_region_end;
+  } else {
+    $strand = $feature->can('strand') ? $feature->strand : undef;
+    $name   = $feature->can('entire_seq') && $feature->entire_seq ? $feature->entire_seq->name : undef;
+    $name   = $feature->seqname if !$name && $feature->can('seqname');
+    $start  = $feature->can('start') ? $feature->start : undef;
+    $end    = $feature->can('end')   ? $feature->end : undef;
+  }
+  $name   ||= 'SEQ';
+  $name   =~ s/\s/_/g;
+  $strand ||= '.';
+  $strand = '+' if $strand eq 1;
+  $strand = '-' if $strand eq -1;
   my $source = $feature->can('source_tag') ? $feature->source_tag : undef;
      $source ||= $def_source || 'Ensembl';
      $source =~ s/\s/_/g;
   my $tag    = $feature->can('primary_tag') ? $feature->primary_tag : undef;
      $tag    ||= ucfirst(lc($type)) || '.';
      $tag    =~ s/\s/_/g;
-  my $start  = $feature->can('start') ? $feature->start : undef;
-  my $end    = $feature->can('end')   ? $feature->end : undef;
 
   my @results = ( $name, $source, $tag, $start, $end, $score, $strand, $frame );
 

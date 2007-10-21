@@ -32,6 +32,7 @@ sub default_track_by_gene {
     ),
     map( {($_, $_.'_transcript')} qw(
       vectorbase tigr_0_5 species_protein human_one2one_mus_orth mus_one2one_human_orth
+      human_one2one_mouse_cow_orth
       cdna_all targettedgenewise human_ensembl_proteins
       medaka_protein gff_prediction oxford_fgu platypus_olfactory_receptors
       genebuilderbeeflymosandswall gsten flybase wormbase
