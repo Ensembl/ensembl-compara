@@ -69,24 +69,24 @@ foreach my $species ( @species ) {
 
 sub dumpQTL {
   my $conf = shift;
-  my $sth = $conf->{'dbh'}->prepare(qq(
+  my $sth = $conf->{'dbh'}->prepare("
  select c.name as chr, qf.seq_region_start, qf.seq_region_end,
         a.logic_name as analysis, q.qtl_id,
         q.trait, qs.source_database, qs.source_primary_id,
         fms1.source as fm1_source, fms1.name as fm1_name,
         fms2.source as fm2_source, fms2.name as fm2_name,
         pms.source  as pm_source,  pms.name  as pm_name
-   from seq_region as c, qtl_feature as qf, qtl_synonym as qs ,
-        analysis as a, qtl as q left join marker as fm1 on
-        fm1.marker_id = q.flank_marker_id_1 left join marker_synonym as fms1 on
-        fm1.display_marker_synonym_id = fms1.marker_synonym_id left join marker as fm2 on
-        fm2.marker_id = q.flank_marker_id_2 left join marker_synonym as fms2 on
-        fm2.display_marker_synonym_id = fms2.marker_synonym_id left join marker as pm on
-        pm.marker_id = q.peak_marker_id left join marker_synonym as pms on
+   from ((((((seq_region as c, qtl_feature as qf, qtl_synonym as qs ,
+        analysis as a, qtl as q) left join marker as fm1 on
+        fm1.marker_id = q.flank_marker_id_1) left join marker_synonym as fms1 on
+        fm1.display_marker_synonym_id = fms1.marker_synonym_id left join) marker as fm2 on
+        fm2.marker_id = q.flank_marker_id_2) left join marker_synonym as fms2 on
+        fm2.display_marker_synonym_id = fms2.marker_synonym_id left join) marker as pm on
+        pm.marker_id = q.peak_marker_id) left join marker_synonym as pms on
         pm.display_marker_synonym_id = pms.marker_synonym_id 
   where c.seq_region_id = qf.seq_region_id and qs.qtl_id = q.qtl_id and 
         qf.analysis_id = a.analysis_id and qf.qtl_id = q.qtl_id
-  ));
+  ");
   $sth->execute();
   open O, ">$conf->{'directory'}/QTL.txt";
   my $desc       = '';
@@ -227,13 +227,13 @@ sub snpLine {
 
 sub dumpMarker {
   my $conf = shift;
-  my $sth = $conf->{'dbh'}->prepare(qq(
+  my $sth = $conf->{'dbh'}->prepare("
    select m.marker_id, ms2.name, ms1.name
-     from marker_synonym as ms1, marker as m left join
+     from (marker_synonym as ms1, marker as m) left join
           marker_synonym as ms2 on ms2.marker_synonym_id = m.display_marker_synonym_id
     where ms1.marker_id = m.marker_id
     order by m.marker_id
-  ));
+  ");
 
   $sth->execute( );
 
@@ -297,7 +297,7 @@ sub dumpGenomicAlignment {
       my $type   = $tables{ $table }[1];
       my $sth    = $conf->{'dbh'}->prepare(
         "select a.logic_name, ad.display_label, t.hit_name, count(*) as hits
-           from $DB_NAME.analysis as a, $DB_NAME.$table as t left join
+           from ($DB_NAME.analysis as a, $DB_NAME.$table as t) left join
                 $DB_NAME.analysis_description as ad on ad.analysis_id = a.analysis_id
           where a.analysis_id = t.analysis_id
           group by a.logic_name, t.hit_name"
@@ -524,7 +524,7 @@ warn "START... $DB";
       my $T = $conf->{'dbh'}->selectall_arrayref(
         "select ox.ensembl_id,
                 x.display_label, x.dbprimary_acc, ed.db_display_name, es.synonym, x.description
-           from $DBNAME.object_xref as ox, $DBNAME.xref as x, $DBNAME.external_db as ed left join $DBNAME.external_synonym as es on es.xref_id = x.xref_id
+           from ($DBNAME.object_xref as ox, $DBNAME.xref as x, $DBNAME.external_db as ed) left join $DBNAME.external_synonym as es on es.xref_id = x.xref_id
           where ox.ensembl_object_type = '$type' and ox.xref_id = x.xref_id and x.external_db_id = ed.external_db_id"
       );
       foreach ( @$T ) {
@@ -544,21 +544,21 @@ warn "START... $DB";
     foreach( @$T ) {
       $exons{$_->[0]}{$_->[1]}=1;
     }
-    my $gene_info = $conf->{'dbh'}->selectall_arrayref(qq(
+    my $gene_info = $conf->{'dbh'}->selectall_arrayref("
       select gsi.gene_id, tsi.transcript_id, trsi.translation_id,
              gsi.stable_id as gsid, tsi.stable_id as tsid, trsi.stable_id as trsid,
              g.description, ed.db_display_name, x.dbprimary_acc,x.display_label, ad.display_label, ad.description, g.source, g.status, g.biotype
-        from $DBNAME.gene_stable_id as gsi, $DBNAME.gene as g,
+        from (((( $DBNAME.gene_stable_id as gsi, $DBNAME.gene as g,
              $DBNAME.transcript_stable_id as tsi,
              $DBNAME.analysis_description as ad,
-             $DBNAME.transcript as t left join
-             $DBNAME.translation as tr on t.transcript_id = tr.transcript_id left join
-             $DBNAME.translation_stable_id as trsi on tr.translation_id = trsi.translation_id left join
-             $DBNAME.xref as x on g.display_xref_id = x.xref_id left join
+             $DBNAME.transcript as t) left join
+             $DBNAME.translation as tr on t.transcript_id = tr.transcript_id) left join
+             $DBNAME.translation_stable_id as trsi on tr.translation_id = trsi.translation_id) left join
+             $DBNAME.xref as x on g.display_xref_id = x.xref_id) left join
              $DBNAME.external_db as ed on ed.external_db_id = x.external_db_id
        where t.gene_id = gsi.gene_id and t.transcript_id = tsi.transcript_id and t.gene_id = g.gene_id and g.analysis_id = ad.analysis_id
        order by gsi.stable_id, tsi.stable_id
-    ));
+    ");
 warn "Gene query...";
     my %old;
     foreach my $row (@$gene_info) {
