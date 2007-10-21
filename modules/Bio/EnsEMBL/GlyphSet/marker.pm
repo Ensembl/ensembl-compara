@@ -88,7 +88,7 @@ sub _init {
       'x'         => $S,
       'y'         => $row_height,
       'height'    => $h,
-      'width'     => 0,
+      'width'     => $res[2] / $pix_per_bp,
       'halign'    => 'left',
       'font'      => $fontname,
       'ptsize'    => $fontsize,
