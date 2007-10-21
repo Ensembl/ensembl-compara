@@ -1243,6 +1243,7 @@ sub ADD_ALL_TRANSCRIPTS {
   $self->add_new_track_transcript( 'species_protein', 'Dog protein',       'prot_gene', $POS++,  @_ );
   $self->add_new_track_transcript( 'horse_protein', 'Horse protein', 'horse_protein', $POS++,  @_ );
   $self->add_new_track_transcript( 'human_one2one_mus_orth', 'Hs/Mm orth', 'prot_gene', $POS++,  @_ );
+  $self->add_new_track_transcript( 'human_one2one_mouse_cow_orth', 'Hs/Mm orth', 'prot_gene', $POS++,  @_ );
   $self->add_new_track_transcript( 'human_ensembl_proteins',   'Human genes',   'human_ensembl_proteins_gene',   $POS++, @_ );
   $self->add_new_track_transcript( 'mus_one2one_human_orth', 'Ms/Hs orth', 'prot_gene', $POS++,  @_ );
 
@@ -1476,6 +1477,7 @@ sub ADD_GENE_TRACKS {
 
   $self->add_new_track_gene( 'species_protein', 'Dog protein', 'prot_gene', $POS++, @_ );
   $self->add_new_track_gene( 'human_one2one_mus_orth', 'Hs/Mm orth', 'prot_gene', $POS++, @_ );
+  $self->add_new_track_gene( 'human_one2one_mouse_cow_orth', 'Hs/Mm orth', 'prot_gene', $POS++, @_ );
   $self->add_new_track_gene( 'mus_one2one_human_orth', 'Ms/Hs orth', 'prot_gene', $POS++, @_ );
 
   $self->add_new_track_gene( 'jamboree_cdnas',  "X.trop. Jambo",  'prot_gene', $POS++,

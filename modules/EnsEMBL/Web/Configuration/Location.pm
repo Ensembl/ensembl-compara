@@ -453,6 +453,7 @@ sub cytoview {
       'species' => $ENV{ENSEMBL_SPECIES},
       'chr'     => $obj->seq_region_name,
       'ori'     => 1,
+      'h'       => $obj->param('h'),
       'main_width' => $obj->length,
       'bp_width' => $zw,
       'base_URL' => "/$ENV{ENSEMBL_SPECIES}/$ENV{ENSEMBL_SCRIPT}"
@@ -736,6 +737,7 @@ sub contigview {
       'chr'     => $obj->seq_region_name,
       'ori'     => 1,
       'main_width' => $obj->length,
+      'h'       => $obj->param('h'),
       'bp_width' => $zw,
       'base_URL' => "/$ENV{ENSEMBL_SPECIES}/$ENV{ENSEMBL_SCRIPT}"
     };

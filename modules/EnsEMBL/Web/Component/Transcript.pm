@@ -328,7 +328,6 @@ sub _sort_similarity_links{
     }
 #    warn $externalDB;
 #    warn $type->db_display_name;
-    if( $type->description ) { $text .= "<br />".CGI::escapeHTML($type->description); }
     if( $type->isa('Bio::EnsEMBL::IdentityXref') ) {
       $text .=' <span class="small"> [Target %id: '.$type->target_identity().'; Query %id: '.$type->query_identity().']</span>';            
       $join_links = 1;    
@@ -342,6 +341,10 @@ sub _sort_similarity_links{
     }
     if($externalDB =~/^(SWISS|SPTREMBL)/i) { # add Search GO link            
       $text .= ' [<a href="'.$urls->get_url('GOSEARCH',$primary_id).'">Search GO</a>]';
+    }
+    if( $type->description ) { 
+      $text .= "<br />".CGI::escapeHTML($type->description);
+      $join_links = 1;    
     }
     if( $join_links  ) {
       $text = qq(\n  <div>$text</div>); 
