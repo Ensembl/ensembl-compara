@@ -670,7 +670,7 @@ warn "Gene query...";
           qq($osi),
           qq(/$species/idhistoryview?).lc($type).qq(=$osi),
           join( ' ', $osi, @deprecated_sis ),
-          qq($type $osi is no longer in the Ensembl database but it has been mapped to the following deprecated identifiers: @deprecated_sis\n)
+          qq($type $osi is no longer in the Ensembl database but it has been mapped to the following identifiers: @deprecated_sis\n)
         );
       } else {
         print O join( "\t",
