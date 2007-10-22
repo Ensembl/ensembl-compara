@@ -131,8 +131,6 @@ sub createObjects {
     $source_config->{type} = $source_config->{mapping}->[0] unless $source_config->{type};
     $source_config->{conftype} ||= 'external';
     $sources_conf{$source}    = $source_config;
-  warn("ADD EXTERNAL: $source");
-  warn(Dumper($source_config)) if ($source =~ /demo/i);
   }
 
 # Get parameters of the view that has called upon dasconfview
@@ -210,7 +208,7 @@ sub createObjects {
   }
 
   my @confkeys = qw( name type);
-  my @allkeys = ('strand', 'labelflag', 'label', 'url', 'conftype', 'group', 'stylesheet', 'score', 'fg_merge', 'fg_grades', 'fg_data', 'fg_min', 'fg_max', 'caption', 'active', 'color', 'depth', 'help', 'linktext', 'linkurl', 'assembly' );
+  my @allkeys = ('strand', 'labelflag', 'label', 'url', 'conftype', 'group', 'stylesheet', 'score', 'fg_merge', 'fg_grades', 'fg_data', 'fg_min', 'fg_max', 'caption', 'active', 'color', 'depth', 'help', 'linktext', 'linkurl', 'assembly_version' );
   my @arr_keys = ('enable', 'mapping');
 
     # Add '/das' suffix to _das_domain param
@@ -366,6 +364,7 @@ sub createObjects {
         foreach my $key( @confkeys, @allkeys, 'dsn', 'enable', 'mapping') {
           $sources_conf{$das_name}->{$key} = $das_data->{$key};
         }
+#	warn "SAVE:", Dumper($das_data);
 ## Replace with session calll
         $self->session->add_das_source_from_hashref($das_data);
         $DASsel{$das_name} = 1;

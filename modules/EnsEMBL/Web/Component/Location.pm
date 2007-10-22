@@ -613,7 +613,7 @@ sub add_das_tracks {
         -proxy_url => $object->species_defs->ENSEMBL_WWW_PROXY,
 	-maxbins   => $image_width,
 	-timeout => $object->species_defs->ENSEMBL_DAS_TIMEOUT,
-	-assembly_version => ($stype =~ /^ensembl_location/) ? $source_config->{'assembly'} : '',
+	-assembly_version=> ($stype =~ /^ensembl_location/) ? $source_config->{'assembly'} : '',
       );
     };
     if($@) {
@@ -630,6 +630,7 @@ sub add_das_tracks {
       push @das_sources, "managed_$source" ;
       my $adaptor = undef;
       my $dbname = $EXT->{$source};
+#      warn "ADD $source", Dumper($dbname);
       eval {
         my $URL = $dbname->{'url'};
         $URL = "http://$URL" unless $URL =~ /https?:\/\//i;
@@ -647,7 +648,7 @@ sub add_das_tracks {
           -proxy_url => $object->species_defs->ENSEMBL_WWW_PROXY, 
 	  -maxbins   => $image_width,
 	  -timeout => $object->species_defs->ENSEMBL_DAS_TIMEOUT,
-	  -assembly_version => ($stype =~ /^ensembl_location/) ? $dbname->{'assembly'} : '',
+	  -assembly_version=> ($stype =~ /^ensembl_location/) ? $dbname->{'assembly'} : '',
         );
       };
       if($@) {

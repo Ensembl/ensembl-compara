@@ -22,6 +22,8 @@ Eugene Kulesha - ek3@sanger.ac.uk
 
 =cut
 use EnsEMBL::Web::Component;
+use Bio::EnsEMBL::ExternalData::DAS::DASAdaptor;
+
 use Data::Dumper;
 
 our @ISA = qw(EnsEMBL::Web::Component);
@@ -95,6 +97,7 @@ sub get_das_domains {
 
   my @urls;
   foreach my $url (sort @domains) {
+    next unless $url;
     $url = "http://$url" if ($url !~ m!^\w+://!);
     $url .= "/das" if ($url !~ /\/das$/);
     push @urls, $url;
@@ -130,11 +133,11 @@ sub get_server_dsns {
         };
       }
     }
-    use Bio::EnsEMBL::ExternalData::DAS::DASAdaptor;
     my $adaptor = Bio::EnsEMBL::ExternalData::DAS::DASAdaptor->new( 
-      -url  => $url, -timeout   => $object->species_def->ENSEMBL_DAS_TIMEOUT,
+      -url  => $url, -timeout   => $object->species_defs->ENSEMBL_DAS_TIMEOUT,
       -proxy_url => $object->species_defs->ENSEMBL_WWW_PROXY 
     );
+    
     use Bio::EnsEMBL::ExternalData::DAS::DAS;
     my $das = Bio::EnsEMBL::ExternalData::DAS::DAS->new ( $adaptor );
     my %dsnhash = map {$_->{id}, $_} grep {$filterT->($_)} @{ $das->fetch_dsn_info };
@@ -180,13 +183,9 @@ sub add_das_server {
 
     my $default = $object->param("DASdomain");
 
-#    warn("DEFAULT: $default");
-
     foreach my $dom (@das_servers) { push @dvals, {'name'=>$dom, 'value'=>$dom} ; }
 
-
     my $btnMore = qq{  <input type="image" name="_das_add_domain" src="/img/buttons/more_small.gif" class="form-button" /> };
-
 
     $form->add_element('type'     => 'DropDown',
       'select'   => 'select',
@@ -245,7 +244,6 @@ sub das_wizard_1 {
 
 sub das_wizard {
   my( $panel, $object ) = @_;
-
   my $html = '';
   foreach my $p ($object->param()) {
     $html .= "$p => ".join('*', $object->param($p))."<br />";
@@ -256,7 +254,7 @@ sub das_wizard {
   my %source_conf = ();        
   my $step;
 
-  my @confkeys = qw(fg_grades fg_data fg_max fg_min fg_merge stylesheet score strand label dsn caption type depth domain group name protocol labelflag color help url linktext linkurl);
+  my @confkeys = qw(assembly_version fg_grades fg_data fg_max fg_min fg_merge stylesheet score strand label dsn caption type depth domain group name protocol labelflag color help url linktext linkurl);
 
   if (defined(my $new_das = $object->param('_das_add'))) {
     $step = 1;
@@ -410,24 +408,24 @@ sub das_wizard {
   
   no strict 'refs';
   my $fname = "das_wizard_".$step;
+#  warn Dumper(\%source_conf);
   if (defined (my $error = &{$fname}($form, \%source_conf, $object, \$step))) {
     $step --;
     $fname = "das_wizard_".$step;
     &{$fname}($form, \%source_conf, $object, \$step, $error);
   }
-
   &wizardTopPanel($form, $step, $source_conf{sourcetype});
 
   $form->add_element('type'=>'Hidden','name' =>'DASWizardStep','value' => $step );
 
   my @sparams; 
   if ($step == 1) {
-    @sparams = grep { /^DAS/ && /edit|link|enable|type|name|label|help|color|group|strand|depth|labelflag|stylesheet|score|^fg_/} $object->param();
+    @sparams = grep { /^DAS/ && /assembly_version|edit|link|enable|type|name|label|help|color|group|strand|depth|labelflag|stylesheet|score|^fg_/} $object->param();
   } elsif ($step == 2) {
     @sparams = grep { /^DAS/ && /edit|link|user_|sourcetype|protocol|domain|dsn|registry|dsns|paste_data|name|label|help|color|group|strand|depth|labelflag|stylesheet|score|^fg_/} $object->param();
     push @sparams, 'DAStype' if ($source_conf{sourcetype} eq 'das_file' && (! $object->param("DASdsn")));
   } elsif ($step == 3) {
-    @sparams = grep { /^DAS/ && /edit|user_|protocol|domain|dsn|registry|dsns|paste_data|enable|type/} $object->param();
+    @sparams = grep { /^DAS/ && /assembly_version|edit|user_|protocol|domain|dsn|registry|dsns|paste_data|enable|type/} $object->param();
   }
   foreach my $param (@sparams) {
     my @v = $object->param($param);
@@ -445,7 +443,9 @@ sub added_sources {
   my( $panel, $object ) = @_;
 
   my $das_collection = $object->get_DASCollection;
+ #  warn Dumper $das_collection;
   my @das_objs = @{$das_collection};
+  warn "DS:", scalar(@das_objs);
   my @das_form = ();
   my @url_form = ();
 
@@ -463,7 +463,7 @@ sub added_sources {
       my $das_action = sprintf("<a href=\"%s;_urldas_delete=%s\"><img src=\"/img/buttons/del_small.gif\" alt=\"Delete source \'%s\'\"/></a>", $object->param("selfURL"), $das_name, $das_name );
     } else{ # Read-write source; Provide del/edit buttons
     (my $sURL = $object->param("selfURL")) =~ s/;pop=;c.+_script/;pop=;conf_script/;
-    warn "$das_name : $sURL : ", $object->param("selfURL");
+#    warn "$das_name : $sURL : ", $object->param("selfURL");
       my $delete_link = sprintf("<a href=\"%s;_das_delete=%s\"><img src=\"/img/buttons/del_small.gif\" alt=\"Delete source \'%s\'\"/></a>", $object->param("selfURL"), $das_name, $das_name );
       my $edit_link = sprintf(qq{<a href="%s;_das_edit=%s\"><img src="/img/buttons/edit_small.gif" alt="Edit source \'%s\'" /></a>}, $sURL, $das_name, $das_name );
       $das_action = $edit_link.$delete_link;
@@ -500,7 +500,7 @@ sub added_sources {
     $add_link .= '+fg_max='.    $das_adapt->fg_max      if $das_adapt->fg_max;
     $add_link .= '+fg_min='.    $das_adapt->fg_min      if $das_adapt->fg_min;
     $add_link .= '+linktext='.  $das_adapt->linktext    if $das_adapt->linktext;
-    $add_link .= '+assembly='.  $das_adapt->assembly    if $das_adapt->assembly;
+    $add_link .= '+assembly_version='.  $das_adapt->assembly_version    if $das_adapt->assembly_version;
     if( my $link_url = $das_adapt->linkurl ) {
       $add_link .= '+linkurl=';
       $link_url =~ s/\?/\$3F/g;
@@ -744,6 +744,24 @@ sub das_wizard_2 {
         'label'   =>'Sequence Coordinate System',
         'values'  => $mvalues_seq
       );
+      
+      my @cvalues;
+      my $csa = $object->database('core')->get_CoordSystemAdaptor();
+      foreach my $cs (sort {$b->version cmp $a->version} @{$csa->fetch_all()}) {
+        next unless $cs->name eq 'chromosome';
+        my $csn = $cs->version;
+        push @cvalues, {'name'=>$csn, 'value'=>$csn};
+      }
+      $form->add_element(
+        'select'  =>  'select',
+    	'type'    =>  'DropDown',
+    	'name'    =>  'DASassembly_version',
+    	'label'   =>  'Assembly version',
+        'values'  =>  \@cvalues,
+        'value'   =>  $object->param('DASassembly_version'),
+      );
+
+
       $form->add_element('type' => 'MultiSelect',
         'class'   => 'radiocheck1col',
         'name'    =>'DAStype',
@@ -1051,9 +1069,7 @@ sub add_das_registry {
       $selected_sources{$_} = 1;
     }
   }
-
   my $registry = $object->getRegistrySources();
-
   $rurl .= "/showdetails.jsp?auto_id=";
 
   my $dwidth = 120;
