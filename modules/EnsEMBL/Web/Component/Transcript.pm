@@ -342,8 +342,9 @@ sub _sort_similarity_links{
     if($externalDB =~/^(SWISS|SPTREMBL)/i) { # add Search GO link            
       $text .= ' [<a href="'.$urls->get_url('GOSEARCH',$primary_id).'">Search GO</a>]';
     }
-    if( $type->description ) { 
-      $text .= "<br />".CGI::escapeHTML($type->description);
+    if( $type->description ) {
+      ( my $D = $type->description ) =~ s/^"(.*)"$/\1/;
+      $text .= "<br />".CGI::escapeHTML($D);
       $join_links = 1;    
     }
     if( $join_links  ) {
@@ -1324,6 +1325,9 @@ sub _sample_configs {
     };
     unshift @haplotype, [ $sample, $allele_info, $munged_coverage ];
 
+warn "#### $sample\n";
+warn map { "  >> @$_\n" } @$allele_info;
+#warn map { "  << @$_\n" } @$munged_coverage;
     $sample_config->container_width( $fake_length );
   
     ## Finally the variation features (and associated transcript_variation_features )...  Not sure exactly which call to make on here to get 
