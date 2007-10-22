@@ -42,6 +42,7 @@ sub zmenu {
     my ($self, $f ) = @_;
     my $name = $f->name();
     if (length($name) >24) { $name = "<br />$name"; }
+    my $species = $self->{'config'}->{'species'};
     my $seq_region = $f->slice->seq_region_name;
     my ($start,$end) = $self->slice2sr( $f->start, $f->end );
     my $analysis = $f->analysis->logic_name;
@@ -66,7 +67,9 @@ sub zmenu {
 #	$return->{"04: [CisRed]"} = "$cisred" if $analysis =~/cisred/i;
       }
       if ($analysis) {
-	my $cisred = $analysis =~/cisred/i ? "http://www.cisred.org/human8.2/gene_view?ensembl_id=$id" : "";
+      if ($species=~/Homo_sapiens/){ $link = "http://www.cisred.org/human9/gene_view?ensembl_id=";}
+      elsif ( $species =~/Mus_musculus/) { $link = "http://www.cisred.org/mouse4/gene_view?ensembl_id=";}
+     my $cisred = $analysis =~/cisred/i ? "$link" . "$id" : "";
 	$return->{"02:Analysis: $analysis"} = "$cisred";
       }
       $return->{"04:Associated $type: $id"} = "$link?$type=$id";
