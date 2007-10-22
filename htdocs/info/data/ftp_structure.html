@@ -37,134 +37,103 @@ The URL
 <a href="ftp://ftp.ensembl.org/pub/" target="external">ftp://ftp.ensembl.org/pub/</a> is the basis of the directory structure outlined below.
 The structure is also described in the FTP site
 <a href="ftp://ftp.ensembl.org/pub/README">README</a>.
-The latest data sets for each species are available via directories prefixed
+The latest data sets are available via directories prefixed
 '<strong>current_</strong>'.
-For example 'current_mouse' will always point to the latest data release for
-the mouse.
+For example 'current_embl' will always point to the latest data release files in EMBL format.
 </p>
 
 
-<h3 class="boxed">Species Directories</h3>
+<h3 class="boxed">FTP Site Directories</h3>
 
 <p>
-All species directories have the following basic structure, although not all
+The FTP directory has the following basic structure, although not all
 information is neccessarily available for each species.
 </p>
 
 <pre>
 
--- species
+   |-- embl	      Gene predictions annotated on genomic DNA slices of 1 Mb in EMBL format.
+   |   | 
+   |   |-- species
    |
-   |-- data
+   |
+   |-- emf     	      Alignment dumps in EMF format
+   |   | 
+   |   |-- pecan                  * Pecan whole genome multiple alignments
+   |   |                            with conservation scores for selected sets
+   |   |-- ensembl_compara        * protein trees and protein multiple alignments
+   |   |                            underlying orthologue/paralogue predictions
+   |   |--species_variation       * resequencing data
+   |
+   | 
+   |-- fasta	      Gene predictions in FASTA datatabase format
+   |   |
+   |   |--species
+   |      |
+   |      |-- cdna         * Transcript (cDNA) predictions
+   |      |-- dna          * Genomic DNA in assembled entities
+   |      |-- pep          * Translation (peptide) predictions
+   |      |-- rna          * Non-coding RNA predictions
+   |
+   |            
+   |-- genbank	      Gene predictions annotated on genomic DNA slices of 1 Mb in GenBank format.
+   |   | 
+   |   |-- species
+   |
+   |
+   |-- gtf	      Gene annotation in GTF format
+   |
+   |-- mysql          MySQL database table text dumps
        |
-       |-- emf            Alignment dumps in EMF format
-       |   |
-       |   |-- variation    * resequencing data
+       |-- core       General genome annotation information
        |
-       |-- fasta          Gene predictions in FASTA database format
-       |   |
-       |   |-- cdna         * Transcript (cDNA) predictions
-       |   |-- dna          * Genomic DNA in assembled entities
-       |   |-- pep          * Translation (peptide) predictions
-       |   |-- rna          * Non-coding RNA predictions
+       |                * Genome sequence assembly
+       |                * Ensembl gene predictions
+       |                * Ab initio gene predictions
+       |                * Marker information
+       |                * ...
        |
-       |-- flat files     Gene predictions annotated on genomic DNA slices of 1 Mb.
-       |   |
-       |   |-- embl         * EMBL format
-       |   |-- genbank      * GenBank format
+       |-- otherfeatures  Additional genome annotation
        |
-       |-- gtf            Gene annotation in GTF format
+       |                * Gene predictions based on EST information
+       |                * ...
        |
-       |-- mysql          MySQL database table text dumps
-           |
-           |-- core       General genome annotation information
-           |
-           |                * Genome sequence assembly
-           |                * Ensembl gene predictions
-           |                * Ab initio gene predictions
-           |                * Marker information
-           |                * ...
-           |
-           |-- otherfeatures  Additional genome annotation
-           |
-           |                * Gene predictions based on EST information
-           |                * ...
-           |
-           |-- variation  Genetic variation information
-           |-- vega       Manually curated gene sets
-           |-- cdna       cDNA to genome alignments based on the latest EMBL database
+       |-- variation  Genetic variation information
+       |-- vega       Manually curated gene sets
+       |-- cdna       cDNA to genome alignments based on the latest EMBL database
+       |
+       |-- ensembl_compara      Cross-species comparative genomics data:
+       |
+       |                          * Orthologue/paralogue predictions
+       |                          * Protein families
+       |                          * Whole genome alignments
+       |                          * Synteny information
+       |
+       |-- ensembl_go           Gene Ontology database
+       |
+       |-- ensembl_web_user_db  SQL table defintion for server-side user config database
+       |
+       |-- ensembl_website        Ensembl web site database:
+       |                            * Context-sensitive help articles
+       |                            * News articles
+       |                            * Mini-ads
+       |-- compara_mart_homology     Orthologue/paralogue predictions
+       |
+       |-- compara_mart_multiple_ga  Constrained elements predictions
+       |
+       |-- compara_mart_pairwise_ga  Whole genome pairwise alignments
+       | 
+       |-- ensembl_mart              Cross-species data mining tables
+       |
+       |-- genomic_features_mart     Clone data sets
+       |
+       |-- sequence_mart             Genome sequences
+       |
+       |-- snp_mart                  Genetic variation information
+       |
+       |-- vega_mart                 Manually curated gene sets
 
 </pre>
-
-
-<h3 class="boxed">Multi-species Directories</h3>
-
-<p>
-The 'multi-species' directories contain databases not directly linked to single
-species data or which contain link data between species.
-</p>
-
-<pre>
-
--- multi-species
-   |
-   |-- data
-       |
-       |-- emf                      Alignment dumps in EMF format
-       |   |
-       |   |-- pecan                  * Pecan whole genome multiple alignments
-       |   |                            with conservation scores for selected sets
-       |   |
-       |   |-- protein_trees          * protein trees and protein multiple alignments
-       |   |                            underlying orthologue/paralogue predictions
-       |
-       |
-       |-- mysql                    MySQL database table text dumps
-           |
-           |-- ensembl_compara      Cross-species comparative genomics data:
-           |
-           |                          * Orthologue/paralogue predictions
-           |                          * Protein families
-           |                          * Whole genome alignments
-           |                          * Synteny information
-           |
-           |-- ensembl_go           Gene Ontology database
-           |
-           |-- ensembl_web_user_db  SQL table defintion for server-side user config database
-           |
-           |-- ensembl_website      Ensembl web site database:
-           |                          * Context-sensitive help articles
-           |                          * News articles
-           |                          * Mini-ads
-</pre>
-
-
-<h3 class="boxed">Mart Directory</h3>
-
-<p>
-The 'mart' directory contains table dumps of the databases underlying the
-<a href="http://www.ebi.ac.uk/biomart/">BioMart</a> data mining tool.
-</p>
-
-<pre>
-
--- mart
-   |
-   |-- data
-       |
-       |-- mysql              MySQL database table text dumps
-           |
-           |-- compara_mart_homology     Orthologue/paralogue predictions
-           |-- compara_mart_multiple_ga  Constrained elements predictions
-           |-- compara_mart_pairwise_ga  Whole genome pairwise alignments
-           |-- ensembl_mart              Cross-species data mining tables
-           |-- genomic_features_mart     Clone data sets
-           |-- sequence_mart             Genome sequences
-           |-- snp_mart                  Genetic variation information
-           |-- vega_mart                 Manually curated gene sets
-
-</pre>
-
 
 <!--
 <p>
