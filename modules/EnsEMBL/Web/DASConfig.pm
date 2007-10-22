@@ -247,6 +247,7 @@ sub attach_to_configs {
       $config->set( $config_key, 'col',        $self->get_data->{'color'},     1 ) if  $self->get_data->{'color'};
       $config->set( $config_key, 'linktext',   $self->get_data->{'linktext'},  1 ) if  $self->get_data->{'linktext'};
       $config->set( $config_key, 'linkurl',    $self->get_data->{'linkurl'},   1 ) if  $self->get_data->{'linkurl'};
+      $config->set( $config_key, 'assembly_version',    $self->get_data->{'assembly_version'},   1 ) if  $self->get_data->{'assembly_version'};
     }
   }
 }
