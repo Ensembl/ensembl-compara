@@ -12,7 +12,7 @@ function openATV( server, u ) {
   atv_window.document.write( "<FONT FACE = \"HELVETICA, ARIAL\">" );
   atv_window.document.write( "<CENTER><B>" );
   atv_window.document.write( "Please do not close this window<BR>as long as you want to use ATV." );
-  atv_window.document.write( "<APPLET ARCHIVE = \""+server+"/forester/ATVapplet.jar\"" );
+  atv_window.document.write( "<APPLET ARCHIVE = \""+server+"/java/eATVapplet.jar\"" );
   atv_window.document.write( " CODE = \"forester.atv_awt.ATVapplet.class\"" );
   atv_window.document.write( " WIDTH = 200 HEIGHT = 50>\n" );
   atv_window.document.write( "<PARAM NAME = url_of_tree_to_load\n" );
