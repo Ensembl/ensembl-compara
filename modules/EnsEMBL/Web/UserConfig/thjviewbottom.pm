@@ -133,7 +133,7 @@ sub init {
 ## Stranded contig is the central track so should always have pos set to 0...
   
     'stranded_contig' => {
-      'on'  => "off",
+      'on'  => "on",
       'navigation' => 'on',
       'pos' => '0',
     },
@@ -206,7 +206,7 @@ sub init {
   },
 
     'marker' => {
-      'on'  => "on",
+      'on'  => "off",
       'pos' => '4100',
       'col' => 'magenta',
       'str' => 'r',
