@@ -923,17 +923,20 @@ sub orthologues {
     my %orthologue_list = %{$orthologue};
 
 # Find the selected method_link_set
-    $html = qq(
+    $html = qq#
       <p>
         The following gene(s) have been identified as putative
         orthologues:
       </p>
+      <p>(N.B. If you don't find a homologue here, it may be a 'between-species paralogue'.
+Please view the <a href="/#.$gene->species.'/genetreeview?gene='.$gene->stable_id.qq#">gene tree info</a> or export between-species
+paralogues with BioMart to see more.)</p>
       <table width="100%" cellpadding="4">
         <tr>
           <th>Species</th>
           <th>Type</th>
           <th>Gene identifier</th>
-        </tr>);
+        </tr>#;
     my %orthologue_map = qw(SEED BRH PIP RHS);
 
     my %SPECIES;
@@ -1035,13 +1038,10 @@ sub paralogues {
       return 1;
     }
     my %paralogue_list = %{$paralogue};
-    $html = qq#
+    $html = qq(
       <p>
         The following gene(s) have been identified as putative paralogues (within species):
       </p>
-      <p>(N.B. If you don't find a homologue here, it may be a 'between-species paralogue'.
-Please view the <a href="/#.$gene->species.'/genetreeview?gene='.$gene->stable_id.qq(">gene tree info</a> or export between-species
-paralogues with BioMart to see more.</p>
       <table>);
     $html .= qq(
         <tr>
