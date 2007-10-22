@@ -455,19 +455,6 @@ sub added_sources {
 #$Data::Dumper::Maxdepth = 2;
     my $das_name = $das_adapt->name();
 
-#warn Data::Dumper::Dumper($das_adapt); #if ($das_name =~ /demo/);
-    my $das_action = '';
-    if( $das_adapt->conftype eq 'internal' ){ # internal DAS source : configured within INI file
-      $das_action = '&nbsp;';
-    } elsif( $das_adapt->conftype eq 'url' ){ # URL DAS source : no edit, only delete
-      my $das_action = sprintf("<a href=\"%s;_urldas_delete=%s\"><img src=\"/img/buttons/del_small.gif\" alt=\"Delete source \'%s\'\"/></a>", $object->param("selfURL"), $das_name, $das_name );
-    } else{ # Read-write source; Provide del/edit buttons
-    (my $sURL = $object->param("selfURL")) =~ s/;pop=;c.+_script/;pop=;conf_script/;
-#    warn "$das_name : $sURL : ", $object->param("selfURL");
-      my $delete_link = sprintf("<a href=\"%s;_das_delete=%s\"><img src=\"/img/buttons/del_small.gif\" alt=\"Delete source \'%s\'\"/></a>", $object->param("selfURL"), $das_name, $das_name );
-      my $edit_link = sprintf(qq{<a href="%s;_das_edit=%s\"><img src="/img/buttons/edit_small.gif" alt="Edit source \'%s\'" /></a>}, $sURL, $das_name, $das_name );
-      $das_action = $edit_link.$delete_link;
-    }
     my @cparams = qw ( conf_script db gene peptide transcript c w h l vc_start vc_end region);
     my $url = sprintf("http://%s%s/%s/%s?",
       $ENV{'SERVER_NAME'},
@@ -475,10 +462,25 @@ sub added_sources {
       $ENV{'ENSEMBL_SPECIES'},
       $object->param('conf_script')
     );
+    my $s2url = '?';
     foreach my $param (@cparams) {
       if (defined(my $v = $object->param($param))) {
         $url .= "$param=$v;" if ($v);
+        $s2url .= "$param=$v;" if ($v);
       }
+    }
+#warn Data::Dumper::Dumper($das_adapt); #if ($das_name =~ /demo/);
+    my $das_action = '';
+    if( $das_adapt->conftype eq 'internal' ){ # internal DAS source : configured within INI file
+      $das_action = '&nbsp;';
+    } elsif( $das_adapt->conftype eq 'url' ){ # URL DAS source : no edit, only delete
+      my $das_action = sprintf("<a href=\"%s;_urldas_delete=%s\"><img src=\"/img/buttons/del_small.gif\" alt=\"Delete source \'%s\'\"/></a>", $object->param("selfURL"), $das_name, $das_name );
+    } else{ # Read-write source; Provide del/edit buttons
+#      my $sURL = $object->param("selfURL");# selfURL contains some weird characters so use s2url instead
+      my $sURL = $s2url;
+      my $delete_link = sprintf("<a href=\"%s;_das_delete=%s\"><img src=\"/img/buttons/del_small.gif\" alt=\"Delete source \'%s\'\"/></a>", $sURL,$das_name, $das_name );
+      my $edit_link = sprintf(qq{<a href="%s;_das_edit=%s\"><img src="/img/buttons/edit_small.gif" alt="Edit source \'%s\'" /></a>}, $sURL, $das_name, $das_name );
+      $das_action = $edit_link.$delete_link;
     }
 
     my $das_type = $das_adapt->type || $das_adapt->mapping->[0];
