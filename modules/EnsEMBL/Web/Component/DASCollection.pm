@@ -254,7 +254,7 @@ sub das_wizard {
   my %source_conf = ();        
   my $step;
 
-  my @confkeys = qw(assembly_version fg_grades fg_data fg_max fg_min fg_merge stylesheet score strand label dsn caption type depth domain group name protocol labelflag color help url linktext linkurl);
+  my @confkeys = qw(assembly fg_grades fg_data fg_max fg_min fg_merge stylesheet score strand label dsn caption type depth domain group name protocol labelflag color help url linktext linkurl);
 
   if (defined(my $new_das = $object->param('_das_add'))) {
     $step = 1;
@@ -420,12 +420,12 @@ sub das_wizard {
 
   my @sparams; 
   if ($step == 1) {
-    @sparams = grep { /^DAS/ && /assembly_version|edit|link|enable|type|name|label|help|color|group|strand|depth|labelflag|stylesheet|score|^fg_/} $object->param();
+    @sparams = grep { /^DAS/ && /assembly|edit|link|enable|type|name|label|help|color|group|strand|depth|labelflag|stylesheet|score|^fg_/} $object->param();
   } elsif ($step == 2) {
     @sparams = grep { /^DAS/ && /edit|link|user_|sourcetype|protocol|domain|dsn|registry|dsns|paste_data|name|label|help|color|group|strand|depth|labelflag|stylesheet|score|^fg_/} $object->param();
     push @sparams, 'DAStype' if ($source_conf{sourcetype} eq 'das_file' && (! $object->param("DASdsn")));
   } elsif ($step == 3) {
-    @sparams = grep { /^DAS/ && /assembly_version|edit|user_|protocol|domain|dsn|registry|dsns|paste_data|enable|type/} $object->param();
+    @sparams = grep { /^DAS/ && /assembly|edit|user_|protocol|domain|dsn|registry|dsns|paste_data|enable|type/} $object->param();
   }
   foreach my $param (@sparams) {
     my @v = $object->param($param);
@@ -500,7 +500,7 @@ sub added_sources {
     $add_link .= '+fg_max='.    $das_adapt->fg_max      if $das_adapt->fg_max;
     $add_link .= '+fg_min='.    $das_adapt->fg_min      if $das_adapt->fg_min;
     $add_link .= '+linktext='.  $das_adapt->linktext    if $das_adapt->linktext;
-    $add_link .= '+assembly_version='.  $das_adapt->assembly_version    if $das_adapt->assembly_version;
+    $add_link .= '+assembly='.  $das_adapt->assembly_version    if $das_adapt->assembly_version;
     if( my $link_url = $das_adapt->linkurl ) {
       $add_link .= '+linkurl=';
       $link_url =~ s/\?/\$3F/g;
@@ -755,10 +755,10 @@ sub das_wizard_2 {
       $form->add_element(
         'select'  =>  'select',
     	'type'    =>  'DropDown',
-    	'name'    =>  'DASassembly_version',
+    	'name'    =>  'DASassembly',
     	'label'   =>  'Assembly version',
         'values'  =>  \@cvalues,
-        'value'   =>  $object->param('DASassembly_version'),
+        'value'   =>  $object->param('DASassembly'),
       );
 
 

@@ -208,7 +208,7 @@ sub createObjects {
   }
 
   my @confkeys = qw( name type);
-  my @allkeys = ('strand', 'labelflag', 'label', 'url', 'conftype', 'group', 'stylesheet', 'score', 'fg_merge', 'fg_grades', 'fg_data', 'fg_min', 'fg_max', 'caption', 'active', 'color', 'depth', 'help', 'linktext', 'linkurl', 'assembly_version' );
+  my @allkeys = ('strand', 'labelflag', 'label', 'url', 'conftype', 'group', 'stylesheet', 'score', 'fg_merge', 'fg_grades', 'fg_data', 'fg_min', 'fg_max', 'caption', 'active', 'color', 'depth', 'help', 'linktext', 'linkurl', 'assembly' );
   my @arr_keys = ('enable', 'mapping');
 
     # Add '/das' suffix to _das_domain param
