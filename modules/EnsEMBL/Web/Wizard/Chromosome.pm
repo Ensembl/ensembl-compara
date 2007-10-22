@@ -136,7 +136,7 @@ sub _init {
     },
     'ac_blurb' => {
       'type'  => 'Information',
-      'value' => qq(<p>Assembly Converter enables you to convert your data from Mouse assembly m36 to m37. Please note that this facility is not currently compatible with any other species or assembly.</p><p>Supported formats: Only <strong>GFF</strong> files with chromosomal coordinates are currently supported.</p>),
+      'value' => qq(<p>Assembly Converter enables you to convert your data from Mouse assembly m36 to m37. Please note that this facility is not currently compatible with any other species or assembly.</p><p>Supported formats: Only <a href="http://www.sanger.ac.uk/Software/formats/GFF/">GFF</a> files with chromosomal coordinates are currently supported. Data in this format can be exported from the <a href="http://aug2007.archive.ensembl.org/Mus_musculus/">August&nbsp;2007 Ensembl&nbsp;archive</a></p>),
     },
     'track_name'  => {
       'type'=>'String',
@@ -213,12 +213,6 @@ sub _init {
 
   ## define the nodes available to wizards based on this type of object
   my %all_nodes = (
-    'kv_add' => {
-      'form' => 1,
-      'title' => 'Add your data',
-      'input_fields'  => [qw(blurb track_name paste_file upload_file url_file)],
-      'button'  => 'Add more data',
-    },
     'kv_datacheck' => {
       'form' => 1,
       'back'   => 'kv_add',
@@ -250,6 +244,22 @@ sub _init {
       'page' => 1,
     } 
   );
+  if ($object->script eq 'assemblyconverter') {
+    $all_nodes{'kv_add'} = {
+      'form' => 1,
+      'title' => 'Convert your data',
+      'input_fields'  => [qw(ac_blurb paste_file upload_file url_file)],
+      'button'  => 'Add more data',
+    };
+  }
+  else {
+    $all_nodes{'kv_add'} = {
+      'form' => 1,
+      'title' => 'Add your data',
+      'input_fields'  => [qw(blurb track_name paste_file upload_file url_file)],
+      'button'  => 'Add more data',
+    };
+  }
 
   ## feedback messages
   my %message = (
@@ -307,7 +317,6 @@ sub kv_add {
   
   ## Change text if this node is being used by assemblyconverter
   if ($script eq 'assemblyconverter') {
-    $wizard->redefine_node('kv_add', 'input_fields', [qw(ac_blurb paste_file upload_file url_file)], 1);
     $wizard->redefine_node('kv_datacheck', 'button', 'Upload data');
   } 
                                                                
