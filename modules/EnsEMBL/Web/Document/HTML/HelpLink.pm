@@ -11,7 +11,6 @@ sub new           {
   return shift->SUPER::new(
     'kw'    => undef,
     'label' => 'Help',
-    'URL'   => "/common/helpview" 
   ); 
 }
 sub URL    :lvalue { $_[0]{'URL'};   }
@@ -25,18 +24,19 @@ sub render {
   my $self = shift;
 
   my $help_link;
-    my $extra_HTML = join ";",
+  my $extra_HTML = join ";",
       $self->kw     ? "kw=@{[$self->kw]}" : (),
-      $self->ref    ? "ref=@{[CGI::escape($self->ref)]}" : (),
-      $self->action ? "action=@{[$self->action]}" : ();
-    my $URL = $self->URL.($extra_HTML?"?$extra_HTML":"");
-    if( $self->action ) { ## ALREADY IN HELP FORM!!
-      $help_link = qq(<a href="$URL" class="blue-button">@{[$self->label]}</a>);
-    } else {
-      $help_link = sprintf( q(<a href="javascript:void(window.open('%s','helpview','%s'))" class="blue-button">%s</a>),
-        $URL, HELPVIEW_WIN_ATTRIBS, uc($self->label)
-      );
-    }
+      $self->ref    ? "ref=@{[CGI::escape($self->ref)]}" : ();
+  my $URL;
+  if( $ENV{'SCRIPT_NAME'} =~ /helpview/ ) { ## ALREADY IN HELP FORM!!
+    $URL = '/common/help/contact'.($extra_HTML?"?$extra_HTML":"");
+    $help_link = qq(<a href="$URL" class="blue-button">@{[$self->label]}</a>);
+  } else {
+    $URL = '/common/helpview'.($extra_HTML?"?$extra_HTML":"");
+    $help_link = sprintf( q(<a href="javascript:void(window.open('%s','helpview','%s'))" class="blue-button">%s</a>),
+      $URL, HELPVIEW_WIN_ATTRIBS, uc($self->label)
+    );
+  }
   
   ## Set directories 
   my ($map_link, $blast_dir);
