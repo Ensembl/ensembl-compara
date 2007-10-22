@@ -874,7 +874,7 @@ sub init {
       my $short = "Conservation";
       my $color = "pink4";
       my $available = "constrained_element $id";
-      my $jump_to_alignslice = 0;
+      my $jump_to_alignslice = 1;
 
       push @multimethods, [ $alignments{$id}->{'type'}, $color, $short, $label, $id, $available, $jump_to_alignslice, 'on', 1 ];
   }
