@@ -9,7 +9,7 @@ sub squish { return 1; }
 sub my_label {
  my ($self) = @_;
  my $species = $self->{'config'}->{'species'};
- warn $species; 
+ #warn $species; 
  if ($species =~/Drosophila/ ){ return "FlyReg"; } 
  return "cisRED/miRANDA";
 }
