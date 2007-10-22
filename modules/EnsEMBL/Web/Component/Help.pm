@@ -46,7 +46,7 @@ sub helpview {
   return 1;
 }
 
-sub search {
+sub helpsearch {
     my ( $panel, $object) = @_;
   my $html = qq(
   <h3>Search Tips</h3>
@@ -60,14 +60,16 @@ on the content of the help database. This gives better results than a simple str
 <p>For more about the Ensembl Help Search, please go to the <a href="/common/helpview?kw=helpview">HelpView help page</a>.</p>
 <h3>Search Ensembl Help</h3>
 );
-  $html .= $panel->form('search')->render();
+  $html .= $panel->form('helpsearch')->render();
   
+  $panel->print($html);
+  return 1;
 }
 
-sub search_form {
+sub helpsearch_form {
   my( $panel, $object ) = @_;
 
-  my $form = EnsEMBL::Web::Form->new( 'search', "/common/help/results", 'get' );
+  my $form = EnsEMBL::Web::Form->new( 'helpsearch', "/common/help/results", 'get' );
 
   $form->add_element(
     'type'    => 'String',

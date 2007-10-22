@@ -216,10 +216,7 @@ sub articles {
 
 sub index { 
   my $self = shift;
-  #my $method = 'fetch_index_list';
-  ## Switch to this once modular articles are available
-  #my $method = $self->modular ? 'fetch_article_index' : 'fetch_index_list';
-  #return $self->adaptor->$method('live');
+  return $self->adaptor->fetch_index_list('live');
 }
 
 sub glossary {

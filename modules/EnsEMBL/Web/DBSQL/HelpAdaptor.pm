@@ -145,6 +145,21 @@ sub _sort_scores {
   return \@results;
 }
 
+sub fetch_index_list {
+  my( $self ) = @_;
+  return [] unless $self->handle;
+  my $T = $self->handle->selectall_arrayref(
+    "SELECT a.title, a.keyword, c.name, c.priority
+       FROM article a, category c where a.category_id = c.category_id
+      ORDER by priority, name, title"
+  );
+  return [ map {{
+    'title'    => $_->[0],
+    'keyword'  => $_->[1],
+    'category' => $_->[2]
+  }} @$T ];
+}
+
 sub fetch_glossary {
   my ($self, $status) = @_;
   return [] unless $self->handle;

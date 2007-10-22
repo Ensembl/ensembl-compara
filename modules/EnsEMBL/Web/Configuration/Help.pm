@@ -37,9 +37,9 @@ sub search {
 
   )) {
     $panel->add_components(qw(
-      enter_search_terms          EnsEMBL::Web::Component::Help::enter_search_terms
+      helpsearch          EnsEMBL::Web::Component::Help::helpsearch
     ));
-    $self->add_form( $panel, qw(search     EnsEMBL::Web::Component::Help::search_form) );
+    $self->add_form( $panel, qw(helpsearch     EnsEMBL::Web::Component::Help::helpsearch_form) );
     $self->add_panel( $panel );
   }
 }
@@ -248,9 +248,7 @@ sub context_menu {
 
   $self->{'page'}->menu->add_block( '___', 'bulleted', 'Help with help!' );
   $self->{'page'}->menu->add_entry( '___', 'href' => $object->_help_URL( {'kw'=>'helpview'} ), 'text' => 'General' ) ;
-  $self->{'page'}->menu->add_entry( '___', 'href' => '/common/helpsearch/form', 'text' => 'Full text search' );
-=pod
-  my $object = $self->{object};
+  $self->{'page'}->menu->add_entry( '___', 'href' => '/common/help/search', 'text' => 'Full text search' );
   my $display_length = 34; #no of characters of the title that are to be displayed
   my $focus = $object->param('kw'); # get the current entry
   $focus =~ s/(.*)\#/$1/;
@@ -272,7 +270,6 @@ sub context_menu {
     }
     $self->add_entry( lc($row->{'category'}), %hash );
   }
-=cut
 }
 
 sub helpdesk_menu {
