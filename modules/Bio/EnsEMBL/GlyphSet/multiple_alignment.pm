@@ -196,6 +196,7 @@ sub features {
 
 ## Get the GenomicAlignBlocks
     my $gab_adaptor = $db->get_adaptor("GenomicAlignBlock");
+warn ",,,,,,,", $mlss;
     $genomic_align_blocks = $gab_adaptor->fetch_all_by_MethodLinkSpeciesSet_Slice($mlss, $slice);
   } else {
     return [];
@@ -252,9 +253,11 @@ sub wiggle_plot {
     warn ("Cannot get get adaptors: $wiggle_adaptor");
     return 0;
   }
-  my $method_link_species_set = $db->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID(50004);
+  my $method_link_species_set = $db->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID(50005);
 
+warn "WIGGLE $method_link_species_set , $slice, $display_size";
   my $features = $wiggle_adaptor->fetch_all_by_MethodLinkSpeciesSet_Slice($method_link_species_set, $slice, $display_size) || [];
+  warn ">>>> @$features";
   return 0 unless scalar @$features;
 
   @$features   = sort { $a->score <=> $b->score  } @$features;
