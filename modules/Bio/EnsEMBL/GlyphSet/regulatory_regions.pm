@@ -8,7 +8,8 @@ sub squish { return 1; }
 
 sub my_label {
  my ($self) = @_;
- my $species = $self->{'config'}->{'species'}; 
+ my $species = $self->{'config'}->{'species'};
+ warn $species; 
  if ($species =~/Drosophila/ ){ return "FlyReg"; } 
  return "cisRED/miRANDA";
 }
@@ -53,6 +54,7 @@ sub zmenu {
     my ($self, $f ) = @_;
     my $name = $f->name();
     if (length($name) >24) { $name = "<br />$name"; }
+    my $species = $self->{'config'}->{'species'};
     my $seq_region = $f->slice->seq_region_name;
     my ($start,$end) = $self->slice2sr( $f->start, $f->end );
 
@@ -66,7 +68,13 @@ sub zmenu {
     my $feature_link;
     if ($analysis =~ /cisred/i ) {
       $name =~/\D+(\d+)/;
-      $feature_link = "http://www.cisred.org/human8.2/siteseq?fid=$1";
+      my $i = $name;
+      $i=~s/\D*//;
+      if ($species =~/Homo_sapiens/){
+       $feature_link = "http://www.cisred.org/human9/siteseq?fid=$i";
+      } elsif ($species =~/Mus_musculus/) {
+       $feature_link = "http://www.cisred.org/mouse4/siteseq?fid=$i"; 
+      }       
       $name .= "  [CisRed]";
     }
     elsif ($analysis eq "tiffin") {
@@ -94,7 +102,10 @@ sub zmenu {
       $return->{"03:Associated gene: $stable_id"} = "geneview?gene=$stable_id";
 
       if ($analysis) {
-	my $cisred = $analysis =~/cisred/i ? "http://www.cisred.org/human8/gene_view?ensembl_id=$stable_id" : "";
+       my $link;
+       if ($species=~/Homo_sapiens/){ $link = "http://www.cisred.org/human9/gene_view?ensembl_id=";}
+       elsif ( $species =~/Mus_musculus/) { $link = "http://www.cisred.org/mouse4/gene_view?ensembl_id=";}
+	my $cisred = $analysis =~/cisred/i ? "$link" . "$stable_id" : "";
 	$return->{"04:Analysis: $analysis"} = "$cisred";
       }
     }
