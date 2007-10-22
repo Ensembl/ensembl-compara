@@ -35,7 +35,7 @@ foreach my $species ( keys %configured_servers ) {
 }
 
 my @servers = map { sprintf "ssaha%02d", $_ } (1..16);
-push @servers, map { sprintf "ensarc-1-%02d", $_ } (10..14);
+push @servers, map { sprintf "ensarc-1-%02d", $_ } (10..13);
 
 
 my $ssaha = {};
