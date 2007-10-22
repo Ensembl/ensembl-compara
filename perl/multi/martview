@@ -29,7 +29,7 @@ print qq(
 <div id='content' style='width: 60%; padding: 10px; margin:0px auto; border: solid 1px #000066; background: #fff;'>
 <img src='http://www.biomart.org/martview/images/biomart-logo.gif' width='105' height='33' alt='Biomart'><br /><br />
 <b>Redirecting your request to Biomart</b><br /><br />
-You should be redirected to <a href=') . $biomart_url . qq('>biomart.org</a> shortly.
+You should be redirected to <a href=') . $biomart_url . qq('>BioMart</a> shortly.
 </div>
 </body>
 
