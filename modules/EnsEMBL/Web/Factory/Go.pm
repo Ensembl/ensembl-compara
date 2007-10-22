@@ -49,7 +49,7 @@ sub createObjects {
       }
     } elsif( ($query =~ /^(GO\:\d+)/i) || ($query =~ /^(\d+)$/) ){
       $query = uc( $1 );
-      $terms = $ga->get_terms({'acc'=>$query});
+      $terms = $ga->get_terms({'acc'=>"GO:$query"});
       if( @$terms ) {
         $acc_id = $query;
         $graph   = $ga->get_graph_by_terms( $terms, $limit);
