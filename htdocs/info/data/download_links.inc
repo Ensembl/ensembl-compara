@@ -215,7 +215,7 @@
 <td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_genbank/homo_sapiens/">FTP</a></td>
 <td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_mysql/homo_sapiens/">FTP</a></td>
 <td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_gtf/homo_sapiens/">FTP</a></td>
-<td>-</td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_emf/">FTP</a></td>
 </tr>
 	    
 <tr>
@@ -263,7 +263,7 @@
 <td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_genbank/mus_musculus/">FTP</a></td>
 <td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_mysql/mus_musculus/">FTP</a></td>
 <td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_gtf/mus_musculus/">FTP</a></td>
-<td>-</td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_emf/">FTP</a></td>
 </tr>
 	    
 <tr>
@@ -347,7 +347,7 @@
 <td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_genbank/rattus_norvegicus/">FTP</a></td>
 <td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_mysql/rattus_norvegicus/">FTP</a></td>
 <td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_gtf/rattus_norvegicus/">FTP</a></td>
-<td>-</td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_emf/">FTP</a></td>
 </tr>
 	    
 <tr>
@@ -443,7 +443,7 @@
 <td>-</td>
 <td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_mysql/multi_species/">FTP</a></td>
 <td>-</td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_emf/multi_species/variation/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_emf/">FTP</a></td>
 </tr>
 <tr>
 <td><strong>Ensembl Mart</strong></td>
