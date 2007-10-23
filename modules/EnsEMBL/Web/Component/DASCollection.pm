@@ -250,7 +250,9 @@ sub das_wizard {
   }
 
   return if (defined($object->param('_das_submit')));
-
+  if (my $error = $object->param('_error_das_url')) {
+     return;
+  }
   my %source_conf = ();        
   my $step;
 
