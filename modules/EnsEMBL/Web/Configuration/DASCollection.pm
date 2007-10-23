@@ -71,7 +71,10 @@ sub display_wizard_status {
       $das_adapt = $das_obj->adaptor;
       last if ($das_adapt->name eq $src);
     } 
-#    warn(Dumper($das_adapt));
+    if ($src ne $das_adapt->name) {
+        $object->param("_error_das_url", "ERROR: Can not find $src!" );
+    	return "ERROR: Can not find $src!";
+    }
     foreach my $key (@confkeys) {
       my $hkey ="DAS${key}";
       $object->param( "$hkey", $das_adapt->$key);
