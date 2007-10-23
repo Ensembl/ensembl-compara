@@ -352,7 +352,7 @@ sub createObjects {
         }
         $das_data->{active} = 1; # Enable by default
     # Add to the conf list
-        $das_data->{name} = $das_name;
+        $das_data->{id} = $das_data->{name} if ($das_data->{name} ne $das_name);
         $das_data->{label} ||= $das_data->{name};
         $das_data->{caption} ||= $das_data->{name};
         @{$das_data->{enable}} = $self->param('DASenable');
@@ -419,7 +419,7 @@ sub createObjects {
       -help       => $source_conf->{help}    || '',
       -mapping    => $source_conf->{mapping}    || [],
       -fasta      => $source_conf->{fasta} || [],
-      -assembly	  => $source_conf->{assembly} || '',
+      -assembly_version	  => $source_conf->{assembly} || '',
     );        
     if ($das_adapt) {
       $das_adapt->ensembldb( $self->DBConnection('core') );
