@@ -50,7 +50,7 @@ sub process {
   }
   elsif ($total == 1) {
     my $article = $results[0];
-    $webpage->redirect('/common/helpview?id='.$article->id.';hilite='.$object->param('hilite'));
+    $webpage->redirect("/@{[$object->species]}/helpview?id=".$article->id.';hilite='.$object->param('hilite'));
   }
   else {
     $webpage->configure( $object, 'results', 'context_menu' );
