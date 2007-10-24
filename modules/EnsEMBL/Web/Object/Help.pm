@@ -30,13 +30,14 @@ sub send_email {
   $email =~ s/''/'/g;
   my $server = $self->species_defs->ENSEMBL_SERVERNAME;
   my $url = CGI::unescape($self->param('ref'));
-  push @mail_attributes,
+  push @mail_attributes, (
     [ 'Date',         $date ],
     [ 'Name',         $self->param('name') ],
     [ 'Email',        $email ],
     [ 'Referrer',     $url ],
     [ 'Last Keyword', $self->param('kw')||'-none-' ],
     [ 'User agent',   $ENV{'HTTP_USER_AGENT'}],
+  );
   my $comments = $self->param('comments');
 ## HACK OUT BLOG SPAM!
   my $recipient = $self->species_defs->ENSEMBL_HELPDESK_EMAIL;
