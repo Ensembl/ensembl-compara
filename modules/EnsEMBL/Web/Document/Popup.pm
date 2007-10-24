@@ -33,11 +33,13 @@ sub _initialize_HTML {
     html_end   EnsEMBL::Web::Document::HTML::HTML_Block
   );
   $self->call_child_functions( 'common_page_elements' );
+
   $self->_common_HTML;
   $self->_script_HTML;
   $self->helplink->kw = $ENV{'ENSEMBL_SCRIPT'}.';se=1';
   $self->rss->add( '/common/rss.xml', 'Ensembl website news feed', 'rss' );
   $self->javascript->add_source('/js/prototype.js');
+  $self->call_child_functions( 'extra_configuration' );
 }
 
 1;
