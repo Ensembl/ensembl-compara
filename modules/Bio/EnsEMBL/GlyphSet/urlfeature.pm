@@ -28,6 +28,7 @@ sub features {
     sort { $a->[0] <=> $b->[0] }
     map { [ $_->start, $_ ] }
     map { $_->map( $self->{'container'} ) } @{ $self->{'extras'}{'data'} };
+
   return $self->{extras}->{_features} = \@data;
 }
 
@@ -50,8 +51,9 @@ sub zmenu {
 	};
   $h->{ 'details...'} = $T  if ($T);
   if ($f) {
-  	my $score = $f->score;
-	$h->{"SCORE:$score"} = '';
+    if (defined (my $score = $f->{score})) {
+      $h->{"SCORE:$score"} = '';
+     }
   }
 
   return $h;

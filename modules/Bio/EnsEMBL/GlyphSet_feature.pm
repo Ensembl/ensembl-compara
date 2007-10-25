@@ -369,7 +369,6 @@ sub _init {
   my ($self) = @_;
   my $type = $self->check();
   return unless defined $type;  ## No defined type arghhh!!
-
   my $strand = $self->strand;
   my $Config = $self->{'config'};
   my $strand_flag    = $Config->get($type, 'str');
@@ -443,13 +442,13 @@ sub expanded_init {
   my $dep            = $Config->get(  $type, 'dep' );
   my $h              = $Config->get('_settings','opt_halfheight') ? 4 : 8;
   if( $self->{'extras'} && $self->{'extras'}{'height'} ) {
-    warn
     $h = $self->{'extras'}{'height'};
   }
 
   my ($T,$C1,$C) = (0, 0, 0 );
 
 ## Get array of features and push them into the id hash...
+if (0) {
   foreach my $features ( grep { ref($_) eq 'ARRAY' } $self->features ) {
     foreach my $f ( @$features ){
       my $hstrand  = 1; #$f->can('hstrand')  ? $f->hstrand : 1;
@@ -458,21 +457,28 @@ sub expanded_init {
       push @{$id{$fgroup_name}}, [$f->start,$f->end,$f];
     }
   }
-
-## Now go through each feature in turn, drawing them
+  }
+  foreach my $f ( @{$self->features||[]} ){
+    my $hstrand  = 1; #$f->can('hstrand')  ? $f->hstrand : 1;
+    my $fgroup_name = $self->feature_group( $f );
+    next if $strand_flag eq 'b' && $strand != ( $hstrand*$f->strand || -1 ) || $f->end < 1 || $f->start > $length ;
+    push @{$id{$fgroup_name}}, [$f->start,$f->end,$f];
+  }
+				  
+# Now go through each feature in turn, drawing them
   my $y_pos;
   my $n_bumped = 0;
   my $regexp = $pix_per_bp > 0.1 ? '\dI' : ( $pix_per_bp > 0.01 ? '\d\dI' : '\d\d\dI' );
   foreach my $i (keys %id){
     $T+=@{$id{$i}}; ## Diagnostic report....
     my @F = sort { $a->[0] <=> $b->[0] } @{$id{$i}};
-    my $START = $F[0][0] < 1 ? 1 : $F[0][0];
+my $START = $F[0][0] < 1 ? 1 : $F[0][0];
     my $END   = $F[-1][1] > $length ? $length : $F[-1][1];
     my $bump_start = int($START * $pix_per_bp) - 1;
        $bump_start = 0 if $bump_start < 0;
     my $bump_end   = int($END * $pix_per_bp);
        $bump_end   = $bitmap_length if $bump_end > $bitmap_length;
-warn "$i::: $START, $END, $bump_start, $bump_end, $bitmap_length, $dep ";
+#warn "$i::: $START, $END, $bump_start, $bump_end, $bitmap_length, $dep ";
     my $row = & Sanger::Graphics::Bump::bump_row( $bump_start, $bump_end, $bitmap_length, \@bitmap, $dep );
     if( $row > $dep ) {
       $n_bumped++;
@@ -486,7 +492,7 @@ warn "$i::: $START, $END, $bump_start, $bump_end, $bitmap_length, $dep ";
       'width' => 0,
       'y'     => 0,
       'title' => $i,
-      'zmenu'    => $self->zmenu( $i, $id{$i} ),
+      'zmenu'    => $self->zmenu( $i), 
     });
     my $X = -1000000;
     #my ($feature_colour, $label_colour, $part_to_colour) = $self->colour( $F[0][2]->display_id );
