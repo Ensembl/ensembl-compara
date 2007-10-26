@@ -221,6 +221,7 @@ sub template_SCRIPT {
     EnsEMBL::Web::Root->dynamic_use($include);
     $content = $include->render();
   };
+  if( $@ ){ warn( "Cannot dynamic_use $include: $@" ) } 
   return "$content";
 }
 
