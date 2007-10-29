@@ -79,7 +79,9 @@ sub init_label {
 #warn join ' * ', $min_score, $max_score; 
 
     $zmenu->{"04:Region has features in the range $min_value..$max_value"} = '' if (defined $min_value);
-    if ($Extras->{'autoScale'} eq 'on') {
+# At the moment the features outside of the specified range are set to the maximum / minimum values
+# The plan is to introduce an option not to display those features at all 
+    if (1 || ($Extras->{'autoScale'} eq 'on')) { 
 	$zmenu->{"05:Scores are scaled to the range $min_score .. $max_score"} = '';
     } else {
 	$zmenu->{"05:Displaying features with scores in the range $min_score .. $max_score"} = '';
