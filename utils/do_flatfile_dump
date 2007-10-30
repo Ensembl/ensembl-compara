@@ -37,6 +37,7 @@ my $nobundle;
 my $readme_only;
 my ($help, $info, $email);
 
+utils::Tool::info(1, "$0 @ARGV");
 &GetOptions( 'maxsize:s'    => \$MAX_SIZE,
              'format:s'	    => \@user_formats,
              'species:s'    => \@species,
@@ -198,7 +199,7 @@ sub setup_directories {
 
     # Make dumpdir
     my $spp_dir = join "_", (lc ($spp), $sitedefs_release, $sp_release);
-    my $spp_dumpdir = "$dumpdir/$spp_dir/data/flatfiles/$format";
+    my $spp_dumpdir = "$dumpdir/$format/$spp_dir";
     unless (-d "$spp_dumpdir"){
       system("mkdir -p $spp_dumpdir") ==0 or die "Can't create dir $!";
     }
@@ -327,13 +328,13 @@ sub chunk_seq_region {
 
   # Make sure the end is not more than the seqeunce end.
   # This can happen because the blocks are set at gene end +1000
-
-  my ($final_start, $final_end) = @{pop(@$blocklist)};
-  if($final_end > $seq_end){
-    $final_end = $seq_end;
+  if (@$blocklist) {
+    my ($final_start, $final_end) = @{pop(@$blocklist)};
+    if($final_end > $seq_end){
+      $final_end = $seq_end;
+    }
+    push (@$blocklist, [$final_start, $final_end] );
   }
-  push (@$blocklist, [$final_start, $final_end] );
-
 
 
   # We need a stop block at the end to ensure algorithm gets
@@ -433,11 +434,11 @@ sub ftp_bundle{
 
   unless (-d "$spp_dumpdir/FTP"){
     system("mkdir $spp_dumpdir/FTP");
-#    utils::Tool::info (1, "Made dir $spp_dumpdir/FTP");
+   # warn "mkdir $spp_dumpdir/FTP - $!";
+    #utils::Tool::info (1, "Made dir $spp_dumpdir/FTP");
   }
-
   $gz = gzopen("$spp_dumpdir/FTP/$spp.".($batch*$CHUNK).".dat.gz","wb") || die $!;
-
+  
 
   # If species has chr, use sorter
   if (keys %$chr_sorter) {
