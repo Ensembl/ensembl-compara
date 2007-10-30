@@ -1,0 +1,84 @@
+<html>
+<head>
+<meta name="author" content="webteam" />
+<meta name="navigation" content="Documentation" />
+<title>Microarray Probeset Mapping</title>
+</head>
+
+<body>
+
+<h2>Microarray Probeset Mapping</h2>
+
+<p>
+Ensembl aims to associate micro array probe set identifiers to Ensembl transcript models in a two-step procedure.
+</p>
+
+<h3 class="boxed" id="GenomeSequenceMapping">Genome Sequence Mapping</h3>
+
+<p>
+In the first step individual probes (oligonucleotides) are mapped to the genome sequence. 
+The Ensembl analysis and annotation pipeline uses the
+<a href="http://www.ebi.ac.uk/~guy/exonerate/">exonerate</a> sequence comparison and alignment tool 
+(<a href="#BMC_Bioinformatics_6_31">Slater et al., 2005</a>) and tolerates only 1 bp mismatch between the probe and the genome sequence assembly.
+Probes that hit to more than 100 locations, e.g. suspected Alu repeats, are discarded. 
+Individual probes are grouped into probe sets and we require that more than half of the probes of a probe set hit the genome sequence.
+The probe set size is thereby dynamically calculated as the median of all probe matches from all probe sets on a particular microarray. 
+</p>
+
+<p>
+Ensembl 
+'<a href="javascript:void(window.open('/perl/helpview?se=1;kw=contigview','helpview','width=700,height=550,resizable,scrollbars'))">ContigView</a>' displays individual probes that match to the current assembly. 
+If not displayed by default, microarray probe set tracks are available from the 'Features' menu in the yellow menu bar of the 
+'<a href="javascript:void(window.open('/perl/helpview?se=1;kw=contigview#DetailedView','helpview','width=700,height=550,resizable,scrollbars'))">Detailed View</a>' panel. 
+Pointing at a particular probe in a probe set track displays a pop-up window, which reports the 'Probe length', the 'Match length', as well as the 'Match status'. 
+</p>
+
+<p>
+'Match status' 'Full match' reports a perfect match, while 'Mismatch' indicates a single base pair mismatch between the probe set and the genome sequence assembly. 
+Probes with more than 1 bp mismatch, as well as probes spanning exon-intron boundaries are not placed and not reported. 
+Please note that all sequences on Ensembl 
+'<a href="javascript:void(window.open('/perl/helpview?se=1;kw=fastaview','helpview','width=700,height=550,resizable,scrollbars'))">FastaView</a>' pages, which are available following the 'Details...', links in the pop-up windows or directly clicking onto probes in the corresponding track, are genome sequences but not probe sequences. 
+While 'Probe length' directly indicates the oligonucleotide length, a combination of 'Match length' and 'Match status' allows conclusions about the location of the mismatch. 
+If 'Match status' is 'Mismatch' and 'Probe length' equals 'Match length' the mismatch is within the probe sequence. 
+If 'Match length' is one bp smaller than 'Probe length', the mismatch occurred at an end position. 
+</p>
+
+<h3 class="boxed" id="EnsemblTranscriptMapping">Ensembl Transcript Mapping</h3>
+
+<p>
+In the subsequent second step, we aim to associate microarray probe sets with Ensembl transcript predictions (ENST...). 
+For successful transcript mapping, at least 50% of the probes in a probe set need to match the underlying transcript cDNA sequence extended by a 2 kb window following the most 3' exon. 
+The probe set size is taken from the individual microarray specifications rather than being dynamically calculated. A 3' extension of transcript sequences is required as Ensembl predicts all its transcript models strongly on the basis of experimental evidence. 
+Since there is currently no guarantee that UTR regions in 
+<a href="http://www.ncbi.nlm.nih.gov/RefSeq/" target="external">RefSeq</a> or 
+<a href="http://www.ebi.ac.uk/embl/" target="external">EMBL</a> mRNA records are complete there is also no guarantee that Ensembl predicted a full-length 3' UTR. 
+Microarray probes however tend to be designed against 3' UTR regions, mostly on the basis of EST evidence from 
+<a href="http://www.ncbi.nlm.nih.gov/" target="external">NCBI</a> 
+<a href="http://www.ncbi.nlm.nih.gov/entrez/query.fcgi?db=unigene" target="external">UniGene</a>. 
+Since for most species in Ensembl, EST evidence is not directly exploited for Ensembl gene builds (ENSG..., ENST...), a 2 kb extension appears as a sensible means to successfully map microarray probe sets to Ensembl transcripts. 
+</p>
+
+
+<h3 class="boxed" id="References">References</h3>
+
+<ul>
+
+<li id="BMC_Bioinformatics_6_31">
+<p>
+Guy St. C. Slater and
+Ewan Birney
+<br />
+<b>Automated generation of heuristics for biological sequence comparison.</b>
+<br />
+BMC Bioinformatics. 2005 Feb 15;6(1):31
+<br />
+<a href="http://dx.doi.org/10.1186/1471-2105-6-31" target="external">doi:10.1186/1471-2105-6-31</a>
+</p>
+</li>
+
+</ul>
+
+
+
+</body>
+</html>
