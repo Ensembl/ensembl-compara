@@ -1,0 +1,154 @@
+## euf_version 2
+## coordinate_system ensembl_location_chromosome
+
+
+[annotations]
+AL137655.1.1	homologyA	wutblastn	13	31787660	31787740	+	.	373.0000	group=Similarity1;feature_label=AL137655;method_label=ensembl;type_label=Type A;type_category=Category A;note=First note;note=Second note;link=www.ensembl.org;link=Read more:"http://www.ensembl.org";target=Target A\:Chromosome:13:1:1000;target=Target B\:Supercontig:NT_18987:1:1000;
+BC006361.1.1	homologyB	wutblastn	13	31787660	31787740	+	.	384.0000	group=Similarity1;group=Similarity2
+Hs.326048.1	homologyH	wutblastn	13	31787660	31787740	+	.	373.0000	group=Similarity2
+AL137655.1.2	homologyA	wutblastn	13	31788406	31788934	+	.	373.0000	group=Similarity1
+AK024248.1.2	homologyA	wutblastn	13	31788406	31788934	+	.	373.0000	group=Similarity1
+BC006361.1.2	homologyB	wutblastn	13	31788406	31788934	+	.	384.0000	group=Similarity1;group=Similarity2
+AL137733.1.2	homologyA	wutblastn	13	31788406	31788934	+	.	384.0000	group=Similarity1
+Hs.326048.2	homologyH	wutblastn	13	31788406	31788934	+	.	373.0000	group=Similarity2
+
+[groups]
+Similarity1	label=Similarity Type A;type=Similarity;note=Group Note 1;note=Group Note 2;link=Read more:"http://www.sanger.ac.uk/myproject/groupid=1";link=www.ensembl.org;target=Target 1:13:1:10;target=Target 2:14:1:10
+
+Similarity2	label=Similarity Type H;note=note1;note=note2;note=note3;link=Read more:"http://www.sanger.ac.uk/myproject/groupid=Similarity2"
+
+[stylesheet]
+<?xml version="1.0" standalone="no"?>
+<!DOCTYPE DASSTYLE SYSTEM "http://www.biodas.org/dtd/dasstyle.dtd">
+<DASSTYLE>
+<STYLESHEET version="1.0">
+  <CATEGORY id="default">
+    <TYPE id="default">
+    <GLYPH>
+      <BOX>
+        <HEIGHT>4</HEIGHT>
+        <FGCOLOR>black</FGCOLOR> 
+        <BGCOLOR>red</BGCOLOR>
+      </BOX>
+        </GLYPH>
+    </TYPE>
+    <TYPE id="homologyA">
+        <GLYPH>
+           <ANCHORED_ARROW>
+	      <HEIGHT>25</HEIGHT>
+              <BGCOLOR>darkgreen</BGCOLOR>
+              <FGCOLOR>black</FGCOLOR>
+	      <NO_ANCHOR>1</NO_ANCHOR>
+              <BUMP>0</BUMP>
+              <FONT>sanserif</FONT>
+           </ANCHORED_ARROW>
+        </GLYPH>
+     </TYPE>
+    <TYPE id="homologyB">
+        <GLYPH>
+           <ANCHORED_ARROW>
+	      <HEIGHT>25</HEIGHT>
+              <BGCOLOR>palegreen4</BGCOLOR>
+              <FGCOLOR>black</FGCOLOR>
+	      <NO_ANCHOR>1</NO_ANCHOR>
+              <BUMP>0</BUMP>
+              <FONT>sanserif</FONT>
+           </ANCHORED_ARROW>
+        </GLYPH>
+     </TYPE>
+    <TYPE id="homologyH">
+        <GLYPH>
+           <ANCHORED_ARROW>
+	      <HEIGHT>25</HEIGHT>
+              <BGCOLOR>red</BGCOLOR>
+              <FGCOLOR>black</FGCOLOR>
+	      <NO_ANCHOR>1</NO_ANCHOR>
+              <BUMP>0</BUMP>
+              <FONT>sanserif</FONT>
+           </ANCHORED_ARROW>
+        </GLYPH>
+     </TYPE>
+   </CATEGORY>
+   <CATEGORY id="Similarity1">
+     <TYPE id="homology">
+        <GLYPH>
+           <ANCHORED_ARROW>
+	      <HEIGHT>20</HEIGHT>
+              <BGCOLOR>palegreen4</BGCOLOR>
+              <FGCOLOR>black</FGCOLOR>
+	      <NO_ANCHOR>1</NO_ANCHOR>
+              <BUMP>0</BUMP>
+              <FONT>sanserif</FONT>
+           </ANCHORED_ARROW>
+        </GLYPH>
+     </TYPE>
+   </CATEGORY>
+   <CATEGORY id="group">
+     <TYPE id="Similarity1">
+       <GLYPH>
+         <LINE>
+           <FGCOLOR>black</FGCOLOR>
+           <LINE_STYLE>hat</LINE_STYLE>
+         </LINE>
+       </GLYPH>
+     </TYPE>
+     <TYPE id="Similarity2">
+        <GLYPH>
+         <LINE>
+         <FGCOLOR>red</FGCOLOR>
+         <LINE_STYLE>hat</LINE_STYLE>
+      </LINE>
+        </GLYPH>
+      </TYPE>
+    </CATEGORY>
+</STYLESHEET>
+</DASSTYLE>
+
+[meta]
+<?xml version="1.0" standalone="yes"?>
+<!DOCTYPE DASMETA SYSTEM "http://www.ensembl.org/dtd/dasmeta.dtd">
+<DASMETA>
+<coordinate_system name="ensembl_location_chromosome" />
+
+<assembly>NCBI36</assembly>
+
+<capability>features</capability>
+
+<contact name="A.Jones" email="jones@sanger.ac.uk" />
+<contact name="A.Brown" email="brown@sanger.ac.uk" />
+
+<species name="Homo sapiens" />
+<species name="Mus musculus" />
+
+<example_query>features?segment=13:31787617,31871806</example_query>
+
+<last_updated>2005-May-03</last_updated>
+
+<description> Uploaded test source </description>
+
+<das_client_settings id="ensembl">
+  <source_name>Testing</source_name>
+  <group>no</group>
+  <color>red</color>
+  <depth>100</depth>
+  <strand>both</strand>
+  <stylesheet>yes</stylesheet>
+  <label_display>under</label_display>
+  <score>no</score>
+  <help>http://www.ebi.ac.uk/atd</help>
+  <feature_link>
+     <text>More ...</text>
+     <url>http://www1.imim.es/cgi-bin/das/das_genes_SGP_human.cgi?SGP=###ID###</url>
+  </feature_link>
+  <enable view="contigview" />
+  <enable view="geneview" />
+  <enable view="protview" />
+</das_client_setting> 
+
+<das_client_settings id="das_registry">
+  <nickname>myDasSource</nickname>
+  <label>Ensembl</label>
+  <label>BioSapiens</label>
+</das_client_setting>
+
+</DASMETA>

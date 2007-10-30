@@ -1,0 +1,111 @@
+<!-- $Id$ -->
+
+<html>
+<head>
+<meta name="author" content="DAS:AndreasKahari" />
+<meta name="navigation" content="DAS" />
+<title>Distributed Annotation System (DAS)</title>
+</head>
+
+<body>
+
+<h2>DAS</h2>
+
+<h3 class="boxed">The Distributed Annotation System (DAS)</h3>
+
+<p>DAS is a specification of a protocol for requesting and
+returning annotation data for genomic regions.
+
+DAS allows sequence annotation to be stored in a
+decentralised manner, by multiple third-party annotators, and
+integrated on an as-needed basis by client-side software.</p>
+
+<p>A single DAS server is designated as either an <em>annotation
+server</em> or as the <em>reference server</em>.  The reference
+server provides essential structural information about the
+genome: the physical map which relates one <em>entry point</em>
+to another (where an "entry point" is an arbitrary segment of
+the sequence, such as a sequenced BAC, a contig, or a whole
+assembled chromosome), the DNA sequence for each entry point,
+and some standard authorship information.
+
+Using either a freestanding application or a web site,
+such as Ensembl, that acts like a DAS client, researchers can
+interrogate one or more annotation servers to retrieve features
+in a region of interest.  The servers return the results using a
+standard data format, allowing the sequence browser to integrate
+the annotations and display them in graphical or tabular form.
+No attempt is made to automatically resolve contradictions
+between different third-party annotations.  Indeed, the ability
+to make comparisons between annotations from different centres
+is one of the main uses for DAS.</p>
+
+<p>A DAS request consists of a specially formatted URL in a
+simple HTTP request (as used by any web browser), and all DAS
+data are returned in an XML document.  The XML document format
+which is used is derived from GFF.</p>
+
+<p>The Ensembl project have extended the use of the DAS
+specification to not only cover genomic annotations,
+but to also allow for proteomic annotations and the
+annotation of non-positional features.  See the text on <a
+href="./ensembl_das.html">DAS in Ensembl</a> for more info about
+this.</p>
+
+<h3 class="boxed">DAS Resources</h3>
+
+<ul>
+
+<li>
+Information on how you may <a href="das_server.html">set up your
+own DAS server</a>.
+</li>
+
+<li>
+More in-depth information about the DAS protocol,
+including the full specification and future
+developments of it, is available from the <a
+href="http://www.biodas.org/">http://www.biodas.org/</a> site.
+This site also contains information about client libraries, for
+people wishing to implement their own DAS clients.
+</li>
+
+<li>
+There is a low volume mailing list for technical DAS discussions
+(not Ensembl specific).  For information about this list see <a
+href="../../../about/contact.html#DAS">DAS mailing list</a>.
+</li>
+
+</ul>
+
+<h3 class="boxed">DAS in Ensembl</h3>
+
+<ul>
+
+<li>
+Learn about <a href="./ensembl_das.html">how Ensembl makes use of
+DAS</a>.
+</li>
+
+<li>
+The
+<a href="javascript:void(window.open('/default/helpview?kw=dasconfview;se=1','helpview','width=700,height=550,resizable,scrollbars'))" target="_top">help page</a>
+for DASConfView describes how to upload data into a DAS server running on the
+Ensembl site.
+</li>
+
+
+<li>
+The sample file with 10 features and a simple stylesheet may be found
+<a href="./das_upload_v1.euf">here</a>.
+</li>
+
+</ul>
+
+<p>The Distributed Annotation System was originally developed
+by Lincoln D. Stein, Sean Eddy and Robin Dowell in 2000.
+The DAS home page is at <a href="http://www.biodas.org/"
+target="_top">http://www.biodas.org/</a>.</p>
+
+</body>
+</html>

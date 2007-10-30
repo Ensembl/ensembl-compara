@@ -1,0 +1,144 @@
+<!-- $Id$ -->
+
+<html>
+<head>
+<meta name="author" content="DAS:AndreasKahari" />
+<meta name="navigation" content="DAS servers" />
+<title>DAS servers</title>
+</head>
+
+<body>
+
+<h2>Servers</h2>
+
+
+<h3 class="boxed">Setting up and running DAS Servers</h3>
+
+<p>Setting up your own DAS server is straightforward and is ideal
+for viewing large sets of data or annotations from your own site
+in Ensembl or elsewhere.
+
+DAS is an excellent collaboration tool, allowing you to
+quickly and easily share data with other research labs.</p>
+
+
+<h3 class="boxed">DAS Server Implementations</h3>
+
+<p>Depending on the amount and type of data you have, 
+there are different ways to run an annotation server to add
+features to the Ensembl data or to other DAS client
+implementations.  They vary in what programming language 
+and web services your site needs to support.</p>
+
+<h4>Dazzle</h4>
+
+<p><a href="http://www.derkholm.net/thomas/dazzle/">Dazzle</a> is a
+Java based DAS server developed by Thomas Down at the 
+<a href="http://www.sanger.ac.uk/">Wellcome
+Trust Sanger Institute</a>.  It is an advanced and stable server
+solution which runs as a servlet within either the Tomcat or
+Resin servlet containers.  Both the Ensembl reference server and
+the UniProt reference server are running Dazzle.
+Dazzle is a good choice if you already are familiar with
+e.g. Tomcat and/or Java.</p>
+
+<p>The <a href="http://www.derkholm.net/thomas/dazzle/">Dazzle home
+page</a> contains a deployment guide for the server and also a
+description of how to set up a mirror of the Ensembl reference
+server.
+</p>
+
+
+<h4>ProServer</h4>
+
+<p><a href="http://www.sanger.ac.uk/proserver/">ProServer</a>
+is a Perl based DAS server developed by Roger Pettett at the
+<a href="http://www.sanger.ac.uk/">Wellcome Trust Sanger Institute</a>.  
+Its strength is that it is
+extremely light weight and modular.  It does not require any
+pre-existing web server installation and it may be adapted to
+serve DAS features from virtually any underlying data store.</p>
+
+<p>ProServer is the server implementation that we recommend 
+people try first, especially if they have Perl
+programming skills in-house.</p>
+
+<p>There are a number of documents describing how to set up
+ProServer:</p>
+
+<ul>
+<li>
+The <cite>ProServer installation guide</cite> <a
+href="./proserver-guide.pdf">[pdf]</a> describes how to install,
+configure and adapt ProServer.
+</li>
+<li>
+<cite>Setting up the ProServer DAS server, a tutorial</cite>
+<a href="./proserver_installation.pdf">[pdf]</a> is a tutorial
+describing how to make ProServer work with an in-house version
+of Ensembl at your site.  The tutorial mentions a number of
+additional files that may be found here:
+<ul>
+<li><a href="./demo.ini">demo.ini</a></li>
+<li><a href="./demo.pm">demo.pm</a></li>
+<li><a href="./Homo_sapiens.ini">Homo_sapiens.ini</a></li>
+</ul>
+</li>
+<!-- The document referred to below is not found on the linked page...
+<li>
+The <a href="http://www.sanger.ac.uk/proserver/">ProServer home
+page</a> also contains a document describing the server.
+</li>
+-->
+</ul>
+
+<!--    Commented out Diplo.  The Net::Daemon module that it is built on
+        top of makes it very hard to track down bugs (it closes stderr
+        somehow).  I will reimplement it on top of Net::Server at some
+        point. /ak
+<h4>
+  Diplo
+</h4>
+<p>
+  Diplo, by Andreas K&auml;h&auml;ri at the <a href=
+  "http://www.ebi.ac.uk/">The European Bioinformatics Institute</a>, is
+  a DAS server in the same style as ProServer, i.e. it is a Perl-based
+  DAS server which aims at being light-weight and modular and does not
+  depend on any pre-existing web server installation.  The feature list
+  of this implementation includes the following:
+</p>
+<ul>
+  <li>Streaming of result data.</li>
+  <li>Plugins &amp; plugouts.</li>
+  <li>Basic access restriction.</li>
+  <li>Multi-sources.</li>
+  <li>Source aliases.</li>
+</ul>
+<p>
+  The <a href="http://www.ebi.ac.uk/~ak/diplo/">Diplo home page</a>
+  contains an up-to-date list of features, the latest snapshot releases,
+  and documentation.
+</p>
+-->
+
+<h4>LDAS</h4>
+
+<p>The <a href="http://www.biodas.org/servers/">Lightweight
+DAS server</a> (LDAS) was the first widely available DAS server
+solution.  It was written in Perl by 
+<a href="http://stein.cshl.org/">Lincoln Stein</a>, 
+<a href="http://www.cshl.edu/">Cold Spring Harbor Laboratory</a> (CSHL).  
+It relies on a separate
+MySQL database for storing all annotation features.</p>
+
+<ul>
+<li>
+<cite>Setting up a Lightweight DAS server</cite> <a
+href="./LDAS_setup.pdf">[pdf]</a> describes how to install LDAS
+and its prerequisites.  Further information is available from the
+<a href="http://www.biodas.org/servers/">LDAS home page</a>.
+</li>
+</ul>
+
+</body>
+</html>
