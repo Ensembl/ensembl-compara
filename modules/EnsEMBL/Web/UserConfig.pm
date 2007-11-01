@@ -853,6 +853,7 @@ sub ADD_ALL_DNA_FEATURES {
   $self->add_new_track_cdna( 'human_cdna', 'Human cDNAs',   $POS++, @_ );
   $self->add_new_track_cdna( 'chimp_cdna', 'Chimp cDNAs',     $POS++, @_ );
   $self->add_new_track_cdna( 'horse_cdna',    'Horse cDNAs',      $POS++, @_ );
+  $self->add_new_track_cdna( 'orangutan_cdna',    'Orangutan cDNAs',      $POS++, @_ );
   $self->add_new_track_cdna( 'lamprey_cdna', 'Lamprey cDNAs', $POS++, @_ );
   $self->add_new_track_cdna( 'pig_cdna',    'Pig cDNAs',      $POS++, @_ );
   $self->add_new_track_cdna( 'dog_cdna',   'Dog cDNAs',     $POS++, @_ );
@@ -948,6 +949,7 @@ sub ADD_ALL_EST_FEATURES {
   $self->add_new_track_est( 'human_est',    'Human ESTs',      $POS++, @_ );
   $self->add_new_track_est( 'medaka_est',    'Medaka ESTs',    $POS++, @_ );
   $self->add_new_track_est( 'horse_est',    'Horse ESTs',      $POS++, @_ );
+  $self->add_new_track_est( 'orangutan_est',    'Orangutan ESTs',      $POS++, @_ );
   $self->add_new_track_est( 'pig_est',    'Pig ESTs',      $POS++, @_ );
   $self->add_new_track_est( 'platypus_ests', 'Platypus ESTs',   $POS++, @_ );
 
@@ -1111,6 +1113,7 @@ sub ADD_ALL_PROTEIN_FEATURES {
   $self->add_new_track_protein( 'aedes_protein',       'Aedes proteins', $POS++, @_ );
   $self->add_new_track_protein( 'cow_protein',         'Cow proteins', $POS++, @_ );
   $self->add_new_track_protein( 'horse_protein',    'Horse proteins',      $POS++, @_ );
+  $self->add_new_track_protein( 'orangutan_protein',    'Orangutan proteins',      $POS++, @_ );
   $self->add_new_track_protein( 'medaka_protein',      'Medaka proteins', $POS++, @_ );
   $self->add_new_track_protein( 'fugu_protein',        'Fugu proteins', $POS++, @_ );
   $self->add_new_track_protein( 'fish_protein',        'Fish proteins', $POS++, @_ );
@@ -1242,6 +1245,7 @@ sub ADD_ALL_TRANSCRIPTS {
   $self->add_new_track_transcript( 'dog_protein',   'Dog genes',   'dog_protein',   $POS++, @_ );
   $self->add_new_track_transcript( 'species_protein', 'Dog protein',       'prot_gene', $POS++,  @_ );
   $self->add_new_track_transcript( 'horse_protein', 'Horse protein', 'horse_protein', $POS++,  @_ );
+  $self->add_new_track_transcript( 'orangutan_protein', 'Orangutan protein', 'orangutan_protein', $POS++,  @_ );
   $self->add_new_track_transcript( 'human_one2one_mus_orth', 'Hs/Mm orth', 'prot_gene', $POS++,  @_ );
   $self->add_new_track_transcript( 'human_one2one_mouse_cow_orth', 'Hs/Mm orth', 'prot_gene', $POS++,  @_ );
   $self->add_new_track_transcript( 'human_ensembl_proteins',   'Human genes',   'human_ensembl_proteins_gene',   $POS++, @_ );
@@ -1437,15 +1441,14 @@ sub ADD_GENE_TRACKS {
     'gene_label'           => sub { return $_[0]->stable_id },
     'gene_col'             => 'horse_protein' , @_
   );
+  $self->add_new_track_gene( 'orangutan_protein', 'Orangutan proteins', 'orangutan_protein', $POS++,
+    'gene_label'           => sub { return $_[0]->stable_id },
+    'gene_col'             => 'orangutan_protein' , @_
+  );
   $self->add_new_track_gene( 'oxford_genes', 'Oxford Genes', 'oxford_genes', $POS++,
     'gene_label'           => sub { return $_[0]->stable_id },
     'gene_col'             => 'oxford', @_
   );
-
-  $self->add_new_track_gene( 'horse_protein', 'Horse proteins', 'horse_protein', $POS++,
-     'gene_label'           => sub { return $_[0]->stable_id },
-     'gene_col'             => 'horse_protein' , @_
-   );
    $self->add_new_track_gene( 'fugu_protein', 'T.rubripes proteins', 'fugu_protein', $POS++,
      'gene_label'           => sub { return $_[0]->stable_id },
      'gene_col'             => 'fugu_protein' , @_
