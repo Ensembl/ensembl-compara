@@ -146,6 +146,12 @@ sub new {
     'superhi'    => 'highlight2',
     'cow_protein' => [ 'blue', 'Cow protein' ]
   );
+  $self->colourSet( 'orangutan_protein',
+    'hi'         => 'highlight1',
+    'superhi'    => 'highlight2',
+    'orangutan_protein' => [ 'orange', 'Orangutan protein' ]
+  );
+
   $self->colourSet( 'tigr_0_5',
     'hi'         => 'highlight1',
     'superhi'    => 'highlight2',
