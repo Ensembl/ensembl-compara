@@ -132,9 +132,8 @@ sub bookmark_menu_item {
 
 sub static_menu_items {
   my( $self, $doc ) = @_;
-
+=pod
   $doc->menu->add_block( 'docs', 'nested', 'Help & Documentation', 'priority' => 20 );
-
   my $URI = $doc->{_renderer}->{r}->uri;
 
   my $tree = $doc->species_defs->ENSEMBL_INFO;
@@ -165,6 +164,7 @@ sub static_menu_items {
     }
     $doc->menu->add_entry('docs', 'href'=> $link, 'text'=> $text, 'options' => $options );
   }
+=cut
 }
 
 sub dynamic_menu_items {
