@@ -75,3 +75,7 @@ insert into ncbi_taxa_name (taxon_id, name, name_class) values (43179,"Squirrel"
 insert into ncbi_taxa_name (taxon_id, name, name_class) values (43179,"thirteen-lined ground squirrel","ensembl common name");
 insert into ncbi_taxa_name (taxon_id, name, name_class) values (37347,"Tree Shrew","ensembl alias name");
 insert into ncbi_taxa_name (taxon_id, name, name_class) values (37347,"northern tree shrew","ensembl common name");
+insert into ncbi_taxa_name (taxon_id, name, name_class) values (30608,"Mouse Lemur","ensembl alias name");
+insert into ncbi_taxa_name (taxon_id, name, name_class) values (30608,"grey mouse lemur","ensembl common name");
+insert into ncbi_taxa_name (taxon_id, name, name_class) values (9978,"Pika","ensembl alias name");
+insert into ncbi_taxa_name (taxon_id, name, name_class) values (9978,"American pika","ensembl common name");
