@@ -97,10 +97,11 @@ sub getEnsemblMapping {
     $smap = 'ensembl_location_supercontig';
   } elsif ($base eq 'Gene_ID') {
     $smap = $realm eq 'Ensembl'       ? 'ensembl_gene'
-          : $realm eq 'HUGO_ID'       ? 'hugo'
-          : $realm eq 'MGI'           ? 'mgi'
-          : $realm eq 'MarkerSymbol'  ? 'markersymbol'
-          : $realm eq 'MGISymbol'     ? 'markersymbol'
+          : $realm eq 'HUGO_ID'       ? 'hgnc'
+          : $realm eq 'HGNC_ID'       ? 'hgnc'
+          : $realm eq 'MGI'           ? 'mgi_acc'
+          : $realm eq 'MarkerSymbol'  ? 'mgi'
+          : $realm eq 'MGISymbol'     ? 'mgi'
           : $realm eq 'EntrezGene'    ? 'entrezgene_acc'
           : $realm eq 'IPI_Accession' ? 'ipi_acc'
           : $realm eq 'IPI_ID'        ? 'ipi_id'

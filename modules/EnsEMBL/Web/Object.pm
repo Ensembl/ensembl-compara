@@ -251,9 +251,9 @@ sub getCoordinateSystem{
   my $species = $self->species || $ENV{'ENSEMBL_SPECIES'};
 
   my %SpeciesMappings = (
-    'Homo_sapiens' => { 'hugo'         => 'HGNC ID' },
-    'Mus_musculus' => { 'markersymbol' => 'MGI Symbol',
-                        'mgi'          => 'MGI Accession ID' }
+    'Homo_sapiens' => { 'hgnc'         	=> 'HGNC ID' },
+    'Mus_musculus' => { 'mgi' 		=> 'MGI Symbol',
+                        'mgi_acc'       => 'MGI Accession ID' }
   );
 
   my %DASMapping = (

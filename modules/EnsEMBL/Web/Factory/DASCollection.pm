@@ -364,7 +364,6 @@ sub createObjects {
         foreach my $key( @confkeys, @allkeys, 'dsn', 'enable', 'mapping') {
           $sources_conf{$das_name}->{$key} = $das_data->{$key};
         }
-#	warn "SAVE:", Dumper($das_data);
 ## Replace with session calll
         $self->session->add_das_source_from_hashref($das_data);
         $DASsel{$das_name} = 1;
@@ -388,6 +387,7 @@ sub createObjects {
       next;
     }
     $source_conf->{active} = defined ($DASsel{$source}) ? 1 : 0;
+    $source_conf->{label} ||= $source_conf->{name};
     my $das_adapt = Bio::EnsEMBL::ExternalData::DAS::DASAdaptor->new( 
       -name       => $source,
       -timeout    => $self->species_defs->ENSEMBL_DAS_TIMEOUT,
@@ -436,7 +436,6 @@ sub createObjects {
     }
   }
   my @selection = grep {$DASsel{$_}} keys %DASsel;
-#    warn(join '*', 'SELCT:', @selection);
   $self->param('das_sources', @selection);
     # Create the collection object
   my $dataobject = EnsEMBL::Web::Proxy::Object->new( 'DASCollection', [@das_objs], $self->__data );
@@ -454,10 +453,11 @@ sub getEnsemblMapping {
     $smap = 'ensembl_location_supercontig';
   } elsif ($base eq 'Gene_ID') {
     $smap = $realm eq 'Ensembl'       ? 'ensembl_gene'
-          : $realm eq 'HUGO_ID'       ? 'hugo'
-          : $realm eq 'MGI'           ? 'mgi'
-          : $realm eq 'MarkerSymbol'  ? 'markersymbol'
-          : $realm eq 'MGISymbol'     ? 'markersymbol'
+          : $realm eq 'HUGO_ID'       ? 'hgnc'
+          : $realm eq 'HGNC_ID'       ? 'hgnc'
+          : $realm eq 'MGI'           ? 'mgi_acc'
+          : $realm eq 'MarkerSymbol'  ? 'mgi'
+          : $realm eq 'MGISymbol'     ? 'mgi'
           : $realm eq 'EntrezGene'    ? 'entrezgene_acc'
           : $realm eq 'IPI_Accession' ? 'ipi_acc'
           : $realm eq 'IPI_ID'        ? 'ipi_id'
