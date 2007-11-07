@@ -28,7 +28,6 @@ sub das {
   my $status   = 'status_das_sources';
   my $URL = $object->__objecttype eq 'Gene' ? _flip_URL_gene( $object, $status ) :_flip_URL( $object, $status );
 # Get parameters to be passed to dasconfview script
-
 # Now display the annotation from the selected sources
   my $link_tmpl = qq(<a href="%s" target="%s">%s</a>);
 
@@ -69,6 +68,7 @@ sub das {
 
 # Use Bio::EnsEMBL::Gene / Translation - so all the features are retrieved by the same function
   my $obj = $object->[1]->{_object};
+
   my ($featref, $styleref) = $obj->get_all_DAS_Features();
 
  foreach my $das ( grep {$_->adaptor->active} @das_objs ){
@@ -208,9 +208,8 @@ $fhash->{$fid} = 1;
         if ($source->conftype eq 'internal') {
           $note = decode_entities($note);
         } else {
-          $note = decode_entities($note);
+#          $note = decode_entities($note);
 	}
-
 
 # Special case : if the feature is of type NOTE than we display just a note - across all columns 
         if ($feature->das_type_id eq 'NOTE') {
