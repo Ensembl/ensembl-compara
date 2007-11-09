@@ -13,6 +13,12 @@ Bio::EnsEMBL::Compara::RunnableDB::HealthCheck
 
 =head1 SYNOPSIS
 
+$module->fetch_input
+
+$module->run
+
+$module->write_output
+
 =cut
 
 =head1 DESCRIPTION
@@ -21,7 +27,47 @@ This module is inteded to run automatic checks at the end of a pipeline (or at a
 
 =head1 OPTIONS
 
-=head2 option
+This module has been designed to run one test per analysis_job. All the options are specific to
+the test iself and therefore you shouldn't set any parameters in the analysis table. Use the input_id
+column of the analysis_job to set these values.
+
+=head2 test
+
+The name of the test to be run. See below for a list of tests
+
+=head2 params
+
+Parameters used by the test
+
+=head1 TESTS
+
+=head2 conservation_jobs
+
+This test checks that there are one conservation analysis per alignment.
+
+Parameters:
+
+=over
+
+=item logic_name
+
+Logic name for the Conservation analysis. Default: Gerp
+
+=item method_link_type
+
+method_link_type for the multiple alignments. Default: PECAN
+
+=back
+
+=head1 EXAMPLES
+
+=over
+
+=item {test=>'conservation_jobs'}
+
+=item {test=>'conservation_jobs', params=>{logic_name=>'Gerp2', method_link_type=>'MLAGAN'}}
+
+=back
 
 =head1 CONTACT
 
@@ -49,19 +95,12 @@ our @ISA = qw(Bio::EnsEMBL::Hive::Process);
 
 =head2 fetch_input
 
-    Title   :   fetch_input
-    Usage   :   $self->fetch_input
-    Function:   Fetches input data for repeatmasker from the database
-    Returns :   none
-    Args    :   none
+  Implementation of the Bio::EnsEMBL::Hive::Process interface
 
 =cut
 
 sub fetch_input {
-  my( $self) = @_;
-
-  ## Intialise test hash
-  $self->{_test} = {};
+  my ($self) = @_;
 
   $self->{'comparaDBA'} = Bio::EnsEMBL::Compara::Production::DBSQL::DBAdaptor->new(-DBCONN=>$self->db->dbc);
   $self->{'hiveDBA'} = Bio::EnsEMBL::Hive::DBSQL::DBAdaptor->new(-DBCONN => $self->{'comparaDBA'}->dbc);
@@ -71,16 +110,30 @@ sub fetch_input {
   return 1;
 }
 
+
+=head2 run
+
+  Implementation of the Bio::EnsEMBL::Hive::Process interface
+
+=cut
+
 sub run
 {
   my $self = shift;
 
-  if ($self->test("conservation_jobs")) {
-    $self->_run_conservation_jobs_test($self->test("conservation_jobs"));
+  if ($self->test() eq "conservation_jobs") {
+    $self->_run_conservation_jobs_test($self->parameters());
   }
 
   return 1;
 }
+
+
+=head2 write_output
+
+  Implementation of the Bio::EnsEMBL::Hive::Process interface
+
+=cut
 
 sub write_output {
   my ($self) = @_;
@@ -90,6 +143,15 @@ sub write_output {
 
 
 =head2 get_params
+
+  Arg [1]     : (optional) string $parameters
+  Example     : $self->get_params("{blah=>'foo'}");
+  Description : Reads and parses a string representing a hash
+                with parameters for this job.
+  Returntype  :
+  Exceptions  : none
+  Caller      : fetch_input
+  Status      : Stable
 
 =cut
 
@@ -103,8 +165,12 @@ sub get_params {
   my $params = eval($param_string);
   return unless($params);
 
-  if (defined($params->{'conservation_jobs'})) {
-    $self->test("conservation_jobs", $params->{'conservation_jobs'});
+  if (defined($params->{'test'})) {
+    $self->test($params->{'test'});
+  }
+
+  if (defined($params->{'params'})) {
+    $self->parameters($params->{'params'});
   }
 
   return 1;
@@ -113,17 +179,48 @@ sub get_params {
 
 =head2 test
 
+  Arg [1]     : (optional) string $test
+  Example     : $object->test($test);
+  Example     : $test = $object->test();
+  Description : Getter/setter for the test attribute, i.e. the
+                name of the test to be run
+  Returntype  : string
+  Exceptions  : none
+  Caller      : general
+  Status      : Stable
+
 =cut
 
 sub test {
-  my ($self, $test_name, $test_parameters) = @_;
-
-  if ($test_name and $test_parameters) {
-    $self->{_test}->{$test_name} = $test_parameters;
+  my $self = shift;
+  if (@_) {
+    $self->{_test} = shift;
   }
-
-  return $self->{_test}->{$test_name};
+  return $self->{_test};
 }
+
+=head2 parameters
+
+  Arg [1]     : (optional) string $parameters
+  Example     : $object->parameters($parameters);
+  Example     : $parameters = $object->parameters();
+  Description : Getter/setter for the parameters attribute
+  Returntype  : string representing a hashref
+  Exceptions  : none
+  Caller      : general
+  Status      : Stable
+
+=cut
+
+sub parameters {
+  my $self = shift;
+  if (@_) {
+    $self->{_parameters} = shift;
+  }
+  return $self->{_parameters};
+}
+
+
 
 =head2 _run_conservation_jobs_test
 
@@ -147,23 +244,18 @@ sub test {
 sub _run_conservation_jobs_test {
   my ($self, $parameters) = @_;
 
-  $parameters = 1 if (!$parameters);
-
-  my $params = eval($parameters);
-  return unless($params);
-
   my $logic_name = "Gerp";
   my $method_link_type = "PECAN";
 
-  if (UNIVERSAL::isa($params, "HASH")) {
-    if (defined($params->{'logic_name'})) {
-      $logic_name = $params->{'logic_name'};
+  if ($parameters) {
+    if (defined($parameters->{'logic_name'})) {
+      $logic_name = $parameters->{'logic_name'};
     }
-    if (defined($params->{'from_method_link_type'})) {
-      $method_link_type = $params->{'from_method_link_type'};
+    if (defined($parameters->{'from_method_link_type'})) {
+      $method_link_type = $parameters->{'from_method_link_type'};
     }
-    if (defined($params->{'method_link_type'})) {
-      $method_link_type = $params->{'method_link_type'};
+    if (defined($parameters->{'method_link_type'})) {
+      $method_link_type = $parameters->{'method_link_type'};
     }
   }
 
@@ -181,6 +273,8 @@ sub _run_conservation_jobs_test {
 
   if ($count1 != $count2) {
     die("There are $count1 analysis_jobs for $logic_name while there are $count2 $method_link_type alignments!\n");
+  } elsif ($count1 == 0) {
+    die("There are no analysis_jobs for $logic_name and no $method_link_type alignments!\n");
   }
 }
 
