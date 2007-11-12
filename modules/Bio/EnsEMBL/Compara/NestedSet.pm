@@ -67,7 +67,7 @@ sub copy {
   my $self = shift;
   
   my $mycopy = $self->SUPER::copy; 
-  bless $mycopy, "Bio::EnsEMBL::Compara::NestedSet";
+  bless $mycopy, ref $self;
 
   $mycopy->distance_to_parent($self->distance_to_parent);
   $mycopy->left_index($self->left_index);
@@ -79,6 +79,17 @@ sub copy {
   return $mycopy;
 }
 
+
+=head2 release_tree
+
+  Overview   : deletes and frees the memory used by this tree
+               and all the underlying nodes.
+  Example    : $self->release_tree;
+  Returntype : undef
+  Exceptions : none
+  Caller     : general
+
+=cut
 
 sub release_tree {
   my $self = shift;
@@ -468,6 +479,20 @@ sub distance_to_root {
   return $dist;
 }
 
+
+=head2 distance_to_ancestor
+
+  Arg [1]     : Bio::EnsEMBL::Compara::NestedSet $ancestor
+  Example     : my $distance = $this_node->distance_to_ancestor($ancestor);
+  Description : Calculates the distance in the tree between this node and
+                its ancestor $ancestor
+  Returntype  : float
+  Exceptions  : throws if $ancestor is not an ancestor of this node.
+  Caller      : general
+  Status      : Stable
+
+=cut
+
 sub distance_to_ancestor {
   my $self = shift;
   my $ancestor = shift;
@@ -480,6 +505,49 @@ sub distance_to_ancestor {
   }
   return $self->distance_to_parent + $self->parent->distance_to_ancestor($ancestor);
 }
+
+
+=head2 distance_to_node
+
+  Arg [1]     : Bio::EnsEMBL::Compara::NestedSet $node
+  Example     : my $distance = $this_node->distance_to_node($other_node);
+  Description : Calculates the distance in the tree between these
+                two nodes.
+  Returntype  : float
+  Exceptions  : returns undef if no ancestor can be found, no distances are
+                defined in the tree, etc.
+  Caller      : general
+  Status      : Stable
+
+=cut
+
+sub distance_to_node {
+  my $self = shift;
+  my $node = shift;
+
+  my $ancestor = $self->find_first_shared_ancestor($node);
+  if (!$ancestor) {
+    return undef;
+  }
+  my $distance = $self->distance_to_ancestor($ancestor);
+  $distance += $node->distance_to_ancestor($ancestor);
+
+  return $distance;
+}
+
+
+=head2 print_tree
+
+  Arg [1]     : int $scale
+  Example     : $this_node->print_tree(100);
+  Description : Prints this tree in ASCII format. The scale is used to define
+                the width of the tree in the output
+  Returntype  : undef
+  Exceptions  :
+  Caller      : general
+  Status      : At risk (as the output might change)
+
+=cut
 
 sub print_tree {
   my $self  = shift;
@@ -665,6 +733,21 @@ sub _internal_nhx_format {
   return $nhx;
 }
 
+
+=head2 newick_format
+
+  Arg [1]     : string $format_mode
+  Example     : $this_node->newick_format("full");
+  Description : Prints this tree in Newick format. Several modes are
+                available: full, display_label_composite, simple, species,
+                species_short_name, ncbi_taxon, ncbi_name, njtree and phylip
+  Returntype  : undef
+  Exceptions  :
+  Caller      : general
+  Status      : Stable
+
+=cut
+
 sub newick_format {
   my $self = shift;
   my $format_mode = shift;
@@ -805,6 +888,19 @@ sub _internal_newick_format {
   return $newick;
 }
 
+
+=head2 newick_simple_format
+
+  Arg [1]     : -none-
+  Example     : $this_node->newick_simple_format();
+  Description : Prints this tree in simple Newick format. This is an
+                alias for $this_node->newick_format("simple");
+  Returntype  : undef
+  Exceptions  :
+  Caller      : general
+  Status      : Stable
+
+=cut
 
 sub newick_simple_format {
   my $self = shift;
@@ -1131,6 +1227,18 @@ sub max_depth {
   return $max_depth;  
 }
 
+
+=head2 find_first_shared_ancestor
+
+  Arg [1]     : Bio::EnsEMBL::Compara::NestedSet $node
+  Example     : my $ancestor = $this_node->find_first_shared_ancestor($other_node);
+  Description : Gets the first common ancestor between this node and the other one.
+  Returntype  : Bio::EnsEMBL::Compara::NestedSet object
+  Exceptions  :
+  Caller      : general
+  Status      : Stable
+
+=cut
 
 sub find_first_shared_ancestor {
   my $self = shift;
