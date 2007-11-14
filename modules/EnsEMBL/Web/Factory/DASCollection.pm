@@ -345,6 +345,7 @@ sub createObjects {
             }
           }
         }
+	$das_data->{'name'} = $das_name;
         foreach my $key( @confkeys, @allkeys){
           if (defined($self->param("DAS${key}"))) {
             $das_data->{$key} = $self->param("DAS${key}");
