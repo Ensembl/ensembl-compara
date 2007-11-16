@@ -82,12 +82,12 @@ sub synonyms {
       }
       next unless @urls;
     }
-    elsif ($db =~ /hgvbase/i) {
-      @urls  = map {  $object->get_ExtURL_link( $_, 'HGVBASE', $_) } @ids;
-    } 
-    elsif ($db =~ /tsc/i) {
-      @urls  = map {  $object->get_ExtURL_link( $_, 'TSC', $_)  } @ids;
-    }
+    #elsif ($db =~ /hgvbase/i) {
+    #  @urls  = map {  $object->get_ExtURL_link( $_, 'HGVBASE', $_) } @ids;
+    #} 
+    #elsif ($db =~ /tsc/i) {
+    #  @urls  = map {  $object->get_ExtURL_link( $_, 'TSC', $_)  } @ids;
+    #}
     #elsif ($db =~ /Sanger/i) {  # don't link to this as it gives no extra info
     #  @urls = map {  $object->get_ExtURL_link( $_, 'SNPVIEW', {source=>$db, ID=>$_} ) } @ids;
     #}
