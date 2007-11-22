@@ -163,7 +163,8 @@ for my $sp( sort @SPECIES ){  # users selected spp
   # Work out species folder name and empty if you are dumping --type all
   my $sp_release = $SPECIES_DEFS->get_config($sp,"SPECIES_RELEASE_VERSION");
      $sp_release =~ s/\.//g;
-  my $sp_folder = "$DUMPDIR"."fasta/".(join "_", lc($sp), $release, $sp_release);
+ # my $sp_folder = "$DUMPDIR"."fasta/".(join "_", lc($sp), $release, $sp_release);
+   my $sp_folder = "$DUMPDIR"."fasta/". lc($sp);
 
   if ( -e $sp_folder && $TYPES[0] eq 'all' && !$no_dumpdata) {
     info( 1, "Removing existing copies of $sp_folder" );
