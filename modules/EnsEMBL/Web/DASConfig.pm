@@ -138,7 +138,7 @@ sub create_from_URL {
   my( $self, $URL ) = @_;
   $URL =~ s/[\(|\)]//g;                                # remove ( and |
   return unless $URL;
-
+  $URL =~ s/\\ /###/g; # Preserve escaped spaces in source label
   my @das_keys = split(/\s/, $URL);                    # break on spaces...
   my %das_data = map { split (/\=/, $_,2) } @das_keys; # split each entry on spaces
   my $das_name = $das_data{name} || $das_data{dsn} || 'NamelessSource';
@@ -153,6 +153,7 @@ sub create_from_URL {
 
       # Add to the conf list
   $das_data{label}      ||= $das_name;
+  $das_data{label} =~ s/###/ /g; # restore the spaces in the label
   $das_data{caption}    ||= $das_name;
 ## Set these to the dafault values....
   $das_data{stylesheet} ||= $DAS_DEFAULTS{STYLESHEET};
