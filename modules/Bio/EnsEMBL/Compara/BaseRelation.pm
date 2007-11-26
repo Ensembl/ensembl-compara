@@ -235,12 +235,13 @@ sub add_Member_Attribute {
   }
 }
 
+
 =head2 get_all_Member_Attribute
 
   Arg [1]    : None
   Example    : 
   Description: 
-  Returntype : array reference of Bio::EnsEMBL::Compara::Member
+  Returntype : array reference of [Bio::EnsEMBL::Compara::Member, Bio::EnsEMBL::Compara::Attribute]
   Exceptions : 
   Caller     : 
 
@@ -263,6 +264,31 @@ sub get_all_Member_Attribute {
   }
   return $self->{'_member_array'}; #should return also attributes
 }
+
+
+=head2 get_all_Members
+
+  Arg [1]    : None
+  Example    : 
+  Description: 
+  Returntype : array reference of Bio::EnsEMBL::Compara::Member
+  Exceptions : 
+  Caller     : 
+
+=cut
+
+sub get_all_Members {
+  my ($self) = @_;
+
+  my $members = [];
+  foreach my $member_attribute (@{$self->get_all_Member_Attribute}) {
+    my ($member, $attribute) = @$member_attribute;
+    push (@$members, $member);
+  }
+
+  return $members;
+}
+
 
 =head2 get_Member_Attribute_by_source
 
