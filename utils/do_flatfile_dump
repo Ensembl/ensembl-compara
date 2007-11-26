@@ -198,7 +198,8 @@ sub setup_directories {
  #   utils::Tool::info(2, "species = $spp $format");
 
     # Make dumpdir
-    my $spp_dir = join "_", (lc ($spp), $sitedefs_release, $sp_release);
+    # my $spp_dir = join "_", (lc ($spp), $sitedefs_release, $sp_release);
+    my $spp_dir = lc ($spp);
     my $spp_dumpdir = "$dumpdir/$format/$spp_dir";
     unless (-d "$spp_dumpdir"){
       system("mkdir -p $spp_dumpdir") ==0 or die "Can't create dir $!";
@@ -328,7 +329,7 @@ sub chunk_seq_region {
 
   # Make sure the end is not more than the seqeunce end.
   # This can happen because the blocks are set at gene end +1000
-  if (@$blocklist) {
+  if( @$blocklist ) {
     my ($final_start, $final_end) = @{pop(@$blocklist)};
     if($final_end > $seq_end){
       $final_end = $seq_end;
