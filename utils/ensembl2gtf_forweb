@@ -173,7 +173,7 @@ for my $sp( sort @SPECIES ){  # users selected spp
   $sp_release =~ s/\.//g;
   $dumpdir   ||= "/dumps/release-$release";
 
-  my $sp_folder = "$dumpdir/".(join "_", lc($sp), $release, $sp_release)."/data/gtf";
+  my $sp_folder = "$dumpdir/gtf/". lc($sp);
   utils::Tool::check_dir($sp_folder);
 
   my $outfile = $gtf_file || "$sp_folder/$sp.$assembly.$release.gtf";
