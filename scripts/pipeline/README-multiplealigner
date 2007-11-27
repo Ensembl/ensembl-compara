@@ -42,49 +42,72 @@ in bash
 
 2- Create a hive/compara database
    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Pick a mysql instance and create a database
+* Pick a mysql instance and create a database
 
-mysql -h ia64g -P3306 -uensadmin -pxxxx -e "create database abel_compara_mlagan"
+mysql -h compara1 -uensadmin -pxxxx -e "create database jh7_pecan_47"
 
 cd ~/src/ensembl_main/ensembl-hive/sql
-mysql -h ia64g -P3306 -uensadmin -pxxxx abel_compara_mlagan < tables.sql
+mysql -h compara1 -uensadmin -pxxxx jh7_pecan_47 < tables.sql
 
 cd ~/src/ensembl_main/ensembl-compara/sql
-mysql -h ia64g -P3306 -uensadmin -pxxxx abel_compara_mlagan < table.sql
-mysql -h ia64g -P3306 -uensadmin -pxxxx abel_compara_mlagan < pipeline-tables.sql
+mysql -h compara1 -uensadmin -pxxxx jh7_pecan_47 < table.sql
+mysql -h compara1 -uensadmin -pxxxx jh7_pecan_47 < pipeline-tables.sql
 
-Add an entry in your registry configuration file:
+* Populate your database:
+
+cd /lustre/work1/ensembl/jh7/release47/pecan/
+
+* Create a registry configuration file:
+
+=======================================
+use strict;
+use Bio::EnsEMBL::Registry;
+use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 
 new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(
-    -host => 'ia64g',
+    -host => 'compara1',
+    -user => 'ensro',
+    -port => 3306,
+    -species => 'compara-master',
+    -dbname => 'jh7_ensembl_compara_master');
+
+new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(
+    -host => 'compara1',
     -user => 'ensadmin',
     -pass => 'XXXXXXXX',
     -port => 3306,
-    -species => 'abel_compara_mlagan',
-    -dbname => 'abel_compara_mlagan');
+    -species => 'jh7_pecan_47',
+    -dbname => 'jh7_pecan_47');
 
-Populate the database with data from the master DB:
+Bio::EnsEMBL::Registry->load_registry_from_url('mysql://ensro@ens-staging/47');
+
+1;
+=======================================
+
+* Populate the database with data from the master DB:
 
 ~/src/ensembl_main/ensembl-compara/scripts/pipeline/populate_new_database.pl \
-  --master compara-master --new abel_compara_mlagan
+  --master compara-master --new jh7_pecan_47 --reg reg.conf
 
 3- Choose a working directory with some disk space
    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-The multiple aligner pipeline tries to minize the amount of output data for workers. But if 
-debug options is on this can take some space. So be careful.
+* The multiple aligner pipeline tries to minize the amount of output data for workers.
+But if debug options is on this can take some space. So be careful.
 
-mkdir -p /acari/work7a/abel/hive/abel_compara_mlagan/workers
-mkdir -p /acari/work7a/abel/hive/abel_compara_mlagan/blastDB
+mkdir -p /lustre/scratch1/ensembl/jh7/release47/pecan/blastDB
+## Sets the stripping patterns for big files
+lsf setstripe /lustre/scratch1/ensembl/jh7/release47/pecan/blastDB 0 -1 -1
+mkdir -p /lustre/scratch1/ensembl/jh7/release47/pecan/workers
 
-This directory needs to be set in 'hive_output_dir' variable in the compara-hive
+* This directory needs to be set in 'hive_output_dir' variable in the compara-hive
 configuration file. See below. If not set, all STDOUT/STDERR goes to /dev/null. :)
 
 4- Copy and modify your compara-hive config file
    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-cd /acari/work7a/abel/hive/abel_compara_mlagan
+cd /lustre/work1/ensembl/jh7/release47/pecan/
 
-cp ~/src/ensembl_main/ensembl-compara/scripts/pipeline/compara-hive-mulitplealigner.conf.example hive.conf.pl
+cp ~/src/ensembl_main/ensembl-compara/scripts/pipeline/compara-hive-multiplealigner.conf.example hive.conf.pl
 cp ~/src/ensembl_main/ensembl-compara/scripts/pipeline/hmr.tree.example hmr.tree
 <editor> hive.conf.pl
 <editor> hmr.tree
@@ -102,7 +125,7 @@ perl ~/src/ensembl_main/ensembl-compara/scripts/tree/geneTreeTool.pl --file \
 
 You can have several multiple alignment pipelines working in the same HIVE. To do this, add an extra
 MULTIPLE_ALIGNER block in the configuration file and change the corresponding list of species and the
-tree file. The HIVE will run the all-vs-all balstp jobs and then build a Synteny map for each
+tree file. The HIVE will run the all-vs-all blastp jobs and then build a Synteny map for each
 multiple alignment pipeline. The resulting syntenies will be used to feed the multiple aligner.
 
 You can also have a CONSERVATION_SCORE block if you want to run Gerp or any other similar software
@@ -132,8 +155,8 @@ where alignment: alignment file used in multi-fasta format
 
 You will also need to add the paths for gerp and semphy if you want to run Gerp. At the time of
 writting these can be found in:
-/lustre/work1/ensembl/kb3/semphy/semphy-1.0a5/
-/lustre/work1/ensembl/jh7/gerp/GERP_03292006/
+/software/ensembl/compara/semphy
+/software/ensembl/compara/gerp/GERP_03292006/
 
 For the SYNTENY_MAP_BUILDER, the MULTIPLE_ALIGNER and the CONSERVATION_SCORE blocks you can specify
 the logic_name for the method. You can also specify the module name. If none is given, the hive will
@@ -187,27 +210,29 @@ where xxxx is the password for write access to the database
 for more details on controling/monitoring the hive system see 
 beekeeper -help
 
-Some MLAGAN jobs might fail because of memory requirements. You can find these jobs using the following commend:
-$> beekeeper.pl --url mysql://ensadmin:xxxx@ia64g:3306/abel_compara_mlagan --failed_jobs
-
-Then you can reset these jobs with:
-$> beekeeper.pl --url mysql://ensadmin:xxxx@ia64g:3306/abel_compara_mlagan --reset_job_id 42483
-
-And finally rerun them using the hugemem queue:
-$> beekeeper.pl --lsf_options '-R "select[mem>=4000] rusage[mem=4000]" -q hugemem' --url mysql://ensadmin:xxxx@ia64g:3306/abel_compara_mlagan --loop
-
-For big PECAN jobs: update the analysis_job table in order to overwritte the -Xmx option:
-
-update analysis_job set input_id = concat("{java_options=>'-server -Xmx2000M',", substr(input_id,2))
-  status = "READY", job_claim = "" where status = "FAILED" and analysis_id = 8;
-
-Run the job on the bigmem queue (requesting quite a lot of memory):
-
-beekeeper.pl --lsf_options '-R "select[mem>=5000] rusage[mem=5000]" -q bigmem' \
-  --url mysql://ensadmin:ensembl@compara1/jh7_pecan_42 --loop
-
 
 *TROUBLESHOOTING*
+
+* Some sequences refuse to be blasted.
+
+  - The actual pipeline uses a blast filter that only allows for the 20 standard aminoancids
+    and X. Check that your sequence do not contain selecisteines (* or U) for instance and
+    replace them by X's:
+    UPDATE sequence SET sequence = REPLACE(sequence, "U", "X") WHERE sequence_id = 123456;
+    UPDATE sequence SET sequence = REPLACE(sequence, "*", "X") WHERE sequence_id = 123456;
+
+* Mlagan/Pecan jobs are failing
+
+  - Some of these jobs may run out of memory. Reset those jobs and overwrite the default amount
+    of memory allowed for the Java VM:
+
+    UPDATE analysis_job SET input_id = concat("{java_options=>'-server -Xmx2500M',", substr(input_id,2)),
+        status = "READY", job_claim = "" WHERE status = "FAILED" AND analysis_id = 8;
+
+    Run these jobs on the long queue (requesting quite a lot of memory)
+
+    beekeeper.pl --lsf_options '-R "select[mem>=6000] rusage[mem=6000]" -q long' \
+        --url mysql://ensadmin:xxxxxxx@compara1/jh7_pecan_42 --run
 
 * Gerp jobs are failing.
 
@@ -216,3 +241,4 @@ beekeeper.pl --lsf_options '-R "select[mem>=5000] rusage[mem=5000]" -q bigmem' \
 
   - Check the source code for the Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::Gerp
     module. The path to the main Gerp script is hard-coded there.
+
