@@ -258,23 +258,25 @@ sub _matches {
 
 #this is temporarily needed to delete duplicated and redundant database entries
 sub remove_redundant_vega_xrefs {
-  my ($links) = @_;
-  my %priorities;
-  foreach my $link (@$links) {
-    my ( $key, $text ) = @$link;
-    if ($text =~ />OTT/) {
-      $priorities{$key} = $text;
-    }
-  }
-  foreach my $type ('Transcript having exact match between ENSEMBL and HAVANA',
-    'Havana transcript having same CDS',
-    'Havana transcripts') {
-    if ($priorities{$type}) {
-      my $munged_links;
-      $munged_links->[0] = [ $type, $priorities{$type} ];
-      return $munged_links;
-    }
-  }
+	my ($links) = @_;
+	my %priorities;
+	foreach my $link (@$links) {
+		my ( $key, $text ) = @$link;
+		if ($text =~ />OTT/) {
+			$priorities{$key} = $text;
+		}
+	}
+	foreach my $type (
+		'Transcript having exact match between ENSEMBL and HAVANA',
+		'Havana transcript having same CDS',
+		'Havana transcripts') {
+		if ($priorities{$type}) {
+			my $munged_links;
+			$munged_links->[0] = [ $type, $priorities{$type} ];
+			return $munged_links;
+		}
+	}
+	return $links;
 }
 
 sub _sort_similarity_links{
