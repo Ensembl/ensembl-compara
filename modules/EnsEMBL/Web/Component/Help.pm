@@ -138,6 +138,15 @@ sub contact_form {
 
   my $form = EnsEMBL::Web::Form->new( 'contact', "/common/help/send_email", 'get' );
 
+  if ($object->param('kw')) {
+    $form->add_element(
+      'type' => 'Information',
+      'value' => 'Sorry, no pages were found containing the term <strong>'.$object->param('kw')
+                  .qq#</strong> (or more than 50% of articles contain this term). Please 
+<a href="/common/help/search">try again</a> or use the form below to contact HelpDesk:#,
+    );
+  }
+
   $form->add_element(
     'type'    => 'String',
     'name'    => 'name',
