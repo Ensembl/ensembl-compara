@@ -234,7 +234,7 @@ sub _matches {
   }
   $html .= qq(<table cellpadding="4">);
   if( $keys[0] eq 'ALT_TRANS' ) {
-    @links = @{&remove_redundant_vega_xrefs(\@links)};
+    @links = &remove_redundant_xrefs(@links);
   }
 
   my $old_key = '';
@@ -257,26 +257,29 @@ sub _matches {
 }
 
 #this is temporarily needed to delete duplicated and redundant database entries
-sub remove_redundant_vega_xrefs {
-	my ($links) = @_;
+#used for both core and ensembl-vega databases
+sub remove_redundant_xrefs {
+	my (@links) = @_;
 	my %priorities;
-	foreach my $link (@$links) {
+	foreach my $link (@links) {
 		my ( $key, $text ) = @$link;
-		if ($text =~ />OTT/) {
+		if ($text =~ />OTT|>ENST/) {
 			$priorities{$key} = $text;
 		}
 	}
 	foreach my $type (
 		'Transcript having exact match between ENSEMBL and HAVANA',
+		'Ensembl transcript having exact match with Havana',
 		'Havana transcript having same CDS',
+		'Ensembl transcript sharing CDS with Havana',
 		'Havana transcripts') {
 		if ($priorities{$type}) {
-			my $munged_links;
-			$munged_links->[0] = [ $type, $priorities{$type} ];
-			return $munged_links;
+			my @munged_links;
+			$munged_links[0] = [ $type, $priorities{$type} ];
+			return @munged_links;;
 		}
 	}
-	return $links;
+	return @links;
 }
 
 sub _sort_similarity_links{
