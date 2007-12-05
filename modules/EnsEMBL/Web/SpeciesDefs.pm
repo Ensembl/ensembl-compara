@@ -1669,16 +1669,15 @@ sub get_title {
 
   open IN, "< $file" or die "Couldn't open input file $file :(\n";
   while (<IN>) {
-    if (/<title/) {
-      $title = $_;
-      chomp($title);
-      $title =~ s/^(\s+)//;
-      $title =~ s/(\s+)$//;
-      $title =~ s/<title>//;
-      $title =~ s/<\/title>//;
-      last;
+    if (m!<title.*?>(.*?)(?:</title>|$)!i) {
+      $title = $1;
+    } elsif (defined($title) && m!^(.*?)(?:</title>|$)!i) {
+      $title .= $1;
     }
+    last if m!</title!i;
   }
+  close IN;
+  $title =~ s/\s{2,}//g;
   return $title;
 }
 
