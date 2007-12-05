@@ -2,7 +2,7 @@ package Bio::EnsEMBL::Compara::Homology;
 
 use strict;
 use Bio::EnsEMBL::Compara::BaseRelation;
-use Bio::EnsEMBL::Utils::Exception;
+use Bio::EnsEMBL::Utils::Exception qw( deprecate throw warning );
 use Bio::SimpleAlign;
 
 our @ISA = qw(Bio::EnsEMBL::Compara::BaseRelation);
@@ -236,7 +236,7 @@ sub get_SimpleAlign {
   Example    : $subtype = $homology->subtype();
                $homology->subtype($subtype);
   Description: getter/setter of string description of homology subtype.
-               Examples: 'DUP 1.3', 'SYN', 'complex'
+               Examples: 'Chordata', 'Euteleostomi', 'Homo sapiens'
   Returntype : string
   Exceptions : none
   Caller     : general
@@ -244,6 +244,26 @@ sub get_SimpleAlign {
 =cut
 
 sub subtype {
+  my $self = shift;
+  # deprecate("Use taxonomy_level() instead.");
+  return $self->taxonomy_level(@_);
+}
+
+
+=head2 taxonomy_level
+
+  Arg [1]    : string $taxonomy_level (optional)
+  Example    : $taxonomy_level = $homology->taxonomy_level();
+               $homology->taxonomy_level($taxonomy_level);
+  Description: getter/setter of string description of homology taxonomy_level.
+               Examples: 'Chordata', 'Euteleostomi', 'Homo sapiens'
+  Returntype : string
+  Exceptions : none
+  Caller     : general
+
+=cut
+
+sub taxonomy_level {
   my $self = shift;
   $self->{'_subtype'} = shift if(@_);
   $self->{'_subtype'} = '' unless($self->{'_subtype'});
