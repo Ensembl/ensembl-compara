@@ -76,7 +76,8 @@ foreach my $homology (@mouse_homologies,@rat_homologies) {
   my $merged_cdna_exon_length = 0;
   my $merged_exons_dna_simple_align = new Bio::SimpleAlign;
   my $utr = $transcript->five_prime_utr;
-  my $utr_length = length($utr->seq);
+  my $utr_length = 0;
+  eval {$utr_length = length($utr->seq);};
   foreach my $exon (@this_exons) {
     $this_exon++;
     $merged_cdna_exon_length += $exon->end - $exon->start;
@@ -107,7 +108,8 @@ foreach my $homology (@mouse_homologies,@rat_homologies) {
   #my $phase_this_exon = 0;
   my $merged_exons_dna_simple_align2 = new Bio::SimpleAlign;
   my $utr2 = $transcript2->five_prime_utr;
-  my $utr_length2 = length($utr2->seq);
+  my $utr_length2 = 0;
+  eval {$utr_length2 = length($utr2->seq);};
   foreach my $exon2 (@this_exons2) {
     $this_exon2++;
     $merged_cdna_exon_length2 += $exon2->end - $exon2->start;
