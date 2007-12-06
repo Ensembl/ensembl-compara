@@ -47,7 +47,9 @@ sub dynamic_use {
   return 1 if $parent_namespace->{$module.'::'} && %{ $parent_namespace->{$module.'::'}||{} }; # return if already used 
   eval "require $classname";
   if($@) {
-    warn "EnsEMBL::Web::Root: failed to use $classname\nEnsEMBL::Web::Root: $@" unless $@ =~/^Can't locate /;
+    my $module = $classname; 
+    $module =~ s/::/\//g;
+    warn "EnsEMBL::Web::Root: failed to use $classname\nEnsEMBL::Web::Root: $@" unless $@ =~/^Can't locate $module/;
 #    warn "DYNAMIC USE FAILURE: $@";
     $parent_namespace->{$module.'::'} = {};
     $failed_modules->{$classname} = $@ || "Unknown failure when dynamically using module";
