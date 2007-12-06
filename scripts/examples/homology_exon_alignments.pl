@@ -87,7 +87,13 @@ foreach my $homology (@mouse_homologies,@rat_homologies) {
     my $cdna_coding_start = $exon->cdna_coding_start($transcript) - $utr_length;
     my $cdna_coding_end = $exon->cdna_coding_end($transcript) - $utr_length;
     my $display_id = $transcript->translation->stable_id;
-    my $aln_pos_start = $cdna_simple_align->column_from_residue_number($display_id, $cdna_coding_start);
+    my $aln_pos_start;
+    if (($cdna_coding_end - $cdna_coding_start <= 3) && ($this_exon == $exon_num)) {
+      print "$exon_stable_id,$cdna_coding_start,$coding_region_start,na,$cdna_coding_end,$coding_region_end,na\n";
+      next;
+    } else {
+      $aln_pos_start = $cdna_simple_align->column_from_residue_number($display_id, $cdna_coding_start);
+    }
     my $aln_pos_end;
     if ($this_exon == $exon_num) {
       # We dont have the stop codons in the alignment, so give the previous codon end
@@ -119,7 +125,13 @@ foreach my $homology (@mouse_homologies,@rat_homologies) {
     my $cdna_coding_start2 = $exon2->cdna_coding_start($transcript2) - $utr_length2;
     my $cdna_coding_end2 = $exon2->cdna_coding_end($transcript2) - $utr_length2;
     my $display_id2 = $transcript2->translation->stable_id;
-    my $aln_pos_start2 = $cdna_simple_align->column_from_residue_number($display_id2, $cdna_coding_start2);
+    my $aln_pos_start2;
+    if (($cdna_coding_end2 - $cdna_coding_start2 <= 3) && ($this_exon2 == $exon_num2)) {
+      print "$exon_stable_id2,$cdna_coding_start2,$coding_region_start2,na,$cdna_coding_end2,$coding_region_end2,na\n";
+      next;
+    } else {
+      $aln_pos_start2 = $cdna_simple_align->column_from_residue_number($display_id2, $cdna_coding_start2);
+    }
     my $aln_pos_end2;
     # print STDERR "[$this_exon2 / $exon_num2]\n";
     if ($this_exon2 == $exon_num2) {
