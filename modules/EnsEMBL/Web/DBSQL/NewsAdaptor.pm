@@ -144,15 +144,15 @@ sub fetch_news_items {
             c.priority          as cat_order,
             n.status            as status
         FROM
-            news_item n,
-            news_category c
+            ( news_item n,
+            news_category c )
   );
   if ($generic) {
     $sql .= qq(
         LEFT JOIN
-            item_species i
+            ( item_species i )
         ON
-            n.news_item_id = i.news_item_id
+            ( n.news_item_id = i.news_item_id )
         WHERE
             i.news_item_id IS NULL
         AND
@@ -266,9 +266,9 @@ sub fetch_headlines {
   if ($generic) {
     $sql .= qq(
         LEFT JOIN
-            item_species i
+            ( item_species i )
         ON
-            n.news_item_id = i.news_item_id
+            ( n.news_item_id = i.news_item_id )
         WHERE
             i.news_item_id IS NULL
         AND
