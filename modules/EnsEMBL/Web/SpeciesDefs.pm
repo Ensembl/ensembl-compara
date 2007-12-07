@@ -322,9 +322,12 @@ sub _parse {
   warn '-' x 78 , "\n[CONF]    [INFO] Parsing .ini files\n" ;
   $CONF->{'_storage'} = {};
   my $BC = $self->bread_crumb_creator();
-  my $info = [];
-  read_web_tree($info, 'info');
-  $BC->{'ENSEMBL_INFO'} = $info;
+
+  my $web_tree = { _path => '/' };
+  read_web_tree($web_tree, $_)
+    for reverse @ENSEMBL_HTDOCS_DIRS;
+  $BC->{'ENSEMBL_WEB_TREE'} = $web_tree;
+
   my ($defaults, $common);
 
 ###### Loop for each species exported from SiteDefs
@@ -1486,157 +1489,67 @@ Disallow:
   }
 }
 
-sub bread_crumb_creator {
-  ### Create the breadcrumbs hash, which is used to autogenerate navigation in the static content.
-  ### The hash is stored in the cached config to speed up rendering of bread-crumbs in web-pages.
-  ###
-  ### This method loops through all htdocs trees looking for index files to grab the "navigation"
-  ### meta tag from...
-  my $self = shift;
-  my @dirs = ( '/' );
-  my $ENSEMBL_BREADCRUMBS = {};
-  local( $/ ) = undef;
-  while( scalar(@dirs) ) {
-    my %dirs2 = ();
-    foreach my $dir ( @dirs ) {
-      foreach my $root ( @ENSEMBL_HTDOCS_DIRS ) {
-#       warn "$root - $dir - index.html";
-        my $fn = $root.$dir.'index.html';
-        if( -e $fn ) {
-          open I, $fn;
-          my $content = <I>;
-          my($nav) = $content =~ /<meta\s+name\s*=\s*"navigation"\s+content\s*=\s*"([^"]+)"\s*\/?>/ism;
-          $nav   ||= $content =~ /<meta\s+content\s*=\s*"([^"]+)"\s+name\s*=\s*"navigation"\s*\/?>/ism;
-#          warn ">>> $dir -> $nav";
-          if( !$nav && $dir =~ /\/(\w+)\/$/ ) {
-            #$nav = join ' ', map ucfirst( $_ ), split /_/, $1;
-            $nav = join ' ', split /_/, $1;
-          }
-          my($title) = $content =~ /<title>([^<]+)<\/title>/ism;
-          if( $nav ) {
-            $ENSEMBL_BREADCRUMBS->{ $dir } = [ $nav , $title ] if $nav;
-            $dirs2{$dir} = 1;
-			last;
-          }
-        }
-      }
-    }
-    @dirs = sort keys %dirs2;
-    %dirs2 = ();
-    foreach my $root ( @ENSEMBL_HTDOCS_DIRS ) {
-      foreach my $dir ( @dirs ) {
-        next unless -d $root.$dir;
-        opendir( DH, $root.$dir );
-        while( my $d = readdir(DH) ) {
-          next if $d eq '.' || $d eq '..' || $d eq 'CVS';
-          next unless -d $root.$dir.$d;
-          $dirs2{$dir.$d.'/'} =1;
-        }
-      }
-    }
-    @dirs = sort keys %dirs2;
-  }
-  my $ENSEMBL_PARENTS  = {};
-  my $ENSEMBL_CHILDREN = {};
-  foreach (sort keys %$ENSEMBL_BREADCRUMBS) {
-    (my $P = $_ ) =~ s/\/[^\/]+\/$/\//;
-    unless( $P eq $_ ) {
-      push @{ $ENSEMBL_CHILDREN->{ $P } }, $_;
-      $ENSEMBL_PARENTS->{$_} = $P;
-    }
-  }
-  return( {
-    'ENSEMBL_BREADCRUMBS' => $ENSEMBL_BREADCRUMBS,
-    'ENSEMBL_PARENTS'     => $ENSEMBL_PARENTS, 
-    'ENSEMBL_CHILDREN'    => $ENSEMBL_CHILDREN
-  } );
-}
 
 sub read_web_tree {
+###
 ### Recursive function which descends into a directory and creates 
-### a multi-dimensional array of:
-### * two scalars (directory URL and title)
-### * an optional hash of non-index pages within the directory
-### * zero or more arrays of the same structure as itself i.e. subdirectories
-### from any HTML files it finds
-  my ($node_array, $dir, $nlink) = @_;
+### a tree of htdocs static pages with a multi-level hashref:
+###  { 
+###    _path  => '/...',              # web path
+###    _nav   => 'navigation info',   # from meta tags
+###    _title => 'title',             # from title tag
+###    file1  => {nav => '...', title => '...'},
+###    file2  => {nav => '...', title => '...'},
+###    ...,
+###    dir1  => { ..same structure as parent.. },
+###    dir2  => { ..same structure as parent.. },
+###    ...,
+###  }
+###
 
-  my ($dev, $ino, $mode, $subcount);
-  my ($name, $title, $page_hash, $html_files, $sub_dirs);
-  my $doc_root = $ENSEMBL_SERVERROOT.'/htdocs/';
-  my $curr_depth = 0;
-  my $path = '/'.$dir;
+  my (
+    $branch,    ## hashref to be populated, branch of the tree 
+                ## by default it's { path => '/path/..' }
+    $doc_root,  ## this could be different because of the plugins
+  ) = @_;   
 
-  ## At the top level, we need to find nlink ourselves.
-  if (!$nlink) {
-    chdir($doc_root.$dir);
-    ($dev,$ino,$mode,$nlink) = stat('.');
-  }
+  my $path = $branch->{_path};
+  #warn "processing $path ...";
 
-  ## Get the list of files in the current directory.
-  opendir(DIR,'.') || die "Can't open $dir";
+  return unless -r "$doc_root$path";
+
+  ## Get the list of files for directory of the current path.
+  opendir(DIR, $doc_root . $path) || die "Can't open $doc_root$path";
   my @files = readdir(DIR);
   closedir(DIR);
 
   ## separate directories from other files
-  ($html_files, $sub_dirs) = sortnames(@files);
+  my ($html_files, $sub_dirs) = sortnames(\@files, $doc_root . $path);
 
-  ## create references to anonymous data structures
-  if (!$page_hash) {
-    $page_hash = {};
-  }
-  if (!$node_array) {
-    $node_array = [];
-  }
-  $subcount = $nlink - 2;
+  ## Read files and populate the branch
   foreach my $filename (@$html_files) {
-    $name = "$dir/$filename";
-    next if $name =~ m#software/java#;
-    if ($filename =~ /\.html$/) {
-      $title = get_title( $filename );
-      if (!$title) { ## sanity check - don't want an empty hash key!
-        $title = $filename;
-      }
-      if ($filename eq 'index.html') {
-        ## add the directory path and index title to array
-        $path .= '/';
-        push(@$node_array, $path, $title);
-      }
-      else {
-        $$page_hash{$title} = '/'.$name;
-      }
+    my $full_path = "$doc_root$path$filename";
+    next if $full_path =~ m#software/java#;
+    my $title = get_title( $full_path );
+    my $nav   = get_meta_navigation( $full_path );
+
+    if ($filename eq 'index.html') {
+      ## add the directory path and index title to array
+      $branch->{_title} = $title;
+      $branch->{_nav}   = $nav;
+    } else {
+      $branch->{$filename}->{_title} = $title;
+      $branch->{$filename}->{_nav}   = $nav;
     }
   }
-  ## reached end of files, so add them to array
-  if ((keys %$page_hash) > 0) { # not an empty hash
-    push (@$node_array, $page_hash);
-  }
+
+  ## Descent into directories recursively
   foreach my $dirname (@$sub_dirs) {
     ## omit CVS directories and directories beginning with . or _
-    if ($dirname eq 'CVS' || $dirname =~ /^\./ || $dirname =~ /^_/) {
-      next;
-    }
-    $name = "$dir/$dirname";
-
-    next if $subcount == 0;   ## Seen all the subdirs?
-
-    unless ($name =~ m#java/# || $name =~ m#info/website#) {
-      ## Get link count and check for directoriness.
-      ($dev,$ino,$mode,$nlink) = lstat($dirname);
-
-      ## create a reference to an anonymous array that will be
-      ## the node for this next branch of the tree
-      my $sub_node = [];
-      push (@$node_array, $sub_node);
-
-      ## Recurse into directory
-      chdir $dirname || die "Can't cd to $name";
-      ++$curr_depth;
-      read_web_tree($sub_node, $name, $nlink);
-      chdir '..';
-      --$curr_depth;
-    }
-    --$subcount;
+    next if $dirname eq 'CVS' || $dirname =~ /^\./ || $dirname =~ /^_/;
+    #next if $full_path =~ m#(?:java|info/website)/#;
+    $branch->{$dirname}->{_path} = "$path$dirname/";
+    read_web_tree($branch->{$dirname}, $doc_root);
   }
 }
 
@@ -1644,16 +1557,16 @@ sub read_web_tree {
 sub sortnames {
 ### Does a case-insensitive sort of a list of file names
 ### and separates them into two lists - directories and non-directories
-  my @namelist = @_;
-  my @sorted = sort {lc $a cmp lc $b} @namelist;
+  my ($namelist, $full_path) = @_;
+  my @sorted = sort {lc $a cmp lc $b} @$namelist;
 
   my (@file_list, @dir_list);
 
   foreach my $item (@sorted) {
-    if (-d $item) {
+    if (-d $full_path.$item) {
       push (@dir_list, $item);
     }
-    else {
+    elsif ($item =~ /\.html$/) {
       push (@file_list, $item);
     }
   }
@@ -1667,7 +1580,7 @@ sub get_title {
   my $file = shift;
   my $title;
 
-  open IN, "< $file" or die "Couldn't open input file $file :(\n";
+  open IN, "< $file" || die "Couldn't open input file $file :(\n";
   while (<IN>) {
     if (m!<title.*?>(.*?)(?:</title>|$)!i) {
       $title = $1;
@@ -1676,9 +1589,40 @@ sub get_title {
     }
     last if m!</title!i;
   }
+  unless ($title) {
+    if ($file =~ m!/(\w+)/index\.html!) {
+      $title = $1;
+    } elsif ($file =~ m!/(\w+)\.html!) {
+      $title = $1;
+    }
+  }
+  
   close IN;
   $title =~ s/\s{2,}//g;
   return $title;
+}
+
+
+sub get_meta_navigation {
+### Parses an HTML file and returns the contents of the navigation meta tag
+  my $file = shift;
+  my $nav;
+
+  open IN, "< $file" || die("Can't open input file $file :(\n");
+  while (<IN>) {
+    if (/<meta\s+name\s*=\s*"navigation"\s+content\s*=\s*"([^"]+)"\s*\/?>/ism) {
+      $nav = $1;
+    } elsif (/<meta\s+content\s*=\s*"([^"]+)"\s+name\s*=\s*"navigation"\s*\/?>/ism) {
+      $nav = $1;
+    }
+  }
+
+  if (!$nav && $file =~ m!/(\w+)/\w+\.html$!) {
+    $nav = join ' ', split /_/, $1;
+  }
+
+  close IN;
+  return $nav;
 }
 
 

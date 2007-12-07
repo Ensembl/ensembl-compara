@@ -24,7 +24,7 @@ sub handler {
   unless( $pageContent ) {
     $r->err_headers_out->{'Ensembl-Error'=>"Problem in module EnsEMBL::Web::Apache::SendDecPage"};
     $r->custom_response(SERVER_ERROR, "/Crash");
-    
+
     return DECLINED if $r->content_type ne 'text/html';
     my $rc = $r->discard_request_body;
     return $rc unless $rc == OK;
@@ -33,7 +33,7 @@ sub handler {
       $r->log->error("Invalid method in request ", $r->the_request);
       return HTTP_NOT_IMPLEMENTED;
     }
-
+    
     return DECLINED                if $r->method_number == M_OPTIONS;
     return HTTP_METHOD_NOT_ALLOWED if $r->method_number == M_PUT;
     return DECLINED                if -d $r->filename;
@@ -97,7 +97,7 @@ sub handler {
 
   $pageContent =~ s/\[\[([A-Z]+)::([^\]]*)\]\]/my $m = "template_$1"; no strict 'refs'; &$m($r, $2);/ge;
 
-  $pageContent =~ s/<h2>/'<h2 class="breadcrumbs">'.breadcrumbs( $r );/ge;
+  $pageContent =~ s/<h2.*?>/'<h2 class="breadcrumbs">'.breadcrumbs( $r->uri, $ENSEMBL_WEB_REGISTRY->species_defs->ENSEMBL_WEB_TREE );/ge;
 
   # do SSI includes
   #  $pageContent =~ s/<!--#include\s+virtual\s*=\s*\"(.*)\"\s*-->/template_INCLUDE($r, $1)/eg;
@@ -149,23 +149,18 @@ sub handler {
 } # end of handler
 
 sub breadcrumbs {
-  my $r = shift;
-  my $filename = $r->uri;
-  my $pointer = qq(<img src="/img/red_bullet.gif" width="4" height="8" alt="&gt;" class="breadcrumb" />);
-  my $DIR = '';
+  my ($path, $branch) = @_;
+  
   my $out = '';
-  my @DATA = split '/', $filename;
-  my $file = pop @DATA;
-  pop @DATA if $file eq 'index.html';
-  my $level = 0;
-  foreach my $part ( @DATA ) {
-    next if ($part eq 'info' && $level == 0); ## omit top-level info [OUGHT TO OMIT ALL DIRS WITH NO INDEX!]
-    $DIR.=$part.'/';
-    if( $DIR ne '/' && $ENSEMBL_WEB_REGISTRY->species_defs->ENSEMBL_BREADCRUMBS->{$DIR} ) {
-      $out .= sprintf qq(<a href="%s" title="%s" class="breadcrumb">%s</a> $pointer ), $DIR, $ENSEMBL_WEB_REGISTRY->species_defs->ENSEMBL_BREADCRUMBS->{$DIR}[1], $ENSEMBL_WEB_REGISTRY->species_defs->ENSEMBL_BREADCRUMBS->{$DIR}[0];
-      $level++;
-    }
+  my $pointer = qq(<img src="/img/red_bullet.gif" width="4" height="8" alt="&gt;" class="breadcrumb" />);
+
+  my ($step, $rest) = $path =~ m!/(.*?)(/.*)?$!; 
+
+  if (defined $branch->{$step} && $step !~ /\.html/ && $rest ne '/index.html') {
+    $out = sprintf qq(<a href="%s" title="%s" class="breadcrumb">%s</a> $pointer ), $branch->{$step}->{_path}, $branch->{$step}->{_nav}, $branch->{$step}->{_title};
+    $out .= breadcrumbs($rest, $branch->{$step}) if $rest;
   }
+  
   return $out;
 }
 
