@@ -132,39 +132,39 @@ sub bookmark_menu_item {
 
 sub static_menu_items {
   my( $self, $doc ) = @_;
-=pod
   $doc->menu->add_block( 'docs', 'nested', 'Help & Documentation', 'priority' => 20 );
   my $URI = $doc->{_renderer}->{r}->uri;
 
-  my $tree = $doc->species_defs->ENSEMBL_INFO;
-  my ($info_dir, $info_title, @subdirs) = @$tree;
-  foreach my $dir (@subdirs) {
+  my $tree = $doc->species_defs->ENSEMBL_WEB_TREE->{info};
+  my @dirs  = grep { $_ !~ /(:?\.html|^_)/ } keys %$tree;
+
+  foreach my $dir (@dirs) {
+    my $node = $tree->{$dir};
     my $options = [];
-    my @elements = @$dir;
-    next if ref($elements[0]) eq 'HASH';
-    my $link = shift @elements;
-    my $text = shift @elements;
+    my $link = $node->{_path};
+    my $text = $node->{_title};
+    next if $link =~ /genomes/;
     next unless ($link);
+
+    ## Second-level nav for current section
     if ($URI =~ m#^/info# && index($URI, $link) > -1) {
-      my %links;
-      foreach my $subelement (@elements) {
-        if (ref($subelement) eq 'ARRAY') {
-          $links{$subelement->[1]} = $subelement->[0];
-        }
-        elsif (ref($subelement) eq 'HASH') {
-          while (my ($k, $v) = each (%$subelement)) {
-          $links{$k} = $v;
-          }
-        }
+      my @subdirs = grep { $_ !~ /(:?\.html|^_)/ } keys %$node;
+      my @pages = grep { /\.html/ } keys %$node;
+      my ($url, $title);
+
+      foreach my $subdir (@subdirs) {
+        $url   = $node->{$subdir}->{_path};
+        $title = $node->{$subdir}->{_title};
+        push @$options, {'href'=>$url, 'text'=>$title} if $title;
       }
-      my @page_order = sort keys %links;
-      foreach my $page ( @page_order ) {
-        push @$options, {'href'=>$links{$page}, 'text'=>$page} if $page;
+      foreach my $page (sort { $node->{$a} cmp $node->{$b} } @pages) {
+        $url   = $node->{_path} . $page;
+        $title = $node->{$page}->{_title};
+        push @$options, {'href'=>$url, 'text'=>$title} if $title;
       }
     }
     $doc->menu->add_entry('docs', 'href'=> $link, 'text'=> $text, 'options' => $options );
   }
-=cut
 }
 
 sub dynamic_menu_items {
