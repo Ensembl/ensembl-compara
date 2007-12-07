@@ -32,7 +32,11 @@ sub render {
     $URL = '/common/help/contact'.($extra_HTML?"?$extra_HTML":"");
     $help_link = qq(<a href="$URL" class="blue-button">@{[$self->label]}</a>);
   } else {
-    $URL = "/@{[$ENV{'ENSEMBL_SPECIES'}||'perl']}/helpview".($extra_HTML?"?$extra_HTML":"");
+    my $dir = $ENV{'ENSEMBL_SPECIES'};
+    $URL = "/$dir/helpview".($extra_HTML?"?$extra_HTML":"");
+    if (!$dir || $dir =~ /Multi/i || $dir eq 'common') {
+      $URL = '/perl/helpview';
+    }
     $help_link = sprintf( q(<a href="javascript:void(window.open('%s','helpview','%s'))" class="blue-button">%s</a>),
       $URL, HELPVIEW_WIN_ATTRIBS, uc($self->label)
     );
