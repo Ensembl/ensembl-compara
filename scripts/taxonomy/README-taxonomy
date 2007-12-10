@@ -5,6 +5,9 @@ the necessary information to generate the taxonomy tree structure used by
 the Bio::EnsEMBL::Compara::NCBITaxon object (and its corresponding adaptor
 Bio::EnsEMBL::Compara::DBSQL::NCBITaxonAdaptor).
 
+First of all, send an email to ensembl-admin and alert people that you
+will be updating ncbi_taxonomy in ens-livemirror.
+
 The NCBI taxonomy database dumps are apparently generated every hour.
 We'll update our "mirror" at each release (every 2 months).
 
@@ -60,11 +63,11 @@ exit
 
 # This should take about 60 seconds
 mysqlimport -hens-livemirror -uensadmin -pensembl -L ncbi_taxonomy ncbi_taxa_node.txt
-# ncbi_taxonomy.ncbi_taxa_node: Records: 383990  Deleted: 0  Skipped: 0  Warnings: 1151970
+#ncbi_taxonomy.ncbi_taxa_node: Records: 392528  Deleted: 0  Skipped: 0  Warnings: 1177584
 
 # This should take about 90-120 seconds
 mysqlimport -hens-livemirror -uensadmin -pensembl -L ncbi_taxonomy ncbi_taxa_name.txt
-# ncbi_taxonomy.ncbi_taxa_name: Records: 525516  Deleted: 0  Skipped: 0  Warnings: 0
+ncbi_taxonomy.ncbi_taxa_name: Records: 539728  Deleted: 0  Skipped: 0  Warnings: 0
 
 mysql -hens-livemirror -uensadmin -pensembl -N -e "update ncbi_taxa_node set parent_id=0 where parent_id=taxon_id" ncbi_taxonomy
 
@@ -103,5 +106,28 @@ mysql -hens-livemirror -uensro ncbi_taxonomy -e "select * from ncbi_taxa_name wh
 +----------+---------------------+-----------------+
 |        1 | all                 | synonym         |
 |        1 | root                | scientific name |
-|        1 | 2007-09-19 15:58:11 | import date     |
+|        1 | 2007-11-07 09:38:49 | import date     |
 +----------+---------------------+-----------------+
+
+Ochotona princeps
+Taxonomy ID: 9978
+Genbank common name: American pika
+Rank: species
+Genetic code: Translation table 1 (Standard)
+Mitochondrial genetic code: Translation table 2 (Vertebrate Mitochondrial)
+Other names:
+common name: 	southern American pika
+
+Lineage( full )
+    cellular organisms; Eukaryota; Fungi/Metazoa group; Metazoa; Eumetazoa; Bilateria; Coelomata; Deuterostomia; Chordata; Craniata; Vertebrata; Gnathostomata; Teleostomi; Euteleostomi; Sarcopterygii; Tetrapoda; Amniota; Mammalia; Theria; Eutheria; Euarchontoglires; Glires; Lagomorpha; Ochotonidae; Ochotona 
+
+Microcebus murinus
+Taxonomy ID: 30608
+Genbank common name: gray mouse lemur
+Rank: species
+Genetic code: Translation table 1 (Standard)
+Mitochondrial genetic code: Translation table 2 (Vertebrate Mitochondrial)
+
+Lineage( full )
+    cellular organisms; Eukaryota; Fungi/Metazoa group; Metazoa; Eumetazoa; Bilateria; Coelomata; Deuterostomia; Chordata; Craniata; Vertebrata; Gnathostomata; Teleostomi; Euteleostomi; Sarcopterygii; Tetrapoda; Amniota; Mammalia; Theria; Eutheria; Euarchontoglires; Primates; Strepsirrhini; Lemuriformes; Cheirogaleidae; Microcebus 
+

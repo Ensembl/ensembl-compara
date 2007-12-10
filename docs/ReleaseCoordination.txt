@@ -3,18 +3,17 @@
 
 1. Once the release coordinator has sent the mail for declaration of
 intention, ask the other members of compara group (or related) what
-they intend to produce.  Sometimes, you have to wait a bit that gene
+they intend to produce. Sometimes, you have to wait a bit that gene
 builders do their declaration first to know what compara will need to
-produce and also potential schema changes.
-Compara has one extra days to send the DOI, because we have to know which new 
-species are added. 
+produce and also potential schema changes. Compara has one extra day
+to send the DOI, because we have to know which new species are added.
 
 For homologues and families, ask Albert (avilella@ebi.ac.uk).  
 For whole genome alignments and synteny ask Javier (jherrero@ebi.ac.uk). 
-For ComparaMart ask Benoit (benoit@ebi.ac.uk).
+For ComparaMart ask Benoit (benoit@ebi.ac.uk) or Richard (holland@ebi.ac.uk).
 
 2. Mail the compara declaration of intentions to ensembl-admin@ebi.ac.uk
-send the DOI at after the Genebuilders
+send the DOI after the Genebuilders
 
 3. Define priorities and assign jobs to the team members.
 
@@ -24,11 +23,15 @@ genome_db and dnafrag tables. You can set up your registry and use the
 ~ensembl-compara/scripts/pipeline/update_genome.pl script. This script
 sets the new genome_dbs as the default assemblies.
 You have to create new genome_db_id (dnafrag) when it is a new assembly, or a new species. 
-Sometime it's done by the pairwise guys as they want to start building earlier. 
+Sometimes it's done by the pairwise guys as they want to start building earlier. 
 
 eg. 
 perl update_genome.pl --reg_conf reg_conf_v44.pl --compara compara_master --species bushbaby
 
+eg.
+perl /nfs/acari/avilella/src/ensembl_main/ensembl-compara/scripts/pipeline/update_genome.pl \
+ --reg_conf /lustre/work1/ensembl/avilella/hive/avilella_compara_homology_48/v48.conf \
+ --compara compara-master --species "Ochotona princeps"
 
 5. Wait for the handover before starting to build the new database in case
 any of the new species cannot make it. Don't forget to switch the
@@ -41,6 +44,19 @@ ncbi_taxonomy database located in mysql::/ens-livemirror:3306/ncbi_taxonomy
 This is usually done by the person who runs the orthologs/paralogs.
 For more information, here is the doc ensembl-compara/scripts/taxonomy/README-taxonomy
 
+mysqldump -u ensro -h ens-livemirror -P3306 --extended-insert --compress --delayed-insert ncbi_taxonomy \
+ncbi_taxa_node ncbi_taxa_name | mysql -u ensadmin -pxxxx -h compara1 jh7_ensembl_compara_master
+
+mysql -hcompara1 -uensadmin -pxxxx jh7_ensembl_compara_master -e \
+ "update ncbi_taxa_name set name = \"Canis familiaris\" where taxon_id = 9615 and name_class = \"scientific name\" and name = \"Canis lupus familiaris\""
+mysql -hcompara1 -uensadmin -pxxxx jh7_ensembl_compara_master -e \
+ "update ncbi_taxa_name set name = \"Canis lupus familiaris\" where taxon_id = 9615 and name_class = \"synonym\" and name = \"Canis familiaris\""
+
+eg.
+mysql -hcompara3 -uensadmin -pxxxx avilella_orang_homology_48 -e \
+ "update ncbi_taxa_name set name = \"Pongo abelii\" where taxon_id = 9600 and name_class = \"scientific name\" and name = \"Pongo pygmaeus abelii\""
+mysql -hcompara3 -uensadmin -pxxxx avilella_orang_homology_48 -e \
+ "update ncbi_taxa_name set name = \"Pongo pygmaeus abelii\" where taxon_id = 9600 and name_class = \"synonym\" and name = \"Pongo pygmaeus abelii\""
 
 7. New method_link_species_set entries might be added using the
 ~ensembl-compara/scripts/pipeline/create_mlss.pl script. The release
@@ -70,7 +86,6 @@ perl create_mlss.pl --method_link_type ENSEMBL_PARALOGUES --genome_db_id 3,4,5,1
 --sg stands for keep genome_db_id in the list alone (singleton) 
 
 
-
 8. Create the new database for the new release and add it to your
 registry configuration file. Use the ~ensembl-compara/sql/table.sql
 file to create the tables and populate the database with the relevant
@@ -80,21 +95,25 @@ previous release. This can be done with the
 requires the master database, the previous released database and the
 fresh new database with the tables already created. The script will
 copy relevant data from the master and the old database into the new
-one.
+one. 
+
+Note: make sure there are no error messages, as sometimes different
+versions of mysql may give you an error message about invalid options
+of mysqldump.
 
   mysql -u USER -pPASSWD -h compara1 -P 3306 \
-      -e "CREATE DATABASE jh7_ensembl_compara_39"
+      -e "CREATE DATABASE avilella_ensembl_compara_48"
   mysql -u USER -pPASSWD -h compara1 -P 3306 \
-      jh7_ensembl_compara_39 < ~/src/ensembl-compara/sql/table.sql
-  populate_new_database.pl --master compara_master \
-      --old compara_38 --new_compara_39
+      avilella_ensembl_compara_48 < ~/src/ensembl-compara/sql/table.sql
+  populate_new_database.pl --master compara-master \
+      --old compara_38 --new_compara_48
 
 If new method_link_species_sets are added in the master after this, you use this
 script again to copy the new relevant data. In such case, you will have to skip
 the old_database in order to avoid trying to copy the dna-dna alignments and
 syntenies again.
 
-  populate_new_database.pl --master compara_master --new compara_39
+  populate_new_database.pl --master compara_master --new compara_48
 
 9. Check that primary data (species data, dnafrags...) in the new compara DB
 match the data in the corresponding core databases using the healthchecks. You
@@ -121,11 +140,11 @@ like this:
 
 Now you can run the compara-compara_external_foreign_keys healthchecks:
 
-#  ./run-healthcheck.sh -d jh7_ensembl_compara_39 -type compara \
-#      -d2 .+_core_39_.+ compara_external_foreign_keys
+#  ./run-healthcheck.sh -d avilella_ensembl_compara_48 -type compara \
+#      -d2 .+_core_48_.+ compara_external_foreign_keys
 
-  ./run-healthcheck.sh -d jh7_ensembl_compara_42 -type compara \
-      -d2 .+_core_42_.+ compara_external_foreign_keys
+  ./run-healthcheck.sh -d avilella_ensembl_compara_48 -type compara \
+      -d2 .+_core_48_.+ compara_external_foreign_keys
 
 ...and correct mismatches if any!
 
@@ -139,41 +158,60 @@ Now you can run the compara-compara_external_foreign_keys healthchecks:
 - BlastZ-Net, Pecan, Gerp
 
   These data should be in a production database. You can copy them using the
-  copy_data.pl script in ensmbl-compara/scripts/pipeline. This script requires
+  copy_data.pl script in ensembl-compara/scripts/pipeline. This script requires
   write access in the production database if the dnafrag_ids need fixing or the
   data must be copyied in binary mode (this is required for conservation scores).
   Example:
 
-  bub -I copy_data.pl --from_url mysql://ro_user@host/production_db \
+  bsub -q yesterday -I ensembl-compara/scripts/pipeline/copy_data.pl \
+    --from_url mysql://ro_user@host/production_db \
     --to_url mysql://rw_user:password@host/release_db --mlss 268
 
 - Syntenies
 
-  Please refer to the documentation in the ensembl-compara/script/syteny directory.
+  Please refer to the documentation in the ensembl-compara/script/synteny directory.
 
 - Protein trees/homologues/families
 
   The merge is done by the person in charge of the protein compara production
   side. The compara release coordinator needs to let him/her know where is the
-  database to merge to. It involves using the
-  ensembl-compara/scripts/pipeline/merge_protein_data.pl script for the merging.
+  database to merge to. It involves:
+
+  copying the homology db (usually from compara2 to compara1):
+
+  ssh mysqlens@compara1
+  emacs -nw /tmp/avilella_compara_homology_48.copy_options
+  compara2        3306    avilella_compara_homology_48        compara1        3306    avilella_compara_homology_48
+  perl ~avilella/src/ensembl_main/ensembl/misc-scripts/CopyDBoverServer.pl \
+    -pass xxxx -noflush /tmp/avilella_compara_homology_48.copy_options \
+    > /tmp/avilella_compara_homology_47.copy.err 2>&1 &
+
+  and then merging the data in compara1 with:
+
+  ssh mysqlens@compara1
+  bash
+  cd /mysql/data_3306/tmp
+  perl /nfs/acari/avilella/src/ensembl_main/ensembl-compara/scripts/pipeline/merge_protein_data.pl \
+    -host compara1 -user ensadmin -pass xxxx \
+     -src_db avilella_compara_homology_48 \
+    -dest_db avilella_ensembl_compara_48 -socket /mysql/data_3306/mysql.sock
 
 11. Drop method_link_species_set entries for alignments which did not make it.
 
 12. Update the max_alignment_length. You can use the corresponding healthcheck
 with the -repair option:
 
-    ./run-healthcheck.sh -d jh7_ensembl_compara_42 -type compara -repair Meta
+    ./run-healthcheck.sh -d avilella_ensembl_compara_48 -type compara -repair Meta
 
 13. Run the healthchecks:
 
-  ./run-healthcheck.sh -d jh7_ensembl_compara_42 -type compara \
-      -d2 .+_core_39_.+ compara_external_foreign_keys
+  ./run-healthcheck.sh -d avilella_ensembl_compara_48 -type compara \
+      -d2 .+_core_48_.+ compara_external_foreign_keys
 
-#  ./run-healthcheck.sh -d jh7_ensembl_compara_42 -type compara \
-#      compara_db_constraints
+  ./run-healthcheck.sh -d avilella_ensembl_compara_48 -type compara \
+      compara_db_constraints
 
-  ./run-healthcheck.sh -d jh7_ensembl_compara_42 -type compara \
+  ./run-healthcheck.sh -d avilella_ensembl_compara_48 -type compara \
       protein_db_constraints
 
 ...and correct mismatches if any!
@@ -203,19 +241,19 @@ Don't forget to commit these changes into the repository!
 You might need to update the create_mlss_table.conf file with new species added.
 
   perl ~/src/ensembl_main/ensembl-compara/docs/create_mlss_table.pl \
-    --reg_conf ~/.ensembl_init --dbname Compara39 --method_link PECAN \
+    --reg_conf ~/.ensembl_init --dbname Compara48 --method_link PECAN \
     --list > pecan.inc
 
   perl ~/src/ensembl_main/ensembl-compara/docs/create_mlss_table.pl \
-    --reg_conf ~/.ensembl_init --dbname Compara39 --method_link TRANSLATED_BLAT \
+    --reg_conf ~/.ensembl_init --dbname Compara48 --method_link TRANSLATED_BLAT \
     --trim > tblat.inc
 
   perl ~/src/ensembl_main/ensembl-compara/docs/create_mlss_table.pl \
-    --reg_conf ~/.ensembl_init --dbname Compara39 --method_link BLASTZ_NET \
+    --reg_conf ~/.ensembl_init --dbname Compara48 --method_link BLASTZ_NET \
     --trim > blastz_net.inc
 
   perl ~/src/ensembl_main/ensembl-compara/docs/create_mlss_table.pl \
-    --reg_conf ~/.ensembl_init --dbname Compara39 --method_link SYNTENY \
+    --reg_conf ~/.ensembl_init --dbname Compara48 --method_link SYNTENY \
      --trim  > synteny.inc
 
  ==> The resulting blastz-net table is huge. In order to make it slightly smaller,

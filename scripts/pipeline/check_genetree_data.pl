@@ -7,7 +7,7 @@ my $dba = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor
   (-host => 'compara1',
    -port => 3306,
    -user => 'ensro',
-   -dbname => 'kb3_ensembl_compara_47');
+   -dbname => 'avilella_ensembl_compara_48');
 
 my $doit = 1;
 
