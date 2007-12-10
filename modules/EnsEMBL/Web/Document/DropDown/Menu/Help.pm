@@ -21,7 +21,7 @@ sub new {
     'alt'         => 'Help'
   ); 
   $self->add_link( 'Configuring', $self->help_link('contigview#pull_down',1), '' );
-  $self->add_link( 'DAS sources', $self->help_link('dassources',1),           '' );
+  # NEEDS HELP PAGE $self->add_link( 'DAS sources', $self->help_link('dassources',1),           '' );
   $self->add_link( 'General',     $self->help_link($self->{'script'},1),      '' );
   $self->add_link( 'Helpdesk',    "javascript:void(window.open('/$self->{'species'}/helpview?kw=contigview;se=1','helpview','width=700,height=550,resizable,scrollbars'))", '' );
   return $self;
