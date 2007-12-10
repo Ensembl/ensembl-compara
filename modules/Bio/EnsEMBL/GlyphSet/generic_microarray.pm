@@ -30,8 +30,7 @@ sub image_label {
 ## Link back to this page centred on the map fragment
 
 sub href {
-  my ($self, $id, $fd ) = @_;
-  my $f = $fd->[0][2];
+  my ($self, $id, $f ) = @_;
   my $tmpl = "/%s/featureview?type=OligoProbe;id=%s";
   return sprintf( "/%s/featureview?type=OligoProbe;id=%s", $self->{container}{_config_file_name_}, $f->probeset );
 }
@@ -39,11 +38,10 @@ sub href {
 ## Create the zmenu...
 ## Include each accession id separately
 sub zmenu {
-  my ($self, $id, $fd ) = @_;
-  my $f = $fd->[0][2];
+  my ($self, $id, $f ) = @_;
   return {
     'caption' => "Oligo feature: ".$f->probeset,
-    'Probe set details: ' => $self->href( $id, $fd )
+    'Probe set details: ' => $self->href( $id, $f )
   };
 }
 sub feature_group{

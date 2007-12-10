@@ -9,7 +9,7 @@
 #
 package Sanger::Graphics::Renderer::gif;
 use strict;
-use warnings;
+#use warnings;
 use base qw(Sanger::Graphics::Renderer);
 use GD;
 ## use GD::Text::Align;
@@ -147,6 +147,8 @@ sub render_Text {
   ########## Stock GD fonts
   my $left      = $glyph->{'pixelx'}    || 0;
   my $textwidth = $glyph->{'textwidth'} || 0;
+  my $top       = $glyph->{'pixely'}    || 0;
+  my $textheight = $glyph->{'pixelheight'} || 0;
   my $halign    = $glyph->{'halign'}    || '';
 
   if($halign eq 'right' ) {
@@ -157,24 +159,24 @@ sub render_Text {
   }
 
   if($font eq 'Tiny') {
-    $self->{'canvas'}->string(gdTinyFont,  $left, $glyph->{'pixely'}, $glyph->text(), $colour);
+    $self->{'canvas'}->string(gdTinyFont,  $left, $top, $glyph->text(), $colour);
 
   } elsif($font eq 'Small') {
-    $self->{'canvas'}->string(gdSmallFont, $left, $glyph->{'pixely'}, $glyph->text(), $colour);
+    $self->{'canvas'}->string(gdSmallFont, $left, $top, $glyph->text(), $colour);
 
   } elsif($font eq 'MediumBold') {
-    $self->{'canvas'}->string(gdMediumBoldFont, $left, $glyph->{'pixely'}, $glyph->text(), $colour);
+    $self->{'canvas'}->string(gdMediumBoldFont, $left, $top, $glyph->text(), $colour);
 
   } elsif($font eq 'Large') {
-    $self->{'canvas'}->string(gdLargeFont, $left, $glyph->{'pixely'}, $glyph->text(), $colour);
+    $self->{'canvas'}->string(gdLargeFont, $left, $top, $glyph->text(), $colour);
 
   } elsif($font eq 'Giant') {
-    $self->{'canvas'}->string(gdGiantFont, $left, $glyph->{'pixely'}, $glyph->text(), $colour);
+    $self->{'canvas'}->string(gdGiantFont, $left, $top, $glyph->text(), $colour);
 
   } elsif($font) {
     #########
     # If we didn't recognise it already, assume it's a TrueType font
-    $self->{'canvas'}->stringTTF( $colour, $self->{'ttf_path'}.$font.'.ttf', $glyph->ptsize, 0, $left, $glyph->{'pixely'}+$glyph->{'pixelheight'}, $glyph->{'text'} );
+    $self->{'canvas'}->stringTTF( $colour, $self->{'ttf_path'}.$font.'.ttf', $glyph->ptsize, 0, $left, $top+$textheight, $glyph->{'text'} );
 
 ###  my ($cx, $cy)      = $glyph->pixelcentre();
 ###  my $xpt = $glyph->{'pixelx'} + 

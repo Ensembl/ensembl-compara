@@ -57,6 +57,7 @@ sub _init {
     if( $ms ) {
       $fid = $ms->name;
     }
+
     if( $fid eq '-' || $fid eq '' ) {
       $fid ='';
       my @mss = grep { $_->name ne '-' } @{$f->marker->get_all_MarkerSynonyms||[]};

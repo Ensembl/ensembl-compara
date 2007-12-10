@@ -79,9 +79,7 @@ sub init_label {
 #warn join ' * ', $min_score, $max_score; 
 
     $zmenu->{"04:Region has features in the range $min_value..$max_value"} = '' if (defined $min_value);
-# At the moment the features outside of the specified range are set to the maximum / minimum values
-# The plan is to introduce an option not to display those features at all 
-    if (1 || ($Extras->{'autoScale'} eq 'on')) { 
+    if (1 || ($Extras->{'autoScale'} eq 'on')) {
 	$zmenu->{"05:Scores are scaled to the range $min_score .. $max_score"} = '';
     } else {
 	$zmenu->{"05:Displaying features with scores in the range $min_score .. $max_score"} = '';
@@ -120,6 +118,7 @@ sub init_label {
 
 ## Now we render the actual link...
   my( $fontname, $fontsize ) = $self->get_font_details( 'label' );
+  $track_label = "[$Extras->{'alt_assembly'}] $track_label" if $Extras->{'alt_assembly'};
   my @res = $self->get_text_width( 0, $track_label, '', 'font'=>$fontname, 'ptsize' => $fontsize );
   $self->label( new Sanger::Graphics::Glyph::Text({
     'text'      => $track_label,

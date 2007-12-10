@@ -33,15 +33,7 @@ sub _init {
     my $authority = lc($self->species_defs->AUTHORITY);
 
     ## hack to fix flybase db type definition
-    if ($authority eq $type || ($type eq 'gene' && $authority eq 'flybase')){
-      $db = 'core';
-    } elsif ($type eq 'genomewise') {
-      $db = 'est';
-    } elsif( $type ){
-      ($self->species_defs->ENSEMBL_SITETYPE eq 'Vega') ? ($db = 'core') : ($db = 'vega');
-    } else {
-      $db = 'core';
-    }
+    my $db = $protein->adaptor->{'dbc'}->{_dbname} =~ /_(vega|otherfeatures|cdna)_/ ? $1 : 'core';
 
     my $x = 0;
     my $y = 0;
@@ -56,8 +48,8 @@ sub _init {
         next unless $exon_id;
         my $exonview_link = '';
         if( $prot_id ){
-          $exonview_link = sprintf( "/%s/exonview?exon=%s;db=%s", 
-          $self->{container}{_config_file_name_}, $exon_id, $db );
+          $exonview_link = sprintf( "/%s/exonview?peptide=%s;exon=%s;db=%s", 
+          $self->{container}{_config_file_name_}, $prot_id, $exon_id, $db );
         }
 
         my $rect = new Sanger::Graphics::Glyph::Rect({

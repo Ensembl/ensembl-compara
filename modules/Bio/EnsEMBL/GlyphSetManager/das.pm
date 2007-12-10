@@ -22,6 +22,9 @@ sub init {
     next unless( $Config->get("managed_${das_source_name}",'on') eq 'on' );
     my $extra_config = $species_defs->ENSEMBL_INTERNAL_DAS_SOURCES->{$das_source_name};
     $extra_config->{'name'} = "managed_${das_source_name}";
+    $extra_config->{'alt_assembly'}     = $extra_config->{'assembly'} if
+      $extra_config->{'assembly'} ne $species_defs->ENSEMBL_GOLDEN_PATH;
+
     $self->add_glyphset( $extra_config );
   }
 
@@ -34,8 +37,10 @@ sub init {
     my $das_species   = $source_config->{'species'};
     next if  $das_species && $das_species ne '' && $das_species ne $ENV{'ENSEMBL_SPECIES'};
     my $extra_config = \%{$source->get_data};
-    $extra_config->{'extra_name'}  = "managed_extdas_".$source->get_key;
-    $extra_config->{'extra_url'} ||= "http://$extra_config->{'URL'}/das";
+    $extra_config->{'extra_name'}     = "managed_extdas_".$source->get_key;
+    $extra_config->{'extra_url'}    ||= "http://$extra_config->{'URL'}/das";
+    $extra_config->{'alt_assembly'}   = $extra_config->{'assembly'} if
+      $extra_config->{'assembly'} ne $species_defs->ENSEMBL_GOLDEN_PATH;
 #        warn( "ADDING GLYPHSET $das_species $source" );
     $self->add_glyphset( $extra_config );        
   }
