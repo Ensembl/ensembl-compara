@@ -146,6 +146,7 @@ sub views {
     
   ## Check old database and convert to records
   ## NB - convert to else block once EnsEMBL is fully migrated?
+warn "#### ", join '; ', map "@$_", @$params;
   my $results = $self->adaptor->fetch_articles($params);
   foreach my $row (@$results) {
     my %fields = (

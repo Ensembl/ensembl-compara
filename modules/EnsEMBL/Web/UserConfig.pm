@@ -855,6 +855,7 @@ sub ADD_ALL_DNA_FEATURES {
   $self->add_new_track_cdna( 'horse_cdna',    'Horse cDNAs',      $POS++, @_ );
   $self->add_new_track_cdna( 'orangutan_cdna',    'Orangutan cDNAs',      $POS++, @_ );
   $self->add_new_track_cdna( 'lamprey_cdna', 'Lamprey cDNAs', $POS++, @_ );
+  $self->add_new_track_cdna( 'orangutan_cdna',    'Orangutan cDNAs',      $POS++, @_ );
   $self->add_new_track_cdna( 'pig_cdna',    'Pig cDNAs',      $POS++, @_ );
   $self->add_new_track_cdna( 'dog_cdna',   'Dog cDNAs',     $POS++, @_ );
   $self->add_new_track_cdna( 'rat_cdna',   'Rat cDNAs',     $POS++, @_ );
@@ -989,6 +990,7 @@ sub ADD_ALL_EST_FEATURES {
     [ 'chicken_ests',          'Chicken EST' ],
     [ 'est_embl',              "C.savigyi EST" ],  # subset of these in core but don't draw those
     [ 'chicken_est_exonerate', 'Chicken EST (ex.)' ],
+    [ 'human_est',   'Human EST' ],
     [ 'human_est_exonerate',   'Human EST (ex.)' ],
     [ 'est_exonerate',         'EST (ex.)' ],
     [ 'ciona_est',             'Ciona EST' ],
@@ -1047,6 +1049,8 @@ sub ADD_ALL_EST_FEATURES {
 sub ADD_ALL_CLONE_TRACKS {
   my $self = shift;
   my $POS = shift || 2500;
+  $self->add_clone_track( 'MAPTP_set_v1', 'MAPTP clone set',   $POS++, @_ );
+  $self->add_clone_track( '10Mb_set', '10Mb clone set',   $POS++, @_ );
   $self->add_clone_track( '0_5MB_cloneset', '0.5Mb clones',   $POS++, @_ );
   $self->add_clone_track( '1MB_cloneset',   '1Mb clones',     $POS++, @_ );
   $self->add_clone_track( 'cloneset_1mb',   '1Mb clones',     $POS++, @_ );
@@ -1113,7 +1117,7 @@ sub ADD_ALL_PROTEIN_FEATURES {
   $self->add_new_track_protein( 'aedes_protein',       'Aedes proteins', $POS++, @_ );
   $self->add_new_track_protein( 'cow_protein',         'Cow proteins', $POS++, @_ );
   $self->add_new_track_protein( 'horse_protein',    'Horse proteins',      $POS++, @_ );
-  $self->add_new_track_protein( 'orangutan_protein',    'Orangutan proteins',      $POS++, @_ );
+  $self->add_new_track_protein( 'orangutan_protein',   'Orangutan proteins',      $POS++, @_ );
   $self->add_new_track_protein( 'medaka_protein',      'Medaka proteins', $POS++, @_ );
   $self->add_new_track_protein( 'fugu_protein',        'Fugu proteins', $POS++, @_ );
   $self->add_new_track_protein( 'fish_protein',        'Fish proteins', $POS++, @_ );

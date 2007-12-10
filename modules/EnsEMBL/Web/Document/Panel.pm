@@ -378,7 +378,7 @@ sub render {
     if( $status ne 'off' ) {
       if( $self->{'cacheable'} eq 'yes' ) { ### We can cache this panel - so switch the renderer!!!
         my $temp_renderer = $self->renderer;
-        $self->renderer = new EnsEMBL::Web::Document::Renderer::GzCacheFile( $self->{'cache_filename'} );
+        $self->renderer = new EnsEMBL::Web::Document::Renderer::GzCacheFile( $self->{'cache_type'}, $self->{'cache_filename'} );
         if( $self->{'_delayed_write_'} ) {
           $self->renderer->print($content)    unless( $self->renderer->{'exists'} eq 'yes' );
         } else {

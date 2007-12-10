@@ -252,9 +252,11 @@ sub search_SEQUENCE {
         group by mf.misc_feature_id" ]
   );
   foreach ( @{$self->{_results}} ) {
+    my $KEY =  $_->[2] < 1e6 ? 'contigview' : 'cytoview';
+    $KEY = 'cytoview' if $self->species_defs->NO_SEQUENCE;
     $_ = {
       'URL'       => (lc($_->[1]) eq 'chromosome' && length($_->[0])<10) ? "/@{[$self->species]}/mapview?chr=$_->[0]" :
-                        "/@{[$self->species]}/@{[ $_->[2] < 1e6 ? 'contigview' : 'cytoview' ]}?$_->[3]=$_->[0]" ,
+                        "/@{[$self->species]}/$KEY?$_->[3]=$_->[0]" ,
       'idx'       => 'Sequence',
       'subtype'   => ucfirst( $_->[1] ),
       'ID'        => $_->[0],
@@ -330,9 +332,11 @@ sub search_MARKER {
   );
 
   foreach ( @{$self->{_results}} ) {
+    my $KEY =  $_->[2] < 1e6 ? 'contigview' : 'cytoview';
+    $KEY = 'cytoview' if $self->species_defs->NO_SEQUENCE;
     $_ = {
       'URL'       => "/@{[$self->species]}/markerview?marker=$_->[0]",
-      'URL_extra' => [ 'C', 'View marker in ContigView', "/@{[$self->species]}/contigview?marker=$_->[0]" ],
+      'URL_extra' => [ 'C', 'View marker in ContigView', "/@{[$self->species]}/$KEY?marker=$_->[0]" ],
       'idx'       => 'Marker',
       'subtype'   => 'Marker',
       'ID'        => $_->[0],
@@ -406,9 +410,11 @@ sub search_GENE {
   );
   }
   foreach ( @{$self->{_results}} ) {
+    my $KEY =  $_->[2] < 1e6 ? 'contigview' : 'cytoview';
+    $KEY = 'cytoview' if $self->species_defs->NO_SEQUENCE;
     $_ = {
       'URL'       => "/@{[$self->species]}/$_->[3]?db=$_->[2];$_->[4]=$_->[0]",
-      'URL_extra' => [ 'C', 'View marker in ContigView', "/@{[$self->species]}/contigview?db=$_->[2];$_->[4]=$_->[0]" ],
+      'URL_extra' => [ 'C', 'View marker in ContigView', "/@{[$self->species]}/$KEY?db=$_->[2];$_->[4]=$_->[0]" ],
       'idx'       => 'Gene',
       'subtype'   => ucfirst($_->[4]),
       'ID'        => $_->[0],

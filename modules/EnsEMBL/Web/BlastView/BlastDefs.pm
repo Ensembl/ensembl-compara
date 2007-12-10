@@ -58,7 +58,7 @@ sub new{
 #----------------------------------------------------------------------
 sub _build_conf{
 
-  my @species = sort grep{ /^[A-Z][a-z]+_[a-z]+$/ } $SPECIES_DEFS->valid_species();
+  my @species = sort grep{ !/_map$/ } $SPECIES_DEFS->valid_species();
 
   my $method_conf = $SPECIES_DEFS->ENSEMBL_BLAST_METHODS;
 

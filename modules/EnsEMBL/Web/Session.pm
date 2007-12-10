@@ -128,7 +128,7 @@ sub store {
       my $config_key = $storable->{config_key};
       my $d = $storable->{data};
 #warn "STORING $storable $config_key";
-      $self->get_adaptor->setConfigByName( $self->create_session_id($r), 'script', $config_key, $d->Dump );
+      $self->get_adaptor->setConfigByName( $self->create_session_id($r), 'script', $config_key, $d->Dump ) if $config_key;
     }
   }
   $self->save_das;

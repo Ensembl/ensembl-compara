@@ -554,7 +554,7 @@ sub ac_preview {
   my $html = "<h2>Your converted file</h2><h3>Preview</h3>";
 
   ## Retrieve and display converted file
-  my $root = $object->species_defs->ENSEMBL_SERVERROOT;
+  my $root = $object->species_defs->ENSEMBL_TMP_DIR_CACHE;
   my $data_file = $root.$object->param('converted');
   warn "RETRIEVING: $data_file";
   my $cache = new EnsEMBL::Web::File::Text($object->species_defs);
@@ -569,7 +569,7 @@ sub ac_preview {
   $html .= "<pre>$output</pre>";
   
   ## link to actual file
-  my $url = $object->param('converted');
+  my $url = '/img-cache'.$object->param('converted');
   $url =~ s#img/cache#img-cache#;
   $html .= qq#<h3>Download converted file</h3>
 <p><a href="$url">Click to download</a> (Gzipped text)#;

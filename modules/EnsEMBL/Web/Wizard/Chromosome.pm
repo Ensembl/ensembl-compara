@@ -579,7 +579,7 @@ sub ac_convert {
     $fh->gzclose;
   }
 
-  my $root = $object->species_defs->ENSEMBL_SERVERROOT;
+  my $root = $object->species_defs->ENSEMBL_TMP_DIR_CACHE;
   $out =~ s/$root//;
   $parameter{'node'} = 'ac_preview';
   $parameter{'converted'} = $out;

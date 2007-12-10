@@ -35,7 +35,8 @@ sub familyview {
     'code'    => "loc$self->{flag}",
     'caption' => "Location of Ensembl genes containing family $stable_id",
     'cacheable' => 'yes',
-    'cache_filename' => "family-gene-$species-$stable_id.table",
+    'cache_type' => 'familytable',
+    'cache_filename' => "gene-$species-$stable_id.table",
     'status'  => 'panel_table',
     @common,
     'null_data' => '<p>There are no Ensembl genes with this family</p>'
@@ -47,7 +48,8 @@ sub familyview {
     'code'    => "peptides$self->{flag}",
     'caption' => "Other peptides in Family $stable_id",
     'cacheable' => 'yes',
-    'cache_filename' => "family-other-$species-$stable_id.table",
+    'cache_type' => 'familytable',
+    'cache_filename' => "other-$species-$stable_id.table",
     'status'  => 'panel_other',
     @common
   );
@@ -60,7 +62,8 @@ sub familyview {
     'code'    => "peptides$self->{flag}",
     'caption' => "Ensembl peptides in Family $stable_id",
     'cacheable' => 'yes',
-    'cache_filename' => "family-ensembl-$species-$stable_id.table",
+    'cache_type' => 'familytable',
+    'cache_filename' => "ensembl-$species-$stable_id.table",
     'status'  => 'panel_ensembl',
     @common
   );

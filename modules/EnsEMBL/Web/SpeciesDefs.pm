@@ -1530,6 +1530,7 @@ sub read_web_tree {
   ## Read files and populate the branch
   foreach my $filename (@$html_files) {
     my $full_path = "$doc_root$path$filename";
+    next if $full_path =~ m#software/website/edoc#;
     next if $full_path =~ m#api/java#;
     next if $full_path =~ m#api/Pdoc#;
     my $title = get_title( $full_path );
