@@ -324,8 +324,9 @@ sub _parse {
   my $BC = $self->bread_crumb_creator();
 
   my $web_tree = { _path => '/' };
-  read_web_tree($web_tree, $_)
-    for reverse @ENSEMBL_HTDOCS_DIRS;
+  for my $root (reverse @ENSEMBL_HTDOCS_DIRS) {
+    read_web_tree($web_tree, $root);
+  }
   $BC->{'ENSEMBL_WEB_TREE'} = $web_tree;
 
   my ($defaults, $common);
