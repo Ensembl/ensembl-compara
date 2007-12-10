@@ -156,7 +156,7 @@ $integration->add_configuration_task(Integration::Task::Mkdir->new((source => "/
 $integration->add_configuration_task(Integration::Task::Mkdir->new((source => "/ensemblweb/head/integration/checkout/logs")));
 $integration->add_configuration_task(Integration::Task::Mkdir->new((source => "/ensemblweb/head/integration/checkout/tmp")));
 
-$integration->add_configuration_task(Integration::Task::EDoc->new((source => "/ensemblweb/head/integration/checkout/utils/edoc", destination => "/ensemblweb/head/integration/checkout/htdocs/info/software/website/docs")));
+$integration->add_configuration_task(Integration::Task::EDoc->new((source => "/ensemblweb/head/integration/checkout/utils/edoc", destination => "/ensemblweb/head/integration/checkout/htdocs/info/webcode/docs")));
 
 $integration->add_configuration_task(Integration::Task::Execute->new((source => "/ensemblweb/head/integration/checkout/ctrl_scripts/start_server")));
 
