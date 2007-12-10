@@ -54,6 +54,12 @@ sub __gene_databases {
   push @return, 'est' if $self->species_defs->databases->{ 'ENSEMBL_OTHERFEATURES' };
   return @return;
 }
+
+sub _location_from_RegFeature {
+  my( $self, $ID ) = @_;
+  $self->problem( "fatal", "Unknown regulatory", "Could not find regulatory feature $ID" );
+  return undef; 
+}
 sub _location_from_Gene {
   my( $self, $ID ) = @_;
   my $TS;

@@ -9,6 +9,7 @@ our @ISA = qw(EnsEMBL::Web::Document::Renderer::GzFile);
 
 sub new {
   my $class = shift;
+  my $type     = shift;
   my $filename = shift;
 
   my $path = $ENSEMBL_WEB_REGISTRY->species_defs->ENSEMBL_TMP_DIR_CACHE;
@@ -16,7 +17,7 @@ sub new {
   my $c1  = $EnsEMBL::Web::Root::random_ticket_chars[($MD5>>5)&31];
   my $c2  = $EnsEMBL::Web::Root::random_ticket_chars[$MD5&31];
 
-  $filename = "$path/$c1/$c2/$filename.gz";
+  $filename = "$path/$type/$c1/$c2/$filename.gz";
 
   my $self      = { 'filename' => $filename };
   bless $self, $class;

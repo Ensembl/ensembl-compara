@@ -47,7 +47,7 @@ sub createObjects {
       } else {
         $flag = 1;
       }
-    } elsif( ($query =~ /^(GO\:\d+)/i) || ($query =~ /^(\d+)$/) ){
+    } elsif( ($query =~ /^GO:(\d+)/i) || ($query =~ /^(\d+)$/) ){
       $query = uc( $1 );
       $terms = $ga->get_terms({'acc'=>"GO:$query"});
       if( @$terms ) {
