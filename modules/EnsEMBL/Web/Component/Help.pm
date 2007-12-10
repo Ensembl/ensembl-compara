@@ -472,7 +472,7 @@ sub static {
   my ( $panel, $object ) = @_;
   my $label = '';
   my $html = qq(<h3>Non-animated Presentations</h3>
-  <p>We also have an number of our workshop presentations online as PDF documents, covering subjects from overviews of Ensembl to detailed worked examples. Please visit the <a href="/info/helpdesk/tutorials/">tutorials homepage</a> for the up-to-date list.</p>
+  <p>We also have an number of our workshop presentations online as PDF documents, covering subjects from overviews of Ensembl to detailed worked examples. Please visit the <a href="/info/using/website/tutorials/">tutorials homepage</a> for the up-to-date list.</p>
   );
 
   $panel->print($html);
