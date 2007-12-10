@@ -13,7 +13,7 @@ sub render {
     <p class="center">
     &copy; $year <a href="http://www.sanger.ac.uk/" class="nowrap">WTSI</a> /
     <a href="http://www.ebi.ac.uk/" style="white-space:nowrap">EBI</a>.
-    Ensembl is available to <a href="/info/downloads/">download for public use</a> - please see the <a href="/info/code_licence.html">code licence</a> for details.
+    Ensembl is available to <a href="/info/downloads/">download for public use</a> - please see the <a href="/info/about/code_licence.html">code licence</a> for details.
     </p>
     </div></div></div>
     ) 
