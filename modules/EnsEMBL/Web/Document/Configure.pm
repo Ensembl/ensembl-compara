@@ -143,6 +143,7 @@ sub static_menu_items {
     my $options = [];
     my $link = $node->{_path};
     my $text = $node->{_title};
+    next unless $text;
     next if $link =~ /genomes/;
     next unless ($link);
 
