@@ -29,6 +29,7 @@ my $q = CGI->new();
 
 my $source = "+Top/Source/" . $page->{'species_defs'}->ENSEMBL_EXALEAD_SITE_INDEX;
 
+$source = '';
 my $not_fresh = $q->param;
 if( $not_fresh ) {
   if( $q->param('q') ) {
