@@ -37,9 +37,9 @@ sub default_track_by_gene {
       medaka_protein gff_prediction oxford_fgu platypus_olfactory_receptors
       genebuilderbeeflymosandswall gsten flybase wormbase
       ensembl sgd homology_low cow_proteins refseq mouse_protein dog_protein horse_protein
-      jamboree_cdnas ciona_dbest_ncbi ciona_est_seqc ciona_est_seqn
+      jamboree_cdnas ciona_dbest_ncbi ciona_est_seqc ciona_est_seqn organutan_protein
       ciona_est_seqs ciona_jgi_v1 ciona_kyotograil_2004
- ensembl_projection ensembl_segment
+ ensembl_projection ensembl_segment fugu_protein lamprey_protein
       ciona_kyotograil_2005 )
     ),
     qw(
