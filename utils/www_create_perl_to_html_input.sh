@@ -36,8 +36,8 @@
 PERLMOD_LOC="/ensemblweb/www/www_46"   # current server root
 #PERLMOD_LOC="/ensemblweb/www/server"   # current server root
 
-PDOC_LOC="$PERLMOD_LOC/htdocs/info/software/Pdoc"    # where you want Pdocs created
-HTTP="/info/software/Pdoc"
+PDOC_LOC="$PERLMOD_LOC/htdocs/info/using/api/Pdoc"    # where you want Pdocs created
+HTTP="/info/using/api/Pdoc"
 P2WDOC_LOC="/ensemblweb/shared/bin/pdoc-live"  # Pdoc code location
 P2WDOCER="/ensemblweb/shared/bin/pdoc-live/scripts/perlmod2www.pl"
 
@@ -119,8 +119,8 @@ cd $PERLMOD_LOC
 
 # generate e! docs:
 echo "Generating e! docs:";
-rm -r $PERLMOD_LOC/htdocs/info/software/website/docs 
+rm -r $PERLMOD_LOC/htdocs/info/webcode/docs 
 perl $PERLMOD_LOC/utils/edoc/update_docs.pl
-cp -r $PERLMOD_LOC/utils/edoc/temp $PERLMOD_LOC/htdocs/info/software/website/docs
+cp -r $PERLMOD_LOC/utils/edoc/temp $PERLMOD_LOC/htdocs/info/webcode/docs
 
 exit 0
