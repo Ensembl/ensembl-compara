@@ -128,7 +128,7 @@ sub render {
   if ($species_defs->ENSEMBL_LOGINS) {
     if ($user_id && $user_id > 0) {
       if (!$filtered) {
-        $html .= qq(Go to <a href="/common/accountview?tab=news">your account</a> to customise this news panel);
+        $html .= qq(Go to <a href="/common/user/account?tab=news">your account</a> to customise this news panel);
       }
     }
     else {

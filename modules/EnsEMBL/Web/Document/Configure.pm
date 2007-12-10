@@ -24,7 +24,7 @@ sub common_menu_items {
     my @bookmark_sections = ();
 
     if ($user_id) {
-      #$doc->menu->add_entry( $flag, 'text' => "<a href='/common/accountview'>Your account</a> &middot; <a href='javascript:logout_link()'>Log out</a>", 'raw' => 'yes');
+      #$doc->menu->add_entry( $flag, 'text' => "<a href='/common/user/account'>Your account</a> &middot; <a href='javascript:logout_link()'>Log out</a>", 'raw' => 'yes');
       #$doc->menu->add_entry( $flag, 'text' => "Bookmark this page",
       #                              'code' => 'bookmark',
       #                            'href' => "javascript:bookmark_link()" );
@@ -64,12 +64,12 @@ sub common_menu_items {
         push @bookmark_sections, { 'href' => 'javascript:bookmark_link()', 
                                    'text'  => 'Bookmark this page', extra_icon => '/img/bullet_toggle_plus.png' };
 
-        push @bookmark_sections, { 'href' => '/common/accountview', 
+        push @bookmark_sections, { 'href' => '/common/user/account', 
                                    'text'  => 'More bookmarks...', extra_icon => '/img/bullet_go.png' };
 
       #  $doc->menu->add_entry(
       #    $flag,
-      #      'href' => '/common/accountview',
+      #      'href' => '/common/user/account',
       #      'text' => 'Bookmarks',
       #    'options'=> \@bookmark_sections );
 
@@ -85,7 +85,7 @@ sub common_menu_items {
                                     'href' => "javascript:bookmark_link()" );
     
       #$doc->menu->add_entry( $flag, 'text' => "Your account",
-      #                            'href' => "/common/accountview" );
+      #                            'href' => "/common/user/account" );
 
     }
     else {

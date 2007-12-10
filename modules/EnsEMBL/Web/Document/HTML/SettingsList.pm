@@ -133,7 +133,7 @@ sub list_for_records {
       }
     }
     if ($count > 10) {
-      $html .= "<li><i><a href='/common/accountview'>More settings &rarr;</a></i></li>"
+      $html .= "<li><i><a href='/common/user/account'>More settings &rarr;</a></i></li>"
     }
     $html .= "</ul>";
   } else {
