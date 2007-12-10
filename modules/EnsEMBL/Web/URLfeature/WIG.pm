@@ -9,8 +9,8 @@ sub hstrand  { my $self = shift; return @{$self->{'__raw__'}}>5 ? $self->_strand
 sub rawstart{ my $self = shift; return $self->{'__raw__'}[1] + 1; }
 sub rawend  { my $self = shift; return $self->{'__raw__'}[2] + 1; }
 sub score   { my $self = shift; return $self->{'__raw__'}[3]; }
-sub start{ my $self = shift; return $self->{'__raw__'}[1]; }
-sub end  { my $self = shift; return $self->{'__raw__'}[2]; }
+#sub start{ my $self = shift; return $self->{'__raw__'}[1]; }
+#sub end  { my $self = shift; return $self->{'__raw__'}[2]; }
 sub id      { my $self = shift; return $self->{'__raw__'}[4]; }
 
 sub slide   {
