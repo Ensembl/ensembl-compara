@@ -33,7 +33,7 @@
 
 . /etc/profile
 
-PERLMOD_LOC="/ensemblweb/www/www_46"   # current server root
+PERLMOD_LOC="/ensemblweb/www/www_48"   # current server root
 #PERLMOD_LOC="/ensemblweb/www/server"   # current server root
 
 PDOC_LOC="$PERLMOD_LOC/htdocs/info/using/api/Pdoc"    # where you want Pdocs created
@@ -119,8 +119,8 @@ cd $PERLMOD_LOC
 
 # generate e! docs:
 echo "Generating e! docs:";
-rm -r $PERLMOD_LOC/htdocs/info/webcode/docs 
+rm -r $PERLMOD_LOC/public-plugins/ensembl/htdocs/info/webcode/docs 
 perl $PERLMOD_LOC/utils/edoc/update_docs.pl
-cp -r $PERLMOD_LOC/utils/edoc/temp $PERLMOD_LOC/htdocs/info/webcode/docs
+cp -r $PERLMOD_LOC/utils/edoc/temp $PERLMOD_LOC/public-plugins/ensembl/htdocs/info/webcode/docs
 
 exit 0
