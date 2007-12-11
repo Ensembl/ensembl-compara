@@ -5,7 +5,7 @@ use Bio::EnsEMBL::Registry;
 Bio::EnsEMBL::Registry->load_registry_from_db
   (-host=>"ensembldb.ensembl.org", 
    -user=>"anonymous", 
-   -db_version=>'45');
+   -db_version=>'47');
 my $human_gene_adaptor =
     Bio::EnsEMBL::Registry->get_adaptor
   ("Homo sapiens", "core", "Gene");
@@ -47,4 +47,25 @@ foreach my $gene (@$genes) {
   # Get the protein multialignment and the back-translated CDS alignment
   my $protein_align = $proteintree->get_SimpleAlign;
   my $cds_align = $proteintree->get_SimpleAlign(-cdna=>1);
+
+  eval {require Bio::AlignIO;};
+  last if ($@);
+  # We can use bioperl to print out the aln in fasta format
+  my $stdout_alignio = Bio::AlignIO->new
+    (-fh => \*STDOUT,
+     -format => 'fasta');
+  $stdout_alignio->write_aln($protein_align);
+
+  my $filename = $gene->stable_id . ".phylip";
+
+  # We can print out the aln in phylip format, with a space between
+  # each codon (tag_length = 3)
+  my $phylip_alignio = Bio::AlignIO->new
+    (-file => ">$filename",
+    -format => 'phylip',
+    -tag_length => 3,
+    -interleaved => 1,
+    -idlength => 30);
+  $phylip_alignio->write_aln($cds_align);
+  print STDERR "Your file $filename has been generated\n";
 }
