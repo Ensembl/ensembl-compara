@@ -469,7 +469,7 @@ sub name {
   my $linked_display_name = $display_name;
   if( $ext_id ) {
     $linked_display_name = $object->get_ExtURL_link( $display_name, $dbname, $ext_id );
-        }
+  }
   
   # If gene ID projected from other spp, put link on other spp geneID
   if ($dbname_disp =~/^Projected/) {
@@ -486,7 +486,7 @@ sub name {
   my $FLAG = 1;
   if ($dbname_disp =~/(HGNC|ZFIN)/){
     #warn "GETTING HGNC/ZFIN synonyms...";
-    my ($disp_table, $HGNC_table) = @{get_HGNC_synonyms($object)};
+    my ($disp_table, $HGNC_table) = @{get_HGNC_synonyms($object)}; 
     if ($object->get_db eq 'vega') {
             $html = $disp_table;
     } else   {  
@@ -771,29 +771,27 @@ sub get_HGNC_synonyms {
   my $site_type = ucfirst(lc($SiteDefs::ENSEMBL_SITETYPE));
   my ($disp_id_table, $HGNC_table, %syns, %text_info );
   my $disp_syn = 0;
-
   my $matches = $self->get_database_matches;
-  _sort_similarity_links( $self, @$matches );
+  _sort_similarity_links( $self, @$matches ); 
   my $links = $self->__data->{'links'}{'PRIMARY_DB_SYNONYM'}||[];
-  foreach my $link (@$links){
+  foreach my $link (@$links){ 
      my ($key, $text)= @$link;
-       my $temp = $text;
+       my $temp = $text; 
        $text =~s/\<div\s*class="multicol"\>|\<\/div\>//g;
        $text =~s/<br \/>.*$//gism;
        my @t = split(/\<|\>/, $temp);
-       my $id = $t[4];
-       my $synonyms = get_synonyms($id, @$matches);
-       if ($id =~/$display_name/){
+       my $id = $t[4]; 
+       my $synonyms = get_synonyms($id, @$matches); 
+      if ($id =~/$display_name/){ 
          unless ($synonyms !~/\w/) {
           $disp_syn = 1;
-          $syns{$id} = $synonyms;
+          $syns{$id} = $synonyms; 
          }
        }
-       $text_info{$id} = $text;
+       $text_info{$id} = $text; 
        unless ($synonyms !~/\w/ || $id =~/$display_name/){
-        $syns{$id} = $synonyms;
+        $syns{$id} = $synonyms; 
        }
-#    }
   }
  my @keys = keys %syns;
  my $syn_count = @keys; 
@@ -803,10 +801,10 @@ sub get_HGNC_synonyms {
 
 SYN: foreach my $k (keys (%text_info)){
          my $syn = $syns{$k};
-         my $syn_entry;
-
+         my $syn_entry; 
+        
          if ($syn_count >= 1) { $syn_entry = qq(<td>$syn</td>); }
-         my $text = $text_info{$k};
+         my $text = $text_info{$k}; 
          $HGNC_table .= qq(
           <tr>
            <td><strong>$text</strong> ($dbname_disp)</td>$syn_entry
@@ -843,14 +841,14 @@ sub get_synonyms {
   my $match_id = shift;
   my @matches = @_;
   my $ids;
-  foreach my $m (@matches){
+  foreach my $m (@matches){	 
     my $dbname = $m->db_display_name;
     my $disp_id = $m->display_id();
-    if ( $dbname =~/(HGNC|ZFIN)/ && $disp_id=~/$match_id/){
+    if ( $dbname =~/(HGNC|ZFIN)/ && $disp_id eq $match_id){
+	  $ids = ""; 
       my $synonyms = $m->get_all_synonyms();
-warn "SS: ", $synonyms;
       foreach my $syn (@$synonyms){
-      $ids = $ids .", " .( ref($syn) eq 'ARRAY' ? "@$syn" : $syn );
+        $ids = $ids .", " .( ref($syn) eq 'ARRAY' ? "@$syn" : $syn );
      }
     }
   }
