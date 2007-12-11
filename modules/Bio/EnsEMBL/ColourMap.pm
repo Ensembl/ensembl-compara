@@ -32,6 +32,7 @@ sub new {
   );
   $self->colourSet( 'ensembl_projection',
     'ensembl_projection_protein_coding_KNOWN',    => [ 'chartreuse4', 'Known projection' ],
+    'ensembl_projection_protein_coding_KNOWN_BY_PROJECTION',    => [ 'chartreuse3', 'Known by projection' ],
     'ensembl_projection_protein_coding_NOVEL',    => [ 'olivedrab4', 'Novel projection' ],
     'ensembl_projection_pseudogene_NOVEL',        => [ 'darkolivegreen3', 'Pseudogene projection' ],
   );
