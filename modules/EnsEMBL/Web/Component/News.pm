@@ -202,7 +202,7 @@ sub show_news {
     my $ul_open = 0;
     for (my $i=0; $i<scalar(@$current_items); $i++) {
       my %item = %{$$current_items[$i]};
-      next if $item{'status'} ne 'live';
+      next if $item{'status'} ne 'news_ok';
       my $item_id = $item{'news_item_id'};
       my $title = $item{'title'};
       my $content = $item{'content'};
