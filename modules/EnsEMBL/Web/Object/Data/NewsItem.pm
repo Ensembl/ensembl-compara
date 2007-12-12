@@ -18,11 +18,13 @@ sub BUILD {
   $self->set_primary_key({ name => 'news_item_id', type => 'int' });
   $self->add_queriable_field({ name => 'title', type => 'tinytext' });
   $self->add_queriable_field({ name => 'content', type => 'text' });
+  $self->add_queriable_field({ name => 'declaration', type => 'text' });
+  $self->add_queriable_field({ name => 'notes', type => 'text' });
   $self->add_queriable_field({ name => 'priority', type => 'int' });
-  $self->add_queriable_field({ name => 'status', type => "enum('draft','live','dead')" });
+  $self->add_queriable_field({ name => 'status', type => "enum('declared','done','news_ok','news_not_ok')" });
   $self->add_belongs_to("EnsEMBL::Web::Object::Data::Release");
   $self->add_belongs_to("EnsEMBL::Web::Object::Data::NewsCategory");
-  $self->add_has_many({ class => 'EnsEMBL::Web::Object::Data::Species'});
+  #$self->add_has_many({ class => 'EnsEMBL::Web::Object::Data::Species'});
   $self->populate_with_arguments($args);
 }
 
