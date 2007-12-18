@@ -81,7 +81,9 @@ foreach my $sp (@$species) {
     my $search_info = $species_defs->get_config($sp, 'SEARCH_LINKS');
     (my $vsp = $sp) =~ s/\_/ /g;
     $species_info->{$sp}->{'species'} = $vsp;
-    $species_info->{$sp}->{'taxon_id'} = $ta->fetch_node_by_name($vsp)->taxon_id;
+    my $tanode = $ta->fetch_node_by_name($vsp);
+    print STDERR " No Taxon ID ..." and next unless $tanode;
+    $species_info->{$sp}->{'taxon_id'} = $tanode->taxon_id;
 
     my $db_info = $species_defs->get_config($sp, 'databases')->{'ENSEMBL_DB'};
     my $db = Bio::EnsEMBL::DBSQL::DBAdaptor->new(
@@ -94,6 +96,7 @@ foreach my $sp (@$species) {
 						 );
 
     my @toplevel_slices = @{$db->get_SliceAdaptor->fetch_all('toplevel', undef, 1)};
+    print STDERR " No toplevel entries ..." and next unless (@toplevel_slices);
     my %thash;
     map {$thash{$_->seq_region_name } = $_} @toplevel_slices;
 
