@@ -243,23 +243,23 @@ sub build_GeneTreeSystem
 
   $dataflowRuleDBA->create_rule($blastSubsetStaging, $dumpfasta_analysis);
 
-  #
-  # GenomeCalcStats
-  #
-  my $calcstats_analysis = Bio::EnsEMBL::Analysis->new(
-      -db_version      => '1',
-      -logic_name      => 'GenomeCalcStats',
-      -input_id_type   => 'genome_db_id',
-      -module          => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeCalcStats',
-      -parameters      => '',
-    );
-  $self->{'comparaDBA'}->get_AnalysisAdaptor()->store($calcstats_analysis);
-  $stats = $analysisStatsDBA->fetch_by_analysis_id($calcstats_analysis->dbID);
-  $stats->batch_size(1);
-  $stats->hive_capacity(-1);
-  $stats->update();
+#   #
+#   # GenomeCalcStats
+#   #
+#   my $calcstats_analysis = Bio::EnsEMBL::Analysis->new(
+#       -db_version      => '1',
+#       -logic_name      => 'GenomeCalcStats',
+#       -input_id_type   => 'genome_db_id',
+#       -module          => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeCalcStats',
+#       -parameters      => '',
+#     );
+#   $self->{'comparaDBA'}->get_AnalysisAdaptor()->store($calcstats_analysis);
+#   $stats = $analysisStatsDBA->fetch_by_analysis_id($calcstats_analysis->dbID);
+#   $stats->batch_size(1);
+#   $stats->hive_capacity(-1);
+#   $stats->update();
 
-  $dataflowRuleDBA->create_rule($blastSubsetStaging, $calcstats_analysis);
+#   $dataflowRuleDBA->create_rule($blastSubsetStaging, $calcstats_analysis);
 
   #
   # CreateBlastRules
