@@ -1,3 +1,7 @@
+## Script to generate list of database sizes
+## Please ensure that your output is called db_sizes.inc,
+## not db_sizes.html
+
 while(<STDIN>) {
   chomp;
   ($size,$_) = split;
