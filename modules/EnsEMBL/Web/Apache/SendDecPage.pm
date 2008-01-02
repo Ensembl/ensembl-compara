@@ -61,31 +61,6 @@ sub handler {
       last if @groups;
     }
   
-=pod
-    if (@groups) {
-      ## TODO: Not sure what this block does, as $user is not defined - mw4
-      ## Probably best to get the user from the registry.
-  
-      my $user;
-      my @user_groups = $user->groups;
-  
-      ## cross-reference user's groups against permitted groups
-      my $access = 0;
-      foreach my $g (@groups) {
-        foreach my $u (@user_groups) {
-          $access = 1 if $u == $g;
-        }
-        last if $access;
-      }
-      if (!$access) {
-        my $URL = '/common/access_denied';
-        $r->headers_out->add( "Location" => $URL );
-        $r->err_headers_out->add( "Location" => $URL );
-        $r->status( REDIRECT );
-      }
-    }
-  
-=cut
 ## Read html file into memory to parse out SSI directives.
     {
       local($/) = undef;
@@ -97,7 +72,10 @@ sub handler {
 
   $pageContent =~ s/\[\[([A-Z]+)::([^\]]*)\]\]/my $m = "template_$1"; no strict 'refs'; &$m($r, $2);/ge;
 
-  $pageContent =~ s/<h2.*?>/'<h2 class="breadcrumbs">'.breadcrumbs( $r->uri, $ENSEMBL_WEB_REGISTRY->species_defs->ENSEMBL_WEB_TREE );/ge;
+  my $BC = format_breadcrumbs( $r->uri, $ENSEMBL_WEB_REGISTRY->species_defs->ENSEMBL_WEB_TREE );
+  if ($BC) {
+    $pageContent =~ s#<body>#<body>$BC#;
+  }
 
   # do SSI includes
   #  $pageContent =~ s/<!--#include\s+virtual\s*=\s*\"(.*)\"\s*-->/template_INCLUDE($r, $1)/eg;
@@ -148,11 +126,23 @@ sub handler {
   return OK;
 } # end of handler
 
+our $pointer = qq(<img src="/img/red_bullet.gif" width="4" height="8" alt="&gt;" class="breadcrumb" />);
+
+sub format_breadcrumbs {
+  my ($path, $branch) = @_;
+  my $BC = breadcrumbs($path, $branch);
+  if ($BC) {
+warn "BC: $BC";
+    $BC =~ s/$pointer\s*$//;
+    $BC = '<p id="breadcrumbs">'.$BC.'</div>';
+  }
+  return $BC; 
+}
+
 sub breadcrumbs {
   my ($path, $branch) = @_;
-  
-  my $out = '';
-  my $pointer = qq(<img src="/img/red_bullet.gif" width="4" height="8" alt="&gt;" class="breadcrumb" />);
+
+  my $out = '';  
 
   my ($step, $rest) = $path =~ m!/(.*?)(/.*)?$!; 
 
@@ -160,7 +150,7 @@ sub breadcrumbs {
     $out = sprintf qq(<a href="%s" title="%s" class="breadcrumb">%s</a> $pointer ), $branch->{$step}->{_path}, $branch->{$step}->{_nav}, $branch->{$step}->{_title};
     $out .= breadcrumbs($rest, $branch->{$step}) if $rest;
   }
-  
+
   return $out;
 }
 
