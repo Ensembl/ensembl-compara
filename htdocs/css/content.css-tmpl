@@ -374,7 +374,7 @@ p.error {
 
 .red { color:#933; }
 
-h2.breadcrumbs { color:[[TEXTCOLOR]]; }
+#breadcrumbs { color:[[TEXTCOLOR]]; font-weight:bold; font-size:1.1em; }
 a.breadcrumb { text-decoration:none }
 
 p.footnote { font-size:85%; }
