@@ -321,13 +321,13 @@ sub _parse {
   my $self = shift; 
   warn '-' x 78 , "\n[CONF]    [INFO] Parsing .ini files\n" ;
   $CONF->{'_storage'} = {};
-  my $BC = $self->bread_crumb_creator();
+  my $TREE; 
 
   my $web_tree = { _path => '/' };
   for my $root (reverse @ENSEMBL_HTDOCS_DIRS) {
     read_web_tree($web_tree, $root);
   }
-  $BC->{'ENSEMBL_WEB_TREE'} = $web_tree;
+  $TREE->{'ENSEMBL_WEB_TREE'} = $web_tree;
 
   my ($defaults, $common);
 
@@ -335,7 +335,7 @@ sub _parse {
   
   foreach my $filename ( 'DEFAULTS', @$ENSEMBL_SPECIES, 'MULTI' ) {
     warn "-" x 78, "\n[SPECIES] [INFO] Starting $filename\n";
-    my $tree            = {%$BC};
+    my $tree            = {%$TREE};
     
 ###### Read and parse the <species>.ini file
     my $inifile;
@@ -1507,10 +1507,12 @@ sub read_web_tree {
 ###    ...,
 ###  }
 ###
+### N.B. A directory can be omitted by putting 'NO INDEX' as the value
+### of the navigation meta tag 
 
   my (
     $branch,    ## hashref to be populated, branch of the tree 
-                ## by default it's { path => '/path/..' }
+                ## by default its { path => '/path/..' }
     $doc_root,  ## this could be different because of the plugins
   ) = @_;   
 
@@ -1526,36 +1528,56 @@ sub read_web_tree {
 
   ## separate directories from other files
   my ($html_files, $sub_dirs) = sortnames(\@files, $doc_root . $path);
+  my ($title, $nav, $index);
+
+  ## Check if we want to do this directory at all
+  my $include = 0;
+  foreach my $filename (@$html_files) {
+    if ($filename eq 'index.html') {
+      $include = 1;
+      ($title, $nav, $index) = get_info( $doc_root . $path . $filename );
+      if ($index =~ /NO FOLLOW/) {
+        $branch->{_title} = $title;
+        $branch->{_nav}   = $nav;
+        return;
+      }
+      elsif ($index =~ /NO INDEX/) {
+        $include = 0;
+      }
+      last;
+    }
+  }
+  if (!$include) {
+    $branch = undef;
+    return;
+  }
 
   ## Read files and populate the branch
   foreach my $filename (@$html_files) {
     my $full_path = "$doc_root$path$filename";
-    next if $full_path =~ m#software/website/edoc#;
-    next if $full_path =~ m#api/java#;
-    next if $full_path =~ m#api/Pdoc#;
-    my $title = get_title( $full_path );
-    my $nav   = get_meta_navigation( $full_path );
+    ($title, $nav, $index) = get_info( $full_path );
 
     if ($filename eq 'index.html') {
       ## add the directory path and index title to array
       $branch->{_title} = $title;
       $branch->{_nav}   = $nav;
-    } else {
-      $branch->{$filename}->{_title} = $title;
-      $branch->{$filename}->{_nav}   = $nav;
+    } 
+    else {
+      unless ($index =~ /NO INDEX/) {
+        $branch->{$filename}->{_title} = $title;
+        $branch->{$filename}->{_nav}   = $nav;
+      }
     }
   }
 
-  ## Descent into directories recursively
+  ## Descend into directories recursively
   foreach my $dirname (@$sub_dirs) {
     ## omit CVS directories and directories beginning with . or _
     next if $dirname eq 'CVS' || $dirname =~ /^\./ || $dirname =~ /^_/;
-    #next if $full_path =~ m#(?:java|info/website)/#;
     $branch->{$dirname}->{_path} = "$path$dirname/";
     read_web_tree($branch->{$dirname}, $doc_root);
   }
 }
-
 
 sub sortnames {
 ### Does a case-insensitive sort of a list of file names
@@ -1577,6 +1599,22 @@ sub sortnames {
   return (\@file_list, \@dir_list);
 }
 
+sub get_info {
+### Parses an HTML file and returns info for navigation and indexing
+  my $file = shift;
+
+  my $title   = get_title($file);
+  my $nav     = get_meta_navigation($file);
+  my $index   = get_meta_index($file);
+  if (!$title) {
+    $title = get_first_header($file);
+  }
+  if (!$nav) {
+    $nav = $title;
+  }
+
+  return ($title, $nav, $index);
+}
 
 sub get_title {
 ### Parses an HTML file and returns the contents of the <title> tag
@@ -1592,20 +1630,11 @@ sub get_title {
     }
     last if m!</title!i;
   }
-  unless ($title) {
-    if ($file =~ m!/(\w+)/index\.html!) {
-      $title = $1;
-    } elsif ($file =~ m!/(\w+)\.html!) {
-      $title = $1;
-    }
-  }
   
   close IN;
   $title =~ s/\s{2,}//g;
   return $title;
 }
-
-
 sub get_meta_navigation {
 ### Parses an HTML file and returns the contents of the navigation meta tag
   my $file = shift;
@@ -1620,14 +1649,61 @@ sub get_meta_navigation {
     }
   }
 
-  if (!$nav && $file =~ m!/(\w+)/\w+\.html$!) {
-    $nav = join ' ', split /_/, $1;
-  }
-
   close IN;
   return $nav;
 }
 
+sub get_meta_index {
+### Parses an HTML file and returns the contents of the index meta tag
+  my $file = shift;
+  my $index;
+
+  open IN, "< $file" || die("Can't open input file $file :(\n");
+  while (<IN>) {
+    if (/<meta\s+name\s*=\s*"index"\s+content\s*=\s*"([^"]+)"\s*\/?>/ism) {
+      $index = $1;
+    } elsif (/<meta\s+content\s*=\s*"([^"]+)"\s+name\s*=\s*"index"\s*\/?>/ism) {
+      $index = $1;
+    }
+  }
+
+  close IN;
+  return $index;
+}
+
+sub get_first_header {
+### Parses an HTML file and returns the contents of the first <h> tag (up to h3)
+  my $file = shift;
+  my $header;
+
+  open IN, "< $file" || die "Couldn't open input file $file :(\n";
+  while (<IN>) {
+    if (m!<h1.*?>(.*?)(?:</h1>|$)!i) {
+      $header = $1;
+      last;
+    } 
+    elsif (m!<h2.*?>(.*?)(?:</h2>|$)!i) {
+      $header = $1;
+      last;
+    }
+    elsif (m!<h3.*?>(.*?)(?:</h3>|$)!i) {
+      $header = $1;
+      last;
+    }
+  }
+  ## Fallback in case no <h> tags
+  unless ($header) {
+    if ($file =~ m!/(\w+)/index\.html!) {
+      $header = $1;
+    } elsif ($file =~ m!/(\w+)\.html!) {
+      $header = $1;
+    }
+  }
+  
+  close IN;
+  $header =~ s/\s{2,}//g;
+  return $header;
+}
 
 sub _is_available_artefact{
   ### Checks to see if a given artefact is available (or not available)
