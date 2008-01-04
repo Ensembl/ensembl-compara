@@ -1531,10 +1531,9 @@ sub read_web_tree {
   my ($title, $nav, $index);
 
   ## Check if we want to do this directory at all
-  my $include = 0;
+  my $include = 1;
   foreach my $filename (@$html_files) {
     if ($filename eq 'index.html') {
-      $include = 1;
       ($title, $nav, $index) = get_info( $doc_root . $path . $filename );
       if ($index =~ /NO FOLLOW/) {
         $branch->{_title} = $title;
