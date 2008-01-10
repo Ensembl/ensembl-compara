@@ -71,7 +71,7 @@ cd synteny
 
 echo "SELECT DISTINCT(dnafrag.name) FROM dnafrag LEFT JOIN genome_db USING (genome_db_id) \
  WHERE genome_db.name = \"Homo sapiens\" AND coord_system_name=\"chromosome\";" | \
-mysql -h compara1 -u ensro -N jh7_ensembl_Hsap_Cfam_42 |grep -v NT | grep -v DR | sort > Hsap_chr_names
+mysql -h compara1 -u ensro -N jh7_ensembl_Hsap_Cfam_42 |grep -v -e NT -e DR -e c | sort > Hsap_chr_names
 
 
 Run the dump in sequential order, one at a time to avoid overloading the DB:
