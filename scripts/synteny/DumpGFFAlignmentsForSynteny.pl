@@ -66,12 +66,12 @@ unless (defined $seq_region) {
 }
 
 foreach my $qy_dnafrag (@{$qy_dnafrags}) {
-  next unless ($qy_dnafrag->name =~ /^\d+[A-Za-z]*$|^X$|^Y$/);
+  next unless ($qy_dnafrag->name =~ /^\d+[A-Za-z]*$|^W$|^X\d?$|^Y$|^Z$/);
   my $seq_region_name = $qy_dnafrag->name;
   open SYN,">$seq_region_name.syten.gff";
 
   foreach my $tg_dnafrag (@{$dfa->fetch_all_by_GenomeDB_region($tg_gdb, 'chromosome')}) {
-    next unless ($tg_dnafrag->name =~ /^\d+[A-Za-z]*$|^X$|^Y$/);
+    next unless ($tg_dnafrag->name =~ /^\d+[A-Za-z]*$|^W$|^X\d?$|^Y$|^Z$/);
 
     my $start = 1;
     my $chunk = 5000000;
