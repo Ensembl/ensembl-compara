@@ -44,11 +44,24 @@ sub populate_with_arguments {
 }
 
 sub populate {
-  my ($self, $id) = @_;
-  $self->id($id);
-  my $result = $self->get_adaptor->find($self);
+  my ($self, $id, $unique_field, $value) = @_;
+  my $result;
+  if ($unique_field) {
+    $result = $self->get_adaptor->find_by_unique_field($self, $unique_field, $value);
+  }
+  else {
+    $self->id($id);
+    $result = $self->get_adaptor->find($self);
+  }
   foreach my $key (@{ $result->fields }) {
-    next if $key eq EnsEMBL::Web::Tools::DBSQL::TableName::parse_primary_key($self->get_primary_key);
+    if ($key eq EnsEMBL::Web::Tools::DBSQL::TableName::parse_primary_key($self->get_primary_key)) {
+      if ($unique_field) {
+        $self->id($result->get_value($key));
+      }
+      else {
+        next;
+      }
+    }
     ## Ignore plain datetime fields in favour of UNIX_TIMESTAMP versions
     next if $key eq 'created_at';
     next if $key eq 'modified_at';
