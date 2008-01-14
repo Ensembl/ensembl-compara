@@ -6,7 +6,7 @@ use warnings;
 use EnsEMBL::Web::Controller::Command::Filter;
 use EnsEMBL::Web::Document::Interface;
 use EnsEMBL::Web::Interface::InterfaceDef;
-use EnsEMBL::Web::Object::Data::User;
+use EnsEMBL::Web::Data::User;
 use EnsEMBL::Web::SpeciesDefs;
 use EnsEMBL::Web::Root;
 use EnsEMBL::Web::RegObj;

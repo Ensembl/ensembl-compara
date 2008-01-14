@@ -97,7 +97,7 @@ sub delete {
   ### Deletes record(s) and redirects to a feedback page
   my ($self, $object, $interface) = @_;
   
-  $interface->data->populate($object->param('id'));
+  $interface->data->populate_with_arguments({id => $object->param('id')});
 
   my $success = $interface->data->destroy;
   my $script = $interface->script_name || $object->script;

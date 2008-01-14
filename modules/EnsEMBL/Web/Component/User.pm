@@ -1,16 +1,16 @@
 package EnsEMBL::Web::Component::User;
 
+use Data::Dumper;
+
 use EnsEMBL::Web::Component;
 use EnsEMBL::Web::Proxy::Object;
 use EnsEMBL::Web::DBSQL::NewsAdaptor;
-use EnsEMBL::Web::Record::Group;
-use Data::Dumper;
 use EnsEMBL::Web::Interface::TabView;
 use EnsEMBL::Web::Interface::Tab;
 use EnsEMBL::Web::Interface::Table;
 use EnsEMBL::Web::Interface::Table::Row;
-use EnsEMBL::Web::Object::Data::User;
-use EnsEMBL::Web::Object::Data::Group;
+use EnsEMBL::Web::Data::User;
+use EnsEMBL::Web::Data::Group;
 use EnsEMBL::Web::RegObj;
 use EnsEMBL::Web::Form;
 
@@ -96,7 +96,9 @@ function backToEnsembl(){
 sub enter_password_form {
   ## Form to add/change password
   my( $panel, $object ) = @_;
-  my $script = $object->script;
+
+  ## TODO: Remove!
+  # my $script = $object->script;
 
   my $form = EnsEMBL::Web::Form->new( 'enter_password', "/common/user/save_password", 'post' );
  
@@ -105,7 +107,7 @@ sub enter_password_form {
  
   if ($ENV{'ENSEMBL_USER_ID'}) {
     ## Logged-in user, changing own password
-    my $user = EnsEMBL::Web::Object::Data::User->new({'id' => $ENV{'ENSEMBL_USER_ID'}});
+    my $user = EnsEMBL::Web::Data::User->new({'id' => $ENV{'ENSEMBL_USER_ID'}});
     my $email = $user->email;
     $form->add_element('type'  => 'Hidden', 'name'  => 'email', 'value' => $email);
     $form->add_element('type'  => 'Password', 'name'  => 'password', 'label' => 'Old password', 
@@ -396,35 +398,42 @@ sub _render_bookmarks {
   my @records;
   foreach my $bookmark (@bookmarks) {
     my $description = $bookmark->description || '&nbsp;';
-    push @records, {  'id' => $bookmark->id, 
-                      'ident' => 'user',
-                      'sortable' => $bookmark->name,
-                      'shareable' => 1,
-                      'edit_url' => 'bookmark', 
-                      'delete_url' => 'remove_record',
-                      'data' => [
-      '<a href="/common/user/use_bookmark?id=' . $bookmark->id . '" title="' . $bookmark->description . '">' . $bookmark->name . '</a><br /><span style="font-size: 10px;">' . $bookmark->description . '</span>', '&nbsp;' 
-    ]};
+    push @records, {
+      'id'         => $bookmark->id, 
+      'type'       => 'bookmark',
+      'ident'      => 'user',
+      'sortable'   => $bookmark->name,
+      'shareable'  => 1,
+      'edit_url'   => 'bookmark',
+      'delete_url' => 'remove_record',
+      'data'       => [
+        '<a href="/common/user/use_bookmark?id=' . $bookmark->id . '" title="' . $bookmark->description . '">' . $bookmark->name . '</a><br /><span style="font-size: 10px;">' . $bookmark->description . '</span>',
+        '&nbsp;',
+      ],
+    };
   }
   foreach my $group (@{ $user->groups }) {
     foreach my $bookmark (@{ $group->bookmarks }) {
       my $description = $bookmark->description || '&nbsp;';
-      push @records, {'id' => $bookmark->id, 
-                      'ident' => $group->id, 
-                      'sortable' => $bookmark->name,
-                      'data' => [
-      '<a href="/common/user/use_bookmark?id=' . $bookmark->id . '" title="' . $bookmark->description . '">' . $bookmark->name . '</a><br /><span style="font-size: 10px;">' . $bookmark->description . '</span>', $group->name 
-      ]};
+      push @records, {
+        'id' => $bookmark->id, 
+        'ident' => $group->id, 
+        'sortable' => $bookmark->name,
+        'data' => [
+          '<a href="/common/user/use_bookmark?id=' . $bookmark->id . '" title="' . $bookmark->description . '">' . $bookmark->name . '</a><br /><span style="font-size: 10px;">' . $bookmark->description . '</span>',
+          $group->name,
+        ]
+      };
     }
   }
   my $html;
-  $html .= &info_box($user, qq(Bookmarks allow you to save frequently used pages from $sitename and elsewhere. When browsing $sitename, you can add new bookmarks by clicking the 'Add bookmark' link in the sidebar. <a href="http://www.ensembl.org/info/help/custom.html#bookmarks">Learn more about saving frequently used pages (Ensembl documentation) &rarr;</a>) , 'user_bookmark_info');
+  $html .= &info_box($user, qq(Bookmarks allow you to save frequently used pages from $sitename and elsewhere. When browsing $sitename, you can add new bookmarks by clicking the 'Add bookmark' link in the sidebar. <a href="http://www.ensembl.org/info/about/custom.html#bookmarks">Learn more about saving frequently used pages (Ensembl documentation) &rarr;</a>) , 'user_bookmark_info');
   if ($#records > -1) {
     $html .= _render_settings_table(\@records, $user);
   }
   else {
     $html .= qq(<p class="center"><img src="/img/help/bookmark_example.gif" alt="Sample screenshot" title="SAMPLE" /></p>);
-    $html .= qq(<p class="center">You haven't saved any bookmarks. <a href='/info/help/custom.html#bookmarks'>Learn more about bookmarks &rarr;</a>);
+    $html .= qq(<p class="center">You haven't saved any bookmarks. <a href='/info/about/custom.html#bookmarks'>Learn more about bookmarks &rarr;</a>);
   }  
   $html .= qq(<p><a href="/common/user/bookmark?dataview=add"><b>Add a new bookmark </b>&rarr;</a></p>);
   return $html;
@@ -440,14 +449,19 @@ sub _render_configs {
     my $description = $configuration->description || '&nbsp;';
     my $link = "<a href='javascript:void(0);' onclick='javascript:go_to_config(" . $configuration->id . ");'>";
     $description = substr($configuration->description, 0, 30);
-    push @records, {  'id' => $configuration->id, 
-                      'ident' => 'user',
-                      'sortable' => $configuration->name,
-                      'shareable' => 1,
-                      'edit_url' => 'configuration', 
-                      'data' => [
-                         $link . $configuration->name . '</a>', '&nbsp;' , "($description)" 
-                      ]};
+    push @records, {
+      'id'        => $configuration->id, 
+      'type'      => 'configuration',
+      'ident'     => 'user',
+      'sortable'  => $configuration->name,
+      'shareable' => 1,
+      'edit_url'  => 'configuration',
+      'data'      => [
+        $link . $configuration->name . '</a>',
+        '&nbsp;',
+        "($description)",
+      ],
+    };
   }
 
   foreach my $group (@{ $user->groups }) {
@@ -464,13 +478,13 @@ sub _render_configs {
   }
 
   my $html;
-  $html .= &info_box($user, qq(You can save custom view configurations (DAS sources, decorations, additional drawing tracks, etc), and return to them later or share them with fellow group members. Look for the 'Save configuration link' in the sidebar when browsing $sitename. <a href="http://www.ensembl.org/info/help/custom.html#configurations">Learn more about view configurations (Ensembl documentation) &rarr;</a>), 'user_configuration_info');
+  $html .= &info_box($user, qq(You can save custom view configurations (DAS sources, decorations, additional drawing tracks, etc), and return to them later or share them with fellow group members. Look for the 'Save configuration link' in the sidebar when browsing $sitename. <a href="http://www.ensembl.org/info/about/custom.html#configurations">Learn more about view configurations (Ensembl documentation) &rarr;</a>), 'user_configuration_info');
   if ($#records > -1) {
     $html .= _render_settings_table(\@records, $user);
   }
   else {
     $html .= qq(<p class="center"><img src="/img/help/config_example.gif" /></p>);
-    $html .= qq(<p class="center">You haven't saved any $sitename view configurations. <a href='/info/help/custom.html#configurations'>Learn more about configurating views &rarr;</a>);
+    $html .= qq(<p class="center">You haven't saved any $sitename view configurations. <a href='/info/about/custom.html#configurations'>Learn more about configurating views &rarr;</a>);
   }
 
   return $html;
@@ -485,15 +499,19 @@ sub _render_das {
   #warn "RENDERING DAS";
   foreach my $das (@dases) {
     my $description = $das->name || '&nbsp;';
-    push @records, {  'id' => $das->id, 
-                      'ident' => 'user',
-                      'sortable' => $das->name,
-                      'shareable' => 1,
-                      'edit_url' => 'das', 
-                      'delete_url' => 'remove_record',
-                      'data' => [
-      $das->name . '<br /><span style="font-size: 10px;">' . $das->url . '</span>', '&nbsp;' 
-    ]};
+    push @records, {
+      'id'         => $das->id, 
+      'type'       => 'das',
+      'ident'      => 'user',
+      'sortable'   => $das->name,
+      'shareable'  => 1,
+      'edit_url'   => 'das',
+      'delete_url' => 'remove_record',
+      'data'       => [
+        $das->name . '<br /><span style="font-size: 10px;">' . $das->url . '</span>',
+        '&nbsp;',
+      ],
+    };
   }
   if ($#records > -1) {
     #warn "RENDERING DAS TABLE";
@@ -513,14 +531,18 @@ sub _render_notes {
   foreach my $note (@notes) {
     my $description = $note->annotation || '&nbsp;';
     #warn "NOTE: " . $note;
-    push @records, {  'id' => $note->id, 
-                      'ident' => 'user',
-                      'sortable' => $note->title,
-                      'shareable' => 1,
-                      'edit_url' => 'annotation', 
-                      'data' => [
-      '<a href="' . $note->url. '" title="' . $note->title . '">' . $note->stable_id . ': ' . $note->title . '</a>', '&nbsp;' 
-    ]};
+    push @records, {
+      'id'        => $note->id,
+      'type'      => 'annotation',
+      'ident'     => 'user',
+      'sortable'  => $note->title,
+      'shareable' => 1,
+      'edit_url'  => 'annotation',
+      'data'      => [
+        '<a href="' . $note->url. '" title="' . $note->title . '">' . $note->stable_id . ': ' . $note->title . '</a>',
+        '&nbsp;',
+      ]
+    };
   }
 
   foreach my $group (@{ $user->groups }) {
@@ -536,13 +558,13 @@ sub _render_notes {
   }
 
   my $html = "";
-  $html .= &info_box($user, qq(Annotation notes from genes are listed here. <a href='http://www.ensembl.org/info/help/custom.html#notes'>Learn more about notes (Ensembl documentation) &rarr;</a>), 'user_note_info');
+  $html .= &info_box($user, qq(Annotation notes from genes are listed here. <a href='http://www.ensembl.org/info/about/custom.html#notes'>Learn more about notes (Ensembl documentation) &rarr;</a>), 'user_note_info');
   if ($#records > -1) {
     $html .= _render_settings_table(\@records, $user);
   }
   else {
     $html .= qq(<p class="center"><img src="/img/help/note_example.gif" alt="Sample screenshot" title="SAMPLE" /></p>);
-    $html .= qq(<p class="center">You haven't saved any $sitename notes. <a href='/info/help/custom.html#notes'>Learn more about notes &rarr;</a>);
+    $html .= qq(<p class="center">You haven't saved any $sitename notes. <a href='/info/about/custom.html#notes'>Learn more about notes &rarr;</a>);
   }
   return $html;
 }
@@ -550,19 +572,23 @@ sub _render_notes {
 sub _render_news {
   ### Content for News Filters tab
   my $user = shift;
-  my @filters = @{ $user->news };
+  my @filters = @{ $user->newsfilters };
   my @records;
   my $both = 0;
   foreach my $filter (@filters) {
     my $data;
-    if ($filter->topic) {
-      my $topic = $filter->topic;
-      if (ref($topic) eq 'ARRAY') {
-        $topic = join(', ', @$topic);
-      }
-      $data .= "Topic: $topic";
-      $both = 1;
-    }
+
+    ## Topic has been deprecated
+    ## this should be removed:
+    #      if ($filter->topic) {
+    #      my $topic = $filter->topic;
+    #      if (ref($topic) eq 'ARRAY') {
+    #        $topic = join(', ', @$topic);
+    #      }
+    #      $data .= "Topic: $topic";
+    #      $both = 1;
+    #    }
+
     if ($filter->species) {
       my $species = $filter->species;
       if (ref($species) eq 'ARRAY') {
@@ -579,7 +605,7 @@ sub _render_news {
   }
 
   my $html;
-  $html .= &info_box($user, qq(You can filter the news headlines on the home page and share these settings with fellow group members.<br /><a href="http://www.ensembl.org/info/help/custom.html#news">Learn more about news filters (Ensembl documentation) &rarr;</a>), 'news_filter_info');
+  $html .= &info_box($user, qq(You can filter the news headlines on the home page and share these settings with fellow group members.<br /><a href="http://www.ensembl.org/info/about/custom.html#news">Learn more about news filters (Ensembl documentation) &rarr;</a>), 'news_filter_info');
   if ($#records > -1) {
     $html .= _render_settings_table(\@records, $user);
   }
@@ -599,7 +625,7 @@ sub _render_groups {
   my @groups = @{ $user->groups };
   my @group_rows = ();
   my %included = ();
-  my @all_groups = @{ EnsEMBL::Web::Object::Data::Group->find_all };
+  my @all_groups = @{ EnsEMBL::Web::Data::Group->find_all };
   $html .= &info_box($user, qq(Groups enable you to organise your saved bookmarks, notes and view configurations, and also let you share them with other users. The groups you're subscribed to are listed below. <a href="http://www.ensembl.org/info/help/groups.html">Learn more about creating and managing groups (Ensembl documentation) &rarr;</a>) , 'user_group_info');
   if ($#groups > -1) {
     $html .= "<h5>Your subscribed groups</h5>\n";
@@ -668,7 +694,7 @@ sub _render_public_groups {
   if ($included) {
     %included = %{ $included }; 
   }
-  my @all_groups = @{ EnsEMBL::Web::Object::Group->all_groups_by_type('open') };
+  my @all_groups = @{ EnsEMBL::Web::Data::Group->all_groups_by_type('open') };
   if ($#all_groups > -1) {
     $html = "<h5>Publicly available groups</h5>";
     $html .= "<table width='100%' cellpadding='4' cellspacing='0'><tr>";
@@ -748,6 +774,7 @@ sub _render_settings_table {
 
     $html .= qq(<tr class="$class all ) . $row->{ident} . qq(" $style>);
     my $id = $row->{'id'};
+    my $type =  $row->{'type'};
     my @data = @{$row->{'data'}};
     foreach my $column (@data) {
       if (ref($column) eq 'ARRAY') {
@@ -774,7 +801,7 @@ sub _render_settings_table {
       }
       $html .= '<td style="text-align:right;">';
       if ($row->{'shareable'} && $is_admin) {
-        $html .= qq(<a href="/common/user/select_group?id=$id">Share</a>);
+        $html .= qq(<a href="/common/user/select_group?id=$id&type=$type">Share</a>);
       }
       else {
         $html .= '&nbsp;';
@@ -798,11 +825,13 @@ sub _render_settings_table {
 sub select_group_form {
   ## Form to add/change password
   my( $panel, $object ) = @_;
-  my $script = $object->script;
+
+  ## TODO: Remove this
+  # my $script = $object->script;
 
   my $form = EnsEMBL::Web::Form->new( 'select_group', "/common/user/share_record", 'post' );
   
-  my $user = EnsEMBL::Web::Object::Data::User->new({'id' => $ENV{'ENSEMBL_USER_ID'}});
+  my $user = EnsEMBL::Web::Data::User->new({ 'id' => $ENV{'ENSEMBL_USER_ID'} });
   my (@admin_groups, $group);
   foreach $group (@{ $user->find_administratable_groups }) {
     push @admin_groups, $group;
@@ -820,6 +849,7 @@ sub select_group_form {
                       'label' => $group->name, 'value' => $group->id, 'checked' => 'checked');
   }
   $form->add_element('type'  => 'Hidden', 'name'  => 'id', 'value' => $object->param('id'));
+  $form->add_element('type'  => 'Hidden', 'name'  => 'type', 'value' => $object->param('type'));
   $form->add_element('type'  => 'Submit', 'name'  => 'submit', 'value' => 'Share');
   return $form;
 }
@@ -843,8 +873,8 @@ sub groupview {
   ### Selects appropriate components for groupview page, based on user's permissions
   my( $panel, $object) = @_;
   my $webgroup_id = $object->param('id');
-  my $group = EnsEMBL::Web::Object::Data::Group->new({ id => $webgroup_id });
-  my $user = EnsEMBL::Web::Object::Data::User->new({ id => $object->id });
+  my $group = EnsEMBL::Web::Data::Group->new({ id => $webgroup_id });
+  my $user  = $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->get_user;
 
   my $html;
   if ($user->is_administrator_of($group)) {
@@ -924,8 +954,8 @@ sub group_details {
 
 sub group_records {
   my($object, $is_owner) = @_;
-  my $user = EnsEMBL::Web::Object::Data::User->new({ id => $object->id });
-  my $group = EnsEMBL::Web::Object::Data::Group->new({ id => $object->param('id') });
+  my $user = $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->get_user;
+  my $group = EnsEMBL::Web::Data::Group->new({ id => $object->param('id') });
   my $html;
   if ($is_owner) {
     $html = qq(<h3 class="plain">Membership and Shared Resources</h3>\n);
@@ -1015,17 +1045,19 @@ sub _render_group_settings {
       my $data =  ['<a href="' . $bookmark->url . '" title="' . $bookmark->description . '">' . $bookmark->name . '</a>'];
       if ($ident eq 'group') {
         push @$data, $description;
-      }
-      else {
+      } else {
         push @$data, '';
       }
-      push @records, {  'id' => $bookmark->id, 
-                        'group_id' => $group->id,
-                        'sortable' => $bookmark->name,
-                        'ident'    => $ident,
-                        'edit_url' => 'bookmark', 
-                        'data'     => $data,
-                      };
+
+      push @records, {
+        'id'       => $bookmark->id, 
+        'group_id' => $group->id,
+        'sortable' => $bookmark->name,
+        'ident'    => $ident,
+        'edit_url' => 'bookmark', 
+        'data'     => $data,
+      };
+
     }
     $html .= _render_settings_table(\@records);
   }
@@ -1177,34 +1209,39 @@ sub invitation_nonpending {
 
 sub invitations {
   my ($panel, $object) = @_;
+
+  my $group_id = $object->param('id');
+
   my $html = qq(<p>The following addresses have been checked and invitations sent where appropriate:</p>
 <table class="ss">
 <tr class="ss-header"><th>Email address</th><th>Invitation sent?</th><th>Notes</th></tr>);
 
-  my %invitation = %{$object->invitees};
+  my $group = EnsEMBL::Web::Data::Group->new({ id => $group_id });
   my $bg = 'bg1';
   my $count = 1;
-  while (my ($email, $status) = each (%invitation)) {
+
+  foreach my $invitation (@{ $group->invites }) {
+
     if ($count % 2 == 0) {
       $bg = 'bg2';
     }
     else {
       $bg = 'bg1';
     }
-    $html .= qq(<tr class="$bg"><td>$email</td><td>);
-    if ($status eq 'invited') {
+    $html .= '<tr class="$bg"><td>'. $invitation->email .'</td><td>';
+    if ($invitation->status eq 'invited') {
       $html .= 'No</td><td>Already invited';
     }
-    elsif ($status eq 'active') {
+    elsif ($invitation->status eq 'active') {
       $html .= 'No</td><td>Already a member of this group';
     }
-    elsif ($status eq 'barred') {
+    elsif ($invitation->status eq 'barred') {
       $html .= 'No</td><td>This user has been barred from this group';
     }
-    elsif ($status eq 'inactive') {
+    elsif ($invitation->status eq 'inactive') {
       $html .= 'Yes</td><td>This user is a former member of this group';
     }
-    elsif ($status eq 'exists') {
+    elsif ($invitation->status eq 'exists') {
       $html .= 'Yes</td><td>Registered user';
     }
     else {
@@ -1212,8 +1249,8 @@ sub invitations {
     }
     $html .= "</td></tr>\n";
     $count++;
+
   }
-  my $group_id = $object->param('id');
   $html .= qq(</table>
 <p>&larr; <a href="/common/user/view_group?id=$group_id">Back to group details</a></p>);
 

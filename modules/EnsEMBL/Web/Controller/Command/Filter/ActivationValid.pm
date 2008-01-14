@@ -3,7 +3,7 @@ package EnsEMBL::Web::Controller::Command::Filter::ActivationValid;
 use strict;
 use warnings;
 
-use EnsEMBL::Web::Object::User;
+use EnsEMBL::Web::Data::User;
 use EnsEMBL::Web::RegObj;
 
 our @ISA = qw(EnsEMBL::Web::Controller::Command::Filter);
@@ -17,14 +17,11 @@ sub allow {
   my $cgi = new CGI;
   my $user;
   if ($cgi->param('user_id')) {
-    $user = EnsEMBL::Web::Object::User->new({
-      adaptor => $ENSEMBL_WEB_REGISTRY->userAdaptor,
+    $user = EnsEMBL::Web::Data::User->new({
       id      => $cgi->param('user_id'),
     });
-  }
-  else {
-    $user = EnsEMBL::Web::Object::User->new({
-      adaptor => $ENSEMBL_WEB_REGISTRY->userAdaptor,
+  } else {
+    $user = EnsEMBL::Web::Data::User->new({
       email   => $cgi->param('email'),
     });
   }

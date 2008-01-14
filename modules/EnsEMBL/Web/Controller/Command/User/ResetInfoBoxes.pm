@@ -7,7 +7,7 @@ use Class::Std;
 use CGI;
 
 use EnsEMBL::Web::RegObj;
-use EnsEMBL::Web::Object::Data::User;
+use EnsEMBL::Web::Data::User;
 use base 'EnsEMBL::Web::Controller::Command::User';
 
 {
@@ -31,9 +31,8 @@ sub process {
   my $self = shift;
   my $cgi = new CGI;
 
-  my $registry_user = $ENSEMBL_WEB_REGISTRY->get_user;
-  my $user = EnsEMBL::Web::Object::Data::User->new({ id => $registry_user->id });
-  if ($user) {
+  my $user = $ENSEMBL_WEB_REGISTRY->get_user;
+  if ($user && $user->id) {
     foreach my $info_box (@{ $user->infoboxes }) {
       $info_box->destroy;
     }

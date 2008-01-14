@@ -329,8 +329,7 @@ sub align_markup_options_form {
 
 sub user_notes {
   my( $panel, $object ) = @_;
-  my $reg_user = $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->get_user;
-  my $user = EnsEMBL::Web::Object::Data::User->new({ id => $reg_user->id });
+  my $user = $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->get_user;
   my $uri = CGI::escape($ENV{'REQUEST_URI'});
   my $html = "";
   my $stable_id = $object->stable_id;
@@ -359,8 +358,7 @@ sub user_notes {
 
 sub group_notes {
   my( $panel, $object ) = @_;
-  my $reg_user = $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->get_user;
-  my $user = EnsEMBL::Web::Object::Data::User->new({ id => $reg_user->id });
+  my $user = $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->get_user;
   my @groups = @{ $user->groups };
   my $uri = CGI::escape($ENV{'REQUEST_URI'});
   my $stable_id = $object->stable_id;

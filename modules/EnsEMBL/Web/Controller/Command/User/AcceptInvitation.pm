@@ -8,8 +8,9 @@ use CGI;
 
 use EnsEMBL::Web::Document::Interface;
 use EnsEMBL::Web::Interface::InterfaceDef;
-use EnsEMBL::Web::Object::Data::Invite;
-use EnsEMBL::Web::Object::Data::Membership;
+use EnsEMBL::Web::Data::User;
+use EnsEMBL::Web::Data::Invite;
+use EnsEMBL::Web::Data::Membership;
 use EnsEMBL::Web::RegObj;
 
 use base 'EnsEMBL::Web::Controller::Command::User';
@@ -35,11 +36,11 @@ sub render {
 sub process {
   my $self = shift;
   my $cgi = new CGI;
-  my $invitation = EnsEMBL::Web::Object::Data::Invite->new({'id' => $cgi->param('id')});
+  my $invitation = EnsEMBL::Web::Data::Invite->new({'id' => $cgi->param('id')});
   my $url; 
   if ($invitation->status eq 'pending') {
     ## Is this an existing user?
-    my $existing_user = EnsEMBL::Web::Object::User->new({'email' => $invitation->email, adaptor => $ENSEMBL_WEB_REGISTRY->userAdaptor});
+    my $existing_user = EnsEMBL::Web::Data::User->new({ 'email' => $invitation->email });
     if ($existing_user) {
       ## Create membership link between user and group
       my $success = $self->add_member_from_invitation($existing_user, $invitation);

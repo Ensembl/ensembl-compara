@@ -28,7 +28,6 @@ sub render {
   my $species_defs = $ENSEMBL_WEB_REGISTRY->species_defs;
   my $release_id = $species_defs->ENSEMBL_VERSION;
 
-  my $user_id = $ENV{'ENSEMBL_USER_ID'};
   my $user = $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->get_user;
 
   my $adaptor = $ENSEMBL_WEB_REGISTRY->newsAdaptor;
@@ -38,10 +37,10 @@ sub render {
 
   ## get news headlines
   my $criteria = {'release'=>$release_id};
-  if ($user_id && $user_id > 0) {
+  if ($user && $user->id) {
     $criteria->{'species'} = [];
     ## check for user filters
-    my @filters = $user->news_records;
+    my @filters = @{ $user->newsfilters };
     ## Look up species names for use in query
     foreach my $f (@filters) {
       if ($f->species && $f->species ne 'none') {
@@ -126,7 +125,7 @@ sub render {
   }
 
   if ($species_defs->ENSEMBL_LOGINS) {
-    if ($user_id && $user_id > 0) {
+    if ($user && $user->id) {
       if (!$filtered) {
         $html .= qq(Go to <a href="/common/user/account?tab=news">your account</a> to customise this news panel);
       }

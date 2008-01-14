@@ -4,7 +4,7 @@ use strict;
 #use warnings;
 
 use EnsEMBL::Web::DBSQL::NewsAdaptor;
-use EnsEMBL::Web::Object::Data::User;
+use EnsEMBL::Web::Data::User;
 use EnsEMBL::Web::RegObj;
 
 {
@@ -19,24 +19,20 @@ sub render {
 
   my %species_description = setup_species_descriptions($species_defs);
 
-  my $reg_user = $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->get_user;
-  my $user_data = undef; 
-  if ($reg_user->id > 0) {
-    $user_data = EnsEMBL::Web::Object::Data::User->new({ id => $reg_user->id });
-  }
+  my $user = $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->get_user;
 
   my $html = "";
   #warn "RENDERING CUSTOM SPECIES LIST WITH USER: " . $reg_user->id;
   if ($request && $request eq 'fragment') {
-    $html .= render_species_list($user_data, $species_defs, \%id_to_species, \%species_description); 
+    $html .= render_species_list($user, $species_defs, \%id_to_species, \%species_description); 
   } else {
     #warn "REORDER LIST"; 
     $html .= "<div id='reorder_species' style='display: none;'>\n";
-    $html .= render_ajax_reorder_list($user_data, $species_defs, \%id_to_species); 
+    $html .= render_ajax_reorder_list($user, $species_defs, \%id_to_species); 
     $html .= "</div>\n";
     #warn "FULL LIST";
     $html .= "<div id='full_species'>\n";
-    $html .= render_species_list($user_data, $species_defs, \%id_to_species, \%species_description); 
+    $html .= render_species_list($user, $species_defs, \%id_to_species, \%species_description); 
     $html .= "</div>\n";
     $html .= qq(
 <p>Other pre-build species are available in <a href='#top' onclick='show_pre();'>Ensembl Pre! &rarr;</a></p>);

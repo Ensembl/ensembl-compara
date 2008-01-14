@@ -5,7 +5,7 @@ use warnings;
 
 use Class::Std;
 use EnsEMBL::Web::RegObj;
-use EnsEMBL::Web::Object::Data;
+use EnsEMBL::Web::Data;
 use EnsEMBL::Web::DBSQL::SQL::Result;
 use EnsEMBL::Web::DBSQL::SQL::Request;
 use EnsEMBL::Web::Tools::DBSQL::TableName;
@@ -125,9 +125,8 @@ sub create {
   my ($self, $data) = @_;
   my $result = EnsEMBL::Web::DBSQL::SQL::Result->new();
   my ($set_clause, $values) = $self->set_clause($data);
-  my $sql = 'INSERT INTO ' . $self->get_table . ' SET '; 
-  $sql .= $set_clause;  
-  warn "CREATE: " . $sql;
+  my $sql = 'INSERT INTO ' . $self->get_table . ' SET ' . $set_clause;  
+  #warn "CREATE: " . $sql;
   $self->get_handle->prepare($sql);
   $result->set_action('create');
   if ($self->get_handle->do($sql, {}, @$values)) {
@@ -143,11 +142,10 @@ sub update {
   $result->set_action('update');
   my ($set_clause, $values) = $self->set_clause($data);
   my $key = EnsEMBL::Web::Tools::DBSQL::TableName::parse_primary_key($data->get_primary_key);
-  my $sql = 'UPDATE ' . $self->get_table . " ";
-  $sql .= "SET " . $set_clause;
-  $sql .= " WHERE " . $key . "='" . $data->id . "'";
-  $sql .= ";";
-  warn "UPDATE: " . $sql;
+  my $sql = 'UPDATE ' . $self->get_table . ' SET ' . $set_clause;
+  $sql   .= ' WHERE ' . $key . '=\'' . $data->id . '\'';
+  $sql   .= ';';
+  #warn "UPDATE: " . $sql;
   $self->get_handle->prepare($sql);
   if ($self->get_handle->do($sql, {}, @$values)) {
     $result->set_success(1);
@@ -172,10 +170,8 @@ sub destroy {
 
 sub find {
   my ($self, $data) = @_;
-  #warn "FIND";
   my $result = EnsEMBL::Web::DBSQL::SQL::Result->new();
   $result->set_action('find');
-  my $key = EnsEMBL::Web::Tools::DBSQL::TableName::parse_primary_key($data->get_primary_key);
   my $sql = 'SELECT *';
   foreach my $column (@{$data->get_queriable_fields}) {
     if ($column->get_name eq 'created_at' || $column->get_name eq 'modified_at') {
@@ -187,10 +183,30 @@ sub find {
     $sql .= $data->get_data_field_name.', ';
   }
   $sql =~ s/, $/ /;
-  $sql .= ' FROM ' . $self->get_table . ' WHERE ' . $key . '="' . $data->id . '";';
-  #warn $sql;
-  my $hashref = $self->get_handle->selectall_hashref($sql, $key);
-  $result->set_result_hash($hashref->{$data->id});
+  $sql .= ' FROM '. $self->get_table .' WHERE ';
+
+  my $key = EnsEMBL::Web::Tools::DBSQL::TableName::parse_primary_key($data->get_primary_key);
+
+  my @bind_values;
+  if ($data->id) {
+      $sql .= "$key = ?";
+      push @bind_values, $data->id;
+  } else {
+      foreach my $column (@{$data->get_queriable_fields}) {
+        my $fname = $column->get_name;
+        next unless defined $data->$fname;
+        push @bind_values, $data->$fname;
+        $sql .= " $fname = ? AND ";
+      }
+      $sql =~ s/AND $/ /;
+  }  
+  
+  #warn Dumper(\@bind_values);
+  #warn "SQL = $sql";
+  
+  my $hashref = $self->get_handle->selectrow_hashref($sql, {}, @bind_values);
+  
+  $result->set_result_hash($hashref);
   return $result;
 }
 

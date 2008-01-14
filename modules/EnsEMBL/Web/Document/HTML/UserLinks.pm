@@ -9,10 +9,7 @@ use EnsEMBL::Web::RegObj;
 
 sub render {
   my $html = "";
-  my $user_id = $ENV{'ENSEMBL_USER_ID'};
-  if ($user_id > 0) {
-    my $user_adaptor = $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->userAdaptor;
-    my $user = $user_adaptor->find_user_by_user_id($user_id);
+  if ($user = $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->get_user) {
     $html .= "Logged in as " . $user->name;
   } else {
     $html .= "Log in or register";

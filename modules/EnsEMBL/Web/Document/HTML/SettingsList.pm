@@ -17,12 +17,11 @@ sub render {
   my $html = "";
   if ($ENV{'ENSEMBL_USER_ID'}) {
   my $user = $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->get_user;
-  my $data_user = EnsEMBL::Web::Object::Data::User->new({ id => $user->id });
 
   my $sitename = $SiteDefs::ENSEMBL_SITETYPE;
 
   my $group_id = undef;
-  foreach my $this ($user->drawer_records) {
+  foreach my $this (@{ $user->drawers }) {
     $group_id = $this->group;
   }
   $html = "<div id='settings' style='display:none;'>\n";
@@ -33,13 +32,14 @@ sub render {
   $html .= "</td>\n";
   $html .= "<td style='text-align: right;' width='49%'>";
   my @groups = @{ $user->groups };
-  if ($#groups > -1) {
+  if (@groups) {
     $html .= "Show from: ";
     $html .= "<select name='group_select' id='group_select' onChange='settings_drawer_change()'>\n";
     $html .= "<option value='user'>Your account</option>\n";
     $html .= "<optgroup label='Groups'>\n";
   }
   foreach my $group (@{ $user->groups }) {
+    next if $group->status ne 'active';
     my $selected = "";
     if ($group_id && $group_id eq $group->id) {
       $selected = "selected";
@@ -55,22 +55,45 @@ sub render {
   $html .= "<tr>\n";
   $html .= "<td style='padding-top: 5px;'>\n";
   $html .= "Bookmarks";
-  my @user_bookmarks = @{ $data_user->bookmarks };
-  $html .= list_for_records({ records => \@user_bookmarks, tag => 'user', selected => $group_id, type => 'bookmark' });
+  my @user_bookmarks = @{ $user->bookmarks };
+  $html .= list_for_records({
+    records  => \@user_bookmarks,
+    tag      => 'user',
+    selected => $group_id,
+    type     => 'bookmark',
+  });
+  
   foreach my $group (@{ $user->groups }) {
-    my @group_bookmarks = $group->bookmark_records;
-    $html .= list_for_records({ records => \@group_bookmarks, tag => $group->id, selected => $group_id, type => 'bookmark' });
+    my @group_bookmarks = @{ $group->bookmarks };
+    $html .= list_for_records({
+      records  => \@group_bookmarks,
+      tag      => $group->id,
+      selected => $group_id,
+      type     => 'bookmark',
+    });
   }
   $html .= "</td>\n";
   $html .= "<td style='padding-top: 5px;'>\n";
-  my @configurations = @{ $data_user->configurations };
+  my @configurations = @{ $user->configurations };
   $html .= "Configurations";
-  my @current_configs = $user->currentconfigs;
+  my @current_configs = @{ $user->currentconfigs };
   my $current_config = $current_configs[0];
-  $html .= list_for_records({ records => \@configurations, tag => 'user', selected => $group_id, type => 'configuration', current_config => $current_config });
+  $html .= list_for_records({
+    records        => \@configurations,
+    tag            => 'user',
+    selected       => $group_id,
+    type           => 'configuration',
+    current_config => $current_config,
+  });
   foreach my $group (@{ $user->groups }) {
-    my @group_configurations = $group->configuration_records;
-    $html .= list_for_records({ records => \@group_configurations, tag => $group->id, selected => $group_id, type => 'configuration', current_config => $current_config });
+    my @group_configurations = @{ $group->configurations };
+    $html .= list_for_records({
+      records        => \@group_configurations,
+      tag            => $group->id,
+      selected       => $group_id,
+      type           => 'configuration',
+      current_config => $current_config,
+    });
   }
   $html .= "</td>\n";
   $html .= "</tr>\n";

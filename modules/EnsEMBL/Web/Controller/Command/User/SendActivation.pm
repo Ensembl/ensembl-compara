@@ -7,7 +7,7 @@ use Class::Std;
 use CGI;
 
 use EnsEMBL::Web::RegObj;
-use EnsEMBL::Web::Object::User;
+use EnsEMBL::Web::Data::User;
 use EnsEMBL::Web::Mailer::User;
 
 use base 'EnsEMBL::Web::Controller::Command::User';
@@ -34,8 +34,7 @@ sub process {
   my $self = shift;
   my $cgi = new CGI;
 
-  my $user = EnsEMBL::Web::Object::User->new({
-        adaptor => $ENSEMBL_WEB_REGISTRY->userAdaptor,
+  my $user = EnsEMBL::Web::Data::User->new({
 	      email   => $cgi->param('email'),
   });
   if ($cgi->param('record_id')) {

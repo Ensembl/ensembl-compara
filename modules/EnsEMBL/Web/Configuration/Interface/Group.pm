@@ -7,7 +7,7 @@ use strict;
 use CGI;
 use EnsEMBL::Web::RegObj;
 use EnsEMBL::Web::Configuration::Interface;
-use EnsEMBL::Web::Object::Data::Membership;
+use EnsEMBL::Web::Data::Membership;
 
 
 our @ISA = qw( EnsEMBL::Web::Configuration::Interface );
@@ -27,7 +27,7 @@ sub save {
 
   ## If new group, add current user as administrator
   if (!$id) {
-    my $member = EnsEMBL::Web::Object::Data::Membership->new();
+    my $member = EnsEMBL::Web::Data::Membership->new();
     $member->user_id($ENV{'ENSEMBL_USER_ID'});
     $member->webgroup_id($interface->data->id);
     $member->level('administrator');

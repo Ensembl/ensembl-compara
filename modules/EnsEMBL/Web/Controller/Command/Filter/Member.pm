@@ -5,8 +5,8 @@ use warnings;
 
 use EnsEMBL::Web::RegObj;
 use EnsEMBL::Web::Registry;
-use EnsEMBL::Web::Object::Data::Group;
-use EnsEMBL::Web::Object::Data::User;
+use EnsEMBL::Web::Data::Group;
+use EnsEMBL::Web::Data::User;
 
 our @ISA = qw(EnsEMBL::Web::Controller::Command::Filter);
 
@@ -18,8 +18,8 @@ sub allow {
   my $self = shift;
   my $reg = $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY;
 
-  my $group = EnsEMBL::Web::Object::Data::Group->new({id=>$self->get_group_id});
-  my $user = EnsEMBL::Web::Object::Data::User->new({id=>$reg->get_user->id});
+  my $group = EnsEMBL::Web::Data::Group->new({id => $self->get_group_id});
+  my $user = $reg->get_user;
   if ($user->is_member_of($group)) {
     return 1;
   }

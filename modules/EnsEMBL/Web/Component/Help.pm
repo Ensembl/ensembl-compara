@@ -2,9 +2,10 @@ package EnsEMBL::Web::Component::Help;
 
 use EnsEMBL::Web::Component;
 use EnsEMBL::Web::Form;
-use EnsEMBL::Web::Object::Data::Article;
-use EnsEMBL::Web::Object::Data::View;
+use EnsEMBL::Web::Data::Article;
+use EnsEMBL::Web::Data::View;
 use Image::Size;
+use Data::Dumper;
 
 our @ISA = qw( EnsEMBL::Web::Component);
 use strict;
@@ -23,19 +24,19 @@ sub _wrap_form {
 }
 
 sub helpview {
-  my($panel,$object) = @_;
-  my @articles = @{$object->views};
-  my $article = $articles[0];
+  my($panel, $object) = @_;
+  my ($article) = @{ $object->views };
+  
   my $hilite = $object->param('hilite');
 
-  my $title = $article->title;
+  my $title = $article->title if $article;
   if ($hilite) {
     $title = _kw_hilite($object, $title);
   }
   my $html = "<h2>$title</h2>";
 
   my ($text, $header, $group);
-  $text = $article->content;
+  $text = $article->content if $article;
   $text =~ s/\\'/'/g;
   if ($hilite) {
     $text   = _kw_hilite($object, $text);
@@ -119,11 +120,11 @@ sub results {
   foreach( @{$object->results}) {
     my $url = '/common/helpview?id='.$_->{'id'}.';hilite='.$object->param('hilite');
     if ($modular) {
-      my $help = EnsEMBL::Web::Object::Data::View->new({ 'id' => $_->{'id'} }); 
+      my $help = EnsEMBL::Web::Data::View->new({ 'id' => $_->{'id'} }); 
       $panel->printf( qq(\n    <dt><a href="%s">%s</a></dt><dd>%s</dd>), $url, $help->title, $help->summary);
     }
     else {
-      my $help = EnsEMBL::Web::Object::Data::Article->new({ 'id' => $_->{'id'} }); 
+      my $help = EnsEMBL::Web::Data::Article->new({ 'id' => $_->{'id'} }); 
       $panel->printf( qq(\n    <li><a href="%s">%s</a></li>), $url, $help->title);
     }
   } 
@@ -223,9 +224,9 @@ sub glossary {
 
   my $html = "<dl>";
   my @sorted = sort { lc($a->word) cmp lc($b->word) } @$glossary;
-  foreach my $entry (@sorted) {
+  foreach my $entry (@$glossary) {
     my $word    = $entry->word;
-    my $acronym = $entry->acronym;
+    my $acronym = $entry->expanded;
     my $meaning = $entry->meaning;
     (my $anchor = $word) =~ s/ /_/g;
     $html .= qq(<dt id="$anchor">$word</dt>\n<dd>);

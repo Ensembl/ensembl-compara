@@ -33,10 +33,9 @@ sub process {
   my $cgi = new CGI;
   my $url = '/common/user/account';
 
-  my $reg_user = $ENSEMBL_WEB_REGISTRY->get_user;
-  my $group = EnsEMBL::Web::Object::Group->new(( id => $cgi->param('id') ));
+  my $user = $ENSEMBL_WEB_REGISTRY->get_user;
+  my $group = EnsEMBL::Web::Data::Group->new({ id => $cgi->param('id') });
   $group->assign_status_to_user($user, 'inactive');
-  $group->save;
 
   $cgi->redirect($url);
 }

@@ -5,7 +5,7 @@ package EnsEMBL::Web::Configuration::User;
 
 use strict;
 use EnsEMBL::Web::Configuration;
-use EnsEMBL::Web::Object::Data::User;
+use EnsEMBL::Web::Data::User;
 use EnsEMBL::Web::RegObj;
 
 our @ISA = qw( EnsEMBL::Web::Configuration );
@@ -257,7 +257,7 @@ sub groupview {
   $self->_add_javascript_libraries;
 
   if ($user->param('id')) {
-    my $group = EnsEMBL::Web::Object::Group->new(( id => $user->param('id') ));
+    my $group = EnsEMBL::Web::Data::Group->new({ id => $user->param('id') });
 
     if( my $members_panel = $self->new_panel( 'Image',
       'code'    => "group_details#",
@@ -287,10 +287,7 @@ sub groupview {
 sub accountview {
   ### Dynamic view displaying information about a user account
   my $self   = shift;
-  #my $user = $self->{object};
-  #my $user = $ENSEMBL_WEB_REGISTRY->get_user;
-  my $registry_user = $ENSEMBL_WEB_REGISTRY->get_user;
-  my $user = EnsEMBL::Web::Object::Data::User->new({ id => $registry_user->id });
+  my $user = $ENSEMBL_WEB_REGISTRY->get_user;
 
   $self->_add_javascript_libraries;
 

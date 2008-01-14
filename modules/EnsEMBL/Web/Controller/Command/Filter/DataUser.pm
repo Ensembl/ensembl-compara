@@ -3,7 +3,7 @@ package EnsEMBL::Web::Controller::Command::Filter::DataUser;
 use strict;
 use warnings;
 
-use EnsEMBL::Web::Object::Data::User;
+use EnsEMBL::Web::Data::User;
 use EnsEMBL::Web::RegObj;
 
 our @ISA = qw(EnsEMBL::Web::Controller::Command::Filter);
@@ -12,11 +12,12 @@ our @ISA = qw(EnsEMBL::Web::Controller::Command::Filter);
 
 sub user {
   my ($self, $id) = @_;
-  my $get_id = $id;
-  if (!$id) {
-    $get_id = $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->get_user->id;
+
+  if ($id) {
+    return EnsEMBL::Web::Data::User->new({ id => $id });
   }
-  return EnsEMBL::Web::Object::Data::User->new({ id => $get_id });
+
+  return $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->get_user;
 }
 
 sub inherit {

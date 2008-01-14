@@ -153,6 +153,7 @@ sub render {
   $self->add_element( 'type' => 'Information', 
     'value' => '<div style="text-align: right">Fields marked with <b>*</b> are required</div>'
   ) if $F;
+  
   foreach my $element ( @{$self->{'_elements'}} ) {
     $output .= $self->_render_element( $element );
   }

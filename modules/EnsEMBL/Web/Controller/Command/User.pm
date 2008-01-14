@@ -23,7 +23,7 @@ sub user_or_admin {
 sub add_member_from_invitation {
   my ($self, $user, $invitation) = @_;
 
-  my $membership = EnsEMBL::Web::Object::Data::Membership->new;
+  my $membership = EnsEMBL::Web::Data::Membership->new;
   $membership->webgroup_id($invitation->webgroup_id);
   $membership->user_id($user->id);
   $membership->created_by($user->id);

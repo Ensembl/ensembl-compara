@@ -7,7 +7,7 @@ package EnsEMBL::Web::Interface::InterfaceDef;
 use strict;
 use warnings;
 
-use EnsEMBL::Web::Object::Data;
+use EnsEMBL::Web::Data;
 use EnsEMBL::Web::Interface::ElementDef;
 use EnsEMBL::Web::Tools::DBSQL::TableName;
 
@@ -436,7 +436,7 @@ sub _create_relational_element {
 
     ## Get default values
     my $primary_key;
-    my $objects = EnsEMBL::Web::Object::Data::find_all($class);
+    my $objects = EnsEMBL::Web::Data::find_all($class);
     foreach my $obj (@$objects) {
       push @option_values, {'name'=> $obj->id, 'value' => $obj->id};
       $primary_key = $obj->get_primary_key;

@@ -5,7 +5,6 @@ use warnings;
 
 use CGI;
 use Class::Std;
-use EnsEMBL::Web::ParameterSet;
 
 {
 

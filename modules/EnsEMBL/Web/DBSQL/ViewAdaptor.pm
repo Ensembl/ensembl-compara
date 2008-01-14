@@ -11,6 +11,7 @@ use Data::Dumper;
 use EnsEMBL::Web::SpeciesDefs;
 use EnsEMBL::Web::Object::User;
 use EnsEMBL::Web::DBSQL::SQL::Result;
+use EnsEMBL::Web::Tools::Encryption;
 
 {
 
@@ -119,7 +120,7 @@ sub edit {
   if ($set_parameters{password}) {
     my $salt = $params{salt}; 
     my $password = $set_parameters{password};
-    $set_parameters{password} = EnsEMBL::Web::Object::User->encrypt($password);
+    $set_parameters{password} = EnsEMBL::Web::Tools::Encryption::encryptPassword($password);
   }
   
   my $in = "'$id'";

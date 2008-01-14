@@ -23,7 +23,7 @@ sub add_form {
   my $key = EnsEMBL::Web::Tools::DBSQL::TableName::parse_primary_key($panel->interface->data->get_primary_key);
   my $id = $object->param($key) || $object->param('id');
   if ($id) {
-    $panel->interface->data->populate($id);
+    $panel->interface->data->populate_with_arguments({id => $id});
   }
   else {
     $panel->interface->cgi_populate($object, '');

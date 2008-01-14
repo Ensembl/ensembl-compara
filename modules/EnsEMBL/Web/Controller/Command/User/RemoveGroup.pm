@@ -33,7 +33,7 @@ sub render {
 sub process {
   my $self = shift;
   my $cgi = new CGI;
-  my $group = EnsEMBL::Web::Object::Group->new(( adaptor => $ENSEMBL_WEB_REGISTRY->userAdaptor, id => $cgi->param('id') ));
+  my $group = EnsEMBL::Web::Data::Group->new({ id => $cgi->param('id') });
   $group->status('inactive');
   $group->save;
   $cgi->redirect('/common/user/account');

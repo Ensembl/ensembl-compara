@@ -114,7 +114,7 @@ sub preview_form {
 
 
   if ($db_action eq 'delete') {
-    $panel->interface->data->populate($id);
+    $panel->interface->data->populate_with_arguments({id => $id});
   }
   else {
     $panel->interface->cgi_populate($object, $id);
@@ -160,7 +160,7 @@ sub _data_form {
   }
   my $id = $object->param($key) || $object->param('id');
   if ($id) {
-    $panel->interface->data->populate($id);
+    $panel->interface->data->populate_with_arguments({id => $id});
   }
   else {
     $panel->interface->cgi_populate($object, '');

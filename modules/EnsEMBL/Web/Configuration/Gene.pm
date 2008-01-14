@@ -276,7 +276,7 @@ sub geneview {
 
   my $user = $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->get_user;
 
-  if ($user->id) {
+  if ($user && $user->id) {
     if( my $annotation_panel = $self->new_panel( 
                                      'Information',
                                      'code'    => "dasinfo#",

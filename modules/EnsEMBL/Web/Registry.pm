@@ -1,14 +1,12 @@
 package EnsEMBL::Web::Registry;
 
 use EnsEMBL::Web::DBSQL::UserDBAdaptor;
-use EnsEMBL::Web::DBSQL::UserAdaptor;
 use EnsEMBL::Web::DBSQL::SessionAdaptor;
 use EnsEMBL::Web::DBSQL::WebDBAdaptor;
 use EnsEMBL::Web::DBSQL::NewsAdaptor;
-use EnsEMBL::Web::DBSQL::HelpAdaptor;
 use EnsEMBL::Web::Timer;
 use EnsEMBL::Web::SpeciesDefs;
-use EnsEMBL::Web::Object::Data::User;
+use EnsEMBL::Web::Data::User;
 #use Cache::Memcached;
 #use EnsEMBL::Web::DBCache;
 #use EnsEMBL::Web::FakeMemcached;
@@ -30,10 +28,7 @@ my %Session_of   :ATTR( :set<session>  :get<session>  );
 my %Script_of    :ATTR( :set<script>   :get<script>   );
 my %Species_of   :ATTR( :set<species>  :get<species>  );
 my %SessionAdaptor_of :ATTR( :get<sessionadaptor> );                    # To allow it to be reset
-my %UserAdaptor_of    :ATTR( :get<useradaptor>    );                    # To allow it to be reset
 my %NewsAdaptor_of    :ATTR( :get<newsadaptor>    );                    # To allow it to be reset
-my %HelpAdaptor_of    :ATTR( :get<helpadaptor>    );                    # To allow it to be reset
-my %UserDB_of :ATTR( :get<userdb>    );                    # To allow it to be reset
 my %WebDB_of :ATTR( :get<webdb>    );                    # To allow it to be reset
 
 ## DAS functionality - most of this is moved from EnsEMBL::Web::ExternalDAS which
@@ -54,9 +49,7 @@ sub get_das {
 ## No session so cannot have anything configured!
   my $session_das = $self->get_session->get_das;
 
-  my $user_id = $self->get_user->id;
-  if ($user_id) {
-    my $user = EnsEMBL::Web::Object::Data::User->new({ id => $user_id });
+  if (my $user = $self->get_user) {
     foreach my $das (@{ $user->dases }) {
       $Das_sources_of{ ident $self }{$das->name} = $das->get_das_config;
       #warn $Das_sources_of{ ident $self }{$das->name};
@@ -150,17 +143,6 @@ sub sessionAdaptor {
   });
 }
 
-sub userAdaptor {
-### a
-### Lazy loaded User adaptor....
-  my $self = shift;
-  return $UserAdaptor_of{ ident $self } ||=
-    EnsEMBL::Web::DBSQL::UserAdaptor->new({
-      'db_adaptor'   => $self->dbAdaptor,   ## Web user db adaptor
-      'species_defs' => $self->species_defs ## Species defs..
-    });
-}
-
 sub newsAdaptor {
 ### a
 ### Lazy loaded News adaptor....
@@ -170,26 +152,6 @@ sub newsAdaptor {
       'db_adaptor'   => $self->websiteAdaptor,   ## Website db adaptor
       'species_defs' => $self->species_defs ## Species defs..
     });
-}
-
-sub helpAdaptor {
-### a
-### Lazy loaded Help adaptor....
-  my $self = shift;
-  return $HelpAdaptor_of{ ident $self } ||=
-    EnsEMBL::Web::DBSQL::HelpAdaptor->new({
-      'db_adaptor'   => $self->websiteAdaptor,   ## Website db adaptor
-      'species_defs' => $self->species_defs ## Species defs..
-    });
-}
-
-sub userDB {
-### x 
-### Lazy loaded User DB....
-### Deprecated. Use {{userAdaptor}} instead.
-  my $self = shift;
-  warn "xxxxxxxxxxxxx DEPRECATED xxxxxxxxxxxxxxxx";
-  return $UserDB_of{ ident $self } ||= $self->userAdaptor;
 }
 
 sub webDB {
@@ -206,11 +168,14 @@ sub webDB {
 sub initialize_user {
 ###
   my($self,$arg_ref)=@_;
-#  $self->userAdaptor->set_request( $self->get_request );
-  $self->set_user( $self->userAdaptor->get_user_from_cookie({
-    'cookie'=> $arg_ref->{'cookie'},
-    'r'     => $arg_ref->{'r'}
-   }) );
+  $arg_ref->{'cookie'}->retrieve($arg_ref->{'r'});
+  my $id = $arg_ref->{'cookie'}->get_value;
+  
+  $self->set_user( EnsEMBL::Web::Data::User->new({
+    id    => $id,
+##  TODO: decide if we still need 'defer' here, and implement if yes
+##  defer => 'yes',
+  }) ) if $id;
 }
 
 sub initialize_session {

@@ -12,9 +12,8 @@ our @ISA = qw(EnsEMBL::Web::Controller::Command::Filter);
 
 sub allow {
   my $self = shift;
-  my $reg = $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY;
-  my $user = $reg->get_user;
-  if ($user->id) {
+  my $user = $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->get_user;
+  if ($user && $user->id) {
     return 1;
   }
   #my $previous = $self->SUPER::allow(); 

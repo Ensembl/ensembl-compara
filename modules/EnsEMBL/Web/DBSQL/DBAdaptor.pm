@@ -69,6 +69,14 @@ use strict;
     $self->get_dbhandle->selectall_hashref( @_ );
   }
 
+  sub selectrow_hashref {
+### wrapper around DBI
+    my $self = shift;
+    #use Carp qw(cluck);
+    #warn "SELECTROW HASHREF: " . cluck();
+    $self->get_dbhandle->selectrow_hashref( @_ );
+  }
+
   sub do {
 ### wrapper around DBI
     my $self = shift;

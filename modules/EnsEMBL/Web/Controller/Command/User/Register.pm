@@ -36,7 +36,7 @@ sub render_page {
 
   ## Create interface object, which controls the forms
   my $interface = EnsEMBL::Web::Interface::InterfaceDef->new();
-  my $data = EnsEMBL::Web::Object::Data::User->new();
+  my $data = EnsEMBL::Web::Data::User->new();
   $interface->data($data);
   $interface->discover;
 

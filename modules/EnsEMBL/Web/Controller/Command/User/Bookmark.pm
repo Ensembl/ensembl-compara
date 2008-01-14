@@ -6,7 +6,7 @@ use warnings;
 use Class::Std;
 use CGI;
 
-use EnsEMBL::Web::Object::Data::Bookmark;
+use EnsEMBL::Web::Data::Bookmark;
 
 use base 'EnsEMBL::Web::Controller::Command::User';
 
@@ -19,7 +19,7 @@ sub BUILD {
   my $cgi = new CGI;
   my $record;
   if ($cgi->param('id')) {
-    $self->user_or_admin('EnsEMBL::Web::Object::Data::Bookmark', $cgi->param('id'), $cgi->param('record_type'));
+    $self->user_or_admin('EnsEMBL::Web::Data::Bookmark', $cgi->param('id'), $cgi->param('record_type'));
   }
 }
 
@@ -45,7 +45,7 @@ sub render_page {
   ## Create interface object, which controls the forms
   my $interface = EnsEMBL::Web::Interface::InterfaceDef->new();
   my $cgi = new CGI;
-  my $data = EnsEMBL::Web::Object::Data::Bookmark->new({'record_type' => $cgi->param('record_type')});
+  my $data = EnsEMBL::Web::Data::Bookmark->new({'record_type' => $cgi->param('record_type')});
   $interface->data($data);
   $interface->discover;
 

@@ -10,7 +10,7 @@ use EnsEMBL::Web::Proxy::Object;
 use EnsEMBL::Web::Object::UserDAS;
 ## TO ADD
 #use EnsEMBL::Web::Object::File;
-#use EnsEMBL::Web::Object::Data::UserFile;
+#use EnsEMBL::Web::Data::UserFile;
                                                                                    
 our @ISA = qw(  EnsEMBL::Web::Factory );
 

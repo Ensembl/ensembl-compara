@@ -4,8 +4,8 @@ use strict;
 use warnings;
 
 use Class::Std;
-use EnsEMBL::Web::Object::User;
-use EnsEMBL::Web::Object::Data::Invite;
+use EnsEMBL::Web::Data::User;
+use EnsEMBL::Web::Data::Invite;
 use EnsEMBL::Web::Tools::Encryption;
 use EnsEMBL::Web::RegObj;
 use Apache2::RequestUtil;
@@ -34,10 +34,12 @@ sub process {
   my $self = shift;
 
   my $cgi = new CGI;
-  my $user = EnsEMBL::Web::Object::User->new({
-    adaptor  => $ENSEMBL_WEB_REGISTRY->userAdaptor,
+  my $user = EnsEMBL::Web::Data::User->new({
     email    => $cgi->param('email'),
   });
+  
+  warn 'USER email: '. $user->email;
+  warn 'USER id: '. $user->id;
 
   my $url = $cgi->param('url'); 
   if (!$url || $url =~ m#common/user#) { ## Don't want to redirect user to e.g. register or login confirmation!
@@ -68,7 +70,7 @@ sub process {
 
   ## Add membership if coming from invitation acceptance
   if ($cgi->param('record_id')) {
-    my $invitation = EnsEMBL::Web::Object::Data::Invite->new({id => $cgi->param('record_id')});
+    my $invitation = EnsEMBL::Web::Data::Invite->new({id => $cgi->param('record_id')});
     my $success = $self->add_member_from_invitation($user, $invitation);
     if ($success) {
       $invitation->destroy;

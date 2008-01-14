@@ -3,7 +3,7 @@ package EnsEMBL::Web::Controller::Command::Filter::PasswordValid;
 use strict;
 use warnings;
 
-use EnsEMBL::Web::Object::User;
+use EnsEMBL::Web::Data::User;
 use EnsEMBL::Web::Tools::Encryption;
 use EnsEMBL::Web::RegObj;
 use CGI;
@@ -21,8 +21,7 @@ sub allow {
   my $email = $cgi->param('email');
   my$password = $cgi->param('password');
 
-  my $user = EnsEMBL::Web::Object::User->new({
-    adaptor   => $ENSEMBL_WEB_REGISTRY->userAdaptor,
+  my $user = EnsEMBL::Web::Data::User->new({
     email     => $email,
   });
   my $input_password = $cgi->param('password');

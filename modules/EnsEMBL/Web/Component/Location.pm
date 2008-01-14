@@ -23,7 +23,6 @@ use Bio::EnsEMBL::ExternalData::DAS::DASAdaptor;
 use Bio::EnsEMBL::ExternalData::DAS::DAS;
 use EnsEMBL::Web::RegObj;
 use EnsEMBL::Web::Form;
-use EnsEMBL::Web::Object::Data::User;
 use CGI qw(escape);
 use Data::Dumper;
 our @ISA = qw( EnsEMBL::Web::Component);
@@ -428,8 +427,7 @@ sub contigviewtop {
 sub cytoview_config {
   my ($panel, $object) = @_;
   my $user = $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->get_user;
-  my $data_user = EnsEMBL::Web::Object::Data::User->new({ id => $user->id });
-  my @current_configs = @{ $data_user->currentconfigs };
+  my @current_configs = @{ $user->currentconfigs };
   my $current_config = $current_configs[0];
   my $script_name = "cytoview";
   my $session = $ENSEMBL_WEB_REGISTRY->get_session;
@@ -438,7 +436,7 @@ sub cytoview_config {
 
   if ($current_config) {
 #  warn "CHECKING FOR CURRENT CONFIG: " . $current_config->config;
-    foreach my $configuration (@{ $data_user->configurations }) {
+    foreach my $configuration (@{ $user->configurations }) {
       if ($configuration->id eq $current_config->config) {
         warn "LOADED CONFIG " . $configuration->id;
 	my $saved_string = $configuration->scriptconfig . "\n";
@@ -523,12 +521,11 @@ sub contigviewbottom_config {
   my $html = "";
   if ($ENV{'ENSEMBL_USER_ID'}) {
     my $user = $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->get_user;
-    my $data_user = EnsEMBL::Web::Object::Data::User->new({ id => $user->id });
-    my @current_configs = @{ $data_user->currentconfigs };
+    my @current_configs = @{ $user->currentconfigs };
     my $current_config = $current_configs[0];
     if ($current_config) {
       #warn "---------------> CONFIG CHECK: ".$current_config->config;
-      foreach my $configuration (@{ $data_user->configurations }) {
+      foreach my $configuration (@{ $user->configurations }) {
         #warn "SEACHING FOR CONFIG: " . $configuration->id; 
         if ($configuration->id eq $current_config->config) {
           my $saved_string = $configuration->scriptconfig . "\n";
@@ -536,7 +533,10 @@ sub contigviewbottom_config {
           $saved_string =~ s/\n|\r|\f//g; 
           $html = "<div style='text-align: center; padding-bottom: 4px;'>";
           if (length($saved_string) != length($string)) {
-            $html .= "You have changed the '" . $configuration->name . "' view configuration: <a href='javascript:void(0);' onclick='change_config(" . $configuration->id . ");'><strong>Save</strong></a> &middot; <a href='javascript:void(0);' onclick='add_config(" . $configuration->id . ");'><strong>Save As</strong></a>";
+            $html .= "You have changed the '" . $configuration->name
+                  .  "' view configuration: <a href='javascript:void(0);' onclick='change_config("
+                  .  $configuration->id . ");'><strong>Save</strong></a> &middot; <a href='javascript:void(0);' onclick='add_config("
+                  .  $configuration->id . ");'><strong>Save As</strong></a>";
           } else {
             $html .= "You are using the '" . $configuration->name . "' view configuration.";
           }

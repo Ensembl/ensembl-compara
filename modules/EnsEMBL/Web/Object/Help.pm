@@ -6,9 +6,11 @@ no warnings "uninitialized";
 use CGI qw(unescape);
 
 use EnsEMBL::Web::Object;
-use EnsEMBL::Web::Object::Data::Article;
-use EnsEMBL::Web::Object::Data::Category;
-use EnsEMBL::Web::Record::Help;
+use EnsEMBL::Web::Data::Article;
+use EnsEMBL::Web::Data::Category;
+use EnsEMBL::Web::Data::View;
+use EnsEMBL::Web::Data::Glossary;
+
 use Mail::Mailer;
 use Data::Dumper;
 
@@ -80,7 +82,7 @@ sub search {
   }
 
   ## get list of help articles by appropriate method
-  $self->{'data'}{'_results'} = $self->adaptor->$method( $keywords );
+  $self->{'data'}{'_results'} = EnsEMBL::Web::Data::Article->$method( $keywords );
   return $self->results;
 }
 
@@ -89,30 +91,12 @@ sub results :lvalue { $_[0]->{'data'}{'_results'}; }
 sub records {
   my ($self, $criteria) = @_;
 
-  if (!$self->{'records'}) {
-    my $records = [];
-    my $result = $self->adaptor->fetch_records($criteria);
-    foreach my $row (@$result) {
-      my $r = EnsEMBL::Web::Record::Help->new(
-        'id'          => $row->{'help_record_id'},
-        'type'        => $row->{'type'},
-        'keyword'     => $row->{'keyword'},
-        'data'        => $row->{'data'},
-        'status'      => $row->{'status'},
-        'helpful'     => $row->{'helpful'},
-        'not_helpful' => $row->{'not_helpful'},
-        'created_by'  => $row->{'created_by'},
-        'created_at'  => $row->{'created_at'},
-        'modified_by' => $row->{'modified_by'},
-        'modified_at' => $row->{'modified_at'},
-        'adaptor'     => $self->adaptor,
-      );
-      push @$records, $r;
-    }
-    $self->{'records'} = $records;
-  }
+  $self->{'records'} = EnsEMBL::Web::Data::View->find_all($criteria)
+    unless $self->{'records'};
+
   return $self->{'records'};
 }
+
 
 sub views {
   my $self = shift;
@@ -133,12 +117,10 @@ sub views {
     }
     $articles = $self->records($params);
     pop @$params; ## remove type parameter since it doesn't exist in old table
+  } elsif ($self->param('id')) {
+    push @$params, ['article_id', $self->param('id')];
   }
-  else {
-    if ($self->param('id')) {
-      push @$params, ['article_id',$self->param('id')];
-    }
-  }
+
   ## Default help
   if (!$self->param('id') && !$self->param('kw')) {
     push @$params, ['keyword','helpview'];
@@ -146,112 +128,30 @@ sub views {
     
   ## Check old database and convert to records
   ## NB - convert to else block once EnsEMBL is fully migrated?
-warn "#### ", join '; ', map "@$_", @$params;
-  my $results = $self->adaptor->fetch_articles($params);
-  foreach my $row (@$results) {
-    my %fields = (
-        'title'     => $row->{'title'},
-        'keyword'   => $row->{'keyword'},
-        'content'   => $row->{'content'},
-        'category'  => $row->{'category_name'},
-      );
-    my $temp_fields = {};
-    foreach my $key (keys %fields ) {
-      $temp_fields->{$key} = $fields{$key};
-      $temp_fields->{$key} =~ s/'/\\'/g;
-    }
-    my $data = Dumper($temp_fields);
-    $data =~ s/^\$VAR1 = //;
+  my $articles = EnsEMBL::Web::Data::Article->find_all($params);
 
-    my $r = EnsEMBL::Web::Record::Help->new(
-        'id'          => $row->{'article_id'},
-        'type'        => 'view',
-        'keyword'     => $row->{'keyword'},
-        'data'        => $data,
-        'adaptor'     => $self->adaptor,
-    );
-    push @$articles, $r; 
-  }
   return $articles;
-}
-
-
-sub articles {
-  ### a
-  ### Returns:
-  my $self = shift;
-
-  my $keywords    = $self->param( 'kw' );
-  my $ids         = $self->param( 'ids' );
-  my ($method_se, $method_kw, $method_id, $results);
-
-  #if ($self->modular) {
-  #  $method_se = 'fetch_article_by_keyword';
-  #  $method_kw = 'fetch_scores_by_string';
-  #  $method_id = 'fetch_summaries_by_scores';
-  #}
-  #else {
-    $method_se = 'fetch_all_by_keyword';
-    $method_kw = 'fetch_all_by_string';
-    $method_id = 'fetch_all_by_scores';
-  #}
-
-  ## get list of help articles by appropriate method
-  if( $self->param('se') ) {
-    $results = $self->adaptor->$method_se( $keywords );
-  }
-  elsif ($self->param('kw')) {
-    $results = $self->adaptor->$method_kw( $keywords );
-  }
-  elsif ( $self->param('results')) {
-    ## messy, but makes sure we get the results in order!
-    my $ids = [];
-    my @articles = split('_', $self->param('results'));
-    foreach my $article (@articles) {
-      my @bits = split('-', $article);
-      push(@$ids, {'id'=>$bits[0], 'score'=>$bits[1]});
-    }
-    $results = $self->adaptor->$method_id( $ids );
-  }
-  return $results;
 }
 
 sub index { 
   my $self = shift;
-  return $self->adaptor->fetch_index_list('live');
+  return EnsEMBL::Web::Data::Article->fetch_index_list('live');
 }
 
 sub glossary {
   my $self = shift;
   if ($self->modular) {
     return $self->records([['type','glossary'],['status','live']]);
-  }
-  else {
+  } else {
     ## Fake records!
-    my $glossary = [];
-    my $results = $self->adaptor->fetch_glossary('live');
-    foreach my $row (@$results) {
-      my %fields = (
-          'word'    => $row->{'word'},
-          'expanded' => $row->{'acronym'},
-          'meaning' => $row->{'meaning'},
-        );
-      my $temp_fields = {};
-      foreach my $key (keys %fields ) {
-        $temp_fields->{$key} = $fields{$key};
-        $temp_fields->{$key} =~ s/'/\\'/g;
-      }
-      my $data = Dumper($temp_fields);
-      $data =~ s/^\$VAR1 = //;
 
-      my $r = EnsEMBL::Web::Record::Help->new(
-        'id'          => $row->{'word_id'},
-        'type'        => 'glossary',
-        'data'        => $data,
-        'adaptor'     => $self->adaptor,
-      );
-      push @$glossary, $r; 
-    }
+    my $glossary = EnsEMBL::Web::Data::Glossary->find_all(
+      [['status', 'live']],
+      {
+        order_by => ['word', 'ASC'],
+      }
+    );
+
     return $glossary;
   }
 }

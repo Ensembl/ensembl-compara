@@ -6,7 +6,7 @@ use warnings;
 use Class::Std;
 use CGI;
 
-use EnsEMBL::Web::Object::Data::SpeciesList;
+use EnsEMBL::Web::Data::SpeciesList;
 use EnsEMBL::Web::Document::HTML::SpeciesList;
 use EnsEMBL::Web::RegObj;
 
@@ -35,13 +35,12 @@ sub render_page {
   my $self = shift;
   print "Content-type:text/html\n\n";
   my $user = $self->filters->user($EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->get_user->id);
-  warn "USER: " . $user->name; 
   my @lists = @{ $user->specieslists };
   my $species_list;
   if ($#lists > -1) {
     $species_list = $lists[0];
   } else {
-    $species_list = EnsEMBL::Web::Object::Data::SpeciesList->new();
+    $species_list = EnsEMBL::Web::Data::SpeciesList->new();
   }
   $species_list->favourites($self->get_action->get_named_parameter('favourites'));
   $species_list->list($self->get_action->get_named_parameter('list'));

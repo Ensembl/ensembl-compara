@@ -6,7 +6,7 @@ use warnings;
 use Class::Std;
 use CGI;
 
-use EnsEMBL::Web::Object::Data::SpeciesList;
+use EnsEMBL::Web::Data::SpeciesList;
 use EnsEMBL::Web::Document::HTML::SpeciesList;
 
 use base 'EnsEMBL::Web::Controller::Command::User';

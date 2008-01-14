@@ -6,7 +6,7 @@ use warnings;
 use Class::Std;
 use CGI;
 
-use EnsEMBL::Web::Object::Data::Annotation;
+use EnsEMBL::Web::Data::Annotation;
 
 use base 'EnsEMBL::Web::Controller::Command::User';
 
@@ -19,7 +19,7 @@ sub BUILD {
   my $cgi = new CGI;
   my $record;
   if ($cgi->param('id')) {
-    $self->user_or_admin('EnsEMBL::Web::Object::Data::Annotation', $cgi->param('id'), $cgi->param('record_type'));
+    $self->user_or_admin('EnsEMBL::Web::Data::Annotation', $cgi->param('id'), $cgi->param('record_type'));
   }
 }
 
@@ -45,7 +45,7 @@ warn "Rendering page Annotation";
 
   ## Create interface object, which controls the forms
   my $interface = EnsEMBL::Web::Interface::InterfaceDef->new();
-  my $data = EnsEMBL::Web::Object::Data::Annotation->new();
+  my $data = EnsEMBL::Web::Data::Annotation->new();
   $interface->data($data);
   $interface->discover;
 

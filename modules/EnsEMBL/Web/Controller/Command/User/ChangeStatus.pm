@@ -6,8 +6,8 @@ use warnings;
 use Class::Std;
 use CGI;
 
-use EnsEMBL::Web::Object::User;
-use EnsEMBL::Web::Object::Group;
+use EnsEMBL::Web::Data::User;
+use EnsEMBL::Web::Data::Group;
 use EnsEMBL::Web::RegObj;
 
 use base 'EnsEMBL::Web::Controller::Command::User';
@@ -37,11 +37,9 @@ sub process {
   warn "*** Processing status change";
   my $self = shift;
   my $cgi = new CGI;
-  my $user = EnsEMBL::Web::Object::User->new({ adaptor => $ENSEMBL_WEB_REGISTRY->userAdaptor, id => $cgi->param('user_id') });
-  my $group = EnsEMBL::Web::Object::Group->new(( adaptor => $ENSEMBL_WEB_REGISTRY->userAdaptor, id => $cgi->param('group_id') ));
-  warn "NEW STATUS: ", $cgi->param('new_status');
-  $group->assign_status_to_user($cgi->param('new_status'), $user);
-  $group->save;
+  my $user = EnsEMBL::Web::Data::User->new({ id => $cgi->param('user_id') });
+  my $group = EnsEMBL::Web::Data::Group->new({ id => $cgi->param('group_id') });
+  $group->assign_status_to_user($user, $cgi->param('new_status'));
 
   $cgi->redirect('/common/user/view_group?id='.$cgi->param('group_id'));
 }

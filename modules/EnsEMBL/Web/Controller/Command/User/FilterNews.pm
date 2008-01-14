@@ -6,9 +6,9 @@ use warnings;
 use Class::Std;
 use CGI;
 
-use EnsEMBL::Web::Object::Data;
-use EnsEMBL::Web::Object::Data::NewsFilter;
-use EnsEMBL::Web::Object::Data::Species;
+use EnsEMBL::Web::Data;
+use EnsEMBL::Web::Data::NewsFilter;
+use EnsEMBL::Web::Data::Species;
 
 use base 'EnsEMBL::Web::Controller::Command::User';
 
@@ -20,7 +20,7 @@ sub BUILD {
   ## If edting, ensure that this record belongs to the logged-in user!
   my $cgi = new CGI;
   if ($cgi->param('id')) {
-    $self->user_or_admin('EnsEMBL::Web::Object::Data::NewsFilter', $cgi->param('id'), $cgi->param('record_type'));
+    $self->user_or_admin('EnsEMBL::Web::Data::NewsFilter', $cgi->param('id'), $cgi->param('record_type'));
   }
 }
 
@@ -45,12 +45,12 @@ sub render_page {
 
   ## Create interface object, which controls the forms
   my $interface = EnsEMBL::Web::Interface::InterfaceDef->new();
-  my $data = EnsEMBL::Web::Object::Data::NewsFilter->new();
+  my $data = EnsEMBL::Web::Data::NewsFilter->new();
   $interface->data($data);
   $interface->discover;
 
   ## Set values for checkboxes
-  my $all_species = EnsEMBL::Web::Object::Data::Species->find_all;
+  my $all_species = EnsEMBL::Web::Data::Species->find_all;
   my @species_list;
   my @sorted = sort {$a->common_name cmp $b->common_name} @$all_species;
   foreach my $species (@sorted) {

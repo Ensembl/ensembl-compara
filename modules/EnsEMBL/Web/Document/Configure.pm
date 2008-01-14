@@ -17,8 +17,6 @@ sub common_menu_items {
     ## Is the user logged in?
     my $user_id = $ENV{'ENSEMBL_USER_ID'};
 
-    my $user_adaptor = $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->userAdaptor;
-
     my $flag = 'ac_mini';
     $doc->menu->add_block( $flag, 'bulleted', "Your $SiteDefs::ENSEMBL_SITETYPE", 'priority' => 0 );
     my @bookmark_sections = ();
@@ -33,7 +31,7 @@ sub common_menu_items {
 
       ## Link to existing bookmarks
       my %included = ();
-      my @records = $user->bookmark_records({order_by => 'click' });
+      my @records = @{ $user->bookmarks({order_by => 'click' }) };
       my $found = 0;
       if ($#records > -1) { 
         $found = 1;
@@ -51,7 +49,7 @@ sub common_menu_items {
 
       foreach my $group (@{ $user->groups }) {
         $found = 1;
-        my @bookmarks = $group->bookmark_records;   
+        my @bookmarks = @{ $group->bookmarks };   
         foreach my $bookmark (@bookmarks) {
           if (!$included{$bookmark->url}) {
             push @bookmark_sections, &bookmark_menu_item($bookmark);

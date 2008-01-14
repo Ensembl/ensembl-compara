@@ -7,6 +7,7 @@ use strict;
 
 {
   sub connection_details {
+    
     my( $self, $arg_ref ) = @_;
     return {
       'name' => $arg_ref->{'species_defs'}->multidb->{'ENSEMBL_WEBSITE'}{'NAME'},

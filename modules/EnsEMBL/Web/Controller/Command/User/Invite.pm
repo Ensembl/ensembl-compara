@@ -6,10 +6,10 @@ use warnings;
 use Class::Std;
 use CGI;
 
-use EnsEMBL::Web::Object::Data::Group;
-use EnsEMBL::Web::Object::Data::User;
-use EnsEMBL::Web::Object::Data::Invite;
-use EnsEMBL::Web::Object::User;
+use EnsEMBL::Web::Data::Group;
+use EnsEMBL::Web::Data::User;
+use EnsEMBL::Web::Data::Invite;
+use EnsEMBL::Web::Data::User;
 use EnsEMBL::Web::Mailer::User;
 use EnsEMBL::Web::Tools::RandomString;
 use EnsEMBL::Web::RegObj;
@@ -40,7 +40,7 @@ sub render_page {
   my $cgi = new CGI;
   my $url = "/common/user/view_group?id=" . $cgi->param('id');
 
-  my $group = EnsEMBL::Web::Object::Data::Group->new({ 'id' => $cgi->param('id') });
+  my $group = EnsEMBL::Web::Data::Group->new({ 'id' => $cgi->param('id') });
   my @addresses = split(/,/, $cgi->param('invite_email'));
   my %invite_check;
   foreach my $email (@addresses) {
@@ -59,7 +59,7 @@ sub render_page {
     next if $invited;
 
     ## Is this user already a member?
-    my $user = EnsEMBL::Web::Object::User->new({email => $email, adaptor => $ENSEMBL_WEB_REGISTRY->userAdaptor});
+    my $user = EnsEMBL::Web::Data::User->new({ email => $email });
     if ($user && $user->id) {
       my $member = $group->find_user_by_user_id($user->id);
       if ($member) {
@@ -86,7 +86,7 @@ sub render_page {
     $webpage->render_error_page( $webpage->problem->[0] );
   } else {
     foreach my $object( @{$webpage->dataObjects} ) {
-      $object->invitees(\%invite_check);
+      #$object->invitees(\%invite_check);
       $webpage->configure( $object, 'invitations' );
     }
     $webpage->action();
@@ -96,11 +96,10 @@ sub render_page {
 
 sub send_invitation {
   my ($group_id, $email) = @_;
-  my $reg_user = $ENSEMBL_WEB_REGISTRY->get_user;
-  my $user = EnsEMBL::Web::Object::Data::User->new({ id => $reg_user->id });
-  my $group = EnsEMBL::Web::Object::Data::Group->new({ id => $group_id });
+  my $user = $ENSEMBL_WEB_REGISTRY->get_user;
+  my $group = EnsEMBL::Web::Data::Group->new({ id => $group_id });
 
-  my $invite = EnsEMBL::Web::Object::Data::Invite->new;
+  my $invite = EnsEMBL::Web::Data::Invite->new;
   $invite->webgroup_id($group_id);
   $invite->email($email);
   $invite->status("pending");

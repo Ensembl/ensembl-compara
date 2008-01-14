@@ -41,7 +41,7 @@ sub save {
   my $url;
   if ($success) {
     if ($object->param('record_type') eq 'group') {
-      $interface->data->populate($id);
+      $interface->data->populate_with_arguments({id => $id});
       $url = "/common/user/view_group?id=".$interface->data->webgroup_id;
     }
     else {
@@ -70,14 +70,14 @@ sub delete {
   if ($object->param('record_type')) {
     $interface->data->attach_owner($object->param('record_type'));
   }
-  $interface->data->populate($id);
+  $interface->data->populate_with_arguments({id => $id});
 
   my $success = $interface->data->destroy;
   my $script = $interface->script_name || $object->script;
   my $url;
   if ($success) {
     if ($object->param('record_type') eq 'group') {
-      $interface->data->populate($id);
+      $interface->data->populate_with_arguments({id => $id});
       $url = "/common/user/view_group?id=".$interface->data->webgroup_id;
     }
     else {

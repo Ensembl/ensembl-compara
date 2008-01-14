@@ -43,7 +43,7 @@ sub process {
       $object = $obj;
     }
   }
-  my @results = @{$object->search};
+  my @results = @{ $object->search };
   my $total = scalar(@results);
   if ($total < 1) { 
     $webpage->redirect('/common/help/contact?kw='.$object->param('kw'));

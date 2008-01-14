@@ -18,6 +18,9 @@ sub validate { return $_[0]->render_as eq 'select'; }
 
 sub render {
   my $self =shift;
+
+  #cluck "This is how we got here!";
+
   if( $self->render_as eq 'select' ) {
     my $options = '';
     foreach my $V( @{$self->values} ) {
@@ -36,6 +39,7 @@ sub render {
     my $output = '';
     my $K = 0;
     my $checked;
+
     foreach my $V ( @{$self->values} ) {
         $checked = 'no';
         # check if we want to tick this box

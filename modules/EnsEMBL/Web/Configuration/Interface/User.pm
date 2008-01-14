@@ -3,6 +3,7 @@ package EnsEMBL::Web::Configuration::Interface::User;
 ### Sub-class to do user-specific interface functions
 
 use strict;
+use EnsEMBL::Web::Data::User;
 use EnsEMBL::Web::Configuration::Interface;
 use EnsEMBL::Web::Tools::RandomString;
 use EnsEMBL::Web::RegObj;
@@ -26,8 +27,7 @@ sub check_input {
   ## checks user input for duplicate emails
   my ($self, $object, $interface) = @_;
   if ($object->param('email')) {
-    my $existing_user = EnsEMBL::Web::Object::User->new({'email' => $object->param('email'),
-                                    'adaptor' => $ENSEMBL_WEB_REGISTRY->userAdaptor});
+    my $existing_user = EnsEMBL::Web::Data::User->new({ email => $object->param('email') });
     if ($existing_user->id) {
       if (my $panel = $self->interface_panel($interface, 'add', 'Register')) {
         $panel->add_components(qw(duplicate   EnsEMBL::Web::Component::Interface::User::duplicate));
