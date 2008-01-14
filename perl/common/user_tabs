@@ -5,19 +5,19 @@ package user_tabs;
 use strict;
 use warnings;
 
-use EnsEMBL::Web::Object::Data::Opentab;
-use EnsEMBL::Web::Object::Data::User;
+use EnsEMBL::Web::Data::Opentab;
+use EnsEMBL::Web::Data::User;
 use EnsEMBL::Web::RegObj;
 use CGI;
 
 
 my $cgi = new CGI;
  
-my $registry_user = $ENSEMBL_WEB_REGISTRY->get_user;
+my $user = $ENSEMBL_WEB_REGISTRY->get_user;
 
-if ($registry_user->id > 0) {
-  my $user = EnsEMBL::Web::Object::Data::User->new({ id => $registry_user->id });
+if ($user) {
 
+print STDERR "USER IS HERE";
   my $found = 0;
   my $tab = undef;
   foreach my $open_tab (@{ $user->opentabs }) {
@@ -27,7 +27,7 @@ if ($registry_user->id > 0) {
   }
 
   if (!$tab) {
-    $tab = EnsEMBL::Web::Object::Data::Opentab->new();
+    $tab = EnsEMBL::Web::Data::Opentab->new();
   }
 
   $tab->user_id($user->id);
@@ -35,6 +35,8 @@ if ($registry_user->id > 0) {
   $tab->name($cgi->param('name'));
   $tab->save;
 
+} else {
+print STDERR "USER IS NOOOT HERE";
 }
 
 print "Content-type: text/plain\n\n";
