@@ -6,13 +6,13 @@ use strict;
 use vars qw($filename $parser);
 
 BEGIN {
-  use_ok( 'EnsEMBL::Web::Object::Data' );
-  use_ok( 'EnsEMBL::Web::Object::DataField' );
+  use_ok( 'EnsEMBL::Web::Data' );
+  use_ok( 'EnsEMBL::Web::Data::Field' );
 }
 
-my $data_object = EnsEMBL::Web::Object::Data->new();
+my $data_object = EnsEMBL::Web::Data->new();
 
-isa_ok( $data_object, 'EnsEMBL::Web::Object::Data' );
+isa_ok( $data_object, 'EnsEMBL::Web::Data' );
 
 $data_object->add_field({ name => 'name', type => 'text' });
 $data_object->add_field({ name => 'id', type => 'int' });
@@ -20,4 +20,4 @@ $data_object->add_field({ name => 'id', type => 'int' });
 my @fields = @{ $data_object->get_fields };
 
 ok ($#fields == 1, 'field count is 2');
-isa_ok ($fields[0], 'EnsEMBL::Web::Object::DataField');
+isa_ok ($fields[0], 'EnsEMBL::Web::Data::Field');

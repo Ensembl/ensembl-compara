@@ -7,14 +7,14 @@ use strict;
 use warnings;
 
 BEGIN {
-  use_ok( 'EnsEMBL::Web::Object::Data::Bookmark' );
+  use_ok( 'EnsEMBL::Web::Data::Bookmark' );
 }
 
 mock_registry;
 
-my $bookmark = EnsEMBL::Web::Object::Data::Bookmark->new();
+my $bookmark = EnsEMBL::Web::Data::Bookmark->new();
 
-isa_ok( $bookmark, 'EnsEMBL::Web::Object::Data::Bookmark' );
+isa_ok( $bookmark, 'EnsEMBL::Web::Data::Bookmark' );
 ok( $bookmark->get_record_type eq 'bookmark', 'bookmark type is bookmark');
 
 my $url = "http://www.ensembl.org";
@@ -33,7 +33,7 @@ ok($bookmark->url() eq $url, 'URL is ' . $url);
 ok($bookmark->title() eq $title, 'title is ' . $title);
 
 ## Relational tests
-ok ($bookmark->get_belongs_to->[0] eq 'EnsEMBL::Web::Object::Data::User', 'Bookmark belongs to User');
+ok ($bookmark->get_belongs_to->[0] eq 'EnsEMBL::Web::Data::User', 'Bookmark belongs to User');
 
 ## DB tests
 ok($bookmark->save == 1, 'Bookmark will save');
