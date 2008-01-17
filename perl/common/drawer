@@ -5,7 +5,7 @@ package drawer;
 use strict;
 use warnings;
 
-use EnsEMBL::Web::Record::User;
+use EnsEMBL::Web::Data::Drawer;
 use EnsEMBL::Web::RegObj;
 use CGI;
 
@@ -16,12 +16,13 @@ if ($user) {
 
   my $found = 0;
   my $record = undef;
-  foreach my $this ($user->drawer_records) {
+  foreach my $this (@{ $user->drawers }) {
     $record = $this;
   }
 
   if (!$record) {
-    $record = EnsEMBL::Web::Record::User->new(( adaptor => $ENSEMBL_WEB_REGISTRY->userAdaptor, type => 'drawer', user => $user->id));
+    $record = EnsEMBL::Web::Data::Drawer->new;
+    $record->user_id($user->id);
   }
 
   $record->group($cgi->param('group'));
