@@ -20,13 +20,14 @@ This script is part of the Ensembl project http://www.ensembl.org
 =head1 DESCRIPTION
 
 This script downloads alignments from a compara database, creates a gap4
-database and brings up a contig editor for each alignment found. If the gap4 
-database already exists, it will not overwrite the existing database but it 
-will bring up a contig editor for each alignment. 
+database and brings up a contig editor for each alignment block found. This
+allows the alignment to be scrolled and viewed in detail. Additional 
+information such as genes, conserved regions and repeats can be highlighted.
 
 =head1 SETUP
 
-The location of gap4 and view_alignment must be in your path. e.g.
+The location of the Staden Package and view_alignment must be in your path.
+For example:
 
 in bash:
 
@@ -36,6 +37,7 @@ in csh:
 
 setenv PATH /nfs/sids/badger/OSF/STADEN_PKGS/unix-rel-1-7-0/linux-x86_64-bin:$HOME/src/ensembl_main/ensembl_compara/scripts/view_alignment:$PATH
 
+It must also be run under X windows.
 
 =head1 SYNPOSIS
 
@@ -43,23 +45,24 @@ view_alignment --help
 
 view_alignment 
     [--reg_conf registry_configuration_file]
-    [--compara compara_database]
-    [--set_of_species species1:species2:species3...]
+    [--dbname compara_database]
     [--alignment_type alignment_type]
+    [--set_of_species species1:species2:species3...]
     [--method_link_species_set_id method_link_species_set_id]
+    [--genomic_align_block_id genomic_align_block_id]
     [--species species]
     [--seq_region seq_region]
     [--seq_region_start start]
     [--seq_region_end end]
-    [--genomic_align_block_id genomic_align_block_id]
     [--gap4 gap4_database]
     [--display_scores]
     [--display_constrained_element_tags]
-    [--display_start_end_tags]
     [--display_exon_tags]
     [--display_gene_tags]
+    [--display_start_end_tags]
     [--template_display]
-    [--repeat_feature]
+    [--repeat_feature repeat1:repeat2:repeat3]
+    [--file_of_repeat_feature file containing list of repeat features]
     
 =head1 OPTIONS
 
@@ -79,24 +82,24 @@ view_alignment
 
 =item B<[--reg_conf registry_configuration_file]>
 
-The Bio::EnsEMBL::Registry configuration file. If none given,
+The Bio::EnsEMBL::Registry configuration file. If none is given,
 the one set in ENSEMBL_REGISTRY will be used if defined, if not
 ~/.ensembl_init will be used.
 
-=item B<--compara compara_db_name_or_alias>
+=item B<--dbname compara_db_name_or_alias>
 
 The compara database to query. You can use either the original name or any of 
 the aliases given in the registry_configuration_file. 
+
+=item B<[--alignment_type]>
+
+This should be an exisiting method_link_type eg PECAN, TRANSLATED_BLAT, BLASTZ_NET
 
 =item B<[--set_of_species]>
 
 The set of species used in the alignment. These should be the same as defined 
 in the registry configuration file aliases. The species should be separated by 
 a colon e.g. human:rat
-
-=item B<[--alignment_type]>
-
-This should be an exisiting method_link_type eg MLAGAN, TRANSLATED_BLAT, BLASTZ_NET
 
 =item B<[--method_link_species_set_id]>
 
@@ -131,15 +134,15 @@ will ignore the above arguments
 Tags (shown as coloured blocks in the contig editor) are created showing the
 position of constrained elements (conserved regions) and their 'rejected
 substitution' score. Only valid if conservation scores have been calculated for
-the alignment. The tag is of type "COMM", colour blue.
+the alignment. The tag is of type "COMM", colour blue and is shown on the "consensus line".
 
 =item B<[--display_scores]>
 
 A tag (shown as a coloured block in the contig editor) is created for each 
-base that has a conservation value and shows the difference between the 
-expected and observed scores. This can produce a lot of tags which can take a 
-long time to be read in. Only valid if conservation scores have been calculated
-for the alignment. The tag is of type "COMP", colour red.
+base that has a conservation value and shows the conservation score. This can 
+produce a lot of tags which can take a long time to be read in. Only valid if 
+conservation scores have been calculated for the alignment. The tag is of type 
+"COMP", colour red.
 
 =item B<[--display_start_end_tags]>
 
@@ -157,12 +160,25 @@ Valid repeat feature name eg "MIR".
 Tags (shown as coloured blocks in the contig editor) are created for each 
 repeat found. Repeats on the forward strand assigned a tag type of "COMM" 
 (default colour is blue) and repeats on the reverse strand have tag type
+"OLIGO" (default colour is yellow). The repeats should be separated by a colon.
+
+=item B<[--file_of_repeat_feature]>
+
+A file containing a list of valid repeat feature names eg "MIR".
+Tags (shown as coloured blocks in the contig editor) are created for each 
+repeat found. Repeats on the forward strand assigned a tag type of "COMM" 
+(default colour is blue) and repeats on the reverse strand have tag type
 "OLIGO" (default colour is yellow).
 
 =item B<[--display_exon_tags]>
 
 Tags (shown as coloured blocks in the contig editor) are created showing the
-position of coding exons. The tag is of type "REPT", colour green.
+position of coding exons. The tag is of type "REPT", colour green for exons on the forward strand and type "ALUS", colour bright green for exons on the reverse strand.
+
+=item B<[--display_gene_tags]>
+
+Tags (shown as coloured blocks in the contig editor) are created showing the
+position of genes. The tag is of type "REPT", colour green.
 
 =item B<[--gap4]>
 
@@ -179,29 +195,33 @@ opened.
 
 =head2 EXAMPLES
 
-Using species and alignment type:
+Using species and alignment type, creating a database called a.0:
 
-view_alignment --reg_conf reg_conf38 --dbname compara_38 --species human --set_of_species human:mouse:rat:dog:chicken:cow:opossum:macaque:chimp --alignment_type MLAGAN --seq_region "17" --seq_region_start 17942309 --seq_region_end 17947928 --gap4 a.0
+view_alignment --reg_conf reg_conf47 --dbname compara_47 --species human --set_of_species human:mouse:rat:dog:chicken:cow:opossum:rhesus:chimp:platypus --alignment_type PECAN --seq_region "17" --seq_region_start 37220641 --seq_region_end 37247904 --gap4 a.0
 
 Using method_link_species_set_id:
 
-view_alignment --reg_conf reg_conf38 --dbname compara_38 --species human --method_link_species_set_id 2 --seq_region "17" --seq_region_start 17942309 --seq_region_end 17943000 --gap4 a.0
+view_alignment --reg_conf reg_conf47 --dbname compara_47 --species human --method_link_species_set_id 292 --seq_region "17" --seq_region_start 37220641 --seq_region_end 37247904 --gap4 a.0
 
 Using alignment genomic align block id:
 
-view_alignment --reg_conf reg_conf38 --dbname compara_38 --genomic_align_block_id 20000032533 --gap4 a.0
+view_alignment --reg_conf reg_conf47 --dbname compara_47 --genomic_align_block_id 2920000011644 --gap4 a.0
 
-Produce multiple contigs:
+Tag coding exons and constrained elements and bring up the template display:
 
-view_alignment --reg_conf reg_conf38 --dbname compara_38 --species human --set_of_species human:mouse:rat:dog:chicken:cow:opossum:macaque:chimp --alignment_type MLAGAN --seq_region "17" --seq_region_start 1488850 --seq_region_end 1532082 --gap4 a.0
+view_alignment --reg_conf reg_conf47 --dbname compara_47 --species human --set_of_species human:mouse:rat:dog:chicken:cow:opossum:rhesus:chimp:platypus --alignment_type PECAN --seq_region "17" --seq_region_start 37222810 --seq_region_end 37233000 --gap4 a.0 --display_exon_tags --display_constrained_element_tags --template_display
 
-Blastz_net alignment (produces 5 alignments)
+Tag conservation scores (small region only)
 
-view_alignment --reg_conf reg_conf38 --dbname compara_38 --species human --set_of_species human:mouse --alignment_type BLASTZ_NET --seq_region "17" --seq_region_start 17942309 --seq_region_end 17947928 --gap4 a.0
+view_alignment --reg_conf reg_conf47 --dbname compara_47 --species human --set_of_species human:mouse:rat:dog:chicken:cow:opossum:rhesus:chimp:platypus --alignment_type PECAN --seq_region "17" --seq_region_start 37222810 --seq_region_end 37222900 --gap4 a.0 --display_scores
 
-Translated blat (produces 8 alignments)
+Tag repeat features
 
-view_alignment --reg_conf reg_conf38 --dbname compara_38 --species human --set_of_species human:chicken --alignment_type TRANSLATED_BLAT --seq_region "17" --seq_region_start 17942309 --seq_region_end 17947928 --gap4 a.0
+view_alignment --reg_conf reg_conf47 --dbname compara_47 --species human --set_of_species human:mouse:rat:dog:chicken:cow:opossum:rhesus:chimp:platypus --alignment_type PECAN --seq_region "17" --seq_region_start 37222810 --seq_region_end 37233000 --gap4 a.0 --file_of_repeat_feature transposonsII.txt
+
+Blastz_net alignment (produces 9 alignments)
+
+view_alignment --reg_conf reg_conf47 --dbname compara_47 --species human --set_of_species human:mouse --alignment_type BLASTZ_NET --seq_region "17" --seq_region_start 37222810 --seq_region_end 37233000 --gap4 a.0
 
 =head2 HELP WITH GAP4
 
@@ -211,11 +231,7 @@ http://staden.sourceforge.net/
 
 or click on the help button on the contig editor.
 
-A gap4 database consists of 4 files: db_name.version, db_name.version.aux,
-db_name.version.log and db_name.version.BUSY eg a.0 a.0.aux a.0.log a.0.BUSY.
-If you wish to delete a gap4 database all these files should be deleted.
-
-To exit, press the "Quit" button on each contig editor.
+To remove the contig editor, press the "Quit" button.
 
 Useful commands in the editor are:
 
@@ -224,7 +240,14 @@ reference and set its start position to be 1 by right clicking the mouse over
 the name of the species in the left hand box and selecting "Set as reference
 sequence". This has the effect of ignoring padding characters. 
 
-To highlight differences between the sequences, select "Settings" from the menubar and select "By foreground colour".
+To highlight differences between the sequences, select "Settings" from the menubar and select "Highlight Disagreements".
+
+Tidying up:
+
+A gap4 database consists of 4 files: db_name.version, db_name.version.aux,
+db_name.version.log and db_name.version.BUSY eg a.0 a.0.aux a.0.log a.0.BUSY.
+If you wish to delete a gap4 database all these files should be deleted.
+
 =cut
 
 my $reg_conf;
@@ -242,6 +265,7 @@ my $gap4_db = undef;
 my $disp_conservation_scores = undef;
 my $disp_constrained_tags = undef;
 my $set_of_repeat_features = undef;
+my $file_of_repeat_features = undef;
 my $disp_start_end_tags = undef;
 my $disp_exon_tags = undef;
 my $disp_gene_tags = undef;
@@ -251,14 +275,13 @@ my $_array_files;
 my $_file_list;
 my $exp_line_len = 67;
 
-
 GetOptions(
     "help" => \$help,
     "reg_conf=s" => \$reg_conf,
     "dbname=s" => \$dbname,
     "alignment_type=s" => \$alignment_type,
     "set_of_species=s" => \$set_of_species,
-    "method_link_species_set_id=i" => \$method_link_species_set_id,
+    "method_link_species_set_id|mlss=i" => \$method_link_species_set_id,
     "genomic_align_block_id=i" => \$align_gab_id,
     "species=s" => \$species,
     "seq_region=s" => \$seq_region,
@@ -272,6 +295,7 @@ GetOptions(
      "display_start_end_tags" => \$disp_start_end_tags,
      "template_display" => \$template_display,
      "repeat_feature=s" => \$set_of_repeat_features,
+     "file_of_repeat_feature=s" => \$file_of_repeat_features,
   );
 
 if ($help) {
@@ -289,6 +313,8 @@ if (defined $gap4_db) {
 }
 
 my $reg = "Bio::EnsEMBL::Registry";
+
+$reg->no_version_check(1);
 
 # Configure the Bio::EnsEMBL::Registry
 # Uses $reg_conf if supplied. Uses ENV{ENSMEBL_REGISTRY} instead if defined. 
@@ -346,16 +372,11 @@ if (defined $align_gab_id) {
 	$genomic_align_block->reference_genomic_align($gas->[0]);
     }
 
-    if ($genomic_align_block->reference_genomic_align->dnafrag_strand == -1) {
+    if (defined($genomic_align_block->reference_genomic_align) && $genomic_align_block->reference_genomic_align->dnafrag_strand == -1) {
 	$genomic_align_block->reverse_complement();
     }
 
-    #print "gab " . $genomic_align_block->dbID . " " . $genomic_align_block->reference_genomic_align->dnafrag->name,
-    #" ", $genomic_align_block->reference_genomic_align->dnafrag_start,
-    #" ", $genomic_align_block->reference_genomic_align->dnafrag_end . "\n";
-        
     my $align_slice = $align_slice_adaptor->fetch_by_GenomicAlignBlock($genomic_align_block, 1);
-
     writeExperimentFiles($genomic_align_block, $align_slice, $contig_num, 1);
 
     open (FOFN, ">$_fofn_name") || die "ERROR writing ($_fofn_name) file\n";
@@ -382,21 +403,8 @@ throw("Registry configuration file has no data for connecting to <$dbname>")
 
 my $genome_dbs;
 foreach my $this_species (split(":", $set_of_species)) {
+    my $genome_db = $genome_db_adaptor->fetch_by_registry_name($this_species);
 
-    my $this_meta_container_adaptor = $reg->get_adaptor(
-				      $this_species, 'core', 'MetaContainer');
-    throw("Registry configuration file has no data for connecting to <$this_species>")
-	if (!$this_meta_container_adaptor);
-    my $this_binomial_id = $this_meta_container_adaptor->get_Species->binomial;
-    my $assembly = $this_meta_container_adaptor->get_default_assembly;
-
-    #major hack to deal with FUGU3 in multiz17
-    if ($assembly eq "FUGU4") {
-        $assembly = "FUGU3";
-    }
-
-    # Fetch Bio::EnsEMBL::Compara::GenomeDB object    
-    my $genome_db = $genome_db_adaptor->fetch_by_name_assembly($this_binomial_id, $assembly);
     # Add Bio::EnsEMBL::Compara::GenomeDB object to the list
     push(@$genome_dbs, $genome_db);
 }
@@ -430,7 +438,6 @@ if ($seq_region) {
     # Fetching all the GenomicAlignBlock corresponding to this Slice:
     $genomic_align_blocks =
 	$genomic_align_block_adaptor->fetch_all_by_MethodLinkSpeciesSet_Slice($method_link_species_set, $slice);
-
 } else {
     throw ("Either a genomic_align_block_id or a seq_region must be defined");
 }
@@ -438,6 +445,8 @@ if ($seq_region) {
 #write experiment files for each alignment found
 foreach my $genomic_align_block (@$genomic_align_blocks) { 
     my $contig_num = $_seq_num; 
+
+    print "GAB " . $genomic_align_block->dbID . "\n";
 
     my $genomic_align = $genomic_align_block->reference_genomic_align;
 
@@ -450,8 +459,6 @@ foreach my $genomic_align_block (@$genomic_align_blocks) {
     #such as original strand
     #my $align_slice = $align_slice_adaptor->fetch_by_Slice_MethodLinkSpeciesSet($slice, $method_link_species_set, 1);
     my $align_slice = $align_slice_adaptor->fetch_by_Slice_MethodLinkSpeciesSet($restricted_ga->get_Slice, $method_link_species_set, 1);
-
-
 
     writeExperimentFiles($restricted_gab, $align_slice, $contig_num, 1);
 }
@@ -485,18 +492,29 @@ sub writeExperimentFiles {
 	    $repeat_feature_list->{lc($repeat)} = 1;
 	}
     }
+    if (defined $file_of_repeat_features) {
+	open FILE, "< $file_of_repeat_features" or die "Can't open file $file_of_repeat_features: $!\n";
+	while (<FILE>) {
+	    my $line = $_;
+	    chomp $line;
+	    $repeat_feature_list->{lc($line)} = 1;
+	}
+	close FILE;
+    }
 
     #create mfa file of multiple alignment from genomic align block
     foreach my $genomic_align (@{$gab->get_all_GenomicAligns}) {
 
 	#hack to remove takifugu!
-	if ($genomic_align->genome_db->name eq "takifugu") {
-	    next;
-	}
+	#if ($genomic_align->genome_db->name eq "takifugu") {
+	    #next;
+	#}
 
 	my $filename = "ensembl_$_seq_num" . ".exp";
 
 	my $aligned_sequence = $genomic_align->aligned_sequence;
+
+	#print "name " . $genomic_align->genome_db->name . " " . $genomic_align->dnafrag->name . " start " . $genomic_align->dnafrag_start . " end " . $genomic_align->dnafrag_end . " " . $aligned_sequence . "\n";
 
 	$aligned_sequence =~ tr/-/*/;
 	$aligned_sequence =~ s/(.{60})/$1\n/g;
@@ -557,7 +575,11 @@ sub writeExperimentFiles {
 		#convert into alignment coords
 		my $exon_start = findAlignPos($e_start, 1, $genomic_align->cigar_line);
 		my $exon_end = findAlignPos($e_end, 1, $genomic_align->cigar_line);
-		printf(EXP "TG   REPT + %d..%d exon %s:%d-%d\n", $exon_start, $exon_end, $genomic_align->dnafrag->name, $exon->start + $slice->start, $exon->end + $slice->start);
+		if ($exon->strand == 1) {
+		    printf(EXP "TG   REPT + %d..%d exon %s:%d-%d\n", $exon_start, $exon_end, $genomic_align->dnafrag->name, $exon->start + $slice->start, $exon->end + $slice->start);
+		} else {
+		    printf(EXP "TG   ALUS + %d..%d exon %s:%d-%d\n", $exon_start, $exon_end, $genomic_align->dnafrag->name, $exon->start + $slice->start, $exon->end + $slice->start);
+		}
 	    }
 	}
 
@@ -574,9 +596,13 @@ sub writeExperimentFiles {
 	}
 
 	#write repeat feature tags
-	if (defined $set_of_repeat_features) {
+	if (defined $set_of_repeat_features || defined $file_of_repeat_features) {
 	    foreach my $a_slice (@{$align_slice->get_all_Slices}) {
-		if ($a_slice->genome_db->name eq $genomic_align->genome_db->name) {
+		my $original_feature = $a_slice->get_all_underlying_Slices($a_slice->start, $a_slice->end)->[0];
+
+		#need to find the current genomic_align in the align_slice list.
+		if ($a_slice->genome_db->name eq $genomic_align->genome_db->name && $original_feature->seq_region_name eq $genomic_align->dnafrag->name && $original_feature->start == $genomic_align->dnafrag_start && $original_feature->end == $genomic_align->dnafrag_end) {
+
 		    writeRepeatFeatures($a_slice, $gab->length, $repeat_feature_list, \*EXP);
 		}
 	    }
@@ -714,11 +740,10 @@ sub writeRepeatFeatures {
     my ($a_slice, $gab_length, $repeat_feature_list, $FILE) = @_;
 
     my $repeat_features = $a_slice->get_all_RepeatFeatures;
-
     foreach my $repeat_feature (@$repeat_features) {
 	my $name = $repeat_feature->repeat_consensus->name;
 	if ($repeat_feature_list->{lc($name)}) {
-	    $name .= " length=" .  $repeat_feature->length . " strand=" .$repeat_feature->strand . " score= " . $repeat_feature->score; 
+	    $name .= " length=" .  $repeat_feature->length . " strand=" .$repeat_feature->strand . " score= " . $repeat_feature->score . " hstart " . $repeat_feature->hstart . " hend " . $repeat_feature->hend; 
 	    my $start = $repeat_feature->start;
 	    if ($start < 1) {
 		$start = 1;
@@ -727,12 +752,9 @@ sub writeRepeatFeatures {
 	    if ($end > $gab_length) {
 		$end = $gab_length;
 	    }
-
 	    if ($repeat_feature->strand == 1) {
-		#printf("TG   COMM + %d..%d %s\n", $start, $end, $name); 
 		printf($FILE "TG   COMM + %d..%d %s\n", $start, $end, $name); 
 	    } else {
-		#printf("TG   OLIG + %d..%d %s\n", $start, $end, $name); 
 		printf($FILE "TG   OLIG + %d..%d %s\n", $start, $end, $name); 
 	    }
 	}
