@@ -85,7 +85,7 @@ foreach my $qy_dnafrag (@{$qy_dnafrags}) {
         my $qy_ga = $gab->reference_genomic_align;
         
         # keep on the basis of level_id
-        next if ($qy_ga->level_id != $level);
+        next if ($level and ($qy_ga->level_id > $level));
         
         my ($tg_ga) = @{$gab->get_all_non_reference_genomic_aligns};
         
