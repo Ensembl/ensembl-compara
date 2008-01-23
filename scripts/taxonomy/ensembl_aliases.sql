@@ -62,6 +62,8 @@ insert into ncbi_taxa_name (taxon_id, name, name_class) values (9685,"Cat","ense
 insert into ncbi_taxa_name (taxon_id, name, name_class) values (9685,"cat","ensembl common name");
 insert into ncbi_taxa_name (taxon_id, name, name_class) values (9600,"Orangutan","ensembl common name");
 insert into ncbi_taxa_name (taxon_id, name, name_class) values (9600,"orangutan","ensembl common name");
+insert into ncbi_taxa_name (taxon_id, name, name_class) values (9796,"Horse","ensembl common name");
+insert into ncbi_taxa_name (taxon_id, name, name_class) values (9796,"horse","ensembl common name");
 # 2X genomes
 insert into ncbi_taxa_name (taxon_id, name, name_class) values (42254,"Shrew","ensembl alias name");
 insert into ncbi_taxa_name (taxon_id, name, name_class) values (42254,"European shrew","ensembl common name");
