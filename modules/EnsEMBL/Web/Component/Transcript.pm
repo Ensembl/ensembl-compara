@@ -1033,6 +1033,30 @@ sub do_markedup_pep_seq {
 
 sub supporting_evidence_image {
   my( $panel, $object ) = @_;
+  if (! defined $object->get_supporting_evidence) {
+    my $type = $object->logic_name; 
+    if ($type eq "otter" ){ 
+      $panel->print( '
+        <p id="evidence">
+          Although this Vega Havana transcript has been manually annotated and
+          it\'s structure is supported by experimental evidence, this evidence is
+          currently missing from the database. We are adding the evidence back to
+          the database as time permits
+        </p>' );
+    } elsif ($type eq "otter_external"){
+      $panel->print( '
+        <p id="evidence">
+          Although this Vega External transcript has been manually annotated and
+          it\'s structure is supported by experimental evidence, this evidence is
+          missing from the database. This annotation is not being updated
+        </p>' );
+    }
+    else {
+      $panel->print( '
+        <p id="evidence">
+        </p>' );
+    }
+  } else {
   $panel->print( '
     <p id="evidence">
       The supporting evidence below consists of the sequence matches
@@ -1074,6 +1098,7 @@ sub supporting_evidence_image {
 
   my $T = $image->render;
   $panel->print( $T );
+ }
   return 1;
 }
 
