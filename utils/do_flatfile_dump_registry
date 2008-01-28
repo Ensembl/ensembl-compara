@@ -240,7 +240,7 @@ my $time_taken = time - $time1;
 my $hours      = localtime($time_taken)->hour -1;
 info (2, "Used $logfile. Time taken: $hours:". localtime($time_taken)->min."mins");
 
-$email ||= 'ssg-ensembl@sanger.ac.uk';
+$email ||= 'ensembl-core@ebi.ac.uk';
 mail_log( $logfile, $email,"" ) if $logfile;
 
 exit;
