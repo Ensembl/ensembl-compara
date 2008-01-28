@@ -87,6 +87,16 @@ bsub -q long -o dump.out -J DumpGFF.Hs-Cf ./run.me
 In this command line, "ensemblHsapCfam" is the name of the compara databases,
 as defined in the registry configuration file.
 
+For human vs chimp, we use both the level 1 and level 2 BlastZ alignments. The command will therefore be:
+
+cat Hsap_chr_names | while read i; do \
+echo "~/src/ensembl_main/ensembl-compara/scripts/synteny/DumpGFFAlignmentsForSynteny.pl \
+ --reg_conf ../reg.conf --dbname ensemblHsapPtro --qy 'Homo sapiens' \
+ --tg 'Pan troglodytes' --seq_region $i --level 2"; \
+done > run.me
+chmod +x run.me
+bsub -q long -o dump.out -J DumpGFF.Hs-Pt ./run.me
+
 This will write out all the dna-dna matches for mouse chromosomes against rat into files called
 
 	1.syten.gff
