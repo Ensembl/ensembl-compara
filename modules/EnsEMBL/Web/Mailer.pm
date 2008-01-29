@@ -97,17 +97,20 @@ sub send {
   my $self = shift;
   #my $mailer = new Mail::Mailer 'smtp', Server => $self->mail_server;
   my $mailer = new Mail::Mailer 'smtp', Server => "localhost";
-  my $time = localtime;
+  my @months = qw(Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec);
+  my @weekDays = qw(Sun Mon Tue Wed Thu Fri Sat Sun);
+  my ($sec, $min, $hour, $day, $month, $year) = gmtime();
+  $year += 1900;
+  my $time_string = "$weekDays[$day] $day $months[$month], $year $hour:$minute:$second +0000"; 
 
   $mailer->open({
                 'To'      => $self->escape($self->email),
                 'From'    => $self->escape($self->from),
                 'Reply-To'=> $self->escape($self->reply_to),
                 'Subject' => $self->subject,
-                'Date'    => $time.' +0000'; ## Add timezone or it can cause problems in some email clients 
+                'Date'    => $time_string; 
                 });
   
-  #my $message= $self->message . "\n\n";
   my $message= $self->message;
  
  
