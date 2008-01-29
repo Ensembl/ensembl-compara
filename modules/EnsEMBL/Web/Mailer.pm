@@ -104,7 +104,7 @@ sub send {
                 'From'    => $self->escape($self->from),
                 'Reply-To'=> $self->escape($self->reply_to),
                 'Subject' => $self->subject,
-                'Date'    => $time 
+                'Date'    => $time.' +0000'; ## Add timezone or it can cause problems in some email clients 
                 });
   
   #my $message= $self->message . "\n\n";
