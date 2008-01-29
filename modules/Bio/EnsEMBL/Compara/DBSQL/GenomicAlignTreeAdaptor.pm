@@ -95,11 +95,12 @@ sub fetch_all_by_MethodLinkSpeciesSet {
 =cut
 
 sub fetch_all_by_MethodLinkSpeciesSet_DnaFrag {
-  my $self = shift @_;
+  my ($self, $method_link_species_set, $dnafrag, $start, $end, $limit_number, $limit_index_start, $restrict) = @_;
   my $genomic_align_trees = [];
 
   my $genomic_align_block_adaptor = $self->db->get_GenomicAlignBlockAdaptor();
-  my $genomic_align_blocks = $genomic_align_block_adaptor->fetch_all_by_MethodLinkSpeciesSet_DnaFrag(@_);
+  my $genomic_align_blocks = $genomic_align_block_adaptor->fetch_all_by_MethodLinkSpeciesSet_DnaFrag(
+      $method_link_species_set, $dnafrag, $start, $end, $limit_number, $limit_index_start);
   foreach my $this_genomic_align_block (@$genomic_align_blocks) {
     my $this_genomic_align_tree = $self->fetch_by_GenomicAlignBlock($this_genomic_align_block);
     if ($this_genomic_align_tree) {
@@ -111,6 +112,10 @@ sub fetch_all_by_MethodLinkSpeciesSet_DnaFrag {
 #         print " * ", $this_genomic_align_tree->reference_genomic_align, "\n";
 #       }
       $this_genomic_align_tree->sorted_children;
+      if (defined($start) and defined($end) and $restrict) {
+        $this_genomic_align_tree = $this_genomic_align_tree->restrict_between_reference_positions(
+            $start, $end, undef, "skip_empty_genomic_aligns");
+      }
       push(@$genomic_align_trees, $this_genomic_align_tree);
     }
   }
