@@ -118,6 +118,9 @@ sub get_params {
     print("  $key : ", $params->{$key}, "\n");
   }
 
+  # Quick option
+  $self->{'quick'} = $params->{'quick'} if(defined($params->{'quick'}));
+
   # from input_id
   $self->{'query_genome_db_id'} = $params->{'query_genome_db_id'} if(defined($params->{'query_genome_db_id'}));
   $self->{'target_genome_db_id'} = $params->{'target_genome_db_id'} if(defined($params->{'target_genome_db_id'}));
@@ -152,7 +155,20 @@ sub update_meta_table {
   $dba->dbc->do("analyze table genomic_align");
   $dba->dbc->do("analyze table genomic_align_group");
 
-  my $sth = $dba->dbc->prepare("SELECT method_link_species_set_id,max(dnafrag_end - dnafrag_start + 1) FROM genomic_align group by method_link_species_set_id");
+  my $where = "";
+  if ($self->{'mlss'}) {
+    $where = " WHERE method_link_species_set_id = ".$self->{'mlss'}->dbID;
+  }
+
+  my $sql;
+  if ($self->{'quick'}) {
+    $sql = "SELECT method_link_species_set_id, max(length) FROM genomic_align_block".
+        $where." GROUP BY method_link_species_set_id";
+  } else {
+    $sql = "SELECT method_link_species_set_id, max(dnafrag_end - dnafrag_start + 1) FROM genomic_align".
+        $where." GROUP BY method_link_species_set_id";
+  }
+  my $sth = $dba->dbc->prepare($sql);
   $sth->execute();
   my $max_alignment_length = 0;
   my ($method_link_species_set_id,$max_align);
