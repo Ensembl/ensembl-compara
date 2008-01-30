@@ -626,7 +626,7 @@ sub _render_groups {
   my @group_rows = ();
   my %included = ();
   my @all_groups = @{ EnsEMBL::Web::Data::Group->find_all };
-  $html .= &info_box($user, qq(Groups enable you to organise your saved bookmarks, notes and view configurations, and also let you share them with other users. The groups you're subscribed to are listed below. <a href="http://www.ensembl.org/info/help/groups.html">Learn more about creating and managing groups (Ensembl documentation) &rarr;</a>) , 'user_group_info');
+  $html .= &info_box($user, qq(Groups enable you to organise your saved bookmarks, notes and view configurations, and also let you share them with other users. The groups you're subscribed to are listed below. <a href="http://www.ensembl.org/info/about/groups.html">Learn more about creating and managing groups (Ensembl documentation) &rarr;</a>) , 'user_group_info');
   if ($#groups > -1) {
     $html .= "<h5>Your subscribed groups</h5>\n";
     $html .= "<table width='100%' cellspacing='0' cellpadding='4'>\n";
@@ -654,7 +654,7 @@ sub _render_groups {
     $html .= "</table><br />\n";
   }
   else {
-    $html .= qq(<p class="center">You are not subscribed to any $sitename groups. &middot; <a href='/info/help/groups.html'>Learn more &rarr;</a> </p>);
+    $html .= qq(<p class="center">You are not subscribed to any $sitename groups. &middot; <a href='/info/about/groups.html'>Learn more &rarr;</a> </p>);
   }  
   #$html .= "<br />";
   ## An unimplemented feature - we don't have any public groups yet.
@@ -898,7 +898,7 @@ sub admin_intro {
   my $html = "<div class='pale boxed'>";
   $html .= qq(<p>This page allows administrators to manage their $sitename group. From here you can invite new users to join your group, remove existing users, and decide which resources are shared between group members.</p>
                 <p>For more information about $sitename groups, and how to use them,
-                read the <a href='/info/help/groups.html'>introductory guide</a>.</p>);
+                read the <a href='/info/about/groups.html'>introductory guide</a>.</p>);
   $html .= "</div>";
    
   return $html;
@@ -910,7 +910,7 @@ sub member_intro {
   my $html = "<div class='pale boxed'>";
   $html .= qq(<p>This page displays $sitename group information.<p>
                 <p>For more information about $sitename groups, and how to use them,
-                read the <a href='/info/help/groups.html'>introductory guide</a>.</p>);
+                read the <a href='/info/about/groups.html'>introductory guide</a>.</p>);
   $html .= "</div>";
    
   return $html;
