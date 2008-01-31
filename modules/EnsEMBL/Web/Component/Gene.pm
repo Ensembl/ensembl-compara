@@ -409,8 +409,8 @@ sub name {
   my $page_type= $object->[0];
   my $site_type = ucfirst(lc($SiteDefs::ENSEMBL_SITETYPE));
   my $sp = $object->species_defs->SPECIES_COMMON_NAME;
-  
-  #add links to Vega or Ensembl depending on the source of the transcript
+
+  ##add links to Vega or Ensembl depending on the source of the transcript
   my @vega_info=();
   my $url_name   = ($object->get_db eq 'vega') ? 'Ensembl' : 'Vega';
   if($page_type eq 'Transcript'){
@@ -419,34 +419,30 @@ sub name {
     my @vega_links;
     #add links to Ensembl from ensembl-vega
     if ($object->get_db eq 'vega') {
-      foreach my $link (@similarity_links) {
-        if ($link->dbname =~ /ENST/ ) {
-          if ($link->dbname eq 'ENST_CDS') {
-            $link->db_display_name("Ensembl transcript sharing CDS with Havana");
-          }
-          else {
-            $link->db_display_name("Ensembl transcript having exact match with Havana");
-          }
-          push @vega_links, $link;
-        }
-      }      
+		foreach my $link (@similarity_links) {
+			#remove redundancy
+			if ($link->dbname =~ /ENST/ ) {
+				if ($link->dbname eq 'ENST_ident') { 
+					@vega_links = ( $link ) ;
+					last;
+				}
+				@vega_links = ( $link );
+			}
+		}
     }
     #add links to Vega from Ensembl genes
     else {
-      #get 'shares CDS' links out first
-      #if there aren't any then get OTTT (but only those with OTT name and NULL info_text
-      foreach my $link (@similarity_links) {
-        if ($link->display_id =~ /OTT/ && ! $link->info_text ) {
-          if ($link->dbname =~ /shares_CDS/ ) {
-            @vega_links = ();
-            push @vega_links, $link;
-            last;
-          }
-          elsif ($link->dbname eq 'OTTT' ) {
-            push @vega_links, $link;
-          }
-        }
-      }
+		#get 'shares CDS' links out first (these are both identical and CDS shared)
+		#if there aren't any then get OTTT (but only those with OTT name and NULL info_text
+		foreach my $link (@similarity_links) {
+			if ($link->display_id =~ /OTT/ && ! $link->info_text ) {
+				if ($link->dbname =~ /shares_CDS/ ) {
+					@vega_links = ( $link );
+					last;
+				}
+				@vega_links = ( $link );
+			}
+		}
     }
 
     my $urls= $object->ExtURL;
@@ -601,20 +597,21 @@ sub version_and_date {
  Description : adds gene type to an information panel
  Return type : true 
 
-=cut         
+=cut
 
 sub type {
     my ($panel, $gene) = @_; 
     my $label = 'Gene Type';
-    my $type = $gene->Obj->biotype.'_'.$gene->Obj->status;
+	#return if this is a Eucomm gene
+	return if ($gene->Obj->analysis->logic_name eq 'otter_eucomm');
+	my $biotype = ($gene->Obj->biotype eq 'tec') ? uc($gene->Obj->biotype) : ucfirst(lc($gene->Obj->biotype));
+    my $type = ucfirst(lc($gene->Obj->status))." $biotype";
+	$type =~ s/_/ /g;
+	$type =~ s/unknown //i;
     # create a colourmap and use it to get label for gene type
-    my $cm = Bio::EnsEMBL::ColourMap->new($gene->species_defs);
-    my %gm = $cm->colourSet('vega_gene_havana');
-    my $text = $gm{$type}[1];
-    $panel->add_row($label, qq(<p>$text</p>));
+    $panel->add_row($label, qq(<p>$type [<a href="http://vega.sanger.ac.uk/info/about/gene_and_transcript_types.html">Definition</a>]</p>));
     return 1;
 }
-
 
 sub location {
   my( $panel, $object ) = @_;
