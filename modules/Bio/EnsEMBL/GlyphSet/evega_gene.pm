@@ -38,7 +38,7 @@ sub gene_label {
 
 sub gene_col {
   my( $self, $g ) = @_;
-  my $type = $g->biotype.'_'.$g->status;
+  my $type = $g->biotype;
   return $type;
 }
 
@@ -56,10 +56,8 @@ sub gene_col {
 sub format_vega_name {
 	my ($self,$gene) = @_;
 	my %gm = $self->{'config'}->colourmap()->colourSet($self->my_config('colour_set'));
-	my $status = $gene->status;
 	my $biotype = $gene->biotype();
-	my $t = $biotype.'_'.$status;
-	my $label = $gm{$t}[1];
+	my $label = $gm{$biotype}[1];
 	return $label;
 }
 

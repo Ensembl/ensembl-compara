@@ -23,7 +23,7 @@ sub transcript_type {
 sub colour {
   my ($self, $gene, $transcript, $colours, %highlights) = @_;
   my $highlight = undef;
-  my $type = $gene->biotype.'_'.$gene->status;
+  my $type = $gene->biotype;
   my @colour = @{$colours->{$type}||['black','transcript']};
   $colour[1] = $self->label_type($colour[1],$self->my_config('logic_name'));
   if(exists $highlights{lc($transcript->stable_id)}) {
@@ -41,7 +41,7 @@ sub colour {
 sub gene_colour {
   my ($self, $gene, $colours, %highlights) = @_;
   my $highlight = undef;
-  my $type = $gene->biotype."_".$gene->status;
+  my $type = $gene->biotype;
   my @colour = @{$colours->{$type}||['black','transcript']};
   $colour[1] = $self->label_type($colour[1],$self->my_config('logic_name'));
   if(exists $highlights{lc($gene->stable_id)}) {
@@ -92,9 +92,12 @@ sub zmenu {
   my $pid = $translation->stable_id() if $translation;
   my $gid = $gene->stable_id();
   my $id   = $transcript->external_name() eq '' ? $tid : $transcript->external_name();
-  my $gtype = $self->format_vega_name($gene);
-  my $ttype = $self->format_vega_name($gene,$transcript);
-
+  my $gtype = ucfirst(lc($gene->status)).' '.ucfirst(lc($gene->biotype));
+  $gtype =~ s/_/ /g;
+  $gtype =~ s/unknown //i;
+  my $ttype = ucfirst(lc($transcript->status)).' '.ucfirst(lc($transcript->biotype));
+  $ttype =~ s/_/ /g;
+  $ttype =~ s/unknown //i;
   my $ExtUrl = EnsEMBL::Web::ExtURL->new($self->{'config'}->{'species'}, $self->species_defs);
   my $caption = $self->my_config('caption'); 
   my $zmenu = {
@@ -131,7 +134,9 @@ sub gene_zmenu {
   else {
     $author =   'not defined';
   }
-  my $type = $self->format_vega_name($gene);
+  my $type = ucfirst(lc($gene->status)).' '.ucfirst(lc($gene->biotype));
+  $type =~ s/_/ /g;
+  $type =~ s/unknown //i;
   my $ExtUrl = EnsEMBL::Web::ExtURL->new($self->{'config'}->{'species'}, $self->species_defs);
   my $caption = $self->my_config('caption');
   my $zmenu = {
@@ -151,7 +156,8 @@ sub text_label {
   my $Config = $self->{config};
   my $short_labels = $Config->get('_settings','opt_shortlabels');
   unless( $short_labels ){
-    my $type = $self->format_vega_name($gene,$transcript);
+    my $type = ucfirst(lc($gene->status)) .' '.ucfirst($gene->biotype);
+	$type =~ s/_/ /;
     $id .= " \nVega $type ";
   }
   return $id;
@@ -163,8 +169,9 @@ sub gene_text_label {
   my $Config = $self->{config};
   my $short_labels = $Config->get('_settings','opt_shortlabels');
   unless( $short_labels ){
-   my $type = $self->format_vega_name($gene);
-   $id .= " \n$type ";
+	my $type =  ucfirst(lc($gene->status)) .' '.ucfirst($gene->biotype);
+	$type =~ s/_/ /;
+    $id .= " \nVega $type ";
   }
   return $id;
 }
@@ -173,7 +180,7 @@ our $VEGA_TO_SHOW_ON_ENS;
 
 sub features {
   my ($self) = @_;
-  my $genes = $self->{'container'}->get_all_Genes($self->my_config('logic_name'),'vega'); 
+  my $genes = $self->{'container'}->get_all_Genes($self->my_config('logic_name'),'vega');
   $VEGA_TO_SHOW_ON_ENS = [@$genes];
   return $genes;
 }
@@ -192,19 +199,10 @@ sub features {
 =cut
 
 sub format_vega_name {
-	my ($self,$gene,$trans) = @_;
-	my ($status,$biotype);
+	my ($self,$gene) = @_;
 	my %gm = $self->{'config'}->colourmap()->colourSet($self->my_config('colour_set'));
-	my ($t,$label);
-	if ($trans) {
-		$label = $trans->biotype()||$gene->biotype();
-		$label =~ s/_/ /;
-	} else {
-		$status = $gene->status;
-		$biotype = $gene->biotype();
-		$t = $biotype.'_'.$status;
-		$label = $gm{$t}[1];
-	}
+	my $biotype = $gene->biotype();
+	my $label = $gm{$biotype}[1];
 	return $label;
 }
 
