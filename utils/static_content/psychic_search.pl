@@ -15,7 +15,6 @@ use CGI qw(:standard *table);
 use vars qw( $SERVERROOT );
 BEGIN{
   $SERVERROOT = dirname( $Bin );
- $SERVERROOT  =~ s#/sanger-plugins/sanger##;
   unshift @INC, "$SERVERROOT/conf";
   eval{ require SiteDefs };
   if ($@){ die "Can't use SiteDefs.pm - $@\n"; }
