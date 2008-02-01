@@ -31,8 +31,8 @@ sub _init {
   my ($self) = @_;
 
   my $current_gene = $self->{highlights}->[0];
+  my $current_genome_db = $self->{highlights}->[1] || ' ';
   my $tree      = $self->{'container'};
-
   $k = 1;
 #  warn ("A-0:".localtime());
   my @nodes = sort { ($a->{_rank} <=> $b->{_rank}) * 10 + ($a->{_id} <=> $b->{_id})} @{$self->features($tree, 0, 0, 0) || []};
@@ -99,7 +99,7 @@ sub _init {
       $self->push( $t );
 
       if ($f->{label}) {
-	  my $col = $f->{_gene} eq $current_gene ? 'red' : 'black';
+	  my $col = $f->{_gene} eq $current_gene ? 'red' : ( $f->{_genome_db} eq $current_genome_db ? 'blue' : 'black');
 
 	  my $txt = new Sanger::Graphics::Glyph::Text({
 	      'text'       => $f->{label},
@@ -286,8 +286,11 @@ sub features {
   }
 
   if ($tree->isa('Bio::EnsEMBL::Compara::AlignedMember')) {
-      $f->{_species} = $tree->genome_db->name if($tree->genome_db);
 
+      if ($tree->genome_db) {
+        $f->{_species} = $tree->genome_db->name;
+	$f->{_genome_db} = $tree->genome_db->dbID;
+      }
       if ($tree->stable_id) {
 	  $f->{_protein} = $tree->stable_id;
 	  $f->{label} = sprintf("%s %s", $f->{_stable_id}, $f->{_species});
