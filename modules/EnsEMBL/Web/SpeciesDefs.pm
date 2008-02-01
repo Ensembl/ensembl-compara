@@ -142,12 +142,13 @@ sub configure_registry {
     'COMPARA'   => 'Bio::EnsEMBL::Compara::DBSQL::DBAdaptor',
     'ENSEMBL_VEGA'  => 'Bio::EnsEMBL::DBSQL::DBAdaptor',
     'COMPARA_MULTIPLE'  => undef,
-    'WEBSITE'   => undef,
-    'BLAST'     => undef,
-    'BLAST_LOG' => undef,
-    'MART'      => undef,
-    'GO'        => undef,
-    'FASTA'     => undef,
+    'WEBSITE'     => undef,
+    'HEALTHCHECK' => undef,
+    'BLAST'       => undef,
+    'BLAST_LOG'   => undef,
+    'MART'        => undef,
+    'GO'          => undef,
+    'FASTA'       => undef,
   ); 
    
   for my $species ( keys %{$CONF->{_storage}} ) {
