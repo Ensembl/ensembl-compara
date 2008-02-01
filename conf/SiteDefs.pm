@@ -134,7 +134,7 @@ foreach( @dir ) {
   }
 }
 
-warn ".......... @clean_directory ..............";
+#warn ".......... @clean_directory ..............";
 my $CONF_DIR = 'conf';
 while( ($CONF_DIR = pop @clean_directory) !~ /^conf/) { 1; }     ## Remove up to the last "conf" directory...
 
