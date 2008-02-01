@@ -102,7 +102,7 @@ sub transview {
 	  $panel1->add_component_after(qw(
 	     location author EnsEMBL::Web::Component::Transcript::class));
 	   $panel1->add_component_after(qw(
-	     author version_and_date  EnsEMBL::Web::Component::Transcript::version));
+	     author version_and_date  EnsEMBL::Web::Component::Gene::version_and_date));
   }
   $self->add_panel( $panel1 );
   $self->initialize_zmenu_javascript;

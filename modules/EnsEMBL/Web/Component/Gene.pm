@@ -609,7 +609,7 @@ sub type {
 	$type =~ s/_/ /g;
 	$type =~ s/unknown //i;
     # create a colourmap and use it to get label for gene type
-    $panel->add_row($label, qq(<p>$type [<a href="http://vega.sanger.ac.uk/info/about/gene_and_transcript_types.html">Definition</a>]</p>));
+    $panel->add_row($label, qq(<p>$type [<a href="http://vega.sanger.ac.uk/info/about/gene_and_transcript_types.html" target="external">Definition</a>]</p>));
     return 1;
 }
 

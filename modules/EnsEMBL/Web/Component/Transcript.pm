@@ -1753,10 +1753,13 @@ sub text_dump {
 sub class {
     my ($panel,$transcript) = @_;
     my $label = 'Transcript Class';
-    my $t_class = $transcript->Obj->biotype;
-    return 1 unless $t_class;
+    my $class = ucfirst(lc($transcript->Obj->status)).' '.ucfirst(lc($transcript->Obj->biotype));
+	$class =~ s/_/ /g;
+	$class =~ s/unknown//i;
+    return 1 unless $class;
     my $species = $transcript->species;
-    $panel->add_row($label, qq(<p>$t_class</p>));
+    my $text = qq(<p>$class [<a href="http://vega.sanger.ac.uk/info/about/gene_and_transcript_types.html" target="external">Definition</a>]</p>);
+    $panel->add_row($label, qq($text));
     return 1;
 }
 
