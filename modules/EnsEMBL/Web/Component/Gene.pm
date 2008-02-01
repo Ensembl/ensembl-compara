@@ -1613,13 +1613,14 @@ sub genetreeview {
   (warn("Can't get aligned member") and return 0) unless (defined $aligned_member);
 
   my $node = $aligned_member->subroot;
+
   my $tree = $treeDBA->fetch_node_by_node_id($node->node_id);
   $node->release_tree;
 
 #  warn("Z-0:".localtime);
   my $label = "GeneTree";
 
-  my $treeimage = create_genetree_image( $object, $tree);
+  my $treeimage = create_genetree_image( $object, $tree, $member);
 #  warn("Y-0:".localtime);
 
   my $T = $treeimage->render;
@@ -1708,15 +1709,16 @@ sub external_links {
 }
 
 sub create_genetree_image {
-  my(  $object, $tree ) = @_;
+  my(  $object, $tree, $member ) = @_;
 
   my $wuc        = $object->user_config_hash( 'genetreeview' ); 
   my $image_width  = $object->param( 'image_width' ) || 1200;
+
   $wuc->container_width($image_width);
   $wuc->set_width( $object->param('image_width') );
   $wuc->{_object} = $object;
 
-  my $image  = $object->new_image( $tree, $wuc, [$object->stable_id] );
+  my $image  = $object->new_image( $tree, $wuc, [$object->stable_id, $member->genome_db->dbID] );
 #  $image->cacheable   = 'yes';
   $image->image_type  = 'genetree';
   $image->image_name  = ($object->param('image_width')).'-'.$object->stable_id;
