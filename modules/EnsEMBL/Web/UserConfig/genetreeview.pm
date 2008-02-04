@@ -9,7 +9,7 @@ sub init {
   $self->{'_userdatatype_ID'} = 192;
   $self->{'general'}->{'genetrieview'} = {
     '_artefacts'   => [
-		       qw( genetree )
+		       qw( genetree genetree_legend )
 		       ],
     '_names'   => {
       'on'    => 'activate',
@@ -44,6 +44,13 @@ sub init {
       'pos' => '0',
       'str' => 'f'
     },
+
+    'genetree_legend' => {
+      'on'          => "on",
+      'str'         => 'r',
+      'pos'         => '9999',
+    },
+
 
   };
   my $POS = 0;
