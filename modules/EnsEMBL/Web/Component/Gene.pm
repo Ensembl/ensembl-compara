@@ -1566,6 +1566,7 @@ sub genesnpview {
 }
 
 sub genesnpview_legend {
+  ## NOT CALLED FROM ANYWHERE IN CODE - REMOVE? ap5
   my( $panel, $object ) = @_;
   $panel->print( qq(
     <p>
