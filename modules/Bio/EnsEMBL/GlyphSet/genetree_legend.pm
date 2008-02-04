@@ -37,14 +37,13 @@ sub _init {
     ['x10 branch length', 'blue', 1],
     ['x100 branch length', 'red', 1]
   );
-  my @orthos = (
-    ['current gene', 'red', 'PAX2 Homo sapiens'],
-    ['orthologue', 'black', 'PAX2 Mus musculus'],
-    ['paralogue', 'blue', 'PAX7 Homo sapiens'],
-  );
   my @nodes = (
     ['speciation node', 'navyblue'],
     ['duplication node', 'red3'],
+  );
+  my @orthos = (
+    ['current gene', 'red', 'GeneID Species A'],
+    ['within-sp. paralogue', 'blue', 'GeneID Species A'],
   );
   my @boxes = (
     ['AA alignment match/mismatch', 'yellowgreen', 'yellowgreen'],
@@ -123,7 +122,7 @@ sub _init {
         'colour'   => $colour,
         })
       );
-    $label = _create_label($im_width, $x, $y, $NO_OF_COLUMNS, $BOX_WIDTH, $th, $fontsize, $fontname, $legend);
+    $label = _create_label($im_width, $x, $y, $NO_OF_COLUMNS, $BOX_WIDTH - 20, $th, $fontsize, $fontname, $legend);
     $self->push($label);
     $y++;
   }
@@ -155,7 +154,7 @@ sub _init {
         'colour'    => $border,
         })
       );
-    $label = _create_label($im_width, $x, $y, $NO_OF_COLUMNS, $BOX_WIDTH, $th, $fontsize, $fontname, $legend);
+    $label = _create_label($im_width, $x, $y, $NO_OF_COLUMNS, $BOX_WIDTH - 10, $th, $fontsize, $fontname, $legend);
     $self->push($label);
     $y++;
   }
