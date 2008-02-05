@@ -452,7 +452,7 @@ sub _parse {
     $common = $tree;
 
     ## get some info from core meta table
-    unless ($filename eq 'MULTI') {
+    unless ($filename eq 'MULTI' and !$tree->{'databases'}->{'ENSEMBL_DB'}) {
       ## hash of keys (other than taxonomy) that we want to use
       my %meta_map = (
         'species.ensembl_alias_name'  => 'SPECIES_COMMON_NAME',
@@ -500,11 +500,18 @@ sub _parse {
       $dbh->disconnect();
 
       # SPECIES_ABBREVIATION
-      $filename =~ /^([A-Z])[a-z]+_([a-z]{3})[a-z]*$/;
+      if ($filename eq "MULTI") { ## Required for Ancestral sequences DB
+        "Ancestral_sequences" =~ /^([A-Z])[a-z]+_([a-z]{3})[a-z]*$/;
+      } else {
+        $filename =~ /^([A-Z])[a-z]+_([a-z]{3})[a-z]*$/;
+      }
       $tree->{'general'}{'SPECIES_ABBREVIATION'} = $1.$2;
 
       ## Do species name and group
       (my $ininame = $filename) =~ s/_/ /g;
+      if ($filename eq "MULTI") {  ## Required for Ancestral sequences DB
+        $ininame = "Ancestral sequences";
+      }
       my $bioname = $taxonomy[1].' '.$taxonomy[0];
       my $phylo = $tree->{'ENSEMBL_PHYLOGENY'};
       $tree->{'general'}{'SPECIES_BIO_NAME'} = $ininame;
@@ -629,12 +636,12 @@ sub _parse {
         ## We've done the DB hash...
         ## So lets get on with the multiple alignment hash;
 	      my $q = qq{
-	        SELECT ml.type, gd.name, mlss.name, mlss.method_link_species_set_id, ss.species_set_id
+	        SELECT ml.class, ml.type, gd.name, mlss.name, mlss.method_link_species_set_id, ss.species_set_id
 	        FROM   method_link ml, method_link_species_set mlss, genome_db gd, species_set ss 
 	        WHERE  mlss.method_link_id = ml.method_link_id 
           AND    mlss.species_set_id=ss.species_set_id 
           AND    ss.genome_db_id = gd.genome_db_id 
-          AND    ml.type in ('GERP_CONSERVATION_SCORE','GERP_CONSTRAINED_ELEMENT','PECAN','MLAGAN','BLASTZ_NET','BLASTZ_RAW')};
+          AND    ml.type in ('GERP_CONSERVATION_SCORE','GERP_CONSTRAINED_ELEMENT','ORTHEUS','PECAN','MLAGAN','BLASTZ_NET','BLASTZ_RAW')};
 
           my $sth = $dbh->prepare( $q );
           my $rv  = $sth->execute || die( $sth->errstr );
@@ -643,21 +650,26 @@ sub _parse {
           my $constrained_elements;
 
           foreach my $row ( @$results ) {
-            my ($type, $species, $name, $id, $species_set_id) =
-                (uc($row->[0]), $row->[1], $row->[2], $row->[3], $row->[4]);
+            my ($class, $type, $species, $name, $id, $species_set_id) =
+                ($row->[0], uc($row->[1]), $row->[2], $row->[3], $row->[4], $row->[5]);
             my $KEY = 'ALIGNMENTS';
-            if ($type =~ /CONSERVATION_SCORE/) {
+            if ($class =~ /ConservationScore/ or $type =~ /CONSERVATION_SCORE/) {
               $KEY = "CONSERVATION_SCORES";
               $name = "Conservation scores";
-            } elsif ($type =~ /CONSTRAINED_ELEMENT/) {
+            } elsif ($class =~ /constrained_element/ or $type =~ /CONSTRAINED_ELEMENT/) {
               $KEY = "CONSTRAINED_ELEMENTS";
               $constrained_elements->{$species_set_id} = $id;
               $name = "Constrained elements";
+            } elsif ($class =~ /tree_alignment/ or $type =~ /ORTHEUS/) {
+              if (!defined($tree->{$KEY}) or !defined($tree->{$KEY}->{$id})) {
+                $tree->{$KEY}->{$id}->{'species'}->{"Ancestral_sequences"} = 1;
+              }
             }
             $species =~ tr/ /_/;
             $tree->{$KEY}->{$id}->{'id'} = $id;
             $tree->{$KEY}->{$id}->{'name'} = $name;
             $tree->{$KEY}->{$id}->{'type'} = $type;
+            $tree->{$KEY}->{$id}->{'class'} = $class;
             $tree->{$KEY}->{$id}->{'species_set_id'} = $species_set_id;
             $tree->{$KEY}->{$id}->{'species'}->{$species} = 1;
           }
@@ -877,6 +889,11 @@ sub _parse {
       delete $tree->{'general'};
       $CONF->{'_multi'} = $tree;
       $CONF->{'_storage'}{'Multi'} = $tree;
+
+      ## Needed for the ancestral sequences database
+      if ($tree->{'databases'}->{'ENSEMBL_DB'}) {
+        $CONF->{'_storage'}{'Ancestral_sequences'} = $tree;
+      }
 #      warn(Dumper($tree->{VEGA_COMPARA_CONF}));
 #      warn(Dumper($tree->{'BLASTZ_RAW'}));
 #      warn(Dumper($CONF->{_multi}->{'ALIGNMENTS'}));
