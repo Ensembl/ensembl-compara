@@ -57,11 +57,8 @@ sub _init {
   my @features = ();
   my @segments = ();
 
-  if ($Container->isa("Bio::EnsEMBL::Compara::AlignSlice::Slice")) {
-      @segments = @{$Container->project("contig")  ||[]};
-  } else {
-      @segments = @{$Container->project('seqlevel')||[]};
-  }
+  @segments = @{$Container->project('seqlevel')||[]};
+
   my @coord_systems;
   if ( ! $Container->isa("Bio::EnsEMBL::Compara::AlignSlice::Slice") && ($Container->{__type__} ne 'alignslice')) {
     @coord_systems = @{$Container->adaptor->db->get_CoordSystemAdaptor->fetch_all() || []};
@@ -78,8 +75,11 @@ sub _init {
       my $end        = $segment->from_end;
       my $ctg_slice  = $segment->to_Slice;
       my $ORI        = $ctg_slice->strand;
-#warn $ctg_slice->seq_region_name,' ... ', $ctg_slice->coord_system->name, ' ... ';
       my $feature = { 'start' => $start, 'end' => $end, 'name' => $ctg_slice->seq_region_name };
+      if ($ctg_slice->coord_system->name eq "ancestralsegment") {
+        ## This is a Slice of Ancestral sequences: display the tree instead of the ID
+        $feature->{'name'} = $ctg_slice->{_tree};
+      }
 
       $feature->{'locations'}{ $ctg_slice->coord_system->name } = [ $ctg_slice->seq_region_name, $ctg_slice->start, $ctg_slice->end, $ctg_slice->strand  ];
 
@@ -217,7 +217,7 @@ sub _init_non_assembled_contig {
       $script = 'contigview';
       $caption = 'Jump to contigview';
     } 
-    my $label = '';
+    my $label = $tile->{'name'};
     foreach( qw(chunk supercontig scaffold clone contig) ) {
       if( my $Q = $tile->{'locations'}->{$_} ) {
         if($show_href eq 'on') {
