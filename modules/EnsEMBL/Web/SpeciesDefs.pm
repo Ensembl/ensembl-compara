@@ -1188,6 +1188,12 @@ sub _parse {
 
 sub DESTROY { }
 
+sub timer{
+### Provides easy-access to the ENSEMBL_WEB_REGISTRY's timer
+  use EnsEMBL::Web::RegObj qw($ENSEMBL_WEB_REGISTRY);
+  return $ENSEMBL_WEB_REGISTRY->timer;
+}
+
 sub get_vega_regions {
 #compare regions to get the smallest start and largest end
 	my ($config,$method,$comparison,$species1,$species2,$location1,$location2,$condition) = @_;
