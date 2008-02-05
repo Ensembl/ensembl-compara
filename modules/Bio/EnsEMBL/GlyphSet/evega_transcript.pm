@@ -152,26 +152,38 @@ sub gene_zmenu {
 
 sub text_label {
   my ($self, $gene, $transcript) = @_;
+  my $ln = $transcript->analysis->logic_name;
+  my %sourcenames = (
+	  'otter' => 'Vega Havana',
+	  'otter_external' => 'Vega External',
+  );
+  my $prefix = $sourcenames{$ln};
   my $id = $transcript->external_name() || $transcript->stable_id();
   my $Config = $self->{config};
   my $short_labels = $Config->get('_settings','opt_shortlabels');
   unless( $short_labels ){
-    my $type = ucfirst(lc($gene->status)) .' '.ucfirst($gene->biotype);
+    my $type = ucfirst($gene->biotype);
 	$type =~ s/_/ /;
-    $id .= " \nVega $type ";
+    $id .= " \n$prefix $type ";
   }
   return $id;
 }
 
 sub gene_text_label {
   my ($self, $gene) = @_;
+  my $ln = $gene->analysis->logic_name;
+  my %sourcenames = (
+	  'otter' => 'Vega Havana',
+	  'otter_external' => 'Vega External',
+  );
+  my $prefix = $sourcenames{$ln};
   my $id = $gene->external_name() || $gene->stable_id();
   my $Config = $self->{config};
   my $short_labels = $Config->get('_settings','opt_shortlabels');
   unless( $short_labels ){
-	my $type =  ucfirst(lc($gene->status)) .' '.ucfirst($gene->biotype);
+	my $type = ucfirst($gene->biotype);
 	$type =~ s/_/ /;
-    $id .= " \nVega $type ";
+    $id .= " \n$prefix $type ";
   }
   return $id;
 }
