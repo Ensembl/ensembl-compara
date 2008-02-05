@@ -134,7 +134,7 @@ sub _init {
     my $filled = 1;
     my $last_text_X = -1e20;
     my $yc = $self->{strand} > 0 ? 0 : 20;
-    if ($param_string eq $ENV{ENSEMBL_SPECIES}) {
+    if ($Container->{compara} eq 'primary') {
     if ($self->{strand} < 0) {
         $start = $global_end  +1;
     }
@@ -166,6 +166,7 @@ sub _init {
 
     $self->push($t);
 
+   ## Vertical lines across all species
    if($REGISTER_LINE && $Container->{compara} ne 'secondary') {
         if($start == $box_start ) { # This is the end of the box!
         $self->join_tag( $t, "ruler_$start", 0, 0 , $start%$major_unit ? 'grey90' : 'grey80'  );
@@ -240,7 +241,9 @@ sub align_interval {
     my $last_end = -1;
     my $last_chr = -1;
     my $zc = -20;
+    my $last_s2s = -1;
     my $last_s2e = -1;
+    my $last_s2st = 0;
 
     my %colour_map = ();
     my %colour_map2 = ();
@@ -271,6 +274,14 @@ sub align_interval {
       $zmenu = {
 		'caption' => "AlignSlice",
 		'01:Gap in the alignment' => "",
+	       };
+    }
+    elsif ($species eq "Ancestral_sequences") {
+      my $simple_tree = $s2->{_tree};
+      $zmenu = {
+		'caption' => "AlignSlice",
+		"01:ID: $s2t" => "",
+		'02:'.$simple_tree => '',
 	       };
     }
     else {
@@ -315,29 +326,81 @@ sub align_interval {
         $self->join_tag( $t, "alignslice_${box_start}", 0,1, $col, 'fill', $zc );
     }
 
-    if (($last_chr == $s2t) && ($last_end == $ss - 1)) {
-        my $s3l = abs($s2s - $last_s2e);
-        my $zmenu2 = {
-        'caption' => "AlignSlice Break",
-        "00:Info: There is a gap in the original slice"=>"",
-        "01:Chromosome: $s2t" => "",
-        "02:Length: $s3l" => ""
-        };
+    ## This happens when we have two contiguous underlying slices
+    if ($last_end == $ss - 1) {
+      my $s3l = $s2s - $last_s2e - 1;
+      if ($s2st == -1 and $last_s2st == -1) {
+        $s3l = $s2e - $last_s2s + 1;
+      }
+      my $xc = $box_start - $global_start;
+      my $h = $yc - 2;
 
-        my $xc = $box_start - $global_start;
-        my $h = $yc - 2;
-        
-        $self->push( new Sanger::Graphics::Glyph::Poly({
-        'points'    => [ $xc - 2/$pix_per_bp, $h,
-                 $xc, $h+6,
-                 $xc+ 2/$pix_per_bp, $h  ],
-        'colour'    => 'red',
-        'absolutey' => 1,
-        'zmenu' => $zmenu2
-        }));
+      my $zmenu2;
+      my $colour;
+      if ($last_chr ne $s2t) {
+        ## Different chromosomes
+        $colour = "black";
+        $zmenu2 = {
+            'caption' => "AlignSlice Break",
+            "00:Info: There is a breakpoint" => "",
+            "01:in the alignment between chromosome" => "",
+            "02:$last_chr and $s2t" => "",
+          };
+      } elsif ($last_s2st ne $s2st) {
+        ## Same chromosome, different strand (inversion)
+        $colour = "3333ff"; #"seagreen4";
+        $zmenu2 = {
+            'caption' => "AlignSlice Break",
+            "00:Info: There is an inversion" => "",
+            "01:in chromosome $s2t" => "",
+          };
+      } elsif ($s3l > 0) {
+        ## Same chromosome, same strand, gap between the two underlying
+        ## slices
+        $colour = "red";
+        my ($from, $to); 
+        if ($s2st == 1) {
+          $from = $last_s2e;
+          $to = $s2s;
+        } else {
+          $from = $s2e;
+          $to = $last_s2s;
+        }
+        my $cview = sprintf("/%s/contigview?l=%s:%ld-%ld", $species, $s2t, ($from+1), ($to-1));
+        $zmenu2 = {
+            'caption' => "AlignSlice Break",
+            "00:Info: There is a gap in the original"=>"",
+            "01:chromosome between these two alignments" => "",
+            "02:Chromosome: $s2t" => "",
+            "03:From: $from" => "",
+            "04:To: $to" => "",
+            "05:Length: $s3l bp" => "",
+            "06:View in ContigView" => $cview,
+          };
+      } else {
+        ## Same chromosome, same strand, no gap between the two underlying
+        ## slices (BreakPoint in another species)
+        $colour = "indianred3";
+        $zmenu2 = {
+            'caption' => "AlignSlice Break",
+            "00:Info: There is a breakpoint in the" => "",
+            "01:alignment on chromosome: $s2t" => "",
+          };
+      }
+
+      $self->push( new Sanger::Graphics::Glyph::Poly({
+      'points'    => [ $xc - 2/$pix_per_bp, $h,
+              $xc, $h+6,
+              $xc + 2/$pix_per_bp, $h  ],
+      'colour'    => $colour,
+      'absolutey' => 1,
+      'zmenu' => $zmenu2
+      }));
     }
     $last_end = $se;
+    $last_s2s = $s2s;
     $last_s2e = $s2e;
+    $last_s2st = $s2st;
     $last_chr = $s2t;
     }
 
