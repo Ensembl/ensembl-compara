@@ -1250,7 +1250,7 @@ sub alignsliceviewbottom {
     unshift @selected_species, $object->species if (scalar(@selected_species));
 
     my $asa = $comparadb->get_adaptor("AlignSlice" );
-    my $align_slice = $asa->fetch_by_Slice_MethodLinkSpeciesSet($query_slice, $method_link_species_set, "expanded" );
+    my $align_slice = $asa->fetch_by_Slice_MethodLinkSpeciesSet($query_slice, $method_link_species_set, "expanded", "restrict" );
 
     $object->Obj->{_align_slice} = $align_slice;
 
@@ -1263,11 +1263,15 @@ sub alignsliceviewbottom {
     my $t3 = $wuc->get('variation','on');
     my $t4 = $wuc->get('alignslice','constrained_elements');
     my $id = 0;
-    my $num = scalar(@selected_species);
+
+    my $as_slices = $align_slice->get_all_Slices(@selected_species);
+    ## $num represent the total number of tracks and is used to "close" the view.
+    ## There might be more than one track per species.
+    my $num = scalar(@$as_slices);
 
     add_repeat_tracks( $object, $wuc );
 
-    foreach my $as (@{$align_slice->get_all_Slices(@selected_species)}) {
+    foreach my $as (@{$as_slices}) {
     (my $vsp = $as->genome_db->name) =~ s/ /_/g;
     $id ++;
     my $CONF = $object->user_config_hash( "alignsliceviewbottom_$id", "alignsliceviewbottom"  );
@@ -1433,7 +1437,10 @@ sub alignsliceviewzoom {
     }
     }
 
-    my $num = scalar(@selected_species) || 2;
+    my $as_slices = $align_slice->get_all_Slices(@selected_species);
+    ## $num represent the total number of tracks and is used to "close" the view.
+    ## There might be more than one track per species.
+    my $num = scalar($as_slices) || 2;
 
     foreach my $nt (@SEQ) {
     $nt->{S} = join('', grep {$nt->{$_} >= $num} keys(%{$nt}));
@@ -1443,7 +1450,7 @@ sub alignsliceviewzoom {
     my $cmpstr = 'primary';
     my $id = 0;
 
-    foreach my $as (@{$align_slice->get_all_Slices(@selected_species)}) {
+    foreach my $as (@$as_slices) {
     (my $vsp = $as->genome_db->name) =~ s/ /_/g;
     $id ++;
     my $wuc = $object->user_config_hash( "alignsliceviewzoom_$id", 'alignsliceviewbottom' );
