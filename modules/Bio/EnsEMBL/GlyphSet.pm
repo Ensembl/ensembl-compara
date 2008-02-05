@@ -62,59 +62,75 @@ sub species_defs { return $_[0]->{'config'}->{'species_defs'}; }
 sub get_text_width {
   my( $self, $width, $text, $short_text, %parameters ) = @_;
 
-  my $KEY;
-  if($parameters{'font'} =~ /Cour/i && length($text)==1 ) {
-    $KEY = "$width--X--$short_text--$parameters{'font'}--$parameters{'ptsize'}";
-  } else {
-    $KEY = "$width--$text--$short_text--$parameters{'font'}--$parameters{'ptsize'}";
-  }
+  # Adjust the text for courier fonts
+  if( length($text)==1 && $parameters{'font'} =~ /Cour/i ){ $text = 'X' }
+
+  # Look in the cache for a previous entry 
+  my $KEY = "$width--$text--$short_text--"
+      . "$parameters{'font'}--$parameters{'ptsize'}";
   return @{$cache{$KEY}} if exists $cache{$KEY};
-## return @{$self->{'_cache_'}{$KEY}} if exists $self->{'_cache_'}{$KEY};
-  my $font   = $self->{'config'}->species_defs->ENSEMBL_STYLE->{'GRAPHIC_TTF_PATH'}.($parameters{'font'}||'arial').'.ttf';
-  $width ||= 1e6;
-  my $ptsize =  $parameters{'ptsize'}||10;
+
+  # Get the GD::Text object for this font/size
+  my $gd_text = $self->get_gd_text($parameters{'font'},$parameters{'ptsize'})
+      || return(); # Ensure we have the text obj
+
+  # Use the text object to determine height/width of the given text;
+  $gd_text->set_text($text);
+  $width ||= 1e6; # Make initial width very big by default
+  my($w,$h) = $gd_text->get('width','height');
+  my @res;
+  if($w<$width) { 
+    @res = ($text,      'full', $w,$h);
+  } elsif($short_text) {
+    $gd_text->set_text($short_text);
+    ($w,$h) = $gd_text->get('width','height');
+    if($w<$width) { 
+      @res = ($short_text,'short',$w,$h);
+    } else {
+      @res = ('',         'none', 0, 0 );
+    }
+  }
+  $self->{'_cache_'}{$KEY} = \@res; # Update the cache
+  $cache{$KEY} = \@res;
+  return @res;
+}
+
+sub get_gd_text{
+  ### Returns the GD::Text object appropriate for the given fontname
+  ### and fontsize. GD::Text objects are cached against fontname and fontsize.
+  my $self   = shift;
+  my $font   = shift || 'arial';
+  my $ptsize = shift || 10;
+
+  my $FONT_KEY = "${font}--${ptsize}"; 
+  return $cache{$FONT_KEY} if exists( $cache{$FONT_KEY} );
+  
+  my $fontpath 
+      = $self->{'config'}->species_defs->ENSEMBL_STYLE->{'GRAPHIC_TTF_PATH'}
+        . $font . '.ttf';
+
   my $gd_text = GD::Text->new();
   eval {
-    if( -e $font ) {
+    if( -e $fontpath ) {
       $gd_text->set_font( $font, $ptsize );
-    } elsif( $parameters{'font'} eq 'Tiny' ) {
+    } elsif( $font eq 'Tiny' ) {
       $gd_text->set_font( gdTinyFont );
-    } elsif( $parameters{'font'} eq 'MediumBold' ) {
+    } elsif( $font eq 'MediumBold' ) {
       $gd_text->set_font( gdMediumBoldFont );
-    } elsif( $parameters{'font'} eq 'Large' ) {
+    } elsif( $font eq 'Large' ) {
       $gd_text->set_font( gdLargeFont );
-    } elsif( $parameters{'font'} eq 'Giant' ) {
+    } elsif( $font eq 'Giant' ) {
       $gd_text->set_font( gdGiantFont );
     } else {
-      $parameters{'font'} = 'Small';
+      $font = 'Small';
       $gd_text->set_font( gdSmallFont );
     }
   };
-
   warn $@ if $@;
-  if( $gd_text ) {
-    if($font =~ /Cour/i && length($text)==1) {
-      $gd_text->set_text('X');
-    } else {
-      $gd_text->set_text($text);
-    }
-    my($w,$h) = $gd_text->get('width','height');
-    my @res;
-    if($w<$width) { 
-      @res = ($text,      'full', $w,$h);
-    } elsif($short_text) {
-      $gd_text->set_text($short_text);
-      ($w,$h) = $gd_text->get('width','height');
-      if($w<$width) { 
-        @res = ($short_text,'short',$w,$h);
-      } else {
-        @res = ('',         'none', 0, 0 );
-      }
-    }
-    $self->{'_cache_'}{$KEY} = \@res;
-    $cache{$KEY} = \@res;
-    return @res;
-  }
+
+  $cache{$FONT_KEY} = $gd_text; # Update font cache
+  
+  return $cache{$FONT_KEY};
 }
 
 sub commify { local $_ = reverse $_[1]; s/(\d\d\d)(?=\d)(?!\d*\.)/$1,/g; return scalar reverse $_; }
@@ -148,9 +164,10 @@ sub new {
 
 sub __init {
   my $self = shift;
-  eprof_start('init_'.ref($self));
+  my $track = $self->check();
+  eprof_start('DRAW:'.$track);
   $self->_init(@_);
-  eprof_end('init_'.ref($self));
+  eprof_end('DRAW:'.$track);
 }
 sub bumpbutton {
     my ($self, $val) = @_;
