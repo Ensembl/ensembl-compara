@@ -479,6 +479,8 @@ sub exists {
 
 sub render {
   my $self = shift;
+  my $timer = $self->{'species_defs'}->timer;
+  $timer->push('Image->render starting');
   my $HTML = $self->introduction;
   ## Here we have to do the next bit which is to draw the image itself;
   my $image = new EnsEMBL::Web::File::Image( $self->{'species_defs'} );
@@ -513,7 +515,7 @@ sub render {
     $HTML .= $image->render_image_button();
     $HTML .= sprintf qq(<div style="text-align: center; font-weight: bold">%s</div>), $self->caption if $self->caption;
   } elsif( $self->button eq 'drag' ) {
-    $self->{'species_defs'}{'timer'}->push("Starting Image Tag",5);
+    #$timer->push("Starting Image Tag",5);
     $image->{'id'} = $self->{'prefix'} . "_$self->{'panel_number'}_i";
     my $tag = $image->render_image_tag();
     ## Now we have the image dimensions, we can set the correct DIV width
@@ -528,14 +530,14 @@ sub render {
     ### outside this module!
     $HTML .= sprintf '<div style="text-align:center"><div class="center" style="margin:auto;border:0px;padding:0px;width:%dpx">',  $image->{'width'}+2;
     $HTML .= sprintf qq(<div id="$self->{'prefix'}_$self->{'panel_number'}" style="border: solid 1px black; position: relative; width:%dpx">%s), $image->{'width'},$tag;
-$self->{'species_defs'}{'timer'}->push("Starting Image Map",5);
+    #$timer->push("Starting Image Map",5);
     if( $self->imagemap eq 'yes' ) {
       $HTML .= $image->render_image_map
     }
     $HTML .= "</div>";
     $HTML .= sprintf qq(<div style="text-align: center; font-weight: bold">%s</div>), $self->caption if $self->caption;
     $HTML .= '</div></div>';
-# $self->{'species_defs'}{'timer'}->push("Finishing Image Map",5);
+# $timer->push("Finishing Image Map",5);
   } else {
     my $tag = $image->render_image_tag();
     ## Now we have the image dimensions, we can set the correct DIV width 
@@ -560,7 +562,7 @@ $self->{'species_defs'}{'timer'}->push("Starting Image Map",5);
     my %URLS;
     foreach( sort @{$self->{'image_formats'}} ) {
       my $T = $image->render($_);
-$self->{'species_defs'}{'timer'}->push("Finishing rendering $_",5);
+#$timer->push("Finishing rendering $_",5);
       $URLS{$_} = $T->{'URL'};
       $URLS{$_}.='.eps' if lc($_) eq 'postscript';
     }
@@ -572,7 +574,8 @@ $self->{'species_defs'}{'timer'}->push("Finishing rendering $_",5);
   $HTML .= $self->tailnote;
     
   $self->{'width'} = $image->{'width'};
-#  $self->species_defs->{'timer'}->push("Returning from renderer....",5);
+#  $timer->push("Returning from renderer....",5);
+  $timer->push('Image->render ending');
   return $HTML
 }
 
