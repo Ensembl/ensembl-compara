@@ -395,7 +395,7 @@ sub _parse {
 
 ######### Deal with DEFAULTS.ini -- store the information collected in a separate tree...
 #########                           and skip the remainder of this code...
-    if( $filename eq 'DEFAULTS' ) { 
+    if( $filename eq 'DEFAULTS' ) {
       print STDERR ( "\t  [INFO] Defaults file successfully stored\n" );
       $defaults = $tree;
       next;
@@ -528,23 +528,30 @@ sub _parse {
         last if $tree->{'general'}{'SPECIES_GROUP'};
       }
       
-      ## Also get archive assembly info for each species
+      ## Also get archive info for species
       $dbh = $self->db_connect( $tree, 'ENSEMBL_WEBSITE' );
       $tree->{'archive'} = {};
-
-      $sql = qq(SELECT r.release_id, r.assembly_name 
-                    FROM release_species r, species s 
+      my $sql = qq(SELECT r.release_id, r.assembly_name, e.archive, e.online
+                    FROM release_species r, species s, ens_release e
                     WHERE r.species_id = s.species_id
-                      AND s.name = "$filename" 
-                      AND r.assembly_name != ''
-                    ORDER BY release_id);
+                    AND r.release_id = e.release_id
+                    AND r.assembly_name != ''
+                    AND s.name = '$filename'
+                    ORDER BY r.release_id
+            );
+        
       $sth = $dbh->prepare( $sql );
       $rst  = $sth->execute || die( $sth->errstr );
       $results = $sth->fetchall_arrayref();
       foreach my $row (@$results) {
         my $release_id  = $row->[0];
         my $assembly    = $row->[1];
-        $tree->{'archive'}{$release_id} = $assembly;
+        my $archive     = $row->[2];
+        my $online      = $row->[3];
+        $tree->{'archive'}{'assemblies'}{$release_id} = $assembly;
+        if ($online eq 'Y') {
+          $tree->{'archive'}{'online'}{$release_id} = $archive;
+        }
       }
       $sth->finish();
       $dbh->disconnect();
