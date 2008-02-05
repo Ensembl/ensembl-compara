@@ -263,7 +263,7 @@ sub get_all_sorted_genomic_align_nodes {
   Arg[1]     : [optional] int $start, refers to the reference_dnafrag
   Arg[2]     : [optional] int $end, refers to the reference_dnafrag
   Arg[3]     : [optional] Bio::EnsEMBL::Compara::GenomicAlign $reference_GenomicAlign
-  Arg[4]     : [optional] boolean $skip_empty_GenomicAligns
+  Arg[4]     : [optional] boolean $skip_empty_GenomicAligns [ALWAYS FALSE]
   Example    : none
   Description: restrict this GenomicAlignBlock. It returns a new object unless no
                restriction is needed. In that case, it returns the original unchanged
@@ -292,7 +292,7 @@ sub restrict_between_reference_positions {
 
   $self->get_all_sorted_genomic_align_nodes;
   my $genomic_align_block = $self->SUPER::restrict_between_reference_positions($start, $end,
-      $reference_genomic_align, $skip_empty_GenomicAligns);
+      $reference_genomic_align, 0);
 
   return $self if (!$genomic_align_block or $genomic_align_block eq $self);
   # Get a copy of the tree (this method should return a new object in order to comply with parent one.
@@ -318,6 +318,20 @@ $DB::single = 1;
       }
       $all_genomic_align_nodes->[$i]->{genomic_align}->{genomic_align_block} = $genomic_align_block;
     } else {
+      for (my $i=0; $i<@$all_genomic_align_nodes; $i++) {
+          print STDERR join(":",
+              $all_new_genomic_aligns->[$i]->genome_db->name,
+              $all_new_genomic_aligns->[$i]->dnafrag->name,
+              $all_new_genomic_aligns->[$i]->dnafrag_start,
+              $all_new_genomic_aligns->[$i]->dnafrag_end,
+              $all_new_genomic_aligns->[$i]->dnafrag_strand), "\n";
+          print STDERR join("|",
+              $all_original_genomic_aligns->[$i]->genome_db->name,
+              $all_original_genomic_aligns->[$i]->dnafrag->name,
+              $all_original_genomic_aligns->[$i]->dnafrag_start,
+              $all_original_genomic_aligns->[$i]->dnafrag_end,
+              $all_original_genomic_aligns->[$i]->dnafrag_strand), "\n";
+      }
       warn("Cannot find right order");
       return undef;
     }
@@ -445,21 +459,49 @@ sub _sort_children {
   }
 
   ## Species name based sorting
-  my $species_a;
-  if ($a->is_leaf) {
-    $species_a = $a->genomic_align->genome_db->name;
-  } else {
-    $species_a = join(" - ", sort map {$_->genomic_align->genome_db->name} @{$a->get_all_leaves});
-  }
-  my $species_b;
-  if ($b->is_leaf) {
-    $species_b = $b->genomic_align->genome_db->name;
-  } else {
-    $species_b = join(" - ", sort map {$_->genomic_align->genome_db->name} @{$b->get_all_leaves});
-  }
+  my $species_a = $a->_name_for_sorting;
+  my $species_b = $b->_name_for_sorting;
 
   return $species_a cmp $species_b;
+#   if ($a->is_leaf) {
+#     $species_a = $a->genomic_align->genome_db->name;
+#   } else {
+#     $species_a = join(" - ", sort map {sprintf("%s.%s.%020d.%020d", $_->genomic_align->genome_db->name} @{$a->get_all_leaves});
+#   }
+#   my $species_b;
+#   if ($b->is_leaf) {
+#     $species_b = $b->genomic_align->genome_db->name;
+#   } else {
+#     $species_b = join(" - ", sort map {$_->genomic_align->genome_db->name} @{$b->get_all_leaves});
+#   }
+# #   my $cmp = $species_a cmp $species_b;
+# #   if ($cmp < 0) {
+# #     print "$species_a <<<<<<<< $species_b\n";
+# #   } elsif ($cmp > 0) {
+# #     print "$species_b >>>>>>>> $species_a\n";
+# #   } else {
+# #     print "$species_b ======== $species_a\n";
+# #   }
+# #   return $cmp;
 }
 
+sub _name_for_sorting {
+  my ($self) = @_;
+  my $name;
+
+  if ($self->is_leaf) {
+    $name = sprintf("%s.%s.%020d",
+        $self->genomic_align->genome_db->name,
+        $self->genomic_align->dnafrag->name,
+        $self->genomic_align->dnafrag_start);
+  } else {
+    $name = join(" - ", sort map {sprintf("%s.%s.%020d",
+        $_->genomic_align->genome_db->name,
+        $_->genomic_align->dnafrag->name,
+        $_->genomic_align->dnafrag_start)} @{$self->get_all_leaves});
+  }
+
+  return $name;
+}
 
 1;
