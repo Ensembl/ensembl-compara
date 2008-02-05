@@ -80,7 +80,7 @@ sub push {
 sub render {
 ### Render both diagnostic tables if any data - tree timings from Push and diagnostic repeats from start/end
   my $self = shift;
-  $self->push("Page rendered");
+  #$self->push("Page rendered");
   my $base_time = shift @{$Times_of{ ident $self }};
 
   my $diagnostics = "
