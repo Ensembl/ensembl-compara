@@ -164,7 +164,7 @@ sub initialize_zmenu_javascript {
 
 sub initialize_zmenu_javascript_new {
   my $self = shift;
-  warn "sr7:initialise_zmenu_javascript_new is called\n";
+  #warn "sr7:initialise_zmenu_javascript_new is called\n";
   $self->{page}->javascript->add_script( 'var LOADED = 0;' );
   foreach( qw(dd_menus_42.js new_contigview_support_42.js new_drag_imagemap.js new_old_zmenu_42.js new_zmenu_42.js new_support.js protopacked.js) ) {
     $self->{page}->javascript->add_source( "/js/$_" );
