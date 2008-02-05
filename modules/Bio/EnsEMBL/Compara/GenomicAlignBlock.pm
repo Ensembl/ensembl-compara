@@ -1447,6 +1447,10 @@ sub reverse_complement {
 sub get_original_strand {
   my ($self) = @_;
 
+  if (!defined($self->{_original_strand})) {
+    $self->{_original_strand} = 1;
+  }
+
   return $self->{_original_strand};
 }
 
@@ -1520,6 +1524,7 @@ sub restrict_between_alignment_positions {
           -dnafrag_strand => $dnafrag_strand,
           -cigar_line => $cigar_line,
     );
+    $new_genomic_align->{original_dbID} = $this_genomic_align->dbID;
     if ($this_genomic_align->{method_link_species_set_id}) {
 	$new_genomic_align->method_link_species_set_id($this_genomic_align->method_link_species_set_id);
     } 
@@ -1702,6 +1707,7 @@ sub restrict_between_reference_positions {
 
   if ($start > $reference_genomic_align->dnafrag_end or $end < $reference_genomic_align->dnafrag_start) {
     # restricting outside of boundaries => return undef object
+    warn("restricting outside of boundaries => return undef object: $start-$end (".$reference_genomic_align->dnafrag_start."-".$reference_genomic_align->dnafrag_end.")");
     return wantarray ? (undef, undef, undef) : undef;
   }
   my $excess_at_the_start = $start - $reference_genomic_align->dnafrag_start;
@@ -1734,6 +1740,11 @@ sub restrict_between_reference_positions {
           -cigar_line => $cigar_line,
           -level_id => $this_genomic_align->level_id
       );
+    if (defined($this_genomic_align->dbID)) {
+      $new_genomic_align->{original_dbID} = $this_genomic_align->dbID;
+    } elsif (defined($this_genomic_align->{original_dbID})) {
+      $new_genomic_align->{original_dbID} = $this_genomic_align->{original_dbID};
+    }
     my @gags;
     foreach my $gag (@{$this_genomic_align->genomic_align_groups}) {
       my $new_gag = Bio::EnsEMBL::Compara::GenomicAlignGroup->new
