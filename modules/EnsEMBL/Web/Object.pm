@@ -157,7 +157,9 @@ sub generate_query_url {
 
 sub new_image {
   my $self = shift;
-  my $image = EnsEMBL::Web::Document::Image->new( $self->species_defs );
+  my $species_defs = $self->species_defs;
+  my $timer = $species_defs->timer;
+  my $image = EnsEMBL::Web::Document::Image->new( $species_defs );
      $image->drawable_container = Bio::EnsEMBL::DrawableContainer->new( @_ );
      $image->set_extra( $self );
      if ($self->prefix) {
