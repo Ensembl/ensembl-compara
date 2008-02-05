@@ -57,6 +57,9 @@ sub call_child_functions {
   if (!$self->plugin_locator->results) {
     $self->plugin_locator->include;
     $self->plugin_locator->create_all;
+    foreach( @{$self->plugin_locator->warnings || []} ){
+      warn( ref($self), ": ", $_ );
+    }
   }
   $self->plugin_locator->call(@_);
 }
