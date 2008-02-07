@@ -38,7 +38,7 @@ sub align_sequence_display {
     my $mlss_adaptor = $compara_db->get_adaptor("MethodLinkSpeciesSet");
     my $method_link_species_set = $mlss_adaptor->fetch_by_dbID($selectedAlignment); 
     my $as_adaptor = $compara_db->get_adaptor("AlignSlice" );
-    my $align_slice = $as_adaptor->fetch_by_Slice_MethodLinkSpeciesSet($slice, $method_link_species_set);
+    my $align_slice = $as_adaptor->fetch_by_Slice_MethodLinkSpeciesSet($slice, $method_link_species_set, undef, "restrict");
 
     my @selected_species = grep {$_ } $object->param("ms_${selectedAlignment}");
 

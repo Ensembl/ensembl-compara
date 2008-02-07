@@ -1424,7 +1424,7 @@ sub alignsliceviewzoom {
     my $method_link_species_set = $mlss_adaptor->fetch_by_dbID($aID);
 
     my $asa = $comparadb->get_adaptor("AlignSlice" );
-    $align_slice = $asa->fetch_by_Slice_MethodLinkSpeciesSet($query_slice, $method_link_species_set, "expanded" );
+    $align_slice = $asa->fetch_by_Slice_MethodLinkSpeciesSet($query_slice, $method_link_species_set, "expanded", "restrict" );
 
     }
 
