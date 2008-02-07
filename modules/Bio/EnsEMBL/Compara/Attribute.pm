@@ -168,7 +168,7 @@ sub cdna_alignment_string {
       
       if($pep eq '-') {
         $cdna_align_string .= '--- ';
-      } elsif ($pep eq 'U' && $changeSelenos) {
+      } elsif ($pep eq 'U' && $changeSelenos or $pep eq '*') {
 	$cdna_align_string .= 'NNN ';
 	$start += 3;  
       } else {
