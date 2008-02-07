@@ -445,7 +445,7 @@ sub cytoview_config {
 
         $html = "<div style='text-align: center; padding-bottom: 4px;'>";
         if (length($saved_string) != length($string)) {
-	  $html .= "You have changed the '" . $configuration->name . "' view configuration &middot; <a href='javascript:void(0);' onclick='config_link(" . $configuration->id . ");'><b>Save changes</b></a>";
+	  $html .= "You have changed the '" . $configuration->name . "' view configuration &middot; <a href='#' onclick='config_link(" . $configuration->id . ");'><b>Save changes</b></a>";
         } else {
           $html .= "You are using the " . $configuration->name . " configuration";
 	}
@@ -534,8 +534,8 @@ sub contigviewbottom_config {
           $html = "<div style='text-align: center; padding-bottom: 4px;'>";
           if (length($saved_string) != length($string)) {
             $html .= "You have changed the '" . $configuration->name
-                  .  "' view configuration: <a href='javascript:void(0);' onclick='change_config("
-                  .  $configuration->id . ");'><strong>Save</strong></a> &middot; <a href='javascript:void(0);' onclick='add_config("
+                  .  "' view configuration: <a href='#' onclick='change_config("
+                  .  $configuration->id . ");'><strong>Save</strong></a> &middot; <a href='#' onclick='add_config("
                   .  $configuration->id . ");'><strong>Save As</strong></a>";
           } else {
             $html .= "You are using the '" . $configuration->name . "' view configuration.";

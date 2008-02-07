@@ -27,16 +27,16 @@ function dd_render_layer( i ) {
       entry = options_array[ j ];
       if( entry.type == 'checkbox' ) {
         rows +=
-        '<tr class="bg2"><td class="center"><a href="javascript:void(0)" onclick="dd_flip('+ i +','+ j +
+        '<tr class="bg2"><td class="center"><a href="#" onclick="dd_flip('+ i +','+ j +
   ');"><img id="x_'+ i +'_'+ j + '" src="'+dd_imagepath+'y-off.gif" border="0" height="'+ dd_checkheight +
-        '" width="'+ dd_checkwidth+ '" alt=""></a></td>\n<td class="nowrap ddmain"><a href="javascript:void(0)" onclick="dd_flip('+
+        '" width="'+ dd_checkwidth+ '" alt=""></a></td>\n<td class="nowrap ddmain"><a href="#" onclick="dd_flip('+
   i +','+ j +');">'+ entry.name +'</a></td></tr>\n';
       } else {
       if( entry.type == 'radio' ) {
         rows +=
-        '<tr class="bg2"><td class="center"><a href="javascript:void(0)" onclick="dd_set('+ i +','+ j +
+        '<tr class="bg2"><td class="center"><a href="#" onclick="dd_set('+ i +','+ j +
   ');"><img id="x_'+ i +'_'+ j + '" src="'+dd_imagepath+'radio-off.gif" border="0" height="'+ dd_checkheight +
-        '" width="'+ dd_checkwidth+ '" alt=""></a></td>\n<td class="nowrap ddmain"><a href="javascript:void(0)" onclick="dd_set('+
+        '" width="'+ dd_checkwidth+ '" alt=""></a></td>\n<td class="nowrap ddmain"><a href="#" onclick="dd_set('+
   i +','+ j +');">'+ entry.name +'</a></td></tr>\n';
       } else {
         rows += '<tr class="bg2"><td class="ddmain"><img src="'+ dd_imagepath +'y-b.gif" height="'+ dd_checkheight+ '" width="'+

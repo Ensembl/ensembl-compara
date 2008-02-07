@@ -29,7 +29,7 @@ sub linkage {
   ### Returns the zmenu as a contents of an HTML link. Useful for imagemaps.
   my $self = shift;
   my $link = qq(alt="Click for menu" );
-  $link .= qq(href="javascript:void(0)" );
+  $link .= qq(href="#" );
   $link .= qq(title="" );
   $link .= qq(onclick=");
   $link .= qq(zmenu\(') . $self->zmenu->title . 
@@ -43,7 +43,7 @@ sub ajax_linkage {
   ### Returns the zmenu as a contents of an HTML link. Useful for imagemaps.
   my $self = shift;
   my $link = qq(alt="Click for menu" );
-  $link .= qq(href="javascript:void(0)" );
+  $link .= qq(href="#" );
   $link .= qq(title="AJAX" );
   $link .= qq(onclick=");
   $link .= qq(menu\(') . $self->json .  

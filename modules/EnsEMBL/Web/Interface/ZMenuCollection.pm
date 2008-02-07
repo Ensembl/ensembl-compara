@@ -74,7 +74,7 @@ sub linkage {
   ### Returns javascript link used in image maps.
   my ($self, $zmenu) = @_;
   my $link = qq(alt="Click for menu" );
-  $link .= qq(href="javascript:void(0)" );
+  $link .= qq(href="#" );
   $link .= qq(title="AJAX" );
   $link .= qq(onclick=");
   $link .= qq(menu\(') . $self->json($zmenu) .

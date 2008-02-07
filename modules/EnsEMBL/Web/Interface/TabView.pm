@@ -85,7 +85,7 @@ sub render {
     if ($tab->name eq $open) {
       $class = 'tab selected';
     }
-    $html .= "<div class='$class' id='" . $tab->name . "_tab' style='width: $tab_width%;'><a href='javascript:void(0);' onClick='" . $name . "_switch_tab(\"" . $tab->name . "\");'>" . $tab->label . "</a></div>";
+    $html .= "<div class='$class' id='" . $tab->name . "_tab' style='width: $tab_width%;'><a href='#' onClick='" . $name . "_switch_tab(\"" . $tab->name . "\");'>" . $tab->label . "</a></div>";
   }
 
   $html .= "<br clear='all' />\n";

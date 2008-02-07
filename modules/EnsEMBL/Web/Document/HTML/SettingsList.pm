@@ -28,7 +28,7 @@ sub render {
   $html .= "<div id='settings_content'>\n";
   $html .= "<table width='100%' cellpadding='0' cellspacing='0'>\n";
   $html .= "<tr><td width='49%'>\n";
-  $html .= "<b><a href='/common/user/account'>Your $sitename account</a> &gt; " . $user->name . "</b> &middot; <a href='javascript:void(0);' onclick='toggle_settings_drawer()'>Hide</a>\n";
+  $html .= "<b><a href='/common/user/account'>Your $sitename account</a> &gt; " . $user->name . "</b> &middot; <a href='#' onclick='toggle_settings_drawer()'>Hide</a>\n";
   $html .= "</td>\n";
   $html .= "<td style='text-align: right;' width='49%'>";
   my @groups = @{ $user->groups };
@@ -143,9 +143,9 @@ sub list_for_records {
 
         $text = $record->name . ':';
         if ($ENV{'ENSEMBL_SCRIPT'} && ($ENV{'ENSEMBL_SCRIPT'} eq 'contigview' || $ENV{'ENSEMBL_SCRIPT'} eq 'cytoview') ) {
-          $text .=  ' <a href="javascript:void(0);" onclick="javascript:load_config(' . $record->id . ');">Load settings in this page</a> |';
+          $text .=  ' <a href="#" onclick="javascript:load_config(' . $record->id . ');">Load settings in this page</a> |';
         }
-        $text .= ' <a  href="javascript:void(0);" onclick="javascript:go_to_config(' . $record->id . ');">Go to saved page and load tracks</a>';
+        $text .= ' <a  href="#" onclick="javascript:go_to_config(' . $record->id . ');">Go to saved page and load tracks</a>';
       }
       else {
         $text = '<a href="' . $record->url . '" title="' . $description . '">' . $record->name . '</a>';

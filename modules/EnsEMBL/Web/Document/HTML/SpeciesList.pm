@@ -118,7 +118,7 @@ sub render_species_list {
     $html .= '<a href="javascript:login_link()">Log in to customize</a>';
   } else {
     $html .= "<b>Favourite genomes</b> &middot; \n";
-    $html .= '<a href="javascript:void(0);" onClick="toggle_reorder();">Change favourites</a>';
+    $html .= '<a href="#" onClick="toggle_reorder();">Change favourites</a>';
   }
   $html .= "<div id='static_favourite_species'>\n";
   $html .= "<div class='favourites-species-list'>\n";
@@ -201,7 +201,7 @@ sub render_ajax_reorder_list {
   my %species_id = reverse %id_to_species;
   my $html = "";
 
-  $html .= "For easy access to commonly used genomes, drag from the bottom list to the top one &middot; <a href='javascript:void(0);' onClick='toggle_reorder();'>Done</a><br /><br />\n";
+  $html .= "For easy access to commonly used genomes, drag from the bottom list to the top one &middot; <a href='#' onClick='toggle_reorder();'>Done</a><br /><br />\n";
 
   $html .= "<div id='favourite_species'>\n<b>Favourites</b>";
   #warn "CHECKING FOR SPECIES IN AJAX LIST";
@@ -254,7 +254,7 @@ sub render_ajax_reorder_list {
   }
 
   $html .= "</ul></div>\n";
-  $html .= "<a href='javascript:void(0);' onClick='toggle_reorder();'>Finished reordering</a> &middot; <a href='/common/user/reset_favourites'>Restore default list</a>";
+  $html .= "<a href='#' onClick='toggle_reorder();'>Finished reordering</a> &middot; <a href='/common/user/reset_favourites'>Restore default list</a>";
 #warn "HTML: $html";
 
   return $html;

@@ -156,7 +156,7 @@ sub account_intro {
                 your saved settings, update your details and join or create new 
                 $sitename groups. To learn more about how to get the most
                 from your $sitename account, read our <a href='/info/about/accounts.html'>introductory guide</a>.<br />);
-  $html .= "&larr; <a href='javascript:void(0);' onclick='account_return();'>Return to $sitename</a>";
+  $html .= "&larr; <a href='#' onclick='account_return();'>Return to $sitename</a>";
   $html .= "</div>";
   $panel->print($html);
 }
@@ -265,12 +265,12 @@ sub mixer {
   $html .= "</td>\n";
   $html .= "<td width='10%' style='text-align: right'>";
   if (!$last) {
-    $html .= "<a href='javascript:void(0);' onclick='javascript:add_mix(" . ($ident + 1) . ");'>Add</td>\n";
+    $html .= "<a href='#' onclick='javascript:add_mix(" . ($ident + 1) . ");'>Add</td>\n";
   }
   $html .= "</td>";
   $html .= "<td width='10%' style='text-align: right'>";
   if (!$first) {
-    $html .= "<a href='javascript:void(0);' onclick='javascript:remove_mix(" . $ident . ");'>Remove</td>\n";
+    $html .= "<a href='#' onclick='javascript:remove_mix(" . $ident . ");'>Remove</td>\n";
   }
   $html .= "</td>";
   $html .= "</tr>\n";
@@ -447,7 +447,7 @@ sub _render_configs {
 
   foreach my $configuration (@configurations) {
     my $description = $configuration->description || '&nbsp;';
-    my $link = "<a href='javascript:void(0);' onclick='javascript:go_to_config(" . $configuration->id . ");'>";
+    my $link = "<a href='#' onclick='javascript:go_to_config(" . $configuration->id . ");'>";
     $description = substr($configuration->description, 0, 30);
     push @records, {
       'id'        => $configuration->id, 
@@ -467,7 +467,7 @@ sub _render_configs {
   foreach my $group (@{ $user->groups }) {
     foreach my $configuration (@{ $group->configurations }) {
       my $description = $configuration->description || '&nbsp;';
-      my $link = "<a href='javascript:void(0);' onclick='javascript:got_to_config(" . $configuration->id . ");'>";
+      my $link = "<a href='#' onclick='javascript:got_to_config(" . $configuration->id . ");'>";
       push @records, {'id' => $configuration->id, 
                       'ident' => $group->id, 
                       'sortable' => $configuration->name,
@@ -1067,7 +1067,7 @@ sub _render_group_settings {
     my @records = ();
     foreach my $configuration (@configurations) {
       my $description = $configuration->description || '&nbsp;';
-      my $link = "<a href='javascript:void(0);' onclick='javascript:load_config_link(" . $configuration->id . ");'>";
+      my $link = "<a href='#' onclick='javascript:load_config_link(" . $configuration->id . ");'>";
       push @records, {  'id' => $configuration->id, 
                         'group_id' => $group->id,
                         'sortable' => $configuration->name,
@@ -1300,7 +1300,7 @@ sub info_box {
     $html = "<div class='alt boxed' id='$name'>";
     $html .= "<p><img src='/img/infoicon.gif' class='float-left' > " . $message . '</p>';
     $html .= "<div style='text-align: right; font-size: 80%;'>\n";
-    $html .= "<a href='javascript:void(0);' onclick='hide_info(\"$name\");'>Hide this message</a>";
+    $html .= "<a href='#' onclick='hide_info(\"$name\");'>Hide this message</a>";
     $html .= "</div>\n";
     $html .= "</div>\n";
   }
