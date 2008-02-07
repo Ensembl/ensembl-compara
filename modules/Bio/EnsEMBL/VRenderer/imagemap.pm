@@ -98,7 +98,7 @@ sub _getHref {
         delete $actions{'alt'};
         $actions{'onmouseover'} = &Sanger::Graphics::JSTools::js_menu($zmenu);
       }
-      $actions{'href'} ||= qq"javascript:void(0)";
+      $actions{'href'} ||= 'javascript:void(0)';
     }
   }
   return join '', map { qq( $_="$actions{$_}") } keys %actions;

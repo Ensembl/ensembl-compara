@@ -191,7 +191,7 @@ sub _getHref_static {
         delete $actions{'alt'};
         $actions{'onmouseover'} = Sanger::Graphics::JSTools::js_menu($zmenu);
       }
-      $actions{'href'} ||= q(javascript:void(0););
+      $actions{'href'} ||= 'javascript:void(0);';
     }
   }
 
