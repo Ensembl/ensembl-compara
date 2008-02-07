@@ -182,7 +182,8 @@ sub alignment_string {
 sub cdna_alignment_string {
   my $self = shift;
 
-  throw("can't connect to CORE to get transcript and cdna")
+  throw("can't connect to CORE to get transcript and cdna for "
+        . "genome_db_id:" . $self->genome_db_id )
     unless($self->transcript);
 
   unless (defined $self->{'cdna_alignment_string'}) {
