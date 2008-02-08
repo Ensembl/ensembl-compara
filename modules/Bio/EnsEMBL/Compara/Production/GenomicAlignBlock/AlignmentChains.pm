@@ -144,13 +144,13 @@ sub fetch_input {
   my $target_slice = $self->target_dnafrag->slice;
 
   print STDERR "Fetching all DnaDnaAlignFeatures by query and target...\n";
-  print STDERR "start fetching at time: ",time,"\n";
+  print STDERR "start fetching at time: ",scalar(localtime),"\n";
 
   if ($self->input_job->retry_count > 0) {
     print STDERR "Deleting alignments as it is a rerun\n";
     $self->delete_alignments($out_mlss,$self->query_dnafrag,$self->target_dnafrag);
   }
-  
+
   my $gabs = $gaba->fetch_all_by_MethodLinkSpeciesSet_DnaFrag_DnaFrag($mlss,$self->query_dnafrag,undef,undef,$self->target_dnafrag);
   my $features;
   while (my $gab = shift @{$gabs}) {
@@ -185,7 +185,7 @@ sub fetch_input {
     }
   }
   
-  print STDERR scalar @{$features}," features at time: ",time,"\n";
+  print STDERR scalar @{$features}," features at time: ",scalar(localtime),"\n";
 
   $WORKDIR = "/tmp/worker.$$";
   unless(defined($WORKDIR) and (-e $WORKDIR)) {
