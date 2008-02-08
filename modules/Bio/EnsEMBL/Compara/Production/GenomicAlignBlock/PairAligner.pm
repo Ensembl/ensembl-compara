@@ -109,6 +109,8 @@ sub get_params {
 
   $self->options($params->{'options'})              if(defined($params->{'options'}));
   $self->method_link_type($params->{'method_link'}) if(defined($params->{'method_link'}));
+  $self->max_alignments($params->{'max_alignments'}) if(defined($params->{'max_alignments'}));
+
   return;
 }
 
@@ -129,6 +131,12 @@ sub method_link_type {
   my $self = shift;
   $self->{'_method_link_type'} = shift if(@_);
   return $self->{'_method_link_type'};
+}
+
+sub max_alignments {
+  my $self = shift;
+  $self->{'_max_alignments'} = shift if(@_);
+  return $self->{'_max_alignments'};
 }
 
 sub query_DnaFragChunkSet {
@@ -203,6 +211,19 @@ sub fetch_input {
 
   $self->{'comparaDBA'}->get_MethodLinkSpeciesSetAdaptor->store($mlss);
   $self->{'method_link_species_set'} = $mlss;
+
+  if ($self->max_alignments) {
+    my $sth = $self->{'comparaDBA'}->dbc->prepare("SELECT count(*) FROM genomic_align_block".
+        " WHERE method_link_species_set_id = ".$mlss->dbID);
+    $sth->execute();
+    my ($num_alignments) = $sth->fetchrow_array();
+    $sth->finish();
+    if ($num_alignments >= $self->max_alignments) {
+      throw("Too many alignments ($num_alignments) have been stored already for MLSS ".$mlss->dbID."\n".
+          "  Try changing the parameters or increase the max_alignments option if you think\n".
+          "  your system can cope with so many alignments.");
+    }
+  }
 
   #
   # execute subclass configure_runnable method
