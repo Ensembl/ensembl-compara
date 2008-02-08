@@ -527,11 +527,43 @@ sub _parse {
         }
         last if $tree->{'general'}{'SPECIES_GROUP'};
       }
-      
-      ## Also get archive info for species
+     
+      ## Other useful species info
       $dbh = $self->db_connect( $tree, 'ENSEMBL_WEBSITE' );
+      
+      $sql = qq(SELECT s.species_id, s.vega, rs.assembly_name, rs.pre_name
+                FROM release_species rs, species s
+                WHERE s.species_id = rs.species_id
+                AND rs.release_id = $SiteDefs::ENSEMBL_VERSION 
+                AND s.name = '$filename'
+          );
+      $sth = $dbh->prepare( $sql );
+      $rst  = $sth->execute || die( $sth->errstr );
+      $results = $sth->fetchall_arrayref();
+      my $T = $results->[0];
+      $tree->{'general'}{'SPECIES_INFO'} = {
+          'id'        => $T->[0],
+          'vega'      => $T->[1],
+          'assembly'  => $T->[2],
+          'pre'       => $T->[3],
+      };
+      my $prev_rel = $SiteDefs::ENSEMBL_VERSION - 1;
+      $sql = qq(SELECT rs.assembly_name, rs.pre_name
+                FROM release_species rs, species s
+                WHERE s.species_id = rs.species_id
+                AND release_id = $prev_rel
+                AND s.name = '$filename'
+          );
+      $sth = $dbh->prepare( $sql );
+      $rst  = $sth->execute || die( $sth->errstr );
+      $results = $sth->fetchall_arrayref();
+      my $T = $results->[0];
+      $tree->{'general'}{'SPECIES_INFO'}{'prev_assembly'} = $T->[0]; 
+      $tree->{'general'}{'SPECIES_INFO'}{'prev_pre'} =      $T->[1]; 
+ 
+      ## Also get archive info for species
       $tree->{'archive'} = {};
-      my $sql = qq(SELECT r.release_id, r.assembly_name, e.archive, e.online
+      $sql = qq(SELECT r.release_id, r.assembly_name, e.archive, e.online
                     FROM release_species r, species s, ens_release e
                     WHERE r.species_id = s.species_id
                     AND r.release_id = e.release_id
