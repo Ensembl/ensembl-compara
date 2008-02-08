@@ -370,7 +370,7 @@ sub _parse {
                 }  
               }
               my @A = keys %taxon_order;
-              $tree->{'TAXON_ORDER'} = \@A;
+              $tree->{'TAXON_ORDER'} = \@A if scalar(@A) > 0;
             }
           } elsif (/(\w\S*)\s*=\s*(.*)/ && defined $current_section) { # Config entry
             my ($key,$value) = ($1,$2); ## Add a config entry under the current 'top level'

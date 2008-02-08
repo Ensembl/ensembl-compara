@@ -106,10 +106,7 @@ sub _render_species_list {
     }
   }  
 
-  #my @taxon_order = @{$species_defs->TAXON_ORDER};
-  my @taxon_order = ('Primates', 'Rodents etc.', 'Laurasiatheria', 'Afrotheria', 'Xenarthra',
-                      'Marsupials &amp; Monotremes', 'Birds', 'Reptiles &amp; Amphibians',
-                      'Fish', 'Other chordates', 'Other eukaryotes');
+  my @taxon_order = @{$species_defs->TAXON_ORDER};
 
   ## Output in taxonomic groups, ordered by common name
   foreach $group (@taxon_order) {
