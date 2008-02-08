@@ -63,6 +63,7 @@ sub configure_defaults {
   
   $self->options('T=2 H=2200');
   $self->method_link_type('BLASTZ_RAW');
+  $self->max_alignments('5000000');
   
   return 0;
 }
