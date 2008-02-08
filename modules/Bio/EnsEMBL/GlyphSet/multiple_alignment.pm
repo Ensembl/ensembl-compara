@@ -196,7 +196,6 @@ sub features {
 
 ## Get the GenomicAlignBlocks
     my $gab_adaptor = $db->get_adaptor("GenomicAlignBlock");
-warn ",,,,,,,", $mlss;
     $genomic_align_blocks = $gab_adaptor->fetch_all_by_MethodLinkSpeciesSet_Slice($mlss, $slice);
   } else {
     return [];
