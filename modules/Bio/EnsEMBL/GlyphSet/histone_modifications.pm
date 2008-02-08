@@ -45,7 +45,11 @@ sub draw_features {
 
     # render wiggle if wiggle
     if ($wiggle) {
-      foreach my $result_set  (  @{ $feature->get_displayable_ResultSets() } ){   
+      foreach my $result_set  (  @{ $feature->get_displayable_supporting_sets() } ){
+		
+		next if $result_set->set_type ne 'result';
+
+
 	#get features for slice and experimtenal chip set
 	my @features = @{ $result_set->get_displayable_ResultFeatures_by_Slice($slice) };
 	next unless @features;
