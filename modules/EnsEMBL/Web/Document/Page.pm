@@ -58,6 +58,8 @@ sub call_child_functions {
     $self->plugin_locator->include;
     $self->plugin_locator->create_all;
     foreach( @{$self->plugin_locator->warnings || []} ){
+      next if $_ =~ /^Can't locate/; 
+      warn( "Error in call_child_functions()" );
       warn( ref($self), ": ", $_ );
     }
   }
