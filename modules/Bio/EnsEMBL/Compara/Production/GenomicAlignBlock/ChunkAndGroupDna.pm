@@ -86,7 +86,7 @@ sub fetch_input {
   $self->{'genome_db_id'}             = 0;  # 'gdb'
   $self->{'store_seq'}                = 0;
   $self->{'overlap'}                  = 0;
-  $self->{'chunk_size'}               = 1000000;
+  $self->{'chunk_size'}               = undef;
   $self->{'region'}                   = undef;
   $self->{'masking_analysis_data_id'} = 0;
   $self->{'masking_options'}          = undef;
@@ -328,21 +328,30 @@ sub create_dnafrag_chunks {
     $i = $seq_region_start;
   }
 
+  #If chunk_size is not set then set it to be the fragment length 
+  #overlap must be 0 in this case.
+  my $chunk_size = $self->{'chunk_size'};
+  my $overlap = $self->{'overlap'};
+  if (!defined $chunk_size) {
+      $chunk_size = $length;
+      $overlap = 0;
+  }
+
   #print "dnafrag : ", $dnafrag->display_id, "n";
   #print "  sequence length : ",$length,"\n";
 
   my $lasttime = time();
 
   #all seq in inclusive coordinates so need to +1
-  for ( ; $i <= $length; $i += $self->{'chunk_size'}-$self->{'overlap'}) {
+  for ( ; $i <= $length; $i += $chunk_size - $overlap) {
 
     my $chunk = new Bio::EnsEMBL::Compara::Production::DnaFragChunk();
     $chunk->dnafrag($dnafrag);
     $chunk->seq_start($i);
-    if (defined $seq_region_end && $i + $self->{'chunk_size'} - 1 > $seq_region_end) {
+    if (defined $seq_region_end && $i + $chunk_size - 1 > $seq_region_end) {
       $chunk->seq_end($seq_region_end);
     } else {
-      $chunk->seq_end($i + $self->{'chunk_size'} - 1);
+      $chunk->seq_end($i + $chunk_size - 1);
     }
     $chunk->masking_analysis_data_id($self->{'masking_analysis_data_id'});
     if($self->{'masking_options'}) {
