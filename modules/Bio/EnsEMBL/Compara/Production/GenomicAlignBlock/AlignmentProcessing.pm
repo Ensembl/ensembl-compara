@@ -67,6 +67,9 @@ sub get_params {
   if (defined($params->{'max_gap'})) {
     $self->MAX_GAP($params->{'max_gap'});
   }
+  if (defined($params->{'min_chain_score'})) {
+    $self->MIN_CHAIN_SCORE($params->{'min_chain_score'});
+  }
 }
 
 sub fetch_input {
@@ -116,13 +119,13 @@ sub write_output {
   my($self) = @_;
 
   my $compara_dba = $self->compara_dba;
-
   my @gen_al_groups;
   foreach my $chain (@{$self->output}) {
       my $group_id;
 
       #store first block
       my $first_block = shift @$chain;
+
       $compara_dba->get_GenomicAlignBlockAdaptor->store($first_block);
     
       #Set the group_id if one doesn't already exist ie for chains, to be the
@@ -135,7 +138,9 @@ sub write_output {
 
       #store the rest of the genomic_align_blocks
       foreach my $block (@$chain) {
-	  $block->group_id($group_id);
+	  if (defined $group_id) {
+	      $block->group_id($group_id);
+	  }
 	  $compara_dba->get_GenomicAlignBlockAdaptor->store($block);
      }
   }
