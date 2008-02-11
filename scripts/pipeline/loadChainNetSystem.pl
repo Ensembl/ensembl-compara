@@ -27,6 +27,7 @@ my %compara_conf;
 $compara_conf{'-port'} = 3306;
 my %chain_conf;
 my %net_conf;
+my %healthcheck_conf;
 
 # ok this is a hack, but I'm going to pretend I've got an object here
 # by creating a blessed hash ref and passing it around like an object
@@ -68,6 +69,16 @@ foreach my $dnaCollectionConf (@{$self->{'dna_collection_conf_list'}}) {
   print("creating ChunkAndGroup jobs\n");
 #  $self->storeMaskingOptions($dnaCollectionConf);
   $self->createChunkAndGroupDnaJobs($dnaCollectionConf);
+}
+ 
+#allow 'query_collection_name' or 'reference_collection_name'
+if ($chain_conf{'reference_collection_name'} && !$chain_conf{'query_collection_name'}) {
+    $chain_conf{'query_collection_name'} = $chain_conf{'reference_collection_name'};
+}
+
+ #allow 'target_collection_name' or 'non_reference_collection_name'
+if ($chain_conf{'non_reference_collection_name'} && !$chain_conf{'target_collection_name'}) {
+    $chain_conf{'target_collection_name'} = $chain_conf{'non_reference_collection_name'};
 }
 
 $self->create_dump_nib_job($chain_conf{'query_collection_name'});
@@ -128,6 +139,9 @@ sub parse_conf {
         push @{$self->{'net_conf_list'}} , $confPtr;
 #        %net_conf = %{$confPtr};
       }
+      elsif($type eq 'HEALTHCHECKS') {
+        %healthcheck_conf = %{$confPtr};
+      }
 
     }
   }
@@ -171,8 +185,8 @@ sub prepareChainSystem
   my $dumpLargeNibForChainsAnalysis = Bio::EnsEMBL::Analysis->new(
       -db_version      => '1',
       -logic_name      => 'DumpLargeNibForChains',
-      -module          => 'Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::DumpLargeNibForChains',
-      -parameters      => ""
+      -module          => 'Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::DumpDnaCollection',
+      -parameters      => "{'dump_nib'=>1}"
     );
   $self->{'hiveDBA'}->get_AnalysisAdaptor()->store($dumpLargeNibForChainsAnalysis);
   $stats = $dumpLargeNibForChainsAnalysis->stats;
@@ -251,6 +265,12 @@ sub prepareChainSystem
 
   $ctrlRuleDBA->create_rule($alignmentChainsAnalysis, $self->{'updateMaxAlignmentLengthAfterChainAnalysis'});
   $dataflowRuleDBA->create_rule($createAlignmentChainsJobsAnalysis,$self->{'updateMaxAlignmentLengthAfterChainAnalysis'}, 2);
+
+  #Create healthcheck jobs if I don't have any net jobs
+  if (!defined $self->{'net_conf_list'}) {
+      $self->create_pairwise_healthcheck_analysis($output_method_link_type);
+  }
+
 }
 
 sub prepareNetSystem {
@@ -263,6 +283,15 @@ sub prepareNetSystem {
   my $ctrlRuleDBA = $self->{'hiveDBA'}->get_AnalysisCtrlRuleAdaptor;
   my $stats;
 
+  #allow 'query_collection_name' or 'reference_collection_name'
+  if ($netConf->{'reference_collection_name'} && !$netConf->{'query_collection_name'}) {
+      $netConf->{'query_collection_name'} = $netConf->{'reference_collection_name'};
+  }
+  
+  #allow 'target_collection_name' or 'non_reference_collection_name'
+  if ($netConf->{'non_reference_collection_name'} && !$netConf->{'target_collection_name'}) {
+      $netConf->{'target_collection_name'} = $netConf->{'non_reference_collection_name'};
+  }
 
   #
   # createAlignmentNetsJobs Analysis
@@ -337,10 +366,153 @@ sub prepareNetSystem {
     $stats->update();
     $self->{'updateMaxAlignmentLengthAfterNetAnalysis'} = $updateMaxAlignmentLengthAfterNetAnalysis;
 
-  }
+}
   $ctrlRuleDBA->create_rule($alignmentNetsAnalysis,$self->{'updateMaxAlignmentLengthAfterNetAnalysis'});
   $dataflowRuleDBA->create_rule($createAlignmentNetsJobsAnalysis,$self->{'updateMaxAlignmentLengthAfterNetAnalysis'}, 2);
+
+  #
+  #creating FilterStack analysis
+  #
+  if (defined $netConf->{'filter_stack'} && ($netConf->{'filter_stack'} == 1)) {
+      my $query_collection_name = $netConf->{'query_collection_name'};
+      my $target_collection_name = $netConf->{'target_collection_name'};
+      my $gdb_id1 = $self->{'chunkCollectionHash'}->{$query_collection_name}->{'genome_db_id'};
+      my $gdb_id2 = $self->{'chunkCollectionHash'}->{$target_collection_name}->{'genome_db_id'};
+      my $height = $netConf->{'height'};
+      my $parameters = "{\'method_link\'=>\'$output_method_link_type\',\'query_genome_db_id\'=>\'$gdb_id1\',\'target_genome_db_id\'=>\'$gdb_id2\',\'height\'=>\'$height\'}";
+      my $filterStackAnalysis = Bio::EnsEMBL::Analysis->new
+	(-db_version      => '1',
+	 -logic_name      => 'FilterStack',
+	 -module          => 'Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::FilterStack',
+	 -parameters      => $parameters);
+      
+      $self->{'hiveDBA'}->get_AnalysisAdaptor()->store($filterStackAnalysis);
+      $stats = $filterStackAnalysis->stats;
+      $stats->hive_capacity(1);
+      $stats->update();
+      $self->{'filterStackAnalysis'} = $filterStackAnalysis; 
+
+      $self->createFilterStackJob($target_collection_name);
+
+      $ctrlRuleDBA->create_rule($self->{'updateMaxAlignmentLengthAfterNetAnalysis'}, $filterStackAnalysis);
+
+      #
+      # creating UpdateMaxAlignmentLengthAfterStack analysis
+      #
+      $parameters = "{\'method_link\'=>\'$output_method_link_type\'}";
+      my $updateMaxAlignmentLengthAfterStackAnalysis = Bio::EnsEMBL::Analysis->new
+	(-db_version      => '1',
+	 -logic_name      => 'UpdateMaxAlignmentLengthAfterStack',
+	 -module          => 'Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::UpdateMaxAlignmentLength',
+	 -parameters      => $parameters);
+      
+      $self->{'hiveDBA'}->get_AnalysisAdaptor()->store($updateMaxAlignmentLengthAfterStackAnalysis);
+      $stats = $updateMaxAlignmentLengthAfterStackAnalysis->stats;
+      $stats->hive_capacity(1);
+      $stats->update();
+      $self->{'updateMaxAlignmentLengthAfterStackAnalysis'} = $updateMaxAlignmentLengthAfterStackAnalysis;
+      
+      $ctrlRuleDBA->create_rule($self->{'filterStackAnalysis'}, $updateMaxAlignmentLengthAfterStackAnalysis);
+      $self->createUpdateMaxAlignmentLengthAfterStackJob($gdb_id1, $gdb_id2); 
+  }
+
+  #Create healthcheck jobs
+  $self->create_pairwise_healthcheck_analysis($output_method_link_type);
 }
+
+ sub create_pairwise_healthcheck_analysis {
+     my ($self, $output_method_link_type) = @_;
+
+     my $ctrlRuleDBA = $self->{'hiveDBA'}->get_AnalysisCtrlRuleAdaptor;
+
+     my $pairwise_healthcheck_analysis = Bio::EnsEMBL::Analysis->new(
+       -logic_name      => 'PairwiseHealthCheck',
+       -module          => 'Bio::EnsEMBL::Compara::RunnableDB::HealthCheck',
+     );
+
+     $self->{'hiveDBA'}->get_AnalysisAdaptor()->store($pairwise_healthcheck_analysis);
+      my $stats = $pairwise_healthcheck_analysis->stats;
+      $stats->batch_size(1);
+      $stats->hive_capacity(1);
+      $stats->status('BLOCKED');
+      $stats->update();
+
+     #Create healthcheck analysis_jobs
+
+     #pairwise_gabs healthcheck
+     my $input_id = "test=>'pairwise_gabs',";
+
+     #Use parameters defined in config file if they exist or create default
+     #ones based on the genome_db_ids in the DNA_COLLECTION and the
+     #$output_method_link_type variable
+     if (defined $healthcheck_conf{'pairwise_gabs'}) {
+	 $input_id .= $healthcheck_conf{'pairwise_gabs'};
+     } else {
+	 my $params = "";
+	 $params .= "method_link_type=>\'$output_method_link_type\',";
+	 $params .= "genome_db_ids=>'[";
+
+	 $params .= join ",", map $_->{'genome_db_id'}, @{$self->{'dna_collection_conf_list'}};
+
+	 $params .= "]'";
+	 $input_id .= "params=>{$params}";
+     }
+     $input_id = "{$input_id}";
+     
+     Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob(
+ 	   -input_id       => $input_id,
+ 	   -analysis       => $pairwise_healthcheck_analysis
+           );
+
+     #compare_to_previous_db healthcheck
+     $input_id = "test=>'compare_to_previous_db',";
+
+     #Use parameters defined in config file if they exist or create default
+     #ones based on the genome_db_ids in the DNA_COLLECTION, the
+     #$output_method_link_type variable and the ens-livemirror database
+     if (defined $healthcheck_conf{'compare_to_previous_db'}) {
+	 $input_id .= $healthcheck_conf{'compare_to_previous_db'};
+     } else {
+	 my $params = "";
+
+	 #If have specifically defined previous_db_url in config file.
+	 if (defined $healthcheck_conf{'previous_db_url'}) {
+	     $params .= "previous_db_url=>\'" . $healthcheck_conf{'previous_db_url'} . "\',";
+	 } else {
+	     #Use default previous_db_url
+	     $params .= "previous_db_url=>\'mysql://ensro\@ens-livemirror\',";
+	     #$params .= "previous_db_url=>\'mysql://anonymous\@ensembldb.ensembl.org\',";
+	 }
+	 $params .= "method_link_type=>\'$output_method_link_type\',";
+	 
+	 $params .= "current_genome_db_ids=>'[";
+	 $params .= join ",", map $_->{'genome_db_id'}, @{$self->{'dna_collection_conf_list'}};
+	 $params .= "]'";
+	 $input_id .= "params=>{$params}";
+     }
+     $input_id = "{$input_id}";
+     
+     Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob(
+ 	   -input_id       => $input_id,
+ 	   -analysis       => $pairwise_healthcheck_analysis
+     );
+
+
+     #Create control flow rule to run after last analysis. Need to hard code
+     #these for now since we don't have a "do last" analysis control rule.
+
+     #After FilterStack (tblat)
+     if (defined $self->{'updateMaxAlignmentLengthAfterStackAnalysis'}) {
+	 $ctrlRuleDBA->create_rule($self->{'updateMaxAlignmentLengthAfterStackAnalysis'}, $pairwise_healthcheck_analysis);
+     } elsif (defined $self->{'updateMaxAlignmentLengthAfterNetAnalysis'}) {
+	 #After Netting (pairwise blastz)
+	 $ctrlRuleDBA->create_rule($self->{'updateMaxAlignmentLengthAfterNetAnalysis'}, $pairwise_healthcheck_analysis);
+	 
+     } else {
+	 #After Chaining (self-self blastz)
+	 $ctrlRuleDBA->create_rule($self->{'updateMaxAlignmentLengthAfterChainAnalysis'}, $pairwise_healthcheck_analysis);
+     }
+ }
 
 sub storeMaskingOptions
 {
@@ -464,6 +636,31 @@ sub prepCreateAlignmentNetsJobs {
   Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob (
         -input_id       => $input_id,
         -analysis       => $self->{'createAlignmentNetsJobsAnalysis'},
+        -input_job_id   => 0
+        );
+}
+
+sub createFilterStackJob {
+    my $self = shift;
+    my $collection_name = shift;
+
+    my $input_id = "{\'collection_name\'=>\'$collection_name\'}";
+    Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob (
+        -input_id       => $input_id,
+        -analysis       => $self->{'filterStackAnalysis'},
+        -input_job_id   => 0
+        );
+}
+
+sub createUpdateMaxAlignmentLengthAfterStackJob {
+    my $self = shift;
+    my $query_genome_db_id = shift;
+    my $target_genome_db_id = shift;
+
+    my $input_id = "{\'query_genome_db_id\' => \'" . $query_genome_db_id . "\',\'target_genome_db_id\' => \'" . $target_genome_db_id . "\'}";
+    Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob (
+        -input_id       => $input_id,
+        -analysis       => $self->{'updateMaxAlignmentLengthAfterStackAnalysis'},
         -input_job_id   => 0
         );
 }
