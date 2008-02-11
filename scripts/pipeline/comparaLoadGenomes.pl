@@ -192,7 +192,7 @@ sub submitGenome
 
   my ($cs) = @{$genomeDBA->get_CoordSystemAdaptor->fetch_all()};
   my $assembly = $cs->version;
-  my $genebuild = $meta->get_genebuild;
+  my $genebuild = ($meta->get_genebuild or "");
 
   if($species->{taxon_id} && ($taxon_id ne $species->{taxon_id})) {
     throw("$genome_name taxon_id=$taxon_id not as expected ". $species->{taxon_id});
