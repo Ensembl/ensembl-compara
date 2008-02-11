@@ -110,7 +110,7 @@ sub get_params {
   $self->options($params->{'options'})              if(defined($params->{'options'}));
   $self->method_link_type($params->{'method_link'}) if(defined($params->{'method_link'}));
   $self->max_alignments($params->{'max_alignments'}) if(defined($params->{'max_alignments'}));
-
+  $self->dump_loc($params->{'dump_loc'}) if(defined($params->{'dump_loc'}));
   return;
 }
 
@@ -125,6 +125,12 @@ sub options {
   my $self = shift;
   $self->{'_options'} = shift if(@_);
   return $self->{'_options'};
+}
+
+sub dump_loc {
+  my $self = shift;
+  $self->{'_dump_loc'} = shift if(@_);
+  return $self->{'_dump_loc'};
 }
 
 sub method_link_type {
