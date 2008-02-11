@@ -88,16 +88,13 @@ sub fetch_input {
   $self->{'overlap'}                  = undef;
   $self->{'chunk_size'}               = undef;
   $self->{'method_link_species_set_id'} = undef;
-  $self->{'options'} = undef;
   $self->debug(0);
 
   $self->get_params($self->parameters);
   $self->get_params($self->input_id);
 
   throw("No dnafrag_id specified") unless defined($self->{'dnafrag_id'});
-  if ($self->{'options'} eq "in_chunk_overlaps" && ! defined $self->{'overlap'} && ! defined $self->{'chunk_size'}) {
-    throw("If options is \'in_chunk_overlaps\', then overlap and chunk_size must be defined, and one of these is not\n");
-  }
+  throw("Window size (".$self->{'window_size'}.")must be > 0") if (!$self->{'window_size'} or $self->{'window_size'} <= 0);
   $self->print_params;
 
   #create a Compara::DBAdaptor which shares the same DBI handle
@@ -155,8 +152,8 @@ sub get_params {
     if(defined($params->{'chunk_size'}));
   $self->{'overlap'} = $params->{'overlap'}
     if(defined($params->{'overlap'}));
-  $self->{'options'} = $params->{'options'}
-    if(defined($params->{'options'}));
+  $self->{'window_size'} = $params->{'window_size'}
+    if(defined($params->{'window_size'}));
 
   # from job input_id
   $self->{'dnafrag_id'} = $params->{'dnafrag_id'}
@@ -184,7 +181,6 @@ sub filter_duplicates {
 
   my $overlap = $self->{'overlap'};
   my $chunk_size = $self->{'chunk_size'};
-  my $options = $self->{'options'};
   my $window_size = $self->{'window_size'};
   $self->{'overlap_count'}   = 0;
   $self->{'identical_count'} = 0;
@@ -212,45 +208,12 @@ sub filter_duplicates {
     my $seq_region_end = $self->{'seq_region_end'};
     $seq_region_end = $dnafrag->length unless (defined $seq_region_end);
 
-    if ($options eq "in_chunk_overlaps") {
-      $region_start += $chunk_size - $overlap;
-    }
+    #find identical matches over all the dnafrag
+    $self->find_identical_matches($region_start, $seq_region_end, $window_size, $mlss, $dnafrag);
 
-    while($region_start <= $seq_region_end) {
-      my $region_end;
-      if ($options eq "in_chunk_overlaps") {
-        $region_end = $region_start + $overlap - 1;
-      } else { #$options eq "all"
-        $region_end = $region_start + $window_size;
-      }
-
-      my $genomic_align_block_list = $GAB_DBA->fetch_all_by_MethodLinkSpeciesSet_DnaFrag
-        ($mlss, $dnafrag, $region_start, $region_end);
-
-      printf("dnafrag %s %s %d:%d has %d GABs\n", $dnafrag->coord_system_name, $dnafrag->name, 
-             $region_start, $region_end, scalar(@$genomic_align_block_list));
-
-      if ($self->debug) {
-        foreach my $gab (@{$genomic_align_block_list}) {
-          $self->assign_jobID_to_genomic_align_block($gab);
-        }
-      }
-
-      # first sort the list for processing
-      my @sorted_GABs = sort sort_alignments @$genomic_align_block_list;
-      $self->{'gab_count'} += scalar(@sorted_GABs);
-
-      # remove all the equal duplicates from the list
-      $self->removed_equals_from_genomic_align_block_list(\@sorted_GABs);
-
-      # now process remaining list (still sorted) for overlaps
-      $self->remove_edge_artifacts_from_genomic_align_block_list(\@sorted_GABs, $region_start, $region_end);
-
-      if ($options eq "in_chunk_overlaps") {
-        $region_start += $chunk_size - $overlap;
-      } else { #$options eq "all"
-        $region_start = $region_end;
-      }
+    #find edge artefacts only in the overlap regions
+    if (defined $overlap && $overlap > 0) {
+	$self->find_edge_artefacts($region_start, $seq_region_end, $overlap, $chunk_size, $mlss, $dnafrag);
     }
   }
 
@@ -285,6 +248,72 @@ sub filter_duplicates {
   printf("%d not TRUNCATE gabs\n", $self->{'not_truncate_count'});
 }
 
+#Remove identical matches over all the dnafrag to remove matches either from 
+#overlaps or because a job has been run more than once
+sub find_identical_matches {
+    my ($self, $region_start, $seq_region_end, $window_size, $mlss, $dnafrag) = @_;
+
+    my $GAB_DBA = $self->{'comparaDBA'}->get_GenomicAlignBlockAdaptor;
+
+    while($region_start <= $seq_region_end) {
+	my  $region_end = $region_start + $window_size;
+
+	my $genomic_align_block_list = $GAB_DBA->fetch_all_by_MethodLinkSpeciesSet_DnaFrag
+	  ($mlss, $dnafrag, $region_start, $region_end);
+	
+	printf STDERR "IDENTICAL MATCHES: dnafrag %s %s %d:%d has %d GABs\n", $dnafrag->coord_system_name, $dnafrag->name, 
+	      $region_start, $region_end, scalar(@$genomic_align_block_list);
+	
+	if ($self->debug) {
+	    foreach my $gab (@{$genomic_align_block_list}) {
+		$self->assign_jobID_to_genomic_align_block($gab);
+	    }
+	}
+	
+	# first sort the list for processing
+	my @sorted_GABs = sort sort_alignments @$genomic_align_block_list;
+	$self->{'gab_count'} += scalar(@sorted_GABs);
+	
+	# remove all the equal duplicates from the list
+	$self->removed_equals_from_genomic_align_block_list(\@sorted_GABs);
+	
+        $region_start = $region_end;
+    }
+}
+
+#Remove matches spanning the overlap using "in_chunk_overlap" mode which 
+#checks just the region of the overlap and not the whole dnafrag
+sub find_edge_artefacts {
+    my ($self, $region_start, $seq_region_end, $overlap, $chunk_size, $mlss, $dnafrag) = @_;
+
+    my $GAB_DBA = $self->{'comparaDBA'}->get_GenomicAlignBlockAdaptor;
+
+    $region_start += $chunk_size - $overlap;
+    while($region_start <= $seq_region_end) {
+       my $region_end = $region_start + $overlap - 1;
+
+       my $genomic_align_block_list = $GAB_DBA->fetch_all_by_MethodLinkSpeciesSet_DnaFrag
+        ($mlss, $dnafrag, $region_start, $region_end);
+       
+       printf STDERR "EDGE ARTEFACTS: dnafrag %s %s %d:%d has %d GABs\n", $dnafrag->coord_system_name, $dnafrag->name, $region_start, $region_end, scalar(@$genomic_align_block_list);
+       
+       if ($self->debug) {
+	   foreach my $gab (@{$genomic_align_block_list}) {
+	       $self->assign_jobID_to_genomic_align_block($gab);
+	   }
+       }
+
+       # first sort the list for processing
+       my @sorted_GABs = sort sort_alignments @$genomic_align_block_list;
+       $self->{'gab_count'} += scalar(@sorted_GABs);
+
+       # now process remaining list (still sorted) for overlaps
+       $self->remove_edge_artifacts_from_genomic_align_block_list(\@sorted_GABs, $region_start, $region_end);
+       
+        $region_start += $chunk_size - $overlap;
+    }
+
+}
 
 sub sort_alignments{
   # $a,$b are GenomicAlignBlock objects
@@ -354,10 +383,12 @@ sub removed_equals_from_genomic_align_block_list {
     for(my $index2=$index+1; $index2<(scalar(@$genomic_align_block_list)); $index2++) {
       my $gab2 = $genomic_align_block_list->[$index2];
       last if($gab2->reference_genomic_align->dnafrag_start > 
-              $gab1->reference_genomic_align->dnafrag_end);
+              $gab1->reference_genomic_align->dnafrag_start);
+
       next if($self->{'delete_hash'}->{$gab2->dbID}); #already deleted so skip it
-    
+
       if(genomic_align_blocks_identical($gab1, $gab2)) {
+
         if ($self->debug) {
           if($gab1->{'analysis_job_id'} == $gab2->{'analysis_job_id'}) {
             printf("WARNING!!!!!! identical GABs dbID:%d,%d  SAME JOB:%d,%d\n", 
@@ -413,7 +444,7 @@ sub remove_edge_artifacts_from_genomic_align_block_list {
       last if($gab2->reference_genomic_align->dnafrag_start > 
               $gab1->reference_genomic_align->dnafrag_end);
       next if($self->{'delete_hash'}->{$gab2->dbID}); #already deleted so skip it
-    
+
       if(genomic_align_blocks_overlap($gab1, $gab2)) {
         $self->{'overlap_count'}++;
 
@@ -455,7 +486,7 @@ sub genomic_align_blocks_identical {
   
   my ($gab1_1, $gab1_2) = sort {$a->dnafrag_id <=> $b->dnafrag_id} @{$gab1->genomic_align_array};
   my ($gab2_1, $gab2_2) = sort {$a->dnafrag_id <=> $b->dnafrag_id} @{$gab2->genomic_align_array};
-  
+
   return 0 if(($gab1_1->dnafrag_id != $gab2_1->dnafrag_id) or ($gab1_2->dnafrag_id != $gab2_2->dnafrag_id));
   return 0 if(($gab1_1->dnafrag_strand != $gab2_1->dnafrag_strand) or ($gab1_2->dnafrag_strand != $gab2_2->dnafrag_strand));
 
