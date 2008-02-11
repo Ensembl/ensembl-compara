@@ -22,6 +22,7 @@ my %member_loading_params;
 my %synteny_map_builder_params;
 my $multiple_aligner_params;
 my %conservation_score_params;
+my %healthcheck_conf;
 
 my %compara_conf = ();
 #$compara_conf{'-user'} = 'ensadmin';
@@ -133,6 +134,9 @@ sub parse_conf {
         die "You cannot have more than one CONSERVATION_SCORE block in your configuration file"
             if (%conservation_score_params);
         %conservation_score_params = %{$confPtr};
+      }
+      elsif($type eq 'HEALTHCHECKS') {
+	  %healthcheck_conf = %{$confPtr};
       }
     }
   }
@@ -533,7 +537,7 @@ sub create_conservation_score_analysis {
   my ($self, %conservation_score_params) = @_;
 
   return undef if (!%conservation_score_params);
-
+  
   my ($logic_name, $module) = set_logic_name_and_module(
       \%conservation_score_params, "Gerp");
 
@@ -606,15 +610,22 @@ sub create_conservation_score_analysis {
   if (defined $conservation_score_params{'tree_file'}) {
     $parameters .= "tree_file=>\'" . $conservation_score_params{'tree_file'} ."\',";
   }
-  
+
   $parameters .= "constrained_element_method_link_type=>\'" . $method_link_type_ce ."\',";
 
   $parameters = "{$parameters}";
 
+  #default program_version
+  my $program_version = 1;
+  if (defined $conservation_score_params{'program_version'}) {
+    $program_version = $conservation_score_params{'program_version'};
+  }
+  
   my $conservation_score_analysis = Bio::EnsEMBL::Analysis->new(
       -logic_name      => $logic_name,
       -module          => $module,
-      -parameters      => $parameters
+      -parameters      => $parameters,
+      -program_version => $program_version
     );
 
   $self->{'comparaDBA'}->get_AnalysisAdaptor()->store($conservation_score_analysis);
@@ -624,8 +635,89 @@ sub create_conservation_score_analysis {
   $stats->status('BLOCKED');
   $stats->update();
 
+  foreach my $this_multiple_aligner_params (@$multiple_aligner_params) {
+      $self->create_conservation_score_healthcheck_analysis($conservation_score_analysis, \%conservation_score_params, $this_multiple_aligner_params);
+  }
+
   return $conservation_score_analysis;
 }
+
+sub create_conservation_score_healthcheck_analysis {
+     my ($self, $conservation_score_analysis, $conservation_score_params, $multiple_aligner_params) = @_;
+
+     my $ctrlRuleDBA = $self->{'hiveDBA'}->get_AnalysisCtrlRuleAdaptor;
+
+     my $conservation_score_healthcheck_analysis = Bio::EnsEMBL::Analysis->new(
+      -logic_name      => 'ConservationScoreHealthCheck',
+      -module          => 'Bio::EnsEMBL::Compara::RunnableDB::HealthCheck',
+    );
+     
+     $self->{'comparaDBA'}->get_AnalysisAdaptor()->store($conservation_score_healthcheck_analysis);
+     my $stats = $self->{'analysisStatsDBA'}->fetch_by_analysis_id($conservation_score_healthcheck_analysis->dbID);
+     $stats->batch_size(1);
+     $stats->hive_capacity(1);
+     $stats->status('BLOCKED');
+     $stats->update();
+
+     #Create healthcheck analysis_jobs
+
+     #conservation_jobs healthcheck
+     my $input_id = "test=>'conservation_jobs',";
+     #Use parameters defined in config file if they exist or create default
+     #ones based on the method_link_type defined in the MULTIPLE_ALIGNER params
+     #and the logic_name defined in the CONSERVATION_SCORE params
+     if (defined $healthcheck_conf{'conservation_jobs'}) {
+	  $input_id .= $healthcheck_conf{'conservation_jobs'};
+     } else {
+	 my $params = "";
+	 if (defined $conservation_score_params->{'logic_name'}) {
+	     $params .= "logic_name=>\'" . $conservation_score_params->{'logic_name'} ."\',";
+	 }
+	 
+	 if ($multiple_aligner_params->{'method_link'}) {
+	     my ($method_link_id, $method_link_type) = @{$multiple_aligner_params->{'method_link'}};
+	     $params .= "method_link_type=>\'$method_link_type\',";
+	 }
+	 
+	 if ($params ne "") {
+	     $input_id .= "params=>{$params}";
+	 }
+     }
+     $input_id = "{$input_id}";
+     
+     Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob(
+	   -input_id       => $input_id,
+	   -analysis       => $conservation_score_healthcheck_analysis
+          );
+ 
+     #conservation_scores healthcheck
+     $input_id = "test=>'conservation_scores',";
+     
+     #Use parameters defined in config file if they exist or create default
+     #ones based on the gerp_mlss_id 
+     if (defined $healthcheck_conf{'conservation_scores'}) {
+	 $input_id .= $healthcheck_conf{'conservation_scores'};
+     } else {
+	 my $params = "";
+	 if (defined $multiple_aligner_params->{'gerp_mlss_id'}) {
+	     $params .= "method_link_species_set_id=>" . $multiple_aligner_params->{'gerp_mlss_id'};
+	 }
+	 if ($params ne "") {
+	     $input_id .= "params=>{$params}";
+	 }
+     }
+
+     $input_id = "{$input_id}";
+
+     Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob(
+	   -input_id       => $input_id,
+	   -analysis       => $conservation_score_healthcheck_analysis
+          );
+
+
+     $ctrlRuleDBA->create_rule($conservation_score_analysis, $conservation_score_healthcheck_analysis); 
+}
+
 
 #####################################################################
 ##
