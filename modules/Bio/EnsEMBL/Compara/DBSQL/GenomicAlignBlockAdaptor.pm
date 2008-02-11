@@ -292,7 +292,8 @@ sub fetch_by_dbID {
               method_link_species_set_id,
               score,
               perc_id,
-              length
+              length,
+              group_id
           FROM
               genomic_align_block
           WHERE
@@ -303,7 +304,7 @@ sub fetch_by_dbID {
   $sth->execute($dbID);
   my $array_ref = $sth->fetchrow_arrayref();
   if ($array_ref) {
-    my ($method_link_species_set_id, $score, $perc_id, $length) = @$array_ref;
+    my ($method_link_species_set_id, $score, $perc_id, $length, $group_id) = @$array_ref;
   
     ## Create the object
     # Lazy loading of genomic_align objects. They are fetched only when needed.
@@ -312,8 +313,9 @@ sub fetch_by_dbID {
                           -dbID => $dbID,
                           -method_link_species_set_id => $method_link_species_set_id,
                           -score => $score,
-                          -perc_id => $perc_id,
-                          -length => $length
+			  -perc_id => $perc_id,
+			  -length => $length,
+                          -group_id => $group_id
                   );
     if (!$self->lazy_loading) {
       $genomic_align_block = $self->retrieve_all_direct_attributes($genomic_align_block);
@@ -359,7 +361,8 @@ sub fetch_all_by_MethodLinkSpeciesSet {
               gab.genomic_align_block_id,
               gab.score,
               gab.perc_id,
-              gab.length
+              gab.length,
+              gab.group_id
           FROM
               genomic_align_block gab
           WHERE 
@@ -373,8 +376,8 @@ sub fetch_all_by_MethodLinkSpeciesSet {
 
   my $sth = $self->prepare($sql);
   $sth->execute();
-  my ($genomic_align_block_id, $score, $perc_id, $length);
-  $sth->bind_columns(\$genomic_align_block_id, \$score, \$perc_id, \$length);
+  my ($genomic_align_block_id, $score, $perc_id, $length, $group_id);
+  $sth->bind_columns(\$genomic_align_block_id, \$score, \$perc_id, \$length, \$group_id);
   
   while ($sth->fetch) {
     my $this_genomic_align_block = new Bio::EnsEMBL::Compara::GenomicAlignBlock(
@@ -383,7 +386,8 @@ sub fetch_all_by_MethodLinkSpeciesSet {
             -method_link_species_set_id => $method_link_species_set_id,
             -score => $score,
             -perc_id => $perc_id,
-            -length => $length
+            -length => $length,
+	    -group_id => $group_id
         );
     push(@$genomic_align_blocks, $this_genomic_align_block);
   }
@@ -975,6 +979,70 @@ sub fetch_all_by_MethodLinkSpeciesSet_DnaFrag_GroupType {
     $this_genomic_align->genomic_align_group_id_by_type($group_type, $group_id);
     ## ... attach it to the corresponding Bio::EnsEMBL::Compara::GenomicAlignBlock
     $all_genomic_align_blocks->{$query_genomic_align_id}->add_GenomicAlign($this_genomic_align);
+  }
+  
+  return $genomic_align_blocks;
+}
+
+=head2 fetch_all_by_MethodLinkSpeciesSet_GroupID
+
+  Arg  1     : Bio::EnsEMBL::Compara::MethodLinkSpeciesSet $method_link_species_set
+  Arg  2     : integer $group_id
+  Example    : my $genomic_align_blocks =
+                  $genomic_align_block_adaptor->fetch_all_by_MethodLinkSpeciesSet_GroupID($mlss, $group_id);
+  Description: Retrieve the corresponding
+               Bio::EnsEMBL::Compara::GenomicAlignBlock objects.
+  Returntype : ref. to an array of Bio::EnsEMBL::Compara::GenomicAlignBlock objects. 
+  Exceptions : Returns ref. to an empty array if no matching
+               Bio::EnsEMBL::Compara::GenomicAlignBlock object can be retrieved
+  Caller     : none
+
+=cut
+
+sub fetch_all_by_MethodLinkSpeciesSet_GroupID {
+  my ($self, $method_link_species_set, $group_id) = @_;
+
+  my $genomic_align_blocks = []; # returned object
+
+  throw("[$method_link_species_set] is not a Bio::EnsEMBL::Compara::MethodLinkSpeciesSet object")
+      unless ($method_link_species_set and ref $method_link_species_set and
+          $method_link_species_set->isa("Bio::EnsEMBL::Compara::MethodLinkSpeciesSet"));
+  my $method_link_species_set_id = $method_link_species_set->dbID;
+  throw("[$method_link_species_set_id] has no dbID") if (!$method_link_species_set_id);
+
+  unless (defined $group_id) {
+      throw("group_id is not defined");
+  }
+
+  my $sql = qq{
+          SELECT
+              gab.genomic_align_block_id,
+              gab.score,
+              gab.perc_id,
+              gab.length
+          FROM
+              genomic_align_block gab
+          WHERE 
+              gab.method_link_species_set_id = $method_link_species_set_id
+              AND gab.group_id = $group_id
+      };
+
+  my $sth = $self->prepare($sql);
+  $sth->execute();
+  my ($genomic_align_block_id, $score, $perc_id, $length);
+  $sth->bind_columns(\$genomic_align_block_id, \$score, \$perc_id, \$length);
+  
+  while ($sth->fetch) {
+    my $this_genomic_align_block = new Bio::EnsEMBL::Compara::GenomicAlignBlock(
+            -adaptor => $self,
+            -dbID => $genomic_align_block_id,
+            -method_link_species_set_id => $method_link_species_set_id,
+            -score => $score,
+            -perc_id => $perc_id,
+            -length => $length,
+	    -group_id => $group_id
+        );
+    push(@$genomic_align_blocks, $this_genomic_align_block);
   }
   
   return $genomic_align_blocks;
