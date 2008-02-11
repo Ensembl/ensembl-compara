@@ -472,9 +472,12 @@ sub build_GeneTreeSystem
   my $CreateHomology_dNdSJob = Bio::EnsEMBL::Analysis->new(
       -db_version      => '1',
       -logic_name      => 'CreateHomology_dNdSJob',
-      -module          => 'Bio::EnsEMBL::Compara::RunnableDB::CreateHomology_dNdSJobs'
+      -module          => 'Bio::EnsEMBL::Compara::RunnableDB::CreateHomology_dNdSJobs',
   );
-  $self->{'comparaDBA'}->get_AnalysisAdaptor->store($CreateHomology_dNdSJob);
+  $self->{'hiveDBA'}
+    ? $self->{'hiveDBA'}->get_AnalysisAdaptor->store($CreateHomology_dNdSJob)
+    : $self->{'comparaDBA'}->get_AnalysisAdaptor->store($CreateHomology_dNdSJob);
+
   if(defined($self->{'hiveDBA'})) {
     my $stats = $analysisStatsDBA->fetch_by_analysis_id($CreateHomology_dNdSJob->dbID);
     $stats->batch_size(1);
@@ -487,7 +490,7 @@ sub build_GeneTreeSystem
     $ctrlRuleDBA->create_rule($BreakPAFCluster,$CreateHomology_dNdSJob);
   }
   if (defined $dnds_params{'species_sets'}) {
-    Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob
+    $self->{'hiveDBA'}->get_AnalysisJobAdaptor->CreateNewJob
         (
          -input_id       => '{species_sets=>' . $dnds_params{'species_sets'} . ',method_link_type=>\''.$dnds_params{'method_link_type'}.'\'}',
          -analysis       => $CreateHomology_dNdSJob,
@@ -524,7 +527,10 @@ sub build_GeneTreeSystem
       -logic_name      => 'Threshold_on_dS',
       -module          => 'Bio::EnsEMBL::Compara::RunnableDB::Threshold_on_dS'
   );
-  $self->{'comparaDBA'}->get_AnalysisAdaptor->store($threshold_on_dS);
+  $self->{'hiveDBA'}
+    ? $self->{'hiveDBA'}->get_AnalysisAdaptor->store($threshold_on_dS)
+    : $self->{'comparaDBA'}->get_AnalysisAdaptor->store($threshold_on_dS);
+
   if(defined($self->{'hiveDBA'})) {
     my $stats = $analysisStatsDBA->fetch_by_analysis_id($threshold_on_dS->dbID);
     $stats->batch_size(1);
@@ -534,7 +540,7 @@ sub build_GeneTreeSystem
     $ctrlRuleDBA->create_rule($homology_dNdS,$threshold_on_dS);
   }
   if (defined $dnds_params{'species_sets'}) {
-    Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob
+    $self->{'hiveDBA'}->get_AnalysisJobAdaptor->CreateNewJob
         (
          -input_id       => '{species_sets=>' . $dnds_params{'species_sets'} . ',method_link_type=>\''.$dnds_params{'method_link_type'}.'\'}',
          -analysis       => $threshold_on_dS,
