@@ -442,8 +442,11 @@ sub _run_conservation_scores_test {
                 Possible options are:
                   method_link_species_set_id => method_link_species_set id for 
                   the pairwise alignment.
+                  method_link_type => method_link_type for pairwise segment
+                  genome_db_ids => array of genome_db_ids 
   Example     : $self->_run_pairwise_gabs_test();
   Example     : $self->_run_pairwise_gabs_test("{method_link_species_set_id=>123}");
+  Example     : self->_run_pairwise_gabs_test("{method_link_type=>'BLASTZ_NET', genome_db_ids=>'[1,2]'}");
   Description : Tests whether the genomic_align_block and genomic_align tables 
                 are not empty, whether there are twice as many genomic_aligns 
                 as genomic_align_blocks and whether each genomic_align_block 
@@ -458,6 +461,9 @@ sub _run_pairwise_gabs_test {
   my ($self, $parameters) = @_;
 
   my $method_link_species_set_id;
+  my $method_link_id;
+  my $method_link_type;
+  my $genome_db_ids;
 
   if ($parameters) {
     if (defined($parameters->{'method_link_species_set_id'})) {
@@ -465,6 +471,12 @@ sub _run_pairwise_gabs_test {
     }
     if (defined($parameters->{'mlss_id'})) {
       $method_link_species_set_id = $parameters->{'mlss_id'};
+    }
+    if (defined($parameters->{'method_link_type'})) {
+      $method_link_type = $parameters->{'method_link_type'};
+    }
+    if (defined($parameters->{'genome_db_ids'})) {
+	$genome_db_ids = eval($parameters->{'genome_db_ids'});
     }
   }
 
@@ -474,12 +486,18 @@ sub _run_pairwise_gabs_test {
   my $method_link_species_set_ids;
   if ($method_link_species_set_id) {
       $method_link_species_set_ids = [$method_link_species_set_id];
+  } elsif ($method_link_type && $genome_db_ids) {
+      my $mlss_adaptor = $self->{'comparaDBA'}->get_MethodLinkSpeciesSetAdaptor;
+      throw ("No method_link_species_set") if (!$mlss_adaptor);
+      my $mlss = $mlss_adaptor->fetch_by_method_link_type_genome_db_ids($method_link_type, ${genome_db_ids});
+      $method_link_species_set_ids = [$mlss->dbID];
   } else {
       $method_link_species_set_ids = $self->{'comparaDBA'}->dbc->db_handle->selectcol_arrayref(
 	 "SELECT DISTINCT method_link_species_set_id FROM genomic_align_block");
   }
 
   foreach my $this_method_link_species_set_id (@$method_link_species_set_ids) {
+
       ## Get the number of genomic_align_blocks
       my $count1 = $self->{'comparaDBA'}->dbc->db_handle->selectrow_array(
 		    "SELECT COUNT(*) FROM genomic_align_block WHERE method_link_species_set_id = \"$this_method_link_species_set_id\"");
@@ -512,18 +530,20 @@ sub _run_pairwise_gabs_test {
 
   Arg[1]      : string representing a hashref of options.
                 Possible options are:
-                  target_url => url of the target (previous) database. Must be 
+                  previous_db_url => url of the previous database. Must be 
                   defined.
-                  target_method_link_species_set_id => method_link_species_set 
-                  id for the pairwise alignments in the target (previous) 
-                  database. Must be defined
-                  query_method_link_species_set_id => method_link_species_set 
-                  id for the pairwise alignments in the query (this) database. 
-                  Must be defined
+                  previous_method_link_species_set_id => method_link_species_set 
+                  id for the pairwise alignments in the previous database. 
+                  current_method_link_species_set_id => method_link_species_set 
+                  id for the pairwise alignments in the current (this) database. 
+                  method_link_type => method_link_type for pairwise segment
+                  current_genome_db_ids => array of genome_db_ids for current 
+                  (this) database
                   max_percentage_diff => the percentage difference between the 
                   number of genomic_align_blocks in the query and the target 
                   databases before being flaged as an error. Default 20.
-  Example     : $self->_run_compare_to_previous_db_test("{target_url=>'mysql://anonymous@ensembldb.ensembl.org:3306/ensembl_compara_47', target_method_link_species_set_id=>123, query_method_link_species_set_id=>123, max_percentage_diff=>20}");
+  Example     : $self->_run_compare_to_previous_db_test("{previous_db_url=>'mysql://anonymous@ensembldb.ensembl.org:3306/ensembl_compara_47', previous_method_link_species_set_id=>123, current_method_link_species_set_id=>123, max_percentage_diff=>20}");
+ Example      : $self->_run_compare_to_previous_db_test("{previous_db_url=>\'mysql://anonymous\@ensembldb.ensembl.org\',method_link_type=>\'BLASTZ_NET\',current_genome_db_ids=>\'[25,22,]\'}")
   Description : Tests whether there are genomic_align_blocks, genomic_aligns 
                 and method_link_species_sets in the tables and whether the 
                 total number of genomic_align_blocks between 2 databases are 
@@ -539,70 +559,130 @@ sub _run_pairwise_gabs_test {
 sub _run_compare_to_previous_db_test {
   my ($self, $parameters) = @_;
 
-  my $target_mlss_id;
-  my $query_mlss_id;
+  my $previous_mlss_id;
+  my $current_mlss_id;
   my $max_percent_diff = 20;
-  my $target_url;
+  my $previous_db_url;
+  my $method_link_type;
+  my $previous_genome_db_ids;
+  my $current_genome_db_ids;
+  my $species_set;
 
   if ($parameters) {
-    if (defined($parameters->{'target_method_link_species_set_id'})) {
-      $target_mlss_id = $parameters->{'target_method_link_species_set_id'};
+    if (defined($parameters->{'previous_method_link_species_set_id'})) {
+      $previous_mlss_id = $parameters->{'previous_method_link_species_set_id'};
     }
-    if (defined($parameters->{'query_method_link_species_set_id'})) {
-      $query_mlss_id = $parameters->{'query_method_link_species_set_id'};
+    if (defined($parameters->{'current_method_link_species_set_id'})) {
+      $current_mlss_id = $parameters->{'current_method_link_species_set_id'};
     }
-    if (defined($parameters->{'target_mlss_id'})) {
-      $target_mlss_id = $parameters->{'target_mlss_id'};
+    if (defined($parameters->{'previous_mlss_id'})) {
+      $previous_mlss_id = $parameters->{'previous_mlss_id'};
     }
-    if (defined($parameters->{'query_mlss_id'})) {
-      $query_mlss_id = $parameters->{'query_mlss_id'};
+    if (defined($parameters->{'current_mlss_id'})) {
+      $current_mlss_id = $parameters->{'current_mlss_id'};
     }
-    if (defined($parameters->{'target_url'})) {
-      $target_url = $parameters->{'target_url'};
+    if (defined($parameters->{'previous_db_url'})) {
+      $previous_db_url = $parameters->{'previous_db_url'};
+    }
+    if (defined($parameters->{'method_link_type'})) {
+      $method_link_type = $parameters->{'method_link_type'};
+    }
+    if (defined($parameters->{'current_genome_db_ids'})) {
+	$current_genome_db_ids = eval($parameters->{'current_genome_db_ids'});
     }
     if (defined($parameters->{'max_percentage_diff'})) {
       $max_percent_diff = $parameters->{'max_percentage_diff'};
     }
   }
 
-  throw("Must define target method_link_species_set_id") if (!defined($target_mlss_id));
-  throw("Must define query method_link_species_set_id") if (!defined($query_mlss_id));
-  throw("Must define target url") if (!defined($target_url));
+  throw("Must define previous database url") if (!defined($previous_db_url));
 
   $self->test_table("genomic_align_block");
   $self->test_table("genomic_align");
   $self->test_table("method_link_species_set");
 
+  #Load previous url
+  Bio::EnsEMBL::Registry->load_registry_from_url($previous_db_url);
+  my $previous_compara_dba;
 
-  my $compara_dba = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(-url=>$target_url);
+  #if the database name is defined in the url, then open that
+  if ($previous_db_url =~ /mysql:\/\/.*@.*\/.+/) {
+      $previous_compara_dba = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(-url=>$previous_db_url);
+  } else {
+      #open the most recent compara database
+      $previous_compara_dba = Bio::EnsEMBL::Registry->get_DBAdaptor("Multi", "compara");
+  }
 
-  my $genomic_align_block_adaptor = $compara_dba->get_GenomicAlignBlockAdaptor;
-  throw ("No genomic_align_blocks") if (!$genomic_align_block_adaptor);
+  #get the previous method_link_species_set adaptor
+  my $previous_mlss_adaptor = $previous_compara_dba->get_MethodLinkSpeciesSetAdaptor;
+  throw ("No method_link_species_set") if (!$previous_mlss_adaptor);
 
-  my $target_mlss_adaptor = $compara_dba->get_MethodLinkSpeciesSetAdaptor;
-  throw ("No method_link_species_set") if (!$target_mlss_adaptor);
+
+  #get the current method_link_species_set adaptor
+  my $current_mlss_adaptor = $self->{'comparaDBA'}->get_MethodLinkSpeciesSetAdaptor;
+  throw ("No method_link_species_set") if (!$current_mlss_adaptor);
+
+  #get the current genome_db adaptor
+  my $current_genome_db_adaptor = $self->{'comparaDBA'}->get_GenomeDBAdaptor;
+  throw ("No genome_db_adaptor") if (!$current_genome_db_adaptor);
+
+  #get the current method_link_species_set object from method_link_type and
+  #current genome_db_ids
+  if (defined $method_link_type && defined $current_genome_db_ids) {
+      my $current_mlss = $current_mlss_adaptor->fetch_by_method_link_type_genome_db_ids($method_link_type, ${current_genome_db_ids});
+      $current_mlss_id = $current_mlss->dbID;
+  } elsif (!defined $current_mlss_id) {
+      throw("No current_mlss_id or method_link_type and current_genome_db_ids set\n");
+  }
+
+  #get the previous method_link_species_set object from the method_link_type and
+  #species corresponding to the current genome_db_ids 
+  if (defined $method_link_type && defined $current_genome_db_ids) {
+      #covert genome_db_ids into species names
+      foreach my $g_db_id (@$current_genome_db_ids) {
+	  my $g_db = $current_genome_db_adaptor->fetch_by_dbID($g_db_id);
+	  push @$species_set, $g_db->name;
+      }
+
+      #find corresponding method_link_species_set in previous database
+      my $previous_mlss;
+      eval {
+	  $previous_mlss = $previous_mlss_adaptor->fetch_by_method_link_type_registry_aliases($method_link_type, ${species_set});
+      };
+      #Catch throw if these species do not exist in the previous database
+      #and return success.
+      if ($@ || !defined $previous_mlss) {
+	  print "This pair of species (" .(join ",", @$species_set) . ") with this method_link $method_link_type not do exist in this database $previous_db_url \n";
+	  return;
+      }
+      $previous_mlss_id = $previous_mlss->dbID;
+  } elsif (!defined $previous_mlss_id) {
+      throw("No previous_mlss_id or method_link_type and current_genome_db_ids set\n");
+  }
 
   #get the name for the method_link_species_set_id
-  my $target_name = $self->{'comparaDBA'}->dbc->db_handle->selectrow_array(
-	"SELECT name FROM method_link_species_set WHERE method_link_species_set_id = \"$target_mlss_id\""); 
-  my $query_name = $self->{'comparaDBA'}->dbc->db_handle->selectrow_array(
-	"SELECT name FROM method_link_species_set WHERE method_link_species_set_id = \"$query_mlss_id\""); 
+  my $previous_name = $previous_compara_dba->dbc->db_handle->selectrow_array(
+	"SELECT name FROM method_link_species_set WHERE method_link_species_set_id = \"$previous_mlss_id\""); 
 
-  ## Get the number of genomic_align_blocks of previous (target) db
-  my $target_mlss = $target_mlss_adaptor->fetch_by_dbID($target_mlss_id);
-  my $target_count = @{$genomic_align_block_adaptor->fetch_all_by_MethodLinkSpeciesSet($target_mlss)};
+  my $current_name = $self->{'comparaDBA'}->dbc->db_handle->selectrow_array(
+	"SELECT name FROM method_link_species_set WHERE method_link_species_set_id = \"$current_mlss_id\""); 
 
-  ## Get number of genomic_align_blocks of current (query) db
-  my $query_count = $self->{'comparaDBA'}->dbc->db_handle->selectrow_array(
-      "SELECT COUNT(*) FROM genomic_align_block WHERE method_link_species_set_id = \"$query_mlss_id\"");
+  ## Get the number of genomic_align_blocks of previous db
+  my $previous_count = $previous_compara_dba->dbc->db_handle->selectrow_array(
+      "SELECT COUNT(*) FROM genomic_align_block WHERE method_link_species_set_id = \"$previous_mlss_id\"");
+
+  ## Get number of genomic_align_blocks of current db
+  my $current_count = $self->{'comparaDBA'}->dbc->db_handle->selectrow_array(
+      "SELECT COUNT(*) FROM genomic_align_block WHERE method_link_species_set_id = \"$current_mlss_id\"");
+
 
   ## Find percentage difference between the two
-  my $current_percent_diff = abs($query_count-$target_count)/$target_count*100;
+  my $current_percent_diff = abs($current_count-$previous_count)/$previous_count*100;
 
   ## Report an error if this is higher than max_percent_diff
   if ($current_percent_diff > $max_percent_diff) {
       my $c_perc = sprintf "%.2f", $current_percent_diff;
-      die("The percentage difference between the number of genomic_align_blocks of the current database of $query_name results ($query_count) and the target database of $target_name results ($target_count) is $c_perc% and is greater than $max_percent_diff%!\n");
+      die("The percentage difference between the number of genomic_align_blocks of the current database of $current_name results ($current_count) and the previous database of $previous_name results ($previous_count) is $c_perc% and is greater than $max_percent_diff%!\n");
   }
 
 }
