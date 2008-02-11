@@ -197,7 +197,19 @@ sub createPairAlignerAnalysis
   my $ctrlRuleDBA = $self->{'hiveDBA'}->get_AnalysisCtrlRuleAdaptor;
 
   print("creating PairAligner jobs\n") if($verbose);
+
+  #allow 'query_collection_name' or 'non_reference_collection_name'
+  if ($pair_aligner_conf->{'non_reference_collection_name'} && !$pair_aligner_conf->{'query_collection_name'}) {
+      $pair_aligner_conf->{'query_collection_name'} = $pair_aligner_conf->{'non_reference_collection_name'};
+  }
+
   my $query_dnaCollectionConf = $self->{'chunkCollectionHash'}->{$pair_aligner_conf->{'query_collection_name'}};
+
+  #allow 'target_collection_name' or 'reference_collection_name'
+  if ($pair_aligner_conf->{'reference_collection_name'} && !$pair_aligner_conf->{'target_collection_name'}) {
+      $pair_aligner_conf->{'target_collection_name'} = $pair_aligner_conf->{'reference_collection_name'};
+  }
+
   my $target_dnaCollectionConf = $self->{'chunkCollectionHash'}->{$pair_aligner_conf->{'target_collection_name'}};
 
   if($pair_aligner_conf->{'method_link'}) {
@@ -246,6 +258,15 @@ sub createPairAlignerAnalysis
   #
 
   my $pairAlignerAnalysis = new Bio::EnsEMBL::Analysis(%{$pair_aligner_conf->{'analysis_template'}});
+  my $parameters = $pairAlignerAnalysis->parameters();
+  
+  #if running blat, need to append dump_loc to blat analysis parameters 
+  if ($target_dnaCollectionConf->{'dump_loc'}) {
+      my $dump_loc = $target_dnaCollectionConf->{'dump_loc'};
+      $parameters =~ s/\}/,dump_loc=>'$dump_loc'\}/;
+      $pairAlignerAnalysis->parameters($parameters);
+  }
+
   my $logic_name = "PairAligner-".$hexkey;
   $logic_name = $pair_aligner_conf->{'logic_name_prefix'}."-".$hexkey
     if (defined $pair_aligner_conf->{'logic_name_prefix'});
@@ -264,6 +285,38 @@ sub createPairAlignerAnalysis
     $stats->batch_size($pair_aligner_conf->{'batch_size'});
   }
   $stats->update();
+
+  #Dump reference dna as overlapping chunks in multi-fasta file
+  if ($target_dnaCollectionConf->{'dump_loc'}) {
+      ## We want to dump the target collection for Blat. Set dump_min_size to 1 to ensure that all the toplevel seq_regions are dumped. The use of group_set_size in the target collection ensures that short seq_regions are grouped together. 
+      my $dumpDnaAnalysis = new Bio::EnsEMBL::Analysis(
+						       -module => "Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::DumpDnaCollection",
+						       -parameters => "{'dump_dna'=>1,'dump_min_size'=>1}",
+						      );
+      my $dump_dna_logic_name = "DumpDnaForPairAligner-".$hexkey;
+      $dump_dna_logic_name = "DumpDnaFor".$pair_aligner_conf->{'logic_name_prefix'}."-".$hexkey
+	if (defined $pair_aligner_conf->{'logic_name_prefix'});
+
+      $dumpDnaAnalysis->logic_name($dump_dna_logic_name);
+
+      $self->{'hiveDBA'}->get_AnalysisAdaptor()->store($dumpDnaAnalysis);
+
+      my $stats = $dumpDnaAnalysis->stats;
+      $stats->hive_capacity(1);
+      $stats->batch_size(1);
+      $stats->update();
+      $self->{'dump_dna_analysis'} = $dumpDnaAnalysis;
+
+      if ($target_dnaCollectionConf->{'dump_loc'}) {
+	  Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob
+	      (-input_id       => "{'dna_collection_name'=>'".$pair_aligner_conf->{'target_collection_name'}."'}",
+	       -analysis       => $self->{'dump_dna_analysis'});
+      }
+
+      ## Create new rule: DumpDna before running Blat!!
+      $ctrlRuleDBA->create_rule($self->{'chunkAndGroupDnaAnalysis'}, $dumpDnaAnalysis);
+      $ctrlRuleDBA->create_rule($dumpDnaAnalysis, $pairAlignerAnalysis);
+  }
 
   unless (defined $self->{'updateMaxAlignmentLengthBeforeFDAnalysis'}) {
 
@@ -314,204 +367,211 @@ sub createPairAlignerAnalysis
 
 
   
-
-  # creating FilterDuplicates analysis
   #
-  if ($pair_aligner_conf->{'filter_duplicates_options'}) {
-    unless ($pair_aligner_conf->{'filter_duplicates_options'} eq "all" ||
-            $pair_aligner_conf->{'filter_duplicates_options'} eq "in_chunk_overlaps") {
-      print("filter_duplicates_options entry can only be \'all\' or \'in_chunk_overlaps\', not \'".$pair_aligner_conf->{'filter_duplicates_options'}."\'\n");
-      exit(4);
-    }
-    my $queryFilterDuplicatesAnalysis;
-    unless ($pair_aligner_conf->{'filter_duplicates_options'} eq "in_chunk_overlaps" &&
-            (! defined $query_dnaCollectionConf->{'overlap'} ||
-             $query_dnaCollectionConf->{'overlap'} == 0)) {
-      #
-      # creating QueryFilterDuplicates analysis
-      #
-      my $parameters = "{'method_link_species_set_id'=>".$pair_aligner_conf->{'method_link_species_set_id'};
+  # Creating FilterDuplicates analysis
+  #
+  # Now done always. If there is no chunking on the query, it will only
+  # remove identical matches from each query dnafrag. If there is chunking
+  # on the query, then it will remove both identical matches and edge
+  # artefacts.
+  my $queryFilterDuplicatesAnalysis;
+
+  #
+  # creating QueryFilterDuplicates analysis
+  #
+  $parameters = "{'method_link_species_set_id'=>".$pair_aligner_conf->{'method_link_species_set_id'};
+  
+  if (defined $query_dnaCollectionConf->{'chunk_size'} && 
+      $query_dnaCollectionConf->{'chunk_size'} > 0) {
       $parameters .= ",'chunk_size'=>".$query_dnaCollectionConf->{'chunk_size'};
-      $parameters .= ",'overlap'=>".$query_dnaCollectionConf->{'overlap'};
-      $parameters .= ",'options'=>'".$pair_aligner_conf->{'filter_duplicates_options'}."'}";
-
-      $queryFilterDuplicatesAnalysis = Bio::EnsEMBL::Analysis->new
-        (-db_version      => '1',
-         -logic_name      => 'QueryFilterDuplicates-'.$hexkey,
-         -module          => 'Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::FilterDuplicates',
-         -parameters      => $parameters);
-      $self->{'hiveDBA'}->get_AnalysisAdaptor()->store($queryFilterDuplicatesAnalysis);
-      $stats = $queryFilterDuplicatesAnalysis->stats;
-      $stats->batch_size(1);
-      $stats->hive_capacity(200); 
-      $stats->status('BLOCKED');
-      $stats->update();
-      $self->{'queryFilterDuplicatesAnalysis'} = $queryFilterDuplicatesAnalysis;
-
-      $ctrlRuleDBA->create_rule($self->{'updateMaxAlignmentLengthBeforeFDAnalysis'}, $queryFilterDuplicatesAnalysis);
-
-      unless (defined $self->{'updateMaxAlignmentLengthAfterFDAnalysis'}) {
-        
-        #
-        # creating UpdateMaxAlignmentLengthAfterFD analysis
-        #
-        
-        my $updateMaxAlignmentLengthAfterFDAnalysis = Bio::EnsEMBL::Analysis->new
-          (-db_version      => '1',
-           -logic_name      => 'UpdateMaxAlignmentLengthAfterFD',
-           -module          => 'Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::UpdateMaxAlignmentLength',
-           -parameters      => "");
-        
-        $self->{'hiveDBA'}->get_AnalysisAdaptor()->store($updateMaxAlignmentLengthAfterFDAnalysis);
-        my $stats = $updateMaxAlignmentLengthAfterFDAnalysis->stats;
-        $stats->hive_capacity(1);
-        $stats->update();
-        $self->{'updateMaxAlignmentLengthAfterFDAnalysis'} = $updateMaxAlignmentLengthAfterFDAnalysis;
-        
-
-        #
-        # create UpdateMaxAlignmentLengthAfterFD job
-        #
-        my $input_id = 1;
-        Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob
-            (-input_id       => $input_id,
-             -analysis       => $self->{'updateMaxAlignmentLengthAfterFDAnalysis'});
-      }
-      
-      $ctrlRuleDBA->create_rule($queryFilterDuplicatesAnalysis,$self->{'updateMaxAlignmentLengthAfterFDAnalysis'});
-
-      #
-      # create CreateFilterDuplicatesJobs analysis
-      #
-      unless (defined $self->{'createFilterDuplicatesJobsAnalysis'}) {
-        my $createFilterDuplicatesJobsAnalysis = Bio::EnsEMBL::Analysis->new
-          (-db_version      => '1',
-           -logic_name      => 'CreateFilterDuplicatesJobs',
-           -module          => 'Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::CreateFilterDuplicatesJobs',
-           -parameters      => "");
-        $self->{'hiveDBA'}->get_AnalysisAdaptor()->store($createFilterDuplicatesJobsAnalysis);
-        $stats = $createFilterDuplicatesJobsAnalysis->stats;
-        $stats->batch_size(1);
-        if($pair_aligner_conf->{'max_parallel_workers'}) {
-          $stats->hive_capacity($pair_aligner_conf->{'max_parallel_workers'});
-        }
-        $stats->update();
-        $self->{'createFilterDuplicatesJobsAnalysis'} = $createFilterDuplicatesJobsAnalysis;
-
-        $ctrlRuleDBA->create_rule($self->{'chunkAndGroupDnaAnalysis'}, $createFilterDuplicatesJobsAnalysis);
-      }
-
-      #
-      # create QueryCreateFilterDuplicatesJobs job
-      #
-      my $input_id .= "{'logic_name'=>'".$queryFilterDuplicatesAnalysis->logic_name ."'";
-      $input_id .= ",'collection_name'=>'".$pair_aligner_conf->{'query_collection_name'} ."'";
-      if ($query_dnaCollectionConf->{'region'}) {
-        $input_id .= ",'region'=>'".$query_dnaCollectionConf->{'region'}."'"
-      }
-      $input_id .= "}";
-
-      Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob
-          (-input_id       => $input_id,
-           -analysis       => $self->{'createFilterDuplicatesJobsAnalysis'});
-    }
-
-    unless ($pair_aligner_conf->{'filter_duplicates_options'} eq "all" ||
-            ($pair_aligner_conf->{'filter_duplicates_options'} eq "in_chunk_overlaps" &&
-            (! defined $target_dnaCollectionConf->{'overlap'} ||
-             $target_dnaCollectionConf->{'overlap'} == 0))) {
-      #
-      # creating TargetFilterDuplicates analysis
-      #
-      my $parameters = "{'method_link_species_set_id'=>".$pair_aligner_conf->{'method_link_species_set_id'};
-      $parameters .= ",'chunk_size'=>".$target_dnaCollectionConf->{'chunk_size'};
-      $parameters .= ",'overlap'=>".$target_dnaCollectionConf->{'overlap'};
-      $parameters .= ",'options'=>'".$pair_aligner_conf->{'filter_duplicates_options'}."'}";
-
-      my $targetFilterDuplicatesAnalysis = Bio::EnsEMBL::Analysis->new
-        (-db_version      => '1',
-         -logic_name      => 'TargetFilterDuplicates-'.$hexkey,
-         -module          => 'Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::FilterDuplicates',
-         -parameters      => $parameters);
-      $self->{'hiveDBA'}->get_AnalysisAdaptor()->store($targetFilterDuplicatesAnalysis);
-      $stats = $targetFilterDuplicatesAnalysis->stats;
-      $stats->batch_size(1);
-      $stats->hive_capacity(200);
-      $stats->status('BLOCKED');
-      $stats->update();
-      $self->{'targetFilterDuplicatesAnalysis'} = $targetFilterDuplicatesAnalysis;
-
-      if (defined $queryFilterDuplicatesAnalysis) {
-        $ctrlRuleDBA->create_rule($queryFilterDuplicatesAnalysis, $targetFilterDuplicatesAnalysis);
-      } else {
-        $ctrlRuleDBA->create_rule($pairAlignerAnalysis, $targetFilterDuplicatesAnalysis);
-      }
-
-      unless (defined $self->{'updateMaxAlignmentLengthAfterFDAnalysis'}) {
-        
-        #
-        # creating UpdateMaxAlignmentLengthAfterFD analysis
-        #
-        
-        my $updateMaxAlignmentLengthAfterFDAnalysis = Bio::EnsEMBL::Analysis->new
-          (-db_version      => '1',
-           -logic_name      => 'UpdateMaxAlignmentLengthAfterFD',
-           -module          => 'Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::UpdateMaxAlignmentLength',
-           -parameters      => "");
-        
-        $self->{'hiveDBA'}->get_AnalysisAdaptor()->store($updateMaxAlignmentLengthAfterFDAnalysis);
-        my $stats = $updateMaxAlignmentLengthAfterFDAnalysis->stats;
-        $stats->hive_capacity(1);
-        $stats->update();
-        $self->{'updateMaxAlignmentLengthAfterFDAnalysis'} = $updateMaxAlignmentLengthAfterFDAnalysis;
-        
-
-        #
-        # create UpdateMaxAlignmentLengthAfterFD job
-        #
-        my $input_id = 1;
-        Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob
-            (-input_id       => $input_id,
-             -analysis       => $self->{'updateMaxAlignmentLengthAfterFDAnalysis'});
-      }
-      
-      $ctrlRuleDBA->create_rule($targetFilterDuplicatesAnalysis,$self->{'updateMaxAlignmentLengthAfterFDAnalysis'});
-
-      #
-      # create CreateFilterDuplicatesJobs analysis
-      #
-      unless (defined $self->{'createFilterDuplicatesJobsAnalysis'}) {
-        my $createFilterDuplicatesJobsAnalysis = Bio::EnsEMBL::Analysis->new
-          (-db_version      => '1',
-           -logic_name      => 'CreateFilterDuplicatesJobs',
-           -module          => 'Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::CreateFilterDuplicatesJobs',
-           -parameters      => "");
-        $self->{'hiveDBA'}->get_AnalysisAdaptor()->store($createFilterDuplicatesJobsAnalysis);
-        $stats = $createFilterDuplicatesJobsAnalysis->stats;
-        $stats->batch_size(1);
-        if($pair_aligner_conf->{'max_parallel_workers'}) {
-          $stats->hive_capacity($pair_aligner_conf->{'max_parallel_workers'});
-        }
-        $stats->update();
-        $self->{'createFilterDuplicatesJobsAnalysis'} = $createFilterDuplicatesJobsAnalysis;
-
-        $ctrlRuleDBA->create_rule($self->{'chunkAndGroupDnaAnalysis'}, $createFilterDuplicatesJobsAnalysis);
-      }
-      #
-      # create TargetCreateFilterDuplicatesJobs job
-      #
-      my $input_id .= "{'logic_name'=>'".$targetFilterDuplicatesAnalysis->logic_name ."'";
-      $input_id .= ",'collection_name'=>'".$pair_aligner_conf->{'target_collection_name'}."'";
-      if ($target_dnaCollectionConf->{'region'}) {
-        $input_id .= ",'region'=>'".$target_dnaCollectionConf->{'region'}."'"
-      }
-      $input_id .= "}";
-
-      Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob
-          (-input_id       => $input_id,
-           -analysis       => $self->{'createFilterDuplicatesJobsAnalysis'});
-    }
   }
+  if (defined $query_dnaCollectionConf->{'overlap'} && 
+      $query_dnaCollectionConf->{'overlap'} > 0) {
+      $parameters .= ",'overlap'=>".$query_dnaCollectionConf->{'overlap'};
+  } 
+  $parameters .= "}";
+
+  $queryFilterDuplicatesAnalysis = Bio::EnsEMBL::Analysis->new
+    (-db_version      => '1',
+     -logic_name      => 'QueryFilterDuplicates-'.$hexkey,
+     -module          => 'Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::FilterDuplicates',
+     -parameters      => $parameters);
+  $self->{'hiveDBA'}->get_AnalysisAdaptor()->store($queryFilterDuplicatesAnalysis);
+
+  $stats = $queryFilterDuplicatesAnalysis->stats;
+  $stats->batch_size(1);
+  $stats->hive_capacity(200); 
+  $stats->status('BLOCKED');
+  $stats->update();
+  $self->{'queryFilterDuplicatesAnalysis'} = $queryFilterDuplicatesAnalysis;
+
+  $ctrlRuleDBA->create_rule($self->{'updateMaxAlignmentLengthBeforeFDAnalysis'}, $queryFilterDuplicatesAnalysis);
+
+  unless (defined $self->{'updateMaxAlignmentLengthAfterFDAnalysis'}) {
+        
+      #
+      # creating UpdateMaxAlignmentLengthAfterFD analysis
+      #
+      
+      my $updateMaxAlignmentLengthAfterFDAnalysis = Bio::EnsEMBL::Analysis->new
+	(-db_version      => '1',
+	 -logic_name      => 'UpdateMaxAlignmentLengthAfterFD',
+	 -module          => 'Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::UpdateMaxAlignmentLength',
+	 -parameters      => "");
+      
+      $self->{'hiveDBA'}->get_AnalysisAdaptor()->store($updateMaxAlignmentLengthAfterFDAnalysis);
+      my $stats = $updateMaxAlignmentLengthAfterFDAnalysis->stats;
+      $stats->hive_capacity(1);
+      $stats->update();
+      $self->{'updateMaxAlignmentLengthAfterFDAnalysis'} = $updateMaxAlignmentLengthAfterFDAnalysis;
+      
+      
+      #
+      # create UpdateMaxAlignmentLengthAfterFD job
+      #
+      my $input_id = 1;
+      Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob
+	  (-input_id       => $input_id,
+	   -analysis       => $self->{'updateMaxAlignmentLengthAfterFDAnalysis'});
+  }
+  
+  $ctrlRuleDBA->create_rule($queryFilterDuplicatesAnalysis,$self->{'updateMaxAlignmentLengthAfterFDAnalysis'});
+  
+  #
+  # create CreateFilterDuplicatesJobs analysis
+  #
+  unless (defined $self->{'createFilterDuplicatesJobsAnalysis'}) {
+      my $createFilterDuplicatesJobsAnalysis = Bio::EnsEMBL::Analysis->new
+	(-db_version      => '1',
+	 -logic_name      => 'CreateFilterDuplicatesJobs',
+	 -module          => 'Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::CreateFilterDuplicatesJobs',
+	 -parameters      => "");
+      $self->{'hiveDBA'}->get_AnalysisAdaptor()->store($createFilterDuplicatesJobsAnalysis);
+      $stats = $createFilterDuplicatesJobsAnalysis->stats;
+      $stats->batch_size(1);
+      if($pair_aligner_conf->{'max_parallel_workers'}) {
+          $stats->hive_capacity($pair_aligner_conf->{'max_parallel_workers'});
+      }
+      $stats->update();
+      $self->{'createFilterDuplicatesJobsAnalysis'} = $createFilterDuplicatesJobsAnalysis;
+      
+      $ctrlRuleDBA->create_rule($self->{'chunkAndGroupDnaAnalysis'}, $createFilterDuplicatesJobsAnalysis);
+  }
+  
+  #
+  # create QueryCreateFilterDuplicatesJobs job
+  #
+  $input_id = "";
+  $input_id .= "{'logic_name'=>'".$queryFilterDuplicatesAnalysis->logic_name ."'";
+  $input_id .= ",'collection_name'=>'".$pair_aligner_conf->{'query_collection_name'} ."'";
+  if ($query_dnaCollectionConf->{'region'}) {
+      $input_id .= ",'region'=>'".$query_dnaCollectionConf->{'region'}."'"
+  }
+  $input_id .= "}";
+  
+  Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob
+      (-input_id       => $input_id,
+       -analysis       => $self->{'createFilterDuplicatesJobsAnalysis'});
+
+  #
+  # creating TargetFilterDuplicates analysis
+  #
+  $parameters = "{'method_link_species_set_id'=>".$pair_aligner_conf->{'method_link_species_set_id'};
+  
+  if (defined $target_dnaCollectionConf->{'chunk_size'} && 
+      $target_dnaCollectionConf->{'chunk_size'} > 0) {
+      $parameters .= ",'chunk_size'=>".$target_dnaCollectionConf->{'chunk_size'};
+  }
+  if (defined $target_dnaCollectionConf->{'overlap'} && 
+      $target_dnaCollectionConf->{'overlap'} > 0) {
+      $parameters .= ",'overlap'=>".$target_dnaCollectionConf->{'overlap'};
+  } 
+  $parameters .= "}";
+  
+  my $targetFilterDuplicatesAnalysis = Bio::EnsEMBL::Analysis->new
+    (-db_version      => '1',
+     -logic_name      => 'TargetFilterDuplicates-'.$hexkey,
+     -module          => 'Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::FilterDuplicates',
+     -parameters      => $parameters);
+  $self->{'hiveDBA'}->get_AnalysisAdaptor()->store($targetFilterDuplicatesAnalysis);
+  $stats = $targetFilterDuplicatesAnalysis->stats;
+  $stats->batch_size(1);
+  $stats->hive_capacity(200);
+  $stats->status('BLOCKED');
+  $stats->update();
+  $self->{'targetFilterDuplicatesAnalysis'} = $targetFilterDuplicatesAnalysis;
+  
+  if (defined $queryFilterDuplicatesAnalysis) {
+      $ctrlRuleDBA->create_rule($queryFilterDuplicatesAnalysis, $targetFilterDuplicatesAnalysis);
+  } else {
+      $ctrlRuleDBA->create_rule($pairAlignerAnalysis, $targetFilterDuplicatesAnalysis);
+  }
+  
+  unless (defined $self->{'updateMaxAlignmentLengthAfterFDAnalysis'}) {
+      
+      #
+      # creating UpdateMaxAlignmentLengthAfterFD analysis
+      #
+      
+      my $updateMaxAlignmentLengthAfterFDAnalysis = Bio::EnsEMBL::Analysis->new
+	(-db_version      => '1',
+	 -logic_name      => 'UpdateMaxAlignmentLengthAfterFD',
+	 -module          => 'Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::UpdateMaxAlignmentLength',
+	 -parameters      => "");
+      
+      $self->{'hiveDBA'}->get_AnalysisAdaptor()->store($updateMaxAlignmentLengthAfterFDAnalysis);
+      my $stats = $updateMaxAlignmentLengthAfterFDAnalysis->stats;
+      $stats->hive_capacity(1);
+      $stats->update();
+      $self->{'updateMaxAlignmentLengthAfterFDAnalysis'} = $updateMaxAlignmentLengthAfterFDAnalysis;
+      
+      
+      #
+      # create UpdateMaxAlignmentLengthAfterFD job
+      #
+      my $input_id = 1;
+      Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob
+	  (-input_id       => $input_id,
+	   -analysis       => $self->{'updateMaxAlignmentLengthAfterFDAnalysis'});
+  }
+  
+$ctrlRuleDBA->create_rule($targetFilterDuplicatesAnalysis,$self->{'updateMaxAlignmentLengthAfterFDAnalysis'});
+  
+  #
+  # create CreateFilterDuplicatesJobs analysis
+  #
+  unless (defined $self->{'createFilterDuplicatesJobsAnalysis'}) {
+      my $createFilterDuplicatesJobsAnalysis = Bio::EnsEMBL::Analysis->new
+	(-db_version      => '1',
+	 -logic_name      => 'CreateFilterDuplicatesJobs',
+	 -module          => 'Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::CreateFilterDuplicatesJobs',
+	 -parameters      => "");
+      $self->{'hiveDBA'}->get_AnalysisAdaptor()->store($createFilterDuplicatesJobsAnalysis);
+      $stats = $createFilterDuplicatesJobsAnalysis->stats;
+      $stats->batch_size(1);
+      if($pair_aligner_conf->{'max_parallel_workers'}) {
+	  $stats->hive_capacity($pair_aligner_conf->{'max_parallel_workers'});
+      }
+      $stats->update();
+      $self->{'createFilterDuplicatesJobsAnalysis'} = $createFilterDuplicatesJobsAnalysis;
+      
+      $ctrlRuleDBA->create_rule($self->{'chunkAndGroupDnaAnalysis'}, $createFilterDuplicatesJobsAnalysis);
+  }
+
+  #
+  # create TargetCreateFilterDuplicatesJobs job
+  #
+  $input_id = "";
+  $input_id .= "{'logic_name'=>'".$targetFilterDuplicatesAnalysis->logic_name ."'";
+  $input_id .= ",'collection_name'=>'".$pair_aligner_conf->{'target_collection_name'}."'";
+  if ($target_dnaCollectionConf->{'region'}) {
+      $input_id .= ",'region'=>'".$target_dnaCollectionConf->{'region'}."'"
+  }
+  $input_id .= "}";
+  
+  Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob
+      (-input_id       => $input_id,
+       -analysis       => $self->{'createFilterDuplicatesJobsAnalysis'});
 }
 
 
