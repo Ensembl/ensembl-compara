@@ -139,6 +139,7 @@ sub build_GeneTreeSystem
   my $dataflowRuleDBA = $self->{'hiveDBA'}->get_DataflowRuleAdaptor;
   my $ctrlRuleDBA = $self->{'hiveDBA'}->get_AnalysisCtrlRuleAdaptor;
   my $analysisStatsDBA = $self->{'hiveDBA'}->get_AnalysisStatsAdaptor;
+  my $analysisDBA = $self->{'hiveDBA'}->get_AnalysisAdaptor;
   my $stats;
 
   #
@@ -150,7 +151,7 @@ sub build_GeneTreeSystem
       -input_id_type   => 'genome_db_id',
       -module          => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy'
     );
-  $self->{'comparaDBA'}->get_AnalysisAdaptor()->store($submit_analysis);
+  $analysisDBA->store($submit_analysis);
   $stats = $analysisStatsDBA->fetch_by_analysis_id($submit_analysis->dbID);
   $stats->batch_size(100);
   $stats->hive_capacity(-1);
@@ -167,7 +168,7 @@ sub build_GeneTreeSystem
       -logic_name      => 'GenomeLoadMembers',
       -module          => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeLoadMembers'
     );
-  $self->{'comparaDBA'}->get_AnalysisAdaptor()->store($load_genome);
+  $analysisDBA->store($load_genome);
   $stats = $analysisStatsDBA->fetch_by_analysis_id($load_genome->dbID);
   $stats->batch_size(1);
   $stats->hive_capacity(-1); #unlimited
@@ -183,7 +184,7 @@ sub build_GeneTreeSystem
         -logic_name      => 'LoadUniProt',
         -module          => 'Bio::EnsEMBL::Compara::RunnableDB::LoadUniProt',
       );
-  $self->{'comparaDBA'}->get_AnalysisAdaptor()->store($loadUniProt);
+  $analysisDBA->store($loadUniProt);
   $stats = $analysisStatsDBA->fetch_by_analysis_id($loadUniProt->dbID);
   $stats->batch_size(1);
   $stats->hive_capacity(-1);
@@ -199,7 +200,7 @@ sub build_GeneTreeSystem
       -logic_name      => 'BlastSubsetStaging',
       -module          => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy'
     );
-  $self->{'comparaDBA'}->get_AnalysisAdaptor()->store($blastSubsetStaging);
+  $analysisDBA->store($blastSubsetStaging);
   $stats = $analysisStatsDBA->fetch_by_analysis_id($blastSubsetStaging->dbID);
   $stats->batch_size(100);
   $stats->hive_capacity(-1);
@@ -217,7 +218,7 @@ sub build_GeneTreeSystem
       -input_id_type   => 'genome_db_id',
       -module          => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeSubmitPep'
     );
-  $self->{'comparaDBA'}->get_AnalysisAdaptor()->store($submitpep_analysis);
+  $analysisDBA->store($submitpep_analysis);
   $stats = $analysisStatsDBA->fetch_by_analysis_id($submitpep_analysis->dbID);
   $stats->batch_size(1);
   $stats->hive_capacity(3);
@@ -235,7 +236,7 @@ sub build_GeneTreeSystem
       -module          => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDumpFasta',
       -parameters      => 'fasta_dir=>'.$analysis_template{fasta_dir}.',',
     );
-  $self->{'comparaDBA'}->get_AnalysisAdaptor()->store($dumpfasta_analysis);
+  $analysisDBA->store($dumpfasta_analysis);
   $stats = $analysisStatsDBA->fetch_by_analysis_id($dumpfasta_analysis->dbID);
   $stats->batch_size(1);
   $stats->hive_capacity(-1);
@@ -253,7 +254,7 @@ sub build_GeneTreeSystem
 #       -module          => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeCalcStats',
 #       -parameters      => '',
 #     );
-#   $self->{'comparaDBA'}->get_AnalysisAdaptor()->store($calcstats_analysis);
+#   $analysisDBA->store($calcstats_analysis);
 #   $stats = $analysisStatsDBA->fetch_by_analysis_id($calcstats_analysis->dbID);
 #   $stats->batch_size(1);
 #   $stats->hive_capacity(-1);
@@ -273,7 +274,7 @@ sub build_GeneTreeSystem
       -module          => 'Bio::EnsEMBL::Compara::RunnableDB::CreateBlastRules',
       -parameters      => $parameters
     );
-  $self->{'comparaDBA'}->get_AnalysisAdaptor()->store($blastrules_analysis);
+  $analysisDBA->store($blastrules_analysis);
   $stats = $analysisStatsDBA->fetch_by_analysis_id($blastrules_analysis->dbID);
   $stats->batch_size(1);
   $stats->hive_capacity(1);
@@ -297,7 +298,7 @@ sub build_GeneTreeSystem
       -module          => 'Bio::EnsEMBL::Compara::RunnableDB::UpdatePAFIds',
       -parameters      => $parameters
     );
-  $self->{'comparaDBA'}->get_AnalysisAdaptor()->store($updatepafids_analysis);
+  $analysisDBA->store($updatepafids_analysis);
   $stats = $analysisStatsDBA->fetch_by_analysis_id($updatepafids_analysis->dbID);
   $stats->batch_size(1);
   $stats->hive_capacity(-1);
@@ -321,7 +322,7 @@ sub build_GeneTreeSystem
   # the dynamic creation of the analyses like blast_1_NCBI34
   my $blast_template = new Bio::EnsEMBL::Analysis(%analysis_template);
   $blast_template->logic_name("blast_template");
-  eval { $self->{'comparaDBA'}->get_AnalysisAdaptor()->store($blast_template); };
+  eval { $analysisDBA->store($blast_template); };
 
   #
   # Create peptide_align_feature per-species tables
@@ -349,7 +350,7 @@ sub build_GeneTreeSystem
       -module          => 'Bio::EnsEMBL::Compara::RunnableDB::PAFCluster',
       -parameters      => $parameters
     );
-  $self->{'hiveDBA'}->get_AnalysisAdaptor()->store($paf_cluster);
+  $analysisDBA->store($paf_cluster);
   $stats = $paf_cluster->stats;
   $stats->batch_size(1);
   $stats->hive_capacity(-1);
@@ -363,7 +364,7 @@ sub build_GeneTreeSystem
       -logic_name      => 'Clusterset_staging',
       -module          => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
     );
-  $self->{'hiveDBA'}->get_AnalysisAdaptor()->store($clusterset_staging);
+  $analysisDBA->store($clusterset_staging);
   $stats = $clusterset_staging->stats;
   $stats->batch_size(-1);
   $stats->hive_capacity(1);
@@ -386,7 +387,7 @@ sub build_GeneTreeSystem
       -module          => 'Bio::EnsEMBL::Compara::RunnableDB::Muscle',
       -parameters      => $parameters
     );
-  $self->{'hiveDBA'}->get_AnalysisAdaptor()->store($muscle);
+  $analysisDBA->store($muscle);
   $stats = $muscle->stats;
   $stats->batch_size(1);
   $stats->hive_capacity(-1);
@@ -402,7 +403,8 @@ sub build_GeneTreeSystem
   if ($genetree_params{'species_tree_file'}){
     $parameters .= ",'species_tree_file'=>'". $genetree_params{'species_tree_file'}."'";
   } else {
-    warn("No species_tree_file => 'myfile' has been set in your config file. This parameter can not be set for njtree. EXIT 3\n");
+    warn("No species_tree_file => 'myfile' has been set in your config file. "
+         ."This parameter can not be set for njtree. EXIT 3\n");
     exit(3);
   }
   if (defined $genetree_params{'honeycomb_dir'}) {
@@ -419,7 +421,7 @@ sub build_GeneTreeSystem
       -module          => 'Bio::EnsEMBL::Compara::RunnableDB::NJTREE_PHYML',
       -parameters      => $parameters
     );
-  $self->{'hiveDBA'}->get_AnalysisAdaptor()->store($njtree_phyml);
+  $analysisDBA->store($njtree_phyml);
   $stats = $njtree_phyml->stats;
   $stats->batch_size(1);
   $stats->hive_capacity(400);
@@ -434,7 +436,7 @@ sub build_GeneTreeSystem
       -module          => 'Bio::EnsEMBL::Compara::RunnableDB::BreakPAFCluster',
       -parameters      => $parameters
     );
-  $self->{'hiveDBA'}->get_AnalysisAdaptor()->store($BreakPAFCluster);
+  $analysisDBA->store($BreakPAFCluster);
   $stats = $BreakPAFCluster->stats;
   $stats->batch_size(1);
   $stats->hive_capacity(3);
@@ -459,7 +461,7 @@ sub build_GeneTreeSystem
       -module          => 'Bio::EnsEMBL::Compara::RunnableDB::OrthoTree',
       -parameters      => $parameters
       );
-  $self->{'hiveDBA'}->get_AnalysisAdaptor()->store($orthotree);
+  $analysisDBA->store($orthotree);
   $stats = $orthotree->stats;
   $stats->batch_size(1);
   $stats->hive_capacity(200);
@@ -474,9 +476,7 @@ sub build_GeneTreeSystem
       -logic_name      => 'CreateHomology_dNdSJob',
       -module          => 'Bio::EnsEMBL::Compara::RunnableDB::CreateHomology_dNdSJobs',
   );
-  $self->{'hiveDBA'}
-    ? $self->{'hiveDBA'}->get_AnalysisAdaptor->store($CreateHomology_dNdSJob)
-    : $self->{'comparaDBA'}->get_AnalysisAdaptor->store($CreateHomology_dNdSJob);
+  $analysisDBA->store($CreateHomology_dNdSJob);
 
   if(defined($self->{'hiveDBA'})) {
     my $stats = $analysisStatsDBA->fetch_by_analysis_id($CreateHomology_dNdSJob->dbID);
@@ -509,7 +509,7 @@ sub build_GeneTreeSystem
   if (defined $dnds_params{'dNdS_analysis_data_id'}) {
     $homology_dNdS->parameters('{dNdS_analysis_data_id=>' . $dnds_params{'dNdS_analysis_data_id'} . '}');
   }
-  $self->{'comparaDBA'}->get_AnalysisAdaptor->store($homology_dNdS);
+  $analysisDBA->store($homology_dNdS);
   if(defined($self->{'hiveDBA'})) {
     my $stats = $analysisStatsDBA->fetch_by_analysis_id($homology_dNdS->dbID);
     $stats->batch_size(10);
@@ -527,9 +527,7 @@ sub build_GeneTreeSystem
       -logic_name      => 'Threshold_on_dS',
       -module          => 'Bio::EnsEMBL::Compara::RunnableDB::Threshold_on_dS'
   );
-  $self->{'hiveDBA'}
-    ? $self->{'hiveDBA'}->get_AnalysisAdaptor->store($threshold_on_dS)
-    : $self->{'comparaDBA'}->get_AnalysisAdaptor->store($threshold_on_dS);
+  $analysisDBA->store($threshold_on_dS);
 
   if(defined($self->{'hiveDBA'})) {
     my $stats = $analysisStatsDBA->fetch_by_analysis_id($threshold_on_dS->dbID);
