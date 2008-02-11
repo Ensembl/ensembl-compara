@@ -131,11 +131,10 @@ file as of ensembl v40.
 
 Pick a mysql instance and create a database;
 
-  $ set COMPARA_DBNAME=my_ensembl_compara_46
+  $ set COMPARA_DBNAME=my_ensembl_compara_48
   $ mysql -e "create database $COMPARA_DBNAME"
 
 And load the schemas;
-
   $ mysql $COMPARA_DBNAME \
     < $BASEDIR/ensembl-hive/sql/tables.sql
   $ mysql $COMPARA_DBNAME \
@@ -319,7 +318,8 @@ $ perl $BASEDIR/ensembl-compara/scripts/tree/testTaxonTree.pl \
   -create_species_tree -extrataxon_sequenced 7165_7159_7227 \
   -extrataxon_incomplete 7175_121225  -no_previous
 
-Which in this case will create your file with the name "njtree.5.ensembl_compara_45.nh":
+Which in this case will create your file with the name
+"njtree.5.ensembl_compara_45.nh":
 
 ((((7175,7159*)53550,7165*)7157,7227*)7147,121225);
 
@@ -372,6 +372,13 @@ available or if it's unable to connect to core databases.
  $ ./comparaLoadGenomes.pl -conf my_compara.conf
  $ ./loadGeneTreeSystem.pl -conf my_compara.conf
 
+If comparaLoadGenomes.pl goes wrong, the DB can be reset as follows;
+
+ $ mysql $COMPARA_DBNAME \
+   -e"delete from analysis;" -e"delete from analysis_job;" \
+   -e"delete from analysis_stats;" -e"delete from genome_db;" \
+   -e"delete from genome_db_extn;" -e"delete from meta;" 
+ 
 
 7- Create the method_link_species_sets
    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -405,7 +412,7 @@ create_mlss.pl script as follows;
 
 7.2. You may need to create the following method_link entries;
   
-  $ mysql my_ensembl_compara_45 -e \
+  $ mysql $COMPARA_DBNAME -e \
     'INSERT INTO method_link (type, class) \
      VALUES ("ENSEMBL_ORTHOLOGUES","Homology.homology"), \
             ("ENSEMBL_PARALOGUES", "Homology.homology"), \
@@ -419,25 +426,25 @@ create_mlss.pl script as follows;
 
   $ # For orthologues
   $ ./create_mlss.pl --f --pw \
-    --reg_conf /path/to/ensembl.registry \
+    --reg_conf ensembl.registry \
     --method_link_type ENSEMBL_ORTHOLOGUES \
     --genome_db_id '1,2,3,4,5'
 
   $ # For between-species paralogues
   $ ./create_mlss.pl --f --pw \
-    --reg_conf /path/to/ensembl.registry \
+    --reg_conf ensembl.registry \
     --method_link_type ENSEMBL_PARALOGUES \
     --genome_db_id '1,2,3,4,5'
 
   $ # For same-species paralogues
   $ ./create_mlss.pl --f --sg \
-    --reg_conf /path/to/ensembl.registry \
+    --reg_conf ensembl.registry \
     --method_link_type ENSEMBL_PARALOGUES \
     --genome_db_id '1,2,3,4,5'
 
   $ # For protein trees
   $ ./create_mlss.pl --f \
-    --reg_conf /path/to/ensembl.registry \
+    --reg_conf ensembl.registry \
     --method_link_type PROTEIN_TREES \
     --genome_db_id '1,2,3,4,5'
 
