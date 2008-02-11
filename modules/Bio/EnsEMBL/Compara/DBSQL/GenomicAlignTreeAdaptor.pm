@@ -222,17 +222,41 @@ sub store {
     if (!$genomic_align_block) {
       throw("No Bio::EnsEMBL::Compara::GenomicAlignBlock found for $this_node");
     }
-    $genomic_align_blocks->{$genomic_align_block} = $genomic_align_block
+    $genomic_align_blocks->{$genomic_align_block} = $genomic_align_block;
   }
 
   ## Store all the GenomicAlignBlock objects (this stores the GenomicAlign objects as well)
   my $genomic_align_block_adaptor = $self->db->get_GenomicAlignBlockAdaptor();
-  foreach my $this_genomic_align_block (values %$genomic_align_blocks) {
-    if (!$this_genomic_align_block->method_link_species_set) {
-      $this_genomic_align_block->method_link_species_set(
-          $this_genomic_align_block->get_all_GenomicAligns->[0]->method_link_species_set);
+  if (values %$genomic_align_blocks == 1) {
+    my $original_genomic_align_block = (values %$genomic_align_blocks)[0];
+    ## Need to split this block into ancestral/modern sequences before storing
+    my $method_link_species_set = ($node->method_link_species_set or
+        $node->get_all_GenomicAligns->[0]->method_link_species_set);
+    my $ancestral_genomic_align_block = new Bio::EnsEMBL::Compara::GenomicAlignBlock(
+        -method_link_species_set => $node->get_all_GenomicAligns->[0]->method_link_species_set,
+        -group_id => $original_genomic_align_block->group_id);
+    my $modern_genomic_align_block = new Bio::EnsEMBL::Compara::GenomicAlignBlock(
+        -method_link_species_set => $node->get_all_GenomicAligns->[0]->method_link_species_set,
+        -group_id => $original_genomic_align_block->group_id);
+    foreach my $genomic_align_node (@{$node->get_all_nodes}) {
+      my $genomic_align = $genomic_align_node->genomic_align;
+      if ($genomic_align_node->is_leaf()) {
+        $modern_genomic_align_block->add_GenomicAlign($genomic_align);
+      } else {
+        $ancestral_genomic_align_block->add_GenomicAlign($genomic_align);
+      }
     }
-    $genomic_align_block_adaptor->store($this_genomic_align_block);
+    $genomic_align_block_adaptor->store($ancestral_genomic_align_block);
+    $genomic_align_block_adaptor->store($modern_genomic_align_block);
+
+  } else {
+    foreach my $this_genomic_align_block (values %$genomic_align_blocks) {
+      if (!$this_genomic_align_block->method_link_species_set) {
+        $this_genomic_align_block->method_link_species_set(
+            $this_genomic_align_block->get_all_GenomicAligns->[0]->method_link_species_set);
+      }
+      $genomic_align_block_adaptor->store($this_genomic_align_block);
+    }
   }
 
   ## Store this node and, recursivelly, all the sub nodes
