@@ -188,6 +188,60 @@ sub reference_genomic_align {
 }
 
 
+=head2 group_id
+
+  Arg [1]    : integer $group_id
+  Example    : my $group_id = $genomic_align_tree->group_id;
+  Example    : $genomic_align_tree->group_id(1234);
+  Description: get/set for attribute group_id of the underlying
+               GenomicAlignBlock objects
+  Returntype : integer
+  Exceptions : A GenomicAlignTree is made of two GenomicAlignBlock
+               object. The method fail when gettign the value if the
+               two group_ids don't match
+  Caller     : general
+
+=cut
+
+sub group_id {
+    my ($self, $group_id) = @_;
+
+    if (defined($group_id)) {
+      $self->{'group_id'} = $group_id;
+      # Set the group_id on the genomic_align_blocks...
+      my %genomic_align_blocks;
+      foreach my $this_genomic_align_node (@{$self->get_all_sorted_genomic_align_nodes()}) {
+        my $this_genomic_align_block = $this_genomic_align_node->genomic_align->genomic_align_block;
+        if ($this_genomic_align_block and !defined($genomic_align_blocks{$this_genomic_align_block})) {
+          $this_genomic_align_block->group_id($group_id);
+          $genomic_align_blocks{$this_genomic_align_block} = 1;
+        }
+      }
+    } elsif (!defined($self->{'group_id'}) and defined($self->{adaptor})) {
+      # Try to get the ID from other sources...
+      my %group_ids;
+      my $genomic_align_block_adaptor = $self->adaptor->dba->get_GenomicAlignBlockAdaptor;
+      foreach my $this_genomic_align_node (@{$self->get_all_sorted_genomic_align_nodes()}) {
+        my $this_genomic_align_block_id = $this_genomic_align_node->genomic_align->genomic_align_block_id;
+        my $this_genomic_align_block = $genomic_align_block_adaptor->fetch_by_dbID($this_genomic_align_block_id);
+        if ($this_genomic_align_block->group_id) {
+          $group_ids{$this_genomic_align_block->group_id} = 1;
+        } else {
+          $group_ids{"undef"} = 1;
+        }
+      }
+      if (keys %group_ids == 1) {
+        if (!defined($group_ids{"undef"})) {
+          $self->{'group_id'} = (keys %group_ids)[0];
+        }
+      } else {
+        warning("Different group_ids found for this GenomicAlignTree\n");
+      }
+    }
+    return $self->{'group_id'};
+}
+
+
 =head2 name
 
   Arg [1]     : (optional) string $name
@@ -255,6 +309,101 @@ sub get_all_sorted_genomic_align_nodes {
   $self->{genomic_align_array} = [map {$_->genomic_align} @{$sorted_genomic_align_nodes}];
 
   return $sorted_genomic_align_nodes;
+}
+
+
+=head2 restrict_between_alignment_positions
+
+  Arg[1]     : [optional] int $start, refers to the start of the alignment
+  Arg[2]     : [optional] int $end, refers to the start of the alignment
+  Arg[3]     : [optional] boolean $skip_empty_GenomicAligns
+  Example    : none
+  Description: restrict this GenomicAlignBlock. It returns a new object unless no
+               restriction is needed. In that case, it returns the original unchanged
+               object.
+               This method uses coordinates relative to the alignment itself.
+               For instance if you have an alignment like:
+                            1    1    2    2    3
+                   1   5    0    5    0    5    0
+                   AAC--CTTGTGGTA-CTACTT-----ACTTT
+                   AACCCCTT-TGGTATCTACTTACCTAACTTT
+               and you restrict it between 5 and 25, you will get back a
+               object containing the following alignment:
+                            1    1
+                   1   5    0    5
+                   CTTGTGGTA-CTACTT----
+                   CTT-TGGTATCTACTTACCT
+
+               See restrict_between_reference_positions() elsewhere in this document
+               for an alternative method using absolute genomic coordinates.
+
+               NB: This method works only for GenomicAlignBlock which have been
+               fetched from the DB as it is adjusting the dnafrag coordinates
+               and the cigar_line only and not the actual sequences stored in the
+               object if any. If you want to restrict an object with no coordinates
+               a simple substr() will do!
+
+  Returntype : Bio::EnsEMBL::Compara::GenomicAlignBlock object
+  Exceptions : none
+  Caller     : general
+
+
+=cut
+
+sub restrict_between_alignment_positions {
+  my ($self, $start, $end, $reference_genomic_align, $skip_empty_GenomicAligns) = @_;
+  my $genomic_align_tree;
+
+  $self->get_all_sorted_genomic_align_nodes;
+  my $genomic_align_block = $self->SUPER::restrict_between_alignment_positions($start, $end,
+      $reference_genomic_align, 0);
+
+  return $self if (!$genomic_align_block or $genomic_align_block eq $self);
+  # Get a copy of the tree (this method should return a new object in order to comply with parent one.
+  $genomic_align_tree = $self->copy;
+
+  # Mess with the genomic_aligns. All of them should be in the same order!
+  my $all_genomic_align_nodes = $genomic_align_tree->get_all_sorted_genomic_align_nodes;
+  my $all_original_genomic_aligns = $genomic_align_tree->get_all_GenomicAligns;
+  my $all_new_genomic_aligns = $genomic_align_block->get_all_GenomicAligns;
+  return (1) if (@$all_genomic_align_nodes != @$all_original_genomic_aligns);
+  return (2) if (@$all_original_genomic_aligns != @$all_new_genomic_aligns);
+  $genomic_align_tree->{genomic_align_array} = $all_new_genomic_aligns;
+  for (my $i=0; $i<@$all_genomic_align_nodes; $i++) {
+    if ($all_new_genomic_aligns->[$i]->genome_db eq $all_original_genomic_aligns->[$i]->genome_db and
+        $all_new_genomic_aligns->[$i]->dnafrag eq $all_original_genomic_aligns->[$i]->dnafrag and
+        $all_new_genomic_aligns->[$i]->dnafrag_start >= $all_original_genomic_aligns->[$i]->dnafrag_start and
+        $all_new_genomic_aligns->[$i]->dnafrag_end <= $all_original_genomic_aligns->[$i]->dnafrag_end and
+        $all_new_genomic_aligns->[$i]->dnafrag_strand == $all_original_genomic_aligns->[$i]->dnafrag_strand) {
+      $all_genomic_align_nodes->[$i]->{genomic_align} = $all_new_genomic_aligns->[$i];
+      if ($self->reference_genomic_align eq $all_original_genomic_aligns->[$i]) {
+$DB::single = 1;
+        $genomic_align_tree->reference_genomic_align($all_genomic_align_nodes->[$i]->{genomic_align});
+      }
+      $all_genomic_align_nodes->[$i]->{genomic_align}->{genomic_align_block} = $genomic_align_block;
+    } else {
+      for (my $i=0; $i<@$all_genomic_align_nodes; $i++) {
+          print STDERR join(":",
+              $all_new_genomic_aligns->[$i]->genome_db->name,
+              $all_new_genomic_aligns->[$i]->dnafrag->name,
+              $all_new_genomic_aligns->[$i]->dnafrag_start,
+              $all_new_genomic_aligns->[$i]->dnafrag_end,
+              $all_new_genomic_aligns->[$i]->dnafrag_strand), "\n";
+          print STDERR join("|",
+              $all_original_genomic_aligns->[$i]->genome_db->name,
+              $all_original_genomic_aligns->[$i]->dnafrag->name,
+              $all_original_genomic_aligns->[$i]->dnafrag_start,
+              $all_original_genomic_aligns->[$i]->dnafrag_end,
+              $all_original_genomic_aligns->[$i]->dnafrag_strand), "\n";
+      }
+      warn("Cannot find right order");
+      return undef;
+    }
+  }
+
+  $genomic_align_tree->get_all_sorted_genomic_align_nodes;
+
+  return $genomic_align_tree;
 }
 
 
