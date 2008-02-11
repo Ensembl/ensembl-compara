@@ -140,7 +140,7 @@ sub fetch_input {
   ###################################################################
   my (%features_by_group, %query_lengths, %target_lengths);
   my %group_score;
-  
+
   while (my $gab = shift @{$gabs}) {
     
     my ($qy_ga) = $gab->reference_genomic_align;
@@ -186,7 +186,8 @@ sub fetch_input {
                     -chains               => [ map {$features_by_group{$_}} sort {$group_score{$b} <=> $group_score{$a}} keys %group_score ],
                     -chains_sorted => 1,
                     -chainNet             =>  $BIN_DIR . "/" . "chainNet",
-                    -workdir              => $WORKDIR);
+                    -workdir              => $WORKDIR,
+		    -min_chain_score      => $self->MIN_CHAIN_SCORE);
   
   my $run = Bio::EnsEMBL::Analysis::Runnable::AlignmentNets->new(%parameters);
   $self->runnable($run);
