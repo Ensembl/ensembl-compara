@@ -241,7 +241,7 @@ sub fetch_by_Slice_MethodLinkSpeciesSet {
 # # #               join(" : ", @{$_->{genomic_align_ids}})."]"
 # # #           } @$species_order), "\n";
       _combine_genomic_align_trees($species_order, $this_genomic_align_tree, $next_genomic_align_tree);
-      $next_genomic_align_tree->print();
+#       $next_genomic_align_tree->print();
 # # #       print STDERR "\nAFTER:\n - ", join("\n - ", map {
 # # #               $_->{genome_db}->name." (".($_->{right_node_id} or "***").")  [".
 # # #               join(" : ", @{$_->{genomic_align_ids}})."]"
