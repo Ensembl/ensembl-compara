@@ -15,6 +15,10 @@
   blastz
       using /usr/local/ensembl/bin/blastz
 
+  or
+  blat
+     using /usr/local/ensembl/bin/blat-32
+
 1.2 Code checkout
 
     bioperl code
@@ -124,7 +128,7 @@ allow the system to know where the respective core databases are located. This s
 will also 'seed' the pipeline/hive system by creating the first jobs in the analysis_job
 table for the analysis 'SubmitGenome'.
 
-The loadPairAlingerSystem script creates the analysis entries for the processing
+The loadPairAlignerSystem script creates the analysis entries for the processing
 system, and creates both the dataflow rule and the analysis control rules.
 It also initializes the analysis_stats row for each analysis.  These row hold
 information like batch_size, hive_capacity, and run-time stats that the Hive's
