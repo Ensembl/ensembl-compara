@@ -259,7 +259,14 @@ sub _add_child_name_to_classification {
 sub common_name {
   my $self = shift;
   if ($self->has_tag('genbank common name') && $self->rank eq 'species') {
-    return $self->get_tagvalue('genbank common name');
+    ## Patch for esnembl  48. Scientific name tags are duplicated
+    my $common_name = $self->get_tagvalue('genbank common name');
+    if (ref($common_name) eq "ARRAY") {
+      return $common_name->[0];
+    } else {
+      return $common_name;
+    }
+    return ;
   } else {
     return undef;
   }
@@ -279,7 +286,13 @@ sub common_name {
 sub binomial {
   my $self = shift;
   if ($self->has_tag('scientific name') && ($self->rank eq 'species' || $self->rank eq 'subspecies')) {
-    return $self->get_tagvalue('scientific name');
+    ## Patch for esnembl  48. Scientific name tags are duplicated
+    my $binomial = $self->get_tagvalue('scientific name');
+    if (ref($binomial) eq "ARRAY") {
+      return $binomial->[0];
+    } else {
+      return $binomial;
+    }
   } else {
     warning("taxon_id=",$self->node_id," is not a species or subspecies. So binomial is undef\n");
     return undef;
