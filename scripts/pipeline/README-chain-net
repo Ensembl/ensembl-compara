@@ -1,6 +1,6 @@
 
 The chain/net process assumes that you have already run a pairwise comparison pipeline
-between 2 genomes (whole or partial) usuallu using blastz aligner. Please start reading
+between 2 genomes (whole or partial) usually using blastz or blat aligner. Please start reading
 README-pairlaigner first
 
 Include in your PERL5LIB, the ensembl-analysis code
@@ -50,13 +50,16 @@ mkdir -p /acari/work7a/abel/hive/abel_compara_human_cow_blastz_27cn/human_nib_fo
 
 These need to be set in the hive configuration file as the 'dump_loc' variable.
 
+At the end of the pipeline, some basic healthchecks are performed. Currently these are 'pairwise_gabs' which checks that for each genome_align_block there are 2 genomic_aligns and 'compare_to_previous_db' which checks that the number of genomic_align_blocks after netting is within $max_percentage_diff of a previous database. If no HEALTHCHECK module is defined, the parameters are automatically created. The method_link_type comes from the output_method_link type from NET_CONFIG and the current_genome_db_ids come from the DNA_COLLECTION. The default previous_db_url is mysql://ensro@ens-livemirror and the default max_percentage_diff is 20. It is possible to either define all the params for the 2 healthchecks or only the previous_db_url for the compare_to_previous_db healthcheck and in this case the method_link_type and current_genome_db_ids will be created automatically.
+
+
 5- Run the configure scripts
    ~~~~~~~~~~~~~~~~~~~~~~~~~
 The following script is in ensembl-compara/scripts/pipeline (should be in your PATH)
 
 loadChainNetSystem.pl -conf hive.conf
 
-The loadPairAlingerSystem script creates the analysis entries for the processing
+The loadPairAlignerSystem script creates the analysis entries for the processing
 system, and creates both the dataflow rule and the analysis control rules.
 It also initializes the analysis_stats row for each analysis.  These row hold
 information like batch_size, hive_capacity, and run-time stats that the Hive's
@@ -92,5 +95,11 @@ where xxxx is the password for write access to the database
 for more details on controling/monitoring the hive system see 
 beekeeper -help
 
+7- Healthchecks
+   ~~~~~~~~~~~~
+The healthchecks are run at the end of the pipeline. If a healthcheck fails, it is important to discover why it has failed. It is possible to do this either by looking at the output file if hive_output_dir is defined or by running the job again interactively using runWorker.pl.
+for example
+runWorker.pl -bk LSF -url mysql://ensadmin:xxxx@ia64g:3306/abel_compara_human_cow_blastz_27  -job_id 115 -outdir '' -no_cleanup
 
-
+where the job_id is the analysis_job_id of the job you wish to rerun. For more information on the options of runWorker.pl see
+runWorker.pl -help
