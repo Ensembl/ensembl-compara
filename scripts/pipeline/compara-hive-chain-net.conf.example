@@ -49,8 +49,8 @@
                                                 # The collection_name needs to be unique to avoid confusion
     'genome_db_id'          => 3,
     'genome_name_assembly'  => 'Rattus norvegicus:RGSC3.4',
-    'chunk_size'            => 270000000,# set it to be over the longest toplevel seq_region
-                                         # you expect for this species
+#    'chunk_size'            => 270000000,# set it to be over the longest toplevel seq_region
+                                         # you expect for this species. If it is not defined, then the longest toplevel seg_region is automatically used.
     'dump_loc'              => '/acari/work7a/abel/hive/abel_compara_blastz_Hs35Rn3p4c/rat_nib_for_chain'
   },
 
@@ -60,8 +60,8 @@
                                                  # The collection_name needs to be unique to avoid confusion
     'genome_db_id'          => 1,
     'genome_name_assembly'  => 'Homo sapiens:NCBI35',
-    'chunk_size'            => 250000000,# set it to be over the longest toplevel seq_region
-                                         # you expect for this species
+#    'chunk_size'            => 250000000,# set it to be over the longest toplevel seq_region
+                                         # you expect for this species. If is not defined, then the longest toplevel seg_region is automatically used.
     'dump_loc'              => '/acari/work7a/abel/hive/abel_compara_blastz_Hs35Rn3p4c/human_nib_for_chain',
   },
 
@@ -70,8 +70,8 @@
     'input_method_link' => [1001, 'BLASTZ_RAW'],
     'output_method_link' => [1002, 'BLASTZ_CHAIN'],
 
-    'query_collection_name' => 'human for chain',
-    'target_collection_name' => 'rat for chain',
+    'reference_collection_name' => 'human for chain',
+    'non_reference_collection_name' => 'rat for chain',
               
     'max_gap' => 50,
     'output_group_type' => 'chain'
@@ -81,13 +81,21 @@
     'input_method_link' => [1002, 'BLASTZ_CHAIN'],
     'output_method_link' => [1, 'BLASTZ_NET'],
 
-    'query_collection_name' => 'human for chain',
-    'target_collection_name' => 'rat for chain',
+    'reference_collection_name' => 'human for chain',
+    'non_reference_collection_name' => 'rat for chain',
               
     'max_gap' => 50,
     'input_group_type' => 'chain',
     'output_group_type' => 'default'
   },
+
+## HEALTHCHECKS are run at the end of the pipeline.
+## If not defined, the healthcheck params are automatically created.
+# { TYPE => HEALTHCHECKS,
+#    'pairwise_gabs' => "params=>{method_link_type=>\'BLASTZ_NET\',genome_db_ids=>\'[25,22,]\'}", 
+    'compare_to_previous_db' => "params=>{previous_db_url=>\'mysql://anonymous\@ensembldb.ensembl.org\',method_link_type=>\'BLASTZ_NET\',current_genome_db_ids=>\'[25,22,]\',max_percentage_diff=>10}",             
+#    'previous_db_url' => 'mysql://anonymous@ensembldb.ensembl.org', #default mysql://ensro@ens-livemirror
+#  },            
 
   { TYPE => END }
 ]
