@@ -154,13 +154,16 @@ where alignment: alignment file used in multi-fasta format
       no_ABC_files: no ABC files produced
 
 You will also need to add the paths for gerp and semphy if you want to run Gerp. At the time of
-writting these can be found in:
+writing these can be found in:
 /software/ensembl/compara/semphy
 /software/ensembl/compara/gerp/GERP_03292006/
 
 For the SYNTENY_MAP_BUILDER, the MULTIPLE_ALIGNER and the CONSERVATION_SCORE blocks you can specify
 the logic_name for the method. You can also specify the module name. If none is given, the hive will
 use the Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::$logic_name module.
+
+At the end of the pipeline, some basic healthchecks are performed. Currently these are conservation_jobs which checks whether there is one conservation job per multiple alignment and conservation_scores which checks if the conservation scores correspond to existing genomic_align_blocks, whether the correct gerp_XXX entry exists in the meta table and whether there are no alignments with more than 3 seqs and no scores. If no HEALTHCHECK module is defined, the parameters are automatically created.
+
 
 5- Run the configure scripts
    ~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -210,6 +213,14 @@ where xxxx is the password for write access to the database
 for more details on controling/monitoring the hive system see 
 beekeeper -help
 
+7- Healthchecks
+   ~~~~~~~~~~~~
+The healthchecks are run at the end of the pipeline. If a healthcheck fails, it is important to discover why it has failed. It is possible to do this either by looking at the output file if hive_output_dir is defined or by running the job again interactively using runWorker.pl.
+for example
+runWorker.pl -bk LSF -url mysql://ensadmin:xxxx@compara1:3306/kb3_compara_human_mouse_tblat_healthcheck_test -job_id 115 -outdir '' -no_cleanup
+
+where the job_id is the analysis_job_id of the job you wish to rerun. For more information on the options of runWorker.pl see
+runWorker.pl -help
 
 *TROUBLESHOOTING*
 
