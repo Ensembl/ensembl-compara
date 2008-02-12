@@ -66,6 +66,13 @@
    '-program' => '/software/ensembl/compara/gerp/GERP_03292006/GERP.pl',
  },
 
+## HEALTHCHECKS are run at the end of the pipeline.
+## If not defined, the healthcheck params are automatically created.
+# { TYPE => HEALTHCHECKS,
+#   'conservation_jobs' => "params=>{logic_name=>'Gerp',method_link_type=>'PECAN',}",
+#   'conservation_scores' => "params=>{method_link_species_set_id=>50001}",
+# },
+
  { TYPE => SPECIES,
    'abrev'          => 'Hs35i',
    'genome_db_id'   => 1,
