@@ -33,7 +33,6 @@ function ajax_call_complete() {
 }
 
 function info_fragment(caller) {
-  //alert(caller);
   json = eval( '(' + caller + ')' );
   var data = "gene=" + json.fragment.stable_id+"&db=" +json.fragment.db;
   for (i = 0; i < json.components.length; i++) {
@@ -41,7 +40,7 @@ function info_fragment(caller) {
   }
   var url = "/" + json.fragment.species + "/populate_info_fragment";
   var ajax_panel = new Ajax.Request(url, {
-                           method: 'get',
+                           method: 'POST',
                            parameters: data,
                            onComplete: info_panel_loaded
                          });
