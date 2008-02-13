@@ -61,10 +61,8 @@ use Bio::EnsEMBL::Analysis;
 use Bio::EnsEMBL::Root;
 use Bio::PrimarySeqI;
 use Bio::SeqI;
-use Bio::EnsEMBL::Compara::Production::DnaFragChunkSet;
 
 @ISA = qw(Bio::EnsEMBL::Analysis::Runnable);
-
 
 sub new {
   my ($class,@args) = @_;
@@ -105,7 +103,7 @@ sub run {
 
   my $blat_output_pipe = undef;
 
-  $cmd .=  " stdout";
+  $cmd .=  " -out=pslx -noHead stdout";
 
   info("Running blat to pipe...\n$cmd\n");
   print("Running blat to pipe...\n$cmd\n");
@@ -132,7 +130,7 @@ sub parse_results {
     my @alignments;
 
     while (<$blat_output_pipe>) {
-	print STDERR "$_\n";
+	#print STDERR "$_\n";
     
 	############################################################
 	#  PSL lines represent alignments and are typically taken from files generated 
@@ -177,9 +175,9 @@ sub parse_results {
            # $block_sizes,  $q_starts,      $t_starts\n";
 
 	# ignore any preceeding text
-	unless ( defined($matches) and $matches =~/^\d+$/ ){
-	    next;
-	}
+	#unless ( defined($matches) and $matches =~/^\d+$/ ){
+	 #   next;
+	#}
 
 	# create as many features as blocks there are in each output line
 	my (%feat1, %feat2);
@@ -317,117 +315,117 @@ sub parse_results {
 	    $feat1 {end}   = $target_ends[$i];
 	    
 	    my $this_q_bioseq = Bio::Seq->new(
-					       -seq => $q_sequences[$i],
-					       -moltype => "dna",
-					       -alphabet => 'dna',
-					       -id => "q_seq");
+					     -seq => $q_sequences[$i],
+					     -moltype => "dna",
+					     -alphabet => 'dna',
+					     -id => "q_seq");
 	    my $this_t_bioseq = Bio::Seq->new(
 					      -seq => $t_sequences[$i],
 					      -moltype => "dna",
 					      -alphabet => 'dna',
 					      -id => "t_seq");
 	    my ($score, $percent_id, $frame) =
-               get_best_score_in_all_frames($this_q_bioseq, $this_t_bioseq);
-	# we put all the features with the same score and percent_id
-	$feat2 {score}   = $score;
-	$feat1 {score}   = $feat2 {score};
-	$feat2 {percent} = $percent_id;
-	$feat1 {percent} = $feat2 {percent};
-	
-	# other stuff:
-	$feat1 {db}         = undef;
-	$feat1 {db_version} = undef;
-	$feat1 {program}    = 'blat';
-	$feat1 {p_version}  = '1';
-	$feat1 {source}     = 'blat';
-	$feat1 {primary}    = 'similarity';
-	$feat2 {source}     = 'blat';
-	$feat2 {primary}    = 'similarity';
-	
-	## make strand -1 or 1 rather than - or +
-	my $t_strand = ( $feat1{strand}eq '-')?"-1":"1";
-	my $q_strand = ($feat2{strand} eq '-')?"-1":"1";
-	
-	## make FeaturePair object
-	my $feature_pair = new Bio::EnsEMBL::FeaturePair;
-	$feature_pair->seqname($feat2{name});
-	$feature_pair->start($query_starts[$i]);
-	$feature_pair->end($query_ends[$i]);
-	$feature_pair->strand($q_strand);
-	$feature_pair->hseqname($feat1{name});
-	$feature_pair->hstart($target_starts[$i]);
-	$feature_pair->hend($target_ends[$i]);
-	$feature_pair->hstrand($t_strand);
-	$feature_pair->score($score);
-	$feature_pair->percent_id($percent_id);
-
-	# note that the cigar_string is created in Bio::EnsEMBL::BaseAlignFeature
-	my $alignment = new Bio::EnsEMBL::DnaDnaAlignFeature(-features => [$feature_pair]);
-
-	push @alignments, $alignment;
-       }
+	      get_best_score_in_all_frames($this_q_bioseq, $this_t_bioseq);
+	    # we put all the features with the same score and percent_id
+	    $feat2 {score}   = $score;
+	    $feat1 {score}   = $feat2 {score};
+	    $feat2 {percent} = $percent_id;
+	    $feat1 {percent} = $feat2 {percent};
+	    
+	    # other stuff:
+	    $feat1 {db}         = undef;
+	    $feat1 {db_version} = undef;
+	    $feat1 {program}    = 'blat';
+	    $feat1 {p_version}  = '1';
+	    $feat1 {source}     = 'blat';
+	    $feat1 {primary}    = 'similarity';
+	    $feat2 {source}     = 'blat';
+	    $feat2 {primary}    = 'similarity';
+	    
+	    ## make strand -1 or 1 rather than - or +
+	    my $t_strand = ( $feat1{strand}eq '-')?"-1":"1";
+	    my $q_strand = ($feat2{strand} eq '-')?"-1":"1";
+	    
+	    ## make FeaturePair object
+	    my $feature_pair = new Bio::EnsEMBL::FeaturePair;
+	    $feature_pair->seqname($feat2{name});
+	    $feature_pair->start($query_starts[$i]);
+	    $feature_pair->end($query_ends[$i]);
+	    $feature_pair->strand($q_strand);
+	    $feature_pair->hseqname($feat1{name});
+	    $feature_pair->hstart($target_starts[$i]);
+	    $feature_pair->hend($target_ends[$i]);
+	    $feature_pair->hstrand($t_strand);
+	    $feature_pair->score($score);
+	    $feature_pair->percent_id($percent_id);
+	    
+	    # note that the cigar_string is created in Bio::EnsEMBL::BaseAlignFeature
+	    my $alignment = new Bio::EnsEMBL::DnaDnaAlignFeature(-features => [$feature_pair]);
+	    
+	    push @alignments, $alignment;
+        }
     }
-foreach my $out (@alignments) {
-    print STDERR $out->seqname."\t"."BLAT"."\tsimilarity\t".$out->start."\t".$out->end."\t".$out->hseqname."\t".$out->hstart."\t".$out->hend."\t".
-  $out->score."\t".$out->p_value."\t".$out->hstrand."\t". $out->strand."\t".$out->identical_matches."\t".$out->positive_matches."\t".$out->cigar_string."\n"; #this line is the start of a gff line for display
-}
-
-return \@alignments;
+#foreach my $out (@alignments) {
+ #      print STDERR $out->seqname."\t"."BLAT"."\tsimilarity\t".$out->start."\t".$out->end."\t".$out->hseqname."\t".$out->hstart."\t".$out->hend."\t".
+#    $out->score."\t".$out->p_value."\t".$out->hstrand."\t". $out->strand."\t".$out->identical_matches."\t".$out->positive_matches."\t".$out->cigar_string."\n"; #this line is the start of a gff line for display
+#}
+    
+    return \@alignments;
 }
 
 sub get_best_score_in_all_frames {
-  my ($seq1, $seq2, $matrix) = @_;
-
-  my @aa_seq1_6fr = Bio::SeqUtils->translate_6frames($seq1);
-  my @aa_seq2_6fr = Bio::SeqUtils->translate_6frames($seq2);
-
-  my $score;
-  my $perc_id = 0;
-  my $frame = 0;
-##  my $seqs;
-  for (my $i=0; $i<6; $i++) {
-    my $this_score = 0;
-    my $this_perc_id = 0;
-    my $this_seq1 = $aa_seq1_6fr[$i]->seq;
-    my $this_seq2 = $aa_seq2_6fr[$i]->seq;
-    my $length = length($this_seq1);
-    $length = length($this_seq2) if (length($this_seq2) < $length);
-    my @this_seq1 = split("", $this_seq1);
-    my @this_seq2 = split("", $this_seq2);
-
-    if (defined($matrix)) {
-      for (my $j=0; $j<$length; $j++) {
-        my $aa1 = $this_seq1[$j];
-        my $aa2 = $this_seq2[$j];
-        $this_score += $matrix->{$aa1}->{$aa2};
-        $this_perc_id++ if ($aa1 eq $aa2);
-      }
-    } else {
-      for (my $j=0; $j<$length; $j++) {
-        my $aa1 = $this_seq1[$j];
-        my $aa2 = $this_seq2[$j];
-        if ($aa1 eq $aa2) {
-          $this_score += 2;
-          $this_perc_id++;
-        } else {
-          $this_score--;
-        }
-      }
+    my ($seq1, $seq2, $matrix) = @_;
+    
+    my @aa_seq1_6fr = Bio::SeqUtils->translate_6frames($seq1);
+    my @aa_seq2_6fr = Bio::SeqUtils->translate_6frames($seq2);
+    
+    my $score;
+    my $perc_id = 0;
+    my $frame = 0;
+    ##  my $seqs;
+    for (my $i=0; $i<6; $i++) {
+	my $this_score = 0;
+	my $this_perc_id = 0;
+	my $this_seq1 = $aa_seq1_6fr[$i]->seq;
+	my $this_seq2 = $aa_seq2_6fr[$i]->seq;
+	my $length = length($this_seq1);
+	$length = length($this_seq2) if (length($this_seq2) < $length);
+	my @this_seq1 = split("", $this_seq1);
+	my @this_seq2 = split("", $this_seq2);
+	
+	if (defined($matrix)) {
+	    for (my $j=0; $j<$length; $j++) {
+		my $aa1 = $this_seq1[$j];
+		my $aa2 = $this_seq2[$j];
+		$this_score += $matrix->{$aa1}->{$aa2};
+		$this_perc_id++ if ($aa1 eq $aa2);
+	    }
+	} else {
+	    for (my $j=0; $j<$length; $j++) {
+		my $aa1 = $this_seq1[$j];
+		my $aa2 = $this_seq2[$j];
+		if ($aa1 eq $aa2) {
+		    $this_score += 2;
+		    $this_perc_id++;
+		} else {
+		    $this_score--;
+		}
+	    }
+	}
+	
+	if (!defined($score) or ($this_score > $score)) {
+	    $score = $this_score;
+	    if ($length) {
+		$perc_id = int(100 * $this_perc_id / $length);
+	    } else {
+		$perc_id = 0;
+	    }
+	    $frame = $i;
+	    ##      $seqs = $this_seq1."\n".$this_seq2;
+	}
     }
-
-    if (!defined($score) or ($this_score > $score)) {
-      $score = $this_score;
-      if ($length) {
-        $perc_id = int(100 * $this_perc_id / $length);
-      } else {
-        $perc_id = 0;
-      }
-      $frame = $i;
-##      $seqs = $this_seq1."\n".$this_seq2;
-    }
-  }
-
-  return ($score, $perc_id, $frame);
+    
+    return ($score, $perc_id, $frame);
 }
 
 
@@ -449,18 +447,18 @@ sub get_best_score_in_all_frames {
 =cut
 
 sub query {
-  my ($self, $val) = @_;
-
-  if (defined $val) {
-    if (not ref($val)) {   
-      throw("[$val] : file does not exist\n") unless -e $val;
-    } elsif (not $val->isa("Bio::PrimarySeqI")) {
-      throw("[$val] is neither a Bio::Seq not a file");
+    my ($self, $val) = @_;
+    
+    if (defined $val) {
+	if (not ref($val)) {   
+	    throw("[$val] : file does not exist\n") unless -e $val;
+	} elsif (not $val->isa("Bio::PrimarySeqI")) {
+	    throw("[$val] is neither a Bio::Seq not a file");
+	}
+	$self->{_query} = $val;
     }
-    $self->{_query} = $val;
-  }
-
-  return $self->{_query}
+    
+    return $self->{_query}
 }
 
 =head2 database
@@ -475,86 +473,86 @@ sub query {
 =cut
 
 sub database {
-  my ($self, $val) = @_;
-
-  if (defined $val) {
-    if (not ref($val)) {   
-      throw("[$val] : file does not exist\n") unless -e $val;
-    } else {
-      if (ref($val) eq 'ARRAY') {
-        foreach my $el (@$val) {
-          throw("All elements of given database array should be Bio::PrimarySeqs")
-              if not ref($el) or not $el->isa("Bio::PrimarySeq");
-        }
-      } elsif (not $val->isa("Bio::PrimarySeq")) {
-        throw("[$val] is neither a file nor array of Bio::Seq");
-      } else {
-        $val = [$val];
-      }
+    my ($self, $val) = @_;
+    
+    if (defined $val) {
+	if (not ref($val)) {   
+	    throw("[$val] : file does not exist\n") unless -e $val;
+	} else {
+	    if (ref($val) eq 'ARRAY') {
+		foreach my $el (@$val) {
+		    throw("All elements of given database array should be Bio::PrimarySeqs")
+		      if not ref($el) or not $el->isa("Bio::PrimarySeq");
+		}
+	    } elsif (not $val->isa("Bio::PrimarySeq")) {
+		throw("[$val] is neither a file nor array of Bio::Seq");
+	    } else {
+		$val = [$val];
+	    }
+	}
+	$self->{_database} = $val;
     }
-    $self->{_database} = $val;
-  }
-
-  return $self->{_database};
+    
+    return $self->{_database};
 }
 
 ############################################################
 
 sub blat {
-  my ($self, $location) = @_;
-  if ($location) {
-    throw("Blat not found at $location: $!\n") unless (-e $location);
-    $self->{_blat} = $location ;
-  }
-  return $self->{_blat};
+    my ($self, $location) = @_;
+    if ($location) {
+	throw("Blat not found at $location: $!\n") unless (-e $location);
+	$self->{_blat} = $location ;
+    }
+    return $self->{_blat};
 }
 
 ############################################################
 
 sub query_type {
-  my ($self, $mytype) = @_;
-  if (defined($mytype) ){
-    my $type = lc($mytype);
-    unless( $type eq 'dna' || $type eq 'rna' || $type eq 'prot' || $type eq 'dnax' || $type eq 'rnax' ){
-      throw("not the right query type: $type");
+    my ($self, $mytype) = @_;
+    if (defined($mytype) ){
+	my $type = lc($mytype);
+	unless( $type eq 'dna' || $type eq 'rna' || $type eq 'prot' || $type eq 'dnax' || $type eq 'rnax' ){
+	    throw("not the right query type: $type");
+	}
+	$self->{_query_type} = $type;
     }
-    $self->{_query_type} = $type;
-  }
-  return $self->{_query_type};
+    return $self->{_query_type};
 }
 
 ############################################################
 
 sub target_type {
-  my ($self, $mytype) = @_;
-  if (defined($mytype) ){
-    my $type = lc($mytype);
-    unless( $type eq 'dna' || $type eq 'prot' || $type eq 'dnax' ){
-      throw("not the right target type: $type");
+    my ($self, $mytype) = @_;
+    if (defined($mytype) ){
+	my $type = lc($mytype);
+	unless( $type eq 'dna' || $type eq 'prot' || $type eq 'dnax' ){
+	    throw("not the right target type: $type");
+	}
+	$self->{_target_type} = $type ;
     }
-    $self->{_target_type} = $type ;
-  }
-  return $self->{_target_type};
+    return $self->{_target_type};
 }
 
 ############################################################
 
 sub options {
-  my ($self, $options) = @_;
-  if ($options) {
-    $self->{_options} = $options ;
-  }
-  return $self->{_options};
+    my ($self, $options) = @_;
+    if ($options) {
+	$self->{_options} = $options ;
+    }
+    return $self->{_options};
 }
 
 ############################################################
 
 sub parse {
-  my ($self, $parse) = @_;
-  if ($parse) {
-    $self->{_parse} = $parse;
-  }
-  return $self->{_parse};
+    my ($self, $parse) = @_;
+    if ($parse) {
+	$self->{_parse} = $parse;
+    }
+    return $self->{_parse};
 }
 
 ############################################################
