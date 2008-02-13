@@ -1,5 +1,5 @@
 3	10116	Rattus norvegicus	RGSC3.4	1	2006-02-Ensembl	
-4	31033	Takifugu rubripes	FUGU4	1	2005-05-IMCB	
+4	31033	Takifugu rubripes	FUGU4	1	2007-11-Ensembl	
 5	7165	Anopheles gambiae	AgamP3	1	2007-06-VectorBase	
 13	99883	Tetraodon nigroviridis	TETRAODON7	1	2004-09-Genoscope	
 16	8364	Xenopus tropicalis	JGI4.1	1	2005-11-Ensembl	
@@ -16,10 +16,9 @@
 37	8090	Oryzias latipes	MEDAKA1	1	2006-05-Ensembl	
 38	9598	Pan troglodytes	CHIMP2.1	1	2007-05-Ensembl	
 39	9615	Canis familiaris	BROADD2	1	2006-12-Ensembl	
-40	7227	Drosophila melanogaster	BDGP4.3	1	2006-03-FlyBase	
 42	9031	Gallus gallus	WASHUC2	1	2006-08-Ensembl	
 43	9258	Ornithorhynchus anatinus	OANA5	1	2007-01-Ensembl	
-44	4932	Saccharomyces cerevisiae	SGD1.01	1	2006-12-SGD	
+44	4932	Saccharomyces cerevisiae	SGD1.01	1	2007-10-SGD	
 45	9913	Bos taurus	Btau_3.1	1	2006-09-Ensembl	
 46	13616	Monodelphis domestica	BROADO5	1	2007-02-Ensembl	
 47	9685	Felis catus	CAT	1	2006-06-Ensembl	
@@ -35,3 +34,7 @@
 57	10090	Mus musculus	NCBIM37	1	2007-04-Ensembl	
 58	30608	Microcebus murinus	micMur1	1	2007-07-Ensembl	
 59	9978	Ochotona princeps	pika	1	2007-07-Ensembl	
+60	9600	Pongo pygmaeus	PPYG2	1	2007-10-Ensembl	
+61	9796	Equus caballus	EquCab2	1	2007-09-Ensembl	
+62	7227	Drosophila melanogaster	BDGP5.4	1	2007-10-Ensembl	
+63	0	Ancestral sequences		1		
