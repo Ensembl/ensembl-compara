@@ -91,7 +91,7 @@
     'method_link' => [6, 'TRANSLATED_BLAT'],
     'analysis_template' => {
         '-program'      => 'blat-32',
-        '-parameters'   => "{method_link=>'TRANSLATED_BLAT',options=>'-minScore=30 -t=dnax -q=dnax -mask=lower -qMask=lower -out=pslx'}",
+        '-parameters'   => "{method_link=>'TRANSLATED_BLAT',options=>'-minScore=30 -t=dnax -q=dnax -mask=lower -qMask=lower'}",
         '-module'        => 'Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::Blat',
     },
     'max_parallel_workers'    => 200, #depending on the speed of the 'core' and 'compara' databases used, default is 200

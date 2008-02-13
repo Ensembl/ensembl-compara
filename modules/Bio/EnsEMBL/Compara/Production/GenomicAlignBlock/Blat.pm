@@ -78,7 +78,7 @@ sub configure_defaults {
   #-ooc=/tmp/worker.????/5ooc
   #
 
-  $self->options('-minScore=30 -t=dnax -q=dnax -mask=lower -qMask=lower -out=pslx');
+  $self->options('-minScore=30 -t=dnax -q=dnax -mask=lower -qMask=lower');
   $self->method_link_type('TRANSLATED_BLAT');
   
   return 0;
