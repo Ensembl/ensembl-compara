@@ -3,7 +3,6 @@ package EnsEMBL::Web::Data;
 use strict;
 use warnings;
 
-##
 use Class::Std;
 use Carp qw(:DEFAULT cluck);
 use EnsEMBL::Web::DBSQL::SQL::Result;
