@@ -158,8 +158,15 @@ sub calc_genetic_distance
     print_simple_align($aln, 80);
     print("codeml error : ", $codeml->error_string, "\n");
   }
-  my $result = $parser->next_result;
-  
+  my $result;
+  eval{ $result = $parser->next_result };
+  unless( $result ){
+    if( $@ ){ 
+      warn( "$@\n" );
+    }
+    warn( "Parser failed" );
+    return $homology;
+  }
   my $MLmatrix = $result->get_MLmatrix();
 
   #print "n = ", $MLmatrix->[0]->[1]->{'N'},"\n";
