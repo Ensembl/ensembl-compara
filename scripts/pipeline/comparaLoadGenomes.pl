@@ -185,7 +185,8 @@ sub submitGenome
   }
   # Some NCBI taxons for complete genomes have no binomial, so one has
   # to go to the species level - A.G.
-  if (!defined $genome_name) {
+  if (!defined $genome_name ) {
+    $verbose && print"  Cannot get binomial from NCBITaxon, try Meta...\n";
     $genome_name = $meta->get_Species->binomial;
   }
 
