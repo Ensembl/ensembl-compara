@@ -30,7 +30,10 @@ sub mail {
     'Subject' => "Failed to deploy head.ensembl.org: $error",
   });
   
-  print $mailer "STDOUT:\n$stdout \n\n STDERR:\n$stderr";
+  open LOG, 'deploy.log';
+  my $body = join "\n", <LOG>;
+  
+  print $mailer $body;
   $mailer->close();
 }
 
@@ -38,10 +41,10 @@ BEGIN {
   no strict 'refs';
 
   close STDOUT;
-  open  STDOUT, '>', \$stdout or die "Can't open STDOUT: $!";
+  open  STDOUT, '>deploy.log' or die "Can't open STDOUT: $!";
   
   close STDERR;
-  open  STDERR, '>', \$stderr or die "Can't open STDERR: $!";
+  open  STDERR, '>deploy.log' or die "Can't open STDERR: $!";
 
   my $config;
   my $config_file = $ARGV[0] || './deploy.yml';
