@@ -68,7 +68,7 @@ if (-e 'lock') {
 }
 
 execute('cvs -q -d :ext:'.$cvs_user.'@'.$cvs_server.':'.$cvs_root." co -d $checkout ensembl-website ensembl-api sanger-plugins > /dev/null");
-execute('cp support/Plugins.pm checkout/conf/');
+execute("cp -f support/Plugins.test.pm $checkout/conf/Plugins.pm");
 
 execute("ln -s $apache_src $checkout/apache2");
 execute("ln -s $bioperl_live $checkout/bioperl-live");
@@ -92,6 +92,8 @@ sleep 3;
 execute("$checkout/ctrl_scripts/start_server");
 sleep 3;
 execute("$checkout/ctrl_scripts/stop_server", 1);
+
+execute("cp -f support/Plugins.pm $checkout/conf/");
 execute("cp -rpf $checkout/* /ensemblweb/head/");
 
 execute("/ensemblweb/head/ctrl_scripts/stop_server", 1);
