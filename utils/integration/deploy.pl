@@ -4,7 +4,10 @@
 #use warnings;
 use Data::Dumper;
 use YAML qw(LoadFile);
+use Mail::Mailer;
 use Carp;
+
+my ($stderr, $stdout);
 
 sub execute {
   my $command = shift;
@@ -13,13 +16,33 @@ sub execute {
   if (system($command) != 0 && !$ignore_failures) {
     execute('rm -f lock', 1);
     execute("rm -rf $checkout", 1);
+    mail($?);
     die " FAILED: $?";
   }
 }
 
+sub mail {
+  my $error = shift;
+  my $mailer = new Mail::Mailer 'smtp', Server => 'localhost';
+  $mailer->open({
+    'To'      => 'eb4@sanger.ac.uk',
+    'From'    => 'head@ensembl.org',
+    'Subject' => "Failed to deploy head.ensembl.org: $error",
+  });
+  
+  print $mailer "STDOUT:\n$stdout \n\n STDERR:\n$stderr";
+  $mailer->close();
+}
 
 BEGIN {
   no strict 'refs';
+
+  close STDOUT;
+  open  STDOUT, '>', \$stdout or die "Can't open STDOUT: $!";
+  
+  close STDERR;
+  open  STDERR, '>', \$stderr or die "Can't open STDERR: $!";
+
   my $config;
   my $config_file = $ARGV[0] || './deploy.yml';
   print "Using: $config_file\n";
