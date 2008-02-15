@@ -40,12 +40,6 @@ sub mail {
 BEGIN {
   no strict 'refs';
 
-  close STDOUT;
-  open  STDOUT, '>deploy.log' or die "Can't open STDOUT: $!";
-  
-  close STDERR;
-  open  STDERR, '>deploy.log' or die "Can't open STDERR: $!";
-
   my $config;
   my $config_file = $ARGV[0] || './deploy.yml';
   print "Using: $config_file\n";
@@ -59,13 +53,20 @@ BEGIN {
     *{ "main\::$key" } = \$value;
   }
 
+  chdir $integration_path;
+
+  close STDOUT;
+  open  STDOUT, '>deploy.log' or die "Can't open STDOUT: $!";
+  
+  close STDERR;
+  open  STDERR, '>deploy.log' or die "Can't open STDERR: $!";
+
+
 #  push @INC, $integration_path . '/modules';
 #  $SIG{INT} = \&CATCH;
 }
 
 my $run;
-
-chdir $integration_path;
 
 if (-e $checkout) {
   execute("cvs -n -q up -dP $checkout > $integration_path/cvs.update");
