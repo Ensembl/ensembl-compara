@@ -30,8 +30,13 @@ sub mail {
     'Subject' => "Failed to deploy head.ensembl.org: $error",
   });
   
-  open LOG, 'deploy.log';
-  my $body = join "\n", <LOG>;
+  open LOG, 'deploy.out.log';
+  my $body = "STDOUT: \n". join "\n", <LOG>;
+  close LOG;
+  
+  open LOG, 'deploy.err.log';
+  my $body = "\n\n\nSTDERR: \n". join "\n", <LOG>;
+  close LOG;
   
   print $mailer $body;
   $mailer->close();
@@ -56,10 +61,10 @@ BEGIN {
   chdir $integration_path;
 
   close STDOUT;
-  open  STDOUT, '>deploy.log' or die "Can't open STDOUT: $!";
+  open  STDOUT, '>deploy.out.log' or die "Can't open STDOUT: $!";
   
   close STDERR;
-  open  STDERR, '>deploy.log' or die "Can't open STDERR: $!";
+  open  STDERR, '>deploy.err.log' or die "Can't open STDERR: $!";
 
 
 #  push @INC, $integration_path . '/modules';
@@ -69,7 +74,7 @@ BEGIN {
 my $run;
 
 if (-e $checkout) {
-  execute("cvs -n -q up -dP $checkout > $integration_path/cvs.update");
+  execute('cvs -n -q :ext:'.$cvs_user.'@'.$cvs_server.':'.$cvs_root." up -dP $checkout > $integration_path/cvs.update");
   open (INPUT, "$integration_path/cvs.update") or die "$!";
   $run = 1 if grep {/^U/} <INPUT>;
   close INPUT;
