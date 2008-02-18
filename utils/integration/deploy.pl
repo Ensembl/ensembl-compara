@@ -74,7 +74,7 @@ BEGIN {
 my $run;
 
 if (-e $checkout) {
-  execute('cvs -n -q :ext:'.$cvs_user.'@'.$cvs_server.':'.$cvs_root." up -dP $checkout > $integration_path/cvs.update");
+  execute("cvs -n -q  up -dP $checkout > $integration_path/cvs.update");
   open (INPUT, "$integration_path/cvs.update") or die "$!";
   $run = 1 if grep {/^U/} <INPUT>;
   close INPUT;
