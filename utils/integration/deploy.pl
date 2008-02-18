@@ -35,7 +35,7 @@ sub mail {
   close LOG;
   
   open LOG, 'deploy.err.log';
-  my $body = "\n\n\nSTDERR: \n". join "\n", <LOG>;
+  my $body .= "\n\n\nSTDERR: \n". join "\n", <LOG>;
   close LOG;
   
   print $mailer $body;
