@@ -21,7 +21,7 @@ sub get_block_features {
       return [];
     }
      #warn "Adapt $feature_adaptor"; 
-     my $features = $feature_adaptor->fetch_all_displayable_by_feature_type_class('Insulator') || [] ; 
+     my $features = $feature_adaptor->fetch_all_displayable_by_feature_type_class('Insulator') || [] ;  warn "FEATS $features";
     $self->{'block_features'} = $features; 
   }
 
