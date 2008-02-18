@@ -110,15 +110,6 @@ mkdir "$checkout/logs";
 mkdir "$checkout/tmp";
 
 
-#
-#$integration->add_configuration_task(
-#  Integration::Task::EDoc->new(
-#    source      => INTEGRATION . '/checkout/utils/edoc',
-#    destination => INTEGRATION . '/checkout/htdocs/info/webcode/docs',
-#  )  
-#);
-
-
 execute("$checkout/ctrl_scripts/stop_server", 1);
 sleep 3;
 execute("$checkout/ctrl_scripts/start_server");
@@ -131,46 +122,6 @@ execute("cp -rpf $checkout/* /ensemblweb/head/");
 execute("/ensemblweb/head/ctrl_scripts/stop_server", 1);
 sleep 3;
 execute("/ensemblweb/head/ctrl_scripts/start_server");
-
-#my $checkout_copy_task = Integration::Task::Copy->new(
-#                           source      => HEAD . '/integration/checkout',
-#                           destination => HEAD,
-#                         );
-#
-#$integration->add_configuration_task($checkout_copy_task);
-#
-#$integration->add_configuration_task(Integration::Task::Execute->new(source => HEAD . '/checkout/ctrl_scripts/stop_server'));
-#$integration->add_configuration_task(Integration::Task::Execute->new(source => HEAD . '/checkout/ctrl_scripts/start_server'));
-#
-#$integration->configure;
-#
-#my $server_up_test = Integration::Task::Test::Ping->new(
-#                       target   => $config->{server},
-#                       proxy    => $config->{proxy},
-#                       search   => 'Mammalian genomes',
-#                       name     => 'Server start',
-#                       critical => 'yes',
-#                     );
-#
-#$integration->add_test_task($server_up_test);
-#$integration->test;
-#
-#if ($integration->critical_fail) {
-#  warn 'CRITICAL FAILURE: ' . $integration->test_result . '% pass rate';
-#  $integration->rollback;
-#} else {
-#  $rollback_task->purge;
-#}
-#
-#if ($integration->test_result < 100) {
-#  warn 'TESTS FAILED: ' . $integration->test_result . '% pass rate';
-#}
-#
-#$integration->update_log;
-#$integration->generate_output;
-#
-#my $rm = `rm $lock`;
-#
 
 execute("rm -f lock");
 
