@@ -5,7 +5,6 @@ use vars qw(@ISA);
 @ISA = qw(EnsEMBL::Web::UserConfig);
 
 sub init {
-
     my ($self) = @_;
     $self->{'_label'}           = 'above';
     $self->{'_uppercase_label'} = 'no';
@@ -20,15 +19,11 @@ sub init {
 	'_artefacts'   => [qw(
             Vannotation_status_left
             Vannotation_status_right
-    	    Vannot_knownPCod
-    	    Vannot_novelPCod
-	        Vannot_predictedPCod
-  	        Vannot_knownPTrans
-	        Vannot_novelPTrans
-			Vannot_putativePTrans
-            Vannot_predPTrans
-    	    Vannot_ig_and_ig_pseudo
-	        Vannot_pseudo
+			Vannot_TotPCod
+			Vannot_TotPTrans
+            Vannot_TotPseudo
+			Vannot_TotIgSeg
+			Vannot_TotTEC
             Vsnps
 	        Vpercents
     	    Videogram
@@ -42,16 +37,11 @@ sub init {
 	    'bgcolour1' => 'background1',
 	    'bgcolour2' => 'background1',
             'scale_values' => [qw(
-                knownPCodDensity
-	            novelPCodDensity
-                predictedPCodDensity
-        		knownPTransDensity
-                novelPTransDensity
-                putativePTransDensity
-                PredPTransDensity
-                IgSegDensity
-                IgPseudoSegDensity
-                pseudoGeneDensity
+				PCodDensity
+     			PTransDensity
+                PseudoGeneDensity
+			    IgSegDensity
+				TECGeneDensity
             )],
 	},
        
@@ -73,105 +63,57 @@ sub init {
             'colour'      => 'gray85',
             'glyphset'    => 'Vannotation_status',
             'tag_pos'     => 0,
-        },  
+        },
 
-        'Vsnps' => {
-            'on'          => 'off',
-            'pos'         => '20',
-            'width'       => 40,
-            'col'         => 'blue',
-            'logicname' => 'snpDensity',
-        },  
-
-        'Vannot_knownPCod' => {
+	    'Vannot_TotPCod' => {
 	        'on' => 'on',
 	        'pos' => '10',
 	        'width' => 40,
             'glyphset' => 'Vgenedensity_vega',
-            'label' => ["Kn_Pc"],
-            'colour' => [qw(protein_coding_KNOWN)],
-    	    'logicname' => 'knownPCodDensity',
+            'label' => ["Prot.Cod."],
+            'colour' => [qw(protein_coding)],
+    	    'logicname' => 'PCodDensity',
 		},
 
-	    'Vannot_novelPCod' => {
+	    'Vannot_TotPTrans' => {
 	        'on' => 'on',
 	        'pos' => '12',
 	        'width' => 40,
             'glyphset' => 'Vgenedensity_vega',
-            'label' => ["No_Pc"],
-            'colour' => [qw(protein_coding_NOVEL)],
-    	    'logicname' => 'novelPCodDensity',
+            'label' => ["Proc.Trans."],
+            'colour' => [qw(processed_transcript)],
+    	    'logicname' => 'PTransDensity',
     	},
 
-	    'Vannot_predictedPCod' => {
+	    'Vannot_TotPseudo' => {
 	        'on' => 'on',
 	        'pos' => '15',
 	        'width' => 40,
             'glyphset' => 'Vgenedensity_vega',
-            'label' => ["Pr_Pc"],
-            'colour' => [qw(protein_coding_PREDICTED)],
-    	    'logicname' => 'predictedPCodDensity',
+            'label' => ["Pseudo."],
+            'colour' => [qw(pseudogene)],
+    	    'logicname' => 'PseudoGeneDensity',
     	},
 
-       'Vannot_knownPTrans' => {
+	    'Vannot_TotIgSeg' => {
 	        'on' => 'on',
-	        'pos' => '11',
+	        'pos' => '18',
 	        'width' => 40,
             'glyphset' => 'Vgenedensity_vega',
-            'label' => ["Kn_Pt"],
-            'colour' => [qw(processed_transcript_KNOWN)],
-    	    'logicname' => 'knownPTransDensity',
-		},
-
-    	'Vannot_novelPTrans' => {
-	        'on' => 'on',
-	        'pos' => '13',
-	        'width' => 40,
-            'glyphset' => 'Vgenedensity_vega',
-            'label' => ["No_Pt"],
-            'colour' => [qw(processed_transcript_NOVEL)],
-    	    'logicname' => 'novelPTransDensity',
-    	},	
-
-	    'Vannot_putativePTrans' => {
-	        'on' => 'on',
-	        'pos' => '16',
-	        'width' => 40,
-            'glyphset' => 'Vgenedensity_vega',
-            'label' => ["Pu_Pt"],
-            'colour' => [qw(processed_transcript_PUTATIVE)],
-    	    'logicname' => 'putativePTransDensity',
+            'label' => ["Ig Seg."],
+            'colour' => [qw(ig_segment)],
+    	    'logicname' => 'IgSegDensity',
     	},
 
-	    'Vannot_predPTrans' => {
+	    'Vannot_TotTEC' => {
 	        'on' => 'on',
-	        'pos' => '17',
+	        'pos' => '21',
 	        'width' => 40,
             'glyphset' => 'Vgenedensity_vega',
-            'label' => ["Pr_Pt"],
-            'colour' => [qw(processed_transcript_PREDICTED)],
-    	    'logicname' => 'PredPTransDensity',
+            'label' => ["TEC"],
+            'colour' => [qw(tec)],
+    	    'logicname' => 'TECGeneDensity',
     	},
-
-    	'Vannot_pseudo' => {
-	        'on' => 'on',
-	        'pos' => '19',
-	        'width' => 40,
-            'glyphset' => 'Vgenedensity_vega',
-            'label' => ["To_Ps"],
-            'colour' => [qw(pseudogene_UNKNOWN)],
-    	    'logicname' => 'pseudoGeneDensity',
-	    },
-
-	    'Vannot_ig_and_ig_pseudo' => {
-	        'on' => 'on',
-	        'pos' => '20',
-	        'width' => 40,
-            'glyphset' => 'Vgenedensity_vega',
-            'label' => ["IgS","IgP"],
-            'colour' => ['Ig_segment_NOVEL Ig_pseudogene_segment_UNKNOWN'],
-    	    'logicname' => 'IgSegDensity IgPseudoSegDensity',
-	    },
 
 	    'Vpercents' => {
 	        'on' => 'on',
