@@ -85,6 +85,7 @@ sub stable_id         { my $self = shift; return $self->Obj->stable_id;  }
 sub feature_type      { my $self = shift; return $self->Obj->type;       }
 sub version           { my $self = shift; return $self->Obj->version;    }
 sub logic_name        { my $self = shift; return $self->gene ? $self->gene->analysis->logic_name : $self->Obj->analysis->logic_name; }
+sub status            { my $self = shift; return $self->Obj->status;  }
 sub display_label        {
   my $self = shift;
   return $self->Obj->analysis->display_label || $self->logic_name;
@@ -1273,7 +1274,7 @@ sub created_date {
   return $self->date_format( $time,'%d/%m/%y' ), $self->date_format( $time, '%y/%m/%d' );
 }
 
-sub date_format {
+sub date_format { 
   my( $self, $time, $format ) = @_;
   my( $d,$m,$y) = (localtime($time))[3,4,5];
   my %S = ('d'=>sprintf('%02d',$d),'m'=>sprintf('%02d',$m+1),'y'=>$y+1900);
