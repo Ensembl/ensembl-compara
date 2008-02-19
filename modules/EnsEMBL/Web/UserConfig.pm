@@ -1260,18 +1260,18 @@ sub ADD_ALL_TRANSCRIPTS {
   $self->add_new_track_transcript( 'tigr_0_5',   'TIGR genes',   'tigr_0_5',   $POS++, @_ );
   $self->add_new_track_transcript( 'homology_low', 'Bee genes',    'bee_pre_gene',   $POS++, @_ );
   # trancripts for Vega
-  $self->add_new_track_transcript('vega_eucomm', 'Knockout genes', 'vega_gene_eucomm',
+  $self->add_new_track_transcript('vega_eucomm', 'KO genes (EUCOMM)', 'vega_gene_eucomm',
     $POS++, 'glyph' => 'vega_transcript', 'logic_name' => 'otter_eucomm',
     'available'=>'features VEGA_GENES_OTTER_EUCOMM', @_);
+  $self->add_new_track_transcript('vega_komp', 'KO genes (KOMP)', 'vega_gene_komp',
+    $POS++, 'glyph' => 'vega_transcript', 'logic_name' => 'otter_komp',
+    'available'=>'features VEGA_GENES_OTTER_KOMP', @_);
   $self->add_new_track_transcript('vega', 'Havana genes', 'vega_gene_havana',
     $POS++, 'glyph' => 'vega_transcript', 'logic_name' => 'otter',
     'available'=>'features VEGA_GENES_OTTER', @_);
   $self->add_new_track_transcript('vega_corf', 'CORF genes', 'vega_gene_corf',
     $POS++, 'glyph' => 'vega_transcript', 'logic_name' => 'otter_corf',
     'available'=>'features VEGA_GENES_OTTER_CORF', @_);
-  $self->add_new_track_transcript('vega_igsf', 'IgSF genes', 'vega_gene_igsf',
-    $POS++, 'glyph' => 'vega_transcript', 'logic_name' => 'otter_igsf',
-    'available'=>'features VEGA_GENES_OTTER_IGSF', @_); 
    $self->add_new_track_transcript('vega_external', 'External genes', 'vega_gene_external',
     $POS++, 'glyph' => 'vega_transcript', 'logic_name' => 'otter_external',
     'available'=>'features VEGA_GENES_OTTER_EXTERNAL', @_);
@@ -1548,18 +1548,18 @@ sub ADD_GENE_TRACKS {
                              'gene_col' => 'estgene', 'on'=>'off',@_ );
 
 #for genes in Vega
-  $self->add_new_track_gene('vega_eucomm_gene', 'Knockout genes', 'vega_gene_eucomm', $POS++,
+  $self->add_new_track_gene('vega_eucomm_gene', 'KO genes (EUCOMM)', 'vega_gene_eucomm', $POS++,
     'available' => 'features VEGA_GENES_OTTER_EUCOMM', 'glyphset' => 'vega_gene',
     'logic_name' => 'otter_eucomm', 'gene_col' => 'vega_gene', @_);
+  $self->add_new_track_gene('vega_komp_gene', 'KO genes (KOMP)', 'vega_gene_komp', $POS++,
+    'available' => 'features VEGA_GENES_OTTER_EUCOMM', 'glyphset' => 'vega_gene',
+    'logic_name' => 'otter_komp', 'gene_col' => 'vega_gene', @_);
   $self->add_new_track_gene( 'vega_gene', 'Havana Genes', 'vega_gene_havana', $POS++,
     'available' => 'features VEGA_GENES_OTTER', 'glyphset' => 'vega_gene',
     'logic_name' => 'otter', 'gene_col' => 'vega_gene', @_);
   $self->add_new_track_gene( 'vega_corf_gene', 'CORF Genes', 'vega_gene_corf', $POS++,
     'available' => 'features VEGA_GENES_OTTER_CORF', 'glyphset' => 'vega_gene',
     'logic_name' => 'otter_corf', 'gene_col' => 'vega_gene', @_);
-  $self->add_new_track_gene( 'vega_igsf_gene', 'IgSF Genes', 'vega_gene_igsf', $POS++,
-    'available' => 'features VEGA_GENES_OTTER_IGSF', 'glyphset' => 'vega_gene',
-    'logic_name' => 'otter_igsf', 'gene_col' => 'vega_gene', @_);
   $self->add_new_track_gene( 'vega_external_gene', 'External Genes', 'vega_gene_external', $POS++,
     'available' => 'features VEGA_GENES_OTTER_EXTERNAL', 'glyphset' => 'vega_gene',
     'logic_name' => 'otter_external', 'gene_col' => 'vega_gene', @_);
@@ -1649,18 +1649,21 @@ sub ADD_AS_GENE_TRACKS {
                              'glyphset' => 'evega_gene',
                               @_ );    
     #for genes in Vega
-    $self->add_new_track_gene('vega_eucomm_gene', 'Knockout genes', 'vega_gene_eucomm', $POS++,
+    $self->add_new_track_gene('vega_eucomm_gene', 'EUCOMM KO genes', 'vega_gene_eucomm', $POS++,
     'available' => 'features VEGA_GENES_OTTER_EUCOMM', 'glyphset' => 'vega_gene',
     'logic_name' => 'otter_eucomm', 'gene_col' => 'vega_gene', @_);
+    $self->add_new_track_gene('vega_komp_gene', 'KOMP KO genes', 'vega_gene_komp', $POS++,
+    'available' => 'features VEGA_GENES_OTTER_KOMP', 'glyphset' => 'vega_gene',
+    'logic_name' => 'otter_komp', 'gene_col' => 'vega_gene', @_);
     $self->add_new_track_gene( 'vega_gene', 'Vega Genes', 'vega_gene', $POS++,
 	'available' => 'features VEGA_GENES_OTTER', 'glyphset' => 'vega_gene',
 	'logic_name' => 'otter', 'gene_col' => 'vega_gene', @_);
     $self->add_new_track_gene( 'vega_corf_gene', 'CORF Genes', 'vega_gene', $POS++,
 	'available' => 'features VEGA_GENES_OTTER_CORF', 'glyphset' => 'vega_gene',
-	'logic_name' => 'otter_corf', 'gene_col' => 'vega_gene', @_);
-    $self->add_new_track_gene( 'vega_igsf_gene', 'IgSF Genes', 'vega_gene', $POS++,
-	'available' => 'features VEGA_GENES_OTTER_IGSF', 'glyphset' => 'vega_gene',
-	'logic_name' => 'otter_igsf', 'gene_col' => 'vega_gene', @_);
+	'logic_name' => 'otter_corf', 'gene_col' => 'vega_gene', @_); 
+	$self->add_new_track_gene( 'vega_external_gene', 'External Genes', 'vega_gene_external', $POS++,
+    'available' => 'features VEGA_GENES_OTTER_EXTERNAL', 'glyphset' => 'vega_gene',
+    'logic_name' => 'otter_external', 'gene_col' => 'vega_gene', @_);
     return $POS;
 }
 
