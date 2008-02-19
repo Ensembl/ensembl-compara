@@ -579,7 +579,7 @@ sub version_and_date {
                 my $mod_date = $obj->mod_date;
                 my $c_date = $obj->created_date;
                 if ($mod_date) {
-                        $text .= qq(</p><p>Gene last modified on $mod_date);
+                        $text .= qq(</p><p>Last modified on $mod_date);
                         if ($c_date) {
                                 $text .= qq( (<span class="small">Created on $c_date</span>)<small>);
                         }
@@ -1177,8 +1177,8 @@ sub transcripts {
     } else {
       $rows.= "<td>novel transcript</td>";
     }
-  my $trans_stable_id = $transcript->stable_id;
-  $rows .= qq(<td>$trans_stable_id</td>);
+	my $trans_stable_id = $transcript->stable_id;
+	$rows .= qq(<td>$trans_stable_id</td>);
     if( $transcript->translation_object ) {
       my $pep_stable_id = $transcript->translation_object->stable_id;
       $rows .= "<td>$pep_stable_id</td>";
