@@ -13,7 +13,7 @@ sub colours {
 
 sub colour {
   my ($self, $gene, $transcript, $colours, %highlights) = @_;
-  my $genecol = $colours->{ $gene->analysis->logic_name }->{ $gene->biotype."_".$gene->status };
+  my $genecol = $colours->{ $gene->analysis->logic_name }->{ $gene->biotype };
   if(exists $highlights{lc($transcript->stable_id)}) {
     return (@$genecol, $colours->{'superhi'}[0]);
   } elsif(exists $highlights{lc($transcript->external_name)}) {
