@@ -87,8 +87,16 @@ sub _init {
     my $gene_col   = ($used_colours->{ $GT } = $colours->{ $GT });
     my $ens_ID     = $self->ens_ID( $g );
     my $high = exists $highlights{ lc($gene_label) } || exists $highlights{ lc($g->stable_id) };
-    my $type = $g->source eq 'vega' ? $self->format_vega_name($g) : $g->biotype;
-       $type =~ s/HUMACE-//;
+    my $type;
+	if ($g->analysis->logic_name =~ /otter/) {
+		$type = ucfirst(lc($g->status)).' '.ucfirst(lc($g->biotype));
+		$type =~ s/_/ /g;
+		$type =~ s/unknown//i;
+	}
+	else {
+		$type = $g->biotype;
+	}
+	$type =~ s/HUMACE-//;
     my $start = $g->start;
     my $end   = $g->end;
     my ($chr_start, $chr_end) = $self->slice2sr( $start, $end );
