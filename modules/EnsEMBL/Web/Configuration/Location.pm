@@ -72,10 +72,12 @@ unless( $obj->species_defs->NO_SEQUENCE ) {
                                   'href' => "/$species/cytoview?l=$q_string" );
 
   if( $species =~ /^(Homo_sapiens|Mus_musculus|Rattus_norvegicus)$/ ) {
-    $menu->add_entry( $flag, 'text' => 'Resequencing alignment',
-       'title' => "SequenceAlignView",
-                                  'href' => "/$species/sequencealignview?l=$q_string" );
-  }
+    $menu->add_entry( $flag,
+					  'code' => 'reseq_align',
+					  'text' => 'Resequencing alignment',
+					  'title' => "SequenceAlignView",
+					  'href' => "/$species/sequencealignview?l=$q_string" );
+}
   my $export_section;
 unless( $obj->species_defs->NO_SEQUENCE ) {
   $export_section = "Export data";
