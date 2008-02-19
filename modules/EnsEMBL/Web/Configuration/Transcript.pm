@@ -384,9 +384,11 @@ sub context_menu {
   } # end if core and has gene
 
   if( $species =~ /^(Homo_sapiens|Mus_musculus|Rattus_norvegicus)$/ ) {
-    $self->add_entry( $flag, 'text' => 'Resequencing alignment',
-       'title' => "SequenceAlignView",
-                                'href' => "/$species/sequencealignview?$q_string" );
+    $self->add_entry( $flag,
+					  'code' => 'reseq_align',
+					  'text' => 'Resequencing alignment',
+					  'title' => "SequenceAlignView",
+					  'href' => "/$species/sequencealignview?$q_string" );
   }
 
   $self->add_entry( $flag,
