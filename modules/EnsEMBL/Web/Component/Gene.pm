@@ -1661,7 +1661,7 @@ sub external_links {
   if( open NHX,   ">$file" ) {
       print NHX $tree->nhx_format('simple');
       close NHX;
-#      warn "(written $file => $URL)";
+      warn "(written $file => $URL): ".$tree->nhx_format('simple');
   }
 
   my $alignio = Bio::AlignIO->newFh(
