@@ -1,4 +1,4 @@
-#! /usr/local/bin/perl
+#!/software/perl-5.8.8/bin/perl
 
 #use strict;
 #use warnings;
