@@ -118,15 +118,17 @@ sub draw_features {
 
     my $id = 10; 
     my $max_contig = 250000;
-    foreach my $fr (sort keys %{$f->{fragments}}) {
-	$zmenu->{"$id:$fr"} = '';
-	$id++;
-	my $flength = abs($f->{fragments}->{$fr}->[2] - $f->{fragments}->{$fr}->[1]);
-	(my $species = $fr) =~ s/\s/\_/g;
-	my $flink = sprintf("/%s/%s?l=%s:%d-%d", $species, $flength > $max_contig ? 'cytoview' : 'contigview', @{$f->{fragments}->{$fr}});
-	my $key = sprintf("%d:&nbsp;%s: %d-%d", $id++, @{$f->{fragments}->{$fr}});
+    foreach my $species_name (sort keys %{$f->{fragments}}) {
+      $zmenu->{"$id:$species_name"} = '';
+      $id++;
+      foreach my $fr (@{$f->{fragments}->{$species_name}}) {
+	my $flength = abs($fr->[2] - $fr->[1]);
+	(my $species = $species_name) =~ s/\s/\_/g;
+	my $flink = sprintf("/%s/%s?l=%s:%d-%d", $species, $flength > $max_contig ? 'cytoview' : 'contigview', @$fr);
+	my $key = sprintf("%d:&nbsp;%s: %d-%d", $id++, @$fr);
 	$zmenu->{"$key"} = $flink;
 	$C++;
+      }
     }
 
     if($DRAW_CIGAR) {
@@ -206,11 +208,13 @@ sub features {
 	my $all_gas = $_->get_all_GenomicAligns;
 	my $fragments;
 	foreach my $this_genomic_align (@$all_gas) {
-	    $fragments->{$this_genomic_align->dnafrag->genome_db->name} = [
-		      $this_genomic_align->dnafrag->name,
-		      $this_genomic_align->dnafrag_start,
-		      $this_genomic_align->dnafrag_end,
-		      $this_genomic_align->dnafrag_strand];
+          push(@{$fragments->{$this_genomic_align->dnafrag->genome_db->name}},
+              [
+		$this_genomic_align->dnafrag->name,
+		$this_genomic_align->dnafrag_start,
+		$this_genomic_align->dnafrag_end,
+		$this_genomic_align->dnafrag_strand
+              ]);
 	}
 	my ($rtype, $gpath, $rname, $rstart, $rend, $rstrand) = split(':',$_->reference_slice->name);
  
@@ -254,9 +258,9 @@ sub wiggle_plot {
   }
   my $method_link_species_set = $db->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID(50005);
 
-warn "WIGGLE $method_link_species_set , $slice, $display_size";
+# warn "WIGGLE $method_link_species_set , $slice, $display_size";
   my $features = $wiggle_adaptor->fetch_all_by_MethodLinkSpeciesSet_Slice($method_link_species_set, $slice, $display_size) || [];
-  warn ">>>> @$features";
+#   warn ">>>> @$features";
   return 0 unless scalar @$features;
 
   @$features   = sort { $a->score <=> $b->score  } @$features;
