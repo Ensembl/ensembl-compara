@@ -99,9 +99,9 @@ use Sys::Hostname;
 use Exporter();
 @ISA=qw(Exporter);
 
-$VERSION                   = 48;
-$ARCHIVE_VERSION           = "Dec2007";    # Change this to the archive site for this version
-$ENSEMBL_RELEASE_DATE      = 'Dec 2007';
+$VERSION                   = 49;
+$ARCHIVE_VERSION           = "Mar2008";    # Change this to the archive site for this version
+$ENSEMBL_RELEASE_DATE      = 'Mar 2008';
 
 $ENSEMBL_MIN_SPARE_SERVERS =  5;
 $ENSEMBL_MAX_SPARE_SERVERS = 20;
@@ -239,7 +239,7 @@ $ENSEMBL_REGISTRY       = undef;
 
 my $perl_version = sprintf( '%d.%d.%d', $] =~ /(\d)\.(\d{3})(\d{3})/ ) || "5.8.0";
 @ENSEMBL_LIB_DIRS     = (
-  $ENSEMBL_SERVERROOT."/apache2/lib/perl5/site_perl/$perl_version/i686-linux/",
+  $ENSEMBL_SERVERROOT."/apache2/lib/site_perl/5.8.8/x86_64-linux-thread-multi/",
   $ENSEMBL_SERVERROOT.'/ensembl/modules',
   $ENSEMBL_SERVERROOT.'/ensembl-compara/modules',
   $ENSEMBL_SERVERROOT.'/ensembl-draw/modules',
