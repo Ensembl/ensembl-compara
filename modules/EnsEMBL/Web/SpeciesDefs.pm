@@ -365,12 +365,7 @@ sub _parse {
               my %hash = %{$defaults->{ $current_section }};
               foreach( keys %hash ) {
                 $tree->{$current_section}{$_} = $defaults->{$current_section}{$_};
-                if ($current_section eq 'ENSEMBL_PHYLOGENY') {
-                  $taxon_order{$hash{$_}}++;
-                }  
               }
-              my @A = keys %taxon_order;
-              $tree->{'TAXON_ORDER'} = \@A if scalar(@A) > 0;
             }
           } elsif (/(\w\S*)\s*=\s*(.*)/ && defined $current_section) { # Config entry
             my ($key,$value) = ($1,$2); ## Add a config entry under the current 'top level'
@@ -513,16 +508,15 @@ sub _parse {
         $ininame = "Ancestral sequences";
       }
       my $bioname = $taxonomy[1].' '.$taxonomy[0];
-      my $phylo = $tree->{'ENSEMBL_PHYLOGENY'};
+      my $labels = $tree->{'TAXONOMY_LABELS'};
+      my $order = $tree->{'general'}{'TAXON_ORDER'};
       $tree->{'general'}{'SPECIES_BIO_NAME'} = $ininame;
       print STDERR "\t  [WARN] SPECIES NAME MISMATCH!\n" if $ininame ne $bioname;
       foreach my $taxon (@taxonomy) {
-        if ($phylo && ref($phylo) eq 'HASH' && keys %$phylo) {
-          while (my ($k,$v) = each %$phylo) {
-            if ($taxon eq $k) {
-              $tree->{'general'}{'SPECIES_GROUP'} = $v;
-              last;
-            }
+        foreach my $group (@$order) {
+          if ($taxon eq $group) {
+            $tree->{'general'}{'SPECIES_GROUP'} = $labels->{$group} || $group;
+            last;
           }
         }
         last if $tree->{'general'}{'SPECIES_GROUP'};
