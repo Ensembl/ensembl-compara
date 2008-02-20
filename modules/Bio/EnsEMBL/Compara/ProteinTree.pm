@@ -94,6 +94,11 @@ sub get_SimpleAlign {
     $seqID = $member->sequence_id if($id_type eq "SEQ");
     $seqID = $member->member_id if($id_type eq "MEMBER");
     $seqID .= "_" . $member->taxon_id if($append_taxon_id);
+
+    my $species = $member->genome_db->short_name;
+    $species =~ s/\s/_/g;
+    $seqID .= "_" . $species . "_";
+
 #    $seqID .= "_" . $member->genome_db->taxon_id if($append_taxon_id); # this may be needed if you have subspecies or things like that
     $seqstr =~ s/\*/X/g if ($stop2x);
     my $seq = Bio::LocatableSeq->new(-SEQ    => $seqstr,
