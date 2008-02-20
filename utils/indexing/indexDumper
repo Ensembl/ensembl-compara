@@ -52,7 +52,7 @@ foreach my $species ( @species ) {
   $conf->{'dbs'}       = { map { ($_,$dbs{$_}{NAME}) } keys %dbs };
   $conf->{'dbs'}{'ENSEMBL_COMPARA'} = 'ensembl_compara_'.$SD->ENSEMBL_VERSION;
   my $core = $dbs{'ENSEMBL_DB'};
-  $conf->{'dbh_compara'} = DBI->connect( "dbi:mysql:ensembl_compara_".$SD->ENSEMBL_VERSION.";host=ensdb-1-10;port=3307", $core->{'USER'}, $core->{'PASS'} );
+  $conf->{'dbh_compara'} = DBI->connect( "dbi:mysql:ensembl_compara_".$SD->ENSEMBL_VERSION.";host=ensdb-1-13;port=5307", $core->{'USER'}, $core->{'PASS'} );
   $conf->{'dbh'}         = DBI->connect( "dbi:mysql:$core->{'NAME'};host=$core->{'HOST'};port=$core->{'PORT'}", $core->{'USER'}, $core->{'PASS'} );
   warn join ' ', $species, Data::Dumper::Dumper $conf;
   foreach my $index (@indexes) {
@@ -76,12 +76,12 @@ sub dumpQTL {
         fms1.source as fm1_source, fms1.name as fm1_name,
         fms2.source as fm2_source, fms2.name as fm2_name,
         pms.source  as pm_source,  pms.name  as pm_name
-   from ((((((seq_region as c, qtl_feature as qf, qtl_synonym as qs ,
+   from ((((((seq_region as c, qtl_feature as qf, qtl_synonym as qs,
         analysis as a, qtl as q) left join marker as fm1 on
         fm1.marker_id = q.flank_marker_id_1) left join marker_synonym as fms1 on
-        fm1.display_marker_synonym_id = fms1.marker_synonym_id left join) marker as fm2 on
+        fm1.display_marker_synonym_id = fms1.marker_synonym_id) left join marker as fm2 on
         fm2.marker_id = q.flank_marker_id_2) left join marker_synonym as fms2 on
-        fm2.display_marker_synonym_id = fms2.marker_synonym_id left join) marker as pm on
+        fm2.display_marker_synonym_id = fms2.marker_synonym_id) left join marker as pm on
         pm.marker_id = q.peak_marker_id) left join marker_synonym as pms on
         pm.display_marker_synonym_id = pms.marker_synonym_id 
   where c.seq_region_id = qf.seq_region_id and qs.qtl_id = q.qtl_id and 
@@ -139,8 +139,8 @@ sub dumpSNP {
   my $SNPDB = $conf->{'dbs'}->{'ENSEMBL_VARIATION'};
   return unless $SNPDB;
 
-  `/usr/local/ensembl/mysql/bin/mysql -h ensdb-1-10 -P3307 -uensro $SNPDB -e 'select variation_id,source_id,name from variation order by variation_id' > v.txt`;
-  `/usr/local/ensembl/mysql/bin/mysql -h ensdb-1-10 -P3307 -uensro $SNPDB -e 'select variation_id,source_id,name from variation_synonym order by variation_id' > vs.txt`;
+  `/usr/local/ensembl/mysql/bin/mysql -h ensdb-1-13 -P5307 -uensro $SNPDB -e 'select variation_id,source_id,name from variation order by variation_id' > v.txt`;
+  `/usr/local/ensembl/mysql/bin/mysql -h ensdb-1-13 -P5307 -uensro $SNPDB -e 'select variation_id,source_id,name from variation_synonym order by variation_id' > vs.txt`;
 
   return unless $SNPDB;
   my $SOURCES = { map { @$_ } @{$conf->{'dbh'}->selectall_arrayref( "select source_id, name from $SNPDB.source" )} };
