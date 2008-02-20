@@ -1661,7 +1661,7 @@ sub external_links {
   if( open NHX,   ">$file" ) {
       print NHX $tree->nhx_format('simple');
       close NHX;
-      warn "(written $file => $URL): ".$tree->nhx_format('simple');
+      #warn "(written $file => $URL): ".$tree->nhx_format('simple');
   }
 
   my $alignio = Bio::AlignIO->newFh(
@@ -1669,7 +1669,7 @@ sub external_links {
                                     -format => 'fasta'
                                     );
       
-  print $alignio $tree->get_SimpleAlign();
+  print $alignio $tree->get_SimpleAlign( -append_sp_short_name => 1 );
   my $FN2        = $object->temp_file_name( undef, 'XXX/X/X/XXXXXXXXXXXXXXX' );
   my $file2      = $object->species_defs->ENSEMBL_TMP_DIR_IMG."/$FN2";
   $object->make_directory( $file2 );
@@ -1677,7 +1677,7 @@ sub external_links {
   if( open FASTA,   ">$file2" ) {
       print FASTA $var;
       close FASTA;
-#      warn "(written FASTA $file2 => $URL2)";
+      #warn "(written FASTA $file2 => $URL2): $var";
   }
 
   my $jalview = qq{
