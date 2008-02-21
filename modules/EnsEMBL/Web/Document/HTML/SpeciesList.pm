@@ -57,11 +57,15 @@ sub _render_species_list {
 
   ## output list
   if (!$user) {
-    $html .= "<b>Popular genomes</b> &middot; \n";
-    $html .= '<a href="javascript:login_link()">Log in to customize</a>';
+    $html .= "<b>Popular genomes</b>";
+    if ($species_defs->ENSEMBL_LOGINS) {
+      $html .= ' &middot; <a href="javascript:login_link()">Log in to customize</a>';
+    }
   } else {
-    $html .= "<b>Favourite genomes</b> &middot; \n";
-    $html .= '<a href="#" onClick="toggle_reorder();">Change favourites</a>';
+    $html .= "<b>Favourite genomes</b>";
+    if ($species_defs->ENSEMBL_LOGINS) {
+      $html .= ' &middot; <a href="#" onclick="toggle_reorder();">Change favourites</a>';
+    }
   }
   $html .= "<div id='static_favourite_species'>\n";
   $html .= "<div class='favourites-species-list'>\n";
