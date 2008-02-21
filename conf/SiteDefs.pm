@@ -94,6 +94,7 @@ use vars qw ( @ISA @EXPORT @EXPORT_OK %EXPORT_TAGS $VERSION
   $ENSEMBL_SHORTEST_ALIAS
   $MART_ENSEMBL_LINKS
   $ENSEMBL_MART_ENABLED
+  $ENSEMBL_BLAST_ENABLED
 );
 use Sys::Hostname;
 use Exporter();
@@ -146,6 +147,7 @@ eval qq(require '$ENSEMBL_SERVERROOT/$CONF_DIR/Plugins.pm');
 error( "Error requiring plugin file:\n$@" ) if $@;
 
 $ENSEMBL_MART_ENABLED   = 0;
+$ENSEMBL_BLAST_ENABLED  = 0;
 
 $ENSEMBL_SERVER         = Sys::Hostname::hostname();  # Local machine name
 
@@ -322,7 +324,6 @@ $ENSEMBL_APACHE_RELOAD          = 0; # Debug setting - set to 0 for release
 
 $ENSEMBL_HAS_C_EXTENSIONS       = 1;
 $ENSEMBL_LONGPROCESS_MINTIME    = 10;
-$ENSEMBL_MART_ENABLED           = 0;
 
 ###############################################################################
 ##
@@ -579,6 +580,7 @@ $ENSEMBL_TEMPLATE_ROOT = $ENSEMBL_SERVERROOT.'/biomart-web/conf';
   $EARLIEST_ARCHIVE
   $MART_ENSEMBL_LINKS
   $ENSEMBL_MART_ENABLED
+  $ENSEMBL_BLAST_ENABLED
 );
 
 ###################################
@@ -664,6 +666,7 @@ $ENSEMBL_TEMPLATE_ROOT = $ENSEMBL_SERVERROOT.'/biomart-web/conf';
   @ENSEMBL_LIB_DIRS
   $MART_ENSEMBL_LINKS
   $ENSEMBL_MART_ENABLED
+  $ENSEMBL_BLAST_ENABLED
   )],
   WEB => [qw(
   $ENSEMBL_PLUGIN_ROOTS
@@ -713,6 +716,7 @@ $ENSEMBL_TEMPLATE_ROOT = $ENSEMBL_SERVERROOT.'/biomart-web/conf';
     @ENSEMBL_PERL_DIRS
     $MART_ENSEMBL_LINKS
   $ENSEMBL_MART_ENABLED
+  $ENSEMBL_BLAST_ENABLED
   )],
   APACHE => [qw(
     $ENSEMBL_PLUGIN_ROOTS
@@ -765,6 +769,7 @@ $ENSEMBL_TEMPLATE_ROOT = $ENSEMBL_SERVERROOT.'/biomart-web/conf';
     $EARLIEST_ARCHIVE
     $MART_ENSEMBL_LINKS
   $ENSEMBL_MART_ENABLED
+  $ENSEMBL_BLAST_ENABLED
   )],
 );
 
