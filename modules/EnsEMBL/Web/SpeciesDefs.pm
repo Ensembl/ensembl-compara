@@ -508,14 +508,13 @@ sub _parse {
         $ininame = "Ancestral sequences";
       }
       my $bioname = $taxonomy[1].' '.$taxonomy[0];
-      my $labels = $tree->{'TAXONOMY_LABELS'};
       my $order = $tree->{'general'}{'TAXON_ORDER'};
       $tree->{'general'}{'SPECIES_BIO_NAME'} = $ininame;
       print STDERR "\t  [WARN] SPECIES NAME MISMATCH!\n" if $ininame ne $bioname;
       foreach my $taxon (@taxonomy) {
         foreach my $group (@$order) {
           if ($taxon eq $group) {
-            $tree->{'general'}{'SPECIES_GROUP'} = $labels->{$group} || $group;
+            $tree->{'general'}{'SPECIES_GROUP'} = $group;
             last;
           }
         }
