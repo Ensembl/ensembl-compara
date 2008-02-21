@@ -90,10 +90,21 @@ sub _render_species_list {
 
   my @all_species = keys %$species_info;
 
-  ## Sort species into phylogenetic groups
+  ## sort out labels
+  my $labels = $species_defs->TAXON_LABEL;
+  my @group_order;
+  my %label_check;
+  foreach my $taxon (@{$species_defs->TAXON_ORDER}) {
+    my $label = $labels->{$taxon} || $taxon;
+    push @group_order, $label unless $label_check{$label};
+    $label_check{$label}++;
+  }
+
+  ## Sort species into desired groups
   my %phylo_tree;
   foreach $species_name (@all_species) {
-    $group = $species_defs->get_config($species_name, "SPECIES_GROUP");
+    my $taxon_group = $species_defs->get_config($species_name, "SPECIES_GROUP");
+    my $group = $labels->{$taxon_group} || $taxon_group;
     if (!$group) {
       ## Allow for non-grouped species lists
       $group = 'no_group';
@@ -106,26 +117,28 @@ sub _render_species_list {
     }
   }  
 
-  my @taxon_order = @{$species_defs->TAXON_ORDER};
-
   ## Output in taxonomic groups, ordered by common name
-  foreach $group (@taxon_order) {
+  foreach my $group_name (@group_order) {
+    my $optgroup = 0;
     my @sorted_by_common; 
-    my $species_group = $phylo_tree{$group};
-    if ($species_group && ref($species_group) eq 'ARRAY' && scalar(@$species_group) > 0) {
-      if ($group eq 'no_group') {
-        if (scalar(@taxon_order) > 1) {
+    my $species_list = $phylo_tree{$group_name};
+    if ($species_list && ref($species_list) eq 'ARRAY' && scalar(@$species_list) > 0) {
+      if ($group_name eq 'no_group') {
+        if (scalar(@group_order) > 1) {
           $html .= '<optgroup label="Other species">'."\n";
+          $optgroup = 1;
         }
       }
       else {
-        $html .= '<optgroup label="'.$group.'">'."\n";
+        (my $group_text = $group_name) =~ s/&/&amp;/g;
+        $html .= '<optgroup label="'.$group_text.'">'."\n";
+        $optgroup = 1;
       }
       @sorted_by_common = sort {
                           $species_defs->get_config($a, "SPECIES_COMMON_NAME")
                           cmp
                           $species_defs->get_config($b, "SPECIES_COMMON_NAME")
-                          } @$species_group;
+                          } @$species_list;
     }
     foreach $species_name (@sorted_by_common) {
       $html .= '<option value="/'.$species_name.'/">'.$species_defs->get_config($species_name, "SPECIES_COMMON_NAME");
@@ -133,7 +146,7 @@ sub _render_species_list {
       $html .= '</option>'."\n";
     }
 
-    $html .= '</optgroup>'."\n" unless $group eq 'no_group';
+    $html .= '</optgroup>'."\n" if $optgroup == 1;
   }
 
   $html .= qq(
