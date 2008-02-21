@@ -57,7 +57,10 @@ sub render {
   ## Assemble links
   my $html;
   unless ($self->simple) {
-    $html .= qq(<a href="/">HOME</a> &middot; <a href="/$blast_dir/blastview">BLAST</a>);
+    $html .= qq(<a href="/">HOME</a>);
+    if ($ENV{'ENSEMBL_BLAST_ENABLED'}) {
+      $html .= qq( &middot; <a href="/$blast_dir/blastview">BLAST</a>);
+    }
     if ($ENV{'ENSEMBL_MART_ENABLED'}) {
       $html .= qq( &middot; <a href="/biomart/martview/">BIOMART</a>);
     }
