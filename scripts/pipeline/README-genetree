@@ -131,16 +131,15 @@ file as of ensembl v40.
 
 Pick a mysql instance and create a database;
 
-  $ set COMPARA_DBNAME=my_ensembl_compara_48
+  $ set COMPARA_DBNAME=${USER}_ensembl_compara_48
   $ mysql -e "create database $COMPARA_DBNAME"
 
 And load the schemas;
-  $ mysql $COMPARA_DBNAME \
-    < $BASEDIR/ensembl-hive/sql/tables.sql
-  $ mysql $COMPARA_DBNAME \
-    < $BASEDIR/ensembl-compara/sql/table.sql
-  $ mysql $COMPARA_DBNAME \
-    < $BASEDIR/ensembl-compara/sql/pipeline-tables.sql
+
+  $ cat $BASEDIR/ensembl-hive/sql/tables.sql \
+        $BASEDIR/ensembl-compara/sql/table.sql \
+        $BASEDIR/ensembl-compara/sql/pipeline-tables.sql \
+    | mysql $COMPARA_DBNAME
 
 3- Load the NCBI taxonomy data 
    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -372,13 +371,19 @@ available or if it's unable to connect to core databases.
  $ ./comparaLoadGenomes.pl -conf my_compara.conf
  $ ./loadGeneTreeSystem.pl -conf my_compara.conf
 
-If comparaLoadGenomes.pl goes wrong, the DB can be reset as follows;
+If comparaLoadGenomes.pl or loadGeneTreeSystem.pl goes wrong, the DB
+can be reset as follows (you need to re-run both);
 
  $ mysql $COMPARA_DBNAME \
-   -e"delete from analysis;" -e"delete from analysis_job;" \
-   -e"delete from analysis_stats;" -e"delete from genome_db;" \
-   -e"delete from genome_db_extn;" -e"delete from meta;" 
- 
+   -e"delete from analysis;" -e"delete from analysis_ctrl_rule;" \
+   -e"delete from analysis_data;" -e"delete from analysis_description;" \
+   -e"delete from analysis_job;" -e"delete from analysis_stats;" \
+   -e"delete from dataflow_rule;" \
+   -e"delete from genome_db;" -e"delete from genome_db_extn;" \
+   -e"delete from hive;" -e"delete from monitor;"
+
+  $ mysql $COMPARA_DBNAME -e"show tables like 'peptide_align_feature_%'"
+  (drop each of these)
 
 7- Create the method_link_species_sets
    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -473,7 +478,7 @@ add the -local flag to the command and the workers will run as
 background system commands rather than being submited to an LSF resource.
 
  $ beekeeper.pl \
-   -url mysql://user:password@compara2:3306/avilella_compara_homology_small_45 -loop
+   -url $COMPARA_URL -loop
 
 where 'user' and 'password' allow write access to the database
 
