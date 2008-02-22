@@ -549,7 +549,7 @@ sub _parse {
       $sth = $dbh->prepare( $sql );
       $rst  = $sth->execute || die( $sth->errstr );
       $results = $sth->fetchall_arrayref();
-      my $T = $results->[0];
+      $T = $results->[0];
       $tree->{'general'}{'SPECIES_INFO'}{'prev_assembly'} = $T->[0]; 
       $tree->{'general'}{'SPECIES_INFO'}{'prev_pre'} =      $T->[1]; 
  
