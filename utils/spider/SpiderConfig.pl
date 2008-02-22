@@ -34,6 +34,7 @@ our @servers;
 our %template = (
     agent       => 'swish-e spider http://swish-e.org/',
     email       => 'ensembl-admin@ebi.ac.uk',
+    debug       => 1,
     keep_alive  => 1,         # Try to keep the connection open
     max_wait_time => 15,      # This setting is the number of seconds to wait for data
                               # to be returned from each request
@@ -41,7 +42,6 @@ our %template = (
 #   max_time    => 10,        # Max time to spider in minutes
 #   max_files   => 20,        # Max files to spider
     delay_sec   => 0,         # Delay in seconds between requests
-    ignore_robots_file => 0,  # Don't set that to one, unless you are sure.
     use_cookies => 1,         # True will keep cookie jar
                               # Some sites require cookies
                               # Requires HTTP::Cookies
@@ -55,16 +55,17 @@ our %template = (
     # Probably a good idea to use them so you don't try to index
     # Binary data.  Look at content-type headers!
     #test_url       => \&test_url,
-    #test_response   => \&test_response,
-    #filter_content  => \&filter_content,
+    test_response   => \&test_response,
+    filter_content  => \&filter_content,
     output_function => sub {  },
     spider_done     => \&spider_done,
 );
 
 sub test_response {
   ($uri, $server, $response, $content_chunk) = @_;
+  print $response->code.' ('.$response->message.') '.$uri."\n";
   if ($response->code >= 400) {
-    print LOG $response->code.' ('.$response->message.') '.$uri."\n";
+    print ERROR_PAGES $response->code.' ('.$response->message.') '.$uri."\n";
   }
   return 1;
 }
@@ -85,9 +86,6 @@ foreach my $url (@ARGV) {
     %template,
   };
 }
-
-use Data::Dumper;
-warn Dumper(\@servers);
 
 if (scalar @servers) {
   open ERROR_PAGES, '>error_pages.log' or die "Can't open 'error_pages.log' for writing: $!";
