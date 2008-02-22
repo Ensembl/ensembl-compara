@@ -1,5 +1,14 @@
 #!/usr/local/bin/perl
 
+##############################################################################
+#
+# SCRIPT TO GENERATE HTML TABLES OF GENOMIC STATISTICS FOR ENSEMBL
+# Default is to do all configured species, or pass an array of
+# species names (typically in Genus_species format)
+#
+##############################################################################
+
+
 ##---------------------------- CONFIGURATION ---------------------------------
 
 use strict;
@@ -22,7 +31,6 @@ BEGIN{
 	      'info'      => \$info,
 	      'species=s' => \@user_spp,
         'debug'     => \$DEBUG,
-        'fudge'     => \$FUDGE,
         'nointerpro'=> \$NOINTERPRO,
         'nosummary' => \$NOSUMMARY,
 	     );
@@ -31,7 +39,7 @@ BEGIN{
   pod2usage(1) if $help;
 
   $SCRIPT_ROOT = dirname( $Bin );
-  ($SERVERROOT = $SCRIPT_ROOT) =~ s#/sanger-plugins/sanger##;
+  ($SERVERROOT = $SCRIPT_ROOT) =~ s#/utils##;
   $ENSEMBL_ROOT = $SERVERROOT.'/public-plugins/ensembl';
   unshift @INC, "$SERVERROOT/conf";
   eval{ require SiteDefs };
@@ -689,9 +697,6 @@ B<-s, --species>
 
 B<--nointerpro>
   Don't run utils/make_InterProTop40.pl for each species
-
-B<--fudge>
-  Get gene counts for human from the attrib_type table, not from the gene table
 
 B<--debug>
   Print out stats as the program is running
