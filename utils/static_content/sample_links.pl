@@ -1,4 +1,15 @@
 #!/usr/local/bin/perl
+
+#############################################################################
+#
+# SCRIPT TO CHECK AND UPDATE LINKS LIST IN INI FILES (as used to generate
+# sitemaps and links on error pages)
+# Default is to do all configured species, or pass an array of
+# species names (typically in Genus_species format)
+#
+#############################################################################
+
+
 use strict;
 use FindBin qw($Bin);
 use File::Basename qw( dirname );
@@ -43,7 +54,7 @@ if ($log) {
 use vars qw( $SERVERROOT );
 BEGIN{
   $SERVERROOT = dirname( $Bin );
-  $SERVERROOT =~ s#/sanger-plugins/sanger##;
+  $SERVERROOT =~ s#/utils##;
   unshift @INC, "$SERVERROOT/conf";
   eval{ require SiteDefs };
   if ($@){ die "Can't use SiteDefs.pm - $@\n"; }
