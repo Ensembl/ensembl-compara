@@ -510,7 +510,6 @@ sub _parse {
       my $bioname = $taxonomy[1].' '.$taxonomy[0];
       my $order = $tree->{'general'}{'TAXON_ORDER'};
       $tree->{'general'}{'SPECIES_BIO_NAME'} = $ininame;
-      print STDERR "\t  [WARN] SPECIES NAME MISMATCH!\n" if $ininame ne $bioname;
       foreach my $taxon (@taxonomy) {
         foreach my $group (@$order) {
           if ($taxon eq $group) {
