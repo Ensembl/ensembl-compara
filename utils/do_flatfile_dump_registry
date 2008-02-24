@@ -1,4 +1,4 @@
-#!/usr/local/bin/perl 
+#!/usr/local/bin/perl
 
 use strict;
 use Carp ();
@@ -26,7 +26,7 @@ my $nobundle;
 my $readme_only;
 my ($help, $info, $email);
 
-my ($dbname,$dbversion,$host,$user,$pass,$port,$seq_region);
+my ($dbname,$dbversion,$host,$user,$pass,$port,$seq_region, $listonly, $batch_total, $batch_index);
 
 &GetOptions( 'maxsize:s'    => \$MAX_SIZE,
              'format:s'	    => \@user_formats,
@@ -50,6 +50,9 @@ my ($dbname,$dbversion,$host,$user,$pass,$port,$seq_region);
              'pass=s'       => \$pass,
              'port=s'       => \$port,
              'seq_region=s' => \$seq_region,
+             'listonly'     => \$listonly,
+	     'batch_total:s' => \$batch_total,
+             'batch_index:s' => \$batch_index,
            ) || pod2usage(2);
 
 pod2usage(-verbose => 2) if $info;
@@ -74,10 +77,46 @@ if(!defined($dbname)){
   else {
     @species = @{all_species()};
   }
+  my $sort_method = "alphabetic";
+  if(defined($batch_total)){
+    $sort_method = "number of toplevel slices";
+  }
+  @species =  @{ sort_species(\@species,$sort_method) };  
+  if(defined($batch_total) and !defined($batch_index)){
+    info (2,"Need a batch_index if batch_total is set options\n");
+    print "Need a batch_index if batch_total is set options and list generated are:-\n";
+    my $start = 1;
+    while ($start <= $batch_total){
+      print "batch $start\n";
+      my $index = $start-1;
+      while($index < scalar(@species)){
+	print "\t".$species[$index]."\n";
+	$index += $batch_total;
+      }
+      $start++;
+    }          
+    exit;
+  }
+  print "total = $batch_total  index = $batch_index \n";
+  if(defined($batch_total) and defined($batch_index)){
+    if($batch_index < 0 or $batch_index > $batch_total){
+      die "batch_index has to be greater than 0 and not greater then batch_total ($batch_total)\n";
+    }
+    my $index = $batch_index-1;
+    my @new_list;
+    while($index < scalar(@species)){
+      push @new_list, $species[$index];
+      $index += $batch_total;
+    }
+    @species = ();
+    foreach my $sp (@new_list){
+      push @species, $sp;
+    }
+  }
+  @species  = @{ start_with_species($start_with, \@species) } if $start_with;
+  @species  = @{ end_with_species($end_with, \@species) } if $end_with;
   
-  #  @species  = @{ start_with_species($start_with, \@species) } if $start_with;
-  #  @species  = @{ end_with_species($end_with, \@species) } if $end_with;
-  
+
 }
 else{
   Bio::EnsEMBL::DBSQL::DBAdaptor->new(-host => $host,
@@ -122,15 +161,7 @@ my $sitedefs_release;
 my $time1 = time;
 @user_formats = qw(embl genbank) if (!$user_formats[0]);
 $VERBOSITY ||= 2;
-#require SiteDefs;
-#require EnsEMBL::Web::SpeciesDefs;
 require Bio::EnsEMBL::Utils::SeqDumper;
-#require EnsEMBL::Web::DBSQL::DBConnection;
-
-#my $SPECIES_DEFS = EnsEMBL::Web::SpeciesDefs->new();
-#my $dbconnection = EnsEMBL::Web::DBSQL::DBConnection->new(undef, $SPECIES_DEFS);
-#our $sitedefs_release =  $SiteDefs::ENSEMBL_VERSION;
-
 
 unless ($no_log) {
   (my $time = gmtime(time)) =~ s/\s+/\./g;
@@ -140,10 +171,18 @@ unless ($no_log) {
 }
 
 $dumpdir ||= $basedir."release-$sitedefs_release";
+
+
 print "Species to be dumped are:-\n";
 foreach my $spp (@species){
   print "\t$spp\n";
 }
+if($listonly){
+  exit;
+}
+
+exit;
+
 foreach my $spp (@species){
   info(2, "Species: $spp");
   my $sp_time = time;
@@ -151,7 +190,7 @@ foreach my $spp (@species){
 
   my $batch = 0;
   my $count = 0;
-  my $CHUNK = $spp eq "Mus_musculus" ? 100 : 1000;
+  my $CHUNK = $spp eq "mus_musculus" ? 100 : 1000;
   my @too_long;
 
   # loop through every non-redundant region in the DB
@@ -190,14 +229,17 @@ foreach my $spp (@species){
       @slices =  @{ $slice_adaptor->fetch_all('toplevel', undef, $inc_dupes, $inc_nonref) || [] };
     }
   }
-  print "there are ".scalar(@slices)." slices to be processed\n";
-  foreach my $slice (@slices) {
-    print "processing ".$slice->seq_region_name."\n";;
+  print "there are ".scalar(@slices)." slices to be processed for $spp\n";
+  while (my $slice =  pop @slices) {
+#    print "processing ".$slice->seq_region_name."\n";;
     # generate list of 'unbreakable' blocks around genes
     my ($blocks, $too_long)= generate_blocklist($slice, $spp);
+#    print "back from generate_blocklist\n";
+
     push (@too_long, @$too_long);
 
     # split up slices into reasonable chunks, and avoid breaking genes
+
     my $chunked_slices = chunk_seq_region( $slice, $blocks );
     undef $blocks;
 
@@ -205,7 +247,7 @@ foreach my $spp (@species){
     foreach my $chunked_slice (@$chunked_slices) {
       my $seq = $chunked_slice->seq();
       foreach my $format (sort keys %$formats_dir) {
-        dump_format($chunked_slice, $format, $formats_dir->{$format}, $seq);
+	dump_format($chunked_slice, $format, $formats_dir->{$format}, $seq);
       }
       $count++;
       if($count >= $CHUNK){
@@ -216,6 +258,7 @@ foreach my $spp (@species){
         $count = 0;
       }
     }
+#    print "end of this slcie\n";
   } #end foreach slice
 
   if($count > 0){
@@ -225,7 +268,8 @@ foreach my $spp (@species){
   }
 
   foreach (@too_long){
-    utils::Tool::warning (1, "Gene skipped cos greater than $GENE_MAX: $_");
+    warn (1, "Gene skipped cos greater than $GENE_MAX: $_");
+    info (1, "Gene skipped cos greater than $GENE_MAX: $_");
   }
 
   my $sp_time_taken = time - $sp_time;
@@ -250,6 +294,11 @@ exit;
 sub setup_directories_reg {
   my ($spp, $user_formats) = @_;
 
+#
+# Also need to delete any files in these durectories for safety.
+#
+
+
   my $sa= $reg->get_adaptor($spp,"core","slice");
   my $dbname = $sa->dbc->dbname;
 
@@ -267,8 +316,10 @@ sub setup_directories_reg {
    info(2, "species = $spp $format");
 
     # Make dumpdir
-    my $spp_dir = join "_", (lc ($spp), $sitedefs_release, $sp_release);
-    my $spp_dumpdir = "$dumpdir/$spp_dir/data/flatfiles/$format";
+#    my $spp_dir = join "_", (lc ($spp), $sitedefs_release, $sp_release);
+    my $spp_dir = lc($spp);
+#    my $spp_dumpdir = "$dumpdir/$spp_dir/data/flatfiles/$format";
+    my $spp_dumpdir = "$dumpdir/$format/$spp_dir";
     unless (-d "$spp_dumpdir"){
       system("mkdir -p $spp_dumpdir") ==0 or die "Can't create dir $!";
     }
@@ -322,7 +373,9 @@ sub generate_blocklist {
     my $gen_end   = $gene->end()   + 1000;
 
     if( $gen_end - $gen_start > $GENE_MAX ) {
-      utils::Tool::warning (1, "Gene too long -skipped ". $slice->seq_region_name().":".
+      warn (1, "Gene too long -skipped ". $slice->seq_region_name().":".
+         $gene->start(). "-". $gene->end());
+      info (1, "Gene too long -skipped ". $slice->seq_region_name().":".
          $gene->start(). "-". $gene->end());
       push (@too_long, "Species: $species, chr:".
 	    $slice->seq_region_name." coords:".
@@ -386,13 +439,20 @@ sub chunk_seq_region {
 
   ########## CAN YOU ASSUME THESE COME BACK IN ORDER??  
   my @projection = @{$slice->project('seqlevel')};
-  undef $slice;  # saves memory
+
 
   if(!@projection) {
-    utils::Tool::warning (1,"Sequence region: $seq_region doesn't have any sequence");
+    warn (1,"Sequence region: $seq_region doesn't have any sequence");
+    info (1,"Sequence region: $seq_region doesn't have any sequence");
     return [];
   }
+
   my $seq_end   = $projection[-1]->from_end();
+#  if($slice->end != $seq_end){
+#   print "AHHHH slice end = ".$slice->end." but projection is $seq_end\n";
+# }
+
+  undef $slice;  # saves memory
   undef @projection; # saves memory
 
   # Make sure the end is not more than the seqeunce end.
@@ -459,6 +519,84 @@ sub chunk_seq_region {
 
 
 
+
+
+
+
+
+#
+# use a routine in case we want to sort these by number of slices etc later on
+#
+sub sort_species{
+  my ($species, $method) = @_;
+  my @list;
+  
+  
+  @list = sort @$species;
+
+  if($method eq "number of toplevel slices"){
+    my %species_size;
+    my $sql = 'select count(*) from seq_region s, seq_region_attrib sa, attrib_type at where s.seq_region_id = sa.seq_region_id and sa.attrib_type_id = at.attrib_type_id and  at.code like "toplevel"';
+
+    foreach my $spp (@list){
+      my $slice_adaptor = $reg->get_adaptor($spp,"core","slice");  
+      my $sth =  $slice_adaptor->dbc->prepare($sql);
+      $sth->execute();
+      my ($count);
+      $sth->bind_columns(\$count);
+      $sth->fetch;
+      $species_size{$spp} = $count;
+      $sth->finish;
+    }
+    my @new_list = sort { $species_size{$a} <=> $species_size{$b} }  @list;
+    return \@new_list;
+  }
+  return \@list;
+
+}
+
+
+
+
+sub start_with_species{
+  my ($species_start, $species) = @_;
+  my @list;
+  
+  my $found = 0; 
+  foreach my $sp (@$species){
+    if($sp eq $species_start){
+      $found = 1;
+    }
+    if($found){
+      push @list, $sp;
+    }	
+  }
+   
+  if($found){
+    return \@list;
+  }
+  else{
+    die "Could not find species $species to start with\n";
+  }
+}
+
+sub end_with_species{
+  my ($species_end, $species) = @_;
+  my @list;
+  
+  foreach my $sp (@$species){
+    if($sp eq $species_end){
+      push @list, $sp;
+      return \@list;
+    }
+    else{
+      push @list, $sp;
+    }	
+  }
+   
+  die "Could not find species $species to end with\n";
+}
+
 #-----------------------------------------------------------------------------
 # dumps given piece of genomic dna into given format
 # uses static golden path adaptor to get virtual contig.. 
@@ -480,7 +618,8 @@ sub dump_format {
     $seq_dumper->dump($slice, $format, $filename, $seq);
   };
   if( $@ ) {
-    utils::Tool::warning (1, "ERROR: Dumping Error! Cannot dump $name\n$@");
+    warn (1, "ERROR: Dumping Error! Cannot dump $name\n$@");
+    info (1, "ERROR: Dumping Error! Cannot dump $name\n$@");
   }
 }
 
@@ -489,7 +628,7 @@ sub ftp_bundle{
   my ($format, $spp_dumpdir, $batch, $spp, $chr_sorter) = @_;
   my $count = 0;
   my $gz;
-  my $CHUNK = $spp eq "Mus_musculus" ? 100 : 1000;
+  my $CHUNK = $spp eq "mus_musculus" ? 100 : 1000;
 
 #  utils::Tool::info(1, "Generating compressed data archives for FTP site (chunk=$CHUNK)..");
   opendir DIR, "$spp_dumpdir" or warn "$spp_dumpdir: $!\n";
@@ -502,12 +641,13 @@ sub ftp_bundle{
   }
   closedir (DIR);
 
-  unless (-d "$spp_dumpdir/FTP"){
-    system("mkdir $spp_dumpdir/FTP");
+#  unless (-d "$spp_dumpdir/FTP"){
+#    system("mkdir -p $spp_dumpdir/FTP");
 #    utils::Tool::info (1, "Made dir $spp_dumpdir/FTP");
-  }
+#  }
 
-  $gz = gzopen("$spp_dumpdir/FTP/$spp.".($batch*$CHUNK).".dat.gz","wb") || die $!;
+  $gz = gzopen("$spp_dumpdir/".ucfirst($spp).".".($batch*$CHUNK).".dat.gz","wb") 
+    || die "Could not open file $spp_dumpdir/".ucfirst($spp).".".($batch*$CHUNK).".dat.gz\n". $!;
 
 
   # If species has chr, use sorter
@@ -520,7 +660,7 @@ sub ftp_bundle{
  #   utils::Tool::info(1, "Processing $filename...");
 
     if (!-f "$spp_dumpdir/$filename"){
-      utils::Tool::warning (1, "ERROR: Cannot find $filename!");
+     warn (1, "ERROR: Cannot find $filename!");
       next;
     }
 
@@ -544,8 +684,8 @@ sub ftp_bundle{
   close DIR;
 
 #  utils::Tool::info(1, "Deleting the individual files and replacing with the zips");
-  system ("mv $spp_dumpdir/FTP/* $spp_dumpdir/");
-  system ("rm -r $spp_dumpdir/FTP");
+#  system ("mv $spp_dumpdir/FTP/* $spp_dumpdir/");
+#  system ("rm -r $spp_dumpdir/FTP");
   return;
 }
 
@@ -596,8 +736,8 @@ sub mail_log {
     open(SENDMAIL, "|$sendmail") or die "Cannot open $sendmail: $!";
     print SENDMAIL $subject;
     print SENDMAIL "To: $email_address\n";
-    print SENDMAIL 'From: ssg-ensembl@sanger.ac.uk\n';
-    print SENDMAIL "Content-type: text/plain\n\n";
+    print SENDMAIL 'From: ensembl-core@ebi.ac.uk';
+    print SENDMAIL "\nContent-type: text/plain\n\n";
     print SENDMAIL $content . $additional_text;
     close(SENDMAIL);
     print "[INFO] Sent report to $email_address\n";
@@ -718,7 +858,7 @@ sub all_species{
 
   foreach my $adap (@{$reg->get_all_DBAdaptors(-group => "core")}){
     if(!defined($hash{$adap->species})){
-      print $adap->species."\n";
+#      print $adap->species."\n";
       push @species, $adap->species;
       $hash{$adap->species} = 1;
     }
@@ -745,7 +885,7 @@ do_flatfile_dump_registry [options]
 Options:
   --help, --info, --verbose, --species, --format, --maxsize,
   --logfile, --dumpdir, --nobundle --readme_only --email 
-  --start_with --end_with 
+  --start_with --end_with --listonly
   --dbname --dbversion --host --user --pass --port --seq_region
 
 E.g.: time ./do_flatfile_dump --species Anopheles_gambiae
@@ -832,6 +972,9 @@ B<--port>
 B<--seq_region>
   Optional: seq region name to dump. (normally a chromosome name i.e. X)
 
+B<--listonly>
+  Optional: list the species to be dumped only. then exit
+
 =head1 DESCRIPTION
 
 B<This program:>
@@ -855,7 +998,7 @@ B<  [INFO]>: Non-critical message, dumping should continue as normal.
  Any other messages with out the above prefixes is verbose information.
  If a error log file is not requested these messages are output to stdout.
 
-Maintained by Ensembl web team <ianl@ebi.ac.uk>
+Maintained by Core team <ensembl-core@ebi.ac.uk>
 
 =cut
 
