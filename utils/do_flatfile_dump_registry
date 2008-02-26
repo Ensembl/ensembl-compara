@@ -97,7 +97,7 @@ if(!defined($dbname)){
     }          
     exit;
   }
-  print "total = $batch_total  index = $batch_index \n";
+
   if(defined($batch_total) and defined($batch_index)){
     if($batch_index < 0 or $batch_index > $batch_total){
       die "batch_index has to be greater than 0 and not greater then batch_total ($batch_total)\n";
@@ -181,7 +181,6 @@ if($listonly){
   exit;
 }
 
-exit;
 
 foreach my $spp (@species){
   info(2, "Species: $spp");
@@ -885,7 +884,7 @@ do_flatfile_dump_registry [options]
 Options:
   --help, --info, --verbose, --species, --format, --maxsize,
   --logfile, --dumpdir, --nobundle --readme_only --email 
-  --start_with --end_with --listonly
+  --start_with --end_with --listonly --species
   --dbname --dbversion --host --user --pass --port --seq_region
 
 E.g.: time ./do_flatfile_dump --species Anopheles_gambiae
@@ -974,6 +973,16 @@ B<--seq_region>
 
 B<--listonly>
   Optional: list the species to be dumped only. then exit
+
+B<--batch_total>
+ Optional: The total number of jobs in set. 
+
+B<--batch_index>
+ Optional: The job number for this run.
+
+B<--species>
+ Optional: Only do this species. aliases work here.
+
 
 =head1 DESCRIPTION
 
