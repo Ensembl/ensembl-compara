@@ -117,7 +117,7 @@ our %views = (
   searchview          => {}, ## no entry
   sequencealignview   => {'object'=>'Location', 'random' => 'rand_location'}, 
   snpview             => {'object'=>'SNP', 'random' => 'rand_snp'},
-  syntenyview         => {'object'=>'Chromosome'},
+  syntenyview         => {'object'=>'Chromosome', 'random' => 'rand_synteny'},
   tagloview           => {}, ## no entry
   textview            => {}, ## no entry
   transview           => {'object'=>'Transcript', 'random' => 'rand_trans'},
@@ -148,7 +148,7 @@ foreach (keys %cp_views) {
 
 ################# Multi-species database info ###############################
 
-my %synteny;
+our %synteny;
 if ($site_type ne 'pre') {
   %synteny  = %{$SPECIES_DEFS->get_config("Multi", "SYNTENY")};
 }
@@ -393,12 +393,26 @@ sub rand_chr {
   my $dbs = get_dbs($db, ['ENSEMBL_DB']);
   my $dbh = get_handle($dbs, 'ENSEMBL_DB');
   my $params = {'name' => 'chr'};
-  my $sql = qq(SELECT s.name
-                FROM seq_region as s, coord_system as c
-                WHERE s.coord_system_id = c.coord_system_id
-                  AND c.name = 'chromosome'
-                  AND c.attrib LIKE '%default_version%');
+  my $sql = qq(SELECT sr.name 
+                FROM seq_region sr LEFT JOIN coord_system c ON sr.coord_system_id = c.coord_system_id 
+                LEFT JOIN assembly_exception ae ON ae.seq_region_id = sr.seq_region_id 
+                LEFT JOIN seq_region_attrib sra ON sr.seq_region_id = sra.seq_region_id 
+                LEFT JOIN attrib_type at ON sra.attrib_type_id = at.attrib_type_id 
+                WHERE at.code = 'toplevel' 
+                AND (ae.exc_type != 'HAP' OR ae.exc_type IS NULL) 
+                AND c.name = 'chromosome' ORDER BY rand() LIMIT 1);
   my $eg = do_query($dbh, $sql, $view, $params);
+  return $eg;
+}
+
+sub rand_synteny {
+  my ($db, $sp, $view, $options) = @_;
+  my $eg = rand_chr($db, $sp, $view, $options);
+  my @spp = keys %{$synteny{$sp}};
+  srand;
+  my $other_species = $spp[rand(@spp)];
+  $eg->{'url'} .= ';other_species='.$other_species;
+  $eg->{'text'} = 'Chr '.$eg->{'text'}.': synteny with '.$other_species;
   return $eg;
 }
 
