@@ -19,6 +19,7 @@ sub BUILD {
   $self->add_queriable_field({ name => 'number', type => 'varchar(5)' });
   $self->add_queriable_field({ name => 'date', type => 'date' });
   $self->add_queriable_field({ name => 'archive', type => 'varchar(7)' });
+  $self->add_queriable_field({ name => 'online', type => "enum('N','Y')" });
   $self->add_has_many({ class => "EnsEMBL::Web::Data::NewsItem"});
   $self->add_has_many({ class => "EnsEMBL::Web::Data::Species"});
   $self->populate_with_arguments($args);
