@@ -398,11 +398,9 @@ sub discover {
       }
     }
   }
-  ## 'Has many' are multiple checkboxes by default
-=pod
   my $has_many = $self->data->get_has_many;
   if ($has_many) {
-    foreach my $class (@$has_many) {
+    foreach my $class (keys %$has_many) {
       my ($key, $element) = $self->_create_relational_element('MultiSelect', $class);
       if ($element) {
         $elements{$element->name} = $element;
@@ -411,7 +409,6 @@ sub discover {
       }
     }
   }
-=cut
   $Elements_of{$self} = \%elements;
   $ElementOrder_of{$self} = \@element_order;
 }
@@ -493,7 +490,7 @@ sub record_list {
   if ($self->data->get_data_field_name) {
     $request->add_where('type', $self->data->type);
   }
-  $request->set_index_by($self->data->get_primary_key);
+  $request->set_index_by(EnsEMBL::Web::Tools::DBSQL::TableName::parse_primary_key($self->data->get_primary_key));
   my $result = $self->data->get_adaptor->find_many($request);
 
   foreach my $id (keys %{$result->get_result_hash}) {
@@ -604,6 +601,9 @@ sub edit_fields {
       else {
         push @$parameters, \%hidden;
       }
+      if ($param{'value'} =~ m#\<#) {
+        $param{'value'} = '<pre>'.$param{'value'}.'</pre>';
+      }
     }
   } 
   ## Add extra data
@@ -659,6 +659,9 @@ sub preview_fields {
         else {
           $param{'value'} = $lookup{$var};
         }
+      }
+      elsif ($element->type eq 'Text' && $var =~ m#</|/>#) {
+        $param{'value'} = '<pre>'.$var.'</pre>';
       }
       else {
         $param{'value'} = $var;

@@ -42,7 +42,7 @@ sub set_connection {
 
 sub dispatch {
   my ($self, $url) = @_;
-  warn "Dispatch: $url";
+  #warn "Dispatch: $url";
   $self->set_url($url);
   $self->process;
 }

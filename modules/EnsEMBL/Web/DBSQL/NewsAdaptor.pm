@@ -788,6 +788,20 @@ sub update_news_item {
   return $result;
 }
 
+sub save_item_species {
+  my ($self, $news_item, $species) = @_;
+  my $sql = qq(DELETE FROM item_species WHERE news_item_id = "$news_item");
+  my $sth = $self->handle->prepare($sql);
+  my $result = $sth->execute();
+
+  foreach my $sp (@$species) {
+    $sql = "INSERT INTO item_species (news_item_id, species_id) VALUES($news_item, $sp) ";
+    $sth = $self->handle->prepare($sql);
+    $result = $sth->execute();
+  }
+  return $result;
+}
+
 sub add_release {
     my ($self, $record) = @_;
     my $result = '';

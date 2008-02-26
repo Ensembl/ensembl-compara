@@ -136,6 +136,16 @@ sub add_queriable_field {
   push @{ $self->get_queriable_fields }, EnsEMBL::Web::Data::Field->new( { name => $args->{name}, type => $args->{type}, queriable => 'yes' } );
 }
 
+sub remove_queriable_field {
+  my ($self, $field_name) = @_;
+  return if !$self->get_queriable_fields;
+  my @kept_fields;
+  foreach my $field (@{ $self->get_queriable_fields }) {
+    push @kept_fields, $field unless $field->get_name eq $field_name;
+  }
+  $self->set_queriable_fields(\@kept_fields);
+}
+
 sub add_relational_field {
   my ($self, $args) = @_;
   if (!$self->get_relational_fields) {
