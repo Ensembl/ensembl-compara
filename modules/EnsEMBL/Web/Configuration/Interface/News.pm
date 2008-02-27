@@ -23,7 +23,7 @@ sub save {
   
   ## Now save species separately
   my @spp = $object->param('species_id');
-  if (@spp) {
+  if (scalar(@spp) > 0) {
     my $adaptor = $ENSEMBL_WEB_REGISTRY->newsAdaptor;
     $success = $adaptor->save_item_species($object->param('news_item_id'), \@spp);
   }

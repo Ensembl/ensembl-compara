@@ -790,12 +790,14 @@ sub update_news_item {
 
 sub save_item_species {
   my ($self, $news_item, $species) = @_;
+  return unless $news_item && $species;
   my $sql = qq(DELETE FROM item_species WHERE news_item_id = "$news_item");
   my $sth = $self->handle->prepare($sql);
   my $result = $sth->execute();
 
   foreach my $sp (@$species) {
-    $sql = "INSERT INTO item_species (news_item_id, species_id) VALUES($news_item, $sp) ";
+    next if $sp eq '' || !defined($sp);
+    $sql = "INSERT INTO item_species (news_item_id, species_id) VALUES ($news_item, $sp)";
     $sth = $self->handle->prepare($sql);
     $result = $sth->execute();
   }
