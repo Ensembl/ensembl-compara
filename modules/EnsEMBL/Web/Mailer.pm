@@ -101,14 +101,14 @@ sub send {
   my @weekDays = qw(Sun Mon Tue Wed Thu Fri Sat Sun);
   my ($sec, $min, $hour, $day, $month, $year) = gmtime();
   $year += 1900;
-  my $time_string = "$weekDays[$day] $day $months[$month], $year $hour:$min:$second +0000"; 
+  my $time_string = "$weekDays[$day] $day $months[$month], $year $hour:$min:$sec +0000"; 
 
   $mailer->open({
                 'To'      => $self->escape($self->email),
                 'From'    => $self->escape($self->from),
                 'Reply-To'=> $self->escape($self->reply_to),
                 'Subject' => $self->subject,
-                'Date'    => $time_string; 
+                'Date'    => $time_string,
                 });
   
   my $message= $self->message;
