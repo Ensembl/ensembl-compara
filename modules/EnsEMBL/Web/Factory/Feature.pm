@@ -79,7 +79,13 @@ sub create_ProteinAlignFeature {
 }
 
 sub create_Gene {
-  return {'Gene' => $_[0]->_generic_create( 'Gene', 'fetch_all_by_external_name', $_[1] ) }; 
+  my ($self, $db) = @_;
+  if ($self->param('id') =~ /^ENS/) {
+    return {'Gene' => $self->_generic_create( 'Gene', 'fetch_by_stable_id', $db ) }; 
+  }
+  else {
+    return {'Gene' => $self->_generic_create( 'Gene', 'fetch_all_by_external_name', $db ) }; 
+  }
 }
 
 # For a Regulatory Factor ID display all the RegulatoryFeatures
@@ -152,6 +158,11 @@ sub _generic_create {
          $t_features = [$db_adaptor->$adaptor_name->$accessor($xref_db, $fid)];
         };
       }
+      elsif ($accessor eq 'fetch_by_stable_id') { ## Hack to get gene stable IDs to work!
+        eval {
+         $t_features = [$db_adaptor->$adaptor_name->$accessor($fid)];
+        };
+      }
       else {
         eval {
          $t_features = $db_adaptor->$adaptor_name->$accessor($fid);
@@ -165,12 +176,12 @@ sub _generic_create {
 
       if( $t_features && ref($t_features) eq 'ARRAY') {
         foreach my $f (@$t_features) { 
+          next unless $f;
           $f->{'_id_'} = $fid;
+          push @$features, $f;
         }
-        push @$features, @$t_features;
       }
     }
-                                                                                   
     return $features if $features && @$features; # Return if we have at least one feature
 
     # We have no features so return an error....
