@@ -27,7 +27,6 @@ BEGIN{
 }
 
 require EnsEMBL::Web::SpeciesDefs;                  # Loaded at run time
-require EnsEMBL::Web::DBSQL::DBConnection;
 my $SPECIES_DEFS = EnsEMBL::Web::SpeciesDefs->new;
 $SPECIES_DEFS || pod2usage("$0: SpeciesDefs config not found");
 my @species_inconf = @{$SiteDefs::ENSEMBL_SPECIES};
@@ -176,6 +175,7 @@ my @geneseqview     = ('geneseqview', 'GeneSeqView', 'Displays the sequence sect
 my @genesnpview     = ('genesnpview', 'GeneSNPView', 'Lists all SNPs for a gene');
 my @genespliceview  = ('genespliceview', 'GeneSpliceView', 'Alternative splicing for a given gene');
 my @generegulationview  = ('generegulationview', 'GeneRegulationView', 'Regulatory factors for a given gene');
+my @genetreeview    = ('genetreeview', 'GeneTreeView', 'Tree of orthologues for a gene');
 my @goview          = ('goview', 'GOView', 'Gene Ontology hierarchy');
 my @historyview     = ('historyview', 'HistoryView', 'Convert a list of old Ensembl stable IDs');
 my @idhistoryview   = ('idhistoryview', 'IDHistoryView', 'Track the history of an Ensembl stable ID');
@@ -188,7 +188,7 @@ my @multicontigview = ('multicontigview', 'MultiContigView', 'Compare syntenous 
 my @protview        = ('protview', 'ProtView', 'Protein Report');
 my @sequencealignview = ('sequencealignview', 'SequenceAlignView', 'Compare the DNA sequence between strains or individuals');
 my @snpview         = ('snpview', 'SNPView', 'SNP report');
-my @syntenyview     = ('syntenyview', 'SyntenyView', 'Compare syntenous regions', 'compgen');
+my @syntenyview     = ('syntenyview', 'SyntenyView', 'Compare syntenous regions');
 my @transview       = ('transview', 'TransView', 'Transcript report');
 my @transcriptsnpview = ('transcriptsnpview', 'TranscriptSNPView', "Compare a transcript's SNPs in individuals / strains / populations");
        
@@ -203,7 +203,7 @@ foreach my $spp (@species) {
     # rebuild view hierarchy each time
     my %species_views = (
         'gene'      => [\@geneview, \@geneseqview, \@genespliceview, \@generegulationview, \@exonview, \@transview, \@contigview, \@cytoview, \@markerview, \@goview],
-        'compgen'   => [\@syntenyview, \@multicontigview, \@sequencealignview],
+        'compgen'   => [\@syntenyview, \@multicontigview, \@sequencealignview, \@genetreeview],
         'protein'   => [\@protview, \@domainview, \@familyview],
         'variation' => [\@genesnpview, \@transcriptsnpview, \@snpview, \@ldview, \@ldtableview],
         'find'      => [\@mapview, \@idhistoryview, \@historyview],
@@ -277,28 +277,6 @@ foreach my $spp (@species) {
     <div class="col3">
     );
     
-    # Proteins
-    $entries = do_entries('Proteins', 'protein', \%species_views, \%display_views);
-    print SUBMAP $entries;
-
-    # Variation
-    $entries = do_entries('Variation', 'variation', \%species_views, \%display_views);
-    print SUBMAP $entries;
-
-    # Comparative genomics
-    $entries = do_entries('Comparative genomics', 'compgen', \%species_views, \%display_views);
-    print SUBMAP $entries;
-
-    # End column #2 and start column #3
-    print SUBMAP qq(</div>
-
-    <div class="col3">
-    );
-
-    # Karyotypes
-    $entries = do_entries('Feature displays', 'karyotype', \%species_views, \%display_views);
-    print SUBMAP $entries;
-
     # Import/export links
     
     print SUBMAP qq(
@@ -313,6 +291,28 @@ foreach my $spp (@species) {
     <dd>Export sequence data to file</dd>
     </dl>
     );
+
+    # Proteins
+    $entries = do_entries('Proteins', 'protein', \%species_views, \%display_views);
+    print SUBMAP $entries;
+
+    # Karyotypes
+    $entries = do_entries('Feature displays', 'karyotype', \%species_views, \%display_views);
+    print SUBMAP $entries;
+
+    # End column #2 and start column #3
+    print SUBMAP qq(</div>
+
+    <div class="col3">
+    );
+
+    # Variation
+    $entries = do_entries('Variation', 'variation', \%species_views, \%display_views);
+    print SUBMAP $entries;
+
+    # Comparative genomics
+    $entries = do_entries('Comparative genomics', 'compgen', \%species_views, \%display_views);
+    print SUBMAP $entries;
 
     # End column #3
     print SUBMAP "</div>\n\n";
