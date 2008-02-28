@@ -266,7 +266,7 @@ sub taxon_id {
   my $self = shift;
   my $taxon_id = shift;
 
-  if($taxon_id) {
+  if(defined $taxon_id) {
     $self->{'taxon_id'} = $taxon_id;
   }
   return $self->{'taxon_id'};
