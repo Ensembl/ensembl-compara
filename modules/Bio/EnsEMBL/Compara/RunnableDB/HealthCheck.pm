@@ -490,7 +490,10 @@ sub _run_pairwise_gabs_test {
       my $mlss_adaptor = $self->{'comparaDBA'}->get_MethodLinkSpeciesSetAdaptor;
       throw ("No method_link_species_set") if (!$mlss_adaptor);
       my $mlss = $mlss_adaptor->fetch_by_method_link_type_genome_db_ids($method_link_type, ${genome_db_ids});
-      $method_link_species_set_ids = [$mlss->dbID];
+      
+      if (defined $mlss) {
+	  $method_link_species_set_ids = [$mlss->dbID];
+      }
   } else {
       $method_link_species_set_ids = $self->{'comparaDBA'}->dbc->db_handle->selectcol_arrayref(
 	 "SELECT DISTINCT method_link_species_set_id FROM genomic_align_block");
@@ -630,7 +633,9 @@ sub _run_compare_to_previous_db_test {
   #current genome_db_ids
   if (defined $method_link_type && defined $current_genome_db_ids) {
       my $current_mlss = $current_mlss_adaptor->fetch_by_method_link_type_genome_db_ids($method_link_type, ${current_genome_db_ids});
-      $current_mlss_id = $current_mlss->dbID;
+      if (defined $current_mlss) {
+	  $current_mlss_id = $current_mlss->dbID;
+      }
   } elsif (!defined $current_mlss_id) {
       throw("No current_mlss_id or method_link_type and current_genome_db_ids set\n");
   }
