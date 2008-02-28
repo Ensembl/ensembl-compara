@@ -62,28 +62,47 @@ if(%hive_params) {
   }
 }
 
-
-$self->prepareChainSystem;
+#
+# creating ChunkAndGroupDna analysis
+#
+my $stats;
+my $chunkAndGroupDnaAnalysis = Bio::EnsEMBL::Analysis->new(
+      -db_version      => '1',
+      -logic_name      => 'ChunkAndGroupDna',
+      -module          => 'Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::ChunkAndGroupDna',
+      -parameters      => ""
+    );
+$self->{'hiveDBA'}->get_AnalysisAdaptor()->store($chunkAndGroupDnaAnalysis);
+$stats = $chunkAndGroupDnaAnalysis->stats;
+$stats->batch_size(1);
+$stats->hive_capacity(-1); #unlimited
+$stats->update();
+$self->{'chunkAndGroupDnaAnalysis'} = $chunkAndGroupDnaAnalysis;
 
 foreach my $dnaCollectionConf (@{$self->{'dna_collection_conf_list'}}) {
-  print("creating ChunkAndGroup jobs\n");
-#  $self->storeMaskingOptions($dnaCollectionConf);
-  $self->createChunkAndGroupDnaJobs($dnaCollectionConf);
+    print("creating ChunkAndGroup jobs\n");
+    #  $self->storeMaskingOptions($dnaCollectionConf);
+    $self->createChunkAndGroupDnaJobs($dnaCollectionConf);
 }
  
-#allow 'query_collection_name' or 'reference_collection_name'
-if ($chain_conf{'reference_collection_name'} && !$chain_conf{'query_collection_name'}) {
-    $chain_conf{'query_collection_name'} = $chain_conf{'reference_collection_name'};
-}
+foreach my $chainConf (@{$self->{'chain_conf_list'}}) {
 
- #allow 'target_collection_name' or 'non_reference_collection_name'
-if ($chain_conf{'non_reference_collection_name'} && !$chain_conf{'target_collection_name'}) {
-    $chain_conf{'target_collection_name'} = $chain_conf{'non_reference_collection_name'};
-}
+    $self->prepareChainSystem($chainConf);
 
-$self->create_dump_nib_job($chain_conf{'query_collection_name'});
-$self->create_dump_nib_job($chain_conf{'target_collection_name'});
-$self->prepCreateAlignmentChainsJobs;
+    #allow 'query_collection_name' or 'reference_collection_name'
+    if ($chainConf->{'reference_collection_name'} && !$chainConf->{'query_collection_name'}) {
+	$chainConf->{'query_collection_name'} = $chainConf->{'reference_collection_name'};
+    }
+
+    #allow 'target_collection_name' or 'non_reference_collection_name'
+    if ($chainConf->{'non_reference_collection_name'} && !$chainConf->{'target_collection_name'}) {
+	$chainConf->{'target_collection_name'} = $chainConf->{'non_reference_collection_name'};
+    }
+
+    $self->create_dump_nib_job($chainConf->{'query_collection_name'});
+    $self->create_dump_nib_job($chainConf->{'target_collection_name'});
+    $self->prepCreateAlignmentChainsJobs($chainConf);
+}
 
 foreach my $netConf (@{$self->{'net_conf_list'}}) {
   print("prepChunkGroupJob\n");
@@ -133,7 +152,8 @@ sub parse_conf {
         push @{$self->{'dna_collection_conf_list'}} , $confPtr;
       }
       elsif($type eq 'CHAIN_CONFIG') {
-        %chain_conf = %{$confPtr};
+        push @{$self->{'chain_conf_list'}} , $confPtr;
+        #%chain_conf = %{$confPtr};
       }
       elsif($type eq 'NET_CONFIG') {
         push @{$self->{'net_conf_list'}} , $confPtr;
@@ -159,26 +179,14 @@ sub prepareChainSystem
 {
   #yes this should be done with a config file and a loop, but...
   my $self = shift;
+  my $chainConf = shift;
+
+  return unless($chainConf);
 
   my $dataflowRuleDBA = $self->{'hiveDBA'}->get_DataflowRuleAdaptor;
   my $ctrlRuleDBA = $self->{'hiveDBA'}->get_AnalysisCtrlRuleAdaptor;
   my $stats;
 
-  #
-  # creating ChunkAndGroupDna analysis
-  #
-  my $chunkAndGroupDnaAnalysis = Bio::EnsEMBL::Analysis->new(
-      -db_version      => '1',
-      -logic_name      => 'ChunkAndGroupDna',
-      -module          => 'Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::ChunkAndGroupDna',
-      -parameters      => ""
-    );
-  $self->{'hiveDBA'}->get_AnalysisAdaptor()->store($chunkAndGroupDnaAnalysis);
-  $stats = $chunkAndGroupDnaAnalysis->stats;
-  $stats->batch_size(1);
-  $stats->hive_capacity(-1); #unlimited
-  $stats->update();
-  $self->{'chunkAndGroupDnaAnalysis'} = $chunkAndGroupDnaAnalysis;
   #
   # DumpLargeNibForChains Analysis
   #
@@ -202,9 +210,12 @@ sub prepareChainSystem
   #
   my $sql = "INSERT ignore into method_link SET method_link_id=?, type=?";
   my $sth = $self->{'comparaDBA'}->dbc->prepare($sql);
-  my ($input_method_link_id, $input_method_link_type) = @{$chain_conf{'input_method_link'}};
+
+  my ($input_method_link_id, $input_method_link_type) = @{$chainConf->{'input_method_link'}};
+
   $sth->execute($input_method_link_id, $input_method_link_type);
-  my ($output_method_link_id, $output_method_link_type) = @{$chain_conf{'output_method_link'}};
+
+  my ($output_method_link_id, $output_method_link_type) = @{$chainConf->{'output_method_link'}};
   $sth->execute($output_method_link_id, $output_method_link_type);
   $sth->finish;
 
@@ -225,16 +236,19 @@ sub prepareChainSystem
 
   $ctrlRuleDBA->create_rule($dumpLargeNibForChainsAnalysis, $createAlignmentChainsJobsAnalysis);
 
+  my $hexkey = sprintf("%x", rand(time()));
+  print("hexkey = $hexkey\n");
+
   #
   # AlignmentChains Analysis
   #
-  my $max_gap = $chain_conf{'max_gap'};
-  my $group_type = $chain_conf{'output_group_type'};
+  my $max_gap = $chainConf->{'max_gap'};
+  my $group_type = $chainConf->{'output_group_type'};
   $group_type = "chain" unless (defined $group_type);
   $parameters = "{\'input_method_link\'=>\'$input_method_link_type\',\'output_method_link\'=>\'$output_method_link_type\',\'max_gap\'=>\'$max_gap\','output_group_type\'=>\'$group_type\'}";
   my $alignmentChainsAnalysis = Bio::EnsEMBL::Analysis->new(
       -db_version      => '1',
-      -logic_name      => 'AlignmentChains',
+      -logic_name      => 'AlignmentChains-'.$hexkey,
       -module          => 'Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::AlignmentChains',
       -parameters      => $parameters
     );
@@ -247,22 +261,28 @@ sub prepareChainSystem
 
   $ctrlRuleDBA->create_rule($createAlignmentChainsJobsAnalysis, $alignmentChainsAnalysis);
 
-  #
-  # creating UpdateMaxAlignmentLengthAfterChain analysis
-  #
-  $parameters = "{\'method_link\'=>\'$output_method_link_type\'}";
-  my $updateMaxAlignmentLengthAfterChainAnalysis = Bio::EnsEMBL::Analysis->new
-    (-db_version      => '1',
-     -logic_name      => 'UpdateMaxAlignmentLengthAfterChain',
-     -module          => 'Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::UpdateMaxAlignmentLength',
-     -parameters      => $parameters);
-  
-  $self->{'hiveDBA'}->get_AnalysisAdaptor()->store($updateMaxAlignmentLengthAfterChainAnalysis);
-  $stats = $updateMaxAlignmentLengthAfterChainAnalysis->stats;
-  $stats->hive_capacity(1);
-  $stats->update();
-  $self->{'updateMaxAlignmentLengthAfterChainAnalysis'} = $updateMaxAlignmentLengthAfterChainAnalysis;
+  $chainConf->{'logic_name'} = $alignmentChainsAnalysis->logic_name;
+  #$self->prepCreateAlignmentChainsJobs($chainConf,$alignmentChainsAnalysis->logic_name);
 
+  unless (defined $self->{'updateMaxAlignmentLengthAfterChainAnalysis'}) {
+      
+      #
+      # creating UpdateMaxAlignmentLengthAfterChain analysis
+      #
+      $parameters = "{\'method_link\'=>\'$output_method_link_type\'}";
+      my $updateMaxAlignmentLengthAfterChainAnalysis = Bio::EnsEMBL::Analysis->new
+	(-db_version      => '1',
+	 -logic_name      => 'UpdateMaxAlignmentLengthAfterChain',
+	 -module          => 'Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::UpdateMaxAlignmentLength',
+	 -parameters      => $parameters);
+      
+      $self->{'hiveDBA'}->get_AnalysisAdaptor()->store($updateMaxAlignmentLengthAfterChainAnalysis);
+      $stats = $updateMaxAlignmentLengthAfterChainAnalysis->stats;
+      $stats->hive_capacity(1);
+      $stats->update();
+      $self->{'updateMaxAlignmentLengthAfterChainAnalysis'} = $updateMaxAlignmentLengthAfterChainAnalysis;
+      
+  }
   $ctrlRuleDBA->create_rule($alignmentChainsAnalysis, $self->{'updateMaxAlignmentLengthAfterChainAnalysis'});
   $dataflowRuleDBA->create_rule($createAlignmentChainsJobsAnalysis,$self->{'updateMaxAlignmentLengthAfterChainAnalysis'}, 2);
 
@@ -595,14 +615,19 @@ sub create_dump_nib_job
 
 sub prepCreateAlignmentChainsJobs {
   my $self = shift;
+  my $chainConf = shift;
 
-  my $query_collection_name = $chain_conf{'query_collection_name'};
-  my $target_collection_name = $chain_conf{'target_collection_name'};
+  return unless($chainConf);
+
+  my $query_collection_name = $chainConf->{'query_collection_name'};
+  my $target_collection_name = $chainConf->{'target_collection_name'};
   my $gdb_id1 = $self->{'chunkCollectionHash'}->{$query_collection_name}->{'genome_db_id'};
   my $gdb_id2 = $self->{'chunkCollectionHash'}->{$target_collection_name}->{'genome_db_id'};
+  my $logic_name = $chainConf->{'logic_name'};
 
   my $input_id = "{\'query_genome_db_id\'=>\'$gdb_id1\',\'target_genome_db_id\'=>\'$gdb_id2\',";
-  $input_id .= "\'query_collection_name\'=>\'$query_collection_name\',\'target_collection_name\'=>\'$target_collection_name\'}";
+  $input_id .= "\'query_collection_name\'=>\'$query_collection_name\',\'target_collection_name\'=>\'$target_collection_name\',";
+  $input_id .= ",\'logic_name\'=>\'$logic_name\'}";
 
   Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob (
         -input_id       => $input_id,
