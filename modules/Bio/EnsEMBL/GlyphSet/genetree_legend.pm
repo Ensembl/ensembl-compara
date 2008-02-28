@@ -42,8 +42,8 @@ sub _init {
     ['duplication node', 'red3'],
   );
   my @orthos = (
-    ['current gene', 'red', 'GeneID Species A'],
-    ['within-sp. paralogue', 'blue', 'GeneID Species A'],
+    ['current gene', 'red', 'Gene ID Species A'],
+    ['within-sp. paralogue', 'blue', 'Gene ID Species A'],
   );
   my @boxes = (
     ['AA alignment match/mismatch', 'yellowgreen', 'yellowgreen'],
@@ -91,7 +91,7 @@ sub _init {
   foreach my $ortho (@orthos) {
     ($legend, $colour, $text) = @$ortho;
     $self->push(new Sanger::Graphics::Glyph::Text({
-        'x'         => $im_width * $x/$NO_OF_COLUMNS,
+        'x'         => $im_width * $x/$NO_OF_COLUMNS - 50,
         'y'         => $y * ( $th + 3 ) + $th,
         'height'    => $th,
         'valign'    => 'center',
@@ -106,7 +106,7 @@ sub _init {
 
         })
       );
-    $label = _create_label($im_width, $x, $y, $NO_OF_COLUMNS, $BOX_WIDTH + 80, $th, $fontsize, $fontname, $legend);
+    $label = _create_label($im_width, $x, $y, $NO_OF_COLUMNS, $BOX_WIDTH + 20, $th, $fontsize, $fontname, $legend);
     $self->push($label);
     $y++;
   }
