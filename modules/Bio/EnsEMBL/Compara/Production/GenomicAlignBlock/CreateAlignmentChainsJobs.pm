@@ -165,8 +165,11 @@ sub get_params {
   $self->{'target_genome_db_id'} = $params->{'target_genome_db_id'} if(defined($params->{'target_genome_db_id'}));
   $self->{'query_collection_name'} = $params->{'query_collection_name'} if(defined($params->{'query_collection_name'}));
   $self->{'target_collection_name'} = $params->{'target_collection_name'} if(defined($params->{'target_collection_name'}));
+  $self->{'logic_name'} = $params->{'logic_name'} if(defined($params->{'logic_name'}));
+
   # from parameters
   $self->{'method_link'} = $params->{'method_link'} if(defined($params->{'method_link'}));
+
 
   return;
 }
@@ -192,7 +195,8 @@ sub createAlignmentChainsJobs
 {
   my $self = shift;
 
-  my $analysis = $self->db->get_AnalysisAdaptor->fetch_by_logic_name('AlignmentChains');
+  #my $analysis = $self->db->get_AnalysisAdaptor->fetch_by_logic_name('AlignmentChains');
+  my $analysis = $self->db->get_AnalysisAdaptor->fetch_by_logic_name($self->{'logic_name'});
 
   my (%qy_dna_hash, %tg_dna_hash);
 
