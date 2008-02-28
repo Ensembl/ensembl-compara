@@ -106,7 +106,7 @@ sub fetch_input {
   } else {
     $self->{'method_link_species_set'} = $self->{'comparaDBA'}->get_MethodLinkSpeciesSetAdaptor->fetch_by_method_link_type_genome_db_ids($self->{'method_link'}, [$self->{'query_genome_db'}->dbID, $self->{'target_genome_db'}->dbID] );
   }
-  throw("unable to find method_link_species_set for method_link=",$self->{'method_link'}," and the following genome_db_ids ",$self->{'query_genome_db_id'},", ",$self->{'target_genome_db_id'},"\n")
+  throw("unable to find method_link_species_set for method_link=" . $self->{'method_link'} . " and the following genome_db_ids " . $self->{'query_genome_db_id'}. ", " .$self->{'target_genome_db_id'} . "\n")
     unless(defined($self->{'method_link_species_set'}));
 
   $self->print_params;
@@ -163,7 +163,6 @@ sub get_params {
 
   # from parameters
   # nothing
-
   return;
 }
 
