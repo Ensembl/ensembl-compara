@@ -244,10 +244,14 @@ sub store{
   my $genebuild = $gdb->genebuild;
   my $locator = $gdb->locator;
 
-  unless($name && $assembly && $taxon_id) {
-    $self->throw("genome db must have a name, assembly, and taxon_id");
+  if ($taxon_id == 0 and !$assembly) {
+     $assembly = "";
+  } else {
+      unless($name && $assembly && $taxon_id) {
+	  $self->throw("genome db must have a name, assembly, and taxon_id");
+      }
   }
-  
+
   my $sth = $self->prepare("
       SELECT genome_db_id
       FROM genome_db
@@ -261,10 +265,23 @@ sub store{
 
   if(!$dbID) {
     #if the genome db has not been stored before, store it now
-    my $sql = "INSERT into genome_db (name,assembly,taxon_id,assembly_default,genebuild,locator) ". 
-              " VALUES ('$name','$assembly', $taxon_id, $assembly_default, '$genebuild', '$locator')";
-    #print("$sql\n");
-    my $sth = $self->prepare($sql);
+   # my $sql = "INSERT into genome_db (name,assembly,taxon_id,assembly_default,genebuild,locator) ". 
+    #          " VALUES ('$name','$assembly', $taxon_id, $assembly_default, '$genebuild', '$locator')";
+
+     my $sql = qq(
+           INSERT into genome_db (name,assembly,taxon_id,assembly_default,genebuild,locator)
+           VALUES (?,?,?,?,?,?)
+        );      
+
+     #print("$sql\n");
+     my $sth = $self->prepare($sql);
+     $sth->bind_param(1, $name, SQL_VARCHAR);
+     $sth->bind_param(2, $assembly, SQL_VARCHAR);
+     $sth->bind_param(3, $taxon_id, SQL_INTEGER);
+     $sth->bind_param(4, $assembly_default, SQL_TINYINT);
+     $sth->bind_param(5, $genebuild, SQL_VARCHAR);
+     $sth->bind_param(6, $locator, SQL_VARCHAR);
+     
     if($sth->execute()) {
       $dbID = $sth->{'mysql_insertid'};
 
