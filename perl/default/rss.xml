@@ -21,16 +21,16 @@ print qq(
     <category>Bioinformatics</category>
     <category>Genomics</category>
     <category>Genome Browsers</category>
-    <copyright>Copyright 2007 The Ensembl webteam</copyright>
+    <copyright>Copyright 2008 The Ensembl webteam</copyright>
     <managingEditor>helpdesk\@ensembl.org</managingEditor>
     <webMaster>webmaster\@ensembl.org</webMaster>
     <title>Ensembl release $release_id</title>
-    <link>http://dev.ensembl.org/</link>
+    <link>http://www.ensembl.org/</link>
     <generator>Ensembl web API</generator>
     <image>
-      <url>http://dev.ensembl.org/img/e-rss.png</url>
+      <url>http://www.ensembl.org/img/e-rss.png</url>
       <title>Ensembl release $release_id</title>
-      <link>http://dev.ensembl.org/</link>
+      <link>http://www.ensembl.org/</link>
     </image>
     <ttl>1440</ttl>
     <description>
@@ -53,7 +53,7 @@ foreach my $E ( @$results ) {
     <item>
       <title>$E->{'title'}</title>
       <description>$C</description>
-      <link>http://dev.ensembl.org/$this_species/newsview?rel=$release_id#$E->{'news_item_id'}</link>
+      <link>http://www.ensembl.org/$this_species/newsview?rel=$release_id#$E->{'news_item_id'}</link>
     </item>);
 }
 print qq(
