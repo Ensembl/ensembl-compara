@@ -220,17 +220,17 @@ sub context_location {
     # );
     }
    unless ( $obj->species_defs->ENSEMBL_NOMART) {
-      if( $obj->species_defs->multidb('ENSEMBL_MART_ENSEMBL') && !$obj->species_defs->ENSEMBL_NOMART ) {
+      if( ${$obj->species_defs->multidb || {}}{'ENSEMBL_MART_ENSEMBL'} ) {
         $self->add_entry( $flag, 'icon' => '/img/biomarticon.gif' , 'text' => 'Export Gene info in region',
           'title' => "BioMart - export Gene information in $header",
           'href' => "/$species/martlink?l=$q_string;type=gene_region" );
       }
-      if( $obj->species_defs->multidb( 'ENSEMBL_MART_SNP' ) ) {
+      if( ${$obj->species_defs->multidb || {}}{'ENSEMBL_MART_SNP'} ) {
         $self->add_entry( $flag, 'icon' => '/img/biomarticon.gif' , 'text' => 'Export SNP info in region',
           'title' => "BioMart - export SNP information in $header",
           'href' => "/$species/martlink?l=$q_string;type=snp_region" ) if $obj->species_defs->databases->{'ENSEMBL_VARIATION'};
       }
-      if( $obj->species_defs->multidb( 'ENSEMBL_MART_VEGA' ) ) {
+      if( ${$obj->species_defs->multidb || {}}{'ENSEMBL_MART_VEGA'} ) {
         $self->add_entry( $flag,  'icon' => '/img/biomarticon.gif' , 'text' => 'Export Vega info in region',
           'title' => "BioMart - export Vega gene features in $header",
           'href' => "/$species/martlink?l=$q_string;type=vega_region" ) if $obj->species_defs->databases->{'ENSEMBL_VEGA'};
