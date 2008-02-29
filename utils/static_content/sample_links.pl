@@ -411,7 +411,7 @@ sub rand_synteny {
   my @spp = keys %{$synteny{$sp}};
   srand;
   my $other_species = $spp[rand(@spp)];
-  $eg->{'url'} .= ';other_species='.$other_species;
+  $eg->{'url'} .= ';otherspecies='.$other_species;
   $eg->{'text'} = 'Chr '.$eg->{'text'}.': synteny with '.$other_species;
   return $eg;
 }
