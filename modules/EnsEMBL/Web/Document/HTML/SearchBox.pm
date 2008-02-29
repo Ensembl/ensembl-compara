@@ -36,6 +36,7 @@ sub render {
   $self->print( qq(
 <div id="search">
 <form action="/@{[$species||'perl']}/psychic" method="get" id="seform">
+  <input type="hidden" id="species" name="species" value="$species" />
   <input type="hidden" id="se_si" name="site" value="ensembl" />
   <table id="se">
     <tr>
