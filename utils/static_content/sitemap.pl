@@ -172,6 +172,7 @@ my @familyview      = ('familyview', 'FamilyView', 'Protein Family report');
 my @featureview     = ('featureview', 'FeatureView', 'Display Ensembl features (on a karyotype if available)');
 my @geneview        = ('geneview', 'GeneView', 'Gene report');
 my @geneseqview     = ('geneseqview', 'GeneSeqView', 'Displays the sequence section from GeneView');
+my @geneseqalignview    = ('geneseqalignview', 'GeneSeqAlignView', 'Compare the DNA sequence of orthologues');
 my @genesnpview     = ('genesnpview', 'GeneSNPView', 'Lists all SNPs for a gene');
 my @genespliceview  = ('genespliceview', 'GeneSpliceView', 'Alternative splicing for a given gene');
 my @generegulationview  = ('generegulationview', 'GeneRegulationView', 'Regulatory factors for a given gene');
@@ -203,7 +204,7 @@ foreach my $spp (@species) {
     # rebuild view hierarchy each time
     my %species_views = (
         'gene'      => [\@geneview, \@geneseqview, \@genespliceview, \@generegulationview, \@exonview, \@transview, \@contigview, \@cytoview, \@markerview, \@goview],
-        'compgen'   => [\@syntenyview, \@multicontigview, \@sequencealignview, \@genetreeview],
+        'compgen'   => [\@syntenyview, \@multicontigview, \@sequencealignview, \@genetreeview, \@geneseqalignview],
         'protein'   => [\@protview, \@domainview, \@familyview],
         'variation' => [\@genesnpview, \@transcriptsnpview, \@snpview, \@ldview, \@ldtableview],
         'find'      => [\@mapview, \@idhistoryview, \@historyview],
