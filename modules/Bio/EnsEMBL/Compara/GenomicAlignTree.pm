@@ -262,7 +262,7 @@ sub name {
     $self->{_name} = shift;
   } elsif (!$self->{_name}) {
     my $genomic_align = $self->genomic_align;
-    if ($self->SUPER::name()) {
+    if (defined($self->SUPER::name())) {
       ## Uses the name defined before blessing this object as a
       ## Bio::EnsEMBL::Compara::GenomicAlignTree in the Ortheus pipeline
       $self->{_name} = $self->SUPER::name();
