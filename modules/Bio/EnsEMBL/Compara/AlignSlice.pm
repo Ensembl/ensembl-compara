@@ -745,7 +745,7 @@ sub _create_underlying_Slices {
   } else {
     $last_ref_pos = $self->reference_Slice->end;
   }
-  my $ref_genome_db = undef;
+  my $ref_genome_db = $self->adaptor->db->get_GenomeDBAdaptor->fetch_by_Slice($self->reference_Slice);
   my $big_mapper = Bio::EnsEMBL::Mapper->new("sequence", "alignment");
 
   my $sorted_genomic_align_blocks;
@@ -772,10 +772,6 @@ sub _create_underlying_Slices {
     $original_genomic_align_block->{_alignslice_to} = $to;
 
     my $reference_genomic_align = $this_genomic_align_block->reference_genomic_align;
-    if (!$ref_genome_db) {
-      $ref_genome_db = $reference_genomic_align->genome_db;
-      warn "[$reference_genomic_align] has no genome_db" if (!$ref_genome_db);
-    }
     my ($this_pos, $this_gap_between_genomic_align_blocks);
     if ($strand == 1) {
       $this_pos = $reference_genomic_align->dnafrag_start;
