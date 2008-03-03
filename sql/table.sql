@@ -479,7 +479,8 @@ CREATE TABLE homology (
   # FOREIGN KEY (method_link_species_set_id) REFERENCES method_link_species_set(method_link_species_set_id),
 
   PRIMARY KEY (homology_id),
-  KEY (method_link_species_set_id)
+  KEY (method_link_species_set_id),
+  KEY (tree_node_id)
 ) COLLATE=latin1_swedish_ci;
 
 
