@@ -91,7 +91,14 @@ sub create_Gene {
 # For a Regulatory Factor ID display all the RegulatoryFeatures
 sub create_RegulatoryFactor {
   my ( $self, $db, $id ) = @_;
-  $id ||= $self->param( 'id' );
+
+  if (!$id ) {
+    my @ids = $self->param( 'id' );
+    $id = join(' ', @ids);
+  }
+  elsif (ref($id) eq 'ARRAY') {
+    $id = join(' ', @$id);
+  }
 
   my $db_adaptor  = $self->database(lc($db));
   unless( $db_adaptor ){
@@ -125,8 +132,14 @@ sub create_RegulatoryFactor {
 sub _generic_create {
   my( $self, $object_type, $accessor, $db, $id, $flag ) = @_;
   $db ||= 'core';
-                                                                                   
-  $id ||= $self->param( 'id' );
+
+  if (!$id ) {
+    my @ids = $self->param( 'id' );
+    $id = join(' ', @ids);
+  }
+  elsif (ref($id) eq 'ARRAY') {
+    $id = join(' ', @$id);
+  }
 
   ## deal with xrefs
   my $xref_db;
@@ -151,7 +164,7 @@ sub _generic_create {
     $id =~ s/\s+/ /g;
     $id =~s/^ //;
     $id =~s/ $//;
-    foreach my $fid ( $id=~/ /?$id:(), split /\s+/, $id ) {
+    foreach my $fid ( split /\s+/, $id ) {
       my $t_features;
       if ($xref_db) {
         eval {
@@ -169,16 +182,17 @@ sub _generic_create {
         };
       }
       ## if no result, check for unmapped features
-      if ($t_features && ref($t_features) eq 'ARRAY' && !@$t_features) {
-        my $uoa = $db_adaptor->get_UnmappedObjectAdaptor;
-        $t_features = $uoa->fetch_by_identifier($fid);
-      }
-
-      if( $t_features && ref($t_features) eq 'ARRAY') {
-        foreach my $f (@$t_features) { 
-          next unless $f;
-          $f->{'_id_'} = $fid;
-          push @$features, $f;
+      if ($t_features && ref($t_features) eq 'ARRAY') {
+        if (!@$t_features) {
+          my $uoa = $db_adaptor->get_UnmappedObjectAdaptor;
+          $t_features = $uoa->fetch_by_identifier($fid);
+        }
+        else {
+          foreach my $f (@$t_features) { 
+            next unless $f;
+            $f->{'_id_'} = $fid;
+            push @$features, $f;
+          }
         }
       }
     }
