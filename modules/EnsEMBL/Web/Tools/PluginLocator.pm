@@ -32,7 +32,7 @@ sub new {
 }
 
 sub include {
-  ### Dynamically includes found moledules in the locations specified by {{locations}}, ending in a specified (optional) suffix. Any previously loaded modules are not loaded again.
+  ### Dynamically includes found modules in the locations specified by {{locations}}, ending in a specified (optional) suffix. Any previously loaded modules are not loaded again.
   ### Returns true even if modules failed to load. Anything calling
   ### {{include}} should check for {{warnings}} if it's important that
   ### a particular module is loaded.
@@ -61,6 +61,20 @@ sub create_all {
     $self->add_result($child, $temp);
   }
   return $self->results;
+}
+
+sub call_sub {
+  ### Calls one or more methods on the classes found by {{include}}. The results are stored in the {{results}} array.
+  my $self   = shift;
+  my $method = shift;
+  my %results = ();
+  foreach my $child (@{ $self->children }) {
+    my $pack   = "$child"."::";
+    my $subr   = "$pack$method";
+    my $f = 0;
+    eval "\$f = exists( \$$pack{'$method'} );";
+    $subr( @_ ) if $f;
+  }
 }
 
 sub call {
