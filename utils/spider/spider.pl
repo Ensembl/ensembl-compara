@@ -676,7 +676,6 @@ sub process_link {
 sub make_request {
     my ( $request, $server, $uri, $parent, $depth ) = @_;
 
-
     my $response;
     my $response_aborted_msg;
     my $killed_connection;
@@ -692,7 +691,6 @@ sub make_request {
 
         my $callback = sub {
             my ( $content, $response ) = @_;
-
             # First time, check response - this can die()
             check_response( $response, $server, $uri )
                 unless $server->{response_checked}++;
@@ -706,8 +704,6 @@ sub make_request {
 
             $response->add_content( $content );
         };
-
-
 
         ## Make Request ##
 
@@ -796,9 +792,9 @@ sub make_request {
 
 
     # Deal with failed responses
-
-    return failed_response( $response, $server, $uri, $parent, $depth )
-        unless $response->is_success;
+    #
+    #    return failed_response( $response, $server, $uri, $parent, $depth )
+    #        unless $response->is_success;
 
 
     # Don't log HEAD requests
@@ -831,7 +827,7 @@ sub make_request {
 sub check_response {
     my ( $response, $server, $uri ) = @_;
 
-    return unless $response->is_success;  # 2xx response.
+    #return unless $response->is_success;  # 2xx response.
 
     # Cache user/pass if entered from the keyboard or callback function (as indicated by the realm)
     # do here so we know it is correct

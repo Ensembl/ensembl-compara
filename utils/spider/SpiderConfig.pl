@@ -34,6 +34,7 @@ our @servers;
 our %template = (
     agent       => 'swish-e spider http://swish-e.org/',
     email       => 'ensembl-admin@ebi.ac.uk',
+    use_head_requests => 1,
     debug       => 1,
     keep_alive  => 1,         # Try to keep the connection open
     max_wait_time => 15,      # This setting is the number of seconds to wait for data
@@ -54,12 +55,34 @@ our %template = (
     # Here are hooks to callback routines to validate urls and responses
     # Probably a good idea to use them so you don't try to index
     # Binary data.  Look at content-type headers!
-    #test_url       => \&test_url,
+    test_url        => \&test_url,
     test_response   => \&test_response,
     filter_content  => \&filter_content,
     output_function => sub {  },
     spider_done     => \&spider_done,
 );
+
+sub test_url {
+  ($uri, $server) = @_;
+  my @ban = qw/exportview         haplotag            multicontigview equencealignview
+               ajax-pfetch        familyview          haploview       newsview                sequencealignview snpview
+               alignsliceview     fastaview           helpview        populate_fragment       status
+               alignview          featureview         historyview     populate_info_fragment  syntenyview
+               assemblyconverter  generegulationview  idhistoryview   populate_tree           tag_response
+               colourmap          geneseqalignview    jump_to_contig  populate_zmenu          tagloview
+               contigview         geneseqview         karyoview       primerview              textview
+               cytoview           genesnpview         ldtableview     protview                transcriptsnpdataview
+               das                genespliceview      ldview          psychic                 transcriptsnpview
+               dasconfview        genetreeview        mapview         r                       transview
+               domainview         geneview            markerview      unisearch               dotterview
+               glossaryview       martlink            search          urlsource
+               exonview           goview              miscsetview     searchview/;
+
+  foreach my $ban (@ban) {
+    return 0 if $uri =~ m!/$ban!;
+  }
+  return 1;
+}
 
 sub test_response {
   ($uri, $server, $response, $content_chunk) = @_;
