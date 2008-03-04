@@ -29,7 +29,7 @@ sub load_configuration {
   my ($self, $config) = @_;
   my $obj  = $self->{object};
   my $config_string = $config->config;
-  $config_string =~ s/&quote;/'/g;
+  $config_string =~ s/&quote;/'/g; #'
 #  warn $config_string;
   my $config_data = eval($config_string);
   foreach my $key (keys %{ $config_data }) {
@@ -100,15 +100,31 @@ unless( $obj->species_defs->NO_SEQUENCE ) {
       $export_section = "Export data";
       $menu->add_block( $export_section, 'bulleted', "Export data", 'raw' => 1 );
     }
-    $menu->add_entry( $export_section, 'icon' => '/img/biomarticon.gif' , 'text' => 'Export Gene info in region',
-        'title' => "BioMart - export Gene information in $header",
-        'href' => "/$species/martlink?l=$q_string;type=gene_region" );
-      $menu->add_entry( $export_section, 'icon' => '/img/biomarticon.gif' , 'text' => 'Export SNP info in region',
-        'title' => "BioMart - export SNP information in $header",
-        'href' => "/$species/martlink?l=$q_string;type=snp_region" ) if $obj->species_defs->databases->{'ENSEMBL_VARIATION'};
-      $menu->add_entry( $export_section,  'icon' => '/img/biomarticon.gif' , 'text' => 'Export Vega info in region',
-        'title' => "BioMart - export Vega gene features in $header",
-        'href' => "/$species/martlink?l=$q_string;type=vega_region" ) if $obj->species_defs->databases->{'ENSEMBL_VEGA'};
+
+    if( ${$obj->species_defs->multidb || {}}{'ENSEMBL_MART_ENSEMBL'} ) {
+      $menu->add_entry
+          ( $export_section, 
+            'icon' => '/img/biomarticon.gif' , 
+            'text' => 'Export Gene info in region',
+            'title' => "BioMart - export Gene information in $header",
+            'href' => "/$species/martlink?l=$q_string;type=gene_region" );
+    }
+    if( ${$obj->species_defs->multidb || {}}{'ENSEMBL_MART_SNP'} ) {
+      $menu->add_entry
+          ( $export_section, 
+            'icon' => '/img/biomarticon.gif' , 
+            'text' => 'Export SNP info in region',
+            'title' => "BioMart - export SNP information in $header",
+            'href' => "/$species/martlink?l=$q_string;type=snp_region" );
+    }
+    if( ${$obj->species_defs->multidb || {}}{'ENSEMBL_MART_VEGA'} ) {
+      $menu->add_entry
+          ( $export_section,  
+            'icon' => '/img/biomarticon.gif' , 
+            'text' => 'Export Vega info in region',
+            'title' => "BioMart - export Vega gene features in $header",
+            'href' => "/$species/martlink?l=$q_string;type=vega_region" );
+    }
   }
   my @options_as = ();
 
