@@ -243,7 +243,7 @@ sub show_news {
       }
     
       ## wrap each record in nice XHTML
-      $html .= _output_story($title, $content);
+      $html .= _output_story($title, $content, $item_id);
 
       ## keep track of where we are!
       $prev_rel = $release_id;
@@ -265,9 +265,9 @@ sub _output_cat_heading {
 
 sub _output_story {
 ### "Private" method used by show_news (above) to format stories
-    my ($title, $content) = @_;
+    my ($title, $content, $id) = @_;
     
-    my $html = "<h4>$title</h4>\n";
+    my $html = qq(<h4 id="news_$id">$title</h4>\n);
     if ($content !~ /^</) { ## wrap bare content in a <p> tag
         $content = "<p>$content</p>";
     }
