@@ -215,10 +215,11 @@ sub get_homology_matches{
     foreach my $displayspp (keys (%homologues)){
       ( my $spp = $displayspp ) =~ tr/ /_/;
       my $order=0;
-      foreach my $homology (@{$homologues{$displayspp}}){
-        my ($homologue, $homology_desc, $homology_subtype, $query_perc_id, $target_perc_id) = @{$homology};
+      foreach my $homology (@{$homologues{$displayspp}}){ 
+        my ($homologue, $homology_desc, $homology_subtype, $query_perc_id, $target_perc_id, $dnds_ratio) = @{$homology};
+  
         next unless ($homology_desc =~ /$homology_description/);
-        my $homologue_id = $homologue->stable_id;
+        my $homologue_id = $homologue->stable_id;        
            $homology_desc= $desc_mapping{$homology_desc};   # mapping to more readable form
         $homology_desc= "no description" unless (defined $homology_desc);
         $homology_list{$displayspp}{$homologue_id}{'homology_desc'}    = $homology_desc ;
@@ -228,7 +229,8 @@ sub get_homology_matches{
         $homology_list{$displayspp}{$homologue_id}{'order'}            = $order ;
         $homology_list{$displayspp}{$homologue_id}{'query_perc_id'}    = $query_perc_id ;
         $homology_list{$displayspp}{$homologue_id}{'target_perc_id'}   = $target_perc_id ;
-      
+        $homology_list{$displayspp}{$homologue_id}{'homology_dnds_ratio'}       = $dnds_ratio; 
+ 
         if ($self->species_defs->valid_species($spp)){
           my $database_spp = $self->DBConnection->get_databases_species( $spp, 'core') ;
           unless( $database_spp->{'core'} ) {
@@ -297,7 +299,7 @@ sub fetch_homology_species_hash {
  
  foreach my $homology (@{$homologies_array}){
     next unless ($homology->description =~ /$homology_description/);
-    my ($query_perc_id, $target_perc_id, $genome_db_name, $target_member);
+    my ($query_perc_id, $target_perc_id, $genome_db_name, $target_member, $dnds_ratio);
     foreach my $member_attribute (@{$homology->get_all_Member_Attribute}) {
       my ($member, $attribute) = @{$member_attribute};
       if ($member->stable_id eq $query_member->stable_id) {
@@ -306,9 +308,10 @@ sub fetch_homology_species_hash {
           $target_perc_id = $attribute->perc_id;
           $genome_db_name = $member->genome_db->name;
           $target_member = $member;
+          $dnds_ratio = $homology->dnds_ratio; 
       }
     }  
-    push (@{$homologues{$genome_db_name}}, [ $target_member, $homology->description, $homology->subtype, $query_perc_id, $target_perc_id ]);
+    push (@{$homologues{$genome_db_name}}, [ $target_member, $homology->description, $homology->subtype, $query_perc_id, $target_perc_id, $dnds_ratio ]);
   }
 
   foreach my $species_name (keys %homologues){
