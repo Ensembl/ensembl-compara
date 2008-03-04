@@ -1,4 +1,4 @@
-#!/software/perl-5.8.8/bin/perl -w
+#!/usr/local/bin/perl -w
 use strict;
 #no warnings;
 
@@ -34,6 +34,7 @@ $HTTP::URI_CLASS = "URI";   # prevent loading default URI::URL
 use LWP::RobotUA;
 use HTML::LinkExtor;
 use HTML::Tagset;
+use Data::Dumper;
 
 use vars '$VERSION';
 $VERSION = sprintf '%d.%02d', q$Revision$ =~ /: (\d+)\.(\d+)/;
@@ -516,7 +517,6 @@ sub spider {
         delete $server->{_request};
 
         my $new_links = process_link( $server, $uri->clone, $parent, $depth );
-
         push @link_array, map { [ $_, $uri, $depth+1 ] } @$new_links if $new_links;
 
     }
@@ -574,7 +574,6 @@ sub delay_request {
 
 sub process_link {
     my ( $server, $uri, $parent, $depth ) = @_;
-
 
     $server->{counts}{'Unique URLs'}++;
 
@@ -954,7 +953,7 @@ sub redirect_response {
     # But leave here just in case
 
     if ( $server->{_request}{redirects}++ > MAX_REDIRECTS ) {
-        warn "Exceeded redirect limimt: perhaps a redirect loop: $uri on parent page: $parent\n";
+        warn "Exceeded redirect limit: perhaps a redirect loop: $uri on parent page: $parent\n";
         return;
     }
 
