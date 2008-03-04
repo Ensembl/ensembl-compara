@@ -132,7 +132,6 @@ sub format_breadcrumbs {
   my ($path, $branch) = @_;
   my $BC = breadcrumbs($path, $branch);
   if ($BC) {
-warn "BC: $BC";
     $BC =~ s/$pointer\s*$//;
     $BC = '<p id="breadcrumbs">'.$BC.'</div>';
   }
@@ -147,7 +146,7 @@ sub breadcrumbs {
   my ($step, $rest) = $path =~ m!/(.*?)(/.*)?$!; 
 
   if (defined $branch->{$step} && $step !~ /\.html/ && $rest ne '/index.html') {
-    $out = sprintf qq(<a href="%s" title="%s" class="breadcrumb">%s</a> $pointer ), $branch->{$step}->{_path}, $branch->{$step}->{_nav}, $branch->{$step}->{_title};
+    $out = sprintf qq(<a href="%s" title="%s" class="breadcrumb">%s</a> $pointer ), $branch->{$step}->{_path}, $branch->{$step}->{_title}, $branch->{$step}->{_nav};
     $out .= breadcrumbs($rest, $branch->{$step}) if $rest;
   }
 
