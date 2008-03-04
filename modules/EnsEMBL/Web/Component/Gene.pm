@@ -902,18 +902,18 @@ sub orthologues {
   if( $gene->param( $status ) eq 'off' ) { $panel->add_row( $label, '', "$URL=on" ); return 0; }
 
   my $db              = $gene->get_db() ;
-  my $cache_obj = cache( $panel, $gene, 'orth', join '::', $db, $gene->species, $gene->stable_id );
-  my $html;
+  my $cache_obj = cache( $panel, $gene, 'orth', join '::', $db, $gene->species, $gene->stable_id ); 
+  my $html; 
   if( $cache_obj->exists ) {
-    $html = $cache_obj->retrieve();
+    $html = $cache_obj->retrieve(); 
     return 1 unless $html;
   } else {
     my $orthologue = $gene->get_homology_matches('ENSEMBL_ORTHOLOGUES');
     unless( keys %{$orthologue} ) {
       cache_print( $cache_obj, undef );
       return 1;
-    }
-    my %orthologue_list = %{$orthologue};
+    } 
+    my %orthologue_list = %{$orthologue}; 
 
 # Find the selected method_link_set
     $html = qq#
@@ -928,17 +928,18 @@ paralogues with BioMart to see more.)</p>
         <tr>
           <th>Species</th>
           <th>Type</th>
+          <th>dN/dS</th>
           <th>Gene identifier</th>
         </tr>#;
-    my %orthologue_map = qw(SEED BRH PIP RHS);
-
+    my %orthologue_map = qw(SEED BRH PIP RHS); 
+    
     my %SPECIES;
     my $STABLE_ID = $gene->stable_id; my $C = 1;
     my $ALIGNVIEW = 0;
     my $matching_orthologues = 0;
     my %SP = ();
     my $multicv_link = sprintf "/%s/multicontigview?gene=%s;context=10000", $gene->species, $gene->stable_id;
-    my $FULL_URL     = $multicv_link;
+    my $FULL_URL     = $multicv_link; 
 
     foreach my $species (sort keys %orthologue_list) {
       my $C_species = 1;
@@ -956,10 +957,10 @@ paralogues with BioMart to see more.)</p>
         <tr>);
         $matching_orthologues = 1;
         my $description = $OBJ->{'description'};
-           $description = "No description" if $description eq "NULL";
-        my $orthologue_desc = $orthologue_map{ $OBJ->{'homology_desc'} } || $OBJ->{'homology_desc'};
-   #     my $orthologue_dnds_ratio = $OBJ->{'homology_dnds_ratio'};
-   #      $orthologue_dnds_ratio = '&nbsp;' unless (defined $orthologue_dnds_ratio);
+           $description = "No description" if $description eq "NULL"; 
+        my $orthologue_desc = $orthologue_map{ $OBJ->{'homology_desc'} } || $OBJ->{'homology_desc'}; 
+        my $orthologue_dnds_ratio = $OBJ->{'homology_dnds_ratio'}; 
+         $orthologue_dnds_ratio = '&nbsp;' unless (defined $orthologue_dnds_ratio);
         my ($last_col, $EXTRA2);
         if(exists( $OBJ->{'display_id'} )) {
           (my $spp = $OBJ->{'spp'}) =~ tr/ /_/ ;
@@ -984,14 +985,15 @@ paralogues with BioMart to see more.)</p>
                       qq(<span class="small">$description</span> $EXTRA2);
         } else {
           $last_col = qq($stable_id<br /><span class="small">$description</span> $EXTRA2);
-        }
+        } 
         $html .= sprintf( qq(
               <td>$orthologue_desc</td>
+              <td>$orthologue_dnds_ratio</td>
               <td>$last_col</td>
             </tr>));
-      }
-      if( $rowspan > 1) {
-        $html .= qq(<tr><td>&nbsp;</td><td><a href="$mcv_species">MultiContigView showing all $species orthologues</a></td></tr>); 
+      } 
+      if( $rowspan > 1) { 
+        $html .= qq(<tr><td>&nbsp;</td><td>&nbsp;</td><td><a href="$mcv_species">MultiContigView showing all $species orthologues</a></td></tr>); 
       }
     }
     $html .= qq(\n      </table>);
@@ -1038,7 +1040,7 @@ sub paralogues {
       <table>);
     $html .= qq(
         <tr>
-          <th>Taxonomy Level</th><th>Gene identifier</th>
+          <th>Taxonomy Level</th><th>dN/dS</th><th>Gene identifier</th>
         </tr>);
     my %paralogue_map = qw(SEED BRH PIP RHS);
 
@@ -1058,6 +1060,8 @@ sub paralogues {
         my $paralogue_desc = $paralogue_map{ $OBJ->{'homology_desc'} } || $OBJ->{'homology_desc'};
         my $paralogue_subtype = $OBJ->{'homology_subtype'};
            $paralogue_subtype = "&nbsp;" unless (defined $paralogue_subtype);
+        my $paralogue_dnds_ratio = $OBJ->{'homology_dnds_ratio'};
+        $paralogue_dnds_ratio = "&nbsp;" unless ( defined $paralogue_dnds_ratio); 
         if($OBJ->{'display_id'}) {
           (my $spp = $OBJ->{'spp'}) =~ tr/ /_/ ;
           my $EXTRA = qq(<span class="small">[<a href="/@{[$gene->species]}/multicontigview?gene=$STABLE_ID;s1=$spp;g1=$stable_id;context=1000">MultiContigView</a>]</span>);
@@ -1077,6 +1081,7 @@ sub paralogues {
           $html .= qq(
         <tr>
           <td>$paralogue_subtype</td>
+          <td> $paralogue_dnds_ratio</td>
           <td><a href="$link">$stable_id</a> (@{[ $OBJ->{'display_id'} ]}) $EXTRA<br />
               <span class="small">$description</span>$EXTRA2</td>
         </tr>);
