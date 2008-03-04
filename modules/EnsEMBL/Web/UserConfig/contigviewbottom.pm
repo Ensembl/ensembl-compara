@@ -259,14 +259,16 @@ sub init {
       'on'  => "off",
       'pos' => '12',
       'str' => 'b',
-      'available'=> 'database_tables ENSEMBL_DB.regulatory_feature', 
+      'bump_width' => 0,
+      'dep' => 6,
+      'available'=> 'database_tables ENSEMBL_FUNCGEN.feature_set', 
     },
 
    'regulatory_search_regions' => {
       'on'  => "off",
       'pos' => '13',
       'str' => 'b',
-      'available'=> 'database_tables ENSEMBL_DB.regulatory_search_region',
+      'available'=> 'database_tables ENSEMBL_FUNCGEN.feature_set',
     },
 
     'first_ef'   => {
