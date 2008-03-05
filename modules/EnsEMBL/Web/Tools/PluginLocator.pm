@@ -63,20 +63,6 @@ sub create_all {
   return $self->results;
 }
 
-sub call_sub {
-  ### Calls one or more methods on the classes found by {{include}}. The results are stored in the {{results}} array.
-  my $self   = shift;
-  my $method = shift;
-  my %results = ();
-  foreach my $child (@{ $self->children }) {
-    my $pack   = "$child"."::";
-    my $subr   = "$pack$method";
-    my $f = 0;
-    eval "\$f = exists( \$$pack{'$method'} );";
-    $subr( @_ ) if $f;
-  }
-}
-
 sub call {
   ### Calls one or more methods on the classes found by {{include}}. The results are stored in the {{results}} array.
   my ($self, @methods) = @_;
