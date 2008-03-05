@@ -692,7 +692,7 @@ sub make_request {
         my $callback = sub {
             my ( $content, $response ) = @_;
             # First time, check response - this can die()
-            check_response( $response, $server, $uri )
+            check_response( $response, $server, $uri, $parent )
                 unless $server->{response_checked}++;
 
 
@@ -726,7 +726,7 @@ sub make_request {
 
         # check_response - user callback can call die() so wrap in eval block
         eval {
-            check_response( $response, $server, $uri )
+            check_response( $response, $server, $uri, $parent )
                 unless $server->{response_checked}++;
         };
         $response_aborted_msg = $@ if $@;
@@ -825,7 +825,7 @@ sub make_request {
 #
 #-------------------------------------------------------------------
 sub check_response {
-    my ( $response, $server, $uri ) = @_;
+    my ( $response, $server, $uri, $parent ) = @_;
 
     #return unless $response->is_success;  # 2xx response.
 
@@ -848,8 +848,7 @@ sub check_response {
     # check for document too big.
     check_too_big( $response, $server ) if $server->{max_size};
 
-
-    die "test_response" if !check_user_function( 'test_response', $uri, $server, $response );
+    die "test_response" if !check_user_function( 'test_response', $uri, $server, $response, $parent );
 
 }
 
@@ -1057,7 +1056,7 @@ sub log_response {
 #---------------------------------------------------------------------------------------------------
 
 sub check_user_function {
-    my ( $fn, $uri, $server ) = ( shift, shift, shift );
+    my ( $fn, $uri, $server, @args ) = @_;
 
     return 1 unless $server->{$fn};
 
@@ -1071,7 +1070,7 @@ sub check_user_function {
 
         my $ret;
 
-        eval { $ret = $sub->( $uri, $server, @_ ) };
+        eval { $ret = $sub->( $uri, $server, @args ) };
 
         if ( $@ ) {
             print STDERR "-Skipped $uri due to '$fn' user supplied function #$cnt death '$@'\n" if $server->{debug} & DEBUG_SKIPPED;

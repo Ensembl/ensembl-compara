@@ -85,9 +85,10 @@ sub test_url {
 }
 
 sub test_response {
-  ($uri, $server, $response, $content_chunk) = @_;
+  ($uri, $server, $response, $parent) = @_;
   print $response->code.' ('.$response->message.') '.$uri."\n";
   if ($response->code >= 400) {
+    print ERROR_PAGES "                $parent : \n";
     print ERROR_PAGES $response->code.' ('.$response->message.') '.$uri."\n";
   }
   return 1;
