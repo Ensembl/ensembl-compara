@@ -66,7 +66,7 @@ sub test_url {
   ($uri, $server) = @_;
   my @ban = qw/exportview         haplotag            multicontigview equencealignview
                ajax-pfetch        familyview          haploview       newsview                sequencealignview snpview
-               alignsliceview     fastaview           helpview        populate_fragment       status
+               alignsliceview     fastaview                           populate_fragment       status
                alignview          featureview         historyview     populate_info_fragment  syntenyview
                assemblyconverter  generegulationview  idhistoryview   populate_tree           tag_response
                colourmap          geneseqalignview    jump_to_contig  populate_zmenu          tagloview
