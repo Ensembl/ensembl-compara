@@ -614,7 +614,7 @@ sub _parse {
 	      my $assembly = $tree->{'general'}{'ENSEMBL_GOLDEN_PATH'};
 	      (my $type = lc($source)) =~ s/_/\./ ;
 	      if ($type =~ /latestgp/) {
-	        $type =~ s/latestgp(.*)/dna$1\.seqlevel/;
+	        $type =~ s/latestgp(.*)/dna$1\.toplevel/;
 	        $type =~ s/.masked/_rm/;
 	      }
 	      $type = "ncrna" if $type eq 'rna.nc';
