@@ -35,8 +35,8 @@ sub init_label {
 
   my $script = $ENV{ENSEMBL_SCRIPT};
   my $species = $ENV{ENSEMBL_SPECIES};
-  my $helplink = (defined($self->{'extras'}->{'helplink'})) ?  $self->{'extras'}->{'helplink'} :  "/$species/helpview?se=1;kw=$ENV{'ENSEMBL_SCRIPT'}#das";
-    
+  my $helplink = $self->{'extras'}->{'help'} || $self->{'extras'}->{'helplink'} ||  "/$species/helpview?se=1;kw=$ENV{'ENSEMBL_SCRIPT'}#das";
+#  my $helplink = (defined($self->{'extras'}->{'helplink'})) ?  $self->{'extras'}->{'helplink'} :  "/$species/helpview?se=1;kw=$ENV{'ENSEMBL_SCRIPT'}#das";
 ## Compute the label for the track...
   my $track_label = $self->{'extras'}->{'label'} || $self->{'extras'}->{'caption'} || $self->{'extras'}->{'name'};
   $track_label =~ s/^(managed_|managed_extdas)//;
@@ -50,14 +50,14 @@ sub init_label {
     $zmenu->{'caption'} =  'Configure';
     $zmenu->{'01:Advanced configuration...'} = $URL;
   } else {
+    $zmenu->{'caption'} = 'Help';
+  }
     if ($self->{'extras'}{'homepage'}){
       $URL = $self->{'extras'}{'homepage'};
     } else {
       $URL = qq(javascript:X=window.open(\'$helplink\',\'helpview\',\'left=20,top=20,resizable,scrollbars=yes\');X.focus();void(0)) ;
     }
-    $zmenu->{'caption'} = 'Help';
     $zmenu->{'01:Track information...'}      = $URL;
-  }
   my $Config = $self->{'config'};
   my $Extras = $self->{'extras'};
   ( my $das_name        = (my $das_config_key = $self->das_name() ) ) =~ s/managed_(extdas_)?//g;
@@ -67,7 +67,6 @@ sub init_label {
     $Extras->{dataMin} = $Extras->{fg_min};  
     $Extras->{dataMax} = $Extras->{fg_max};  
     my @features = sort {$b->das_score <=> $a->das_score} @{$self->features_nongrouped || []}; ### Sort by score in descending order - preparing for merge_features
-#    warn "F1-0:", scalar(@features);
     my @sfeatures = grep { defined ($_->das_score) } @features;
     my ($max_value, $min_value) = (@sfeatures) ? ($sfeatures[0]->das_score, $sfeatures[-1]->das_score) : (undef, undef);
     my $min_score = defined ($Extras->{dataMin}) ? $Extras->{dataMin} : ($min_value  || 0);
@@ -75,8 +74,6 @@ sub init_label {
     $min_score = 0 if ($max_score == $min_score);
     $self->{_min_score} = $min_score;
     $self->{_max_score} = $max_score;
-#warn join ' * ', $Extras->{dataMin}, $Extras->{dataMax}; 
-#warn join ' * ', $min_score, $max_score; 
 
     $zmenu->{"04:Region has features in the range $min_value..$max_value"} = '' if (defined $min_value);
     if (1 || ($Extras->{'autoScale'} eq 'on')) {
@@ -92,17 +89,15 @@ sub init_label {
   
 ## Add a link to the zmenu which allows people to look at the raw DAS response (or 
 ## the pretty one if that is styled with CSS.. Need the URL and the segments list.
-
-#$Data::Dumper::Indent = 1;
+$Data::Dumper::Indent = 1;
 #warn Data::Dumper::Dumper( $self->{'extras'} );
 
   my @segments;
-
-  if ( (my $dastype = $self->{'extras'}{'type'} ) !~ /^ensembl_location/) {
+  my ($das_type) = $self->{'extras'}{'type'} || @{$self->{'extras'}{'mapping'}||[]};
+  if ( $das_type !~ /^ensembl_location/) {
     my $ga =  $self->{'container'}->adaptor->db->get_GeneAdaptor();
     my $genes = $ga->fetch_all_by_Slice( $self->{'container'});
     (my $name = $self->{'extras'}{'name'}) =~ s/^managed(_das)?_//;
-
     foreach my $gene (@$genes) {
       next if ($gene->strand != $self->strand);
       my ($fref, $cssref, $segref) = $gene->get_all_DAS_Features;
@@ -144,7 +139,6 @@ sub RENDER_simple {
   my $more_features = 0;
   my $label_height = 0;
   my $total_track_height = 0;
-
   foreach my $f( sort { 
     my $c=0;
     my $astyle = $self->get_featurestyle ($a, $configuration);
@@ -162,7 +156,7 @@ sub RENDER_simple {
   
       # Skip features that aren't on the current strand, if we're doing both
       # strands
-    next if $configuration->{'strand'} eq 'b' && ( $f->strand() !=1 && $configuration->{'STRAND'}==1 || $f->strand() ==1 && $configuration->{'STRAND'}==-1);
+    next if $configuration->{'strand'} eq 'b' && ( ($f->strand() !=1 && $configuration->{'STRAND'}==1) || ($f->strand() ==1 && $configuration->{'STRAND'}!= 1));
   
     my $ID    = $f->das_id;
     my $label = $f->das_feature_label || $ID;
@@ -912,8 +906,6 @@ sub _init {
     $renderer = $renderer ? "RENDER_$renderer" : ($group eq 'N' ? 'RENDER_simple' : 'RENDER_grouped');  
     $renderer =~ s/RENDER_RENDER/RENDER/;
   }  
-
-
   return $self->$renderer( $configuration );
 }
 
@@ -1518,14 +1510,13 @@ sub RENDER_histogram {
 
 }   # END RENDER_histogram
 
-sub RENDER_plot {
+sub RENDER_plot_2 {
   my( $self, $configuration ) = @_;
-
 # Display histogram only on a reverse strand if the track is configured to be shown on both strands
   return if ($configuration->{'strand'} eq 'b' && $self->strand == 1);
   
   my ($min_score, $max_score) = ( $self->{_min_score}, $self->{_max_score});
-  my $row_height = $configuration->{h} || 30;
+  my $row_height = $configuration->{h} || 20;
 
 # In case of tiling array we want symmetric positive and negative scales, so if min = -10 and max = 40 then 
 #  we want an axis from -40 to + 40
@@ -1551,10 +1542,9 @@ sub RENDER_plot {
   my $g_offset = 0;
   my $y_offset = 0;
   my $axis_colour = 'black';
-
+ 
   foreach my $fgroup ( sort keys %{$self->{_features}->{grouped}}) {
 
-#  warn join ' * ', $fgroup, scalar(@features);
     $self->push( new Sanger::Graphics::Glyph::Line({
        	'x'         => 0,
 	'y'         => $g_offset + $row_height + 1,
@@ -1666,7 +1656,7 @@ sub features {
 
   return $self->{'_features'} if ($self->{'_features'});
 
-  my $dastype = $Extra->{'type'} || 'ensembl_location_chromosome';
+#  my $dastype = $Extra->{'type'} || 'ensembl_location_chromosome';
   my $dsn = $Extra->{'dsn'};
   my $url = defined($Extra->{'extra_url'}) ? $Extra->{'extra_url'}."/$dsn" :  $Extra->{'protocol'}.'://'. $Extra->{'domain'} ."/$dsn";
  ( my $das_name        = (my $das_config_key = $self->das_name() ) ) =~ s/managed_(extdas_)?//g;
@@ -1675,10 +1665,12 @@ sub features {
   $srcname =~ s/^(managed_|mananged_extdas)//;
    
   my @das_features = ();
+   my ($dastype) = $Extra->{'type'} || @{$Extra->{'mapping'}||[]};
   if ($dastype !~ /^ensembl_location/) {
     my $ga =  $self->{'container'}->adaptor->db->get_GeneAdaptor();
     my $genes = $ga->fetch_all_by_Slice( $self->{'container'});
     my $name = $das_name || $url;
+ my $sl = $self->{'container'};
 
     foreach my $gene (@$genes) {
       next if ($gene->strand != $self->strand);
@@ -1692,7 +1684,7 @@ sub features {
         if ($f->das_end) {
            my @coords;
            foreach my $transcript (@{$gene->get_all_Transcripts()}) {
-             @coords = grep { $_->isa('Bio::EnsEMBL::Mapper::Coordinate') } $transcript->pep2genomic($f->start, $f->end, $f->strand);
+             push @coords, grep { $_->isa('Bio::EnsEMBL::Mapper::Coordinate') } $transcript->pep2genomic($f->start, $f->end, $f->strand);
            }
            if (@coords) {
              my $c = $coords[0];
@@ -1701,6 +1693,8 @@ sub features {
              $f->das_orientation or $f->das_orientation($gene->strand);
              $f->das_start($start);
              $f->das_end($end);
+#             $f->das_start($sl->start+ $start);
+#             $f->das_end($sl->start + $end);
            }
            push(@das_features, $f);
          } else {
@@ -1712,6 +1706,7 @@ sub features {
            }
          }
        }
+
        foreach my $key (keys %fhash) {
          my $ft = $fhash{$key}->{feature}; 
          if ((my $count = $fhash{$key}->{count}) > 1) {
@@ -1743,7 +1738,6 @@ sub features {
       $_->das_end > 0
     } @{ $features || [] };
   }
-#  warn "F1-0:", scalar(\@das_features);
   $self->{_features}->{nongrouped} = \@das_features;
   return $self->{_features}; 
 
