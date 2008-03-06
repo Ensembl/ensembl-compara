@@ -22,7 +22,6 @@ BEGIN{
 }
 
 require EnsEMBL::Web::SpeciesDefs;                  # Loaded at run time
-require EnsEMBL::Web::DBSQL::DBConnection;
 my $SPECIES_DEFS = EnsEMBL::Web::SpeciesDefs->new;
 $SPECIES_DEFS || pod2usage("$0: SpeciesDefs config not found");
 my @species_inconf = @{$SiteDefs::ENSEMBL_SPECIES};

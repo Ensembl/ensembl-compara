@@ -285,7 +285,7 @@ foreach my $spp (@species) {
     <h3 class="boxed">Import/Export data</h3>
     
     <dl class="species-map">
-<dt><a href="/info/data/external_data/index.html">DAS</a> (Distributed Annotation Server)</dt>
+<dt><a href="/info/using/external_data/index.html">DAS</a> (Distributed Annotation Server)</dt>
 
     <dd>Import your data into Ensembl</dd>
     <dt><a href="/$spp/exportview">ExportView</a></dt>

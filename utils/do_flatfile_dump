@@ -658,7 +658,7 @@ B<  [INFO]>: Non-critical message, dumping should continue as normal.
  Any other messages with out the above prefixes is verbose information.
  If a error log file is not requested these messages are output to stdout.
 
-Maintained by Ensembl web team <webmaster@ensembl.org>
+Maintained by Ensembl web team <ensembl-webteam@ensembl.org>
 
 =cut
 
