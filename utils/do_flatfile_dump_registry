@@ -230,10 +230,8 @@ foreach my $spp (@species){
   }
   print "there are ".scalar(@slices)." slices to be processed for $spp\n";
   while (my $slice =  pop @slices) {
-#    print "processing ".$slice->seq_region_name."\n";;
     # generate list of 'unbreakable' blocks around genes
     my ($blocks, $too_long)= generate_blocklist($slice, $spp);
-#    print "back from generate_blocklist\n";
 
     push (@too_long, @$too_long);
 
@@ -257,7 +255,6 @@ foreach my $spp (@species){
         $count = 0;
       }
     }
-#    print "end of this slcie\n";
   } #end foreach slice
 
   if($count > 0){
@@ -315,14 +312,17 @@ sub setup_directories_reg {
    info(2, "species = $spp $format");
 
     # Make dumpdir
-#    my $spp_dir = join "_", (lc ($spp), $sitedefs_release, $sp_release);
+
     my $spp_dir = lc($spp);
-#    my $spp_dumpdir = "$dumpdir/$spp_dir/data/flatfiles/$format";
     my $spp_dumpdir = "$dumpdir/$format/$spp_dir";
-    unless (-d "$spp_dumpdir"){
+    if(-d "$spp_dumpdir"){
+      info (1,"Purging dump directory: $spp_dumpdir");
+      system("rm -f $spp_dumpdir/*");
+    }
+    else{
+      info (1,"Made dump directory: $spp_dumpdir");
       system("mkdir -p $spp_dumpdir") ==0 or die "Can't create dir $!";
     }
-    info (1,"Made dump directory: $spp_dumpdir");
 
     # Do README file
     my $text = readme($format, $spp);
@@ -447,9 +447,6 @@ sub chunk_seq_region {
   }
 
   my $seq_end   = $projection[-1]->from_end();
-#  if($slice->end != $seq_end){
-#   print "AHHHH slice end = ".$slice->end." but projection is $seq_end\n";
-# }
 
   undef $slice;  # saves memory
   undef @projection; # saves memory
@@ -476,7 +473,7 @@ sub chunk_seq_region {
   my $cur_start     = 1;
   my $cur_length    = 0;
 
-  while($cur_start + $cur_length < $seq_end) {
+  while($cur_start + $cur_length <= $seq_end) {
     my($cb_start, $cb_end) = @{$blocklist->[$current_block]};
 
     if( $cb_start - $cur_start > $MAX_SIZE ) {
