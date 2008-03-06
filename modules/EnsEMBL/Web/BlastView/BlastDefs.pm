@@ -70,7 +70,7 @@ sub _build_conf{
   my @types   = qw( dna peptide );
 
   $CONF->{default_type}         = 'dna';
-  $CONF->{default_method}       = 'BLASTN';
+  $CONF->{default_method}       = 'BLAT';
   $CONF->{default_species}      = 'Homo_sapiens';
   $CONF->{default_database}     = 'LATESTGP';
 

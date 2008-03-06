@@ -50,6 +50,13 @@ STAGE_SETUP:{
   $stage->set_name( 'setup' );
   $stage->add_javascript_files( '/js/ensFormElementControl.js' );
   
+  my $block = $stage->addobj_block();
+     $block->set_label( qq( Important Notice ) );
+  my $form = $block->addobj_form();
+     $form->set_type( 'LABEL' );
+     $form->set_name( 'alert' );
+  my $entry = $form->addobj_form_entry();
+     $entry->set_label( qq(We now used Blat as our default DNA search.  This will make your query faster.) );
  BLOCK_SEQUENCE:{
     my $block = $stage->addobj_block();
     $block->set_name('query');
@@ -262,7 +269,7 @@ STAGE_SETUP:{
     METHOD_SELECT:{
 	my $entry = $form->addobj_form_entry();
 	$entry->set_type('SELECT');
-	$entry->set_label('');
+	$entry->set_label('<small>Note we now use BLAT as the default DNA search.<br />This will make your queries faster.</small>');
 	$entry->set_options([@methods]);
 	$entry->set_default( $DEFS->default_method() );
 	$entry->set_cgi_size(3);
