@@ -131,7 +131,7 @@ sub dump_fasta {
 
   my $sql = "SELECT member.sequence_id, member.stable_id, member.description, sequence.sequence, member.taxon_id, member.source_name " .
             " FROM member, sequence " .
-            " WHERE member.source_name in ('ENSEMBLPEP','Uniprot/SWISSPROT','Uniprot/SPTREMBL') ".
+            " WHERE member.source_name in ('ENSEMBLPEP','Uniprot/SWISSPROT','Uniprot/SPTREMBL', 'EXTERNALPEP') ".
             " AND member.sequence_id=sequence.sequence_id ";
 
   if ($noredundancy) {

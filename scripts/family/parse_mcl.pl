@@ -92,7 +92,7 @@ print STDERR "Done\n";
 
 print STDERR "Getting source_name from database...";
 
-my $sql = "select stable_id,source_name,description from member where source_name in ('Uniprot/SWISSPROT','Uniprot/SPTREMBL','ENSEMBLPEP')";
+my $sql = "select stable_id,source_name,description from member where source_name in ('Uniprot/SWISSPROT','Uniprot/SPTREMBL','ENSEMBLPEP','EXTERNALPEP')";
 my $sth = $dbc->prepare($sql);
 $sth->execute;
 
@@ -116,7 +116,7 @@ print STDERR "Done\n";
 
 print STDERR "Getting redundancy information from the database...";
 
-$sql = "select sequence_id,count(*) as count from member where source_name in ('Uniprot/SWISSPROT','Uniprot/SPTREMBL','ENSEMBLPEP') group by sequence_id having count>1";
+$sql = "select sequence_id,count(*) as count from member where source_name in ('Uniprot/SWISSPROT','Uniprot/SPTREMBL','ENSEMBLPEP','EXTERNALPEP') group by sequence_id having count>1";
 $sth = $dbc->prepare($sql);
 $sth->execute;
 
@@ -231,14 +231,18 @@ foreach my $cluster (@clusters) {
 
   foreach my $member_attribute (@{$family->get_all_Member_Attribute}) {
     my ($member,$attribute) = @{$member_attribute};
-    if ($member->source_name eq 'Uniprot/SWISSPROT' || $member->source_name eq 'Uniprot/SPTREMBL') {
+    if ($member->source_name eq 'Uniprot/SWISSPROT' 
+        || $member->source_name eq 'Uniprot/SPTREMBL' 
+        || $member->source_name eq 'EXTERNALPEP') {
       print $member->source_name,"\t$dbID\t",$member->stable_id,"\t",$member->description,"\n";
     }
 
     if (defined $redundant_sequence_id2stable_ids{$member->sequence_id}) {
       foreach my $stable_id (@{$redundant_sequence_id2stable_ids{$member->sequence_id}}) {
         next if ($stable_id eq $member->stable_id);
-        next unless ($stable_id2source_name{$stable_id} eq 'Uniprot/SWISSPROT' || $stable_id2source_name{$stable_id} eq 'Uniprot/SPTREMBL');
+        next unless ($stable_id2source_name{$stable_id} eq 'Uniprot/SWISSPROT' 
+                     || $stable_id2source_name{$stable_id} eq 'Uniprot/SPTREMBL' 
+                     || $stable_id2source_name{$stable_id} eq 'EXTERNALPEP');
         my $rd_member = $ma->fetch_by_source_stable_id($stable_id2source_name{$stable_id}, $stable_id);
         print $rd_member->source_name,"\t$dbID\t",$rd_member->stable_id,"\t",$rd_member->description,"\n";
       }
