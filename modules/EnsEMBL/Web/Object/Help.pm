@@ -9,6 +9,7 @@ use EnsEMBL::Web::Object;
 use EnsEMBL::Web::Data::Article;
 use EnsEMBL::Web::Data::Category;
 use EnsEMBL::Web::Data::View;
+use EnsEMBL::Web::Data::Movie;
 use EnsEMBL::Web::Data::Glossary;
 
 use Mail::Mailer;
@@ -158,12 +159,12 @@ sub glossary {
 
 sub movie_list {
   my $self = shift;
-  return $self->records([['type','movie'],['status','live']]);
+  return EnsEMBL::Web::Data::Movie->find_all([['type','movie'],['status','live']]);
 }
 
 sub movie {
   my $self = shift;
-  my $records = $self->records([['help_record_id',$self->param('id')]]);
+  my $records = EnsEMBL::Web::Data::Movie->find_all([['help_record_id',$self->param('id')]]);
   return $records->[0];
 }
 
