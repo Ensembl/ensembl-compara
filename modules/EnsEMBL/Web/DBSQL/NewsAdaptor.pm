@@ -685,6 +685,23 @@ sub fetch_assemblies {
     return $results;
 }
 
+sub fetch_archives {
+  my $self = shift;
+  my $results = {};
+
+  return {} unless $self->handle;
+
+  my $sql = qq(SELECT release_id, archive FROM ens_release WHERE online = 'Y';
+  );  
+  my $T = $self->handle->selectall_arrayref($sql);
+  return {} unless $T;
+  for (my $i=0; $i<scalar(@$T);$i++) {
+    my @array = @{$T->[$i]};
+    $results->{$array[0]} = $array[1];
+  }
+  return $results;
+}
+
 #----------------- Database admin queries ----------------------------------------
 
 sub add_news_item {
