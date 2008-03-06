@@ -206,8 +206,7 @@ sub _initialise_runnables{
     foreach my $db( keys %{$self->{-databases}} ){
 
       # Query SPECIES_DEFS to get database string from species, method, db key
-      my( $ge, $sp, $db_key ) = split( '_', $db, 3 );
-      $sp = $ge."_".$sp;
+      my( $sp, $db_key ) = $db =~ /^([A-Z][a-z_]+)_([A-Z_]+)$/;
       $db_key || $self->throw( "$db bad db format; must be ${sp}_${db}" );
       my $me_key = $me."_DATASOURCES";
       my $datasources = $SPECIES_DEFS->get_config( $sp, $me_key ) ||
