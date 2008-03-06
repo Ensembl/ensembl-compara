@@ -153,7 +153,11 @@ sub getRegistrySources {
   }
   my $das_url = $self->species_defs->DAS_REGISTRY_URL;
 
-  my $source_arr = SOAP::Lite->service("${das_url}/services/das:das_directory?wsdl")->listServices();
+#  my $source_arr = SOAP::Lite->service("${das_url}/services/das:das_directory?wsdl")->listServices();
+
+  my $soap = SOAP::Lite->proxy($das_url, 'timeout' => 5);
+  my $source_arr = $soap->service("${das_url}/services/das:das_directory?wsdl")->listServices();
+
   my $i = 0;
   my %registryHash = ();
   my $spec = $ENV{ENSEMBL_SPECIES};
