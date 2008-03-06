@@ -1345,6 +1345,11 @@ sub ADD_SIMPLE_TRACKS {
   $self->add_new_simple_track( 'signal_peptide',           'Signal peptide',      'red', $POS++, @_ );
   $self->add_new_simple_track( 'MMC2_probes',              'MMC2 probes',         'red', $POS++, @_ );
   $self->add_new_simple_track( 'oligo',                    'Oligo',               'red', $POS++, @_ );
+  $self->add_new_simple_track( 'deletion',                    'Deletion',               'red', $POS++, @_ );
+  $self->add_new_simple_track( 'sequence_variant',                    'Sequence variant',               'red', $POS++, @_ );
+  $self->add_new_simple_track( 'transposable_element_insertion',                    'Transposable element insertion',               'red', $POS++, @_ );
+  $self->add_new_simple_track( 'transposable_element_target_duplication',                    'Transposable element target duplication',               'red', $POS++, @_ );
+  $self->add_new_simple_track( 'uncharacterized_change_in_nucleotide_seq',                    'Uncharacterized changed in nucleotide seq',               'red', $POS++, @_ );
 
   # some simple features are configured in contigview
 }
