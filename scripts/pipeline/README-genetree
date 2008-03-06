@@ -562,4 +562,36 @@ inconsistent homologies. This script is to check this kind of cases.
 10 - Generate basic statistics
      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+A basic set of gene tree stats can be generated using the following
+command (should complete within 5 mins):
+
+ $ cat ${BASEDIR}/ensembl-compara/sql/protein_tree-stats.sql \
+   | mysql -vv -t $COMPARA_DBNAME | less
+
+There is also a 'homology-stats.sql' file that can be processed in the
+same way, but this takes linger to run.
+
+For a more detailed analysis of the gene tree data, look at;
+
+ $ perl ${BASEDIR}/ensembl-compara/scripts/tree/geneTreeTool.pl -help
+
+
+11 - Creating the Release Database
+     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Once the pipeline has completed, the database contains many
+pipeline/hive specific tables. These can be removed as follows;
+
+  $ cat ${BASEDIR}/ensembl-compara/sql/drop-pipeline-tables.sql \
+    | mysql $COMPARA_DBNAME
+
+
+To merge the GeneTrees + Families to the general compara DB, look at;
+
+  scripts/pipeline/merge_protein_data.pl
+
+And use the standard ImportDB.pl or CopyDBoverserver.pl to copy things
+around...
+
+
 
