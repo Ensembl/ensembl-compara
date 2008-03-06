@@ -63,47 +63,7 @@ sub createObjects {
 # Get the view that is requesting DASCollection Factory
   my $conf_script = $self->param("conf_script") || $self->script;
 
-# Read the DAS config from the ini files
-#  my $das_conftype = "ENSEMBL_INTERNAL_DAS_SOURCES"; # combined GeneDAS and Internal DAS
   my %sources_conf;
-#  my $ini_confdata = $self->species_defs->$das_conftype() || {};
-#  ref( $ini_confdata ) eq 'HASH' or die("$das_conftype badly configured" );
-#  foreach my $source( keys %$ini_confdata ){
-#    my $source_confdata = $ini_confdata->{$source} || ( warn( "$das_conftype source $source not configured" ) && next );
-#    ref( $source_confdata ) eq 'HASH' || ( warn( "$das_conftype source $source badly configured" ) && next );
-#
-#  # Is source enabled for this view?
-#    if (! defined($source_confdata->{enable})) {
-#        @{$source_confdata->{enable}} = @{ $source_confdata->{on} || []}; # 
-#    }
-#
-#    my $dsn = $source_confdata->{dsn};
-#    $source_confdata->{url} .= "/$dsn" if ($source_confdata->{url} !~ /$dsn$/);
-#    my %valid_scripts = map{ $_, 1 } @{$source_confdata->{enable}};
-#    $valid_scripts{$conf_script} || next;
-#    $source_confdata->{conftype} = 'internal'; # Denotes where conf is from
-#    $source_confdata->{type} ||= 'ensembl_location'; # 
-#    $source_confdata->{color} ||= $source_confdata->{col}; # 
-#    $source_confdata->{id} = $source;
-#    $source_confdata->{description} ||= $source_confdata->{label} ;
-#    $source_confdata->{stylesheet} ||= 'N';
-#    $source_confdata->{stylesheet} = 'Y' if ($source_confdata->{stylesheet} eq '1'); # 
-#    $source_confdata->{score} ||= 'N';
-#    $source_confdata->{fg_merge} ||= 'A';
-#    $source_confdata->{fg_grades} ||= 20;
-#    $source_confdata->{fg_data} ||= 'O';
-#    $source_confdata->{fg_min} ||= 0;
-#    $source_confdata->{fg_max} ||= 100;
-#  
-#    $source_confdata->{name} ||= $source;
-#    $source_confdata->{group} ||= 'N';
-#    $source_confdata->{group} = 'Y' if ($source_confdata->{group} eq '1'); # 
-#    
-#  #  warn("ADD INTERNAL: $source");
-#  #  warn(Dumper($source_confdata));
-#    $sources_conf{$source} = $source_confdata;
-#  }
-#
   my $daslist = $self->get_session->get_internal_das; 
   for my $source( keys %$daslist ) {
     my $source_config = $daslist->{$source}->get_data;
@@ -115,8 +75,6 @@ sub createObjects {
     $sources_conf{$source}    = $source_config;
   }
 # Add external sources (ones added by user)
-### THIS NOW NEEDS TO COME OUT OF THE session object.....
-#    $extdas->getConfigs($conf_script, $conf_script);
   $daslist = $self->get_session->get_das;
    
   for my $source ( keys %$daslist ) {
@@ -161,7 +119,6 @@ sub createObjects {
   }
   
 # Add sources that are attached via URL
-#  warn("URL SOURCES: @udas");
   my $urlnum = 1;
   foreach my $u (@udas) {
     my $das_name = "_URL_$urlnum";
@@ -194,9 +151,7 @@ sub createObjects {
   my %das_edit   = map{$_,1} ($self->param( "_das_edit" ) || ());
 
   foreach (keys (%das_del)){
-## Replace with session call
     $self->get_session->remove_das_source($_);
-##    $extdas->delete_das_source($_);
     delete($sources_conf{$_});
   }
   foreach (keys %urldas_del){
@@ -222,8 +177,7 @@ sub createObjects {
     # Have we got new DAS? If so, validate, and add to Input
 
   my $source_type = $self->param("DASsourcetype");
-  $source_type = 'das_registry' if ( $self->param("DASdomain") eq $self->species_defs->DAS_REGISTRY_URL);
-
+ 
   if( $self->param("_das_submit") ){
     if ($self->param("DASsourcetype") eq 'das_url') {
       my $url = $self->param("DASurl") || ( warn( "_error_das_url: Need a url!") &&  $self->param( "_error_das_url", "Need a url!" ));
@@ -232,60 +186,6 @@ sub createObjects {
       $sources_conf{$das_name}->{name} = $das_name;
       $sources_conf{$das_name}->{url} = $url;
       $sources_conf{$das_name}->{conftype} = 'url';
-    } elsif ($source_type eq 'das_registry') {
-      my $registry = $self->getRegistrySources();
-
-      foreach my $id ($self->param("DASregistry")) {
-        my $err = 0;
-        my %das_data;
-        $self->getSourceData($registry->{$id}, \%das_data);
-        foreach my $key( @confkeys ){
-          if (defined($self->param("DAS${key}"))) {
-            $das_data{$key} = $self->param("DAS${key}");
-          }
-        }
-        my $das_name = $das_data{name};
-        if( exists( $sources_conf{$das_name} ) and  (! defined($sources_conf{$das_name}->{conftype}) or $sources_conf{$das_name}->{conftype} ne 'external_editing' )){ 
-          my $das_name_ori = $das_name;
-          for( my $i = 1; 1; $i++ ){
-            $das_name = $das_name_ori ."_$i";
-            if( ! exists( $sources_conf{$das_name} ) ){
-              $das_data{name} =  $das_name;
-              last;
-            }
-          }
-        }
-  # Add to the conf list
-        $das_data{label} = $self->param('DASlabel') || $das_data{name};
-        $das_data{caption} = $das_data{name};
-        $das_data{stylesheet} = $self->param('DASstylesheet');
-        $das_data{strand} = $self->param('DASstrand');
-        $das_data{labelflag} = $self->param('DASlabelflag');
-        $das_data{score} = $self->param('DASscore');
-        $das_data{fg_merge} = $self->param('DASfg_merge');
-        $das_data{fg_grades} = $self->param('DASfg_grades');
-        $das_data{fg_data} = $self->param('DASfg_data');
-        $das_data{fg_min} = $self->param('DASfg_min');
-        $das_data{fg_max} = $self->param('DASfg_max');
-        $das_data{group} = $self->param('DASgroup');
-        @{$das_data{enable}} = $self->param('DASenable');
-        $das_data{conftype} = 'external';
-        $das_data{color} = $self->param("DAScolor");
-        $das_data{depth} = $self->param("DASdepth");
-        $das_data{help} = $self->param("DAShelp");
-        $das_data{linktext} = $self->param("DASlinktext");
-        $das_data{linkurl} = $self->param("DASlinkurl");
-        $das_data{active} = 1; # Enable by default
-        $sources_conf{$das_name} ||= {};
-        foreach my $key( @confkeys, @allkeys, @arr_keys, 'conftype', 'active') {
-          $sources_conf{$das_name}->{$key} = $das_data{$key};
-        }
-        $sources_conf{$das_name}->{'species'} = $self->species;
-        $das_data{'species'} = $self->species;
-## replace with session call
-        $self->session->add_das_source_from_hashref(\%das_data);
-        $DASsel{$das_name} = 1;
-      }
     } elsif (my $das_name = $self->param("DASedit")) { # Edit source
       my $das_dsn = $self->param("DASdsns");
       my $das_data = $sources_conf{$das_name};
@@ -310,8 +210,6 @@ sub createObjects {
         $sources_conf{$das_name}->{$key} = $das_data->{$key};
       }
 
-#      warn("EDIT: ".Dumper($das_data));
-## Replace with session call...
       $self->session->add_das_source_from_hashref($das_data);
       $DASsel{$das_name} = 1;
     } else {
@@ -324,17 +222,35 @@ sub createObjects {
           'dsn' => $usersrc
         };
       } else {
+        my $shash = $self->getServerSources($self->param('DASdomain'));
+ #       warn Dumper ($shash);
         foreach my $id ($self->param("DASdsns")) {
-          push @das_sources, {
+#	  warn "SRC: $id";
+#	  warn Dumper $shash->{$id};
+	  if (exists $shash->{$id} ) {
+#	  	warn "E";
+	  } else {
+	    $shash->{$id} = {
             'id'  => $id,
             'url' => join ('/', $self->param('DASdomain'), $id),
             'url' => $self->param('DASdomain'),
-            'dsn' => $id
-          };
-        }
+            'dsn' => $id,
+	    'name' => $id,
+            };
+	  }
+	  
+          foreach my $key( @confkeys, @allkeys){
+            if (defined($self->param("DAS${key}"))) {
+              $shash->{$id}->{$key} = $self->param("DAS${key}");
+            }
+          }
+          push @das_sources, $shash->{$id};
+	}
       }
+# warn "FF:",Dumper(\@das_sources);
+
       foreach my $das_data (@das_sources) {
-        my $das_name = $das_data->{'id'} or next;
+        my $das_name = $das_data->{'name'} or next;
         if( exists( $sources_conf{$das_name} ) and  (! defined($sources_conf{$das_name}->{conftype}) or $sources_conf{$das_name}->{conftype} ne 'external_editing' )){ 
           my $das_name_ori = $das_name;
           for( my $i = 1; 1; $i++ ){
@@ -346,18 +262,14 @@ sub createObjects {
           }
         }
 	$das_data->{'name'} = $das_name;
-        foreach my $key( @confkeys, @allkeys){
-          if (defined($self->param("DAS${key}"))) {
-            $das_data->{$key} = $self->param("DAS${key}");
-          }
-        }
+	
         $das_data->{active} = 1; # Enable by default
     # Add to the conf list
         $das_data->{id} = $das_data->{name} if ($das_data->{name} ne $das_name);
         $das_data->{label} ||= $das_data->{name};
         $das_data->{caption} ||= $das_data->{name};
         @{$das_data->{enable}} = $self->param('DASenable');
-        @{$das_data->{mapping}} = grep { $_ } $self->param('DAStype');
+        $das_data->{mapping} or @{$das_data->{mapping}} = grep { $_ } $self->param('DAStype');
         $das_data->{type} = 'mixed' if (scalar(@{$das_data->{mapping}}>1));
         $das_data->{conftype} = 'external';
         $das_data->{species} = $self->species;
@@ -365,7 +277,8 @@ sub createObjects {
         foreach my $key( @confkeys, @allkeys, 'dsn', 'enable', 'mapping') {
           $sources_conf{$das_name}->{$key} = $das_data->{$key};
         }
-## Replace with session calll
+#	warn "DATA ($das_name)";
+#warn Dumper($das_data);
         $self->session->add_das_source_from_hashref($das_data);
         $DASsel{$das_name} = 1;
       }
@@ -375,7 +288,6 @@ sub createObjects {
   if( $self->delete_param( "_das_delete" ) ){
     foreach my $key( @confkeys ){ $self->delete_param("DAS$key") }
   }
-  
   my @udaslist = ();
   my @das_objs = ();
  
@@ -383,6 +295,7 @@ sub createObjects {
   foreach my $source( sort keys %sources_conf ){
   # Create the DAS adaptor from the (valid) conf
     my $source_conf = $sources_conf{$source};
+#warn Dumper($source_conf);
     push (@udaslist, "URL:$source_conf->{url}") if ($source_conf->{conftype} eq 'url');
     if( ! $source_conf->{url} and ! ( $source_conf->{protocol} && $source_conf->{domain} ) ){
       next;
@@ -546,5 +459,60 @@ sub getSourceData {
     $dasconf->{type} = scalar(@{$dasconf->{mapping}}) > 1 ? 'mixed' : $smap;
   }
 }
+
+sub getServerSources {
+  my $self = shift;
+  my ($url) = @_;
+  if (defined($self->{data}->{_das_sources}->{$url})) {
+    return $self->{data}->{_das_sources}->{$url};
+  }
+  
+#    next if ("@{$dassource->{capabilities}}" !~ /features/);
+#    foreach my $cs (@{$dassource->{coordinateSystem}}) {
+#      my ($smap, $sp) = $self->getEnsemblMapping($cs);
+
+  my $spec = $ENV{ENSEMBL_SPECIES};
+
+  my $filterT = sub { return 1; };
+  my $filterM = sub { my $src = shift;  return 1 unless defined ($src->{species}); return 1 if ($src->{species} eq $spec);  return 0};
+  my $keyText = $self->param('keyText');
+  my $keyMapping = $self->param('keyMapping');
+
+  if (defined (CGI::param('_apply_search=registry.x')) || defined ($self->param('_das_filter'))) {
+    if ($keyText) {
+      $filterT = sub { 
+        my $src = shift; 
+        return 1 if ($src->{url} =~ /$keyText/); 
+        return 1 if ($src->{nickname} =~ /$keyText/); 
+        return 1 if ($src->{description} =~ /$keyText/); 
+        return 0;
+      };
+    }
+    if ($keyMapping ne 'any') {
+      $filterM = sub { 
+        my $src = shift; 
+        foreach my $cs (@{$src->{coordinateSystem}}) {
+          return 1 if ($self->getEnsemblCoordinateSystem($cs) eq $keyMapping);
+          return 1 if ($self->getEnsemblCoordinateSystem($cs) =~ /^$keyMapping/);
+        }
+        return 0;
+      };
+    }
+  }
+
+  my $adaptor = Bio::EnsEMBL::ExternalData::DAS::DASAdaptor->new(
+    -url  => $url, -timeout   => $self->species_defs->ENSEMBL_DAS_TIMEOUT,
+    -proxy_url => $self->species_defs->ENSEMBL_WWW_PROXY
+  );
+  my $das = Bio::EnsEMBL::ExternalData::DAS::DAS->new ( $adaptor );
+  my %dsnhash = map {$_->{id}, $_} grep {$filterT->($_) && $filterM->($_) } @{ $das->fetch_sources_info };
+  if( %dsnhash ){
+    $self->{data}->{_das_sources}->{$url} = \%dsnhash;
+  } else {
+    $self->param('_error_das_domain', 'No sources for domain');
+  }
+  return $self->{data}->{_das_sources}->{$url};
+}
+
 
 1;

@@ -26,7 +26,6 @@ sub dasconfview {
       }
     }
   }
-
 # for Edit and Delete buttons
   $obj->param("selfURL", "/$ENV{'ENSEMBL_SPECIES'}/dasconfview?$confparams");
   if (defined(my $wizard_stage = &display_wizard_status($document, $obj))) {
@@ -58,6 +57,7 @@ sub display_wizard_status {
   my %source_conf = ();        
   my @confkeys = qw( assembly stylesheet fg_merge fg_grades fg_data fg_min fg_max score strand label caption type depth domain group name protocol labelflag color help url linktext linkurl);
   my $step;
+  my $i = 1;
   if (defined(my $new_das = $object->param('_das_add'))) {
     $step = 1;
     $source_conf{sourcetype} = $new_das;
@@ -135,46 +135,32 @@ sub display_wizard_status {
     }
   } else {
     if ( my $domain = $object->param('DASdomain')) {
+     warn "D:$domain";
+     warn $object->species_defs->DAS_REGISTRY_URL;
+
       if ($domain eq $object->species_defs->DAS_REGISTRY_URL) {
-        my $dreg = $object->getRegistrySources();
-        my $dassource;
-        foreach my $src ($object->param('DASregistry')) {
-          $dassource = $dreg->{$src};
-          if ($dassource->{url} =~ /(https?:\/\/)(.+das)\/(.+)/) {
-            ($prot, $url, $dsn) = ($1, $2, $3);
-            $dsn =~ s/\///;
-            push @data_location, {"text" => "Server: $url"};
-            push @data_location, {"text" => "DSN: $dsn"};
-          }
-          $scount ++;
-        }
-        if ($scount > 1) {
-          $source_conf{name} = $source_conf{label} = '*As nickname*';
-        } else {
-          $source_conf{name} = $object->param('DASname') || $dassource->{nickname};
-          $source_conf{label} = $object->param('DASlabel') || $dassource->{nickname};
-        }
+        push @data_location, {"text" => "Server: DAS Registry"};
       } else {
         push @data_location, {"text" => "Server: $domain"};
+      }
+
         my $id;
         if (defined( my $usersrc = $object->param("DASuser_source") || undef)) {
           $id = $usersrc;
-          push @data_location, {"text" => "DSN: $id"};
+          push @data_location, {"text" => "Source: $id"};
         } else {
           foreach my $dsn ($object->param('DASdsns')) {
             $id = $dsn if (! $scount);
-            push @data_location, {"text" => "DSN: $dsn"};
+            push @data_location, {"text" => "Source: $dsn"};
             $scount ++;
           }
         }
         if ($scount > 1) {
-          $source_conf{name} = '*As DSN*';
-          $source_conf{label} = '*As DSN*';
         } else {
           $source_conf{name} = $object->param('DASname') || $id;
-          $source_conf{label} = $object->param('DASlabel') || $id;
+          $source_conf{label} = $object->param('DASlabel') || $source_conf{name};
+	  
         }
-      }
     }
   }
   if (@data_location) {
@@ -204,18 +190,20 @@ sub display_wizard_status {
     my $dsw_stylesheet = $source_conf{stylesheet} eq 'y' ? 'Yes' : 'No';
     my $dsw_score = $ScoreStr{$source_conf{score}} || 'No';
     push @display_config,
-      {"text"=>"Enable on: @dsw_enable"}, {"text"=>"Name: $dsw_name"},  {"text"=>"Track label: $dsw_label"},
-      {"text"=>"Help: $dsw_help"},     {"text"=>"LinkText: $dsw_linktext"},     {"text"=>"LinkURL: $dsw_linkurl"},     
+      {"text"=>"Enable on: @dsw_enable"};
+    push @display_config, {"text"=>"Name: $dsw_name"},  {"text"=>"Track label: $dsw_label"} if ($dsw_name);
+    
+    push @display_config,  {"text"=>"Help: $dsw_help"},     {"text"=>"LinkText: $dsw_linktext"},     {"text"=>"LinkURL: $dsw_linkurl"},     
       {"text"=>"Colour: $dsw_color"},     {"text"=>"Group: $dsw_group"},     
       {"text"=>"Display on: $dsw_strand"}, {"text"=>"Depth: $dsw_depth rows"}, {"text"=>"Label: $dsw_labelflag"},
       {"text"=>"Stylesheet: $dsw_stylesheet"}, {"text"=>"Use score: $dsw_score"} ;
   } else {
     push  @display_config, { "text"=>"Not yet initialised" };
   }
-  $document->menu->add_block( 'status', 'bulleted', "Summary" );
-  $document->menu->add_entry( 'status', 'text' => "Source type", "options" => \@source_type, "popup"=> "no");
-  $document->menu->add_entry( 'status', 'text' => "Data Location", "options"=>\@data_location, "popup"=>"no");
-  $document->menu->add_entry( 'status', 'text' => "Data Display", "options"=>\@display_config, "popup"=>"no");
+#  $document->menu->add_block( 'status', 'bulleted', "Summary" );
+#  $document->menu->add_entry( 'status', 'text' => "Source type", "options" => \@source_type, "popup"=> "no");
+#  $document->menu->add_entry( 'status', 'text' => "Data Location", "options"=>\@data_location, "popup"=>"no");
+#  $document->menu->add_entry( 'status', 'text' => "Data Display", "options"=>\@display_config, "popup"=>"no");
   my %stages = (
     1 => 'Data location', 
     2 => 'Data appearance', 
