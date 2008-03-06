@@ -24,16 +24,16 @@ my %queries = (
      where of.oligo_probe_id = op.oligo_probe_id and op.oligo_array_id = oa.oligo_array_id
      group by of.analysis_id, oa.name
      order by analysis_id, name),
-  'Regulatory Fact' => qq(
-    select rr.analysis_id, rf.type, count(*) as n
-      from regulatory_feature as rr left join regulatory_factor as rf on rr.regulatory_factor_id = rf.regulatory_factor_id
-     group by rr.analysis_id,rf.type
-     order by analysis_id, type),
-  'Regulatory Search' => qq(
-    select analysis_id,'',count(*) as n
-      from regulatory_search_region
-     group by analysis_id
-     order by analysis_id),
+#  'Regulatory Fact' => qq(
+#    select rr.analysis_id, rf.type, count(*) as n
+#      from regulatory_feature as rr left join regulatory_factor as rf on rr.regulatory_factor_id = rf.regulatory_factor_id
+#     group by rr.analysis_id,rf.type
+#     order by analysis_id, type),
+#  'Regulatory Search' => qq(
+#    select analysis_id,'',count(*) as n
+#      from regulatory_search_region
+#     group by analysis_id
+#     order by analysis_id),
   'QTLs' => qq(
     select analysis_id,'',count(*) as n
       from qtl_feature
