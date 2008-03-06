@@ -63,11 +63,15 @@ exit
 
 # This should take about 60 seconds
 mysqlimport -hens-livemirror -uensadmin -pensembl -L ncbi_taxonomy ncbi_taxa_node.txt
+#ncbi_taxonomy.ncbi_taxa_node: Records: 405924  Deleted: 0  Skipped: 0  Warnings: 1217772
+# v48
 #ncbi_taxonomy.ncbi_taxa_node: Records: 392528  Deleted: 0  Skipped: 0  Warnings: 1177584
 
 # This should take about 90-120 seconds
 mysqlimport -hens-livemirror -uensadmin -pensembl -L ncbi_taxonomy ncbi_taxa_name.txt
-ncbi_taxonomy.ncbi_taxa_name: Records: 539728  Deleted: 0  Skipped: 0  Warnings: 0
+#ncbi_taxonomy.ncbi_taxa_name: Records: 562606  Deleted: 0  Skipped: 0  Warnings: 0
+# v48
+#ncbi_taxonomy.ncbi_taxa_name: Records: 539728  Deleted: 0  Skipped: 0  Warnings: 0
 
 mysql -hens-livemirror -uensadmin -pensembl -N -e "update ncbi_taxa_node set parent_id=0 where parent_id=taxon_id" ncbi_taxonomy
 
