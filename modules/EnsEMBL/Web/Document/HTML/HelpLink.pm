@@ -29,7 +29,7 @@ sub render {
       $self->ref    ? "ref=@{[CGI::escape($self->ref)]}" : ();
   my $URL;
   if( $ENV{'SCRIPT_NAME'} =~ /helpview/ ) { ## ALREADY IN HELP FORM!!
-    $URL = '/common/help/contact'.($extra_HTML?"?$extra_HTML":"");
+    $URL = "/common/help/contact?ref=@{[CGI::escape($self->ref)]}";
     $help_link = qq(<a href="$URL" class="blue-button">@{[$self->label]}</a>);
   } else {
     my $dir = $ENV{'ENSEMBL_SPECIES'};
