@@ -660,8 +660,40 @@ sub generate_query_hash {
 # Calls for GeneRegulationView 
 
 sub features {
-  my $self = shift;
-  return $self->gene->get_all_regulatory_features(1) || [];
+  my $self = shift;;
+  my $slice = $self->get_Slice( @_ ); 
+#  return $self->gene->get_all_regulatory_features(1) || [];
+    my $fg_db = undef;
+    my $db_type  = 'funcgen';
+    unless($slice->isa("Bio::EnsEMBL::Compara::AlignSlice::Slice")) {
+      $fg_db = $slice->adaptor->db->get_db_adaptor($db_type);
+      if(!$fg_db) {
+        warn("Cannot connect to $db_type db");
+        return [];
+      }
+    }
+  my $feature_set_adaptor = $fg_db->get_FeatureSetAdaptor;
+  my $external_Feature_adaptor = $fg_db->get_ExternalFeatureAdaptor;
+  my $features;
+  my $species = $ENV{'ENSEMBL_SPECIES'}; 
+     if ($species =~/Homo_sapiens/){
+         my $cisred_fset = $feature_set_adaptor->fetch_by_name('cisRED group motifs');
+         my $miranda_fset = $feature_set_adaptor->fetch_by_name('miRanda miRNA');
+         my $vista_fset = $feature_set_adaptor->fetch_by_name('VISTA enhancer set');
+         $f = $external_Feature_adaptor->fetch_all_by_Slice_FeatureSets($slice, $cisred_fset, $miranda_fset, $vista_fset);
+      } elsif ($species=~/Mus_musculus/){
+         my $cisred_fset = $feature_set_adaptor->fetch_by_name('cisRED group motifs');
+         $f = $external_Feature_adaptor->fetch_all_by_Slice_FeatureSets($slice, $cisred_fset);
+     } elsif ($species=~/Drosophila/){
+         my $tiffin_fset = $feature_set_adaptor->fetch_by_name('BioTIFFIN motifs');
+         my $crm_fset = $feature_set_adaptor->fetch_by_name('REDfly CRMs');
+         my $tfbs_fset = $feature_set_adaptor->fetch_by_name('REDfly TFBSs');
+         $f = $external_Feature_adaptor->fetch_all_by_Slice_FeatureSets($slice, $tiffin_fset, $crm_fset, $tfbs_fset);
+     }
+
+  my $features = $f;
+  return $features || [];
+
 }
 
 
