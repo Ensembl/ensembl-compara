@@ -12,8 +12,13 @@ DROP TABLE dna_collection;
 DROP TABLE genomic_align_block_job_track;
 
 /* from  ensembl-hive/sql/tables.sql */
+DROP TABLE hive;
+DROP TABLE dataflow_rule;
+DROP TABLE analysis_ctrl_rule;
+DROP TABLE analysis_job;
 DROP TABLE analysis_job_file;
 DROP TABLE analysis_data;
 DROP TABLE analysis_stats;
 DROP TABLE monitor;
+
 
