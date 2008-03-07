@@ -137,7 +137,7 @@ sub get_server_sources {
       if ($keyMapping ne 'any') {
         $filterM = sub { 
           my $src = shift; 
-          foreach my $cs (@{$src->{mapping_type}}) {
+          foreach my $cs (@{$src->{mapping}}, @{$src->{mapping_type}}) {
             return 1 if ($cs eq $keyMapping);
           }
           return 0; 
@@ -151,7 +151,7 @@ sub get_server_sources {
 #    warn "keyM:", $keyMapping; 
     use Bio::EnsEMBL::ExternalData::DAS::DAS;
     my $das = Bio::EnsEMBL::ExternalData::DAS::DAS->new ( $adaptor );
-    my %dsnhash = map {$_->{id}, $_} grep { $filterT->($_) } @{ $das->fetch_sources_info };
+    my %dsnhash = map {$_->{id}, $_} grep { $filterT->($_) && $filterM->($_) } @{ $das->fetch_sources_info };
  #   warn Dumper \%dsnhash;
     if( %dsnhash ){
 #      warn "N:", scalar (keys %dsnhash);
