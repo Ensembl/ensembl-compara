@@ -1,5 +1,5 @@
 package EnsEMBL::Web::Factory::Feature;
-                                                                                   
+                                                                                  
 use strict;
 use warnings;
 no warnings "uninitialized";
@@ -90,8 +90,8 @@ sub create_Gene {
 
 # For a Regulatory Factor ID display all the RegulatoryFeatures
 sub create_RegulatoryFactor {
-  my ( $self, $db, $id ) = @_;
-
+  my ( $self, $db, $id, $name ) = @_;
+  
   if (!$id ) {
     my @ids = $self->param( 'id' );
     $id = join(' ', @ids);
@@ -99,26 +99,61 @@ sub create_RegulatoryFactor {
   elsif (ref($id) eq 'ARRAY') {
     $id = join(' ', @$id);
   }
-
-  my $db_adaptor  = $self->database(lc($db));
-  unless( $db_adaptor ){
-    $self->problem( 'Fatal', 'Database Error', "Could not connect to the $db database." );
-    return undef;
+  if (!$name ) {
+    my @names = $self->param( 'name' );
+    $name = join(' ', @names);
   }
-  my $reg_feature_adaptor = $db_adaptor->get_RegulatoryFeatureAdaptor;
-  my $reg_factor_adaptor = $db_adaptor->get_RegulatoryFactorAdaptor;
+  elsif (ref($name) eq 'ARRAY') {
+    $name = join(' ', @$name);
+  }
 
+
+  my $objs = $self->DataObjects(); warn "OBJ " .$objs;  
   my $features = [];
-  foreach my $fid ( $id, split /\s+/, $id ) {
-    my $t_features;
-    eval {
-      $t_features = $reg_feature_adaptor->fetch_all_by_factor_name($fid);
-    };
-     if( $t_features ) {
-      foreach( @$t_features ) { $_->{'_id_'} = $fid; }
-      push @$features, @$t_features;
-    }
+#  foreach  ( @$objs){  
+  #my $db_adaptor  = $self->database(lc($db));
+  #unless( $db_adaptor ){
+  #  $self->problem( 'Fatal', 'Database Error', "Could not connect to the $db database." );
+ #   return undef;
+ # }
+
+  my $db_type  = 'funcgen';
+  my $efg_db = $self->database(lc($db_type));
+  if(!$efg_db) {
+     warn("Cannot connect to $db_type db");
+     return [];
   }
+
+  my %fset_types = (
+   "cisRED group motif" => "cisRED group motifs",
+   "miRanda miRNA_target" => "miRanda miRNA",
+   "BioTIFFIN motif" => "BioTIFFIN motifs"
+  );
+
+  my $feature_set_adaptor = $efg_db->get_FeatureSetAdaptor; warn "FEAT Adapt " . $feature_set_adaptor;
+  my $feature_type_adaptor = $efg_db->get_FeatureTypeAdaptor; warn "NAME ".$name;
+  my $ftype =  $feature_type_adaptor->fetch_by_name($name); warn "FTYPE " . $ftype; 
+  my $type = $ftype->description; warn "TYPE $type";
+  my $fstype = $fset_types{$type}; warn "TYPE $fstype";
+  my $fset = $feature_set_adaptor->fetch_by_name($fstype); warn "FSET ". $fset;
+  $features = $fset->get_Features_by_FeatureType($ftype);
+  warn "FEATS ". $features;
+   foreach (@$features){ warn "F " . $_;}
+#  my $reg_feature_adaptor = $db_adaptor->get_RegulatoryFeatureAdaptor;
+#  my $reg_factor_adaptor = $db_adaptor->get_RegulatoryFactorAdaptor;
+  
+ # foreach my $fid ( $id, split /\s+/, $id ) {
+ #  foreach my $feat_type (@$o){ warn "FEAT " .$feat_type;
+ #   my $t_features;
+ #   eval {
+ #     #$t_features = $reg_feature_adaptor->fetch_all_by_factor_name($fid);
+ #      $t_features = $feature_set_adaptor->get_Features_by_FeatureType($fid);
+ #   };
+ #    if( $t_features ) { my $fid;
+ #     foreach( @$t_features ) { $_->{'_id_'} = $fid; }
+ #     push @$features, @$t_features;
+ #   }
+ #}
   my $feature_set = {'RegulatoryFactor' => $features};
   return $feature_set;
 
