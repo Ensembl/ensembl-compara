@@ -108,7 +108,7 @@ sub create_RegulatoryFactor {
   }
 
 
-  my $objs = $self->DataObjects(); warn "OBJ " .$objs;  
+  my $objs = $self->DataObjects();   
   my $features = [];
 #  foreach  ( @$objs){  
   #my $db_adaptor  = $self->database(lc($db));
@@ -130,15 +130,13 @@ sub create_RegulatoryFactor {
    "BioTIFFIN motif" => "BioTIFFIN motifs"
   );
 
-  my $feature_set_adaptor = $efg_db->get_FeatureSetAdaptor; warn "FEAT Adapt " . $feature_set_adaptor;
-  my $feature_type_adaptor = $efg_db->get_FeatureTypeAdaptor; warn "NAME ".$name;
-  my $ftype =  $feature_type_adaptor->fetch_by_name($name); warn "FTYPE " . $ftype; 
-  my $type = $ftype->description; warn "TYPE $type";
-  my $fstype = $fset_types{$type}; warn "TYPE $fstype";
-  my $fset = $feature_set_adaptor->fetch_by_name($fstype); warn "FSET ". $fset;
+  my $feature_set_adaptor = $efg_db->get_FeatureSetAdaptor; 
+  my $feature_type_adaptor = $efg_db->get_FeatureTypeAdaptor; 
+  my $ftype =  $feature_type_adaptor->fetch_by_name($name);  
+  my $type = $ftype->description; 
+  my $fstype = $fset_types{$type}; 
+  my $fset = $feature_set_adaptor->fetch_by_name($fstype); 
   $features = $fset->get_Features_by_FeatureType($ftype);
-  warn "FEATS ". $features;
-   foreach (@$features){ warn "F " . $_;}
 #  my $reg_feature_adaptor = $db_adaptor->get_RegulatoryFeatureAdaptor;
 #  my $reg_factor_adaptor = $db_adaptor->get_RegulatoryFactorAdaptor;
   
