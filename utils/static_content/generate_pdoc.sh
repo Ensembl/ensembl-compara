@@ -36,7 +36,7 @@
 PERLMOD_LOC="/ensemblweb/www/www_49"   # current server root
 #PERLMOD_LOC="/ensemblweb/www/server"   # current server root
 
-PDOC_LOC="$PERLMOD_LOC/htdocs/info/using/api/Pdoc"    # where you want Pdocs created
+PDOC_LOC="$PERLMOD_LOC/public_plugins/ensembl/htdocs/info/using/api/Pdoc"    # where you want Pdocs created
 HTTP="/info/using/api/Pdoc"
 P2WDOC_LOC="/ensemblweb/shared/bin/pdoc-live"  # Pdoc code location
 P2WDOCER="/ensemblweb/shared/bin/pdoc-live/scripts/perlmod2www.pl"
