@@ -15,6 +15,18 @@ sub my_helplink { return "markers"; }
 sub features {
     my ($self) = @_;
     my $slice = $self->{'container'};
+    my $fg_db = undef;
+    my $db_type  = $self->my_config('db_type')||'funcgen';
+    unless($slice->isa("Bio::EnsEMBL::Compara::AlignSlice::Slice")) {
+      $fg_db = $slice->adaptor->db->get_db_adaptor($db_type);
+      if(!$fg_db) {
+        warn("Cannot connect to $db_type db");
+        return [];
+      }
+    }
+ 
+    my $feature_set_adaptor = $fg_db->get_FeatureSetAdaptor;  
+    my $feature_set = $feature_set_adaptor->fetch_by_name('cisRED search regions'); warn "FSET $feature_set";
 #    my $features =  $slice->adaptor->db->get_RegulatorySearchRegionAdaptor()->fetch_all_by_Slice( $slice );  # $logic name is second param
   my $gene = $self->{'config'}->{'_draw_single_Gene'};
   warn ">>> $gene <<<";
@@ -27,8 +39,13 @@ sub features {
     }
     warn join " ", map {$_->seq_region_start} @$data;
     return $data;
-  } else {
-    return $slice->adaptor->db->get_RegulatorySearchRegionAdaptor->fetch_all_by_Slice_constraint( $slice );  # $logic name is second param
+  } else 
+ { 
+   foreach my $search_region_feature(@{$feature_set->get_Features_by_Slice($slice)}){
+     warn "Found ".$search_region_feature->feature_type->class."\n";
+   }
+      return $feature_set->get_Features_by_Slice($slice);
+    # return $slice->adaptor->db->get_RegulatorySearchRegionAdaptor->fetch_all_by_Slice_constraint( $slice );  # $logic name is second param
   }
 #    return $features;
 }
@@ -40,19 +57,29 @@ sub href {
 
 sub zmenu {
     my ($self, $f ) = @_;
-    my $name = $f->name();
+    my $name = $f->display_id;
     if (length($name) >24) { $name = "<br />$name"; }
     my $species = $self->{'config'}->{'species'};
     my $seq_region = $f->slice->seq_region_name;
     my ($start,$end) = $self->slice2sr( $f->start, $f->end );
     my $analysis = $f->analysis->logic_name;
+    if ($analysis =~/cisRED/){$analysis = "cisred_search";}
     my $return = {
         'caption'                    => 'regulatory_search_regions',
         "01:bp: $start-$end"         => "contigview?c=$seq_region:$start;w=1000",
 		 };
 
-    if  ( my $type = lc($f->ensembl_object_type) ) {
-      my $id = $f->ensembl_object()->stable_id();
+    my ($id, $type);
+    my $db_ent = $f->get_all_DBEntries;
+    foreach my $dbe (@{$db_ent}){
+      $id = $dbe->primary_id;
+      my $dbname = $dbe->dbname;
+      if ($dbname =~/gene/) {$type = "gene";}
+      elsif ($dbname =~/transcript/){$type = "transcript";}
+      elsif ($dbname =~/translation/){$type = "peptide"; } 
+    }
+     warn "TYPE $type"; 
+     if ( $type =~/^\w*/){
       my $link;
       if ($type eq 'translation') {
 	$link = "protview";
@@ -66,10 +93,10 @@ sub zmenu {
 
 #	$return->{"04: [CisRed]"} = "$cisred" if $analysis =~/cisred/i;
       }
-      if ($analysis) {
-      if ($species=~/Homo_sapiens/){ $link = "http://www.cisred.org/human9/gene_view?ensembl_id=";}
-      elsif ( $species =~/Mus_musculus/) { $link = "http://www.cisred.org/mouse4/gene_view?ensembl_id=";}
-     my $cisred = $analysis =~/cisred/i ? "$link" . "$id" : "";
+      if ($analysis) { my $cis_link;
+      if ($species=~/Homo_sapiens/){ $cis_link = "http://www.cisred.org/human9/gene_view?ensembl_id=";}
+      elsif ( $species =~/Mus_musculus/) { $cis_link = "http://www.cisred.org/mouse4/gene_view?ensembl_id=";}
+     my $cisred = $analysis =~/cisred/i ? "$cis_link" . "$id" : "";
 	$return->{"02:Analysis: $analysis"} = "$cisred";
       }
       $return->{"04:Associated $type: $id"} = "$link?$type=$id";
@@ -82,6 +109,7 @@ sub zmenu {
 sub colour {
   my ($self, $f) = @_;
   my $name = $f->analysis->logic_name;
+  if ($name =~/cisRED/){$name = "cisred_search";}
   my $colour =  $self->{'config'}->colourmap->{'colour_sets'}->{'regulatory_search_regions'}{$name}[0];
   return $colour if $colour;
 
