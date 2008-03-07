@@ -404,8 +404,12 @@ sub regulatory_factor {
   my %factors;
 
   foreach my $feature ( @features ) {  # unique-ify
-    my $gene = $feature->{'coding_gene'} ? $feature->{'coding_gene'}->stable_id : "unknown";
-    $factors{ $gene } = $feature->{'factor_name'};
+    #my $gene = $feature->{'coding_gene'} ? $feature->{'coding_gene'}->stable_id : "unknown";
+    my $db_ent = $feature->get_all_DBEntries; 
+    foreach my $dbe (@$db_ent){  
+     my $gene = $dbe->primary_id ? $dbe->primary_id : "unknown";
+     $factors{ $gene } = $feature->{'factor_name'};
+    }
   }
 
   foreach my $gene (keys %factors) {
