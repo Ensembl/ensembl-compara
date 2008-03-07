@@ -674,7 +674,7 @@ sub features {
     }
   my $feature_set_adaptor = $fg_db->get_FeatureSetAdaptor;
   my $external_Feature_adaptor = $fg_db->get_ExternalFeatureAdaptor;
-  my $features;
+  my $f;
   my $species = $ENV{'ENSEMBL_SPECIES'}; 
      if ($species =~/Homo_sapiens/){
          my $cisred_fset = $feature_set_adaptor->fetch_by_name('cisRED group motifs');
