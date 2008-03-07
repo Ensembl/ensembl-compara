@@ -147,7 +147,7 @@ sub generegulationview {
      'caption' => "Gene structure",
      'status'  => 'panel_image',
      'params'  => $params,
-                                        )) {
+                                       )) {
       $structure_panel->add_components(qw(
       structure   EnsEMBL::Web::Component::Gene::gene_structure
 				     ));
@@ -435,7 +435,7 @@ sub context_menu {
     'text'  => "Gene regulation info.",
     'title' => 'GeneRegulationView - Regulatory factors for this gene'.$obj->stable_id,
     'href'  => "/$species/generegulationview?$q_string"
-  ) if $obj->species_defs->get_table_size({ -db => 'ENSEMBL_DB', -table => 'regulatory_feature'}) && $obj->gene;
+  ) if $obj->species_defs->get_table_size({ -db => 'ENSEMBL_FUNCGEN', -table => 'feature_set'}) && $obj->gene;
 
   $self->add_entry( $flag,
     'code'  => 'genomic_seq',
