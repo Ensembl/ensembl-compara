@@ -51,9 +51,8 @@ F6=ensembl-pipeline
 F7=perl
 F8=ensembl-variation
 F9=ensembl-hive
-F10=biomart-perl
-F11=public-plugins
-F12=ensembl-functgenomics
+F10=public-plugins
+F11=ensembl-functgenomics
 
 rm -f $P2WDOC_LOC/make_html_docs.*
 
@@ -67,7 +66,7 @@ cd $PERLMOD_LOC
 echo "Check out ensembl-pipeline and ensembl analysis ensembl-hive"
 cvs co ensembl-pipeline ensembl-analysis ensembl-hive
 
-for i in bioperl-live ensembl ensembl-analysis ensembl-compara ensembl-functgenomics ensembl-external ensembl-variation ensembl-hive perl biomart-perl public-plugins ensembl-pipeline
+for i in bioperl-live ensembl ensembl-analysis ensembl-compara ensembl-functgenomics ensembl-external ensembl-variation ensembl-hive perl public-plugins ensembl-pipeline
 do
         mkdir $PDOC_LOC/$i
   	echo "CURRENT MODULE: $i"
