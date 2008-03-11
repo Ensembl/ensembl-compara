@@ -188,7 +188,7 @@ sub find {
   my $key = EnsEMBL::Web::Tools::DBSQL::TableName::parse_primary_key($data->get_primary_key);
 
   my @bind_values;
-  if ($data->id) {
+  if (defined $data->id) {
       $sql .= "$key = ?";
       push @bind_values, $data->id;
   } else {
