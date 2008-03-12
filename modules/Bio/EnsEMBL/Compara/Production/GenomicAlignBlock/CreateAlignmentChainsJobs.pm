@@ -53,6 +53,7 @@ use Bio::EnsEMBL::Utils::Exception;
 our @ISA = qw(Bio::EnsEMBL::Hive::Process);
 
 #my $DEFAULT_DUMP_MIN_SIZE = 11500000;
+my $DEFAULT_OUTPUT_METHOD_LINK = "BLASTZ_CHAIN";
 
 sub fetch_input {
   my $self = shift;
@@ -67,6 +68,7 @@ sub fetch_input {
   $self->{'query_genome_db'} = undef;
   $self->{'target_genome_db'} = undef;
   $self->{'method_link_species_set'} = undef;
+  $self->{'output_method_link'} = undef;
 
   $self->get_params($self->parameters);
   $self->get_params($self->input_id);
@@ -168,7 +170,10 @@ sub get_params {
   $self->{'logic_name'} = $params->{'logic_name'} if(defined($params->{'logic_name'}));
 
   # from parameters
+  ## method_link alias for input_method_link, for backwards compatibility
   $self->{'method_link'} = $params->{'method_link'} if(defined($params->{'method_link'}));
+  $self->{'method_link'} = $params->{'input_method_link'} if(defined($params->{'input_method_link'}));
+  $self->{'output_method_link'} = $params->{'output_method_link'} if(defined($params->{'output_method_link'}));
 
 
   return;
@@ -282,7 +287,37 @@ sub createAlignmentChainsJobs
     }
   }
   $sth->finish;
-  printf("created %d jobs for AlignmentChains\n", $count);
+
+  if ($count == 0) {
+    # No alignments have been found. Remove the control rule to unblock following analyses
+    my $analysis_ctrl_rule_adaptor = $self->db->get_AnalysisCtrlRuleAdaptor;
+    $analysis_ctrl_rule_adaptor->remove_by_condition_analysis_url($analysis->logic_name);
+    print "No jobs created. Deleting analysis ctrl rule for " . $analysis->logic_name . "\n";
+  } else {
+    printf("created %d jobs for AlignmentChains\n", $count);
+  }
+
+
+  ## Create new MethodLinkSpeciesSet
+  # Use the value set in the parameters or the input_id
+  my $output_method_link = $self->{'output_method_link'};
+  # Use the output_method_link from the target analysis if the previous is not set
+  if (!$output_method_link and $self->{'logic_name'}) {
+    my $params = eval($analysis->parameters);
+    if ($params->{'output_method_link'}) {
+      $output_method_link = $params->{'output_method_link'}
+    }
+  }
+  # Use the default value otherwise
+  if (!$output_method_link) {
+    $output_method_link = $DEFAULT_OUTPUT_METHOD_LINK;
+  }
+  my $new_mlss = new Bio::EnsEMBL::Compara::MethodLinkSpeciesSet(
+      -species_set => $self->{'method_link_species_set'}->species_set,
+      -method_link_type => $output_method_link
+    );
+  $self->{'comparaDBA'}->get_MethodLinkSpeciesSetAdaptor->store($new_mlss);
+
 }
 
 1;
