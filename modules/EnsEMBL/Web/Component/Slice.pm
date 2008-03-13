@@ -54,6 +54,14 @@ sub align_sequence_display {
     }
 
     push @sliceArray, @{$align_slice->get_all_Slices(@selected_species)};
+    if ($method_link_species_set->method_link_class =~ /GenomicAlignTree/) {
+      ## Slices built from GenomicAlignTrees (EPO alignments) are returned in a specific order
+      ## This tag will allow us to keep that order
+      my $count = 0;
+      foreach my $slice (@sliceArray) {
+        $slice->{"_order"} = $count++;
+      }
+    }
   }
   markup_and_render( $panel, $object, \@sliceArray);
   return 1;
@@ -103,12 +111,26 @@ sub markup_and_render {
 
   # Add a section holding the names of the displayed slices
   my $Chrs = "<table>";
-  foreach my $display_name (sort( $object->species, grep {$_ ne $object->species } keys %sliceHash ) ) {
-    next unless  $object->species_defs->get_config($display_name, "SPECIES_ABBREVIATION");
+  foreach my $key_name (_sort_slices( \%sliceHash ) ) {
+    my $display_name = $sliceHash{$key_name}{display_name};
+
+    my $slices = $sliceHash{$key_name}{slices};
+
+    if ($display_name eq "Ancestral_sequences") {
+      ## Display simple tree for ancestral sequences
+      $Chrs .= qq{<tr><th>$display_name &gt;&nbsp;</th>};
+      foreach my $tree (@$slices) {
+        $Chrs .= qq{<td>$tree</td>};
+      }
+      $Chrs .= "</tr>";
+      next;
+    } elsif (!$object->species_defs->valid_species($display_name)) {
+      ## Looks like this is required for SequenceAlignView but it has its own method (sequence_markup_and_render)
+      next;
+    }
 
     # TO ADD : For the strains, work out the original species and add link for that instead
     $Chrs .= qq{<tr><th>$display_name &gt;&nbsp;</th>};
-    my $slices = $sliceHash{$display_name}{slices};
 
     # If page is based on strains, use the URL species
     unless ($slices ) {
@@ -118,20 +140,45 @@ sub markup_and_render {
        };
       $slices = [$slice_name];
     }
- 
+
    foreach my $loc (@$slices) {
       my ($stype, $assembly, $region, $start, $end, $strand) = split (/:/ , $loc);
       $Chrs .= qq{<td><a href="/$display_name/contigview?l=$region:$start-$end">$loc</a></td>};
     }
     $Chrs .= "</tr>";
   }
- $Chrs .= "</table>";
+  $Chrs .= "</table>";
+
   $panel->add_row( 'Marked up sequence', qq(
     $KEY
     $Chrs
      <pre>\n$html\n</pre>
    ) );
     return 1;
+}
+
+#-----------------------------------------------------------------------------------------
+sub _sort_slices {
+
+  ### This method sort the values of hRef according to the _order tags if sets
+
+  my ($hRef) = @_;
+  return () if (!%$hRef);
+
+  my $use_order = 1;
+  foreach my $slice (values %$hRef) {
+    if (!defined($slice->{slice}->{"_order"})) {
+      $use_order = 0;
+      last;
+    }
+  }
+  if ($use_order) {
+    ## Use specified order if available
+    return sort {$hRef->{$a}->{slice}->{"_order"} <=> $hRef->{$b}->{slice}->{"_order"}} keys %$hRef;
+  } else {
+    ## Use normal sort otherwise
+    return sort keys %$hRef;
+  }
 }
 
 #------------------------------------------------------------------------------------------
@@ -153,6 +200,7 @@ sub markupInit {
 
   # An AlignSlice is made up of at least one AlignSlice::Slice for each 
   # species.  The reference species will only have one AlignSlice::Slice
+  my $counter = 0;
   foreach my $slice (@$slices) {
     my $sequence = $slice->seq;
     my $display_name = $slice->can('display_Slice_name') ? $slice->display_Slice_name : $object->species;
@@ -165,9 +213,10 @@ sub markupInit {
       @subslices = ($slice);
     }
 
+    $counter++;
     foreach my $uSlice ( @subslices ) {
       next if ($uSlice->seq_region_name eq 'GAP');
-      push @{$hRef->{$display_name}->{slices}}, $uSlice->name;
+      push @{$hRef->{$display_name."_$counter"}->{slices}}, ($uSlice->{_tree}?$uSlice->{_tree}:$uSlice->name);
       if ( (my $label_length = length($uSlice->seq_region_name)) > $max_label) {
 	$max_label = $label_length;
       }
@@ -177,10 +226,11 @@ sub markupInit {
 
     # Get abbreviated species name (first letters of genus, first 3 of species)
     my $abbr = $object->species_defs->get_config($display_name, "SPECIES_ABBREVIATION") || $display_name;
-    $hRef->{$display_name}->{abbreviation} = $abbr;
-    $hRef->{$display_name}->{slice} = $slice;
-    $hRef->{$display_name}->{sequence} = $sequence . ' ';
-    $hRef->{$display_name}->{slice_length} = $slice_length;
+    $hRef->{$display_name."_$counter"}->{display_name} = $display_name;
+    $hRef->{$display_name."_$counter"}->{abbreviation} = $abbr;
+    $hRef->{$display_name."_$counter"}->{slice} = $slice;
+    $hRef->{$display_name."_$counter"}->{sequence} = $sequence . ' ';
+    $hRef->{$display_name."_$counter"}->{slice_length} = $slice_length;
 
 
     # Maximum lengths
@@ -211,7 +261,7 @@ sub markupInit {
 			   'mask' => -$ins_On, 'text' => $txt };
     }
 
-    $hRef->{$display_name}->{markup} = \@markup_bins;
+    $hRef->{$display_name."_$counter"}->{markup} = \@markup_bins;
 
     # And in case the conservation markup is switched on - get conservation scores for each 
     # basepair in the alignment.
@@ -245,6 +295,7 @@ sub generateHTML {
   my $line_numbering = $object->param('line_numbering');
   my $reference_name = $object->get_slice_object->get_individuals('reference');
   my $flag_done_reference = 0;
+#   foreach my $display_name ($reference_name, (sort keys %$hRef)) {
   foreach my $display_name ($reference_name, (sort keys %$hRef)) {
     next unless $hRef->{$display_name};
     if ($display_name eq $reference_name) {
@@ -267,7 +318,7 @@ sub generateHTML {
       if ($hRef->{$reference_name}) {
 	$line_html .= shift @{$hRef->{$reference_name}->{html} || [] };
       }
-      foreach my $display_name (sort keys %{$hRef}) {
+      foreach my $display_name (_sort_slices $hRef) {
 	next if $display_name eq $reference_name;
         $line_html .= shift @{$hRef->{$display_name}->{html}};
       }
@@ -1454,7 +1505,7 @@ sub sequence_markup_and_render {
  # Add a section holding the names of the displayed slices
   my $Chrs = "<table>";
   foreach my $display_name (sort( $object->species, grep {$_ ne $object->species } keys %sliceHash ) ) {
-    next unless  $object->species_defs->get_config($display_name, "SPECIES_ABBREVIATION");
+    next unless  $object->species_defs->valid_species($display_name);
 
     # TO ADD : For the strains, work out the original species and add link for that instead
     $Chrs .= qq{<tr><th>$display_name &gt;&nbsp;</th>};
@@ -1579,6 +1630,7 @@ sub sequence_markupInit {
 
     # Get abbreviated species name (first letters of genus, first 3 of species)
     my $abbr = $object->species_defs->get_config($display_name, "SPECIES_ABBREVIATION") || $display_name;
+    $hRef->{$display_name}->{display_name} = $display_name;
     $hRef->{$display_name}->{abbreviation} = $abbr;
     $hRef->{$display_name}->{slice} = $slice;
     $hRef->{$display_name}->{sequence} = $sequence . ' ';
