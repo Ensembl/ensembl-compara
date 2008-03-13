@@ -71,10 +71,30 @@ sub search_ALL {
   my $package_space = __PACKAGE__.'::';
   no strict 'refs';
   my @methods = map { /(search_\w+)/ && $1 ne 'search_ALL' ? $1 : () } keys %$package_space;
-  warn @methods;
+
+    ## Filter by configured indices
+  my $SD = EnsEMBL::Web::SpeciesDefs->new();
+  my @idxs = @{$SD->ENSEMBL_SEARCH_IDXS};
+  my @valid_methods;
+
+  if (scalar(@idxs) > 0) {
+    foreach my $m (@methods) {
+      (my $index = $m) =~ s/search_//;
+      foreach my $i (@idxs) {
+        if (lc($index) eq lc($i)) {
+          push @valid_methods, $m;
+          last;
+        }
+      }
+    }
+  }
+  else {
+    @valid_methods = @methods;
+  }
+
   my @ALL = ();
   
-  foreach my $method (@methods) {
+  foreach my $method (@valid_methods) {
     $self->{_result_count} = 0;
     $self->{_results}      = [];
     $self->{to_return} = 10;
