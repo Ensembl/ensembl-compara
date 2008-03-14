@@ -187,8 +187,6 @@ sub output_AlignSlice {
 	}
     }
 
-    my $sa = $as->get_SimpleAlign($esp, @species);
-    
     my $type = $as->get_MethodLinkSpeciesSet->method_link_type;
     my $name = $as->get_MethodLinkSpeciesSet->name;
 
@@ -196,22 +194,44 @@ sub output_AlignSlice {
     my $info = qq{
 <table>
   <tr>
-    <td> Secondary species: </td>
+    <th> Secondary species: </th>
     <td> %s </td>
   </tr>
   <tr>
-    <td> Method: </td>
-    <td> %s </td>
-  </tr>
-  <tr>
-    <td> Species set: </td>
+    <th> Alignments: </th>
     <td> %s </td>
   </tr>
 
 </table>
     };
 
-    $panel->print(sprintf($info, join(", ", @species), $type, $name));
+    $panel->print(sprintf($info, join(", ", @species), $name));
+
+    ## Print the locations of the underlying slices
+    my $Chrs = "<table><tr><th>Underlying sequences</th></tr>";
+    foreach my $this_as_slice (@{$as->get_all_Slices()}) {
+      my $display_name = $this_as_slice->genome_db->name;
+      $display_name =~ s/ /_/g;
+      $Chrs .= "<tr><td>-&nbsp;$display_name &gt;&nbsp;</td>";
+      foreach my $this_underlying_slice (@{$this_as_slice->get_all_underlying_Slices}) {
+        my $loc = $this_underlying_slice->name;
+        my ($stype, $assembly, $seq_region_name, $start, $end, $strand) = split (/:/ , $loc);
+        next if ($seq_region_name eq "GAP");
+        if ($display_name eq "Ancestral_sequences") {
+          $Chrs .= "<td>".$this_underlying_slice->{_tree}."</td>";
+        } else {
+          $Chrs .= qq{<td><a href="/$display_name/contigview?l=$seq_region_name:$start-$end">$loc</a></td>};
+        }
+      }
+      $Chrs .= "</tr>";
+    }
+    $Chrs .= "</table>";
+
+    $panel->print($Chrs);
+
+    ## Print the alignment using Bio::Perl
+    #my $sa = $as->get_SimpleAlign($esp, @species);
+    my $sa = $as->get_SimpleAlign();
 
     my $alignio = Bio::AlignIO->newFh(
 				      -fh     => IO::String->new(my $var),
