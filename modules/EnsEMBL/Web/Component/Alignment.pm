@@ -39,7 +39,7 @@ sub param_list {
     'Family'   => [qw(family_stable_id)],
     'Homology' => [qw(gene g1)],
     'GeneTree' => [qw(gene)],
-    'AlignSlice' => [qw(chr bp_start bp_end as method s)],
+    'AlignSlice' => [qw(chr bp_start bp_end as)],
   };
   return @{$T->{$class}||[]};
 }
@@ -67,16 +67,70 @@ sub format_form {
   }
   my $hash = SIMPLEALIGN_FORMATS;
   $form->add_element( 
-    'type' => 'DropDownAndSubmit', 
+    'type' => 'DropDown', 
     'select' => 'select',
     'name' => 'format',
     'label' => 'Change output format to:',
     'value' => $object->param('format')||SIMPLEALIGN_DEFAULT,
-    'button_value' => 'Go',
+#     'button_value' => 'Go',
     'values' => [
       map {{ 'value' => $_, 'name' => $hash->{$_} }} sort keys %$hash
     ]
   );
+
+  ## AlignView
+  if( $class eq 'AlignSlice' ) {
+    ## method is the method_link_species_set_id
+    my $id = $object->param('method');
+    ## Get details about the alignment from the SpeciesDefs hash
+    my %alignments = $object->species_defs->multiX('ALIGNMENTS');
+    my $label = $alignments{$id}->{'name'};
+    my @species = grep {$_ ne $object->species} sort keys %{$alignments{$id}->{'species'}};
+
+    my @multi_species;
+    if ( scalar(@species) > 1) {
+      ## For a multiple alignment, let the user choose the species
+      my %selected_species = map { $_ => 1} grep {$_} $object->param('s');
+
+      foreach my $v (@species) {
+        (my $name = $v) =~ s/_/ /g;
+        if ($selected_species{$v} or !keys(%selected_species)) {
+          push @multi_species, {"value"=>$v, "name"=>$name, "checked"=>"yes"};
+        } else {
+          push @multi_species, {"value"=>$v, "name"=>$name};
+        }
+      }
+      $label = "<b>$label</b>";
+
+    } else {
+      ($label = "<b>$species[0]</b>") =~ s/_/ /g;
+    }
+
+    ## One single radio button. Just an aesthetic way to display the type of alignments
+    $form->add_element('type' => 'RadioGroup',
+      'name' => 'method',
+      'values' =>  [{name=> $label, 'value' => $id, checked=>"yes"}],
+      'label' => 'View in alignment with',
+      'class' => 'radiocheck1col',
+      'noescape' => 'yes',
+    );
+
+    ## For a multiple alignment only, display a selection of species to show
+    if (@multi_species) {
+      $form->add_element(
+          'type' => 'MultiSelect',
+          'name'=> "s",
+          'values' => \@multi_species,
+          'value' => $object->param("s"),
+        );
+    }
+  }
+
+  ## Add the update button at the end. Will be the same for all the scripts using this form
+  $form->add_element(
+    'type'  => 'Submit', 'value' => 'Update' 
+  );
+
   return $form;
 }
 
@@ -170,49 +224,17 @@ sub output_AlignSlice {
 
     my $as = $object->Obj;
     (my $esp = $ENV{ENSEMBL_SPECIES}) =~ s!_! !g;
-    
 
-    my @species;
 
-    if ($object->param('s')) {
-	foreach my $sp  (split(/,/, $object->param('s'))) {
-	    $sp =~ s!_! !g;
-	    push @species, $sp unless ( $sp eq $esp);
-	}
-
-    } else {
-	my $ss = $as->get_MethodLinkSpeciesSet->species_set;
-	foreach my $gdb (@$ss) {
-	    push @species, $gdb->name unless ( $gdb->name eq $esp);
-	}
-    }
-
-    my $type = $as->get_MethodLinkSpeciesSet->method_link_type;
-    my $name = $as->get_MethodLinkSpeciesSet->name;
-
-    
-    my $info = qq{
-<table>
-  <tr>
-    <th> Secondary species: </th>
-    <td> %s </td>
-  </tr>
-  <tr>
-    <th> Alignments: </th>
-    <td> %s </td>
-  </tr>
-
-</table>
-    };
-
-    $panel->print(sprintf($info, join(", ", @species), $name));
+    my @species = grep {$_} $object->param('s');
+    unshift(@species, $esp) if (@species);
 
     ## Print the locations of the underlying slices
-    my $Chrs = "<table><tr><th>Underlying sequences</th></tr>";
-    foreach my $this_as_slice (@{$as->get_all_Slices()}) {
+    my $Chrs = "<table>";
+    foreach my $this_as_slice (@{$as->get_all_Slices(@species)}) {
       my $display_name = $this_as_slice->genome_db->name;
       $display_name =~ s/ /_/g;
-      $Chrs .= "<tr><td>-&nbsp;$display_name &gt;&nbsp;</td>";
+      $Chrs .= "<tr><th>$display_name &gt;&nbsp;</th>";
       foreach my $this_underlying_slice (@{$this_as_slice->get_all_underlying_Slices}) {
         my $loc = $this_underlying_slice->name;
         my ($stype, $assembly, $seq_region_name, $start, $end, $strand) = split (/:/ , $loc);
@@ -230,8 +252,7 @@ sub output_AlignSlice {
     $panel->print($Chrs);
 
     ## Print the alignment using Bio::Perl
-    #my $sa = $as->get_SimpleAlign($esp, @species);
-    my $sa = $as->get_SimpleAlign();
+    my $sa = $as->get_SimpleAlign(@species);
 
     my $alignio = Bio::AlignIO->newFh(
 				      -fh     => IO::String->new(my $var),
