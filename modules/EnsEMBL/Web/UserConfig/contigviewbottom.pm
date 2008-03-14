@@ -268,7 +268,7 @@ sub init {
       'on'  => "off",
       'pos' => '13',
       'str' => 'b',
-      'available'=> 'database_tables ENSEMBL_FUNCGEN.feature_set',
+      'available'=> 'features REGFEATURES_CISRED',
     },
 
     'first_ef'   => {
