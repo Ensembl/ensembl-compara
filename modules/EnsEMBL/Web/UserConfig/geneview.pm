@@ -6,6 +6,10 @@ use vars qw(@ISA);
 
 sub init {
   my ($self) = @_;
+  my $species = $self->{'species'};
+  my $reg_feat_label = "cisRED/miRANDA";
+  if ($species=~/Drosophila/){ $reg_feat_label = "REDfly"; }
+
   $self->{'_userdatatype_ID'} = 11; 
   $self->{'fakecore'} = 1;
 
@@ -14,6 +18,10 @@ sub init {
     '_options'  => [qw(pos col known unknown)],
  'fakecore' => 1,
     '_settings' => {
+      'features' => [
+         [ 'regulatory_regions'       => $reg_feat_label  ],
+         [ 'regulatory_search_regions'=> 'cisRED search regions'  ],
+      ],
       'show_labels'       => 'no',
       'show_buttons'      => 'no',
       'width'             => 500,
@@ -30,20 +38,19 @@ sub init {
       'pos' => '10',
       'col' => 'black',
     },
-
    # col is for colours. Not needed here as overwritten in Glyphset
    'regulatory_regions' => {
-      'on'  => "off",
+      'on'  => "on",
       'pos' => '12',
       'str' => 'b',
       'available'=> 'database_tables ENSEMBL_FUNCGEN.feature_set', 
     },
 
  'regulatory_search_regions' => {
-      'on'  => "off",
+      'on'  => "on",
       'pos' => '13',
        'str' => 'b',
-      'available'=> 'database_tables ENSEMBL_FUNCGEN.feature_set',
+      'available'=> 'features REGFEATURES_CISRED',
     },
 
 
