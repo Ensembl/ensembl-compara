@@ -81,15 +81,14 @@ my $estimate_tree = "~/pecan/EstimateTree.py";
 sub new {
   my ($class,@args) = @_;
   my $self = $class->SUPER::new(@args);
-  my ($workdir, $fasta_files, $synteny_region_id, $tree_string, $species_tree, $species_order, $parameters,
+  my ($workdir, $fasta_files, $tree_string, $species_tree, $species_order, $parameters,
       $jar_file, $java_class, $exonerate) =
-        rearrange(['WORKDIR', 'FASTA_FILES', 'SYNTENY_REGION_ID', 'TREE_STRING', 'SPECIES_TREE',
+        rearrange(['WORKDIR', 'FASTA_FILES', 'TREE_STRING', 'SPECIES_TREE',
             'SPECIES_ORDER', 'PARAMETERS', 'JAR_FILE', 'JAVA_CLASS', 'EXONERATE'], @args);
 
 
   chdir $self->workdir;
   $self->fasta_files($fasta_files) if (defined $fasta_files);
-  $self->synteny_region_id($synteny_region_id) if (defined $synteny_region_id);
   if (defined $tree_string) {
     $self->tree_string($tree_string)
   } elsif ($species_tree and $species_order and @$species_order) {
@@ -143,12 +142,6 @@ sub fasta_files {
   my $self = shift;
   $self->{'_fasta_files'} = shift if(@_);
   return $self->{'_fasta_files'};
-}
-
-sub synteny_region_id {
-  my $self = shift;
-  $self->{'_synteny_region_id'} = shift if(@_);
-  return $self->{'_synteny_region_id'};
 }
 
 sub tree_string {
@@ -220,6 +213,7 @@ sub run_ortheus {
 
 #   throw("Python [$PYTHON] is not executable") unless ($PYTHON && -x $PYTHON);
   throw("Ortheus [$ORTHEUS] does not exist") unless ($ORTHEUS && -e $ORTHEUS);
+
   my $command = "$PYTHON $ORTHEUS";
 #   if ($self->parameters) {
 #     $command .= " " . $self->parameters;
@@ -236,8 +230,13 @@ sub run_ortheus {
   $command .= " -m $JAVA -k \"#-J $EXONERATE\"";
   if ($self->tree_string) {
     $command .= " -d '" . $self->tree_string . "'";
-  } elsif ($self->species_tree and @{$self->species_order} > 2) {
-    $command .= " -s $SEMPHY -z '".$self->species_tree."' -A " . join(" ", @{$self->species_order});
+
+# #   TODO Not sure which elsif is right. Need to check this!!
+#   } elsif ($self->species_tree and $self->species_order and @{$self->species_order} > 2) {
+#     $command .= " -s $SEMPHY -z '".$self->species_tree."' -A ".join(" ", @{$self->species_order});
+
+  } elsif ($self->species_tree and $self->species_order and @{$self->species_order}) {
+    $command .= " -s $SEMPHY -z '".$self->species_tree."' -A ".join(" ", @{$self->species_order});
   } else {
     $command .= " -s $SEMPHY";
   }
@@ -265,7 +264,6 @@ sub run_ortheus {
 sub parse_results{
   my ($self, $run_number) = @_;
 
-print STDERR 
   ## The output file contains one fasta aligned sequence per original sequence + ancestral sequences.
   ## The first seq. corresponds to the fist leaf of the tree, the second one will be an internal
   ## node, the third is the second leaf and so on. The fasta header in the result file correspond
@@ -306,7 +304,7 @@ print STDERR
     $files =~ s/[\r\n]+$//;
     my $all_files = [split(" ", $files)];
     $self->fasta_files($all_files);
-    print STDERR "**NEWICK: $newick\nFILES: ", join(" -- ", @$all_files), "\n";
+    print STDERR "NEWICK: $newick\nFILES: ", join(" -- ", @$all_files), "\n";
   }
 
 
@@ -315,7 +313,7 @@ print STDERR
 
 
   my (@ordered_leaves) = $self->tree_string =~ /[(,]([^(:)]+)/g;
-  print "++NEWICK: ", $self->tree_string, "\nLEAVES: ", join(" -- ", @ordered_leaves), "\nFILES: ", join(" -- ", @{$self->fasta_files}), "\n";
+  print STDERR "NEWICK: ", $self->tree_string, "\nLEAVES: ", join(" -- ", @ordered_leaves), "\nFILES: ", join(" -- ", @{$self->fasta_files}), "\n";
   my $alignment_file = $self->workdir . "/output.$$.mfa";
 #   my $alignment_file = $self->workdir . "/output.8139.mfa";
   my $this_genomic_align_block = new Bio::EnsEMBL::Compara::GenomicAlignBlock;
@@ -325,7 +323,6 @@ print STDERR
   my $this_genomic_align;
   my $tree = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($self->tree_string);
   $tree->print_tree(100);
-
   print $tree->newick_format("simple"), "\n";
   print join(" -- ", map {$_->name} @{$tree->get_all_leaves}), "\n";
 print "Reading $alignment_file...\n";
@@ -380,7 +377,7 @@ print "Reading $alignment_file...\n";
         print "leaf_name?? $name\n";
         my $this_leaf = $tree->find_node_by_name($name);
         if (!$this_leaf) {
-          print $tree->newick_format(), " ****\n";
+          print $tree->newick_format(), "\n";
           die "";
         }
         print "$this_leaf\n";
@@ -413,7 +410,7 @@ print "Reading $alignment_file...\n";
     $this_genomic_align_block->add_GenomicAlign($this_genomic_align);
   }
   print $tree->newick_format("simple"), "\n";
-  print join(" -- ", map {$_."+".$_->node_id."+".$_->name} (@{$tree->get_all_nodes()})), "\n";
+  print join(" -- ", map {$_->node_id."+".$_->genomic_align->dnafrag_id} (@{$tree->get_all_nodes()})), "\n";
   $self->output([$tree]);
 }
 
