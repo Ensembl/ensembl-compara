@@ -121,7 +121,7 @@ sub createObjects_AlignSlice {
   return $self->_prob( "Unable to get Method Link Species Set $id" ) unless $method_link_species_set;
   eval {
       my $asa = $comparadb->get_adaptor("AlignSlice" );
-      my $align_slice = $asa->fetch_by_Slice_MethodLinkSpeciesSet($query_slice, $method_link_species_set, "expanded" );
+      my $align_slice = $asa->fetch_by_Slice_MethodLinkSpeciesSet($query_slice, $method_link_species_set, "expanded", "restrict" );
 
       $self->_createObjects( $align_slice, 'AlignSlice' );
   };
