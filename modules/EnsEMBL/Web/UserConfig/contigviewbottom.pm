@@ -11,7 +11,7 @@ sub init {
   my ($self ) = @_;
   my $species = $self->{'species'};
   my $reg_feat_label = "cisRED/miRANDA";
-  if ($species=~/Drosophila/){ $reg_feat_label = "FlyReg"; }
+  if ($species=~/Drosophila/){ $reg_feat_label = "REDfly"; }
 
   $self->{'_das_offset'} = '5800';
 
