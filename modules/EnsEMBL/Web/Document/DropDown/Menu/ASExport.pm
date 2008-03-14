@@ -29,7 +29,7 @@ sub new {
     my $aID = $wuc->get('alignslice', 'id');
     my $aType = $wuc->get('alignslice', 'type');
 
-    $exportURL .= ";method=$aID;s=".join(',', @species);
+    $exportURL .= ";method=$aID";
 
     my $exports = { 
 		    fasta  => { text  => 'Alignment',
