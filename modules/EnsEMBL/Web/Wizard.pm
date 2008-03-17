@@ -155,23 +155,21 @@ sub render_current_node {
   my $self = shift;
   my $node = $self->current_node;
   my $html;
+  my $action = '/common/'.$node->object->script;
+  $self->set_form(EnsEMBL::Web::Form->new('connection_form', $action));
   if ($node) {
     my $init_method = $node->name;
     $node->$init_method; 
-    if ($node) {
-      $html .= "<h2>".$node->title."</h2>\n";
-      $html .= $node->text_above."\n" if $node->text_above;
-      my $action = '/common/'.$node->object->script;
+    $html .= "<h2>".$node->title."</h2>\n";
+    $html .= $node->text_above."\n" if $node->text_above;
     #if ($current_node->is_final) {
       ## redirect to the final destination
       #$action = $current_node->get_destination;
     #}
-      $self->set_form(EnsEMBL::Web::Form->new('connection_form', $action));
-      $html .= $self->render_connection_form($node);
-      $html .= "\n".$node->text_below."\n" if $node->text_below;
-    } else {
-      $html = $self->render_error_message('No current node has been specified. Check the URL and try again.');
-    }
+    $html .= $self->render_connection_form($node);
+    $html .= "\n".$node->text_below."\n" if $node->text_below;
+  } else {
+    $html = $self->render_error_message('No current node has been specified. Check the URL and try again.');
   }
   return $html;
 }
@@ -232,8 +230,10 @@ sub add_incoming_parameters {
 
   ## Make sure we don't duplicate fields already in this form (via 'Back' actions)
   ## Mainly a fix for stupid HTML checkboxes
-  foreach my $element (@{ $self->current_node->get_elements }) {
-    delete($parameter{$element->{'name'}});
+  if (keys %parameter) {
+    foreach my $element (@{ $self->current_node->get_elements }) {
+      delete($parameter{$element->{'name'}}) if $element->{'name'};
+    }
   }
 
   ## Add in valid CGI parameters as hidden fields
