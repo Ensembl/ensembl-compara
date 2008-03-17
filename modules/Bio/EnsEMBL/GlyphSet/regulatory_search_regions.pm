@@ -26,18 +26,13 @@ sub features {
     }
  
     my $feature_set_adaptor = $fg_db->get_FeatureSetAdaptor;  
-    my $feature_set = $feature_set_adaptor->fetch_by_name('cisRED search regions'); warn "FSET $feature_set";
-#    my $features =  $slice->adaptor->db->get_RegulatorySearchRegionAdaptor()->fetch_all_by_Slice( $slice );  # $logic name is second param
+    my $feature_set = $feature_set_adaptor->fetch_by_name('cisRED search regions'); 
+    my $species = $self->{'config'}->{'species'}; 
+    my $external_Feature_adaptor = $fg_db->get_ExternalFeatureAdaptor;
   my $gene = $self->{'config'}->{'_draw_single_Gene'};
   warn ">>> $gene <<<";
   if( $gene ) {
-    my $data = $slice->adaptor->db->get_RegulatorySearchRegionAdaptor->fetch_all_by_gene( $gene, 1 );
-    my $offset = 1 - $slice->start;
-    foreach( @$data ) {
-      $_->{'start'} += $offset;
-      $_->{'end'}   += $offset;
-    }
-    warn join " ", map {$_->seq_region_start} @$data;
+    my $data =  $feature_set->get_Features_by_Slice($slice);
     return $data;
   } else 
  { 
@@ -45,9 +40,7 @@ sub features {
      warn "Found ".$search_region_feature->feature_type->class."\n";
    }
       return $feature_set->get_Features_by_Slice($slice);
-    # return $slice->adaptor->db->get_RegulatorySearchRegionAdaptor->fetch_all_by_Slice_constraint( $slice );  # $logic name is second param
   }
-#    return $features;
 }
 
 sub href {
@@ -78,7 +71,7 @@ sub zmenu {
       elsif ($dbname =~/transcript/){$type = "transcript";}
       elsif ($dbname =~/translation/){$type = "peptide"; } 
     }
-     warn "TYPE $type"; 
+      
      if ( $type =~/^\w*/){
       my $link;
       if ($type eq 'translation') {
@@ -91,7 +84,6 @@ sub zmenu {
       else {
 	$link = "geneview";
 
-#	$return->{"04: [CisRed]"} = "$cisred" if $analysis =~/cisred/i;
       }
       if ($analysis) { my $cis_link;
       if ($species=~/Homo_sapiens/){ $cis_link = "http://www.cisred.org/human9/gene_view?ensembl_id=";}
