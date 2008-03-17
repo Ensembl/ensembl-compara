@@ -6,43 +6,55 @@ use EnsEMBL::Web::Configuration;
 our @ISA = qw( EnsEMBL::Web::Configuration );
 
 
-sub user_data_wizard {
+sub user_data {
   my $self   = shift;
   my $object = $self->{'object'};
 
-  my $commander = $self->commander;
+  my $wizard = $self->wizard;
 
-  my $module = 'EnsEMBL::Web::Commander::Node::UserData';
-  my $start         = $commander->create_node(( object => $object, module => $module, name => 'start' ));
-  my $das_servers   = $commander->create_node(( object => $object, module => $module, name => 'das_servers'));
-  my $das_sources   = $commander->create_node(( object => $object, module => $module, name => 'das_sources'));
-  my $conf_tracks   = $commander->create_node(( object => $object, module => $module, name => 'conf_tracks'));
-  my $file_info     = $commander->create_node(( object => $object, module => $module, name => 'file_info'));
-  my $file_upload   = $commander->create_node(( object => $object, module => $module, name => 'file_upload'));
-  my $file_feedback = $commander->create_node(( object => $object, module => $module, name => 'file_feedback'));
-  my $user_record   = $commander->create_node(( object => $object, module => $module, name => 'user_record'));
-  my $finish        = $commander->create_node(( object => $object, module => $module, name => 'finish'));
+  ## CREATE NODES
+  my $node  = 'EnsEMBL::Web::Wizard::Node::UserData';
+  my $start         = $wizard->create_node(( object => $object, module => $node, type => 'page', name => 'start' ));
 
-  ## DAS section
-  $commander->add_connection(( type => 'link', from => $das_servers,    to => $das_sources));
-  $commander->add_connection(( type => 'link', from => $das_servers,    to => $das_servers));
-  $commander->add_connection(( type => 'link', from => $das_sources,    to => $conf_tracks));
-  $commander->add_connection(( type => 'link', from => $das_sources,    to => $finish));
-  $commander->add_connection(( type => 'option', conditional => 'filter', predicate => 'das', 
-                              from => $das_servers, to => $das_servers));
+  ## File upload/link section of wizard
+  my $start_logic   = $wizard->create_node(( object => $object, module => $node, type => 'logic', name => 'start_logic'));
+  my $distribution  = $wizard->create_node(( object => $object, module => $node, type => 'page', name => 'distribution'));
+  my $file_guide    = $wizard->create_node(( object => $object, module => $node, type => 'page', name => 'file_guide'));
+  my $file_logic    = $wizard->create_node(( object => $object, module => $node, type => 'logic', name => 'file_logic'));
+  my $file_details  = $wizard->create_node(( object => $object, module => $node, type => 'page', name => 'file_details'));
+  my $file_upload   = $wizard->create_node(( object => $object, module => $node, type => 'logic', name => 'file_upload'));
+  my $url_data      = $wizard->create_node(( object => $object, module => $node, type => 'page', name => 'url_data'));
+  my $file_feedback = $wizard->create_node(( object => $object, module => $node, type => 'page', name => 'file_feedback'));
+  my $user_record   = $wizard->create_node(( object => $object, module => $node, type => 'page', name => 'user_record'));
+
+  ## DAS section of wizard
+  my $das_servers   = $wizard->create_node(( object => $object, module => $node, type => 'page', name => 'das_servers'));
+  my $das_sources   = $wizard->create_node(( object => $object, module => $node, type => 'page', name => 'das_sources'));
+
+  my $conf_tracks   = $wizard->create_node(( object => $object, module => $node, type => 'page', name => 'conf_tracks'));
+  my $finish        = $wizard->create_node(( object => $object, module => $node, type => 'page', name => 'finish'));
+
+  ## LINK PAGE NODES TOGETHER
+  $wizard->add_connection(( from => $start,   to => $start_logic));
+
+  ## DAS
+  $wizard->add_connection(( from => $das_servers,    to => $das_sources));
+  $wizard->add_connection(( from => $das_servers,    to => $das_servers));
+  $wizard->add_connection(( from => $das_sources,    to => $conf_tracks));
+  $wizard->add_connection(( from => $das_sources,    to => $finish));
 
   ## File upload
-  #$commander->add_connection(( type => 'option', conditional => 'option', predicate => '', 
-  #                            from => $file_info, to => $file_upload));
-  $commander->add_connection(( type => 'link', from => $file_info,      to => $file_upload));
-  $commander->add_connection(( type => 'link', from => $file_upload,    to => $file_feedback));
-  $commander->add_connection(( type => 'link', from => $file_feedback,  to => $conf_tracks));
-  $commander->add_connection(( type => 'link', from => $file_feedback,  to => $finish));
+  $wizard->add_connection(( from => $distribution,   to => $file_guide));
+  $wizard->add_connection(( from => $file_guide,     to => $file_logic));
+  $wizard->add_connection(( from => $file_details,   to => $file_upload));
+  $wizard->add_connection(( from => $file_upload,    to => $file_feedback));
+  $wizard->add_connection(( from => $file_feedback,  to => $conf_tracks));
+  $wizard->add_connection(( from => $file_feedback,  to => $finish));
 
   ## User record
 
   ## Universal end-point!
-  $commander->add_connection(( type => 'link', from => $conf_tracks,    to => $finish));
+  $wizard->add_connection(( from => $conf_tracks,    to => $finish));
 
 }
 
