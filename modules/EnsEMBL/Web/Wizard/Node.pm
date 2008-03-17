@@ -1,5 +1,7 @@
 package EnsEMBL::Web::Wizard::Node;
 
+### Package to define an individual node within a wizard
+
 use strict;
 use warnings;
 
@@ -29,6 +31,7 @@ sub BUILD {
 
 sub type {
   ### a
+  ### Valid values are 'page' or 'logic'
   my $self = shift;
   $self->set_type(shift) if @_;
   return $self->get_type;
@@ -77,6 +80,7 @@ sub text_below {
 }
 
 sub add_element {
+### Adds a form element consisting of a hash of parameters
   my( $self, %options ) = @_;
   push @{ $self->elements }, \%options;
 }
