@@ -45,7 +45,7 @@ warn "URL needs help? ", $self->object->param('help');
     }
   }
   else {
-    $parameter->{'wizard_next'} = 'file_upload';
+    $parameter->{'wizard_next'} = 'file_details';
   }
   return $parameter;
 }
