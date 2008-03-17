@@ -202,7 +202,7 @@ sub configure {
       if( $objecttype eq 'DAS' ) {
         $self->problem('Fatal', 'Bad request', 'Unimplemented');
       } else {
-        warn "Can't do configuration function $FN on $objecttype objects, or an error occurred when excuting that function.";
+        warn "Can't do configuration function $FN on $objecttype objects, or an error occurred when executing that function.";
       }
     }
   }
