@@ -1,5 +1,9 @@
 package EnsEMBL::Web::Wizard;
 
+### Package to assemble a wizard from its component nodes, render page nodes
+### and redirect to next node in process
+
+
 use strict;
 use warnings;
 
@@ -27,8 +31,6 @@ sub BUILD {
 }
 
 
-## accessors
-
 sub form {
   ### a
   my $self = shift;
@@ -38,6 +40,7 @@ sub form {
 
 
 sub create_node {
+### Creates a node and adds it to the wizard
   my ($self, %params) = @_;
   my $module = $params{module};
   my $name = $params{name};
@@ -59,6 +62,7 @@ sub create_node {
 }
 
 sub add_node {
+### Adds a node to the nodes hash and sets default node if none exists
   my ($self, $name, $node) = @_;
   my $nodes = $self->get_nodes;
   if (!keys %$nodes) {
@@ -69,6 +73,7 @@ sub add_node {
 }
 
 sub current_node {
+### Determines the current node - either as passed in CGI, or default
   my ($self) = @_;
   my $nodes = $self->get_nodes;
   my $current_node = undef; 
@@ -86,6 +91,7 @@ sub current_node {
 }
 
 sub forward_connection {
+### Gets the forward connection required to generate 'Next'-type buttons
   my ($self, $node) = @_;
   my $forward_connection = undef;
   foreach my $connection (@{ $self->get_connections }) {
@@ -122,6 +128,7 @@ my ($self, $node) = @_;
 =cut
 
 sub add_connection {
+### Creates and adds a Wizard::Connection object to the array of connections
   my ($self, %params) = @_;
   return unless $params{from} && $params{to};
   my @connections = @{$self->get_connections};
@@ -133,6 +140,7 @@ sub add_connection {
 }
 
 sub redirect_current_node {
+### Redirects to next node based on incoming parameters
   my $self = shift;
   my $node = $self->current_node;
   my $init_method = $node->name;
@@ -152,6 +160,7 @@ sub redirect_current_node {
 }
 
 sub render_current_node {
+### Renders a form for the current node
   my $self = shift;
   my $node = $self->current_node;
   my $html;
@@ -175,6 +184,7 @@ sub render_current_node {
 }
 
 sub render_connection_form {
+### helper function to render the form itself
   my ($self, $node) = @_;
   my $html = '';
 
@@ -211,6 +221,7 @@ sub find_previous {
 }
 
 sub incoming_parameters {
+### Munges CGI parameters
   my $self = shift;
   my %parameter = ();
 
@@ -225,6 +236,8 @@ sub incoming_parameters {
 }
 
 sub add_incoming_parameters {
+### Passes CGI parameters as hidden fields in the form, including munging
+### the wizard_steps array to keep track of where we are
   my ($self) = @_;
   my %parameter = $self->incoming_parameters;
 
@@ -262,6 +275,7 @@ sub add_incoming_parameters {
 }
 
 sub render_error_message {
+### Outputs an error message; also uses a form to keep track of where we were in the wizard
   my $self = shift;
   my $html;
 
