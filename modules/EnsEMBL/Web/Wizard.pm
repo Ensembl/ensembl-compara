@@ -2,742 +2,279 @@ package EnsEMBL::Web::Wizard;
 
 use strict;
 use warnings;
-no warnings "uninitialized";
-use CGI qw(escape);
-#use Text::Aspell;
-use EnsEMBL::Web::File::Text;
 
+use Class::Std;
+use Data::Dumper;
 use EnsEMBL::Web::Root;
-our @ISA = qw(EnsEMBL::Web::Root);
+use EnsEMBL::Web::Form;
+use EnsEMBL::Web::Wizard::Connection;
+use EnsEMBL::Web::Wizard::Node;
 
 
-sub new {
-  my ($class, $object) = @_;
-  my $self = {'_nodes' => {}};
-  bless $self, $class;
-  my $init = $class.'::_init';
-  if ($self->can($init)) { 
-    my ($data, $fields, $node_defs, $messages, $karyotype) = @{ $self->$init($object) };
-    $self->{'_data'}        = $data;
-    $self->{'_fields'}      = $fields;
-    $self->{'_node_defs'}   = $node_defs;
-    $self->{'_messages'}    = $messages;
-  }
-  (my $namespace = $class) =~ s/::Wizard::[a-zA-Z_]+$//;
-  $self->{'_namespace'} = $namespace;
-  return $self;
+{
+
+my %CGI :ATTR(:set<cgi> :get<cgi> :init_arg<cgi>);
+my %Form :ATTR(:set<form> :get<form>);
+my %Nodes :ATTR(:set<nodes> :get<nodes> :init_arg<nodes>);
+my %Default_Node :ATTR(:set<default_node> :get<default_node>);
+my %Connections :ATTR(:set<connections> :get<connections> :init_arg<connections>);
+my %Destination :ATTR(:set<destination>);
+
+sub BUILD {
+  my ($self, $ident, $args) = @_;
+  $self->set_nodes({});
+  $self->set_connections([]);
 }
 
-sub namespace { return $_[0]{'_namespace'}; }
 
-sub data { 
-  my ($self, $name, $value) = @_;
-  if ($value) {
-    $self->{'_data'}{$name} = $value;
-  }
-  return $self->{'_data'}{$name}; 
+## accessors
+
+sub form {
+  ### a
+  my $self = shift;
+  $self->set_form(shift) if @_;
+  return $self->get_form;
 }
 
-sub field {
-  my ($self, $field, $param, $value) = @_;
-  if ($value) {
-    $self->{'_fields'}{$field}{$param} = $value;
-  }
-  return $self->{'_fields'}{$field}{$param}; 
-}
 
-sub redefine_node {
-  my ($self, $node, $attrib, $value, $replace) = @_;
-  if (ref($self->{'_node_defs'}{$node}{$attrib}) eq 'ARRAY' && !$replace) {
-    push(@{$self->{'_node_defs'}{$node}{$attrib}}, @$value) 
-      unless grep {$_ eq $value} @{$self->{'_node_defs'}{$node}{$attrib}};
+sub create_node {
+  my ($self, %params) = @_;
+  my $module = $params{module};
+  my $name = $params{name};
+  my $type = $params{type} || 'page';
+  if ($module && $name) {
+    if (EnsEMBL::Web::Root::dynamic_use(undef, $module)) {
+      my $node = $module->new({ name => $name, type => $type, object => $params{object} });
+      $self->add_node($name, $node);
+      return $node;
+    }
+    else {
+      warn "Can't use module $module";
+    }
   }
   else {
-    $self->{'_node_defs'}{$node}{$attrib} = $value;
+    warn "Insufficient parameters - did you supply a module and name?";
   }
+  return undef;
 }
 
-sub node_access {
-  my ($self, $node, $data) = @_;
-  return unless ($node);
-  if ($data && ref($data) eq 'HASH') {
-    for (my ($type, $value) = each (%$data)) {
-      $self->{'_node_defs'}{$node}{'access'}{$type} = $value;
-    }
+sub add_node {
+  my ($self, $name, $node) = @_;
+  my $nodes = $self->get_nodes;
+  if (!keys %$nodes) {
+    $self->set_default_node($name);
   }
-  return $self->{'_node_defs'}{$node}{'access'};
-}
-
-sub get_fields    { return $_[0]->{'_fields'}; }
-sub get_node_def  { return $_[0]->{'_node_defs'}{$_[1]}; }
-sub get_message   { return $_[0]->{'_messages'}{$_[1]}; }
-
-## 'FLOWCHART' FUNCTIONS
-
-sub add_nodes {
-  my ($self, $nodes) = @_;
-  foreach my $node (@$nodes) {
-    $self->{'_nodes'}{$node} = $self->get_node_def($node);
-  }
-}
-
-sub default_node {
- my ($self, $default) = @_;
-  if ($default) {
-    ## unset any existing default
-    foreach my $node (keys %{$self->{'_nodes'}}) {
-      if ($self->{'_nodes'}{$node}{'default'}) {
-        $self->{'_nodes'}{$node}{'default'} = 0;
-      }
-    }
-    ## set new default
-    $self->{'_nodes'}{$default}{'default'} = 1;
-  }
-  else {
-    foreach my $node (keys %{$self->{'_nodes'}}) {
-      if ($self->{'_nodes'}{$node}{'default'}) {
-        $default = $node;
-        last;
-      }
-    }
-  }
-  return $default;
+  $nodes->{$name} = $node;
+  $self->set_nodes($nodes);
 }
 
 sub current_node {
-  my ($self, $object, $new_node) = @_;
-  my $node;
-
-  ## are we resetting the current node?
-  if ($new_node) {
-    $object->param('node', $new_node);
-    return $new_node;
-  }
-
-  ## check if we have a submit button setting the next node
-  my @params = $object->param();
-  foreach my $param (@params) {
-    if ($param =~ m/submit_/) {
-      ($node = $param) =~ s/submit_//g;
-      last;
-    }
-  }
-  if (!$node) { ## if no submit, try other options
-    $node = $object->param('node') || $self->default_node;
-  }
-  return $node;
-}
-
-sub node_value {
-  my ($self, $node, $key, $value) = @_;
-  if ($value) {
-    $self->{'_nodes'}{$node}{$key} = $value;
-  }
-  $value = $self->{'_nodes'}{$node}{$key};
-  return $value;
-}
-
-sub isa_node {
-  my ($self, $node) = @_;
-  my $boolean = $self->{'_nodes'}{$node} ? 1 : 0;
-  return $boolean;
-}
-
-sub isa_page {
-  my ($self, $node) = @_;
-  my $boolean = $self->{'_nodes'}{$node}{'form'} || $self->{'_nodes'}{$node}{'page'};
-  return $boolean;
-}
-
-sub isa_form {
-  my ($self, $node) = @_;
-  my $boolean = $self->{'_nodes'}{$node}{'form'} ? 1 : 0;
-  return $boolean;
-}
-
-sub chain_nodes {
-  my ($self, $edge_ref) = @_;
-  foreach my $edge (@$edge_ref) {
-    my $start = $$edge[0];
-    my $end = $$edge[1];
-    push(@{$self->{'_nodes'}{$start}{'_outgoing_edges'}}, $end);
-    push(@{$self->{'_nodes'}{$end}{'_incoming_edges'}}, $start);
-  }
-}
-
-sub add_outgoing_edges {
-  my ($self, $edge_ref) = @_;
-  foreach my $edge (@$edge_ref) {
-    my $start = $$edge[0];
-    my $end = $$edge[1];
-    push(@{$self->{'_nodes'}{$start}{'_outgoing_edges'}}, $end);
-  }
-}
-
-sub remove_outgoing_edge {
-  my ($self, $start, $end) = @_;
-  my $edge_ref = $self->{'_nodes'}{$start}{'_outgoing_edges'};
-  my $edges = scalar(@$edge_ref);
-  for (my $i=0; $i<$edges; $i++) {
-    my $edge = @{$edge_ref}[$i];
-    splice(@{$edge_ref}, $i) if $edge eq $end;
-  }
-}
-
-sub get_outgoing_edges {
-  my ($self, $node) = @_;
-  ## this function seems to returning duplicate values, so weed them out!
-  my (%check_hash, @edges);
-  foreach my $edge (@{$self->{'_nodes'}{$node}{'_outgoing_edges'}}) {
-    $check_hash{$edge}++;
-    push @edges, $edge if $check_hash{$edge} < 2;
-  }
-  return \@edges;
-}
-
-sub add_incoming_edges {
-  my ($self, $edge_ref) = @_;
-  foreach my $edge (@$edge_ref) {
-    my $start = $$edge[0];
-    my $end = $$edge[1];
-    push(@{$self->{'_nodes'}{$start}{'_incoming_edges'}}, $end);
-  }
-}
-
-sub remove_incoming_edge {
-  my ($self, $start, $end) = @_;
-  my $edge_ref = $self->{'_nodes'}{$start}{'_incoming_edges'};
-  my $edges = scalar(@$edge_ref);
-  for (my $i=0; $i<$edges; $i++) {
-    my $edge = @{$edge_ref}[$i];
-    splice(@{$edge_ref}, $i) if $edge eq $end;
-  }
-}
-
-sub get_incoming_edges {
-  my ($self, $node) = @_;
-  ## this function seems to returning duplicate values, so weed them out!
-  my (%check_hash, @edges);
-  foreach my $edge (@{$self->{'_nodes'}{$node}{'_incoming_edges'}}) {
-    $check_hash{$edge}++;
-    push @edges, $edge if $check_hash{$edge} < 2;
-  }
-  return \@edges;
-}
-
-##---------------- PROGRESS BAR FUNCTIONS ---------------------------------
-
-sub nodes_in_progress_bar {
-  my $self = shift;
-  warn "Progress bar";
-  my %nodes = %{ $self->{'_nodes'} };
-  my @bar_nodes;
-  for my $key( keys %nodes) {
-    my $node_def = $nodes{$key};
-    $node_def->{'name'} = $key;
-    my $label = $node_def->{'progress_label'};
-    if ($label) {
-      push @bar_nodes, $node_def;
-    }
-  }
-  my @sorted = sort { $a->{'order'} cmp $b->{'order'} } @bar_nodes; 
-  return @sorted;
-}
-
-##---------------- FORM ASSEMBLY FUNCTIONS --------------------------------
-
-sub simple_form {
-  my ($self, $node, $form, $object, $display) = @_;
-
-  $self->add_title($node, $form);
-  if ($display eq 'input') { 
-    $self->add_widgets($node, $form, $object);
-  }
-  elsif ($display eq 'output') { 
-    $self->show_fields($node, $form, $object);
-    $self->pass_fields($node, $form, $object);
-  }
-  $self->add_buttons($node, $form, $object);
-}
-
-sub add_title {
-  my ($self, $node, $form) = @_;
-
-  my $title = $self->{'_nodes'}{$node}{'title'};
-
-  $form->add_element( 
-    'type' => 'Header', 
-    'value' => $title,
-  );                                                                            
-}
-
-sub show_fields {
-  my ($self, $node, $form, $object, $fields) = @_;
-
-  if (!$fields) {
-    $fields = $self->{'_nodes'}{$node}{'show_fields'} || $self->default_order;
+  my ($self) = @_;
+  my $nodes = $self->get_nodes;
+  my $current_node = undef; 
+  my $submit = $self->get_cgi->param('wizard_submit');
+  if ($submit && $submit =~ /Back/) {
+    $current_node = $nodes->{$self->find_previous};
   } 
-  my %form_fields = %{$self->get_fields};
-
-  foreach my $field (@$fields) {
-    my %field_info = %{$form_fields{$field}};
-    ## show the input to the user
-    my %parameter = (
-      'type'      => 'NoEdit',
-      'label'     => $field_info{'label'},
-    );
-    
-    my ($output, @values);
-    if ($field_info{'type'} eq 'DropDown' || $field_info{'type'} eq 'MultiSelect') { ## look up 'visible' value(s) of multi-value fields
-      @values = $object->param($field) || $self->{'_data'}{'record'}{$field};
-      my ($lookup, $count);
-      foreach my $value (@values) {
-        foreach my $element (@{$self->{'_data'}{$field_info{'values'}}}) {
-          if ($$element{'value'} eq $value) {
-            $lookup = $$element{'name'};
-            last;
-          }
-        }
-        $output .= ', ' if $count > 0;
-        $output .= $lookup;
-        $count++;
-      }
-    }
-    elsif ($field_info{'type'} eq 'CheckBox') {
-      my $v = $object->param($field) || $self->{'_data'}{'record'}{$field};
-      $output = $v =~ /yes|y|1/i ? 'yes' : 'no';
-    }
-    elsif ($field_info{'type'} eq 'Password') { ## mask passwords
-      $output = '******';
-    }
-    else {
-      my $text = $object->param($field) || $self->{'_data'}{'record'}{$field};
-      if (!$text && ($field_info{'type'} eq 'Int' || $field_info{'type'} eq 'NonNegInt')) {
-        $text = '0';
-      }
-      $output = _HTMLize($text);
-    }
-
-    $parameter{'value'} = $output;
-    $form->add_element(%parameter);
-  }
-
-}
-
-sub _uniquify {
-  my $a_ref = shift;
-  my %unique;
-  foreach my $value (@$a_ref) {
-    $unique{$value}++;
-  }
-  my @uniques = (keys %unique);
-  return \@uniques;
-}
-
-sub _HTMLize {
-  my $string = shift;
-  $string =~ s/"/&quot;/g;
-  $string =~ s/%20/ /g;
-  return $string;
-}
-
-sub pass_fields {
-  my ($self, $node, $form, $object, $fields) = @_;
-
-  ## don't pass data if returning via a Back button
-  if ($object->param) {
-    foreach my $param ($object->param) {
-      return if ($param =~ /^submit/ && $object->param($param) =~ /Back/);
-    }
-  } 
-
-  my @fields;
-  if ($fields) {
-    @fields = @$fields;
-  }
-  elsif ($self->{'_nodes'}{$node}{'pass_fields'}) {
-    @fields = @{$self->{'_nodes'}{$node}{'pass_fields'}};
+  elsif ($self->get_cgi->param('wizard_next')){
+    $current_node = $nodes->{$self->get_cgi->param('wizard_next')};
   }
   else {
-    @fields = $object->param;
-  } 
-
-  ## make lookup of fields you don't want to pass as hidden
-  my $edges = $self->get_incoming_edges($node);
-  my @matches = grep { $node } @$edges;
-  my @no_pass;
-  if (scalar(@matches) < 1) {
-    @no_pass = $self->{'_nodes'}{$node}{'no_passback'};
+    $current_node = $nodes->{$self->get_default_node};
   }
-  my $widgets = $self->{'_nodes'}{$node}{'input_fields'};
-  push @no_pass, @$widgets if $widgets;
-
-  ## put values into a hash to get around Perl's crap array functions!
-  my %skip;
-  foreach my $x (@no_pass) {
-    $skip{$x}++;
-  } 
-  
-  foreach my $field (@fields) {
-    next if $field =~ /submit/;  
-    next if $field =~ /feedback/;  
-    next if exists( $skip{$field} );
-  
-    ## don't pass 'previous' field or it screws up back buttons!  
-    next if $field =~ /previous/;
-
-    ## include a hidden element for passing data
-    my @values = $object->param($field); ## use array context to catch multiple values
-    if (scalar(@values) > 1) {
-      my $unique = _uniquify(\@values);
-      foreach my $element (@$unique) {
-        next unless $element;
-        $form->add_element(
-          'type'      => 'Hidden',
-          'name'      => $field,
-          'value'     => $element,
-        );
-      }
-    }
-    else {
-      next unless $field;
-      $form->add_element(
-        'type'      => 'Hidden',
-        'name'      => $field,
-        'value'     => $object->param($field),
-      );
-    }
-  }
+  return $current_node;
 }
 
-sub add_widgets {
-  my ($self, $node, $form, $object, $fields) = @_;
-  warn "Wizard node: " . $node;
-  warn "Wizard fields: " . $self->{'_nodes'}{$node}{'form'};
-  if (!$fields) {
-    $fields = $self->{'_nodes'}{$node}{'input_fields'} || $self->default_order;
-  } 
-  my %form_fields = %{$self->get_fields};
-  foreach my $field (@$fields) {
-    my %field_info = %{$form_fields{$field}};
-    if( $field_info{'available'} ) {
-      next unless $object->species_defs->_is_available_artefact( $ENV{'ENSEMBL_SPECIES'}, $field_info{'available'} );
+sub forward_connection {
+  my ($self, $node) = @_;
+  my $forward_connection = undef;
+  foreach my $connection (@{ $self->get_connections }) {
+    if ($connection->from->name eq $node->name) {
+      $forward_connection = $connection;
     }
-    my $field_name = $field;
-    ## Is this field involved in looping through multiple records?
-    if ($field_info{'loop'}) {
-      my $count = $self->{'_data'}{'loops'};
-      $field_name .= "_$count"; 
+  }
+  ## Add in any dynamically-created links
+  my $next_name = $self->get_cgi->param('wizard_next');
+  if (!$forward_connection && $next_name) {
+    $forward_connection = EnsEMBL::Web::Wizard::Connection->new({ 
+                    from => $node, to => $self->get_nodes->{$next_name} });
+  }
+  return $forward_connection;
+}
+
+=pod
+
+## Not currently in use!
+
+sub forward_connections {
+my ($self, $node) = @_;
+  my @return_connections = ();
+  foreach my $connection (@{ $self->get_connections }) {
+    if ($connection->from->name eq $node->name) {
+      push @return_connections, $connection;
+      $count++;
     }
+  }
+  return @return_connections; 
+}
 
-    ## set basic parameters
-    my %parameter = (
-      'type'          => $field_info{'type'},
-      'name'          => $field_name,
-      'label'         => $field_info{'label'},
-      'comment'       => $field_info{'comment'},
-      'required'      => $field_info{'required'},
-      'class'         => $field_info{'class'},
-      'rows'          => $field_info{'rows'},
-      'notes'         => $field_info{'notes'},
-      'select'        => $field_info{'select'},
-      'string_name'   => $field_info{'string_name'},
-      'string_label'  => $field_info{'string_label'},
-    );
 
-    ## extra parameters for multi-value fields
-    if ($field_info{'type'} eq 'DropDown' || $field_info{'type'} eq 'DropDownAndString'
-          || $field_info{'type'} eq 'MultiSelect') {
-      if ($object->param($field_name)) {
-        $parameter{'value'}  = [$object->param($field_name)]; 
+=cut
+
+sub add_connection {
+  my ($self, %params) = @_;
+  return unless $params{from} && $params{to};
+  my @connections = @{$self->get_connections};
+  my $connection = EnsEMBL::Web::Wizard::Connection->new({ from => $params{from}, to => $params{to}});
+  if ($connection) {
+    push @connections, $connection;
+  }
+  $self->set_connections(\@connections);
+}
+
+sub redirect_current_node {
+  my $self = shift;
+  my $node = $self->current_node;
+  my $init_method = $node->name;
+  my $parameter = $node->$init_method || {};
+  $parameter = {} if ref($parameter) ne 'HASH'; ## sanity check
+
+  ## Add in any unpassed parameters
+  foreach my $param ($self->get_cgi->param) {
+    next if $param =~ /^wizard_/ && $param ne 'wizard_steps'; ## Don't automatically pass built-in parameters
+    my @value = $self->get_cgi->param($param);
+    if (@value) {
+      $parameter->{$param} = \@value unless $parameter->{$param};
+    }
+  }
+
+  return $parameter;
+}
+
+sub render_current_node {
+  my $self = shift;
+  my $node = $self->current_node;
+  my $html;
+  if ($node) {
+    my $init_method = $node->name;
+    $node->$init_method; 
+    if ($node) {
+      $html .= "<h2>".$node->title."</h2>\n";
+      $html .= $node->text_above."\n" if $node->text_above;
+      my $action = '/common/'.$node->object->script;
+    #if ($current_node->is_final) {
+      ## redirect to the final destination
+      #$action = $current_node->get_destination;
+    #}
+      $self->set_form(EnsEMBL::Web::Form->new('connection_form', $action));
+      $html .= $self->render_connection_form($node);
+      $html .= "\n".$node->text_below."\n" if $node->text_below;
+    } else {
+      $html = $self->render_error_message('No current node has been specified. Check the URL and try again.');
+    }
+  }
+  return $html;
+}
+
+sub render_connection_form {
+  my ($self, $node) = @_;
+  my $html = '';
+
+  ## Main form widgets
+  foreach my $element (@{ $node->get_elements }) {
+    $self->form->add_element(%$element);
+  }
+
+  ## Passed parameters
+  $self->add_incoming_parameters;
+
+  ## Control elements
+  my $forward_connection = $self->forward_connection($node);
+  if ($node->name ne $self->get_default_node) {
+    $self->form->add_element('type' => 'Submit', 'name' => 'wizard_submit', 'value' => '< Back', 
+                            'multibutton' => 'yes');
+  }
+  if ($forward_connection) {
+    my $label = $forward_connection->label || 'Next >';
+    $self->form->add_element('type' => 'Hidden', 'name' => 'wizard_next', 'value' => $forward_connection->to->name);
+    $self->form->add_element('type' => 'Submit', 'name' => 'wizard_submit', 'value' => $label, 
+                            'multibutton' => 'yes' );
+  }
+  $html .= $self->form->render;
+  return $html;
+}
+
+sub find_previous {
+### Returns penultimate element from wizard_steps array
+  my $self = shift;
+  my @steps = $self->get_cgi->param('wizard_steps');
+  pop(@steps);
+  return pop(@steps);
+}
+
+sub incoming_parameters {
+  my $self = shift;
+  my %parameter = ();
+
+  my @cgi_params = $self->get_cgi->param();
+  foreach my $name (@cgi_params) {
+    my @value = $self->get_cgi->param($name);
+    if (@value) {
+      $parameter{$name} = \@value;
+    } 
+  }
+  return %parameter;
+}
+
+sub add_incoming_parameters {
+  my ($self) = @_;
+  my %parameter = $self->incoming_parameters;
+
+  ## Make sure we don't duplicate fields already in this form (via 'Back' actions)
+  ## Mainly a fix for stupid HTML checkboxes
+  foreach my $element (@{ $self->current_node->get_elements }) {
+    delete($parameter{$element->{'name'}});
+  }
+
+  ## Add in valid CGI parameters as hidden fields
+  foreach my $name (keys %parameter) {
+    next if $name =~ /^wizard_/ && $name ne 'wizard_steps';
+    my $value = $parameter{$name};
+    ## Deal with step array
+    if ($name eq 'wizard_steps') {
+      my $submit = $parameter{'wizard_submit'};
+      if ($submit && $submit->[0] =~ /Back/) {
+        pop(@$value) if ref($value) eq 'ARRAY';
       }
       else {
-        $parameter{'value'}  =  $self->{'_data'}{'record'}{$field_name} 
-                                || $field_info{'value'};
-      }
-      $parameter{'values'} = $self->{'_data'}{$field_info{'values'}};
-      $parameter{'select'} = $field_info{'select'};
-      if ($field_info{'type'} eq 'DropDownAndString') {
-        my $string = $parameter{'string_name'};
-        if ($object->param($string)) {
-          $parameter{'string_value'}  = [$object->param($string)]; 
-        }
-        else {
-          $parameter{'string_value'}  =  $self->{'_data'}{'record'}{$string} 
-                                || $field_info{'string_value'};
-        }
+        push(@$value, $self->current_node->name) if ref($value) eq 'ARRAY';
       }
     }
-    elsif ($field_info{'type'} eq 'CheckBox') {
-      $parameter{'value'}  =  $field_info{'value'} || 'yes';
-      if ($object->param($field_name) 
-          || $self->{'_data'}{'record'}{$field_name} =~ /^(yes|Y|on)$/) {
-        $parameter{'checked'} = 1;
-      }
+
+    foreach my $v (@$value) {
+      $self->form->add_element(type => 'Hidden', name => $name, value => $v);
     }
-    else {
-      my @values = $object->param($field_name);
-      if (scalar(@values) > 1) {
-        my $unique = _uniquify(\@values);
-        $parameter{'value'} = $unique;
-      }
-      else {
-        $parameter{'value'} = $object->param($field_name) 
-                              || $self->{'_data'}{'record'}{$field_name} 
-                              || $field_info{'value'};
-        if (!$parameter{'value'} && ($field_info{'type'} eq 'Int' || $field_info{'type'} eq 'NonNegInt')) {
-          $parameter{'value'} = '0';
-        }
-      }
-    }
-    $form->add_element(%parameter);
   }
-}
-
-sub add_buttons {
-  my ($self, $node, $form, $object) = @_;
-
-  $form->add_element(
-    'type'  => 'Hidden',
-    'name'  => 'previous',
-    'value' => $node,
-  );
-
-  my $back = $self->{'_nodes'}{$node}{'back'};
-  if ($back) {
-    ## normally limit back button to direct incoming edges
-    my $back_node;
-    if ($back eq '1') {
-      my $previous = $object->param('previous');
-      my @incoming = @{ $self->get_incoming_edges($node) };
-      foreach my $edge (@incoming) {
-        $back_node = $edge;
-        last if $edge eq $previous; ## defaults to last incoming edge
-      }
-    }
-    ## unless the return node is specified (e.g. to skip a decision node)
-    else {
-      $back_node = $back;
-    }
-    $form->add_element(
-      'type'  => 'Submit',
-      'name'  => "submit_$back_node",
-      'value' => '< Back',
-      'spanning' => 'inline',
-    );
-    $form->add_element(
-      'type'      => 'StaticImage',
-      'name'      => 'spacer',
-      'src'       => '/img/blank.gif',
-      'alt'       => ' ',
-      'width'     => 200,
-      'height'    => 25,
-      'spanning'  => 'inline',
-    );
-  }
-
-  my @edges = @{ $self->get_outgoing_edges($node) };
-  my $edge_count = scalar(@edges);
-  foreach my $edge (@edges) {
-    my $text = $self->{'_nodes'}{$edge}{'button'} || 'Next';
-    $form->add_element(
-      'type'  => 'Submit',
-      'name'  => 'submit_'.$edge,
-      'value' => $text.' >',
-      'spanning' => 'inline',
-    );
+  if (!$parameter{'wizard_steps'}) {
+    $self->form->add_element(('type'=>'Hidden', 'name'=>'wizard_steps', 'value'=>$self->current_node->name));
   }
 
 }
 
-sub create_record {
-  my ($self, $object) = @_;
-  my %record;
+sub render_error_message {
+  my $self = shift;
+  my $html;
 
-  my %form_fields = %{$self->get_fields};
-  my @params = $object->param;
-  foreach my $param (@params) {
-    next unless $form_fields{$param}; ## skip submit buttons, etc
-    my %field_info = %{$form_fields{$param}};
-    my $value;
-    if ($field_info{'type'} eq 'MultiSelect') {
-      $value = [$object->param($param)];
-    }
-    else { 
-      $value = $object->param($param);
-    }
-    $record{$param} = $value;
+  $self->form->add_element(( type => 'Information', value => $self->get_cgi->param('error_message') ));
+  foreach my $value (@{$self->get_cgi->param('wizard_steps')}) {
+    $self->form->add_element(type => 'Hidden', name => 'wizard_steps', value => $value);
   }
-  return \%record;
+  $self->form->add_element('type' => 'Submit', 'name' => 'wizard_submit', 'value' => '< Back');
+
+  $html .= $self->form->render;
+  return $html;
 }
 
-sub spellcheck {
-  my ($self, $object, $text) = @_;
-
-  my $aspell_cmd = 'aspell';
-  my $aspell_opts = "-a --lang=en_US"; 
-  my $ensembl_dict = $object->species_defs->ENSEMBL_SERVERROOT.'/utils/ensembl.aspell';
-  $aspell_opts .= " --personal=$ensembl_dict"; 
-
-  my $timestamp = time();
-  my $filename .= $timestamp;
-  my $cache = new EnsEMBL::Web::File::Text('spell',$object->[1]->{'_species_defs'});
-  $cache->set_cache_filename($filename);
-  my $result = $cache->save_aspell($object, $text);
-
-  ## do spell check
-  my $checked = '<strong>** CHECKED TEXT **</strong><br />';
-  if ($result) { 
-    my $i = 0;
-    my $cachefile = $cache->filename;
-    my @lines = split( /\n/, $text );
-    my $cmd = "$aspell_cmd $aspell_opts < $cachefile 2>&1";
-    open ASPELL, "$cmd |";
-    # parse each line of aspell return
-    for my $result ( <ASPELL> ) {
-      chomp( $result );
-      # if '&', then not in dictionary but has suggestions
-      # if '#', then not in dictionary and no suggestions
-      # if '*', then it is a delimiter between text inputs
-      #if( $result =~ /^\*/ ) { ## no errors found
-      #  $checked .= $lines[$i];
-      #}
-      #elsif( $result =~ /^(&|#)/ ) {
-      #  my @array = split(' ', $result);
-      $checked .= $result;
-    }
-  }
-  return $checked;
 }
-                                                                                
-__END__
-                                                                                
-=head1 Ensembl::Web::Wizard
 
-=head2 SYNOPSIS
-
-Abstract class - see child objects for details of use.
-
-=head2 DESCRIPTION
-
-Parent class for Wizard objects. A child named after the data type manipulated by the Wizard is needed in order to configure the properties of specific nodes.
-
-=head2 METHOD 
-
-=head3 B<new>
-                                                                                
-Description: Simple constructor method
-
-=head3 B<add_nodes>
-                                                                                
-Description: Adds one or more available nodes to a Wizard object
-
-Arguments: a reference to an array of node names
-                                                                                
-Returns:  none
-
-=head3 B<default_node>
-                                                                                
-Description: Get/set accessor method for the nodes of a wizard flowchart. If given a node name, it sets that as the default node; if not, it looks up the default
-
-Arguments: node name (string) - optional
-                                                                                
-Returns: node name (string) 
-
-=head3 B<current_node>
-                                                                                
-Description: Returns the name of the current node, using URL parameters in the first instance, and falling back to the default node if no node parameter is available
-
-Arguments: a reference to a data object (from which to retrieve the URL parameters)
-                                                                                
-Returns: node name (string)
-
-=head3 B<isa_page>
-                                                                                
-Description: Checks if the given node is supposed to output a web page
-
-Arguments: node name (string)
-                                                                                
-Returns: Boolean
-
-=head3 B<isa_form>
-                                                                                
-Description: Checks if the given node is supposed to create a form object
-
-Arguments: node name (string)    
-                                                                                
-Returns: Boolean
-
-=head3 B<add_outgoing_edges>
-                                                                                
-Description: Adds uni-directional links between pairs of nodes in a wizard flowchart
-
-Arguments: a reference to an array of arrays - each subarray consists of the name of the start node and the name of the end node
-                                                                                
-Returns: none
-
-=head3 B<remove_outgoing_edges>
-                                                                                
-Description: Removes a given uni-directional links between pairs of nodes. Useful for dynamically changing the flow control of a wizard
-
-Arguments: the names of the start and end nodes defining the edge
-                                                                                
-Returns: none
-
-=head3 B<get_outgoing_edges>
-                                                                                
-Description: Fetches a list of all exit points for a given node
-
-Arguments: node name (string)  
-                                                                                
-Returns: an array of node names
-
-=head3 B<show_fields>
-                                                                                
-Description: A wrapper for uncomplicated forms, which displays the user input and adds hidden fields to the form object so that the parameters can be passed along. [More complex forms can be built, one widget at a time, within the child module, if preferred.]
-
-Arguments: node name (string), EnsEMBL::Web::Form object, data object    
-                                                                                
-Returns: none
-
-=head3 B<add_widgets>
-                                                                                
-Description: A wrapper for uncomplicated forms, which takes the list of required fields and adds each one to the form object. [More complex forms can be built, one widget at a time, within the child module, if preferred.]
-
-Arguments:  node name (string), EnsEMBL::Web::Form object, data object       
-                                                                                
-Returns: none
-
-=head3 B<add_buttons>
-                                                                                
-Description: A wrapper which adds buttons for incoming and outgoing edges, based on the definitions for each node. It is recommended that this method is used instead of 'manually' adding each submit button.
-
-Arguments:  node name (string), EnsEMBL::Web::Form object, data object       
-                                                                                
-Returns: none
-
-=head2 BUGS AND LIMITATIONS
-
-=head3 Bugs
-
-There is some kind of bug on the setting and getting of edges, whereby a duplicate edge is sometimes returned. A workaround has been placed in get_outgoing_edges to eliminate these duplicates on retrieval, so they are not rendered.
-
-=head3 Limitations
-
-Currently only implements passing of data between nodes via HTML forms (e.g. using hidden fields).
-
-add_widgets only implemented for simple single-value elements, e.g. String, Integer
-                                                                                
-=head2 AUTHOR
-                                                                                
-Anne Parker, Ensembl Web Team
-Support enquiries: helpdesk\@ensembl.org
-                                                                                
-=head2 COPYRIGHT
-                                                                                
-See http://www.ensembl.org/info/about/code_licence.html
-                                                                                
-=cut                                                                  
-
-                                                                                
 1;
