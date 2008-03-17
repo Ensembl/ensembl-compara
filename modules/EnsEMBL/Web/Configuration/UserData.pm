@@ -11,6 +11,7 @@ sub user_data {
   my $object = $self->{'object'};
 
   my $wizard = $self->wizard;
+warn "WIZARD $wizard";
 
   ## CREATE NODES
   my $node  = 'EnsEMBL::Web::Wizard::Node::UserData';

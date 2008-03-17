@@ -14,7 +14,7 @@ our @ISA = qw(EnsEMBL::Web::Document::WebPage);
 
 sub simple_wizard {
   ## TO DO: implement access restrictions
-  my ($type, $menu, $access) = @_;
+  my ($type, $menu) = @_;
   my $self = __PACKAGE__->new( 'doctype' => 'Popup', 'objecttype' => $type );
   if( $self->has_a_problem ) {
      $self->render_error_page;

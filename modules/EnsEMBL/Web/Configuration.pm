@@ -62,6 +62,7 @@ sub wizard {
   if ($wizard) {
     $self->{'wizard'} = $wizard;
   }
+warn "CONF WIZ ", return $self->{'wizard'};
   return $self->{'wizard'};
 }
 
