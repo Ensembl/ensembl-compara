@@ -25,7 +25,7 @@ sub render {
   return sprintf(
     qq(<input type="radio" name="%s" id="%s" value="%s" %s/> %s),
     CGI::escapeHTML( $self->name ), CGI::escapeHTML( $self->id ),
-    $self->value || 'yes', $self->checked ? 'checked="checked" ' : '', $self->introduction
+    $self->value || 'yes', $self->checked ? 'checked="checked" ' : '', $self->notes
   );
 }
                                                                                 
