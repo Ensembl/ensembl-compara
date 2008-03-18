@@ -21,7 +21,7 @@ sub start {
                       label => ' ', notes => 'In a file on a webserver (i.e. URL-based data)'));
   $self->add_element(( type => 'CheckBox', name => 'help', value => 'yes', 
                       label => ' ', notes => 'Suggest the best way to access my URL data',
-                      spanning => 'indent'));
+                      layout => 'indent'));
   $self->add_element(( type => 'RadioButton', name => 'location', value => 'das', 
                       label => ' ', notes => 'On a DAS server'));
   $self->text_below(qq(If you would like help in setting up your own DAS server, please see our <a href="/info/using/external_data/das/das_server.html">DAS documentation</a></li>));
