@@ -302,17 +302,17 @@ $fhash->{$fid} = 1;
     'name'     =>'das_sources',
     'label'    =>'',
     'values'   => \@mvalues,
-    'spanning' => 'yes'
+    'layout'   => 'spanning',
   );
   $form->add_element(
-    'type'     => 'Submit', 'value' => 'Update', 'name' => 'Update', 'spanning' => 'yes'
+    'type'     => 'Submit', 'value' => 'Update', 'name' => 'Update', 'layout' => 'spanning'
   );
 
   $form->add_element(
     'type'     => 'Button',
     'value'    => 'Manage Sources',
     'name'     => 'Manage',
-    'spanning' => 'yes',
+    'layout'   => 'spanning',
     'onclick' => "X=window.open('/@{[$species]}/dasconfview?conf_script=$script;$params','das_sources','left=10,top=10,resizable,scrollbars=yes');X.focus()"
   );
 

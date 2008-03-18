@@ -15,28 +15,26 @@ sub start {
 
   $self->title('Where is the Data?');
   $self->add_element(( type => 'RadioButton', name => 'location', value => 'local', 
-                      label => 'Offline', notes => 'In a file on my local machine'));
-  $self->add_element(( type => 'RadioButton', name => 'location', value => 'das', 
-                      label => 'On the Internet', notes => 'On a DAS server'));
-  if ($ENV{'ENSEMBL_USER_ID'}) {
-    $self->add_element(( type => 'RadioButton', name => 'location', value => 'account', 
-                      label => ' ', notes => 'I have already uploaded the data to my Ensembl user account'));
-  }
+                      label => 'Location', notes => 'In a file on my local machine',
+                      checked => 'checked'));
   $self->add_element(( type => 'RadioButton', name => 'location', value => 'url', 
                       label => ' ', notes => 'In a file on a webserver (i.e. URL-based data)'));
   $self->add_element(( type => 'CheckBox', name => 'help', value => 'yes', 
-                      label => ' ', notes => 'Suggest the best way to access my URL data', checked => 'checked'));
+                      label => ' ', notes => 'Suggest the best way to access my URL data',
+                      spanning => 'indent'));
+  $self->add_element(( type => 'RadioButton', name => 'location', value => 'das', 
+                      label => ' ', notes => 'On a DAS server'));
   $self->text_below(qq(If you would like help in setting up your own DAS server, please see our <a href="/info/using/external_data/das/das_server.html">DAS documentation</a></li>));
 }
 
 sub start_logic {
+### Redirects user to appropriate upload form
   my $self = shift;
   my $parameter = {};
   if ($self->object->param('location') eq 'das') {
     $parameter->{'wizard_next'} = 'das_servers';
   }
   elsif ($self->object->param('location') eq 'url') {
-warn "URL needs help? ", $self->object->param('help');
     if ($self->object->param('help')) {
       $parameter->{'wizard_next'} = 'distribution';
     }
@@ -51,6 +49,7 @@ warn "URL needs help? ", $self->object->param('help');
 }
 
 sub distribution {
+### Collects information to help in deciding how to handle URL data
   my $self = shift;
   $self->title('How is your data distributed on the genome?');
 
@@ -59,6 +58,7 @@ sub distribution {
 }
 
 sub file_guide {
+### Gives user two upload options based on their input about URL data
   my $self = shift;
   $self->title('Please select an upload method');
   my $text;
@@ -82,6 +82,7 @@ whereas attaching a URL source makes it easy to update your data.</p>);
 }
 
 sub file_logic {
+### Directs user to correct input form for their chosen upload type
   my $self = shift;
   my $parameter = {};
   if ($self->object->param('method') eq 'upload') {
@@ -105,6 +106,7 @@ our @formats = (
 );
 
 sub file_details {
+### Form to input file upload information
   my $self = shift;
   $self->title('File Upload');
 
@@ -117,10 +119,12 @@ sub file_details {
 }
 
 sub file_upload {
+### Node to store uploaded data
   my $self = shift;
   my $parameter = {};
 
   if ($self->object->param('file') || $self->object->param('paste')) {
+    $parameter->{'wizard_next'} = 'file_feedback';
   }
   else {
     $parameter->{'wizard_next'} = 'file_details';
@@ -131,14 +135,14 @@ sub file_upload {
 }
 
 sub file_feedback {
+### Node to confirm data upload
   my $self = shift;
-}
-
-sub user_record {
-  my $self = shift;
+  $self->title('File Uploaded');
+  $self->add_element(( type => 'Information', value => 'Thank you - your data was successfully uploaded'));
 }
 
 sub url_data {
+### Form to input URL data
   my $self = shift;
   $self->title('Attach URL data');
   $self->add_element(( type => 'DropDown', name => 'format', label => 'File format', select => 'select', values => \@formats));
@@ -175,16 +179,12 @@ sub das_sources {
   $self->add_element(( type => 'String', name => 'other_source', label => 'Or other DAS source' ));
 }
 
-sub conf_tracks {
-  my $self = shift;
-}
-
 sub finish {
   my $self = shift;
 
   $self->title('Finished');
   my $point_of_origin;
-  $self->destination($point_of_origin);
+  #$self->destination($point_of_origin);
   $self->text_above("<p>And we're done. All your data are belong to us.");
 }
 

@@ -77,16 +77,16 @@ sub _render_element {
   return $element->render() if $element->type eq 'Hidden';
 
   my $style = 'formblock';
-  if( $element->spanning eq 'yes' ) {
+  if( $element->layout eq 'spanning' ) {
     $style = 'formwide';
   } 
-  elsif( $element->spanning eq 'center' ) { 
+  elsif( $element->layout eq 'center' ) { 
     $style = 'formcenter';
   } 
-  elsif( $element->spanning eq 'inline' ) { 
+  elsif( $element->layout eq 'inline' ) { 
     $style = 'forminline';
   }
-  elsif ( $element->spanning eq 'indent') {
+  elsif ( $element->layout eq 'indent') {
     $style = 'formblock formindent';
   }
   if( $element->hidden_label ) {

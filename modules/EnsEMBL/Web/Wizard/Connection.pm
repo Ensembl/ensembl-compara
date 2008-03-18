@@ -1,5 +1,7 @@
 package EnsEMBL::Web::Wizard::Connection;
 
+### Package to define a connection between nodes in a wizard
+
 use strict;
 use warnings;
 

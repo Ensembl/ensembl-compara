@@ -19,7 +19,6 @@ our @ISA = qw( EnsEMBL::Web::Form::Element );
 sub new {
   my $class  = shift;
   my %params = @_;
-  warn "SELECT: ", $params{'select'};
 
   my $self   = $class->SUPER::new(
     %params,

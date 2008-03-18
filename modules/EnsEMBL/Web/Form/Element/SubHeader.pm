@@ -5,7 +5,7 @@ our @ISA = qw( EnsEMBL::Web::Form::Element );
 
 sub new {
   my $class = shift;
-  return $class->SUPER::new( @_, 'spanning' => 'yes' );
+  return $class->SUPER::new( @_, 'layout' => 'spanning' );
 }
 
 sub render { return '<h4>'.$_[0]->value.'</h4>'; }

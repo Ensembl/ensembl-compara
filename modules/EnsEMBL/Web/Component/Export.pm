@@ -134,7 +134,7 @@ sub stage1_form {
     'value'  => $object->param('format')
   );
   $form->add_element( 'type' => 'Hidden', 'name' => 'action', 'value' => 'select' );
-  $form->add_element( 'type' => 'Submit', 'value' => 'Continue >>', 'spanning' => 'center' );
+  $form->add_element( 'type' => 'Submit', 'value' => 'Continue >>', 'layout' => 'center' );
   return $form;
 }
 
@@ -164,7 +164,7 @@ sub fasta_form {
     );
   }
   add_HTML_select( $form, $object );
-  $form->add_element( 'type' => 'Submit', 'value' => 'Continue >>', 'spanning' => 'center' );
+  $form->add_element( 'type' => 'Submit', 'value' => 'Continue >>', 'layout' => 'center' );
   return $form;
 }
 
@@ -195,7 +195,7 @@ sub flat_form {
     ]
   );
   add_HTML_select( $form, $object );
-  $form->add_element( 'type' => 'Submit', 'value' => 'Continue >>', 'spanning' => 'center' );
+  $form->add_element( 'type' => 'Submit', 'value' => 'Continue >>', 'layout' => 'center' );
   return $form;
 }
 
@@ -274,7 +274,7 @@ sub features_form {
     ]
   );
   add_HTML_select( $form, $object );
-  $form->add_element( 'type' => 'Submit', 'value' => 'Continue >>', 'spanning' => 'center' );
+  $form->add_element( 'type' => 'Submit', 'value' => 'Continue >>', 'layout' => 'center' );
   return $form;
 }
 

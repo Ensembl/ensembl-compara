@@ -494,7 +494,7 @@ sub exonview_options_form {
     'label' => "Show exons only",  'name' => 'oexon',
     'value' => 'yes', 'checked' => $object->param('oexon') eq 'yes'
   );
-  $form->add_element( 'type' => 'Submit', 'value' => 'Go', 'spanning' => 'center' );
+  $form->add_element( 'type' => 'Submit', 'value' => 'Go', 'layout' => 'center' );
   return $form ;
 }
 

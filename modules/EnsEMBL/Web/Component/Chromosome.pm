@@ -272,7 +272,7 @@ sub jump_to_contig_form {
     'label'    => 'Bp upstream'
   );
 
-  $form->add_element( 'type' => 'Submit', 'value' => 'Go', 'spanning' => 'center' );
+  $form->add_element( 'type' => 'Submit', 'value' => 'Go', 'layout' => 'center' );
   return $form ;
 }
 

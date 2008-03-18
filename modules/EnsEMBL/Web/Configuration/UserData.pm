@@ -11,7 +11,6 @@ sub user_data {
   my $object = $self->{'object'};
 
   my $wizard = $self->wizard;
-warn "WIZARD $wizard";
 
   ## CREATE NODES
   my $node  = 'EnsEMBL::Web::Wizard::Node::UserData';
@@ -26,13 +25,12 @@ warn "WIZARD $wizard";
   my $file_upload   = $wizard->create_node(( object => $object, module => $node, type => 'logic', name => 'file_upload'));
   my $url_data      = $wizard->create_node(( object => $object, module => $node, type => 'page', name => 'url_data'));
   my $file_feedback = $wizard->create_node(( object => $object, module => $node, type => 'page', name => 'file_feedback'));
-  my $user_record   = $wizard->create_node(( object => $object, module => $node, type => 'page', name => 'user_record'));
 
   ## DAS section of wizard
   my $das_servers   = $wizard->create_node(( object => $object, module => $node, type => 'page', name => 'das_servers'));
   my $das_sources   = $wizard->create_node(( object => $object, module => $node, type => 'page', name => 'das_sources'));
 
-  my $conf_tracks   = $wizard->create_node(( object => $object, module => $node, type => 'page', name => 'conf_tracks'));
+  #my $conf_tracks   = $wizard->create_node(( object => $object, module => $node, type => 'page', name => 'conf_tracks'));
   my $finish        = $wizard->create_node(( object => $object, module => $node, type => 'page', name => 'finish'));
 
   ## LINK PAGE NODES TOGETHER
@@ -41,7 +39,7 @@ warn "WIZARD $wizard";
   ## DAS
   $wizard->add_connection(( from => $das_servers,    to => $das_sources));
   $wizard->add_connection(( from => $das_servers,    to => $das_servers));
-  $wizard->add_connection(( from => $das_sources,    to => $conf_tracks));
+  #$wizard->add_connection(( from => $das_sources,    to => $conf_tracks));
   $wizard->add_connection(( from => $das_sources,    to => $finish));
 
   ## File upload
@@ -49,13 +47,11 @@ warn "WIZARD $wizard";
   $wizard->add_connection(( from => $file_guide,     to => $file_logic));
   $wizard->add_connection(( from => $file_details,   to => $file_upload));
   $wizard->add_connection(( from => $file_upload,    to => $file_feedback));
-  $wizard->add_connection(( from => $file_feedback,  to => $conf_tracks));
+  #$wizard->add_connection(( from => $file_feedback,  to => $conf_tracks));
   $wizard->add_connection(( from => $file_feedback,  to => $finish));
 
-  ## User record
-
   ## Universal end-point!
-  $wizard->add_connection(( from => $conf_tracks,    to => $finish));
+  #$wizard->add_connection(( from => $conf_tracks,    to => $finish));
 
 }
 

@@ -344,14 +344,14 @@ sub control_movie_form {
     'onclick' => "hiliteButton('control_movie_1', $controls);PlayMovie($frame_count);",
     'name'     => 'Play',
     'value'    => 'Play',
-    'spanning' => 'inline',
+    'layout' => 'inline',
   );
   $form->add_element(
     'type'     => 'Button',
     'onclick' => "hiliteButton('control_movie_2', $controls);StopMovie();",
     'name'     => 'Stop',
     'value'    => 'Stop',
-    'spanning' => 'inline',
+    'layout' => 'inline',
   );
   $form->add_element(
       'type'      => 'StaticImage',
@@ -360,14 +360,14 @@ sub control_movie_form {
       'alt'       => ' ',
       'width'     => 100,
       'height'    => 25,
-      'spanning'  => 'inline',
+      'layout'  => 'inline',
     );
   $form->add_element(
     'type'     => 'Button',
     'onclick' => "hiliteButton('control_movie_4', $progress);RewindMovie();",
     'name'     => 'Rewind',
     'value'    => '|<<',
-    'spanning' => 'inline',
+    'layout' => 'inline',
   );
   for (my $i=1; $i<10; $i++) {
     my $tenth = int(($frame_count / 10) * $i);
@@ -376,7 +376,7 @@ sub control_movie_form {
       'onclick' => "SkipToFrame($tenth);",
       'name'     => "Skip$i",
       'value'    => '  ',
-      'spanning' => 'inline',
+      'layout' => 'inline',
     );
   }
   $form->add_element(
@@ -384,7 +384,7 @@ sub control_movie_form {
     'onclick' => "hiliteButton('control_movie_14', $progress);EndOfMovie();",
     'name'     => 'End',
     'value'    => '>>|',
-    'spanning' => 'inline',
+    'layout' => 'inline',
   );
   $form->add_element(
       'type'      => 'StaticImage',
@@ -393,21 +393,21 @@ sub control_movie_form {
       'alt'       => ' ',
       'width'     => 100,
       'height'    => 25,
-      'spanning'  => 'inline',
+      'layout'  => 'inline',
     );
   $form->add_element(
     'type'     => 'Button',
     'onclick' => 'ZoominMovie()',
     'name'     => 'Zoomin',
     'value'    => 'Zoom In',
-    'spanning' => 'inline',
+    'layout' => 'inline',
   );
   $form->add_element(
     'type'     => 'Button',
     'onclick' => 'ZoomoutMovie()',
     'name'     => 'Zoomout',
     'value'    => 'Zoom Out',
-    'spanning' => 'inline',
+    'layout' => 'inline',
   );
   return $form;
 }
