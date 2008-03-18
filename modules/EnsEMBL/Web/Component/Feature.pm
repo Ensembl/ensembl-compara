@@ -408,7 +408,10 @@ sub regulatory_factor {
     my $db_ent = $feature->get_all_DBEntries; 
     foreach my $dbe (@$db_ent){  
      my $gene = $dbe->primary_id ? $dbe->primary_id : "unknown";
-     $factors{ $gene } = $feature->{'factor_name'};
+     my $dbname = $dbe->dbname;;
+     if ($dbname=~/gene/){ 
+      $factors{ $gene } = $feature->{'factor_name'};
+     }
     }
   }
 
@@ -420,7 +423,7 @@ sub regulatory_factor {
       $gene_link =  qq(<a href="geneview?gene=$gene">$gene</a>);
     }
     $gene_link .= " ($factor)" if (keys %factors) > 1;
-    $panel->add_row("Product of gene", "$gene_link");
+#    $panel->add_row("Product of gene", "$gene_link");
   }
 
   $panel->print("<p>The karyotype shows where this regulatory factor binds. The table below lists the regulatory features to which it binds.</p>");
