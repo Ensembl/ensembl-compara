@@ -79,10 +79,15 @@ sub _render_element {
   my $style = 'formblock';
   if( $element->spanning eq 'yes' ) {
     $style = 'formwide';
-  } elsif( $element->spanning eq 'center' ) { 
+  } 
+  elsif( $element->spanning eq 'center' ) { 
     $style = 'formcenter';
-  } elsif( $element->spanning eq 'inline' ) { 
+  } 
+  elsif( $element->spanning eq 'inline' ) { 
     $style = 'forminline';
+  }
+  elsif ( $element->spanning eq 'indent') {
+    $style = 'formblock formindent';
   }
   if( $element->hidden_label ) {
     $output = sprintf qq(
