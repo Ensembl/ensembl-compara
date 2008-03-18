@@ -337,6 +337,7 @@ div.formpanel div, div.formpanel-left div { margin-top:5px; }
 .formcontent p { margin-top:0.3em; }
 .forminline, .forminline div, .formbuttons { display:inline; }
 .forminline h6 { display:inline; margin-right:1em; }
+.formindent { margin-left: 3em; }
 .tight { padding:0px; margin: 0px; }
 .middle { vertical-align:middle; }
 
