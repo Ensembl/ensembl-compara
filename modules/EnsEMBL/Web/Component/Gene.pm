@@ -1251,9 +1251,9 @@ sub transcripts {
 # Gene Regulation View -------------------------------------
 
 sub regulation_factors {
- my($panel, $object) = @_;
-  my $feature_objs = $object->features;
-  return unless @$feature_objs;
+ my($panel, $object) = @_; 
+  my $feature_objs = $object->features; 
+  return unless @$feature_objs; 
 
   $panel->add_columns(
     {'key' =>'Location',   },
@@ -1267,19 +1267,34 @@ sub regulation_factors {
   $panel->add_option( 'triangular', 1 );
   my @sorted_features = sort { $a->display_id cmp $b->display_id} @$feature_objs;
 
-
+  my $object_slice = $object->Obj->feature_Slice;
+  my $offset = $object_slice->start -1;
   foreach my $feature_obj ( @sorted_features ) {
     my $row;   
-    my $factor_name = $feature_obj->display_label; 
-    my $factor_link = $factor_name? qq(<a href="/@{[$object->species]}/featureview?id=$factor_name;type=RegulatoryFactor">$factor_name</a>) : "unknown";
+    my $factor_name = $feature_obj->display_label;
+    my $type = $feature_obj->feature_type->name;
+    my $analysis = $feature_obj->analysis->logic_name;
+    #if ( $feature_obj->display_label =~/Search/){next;}
+    if ($analysis =~/cisRED/){
+     $factor_name =~s/\D*//;
+    }elsif ($analysis =~/miRanda/){
+      $factor_name =~/\D+(\d+)/;
+      my @temp = split (/\:/, $factor_name);
+      $factor_name = $temp[1];
+    }  
+    my $factor_link = $factor_name? qq(<a href="/@{[$object->species]}/featureview?id=$factor_name;type=RegulatoryFactor;id=$factor_name;name=$type">$factor_name</a>) : "unknown";
     my $feature_name = $feature_obj->display_label;
     my $db_ent = $feature_obj->get_all_DBEntries;
-    my $seq = $feature_obj->seq();
-    $seq =~ s/([\.\w]{60})/$1<br \/>/g;
-    my $seq_name = $feature_obj->slice->seq_region_name; 
+    my $seq_name = $feature_obj->slice->seq_region_name;     
     my $position =  $object->thousandify( $feature_obj->start ). "-" .
       $object->thousandify( $feature_obj->end );
     $position = qq(<a href="/@{[$object->species]}/contigview?c=$seq_name:).$feature_obj->start.qq(;w=100">$seq_name:$position</a>);
+
+    $feature_obj->{'start'} =  $feature_obj->{'start'} - $offset  ;
+    $feature_obj->{'end'} = $feature_obj->{'end'} - $offset;
+    my $seq = $feature_obj->seq();
+    $seq =~ s/([\.\w]{60})/$1<br \/>/g;
+
     my $analysis = $feature_obj->analysis->description;
     $analysis =~ s/(https?:\/\/\S+[\w\/])/<a rel="external" href="$1">$1<\/a>/ig;
     $row = {
@@ -1297,33 +1312,20 @@ sub regulation_factors {
 }
 
 sub gene_structure {
-  my( $panel, $object ) = @_;
+  my( $panel, $object ) = @_; 
   my $label    = 'Gene structure';
   my $object_slice = $object->Obj->feature_Slice;
      $object_slice = $object_slice->invert if $object_slice->strand < 1; ## Put back onto correct strand!
 ## Now we need to extend the slice!!
-  my $start = $object->Obj->start;
+  my $start = $object->Obj->start; 
   my $end   = $object->Obj->end;
-  my $fg_db;
-    my $db_type  = 'funcgen';
-    unless($object_slice->isa("Bio::EnsEMBL::Compara::AlignSlice::Slice")) {
-      $fg_db = $object_slice->adaptor->db->get_db_adaptor($db_type);
-      if(!$fg_db) {
-        warn("Cannot connect to $db_type db");
-        return [];
-      }
-    }
-  my $external_Feature_adaptor = $fg_db->get_ExternalFeatureAdaptor;
-  my $feature_set_adaptor = $fg_db->get_FeatureSetAdaptor;
-  my $cisred_fset = $feature_set_adaptor->fetch_by_name('cisRED group motifs');
-  my $cisred_search_fset = $feature_set_adaptor->fetch_by_name('cisRED search regions');
-  my $factors = $external_Feature_adaptor->fetch_all_by_Slice_FeatureSets($object_slice, $cisred_fset, $cisred_search_fset); warn "FACTORS ".$factors;
-  
-#  foreach my $grf ( @{ $object->Obj->get_all_regulatory_features(1)||[] } ) {
- foreach my $grf (@$factors ||[]){
+  my $offset = $object_slice->start -1; 
+  foreach my $grf ( @{ $object->features } ) {
+    $grf->{'start'} += $offset; 
+    $grf->{'end'} += $offset; 
     $start = $grf->start if $grf->start < $start;    
     $end   = $grf->end   if $grf->end   > $end;
-  } 
+  }  
   my $gr_slice = $object_slice->expand( $object->Obj->start - $start, $end - $object->Obj->end ); 
 
   my $trans = $object->get_all_transcripts;
@@ -1345,7 +1347,7 @@ sub gene_structure {
 }
 
 sub factor {
-  my( $panel, $object ) = @_; warn "OBJ " .$object;
+  my( $panel, $object ) = @_; 
     my $slice = $object->Obj->feature_Slice;
     my $fg_db = undef;
     my $db_type  = 'funcgen';
@@ -1360,9 +1362,9 @@ sub factor {
   my $cisred_fset = $feature_set_adaptor->fetch_by_name('cisRED group motifs');
   my $cisred_search_fset = $feature_set_adaptor->fetch_by_name('cisRED search regions');
   my $external_Feature_adaptor = $fg_db->get_ExternalFeatureAdaptor;
-  my $factors = $external_Feature_adaptor->fetch_all_by_Slice_FeatureSets($slice, $cisred_fset, $cisred_search_fset);
-  #my $factors = $object->Obj->fetch_coded_for_regulatory_factors;
-  
+  #my $factors = $external_Feature_adaptor->fetch_all_by_Slice_FeatureSets($slice, $cisred_fset, $cisred_search_fset);
+  my $factors = $object->features;
+
   return 1 unless @$factors;
 
   my $gene = $object->Obj->stable_id;
