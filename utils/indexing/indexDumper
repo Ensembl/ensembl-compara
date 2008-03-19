@@ -648,6 +648,7 @@ warn "Gene query...";
       my @current_sis = ();
       my @deprecated_sis = ();
       foreach ( keys %{$mapping{$type}{$osi}} ) {
+	next if $osi eq $_;
         if( $current_stable_ids{$_} ) {
           push @current_sis,$_;
         } elsif( $_ ne 'NULL' ) {
