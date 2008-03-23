@@ -27,9 +27,9 @@ my $q = CGI->new();
 
 ( my $SPECIES   = $ENV{'ENSEMBL_SPECIES'} ) =~ s/_/ /g;
 
-my $source = "+Top/Source/" . $page->{'species_defs'}->ENSEMBL_EXALEAD_SITE_INDEX;
+my $source = "Top/Source/".$page->{'species_defs'}->ENSEMBL_EXALEAD_SITE_INDEX;
 
-$source = '';
+#$source = '';
 my $not_fresh = $q->param;
 if( $not_fresh ) {
   if( $q->param('q') ) {
@@ -49,15 +49,21 @@ if( $not_fresh ) {
       $CAT =~ s/_/ /g;
       if( $CAT2 ) {
         $CAT2 =~ s/_/ /g;
-        $q->param('_c', "+$CAT2", "+$CAT","$source" );
+        $q->param('_q', $q->param('_q').qq( corporate/tree:"$CAT" corporate/tree:"$CAT2" corporate/tree:"$source") );
+#        $q->param('_c', "+$CAT2", "+$CAT","$source" );
       } else {
-        $q->param('_c', "+$CAT" , "$source");
+        $q->param('_q', $q->param('_q').qq( corporate/tree:"$CAT" corporate/tree:"$source"));
+#       $q->param('_c', "+$CAT" , "$source");
       }
     } else {
-      $q->param( '_c', "$source" );
+#     $q->param( '_c', "$source" );
+      $q->param('_q', $q->param('_q').qq( corporate/tree:"$source"));
     }
   } elsif( $q->param('_q') ){
-    $q->param('_c', "$source");
+#   $q->param('_c', "$source");
+    $q->param('_q', $q->param('_q').qq( corporate/tree:"$source")) unless $q->param('_q') =~/ corporate\/tree:"$source"/;
+  } else {
+#    $q->param('_q', qq( corporate/tree:"$source"));
   }
   $exalead->parse( $q );
 }

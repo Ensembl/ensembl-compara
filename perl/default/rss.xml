@@ -1,14 +1,16 @@
 use EnsEMBL::Web::RegObj;
 
+use strict;
+
 my $SD           = $ENSEMBL_WEB_REGISTRY->species_defs;
 my $wa           = $ENSEMBL_WEB_REGISTRY->newsAdaptor;
 my $release_id   = $SiteDefs::VERSION;
 my $species_hash = $wa->fetch_species;
 my $species      = { reverse %$species_hash };
 my $pars         = { 'release' => $SiteDefs::VERSION };
-my $species_ida  = $species->{$ENV{'ENSEMBL_SPECIES'}};
+my $species_id   = $species->{$ENV{'ENSEMBL_SPECIES'}};
 
-   $pars{ 'species' } = $species_id if $species_id;
+   $pars->{ 'species' } = $species_id if $species_id;
 my $this_species = $ENV{'ENSEMBL_SPECIES'} || 'common';
 my $results      = $wa->fetch_news_items( $pars );
 
