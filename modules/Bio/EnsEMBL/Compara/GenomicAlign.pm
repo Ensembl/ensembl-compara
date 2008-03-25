@@ -1630,6 +1630,110 @@ sub get_Slice {
 }
 
 
+=head2 restrict
+
+  Arg[1]     : int start
+  Arg[1]     : int end
+  Example    : my $genomic_align = $genomic_align->restrict(10, 20);
+  Description: restrict (trim) this GenomicAlign to the start and end
+               positions (in alignment coordinates). If no trimming is
+               required, the original object is returned instead.
+  Returntype : Bio::EnsEMBL::Compara::GenomicAlign object
+  Exceptions :
+  Status     : At risk
+
+=cut
+
+sub restrict {
+  my ($self, $start, $end) = @_;
+  throw("Wrong arguments") if (!$start or !$end);
+  my $restricted_genomic_align = $self->copy();
+  delete($restricted_genomic_align->{dbID});
+  delete($restricted_genomic_align->{genomic_align_block_id});
+  $restricted_genomic_align->{original_dbID} = $self->dbID if ($self->dbID);
+
+  my $final_aligned_length = $end - $start + 1;
+  my $length_of_truncated_seq_at_the_start = $start - 1;
+  my $length_of_truncated_seq_at_the_end = $self->genomic_align_block->length - $end;
+
+  my @cigar = grep {$_} split(/(\d*[GDM])/, $self->cigar_line);
+
+  ## Trim start of cigar_line if needed
+  if ($length_of_truncated_seq_at_the_start >= 0) {
+    my $aligned_seq_length = 0;
+    my $original_seq_length = 0;
+    my $new_cigar_piece = "";
+    while (my $cigar = shift(@cigar)) {
+      my ($num, $type) = ($cigar =~ /^(\d*)([GDM])/);
+      $num = 1 if ($num eq "");
+      $aligned_seq_length += $num;
+      if ($aligned_seq_length >= $length_of_truncated_seq_at_the_start) {
+        my $length = $aligned_seq_length - $length_of_truncated_seq_at_the_start;
+        if ($length > 1) {
+          $new_cigar_piece = $length.$type;
+        } elsif ($length == 1) {
+          $new_cigar_piece = $type;
+        }
+        unshift(@cigar, $new_cigar_piece) if ($new_cigar_piece);
+        if ($type eq "M") {
+          $original_seq_length += $length_of_truncated_seq_at_the_start - ($aligned_seq_length - $num);
+        }
+        last;
+      }
+      $original_seq_length += $num if ($type eq "M");
+    }
+    if ($self->dnafrag_strand == 1) {
+      $restricted_genomic_align->dnafrag_start($self->dnafrag_start + $original_seq_length);
+    } else {
+      $restricted_genomic_align->dnafrag_end($self->dnafrag_end - $original_seq_length);
+    }
+  }
+
+  my @final_cigar = ();
+
+  ## Trim end of cigar_line if needed
+  if ($length_of_truncated_seq_at_the_end >= 0) {
+    ## Truncate all the GenomicAligns
+    my $aligned_seq_length = 0;
+    my $original_seq_length = 0;
+    my $new_cigar_piece = "";
+    while (my $cigar = shift(@cigar)) {
+      my ($num, $type) = ($cigar =~ /^(\d*)([GDM])/);
+      $num = 1 if ($num eq "");
+      $aligned_seq_length += $num;
+      if ($aligned_seq_length >= $final_aligned_length) {
+        my $length = $num - $aligned_seq_length + $final_aligned_length;
+        if ($length > 1) {
+          $new_cigar_piece = $length.$type;
+        } elsif ($length == 1) {
+          $new_cigar_piece = $type;
+        }
+        push(@final_cigar, $new_cigar_piece) if ($new_cigar_piece);
+        if ($type eq "M") {
+          $original_seq_length += $length;
+        }
+        last;
+      } else {
+        push(@final_cigar, $cigar);
+      }
+      $original_seq_length += $num if ($type eq "M");
+    }
+    if ($self->dnafrag_strand == 1) {
+      $restricted_genomic_align->dnafrag_end($restricted_genomic_align->dnafrag_start + $original_seq_length - 1);
+    } else {
+      $restricted_genomic_align->dnafrag_start($restricted_genomic_align->dnafrag_end - $original_seq_length + 1);
+    }
+  } else {
+    @final_cigar = @cigar;
+  }
+
+  ## Save genomic_align's cigar_line
+  $restricted_genomic_align->aligned_sequence(0);
+  $restricted_genomic_align->cigar_line(join("", @final_cigar));
+
+  return $restricted_genomic_align;
+}
+
 #####################################################################
 #####################################################################
 
