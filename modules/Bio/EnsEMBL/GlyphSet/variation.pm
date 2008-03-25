@@ -40,8 +40,14 @@ sub fetch_features {
     $self->{'config'}->{'snps'} = \@vari_features;
   }
   my $snps = $self->{'config'}->{'snps'} || [];
-  if(@$snps && !$self->{'config'}->{'variation_legend_features'} ) {
-    $self->{'config'}->{'variation_legend_features'}->{'variations'} = { 'priority' => 1000, 'legend' => [] };
+  if(@$snps) {
+    unless( $self->{'config'}->{'variation_legend_features'} ) {
+      $self->{'config'}->{'variation_legend_features'}->{'variations'} = { 'priority' => 1000, 'legend' => [] };
+    }
+    foreach my $f (@$snps) {
+warn $f,' ',$f->display_consequence;
+      $self->colour( $f );
+    }
   }
   return $snps;
 }
