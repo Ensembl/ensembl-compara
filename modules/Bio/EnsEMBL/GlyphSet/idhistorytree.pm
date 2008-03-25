@@ -72,8 +72,9 @@ sub _init {
   ## Set X coordinates ##
 
   my @releases = sort {$a <=> $b} @{$history_tree->get_release_display_names};
+warn "Releases... @releases";
   my $count = scalar(@releases);
-  $count -= 1;
+     $count --;
   my $interval = $working_length / $count;
   my $temp_x = 140; 
 
@@ -191,6 +192,7 @@ sub _init {
     my $id = $a_id->stable_id;
     my $version = $a_id->version;
     my $arelease = $a_id->release;
+warn ">>>> $id($version/$arelease) $x <<>> $y <<<";
 
 
 
