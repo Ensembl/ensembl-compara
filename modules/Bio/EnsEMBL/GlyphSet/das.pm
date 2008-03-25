@@ -671,7 +671,11 @@ sub zmenu {
   
   if (defined($f->das_start) && defined($f->das_end)) {
     my $strand = ($f->das_strand > 0) ? 'Forward' : 'Reverse';
-    $zmenu->{"50:FEATURE LOCATION:"} = '';
+    if( $self->{'extras'}{'alt_assembly'} ) {
+      $zmenu->{"50:FEATURE LOCATION [".$self->{'extras'}{'alt_assembly'}."]:"} = '';
+    } else {
+      $zmenu->{"50:FEATURE LOCATION:"} = '';
+    }
     $zmenu->{"51:   - Start: ".$f->das_segment->start} = '';
     $zmenu->{"52:   - End: ".$f->das_segment->end} = '';
     $zmenu->{"53:   - Strand: $strand"} = '';
