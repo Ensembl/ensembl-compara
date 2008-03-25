@@ -36,7 +36,7 @@
 PERLMOD_LOC="/ensemblweb/www/www_49"   # current server root
 #PERLMOD_LOC="/ensemblweb/www/server"   # current server root
 
-PDOC_LOC="$PERLMOD_LOC/public_plugins/ensembl/htdocs/info/using/api/Pdoc"    # where you want Pdocs created
+PDOC_LOC="$PERLMOD_LOC/public-plugins/ensembl/htdocs/info/using/api/Pdoc"    # where you want Pdocs created
 HTTP="/info/using/api/Pdoc"
 P2WDOC_LOC="/ensemblweb/shared/bin/pdoc-live"  # Pdoc code location
 P2WDOCER="/ensemblweb/shared/bin/pdoc-live/scripts/perlmod2www.pl"
@@ -51,8 +51,9 @@ F6=ensembl-pipeline
 F7=perl
 F8=ensembl-variation
 F9=ensembl-hive
-F10=public-plugins
-F11=ensembl-functgenomics
+F10=biomart-perl
+F11=public-plugins
+F12=ensembl-functgenomics
 
 rm -f $P2WDOC_LOC/make_html_docs.*
 
@@ -66,7 +67,7 @@ cd $PERLMOD_LOC
 echo "Check out ensembl-pipeline and ensembl analysis ensembl-hive"
 cvs co ensembl-pipeline ensembl-analysis ensembl-hive
 
-for i in bioperl-live ensembl ensembl-analysis ensembl-compara ensembl-functgenomics ensembl-external ensembl-variation ensembl-hive perl public-plugins ensembl-pipeline
+for i in bioperl-live ensembl ensembl-analysis ensembl-compara ensembl-functgenomics ensembl-external ensembl-variation ensembl-hive perl biomart-perl public-plugins ensembl-pipeline
 do
         mkdir $PDOC_LOC/$i
   	echo "CURRENT MODULE: $i"
