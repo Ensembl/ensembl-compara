@@ -50,7 +50,7 @@ sub render_form {
   my $HIDDEN_FIELDS = '';
   my $QUERY_STRING  = '';
   if( $self->exalead->query ) {
-    $QUERY_STRING = CGI::escapeHTML( $self->exalead->query->string );
+    $QUERY_STRING = $self->exalead->query->string;
     foreach my $query_par ( $self->exalead->query->parameters ) {
       next if $query_par->name eq '_f';
       next if $query_par->name eq '_q'; 
@@ -127,7 +127,7 @@ sub _render_hit {
 ),
     CGI::escapeHTML( $hit->URL ), 
     $hit->field('title')->getHighlighted, $extra,
-    $hit->field('description')->getHighlighted,
+    $hit->field('description')?$hit->field('description')->getHighlighted:'--',
     join( '&nbsp;&nbsp; ',
       map { '<strong>'.CGI::escapeHTML( $_->name =~ /answergroup\.(.*)/?$1:$_->name ).'</strong>: '.
             $self->_render_hitcats( $_->children ) } $hit->groups );
