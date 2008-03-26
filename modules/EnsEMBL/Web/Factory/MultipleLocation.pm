@@ -189,13 +189,10 @@ sub createObjectsLocation {
 	  #get chr argument for self compara
 	  my $chrom = '';
 	  if ($self->param("sr$ID")) {
-		  warn "1----";
 		  $chrom = $self->param("sr$ID");
 	  } elsif ($sc) {
-		  warn "2----";
 		  ($chrom) =  $self->param("c$ID") =~ /^([-\w\.]+):?/;
 	  }
-#	  warn "sc = $sc";
       my $species = $self->map_alias_to_species( $self->param($par) );
 	  ## Skip if we've said flip an active species....
 	  if ($sc) {
@@ -249,6 +246,8 @@ sub createObjectsLocation {
     }
   }
   if( $add_best_to ) { ## If we are flipping an inactive species...
+    $self->__set_species( $add_best_to );
+    $self->databases_species( $add_best_to, 'core', 'compara' );
     push @locations, $self->_best_guess( $location->slice, $add_best_to, $width, $flip_sr);
   }
   $self->DataObjects( $self->new_MultipleLocation( grep {$_} @locations ) );
@@ -268,12 +267,9 @@ sub _best_guess {
   foreach my $method ( qw(BLASTZ_NET TRANSLATED_BLAT BLASTZ_RAW BLASTZ_CHAIN) ) {
     my( $seq_region, $cp, $strand );
     eval {
-#warn ".... ($S2 $method $chrom) ....";
       ( $seq_region, $cp, $strand ) = $self->_dna_align_feature_adaptor->interpolate_best_location( $slice, $S2, $method, $chrom );
-#warn ".... $seq_region $cp $strand ($S2 $method $chrom) ....";
     };
     if( $seq_region ) {
-#      warn ">> $method <<";
       my $start = $cp - ($width-1)/2;
       my $end   = $cp + ($width-1)/2;
       $self->__set_species( $species );
