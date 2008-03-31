@@ -1,5 +1,4 @@
 body { color: [[TEXTCOLOR2]]; }
-body { background-image: url(/img/nav-bg.gif); background-repeat: repeat-y; background-position: left; }
 #related, #search, #help, #release-t { display: block }
 
 #copy, #page { width: 100%; padding: 0px ; background: none }

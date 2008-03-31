@@ -6,16 +6,14 @@
 
 body { font-family: Luxi Sans, Geneva, Helvetica, Tahoma, Arial, sans-serif; 
     font-size:76%; color:#555555; background-color:#fff; 
-    background-image: url(/img/nav-bg.gif); background-repeat: repeat-y; 
     padding: 0px; margin: 0px; border: 0px;}
 pre, code, kbd {font-family:monospace; }
 div, p, span, li, dd, dt, th, td, pre, code, kbd { font-size:1em; }
 p  { margin-top:0.6em; margin-bottom:0.6em; }
-h1 { font-size:2em;   color:#3366bb; margin:1.2em 0px 0px 0px; padding:0px; }
-h2 { font-size:1.5em; color:#555555; margin:0.5em 0px 0px 0px; padding:0px; }
-h3 { font-size:1.2em; color:#993333; margin:1.5em 0px 0px 0px; padding:2px; }
-h4 { font-size:1.1em; color:#000; margin:1em 0px 0px 0px; padding:0px;}
-h5 { font-size:1em;   color:#000; margin:0px; padding:0px;}
+h1 { font-size:1.5em; color:#666666; }
+h2 { font-size:1.2em; color:#993333; }
+h3 { font-size:1.1em; color:#000; }
+h4 { font-size:1em;   color:#000; }
 .viewname { font-size:1em; font-style:italic; color:#993333; }
 img  { border: 0px }
 hr   { display: none; }
@@ -24,19 +22,21 @@ hr.show { display: block; }
 
 a { color:inherit; text-decoration:none; } /* neutral style for anchor target */
 a:link    { color:#3366bb; text-decoration:underline; }
-a:visited { color:#993333; text-decoration:underline; }
+a:visited { color:#000066; text-decoration:underline; }
 a:hover   { color:#cc0000; text-decoration:underline; }
 a:active  { color:#cc0000; text-decoration:underline; }
 
 form { border:none; margin-top: 0px; margin-bottom: 0px; padding:0px; }
 .form-button { color:#993333; font-weight:bold;
     font-style:italic; padding:2px;  }
-.red-button { background-color:#993333; color:#fff; font-weight:bold;
-    font-style:italic; padding:2px; border:1px outset #993333; }
-.blue-button { background-color:#3366bb; color:#fff; font-weight:bold;
-    font-style:italic; padding:2px; border:1px outset #3366bb; }
+.red-button { background-color:#9bb9dd; color:#fff; font-weight:bold;
+    font-style:italic; padding:2px; border:3px double #ffffff; }
+.blue-button { background-color:#999; color:#fff; font-weight:bold;
+    font-style:italic; padding:2px; border:3px double #ffffff; }
+
 a.red-button, a.blue-button { padding:4px; color:#fff; text-decoration:none; } 
 a.red-button:visited, a.blue-button:visited { color:#fff; text-decoration:none; }
+.multi-button { margin:0px 10px; }
 
 /* Miscellaneous text styles */
 .bg1 { background:#fff; }
@@ -61,14 +61,13 @@ kbd.line { display:block; margin-left:20px; }
 .small { font-size:80%; }
 
 /************ Section-specific styles ************/
-
-#masthead    { position: absolute; height: 5.5em; margin: 0px; padding: 0px; width: 100%; z-index: 5;
-               border: 0px; top: 0px; left: 0px; background-color: #fff }
+#masthead    { position: absolute; height: 4em; margin: 0.5em 0px 0px 0px; padding: 0px; width: 100%; z-index: 5;
+               border: 0px; top: 0px; left: 0px; background-color: #ffffff }
 #masthead h1 { margin:0px; padding:0.4em 0.5em 0.5em 0.2em; font-size: 2em; background-color: #fff }
 #masthead a  { text-decoration:none; }
-#masthead a.home    { font-size:0.9em; font-weight: bold; font-style: italic;
-                      color:#933; vertical-align:super; }
-#masthead a.section { font-size:1.5em; color:#36b; }
+#masthead a.home    { font-size:1.8em; font-weight: bold; font-style: italic;
+                      color:#993333; vertical-align:super; }
+#masthead a.section { font-size:2.5em; font-weight:bold; color:#3366bb; }
 
 #search, #closewindow { width:50%; position: absolute; right: 0.4em; top: 0.4em; z-index: 30; left:auto; margin:0px; padding:0px; text-align: right; border: 0px; font-size: 1em }
 #accountlinks a { font-weight:bold; text-decoration:none; }
@@ -98,21 +97,14 @@ kbd.line { display:block; margin-left:20px; }
 #page div.sptop { height: 7em; }
 #page div.sp { height: 1em; }
 
-#related { z-index: 15; position: absolute; left: 0px; top: 7em; padding: 0px; border: 0px; margin: 0px; width: 211px; }
-#related-box { background-color:#fff9af; color:#333333; margin:0px 20px 0px 0px; padding:10px 0px 10px 0px; 
-    border-width:0px 1px 0px 0px; border-style:solid; border-color:#ffdf33; }
-#related h2 { background-color:#fff; color:#993333; font-size:1.2em; margin:0px -10px 0px 0px; padding:2px 0px 2px 10px; 
-  border-width:1px 1px 1px 0px; border-style:solid; border-color:#ffdf33; }
+#related { z-index: 15; position: absolute; left: 0px; top: 7em; padding: 10px; border: 0px; margin: 0px; width: 211px; }
+#related-box { margin:0px 20px 0px 0px; padding:10px 0px 10px 0px; border:1px solid #9bb9dd }
+#related h2 { color:#993333; font-size:1.2em; margin:0px; padding:2px 0px 2px 10px; }
 #related form { padding-left:10px; }
 #related ul { padding-left: 0px; margin-left: 30px; border: 0px }
 #related li {   padding-top:4px; }
 #related li.bullet {   list-style: disc url(/img/yellow_bullet.gif); }
 #related a {    font-weight:bold; text-decoration:none; }
-
-/* Hide complex stuff from IE5 for Mac with a backslashed comment  \*/
-#related h2 { background-color:#fff; color:#993333; font-size:1.2em; margin:0px -10px 0px 0px; padding:2px 0px 2px 10px; overflow:hidden;
-  border-width:1px 1px 1px 0px; border-style:solid; border-color:#ffdf33; }
-/* end hack */
 
 p.archive-link { text-align:center; margin-top:2em; }
 p.affil-link { text-align:center; margin-top:4em; }
@@ -127,15 +119,16 @@ p.affil-link { text-align:center; margin-top:4em; }
 .dropdown ul {position:absolute; top:1em; left:5px; width:200px; z-index:1;
                     display: none; }
 .dropdown:hover ul {display:block;}
-.dropdown ul li { border:1px solid #ffdf33; padding:2px; margin:0px;
-                    background-color:#ffffcc; list-style:none; }
+.dropdown ul li { border:1px solid #9bb9dd; padding:2px; margin:0px;
+                    background-color:#edeeef; list-style:none; }
 /* end hack */
 
 * html .dropdown { position: relative; top: auto; left: auto; z-index: auto; display: block }
 * html .dropdown:hover  {z-index:1; }
 * html .dropdown ul { position: relative; top: auto; left: auto; width: auto; z-index: auto; display: block; list-style: none;}
 * html .dropdown:hover { display: block; }
-* html .dropdown ul li { border: 0px; padding: 2px; margin: 0em; margin-left: -25px; background-color: #fff9af; list-style: none; }
+* html .dropdown ul li { border: 0px; padding: 2px; margin: 0em; margin-left: -25px; background-color: #ffffff; list-style: none; }
+
 * html #related li.bullet ul li.m { list-style: none url(/img/blank.gif); }
 /* end funky menu styling */
 
