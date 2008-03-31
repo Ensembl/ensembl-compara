@@ -169,21 +169,6 @@ sub render {
     }
   }
 
-  # get appropriate affiliation logos from ini
-  if( @{$self->{'logos'}} ) {
-    $self->print( qq(\n<h2 style="padding:4px; margin-top: 2em">\n));
-    foreach my $logo ( @{$self->{'logos'}}) {
-      $self->printf(
-        qq(<a href="%s"><img style="padding-left:5px" src="%s" width="%s" height="%s" alt="%s" title="%s" /></a>),
-        map { $logo->{$_}||'' } qw(href src width height alt alt)
-      );
-    }
-    $self->print('</h2>');
-  }
-
-  ## include a miniad
-  $self->print($self->{'miniad'}) if $self->{'miniad'};
-
   $self->print( qq(\n</div></div>) );
 }
 
