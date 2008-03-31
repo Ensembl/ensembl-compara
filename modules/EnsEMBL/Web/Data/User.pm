@@ -39,7 +39,7 @@ sub BUILD {
   $self->add_has_many({ class => 'EnsEMBL::Web::Data::Mixer', owner => 'user'});
   $self->add_has_many({ class => 'EnsEMBL::Web::Data::Drawer', owner => 'user'});
   $self->add_has_many({ class => 'EnsEMBL::Web::Data::CurrentConfig', owner => 'user'});
-  #$self->add_has_many({ class => 'EnsEMBL::Web::Data::SpeciesList', owner => 'user'});
+  $self->add_has_many({ class => 'EnsEMBL::Web::Data::SpeciesList', owner => 'user'});
   $self->add_has_many({ class => 'EnsEMBL::Web::Data::Group', table => 'webgroup', link_table => 'group_member', });
 
   $self->populate_with_arguments($args);
