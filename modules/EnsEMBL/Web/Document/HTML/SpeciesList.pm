@@ -44,7 +44,7 @@ sub render {
 <p>Click on a species name below to browse the data.</p>);
     $html .= _render_species_list($user, $species_defs, \%species_info, \%species_description); 
     $html .= qq(</div>
-<p>Other pre-build species are available in <a href="http://pre.ensembl.org" rel="external">Ensembl Pre! &rarr;</a></p>
+<p>Other pre-build species are available in <a href="http://pre.ensembl.org" rel="external">Ensembl <em>Pre<span class="red">!</span></em> &rarr;</a></p>
 </div>);
   }
   return $html;
