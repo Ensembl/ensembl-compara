@@ -29,18 +29,23 @@ sub render {
 
   my $user = $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->get_user;
 
-  my $html = "";
+  my $html = '';
   if ($request && $request eq 'fragment') {
     $html .= _render_species_list($user, $species_defs, \%species_info, \%species_description); 
   } else {
-    $html .= "<div id='reorder_species' style='display: none;'>\n";
+    $html .= qq(<div class="white boxed">
+<div id='reorder_species' style='display: none;'>);
     $html .= _render_ajax_reorder_list($user, $species_defs, \%species_info); 
-    $html .= "</div>\n";
-    $html .= "<div id='full_species'>\n";
+    $html .= qq(</div>\n<div id="full_species">
+<p>The <a href="http://www.ensembl.org">Ensembl</a> project produces genome databases
+  for vertebrates and other eukaryotic species, and makes this information
+  freely available online.</p>
+
+<p>Click on a species name below to browse the data.</p>);
     $html .= _render_species_list($user, $species_defs, \%species_info, \%species_description); 
-    $html .= "</div>\n";
-    $html .= qq(
-<p>Other pre-build species are available in <a href='#top' onclick='show_pre();'>Ensembl Pre! &rarr;</a></p>);
+    $html .= qq(</div>
+<p>Other pre-build species are available in <a href="http://pre.ensembl.org" rel="external">Ensembl Pre! &rarr;</a></p>
+</div>);
   }
   return $html;
 
@@ -56,38 +61,25 @@ sub _render_species_list {
   }
 
   ## output list
-  if (!$user) {
-    $html .= "<b>Popular genomes</b>";
-    if ($species_defs->ENSEMBL_LOGINS) {
-      $html .= ' &middot; <a href="javascript:login_link()">Log in to customize</a>';
-    }
-  } else {
-    $html .= "<b>Favourite genomes</b>";
-    if ($species_defs->ENSEMBL_LOGINS) {
-      $html .= ' &middot; <a href="#" onclick="toggle_reorder();">Change favourites</a>';
-    }
-  }
   $html .= "<div id='static_favourite_species'>\n";
   $html .= "<div class='favourites-species-list'>\n";
   $html .= _render_with_images(\@favourites, $species_defs, $description);
 
-  ## Show new species
-  my @new_species;
-  while (my ($species, $info) = each (%$species_info)) {
-    if (!$check_faves{$species} && !$info->{'prev_assembly'}) {
-      push @new_species, $species;
+  if (!$user) {
+    if ($species_defs->ENSEMBL_LOGINS) {
+      $html .= '<a href="javascript:login_link()">Log in to customize this list</a>';
+    }
+  } else {
+    if ($species_defs->ENSEMBL_LOGINS) {
+      $html .= 'You are logged in as Joe Bloggs &middot; <a href="#" onclick="toggle_reorder();">Change favourites</a>';
     }
   }
-
-  $html .= "<b>New genomes</b> \n";
-  $html .= _render_with_images(\@new_species, $species_defs, $description);
-
   $html .= "</div>\n";
   $html .= "</div>\n";
 
   $html .= qq(<div id='static_all_species'>
 <form action="#">
-<h3>All genomes</h3>
+<h2>All genomes</h2>
 <select name="species"  id="species_dropdown" onchange="dropdown_redirect('species_dropdown');">
   <option value="/">-- Select a species --</option>
 );
@@ -122,6 +114,7 @@ sub _render_species_list {
   }  
 
   ## Output in taxonomic groups, ordered by common name
+  my $others = 0;
   foreach my $group_name (@group_order) {
     my $optgroup = 0;
     my @sorted_by_common; 
@@ -131,6 +124,7 @@ sub _render_species_list {
         if (scalar(@group_order) > 1) {
           $html .= '<optgroup label="Other species">'."\n";
           $optgroup = 1;
+          $others = 1;
         }
       }
       else {
@@ -153,7 +147,10 @@ sub _render_species_list {
     $html .= '</optgroup>'."\n" if $optgroup == 1;
   }
 
+  $html .= '<optgroup label="Other species">'."\n" if !$others;
+
   $html .= qq(
+  <option value="/species.html">-- Find a species --</option>
 </select>
 </form>
 );
@@ -226,16 +223,6 @@ sub _setup_species_descriptions {
     }
     else {
       $dropdown = '';
-    }
-    if ($info->{'vega'} && $info->{'vega'} eq 'Y') {
-      $html .= qq( | <a href="http://vega.sanger.ac.uk/$species/">Vega</a>);
-    }
-    if ($info->{'pre'}) {
-      $html .= ' | ';
-      if (!$info->{'prev_pre'} || ($info->{'prev_pre'} && $info->{'prev_pre'} ne $info->{'pre'})) {
-        $html .= $updated.' ';
-      }
-      $html .= qq(<a href="http://pre.ensembl.org/$species/"><i><span class="red">pr<span class="blue">e</span>!</span></i></a>);
     }
     $html  .= qq(</span>);
     if ($species) {
