@@ -341,6 +341,7 @@ sub copy {
   return $new_copy;
 }
 
+
 =head2 adaptor
 
   Arg [1]    : Bio::EnsEMBL::Compara::DBSQL::GenomicAlignAdaptor
@@ -1272,7 +1273,7 @@ sub _get_aligned_sequence_from_original_sequence_and_cigar_line {
 
   my $seq_pos = 0;
   
-  my @cig = ( $cigar_line =~ /(\d*[GMD])/g );
+  my @cig = ( $cigar_line =~ /(\d*[GMDX])/g );
   for my $cigElem ( @cig ) {
     my $cigType = substr( $cigElem, -1, 1 );
     my $cigCount = substr( $cigElem, 0 ,-1 );
@@ -1281,6 +1282,8 @@ sub _get_aligned_sequence_from_original_sequence_and_cigar_line {
     if( $cigType eq "M" ) {
       $aligned_sequence .= substr($original_sequence, $seq_pos, $cigCount);
       $seq_pos += $cigCount;
+    } elsif( $cigType eq "X") {
+        $aligned_sequence .=  "." x $cigCount;
     } elsif( $cigType eq "G" || $cigType eq "D") {
       if ($fix_seq) {
         $seq_pos += $cigCount;
@@ -1496,8 +1499,8 @@ sub get_Mapper {
       my $aln_pos = (eval{$self->genomic_align_block->reference_slice_start} or 1);
       my $aln_seq_pos = 0;
       my $seq_pos = 0;
-      foreach my $cigar_piece ($ref_cigar_line =~ /(\d*[GMD])/g) {
-        my ($cig_count, $cig_mode) = $cigar_piece =~ /(\d*)([GMD])/;
+      foreach my $cigar_piece ($ref_cigar_line =~ /(\d*[GMDX])/g) {
+        my ($cig_count, $cig_mode) = $cigar_piece =~ /(\d*)([GMDX])/;
         $cig_count = 1 if (!defined($cig_count) or $cig_count eq "");
 
         my $this_piece_of_seq = substr($this_aligned_seq, $aln_seq_pos, $cig_count);
@@ -1549,7 +1552,7 @@ sub _get_Mapper_from_cigar_line {
 
   my $mapper = Bio::EnsEMBL::Mapper->new("sequence", "alignment");
 
-  my @cigar_pieces = ($cigar_line =~ /(\d*[GMD])/g);
+  my @cigar_pieces = ($cigar_line =~ /(\d*[GMDX])/g);
   if ($rel_strand == 1) {
     foreach my $cigar_piece (@cigar_pieces) {
       my $cigar_type = substr($cigar_piece, -1, 1 );
@@ -1569,7 +1572,7 @@ sub _get_Mapper_from_cigar_line {
             );
         $sequence_position += $cigar_count;
         $alignment_position += $cigar_count;
-      } elsif( $cigar_type eq "G" || $cigar_type eq "D") {
+      } elsif( $cigar_type eq "G" || $cigar_type eq "D" || $cigar_type eq "X") {
         $alignment_position += $cigar_count;
       }
     }
@@ -1592,7 +1595,7 @@ sub _get_Mapper_from_cigar_line {
             );
         $sequence_position -= $cigar_count;
         $alignment_position += $cigar_count;
-      } elsif( $cigar_type eq "G" || $cigar_type eq "D") {
+      } elsif( $cigar_type eq "G" || $cigar_type eq "D" || $cigar_type eq "X") {
         $alignment_position += $cigar_count;
       }
     }
@@ -1650,21 +1653,23 @@ sub restrict {
   my $restricted_genomic_align = $self->copy();
   delete($restricted_genomic_align->{dbID});
   delete($restricted_genomic_align->{genomic_align_block_id});
+  delete($restricted_genomic_align->{original_sequence});
+  delete($restricted_genomic_align->{aligned_sequence});
+  delete($restricted_genomic_align->{cigar_line});
   $restricted_genomic_align->{original_dbID} = $self->dbID if ($self->dbID);
 
   my $final_aligned_length = $end - $start + 1;
   my $length_of_truncated_seq_at_the_start = $start - 1;
   my $length_of_truncated_seq_at_the_end = $self->genomic_align_block->length - $end;
 
-  my @cigar = grep {$_} split(/(\d*[GDM])/, $self->cigar_line);
-
+  my @cigar = grep {$_} split(/(\d*[GDMX])/, $self->cigar_line);
   ## Trim start of cigar_line if needed
   if ($length_of_truncated_seq_at_the_start >= 0) {
     my $aligned_seq_length = 0;
     my $original_seq_length = 0;
     my $new_cigar_piece = "";
     while (my $cigar = shift(@cigar)) {
-      my ($num, $type) = ($cigar =~ /^(\d*)([GDM])/);
+      my ($num, $type) = ($cigar =~ /^(\d*)([GDMX])/);
       $num = 1 if ($num eq "");
       $aligned_seq_length += $num;
       if ($aligned_seq_length >= $length_of_truncated_seq_at_the_start) {
@@ -1698,7 +1703,7 @@ sub restrict {
     my $original_seq_length = 0;
     my $new_cigar_piece = "";
     while (my $cigar = shift(@cigar)) {
-      my ($num, $type) = ($cigar =~ /^(\d*)([GDM])/);
+      my ($num, $type) = ($cigar =~ /^(\d*)([GDMX])/);
       $num = 1 if ($num eq "");
       $aligned_seq_length += $num;
       if ($aligned_seq_length >= $final_aligned_length) {
