@@ -111,16 +111,16 @@ mkdir "$checkout/tmp";
 
 
 execute("$checkout/ctrl_scripts/stop_server", 1);
-sleep 3;
+sleep 8;
 execute("$checkout/ctrl_scripts/start_server");
-sleep 3;
+sleep 8;
 execute("$checkout/ctrl_scripts/stop_server", 1);
 
 execute("cp -f support/Plugins.pm $checkout/conf/");
 execute("cp -rpf $checkout/* /ensemblweb/head/");
 
 execute("/ensemblweb/head/ctrl_scripts/stop_server", 1);
-sleep 3;
+sleep 8;
 execute("/ensemblweb/head/ctrl_scripts/start_server");
 
 execute("rm -f lock");
