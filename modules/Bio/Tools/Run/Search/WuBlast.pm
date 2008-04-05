@@ -282,14 +282,14 @@ sub command{
 
   my $command_tmpl = "%s %s > %s 2>&1 ; cp %s %s; rm %s";
 
-  my $command = sprintf
-    ( $env_command,
-      $command_tmpl, 
+  my $command = sprintf( $command_tmpl, 
+      $env_command,
       $blast_command, 
       $res_file_local, 
       $res_file_local, 
       $res_file,
-      $res_file_local, );
+      $res_file_local
+   );
 
   return $command; 
 }
