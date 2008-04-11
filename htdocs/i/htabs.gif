@@ -1,0 +1,35 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html>
+<head>
+  <title>Untitled</title>
+  <style type="text/css">
+  body { margin: 0 }
+  dl.tabs { margin: 0; z-index: 20; background : transparent none repeat-x fixed bottom url(line.gif); height: 1em }
+  dl.tabs dt { float: left; padding: 2px 0.5em; border: 1px solid black; background-color: #eef; margin: 0 5px; z-index: 20 }
+  dl.tabs dt.active { border-bottom: 1px solid white; background-color: white; z-index: 20 }
+  div.content { boxrder: 1px solid green; clear: both; margin: -1px 0 0 0; z-index: 10 }
+  dl.tabs dt.help { float: right }
+  </style>
+</head>
+
+<body>
+
+<dl class="tabs">
+  <dt>Contigview</dt>
+  <dt>Cytoview</dt>
+  <dt>Gene Info</dt>
+  <dt class="active">Variation</dt>
+  <dt>Regulatory</dt>
+  <dt>Comparative</dt>
+  <dt>Sequence</dt>
+  <dt>Configure</dt>
+  <dt>Data&nbsp;mining</dt>
+  <dt class="help">Help</dt>
+</dl>
+<div class="content">
+  <p>TAB CONTENTS</p>
+</div>
+
+</body>
+</html>
