@@ -39,7 +39,7 @@ no warnings 'uninitialized';
 
 use FindBin qw($Bin);
 use File::Basename qw( dirname );
-use Sys::Hostname;
+use Sys::Hostname::Long;
 use Getopt::Long;
 
 my ($help, $delay);
@@ -63,7 +63,7 @@ Options:
 }
 
 my $serverroot = dirname($Bin);
-my $hostname = hostname();
+my $hostname = hostname_long();
 
 # stop the server
 warn "Stopping httpd daemon...\n";

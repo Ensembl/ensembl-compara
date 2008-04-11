@@ -32,7 +32,7 @@ no warnings 'uninitialized';
 
 use FindBin qw($Bin);
 use File::Basename qw(dirname);
-use Sys::Hostname;
+use Sys::Hostname::Long;
 use Getopt::Long;
 
 my ($help, $hostname, $do_access);
@@ -60,7 +60,7 @@ Options:
 }
 my $serverroot = dirname($Bin);
 my $logname = $do_access ? "access_log" : "error_log";
-$hostname ||= hostname();
+$hostname ||= hostname_long();
 
 # get all matching logfiles and sort by mtime
 my @logs =  map { $_->[0] }

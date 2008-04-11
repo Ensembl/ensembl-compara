@@ -38,7 +38,7 @@ no warnings 'uninitialized';
 
 use FindBin qw($Bin);
 use File::Basename qw( dirname );
-use Sys::Hostname;
+use Sys::Hostname::Long;
 use Getopt::Long;
 
 my ($help, $rmconfig, $single);
@@ -71,7 +71,7 @@ Options:
 }
 
 my $serverroot = dirname($Bin);
-my $hostname = hostname();
+my $hostname = hostname_long();
 
 # start the server
 if ($rmconfig) {
