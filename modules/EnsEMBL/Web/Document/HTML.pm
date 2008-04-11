@@ -8,6 +8,10 @@ sub new {
   return $self;
 }
 
+sub _root_url { return $_[0]->species_defs->ENSEMBL_ROOT_URL; }
+
+sub species_defs :lvalue { return $_[0]->{'_species_defs'}; }
+
 sub renderer :lvalue { return $_[0]->{_renderer}; }
 
 sub printf { my $self = shift; $self->renderer->printf( @_ ) if $self->{'_renderer'}; }

@@ -57,11 +57,6 @@ sub call_child_functions {
   if (!$self->plugin_locator->results) {
     $self->plugin_locator->include;
     $self->plugin_locator->create_all;
-    foreach( @{$self->plugin_locator->warnings || []} ){
-      next if $_ =~ /^Can't locate/; 
-      warn( "Error in call_child_functions()" );
-      warn( ref($self), ": ", $_ );
-    }
   }
   $self->plugin_locator->call(@_);
 }
@@ -330,12 +325,48 @@ sub renderer :lvalue { $_[0]{'_renderer'} };
 sub _prof { $_[0]->{'timer'} && $_[0]->{'timer'}->push( $_[1], 1 ); }
 sub render {
   my( $self ) = shift;
-  $self->_render_head_and_body_tag;
-  foreach my $R ( @{$self->{'body_order'}} ) {
-    my $attr = $R->[0];
-    $self->$attr->render;
-    $self->_prof( "Rendered $attr" );
+## If this is an AJAX request then we will not render the page wrapper!
+  if( $self->renderer->{'r'}->headers_in->{'X-Requested-With'} eq 'XMLHttpRequest' ) {
+    $self->content->render(); 
+    return;
   }
+  $self->_render_head_and_body_tag;
+  #  my $X = $self->{'page_template'};
+  my $X = '
+<table id="mh">
+  <tr>
+    <td id="mh_lo" rowspan="2">[[logo]]</td>
+    <td id="mh_tt" rowspan="2">[[species]]</td>
+    <td id="mh_search">[[search_box]]</td>
+  </tr>
+  <tr>
+    <td id="mh_lnk">[[uber_nav]]</td>
+  </tr>
+</table>
+<div style="display:none" id="conf"></div>
+<div id="main">
+  <div id="nav">
+    [[global_context]]
+    [[local_context]]
+  </div>
+  <div id="content">
+    [[content]]
+  </div>
+</div>
+<div id="footer">
+  [[release]]<br />
+  [[copyright]]
+</div>
+<div id="debug"></div>
+[[body_javascript]]
+';
+  while( $X =~ s/(.*?)\[\[([\w:]+)\]\]//sm ) {
+    my($start,$page_element) = ($1,$2);
+    $self->print( $start );
+    eval{ $self->$page_element->render; };
+    $self->printf( '%s - %s', $page_element, $@ ) if $@;
+  }
+  $self->print( $X );
   $self->_render_close_body_tag;
 }
 

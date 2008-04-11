@@ -37,14 +37,16 @@ sub _basic_HTML {
 ## Main document attributes...
   $self->set_doc_type( 'XHTML', '1.0 Trans' );
   $self->_init();
-  $self->add_body_attr();
 #  --- Stylesheets
-  $self->stylesheet->add_sheet( 'all',    $self->species_defs->ENSEMBL_TMPL_CSS );
-  $self->stylesheet->add_sheet( 'all',    $self->species_defs->ENSEMBL_PAGE_CSS );
-  $self->stylesheet->add_sheet( 'print', '/css/printer-styles.css' );
-  $self->stylesheet->add_sheet( 'screen', '/css/screen-styles.css' );
+  $self->body_javascript->add_source( '/js/protopacked.js' );
+  $self->body_javascript->add_source( sprintf(
+    '/%s/%s.js', $self->species_defs->ENSEMBL_JSCSS_TYPE,  $self->species_defs->ENSEMBL_JS_NAME 
+  ));
+  $self->stylesheet->add_sheet( 'all',   sprintf(
+    '/%s/%s.css', $self->species_defs->ENSEMBL_JSCSS_TYPE, $self->species_defs->ENSEMBL_CSS_NAME 
+  ));
 }
-
+ 
 sub _common_HTML {
   my $self = shift;
 ## Main document attributes...
@@ -53,47 +55,47 @@ sub _common_HTML {
 $self->_prof('A');
   $self->add_body_attr( 'id' => 'ensembl-webpage' );
 #  --- Stylesheets
-  $self->stylesheet->add_sheet( 'all',    $self->species_defs->ENSEMBL_TMPL_CSS );
-  $self->stylesheet->add_sheet( 'all',    $self->species_defs->ENSEMBL_PAGE_CSS );
-  $self->stylesheet->add_sheet( 'print', '/css/printer-styles.css' );
-  $self->stylesheet->add_sheet( 'screen', '/css/screen-styles.css' );
+  $self->body_javascript->add_source( '/js/protopacked.js' );
+  $self->body_javascript->add_source( sprintf(
+    '/%s/%s.js', $self->species_defs->ENSEMBL_JSCSS_TYPE, $self->species_defs->ENSEMBL_JS_NAME 
+  ));
+  $self->stylesheet->add_sheet( 'all',   sprintf(
+    '/%s/%s.css', $self->species_defs->ENSEMBL_JSCSS_TYPE, $self->species_defs->ENSEMBL_CSS_NAME 
+  ));
 $self->_prof('B');
 
 ## Set up the version information etc for the title of the page, masthead etc
 
 #  --- The release bar...
-  $self->release->site_name       = $self->species_defs->ENSEMBL_SITE_NAME;
-  $self->release->dbserver        = $self->species_defs->ENSEMBL_HOST.':'.$self->species_defs->ENSEMBL_HOST_PORT;
+#  $self->release->site_name       = $self->species_defs->ENSEMBL_SITE_NAME;
+#  $self->release->dbserver        = $self->species_defs->ENSEMBL_HOST.':'.$self->species_defs->ENSEMBL_HOST_PORT;
 #  eval {
-  $self->release->db              = $self->species_defs->databases->{'ENSEMBL_DB'}{'NAME'};
+#  $self->release->db              = $self->species_defs->databases->{'ENSEMBL_DB'}{'NAME'};
 #  };
-  $self->release->version         = $self->species_defs->ENSEMBL_VERSION;
-  (my $DATE = $self->species_defs->ARCHIVE_VERSION ) =~ s/(\d+)/ \1/g;
-  $self->release->date            = $DATE;
+#  $self->release->version         = $self->species_defs->ENSEMBL_VERSION;
+#  (my $DATE = $self->species_defs->ARCHIVE_VERSION ) =~ s/(\d+)/ \1/g;
+#  $self->release->date            = $DATE;
 #  --- The masthead
-  my $style = $self->species_defs->ENSEMBL_STYLE;
-  $self->masthead->site_name      = $self->species_defs->ENSEMBL_SITE_NAME;
-  $self->masthead->sp_bio         = $self->species_defs->SPECIES_BIO_NAME;
-  $self->masthead->sp_common      = $self->species_defs->SPECIES_COMMON_NAME;
-  $self->masthead->logo_src       = $style->{'SITE_LOGO'};
-  $self->masthead->logo_w         = $style->{'SITE_LOGO_WIDTH'};
-  $self->masthead->logo_h         = $style->{'SITE_LOGO_HEIGHT'};
+#  my $style = $self->species_defs->ENSEMBL_STYLE;
+# $self->masthead->site_name      = $self->species_defs->ENSEMBL_SITE_NAME;
+# $self->masthead->sp_bio         = $self->species_defs->SPECIES_BIO_NAME;
+# $self->masthead->sp_common      = $self->species_defs->SPECIES_COMMON_NAME;
+# $self->masthead->logo_src       = $style->{'SITE_LOGO'};
+# $self->masthead->logo_w         = $style->{'SITE_LOGO_WIDTH'};
+# $self->masthead->logo_h         = $style->{'SITE_LOGO_HEIGHT'};
+# $self->masthead->logo_href      = $style->{'SITE_LOGO_HREF'};
 
 $self->_prof('C');
 #  --- The sidebar
-  $self->menu->site_name          = $self->species_defs->ENSEMBL_SITE_NAME;
-  $self->menu->archive            = $self->species_defs->ARCHIVE_VERSION;
-  foreach my $key ( @{$style->{'ADDITIONAL_LOGOS'}||[]} ) {
-    $self->menu->push_logo(
-      map { $_ => $style->{$key.uc("_$_")}||'' } qw(src href width height alt href)
-    );
-  }
+#$self->menu->site_name          = $self->species_defs->ENSEMBL_SITE_NAME;
+  #$self->menu->archive            = $self->species_defs->ARCHIVE_VERSION;
+  #
 }
 
 sub _script_HTML {
   my( $self ) = @_;
   my $scriptname = $self->script_name;
-     $self->masthead->sub_title = $scriptname;
+#     $self->masthead->sub_title = $scriptname;
   #  --- And the title!
   $self->title->set( $scriptname );
 }

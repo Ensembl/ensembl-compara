@@ -89,8 +89,7 @@ sub common_menu_items {
     else {
       $doc->menu->add_entry( $flag, 'text' => "<a href='javascript:login_link();'>Login</a> or <a href='/common/user/register'>Register</a>", 'raw' => 'yes');
       $doc->menu->add_entry( $flag, 'text' => "About User Accounts",
-                                  'href' => "/info/about/accounts.html",
-                                  'icon' => '/img/infoicon.gif' );
+                                  'href' => "/info/about/accounts.html" );
     }
   }
 
