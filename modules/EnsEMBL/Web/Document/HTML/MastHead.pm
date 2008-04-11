@@ -15,44 +15,78 @@ sub sp_common :lvalue { $_[0]{'sp_common'}=~s/_/ /g; $_[0]{'sp_common'}; }
 sub logo_src  :lvalue { $_[0]{'logo_src'}; }
 sub logo_w    :lvalue { $_[0]{'logo_w'};   }
 sub logo_h    :lvalue { $_[0]{'logo_h'};   }
-sub logo_img  { return sprintf '<img src="%s" style="width: %dpx; height: %dpx; vertical-align:bottom; border:0px; padding-bottom:2px" alt="" title="Home" />',
+sub logo_href :lvalue { $_[0]{'logo_href'};   }
+#sub logo_img  { return sprintf '<img src="%s" style="width: %dpx; height: %dpx; vertical-align:bottom; border:0px; padding-bottom:2px" alt="" title="Home" />',
                                $_[0]->logo_src, $_[0]->logo_w, $_[0]->logo_h ; }
-sub sub_title :lvalue { $_[0]{'sub_title'}; }
+
+sub logo_img {
+  my $self=shift;
+  return sprintf(
+    '<img src="%se-ensembl.gif" alt="" title="Return to home page" />',
+    $self->img_url
+  );
+}
+> sub sub_title :lvalue { $_[0]{'sub_title'}; }
+> sub sub_link   { return $_[0]->_root_url.$_[0]->species.'/'; }
+> sub home_url   { return $_[0]->_root_url; }
+> sub img_url    { return $ENSEMBL_WEB_REGISTRY->ROOT_URL.'t/'; }
+> sub search_url { return $ENSEMBL_WEB_REGISTRY->ROOT_URL.$_[0]->species.'/Search'; }
+> sub default_search_code { return 'ensembl'; }
 
 sub render {
-  my @sub_titles = @{[$_[0]->sub_title]};
-  if ($sub_titles[0] eq 'HelpView') {
-    $_[0]->printf( qq(
-<div id="masthead">
-  <h1><a href="/">%s</a> <span class="viewname serif">%s</span></h1>
-</div>), $_[0]->logo_img, @{[$_[0]->sub_title]}
-    );
+  my $self = shift;
+  my $linked_title = '<h1><a class="mh_lnk" href="#">Human</a></h1>';
+  $self->print( '<table id="mh">
+  <tr>');
+# Logo on LHS...
+  $self->printf( '
+    <td id="mh_lo" rowspan="2"><a href="%s">%s</a></td>',
+    $self->home_url, $self->logo_img
+  );
+  if( $self->sub_title ) {
+    $self->printf( '
+    <td id="mh_tt" rowspan="2"><h1><a class="mh_lnk" href="%s">%s</a></h1></td>',
+      $self->sub_link, $self->sub_title );
   }
-  else {
-    my $species_text;
-    if ($ENV{'ENSEMBL_SPECIES'} eq 'common') {
-      (my $view = $_[0]->sub_title) =~ s/_/ /g;
-      $species_text = qq( <span class="commonname serif">$view</span>);
-    }
-    else {
-      $species_text = '<span style="font-size: 1.5em; color:#fff">.</span>';
-      my $species_name;
-      if( $_[0]->sp_bio && $ENV{'ENSEMBL_SPECIES'}) {
-        if ($_[0]->sp_common =~ /\./) {
-          $species_name = '<i>'.$_[0]->sp_common.'</i>';
-        }
-        else {
-          $species_name = $_[0]->sp_common;
-        }
-        $species_text = sprintf( '<a href="/%s/" class="section">%s</a>',  $_[0]->sp_bio, $species_name );
-        $species_text .= qq( <span class="viewname serif">@{[$_[0]->sub_title]}</span>) if $_[0]->sub_title;
-      }
-    }
-    $_[0]->printf( qq(
-<div id="masthead">
-  <h1><a href="/">%s</a><a href="/" class="home serif">%s</a> %s</h1>
-</div>), $_[0]->logo_img, $_[0]->site_name, $species_text );
-  }
+  $self->printf( '
+    <td id="mh_search" style="background-color:#fff9af">
+<form action="%s">
+  <input type="hidden" id="se_si" name="site" value="%s" />
+  <table id="se">
+    <tr>
+      <td id="se_but"><img id="se_im" src="%s" alt="" /><img src="%ssearch/down.gif" style="width:7px" alt="" /></td>
+      <td><input id="se_q" type="text" name="q" /></td>
+      <td style="cursor: hand; cursor: pointer;"><input type="submit"  style="cursor: hand; cursor: pointer;margin:0px; border:0px;background-color:#fff;padding:1px 0.5em;font-size: 0.8em; font-weight: bold" value="Search&gt;&gt;" /></td>
+    </tr>
+  </table>
+  <dl style="display: none" id="se_mn"></dl>
+</form>
+    </td>',
+    $self->search_url,
+    $self->default_search_code,
+    $self->img_url.'search/'.$self->default_search_code.'.gif',
+    $self->img_url
+  );
+  $self->print('
+  </tr>');
+  $self->print('
+  <tr>
+    <td id="mh_bar">
+      <div id="mh_lnk">');
+  $self->printf('
+        <a href="%sBlast">BLAST</a> | <a href="%sbiomart">BioMart</a> &nbsp;|&nbsp;
+        <a href="#" id="login" class="modal_link">Login</a> | <a href="#" class="modal_link">Register</a> &nbsp;|&nbsp;
+        <a href="%s">Home</a> | <a href="#" id="sitemap" class="modal_link">Site map</a> | <a href="#" id="help" class="modal_link"><span>e<span>?</span></span> Help</a>',
+    $self->home_url, $self->home_url, $self->home_url
+  );
+  $self-print('
+      </div>
+    </td>
+  </tr>');
+  $self->print( '
+</table>
+<div style="display:none" id="conf"></div>');
+
 }
 
 1;

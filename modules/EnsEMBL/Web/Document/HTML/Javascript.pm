@@ -12,11 +12,6 @@ sub add_source {
   my( $self, $src ) = @_;
   return unless $src;
   
-  foreach( qw(protopacked core42) ) {
-    $self->{'scripts'}.=qq(  <script type="text/javascript" src="/js/$_.js"></script>\n) unless $self->{'sources'}{"/js/$_.js"};
-    $self->{'sources'}{"/js/$_.js"} = 1;
-
-  }
   return if $self->{'sources'}{$src};
   $self->{'sources'}{$src}=1;
   $self->{'scripts'}.=qq(  <script type="text/javascript" src="$src"></script>\n);

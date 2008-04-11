@@ -20,7 +20,7 @@ use constant 'DEFAULT_DOCUMENT'   => 'Dynamic';
 
 use Bio::EnsEMBL::Registry; # Required so we can do the disconnect all call!!
 our @ISA = qw(EnsEMBL::Web::Root Exporter);
-our @EXPORT_OK = qw(simple_webpage simple_with_redirect wrapper_webpage);
+our @EXPORT_OK = qw(redirect simple_self simple_with_redirect wrapper_self);
 our @EXPORT    = @EXPORT_OK;
 
 sub _prof { my $self = shift; $self->timer->push( @_ ); }
@@ -156,13 +156,14 @@ sub configure {
       # the functions named in the script "configure" line
       # of the script.
       my $CONF = $config_module_name->new( $self->page, $object, $flag );
+      ## Attach any control modules to the configuration
       $CONF->{wizard} = $self->{wizard};
       $CONF->{command} = $self->{command};
+      ## Loop through the functions to configure
       foreach my $FN ( @functions ) { 
         if( $CONF->can($FN) ) {
 	  # If this configuration module can perform this function do so...
           eval { $CONF->$FN(); };
-          $self->{wizard} = $CONF->{wizard};
           if( $@ ) { # Catch any errors and display as a "configuration runtime error"
             $self->page->content->add_panel( 
 					    new EnsEMBL::Web::Document::Panel(
@@ -252,7 +253,6 @@ sub action {
   my $self = shift;
   $self->render;
 }
-
 
 sub redirect {
   my( $self, $URL ) = @_;
@@ -344,8 +344,8 @@ sub DESTROY {
   Bio::EnsEMBL::Registry->disconnect_all();
 }
 
-sub simple { simple_webpage( @_ ); }
-sub simple_webpage {
+sub simple { simple_self( @_ ); }
+sub simple_self {
   my ($type) = @_;
   my $self = __PACKAGE__->new( 'objecttype' => $type );
   if( $self->has_a_problem ) {
@@ -361,7 +361,7 @@ sub simple_webpage {
   #warn $self->timer->render();
 }
 
-sub wrapper_webpage { wrapper( @_ ); }
+sub wrapper_self { wrapper( @_ ); }
 
 sub wrapper {
   my $objecttype = shift;
