@@ -1,0 +1,45 @@
+  <dt>Transcript: BRCA2_HUMAN</dt>
+  <dd class="active"><a title="top of transview" href="/Homo_sapiens/Transcript/Structure">Summary</a></dd>
+  <dd><a title="top of exonview" href="/Homo_sapiens/Transcript/Exons">Exons (28)</a></dd>
+  <dd><a title="protview" href="/Homo_sapiens/Transcript/Translation">Peptide product</a></dd>
+  <dd><a title="similarity matches part of transview" href="/Homo_sapiens/Transcript/Similarity">Similarity matches (32)</a></dd>
+  <dd><a title="oligos part of transview"  href="/Homo_sapiens/Transcript/Oligo">Oligos (25)</a></dd>
+  <dd><a title="go part of transview"  href="/Homo_sapiens/Transcript/Go">GO terms (5)</a></dd>
+  <dd><a title="bottom of exonview" href="/Homo_sapiens/Transcript/Evidence">Supporting Evidence (40)</a></dd>
+  <dd class="closed"><a title="transcriptsnpview" href="/Homo_sapiens/Transcript/Variation">Variational genomics (123)</a>
+    <dl>
+      <dd><a href="/Homo_sapiens/Transcript/Variation">Population comparison</a>
+    </dl>
+  </dd>
+  <dd class="closed"><a href="/Homo_sapiens/Transcript/Sequence_Dna">Marked-up sequence</a>
+    <dl>
+      <dd class="closed"><a href="/Homo_sapiens/Transcript/Sequence_Dna">cDNA (1,853 bps)</a>
+        <dl>
+          <dd><a href="/Homo_sapiens/Transcript/Sequence_Dna">cDNA (1,853 bps)</a>
+          <dd><a href="/Homo_sapiens/Transcript/Sequence_Dna_CDS">CDS (900 bps)</a>
+        </dl>
+      </dd>
+      <dd><a href="/Homo_sapiens/Transcript/Sequence_Peptide">Protein (589 aas)</a></dd>
+    </dl>
+  </dd>
+  <dd><a href="/Homo_sapiens/Transcript/Idhistory">ID History</a></dd>
+  <dd class="closed"><a title="domainview" href="/Homo_sapiens/Transcript/Domain">Domain information (6)</a>
+    <dl>
+      <dd><a title="domainview" href="/Homo_sapiens/Transcript/Domain/IPR002093">IPR002093</a></dd>
+      <dd><a title="domainview" href="/Homo_sapiens/Transcript/Domain/IPR011370">IPR011370</a></dd>
+      <dd><a title="domainview" href="/Homo_sapiens/Transcript/Domain/IPR015187">IPR015187</a></dd>
+      <dd><a title="domainview" href="/Homo_sapiens/Transcript/Domain/IPR015188">IPR015188</a></dd>
+      <dd><a title="domainview" href="/Homo_sapiens/Transcript/Domain/IPR015205">IPR015205</a></dd>
+      <dd><a title="domainview" href="/Homo_sapiens/Transcript/Domain/IPR015252">IPR015252</a></dd>
+    </dl>
+  </dd>
+  <dd class="closed"><a title="familyview" href="/Homo_sapiens/Transcript/Family">Protein families (1)</a>
+    <dl>
+      <dd><a title="familyview" href="/Homo_sapiens/Transcript/Family/ENSF00000004800">ENSF00000004800</a></dd>
+    </dl>
+  </dd>
+  <dd class="closed"><a title="exportview" href="/Homo_sapiens/Transcript/Export_Features">Export Features</a>
+    <dl>
+      <dd><a title="exportview" href="/Homo_sapiens/Transcript/Export_Features">Export features</a></dd>
+    </dl>
+  </dd>
