@@ -1,0 +1,11 @@
+#main { margin:0px;padding;0px; border: 0px }
+
+#nav {float:left;width:15em;margin:0.5em;border:0px;padding:0px;font-size:0.8em;z-index:100;}
+#nav dl {margin: 0 0 0.5em 0; border:1px solid #369;padding:0px;background-color:#fff}
+#nav dt {font-weight:bold}
+#nav dd {margin-left:0px; white-space: nowrap}
+#nav dd dl {border:0px;padding:0 0 0 14px}
+#nav dd img {height:14px;width:14px;border:0px;vertical-align:top;padding-right:5px}
+#nav a{color:#369;text-decoration:none;}
+dd._closed dl{display:none}
+

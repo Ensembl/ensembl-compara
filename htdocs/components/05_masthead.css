@@ -1,0 +1,32 @@
+  #mh { width: 100%; border: 0px; padding: 0px; margin: 0px;
+        border-collapse: collapse; border-bottom: 1px solid #c90;
+        background-color: #fff9af }
+  #mh td { border: 0px; padding: 0px; margin: 0px }
+/** Cell 1 - the main e! logo - currently 40x45 **/
+  #mh_lo     { width:153px; vertical-align:middle; white-space: nowrap; padding-left:3px }
+  #mh_lo img { width:150px; height: 40px; border: 0px }
+/** Cell 2 - the site/species heading - site name / species name **/
+  #mh_tt     { padding: 10px 0 0 0.5em; vertical-align:middle; white-space: nowrap }
+  #mh_tt h1  { margin-top: 2px; font-size: 1.2em; margin: 0px; color: #933; padding: 0px; font-weight: bold; }
+  #mh_tt h1 a { text-decoration: none; color: #933 }
+/** Cell 3 - **/
+  #mh form { margin: 2px; padding: 0; border: 0 }
+  table#se { float: right; margin: 2px; background-color: #fff; border: 1px solid #369; border-collapse: collapse; }
+  table#se td { border: 1px solid #369; vertical-align: middle }
+  table#se img { cursor: hand; cursor: pointer; padding: 2px; height: 16px; width: 16px; }
+  #se_q { border:0px; width: 20em }
+  #se_b { cursor: hand; cursor: pointer; }
+  #se_b input { cursor: hand; cursor: pointer;margin:0px; border:0px;background-color:#fff;padding:1px 0.5em;font-size: 0.8em; font-weight: bold }
+  /** search menu selector **/
+  dl#se_mn { z-index:100;width: 8em; margin: 2px; border-top: 1px solid #369; position: absolute; cursor: hand; cursor: pointer }
+  dl#se_mn dt { border: 1px solid #369 ; border-top: 0px; font-size: 0.8em;  padding: 0px; background-color: #fff  }
+  dl#se_mn dt img { height: 16px; width: 16px; border: 2px solid white; vertical-align: top; padding-right: 0.5em }
+/** Cell 4 - the links at the bottom right **/
+  td#mh_lnk { color: #fff9af; font-weight: bold; float: right; text-align: right;
+            white-space: nowrap; padding: 0px 4px 2px 2px; }
+  #mh_lnk a { font-size: 0.8em; color: #009; text-decoration: none }
+  #mh_lnk a:hover { color: #066;}
+/** including the specially designed help button with e?help and a border **/
+  #help { border:1px solid #009; padding: 0px 2px; background-color: #fff; color #36b; }
+  #help span { color: #36b; font-style: italic; margin-right: 0.1em }
+  #help span span { color: #933 }

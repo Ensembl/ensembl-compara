@@ -1,0 +1,10 @@
+  /** search box... **/
+#mh form { margin: 2px; padding: 0; border: 0 }
+table#se { float: right; margin: 2px; background-color: #fff; border: 1px solid #369; border-collapse: collapse; }
+table#se td { border: 1px solid #369; vertical-align: middle }
+table#se img { cursor: hand; cursor: pointer; padding: 2px; height: 16px; width: 16px; }
+#se_q { border:0px; width: 20em }
+  /** search menu selector **/
+dl#se_mn { z-index:100;width: 8em; margin: 2px; border-top: 1px solid #369; position: absolute; cursor: hand; cursor: pointer }
+dl#se_mn dt { border: 1px solid #369 ; border-top: 0px; font-size: 0.8em;  padding: 0px; background-color: #fff  }
+dl#se_mn dt img { height: 16px; width: 16px; border: 2px solid white; vertical-align: top; padding-right: 0.5em }

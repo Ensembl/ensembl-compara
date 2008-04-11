@@ -1,0 +1,30 @@
+img { border: 0px }
+body { margin: 0; font-family: arial, sans-serif; background-color: #eee }
+.ajax_error { font-weight: bold; color: #c00; background-color: #fcc }
+.spinner { 
+  height: 16px;width:16px;border:0px;vertical-align:middle;
+  padding: 2px 2px 2px 30px; background-image: url(/i/ajax-loader.gif)
+}
+/** Striped spreadsheets **/
+
+table.ss { width: 100%; }
+table.ss tr.ss_header { background-color:#ccc; border-width:1px 0px 0px 0px; border-color:#ccc; border-style:solid; }
+table.ss th { background-color: #ccc; border-width:1px 0px 0px 0px; border-color:#ccc; border-style:solid; padding:0.2em; vertical-align: top; text-align: center }
+table.ss td { vertical-align: top; padding:0.2em; }
+table.ss .right-border {  border-right:1px #369 solid;  }
+/** table.ss .left-border {  border-left:1px #ccc solid;  }
+table.ss .bottom-border {  border-bottom:1px #ccc solid;  } **/
+table.ss tr.bg1 { background-color:#fff; }
+table.ss tr.bg2 { background-color:#f0f0f0; }
+table.tint tr.bg2 { background-color:#ffffcc; }
+table.info-image { width:100%; margin:10px 0px; }
+table.info-image td.image { text-align:center; padding-right:20px; }
+.sequence { font-family: courier new; }
+
+.page { text-align: center; font-size: 0.8em; padding: 0.25em }
+
+h4.normal { padding: 2px 0.25em }
+h4 { margin: 0px; padding: 2px 2px 4px 2px;background-color: #fff }
+h4 .center { text-align: center; margin-top: 2px }
+h4 .button-left  { float:left;  background-color: #cdf; padding:1px 0.5em; border: 1px outset #cdf; margin: 0px; margin-right: 1em }
+h4 .button-right { float:right; background-color: #cdf; padding:1px 0.5em; border: 1px outset #cdf; margin: 0px; margin-left: 1em }

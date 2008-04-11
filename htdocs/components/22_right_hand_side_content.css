@@ -1,0 +1,21 @@
+/* The CSS for the panel headings */
+
+div#content div.panel{border:1px solid #369;margin:0.5em 0.5em 0.5em 16em;font-size:0.8em; }
+div#content { margin:0;padding:0;border:1px solid #eee;}
+
+.panel h4 { padding:2px 0.25em; margin:0; background-color:#fff }
+.panel h4.nav {padding:2px 2px 4px 6px;text-align:center;margin-top:2px}
+.panel h4 .prev, h4.next { background-color:#cdf;padding:1px 0.5em;border:1px outset #cdf;margin:0px; }
+.panel h4 .prev {float:left; margin-right:1em}
+.panel h4 .next {float:right;margin-left:1em }
+.panel h4 .prev a, .panel h4 .next a { font-weight: bold; text-decoration: none; color: #369 }
+
+/* and the content for these divs! */
+.panel div.content{border-top:1px solid #369;background-color:#fff;margin-bottom:0px;padding-bottom:0.5em}
+.content p{margin:2px 0.5em}
+.content th{vertical-align:top;text-align:right}
+.content td{vertical-align:top}
+.content td .multicol{float:left;width:12em}
+
+p#bottompad{margin:0;border:0;padding:0;clear:both;height:1px;overflow:none}
+
