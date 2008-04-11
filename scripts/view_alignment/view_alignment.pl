@@ -44,6 +44,7 @@ It must also be run under X windows.
 view_alignment --help
 
 view_alignment 
+    [--mfa_file multi fasta file]
     [--reg_conf registry_configuration_file]
     [--dbname compara_database]
     [--alignment_type alignment_type]
@@ -79,6 +80,10 @@ view_alignment
 =head2 CONFIGURATION
 
 =over
+
+=item B<[--mfa_file multi fasta file]>
+
+Display the alignment from a multi fasta file. No other arguments required.
 
 =item B<[--reg_conf registry_configuration_file]>
 
@@ -274,6 +279,7 @@ my $_fofn_name = "ensembl_fofn";
 my $_array_files;
 my $_file_list;
 my $exp_line_len = 67;
+my $mfa_file;
 
 GetOptions(
     "help" => \$help,
@@ -296,6 +302,7 @@ GetOptions(
      "template_display" => \$template_display,
      "repeat_feature=s" => \$set_of_repeat_features,
      "file_of_repeat_feature=s" => \$file_of_repeat_features,
+     "mfa_file=s" => \$mfa_file,
   );
 
 if ($help) {
@@ -320,6 +327,13 @@ $reg->no_version_check(1);
 # Uses $reg_conf if supplied. Uses ENV{ENSMEBL_REGISTRY} instead if defined. 
 # Uses ~/.ensembl_init if all the previous fail.
 $reg->load_all($reg_conf);
+
+#Load in alignment from multi fasta file
+if (defined $mfa_file) {
+
+    load_multi_fasta_file($mfa_file);
+    exit;
+}
 
 #Getting Bio::EnsEMBL::Compara::GenomicAlignBlock object
 my $genomic_align_block_adaptor = $reg->get_adaptor(
@@ -702,7 +716,7 @@ sub getCodingExons {
 sub writeConstrainedBlocks {
     my ($align_slice, $length, $FILE) = @_;
 
-    my $cons_elems = $align_slice->get_all_constrained_elements;
+    my $cons_elems = $align_slice->get_all_constrained_elements();
 
     foreach my $cons_elem (@$cons_elems) {
 	#printf("TC   COMM + %d..%d Constrained element score=%d\n", 
@@ -775,4 +789,65 @@ sub writeStartEndTags {
 
     print $FILE "TG   STOP + $start..$start Start\n"; 
     print $FILE "TG   STOP + $end..$end End\n"; 
+}
+
+sub load_multi_fasta_file {
+    my ($mfa_file) = @_;
+
+    my $exp_name;
+    my $new_contig = 1;
+    my $contig_num;
+
+    open FILE, "< $mfa_file" or die "Can't open file $mfa_file: $!\n";
+    while (<FILE>) {
+	my $line = $_;
+	chomp $line;
+	#ignore comments
+	next if ($line =~ /^;/);
+	if ($line =~ /^>/) {
+	    $line =~ tr/>//d;
+	    if (defined $exp_name){
+		print EXP "//\n";
+		close (EXP);
+		push @$_array_files, $exp_name;
+		$_file_list .= "$exp_name\n";
+	    }
+	    $exp_name = $line . ".exp";
+	    open (EXP, ">$exp_name") || die "ERROR writing ($exp_name) file\n";
+	    print EXP "ID   $line\n";
+
+	    if ($new_contig) { 
+		print EXP "AP   *new* + 0 0\n";
+		$contig_num = $line;
+		$new_contig = 0;
+	    } else {
+		print EXP "AP   $contig_num + 0 0\n";
+	    }
+	    print EXP "SQ\n";
+	    print "Creating $exp_name\n";
+	    
+	} else {
+	    $line =~ tr/-/*/;
+	    print EXP "     $line\n"; 
+	}
+    }
+    print EXP "//\n";
+    close (EXP);
+    push @$_array_files, $exp_name;
+    $_file_list .= "$exp_name\n";
+
+    open (FOFN, ">$_fofn_name") || die "ERROR writing ($_fofn_name) file\n";
+    print FOFN "$_file_list";
+    close (FOFN);
+    
+    if (!defined $gap4_db) {
+	$gap4_db = "gap4_compara_" . $mfa_file . ".0";
+    }
+
+    system "view_alignment.tcl $gap4_db $_fofn_name $template_display";
+
+    #remove experiment files
+    unlink @$_array_files;
+    #remove file of filenames
+    unlink $_fofn_name;
 }
