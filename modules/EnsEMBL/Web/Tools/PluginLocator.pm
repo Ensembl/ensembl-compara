@@ -32,7 +32,7 @@ sub new {
 }
 
 sub include {
-  ### Dynamically includes found modules in the locations specified by {{locations}}, ending in a specified (optional) suffix. Any previously loaded modules are not loaded again.
+  ### Dynamically includes found moledules in the locations specified by {{locations}}, ending in a specified (optional) suffix. Any previously loaded modules are not loaded again.
   ### Returns true even if modules failed to load. Anything calling
   ### {{include}} should check for {{warnings}} if it's important that
   ### a particular module is loaded.
@@ -41,7 +41,7 @@ sub include {
   my $success = 1;
   foreach my $module (@{ $self->locations }) {
     $module .= "::" . $self->suffix;
-    if ($self->dynamic_use($module)) {
+    if( $self->dynamic_use($module) ) {
       $self->add_child($module);
     } else {
       if (!$self->warnings) {
@@ -57,7 +57,7 @@ sub create_all {
   ### Creates an instance of each class found by {{include}}, and stores references to the objects in the {{results}} array.
   my $self = shift;
   foreach my $child (@{ $self->children }) {
-    my $temp = new $child;
+    my $temp = $child->new( @_ );
     $self->add_result($child, $temp);
   }
   return $self->results;
@@ -76,6 +76,7 @@ sub call {
   }
   return $self->results;
 }
+
 
 sub add_result {
   ### Accepts a key value pair, and stores the value in the results hash against the key.
