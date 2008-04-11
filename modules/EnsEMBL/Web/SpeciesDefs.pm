@@ -1,5 +1,3 @@
-#!/usr/local/bin/perl -w
-
 package EnsEMBL::Web::SpeciesDefs;
 
 ### SpeciesDefs - Ensembl web configuration accessor
@@ -52,20 +50,31 @@ use Carp qw( cluck );
 use Storable qw(lock_nstore lock_retrieve thaw);
 use Data::Dumper;
 
+use EnsEMBL::Web::Root;
 use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::Utils::ConfigRegistry;
 
 use Bio::EnsEMBL::Utils::Eprof qw(eprof_start eprof_end eprof_dump);
 
+use EnsEMBL::Web::Tools::PluginLocator;
+use EnsEMBL::Web::Tools::WebTree;
+use EnsEMBL::Web::Tools::RobotsTxt;
+use EnsEMBL::Web::Tools::Registry;
+use EnsEMBL::Web::Tools::MartRegistry;
+
 use DBI;
 use SiteDefs qw(:ALL);
+use Hash::Merge qw( merge );
+use Time::HiRes qw(time);
+
+our @ISA = qw(EnsEMBL::Web::Root);
 our ( $AUTOLOAD, $CONF );
 
 sub new {
   ### c
   my $class = shift;
 
-  my $self = bless( {}, $class );
+  my $self = bless( {'_start_time' => undef , '_last_time' => undef }, $class );
   my $conffile = $SiteDefs::ENSEMBL_CONF_DIRS[0].'/'.$ENSEMBL_CONFIG_FILENAME;
   $self->{'_filename'} = $conffile;
 
@@ -82,7 +91,6 @@ sub new {
       $self->{'_new_caller_array'}[$C] = \@T; $C++;
     }
   }
-  $self->{'_multi'}   = $CONF->{'_multi'};
   $self->{'_storage'} = $CONF->{'_storage'};
 
   return $self;
@@ -121,92 +129,6 @@ sub AUTOLOAD {
   my $var = our $AUTOLOAD;
   $var =~ s/.*:://;
   return $self->get_config( $species, $var );
-}
-
-
-sub configure_registry {
-  ### Loads the adaptor into the registry from the CONF definitions
-  ### Returns: none
-  my $self = shift;
-  my %adaptors = (
-    'VARIATION' => 'Bio::EnsEMBL::Variation::DBSQL::DBAdaptor', 
-    'FUNCGEN'   => 'Bio::EnsEMBL::Funcgen::DBSQL::DBAdaptor', 
-    'SNP'       => 'Bio::EnsEMBL::ExternalData::SNPSQL::DBAdaptor',
-    'LITE'      => 'Bio::EnsEMBL::Lite::DBAdaptor',
-    'HAPLOTYPE' => 'Bio::EnsEMBL::ExternalData::Haplotype::DBAdaptor',
-    'EST'       => 'Bio::EnsEMBL::DBSQL::DBAdaptor',
-    'OTHERFEATURES' => 'Bio::EnsEMBL::DBSQL::DBAdaptor',
-    'CDNA'      => 'Bio::EnsEMBL::DBSQL::DBAdaptor',
-    'VEGA'      => 'Bio::EnsEMBL::DBSQL::DBAdaptor',
-    'DB'        => 'Bio::EnsEMBL::DBSQL::DBAdaptor',
-    'COMPARA'   => 'Bio::EnsEMBL::Compara::DBSQL::DBAdaptor',
-    'ENSEMBL_VEGA'  => 'Bio::EnsEMBL::DBSQL::DBAdaptor',
-    'COMPARA_MULTIPLE'  => undef,
-    'WEBSITE'     => undef,
-    'HEALTHCHECK' => undef,
-    'BLAST'       => undef,
-    'BLAST_LOG'   => undef,
-    'MART'        => undef,
-    'GO'          => undef,
-    'FASTA'       => undef,
-  ); 
-   
-  for my $species ( keys %{$CONF->{_storage}} ) {
-    (my $sp = $species ) =~ s/_/ /g;
-    Bio::EnsEMBL::Registry->add_alias( $species, $sp );
-    for my $type ( keys %{$CONF->{'_storage'}{$species}{databases}}){
-## Grab the configuration information from the SpeciesDefs object
-      my $TEMP = $CONF->{'_storage'}{$species}{databases}{$type};
-## Skip if the name hasn't been set (mis-configured database)
-      if(! $TEMP->{NAME}){warn((' 'x10)."[WARN] no NAME for $sp $type") && next}
-      if(! $TEMP->{USER}){warn((' 'x10)."[WARN] no USER for $sp $type") && next}
-      next unless $TEMP->{NAME};
-      next unless $TEMP->{USER};
-      my %arg = ( '-species' => $species, '-dbname' => $TEMP->{NAME} );
-## Copy through the other parameters if defined
-      foreach (qw(host pass port user driver)) {
-        $arg{ "-$_" } = $TEMP->{uc($_)} if defined $TEMP->{uc($_)};
-      }
-## Check to see if the adaptor is in the known list above
-      if( $type =~ /ENSEMBL_(\w+)/ && exists $adaptors{$1}  ) {
-## If the value is defined then we will create the adaptor here...
-        if( my $module = $adaptors{ my $key = $1 } ) {
-## Hack because we map ENSEMBL_DB to 'core' not 'DB'....
-          my $group = $key eq 'DB' ? 'core' : lc( $key );
-          $group = 'otherfeatures' if $group eq 'est';
-## Create a new "module" object... stores info - but doesn't create connection yet!
-          if( $self->dynamic_use( $module ) ) {
-            $module->new( %arg, '-group' => $group );
-          }
-## Add information to the registry...
-          Bio::EnsEMBL::Registry->set_default_track( $species, $group );
-        }
-      } else {
-        warn("unknown database type $type\n");
-      }
-    }
-  }
-  Bio::EnsEMBL::Registry->load_all($SiteDefs::ENSEMBL_REGISTRY);
-  if ($SiteDefs::ENSEMBL_NOVERSIONCHECK) {
-    Bio::EnsEMBL::Registry->no_version_check(1);
-  }
-}
-
-sub dynamic_use {
-  ### Dynamically includes a required module
-  ### Argument: class name of the module to include
-  ### Returns: boolean
-  my( $self, $classname ) = @_;
-  my( $parent_namespace, $module ) = $classname =~/^(.*::)(.*)$/ ? ($1,$2) : ('::',$classname);
-  no strict 'refs';
-  return 1 if $parent_namespace->{$module.'::'}; # return if already used
-  eval "require $classname";
-  if($@) {
-    warn "EnsEMBL::Web::SpeciesDefs: failed to use $classname\nEnsEMBL::Web::SpeciesDefs: $@";
-    return 0;
-  }
-  $classname->import();
-  return 1;
 }
 
 sub get_config {
@@ -250,7 +172,7 @@ sub retrieve {
   ### Exceptions: The filesystem-cache file cannot be opened
   my $self = shift;
   my $Q = lock_retrieve( $self->{'_filename'} ) or die( "Can't open $self->{'_filename'}: $!" ); 
-  ( $CONF->{'_storage'}, $CONF->{'_multi'} ) = @$Q if ref($Q) eq 'ARRAY';
+  $CONF->{'_storage'} = $Q if ref($Q) eq 'HASH';
   return 1;
 }
 
@@ -259,8 +181,9 @@ sub store {
   ### Returns: boolean 
   ### Caller: perl.startup, on first (validation) pass of httpd.conf
   my $self = shift;
+  warn "$self->{_filename}";
   die "[CONF]    [FATAL] Could not write to $self->{'_filename'}: $!" unless
-    lock_nstore( [ $CONF->{'_storage'}, $CONF->{'_multi'} ], $self->{_filename} );
+    lock_nstore( $CONF->{'_storage'}, $self->{_filename} );
   return 1;
 }
 
@@ -269,18 +192,22 @@ sub parse {
   ### Retrieves a stored configuration or creates a new one
   ### Returns: boolean
   ### Caller: $self->new when filesystem and memory caches are empty
-  my  $self  = shift;
-  if( ! $SiteDefs::ENSEMBL_CONFIG_BUILD and -e $self->{_filename} ){
+  my $self  = shift;
+  my $reg_conf = EnsEMBL::Web::Tools::Registry->new( $CONF );
+  $self->{_start_time} = time;
+  $self->{_last_time } = $self->{_start_time};
+  if( ! $SiteDefs::ENSEMBL_CONFIG_BUILD && -e $self->{_filename} ){
     warn( ( '-' x 78 ) ."\n",
           "[CONF]    \033[0;32m[INFO] Retrieving conf from $self->{_filename}\033[0;39m\n",
           ( '-' x 78 ) ."\n" );
     $self->retrieve();
-    $self->configure_registry();
+    $reg_conf->configure();
     return 1;
   }
   $self->_parse();
-  $self->configure_registry();
-  $self->create_robots_txt();
+  $self->store();
+  $reg_conf->configure();
+  EnsEMBL::Web::Tools::RobotsTxt::create();
   $self->{'_parse_caller_array'} = [];
   my $C = 0;
   while(my @T = caller($C) ) { $self->{'_parse_caller_array'}[$C] = \@T; $C++; }
@@ -290,7 +217,7 @@ sub _convert_date {
   ### Converts a date from a species database into a human-friendly format for web display 
   ### Argument: date in format YYYY-MM with optional -string attached
   ### Returns: hash ref {'date' => 'Mmm YYYY', 'string' => 'xxxxx'}
-  my $date = shift;
+  my $date = @_;
   my %parsed;
   my @a = ($date =~ /(\d{4})-(\d{2})-?(.*)/);
   my @now = localtime();
@@ -316,982 +243,242 @@ sub _convert_date {
   return \%parsed;
 }
 
-sub _parse {
-  ### Does the actual parsing of .ini files and now also gets
-  ### some information from the databases (assembly details, miniads)
-  ### Returns: boolean
-  my $self = shift; 
-  warn '-' x 78 , "\n[CONF]    [INFO] Parsing .ini files\n" ;
-  $CONF->{'_storage'} = {};
-  my $TREE; 
 
+sub _load_in_webtree {
+### Load in the contents of the web tree....
+### Check for cached value first....
+  my $self = shift;
+  my $web_tree_packed = $SiteDefs::ENSEMBL_CONF_DIRS[0].'/packed/web_tree_packed';
   my $web_tree = { _path => '/' };
-  for my $root (reverse @ENSEMBL_HTDOCS_DIRS) {
-    read_web_tree($web_tree, $root);
+  if( -e $web_tree_packed ) {
+    $web_tree = lock_retrieve( $web_tree_packed );
+  } else {
+    for my $root (reverse @ENSEMBL_HTDOCS_DIRS) {
+      EnsEMBL::Web::Tools::WebTree::read_tree( $web_tree, $root );
+    }
+    lock_nstore( $web_tree, $web_tree_packed );
   }
-  $TREE->{'ENSEMBL_WEB_TREE'} = $web_tree;
+  return $web_tree;
+}
 
-  my ($defaults, $common);
-
-###### Loop for each species exported from SiteDefs
-  
-  foreach my $filename ( 'DEFAULTS', @$ENSEMBL_SPECIES, 'MULTI' ) {
-    warn "-" x 78, "\n[SPECIES] [INFO] Starting $filename\n";
-    my $tree            = {%$TREE};
-    
-###### Read and parse the <species>.ini file
-    my $inifile;
-    foreach my $confdir( @SiteDefs::ENSEMBL_CONF_DIRS ){
-      if( -e "$confdir/ini-files/$filename.ini" ){
-        if( -r "$confdir/ini-files/$filename.ini" ){
-          $inifile = "$confdir/ini-files/$filename.ini";
-        } else {
-          warn "$confdir/ini-files/$filename.ini is not readable\n" ;
-          next;
-        }
-        #warn "OPENING $inifile\n";
-        open FH, $inifile or die( "Problem with $inifile: $!" );
-###### Loop for each line of <species>.ini
-        my $current_section = undef;
-        my $line_number     = 0;
-        my %taxon_order;
-        while(<FH>) {
-          s/\s+[;].*$//;    # These two lines remove any comment strings
-          s/^[#;].*$//;     # from the ini file - basically ; or #..
-          if( /^\[\s*(\w+)\s*\]/ ) {          # New section - i.e. [ ... ]
-            $current_section          = $1;
-            $tree->{$current_section} ||= {}; # create new # element if required
-            if(defined $defaults->{ $current_section }) { #add settings from default!!
-              my %hash = %{$defaults->{ $current_section }};
-              foreach( keys %hash ) {
-                $tree->{$current_section}{$_} = $defaults->{$current_section}{$_};
-              }
-            }
-          } elsif (/(\w\S*)\s*=\s*(.*)/ && defined $current_section) { # Config entry
-            my ($key,$value) = ($1,$2); ## Add a config entry under the current 'top level'
-            $value=~s/\s*$//;
-            if($value=~/^\[\s*(.*?)\s*\]$/) { # [ - ] signifies an array
-              my @array = split /\s+/, $1;
-              $value = \@array;
-            }
-            $tree->{$current_section}{$key} = $value;
-          } elsif (/([.\w]+)\s*=\s*(.*)/) { # precedes a [ ] section
-            print STDERR "\t  [WARN] NO SECTION $filename.ini($line_number) -> $1 = $2;\n";
-          }
-          $line_number++;
-        }
-        close FH;
-      }
+sub _merge_in_dhtml {
+  my( $self, $tree ) = @_;
+  my $inifile = $SiteDefs::ENSEMBL_CONF_DIRS[0].'/packed/dhtml.ini';
+  return unless( -e $inifile && open I, $inifile );
+  while(<I>) {
+    next unless /^(\w+)\s*=\s*(\w+)/;
+    if( $1 eq 'css' ) {
+      $tree->{'ENSEMBL_CSS_NAME'} = $2;
+    } elsif( $1 eq 'js' ) {
+      $tree->{'ENSEMBL_JS_NAME'} = $2;
+    } elsif( $1 eq 'type' ) {
+      $tree->{'ENSEMBL_JSCSS_TYPE'} = $2;
     }
-    if( ! $inifile ) {
-      warn "could not find $filename.ini in @{[@SiteDefs::ENSEMBL_CONF_DIRS]}";
-      next;
-    }
+  }
+  close I;
+}
 
-######### Deal with DEFAULTS.ini -- store the information collected in a separate tree...
-#########                           and skip the remainder of this code...
-    if( $filename eq 'DEFAULTS' ) {
-      print STDERR ( "\t  [INFO] Defaults file successfully stored\n" );
-      $defaults = $tree;
-      next;
-    }
-
-############### <species>.ini read and parsed 
-        
-######### Prepare database config
-######### Default database values, used if no [database] section included
-    my $HOST   = $tree->{'general'}{'ENSEMBL_HOST'};      
-    my $PORT   = $tree->{'general'}{'ENSEMBL_HOST_PORT'}; 
-    my $USER   = $tree->{'general'}{'ENSEMBL_DBUSER'};    
-    my $PASS   = $tree->{'general'}{'ENSEMBL_DBPASS'};    
-    my $DRIVER = $tree->{'general'}{'ENSEMBL_DRIVER'} || 'mysql';    
-    
-## For each database look for non-default config..
-    if( exists $tree->{'databases'} ) {
-      foreach my $key ( keys %{$tree->{'databases'}} ) {
-        my $DB_NAME = $tree->{'databases'}{$key};
-      print "$key......$DB_NAME\n";
-        if( $DB_NAME =~ /%_(\w+)_%/ ) {
-          $DB_NAME = lc(sprintf( '%s_%s_%s_%s', $filename , $1, $SiteDefs::ENSEMBL_VERSION, $tree->{'general'}{'SPECIES_RELEASE_VERSION'} ));
-        } elsif( $DB_NAME =~/%_(\w+)/ ) {
-          $DB_NAME = lc(sprintf( '%s_%s_%s', $filename , $1, $SiteDefs::ENSEMBL_VERSION ));
-        } elsif( $DB_NAME =~/(\w+)_%_/ ) {
-          $DB_NAME = lc(sprintf( '%s_%s', $1, $SiteDefs::ENSEMBL_VERSION ));
-        }
-        if($tree->{'databases'}{$key} eq '') {
-          delete $tree->{'databases'}{$key};
-        } elsif(exists $tree->{$key} && exists $tree->{$key}{'HOST'}) {
-          my %cnf = %{$tree->{$key}};
-          $tree->{'databases'}{$key} = {
-            'NAME'   => $DB_NAME,
-            'HOST'   => exists( $cnf{'HOST'}  ) ? $cnf{'HOST'}   : $HOST,
-            'USER'   => exists( $cnf{'USER'}  ) ? $cnf{'USER'}   : $USER,
-            'PORT'   => exists( $cnf{'PORT'}  ) ? $cnf{'PORT'}   : $PORT,
-            'PASS'   => exists( $cnf{'PASS'}  ) ? $cnf{'PASS'}   : $PASS,
-            'DRIVER' => exists( $cnf{'DRIVER'}) ? $cnf{'DRIVER'} : $DRIVER,
-          };
-          delete $tree->{$key};
-        } else {
-          $tree->{'databases'}{$key} = {
-            'NAME'   => $DB_NAME,
-            'HOST'   => $HOST,
-            'USER'   => $USER,
-            'PORT'   => $PORT,
-            'PASS'   => $PASS,
-            'DRIVER' => $DRIVER
-          };
-        }
-      }
-    }
-
-    $common = $tree;
-
-    ## get some info from core meta table
-    unless ($filename eq 'MULTI' and !$tree->{'databases'}->{'ENSEMBL_DB'}) {
-      ## hash of keys (other than taxonomy) that we want to use
-      my %meta_map = (
-        'species.ensembl_alias_name'  => 'SPECIES_COMMON_NAME',
-        'assembly.default'            => 'ENSEMBL_GOLDEN_PATH',
-        'assembly.name'               => 'ASSEMBLY_ID',
-      );
-
-      my $dbh = $self->db_connect( $tree, 'ENSEMBL_DB' );
-      my $sql = qq(SELECT * FROM meta WHERE meta_key != 'patch' ORDER BY meta_id);
-      my $sth = $dbh->prepare( $sql );
-      my $rst  = $sth->execute || die( $sth->errstr );
-      my $results = $sth->fetchall_arrayref();
-      print STDERR "\t  [WARN] NO METADATA!!\n" if !@$results;
-      my @taxonomy = ();
-      foreach my $row (@$results) {
-        my $key   = $row->[1];
-        my $value = $row->[2];
-        if ($key eq 'species.classification') {
-          push(@taxonomy, $value);
-        }
-        elsif ($key eq 'assembly.date') {
-          my $assembly = _convert_date($value);
-          $tree->{'general'}{'ASSEMBLY_DATE'} = $assembly->{'date'};
-          print STDERR "\t  [WARN] NO ASSEMBLY DATE\n" if !$assembly->{'date'};
-        }
-        elsif ($key eq 'genebuild.version') {
-          my $genebuild = _convert_date($value);
-          $tree->{'general'}{'GENEBUILD_DATE'} = $genebuild->{'date'};
-          $tree->{'general'}{'GENEBUILD_BY'} = $genebuild->{'string'};  
-          print STDERR "\t  [WARN] NO GENEBUILD DATE \n" if !$genebuild->{'date'};
-          print STDERR "\t  [WARN] NO GENEBUILD NAME \n" if !$genebuild->{'string'};
-        }
-        elsif ($key eq 'species.ensembl_common_name') {
-          $tree->{'general'}{'SPECIES_DESCRIPTION'} = $value;
-        }
-        elsif ($key eq 'species.common_name' && !$tree->{'general'}{'SPECIES_DESCRIPTION'}) {
-          $tree->{'general'}{'SPECIES_DESCRIPTION'} = $value;
-        }
-        elsif (my $v = $meta_map{$key}) {
-          $tree->{'general'}{$v} = $value;
-          print STDERR "\t  [WARN] EMPTY VARIABLE $v\n" if !$value;
-        }
-      }
-      $sth->finish();
-      $dbh->disconnect();
-
-      # SPECIES_ABBREVIATION
-      if ($filename eq "MULTI") { ## Required for Ancestral sequences DB
-        "Ancestral_sequences" =~ /^([A-Z])[a-z]+_([a-z]{3})[a-z]*$/;
+sub _read_in_ini_file {
+  my $tree = {};
+  my( $self, $filename, $defaults ) = @_;
+  my $inifile  = undef;
+  foreach my $confdir( @SiteDefs::ENSEMBL_CONF_DIRS ){
+    if( -e "$confdir/ini-files/$filename.ini" ){
+      if( -r "$confdir/ini-files/$filename.ini" ){
+        $inifile = "$confdir/ini-files/$filename.ini";
       } else {
-        $filename =~ /^([A-Z])[a-z]+_([a-z]{3})[a-z]*$/;
-      }
-      $tree->{'general'}{'SPECIES_ABBREVIATION'} = $1.$2;
-
-      ## Do species name and group
-      (my $ininame = $filename) =~ s/_/ /g;
-      if ($filename eq "MULTI") {  ## Required for Ancestral sequences DB
-        $ininame = "Ancestral sequences";
-      }
-      my $bioname = $taxonomy[1].' '.$taxonomy[0];
-      my $order = $tree->{'general'}{'TAXON_ORDER'};
-      $tree->{'general'}{'SPECIES_BIO_NAME'} = $ininame;
-      foreach my $taxon (@taxonomy) {
-        foreach my $group (@$order) {
-          if ($taxon eq $group) {
-            $tree->{'general'}{'SPECIES_GROUP'} = $group;
-            last;
-          }
-        }
-        last if $tree->{'general'}{'SPECIES_GROUP'};
-      }
-     
-      ## Other useful species info
-      $dbh = $self->db_connect( $tree, 'ENSEMBL_WEBSITE' );
-      
-      $sql = qq(SELECT s.species_id, s.vega, rs.assembly_name, rs.pre_name
-                FROM release_species rs, species s
-                WHERE s.species_id = rs.species_id
-                AND rs.release_id = $SiteDefs::ENSEMBL_VERSION 
-                AND s.name = '$filename'
-          );
-      $sth = $dbh->prepare( $sql );
-      $rst  = $sth->execute || die( $sth->errstr );
-      $results = $sth->fetchall_arrayref();
-      my $T = $results->[0];
-      $tree->{'general'}{'SPECIES_INFO'} = {
-          'id'        => $T->[0],
-          'vega'      => $T->[1],
-          'assembly'  => $T->[2],
-          'pre'       => $T->[3],
-      };
-      my $prev_rel = $SiteDefs::ENSEMBL_VERSION - 1;
-      $sql = qq(SELECT rs.assembly_name, rs.pre_name
-                FROM release_species rs, species s
-                WHERE s.species_id = rs.species_id
-                AND release_id = $prev_rel
-                AND s.name = '$filename'
-          );
-      $sth = $dbh->prepare( $sql );
-      $rst  = $sth->execute || die( $sth->errstr );
-      $results = $sth->fetchall_arrayref();
-      $T = $results->[0];
-      $tree->{'general'}{'SPECIES_INFO'}{'prev_assembly'} = $T->[0]; 
-      $tree->{'general'}{'SPECIES_INFO'}{'prev_pre'} =      $T->[1]; 
- 
-      ## Also get archive info for species
-      $tree->{'archive'} = {};
-      $sql = qq(SELECT r.release_id, r.assembly_name, e.archive, e.online
-                    FROM release_species r, species s, ens_release e
-                    WHERE r.species_id = s.species_id
-                    AND r.release_id = e.release_id
-                    AND r.assembly_name != ''
-                    AND s.name = '$filename'
-                    ORDER BY r.release_id
-            );
-        
-      $sth = $dbh->prepare( $sql );
-      $rst  = $sth->execute || die( $sth->errstr );
-      $results = $sth->fetchall_arrayref();
-      foreach my $row (@$results) {
-        my $release_id  = $row->[0];
-        my $assembly    = $row->[1];
-        my $archive     = $row->[2];
-        my $online      = $row->[3];
-        $tree->{'archive'}{'assemblies'}{$release_id} = $assembly;
-        if ($online eq 'Y') {
-          $tree->{'archive'}{'online'}{$release_id} = $archive;
-        }
-      }
-      $sth->finish();
-      $dbh->disconnect();
-    }
-
-    ## Also cache miniad data
-    my @miniads;
-    my $dbh = $self->db_connect( $tree, 'ENSEMBL_WEBSITE' );
-    my $sql = qq(SELECT image, alt, url 
-              FROM miniad
-              WHERE start_date < NOW() AND end_date > NOW()
-    );
-    my $sth = $dbh->prepare( $sql );
-    my $rst  = $sth->execute || die( $sth->errstr );
-    my $results = $sth->fetchall_arrayref();
-    foreach my $r (@$results) {
-      push @miniads, {
-        'image' => $r->[0],
-        'alt'   => $r->[1],
-        'url'   => $r->[2],
-      };
-    }
-    $tree->{'miniads'} = \@miniads;
-    $sth->finish();
-    $dbh->disconnect();
-
-#### INI FILE BLAST DATABASES
-# Creates default file name of format
-# Anopheles_gambiae.AgamP3.39.dna_rm.seqlevel.fa if the value "%_" is in ini file
-
-    foreach my $blast_type (keys %$tree) {
-      next unless $blast_type =~ /_DATASOURCES/;
-      foreach my $source ( keys %{$tree->{$blast_type}} ) {
-	      my $file = $tree->{$blast_type}{$source};
-	      next unless $file =~ /^%_/;
-	      my $assembly = $tree->{'general'}{'ENSEMBL_GOLDEN_PATH'};
-	      (my $type = lc($source)) =~ s/_/\./ ;
-	      if ($type =~ /latestgp/) {
-	        $type =~ s/latestgp(.*)/dna$1\.toplevel/;
-	        $type =~ s/.masked/_rm/;
-	      }
-	      $type = "ncrna" if $type eq 'rna.nc';
-	      my $new_file = sprintf( '%s.%s.%s.%s', $filename, $assembly, $SiteDefs::ENSEMBL_VERSION, $type ).".fa";
-	      #print "AUTOGENERATING $source......$new_file\t";
-	      $tree->{$blast_type}{$source} = $new_file;
-      }
-    }
-
-
-#### This is the bit of code which handles the "Multi-species" part of the hash....
-#### It creates an entry "_multi" with the following structure:
-####
-#### databases => 
-####     ENSEMBL_COMPARA =>
-####         HOST => ecs1d
-####         NAME => compara_mouse_4_2
-####         PASS => 
-####         PORT => 3306
-####         USER => ensro
-#### SYNTENY => 
-####     Homo_sapiens => 
-####         Mus_musculus  => 1 # Mouse is     running on server
-####         Fugu_rubripes => 0 # Fugu  is NOT running on server
-####     Fugu_rubripes => 
-####         Homo_sapiens  => 1
-####     Mus_musculus => 
-####         Homo_sapiens  => 1
-#### GENE    => 
-####       ..................
-#### DNA     => 
-####       ..................
-#### 
-
-    foreach( keys %{$tree->{'general'}} ) {  
-      $tree->{$_} = $tree->{'general'}{$_};
-    }
-    delete $tree->{'general'};
-    if( $filename eq 'MULTI' ) { ## This is the multispecies hash...
-      my $dbh;
-      if( $tree->{'databases'}->{'ENSEMBL_COMPARA_MULTIPLE'} ){
-        $dbh = $self->db_connect( $tree, 'ENSEMBL_COMPARA_MULTIPLE' );
-      } elsif(  $tree->{'databases'}->{'ENSEMBL_COMPARA'} ) {
-        $dbh = $self->db_connect( $tree, 'ENSEMBL_COMPARA' );
-      }
-      if($dbh) {
-        my %sections = (
-          'SYNTENY' => 'GENE_MULTIPLE',
-        );
-        ## We've done the DB hash...
-        ## So lets get on with the multiple alignment hash;
-	      my $q = qq{
-	        SELECT ml.class, ml.type, gd.name, mlss.name, mlss.method_link_species_set_id, ss.species_set_id
-	        FROM   method_link ml, method_link_species_set mlss, genome_db gd, species_set ss 
-	        WHERE  mlss.method_link_id = ml.method_link_id 
-          AND    mlss.species_set_id=ss.species_set_id 
-          AND    ss.genome_db_id = gd.genome_db_id 
-          AND    ml.type in ('GERP_CONSERVATION_SCORE','GERP_CONSTRAINED_ELEMENT','ORTHEUS','PECAN','MLAGAN','BLASTZ_NET','BLASTZ_RAW')};
-
-          my $sth = $dbh->prepare( $q );
-          my $rv  = $sth->execute || die( $sth->errstr );
-          my $results = $sth->fetchall_arrayref();
-
-          my $constrained_elements;
-
-          foreach my $row ( @$results ) {
-            my ($class, $type, $species, $name, $id, $species_set_id) =
-                ($row->[0], uc($row->[1]), $row->[2], $row->[3], $row->[4], $row->[5]);
-            my $KEY = 'ALIGNMENTS';
-            if ($class =~ /ConservationScore/ or $type =~ /CONSERVATION_SCORE/) {
-              $KEY = "CONSERVATION_SCORES";
-              $name = "Conservation scores";
-            } elsif ($class =~ /constrained_element/ or $type =~ /CONSTRAINED_ELEMENT/) {
-              $KEY = "CONSTRAINED_ELEMENTS";
-              $constrained_elements->{$species_set_id} = $id;
-              $name = "Constrained elements";
-            } elsif ($class =~ /tree_alignment/ or $type =~ /ORTHEUS/) {
-              if (!defined($tree->{$KEY}) or !defined($tree->{$KEY}->{$id})) {
-                $tree->{$KEY}->{$id}->{'species'}->{"Ancestral_sequences"} = 1;
-              }
-            }
-            $species =~ tr/ /_/;
-            $tree->{$KEY}->{$id}->{'id'} = $id;
-            $tree->{$KEY}->{$id}->{'name'} = $name;
-            $tree->{$KEY}->{$id}->{'type'} = $type;
-            $tree->{$KEY}->{$id}->{'class'} = $class;
-            $tree->{$KEY}->{$id}->{'species_set_id'} = $species_set_id;
-            $tree->{$KEY}->{$id}->{'species'}->{$species} = 1;
-          }
-          $sth->finish();
-          while (my ($species_set_id, $constr_elem_id) = each %$constrained_elements) {
-            foreach my $id (keys %{$tree->{'ALIGNMENTS'}}) {
-              if ($tree->{'ALIGNMENTS'}->{$id}->{'species_set_id'} == $species_set_id) {
-                $tree->{'ALIGNMENTS'}->{$id}->{'constrained_element'} = $constr_elem_id;
-              }
-            }
-          }
-
-          $q = qq{SELECT meta_key, meta_value FROM meta where meta_key LIKE "gerp_%"};
-
-          $sth = $dbh->prepare( $q );
-          $rv  = $sth->execute || die( $sth->errstr );
-          $results = $sth->fetchall_arrayref();
-
-          foreach my $row ( @$results ) {
-            my ($meta_key, $meta_value) = ($row->[0], $row->[1]);
-            my ($conservation_score_id) = $meta_key =~ /gerp_(\d+)/;
-            next if (!$conservation_score_id);
-            $tree->{'ALIGNMENTS'}->{$meta_value}->{'conservation_score'} = $conservation_score_id;
-          }
-
-#	warn("$KEY: ". Data::Dumper::Dumper($tree->{$KEY}));
-
-          $sth->finish();
-          $dbh->disconnect();
-        }
-    
-        if( $tree->{'databases'}->{'ENSEMBL_COMPARA'} ){
-          $dbh = $self->db_connect( $tree, 'ENSEMBL_COMPARA' );
-        }
-
-        if($dbh) {
-          my %sections = (
-            'ENSEMBL_ORTHOLOGUES' => 'GENE',
-            'HOMOLOGOUS_GENE'     => 'GENE',
-            'HOMOLOGOUS'          => 'GENE',
-          );
-        # We've done the DB hash...
-        # So lets get on with the DNA, SYNTENY and GENE hashes;
-	        my $q = qq{select ml.type, gd1.name, gd2.name from genome_db gd1, genome_db gd2, species_set ss1, species_set ss2 , method_link ml, method_link_species_set mls1, method_link_species_set mls2 where mls1.method_link_species_set_id = mls2.method_link_species_set_id and ml.method_link_id = mls1.method_link_id and ml.method_link_id = mls2.method_link_id and gd1.genome_db_id != gd2.genome_db_id and mls1.species_set_id = ss1.species_set_id and mls2.species_set_id = ss2.species_set_id and ss1.genome_db_id = gd1.genome_db_id and ss2.genome_db_id = gd2.genome_db_id};
-
-		  my $sth = $dbh->prepare( $q );
-		  my $rv  = $sth->execute || die( $sth->errstr );
-		  my $results = $sth->fetchall_arrayref();
-
-		  my $self_comparisons = 0;
-		  my %config;
-		  #see if there are any intraspecies alignments (ie a self compara)
-		  $q = "select ml.type, gd.name, gd.name, count(*) as count
-                  from method_link_species_set as mls, method_link as ml, species_set as ss, genome_db as gd 
-                 where mls.species_set_id = ss.species_set_id
-                   and ss.genome_db_id = gd.genome_db_id 
-                   and mls.method_link_id = ml.method_link_id
-                   and ml.type not like '%PARALOGUES'
-                 group by mls.method_link_species_set_id, mls.method_link_id
-                having count = 1";
-		  $sth = $dbh->prepare( $q );
-		  $rv  = $sth->execute || die( $sth->errstr );
-		  my $v_results = $sth->fetchall_arrayref();
-		  foreach my $config (@$v_results) {
-			  $self_comparisons = 1;
-			  pop @$config;
-			  push @$results,$config;
-		  }
-
-		  #if there are intraspecies alignments then get the details (currently only for Vega)
-		  if ($self_comparisons) {
-			  #get the stored data structure
-			  my $file_name = $SiteDefs::ENSEMBL_CONF_DIRS[0].'/'.'Multi.config';
-			  if (-e $file_name) {
-				  print STDERR "          [WARN]Retrieving alignment data from $file_name\n";
-				  %config = %{lock_retrieve($file_name)};		
-			  }
-			  else {
-				  print STDERR "          [INFO]Parsing compara database for alignment details\n";
-				  ## get details of all genomic alignments in Vega self compara
-#			      &eprof_start('new_mysql');
-
-				  #get details of seq_regions in the database
-				  $q = qq(select df.dnafrag_id,
-                                 df.name, 
-                                 df.coord_system_name, 
-                                 gdb.name
-                            from dnafrag df, 
-                                 genome_db gdb
-                           where df.genome_db_id = gdb.genome_db_id );
-				  $sth = $dbh->prepare( $q );
-				  $rv  = $sth->execute || die( $sth->errstr );
-				  my %genomic_regions;
-				  while (my ($dnafrag_id,$sr,$coord_system,$species) = $sth->fetchrow_array ) {
-					  $species =~ s/ /_/;
-					  $genomic_regions{$dnafrag_id} = {
-													   species    => $species,
-													   seq_region => $sr,
-													   coord_system => $coord_system,
-													  };
-				  }
-#			      warn "genomic regions are ",Dumper(\%genomic_regions);
-
-				  #get details of methods in the database -
-				  $q = qq(select mlss.method_link_species_set_id, ml.type
-                            from method_link_species_set mlss, 
-                                 method_link ml
-                           where mlss.method_link_id = ml.method_link_id);
-				  $sth = $dbh->prepare( $q );
-				  $rv  = $sth->execute || die( $sth->errstr );
-				  my %methods;
-				  while (my ($mlss, $type) = $sth->fetchrow_array ) {
-					  $methods{$mlss} = $type;
-				  }
-#			      warn "methods are ",Dumper(\%methods);
-
-				  #get details of alignments
-				  $q = qq(select genomic_align_block_id,
-                                 method_link_species_set_id,
-                                 dnafrag_start,
-                                 dnafrag_end,
-                                 dnafrag_id
-                            from genomic_align
-                        order by genomic_align_block_id,
-                                 dnafrag_id);
-				  $sth = $dbh->prepare( $q );
-				  $rv  = $sth->execute || die( $sth->errstr );
-
-#			      &eprof_end('new_mysql');
-
-				  #parse the data
-#			      &eprof_start('new parsing');
-				  my (@seen_ids,$prev_id,$prev_df_id,$prev_comparison,$prev_method,$prev_start,$prev_end,$prev_sr,$prev_species,$prev_coord_sys);
-				  while (my ($gabid,$mlss_id,$start,$end,$df_id) = $sth->fetchrow_array) {
-					  my $id = $gabid.$mlss_id;
-					  if ($id eq $prev_id) {
-						  my $this_method    = $methods{$mlss_id};
-						  my $this_sr        = $genomic_regions{$df_id}->{'seq_region'};
-						  my $this_species   = $genomic_regions{$df_id}->{'species'};
-						  my $this_coord_sys = $genomic_regions{$df_id}->{'coord_system'};
-						  my $comparison     = "$this_sr:$prev_sr";
-						  my $coords         = "$this_coord_sys:$prev_coord_sys";
-						
-						  #add a record of the coord systems used (might be needed for zebrafish ?)
-						  $config{$this_method}{$this_species}{$prev_species}{$comparison}{'coord_systems'} = "$coords";
-						  #add names of compared regions
-						  $config{$this_method}{$this_species}{$prev_species}{$comparison}{'source_name'}    = "$this_sr";
-						  $config{$this_method}{$this_species}{$prev_species}{$comparison}{'source_species'} = "$this_species";
-						  $config{$this_method}{$this_species}{$prev_species}{$comparison}{'target_name'}    = "$prev_sr";
-						  $config{$this_method}{$this_species}{$prev_species}{$comparison}{'target_species'} = "$prev_species";
-						  $config{$this_method}{$this_species}{$prev_species}{$comparison}{'mlss_id'}         = "$mlss_id";
-						
-						  #look for smallest start in this comparison
-						  &get_vega_regions(\%config,$this_method,$comparison,$this_species,$prev_species,$start,$prev_start,'start');
-						  #look for largest ends in this comparison
-						  &get_vega_regions(\%config,$this_method,$comparison,$this_species,$prev_species,$end,$prev_end,'end');
-					  }
-					  else {
-						  $prev_id        = $id;
-						  $prev_df_id     = $df_id;
-						  $prev_start     = $start;
-						  $prev_end       = $end;
-						  $prev_sr        = $genomic_regions{$df_id}->{'seq_region'};
-						  $prev_species   = $genomic_regions{$df_id}->{'species'};
-						  $prev_coord_sys = $genomic_regions{$df_id}->{'coord_system'};
-					  }	
-				  }
-
-				  #add reciprocal entries for each comparison
-				  foreach my $method (keys %config) {
-					  foreach my $p_species (keys %{$config{$method}}) {
-						  foreach my $s_species ( keys %{$config{$method}{$p_species}} ) {						
-							  foreach my $comp ( keys %{$config{$method}{$p_species}{$s_species}} ) {
-								  my $revcomp = join ':', reverse(split ':',$comp);
-								  unless ( exists($config{$method}{$s_species}{$p_species}{$revcomp} ) ) {
-									  my $coords = $config{$method}{$p_species}{$s_species}{$comp}{'coord_systems'};
-									  my ($a,$b) = split ':',$coords;
-									  $coords = $b.':'.$a;
-									  my $record = {
-													'source_name'    => $config{$method}{$p_species}{$s_species}{$comp}{'target_name'},
-													'source_species' => $config{$method}{$p_species}{$s_species}{$comp}{'target_species'},
-													'source_start'   => $config{$method}{$p_species}{$s_species}{$comp}{'target_start'},
-													'source_end'     => $config{$method}{$p_species}{$s_species}{$comp}{'target_end'},
-													'target_name'    => $config{$method}{$p_species}{$s_species}{$comp}{'source_name'},
-													'target_species' => $config{$method}{$p_species}{$s_species}{$comp}{'source_species'},
-													'target_start'   => $config{$method}{$p_species}{$s_species}{$comp}{'source_start'},
-													'target_end'     => $config{$method}{$p_species}{$s_species}{$comp}{'source_end'},
-													'mlss_id'        => $config{$method}{$p_species}{$s_species}{$comp}{'mlss_id'},
-													'coord_systems'  => $coords,
-												   };
-									  $config{$method}{$s_species}{$p_species}{$revcomp} = $record;
-								  }
-							  }
-						  }
-					  }
-				  }
-
-#       		  &eprof_end('new parsing');				
-				  lock_nstore(\%config,$file_name);
-			  }
-#  		      warn "config = ",Dumper(\%config);					
-			  $tree->{'VEGA_COMPARA_CONF'} = \%config;
-		  }
-#		  &eprof_dump(\*STDERR);		
-
-        foreach my $row ( @$results ) {
-          my ( $species1, $species2 ) = ( $row->[1], $row->[2] );
-          $species1 =~ tr/ /_/;
-          $species2 =~ tr/ /_/;
-          my $KEY = $sections{uc($row->[0])} || uc( $row->[0] );
-          $tree->{$KEY}{$species1}{$species2} = exists( $CONF->{'_storage'}{$species1}) ? 1 : 0;
-        }
-        $sth->finish();
-        $dbh->disconnect();
-      }
-      print STDERR "          [INFO]Writing MULTI\n";
-      delete $tree->{'general'};
-      $CONF->{'_multi'} = $tree;
-      $CONF->{'_storage'}{'Multi'} = $tree;
-
-      ## Needed for the ancestral sequences database
-      if ($tree->{'databases'}->{'ENSEMBL_DB'}) {
-        $CONF->{'_storage'}{'Ancestral_sequences'} = $tree;
-      }
-#      warn(Dumper($tree->{VEGA_COMPARA_CONF}));
-#      warn(Dumper($tree->{'BLASTZ_RAW'}));
-#      warn(Dumper($CONF->{_multi}->{'ALIGNMENTS'}));
-
-
-      next;
-  }
-## Move anything in the general section over up to the top level
-## For each trace database look for non-default config..
-## For each das source get its contact information.
-    my @das_keys = qw( ENSEMBL_INTERNAL_DAS_SOURCES ENSEMBL_TRACK_DAS_SOURCES );
-    my $key_count = {};
-    foreach my $das_key( @das_keys ){
-      my $das_conf = $tree->{$das_key};
-      next unless ref( $das_conf ) eq 'HASH';
-      foreach my $das_source( keys %$das_conf ){
-        if( ! $das_conf->{$das_source} ){ # Source explicitly disabled
-          delete $das_conf->{$das_source};
-          next;
-        }
-# Check if the source is based on the current assembly
-#	if (defined(my $assembly = $tree->{$das_source}->{assembly})) {
-#	    if ($assembly ne $tree->{ENSEMBL_GOLDEN_PATH}) {
-#		delete $das_conf->{$das_source};
-#		next;
-#	    }
-#	}
-
-        my $das_source_conf = $tree->{$das_source};
-        ref( $das_source_conf ) eq 'HASH' or $das_source_conf = {};
-	$das_source_conf->{'type'} or $das_source_conf->{'type'} = 'ensembl_location_chromosome';
-	
-        $das_source_conf->{'assembly'} ||= $tree->{'ENSEMBL_GOLDEN_PATH'};
-#        if( ! exists($das_source_conf->{'assembly'}) || $das_source_conf->{'assembly'} eq $tree->{'ENSEMBL_GOLDEN_PATH'} ) {
-          $das_source_conf->{'retrieve_features'} = 1;
-          $das_source_conf->{'name'} = $das_source;
-          $das_conf->{$das_source} = $das_source_conf; # Substitute conf
-#        } else {
-#          delete( $das_conf->{$das_source} );
-#        }
-        delete $tree->{$das_source};
-      }
-    }
-############### Database config prepared 
-######### Store the table sizes for each database
-    my @databases = keys( %{$tree->{'databases'}} );
-
-####### Connect and store database sizes...
-    foreach my $database( @databases ){
-      my $dbh = $self->db_connect( $tree, $database );
-      unless($dbh) {
-        warn( "\t  [DB] Unable to connect to ",ref($database)eq'HASH' ? $database->{'NAME'} : $database);
-        $tree->{'databases'}{$database} = undef;
+        warn "$confdir/ini-files/$filename.ini is not readable\n" ;
         next;
       }
-	  my $q = "show table status";
-      my $sth = $dbh->prepare( $q ) || next;
-      my $rv  = $sth->execute()     || next;
-      my $data = $sth->fetchall_arrayref({'Name'=>1,'Rows'=>1});
-      foreach( @{$data} ){
-        my $table = $_->{'Name'};
-        my $rows  = $_->{'Rows'};
-        $tree->{TABLE_SIZE}->{$database}->{$table} = $rows;
-      }
-      $sth->finish();
-
-      $dbh->disconnect();
-    }
-    ###### Additional implicit data #
-    ## ENSEMBL WEBSITE
-    if( $tree->{'databases'}->{'ENSEMBL_WEBSITE'} ){
-      if( my $dbh = $self->db_connect( $tree, 'ENSEMBL_WEBSITE' ) ) {
-	      my $sql = qq(
-          SELECT
-                r.release_id    as release_id,
-                DATE_FORMAT(r.date, '%b %Y') as short_date
-          FROM
-                ens_release r order by r.release_id desc);
-
-	      # Store in conf.packed
-	      $tree->{RELEASE_INFO} = [];
-	      my $query = $dbh->prepare($sql);
-        $query->execute;
-	      while (my $row = $query->fetchrow_hashref) {
-	        push @{ $tree->{'RELEASE_INFO'} }, $row ;
-	      }
-      }
-    }
-
-    $common = $tree;
-
-## CORE DATABASE....
-    $tree->{'REPEAT_TYPES'} = {};
-    if( $tree->{'databases'}->{'ENSEMBL_DB'} ){ 
-      if( my $dbh = $self->db_connect( $tree, 'ENSEMBL_DB' ) ) {
-
-## Query the analysis table to provide feature switches
-        my $sql = qq(SELECT logic_name FROM analysis);
-        my $query = $dbh->prepare($sql);
-        $query->execute;
-          while (my $row = $query->fetchrow_arrayref) {
-            $tree->{'DB_FEATURES'}{uc($row->[0])}=1;
+      open FH, $inifile or die( "Problem with $inifile: $!" );
+      my $current_section = undef;
+      my $line_number     = 0;
+      while(<FH>) {
+        s/\s+[;].*$//;    # These two lines remove any comment strings
+        s/^[#;].*$//;     # from the ini file - basically ; or #..
+        if( /^\[\s*(\w+)\s*\]/ ) {          # New section - i.e. [ ... ]
+          $current_section          = $1;
+          $tree->{$current_section} ||= {}; # create new element if required
+          if(defined $defaults->{ $current_section }) { # add settings from default!!
+            my %hash = %{$defaults->{ $current_section }};
+            foreach( keys %hash ) {
+              $tree->{$current_section}{$_} = $defaults->{$current_section}{$_};
+            }
           }
-## Compute the length of the maximum chromosome. 
-## Used to scale figures
-
-### STICKLEBACK BUG FIX... 'group' in ickleback is really 'chromosome' so
-### we need a minor hack to the calculation of the longest 'chromosome'
-### REMOVE THE (or cs.name = 'group') where stickleback is fixed.
-
-          $sql   = qq(
-          select sr.name, sr.length 
-            from seq_region as sr, coord_system as cs 
-           where ( cs.name = 'chromosome' or cs.name = 'group' ) and cs.coord_system_id = sr.coord_system_id 
-           order by sr.length
-            desc limit 1);
-          $query = $dbh->prepare($sql);
-          if($query->execute()>0) {
-            my @T = $query->fetchrow_array;
-            $tree->{'MAX_CHR_NAME'}   = $T[0];
-            $tree->{'MAX_CHR_LENGTH'} = $T[1];
-          } else {
-            $tree->{'MAX_CHR_NAME'}   = undef;
-            $tree->{'MAX_CHR_LENGTH'} = 0;
-          }  
-                    
-## Misc feature sets....
-          $sql   = qq(
-            select distinct(ms.code)
-              from misc_set as ms, misc_feature_misc_set as mfms 
-             where ms.misc_set_id = mfms.misc_set_id    
-          );
-          $query = $dbh->prepare($sql);
-          eval {
-            $query->execute;
-            while (my $row = $query->fetchrow_arrayref ){
-              $tree->{'DB_FEATURES'}{"MAPSET_".uc($row->[0])}=1;
-            }
-          };
-## Affy probe sets...
-          $sql   = qq(
-            select distinct(aa.name)
-              from oligo_array as aa, oligo_probe as ap
-             where aa.oligo_array_id = ap.oligo_array_id
-          );
-          $query = $dbh->prepare($sql);
-          eval {
-            $query->execute;
-            while (my $row = $query->fetchrow_arrayref ){
-              $tree->{'OLIGO'}{$row->[0]} = 1;
-              ( my $key = uc("OLIGO_$row->[0]") ) =~ s/\W/_/g;
-              $tree->{'DB_FEATURES'}{$key} = 1;
-            }
-          };
-## Regulatory features...
-
-## Interpro switch
-          $sql   = qq(SELECT id FROM interpro LIMIT 1);
-          $query = $dbh->prepare($sql);
-          $tree->{'DB_FEATURES'}{INTERPRO} = 1 if $query->execute() > 0;
-          $query->finish();
-## Marker features 
-          $sql   = qq(SELECT * FROM marker_feature LIMIT 1);
-          eval{
-            $query = $dbh->prepare($sql);
-            $tree->{'DB_FEATURES'}{MARKERS} = 1 if $query->execute() > 0;
-            $query->finish();
-          };
-## Repeat classifications
-          $sql   = qq(SELECT distinct repeat_type FROM repeat_consensus );
-          eval {
-            $query = $dbh->prepare($sql);
-            if($query->execute()>0) {
-              foreach(@{$query->fetchall_arrayref}) {
-                $tree->{'REPEAT_TYPES'}{$_->[0]}=1;
-              }
-            } 
-            $query->finish();
-          };
-## for annotated datasets (e.g. Vega)
-		if ($SiteDefs::ENSEMBL_SITETYPE eq 'Vega') {
- #         if( $tree->{'TABLE_SIZE'}->{'ENSEMBL_DB'}->{'author'} ) {
-## authors by chromosome
-            $sql = qq(
-                SELECT distinct(a.logic_name)
-                FROM gene g, analysis a
-                WHERE g.analysis_id = a.analysis_id
-            );
-            $query = $dbh->prepare($sql);
-            eval { 
-              $query->execute;
-              while( my $row = $query->fetchrow_arrayref) {
-                $tree->{'DB_FEATURES'}->{uc("VEGA_GENES_$row->[0]")} = 1;
-              }
-            };
-		}
-
-          ## alternative assembly
-          if ($tree->{'ALTERNATIVE_ASSEMBLY'}) {
-            my $alt_ass = $tree->{'ALTERNATIVE_ASSEMBLY'};
-            $sql   = qq(
-                SELECT * FROM seq_region sr, coord_system cs
-                WHERE sr.coord_system_id = cs.coord_system_id
-                AND cs.name = 'chromosome'
-                AND cs.version = '$alt_ass'
-                LIMIT 1
-            );
-            eval{
-              $query = $dbh->prepare($sql);
-              $tree->{'DB_FEATURES'}->{'ALTERNATIVE_ASSEMBLY'} = 1 if $query->execute() > 0;
-              $query->finish();
-            };
-
-            # if you can't find this in core, look in the Vega db
-			unless ($tree->{'DB_FEATURES'}->{'ALTERNATIVE_ASSEMBLY'}) {
-              if( my $vega_dbh = $self->db_connect($tree, 'ENSEMBL_VEGA')) {
-                eval{
-                  $query = $vega_dbh->prepare($sql);
-                  $tree->{'DB_FEATURES'}->{'ALTERNATIVE_ASSEMBLY'} = 1 if $query->execute() > 0;
-                  $query->finish();
-                };
-		      }
-            }
-			warn ("No alternative assembly found") unless ($tree->{'DB_FEATURES'}->{'ALTERNATIVE_ASSEMBLY'});
+        } elsif (/(\w\S*)\s*=\s*(.*)/ && defined $current_section) { # Config entry
+          my ($key,$value) = ($1,$2); ## Add a config entry under the current 'top level'
+          $value=~s/\s*$//;
+          if($value=~/^\[\s*(.*?)\s*\]$/) { # [ - ] signifies an array
+            my @array = split /\s+/, $1;
+            $value = \@array;
           }
-          
-          $dbh->disconnect();
-
-          print STDERR ( "\t  [INFO] Species $filename OK\n" );
+          $tree->{$current_section}{$key} = $value;
+        } elsif (/([.\w]+)\s*=\s*(.*)/) { # precedes a [ ] section
+          print STDERR "\t  [WARN] NO SECTION $filename.ini($line_number) -> $1 = $2;\n";
         }
+        $line_number++;
       }
-
-      foreach my $T_DB (qw(ENSEMBL_VEGA ENSEMBL_OTHERFEATURES)) {
-        if( $tree->{'databases'}->{$T_DB} ) {
-          if( my $dbh = $self->db_connect( $tree, $T_DB ) ) {
-          my $sql = qq(select distinct(logic_name) from analysis);
-          my $query = $dbh->prepare($sql);
-          eval {
-            $query->execute;
-            while( my $row = $query->fetchrow_arrayref) {
-              $tree->{'DB_FEATURES'}{uc("$T_DB.$row->[0]")} = 1;
-            }
-          };
-        }
-      }
+      close FH;
     }
-## FUNCGEN DATABASE
-    if( $tree->{'databases'}->{'ENSEMBL_FUNCGEN'} ){
-      if( my $dbh = $self->db_connect( $tree, 'ENSEMBL_FUNCGEN' ) ){ 
-       my $sql = qq(select a.logic_name from analysis as a, feature_set as fs where fs.type='external' and a.analysis_id=fs.analysis_id);
-       my $query = $dbh->prepare($sql);
-       eval {
-        $query ->execute;
-         while (my $row = $query->fetchrow_arrayref){
-          $row->[0] =~s/ /_/g;
-          $tree->{'DB_FEATURES'}{uc("REGFEATURES_$row->[0]")} = 1;
-         }
-       }; 
-     $query->finish();
-     $dbh->disconnect();
-     }
-   }
-
-## VARIATION DATABASE 
-    if( $tree->{'databases'}->{'ENSEMBL_VARIATION'} ){ # Then SNP is configured
-      if( my $dbh = $self->db_connect( $tree, 'ENSEMBL_VARIATION' ) ){
-
-	# Sources for TSV, SNPView, GSV
-        my $sql = qq(SELECT name FROM source  );
-        my $sth = $dbh->prepare( $sql );
-	eval {
-	  $sth->execute;
-	  while( my $row = $sth->fetchrow_arrayref) {
-	    $tree->{'VARIATION_SOURCES'}{"$row->[0]"} = 1;
-	  }
-	};
-        $sth->finish();
-
-	# For yellow menu bar link to TSV
- 	$sth = $dbh->prepare(qq(
-                     SELECT count(*) 
-                     FROM meta 
-                     WHERE meta_key = "individual.default_strain";
-                  )
- 			    );
- 	eval {
- 	  $sth->execute;
- 	  my ($count) = $sth->fetchrow_array;
- 	  if ( $count ) {
- 	    $tree->{'VARIATION_STRAIN'} = $count;
- 	  }
- 	};
-
-        # For LDview link
-        $sth = $dbh->prepare(qq(
-                     SELECT count(*)
-                     FROM meta
-                     WHERE meta_key = "pairwise_ld.default_population";
-                  )
-                            );
-        eval {
-          $sth->execute;
-          my ($count) = $sth->fetchrow_array;
-          if ( $count ) {
-            $tree->{'VARIATION_LD'} = $count;
-          }
-        };
-
-
-	$sth->finish();
-	$dbh->disconnect();
-      }
-    }
-
-############### Implicit data retrieved
-###### Update object with species config
-    $CONF->{'_storage'}{$filename} = $tree;
   }
-  ## Tidy up 'Common'
-  $common->{'SPECIES_BIO_NAME'} = '';
-  $common->{'SPECIES_COMMON_NAME'} = '';
-  $CONF->{'_storage'}{'common'} = $common;
-  print STDERR "-" x 78, "\n";
-  return 1;
+  return $inifile ? $tree : undef;
+}
+
+sub _promote_general {
+  my( $self, $tree ) = @_;
+  foreach( keys %{$tree->{'general'}} ) {
+    $tree->{$_} = $tree->{'general'}{$_};
+  }
+  delete $tree->{'general'};
+}
+
+sub _expand_database_templates {
+  my( $self, $filename, $tree ) = @_;
+  my $HOST   = $tree->{'general'}{'ENSEMBL_HOST'};      
+  my $PORT   = $tree->{'general'}{'ENSEMBL_HOST_PORT'}; 
+  my $USER   = $tree->{'general'}{'ENSEMBL_DBUSER'};    
+  my $PASS   = $tree->{'general'}{'ENSEMBL_DBPASS'};    
+  my $DRIVER = $tree->{'general'}{'ENSEMBL_DRIVER'} || 'mysql'; 
+  if( exists $tree->{'databases'} ) {
+    foreach my $key ( keys %{$tree->{'databases'}} ) {
+      my $DB_NAME = $tree->{'databases'}{$key};
+      if( $DB_NAME =~ /^%_(\w+)_%$/ ) {
+        $DB_NAME = lc(sprintf( '%s_%s_%s_%s', $filename , $1, $SiteDefs::ENSEMBL_VERSION, $tree->{'general'}{'SPECIES_RELEASE_VERSION'} ));
+      } elsif( $DB_NAME =~/^%_(\w+)$/ ) {
+        $DB_NAME = lc(sprintf( '%s_%s_%s', $filename , $1, $SiteDefs::ENSEMBL_VERSION ));
+      } elsif( $DB_NAME =~/^(\w+)_%$/ ) {
+        $DB_NAME = lc(sprintf( '%s_%s', $1, $SiteDefs::ENSEMBL_VERSION ));
+      }
+      if($tree->{'databases'}{$key} eq '') {
+        delete $tree->{'databases'}{$key};
+      } elsif(exists $tree->{$key} && exists $tree->{$key}{'HOST'}) {
+        my %cnf = %{$tree->{$key}};
+        $tree->{'databases'}{$key} = {
+          'NAME'   => $DB_NAME,
+          'HOST'   => exists( $cnf{'HOST'}  ) ? $cnf{'HOST'}   : $HOST,
+          'USER'   => exists( $cnf{'USER'}  ) ? $cnf{'USER'}   : $USER,
+          'PORT'   => exists( $cnf{'PORT'}  ) ? $cnf{'PORT'}   : $PORT,
+          'PASS'   => exists( $cnf{'PASS'}  ) ? $cnf{'PASS'}   : $PASS,
+          'DRIVER' => exists( $cnf{'DRIVER'}) ? $cnf{'DRIVER'} : $DRIVER,
+        };
+        delete $tree->{$key};
+      } else {
+        $tree->{'databases'}{$key} = {
+          'NAME'   => $DB_NAME,
+          'HOST'   => $HOST,
+          'USER'   => $USER,
+          'PORT'   => $PORT,
+          'PASS'   => $PASS,
+          'DRIVER' => $DRIVER
+        };
+      }
+    }
+  }
+}
+
+sub _merge_db_tree {
+  my( $self, $tree, $db_tree, $key ) = @_;
+  Hash::Merge::set_behavior( 'RIGHT_PRECEDENT' );
+  my $t = merge( $tree->{$key}, $db_tree->{$key} );
+  $tree->{$key} = $t;
+}
+
+sub _parse {
+### Does the actual parsing of .ini files
+### (1) Open up the DEFAULTS.ini file(s)
+### Foreach species open up all {species}.ini file(s)
+###  merge in content of defaults
+###  load data from db.packed file
+###  make other manipulations as required
+### Repeat for MULTI.ini
+### Returns: boolean
+
+  my $self = shift; 
+  $CONF->{'_storage'} = {};                                                                $self->_info_log( 'Parser', "Starting to parse tree" );
+
+  my $tree    = {};
+  my $db_tree = {};
+#------------ Initialize plugin locator - and create array of ConfigPacker objects...
+  my $plugin_locator = EnsEMBL::Web::Tools::PluginLocator->new( (
+    locations  => [ 'EnsEMBL::Web', reverse @{ $self->ENSEMBL_PLUGIN_ROOTS } ], 
+    suffix     => "ConfigPacker"
+  ));
+  $plugin_locator->include();
+# Create all the child objects with the $tree and $db_tree hashrefs attahed...
+  $plugin_locator->create_all( $tree, $db_tree );
+# not sure why I have to do this - but copy the results back as children (what does mw4's code do?)
+  $plugin_locator->children( [ values %{$plugin_locator->results} ] );                     $self->_info_line( 'Parser', 'Child objects attached' );
+
+#------------ Parse the web tree to create the static content site map
+  my $web_tree = $self->_load_in_webtree();                                                $self->_info_line( 'Filesystem', "Trawled web tree" );
+
+#------------ Grab default settings first and store in defaults...
+                                                                                           $self->_info_log(  'Parser', "Parsing ini files and munging dbs" );
+
+  my $defaults = $self->_read_in_ini_file( 'DEFAULTS', {} );                               $self->_info_line( 'Parsing', "DEFAULTS ini file" );
+  $self->_merge_in_css_ini( $defaults );
+  
+#------------ Loop for each species exported from SiteDefs
+#             grab the contents of the ini file AND
+#             IF  the DB packed file exists expand that 
+#             o/w attach the species databases and load the
+#                 data and store the DB packed file... 
+  foreach my $species ( @$ENSEMBL_SPECIES ) {
+    $tree->{$species} = $self->_read_in_ini_file( $species, $defaults );                   $self->_info_line( 'Parsing', "$species ini file" );
+    $self->_expand_database_templates( $species, $tree->{$species} );
+    $self->_promote_general(           $tree->{$species} );
+    my $species_packed = $SiteDefs::ENSEMBL_CONF_DIRS[0]."/packed/$species.db.packed";    
+
+    if( -e $species_packed ) {
+      $db_tree->{ $species } = lock_retrieve( $species_packed );                           $self->_info_line( 'Retrieve', "$species databases" );
+    } else {
+# Set species on each of the child objects..
+      $plugin_locator->parameters( [$species] );
+      $plugin_locator->call( 'species' );
+      $plugin_locator->call( '_munge_databases' );                                         $self->_info_line( '** DB **', "$species databases" );
+      lock_nstore( $db_tree->{ $species }, $species_packed );
+    }
+    $self->_merge_db_tree( $tree, $db_tree, $species );
+  }
+#------------ Do the same for the multi-species file...
+  $tree->{'MULTI'} = $self->_read_in_ini_file( 'MULTI', $defaults );                       $self->_info_line( 'Parsing', "MULTI ini file" );
+  $self->_expand_database_templates( 'MULTI', $tree->{'MULTI'} );
+  $self->_promote_general(           $tree->{'MULTI'} );
+  my $multi_packed = $SiteDefs::ENSEMBL_CONF_DIRS[0]."/packed/MULTI.db.packed";      
+  if( -e $multi_packed ) {
+    $db_tree->{'MULTI'} = lock_retrieve( $multi_packed );                                  $self->_info_line( 'Retrieve', "MULTI ini file" );
+  } else {
+    $plugin_locator->parameters( ['MULTI'] );
+    $plugin_locator->call( 'species' );
+    $plugin_locator->call( '_munge_databases_multi');                                      $self->_info_line( '** DB **', "MULTI database" );
+    lock_nstore( $db_tree->{'MULTI'}, $multi_packed );
+  }
+  $self->_merge_db_tree( $tree, $db_tree, 'MULTI' );
+
+#------------ Loop over each tree and make further manipulations
+                                                                                           $self->_info_log(  'Parser', "Post processing ini files" );
+  $self->_merge_in_dhtml( $tree );
+  foreach my $species ( @$ENSEMBL_SPECIES ) {
+    $plugin_locator->parameters( [$species] );
+    $plugin_locator->call( 'species' );
+    $plugin_locator->call( '_munge_config_tree' );                                         $self->_info_line( 'munging', "$species config" );
+  }
+  $plugin_locator->parameters( ['MULTI'] );
+  $plugin_locator->call( 'species' );
+  $plugin_locator->call( '_munge_config_tree_multi' );                                     $self->_info_line( 'munging',   "MULTI config" );
+
+#------------ Store the tree...
+  $CONF->{'_storage'} = $tree;
 }
 
 sub DESTROY { }
 
 sub timer{
 ### Provides easy-access to the ENSEMBL_WEB_REGISTRY's timer
-  use EnsEMBL::Web::RegObj;
+  my $self = shift;
+  $self->dynamic_use('EnsEMBL::Web::RegObj');
   return $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->timer;
 }
-
-sub get_vega_regions {
-#compare regions to get the smallest start and largest end
-	my ($config,$method,$comparison,$species1,$species2,$location1,$location2,$condition) = @_;
-	if ($config->{$method}{$species1}{$species2}{$comparison}{'source_'.$condition}) {
-		if (&comp_se( $condition,$location1,$config->{$method}{$species1}{$species2}{$comparison}{'source_'.$condition} )) {
-			$config->{$method}{$species1}{$species2}{$comparison}{'source_'.$condition} = $location1;
-		}
-	}
-	else {
-		$config->{$method}{$species1}{$species2}{$comparison}{'source_'.$condition} = $location1;	
-	}
-	
-	if ($config->{$method}{$species1}{$species2}{$comparison}{'target_'.$condition}) {
-		if (&comp_se( $condition,$location2,$config->{$method}{$species1}{$species2}{$comparison}{'target_'.$condition} )) {
-			$config->{$method}{$species1}{$species2}{$comparison}{'target_'.$condition} = $location2;
-		}
-	}
-	else {
-		$config->{$method}{$species1}{$species2}{$comparison}{'target_'.$condition} = $location2;	
-	}
-}
-
-sub comp_se {
-# compare start (less than) or end (greater than) regions depending on condition
-	my ($condition, $location1, $location2) = @_;
-	if ($condition eq 'start') {
-		return $location1 < $location2 ? 1 : 0;
-	}
-	if ($condition eq 'end') {
-		return $location1 > $location2 ? 1 : 0;
-	}
-}
-
 
 sub anyother_species {
   ### DEPRECATED - use get_config instead
@@ -1305,10 +492,14 @@ sub other_species {
   return $self->get_config( $species, $var );
 }
 
+sub marts {
+  my $self = shift;
+  return exists( $CONF->{'_storage'}{'MULTI'}{'marts'} ) ? $CONF->{'_storage'}{'MULTI'}{'marts'} : undef;
+}
 sub multidb {
   ### a
   my $self = shift;
-  return $CONF->{'_multi'} && $CONF->{'_multi'}{'databases'};
+  return exists( $CONF->{'_storage'}{'MULTI'}{'databases'} ) ? $CONF->{'_storage'}{'MULTI'}{'databases'} : undef;
 }
 
 sub multi {
@@ -1316,87 +507,15 @@ sub multi {
   ### Arguments: configuration type (string), species name (string)
   my( $self, $type, $species ) = @_;
   $species ||= $ENV{'ENSEMBL_SPECIES'};
-  return $CONF->{'_multi'} && $CONF->{'_multi'}{$type} && $CONF->{'_multi'}{$type}{$species} ? %{$CONF->{'_multi'}{$type}{$species}} : ();
+  return exists( $CONF->{'_storage'}{'MULTI'}{$type}{$species} ) ? %{$CONF->{'_storage'}{'MULTI'}{$type}{$species}} : ();
 }
 
 sub multiX {
   ### a
   ### Arguments: configuration type (string)
   my( $self, $type ) = @_;
-  return $CONF->{'_multi'} && $CONF->{'_multi'}{$type} ? %{$CONF->{'_multi'}{$type}} : ();
+  return exists( $CONF->{'_storage'}{'MULTI'}{$type} ) ? %{$CONF->{'_storage'}{'MULTI'}{$type}} : ();
 }
-
-sub db_connect {
-  ### Connects to the specified database 
-  ### Arguments: configuration tree (hash ref), database name (string)
-  ### Returns: DBI database handle
-  my $self    = shift;
-  my $tree    = shift @_ || die( "Have no data! Can't continue!" );
-  my $db_name = shift @_ || confess( "No database specified! Can't continue!" );
-
-  my $dbname  = $tree->{'databases'}->{$db_name}{'NAME'};
-  if($dbname eq '') {
-    warn( "No database name supplied for $db_name." );
-    return undef;
-  }
-
-  #warn "Connecting to $db_name";
-  my $dbhost  = $tree->{'databases'}->{$db_name}{'HOST'};
-  my $dbport  = $tree->{'databases'}->{$db_name}{'PORT'};
-  my $dbuser  = $tree->{'databases'}->{$db_name}{'USER'};
-  my $dbpass  = $tree->{'databases'}->{$db_name}{'PASS'};
-  my $dbdriver= $tree->{'databases'}->{$db_name}{'DRIVER'};
-  my ($dsn, $dbh);
-  eval {
-    if( $dbdriver eq "mysql" ) {
-      $dsn = "DBI:$dbdriver:database=$dbname;host=$dbhost;port=$dbport";
-      $dbh = DBI->connect(
-        $dsn,$dbuser,$dbpass, { 'RaiseError' => 1, 'PrintError' => 0 }
-      );
-    } elsif ( $dbdriver eq "Oracle") {
-      $dsn = "DBI:$dbdriver:";
-      my  $userstring = $dbuser . "\@" . $dbname;
-      $dbh = DBI->connect(
-        $dsn,$userstring,$dbpass, { 'RaiseError' => 1, 'PrintError' => 0 }
-      ); 
-    } elsif ( $dbdriver eq "ODBC") {
-      $dsn = "DBI:$dbdriver:$dbname";
-      $dbh = DBI->connect(
-        $dsn, $dbuser, $dbpass,
-        {'LongTruncOk' => 1,
-         'LongReadLen' => 2**16 - 8,
-         'RaiseError' => 1,
-         'PrintError' => 0,
-         'odbc_cursortype' => 2}
-      );
-    } else {
-      print STDERR "\t  [WARN] Can't connect using unsupported DBI driver type: $dbdriver\n";
-    }
-  };
-
-  if( $@ ) {
-    print STDERR "\t  [WARN] Can't connect to $db_name\n", "\t  [WARN] $@";
-    return undef();
-  } elsif( !$dbh ) {
-    print STDERR ( "\t  [WARN] $db_name database handle undefined\n" );
-    return undef();
-  }
-  return $dbh;
-}
-
-sub db_connect_multi_species {
-  ### Wrapper for db_connect, for use with multispecies configurations
-  ### Arguments: database name (string)
-  ### Returns: DBI database handle
-  my $db_name = shift || die( "No database specified! Can't continue!" );
-  
-  my $self = EnsEMBL::Web::SpeciesDefs->new();
-  
-  my $tree = $CONF->{_multi} || die( "No multispecies DB config found!" );
-  warn "... $tree ... $db_name ...";
-  return $self->db_connect( $tree, $db_name );
-}
-
 
 sub get_table_size{
 ### Accessor function for table size,
@@ -1456,47 +575,6 @@ sub set_write_access {
   }
 }
 
-sub create_martRegistry {
-  ### Creates mart registry (XML)
-  ### Returns: registry content (string)
-  my $self = shift;
-  my $multi = $CONF->{'_multi'};
-  warn "@{[keys %{$multi->{'databases'}}]}";
-  my $reg = '<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE MartRegistry>
-<MartRegistry>';
-
-  foreach my $mart ( sort keys %{$multi->{'marts'}} ) {
-    my( $default, $visible, @name ) = @{$multi->{'marts'}->{$mart}};
-    if( $multi->{'databases'}->{$mart} ) {
-      my $T = $multi->{'databases'}->{$mart};
-      $reg .= sprintf( '
-<MartDBLocation
-   databaseType = "%s"
-       database = "%s"
-           name = "%s"
-         schema = "%s"
-           host = "%s"
-           port = "%s"
-           user = "%s"
-       password = "%s"
-    displayName = "%s"
-        visible = "%s"
-        default = "%s"
-       martUser = ""
-includeDatasets = ""
-   includeMarts = ""
-/>',
-        $T->{DRIVER}, $T->{NAME},   $mart,  $T->{NAME}, $T->{HOST}, $T->{PORT},
-        $T->{USER},   $T->{PASS},   "@name", $visible?1:'', $default?1:''
-      );
-    }
-  }
-  $reg .= "\n</MartRegistry>\n";
-#  warn $reg;
-  return $reg;
-}
-
 sub dump {
   ## Diagnostic function!! 
   my ($self, $FH, $level, $Q) = @_;
@@ -1533,249 +611,37 @@ sub all_search_indexes {
 ##############################################################################
 ## Additional parsing / creation codes...
 
-sub create_robots_txt {
-  ### This is to try and stop search engines killing e! - it gets created each
-  ### time on server startup and gets placed in the first directory in the htdocs
-  ### tree.
-  ### Returns: none
+##====================================================================##
+##                                                                    ##
+## write diagnostic errors to log file on...                          ##
+##                                                                    ##
+##====================================================================##
+
+our $warn_template = "-%6.6s : %8.3f : %-10.10s >> %s\n";
+
+sub _info_log {
   my $self = shift;
-  my $root = $ENSEMBL_HTDOCS_DIRS[0];
-  my %allowed = map { ($_,1) } @{$SiteDefs::ENSEMBL_EXTERNAL_SEARCHABLE||[]};
-  if( open FH, ">$root/robots.txt" ) { 
-    print FH qq(
-User-agent: *
-Disallow: /Multi/
-Disallow: /BioMart/
-);
-    foreach( @$ENSEMBL_SPECIES ) { 
-      print FH qq(Disallow: /$_/\n);
-      print FH qq(Allow: /$_/geneview\n) if $allowed{'gene'};
-      print FH qq(Allow: /$_/sitemap.xml.gz\n);
-    }
-print FH qq(
-
-User-Agent: W3C-checklink
-Disallow:
-);
-    close FH;
-  } else {
-    warn "Unable to creates robots.txt file in $root-robots";
-  }
+  warn "------------------------------------------------------------------------------\n";
+  $self->_info_line( @_ );
+  warn "------------------------------------------------------------------------------\n";
 }
 
-
-sub read_web_tree {
-###
-### Recursive function which descends into a directory and creates 
-### a tree of htdocs static pages with a multi-level hashref:
-###  { 
-###    _path  => '/...',              # web path
-###    _nav   => 'navigation info',   # from meta tags
-###    _title => 'title',             # from title tag
-###    file1  => {nav => '...', title => '...'},
-###    file2  => {nav => '...', title => '...'},
-###    ...,
-###    dir1  => { ..same structure as parent.. },
-###    dir2  => { ..same structure as parent.. },
-###    ...,
-###  }
-###
-### N.B. A directory can be omitted by putting 'NO INDEX' as the value
-### of the navigation meta tag 
-
-  my (
-    $branch,    ## hashref to be populated, branch of the tree 
-                ## by default its { path => '/path/..' }
-    $doc_root,  ## this could be different because of the plugins
-  ) = @_;   
-
-  my $path = $branch->{_path};
-  #warn "processing $path ...";
-
-  return unless -r "$doc_root$path";
-
-  ## Get the list of files for directory of the current path.
-  opendir(DIR, $doc_root . $path) || die "Can't open $doc_root$path";
-  my @files = readdir(DIR);
-  closedir(DIR);
-
-  ## separate directories from other files
-  my ($html_files, $sub_dirs) = sortnames(\@files, $doc_root . $path);
-  my ($title, $nav, $index);
-
-  ## Check if we want to do this directory at all
-  my $include = 1;
-  foreach my $filename (@$html_files) {
-    if ($filename eq 'index.html') {
-      ($title, $nav, $index) = get_info( $doc_root . $path . $filename );
-      if ($index =~ /NO FOLLOW/) {
-        $branch->{_title} = $title;
-        $branch->{_nav}   = $nav;
-        return;
-      }
-      elsif ($index =~ /NO INDEX/) {
-        $include = 0;
-      }
-      last;
-    }
-  }
-  if (!$include) {
-    $branch = undef;
-    return;
-  }
-
-  ## Read files and populate the branch
-  foreach my $filename (@$html_files) {
-    my $full_path = "$doc_root$path$filename";
-    ($title, $nav, $index) = get_info( $full_path );
-
-    if ($filename eq 'index.html') {
-      ## add the directory path and index title to array
-      $branch->{_title} = $title;
-      $branch->{_nav}   = $nav;
-    } 
-    else {
-      unless ($index =~ /NO INDEX/) {
-        $branch->{$filename}->{_title} = $title;
-        $branch->{$filename}->{_nav}   = $nav;
-      }
-    }
-  }
-
-  ## Descend into directories recursively
-  foreach my $dirname (@$sub_dirs) {
-    ## omit CVS directories and directories beginning with . or _
-    next if $dirname eq 'CVS' || $dirname =~ /^\./ || $dirname =~ /^_/;
-    $branch->{$dirname}->{_path} = "$path$dirname/";
-    read_web_tree($branch->{$dirname}, $doc_root);
-  }
+sub _info_line {
+  my( $self, $title, $note, $level ) = @_;
+  my $T = time;
+  $level||='INFO';
+  warn sprintf  "-%6.6s : %8.3f : %8.3f : %-10.10s >> %s\n",
+    $level, $T-$self->{_start_time}, $T-$self->{_last_time}, $title, $note;
+  $self->{_last_time} = $T;
 }
 
-sub sortnames {
-### Does a case-insensitive sort of a list of file names
-### and separates them into two lists - directories and non-directories
-  my ($namelist, $full_path) = @_;
-  my @sorted = sort {lc $a cmp lc $b} @$namelist;
+##====================================================================##
+##                                                                    ##
+## _is_available_artefact - code to check the configuration hash in a ##
+##  simple manner                                                     ##
+##                                                                    ##
+##====================================================================##
 
-  my (@file_list, @dir_list);
-
-  foreach my $item (@sorted) {
-    if (-d $full_path.$item) {
-      push (@dir_list, $item);
-    }
-    elsif ($item =~ /\.html$/) {
-      push (@file_list, $item);
-    }
-  }
-
-  return (\@file_list, \@dir_list);
-}
-
-sub get_info {
-### Parses an HTML file and returns info for navigation and indexing
-  my $file = shift;
-
-  my $title   = get_title($file);
-  my $nav     = get_meta_navigation($file);
-  my $index   = get_meta_index($file);
-  if (!$title) {
-    $title = get_first_header($file);
-  }
-  if (!$nav) {
-    $nav = $title;
-  }
-
-  return ($title, $nav, $index);
-}
-
-sub get_title {
-### Parses an HTML file and returns the contents of the <title> tag
-  my $file = shift;
-  my $title;
-
-  open IN, "< $file" || die "Couldn't open input file $file :(\n";
-  while (<IN>) {
-    if (m!<title.*?>(.*?)(?:</title>|$)!i) {
-      $title = $1;
-    } elsif (defined($title) && m!^(.*?)(?:</title>|$)!i) {
-      $title .= $1;
-    }
-    last if m!</title!i;
-  }
-  
-  close IN;
-  $title =~ s/\s{2,}//g;
-  return $title;
-}
-sub get_meta_navigation {
-### Parses an HTML file and returns the contents of the navigation meta tag
-  my $file = shift;
-  my $nav;
-
-  open IN, "< $file" || die("Can't open input file $file :(\n");
-  while (<IN>) {
-    if (/<meta\s+name\s*=\s*"navigation"\s+content\s*=\s*"([^"]+)"\s*\/?>/ism) {
-      $nav = $1;
-    } elsif (/<meta\s+content\s*=\s*"([^"]+)"\s+name\s*=\s*"navigation"\s*\/?>/ism) {
-      $nav = $1;
-    }
-  }
-
-  close IN;
-  return $nav;
-}
-
-sub get_meta_index {
-### Parses an HTML file and returns the contents of the index meta tag
-  my $file = shift;
-  my $index;
-
-  open IN, "< $file" || die("Can't open input file $file :(\n");
-  while (<IN>) {
-    if (/<meta\s+name\s*=\s*"index"\s+content\s*=\s*"([^"]+)"\s*\/?>/ism) {
-      $index = $1;
-    } elsif (/<meta\s+content\s*=\s*"([^"]+)"\s+name\s*=\s*"index"\s*\/?>/ism) {
-      $index = $1;
-    }
-  }
-
-  close IN;
-  return $index;
-}
-
-sub get_first_header {
-### Parses an HTML file and returns the contents of the first <h> tag (up to h3)
-  my $file = shift;
-  my $header;
-
-  open IN, "< $file" || die "Couldn't open input file $file :(\n";
-  while (<IN>) {
-    if (m!<h1.*?>(.*?)(?:</h1>|$)!i) {
-      $header = $1;
-      last;
-    } 
-    elsif (m!<h2.*?>(.*?)(?:</h2>|$)!i) {
-      $header = $1;
-      last;
-    }
-    elsif (m!<h3.*?>(.*?)(?:</h3>|$)!i) {
-      $header = $1;
-      last;
-    }
-  }
-  ## Fallback in case no <h> tags
-  unless ($header) {
-    if ($file =~ m!/(\w+)/index\.html!) {
-      $header = $1;
-    } elsif ($file =~ m!/(\w+)\.html!) {
-      $header = $1;
-    }
-  }
-  
-  close IN;
-  $header =~ s/\s{2,}//g;
-  return $header;
-}
 
 sub _is_available_artefact{
   ### Checks to see if a given artefact is available (or not available)
@@ -1818,14 +684,14 @@ sub _is_available_artefact{
     return $fail;
   } elsif( $test[0] eq 'database_features' ){ ## Is the given database specified?
     my $ft = $self->other_species($def_species,'DB_FEATURES') || {};
-#	use Data::Dumper;
-#	warn Dumper($ft);
+#  use Data::Dumper;
+#  warn Dumper($ft);
     my @T = split /\|/, $test[1];
     my $flag = 1;
     foreach( @T ) {
-#		warn "looking for $_";
+#    warn "looking for $_";
       $flag = 0 if $ft->{uc($_)};
-#		warn "flag is $flag";
+#    warn "flag is $flag";
     }
     return $fail if $flag;
     return $success;
