@@ -96,13 +96,13 @@ use vars qw ( @ISA @EXPORT @EXPORT_OK %EXPORT_TAGS $VERSION
   $ENSEMBL_MART_ENABLED
   $ENSEMBL_BLAST_ENABLED
 );
-use Sys::Hostname;
+use Sys::Hostname::Long;
 use Exporter();
 @ISA=qw(Exporter);
 
 $VERSION                   = 49;
-$ARCHIVE_VERSION           = "Mar2008";    # Change this to the archive site for this version
-$ENSEMBL_RELEASE_DATE      = 'Mar 2008';
+$ARCHIVE_VERSION           = "Jul2008";    # Change this to the archive site for this version
+$ENSEMBL_RELEASE_DATE      = 'July 2008';
 
 $ENSEMBL_MIN_SPARE_SERVERS =  5;
 $ENSEMBL_MAX_SPARE_SERVERS = 20;
@@ -149,7 +149,7 @@ error( "Error requiring plugin file:\n$@" ) if $@;
 $ENSEMBL_MART_ENABLED   = 0;
 $ENSEMBL_BLAST_ENABLED  = 0;
 
-$ENSEMBL_SERVER         = Sys::Hostname::hostname();  # Local machine name
+$ENSEMBL_SERVER         = Sys::Hostname::Long::hostname_long();  # Local machine name
 
 $ENSEMBL_PORT           = 80;
 $ENSEMBL_PROXY_PORT     = undef; # Port used for self-referential URLs: 
