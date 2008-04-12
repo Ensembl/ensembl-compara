@@ -230,7 +230,7 @@ sub fetch_all_by_MethodLinkSpeciesSet_Slice {
 	}
 
 	if ($genomic_align_block->get_original_strand == 0) {
-	    $conservation_scores = _reverse($conservation_scores);
+	    $conservation_scores = _reverse($conservation_scores, $genomic_align_block->length);
 	}
  
 	#reset _score_index for new conservation_scores
@@ -600,11 +600,11 @@ sub _find_min_max_score {
 
 #reverse the conservation scores for complemented sequences
 sub _reverse {
-    my ($scores) = @_;
+    my ($scores, $genomic_align_block_length) = @_;
 
     #reverse each conservation_score 
     foreach my $s (@$scores) {
-	$s->reverse;
+	$s->reverse($genomic_align_block_length);
     }
     #reverse array so position values go from small to large
     my @rev = reverse @$scores;
