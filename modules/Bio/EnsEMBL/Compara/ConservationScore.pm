@@ -586,7 +586,7 @@ sub packed {
 =cut
 
 sub reverse {
-    my ($self) = @_;
+    my ($self, $genomic_align_block_length) = @_;
     my $num_scores = 0;
     return if (!defined($self->score));
     if ($self->packed) { 
@@ -600,7 +600,10 @@ sub reverse {
     my $end = $self->position + (($num_scores - 1) * $self->window_size);
     #10.10.06 +1 so position starts at 1 not 0
     #$self->position($self->genomic_align_block->length - $end);
-    $self->position($self->genomic_align_block->length - $end + 1);
+    if (!defined($genomic_align_block_length)) {
+      $genomic_align_block_length = $self->genomic_align_block->length;
+    }
+    $self->position($genomic_align_block_length - $end + 1);
 
     #swap position orientation and reverse seq_region_pos in alignment
     if (defined $self->seq_region_pos) {
