@@ -23,16 +23,17 @@ use File::Basename qw( dirname );
 use Pod::Usage;
 use Getopt::Long;
 
-use vars qw( $SERVERROOT $ENSEMBL_ROOT $SCRIPT_ROOT $DEBUG $FUDGE $NOINTERPRO $NOSUMMARY $help $info @user_spp);
+use vars qw( $SERVERROOT $PLUGIN_ROOT $SCRIPT_ROOT $DEBUG $FUDGE $NOINTERPRO $NOSUMMARY $help $info @user_spp);
 
 BEGIN{
   &GetOptions( 
-	      'help'      => \$help,
-	      'info'      => \$info,
-	      'species=s' => \@user_spp,
-        'debug'     => \$DEBUG,
-        'nointerpro'=> \$NOINTERPRO,
-        'nosummary' => \$NOSUMMARY,
+               'help'      => \$help,
+               'info'      => \$info,
+               'species=s' => \@user_spp,
+               'debug'     => \$DEBUG,
+               'nointerpro'=> \$NOINTERPRO,
+               'nosummary' => \$NOSUMMARY,
+               'plugin_root=s' => \$PLUGIN_ROOT,
 	     );
 
   pod2usage(-verbose => 2) if $info;
@@ -40,7 +41,14 @@ BEGIN{
 
   $SCRIPT_ROOT = dirname( $Bin );
   ($SERVERROOT = $SCRIPT_ROOT) =~ s#/utils##;
-  $ENSEMBL_ROOT = $SERVERROOT.'/public-plugins/ensembl';
+  $PLUGIN_ROOT ||= $SERVERROOT.'/public-plugins/ensembl';
+  unless( $PLUGIN_ROOT =~ /^\// ){ # Relative path
+    $PLUGIN_ROOT = $SERVERROOT.'/'.$PLUGIN_ROOT;
+  }
+  unless( -d $PLUGIN_ROOT ){
+    pod2usage("plugin_root $PLUGIN_ROOT is not a directory");
+  }
+
   unshift @INC, "$SERVERROOT/conf";
   eval{ require SiteDefs };
   if ($@){ die "Can't use SiteDefs.pm - $@\n"; }
@@ -117,7 +125,7 @@ foreach my $spp (@valid_spp) {
   else {
 
     ## PREPARE TO WRITE TO OUTPUT FILE
-    my $fq_path_dir = sprintf( SSI_PATH, $ENSEMBL_ROOT, $spp);
+    my $fq_path_dir = sprintf( SSI_PATH, $PLUGIN_ROOT, $spp);
     #print $fq_path_dir, "\n";
     &check_dir($fq_path_dir);
     my $fq_path_html = $fq_path_dir."stats.html";
@@ -130,6 +138,7 @@ foreach my $spp (@valid_spp) {
     my $assembly =  $meta_container->list_value_by_key('assembly.name') || $meta_container->list_value_by_key('assembly.default') || [];
     my $a_id      = $assembly->[0];
     my $a_date = $SD->get_config($spp, 'ASSEMBLY_DATE');
+
     warn "[ERROR] missing assembly info!" unless ($a_id && $a_date);
 
     my $b_date  = $SD->get_config($spp, 'GENEBUILD_DATE');;
@@ -288,7 +297,7 @@ foreach my $spp (@valid_spp) {
 
     my $snps = 0;
     if ($var_db) {
-      ($snps) = &query ( $db,
+      ($snps) = &query ( $var_db,
         "SELECT COUNT(DISTINCT variation_id) FROM variation_feature",
         );
       print "SNPs:$snps\n" if $DEBUG;
@@ -562,12 +571,12 @@ sub do_interpro {
   $number = 40;
   $file = "IPtop40.html";
   $bigtable = 0;
-  hits2html($ENSEMBL_ROOT, $domain, $number, $file, $bigtable, $species);
+  hits2html($PLUGIN_ROOT, $domain, $number, $file, $bigtable, $species);
 
   $number = 500;
   $file = "IPtop500.html";
   $bigtable = 1;
-  hits2html($ENSEMBL_ROOT, $domain, $number, $file, $bigtable, $species);
+  hits2html($PLUGIN_ROOT, $domain, $number, $file, $bigtable, $species);
 
   return 1;
 }
@@ -700,6 +709,13 @@ B<--nointerpro>
 
 B<--debug>
   Print out stats as the program is running
+
+B<--plugin_root>
+
+  Directory containing the htdocs dir (normally an ensembl plugin) to
+  edit.  Defaults to $Sitedefs::SERVERROOT/public-plugins/ensembl. If
+  a relative path is given, this is assumed relative to
+  $Sitedefs::SERVERROOT.
 
 =head1 DESCRIPTION
 
