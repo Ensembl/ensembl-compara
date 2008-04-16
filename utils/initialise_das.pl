@@ -3,7 +3,7 @@
 use strict;
 use warnings;
 
-package create_das_dsn_page;
+package initialize_das;
 # This script
 use FindBin qw($Bin);
 use Cwd;
@@ -11,11 +11,13 @@ use File::Basename;
 use Getopt::Long;
 use Pod::Usage;
 use DBI;
+use Data::Dumper;
 
 # --- load libraries needed for reading config ---
 use vars qw( $SERVERROOT );
 BEGIN{
   $SERVERROOT = dirname( $Bin );
+
   unshift @INC, "$SERVERROOT/conf";
   unshift @INC, "$SERVERROOT";
   eval{ require SiteDefs };
@@ -116,7 +118,8 @@ warn "Parsing species $sp ".gmtime();
   my $search_info = $species_defs->get_config($sp, 'SEARCH_LINKS');
   (my $vsp = $sp) =~ s/\_/ /g;
   $species_info->{$sp}->{'species'}  = $vsp;
-  $species_info->{$sp}->{'taxon_id'} = $ta->fetch_node_by_name($vsp)->taxon_id;
+  my $snode = $ta->fetch_node_by_name($vsp) or next;
+  $species_info->{$sp}->{'taxon_id'} = $snode->taxon_id;
 
   my $db_info = $species_defs->get_config($sp, 'databases')->{'ENSEMBL_DB'};
   my $db = Bio::EnsEMBL::DBSQL::DBAdaptor->new(
@@ -248,6 +251,9 @@ sub sources {
     (my $vsp = $species) =~ s/\_/ /g;
     my $source = pop @n;
     my $assembly = join('.', @n);
+    # Assume the version starts with a number (if it exists)
+    # e.g. NCBI36 -> NCBI + 36, Btau_3.1 -> Btau_ + 3.1, GUINEAPIG -> GUINEAPIG + undef
+    my ($authority, $version) = $assembly =~ m/(\D+)(i.*)/;
 	my $seq_type = $assembly =~ /-clone/ ? 'Clone' : 'Chromosome';
 	my $id;
 	if ($sitetype eq 'Vega') {
@@ -272,6 +278,7 @@ sub sources {
     my $test_range  = $sources->{$dsn}{'test_range' };
     $taxon_ids{$vsp} ||= $ta->fetch_node_by_name($vsp)->taxon_id;
 	$assembly =~ s/-clone//;
+    
     print FH qq( 
   <SOURCE uri="$id" title="$dsn" description="$description">
     <MAINTAINER    email="$email" />
@@ -279,12 +286,13 @@ sub sources {
                    created="$today">
       <PROPERTY    name="label"
                    value="ENSEMBL" />
-      <COORDINATES uri="ensembl_location" 
+      <COORDINATES uri="ensembl_location_toplevel" 
                    taxid="$taxon_ids{$vsp}"
                    source="$seq_type"
-                   authority="$assembly"
-                   version="$assembly"
-                   test_range="$test_range"/>$capability
+                   authority="$authority"
+                   version="$version"
+                   test_range="$test_range">$assembly,$seq_type,$vsp</COORDINATES>
+    $capability
     </VERSION>
   </SOURCE>);
   }
