@@ -135,16 +135,19 @@ foreach my $spp (@valid_spp) {
     # Assembly ID ->should be in meta table
     my $db_adaptor = Bio::EnsEMBL::Registry->get_DBAdaptor($spp, "core");
     my $meta_container = $db_adaptor->get_MetaContainer();
-    my $assembly =  $meta_container->list_value_by_key('assembly.name') || $meta_container->list_value_by_key('assembly.default') || [];
-    my $a_id      = $assembly->[0];
-    my $a_date = $SD->get_config($spp, 'ASSEMBLY_DATE');
 
-    warn "[ERROR] missing assembly info!" unless ($a_id && $a_date);
+    my( $a_id ) = ( @{$meta_container->list_value_by_key('assembly.name')},
+                    @{$meta_container->list_value_by_key('assembly.default')});
+    warn "[ERROR] $spp "
+        ."missing both meta->assembly.name and meta->assembly.default"
+        unless( $a_id );
 
-    my $b_date  = $SD->get_config($spp, 'GENEBUILD_DATE');;
-    my $b_id    = $SD->get_config($spp, 'GENEBUILD_BY');
-    warn "[ERROR] missing genebuild info!" unless ($b_id && $b_date);
-
+    my $a_date  = $SD->get_config($spp, 'ASSEMBLY_DATE') || '';
+    $a_date || warn "[ERROR] $spp missing SpeciesDefs->ASSEMBLY_DATE!";
+    my $b_date  = $SD->get_config($spp, 'GENEBUILD_DATE') || '';
+    $b_date || warn "[ERROR] $spp missing SpeciesDefs->GENEBUILD_DATE!";
+    my $b_id    = $SD->get_config($spp, 'GENEBUILD_BY') || '';
+    $b_id   || warn "[ERROR] $spp missing SpeciesDefs->GENEBUILD_BY!";
 
     my $data_version = $SD->get_config($spp, 'SPECIES_RELEASE_VERSION');
     my $db_id = $release_id.'.'.$data_version;
@@ -157,6 +160,10 @@ foreach my $spp (@valid_spp) {
       'ensembl_ncRNA', 'tRNA', 'pseudogene', 'retrotransposed', 'human_ensembl_proteins',
       'flybase', 'wormbase', 'vectorbase', 'sgd', 'HOX', 'CYT', 'GSTEN'";
 
+    my $authority = $SD->get_config($spp, 'AUTHORITY');
+    if( $authority ){
+      $genetypes .= sprintf(", '%s'",$authority);
+    }
 
     my ($known, $novel, $proj, $pseudo, $rna);  
 
@@ -242,7 +249,7 @@ foreach my $spp (@valid_spp) {
       ( $pseudo ) = &query( $db,
         "select count(*)
         from gene
-        where biotype = 'pseudogene' 
+        where biotype like '%pseudogene' 
         or biotype = 'retrotransposed'
         ");    
       print "Pseudogenes:$pseudo\n" if $DEBUG;
@@ -275,6 +282,12 @@ foreach my $spp (@valid_spp) {
       from prediction_transcript p, analysis a
       where p.analysis_id = a.analysis_id and a.logic_name = 'Genefinder'");
     print "Genefinder:$genfpept\n" if $DEBUG;
+
+    my( $fgenpept ) = &query( $db,
+    "select count( distinct p.prediction_transcript_id )
+      from prediction_transcript p, analysis a
+      where p.analysis_id = a.analysis_id and a.logic_name like '%fgenesh%'");
+    print "Fgenesh:$fgenpept\n" if $DEBUG;
 
     my( $transcripts )= &query( $db,
     "select count(distinct t.transcript_id)
@@ -436,6 +449,16 @@ foreach my $spp (@valid_spp) {
       print STATS qq($row
     <td class="data">Genefinder gene predictions:</td>
     <td class="value">$genfpept</td>
+  </tr>);
+    }
+
+    if ($fgenpept){
+      $fgenpept = thousandify($fgenpept);
+      $rowcount++;
+      $row = stripe_row($rowcount);
+      print STATS qq($row
+    <td class="data">FGENESH gene predictions:</td>
+    <td class="value">$fgenpept</td>
   </tr>);
     }
 
