@@ -244,7 +244,7 @@ sub align_markup_options_form {
 
   my %alignments = $object->species_defs->multiX('ALIGNMENTS');
 
-# From release to release the alignment ids change so we need to 
+# From release to release the alignment ids change so we need to
 # check that the passed id is still valid.
 
   if (! exists ($alignments{$aselect})) {
@@ -264,7 +264,7 @@ sub align_markup_options_form {
 
   foreach my $id (
       sort { 10 * ($alignments{$b}->{'type'} cmp $alignments{$a}->{'type'}) + ($a <=> $b) }
-      grep { $alignments{$_}->{'species'}->{$object->species} } 
+      grep { $alignments{$_}->{'species'}->{$object->species} }
       keys (%alignments)) {
 
       my $label = $alignments{$id}->{'name'};
@@ -319,9 +319,9 @@ sub align_markup_options_form {
       }
 
   }
-  
+
   $form->add_element(
-    'type'  => 'Submit', 'value' => 'Update' 
+    'type'  => 'Submit', 'value' => 'Update'
   );
 
   return $form;
@@ -352,8 +352,8 @@ sub user_notes {
 
   $html .= "<a href='/common/user/annotation?url=" . $uri . ";stable_id=" . $stable_id . "'>Add new note</a>";
 
-  $panel->add_row('Your notes', $html); 
-  
+  $panel->add_row('Your notes', $html);
+
 }
 
 sub group_notes {
@@ -399,7 +399,7 @@ sub group_notes {
     }
   }
   if ($found) {
-    $panel->add_row('Group notes', $html); 
+    $panel->add_row('Group notes', $html);
   }
 }
 
@@ -422,7 +422,7 @@ sub name {
 		foreach my $link (@similarity_links) {
 			#remove redundancy
 			if ($link->dbname =~ /ENST/ ) {
-				if ($link->dbname eq 'ENST_ident') { 
+				if ($link->dbname eq 'ENST_ident') {
 					@vega_links = ( $link ) ;
 					last;
 				}
@@ -458,13 +458,13 @@ sub name {
   return 1 unless defined $display_name;
   my $label = $object->type_name();
   my $lc_type = lc($label);
-  
+
   #set display xref
   my $linked_display_name = $display_name;
   if( $ext_id ) {
     $linked_display_name = $object->get_ExtURL_link( $display_name, $dbname, $ext_id );
   }
-  
+
   # If gene ID projected from other spp, put link on other spp geneID
   if ($dbname_disp =~/^Projected/) {
     $linked_display_name = $display_name; # i.e. don't link it
@@ -480,10 +480,10 @@ sub name {
   my $FLAG = 1;
   if ($dbname_disp =~/(HGNC|ZFIN)/){
     #warn "GETTING HGNC/ZFIN synonyms...";
-    my ($disp_table, $HGNC_table) = @{get_HGNC_synonyms($object)}; 
+    my ($disp_table, $HGNC_table) = @{get_HGNC_synonyms($object)};
     if ($object->get_db eq 'vega') {
             $html = $disp_table;
-    } else   {  
+    } else   {
             if($HGNC_table=~/tr/){
         $html = $HGNC_table;
         $FLAG = 0;
@@ -492,10 +492,10 @@ sub name {
         my %T = map { $_->primary_id,1 } @CCDS;
         @CCDS = sort keys %T;
         $html .= qq(<p>
-                This $lc_type is a member of the $sp CCDS set: @{[join ', ', map {$object->get_ExtURL_link($_,'CCDS', $_)} @CCDS] } 
+                This $lc_type is a member of the $sp CCDS set: @{[join ', ', map {$object->get_ExtURL_link($_,'CCDS', $_)} @CCDS] }
               </p>);
             }
-    }                
+    }
   }
   if( $FLAG ) {
     $html = qq(<p>
@@ -554,7 +554,7 @@ sub author {
                 my $text;
                 if ($author) {
                         $text .= "This locus was annotated by " . $author . " ";
-#                        $text .= email_URL($obj->get_author_email);                        
+#                        $text .= email_URL($obj->get_author_email);
                 }
                 else {
                         $text = "unknown";
@@ -570,7 +570,7 @@ sub email_URL {
 }
 
 sub version_and_date {
-    my ($panel, $obj) = @_; 
+    my ($panel, $obj) = @_;
     my $label = 'Version & Date';
     my $version = $obj->version;
         my $text = "Version $version";
@@ -583,7 +583,7 @@ sub version_and_date {
                         if ($c_date) {
                                 $text .= qq( (<span class="small">Created on $c_date</span>)<small>);
                         }
-                }        
+                }
         };
     $panel->add_row($label, qq(<p>$text</p>));
     return 1;
@@ -592,15 +592,15 @@ sub version_and_date {
 =head2 type
 
  Arg[1]             : information panel (EnsEMBL::Web::Document::Panel::Information)
- Arg[2]             : object (EnsEMBL::Web::Proxy::Object) 
+ Arg[2]             : object (EnsEMBL::Web::Proxy::Object)
  Example     : $panel1->add_component(qw(curated_locus EnsEMBL::Sanger_vega::Component::Gene::type));
  Description : adds gene type to an information panel
- Return type : true 
+ Return type : true
 
 =cut
 
 sub type {
-    my ($panel, $gene) = @_; 
+    my ($panel, $gene) = @_;
     my $label = 'Gene Type';
 	#return if this is a Eucomm gene
 	return if ($gene->Obj->analysis->logic_name eq 'otter_eucomm');
@@ -666,11 +666,11 @@ sub location {
       # set dnadb back to the original group
       $reg->add_DNAAdaptor($object->species, "vega", $object->species, $orig_group);
     }
-    
+
     $html .= sprintf( qq(
       <p>
         The start of this $lc_type is located in <a href="/%s/contigview?region=%s">%s</a>.
-      </p>), 
+      </p>),
       $object->species, $contig, $contig_name
     );
   }
@@ -723,7 +723,7 @@ sub method {
   my $db = $gene->get_db ;
   my $label = ( ($db eq 'vega' or $gene->species_defs->ENSEMBL_SITETYPE eq 'Vega') ? 'Curation' : 'Prediction' ).' Method';
   my $text = "No $label defined in database";
-  my $o = $gene->Obj;  
+  my $o = $gene->Obj;
   eval {
   if( $o &&
       $o->can( 'analysis' ) &&
@@ -767,39 +767,39 @@ sub get_HGNC_synonyms {
   my ($disp_id_table, $HGNC_table, %syns, %text_info );
   my $disp_syn = 0;
   my $matches = $self->get_database_matches;
-  _sort_similarity_links( $self, @$matches ); 
+  _sort_similarity_links( $self, @$matches );
   my $links = $self->__data->{'links'}{'PRIMARY_DB_SYNONYM'}||[];
-  foreach my $link (@$links){ 
+  foreach my $link (@$links){
      my ($key, $text)= @$link;
-       my $temp = $text; 
+       my $temp = $text;
        $text =~s/\<div\s*class="multicol"\>|\<\/div\>//g;
        $text =~s/<br \/>.*$//gism;
        my @t = split(/\<|\>/, $temp);
-       my $id = $t[4]; 
-       my $synonyms = get_synonyms($id, @$matches); 
-      if ($id =~/$display_name/){ 
+       my $id = $t[4];
+       my $synonyms = get_synonyms($id, @$matches);
+      if ($id =~/$display_name/){
          unless ($synonyms !~/\w/) {
           $disp_syn = 1;
-          $syns{$id} = $synonyms; 
+          $syns{$id} = $synonyms;
          }
        }
-       $text_info{$id} = $text; 
+       $text_info{$id} = $text;
        unless ($synonyms !~/\w/ || $id =~/$display_name/){
-        $syns{$id} = $synonyms; 
+        $syns{$id} = $synonyms;
        }
   }
  my @keys = keys %syns;
- my $syn_count = @keys; 
+ my $syn_count = @keys;
  my $width ="100%";
  $disp_id_table = qq(<table width="$width" cellpadding="4">);
  $HGNC_table = qq(<table width="$width" cellpadding="4">);
 
 SYN: foreach my $k (keys (%text_info)){
          my $syn = $syns{$k};
-         my $syn_entry; 
-        
+         my $syn_entry;
+
          if ($syn_count >= 1) { $syn_entry = qq(<td>$syn</td>); }
-         my $text = $text_info{$k}; 
+         my $text = $text_info{$k};
          $HGNC_table .= qq(
           <tr>
            <td><strong>$text</strong> ($dbname_disp)</td>$syn_entry
@@ -820,7 +820,7 @@ SYN: foreach my $k (keys (%text_info)){
         <td><span class="small"> To view all $site_type genes linked to the name <a href="/@{[$self->species]}/featureview?type=Gene;id=$display_name">click here</a>.</span></td>
         </tr>
       );
-         } 
+         }
  }
 
  $disp_id_table .=qq(</table>);
@@ -836,11 +836,11 @@ sub get_synonyms {
   my $match_id = shift;
   my @matches = @_;
   my $ids;
-  foreach my $m (@matches){	 
+  foreach my $m (@matches){
     my $dbname = $m->db_display_name;
     my $disp_id = $m->display_id();
     if ( $dbname =~/(HGNC|ZFIN)/ && $disp_id eq $match_id){
-	  $ids = ""; 
+	  $ids = "";
       my $synonyms = $m->get_all_synonyms();
       foreach my $syn (@$synonyms){
         $ids = $ids .", " .( ref($syn) eq 'ARRAY' ? "@$syn" : $syn );
@@ -902,18 +902,18 @@ sub orthologues {
   if( $gene->param( $status ) eq 'off' ) { $panel->add_row( $label, '', "$URL=on" ); return 0; }
 
   my $db              = $gene->get_db() ;
-  my $cache_obj = cache( $panel, $gene, 'orth', join '::', $db, $gene->species, $gene->stable_id ); 
-  my $html; 
+  my $cache_obj = cache( $panel, $gene, 'orth', join '::', $db, $gene->species, $gene->stable_id );
+  my $html;
   if( $cache_obj->exists ) {
-    $html = $cache_obj->retrieve(); 
+    $html = $cache_obj->retrieve();
     return 1 unless $html;
   } else {
     my $orthologue = $gene->get_homology_matches('ENSEMBL_ORTHOLOGUES');
     unless( keys %{$orthologue} ) {
       cache_print( $cache_obj, undef );
       return 1;
-    } 
-    my %orthologue_list = %{$orthologue}; 
+    }
+    my %orthologue_list = %{$orthologue};
 
 # Find the selected method_link_set
     $html = qq#
@@ -931,15 +931,15 @@ paralogues with BioMart to see more.)</p>
           <th>dN/dS</th>
           <th>Gene identifier</th>
         </tr>#;
-    my %orthologue_map = qw(SEED BRH PIP RHS); 
-    
+    my %orthologue_map = qw(SEED BRH PIP RHS);
+
     my %SPECIES;
     my $STABLE_ID = $gene->stable_id; my $C = 1;
     my $ALIGNVIEW = 0;
     my $matching_orthologues = 0;
     my %SP = ();
     my $multicv_link = sprintf "/%s/multicontigview?gene=%s;context=10000", $gene->species, $gene->stable_id;
-    my $FULL_URL     = $multicv_link; 
+    my $FULL_URL     = $multicv_link;
 
     foreach my $species (sort keys %orthologue_list) {
       my $C_species = 1;
@@ -957,9 +957,9 @@ paralogues with BioMart to see more.)</p>
         <tr>);
         $matching_orthologues = 1;
         my $description = $OBJ->{'description'};
-           $description = "No description" if $description eq "NULL"; 
-        my $orthologue_desc = $orthologue_map{ $OBJ->{'homology_desc'} } || $OBJ->{'homology_desc'}; 
-        my $orthologue_dnds_ratio = $OBJ->{'homology_dnds_ratio'}; 
+           $description = "No description" if $description eq "NULL";
+        my $orthologue_desc = $orthologue_map{ $OBJ->{'homology_desc'} } || $OBJ->{'homology_desc'};
+        my $orthologue_dnds_ratio = $OBJ->{'homology_dnds_ratio'};
          $orthologue_dnds_ratio = '&nbsp;' unless (defined $orthologue_dnds_ratio);
         my ($last_col, $EXTRA2);
         if(exists( $OBJ->{'display_id'} )) {
@@ -985,21 +985,21 @@ paralogues with BioMart to see more.)</p>
                       qq(<span class="small">$description</span> $EXTRA2);
         } else {
           $last_col = qq($stable_id<br /><span class="small">$description</span> $EXTRA2);
-        } 
+        }
         $html .= sprintf( qq(
               <td>$orthologue_desc</td>
               <td>$orthologue_dnds_ratio</td>
               <td>$last_col</td>
             </tr>));
-      } 
-      if( $rowspan > 1) { 
-        $html .= qq(<tr><td>&nbsp;</td><td>&nbsp;</td><td><a href="$mcv_species">MultiContigView showing all $species orthologues</a></td></tr>); 
+      }
+      if( $rowspan > 1) {
+        $html .= qq(<tr><td>&nbsp;</td><td>&nbsp;</td><td><a href="$mcv_species">MultiContigView showing all $species orthologues</a></td></tr>);
       }
     }
     $html .= qq(\n      </table>);
     if( keys %orthologue_list ) {
       # $html .= qq(\n      <p><a href="$FULL_URL">View all genes in MultiContigView</a>;);
-      $html .= qq(\n      <p><a href="/@{[$gene->species]}/alignview?class=Homology;gene=$STABLE_ID">View alignments of homologies</a>.</p>) if $ALIGNVIEW;
+      $html .= qq(\n      <p><a href="/@{[$gene->species]}/alignview?class=Homology;gene=$STABLE_ID">View sequence alignments of all homologues</a>.</p>) if $ALIGNVIEW;
     }
     cache_print( $cache_obj, \$html );
     return 1 unless($matching_orthologues);
@@ -1054,14 +1054,14 @@ sub paralogues {
       foreach my $stable_id (sort {$paralogue_list{$species}{$a}{'order'} <=> $paralogue_list{$species}{$b}{'order'}} keys %{$paralogue_list{$species}}){
 
         my $OBJ = $paralogue_list{$species}{$stable_id};
-        my $matching_paralogues = 1;    
+        my $matching_paralogues = 1;
         my $description = $OBJ->{'description'};
            $description = "No description" if $description eq "NULL";
         my $paralogue_desc = $paralogue_map{ $OBJ->{'homology_desc'} } || $OBJ->{'homology_desc'};
         my $paralogue_subtype = $OBJ->{'homology_subtype'};
            $paralogue_subtype = "&nbsp;" unless (defined $paralogue_subtype);
         my $paralogue_dnds_ratio = $OBJ->{'homology_dnds_ratio'};
-        $paralogue_dnds_ratio = "&nbsp;" unless ( defined $paralogue_dnds_ratio); 
+        $paralogue_dnds_ratio = "&nbsp;" unless ( defined $paralogue_dnds_ratio);
         if($OBJ->{'display_id'}) {
           (my $spp = $OBJ->{'spp'}) =~ tr/ /_/ ;
           my $EXTRA = qq(<span class="small">[<a href="/@{[$gene->species]}/multicontigview?gene=$STABLE_ID;s1=$spp;g1=$stable_id;context=1000">MultiContigView</a>]</span>);
@@ -1096,9 +1096,9 @@ sub paralogues {
     }
    $html .= qq(</table>);
    if( keys %paralogue_list ) {
-      $html .= qq(\n      <p><a href="/@{[$gene->species]}/alignview?class=Homology;gene=$STABLE_ID">View alignments of homologies</a>.</p>) if $ALIGNVIEW;    }
+      $html .= qq(\n      <p><a href="/@{[$gene->species]}/alignview?class=Homology;gene=$STABLE_ID">View sequence alignments of all homologues</a>.</p>) if $ALIGNVIEW;    }
    cache_print( $cache_obj, \$html );
- } 
+ }
 
   $panel->add_row( $label, $html, "$URL=off" );
   return 1;
@@ -1217,7 +1217,7 @@ sub transcripts {
     my $gene_slice = $gene->Obj->feature_Slice->expand( 10e3, 10e3 );
     $gene_slice = $gene_slice->invert if $gene->seq_region_strand < 0;
     ## Get the web_user_config
-    my $wuc        = $gene->user_config_hash( 'altsplice' ); 
+    my $wuc        = $gene->user_config_hash( 'altsplice' );
     ## We now need to select the correct track to turn on....
     ## We need to do the turn on turn off for the checkboxes here!!
     foreach( $trans[0]->default_track_by_gene ) {
@@ -1251,9 +1251,9 @@ sub transcripts {
 # Gene Regulation View -------------------------------------
 
 sub regulation_factors {
- my($panel, $object) = @_; 
-  my $feature_objs = $object->features; 
-  return unless @$feature_objs; 
+ my($panel, $object) = @_;
+  my $feature_objs = $object->features;
+  return unless @$feature_objs;
 
   $panel->add_columns(
     {'key' =>'Location',   },
@@ -1270,7 +1270,7 @@ sub regulation_factors {
   my $object_slice = $object->Obj->feature_Slice;
   my $offset = $object_slice->start -1;
   foreach my $feature_obj ( @sorted_features ) {
-    my $row;   
+    my $row;
     my $factor_name = $feature_obj->display_label;
     my $type = $feature_obj->feature_type->name;
     my $analysis = $feature_obj->analysis->logic_name;
@@ -1281,11 +1281,11 @@ sub regulation_factors {
       $factor_name =~/\D+(\d+)/;
       my @temp = split (/\:/, $factor_name);
       $factor_name = $temp[1];
-    }  
+    }
     my $factor_link = $factor_name? qq(<a href="/@{[$object->species]}/featureview?id=$factor_name;type=RegulatoryFactor;id=$factor_name;name=$type">$factor_name</a>) : "unknown";
     my $feature_name = $feature_obj->display_label;
     my $db_ent = $feature_obj->get_all_DBEntries;
-    my $seq_name = $feature_obj->slice->seq_region_name;     
+    my $seq_name = $feature_obj->slice->seq_region_name;
     my $position =  $object->thousandify( $feature_obj->start ). "-" .
       $object->thousandify( $feature_obj->end );
     $position = qq(<a href="/@{[$object->species]}/contigview?c=$seq_name:).$feature_obj->start.qq(;w=100">$seq_name:$position</a>);
@@ -1312,21 +1312,21 @@ sub regulation_factors {
 }
 
 sub gene_structure {
-  my( $panel, $object ) = @_; 
+  my( $panel, $object ) = @_;
   my $label    = 'Gene structure';
   my $object_slice = $object->Obj->feature_Slice;
      $object_slice = $object_slice->invert if $object_slice->strand < 1; ## Put back onto correct strand!
 ## Now we need to extend the slice!!
-  my $start = $object->Obj->start; 
+  my $start = $object->Obj->start;
   my $end   = $object->Obj->end;
-  my $offset = $object_slice->start -1; 
+  my $offset = $object_slice->start -1;
   foreach my $grf ( @{ $object->features } ) {
-    $grf->{'start'} += $offset; 
-    $grf->{'end'} += $offset; 
-    $start = $grf->start if $grf->start < $start;    
+    $grf->{'start'} += $offset;
+    $grf->{'end'} += $offset;
+    $start = $grf->start if $grf->start < $start;
     $end   = $grf->end   if $grf->end   > $end;
-  }  
-  my $gr_slice = $object_slice->expand( $object->Obj->start - $start, $end - $object->Obj->end ); 
+  }
+  my $gr_slice = $object_slice->expand( $object->Obj->start - $start, $end - $object->Obj->end );
 
   my $trans = $object->get_all_transcripts;
   my $gene_track_name =$trans->[0]->default_track_by_gene;
@@ -1347,7 +1347,7 @@ sub gene_structure {
 }
 
 sub factor {
-  my( $panel, $object ) = @_; 
+  my( $panel, $object ) = @_;
     my $slice = $object->Obj->feature_Slice;
     my $fg_db = undef;
     my $db_type  = 'funcgen';
@@ -1385,7 +1385,7 @@ sub genespliceview_menu {  return gene_menu( @_, 'genesnpview_transcript',
    [qw( Features SNPContext ImageSize THExport )] ); }
 
 sub genetreeview_menu {
-    my($panel, $object, $configname, $left, $right ) =  
+    my($panel, $object, $configname, $left, $right ) =
         (@_, 'genetreeview', [qw( GTExport ImageSize )], ['GeneTreeHelp'] );
 
     my $mc = $object->new_menu_container(
@@ -1408,13 +1408,13 @@ sub nogenetree {
   );
   $panel->print( $html );
   return 1;
-} 
+}
 
 
-sub genesnpview_menu    {  return gene_menu( @_, 'genesnpview_transcript', 
+sub genesnpview_menu    {  return gene_menu( @_, 'genesnpview_transcript',
    [qw( Features  Source SNPClasses SNPValid SNPTypes SNPContext THExport ImageSize)], ['SNPHelp'] ); }
 
-sub gene_menu { 
+sub gene_menu {
   my($panel, $object, $configname, $left, $right ) = @_;
   my $mc = $object->new_menu_container(
     'configname'  => $configname,
@@ -1467,15 +1467,15 @@ sub genesnpview {
 
 
   # Fake SNPs -----------------------------------------------------------
-  # Grab the SNPs and map them to subslice co-ordinate 
-  # $snps contains an array of array each sub-array contains [fake_start, fake_end, B:E:Variation object] # Stores in $object->__data->{'SNPS'} 
-  my ($count_snps, $snps, $context_count) = $object->getVariationsOnSlice( $transcript_slice, $sub_slices  ); 
+  # Grab the SNPs and map them to subslice co-ordinate
+  # $snps contains an array of array each sub-array contains [fake_start, fake_end, B:E:Variation object] # Stores in $object->__data->{'SNPS'}
+  my ($count_snps, $snps, $context_count) = $object->getVariationsOnSlice( $transcript_slice, $sub_slices  );
   my $start_difference =  $object->__data->{'slices'}{'transcripts'}[1]->start - $object->__data->{'slices'}{'gene'}[1]->start;
-  
+
   my @fake_filtered_snps;
-  map { push @fake_filtered_snps, 
-     [ $_->[2]->start + $start_difference, 
-       $_->[2]->end   + $start_difference, 
+  map { push @fake_filtered_snps,
+     [ $_->[2]->start + $start_difference,
+       $_->[2]->end   + $start_difference,
        $_->[2]] } @$snps;
 
   $Configs->{'gene'}->{'filtered_fake_snps'} = \@fake_filtered_snps unless $no_snps;
@@ -1486,7 +1486,7 @@ sub genesnpview {
 
   my @domain_logic_names = qw(Pfam scanprosite Prints pfscan PrositePatterns PrositeProfiles Tigrfam Superfamily Smart PIRSF);
   foreach( @domain_logic_names ) {
-    $object->store_TransformedDomains( $_ );    ## Stores in $transcript_object->__data->{'transformed'}{'Pfam_hits'} 
+    $object->store_TransformedDomains( $_ );    ## Stores in $transcript_object->__data->{'transformed'}{'Pfam_hits'}
   }
   $object->store_TransformedSNPS() unless $no_snps;      ## Stores in $transcript_object->__data->{'transformed'}{'snps'}
 
@@ -1514,7 +1514,7 @@ sub genesnpview {
       'gene'         => $object->Obj,
       $no_snps ? (): ('snps' => $TS->{'snps'})
     };
-    foreach ( @domain_logic_names ) { 
+    foreach ( @domain_logic_names ) {
       $CONFIG->{'transcript'}{lc($_).'_hits'} = $TS->{lc($_).'_hits'};
     }
 
@@ -1612,7 +1612,7 @@ sub genesnpview_legend {
     <p>
       <img src="/img/help/genesnpview-key.gif" height="160" width="800" border="0" alt="" />
     </p>
-  ) ); 
+  ) );
   return 0;
 }
 
@@ -1679,7 +1679,7 @@ sub external_links {
   my $comparaDBA      = $databases->{'compara'};
 
   my $id = $object->stable_id;
-  my $clusterset_id = 0; 
+  my $clusterset_id = 0;
 
   my $treeDBA = $comparaDBA->get_ProteinTreeAdaptor;
   my $member = $comparaDBA->get_MemberAdaptor->fetch_by_source_stable_id('ENSEMBLGENE', $id);
@@ -1708,7 +1708,7 @@ sub external_links {
                                     -fh     => IO::String->new(my $var),
                                     -format => 'fasta'
                                     );
-      
+
   print $alignio $tree->get_SimpleAlign( -append_sp_short_name => 1 );
   my $FN2        = $object->temp_file_name( undef, 'XXX/X/X/XXXXXXXXXXXXXXX' );
   my $file2      = $object->species_defs->ENSEMBL_TMP_DIR_IMG."/$FN2";
@@ -1752,7 +1752,7 @@ sub external_links {
 sub create_genetree_image {
   my(  $object, $tree, $member ) = @_;
 
-  my $wuc        = $object->user_config_hash( 'genetreeview' ); 
+  my $wuc        = $object->user_config_hash( 'genetreeview' );
   my $image_width  = $object->param( 'image_width' ) || 1200;
 
   $wuc->container_width($image_width);
@@ -1765,7 +1765,6 @@ sub create_genetree_image {
   $image->image_name  = ($object->param('image_width')).'-'.$object->stable_id;
   $image->imagemap           = 'yes';
   return $image;
-}     
- 
-1;
+}
 
+1;
