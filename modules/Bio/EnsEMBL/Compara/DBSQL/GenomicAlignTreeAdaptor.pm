@@ -149,6 +149,7 @@ sub fetch_by_GenomicAlignBlock {
 
   ## root_id point to the root of this tree:
   my $root = $self->fetch_node_by_node_id($node->root->node_id);
+  $root->dbID($genomic_align_block->dbID);
 #   print STDERR "ROOT ", $root->node_id, "\n";
 
   $root->{genomic_align_array} = [map {$_->genomic_align} @{$root->get_all_sorted_genomic_align_nodes}];
