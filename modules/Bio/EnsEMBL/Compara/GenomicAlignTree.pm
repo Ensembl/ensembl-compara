@@ -467,14 +467,15 @@ $DB::single = 1;
       }
       $all_genomic_align_nodes->[$i]->{genomic_align}->{genomic_align_block} = $genomic_align_block;
     } else {
+      print STDERR "Fail while checking $i\n";
       for (my $i=0; $i<@$all_genomic_align_nodes; $i++) {
-          print STDERR join(":",
+          print STDERR join(":", $i,
               $all_new_genomic_aligns->[$i]->genome_db->name,
               $all_new_genomic_aligns->[$i]->dnafrag->name,
               $all_new_genomic_aligns->[$i]->dnafrag_start,
               $all_new_genomic_aligns->[$i]->dnafrag_end,
               $all_new_genomic_aligns->[$i]->dnafrag_strand), "\n";
-          print STDERR join("|",
+          print STDERR join("|", $i,
               $all_original_genomic_aligns->[$i]->genome_db->name,
               $all_original_genomic_aligns->[$i]->dnafrag->name,
               $all_original_genomic_aligns->[$i]->dnafrag_start,
@@ -639,9 +640,10 @@ sub _name_for_sorting {
   my $name;
 
   if ($self->is_leaf) {
-    $name = sprintf("%s.%s.%020d",
+    $name = sprintf("%s.%s.%s.%020d",
         $self->genomic_align->genome_db->name,
         $self->genomic_align->dnafrag->name,
+        ($self->genomic_align->dbID or $self->genomic_align->{original_dbID} or 0),
         $self->genomic_align->dnafrag_start);
   } else {
     $name = join(" - ", sort map {sprintf("%s.%s.%020d",
