@@ -9,7 +9,7 @@ use CGI;
 use EnsEMBL::Web::Document::Interface;
 use EnsEMBL::Web::Interface::InterfaceDef;
 use EnsEMBL::Web::Data::User;
-use EnsEMBL::Web::Data::Invite;
+use EnsEMBL::Web::Data::Group;
 use EnsEMBL::Web::Data::Membership;
 use EnsEMBL::Web::RegObj;
 
@@ -36,21 +36,19 @@ sub render {
 sub process {
   my $self = shift;
   my $cgi = new CGI;
-  my $invitation = EnsEMBL::Web::Data::Invite->new({'id' => $cgi->param('id')});
+  
+  my $invitation = EnsEMBL::Web::Data::Record::Invite::Groups->new($cgi->param('id'));
   my $url; 
   if ($invitation->status eq 'pending') {
     ## Is this an existing user?
-    my $existing_user = EnsEMBL::Web::Data::User->new({ 'email' => $invitation->email });
+    my $existing_user = EnsEMBL::Web::Data::User->find('email' => $invitation->email);
     if ($existing_user) {
       ## Create membership link between user and group
       my $success = $self->add_member_from_invitation($existing_user, $invitation);
       if ($ENV{'ENSEMBL_USER_ID'}) {
-        if ($success) {
-          $invitation->destroy;
-        }
+        $invitation->destroy if $success;
         $url = '/common/user/view_group?id='.$invitation->webgroup_id;
-      }
-      else {
+      } else {
         ## Set invitation status to 'accepted' (don't delete in case login fails!)
         $invitation->status('accepted');
         $invitation->save;

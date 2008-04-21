@@ -9,7 +9,6 @@ use warnings;
 
 use EnsEMBL::Web::Data;
 use EnsEMBL::Web::Interface::ElementDef;
-use EnsEMBL::Web::Tools::DBSQL::TableName;
 
 {
 
@@ -42,17 +41,17 @@ sub new {
   my ($class, %params) = @_;
   my $self = bless \my($scalar), $class;
   $Data_of{$self}         = defined $params{data} ? $params{data} : {};
-  $ExtraData_of{$self}   = defined $params{extra_data} ? $params{extra_data} : {};
+  $ExtraData_of{$self}    = defined $params{extra_data} ? $params{extra_data} : {};
   $Repeat_of{$self}       = defined $params{repeat} ? $params{repeat} : undef;
   $PermitDelete_of{$self} = defined $params{permit_delete} ? $params{permit_delete} : undef;
 
-  $Elements_of{$self}     = defined $params{elements} ? $params{elements} : {};
-  $ElementOrder_of{$self} = defined $params{element_order} ? $params{element_order} : [];
+  $Elements_of{$self}      = defined $params{elements} ? $params{elements} : {};
+  $ElementOrder_of{$self}  = defined $params{element_order} ? $params{element_order} : [];
   $OptionColumns_of{$self} = defined $params{option_columns} ? $params{option_columns} : [];
-  $OptionOrder_of{$self}  = defined $params{option_order} ? $params{option_order} : undef;
-  $Dropdown_of{$self}     = defined $params{dropdown} ? $params{dropdown} : undef;
-  $RecordFilter_of{$self} = defined $params{record_filter} ? $params{record_filter} : undef;
-  $ShowHistory_of{$self}  = defined $params{show_history} ? $params{show_history} : undef;
+  $OptionOrder_of{$self}   = defined $params{option_order} ? $params{option_order} : undef;
+  $Dropdown_of{$self}      = defined $params{dropdown} ? $params{dropdown} : undef;
+  $RecordFilter_of{$self}  = defined $params{record_filter} ? $params{record_filter} : undef;
+  $ShowHistory_of{$self}   = defined $params{show_history} ? $params{show_history} : undef;
 
   $PanelStyle_of{$self}   = defined $params{panel_style} ? $params{panel_style} : '';
   $Caption_of{$self}      = defined $params{caption} ? $params{caption} : {};
@@ -63,7 +62,7 @@ sub new {
   $OnFailure_of{$self}    = defined $params{on_failure} ? $params{on_failure} : '';
   $DefaultView_of{$self}  = defined $params{default_view} ? $params{default_view} : '';
 
-  $ScriptName_of{$self}  = defined $params{script_name} ? $params{script_name} : '';
+  $ScriptName_of{$self}   = defined $params{script_name} ? $params{script_name} : '';
 
   return $self;
 }
@@ -329,39 +328,36 @@ sub extra_data {
 sub discover {
   ### Autogenerate elements based on data structure
   my $self = shift;
-  my @fields = @{$self->data->get_all_fields};
+  my %fields = %{ $self->data->get_all_fields };
 
   my (%elements, @element_order);
-  foreach my $field (@fields) {
+  foreach my $field (keys %fields) {
     my ($element_type, $options);
-    my $name = $field->get_name;
     ## set label
-    my $label = ucfirst($name);
+    my $label = ucfirst($field);
     $label =~ s/_/ /g;
-    my $data_type = $field->get_type;
+    my $data_type = $fields{$field};
 
     if ($data_type =~ /^int/) {
       $element_type = 'Int';
-    }
-    elsif ($data_type eq 'text' || $data_type eq 'mediumtext') {
+    } elsif ($data_type eq 'text' || $data_type eq 'mediumtext') {
       $element_type= 'Text';
-    }
-    elsif ($data_type =~ /^enum/ || $data_type =~ /set/) {
-      if ($data_type =~ /^enum/) {
+    } elsif ($data_type =~ /^(enum|set)\((.*)\)/) {
+
+      if ($1 eq 'enum') {
         $element_type = 'DropDown';
-      }
-      else {
+      } else {
         $element_type = 'MultiSelect';
       }
-      my @values = @{$field->get_values};
-      my @option_values;
-      foreach my $value (@values) {
-        push @option_values, {'name'=>$value, 'value'=>$value};
-      }
+
+      my @values = map {
+        $_ =~ s/'//g;
+        { 'name' => $_, 'value' => $_ };
+      } split ',', $2;
+
       $options->{'select'} = 'select';
-      $options->{'values'} = \@option_values;
-    }
-    else {
+      $options->{'values'} = \@values;
+    } else {
       $element_type = 'String';
       if ($data_type =~ /^varchar/) {
         my $size = $data_type;
@@ -372,19 +368,22 @@ sub discover {
     }
     ## Record management fields should be non-editable, regardless of type,
     ## and omitted from the standard widget list
-    if ($name =~ /^created_|^modified_/) {
+    if ($field =~ /^created_|^modified_/) {
       $element_type = 'NoEdit';
     }
     else {
-      push @element_order, $name;
+      push @element_order, $field;
     }
-    $elements{$name} = EnsEMBL::Web::Interface::ElementDef->new({
-      'name'        => $name,
+    $elements{$field} = EnsEMBL::Web::Interface::ElementDef->new({
+      'name'        => $field,
       'label'       => $label,
       'type'        => $element_type,
       'options'     => $options
-      });
+    });
   }
+
+=pod
+
   ## Also get possible 'belongs to' and 'has many' fields as well
   ## 'Belongs to' are dropdown by default
   my $belongs_to = $self->data->get_belongs_to;
@@ -398,9 +397,11 @@ sub discover {
       }
     }
   }
+  ## 'Has many' are multiple checkboxes by default
+
   my $has_many = $self->data->get_has_many;
   if ($has_many) {
-    foreach my $class (keys %$has_many) {
+    foreach my $class (@$has_many) {
       my ($key, $element) = $self->_create_relational_element('MultiSelect', $class);
       if ($element) {
         $elements{$element->name} = $element;
@@ -409,6 +410,7 @@ sub discover {
       }
     }
   }
+=cut
   $Elements_of{$self} = \%elements;
   $ElementOrder_of{$self} = \@element_order;
 }
@@ -488,9 +490,9 @@ sub record_list {
     $request->add_where(@{$self->record_filter});
   }
   if ($self->data->get_data_field_name) {
-    $request->add_where('type', $self->data->type);
+    $request->add_where('type', $self->data->__type);
   }
-  $request->set_index_by(EnsEMBL::Web::Tools::DBSQL::TableName::parse_primary_key($self->data->get_primary_key));
+  $request->set_index_by($self->data->get_primary_key);
   my $result = $self->data->get_adaptor->find_many($request);
 
   foreach my $id (keys %{$result->get_result_hash}) {
@@ -505,32 +507,14 @@ sub record_list {
 sub cgi_populate {
   ### Utility function to populate a data object from CGI parameters
   ### instead of from the database
-  my ($self, $object, $id) = @_;
+  my ($self, $object) = @_;
   my $data = $self->data;
-  $data->id($id);
-
   ## restrict ourselves to defined fields
-  my $fields = $data->get_all_fields;
-  my %ok_field;
-  foreach my $data_field (@$fields) {
-    my $name = $data_field->get_name;
-    $ok_field{$name}++;
-  }
-
-  my @parameters = $object->param();
-  foreach my $key (@parameters) {
-    next unless $ok_field{$key};
-    my $field = $data->mapped_field($key);
-
-    ## deal with multiple-value parameters!
-    my @param_check = $object->param($key);
-    my $value;
-    if (scalar(@param_check) > 1) {
-      $value = [$object->param($key)];
-    }
-    else {
-      $value = $object->param($key);
-    }
+  foreach my $field (keys %{ $data->get_all_fields }) {
+    next unless grep {$_ eq $field} $object->param();
+    my $value = (scalar(@{[$object->param($field)]}) > 1)
+                ? [$object->param($field)]
+                : $object->param($field);
     $data->$field($value);
   }
 
@@ -559,15 +543,14 @@ sub edit_fields {
   my $element_order = $self->element_order;
   ## populate widgets from Data_of{$self}
   foreach my $field (@$element_order) {
-    my $name = $field;
-    my $element = $elements->{$name};
+    my $element = $elements->{$field};
     my %param = %{$element->widget};
     ## File widgets behave differently depending on user action
     if ($element->type eq 'File' && $dataview ne 'add') {
       $param{'type'} = 'NoEdit';
     }
     ## Set field values
-    if ($data && !$param{'value'}) {
+    if (ref($data) && !$param{'value'}) {
       $param{'value'} = $data->$field;
       if (!$param{'value'} && $param{'default'}) {
         $param{'value'} = $param{'default'};
@@ -587,7 +570,7 @@ sub edit_fields {
     ## pass non-editable elements as additional hidden fields
     if ($element->type eq 'NoEdit') {
       my %hidden = %{$element->hide};
-      if ($data) {
+      if (ref $data) {
         $hidden{'value'} = $param{'value'};
       }
       ## deal with multi-value fields
@@ -630,16 +613,16 @@ sub preview_fields {
   ### Returns fields as non-editable text
   my ($self, $id, $object) = @_;
   my $parameters = [];
+
   my $data = $self->data;
   my $elements = $self->elements;
   my $element_order = $self->element_order;
   foreach my $field (@$element_order) {
-    my $name = $field;
-    my $element = $elements->{$name};
+    my $element = $elements->{$field};
     next if $element->type eq 'Information';
     next if $element->type eq 'Hidden';
     my %param = %{$element->preview};
-    if ($data) {
+    if (ref $data) {
       my $var = $data->$field;
       if ($element->type eq 'DropDown' || $element->type eq 'MultiSelect') {
         my @values = @{$param{'values'}};
@@ -694,7 +677,7 @@ sub pass_fields {
     next if $element->type eq 'SubHeader';
     next if $element->type eq 'Information';
     my %param = %{$element->hide};
-    if ($data) {
+    if (ref $data) {
       my $var = $data->$field;
       if (ref($var) eq 'ARRAY') {
         foreach my $v (@$var) {
@@ -712,6 +695,7 @@ sub pass_fields {
     }
     push @$parameters, \%param;
   } 
+
   return $parameters;
 }
 
@@ -742,7 +726,7 @@ sub history_fields {
     if ($element) {
       my %param;
       %param = %{$element->preview};
-      if ($data) {
+      if (ref $data) {
         $param{'value'} = $data->$name;
       }
       push @$parameters, \%param;

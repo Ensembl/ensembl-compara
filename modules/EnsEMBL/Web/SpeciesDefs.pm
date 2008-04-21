@@ -217,7 +217,7 @@ sub _convert_date {
   ### Converts a date from a species database into a human-friendly format for web display 
   ### Argument: date in format YYYY-MM with optional -string attached
   ### Returns: hash ref {'date' => 'Mmm YYYY', 'string' => 'xxxxx'}
-  my $date = @_;
+  my $date = shift;
   my %parsed;
   my @a = ($date =~ /(\d{4})-(\d{2})-?(.*)/);
   my @now = localtime();

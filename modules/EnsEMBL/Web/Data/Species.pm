@@ -2,30 +2,21 @@ package EnsEMBL::Web::Data::Species;
 
 use strict;
 use warnings;
+use base qw(EnsEMBL::Web::Data);
+use EnsEMBL::Web::DBSQL::WebDBConnection (__PACKAGE__->species_defs);
 
-use Class::Std;
-use EnsEMBL::Web::Data;
-use EnsEMBL::Web::DBSQL::MySQLAdaptor;
+__PACKAGE__->table('species');
+__PACKAGE__->set_primary_key('species_id');
 
-our @ISA = qw(EnsEMBL::Web::Data);
+__PACKAGE__->add_queriable_fields(
+  code        => 'char(3)',
+  name        => 'varchar(255)',
+  common_name => 'varchar(32)',
+  vega        => "enum('N','Y')",
+  dump_notes  => 'text',
+);
 
-{
-
-sub BUILD {
-  my ($self, $ident, $args) = @_;
-  $self->set_adaptor(EnsEMBL::Web::DBSQL::MySQLAdaptor->new({ 'table' => 'species', 
-                                                              'adaptor' => 'websiteAdaptor'}));
-  $self->set_primary_key('species_id');
-  $self->add_queriable_field({ name => 'code', type => 'char(3)' });
-  $self->add_queriable_field({ name => 'name', type => 'varchar(255)' });
-  $self->add_queriable_field({ name => 'common_name', type => 'varchar(32)' });
-  $self->add_queriable_field({ name => 'vega', type => "enum('N','Y')" });
-  $self->add_queriable_field({ name => 'dump_notes', type => 'text' });
-  $self->add_belongs_to("EnsEMBL::Web::Data::Release");
-  $self->add_has_many({class => "EnsEMBL::Web::Data::NewsItem"});
-  $self->populate_with_arguments($args);
-}
-
-}
+__PACKAGE__->has_many(releases   => 'EnsEMBL::Web::Data::ReleaseSpecies');
+__PACKAGE__->has_many(news_items => 'EnsEMBL::Web::Data::ItemSpecies');
 
 1;

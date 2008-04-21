@@ -54,7 +54,7 @@ X  $current_files->{'type'}
 #  $current_files->{'js'}
 #  $current_files->{'type'}
 ";
-
+    warn "WRITING NEW FILE....";
     printf O "type = %s\ncss = %s\njs = %s\n",
       $current_files->{'type'}, $current_files->{'css'}, $current_files->{'js'};
     close O;
@@ -104,19 +104,22 @@ $CONTENTS
   }
   warn "New contents for $type produced";
   if( $current_file ) {
-    open I, "$first_root/merged/$current_file.$type";
-    local $/ = undef;
-    my $CONTENTS = <I>;
-    close I;
-    return undef if $CONTENTS eq $NEW_CONTENTS;
+    if (open I, "$first_root/merged/$current_file.$type") {
+      local $/ = undef;
+      my $CONTENTS = <I>;
+      close I;
+      return undef if $CONTENTS eq $NEW_CONTENTS;
+    }
   }
   my $filename = md5_hex( $NEW_CONTENTS );
   my $fn = "$first_root/merged/$filename.$type";
-  open O, ">$fn";
+  
+  open O, ">$fn" or die "can't open $fn for writing";
   print O $NEW_CONTENTS;
   close O;
   my $minified = "$first_root/minified/$filename.$type";
   open INFILE,  $fn;
+  warn "Creating $minified file??";
   return undef unless open OUTFILE, ">$minified";
   if( $type eq 'css' ) {
     CSS::Minifier::minify(input => *INFILE, outfile => *OUTFILE);

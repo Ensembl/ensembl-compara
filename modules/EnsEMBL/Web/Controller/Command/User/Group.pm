@@ -34,6 +34,7 @@ sub render {
 
 sub render_page {
   my $self = shift;
+  my $cgi = new CGI;
 
   ## Create basic page object, so we can access CGI parameters
   my $webpage = EnsEMBL::Web::Document::Interface::simple('User');
@@ -43,8 +44,8 @@ sub render_page {
   my $sitename = $sd->ENSEMBL_SITETYPE;
 
   ## Create interface object, which controls the forms
-  my $interface = EnsEMBL::Web::Interface::InterfaceDef->new();
-  my $data = EnsEMBL::Web::Data::Group->new();
+  my $interface = EnsEMBL::Web::Interface::InterfaceDef->new;
+  my $data = EnsEMBL::Web::Data::Group->new($cgi->param('id'));
   $interface->data($data);
   $interface->discover;
 

@@ -329,11 +329,11 @@ sub align_markup_options_form {
 
 sub user_notes {
   my( $panel, $object ) = @_;
-  my $user = $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->get_user;
-  my $uri = CGI::escape($ENV{'REQUEST_URI'});
-  my $html = "";
+  my $user = $ENSEMBL_WEB_REGISTRY->get_user;
+  my $uri  = CGI::escape($ENV{'REQUEST_URI'});
+  my $html;
   my $stable_id = $object->stable_id;
-  my @annotations = @{ $user->annotations };
+  my @annotations = $user->annotations;
   if ($#annotations > -1) {
     $html .= "<ul>";
     foreach my $annotation (sort { $a->created_at cmp $b->created_at } @annotations) {
@@ -358,14 +358,14 @@ sub user_notes {
 
 sub group_notes {
   my( $panel, $object ) = @_;
-  my $user = $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->get_user;
-  my @groups = @{ $user->groups };
+  my $user = $ENSEMBL_WEB_REGISTRY->get_user;
+  my @groups = $user->groups;
   my $uri = CGI::escape($ENV{'REQUEST_URI'});
   my $stable_id = $object->stable_id;
-  my $html = "";
+  my $html;
   my $found = 0;
   my %included_annotations = ();
-  foreach my $annotation (@{ $user->annotations }) {
+  foreach my $annotation ($user->annotations) {
     if ($annotation->stable_id eq $stable_id) {
       $included_annotations{$annotation->id} = "yes";
     }
@@ -373,7 +373,7 @@ sub group_notes {
   foreach my $group (@groups) {
     my $title_added = 0;
     my $group_annotations = 0;
-    my @annotations = @{ $group->annotations };
+    my @annotations = $group->annotations;
     foreach my $annotation (@annotations) {
       if ($annotation->stable_id eq $stable_id) {
         $group_annotations = 1;
@@ -991,9 +991,15 @@ paralogues with BioMart to see more.)</p>
               <td>$orthologue_dnds_ratio</td>
               <td>$last_col</td>
             </tr>));
+<<<<<<< Gene.pm
+      }
+      if( $rowspan > 1) {
+        $html .= qq(<tr><td>&nbsp;</td><td>&nbsp;</td><td><a href="$mcv_species">MultiContigView showing all $species orthologues</a></td></tr>); 
+=======
       }
       if( $rowspan > 1) {
         $html .= qq(<tr><td>&nbsp;</td><td>&nbsp;</td><td><a href="$mcv_species">MultiContigView showing all $species orthologues</a></td></tr>);
+>>>>>>> 1.143
       }
     }
     $html .= qq(\n      </table>);
@@ -1182,8 +1188,8 @@ sub transcripts {
     } else {
       $rows.= "<td>novel transcript</td>";
     }
-	my $trans_stable_id = $transcript->stable_id;
-	$rows .= qq(<td>$trans_stable_id</td>);
+  my $trans_stable_id = $transcript->stable_id;
+  $rows .= qq(<td>$trans_stable_id</td>);
     if( $transcript->translation_object ) {
       my $pep_stable_id = $transcript->translation_object->stable_id;
       $rows .= "<td>$pep_stable_id</td>";
@@ -1701,7 +1707,6 @@ sub external_links {
   if( open NHX,   ">$file" ) {
       print NHX $tree->nhx_format('simple');
       close NHX;
-      #warn "(written $file => $URL): ".$tree->nhx_format('simple');
   }
 
   my $alignio = Bio::AlignIO->newFh(
@@ -1717,7 +1722,6 @@ sub external_links {
   if( open FASTA,   ">$file2" ) {
       print FASTA $var;
       close FASTA;
-      #warn "(written FASTA $file2 => $URL2): $var";
   }
 
   my $jalview = qq{

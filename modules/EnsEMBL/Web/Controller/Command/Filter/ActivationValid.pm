@@ -4,7 +4,6 @@ use strict;
 use warnings;
 
 use EnsEMBL::Web::Data::User;
-use EnsEMBL::Web::RegObj;
 
 our @ISA = qw(EnsEMBL::Web::Controller::Command::Filter);
 
@@ -17,18 +16,13 @@ sub allow {
   my $cgi = new CGI;
   my $user;
   if ($cgi->param('user_id')) {
-    $user = EnsEMBL::Web::Data::User->new({
-      id      => $cgi->param('user_id'),
-    });
+    $user = EnsEMBL::Web::Data::User->new($cgi->param('user_id'));
   } else {
-    $user = EnsEMBL::Web::Data::User->new({
-      email   => $cgi->param('email'),
-    });
+    $user = EnsEMBL::Web::Data::User->find(email => $cgi->param('email'));
   }
-  warn "USER: " . $user->name;
-  warn "SALT: " . $user->salt;
+
   ## TO DO: Add email address to validation, once new link is standard
-  if ($user->salt eq $cgi->param('code')) {
+  if ($user && ($user->salt eq $cgi->param('code'))) {
     return 1;
   } else {
     return 0;

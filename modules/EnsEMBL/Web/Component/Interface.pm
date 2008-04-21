@@ -2,7 +2,6 @@ package EnsEMBL::Web::Component::Interface;
 
 ### Module to create generic forms for Document::Interface and its associated modules
 
-use EnsEMBL::Web::Tools::DBSQL::TableName;
 use EnsEMBL::Web::Component;
 use EnsEMBL::Web::Form;
 
@@ -43,7 +42,7 @@ sub edit_form {
   ### Builds an HTML form populated with a database record
   my($panel, $object) = @_;
 
-  my $primary_key = EnsEMBL::Web::Tools::DBSQL::TableName::parse_primary_key($panel->interface->data->get_primary_key);
+  my ($primary_key) = $panel->interface->data->primary_columns;
   my $id = $object->param($primary_key) || $object->param('id');
   
   my $form = _data_form($panel, $object, 'edit');
@@ -105,32 +104,37 @@ sub preview_form {
   my $form = EnsEMBL::Web::Form->new('preview', "/common/$script", 'post');
 
   ## get data and assemble form
-  my $primary_key = EnsEMBL::Web::Tools::DBSQL::TableName::parse_primary_key($panel->interface->data->get_primary_key);
+  my ($primary_key) = $panel->interface->data->primary_columns;
   my $id = $object->param($primary_key) || $object->param('id');
   my $db_action = $object->param('db_action');
   if ($object->param('record_type')) {
-    $panel->interface->data->attach_owner($object->param('record_type'));
+    #$panel->interface->data->attach_owner($object->param('record_type'));
   }
-
 
   if ($db_action eq 'delete') {
-    $panel->interface->data->populate_with_arguments({id => $id});
-  }
-  else {
-    $panel->interface->cgi_populate($object, $id);
+    #$panel->interface->data->populate($id);
+  } else {
+    $panel->interface->cgi_populate($object);
   }
 
+  ## TODO: get rid of one of this elements
+  $form->add_element(
+    'type'  => 'Hidden',
+    'name'  => 'id',
+    'value' => $id,  
+  );
   ## add form elements
   $form->add_element(
-            'type'  => 'Hidden',
-            'name'  => $primary_key,
-            'value' => $id,  
-        );
+    'type'  => 'Hidden',
+    'name'  => $primary_key,
+    'value' => $id,  
+  );
   $form->add_element(
-          'type'  => 'Hidden',
-          'name'  => 'mode',
-          'value' => $object->param('mode'),  
-        );
+    'type'  => 'Hidden',
+    'name'  => 'mode',
+    'value' => $object->param('mode'),  
+  );
+  
   my $preview_fields = $panel->interface->preview_fields($id);
   my $element;
   foreach $element (@$preview_fields) {
@@ -154,16 +158,15 @@ sub _data_form {
   my $form = EnsEMBL::Web::Form->new($name, "/common/$script", 'post');
 
   ## form widgets
-  my $key = EnsEMBL::Web::Tools::DBSQL::TableName::parse_primary_key($panel->interface->data->get_primary_key);
+  my ($key) = $panel->interface->data->primary_columns;
   if ($object->param('record_type')) {
-    $panel->interface->data->attach_owner($object->param('record_type'));
+    #$panel->interface->data->attach_owner($object->param('record_type'));
   }
   my $id = $object->param($key) || $object->param('id');
   if ($id) {
-    $panel->interface->data->populate_with_arguments({id => $id});
-  }
-  else {
-    $panel->interface->cgi_populate($object, '');
+    #$panel->interface->data->populate($id);
+  } else {
+    $panel->interface->cgi_populate($object);
   }
   my $widgets = $panel->interface->edit_fields($object->param('dataview'));
 
@@ -191,11 +194,7 @@ sub _record_select {
   my @columns = @{$panel->interface->option_columns};
 
   ## Create field type lookup, for sorting purposes
-  my %lookup;
-  my @all_fields = @{$panel->interface->data->get_all_fields};
-  foreach my $field (@all_fields) {
-    $lookup{$field->get_name} = $field->get_type;
-  }
+  my %all_fields = %{ $panel->interface->data->get_all_fields };
 
   ## Do custom sort
   my ($sort_code, $repeat, @list);
@@ -214,7 +213,7 @@ sub _record_select {
         $b = '$a';
       }
       ## try to guess appropriate sort type
-      if ($lookup{$col_name} =~ /^int/ || $lookup{$col_name} =~ /^float/) {
+      if ($all_fields{$col_name} =~ /^int/ || $all_fields{$col_name} =~ /^float/) {
         $sort_code .= $a.'->'.$col_name.' <=> '.$b.'->'.$col_name.' ';
       }
       else {
@@ -241,15 +240,14 @@ sub _record_select {
     push @options, {'name'=>$text, 'value'=>$value};
   }
   
-  my $primary_key = EnsEMBL::Web::Tools::DBSQL::TableName::parse_primary_key($panel->interface->data->get_primary_key);
+  my ($primary_key) = $panel->interface->data->primary_columns;
   $form->add_element( 
             'type'    => 'DropDown', 
             'select'  => $select,
             'title'   => 'Select a Record', 
             'name'    => $primary_key, 
             'values'  => \@options,
-          
-          );
+  );
   
   return $form;
 }

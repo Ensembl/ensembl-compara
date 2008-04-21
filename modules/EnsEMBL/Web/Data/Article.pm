@@ -1,44 +1,28 @@
 package EnsEMBL::Web::Data::Article;
 
-## Old-style help article
-
 use strict;
 use warnings;
+use base qw(EnsEMBL::Web::Data);
+use EnsEMBL::Web::DBSQL::WebDBConnection (__PACKAGE__->species_defs);
 
-use Class::Std;
-use EnsEMBL::Web::DBSQL::MySQLAdaptor;
-use EnsEMBL::Web::Data;
+__PACKAGE__->table('article');
+__PACKAGE__->set_primary_key('article_id');
 
-our @ISA = qw(EnsEMBL::Web::Data);
+__PACKAGE__->add_queriable_fields(
+  keyword => 'string',
+  title   => 'string',
+  content => 'text',  ## TODO: Remove it from essential fields
+  status  => "enum('in_use','obsolete','transferred')",
+);
+
+__PACKAGE__->has_a(category => 'EnsEMBL::Web::Data::Category');
 
 
-{
-
-sub BUILD {
-  my ($self, $ident, $args) = @_;
-  $self->set_primary_key('article_id');
-  $self->set_adaptor(
-    EnsEMBL::Web::DBSQL::MySQLAdaptor->new({
-      table   => 'article',
-      adaptor => 'websiteAdaptor',
-    })
-  );
-
-  $self->add_queriable_field({ name => 'keyword', type => 'string' });
-  $self->add_queriable_field({ name => 'title'  , type => 'string' });
-  $self->add_queriable_field({ name => 'content', type => 'text' });
-  $self->add_queriable_field({ name => 'status' , type => "enum('in_use','obsolete','transferred')" });
-
-  $self->add_belongs_to('EnsEMBL::Web::Data::Category');
-  $self->populate_with_arguments($args);
-}
-
+## TODO: remove this, and replace with proper object-oriented request
 sub fetch_index_list {
   my( $class ) = @_;
 
-  my $object = $class->new;
-
-  my $T = $object->get_adaptor->get_handle->selectall_arrayref(
+  my $T = $class->db_Main->selectall_arrayref(
     "SELECT a.title, a.keyword, c.name, c.priority
        FROM article a, category c where a.category_id = c.category_id
        AND a.status = 'in_use'
@@ -51,15 +35,23 @@ sub fetch_index_list {
   }} @$T ];
 }
 
+__PACKAGE__->set_sql(full_text => qq{
+  SELECT article_id, MATCH (title, content) AGAINST (?) AS score
+  FROM article
+  WHERE status = 'in_use'
+  HAVING score > 0
+  ORDER BY score DESC
+});
+
+
+
 sub search_articles {
   my( $class, $string ) = @_;
 
-  my $object = $class->new;
-  
   my $results = [];
   my (%matches, $id, $score, $rounded);
 
-  my $T = $object->get_adaptor->get_handle->selectall_arrayref(
+  my $T = $class->db_Main->selectall_arrayref(
     "SELECT article_id, MATCH (title, content) AGAINST (?) AS score
         FROM article
         WHERE status = 'in_use'
@@ -91,14 +83,12 @@ sub _sort_scores {
 
   ## turn that into an array of hashes, in descending score order
   foreach my $score (reverse sort keys %hoa) {
-    foreach my $id (@{$hoa{$score}}) {
-      push(@results, {'id'=>$id, 'score'=>$score});
+    foreach my $id (@{ $hoa{$score} }) {
+      push @results, { id => $id, score => $score };
     }
   }
 
   return \@results;
-}
-
 }
 
 1;

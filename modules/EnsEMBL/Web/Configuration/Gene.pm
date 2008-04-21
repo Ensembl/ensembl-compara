@@ -4,6 +4,7 @@ use strict;
 
 use EnsEMBL::Web::Configuration;
 use EnsEMBL::Web::Tools::Ajax;
+use EnsEMBL::Web::RegObj;
 
 our @ISA = qw( EnsEMBL::Web::Configuration );
 
@@ -147,7 +148,7 @@ sub generegulationview {
      'caption' => "Gene structure",
      'status'  => 'panel_image',
      'params'  => $params,
-                                       )) {
+                                        )) {
       $structure_panel->add_components(qw(
       structure   EnsEMBL::Web::Component::Gene::gene_structure
 				     ));
@@ -274,9 +275,10 @@ sub geneview {
 
 ## Bonus Panel - user annotations 
 
-  my $user = $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->get_user;
+  my $user = $ENSEMBL_WEB_REGISTRY->get_user;
 
-  if ($user && $user->id) {
+  if ($user) {
+
     if( my $annotation_panel = $self->new_panel( 
                                      'Information',
                                      'code'    => "dasinfo#",
@@ -290,6 +292,7 @@ sub geneview {
       ));
       $self->add_panel($annotation_panel);
     }
+
   }
 
 ## Panel 2 - DAS configuration panel...

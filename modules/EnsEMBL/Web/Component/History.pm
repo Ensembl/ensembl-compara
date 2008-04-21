@@ -7,6 +7,7 @@ no warnings "uninitialized";
 use EnsEMBL::Web::Component;
 use EnsEMBL::Web::Form;
 use EnsEMBL::Web::RegObj;
+use EnsEMBL::Web::Data::Species;
 
 our @ISA = qw(EnsEMBL::Web::Component);
 
@@ -39,12 +40,16 @@ sub stage1_form {
       'value' => qq(<p>Please enter or upload a list of up to 30 stable IDs to retrieve the stable ID history for. Input should be in plain text format, one stable ID per line (versions are optional and will be stripped automatically).</p>)
   );
 
-  my $adaptor = $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->newsAdaptor;
-  my %id_to_species = %{ $adaptor->fetch_species($SiteDefs::ENSEMBL_VERSION) };
-  my @spp;
-  foreach my $id (sort (values %id_to_species)){
-    push @spp, {'value' => $id, 'name' => $id} ;
-  }
+  my @species = EnsEMBL::Web::Data::Species->search(
+    {
+      'releases.release_id'    => $SiteDefs::ENSEMBL_VERSION,
+      'releases.assembly_code' => {'!=' => ''},
+    },
+    {
+      order_by => 'name',
+    }
+  );
+  my @spp = map +{ 'value' => $_->name, 'name' => $_->name } @species;
   
   $form->add_element( 
     'type'   => 'DropDown',

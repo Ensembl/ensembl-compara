@@ -1,7 +1,7 @@
 package EnsEMBL::Web::Configuration::Interface::News;
 
 ### Sub-class to do news-specific interface functions
-
+## TODO: change according to new DB adaptors scheme
 use strict;
 use EnsEMBL::Web::Data::NewsItem;
 use EnsEMBL::Web::Configuration::Interface;

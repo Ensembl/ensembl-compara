@@ -1,18 +1,32 @@
+use strict;
 use EnsEMBL::Web::RegObj;
+use EnsEMBL::Web::Data::Species;
+use EnsEMBL::Web::Data::NewsItem;
 
 use strict;
 
 my $SD           = $ENSEMBL_WEB_REGISTRY->species_defs;
-my $wa           = $ENSEMBL_WEB_REGISTRY->newsAdaptor;
 my $release_id   = $SiteDefs::VERSION;
-my $species_hash = $wa->fetch_species;
+my $species_hash = EnsEMBL::Web::Data::Species->search({order_by => 'name'});
 my $species      = { reverse %$species_hash };
 my $pars         = { 'release' => $SiteDefs::VERSION };
 my $species_id   = $species->{$ENV{'ENSEMBL_SPECIES'}};
 
-   $pars->{ 'species' } = $species_id if $species_id;
+$pars{ 'species' } = $species_id if $species_id;
+
 my $this_species = $ENV{'ENSEMBL_SPECIES'} || 'common';
-my $results      = $wa->fetch_news_items( $pars );
+
+my @news = EnsEMBL::Web::Data::NewsItem->search(
+  {
+    release_id  => $SiteDefs::VERSION,
+    $species_id
+      ? ( species.species_id => $species_id )
+      : (),
+  }
+  {
+    order_by => 'priority',
+  }
+);
 
 print "Content-type: xml/rss\n\n";
 
@@ -45,17 +59,18 @@ print qq(
     </description>
     <language>en-gb</language>
 );
-foreach my $E ( @$results ) {
-  my $C = $E->{'content'};
+
+foreach my $item ( @news ) {
+  my $C = $item->content;
   if( $C =~ /^\s*<p>(.*)<\/p>/ ) {
     $C = $1;
   }
   $C =~ s/<.*//sm;
-  print qq(
+  print '
     <item>
-      <title>$E->{'title'}</title>
+      <title>'. $item->title .'</title>
       <description>$C</description>
-      <link>http://www.ensembl.org/$this_species/newsview?rel=$release_id#$E->{'news_item_id'}</link>
+      <link>http://dev.ensembl.org/$this_species/newsview?rel=$release_id#'. $item->id .'</link>
     </item>);
 }
 print qq(

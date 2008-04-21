@@ -11,8 +11,6 @@ use EnsEMBL::Web::RegObj;
 use Data::Dumper;
 use EnsEMBL::Web::Root;
 
-warn $ENSEMBL_WEB_REGISTRY;
-
 use Apache2::Const qw(:common :methods :http);
 #############################################################
 # Mod_perl request handler all /htdocs pages

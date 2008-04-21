@@ -18,13 +18,13 @@ use strict;
     my( $self, $ident, $arg_ref ) = @_;
     my $conf = $self->connection_details( $arg_ref );
     if( exists( $conf->{'type'} ) && $conf->{'type'} eq 'sqlite' ) {
-      $DBHandle_of{ $ident } = DBI->connect(
+      $DBHandle_of{ $ident } = DBI->connect_cached(
         join( ':', 'dbi', 'SQLite', $conf->{'name'} )
       );
       $DBHandle_of{ $ident }->func( 'now', 0, sub { return time }, 'create_function' );
       $DBHandle_of{ $ident }->func( 'UNIX_TIMESTAMP', 1, sub { return $_[0] }, 'create_function' );
     } else {
-      $DBHandle_of{ $ident } = DBI->connect(
+      $DBHandle_of{ $ident } = DBI->connect_cached(
         join( ':', 'dbi', 'mysql', $conf->{'name'}, $conf->{'host'}, $conf->{'port'} ),
         $conf->{'user'}, $conf->{'pass'}, {RaiseError=>1,PrintError=>0}
       );

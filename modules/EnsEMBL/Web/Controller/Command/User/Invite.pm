@@ -8,8 +8,6 @@ use CGI;
 
 use EnsEMBL::Web::Data::Group;
 use EnsEMBL::Web::Data::User;
-use EnsEMBL::Web::Data::Invite;
-use EnsEMBL::Web::Data::User;
 use EnsEMBL::Web::Mailer::User;
 use EnsEMBL::Web::Tools::RandomString;
 use EnsEMBL::Web::RegObj;
@@ -40,14 +38,14 @@ sub render_page {
   my $cgi = new CGI;
   my $url = "/common/user/view_group?id=" . $cgi->param('id');
 
-  my $group = EnsEMBL::Web::Data::Group->new({ 'id' => $cgi->param('id') });
+  my $group = EnsEMBL::Web::Data::Group->new($cgi->param('id'));
   my @addresses = split(/,/, $cgi->param('invite_email'));
   my %invite_check;
   foreach my $email (@addresses) {
     $email =~ s/ //g;
 
     ## Check pending invitations
-    my @invites = @{ $group->invites };
+    my @invites = $group->invites;
     my $invited = 0;
     foreach my $invite (@invites) {
       if ($invite->email eq $email && $invite->status eq 'pending') {
@@ -59,8 +57,8 @@ sub render_page {
     next if $invited;
 
     ## Is this user already a member?
-    my $user = EnsEMBL::Web::Data::User->new({ email => $email });
-    if ($user && $user->id) {
+    my $user = EnsEMBL::Web::Data::User->find(email => $email);
+    if ($user) {
       my $member = $group->find_user_by_user_id($user->id);
       if ($member) {
         $invite_check{$email} = $member->member_status;
@@ -96,15 +94,15 @@ sub render_page {
 
 sub send_invitation {
   my ($group_id, $email) = @_;
-  my $user = $ENSEMBL_WEB_REGISTRY->get_user;
-  my $group = EnsEMBL::Web::Data::Group->new({ id => $group_id });
 
-  my $invite = EnsEMBL::Web::Data::Invite->new;
-  $invite->webgroup_id($group_id);
-  $invite->email($email);
-  $invite->status("pending");
-  $invite->code(EnsEMBL::Web::Tools::RandomString::random_string());
-  $invite->save;
+  my $user   = $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->get_user;
+  my $group  = EnsEMBL::Web::Data::Group->new($group_id);
+  my $invite = $group->add_to_invites({
+    email  => $email,
+    status => 'pending',
+    code   => EnsEMBL::Web::Tools::RandomString::random_string(),
+  });
+  
   my $mailer = EnsEMBL::Web::Mailer::User->new;
   $mailer->send_invite_email($user, $group, $invite, $email);
 }

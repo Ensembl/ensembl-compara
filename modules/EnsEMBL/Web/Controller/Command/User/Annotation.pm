@@ -6,7 +6,7 @@ use warnings;
 use Class::Std;
 use CGI;
 
-use EnsEMBL::Web::Data::Annotation;
+use EnsEMBL::Web::Data::User;
 
 use base 'EnsEMBL::Web::Controller::Command::User';
 
@@ -19,7 +19,7 @@ sub BUILD {
   my $cgi = new CGI;
   my $record;
   if ($cgi->param('id')) {
-    $self->user_or_admin('EnsEMBL::Web::Data::Annotation', $cgi->param('id'), $cgi->param('record_type'));
+    $self->user_or_admin('EnsEMBL::Web::Data::Record::Annotation', $cgi->param('id'), $cgi->param('record_type'));
   }
 }
 
@@ -35,8 +35,8 @@ sub render {
 
 sub render_page {
   my $self = shift;
+  my $cgi = new CGI;
 
-warn "Rendering page Annotation";
   ## Create basic page object, so we can access CGI parameters
   my $webpage = EnsEMBL::Web::Document::Interface::simple('User');
 
@@ -44,8 +44,9 @@ warn "Rendering page Annotation";
   my $help_email = $sd->ENSEMBL_HELPDESK_EMAIL;
 
   ## Create interface object, which controls the forms
-  my $interface = EnsEMBL::Web::Interface::InterfaceDef->new();
-  my $data = EnsEMBL::Web::Data::Annotation->new();
+  my $interface = EnsEMBL::Web::Interface::InterfaceDef->new;
+  my $data = EnsEMBL::Web::Data::Record::Annotation::User->new($cgi->param('id'));
+
   $interface->data($data);
   $interface->discover;
 
@@ -57,7 +58,7 @@ warn "Rendering page Annotation";
   $interface->on_failure('/common/user/update_failed');
   $interface->script_name($self->get_action->script_name);
 
-## Form elements
+  ## Form elements
   $interface->caption({'add'=>'Create annotation'});
   $interface->caption({'edit'=>'Edit annotation'});
   $interface->permit_delete('yes');

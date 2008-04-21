@@ -197,7 +197,7 @@ warn "ScriptConfig load - Deprecated call - now written by session";
 sub save {
   my ($self) = @_;
   #warn "Saving from ScriptConfig";
-warn "ScriptConfig load - Deprecated call - now written by session";
+  warn "ScriptConfig load - Deprecated call - now written by session";
   return;
   return unless $self->{'_db'};
   my $diffs = {};

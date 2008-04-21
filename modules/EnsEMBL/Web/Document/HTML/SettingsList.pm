@@ -14,14 +14,12 @@ sub new { return shift->SUPER::new( 'sp_bio' => '?? ??', 'sp_common' => '??', 's
 
 sub render {
   my ($class, $request) = @_;
-  my $html = "";
-  if ($ENV{'ENSEMBL_USER_ID'}) {
-  my $user = $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->get_user;
-
+  my $html;
+  if (my $user = $ENSEMBL_WEB_REGISTRY->get_user) {
   my $sitename = $SiteDefs::ENSEMBL_SITETYPE;
 
   my $group_id = undef;
-  foreach my $this (@{ $user->drawers }) {
+  foreach my $this ($user->drawers) {
     $group_id = $this->group;
   }
   $html = "<div id='settings' style='display:none;'>\n";
@@ -31,14 +29,14 @@ sub render {
   $html .= "<b><a href='/common/user/account'>Your $sitename account</a> &gt; " . $user->name . "</b> &middot; <a href='#' onclick='toggle_settings_drawer()'>Hide</a>\n";
   $html .= "</td>\n";
   $html .= "<td style='text-align: right;' width='49%'>";
-  my @groups = @{ $user->groups };
+  my @groups = $user->groups;
   if (@groups) {
     $html .= "Show from: ";
     $html .= "<select name='group_select' id='group_select' onChange='settings_drawer_change()'>\n";
     $html .= "<option value='user'>Your account</option>\n";
     $html .= "<optgroup label='Groups'>\n";
   }
-  foreach my $group (@{ $user->groups }) {
+  foreach my $group (@groups) {
     next if $group->status ne 'active';
     my $selected = "";
     if ($group_id && $group_id eq $group->id) {
@@ -55,7 +53,7 @@ sub render {
   $html .= "<tr>\n";
   $html .= "<td style='padding-top: 5px;'>\n";
   $html .= "Bookmarks";
-  my @user_bookmarks = @{ $user->bookmarks };
+  my @user_bookmarks = $user->bookmarks;
   $html .= list_for_records({
     records  => \@user_bookmarks,
     tag      => 'user',
@@ -63,8 +61,8 @@ sub render {
     type     => 'bookmark',
   });
   
-  foreach my $group (@{ $user->groups }) {
-    my @group_bookmarks = @{ $group->bookmarks };
+  foreach my $group ($user->groups) {
+    my @group_bookmarks = $group->bookmarks;
     $html .= list_for_records({
       records  => \@group_bookmarks,
       tag      => $group->id,
@@ -74,9 +72,9 @@ sub render {
   }
   $html .= "</td>\n";
   $html .= "<td style='padding-top: 5px;'>\n";
-  my @configurations = @{ $user->configurations };
+  my @configurations = $user->configurations;
   $html .= "Configurations";
-  my @current_configs = @{ $user->currentconfigs };
+  my @current_configs = $user->currentconfigs;
   my $current_config = $current_configs[0];
   $html .= list_for_records({
     records        => \@configurations,
@@ -85,8 +83,8 @@ sub render {
     type           => 'configuration',
     current_config => $current_config,
   });
-  foreach my $group (@{ $user->groups }) {
-    my @group_configurations = @{ $group->configurations };
+  foreach my $group ($user->groups) {
+    my @group_configurations = $group->configurations;
     $html .= list_for_records({
       records        => \@group_configurations,
       tag            => $group->id,
@@ -131,7 +129,7 @@ sub list_for_records {
       if ($record->url && $record->description) {
         $description = $record->description;
       }
-      my $link = "<a href=/common/user/use_bookmark?id='" . $record->id . "' title='" . $description . "'>";
+      my $link = "<a href=/common/user/use_bookmark?id=" . $record->id . " title='" . $description . "'>";
       if ($record->type eq 'configuration') {
         my $bold_start = '';
         my $bold_end = '';
@@ -146,9 +144,8 @@ sub list_for_records {
           $text .=  ' <a href="#" onclick="javascript:load_config(' . $record->id . ');">Load settings in this page</a> |';
         }
         $text .= ' <a  href="#" onclick="javascript:go_to_config(' . $record->id . ');">Go to saved page and load tracks</a>';
-      }
-      else {
-        $text = '<a href="' . $record->url . '" title="' . $description . '">' . $record->name . '</a>';
+      } else {
+        $text = $link . $record->name . '</a>';
       }
       $html .= "<li class='all $tag' $style>" . $text . "</li>\n"; 
       if ($count > 10) {
@@ -171,7 +168,7 @@ sub list_for_records {
           $style = "";
         }
       }
-      $html .= "<ul class='all $tag' $style><li>No saved " . $type . "s</li>\n<li><a href='/info/about/custom.html'>Learn more about saving " . $type . "s &rarr;</a></li></ul>";
+      $html .= "<ul class='all $tag' $style><li>No saved " . $type . "s</li>\n<li><a href='/info/help/custom.html'>Learn more about saving " . $type . "s &rarr;</a></li></ul>";
     }
   }
   return $html;

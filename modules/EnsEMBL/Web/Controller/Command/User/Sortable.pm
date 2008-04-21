@@ -7,8 +7,6 @@ use Class::Std;
 use CGI;
 
 use EnsEMBL::Web::RegObj;
-use EnsEMBL::Web::Data::Sortable;
-
 use base 'EnsEMBL::Web::Controller::Command::User';
 
 {
@@ -32,18 +30,19 @@ sub process {
   my $self = shift;
   my $cgi = new CGI;
 
-  if (my $user = $ENSEMBL_WEB_REGISTRY->get_user) {
-    my $record = $user->sortables->[0];
-
-    $record ||= EnsEMBL::Web::Data::Sortable->new;
-    $record->user_id($user->id);
-
-    if ($cgi->param('type') =~ /alpha|group/) {
-      $record->kind($cgi->param('type'));
+  my $kind = ($cgi->param('type') =~ /alpha|group/) 
+             ? $cgi->param('type')
+             : 'group';
+  
+  if (my $user = $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->get_user) {
+    if (my ($record) = $user->sortables) {
+      $record->kind($kind);
       $record->save;
+    } else {
+    $user->add_to_sortables({kind => $kind});
     }
   }
-
+  
   $cgi->redirect('/common/user/account');
 }
 

@@ -6,14 +6,14 @@ use strict;
 
 use EnsEMBL::Web::Factory;
 use EnsEMBL::Web::Proxy::Object;
+use EnsEMBL::Web::Data::Species;
+use EnsEMBL::Web::Data::Release;
 our @ISA = qw(EnsEMBL::Web::Factory);
 
 sub createObjects {
 ### Creates a lightweight Proxy::Object of type News, containing some basic lists
 ### for use with dropdown menus - actual news items are fetched on the fly
   my $self          = shift;
-
-  my $adaptor = $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->newsAdaptor;
 
   ## allow a generic URL for current release
   my $current_release = $self->species_defs->ENSEMBL_VERSION;
@@ -27,17 +27,16 @@ sub createObjects {
     $release_id = '';
   }
 
-  my $species     = $adaptor->fetch_species;
-  my $categories  = $adaptor->fetch_cats;
-  my $releases    = $adaptor->fetch_releases;
+  my %species    = map { $_->id => $_->name } EnsEMBL::Web::Data::Species->search({}, {order_by => 'name'});
+  my @categories = EnsEMBL::Web::Data::NewsCategory->search({}, {order_by => 'priority'});
+  my @releases   = EnsEMBL::Web::Data::Release->search({}, { order_by => 'release_id DESC' });
 
   $self->DataObjects( new EnsEMBL::Web::Proxy::Object(
     'News', {
-      'adaptor'     => $adaptor,
       'release_id'  => $release_id,
-      'releases'    => $releases,
-      'species'     => $species,
-      'categories'  => $categories,
+      'releases'    => \@releases,
+      'species'     => \%species,
+      'categories'  => \@categories,
     }, $self->__data
   ) ); 
 }

@@ -12,7 +12,6 @@ package EnsEMBL::Web::Document::Interface;
 ###    to be manipulated, including setting user and timestamp fields where appropriate
 
 use EnsEMBL::Web::Document::WebPage;
-use EnsEMBL::Web::DBSQL::InterfaceAdaptor;
 use EnsEMBL::Web::RegObj;
 
 use strict;
@@ -104,29 +103,6 @@ sub process {
   else {
 warn "Can't use module $config_module_name!";
   } 
-}
-
-sub adaptors {
-  ### Instantiates an InterfaceAdaptor object, given a database adaptor name and table name,
-  ### plus a UserAdaptor if needed
-  my ($self, $db_adaptor, $table) = @_;
-  my $data_db = $ENSEMBL_WEB_REGISTRY->$db_adaptor;
-  my $data_adaptor = EnsEMBL::Web::DBSQL::InterfaceAdaptor->new((
-                                          handle => $data_db,
-                                          table  => $table
-                                        ));
-  my $user_adaptor;
-  if ($db_adaptor eq 'userAdaptor') {
-    $user_adaptor = $data_adaptor;
-  }
-  else {
-    my $user_db = $ENSEMBL_WEB_REGISTRY->userAdaptor;
-    $user_adaptor = EnsEMBL::Web::DBSQL::UserAdaptor->new((
-                                          handle => $user_db,
-                                          table  => 'user'
-                                        ));
-  }
-  return [$data_adaptor, $user_adaptor];
 }
 
 }

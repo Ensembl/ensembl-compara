@@ -26,7 +26,7 @@ sub render {
       <option value="">---</option>
 );
 
-  my $species_defs = $ENSEMBL_WEB_REGISTRY->species_defs;
+  my $species_defs = $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->species_defs;
   foreach my $species (@{$species_defs->ENSEMBL_SPECIES}) {
     my $bio_name = $species_defs->other_species($species, "SPECIES_BIO_NAME");
     $html .= qq(<option value="$species">$bio_name</option>);

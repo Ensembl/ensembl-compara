@@ -3,28 +3,33 @@ package EnsEMBL::Web::Data::Release;
 use strict;
 use warnings;
 
-use Class::Std;
-use EnsEMBL::Web::Data;
-use EnsEMBL::Web::DBSQL::MySQLAdaptor;
+use HTTP::Date 'str2time';
+use POSIX      'strftime';
 
-our @ISA = qw(EnsEMBL::Web::Data);
+use base qw(EnsEMBL::Web::Data);
+use EnsEMBL::Web::DBSQL::WebDBConnection (__PACKAGE__->species_defs);
 
-{
+__PACKAGE__->table('ens_release');
+__PACKAGE__->set_primary_key('release_id');
 
-sub BUILD {
-  my ($self, $ident, $args) = @_;
-  $self->set_adaptor(EnsEMBL::Web::DBSQL::MySQLAdaptor->new({ 'table' => 'ens_release',
-                                                              'adaptor' => 'websiteAdaptor'}));
-  $self->set_primary_key('release_id');
-  $self->add_queriable_field({ name => 'number', type => 'varchar(5)' });
-  $self->add_queriable_field({ name => 'date', type => 'date' });
-  $self->add_queriable_field({ name => 'archive', type => 'varchar(7)' });
-  $self->add_queriable_field({ name => 'online', type => "enum('N','Y')" });
-  $self->add_has_many({ class => "EnsEMBL::Web::Data::NewsItem"});
-  $self->add_has_many({ class => "EnsEMBL::Web::Data::Species"});
-  $self->populate_with_arguments($args);
-}
+__PACKAGE__->add_queriable_fields(
+  number  => 'varchar(5)',
+  date    => 'date',
+  archive => 'varchar(7)',
+);
 
+__PACKAGE__->columns(TEMP => qw/full_date short_date long_date/);
+
+__PACKAGE__->has_many(news_items => 'EnsEMBL::Web::Data::NewsItem');
+__PACKAGE__->has_many(species    => 'EnsEMBL::Web::Data::ReleaseSpecies');
+
+__PACKAGE__->add_trigger(select => \&format_time);
+
+sub format_time {
+  my $self = shift;
+  $self->full_date(strftime('%D %M %Y', localtime( str2time($self->date) )));
+  $self->short_date(strftime('%b %Y', localtime( str2time($self->date) )));
+  $self->long_date(strftime('%M %Y', localtime( str2time($self->date) )));
 }
 
 1;

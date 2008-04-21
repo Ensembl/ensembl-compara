@@ -7,8 +7,6 @@ use Class::Std;
 use CGI;
 
 use EnsEMBL::Web::RegObj;
-use EnsEMBL::Web::Data::Infobox;
-
 use base 'EnsEMBL::Web::Controller::Command::User';
 
 {
@@ -31,12 +29,12 @@ sub render {
 sub process {
   my $self = shift;
   my $cgi = new CGI;
-  my $box = EnsEMBL::Web::Data::Infobox->new();
 
-  $box->user_id($ENV{'ENSEMBL_USER_ID'});
-  $box->name($cgi->param('id'));
-  $box->save;
-
+  my $user = $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->get_user;
+  $user->add_to_infoboxes({
+    name => $cgi->param('id'),
+  });
+  
   print "Content-type: text/plain\n\n";
   print "Done:";
 }

@@ -27,16 +27,15 @@ sub check_input {
   ## checks user input for duplicate emails
   my ($self, $object, $interface) = @_;
   if ($object->param('email')) {
-    my $existing_user = EnsEMBL::Web::Data::User->new({ email => $object->param('email') });
-    if ($existing_user->id) {
+    my $existing_user = EnsEMBL::Web::Data::User->find(email => $object->param('email'));
+    if ($existing_user) {
       if (my $panel = $self->interface_panel($interface, 'add', 'Register')) {
         $panel->add_components(qw(duplicate   EnsEMBL::Web::Component::Interface::User::duplicate));
         $self->{page}->content->add_panel($panel);
         $self->{page}->set_title("Registration Error");
       }
       return undef;
-    }
-    else {
+    } else {
       my $url = '/common/user/register?dataview=preview;db_action='.$object->param('db_action').';name='.$object->param('name').';email='.$object->param('email').';organisation='.$object->param('organisation');
       return $url;
     }
@@ -47,34 +46,25 @@ sub save {
   my ($self, $object, $interface) = @_;
 
   my $script = $interface->script_name || $object->script;
-  my ($success, $url);
-  my $id = $ENV{'ENSEMBL_USER_ID'};
+  $interface->cgi_populate($object);
   
-  $interface->cgi_populate($object, $id);
-  if (!$id) {
+  if ($ENV{'ENSEMBL_USER_ID'}) {
+    $interface->data->modified_by($ENV{'ENSEMBL_USER_ID'});
+  } else {
     $interface->data->salt(EnsEMBL::Web::Tools::RandomString::random_string(8));
     $interface->data->status('pending');
+    $interface->data->created_by($interface->data->id);
   }
-  $success = $interface->data->save;
-  if ($success) {
-    ## set timestamp
-    if ($id) {
-      $interface->data->modified_by($id);
-    }
-    else {
-      $interface->data->created_by($interface->data->id);
-    }
-    $success = $interface->data->save;
 
+  my $url;
+  if ($interface->data->save) {
     ## redirect to confirmation page 
-    $url = "/common/$script?dataview=success;email=".$object->param('email');
-    if ($object->param('record_id')) {
-      $url .= ';record_id='.$object->param('record_id');
-    }
-  }
-  else {
+    $url = "/common/$script?dataview=success;email=" . $object->param('email');
+    $url .= ';record_id='.$object->param('record_id') if $object->param('record_id');
+  } else {
     $url = "/common/$script?dataview=failure";
   }
+  
   return $url;
 }
 

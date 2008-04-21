@@ -83,7 +83,7 @@ sub update_config_from_parameter {
       $self->set( $key, 'on', $value );
     }
   }
-  $self->save( );
+  #$self->save; - deprecated
 }
 
 sub add_track {
@@ -488,7 +488,7 @@ sub _set {
 
 sub load {
   my ($self) = @_;
-warn "UserConfig->load - Deprecated call now handled by session";
+  warn "UserConfig->load - Deprecated call now handled by session";
   return;
   if($self->{'_db'}) {
     my $TEMP = $self->{'_db'}->getConfigByName( $ENV{'ENSEMBL_FIRSTSESSION'}, $self->{'type'} );
@@ -500,14 +500,14 @@ warn "UserConfig->load - Deprecated call now handled by session";
 }
 
 sub save {
-    my ($self) = @_;
-warn "UserConfig->save - Deprecated call now handled by session";
+  my ($self) = @_;
+  warn "UserConfig->save - Deprecated call now handled by session";
   return;
     $self->{'_db'}->setConfigByName(
     	$self->{'_r'}, $ENV{'ENSEMBL_FIRSTSESSION'}, $self->{'type'},
     	&Storable::nfreeze($self->{'user'})
-    ) if($self->{'_db'});
-    return;
+    ) if $self->{'_db'};
+  return;
 }
 
 sub reset {

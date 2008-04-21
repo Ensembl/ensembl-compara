@@ -14,49 +14,53 @@ our @ISA = qw( EnsEMBL::Web::Configuration::Interface );
 sub save {
   ### Saves changes to the record(s) and redirects to a feedback page
   my ($self, $object, $interface) = @_;
-  my $primary_key = EnsEMBL::Web::Tools::DBSQL::TableName::parse_primary_key($interface->data->get_primary_key);
-  my $id = $object->param($primary_key) || $object->param('id');
-  if ($object->param('record_type')) {
-    $interface->data->attach_owner($object->param('record_type'));
-  }
-  $interface->cgi_populate($object, $id);
+  my ($primary_key) = $interface->data->primary_columns;
 
-  warn "Saving record ", $interface->data;
+  my $id = $object->param($primary_key) || $object->param('id');
+
+  if ($object->param('record_type')) {
+    #$interface->data->attach_owner($object->param('record_type'));
+  }
+  
+  $interface->cgi_populate($object);
+
   ## Add owner to new records
   ## N.B. Don't need this option for group records, as they are created via sharing
-  if (!$id) {
+  unless ($id) {
     $interface->data->user_id($ENV{'ENSEMBL_USER_ID'});
   }
 
   ## Do any type-specific data-munging
-  if ($interface->data->type eq 'bookmark') {
+  if ($interface->data->__type eq 'bookmark') {
     _bookmark($object, $interface);
-  }
-  elsif ($interface->data->type eq 'configuration' && $object->param('rename') ne 'yes') {
+  } elsif ($interface->data->__type eq 'configuration' && $object->param('rename') ne 'yes') {
     _configuration($object, $interface);
   }
 
   my $success = $interface->data->save;
+
   my $script = $interface->script_name || $object->script;
   my $url;
   if ($success) {
     if ($object->param('record_type') eq 'group') {
-      $interface->data->populate_with_arguments({id => $id});
+      #$interface->data->populate($id);
       $url = "/common/user/view_group?id=".$interface->data->webgroup_id;
     }
     else {
       $url = "/common/$script?dataview=success";
     }
-  }
-  else {
+  } else {
     $url = "/common/$script?dataview=failure";
   }
+  
   if ($object->param('url')) {
     $url .= ';url='.CGI::escape($object->param('url'));
   }
+  
   if ($object->param('mode')) {
     $url .= ';mode='.$object->param('mode');
   }
+  
   return $url;
 
 }
@@ -65,19 +69,19 @@ sub delete {
   ### Deletes record(s) and redirects to a feedback page
   my ($self, $object, $interface) = @_;
 
-  my $primary_key = EnsEMBL::Web::Tools::DBSQL::TableName::parse_primary_key($interface->data->get_primary_key);
+  my ($primary_key) = $interface->data->primary_columns;
   my $id = $object->param($primary_key) || $object->param('id');
   if ($object->param('record_type')) {
-    $interface->data->attach_owner($object->param('record_type'));
+    #$interface->data->attach_owner($object->param('record_type'));
   }
-  $interface->data->populate_with_arguments({id => $id});
+  #$interface->data->populate($id);
 
   my $success = $interface->data->destroy;
   my $script = $interface->script_name || $object->script;
   my $url;
   if ($success) {
     if ($object->param('record_type') eq 'group') {
-      $interface->data->populate_with_arguments({id => $id});
+      #$interface->data->populate($id);
       $url = "/common/user/view_group?id=".$interface->data->webgroup_id;
     }
     else {

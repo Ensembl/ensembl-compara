@@ -2,26 +2,17 @@ package EnsEMBL::Web::Data::Category;
 
 use strict;
 use warnings;
+use base qw(EnsEMBL::Web::Data);
+use EnsEMBL::Web::DBSQL::WebDBConnection (__PACKAGE__->species_defs);
 
-use Class::Std;
-use EnsEMBL::Web::DBSQL::MySQLAdaptor;
-use EnsEMBL::Web::Data;
+__PACKAGE__->table('category');
+__PACKAGE__->set_primary_key('category_id');
 
-our @ISA = qw(EnsEMBL::Web::Data);
+__PACKAGE__->add_queriable_fields(
+  name     => 'string',
+  priority => 'int',
+);
 
-
-{
-
-sub BUILD {
-  my ($self, $ident, $args) = @_;
-  $self->set_adaptor(EnsEMBL::Web::DBSQL::MySQLAdaptor->new({table => 'category', 'adaptor' => 'websiteAdaptor' }));
-  $self->set_primary_key('category_id');
-  $self->add_queriable_field({ name => 'name', type => 'string' });
-  $self->add_queriable_field({ name => 'priority', type => 'int' });
-  $self->add_has_many({ class => 'EnsEMBL::Web::Data::Article'});
-  $self->populate_with_arguments($args);
-}
-
-}
+__PACKAGE__->has_many(articles => 'EnsEMBL::Web::Data::Article');
 
 1;

@@ -11,7 +11,7 @@ use EnsEMBL::Web::RegObj;
 sub render {
   my ($class, $request) = @_;
 
-  my $species_defs = $ENSEMBL_WEB_REGISTRY->species_defs;
+  my $species_defs = $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->species_defs;
 
   my @valid_species = $species_defs->valid_species;
   my $species_check;
@@ -71,7 +71,7 @@ sub _render_species_list {
     }
   } else {
     if ($species_defs->ENSEMBL_LOGINS) {
-      $html .= 'You are logged in as Joe Bloggs &middot; <a href="#" onclick="toggle_reorder();">Change favourites</a>';
+      $html .= 'You are logged in as '. $user->name .' &middot; <a href="#" onclick="toggle_reorder();">Change favourites</a>';
     }
   }
   $html .= "</div>\n";
@@ -245,8 +245,8 @@ sub _get_favourites {
   }
 
   my @specieslists = ();
-  if ($user && $user->id) {
-    @specieslists = @{ $user->specieslists };
+  if ($user) {
+    @specieslists = $user->specieslists;
   }
   my @favourites = ();
 

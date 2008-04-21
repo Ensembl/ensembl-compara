@@ -21,7 +21,8 @@ our %DAS_DEFAULTS = (
 
 sub new {
   my $class   = shift;
-  my $adaptor = shift;
+# adaptor was deprecated
+# my $adaptor = shift;
   my $self = {
 #    '_db'       => $adaptor->{'user_db'},
 #    '_r'        => $adaptor->{'r'},

@@ -24,7 +24,7 @@ sub BUILD {
   my ($self, $ident, $args) = @_;
   $self->set_filter(EnsEMBL::Web::Controller::Command::Filter->new);
   if ($EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY) {
-    $self->set_species_defs($ENSEMBL_WEB_REGISTRY->species_defs);
+    $self->set_species_defs($EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->species_defs);
   }
 }
 

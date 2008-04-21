@@ -4,7 +4,7 @@ use strict;
 use warnings;
 
 use Class::Std;
-
+use EnsEMBL::Web::RegObj;
 use base 'EnsEMBL::Web::Controller::Command::User';
 
 {
@@ -37,9 +37,8 @@ sub render_page {
   my $sitename = $sitetype eq 'EnsEMBL' ? 'Ensembl' : $sitetype;
 
   ## Create interface object, which controls the forms
-  my $interface = EnsEMBL::Web::Interface::InterfaceDef->new();
-  my $data = EnsEMBL::Web::Data::User->new({'id'=>$ENV{'ENSEMBL_USER_ID'}});
-  $interface->data($data);
+  my $interface = EnsEMBL::Web::Interface::InterfaceDef->new;
+  $interface->data($EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->get_user);
   $interface->discover;
 
   ## Customization

@@ -29,7 +29,7 @@ sub load_configuration {
   my ($self, $config) = @_;
   my $obj  = $self->{object};
   my $config_string = $config->config;
-  $config_string =~ s/&quote;/'/g; #'
+  $config_string =~ s/&quote;/'/g;
 #  warn $config_string;
   my $config_data = eval($config_string);
   foreach my $key (keys %{ $config_data }) {

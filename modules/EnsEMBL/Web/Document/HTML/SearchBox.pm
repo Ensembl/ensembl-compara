@@ -42,4 +42,3 @@ sub render {
 }
 
 1;
-

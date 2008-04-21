@@ -26,6 +26,7 @@ sub dasconfview {
       }
     }
   }
+
 # for Edit and Delete buttons
   $obj->param("selfURL", "/$ENV{'ENSEMBL_SPECIES'}/dasconfview?$confparams");
   if (defined(my $wizard_stage = &display_wizard_status($document, $obj))) {

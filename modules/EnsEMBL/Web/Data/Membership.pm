@@ -2,26 +2,20 @@ package EnsEMBL::Web::Data::Membership;
 
 use strict;
 use warnings;
+use base qw(EnsEMBL::Web::Data::Trackable);
+use EnsEMBL::Web::DBSQL::UserDBConnection (__PACKAGE__->species_defs);
 
-use Class::Std;
-use EnsEMBL::Web::Data::Trackable;
-use EnsEMBL::Web::DBSQL::MySQLAdaptor;
+__PACKAGE__->table('group_member');
+__PACKAGE__->set_primary_key('group_member_id');
 
-our @ISA = qw(EnsEMBL::Web::Data::Trackable);
+__PACKAGE__->add_queriable_fields(
+  webgroup_id   => 'int',
+  user_id       => 'int',
+  level         => "enum('member','administrator','superuser')",
+  member_status => "enum('active','inactive','pending','barred')",
+);
 
-{
-
-sub BUILD {
-  my ($self, $ident, $args) = @_;
-  $self->set_primary_key('group_member_id');
-  $self->set_adaptor(EnsEMBL::Web::DBSQL::MySQLAdaptor->new({table => 'group_member' }));
-  $self->add_queriable_field({ name => 'webgroup_id', type => "int" });
-  $self->add_queriable_field({ name => 'user_id', type => "int" });
-  $self->add_queriable_field({ name => 'level', type => "enum('member','administrator','superuser')" });
-  $self->add_queriable_field({ name => 'member_status', type => "enum('active','inactive','pending','barred')" });
-  $self->populate_with_arguments($args);
-}
-
-}
+__PACKAGE__->has_a(webgroup => 'EnsEMBL::Web::Data::Group');
+__PACKAGE__->tie_a(user     => 'EnsEMBL::Web::Data::User');
 
 1;

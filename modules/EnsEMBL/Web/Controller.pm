@@ -75,11 +75,9 @@ sub command {
     #warn "Dispatching to: " . $class . " (" . $action->get_action . ")";
     my $command = $class->new();
     $command->render($action);
-  }
-  else {
+  } else {
     warn "Cannot use $class";
   }
-
 }
 
 }

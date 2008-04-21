@@ -30,7 +30,7 @@ BEGIN{
 }
 
 use EnsEMBL::Web::SpeciesDefs;                  
-use EnsEMBL::Web::DBSQL::NewsAdaptor;
+use EnsEMBL::Web::Data::Release;
 
 my $SD = EnsEMBL::Web::SpeciesDefs->new;
 my $release_id = $SiteDefs::VERSION;
@@ -44,13 +44,11 @@ my $wa = $ENSEMBL_WEB_REGISTRY->newsAdaptor;
 
 # Check database to see if this release is included already, then
 # give the user the option to update the release date
-my $release_details = $wa->fetch_releases({'release'=>$release_id});
+my $release = EnsEMBL::Web::Data::Release->new($release_id);
 
-if ($release_details && $$release_details[0]) {
+if ($release) {
 
-    my $release_date = $$release_details[0]{'full_date'};
-
-    print "Release $release_id is currently scheduled for $release_date.
+    print "Release $release_id is currently scheduled for ". $release->full_date .".
             Is this correct? [y/n]";
 
     while (<STDIN>) {
@@ -61,7 +59,8 @@ if ($release_details && $$release_details[0]) {
                 chomp;
                 if (/\d{4}-\d{2}-\d{2}/) {
                     print "Setting release date to $_\n\n";
-                    $wa->set_release_date($release_id, $_);
+                    $release->date($_);
+                    $release->update;
                     last INPUT;
                 }
                 print "Sorry, that was not a valid date format.\nPlease input a date in format yyyy-mm-dd:";
@@ -69,8 +68,7 @@ if ($release_details && $$release_details[0]) {
         }
         last;
     }
-}
-else {
+} else {
     if (!$date || $date !~ /\d{4}-\d{2}-\d{2}/) { 
         # no valid date supplied, so default to 1st of next month
         my @today = localtime(time);
@@ -84,14 +82,15 @@ else {
         $date = $year.'-'.$nextmonth.'-01';
     }
     my $archive = $SiteDefs::ARCHIVE_VERSION;
-    $release_details = {
-        'release_id'    => $release_id,
-        'number'        => $release_id,
-        'date'          => $date,
-        'archive'       => $archive,
-        };
+    $release = EnsEMBL::Web::Data::Release->new({
+        'release_id' => $release_id,
+        'number'     => $release_id,
+        'date'       => $date,
+        'archive'    => $archive,
+    });
+    $release->save;
+    
     print "Inserting release $release_id ($archive), scheduled for $date.\n\n";
-    $wa->add_release($release_details);
 }
 
 # get the hash of all species in the database

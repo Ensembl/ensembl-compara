@@ -5,7 +5,7 @@ package drawer;
 use strict;
 use warnings;
 
-use EnsEMBL::Web::Data::Drawer;
+use EnsEMBL::Web::Data::User;
 use EnsEMBL::Web::RegObj;
 use CGI;
 
@@ -21,7 +21,7 @@ if ($user) {
   }
 
   if (!$record) {
-    $record = EnsEMBL::Web::Data::Drawer->new;
+    $record = EnsEMBL::Web::Data::Record::Drawer::User->new;
     $record->user_id($user->id);
   }
 

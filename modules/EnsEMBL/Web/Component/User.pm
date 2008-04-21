@@ -1,10 +1,7 @@
 package EnsEMBL::Web::Component::User;
 
-use Data::Dumper;
-
 use EnsEMBL::Web::Component;
 use EnsEMBL::Web::Proxy::Object;
-use EnsEMBL::Web::DBSQL::NewsAdaptor;
 use EnsEMBL::Web::Interface::TabView;
 use EnsEMBL::Web::Interface::Tab;
 use EnsEMBL::Web::Interface::Table;
@@ -13,6 +10,7 @@ use EnsEMBL::Web::Data::User;
 use EnsEMBL::Web::Data::Group;
 use EnsEMBL::Web::RegObj;
 use EnsEMBL::Web::Form;
+use EnsEMBL::Web::Tools::Misc;
 
 use CGI;
 
@@ -105,23 +103,27 @@ sub enter_password_form {
   $form->add_element('type' => 'Information',
     'value' => 'Passwords should be at least 6 characters long and include both letters and numbers.');
  
-  if ($ENV{'ENSEMBL_USER_ID'}) {
+  if (my $user = $ENSEMBL_WEB_REGISTRY->get_user) {
     ## Logged-in user, changing own password
-    my $user = EnsEMBL::Web::Data::User->new({'id' => $ENV{'ENSEMBL_USER_ID'}});
     my $email = $user->email;
     $form->add_element('type'  => 'Hidden', 'name'  => 'email', 'value' => $email);
     $form->add_element('type'  => 'Password', 'name'  => 'password', 'label' => 'Old password', 
                       'required' => 'yes');
-  }
-  else {
+  } else {
     ## Setting new/forgotten password
-    $form->add_element('type'  => 'Hidden', 'name'  => 'user_id', 'value' => $object->param('user_id'));
-    $form->add_element('type'  => 'Hidden', 'name'  => 'email', 'value' => $object->param('email'));
-    $form->add_element('type'  => 'Hidden', 'name'  => 'code', 'value' => $object->param('code'));
+    $form->add_element('type' => 'Hidden', 'name' => 'user_id', 'value' => $object->param('user_id'));
+    $form->add_element('type' => 'Hidden', 'name' => 'email', 'value' => $object->param('email'));
+    $form->add_element('type' => 'Hidden', 'name' => 'code', 'value' => $object->param('code'));
   }
+
   if ($object->param('record_id')) {
-    $form->add_element('type'  => 'Hidden', 'name'  => 'record_id', 'value' => $object->param('record_id'));
+    $form->add_element(
+      'type'  => 'Hidden',
+      'name'  => 'record_id',
+      'value' => $object->param('record_id')
+    );
   }
+  
   $form->add_element('type'  => 'Password', 'name'  => 'new_password_1', 'label' => 'New password',
                       'required' => 'yes');
   $form->add_element('type'  => 'Password', 'name'  => 'new_password_2', 'label' => 'Confirm new password',
@@ -165,8 +167,8 @@ sub user_prefs {
   ## Preferences panel at foot of accountview
   my ($panel) = @_;
   my $user = $panel->{user};
-  my @infoboxes = @{ $user->infoboxes };
-  my @sortables = @{ $user->sortables };
+  my @infoboxes = $user->infoboxes;
+  my @sortables = $user->sortables;
   my $sortable = $sortables[0];
   my $html = "";
   $html = qq(<div class="white boxed">
@@ -199,7 +201,7 @@ sub settings_mixer {
   my ($panel) = @_;
   my $user = $panel->{user};
   my $html = "<div>";
-  my @groups = @{ $user->groups };
+  my @groups = $user->groups;
   if ($#groups > -1) {
     my @presets = &mixer_presets_for_user($user);
     my $html = "<script type='text/javascript'>\n";
@@ -234,7 +236,7 @@ sub settings_mixer {
 sub mixer_presets_for_user {
   ## Retrieves mixer settings from user_record table
   my ($user) = @_;
-  my @mixers = @{ $user->mixers };
+  my @mixers = $user->mixers;
   my @presets = ();
   if ($#mixers > -1) {
     my $mixer = $mixers[0];
@@ -287,7 +289,7 @@ sub options_for_user {
   push @items, $your_settings;
   my $everything = { description => "Everything", value => "all" };
   push @items, $everything;
-  foreach my $group (@{ $user->groups }) {
+  foreach my $group ($user->groups) {
     push @items, { description => $group->name, value => $group->id };
   }
   my $html = "";
@@ -374,7 +376,7 @@ sub user_tabs {
                                               ]
                                                      ));
   
-  my @opentabs = @{ $user->opentabs };
+  my @opentabs = $user->opentabs;
   if ($#opentabs > -1) {
     foreach my $opentab (@opentabs) {
       if ($opentab->name eq $tabview->name) { 
@@ -394,13 +396,13 @@ sub user_tabs {
 sub _render_bookmarks {
   ### Content for bookmarks tab
   my $user = shift;
-  my @bookmarks = @{ $user->bookmarks };
+  my @bookmarks = $user->bookmarks;
   my @records;
   foreach my $bookmark (@bookmarks) {
     my $description = $bookmark->description || '&nbsp;';
     push @records, {
       'id'         => $bookmark->id, 
-      'type'       => 'bookmark',
+      'type'       => 'bookmarks',
       'ident'      => 'user',
       'sortable'   => $bookmark->name,
       'shareable'  => 1,
@@ -412,8 +414,8 @@ sub _render_bookmarks {
       ],
     };
   }
-  foreach my $group (@{ $user->groups }) {
-    foreach my $bookmark (@{ $group->bookmarks }) {
+  foreach my $group ($user->groups) {
+    foreach my $bookmark ($group->bookmarks) {
       my $description = $bookmark->description || '&nbsp;';
       push @records, {
         'id' => $bookmark->id, 
@@ -442,7 +444,7 @@ sub _render_bookmarks {
 sub _render_configs {
   ### Content for Configurations tab
   my $user = shift;
-  my @configurations = @{ $user->configurations };
+  my @configurations = $user->configurations;
   my @records;
 
   foreach my $configuration (@configurations) {
@@ -451,7 +453,7 @@ sub _render_configs {
     $description = substr($configuration->description, 0, 30);
     push @records, {
       'id'        => $configuration->id, 
-      'type'      => 'configuration',
+      'type'      => 'configurations',
       'ident'     => 'user',
       'sortable'  => $configuration->name,
       'shareable' => 1,
@@ -464,8 +466,8 @@ sub _render_configs {
     };
   }
 
-  foreach my $group (@{ $user->groups }) {
-    foreach my $configuration (@{ $group->configurations }) {
+  foreach my $group ($user->groups) {
+    foreach my $configuration ($group->configurations) {
       my $description = $configuration->description || '&nbsp;';
       my $link = "<a href='#' onclick='javascript:got_to_config(" . $configuration->id . ");'>";
       push @records, {'id' => $configuration->id, 
@@ -494,14 +496,14 @@ sub _render_das {
   ### Content for DAS tab
   my $user = shift;
   my $html .= &info_box($user, qq(DAS sources allow you to share annotation and other information.), 'user_das_info');
-  my @dases= @{ $user->dases};
+  my @dases = $user->dases;
   my @records = ();
   #warn "RENDERING DAS";
   foreach my $das (@dases) {
     my $description = $das->name || '&nbsp;';
     push @records, {
       'id'         => $das->id, 
-      'type'       => 'das',
+      'type'       => 'dases',
       'ident'      => 'user',
       'sortable'   => $das->name,
       'shareable'  => 1,
@@ -525,7 +527,7 @@ sub _render_das {
 sub _render_notes {
   ### Content for Notes tab
   my $user = shift;
-  my @notes = @{ $user->annotations };
+  my @notes = $user->annotations;
   my @records;
 
   foreach my $note (@notes) {
@@ -533,7 +535,7 @@ sub _render_notes {
     #warn "NOTE: " . $note;
     push @records, {
       'id'        => $note->id,
-      'type'      => 'annotation',
+      'type'      => 'annotations',
       'ident'     => 'user',
       'sortable'  => $note->title,
       'shareable' => 1,
@@ -545,8 +547,8 @@ sub _render_notes {
     };
   }
 
-  foreach my $group (@{ $user->groups }) {
-    foreach my $note (@{ $group->annotations }) {
+  foreach my $group ($user->groups) {
+    foreach my $note ($group->annotations) {
       my $description = $note->annotation || '&nbsp;';
       push @records, {'id' => $note->id, 
                       'ident' => $note->id, 
@@ -572,7 +574,7 @@ sub _render_notes {
 sub _render_news {
   ### Content for News Filters tab
   my $user = shift;
-  my @filters = @{ $user->newsfilters };
+  my @filters = $user->newsfilters;
   my @records;
   my $both = 0;
   foreach my $filter (@filters) {
@@ -622,10 +624,10 @@ sub _render_groups {
   ### Content for group tab
   my $user = shift;
   my $html;
-  my @groups = @{ $user->groups };
+  my @groups = $user->groups;
   my @group_rows = ();
   my %included = ();
-  my @all_groups = @{ EnsEMBL::Web::Data::Group->find_all };
+  my @all_groups = EnsEMBL::Web::Data::Group->find_all;
   $html .= &info_box($user, qq(Groups enable you to organise your saved bookmarks, notes and view configurations, and also let you share them with other users. The groups you're subscribed to are listed below. <a href="http://www.ensembl.org/info/about/groups.html">Learn more about creating and managing groups (Ensembl documentation) &rarr;</a>) , 'user_group_info');
   if ($#groups > -1) {
     $html .= "<h5>Your subscribed groups</h5>\n";
@@ -670,7 +672,7 @@ sub _render_invites_for_group {
   my $html = "";
   my $class = "";
   if ($group->type eq 'restricted') {
-    my @invites = @{ $group->invites };
+    my @invites = $group->invites;
     foreach my $invite (@invites) {
       if ($invite->email eq $user->email && $invite->status eq 'pending') {
         $class = "invite";
@@ -694,12 +696,13 @@ sub _render_public_groups {
   if ($included) {
     %included = %{ $included }; 
   }
-  my @all_groups = @{ EnsEMBL::Web::Data::Group->all_groups_by_type('open') };
+  my @all_groups = EnsEMBL::Web::Data::Group->search(type => 'open');
   if ($#all_groups > -1) {
     $html = "<h5>Publicly available groups</h5>";
     $html .= "<table width='100%' cellpadding='4' cellspacing='0'><tr>";
 
     my $class = "bg1";
+    ## TODO: remove this sorting to mysql query
     foreach my $group (sort {$a->name cmp $b->name} @all_groups) {
       if (!$included{$group->id}) {
         $class = &toggle_class($class);
@@ -726,7 +729,7 @@ sub _render_settings_table {
   my @sortables = undef;
   my @presets = ();
   if ($user) {
-    @sortables = @{ $user->sortables };
+    @sortables = $user->sortables;
     $sortable = $sortables[0];
     @presets = &mixer_presets_for_user($user);
   }
@@ -736,15 +739,6 @@ sub _render_settings_table {
   if ($sort) {
     @row_records = sort { $a->{sortable} cmp $b->{sortable} } @{ $records };
   } 
-
-  my @admin_groups = ();
-  if ($user) {
-    @admin_groups = @{ $user->find_administratable_groups };
-  }
-  my $is_admin = 0;
-  if ($#admin_groups > -1) {
-    $is_admin = 1;
-  }
 
   my $html = qq(<table class="ss" cellpadding='4' cellspacing='0'>);
   my $class = 'bg1';
@@ -800,7 +794,7 @@ sub _render_settings_table {
         $html .= qq(">$edit_link</a></td>);
       }
       $html .= '<td style="text-align:right;">';
-      if ($row->{'shareable'} && $is_admin) {
+      if ($row->{'shareable'} && $user->find_administratable_groups) {
         $html .= qq(<a href="/common/user/select_group?id=$id&type=$type">Share</a>);
       }
       else {
@@ -831,23 +825,20 @@ sub select_group_form {
 
   my $form = EnsEMBL::Web::Form->new( 'select_group', "/common/user/share_record", 'post' );
   
-  my $user = EnsEMBL::Web::Data::User->new({ 'id' => $ENV{'ENSEMBL_USER_ID'} });
-  my (@admin_groups, $group);
-  foreach $group (@{ $user->find_administratable_groups }) {
-    push @admin_groups, $group;
+  my $user = $ENSEMBL_WEB_REGISTRY->get_user;
+
+  my @admin_groups = $user->find_administratable_groups;
+
+  foreach my $group ($user->find_administratable_groups) {
+    $form->add_element(
+      type    => 'RadioButton',
+      name    => 'webgroup_id', 
+      label   => $group->name,
+      value   => $group->id,
+      checked => (scalar(@admin_groups) == 1) ? 'checked' : undef,
+    );
   }
-  my $count = $#admin_groups;
-  if ($count > 1) {
-    foreach $group (@admin_groups) {
-      $form->add_element('type'  => 'RadioButton', 'name'  => 'webgroup_id', 
-                      'label' => $group->name, 'value' => $group->id);
-    }
-  }
-  else {
-    $group = $admin_groups[0];
-    $form->add_element('type'  => 'RadioButton', 'name'  => 'webgroup_id', 
-                      'label' => $group->name, 'value' => $group->id, 'checked' => 'checked');
-  }
+
   $form->add_element('type'  => 'Hidden', 'name'  => 'id', 'value' => $object->param('id'));
   $form->add_element('type'  => 'Hidden', 'name'  => 'type', 'value' => $object->param('type'));
   $form->add_element('type'  => 'Submit', 'name'  => 'submit', 'value' => 'Share');
@@ -860,7 +851,7 @@ sub select_group_form {
 
 sub no_group {
   ### Error message if group id not found
-  my( $panel, $user) = @_;
+  my ($panel, $user) = @_;
 
   my $html = qq(<p>No group was specified. Please go back to your <a href="/common/user/account">account home page</a> and click a "Manage group"
 link for a group you created.</p>);
@@ -873,8 +864,8 @@ sub groupview {
   ### Selects appropriate components for groupview page, based on user's permissions
   my( $panel, $object) = @_;
   my $webgroup_id = $object->param('id');
-  my $group = EnsEMBL::Web::Data::Group->new({ id => $webgroup_id });
-  my $user  = $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->get_user;
+  my $group = EnsEMBL::Web::Data::Group->new($webgroup_id);
+  my $user  = $ENSEMBL_WEB_REGISTRY->get_user;
 
   my $html;
   if ($user->is_administrator_of($group)) {
@@ -927,7 +918,7 @@ sub group_details {
   my $modifier      = $group->find_user_by_user_id($group->modified_by);
   my $creator_name  = $creator->name; 
   my $creator_org   = $creator->organisation; 
-  my $created_at    = $group->pretty_date($group->created_at);
+  my $created_at    = pretty_date($group->created_at);
 
   my $html = qq(<h3 class="plain">$group_name</h3>\n<p>$group_blurb</p>\n);
   if ($level eq 'Administrator') {
@@ -942,7 +933,7 @@ sub group_details {
     if ($modifier) {
       my $modifier_name = $modifier->name; 
       my $modifier_org  = $modifier->organisation; 
-      my $modified_at   = $group->pretty_date($group->modified_at);
+      my $modified_at   = $group->modified_at_pretty;
       $html .= qq(<br /><strong>Details modified by</strong>: $modifier_name ($modifier_org) on $modified_at);
     }
   }
@@ -954,8 +945,8 @@ sub group_details {
 
 sub group_records {
   my($object, $is_owner) = @_;
-  my $user = $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->get_user;
-  my $group = EnsEMBL::Web::Data::Group->new({ id => $object->param('id') });
+  my $user  = $ENSEMBL_WEB_REGISTRY->get_user;
+  my $group = EnsEMBL::Web::Data::Group->new($object->param('id'));
   my $html;
   if ($is_owner) {
     $html = qq(<h3 class="plain">Membership and Shared Resources</h3>\n);
@@ -992,7 +983,7 @@ sub group_management_tabs {
                                      content => _render_group_invite($group)
                                                      ));
 
-  my @invites = @{ $group->invites };
+  my @invites = $group->invites;
   my @pending;
   foreach my $invitation (@invites) {
     push @pending, $invitation if $invitation->status eq 'pending';
@@ -1013,7 +1004,7 @@ sub group_management_tabs {
                                                      ));
 
 
-  my @opentabs = @{ $user->opentabs };
+  my @opentabs = $user->opentabs;
   if ($#opentabs > -1) {
     foreach my $opentab (@opentabs) {
       if ($opentab->name eq $tabview->name) { 
@@ -1033,9 +1024,9 @@ sub group_management_tabs {
 sub _render_group_settings {
   ### Renders shared settings tab content
   my ($group, $user, $ident) = @_;
-  my @bookmarks = @{ $group->bookmarks };
-  my @configurations = @{ $group->configurations };
-  my @notes = @{ $group->annotations };
+  my @bookmarks      = $group->bookmarks;
+  my @configurations = $group->configurations;
+  my @notes          = $group->annotations;
   my $html = "";
   if ($#bookmarks > -1) {
     $html .= "<h5>Bookmarks</h5>\n";
@@ -1086,13 +1077,14 @@ sub _render_group_settings {
 
 sub _render_group_users {
   my ($group, $admin, $show_all) = @_;
-  my $html = "";
+  my $html;
   $html .= &info_box($admin, "This panel lists all members of this group. You can invite new users to join your group by entering their email address in the 'Invite' tab.", "group_members_info");
-  my @users = @{ $group->users };
-  my $table = EnsEMBL::Web::Interface::Table->new(( 
-                                       class => "ss", 
-                                       style => "border-collapse:collapse"
-                                                  ));
+  my @users = $group->members;
+  my $table = EnsEMBL::Web::Interface::Table->new( 
+    class => 'ss', 
+    style => 'border-collapse:collapse',
+  );
+  
   foreach my $user (@users) {
     next if ($show_all ne 'yes' && $user->member_status ne 'active');
     my $row = EnsEMBL::Web::Interface::Table::Row->new();
@@ -1216,11 +1208,11 @@ sub invitations {
 <table class="ss">
 <tr class="ss-header"><th>Email address</th><th>Invitation sent?</th><th>Notes</th></tr>);
 
-  my $group = EnsEMBL::Web::Data::Group->new({ id => $group_id });
+  my $group = EnsEMBL::Web::Data::Group->new($group_id);
   my $bg = 'bg1';
   my $count = 1;
 
-  foreach my $invitation (@{ $group->invites }) {
+  foreach my $invitation ($group->invites) {
 
     if ($count % 2 == 0) {
       $bg = 'bg2';
@@ -1290,7 +1282,7 @@ sub info_box {
   ### Wrapper for infobox content
   my($user, $message, $name) = @_;
   my $found = 0;
-  foreach my $info (@{ $user->infoboxes }) {
+  foreach my $info ($user->infoboxes) {
     if ($info->name eq $name) {
       $found = 1;
     }

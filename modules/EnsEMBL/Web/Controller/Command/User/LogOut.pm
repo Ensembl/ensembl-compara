@@ -35,7 +35,7 @@ sub process {
   }
 
   ## setting a (blank) expired cookie deletes the current one
-  my $SD = $ENSEMBL_WEB_REGISTRY->species_defs;
+  my $SD = $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->species_defs;
   my $user_cookie = EnsEMBL::Web::Cookie->new({
         'host'    => $SD->ENSEMBL_COOKIEHOST,
         'name'    => $SD->ENSEMBL_USER_COOKIE,

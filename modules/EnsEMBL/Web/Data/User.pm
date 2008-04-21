@@ -2,89 +2,63 @@ package EnsEMBL::Web::Data::User;
 
 use strict;
 use warnings;
+use base qw(EnsEMBL::Web::Data::Trackable);
+use EnsEMBL::Web::DBSQL::UserDBConnection (__PACKAGE__->species_defs);
 
-use Class::Std;
-use EnsEMBL::Web::RegObj;
-use EnsEMBL::Web::Data::Trackable;
-use EnsEMBL::Web::DBSQL::MySQLAdaptor;
+__PACKAGE__->table('user');
+__PACKAGE__->set_primary_key('user_id');
 
-our @ISA = qw(EnsEMBL::Web::Data::Trackable);
+__PACKAGE__->add_queriable_fields(
+  name         => 'tinytext',
+  email        => 'tinytext',
+  salt         => 'tinytext',
+  password     => 'tinytext',
+  organisation => 'text',
+  status       => 'tinytext',
+);
 
-{
+__PACKAGE__->add_has_many(
+  bookmarks      => 'EnsEMBL::Web::Data::Record::Bookmark',
+  configurations => 'EnsEMBL::Web::Data::Record::Configuration',
+  annotations    => 'EnsEMBL::Web::Data::Record::Annotation',
+  dases          => 'EnsEMBL::Web::Data::Record::DAS',
+  newsfilters    => 'EnsEMBL::Web::Data::Record::NewsFilter',
+  infoboxes      => 'EnsEMBL::Web::Data::Record::Infobox',
+  opentabs       => 'EnsEMBL::Web::Data::Record::Opentab',
+  sortables      => 'EnsEMBL::Web::Data::Record::Sortable',
+  mixers         => 'EnsEMBL::Web::Data::Record::Mixer',
+  drawers        => 'EnsEMBL::Web::Data::Record::Drawer',
+  currentconfigs => 'EnsEMBL::Web::Data::Record::CurrentConfig',
+  specieslists   => 'EnsEMBL::Web::Data::Record::SpeciesList',
+);
 
-sub BUILD {
-  my ($self, $ident, $args) = @_;
-  $self->set_primary_key('user_id');
-  $self->set_adaptor(EnsEMBL::Web::DBSQL::MySQLAdaptor->new({table => 'user' }));
-  $self->set_data_field_name('data');
+__PACKAGE__->has_many(_groups => ['EnsEMBL::Web::Data::Membership' => 'webgroup']);
 
-  $self->add_queriable_field({ name => 'name', type => 'tinytext' });
-  $self->add_queriable_field({ name => 'email', type => 'tinytext' });
-  $self->add_queriable_field({ name => 'salt', type => 'tinytext' });
-  $self->add_queriable_field({ name => 'password', type => 'tinytext' });
-  $self->add_queriable_field({ name => 'organisation', type => 'text' });
-  $self->add_queriable_field({ name => 'status', type => 'tinytext' });
-
-  $self->add_relational_field({ name => 'level', type => 'text' });
-  $self->add_relational_field({ name => 'member_status', type => 'text' });
-
-  $self->add_has_many({ class => 'EnsEMBL::Web::Data::Bookmark', owner => 'user'});
-  $self->add_has_many({ class => 'EnsEMBL::Web::Data::Configuration', owner => 'user'});
-  $self->add_has_many({ class => 'EnsEMBL::Web::Data::Annotation', owner => 'user'});
-  $self->add_has_many({ class => 'EnsEMBL::Web::Data::DAS', owner => 'user'});
-  $self->add_has_many({ class => 'EnsEMBL::Web::Data::NewsFilter', owner => 'user'});
-  $self->add_has_many({ class => 'EnsEMBL::Web::Data::Infobox', owner => 'user'});
-  $self->add_has_many({ class => 'EnsEMBL::Web::Data::Opentab', owner => 'user'});
-  $self->add_has_many({ class => 'EnsEMBL::Web::Data::Sortable', owner => 'user'});
-  $self->add_has_many({ class => 'EnsEMBL::Web::Data::Mixer', owner => 'user'});
-  $self->add_has_many({ class => 'EnsEMBL::Web::Data::Drawer', owner => 'user'});
-  $self->add_has_many({ class => 'EnsEMBL::Web::Data::CurrentConfig', owner => 'user'});
-  $self->add_has_many({ class => 'EnsEMBL::Web::Data::SpeciesList', owner => 'user'});
-  $self->add_has_many({ class => 'EnsEMBL::Web::Data::Group', table => 'webgroup', link_table => 'group_member', });
-
-  $self->populate_with_arguments($args);
+sub groups {
+  return grep { $_->status eq 'active' } shift->_groups(@_);
 }
-
 
 sub find_administratable_groups {
   my $self = shift;
-  my @admin = ();
-  foreach my $group (@{ $self->groups }) {
-    foreach my $user (@{ $group->users }) {
-      if ($user->id eq $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->get_user->id) {
-        if ($user->level eq 'administrator' || $user->level eq 'superuser') {
-          push @admin, $group;
-        }
-      }
-    }
-  }
-  return \@admin;
+  ## TODO: Not sure if this will work  
+  my @admin_groups = (
+    $self->groups(level => 'administrator'),
+    $self->groups(level => 'superuser'),
+  );
+
+  return @admin_groups;
 }
 
 sub is_administrator_of {
   my ($self, $group) = @_; 
-  my @admins = @{ $self->find_administratable_groups };
-  my $found = 0;
-  foreach my $admin_group (@admins) {
-    if ($admin_group->id eq $group->id) {
-      $found = 1;
-    }
-  }
-  return $found;
+
+  return grep {$group->id eq $_->id} $self->find_administratable_groups;
 }
 
 sub is_member_of {
   my ($self, $group) = @_; 
-  my $found = 0;
-  foreach my $gp (@{ $self->groups }) {
-    if ($gp->id eq $group->id) {
-      $found = 1;
-      next;
-    }
-  }
-  return $found;
-}
 
+  return grep {$group->id eq $_->id} $self->groups;
 }
 
 1;

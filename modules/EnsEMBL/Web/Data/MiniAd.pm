@@ -2,30 +2,18 @@ package EnsEMBL::Web::Data::MiniAd;
 
 use strict;
 use warnings;
+use base qw(EnsEMBL::Web::Data);
+use EnsEMBL::Web::DBSQL::UserDBConnection (__PACKAGE__->species_defs);
 
-use Class::Std;
-use EnsEMBL::Web::Data;
-use EnsEMBL::Web::DBSQL::MySQLAdaptor;
+__PACKAGE__->table('miniad');
+__PACKAGE__->set_primary_key('miniad_id');
 
-our @ISA = qw(EnsEMBL::Web::Data);
-
-{
-
-sub BUILD {
-  my ($self, $ident, $args) = @_;
-  $self->set_adaptor(EnsEMBL::Web::DBSQL::MySQLAdaptor->new(
-                          {adaptor => 'websiteAdaptor', 
-                          table => 'miniad' }
-  ));
-  $self->set_primary_key('miniad_id');
-  $self->add_queriable_field({ name => 'image',       type => 'varchar(32)' });
-  $self->add_queriable_field({ name => 'alt',         type => 'tinytext' });
-  $self->add_queriable_field({ name => 'url',         type => 'tinytext' });
-  $self->add_queriable_field({ name => 'start_date',  type => 'date' });
-  $self->add_queriable_field({ name => 'end_date',    type => 'date' });
-  $self->populate_with_arguments($args);
-}
-
-}
+__PACKAGE__->add_queriable_fields(
+  image      => 'varchar(32)',
+  alt        => 'tinytext',
+  url        => 'tinytext',
+  start_date => 'date',
+  end_date   => 'date',
+);
 
 1;

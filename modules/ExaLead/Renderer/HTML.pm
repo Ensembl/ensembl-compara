@@ -127,7 +127,7 @@ sub _render_hit {
 ),
     CGI::escapeHTML( $hit->URL ), 
     $hit->field('title')->getHighlighted, $extra,
-    $hit->field('description')?$hit->field('description')->getHighlighted:'--',
+    $hit->field('description') ? $hit->field('description')->getHighlighted : '--',
     join( '&nbsp;&nbsp; ',
       map { '<strong>'.CGI::escapeHTML( $_->name =~ /answergroup\.(.*)/?$1:$_->name ).'</strong>: '.
             $self->_render_hitcats( $_->children ) } $hit->groups );

@@ -15,23 +15,24 @@ sub common_menu_items {
 
   if ($doc->species_defs->ENSEMBL_LOGINS) {
     ## Is the user logged in?
-    my $user_id = $ENV{'ENSEMBL_USER_ID'};
+    my $user = $ENSEMBL_WEB_REGISTRY->get_user;
 
     my $flag = 'ac_mini';
     $doc->menu->add_block( $flag, 'bulleted', "Your $SiteDefs::ENSEMBL_SITETYPE", 'priority' => 0 );
     my @bookmark_sections = ();
 
-    if ($user_id) {
+    if ($user) {
       #$doc->menu->add_entry( $flag, 'text' => "<a href='/common/user/account'>Your account</a> &middot; <a href='javascript:logout_link()'>Log out</a>", 'raw' => 'yes');
       #$doc->menu->add_entry( $flag, 'text' => "Bookmark this page",
       #                              'code' => 'bookmark',
       #                            'href' => "javascript:bookmark_link()" );
 
-      my $user = $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->get_user;
-
       ## Link to existing bookmarks
-      my %included = ();
-      my @records = @{ $user->bookmarks({order_by => 'click' }) };
+      my %included;
+
+      no warnings;
+      my @records = reverse sort {$a->click <=> $b->click} $user->bookmarks;
+
       my $found = 0;
       if ($#records > -1) { 
         $found = 1;
@@ -47,9 +48,9 @@ sub common_menu_items {
 
       }
 
-      foreach my $group (@{ $user->groups }) {
+      foreach my $group ($user->groups) {
         $found = 1;
-        my @bookmarks = @{ $group->bookmarks };   
+        my @bookmarks = $group->bookmarks;
         foreach my $bookmark (@bookmarks) {
           if (!$included{$bookmark->url}) {
             push @bookmark_sections, &bookmark_menu_item($bookmark);
@@ -89,7 +90,8 @@ sub common_menu_items {
     else {
       $doc->menu->add_entry( $flag, 'text' => "<a href='javascript:login_link();'>Login</a> or <a href='/common/user/register'>Register</a>", 'raw' => 'yes');
       $doc->menu->add_entry( $flag, 'text' => "About User Accounts",
-                                  'href' => "/info/about/accounts.html" );
+                                  'href' => "/info/about/accounts.html",
+                                  'icon' => '/img/infoicon.gif' );
     }
   }
 
@@ -169,9 +171,7 @@ sub dynamic_menu_items {
   my( $self, $doc ) = @_;
 
   ## Is the user logged in?
-  my $user_id = $ENV{'ENSEMBL_USER_ID'};
-
-  if ($user_id) {
+  if ($ENV{'ENSEMBL_USER_ID'}) {
     my $flag = 'ac_mini';
       ## to do - add a check for configurability
       my $configurable = 1;

@@ -2,36 +2,26 @@ package EnsEMBL::Web::Data::Tutorial;
 
 use strict;
 use warnings;
+use base qw(EnsEMBL::Web::Data::Trackable);
+use EnsEMBL::Web::DBSQL::WebDBConnection (__PACKAGE__->species_defs);
 
-use Class::Std;
-use EnsEMBL::Web::Data::Trackable;
-use EnsEMBL::Web::DBSQL::MySQLAdaptor;
+__PACKAGE__->table('help_record');
+__PACKAGE__->set_primary_key('help_record_id');
 
-our @ISA = qw(EnsEMBL::Web::Data::Trackable);
+__PACKAGE__->add_fields(
+  title         => 'string',
+  filename      => 'string',
+  filesize      => 'float(3,1)',
+  list_position => 'int',
+);
 
-{
+__PACKAGE__->_type('tutorial');
 
-sub BUILD {
-  my ($self, $ident, $args) = @_;
-  $self->set_primary_key('help_record_id');
-  $self->set_adaptor(EnsEMBL::Web::DBSQL::MySQLAdaptor->new(
-                        {table => 'help_record',
-                        adaptor => 'websiteAdaptor'}
-  ));
-  $self->set_data_field_name('data');
-  $self->add_field({ name => 'title', type => 'string' });
-  $self->add_field({ name => 'filename', type => 'string' });
-  $self->add_field({ name => 'filesize', type => 'float(3,1)' });
-  $self->add_field({ name => 'list_position', type => 'int' });
-  $self->add_queriable_field({ name => 'keyword', type => 'string' });
-  $self->add_queriable_field({ name => 'status', type => "enum('draft','live','dead')" });
-  $self->add_queriable_field({ name => 'helpful', type => 'int' });
-  $self->add_queriable_field({ name => 'not_helpful', type => 'int' });
-  $self->add_queriable_field({ name => 'type', type => 'string' });
-  $self->type('tutorial');
-  $self->populate_with_arguments($args);
-}
-
-}
+__PACKAGE__->add_queriable_fields(
+  keyword     => 'string',
+  status      => "enum('draft','live','dead')",
+  helpful     => 'int',
+  not_helpful => 'int',
+);
 
 1;

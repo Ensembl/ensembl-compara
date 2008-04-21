@@ -20,13 +20,12 @@ sub add_form {
   my $form = EnsEMBL::Web::Form->new('add', "/common/$script", 'post');
 
   ## form widgets
-  my $key = EnsEMBL::Web::Tools::DBSQL::TableName::parse_primary_key($panel->interface->data->get_primary_key);
+  my ($key) = $panel->interface->data->primary_columns;
   my $id = $object->param($key) || $object->param('id');
   if ($id) {
-    $panel->interface->data->populate_with_arguments({id => $id});
-  }
-  else {
-    $panel->interface->cgi_populate($object, '');
+    #$panel->interface->data->populate($id);
+  } else {
+    $panel->interface->cgi_populate($object);
   }
   my @widgets = @{$panel->interface->edit_fields};
 

@@ -39,7 +39,7 @@ sub dynamic_use {
     return 0;
   }
   if( exists( $failed_modules->{$classname} ) ) {
-  #  warn "EnsEMBL::Web::Root: tried to use $classname again - this has already failed $failed_modules->{$classname}";
+    #warn "EnsEMBL::Web::Root: tried to use $classname again - this has already failed $failed_modules->{$classname}";
     return 0;
   }
   my( $parent_namespace, $module ) = $classname =~/^(.*::)(.*)$/ ? ($1,$2) : ('::',$classname);

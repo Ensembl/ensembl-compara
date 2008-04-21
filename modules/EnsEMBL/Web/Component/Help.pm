@@ -25,7 +25,7 @@ sub _wrap_form {
 
 sub helpview {
   my($panel, $object) = @_;
-  my ($article) = @{ $object->views };
+  my ($article) = $object->views;
   
   my $hilite = $object->param('hilite');
 
@@ -120,11 +120,11 @@ sub results {
   foreach( @{$object->results}) {
     my $url = '/common/helpview?id='.$_->{'id'}.';hilite='.$object->param('hilite');
     if ($modular) {
-      my $help = EnsEMBL::Web::Data::View->new({ 'id' => $_->{'id'} }); 
+      my $help = EnsEMBL::Web::Data::View->new($_->{'id'}); 
       $panel->printf( qq(\n    <dt><a href="%s">%s</a></dt><dd>%s</dd>), $url, $help->title, $help->summary);
     }
     else {
-      my $help = EnsEMBL::Web::Data::Article->new({ 'id' => $_->{'id'} }); 
+      my $help = EnsEMBL::Web::Data::Article->new($_->{'id'}); 
       $panel->printf( qq(\n    <li><a href="%s">%s</a></li>), $url, $help->title);
     }
   } 

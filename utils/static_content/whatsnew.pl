@@ -15,6 +15,8 @@ use File::Basename qw( dirname );
 use Pod::Usage;
 use Getopt::Long;
 
+use EnsEMBL::Web::Data::NewsItem;
+
 our $SERVERROOT;
 my ( $help, $info, @species);
 
@@ -53,7 +55,6 @@ my $wa = $ENSEMBL_WEB_REGISTRY->newsAdaptor;
 #---------------- DO APPROPRIATE QUERIES AND OUTPUT NEWS FILE ----------------#
 
 # general query - will probably need it at least once
-my $stories = $wa->fetch_news_items({'release'=>$release_id, 'status'=>'news_ok'}, 1);
 
 # get a list of valid species for this release
 our $rel_spp = $wa->fetch_species($release_id);
@@ -81,9 +82,7 @@ elsif (!@species) { ## defaults to all
 my ($output_dir, $html, $title, $extra);
 
 #### NEWS FOR INDIVIDUAL SPECIES ####
-if (@valid_spp) {
-
-    foreach my $sp (@valid_spp) {
+foreach my $sp (@valid_spp) {
 
         (my $pretty_sp = $sp) =~ s/_/ /;
                                                                                 
@@ -91,40 +90,30 @@ if (@valid_spp) {
         
         # get stories for this species
         my $species_id = $rev_hash{$sp};
-        my $sp_items = $wa->fetch_news_items({'release'=>$release_id, 'species'=>$species_id, 'status'=>'news_ok'}, '', '5',);
+        my @stories = EnsEMBL::Web::Data::NewsItem->search(
+          {
+            release => $release_id,
+            status  => 'news_ok',
+            species.species_id => {-or => [ {IS => 'NULL'}, $species_id ]},
+          },
+          {
+            order_by => 'species_id, priority',
+            rows     => 5,
+          }
+        );
 
         $html .= qq(<h4><i>$pretty_sp</i> News</h4>);
-        my $done = [];
 
-        if (@$sp_items) {
+        if (@stories) {
           ## output species stories
           $html .= qq(<ul class="spaced">\n);
-          $html .= &output_stories($sp_items, 'species');
-
-          ## make a note of which stories we've included so far
-          foreach my $story (@$sp_items) {
-            my $item_id = $$story{'news_item_id'};
-            push @$done, $item_id;
-          }
-
+          $html .= &output_stories(\@stories, 'species');
           $html .= qq(</ul>);
-        }
-        else {
+        } else {
           $html .= qq(<p>There is no <i>$pretty_sp</i>-specific news this release.</p>\n\n);
         }
-         
-        ## if fewer than 5 items, make number up to 5 from general items
-        my $total = scalar(@$sp_items);
-        $extra = 5 - scalar(@$sp_items);
     
         print STDERR "\nINFO: Adding $total species stories for $sp\n";
-
-        if ($extra) {
-          $html .= qq(<h4>General News</h4>);
-          $html .= qq(<ul class="spaced">\n);
-          $html .= &output_stories($stories, 'species', $extra, $done);
-          $html .= qq(</ul>);
-        }
 
         ## finish file and write it out
         $html .= qq(<p><a href="/$sp/newsview?rel=$release_id">More news...</a></p>\n\n);
@@ -138,61 +127,22 @@ if (@valid_spp) {
 #--------------------------------------------------------
 
 sub output_stories {
-    my ($stories, $style, $limit, $done) = @_;
+    my ($stories, $style, $limit) = @_;
 
     my $html;
     my $prev_cat = 0;
     my $prev_sp = 0;
 
-    if (!$limit) {
-        $limit = scalar(@$stories);
-    }
+    foreach my $story (@$stories) {
 
-    STORY: for (my $i = 0; $i < $limit; $i++) {
-        my $next = $$stories[$i];
-        next unless $next;
-        my $item_id = $$next{'news_item_id'};
-        if ($done) { ## skip any stories that might have been done already
-          foreach my $is_done (@$done) {
-            if ($item_id == $is_done) {
-              next STORY;
-            }
-          }
-        }
-        my $title   = $$next{'title'};
-        my $content = $$next{'content'};
-        my $release_id = $$next{'release_id'};
-        my $cat_id = $$next{'news_cat_id'};
-        my $species = $$next{'species'};
-        my @sp_ids;
-        my ($sp_id, $sp_dir, $sp_name);
-        if (ref($species)) {
-            $sp_id = ${$species}[0];
-            @sp_ids = @{$species};
-        }
-        else {
-            $sp_id = $species;
-            @sp_ids = ($sp_id);
-        }
-        if ($sp_id) {
-            $sp_dir = $$rel_spp{$sp_id};
-            my $sp_count = scalar(@sp_ids);
-            if ($sp_count > 1) {
-                for (my $j=0; $j<$sp_count; $j++) {
-                    $sp_name .= ', ' unless $j == 0;
-                    my @name_bits = split('_', $$rel_spp{$sp_ids[$j]});
-                    $sp_name .= '<i>'.substr($name_bits[0], 0, 1).'. '.$name_bits[1].'</i>';
-                }
-            }
-            else {
-                ($sp_name = $sp_dir) =~ s/_/ /g;
-                $sp_name = "<i>$sp_name</i>";
-            }
-        }
-        else {
-            $sp_dir = 'Multi';
-            $sp_name = 'all species';
-        }
+        my $item_id = $story->id;
+        my $title      = $story->title;
+        my $content    = $story->content;
+        my $release_id = $story->release_id;
+        my @species    = $story->species;
+
+        my $sp_dir = @species ? $species[0]->name : 'Multi';
+
 
         # truncate content if story is over nnn chars
         if ($style && $style eq 'species' && length($content) > 250) {

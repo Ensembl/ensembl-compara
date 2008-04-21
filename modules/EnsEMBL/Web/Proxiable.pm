@@ -72,7 +72,6 @@ sub fix_session {
 ### calls store on... this will check whether (a) there are any saveable
 ### scriptconfigs AND (b) if any of the saveable scriptconfigs have been altered
   my( $self, $r ) = @_;
-  #warn "FIX SESSION...............................";
   my $session = $self->get_session;
   $session->store($self->apache_handle) if $session;
 }

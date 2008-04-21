@@ -9,7 +9,6 @@ use CGI;
 use EnsEMBL::Web::RegObj;
 use EnsEMBL::Web::Data::User;
 use EnsEMBL::Web::Data::Group;
-use EnsEMBL::Web::Data::Invite;
 
 use base 'EnsEMBL::Web::Controller::Command::User';
 
@@ -41,7 +40,7 @@ sub process {
   my $self = shift;
   my $cgi = new CGI;
 
-  my $user = EnsEMBL::Web::Data::User->new({ email => $cgi->param('email') });
+  my $user = EnsEMBL::Web::Data::User->find(email => $cgi->param('email'));
 
   $user->password( EnsEMBL::Web::Tools::Encryption::encryptPassword($cgi->param('new_password_1')) );
   $user->status('active');
@@ -50,17 +49,13 @@ sub process {
 
   ## Add membership if coming from invitation acceptance
   if ($cgi->param('record_id')) {
-    my $invitation = EnsEMBL::Web::Data::Invite->new({ id => $cgi->param('record_id') });
-    my $membership = EnsEMBL::Web::Data::Membership->new;
-    $membership->webgroup_id($invitation->webgroup_id);
-    $membership->user_id($user->id);
-    $membership->level('member');
-    $membership->member_status('active');
-    
-    my $success = $membership->save;
-    $invitation->destroy 
-      if $success;
+    my $invitation = EnsEMBL::Web::Data::Record::Invite::Group->new($cgi->param('record_id'));
+    my $group = EnsEMBL::Web::Data::Group->new($invitation->webgroup_id);
+
+    $invitation->destroy
+      if $group->add_user($user);
   }
+
   my $url = '/common/user/set_cookie?email='.$user->email
                   .';password='.$cgi->param('new_password_1')
                   .';url='.$cgi->param('url')

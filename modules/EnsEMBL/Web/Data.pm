@@ -2,664 +2,283 @@ package EnsEMBL::Web::Data;
 
 use strict;
 use warnings;
+use EnsEMBL::Web::Cache;
+use base qw/EnsEMBL::Web::DBSQL::MySQLAdaptor/;
+use Data::Dumper qw//;
 
-use Class::Std;
-use Carp qw(:DEFAULT cluck);
-use EnsEMBL::Web::DBSQL::SQL::Result;
-use EnsEMBL::Web::DBSQL::SQL::Request;
-use EnsEMBL::Web::Data::Field;
-use EnsEMBL::Web::Tools::DBSQL::TableName;
-use EnsEMBL::Web::Root;
 
-{
+#----------------------------------------------------------------------
+# Our Class Data
+#----------------------------------------------------------------------
+__PACKAGE__->mk_classdata(data_fields      => {});
+__PACKAGE__->mk_classdata(queriable_fields => {});
+__PACKAGE__->mk_classdata(relations        => {});
+__PACKAGE__->mk_classdata('__type');
 
-my %Fields :ATTR(:set<fields> :get<fields>);
-my %Primary_key :ATTR(:set<primary_key> :get<primary_key>);
-my %Data_field :ATTR(:set<data_field_name> :get<data_field_name>);
-my %Value :ATTR(:set<values>, :get<values>);
-my %Queriable_Fields :ATTR(:set<queriable_fields> :get<queriable_fields>);
-my %Adaptor :ATTR(:set<adaptor> :get<adaptor>);
-my %Belongs_to :ATTR(:set<belongs_to> :get<belongs_to>);
-my %Relational_attributes :ATTR(:set<relational_attributes> :get<relational_attributes>);
-my %Relational_table :ATTR(:set<relational_table> :get<relational_table>);
-my %Relational_owner :ATTR(:set<relational_owner> :get<relational_owner>);
-my %Relational_fields :ATTR(:set<relational_fields> :get<relational_fields>);
-my %Relational_link_table :ATTR(:set<relational_link_table> :get<relational_link_table>);
-my %Relational_contribution :ATTR(:set<relational_contribution> :get<relational_contribution>);
-my %Has_many:ATTR(:set<has_many> :get<has_many>);
-my %Trackable:ATTR(:set<trackable> :get<trackable>);
+##
+## Enhancement for our MySQLAdaptor (Class::DBI), which doesn't have new constructor by default
+## arguments:
+## LIST of primery keys - will be looked up in DB
+## OR!
+## HASHREF of values for new object
+##
+sub new {
+  my $class = shift; 
+  my $data  = shift;
 
-}
-
-sub BUILD {
-  my ($self, $ident, $args) = @_;
-  $self->add_queriable_field({ name => 'id', type => 'int' });
-}
-
-sub populate_with_arguments {
-  my ($self, $args) = @_;
-  my $taint;
-  foreach my $column (@{$self->get_queriable_fields}) {
-    my $field = $column->get_name;
-    if (defined $args->{$field}) {
-      $self->$field($args->{$field});
-      $taint = 1;
-    }
-  }
-  $self->populate
-    if $taint;
-}
-
-sub populate {
-  my $self = shift;
-  my $result = $self->get_adaptor->find($self);
-  foreach my $key (@{ $result->fields }) {
-    if ($key eq EnsEMBL::Web::Tools::DBSQL::TableName::parse_primary_key($self->get_primary_key)) {
-      $self->id($result->get_value($key));
-      next;
-    }
-    ## Ignore plain datetime fields in favour of UNIX_TIMESTAMP versions
-    next if $key eq 'created_at';
-    next if $key eq 'modified_at';
-    my $field = $self->mapped_field($key);
-    if ($self->get_data_field_name && ($field eq $self->get_data_field_name)) {
-      $self->populate_data($result->get_value($key));
-    } 
-    else {
-      $self->$field($result->get_value($key));
-    }
-  }
-}
-
-sub populate_data {
-  ### Populates data.
-  my ($self, $string) = @_;
-  my $hash = eval ($string);
-  foreach my $key (keys %{ $hash }) {
-    $self->$key($hash->{$key});
-  }
-}
-
-sub mapped_field {
-  my ($self, $field) = @_;
-  if ($field eq $self->get_primary_key) {
-    $field = 'id';
-  }
-  elsif ($field =~ /^UNIX_TIMESTAMP/) {
-    $field =~ s/UNIX_TIMESTAMP\(//;
-    $field =~ s/\)//;
-  } 
-  return $field;
-}
-
-sub records {
-  my ($self) = @_;
-  my @records = ();
-  foreach my $key (keys %{ $self->get_relational_attributes }) {
-    push @records, @{ $self->$key }; 
-  }
-  return \@records;
-}
-
-sub get_value {
-  my ($self, $name) = @_;
-  return $self->get_values->{$name};
-}
-
-sub set_value {
-  my ($self, $name, $value) = @_;
-  if (!defined $self->get_values) {
-    $self->set_values({});
-  }
-  $self->get_values->{$name} = $value;
-}
-
-sub add_field {
-  my ($self, $args) = @_;
-  if (!$self->get_fields) {
-    $self->set_fields([]);
-  }
-  $self->add_accessor_symbol_lookup($args->{name});
-  push @{ $self->get_fields }, EnsEMBL::Web::Data::Field->new( { name => $args->{name}, type => $args->{type} } );
-}
-
-sub add_queriable_field {
-  my ($self, $args) = @_;
-  if (!$self->get_queriable_fields) {
-    $self->set_queriable_fields([]);
-  }
-  ## check this field doesn't already exist
-  foreach my $field (@{ $self->get_queriable_fields }) {
-    return if $field->get_name eq $args->{name};
-  }
-  $self->add_accessor_symbol_lookup($args->{name});
-  push @{ $self->get_queriable_fields }, EnsEMBL::Web::Data::Field->new( { name => $args->{name}, type => $args->{type}, queriable => 'yes' } );
-}
-
-sub remove_queriable_field {
-  my ($self, $field_name) = @_;
-  return if !$self->get_queriable_fields;
-  my @kept_fields;
-  foreach my $field (@{ $self->get_queriable_fields }) {
-    push @kept_fields, $field unless $field->get_name eq $field_name;
-  }
-  $self->set_queriable_fields(\@kept_fields);
-}
-
-sub add_relational_field {
-  my ($self, $args) = @_;
-  if (!$self->get_relational_fields) {
-    $self->set_relational_fields([]);
-  }
-  $self->add_accessor_symbol_lookup($args->{name});
-  push @{ $self->get_relational_fields }, EnsEMBL::Web::Data::Field->new( { name => $args->{name}, type => $args->{type} } );
-}
-
-sub get_all_fields {
-  my $self = shift;
-  my @all_fields;
-
-  ## Check we actually have fields of each type before trying to dereference the arrayref!
-  if (ref($self->get_fields) eq 'ARRAY') {
-    push @all_fields, @{ $self->get_fields };
-  }
-  if (ref($self->get_queriable_fields) eq 'ARRAY') {
-    push @all_fields, @{ $self->get_queriable_fields };
-  }
-  return \@all_fields;
-}
-
-sub add_has_many {
-  my ($self, $args) = @_;
-
-  my $has_many = $self->get_has_many || {};
-  $self->set_has_many($has_many);
-
-  my $object = $self->object_name_from_package($args->{class});
-  $self->relational_class($self->plural($object), $args->{class});
-  $self->relational_table($self->plural($object), $args->{owner}, $args->{table});
-  if ($args->{link_table}) {
-    $self->add_linked_has_many_symbol_lookup($self->plural($object));
-    $self->relational_link_table($self->plural($object), $args->{link_table});
-    ## relational contributions allow the parent class to bestow additional attributes on child classes. This
-    ## data is usually stored in a link table. For example, this mechanism is used to add an authorisation 'level'
-    ## to users retrived from a group, via the group_member table.
-    if ($args->{contribute}) {
-      $self->relational_contribution($args->{link_table}, $args->{contribute});
+  if ($data && !ref($data)) {
+    if ($class->__type) {
+      my $key = $class->get_primary_key;
+      return $class->retrieve(
+        $key => $data,
+        type => $class->__type,
+      );
+    } else {
+      return $class->retrieve($data);
     }
   } else {
-    $self->add_has_many_symbol_lookup($self->plural($object));
-  }
-
-  $has_many->{$self->plural($object)} = $args->{class};
-}
-
-
-sub add_belongs_to {
-  my ($self, $arg) = @_;
-  if (!$self->get_belongs_to ) {
-    $self->set_belongs_to([]);
-  }
-  my $name = $self->object_name_from_package($arg);
-  my $table = $self->fix_tablename($name);
-
-  $self->relational_class($name, $arg);
-  $self->add_relational_symbol_lookup($table);
-  $self->add_queriable_field({ name => $table.'_id', type => 'int', queriable => 'yes' });
-  push @{ $self->get_belongs_to }, $arg;
-}
-
-sub add_accessor_symbol_lookup {
-  my ($self, $name) = @_;
-  no strict;
-  my $class = ref($self);
-  $self->set_value({ $name => "" });
-
-  unless (defined *{ "$class\::$name" }) {
-    *{ "$class\::$name" } = $self->initialize_accessor($name);
+  	$class->normalize_column_values($data) if ref $data;
+  	$class->validate_column_values($data)  if ref $data;
+    return $class->_init($data);
   }
 }
-
-sub initialize_accessor {
-  no strict;
-  my ($self, $attribute) = @_;
-  return sub {
-    my $self = shift;
-    my $new_value = shift;
-    if (defined $new_value) {
-      $self->set_value($attribute,  $new_value);
-    }
-    return $self->get_value($attribute);
-  };
-}
-
-sub add_lazy_accessor_symbol_lookup {
-  my ($self, $name) = @_;
-  no strict;
-  my $class = ref($self);
-  $self->set_value({ $name => undef });
-   
-  unless (defined *{ "$class\::$name" }) {
-    *{ "$class\::$name" } = $self->initialize_relational_accessor($name);
-  }
-}
-
-sub initialize_relational_accessor {
-  no strict;
-  my ($self, $attribute) = @_;
-  return sub {
-    my $self = shift;
-    my $new_value = shift;
-    if (defined $new_value) {
-      $self->set_value($attribute,  $new_value);
-    }
-    return $self->get_lazy_value($attribute);
-  };
-}
-
-sub add_has_many_symbol_lookup {
-  my ($self, $name) = @_;
-  no strict;
-  my $class = ref($self);
-  $self->set_value({ $name => undef });
-   
-  unless (defined *{ "$class\::$name" }) {
-    *{ "$class\::$name" } = $self->initialize_has_many_accessor($name);
-  }
-}
-
-sub initialize_has_many_accessor {
-  no strict;
-  my ($self, $attribute) = @_;
-  return sub {
-    my $self    = shift;
-    my $options = shift;
-    ## This seems to be read-only accessor, following will be deprecated
-    #my $new_value = shift;
-    #if (defined $new_value) {
-    #  $self->set_value($attribute,  $new_value);
-    #}
-    return $self->get_lazy_values($attribute, $options);
-  };
-}
-
-sub add_linked_has_many_symbol_lookup {
-  my ($self, $name) = @_;
-  no strict;
-  my $class = ref($self);
-  $self->set_value({ $name => undef });
-   
-  unless (defined *{ "$class\::$name" }) {
-    *{ "$class\::$name" } = $self->initialize_linked_has_many_accessor($name);
-  }
-}
-
-sub initialize_linked_has_many_accessor {
-  no strict;
-  my ($self, $attribute) = @_;
-  return sub {
-    my $self = shift;
-    my $new_value = shift;
-    if (defined $new_value) {
-      $self->set_value($attribute,  $new_value);
-    }
-    return $self->get_linked_values($attribute);
-  };
-}
-
-sub get_linked_values {
-  my ($self, $attribute) = @_;
-  my $class = $self->relational_class($attribute);
-  my $result = $self->find_linked_many($attribute);
-  my @objects = ();
-  if (EnsEMBL::Web::Root::dynamic_use(undef, $class)) {
-    foreach my $id (keys %{ $result->get_result_hash }) {
-      my $new = $class->new({ id => $id });
-      if ($self->relational_contribution($self->relational_link_table($attribute))) {
-        foreach my $contrib (@{ $self->relational_contribution($self->relational_link_table($attribute)) }) {
-          $new->$contrib($result->get_result_hash->{$id}->{$contrib});
-        }
-      }
-      push @objects, $new;
-    }
-  }
-  return \@objects;
-}
-
-sub get_lazy_value {
-  my ($self, $attribute) = @_;
-  my $class = $self->relational_class($attribute);
-  my $object = $self->object_name_from_package($class);
-  my $accessor = $self->fix_tablename($object) . "_id";
-  if (defined $self->get_value($object)) {
-    return $self->get_value($object);
-  }
-  if (EnsEMBL::Web::Root::dynamic_use(undef, $class)) {
-    ## deal with record ownership
-    my $owner = undef;
-    if (ref($self) eq 'EnsEMBL::Web::Data::Group') {
-      $owner = 'group';
-    }
-    elsif (ref($self) eq 'EnsEMBL::Web::Data::User') {
-      $owner = 'user';
-    }
-    my $new = $class->new({ id => $self->$accessor, record_type => $owner });
-    $self->set_value($object, $new);
-    return $new;
-  }
-  return undef;
-}
-
-sub get_lazy_values {
-  my ($self, $attribute, $options) = @_;
-  my $class = $self->relational_class($attribute);
-  my $object = $self->object_name_from_package($class);
-  my $accessor = $self->fix_tablename($object) . "_id";
-  if (defined $self->get_value($object)) {
-    return $self->get_value($object);
-  }
-  my $result = $self->find_many($attribute);
-  my @objects = ();
-  if (EnsEMBL::Web::Root::dynamic_use(undef, $class)) {
-    ## deal with record ownership
-    my $owner = undef;
-    if (ref($self) eq 'EnsEMBL::Web::Data::Group') {
-      $owner = 'group';
-    }
-    elsif (ref($self) eq 'EnsEMBL::Web::Data::User') {
-      $owner = 'user';
-    }
-    foreach my $id (keys %{ $result->get_result_hash }) {  
-      my $new = $class->new({ id => $id, record_type => $owner });
-      push @objects, $new;
-    }
-    $self->set_value($object, \@objects);
-  }
-  
-  if ($options && $options->{'order_by'}) {
-    no warnings;
-    my $sorter = $options->{'order_by'};
-    @objects = reverse sort { $a->$sorter <=> $b->$sorter } sort @objects;
-  }
-
-  return \@objects;
-}
-
-sub relational_contribution {
-  my ($self, $attribute, $contribution) = @_;
-  unless (defined $self->get_relational_contribution) {
-    $self->set_relational_contribution({});
-  }
-  if (defined $contribution) {
-    $self->get_relational_contribution->{$attribute} = $contribution; 
-  }
-  return $self->get_relational_contribution->{$attribute};
-}
-
-sub relational_class {
-  my ($self, $attribute, $class) = @_;
-  unless (defined $self->get_relational_attributes) {
-    $self->set_relational_attributes({});
-  }
-  if (defined $class) {
-    $self->get_relational_attributes->{$attribute} = $class; 
-  }
-  return $self->get_relational_attributes->{$attribute};
-}
-
-sub relational_table {
-  my ($self, $attribute, $owner, $table) = @_;
-  unless (defined $self->get_relational_table) {
-    $self->set_relational_table({});
-  }
-  if (defined $table) {
-    $self->get_relational_table->{$attribute} = $table; 
-  }
-  elsif (defined $owner) {
-    if ($owner eq 'group') {
-      $table = EnsEMBL::Web::Tools::DBSQL::TableName::parse_table_name('%%group_record%%');
-    }
-    else {
-      $table = EnsEMBL::Web::Tools::DBSQL::TableName::parse_table_name('%%user_record%%');
-    }
-    $self->get_relational_table->{$attribute} = $table; 
-  }
-  return $self->get_relational_table->{$attribute};
-}
-
-sub relational_link_table {
-  my ($self, $attribute, $table) = @_;
-  unless (defined $self->get_relational_link_table) {
-    $self->set_relational_link_table({});
-  }
-  if (defined $table) {
-    $self->get_relational_link_table->{$attribute} = $table; 
-  }
-  return $self->get_relational_link_table->{$attribute};
-}
-
-sub add_relational_symbol_lookup {
-  my ($self, $name) = @_;
-  no strict;
-  my $class = ref($self);
-  
-  ## Add method to populate the relational data object from the 
-  ## database if an ID is specified.
-  ## eg: $data->user_id('66');
-  ##     $user = $data->user();
-  $self->add_accessor_symbol_lookup($name . "_id");
-
-  ## Add methods to get and set the relational data object.
-  ## eg: $data->user($user)
-  $self->add_lazy_accessor_symbol_lookup($name);
-}
-
-sub has_id {
-  my ($self) = @_;
-  if ($self->get_value('id')) {
-    return 1;
-  }
-  return 0;
-}
-
-# DB methods
 
 sub save {
   my $self = shift;
-  if ($self->get_trackable) {
-    if ($self->id) {
-      $self->modified_by($ENV{'ENSEMBL_USER_ID'});
-    }
-    else {
-      $self->created_by($ENV{'ENSEMBL_USER_ID'});
-    }
-  }
-  my $result = $self->get_adaptor->save($self);
-  if ($result->get_action eq 'create') {
-    $self->id($result->get_last_inserted_id);
-  }
-  return $result->get_success;
-}
 
-sub save_anon {
-  ## Saves record but doesn't set ID, thereby enabling multiple inserts of same data object
-  my $self = shift;
   if ($self->id) {
-    $self->modified_by($ENV{'ENSEMBL_USER_ID'});
+    $self->update(@_);
+  } else {
+    $self->insert_blessed(@_);
   }
-  else {
-    $self->created_by($ENV{'ENSEMBL_USER_ID'});
-  }
-  my $result = $self->get_adaptor->save($self);
-  return $result->get_success;
 }
 
-sub destroy {
+##
+## Fix for insert, to work with new() and save()
+##
+sub insert_blessed {
+	my $self = shift;
+
+  if ( $self->cache ) {
+      $self->cache->set( $self->_staleness_cache_key, time() );
+  }
+
+	$self->call_trigger('before_create');
+	$self->call_trigger('deflate_for_create');
+
+	$self->_prepopulate_id if $self->_undefined_primary;
+
+	# Reinstate data
+	my ($real, $temp) = ({}, {});
+	foreach my $col (grep $self->_attribute_exists($_), $self->all_columns) {
+		($self->has_real_column($col) ? $real : $temp)->{$col} =
+			$self->_attrs($col);
+	}
+
+	$self->_insert_row($real);
+
+	my @primary_columns = $self->primary_columns;
+	$self->_attribute_store(
+		$primary_columns[0] => $real->{ $primary_columns[0] })
+		if @primary_columns == 1;
+
+	delete $self->{__Changed};
+
+	my %primary_columns;
+	@primary_columns{@primary_columns} = ();
+	my @discard_columns = grep !exists $primary_columns{$_}, keys %$real;
+	$self->call_trigger('create', discard_columns => \@discard_columns);   # XXX
+
+	# Empty everything back out again!
+	$self->_attribute_delete(@discard_columns);
+	$self->call_trigger('after_create');
+	return $self;
+}
+##/Class::DBI enhancements
+
+
+sub set_primary_key {
+  my $class = shift;
+  $class->columns(Primary => @_);
+}
+
+
+sub get_primary_key {
+  my $class = shift;
+  my @keys = $class->columns(Primary => @_);
+  return wantarray ? @keys : $keys[0];
+}
+
+
+sub add_fields {
+  my $class = shift;
+
+  $class->add_queriable_field(data => 'data');
+  $class->data_fields({
+    %{ $class->data_fields },
+    @_,
+  });
+  
+  $class->columns(TEMP => keys %{ $class->data_fields });
+
+  $class->add_trigger(select        => \&withdraw_data);
+  $class->add_trigger(before_create => \&fertilize_data);
+  $class->add_trigger(before_update => \&fertilize_data);
+}
+
+
+sub add_queriable_fields {
+  my $class = shift;
+  $class->queriable_fields({
+    %{ $class->queriable_fields },
+    @_,
+  });
+  
+  $class->columns(Essential => keys %{ $class->queriable_fields });
+}
+*add_queriable_field = \&add_queriable_fields;
+
+
+sub get_all_fields {
+  my $class = shift;
+
+  return {
+  %{ $class->data_fields },
+  %{ $class->queriable_fields },
+  };
+}
+
+
+sub withdraw_data {
   my $self = shift;
-  my $request = EnsEMBL::Web::DBSQL::SQL::Request->new();
-  $request->set_action('destroy');
-  $request->add_where($self->get_primary_key, $self->id);
-  $request->set_index_by('user_record_id');
-  my $result = $self->get_adaptor->destroy($request);
-  return $result->get_success;
+  my $hash = eval ($self->data);
+  foreach my $field (keys %{ $self->data_fields }) {
+    $self->$field($hash->{$field});
+  }
 }
 
-sub find_many {
-  my ($self, $attribute) = @_;
-  my $request = EnsEMBL::Web::DBSQL::SQL::Request->new();
-  $request->set_action('select');
-  $request->set_table($self->relational_table($attribute));
-  $request->add_where('type', $self->singular($attribute));
-  $request->add_where($self->get_primary_key, $self->id);
-  #warn "SQL: ", $request->get_sql;
-  $request->set_index_by($self->relational_table($attribute) . "_id");
-  return $self->get_adaptor->find_many($request);
+
+sub fertilize_data {
+  my $self = shift;
+  my $hash = {};
+  foreach my $field (keys %{ $self->data_fields }) {
+    $hash->{$field} = $self->$field;
+  }
+  $self->data(dump_data($hash));
 }
 
-sub find_linked_many {
-  my ($self, $attribute) = @_;
-  my $request = EnsEMBL::Web::DBSQL::SQL::Request->new();
-  $request->set_action('select');
-  $request->set_table($self->relational_link_table($attribute));
-  if ($self->relational_contribution($self->relational_link_table($attribute))) {
-    foreach my $contribution (@{ $self->relational_contribution($self->relational_link_table($attribute)) }) {
-      $request->add_select($self->relational_link_table($attribute) . "." . $contribution);
-    }
+
+sub dump_data {
+  my $data = shift;
+  my $temp_fields = {};
+  foreach my $key (keys %{ $data }) {
+    $temp_fields->{$key} = $data->{$key};
+    $temp_fields->{$key} =~ s/'/\\'/g;
   }
-  $request->add_select($self->relational_table($attribute) . '.*');
-  $request->add_join($self->relational_table($attribute), $self->relational_link_table($attribute) . "." . $self->relational_table($attribute) . "_id", $self->relational_table($attribute) . "." . $self->relational_table($attribute) . "_id");
-  $request->add_where($self->relational_link_table($attribute) . "." . $self->get_primary_key, $self->id);
-  $request->set_index_by($self->relational_table($attribute) . "_id");
-  return $self->get_adaptor->find_many($request);
+  my $dumper = Data::Dumper->new([$temp_fields]);
+  $dumper->Indent(0);
+  my $dump = $dumper->Dump();
+  #$dump =~ s/'/\\'/g;
+  $dump =~ s/^\$VAR1 = //;
+  return $dump;
 }
 
-sub find_all {
-  my ($class, $params) = @_;
-  my @objects = ();
-  if (EnsEMBL::Web::Root::dynamic_use(undef, $class)) {
-    my $object = $class->new;
-    my $request = EnsEMBL::Web::DBSQL::SQL::Request->new();
-    $request->set_action('select');
-    my $key = EnsEMBL::Web::Tools::DBSQL::TableName::parse_primary_key($object->get_primary_key);
-    $request->set_index_by($key);
-    if ($params && ref($params) eq 'ARRAY') {
-      foreach my $array_ref (@$params) {
-        $request->add_where(@$array_ref);
-      }
-    }
-    my $result = $object->get_adaptor->find_many($request);
-    foreach my $id (keys %{ $result->get_result_hash }) {
-      my $new = $class->new({ id => $id });
-      push @objects, $new;
-    }
-  }
-  return \@objects;
-}
 
-# Util methods
-
-sub object_name_from_package {
-  my ($self, $name) = @_;
-  my @components = split /::/, $name;
-  return lc($components[$#components]);
-}
-
-sub fix_tablename {
-  ### Fix for the fact that 'group' is a reserved word in MySQL! 
-  my ($self, $name) = @_;
-  if ($name && $name eq 'group') {
-    $name = 'webgroup';
-  }
-  return $name;
-}
-
-sub plural {
-  ### Returns the plural form of a word. 
-  ### Note: this is not a definitive lexical modification!
-  ### Extended this method with more complex rules if it doesn't
-  ### return what you expected.
-
-  my ($self, $word) = @_;
-  my $plural = $word;
-  my $found = 0;
-
-  ## Words ending in ws - skip
-  if (!$found && $word =~ /ws$/) {
-    $found = 1;
-  }
-
-  ## Words ending in s
-  if (!$found && $word =~ /s$/) {
-    $plural =~ s/s$/ses/;
-    $found = 1;
-  }
-
-  ## Words ending in x 
-  if (!$found && $word =~ /x$/) {
-    $plural =~ s/x$/xes/;
-    $found = 1;
-  }
+sub has_a {
+  my $class    = shift;
+  my $accessor = shift;
   
-  unless ($found) {
-    $plural .= "s";
-  }
-  return $plural;
-}
-
-sub singular {
-  ### Returns the single form of a word. 
-  ### Note: this is not a definitive lexical modification!
-  ### Extended this method with more complex rules if it doesn't
-  ### return what you expected.
- 
-  my ($self, $word) = @_;
-  my $singular = $word;
-  my $found = 0;
-
-  ## Words ending in ws - skip
-  if (!$found && $word =~ /ws$/) {
-    $found = 1;
-  }
-
-  ## Words ending in sses
-  if (!$found && $word =~ /sses$/) {
-    $singular =~ s/es$//;
-    $found = 1;
-  }
-
-  ## Words ending in xes
-  if (!$found && $word =~ /xes$/) {
-    $singular =~ s/xes$/x/;
-    $found = 1;
-  }
-
-  unless ($found) {
-    $singular =~ s/s$//;
-  }
-
-  return $singular;
-}
-
-sub pretty_date {
-  my ($self, $timestamp) = @_;
-  my @date = localtime($timestamp);
-  my @days = ('Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat');
-  my @months = ('Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec');
-  return $days[$date[6]].' '.$date[3].' '.$months[$date[4]].', '.($date[5] + 1900);
-}
-
-sub clone {
-  my $self  = shift;
-  my $class = ref($self);
+  $accessor .= '_id';
   
-  my $clone = $class->new;
-  foreach my $field (@{ $self->get_all_fields }) {
-    my $fname = $field->get_name; 
-    next if $fname eq 'id';
-    $clone->$fname($self->$fname);
-  }
-
-  return $clone;
+  $class->add_queriable_fields($accessor => 'int');
+  return $class->SUPER::has_a($accessor => @_);
 }
+
+
+sub add_has_many {
+  my $class = shift;
+  my %args  = @_;
+  while (my ($key, $value) = each %args) {
+    $class->has_many($key => $value);
+  }
+}
+
+
+sub has_many {
+  my $class    = shift;
+  my $accessor = shift;
+  my ($relation_class) = @_;
+  no strict 'refs';
+
+  my ($owner) = $class =~ /::(\w+)$/;
+    
+  if (!ref($relation_class) && $relation_class =~ /^EnsEMBL::Web::Data::Record/) {
+
+    $class->_require_class($relation_class);
+    $relation_class = $relation_class->add_owner($owner);
+    
+    $class->relations({
+      %{ $class->relations },
+      $accessor => $relation_class,
+    });
+
+    my $real_accessor = '_'. $accessor;
+    $class->SUPER::has_many($real_accessor => $relation_class);
+
+    *{$class."::$accessor"} =
+      sub {
+        my $self = shift;
+        return $self->$real_accessor(@_, type => $relation_class->__type);
+      };
+    *{$class."::add_to_$accessor"} =
+      sub {
+        my $self = shift;
+        my $add_to_real_accessor = 'add_to_' . $real_accessor;
+        return $self->$add_to_real_accessor(@_);
+      };
+
+  } else {
+    return $class->SUPER::has_many($accessor => @_);
+  }
+}
+
+
+sub _type {
+  my $class = shift;
+  my $type  = shift;
+  
+  $class->__type($type);
+  $class->add_queriable_fields(type => 'string');
+  $class->add_trigger(before_create => sub { my $self = shift; $self->type($self->__type) });
+}
+
+## 
+## Like has_a, but imports all relative properties into our object
+## so they both represented together as one entity
+##
+sub tie_a {
+  my $class = shift;
+  my ($rel_obj, $rel_class) = @_;
+  no strict 'refs';
+  
+  $class->has_a(@_);
+  $class->add_trigger( after_update => sub { shift->$rel_obj->update } );
+  foreach my $column (keys %{ $rel_class->get_all_fields }) {
+    *{$class."::$column"} = sub { shift->$rel_obj->$column(@_) }
+      unless $class->find_column($column);
+  }
+}
+
+sub find_all { shift->retrieve_all(@_) }
+sub find     { shift->retrieve(@_) }
+sub destroy  { shift->delete(@_) }
+
+## Set caching object
+## Any cache object that has a get, set, and remove method is supported
+__PACKAGE__->cache(
+  new EnsEMBL::Web::Cache
+);
+
+#__PACKAGE__->default_search_attributes( { use_resultset_cache => 1 } );
 
 1;
