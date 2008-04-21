@@ -1,30 +1,78 @@
 img { border: 0px }
-body { margin: 0; font-family: arial, sans-serif; background-color: #eee }
+body { font-family: Luxi Sans, Geneva, Tahoma, Helvetica, Arial, sans-serif;
+    font-size:80%; color:#555555; background-color:#fff;
+    padding: 0px; margin: 0px; border: 0px; } 
+/* #b1cdcb #c8daed */
+pre, code, kbd {font-family:Courier New, Courier, Monaco, monospace; }
+pre { margin-left:1em; }
+div, p, span, li, dd, dt, th, td, pre, code, kbd { font-size:1em; }
+p  { margin-top:0.6em; margin-bottom:0.6em; }
+
 .ajax_error { font-weight: bold; color: #c00; background-color: #fcc }
 .spinner { 
   height: 16px;width:16px;border:0px;vertical-align:middle;
   padding: 2px 2px 2px 30px; background-image: url(/i/ajax-loader.gif)
 }
-/** Striped spreadsheets **/
 
-table.ss { width: 100%; }
-table.ss tr.ss_header { background-color:#ccc; border-width:1px 0px 0px 0px; border-color:#ccc; border-style:solid; }
-table.ss th { background-color: #ccc; border-width:1px 0px 0px 0px; border-color:#ccc; border-style:solid; padding:0.2em; vertical-align: top; text-align: center }
-table.ss td { vertical-align: top; padding:0.2em; }
-table.ss .right-border {  border-right:1px #369 solid;  }
-/** table.ss .left-border {  border-left:1px #ccc solid;  }
-table.ss .bottom-border {  border-bottom:1px #ccc solid;  } **/
-table.ss tr.bg1 { background-color:#fff; }
-table.ss tr.bg2 { background-color:#f0f0f0; }
-table.tint tr.bg2 { background-color:#ffffcc; }
-table.info-image { width:100%; margin:10px 0px; }
-table.info-image td.image { text-align:center; padding-right:20px; }
-.sequence { font-family: courier new; }
+.page { text-align: center; padding: 0.25em }
 
-.page { text-align: center; font-size: 0.8em; padding: 0.25em }
+/* Headings */
+h1 { font-size:1.5em; color:#666666; }
+h2 { font-size:1.2em; color:#993333; }
+h3 { font-size:1.1em; color:#000; }
+h4 { font-size:1em;   color:#000; }
+.first { margin-top:0em; }
 
-h4.normal { padding: 2px 0.25em }
-h4 { margin: 0px; padding: 2px 2px 4px 2px;background-color: #fff }
-h4 .center { text-align: center; margin-top: 2px }
-h4 .button-left  { float:left;  background-color: #cdf; padding:1px 0.5em; border: 1px outset #cdf; margin: 0px; margin-right: 1em }
-h4 .button-right { float:right; background-color: #cdf; padding:1px 0.5em; border: 1px outset #cdf; margin: 0px; margin-left: 1em }
+/* Colours and backgrounds */
+
+/* TO REVISIT? - NUMBERS DON'T CORRESPOND 1:1 WITH TEMPLATE ONES! */
+.bg1 { background:#fff; }
+.bg2 { background:#ffffdd; }
+.bg3 { background:#ffffcc; }
+.bg4 { background:#fff9af; }
+.bg5 { background:#ffffe7; }
+
+.hilite { background:#ccff99; }
+.red { color:#933; }
+
+/* Additional fonts */
+.serif    { font-family: Serif, Palatino, Times, "Times New Roman", serif; }
+.latin { font-style:italic; }
+.normal { font-style:normal; font-weight:normal; }
+.small { font-size:80%; }
+.sequence { font-family: 'Courier New'; }
+
+/* Text layout */
+.nowrap { white-space:nowrap; }
+.left { text-align:left; }
+.right, .more { text-align:right; }
+.center { text-align:center; }
+.middle { vertical-align:middle; }
+.bottom { vertical-align:bottom; }
+.autocenter { margin: 0 auto; }
+.hide { display:none; }
+
+/* Links */
+a { color:inherit; } /* neutral style for anchor target */
+a:link    { color:#3366bb; text-decoration:underline; }
+a:visited { color:#000066; text-decoration:underline; }
+a:hover   { color:#cc0000; text-decoration:underline; }
+a:active  { color:#cc0000; text-decoration:underline; }
+
+/* Tables */
+
+tr { vertical-align:top; }
+th, td { text-align:left; border:none; color:#333333; }
+
+/* Lists */
+li { margin-bottom:0.5em; }
+
+/* Forms */
+form { border:none; margin-top: 0px; margin-bottom: 0px; padding:0px; }
+
+/* BASIC PRINTER STYLES */
+
+@media print {
+  body, h1, h2, h4 { color:#000000; }
+  .print_hide { display: none }
+}

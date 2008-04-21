@@ -1,6 +1,6 @@
   #mh { width: 100%; border: 0px; padding: 0px; margin: 0px;
-        border-collapse: collapse; border-bottom: 1px solid #c90;
-        background-color: #fff9af }
+        border-collapse: collapse; border-bottom: 1px solid #003;
+        background-color: #336 }
   #mh td { border: 0px; padding: 0px; margin: 0px }
 /** Cell 1 - the main e! logo - currently 40x45 **/
   #mh_lo     { width:153px; vertical-align:middle; white-space: nowrap; padding-left:3px }
@@ -22,11 +22,7 @@
   dl#se_mn dt { border: 1px solid #369 ; border-top: 0px; font-size: 0.8em;  padding: 0px; background-color: #fff  }
   dl#se_mn dt img { height: 16px; width: 16px; border: 2px solid white; vertical-align: top; padding-right: 0.5em }
 /** Cell 4 - the links at the bottom right **/
-  td#mh_lnk { color: #fff9af; font-weight: bold; float: right; text-align: right;
-            white-space: nowrap; padding: 0px 4px 2px 2px; }
-  #mh_lnk a { font-size: 0.8em; color: #009; text-decoration: none }
-  #mh_lnk a:hover { color: #066;}
-/** including the specially designed help button with e?help and a border **/
-  #help { border:1px solid #009; padding: 0px 2px; background-color: #fff; color #36b; }
-  #help span { color: #36b; font-style: italic; margin-right: 0.1em }
-  #help span span { color: #933 }
+  td#mh_lnk { color: #669; font-weight: bold; float: right; text-align: right;
+            white-space: nowrap; padding: 0px 8px 2px 2px; }
+  #mh_lnk a { color: #fff; text-decoration: none }
+  #mh_lnk a:hover { color: #fc0;}

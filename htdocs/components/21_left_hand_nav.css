@@ -1,10 +1,11 @@
-#global dd { padding: 0px 2px 2px 14px }
-#global dt { padding: 0px 2px 2px 14px }
+#global dt, #global dd { padding: 0px 2px 2px 16px }
+#local dt,  #local dd  { padding: 0px 2px 0px 16px }
 #global dd.current { font-weight:bold;background: #fff url(/i/arrow-right.gif) no-repeat left center }
-#global dt.sep { border-top: 1px solid #369 }
+#global dt.sep { border-top: 1px solid #aac; }
 
-#local dt { border-bottom: 1px solid #369; padding: 2px; font-size: 1em }
+#local dt { border-bottom: 1px solid #bbc; padding: 2px; }
 #local dd.notl dl, #local dd.notl { background: url(/i/line.gif) repeat-y }
 #local dd.notl dl { margin: 0px }
 #local dd.last { background: #fff url(/i/last.gif) no-repeat }
 #local dd.active { font-weight: bold; background-color: #cdf }
+#local dd.closed { background: #fff url(/i/closed.gif) no-repeat }
