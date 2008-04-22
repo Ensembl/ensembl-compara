@@ -8,6 +8,22 @@ use EnsEMBL::Web::Document::Panel::Information;
 use EnsEMBL::Web::Document::Panel::SpreadSheet;
 use EnsEMBL::Web::Document::Panel;
 
+sub tree {
+  my $self = shift;
+  my $panel = new EnsEMBL::Web::Document::Panel(
+    'caption' => 'Packed tree',
+    'object'  => $self->{object}
+  );
+  $panel->add_form( $self->{page},
+    qw(tree EnsEMBL::Web::Component::Server::tree_form)
+  );
+  $panel->add_components(
+    qw(tree EnsEMBL::Web::Component::Server::tree)
+  );
+  $self->{page}->content->add_panel( $panel );
+  $self->{page}->title->set( 'Configuration dumping' );
+}
+
 sub urlsource {
   my $self = shift;
   my $panel = new EnsEMBL::Web::Document::Panel(

@@ -28,6 +28,57 @@ use strict;
 use warnings;
 no warnings "uninitialized";
 
+sub display_node {
+  my( $panel, $x, $depth ) = @_;
+  if( ref( $x ) eq 'HASH' ) {           ## HASH REF....
+    $panel->print( '<table class="nested" style="border:1px solid red">' );
+    foreach( sort keys %$x ) {
+      $panel->printf( '<tr><th>%s</th><td>', CGI::escapeHTML( $_ ) );
+      display_node( $panel, $x->{$_}, $depth + 1 );
+      $panel->print( '</td></tr>' );
+    }
+    $panel->print( '</table>' );
+  } elsif( ref( $x ) eq 'ARRAY' ) {     ## ARRAY REF....
+    my $C = 0;
+    $panel->print( '<table class="nested" style="border:1px solid blue">' );
+    foreach( @$x ) {
+      $panel->printf( '<tr><th>%d</th><td>', $C++ );
+      display_node( $panel, $_, $depth + 1 );
+      $panel->print( '</td></tr>' );
+    }
+    $panel->print( '</table>' );
+  } else { ## SCALAR
+    $panel->printf( '<div style="border:1px solid green">%s</div>', CGI::escapeHTML( $x ) );
+  }
+}
+
+sub tree_form {
+  my($panel,$object) = @_;
+  my $form = EnsEMBL::Web::Form->new( 'tree', '/'.$object->species.'/tree', 'get' );
+  $form->add_element(
+    'type'  => 'Information',
+    'value' => '<p>Select the file you wish to look at</p>'
+  );
+  $form->add_element(
+    'type'     => 'DropDown', 'select'   => 'select',
+    'required' => 'yes',      'name'     => 'file',
+    'label'    => 'File',
+    'values'   => [ map( { { 'value' => $_, 'name' => $_ } } $object->get_all_packed_files )],
+    'value'    => $object->param('file')
+  );
+
+  $form->add_element( 'type' => 'Submit', 'value' => 'Change' );
+  return $form;
+
+}
+
+sub tree {
+  my($panel,$object) = @_;
+  $panel->printf('<p>Contents of %s.packed</p>', $object->param('file') );
+  $panel->print( $panel->form('tree')->render );
+  display_node( $panel, $object->unpack_db_tree, 0 );
+  return 1;
+}
 =head2 name
 
   Arg [panel]:  EnsEMBL::Web::Document::Panel::Information;

@@ -5,8 +5,42 @@ use warnings;
 no warnings "uninitialized";
 
 use EnsEMBL::Web::Object;
+use Storable qw(lock_retrieve);
+
 our @ISA = qw(EnsEMBL::Web::Object);
 
+sub unpack_db_tree {
+  my $self = shift;
+  my $f = $self->param('file');
+  warn "**".$f;
+  $f = $self->species.'.db' unless $f;
+  warn "**".$f;
+  $f =~ s/[^\.\w]+//g;
+  warn "**".$f;
+  $f =~ s/^\.+//;
+  warn "**".$f;
+  warn "SETTING PARAMETER FILE $f";
+  $self->param( 'file', $f );
+  $f = "packed/$f" if $f ne 'config';
+  my $file = $self->species_defs->ENSEMBL_SERVERROOT."/conf/$f.packed";
+  warn "FILE $file";
+  return -e $file ? lock_retrieve $file : undef;
+}
+  
+sub get_all_packed_files {
+  my $self = shift;
+  my $dir = $self->species_defs->ENSEMBL_SERVERROOT."/conf/packed";
+  my @files = ();
+  if( opendir( DH, $dir ) ) {
+    while(my $n = readdir DH ) {
+      push @files, $1 if $n =~ /^(\w+(\.\w+)?)\.packed$/;
+    }
+  }
+  closedir DH;
+  @files = sort @files;
+  unshift @files, 'config';
+  return @files;
+}
 sub get_all_species {
   my $self = shift;
   my @species = @{ $self->species_defs->ENSEMBL_SPECIES };
