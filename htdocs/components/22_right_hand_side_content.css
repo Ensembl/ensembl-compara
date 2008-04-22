@@ -25,4 +25,4 @@ p#bottompad{margin:0;border:0;padding:0;clear:both;height:1px;overflow:none}
 .twocol-right { float:left; width:47%; margin:0.5% 0 0.5% 0; padding:1% }
 .plain-box  { background-color:#fff; border:1px solid #bbc; }
 .tinted-box { background-color:#ffc; border:1px solid #cca; }
-
+.unpadded { margin:0px; padding:0px; }
