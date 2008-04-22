@@ -1,6 +1,7 @@
 // Javascript to do collapsible hierarchical menus
 
 function codelinks() {
+  return;
   pre_blocks = document.getElementsByTagName( 'pre' );
   if(!document.all){
   for( i = 0; i< pre_blocks.length; i++ ) {

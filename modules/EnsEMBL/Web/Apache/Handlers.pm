@@ -322,7 +322,6 @@ sub transHandler {
 	warn $r->subprocess_env->{'ENSEMBL_ACTION'};
         warn ":: $script :: $type :: $action ::";
       }
-
       $path_info = join( '/', @path_segments );
       unshift ( @path_segments, '', $species, $script );
       my $newfile = join( '/', @path_segments );

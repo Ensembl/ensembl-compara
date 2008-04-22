@@ -1,5 +1,5 @@
-/** This Javascript module loads alters the search box to have a graphical
-    drop down akin to the Firefox drop down.
+/** This Javascript module alters the search box to have a graphical
+    drop down akin to the Firefox drop down on server load
 
     Global variables: Flag to make sure that we only populate the drop down box once!! 
 
@@ -9,7 +9,7 @@
   var ENSEMBL_SEARCH_BOX = 0;
 
   function remove_search_index(code) {
-/** Remove a search index entry from the drop down box! 
+/** Remove a search index entry from the drop down box (if it exists)
    
     PUBLIC - e.g. remove_search_index( 'ebi' );
 **/
@@ -21,6 +21,10 @@
 /** Add a search index entry to the drop down box
 
     PUBLIC - e.g. add_search_index( 'vega', 'Vega search' );
+
+    Notes: 
+    
+    * The image "/i/search/{code}/.gif" should exist in the web-tree as a 16x16 gif
 **/
     if(!$('se_mn')) return;             // Sanity check can't add to what doesn't exist!
     if($('se_'+code)) return;           // Don't open up another search box with this link!

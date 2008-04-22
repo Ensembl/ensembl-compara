@@ -18,6 +18,8 @@ my %User_of           :ATTR( :set<user>     :get<user>     );
 my %Session_of        :ATTR( :set<session>  :get<session>  );
 my %Script_of         :ATTR( :set<script>   :get<script>   );
 my %Species_of        :ATTR( :set<species>  :get<species>  );
+my %Type_of           :ATTR( :set<type>     :get<type>     );
+my %Action_of         :ATTR( :set<action>   :get<action>   );
 
 ## DAS functionality - most of this is moved from EnsEMBL::Web::ExternalDAS which
 ## will be deprecated - and now stores each source in the database separately
@@ -101,6 +103,8 @@ sub initialize_session {
   my($self,$arg_ref)=@_;
   $self->set_species( $arg_ref->{'species'} ) if exists $arg_ref->{'species'};
   $self->set_script(  $arg_ref->{'script'}  ) if exists $arg_ref->{'script'};
+  $self->set_action(  $arg_ref->{'action'}  ) if exists $arg_ref->{'action'};
+  $self->set_type(    $arg_ref->{'type'}    ) if exists $arg_ref->{'type'};
   $arg_ref->{'cookie'}->retrieve($arg_ref->{'r'});
 
   $self->set_session(

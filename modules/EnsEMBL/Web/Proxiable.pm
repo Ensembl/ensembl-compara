@@ -38,6 +38,7 @@ sub _sanitize {
 sub param {
   my $self = shift;
   if( @_ ){ 
+    warn "... param @_ ...";
     my @T =  map { _sanitize($_) } $self->{'data'}{'_input'}->param(@_);
     if( @T ) {
       return wantarray ? @T : $T[0];
