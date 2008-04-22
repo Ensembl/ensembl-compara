@@ -85,9 +85,6 @@ sub handler {
   $pageContent =~ s/\[\[([A-Z]+)::([^\]]*)\]\]/my $m = "template_$1"; no strict 'refs'; &$m($r, $2);/ge;
 
   my $BC = format_breadcrumbs( $r->uri, $ENSEMBL_WEB_REGISTRY->species_defs->ENSEMBL_WEB_TREE );
-  if ($BC) {
-    $pageContent =~ s#<body>#<body>$BC#;
-  }
 
   # do SSI includes
   #  $pageContent =~ s/<!--#include\s+virtual\s*=\s*\"(.*)\"\s*-->/template_INCLUDE($r, $1)/eg;
@@ -122,9 +119,15 @@ sub handler {
     }
   }
 
+  ## Build page content
+  my $html = $pageContent =~ /<body.*?>(.*?)<\/body>/sm ? $1 : $pageContent;
+  unless ($html =~ /^\s*<div/) {
+    $html = qq(\n<div class="onecol">\n$html\n</div>);
+  }
+
   $page->content->add_panel(
     new EnsEMBL::Web::Document::Panel( 
-      'raw' => $pageContent =~ /<body.*?>(.*?)<\/body>/sm ? $1 : $pageContent
+      'raw' => $BC.$html 
     )
   );
   if($ENV{PERL_SEND_HEADER}) {
@@ -138,7 +141,7 @@ sub handler {
   return OK;
 } # end of handler
 
-our $pointer = qq(<img src="/img/red_bullet.gif" width="4" height="8" alt="&gt;" class="breadcrumb" />);
+our $pointer = qq(<img src="/i/arrow-right.gif" alt="&gt;" class="breadcrumb" />);
 
 sub format_breadcrumbs {
   my ($path, $branch) = @_;
