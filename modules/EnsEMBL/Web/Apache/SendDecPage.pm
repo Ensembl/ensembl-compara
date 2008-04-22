@@ -15,7 +15,7 @@ use Apache2::Const qw(:common :methods :http);
 
 use Cache::Memcached;
 
-$memd =Cache::Memcached->new({
+our $memd =Cache::Memcached->new({
   'servers' => [ 'localhost:11211' ],
   'debug'   => 0,
   'compress_threshold' => 10000,
@@ -30,31 +30,30 @@ sub handler {
   my $r = shift;
   ## First of all check that we should be doing something with the page...
   my $pageContent = $memd->get( "SDP::".$r->filename );
+  $r->err_headers_out->{'Ensembl-Error'=>"Problem in module EnsEMBL::Web::Apache::SendDecPage"};
+  $r->custom_response(SERVER_ERROR, "/Crash");
+
+  return DECLINED if $r->content_type ne 'text/html';
+  my $rc = $r->discard_request_body;
+  return $rc unless $rc == OK;
+  if ($r->method_number == M_INVALID) {
+    $r->log->error("Invalid method in request ", $r->the_request);
+    return HTTP_NOT_IMPLEMENTED;
+  }
+   
+  return DECLINED                if $r->method_number == M_OPTIONS;
+  return HTTP_METHOD_NOT_ALLOWED if $r->method_number != M_GET;
+  return DECLINED                if -d $r->filename;
+
   if( $pageContent ) {
     warn "STATIC CONTENT CACHE HIT  SDP::".$r->filename."\n";
   } else {
     warn "STATIC CONTENT CACHE MISS SDP::".$r->filename."\n";
-    $r->err_headers_out->{'Ensembl-Error'=>"Problem in module EnsEMBL::Web::Apache::SendDecPage"};
-    $r->custom_response(SERVER_ERROR, "/Crash");
-
-    return DECLINED if $r->content_type ne 'text/html';
-    my $rc = $r->discard_request_body;
-    return $rc unless $rc == OK;
-
-    if ($r->method_number == M_INVALID) {
-      $r->log->error("Invalid method in request ", $r->the_request);
-      return HTTP_NOT_IMPLEMENTED;
-    }
-    
-    return DECLINED                if $r->method_number == M_OPTIONS;
-    return HTTP_METHOD_NOT_ALLOWED if $r->method_number == M_PUT;
-    return DECLINED                if -d $r->filename;
+  
     unless (-e $r->filename) {
       $r->log->error("File does not exist: ", $r->filename);
       return NOT_FOUND;
     }
-    return HTTP_METHOD_NOT_ALLOWED if $r->method_number != M_GET;
-  
     unless( -r $r->filename) {
       $r->log->error("File permissions deny server access: ", $r->filename);
       return FORBIDDEN;

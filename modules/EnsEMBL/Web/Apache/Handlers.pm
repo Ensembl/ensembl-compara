@@ -59,7 +59,6 @@ sub in_cache {
   my($type,$key) = @_;
   my $real_key = join '::', $type, $key;
   my $val = $memd->get( $real_key );
-  warn $memd;
   warn defined $val ? "CACHE HIT  $real_key\n" : "CACHE MISS $real_key\n";
   return defined $val;
 }
@@ -71,10 +70,9 @@ sub cache_value {
   return $val;
 }
 sub add_to_cache {
-  return ; # disable caching...
+#  return ; # disable caching...
   my($type,$key,$value) = @_;
   my $real_key = join '::', $type, $key;
-  warn "CACHE SET  $real_key - $value\n";
   $memd->set( $real_key, defined($value)?$value:'' );
 }
 
@@ -341,10 +339,8 @@ sub transHandler {
       my $to_execute = '';
       warn "... $script ....";
       if(in_cache( 'SCRIPT',$script ) ) {
-        warn "..IN..";
         $to_execute = cache_value('SCRIPT',$script );
       } else { 
-        warn "..NOT..";
         $to_execute ='';
         foreach my $dir( @PERL_TRANS_DIRS ){
           $script || last;
@@ -386,7 +382,6 @@ sub transHandler {
   $r->uri( "/$path" );
   my $filename = '';
   if( in_cache( 'STATIC', $path ) ) {
-    warn "in cache $path";
     $filename = cache_value( 'STATIC', $path );
   } else {
     foreach my $dir( @HTDOCS_TRANS_DIRS ){
@@ -399,8 +394,8 @@ sub transHandler {
         last;
       }
     }
+    add_to_cache( 'STATIC', $path, $filename );
   }
-  add_to_cache( 'STATIC', $path, $filename );
   if( $filename =~ /^! (.*)$/ ) {
     $r->uri( $r->uri . ($r->uri =~ /\/$/ ? '' : '/' ). 'index.html' );
     $r->filename( $1 . ( $r->filename =~ /\/$/ ? '' : '/' ). 'index.html' );
