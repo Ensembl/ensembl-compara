@@ -18,13 +18,30 @@ use Data::Dumper;
 use Fcntl ':flock';
 use EnsEMBL::Web::RegObj;
 
+#use Cache::Memcached;
+
 use Exporter;
+
+our $memd;
+
+$memd =Cache::Memcached->new({
+  'servers' => [ 'localhost:11211' ],
+  'debug'   => 0,
+  'compress_threshold' => 10000,
+  'namespace'          => $SiteDefs::ENSEMBL_SERVER."-".($SiteDefs::ENSEMBL_PROXY_PORT||80)
+});
+$memd->enable_compress(0);
+
+$memd->flush_all();
+
+warn "FLUSHING MEMCACHE...........................";
 
 our $THIS_HOST;
 our $LOG_INFO; 
 our $LOG_TIME; 
 our $BLAST_LAST_RUN;
 our $BIOMART_REGISTRY;
+our %LOOKUP_HASH;
 
 #======================================================================#
 # Set up apache-size-limit style load commands                         #
@@ -38,6 +55,28 @@ BEGIN {
                 :                                  \&_load_command_null  ;
 };
 
+sub in_cache {
+  my($type,$key) = @_;
+  my $real_key = join '::', $type, $key;
+  my $val = $memd->get( $real_key );
+  warn $memd;
+  warn defined $val ? "CACHE HIT  $real_key\n" : "CACHE MISS $real_key\n";
+  return defined $val;
+}
+
+sub cache_value {
+  my($type,$key) = @_;
+  my $real_key = join '::', $type, $key;
+  my $val = $memd->get( $real_key );
+  return $val;
+}
+sub add_to_cache {
+  return ; # disable caching...
+  my($type,$key,$value) = @_;
+  my $real_key = join '::', $type, $key;
+  warn "CACHE SET  $real_key - $value\n";
+  $memd->set( $real_key, defined($value)?$value:'' );
+}
 
 #======================================================================#
 # Setting up the directory lists for Perl/webpage                      #
@@ -116,7 +155,6 @@ sub childInitHandler {
   $ENSEMBL_WEB_REGISTRY = EnsEMBL::Web::Registry->new();
   $ENSEMBL_WEB_REGISTRY->timer->set_process_child_count( 0    );
   $ENSEMBL_WEB_REGISTRY->timer->set_process_start_time(  time );
-#  $ENSEMBL_WEB_REGISTRY->memcache;
   if( $ENSEMBL_DEBUG_FLAGS & 8 ){
     printf STDERR "Child %9d: - initialised at %30s\n", $$,''.gmtime();
   }
@@ -195,11 +233,6 @@ sub transHandler {
   my $script    = undef;
   my $path_info = undef;
 
-#  my $F = $ENSEMBL_WEB_REGISTRY->get_memcache->get( "STATIC:$file" );
-#  if( $F ) {
-#    $r->filename( $F );
-#    return OK;
-#  }
   if( $species eq 'das' ) { # we have a DAS request...
     my $DSN = $path_segments[0];
     my $command = '';
@@ -276,11 +309,26 @@ sub transHandler {
   # DECLINE this request if we cant find a valid species
     if( $species && ($species = $SPECIES_MAP{lc($species)} || '' ) ) {
       $script = shift @path_segments;
+      my $action = '';
+      my $type   = '';
+      if( $script =~ /^(Gene|Transcript|Location)$/ ) {
+        $type = $script;
+        $r->subprocess_env->{'ENSEMBL_TYPE'}   = $type;
+        $action = join('_',@path_segments);
+        $r->subprocess_env->{'ENSEMBL_ACTION'} = $action;
+        $script = 'action';
+	@path_segments = ();
+	warn $r->subprocess_env->{'ENSEMBL_TYPE'} ;
+	warn $r->subprocess_env->{'ENSEMBL_ACTION'};
+        warn ":: $script :: $type :: $action ::";
+      }
+
       $path_info = join( '/', @path_segments );
       unshift ( @path_segments, '', $species, $script );
       my $newfile = join( '/', @path_segments );
 
-      if( $newfile ne $file ){ # Path is changed; HTTP_TEMPORARY_REDIRECT
+      warn "$newfile";
+      if( $script ne 'action' && $newfile ne $file ){ # Path is changed; HTTP_TEMPORARY_REDIRECT
         $r->uri( $newfile );
         $r->headers_out->add( 'Location' => join( '?', $newfile, $querystring || () ) );
         $r->child_terminate;
@@ -289,20 +337,33 @@ sub transHandler {
       # Mess with the environment
       $r->subprocess_env->{'ENSEMBL_SPECIES'} = $species;
       $r->subprocess_env->{'ENSEMBL_SCRIPT'}  = $script;
-      $ENSEMBL_WEB_REGISTRY->initialize_session({ 'r' => $r, 'cookie'  => $session_cookie, 'species' => $species, 'script'  => $script });
+      $ENSEMBL_WEB_REGISTRY->initialize_session({ 'r' => $r, 'cookie'  => $session_cookie, 'species' => $species, 'script'  => $script, 'type' => $type, 'action' => $action });
       # Search the mod-perl dirs for a script to run
-      foreach my $dir( @PERL_TRANS_DIRS ){
-        $script || last;
-        my $filename = sprintf( $dir, $species ) ."/$script";
-        next unless -r $filename;
-        $r->filename( $filename );
+      my $to_execute = '';
+      warn "... $script ....";
+      if(in_cache( 'SCRIPT',$script ) ) {
+        warn "..IN..";
+        $to_execute = cache_value('SCRIPT',$script );
+      } else { 
+        warn "..NOT..";
+        $to_execute ='';
+        foreach my $dir( @PERL_TRANS_DIRS ){
+          $script || last;
+          my $filename = sprintf( $dir, $species ) ."/$script";
+          next unless -r $filename;
+	  $to_execute = $filename;
+	}
+      }
+      add_to_cache( 'SCRIPT', $script, $to_execute );
+      if( $to_execute ) {
+        $r->filename( $to_execute );
         $r->uri( "/perl/$species/$script" );
         $r->subprocess_env->{'PATH_INFO'} = "/$path_info" if $path_info;
         if( $ENSEMBL_DEBUG_FLAGS & 8 && $script ne 'ladist' && $script ne 'la' ) {
           my @X = localtime();
           $LOG_INFO = sprintf( "SCRIPT:%8s:%-10d %04d-%02d-%02d %02d:%02d:%02d /%s/%s?%s\n",
-           substr($THIS_HOST,0,8), $$, $X[5]+1900, $X[4]+1, $X[3], $X[2],$X[1],$X[0],
-           $species, $script, $querystring ) if $ENSEMBL_DEBUG_FLAGS | 8 && ($script ne 'ladist' && $script ne 'la' );
+            substr($THIS_HOST,0,8), $$, $X[5]+1900, $X[4]+1, $X[3], $X[2],$X[1],$X[0],
+            $species, $script, $querystring );
           warn $LOG_INFO;
           $LOG_TIME = time();
         }
@@ -324,19 +385,31 @@ sub transHandler {
   # Search the htdocs dirs for a file to return
   my $path = join( "/", $species || (), $script || (), $path_info || () );
   $r->uri( "/$path" );
-  foreach my $dir( @HTDOCS_TRANS_DIRS ){
-#        $script || last;
-    my $filename = sprintf( $dir, $path );
-    if( -d $filename ) {
-      $r->uri( $r->uri . ($r->uri =~ /\/$/ ? '' : '/' ). 'index.html' );
-      $r->filename( $filename . ( $r->filename =~ /\/$/ ? '' : '/' ). 'index.html' );
-      $r->headers_out->add( 'Location' => $r->uri );
-      $r->child_terminate;
-      return HTTP_TEMPORARY_REDIRECT;
+  my $filename = '';
+  if( in_cache( 'STATIC', $path ) ) {
+    warn "in cache $path";
+    $filename = cache_value( 'STATIC', $path );
+  } else {
+    foreach my $dir( @HTDOCS_TRANS_DIRS ){
+      $filename = sprintf( $dir, $path );
+      if( -d $filename ) {
+        $filename = '! '.$filename;
+	last;
+      }
+      if( -r $filename ) {
+        last;
+      }
     }
-    next unless -r $filename;
+  }
+  add_to_cache( 'STATIC', $path, $filename );
+  if( $filename =~ /^! (.*)$/ ) {
+    $r->uri( $r->uri . ($r->uri =~ /\/$/ ? '' : '/' ). 'index.html' );
+    $r->filename( $1 . ( $r->filename =~ /\/$/ ? '' : '/' ). 'index.html' );
+    $r->headers_out->add( 'Location' => $r->uri );
+    $r->child_terminate;
+    return HTTP_TEMPORARY_REDIRECT;
+  } elsif( $filename ) {
     $r->filename( $filename );
-#    $ENSEMBL_WEB_REGISTRY->get_memcache->set( "STATIC:$file", $filename ); 
     return OK;
   }
 

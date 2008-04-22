@@ -12,14 +12,28 @@ use Data::Dumper;
 use EnsEMBL::Web::Root;
 
 use Apache2::Const qw(:common :methods :http);
+
+use Cache::Memcached;
+
+$memd =Cache::Memcached->new({
+  'servers' => [ 'localhost:11211' ],
+  'debug'   => 0,
+  'compress_threshold' => 10000,
+  'namespace'          => $SiteDefs::ENSEMBL_SERVER."-".($SiteDefs::ENSEMBL_PROXY_PORT||80)
+});
+$memd->enable_compress(0);
+
 #############################################################
 # Mod_perl request handler all /htdocs pages
 #############################################################
 sub handler {
   my $r = shift;
   ## First of all check that we should be doing something with the page...
-  my $pageContent;# = $ENSEMBL_WEB_REGISTRY->get_memcache->get( "SDP:".$r->filename );
-  unless( $pageContent ) {
+  my $pageContent = $memd->get( "SDP::".$r->filename );
+  if( $pageContent ) {
+    warn "STATIC CONTENT CACHE HIT  SDP::".$r->filename."\n";
+  } else {
+    warn "STATIC CONTENT CACHE MISS SDP::".$r->filename."\n";
     $r->err_headers_out->{'Ensembl-Error'=>"Problem in module EnsEMBL::Web::Apache::SendDecPage"};
     $r->custom_response(SERVER_ERROR, "/Crash");
 
@@ -64,7 +78,7 @@ sub handler {
       local($/) = undef;
       $pageContent = ${ $r->slurp_filename() }; #<$fh>;
     }
-#    $ENSEMBL_WEB_REGISTRY->get_memcache->set( "SDP:".$r->filename, $pageContent );
+    $memd->set( "SDP::".$r->filename, $pageContent );
   }
   return DECLINED if $pageContent =~ /<!--#set var="decor" value="none"-->/;
 
