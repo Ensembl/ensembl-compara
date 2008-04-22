@@ -248,7 +248,7 @@ sub _load_in_webtree {
 ### Load in the contents of the web tree....
 ### Check for cached value first....
   my $self = shift;
-  my $web_tree_packed = $SiteDefs::ENSEMBL_CONF_DIRS[0].'/packed/web_tree_packed';
+  my $web_tree_packed = $SiteDefs::ENSEMBL_CONF_DIRS[0].'/packed/web_tree.packed';
   my $web_tree = { _path => '/' };
   if( -e $web_tree_packed ) {
     $web_tree = lock_retrieve( $web_tree_packed );
