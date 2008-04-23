@@ -24,8 +24,8 @@ sub _initialize {
     search_box     EnsEMBL::Web::Document::HTML::SearchBox
     uber_nav       EnsEMBL::Web::Document::HTML::PageLinks
     content        EnsEMBL::Web::Document::HTML::Content
-    global_context EnsEMBL::Web::Document::HTML::GlobalContext
-    local_context  EnsEMBL::Web::Document::HTML::LocalContext
+    global_context EnsEMBL::Web::Document::HTML::StaticGlobalContext
+    local_context  EnsEMBL::Web::Document::HTML::StaticLocalContext
     release        EnsEMBL::Web::Document::HTML::Release
     copyright      EnsEMBL::Web::Document::HTML::Copyright
     body_javascript EnsEMBL::Web::Document::HTML::BodyJavascript
