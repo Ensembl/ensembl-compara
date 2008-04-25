@@ -301,6 +301,8 @@ sub store {
   }
   $genomic_align_block_adaptor->store($ancestral_genomic_align_block);
   $genomic_align_block_adaptor->store($modern_genomic_align_block);
+  $node->ancestral_genomic_align_block_id($ancestral_genomic_align_block->dbID)
+  $node->modern_genomic_align_block_id($modern_genomic_align_block->dbID)
 
   ## Store this node and, recursivelly, all the sub nodes
   $self->store_node($node);
