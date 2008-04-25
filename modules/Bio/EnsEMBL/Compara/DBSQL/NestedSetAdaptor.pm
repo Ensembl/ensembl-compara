@@ -86,9 +86,9 @@ sub fetch_subtree_under_node {
   my $table = $self->tables->[0]->[0];
   my $alias = $self->tables->[0]->[1];
 
-  my $constraint = "INNER JOIN $table AS root_node ON ( $alias.left_index 
-                         BETWEEN root_node.left_index AND root_node.right_index)
-                    WHERE root_node.node_id=". $node->node_id;
+  my $constraint = ", $table AS root_node WHERE $alias.left_index 
+                         BETWEEN root_node.left_index AND root_node.right_index
+                    AND root_node.node_id=". $node->node_id;
 
   my $all_nodes = $self->_generic_fetch($constraint);
   push @{$all_nodes}, $node;
@@ -111,9 +111,9 @@ sub fetch_tree_at_node_id {
   my $table = $self->tables->[0]->[0];
   my $alias = $self->tables->[0]->[1];
 
-  my $constraint = "INNER JOIN $table AS root_node ON ( $alias.left_index 
-                         BETWEEN root_node.left_index AND root_node.right_index)
-                    WHERE root_node.node_id=". $node_id;
+  my $constraint = ", $table AS root_node WHERE $alias.left_index 
+                         BETWEEN root_node.left_index AND root_node.right_index
+                    AND root_node.node_id=". $node_id;
 
   my $all_nodes = $self->_generic_fetch($constraint);
   my $root = $self->_build_tree_from_nodes($all_nodes);
@@ -428,6 +428,33 @@ sub _build_tree_from_nodes {
 sub _generic_fetch {
   my ($self, $constraint, $join) = @_;
 
+  my $sql = $self->_construct_sql_query($constraint, $join);
+
+  #print STDERR $sql,"\n";
+  my $node_list = [];
+
+  my $sth = $self->prepare($sql);
+  $sth->execute;
+  if ($self->can("_objs_from_sth")) {
+    $node_list = $self->_objs_from_sth($sth);
+  } else {
+    while(my $rowhash = $sth->fetchrow_hashref) {
+      while (my ($key, $value) = each %$rowhash) {
+        print "$key -> $value; ";
+      }
+      print "\n";
+      my $node = $self->create_instance_from_rowhash($rowhash);        
+      push @$node_list, $node;
+    }
+  }
+  $sth->finish;
+
+  return $node_list;
+}
+
+sub _construct_sql_query {
+  my ($self, $constraint, $join) = @_;
+
   my @tables = @{$self->tables};
   my $columns = join(', ', @{$self->columns()});
   
@@ -469,19 +496,7 @@ sub _generic_fetch {
   my $final_clause = $self->final_clause;
   $sql .= " $final_clause" if($final_clause);
 
-  
-  #print STDERR $sql,"\n";
-  my @node_list = ();
-
-  my $sth = $self->prepare($sql);
-  $sth->execute;  
-  while(my $rowhash = $sth->fetchrow_hashref) {
-    my $node = $self->create_instance_from_rowhash($rowhash);        
-    push @node_list, $node;
-  }
-  $sth->finish;
-  
-  return \@node_list;
+  return $sql;
 }
 
 
