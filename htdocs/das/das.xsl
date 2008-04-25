@@ -126,7 +126,7 @@ body { background-image: none }
 
 <xsl:template name="release_and_links">
 <div id="release-t">&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;</div>
-<div id="release"><div>Ensembl release 43 - <a href="/Multi/newsview?rel=43" title="What's New">Feb 2007</a></div></div>
+<div id="release"><div>Ensembl release 49 - <a href="/Multi/newsview?rel=49" title="What's New">Mar 2008</a></div></div>
 <div id="help"><strong>
   <a href="/">HOME</a> &#183;
   <a href="/das/sources">DAS&#160;SOURCES</a> &#183;
@@ -261,6 +261,7 @@ body { background-image: none }
 <xsl:template match="SOURCES" mode="title">
   Ensembl DAS Sources
 </xsl:template>
+<xsl:template match="SOURCES" mode="hack"></xsl:template>
 <xsl:template match="SOURCES" mode="masthead">
   <a class="section"> DAS</a><span class="viewname serif">Sources</span>
 </xsl:template>
@@ -269,7 +270,7 @@ body { background-image: none }
 <h3 class="boxed">DAS sources available</h3>
 <div class="das"><table id="das" class="das"><thead>
   <tr>
-    <th>#<xsl:value-of select="." /></th>
+    <th>#</th>
     <th>URI</th>
     <th>Title</th>
     <th>Species</th>
