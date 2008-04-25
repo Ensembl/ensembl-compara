@@ -946,6 +946,41 @@ sub aligned_sequence {
 }
 
 
+=head2 length
+
+  Arg [1]    : -none-
+  Example    : $length = $genomic_align->length;
+  Description: get the length of the aligned sequence. This method will try to
+               get the length from the aligned_sequence if already set or by
+               parsing the cigar_line otherwise
+  Returntype : int
+  Exceptions : none
+  Warning    : 
+  Caller     : object->methodname
+
+=cut
+
+sub length {
+  my $self = shift;
+
+  if ($self->{aligned_sequence}) {
+    return length($self->{aligned_sequence});
+  } elsif ($self->{cigar_line}) {
+    my $length = 0;
+    my $cigar_line = $self->{cigar_line};
+    my @cig = ( $cigar_line =~ /(\d*[GMDX])/g );
+    for my $cigElem ( @cig ) {
+      my $cigType = substr( $cigElem, -1, 1 );
+      my $cigCount = substr( $cigElem, 0 ,-1 );
+      $cigCount = 1 unless ($cigCount =~ /^\d+$/);
+      $length += $cigCount;
+    }
+    return $length;
+  }
+
+  return undef;
+}
+
 =head2 cigar_line
 
   Arg [1]    : string $cigar_line
@@ -1317,8 +1352,8 @@ sub _get_fake_aligned_sequence_from_cigar_line {
   return undef if (!$cigar_line);
 
   my $seq_pos = 0;
-  
-  my @cig = ( $cigar_line =~ /(\d*[GMD])/g );
+
+  my @cig = ( $cigar_line =~ /(\d*[GMDX])/g );
   for my $cigElem ( @cig ) {
     my $cigType = substr( $cigElem, -1, 1 );
     my $cigCount = substr( $cigElem, 0 ,-1 );
@@ -1327,6 +1362,8 @@ sub _get_fake_aligned_sequence_from_cigar_line {
     if( $cigType eq "M" ) {
       $fake_aligned_sequence .= "N" x $cigCount;
       $seq_pos += $cigCount;
+    } elsif( $cigType eq "X") {
+        $fake_aligned_sequence .=  "." x $cigCount;
     } elsif( $cigType eq "G" || $cigType eq "D") {
       if ($fix_seq) {
         $seq_pos += $cigCount;
