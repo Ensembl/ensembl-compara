@@ -172,26 +172,25 @@ sub ancestral_genomic_align_block_id {
 }
 
 
-=head2 extant_genomic_align_block_id
+=head2 modern_genomic_align_block_id
 
-  Arg [1]     : (optional) $extant_genomic_align_block_id
-  Example     : $object->extant_genomic_align_block_id($extant_genomic_align_block_id);
-  Example     : $extant_genomic_align_block_id = $object->extant_genomic_align_block_id();
-  Description : Getter/setter for the extant_genomic_align_block_id attribute
-                This attribute is intended for the root of the tree only!
-  Returntype  : int
+  Arg [1]     : (optional) $modern_genomic_align_block_id
+  Example     : $object->modern_genomic_align_block_id($modern_genomic_align_block_id);
+  Example     : $modern_genomic_align_block_id = $object->modern_genomic_align_block_id();
+  Description : Getter/setter for the modern_genomic_align_block_id attribute
+  Returntype  : 
   Exceptions  : none
   Caller      : general
   Status      : Stable
 
 =cut
 
-sub extant_genomic_align_block_id {
+sub modern_genomic_align_block_id {
   my $self = shift;
   if (@_) {
-    $self->{_extant_genomic_align_block_id} = shift;
+    $self->{_modern_genomic_align_block_id} = shift;
   }
-  return $self->{_extant_genomic_align_block_id};
+  return $self->{_modern_genomic_align_block_id};
 }
 
 
