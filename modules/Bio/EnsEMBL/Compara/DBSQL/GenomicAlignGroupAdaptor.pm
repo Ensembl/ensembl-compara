@@ -103,7 +103,8 @@ sub store {
   my @values;
   
   ## CHECKING
-  foreach my $genomic_align (@{$genomic_align_group->genomic_align_array}) {
+  my $all_genomic_aligns = $genomic_align_group->get_all_GenomicAligns;
+  foreach my $genomic_align (@$all_genomic_aligns) {
     # check if every GenomicAlgin has a dbID
     if (!defined($genomic_align->dbID)) {
       throw("GenomicAlign [$genomic_align] in GenomicAlignGroup is not in DB");
@@ -114,7 +115,7 @@ sub store {
   if (!$group_id) {
     my $method_link_species_set_id;
     # Get common method_link_species_set_id
-    foreach my $genomic_align (@{$genomic_align_group->genomic_align_array}) {
+    foreach my $genomic_align (@$all_genomic_aligns) {
       if (!$genomic_align->method_link_species_set_id()) {
         ## undef value and exit loop if method_link_species_set_id does not match
         $method_link_species_set_id = undef;
@@ -147,8 +148,8 @@ sub store {
 
   ## Stores data, all of them with the same id
   my $sth = $self->prepare($genomic_align_block_sql);
-  for (my $i = 0; $i < @{$genomic_align_group->genomic_align_array}; $i++) {
-    my $genomic_align  = $genomic_align_group->genomic_align_array->[$i];
+  for (my $i = 0; $i < @$all_genomic_aligns; $i++) {
+    my $genomic_align  = $all_genomic_aligns->[$i];
     $sth->execute(
                   ($group_id or "NULL"),
                   $genomic_align_group->type,
@@ -157,7 +158,7 @@ sub store {
     if (!$group_id) {$group_id = $sth->{'mysql_insertid'};}
 
     info("Stored Bio::EnsEMBL::Compara::GenomicAlignGroup ".
-          "(".($i+1)."/".scalar(@{$genomic_align_group->genomic_align_array}).") ".
+          "(".($i+1)."/".scalar(@$all_genomic_aligns).") ".
           ($group_id or "NULL").", ".$genomic_align_group->type.", ".
           $genomic_align->dbID, );
 
