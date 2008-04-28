@@ -1,0 +1,10 @@
+/* ENSEMBL STYLES FOR IMAGES, ETC */
+
+img  { border: 0px }
+
+img.float-left { float:left; margin-right:10px; }
+img.float-right { float:right; margin-left:10px; }
+
+.screenshot { text-align:center; margin:10px auto; }
+.karyomap { text-align:center; margin:auto; }
+.flash { margin:20px auto; }

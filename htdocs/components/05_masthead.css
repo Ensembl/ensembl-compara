@@ -3,13 +3,9 @@
         background-color: #336 }
   #mh td { border: 0px; padding: 0px; margin: 0px }
 /** Cell 1 - the main e! logo - currently 40x45 **/
-  #mh_lo     { width:153px; vertical-align:middle; white-space: nowrap; padding-left:3px }
+  #mh_lo     { width:50%; vertical-align:middle; white-space: nowrap; padding-left:3px }
   #mh_lo img { width:150px; height: 40px; border: 0px }
-/** Cell 2 - the site/species heading - site name / species name **/
-  #mh_tt     { padding: 10px 0 0 0.5em; vertical-align:middle; white-space: nowrap }
-  #mh_tt h1  { margin-top: 2px; font-size: 1.2em; margin: 0px; color: #933; padding: 0px; font-weight: bold; }
-  #mh_tt h1 a { text-decoration: none; color: #933 }
-/** Cell 3 - **/
+/** Cell 2 - **/
   #mh form { margin: 2px; padding: 0; border: 0 }
   table#se { float: right; margin: 2px; background-color: #fff; border: 1px solid #369; border-collapse: collapse; }
   table#se td { border: 1px solid #369; vertical-align: middle }
@@ -21,8 +17,13 @@
   dl#se_mn { z-index:100;width: 8em; margin: 2px; border-top: 1px solid #369; position: absolute; cursor: hand; cursor: pointer }
   dl#se_mn dt { border: 1px solid #369 ; border-top: 0px; font-size: 0.8em;  padding: 0px; background-color: #fff  }
   dl#se_mn dt img { height: 16px; width: 16px; border: 2px solid white; vertical-align: top; padding-right: 0.5em }
+/** Cell 3 - the breadcrumb links under the logo **/
+  td#mh_bc { color: #ccc; font-weight: bold; padding-left:4px; } 
+  #mh_bc a { color: #fff; text-decoration: none }
+  #mh_bc a:hover { color: #c00;}
+
 /** Cell 4 - the links at the bottom right **/
-  td#mh_lnk { color: #669; font-weight: bold; float: right; text-align: right;
-            white-space: nowrap; padding: 0px 8px 2px 2px; }
+  td#mh_lnk { color: #999; font-size:0.9em;font-weight: bold; float: right; text-align: right;
+            white-space: nowrap; padding: 0px 10px 2px 2px; }
   #mh_lnk a { color: #fff; text-decoration: none }
-  #mh_lnk a:hover { color: #fc0;}
+  #mh_lnk a:hover { color: #c00;}

@@ -2,7 +2,7 @@
 
 div#content { margin:0em 0em 0em 16em; padding:0; border:none; }
 
-div#content div.panel { border:1px solid #bbc; background-color:#fff; }
+div#content div.panel { border:1px solid #ccc; background-color:#fff; }
 
 .panel h4 { padding:2px 0.25em; margin:0; background-color:#fff; border-bottom:1px solid #369; }
 .panel h4.nav {padding:2px 2px 4px 6px;text-align:center;margin-top:2px}
@@ -20,9 +20,12 @@ div#content div.panel { border:1px solid #bbc; background-color:#fff; }
 p#bottompad{margin:0;border:0;padding:0;clear:both;height:1px;overflow:none}
 
 /* Columns for static content */
-.onecol { width:97%; margin:0.5% 0; padding:1% }
-.twocol-left { float:left; width:47%; margin:0.5% 1% 0.5% 0; padding:1% }
-.twocol-right { float:left; width:47%; margin:0.5% 0 0.5% 0; padding:1% }
-.plain-box  { background-color:#fff; border:1px solid #bbc; }
-.tinted-box { background-color:#ffc; border:1px solid #cca; }
-.unpadded { margin:0px; padding:0px; }
+.onecol { margin:8px 8px 0 8px; padding:8px }
+.twocol-left { float:left; width:47%; margin:8px 0 0 8px; padding:8px; clear:left; }
+.twocol-right { float:right; width:47%; margin:8px 8px 0 0; padding:8px; }
+.plain-box  { background-color:#fff; border:1px solid #ccc; }
+.tinted-box { background-color:#eef; border:1px solid #ccf; }
+.unpadded { margin:0px 8px; padding:0px; }
+
+.float-right { float:right; width:30%; margin:8px 8px 0 0; padding:8px; }
+.float-left { float:left; width:30%; margin:8px 8px 0 0; padding:8px; }

@@ -1,7 +1,8 @@
-#global dt, #global dd { padding: 0px 2px 2px 16px }
-
-#global dd.current { font-weight:bold;background: #fff url(/i/arrow-right.gif) no-repeat left center }
-#global dt.sep { border-top: 1px solid #bbc }
+#global dt, #global dd { padding: 0px 2px 2px 16px; font-weight:normal }
+#local dt,  #local dd  { padding: 0px 2px 0px 16px }
+/* #global dd.current { font-weight:bold;background: #fff url(/i/arrow-right.gif) no-repeat left center } */
+ #global dd.current { font-weight:bold;background:#eef; }
+#global dt.sep { border-top: 1px solid #aac; }
 
 #local dt { border-bottom: 1px solid #bbc; padding: 2px; }
 #local dd.notl dl, #local dd.notl { background: url(/i/line.gif) repeat-y }
