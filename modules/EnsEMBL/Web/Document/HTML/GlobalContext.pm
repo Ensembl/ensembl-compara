@@ -19,7 +19,7 @@ sub links {
 
 sub render {
   my $self = shift;
-  $self->print( '
+  $self->print( '<div id="nav">
     <dl id="global">' );
   foreach my $link ( @{$self->links} ) {
     $self->printf( '

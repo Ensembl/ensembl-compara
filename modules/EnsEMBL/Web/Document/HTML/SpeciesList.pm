@@ -36,15 +36,9 @@ sub render {
     $html .= qq(<div class="white boxed">
 <div id='reorder_species' style='display: none;'>);
     $html .= _render_ajax_reorder_list($user, $species_defs, \%species_info); 
-    $html .= qq(</div>\n<div id="full_species">
-<p>The <a href="http://www.ensembl.org">Ensembl</a> project produces genome databases
-  for vertebrates and other eukaryotic species, and makes this information
-  freely available online.</p>
-
-<p>Click on a species name below to browse the data.</p>);
+    $html .= qq(</div>\n<div id="full_species">);
     $html .= _render_species_list($user, $species_defs, \%species_info, \%species_description); 
     $html .= qq(</div>
-<p>Other pre-build species are available in <a href="http://pre.ensembl.org" rel="external">Ensembl <em>Pre<span class="red">!</span></em> &rarr;</a></p>
 </div>);
   }
   return $html;
@@ -63,8 +57,15 @@ sub _render_species_list {
   ## output list
   $html .= "<div id='static_favourite_species'>\n";
   $html .= "<div class='favourites-species-list'>\n";
+  if ($species_defs->ENSEMBL_LOGINS && $user) {
+    $html .= "<h3>Favourite genomes</h3>";
+  }
+  else {
+    $html .= "<h3>Popular genomes</h3>";
+  }
   $html .= _render_with_images(\@favourites, $species_defs, $description);
 
+=pod
   if (!$user) {
     if ($species_defs->ENSEMBL_LOGINS) {
       $html .= '<a href="javascript:login_link()">Log in to customize this list</a>';
@@ -74,12 +75,14 @@ sub _render_species_list {
       $html .= 'You are logged in as '. $user->name .' &middot; <a href="#" onclick="toggle_reorder();">Change favourites</a>';
     }
   }
+=cut 
+
   $html .= "</div>\n";
   $html .= "</div>\n";
 
   $html .= qq(<div id='static_all_species'>
 <form action="#">
-<h2>All genomes</h2>
+<h3>All genomes</h3>
 <select name="species"  id="species_dropdown" onchange="dropdown_redirect('species_dropdown');">
   <option value="/">-- Select a species --</option>
 );
@@ -99,9 +102,11 @@ sub _render_species_list {
   ## Sort species into desired groups
   my %phylo_tree;
   foreach $species_name (@all_species) {
-    my $taxon_group = $species_defs->get_config($species_name, "SPECIES_GROUP");
-    my $group = $labels->{$taxon_group} || $taxon_group;
-    if (!$group) {
+    my $group = $species_defs->get_config($species_name, "SPECIES_GROUP");
+    if ($group) {
+      $group = $labels->{$group} || $group;   
+    }
+    else {
       ## Allow for non-grouped species lists
       $group = 'no_group';
     }
@@ -186,11 +191,14 @@ sub _render_ajax_reorder_list {
   foreach my $fave (@favourites) {
     delete $sp_to_sort{$fave};
   }
+=pod
   my @sorted_by_common = sort {
                           $species_defs->get_config($a, "SPECIES_COMMON_NAME")
                           cmp
                           $species_defs->get_config($b, "SPECIES_COMMON_NAME")
                           } keys %sp_to_sort;
+=cut
+  my @sorted_by_common = keys %sp_to_sort;
   foreach $species_name (@sorted_by_common) {
     $species_dir = $species_name;
     $species_name =~ s/_/ /;

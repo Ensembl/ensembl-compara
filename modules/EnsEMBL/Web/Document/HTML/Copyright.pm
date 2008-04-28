@@ -7,6 +7,17 @@ use EnsEMBL::Web::RegObj;
 @EnsEMBL::Web::Document::HTML::Copyright::ISA = qw(EnsEMBL::Web::Document::HTML);
 
 sub render {
+  my @time = localtime();
+  my $year = @time[5] + 1900;
+  $_[0]->print( qq(
+    &copy; $year <a href="http://www.sanger.ac.uk/" class="nowrap">WTSI</a> /
+    <a href="http://www.ebi.ac.uk/" style="white-space:nowrap">EBI</a>.
+    Ensembl is available to <a href="http://www.ensembl.org/info/downloads/index.html">download for public use</a> - please see the <a href="http://www.ensembl.org/info/about/legal/">code licence</a> for details.
+    </p>
+    )
+  );
+
+=pod
   my @time   = localtime();
   my $sd     = $ENSEMBL_WEB_REGISTRY->species_defs;
   my $year_0 = $sd->ENSEMBL_COPYRIGHT_YEAR || 2000;
@@ -27,6 +38,7 @@ sub render {
   ),
     $year_0, $year_n, $logo_links, $sd->ENSEMBL_SITE_NAME, $root, $root
   );
+=cut
 }
 
 1;

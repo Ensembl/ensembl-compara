@@ -335,31 +335,32 @@ sub render {
   my $X = '
 <table id="mh">
   <tr>
-    <td id="mh_lo" rowspan="2">[[logo]]</td>
-    <td id="mh_tt" rowspan="2">[[species]]</td>
+    <td id="mh_lo">[[logo]]</td>
     <td id="mh_search">[[search_box]]</td>
   </tr>
   <tr>
-    <td id="mh_lnk">[[uber_nav]]</td>
+    <td id="mh_bc">[[breadcrumbs]]</td>
+    <td id="mh_lnk">[[tools]]</td>
   </tr>
 </table>
 <div style="display:none" id="conf"></div>
 <div id="main">
-  <div id="nav">
     [[global_context]]
     [[local_context]]
-  </div>
-  <div id="content">
     [[content]]
-  </div>
 </div>
 <div id="footer">
   [[release]]<br />
   [[copyright]]
 </div>
-<div id="debug"></div>
 [[body_javascript]]
 ';
+
+=pod
+<div id="debug"></div>
+=cut
+
+
   while( $X =~ s/(.*?)\[\[([\w:]+)\]\]//sm ) {
     my($start,$page_element) = ($1,$2);
     $self->print( $start );

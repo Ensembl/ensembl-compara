@@ -22,10 +22,11 @@ sub _initialize {
     logo           EnsEMBL::Web::Document::HTML::Logo
     species        EnsEMBL::Web::Document::HTML::Species
     search_box     EnsEMBL::Web::Document::HTML::SearchBox
-    uber_nav       EnsEMBL::Web::Document::HTML::PageLinks
+    breadcrumbs    EnsEMBL::Web::Document::HTML::BreadCrumbs
+    tools          EnsEMBL::Web::Document::HTML::ToolLinks
     content        EnsEMBL::Web::Document::HTML::Content
-    global_context EnsEMBL::Web::Document::HTML::StaticGlobalContext
-    local_context  EnsEMBL::Web::Document::HTML::StaticLocalContext
+    global_context EnsEMBL::Web::Document::HTML::Empty
+    local_context  EnsEMBL::Web::Document::HTML::Empty
     release        EnsEMBL::Web::Document::HTML::Release
     copyright      EnsEMBL::Web::Document::HTML::Copyright
     body_javascript EnsEMBL::Web::Document::HTML::BodyJavascript

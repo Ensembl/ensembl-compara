@@ -35,7 +35,7 @@ sub logo_img {
 
 sub render {
   my $self = shift;
-  my $linked_title = '<h1><a class="mh_lnk" href="#">Human</a></h1>';
+  my $linked_title; # = '<h1><a class="mh_lnk" href="#">Human</a></h1>';
   $self->print( '<table id="mh">
   <tr>');
 # Logo on LHS...
@@ -76,7 +76,7 @@ sub render {
   $self->printf('
         <a href="%sBlast">BLAST</a> | <a href="%sbiomart">BioMart</a> &nbsp;|&nbsp;
         <a href="#" id="login" class="modal_link">Login</a> | <a href="#" class="modal_link">Register</a> &nbsp;|&nbsp;
-        <a href="%s">Home</a> | <a href="#" id="sitemap" class="modal_link">Site map</a> | <a href="#" id="help" class="modal_link"><span>e<span>?</span></span> Help</a>',
+        <a href="#" id="help" class="modal_link"><span>e<span>?</span></span> Help</a>',
     $self->home_url, $self->home_url, $self->home_url
   );
   $self-print('

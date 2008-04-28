@@ -7,7 +7,7 @@ our @ISA = qw(EnsEMBL::Web::Document::HTML);
 
 sub render {
   my $self = shift;
-  $self->printf( q(<dl id="local" class="ajax" title="['/Homo_sapiens/ajax-menu/2']"></dl>) );
+  $self->printf( q(<dl id="local" class="ajax" title="['/Homo_sapiens/ajax-menu/2']"></dl></div>) );
 }
 
 return 1;

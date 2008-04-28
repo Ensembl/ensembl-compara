@@ -83,7 +83,7 @@ sub handler {
 
   $pageContent =~ s/\[\[([A-Z]+)::([^\]]*)\]\]/my $m = "template_$1"; no strict 'refs'; &$m($r, $2);/ge;
 
-  my $BC = format_breadcrumbs( $r->uri, $ENSEMBL_WEB_REGISTRY->species_defs->ENSEMBL_WEB_TREE );
+  #my $BC = format_breadcrumbs( $r->uri, $ENSEMBL_WEB_REGISTRY->species_defs->ENSEMBL_WEB_TREE );
 
   # do SSI includes
   #  $pageContent =~ s/<!--#include\s+virtual\s*=\s*\"(.*)\"\s*-->/template_INCLUDE($r, $1)/eg;
@@ -120,13 +120,22 @@ sub handler {
 
   ## Build page content
   my $html = $pageContent =~ /<body.*?>(.*?)<\/body>/sm ? $1 : $pageContent;
-  unless ($html =~ /^\s*<div/) {
-    $html = qq(\n<div class="onecol">\n$html\n</div>);
+  my $wrapped;
+  if ($ENV{'SCRIPT_NAME'} =~ m#^/info/#) {
+    $wrapped = qq(<div id="nav">);
+    $wrapped .= template_SCRIPT($r, 'EnsEMBL::Web::Document::HTML::DocsMenu');
+    $wrapped .= qq(</div>
+<div id="content">
+$html
+</div>);
+  }
+  else {
+    $wrapped = $html =~ /^\s*<div/ ? $html : qq(\n<div class="onecol">\n$html\n</div>);
   }
 
   $page->content->add_panel(
     new EnsEMBL::Web::Document::Panel( 
-      'raw' => $BC.$html 
+      'raw' => $wrapped 
     )
   );
   if($ENV{PERL_SEND_HEADER}) {

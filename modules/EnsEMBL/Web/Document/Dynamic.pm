@@ -74,7 +74,8 @@ sub _initialize_HTML {
     logo           EnsEMBL::Web::Document::HTML::Logo
     species        EnsEMBL::Web::Document::HTML::Species
     search_box     EnsEMBL::Web::Document::HTML::SearchBox
-    uber_nav       EnsEMBL::Web::Document::HTML::PageLinks
+    breadcrumbs    EnsEMBL::Web::Document::HTML::BreadCrumbs
+    tools          EnsEMBL::Web::Document::HTML::ToolLinks
     content        EnsEMBL::Web::Document::HTML::Content
     global_context EnsEMBL::Web::Document::HTML::GlobalContext
     local_context  EnsEMBL::Web::Document::HTML::LocalContext

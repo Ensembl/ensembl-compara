@@ -36,7 +36,7 @@ sub render {
   <dl style="display: none" id="se_mn"></dl>
 </form>
 ',
-    $self->search_url,  $self->default_search_code,
+    $self->search_url, $self->default_search_code,
     $self->img_url, lc($self->default_search_code), $self->img_url
   );
 }
