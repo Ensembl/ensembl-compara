@@ -6,27 +6,24 @@ our @ISA = qw(EnsEMBL::Web::Document::HTML);
 
 sub render   {
   my $species = $ENV{'ENSEMBL_SPECIES'} || 'default';
-  my $html = qq(
-      <a href="$species/Blast">BLAST</a> &nbsp;|&nbsp; 
-      <a href="$species/Biomart">BioMart</a> &nbsp;|&nbsp;
-      <a href="/info/">Documentation</a> &nbsp;|&nbsp;
-      <a href="/info/website/help/" id="help"><img src="/i/e-quest_bg.gif" alt="e?" style="vertical-align:middle" />&nbsp;Help</a> &nbsp;|&nbsp;
-      <a href="/Configurator">Control Panel</a> &nbsp;|&nbsp;
-      );
-  my $user;
+  my ($user, $html);
   if ($ENV{'ENSEMBL_LOGINS'} && $user) {
-    $html .= qq(<a href="/User">Your Account</a>
+    $html .= qq(<a href="/User" class="modal_link">Your Account</a>
       );
   }
   else {
-    $html .= qq(<a href="/">Login</a> &middot; <a href="/">Register</a>
+    $html .= qq(<a href="/User/Login" class="modal_link">Login</a> / <a href="/User/Register" class="modal_link">Register</a>
       );
   }
+  $html .= qq( &nbsp;|&nbsp;
+      <a href="/Configurator" class="modal_link">Control Panel</a> &nbsp;|&nbsp;
+      <a href="$species/Blast">BLAST</a> &nbsp;|&nbsp; 
+      <a href="$species/Biomart">BioMart</a> &nbsp;|&nbsp;
+      <a href="/info/">Documentation</a> &nbsp;|&nbsp;
+      <a href="/info/website/help/" id="help"><img src="/i/e-quest_bg.gif" alt="e?" style="vertical-align:middle" />&nbsp;Help</a>
+      );
   $_[0]->printf($html);
 }
-
-=pod
-=cut
 
 1;
 

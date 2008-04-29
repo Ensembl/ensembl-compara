@@ -26,10 +26,10 @@ sub render {
   (my $bio_name = $species) =~ s/_/ /g; 
   my $html = qq(<div class="center">\n);
 
-  $html .= sprintf(qq(<h2>Search Genome Databases</h2>
+  $html .= sprintf(qq(<h2>Search %s %s</h2>
 <form action="%s" method="get">
   <input type="hidden" name="site" value="%s" />),
-  $self->search_url, $self->default_search_code
+  $self->default_search_code, $bio_name, $self->search_url, $self->default_search_code
 );
 
   if (!$species) {
@@ -54,7 +54,7 @@ sub render {
     <input type="submit" value="Go" class="input-submit" />);
 
   ## Examples
-  my @examples = ('mouse chromosome 2', 'rat X:10000..20000', 'human gene BRCA2');
+  my @examples = ('human gene BRCA2', 'rat X:10000..20000', 'insulin'); #TO DO - get from species_defs (ini file)
   $html .= '<p>e.g. ' . join(' or ', map {'<strong>'.$_.'</strong>'} @examples) . '</p>';
 
   $html .= qq(\n</form>\n</div>\n);
