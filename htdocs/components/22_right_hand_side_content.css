@@ -26,6 +26,7 @@ p#bottompad{margin:0;border:0;padding:0;clear:both;height:1px;overflow:none}
 .plain-box  { background-color:#fff; border:1px solid #ccc; }
 .tinted-box { background-color:#eef; border:1px solid #ccf; }
 .unpadded { margin:0px 8px; padding:0px; }
+.noclear { clear:none; }
 
 .float-right { float:right; width:30%; margin:8px 8px 0 0; padding:8px; }
 .float-left { float:left; width:30%; margin:8px 8px 0 0; padding:8px; }
