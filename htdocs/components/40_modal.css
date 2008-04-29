@@ -16,7 +16,7 @@
   overflow:auto; height:375px
 }
 
-.modal_but { font-size: 0.8em; float: left; width: 80px; padding:2px; background-color: #ddd; margin: 2px; text-align: center; font-weight: bold; color: #000 }
+.modal_but { font-size: 0.8em; float: left; width: 80px; padding:2px; background-color: #ddd; margin: 2px; text-align: center; font-weight: bold; color: #000; cursor:pointer; }
 
-#modal_close { float:right;margin:0px;padding:0px; width: 40px }
+#modal_close { float:right;margin:0px;padding:0px; width: 40px; }
 
