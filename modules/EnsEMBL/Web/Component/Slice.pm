@@ -130,7 +130,7 @@ sub markup_and_render {
     }
 
     # TO ADD : For the strains, work out the original species and add link for that instead
-    $Chrs .= qq{<tr><th>$display_name &gt;&nbsp;</th>};
+    $Chrs .= qq{<tr><th>$display_name &gt;&nbsp;</th><td>};
 
     # If page is based on strains, use the URL species
     unless ($slices ) {
@@ -143,9 +143,9 @@ sub markup_and_render {
 
    foreach my $loc (@$slices) {
       my ($stype, $assembly, $region, $start, $end, $strand) = split (/:/ , $loc);
-      $Chrs .= qq{<td><a href="/$display_name/contigview?l=$region:$start-$end">$loc</a></td>};
+      $Chrs .= qq{<a href="/$display_name/contigview?l=$region:$start-$end">$loc</a><br />};
     }
-    $Chrs .= "</tr>";
+    $Chrs .= "</td></tr>";
   }
   $Chrs .= "</table>";
 
