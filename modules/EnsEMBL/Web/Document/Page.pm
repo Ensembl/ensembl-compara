@@ -350,8 +350,8 @@ sub render {
     [[content]]
 </div>
 <div id="footer">
-  [[release]]<br />
   [[copyright]]
+  [[footerlinks]]
 </div>
 [[body_javascript]]
 ';
