@@ -20,13 +20,15 @@ div#content div.panel { border:1px solid #ccc; background-color:#fff; }
 p#bottompad{margin:0;border:0;padding:0;clear:both;height:1px;overflow:none}
 
 /* Columns for static content */
-.onecol { margin:8px 8px 0 8px; padding:8px }
-.twocol-left { float:left; width:47%; margin:8px 0 0 8px; padding:8px; clear:left; }
-.twocol-right { float:right; width:47%; margin:8px 8px 0 0; padding:8px; }
+.onecol { margin:1% 1% 0 1%; padding:1% }
+.twocol-left { float:left; width:46%; margin:1% 0 0 1%; padding:1%; clear:left; }
+.twocol-right { float:right; width:46%; margin:1% 1% 0 0; padding:1%; }
 .plain-box  { background-color:#fff; border:1px solid #ccc; }
 .tinted-box { background-color:#eef; border:1px solid #ccf; }
-.unpadded { margin:0px 8px; padding:0px; }
+.float-right { float:right; width:30%; margin:1% 1% 0 0; padding:1%; }
+.float-left { float:left; width:30%; margin:1% 1% 0 0; padding:1%; }
+.unpadded { margin:0px 1%; padding:0px; }
 .noclear { clear:none; }
 
-.float-right { float:right; width:30%; margin:8px 8px 0 0; padding:8px; }
-.float-left { float:left; width:30%; margin:8px 8px 0 0; padding:8px; }
+hr.end-of-doc { height:1px; width:98%; color:#ccc; background-color:#ccc; border:0; 
+                margin-top:2em; margin-bottom:0; padding: 0; clear:both; }
