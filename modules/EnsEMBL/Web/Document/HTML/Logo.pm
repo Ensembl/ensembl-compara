@@ -1,16 +1,20 @@
 package EnsEMBL::Web::Document::HTML::Logo;
+
+### Generates the logo wrapped in a link to the homepage
+
 use strict;
-use CGI qw(escapeHTML);
 use EnsEMBL::Web::Document::HTML;
 
 our @ISA = qw(EnsEMBL::Web::Document::HTML);
 
-sub home_url { return '/'; }
-sub img_url  { return '/i/'; }
+sub home_url { return '/'; ### a }
+sub img_url  { return '/i/'; ### a }
+sub site_logo  { return 'e-ensembl.gif'; ### a }
 sub logo_img {
-  my $self=shift;
+### a
+  my $self = shift;
   return sprintf(
-    '<img src="%se-ensembl.gif" alt="" title="Return to home page" />',
+    '<img src="%s%s" alt="Home" title="Return to home page" />',
     $self->img_url
   );
 }

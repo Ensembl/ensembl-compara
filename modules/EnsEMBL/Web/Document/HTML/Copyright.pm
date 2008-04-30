@@ -1,8 +1,10 @@
 package EnsEMBL::Web::Document::HTML::Copyright;
+
+### Copyright notice for footer (basic version with no logos)
+
 use strict;
 use CGI qw(escapeHTML);
 use EnsEMBL::Web::Document::HTML;
-use EnsEMBL::Web::RegObj;
 
 our @ISA = qw(EnsEMBL::Web::Document::HTML);
 

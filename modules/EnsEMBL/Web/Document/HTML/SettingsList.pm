@@ -1,5 +1,7 @@
 package EnsEMBL::Web::Document::HTML::SettingsList;
 
+### Generates drop-down user panel - needs replacing with nice Ajax popup!
+
 use strict;
 use warnings;
 

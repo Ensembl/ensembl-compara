@@ -1,6 +1,8 @@
 package EnsEMBL::Web::Document::HTML::LocalContext;
+
+### Generates the global context navigation menu, used in dynamic pages
+
 use strict;
-use CGI qw(escapeHTML);
 use EnsEMBL::Web::Document::HTML;
 
 our @ISA = qw(EnsEMBL::Web::Document::HTML);

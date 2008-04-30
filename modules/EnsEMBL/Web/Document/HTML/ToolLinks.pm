@@ -1,4 +1,7 @@
 package EnsEMBL::Web::Document::HTML::ToolLinks;
+
+### Generates links to site tools - BLAST, help, login, etc (currently in masthead)
+
 use strict;
 use EnsEMBL::Web::Document::HTML;
 

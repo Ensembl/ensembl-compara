@@ -1,6 +1,8 @@
 package EnsEMBL::Web::Document::HTML::FooterLinks;
+
+### Generates release info for the footer
+
 use strict;
-use CGI qw(escapeHTML);
 use EnsEMBL::Web::Document::HTML;
 use EnsEMBL::Web::RegObj;
 
