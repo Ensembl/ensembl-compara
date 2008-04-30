@@ -11,7 +11,7 @@ sub render {
 
   $_[0]->printf(
     q(
-    <div class="twocol-right right">%s release %d - %s</div>),
+    <div class="twocol-right right unpadded">%s release %d - %s</div>),
     $sd->ENSEMBL_SITE_NAME, $sd->ENSEMBL_VERSION, $sd->ENSEMBL_RELEASE_DATE
   );
 }

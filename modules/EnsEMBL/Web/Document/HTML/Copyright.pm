@@ -11,7 +11,7 @@ sub render {
   my $year = @time[5] + 1900;
 
   $_[0]->print( qq(
-    <div class="twocol-left left">
+    <div class="twocol-left left unpadded">
     &copy; $year <a href="http://www.sanger.ac.uk/" class="nowrap">WTSI</a> /
     <a href="http://www.ebi.ac.uk/" style="white-space:nowrap">EBI</a>.
     </div>
