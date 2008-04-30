@@ -113,7 +113,7 @@ sub handler {
 
   ## Build page content
   my $html = $pageContent =~ /<body.*?>(.*?)<\/body>/sm ? $1 : $pageContent;
-  my $needs_wrapping = $html =~ /^\s*<div/ ? 0 : 1;
+  my $hr = ($ENV{'SCRIPT_NAME'} eq '/index.html') ? '' : '<hr class="end-of-doc" />'; 
   my $panelContent;
   if ($ENV{'SCRIPT_NAME'} =~ m#^/info/#) {
     $panelContent = qq(<div id="nav">);
@@ -121,11 +121,10 @@ sub handler {
     $panelContent .= qq(</div>
 <div id="content">
 $html);
-    $panelContent .= qq(\n<hr class="end-of-doc" />\n) if $needs_wrapping;
-    $panelContent .= qq(</div>);
+    $panelContent .= qq(\n</div>\n$hr);
   }
   else {
-    $panelContent = $needs_wrapping ? qq(\n<div class="onecol">\n$html\n<hr class="end-of-doc />\n</div>\n) : $html; 
+    $panelContent = ($html =~ /^\s*<div/) ? "$html\n$hr\n" : qq(\n<div class="onecol">\n$html\n$hr\n</div>\n); 
   }
 
   $page->content->add_panel(
