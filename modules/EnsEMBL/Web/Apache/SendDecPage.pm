@@ -83,19 +83,12 @@ sub handler {
 
   $pageContent =~ s/\[\[([A-Z]+)::([^\]]*)\]\]/my $m = "template_$1"; no strict 'refs'; &$m($r, $2);/ge;
 
-  #my $BC = format_breadcrumbs( $r->uri, $ENSEMBL_WEB_REGISTRY->species_defs->ENSEMBL_WEB_TREE );
-
-  # do SSI includes
-  #  $pageContent =~ s/<!--#include\s+virtual\s*=\s*\"(.*)\"\s*-->/template_INCLUDE($r, $1)/eg;
-
   my $renderer = new EnsEMBL::Web::Document::Renderer::Apache( $r );
   my $page     = new EnsEMBL::Web::Document::Static( $renderer, undef, $ENSEMBL_WEB_REGISTRY->species_defs );
 
   $page->_initialize();
 
   $page->title->set( $pageContent =~ /<title>(.*?)<\/title>/sm ? $1 : 'Untitled: '.$r->uri );
-  # warn $ENV{'ENSEMBL_SPECIES'};
-  #$page->masthead->ies = $ENSEMBL_WEB_REGISTRY->species_defs->SPECIES_COMMON_NAME if $ENV{'ENSEMBL_SPECIES'};
 
   my $head = $pageContent =~ /<head>(.*?)<\/head>/sm ? $1 : '';
   while($head=~s/<script(.*?)>(.*?)<\/script>//sm) {
@@ -150,33 +143,6 @@ $html);
   $page->render();
   return OK;
 } # end of handler
-
-our $pointer = qq(<img src="/i/arrow-right.gif" alt="&gt;" class="breadcrumb" />);
-
-sub format_breadcrumbs {
-  my ($path, $branch) = @_;
-  my $BC = breadcrumbs($path, $branch);
-  if ($BC) {
-    $BC =~ s/$pointer\s*$//;
-    $BC = '<p id="breadcrumbs">'.$BC.'</div>';
-  }
-  return $BC; 
-}
-
-sub breadcrumbs {
-  my ($path, $branch) = @_;
-
-  my $out = '';  
-
-  my ($step, $rest) = $path =~ m!/(.*?)(/.*)?$!; 
-
-  if (defined $branch->{$step} && $step !~ /\.html/ && $rest ne '/index.html') {
-    $out = sprintf qq(<a href="%s" title="%s" class="breadcrumb">%s</a> $pointer ), $branch->{$step}->{_path}, $branch->{$step}->{_title}, $branch->{$step}->{_nav};
-    $out .= breadcrumbs($rest, $branch->{$step}) if $rest;
-  }
-
-  return $out;
-}
 
 sub template_SPECIESINFO {
   my( $r, $code ) = @_;
