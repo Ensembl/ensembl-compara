@@ -120,22 +120,24 @@ sub handler {
 
   ## Build page content
   my $html = $pageContent =~ /<body.*?>(.*?)<\/body>/sm ? $1 : $pageContent;
-  my $wrapped;
+  my $needs_wrapping = $html =~ /^\s*<div/ ? 0 : 1;
+  my $panelContent;
   if ($ENV{'SCRIPT_NAME'} =~ m#^/info/#) {
-    $wrapped = qq(<div id="nav">);
-    $wrapped .= template_SCRIPT($r, 'EnsEMBL::Web::Document::HTML::DocsMenu');
-    $wrapped .= qq(</div>
+    $panelContent = qq(<div id="nav">);
+    $panelContent .= template_SCRIPT($r, 'EnsEMBL::Web::Document::HTML::DocsMenu');
+    $panelContent .= qq(</div>
 <div id="content">
-$html
-</div>);
+$html);
+    $panelContent .= qq(\n<hr class="end-of-doc" />\n) if $needs_wrapping;
+    $panelContent .= qq(</div>);
   }
   else {
-    $wrapped = $html =~ /^\s*<div/ ? $html : qq(\n<div class="onecol">\n$html\n</div>);
+    $panelContent = $needs_wrapping ? qq(\n<div class="onecol">\n$html\n<hr class="end-of-doc />\n</div>\n) : $html; 
   }
 
   $page->content->add_panel(
     new EnsEMBL::Web::Document::Panel( 
-      'raw' => $wrapped 
+      'raw' => $panelContent 
     )
   );
   if($ENV{PERL_SEND_HEADER}) {
