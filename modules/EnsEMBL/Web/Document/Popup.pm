@@ -21,14 +21,16 @@ sub _initialize_HTML {
   );
 
   $self->add_body_elements qw(
-    javascript_div EnsEMBL::Web::Document::HTML::JavascriptDiv
-    masthead   EnsEMBL::Web::Document::HTML::NoMastHead
-    release    EnsEMBL::Web::Document::HTML::NoRelease
-    helplink   EnsEMBL::Web::Document::HTML::NoHelpLink
-    html_start EnsEMBL::Web::Document::HTML::HTML_Block
-    menu       EnsEMBL::Web::Document::HTML::NoMenu
-    content    EnsEMBL::Web::Document::HTML::PopupContent
-    html_end   EnsEMBL::Web::Document::HTML::HTML_Block
+    logo           EnsEMBL::Web::Document::HTML::Empty
+    search_box     EnsEMBL::Web::Document::HTML::Empty
+    breadcrumbs    EnsEMBL::Web::Document::HTML::Empty
+    tools          EnsEMBL::Web::Document::HTML::Empty
+    content        EnsEMBL::Web::Document::HTML::Content
+    global_context EnsEMBL::Web::Document::HTML::Empty
+    local_context  EnsEMBL::Web::Document::HTML::Empty
+    release        EnsEMBL::Web::Document::HTML::Empty
+    copyright      EnsEMBL::Web::Document::HTML::Empty
+    body_javascript EnsEMBL::Web::Document::HTML::BodyJavascript
   );
   $self->call_child_functions( 'common_page_elements' );
 
