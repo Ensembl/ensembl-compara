@@ -7,9 +7,11 @@ use EnsEMBL::Web::Document::HTML;
 
 our @ISA = qw(EnsEMBL::Web::Document::HTML);
 
-sub home_url { return '/'; ### a }
-sub img_url  { return '/i/'; ### a }
-sub site_logo  { return 'e-ensembl.gif'; ### a }
+sub site_logo  {
+  ### a
+  return 'e-ensembl.gif';
+}
+
 sub logo_img {
 ### a
   my $self = shift;

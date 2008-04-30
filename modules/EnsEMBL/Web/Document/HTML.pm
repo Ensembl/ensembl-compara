@@ -8,6 +8,16 @@ sub new {
   return $self;
 }
 
+sub home_url {
+  ### a
+  return '/';
+}
+
+sub img_url  {
+  ### a
+  return '/i/';
+}
+
 sub _root_url { return $_[0]->species_defs->ENSEMBL_ROOT_URL; }
 
 sub species_defs :lvalue { return $_[0]->{'_species_defs'}; }
