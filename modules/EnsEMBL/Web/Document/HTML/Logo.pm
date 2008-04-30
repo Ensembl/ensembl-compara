@@ -17,7 +17,7 @@ sub logo_img {
   my $self = shift;
   return sprintf(
     '<img src="%s%s" alt="Home" title="Return to home page" />',
-    $self->img_url
+    $self->img_url, $self->site_logo
   );
 }
 
