@@ -210,6 +210,6 @@ sub legend {
   ]);
 }
 
-sub error_track_name { return 'Ensembl transcripts'; }
+sub error_track_name { return 'Ig segments'; }
 
 1;
