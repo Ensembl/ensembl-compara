@@ -8,6 +8,7 @@ use Apache2::Const qw(:common M_GET);
 use EnsEMBL::Web::Tools::Encryption;
 
 use EnsEMBL::Web::RegObj;
+use EnsEMBL::Web::OrderedTree;
 
 use CGI qw(header escapeHTML unescape);
 use CGI::Cookie;
@@ -97,8 +98,20 @@ sub new {
   $self->_prof("Output method initialized" );
 
 ## Finally we get to the Factory module!
+  use EnsEMBL::Web::CoreObjects;
+  use EnsEMBL::Web::DBSQL::DBConnection;
+  my $db_connection = EnsEMBL::Web::DBSQL::DBConnection->new(
+    $ENV{'ENSEMBL_SPECIES'},
+    $ENSEMBL_WEB_REGISTRY->species_defs
+  );
+  my $core_objects = EnsEMBL::Web::CoreObjects->new( $input, $db_connection );
   $self->factory = EnsEMBL::Web::Proxy::Factory->new(
-    $parameters{'objecttype'}, { '_input' => $input, '_apache_handle' => $rend->{'r'} }
+    $parameters{'objecttype'}, {
+      '_input'         => $input,
+      '_apache_handle' => $rend->{'r'},
+      '_core_objects'  => $core_objects,
+      '_databases'     => $db_connection
+    }
   );
   $self->factory->__data->{'timer'} = $self->{'timer'};
   $self->_prof("Factory compiled and objects created...");
@@ -141,13 +154,16 @@ sub configure {
   my @T = ('EnsEMBL::Web', '', @{$ENSEMBL_PLUGINS});
 
   my $FUNCTIONS_CALLED = {};
+  my $common_conf = {
+    'tree'           => EnsEMBL::Web::OrderedTree->new(),
+    'default'        => undef,
+    'action'         => undef
+  };
+  my @modules = ();
   while( my ($module_root, $X) = splice( @T, 0, 2) ) {
-
-   # Starting with the standard EnsEMBL module configure
-    # the script....
-    # Then loop through the plugins in order after that...
-    # First work out what the module name is - to see if it
-    # can be "used"
+# Starting with the standard EnsEMBL module configure the script....
+# Then loop through the plugins in order after that...
+# First work out what the module name is - to see if it can be "used"
     $flag ++;
     my $config_module_name = $module_root."::Configuration::$objecttype";
 
@@ -155,42 +171,20 @@ sub configure {
       # If it has been successfully used then look for
       # the functions named in the script "configure" line
       # of the script.
-      my $CONF = $config_module_name->new( $self->page, $object, $flag );
+      my $CONF = $config_module_name->new( $self->page, $object, $flag, $common_conf );
+      push @modules, [$CONF,$config_module_name];
       ## Attach any control modules to the configuration
-      $CONF->{wizard} = $self->{wizard};
+      $CONF->{wizard}  = $self->{wizard};
       $CONF->{command} = $self->{command};
-      ## Loop through the functions to configure
-      foreach my $FN ( @functions ) { 
-        if( $CONF->can($FN) ) {
-	  # If this configuration module can perform this function do so...
-          eval { $CONF->$FN(); };
-          if( $@ ) { # Catch any errors and display as a "configuration runtime error"
-            $self->page->content->add_panel( 
-					    new EnsEMBL::Web::Document::Panel(
-               'caption' => 'Configuration module runtime error',
-               'content' => sprintf( qq(
-    <p>
-      Unable to execute configuration $FN from configuration module <b>$config_module_name</b>
-      due to the following error:
-    </p>
-    <pre>%s</pre>), $self->_format_error($@) )
-									     )
-					   );
-	        } else {
-            $FUNCTIONS_CALLED->{$FN} = 1;
-          }
-        }
-      }
-    } elsif( $self->dynamic_use_failure( $config_module_name ) !~ /^Can't locate/ ) { 
-                           # Handle "use" failures gracefully... 
-                           # Firstly skip Can't locate errors
-                           # o/w display a "compile time" error message.
+    } elsif( $self->dynamic_use_failure( $config_module_name ) !~ /^Can't locate/ ) {
+# Handle "use" failures gracefully...
+# Firstly skip Can't locate errors o/w display a "compile time" error message.
       $self->page->content->add_panel(
         new EnsEMBL::Web::Document::Panel(
          'caption' => 'Configuration module compilation error',
          'content' => sprintf( qq(
     <p>
-      Unable to use Configuration module <b>$config_module_name</b> due to 
+      Unable to use Configuration module <b>$config_module_name</b> due to
       the following error:
     </p>
     <pre>%s</pre>), $self->_format_error( $self->dynamic_use_failure( $config_module_name )) )
@@ -198,6 +192,36 @@ sub configure {
       );
     }
   }
+## Tree is now built... so we need to set the action...
+
+  $modules[0][0]->set_action( $ENV{'ENSEMBL_ACTION'} );
+
+  foreach my $T ( @modules ) {
+    my( $CONF,$config_module_name ) = @$T;
+## Loop through the functions to configure
+    foreach my $FN ( @functions ) { 
+      if( $CONF->can($FN) ) {
+# If this configuration module can perform this function do so...
+        eval { $CONF->$FN(); };
+        if( $@ ) { # Catch any errors and display as a "configuration runtime error"
+          $self->page->content->add_panel( 
+            new EnsEMBL::Web::Document::Panel(
+              'caption' => 'Configuration module runtime error',
+              'content' => sprintf( qq(
+    <p>
+      Unable to execute configuration $FN from configuration module <b>$config_module_name</b>
+      due to the following error:
+    </p>
+    <pre>%s</pre>), $self->_format_error($@) )
+            )
+          );
+        } else {
+          $FUNCTIONS_CALLED->{$FN} = 1;
+        } 
+      }
+    }
+  }
+
   foreach my $FN ( @functions ) {
     unless( $FUNCTIONS_CALLED->{$FN} ) {
       if( $objecttype eq 'DAS' ) {
@@ -207,6 +231,7 @@ sub configure {
       }
     }
   }
+
   $self->add_error_panels(); # Add error panels to end of display!!
   $self->_prof("Script configured ($objecttype)");
 }   
