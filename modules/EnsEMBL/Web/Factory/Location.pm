@@ -353,10 +353,28 @@ warn "ATTACHING DATA OBJECT........";
 
 sub createObjects { 
   my $self      = shift;    
+  if( $self->core_objects->location ) {
+    warn "Creating location object!.....!";
+    my $l = $self->core_objects->location;
+    $self->DataObjects( EnsEMBL::Web::Proxy::Object->new( 'Location', {
+      'type' => 'SeqRegion',
+      'real_species'     => $self->__species,
+      'name'             => $l->seq_region_name,
+      'seq_region_name'  => $l->seq_region_name,
+      'seq_region_start' => $l->start,
+      'seq_region_end'    => $l->end,
+      'seq_region_strand' => 1,
+      'seq_region_type'   => $l->coord_system->name,
+      'raw_feature_strand' => 1,
+      'seq_region_length' => $l->end-$l->start+1,
+    }, $self->__data ));
+    warn ".... created";
+    return;
+  }
+
   $self->get_databases($self->__gene_databases, 'compara','blast');
   my $database  = $self->database('core');
   return $self->problem( 'Fatal', 'Database Error', "Could not connect to the core database." ) unless $database;
-  
 ## First lets try and locate the slice....
 
 ## Gene

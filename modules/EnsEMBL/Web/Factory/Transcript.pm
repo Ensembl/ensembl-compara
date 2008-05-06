@@ -21,6 +21,12 @@ sub fastCreateObjects {
 sub createObjects {   
   my $self = shift;
   my ($identifier, @fetch_calls, $transobj);
+  if( $self->core_objects->transcript ) {
+    warn "Creating transcript object!.....!";
+    $self->DataObjects( EnsEMBL::Web::Proxy::Object->new( 'Transcript', $self->core_objects->transcript, $self->__data ));
+    return;
+  }
+
   my $db          = $self->param( 'db' ) || 'core';
      $db          = 'otherfeatures' if $db eq 'est';
   my $db_adaptor  = $self->database($db) ;	

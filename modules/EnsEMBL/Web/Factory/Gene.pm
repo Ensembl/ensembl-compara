@@ -12,6 +12,10 @@ our @ISA = qw(  EnsEMBL::Web::Factory );
 sub createObjects { 
   my $self = shift;
   my ($identifier, @fetch_calls, $geneobj);
+  if( $self->core_objects->gene ) {
+    $self->DataObjects( EnsEMBL::Web::Proxy::Object->new( 'Gene', $self->core_objects->gene, $self->__data ));
+    return;
+  }
   my $db        = $self->param('db')  || 'core'; 
      $db          = 'otherfeatures' if $db eq 'est';
   my $exonid    = $self->param('exon');
@@ -56,7 +60,7 @@ sub createObjects {
     @fetch_calls = qw(fetch_by_transcript_stable_id fetch_by_translation_stable_id);
   } elsif( $identifier = $self->param( 'exon' ) ){ 
     @fetch_calls = qw(fetch_by_exon_stable_id);
-  } elsif( $identifier = $self->param( 'gene' ) || $self->param( 'anchor1' ) ){
+  } elsif( $identifier = $self->param( 'gene' ) || $self->param('g') || $self->param( 'anchor1' ) ){
     $KEY = 'anchor1' unless $self->param('gene');
     @fetch_calls = qw(fetch_by_stable_id fetch_by_transcript_stable_id fetch_by_translation_stable_id); 
   } else {
