@@ -43,6 +43,7 @@ sub new {
   my $self  = [
     $type,
     {
+      '_core_objects'    => $data->{_core_objects}    || undef,
       '_problem'         => $data->{_problem}         || [],
       '_species_defs'    => $data->{_species_defs}    || undef,
       '_ext_url_'        => $data->{_ext_url}         || undef,
@@ -131,7 +132,7 @@ sub __objecttype :lvalue {
 
 sub __children           {
 ### a
-### returns a reference to the array of child (EnsEMBL::*::$supertype::$type) objects
+### returns a reference to the array of child (EnsEMBL::*::$supertype::$objecttype) objects
   my $self = shift;
   return $self->[2];
 }
@@ -147,8 +148,6 @@ sub timer {
   my $self = shift;
   return $self->{'timer'};
 }
-
-sub __children           { return $_[0][2]; }
 
 sub has_a_problem     { return scalar(                               @{$_[0][1]{'_problem'}} ); }
 sub has_fatal_problem { return scalar( grep {$_->isFatal}            @{$_[0][1]{'_problem'}} ); }
