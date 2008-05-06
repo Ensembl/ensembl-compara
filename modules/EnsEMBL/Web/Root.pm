@@ -51,7 +51,7 @@ sub dynamic_use {
     $module =~ s/::/\//g;
     warn "EnsEMBL::Web::Root: failed to use $classname\nEnsEMBL::Web::Root: $@" unless $@ =~/^Can't locate $module/;
 #    warn "DYNAMIC USE FAILURE: $@";
-    $parent_namespace->{$module.'::'} = {};
+#    $parent_namespace->{$module.'::'} = {};
     $failed_modules->{$classname} = $@ || "Unknown failure when dynamically using module";
     return 0;
   }

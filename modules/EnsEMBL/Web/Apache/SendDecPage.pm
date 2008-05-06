@@ -46,9 +46,9 @@ sub handler {
   return DECLINED                if -d $r->filename;
 
   if( $pageContent ) {
-    warn "STATIC CONTENT CACHE HIT  SDP::".$r->filename."\n";
+#    warn "STATIC CONTENT CACHE HIT  SDP::".$r->filename."\n";
   } else {
-    warn "STATIC CONTENT CACHE MISS SDP::".$r->filename."\n";
+#    warn "STATIC CONTENT CACHE MISS SDP::".$r->filename."\n";
   
     unless (-e $r->filename) {
       $r->log->error("File does not exist: ", $r->filename);

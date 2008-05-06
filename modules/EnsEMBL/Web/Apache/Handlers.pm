@@ -59,7 +59,7 @@ sub in_cache {
   my($type,$key) = @_;
   my $real_key = join '::', $type, $key;
   my $val = $memd->get( $real_key );
-  warn defined $val ? "CACHE HIT  $real_key\n" : "CACHE MISS $real_key\n";
+#  warn defined $val ? "CACHE HIT  $real_key\n" : "CACHE MISS $real_key\n";
   return defined $val;
 }
 
@@ -316,15 +316,14 @@ sub transHandler {
         $r->subprocess_env->{'ENSEMBL_ACTION'} = $action;
         $script = 'action';
 	@path_segments = ();
-	warn $r->subprocess_env->{'ENSEMBL_TYPE'} ;
-	warn $r->subprocess_env->{'ENSEMBL_ACTION'};
-        warn ":: $script :: $type :: $action ::";
+	#warn $r->subprocess_env->{'ENSEMBL_TYPE'} ;
+	#warn $r->subprocess_env->{'ENSEMBL_ACTION'};
+        #warn ":: $script :: $type :: $action ::";
       }
       $path_info = join( '/', @path_segments );
       unshift ( @path_segments, '', $species, $script );
       my $newfile = join( '/', @path_segments );
 
-      warn "$newfile";
       if( $script ne 'action' && $newfile ne $file ){ # Path is changed; HTTP_TEMPORARY_REDIRECT
         $r->uri( $newfile );
         $r->headers_out->add( 'Location' => join( '?', $newfile, $querystring || () ) );
@@ -337,7 +336,6 @@ sub transHandler {
       $ENSEMBL_WEB_REGISTRY->initialize_session({ 'r' => $r, 'cookie'  => $session_cookie, 'species' => $species, 'script'  => $script, 'type' => $type, 'action' => $action });
       # Search the mod-perl dirs for a script to run
       my $to_execute = '';
-      warn "... $script ....";
       if(in_cache( 'SCRIPT',$script ) ) {
         $to_execute = cache_value('SCRIPT',$script );
       } else { 
