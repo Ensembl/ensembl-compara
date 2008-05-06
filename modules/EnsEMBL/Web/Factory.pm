@@ -3,11 +3,18 @@ package EnsEMBL::Web::Factory;
 use strict;
 use warnings;
 no warnings "uninitialized";
+use EnsEMBL::Web::CoreObjects;
 
 use EnsEMBL::Web::Proxiable;
 our @ISA =qw(EnsEMBL::Web::Proxiable);
 
 ## Additional Factory functionality
+
+sub new {
+  my ($class,$data) = @_;
+  my $self  = $class->SUPER::new( $data );
+  return $self;
+}
 
 sub DataObjects {
   my $self = shift;
@@ -19,6 +26,7 @@ sub fastCreateObjects {
   my $self = shift;
   $self->createObjects(@_);
 }
+
 sub clearDataObjects {
   my $self = shift;
   $self->{'data'}{'_dataObjects'} = [];
@@ -100,12 +108,12 @@ sub _archive {
 #       my $adaptor = $self->database($db)->get_TranslationAdaptor();
 #       my $peptide = $adaptor->fetch_by_stable_id($name);
 #       if ($peptide) {
-# 	$output .= sprintf( '<tr valign="top"><th><a href="/%s/protview?peptide=%s">%s</a>&nbsp;</th><td>is still in Ensembl</td></tr>',
-# 			    $ENV{'ENSEMBL_SPECIES'}, $_->stable_id, $_->stable_id );
+#        $output .= sprintf( '<tr valign="top"><th><a href="/%s/protview?peptide=%s">%s</a>&nbsp;</th><td>is still in Ensembl</td></tr>',
+#                          $ENV{'ENSEMBL_SPECIES'}, $_->stable_id, $_->stable_id );
 #       }
 #       else {
-# 	$output .= "<tr><th>unknown</th></tr>";
-# 	warn "***********ERROR: $name is not in Ensembl or Archive database!!";
+#        $output .= "<tr><th>unknown</th></tr>";
+#        warn "***********ERROR: $name is not in Ensembl or Archive database!!";
 #       }
 #     }
 #   }
