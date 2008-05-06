@@ -79,6 +79,13 @@ sub default_track_by_gene {
          'ensembl_transcript';
 }
 
+sub caption           {
+  my $self = shift;
+  my( $disp_id ) = $self->display_xref;
+  return $self->type_name.': '.($disp_id||$self->stable_id);
+}
+
+
 sub type_name         { my $self = shift; return $self->species_defs->translate('Transcript'); }
 sub source            { my $self = shift; return $self->gene ? $self->gene->source : undef; }
 sub stable_id         { my $self = shift; return $self->Obj->stable_id;  }

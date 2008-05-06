@@ -5,12 +5,19 @@ use warnings;
 no warnings "uninitialized";
 use Data::Dumper;
 
-use EnsEMBL::Web::Object;
 use EnsEMBL::Web::Proxy::Factory;
 use Data::Dumper;
-our @ISA = qw(EnsEMBL::Web::Object);
+
+use base qw(EnsEMBL::Web::Object);
+
 use POSIX qw(floor ceil);
 
+sub caption {
+  my $self = shift;
+  warn $self->Obj;
+  return $self->seq_region_name.': '.$self->thousandify($self->seq_region_start).'-'.
+                                     $self->thousandify($self->seq_region_end);
+}
 sub centrepoint      { return ( $_[0]->Obj->{'seq_region_end'} + $_[0]->Obj->{'seq_region_start'} ) / 2; }
 sub length           { return $_[0]->Obj->{'seq_region_end'} - $_[0]->Obj->{'seq_region_start'} + 1; }
 

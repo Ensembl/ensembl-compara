@@ -34,6 +34,12 @@ sub get_Slice {
   return $slice->expand( $context, $context );
 }
 
+sub caption           {
+  my $self = shift;
+  my( $disp_id ) = $self->display_xref;
+  return $self->type_name.': '.($disp_id||$self->stable_id);
+}
+
 sub type_name         { my $self = shift; return $self->species_defs->translate('Gene'); }
 sub gene              { my $self = shift; return $self->Obj;             }
 sub stable_id         { my $self = shift; return $self->Obj->stable_id;  }
