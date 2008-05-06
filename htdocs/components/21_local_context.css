@@ -1,0 +1,7 @@
+#local dl { overflow: hidden }
+#local dd { margin-bottom: 0 }
+#local dt { border-bottom: 1px solid #ccc; padding: 2px; }
+#local dd.notl dl, #local dd.notl { background: url(/i/line.gif) repeat-y }
+#local dd.notl dl { margin: 0px }
+#local dd.last { background: #fff url(/i/last.gif) no-repeat }
+#local dd.active { font-weight: bold; background-color: #eef }

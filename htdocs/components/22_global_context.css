@@ -1,0 +1,5 @@
+#global dt, #global dd { padding: 0 2px 2px 2px; margin:0; font-weight:normal; }
+
+#global dd.active { font-weight:bold;background:#eef; }
+#global dt.sep { border-top: 1px solid #ccc; }
+dl#global { overflow: hidden }

@@ -1,0 +1,6 @@
+.panel { border: 1px solid #ccc; padding; 0px; margin: 0.5em 0.5em 0.5em 16em;}
+.panel h2 { border-bottom: 1px solid #ccc; padding: 2px; margin: 0px; }
+.panel p  { margin: 0; padding: 0 }
+.panel div.content { padding: 2px; margin; 0px; }
+.panel dl { margin: 0; position: relative }
+.panel dt { clear: left; float: left; width: 8em }
