@@ -5,9 +5,87 @@ use EnsEMBL::Web::Document::Panel::SpreadSheet;
 use EnsEMBL::Web::Document::Panel::Information;
 use EnsEMBL::Web::Document::Panel::Image;
 use Data::Dumper;
-use EnsEMBL::Web::Configuration;
 
-@EnsEMBL::Web::Configuration::Transcript::ISA = qw( EnsEMBL::Web::Configuration );
+use base qw(EnsEMBL::Web::Configuration);
+
+sub set_default_action {
+  my $self = shift;
+  $self->{_data}{default} = 'Structure';
+}
+
+sub local_context { $_[0]->_local_context }
+
+sub global_context {
+  my $self = shift;
+  return $self->_global_context('Transcript');
+}
+
+sub context_panel {
+  my $self   = shift;
+  my $obj    = $self->{'object'};
+  my $panel  = $self->new_panel( 'Summary',
+    'code'     => 'summary_panel',
+    'object'   => $obj,
+    'caption'  => "CAPTION:". $obj->core_objects->transcript_long_caption
+  );
+  $panel->add_component( qw(gene_summary EnsEMBL::Web::Component::Gene::Summary) );
+  $self->add_panel( $panel );
+}
+
+sub content_panel {
+  my $self   = shift;
+  my $obj    = $self->{'object'};
+
+  my $action = $self->_get_valid_action( $ENV{'ENSEMBL_ACTION'} );
+  warn ".... $action ....";
+  my $node          = $self->get_node( $action );
+  my $previous_node = $node->previous_leaf      ;
+  my $next_node     = $node->next_leaf          ;
+
+  my $panel = $self->new_panel( 'Navigation',
+    'object'   => $obj,
+    'code'     => 'main',
+    'current'  => { 'caption' => $node->data->{'name'} },
+    'previous' => { 'caption' => $node->previous_leaf ? $node->previous_leaf->data->{'name'} : undef, 'url' => 'previous' } ,
+    'next'     => { 'caption' => $node->next_leaf     ? $node->next_leaf->data->{'name'}     : undef, 'url' => 'next' }
+  );
+  if( $panel ) {
+    $panel->add_components( @{$node->data->{'components'}} );
+    $self->add_panel( $panel );
+  }
+}
+
+sub populate_tree {
+  my $self = shift;
+
+  $self->create_node( 'Structure', "Transcript Neighbourhood",
+    [qw(neighbourhood EnsEMBL::Web::Component::Gene::transcript_neighbourhood)],
+    { 'availability' => 1}
+  );
+
+}
+
+# Transcript: BRCA2_HUMAN
+# # Summary
+# # Exons (28)
+# # Peptide product
+# # Similarity matches (32)
+# # Oligos (25)
+# # GO terms (5)
+# # Supporting Evidence (40)
+# # Variational genomics (123)
+# #   Population comparison
+# # Marked-up sequence
+# #   cDNA (1,853 bps)
+# #   Protein (589 aas)
+# # ID History
+# # Domain information (6)
+# # Protein families (1)
+# # Export data
+# #   Export features
+# #   Export sequence
+# #   Jump to BioMart
+
 
 ## Function to configure transview
 

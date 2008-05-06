@@ -2,13 +2,130 @@ package EnsEMBL::Web::Configuration::Gene;
 
 use strict;
 
-use EnsEMBL::Web::Configuration;
 use EnsEMBL::Web::Tools::Ajax;
 use EnsEMBL::Web::RegObj;
 
-our @ISA = qw( EnsEMBL::Web::Configuration );
+use base qw( EnsEMBL::Web::Configuration );
 
 ## Function to configure gene snp view
+
+sub set_default_action {
+  my $self = shift;
+  $self->{_data}{default} = 'Structure';
+}
+
+sub local_context  { $_[0]->_local_context; }
+
+sub populate_tree {
+  my $self = shift;
+#  my $hash = $obj->get_summary_counts;
+
+  $self->create_node( 'Structure', "Transcripts ([[counts::transcripts]])",
+    [qw(transcripts EnsEMBL::Web::Component::Gene::transcript_image)],
+    { 'availability' => 1 }
+  );
+  $self->create_node( 'Splice', "Exons ([[counts::exons]])",
+    [qw(menu        EnsEMBL::Web::Component::Gene::genespliceview_menu
+       image       EnsEMBL::Web::Component::Gene::genespliceview)],
+    { 'availability' => 1 }
+  );
+
+##----------------------------------------------------------------------
+## Compara menu: alignments/orthologs/paralogs/trees
+##----------------------------------------------------------------------
+## Compara menu: alignments/orthologs/paralogs/trees
+  my $compara_menu = $self->create_submenu( 'Compara', 'Comparative genomics' );
+  $compara_menu->append( $self->create_node( 'Compara_Alignments', "Genomic alignments ([[counts::alignments]])",
+    [qw(alignments  EnsEMBL::Web::Component::Gene::alignments)],
+    { 'availability' => 'database:compara' }
+  ));
+## Compara tree
+  $compara_menu->append( $self->create_node( 'Compara_Ortholog',   "Orthologues ([[counts::orthologs]])",
+    [qw(orthologues EnsEMBL::Web::Component::Gene::orthologues)],
+    { 'availability' => 'database:compara' }
+  ));
+  $compara_menu->append( $self->create_node( 'Compara_Paralog',    "Paralogues ([[counts::paralogs]])",
+    [qw(paralogues  EnsEMBL::Web::Component::Gene::paralogues)],
+    { 'availability' => 'database:compara' }
+  ));
+
+  $compara_menu->append( $self->create_node( 'Compara_Tree',       "Gene Trees",
+    [qw(menu        EnsEMBL::Web::Component::Gene::genetreeview_menu
+      image        EnsEMBL::Web::Component::Gene::genetreeview)],
+    { 'availability' => 'database:compara' }
+  ));
+  my $user_menu = $self->create_submenu( 'User', 'User data' );
+  $user_menu->append( $self->create_node( 'User_Notes', "User's gene based annotation",
+    [qw(manual_annotation EnsEMBL::Web::Component::Gene::Annotation)],
+    { 'availability' => 1 }
+  ));
+## DAS tree
+  $self->create_node( 'Evidence',   'Supporting evidence', [qw()] );
+  $self->create_node( 'Regulation', 'Regulation', 
+    [qw(regulation EnsEMBL::Web::Component::Gene::regulation_factor)],
+    { 'availability' => 'database:funcgen' }
+  );
+## Variation tree
+  my $var_menu = $self->create_submenu( 'Variation', 'Variational genomics' );
+  $var_menu->append($self->create_node( 'Variation_Gene',  'Gene variations',
+    [qw(menu        EnsEMBL::Web::Component::Gene::genesnpview_menu
+        image       EnsEMBL::Web::Component::Gene::genesnpview)],
+    { 'availability' => 'database:variation' }
+  ));
+  $self->create_node( 'Idhistory', 'ID history', [qw()] );
+  my $exp_menu = $self->create_submenu( 'Export', 'Export data' );
+  $exp_menu->append( $self->create_node( 'Export_Features',  'Features', [qw()] ) );
+}
+
+sub global_context {
+  my $self = shift;
+  return $self->_global_context('Gene');
+}
+
+#sub local_context {
+#  my $self = shift;
+#  my $obj      = $self->{object};
+#  my $species  = $obj->species;
+#  my $q_string = sprintf( "db=%s;gene=%s" , $obj->get_db , $obj->stable_id );
+#  my $flag     = "local#";
+#  $self->add_block( $flag, 'bulleted', 'Gene: '.$obj->stable_id );
+#  my $P = 0;
+#}
+
+sub context_panel {
+  my $self   = shift;
+  my $obj    = $self->{'object'};
+  my $panel  = $self->new_panel( 'Summary', 
+    'code'     => 'summary_panel',
+    'object'   => $obj,
+    'caption'  => "CAPTION:". $obj->core_objects->gene_long_caption
+  );
+  $panel->add_component( qw(gene_summary EnsEMBL::Web::Component::Gene::Summary) );
+  $self->add_panel( $panel );
+}
+
+sub content_panel {
+  my $self   = shift;
+  my $obj    = $self->{'object'};
+
+  my $action = $self->_get_valid_action( $ENV{'ENSEMBL_ACTION'} );
+  warn ".... $action ....";
+  my $node          = $self->get_node( $action );
+  my $previous_node = $node->previous_leaf      ;
+  my $next_node     = $node->next_leaf          ;
+
+  my $panel = $self->new_panel( 'Navigation', 
+    'object'   => $obj,
+    'code'     => 'main',
+    'current'  => { 'caption' => $node->data->{'name'} },
+    'previous' => { 'caption' => $node->previous_leaf ? $node->previous_leaf->data->{'name'} : undef, 'url' => 'previous' } ,
+    'next'     => { 'caption' => $node->next_leaf     ? $node->next_leaf->data->{'name'}     : undef, 'url' => 'next' }
+  );
+  if( $panel ) {
+    $panel->add_components( @{$node->data->{'components'}} );
+    $self->add_panel( $panel );
+  }
+}
 
 sub genesnpview {
   my $self   = shift;

@@ -2,21 +2,132 @@ package EnsEMBL::Web::Configuration;
 
 use strict;
 use EnsEMBL::Web::Document::Panel;
-use EnsEMBL::Web::Root;
+use base qw(EnsEMBL::Web::Root);
 our @ISA = qw(EnsEMBL::Web::Root);
+
 use POSIX qw(floor ceil);
 use warnings;
 
 sub new {
-  my( $class, $page, $object, $flag ) = @_;
+  my( $class, $page, $object, $flag, $common_conf ) = @_;
   my $self = {
-    'page'   => $page,
-    'object' => $object,
-    'flag '  => $flag || '',
-    'cl'     => {}
+    'page'    => $page,
+    'object'  => $object,
+    'flag '   => $flag || '',
+    'cl'      => {},
+    '_data'   => $common_conf
   };
   bless $self, $class;
+  warn "... $self ...";
+  $self->populate_tree;
+  warn "TREE POPULATED";
+  $self->set_default_action;
   return $self;
+}
+
+sub tree {
+  my $self = shift;
+  return $self->{_data}{tree};
+}
+
+sub set_action {
+  my $self = shift;
+  $self->{_data}{'action'} = $self->_get_valid_action(shift);
+}
+
+sub default_action {
+### Default action for feature type...
+  my $self = shift;
+  unless( $self->{_data}{'default'} ) {
+    ($self->{_data}{'default'}) = $self->{_data}{tree}->leaf_codes;
+  }
+  return $self->{_data}{'default'};
+}
+
+sub _get_valid_action {
+  my $self = shift;
+  my $action = shift;
+  my %hash = map { $_ => 1 } $self->{_data}{tree}->leaf_codes;
+  return exists( $hash{$action} ) ? $action : $self->default_action;
+}
+
+sub _global_context {
+  my $self = shift;
+  my $type = shift;
+
+  my @data = (
+    ['gene',      'Gene',       $self->{object}->core_objects->gene_short_caption       ],
+    ['transcript','Transcript', $self->{object}->core_objects->transcript_short_caption ],
+    ['location',  'Location',   $self->{object}->core_objects->location_short_caption   ]
+  );
+  my $qs = $self->query_string;
+  foreach my $row ( @data ) {
+    my $url   = '';
+    my @class = ();
+    if( $row->[2] eq '-' ) {
+      push @class, 'disabled';
+    } else {
+      $url   = "/$ENV{ENSEMBL_SPECIES}/$row->[1]/Summary?$qs";
+    }
+    if( $row->[1] eq $type ) {
+      push @class, 'active';
+    }
+    $self->{'page'}->global_context->add_entry( 
+      'caption' => $row->[2],
+      'url'     => $url,
+      'class'   => (join ' ',@class),
+    );
+  }
+}
+
+sub _local_context {
+  my $self = shift;
+  warn "CALLING LOCAL CONTEXT...............";
+  my $hash = {}; #  $self->obj->get_summary_counts;
+  warn "Local context tree....".$self->{_data}{'tree'};
+  $self->{'page'}->local_context->tree(    $self->{_data}{'tree'}    );
+  $self->{'page'}->local_context->active(  $self->{_data}{'action'}  );
+  $self->{'page'}->local_context->caption( $self->{object}->caption );
+}
+
+sub get_node { 
+  my ( $self, $code ) = @_;
+  return $self->{_data}{tree}->get_node( $code );
+}
+
+sub species { return $ENV{'ENSEMBL_SPECIES'}; }
+sub type    { return $ENV{'ENSEMBL_TYPE'}; }
+sub query_string {
+  my $self = shift;
+  my %parameters = %{$self->{object}->core_objects->{parameters}},@_;
+  my @S = ();
+  foreach (sort keys %parameters) {
+    push @S, "$_=$parameters{$_}"; 
+  }
+  return join ';', @S;
+}
+
+sub create_node {
+  my ( $self, $code, $caption, $components, $options ) = @_;
+  
+  my $details = {
+    'caption'    => $caption,
+    'components' => $components,
+    'url'        => '/'.$self->species.'/'.$self->type."/$code?".$self->query_string
+  };
+  foreach ( keys %{$options||{}} ) {
+    $details->{$_} = $options->{$_};
+  }
+  return $self->tree->create_node( $code, $details );
+}
+
+sub create_submenu {
+  my ( $self, $code, $caption, $options ) = @_;
+  my $details = { 'caption'    => $caption, 'url' => '' };
+  foreach ( keys %{$options||{}} ) {
+    $details->{$_} = $options->{$_};
+  }
+  return $self->tree->create_node( $code, $details );
 }
 
 sub update_configs_from_parameter {
@@ -123,7 +234,9 @@ sub new_panel {
   eval {
     $panel = $module_name->new( 'object' => $self->{'object'}, %params );
   };
+  warn $panel;
   return $panel unless $@;
+  warn ":::: arg!";
   my $error = "<pre>".$self->_format_error($@)."</pre>";
   $self->{page}->content->add_panel(
     new EnsEMBL::Web::Document::Panel(
