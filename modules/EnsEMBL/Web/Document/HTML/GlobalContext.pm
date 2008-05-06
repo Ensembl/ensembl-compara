@@ -9,36 +9,32 @@ use EnsEMBL::Web::Document::HTML;
 our @ISA = qw(EnsEMBL::Web::Document::HTML);
 
 
-sub add_link {
+sub add_entry {
 ### a
   my $self = shift;
-  push @{$self->{'_links'}}, {@_};
+  push @{$self->{'_entries'}}, {@_};
 }
 
-sub links {
+sub entries {
 ### a
   my $self = shift;
-  return $self->{'_links'}||[];
+  return $self->{'_entries'}||[];
 }
 
 sub render {
   my $self = shift;
-  $self->print( '<div id="nav">
+  $self->print( '
     <dl id="global">' );
-  foreach my $link ( @{$self->links} ) {
+  foreach my $entry ( @{$self->entries} ) {
+    my $name = $entry->{caption};
+       $name = CGI::escapeHTML( $name );
+    if( $entry->{'url'} ) {
+      $name = sprintf( '<a href="%s">%s</a>', $entry->{'url'}, $name );
+    }
     $self->printf( '
-      <dd%s><a href="%s">%s</a></dd>',
-      $link->{'current'} ? ' class="current"' : '',
-      CGI::escapeHTML( $link->{'URL'} ),
-      CGI::escapeHTML( $link->{'txt'} )
-    );
+      <dd%s>%s</dd>', $entry->{'class'} ? qq( class="$entry->{class}") : '', $name );
   }
-=pod
-  $self->print('
-      <dt class="sep"><a href="#">Configure page</a></dt>
-      <dt><a href="#">User data</a></dt>
-    </dl>' );
-=cut
+  $self->print( '</dl>' );
 }
 
 return 1;
