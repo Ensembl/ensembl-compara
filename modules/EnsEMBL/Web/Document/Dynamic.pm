@@ -71,15 +71,15 @@ sub _initialize_HTML {
   );
     #iehover    EnsEMBL::Web::Document::HTML::IEHoverHack
   $self->add_body_elements qw(
-    logo           EnsEMBL::Web::Document::HTML::Logo
-    search_box     EnsEMBL::Web::Document::HTML::SearchBox
-    breadcrumbs    EnsEMBL::Web::Document::HTML::BreadCrumbs
-    tools          EnsEMBL::Web::Document::HTML::ToolLinks
-    content        EnsEMBL::Web::Document::HTML::Content
-    global_context EnsEMBL::Web::Document::HTML::GlobalContext
-    local_context  EnsEMBL::Web::Document::HTML::LocalContext
-    copyright      EnsEMBL::Web::Document::HTML::Copyright
-    footerlinks    EnsEMBL::Web::Document::HTML::FooterLinks
+    logo            EnsEMBL::Web::Document::HTML::Logo
+    search_box      EnsEMBL::Web::Document::HTML::SearchBox
+    breadcrumbs     EnsEMBL::Web::Document::HTML::BreadCrumbs
+    tools           EnsEMBL::Web::Document::HTML::ToolLinks
+    content         EnsEMBL::Web::Document::HTML::Content
+    global_context  EnsEMBL::Web::Document::HTML::GlobalContext
+    local_context   EnsEMBL::Web::Document::HTML::LocalContext
+    copyright       EnsEMBL::Web::Document::HTML::Copyright
+    footerlinks     EnsEMBL::Web::Document::HTML::FooterLinks
     body_javascript EnsEMBL::Web::Document::HTML::BodyJavascript
   );
 

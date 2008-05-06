@@ -345,20 +345,20 @@ sub render {
 </table>
 <div style="display:none" id="conf"></div>
 <div id="main">
+  [[content]]
+  <div id="nav">
     [[global_context]]
     [[local_context]]
-    [[content]]
+  </div>
 </div>
 <div id="footer">
   [[copyright]]
   [[footerlinks]]
 </div>
 [[body_javascript]]
+<div id="debug"></div>
 ';
 
-=pod
-<div id="debug"></div>
-=cut
 
 
   while( $X =~ s/(.*?)\[\[([\w:]+)\]\]//sm ) {
