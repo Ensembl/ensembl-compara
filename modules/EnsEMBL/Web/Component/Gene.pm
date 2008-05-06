@@ -17,6 +17,7 @@ use Data::Dumper;
 use Bio::AlignIO;
 use IO::String;
 
+our %do_not_copy = map {$_,1} qw(species type view db transcript gene);
 
 sub markup_options {
   my( $panel, $object ) =@_;
@@ -24,6 +25,97 @@ sub markup_options {
   return 1;
 }
 
+sub Summary {
+  my( $panel, $gene ) =@_;
+  $panel->add_description( "DESCRIPTION" );
+  $panel->add_row( 'Location', 'location' );
+  $panel->add_row( 'Method',   'method'   );
+  $panel->add_row( 'Location', 'location' );
+}
+
+sub URL {
+  my( $object, $parameters ) = @_;
+  my $extra_parameters = '';
+  foreach ( keys %$parameters ) {
+    $extra_parameters .= sprintf( ';%s=%s',
+      CGI::escape( $_ ),
+      CGI::escape( $parameters->{$_} )
+    ) unless $do_not_copy{$_};
+  }
+  my( $type, $stable_id ) = exists( $parameters->{'transcript'} ) ? ('transcript',$parameters->{'transcript'})
+                          : exists( $parameters->{'gene'}       ) ? ('gene',      $parameters->{'gene'})
+                          : exists( $object->{'transcript'}     ) ? ('transcript',$object->{'transcript'})
+                          :                                         ('gene',      $object->stable_id)
+                          ;
+  return sprintf( '%s%s/%s/%s%s?db=%s;%s=%s%s',
+    $ENSEMBL_WEB_REGISTRY->species_defs->ENSEMBL_WEB_ROOT,
+    exists( $parameters->{'species'} ) ? $parameters->{'species'} : $object->species,
+    exists( $parameters->{'type'   } ) ? $parameters->{'type'}    : $ENV{'ENSEMBL_TYPE'}||'Gene',
+    exists( $parameters->{'view'   } ) ? $parameters->{'view'}    : $object->script,
+    exists( $parameters->{'db'     } ) ? $parameters->{'db'}      : $object->get_db,
+    $type,
+    $stable_id,
+    $extra_parameters
+  );
+}
+
+sub transcript_links {
+  my( $panel, $gene ) = @_;
+  my $label    = 'Transcripts';
+  my $gene_stable_id = $gene->stable_id;
+  my $db = $gene->get_db() ;
+  my $status   = 'status_gene_transcripts';
+  my $URL = _flip_URL( $gene, $status );
+  if( $gene->param( $status ) eq 'off' ) { $panel->add_row( $label, '', "$URL=on" ); return 0; }
+
+##----------------------------------------------------------------##
+## This panel has two halves...                                   ##
+## ... the top is a table of all the transcripts in the gene ...  ##
+##----------------------------------------------------------------##
+
+  my $rows = '';
+  my @trans = sort { $a->stable_id cmp $b->stable_id } @{$gene->get_all_transcripts()};
+  my $extra = @trans>17?'<p><strong>A large number of transcripts have been returned for this gene. To reduce render time for this page the protein and transcript  information will not be displayed. To view this information please follow the transview and protview links below. </strong></p>':'';
+  foreach my $transcript ( @trans ) {
+    $rows .= qq(\n  <tr>\n);
+        if( $transcript->display_xref ) {
+      my ($trans_display_id, $db_name, $ext_id) = $transcript->display_xref();
+      if( $ext_id ) {
+        $trans_display_id = $gene->get_ExtURL_link( $trans_display_id, $db_name, $ext_id );
+      }
+      $rows .= "<td>$trans_display_id</td>";
+    } else {
+      $rows.= "<td>novel transcript</td>";
+    }
+        my $trans_stable_id = $transcript->stable_id;
+#       $rows .= qq(<td><a href="$trans_stable_id">$trans_stable_id</a></td>);
+    if( $transcript->translation_object ) {
+      my $pep_stable_id = $transcript->translation_object->stable_id;
+      $rows .= "<td>$pep_stable_id</td>";
+    } else {
+      $rows .= "<td>no translation</td>";
+    }
+    $rows .= sprintf '
+    <td>[<a href="%s">Transcript&nbsp;info</a>]</td>', $gene->URL( 'script' => 'transview', 'db' => $db, 'transcript' => $trans_stable_id );
+    $rows .= sprintf '
+    <td>[<a href="%s">Exon&nbsp;info</a>]</td>', $gene->URL( 'script' => 'exonview', 'db' => $db, 'transcript' => $trans_stable_id );
+    if( $transcript->translation_object ) {
+      my $pep_stable_id = $transcript->translation_object->stable_id;
+      $rows .= sprintf '
+    <td>[<a href="%s">Peptide&nbsp;info</a>]</td>', $gene->URL( 'script' => 'protview', 'db' => $db, 'peptide' => $pep_stable_id );
+    }
+    $rows .= "\n  </tr>";
+  }
+  $panel->add_row( $label,
+     qq(<table style="width:100%">$rows</table>\n)
+  );
+}
+
+sub markup_options {
+  my( $panel, $object ) =@_;
+  $panel->add_row( 'Markup options', "<div>@{[ $panel->form( 'markup_options' )->render ]}</div>" );
+  return 1;
+}
 
 sub markup_options_form {
   my( $panel, $object ) = @_;
@@ -991,15 +1083,9 @@ paralogues with BioMart to see more.)</p>
               <td>$orthologue_dnds_ratio</td>
               <td>$last_col</td>
             </tr>));
-<<<<<<< Gene.pm
       }
       if( $rowspan > 1) {
         $html .= qq(<tr><td>&nbsp;</td><td>&nbsp;</td><td><a href="$mcv_species">MultiContigView showing all $species orthologues</a></td></tr>); 
-=======
-      }
-      if( $rowspan > 1) {
-        $html .= qq(<tr><td>&nbsp;</td><td>&nbsp;</td><td><a href="$mcv_species">MultiContigView showing all $species orthologues</a></td></tr>);
->>>>>>> 1.143
       }
     }
     $html .= qq(\n      </table>);
@@ -1301,13 +1387,13 @@ sub regulation_factors {
     my $seq = $feature_obj->seq();
     $seq =~ s/([\.\w]{60})/$1<br \/>/g;
 
-    my $analysis = $feature_obj->analysis->description;
-    $analysis =~ s/(https?:\/\/\S+[\w\/])/<a rel="external" href="$1">$1<\/a>/ig;
+    my $desc = $feature_obj->analysis->description;
+    $desc =~ s/(https?:\/\/\S+[\w\/])/<a rel="external" href="$1">$1<\/a>/ig;
     $row = {
       'Location'         => $position,
       'Reg. factor'      => $factor_link,
       'Reg. feature'     => "$feature_name",
-      'Feature analysis' =>  $analysis,
+      'Feature analysis' =>  $desc,
       'Length'           => $object->thousandify( length($seq) ).' bp',
             'Sequence'         => qq(<font face="courier" color="black">$seq</font>),
      };
