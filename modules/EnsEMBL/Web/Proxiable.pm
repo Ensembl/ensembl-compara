@@ -28,6 +28,11 @@ sub input {
   return $self->{'data'}{'_input'};
 }
 
+sub core_objects {
+  my $self = shift;
+  return $self->{'data'}{'_core_objects'};
+}
+
 sub _sanitize {
   my $T = shift;
   $T =~ s/<script(.*?)>/[script$1]/igsm;
@@ -38,7 +43,6 @@ sub _sanitize {
 sub param {
   my $self = shift;
   if( @_ ){ 
-    warn "... param @_ ...";
     my @T =  map { _sanitize($_) } $self->{'data'}{'_input'}->param(@_);
     if( @T ) {
       return wantarray ? @T : $T[0];
