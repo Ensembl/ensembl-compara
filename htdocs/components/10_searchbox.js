@@ -57,6 +57,9 @@
 
     __debug( 'Initializing search box' );
     if($('se_but')){                    // Only if search box exists...
+      $('se').parentNode.appendChild(
+        Builder.node( 'dl', {id: 'se_mn', style: 'display:none' } )
+      );
       Event.observe($('se_but'),'click',function(event){
         var box  = $('se');
         var menu = $('se_mn');

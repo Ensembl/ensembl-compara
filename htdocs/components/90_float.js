@@ -31,6 +31,7 @@
             el.src = '/i/'+(p.hasClassName('_closed')?'closed':'open')+'.gif';
           };
         }
+	dd_node.immediateDescendants().each(function(x) { if(x.tagName=='DL') { __float_highlight(x); } });
         N = dd_node;
       }
     });
@@ -41,13 +42,9 @@
   }
   function __init_ensembl_web_float_box() {
     __debug( 'setting up menu', 'success' );
-    if( $('nav') ) {
-      $$('#nav dl').each( function(dl_node) {
-        if( !dl_node.hasClassName( 'float-level1' ) ) {
-          __float_highlight( dl_node );
-        }
-      });
+    if( $('local') ) {
+      __float_highlight( $('local') );
     }
   }
   
-//  addLoadEvent( __init_ensembl_web_float_box );
+  addLoadEvent( __init_ensembl_web_float_box );

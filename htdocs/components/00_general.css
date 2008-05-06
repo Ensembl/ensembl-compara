@@ -1,6 +1,6 @@
 img { border: 0px }
-body { font-family: Luxi Sans, Geneva, Tahoma, Helvetica, Arial, sans-serif;
-    font-size:80%; color:#555; background-color:#fff;
+body { font-family: Luxi Sans, Geneva, Helvetica, Arial, sans-serif;
+    color:#555; background-color:#fff; font-size: 80%;
     padding: 0px; margin: 0px; border: 0px; } 
 /* #b1cdcb #c8daed */
 pre, code, kbd {font-family:Courier New, Courier, Monaco, monospace; }
@@ -17,7 +17,7 @@ p  { margin-top:0.6em; margin-bottom:0.6em; }
 .page { text-align: center; padding: 0.25em }
 
 /* Headings */
-h1 { font-size:1.5em; color:#666666; margin-top:0px: padding:0px;}
+h1 { font-size:1.5em; color:#666666; margin-top:0px; padding:0px;}
 h2 { font-size:1.2em; color:#993333; }
 h3 { font-size:1.1em; color:#000; }
 h4 { font-size:1em;   color:#000; }
