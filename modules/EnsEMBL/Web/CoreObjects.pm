@@ -139,7 +139,14 @@ sub _get_location_transcript_from_gene {
   my( $self ) = @_;
   return unless $self->gene;
 ## Replace this with canonical transcript calculation!!
-  $self->transcript( sort {$a->stable_id cmp $b->stable_id } @{$self->gene->get_all_Transcripts} );
+  foreach( @{$self->gene->get_all_Transcripts} ) {
+    warn $_->stable_id, ' - ', $_->display_xref->priority;
+  }
+  $self->transcript(
+    sort {
+      ( $b->display_xref ? $b->display_xref->priority : 0 ) <=> ( $a->display_xref ? $a->display_xref->priority : 0 ) ||
+      $a->stable_id cmp $b->stable_id
+    } @{$self->gene->get_all_Transcripts} );
   $self->location(   $self->gene->feature_Slice );
 }
 
@@ -173,7 +180,11 @@ sub _get_gene_transcript_from_location {
     }
   }
   if( @transcripts ) {
-    my($T) = sort { $a->[0]->stable_id cmp $b->[0]->stable_id || $a->[1]->stable_id cmp $b->[1]->stable_id } @transcripts;
+    my($T) = sort { 
+      ( $b->[1]->display_xref ? $b->[1]->display_xref->priority : 0 ) <=> ( $a->[1]->display_xref ? $a->[1]->display_xref->priority : 0 ) ||
+      $a->[0]->stable_id cmp $b->[0]->stable_id ||
+      $a->[1]->stable_id cmp $b->[1]->stable_id 
+    } @transcripts;
     $self->gene(       $T->[0] );
     $self->transcript( $T->[1] );
   } elsif( $nearest_transcript->[1] ) {
