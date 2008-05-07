@@ -1,6 +1,16 @@
-.panel { border: 1px solid #ccc; padding; 0px; margin: 0.5em 0.5em 0.5em 16em;}
-.panel h2 { border-bottom: 1px solid #ccc; padding: 2px; margin: 0px; }
+.panel { border: 1px solid #ccc; padding; 0; margin: 0.5em 0.5em 0.5em 16em;}
+.panel h2 { border-bottom: 1px solid #ccc; padding: 2px; margin: 0; }
+.panel h2 { border-bottom: 1px solid #ccc; padding: 2px; margin: 0; }
 .panel p  { margin: 0; padding: 0 }
-.panel div.content { padding: 2px; margin; 0px; }
+.panel div.content { padding: 2px; margin; 0; }
 .panel dl { margin: 0; position: relative }
 .panel dt { clear: left; float: left; width: 8em }
+.panel dd { margin: 0.5em 0 0 9em }
+
+.panel .nav-heading { border-bottom: 0; border-bottom:1px solid #ccc; }
+.panel .nav-heading h2 { border: 0; border-bottom: 0; padding 0; text-align: center; margin: 0}
+.left-button { float: left }
+.right-button { float: right; }
+.panel .nav-heading div { width: 16em; padding: 1px;  }
+.panel .nav-heading div a { height: 1.4em; overflow: hidden; text-decoration: none; margin: 2px; font-weight: bold; display:block; padding: 0 0.5em; text-align: center; background-color: #cdf; border:1px outset #cdf; font-size: 0.9em}
+
