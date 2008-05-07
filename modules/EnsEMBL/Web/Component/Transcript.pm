@@ -9,6 +9,8 @@ use strict;
 use warnings;
 use Exporter;
 use EnsEMBL::Web::Form;
+use CGI qw(escapeHTML);
+
 our @EXPORT = qw(_sort_similarity_links);  ##dunno if this is needed
 no warnings "uninitialized";
 
@@ -16,6 +18,60 @@ no warnings "uninitialized";
 ## No sub name        <- uses Gene's name
 ## No sub description <- uses Gene's description
 ## No sub location    <- uses Gene's location call
+
+sub Summary {
+  my( $panel, $object ) =@_;
+  my $ob = $object->Obj;
+
+  my $location_html = sprintf( '<a href="/%s/Location/View?r=%s:%s-%s">%s: %s-%s</a>%s',
+    $object->species,
+    $object->seq_region_name,
+    $object->seq_region_start,
+    $object->seq_region_end,
+    $object->neat_sr_name( $object->seq_region_type, $object->seq_region_name ),
+    $object->thousandify( $object->seq_region_start ),
+    $object->thousandify( $object->seq_region_end ),
+    $object->seq_region_strand < 0 ? ' reverse strand' : 'forward strand'
+  );
+
+  my $description = escapeHTML( $object->trans_description() );
+  if( $description ) {
+    $description =~ s/EC\s+([-*\d]+\.[-*\d]+\.[-*\d]+\.[-*\d]+)/EC_URL($object,$1)/e;
+    $description =~ s/\[\w+:([\w\/]+)\;\w+:(\w+)\]//g;
+    my($edb, $acc) = ($1, $2);
+    $description .= qq( <span class="small">@{[ $object->get_ExtURL_link("Source: $edb $acc",$edb, $acc) ]}</span>) if $acc;
+  }
+
+  $panel->add_description( $description );
+  $panel->add_row( 'Location', $location_html );
+#  if( $ob->can('analysis') ) {
+#    my $desc = $ob->analysis->description;
+#    $panel->add_row( 'Method',   escapeHTML( $desc ) ) if $desc;
+#  }
+  my $gene = $object->core_objects->gene;
+  my $transcripts = $gene->get_all_Transcripts;
+  warn @$transcripts;
+  my $count = @$transcripts;
+  if( $count > 1 ) {
+    my $html = '<table>';
+    foreach( sort { $a->stable_id cmp $b->stable_id } @$transcripts ) {
+      $html .= sprintf( '<tr><th>%s</th><td><a href="/%s/Transcript/%s?t=%s">%s</a></td></tr>',
+        $_->display_xref ? $_->display_xref->display_id : 'Novel',
+        $object->species,
+        $ENV{'ENSEMBL_ACTION'},
+        $_->stable_id,
+        $_->stable_id
+      );
+
+    }
+    $html .= '</table>';
+    $panel->add_row( 'Gene', sprintf(q(<div style="float:left">Is a product of gene %s - There are %d transcripts in this gene:</div> %s), $gene->stable_id, $count, $html ));
+  } else {
+    $panel->add_row( 'Gene', sprintf(q(<div style="float:left">Is the product of gene %s.</div>), $gene->stable_id ));
+
+  }
+#  $panel->add_row( 'Location', 'location' );
+}
 
 sub tn_external {
   my( $panel, $object ) = @_;

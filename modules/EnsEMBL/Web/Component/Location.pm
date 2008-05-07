@@ -32,6 +32,12 @@ no warnings "uninitialized";
 
 use POSIX qw(floor ceil);
 
+sub Summary {
+  my( $panel, $object ) =@_;
+  my $ob = $object->Obj;
+
+}
+
 =head2 name
 
   Arg [panel]:  EnsEMBL::Web::Document::Panel::Information;

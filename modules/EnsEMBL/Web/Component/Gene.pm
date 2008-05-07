@@ -16,6 +16,7 @@ use EnsEMBL::Web::Form;
 use Data::Dumper;
 use Bio::AlignIO;
 use IO::String;
+use CGI qw(escapeHTML);
 
 our %do_not_copy = map {$_,1} qw(species type view db transcript gene);
 
@@ -26,11 +27,52 @@ sub markup_options {
 }
 
 sub Summary {
-  my( $panel, $gene ) =@_;
-  $panel->add_description( "DESCRIPTION" );
-  $panel->add_row( 'Location', 'location' );
-  $panel->add_row( 'Method',   'method'   );
-  $panel->add_row( 'Location', 'location' );
+  my( $panel, $object ) =@_;
+  my $ob = $object->Obj;
+
+  my $location_html = sprintf( '<a href="/%s/Location/View?r=%s:%s-%s">%s: %s-%s</a>%s',
+    $object->species,
+    $object->seq_region_name,
+    $object->seq_region_start,
+    $object->seq_region_end,
+    $object->neat_sr_name( $object->coord_system, $object->seq_region_name ),
+    $object->thousandify( $object->seq_region_start ),
+    $object->thousandify( $object->seq_region_end ),
+    $object->seq_region_strand < 0 ? ' reverse strand' : 'forward strand'
+  );
+
+  my $description = escapeHTML( $object->gene_description() );
+  if( $description ) {
+    $description =~ s/EC\s+([-*\d]+\.[-*\d]+\.[-*\d]+\.[-*\d]+)/EC_URL($object,$1)/e;
+    $description =~ s/\[\w+:([\w\/]+)\;\w+:(\w+)\]//g;
+    my($edb, $acc) = ($1, $2);
+    $description .= qq( <span class="small">@{[ $object->get_ExtURL_link("Source: $edb $acc",$edb, $acc) ]}</span>) if $acc;
+  }
+
+  $panel->add_description( $description );
+  $panel->add_row( 'Location', $location_html );
+#  if( $ob->can('analysis') ) {
+#    my $desc = $ob->analysis->description;
+#    $panel->add_row( 'Method',   escapeHTML( $desc ) ) if $desc;
+#  }
+  my $transcripts = $ob->get_all_Transcripts;
+  warn @$transcripts;
+  my $count = @$transcripts;
+  if( $count > 1 ) {
+    my $html = '<table>';
+    foreach( sort { $a->stable_id cmp $b->stable_id } @$transcripts ) {
+      $html .= sprintf( '<tr><th>%s</th><td><a href="/%s/Transcript/Summary=%s">%s</a></td></tr>', 
+        $_->display_xref ? $_->display_xref->display_id : 'Novel',
+	$object->species,
+        $_->stable_id,
+        $_->stable_id
+      );
+	
+    }
+    $html .= '</table>';
+    $panel->add_row( 'Transcripts', sprintf(q(<div style="float:left">There are %d transcripts in this gene:</div> %s), $count, $html ));
+  }      
+#  $panel->add_row( 'Location', 'location' );
 }
 
 sub URL {
