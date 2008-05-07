@@ -350,30 +350,45 @@ sub render {
         return;
       }
     }
-    my $HTML = qq(\n<div class="panel">);
+    my $HTML = q(
+<div class="panel">);
     my $cap = '';
-    if( exists $self->{'status'} ) {
-      my $URL = sprintf '/%s/%s?%s=%s', $self->{'object'}->species, $self->{'object'}->script, $self->{'status'}, $status ne 'off' ? 'off' : 'on';
-      foreach my $K (keys %{$self->{'params'}||{}} ) {
-        $URL .= sprintf ';%s=%s', CGI::escape( $K ), CGI::escape( $self->{'params'}{$K} );
-      }
-      if( $status ne 'off' ) { 
-        $cap = sprintf '<a class="print_hide" href="%s" title="collapse panel"><img src="/img/dd_menus/min-box.gif" width="16" height="16" alt="-" /></a> ', $URL;
+    if( exists $self->{'previous'} || exists $self->{'next'} ) {
+      warn values %{ $self->{'previous'} };
+      warn values %{ $self->{'next'}     };
+      $HTML .= q(
+  <div class="nav-heading">
+    <div class="left-button">);
+      if( exists $self->{'previous'} && $self->{'previous'}{'url'} ) {
+        $HTML .= sprintf q(
+      <a href="%s">&laquo;&nbsp;%s</a>), $self->{'previous'}{'url'}, $self->{'previous'}{'caption'};
       } else {
-        $cap = sprintf '<a class="print_hide" href="%s" title="expand panel"><img src="/img/dd_menus/plus-box.gif" width="16" height="16" alt="+" /></a> ',    $URL;
+        $HTML .= q(
+      &nbsp;);
       }
-    }
-    $cap .= exists( $self->{'caption'} ) ? CGI::escapeHTML($self->parse($self->{'caption'})) : '';
-    if( $cap ) {
-      my $level = $first ? 'h2' : 'h2' ;
-      my $levelend = $level;
-      $level .= ' class="print_hide"' if $status eq 'off';
-      if( $self->{'link'} ) {
-        $HTML .= sprintf( qq(\n  <%s><a href="%s">%s</a></%s>), $level, $self->{'link'}, $cap, $levelend );
+      $HTML .= q(
+    </div>
+    <div class="right-button">);
+      if( exists $self->{'next'} && $self->{'next'}{'url'} ) {
+        $HTML .= sprintf q(
+      <a href="%s">%s&nbsp;&raquo;</a>), $self->{'next'}{'url'}, $self->{'next'}{'caption'};
       } else {
-        $HTML .= sprintf( qq(\n  <%s>%s</%s>), $level, $cap, $levelend )
+         $HTML .= q(
+      &nbsp;);
       }
+      $HTML .= q(
+    </div>);
+      if( exists $self->{'caption'} ) {
+        $HTML .= sprintf q(
+    <h2>%s</h2>), CGI::escapeHTML( $self->parse($self->{'caption'}) );
+      }
+      $HTML .= q(
+  </div>);
+    } elsif( exists $self->{'caption'} ) {
+      $HTML .= sprintf q(
+  <h2>%s</h2>), CGI::escapeHTML( $self->parse($self->{'caption'}));
     }
+    warn ".... $HTML .....";
     $self->renderer->print($HTML);
     if( $status ne 'off' ) {
       if( $self->{'cacheable'} eq 'yes' ) { ### We can cache this panel - so switch the renderer!!!
