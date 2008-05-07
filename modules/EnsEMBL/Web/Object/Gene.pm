@@ -4,12 +4,11 @@ use strict;
 use warnings;
 no warnings "uninitialized";
 
-use EnsEMBL::Web::Object;
 use EnsEMBL::Web::Proxy::Object;
 use EnsEMBL::Web::Proxy::Factory;
 use EnsEMBL::Web::Component::Transcript qw(_sort_similarity_links);
 
-@EnsEMBL::Web::Object::Gene::ISA = qw(EnsEMBL::Web::Object);
+use base qw(EnsEMBL::Web::Object);
 
 sub get_slice_object {
   my $self = shift;
