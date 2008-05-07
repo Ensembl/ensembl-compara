@@ -30,7 +30,7 @@ sub context_panel {
     'object'   => $obj,
     'caption'  => "CAPTION:". $obj->core_objects->location_long_caption
   );
-  $panel->add_component( qw(gene_summary EnsEMBL::Web::Component::Gene::Summary) );
+  $panel->add_component( qw(summary EnsEMBL::Web::Component::Location::Summary) );
   $self->add_panel( $panel );
 }
 
