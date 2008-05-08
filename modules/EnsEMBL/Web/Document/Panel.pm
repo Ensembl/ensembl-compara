@@ -351,42 +351,36 @@ sub render {
       }
     }
     my $HTML = q(
-<div class="panel">);
+    <div class="panel">);
     my $cap = '';
     if( exists $self->{'previous'} || exists $self->{'next'} ) {
       warn values %{ $self->{'previous'} };
       warn values %{ $self->{'next'}     };
       $HTML .= q(
-  <div class="nav-heading">
-    <div class="left-button">);
+      <div class="nav-heading">
+        <div class="left-button">);
       if( exists $self->{'previous'} && $self->{'previous'}{'url'} ) {
-        $HTML .= sprintf q(
-      <a href="%s">&laquo;&nbsp;%s</a>), $self->{'previous'}{'url'}, $self->{'previous'}{'caption'};
+        $HTML .= sprintf q(<a href="%s">&laquo;&nbsp;%s</a>), $self->{'previous'}{'url'}, $self->{'previous'}{'caption'};
       } else {
-        $HTML .= q(
-      &nbsp;);
+        $HTML .= q(&nbsp;);
       }
-      $HTML .= q(
-    </div>
-    <div class="right-button">);
+      $HTML .= q(</div>
+        <div class="right-button">);
       if( exists $self->{'next'} && $self->{'next'}{'url'} ) {
-        $HTML .= sprintf q(
-      <a href="%s">%s&nbsp;&raquo;</a>), $self->{'next'}{'url'}, $self->{'next'}{'caption'};
+        $HTML .= sprintf q(<a href="%s">%s&nbsp;&raquo;</a>), $self->{'next'}{'url'}, $self->{'next'}{'caption'};
       } else {
-         $HTML .= q(
-      &nbsp;);
+         $HTML .= q(&nbsp;);
       }
-      $HTML .= q(
-    </div>);
+      $HTML .= q(</div>);
       if( exists $self->{'caption'} ) {
         $HTML .= sprintf q(
-    <h2>%s</h2>), CGI::escapeHTML( $self->parse($self->{'caption'}) );
+        <h2>%s</h2>), CGI::escapeHTML( $self->parse($self->{'caption'}) );
       }
       $HTML .= q(
-  </div>);
+      </div>);
     } elsif( exists $self->{'caption'} ) {
       $HTML .= sprintf q(
-  <h2>%s</h2>), CGI::escapeHTML( $self->parse($self->{'caption'}));
+      <h2>%s</h2>), CGI::escapeHTML( $self->parse($self->{'caption'}));
     }
     warn ".... $HTML .....";
     $self->renderer->print($HTML);
@@ -411,7 +405,8 @@ sub render {
         }
       }
     }
-    $self->renderer->print( "\n  </div>" );
+    $self->renderer->print( q(
+    </div>) );
   }
 }
 
@@ -446,24 +441,30 @@ sub _content {
   my $self = shift;
   my $output = $self->content();
   return unless $output;
-  my $output = qq(\n    <div class="content">$output);
+  my $output = q(
+      <div class="content">$output);
   my $cap = exists( $self->{'caption'} ) ? CGI::escapeHTML($self->parse($self->{'caption'})) : '';
   if( $self->{'link'} ) {
-    $output .= sprintf( qq(\n   <div class="more"><a href="%s">more about %s ...</a></div>), $self->{'link'}, $cap );
+    $output .= sprintf( q(
+        <div class="more"><a href="%s">more about %s ...</a></div>), $self->{'link'}, $cap );
   }
-     $output .="\n    </div>";
+  $output .= q(
+      </div>);
   return $output;
 }
 
 sub _render_content {
   my $self = shift;
-  $self->renderer->print( qq(\n    <div class="content">));
+  $self->renderer->print( q(
+      <div class="content">));
   $self->content();
   my $cap = exists( $self->{'caption'} ) ? CGI::escapeHTML($self->parse($self->{'caption'})) : '';
   if( $self->{'link'} ) {
-    $self->renderer->printf( qq(\n   <div class="more"><a href="%s">more about %s ...</a></div>), $self->{'link'}, $cap );
+    $self->renderer->printf( q(
+        <div class="more"><a href="%s">more about %s ...</a></div>), $self->{'link'}, $cap );
   }
-  $self->renderer->print( "\n    </div>" );
+  $self->renderer->print( q(
+      </div>));
 }
 
 sub render_image {

@@ -2,6 +2,9 @@
 | Initialize the display of the float box...                              |
 ------------------------------------------------------------------------**/
 
+
+var FLOAT_HIGHLIGHT = 0;
+
   function __float_highlight( dl_node ) {
     var N=0;
     dl_node.immediateDescendants().each(function(dd_node) {
@@ -41,6 +44,8 @@
     }
   }
   function __init_ensembl_web_float_box() {
+    if(FLOAT_HIGHLIGHT) return;
+    FLOAT_HIGHLIGHT = 1;
     __debug( 'setting up menu', 'success' );
     if( $('local') ) {
       __float_highlight( $('local') );

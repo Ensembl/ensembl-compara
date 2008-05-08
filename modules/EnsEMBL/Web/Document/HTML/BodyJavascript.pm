@@ -22,7 +22,11 @@ sub add_script {
   $_[0]->{'scripts'}.=qq(  <script type="text/javascript">\n$_[1]</script>\n);
 }
 
-sub render { $_[0]->print( $_[0]->{'scripts'} ); } 
+sub render {
+  $_[0]->print( $_[0]->{'scripts'} );
+  $_[0]->print( q(  <div id="debug"></div>
+  <div id="conf"></div>)); 
+} 
 1;
 
 

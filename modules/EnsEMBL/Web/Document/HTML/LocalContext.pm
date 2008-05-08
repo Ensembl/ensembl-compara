@@ -45,13 +45,20 @@ sub render {
   my $active_l    = $active_node->left;
   my $active_r    = $active_node->right;
   my $counts = {};
-  $self->printf( q(<dl id="local">
-  <dt>%s</dt>), $self->caption );
+  $self->printf( q(
+      <dl id="local">
+        <dt>%s</dt>), $self->caption );
+  my $pad = '';
   foreach my $node ( $t->nodes ) {
     $r = $node->right if $node->right > $r;
-    $self->print( "
-</dl>
-  </dd>\n" x ($node->left - $previous_node->right-1) ) if $previous_node && $node->left > $previous_node->right;
+    if( $previous_node && $node->left > $previous_node->right ) {
+      foreach(1..($node->left - $previous_node->right-1)) {
+        $self->print( "
+$pad      </dl>
+$pad    </dd>" );
+        substr($pad,0,4)='';
+      }
+    }
     my $name = $node->data->{caption};
        $name =~ s/\[\[counts::(\w+)\]\]/$counts->{$1}/eg;
        $name = CGI::escapeHTML( $name );
@@ -59,21 +66,24 @@ sub render {
       $name = sprintf( '<a href="%s">%s</a>', $node->data->{'url'}, $name );
     }
     if( $node->is_leaf ) {
-      $self->printf( q(
-  <dd%s>%s</dd>), $node->key eq $active ? ' class="active"' :'', $name );
+      $self->printf( qq(
+$pad        <dd%s>%s</dd>), $node->key eq $active ? ' class="active"' :'', $name );
     } else {
-      $self->printf( q(
-  <dd class="%s">%s
-<dl>), $node->left <= $active_l && $node->right >= $active_r ? 'open' : 'closed', $name );
+      $self->printf( qq(
+$pad        <dd class="%s">%s
+$pad          <dl>), $node->left <= $active_l && $node->right >= $active_r ? 'open' : 'closed', $name );
+      $pad .= '    ';
     }
     $previous_node = $node;
   }
+  foreach(($previous_node->right+1)..$r) {
+    $self->print( qq(
+$pad      </dl>
+$pad    </dd>) );
+    substr($pad,0,4)='';
+  }
   $self->print( q(
-</dl>
-  </dd>) x ($r-$previous_node->right)
-  ); 
-  $self->print( q(
-</dl>) );
+      </dl>) );
 }
 
 return 1;

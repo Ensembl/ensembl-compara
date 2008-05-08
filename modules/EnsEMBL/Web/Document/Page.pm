@@ -333,33 +333,31 @@ sub render {
   $self->_render_head_and_body_tag;
   #  my $X = $self->{'page_template'};
   my $X = '
-<table id="mh">
-  <tr>
-    <td id="mh_lo">[[logo]]</td>
-    <td id="mh_search">[[search_box]]</td>
-  </tr>
-  <tr>
-    <td id="mh_bc">[[breadcrumbs]]</td>
-    <td id="mh_lnk">[[tools]]</td>
-  </tr>
-</table>
-<div style="display:none" id="conf"></div>
-<div id="main">
-  [[content]]
-  <div id="nav">
-    [[global_context]]
-    [[local_context]]
+  <table id="mh">
+    <tr>
+      <td id="mh_lo">[[logo]]</td>
+      <td id="mh_search">[[search_box]]
+      </td>
+    </tr>
+    <tr>
+      <td id="mh_bc">[[breadcrumbs]]</td>
+      <td id="mh_lnk">[[tools]]
+      </td>
+    </tr>
+  </table>
+  <div id="main">
+
+<!-- Start of real content --> 
+    [[content]]
+
+<!-- End of real content -->
+
+    <div id="nav">[[global_context]][[local_context]]
+    </div>
   </div>
-</div>
-<div id="footer">
-  [[copyright]]
-  [[footerlinks]]
-</div>
-[[body_javascript]]
-<div id="debug"></div>
-';
-
-
+  <div id="footer">[[copyright]][[footerlinks]]
+  </div>
+[[body_javascript]]';
 
   while( $X =~ s/(.*?)\[\[([\w:]+)\]\]//sm ) {
     my($start,$page_element) = ($1,$2);

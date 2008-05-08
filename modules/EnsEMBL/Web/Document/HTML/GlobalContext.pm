@@ -24,7 +24,7 @@ sub entries {
 sub render {
   my $self = shift;
   $self->print( '
-    <dl id="global">' );
+      <dl id="global">' );
   foreach my $entry ( @{$self->entries} ) {
     my $name = $entry->{caption};
        $name = CGI::escapeHTML( $name );
@@ -32,9 +32,10 @@ sub render {
       $name = sprintf( '<a href="%s">%s</a>', $entry->{'url'}, $name );
     }
     $self->printf( '
-      <dd%s>%s</dd>', $entry->{'class'} ? qq( class="$entry->{class}") : '', $name );
+        <dd%s>%s</dd>', $entry->{'class'} ? qq( class="$entry->{class}") : '', $name );
   }
-  $self->print( '</dl>' );
+  $self->print( '
+      </dl>' );
 }
 
 return 1;
