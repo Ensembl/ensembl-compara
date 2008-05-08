@@ -15,16 +15,15 @@ use Class::Std;
 
 {
 
-my %Filter :ATTR(:get<filter> :set<filter>);
+my %Filters :ATTR(:get<filters> :set<filters>);
 my %Action :ATTR(:get<action> :set<action>);
 my %Message  :ATTR(:get<message> :set<message>);
 my %SpeciesDefs  :ATTR(:get<species_defs> :set<species_defs>);
 
 sub BUILD {
   my ($self, $ident, $args) = @_;
-  $self->set_filter(EnsEMBL::Web::Controller::Command::Filter->new);
   if ($EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY) {
-    $self->set_species_defs($EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->species_defs);
+    $self->set_species_defs($ENSEMBL_WEB_REGISTRY->species_defs);
   }
 }
 
@@ -49,23 +48,31 @@ sub render_message {
   }
 }
 
-sub filters {
-  my $self = shift;
-  return $self->get_filter;
-}
-
 sub add_filter {
   my ($self, $class, $params) = @_;
   if (EnsEMBL::Web::Root::dynamic_use(undef, $class)) {
     my $parameters = $params || {};
     my $filter = $class->new($parameters);
-    if ($filter->isa('EnsEMBL::Web::Controller::Command::Filter')) {
-      $filter->inherit($self->get_filter);
-      $self->set_filter($filter);
-    }
+    my $filters = $self->get_filters || [];
+    push @$filters, $filter;
+    $self->set_filters($filters);
   } else {
-    warn "Failed to add filter: must be of class Filter.";;
+    warn "Failed to add filter.";;
   }
+}
+
+sub not_allowed {
+  ### Loops through array of filters and returns error message 
+  ### for the first one which fails
+  my $self = shift;
+  my $filters = $self->get_filters || [];
+  foreach my $f (@$filters) {
+    if (!$f->allow) {
+      $self->set_message($f->message);
+      return $f->message;
+    }
+  }
+  return undef;
 }
 
 sub add_symbol_lookup {

@@ -2,8 +2,12 @@ package EnsEMBL::Web::Controller::Command::User::ResetFavourites;
 
 use strict;
 use warnings;
-use CGI;
+
 use Class::Std;
+use CGI;
+
+use EnsEMBL::Web::Data::SpeciesList;
+use EnsEMBL::Web::Document::HTML::SpeciesList;
 
 use base 'EnsEMBL::Web::Controller::Command::User';
 
@@ -19,18 +23,21 @@ sub BUILD {
 sub render {
   my ($self, $action) = @_;
   $self->set_action($action);
-  if ($self->filters->allow) {
-    $self->render_page;
-  } else {
+  if ($self->not_allowed) {
     $self->render_message;
+  } else {
+    $self->render_page;
   }
 }
 
 sub render_page {
   my $self = shift;
   my $user = $self->filters->user;
-  $user->specieslists->delete_all;
-
+  warn "RENDERING PAGE for RESET";
+  foreach my $list (@{ $user->specieslists }) {
+    warn "LIST: " . $list->id;
+    $list->destroy;
+  }
   $self->filters->redirect('/index.html');
 }
 

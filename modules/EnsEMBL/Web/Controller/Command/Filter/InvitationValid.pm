@@ -3,7 +3,7 @@ package EnsEMBL::Web::Controller::Command::Filter::InvitationValid;
 use strict;
 use warnings;
 
-use EnsEMBL::Web::Data::Group;
+use EnsEMBL::Web::Data::Invite;
 use EnsEMBL::Web::RegObj;
 
 our @ISA = qw(EnsEMBL::Web::Controller::Command::Filter);
@@ -15,7 +15,7 @@ our @ISA = qw(EnsEMBL::Web::Controller::Command::Filter);
 sub allow {
   my ($self) = @_;
   my $cgi = new CGI;
-  my $invitation = EnsEMBL::Web::Data::Record::Invite::Group->new($cgi->param('id'));
+  my $invitation = EnsEMBL::Web::Data::Invite->new({id => $cgi->param('id')});
   if ($invitation->code eq $cgi->param('code')) {
     return 1;
   } else {
@@ -26,12 +26,6 @@ sub allow {
 sub message {
   my $self = shift;
   return 'Sorry, these details could not be validated.';
-}
-
-sub inherit {
-  my ($self, $parent) = @_;
-  unshift @ISA, ref $parent;
-  return 1;
 }
 
 }

@@ -17,10 +17,10 @@ sub BUILD {
 sub render {
   my ($self, $action) = @_;
   $self->set_action($action);
-  if ($self->filters->allow) {
-    $self->render_page;
-  } else {
+  if ($self->not_allowed) {
     $self->render_message;
+  } else {
+    $self->render_page;
   }
 }
 

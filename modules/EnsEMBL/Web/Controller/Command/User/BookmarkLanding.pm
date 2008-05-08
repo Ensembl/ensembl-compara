@@ -21,10 +21,10 @@ sub BUILD {
 sub render {
   my ($self, $action) = @_;
   $self->set_action($action);
-  if ($self->filters->allow) {
-    $self->process;
+  if ($self->not_allowed) {
+    $self->render_message;
   } else {
-    $self->render_message; 
+    $self->process; 
   }
 }
 

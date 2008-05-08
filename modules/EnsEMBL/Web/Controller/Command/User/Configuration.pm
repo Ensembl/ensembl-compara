@@ -6,8 +6,7 @@ use warnings;
 use Class::Std;
 use CGI;
 
-use EnsEMBL::Web::Data::User;
-use EnsEMBL::Web::Data::Group;
+use EnsEMBL::Web::Data::Configuration;
 
 use base 'EnsEMBL::Web::Controller::Command::User';
 
@@ -20,23 +19,22 @@ sub BUILD {
   my $cgi = new CGI;
   my $record;
   if ($cgi->param('id')) {
-    $self->user_or_admin('EnsEMBL::Web::Data::Record::Configuration', $cgi->param('id'), $cgi->param('record_type'));
+    $self->user_or_admin('EnsEMBL::Web::Data::Configuration', $cgi->param('id'), $cgi->param('record_type'));
   }
 }
 
 sub render {
   my ($self, $action) = @_;
   $self->set_action($action);
-  if ($self->filters->allow) {
-    $self->render_page;
-  } else {
+  if ($self->not_allowed) {
     $self->render_message;
+  } else {
+    $self->render_page;
   }
 }
 
 sub render_page {
   my $self = shift;
-  my $cgi  = new CGI;
 
   ## Create basic page object, so we can access CGI parameters
   my $webpage = EnsEMBL::Web::Document::Interface::simple('User');
@@ -45,14 +43,8 @@ sub render_page {
   my $help_email = $sd->ENSEMBL_HELPDESK_EMAIL;
 
   ## Create interface object, which controls the forms
-  my $interface = EnsEMBL::Web::Interface::InterfaceDef->new;
-  my $data;
-  if ($cgi->param('record_type') eq 'group') {
-    $data = EnsEMBL::Web::Data::Record::Configuration::Group->new($cgi->param('id'));
-  } else {
-    $data = EnsEMBL::Web::Data::Record::Configuration::User->new($cgi->param('id'));
-  }
-  
+  my $interface = EnsEMBL::Web::Interface::InterfaceDef->new();
+  my $data = EnsEMBL::Web::Data::Configuration->new();
   $interface->data($data);
   $interface->discover;
 
@@ -77,7 +69,7 @@ sub render_page {
   $interface->element_order('name', 'description', 'url', 'scriptconfig', 'record_type');
 
   ## Render page or munge data, as appropriate
-  $webpage->process($interface, 'EnsEMBL::Web::Configuration::Interface::Record');
+  $webpage->render_message($interface, 'EnsEMBL::Web::Configuration::Interface::Record');
 }
 
 }

@@ -6,6 +6,7 @@ use warnings;
 use Class::Std;
 use CGI;
 
+use EnsEMBL::Web::Data::DAS;
 use EnsEMBL::Web::RegObj;
 
 use base 'EnsEMBL::Web::Controller::Command::User';
@@ -21,28 +22,27 @@ sub BUILD {
 sub render {
   my ($self, $action) = @_;
   $self->set_action($action);
-  if ($self->filters->allow) {
-    $self->render_page;
-  } else {
+  if ($self->not_allowed) {
     $self->render_message;
+  } else {
+    $self->render_page;
   }
 }
 
 sub render_page {
   my $self = shift;
-  my $user = $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->get_user;
+  my $user = $self->filters->user($ENSEMBL_WEB_REGISTRY->get_user->id);
   print "Content-type:text/html\n\n";
   print "Saving DAS for " . $user->id . "<br />"; 
-  my @sources = @{ $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->get_das_filtered_and_sorted };
-    
+  my @sources = @{ $ENSEMBL_WEB_REGISTRY->get_das_filtered_and_sorted };
   foreach my $das (@sources) {
-    $user->add_to_dases({
-      name    => $das->get_name,
-      url     => $das->get_data->{'url'},
-      config  => $das->get_data,
-    });
-
+    my $user_das = EnsEMBL::Web::Data::DAS->new; 
+    $user_das->user_id($user->id);
+    $user_das->name($das->get_name);
+    $user_das->url($das->get_data->{'url'});
+    $user_das->config($das->get_data);
     print $user_das->name . "<br />";
+    $user_das->save;
     warn "DAS: " . $das->get_name . " (" . $das->get_data->{'url'} . ")";
   } 
 }

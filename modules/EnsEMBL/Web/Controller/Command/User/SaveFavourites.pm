@@ -6,7 +6,7 @@ use warnings;
 use Class::Std;
 use CGI;
 
-use EnsEMBL::Web::Data::User;
+use EnsEMBL::Web::Data::SpeciesList;
 use EnsEMBL::Web::Document::HTML::SpeciesList;
 use EnsEMBL::Web::RegObj;
 
@@ -24,10 +24,10 @@ sub BUILD {
 sub render {
   my ($self, $action) = @_;
   $self->set_action($action);
-  if ($self->filters->allow) {
-    $self->render_page;
-  } else {
+  if ($self->not_allowed) {
     $self->render_message;
+  } else {
+    $self->render_page;
   }
 }
 
@@ -35,11 +35,13 @@ sub render_page {
   my $self = shift;
   print "Content-type:text/html\n\n";
   my $user = $self->filters->user($EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->get_user->id);
-
-  my ($species_list) = $user->specieslists;
-  $species_list = EnsEMBL::Web::Data::Record::SpeciesList::User->new
-    unless $species_list;
-    
+  my @lists = @{ $user->specieslists };
+  my $species_list;
+  if ($#lists > -1) {
+    $species_list = $lists[0];
+  } else {
+    $species_list = EnsEMBL::Web::Data::SpeciesList->new();
+  }
   $species_list->favourites($self->get_action->get_named_parameter('favourites'));
   $species_list->list($self->get_action->get_named_parameter('list'));
   $species_list->user_id($user->id);

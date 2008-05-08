@@ -14,12 +14,6 @@ sub header {
   return "Content-Type: text/html\n\n" . $self->SUPER::header();
 }
 
-sub inherit {
-  my ($self, $parent) = @_;
-  unshift @ISA, ref $parent;
-  return 1;
-}
-
 }
 
 1;

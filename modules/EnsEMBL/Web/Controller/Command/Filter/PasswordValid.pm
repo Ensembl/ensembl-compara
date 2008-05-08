@@ -21,10 +21,9 @@ sub allow {
   my $email = $cgi->param('email');
   my$password = $cgi->param('password');
 
-  ## TODO: proper error exception
-  my $user = EnsEMBL::Web::Data::User->find(email => $email);
-  return 0 unless $user;
-  
+  my $user = EnsEMBL::Web::Data::User->new({
+    email     => $email,
+  });
   my $input_password = $cgi->param('password');
   my $encrypted = EnsEMBL::Web::Tools::Encryption::encryptPassword($input_password, $user->salt);
   if ($user->password eq $encrypted) {
@@ -38,12 +37,6 @@ sub message {
   my $self = shift;
   my $ref = $ENV{'HTTP_REFERER'};
   return qq(Sorry, your username or password was entered incorrectly and could not be validated.<br /><br /><a href="$ref" class="red-button">Back</a>.);
-}
-
-sub inherit {
-  my ($self, $parent) = @_;
-  unshift @ISA, ref $parent;
-  return 1;
 }
 
 }

@@ -6,7 +6,9 @@ use warnings;
 use Class::Std;
 use CGI;
 
+use EnsEMBL::Web::Data::User;
 use EnsEMBL::Web::Data::Group;
+use EnsEMBL::Web::RegObj;
 
 use base 'EnsEMBL::Web::Controller::Command::User';
 
@@ -22,19 +24,19 @@ sub BUILD {
 sub render {
   my ($self, $action) = @_;
   $self->set_action($action);
-  if ($self->filters->allow) {
-    $self->process;
-  } else {
+  if ($self->not_allowed) {
     $self->render_message;
+  } else {
+    $self->process;
   }
 }
 
 sub process {
   my $self = shift;
   my $cgi = new CGI;
-
-  my $group = EnsEMBL::Web::Data::Group->new($cgi->param('group_id'));
-  $group->assign_level_to_user($cgi->param('user_id'), $cgi->param('new_level'));
+  my $user = EnsEMBL::Web::Data::User->new({ id => $cgi->param('user_id') });
+  my $group = EnsEMBL::Web::Data::Group->new({ id => $cgi->param('group_id') });
+  $group->assign_level_to_user($user, $cgi->param('new_level'));
 
   $cgi->redirect('/common/user/view_group?id='.$cgi->param('group_id'));
 }

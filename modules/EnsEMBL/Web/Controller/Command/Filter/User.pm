@@ -12,11 +12,6 @@ our @ISA = qw(EnsEMBL::Web::Controller::Command::Filter);
 sub user {
 }
 
-sub inherit {
-  my ($self, $parent) = @_;
-  unshift @ISA, ref $parent;
-  return 1;
-}
 
 }
 

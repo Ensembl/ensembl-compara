@@ -37,12 +37,6 @@ sub message {
   least 6 characters long and include both letters and numbers.';
 }
 
-sub inherit {
-  my ($self, $parent) = @_;
-  unshift @ISA, ref $parent;
-  return 1;
-}
-
 }
 
 1;

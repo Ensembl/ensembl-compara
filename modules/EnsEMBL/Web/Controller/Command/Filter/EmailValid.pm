@@ -29,12 +29,6 @@ sub message {
   return qq(Sorry, the email address you entered was not valid. Please try again.<br /><br /><a href="$ref" class="red-button">Back</a>);
 }
 
-sub inherit {
-  my ($self, $parent) = @_;
-  unshift @ISA, ref $parent;
-  return 1;
-}
-
 }
 
 1;

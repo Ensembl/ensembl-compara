@@ -4,24 +4,23 @@ use strict;
 use warnings;
 
 use Class::Std;
-use EnsEMBL::Web::RegObj;
+
 use base 'EnsEMBL::Web::Controller::Command::User';
 
 {
 
 sub BUILD {
   my ($self, $ident, $args) = @_; 
-  $self->add_filter('EnsEMBL::Web::Controller::Command::Filter::Logging');
   $self->add_filter('EnsEMBL::Web::Controller::Command::Filter::LoggedIn');
 }
 
 sub render {
   my ($self, $action) = @_;
   $self->set_action($action);
-  if ($self->filters->allow) {
-    $self->render_page;
-  } else {
+  if ($self->not_allowed) {
     $self->render_message;
+  } else {
+    $self->render_page;
   }
 }
 
@@ -37,8 +36,9 @@ sub render_page {
   my $sitename = $sitetype eq 'EnsEMBL' ? 'Ensembl' : $sitetype;
 
   ## Create interface object, which controls the forms
-  my $interface = EnsEMBL::Web::Interface::InterfaceDef->new;
-  $interface->data($EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->get_user);
+  my $interface = EnsEMBL::Web::Interface::InterfaceDef->new();
+  my $data = EnsEMBL::Web::Data::User->new({'id'=>$ENV{'ENSEMBL_USER_ID'}});
+  $interface->data($data);
   $interface->discover;
 
   ## Customization
@@ -59,7 +59,7 @@ sub render_page {
 
   ## Render page or munge data, as appropriate
   ## N.B. Force use of Configuration subclass
-  $webpage->process($interface, 'EnsEMBL::Web::Configuration::Interface::User');
+  $webpage->render_message($interface, 'EnsEMBL::Web::Configuration::Interface::User');
 }
 
 }

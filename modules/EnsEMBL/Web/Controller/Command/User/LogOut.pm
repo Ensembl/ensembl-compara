@@ -19,10 +19,10 @@ sub BUILD {
 sub render {
   my ($self, $action) = @_;
   $self->set_action($action);
-  if ($self->filters->allow) {
-    $self->process;
+  if ($self->not_allowed) {
+    $self->render_message;
   } else {
-    $self->render_message; 
+    $self->process; 
   }
 }
 
@@ -35,7 +35,7 @@ sub process {
   }
 
   ## setting a (blank) expired cookie deletes the current one
-  my $SD = $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->species_defs;
+  my $SD = $ENSEMBL_WEB_REGISTRY->species_defs;
   my $user_cookie = EnsEMBL::Web::Cookie->new({
         'host'    => $SD->ENSEMBL_COOKIEHOST,
         'name'    => $SD->ENSEMBL_USER_COOKIE,
