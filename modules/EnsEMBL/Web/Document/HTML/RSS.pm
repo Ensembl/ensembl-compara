@@ -18,14 +18,14 @@ sub add      {
 sub render   {
   my $self = shift;
   $self->printf(
-    '<link rel="search" href="'.
+    '  <link rel="search" href="'.
     $ENSEMBL_WEB_REGISTRY->species_defs->ENSEMBL_BASE_URL.
     '/opensearchdescription.xml" type="application/opensearchdescription+xml" title="Ensembl" />'.
     "\n"
   );
   foreach (keys %{$self->{'feeds'}}) {
     $self->printf(
-      qq(<link rel="alternate" type="application/%s+xml" title="%s" href="%s" />),
+      qq(  <link rel="alternate" type="application/%s+xml" title="%s" href="%s" />\n),
       $self->{'feeds'}{$_}{'type'},
       CGI::escapeHTML($self->{'feeds'}{$_}{'title'}),
       $_ 

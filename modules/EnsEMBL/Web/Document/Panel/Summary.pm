@@ -21,21 +21,19 @@ sub _error {
 sub add_description {
   my( $self, $description ) = @_;
   $self->printf( qq(
-  <p>%s</p>), $description );
+        <p>%s</p>), $description );
 }
 
 
 sub add_row {
   my( $self, $label, $content ) =@_;
   $self->printf( qq(
-  <dl class="summary">
-    <dt>
-      %s
-    </dt>
-    <dd>
-      %s
-    </dd>
-  </dl>),
+        <dl class="summary">
+          <dt>%s</dt>
+          <dd>
+            %s
+          </dd>
+        </dl>),
     $label, $content
   );
 }
