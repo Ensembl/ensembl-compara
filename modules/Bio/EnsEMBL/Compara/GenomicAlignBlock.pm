@@ -1675,15 +1675,15 @@ sub restrict_between_reference_positions {
   if ($length_of_truncated_seq_at_the_start <= 0 and $length_of_truncated_seq_at_the_end <= 0) {
     return wantarray ? ($self, 1, $self->length) : $self;
   }
-  my ($start, $end);
+  my ($aln_start, $aln_end);
   if ($negative_strand) {
-    $start = $length_of_truncated_seq_at_the_end + 1;
-    $end = $self->length - $length_of_truncated_seq_at_the_start;
+    $aln_start = $length_of_truncated_seq_at_the_end + 1;
+    $aln_end = $self->length - $length_of_truncated_seq_at_the_start;
   } else {
-    $start = $length_of_truncated_seq_at_the_start + 1;
-    $end = $self->length - $length_of_truncated_seq_at_the_end;
+    $aln_start = $length_of_truncated_seq_at_the_start + 1;
+    $aln_end = $self->length - $length_of_truncated_seq_at_the_end;
   }
-  $genomic_align_block = $self->restrict_between_alignment_positions($start, $end, $skip_empty_GenomicAligns);
+  $genomic_align_block = $self->restrict_between_alignment_positions($aln_start, $aln_end, $skip_empty_GenomicAligns);
   $new_reference_genomic_align = $genomic_align_block->reference_genomic_align;
   if (defined $self->reference_slice) {
     if ($self->reference_slice_strand == 1) {
@@ -1700,7 +1700,7 @@ sub restrict_between_reference_positions {
       $genomic_align_block->reference_slice_strand(-1);
     }
   }
-  return wantarray ? ($genomic_align_block, $start, $end) : $genomic_align_block;
+  return wantarray ? ($genomic_align_block, $aln_start, $aln_end) : $genomic_align_block;
 }
 
 
