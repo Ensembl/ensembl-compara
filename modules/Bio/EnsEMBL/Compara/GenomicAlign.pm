@@ -1276,10 +1276,10 @@ sub _get_cigar_line_from_aligned_sequence {
     } else {
       $mode = "M"; # M for matches/mismatches
     }
-    if (length($piece) == 1) {
+    if (CORE::length($piece) == 1) {
       $cigar_line .= $mode;
-    } elsif (length($piece) > 1) { #length can be 0 if the sequence starts with a gap
-      $cigar_line .= length($piece).$mode;
+    } elsif (CORE::length($piece) > 1) { #length can be 0 if the sequence starts with a gap
+      $cigar_line .= CORE::length($piece).$mode;
     }
   }
 
@@ -1327,7 +1327,8 @@ sub _get_aligned_sequence_from_original_sequence_and_cigar_line {
       }
     }
   }
-  throw("Cigar line ($seq_pos) does not match sequence lenght (".length($original_sequence).")") if ($seq_pos != length($original_sequence));
+  throw("Cigar line ($seq_pos) does not match sequence lenght (".CORE::length($original_sequence).")")
+      if ($seq_pos != CORE::length($original_sequence));
 
   return $aligned_sequence;
 }
