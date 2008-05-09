@@ -430,9 +430,11 @@ sub individual_genotypes {
   ### Description: gets Individual Genotype data for this variation
   ### Returns hashref with all the data
 
-  my ($self, $vf) = @_;
-
-  my $individual_genotypes = $self->individual_genotypes_obj($vf);
+  my ($self, $vf, $slice_genotypes) = @_;
+  if (! defined $slice_genotypes->{$vf->seq_region_name.'-'.$vf->seq_region_start}){
+      return {};
+  }
+  my $individual_genotypes = $slice_genotypes->{$vf->seq_region_name.'-'.$vf->seq_region_start};
   return {} unless @$individual_genotypes; 
   my %data = ();
   my %genotypes = ();
@@ -443,8 +445,10 @@ sub individual_genotypes {
     next unless $ind_obj;
 
     # data{name}{AA}
+    #we should only consider 1 base genotypes (from compressed table)
+    next if (length($ind_gt_obj->allele1) > 1 || length($ind_gt_obj->allele2)>1);
     foreach ($ind_gt_obj->allele1, $ind_gt_obj->allele2) {
-      my $allele = $_ =~ /A|C|G|G|N/ ? $_ : "N";
+      my $allele = $_ =~ /A|C|G|T|N/ ? $_ : "N";
       $genotypes{ $ind_obj->name }.= $allele;
     }
     $data{ $ind_obj->name }{gender}   = $gender{$ind_obj->gender} || 0;
@@ -472,24 +476,19 @@ sub parent {
 }
 
 
-sub individual_genotypes_obj {
+sub get_all_genotypes{
+    my $self = shift;
 
-  ### Individual_genotype_table_calls
-  ### Arg1: variation feature object
-  ### Example    : my $ind_genotypes = $object->individual_genotypes;
-  ### Description: gets IndividualGenotypes for this Variation
-  ### Returns listref of IndividualGenotypes
-
-  my ($self, $vf) = @_;
-  my $individuals = [];
-  eval {
-    $individuals = $vf->variation->get_all_IndividualGenotypes;
-  };
-  if ($@) {
-    print STDERR "\n\n************ERROR************:  Bio::EnsEMBL::Variation::Variation::get_all_IndividualGenotypes fails.\n\n $@";
-  }
-  return $individuals;
+    my $slice = $self->slice_cache;
+    my $variation_db = $self->database('variation')->get_db_adaptor('variation');
+    my $iga = $variation_db->get_IndividualGenotypeAdaptor;
+    my $genotypes = $iga->fetch_all_by_Slice($slice);
+    #will return genotypes as a hash, having the region_name-start as key for rapid acces
+    my $genotypes_hash = {};
+    foreach my $genotype (@{$genotypes}){
+	push @{$genotypes_hash->{$genotype->seq_region_name.'-'.$genotype->seq_region_start}},$genotype;
+    }
+    return $genotypes_hash;
 }
-
 
 1;

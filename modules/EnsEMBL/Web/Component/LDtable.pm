@@ -307,8 +307,11 @@ sub haploview_files {
   my %ind_genotypes;
   my %individuals;
   my @snps;
+  #gets all genotypes in the Slice as a hash. where key is region_name-region_start
+  my $slice_genotypes = $object->get_all_genotypes();
+  
   foreach my $vf ( @{ $object->get_variation_features } ) {
-    my ($genotypes, $ind_data) =  $object->individual_genotypes($vf) ;
+    my ($genotypes, $ind_data) =  $object->individual_genotypes($vf,$slice_genotypes);
     next unless %$genotypes;
 
     my $name = $vf->variation_name;
