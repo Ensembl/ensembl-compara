@@ -354,8 +354,6 @@ sub render {
     <div class="panel">);
     my $cap = '';
     if( exists $self->{'previous'} || exists $self->{'next'} ) {
-      warn values %{ $self->{'previous'} };
-      warn values %{ $self->{'next'}     };
       $HTML .= q(
       <div class="nav-heading">
         <div class="left-button">);
@@ -382,7 +380,6 @@ sub render {
       $HTML .= sprintf q(
       <h2>%s</h2>), CGI::escapeHTML( $self->parse($self->{'caption'}));
     }
-    warn ".... $HTML .....";
     $self->renderer->print($HTML);
     if( $status ne 'off' ) {
       if( $self->{'cacheable'} eq 'yes' ) { ### We can cache this panel - so switch the renderer!!!
@@ -609,6 +606,7 @@ sub content {
           $result = &$function_name( $self, $self->{'object'} );
         };
         if( $@ ) {
+	  warn $@;
           my $error = sprintf( '<pre>%s</pre>', $self->_format_error($@) );
           # if( $@ =~ /^Undefined subroutine / ) {
           #  $error = "<p>This function is not defined</p>";
