@@ -50,22 +50,28 @@ sub Summary {
 #  }
   my $gene = $object->core_objects->gene;
   my $transcripts = $gene->get_all_Transcripts;
-  warn @$transcripts;
   my $count = @$transcripts;
   if( $count > 1 ) {
-    my $html = '<table>';
+    my $html = '
+        <table id="transcripts" style="display:none">';
     foreach( sort { $a->stable_id cmp $b->stable_id } @$transcripts ) {
-      $html .= sprintf( '<tr><th>%s</th><td><a href="/%s/Transcript/%s?t=%s">%s</a></td></tr>',
+      my $url = $object->_url({
+        't'      => $_->stable_id
+      });
+      $html .= sprintf( '
+          <tr>
+	    <th>%s</th>
+	    <td><a href="%s">%s</a></td>
+	  </tr>',
         $_->display_xref ? $_->display_xref->display_id : 'Novel',
-        $object->species,
-        $ENV{'ENSEMBL_ACTION'},
-        $_->stable_id,
+        $url,
         $_->stable_id
       );
 
     }
-    $html .= '</table>';
-    $panel->add_row( 'Gene', sprintf(q(<div style="float:left">Is a product of gene %s - There are %d transcripts in this gene:</div> %s), $gene->stable_id, $count, $html ));
+    $html .= '
+        </table>';
+    $panel->add_row( 'Gene', sprintf(q(<div id="transcripts_text">Is a product of gene %s - There are %d transcripts in this gene:</div> %s), $gene->stable_id, $count, $html ));
   } else {
     $panel->add_row( 'Gene', sprintf(q(<div style="float:left">Is the product of gene %s.</div>), $gene->stable_id ));
 
@@ -404,7 +410,7 @@ sub _sort_similarity_links{
       $text .= ' [<a href="'.$urls->get_url('GOSEARCH',$primary_id).'">Search GO</a>]';
     }
     if( $type->description ) {
-      ( my $D = $type->description ) =~ s/^"(.*)"$/\1/;
+      ( my $D = $type->description ) =~ s/^"(.*)"$/$1/;
       $text .= "<br />".CGI::escapeHTML($D);
       $join_links = 1;    
     }

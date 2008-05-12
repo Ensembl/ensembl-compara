@@ -1,5 +1,6 @@
 package EnsEMBL::Web::Component::Gene;
 
+
 use EnsEMBL::Web::Component;
 our @ISA = qw( EnsEMBL::Web::Component);
 
@@ -20,26 +21,8 @@ use CGI qw(escapeHTML);
 
 our %do_not_copy = map {$_,1} qw(species type view db transcript gene);
 
-sub markup_options {
-  my( $panel, $object ) =@_;
-  $panel->add_row( 'Markup options', "<div>@{[ $panel->form( 'markup_options' )->render ]}</div>" );
-  return 1;
-}
-
 sub Summary {
   my( $panel, $object ) =@_;
-  my $ob = $object->Obj;
-
-  my $location_html = sprintf( '<a href="/%s/Location/View?r=%s:%s-%s">%s: %s-%s</a>%s',
-    $object->species,
-    $object->seq_region_name,
-    $object->seq_region_start,
-    $object->seq_region_end,
-    $object->neat_sr_name( $object->coord_system, $object->seq_region_name ),
-    $object->thousandify( $object->seq_region_start ),
-    $object->thousandify( $object->seq_region_end ),
-    $object->seq_region_strand < 0 ? ' reverse strand' : 'forward strand'
-  );
 
   my $description = escapeHTML( $object->gene_description() );
   if( $description ) {
@@ -47,59 +30,82 @@ sub Summary {
     $description =~ s/\[\w+:([\w\/]+)\;\w+:(\w+)\]//g;
     my($edb, $acc) = ($1, $2);
     $description .= qq( <span class="small">@{[ $object->get_ExtURL_link("Source: $edb $acc",$edb, $acc) ]}</span>) if $acc;
+    $panel->add_description( $description );
   }
 
-  $panel->add_description( $description );
+## Now a link to location;
+
+  my $url = $object->_url({
+    'type'   => 'Location',
+    'action' => 'View',
+    'r'      => $object->seq_region_name.':'.$object->seq_region_start.'-'.$object->seq_region_end
+  });
+
+  my $location_html = sprintf( '<a href="%s">%s: %s-%s</a>%s',
+    $url,
+    $object->neat_sr_name( $object->coord_system, $object->seq_region_name ),
+    $object->thousandify( $object->seq_region_start ),
+    $object->thousandify( $object->seq_region_end ),
+    $object->seq_region_strand < 0 ? ' reverse strand' : ' forward strand'
+  );
+
   $panel->add_row( 'Location', $location_html );
-#  if( $ob->can('analysis') ) {
-#    my $desc = $ob->analysis->description;
-#    $panel->add_row( 'Method',   escapeHTML( $desc ) ) if $desc;
-#  }
-  my $transcripts = $ob->get_all_Transcripts;
-  warn @$transcripts;
+
+## Now create the transcript information...
+  my $transcripts = $object->Obj->get_all_Transcripts;
   my $count = @$transcripts;
   if( $count > 1 ) {
-    my $html = '<table>';
+    my $html = '
+        <table id="transcripts" style="display:none">';
     foreach( sort { $a->stable_id cmp $b->stable_id } @$transcripts ) {
-      $html .= sprintf( '<tr><th>%s</th><td><a href="/%s/Transcript/Summary=%s">%s</a></td></tr>', 
+      my $url = $object->_url({
+        'type'   => 'Transcript',
+        'action' => 'Summary',
+        't'      => $_->stable_id
+      });
+      $html .= sprintf( '
+          <tr>
+            <th>%s</th>
+            <td><a href="%s">%s</a></td>
+          </tr>',
         $_->display_xref ? $_->display_xref->display_id : 'Novel',
-	$object->species,
-        $_->stable_id,
+        $url,
         $_->stable_id
       );
-	
     }
-    $html .= '</table>';
-    $panel->add_row( 'Transcripts', sprintf(q(<div style="float:left">There are %d transcripts in this gene:</div> %s), $count, $html ));
-  }      
-#  $panel->add_row( 'Location', 'location' );
+    $html .= '
+        </table>';
+    $panel->add_row( 'Transcripts', sprintf(q(
+        <p id="transcripts_text">There are %d transcripts in this gene:</p>
+        %s), $count, $html ));
+  }
 }
 
-sub URL {
-  my( $object, $parameters ) = @_;
-  my $extra_parameters = '';
-  foreach ( keys %$parameters ) {
-    $extra_parameters .= sprintf( ';%s=%s',
-      CGI::escape( $_ ),
-      CGI::escape( $parameters->{$_} )
-    ) unless $do_not_copy{$_};
-  }
-  my( $type, $stable_id ) = exists( $parameters->{'transcript'} ) ? ('transcript',$parameters->{'transcript'})
-                          : exists( $parameters->{'gene'}       ) ? ('gene',      $parameters->{'gene'})
-                          : exists( $object->{'transcript'}     ) ? ('transcript',$object->{'transcript'})
-                          :                                         ('gene',      $object->stable_id)
-                          ;
-  return sprintf( '%s%s/%s/%s%s?db=%s;%s=%s%s',
-    $ENSEMBL_WEB_REGISTRY->species_defs->ENSEMBL_WEB_ROOT,
-    exists( $parameters->{'species'} ) ? $parameters->{'species'} : $object->species,
-    exists( $parameters->{'type'   } ) ? $parameters->{'type'}    : $ENV{'ENSEMBL_TYPE'}||'Gene',
-    exists( $parameters->{'view'   } ) ? $parameters->{'view'}    : $object->script,
-    exists( $parameters->{'db'     } ) ? $parameters->{'db'}      : $object->get_db,
-    $type,
-    $stable_id,
-    $extra_parameters
-  );
-}
+#sub URL {
+#  my( $object, $parameters ) = @_;
+#  my $extra_parameters = '';
+#  foreach ( keys %$parameters ) {
+#    $extra_parameters .= sprintf( ';%s=%s',
+#      CGI::escape( $_ ),
+#      CGI::escape( $parameters->{$_} )
+#    ) unless $do_not_copy{$_};
+#  }
+#  my( $type, $stable_id ) = exists( $parameters->{'transcript'} ) ? ('transcript',$parameters->{'transcript'})
+#                          : exists( $parameters->{'gene'}       ) ? ('gene',      $parameters->{'gene'})
+#                          : exists( $object->{'transcript'}     ) ? ('transcript',$object->{'transcript'})
+#                          :                                         ('gene',      $object->stable_id)
+#                          ;
+#  return sprintf( '%s%s/%s/%s%s?db=%s;%s=%s%s',
+#    $ENSEMBL_WEB_REGISTRY->species_defs->ENSEMBL_WEB_ROOT,
+#    exists( $parameters->{'species'} ) ? $parameters->{'species'} : $object->species,
+#    exists( $parameters->{'type'   } ) ? $parameters->{'type'}    : $ENV{'ENSEMBL_TYPE'}||'Gene',
+#    exists( $parameters->{'view'   } ) ? $parameters->{'view'}    : $object->script,
+#    exists( $parameters->{'db'     } ) ? $parameters->{'db'}      : $object->get_db,
+#    $type,
+#    $stable_id,
+#    $extra_parameters
+#  );
+#}
 
 sub transcript_links {
   my( $panel, $gene ) = @_;
@@ -148,7 +154,7 @@ sub transcript_links {
     }
     $rows .= "\n  </tr>";
   }
-  $panel->add_row( $label,
+  $panel->add_content(
      qq(<table style="width:100%">$rows</table>\n)
   );
 }
@@ -1290,6 +1296,7 @@ sub _flip_URL {
 
 sub transcripts {
   my( $panel, $gene ) = @_;
+  warn "... $gene .... $panel ...";
   my $label    = 'Transcripts';
   my $gene_stable_id = $gene->stable_id;
   my $db = $gene->get_db() ;
@@ -1340,6 +1347,7 @@ sub transcripts {
 ## ... and the second part is an image of the transcripts +-10k   ##
 ##----------------------------------------------------------------##
 
+  warn "............ $panel .................";
   if ($panel->is_asynchronous('transcripts')) {
 #    warn "Asynchronously load transcripts";
     my $json = "{ components: [ 'EnsEMBL::Web::Component::Gene::transcripts'], fragment: {db: '".$db."', stable_id: '" . $gene->stable_id . "', species: '" . $gene->species . "'} }";
@@ -1376,7 +1384,7 @@ sub transcripts {
     $image->menu_container     = $mc;
     $image->set_extra( $gene );
 
-    $panel->add_row( $label, $image->render, "$URL=odd" );
+    $panel->add_content( $image->render, "$URL=odd" );
   }
 
 }

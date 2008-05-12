@@ -21,7 +21,7 @@ sub populate_tree {
 #  my $hash = $obj->get_summary_counts;
 
   $self->create_node( 'Structure', "Transcripts ([[counts::transcripts]])",
-    [qw(transcripts EnsEMBL::Web::Component::Gene::transcript_image)],
+    [qw(transcripts EnsEMBL::Web::Component::Gene::transcripts)],
     { 'availability' => 1 }
   );
   $self->create_node( 'Splice', "Exons ([[counts::exons]])",
