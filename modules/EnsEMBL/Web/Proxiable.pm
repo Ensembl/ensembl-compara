@@ -69,7 +69,9 @@ sub input_param  {
 }
 
 sub delete_param { my $self = shift; $self->{'data'}{'_input'}->delete(@_); }
-sub script       { return $_[0]{'data'}{'_script'}; }
+sub type         { return $_[0]{'data'}{'_type'};    }
+sub action       { return $_[0]{'data'}{'_action'};  }
+sub script       { return $_[0]{'data'}{'_script'};  }
 sub species      { return $_[0]{'data'}{'_species'}; }
 
 sub fix_session {
