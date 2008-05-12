@@ -1,9 +1,9 @@
-#Fri Apr 18 18:25:05 BST 2008
+#Mon May 12 11:12:21 BST 2008
 Create\ Empty\ Directories=true
 Password=0BoLlNYQ
 Recurse\ Subdirectories=true
 Save\ Password=true
-Site\ Root=/ensemblweb/eb4/merged.new/modules
+Site\ Root=/ensemblweb/eb4/modules
 Username=eb4
 eclipse.preferences.version=1
 port=22
