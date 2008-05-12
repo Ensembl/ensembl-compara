@@ -35,9 +35,7 @@ sub caption {
 sub render {
   my $self = shift;
   my $t = $self->tree;
-  warn $t;
   return unless $t;
-  warn %$t;
   my $r = 0;
   my $previous_node;
   my $active = $self->active;
