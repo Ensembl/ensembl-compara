@@ -48,7 +48,9 @@ sub AUTOLOAD {
 ## Automagically creates simple form wrapper components
   my ( $panel, $object ) = @_;
   our $AUTOLOAD;
+  warn "TRYING TO CALL $AUTOLOAD";
   my ($method) = ($AUTOLOAD =~ /::([a-z].*)$/);
+  return 0 unless $panel->form($method);
   my $html = qq(<div class="formpanel" style="width:80%">);
   $html .= $panel->form($method)->render();
   $html .= '</div>';
