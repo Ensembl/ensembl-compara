@@ -63,6 +63,72 @@ sub populate_tree {
     { 'availability' => 1}
   );
 
+  $self->create_node( 'Exons', "Exons  ([[counts::exons]])",
+    [qw(exons       EnsEMBL::Web::Component::Transcript::spreadsheet_exons)],
+    { 'availability' => 1}
+  );
+
+  $self->create_node( 'Protein', "Peptide product",
+    [qw(image       EnsEMBL::Web::Component::Translation::image
+    statistics  EnsEMBL::Web::Component::Translation::pep_stats)],
+    { 'availability' => 1}
+  );
+
+  $self->create_node( 'Similarity', "Similarity matches  ([[counts::similarity_matches]])",
+    [qw(similarity  EnsEMBL::Web::Component::Transcript::similarity_matches)],
+    { 'availability' => 1}
+  );
+
+  $self->create_node( 'Oligos', "Oligos  ([[counts::oligos]])",
+    [qw(arrays      EnsEMBL::Web::Component::Transcript::oligo_arrays)],
+    { 'availability' => 1}
+  );
+
+  $self->create_node( 'GO', "Go terms  ([[counts::go]])",
+    [qw(go          EnsEMBL::Web::Component::Transcript::go)],
+    { 'availability' => 1}
+  );
+
+  $self->create_node( 'Evidence', "Supporting evidence  ([[counts::evidence]])",
+    [],
+    { 'availability' => 1}
+  );
+
+  my $var_menu = $self->create_submenu( 'Variation', 'Variational genomics' );
+  $var_menu->append($self->create_node( 'Population',  'Population comparison',
+    [qw()],
+    { 'availability' => 'database:variation' }
+  ));
+
+  my $seq_menu = $self->create_submenu( 'Sequence', 'Marked-up sequence' );
+  $seq_menu->append($self->create_node( 'Sequence_cDNA',  'cDNA ([[counts::cdna]] bps)',
+    [qw(sequence    EnsEMBL::Web::Component::Transcript::marked_up_seq)],
+    { 'availability' => 1 }
+  ));
+  $seq_menu->append($self->create_node( 'Sequence_Protein',  'Protein ([[counts::cdna]] aas)',
+    [qw(sequence    EnsEMBL::Web::Component::Translation::marked_up_seq)],
+    { 'availability' => 1 }
+  ));
+
+  $self->create_node( 'History', "ID history",
+    [qw()],
+    { 'availability' => 1}
+  );
+
+  $self->create_node( 'Domain', "Domain information  ([[counts::domain]])",
+    [qw(interpro    EnsEMBL::Web::Component::Transcript::interpro)],
+    { 'availability' => 1}
+  );
+
+  $self->create_node( 'Families', "Protein families ([[counts::families]])",
+    [qw(family    EnsEMBL::Web::Component::Transcript::family)],
+    { 'availability' => 1}
+  );
+
+  my $exp_menu = $self->create_submenu( 'Export', 'Export data' );
+  $exp_menu->append( $self->create_node( 'Export_Features',  'Features', [qw()] ) );
+  $exp_menu->append( $self->create_node( 'Export_Sequence',  'Sequence', [qw()] ) );
+  $exp_menu->append( $self->create_node( 'Export_BioMart',  'Jump to BioMart', [qw()] ) );
 }
 
 # Transcript: BRCA2_HUMAN
