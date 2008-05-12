@@ -15,6 +15,11 @@ sub add_entry {
   push @{$self->{'_entries'}}, {@_};
 }
 
+sub active {
+  my $self = shift;
+  $self->{'_active'} = shift if @_;
+  return $self->{'_active'};
+}
 sub entries {
 ### a
   my $self = shift;
@@ -32,7 +37,7 @@ sub render {
       $name = sprintf( '<a href="%s">%s</a>', $entry->{'url'}, $name );
     }
     $self->printf( '
-        <dd%s>%s</dd>', $entry->{'class'} ? qq( class="$entry->{class}") : '', $name );
+        <dd%s>%s</dd>', $entry->{'code'} eq $self->active  ? qq( class="active") : '', $name );
   }
   $self->print( '
       </dl>' );
