@@ -13,9 +13,30 @@ use EnsEMBL::Web::Proxiable;
 use EnsEMBL::Web::Document::Image;
 use Bio::EnsEMBL::DrawableContainer;
 use Bio::EnsEMBL::VDrawableContainer;
+use CGI qw(escape);
 
 our @ISA =qw(EnsEMBL::Web::Proxiable);
  
+sub _url {
+  my $self = shift;
+  my $params  = shift || {};
+  my $species = exists( $params->{'species'} ) ? $params->{'species'} : $self->species;
+  my $type    = exists( $params->{'type'}    ) ? $params->{'type'}    : $self->type;
+  my $action  = exists( $params->{'action'}  ) ? $params->{'action'}  : $self->action;
+  my %pars = %{$self->core_objects->{'parameters'}};
+  foreach( keys %$params ) {
+    $pars{$_} = $params->{$_} unless $_ eq 'species' || $_ eq 'type' || $_ eq 'action';
+  }
+  my $URL = sprintf( '/%s/%s/%s', $species, $type, $action );
+  my $join = '?';
+## Sort the keys so that the URL is the same for a given set of parameters...
+  foreach ( sort keys %pars ) {
+    $URL .= sprintf '%s%s=%s', $join, escape($_), escape($pars{$_}) if defined $pars{$_};
+    $join = ';';
+  }
+  return $URL;
+}
+
 sub EnsemblObject   {
 ### Deprecated
 ### Sets/gets the underlying Ensembl object wrapped by the web object
