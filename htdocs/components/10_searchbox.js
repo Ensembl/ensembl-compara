@@ -68,6 +68,7 @@
       });
 // Create the search list!
       add_search_index( 'ensembl', 'Ensembl search' );
+      add_search_index( 'vega',    'Vega search'    );
       add_search_index( 'ebi',     'EBI search'     );
       add_search_index( 'sanger',  'Sanger search'  );
     }
