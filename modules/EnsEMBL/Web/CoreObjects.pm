@@ -139,9 +139,6 @@ sub _get_location_transcript_from_gene {
   my( $self ) = @_;
   return unless $self->gene;
 ## Replace this with canonical transcript calculation!!
-  foreach( @{$self->gene->get_all_Transcripts} ) {
-    warn $_->stable_id, ' - ', $_->display_xref->priority;
-  }
   $self->transcript(
     sort {
       ( $b->display_xref ? $b->display_xref->priority : 0 ) <=> ( $a->display_xref ? $a->display_xref->priority : 0 ) ||

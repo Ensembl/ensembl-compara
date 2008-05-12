@@ -30,8 +30,7 @@ sub magic      {
 ###
 ### In this case we use it as a way to warn lines to the error log
 ### to show what the script has just done!
-  warn "@_";
-  warn "MAGIC < ",$ENV{'REQUEST_URI'},"\nMAGIC > ",shift,"\n";
+  warn sprintf "MAGIC < %-60.60s > %s\n",$ENV{'REQUEST_URI'},shift;
 }
 
 sub carpet { 
@@ -75,7 +74,6 @@ sub stuff {
 ### and 'action' - giving nice, clean, systematic URLs for handling
 ### heirarchical object navigation
   my $object_type = shift || $ENV{'ENSEMBL_TYPE'};
-  warn "FACTORY is $object_type :: $ENV{'ENSEMBL_TYPE'}";
   my $webpage = EnsEMBL::Web::Document::WebPage->new( 'objecttype' => $object_type, 'scriptname' => 'action' );
 # The whole problem handling code possibly needs re-factoring 
 # Especially the stuff that may end up cyclic! (History/UnMapped)
