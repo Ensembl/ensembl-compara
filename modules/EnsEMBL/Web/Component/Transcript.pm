@@ -23,7 +23,7 @@ sub Summary {
   my( $panel, $object ) =@_;
   my $ob = $object->Obj;
 
-  my $location_html = sprintf( '<a href="/%s/Location/View?r=%s:%s-%s">%s: %s-%s</a>%s',
+  my $location_html = sprintf( '<a href="/%s/Location/View?r=%s:%s-%s">%s: %s-%s</a> %s',
     $object->species,
     $object->seq_region_name,
     $object->seq_region_start,

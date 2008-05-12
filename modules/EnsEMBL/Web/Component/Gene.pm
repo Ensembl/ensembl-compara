@@ -41,7 +41,7 @@ sub Summary {
     'r'      => $object->seq_region_name.':'.$object->seq_region_start.'-'.$object->seq_region_end
   });
 
-  my $location_html = sprintf( '<a href="%s">%s: %s-%s</a>%s',
+  my $location_html = sprintf( '<a href="%s">%s: %s-%s</a> %s',
     $url,
     $object->neat_sr_name( $object->coord_system, $object->seq_region_name ),
     $object->thousandify( $object->seq_region_start ),
