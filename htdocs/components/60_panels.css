@@ -12,5 +12,5 @@
 .left-button { float: left }
 .right-button { float: right; }
 .panel .nav-heading div { width: 16em; padding: 1px;  }
-.panel .nav-heading div a { height: 1.4em; overflow: hidden; text-decoration: none; margin: 2px; font-weight: bold; display:block; padding: 0 0.5em; text-align: center; background-color: #cdf; border:1px outset #cdf; font-size: 0.9em}
+.panel .nav-heading div a { height: 1.4em; overflow: hidden; text-decoration: none; margin: 2px; font-weight: bold; display:block; padding: 0 0.5em; text-align: center; background-color: #d8ddff; border:1px outset #cdf; font-size: 0.9em}
 
