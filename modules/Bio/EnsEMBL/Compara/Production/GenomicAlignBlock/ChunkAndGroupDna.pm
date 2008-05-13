@@ -321,11 +321,11 @@ sub create_dnafrag_chunks {
   my ($coord_system_name, $seq_region_name, $seq_region_start, $seq_region_end) = split(/:/,  $self->{'region'})
     if($self->{'region'});
 
-  my $length = $dnafrag->length;
-  my $i = 1;
+  my $region_end = $dnafrag->length;
+  my $region_start = 1;
   if (defined $seq_region_start && defined $seq_region_end) {
-    $length = $seq_region_end;
-    $i = $seq_region_start;
+    $region_end = $seq_region_end;
+    $region_start = $seq_region_start;
   }
 
   #If chunk_size is not set then set it to be the fragment length 
@@ -333,7 +333,7 @@ sub create_dnafrag_chunks {
   my $chunk_size = $self->{'chunk_size'};
   my $overlap = $self->{'overlap'};
   if (!defined $chunk_size) {
-      $chunk_size = $length;
+      $chunk_size = $region_end;
       $overlap = 0;
   }
 
@@ -342,17 +342,24 @@ sub create_dnafrag_chunks {
 
   my $lasttime = time();
 
-  #all seq in inclusive coordinates so need to +1
-  for ( ; $i <= $length; $i += $chunk_size - $overlap) {
+  #initialise chunk_start and chunk_end to be the dnafrag start and end
+  my $chunk_start = $region_start;
+  my $chunk_end = $region_start;
+
+  while ($chunk_end < $region_end) {
 
     my $chunk = new Bio::EnsEMBL::Compara::Production::DnaFragChunk();
     $chunk->dnafrag($dnafrag);
-    $chunk->seq_start($i);
-    if (defined $seq_region_end && $i + $chunk_size - 1 > $seq_region_end) {
-      $chunk->seq_end($seq_region_end);
-    } else {
-      $chunk->seq_end($i + $chunk_size - 1);
+    $chunk->seq_start($chunk_start);
+    
+    $chunk_end = $chunk_start + $chunk_size - 1;
+
+    #if current $chunk_end is too long, trim to be $region_end
+    if ($chunk_end > $region_end) {
+	$chunk_end = $region_end;
     }
+    $chunk->seq_end($chunk_end);
+
     $chunk->masking_analysis_data_id($self->{'masking_analysis_data_id'});
     if($self->{'masking_options'}) {
       $chunk->masking_options($self->{'masking_options'});
@@ -361,6 +368,8 @@ sub create_dnafrag_chunks {
     if($self->{'store_seq'}) {
       $chunk->bioseq; #fetches sequence and stores internally in ->sequence variable
     }
+    #print "store chunk " . $chunk->dnafrag->name . " " . $chunk->seq_start . " " . $chunk->seq_end . " " . length($chunk->bioseq->seq) . "\n";
+
     $self->{'comparaDBA'}->get_DnaFragChunkAdaptor->store($chunk);
 
     # do grouping if requested
@@ -389,7 +398,7 @@ sub create_dnafrag_chunks {
                $self->{'current_chunkset'}->count, 
                $self->{'current_chunkset'}->total_basepairs/1000000.0);
       }
-    }
+  }
     else {
       #not doing grouping so put the $chunk directly into the collection
       $self->{'dna_collection'}->add_dna_object($chunk);
@@ -400,8 +409,9 @@ sub create_dnafrag_chunks {
     
     $self->submit_job($chunk) if($self->{'analysis_job'});
     $self->create_chunk_analysis($chunk) if($self->{'create_analysis_prefix'});
-    
-  }
+
+    $chunk_start = $chunk_end - $overlap + 1;
+}
 
   #print "Done\n";
   #print scalar(time()-$lasttime), " secs to chunk, and store\n";
