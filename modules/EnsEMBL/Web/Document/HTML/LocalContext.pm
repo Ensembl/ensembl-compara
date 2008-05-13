@@ -4,6 +4,7 @@ package EnsEMBL::Web::Document::HTML::LocalContext;
 
 use strict;
 use base qw(EnsEMBL::Web::Document::HTML);
+use Data::Dumper;
 
 sub new {
   my $class = shift;
@@ -61,7 +62,7 @@ $pad    </dd>" );
        $name =~ s/\[\[counts::(\w+)\]\]/$counts->{$1}/eg;
        $name = CGI::escapeHTML( $name );
     if( $node->data->{'url'} ) {
-      $name = sprintf( '<a href="%s">%s</a>', $node->data->{'url'}, $name );
+      $name = sprintf( '<a href="%s" title="%s">%s</a>', $node->data->{'url'}, $name, $name );
     }
     if( $node->is_leaf ) {
       $self->printf( qq(
