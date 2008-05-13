@@ -22,12 +22,11 @@ sub populate_tree {
 
   $self->create_node( 'Structure', "Transcripts ([[counts::transcripts]])",
     [qw(transcripts EnsEMBL::Web::Component::Gene::transcripts)],
-    { 'availability' => 1 }
+    { 'availability' => 1, 'concise' => 'Transcripts' }
   );
   $self->create_node( 'Splice', "Exons ([[counts::exons]])",
-    [qw(menu        EnsEMBL::Web::Component::Gene::genespliceview_menu
-       image       EnsEMBL::Web::Component::Gene::genespliceview)],
-    { 'availability' => 1 }
+    [qw(image       EnsEMBL::Web::Component::Gene::genespliceview)],
+    { 'availability' => 1, 'concise' => 'Exons' }
   );
 
 ##----------------------------------------------------------------------
@@ -37,16 +36,16 @@ sub populate_tree {
   my $compara_menu = $self->create_submenu( 'Compara', 'Comparative genomics' );
   $compara_menu->append( $self->create_node( 'Compara_Alignments', "Genomic alignments ([[counts::alignments]])",
     [qw(alignments  EnsEMBL::Web::Component::Gene::alignments)],
-    { 'availability' => 'database:compara' }
+    { 'availability' => 'database:compara', , 'concise' => 'Genomic alignments' }
   ));
 ## Compara tree
   $compara_menu->append( $self->create_node( 'Compara_Ortholog',   "Orthologues ([[counts::orthologs]])",
     [qw(orthologues EnsEMBL::Web::Component::Gene::orthologues)],
-    { 'availability' => 'database:compara' }
+    { 'availability' => 'database:compara', 'concise' => 'Orthologues' }
   ));
   $compara_menu->append( $self->create_node( 'Compara_Paralog',    "Paralogues ([[counts::paralogs]])",
     [qw(paralogues  EnsEMBL::Web::Component::Gene::paralogues)],
-    { 'availability' => 'database:compara' }
+    { 'availability' => 'database:compara', 'concise' => 'Paralogues' }
   ));
 
   $compara_menu->append( $self->create_node( 'Compara_Tree',       "Gene Trees",
@@ -54,11 +53,13 @@ sub populate_tree {
       image        EnsEMBL::Web::Component::Gene::genetreeview)],
     { 'availability' => 'database:compara' }
   ));
+=pod
   my $user_menu = $self->create_submenu( 'User', 'User data' );
   $user_menu->append( $self->create_node( 'User_Notes', "User's gene based annotation",
     [qw(manual_annotation EnsEMBL::Web::Component::Gene::Annotation)],
     { 'availability' => 1 }
   ));
+=cut
 ## DAS tree
   $self->create_node( 'Evidence',   'Supporting evidence', [qw()] );
   $self->create_node( 'Regulation', 'Regulation', 
