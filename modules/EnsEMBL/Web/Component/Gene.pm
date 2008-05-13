@@ -1381,7 +1381,7 @@ sub transcripts {
     my  $image  = $gene->new_image( $gene_slice, $wuc, [$gene->Obj->stable_id] );
     $image->introduction       = qq($extra\n<table style="width:100%">$rows</table>\n);
     $image->imagemap           = 'yes';
-    $image->menu_container     = $mc;
+    $image->menu_container     = undef;
     $image->set_extra( $gene );
 
     $panel->add_content( $image->render, "$URL=odd" );
