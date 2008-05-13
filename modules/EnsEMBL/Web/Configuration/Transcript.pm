@@ -26,7 +26,7 @@ sub context_panel {
   my $panel  = $self->new_panel( 'Summary',
     'code'     => 'summary_panel',
     'object'   => $obj,
-    'caption'  => "CAPTION:". $obj->core_objects->transcript_long_caption
+    'caption'  => $obj->core_objects->transcript_long_caption
   );
   $panel->add_component( qw(summary EnsEMBL::Web::Component::Transcript::Summary) );
   $self->add_panel( $panel );
@@ -41,14 +41,15 @@ sub content_panel {
   my $node          = $self->get_node( $action );
   my $previous_node = $node->previous_leaf      ;
   my $next_node     = $node->next_leaf          ;
-
-  my $panel = $self->new_panel( 'Navigation',
+  
+  my %params = (
     'object'   => $obj,
     'code'     => 'main',
-    'current'  => { 'caption' => $node->data->{'name'} },
-    'previous' => { 'caption' => $node->previous_leaf ? $node->previous_leaf->data->{'name'} : undef, 'url' => 'previous' } ,
-    'next'     => { 'caption' => $node->next_leaf     ? $node->next_leaf->data->{'name'}     : undef, 'url' => 'next' }
+    'caption'  => $node->data->{'caption'}
   );
+  $params{'previous'} = $previous_node->data if $previous_node;
+  $params{'next'    } = $next_node->data     if $next_node;
+  my $panel = $self->new_panel( 'Navigation', %params );
   if( $panel ) {
     $panel->add_components( @{$node->data->{'components'}} );
     $self->add_panel( $panel );
@@ -65,7 +66,7 @@ sub populate_tree {
 
   $self->create_node( 'Exons', "Exons  ([[counts::exons]])",
     [qw(exons       EnsEMBL::Web::Component::Transcript::spreadsheet_exons)],
-    { 'availability' => 1}
+    { 'availability' => 1, 'concise' => 'Exons'}
   );
 
   $self->create_node( 'Protein', "Peptide product",
@@ -76,22 +77,22 @@ sub populate_tree {
 
   $self->create_node( 'Similarity', "Similarity matches  ([[counts::similarity_matches]])",
     [qw(similarity  EnsEMBL::Web::Component::Transcript::similarity_matches)],
-    { 'availability' => 1}
+    { 'availability' => 1, 'concise' => 'Similarity matches'}
   );
 
   $self->create_node( 'Oligos', "Oligos  ([[counts::oligos]])",
     [qw(arrays      EnsEMBL::Web::Component::Transcript::oligo_arrays)],
-    { 'availability' => 1}
+    { 'availability' => 1,  'concise' => 'Oligos'}
   );
 
-  $self->create_node( 'GO', "Go terms  ([[counts::go]])",
+  $self->create_node( 'GO', "GO terms  ([[counts::go]])",
     [qw(go          EnsEMBL::Web::Component::Transcript::go)],
-    { 'availability' => 1}
+    { 'availability' => 1, 'concise' => 'GO terms'}
   );
 
   $self->create_node( 'Evidence', "Supporting evidence  ([[counts::evidence]])",
     [],
-    { 'availability' => 1}
+    { 'availability' => 1, 'concise' => 'Supporting evidence'}
   );
 
   my $var_menu = $self->create_submenu( 'Variation', 'Variational genomics' );
@@ -103,11 +104,11 @@ sub populate_tree {
   my $seq_menu = $self->create_submenu( 'Sequence', 'Marked-up sequence' );
   $seq_menu->append($self->create_node( 'Sequence_cDNA',  'cDNA ([[counts::cdna]] bps)',
     [qw(sequence    EnsEMBL::Web::Component::Transcript::marked_up_seq)],
-    { 'availability' => 1 }
+    { 'availability' => 1, 'concise' => 'cDNA sequence' }
   ));
   $seq_menu->append($self->create_node( 'Sequence_Protein',  'Protein ([[counts::cdna]] aas)',
     [qw(sequence    EnsEMBL::Web::Component::Translation::marked_up_seq)],
-    { 'availability' => 1 }
+    { 'availability' => 1, 'concise' => 'Protein sequence' }
   ));
 
   $self->create_node( 'History', "ID history",

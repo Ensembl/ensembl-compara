@@ -28,7 +28,7 @@ sub context_panel {
   my $panel  = $self->new_panel( 'Summary',
     'code'     => 'summary_panel',
     'object'   => $obj,
-    'caption'  => "CAPTION:". $obj->core_objects->location_long_caption
+    'caption'  => $obj->core_objects->location_long_caption
   );
   $panel->add_component( qw(summary EnsEMBL::Web::Component::Location::Summary) );
   $self->add_panel( $panel );
@@ -44,13 +44,14 @@ sub content_panel {
   my $previous_node = $node->previous_leaf      ;
   my $next_node     = $node->next_leaf          ;
 
-  my $panel = $self->new_panel( 'Navigation',
+  my %params = (
     'object'   => $obj,
     'code'     => 'main',
-    'current'  => { 'caption' => $node->data->{'name'} },
-    'previous' => { 'caption' => $node->previous_leaf ? $node->previous_leaf->data->{'name'} : undef, 'url' => 'previous' } ,
-    'next'     => { 'caption' => $node->next_leaf     ? $node->next_leaf->data->{'name'}     : undef, 'url' => 'next' }
+    'caption'  => $node->data->{'concise'} || $node->data->{'caption'}
   );
+  $params{'previous'} = $previous_node->data if $previous_node;
+  $params{'next'    } = $next_node->data     if $next_node;
+  my $panel = $self->new_panel( 'Navigation', %params );
   if( $panel ) {
     $panel->add_components( @{$node->data->{'components'}} );
     $self->add_panel( $panel );
@@ -60,11 +61,56 @@ sub content_panel {
 sub populate_tree {
   my $self = shift;
 
-  $self->create_node( 'View', "Grapcial View",
+  $self->create_node( 'View', "Contig neigbourhood",
     [qw()],
     { 'availability' => 1}
   );
 
+  my $align_menu = $self->create_submenu( 'Align', 'Alignments' );
+  $align_menu->append( $self->create_node( 'Align_Slice', "Feature ([[counts::align_slice]] options)",
+    [qw()],
+    { 'availability' => 'database:compara', 'concise' => 'Feature Alignments' }
+  ));
+  $align_menu->append( $self->create_node( 'Align_Contig', "Contig ([[counts::align_contig]] species)",
+    [qw()],
+    { 'availability' => 'database:compara', 'concise' => 'Contig Alignments' }
+  ));
+  $align_menu->append( $self->create_node( 'Align_Seq', "Resequencing ([[counts::align_seq]] individuals)",
+    [qw()],
+    { 'availability' => 'database:compara', 'concise' => 'Resequencing Alignments' }
+  ));
+
+
+  $self->create_node( 'Synteny', "Synteny ([[counts::synteny]] species)",
+    [qw(
+    image           EnsEMBL::Web::Component::Chromosome::synteny_map
+    syn_matches     EnsEMBL::Web::Component::Chromosome::syn_matches
+    nav_homology    EnsEMBL::Web::Component::Chromosome::nav_homology
+    change_chr      EnsEMBL::Web::Component::Chromosome::change_chr
+    )],
+    { 'availability' => $self->mapview_possible, 'concise' => 'Synteny'}
+  );
+
+  $self->create_node( 'Chromosome', 'Chromosome '.$self->{'object'}->seq_region_name,
+    [qw(image           EnsEMBL::Web::Component::Chromosome::chr_map
+        stats           EnsEMBL::Web::Component::Chromosome::stats
+    )],
+    { 'availability' => $self->mapview_possible}
+  );
+
+  $self->create_node( 'Karyotype', "Karyotype",
+    [qw(image EnsEMBL::Web::Component::Feature::show_karyotype)],
+    { 'availability' => $self->mapview_possible}
+  );
+
+  my $exp_menu = $self->create_submenu( 'Export', 'Export data' );
+  $exp_menu->append( $self->create_node( 'Export_Features',  'Features', [qw()] ) );
+  $exp_menu->append( $self->create_node( 'Export_Sequence',  'Sequence', [qw()] ) );
+  $exp_menu->append( $self->create_node( 'Export_BioMart',  'Jump to BioMart', [qw()] ) );
+
+  my $exp_menu = $self->create_submenu( 'External', 'View in other browsers' );
+  $exp_menu->append( $self->create_node( 'External_UCSC',  'UCSC', [qw()] ) );
+  $exp_menu->append( $self->create_node( 'External_NCBI',  'NCBI', [qw()] ) );
 }
 
 ### Functions to configure contigview, ldview etc
