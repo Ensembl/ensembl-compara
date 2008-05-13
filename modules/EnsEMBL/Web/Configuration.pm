@@ -56,9 +56,10 @@ sub _global_context {
   my $type = shift;
 
   my @data = (
-    ['location',  'Location',   $self->{object}->core_objects->location_short_caption   ],
-    ['gene',      'Gene',       $self->{object}->core_objects->gene_short_caption       ],
-    ['transcript','Transcript', $self->{object}->core_objects->transcript_short_caption ],
+    ['location',  'Location',   $self->{object}->core_objects->location_short_caption,   $self->{object}->core_objects->location_disabled ],
+    ['gene',      'Gene',       $self->{object}->core_objects->gene_short_caption,       $self->{object}->core_objects->gene_disabled ],
+    ['transcript','Transcript', $self->{object}->core_objects->transcript_short_caption, $self->{object}->core_objects->transcript_disabled ],
+    ['snp',       'Variation',  $self->{object}->core_objects->snp_short_caption,        $self->{object}->core_objects->snp_disabled ],
   );
   my $qs = $self->query_string;
   foreach my $row ( @data ) {
@@ -74,9 +75,11 @@ warn "######## ".$row->[1].": $type";
       push @class, 'active';
     }
     $self->{'page'}->global_context->add_entry( 
-      'caption' => $row->[2],
-      'url'     => $url,
-      'class'   => (join ' ',@class),
+      'type'      => $row->[1],
+      'caption'   => $row->[2],
+      'url'       => $url,
+      'class'     => (join ' ',@class),
+      'disabled'  => $row->[3]
     );
   }
 }

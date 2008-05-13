@@ -32,9 +32,14 @@ sub render {
       <dl id="global">' );
   foreach my $entry ( @{$self->entries} ) {
     my $name = $entry->{caption};
-       $name = CGI::escapeHTML( $name );
-    if( $entry->{'url'} ) {
-      $name = sprintf( '<a href="%s">%s</a>', $entry->{'url'}, $name );
+    if ($name eq '-') {
+      $name =  sprintf( '<span title="%s">%s</span>', $entry->{'disabled'}, $entry->{'type'});
+    }
+    else { 
+      $name = CGI::escapeHTML( $name );
+      if( $entry->{'url'} ) {
+        $name = sprintf( '<a href="%s">%s</a>', $entry->{'url'}, $name );
+      }
     }
     $self->printf( '
         <dd class="%s">%s</dd>', $entry->{class}, $name );

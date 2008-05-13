@@ -12,7 +12,8 @@ sub new {
     'objects' => {
       'transcript' => undef,
       'gene'       => undef,
-      'location'   => undef
+      'location'   => undef,
+      'snp'        => undef,
     },
     'parameters' => {}
   };
@@ -48,6 +49,11 @@ sub transcript_long_caption {
   return "Transcript: ".$self->transcript->stable_id.$label;
 }
 
+sub transcript_disabled {
+  my $self = shift;
+  return "There is no default gene for this location";
+}
+
 sub gene {
 ### a
   my $self = shift;
@@ -69,6 +75,11 @@ sub gene_long_caption {
   my $dxr = $self->gene->display_xref;
   my $label = $dxr ? " (".$dxr->display_id.")" : '';
   return "Gene: ".$self->gene->stable_id.$label;
+}
+
+sub gene_disabled {
+  my $self = shift;
+  return "There is no default gene for this location";
 }
 
 sub location {
@@ -96,6 +107,40 @@ sub location_long_caption {
   return '-' unless $self->location;
   my $midpoint = int($self->location->end - $self->location->start) + $self->location->start;
   return "Location: ".$self->location->seq_region_name.':'.$self->thousandify($midpoint);
+}
+
+sub location_disabled {
+  my $self = shift;
+  return "";
+}
+
+sub snp {
+### a
+  my $self = shift;
+  $self->{objects}{snp} = shift if @_;
+  return $self->{objects}{snp};
+}
+
+sub snp_short_caption {
+  my $self = shift;
+  return '-' unless $self->snp;
+  my $label = $self->snp->name;
+  if( length($label)>30) {
+    return "Var: $label";
+  } else {
+    return "Variation: $label";
+  }
+}
+
+sub snp_long_caption {
+  my $self = shift;
+  return '-' unless $self->snp;
+  return "Variation: ".$self->snp->name;
+}
+
+sub snp_disabled {
+  my $self = shift;
+  return "No variation data has been selected";
 }
 
 sub param {
