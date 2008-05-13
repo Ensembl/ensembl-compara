@@ -56,9 +56,9 @@ sub _global_context {
   my $type = shift;
 
   my @data = (
+    ['location',  'Location',   $self->{object}->core_objects->location_short_caption   ],
     ['gene',      'Gene',       $self->{object}->core_objects->gene_short_caption       ],
     ['transcript','Transcript', $self->{object}->core_objects->transcript_short_caption ],
-    ['location',  'Location',   $self->{object}->core_objects->location_short_caption   ]
   );
   my $qs = $self->query_string;
   foreach my $row ( @data ) {
