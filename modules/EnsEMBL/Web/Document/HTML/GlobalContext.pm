@@ -37,7 +37,7 @@ sub render {
       $name = sprintf( '<a href="%s">%s</a>', $entry->{'url'}, $name );
     }
     $self->printf( '
-        <dd%s>%s</dd>', $entry->{'code'} eq $self->active  ? qq( class="active") : '', $name );
+        <dd class="%s">%s</dd>', $entry->{class}, $name );
   }
   $self->print( '
       </dl>' );
