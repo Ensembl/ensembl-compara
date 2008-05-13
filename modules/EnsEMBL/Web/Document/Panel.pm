@@ -352,33 +352,36 @@ sub render {
     }
     my $HTML = q(
     <div class="panel">);
-    my $cap = '';
+    my $button_text;
+    my $counts = {};
     if( exists $self->{'previous'} || exists $self->{'next'} ) {
       $HTML .= q(
       <div class="nav-heading">
         <div class="left-button">);
       if( exists $self->{'previous'} && $self->{'previous'}{'url'} ) {
-        $HTML .= sprintf q(<a href="%s">&laquo;&nbsp;%s</a>), $self->{'previous'}{'url'}, $self->{'previous'}{'caption'};
+        $button_text = $self->{'previous'}{'concise'} || $self->{'previous'}{'caption'};
+        $HTML .= sprintf q(<a href="%s">&laquo;&nbsp;%s</a>), $self->{'previous'}{'url'}, $button_text;
       } else {
         $HTML .= q(&nbsp;);
       }
       $HTML .= q(</div>
         <div class="right-button">);
       if( exists $self->{'next'} && $self->{'next'}{'url'} ) {
-        $HTML .= sprintf q(<a href="%s">%s&nbsp;&raquo;</a>), $self->{'next'}{'url'}, $self->{'next'}{'caption'};
+        $button_text = $self->{'next'}{'concise'} || $self->{'next'}{'caption'};
+        $HTML .= sprintf q(<a href="%s">%s&nbsp;&raquo;</a>), $self->{'next'}{'url'}, $button_text;
       } else {
          $HTML .= q(&nbsp;);
       }
       $HTML .= q(</div>);
       if( exists $self->{'caption'} ) {
         $HTML .= sprintf q(
-        <h2>%s</h2>), CGI::escapeHTML( $self->parse($self->{'caption'}) );
+        <h2>%s</h2>), CGI::escapeHTML($self->{caption});
       }
       $HTML .= q(
       </div>);
     } elsif( exists $self->{'caption'} ) {
       $HTML .= sprintf q(
-      <h2>%s</h2>), CGI::escapeHTML( $self->parse($self->{'caption'}));
+      <h2>%s</h2>), CGI::escapeHTML($self->{caption});
     }
     $self->renderer->print($HTML);
     if( $status ne 'off' ) {
@@ -403,7 +406,7 @@ sub render {
       }
     }
     $self->renderer->print( q(
-    </div>) );
+    <span class="invisible">.</span></div>) );
   }
 }
 
