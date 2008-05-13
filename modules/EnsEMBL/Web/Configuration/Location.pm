@@ -61,6 +61,23 @@ sub content_panel {
 sub populate_tree {
   my $self = shift;
 
+  $self->create_node( 'Karyotype', "Karyotype",
+    [qw(image EnsEMBL::Web::Component::Feature::show_karyotype)],
+    { 'availability' => $self->mapview_possible}
+  );
+
+  $self->create_node( 'Chromosome', 'Chromosome '.$self->{'object'}->seq_region_name,
+    [qw(image           EnsEMBL::Web::Component::Chromosome::chr_map
+        stats           EnsEMBL::Web::Component::Chromosome::stats
+    )],
+    { 'availability' => $self->mapview_possible}
+  );
+
+  $self->create_node( 'Overview', "Region overview",
+    [qw()],
+    { 'availability' => 1}
+  );
+
   $self->create_node( 'View', "Contig neigbourhood",
     [qw()],
     { 'availability' => 1}
@@ -89,18 +106,6 @@ sub populate_tree {
     change_chr      EnsEMBL::Web::Component::Chromosome::change_chr
     )],
     { 'availability' => $self->mapview_possible, 'concise' => 'Synteny'}
-  );
-
-  $self->create_node( 'Chromosome', 'Chromosome '.$self->{'object'}->seq_region_name,
-    [qw(image           EnsEMBL::Web::Component::Chromosome::chr_map
-        stats           EnsEMBL::Web::Component::Chromosome::stats
-    )],
-    { 'availability' => $self->mapview_possible}
-  );
-
-  $self->create_node( 'Karyotype', "Karyotype",
-    [qw(image EnsEMBL::Web::Component::Feature::show_karyotype)],
-    { 'availability' => $self->mapview_possible}
   );
 
   my $exp_menu = $self->create_submenu( 'Export', 'Export data' );
