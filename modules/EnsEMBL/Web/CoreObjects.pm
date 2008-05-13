@@ -81,8 +81,9 @@ sub location {
 sub location_short_caption {
   my $self = shift;
   return '-' unless $self->location;
-  my $label = $self->location->seq_region_name.':'.$self->thousandify($self->location->start).'-'.$self->thousandify($self->location->end);
-  return $label;
+  my $midpoint = int($self->location->end - $self->location->start) + $self->location->start;
+  my $label = $self->location->seq_region_name.':'.$self->thousandify($midpoint);
+  #return $label;
   if( length($label)>30) {
     return "Loc: $label";
   } else {
@@ -93,7 +94,8 @@ sub location_short_caption {
 sub location_long_caption {
   my $self = shift;
   return '-' unless $self->location;
-  return "Location: ".$self->location->seq_region_name.':'.$self->thousandify($self->location->start).'-'.$self->thousandify($self->location->end);
+  my $midpoint = int($self->location->end - $self->location->start) + $self->location->start;
+  return "Location: ".$self->location->seq_region_name.':'.$self->thousandify($midpoint);
 }
 
 sub param {
