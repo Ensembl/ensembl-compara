@@ -902,19 +902,17 @@ sub aligned_sequence {
       $aligned_sequence = $flag;
     }
   }
-  
+
   if (defined($aligned_sequence)) {
     $aligned_sequence =~ s/[\r\n]+$//;
     
     if ($aligned_sequence) {
       ## Check sequence
-      throw("Unreadable sequence ($aligned_sequence)") if ($aligned_sequence !~ /^[\-A-Z]+$/i);
+      throw("Unreadable sequence ($aligned_sequence)") if ($aligned_sequence !~ /^[\-\.A-Z]+$/i);
       $self->{'aligned_sequence'} = $aligned_sequence;
     } else {
       $self->{'aligned_sequence'} = undef;
     }
-
-
   } elsif (!defined($self->{'aligned_sequence'})) {
     # Try to get the aligned_sequence from other sources...
     if (defined($self->cigar_line) and $fake_seq) {
@@ -1018,6 +1016,8 @@ sub cigar_line {
     # Try to get the cigar_line from other sources...
     if (defined($self->{'aligned_sequence'})) {
       # ...from the aligned sequence
+
+
       my $cigar_line = _get_cigar_line_from_aligned_sequence($self->{'aligned_sequence'});
       $self->cigar_line($cigar_line);
     
@@ -1327,7 +1327,7 @@ sub _get_aligned_sequence_from_original_sequence_and_cigar_line {
       }
     }
   }
-  throw("Cigar line ($seq_pos) does not match sequence lenght (".CORE::length($original_sequence).")")
+  throw("Cigar line ($seq_pos) does not match sequence length (".CORE::length($original_sequence).")")
       if ($seq_pos != CORE::length($original_sequence));
 
   return $aligned_sequence;
@@ -1688,6 +1688,7 @@ sub get_Slice {
 sub restrict {
   my ($self, $start, $end) = @_;
   throw("Wrong arguments") if (!$start or !$end);
+
   my $restricted_genomic_align = $self->copy();
   delete($restricted_genomic_align->{dbID});
   delete($restricted_genomic_align->{genomic_align_block_id});
