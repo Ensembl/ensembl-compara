@@ -69,6 +69,7 @@ sub _global_context {
     } else {
       $url   = "/$ENV{ENSEMBL_SPECIES}/$row->[1]/Summary?$qs";
     }
+warn "######## ".$row->[1].": $type";
     if( $row->[1] eq $type ) {
       push @class, 'active';
     }
@@ -345,70 +346,6 @@ sub context_location {
       }
     }
   }
-}
-
-sub wizard_panel {
-  ### Wrapper to automatically create panels for a wizard
-  ### Makes the assumption that
-  ### 1. The node contains a single component with the same name as the node
-  ### 2. If the wizard is in a plugin, the component methods are in the same plugin
-  my ($self, $caption) = @_;
-  my $object = $self->{object};
-  my $wizard = $self->{wizard};
-  my $node = $wizard->current_node($object);
-  my $namespace = $wizard->namespace;
-
-  ## determine object type
-  my @module_bits = split('::', ref($wizard));
-  my $type = $module_bits[-1];
-
-  ## check for a node-specific title
-  my $title = $wizard->node_value($node, 'title');
-  $caption = $title if $title;
-
-  ## call the relevant configuration method
-  if ($wizard->isa_page($node)) { ## create panel(s)
-    if ($object->param('feedback')) { ## check for error messages
-      my $message = $wizard->get_message($object->param('feedback'));
-      $self->wizard_feedback($message, $object->param('feedback'), $object->param('error'));
-    }
-    ## create generic panel
-    if (my $panel = $self->new_panel('Image',
-        'code'    => "wizard",
-        'caption' => $caption,
-        'object'  => $self->{object},
-        'wizard'  => $self->{wizard})
-    ) {
-      my $method = $type.'::'.$node;
-      $panel->add_components($node, $namespace.'::Component::'.$method);
-      if ($wizard->isa_form($node)) {
-        $panel->add_form($self->{page}, $node, $namespace.'::Wizard::'.$method);
-      }
-      $self->{page}->content->add_panel($panel);
-    }
-
-  }
-
-}
-
-sub wizard_feedback {
-  my ($self, $feedback, $error) = @_;
-  my $caption;
-
-  if ($error > 0) {
-    $feedback = '<span class="red"><strong>'.$feedback.'</strong></span>';
-    $caption = 'Error';
-  }
-
-  $self->{page}->content->add_panel(
-    new EnsEMBL::Web::Document::Panel(
-      'object'  => $self->{'object'},
-      'code'    => "",
-      'caption' => $caption,
-      'content' => qq(<p>$feedback</p>),
-    )
-  );
-
 }
 
 1;
