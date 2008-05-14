@@ -23,8 +23,10 @@ sub _format_error {
 ### Format an error message by wrapping text to 120 columns
   my $self = shift;
   $Text::Wrap::columns = 120;
-  my $out = CGI::escapeHTML( join "\n", map { Text::Wrap::wrap( '', '... ', $_ ) } split /\n/, join '', @_ );
-  $out =~ s/^(\.{3} )/<span style="color: red">$1<\/span>/gm;
+  my $out = qq(\n      <pre class="syntax-error">\n).
+            CGI::escapeHTML( join "\n", map { Text::Wrap::wrap( '        ', '        ... ', $_ ) } split /\n/, join '', @_ ).
+            qq(\n      </pre>);
+  $out =~ s/^(\.{3} )/$1/gm;
   return $out;
 }
 
