@@ -1,26 +1,26 @@
 package EnsEMBL::Web::Component::LD;
 
-### Description: This class consists of methods which output chunks 
-### of XHTML for LD based displays.  
+### Description: This class consists of methods which output chunks
+### of XHTML for LD based displays.
 ### The page is based on a slice created round a gene or SNP
 
 ### This object is called from a Configuration object e.g.
 ### from package {{EnsEMBL::Web::Configuration::Location}}
 
-### For each component to be displayed, you need to create 
-### an appropriate panel object and then add the component. 
+### For each component to be displayed, you need to create
+### an appropriate panel object and then add the component.
 ### See {{EnsEMBL::Web::Configuration::Location}}
 
 ### Args : Except where indicated, all methods take the same two arguments
-### a {{EnsEMBL::Web::Document::Panel}} object and a 
-### {{EnsEMBL::Web::Proxy::Object}} object (data). 
+### a {{EnsEMBL::Web::Document::Panel}} object and a
+### {{EnsEMBL::Web::Proxy::Object}} object (data).
 
-### Returns : In general components return true on completion. 
-### If true is returned and the components are chained (see notes in 
+### Returns : In general components return true on completion.
+### If true is returned and the components are chained (see notes in
 ### {{Ensembl::Web::Configuration}}) then the subsequence components are ignored.
 ### if false is returned any subsequent components are executed.
 ### Note: Variation objects have all the data (flanks, alleles) but no position
-### Note: VariationFeature objects have position (but also short cut 
+### Note: VariationFeature objects have position (but also short cut
 ### calls to allele etc.)  for contigview
 
 
@@ -85,13 +85,14 @@ sub prediction_method {
 
   my($panel, $object) = @_;
   my $label = "Prediction method";
-  my $info = 
-    "<p>LD values were calculated by a pairwise
+  my $info =
+    qq(<p>LD values were calculated by a pairwise
  estimation between SNPs genotyped in the same individuals and within a
- 100kb window.  An established method was used to estimate the maximum 
+ 100kb window.  An established
+ <a HREF="http://cvs.sanger.ac.uk/cgi-bin/viewcvs.cgi/ensembl-variation/scripts/import/calc_genotypes.pl?view=markup">method</a> was used to estimate the maximum
  likelihood of the proportion that each possible haplotype contributed to the
- double heterozygote.</p>";
-  
+ double heterozygote.</p>);
+
   $panel->add_row( $label, $info );
   return 1;
 }
@@ -101,7 +102,7 @@ sub prediction_method {
 sub population_info {
 
   ### Information_panel
-  ### Purpose    : outputs name, size, description of population and 
+  ### Purpose    : outputs name, size, description of population and
   ### super/sub population info if exists
   ### Description : Returns information about the population.  Calls helper function print_pop_info to get population data (name, size, description, whether the SNP is tagged)
 
@@ -133,7 +134,7 @@ sub population_info {
 
 sub mappings {
 
-  ### Use this if there is more than one mapping for SNP 
+  ### Use this if there is more than one mapping for SNP
   ### Description : table showing Variation feature mappings to genomic locations. May only display when a SNP maps to more than one location
 
   my ( $panel, $object ) = @_;
@@ -218,7 +219,7 @@ sub ldview_image {
     $object->database('core')->get_SliceAdaptor()->fetch_by_region(
     $seq_type, $seq_region, $start, $end, 1
   );
- 
+
 
   my ($count_snps, $snps) = $object->getVariationsOnSlice();
   my ($genotyped_count, $genotyped_snps) = $object->get_genotyped_VariationsOnSlice();
@@ -309,8 +310,8 @@ sub options_form {
 		 );
 
   return $form unless @formats;
-  $form->add_element( 'type' => 'Hidden', 
-		      'name' => '_format', 
+  $form->add_element( 'type' => 'Hidden',
+		      'name' => '_format',
 		      'value'=>'HTML' );
   $form->add_element(
     'class'     => 'radiocheck1col',
@@ -395,8 +396,8 @@ sub tagged_snp {
 
   ### Arg1 : object
   ### Arg2 : population name (string)
-  ### Description : Gets the {{EnsEMBL::Web::Object::SNP}} object off the 
-  ### proxy object and checks if SNP is tagged in the current population.  
+  ### Description : Gets the {{EnsEMBL::Web::Object::SNP}} object off the
+  ### proxy object and checks if SNP is tagged in the current population.
   ### Returns 0 if no SNP.
   ### Returns "Yes" if SNP is tagged in the population name supplied, else
   ### returns no
@@ -422,7 +423,7 @@ sub print_pop_info {
   ### Internal_call
   ###Arg1      : population object
   ### Arg2      : label (e.g. "Super-Population" or "Sub-Population")
-  ### Example     :   print_pop_info($super_pop, "Super-Population"). 
+  ### Example     :   print_pop_info($super_pop, "Super-Population").
   ### Description : Returns information about the population: name, size, description and whether it is a tagged SNP
   ### Returns HTML string with population data
 
@@ -431,7 +432,7 @@ sub print_pop_info {
   my $return;
 
   foreach my $pop_name (keys %$pop) {
-    my $display_pop = _pop_url($object,  $pop->{$pop_name}{Name}, 
+    my $display_pop = _pop_url($object,  $pop->{$pop_name}{Name},
 				       $pop->{$pop_name}{PopLink});
 
     my $description = $pop->{$pop_name}{Description} || "unknown";
@@ -473,4 +474,3 @@ sub _pop_url {
 #------------------------------------------------------------------------------
 
 1;
-
