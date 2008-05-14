@@ -119,7 +119,7 @@ sub stuff {
       $webpage->configure( $object, 'global_context', 'local_context', 'context_panel', 'content_panel' );
     }
     $webpage->factory->fix_session; ## Will have to look at the way script configs are stored now there is only one script!!
-    $webpage->action;
+    $webpage->render;
     return "Completing action";
   }
 }
