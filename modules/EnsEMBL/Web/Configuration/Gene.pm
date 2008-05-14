@@ -21,11 +21,11 @@ sub populate_tree {
 #  my $hash = $obj->get_summary_counts;
 
   $self->create_node( 'Structure', "Transcripts ([[counts::transcripts]])",
-    [qw(transcripts EnsEMBL::Web::Component::Gene::transcripts)],
+    [qw(transcripts EnsEMBL::Web::Component::Gene::TranscriptsImage)],
     { 'availability' => 1, 'concise' => 'Transcripts' }
   );
   $self->create_node( 'Splice', "Exons ([[counts::exons]])",
-    [qw(image       EnsEMBL::Web::Component::Gene::genespliceview)],
+    [qw(image       EnsEMBL::Web::Component::Gene::GeneSpliceImage)],
     { 'availability' => 1, 'concise' => 'Exons' }
   );
 
@@ -35,45 +35,45 @@ sub populate_tree {
 ## Compara menu: alignments/orthologs/paralogs/trees
   my $compara_menu = $self->create_submenu( 'Compara', 'Comparative genomics' );
   $compara_menu->append( $self->create_node( 'Compara_Alignments', "Genomic alignments ([[counts::alignments]])",
-    [qw(alignments  EnsEMBL::Web::Component::Gene::alignments)],
+    [qw(alignments  EnsEMBL::Web::Component::Gene::ComparaAlignments)],
     { 'availability' => 'database:compara', , 'concise' => 'Genomic alignments' }
   ));
 ## Compara tree
   $compara_menu->append( $self->create_node( 'Compara_Ortholog',   "Orthologues ([[counts::orthologs]])",
-    [qw(orthologues EnsEMBL::Web::Component::Gene::orthologues)],
+    [qw(orthologues EnsEMBL::Web::Component::Gene::ComparaOrthologs)],
     { 'availability' => 'database:compara', 'concise' => 'Orthologues' }
   ));
   $compara_menu->append( $self->create_node( 'Compara_Paralog',    "Paralogues ([[counts::paralogs]])",
-    [qw(paralogues  EnsEMBL::Web::Component::Gene::paralogues)],
+    [qw(paralogues  EnsEMBL::Web::Component::Gene::ComparaParalogs)],
     { 'availability' => 'database:compara', 'concise' => 'Paralogues' }
   ));
 
   $compara_menu->append( $self->create_node( 'Compara_Tree',       "Gene Trees",
-    [qw(menu        EnsEMBL::Web::Component::Gene::genetreeview_menu
-      image        EnsEMBL::Web::Component::Gene::genetreeview)],
+    [qw(image        EnsEMBL::Web::Component::Gene::ComparaTree)],
     { 'availability' => 'database:compara' }
   ));
 =pod
   my $user_menu = $self->create_submenu( 'User', 'User data' );
   $user_menu->append( $self->create_node( 'User_Notes', "User's gene based annotation",
-    [qw(manual_annotation EnsEMBL::Web::Component::Gene::Annotation)],
+    [qw(manual_annotation EnsEMBL::Web::Component::Gene::UserAnnotation)],
     { 'availability' => 1 }
   ));
 =cut
 ## DAS tree
   $self->create_node( 'Evidence',   'Supporting evidence', [qw()] );
   $self->create_node( 'Regulation', 'Regulation', 
-    [qw(regulation EnsEMBL::Web::Component::Gene::regulation_factor)],
+    [qw(regulation EnsEMBL::Web::Component::Gene::Regulation)],
     { 'availability' => 'database:funcgen' }
   );
 ## Variation tree
   my $var_menu = $self->create_submenu( 'Variation', 'Variational genomics' );
   $var_menu->append($self->create_node( 'Variation_Gene',  'Gene variations',
-    [qw(menu        EnsEMBL::Web::Component::Gene::genesnpview_menu
-        image       EnsEMBL::Web::Component::Gene::genesnpview)],
+    [qw(image       EnsEMBL::Web::Component::Gene::GeneSNPImage)],
     { 'availability' => 'database:variation' }
   ));
-  $self->create_node( 'Idhistory', 'ID history', [qw()] );
+  $self->create_node( 'Idhistory', 'ID history',
+    [qw(display     EnsEMBL::Web::Component::Gene::IDHistory)]
+  );
   my $exp_menu = $self->create_submenu( 'Export', 'Export data' );
   $exp_menu->append( $self->create_node( 'Export_Features',  'Features', [qw()] ) );
 }

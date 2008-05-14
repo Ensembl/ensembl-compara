@@ -1,9 +1,5 @@
 package EnsEMBL::Web::Component::Gene;
 
-
-use EnsEMBL::Web::Component;
-our @ISA = qw( EnsEMBL::Web::Component);
-
 use strict;
 use warnings;
 no warnings "uninitialized";
@@ -19,6 +15,7 @@ use Bio::AlignIO;
 use IO::String;
 use CGI qw(escapeHTML);
 
+use base qw(EnsEMBL::Web::Component);
 our %do_not_copy = map {$_,1} qw(species type view db transcript gene);
 
 sub Summary {
@@ -55,6 +52,7 @@ sub Summary {
   my $transcripts = $object->Obj->get_all_Transcripts;
   my $count = @$transcripts;
   if( $count > 1 ) {
+    my $transcript = $object->core_objects->{'parameters'}{'t'};
     my $html = '
         <table id="transcripts" style="display:none">';
     foreach( sort { $a->stable_id cmp $b->stable_id } @$transcripts ) {
@@ -64,10 +62,11 @@ sub Summary {
         't'      => $_->stable_id
       });
       $html .= sprintf( '
-          <tr>
+          <tr%s>
             <th>%s</th>
             <td><a href="%s">%s</a></td>
           </tr>',
+	$_->stable_id eq $transcript ? ' class="active"' : '',
         $_->display_xref ? $_->display_xref->display_id : 'Novel',
         $url,
         $_->stable_id
@@ -836,10 +835,10 @@ sub location {
 }
 
 sub EC_URL {
-  my($gene,$string) = @_;
+  my( $self,$string ) = @_;
   my $URL_string= $string;
   $URL_string=~s/-/\?/g;
-  return $gene->get_ExtURL_link( "EC $string", 'EC_PATHWAY', $URL_string );
+  return $self->object->get_ExtURL_link( "EC $string", 'EC_PATHWAY', $URL_string );
 }
 
 sub description {

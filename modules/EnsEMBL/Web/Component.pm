@@ -6,10 +6,48 @@ $Data::Dumper::Indent = 3;
 use EnsEMBL::Web::File::Text;
 use Exporter;
 
-our @ISA = qw(EnsEMBL::Web::Root Exporter);
+use base qw(EnsEMBL::Web::Root Exporter);
 our @EXPORT_OK = qw(cache cache_print);
 our @EXPORT    = @EXPORT_OK;
 
+sub new {
+  my( $class, $object ) = shift;
+  my $self = {
+    'object' => shift,
+  };
+  bless $self,$class;
+  return $self;
+}
+
+sub object {
+  my $self = shift;
+  $self->{'object'} = shift if @_;
+  return $self->{'object'};
+}
+
+sub cacheable {
+  my $self = shift;
+  $self->{'cacheable'} = shift if @_;
+  return $self->{'cacheable'};
+}
+
+sub ajaxable {
+  my $self = shift;
+  $self->{'ajaxable'} = shift if @_;
+  return $self->{'ajaxable'};
+}
+
+sub cache_key {
+  return undef;
+}
+
+sub _init {
+  return;
+}
+
+sub caption {
+  return undef;
+}
 sub cache {
   my( $panel, $obj, $type, $name ) = @_;
   my $cache = new EnsEMBL::Web::File::Text( $obj->species_defs );
@@ -44,7 +82,7 @@ sub message {
 
 
 
-sub AUTOLOAD {
+sub xAUTOLOAD {
 ## Automagically creates simple form wrapper components
   my ( $panel, $object ) = @_;
   our $AUTOLOAD;
