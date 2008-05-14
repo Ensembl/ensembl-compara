@@ -435,18 +435,7 @@ sub _generic_fetch {
 
   my $sth = $self->prepare($sql);
   $sth->execute;
-  if ($self->can("_objs_from_sth")) {
-    $node_list = $self->_objs_from_sth($sth);
-  } else {
-    while(my $rowhash = $sth->fetchrow_hashref) {
-      while (my ($key, $value) = each %$rowhash) {
-        print "$key -> $value; ";
-      }
-      print "\n";
-      my $node = $self->create_instance_from_rowhash($rowhash);        
-      push @$node_list, $node;
-    }
-  }
+  $node_list = $self->_objs_from_sth($sth);
   $sth->finish;
 
   return $node_list;
