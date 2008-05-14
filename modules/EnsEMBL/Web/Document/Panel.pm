@@ -267,7 +267,7 @@ sub add_form {
     };
     if( $@ ) {
       warn $@;
-      my $error = "<pre>".$self->_format_error($@)."</pre>";
+      my $error = $self->_format_error($@);
       $self->print( qq(<h4>Runtime error</h4>
       <p>Unable to execute <strong>$function_name</strong> to add form:</p>
       $error) );
@@ -281,7 +281,7 @@ sub add_form {
   } else {
     $self->printf( qq(<h4>Compile error</h4>
     <p>Unable to compile <strong>$module_name</strong></p>
-    <pre>%s</pre>), $self->_format_error( $self->dynamic_use_failure( $module_name ) ) );
+    %s), $self->_format_error( $self->dynamic_use_failure( $module_name ) ) );
   }
 }
 
@@ -499,7 +499,7 @@ sub parse {
                     the key 'omit' contains a hashref of key /value pairs
                         where the keys are the params to omit
    Example     :  my $param_form = $self->get_params({ style =>"form", 
-				       omit  => {snp =>1, c =>1, gene=>1 }} );
+                                   omit  => {snp =>1, c =>1, gene=>1 }} );
    Description : if style is 'web', it returns cgi parameters in form: 
                  param1=$value1&param2=$value2
                  if style is 'form', it returns cgi parameters in form:
@@ -541,7 +541,7 @@ sub raw_component {
           $result = &$function_name( $self, $self->{'object'} );
         };
         if( $@ ) {
-          my $error = sprintf( '<pre>%s</pre>', $self->_format_error($@) );
+          my $error = $self->_format_error($@);
           # if( $@ =~ /^Undefined subroutine / ) {
           #  $error = "<p>This function is not defined</p>";
           # }
@@ -555,7 +555,7 @@ sub raw_component {
         $self->{'raw'} =  sprintf (qq(<h4>Compile error</h4>
       <p>Function <strong>$function_name</strong> not executed as unable to use
 module <strong>$module_name</strong> due to syntax error.</p>
-      <pre>%s</pre>), $self->_format_error( $self->dynamic_use_failure($module_name)
+      %s), $self->_format_error( $self->dynamic_use_failure($module_name)
             )  );
       }
 }
@@ -599,37 +599,60 @@ sub content {
   }
   foreach my $component ($self->components) {
 #warn "Starting component $component";
-    foreach my $function_name ( @{$self->{'components'}{$component}} ) { 
+    foreach my $module_name ( @{$self->{'components'}{$component}} ) { 
       my $result;
-      (my $module_name = $function_name ) =~s/::\w+$//;
+      # (my $module_name = $function_name ) =~s/::\w+$//;
       if( $self->dynamic_use( $module_name ) ) {
-        $self->{'object'} && $self->{'object'}->prefix($self->prefix);
+        $self->{'object'} && $self->{'object'}->prefix( $self->prefix );
         no strict 'refs';
+        my $comp_obj;
         eval {
-          $result = &$function_name( $self, $self->{'object'} );
+          $comp_obj = $module_name->new( $self->{'object'} ); # &$function_name( $self, $self->{'object'} );
         };
+        $result = $comp_obj->{_end_processing_};
         if( $@ ) {
-	  warn $@;
-          my $error = sprintf( '<pre>%s</pre>', $self->_format_error($@) );
-          # if( $@ =~ /^Undefined subroutine / ) {
-          #  $error = "<p>This function is not defined</p>";
-          # }
-          $self->_error( qq(Runtime Error in component "<b>$component</b>"),
-            qq(<p>Function <strong>$function_name</strong> fails to execute due to the following error:</p>$error)
-          );
-          $self->_prof( "Component $function_name (runtime failure)" );
+         warn $@;
+          $self->_error( qq(Runtime Error in component "<b>$component</b> [new]"),
+            qq(
+    <p>
+      Function <strong>$module_name</strong> fails to
+      execute due to the following error:
+    </p>).$self->_format_error($@)
+             );
+          $self->_prof( "Component $module_name (runtime failure [new])" );
         } else {
-          $self->_prof( "Component $function_name succeeded" );
+          my $content;
+          eval {
+            $content = $comp_obj->content;
+          };
+          if( $@ ) {
+            warn $@;
+            $self->_error( qq(Runtime Error in component "<b>$component</b> [content]"),
+              qq(
+    <p>
+      Function <strong>$module_name</strong> fails to
+      execute due to the following error:
+    </p>).$self->_format_error($@)
+            );
+            $self->_prof( "Component $module_name (runtime failure [content])" );
+          } else {
+            if( $content ) {
+              my $caption = $comp_obj->caption;
+              $self->print( "<h2>$caption</h2>" ) if $caption;
+              $self->print( $content );
+            }
+            $self->_prof( "Component $module_name succeeded" );
+          }
         }
       } else {
         $self->_error( qq(Compile error in component "<b>$component</b>"),
           qq(
-            <p>Function <strong>$function_name</strong> not executed as unable to use module <strong>$module_name</strong>
-               due to syntax error.</p>
-            <pre>@{[ $self->_format_error( $self->dynamic_use_failure($module_name) ) ]}</pre>
-          )
+    <p>
+      Component <strong>$module_name</strong> not used
+      as unable to compile module.
+    </p>). $self->_format_error( $self->dynamic_use_failure($module_name) )
         );
-        $self->_prof( "Component $function_name (compile failure)" );
+        $self->_prof( "Component $module_name (compile failure)" );
       }
       last if $result;
     }
