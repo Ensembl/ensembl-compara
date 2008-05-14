@@ -20,15 +20,25 @@
 
     if($('transcripts')){                    // Only if search box exists...
       __debug( 'Initializing transcript_dropdown box' );
-      $('transcripts_text').appendChild(
-        Builder.node( 'div', { id: 'transcripts_link' }, 'select transcript' )
-      );
+      $('transcripts').select('tr').each(function(n){
+        if( n.hasClassName('active') ) { n.show(); } else { n.hide(); }
+      });
+      $('transcripts').show();
+      $('transcripts').setAttribute('title','Click here to show all transcript identifiers');
+      Event.observe($('transcripts'),'click',function(event){
+        var menu = $('transcripts');
+	menu.select('tr').each(function(n) { 
+	  if( n.hasClassName('active') ) { n.show(); } else { n.toggle(); }
+        });
+      });
+      /*
       Event.observe($('transcripts_link'),'click',function(event){
         var box  = $('transcripts_link');
         var menu = $('transcripts');
         Position.clone(box,menu,{setWidth:false,offsetTop:box.getHeight()-4});
         menu.toggle();
       });
+      */
 // Create the search list!
     }
   }

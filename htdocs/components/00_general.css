@@ -90,3 +90,5 @@ form { border:none; margin-top: 0px; margin-bottom: 0px; padding:0px; }
   body, h1, h2, h4 { color:#000000; }
   .print_hide { display: none }
 }
+
+.syntax-error { font-size: 0.7em; color: #900; background-color: #fee }
