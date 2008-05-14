@@ -6,7 +6,9 @@ use base qw(EnsEMBL::Web::Document::Panel);
 
 sub _error {
   my( $self, $caption, $body ) = @_;
-  $self->add_content( $caption, $body );
+  $self->print( qq(
+  <h3>$caption</h3>
+$body ));
 }
 
 sub add_content {
