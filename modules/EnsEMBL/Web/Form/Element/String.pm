@@ -16,14 +16,15 @@ sub validate { return 1; }
 
 sub render {
   my $self = shift;
-  return sprintf( '%s<input type="%s" name="%s" value="%s" id="%s" %s />%s%s',
-    $self->introduction,
+  return sprintf( '<label for="%s">%s: </label><input type="%s" name="%s" value="%s" id="%s" class="input-text" %s />%s %s',
+    CGI::escapeHTML( $self->name ),
+    CGI::escapeHTML( $self->label ),
     $self->widget_type,
     CGI::escapeHTML( $self->name ),
     CGI::escapeHTML( $self->value ), CGI::escapeHTML( $self->id ),
     $self->_extra(),
     $self->required eq 'yes' ? $self->required_string : '',
-    $self->notes
+    $self->notes,
   );
 }
 

@@ -17,8 +17,11 @@ sub render {
     $style = 'style="height:'.$height.'em"';
   }
   return sprintf(
-    qq(<textarea name="%s" id="%s" rows="%s" cols="%s" onKeyUp="os_check('text',this,%d)" onChange="os_check( 'text', this, %d )" %s>%s</textarea>),
-    CGI::escapeHTML( $self->name ), CGI::escapeHTML( $self->id ),
+    qq(<label for="%s">%s: </label><textarea name="%s" id="%s" rows="%s" cols="%s" onKeyUp="os_check('text',this,%d)" onChange="os_check( 'text', this, %d )" class="input-textarea" %s>%s</textarea>),
+    CGI::escapeHTML( $self->name ), 
+    CGI::escapeHTML( $self->label ), 
+    CGI::escapeHTML( $self->name ), 
+    CGI::escapeHTML( $self->id ),
     CGI::escapeHTML( $self->rows ) ? CGI::escapeHTML( $self->rows ) : '10', 
     CGI::escapeHTML( $self->cols ) ? 'style="'.CGI::escapeHTML( $self->rows ) * 1.2 : '',
     $self->required eq 'yes' ? 1 : 0,
