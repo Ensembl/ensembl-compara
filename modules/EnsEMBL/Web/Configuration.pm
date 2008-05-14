@@ -18,9 +18,7 @@ sub new {
     '_data'   => $common_conf
   };
   bless $self, $class;
-  warn "... $self ...";
   $self->populate_tree;
-  warn "TREE POPULATED";
   $self->set_default_action;
   return $self;
 }
@@ -70,7 +68,6 @@ sub _global_context {
     } else {
       $url   = "/$ENV{ENSEMBL_SPECIES}/$row->[1]/Summary?$qs";
     }
-warn "######## ".$row->[1].": $type";
     if( $row->[1] eq $type ) {
       push @class, 'active';
     }
@@ -82,13 +79,12 @@ warn "######## ".$row->[1].": $type";
       'disabled'  => $row->[3]
     );
   }
+  $self->{'page'}->global_context->active( lc($type) );
 }
 
 sub _local_context {
   my $self = shift;
-  warn "CALLING LOCAL CONTEXT...............";
   my $hash = {}; #  $self->obj->get_summary_counts;
-  warn "Local context tree....".$self->{_data}{'tree'};
   $self->{'page'}->local_context->tree(    $self->{_data}{'tree'}    );
   $self->{'page'}->local_context->active(  $self->{_data}{'action'}  );
   $self->{'page'}->local_context->caption( $self->{object}->caption );
@@ -103,10 +99,10 @@ sub species { return $ENV{'ENSEMBL_SPECIES'}; }
 sub type    { return $ENV{'ENSEMBL_TYPE'}; }
 sub query_string {
   my $self = shift;
-  my %parameters = %{$self->{object}->core_objects->{parameters}},@_;
+  my %parameters = (%{$self->{object}->core_objects->{parameters}},@_);
   my @S = ();
   foreach (sort keys %parameters) {
-    push @S, "$_=$parameters{$_}"; 
+    push @S, "$_=$parameters{$_}" if defined $parameters{$_}; 
   }
   return join ';', @S;
 }
@@ -238,9 +234,7 @@ sub new_panel {
   eval {
     $panel = $module_name->new( 'object' => $self->{'object'}, %params );
   };
-  warn $panel;
   return $panel unless $@;
-  warn ":::: arg!";
   my $error = "<pre>".$self->_format_error($@)."</pre>";
   $self->{page}->content->add_panel(
     new EnsEMBL::Web::Document::Panel(
