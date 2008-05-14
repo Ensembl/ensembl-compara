@@ -56,13 +56,16 @@ sub Summary {
         <table id="transcripts" style="display:none">';
     foreach( sort { $a->stable_id cmp $b->stable_id } @$transcripts ) {
       my $url = $object->_url({
+        'type'   => 'Transcript',
+	'action' => $object->action,
         't'      => $_->stable_id
       });
       $html .= sprintf( '
-          <tr>
+          <tr%s>
 	    <th>%s</th>
 	    <td><a href="%s">%s</a></td>
 	  </tr>',
+	$_->stable_id eq $object->stable_id ? ' class="active"' : '',
         $_->display_xref ? $_->display_xref->display_id : 'Novel',
         $url,
         $_->stable_id
