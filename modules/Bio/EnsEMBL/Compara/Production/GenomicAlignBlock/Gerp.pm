@@ -674,7 +674,9 @@ sub _parse_rates_file {
 	for ($j = 0; $j < scalar(@$win_sizes); $j++) {
 	    
 	    #store called obs, exp and diff in each win_size bucket and keep a count of these with win_called
-	    if ($diff != $diff_no_score) {
+	    #if ($diff != $diff_no_score) {
+	    if (($version == 1 && $obs != $obs_no_score) ||
+		($version == 2 && $exp != $exp_no_score)) {
 		$bucket->{$win_sizes->[$j]}->{exp} += $exp;
 		$bucket->{$win_sizes->[$j]}->{diff} += $diff;
 		$bucket->{$win_sizes->[$j]}->{win_called}++;
@@ -685,14 +687,19 @@ sub _parse_rates_file {
 	    #increment alignment position
 	    $bucket->{$win_sizes->[$j]}->{pos}++;
 	    
-		    #if the bucket is full....
+	    #if the bucket is full....
 	    if ($bucket->{$win_sizes->[$j]}->{win_cnt} == $win_sizes->[$j]) {
 		
 		#re-initialise win_cnt
 		$bucket->{$win_sizes->[$j]}->{win_cnt} = 0;
 		
 		#FOUND CALLED SCORE
-		if ($bucket->{$win_sizes->[$j]}->{diff} != $diff_no_score) {
+		#if ($bucket->{$win_sizes->[$j]}->{diff} != $diff_no_score) {
+
+		#Use the fact that win_called keeps count of how many called
+		#scores I have. If win_called is 0, no called scores have 
+		#been found
+		if ($bucket->{$win_sizes->[$j]}->{win_called} > 0) {
 		    #count how many called bases in this block
 		    $bucket->{$win_sizes->[$j]}->{called}++;
 		    
@@ -766,7 +773,6 @@ sub _parse_rates_file {
 		    $bucket->{$win_sizes->[$j]}->{delete_cnt} = 0;
 		} else {
 		    #FOUND UNCALLED SCORE
-		    
 		    #count how many uncalled bases in this block
 		    $bucket->{$win_sizes->[$j]}->{delete_cnt}++;
 		    
