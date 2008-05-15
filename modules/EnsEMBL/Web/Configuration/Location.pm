@@ -67,8 +67,10 @@ sub populate_tree {
   );
 
   $self->create_node( 'Chromosome', 'Chromosome '.$self->{'object'}->seq_region_name,
-    [qw(image           EnsEMBL::Web::Component::Chromosome::chr_map
-        stats           EnsEMBL::Web::Component::Chromosome::stats
+    [qw(
+        image           EnsEMBL::Web::Component::Location::ChromosomeImage
+        stats           EnsEMBL::Web::Component::Location::ChromosomeStats
+        change          EnsEMBL::Web::Component::Location::ChangeChromosome
     )],
     { 'availability' => $self->mapview_possible}
   );
@@ -100,10 +102,7 @@ sub populate_tree {
 
   $self->create_node( 'Synteny', "Synteny ([[counts::synteny]] species)",
     [qw(
-    image           EnsEMBL::Web::Component::Chromosome::synteny_map
-    syn_matches     EnsEMBL::Web::Component::Chromosome::syn_matches
-    nav_homology    EnsEMBL::Web::Component::Chromosome::nav_homology
-    change_chr      EnsEMBL::Web::Component::Chromosome::change_chr
+    blank      EnsEMBL::Web::Component::UnderConstruction
     )],
     { 'availability' => $self->mapview_possible, 'concise' => 'Synteny'}
   );
@@ -117,6 +116,10 @@ sub populate_tree {
   $exp_menu->append( $self->create_node( 'External_UCSC',  'UCSC', [qw()] ) );
   $exp_menu->append( $self->create_node( 'External_NCBI',  'NCBI', [qw()] ) );
 }
+
+
+############################ OLD CODE! ###############################################################
+
 
 ### Functions to configure contigview, ldview etc
 
@@ -148,166 +151,6 @@ sub load_configuration {
   }
 }
 
-sub context_menu {
-  my $self = shift;
-  my $obj  = $self->{object};
-  my $species = $obj->real_species;
-  return unless $self->{page}->can('menu');
-  my $menu = $self->{page}->menu;
-  return unless $menu;
-  my $q_string = sprintf( '%s:%s-%s', $obj->seq_region_name, $obj->seq_region_start, $obj->seq_region_end );
-  my $flag = "contig$self->{'flag'}";
-  my $header = "@{[$obj->seq_region_type_and_name]}<br />@{[$obj->thousandify(floor($obj->seq_region_start))]}";
-  if( floor($obj->seq_region_start) != ceil($obj->seq_region_end) ) {
-    $header .= " - @{[$obj->thousandify(ceil($obj->seq_region_end))]}";
-  }
-
-  $menu->add_block( $flag, 'bulleted', $header, 'raw' => 1 );
-
-  if( $self->mapview_possible( $obj->seq_region_name ) ) {
-    $menu->add_entry( $flag, 'code' => 'mv_link', 'text' => "View of @{[$obj->seq_region_type_and_name]}",
-       'title' => "MapView - Overview of @{[$obj->seq_region_type_and_name]} including feature sumarries",
-       'href' => "/$species/mapview?chr=".$obj->seq_region_name );
-  }
-  $header =~s/<br \/>/ /;
-unless( $obj->species_defs->NO_SEQUENCE ) {
-  $menu->add_entry( $flag, 'code' => 'cv_link', 'text' => 'Graphical view',
-       'title' => "ContigView - genome browser view of $header",
-                                  'href' => "/$species/contigview?l=$q_string" );
-}
-  $menu->add_entry( $flag, 'text' => 'Graphical overview',
-       'title' => "CytoView - genome browser overview of $header",
-                                  'href' => "/$species/cytoview?l=$q_string" );
-
-  if( $species =~ /^(Homo_sapiens|Mus_musculus|Rattus_norvegicus)$/ ) {
-    $menu->add_entry( $flag,
-					  'code' => 'reseq_align',
-					  'text' => 'Resequencing alignment',
-					  'title' => "SequenceAlignView",
-					  'href' => "/$species/sequencealignview?l=$q_string" );
-}
-  my $export_section;
-unless( $obj->species_defs->NO_SEQUENCE ) {
-  $export_section = "Export data";
-  $menu->add_block( $export_section, 'bulleted', "Export data", 'raw' => 1 );
-  $menu->add_entry( $export_section, 'text' => 'Export from region...',
-    'title' => "ExportView - export information about $header",
-    'href' => "/$species/exportview?l=$q_string"
-  );
-#  $menu->add_entry( $export_section, 'text' => 'Export sequence as FASTA',
-#   'title' => "ExportView - export sequence of $header as FASTA",
-#  'href' => "/$species/exportview?l=$q_string;format=fasta;action=format"
-#  );
-#  $menu->add_entry( $export_section, 'text' => 'Export EMBL file',
- #   'title' => "ExportView - export sequence of $header as EMBL",
- #   'href' => "/$species/exportview?l=$q_string;format=embl;action=format"
-#  );
-}
-  unless ( $obj->species_defs->ENSEMBL_NOMART) {
-    unless ($export_section) {
-      $export_section = "Export data";
-      $menu->add_block( $export_section, 'bulleted', "Export data", 'raw' => 1 );
-    }
-
-    if( ${$obj->species_defs->multidb || {}}{'ENSEMBL_MART_ENSEMBL'} ) {
-      $menu->add_entry
-          ( $export_section, 
-            'icon' => '/img/biomarticon.gif' , 
-            'text' => 'Export Gene info in region',
-            'title' => "BioMart - export Gene information in $header",
-            'href' => "/$species/martlink?l=$q_string;type=gene_region" );
-    }
-    if( ${$obj->species_defs->multidb || {}}{'ENSEMBL_MART_SNP'} ) {
-      $menu->add_entry
-          ( $export_section, 
-            'icon' => '/img/biomarticon.gif' , 
-            'text' => 'Export SNP info in region',
-            'title' => "BioMart - export SNP information in $header",
-            'href' => "/$species/martlink?l=$q_string;type=snp_region" );
-    }
-    if( ${$obj->species_defs->multidb || {}}{'ENSEMBL_MART_VEGA'} ) {
-      $menu->add_entry
-          ( $export_section,  
-            'icon' => '/img/biomarticon.gif' , 
-            'text' => 'Export Vega info in region',
-            'title' => "BioMart - export Vega gene features in $header",
-            'href' => "/$species/martlink?l=$q_string;type=vega_region" );
-    }
-  }
-  my @options_as = ();
-
-  my %alignments = $obj->species_defs->multiX('ALIGNMENTS');
-
-  foreach my $id (
-    sort { 10 * ($alignments{$b}->{'type'} cmp $alignments{$a}->{'type'}) + ($a <=> $b) }
-    grep { $alignments{$_}->{'species'}->{$species} }
-    keys (%alignments)
-  ) {
-    my $label = $alignments{$id}->{'name'};
-    my $KEY = "opt_align_${id}";
-    my @species = grep {$_ ne $species} sort keys %{$alignments{$id}->{'species'}};
-    if( scalar(@species) == 1) {
-      ($label = $species[0]) =~ s/_/ /g;
-    }
-    push @options_as, {
-      'text' => "... <em>$label</em>", 'raw' => 1,
-      'href' =>  sprintf( "/%s/alignsliceview?c=%s:%s;w=%s;align=%s", $species,  $obj->seq_region_name, $obj->centrepoint, $obj->length, $KEY )
-    };
-  }
-
-  if( @options_as ) {
-    $menu->add_entry( $flag, code => 'asv_link', 'text' => "View alignment with ...", 'href' => $options_as[0]{'href'},
-      'options' => \@options_as, 'title' => "AlignSliceView - graphical view of alignment"
-    );
-  }
-
-  my %species = ( map { $obj->species_defs->multi($_,$species) } qw(BLASTZ_RAW BLASTZ_NET BLASTZ_RECIP_NET PHUSION_BLASTN TRANSLATED_BLAT BLASTZ_GROUP) );
-  my @options = ();
-  foreach( sort keys %species ) {
-    (my $HR = $_ ) =~s/_/ /;
-    push @options, {
-      'text' => "... <em>$HR</em>", 'raw'=>1,
-      'href' => sprintf( "/%s/multicontigview?s1=%s;c=%s:%s;w=%s", $species, $_, $obj->seq_region_name, $obj->centrepoint, $obj->length )
-    };
-  }
-  if(@options) {
-    $menu->add_entry( $flag, 'code' => "mcv_link", 'text' => "View alongside ...", 'href' => $options[0]{'href'},
-      'options' => \@options, 'title' => "MultiContigView - side by side view of genomic sequence"
-    );
-  }
-
-  if( @{ $obj->species_defs->other_species($species, 'ENSEMBL_CHROMOSOMES' ) || [] } ) {
-    my %species = ( $obj->species_defs->multi('SYNTENY',$species) );
-    my @options = ();
-    foreach( sort keys %species ) {
-      (my $HR = $_ ) =~s/_/ /;
-      push @options, {
-        'text' => "... with <em>$HR</em>", 'raw'=>1,
-        'href' => sprintf( "/%s/syntenyview?otherspecies=%s;chr=%s;loc=%s", $species, $_, $obj->seq_region_name, $obj->centrepoint )
-      } if @{ $obj->species_defs->other_species($_, 'ENSEMBL_CHROMOSOMES' ) || [] };
-    }
-    if( @options ) {
-      $menu->add_entry( $flag, 'text' => 'View Syntenic regions ...',
-        'href' => $options[0]{'href'}, 'options' => \@options );
-    }
-  }
-
-  my $UCSC_db = $obj->species_defs->other_species( $species, 'UCSC_GOLDEN_PATH' );
-  if( $UCSC_db ) {
-    $menu->add_entry( $flag, 'text' => "View region at UCSC",
-      'href' => $obj->get_ExtURL( 'EGB_UCSC', { 'UCSC_DB' => $UCSC_db, 'CHR' => $obj->seq_region_name, 'START' => int( $obj->seq_region_start ), 'END' => int( $obj->seq_region_end )} ) );
-  }
-  my $NCBI_db = $obj->species_defs->other_species( $species, 'NCBI_GOLDEN_PATH' );
-  if( $NCBI_db ) {
-    $menu->add_entry( $flag, 'text' => "View region at NCBI",
-      'href' => $obj->get_ExtURL( 'EGB_NCBI', { 'NCBI_DB' => $NCBI_db, 'CHR' => $obj->seq_region_name, 'START' => int( $obj->seq_region_start ), 'END' => int( $obj->seq_region_end )} ) );
-  }
-  my %browsers = %{$obj->species_defs->other_species( $species, 'EXTERNAL_GENOME_BROWSERS')||{}};
-  foreach ( sort keys %browsers ) {
-    $menu->add_entry( $flag, 'text' => "View region in $browsers{$_}",
-      'href' => $obj->get_ExtURL( $_, {'CHR' => $obj->seq_region_name, 'START' => int( $obj->seq_region_start ), 'END' => int( $obj->seq_region_end ) } ) );
-  }
-}
 
 sub sequencealignview {
   my $self = shift;
