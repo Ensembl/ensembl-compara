@@ -59,7 +59,7 @@ sub set_extra {
 
                                                                                 
 sub karyotype {
-  my( $self, $data, $highs, $config ) = @_;
+  my( $self, $object, $highs, $config ) = @_;
   
   if( $self->cacheable eq 'yes' ) {
     my $image = new EnsEMBL::Web::File::Image( $self->{'species_defs'} );
@@ -68,28 +68,28 @@ sub karyotype {
   }
   $config ||= 'Vkaryotype';
   my $chr_name;
-  my $wuc = $data->user_config_hash( $config );
+  my $wuc = $object->user_config_hash( $config );
     
   # set some dimensions based on number and size of chromosomes    
   if( $wuc->{'_all_chromosomes'} eq 'yes' ) {
     $chr_name = 'ALL';
-    $wuc->container_width( $data->species_defs->MAX_CHR_LENGTH );
-    my $total_chrs = @{$data->species_defs->ENSEMBL_CHROMOSOMES};
+    $wuc->container_width( $object->species_defs->MAX_CHR_LENGTH );
+    my $total_chrs = @{$object->species_defs->ENSEMBL_CHROMOSOMES};
 
-	$wuc->{'_rows'} = $data->param('rows') || ceil($total_chrs / 13 );
+	$wuc->{'_rows'} = $object->param('rows') || ceil($total_chrs / 13 );
   } 
   else {
-    $chr_name = $data->chr_name;
-    $wuc->container_width( $data->length );
+    $chr_name = $object->seq_region_name;
+    $wuc->container_width( $object->seq_region_length );
     $wuc->{'_rows'} = 1;
   }
   
   # get some adaptors for chromosome data
   my( $sa, $ka, $da);
   eval {
-    $sa = $data->database('core')->get_SliceAdaptor,
-    $ka = $data->database('core')->get_KaryotypeBandAdaptor,
-    $da = $data->database('core')->get_DensityFeatureAdaptor
+    $sa = $object->database('core')->get_SliceAdaptor,
+    $ka = $object->database('core')->get_KaryotypeBandAdaptor,
+    $da = $object->database('core')->get_DensityFeatureAdaptor
   };
   return $@ if $@;
 
@@ -104,7 +104,7 @@ sub add_tracks {
                                                                                 
   my ($self, $object, $config_name, $parser, $track_id) = @_;
                                                                                 
-  if ($object->chr_name eq 'ALL') {
+  if ($object->seq_region_name eq 'ALL') {
     $self->do_chr_layout($object, $config_name);
   }
   my $config   = $object->user_config_hash( $config_name );
