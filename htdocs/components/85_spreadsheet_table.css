@@ -1,0 +1,21 @@
+/* "SPREADSHEET" WITH STRIPED ROWS */
+
+table.ss { width: 100%; }
+
+table.ss tr.ss_header { background-color:#ccc; border-width:1px 0px 0px 0px; border-color:#ccc; border-style:solid; }
+
+table.ss th { background-color: #ccc; border-width:1px 0px 0px 0px; border-color:#ccc; border-style:solid; padding:0.2em; vertical-align: top }
+
+table.ss td { vertical-align: top; padding:0.2em; }
+
+table.ss .left-border {  border-left:1px #ccc solid;  }
+
+table.ss .right-border {  border-right:1px #ccc solid;  }
+
+table.ss .bottom-border {  border-bottom:1px #ccc solid;  }
+
+table.ss tr.bg1 { background-color:#fff; }
+
+table.ss tr.bg2 { background-color:#f0f0f0; } /* grey stripe */
+
+table.tint tr.bg2 { background-color:#eef; } /* coloured stripe */
