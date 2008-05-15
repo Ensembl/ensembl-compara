@@ -18,7 +18,7 @@ sub content {
   my $self = shift;
 
   my $html = qq(<div class="tinted-box center">
-<h2>UNDER CONSTRUCTION</h2>
+<h3>UNDER CONSTRUCTION</h3>
 <p>This page has not yet been ported to the new code. Thank you for your patience.</p>
 </div>);
 
