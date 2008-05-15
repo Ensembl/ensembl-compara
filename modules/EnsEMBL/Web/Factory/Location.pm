@@ -356,7 +356,7 @@ sub createObjects {
   if( $self->core_objects->location ) {
     warn "Creating location object!.....!";
     my $l = $self->core_objects->location;
-    $self->DataObjects( EnsEMBL::Web::Proxy::Object->new( 'Location', {
+    my $data = EnsEMBL::Web::Proxy::Object->new( 'Location', {
       'type' => 'SeqRegion',
       'real_species'     => $self->__species,
       'name'             => $l->seq_region_name,
@@ -366,8 +366,14 @@ sub createObjects {
       'seq_region_strand' => 1,
       'seq_region_type'   => $l->coord_system->name,
       'raw_feature_strand' => 1,
-      'seq_region_length' => $l->end-$l->start+1,
-    }, $self->__data ));
+      'seq_region_length' => $l->seq_region_length,
+    }, $self->__data );
+
+    ## Add a slice consisting of the whole chromosome
+    my $chr = $self->_slice_adaptor()->fetch_by_region( undef, $l->seq_region_name);
+    $data->attach_slice( $chr );
+
+    $self->DataObjects($data);
     warn ".... created";
     return;
   }
@@ -437,7 +443,6 @@ sub createObjects {
     foreach my $O ( @anchorview ) {
       $location = undef;
       my( $ftype, $temp_id ) = @$O;
-	  $location = undef;
       if( $ftype eq 'gene' || $ftype eq 'all' ) {
         $location = $self->_location_from_Gene( $temp_id );
       } 
@@ -480,25 +485,33 @@ sub createObjects {
     if(!defined($start) && ($temp_id = $self->param('geneid') || $self->param('gene'))) {
       $location = $self->_location_from_Gene( $temp_id );
     ## Transcript (completed)
-    } elsif( $temp_id = $self->param('transid') || $self->param('trans') || $self->param('transcript') ) {
+    } 
+    elsif( $temp_id = $self->param('transid') || $self->param('trans') || $self->param('transcript') ) {
       $location = $self->_location_from_Transcript( $temp_id );
-    } elsif( $temp_id = $self->param('exonid') || $self->param('exon') ) {  
+    }
+    elsif( $temp_id = $self->param('exonid') || $self->param('exon') ) {  
       $location = $self->_location_from_Exon( $temp_id );
     ## Translation (completed)
-    } elsif( $temp_id = $self->param('peptide') || $self->param('pepid') || $self->param('peptideid') || $self->param('translation') ) {
+    } 
+    elsif( $temp_id = $self->param('peptide') || $self->param('pepid') || $self->param('peptideid') || $self->param('translation') ) {
       $location = $self->_location_from_Peptide( $temp_id );
     ## MiscFeature (completed)
-    } elsif( $temp_id = $self->param('mapfrag') || $self->param('miscfeature') || $self->param('misc_feature') ) {
+    } 
+    elsif( $temp_id = $self->param('mapfrag') || $self->param('miscfeature') || $self->param('misc_feature') ) {
         $location = $self->_location_from_MiscFeature( $temp_id );
     ## Marker (completed)
-    } elsif( $temp_id = $self->param('marker') ) { 
+    } 
+    elsif( $temp_id = $self->param('marker') ) { 
         $location = $self->_location_from_Marker( $temp_id, $seq_region );
     ## Band (completed)
-    } elsif( $temp_id = $self->param('band') ) { 
+    } 
+    elsif( $temp_id = $self->param('band') ) { 
         $location = $self->_location_from_Band( $temp_id, $seq_region );
-    } elsif( !$start && ($temp_id = $self->param('snp')||$self->param('variation')) ) { 
+    } 
+    elsif( !$start && ($temp_id = $self->param('snp')||$self->param('variation')) ) { 
         $location = $self->_location_from_Variation( $temp_id, $seq_region );
-    } else {
+    } 
+    else {
       if( $self->param( 'click_to_move_window.x' ) ) {
         $location = $self->_location_from_SeqRegion( $seq_region, $start, $end );
         if( $location ) {
