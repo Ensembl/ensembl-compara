@@ -17,10 +17,6 @@ use Switch;
 # the globals into a nice '$self' package
 my $self = bless {};
 
-$self->{'compara_conf'} = {};
-$self->{'compara_conf'}->{'-user'} = 'ensro';
-$self->{'compara_conf'}->{'-port'} = 3306;
-
 $self->{'speciesList'} = ();
 $self->{'removeXedSeqs'} = undef;
 $self->{'outputFasta'} = undef;
@@ -70,18 +66,27 @@ if ($help or !$state) { usage(); }
 if ($url) {
   eval { require Bio::EnsEMBL::Hive::URLFactory ;};
   if ($@) {
-    $url =~ /mysql\:\/\/(\S+)\@(\S+)\/\S+\_(\d+)$/g;
-    my ($myuser,$myhost,$mydbversion) = ($1,$2,$3);
-    my $port = 3306;
+    $url =~ /mysql\:\/\/(\S+)\@(\S+)\/(\S+)/g;
+    my ($myuserpass,$myhost,$mydbname) = ($1,$2,$3);
+    my ($myuser,$mypass);
+    if ($myuserpass =~ /(\S+)\:(\S+)/) {
+      $myuser = $1;
+      $mypass = $1;
+    } else {
+      $myuser = $myuserpass;
+    }
+    my $myport = 3306;
     if ($myhost =~ /(\S+)\:(\S+)/) {
-      $port = $2;
+      $myport = $2;
       $myhost = $1;
     }
-    Bio::EnsEMBL::Registry->load_registry_from_db
-        ( -host => "$myhost",
-          -user => "$myuser",
-          -db_version => "$mydbversion",
-          -port => "$port");
+    my %compara_conf;
+    $compara_conf{-user} = $myuser;
+    $compara_conf{-pass} = $mypass if (defined($mypass));
+    $compara_conf{-host} = $myhost;
+    $compara_conf{-dbname} = $mydbname;
+    $compara_conf{-port} = $myport;
+    eval { $self->{'comparaDBA'}  = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(%compara_conf); }
   } else {
     $self->{'comparaDBA'}  = Bio::EnsEMBL::Hive::URLFactory->fetch($url, 'compara');
   }
