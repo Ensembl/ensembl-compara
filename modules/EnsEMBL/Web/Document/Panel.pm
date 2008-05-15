@@ -406,7 +406,7 @@ sub render {
       }
     }
     $self->renderer->print( q(
-    <span class="invisible">.</span></div>) );
+    <p class="invisible">.</p></div>) );
   }
 }
 
