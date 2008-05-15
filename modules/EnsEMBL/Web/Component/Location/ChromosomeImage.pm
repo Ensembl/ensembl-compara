@@ -37,7 +37,7 @@ sub content {
   my $image    = $object->new_karyotype_image();
   $image->imagemap           = 'no';
   $image->cacheable          = 'yes';
-  $image->image_type         = 'mapview';
+  $image->image_type         = 'chromosome';
   $image->image_name         = $species.'-'.$chr_name;
   my $script = $object->species_defs->NO_SEQUENCE ? 'Overview' : 'View';
   $image->set_button('form', 'id'=>'vclick', 'URL'=>"/$species/jump_to_location_view", 'hidden'=> $hidden);
