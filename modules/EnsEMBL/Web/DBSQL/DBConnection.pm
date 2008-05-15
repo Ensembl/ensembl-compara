@@ -172,8 +172,11 @@ sub get_databases_species {
 sub _get_databases_common {
   my $self = shift;
   my $species = shift || die( "Need a species" );
-  ( $species ) = $self->{'species_defs'}->valid_species( $species );
-  if( ! $species ){ die("Invalid species: $species") }
+  ($species) = $self->{'species_defs'}->valid_species($species);
+
+  die "Invalid species: $species"
+    unless $species;
+    
   $self->{'non_fatal_error'} =  '' ;
   my $default_species_db = $self->{'_dbs'}->{$species} ;
   my %databases = map {($_,1)} @_;
