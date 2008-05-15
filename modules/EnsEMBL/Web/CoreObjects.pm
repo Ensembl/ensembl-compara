@@ -51,7 +51,7 @@ sub transcript_long_caption {
 
 sub transcript_disabled {
   my $self = shift;
-  return "There is no default gene for this location";
+  return "There is no default transcript for this location";
 }
 
 sub gene {
