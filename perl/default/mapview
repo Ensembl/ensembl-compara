@@ -1,8 +1,2 @@
-#!/usr/local/bin/perl
-
-package mapview;
-
-use EnsEMBL::Web::Document::WebPage;
-simple_webpage( 'Chromosome' );
-
-1;
+use EnsEMBL::Web::Magic;
+magic carpet Location 'Chromosome'
