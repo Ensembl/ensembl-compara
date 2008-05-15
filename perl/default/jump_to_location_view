@@ -1,0 +1,48 @@
+#!/usr/local/bin/perl
+package jump_to_location_view;
+
+# Form-processing script that takes parameters from Location/Chromosome
+# and passes the appropriate URL to Location/View
+
+use strict;
+use warnings;
+no warnings "uninitialized";
+
+use EnsEMBL::Web::Document::WebPage;
+use POSIX qw(floor ceil);
+                                                                                
+my $webpage= new EnsEMBL::Web::Document::WebPage(
+  'renderer'   => 'Apache',
+  'outputtype' => 'HTML',
+  'scriptname' => 'jump_to_location_view',
+  'objecttype' => 'Location',
+);
+
+my $f = $webpage->factory;
+
+## Work out coordinates based on click point
+warn '###### CHECKING PARAMETERS #######';
+foreach my $p ($f->param) {
+  warn "PARAM: $p = ".$f->param($p);
+}
+my $temp_id = $f->param( 'click.x' ) + $f->param( 'vclick.y' );
+my $centrepoint = floor(
+            $f->param( 'seq_region_left' ) +
+            ( $temp_id - $f->param( 'click_left' ) + 0.5 ) /
+            ( $f->param( 'click_right' ) - $f->param( 'click_left' ) + 1 ) *
+            ( $f->param( 'seq_region_right' ) - $f->param( 'seq_region_left' ) + 1 )
+          );
+warn "CENTRE: $centrepoint";
+my $seq_region_start = $centrepoint - ($f->param('seq_region_width')-1)/2; 
+$seq_region_start = 0 if $seq_region_start < 0;
+my $seq_region_end   = $seq_region_start + $f->param('seq_region_width'); 
+
+my $URL = sprintf( "/%s/Location/View?r=%s:%d-%d",
+    $ENV{'ENSEMBL_SPECIES'},
+    $f->param('seq_region_name'),
+    $seq_region_start,
+    $seq_region_end
+);
+$webpage->redirect( $URL );
+
+1;
