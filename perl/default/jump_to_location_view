@@ -43,15 +43,17 @@ if ($f->param('karyotype')) {
   }
 }
 
+elsif ($f->param('entry')) {
+  ## Entry form on species homepages
+  my $region = $f->param('region') || $f->param('chr') || '1';
+  my $start = $f->param('start') || '1';
+  my $end = $f->param('end') || '100000';
+  $URL = sprintf( "/%s/Location/View?r=%s:%s-%s", $ENV{'ENSEMBL_SPECIES'}, $region, $start, $end );
+}
+
 elsif ($f->param('chr')) {
   ## change_chromosome form
   $URL = sprintf( "/%s/Location/Chromosome?r=%s:1-100000", $ENV{'ENSEMBL_SPECIES'}, $f->param('chr') );
-}
-
-elsif ($f->param('region')) {
-  ## Entry form on species homepages
-  $URL = sprintf( "/%s/Location/View?r=%s:%s-%s", 
-                    $ENV{'ENSEMBL_SPECIES'}, $f->param('region'), $f->param('start'), $f->param('end') );
 }
 
 else {
