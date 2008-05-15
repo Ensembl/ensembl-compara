@@ -91,7 +91,6 @@ sub _prof { $_[0]->{'timer'} && $_[0]->{'timer'}->push( $_[1], 2 ); }
 sub render {
   my $self = shift;
   $self->_start;
-  $self->render_settings_list;
   $self->print( "\n$self->{'form'}" ) if $self->{'form'};
   foreach my $panel ( @{$self->{'panels'}} ) { 
     $panel->{'timer'} = $self->{'timer'};
@@ -101,14 +100,6 @@ sub render {
   }
   $self->print( "\n</form>" ) if $self->{'form'};
   $self->_end;
-}
-
-sub render_settings_list {
-  my $self = shift;
-  my $settings_list = EnsEMBL::Web::Document::HTML::SettingsList->render();
-  if ($settings_list) {
-    $self->print($settings_list);
-  }
 }
 
 1;
