@@ -4,12 +4,8 @@ use strict;
 use DBI;
 use Getopt::Long;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
-use Bio::EnsEMBL::Pipeline::DBSQL::DBAdaptor;
-use Bio::EnsEMBL::Pipeline::Analysis;
-use Bio::EnsEMBL::Pipeline::Rule;
 use Bio::EnsEMBL::Compara::GenomeDB;
 use Bio::EnsEMBL::DBLoader;
-use Bio::EnsEMBL::Hive::URLFactory;
 use Bio::SimpleAlign;
 use Bio::AlignIO;
 use Bio::EnsEMBL::Compara::NestedSet;
@@ -71,7 +67,25 @@ if($self->{'print_align'}) { $state=8; }
 
 if ($help or !$state) { usage(); }
 
-$self->{'comparaDBA'}  = Bio::EnsEMBL::Hive::URLFactory->fetch($url, 'compara') if($url);
+if ($url) {
+  eval { require Bio::EnsEMBL::Hive::URLFactory ;};
+  if ($@) {
+    $url =~ /mysql\:\/\/(\S+)\@(\S+)\/\S+\_(\d+)$/g;
+    my ($myuser,$myhost,$mydbversion) = ($1,$2,$3);
+    my $port = 3306;
+    if ($myhost =~ /(\S+)\:(\S+)/) {
+      $port = $2;
+      $myhost = $1;
+    }
+    Bio::EnsEMBL::Registry->load_registry_from_db
+        ( -host => "$myhost",
+          -user => "$myuser",
+          -db_version => "$mydbversion",
+          -port => "$port");
+  } else {
+    $self->{'comparaDBA'}  = Bio::EnsEMBL::Hive::URLFactory->fetch($url, 'compara');
+  }
+}
 unless(defined($self->{'comparaDBA'})) {
   print("no url URL\n\n");
   usage();
@@ -210,6 +224,7 @@ sub create_species_tree {
     print STDERR "Loading taxa from gdbs in $url...\n";
     foreach my $gdb (@$gdb_list) {
       my $taxon_name = $gdb->name;
+      next if ($taxon_name =~ /ncestral/);
       my $taxon_id = $gdb->taxon_id;
       my $taxon = $taxonDBA->fetch_node_by_taxon_id($taxon_id);
       print STDERR "  $taxon_name [$taxon_id]\n";
