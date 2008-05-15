@@ -1,8 +1,8 @@
 #!/usr/local/bin/perl
 package jump_to_location_view;
 
-# Form-processing script that takes parameters from Location/Chromosome
-# and passes the appropriate URL to Location/View
+# Form-processing script that takes parameters from various forms
+# and forwards to the appropriate Location URL
 
 use strict;
 use warnings;
@@ -47,6 +47,13 @@ elsif ($f->param('chr')) {
   ## change_chromosome form
   $URL = sprintf( "/%s/Location/Chromosome?r=%s:1-100000", $ENV{'ENSEMBL_SPECIES'}, $f->param('chr') );
 }
+
+elsif ($f->param('region')) {
+  ## Entry form on species homepages
+  $URL = sprintf( "/%s/Location/View?r=%s:%s-%s", 
+                    $ENV{'ENSEMBL_SPECIES'}, $f->param('region'), $f->param('start'), $f->param('end') );
+}
+
 else {
   ## Using imagemap, so work out coordinates based on click point
   my $temp_id = $f->param( 'click.x' ) + $f->param( 'vclick.y' );
