@@ -77,13 +77,13 @@ sub _render_element {
   return qq(
   <div>
     ).$element->render().qq(
-  </div>);
+  </div>\n);
 }
 
 
 sub render {
   my $self = shift;
-  my $output = '<fieldset'.$self->extra.'>';
+  my $output = '<fieldset'.$self->extra.">\n";
  
   if ($self->notes) {
     $output .= '<div class="notes">';
@@ -100,7 +100,7 @@ sub render {
     else {
       $output .= '<p>'.$self->notes->{'text'}.'</p>';
     }
-    $output .= '</div>';
+    $output .= "</div>\n";
   } 
   
   foreach my $element ( @{$self->{'_elements'}} ) {
