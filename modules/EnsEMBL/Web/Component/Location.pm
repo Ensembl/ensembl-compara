@@ -32,11 +32,18 @@ no warnings "uninitialized";
 
 use POSIX qw(floor ceil);
 
-sub Summary {
-  my( $panel, $object ) =@_;
-  my $ob = $object->Obj;
 
+sub chr_list {
+### Method to create an array of chromosome names for use in dropdown lists
+  my $self = shift;
+  my @all_chr = @{$self->object->species_defs->ENSEMBL_CHROMOSOMES};
+  my @chrs;
+  foreach my $next (@all_chr) {
+    push @chrs, {'name'=>$next, 'value'=>$next} ;
+  }
+  return @chrs;
 }
+
 
 =head2 name
 

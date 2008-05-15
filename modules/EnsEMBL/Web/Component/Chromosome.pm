@@ -34,7 +34,7 @@ sub chr_map {
   my( $panel, $object ) = @_;
   my $config_name = 'Vmapview';
   my $species   = $object->species;
-  my $chr_name  = $object->chr_name;
+  my $chr_name  = $object->seq_region_name;
 
   my $config = $object->get_userconfig($config_name);
   my $ideo_height = $config->{'_image_height'}; 
@@ -53,7 +53,7 @@ sub chr_map {
   $image->cacheable          = 'yes';
   $image->image_type         = 'mapview';
   $image->image_name         = $species.'-'.$chr_name;
-  my $script = $object->species_defs->NO_SEQUENCE ? 'cytoview' : 'contigview';
+  my $script = $object->species_defs->NO_SEQUENCE ? 'Overview' : 'View';
   $image->set_button('form', 'id'=>'vclick', 'URL'=>"/$species/$script", 'hidden'=> $hidden);
   $image->add_tracks($object, $config_name);
   $image->karyotype($object, '', $config_name);
