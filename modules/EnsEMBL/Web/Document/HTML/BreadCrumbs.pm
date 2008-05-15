@@ -23,12 +23,56 @@ sub render   {
 
   ## Species/static content links
   my $species = $ENV{'ENSEMBL_SPECIES'};
+
+  ## Temporary hack to deal with broken species_defs
+  my %sp_info = (
+    'Aedes_aegypti'       => 'Aedes',
+    'Anopheles_gambiae'   => 'Anopheles',
+    'Bos_taurus'          => 'Cow',
+    'Caenorhabditis_elegans' => '<i>C. elegans</i>',
+    'Canis_familiaris'    => 'Dog',
+    'Cavia_porcellus'     => 'Guinea pig',
+    'Ciona_intestinalis'  => '<i>C. intestinalis</i>',
+    'Ciona_savignyi'      => '<i>C. savignyi</i>',
+    'Danio_rerio'         => 'Zebrafish',
+    'Dasypus_novemcinctus' => 'Armadillo',
+    'Drosophila_melanogaster' => 'Fly',
+    'Echinops_telfairi'   => 'Lesser hedgehog tenrec',
+    'Erinaceus_europaeus' => 'Hedgehog',
+    'Equus_caballus'      => 'Horse',
+    'Felis_catus'         => 'Cat',
+    'Gallus_gallus'       => 'Chicken',
+    'Gasterosteus_aculeatus' => 'Stickleback',
+    'Homo_sapiens'        => 'Human',
+    'Loxodonta_africana'  => 'Elephant',
+    'Macaca_mulatta'      => 'Macaque',
+    'Microcebus_murinus'  => 'Bushbaby',
+    'Monodelphis_domestica' => 'Opossum',
+    'Mus_musculus'        => 'Mouse',
+    'Myotis_lucifugus'    => 'Microbat',
+    'Ochotona_princeps'   => 'Pika',
+    'Ornithorhynchus_anatidus' => 'Platypus',
+    'Oryctolagus_cuniculus' => 'Rabbit',
+    'Oryzias_latipes'     => 'Medaka',
+    'Pan_troglodytes'     => 'Chimp',
+    'Pongo_pygmaeus'      => 'Orangutan',
+    'Rattus_norvegicus'   => 'Rat',
+    'Saccharomyces_cerevisiae' => 'Yeast',
+    'Sorex_araneus'       => 'Shrew',
+    'Spermophilus_tridecemlineatus' => 'Ground squirrel',
+    'Takifugu_rubripes'   => 'Fugu',
+    'Tetraodon_nigroviridis' => 'Tetraodon',
+    'Tupaia_belangeri'    => 'Tree shrew',
+    'Xenopus_tropicalis'  => '<i>X. tropicalis</i>',
+  );
+
   if ($species) {
+    my $common = $sp_info{$species};
     if ($you_are_here eq '/'.$species.'/index.html') {
-      $html .= qq( &gt; <strong>$species</strong>);
+      $html .= qq( &gt; <strong>$common</strong>);
     }
     else {
-      $html .= qq( &gt; <a href="/$species/">).$species.qq(</a>);
+      $html .= qq( &gt; <a href="/$species/">).$common.qq(</a>);
     }
   }
   elsif ($you_are_here =~ m#^/info/#) {
