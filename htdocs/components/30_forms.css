@@ -1,0 +1,107 @@
+/* The following form styles are based on code published by Jeff Howden - 
+see http://www.jeffhowden.com/legal/copyright/ for distribution details */
+
+form.wizard { border:1px solid #ddd; width:700px; margin:0 auto; }
+
+form fieldset { width:650px; padding: 10px; margin: 0 auto; clear: both; border:none; }
+
+form fieldset legend { font-weight: normal; font-size: 150%; margin: 0 0 0 0; padding: 0 5px; }
+
+label { font-size: 100%; }
+
+input, select, textarea { font-size: 100%; color: #000000; }
+
+textarea { overflow: auto; }
+
+form div { clear: left; display: block; width: 454px; zoom: 1;
+          margin: 5px 0 0 0; padding: 1px 3px; }
+
+form fieldset div.notes { float: right; width: 128px; height: auto; 
+          margin: 0 0 10px 10px; padding: 5px;
+          border: 1px solid #666666; background-color: #ffffe1;
+          font-size: 88%; }
+
+form fieldset div.notes h4 { background-image: url(/img/infoicon.gif);
+              background-repeat: no-repeat; background-position: top left;
+              padding: 0px 0px 3px 20px; margin:0px;
+}
+
+form fieldset div.notes p { margin: 0em 0em 1.2em 0em; color: #666666; }
+
+form fieldset div.notes ul { margin-left: -25px; }
+
+form fieldset div.notes p.last { margin: 0em; }
+
+form div label { display: block; float: left; width: 130px; font-weight:bold;
+                padding: 3px 5px; margin: 0 0 5px 0; text-align: right; }
+
+form div label.label-checkbox, form div label.label-radio { 
+                float: none; display: block;
+                width: 200px; zoom: 1; padding: 0; margin: 0 0 5px 142px; 
+                text-align: left; font-weight:normal; }
+
+form div select, form div textarea {  width: 250px; padding: 1px 3px; margin: 0 0 0 0; }
+form div select.narrow {  width: 100px;  }
+
+form div input.input-text, form div input.input-password { width: 250px; 
+      padding: 1px 3px; margin: 0 0 0 0; }
+
+form div input.input-file { width: 211px; }
+
+form div select.select-one, form div select.select-multiple { width: 211px; padding: 1px 3px; }
+
+form div input.input-checkbox, form div input.input-radio, input.input-checkbox, input.input-radio {
+      display: inline; height: auto; width: auto; background-color: transparent;
+      border-width: 0; padding: 0; margin: 0 0 0 140px; }
+
+form div.submit { width: 214px; padding: 0 0 1em 170px; }
+
+form div.submit div { display: inline; float: left; text-align: left; width: auto;
+      padding: 0; margin: 0; }
+
+form div input.input-submit, form div input.input-button, input.input-submit, input.input-button {
+      background-color: #9bb9dd; color: #fff; font-weight:bold; font-style:italic;
+      border-width: 3px; border-style:double; border-colour:transparent;
+      width: auto; padding: 0 6px; margin: 0; }
+
+form div.submit div input.input-submit, form div.submit div input.input-button {
+      float: right; margin: 0 0 0 5px; }
+
+form div small { display: block; margin: 0 0 5px 142px; padding: 1px 3px;
+      font-size: 88%; zoom: 1; }
+
+/* These styles are imported separatedly by JH, but our code doesn't work like that */
+
+form fieldset legend { line-height: 150%; }
+
+form input, form select, form textarea { background-color: #ffffff; }
+
+form textarea.expanding { overflow: auto; overflow-x: auto; overflow-y: visible; }
+
+form div label.label-checkbox, form div label.label-radio, label.label-checkbox, label.label-radio {
+      display: block; width: 190px; zoom: 1;
+      padding: 4px 0 0 18px; text-indent: -18px; line-height: 120%; }
+
+form div label.label-checkbox input.input-checkbox, form div label.label-radio input.input-radio, label.label-checkbox input.input-checkbox, label.label-radio input.input-radio { margin: 0; }
+
+form div fieldset input.input-text, form div fieldset input.input-password, form div fieldset input.input-file, form div fieldset textarea.input-textarea { width: 160px; margin: 0 0 0 18px; margin: expression(setCntr(), '0px 0 0 -124px'); }
+
+form div label.compact { display: inline; width: auto; padding: 4px 10px 0 0;
+        text-indent: 0; margin: 0 0 0 0; }
+
+form div.wide label { float: none; display: block; }
+
+form div label.wide { width: 348px; }
+
+form div.wide input.input-text, form div.wide input.input-password, form div.wide input.input-file, form div.wide select, form div.wide textarea { width: 344px; margin: 0; }
+
+form div.notes p, form div small { line-height: 125%; }
+
+form div.wide small { margin: 0 0 5px 0; }
+
+
+/************************************************************************************/
+
+/* Additional form styles */
+
+div.formpanel-left { padding:1em; border:1px solid #fff; margin-top:5px; } // Vega login form
