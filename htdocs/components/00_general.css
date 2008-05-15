@@ -52,7 +52,7 @@ h4 { font-size:1em;   color:#000; }
 .bottom { vertical-align:bottom; }
 .autocenter { margin: 0 auto; }
 .hide { display:none; }
-.invisible { color:#fff; }
+.invisible { font-size:1px; color:#fff; clear:both; overflow:hidden }
 
 /* Links */
 a { color:inherit; } /* neutral style for anchor target */
