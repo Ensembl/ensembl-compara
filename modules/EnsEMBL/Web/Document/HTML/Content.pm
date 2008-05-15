@@ -3,7 +3,6 @@ use strict;
 use CGI qw(escapeHTML);
 use Data::Dumper qw(Dumper);
 
-use EnsEMBL::Web::Document::HTML::SettingsList;
 use EnsEMBL::Web::Document::HTML;
 
 @EnsEMBL::Web::Document::HTML::Content::ISA = qw(EnsEMBL::Web::Document::HTML);
