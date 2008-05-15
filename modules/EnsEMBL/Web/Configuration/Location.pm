@@ -62,7 +62,7 @@ sub populate_tree {
   my $self = shift;
 
   $self->create_node( 'Karyotype', "Karyotype",
-    [qw(image EnsEMBL::Web::Component::Feature::show_karyotype)],
+    [qw(image EnsEMBL::Web::Component::Location::KaryotypeImage)],
     { 'availability' => $self->mapview_possible}
   );
 
