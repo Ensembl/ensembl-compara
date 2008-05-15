@@ -1,8 +1,2 @@
-#!/usr/local/bin/perl
-
-package contigview;
-
-use EnsEMBL::Web::Document::WebPage;
-simple_webpage( 'Location' );
-
-1;
+use EnsEMBL::Web::Magic;
+magic carpet Location

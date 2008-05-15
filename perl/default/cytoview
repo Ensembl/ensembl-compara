@@ -1,8 +1,2 @@
-#!/usr/local/bin/perl
-
-package cytoview;
-
-use EnsEMBL::Web::Document::WebPage;
-EnsEMBL::Web::Document::WebPage::simple( 'Location' );
-
-1;
+use EnsEMBL::Web::Magic;
+magic carpet Location 'Overview'
