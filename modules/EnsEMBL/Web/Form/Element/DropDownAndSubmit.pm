@@ -40,12 +40,16 @@ sub render {
         $v_hash{'value'}, $self->value eq $v_hash{'value'} ? ' selected="selected"' : '', $v_hash{'name'}
       );
     }
-    return sprintf( qq(%s<select name="%s" id="%s" class="normal" onChange="os_check('%s',this,%s)">\n%s</select>
-      <input type="submit" value="%s" class="red-button" />%s
+    return sprintf( qq(<label for="%s">%s</label><select name="%s" id="%s" class="%s" onChange="os_check('%s',this,%s)">\n%s</select>
+      <input type="submit" value="%s" class="input-submit" />%s
     %s),
-      $self->introduction,
-      CGI::escapeHTML( $self->name ), CGI::escapeHTML( $self->id ),
-      $self->type, $self->required eq 'yes'?1:0,
+      CGI::escapeHTML( $self->id ),
+      $self->label,
+      CGI::escapeHTML( $self->name ), 
+      CGI::escapeHTML( $self->id ),
+      $self->style,
+      $self->type, 
+      $self->required eq 'yes' ? 1 : 0,
       $options,
       CGI::escapeHTML( $self->button_value ),
       $self->required eq 'yes' ? $self->required_string : '',
@@ -63,8 +67,8 @@ sub render {
       $K++;
     }
     return sprintf( 
-      qq(%s%s<input type="submit" value="%s" />%s\n  %s),
-      $self->introduction, $output,
+      qq(%s%s<input type="submit" class="input-submit" value="%s" />%s\n  %s),
+      $self->label, $output,
       CGI::escapeHTML( $self->button_value ),
       $self->required eq 'yes' ? $self->required_string : '',
       $self->notes
