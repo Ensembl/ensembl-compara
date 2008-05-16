@@ -1526,6 +1526,7 @@ sub restrict_between_alignment_positions {
           -genomic_align_array => $new_genomic_aligns,
           -group_id => $self->group_id,
       );
+  $genomic_align_block->{original_dbID} = ($self->dbID or $self->{original_dbID});
   $genomic_align_block->{_original_strand} = $self->{_original_strand};
   if ($new_reference_genomic_align) {
     $genomic_align_block->reference_genomic_align($new_reference_genomic_align);
