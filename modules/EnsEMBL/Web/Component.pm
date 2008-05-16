@@ -16,6 +16,7 @@ sub new {
     'object' => shift,
   };
   bless $self,$class;
+  $self->_init();
   return $self;
 }
 
