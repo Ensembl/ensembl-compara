@@ -14,12 +14,17 @@ sub _init {
 
 
 sub content {
-  my $self   = shift;
-  my $object = $self->object;
+  my $self        = shift;
+  my $object      = $self->object;
+  my $threshold   = 1e6 * ($object->species_defs->ENSEMBL_GENOME_SIZE||1);
+  my $image_width = $self->image_width;
 
-  my $threshold = 1e6 * ($object->species_defs->ENSEMBL_GENOME_SIZE||1);
   if( $object->length > $threshold ) {
-    return "<p>This slice is too long to view in contigview...</p>";
+    return sprintf qq(
+  <div class="autocenter alert-box" style="width:%spx;">
+    The slice is too large to display in this display - use the navigation above to zoom in...
+  </div>), $image_width;
+
   }
 
   my $slice = $object->slice;
@@ -27,7 +32,7 @@ sub content {
 
   my $wuc = $object->user_config_hash( 'contigviewbottom' );
      $wuc->container_width( $length );
-     $wuc->set_width(       $object->param('image_width') );
+     $wuc->set_width(       $image_width );
 
   my $image    = $object->new_image( $slice, $wuc, $object->highlights );
      $image->imagemap = 'yes';
