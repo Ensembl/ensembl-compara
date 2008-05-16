@@ -295,9 +295,10 @@ sub new_panel {
 }
 
 sub mapview_possible {
-  my( $self, $chr ) = @_;
-  my %chrs = map { $_,1 } @{$self->{object}->species_defs->ENSEMBL_CHROMOSOMES||[]};
-  return $chrs{$chr};
+  my( $self, $location ) = @_;
+  my @coords = split(':', $location);
+  my %chrs = map { $_,1 } @{$self->{object}->species_defs->ENSEMBL_CHROMOSOMES || []};
+  return 1 if exists $chrs{$coords[0]};
 }
 
 sub initialize_ddmenu_javascript {

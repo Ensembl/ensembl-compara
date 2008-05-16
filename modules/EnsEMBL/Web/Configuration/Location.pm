@@ -26,7 +26,8 @@ sub populate_tree {
 
   $self->create_node( 'Karyotype', "Karyotype",
     [qw(image EnsEMBL::Web::Component::Location::KaryotypeImage)],
-    { 'availability' => $self->mapview_possible}
+    { 'availability' => scalar(@{$self->{object}->species_defs->ENSEMBL_CHROMOSOMES||[]}),
+      'disabled' => 'This genome is not assembled into chromosomes'}
   );
 
   $self->create_node( 'Chromosome', 'Chromosome summary',
@@ -35,7 +36,8 @@ sub populate_tree {
         stats           EnsEMBL::Web::Component::Location::ChromosomeStats
         change          EnsEMBL::Web::Component::Location::ChangeChromosome
     )],
-    { 'availability' => $self->mapview_possible}
+    { 'availability' => $self->mapview_possible($self->{object}->param('r')),
+      'disabled' => 'This sequence region is not part of an assembled chromosome' }
   );
 
   $self->create_node( 'Overview', "Region overview",
@@ -75,7 +77,7 @@ sub populate_tree {
     [qw(
     blank      EnsEMBL::Web::Component::Location::UnderConstruction
     )],
-    { 'availability' => $self->mapview_possible, 'concise' => 'Synteny'}
+    { 'availability' => $self->mapview_possible($self->{object}->param('r')), 'concise' => 'Synteny'}
   ));
 
   $self->create_node( 'Export',  'Export Data', [qw(blank      EnsEMBL::Web::Component::Location::UnderConstruction)] );

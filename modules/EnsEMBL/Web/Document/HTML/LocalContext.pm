@@ -59,10 +59,14 @@ $pad    </dd>" );
       }
     }
     my $name = $node->data->{caption};
-       $name =~ s/\[\[counts::(\w+)\]\]/$counts->{$1}/eg;
+       #$name =~ s/\[\[counts::(\w+)\]\]/$counts->{$1}/eg;
+       $name =~ s/\[\[counts::(\w+)\]\]/0/eg;
        $name = CGI::escapeHTML( $name );
-    if( $node->data->{'url'} ) {
+    if( $node->data->{'url'} && $node->data->{'availability'} ) {
       $name = sprintf( '<a href="%s" title="%s">%s</a>', $node->data->{'url'}, $name, $name );
+    }
+    else {
+      $name = sprintf('<span class="disabled" title="%s">%s</span>', $node->data->{'disabled'}, $name);
     }
     if( $node->is_leaf ) {
       $self->printf( qq(
