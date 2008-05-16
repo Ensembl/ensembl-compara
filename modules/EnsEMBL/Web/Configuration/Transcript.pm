@@ -38,9 +38,9 @@ sub populate_tree {
     { 'availability' => 1}
   );
 
-  $self->create_node( 'Similarity', "Similarity matches  ([[counts::similarity_matches]])",
+  $self->create_node( 'External', "External references  ([[counts::similarity_matches]])",
     [qw(similarity  EnsEMBL::Web::Component::Transcript::similarity_matches)],
-    { 'availability' => 1, 'concise' => 'Similarity matches'}
+    { 'availability' => 1, 'concise' => 'External references'}
   );
 
   $self->create_node( 'Oligos', "Oligos  ([[counts::oligos]])",

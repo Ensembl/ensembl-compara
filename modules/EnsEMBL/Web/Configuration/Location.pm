@@ -46,7 +46,7 @@ sub populate_tree {
     { 'availability' => 1}
   );
 
-  $self->create_node( 'View', "Contig neigbourhood",
+  $self->create_node( 'View', "Genome in detail",
     [qw(
       ideo   EnsEMBL::Web::Component::Location::Ideogram
       top    EnsEMBL::Web::Component::Location::ViewTop
@@ -56,36 +56,34 @@ sub populate_tree {
     { 'availability' => 1}
   );
 
-  my $align_menu = $self->create_submenu( 'Align', 'Alignments' );
-  $align_menu->append( $self->create_node( 'Align_Slice', "Feature ([[counts::align_slice]] options)",
-    [qw()],
-    { 'availability' => 'database:compara', 'concise' => 'Feature Alignments' }
+  my $align_menu = $self->create_submenu( 'Align', 'Comparative genomics' );
+  $align_menu->append( $self->create_node( 'Align_Slice', "Non-continuous alignment ([[counts::align_slice]] options)",
+    [qw(blank      EnsEMBL::Web::Component::UnderConstruction)],
+    { 'availability' => 'database:compara', 'concise' => 'Non-continuous alignment' }
   ));
-  $align_menu->append( $self->create_node( 'Align_Contig', "Contig ([[counts::align_contig]] species)",
-    [qw()],
-    { 'availability' => 'database:compara', 'concise' => 'Contig Alignments' }
+  $align_menu->append( $self->create_node( 'Comparison', "Region comparison ([[counts::align_contig]] species)",
+    [qw(blank      EnsEMBL::Web::Component::UnderConstruction)],
+    { 'availability' => 'database:compara', 'concise' => 'Region comparison' }
   ));
   $align_menu->append( $self->create_node( 'Align_Seq', "Resequencing ([[counts::align_seq]] individuals)",
-    [qw()],
+    [qw(blank      EnsEMBL::Web::Component::UnderConstruction)],
     { 'availability' => 'database:compara', 'concise' => 'Resequencing Alignments' }
   ));
-
-
-  $self->create_node( 'Synteny', "Synteny ([[counts::synteny]] species)",
+  $align_menu->append( $self->create_node( 'Synteny', "Synteny ([[counts::synteny]] species)",
     [qw(
     blank      EnsEMBL::Web::Component::UnderConstruction
     )],
     { 'availability' => $self->mapview_possible, 'concise' => 'Synteny'}
-  );
+  ));
 
-  my $exp_menu = $self->create_submenu( 'Export', 'Export data' );
-  $exp_menu->append( $self->create_node( 'Export_Features',  'Features', [qw()] ) );
-  $exp_menu->append( $self->create_node( 'Export_Sequence',  'Sequence', [qw()] ) );
+  $self->create_node( 'Export',  'Export Data', [qw(blank      EnsEMBL::Web::Component::UnderConstruction)] );
+=pod
   $exp_menu->append( $self->create_node( 'Export_BioMart',  'Jump to BioMart', [qw()] ) );
 
   my $exp_menu = $self->create_submenu( 'External', 'View in other browsers' );
   $exp_menu->append( $self->create_node( 'External_UCSC',  'UCSC', [qw()] ) );
   $exp_menu->append( $self->create_node( 'External_NCBI',  'NCBI', [qw()] ) );
+=cut
 }
 
 
