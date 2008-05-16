@@ -10,7 +10,7 @@ use base qw(EnsEMBL::Web::Configuration);
 
 sub set_default_action {
   my $self = shift;
-  $self->{_data}{default} = 'Structure';
+  $self->{_data}{default} = 'Summary';
 }
 
 sub global_context { return $_[0]->_global_context; }
@@ -22,10 +22,15 @@ sub context_panel  { return $_[0]->_context_panel;  }
 sub populate_tree {
   my $self = shift;
 
-  $self->create_node( 'Structure', "Transcript Neighbourhood",
-    [qw(neighbourhood EnsEMBL::Web::Component::Transcript::TranscriptNeighbourhood)],
+  $self->create_node( 'Summary', "Transcript Summary",
+    [qw(summary EnsEMBL::Web::Component::Transcript::TranscriptSummary)],
     { 'availability' => 1}
   );
+
+ # $self->create_node( 'Structure', "Transcript Neighbourhood",
+ #   [qw(neighbourhood EnsEMBL::Web::Component::Transcript::TranscriptNeighbourhood)],
+ #   { 'availability' => 1}
+ # );
 
   $self->create_node( 'Exons', "Exons  ([[counts::exons]])",
    # [qw(exons       EnsEMBL::Web::Component::Transcript::ExonsSpreadsheet)],
