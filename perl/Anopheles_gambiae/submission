@@ -1,3 +1,0 @@
-#!/usr/local/bin/perl
-
-print "Location: http://may2005.archive.ensembl.org/Anopheles_gambiae/submission?$ENV{'QUERY_STRING'}\n\n";
