@@ -49,10 +49,20 @@ sub _get_valid_action {
   return exists( $hash{$action} ) ? $action : $self->default_action;
 }
 
+sub _ajax_content {
+  my $self   = shift;
+  my $obj    = $self->{'object'};
+  my $panel  = $self->new_panel( 'Ajax', 'code' => 'ajax_panel', 'object'   => $obj);
+  $panel->add_component( 'component' => $ENV{'ENSEMBL_ACTION'} );
+  $self->add_panel( $panel );
+}
+
 sub _global_context {
   my $self = shift;
-  my $type = shift;
+  my $type = $self->type;
 
+  warn $self->{object}->core_objects;
+  
   my @data = (
     ['location',  'Location',   $self->{object}->core_objects->location_short_caption,   $self->{object}->core_objects->location_disabled ],
     ['gene',      'Gene',       $self->{object}->core_objects->gene_short_caption,       $self->{object}->core_objects->gene_disabled ],
@@ -61,6 +71,7 @@ sub _global_context {
   );
   my $qs = $self->query_string;
   foreach my $row ( @data ) {
+    warn " @$row ";
     my $url   = '';
     my @class = ();
     if( $row->[2] eq '-' ) {
@@ -88,6 +99,42 @@ sub _local_context {
   $self->{'page'}->local_context->tree(    $self->{_data}{'tree'}    );
   $self->{'page'}->local_context->active(  $self->{_data}{'action'}  );
   $self->{'page'}->local_context->caption( $self->{object}->caption );
+}
+
+sub _context_panel {
+  my $self   = shift;
+  my $obj    = $self->{'object'};
+  my $panel  = $self->new_panel( 'Summary',
+    'code'     => 'summary_panel',
+    'object'   => $obj,
+    'caption'  => $obj->caption
+  );
+  warn $self->type,' -> ENV -> ',$ENV{'ENSEMBL_TYPE'};
+  $panel->add_component( 'summary' => sprintf( 'EnsEMBL::Web::Component::%s::Summary', $self->type ) );
+  $self->add_panel( $panel );
+}
+
+sub _content_panel {
+  my $self   = shift;
+  my $obj    = $self->{'object'};
+
+  my $action = $self->_get_valid_action( $ENV{'ENSEMBL_ACTION'} );
+  my $node          = $self->get_node( $action );
+  my $previous_node = $node->previous_leaf      ;
+  my $next_node     = $node->next_leaf          ;
+
+  my %params = (
+    'object'   => $obj,
+    'code'     => 'main',
+    'caption'  => $node->data->{'caption'}
+  );
+  $params{'previous'} = $previous_node->data if $previous_node;
+  $params{'next'    } = $next_node->data     if $next_node;
+  my $panel = $self->new_panel( 'Navigation', %params );
+  if( $panel ) {
+    $panel->add_components( @{$node->data->{'components'}} );
+    $self->add_panel( $panel );
+  }
 }
 
 sub get_node { 

@@ -15,48 +15,11 @@ sub set_default_action {
   $self->{_data}{default} = 'View';
 }
 
-sub local_context { $_[0]->_local_context }
-
-sub global_context {
-  my $self = shift;
-  return $self->_global_context('Location');
-}
-
-sub context_panel {
-  my $self   = shift;
-  my $obj    = $self->{'object'};
-  my $panel  = $self->new_panel( 'Summary',
-    'code'     => 'summary_panel',
-    'object'   => $obj,
-    'caption'  => $obj->core_objects->location_long_caption
-  );
-  $panel->add_component( qw(summary EnsEMBL::Web::Component::Location::Summary) );
-  $self->add_panel( $panel );
-}
-
-sub content_panel {
-  my $self   = shift;
-  my $obj    = $self->{'object'};
-
-  my $action = $self->_get_valid_action( $ENV{'ENSEMBL_ACTION'} );
-  warn ".... $action ....";
-  my $node          = $self->get_node( $action );
-  my $previous_node = $node->previous_leaf      ;
-  my $next_node     = $node->next_leaf          ;
-
-  my %params = (
-    'object'   => $obj,
-    'code'     => 'main',
-    'caption'  => $node->data->{'concise'} || $node->data->{'caption'}
-  );
-  $params{'previous'} = $previous_node->data if $previous_node;
-  $params{'next'    } = $next_node->data     if $next_node;
-  my $panel = $self->new_panel( 'Navigation', %params );
-  if( $panel ) {
-    $panel->add_components( @{$node->data->{'components'}} );
-    $self->add_panel( $panel );
-  }
-}
+sub global_context { return $_[0]->_global_context; }
+sub ajax_content   { return $_[0]->_ajax_content;   }
+sub local_context  { return $_[0]->_local_context;  }
+sub content_panel  { return $_[0]->_content_panel;  }
+sub context_panel  { return $_[0]->_context_panel;  }
 
 sub populate_tree {
   my $self = shift;
@@ -66,7 +29,7 @@ sub populate_tree {
     { 'availability' => $self->mapview_possible}
   );
 
-  $self->create_node( 'Chromosome', 'Chromosome '.$self->{'object'}->seq_region_name,
+  $self->create_node( 'Chromosome', 'Chromosome summary',
     [qw(
         image           EnsEMBL::Web::Component::Location::ChromosomeImage
         stats           EnsEMBL::Web::Component::Location::ChromosomeStats
@@ -76,12 +39,20 @@ sub populate_tree {
   );
 
   $self->create_node( 'Overview', "Region overview",
-    [qw()],
+    [qw(
+      ideo   EnsEMBL::Web::Component::Location::Ideogram
+      top    EnsEMBL::Web::Component::Location::Region
+    )],
     { 'availability' => 1}
   );
 
   $self->create_node( 'View', "Contig neigbourhood",
-    [qw()],
+    [qw(
+      ideo   EnsEMBL::Web::Component::Location::Ideogram
+      top    EnsEMBL::Web::Component::Location::ViewTop
+      bottom EnsEMBL::Web::Component::Location::ViewBottom
+      zoom   EnsEMBL::Web::Component::Location::ViewZoom
+    )],
     { 'availability' => 1}
   );
 

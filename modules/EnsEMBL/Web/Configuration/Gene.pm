@@ -78,55 +78,11 @@ sub populate_tree {
   $exp_menu->append( $self->create_node( 'Export_Features',  'Features', [qw()] ) );
 }
 
-sub global_context {
-  my $self = shift;
-  return $self->_global_context('Gene');
-}
-
-#sub local_context {
-#  my $self = shift;
-#  my $obj      = $self->{object};
-#  my $species  = $obj->species;
-#  my $q_string = sprintf( "db=%s;gene=%s" , $obj->get_db , $obj->stable_id );
-#  my $flag     = "local#";
-#  $self->add_block( $flag, 'bulleted', 'Gene: '.$obj->stable_id );
-#  my $P = 0;
-#}
-
-sub context_panel {
-  my $self   = shift;
-  my $obj    = $self->{'object'};
-  my $panel  = $self->new_panel( 'Summary', 
-    'code'     => 'summary_panel',
-    'object'   => $obj,
-    'caption'  => $obj->caption
-  );
-  $panel->add_component( qw(gene_summary EnsEMBL::Web::Component::Gene::Summary) );
-  $self->add_panel( $panel );
-}
-
-sub content_panel {
-  my $self   = shift;
-  my $obj    = $self->{'object'};
-
-  my $action = $self->_get_valid_action( $ENV{'ENSEMBL_ACTION'} );
-  my $node          = $self->get_node( $action );
-  my $previous_node = $node->previous_leaf      ;
-  my $next_node     = $node->next_leaf          ;
-
-  my %params = (
-    'object'   => $obj,
-    'code'     => 'main',
-    'caption'  => $node->data->{'caption'}
-  );
-  $params{'previous'} = $previous_node->data if $previous_node;
-  $params{'next'    } = $next_node->data     if $next_node;
-  my $panel = $self->new_panel( 'Navigation', %params );
-  if( $panel ) {
-    $panel->add_components( @{$node->data->{'components'}} );
-    $self->add_panel( $panel );
-  }
-}
+sub global_context { return $_[0]->_global_context; }
+sub ajax_content   { return $_[0]->_ajax_content;   }
+sub local_context  { return $_[0]->_local_context;  }
+sub content_panel  { return $_[0]->_content_panel;  }
+sub context_panel  { return $_[0]->_context_panel;  }
 
 sub genesnpview {
   my $self   = shift;
