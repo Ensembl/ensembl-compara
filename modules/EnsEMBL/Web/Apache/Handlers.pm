@@ -306,10 +306,11 @@ sub transHandler {
   } else {
   # DECLINE this request if we cant find a valid species
     if( $species && ($species = $SPECIES_MAP{lc($species)} || '' ) ) {
+      my $redirect_if_different = 1;
       $script = shift @path_segments;
       my $action = '';
       my $type   = '';
-      if( $script =~ /^(Gene|Transcript|Location)$/ ) {
+      if( $script =~ /^(Gene|Transcript|Location|Variation)$/ ) {
         $type = $script;
         $r->subprocess_env->{'ENSEMBL_TYPE'}   = $type;
         $action = join('_',@path_segments);
@@ -319,12 +320,23 @@ sub transHandler {
 	#warn $r->subprocess_env->{'ENSEMBL_TYPE'} ;
 	#warn $r->subprocess_env->{'ENSEMBL_ACTION'};
         #warn ":: $script :: $type :: $action ::";
+	$redirect_if_different = 0;
+      } elsif( $script =~ /^(Component)$/ ) {
+        my $type = shift @path_segments;
+        $r->subprocess_env->{'ENSEMBL_TYPE'}   = $type;
+	my @T = map { s/\W//g;$_ } @path_segments;
+	my $plugin = shift @T;
+	my $module = join '::', 'EnsEMBL', $plugin, 'Component', $type, @T;
+        $r->subprocess_env->{'ENSEMBL_ACTION'} = $module;
+        $script = 'component';
+	@path_segments = ();
+	$redirect_if_different = 0;
       }
       $path_info = join( '/', @path_segments );
       unshift ( @path_segments, '', $species, $script );
       my $newfile = join( '/', @path_segments );
 
-      if( $script ne 'action' && $newfile ne $file ){ # Path is changed; HTTP_TEMPORARY_REDIRECT
+      if( $redirect_if_different && $newfile ne $file ){ # Path is changed; HTTP_TEMPORARY_REDIRECT
         $r->uri( $newfile );
         $r->headers_out->add( 'Location' => join( '?', $newfile, $querystring || () ) );
         $r->child_terminate;
