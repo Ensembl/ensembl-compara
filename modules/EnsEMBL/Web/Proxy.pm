@@ -56,6 +56,8 @@ sub new {
       '_user_details'    => $data->{_user_details}    || undef,
       '_web_user_db'     => $data->{_web_user_db}     || undef,
       '_apache_handle'   => $data->{_apache_handle}   || undef,
+      '_type'            => $data->{_type}            || $ENV{'ENSEMBL_TYPE'},
+      '_action'          => $data->{_action}          || $ENV{'ENSEMBL_ACTION'},
       '_species'         => $data->{_species}         || $ENV{'ENSEMBL_SPECIES'},
       '_script'          => $data->{_script}          || $ENV{'ENSEMBL_SCRIPT'},
 #      '_feature_types'   => $data->{_feature_types}   || [],

@@ -53,7 +53,7 @@ sub content {
   foreach my $attrib (@{$chr->get_all_Attributes}) {
     $chr_stats{$attrib->name} += $attrib->value;
   }
-  $chr_stats{'Length (bps)'} = ($object->seq_region_name eq 'ALL') ? $chr->max_chr_length : $chr->length ;
+  $chr_stats{'Length (bps)'} = ($object->seq_region_name eq 'ALL') ? $chr->max_chr_length : $chr->seq_region_length ;
 
   for my $stat (@orderlist){
     my $value = $object->thousandify( $chr_stats{$stat} );

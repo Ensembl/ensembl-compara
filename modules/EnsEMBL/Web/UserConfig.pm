@@ -606,6 +606,7 @@ sub is_available_artefact {
   my $DEBUG = shift;
   my $settings = $self->values($artefact);
   return 0 unless $settings && %$settings;
+  return 1;
   return $self->_is_available_artefact( $settings->{available} );
 }
  
@@ -1301,6 +1302,7 @@ sub ADD_ALL_TRANSCRIPTS {
 sub ADD_ALL_OLIGO_TRACKS {
   my $self = shift;
   my $POS  = shift || 4000;
+  return $POS;
   my %T = map { %{ $self->{'species_defs'}{'_storage'}->{$_}{'OLIGO'}||{} } }
           keys %{$self->{'species_defs'}{'_storage'}};
 #  foreach (keys %{$self->{'species_defs'}{'_storage'}}) {
