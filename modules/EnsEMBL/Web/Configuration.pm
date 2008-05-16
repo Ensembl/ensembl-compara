@@ -126,7 +126,7 @@ sub _content_panel {
   my %params = (
     'object'   => $obj,
     'code'     => 'main',
-    'caption'  => $node->data->{'caption'}
+    'caption'  => $node->data->{'concise'} || $node->data->{'caption'}
   );
   $params{'previous'} = $previous_node->data if $previous_node;
   $params{'next'    } = $next_node->data     if $next_node;
