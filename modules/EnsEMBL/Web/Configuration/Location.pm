@@ -56,8 +56,8 @@ sub populate_tree {
     { 'availability' => 1}
   );
 
-  my $align_menu = $self->create_submenu( 'Align', 'Comparative genomics' );
-  $align_menu->append( $self->create_node( 'Align_Slice', "Non-continuous alignment ([[counts::align_slice]] options)",
+  my $align_menu = $self->create_submenu( 'Compara', 'Comparative genomics' );
+  $align_menu->append( $self->create_node( 'Align', "Non-continuous alignment ([[counts::align_slice]] options)",
     [qw(blank      EnsEMBL::Web::Component::Location::UnderConstruction)],
     { 'availability' => 'database:compara', 'concise' => 'Non-continuous alignment' }
   ));
@@ -65,7 +65,7 @@ sub populate_tree {
     [qw(blank      EnsEMBL::Web::Component::Location::UnderConstruction)],
     { 'availability' => 'database:compara', 'concise' => 'Region comparison' }
   ));
-  $align_menu->append( $self->create_node( 'Align_Seq', "Resequencing ([[counts::align_seq]] individuals)",
+  $align_menu->append( $self->create_node( 'AlignSequence', "Resequencing ([[counts::align_seq]] individuals)",
     [qw(blank      EnsEMBL::Web::Component::Location::UnderConstruction)],
     { 'availability' => 'database:compara', 'concise' => 'Resequencing Alignments' }
   ));
